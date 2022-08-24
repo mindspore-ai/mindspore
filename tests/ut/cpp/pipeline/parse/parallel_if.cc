@@ -683,5 +683,26 @@ TEST_F(TestParallelIf, CountIfElseInIfForContinueInElse) {
 TEST_F(TestParallelIf, CountFuncCallInIfWhileBreakInElse) {
   CheckParallelIfTransformationCount("test_func_call_in_if_while_break_in_else", 1);
 }
+
+// Feature: Parallel if transformation
+// Description: Check parallel if transformatin for while(if(if/if(break)))
+// Expectation: The count of parallel if transformation should be equal to the expected count.
+TEST_F(TestParallelIf, CountFuncCallIfByIfBreakInIfInWhile) {
+  CheckParallelIfTransformationCount("test_if_by_if_break_in_if_in_while", 1);
+}
+
+// Feature: Parallel if transformation
+// Description: Check parallel if transformatin for if(if(raise))/else
+// Expectation: The count of parallel if transformation should be equal to the expected count.
+TEST_F(TestParallelIf, CountFuncCallIfRaiseRaise) {
+  CheckParallelIfTransformationCount("test_if_raise_raise", 1);
+}
+
+// Feature: Parallel if transformation
+// Description: Check parallel if transformatin for if(if(assert)/else)
+// Expectation: The count of parallel if transformation should be equal to the expected count.
+TEST_F(TestParallelIf, CountFuncCallIfAssertFailure) {
+  CheckParallelIfTransformationCount("test_if_assert_failure", 2);
+}
 }  // namespace parse
 }  // namespace mindspore

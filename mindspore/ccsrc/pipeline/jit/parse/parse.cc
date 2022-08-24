@@ -697,6 +697,12 @@ FunctionBlockPtr Parser::ParseStatements(FunctionBlockPtr block, const py::objec
                     << " has return statement inside, propagate flag back to block: " << block->ToString();
       block->SetReturnStatementInside();
     }
+    // Propagate flag of break or continue statement back;
+    if (sub_block != block && sub_block->is_break_continue_statement_inside()) {
+      MS_LOG(DEBUG) << "Sub block: " << sub_block->ToString()
+                    << " has break or continue statement inside, propagate flag back to block: " << block->ToString();
+      block->SetBreakContinueStatementInside();
+    }
     sub_block = next_block;
     // Insert appropriate depended items for the function block if it has a return node
     if (sub_block->func_graph()->get_return() != nullptr || sub_block->is_dead_block()) {
@@ -1778,12 +1784,6 @@ void Parser::CheckControlFlowAlterationInIf(std::pair<FunctionBlockPtr, Function
     block->SetReturnStatementInside();
     return;
   }
-  if (branch_end->func_graph()->get_return() != nullptr) {
-    MS_LOG(DEBUG) << "Ignore the block as branch_end will not call after_block, branch_block: "
-                  << branch_block->ToString() << ", branch_end: " << branch_end->ToString()
-                  << ", after_block: " << after_block->ToString();
-    branch_block->SetBreakContinueStatementInside();
-  }
   if (branch_block->is_break_continue_statement_inside()) {
     MS_LOG(DEBUG) << "Inside the branch block has break or continue statement, ignore for transformation to "
                      "parallel-if call, branch block: "
@@ -1792,6 +1792,13 @@ void Parser::CheckControlFlowAlterationInIf(std::pair<FunctionBlockPtr, Function
     MS_LOG(DEBUG) << "Propagate flag of break or continue statement from branch block to block, branch block:"
                   << branch_block->ToString() << ", block: " << block->ToString();
     block->SetBreakContinueStatementInside();
+  } else if (branch_end->func_graph()->get_return() != nullptr) {
+    // Currently, this can only happen with raise statement inside. As try/expect is not supported now,
+    // and contional for raise will be evaluated in Compile time. If raise condition is met, it will
+    // cause compile fail, so no need to propagate the flag back.
+    MS_LOG(DEBUG) << "Ignore the block as branch_end will not call after_block, branch_block: "
+                  << branch_block->ToString() << ", branch_end: " << branch_end->ToString()
+                  << ", after_block: " << after_block->ToString();
   } else {
     branch_graphs_pair->second = branch_end;
   }
@@ -2860,6 +2867,9 @@ FunctionBlockPtr Parser::ParseBreak(const FunctionBlockPtr &block, const py::obj
     TraceGuard trace_guard(std::make_shared<TraceLoopEnd>(block->func_graph()->debug_info()));
     loop.end = MakeFunctionBlock(*this);
   }
+  block->SetBreakContinueStatementInside();
+  MS_LOG(DEBUG) << "Inside the block has break statement, block: " << block->ToString();
+
   // Jump to the end_block.
   block->Jump(loop.end, {});
   return block;
@@ -2876,6 +2886,9 @@ FunctionBlockPtr Parser::ParseContinue(const FunctionBlockPtr &block, const py::
   if (loop.iterator != nullptr) {
     args.emplace_back(loop.iterator);
   }
+  block->SetBreakContinueStatementInside();
+  MS_LOG(DEBUG) << "Inside the block has continue statement, block: " << block->ToString();
+
   block->Jump(loop.header, args);
   return block;
 }

@@ -1958,3 +1958,70 @@ def test_func_call_in_if_while_break_in_else():
         return x + y
 
     return foo
+
+
+def test_if_by_if_break_in_if_in_while():
+    """
+    Feature: Parallel if transformation.
+    Description: break in if in while loop requires that the after-if func graph should not
+                 be called, and this information should be propagated through for to
+                 the outer if part. The by if can be transformed.
+    Expectation: success
+    """
+
+    def foo(x, y, z):
+        out = z
+        while x < y:
+            if y > 2 * x:
+                out = out + out
+                if y > 3 * x:
+                    y = y - 1
+                if y == 3 * x:
+                    break
+        out = out + out
+        return out
+
+    return foo
+
+
+def test_if_raise_raise():
+    """
+    Feature: Parallel if transformation.
+    Description: raise in if requires that the after-if func graph should not
+                 be called, so it cannot be transformed. The outer if can be
+                 transformed.
+    Expectation: success
+    """
+
+    def foo(x, y, z):
+        out = z
+        if x >= y:
+            if x > y:
+                raise ValueError("x is bigger y")
+        else:
+            out = out * 2
+        out = out + out
+        return out
+
+    return foo
+
+
+def test_if_assert_failure():
+    """
+    Feature: Parallel if transformation.
+    Description: assert in if will not affect the inner and outer if transformation.
+    Expectation: success
+    """
+
+    def foo(x, y, z):
+        out = z
+        if x >= y:
+            if x > y:
+                assert x == y
+                out = out * 3
+        else:
+            out = out * 2
+        out = out + out
+        return out
+
+    return foo
