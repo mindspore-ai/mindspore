@@ -67,9 +67,7 @@ abstract::AbstractBasePtr UniformRealInfer(const abstract::AnalysisEnginePtr &, 
     output_shape = std::make_shared<abstract::Shape>(shape);
   } else {
     shape = {-2};  // unknown dimension.
-    ShapeVector min_shape = {0};
-    ShapeVector max_shape = {-1};
-    output_shape = std::make_shared<abstract::Shape>(shape, min_shape, max_shape);
+    output_shape = std::make_shared<abstract::Shape>(shape);
   }
   return abstract::MakeAbstract(output_shape, kFloat32);
 }

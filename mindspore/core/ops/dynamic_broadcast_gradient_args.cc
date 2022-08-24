@@ -37,13 +37,6 @@ int64_t CheckInputsAndGetShape(const AbstractBasePtr &input_arg, const string &p
     if (input_size != 1) {
       MS_EXCEPTION(TypeError) << "For '" << prim_name << "', input shape must be 1-D, but got: " << input_size << "-D.";
     }
-    if (input_shape[0] == abstract::Shape::SHP_ANY) {
-      auto max_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_arg->BuildShape())[kMaxShape];
-      if (max_shape.empty()) {
-        return -1;
-      }
-      return max_shape[0];
-    }
     return input_shape[0];
   } else if (input_arg->isa<abstract::AbstractTuple>()) {
     auto x_shape = dyn_cast<abstract::AbstractTuple>(input_arg);
@@ -67,10 +60,8 @@ abstract::TupleShapePtr Infer(const PrimitivePtr &primitive, const std::vector<A
     auto out_shape = std::make_shared<abstract::Shape>(shape);
     return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{out_shape, out_shape});
   }
-  ShapeVector min_shape{1L};
-  int64_t max_size = x_shape0 > y_shape0 ? x_shape0 : y_shape0;
-  ShapeVector max_shape{max_size};
-  auto out_shape = std::make_shared<abstract::Shape>(shape, min_shape, max_shape);
+
+  auto out_shape = std::make_shared<abstract::Shape>(shape);
   return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{out_shape, out_shape});
 }
 }  // namespace

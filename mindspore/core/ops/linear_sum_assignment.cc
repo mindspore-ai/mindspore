@@ -33,29 +33,14 @@ abstract::TupleShapePtr LinearSumAssignmentInferShape(const PrimitivePtr &primit
   constexpr int64_t kNumber2 = 2;
   auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
   auto matrix_shape = shape_map[kShape];
-  auto matrix_min_shape = shape_map[kMinShape];
-  auto matrix_max_shape = shape_map[kMaxShape];
   auto matrix_rank = SizeToLong(matrix_shape.size());
   (void)CheckAndConvertUtils::CheckInteger("cost_matrix rank", matrix_rank, kEqual, kNumber2, op_name);
 
   int64_t out_dim = std::min(matrix_shape[0], matrix_shape[1]);  // -1 or actual value
   ShapeVector row_ind_shape{1, out_dim};
   ShapeVector col_ind_shape{1, out_dim};
-  if (matrix_min_shape.empty() || matrix_max_shape.empty()) {
-    std::vector<abstract::BaseShapePtr> shapes{std::make_shared<abstract::Shape>(row_ind_shape),
-                                               std::make_shared<abstract::Shape>(col_ind_shape)};
-    return std::make_shared<abstract::TupleShape>(shapes);
-  }
-  int64_t out_min_dim = std::min(matrix_min_shape[0], matrix_min_shape[1]);
-  int64_t out_max_dim = std::min(matrix_max_shape[0], matrix_max_shape[1]);
-  ShapeVector output_min_shape{1, out_min_dim};
-  ShapeVector output_max_shape{1, out_max_dim};
-  abstract::ShapePtr row_ind_shape_ptr =
-    std::make_shared<abstract::Shape>(row_ind_shape, output_min_shape, output_max_shape);
-  abstract::ShapePtr col_ind_shape_ptr =
-    std::make_shared<abstract::Shape>(col_ind_shape, output_min_shape, output_max_shape);
-  std::vector<abstract::BaseShapePtr> shapes{row_ind_shape_ptr, col_ind_shape_ptr};
-
+  std::vector<abstract::BaseShapePtr> shapes{std::make_shared<abstract::Shape>(row_ind_shape),
+                                             std::make_shared<abstract::Shape>(col_ind_shape)};
   return std::make_shared<abstract::TupleShape>(shapes);
 }
 

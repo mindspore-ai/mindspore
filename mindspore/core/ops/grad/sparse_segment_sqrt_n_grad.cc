@@ -62,9 +62,7 @@ abstract::ShapePtr SparseSegmentSqrtNGradInferShape(const PrimitivePtr &prim,
     }
   } else {
     std::vector<int64_t> output_shape = {-2};
-    std::vector<int64_t> min_shape = {1};
-    std::vector<int64_t> max_shape = {1};
-    return std::make_shared<abstract::Shape>(output_shape, min_shape, max_shape);
+    return std::make_shared<abstract::Shape>(output_shape);
   }
 }
 

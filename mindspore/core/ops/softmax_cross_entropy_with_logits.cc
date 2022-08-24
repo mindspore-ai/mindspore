@@ -53,17 +53,8 @@ abstract::TupleShapePtr SoftmaxCrossEntropyWithLogitsInferShape(const PrimitiveP
   }
   auto logits_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(logits_shape);
   auto logits_shp = logits_shape_map[kShape];
-  ShapeVector logits_max_shape = logits_shape_map[kMaxShape];
-  ShapeVector logits_min_shape = logits_shape_map[kMinShape];
   ShapeVector loss_shape = {logits_shp[0]};
-  abstract::ShapePtr loss_shape_ptr;
-  if (!logits_max_shape.empty() && !logits_min_shape.empty()) {
-    ShapeVector loss_min_shape = {logits_min_shape[0]};
-    ShapeVector loss_max_shape = {logits_max_shape[0]};
-    loss_shape_ptr = std::make_shared<abstract::Shape>(loss_shape, loss_min_shape, loss_max_shape);
-  } else {
-    loss_shape_ptr = std::make_shared<abstract::Shape>(loss_shape);
-  }
+  abstract::ShapePtr loss_shape_ptr = std::make_shared<abstract::Shape>(loss_shape);
   return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{loss_shape_ptr, logits_shape_ptr});
 }
 

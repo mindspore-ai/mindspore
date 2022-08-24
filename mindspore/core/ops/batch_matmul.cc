@@ -97,10 +97,6 @@ abstract::ShapePtr BatchMatmulInferShape(const PrimitivePtr &primitive,
   }
   (void)primitive->AddAttr("transpose_x1", transpose_a_ptr);
   (void)primitive->AddAttr("transpose_x2", transpose_b_ptr);
-  ShapeVector x_min_shape = x_shape_map[kMinShape];
-  ShapeVector x_max_shape = x_shape_map[kMaxShape];
-  ShapeVector y_min_shape = y_shape_map[kMinShape];
-  ShapeVector y_max_shape = y_shape_map[kMaxShape];
   // Additional check for dynamic shape
   // Last infer will be real shape values
   bool x_not_dyn =
@@ -119,12 +115,8 @@ abstract::ShapePtr BatchMatmulInferShape(const PrimitivePtr &primitive,
   }
 
   ShapeVector ret_shape;
-  ShapeVector ret_min_shape;
-  ShapeVector ret_max_shape;
   BatchMatMulMakeShape(&ret_shape, x_shp, y_shp, transpose_a, transpose_b, offset);
-  BatchMatMulMakeShape(&ret_min_shape, x_min_shape, y_min_shape, transpose_a, transpose_b, offset);
-  BatchMatMulMakeShape(&ret_max_shape, x_max_shape, y_max_shape, transpose_a, transpose_b, offset);
-  return std::make_shared<abstract::Shape>(ret_shape, ret_min_shape, ret_max_shape);
+  return std::make_shared<abstract::Shape>(ret_shape);
 }
 
 TypePtr BatchMatmulInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {

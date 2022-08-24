@@ -991,9 +991,6 @@ AbstractBasePtr InferImplConcat(const AnalysisEnginePtr &, const PrimitivePtr &p
   MS_EXCEPTION_IF_NULL(tensor_base);
   ShapeVector shape_base = tensor_base->shape()->shape();
   int64_t rank_base = SizeToLong(shape_base.size());
-  ShapeVector min_shape_base = tensor_base->shape()->min_shape();
-  ShapeVector max_shape_base = tensor_base->shape()->max_shape();
-
   primitive->set_attr("T", tensor_base->element()->BuildType());
   primitive->set_attr("inputNums", MakeValue(SizeToLong(tuple_len)));
 
@@ -1002,8 +999,6 @@ AbstractBasePtr InferImplConcat(const AnalysisEnginePtr &, const PrimitivePtr &p
   int64_t axis_value = CheckAxis(op_name, "axis", axis, -(rank_base + 1), rank_base, "input_x");
 
   int64_t all_shp = shape_base[axis_value];
-  int64_t min_all_shp = min_shape_base[axis_value];
-  int64_t max_all_shp = max_shape_base[axis_value];
   for (size_t i = 1; i < tuple_len; ++i) {
     AbstractTensorPtr tensor = nullptr;
     if (args_spec_list[0]->isa<AbstractTuple>()) {
@@ -1013,8 +1008,6 @@ AbstractBasePtr InferImplConcat(const AnalysisEnginePtr &, const PrimitivePtr &p
     }
     ShapeVector shape_tensor = tensor->shape()->shape();
     int64_t rank_tensor = SizeToLong(shape_tensor.size());
-    ShapeVector min_shape_tensor = tensor->shape()->min_shape();
-    ShapeVector max_shape_tensor = tensor->shape()->max_shape();
     (void)CheckDtypeSame(op_name, tensor_base, tensor);
     if (rank_tensor != rank_base) {
       MS_LOG(EXCEPTION) << op_name << " can not concat element " << i << " with the first element: Wrong Rank";
@@ -1029,24 +1022,13 @@ AbstractBasePtr InferImplConcat(const AnalysisEnginePtr &, const PrimitivePtr &p
     } else {
       all_shp += shape_tensor[axis_value];
     }
-    min_all_shp += min_shape_tensor[axis_value];
-    max_all_shp += max_shape_tensor[axis_value];
   }
 
   AbstractTensorPtr ret = dyn_cast<AbstractTensor>(tensor_base->Broaden());
   MS_EXCEPTION_IF_NULL(ret);
   auto shape = ret->shape()->shape();
-  auto min_shape = ret->shape()->min_shape();
-  auto max_shape = ret->shape()->max_shape();
   shape[axis_value] = all_shp;
-  min_shape[axis_value] = min_all_shp;
-  max_shape[axis_value] = max_all_shp;
-  if (IsDynamic(min_shape) || IsDynamic(max_shape)) {
-    min_shape.clear();
-    max_shape.clear();
-  }
-
-  ret->set_shape(std::make_shared<Shape>(shape, min_shape, max_shape));
+  ret->set_shape(std::make_shared<Shape>(shape));
   return ret;
 }
 

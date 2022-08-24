@@ -92,35 +92,16 @@ AbstractBasePtr SparseAddGradInfer(const abstract::AnalysisEnginePtr &, const Pr
   auto val_grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
   (void)CheckSparseAddGradShape(val_grad_shape[kShape].size(), kValuesShapeSize, "backprop_val_grad", name);
   auto x1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kSparseAddGradIndex1]->BuildShape());
-  bool x1_is_dyn_shape = !x1_shape[kMaxShape].empty();
   auto dx1_shape = x1_shape[kShape];
   (void)CheckSparseAddGradShape(dx1_shape.size(), kIndicesShapeSize, "x1_indices", name);
   auto type = SparseAddGradInferType(name, input_args, 0);
   ShapeVector shp = {dx1_shape.at(0)};
-  if (x1_is_dyn_shape) {
-    auto dx1_min_shape = x1_shape[kMinShape];
-    auto dx1_max_shape = x1_shape[kMaxShape];
-    ShapeVector min_shp = {dx1_min_shape.at(0)};
-    ShapeVector max_shp = {dx1_max_shape.at(0)};
-    dx1 = std::make_shared<AbstractTensor>(type, std::make_shared<mindspore::abstract::Shape>(shp, min_shp, max_shp));
-  } else {
-    dx1 = std::make_shared<AbstractTensor>(type, std::make_shared<mindspore::abstract::Shape>(shp));
-  }
-
+  dx1 = std::make_shared<AbstractTensor>(type, std::make_shared<mindspore::abstract::Shape>(shp));
   auto x2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kSparseAddGradIndex2]->BuildShape());
-  bool x2_is_dyn_shape = !x2_shape[kMaxShape].empty();
   ShapeVector dx2_shape = x2_shape[kShape];
   (void)CheckSparseAddGradShape(dx2_shape.size(), kIndicesShapeSize, "x2_indices", name);
   shp = {dx2_shape.at(0)};
-  if (x2_is_dyn_shape) {
-    auto dx2_min_shape = x2_shape[kMinShape];
-    auto dx2_max_shape = x2_shape[kMaxShape];
-    ShapeVector min_shp = {dx2_min_shape.at(0)};
-    ShapeVector max_shp = {dx2_max_shape.at(0)};
-    dx2 = std::make_shared<AbstractTensor>(type, std::make_shared<mindspore::abstract::Shape>(shp, min_shp, max_shp));
-  } else {
-    dx2 = std::make_shared<AbstractTensor>(type, std::make_shared<mindspore::abstract::Shape>(shp));
-  }
+  dx2 = std::make_shared<AbstractTensor>(type, std::make_shared<mindspore::abstract::Shape>(shp));
   auto sum_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kSparseAddGradIndex3]->BuildShape());
   (void)CheckSparseAddGradShape(sum_shape[kShape].size(), kIndicesShapeSize, "sum_indices", name);
   if (sum_shape[kShape][0] >= 0 && val_grad_shape[kShape][0] >= 0) {

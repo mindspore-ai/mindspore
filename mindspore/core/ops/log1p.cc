@@ -31,9 +31,7 @@ abstract::ShapePtr Log1pInferShape(const PrimitivePtr &primitive, const std::vec
   MS_EXCEPTION_IF_NULL(primitive);
   auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
   auto in_shape = shape_map[kShape];
-  auto min_shape = shape_map[kMinShape];
-  auto max_shape = shape_map[kMaxShape];
-  return std::make_shared<abstract::Shape>(in_shape, min_shape, max_shape);
+  return std::make_shared<abstract::Shape>(in_shape);
 }
 
 TypePtr Log1pInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {

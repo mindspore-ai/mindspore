@@ -95,9 +95,7 @@ abstract::ShapePtr PadV3GradInferShape(const PrimitivePtr &primitive, const std:
   if (!x_shape_ptr->IsDynamic()) {
     return std::make_shared<abstract::Shape>(out_shape);
   }
-  auto min_shape = out_shape;
-  auto max_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kMaxShape];
-  return std::make_shared<abstract::Shape>(out_shape, min_shape, max_shape);
+  return std::make_shared<abstract::Shape>(out_shape);
 }
 
 TypePtr PadV3GradInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {

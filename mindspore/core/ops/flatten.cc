@@ -37,8 +37,6 @@ abstract::ShapePtr FlattenInferShape(const PrimitivePtr &primitive, const std::v
                                            prim_name);
   auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
   auto x_shape = shape_map[kShape];
-  auto min_shape = shape_map[kMinShape];
-  auto max_shape = shape_map[kMaxShape];
   int64_t prod = 1;
   size_t size = x_shape.size();
   for (size_t i = 1; i < size; i++) {
@@ -49,22 +47,7 @@ abstract::ShapePtr FlattenInferShape(const PrimitivePtr &primitive, const std::v
     prod = prod * x_shape[i];
   }
   ShapeVector out_shape = {x_shape[0], prod};
-  if (min_shape.empty() || max_shape.empty()) {
-    return std::make_shared<abstract::Shape>(out_shape);
-  }
-  int64_t min_prod = 1;
-  size_t min_size = min_shape.size();
-  for (size_t i = 1; i < min_size; i++) {
-    min_prod = min_prod * min_shape[i];
-  }
-  ShapeVector out_min_shape = {min_shape[0], min_prod};
-  int64_t max_prod = 1;
-  size_t max_size = max_shape.size();
-  for (size_t i = 1; i < max_size; i++) {
-    max_prod = max_prod * max_shape[i];
-  }
-  ShapeVector out_max_shape = {max_shape[0], max_prod};
-  return std::make_shared<abstract::Shape>(out_shape, out_min_shape, out_max_shape);
+  return std::make_shared<abstract::Shape>(out_shape);
 }
 
 TypePtr FlattenInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {

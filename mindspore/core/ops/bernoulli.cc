@@ -28,17 +28,8 @@ namespace ops {
 namespace {
 abstract::ShapePtr BernoulliInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
-  auto input_min_shape = shape_map[kMinShape];
-  auto input_max_shape = shape_map[kMaxShape];
-  auto out_shape = x_shape;
-  if (input_min_shape.size() == 0 || input_max_shape.size() == 0) {
-    return std::make_shared<abstract::Shape>(out_shape);
-  }
-  auto output_min_shape = input_min_shape;
-  auto output_max_shape = input_max_shape;
-  return std::make_shared<abstract::Shape>(out_shape, output_min_shape, output_max_shape);
+  auto out_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  return std::make_shared<abstract::Shape>(out_shape);
 }
 
 TypePtr BernoulliInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {

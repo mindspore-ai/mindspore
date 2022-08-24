@@ -119,15 +119,9 @@ abstract::TupleShapePtr SparseTensorToCSRSparseMatrixInferShape(const PrimitiveP
     }
   } else {
     ShapeVector y_batch_pointers_shape = {-2};
-    ShapeVector y_batch_pointers_min_shape = {1};
-    ShapeVector y_batch_pointers_max_shape = {1};
     ShapeVector y_row_pointers_shape = {-2};
-    ShapeVector y_row_pointers_min_shape = {1};
-    ShapeVector y_row_pointers_max_shape = {1};
-    y_batch_pointers_shape_list =
-      std::make_shared<abstract::Shape>(y_batch_pointers_shape, y_batch_pointers_min_shape, y_batch_pointers_max_shape);
-    y_row_pointers_shape_list =
-      std::make_shared<abstract::Shape>(y_row_pointers_shape, y_row_pointers_min_shape, y_row_pointers_max_shape);
+    y_batch_pointers_shape_list = std::make_shared<abstract::Shape>(y_batch_pointers_shape);
+    y_row_pointers_shape_list = std::make_shared<abstract::Shape>(y_row_pointers_shape);
   }
 
   return std::make_shared<abstract::TupleShape>(

@@ -33,20 +33,11 @@ abstract::ShapePtr PowInferShape(const PrimitivePtr &primitive, const std::vecto
   auto x2_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape());
   auto x1_shape = x1_shape_map[kShape];
   auto x2_shape = x2_shape_map[kShape];
-  auto x1_min_shape = x1_shape_map[kMinShape];
-  auto x1_max_shape = x1_shape_map[kMaxShape];
-  auto x2_min_shape = x2_shape_map[kMinShape];
-  auto x2_max_shape = x2_shape_map[kMaxShape];
   if (x1_shape == x2_shape) {
-    return std::make_shared<abstract::Shape>(x1_shape, x1_min_shape, x1_max_shape);
+    return std::make_shared<abstract::Shape>(x1_shape);
   }
   auto broadcast_shape = CalBroadCastShape(x1_shape, x2_shape, prim_name);
-  if (x1_min_shape.empty() || x1_max_shape.empty() || x2_min_shape.empty() || x2_max_shape.empty()) {
-    return std::make_shared<abstract::Shape>(broadcast_shape);
-  }
-  auto min_broadcast_shape = CalBroadCastShape(x1_min_shape, x2_min_shape, prim_name);
-  auto max_broadcast_shape = CalBroadCastShape(x1_max_shape, x2_max_shape, prim_name);
-  return std::make_shared<abstract::Shape>(broadcast_shape, min_broadcast_shape, max_broadcast_shape);
+  return std::make_shared<abstract::Shape>(broadcast_shape);
 }
 
 TypePtr PowInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {

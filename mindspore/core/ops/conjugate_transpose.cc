@@ -32,8 +32,6 @@ abstract::ShapePtr ConjugateTransposeInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto x_min_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kMinShape];
-  auto x_max_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kMaxShape];
   ShapeVector p_value;
   ShapeVector p_value_raw;
   auto perm_value = input_args[1]->BuildValue();
@@ -73,17 +71,7 @@ abstract::ShapePtr ConjugateTransposeInferShape(const PrimitivePtr &primitive,
   }
   std::vector<int64_t> in_shape(p_value);
   (void)std::transform(in_shape.begin(), in_shape.end(), in_shape.begin(), [x_shape](size_t i) { return x_shape[i]; });
-  if (!x_min_shape.empty() && !x_max_shape.empty()) {
-    std::vector<int64_t> min_shape;
-    std::vector<int64_t> max_shape;
-    for (auto i : p_value) {
-      min_shape.push_back(x_min_shape[LongToSize(i)]);
-      max_shape.push_back(x_max_shape[LongToSize(i)]);
-    }
-    return std::make_shared<abstract::Shape>(in_shape, min_shape, max_shape);
-  } else {
-    return std::make_shared<abstract::Shape>(in_shape);
-  }
+  return std::make_shared<abstract::Shape>(in_shape);
 }
 
 TypePtr ConjugateTransposeInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {

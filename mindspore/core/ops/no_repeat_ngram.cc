@@ -36,11 +36,6 @@ abstract::ShapePtr NoRepeatNGramInferShape(const PrimitivePtr &primitive,
   }
   auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
   auto in_shape = shape_map[kShape];
-  auto min_shape = shape_map[kMinShape];
-  auto max_shape = shape_map[kMaxShape];
-  if (min_shape.size() != 0 && max_shape.size() != 0) {
-    return std::make_shared<abstract::Shape>(in_shape, min_shape, max_shape);
-  }
   return std::make_shared<abstract::Shape>(in_shape);
 }
 TypePtr NoRepeatNGramInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {

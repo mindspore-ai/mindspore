@@ -48,7 +48,6 @@ AbstractBasePtr NonZeroWithValueInfer(const abstract::AnalysisEnginePtr &, const
   (void)y_shape.emplace_back(rank_base);
   // Indices of elements that are non-zero
   (void)y_shape.emplace_back(abstract::Shape::SHP_ANY);
-
   ShapeVector min_shape = {rank_base, 1};
   ShapeVector max_shape = {rank_base, max_size};
 

@@ -32,13 +32,9 @@ abstract::ShapePtr SqueezeInferShape(const PrimitivePtr &primitive, const std::v
   auto op_name = primitive->name();
   auto axis = GetValue<std::vector<int64_t>>(primitive->GetAttr(kAxis));
   std::vector<int64_t> ret_shape;
-  std::vector<int64_t> ret_min_shape;
-  std::vector<int64_t> ret_max_shape;
 
   auto shape_infos = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
   auto in_shape = shape_infos[kShape];
-  auto max_shape = shape_infos[kMaxShape];
-  auto min_shape = shape_infos[kMinShape];
 
   if (IsDynamicRank(in_shape)) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
@@ -48,10 +44,6 @@ abstract::ShapePtr SqueezeInferShape(const PrimitivePtr &primitive, const std::v
     for (size_t i = 0; i < in_shape.size(); i++) {
       if (in_shape[i] != kSqueezedDim) {
         ret_shape.push_back(in_shape[i]);
-        if (!min_shape.empty() && !max_shape.empty()) {
-          ret_min_shape.push_back(min_shape[i]);
-          ret_max_shape.push_back(max_shape[i]);
-        }
       }
     }
   } else {
@@ -72,14 +64,10 @@ abstract::ShapePtr SqueezeInferShape(const PrimitivePtr &primitive, const std::v
       auto it2 = std::find(axis.begin(), axis.end(), i - rank);
       if (!(it != axis.end() || it2 != axis.end())) {
         ret_shape.push_back(in_shape[LongToSize(i)]);
-        if (!min_shape.empty() && !max_shape.empty()) {
-          ret_min_shape.push_back(min_shape[LongToSize(i)]);
-          ret_max_shape.push_back(max_shape[LongToSize(i)]);
-        }
       }
     }
   }
-  return std::make_shared<abstract::Shape>(ret_shape, ret_min_shape, ret_max_shape);
+  return std::make_shared<abstract::Shape>(ret_shape);
 }
 
 TypePtr SqueezeInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {

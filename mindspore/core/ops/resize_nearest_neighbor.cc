@@ -67,20 +67,8 @@ abstract::ShapePtr ResizeNearestNeighborInferShape(const PrimitivePtr &primitive
                                            prim_name);
   (void)CheckAndConvertUtils::CheckInteger("the dimension of size", SizeToLong(size_v.size()), kEqual, size_size,
                                            prim_name);
-  (void)x_shape.erase(x_shape.begin() + size_size, x_shape.end());
-  (void)x_shape.insert(x_shape.end(), size_v.begin(), size_v.end());
-  if (x_shape_ptr->IsDynamic()) {
-    auto x_min_shape = x_shape_ptr->min_shape();
-    auto x_max_shape = x_shape_ptr->max_shape();
-    if (x_min_shape.empty() || x_max_shape.empty()) {
-      return std::make_shared<abstract::Shape>(x_shape);
-    }
-    (void)x_min_shape.erase(x_min_shape.begin() + size_size, x_min_shape.end());
-    (void)x_min_shape.insert(x_min_shape.end(), size_v.begin(), size_v.end());
-    (void)x_max_shape.erase(x_max_shape.begin() + size_size, x_max_shape.end());
-    (void)x_max_shape.insert(x_max_shape.end(), size_v.begin(), size_v.end());
-    return std::make_shared<abstract::Shape>(x_shape, x_min_shape, x_max_shape);
-  }
+  x_shape.erase(x_shape.begin() + size_size, x_shape.end());
+  x_shape.insert(x_shape.end(), size_v.begin(), size_v.end());
   return std::make_shared<abstract::Shape>(x_shape);
 }
 

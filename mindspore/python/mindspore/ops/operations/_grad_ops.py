@@ -2029,10 +2029,10 @@ class ResizeNearestNeighborV2Grad(Primitive):
 
 
 class UpsampleNearest3DGrad(Primitive):
-    r"""
+    """
     Upsample the 3-D gradient data  with the nearest neighbor interpolation algorithm.
 
-    Args:
+      Args:
         input_size (listInt): An required listInt. contain 5 elements: [min_batch, channels, depth, height, width].
             Must: input_size[0] == grad_output_tensor_size[0], input_size[1] == grad_output_tensor_size[1].
         output_size (listInt): An optional listInt. Defaults to none.
@@ -2045,7 +2045,7 @@ class UpsampleNearest3DGrad(Primitive):
             The scale array along each dimension, contain 3 elements: scale_depth, scale_height, scale_width.
             The number of elements of 'scales' should be the same as the rank of input 'grad_output'.
             One of 'scales' and 'output_size' MUST be specified and it is an error if both are specified.
-    Inputs:
+      Inputs:
         - **grad_output** (Tensor) - Tensor of shape [N, C, D, H, W], Must be one of the following types:
           float16, float32, float64.
 
@@ -2217,17 +2217,9 @@ class SliceGrad(PrimitiveWithInfer):
                 validator.check(f'dy_shape[{i}]', dy_shape[i], f'x_shape[{i}]', x_shape[i], Rel.LE, self.name)
                 validator.check(f'dy_shape[{i}]', dy_shape[i], f'size_shape[{i}]', size_value[i], Rel.EQ, self.name)
 
-        if 'max_shape' in x and 'min_shape' in x:
-            max_shape = x['max_shape']
-            min_shape = x['min_shape']
-        else:
-            max_shape = None
-            min_shape = None
         return {'shape': x_shape,
                 'dtype': x['dtype'],
-                'value': None,
-                'max_shape': max_shape,
-                'min_shape': min_shape}
+                'value': None}
 
 
 class NLLLossGrad(PrimitiveWithInfer):
@@ -3482,7 +3474,7 @@ class GridSampler2DGrad(Primitive):
     """
     Computes gradients for GridSampler2D operation.
 
-    Args:
+      Args:
         interpolation_mode (str): An optional string specifying the interpolation method. The optional values are
             "bilinear" or "nearest". Default: "bilinear".
         padding_mode (str): An optional string specifying the pad method. The optional values are "zeros", "border" or
@@ -3490,7 +3482,7 @@ class GridSampler2DGrad(Primitive):
         align_corners (bool): An optional bool. If "true", the centers of the corner pixels of the input and output
             tensors are aligned. Defaults to "false".
 
-    Inputs:
+      Inputs:
         - **grad** (Tensor) - A 4-D tensor whose dtype is float16 or float32 and whose shape is :math:`(N, C,
           H_{out}, W_{out})`. The shape is inconsistent with the shape of the output result of forward calculation.
         - **input_x** (Tensor) - A 4-D tensor whose dtype is the same as `grad` and whose shape is :math:`(N, C,

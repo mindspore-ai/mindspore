@@ -37,12 +37,6 @@ constexpr size_t kIndex2 = 2;
 constexpr size_t kIndex3 = 3;
 constexpr auto kAttrPrimitiveTarget = "primitive_target";
 
-void RefreshNegativeShape(std::vector<int64_t> *shape) {
-  if (IsDynamic(*shape)) {
-    shape->clear();
-  }
-}
-
 void ConvertShapeNHWCToNCHW(std::vector<int64_t> *nhwc_shape) {
   if (nhwc_shape->empty()) {
     return;
@@ -123,40 +117,18 @@ abstract::ShapePtr MaxPoolInferShape(const PrimitivePtr &primitive, const std::v
   }
   CheckDataFormat(primitive, data_format);
   auto in_shape = shape_map[kShape];
-  auto min_shape = shape_map[kMinShape];
-  auto max_shape = shape_map[kMaxShape];
-  RefreshNegativeShape(&min_shape);
-  RefreshNegativeShape(&max_shape);
   (void)CheckAndConvertUtils::CheckValue<size_t>("length of input", in_shape.size(), kEqual, kSizeFour, op_name);
   if (data_format == NHWC) {
     ConvertShapeNHWCToNCHW(&in_shape);
-    ConvertShapeNHWCToNCHW(&min_shape);
-    ConvertShapeNHWCToNCHW(&max_shape);
   }
 
-  int64_t out_h = 0, out_w = 0, out_h_min = 0, out_w_min = 0, out_h_max = 0, out_w_max = 0;
+  int64_t out_h = 0, out_w = 0;
   if (pad_mode == PadMode::SAME) {
     out_h = in_shape[kIndex2] == -1 ? -1 : CeilDiv(in_shape[kIndex2], strides[kIndex2]);
     out_w = in_shape[kIndex3] == -1 ? -1 : CeilDiv(in_shape[kIndex3], strides[kIndex3]);
-    if (!min_shape.empty()) {
-      out_h_min = CeilDiv(min_shape[kIndex2], strides[kIndex2]);
-      out_w_min = CeilDiv(min_shape[kIndex3], strides[kIndex3]);
-    }
-    if (!max_shape.empty()) {
-      out_h_max = CeilDiv(max_shape[kIndex2], strides[kIndex2]);
-      out_w_max = CeilDiv(max_shape[kIndex3], strides[kIndex3]);
-    }
   } else if (pad_mode == PadMode::VALID) {
     out_h = in_shape[kIndex2] == -1 ? -1 : CeilDiv((in_shape[kIndex2] - (kernel_size[kIndex2] - 1)), strides[kIndex2]);
     out_w = in_shape[kIndex3] == -1 ? -1 : CeilDiv((in_shape[kIndex3] - (kernel_size[kIndex3] - 1)), strides[kIndex3]);
-    if (!min_shape.empty()) {
-      out_h_min = CeilDiv((min_shape[kIndex2] - (kernel_size[kIndex2] - 1)), strides[kIndex2]);
-      out_w_min = CeilDiv((min_shape[kIndex3] - (kernel_size[kIndex3] - 1)), strides[kIndex3]);
-    }
-    if (!max_shape.empty()) {
-      out_h_max = CeilDiv((max_shape[kIndex2] - (kernel_size[kIndex2] - 1)), strides[kIndex2]);
-      out_w_max = CeilDiv((max_shape[kIndex3] - (kernel_size[kIndex3] - 1)), strides[kIndex3]);
-    }
   } else {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the pad_mode should be same or valid, but got "
                              << pad_mode << ".";
@@ -165,22 +137,10 @@ abstract::ShapePtr MaxPoolInferShape(const PrimitivePtr &primitive, const std::v
   std::vector<int64_t> out_shape;
   if (data_format == NHWC) {
     out_shape = {in_shape[kIndex0], out_h, out_w, in_shape[kIndex1]};
-    if (!min_shape.empty() && !max_shape.empty()) {
-      std::vector<int64_t> out_shape_min = {min_shape[kIndex0], out_h_min, out_w_min, min_shape[kIndex1]};
-      std::vector<int64_t> out_shape_max = {max_shape[kIndex0], out_h_max, out_w_max, max_shape[kIndex1]};
-      shape = std::make_shared<abstract::Shape>(out_shape, out_shape_min, out_shape_max);
-    } else {
-      shape = std::make_shared<abstract::Shape>(out_shape);
-    }
+    shape = std::make_shared<abstract::Shape>(out_shape);
   } else {
     out_shape = {in_shape[kIndex0], in_shape[kIndex1], out_h, out_w};
-    if (!min_shape.empty() && !max_shape.empty()) {
-      std::vector<int64_t> out_shape_min = {min_shape[kIndex0], min_shape[kIndex1], out_h_min, out_w_min};
-      std::vector<int64_t> out_shape_max = {max_shape[kIndex0], max_shape[kIndex1], out_h_max, out_w_max};
-      shape = std::make_shared<abstract::Shape>(out_shape, out_shape_min, out_shape_max);
-    } else {
-      shape = std::make_shared<abstract::Shape>(out_shape);
-    }
+    shape = std::make_shared<abstract::Shape>(out_shape);
   }
 
   CheckOutshapeValid(primitive, out_shape, in_shape, kernel_size, strides);

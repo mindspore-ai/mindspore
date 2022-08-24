@@ -30,40 +30,20 @@ namespace ops {
 namespace {
 abstract::ShapePtr GatherNdInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
   auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
-  auto min_shape = shape_map[kMinShape];
-  auto max_shape = shape_map[kMaxShape];
   auto input_rank = input_shape.size();
   auto indices_rank = indices_shape.size();
   (void)CheckAndConvertUtils::CheckInteger("Input of indices data", SizeToLong(input_rank), kGreaterEqual,
                                            indices_shape[indices_rank - 1], prim_name);
   std::vector<int64_t> output_shape;
-  std::vector<int64_t> min_output_shape;
-  std::vector<int64_t> max_output_shape;
   for (size_t i = 0; i < indices_rank - 1; i++) {
     output_shape.push_back(indices_shape[i]);
   }
   for (size_t i = LongToSize(indices_shape[indices_rank - 1]); i < input_rank; ++i) {
     output_shape.push_back(input_shape[i]);
   }
-  if (min_shape.empty() || max_shape.empty()) {
-    return std::make_shared<abstract::Shape>(output_shape);
-  }
-  for (size_t i = 0; i < indices_rank - 1; i++) {
-    min_output_shape.push_back(indices_shape[i]);
-  }
-  for (size_t i = LongToSize(indices_shape[indices_rank - 1]); i < input_rank; ++i) {
-    min_output_shape.push_back(min_shape[i]);
-  }
-  for (size_t i = 0; i < indices_rank - 1; i++) {
-    max_output_shape.push_back(indices_shape[i]);
-  }
-  for (size_t i = LongToSize(indices_shape[indices_rank - 1]); i < input_rank; ++i) {
-    max_output_shape.push_back(max_shape[i]);
-  }
-  return std::make_shared<abstract::Shape>(output_shape, min_output_shape, max_output_shape);
+  return std::make_shared<abstract::Shape>(output_shape);
 }
 
 TypePtr GatherNdInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {

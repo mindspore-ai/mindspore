@@ -75,22 +75,12 @@ abstract::TupleShapePtr CTCLossInferShape(const PrimitivePtr &primitive,
   CheckCTCLossInputs(input_args, op_name);
   auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
   auto shape = input_shape[kShape];
-  auto min_shape = input_shape[kMinShape];
-  auto max_shape = input_shape[kMaxShape];
 
   ShapeVector batch = {shape[1]};
   abstract::ShapePtr loss_shape;
   abstract::ShapePtr gradient_shape;
-  if (min_shape.empty() || max_shape.empty()) {
-    loss_shape = std::make_shared<abstract::Shape>(batch);
-    gradient_shape = std::make_shared<abstract::Shape>(shape);
-    return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{loss_shape, gradient_shape});
-  }
-
-  ShapeVector batch_min = {min_shape[1]};
-  ShapeVector batch_max = {max_shape[1]};
-  loss_shape = std::make_shared<abstract::Shape>(batch, batch_min, batch_max);
-  gradient_shape = std::make_shared<abstract::Shape>(shape, min_shape, max_shape);
+  loss_shape = std::make_shared<abstract::Shape>(batch);
+  gradient_shape = std::make_shared<abstract::Shape>(shape);
   return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{loss_shape, gradient_shape});
 }
 

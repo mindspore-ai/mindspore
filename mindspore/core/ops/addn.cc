@@ -59,9 +59,7 @@ abstract::ShapePtr AddNInferShape(const PrimitivePtr &primitive, const std::vect
     }
   }
   auto in_shape = element0_shape_map[kShape];
-  auto min_shape = element0_shape_map[kMinShape];
-  auto max_shape = element0_shape_map[kMaxShape];
-  return std::make_shared<abstract::Shape>(in_shape, min_shape, max_shape);
+  return std::make_shared<abstract::Shape>(in_shape);
 }
 
 TypePtr AddNInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {

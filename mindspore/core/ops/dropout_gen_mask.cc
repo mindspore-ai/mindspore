@@ -134,28 +134,8 @@ abstract::ShapePtr DropoutGenMaskInferShape(const PrimitivePtr &primitive,
       MS_EXCEPTION(TypeError) << "For '" << op_name
                               << "', input 'shape' must be a 1-D Tensor, but got: " << shape->shape().size() << ".";
     }
-    size_t shape_rank = LongToSize(shape->shape()[0]);
-
-    auto shape_max = shape_abstract->get_max_value();
-    MS_EXCEPTION_IF_NULL(shape_max);
-    auto max_value = shape_max->isa<ValueList>() ? shape_max->cast<ValueListPtr>()->value()
-                                                 : shape_max->cast<ValueTuplePtr>()->value();
-
-    auto shape_min = shape_abstract->get_min_value();
-    MS_EXCEPTION_IF_NULL(shape_min);
-    auto min_value = shape_min->isa<ValueList>() ? shape_min->cast<ValueListPtr>()->value()
-                                                 : shape_min->cast<ValueTuplePtr>()->value();
-    if (max_value.size() != shape_rank || min_value.size() != shape_rank) {
-      MS_LOG(EXCEPTION)
-        << "For '" << op_name
-        << "', the size of max_value and min_value must be equal to the shape rank, but got max_value's size: "
-        << max_value.size() << ", min_value's size: " << min_value.size() << ", shape rank: " << shape_rank << ".";
-    }
-    ShapeVector out_min_shape = CalDynamicOutputShape(primitive, min_value);
-    ShapeVector out_max_shape = CalDynamicOutputShape(primitive, max_value);
     ShapeVector any_shape{abstract::Shape::SHP_ANY};
-
-    return std::make_shared<abstract::Shape>(any_shape, out_min_shape, out_max_shape);
+    return std::make_shared<abstract::Shape>(any_shape);
   }
 
   auto x_shape = dyn_cast<abstract::AbstractTuple>(shape_args);

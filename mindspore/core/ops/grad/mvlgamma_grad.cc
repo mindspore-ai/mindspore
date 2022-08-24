@@ -33,18 +33,7 @@ abstract::ShapePtr MvlgammaGradInferShape(const PrimitivePtr &primitive,
   }
 
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
-
-  auto first_input_shape_min = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kMinShape];
-  auto first_input_shape_max = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kMaxShape];
-  auto second_input_shape_min = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kMinShape];
-  auto second_input_shape_max = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kMaxShape];
-  if (first_input_shape_min.empty() || first_input_shape_min.empty() || second_input_shape_min.empty() ||
-      second_input_shape_max.empty()) {
-    return std::make_shared<abstract::Shape>(x_shape);
-  }
-  ShapeVector min_shape = {first_input_shape_min[0], second_input_shape_min[0]};
-  ShapeVector max_shape = {first_input_shape_max[0], second_input_shape_max[0]};
-  return std::make_shared<abstract::Shape>(x_shape, min_shape, max_shape);
+  return std::make_shared<abstract::Shape>(x_shape);
 }
 
 TypePtr MvlgammaGradInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {

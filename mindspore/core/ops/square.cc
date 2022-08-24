@@ -38,9 +38,7 @@ abstract::ShapePtr SquareInferShape(const PrimitivePtr &primitive, const std::ve
   MS_EXCEPTION_IF_NULL(primitive);
   auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
   auto in_shape = shape_map[kShape];
-  auto min_shape = shape_map[kMinShape];
-  auto max_shape = shape_map[kMaxShape];
-  return std::make_shared<abstract::Shape>(in_shape, min_shape, max_shape);
+  return std::make_shared<abstract::Shape>(in_shape);
 }
 
 TypePtr SquareInferType(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {

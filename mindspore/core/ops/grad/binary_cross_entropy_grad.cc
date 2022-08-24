@@ -44,12 +44,7 @@ abstract::ShapePtr BinaryCrossEntropyGradInferShape(const PrimitivePtr &primitiv
   CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
   auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
   auto input_shape = shape_map[kShape];
-  auto min_shape = shape_map[kMinShape];
-  auto max_shape = shape_map[kMaxShape];
-  if (min_shape.empty() || max_shape.empty()) {
-    return std::make_shared<abstract::Shape>(input_shape);
-  }
-  return std::make_shared<abstract::Shape>(input_shape, min_shape, max_shape);
+  return std::make_shared<abstract::Shape>(input_shape);
 }
 
 TypePtr BinaryCrossEntropyGradInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {

@@ -151,10 +151,8 @@ AbstractBasePtr SparseMatrixAddInfer(const abstract::AnalysisEnginePtr &, const 
     out_indptr_shape = std::make_shared<abstract::Shape>(out_index_ptr_shape);
   } else {
     ShapeVector out_shape{-2};
-    ShapeVector min_shape{1};
-    ShapeVector max_shape{1};
-    out_batch_shape = std::make_shared<abstract::Shape>(out_shape, min_shape, max_shape);
-    out_indptr_shape = std::make_shared<abstract::Shape>(out_shape, min_shape, max_shape);
+    out_batch_shape = std::make_shared<abstract::Shape>(out_shape);
+    out_indptr_shape = std::make_shared<abstract::Shape>(out_shape);
   }
   // Make output a csr(dense_shape, batch, indptr, indices, values)
   // Indices maybe dynamic, max_shape = min(a_idx + b_idx, m * n); min_shape = max(a_idx, b_idx)

@@ -113,10 +113,7 @@ abstract::ShapePtr GatherDInferShape(const PrimitivePtr &primitive, const std::v
 
   // For Ascend, only support x.shape[d] == index.shape[d] when d != dim. So limit it.
   CheckGatherShapeEqual(prim_name, x_shape, dim_v, index_shape);
-
-  auto index_min_shape = index_shape_element->min_shape();
-  auto index_max_shape = index_shape_element->max_shape();
-  return std::make_shared<abstract::Shape>(index_shape, index_min_shape, index_max_shape);
+  return std::make_shared<abstract::Shape>(index_shape);
 }
 
 TypePtr GatherDInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {

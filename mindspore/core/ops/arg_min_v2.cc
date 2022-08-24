@@ -75,8 +75,6 @@ abstract::ShapePtr ArgminV2InferShape(const PrimitivePtr &primitive, const std::
   auto shape_ptr = CheckAndConvertUtils::GetTensorInputShape("ArgminV2", input_args, 0);
   MS_EXCEPTION_IF_NULL(shape_ptr);
   auto input_shape = shape_ptr->shape();
-  auto input_min_shape = shape_ptr->min_shape();
-  auto input_max_shape = shape_ptr->max_shape();
   ShapeVector out_shape = {};
   ValuePtr axis_value;
   ValuePtr axis_ptr = input_args[1]->BuildValue();
@@ -111,13 +109,6 @@ abstract::ShapePtr ArgminV2InferShape(const PrimitivePtr &primitive, const std::
     axis_value = axis_ptr;
   }
   InferImplReduceFuncCalShape(primitive, &out_shape, input_shape, axis_value);
-  if (!input_min_shape.empty() && !input_max_shape.empty()) {
-    ShapeVector shape_min = {};
-    ShapeVector shape_max = {};
-    InferImplReduceFuncCalShape(primitive, &shape_min, input_min_shape, axis_value);
-    InferImplReduceFuncCalShape(primitive, &shape_max, input_max_shape, axis_value);
-    return std::make_shared<abstract::Shape>(out_shape, shape_min, shape_max);
-  }
   return std::make_shared<abstract::Shape>(out_shape);
 }
 

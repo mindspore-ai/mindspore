@@ -34,9 +34,7 @@ abstract::ShapePtr HSwishGradInferShape(const PrimitivePtr &primitive, const std
                                            primitive->name());
   auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
   auto shape = input_shape[kShape];
-  auto min_shape = input_shape[kMinShape];
-  auto max_shape = input_shape[kMaxShape];
-  return std::make_shared<abstract::Shape>(shape, min_shape, max_shape);
+  return std::make_shared<abstract::Shape>(shape);
 }
 
 TypePtr HSwishGradInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {

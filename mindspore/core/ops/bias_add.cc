@@ -40,8 +40,6 @@ abstract::ShapePtr BiasAddInferShape(const PrimitivePtr &primitive, const std::v
   (void)CheckAndConvertUtils::CheckInteger("arg size", SizeToLong(input_args.size()), kEqual, input_num, prim_name);
   auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
   auto input_shape = shape_map[kShape];
-  auto min_shape = shape_map[kMinShape];
-  auto max_shape = shape_map[kMaxShape];
   const int64_t x_min_rank = 2;
   const int64_t x_max_rank = 5;
   CheckAndConvertUtils::CheckInRange("dims of input_x", input_shape.size(), kIncludeBoth, {x_min_rank, x_max_rank},
@@ -73,9 +71,6 @@ abstract::ShapePtr BiasAddInferShape(const PrimitivePtr &primitive, const std::v
                              << "] shape when data_format is NHWC or input_x[1] shape, but got bias[0] shape: "
                              << bias_shape[0] << ", input_x[" << input_shape_channel
                              << "] or input_x[1] shape: " << x_channel << ".";
-  }
-  if (!min_shape.empty() && !max_shape.empty()) {
-    return std::make_shared<abstract::Shape>(input_shape, min_shape, max_shape);
   }
   return std::make_shared<abstract::Shape>(input_shape);
 }

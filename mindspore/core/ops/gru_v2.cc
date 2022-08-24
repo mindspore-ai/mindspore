@@ -66,7 +66,6 @@ abstract::TupleShapePtr GRUV2InferShape(const PrimitivePtr &primitive, const std
   auto attr_map = GetAttrMap(primitive);
   auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
   auto h_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape());
-  auto w_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape());
   auto seq_lengths_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape());
   auto x_shape = x_shape_map[kShape];
   auto h_shape = h_shape_map[kShape];
@@ -102,33 +101,6 @@ abstract::TupleShapePtr GRUV2InferShape(const PrimitivePtr &primitive, const std
   auto state_shape_ptr = std::make_shared<abstract::Shape>(state_shape);
   ShapeVector output_shape = {max_seq_lengths, batch_size, real_hidden_size};
   ShapeVector hn_shape = {real_num_layers, batch_size, hidden_size};
-  bool is_dynamic_shp = !x_shape_map[kMaxShape].empty();
-  if (!w_shape_map[kMaxShape].empty()) {
-    MS_LOG(EXCEPTION) << "For dynamic rnn, the weight cannot be dynamic shape.";
-  }
-  if (is_dynamic_shp) {
-    auto x_max_shape = x_shape_map[kMaxShape];
-    auto x_min_shape = x_shape_map[kMinShape];
-    auto h_max_shape = h_shape_map[kMaxShape];
-    auto seq_max_shape = seq_lengths_shape_map[kMaxShape];
-    if (h_max_shape.empty() || seq_max_shape.empty()) {
-      MS_LOG(EXCEPTION) << "For dynamic rnn, only the batch size can be dynamic shape, so that the input_shape[1], "
-                           "h_shape[1], and seq_lengths_shape[1] should be dynamic in dynamic shape mode.";
-    }
-
-    if (x_shape[0] == abstract::Shape::SHP_ANY || x_shape[2] == abstract::Shape::SHP_ANY) {
-      MS_LOG(EXCEPTION) << "For dynamic rnn, only the batch size can be dynamic shape";
-    }
-
-    ShapeVector min_shape = {max_seq_lengths, x_min_shape[1], real_num_layers};
-    ShapeVector max_shape = {max_seq_lengths, x_max_shape[1], real_num_layers};
-    auto output_shape_ptr = std::make_shared<abstract::Shape>(output_shape, min_shape, max_shape);
-    ShapeVector hn_min_shape = {real_num_layers, x_min_shape[1], hidden_size};
-    ShapeVector hn_max_shape = {real_num_layers, x_max_shape[1], hidden_size};
-    auto hn_shape_ptr = std::make_shared<abstract::Shape>(hn_shape, hn_min_shape, hn_max_shape);
-    return std::make_shared<abstract::TupleShape>(
-      std::vector<abstract::BaseShapePtr>{output_shape_ptr, hn_shape_ptr, reserve_shape_ptr, state_shape_ptr});
-  }
   auto output_shape_ptr = std::make_shared<abstract::Shape>(output_shape);
   auto hn_shape_ptr = std::make_shared<abstract::Shape>(hn_shape);
   return std::make_shared<abstract::TupleShape>(

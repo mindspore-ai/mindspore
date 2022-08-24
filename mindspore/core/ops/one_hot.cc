@@ -34,8 +34,6 @@ abstract::ShapePtr OneHotInferShape(const PrimitivePtr &primitive, const std::ve
   const size_t depth_index = 1;
   auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
   auto in_shape = shape_map[kShape];
-  auto min_shape = shape_map[kMinShape];
-  auto max_shape = shape_map[kMaxShape];
   CheckAndConvertUtils::CheckInRange<int64_t>("axis", axis, kIncludeBoth, {-1, SizeToLong(in_shape.size())}, op_name);
   auto depth = input_args[depth_index]->BuildValue();
   MS_EXCEPTION_IF_NULL(depth);
@@ -54,24 +52,13 @@ abstract::ShapePtr OneHotInferShape(const PrimitivePtr &primitive, const std::ve
   }
 
   (void)CheckAndConvertUtils::CheckInteger("depth value", depth_value, kGreaterEqual, 0, op_name);
-  if (min_shape.empty() || max_shape.empty()) {
-    if (axis >= 0) {
-      (void)in_shape.insert(in_shape.begin() + axis, depth_value);
-    } else {
-      in_shape.push_back(depth_value);
-    }
+  if (axis >= 0) {
+    (void)in_shape.insert(in_shape.begin() + axis, depth_value);
   } else {
-    if (axis >= 0) {
-      (void)in_shape.insert(in_shape.begin() + axis, depth_value);
-      (void)min_shape.insert(min_shape.begin() + axis, depth_value);
-      (void)max_shape.insert(max_shape.begin() + axis, depth_value);
-    } else {
-      in_shape.push_back(depth_value);
-      min_shape.push_back(depth_value);
-      max_shape.push_back(depth_value);
-    }
+    in_shape.push_back(depth_value);
   }
-  return std::make_shared<abstract::Shape>(in_shape, min_shape, max_shape);
+
+  return std::make_shared<abstract::Shape>(in_shape);
 }
 
 TypePtr OneHotInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
