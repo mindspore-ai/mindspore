@@ -90,7 +90,7 @@ class FlopsParser:
         while((op_idx < len(op_start_time)) and (op_name != op_start_time[op_idx][0])):
             op_idx += 1
         if op_idx >= len(op_start_time):
-            logger.info(f"Op name {op_name} does not exist in timeline dict.")
+            logger.debug(f"Op name {op_name} does not exist in timeline dict.")
             return op_idx, step_idx, op_all_step_comp
 
         # do not add the op FLOPS that not in fp_and_bp time.
