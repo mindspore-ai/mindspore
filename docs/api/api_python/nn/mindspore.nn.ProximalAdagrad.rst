@@ -36,12 +36,12 @@ mindspore.nn.ProximalAdagrad
 
     - **accum** (float) - 累加器 `accum` 的初始值，起始值必须为零或正值。默认值：0.1。
 
-    - **learning_rate** (Union[float, Tensor, Iterable, LearningRateSchedule]): 默认值：1e-3。
+    - **learning_rate** (Union[float, Tensor, Iterable, LearningRateSchedule]) - 默认值：1e-3。
 
       .. include:: mindspore.nn.optim_arg_dynamic_lr.rst
 
-    - **l1** (float):l1正则化强度，必须大于或等于零。默认值：0.0。
-    - **l2** (float):l2正则化强度，必须大于或等于零。默认值：0.0。
+    - **l1** (float) - l1正则化强度，必须大于或等于零。默认值：0.0。
+    - **l2** (float) - l2正则化强度，必须大于或等于零。默认值：0.0。
     - **use_locking** (bool) - 如果为True，则更新操作使用锁保护。默认值：False。
 
     .. include:: mindspore.nn.optim_arg_loss_scale.rst
