@@ -174,9 +174,8 @@ def matrix_band_part(x, lower, upper):
         ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore.ops import functional as F
         >>> x = Tensor(np.ones([2, 4, 4]).astype(np.float32))
-        >>> output = F.matrix_band_part(x, 2, 1)
+        >>> output = ops.matrix_band_part(x, 2, 1)
         >>> print(output)
         [[[1. 1. 0. 0.]
           [1. 1. 1. 0.]
@@ -211,10 +210,9 @@ def padding(x, pad_dim_size=8):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore.ops import functional as F
         >>> x = Tensor(np.array([[8], [10]]), mindspore.float32)
         >>> pad_dim_size = 4
-        >>> output = F.padding(x, pad_dim_size)
+        >>> output = ops.padding(x, pad_dim_size)
         >>> print(output)
         [[ 8.  0.  0.  0.]
          [10.  0.  0.  0.]]

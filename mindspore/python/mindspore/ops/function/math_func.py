@@ -1800,9 +1800,8 @@ def inv(x):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore.ops import functional as F
         >>> x = Tensor(np.array([0.25, 0.4, 0.31, 0.52]), mindspore.float32)
-        >>> output = F.inv(x)
+        >>> output = ops.inv(x)
         >>> print(output)
         [4.        2.5       3.2258065 1.923077 ]
     """
@@ -1830,9 +1829,8 @@ def invert(x):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore.ops import functional as F
         >>> x = Tensor(np.array([25, 4, 13, 9]), mindspore.int16)
-        >>> output = F.invert(x)
+        >>> output = ops.invert(x)
         >>> print(output)
         [-26 -5 -14 -10]
     """
