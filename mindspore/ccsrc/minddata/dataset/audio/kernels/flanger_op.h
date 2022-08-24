@@ -47,7 +47,7 @@ class FlangerOp : public TensorOp {
   void Print(std::ostream &out) const override {
     out << Name() << ": sample_rate: " << sample_rate_ << ", delay:" << delay_ << ", depth: " << depth_
         << ", regen: " << regen_ << ", width: " << width_ << ", speed: " << speed_ << ", phase: " << phase_
-        << ", Modulation: " << Modulation_ << ", Interpolation: " << Interpolation_ << std::endl;
+        << ", Modulation: " << static_cast<int>(Modulation_) << ", Interpolation: " << Interpolation_ << std::endl;
   }
 
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;

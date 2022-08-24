@@ -336,7 +336,7 @@ template <typename T>
 Status Linspace(std::shared_ptr<Tensor> *output, T start, T end, int32_t n) {
   RETURN_IF_NOT_OK(ValidateNoGreaterThan("Linspace", "start", start, "end", end));
   int hundred = 100;
-  n = std::isnan(n) ? hundred : n;
+  n = std::isnan(static_cast<double>(n * 1.0)) ? hundred : n;
   CHECK_FAIL_RETURN_UNEXPECTED(n >= 0, "Linspace: input param n must be non-negative.");
 
   TensorShape out_shape({n});
