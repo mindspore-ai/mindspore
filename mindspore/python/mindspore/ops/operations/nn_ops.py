@@ -4414,8 +4414,8 @@ class PadV3(Primitive):
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
           additional dimensions.
-        - **paddings** (Tensor) - The paddings tensor of type int32 or int64. The value of `paddings` is a tuple.
-        - **constant_value** (Union[Number, Tensor], optional) - Padding value in 'constant' mode.
+        - **paddings** (Tensor) - Only constant value is allowed. A 1D tensor of type int32 or int64.
+        - **constant_value** (Tensor, optional) - A tensor with the same type as `x`, padding value in 'constant' mode.
 
     Outputs:
         Tensor, the tensor after padding.
@@ -4424,13 +4424,19 @@ class PadV3(Primitive):
         TypeError: If `x` or `paddings` is not a Tensor.
         TypeError: If `padding_contiguous` is not a bool.
         ValueError: If `mode` is not a str or not in support modes.
-        ValueError: If the element's number of paddings not be even.
-        ValueError: If the element's number of paddings is more than 6.
-        ValueError: If `mode` is constant or edge, input dims bigger than 5.
-        ValueError: If `mode` is reflect, input dims bigger than 4.
+        ValueError: If `mode` is constant, the element's number of paddings not be even.
+        ValueError: If `mode` is constant, the element's number of paddings large than input dim * 2.
+        ValueError: If `mode` is edge or reflect, the element's number of paddings is not 2, 4 or 6.
+        ValueError: If `mode` is edge or reflect, x dims equal 3, the element's number of paddings is 2.
+        ValueError: If `mode` is edge or reflect, x dims equal 4, the element's number of paddings is 4.
+        ValueError: If `mode` is edge or reflect, x dims smaller than 3.
+        ValueError: If `mode` is edge, x dims bigger than 5.
+        ValueError: If `mode` is reflect, x dims bigger than 4.
+        ValueError: If `mode` is reflect, padding size bigger than the corresponding x dimension.
+        ValueError: After padding, output's shape number must be greater than 0.
 
     Supported Platforms:
-        ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> # case1: mode="reflect", paddings_contiguous=True
@@ -4453,7 +4459,7 @@ class PadV3(Primitive):
         ...        super(Net, self).__init__()
         ...        self.pad = ops.PadV3(mode=mode, paddings_contiguous=paddings_contiguous)
         ...        self.paddings = Tensor([1, 0, 1, 0])
-        ...        self.value = 1.5
+        ...        self.value = Tensor(1.5)
         ...    def construct(self, x):
         ...        return self.pad(x, self.paddings, self.value)
         ...

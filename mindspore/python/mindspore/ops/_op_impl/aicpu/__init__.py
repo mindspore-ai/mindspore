@@ -182,6 +182,8 @@ from .heaviside import _heaviside_aicpu
 from .div import _div_aicpu
 from .xdivy import _xdivy_aicpu
 from .xlogy import _xlogy_aicpu
+from .pad_v3 import _pad_v3_aicpu
+from .pad_v3_grad import _pad_v3_grad_aicpu
 from .real import _real_aicpu
 from .imag import _imag_aicpu
 from .complex import _complex_aicpu

@@ -24,16 +24,47 @@
 namespace mindspore {
 namespace ops {
 namespace {
-constexpr int64_t kConstantMaxDims = 5;
-constexpr int64_t kReflectMaxDims = 4;
 constexpr int64_t nTwo = 2;
-constexpr int64_t nFour = 4;
-constexpr int64_t nSix = 6;
-constexpr int64_t padding_pos_1 = 1;
-constexpr int64_t padding_pos_2 = 2;
-constexpr int64_t padding_pos_3 = 3;
-constexpr int64_t padding_pos_4 = 4;
+void PaddingsSizeCheck(const PrimitivePtr &primitive, const int64_t paddings_size, const int64_t size) {
+  constexpr size_t kPaddingsSizeTwo = 2;
+  constexpr size_t kPaddingsSizeFour = 4;
+  constexpr size_t kPaddingsSizeSix = 6;
+  constexpr size_t nThree = 3;
+  constexpr size_t nFour = 4;
+  constexpr size_t nFive = 5;
+  auto prim_name = primitive->name();
+  auto mode = GetValue<std::string>(primitive->GetAttr("mode"));
+  if (mode == kConstant) {
+    if (paddings_size / nTwo > size) {
+      MS_EXCEPTION(ValueError) << "For '" << prim_name
+                               << "' constant mode, paddings length too large for input dims:" << size;
+    }
+    if (paddings_size % nTwo == 1) {
+      MS_EXCEPTION(ValueError) << "For '" << prim_name << "' constant mode, paddings length must be divisible by 2";
+    }
+  } else {
+    if (paddings_size == kPaddingsSizeTwo) {
+      (void)CheckAndConvertUtils::CheckInteger("input dims when padding's size equal 2", size, kEqual, nThree,
+                                               prim_name);
+    } else if (paddings_size == kPaddingsSizeFour) {
+      (void)CheckAndConvertUtils::CheckInteger("input dims when padding's size equal 4", size, kEqual, nFour,
+                                               prim_name);
+    } else if (paddings_size == kPaddingsSizeSix) {
+      (void)CheckAndConvertUtils::CheckInteger("input dims when padding's size equal 6", size, kEqual, nFive,
+                                               prim_name);
+    } else {
+      MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the length of paddings must be 2, 4 or 6, but got "
+                               << paddings_size;
+    }
+  }
+}
 abstract::ShapePtr PadV3InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  constexpr size_t kEdgeMaxDims = 5;
+  constexpr size_t kReflectMaxDims = 4;
+  constexpr size_t kOtherMinDims = 3;
+  constexpr size_t kPaddingsSizeFour = 4;
+  constexpr size_t padding_pos_2 = 2;
+  constexpr size_t padding_pos_3 = 3;
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   auto paddings = input_args[1]->BuildValue();
@@ -47,45 +78,47 @@ abstract::ShapePtr PadV3InferShape(const PrimitivePtr &primitive, const std::vec
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   int64_t size = SizeToLong(x_shape.size());
   int64_t paddings_size = SizeToLong(paddings_arg.size());
-  if (paddings_size % nTwo == 1) {
-    MS_EXCEPTION(ValueError) << "For 'PadV3', the length of 'paddings' should be even, but got " << paddings_size;
-  }
-  int64_t paddings_dim = paddings_size / 2;
-  (void)CheckAndConvertUtils::CheckInteger("length of padding", paddings_size, kLessEqual, nSix, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("pad dims", paddings_dim, kLessEqual, size, prim_name);
-  auto mode = GetValue<string>(primitive->GetAttr("mode"));
-  if (mode != kReflect) {
-    (void)CheckAndConvertUtils::CheckInteger("input dims for constant or edge mode", size, kLessEqual, kConstantMaxDims,
+  std::vector<int64_t> paddings_val;
+  auto mode = GetValue<std::string>(primitive->GetAttr("mode"));
+  if (mode != kConstant) {
+    (void)CheckAndConvertUtils::CheckInteger("input dims for edge or reflect mode", size, kGreaterEqual, kOtherMinDims,
                                              prim_name);
-  } else {
+  }
+  if (mode == kReflect) {
     (void)CheckAndConvertUtils::CheckInteger("input dims for reflect mode", size, kLessEqual, kReflectMaxDims,
                                              prim_name);
-    (void)CheckAndConvertUtils::CheckInteger("length of padding for reflect mode", paddings_size, kLessEqual, nFour,
-                                             prim_name);
+    if (paddings_arg[0] >= x_shape[kInputIndex2] || paddings_arg[1] >= x_shape[kInputIndex2]) {
+      MS_EXCEPTION(ValueError) << "For '" << prim_name
+                               << "' reflect mode, Padding size must be less than the corresponding input dimension"
+                               << ", but got: padding (" << paddings_arg[0] << ',' << paddings_arg[1]
+                               << ") at dimension 2 of input:[" << x_shape[kInputIndex2] << "]";
+    }
+    if (paddings_size == kPaddingsSizeFour) {
+      if (paddings_arg[padding_pos_2] >= x_shape[kInputIndex3] ||
+          paddings_arg[padding_pos_3] >= x_shape[kInputIndex3]) {
+        MS_EXCEPTION(ValueError) << "For '" << prim_name
+                                 << "' reflect mode, Padding size must be less than the corresponding input dimension"
+                                 << ", but got: padding (" << paddings_arg[padding_pos_2] << ','
+                                 << paddings_arg[padding_pos_3] << ") at dimension 3 of input:["
+                                 << x_shape[kInputIndex3] << "]";
+      }
+    }
+  } else if (mode == kEdge) {
+    (void)CheckAndConvertUtils::CheckInteger("input dims for edge mode", size, kLessEqual, kEdgeMaxDims, prim_name);
   }
-
-  std::vector<int64_t> paddings_val;
+  PaddingsSizeCheck(primitive, paddings_size, size);
   for (int64_t i = 0; i < paddings_size; ++i) {
     paddings_val.push_back(int64_t(paddings_arg[LongToSize(i)]));
   }
   auto paddings_contiguous = GetValue<bool>(primitive->GetAttr("paddings_contiguous"));
   if (paddings_contiguous == false) {
     std::vector<int64_t> tmp = paddings_val;
-    switch (paddings_size) {
-      case nTwo:
-        break;
-      case nFour:
-        paddings_val[padding_pos_1] = tmp[padding_pos_2];
-        paddings_val[padding_pos_2] = tmp[padding_pos_1];
-        break;
-      case nSix:
-        paddings_val[padding_pos_1] = tmp[padding_pos_3];
-        paddings_val[padding_pos_2] = tmp[padding_pos_1];
-        paddings_val[padding_pos_3] = tmp[padding_pos_4];
-        paddings_val[padding_pos_4] = tmp[padding_pos_2];
-        break;
-      default:
-        break;
+    for (int64_t i = 0; i < paddings_size; ++i) {
+      if (i % nTwo == 0) {
+        paddings_val[i] = tmp[i / nTwo];
+      } else {
+        paddings_val[i] = tmp[(i + paddings_size) / nTwo];
+      }
     }
   }
   primitive->set_attr("padding_switched", MakeValue(paddings_val));
@@ -102,9 +135,7 @@ abstract::ShapePtr PadV3InferShape(const PrimitivePtr &primitive, const std::vec
   for (int64_t i = 0; i < size; ++i) {
     int64_t now_dim_size = x_shape[LongToSize(i)] + paddings_attr[LongToSize(size - i - 1)].first +
                            paddings_attr[LongToSize(size - i - 1)].second;
-    if (now_dim_size < 0) {
-      (void)CheckAndConvertUtils::CheckInteger("output size", now_dim_size, kGreaterEqual, 0, prim_name);
-    }
+    (void)CheckAndConvertUtils::CheckInteger("output size", now_dim_size, kGreaterThan, 0, prim_name);
     (void)out_shape.emplace_back(now_dim_size);
   }
   auto min_shape = out_shape;
@@ -116,8 +147,6 @@ TypePtr PadV3InferType(const PrimitivePtr &prim, const std::vector<AbstractBaseP
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  std::map<std::string, TypePtr> padding = {{"padding", input_args[1]->BuildType()}};
-  (void)CheckAndConvertUtils::CheckTensorTypeSame(padding, {kInt32, kInt64}, prim->name());
 
   std::map<std::string, TypePtr> args = {{"x", input_args[0]->BuildType()}};
   return CheckAndConvertUtils::CheckTensorTypeSame(args,
@@ -135,9 +164,8 @@ AbstractBasePtr PadV3Infer(const abstract::AnalysisEnginePtr &, const PrimitiveP
   if (mode == kConstant) {
     CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kConstantInput, primitive->name());
   } else {
-    CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kOtherInput, primitive->name());
+    CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kOtherInput, primitive->name());
   }
-
   auto infer_type = PadV3InferType(primitive, input_args);
   auto infer_shape = PadV3InferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
