@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,79 +19,56 @@
 #include "coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
 #include "coder/opcoders/file_collector.h"
 #include "coder/opcoders/parallel.h"
+#include "src/runtime/kernel/cpu/base/scale_base.h"
 
 using mindspore::schema::PrimitiveType_ScaleFusion;
 
 namespace mindspore::lite::micro::nnacl {
 int ScaleFP32Coder::InitScaleOffset() {
-  Tensor *scale_tensor = input_tensors_.at(kWeightIndex);
-  MS_CHECK_PTR(scale_tensor);
-  if (scale_tensor->data() != nullptr) {
-    scale_param_->const_scale_ = true;
-    scale_ =
-      reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, scale_tensor->Size(), kOfflinePackWeight));
-    MS_CHECK_PTR(scale_);
-    MS_CHECK_TRUE(scale_tensor->Size() > 0, "invalid scale tensor size");
-    MS_CHECK_RET_CODE(memcpy_s(scale_, scale_tensor->Size(), scale_tensor->data(), scale_tensor->Size()),
-                      "memcpy scale failed");
-  } else {
-    scale_param_->const_scale_ = false;
-    scale_ = nullptr;
+  if (input_tensors_.size() == kInputSize2) {
+    return RET_OK;
   }
-
-  if (input_tensors_.size() == DIMENSION_2D) {
-    scale_param_->const_offset_ = true;
-    offset_ =
-      reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, scale_tensor->Size(), kOfflinePackWeight));
-    MS_CHECK_PTR(offset_);
-    MS_CHECK_RET_CODE(memset_s(offset_, scale_tensor->Size(), 0, scale_tensor->Size()), "memset_s failed!");
-  } else if (input_tensors_.size() == DIMENSION_3D && input_tensors_.at(kBiasIndex)->data() != nullptr) {
-    scale_param_->const_offset_ = true;
-    Tensor *offset_tensor = input_tensors_.at(kBiasIndex);
-    MS_CHECK_PTR(offset_tensor);
-    offset_ =
-      reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, offset_tensor->Size(), kOfflinePackWeight));
-    MS_CHECK_PTR(offset_);
-    MS_CHECK_TRUE(offset_tensor->Size() > 0, "invalid offset tensor size");
-    MS_CHECK_RET_CODE(memcpy_s(offset_, offset_tensor->Size(), offset_tensor->data(), offset_tensor->Size()),
-                      "memcpy_s failed!");
-  } else {
-    scale_param_->const_offset_ = false;
-    offset_ = nullptr;
+  offset_ = reinterpret_cast<float *>(
+    allocator_->Malloc(kNumberTypeFloat32, scale_param_->axis_size_ * sizeof(float), kOfflinePackWeight));
+  if (offset_ == nullptr) {
+    MS_LOG(ERROR) << "Scale: malloc buffer for offset failed.";
+    return RET_NULL_PTR;
   }
+  MS_CHECK_RET_CODE(
+    memcpy_s(offset_, scale_param_->axis_size_ * sizeof(float), 0, scale_param_->axis_size_ * sizeof(float)),
+    "Scale: do memcpy_s for offset failed!");
   return RET_OK;
 }
 
-int ScaleFP32Coder::CalculateParameter() {
-  std::vector<int> in_shape = input_tensor_->shape();
-  Tensor *scale_tensor = input_tensors_.at(kWeightIndex);
-  MS_CHECK_PTR(scale_tensor);
-  std::vector<int> scale_shape = scale_tensor->shape();
-
-  if (scale_param_->axis_ < 0) {
-    scale_param_->axis_ = scale_param_->axis_ + in_shape.size();
+int ScaleFP32Coder::ComputeThreadCuttingInfo() {
+  split_points_ = {0};
+  int ele_num = output_tensor_->ElementsNum();
+  if (!support_parallel_ || scale_param_->op_parameter_.thread_num_ <= 1) {
+    scale_param_->op_parameter_.thread_num_ = 1;
+    split_points_.push_back(ele_num);
+    return RET_OK;
   }
-  if (scale_shape.size() + scale_param_->axis_ > in_shape.size()) {
-    MS_LOG(ERROR) << "Scale tensor shape is incorrect.";
-    return RET_ERROR;
-  }
-  scale_param_->outer_size_ = 1;
-  scale_param_->axis_size_ = 1;
-  scale_param_->inner_size_ = 1;
-  for (int i = 0; i < scale_param_->axis_; i++) {
-    scale_param_->outer_size_ *= in_shape.at(i);
-  }
-  for (size_t i = 0; i < scale_shape.size(); i++) {
-    if (in_shape.at(i + scale_param_->axis_) != scale_shape.at(i)) {
-      MS_LOG(ERROR) << "Scale tensor shape is incorrect.";
-      return RET_ERROR;
+  int block = ele_num / scale_param_->op_parameter_.thread_num_;
+  int remain = ele_num - block * scale_param_->op_parameter_.thread_num_;
+  int split = 0;
+  while (split < ele_num) {
+    split += block;
+    split = remain > 0 ? (--remain, split + 1) : split;
+    if (split > ele_num) {
+      split = ele_num;
     }
-    scale_param_->axis_size_ *= in_shape.at(i + scale_param_->axis_);
+    split_points_.push_back(split);
   }
-  for (size_t i = scale_param_->axis_ + scale_shape.size(); i < in_shape.size(); i++) {
-    scale_param_->inner_size_ *= in_shape.at(i);
+  split_points_bak_ = reinterpret_cast<int *>(
+    allocator_->Malloc(kNumberTypeInt32, split_points_.size() * sizeof(int), kOfflinePackWeight));
+  if (split_points_bak_ == nullptr) {
+    MS_LOG(ERROR) << "Scale: malloc buffer for split-points info failed.";
+    return RET_NULL_PTR;
   }
-  scale_param_->op_parameter_.thread_num_ = MSMIN(scale_param_->op_parameter_.thread_num_, scale_param_->outer_size_);
+  MS_CHECK_RET_CODE(memcpy_s(split_points_bak_, split_points_.size() * sizeof(int), split_points_.data(),
+                             split_points_.size() * sizeof(int)),
+                    "Scale: do memcpy_s for split-points failed!");
+  scale_param_->op_parameter_.thread_num_ = split_points_.size() - 1;
   return RET_OK;
 }
 
@@ -101,12 +78,21 @@ int ScaleFP32Coder::Prepare(CoderContext *const context) {
     MS_LOG(ERROR) << "inputs to Scale operator should be 2 or 3, but " << input_tensors_.size() << " is given.";
     return RET_ERROR;
   }
-  MS_CHECK_RET_CODE(InitScaleOffset(), "Scale fp32 InitScaleOffset failed.");
+  if (scale_param_->activation_type_ != schema::ActivationType_NO_ACTIVATION &&
+      scale_param_->activation_type_ != schema::ActivationType_RELU &&
+      scale_param_->activation_type_ != schema::ActivationType_RELU6) {
+    MS_LOG(ERROR) << "Scale: activation_type only support relu and relu6, but now is "
+                  << scale_param_->activation_type_;
+    return RET_ERROR;
+  }
   return ReSize();
 }
 
 int ScaleFP32Coder::ReSize() {
-  MS_CHECK_RET_CODE(CalculateParameter(), "Scale fp32 CalculateParameter failed.");
+  MS_CHECK_RET_CODE(mindspore::kernel::ScaleBaseCPUKernel::CalculateParameter(input_tensors_, scale_param_),
+                    "Scale fp32 CalculateParameter failed.");
+  MS_CHECK_RET_CODE(InitScaleOffset(), "Scale fp32 InitScaleOffset failed.");
+  MS_CHECK_RET_CODE(ComputeThreadCuttingInfo(), "Scale fp32 ComputeThreadCuttingInfo failed.");
   return RET_OK;
 }
 
@@ -126,29 +112,26 @@ int ScaleFP32Coder::DoCode(CoderContext *const context) {
   NNaclFp32Serializer code;
   code.CodeStruct("scale_parameter", *scale_param_);
 
-  switch (scale_param_->activation_type_) {
-    case schema::ActivationType_RELU6:
-      code.CodeFunction("DoScaleRelu6", input_tensor_, output_tensor_, scale_, offset_, kDefaultTaskId,
-                        "&scale_parameter");
-      break;
-    case schema::ActivationType_RELU: {
-      if (!support_parallel_) {
-        code.CodeFunction("DoScaleRelu", input_tensor_, output_tensor_, scale_, offset_, kDefaultTaskId,
-                          "&scale_parameter");
-      } else {
-        code.CodeBaseStruct("ScaleFp32Args", kRunArgs, input_tensor_, output_tensor_, scale_, offset_,
-                            "&scale_parameter");
-        code.CodeFunction(kParallelLaunch, "DoScaleReluRun", kRunArgsAddr, "scale_parameter.op_parameter_.thread_num_");
-      }
-      break;
+  if (!support_parallel_ || scale_param_->op_parameter_.thread_num_ == 1) {
+    code << "\t\tint block[2] = {" << split_points_.front() << ", " << split_points_.back() << "};\n";
+    if (input_tensors_.size() == kInputSize1) {
+      code.CodeFunction("DoScaleFp32", input_tensor_, input_tensors_[kWeightIndex], offset_, output_tensor_,
+                        "&scale_parameter", "block");
+    } else {
+      code.CodeFunction("DoScaleFp32", input_tensor_, input_tensors_[kWeightIndex], input_tensors_[kBiasIndex],
+                        output_tensor_, "&scale_parameter", "block");
     }
-    case schema::ActivationType_NO_ACTIVATION:
-      code.CodeFunction("DoScale", input_tensor_, output_tensor_, scale_, offset_, kDefaultTaskId, "&scale_parameter");
-      break;
-    default:
-      MS_LOG(ERROR) << "Scale does not support activation type " << scale_param_->activation_type_;
-      return RET_ERROR;
+  } else {
+    if (input_tensors_.size() == kInputSize1) {
+      code.CodeBaseStruct("ScaleFp32Args", kRunArgs, input_tensor_, output_tensor_, input_tensors_[kWeightIndex],
+                          offset_, split_points_bak_, "&scale_parameter");
+    } else {
+      code.CodeBaseStruct("ScaleFp32Args", kRunArgs, input_tensor_, output_tensor_, input_tensors_[kWeightIndex],
+                          input_tensors_[kBiasIndex], split_points_bak_, "&scale_parameter");
+    }
+    code.CodeFunction(kParallelLaunch, "DoScaleRun", kRunArgsAddr, "scale_parameter.op_parameter_.thread_num_");
   }
+
   context->AppendCode(code.str());
   return RET_OK;
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,12 +22,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-void DoScale(const float *in_data, float *out_data, const float *scale, const float *offset, int task_id,
-             const ScaleParameter *scale_param);
-void DoScaleRelu(const float *in_data, float *out_data, const float *scale, const float *offset, int task_id,
-                 const ScaleParameter *scale_param);
-void DoScaleRelu6(const float *in_data, float *out_data, const float *scale, const float *offset, int task_id,
-                  const ScaleParameter *scale_param);
+void DoScaleFp32(const float *src, const float *scale, const float *bias, float *out, const ScaleParameter *scale_param,
+                 const int block[C2NUM]);
 #ifdef __cplusplus
 }
 #endif

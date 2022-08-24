@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,6 +62,7 @@ int FusedBatchnormFp16CPUKernel::Batchnorm2Scale(const void *scale_data, const v
                      (reinterpret_cast<const float16_t *>(mean_data))[i] * fp16_scale[i];
   }
   is_scale_ = true;
+  ComputeThreadCuttingInfo();
   return RET_OK;
 }
 
@@ -105,9 +106,13 @@ int FusedBatchnormFp16CPUKernel::DoExecute(int task_id) {
   }
 
   if (is_scale_) {
-    DoScaleFp16(reinterpret_cast<float16_t *>(in_tensors_.at(0)->data()),
-                reinterpret_cast<float16_t *>(out_tensors_.at(0)->data()), reinterpret_cast<float16_t *>(scale_),
-                reinterpret_cast<float16_t *>(offset_), task_id, scale_param_);
+    if (task_id + 1 >= static_cast<int>(split_points_.size())) {
+      return RET_OK;
+    }
+    int block[C2NUM] = {static_cast<int>(split_points_[task_id]), static_cast<int>(split_points_[task_id + 1])};
+    DoScaleFp16(reinterpret_cast<float16_t *>(in_tensors_.at(0)->data()), reinterpret_cast<float16_t *>(scale_),
+                reinterpret_cast<float16_t *>(offset_), reinterpret_cast<float16_t *>(out_tensors_.at(0)->data()),
+                scale_param_, block);
   } else {
     FusedBatchNormFp16(reinterpret_cast<float16_t *>(in_tensors_.at(0)->data()), reinterpret_cast<float16_t *>(scale_),
                        reinterpret_cast<float16_t *>(offset_), reinterpret_cast<float16_t *>(mean_),

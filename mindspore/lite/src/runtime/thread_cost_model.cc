@@ -48,6 +48,10 @@ const std::map<int32_t, float> kernel_compute_cost_map_ = {
   {TC_TYPE(schema::PrimitiveType_DivFusion, schema::ActivationType_RELU6), 2.288f},          // dataNum about 15k
   {TC_TYPE(schema::PrimitiveType_DivFusion, schema::ActivationType_NO_ACTIVATION), 1.806f},  // dataNum about 30k
 
+  {TC_TYPE(schema::PrimitiveType_ScaleFusion, schema::ActivationType_RELU), 2.288f},           // dataNum about 15k
+  {TC_TYPE(schema::PrimitiveType_ScaleFusion, schema::ActivationType_RELU6), 2.288f},          // dataNum about 15k
+  {TC_TYPE(schema::PrimitiveType_ScaleFusion, schema::ActivationType_NO_ACTIVATION), 1.806f},  // dataNum about 30k
+
   {TC_TYPE(schema::PrimitiveType_RealDiv, schema::ActivationType_RELU), 13.65625f},          // dataNum about 15k
   {TC_TYPE(schema::PrimitiveType_RealDiv, schema::ActivationType_RELU6), 13.65625f},         // dataNum about 15k
   {TC_TYPE(schema::PrimitiveType_RealDiv, schema::ActivationType_NO_ACTIVATION), 6.65625f},  // dataNum about 30k

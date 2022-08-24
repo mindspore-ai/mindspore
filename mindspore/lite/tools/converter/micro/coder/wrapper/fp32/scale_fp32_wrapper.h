@@ -24,6 +24,7 @@ typedef struct {
   float *output_;
   float *scale_;
   float *offset_;
+  int *split_points_;
   const ScaleParameter *scale_param_;
 } ScaleFp32Args;
 
@@ -31,7 +32,7 @@ typedef struct {
 extern "C" {
 #endif
 
-int DoScaleReluRun(void *cdata, int task_id, float lhs_scale, float rhs_scale);
+int DoScaleRun(void *cdata, int task_id, float lhs_scale, float rhs_scale);
 
 #ifdef __cplusplus
 }

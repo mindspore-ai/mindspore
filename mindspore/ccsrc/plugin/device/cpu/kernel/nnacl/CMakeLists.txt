@@ -5,12 +5,8 @@ include_directories(${NNACL_DIR}/..)
 
 set(NNACL_SIMD_DIR ${CMAKE_BINARY_DIR}/src/nnacl)
 include_directories(${NNACL_SIMD_DIR}/..)
-file(GLOB SIMD_CONFIG_HEADER
-    ${NNACL_DIR}/base/*_simd.h.in
-    ${NNACL_DIR}/fp32/*_simd.h.in
-    ${NNACL_DIR}/fp32_grad/*_simd.h.in
-)
-function(generate_simd_header_code)
+
+function(generate_simd_header_code SIMD_CONFIG_HEADER DATA_TYPE)
     foreach(simd_config_file ${SIMD_CONFIG_HEADER})
         string(REGEX MATCHALL "[0-9A-Za-z_]*_simd.h.in" tmp1 ${simd_config_file})
         string(REGEX REPLACE "_simd.h.in" "_${SIMD_INSTRUCTION_LOWER}.h" tmp2 ${tmp1})
@@ -21,7 +17,7 @@ function(generate_simd_header_code)
     endforeach()
 endfunction()
 
-function(generate_simd_code SIMD_INSTRUCTION SIMD_BLOCK_NUM SIMD_TARGET)
+function(generate_simd_code SIMD_INSTRUCTION SIMD_BLOCK_NUM SIMD_TARGET SIMD_CONFIG_HEADER DATA_TYPE)
     string(TOLOWER ${SIMD_INSTRUCTION} SIMD_INSTRUCTION_LOWER)
     set(SIMD_DEFINE "#define MS_SIMD_${SIMD_INSTRUCTION}")
     set(SIMD_UNDEF "#undef MS_SIMD_${SIMD_INSTRUCTION}")
@@ -42,14 +38,21 @@ function(generate_simd_code SIMD_INSTRUCTION SIMD_BLOCK_NUM SIMD_TARGET)
     foreach(simd_config_file ${SIMD_CONFIG_HEADER})
         string(REGEX MATCHALL "[0-9A-Za-z_]*_simd.h.in" tmp1 ${simd_config_file})
         string(REGEX REPLACE "_simd.h.in" "_${SIMD_INSTRUCTION_LOWER}.h" tmp2 ${tmp1})
-        configure_file(${simd_config_file} ${NNACL_SIMD_DIR}/${SIMD_INSTRUCTION_LOWER}/${tmp2})
+        configure_file(${simd_config_file} ${NNACL_SIMD_DIR}/${DATA_TYPE}/${SIMD_INSTRUCTION_LOWER}/${tmp2})
     endforeach()
 endfunction()
-generate_simd_code(NEON 4 \"\")
-generate_simd_code(SSE 4 \"sse4.1\")
-generate_simd_code(AVX 8 "\"avx\", \"avx2\"")
-generate_simd_code(AVX512 16 \"avx512f\")
-generate_simd_header_code()
+file(GLOB SIMD_CONFIG_HEADER
+        ${NNACL_DIR}/base/*_simd.h.in
+        ${NNACL_DIR}/fp32/*_simd.h.in
+        ${NNACL_DIR}/fp32_grad/*_simd.h.in
+        )
+file(GLOB SIMD_F16_CONFIG_HEADER ${NNACL_DIR}/fp16/*_simd.h.in)
+generate_simd_code(NEON 4 \"\" "${SIMD_CONFIG_HEADER}" fp32)
+generate_simd_code(SSE 4 \"sse4.1\" "${SIMD_CONFIG_HEADER}" fp32)
+generate_simd_code(AVX 8 "\"avx\", \"avx2\"" "${SIMD_CONFIG_HEADER}" fp32)
+generate_simd_code(AVX512 16 \"avx512f\" "${SIMD_CONFIG_HEADER}" fp32)
+generate_simd_header_code("${SIMD_CONFIG_HEADER}" fp32)
+generate_simd_code(NEON 8 \"\" "${SIMD_F16_CONFIG_HEADER}" fp16)
 
 if(ENABLE_CPU)
     set(CMAKE_C_FLAGS "-Wno-attributes ${CMAKE_C_FLAGS}")

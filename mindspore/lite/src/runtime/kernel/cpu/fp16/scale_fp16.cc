@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 
 #include "src/runtime/kernel/cpu/fp16/scale_fp16.h"
-#include <cstring>
 #include <vector>
 #include "schema/model_generated.h"
 #include "src/runtime/kernel_registry.h"
@@ -26,144 +25,78 @@
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_ScaleFusion;
 
 namespace mindspore::kernel {
-int ScaleFp16CPUKernel::InitScaleOffset() {
-  auto scale_tensor = in_tensors_.at(1);
-  malloc_scale_ = scale_tensor->data_type() == kNumberTypeFloat32;
-
-  if (in_tensors_.size() == 2) {
-    malloc_offset_ = true;
-  } else {
-    auto offset_tensor = in_tensors_.at(2);
-    malloc_offset_ = offset_tensor->data_type() == kNumberTypeFloat32;
+void ScaleFp16CPUKernel::FreeRunningBuffer() {
+  for (auto buffer : run_buffers_) {
+    ms_context_->allocator->Free(buffer);
   }
-  return RET_OK;
+  run_buffers_.clear();
 }
 
-int ScaleFp16CPUKernel::Prepare() {
-  if (in_tensors_.size() < 2 || in_tensors_.size() > 3) {
-    MS_LOG(ERROR) << "inputs to Scale operator should be 2 or 3, but " << in_tensors_.size() << " is given.";
-    return RET_ERROR;
+int ScaleFp16CPUKernel::EnsureFp16Inputs() {
+  if (in_tensors_[kWeightIndex]->data_type() == kNumberTypeFloat32 ||
+      in_tensors_[kWeightIndex]->data_type() == kNumberTypeFloat) {
+    scale_ =
+      ConvertInputFp32toFp16(in_tensors_[kWeightIndex], static_cast<const lite::InnerContext *>(this->ms_context_));
+    if (scale_ == nullptr) {
+      MS_LOG(ERROR) << "ScaleFp16: convert second-input from fp32 to fp16 failed.";
+      return RET_NULL_PTR;
+    }
+    run_buffers_.push_back(scale_);
+  } else {
+    scale_ = in_tensors_[kWeightIndex]->data();
   }
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
-
-  if (!InferShapeDone()) {
+  if (in_tensors_.size() == kInputSize1) {
     return RET_OK;
   }
-  auto ret = ReSize();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Scale fp16 Resize failed";
-    return RET_ERROR;
+  if (in_tensors_[kBiasIndex]->data_type() == kNumberTypeFloat32 ||
+      in_tensors_[kBiasIndex]->data_type() == kNumberTypeFloat) {
+    offset_ =
+      ConvertInputFp32toFp16(in_tensors_[kBiasIndex], static_cast<const lite::InnerContext *>(this->ms_context_));
+    if (offset_ == nullptr) {
+      MS_LOG(ERROR) << "ScaleFp16: convert third-input from fp32 to fp16 failed.";
+      return RET_NULL_PTR;
+    }
+    run_buffers_.push_back(offset_);
+  } else {
+    offset_ = in_tensors_[kBiasIndex]->data();
   }
   return RET_OK;
 }
 
-int ScaleFp16CPUKernel::ReSize() {
-  auto ret = CalculateParameter();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Scale fp16 CalculateParameter failed.";
-    return RET_ERROR;
+int ScaleFp16CPUKernel::Compute(int task_id) {
+  if (task_id + 1 >= static_cast<int>(split_points_.size())) {
+    return RET_OK;
   }
-
-  return RET_OK;
-}
-
-int ScaleFp16CPUKernel::Scale(int task_id) {
-  switch (scale_param_->activation_type_) {
-    case schema::ActivationType_RELU6:
-      DoScaleRelu6Fp16(input_, output_, scale_, offset_, task_id, scale_param_);
-      break;
-    case schema::ActivationType_RELU:
-      Fp16DoScaleRelu(input_, output_, scale_, offset_, task_id, scale_param_);
-      break;
-    case schema::ActivationType_NO_ACTIVATION:
-      DoScaleFp16(input_, output_, scale_, offset_, task_id, scale_param_);
-      break;
-    default:
-      MS_LOG(ERROR) << "ScaleFp16 does not support activation type " << scale_param_->activation_type_;
-      return RET_ERROR;
-  }
-  return RET_OK;
-}
-
-int ScaleFp16Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
-  auto scale = reinterpret_cast<ScaleFp16CPUKernel *>(cdata);
-  auto ret = scale->Scale(task_id);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "ScaleRun error task_id[" << task_id << "] error_code[" << ret << "]";
-    return RET_ERROR;
-  }
+  int block[C2NUM] = {static_cast<int>(split_points_[task_id]), static_cast<int>(split_points_[task_id + 1])};
+  DoScaleFp16(static_cast<float16_t *>(input_ptr_), static_cast<float16_t *>(scale_), static_cast<float16_t *>(offset_),
+              static_cast<float16_t *>(output_ptr_), scale_param_, block);
   return RET_OK;
 }
 
 int ScaleFp16CPUKernel::Run() {
-  auto input_tensor = in_tensors_.at(0);
-  auto output_tensor = out_tensors_.at(0);
+  auto input_tensor = in_tensors_[kInputIndex];
+  auto output_tensor = out_tensors_[kInputIndex];
   CHECK_NULL_RETURN(input_tensor);
   CHECK_NULL_RETURN(output_tensor);
-  input_ = reinterpret_cast<float16_t *>(input_tensor->data());
-  output_ = reinterpret_cast<float16_t *>(output_tensor->data());
-  CHECK_NULL_RETURN(input_);
-  CHECK_NULL_RETURN(output_);
-  auto ret = InitScaleOffset();
+  input_ptr_ = input_tensor->data();
+  output_ptr_ = output_tensor->data();
+  auto ret = EnsureFp16Inputs();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Scale fp16 InitScaleOffset failed.";
-    return RET_ERROR;
-  }
-
-  ret = MallocAssignTmpBuffer();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Scale Fp16 malloc tmp buffer failed";
-    FreeTmpBuffer();
+    MS_LOG(ERROR) << "ScaleFp16: do EnsureFp16Inputs failed.";
+    FreeRunningBuffer();
     return ret;
   }
-
-  ret = ParallelLaunch(this->ms_context_, ScaleFp16Run, this, op_parameter_->thread_num_);
+  ret = ScaleBaseCPUKernel::Run();
+  FreeRunningBuffer();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Scale error error_code[" << ret << "]";
-    FreeTmpBuffer();
-    return RET_ERROR;
+    MS_LOG(ERROR) << "ScaleFp16: running failed.";
   }
-
-  FreeTmpBuffer();
-  return RET_OK;
-}
-
-int ScaleFp16CPUKernel::MallocAssignTmpBuffer() {
-  scale_ = ConvertInputFp32toFp16(in_tensors_.at(1), static_cast<const lite::InnerContext *>(this->ms_context_));
-  if (scale_ == nullptr) {
-    return RET_ERROR;
-  }
-  if (in_tensors_.size() == 3) {
-    offset_ = ConvertInputFp32toFp16(in_tensors_.at(2), static_cast<const lite::InnerContext *>(this->ms_context_));
-    if (offset_ == nullptr) {
-      return RET_ERROR;
-    }
-  } else {
-    MS_CHECK_INT_MUL_NOT_OVERFLOW(in_tensors_.at(1)->ElementsNum(), static_cast<int>(sizeof(float16_t)), RET_ERROR);
-    offset_ = reinterpret_cast<float16_t *>(
-      ms_context_->allocator->Malloc(in_tensors_.at(1)->ElementsNum() * sizeof(float16_t)));
-    if (offset_ == nullptr) {
-      MS_LOG(ERROR) << "Malloc data failed";
-      return RET_ERROR;
-    }
-    memset(offset_, 0, in_tensors_.at(1)->ElementsNum() * sizeof(float16_t));
-  }
-  return RET_OK;
-}
-
-void ScaleFp16CPUKernel::FreeTmpBuffer() {
-  if (malloc_scale_ && scale_ != nullptr) {
-    ms_context_->allocator->Free(scale_);
-    scale_ = nullptr;
-  }
-  if (malloc_offset_ && offset_ != nullptr) {
-    ms_context_->allocator->Free(offset_);
-    offset_ = nullptr;
-  }
+  return ret;
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_ScaleFusion, LiteKernelCreator<ScaleFp16CPUKernel>)

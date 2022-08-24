@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,11 +41,13 @@ class FusedBatchnormCPUKernel : public BatchnormCPUKernel {
  protected:
   void FreeScaleAndOffset();
   int InitScaleParam();
+  void ComputeThreadCuttingInfo();
   void *scale_ = nullptr;
   void *offset_ = nullptr;
   bool trained_ = false;
   bool is_scale_ = false;
   ScaleParameter *scale_param_ = nullptr;
+  std::vector<int64_t> split_points_;
 };
 }  // namespace mindspore::kernel
 
