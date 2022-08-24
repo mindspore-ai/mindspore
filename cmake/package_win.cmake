@@ -60,6 +60,9 @@ set(tinyxml2_LIBPATH ${tinyxml2_LIBPATH}/../bin/)
 
 message("offline debugger does not support windows system temporarily")
 
+file(GLOB PROTO_PY_PB2_LST ${CMAKE_SOURCE_DIR}/build/mindspore/proto_py/proto/*_pb2.py)
+file(COPY ${PROTO_PY_PB2_LST} DESTINATION ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/train)
+
 # set package files
 install(
   TARGETS _c_expression

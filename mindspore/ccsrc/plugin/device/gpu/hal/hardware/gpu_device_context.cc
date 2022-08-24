@@ -512,7 +512,9 @@ void GPUKernelExecutor::OptimizeGraph(const FuncGraphPtr &graph) const {
 
     // Graph kernel fusion optimization
     if (graphkernel::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
+#if (defined(ENABLE_AKG) && !defined(_WIN32))
       graphkernel::GraphKernelOptimize(kernel_graph);
+#endif
       kernel_graph->SetExecOrderByDefault();
     }
 
@@ -547,13 +549,16 @@ void GPUKernelExecutor::SetOperatorInfo(const KernelGraphPtr &graph) const {
     mng = Manage(graph, true);
     graph->set_manager(mng);
   }
+#if (defined(ENABLE_AKG) && !defined(_WIN32))
   bool do_expand = false;
+#endif
   auto &node_list = graph->execution_order();
   for (auto &node : node_list) {
     auto [msg, etype] = SetKernelInfoWithMsg(node);
     if (msg.empty()) {
       continue;
     }
+#if (defined(ENABLE_AKG) && !defined(_WIN32))
     auto f = [](const CNodePtr &n) {
       auto res = SetKernelInfoWithMsg(n);
       return res.first.empty();
@@ -567,11 +572,14 @@ void GPUKernelExecutor::SetOperatorInfo(const KernelGraphPtr &graph) const {
     auto expand_fg = GetCNodeFuncGraph(cnode);
     graphkernel::InlineExpandFuncGraph(cnode, expand_fg);
     do_expand = true;
+#endif
   }
+#if (defined(ENABLE_AKG) && !defined(_WIN32))
   if (do_expand) {
     graphkernel::BindValueToGraph().Run(graph);
     graph->SetExecOrderByDefault();
   }
+#endif
 }
 
 void GPUKernelExecutor::CreateKernel(const std::vector<CNodePtr> &nodes) const {
