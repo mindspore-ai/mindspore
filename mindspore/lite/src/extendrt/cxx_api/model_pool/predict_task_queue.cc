@@ -34,6 +34,7 @@ PredictTaskQueue::~PredictTaskQueue() {
 }
 
 void PredictTaskQueue::SetPredictTaskDone() {
+  std::unique_lock<std::mutex> task_lock(mtx_predict_task_);
   predict_task_done_ = true;
   task_push_cond_.notify_all();
 }

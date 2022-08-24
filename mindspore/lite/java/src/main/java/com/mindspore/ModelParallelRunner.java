@@ -21,6 +21,7 @@ import com.mindspore.config.RunnerConfig;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * ModelParallelRunner is used to define a MindSpore ModelPoolManager, facilitating Model management.
@@ -33,6 +34,7 @@ public class ModelParallelRunner {
     }
 
     private long modelParallelRunnerPtr;
+    private ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
 
     /**
      * Construct function.
@@ -87,39 +89,48 @@ public class ModelParallelRunner {
      * @return init status.
      */
     public boolean predict(List<MSTensor> inputs, List<MSTensor> outputs) {
-        if (inputs == null || outputs == null || inputs.size() == 0) {
-            return false;
+        rwLock.readLock().lock();
+        if (this.modelParallelRunnerPtr == 0L) {
+            rwLock.readLock().unlock();
+            throw new IllegalStateException("predict cannot be called after calling free");
         }
-        long[] inputsPtrArray = new long[inputs.size()];
-        for (int i = 0; i < inputs.size(); i++) {
-            inputsPtrArray[i] = inputs.get(i).getMSTensorPtr();
-        }
-        if(outputs.size() != 0){
-            long[] outputsPtrArray = new long[outputs.size()];
-            for (int i = 0; i < outputs.size(); i++) {
-                if(outputs.get(i) == null){
+        try {
+            if (inputs == null || outputs == null || inputs.size() == 0) {
+                return false;
+            }
+            long[] inputsPtrArray = new long[inputs.size()];
+            for (int i = 0; i < inputs.size(); i++) {
+                inputsPtrArray[i] = inputs.get(i).getMSTensorPtr();
+            }
+            if(outputs.size() != 0){
+                long[] outputsPtrArray = new long[outputs.size()];
+                for (int i = 0; i < outputs.size(); i++) {
+                    if(outputs.get(i) == null){
+                        return false;
+                    }
+                    outputsPtrArray[i] = outputs.get(i).getMSTensorPtr();
+                }
+                boolean ret = predictWithOutput(modelParallelRunnerPtr, inputsPtrArray, outputsPtrArray);
+                if (!ret) {
                     return false;
                 }
-                outputsPtrArray[i] = outputs.get(i).getMSTensorPtr();
+                return true;
             }
-            boolean ret = predictWithOutput(modelParallelRunnerPtr, inputsPtrArray, outputsPtrArray);
-            if (!ret) {
+            List<Long> outputPtrs = predict(modelParallelRunnerPtr, inputsPtrArray);
+            if (outputPtrs.isEmpty()) {
                 return false;
+            }
+            for (int i = 0; i < outputPtrs.size(); i++) {
+                if (outputPtrs.get(i) == 0L) {
+                    return false;
+                }
+                MSTensor msTensor = new MSTensor(outputPtrs.get(i));
+                outputs.add(msTensor);
             }
             return true;
+        } finally {
+            rwLock.readLock().unlock();
         }
-        List<Long> outputPtrs = predict(modelParallelRunnerPtr, inputsPtrArray);
-        if (outputPtrs.isEmpty()) {
-            return false;
-        }
-        for (int i = 0; i < outputPtrs.size(); i++) {
-            if (outputPtrs.get(i) == 0L) {
-                return false;
-            }
-            MSTensor msTensor = new MSTensor(outputPtrs.get(i));
-            outputs.add(msTensor);
-        }
-        return true;
     }
 
     /**
@@ -128,12 +139,18 @@ public class ModelParallelRunner {
      * @return The vector that includes all input tensors.
      */
     public List<MSTensor> getInputs() {
+        rwLock.readLock().lock();
+        if (this.modelParallelRunnerPtr == 0L) {
+            rwLock.readLock().unlock();
+            throw new IllegalStateException("getInputs cannot be called after calling free");
+        }
         List<Long> ret = this.getInputs(this.modelParallelRunnerPtr);
         List<MSTensor> tensors = new ArrayList<>();
         for (Long msTensorAddr : ret) {
             MSTensor msTensor = new MSTensor(msTensorAddr);
             tensors.add(msTensor);
         }
+        rwLock.readLock().unlock();
         return tensors;
     }
 
@@ -143,12 +160,18 @@ public class ModelParallelRunner {
      * @return The vector that includes all input tensors.
      */
     public List<MSTensor> getOutputs() {
+        rwLock.readLock().lock();
+        if (this.modelParallelRunnerPtr == 0L) {
+            rwLock.readLock().unlock();
+            throw new IllegalStateException("getOutputs cannot be called after calling free");
+        }
         List<Long> ret = this.getOutputs(this.modelParallelRunnerPtr);
         List<MSTensor> tensors = new ArrayList<>();
         for (Long msTensorAddr : ret) {
             MSTensor msTensor = new MSTensor(msTensorAddr);
             tensors.add(msTensor);
         }
+        rwLock.readLock().unlock();
         return tensors;
     }
 
@@ -156,10 +179,12 @@ public class ModelParallelRunner {
      * Free model
      */
     public void free() {
+        rwLock.writeLock().lock();
         if (modelParallelRunnerPtr != 0L) {
             this.free(modelParallelRunnerPtr);
             modelParallelRunnerPtr = 0L;
         }
+        rwLock.writeLock().unlock();
     }
 
     private native long init(String modelPath, long runnerConfigPtr);
