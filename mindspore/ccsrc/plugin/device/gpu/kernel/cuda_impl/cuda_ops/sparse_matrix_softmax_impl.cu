@@ -27,7 +27,7 @@ __global__ void SparseMatrixSoftmaxKernel(int rows, IndexType *indptr, DataType 
     IndexType begin = indptr[id];
     IndexType end = indptr[id + 1];
 
-    DataType row_max = std::numeric_limits<int>::min();
+    DataType row_max = values[begin];
     for (int r_i = begin; r_i < end; ++r_i) {
       row_max = max(row_max, values[r_i]);
     }

@@ -85,8 +85,8 @@ void SparseMatrixSoftmaxCpuKernelMod::LaunchKernel(const std::vector<kernel::Add
   auto *input_logits_values = reinterpret_cast<T *>(inputs[logits_values]->addr);
   auto *input_logits_dense_shape = reinterpret_cast<int *>(inputs[logits_dense_shape]->addr);
   auto *input_logits_col_indices = reinterpret_cast<int *>(inputs[logits_col_indices]->addr);
-  float total = 0;
-  float MAX = input_logits_values[0];
+  T total = 0;
+  T MAX = input_logits_values[0];
   int row_index = input_logits_dense_shape[0];
   int start = 0;
   for (int i = 1; i <= row_index; i++) {
