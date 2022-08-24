@@ -134,8 +134,8 @@ static void RemapBilinearNotCur1C(int dx, const int16_t *HW, const uint16_t *FHW
   int shy = HW[dx * 2 + 1];
   const int16_t *w_ptr = wblock + FHW[dx] * 4;
   const uint8_t *t_src_ptr = src_ptr + shy * src_step + shx;
-  *dst_ptr = CastToFixed(reinterpret_cast<int>(t_src_ptr[0] * w_ptr[0] + t_src_ptr[1] * w_ptr[1] +
-                                               t_src_ptr[src_step] * w_ptr[2] + t_src_ptr[src_step + 1] * w_ptr[3]));
+  *dst_ptr = CastToFixed(static_cast<int>(t_src_ptr[0] * w_ptr[0] + t_src_ptr[1] * w_ptr[1] +
+                                          t_src_ptr[src_step] * w_ptr[2] + t_src_ptr[src_step + 1] * w_ptr[3]));
 }
 
 static void RemapBilinearNotCur2C(int dx, const int16_t *HW, const uint16_t *FHW, const int16_t *wblock,
@@ -227,7 +227,7 @@ static void RemapBilinearCur1C(LiteMat _src, int dx, const int16_t *HW, const ui
     uint8_t v1 = sv1 >= 0 && su0 >= 0 ? src_ptr[su0 * src_step + sv1] : borderValue[0];
     uint8_t v2 = sv0 >= 0 && su1 >= 0 ? src_ptr[su1 * src_step + sv0] : borderValue[0];
     uint8_t v3 = sv1 >= 0 && su1 >= 0 ? src_ptr[su1 * src_step + sv1] : borderValue[0];
-    dst_ptr[0] = CastToFixed(reinterpret_cast<int>(v0 * w_ptr[0] + v1 * w_ptr[1] + v2 * w_ptr[2] + v3 * w_ptr[3]));
+    dst_ptr[0] = CastToFixed(static_cast<int>(v0 * w_ptr[0] + v1 * w_ptr[1] + v2 * w_ptr[2] + v3 * w_ptr[3]));
   }
 }
 
@@ -260,7 +260,7 @@ static void RemapBilinearCurMoreC(LiteMat _src, int dx, const int16_t *HW, const
 
     for (int k = 0; k < cn; k++) {
       dst_ptr[k] =
-        CastToFixed(reinterpret_cast<int>(v0[k] * w_ptr[0] + v1[k] * w_ptr[1] + v2[k] * w_ptr[2] + v3[k] * w_ptr[3]));
+        CastToFixed(static_cast<int>(v0[k] * w_ptr[0] + v1[k] * w_ptr[1] + v2[k] * w_ptr[2] + v3[k] * w_ptr[3]));
     }
   }
 }

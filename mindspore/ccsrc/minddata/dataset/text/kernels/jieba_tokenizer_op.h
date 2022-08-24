@@ -44,7 +44,8 @@ class JiebaTokenizerOp : public TokenizerOp {
   ~JiebaTokenizerOp() override = default;
 
   void Print(std::ostream &out) const override {
-    out << Name() << ": " << jieba_mode_ << "hmm_model_path_ " << hmm_model_path_ << "mp_dict_path_" << mp_dict_path_;
+    out << Name() << ": " << static_cast<int>(jieba_mode_) << "hmm_model_path_ " << hmm_model_path_ << "mp_dict_path_"
+        << mp_dict_path_;
   }
 
   Status Tokenize(std::string_view sentence_v, std::vector<std::string> *words, std::vector<uint32_t> *offsets_start,
