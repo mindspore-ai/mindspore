@@ -19,6 +19,7 @@ from mindspore.ops.operations.sparse_ops import SparseTensorToCSRSparseMatrix
 from mindspore.ops.operations.sparse_ops import SparseToDenseV2
 from mindspore.ops.operations.sparse_ops import SparseSegmentSqrtN
 from mindspore.ops.operations.sparse_ops import SparseSegmentSqrtNWithNumSegments
+from mindspore.ops.operations.sparse_ops import SparseSegmentMeanWithNumSegments
 from mindspore.common import dtype as mstype
 from .. import functional as F
 from .. import operations as P
@@ -88,6 +89,23 @@ def get_bprop_sparse_segment_sqrt_n(self):
 def get_bprop_sparse_segment_sqrt_n_with_num_segments(self):
     """Grad definition for `SparseSegmentSqrtNWithNumSegments` operation."""
     input_grad = G.SparseSegmentSqrtNGrad()
+    shape = P.Shape()
+
+    def bprop(x, indices, segment_ids, num_segments, out, dout):
+        output_dim0 = F.scalar_to_tensor(shape(x)[0], mstype.int32)
+        indices = F.cast(indices, mstype.int32)
+        segment_ids = F.cast(segment_ids, mstype.int32)
+        dx = input_grad(dout, indices, segment_ids, output_dim0)
+        all_d = (dx, zeros_like(indices), zeros_like(segment_ids), zeros_like(num_segments))
+        return all_d
+
+    return bprop
+
+
+@bprop_getters.register(SparseSegmentMeanWithNumSegments)
+def get_bprop_sparse_segment_mean_with_num_segments(self):
+    """Grad definition for `SparseSegmentMeanWithNumSegments` operation."""
+    input_grad = G.SparseSegmentMeanGrad()
     shape = P.Shape()
 
     def bprop(x, indices, segment_ids, num_segments, out, dout):

@@ -324,6 +324,8 @@ constexpr auto kCSRDiv = "CSRDiv";
 constexpr auto kDenseToDenseSetOperation = "DenseToDenseSetOperation";
 constexpr auto kSparseMatrixAdd = "SparseMatrixAdd";
 constexpr auto kSparseAdd = "SparseAdd";
+constexpr auto kSparseSegmentMeanGrad = "SparseSegmentMeanGrad";
+constexpr auto kSparseSegmentMeanWithNumSegments = "SparseSegmentMeanWithNumSegments";
 constexpr auto kSparseConcat = "SparseConcat";
 constexpr auto kSparseMatrixNNZ = "SparseMatrixNNZ";
 constexpr auto kSparseMatrixTranspose = "SparseMatrixTranspose";
@@ -994,6 +996,9 @@ GVAR_DEF(PrimitivePtr, kPrimSparseSplit, std::make_shared<Primitive>(kSparseSpli
 GVAR_DEF(PrimitivePtr, kPrimDenseToDenseSetOperation, std::make_shared<Primitive>(kDenseToDenseSetOperation));
 GVAR_DEF(PrimitivePtr, kPrimSparseMatrixAdd, std::make_shared<Primitive>(kSparseMatrixAdd));
 GVAR_DEF(PrimitivePtr, kPrimSparseAdd, std::make_shared<Primitive>(kSparseAdd));
+GVAR_DEF(PrimitivePtr, kPrimSparseSegmentMeanGrad, std::make_shared<Primitive>("SparseSegmentMeanGrad"));
+GVAR_DEF(PrimitivePtr, kPrimSparseSegmentMeanWithNumSegments,
+         std::make_shared<Primitive>("SparseSegmentMeanWithNumSegments"));
 GVAR_DEF(PrimitivePtr, kPrimDenseToCSRSparseMatrix, std::make_shared<Primitive>("DenseToCSRSparseMatrix"));
 GVAR_DEF(PrimitivePtr, kPrimSparseTensorToCSRSparseMatrix, std::make_shared<Primitive>(kSparseTensorToCSRSparseMatrix));
 GVAR_DEF(PrimitivePtr, kPrimCSRSparseMatrixToSparseTensor, std::make_shared<Primitive>(kCSRSparseMatrixToSparseTensor));
