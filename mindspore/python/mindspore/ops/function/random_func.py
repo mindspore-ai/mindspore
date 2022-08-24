@@ -115,9 +115,9 @@ def standard_laplace(shape, seed=0, seed2=0):
         ``Ascend`` ``CPU``
 
     Examples:
-        >>> from mindspore.ops import functional as F
+        >>> from mindspore import ops
         >>> shape = (4, 4)
-        >>> output = F.standard_laplace(shape)
+        >>> output = ops.standard_laplace(shape)
         >>> result = output.shape
         >>> print(result)
         (4, 4)
