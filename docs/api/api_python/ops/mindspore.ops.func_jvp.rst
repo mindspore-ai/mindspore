@@ -11,8 +11,8 @@ mindspore.ops.jvp
         - **v** (Union[Tensor, tuple[Tensor], list[Tensor]]) - 与雅可比矩阵相乘的向量，shape和type与网络的输入一致。
 
     返回：
-        - **net_output** (Union[Cell, Function]) - 输入网络的正向计算结果。
-        - **jvp** (Union[NoneType, int, tuple[int]]) - 雅可比向量积的结果。
+        - **net_output** (Union[Tensor, tuple[Tensor]]) - 输入网络的正向计算结果。
+        - **jvp** (Union[Tensor, tuple[Tensor]]) - 雅可比向量积的结果。
 
     异常：
         - **TypeError** - `inputs` 或 `v` 类型不符合要求。
