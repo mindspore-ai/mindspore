@@ -186,7 +186,7 @@ FuncGraphPtr ListReverse::GenerateFuncGraph(const abstract::AbstractBasePtrList 
   std::vector<AnfNodePtr> elems;
   elems.push_back(NewValueNode(prim::kPrimMakeList));
   for (int64_t i = arg_length - 1; i >= 0; --i) {
-    elems.push_back(ret->NewCNode({NewValueNode(prim::kPrimListGetItem), arg_node, NewValueNode(SizeToLong(i))}));
+    elems.push_back(ret->NewCNode({NewValueNode(prim::kPrimListGetItem), arg_node, NewValueNode(i)}));
   }
 
   ret->set_output(ret->NewCNode(elems));
@@ -232,7 +232,9 @@ bool ListCount::ComparesTwoValues(const ValuePtr &count_value, const ValuePtr &l
   if (count_value->isa<AnyValue>() || list_value->isa<AnyValue>()) {
     MS_EXCEPTION(NotSupportError) << "The list count not support " << count_value->type_name() << " type now.";
   } else if (count_value->isa<tensor::Tensor>()) {
-    return count_value->cast_ptr<tensor::Tensor>()->ValueEqual(*list_value->cast_ptr<tensor::Tensor>());
+    auto list_tensor_value = list_value->cast_ptr<tensor::Tensor>();
+    MS_EXCEPTION_IF_NULL(list_tensor_value);
+    return count_value->cast_ptr<tensor::Tensor>()->ValueEqual(*list_tensor_value);
   } else {
     return *count_value == *list_value;
   }

@@ -141,8 +141,8 @@ inline std::tuple<size_t, size_t, size_t> CalPosition(const OffsetIndex &offset_
 
 inline InputXIndex CalInputXIndex(const OffsetIndex &offset_index, const DeformableOffsetGradDims &dims) {
   InputXIndex input_x_index;
-  input_x_index.i = -1.0 * SizeToFloat(dims.pad_top);
-  input_x_index.j = -1.0 * SizeToFloat(dims.pad_left);
+  input_x_index.i = -1.0f * SizeToFloat(dims.pad_top);
+  input_x_index.j = -1.0f * SizeToFloat(dims.pad_left);
   input_x_index.i += SizeToFloat(offset_index.offset_i * dims.stride_h + offset_index.kernel_i * dims.dilation_h);
   input_x_index.j += SizeToFloat(offset_index.offset_j * dims.stride_w + offset_index.kernel_j * dims.dilation_w);
   return input_x_index;

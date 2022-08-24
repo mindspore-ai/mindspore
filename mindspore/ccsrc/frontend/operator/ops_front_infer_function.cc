@@ -264,6 +264,7 @@ bool CheckPythonIsInstance(const py::object &x, const AbstractBasePtr &cmp, cons
 }
 
 bool CheckIsInstanceForFunc(const py::object &x_py_obj, const AbstractBasePtr &cmp, const py::module &mod) {
+  MS_EXCEPTION_IF_NULL(cmp);
   if (cmp->isa<abstract::AbstractTuple>()) {
     const auto &cmp_tuple_elements = cmp->cast<abstract::AbstractTuplePtr>()->elements();
     return std::any_of(
@@ -283,6 +284,7 @@ bool CheckIsInstanceForFunc(const py::object &x_py_obj, const AbstractBasePtr &c
 }
 
 bool CheckIsInstanceForSparse(const AbstractBasePtr &cmp, const std::string &target) {
+  MS_EXCEPTION_IF_NULL(cmp);
   if (!cmp->isa<abstract::AbstractTuple>()) {
     return cmp->ToString() == target;
   }
@@ -292,6 +294,7 @@ bool CheckIsInstanceForSparse(const AbstractBasePtr &cmp, const std::string &tar
 }
 
 py::object GetPrimitivePyObj(const abstract::PrimitiveAbstractClosurePtr &prim_abs) {
+  MS_EXCEPTION_IF_NULL(prim_abs);
   auto prim = prim_abs->prim();
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_signature = prim->cast<prim::DoSignaturePrimitivePtr>();
@@ -303,12 +306,14 @@ py::object GetPrimitivePyObj(const abstract::PrimitiveAbstractClosurePtr &prim_a
 }
 
 py::object GetMsClassPyObj(const abstract::PartialAbstractClosurePtr &ms_class_abs) {
+  MS_EXCEPTION_IF_NULL(ms_class_abs);
   const auto &ms_class_args = ms_class_abs->args();
   if (ms_class_args.size() != 1) {
     MS_LOG(EXCEPTION) << "When the first input to IsInstance is PartialAbstractClosure, its args size should be 1 but "
                       << "got: " << ms_class_args.size() << ".";
   }
   auto first_arg = ms_class_args[0];
+  MS_EXCEPTION_IF_NULL(first_arg);
   auto arg_type = first_arg->BuildType();
   auto arg_type_id = arg_type->type_id();
   if (arg_type_id != kObjectTypeClass) {
@@ -321,6 +326,7 @@ py::object GetMsClassPyObj(const abstract::PartialAbstractClosurePtr &ms_class_a
 }
 
 bool CheckCmpValid(const AbstractBasePtr &cmp) {
+  MS_EXCEPTION_IF_NULL(cmp);
   if (cmp->isa<abstract::AbstractSequence>()) {
     if (!cmp->isa<abstract::AbstractTuple>()) {
       return false;
@@ -352,7 +358,7 @@ bool CheckCmpValid(const AbstractBasePtr &cmp) {
     }
     return cmp_type_id == kMetaTypeTypeType;
   }
-  return std::find(kSparsePrimStr.begin(), kSparsePrimStr.end(), cmp->ToString()) != kSparsePrimStr.end();
+  return std::find(kSparsePrimStr.cbegin(), kSparsePrimStr.cend(), cmp->ToString()) != kSparsePrimStr.cend();
 }
 
 AbstractBasePtr InferImplIsInstance(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
@@ -374,6 +380,7 @@ AbstractBasePtr InferImplIsInstance(const AnalysisEnginePtr &, const PrimitivePt
   }
 
   // x is Cell object.
+  MS_EXCEPTION_IF_NULL(x);
   if (x->isa<abstract::FuncGraphAbstractClosure>()) {
     auto x_fg = x->cast<abstract::FuncGraphAbstractClosurePtr>()->func_graph();
     MS_EXCEPTION_IF_NULL(x_fg);
@@ -611,12 +618,14 @@ AbstractBasePtr InferImplTupleDiv(const AnalysisEnginePtr &, const PrimitivePtr 
   MS_LOG(INFO) << "The shape of dividend:" << shape_x->ToString() << ", the shape of divisor:" << div_shp->ToString();
 
   auto div_shp_value = div_shp->BuildValue();
+  MS_EXCEPTION_IF_NULL(div_shp_value);
   if (div_shp_value->isa<AnyValue>()) {
     MS_LOG(EXCEPTION) << "The 'tuple_div' operator shape's data field can't be anything, but got "
                       << args_spec_list[0]->ToString() << ".";
   }
 
   auto shape_x_value = shape_x->BuildValue();
+  MS_EXCEPTION_IF_NULL(shape_x_value);
   if (shape_x_value->isa<AnyValue>()) {
     MS_LOG(EXCEPTION) << "The 'tuple_div' operator shape's data field can't be anything, but got "
                       << args_spec_list[1]->ToString() << ".";
@@ -626,12 +635,16 @@ AbstractBasePtr InferImplTupleDiv(const AnalysisEnginePtr &, const PrimitivePtr 
     MS_LOG(EXCEPTION) << "The size of inputs of 'tuple_div' operator must be the same, but the size of divisor tuple is"
                       << " " << div_shp->size() << ", the size of dividend tuple is " << shape_x->size() << ".";
   }
-
-  auto shape_x_data = shape_x_value->cast<ValueTuplePtr>()->value();
-  auto div_shape_data = div_shp_value->cast<ValueTuplePtr>()->value();
+  auto shape_x_tuple_value = shape_x_value->cast<ValueTuplePtr>();
+  auto div_shape_tuple_value = div_shp_value->cast<ValueTuplePtr>();
+  MS_EXCEPTION_IF_NULL(shape_x_tuple_value);
+  MS_EXCEPTION_IF_NULL(div_shape_tuple_value);
+  auto shape_x_data = shape_x_tuple_value->value();
+  auto div_shape_data = div_shape_tuple_value->value();
   AbstractBasePtrList values;
 
   for (size_t i = 0; i < div_shape_data.size(); i++) {
+    MS_EXCEPTION_IF_NULL(div_shape_data[i]);
     if (div_shape_data[i]->cast<Int64ImmPtr>() == nullptr) {
       auto value_type = div_shape_data[i]->type();
       std::string str_type;
@@ -643,8 +656,8 @@ AbstractBasePtr InferImplTupleDiv(const AnalysisEnginePtr &, const PrimitivePtr 
       MS_LOG(EXCEPTION) << "The data type of inputs of 'tuple_div' operator should be an int64 number, but got a "
                         << str_type << " number " << div_shape_data[i]->ToString() << ".";
     }
-    int64_t shapex_value = GetValue<int64_t>(shape_x_data[i]);
-    int64_t div_value = GetValue<int64_t>(div_shape_data[i]);
+    auto shapex_value = GetValue<int64_t>(shape_x_data[i]);
+    auto div_value = GetValue<int64_t>(div_shape_data[i]);
     MS_LOG(DEBUG) << "div_shp_shape data shapex_value :" << shapex_value << " div_value: " << div_value;
     if (div_value == 0) {
       MS_LOG(EXCEPTION) << "The divisor value should not be 0!";

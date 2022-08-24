@@ -45,13 +45,13 @@ bool Compute(const ComputeParams<T, S> *params, const size_t start, const size_t
     std::vector<size_t> local_indices;
     for (size_t j = 0; j < params->indices_unit_rank_; ++j) {
       auto index = indices[i * params->indices_unit_rank_ + j];
-      (void)local_indices.emplace_back(IntToSize(index));
+      (void)local_indices.emplace_back(LongToSize(index));
       if (index < 0) {
         MS_LOG(ERROR) << "For '" << kKernelName
                       << "', each element in 'indices' must be greater than or equal to 0, but got " << index;
         return false;
       }
-      offset += IntToSize(index) * out_strides->at(j) * params->unit_size_;
+      offset += LongToSize(index) * out_strides->at(j) * params->unit_size_;
     }
     if (offset * sizeof(T) > params->x_mem_size_) {
       MS_LOG(ERROR) << "For '" << kKernelName
