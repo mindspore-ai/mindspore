@@ -296,6 +296,7 @@ from .nn_func import (
     ctc_greedy_decoder,
     ctc_loss,
     dropout,
+    conv3d_transpose,
     conv2d,
 )
 from .linalg_func import (
