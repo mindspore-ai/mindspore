@@ -69,9 +69,7 @@
 #ifdef WITH_BACKEND
 #include "ps/constants.h"
 #include "ps/util.h"
-#include "ps/worker.h"
 #include "ps/ps_cache/ps_data/ps_data_prefetch.h"
-#include "ps/ps_cache/ps_cache_manager.h"
 #include "fl/server/server.h"
 #include "fl/worker/fl_worker.h"
 #include "distributed/cluster/cluster_context.h"
@@ -770,10 +768,6 @@ std::vector<ActionItem> GetPipeline(const ResourcePtr &resource, const std::stri
     if ((server_mode == ps::kServerModeFL || server_mode == ps::kServerModeHybrid) &&
         ps::PSContext::instance()->is_server()) {
       return ServerPipeline(resource);
-    }
-    if (ps::PSContext::instance()->is_server()) {
-      resource->SetBackendAsync([]() { return compile::CreateBackend(); });
-      return PServerPipeline(resource);
     }
     if (ps::PSContext::instance()->is_scheduler()) {
       return PSchedulerPipeline(resource);
@@ -1737,15 +1731,10 @@ void ClearResAtexit() {
 #ifdef WITH_BACKEND
   if (!distributed::cluster::ClusterContext::instance()->initialized() && ps::PSContext::instance()->is_ps_mode() &&
       ps::PSContext::instance()->is_worker()) {
-    if (ps::PsDataPrefetch::GetInstance().cache_enable()) {
-      ps::ps_cache_instance.Finalize();
-    }
     MS_LOG(INFO) << "Start finalizing worker.";
     const std::string &server_mode = ps::PSContext::instance()->server_mode();
     if ((server_mode == ps::kServerModeFL || server_mode == ps::kServerModeHybrid)) {
       fl::worker::FLWorker::GetInstance().Finalize();
-    } else {
-      ps::Worker::GetInstance().Finalize();
     }
   }
 #endif

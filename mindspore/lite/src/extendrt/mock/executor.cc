@@ -21,9 +21,6 @@
 #include "runtime/device/kernel_runtime_manager.h"
 #include "include/common/utils/comm_manager.h"
 #include "include/common/utils/scoped_long_running.h"
-#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
-#include "ps/ps_cache/ps_cache_manager.h"
-#endif
 
 namespace mindspore {
 namespace session {

@@ -94,7 +94,6 @@ void CPUSession::Optimize(const std::shared_ptr<KernelGraph> &kernel_graph) {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode && ps::PSContext::instance()->is_ps_mode()) {
-    AssignParamKey(kernel_graph);
     if (ps::PSContext::instance()->is_worker()) {
       std::string pass_name = "replace_node_by_proxy";
       pass_name.append(std::to_string(graph_sum_));
@@ -197,10 +196,6 @@ void CPUSession::PreExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_grap
                                  const std::vector<tensor::TensorPtr> &inputs, VectorRef *const outputs) {
   MS_LOG(INFO) << "Bind input output address";
   runtime_.BindInputOutput(kernel_graph.get(), inputs, outputs);
-
-#ifdef WITH_BACKEND
-  InitPSParamAndOptim(kernel_graph, inputs);
-#endif
 }
 
 void CPUSession::PostExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_graph,

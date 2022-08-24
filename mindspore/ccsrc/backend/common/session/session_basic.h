@@ -137,9 +137,6 @@ class BACKEND_EXPORT SessionBasic : public std::enable_shared_from_this<SessionB
   // get graph id in child graphs by ME front anf node pointer
   virtual GraphId GetGraphIdByNode(const AnfNodePtr &) const;
   virtual GraphId GetFinalRunGraph() const { return kInvalidGraphId; }
-  void AssignParamKey(const KernelGraphPtr &kernel_graph) const;
-  void InitPSParamAndOptim(const KernelGraphPtr &kernel_graph,
-                           const std::vector<tensor::TensorPtr> &inputs_const) const;
   bool IsGetNextGraph(const std::shared_ptr<KernelGraph> &kernel_graph, std::string *channel_name) const;
   virtual bool CheckModelInputs(uint32_t graph_id, const std::vector<tensor::TensorPtr> &inputs,
                                 std::string *error_msg) const {
@@ -345,11 +342,6 @@ class BACKEND_EXPORT SessionBasic : public std::enable_shared_from_this<SessionB
   virtual std::string GetCommWorldGroup() { return std::string(); }
   void DumpGraphs(const std::vector<KernelGraphPtr> &graphs) const;
   void GetConstValueDepend(const CNodePtr &cnode, std::vector<size_t> *const_input_attr_index) const;
-#ifdef WITH_BACKEND
-  void CheckPSModeConsistence(const KernelGraphPtr &kernel_graph) const;
-  void GetBatchElements(const AnfNodePtr &kernel_node) const;
-  void InitPsWorker(const KernelGraphPtr &kernel_graph) const;
-#endif
   // TODO(caifubi): refactor and remove bucket.
   std::map<uint32_t, std::vector<std::shared_ptr<device::Bucket>>> bucket_map_;
   std::map<uint32_t, uint32_t> free_bucket_id_map_;

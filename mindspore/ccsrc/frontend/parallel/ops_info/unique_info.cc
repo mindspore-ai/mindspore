@@ -30,7 +30,8 @@
 #include "include/common/utils/parallel_context.h"
 #include "frontend/parallel/tensor_layout/tensor_redistribution.h"
 #ifdef WITH_BACKEND
-#include "ps/ps_cache/ps_cache_manager.h"
+#include "ps/ps_cache/ps_data/ps_data_prefetch.h"
+#include "ps/ps_context.h"
 #include "distributed/embedding_cache/embedding_cache_utils.h"
 #endif
 
@@ -112,10 +113,8 @@ Status UniqueInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
   int64_t bias = 0;
   if (ps::PSContext::instance()->enable_distributed_mindrt()) {
     bias = static_cast<int64_t>(embedding_cache_table_manager.cache_indices_lower_bound());
-  } else {
-    bias = static_cast<int64_t>(ps::PsCacheManager::GetInstance().cache_indices_lower_bound());
   }
-  auto slice_size = SizeToLong(ps::PsCacheManager::GetInstance().vocab_cache_size());
+  auto slice_size = SizeToLong(embedding_cache_table_manager.vocab_cache_size());
 
   auto sub = gen_g.PushBack({gen_g.NewOpInst(SUB), gen_g.virtual_input_node(), CreateInt32Tensor(bias)});
   auto relu = gen_g.PushBack({gen_g.NewOpInst(RELU), sub});

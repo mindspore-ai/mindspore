@@ -27,7 +27,7 @@
 #include "frontend/parallel/graph_util/generate_graph.h"
 #include "include/common/utils/parallel_context.h"
 #ifdef WITH_BACKEND
-#include "ps/ps_cache/ps_cache_manager.h"
+#include "ps/ps_cache/ps_data/ps_data_prefetch.h"
 #include "utils/ms_context.h"
 #include "ps/ps_context.h"
 #include "distributed/embedding_cache/embedding_cache_utils.h"
@@ -760,8 +760,6 @@ Status GatherInfo::InferBias() {
     if (ps::PsDataPrefetch::GetInstance().cache_enable()) {
       if (ps::PSContext::instance()->enable_distributed_mindrt()) {
         bias_ = static_cast<int64_t>(embedding_cache_table_manager.cache_indices_lower_bound());
-      } else {
-        bias_ = static_cast<int64_t>(ps::PsCacheManager::GetInstance().cache_indices_lower_bound());
       }
       return SUCCESS;
     }

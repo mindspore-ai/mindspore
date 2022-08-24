@@ -72,7 +72,6 @@
 #endif
 #ifdef WITH_BACKEND
 #include "ps/util.h"
-#include "ps/ps_cache/ps_cache_manager.h"
 #endif
 #include "plugin/device/ascend/hal/device/ascend_bucket.h"
 #include "plugin/device/ascend/hal/device/ascend_device_address.h"
@@ -249,12 +248,6 @@ bool TensorNeedSync(const std::shared_ptr<KernelGraph> &kernel_graph, const AnfN
       }
       MS_EXCEPTION_IF_NULL(memcpy_nums);
       (*memcpy_nums)++;
-#ifdef WITH_BACKEND
-      const std::string &param_name = parameter->fullname_with_scope();
-      if (ps::ps_cache_instance.IsHashTable(param_name)) {
-        return false;
-      }
-#endif
       auto input_param = parameter->cast<ParameterPtr>();
       MS_EXCEPTION_IF_NULL(input_param);
       if (common::AnfAlgo::IsParameterWeight(input_param) || kernel_graph->IsUpdatedParameter(input_param)) {
@@ -347,12 +340,6 @@ void AscendSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_gra
     }
     if (AnfAlgo::OutputAddrExist(input_node, 0) &&
         TensorNeedSync(kernel_graph, input_node, tensor, &device_memcpy_nums)) {
-#ifdef WITH_BACKEND
-      const std::string &param_name = input_node->fullname_with_scope();
-      if (ps::ps_cache_instance.IsHashTable(param_name)) {
-        continue;
-      }
-#endif
       auto device_address = AnfAlgo::GetMutableOutputAddr(input_node, 0);
       MS_EXCEPTION_IF_NULL(device_address);
       if (size != 0 &&
@@ -460,9 +447,6 @@ GraphId AscendSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) {
 
   // adjust kernel
   AdjustKernel(root_graph);
-#ifdef WITH_BACKEND
-  InitPsWorker(root_graph);
-#endif
   // assign stream
   AssignStream(NOT_NULL(root_graph));
 #ifndef ENABLE_SECURITY
@@ -539,9 +523,6 @@ void AscendSession::BuildGraphImpl(GraphId graph_id) {
   single_graph->UpdateExecuteKernelStreamLabel();
   // adjust execution order because  merge child graph and other special operations
   AdjustKernel(graph);
-#ifdef WITH_BACKEND
-  InitPsWorker(graph);
-#endif
   // Assign streams for control sink and hccl and so on
   AssignStream(NOT_NULL(graph));
 #ifndef ENABLE_SECURITY
@@ -615,14 +596,6 @@ void AscendSession::PreExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_g
 #ifdef ENABLE_DEBUGGER
   if (debugger_) {
     debugger_->PreExecute(kernel_graph);
-  }
-#endif
-#ifdef WITH_BACKEND
-  // Initialize parameter server
-  InitPSParamAndOptim(kernel_graph, inputs);
-  std::string channel_name;
-  if (ps::PsDataPrefetch::GetInstance().cache_enable() && IsGetNextGraph(kernel_graph, &channel_name)) {
-    ps::ps_cache_instance.IncreaseGraphStep(channel_name);
   }
 #endif
 }

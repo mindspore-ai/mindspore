@@ -88,7 +88,7 @@
 #include "kernel/graph_kernel_info.h"
 #ifdef WITH_BACKEND
 #include "ps/util.h"
-#include "ps/ps_cache/ps_cache_manager.h"
+#include "ps/ps_context.h"
 #endif
 
 namespace mindspore {
@@ -362,12 +362,6 @@ void GPUSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
     auto input_node = input_nodes[i];
     MS_EXCEPTION_IF_NULL(input_node);
     if (input_node->isa<Parameter>() && AnfAlgo::OutputAddrExist(input_node, 0)) {
-#ifdef WITH_BACKEND
-      const std::string &param_name = input_node->fullname_with_scope();
-      if (ps::ps_cache_instance.IsHashTable(param_name)) {
-        continue;
-      }
-#endif
       auto pk_node = input_node->cast<ParameterPtr>();
       auto device_address = AnfAlgo::GetMutableOutputAddr(pk_node, 0);
       MS_EXCEPTION_IF_NULL(device_address);
@@ -443,9 +437,6 @@ GraphId GPUSession::CompileGraphImpl(const KernelGraphPtr &graph) {
   GraphKernelOptimize(graph);
   // Start gpu kernel runtime
   StartKernelRT();
-#ifdef WITH_BACKEND
-  InitPsWorker(graph);
-#endif
   // Assign CUDA streams
   AssignStream(graph);
 #ifdef ENABLE_DUMP_IR
@@ -525,11 +516,6 @@ void GPUSession::PreExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_grap
 
   E2eDump::UpdateIterOldRTDump(kernel_graph.get());
 #endif
-
-#ifdef WITH_BACKEND
-  // Initialize parameter server
-  InitPSParamAndOptim(kernel_graph, inputs);
-#endif
 }
 
 // GPU old runtime.
@@ -563,12 +549,6 @@ void GPUSession::ExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_graph) 
   int kernel_num = kernel_graph->execution_order().size();
   int64_t loopsize = (kernel_num > 1) ? ConfigManager::GetInstance().gpu_loopsink_size() : 1;
   for (int64_t i = 0; i < loopsize; i++) {
-#ifdef WITH_BACKEND
-    std::string channel_name;
-    if (ps::PsDataPrefetch::GetInstance().cache_enable() && IsGetNextGraph(kernel_graph, &channel_name)) {
-      ps::ps_cache_instance.IncreaseGraphStep(channel_name);
-    }
-#endif
     Execute(kernel_graph);
   }
 }

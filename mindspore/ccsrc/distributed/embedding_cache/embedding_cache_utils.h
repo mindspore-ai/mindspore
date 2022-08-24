@@ -156,6 +156,9 @@ class BACKEND_EXPORT EmbeddingCacheTableManager {
   //  automatic parallel scenario.
   int cache_indices_lower_bound() const;
 
+  // Get vocab cache size on device.
+  size_t vocab_cache_size() const { return device_cache_size_; }
+
   void DumpHashTables() const;
 
  private:
