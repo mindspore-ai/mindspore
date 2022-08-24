@@ -208,7 +208,7 @@ class MS_CORE_API COOTensorType final : public SparseTensorType {
 
   /// \brief Constructor for COOTensorType.
   ///
-  /// \param[in] ele The element of COOTensorType.
+  /// \param[in] obj The list of COOTensorType.
   explicit COOTensorType(const TypePtrList &obj) : SparseTensorType(kObjectTypeCOOTensorType, obj) {}
 
   /// \brief Destructor of COOTensorType.
@@ -232,7 +232,7 @@ class MS_CORE_API CSRTensorType : public SparseTensorType {
 
   /// \brief Constructor for CSRTensorType.
   ///
-  /// \param[in] ele The element of CSRTensorType.
+  /// \param[in] obj The list of CSRTensorType.
   explicit CSRTensorType(const TypePtrList &obj) : SparseTensorType(kObjectTypeCSRTensorType, obj) {}
 
   /// \brief Destructor of CSRTensorType.
