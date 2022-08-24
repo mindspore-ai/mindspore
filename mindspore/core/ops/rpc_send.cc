@@ -25,9 +25,16 @@ namespace ops {
 MIND_API_OPERATOR_IMPL(RpcSend, BaseOperator);
 AbstractBasePtr RpcSendInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &,
                              const std::vector<AbstractBasePtr> &input_args) {
-  abstract::AbstractTuplePtr rpc_send_abs = std::make_shared<abstract::AbstractTuple>(input_args);
-  MS_EXCEPTION_IF_NULL(rpc_send_abs);
-  return rpc_send_abs;
+  if (input_args.empty()) {
+    MS_LOG(EXCEPTION) << "The input size of RpcSend is 0.";
+  }
+  if (input_args.size() == kDim1) {
+    return input_args[kInputIndex0];
+  } else {
+    abstract::AbstractTuplePtr rpc_send_abs = std::make_shared<abstract::AbstractTuple>(input_args);
+    MS_EXCEPTION_IF_NULL(rpc_send_abs);
+    return rpc_send_abs;
+  }
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(RpcSend, prim::kPrimRpcSend, RpcSendInfer, nullptr, true);
 }  // namespace ops

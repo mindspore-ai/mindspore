@@ -117,6 +117,9 @@ std::unique_ptr<MessageBase> SendActor::BuildRpcMessage(const kernel::AddressPtr
   } else {
     SerializeCommonMessage(message.get(), data_list, workspace_addr);
   }
+
+  size_t data_size = common::GetEnv("use_void").empty() ? message->body.size() : message->size;
+  MS_LOG(DEBUG) << "RpcSend message size is " << data_size;
   return message;
 }
 

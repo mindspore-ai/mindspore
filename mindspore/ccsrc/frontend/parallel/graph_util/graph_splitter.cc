@@ -1359,13 +1359,32 @@ void GraphSplitter::AddDependencyBetweenSegments(const InOutDegreeList &in_out_d
       // output.
       if (i == in_out_degree_list.size() - 1) {
         auto make_tuple_node = func_graph_->NewCNode(send_node_tuple_inputs);
-        std::vector<AnfNodePtr> out = {NewValueNode(prim::kPrimDepend)};
-        out.push_back(send_node_tuple_inputs.back());
-        out.push_back(make_tuple_node);
-        auto out_node = func_graph_->NewCNode(out);
-        MS_EXCEPTION_IF_NULL(out_node);
-        out_node->set_abstract(send_node_tuple_inputs.back()->abstract());
-        (void)func_graph_->manager()->Replace(func_graph_->output(), out_node);
+        AbstractBasePtrList abstract_list;
+        (void)std::for_each(send_node_tuple_inputs.cbegin() + 1, send_node_tuple_inputs.cend(),
+                            [&](const auto &input) { (void)abstract_list.emplace_back(input->abstract()); });
+        make_tuple_node->set_abstract(std::make_shared<abstract::AbstractTuple>(abstract_list));
+
+        // Connect fused send nodes to the output so they will not be optimized out.
+        AnfNodePtr origin_output = func_graph_->output();
+        if (node_labels_.count(origin_output) == 0) {
+          MS_LOG(EXCEPTION) << "The origin output node " << origin_output->fullname_with_scope()
+                            << " should have corresponding operator label.";
+        }
+
+        // If the output is not on this process, replace it with a fake output node.
+        AnfNodePtr replaced_output = nullptr;
+        if (node_labels_[origin_output] != this_process_label_) {
+          replaced_output = CreateReplacedOutputNode(func_graph_, origin_output);
+        } else {
+          replaced_output = origin_output;
+        }
+
+        // Add dependency and replace.
+        std::vector<AnfNodePtr> depend_inputs = {NewValueNode(prim::kPrimDepend), replaced_output, make_tuple_node};
+        auto final_output_node = func_graph_->NewCNode(depend_inputs);
+        MS_EXCEPTION_IF_NULL(final_output_node);
+        final_output_node->set_abstract(replaced_output->abstract());
+        (void)func_graph_->manager()->SetEdge(func_graph_->get_return(), 1, final_output_node);
       }
     } else {
       auto make_tuple_node = func_graph_->NewCNode(send_node_tuple_inputs);
