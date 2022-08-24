@@ -806,6 +806,7 @@ FunctionBlockPtr Parser::ParseExpr(const FunctionBlockPtr &block, const py::obje
         // self.x = [xx, xx]
         // self.x.append()
         MS_LOG(DEBUG) << "The variables whose type is not parameter do not support assign operation.";
+        block->AddIsolatedNode(call_node);
       } else {
         WriteAssignVars(block, target_node, call_node);
       }
