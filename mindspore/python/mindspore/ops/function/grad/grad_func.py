@@ -548,15 +548,15 @@ def jvp(fn, inputs, v):
     `forward-mode differentiation <https://www.mindspore.cn/docs/en/master/design/auto_gradient.html#forward-mode-ad>`_.
 
     Args:
-        fn (Union[Function, Cell]): The function or net that takes Tensor inputs and returns single tensor or tuple of
+        fn (Union[Function, Cell]): The function or net that takes Tensor inputs and returns single Tensor or tuple of
             Tensors.
         inputs (Union[Tensor, tuple[Tensor], list[Tensor]]): The inputs to `fn` .
-        v (Union[Tensor, tuple[Tensor], list[Tensor]]): The vector in jacobian-vector-product. The shape and type of v
-            should be the same as inputs.
+        v (Union[Tensor, tuple[Tensor], list[Tensor]]): The vector in jacobian-vector-product. The shape and type of `v`
+            should be the same as `inputs` .
 
     Returns:
-        - **netout** (Union[Tensor, tuple(Tensor]]) - The output of `fn(inputs)` .
-        - **jvp** (Union[Tensor, tuple(Tensor]]) - The result of jacobian-vector-product.
+        - **net_output** (Union[Tensor, tuple[Tensor]]) - The result of `fn(inputs)` .
+        - **jvp** (Union[Tensor, tuple[Tensor]]) - The result of jacobian-vector-product.
 
     Raises:
         TypeError: `inputs` or `v` does not belong to required types.
@@ -674,15 +674,15 @@ def vjp(fn, inputs, v):
         This function is subjected to change in the future.
 
     Args:
-        fn (Union[Function, Cell]): The function or net that takes Tensor inputs and returns single tensor or tuple of
+        fn (Union[Function, Cell]): The function or net that takes Tensor inputs and returns single Tensor or tuple of
             Tensors.
         inputs (Union[Tensor, tuple[Tensor], list[Tensor]]): The inputs to `fn` .
-        v (Union[Tensor, tuple[Tensor], list[Tensor]]): The vector in vector-jacobian-product. The shape and type of v
-            should be the same as outputs.
+        v (Union[Tensor, tuple[Tensor], list[Tensor]]): The vector in vector-jacobian-product. The shape and type of `v`
+            should be the same as `fn(inputs)` .
 
     Returns:
-        - **netout** (Union[Tensor, tuple(Tensor]]) - The output of `fn(inputs)` .
-        - **vjp** (Union[Tensor, tuple(Tensor]]) - The result of vector-jacobian-product.
+        - **net_output** (Union[Tensor, tuple[Tensor]]) - The result of `fn(inputs)` .
+        - **vjp** (Union[Tensor, tuple[Tensor]]) - The result of vector-jacobian-product.
 
     Raises:
         TypeError: `inputs` or `v` does not belong to required types.
