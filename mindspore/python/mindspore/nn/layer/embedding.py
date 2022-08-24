@@ -117,6 +117,7 @@ class Embedding(Cell):
             self.init_tensor[self.padding_idx] = 0
             self.init_tensor = Tensor(self.init_tensor)
         self.embedding_table = Parameter(self.init_tensor, name='embedding_table')
+        self.expand = P.ExpandDims()
         self.reshape_flat = P.Reshape()
         self.shp_flat = (-1,)
         self.gather = P.Gather()
