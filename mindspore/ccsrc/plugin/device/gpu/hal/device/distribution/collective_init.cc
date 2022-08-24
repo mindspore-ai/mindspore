@@ -33,6 +33,7 @@ const void *CollectiveInitializer::collective_handle() { return collective_handl
 
 void CollectiveInitializer::InitCollective() {
   if (common::UseMPI()) {
+#ifndef _WIN32
     void *handle = dlopen("libgpu_collective.so", RTLD_LAZY);
     if (handle == nullptr) {
       MS_LOG(EXCEPTION)
@@ -52,6 +53,9 @@ void CollectiveInitializer::InitCollective() {
     // CollectiveInitializer::instance().
     CollectiveInitializer::instance().use_mpi_ = true;
     CollectiveInitializer::instance().collective_handle_ = handle;
+#else
+    MS_LOG(EXCEPTION) << "windows not support MPI.";
+#endif
   } else {
     if (!distributed::Initialize()) {
       MS_LOG(EXCEPTION) << "Failed to initialize distributed execution for NCCL.";
@@ -77,13 +81,17 @@ uint32_t CollectiveInitializer::GetRankSize(const std::string &group_name) {
 }
 
 uint32_t CollectiveInitializer::local_rank_id() {
-  uint32_t local_rank_id;
+  uint32_t local_rank_id = 0;
   if (common::UseMPI()) {
+#ifndef _WIN32
     MS_EXCEPTION_IF_NULL(collective_handle_);
     auto get_local_rank_funcptr =
       reinterpret_cast<GetLocalRankId>(dlsym(const_cast<void *>(collective_handle_), "local_rank_id"));
     MS_EXCEPTION_IF_NULL(get_local_rank_funcptr);
     local_rank_id = IntToUint((*get_local_rank_funcptr)());
+#else
+    MS_LOG(EXCEPTION) << "windows not support MPI.";
+#endif
   } else {
     local_rank_id = distributed::collective::CollectiveManager::instance()->local_rank_id();
   }
@@ -93,11 +101,15 @@ uint32_t CollectiveInitializer::local_rank_id() {
 bool CollectiveInitializer::CreateCommunicationGroup(const std::string &group_name,
                                                      const std::vector<uint32_t> &group_ranks) {
   if (common::UseMPI()) {
+#ifndef _WIN32
     MS_EXCEPTION_IF_NULL(collective_handle_);
     auto create_comm_group_funcptr =
       reinterpret_cast<CreateCommGroupFunc>(dlsym(const_cast<void *>(collective_handle_), "CreateCommGroup"));
     MS_EXCEPTION_IF_NULL(create_comm_group_funcptr);
     return (*create_comm_group_funcptr)(group_name, group_ranks);
+#else
+    MS_LOG(EXCEPTION) << "windows not support MPI.";
+#endif
   } else {
     // There's only one scheduler in cluster. It shouldn't have collective operations.
     if (distributed::cluster::ClusterContext::instance()->node_role() == distributed::kEnvRoleOfScheduler) {
@@ -109,11 +121,15 @@ bool CollectiveInitializer::CreateCommunicationGroup(const std::string &group_na
 
 bool CollectiveInitializer::DestroyCommunicationGroup(const std::string &group_name) {
   if (common::UseMPI()) {
+#ifndef _WIN32
     MS_EXCEPTION_IF_NULL(collective_handle_);
     auto destroy_group_funcptr =
       reinterpret_cast<DestroyGroupFunc>(dlsym(const_cast<void *>(collective_handle_), "DestroyGroup"));
     MS_EXCEPTION_IF_NULL(destroy_group_funcptr);
     return (*destroy_group_funcptr)(group_name);
+#else
+    MS_LOG(EXCEPTION) << "windows not support MPI.";
+#endif
   } else {
     // There's only one scheduler in cluster. It shouldn't have collective operations.
     if (distributed::cluster::ClusterContext::instance()->node_role() == distributed::kEnvRoleOfScheduler) {
@@ -125,11 +141,15 @@ bool CollectiveInitializer::DestroyCommunicationGroup(const std::string &group_n
 
 uint32_t CollectiveInitializer::GetRankIDByGroup(const std::string &group_name) {
   if (common::UseMPI()) {
+#ifndef _WIN32
     MS_EXCEPTION_IF_NULL(collective_handle_);
     auto get_rank_id_funcptr =
       reinterpret_cast<GetRankIDByGroupFunc>(dlsym(const_cast<void *>(collective_handle_), "GetRankIDByGroup"));
     MS_EXCEPTION_IF_NULL(get_rank_id_funcptr);
     return IntToUint((*get_rank_id_funcptr)(group_name));
+#else
+    MS_LOG(EXCEPTION) << "windows not support MPI.";
+#endif
   } else {
     // There's only one scheduler in cluster. It shouldn't have collective operations.
     if (distributed::cluster::ClusterContext::instance()->node_role() == distributed::kEnvRoleOfScheduler) {
@@ -141,11 +161,15 @@ uint32_t CollectiveInitializer::GetRankIDByGroup(const std::string &group_name) 
 
 uint32_t CollectiveInitializer::GetGroupSize(const std::string &group_name) {
   if (common::UseMPI()) {
+#ifndef _WIN32
     MS_EXCEPTION_IF_NULL(collective_handle_);
     auto get_group_size_funcptr =
       reinterpret_cast<GetGroupSizeFunc>(dlsym(const_cast<void *>(collective_handle_), "GetGroupSize"));
     MS_EXCEPTION_IF_NULL(get_group_size_funcptr);
     return IntToUint((*get_group_size_funcptr)(group_name));
+#else
+    MS_LOG(EXCEPTION) << "windows not support MPI.";
+#endif
   } else {
     // There's only one scheduler in cluster. It shouldn't have collective operations.
     if (distributed::cluster::ClusterContext::instance()->node_role() == distributed::kEnvRoleOfScheduler) {

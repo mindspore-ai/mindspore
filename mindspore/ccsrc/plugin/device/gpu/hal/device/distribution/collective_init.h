@@ -17,7 +17,9 @@
 #ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_DISTRIBUTION_COLLECTIVE_INIT_H_
 #define MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_DISTRIBUTION_COLLECTIVE_INIT_H_
 
+#ifndef _WIN32
 #include <dlfcn.h>
+#endif
 #include <vector>
 #include <string>
 #include "include/backend/visible.h"

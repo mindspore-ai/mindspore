@@ -14,15 +14,25 @@
  * limitations under the License.
  */
 #include <cupti.h>
+#ifndef _WIN32
 #include <dlfcn.h>
+#else
+#include <windows.h>
+#undef ERROR
+#undef SM_DEBUG
+#endif
 #include "utils/log_adapter.h"
 #include "plugin/device/gpu/hal/profiler/cupti_interface.h"
 
 namespace mindspore {
 namespace profiler {
 namespace gpu {
-inline void *LoadLibrary(const char *name) {
+inline void *LoadLib(const char *name) {
+#ifndef _MSC_VER
   auto handle = dlopen(name, RTLD_LAZY | RTLD_LOCAL);
+#else
+  auto handle = LoadLibrary(name);
+#endif
   if (handle == nullptr) {
     MS_LOG(EXCEPTION) << "Load lib " << name << " Please check whether configured the path of CUPTI to LD_LIBRARY_PATH";
   }
@@ -30,13 +40,21 @@ inline void *LoadLibrary(const char *name) {
 }
 
 inline void *GetCUPTIHandle() {
-  static void *handle = LoadLibrary("libcupti.so");
+#ifndef _MSC_VER
+  static void *handle = LoadLib("libcupti.so");
+#else
+  static void *handle = LoadLib("cupti.dll");
+#endif
   return handle;
 }
 
 inline void *GetCUPTIFunc(const char *name) {
   static void *handle = GetCUPTIHandle();
+#ifndef _MSC_VER
   void *func = dlsym(handle, name);
+#else
+  void *func = reinterpret_cast<void *>(GetProcAddress(handle, name));
+#endif
   if (func == nullptr) {
     MS_LOG(EXCEPTION) << "Load func " << name << " failed, make sure you have implied it!";
   }

@@ -12,6 +12,10 @@ if(ENABLE_GPU)
     list(REMOVE_ITEM GPU_SRC_LIST "nccl/nccl_recv_gpu_kernel.cc")
     list(REMOVE_ITEM GPU_SRC_LIST "trt/trt_kernel.cc")
 
+    if(WIN32)
+        list(REMOVE_ITEM GPU_SRC_LIST "nccl/nccl_gpu_kernel.cc")
+    endif()
+
     if(ENABLE_MPI)
         include(ExternalProject)
         file(GLOB_RECURSE GPU_NCCL_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "nccl/*.cc")

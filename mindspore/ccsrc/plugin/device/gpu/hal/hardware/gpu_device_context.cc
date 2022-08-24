@@ -15,7 +15,9 @@
  */
 
 #include "plugin/device/gpu/hal/hardware/gpu_device_context.h"
+#ifndef _WIN32
 #include <dlfcn.h>
+#endif
 #include <utility>
 #include "plugin/device/gpu/hal/device/kernel_info_setter.h"
 #include "plugin/device/gpu/hal/device/gpu_kernel_build.h"
@@ -119,6 +121,7 @@ void GPUDeviceResManager::Initialize() {
   if (CollectiveInitializer::instance().collective_inited()) {
     auto collective_handle = CollectiveInitializer::instance().collective_handle();
     if (collective_handle != nullptr) {
+#ifndef _WIN32
       MS_LOG(INFO) << "Start initializing NCCL communicator for device "
                    << device_context_->device_context_key().device_id_;
       auto init_nccl_comm_funcptr =
@@ -126,6 +129,9 @@ void GPUDeviceResManager::Initialize() {
       MS_EXCEPTION_IF_NULL(init_nccl_comm_funcptr);
       (*init_nccl_comm_funcptr)();
       MS_LOG(INFO) << "End initializing NCCL communicator.";
+#else
+      MS_LOG(EXCEPTION) << "windows not support nccl.";
+#endif
     }
   }
 }
