@@ -685,7 +685,7 @@ def test_getattr_numpy_array():
 
     with pytest.raises(TypeError) as err:
         foo()
-    assert "Do not support to get attribute from interpret object." in str(err.value)
+    assert "Do not support to get attribute from interpreted object." in str(err.value)
 
 
 def test_getattr_numpy_array_2():

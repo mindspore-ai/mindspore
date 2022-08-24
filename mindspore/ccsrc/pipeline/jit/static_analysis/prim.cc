@@ -1675,7 +1675,7 @@ EvalResultPtr StaticGetter(const AnalysisEnginePtr &engine, const AbstractBasePt
   if (data_args->isa<abstract::AbstractScalar>()) {
     ValuePtr data_value = data_args->BuildValue();
     if (data_value->isa<parse::InterpretedObject>()) {
-      MS_EXCEPTION(TypeError) << "Do not support to get attribute from interpret object.";
+      MS_EXCEPTION(TypeError) << "Do not support to get attribute from interpreted object.";
     }
   }
 
