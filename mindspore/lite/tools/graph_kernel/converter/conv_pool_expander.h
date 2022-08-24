@@ -13,18 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_CONV_TUNE_H_
-#define MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_CONV_TUNE_H_
+#ifndef MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_CONV_POOL_EXPANDER_H_
+#define MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_CONV_POOL_EXPANDER_H_
+#include <vector>
 #include "ir/func_graph.h"
-#include "backend/common/optimizer/pass.h"
+#include "tools/graph_kernel/converter/graph_kernel_expander_lite.h"
 
 namespace mindspore::graphkernel {
-class ConvTune : public opt::Pass {
+class ConvPoolExpander : public GraphKernelExpanderLite {
  public:
-  ConvTune() : Pass("conv_tune") {}
-  ~ConvTune() override = default;
+  ConvPoolExpander() : GraphKernelExpanderLite("conv_pool_expander") {}
+  ~ConvPoolExpander() override = default;
   bool Run(const FuncGraphPtr &func_graph) override;
+
+ protected:
+  std::vector<PrimitivePtr> InitOpList() override;
 };
+
+bool InvalidConvAttr(const std::vector<int64_t> &kernel_size, const std::vector<int64_t> &stride,
+                     const std::vector<int64_t> &dilation);
 }  // namespace mindspore::graphkernel
 
-#endif  // MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_CONV_TUNE_H_
+#endif  // MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_CONV_POOL_EXPANDER_H_

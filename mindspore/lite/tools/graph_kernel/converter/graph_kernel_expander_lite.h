@@ -16,6 +16,7 @@
 #ifndef MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_GRAPH_KERNEL_EXPANDER_LITE_H_
 #define MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_GRAPH_KERNEL_EXPANDER_LITE_H_
 #include <memory>
+#include <string>
 #include <vector>
 
 #include "common/graph_kernel/core/graph_kernel_expander.h"
@@ -73,6 +74,7 @@ class PoolLayoutDeco : public ExpanderDecorator {
 class GraphKernelExpanderLite : public GraphKernelExpander {
  public:
   GraphKernelExpanderLite() : GraphKernelExpander() {}
+  explicit GraphKernelExpanderLite(const std::string &name) : GraphKernelExpander(name) {}
   ~GraphKernelExpanderLite() override = default;
 
  protected:

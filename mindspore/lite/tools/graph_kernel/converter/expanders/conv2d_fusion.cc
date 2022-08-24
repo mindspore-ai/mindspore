@@ -17,11 +17,25 @@
 #include <memory>
 
 #include "common/graph_kernel/expanders/op_desc_registry.h"
+#include "tools/graph_kernel/converter/conv_pool_expander.h"
 #include "tools/graph_kernel/converter/expanders/activation.h"
 #include "mindapi/base/types.h"
 #include "ir/dtype.h"
 
 namespace mindspore::graphkernel::expanders {
+class CheckValidAttr : public Validator {
+ public:
+  bool Check(const OpDesc &e) override {
+    const auto kernel_size = GetValue<std::vector<int64_t>>(e.Attrs().find("kernel_size")->second);
+    const auto stride = GetValue<std::vector<int64_t>>(e.Attrs().find("stride")->second);
+    const auto dilation = GetValue<std::vector<int64_t>>(e.Attrs().find("dilation")->second);
+    if (InvalidConvAttr(kernel_size, stride, dilation)) {
+      return false;
+    }
+    return true;
+  }
+};
+
 class CheckDepthWise : public Validator {
  public:
   bool Check(const OpDesc &e) override {
@@ -47,6 +61,7 @@ class Conv2DFusion : public OpDesc {
                                              "weight_coi",  "weight_cio",  "weight_cii"};
     (void)validators_.emplace_back(std::make_unique<CheckAttr>(attrs));
     (void)validators_.emplace_back(std::make_unique<CheckDepthWise>());
+    (void)validators_.emplace_back(std::make_unique<CheckValidAttr>());
   }
   ~Conv2DFusion() = default;
 
