@@ -4,7 +4,7 @@
 
     .. note::
         除recompute参数外，当用户未将auto_parallel_context设为 `SEMI_AUTO_PARALLEL` 或 `AUTO_PARALLEL` 时，其他参数将无效。
-        在训练时，micro_batch_num的值必须大于或等于equal to pipeline_stage的值。data_parallel\*model_parallel  \*pipeline_stage的值必须等于或小于总设备的数量。设置pipeline_stage和optimizer_shard时，其配置将覆盖auto_parallel_context的配置。
+        在训练时，micro_batch_num的值必须大于或等于pipeline_stage的值。data_parallel\*model_parallel  \*pipeline_stage的值必须等于或小于总设备的数量。设置pipeline_stage和optimizer_shard时，其配置将覆盖auto_parallel_context的配置。
 
     **参数：**
 
