@@ -78,6 +78,7 @@ for /f "tokens=1-2 delims= " %%i in (%MODEL_CONFIG%) do (
 
 echo "Run converted models"
 copy %DST_PACKAGE_PATH%\runtime\lib\* %DST_PACKAGE_PATH%\tools\benchmark\
+copy %DST_PACKAGE_PATH%\runtime\third_party\glog\* %DST_PACKAGE_PATH%\tools\benchmark\
 cd /d %DST_PACKAGE_PATH%\tools\benchmark\
 
 SET INPUT_BASE=%MODEL_PATH%/input_output/input
