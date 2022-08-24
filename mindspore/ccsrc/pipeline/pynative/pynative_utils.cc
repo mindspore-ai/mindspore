@@ -358,12 +358,14 @@ void DataConvert::ConvertValueTupleToTensor(const FrontendOpRunInfoPtr &op_run_i
                                             const ValueSequencePtr &value_seq) {
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(value_seq);
-  if (!value_seq->isa<ValueTuple>()) {
-    MS_LOG(EXCEPTION) << "The input object is not a value tuple!";
+  ValueTuplePtr value_tuple;
+  if (value_seq->isa<ValueList>()) {
+    value_tuple = std::make_shared<ValueTuple>(value_seq->value());
+  } else {
+    value_tuple = value_seq->cast<ValueTuplePtr>();
   }
-  auto value_tuple = value_seq->cast<ValueTuplePtr>();
   MS_EXCEPTION_IF_NULL(value_tuple);
-  tensor::TensorPtr tensor_ptr = opt::CreateTupleTensor(value_tuple);
+  auto tensor_ptr = opt::CreateTupleTensor(value_tuple);
   MS_EXCEPTION_IF_NULL(tensor_ptr);
   (void)op_run_info->base_op_run_info.input_tensor.emplace_back(tensor_ptr);
 }
@@ -394,7 +396,7 @@ void DataConvert::ConvertTupleValueToTensor(const FrontendOpRunInfoPtr &op_run_i
   MS_EXCEPTION_IF_NULL(value_seq);
   MS_EXCEPTION_IF_NULL(op_prim);
 
-  auto tuple_inputs = value_seq->value();
+  const auto &tuple_inputs = value_seq->value();
   if (tuple_inputs.empty()) {
     if (kAxisNone.find(op_prim->name()) != kAxisNone.end()) {
       (void)op_run_info->base_op_run_info.input_tensor.emplace_back(
