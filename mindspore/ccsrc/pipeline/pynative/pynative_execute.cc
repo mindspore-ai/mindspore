@@ -138,7 +138,6 @@ void PyNativeExecutor::set_kernel_build_server_dir(const py::object &kernel_buil
 
 void PyNativeExecutor::ClearRes() {
   MS_LOG(DEBUG) << "Clear all res";
-  session::PynativeTaskManager::GetInstance().Reset();
   runtime::OpExecutor::GetInstance().Reset();
 
   // Maybe exit in runop step

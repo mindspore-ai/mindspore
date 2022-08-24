@@ -40,7 +40,6 @@
 #include "debug/debugger/debugger.h"
 #endif
 #include "runtime/hardware/device_context.h"
-#include "backend/common/session/pynative_task_manager.h"
 #include "include/backend/visible.h"
 
 namespace mindspore {
@@ -287,8 +286,6 @@ class BACKEND_EXPORT SessionBasic : public std::enable_shared_from_this<SessionB
     LoadInputData(kernel_graph, inputs_const);
     MS_LOG(INFO) << "Status record: end load input. graph id: " << graph_id;
   }
-
-  virtual void ExecuteAllTaskInQueue() {}
 
   virtual void LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
                              const std::vector<tensor::TensorPtr> &inputs_const) const {

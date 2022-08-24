@@ -30,7 +30,6 @@
 #include "backend/common/session/kernel_graph.h"
 #include "kernel/kernel.h"
 #include "backend/common/session/session_factory.h"
-#include "backend/common/session/pynative_task_manager.h"
 
 namespace mindspore {
 namespace session {
@@ -45,7 +44,6 @@ class AscendSession : public SessionBasic {
   GraphId GetFinalRunGraph() const override { return final_graph_id_; }
   void SyncStream() const override;
 
-  static void BatchBuildKernel(const std::vector<std::shared_ptr<SessionTask>> &build_tasks);
   void ReportWarningMessage() override;
   void ReportErrorMessage() override;
   void SetThreadContext() override;
@@ -80,7 +78,6 @@ class AscendSession : public SessionBasic {
                        const std::vector<tensor::TensorPtr> &graph_inputs,
                        const std::map<KernelWithIndex, size_t> &cnode_refcount) override;
   std::string GetCommWorldGroup() override { return kHcclWorldGroup; }
-  void ExecuteAllTaskInQueue() override;
   void UpdateOutputTensors(const VectorRef *outputs,
                            const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node,
                            std::map<DeviceAddressPtr, DeviceAddressPtr> *) override;
@@ -148,18 +145,7 @@ class AscendSession : public SessionBasic {
                              const std::vector<tensor::TensorPtr> &graph_inputs,
                              const std::map<KernelWithIndex, OutputTensorInfo> &node_output_info,
                              InputTensorInfo *input_tensor_info) const;
-  void PrepareForOutputTensor(const KernelGraphPtr &graph, const std::vector<tensor::TensorPtr> &input_tensors,
-                              std::map<tensor::TensorPtr, session::KernelWithIndex> *tensor_to_node,
-                              VectorRef *const outputs) const;
 
-  void LaunchFunc(const KernelGraphPtr &graph,
-                  const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node,
-                  const std::vector<tensor::TensorPtr> &input_tensors);
-
-  KernelGraphPtr CreateKernelGraph(const GraphInfo &graph_info, const BackendOpRunInfoPtr &op_run_info,
-                                   const std::vector<tensor::TensorPtr> &input_tensors,
-                                   const std::vector<int64_t> &tensors_mask, bool cache_miss);
-  static bool DisableLazyBuild(const BackendOpRunInfoPtr &op_run_info);
   void SelectKernel(const KernelGraphPtr &graph) const;
   void SetOperatorInfo(const std::vector<CNodePtr> &nodes) const;
   void RecurseSelectKernelInfo(const KernelGraphPtr &graph, std::set<KernelGraphPtr> *memo) const;

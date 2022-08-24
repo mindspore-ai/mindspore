@@ -19,13 +19,10 @@
 #ifdef WITH_BACKEND
 #include "ps/ps_cache/ps_cache_manager.h"
 #endif
-#include "backend/common/session/pynative_task_manager.h"
 
 namespace mindspore {
 namespace device {
 void KernelRuntimeManager::ClearRuntimeResource() {
-  // Just remove PyNative tasks before runtime resource release.
-  session::PynativeTaskManager::GetInstance().Reset();
 #ifdef WITH_BACKEND
   if (ps::PSContext::instance()->is_worker() && ps::PsDataPrefetch::GetInstance().cache_enable()) {
     ps::ps_cache_instance.SyncEmbeddingTable();
@@ -121,7 +118,6 @@ KernelRuntime *KernelRuntimeManager::GetCurrentKernelRuntime() {
 }
 
 void KernelRuntimeManager::ReleaseKernelRuntime(const std::string &device_name, uint32_t device_id) {
-  session::PynativeTaskManager::GetInstance().Reset();
   std::string runtime_key = GetDeviceKey(device_name, device_id);
   std::lock_guard<std::mutex> guard(lock_);
   auto runtime_iter = runtime_map_.find(runtime_key);
