@@ -332,12 +332,10 @@ void GetFusionScopeOutputNodeList(session::KernelGraph *kernel_graph,
     fusion_info.all_outputs_from_last_node = true;
     for (size_t node_idx = 0; node_idx < fusion_info.anf_nodes.size(); ++node_idx) {
       const auto &node = fusion_info.anf_nodes[node_idx];
-      auto core_type = AnfAlgo::GetCoreType(node);
-      fusion_info.core_type = core_type;
       size_t old_output_num = fusion_info.outputs_list.size();
       if (common::AnfAlgo::GetOutputTensorNum(node) == 1) {
         auto use_nodes = manager->node_users()[node];
-        for (auto use_node : use_nodes) {
+        for (const auto &use_node : use_nodes) {
           // Do not think of updatestate as real output,
           // Ensuring normal fusion requires eliminating the node of the updatestate
           if (common::AnfAlgo::CheckPrimitiveType(use_node.first, prim::kPrimUpdateState)) {

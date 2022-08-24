@@ -128,7 +128,6 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
   static std::vector<nlohmann::json> GetOutputDataDesc(const AnfNodePtr &node);
   // core type
   static void SetCoreType(const AnfNodePtr &node, const std::string &core_type);
-  static std::string GetCoreType(const AnfNodePtr &node);
   // set select kernel_build_info
   static void SetSelectKernelBuildInfo(const kernel::KernelBuildInfoPtr &select_kernel_build_info, AnfNode *node);
   // get select kernel_build_info

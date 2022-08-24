@@ -38,6 +38,7 @@
 #include "include/common/utils/anfalgo.h"
 #include "backend/common/session/kernel_build_client.h"
 #include "plugin/device/ascend/kernel/aicpu/aicpu_kernel_load.h"
+#include "plugin/device/ascend/hal/hardware/ascend_utils.h"
 #ifndef ENABLE_SECURITY
 #include "plugin/device/ascend/hal/device/profiling/profiling_manager.h"
 #include "plugin/device/ascend/hal/device/profiling/profiling_utils.h"
@@ -388,6 +389,7 @@ bool AscendKernelRuntime::Init() {
     if (rt_ret != RT_ERROR_NONE) {
       MS_LOG(EXCEPTION) << "Reg SetTaskFailCallback failed, error: " << rt_ret;
     }
+    PlatformInfoInitialization();
   } catch (const std::exception &e) {
     const string &error_message = ErrorManager::GetInstance().GetErrorMessage();
     if (!error_message.empty() && error_message.find(kUnknowErrorString) == string::npos) {
