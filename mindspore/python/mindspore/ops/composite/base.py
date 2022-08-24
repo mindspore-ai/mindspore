@@ -526,8 +526,7 @@ class _Grad(GradOperation_):
 
             @_wrap_func
             def after_grad(*args, **kwargs):
-                forward_flag = self.get_value or self.has_aux
-                res = self._pynative_forward_run(fn, grad_, forward_flag, args, kwargs)
+                res = self._pynative_forward_run(fn, grad_, args, kwargs)
                 _pynative_executor.grad(fn, grad_, weights, grad_position, *args, **kwargs)
                 out = _pynative_executor(fn, grad_.sens_param, *args, **kwargs)
                 _pynative_executor.clear_grad(fn, *args, **kwargs)
@@ -560,7 +559,7 @@ class _Grad(GradOperation_):
         self.grad_hash_id = (grad_position, weights_id)
         return self.grad_fn
 
-    def _pynative_forward_run(self, fn, grad, forward_flag, args, kwargs):
+    def _pynative_forward_run(self, fn, grad, args, kwargs):
         """ Pynative forward runs to build grad graph. """
         new_kwargs = kwargs
         outputs = ()
@@ -584,7 +583,7 @@ class _Grad(GradOperation_):
                 outputs = fn(*args, **new_kwargs)
                 fn.set_grad(False)
                 return outputs
-        if forward_flag and not outputs:
+        if (self.get_value or self.has_aux) and not outputs:
             outputs = fn(*args, **new_kwargs)
         return outputs
 

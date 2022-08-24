@@ -22,16 +22,14 @@ from mindspore.common import dtype as mstype
 from mindspore.nn.grad.cell_grad import _JvpInner
 from mindspore.nn.grad.cell_grad import _VjpInner
 from mindspore.nn.grad.cell_grad import _LinearizeInner
-from mindspore.ops.primitive import constexpr, Primitive
+from mindspore.ops.primitive import constexpr
 from mindspore.ops.function import ones, expand_dims
-from ...composite import _Grad, _TaylorOperation
-from ... import operations as P
+from mindspore.ops.composite import _Grad, _TaylorOperation
+from mindspore.ops import operations as P
 
 cast = P.Cast()
 dtype = P.DType()
 zeros = P.Zeros()
-tuple_len = Primitive("tuple_len")
-list_len = Primitive("list_len")
 
 
 @constexpr
@@ -405,13 +403,13 @@ def jet(fn, primals, series):
     """
     primals, series = _check_jet_inputs(primals, series)
     derivative_fn = _taylor(fn)
-    if isinstance(primals, list) and list_len(primals) > 1:
+    if isinstance(primals, list) and len(primals) > 1:
         inputs = map(_preprocess_jet, primals, series)
         outputs = derivative_fn(*inputs)
     else:
         inputs = _preprocess_jet(primals, series)
         outputs = derivative_fn(inputs)
-    if isinstance(outputs, tuple) and tuple_len(outputs) > 1:
+    if isinstance(outputs, tuple) and len(outputs) > 1:
         out_primals = []
         out_series = []
         for element in outputs:
@@ -530,7 +528,7 @@ def derivative(fn, primals, order):
         series[0] = series_one
         inputs = concat_op((expand_dims(primals, 0), series))
         outputs = derivative_fn(inputs)
-    if isinstance(outputs, tuple) and tuple_len(outputs) > 1:
+    if isinstance(outputs, tuple) and len(outputs) > 1:
         out_primals = []
         out_series = []
         for element in outputs:
