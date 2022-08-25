@@ -57,6 +57,15 @@ class Reshape : public OpDesc {
       MS_LOG(INFO) << "Reshape's attr shape is neither Tensor nor ValueTuple. Expand failed";
       return {};
     }
+    for (size_t i = 0; i < shape.size(); i++) {
+      if (shape[i] == 0) {
+        if (input_x->shape.size() <= i) {
+          MS_LOG(INFO) << "Reshape's attr shape[" << i << "] is 0, but input's rank is " << input_x->shape.size();
+          return {};
+        }
+        shape[i] = input_x->shape[i];
+      }
+    }
     auto result = gb.Reshape(input_x, shape);
     return {result};
   }
