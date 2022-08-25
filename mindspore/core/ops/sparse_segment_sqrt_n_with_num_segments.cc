@@ -36,27 +36,30 @@ abstract::ShapePtr SparseSegmentSqrtNWithNumSegmentsInferShape(const PrimitivePt
                                                                const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
+  constexpr size_t kRankOne = 1;
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
   auto segment_ids_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
   auto num_segments_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
-  (void)CheckAndConvertUtils::CheckInteger("indices_shape", static_cast<int64_t>(indices_shape.size()), kEqual,
-                                           static_cast<int64_t>(kInputIndex1), prim->name());
-  (void)CheckAndConvertUtils::CheckInteger("segment_ids_shape", static_cast<int64_t>(segment_ids_shape.size()), kEqual,
-                                           static_cast<int64_t>(kInputIndex1), prim->name());
-  if (x_shape.size() < kInputIndex1) {
-    MS_EXCEPTION(ValueError) << "For " << prim_name << ", rank of x cannot less than 1.";
+  if (indices_shape.size() != kRankOne) {
+    MS_EXCEPTION(ValueError) << "For " << prim_name << ", rank of indices should be 1.";
+  }
+  if (segment_ids_shape.size() != kRankOne) {
+    MS_EXCEPTION(ValueError) << "For " << prim_name << ", rank of segment_ids should be 1.";
+  }
+  if (x_shape.size() < kRankOne) {
+    MS_EXCEPTION(ValueError) << "For " << prim_name << ", rank of x cannot be less than 1.";
   }
   if (indices_shape[kInputIndex0] != segment_ids_shape[kInputIndex0]) {
     MS_EXCEPTION(ValueError) << "For " << prim_name << ", rank of indices and segment_ids mismatch.";
   }
-  if (num_segments_shape.size() > kInputIndex1) {
+  if (num_segments_shape.size() > kRankOne) {
     MS_EXCEPTION(ValueError) << "For " << prim_name << ", num_segments should be at most 1-D.";
   }
-  if (num_segments_shape.size() == kInputIndex1) {
-    if (num_segments_shape[kInputIndex0] != static_cast<int64_t>(kInputIndex1)) {
+  if (num_segments_shape.size() == kRankOne) {
+    if (num_segments_shape[kInputIndex0] != kRankOne) {
       MS_EXCEPTION(ValueError) << "For " << prim_name << ", the num element of num_segments should be 1.";
     }
   }
@@ -69,9 +72,9 @@ abstract::ShapePtr SparseSegmentSqrtNWithNumSegmentsInferShape(const PrimitivePt
     auto num_segments_value_ptr_tensor =
       CheckAndConvertUtils::CheckTensorIntValue("num_segments", num_segments_value_ptr, prim->name());
     size_t dim_zero = static_cast<size_t>(num_segments_value_ptr_tensor.back());
-    if (dim_zero < kInputIndex1) {
+    if (dim_zero < kRankOne) {
       MS_EXCEPTION(ValueError) << "For " << prim_name
-                               << ", num_segments must bigger than the last number of segment_ids.";
+                               << ", num_segments must be bigger than the largest id of segment_ids.";
     } else {
       ShapeVector y_shape = x_shape;
       y_shape[kInputIndex0] = static_cast<int64_t>(dim_zero);

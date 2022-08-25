@@ -1128,11 +1128,11 @@ class SparseSegmentSqrtN(Primitive):
     N is the size of the segment being reduced.
 
     Inputs:
-        - **x** (Tensor) - A tensor.
-        - **indices** (Tensor) - Indices is a 1-D tensor. Must be one of the following types: int32, int64.
+        - **x** (Tensor) - A tensor. It's rank must be more than or equal to one.
+        - **indices** (Tensor) - 1-D Tensor with indices into `x`. Must be one of the following types: int32, int64.
           Has same rank as segment_ids. The shape should be :math:`(N,)`.
-        - **segment_ids** (Tensor) - Segment_ids is a 1-D tensor. Must be one of the following types: int32, int64.
-          Values should be sorted and can be repeated. The shape should be :math:`(N,)`.
+        - **segment_ids** (Tensor) - 1-D Tensor with indices into the output `y`. Must be one of the following
+          types: int32, int64. Values should be sorted and can be repeated. The shape should be :math:`(N,)`.
 
     Outputs:
         A Tensor. Has the same type as `x` .
@@ -1143,12 +1143,12 @@ class SparseSegmentSqrtN(Primitive):
         TypeError: If the dtype of `x` is not any of the following data types: {float16, float32, float64}.
         TypeError: If the dtype of `indices` is not int32 or int64.
         TypeError: If the dtype of `segment_ids` is not int32 or int64.
-        ValueError: If dimension size of `x` less than 1.
+        ValueError: If dimension size of `x` is less than 1.
         ValueError: If any of `indices` and `segment_ids` is not a 1-D tensor.
         ValueError: If shape[0] of `indices` is not corresponding to shape[0] of `segment_ids`.
         ValueError: If indices in `segment_ids` are not contiguous or do not start from 0.
         ValueError: If `segment_ids` is not sorted.
-        ValueError: If `indices` is out of range of x's first shape.
+        ValueError: If `indices` is out of range of x's first dimension.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
@@ -1180,12 +1180,13 @@ class SparseSegmentSqrtNWithNumSegments(Primitive):
     If an id is missing, the output tensor at that position will be zeroed.
 
     Inputs:
-        - **x** (Tensor) - A Tensor.
-        - **indices** (Tensor) - 1-D Tensor. Must be one of the following types: int32, int64.
+        - **x** (Tensor) - A Tensor. It's rank must be more than or equal to one.
+        - **indices** (Tensor) - 1-D Tensor with indices into `x`. Must be one of the following types: int32, int64.
           Has same rank as segment_ids. The shape should be :math:`(N,)`.
-        - **segment_ids** (Tensor) - Segment_ids: 1-D Tensor. Must be one of the following types: int32, int64.
-          Values should be sorted and can be repeated. The shape should be :math:`(N,)`.
-        - **num_segments** (Tensor) - Num_segments should equal the number of distinct segment_ids.
+        - **segment_ids** (Tensor) - 1-D Tensor with indices into the output `y`. Must be one of the following
+          types: int32, int64. Values should be sorted and can be repeated. The shape should be :math:`(N,)`.
+        - **num_segments** (Tensor) - Num_segments indicates the size of the output.
+          It should be bigger than the largest id of `segment_ids`.
 
     Outputs:
         A Tensor. Has the same type as `x` .
@@ -1197,14 +1198,14 @@ class SparseSegmentSqrtNWithNumSegments(Primitive):
         TypeError: If the dtype of `indices` and `segment_ids` and `num_segments` is not int32 or int64.
         TypeError: If dtype of `segment_ids` and `indices` mismatch.
         TypeError: If dtype of `num_segments` and `indices` mismatch.
-        ValueError: If dimension size of `x` less than 1.
+        ValueError: If dimension size of `x` is less than 1.
         ValueError: If any of `indices` and `segment_ids` is not a 1-D tensor.
         ValueError: If rank of `num_segments` is bigger than 1.
         ValueError: If numelements of `num_segments` is not 1.
         ValueError: If the first dimension of `indices` is not equal to the first dimension of `segment_ids`.
         ValueError: If `segment_ids` is not sorted.
-        ValueError: If the last number of `segment_ids` is bigger than or equal to `num_segments`.
-        ValueError: If `indices` is out of range of x's first shape.
+        ValueError: If the the largest id of `segment_ids` is bigger than or equal to `num_segments`.
+        ValueError: If `indices` is out of range of x's first dimension.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
@@ -1312,13 +1313,13 @@ class SparseSegmentMeanWithNumSegments(Primitive):
         TypeError: If dtype of `indices` is not int32 or int64.
         TypeError: If dtype of `segment_ids` and `indices` mismatch.
         TypeError: If dtype of `num_segments` and `indices` mismatch.
-        ValueError: If rank of `x` less than 1.
+        ValueError: If rank of `x` is less than 1.
         ValueError: If rank of `indices` or `segment_ids` is not 1.
         ValueError: If rank of `num_segments` is bigger than 1.
         ValueError: If numelements of `num_segments` is not 1.
         ValueError: If the first dimension of `indices` is not equal to the first dimension of `segment_ids`.
         ValueError: If `segment_ids` is not sorted.
-        ValueError: If the last number of `segment_ids` is bigger than or equal to `num_segments`.
+        ValueError: If the largest id of `segment_ids` is bigger than or equal to `num_segments`.
         ValueError: If `indices` is out of range of x's first dimension.
 
     Supported Platforms:

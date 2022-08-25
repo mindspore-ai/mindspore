@@ -37,16 +37,19 @@ abstract::ShapePtr SparseSegmentSqrtNInferShape(const PrimitivePtr &prim,
                                                 const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
+  constexpr size_t kRankOne = 1;
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
   auto segment_ids_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
-  (void)CheckAndConvertUtils::CheckInteger("indices_shape", SizeToLong(indices_shape.size()), kEqual,
-                                           static_cast<int64_t>(kInputIndex1), prim->name());
-  (void)CheckAndConvertUtils::CheckInteger("segment_ids_shape", SizeToLong(segment_ids_shape.size()), kEqual,
-                                           static_cast<int64_t>(kInputIndex1), prim->name());
-  if (x_shape.size() < kInputIndex1) {
-    MS_EXCEPTION(ValueError) << "For '" << prim_name << "', x's rank less than 1.";
+  if (indices_shape.size() != kRankOne) {
+    MS_EXCEPTION(ValueError) << "For " << prim_name << ", rank of indices should be 1.";
+  }
+  if (segment_ids_shape.size() != kRankOne) {
+    MS_EXCEPTION(ValueError) << "For " << prim_name << ", rank of segment_ids should be 1.";
+  }
+  if (x_shape.size() < kRankOne) {
+    MS_EXCEPTION(ValueError) << "For '" << prim_name << "', x's rank is less than 1.";
   }
   if (indices_shape[kInputIndex0] != segment_ids_shape[kInputIndex0]) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name << "', ranks of indices and segment_ids mismatch.";
@@ -57,8 +60,8 @@ abstract::ShapePtr SparseSegmentSqrtNInferShape(const PrimitivePtr &prim,
     MS_EXCEPTION_IF_NULL(segment_ids_value_ptr);
     auto segment_ids_value_ptr_tensor =
       CheckAndConvertUtils::CheckTensorIntValue("segment_ids", segment_ids_value_ptr, prim->name());
-    size_t dim_zero = static_cast<size_t>(segment_ids_value_ptr_tensor.back()) + kInputIndex1;
-    if (dim_zero < kInputIndex1) {
+    size_t dim_zero = static_cast<size_t>(segment_ids_value_ptr_tensor.back()) + kRankOne;
+    if (dim_zero < kRankOne) {
       MS_EXCEPTION(ValueError) << "For '" << prim_name << "', segment_ids must >= 0!";
     } else {
       ShapeVector y_shape = x_shape;

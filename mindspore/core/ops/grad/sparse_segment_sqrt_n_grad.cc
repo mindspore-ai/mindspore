@@ -36,7 +36,7 @@ abstract::ShapePtr SparseSegmentSqrtNGradInferShape(const PrimitivePtr &prim,
   auto output_dim0_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
   if (x_shape.size() < kInputIndex1) {
-    MS_EXCEPTION(ValueError) << "For '" << prim_name << "', tensor x's rank less than 1.";
+    MS_EXCEPTION(ValueError) << "For '" << prim_name << "', tensor x's rank is less than 1.";
   }
   if (output_dim0_shape.size() != kInputIndex0) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name << "', tensor outputdim0 should be a scalar.";
