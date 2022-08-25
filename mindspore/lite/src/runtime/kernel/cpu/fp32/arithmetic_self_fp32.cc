@@ -34,6 +34,7 @@ ArithmeticSelfFunc ArithmeticSelfCPUKernel::GetArithmeticSelfFun(int primitive_t
   TYPE_FUNC_INFO type_func_table[] = {{mindspore::schema::PrimitiveType_Abs, ElementAbs},
                                       {mindspore::schema::PrimitiveType_Cos, ElementCos},
                                       {mindspore::schema::PrimitiveType_Log, ElementLog},
+                                      {mindspore::schema::PrimitiveType_Log1p, ElementLog1p},
                                       {mindspore::schema::PrimitiveType_Square, ElementSquare},
                                       {mindspore::schema::PrimitiveType_Sqrt, ElementSqrt},
                                       {mindspore::schema::PrimitiveType_Rsqrt, ElementRsqrt},
@@ -152,6 +153,7 @@ int ArithmeticSelfCPUKernel::Run() {
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Abs, LiteKernelCreator<ArithmeticSelfCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Cos, LiteKernelCreator<ArithmeticSelfCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Log, LiteKernelCreator<ArithmeticSelfCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Log1p, LiteKernelCreator<ArithmeticSelfCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Square, LiteKernelCreator<ArithmeticSelfCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Sqrt, LiteKernelCreator<ArithmeticSelfCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Rsqrt, LiteKernelCreator<ArithmeticSelfCPUKernel>)
