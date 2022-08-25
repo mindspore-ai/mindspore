@@ -31,12 +31,14 @@ else()
 endif()
 set(pybind11_CXXFLAGS "-D_FORTIFY_SOURCE=2 -O2")
 set(pybind11_CFLAGS "-D_FORTIFY_SOURCE=2 -O2")
+set(pybind11_patch ${CMAKE_SOURCE_DIR}/third_party/patch/pybind11/pybind11.patch001)
 
 if(PYTHON_VERSION MATCHES "3.9")
     mindspore_add_pkg(pybind11
         VER 2.6.1
         URL ${REQ_URL}
         MD5 ${MD5}
+        PATCHES ${pybind11_patch}
         CMAKE_OPTION -DPYBIND11_TEST=OFF -DPYBIND11_LTO_CXX_FLAGS=FALSE
         )
 elseif(PYTHON_VERSION MATCHES "3.8")
