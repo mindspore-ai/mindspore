@@ -1189,6 +1189,8 @@ bool Somas::NodeSort(const SomasNodePtr &node1, const SomasNodePtr &node2) { ret
 
 void Somas::BuildConflictInfo(const std::shared_ptr<SomasTensor> &tensor, TensorConflictInfo *tensor_conflict_info,
                               std::vector<size_t> *destination_node_list) {
+  MS_EXCEPTION_IF_NULL(tensor);
+  MS_EXCEPTION_IF_NULL(tensor_conflict_info);
   const auto &consumer_list = tensor->consumer_list_;
   tensor_conflict_info->destination_num = consumer_list.size();
 

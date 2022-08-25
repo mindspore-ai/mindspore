@@ -148,7 +148,10 @@ void SetInternalOutputAttr(const AnfNodePtr &node) {
     return;
   }
   auto prim_node = NewValueNode(p->Clone());
-  node->cast<CNodePtr>()->set_input(kAnfPrimitiveIndex, prim_node);
+  MS_EXCEPTION_IF_NULL(node);
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  cnode->set_input(kAnfPrimitiveIndex, prim_node);
   common::AnfAlgo::SetNodeAttr(kAttrIsInternalOutputNopNode, MakeValue(true), node);
 }
 
