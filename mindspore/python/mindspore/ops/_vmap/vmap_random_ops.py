@@ -17,8 +17,8 @@
 """random_ops vmap impl."""
 from __future__ import absolute_import
 
-from ..operations.random_ops import UniformCandidateSampler
-from .._vmap.vmap_base import vmap_rules_getters, _bdim_at_front, _vmap_clone_prim
+from ..operations.random_ops import UniformCandidateSampler, RandomShuffle
+from .._vmap.vmap_base import vmap_rules_getters, _bdim_at_front, _vmap_clone_prim, vmap_general_preprocess
 
 
 @vmap_rules_getters.register(UniformCandidateSampler)
@@ -42,5 +42,29 @@ def get_uniform_candidate_sampler_vmap_rule(prim, axis_size):
         sampled_candidates, true_expected_count, sampled_expected_count = batch_prim(x)
 
         return (sampled_candidates, 0), (true_expected_count, 0), (sampled_expected_count, 0)
+
+    return vmap_rule
+
+
+@vmap_rules_getters.register(RandomShuffle)
+def get_random_shuffle_vmap_rule(prim, axis_size):
+    """VmapRule for `RandomShuffle` operation."""
+    if hasattr(prim, 'batch_rank'):
+        batch_rank = prim.batch_rank + 1
+    else:
+        batch_rank = 1
+
+    batch_prim = _vmap_clone_prim(prim)
+    batch_prim.add_prim_attr("batch_rank", batch_rank)
+
+    def vmap_rule(x_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim)
+        if is_all_none:
+            return result
+
+        x, x_dim = x_bdim
+        x = _bdim_at_front(x, x_dim, axis_size)
+        out = batch_prim(x)
+        return (out, 0)
 
     return vmap_rule

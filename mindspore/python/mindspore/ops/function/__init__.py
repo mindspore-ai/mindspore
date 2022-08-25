@@ -343,6 +343,7 @@ from .random_func import (
     random_gamma,
     uniform_candidate_sampler,
     random_poisson,
+    random_shuffle,
 )
 from .grad import (
     grad_func,

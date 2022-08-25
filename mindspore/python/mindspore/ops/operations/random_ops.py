@@ -936,3 +936,40 @@ class LogUniformCandidateSampler(PrimitiveWithInfer):
         Validator.check_tensor_dtype_valid("true_classes_type", true_classes_type, valid_types, self.name)
         expected_type = mstype.float32
         return true_classes_type, expected_type, expected_type
+
+
+class RandomShuffle(Primitive):
+    r"""
+    Randomly shuffles a Tensor along its first dimension.
+
+    Args:
+        seed (int): The operator-level random seed, used to generate random numbers, must be non-negative. Default: 0.
+        seed2 (int): The global random seed and it will combile with the operator-level random seed to determine the
+            final generated random number, must be non-negative. Default: 0.
+
+    Inputs:
+        - **x** (Tensor) - The Tensor need be shuffled.
+
+    Outputs:
+        Tensor. The shape and type are the same as the input `x`.
+
+    Raises:
+        TypeError: If data type of `seed` or `seed2` is not int.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([1, 2, 3, 4]), mstype.float32)
+        >>> shuffle = ops.RandomShuffle(seed=1, seed2=1)
+        >>> output = shuffle(x)
+        >>> print(output.shape)
+        (4,)
+    """
+
+    @prim_attr_register
+    def __init__(self, seed=0, seed2=0):
+        """Initialize RandomShuffle"""
+        self.init_prim_io_names(inputs=['input_x'], outputs=['output'])
+        Validator.check_non_negative_int(seed, "seed", self.name)
+        Validator.check_non_negative_int(seed2, "seed2", self.name)
