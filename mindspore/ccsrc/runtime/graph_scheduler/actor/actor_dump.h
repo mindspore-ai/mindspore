@@ -32,6 +32,8 @@
 #include "runtime/graph_scheduler/actor/copy_actor.h"
 #include "runtime/graph_scheduler/actor/custom_actor.h"
 #include "runtime/graph_scheduler/actor/fusion/fusion_actor.h"
+#include "runtime/graph_scheduler/actor/memory/memory_alloc_actor.h"
+#include "runtime/graph_scheduler/actor/memory/memory_free_actor.h"
 #include "runtime/graph_scheduler/actor/control_flow/control_actor.h"
 #include "runtime/graph_scheduler/actor/control_flow/switch_actor.h"
 #include "runtime/graph_scheduler/actor/control_flow/gather_actor.h"
@@ -49,6 +51,7 @@ void DumpDSActors(const std::vector<DataSourceActorPtr> &actors, std::ofstream &
 void DumpKernelActors(const std::vector<KernelActorPtr> &actors, std::ofstream &ofs);
 void DumpSuperKernelActors(const std::vector<SuperKernelActorPtr> &actors, std::ofstream &ofs);
 void DumpNoInputKernelActors(const std::vector<AbstractActorPtr> &actors, std::ofstream &ofs);
+void DumpMemoryActors(const std::vector<MemoryAwareActorPtr> &actors, std::ofstream &ofs);
 void DumpCopyActors(const std::vector<CopyActorPtr> &actors, std::ofstream &ofs);
 void DumpFusionActors(const std::vector<FusionActorPtr> &actors, std::ofstream &ofs);
 void DumpControlActors(const ControlActorSetPtr &control_actor_set, std::ofstream &ofs);

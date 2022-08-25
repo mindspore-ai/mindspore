@@ -19,6 +19,7 @@
 
 #include <utility>
 #include <string>
+#include <memory>
 #include "runtime/graph_scheduler/actor/abstract_actor.h"
 #include "runtime/graph_scheduler/device_tensor_store.h"
 
@@ -35,6 +36,8 @@ class MemoryAwareActor : public AbstractActor {
   virtual void SendMemoryAllocReq(OpContext<DeviceTensor> *const context) {}
   virtual void SendMemoryFreeReq(OpContext<DeviceTensor> *const context) {}
   virtual void OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {}
+
+  const AID &memory_manager_aid() const { return memory_manager_aid_; }
 
  protected:
   friend class GraphScheduler;
@@ -56,6 +59,8 @@ class MemoryAwareActor : public AbstractActor {
   // The id of memory manager actor. Send message to it for alloc and free memory.
   const AID memory_manager_aid_;
 };
+
+using MemoryAwareActorPtr = std::shared_ptr<MemoryAwareActor>;
 }  // namespace runtime
 }  // namespace mindspore
 
