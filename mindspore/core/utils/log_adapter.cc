@@ -40,11 +40,11 @@ constexpr auto kSplitLine = "\n-------------------------------------------------
 constexpr const char *ANDROID_LOG_TAG = "MS_LITE";
 #endif
 // set default log level to WARNING for all sub modules
-int g_ms_submodule_log_levels[NUM_SUBMODUES] = {WARNING};
+int g_ms_submodule_log_levels[NUM_SUBMODUES] = {MsLogLevel::kWarning};
 #if defined(_WIN32) || defined(_WIN64)
-enum MsLogLevel this_thread_max_log_level = EXCEPTION;
+enum MsLogLevel this_thread_max_log_level = MsLogLevel::kException;
 #else
-thread_local enum MsLogLevel this_thread_max_log_level = EXCEPTION;
+thread_local enum MsLogLevel this_thread_max_log_level = MsLogLevel::kException;
 #endif
 
 #ifdef USE_GLOG
@@ -82,13 +82,13 @@ static std::string GetLogLevel(MsLogLevel level) {
 // convert MsLogLevel to corresponding glog level
 static int GetGlogLevel(MsLogLevel level) {
   switch (level >= this_thread_max_log_level ? this_thread_max_log_level : level) {
-    case DEBUG:
-    case INFO:
+    case MsLogLevel::kDebug:
+    case MsLogLevel::kInfo:
       return google::GLOG_INFO;
-    case WARNING:
+    case MsLogLevel::kWarning:
       return google::GLOG_WARNING;
-    case ERROR:
-    case EXCEPTION:
+    case MsLogLevel::kError:
+    case MsLogLevel::kException:
     default:
       return google::GLOG_ERROR;
   }
@@ -111,13 +111,13 @@ static int GetThresholdLevel(const std::string &threshold) {
 #undef google
 #elif defined(BUILD_CORE_RUNTIME)
 const char *EnumStrForMsLogLevel(MsLogLevel level) {
-  if (level == MsLogLevel::DEBUG) {
+  if (level == MsLogLevel::kDebug) {
     return "DEBUG";
-  } else if (level == MsLogLevel::INFO) {
+  } else if (level == MsLogLevel::kInfo) {
     return "INFO";
-  } else if (level == MsLogLevel::WARNING) {
+  } else if (level == MsLogLevel::kWarning) {
     return "WARNING";
-  } else if (level == MsLogLevel::ERROR) {
+  } else if (level == MsLogLevel::kError) {
     return "ERROR";
   } else {
     return "NO_LEVEL";
@@ -127,13 +127,13 @@ const char *EnumStrForMsLogLevel(MsLogLevel level) {
 #if defined(__ANDROID__) || defined(ANDROID)
 static int GetAndroidLogLevel(MsLogLevel level) {
   switch (level) {
-    case MsLogLevel::DEBUG:
+    case MsLogLevel::kDebug:
       return ANDROID_LOG_DEBUG;
-    case MsLogLevel::INFO:
+    case MsLogLevel::kInfo:
       return ANDROID_LOG_INFO;
-    case MsLogLevel::WARNING:
+    case MsLogLevel::kWarning:
       return ANDROID_LOG_WARN;
-    case MsLogLevel::ERROR:
+    case MsLogLevel::kError:
     default:
       return ANDROID_LOG_ERROR;
   }
@@ -152,14 +152,14 @@ static int GetAndroidLogLevel(MsLogLevel level) {
 // convert MsLogLevel to corresponding slog level
 static int GetSlogLevel(MsLogLevel level) {
   switch (level) {
-    case DEBUG:
+    case MsLogLevel::kDebug:
       return DLOG_DEBUG;
-    case INFO:
+    case MsLogLevel::kInfo:
       return DLOG_INFO;
-    case WARNING:
+    case MsLogLevel::kWarning:
       return DLOG_WARN;
-    case ERROR:
-    case EXCEPTION:
+    case MsLogLevel::kError:
+    case MsLogLevel::kException:
     default:
       return DLOG_ERROR;
   }
@@ -379,7 +379,7 @@ void LogWriter::operator^(const LogStream &stream) const {
   thread_local bool running = false;
   if (!running) {
     running = true;
-    if (this_thread_max_log_level >= EXCEPTION) {
+    if (this_thread_max_log_level >= MsLogLevel::kException) {
       RemoveLabelBeforeOutputLog(msg);
     }
     if (trace_provider_ != nullptr) {
@@ -578,7 +578,7 @@ bool ParseLogLevel(const std::string &str_level, MsLogLevel *ptr_level) {
     int ch = str_level.c_str()[0];
     constexpr char number_start = '0';
     ch = ch - number_start;  // subtract ASCII code of '0', which is 48
-    if (ch >= static_cast<int>(DEBUG) && ch <= static_cast<int>(EXCEPTION)) {
+    if (ch >= static_cast<int>(MsLogLevel::kDebug) && ch <= static_cast<int>(MsLogLevel::kException)) {
       if (ptr_level != nullptr) {
         *ptr_level = static_cast<MsLogLevel>(ch);
       }
@@ -592,13 +592,13 @@ static MsLogLevel GetGlobalLogLevel() {
 #ifdef USE_GLOG
   return static_cast<MsLogLevel>(FLAGS_v);
 #else
-  int log_level = WARNING;  // set default log level to WARNING
+  int log_level = MsLogLevel::kWarning;  // set default log level to WARNING
   auto str_level = GetEnv("GLOG_v");
   if (str_level.size() == 1) {
     int ch = str_level.c_str()[0];
     constexpr char number_start = '0';
     ch = ch - number_start;  // subtract ASCII code of '0', which is 48
-    if (ch >= DEBUG && ch <= EXCEPTION) {
+    if (ch >= MsLogLevel::kDebug && ch <= MsLogLevel::kException) {
       log_level = ch;
     }
   }
@@ -725,7 +725,7 @@ MS_CORE_API void common_log_init(void) {
   FLAGS_logbufsecs = 0;
   // Set default log level to WARNING
   if (mindspore::GetEnv("GLOG_v").empty()) {
-    FLAGS_v = static_cast<int>(mindspore::WARNING);
+    FLAGS_v = static_cast<int>(mindspore::MsLogLevel::kWarning);
   }
 
   // Set default log file mode to 0640

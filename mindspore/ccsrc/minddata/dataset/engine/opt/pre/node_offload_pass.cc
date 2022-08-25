@@ -37,7 +37,7 @@ Status NodeOffloadPass::OffloadNodes::Visit(std::shared_ptr<MapNode> node, bool 
   if ((manual_offload == ManualOffloadMode::kEnabled) ||
       ((auto_offload_ == true) && (manual_offload != ManualOffloadMode::kDisabled))) {
     bool offload_supported = true;
-    if (IS_OUTPUT_ON(mindspore::INFO)) {
+    if (IS_OUTPUT_ON(mindspore::kInfo)) {
       std::string operations = "operations=[";
       auto op_list = node->operations();
       std::for_each(op_list.begin(), op_list.end(), [&](const auto &op) {

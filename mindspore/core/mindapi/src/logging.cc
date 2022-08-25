@@ -22,18 +22,18 @@
 namespace mindspore::api {
 static MsLogLevel ToMsLogLevel(LogLevel level) {
   switch (level) {
-    case LogLevel::DEBUG:
-      return MsLogLevel::DEBUG;
-    case LogLevel::INFO:
-      return MsLogLevel::INFO;
-    case LogLevel::WARNING:
-      return MsLogLevel::WARNING;
-    case LogLevel::ERROR:
-      return MsLogLevel::ERROR;
-    case LogLevel::EXCEPTION:
-      return MsLogLevel::EXCEPTION;
+    case LogLevel::kDebug:
+      return MsLogLevel::kDebug;
+    case LogLevel::kInfo:
+      return MsLogLevel::kInfo;
+    case LogLevel::kWarning:
+      return MsLogLevel::kWarning;
+    case LogLevel::kError:
+      return MsLogLevel::kError;
+    case LogLevel::kException:
+      return MsLogLevel::kException;
     default:
-      return MsLogLevel::EXCEPTION;
+      return MsLogLevel::kException;
   }
 }
 

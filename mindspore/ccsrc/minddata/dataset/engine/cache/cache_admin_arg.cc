@@ -380,7 +380,7 @@ Status CacheAdminArgHandler::Validate() {
                   "Number of workers must be in range of 1 and " + std::to_string(max_num_workers) + ".");
   }
 
-  if (log_level_ < MsLogLevel::DEBUG || log_level_ > MsLogLevel::EXCEPTION) {
+  if (log_level_ < MsLogLevel::kDebug || log_level_ > MsLogLevel::kException) {
     return Status(StatusCode::kMDSyntaxError, "Log level must be in range (0..4).");
   }
 

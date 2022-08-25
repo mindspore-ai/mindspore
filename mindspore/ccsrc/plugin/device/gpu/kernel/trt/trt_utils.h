@@ -107,7 +107,7 @@ class TrtUtils {
 class TrtLogger : public nvinfer1::ILogger {
  public:
   TrtLogger() {
-    log_level_ = MsLogLevel::WARNING;  // set default log level to WARNING
+    log_level_ = MsLogLevel::kWarning;  // set default log level to WARNING
     const char *glog_config = std::getenv("GLOG_v");
     if (glog_config == nullptr) {
       return;
@@ -117,7 +117,7 @@ class TrtLogger : public nvinfer1::ILogger {
     if (str_level.size() == 1) {
       int ch = str_level.c_str()[0];
       ch = ch - '0';  // subtract ASCII code of '0', which is 48
-      if (ch >= mindspore::DEBUG && ch <= mindspore::EXCEPTION) {
+      if (ch >= MsLogLevel::kDebug && ch <= MsLogLevel::kException) {
         log_level_ = static_cast<MsLogLevel>(ch);
       }
     }
@@ -127,11 +127,11 @@ class TrtLogger : public nvinfer1::ILogger {
 #ifdef USE_GLOG
 #define google mindspore_private
     static std::map<Severity, std::tuple<MsLogLevel, int, std::string>> logger_map = {
-      {Severity::kVERBOSE, {MsLogLevel::DEBUG, google::GLOG_INFO, "VERBOSE"}},
-      {Severity::kINFO, {MsLogLevel::INFO, google::GLOG_INFO, "INFO"}},
-      {Severity::kWARNING, {MsLogLevel::WARNING, google::GLOG_WARNING, "WARNING"}},
-      {Severity::kERROR, {MsLogLevel::ERROR, google::GLOG_ERROR, "ERROR"}},
-      {Severity::kINTERNAL_ERROR, {MsLogLevel::ERROR, google::GLOG_ERROR, "INTERNAL ERROR"}}};
+      {Severity::kVERBOSE, {MsLogLevel::kDebug, google::GLOG_INFO, "VERBOSE"}},
+      {Severity::kINFO, {MsLogLevel::kInfo, google::GLOG_INFO, "INFO"}},
+      {Severity::kWARNING, {MsLogLevel::kWarning, google::GLOG_WARNING, "WARNING"}},
+      {Severity::kERROR, {MsLogLevel::kError, google::GLOG_ERROR, "ERROR"}},
+      {Severity::kINTERNAL_ERROR, {MsLogLevel::kError, google::GLOG_ERROR, "INTERNAL ERROR"}}};
 
     auto iter = logger_map.find(severity);
     if (iter == logger_map.end()) {

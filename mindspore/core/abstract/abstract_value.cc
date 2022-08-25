@@ -331,7 +331,7 @@ void SynchronizeSequenceNodesElementsUseFlagsInner(const AnfNodeWeakPtrList &seq
 }
 
 void CheckSequenceNodesValid(const AnfNodeWeakPtrList &sequence_nodes) {
-  if (!IS_OUTPUT_ON(DEBUG)) {
+  if (!IS_OUTPUT_ON(MsLogLevel::kDebug)) {
     return;
   }
   if (sequence_nodes.size() <= 1) {

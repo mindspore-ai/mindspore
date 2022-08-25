@@ -106,7 +106,7 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
     run_only_once_ = run_only_once;
     is_watch_renormalize_ = false;
     is_untyped_generated_ = false;
-    is_on_debug_ = IS_OUTPUT_ON(mindspore::DEBUG);
+    is_on_debug_ = IS_OUTPUT_ON(mindspore::kDebug);
 
     for (auto &iter : passes) {
       const std::string &name = iter.first;

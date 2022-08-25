@@ -3017,7 +3017,7 @@ FunctionBlockPtr Parser::ParseWith(const FunctionBlockPtr &block, const py::obje
 
 void Parser::PrintPhiArgMaps(const std::map<ParameterPtr, std::set<AnfNodePtr>> &phi_to_args,
                              const std::map<AnfNodePtr, std::set<ParameterPtr>> &arg_to_phis) {
-  if (!IS_OUTPUT_ON(DEBUG)) {
+  if (!IS_OUTPUT_ON(mindspore::kDebug)) {
     return;
   }
   std::ostringstream oss;
@@ -3135,7 +3135,7 @@ std::shared_ptr<std::map<ParameterPtr, AnfNodePtr>> Parser::CollectRemovablePhiA
       (*need_remove_phi_args)[phi] = *(args.begin());
     }
   }
-  if (IS_OUTPUT_ON(DEBUG)) {
+  if (IS_OUTPUT_ON(mindspore::kDebug)) {
     size_t m = 0;
     std::ostringstream oss;
     oss << "=====================Need removed phis and args====================="
