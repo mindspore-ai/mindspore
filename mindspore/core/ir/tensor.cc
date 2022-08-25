@@ -678,13 +678,53 @@ Tensor::Tensor(int64_t input, const TypePtr &data_type)
       data_(MakeTensorData(data_type_, ShapeVector{}, input)),
       id_(MakeId()) {}
 
+Tensor::Tensor(int32_t input, const TypePtr &data_type)
+    : MetaTensor(TypeIdOf(data_type, kNumberTypeInt32), {}),
+      data_(MakeTensorData(data_type_, ShapeVector{}, input)),
+      id_(MakeId()) {}
+
+Tensor::Tensor(int16_t input, const TypePtr &data_type)
+    : MetaTensor(TypeIdOf(data_type, kNumberTypeInt16), {}),
+      data_(MakeTensorData(data_type_, ShapeVector{}, input)),
+      id_(MakeId()) {}
+
+Tensor::Tensor(int8_t input, const TypePtr &data_type)
+    : MetaTensor(TypeIdOf(data_type, kNumberTypeInt8), {}),
+      data_(MakeTensorData(data_type_, ShapeVector{}, input)),
+      id_(MakeId()) {}
+
 Tensor::Tensor(double input, const TypePtr &data_type)
     : MetaTensor(TypeIdOf(data_type, kNumberTypeFloat32), {}),
       data_(MakeTensorData(data_type_, ShapeVector{}, input)),
       id_(MakeId()) {}
 
+Tensor::Tensor(float input, const TypePtr &data_type)
+    : MetaTensor(TypeIdOf(data_type, kNumberTypeFloat32), {}),
+      data_(MakeTensorData(data_type_, ShapeVector{}, input)),
+      id_(MakeId()) {}
+
+Tensor::Tensor(float16 input, const TypePtr &data_type)
+    : MetaTensor(TypeIdOf(data_type, kNumberTypeFloat16), {}),
+      data_(MakeTensorData(data_type_, ShapeVector{}, input)),
+      id_(MakeId()) {}
+
 Tensor::Tensor(uint64_t input, const TypePtr &data_type)
     : MetaTensor(TypeIdOf(data_type, kNumberTypeUInt64), {}),
+      data_(MakeTensorData(data_type_, ShapeVector{}, input)),
+      id_(MakeId()) {}
+
+Tensor::Tensor(uint32_t input, const TypePtr &data_type)
+    : MetaTensor(TypeIdOf(data_type, kNumberTypeUInt32), {}),
+      data_(MakeTensorData(data_type_, ShapeVector{}, input)),
+      id_(MakeId()) {}
+
+Tensor::Tensor(uint16_t input, const TypePtr &data_type)
+    : MetaTensor(TypeIdOf(data_type, kNumberTypeUInt16), {}),
+      data_(MakeTensorData(data_type_, ShapeVector{}, input)),
+      id_(MakeId()) {}
+
+Tensor::Tensor(uint8_t input, const TypePtr &data_type)
+    : MetaTensor(TypeIdOf(data_type, kNumberTypeUInt8), {}),
       data_(MakeTensorData(data_type_, ShapeVector{}, input)),
       id_(MakeId()) {}
 

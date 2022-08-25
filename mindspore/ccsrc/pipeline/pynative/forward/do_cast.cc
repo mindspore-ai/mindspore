@@ -22,6 +22,69 @@
 
 namespace mindspore {
 namespace pynative {
+namespace {
+template <typename S>
+ValuePtr Cast(S in, const TypeId &dst_type_id) {
+  switch (dst_type_id) {
+    case kNumberTypeInt32:
+      return std::make_shared<tensor::Tensor>(static_cast<int>(in), kInt32);
+    case kNumberTypeFloat16:
+      return std::make_shared<tensor::Tensor>(static_cast<float16>(in), kFloat16);
+    case kNumberTypeFloat32:
+      return std::make_shared<tensor::Tensor>(static_cast<float>(in), kFloat32);
+    case kNumberTypeBool:
+      return std::make_shared<tensor::Tensor>(static_cast<bool>(in), kBool);
+    case kNumberTypeInt64:
+      return std::make_shared<tensor::Tensor>(static_cast<int64_t>(in), kInt64);
+    case kNumberTypeFloat64:
+      return std::make_shared<tensor::Tensor>(static_cast<double>(in), kFloat64);
+    case kNumberTypeInt16:
+      return std::make_shared<tensor::Tensor>(static_cast<int16_t>(in), kInt16);
+    case kNumberTypeInt8:
+      return std::make_shared<tensor::Tensor>(static_cast<int8_t>(in), kInt8);
+    case kNumberTypeUInt64:
+      return std::make_shared<tensor::Tensor>(static_cast<uint64_t>(in), kUInt64);
+    case kNumberTypeUInt32:
+      return std::make_shared<tensor::Tensor>(static_cast<uint32_t>(in), kUInt32);
+    case kNumberTypeUInt16:
+      return std::make_shared<tensor::Tensor>(static_cast<uint16_t>(in), kUInt16);
+    case kNumberTypeUInt8:
+      return std::make_shared<tensor::Tensor>(static_cast<uint8_t>(in), kUInt8);
+    default:
+      MS_LOG(DEBUG) << "Not support cast to dst type: " << TypeIdToType(dst_type_id)->ToString();
+      return nullptr;
+  }
+}
+
+// This function is used to convert scalar value to another scalar value with destination data type.
+// The scope of scalar type includes common data types, such as `FP64`, `FP32`, `FP16, `Int64`, `Int32`, ...
+// The following sort is based on the hot spots of the data type.
+ValuePtr ScalarToDstDtypeValue(const ValuePtr &src_value, const TypeId &dst_type_id) {
+  MS_EXCEPTION_IF_NULL(src_value);
+  if (src_value->isa<Int64Imm>()) {
+    const auto &int64_v = src_value->cast<Int64ImmPtr>();
+    return Cast<int64_t>(int64_v->value(), dst_type_id);
+  } else if (src_value->isa<FP32Imm>()) {
+    const auto &fp32_v = src_value->cast<FP32ImmPtr>();
+    return Cast<float>(fp32_v->value(), dst_type_id);
+  } else if (src_value->isa<Int32Imm>()) {
+    const auto &int32_v = src_value->cast<Int32ImmPtr>();
+    return Cast<int32_t>(int32_v->value(), dst_type_id);
+  } else if (src_value->isa<FP64Imm>()) {
+    const auto &fp64_v = src_value->cast<FP64ImmPtr>();
+    return Cast<double>(fp64_v->value(), dst_type_id);
+  } else if (src_value->isa<BoolImm>()) {
+    const auto &bool_v = src_value->cast<BoolImmPtr>();
+    return Cast<bool>(bool_v->value(), dst_type_id);
+  } else if (src_value->isa<Int16Imm>()) {
+    const auto &int16_v = src_value->cast<Int16ImmPtr>();
+    return Cast<int16_t>(int16_v->value(), dst_type_id);
+  } else {
+    MS_LOG(DEBUG) << "Now, the value [" << src_value->ToString() << "] is not supported to cast directly.";
+    return nullptr;
+  }
+}
+}  // namespace
 const char kOpsFunctionModelName[] = "mindspore.ops.functional";
 
 void CastOperation::DoCast(const FrontendOpRunInfoPtr &op_run_info) {
@@ -191,6 +254,14 @@ void CastOperation::GetTypeIndex(const std::vector<SignatureEnumDType> &dtypes,
 
 ValuePtr CastOperation::DoAutoCast(const FrontendOpRunInfoPtr &op_run_info, const ValuePtr &v, const TypeId &type_id,
                                    const std::string &op_name, size_t index) const {
+  // Step 1: Cast scalar value to another scalar value with destination data type.
+  // It is used to avoid to call `cast infer value function` or launch cast op to backend.
+  ValuePtr dst_value = ScalarToDstDtypeValue(v, type_id);
+  if (dst_value != nullptr) {
+    MS_LOG(DEBUG) << "Source value: " << v->ToString() << " cast to value: " << dst_value->ToString();
+    return dst_value;
+  }
+  // When step 1 does not work, creating a cast op to get destination data type value.
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(v);
   const auto &cast_run_info = std::make_shared<FrontendOpRunInfo>();

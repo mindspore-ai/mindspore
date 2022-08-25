@@ -494,6 +494,7 @@ class MS_CORE_API FP32Imm final : public FloatImm {
 };
 using FP32ImmPtr = std::shared_ptr<FP32Imm>;
 IMM_TRAITS(FP32ImmPtr, float)
+
 /// \brief FP64Imm defines interface for float64 data.
 class MS_CORE_API FP64Imm final : public FloatImm {
  public:

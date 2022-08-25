@@ -227,17 +227,65 @@ class MS_CORE_API Tensor final : public MetaTensor {
   /// \param[in] data_type [TypeId] data type.
   explicit Tensor(int64_t input, const TypePtr &data_type = nullptr);
 
-  /// \brief Create 0 dimension tensor from a float scalar.
+  /// \brief Create 0 dimension tensor from an int32_t scalar.
+  ///
+  /// \param[in] input [int32] the data for tensor.
+  /// \param[in] data_type [TypeId] data type.
+  explicit Tensor(int32_t input, const TypePtr &data_type = nullptr);
+
+  /// \brief Create 0 dimension tensor from an int16_t scalar.
+  ///
+  /// \param[in] input [int16] the data for tensor.
+  /// \param[in] data_type [TypeId] data type.
+  explicit Tensor(int16_t input, const TypePtr &data_type = nullptr);
+
+  /// \brief Create 0 dimension tensor from an int8_t scalar.
+  ///
+  /// \param[in] input [int8] the data for tensor.
+  /// \param[in] data_type [TypeId] data type.
+  explicit Tensor(int8_t input, const TypePtr &data_type = nullptr);
+
+  /// \brief Create 0 dimension tensor from a double scalar.
   ///
   /// \param[in] input [double] the data for tensor.
   /// \param[in] data_type [TypeId] data type.
   explicit Tensor(double input, const TypePtr &data_type = nullptr);
 
-  /// \brief Create 0 dimension tensor from a uint scalar.
+  /// \brief Create 0 dimension tensor from a float scalar.
   ///
-  /// \param[in] input [uint] the data for tensor.
+  /// \param[in] input [float] the data for tensor.
+  /// \param[in] data_type [TypeId] data type.
+  explicit Tensor(float input, const TypePtr &data_type = nullptr);
+
+  /// \brief Create 0 dimension tensor from a float16 scalar.
+  ///
+  /// \param[in] input [float16] the data for tensor.
+  /// \param[in] data_type [TypeId] data type.
+  explicit Tensor(float16 input, const TypePtr &data_type = nullptr);
+
+  /// \brief Create 0 dimension tensor from a uint64 scalar.
+  ///
+  /// \param[in] input [uint64] the data for tensor.
   /// \param[in] data_type [TypeId] data type.
   explicit Tensor(uint64_t input, const TypePtr &data_type = nullptr);
+
+  /// \brief Create 0 dimension tensor from a uint32 scalar.
+  ///
+  /// \param[in] input [uint32] the data for tensor.
+  /// \param[in] data_type [TypeId] data type.
+  explicit Tensor(uint32_t input, const TypePtr &data_type = nullptr);
+
+  /// \brief Create 0 dimension tensor from a uint16 scalar.
+  ///
+  /// \param[in] input [uint16] the data for tensor.
+  /// \param[in] data_type [TypeId] data type.
+  explicit Tensor(uint16_t input, const TypePtr &data_type = nullptr);
+
+  /// \brief Create 0 dimension tensor from a uint8 scalar.
+  ///
+  /// \param[in] input [uint8] the data for tensor.
+  /// \param[in] data_type [TypeId] data type.
+  explicit Tensor(uint8_t input, const TypePtr &data_type = nullptr);
 
   /// \brief Create 0 dimension tensor from a bool scalar.
   ///
