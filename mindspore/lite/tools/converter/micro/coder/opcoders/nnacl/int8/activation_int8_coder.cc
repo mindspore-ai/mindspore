@@ -21,6 +21,7 @@
 #include "nnacl/fp32/activation_fp32.h"
 #include "schema/model_generated.h"
 #include "src/common/version_manager.h"
+#include "coder/opcoders/nnacl/int8/leaky_relu_int8_coder.h"
 
 using mindspore::schema::PrimitiveType_Activation;
 
@@ -61,6 +62,9 @@ std::unique_ptr<OperatorCoder> CPUActivationINT8CoderCreator(const std::vector<T
       break;
     case schema::ActivationType_TANH:
       coder = CPUOpCoderCreator<TanhInt8Coder>(in_tensors, out_tensors, node, node_index, target, schema_version);
+      break;
+    case schema::ActivationType_LEAKY_RELU:
+      coder = CPUOpCoderCreator<LeakyReluInt8Coder>(in_tensors, out_tensors, node, node_index, target, schema_version);
       break;
     default:
       break;

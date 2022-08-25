@@ -31,6 +31,7 @@
 #include "nnacl/reshape_parameter.h"
 #include "nnacl/slice_parameter.h"
 #include "nnacl/batchnorm_parameter.h"
+#include "nnacl/pad_parameter.h"
 #include "nnacl/transpose.h"
 #include "nnacl/int8/relux_int8.h"
 
@@ -59,6 +60,10 @@ class NNaclInt8Serializer : public Serializer {
   void CodeStruct(const std::string &name, const SubQuantArg &sub_quant_arg);
   void CodeStruct(const std::string &name, const DivQuantArg &div_quant_arg);
   void CodeStruct(const std::string &name, const ReluXQuantArg &relu_quant_arg);
+  void CodeStruct(const std::string &name, const ArithSelfQuantArg &relu_quant_arg);
+  void CodeStruct(const std::string &name, const LeakyReluQuantArg &relu_quant_arg);
+  void CodeStruct(const std::string &name, const PadParameter &batchnorm_parameter);
+  void CodeStruct(const std::string &name, const GatherQuantArg &batchnorm_parameter);
   void CodeStruct(const std::string &name, const SpliceWrapperParam &splice_param);
 };
 }  // namespace mindspore::lite::micro::nnacl

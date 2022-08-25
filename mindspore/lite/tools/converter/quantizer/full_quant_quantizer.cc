@@ -499,7 +499,8 @@ void FullQuantQuantizer::InitDSPConfig() {
                        prim::kPrimStack,
                        prim::kPrimSubFusion,
                        prim::kPrimTileFusion,
-                       prim::kPrimTranspose};
+                       prim::kPrimTranspose,
+                       prim::kPrimUnsqueeze};
   skip_check_dtype_ops_ = {prim::kPrimTupleGetItem, prim::kPrimShape};
   per_channel_ops_ = {prim::kPrimConv2DFusion, prim::kPrimConv2dTransposeFusion};
   support_activation_ = {RELU, RELU6, SIGMOID, TANH};

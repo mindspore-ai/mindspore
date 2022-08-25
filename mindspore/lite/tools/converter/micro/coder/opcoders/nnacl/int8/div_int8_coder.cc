@@ -22,6 +22,8 @@
 #include "coder/opcoders/serializers/nnacl_serializer/nnacl_int8_serializer.h"
 #include "coder/opcoders/file_collector.h"
 
+using mindspore::schema::PrimitiveType_DivFusion;
+
 namespace mindspore::lite::micro::nnacl {
 int DivInt8Coder::Prepare(CoderContext *context) {
   MS_CHECK_TRUE_RET(input_tensors_.size() == kInputSize1, RET_ERROR);
@@ -50,6 +52,13 @@ int DivInt8Coder::Prepare(CoderContext *context) {
 }
 
 int DivInt8Coder::DoCode(CoderContext *const context) {
+  Collect(context,
+          {
+            "nnacl/int8/div_int8.h",
+          },
+          {
+            "div_int8.c",
+          });
   NNaclInt8Serializer code;
   int element_num = output_tensor_->ElementsNum();
   code.CodeStruct("param", param_);
@@ -77,4 +86,6 @@ int DivInt8Coder::DoCode(CoderContext *const context) {
   context->AppendCode(code.str());
   return RET_OK;
 }
+
+REG_OPERATOR_CODER(kAllTargets, kNumberTypeInt8, PrimitiveType_DivFusion, CPUOpCoderCreator<DivInt8Coder>)
 }  // namespace mindspore::lite::micro::nnacl

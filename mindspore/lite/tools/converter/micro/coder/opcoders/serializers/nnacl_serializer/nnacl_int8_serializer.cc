@@ -238,6 +238,30 @@ void NNaclInt8Serializer::CodeStruct(const std::string &name, const ReluXQuantAr
                  relu_quant_arg.input_multiplier_, relu_quant_arg.left_shift_, relu_quant_arg.right_shift_,
                  relu_quant_arg.quantized_output_min, relu_quant_arg.quantized_output_max);
 }
+
+void NNaclInt8Serializer::CodeStruct(const std::string &name, const ArithSelfQuantArg &relu_quant_arg) {
+  CodeBaseStruct("ArithSelfQuantArg", name, relu_quant_arg.in_args_, relu_quant_arg.out_args_,
+                 relu_quant_arg.output_activation_min_, relu_quant_arg.output_activation_max_,
+                 relu_quant_arg.output_multiplier_, relu_quant_arg.shift_left_, relu_quant_arg.shift_right_);
+}
+
+void NNaclInt8Serializer::CodeStruct(const std::string &name, const LeakyReluQuantArg &relu_quant_arg) {
+  CodeBaseStruct("LeakyReluQuantArg", name, relu_quant_arg.in_args_, relu_quant_arg.out_args_, relu_quant_arg.slope_,
+                 relu_quant_arg.input_dim_, relu_quant_arg.element_num, relu_quant_arg.thread_num_);
+}
+
+void NNaclInt8Serializer::CodeStruct(const std::string &name, const PadParameter &batchnorm_parameter) {
+  CodeBaseStruct("PadParameter", name, batchnorm_parameter.op_parameter_, ToString(batchnorm_parameter.paddings_),
+                 batchnorm_parameter.pad_mode_, batchnorm_parameter.constant_value_, batchnorm_parameter.padding_length,
+                 ToString(batchnorm_parameter.in_strides), ToString(batchnorm_parameter.out_strides),
+                 batchnorm_parameter.mirror_offset_, "{in_quant_args, out_quant_args, constant_value}");
+}
+
+void NNaclInt8Serializer::CodeStruct(const std::string &name, const GatherQuantArg &batchnorm_parameter) {
+  CodeBaseStruct("GatherQuantArg", name, batchnorm_parameter.alpha_, batchnorm_parameter.zp_in_,
+                 batchnorm_parameter.zp_out_);
+}
+
 void NNaclInt8Serializer::CodeStruct(const std::string &name, const SpliceWrapperParam &splice_param) {
   CodeBaseStruct("SpliceWrapperParam", name, splice_param.src_row, splice_param.src_col, splice_param.dst_row,
                  splice_param.dst_col, splice_param.context_size, ToString(splice_param.context),

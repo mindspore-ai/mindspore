@@ -21,33 +21,30 @@ int DoLeakReluInt8(const int8_t *inputs, int8_t *output_ptr, const LeakyReluQuan
   if (quant_prelu_parm == NULL) {
     return NNACL_NULL_PTR;
   }
-  float output_scale = quant_prelu_parm->quant_arg.out_args_.scale_;
-  int output_zp = quant_prelu_parm->quant_arg.out_args_.zp_;
+  float output_scale = quant_prelu_parm->out_args_.scale_;
+  int output_zp = quant_prelu_parm->out_args_.zp_;
   const float output_inverse_scale = 1.f / output_scale;
-  int output_dim = quant_prelu_parm->input_dim_;
 
-  float scale = quant_prelu_parm->quant_arg.in_args_.scale_ * output_inverse_scale;
-  float bias = -quant_prelu_parm->quant_arg.in_args_.zp_ * scale;
-  for (int i = 0; i < output_dim; i++) {
-    for (int j = task_id; j < quant_prelu_parm->element_num; j += quant_prelu_parm->op_parameter_.thread_num_) {
-      if (inputs[j] <= 0) {
-        int32_t output_tmp = round(inputs[j] * quant_prelu_parm->slope_ * scale + bias) + output_zp;
-        if (output_tmp > 127) {
-          output_ptr[j] = 127;
-        } else if (output_tmp < -128) {
-          output_ptr[j] = -128;
-        } else {
-          output_ptr[j] = (int8_t)output_tmp;
-        }
+  float scale = quant_prelu_parm->in_args_.scale_ * output_inverse_scale;
+  float bias = -quant_prelu_parm->in_args_.zp_ * scale;
+  for (int j = task_id; j < quant_prelu_parm->element_num; j += quant_prelu_parm->thread_num_) {
+    if (inputs[j] <= 0) {
+      int32_t output_tmp = round(inputs[j] * quant_prelu_parm->slope_ * scale + bias) + output_zp;
+      if (output_tmp > 127) {
+        output_ptr[j] = 127;
+      } else if (output_tmp < -128) {
+        output_ptr[j] = -128;
       } else {
-        int32_t output_tmp = round(inputs[j] * scale + bias) + output_zp;
-        if (output_tmp > 127) {
-          output_ptr[j] = 127;
-        } else if (output_tmp < -128) {
-          output_ptr[j] = -128;
-        } else {
-          output_ptr[j] = (int8_t)output_tmp;
-        }
+        output_ptr[j] = (int8_t)output_tmp;
+      }
+    } else {
+      int32_t output_tmp = round(inputs[j] * scale + bias) + output_zp;
+      if (output_tmp > 127) {
+        output_ptr[j] = 127;
+      } else if (output_tmp < -128) {
+        output_ptr[j] = -128;
+      } else {
+        output_ptr[j] = (int8_t)output_tmp;
       }
     }
   }

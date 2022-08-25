@@ -42,23 +42,20 @@ int LeakyReluInt8Run(void *cdata, int task_id, float, float) {
 }  // namespace
 
 int LeakyReluInt8CPUKernel::Prepare() {
-  quant_prelu_parm_.op_parameter_ = *op_parameter_;
+  quant_prelu_parm_.thread_num_ = op_parameter_->thread_num_;
   quant_prelu_parm_.slope_ = reinterpret_cast<ActivationParameter *>(op_parameter_)->alpha_;
 
   auto *input_tensor = in_tensors_.at(kInputIndex);
   auto in_quant_args = input_tensor->quant_params();
   MS_CHECK_TRUE_MSG(!in_quant_args.empty(), RET_ERROR, "Input quant param cannot be empty.");
-  quant_prelu_parm_.quant_arg.in_args_.scale_ = static_cast<float>(in_quant_args.front().scale);
-  quant_prelu_parm_.quant_arg.in_args_.zp_ = in_quant_args.front().zeroPoint;
+  quant_prelu_parm_.in_args_.scale_ = static_cast<float>(in_quant_args.front().scale);
+  quant_prelu_parm_.in_args_.zp_ = in_quant_args.front().zeroPoint;
 
   auto *out_tensor = out_tensors_.at(kOutputIndex);
   auto out_quant_args = out_tensor->quant_params();
   MS_CHECK_TRUE_MSG(!out_quant_args.empty(), RET_ERROR, "Output quant param cannot be empty.");
-  quant_prelu_parm_.quant_arg.out_args_.scale_ = static_cast<float>(out_quant_args.front().scale);
-  quant_prelu_parm_.quant_arg.out_args_.zp_ = out_quant_args.front().zeroPoint;
-
-  quant_prelu_parm_.quant_arg.output_activation_max_ = std::numeric_limits<int8_t>::max();
-  quant_prelu_parm_.quant_arg.output_activation_min_ = std::numeric_limits<int8_t>::min();
+  quant_prelu_parm_.out_args_.scale_ = static_cast<float>(out_quant_args.front().scale);
+  quant_prelu_parm_.out_args_.zp_ = out_quant_args.front().zeroPoint;
 
   if (!InferShapeDone()) {
     return RET_OK;
@@ -66,50 +63,14 @@ int LeakyReluInt8CPUKernel::Prepare() {
   return ReSize();
 }
 
-LeakyReluInt8CPUKernel::~LeakyReluInt8CPUKernel() {
-  if (quant_prelu_parm_.in_shape_ != nullptr) {
-    free(quant_prelu_parm_.in_shape_);
-    quant_prelu_parm_.in_shape_ = nullptr;
-  }
-  if (quant_prelu_parm_.out_shape_ != nullptr) {
-    free(quant_prelu_parm_.out_shape_);
-    quant_prelu_parm_.out_shape_ = nullptr;
-  }
-}
+LeakyReluInt8CPUKernel::~LeakyReluInt8CPUKernel() {}
 
 int LeakyReluInt8CPUKernel::ReSize() {
   auto *input_tensor = in_tensors_.at(kInputIndex);
-  auto *out_tensor = out_tensors_.at(kOutputIndex);
   auto input_dim = input_tensor->shape().size();
   quant_prelu_parm_.input_dim_ = input_dim;
-  MS_CHECK_GT(in_tensors_.at(0)->Size(), 0, RET_ERROR);
-  quant_prelu_parm_.element_num = in_tensors_.at(0)->Size();
-  auto input_shape = input_tensor->shape();
-  if (quant_prelu_parm_.in_shape_ != nullptr) {
-    free(quant_prelu_parm_.in_shape_);
-    quant_prelu_parm_.in_shape_ = nullptr;
-  }
-  quant_prelu_parm_.in_shape_ = reinterpret_cast<int *>(malloc(input_shape.size() * sizeof(int)));
-  if (quant_prelu_parm_.in_shape_ == nullptr) {
-    MS_LOG(ERROR) << "malloc memory failed";
-    return RET_MEMORY_FAILED;
-  }
-  memcpy(reinterpret_cast<void *>(const_cast<int *>(quant_prelu_parm_.in_shape_)), input_shape.data(),
-         sizeof(int) * input_dim);
-
-  auto output_shape = out_tensor->shape();
-  size_t output_dim = output_shape.size();
-  if (quant_prelu_parm_.out_shape_ != nullptr) {
-    free(quant_prelu_parm_.out_shape_);
-    quant_prelu_parm_.out_shape_ = nullptr;
-  }
-  quant_prelu_parm_.out_shape_ = reinterpret_cast<int *>(malloc(output_dim * sizeof(int)));
-  if (quant_prelu_parm_.out_shape_ == nullptr) {
-    MS_LOG(ERROR) << "malloc memory failed";
-    return RET_MEMORY_FAILED;
-  }
-  memcpy(reinterpret_cast<void *>(const_cast<int *>(quant_prelu_parm_.out_shape_)), output_shape.data(),
-         sizeof(int) * output_dim);
+  MS_CHECK_GT(input_tensor->ElementsNum(), 0, RET_ERROR);
+  quant_prelu_parm_.element_num = input_tensor->ElementsNum();
   return RET_OK;
 }
 

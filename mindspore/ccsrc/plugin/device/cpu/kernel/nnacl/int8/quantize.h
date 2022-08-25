@@ -159,14 +159,12 @@ typedef struct ReduceQuantArg {
 } ReduceQuantArg;
 
 typedef struct LeakyReluQuantArg {
-  OpParameter op_parameter_;
-  PreluQuantArg quant_arg;
+  QuantArg in_args_;
+  QuantArg out_args_;
   float slope_;
-  int64_t axis_;
-  int32_t *in_shape_;
-  int32_t *out_shape_;
   int input_dim_;
   int element_num;
+  int thread_num_;
 } LeakyReluQuantArg;
 
 typedef struct ResizeQuantArg {

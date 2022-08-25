@@ -74,10 +74,7 @@ int CoderGraph::ConvertTensors() {
         shape.push_back(dim);
       }
     }
-    // tensor Datatype
-    if (shape.empty()) {
-      shape.push_back(1);
-    }
+
     int origin_data_type = static_cast<int>(origin_tensor->dataType());
     Tensor *dstTensor = new (std::nothrow)
       lite::Tensor(TypeId(origin_data_type), shape, static_cast<mindspore::Format>(origin_tensor->format()),
