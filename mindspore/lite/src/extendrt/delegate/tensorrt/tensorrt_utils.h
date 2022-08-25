@@ -138,6 +138,9 @@ int ParseData2Vector(const mindspore::MSTensor &ms_tensor, std::vector<float> *d
 
 void DebugDims(const std::string &key, const nvinfer1::Dims &dims);
 
+template <typename T>
+nvinfer1::DataType GetNvinferDataType();
+
 template <typename T1, typename T2>
 bool SameDims(const std::vector<T1> &shape1, const std::vector<T2> &shape2) {
   if (shape1.size() != shape2.size()) {

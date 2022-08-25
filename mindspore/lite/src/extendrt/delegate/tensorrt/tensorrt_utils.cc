@@ -176,7 +176,6 @@ nvinfer1::ITensor *ConvertConstantTensor(TensorRTContext *ctx, const mindspore::
   }
   ctx->RegisterLayer(constant_tensor, ms_tensor.Name() + "_" + op_name);
   auto tensor_ptr = constant_tensor->getOutput(0);
-  // ctx->RegisterTensor(tensor_ptr, ms_tensor.Name());
   return tensor_ptr;
 }
 
@@ -741,4 +740,17 @@ void DebugDims(const std::string &key, const nvinfer1::Dims &dims) {
     MS_LOG(DEBUG) << dims.d[i];
   }
 }
+
+template <>
+nvinfer1::DataType GetNvinferDataType<float>() {
+  return nvinfer1::DataType::kFLOAT;
+}
+
+template <>
+nvinfer1::DataType GetNvinferDataType<int>() {
+  return nvinfer1::DataType::kINT32;
+}
+
+template nvinfer1::DataType GetNvinferDataType<float>();
+template nvinfer1::DataType GetNvinferDataType<int>();
 }  // namespace mindspore::lite
