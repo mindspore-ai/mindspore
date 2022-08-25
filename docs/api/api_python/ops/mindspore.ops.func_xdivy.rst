@@ -1,4 +1,4 @@
-﻿mindspore.ops.xlogy
+﻿mindspore.ops.xdivy
 ====================
 
 .. py:function:: mindspore.ops.xdivy(x, y)
