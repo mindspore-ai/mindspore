@@ -118,7 +118,7 @@ class MS_API Model {
   /// \param[in] graph A forward network
   /// \param[in] optimizer An optimizer node
   /// \param[in] inputs Inputs expression for the trained network (ex: input, label )
-  /// \param[in] model_contex A context used to store options during execution.
+  /// \param[in] model_context A context used to store options during execution.
   /// \param[in] train_cfg A config used by training
   /// \return Status
 
@@ -352,7 +352,7 @@ class MS_API Model {
   /// \brief Performs the training Loop in Train Mode.
   ///
   /// \param[in] epochs The number of epoch to run.
-  /// \param[in] dataset A smart pointer to MindData Dataset object.
+  /// \param[in] ds A smart pointer to MindData Dataset object.
   /// \param[in] cbs A vector of TrainLoopCallBack objects.
   ///
   /// \return Status of operation.
@@ -360,7 +360,7 @@ class MS_API Model {
 
   /// \brief Performs the training loop over all data in Eval Mode.
   ///
-  /// \param[in] dataset A smart pointer to MindData Dataset object.
+  /// \param[in] ds A smart pointer to MindData Dataset object.
   /// \param[in] cbs A vector of TrainLoopCallBack objects.
   ///
   /// \return Status of operation.

@@ -107,7 +107,7 @@ class MS_CORE_API Primitive : public Named {
   ///
   /// \param[in] args The arguments of primitive need to compute.
   /// \return The primitive's calculation result.
-  virtual BaseRef RunComputeFunction(const VectorRef &) const { return nullptr; }
+  virtual BaseRef RunComputeFunction(const VectorRef &args) const { return nullptr; }
   /// \brief Get Primitive's attribute.
   ///
   /// \param[in] attrName Primitive attribute name.
