@@ -43,6 +43,10 @@ bool InsertTensorMoveForCommunication::Run(const FuncGraphPtr &graph) {
       // 3. (Parameter/ValueNode) -> RefNode -> CommunicationOp.
       auto real_input_with_index = common::AnfAlgo::VisitKernelWithReturnType(input, 0, true);
       MS_EXCEPTION_IF_NULL(real_input_with_index.first);
+      // Skip UMonad op.
+      if (HasAbstractMonad(real_input_with_index.first)) {
+        continue;
+      }
       if (real_input_with_index.first->isa<Parameter>() || real_input_with_index.first->isa<ValueNode>() ||
           kernel_graph->IsInRefOutputMap(real_input_with_index)) {
         auto tensor_move = CreateTensorMoveOp(graph, input);
