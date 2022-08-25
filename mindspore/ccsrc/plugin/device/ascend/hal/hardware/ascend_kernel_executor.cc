@@ -72,7 +72,7 @@ void DumpInit(uint32_t device_id) {
 #if !(defined(ENABLE_TEST) || defined(ENABLE_TESTCASES))
     // register callback to adx
     if (json_parser.FileFormatIsNpy()) {
-      AdxRegDumpProcessCallBack(mindspore::ascend::DumpDataCallBack);
+      (void)AdxRegDumpProcessCallBack(mindspore::ascend::DumpDataCallBack);
     }
 #endif
     if (AdxDataDumpServerInit() != 0) {
@@ -255,7 +255,7 @@ void AscendKernelExecutor::PreprocessBeforeRunSingleOpGraph(const KernelGraphPtr
           new_inputs.emplace_back(input_node);
         }
       }
-      node->set_inputs(new_inputs);
+      (void)node->set_inputs(new_inputs);
     }
 
     // Save the nop_op that needs to be memcpy
@@ -282,7 +282,7 @@ void AscendKernelExecutor::PreprocessBeforeRunSingleOpGraph(const KernelGraphPtr
     auto iter = node_atomics_persistent_cache_.find(node);
     if (iter != node_atomics_persistent_cache_.end()) {
       const auto &atomics = iter->second;
-      std::copy(atomics.begin(), atomics.end(), std::back_inserter(atomic_nodes));
+      (void)std::copy(atomics.begin(), atomics.end(), std::back_inserter(atomic_nodes));
     }
   }
 
@@ -376,7 +376,7 @@ bool AscendKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<Add
   KernelType kernel_type = AnfAlgo::GetKernelType(kernel);
   MS_EXCEPTION_IF_NULL(kernel);
   MS_LOG(DEBUG) << "Launch kernel: " << kernel->fullname_with_scope();
-  res_manager_->BindDeviceToCurrentThread();
+  (void)res_manager_->BindDeviceToCurrentThread();
 
   std::vector<AddressPtr> real_inputs;
   bool ret = GetKernelRealInputs(kernel, inputs, &real_inputs);
@@ -405,7 +405,7 @@ bool AscendKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<Add
 
   // launch kernel
   if (nop_op_to_memcpy_.find(kernel) != nop_op_to_memcpy_.end()) {
-    MemoryCopyAsync(kernel, real_inputs, outputs);
+    (void)MemoryCopyAsync(kernel, real_inputs, outputs);
   } else {
     MS_LOG(DEBUG) << "Launch kernel " << kernel->fullname_with_scope();
 #ifndef ENABLE_SECURITY

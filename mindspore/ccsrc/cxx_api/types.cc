@@ -290,7 +290,7 @@ MSTensor *MSTensor::CharStringsToTensor(const std::vector<char> &name, const std
     return nullptr;
   }
   uint8_t *cur_data = reinterpret_cast<uint8_t *>(data + 1 + str.size());
-  *static_cast<int32_t *>(data) = str.size();
+  *static_cast<int32_t *>(data) = SizeToInt(str.size());
   for (size_t i = 0; i < str.size(); ++i) {
     int32_t offset = (cur_data - reinterpret_cast<uint8_t *>(data));
     data[i + 1] = offset;
@@ -354,7 +354,7 @@ std::vector<std::vector<char>> MSTensor::TensorToStringChars(const MSTensor &ten
 
     str.resize(str_len);
     const uint8_t *cur_data = reinterpret_cast<const uint8_t *>(data) + offset;
-    auto ret = memcpy_s(static_cast<void *>(str.data()), str.size(), cur_data, str_len);
+    auto ret = memcpy_s(static_cast<void *>(str.data()), SizeToInt(str.size()), cur_data, str_len);
     if (ret != EOK) {
       MS_LOG(ERROR) << "memcpy_s failed, ret = " << ret;
       return {};

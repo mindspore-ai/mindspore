@@ -148,7 +148,7 @@ class Somas {
   bool ConfigSomas(const session::KernelGraph &graph);
 
   // somas model
-  bool InitSomasModel(const session::KernelGraph &graph);
+  void InitSomasModel(const session::KernelGraph &graph);
   bool InitBasicInfoFromGraph(const session::KernelGraph &graph);
   void InitSomasStreamAndNode(const session::KernelGraph &graph);
   void InitSomasOutputAndWorkspaceTensors(const session::KernelGraph &graph);
@@ -196,7 +196,7 @@ class Somas {
   void ProcessSemiLifeLongTensor();
 
   // solver
-  bool Solve(const session::KernelGraph &graph);
+  void Solve(const session::KernelGraph &graph);
   void UpdateUnionTensorsOffset();
   void UpdateContiguousTensorsOffset(const std::map<size_t, size_t> &contiguous_ref_list_map);
 

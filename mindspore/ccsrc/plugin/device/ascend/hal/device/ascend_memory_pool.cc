@@ -32,7 +32,7 @@ void AscendMemoryPool::SetMemPoolBlockSize(size_t available_device_mem_size) {
   MS_EXCEPTION_IF_NULL(ms_context);
   float mem_block_size = ms_context->get_param<float>(MS_CTX_MEMPOOL_BLOCK_SIZE);
   // set from context configuration
-  if (mem_block_size != kDefaultMempoolBlockSize) {
+  if (!common::IsFloatEqual(mem_block_size, kDefaultMempoolBlockSize)) {
     size_t config_size = FloatToSize(mem_block_size * kGBToByte);
     if (config_size > available_device_mem_size) {
       MS_LOG(WARNING) << "Memory pool block size " << config_size
@@ -71,7 +71,7 @@ size_t AscendMemoryPool::CalMemBlockAllocSize(size_t size, bool from_persistent_
                     << ", Memory Statistic:" << AscendMemAdapter::GetInstance().DevMemStatistics()
                     << "Please try to reduce 'batch_size' or check whether exists extra large shape. More "
                        "details can be found in MindSpore's FAQ with keyword 'Out of Memory'.";
-    AscendMemAdapter::GetInstance().DevMemStatistics();
+    MS_LOG(WARNING) << "Memory Statistics:" << AscendMemAdapter::GetInstance().DevMemStatistics();
     DumpDynamicMemPoolDebugInfo();
     return 0;
   }

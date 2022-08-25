@@ -118,10 +118,7 @@ bool Somas::Assign(const session::KernelGraph &graph) {
                << "\nEnable debug log: " << save_debug_info_ << "\nDebug log path: " << debug_info_path_;
   MS_LOG(INFO) << "Start Initialize SOMAS Model";
 
-  ret = InitSomasModel(graph);
-  if (!ret) {
-    MS_LOG(EXCEPTION) << "Somas modeling Failed for graph " << graph.graph_id();
-  }
+  InitSomasModel(graph);
   MS_LOG(INFO) << "End Initialize SOMAS Model";
 
   if (tensors_list_.empty()) {
@@ -136,7 +133,7 @@ bool Somas::Assign(const session::KernelGraph &graph) {
       UpdateSomasResultToGraph(graph);
       DumpSomasModelInfo("somas_tensor_offset", graph.graph_id());
       MS_LOG(INFO) << "Somas Allocate end.";
-      return ret;
+      return true;
     }
   }
 
@@ -145,10 +142,7 @@ bool Somas::Assign(const session::KernelGraph &graph) {
   ComputeConflictMatrix();
   MS_LOG(INFO) << "End Computing Conflict Matrix";
 
-  ret = Solve(graph);
-  if (!ret) {
-    MS_LOG(EXCEPTION) << "Somas Assign Failed.";
-  }
+  Solve(graph);
 
   GenGraphStatisticInfo();
   if (enable_cache_) {
@@ -159,7 +153,7 @@ bool Somas::Assign(const session::KernelGraph &graph) {
   DumpSomasModelInfo("somas_tensor_offset", graph.graph_id());
 
   MS_LOG(INFO) << "Somas Allocate end.";
-  return ret;
+  return true;
 }
 
 bool Somas::Assign(const KernelGraphPtr &graph_ptr) {
@@ -465,7 +459,7 @@ bool Somas::UpdateTensorsOffset(const std::vector<nlohmann::json> &tensors_json)
   return ret;
 }
 
-bool Somas::InitSomasModel(const session::KernelGraph &graph) {
+void Somas::InitSomasModel(const session::KernelGraph &graph) {
   MS_EXCEPTION_IF_CHECK_FAIL(InitBasicInfoFromGraph(graph), "Init SOMAS basic info from graph failed.");
 #if defined(ENABLE_DUMP_IR) && !defined(ENABLE_SECURITY)
   SubModuleId module = SubModuleId::SM_OPTIMIZER;
@@ -487,7 +481,7 @@ bool Somas::InitSomasModel(const session::KernelGraph &graph) {
   UpdateContiguousTensorList();
   if (tensors_list_.empty()) {
     MS_LOG(INFO) << "No Tensor from graph " << graph.graph_id();
-    return true;
+    return;
   }
 
   MS_LOG(INFO) << "Created " << streams_map_.size() << " streams (" << streams_groups_.size() << " groups), "
@@ -507,7 +501,6 @@ bool Somas::InitSomasModel(const session::KernelGraph &graph) {
       "/" + device_name_ + "_somas_offline_log_" + std::to_string(graph.graph_id()) + ".ir", debug_info_path_);
     DumpOfflineIR(offline_file_path);
   }
-  return true;
 }
 
 void Somas::AddControlTensor(const SomasNodePtr &from, const SomasNodePtr &to) {
@@ -1218,7 +1211,7 @@ void Somas::ComputeBasicMatrix() {
 
   size_t count = nodes_list_.back()->GetId() + 1;
   for (size_t i = 0; i < count; i++) {
-    nodes_dependency.emplace_back(count);
+    (void)nodes_dependency.emplace_back(count);
   }
 
   MS_LOG(INFO) << "Start Path Computing";
@@ -1234,7 +1227,7 @@ void Somas::ComputeBasicMatrix() {
   MS_LOG(INFO) << "Start Tensor Relation Computing";
   count = tensors_list_.back()->GetId() + 1;
   for (size_t i = 0; i < count; i++) {
-    reuse_matrix_.emplace_back(count);
+    (void)reuse_matrix_.emplace_back(count);
   }
 
   std::vector<TensorConflictInfo> tensor_conflict_info_list;
@@ -1278,11 +1271,11 @@ void Somas::ComputeBasicMatrix() {
                                           &reuse_matrix_);
         return common::SUCCESS;
       };
-      tasks.emplace_back(task);
+      (void)tasks.emplace_back(task);
       start_index += job_size;
     }
 
-    common::ThreadPool::GetInstance().SyncRun(tasks);
+    (void)common::ThreadPool::GetInstance().SyncRun(tasks);
   }
 
   auto end_conflict = std::chrono::system_clock::now();
@@ -1451,11 +1444,11 @@ void Somas::ComputeOneTensorConflicts(const std::shared_ptr<SomasTensor> &target
   }
 }
 
-bool Somas::Solve(const session::KernelGraph &graph) {
+void Somas::Solve(const session::KernelGraph &graph) {
   MS_LOG(INFO) << "Somas Assign start...";
   if (tensors_list_.empty()) {
     MS_LOG(INFO) << "No Tensor for Assigner";
-    return true;
+    return;
   }
 
   // Compute number of constraints for each tensor which will used in solver
@@ -1477,7 +1470,7 @@ bool Somas::Solve(const session::KernelGraph &graph) {
   MS_LOG(INFO) << "Start Solving";
   if (solver_tensor_desc_map_.empty()) {
     MS_LOG(INFO) << "solver_tensor_desc_list is empty.";
-    return true;
+    return;
   }
 
   somas_solver_ = std::make_shared<SomasSolverPre>();
@@ -1501,7 +1494,6 @@ bool Somas::Solve(const session::KernelGraph &graph) {
   reused_memory_size_ = static_cast<size_t>(somas_solver_->GetMaxOffset());
 
   MS_LOG(INFO) << "Somas Assign end.";
-  return true;
 }
 
 void Somas::GetContiguousListContainUnionTensor() {
@@ -1524,7 +1516,7 @@ void Somas::GetContiguousListContainUnionTensor() {
           std::find(contiguous_tensors_list_[index].begin(), contiguous_tensors_list_[index].end(), ref_first);
         if (iterator_first != contiguous_tensors_list_[index].end()) {
           index_first = index;
-          index_in_list_first = iterator_first - contiguous_tensors_list_[index].begin();
+          index_in_list_first = IntToSize(iterator_first - contiguous_tensors_list_[index].begin());
           found_first = true;
         }
       }
@@ -1533,7 +1525,7 @@ void Somas::GetContiguousListContainUnionTensor() {
           std::find(contiguous_tensors_list_[index].begin(), contiguous_tensors_list_[index].end(), ref_second);
         if (iterator_second != contiguous_tensors_list_[index].end()) {
           index_second = index;
-          index_in_list_second = iterator_second - contiguous_tensors_list_[index].begin();
+          index_in_list_second = IntToSize(iterator_second - contiguous_tensors_list_[index].begin());
           found_second = true;
         }
       }
@@ -1554,7 +1546,7 @@ void Somas::GetContiguousListContainUnionTensor() {
                         << index_in_list_first << " of contiguous list " << index_first << " and tensor " << ref_second
                         << " in position " << index_in_list_second << " of contiguous list " << index_second;
       }
-      contiguous_ref_list_error_check_map[index_first][index_second].insert(index_in_list_first);
+      (void)contiguous_ref_list_error_check_map[index_first][index_second].insert(index_in_list_first);
     } else {
       MS_LOG(WARNING) << "Contiguous list " << index_first << " associated (ref node) with two other contiguous lists: "
                       << contiguous_list_with_ref_index_map_[index_first] << " and " << index_second;

@@ -58,13 +58,13 @@ std::vector<CNodePtr> HandleRecursiveCall(const std::vector<CNodePtr> &kernel_cn
   uint32_t i = *index;
   while (i < kernel_cnodes.size()) {
     if (!back_flag) {
-      front.emplace_back(kernel_cnodes[i]);
+      (void)front.emplace_back(kernel_cnodes[i]);
     } else {
-      back->emplace_back(kernel_cnodes[i]);
+      (void)back->emplace_back(kernel_cnodes[i]);
     }
     if (common::AnfAlgo::HasNodeAttr(kAttrRecursiveEnd, kernel_cnodes[i])) {
       *index = i;
-      back->insert(back->end(), back_temp.begin(), back_temp.end());
+      (void)back->insert(back->end(), back_temp.begin(), back_temp.end());
       return front;
     }
     if (common::AnfAlgo::HasNodeAttr(kAttrRecursive, kernel_cnodes[i])) {
@@ -89,15 +89,15 @@ void UnfoldRecursiveExecOrder(KernelGraph *kernel_graph) {
   mem_reuse_order.reserve(kernel_cnodes.size());
   for (uint32_t i = 0; i < kernel_cnodes.size(); i++) {
     if (!common::AnfAlgo::HasNodeAttr(kAttrRecursiveStart, kernel_cnodes[i])) {
-      mem_reuse_order.emplace_back(kernel_cnodes[i]);
+      (void)mem_reuse_order.emplace_back(kernel_cnodes[i]);
       continue;
     }
     auto label_id = common::AnfAlgo::GetNodeAttr<uint32_t>(kernel_cnodes[i], kAttrLabelIndex);
     std::vector<CNodePtr> back;
     auto index = i;
     auto front = HandleRecursiveCall(kernel_cnodes, label_id, &index, &back);
-    mem_reuse_order.insert(mem_reuse_order.end(), front.begin(), front.end());
-    mem_reuse_order.insert(mem_reuse_order.end(), back.begin(), back.end());
+    (void)mem_reuse_order.insert(mem_reuse_order.end(), front.begin(), front.end());
+    (void)mem_reuse_order.insert(mem_reuse_order.end(), back.begin(), back.end());
   }
   kernel_graph->set_mem_reuse_exec_order(mem_reuse_order);
 }
@@ -125,7 +125,7 @@ void InitMemReuseExecOrder(KernelGraph *kernel_graph) {
   auto kernel_cnodes = kernel_graph->execution_order();
   std::vector<CNodePtr> mem_reuse_order;
   for (uint32_t i = 0; i < kernel_cnodes.size(); i++) {
-    mem_reuse_order.emplace_back(kernel_cnodes[i]);
+    (void)mem_reuse_order.emplace_back(kernel_cnodes[i]);
     if (common::AnfAlgo::CheckPrimitiveType(kernel_cnodes[i], prim::kPrimLabelSwitch) &&
         !common::AnfAlgo::HasNodeAttr(kAttrRecursive, kernel_cnodes[i]) &&
         !common::AnfAlgo::HasNodeAttr(kAttrReturn, kernel_cnodes[i])) {
@@ -204,7 +204,8 @@ bool AscendGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<
   MS_EXCEPTION_IF_NULL(graph);
   auto kernel_graph = graph->cast<KernelGraphPtr>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  MS_LOG(INFO) << "Status record: start launch graph. graph id: " << kernel_graph->graph_id();
+  MS_LOG(INFO) << "Status record: start launch graph. graph id: " << kernel_graph->graph_id()
+               << ", options:" << compile_options;
   PROF_START(launch_graph);
   MS_EXCEPTION_IF_NULL(runtime_instance_);
   runtime_instance_->SetContext();
