@@ -6627,7 +6627,7 @@ class ApplyGradientDescent(Primitive):
         RuntimeError: If the data type of `var` and `delta` conversion of Parameter is not supported.
 
     Supported Platforms:
-        ``Ascend``  ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> class Net(nn.Cell):

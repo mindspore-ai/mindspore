@@ -3,7 +3,7 @@ mindspore.ops.gamma
 
 .. py:function:: mindspore.ops.gamma(shape, alpha, beta, seed=None)
 
-    根据伽马分布产生成随机数。
+    根据伽马分布生成随机数。
 
     参数：
         - **shape** (tuple) - 指定生成随机数的shape。任意维度的Tensor。

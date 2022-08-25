@@ -59,10 +59,10 @@ def random_gamma(shape, alpha, seed=0, seed2=0):
 
     Examples:
         >>> import numpy as np
-        >>> from mindspore.ops import functional as F
+        >>> from mindspore import ops
         >>> shape = Tensor(np.array([7, 5]), mindspore.int32)
         >>> alpha = Tensor(np.array([0.5, 1.5]), mindspore.float32)
-        >>> output = F.random_gamma(shape, alpha, seed=5)
+        >>> output = ops.random_gamma(shape, alpha, seed=5)
         >>> result = output.shape
         >>> print(result)
         (7, 5, 2)

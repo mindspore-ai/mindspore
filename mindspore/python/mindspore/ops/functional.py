@@ -171,14 +171,14 @@ def narrow(inputs, axis, start, length):
 
     Examples:
         >>> import mindspore
-        >>> from mindspore.ops import functional as F
+        >>> from mindspore import ops
         >>> from mindspore import Tensor
         >>> x = Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mindspore.int32)
-        >>> output = F.narrow(x, 0, 0, 2)
+        >>> output = ops.narrow(x, 0, 0, 2)
         >>> print(output)
         [[ 1 2 3]
          [ 4 5 6]]
-        >>> output = F.narrow(x, 1, 1, 2)
+        >>> output = ops.narrow(x, 1, 1, 2)
         >>> print(output)
         [[ 2 3]
          [ 5 6]

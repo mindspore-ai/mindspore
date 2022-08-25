@@ -4238,27 +4238,26 @@ class NPUGetFloatStatus(PrimitiveWithInfer):
     Examples:
         >>> import numpy as np
         >>> import mindspore.nn as nn
-        >>> import mindspore.ops.functional as F
+        >>> from mindspore import ops
         >>> from mindspore.common import dtype as mstype
         >>> from mindspore.common.tensor import Tensor
-        >>> from mindspore.ops import operations as P
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super().__init__()
-        ...         self.alloc_status = P.NPUAllocFloatStatus()
-        ...         self.get_status = P.NPUGetFloatStatus()
-        ...         self.clear_status = P.NPUClearFloatStatus()
-        ...         self.sub = P.Sub()
-        ...         self.neg = P.Neg()
+        ...         self.alloc_status = ops.NPUAllocFloatStatus()
+        ...         self.get_status = ops.NPUGetFloatStatus()
+        ...         self.clear_status = ops.NPUClearFloatStatus()
+        ...         self.sub = ops.Sub()
+        ...         self.neg = ops.Neg()
         ...
         ...     def construct(self, x):
         ...         init = self.alloc_status()
         ...         clear_status = self.clear_status(init)
-        ...         x = F.depend(x, clear_status)
+        ...         x = ops.depend(x, clear_status)
         ...         res = self.sub(x, self.neg(x))
-        ...         init = F.depend(init, res)
+        ...         init = ops.depend(init, res)
         ...         get_status = self.get_status(init)
-        ...         res = F.depend(res, get_status)
+        ...         res = ops.depend(res, get_status)
         ...         return res
         >>>
         >>> value = 5
@@ -4312,27 +4311,26 @@ class NPUClearFloatStatus(PrimitiveWithInfer):
     Examples:
         >>> import numpy as np
         >>> import mindspore.nn as nn
-        >>> import mindspore.ops.functional as F
+        >>> from mindspore import ops
         >>> from mindspore.common import dtype as mstype
         >>> from mindspore.common.tensor import Tensor
-        >>> from mindspore.ops import operations as P
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super().__init__()
-        ...         self.alloc_status = P.NPUAllocFloatStatus()
-        ...         self.get_status = P.NPUGetFloatStatus()
-        ...         self.clear_status = P.NPUClearFloatStatus()
-        ...         self.sub = P.Sub()
-        ...         self.neg = P.Neg()
+        ...         self.alloc_status = ops.NPUAllocFloatStatus()
+        ...         self.get_status = ops.NPUGetFloatStatus()
+        ...         self.clear_status = ops.NPUClearFloatStatus()
+        ...         self.sub = ops.Sub()
+        ...         self.neg = ops.Neg()
         ...
         ...     def construct(self, x):
         ...         init = self.alloc_status()
         ...         clear_status = self.clear_status(init)
-        ...         x = F.depend(x, clear_status)
+        ...         x = ops.depend(x, clear_status)
         ...         res = self.sub(x, self.neg(x))
-        ...         init = F.depend(init, res)
+        ...         init = ops.depend(init, res)
         ...         get_status = self.get_status(init)
-        ...         res = F.depend(res, get_status)
+        ...         res = ops.depend(res, get_status)
         ...         return res
         >>>
         >>> value = 5
