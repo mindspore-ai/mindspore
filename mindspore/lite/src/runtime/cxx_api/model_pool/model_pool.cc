@@ -682,6 +682,9 @@ std::vector<MSTensor> ModelPool::GetInputs() {
       return {};
     }
     tensor->SetShape(model_pool_inputs_.at(i).Shape());
+    tensor->SetFormat(model_pool_inputs_.at(i).format());
+    tensor->SetAllocator(model_pool_inputs_.at(i).allocator());
+    tensor->SetQuantParams(model_pool_inputs_.at(i).QuantParams());
     inputs.push_back(*tensor);
     delete tensor;
   }
@@ -702,6 +705,9 @@ std::vector<MSTensor> ModelPool::GetOutputs() {
       return {};
     }
     tensor->SetShape(model_pool_outputs_.at(i).Shape());
+    tensor->SetFormat(model_pool_outputs_.at(i).format());
+    tensor->SetAllocator(model_pool_outputs_.at(i).allocator());
+    tensor->SetQuantParams(model_pool_outputs_.at(i).QuantParams());
     outputs.push_back(*tensor);
     delete tensor;
   }
