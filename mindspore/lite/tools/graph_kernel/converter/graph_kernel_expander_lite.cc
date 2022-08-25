@@ -155,7 +155,8 @@ std::vector<PrimitivePtr> GraphKernelExpanderLite::InitOpList() {
     {kCPUDevice, OpLevel_1, prim::kPrimTranspose},       {kCPUDevice, OpLevel_1, prim::kPrimReshape},
     {kCPUDevice, OpLevel_1, prim::kPrimUnsqueeze},       {kCPUDevice, OpLevel_1, prim::kPrimGather},
     {kCPUDevice, OpLevel_1, prim::kPrimShape},           {kCPUDevice, OpLevel_1, prim::kPrimConcat},
-    {kCPUDevice, OpLevel_1, prim::kPrimConstantOfShape}, {kCPUDevice, OpLevel_1, prim::kPrimStridedSlice}};
+    {kCPUDevice, OpLevel_1, prim::kPrimConstantOfShape}, {kCPUDevice, OpLevel_1, prim::kPrimStridedSlice},
+    {kCPUDevice, OpLevel_1, prim::kPrimFusedBatchNorm}};
   const auto &flags = GraphKernelFlags::GetInstance();
   return GkUtils::GetValidOps(expand_ops_with_level, flags.fusion_ops_level, flags.enable_expand_ops_only,
                               flags.enable_expand_ops, flags.disable_expand_ops);
