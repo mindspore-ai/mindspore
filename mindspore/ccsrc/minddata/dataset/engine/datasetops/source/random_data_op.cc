@@ -131,8 +131,8 @@ Status RandomDataOp::CreateRandomRow(TensorRow *new_row) {
 
     // Generate a random byte of data.  This may cause some funny data for things like doubles,floats, bools
     // however the random data op is not too concerned about the physical data itself.
-    std::uniform_int_distribution<uint8_t> uniDist(0, UINT8_MAX);
-    uint8_t random_byte = uniDist(rand_gen_);
+    std::uniform_int_distribution<uint32_t> uniDist(0, UINT8_MAX);
+    uint8_t random_byte = static_cast<uint8_t>(uniDist(rand_gen_));
 
     // Now, create a chunk of memory for the entire tensor and copy this byte in repeatedly.
     buf = std::make_unique<unsigned char[]>(size_in_bytes);

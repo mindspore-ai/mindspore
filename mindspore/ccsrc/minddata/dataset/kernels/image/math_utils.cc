@@ -17,6 +17,7 @@
 #include "minddata/dataset/kernels/image/math_utils.h"
 
 #include <algorithm>
+#include <numeric>
 #include <string>
 
 namespace mindspore {
