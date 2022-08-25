@@ -62,10 +62,11 @@ class LayerNorm(nn.Cell):
         self.add = P.Add()
         self.mul = P.Mul()
         self.div = P.RealDiv()
+        self.square = P.Square()
 
     def construct(self, x):
         mean = self.mean(x, -1)
-        variance = self.mean(F.square(self.sub(x, mean)))
+        variance = self.mean(self.square(self.sub(x, mean)))
         output = self.div(self.sub(x, mean), F.sqrt(self.add(variance, self.eps)))
         rescaled_output = self.add(self.mul(output, self.gamma), self.beta)
         return rescaled_output
