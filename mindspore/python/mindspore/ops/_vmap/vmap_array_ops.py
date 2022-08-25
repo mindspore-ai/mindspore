@@ -1820,6 +1820,52 @@ def get_stridedslice_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(G.StridedSliceGrad)
+def get_stridedslice_grad_vmap_rule(prim, axis_size):
+    """VmapRule for `StridedSliceGrad`."""
+    new_begin_mask = prim.begin_mask * 2 + 1
+    new_end_mask = prim.end_mask * 2 + 1
+    new_ellipsis_mask = prim.ellipsis_mask
+    new_new_axis_mask = prim.new_axis_mask * 2
+    new_shrink_axis_mask = prim.shrink_axis_mask * 2
+    batch_stridedslice_grad = G.StridedSliceGrad(new_begin_mask, new_end_mask, new_ellipsis_mask, new_new_axis_mask, \
+                                        new_shrink_axis_mask)
+
+    @constexpr
+    def get_new_xshape_begin_end_strided(xshape, begin, end, strided):
+        new_xshape = (axis_size,) + xshape
+        new_begin = (0,) + begin
+        new_end = (axis_size,) + end
+        new_strided = (1,) + strided
+        return new_xshape, new_begin, new_end, new_strided
+
+    def vmap_rule(dy_bdim, xshape_bdim, begin_bdim, end_bdim, strided_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, dy_bdim, xshape_bdim, begin_bdim, end_bdim, strided_bdim)
+        if is_all_none:
+            return result
+
+        dy, dy_dim = dy_bdim
+        xshape, xshape_dim = xshape_bdim
+        begin, begin_dim = begin_bdim
+        end, end_dim = end_bdim
+        strided, strided_dim = strided_bdim
+
+        if any(dim is not None for dim in [xshape_dim, begin_dim, end_dim, strided_dim]):
+            _raise_value_error("vmap of `StridedSliceGrad` not support `xshape`, `begin`, "
+                               "`end` or `strided` has batch dimension, "
+                               "but got {}, {}, {}, {}".format(xshape_dim, begin_dim, end_dim, strided_dim))
+
+        # dy_dim and x_dim are not None, and others are None
+        dy = _bdim_at_front(dy, dy_dim, axis_size)
+
+        new_xshape, new_begin, new_end, new_strided = get_new_xshape_begin_end_strided(xshape, begin, end, strided)
+
+        result = batch_stridedslice_grad(dy, new_xshape, new_begin, new_end, new_strided)
+        return result, 0
+
+    return vmap_rule
+
+
 get_unsupported_dynamic_vmap_rule = vmap_rules_getters.register(NonZero)(get_unsupported_dynamic_vmap_rule)
 get_unsupported_dynamic_vmap_rule = vmap_rules_getters.register(P.Unique)(get_unsupported_dynamic_vmap_rule)
 get_unsupported_dynamic_vmap_rule = \
