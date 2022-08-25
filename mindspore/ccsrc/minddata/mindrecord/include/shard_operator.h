@@ -23,11 +23,11 @@
 
 namespace mindspore {
 namespace mindrecord {
-class __attribute__((visibility("default"))) ShardOperator {
+class MINDRECORD_API ShardOperator {
  public:
   virtual ~ShardOperator() = default;
 
-  Status operator()(ShardTaskList &tasks) {
+  Status operator()(ShardTaskList &tasks) {  // NOLINT
     RETURN_IF_NOT_OK_MR(this->PreExecute(tasks));
     RETURN_IF_NOT_OK_MR(this->Execute(tasks));
     RETURN_IF_NOT_OK_MR(this->SufExecute(tasks));
@@ -45,11 +45,11 @@ class __attribute__((visibility("default"))) ShardOperator {
 
   virtual std::shared_ptr<ShardOperator> GetChildOp() { return child_op_; }
 
-  virtual Status PreExecute(ShardTaskList &tasks) { return Status::OK(); }
+  virtual Status PreExecute(ShardTaskList &tasks) { return Status::OK(); }  // NOLINT
 
-  virtual Status Execute(ShardTaskList &tasks) = 0;
+  virtual Status Execute(ShardTaskList &tasks) = 0;  // NOLINT
 
-  virtual Status SufExecute(ShardTaskList &tasks) { return Status::OK(); }
+  virtual Status SufExecute(ShardTaskList &tasks) { return Status::OK(); }  // NOLINT
 
   /// \brief compute actual the num_samples via loading data
   virtual int64_t GetNumSamples(int64_t dataset_size, int64_t num_classes) { return 0; }

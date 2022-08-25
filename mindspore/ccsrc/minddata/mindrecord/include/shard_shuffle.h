@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace mindrecord {
-class __attribute__((visibility("default"))) ShardShuffle : public ShardOperator {
+class MINDRECORD_API ShardShuffle : public ShardOperator {
  public:
   explicit ShardShuffle(uint32_t seed = 0, ShuffleType shuffle_type = kShuffleCategory);
 
@@ -37,13 +37,13 @@ class __attribute__((visibility("default"))) ShardShuffle : public ShardOperator
 
  private:
   // Private helper function
-  Status CategoryShuffle(ShardTaskList &tasks);
+  Status CategoryShuffle(ShardTaskList &tasks);  // NOLINT
 
   // Keep the file sequence the same but shuffle the data within each file
-  Status ShuffleInfile(ShardTaskList &tasks);
+  Status ShuffleInfile(ShardTaskList &tasks);  // NOLINT
 
   // Shuffle the file sequence but keep the order of data within each file
-  Status ShuffleFiles(ShardTaskList &tasks);
+  Status ShuffleFiles(ShardTaskList &tasks);  // NOLINT
 
   uint32_t shuffle_seed_;
   int64_t no_of_samples_;

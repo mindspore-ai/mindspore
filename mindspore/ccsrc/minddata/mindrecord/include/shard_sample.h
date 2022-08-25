@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace mindrecord {
-class __attribute__((visibility("default"))) ShardSample : public ShardOperator {
+class MINDRECORD_API ShardSample : public ShardOperator {
  public:
   explicit ShardSample(int64_t n);
 
@@ -34,7 +34,7 @@ class __attribute__((visibility("default"))) ShardSample : public ShardOperator 
 
   ShardSample(int64_t num, int64_t den, int64_t par, int64_t no_of_samples = 0, int64_t offset = -1);
 
-  ShardSample(const std::vector<int64_t> &indices);
+  explicit ShardSample(const std::vector<int64_t> &indices);
 
   ShardSample(const std::vector<int64_t> &indices, uint32_t seed);
 
@@ -42,7 +42,7 @@ class __attribute__((visibility("default"))) ShardSample : public ShardOperator 
 
   Status Execute(ShardTaskList &tasks) override;
 
-  Status UpdateTasks(ShardTaskList &tasks, int64_t taking);
+  Status UpdateTasks(ShardTaskList &tasks, int64_t taking);  // NOLINT
 
   Status SufExecute(ShardTaskList &tasks) override;
 

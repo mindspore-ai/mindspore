@@ -30,7 +30,7 @@ using CATEGORY_INFO = std::vector<std::tuple<int, std::string, int>>;
 using PAGES = std::vector<std::tuple<std::vector<uint8_t>, json>>;
 using PAGES_LOAD = std::vector<std::tuple<std::vector<uint8_t>, pybind11::object>>;
 
-class __attribute__((visibility("default"))) ShardSegment : public ShardReader {
+class MINDRECORD_API ShardSegment : public ShardReader {
  public:
   ShardSegment();
 

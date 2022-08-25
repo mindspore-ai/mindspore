@@ -25,12 +25,13 @@
 #include "minddata/mindrecord/include/common/log_adapter.h"
 #include "minddata/mindrecord/include/common/shard_pybind.h"
 #include "minddata/mindrecord/include/common/shard_utils.h"
+#include "minddata/mindrecord/include/mindrecord_macro.h"
 #include "minddata/mindrecord/include/shard_error.h"
 #include "pybind11/pybind11.h"
 
 namespace mindspore {
 namespace mindrecord {
-class __attribute__((visibility("default"))) Schema {
+class MINDRECORD_API Schema {
  public:
   ~Schema() = default;
 

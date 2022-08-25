@@ -32,7 +32,7 @@ namespace mindspore {
 namespace mindrecord {
 using INDEX_FIELDS = std::vector<std::tuple<std::string, std::string, std::string>>;
 using ROW_DATA = std::vector<std::vector<std::tuple<std::string, std::string, std::string>>>;
-class __attribute__((visibility("default"))) ShardIndexGenerator {
+class MINDRECORD_API ShardIndexGenerator {
  public:
   explicit ShardIndexGenerator(const std::string &file_path, bool append = false);
 
@@ -53,7 +53,7 @@ class __attribute__((visibility("default"))) ShardIndexGenerator {
   /// \param[in] field_path
   /// \param[in] schema
   /// \return the type of field
-  static std::string TakeFieldType(const std::string &field_path, json &schema);
+  static std::string TakeFieldType(const std::string &field_path, json &schema);  // NOLINT
 
   /// \brief create databases for indexes
   Status WriteToDatabase();
@@ -99,11 +99,12 @@ class __attribute__((visibility("default"))) ShardIndexGenerator {
 
   Status CreateShardNameTable(sqlite3 *db, const std::string &shard_name);
 
-  Status AddBlobPageInfo(std::vector<std::tuple<std::string, std::string, std::string>> &row_data,
-                         const std::shared_ptr<Page> cur_blob_page, uint64_t &cur_blob_page_offset, std::fstream &in);
+  Status AddBlobPageInfo(std::vector<std::tuple<std::string, std::string, std::string>> &row_data,   // NOLINT
+                         const std::shared_ptr<Page> cur_blob_page, uint64_t &cur_blob_page_offset,  // NOLINT
+                         std::fstream &in);                                                          // NOLINT
 
   Status AddIndexFieldByRawData(const std::vector<json> &schema_detail,
-                                std::vector<std::tuple<std::string, std::string, std::string>> &row_data);
+                                std::vector<std::tuple<std::string, std::string, std::string>> &row_data);  // NOLINT
 
   void DatabaseWriter();  // worker thread
 

@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace mindrecord {
-class __attribute__((visibility("default"))) ShardSequentialSample : public ShardSample {
+class MINDRECORD_API ShardSequentialSample : public ShardSample {
  public:
   ShardSequentialSample(int64_t n, int64_t offset);
 

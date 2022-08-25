@@ -26,6 +26,7 @@
 
 #include "minddata/mindrecord/include/common/log_adapter.h"
 #include "minddata/mindrecord/include/common/shard_utils.h"
+#include "minddata/mindrecord/include/mindrecord_macro.h"
 #include "pybind11/pybind11.h"
 
 namespace mindspore {
@@ -34,7 +35,7 @@ const std::string kPageTypeRaw = "RAW_DATA";
 const std::string kPageTypeBlob = "BLOB_DATA";
 const std::string kPageTypeNewColumn = "NEW_COLUMN_DATA";
 
-class __attribute__((visibility("default"))) Page {
+class MINDRECORD_API Page {
  public:
   Page(const int &page_id, const int &shard_id, const std::string &page_type, const int &page_type_id,
        const uint64_t &start_row_id, const uint64_t end_row_id,

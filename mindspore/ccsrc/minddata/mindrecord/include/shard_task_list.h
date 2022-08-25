@@ -24,6 +24,7 @@
 #include <utility>
 #include <vector>
 #include "minddata/mindrecord/include/common/shard_utils.h"
+#include "minddata/mindrecord/include/mindrecord_macro.h"
 
 namespace mindspore {
 namespace mindrecord {
@@ -34,7 +35,7 @@ namespace mindrecord {
 // 3. std::vector<uint64_t>, json>> : [blob_start, blob_end], scalar_variable_fields
 using ShardTask = std::tuple<TaskType, std::tuple<int, int>, std::vector<uint64_t>, json>;
 
-class __attribute__((visibility("default"))) ShardTaskList {
+class MINDRECORD_API ShardTaskList {
  public:
   ShardTaskList();
 
@@ -49,7 +50,7 @@ class __attribute__((visibility("default"))) ShardTaskList {
   static void TaskListSwap(ShardTaskList &orig_tasks, ShardTaskList &new_tasks);
 
   // Assigns the task based on task id
-  inline void AssignTask(ShardTaskList &sourceTasks, int64_t id);
+  inline void AssignTask(ShardTaskList &sourceTasks, int64_t id);  // NOLINT
 
   inline void InsertTask(TaskType task_type, int shard_id, int group_id, const std::vector<uint64_t> &offset,
                          const json &label);
@@ -79,8 +80,8 @@ class __attribute__((visibility("default"))) ShardTaskList {
 
   int64_t GetRandomTaskID();
 
-  static ShardTaskList Combine(std::vector<ShardTaskList> &category_tasks, bool replacement, int64_t num_elements,
-                               int64_t num_samples);
+  static ShardTaskList Combine(std::vector<ShardTaskList> &category_tasks, bool replacement,  // NOLINT
+                               int64_t num_elements, int64_t num_samples);
 
   inline void ResizeTask(const int64_t &size);
 

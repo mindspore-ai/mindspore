@@ -55,8 +55,6 @@
 #include "minddata/mindrecord/include/shard_sample.h"
 #include "minddata/mindrecord/include/shard_shuffle.h"
 
-#define API_PUBLIC __attribute__((visibility("default")))
-
 namespace mindspore {
 namespace mindrecord {
 using ROW_GROUPS = std::pair<std::vector<std::vector<std::vector<uint64_t>>>, std::vector<std::vector<json>>>;
@@ -64,7 +62,7 @@ using ROW_GROUP_BRIEF = std::tuple<std::string, int, uint64_t, std::vector<std::
 using TASK_CONTENT = std::pair<TaskType, std::vector<std::tuple<std::vector<uint8_t>, json>>>;
 const int kNumBatchInMap = 1000;  // iterator buffer size in row-reader mode
 
-class API_PUBLIC ShardReader {
+class MINDRECORD_API ShardReader {
  public:
   ShardReader();
 
