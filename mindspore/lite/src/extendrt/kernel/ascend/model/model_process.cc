@@ -120,16 +120,16 @@ std::vector<Format> ModelProcess::GetInputFormat() {
     return std::vector<Format>();
   }
   std::vector<Format> input_formats;
-  static const std::map<aclFormat, enum Format> acl_format_map = {{ACL_FORMAT_NCHW, NCHW}, {ACL_FORMAT_NHWC, NHWC}};
+  static const std::map<aclFormat, enum Format> acl_format_map = {
+    {ACL_FORMAT_NCHW, NCHW}, {ACL_FORMAT_NHWC, NHWC}, {ACL_FORMAT_ND, NCHW}};
   size_t input_size = aclmdlGetNumInputs(model_desc_);
   for (size_t i = 0; i < input_size; ++i) {
     aclFormat format = aclmdlGetInputFormat(model_desc_, i);
     auto iter = acl_format_map.find(format);
     if (iter != acl_format_map.end()) {
       input_formats.emplace_back(iter->second);
-    } else {
-      MS_LOG(WARNING) << "Find input " << i << "  format failed, cur format: " << static_cast<int32_t>(format);
     }
+    MS_LOG(DEBUG) << "Format of Input " << i << " is " << static_cast<int32_t>(format);
   }
   return input_formats;
 }

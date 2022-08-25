@@ -163,6 +163,7 @@ int CustomAscendKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
       return lite::RET_ERROR;
     }
   }
+  inputs_.assign(inputs.begin(), inputs.end() - 1);
   return lite::RET_OK;
 }
 
@@ -237,7 +238,7 @@ bool CustomAscendKernelMod::Launch(const std::vector<AddressPtr> &inputs, const 
     return false;
   }
   if (IsDynamicInput()) {
-    dyn_shape_proc_->DestroyDynamicInput();
+    dyn_shape_proc_->DestroyDynamicInput(&inputs_);
   }
   UpdateOutputAddr(outputs);
   return true;

@@ -43,6 +43,8 @@ class SingleOpInferSession : public InferSession {
   tensor::TensorPtr GetInputByTensorName(const std::string &name) override;
 
  private:
+  Status ResizeGraphInputs(const std::vector<tensor::TensorPtr> &inputs, const std::vector<std::vector<int64_t>> &dims);
+
   KernelGraphUtilsPtr kernel_graph_utils_;
   KernelGraphPtr kernel_graph_;
   std::vector<tensor::TensorPtr> inputs_;

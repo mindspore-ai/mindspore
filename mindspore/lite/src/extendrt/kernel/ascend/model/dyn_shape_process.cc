@@ -177,7 +177,11 @@ int DynShapeProcess::GetRealImageSize(std::vector<KernelTensorPtr> *const inputs
   return lite::RET_OK;
 }
 
-void DynShapeProcess::DestroyDynamicInput() {
+void DynShapeProcess::DestroyDynamicInput(std::vector<KernelTensorPtr> *const inputs) {
+  if (inputs == nullptr) {
+    MS_LOG(ERROR) << "Inputs ptr is nullptr.";
+    return;
+  }
   if (batch_size_ptr_ != nullptr && batch_size_ptr_->addr != nullptr) {
     free(batch_size_ptr_->addr);
     batch_size_ptr_->addr = nullptr;
@@ -187,6 +191,9 @@ void DynShapeProcess::DestroyDynamicInput() {
     free(image_size_ptr_->addr);
     image_size_ptr_->addr = nullptr;
     image_size_ptr_->size = 0;
+  }
+  if (!inputs->empty()) {
+    (*inputs).pop_back();
   }
 }
 }  // namespace acl

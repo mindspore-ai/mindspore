@@ -31,7 +31,7 @@ class DynShapeProcess {
       : acl_options_(options), input_data_idx_(input_data_idx), batch_size_ptr_(nullptr), image_size_ptr_(nullptr) {}
 
   int ProcDynamicInput(std::vector<KernelTensorPtr> *const inputs);
-  void DestroyDynamicInput();
+  void DestroyDynamicInput(std::vector<KernelTensorPtr> *const inputs);
 
  private:
   int AddBatchSizeInput(std::vector<KernelTensorPtr> *const inputs);

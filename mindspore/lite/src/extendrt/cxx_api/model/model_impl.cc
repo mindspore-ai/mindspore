@@ -54,7 +54,31 @@ Status ModelImpl::Build(const std::string &model_path, ModelType model_type,
 }
 
 Status ModelImpl::Resize(const std::vector<MSTensor> &inputs, const std::vector<std::vector<int64_t>> &dims) {
-  return kSuccess;
+  MS_EXCEPTION_IF_NULL(session_);
+
+  if (inputs.empty()) {
+    MS_LOG(ERROR) << "Inputs is null.";
+    return kLiteInputParamInvalid;
+  }
+  if (dims.empty()) {
+    MS_LOG(ERROR) << "Dims is null.";
+    return kLiteInputParamInvalid;
+  }
+  if (inputs.size() != dims.size()) {
+    MS_LOG(ERROR) << "The size of inputs does not match the size of dims.";
+    return kLiteInputParamInvalid;
+  }
+  auto model_inputs = session_->GetInputs();
+  if (model_inputs.empty()) {
+    MS_LOG(ERROR) << "The inputs of model is null.";
+    return kLiteParamInvalid;
+  }
+  if (inputs.size() != model_inputs.size()) {
+    MS_LOG(ERROR) << "The size of inputs is incorrect.";
+    return kLiteInputParamInvalid;
+  }
+  std::vector<mindspore::tensor::TensorPtr> resize_inputs = TensorUtils::MSTensorToTensorPtr(inputs);
+  return session_->Resize(resize_inputs, dims);
 }
 
 std::vector<MSTensor> ModelImpl::GetInputs() {
