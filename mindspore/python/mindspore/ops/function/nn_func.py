@@ -525,7 +525,7 @@ def kl_div(logits, labels, reduction='mean'):
 
     Returns:
         Tensor or Scalar, if `reduction` is 'none', then output is a tensor and has the same shape as `logits`.
-        Otherwise it is a scalar.
+        Otherwise, it is a scalar.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -535,12 +535,16 @@ def kl_div(logits, labels, reduction='mean'):
         TypeError: If neither `logits` nor `labels` is a Tensor.
         TypeError: If dtype of `logits` or `labels` is not float32.
 
+    Note:
+        - Currently it does not support float64 on `Ascend`.
+        - It behaves the same as the mathematical definition only when `reduction` is set to `batchmean`.
+
     Examples:
         >>> logits = Tensor(np.array([0.2, 0.7, 0.1]), mindspore.float32)
         >>> labels = Tensor(np.array([0., 1., 0.]), mindspore.float32)
-        >>> output = mindspore.ops.functional.kl_div(logits, labels, 'mean')
+        >>> output = mindspore.ops.functional.kl_div(logits, labels, 'sum')
         >>> print(output)
-        -0.23333333
+        -0.7
     """
     if reduction == 'batchmean':
         kl_div_sum = P.KLDivLoss(reduction='sum')(logits, labels)

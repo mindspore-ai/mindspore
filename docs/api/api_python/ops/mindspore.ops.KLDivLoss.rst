@@ -34,7 +34,6 @@ mindspore.ops.KLDivLoss
 
       - 在Ascend平台上， `reduction` 的可选值为"batchmean"、"none"或"sum"。
       - 在GPU平台上， `reduction` 的可选值为"mean"、"none"或"sum"。
-      - 在CPU平台上， `reduction` 的可选值为"mean"、"batchmean"、"none"或"sum"。
 
     **输入：**
 
