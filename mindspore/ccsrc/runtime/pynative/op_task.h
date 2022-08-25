@@ -32,10 +32,9 @@
 namespace mindspore::runtime {
 class OpTaskContext {
  public:
-  OpTaskContext(GraphCompilerInfo *graph_compiler_info, KernelGraphPtr graph,
-                std::vector<session::KernelWithIndex> output_nodes, session::BackendOpRunInfoPtr op_run_info,
-                device::DeviceContext *device_context, bool is_pynative_infer)
-      : graph_compiler_info_(graph_compiler_info),
+  OpTaskContext(GraphId graph_id, KernelGraphPtr graph, std::vector<session::KernelWithIndex> output_nodes,
+                session::BackendOpRunInfoPtr op_run_info, device::DeviceContext *device_context, bool is_pynative_infer)
+      : graph_id_(graph_id),
         graph_(std::move(graph)),
         output_nodes_(std::move(output_nodes)),
         op_run_info_(std::move(op_run_info)),
@@ -43,7 +42,7 @@ class OpTaskContext {
         is_pyantive_infer_(is_pynative_infer) {}
   ~OpTaskContext() = default;
 
-  GraphCompilerInfo *graph_compiler_info() const { return graph_compiler_info_; }
+  GraphId graph_id() const { return graph_id_; }
   const KernelGraphPtr &graph() const { return graph_; }
   const std::vector<session::KernelWithIndex> &output_nodes() const { return output_nodes_; }
   const session::BackendOpRunInfoPtr &op_run_info() const { return op_run_info_; }
@@ -51,7 +50,7 @@ class OpTaskContext {
   bool is_pynative_infer() const { return is_pyantive_infer_; }
 
  private:
-  GraphCompilerInfo *graph_compiler_info_;
+  GraphId graph_id_;
   KernelGraphPtr graph_;
   std::vector<session::KernelWithIndex> output_nodes_;
   session::BackendOpRunInfoPtr op_run_info_;

@@ -1387,5 +1387,27 @@ void AnfRuntimeAlgorithm::UpdateInternalParameterShape(
     }
   }
 }
+
+void AnfRuntimeAlgorithm::AddOutInRefToGraph(const KernelGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  for (const auto &cnode : graph->execution_order()) {
+    MS_EXCEPTION_IF_NULL(cnode);
+    auto kernel_info = dynamic_cast<device::KernelInfo *>(cnode->kernel_info());
+    MS_EXCEPTION_IF_NULL(kernel_info);
+    for (const auto &ref : kernel_info->out_in_ref_map()) {
+      size_t output_index = ref.first;
+      size_t input_index = ref.second;
+      auto final_pair = std::make_pair(cnode, output_index);
+      auto origin_pair = common::AnfAlgo::VisitKernel(common::AnfAlgo::GetInputNode(cnode, input_index), 0);
+      MS_LOG(INFO) << "The reference relation output " << final_pair.first->fullname_with_scope()
+                   << ", output index: " << final_pair.second << " to input "
+                   << origin_pair.first->fullname_with_scope() << ", output index: " << origin_pair.second;
+      // Add to graph only if the input is not a monad.
+      if (!HasAbstractUMonad(origin_pair.first) && !HasAbstractIOMonad(origin_pair.first)) {
+        graph->AddRefCorrespondPairs(final_pair, origin_pair);
+      }
+    }
+  }
+}
 }  // namespace session
 }  // namespace mindspore

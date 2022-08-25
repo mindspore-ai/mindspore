@@ -23,8 +23,8 @@
 #include "frontend/optimizer/ad/grad.h"
 #include "pipeline/jit/pass.h"
 #include "runtime/pynative/op_executor.h"
+#include "runtime/pynative/op_compiler.h"
 #include "ir/cell.h"
-#include "ir/func_graph_cloner.h"
 
 namespace mindspore::pynative {
 PyNativeExecutorPtr PyNativeExecutor::executor_ = nullptr;
@@ -139,6 +139,7 @@ void PyNativeExecutor::set_kernel_build_server_dir(const py::object &kernel_buil
 void PyNativeExecutor::ClearRes() {
   MS_LOG(DEBUG) << "Clear all res";
   runtime::OpExecutor::GetInstance().Reset();
+  pynative::OpCompiler::GetInstance().ClearAllCache();
 
   // Maybe exit in runop step
   auto ms_context = MsContext::GetInstance();

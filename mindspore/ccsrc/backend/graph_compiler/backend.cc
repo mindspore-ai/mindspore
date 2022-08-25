@@ -23,8 +23,8 @@
 #include "backend/graph_compiler/transform.h"
 #include "backend/common/session/session_factory.h"
 #include "runtime/pynative/op_executor.h"
+#include "runtime/pynative/op_compiler.h"
 #include "backend/common/optimizer/helper.h"
-#include "pipeline/pynative/pynative_execute.h"
 #include "pipeline/jit/action.h"
 #include "pipeline/jit/parse/data_converter.h"
 #include "ir/anf.h"
@@ -1388,47 +1388,8 @@ std::shared_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(con
                                              strategy);
 }
 
-std::shared_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(
-  const ActorInfo &actor_info, const std::vector<int64_t> &tensors_mask, const std::vector<TensorPtr> &input_tensors,
-  bool need_erase) {
-  std::vector<KernelGraphPtr> graphs;
-  std::vector<DeviceContext *> device_contexts;
-  runtime::KernelMapPosition outputs_order;
-  size_t position = 0;
-  MS_EXCEPTION_IF_NULL(graph_compiler_);
-  for (const auto &graph_info_to_context : graph_info_to_device_context_) {
-    const auto &graph = graph_compiler_->Fetch(graph_info_to_context.first);
-    MS_EXCEPTION_IF_NULL(graph);
-    (void)graphs.emplace_back(graph);
-    (void)device_contexts.emplace_back(graph_info_to_context.second);
-
-    auto outputs = common::AnfAlgo::GetAllOutputWithIndex(graph->output());
-    for (const auto &output : outputs) {
-      if (outputs_order.count(output) == 0) {
-        outputs_order[output] = {position++};
-      } else {
-        (void)outputs_order[output].emplace_back(position++);
-      }
-    }
-  }
-
-  std::vector<std::vector<int64_t> *> tensors_mask_list(1, const_cast<std::vector<int64_t> *>(&tensors_mask));
-  std::vector<std::vector<TensorPtr> *> input_tensors_list(
-    1, const_cast<std::vector<tensor::TensorPtr> *>(&input_tensors));
-  auto parser = std::make_shared<ControlNodeParser>();
-  return std::make_shared<GraphCompilerInfo>(graphs, device_contexts, tensors_mask_list, input_tensors_list,
-                                             std::vector<AnfNodePtr>(), std::vector<AnfNodePtr>(), parser,
-                                             outputs_order, 0, actor_info, need_erase,
-                                             runtime::GraphExecutionStrategy::kStep);
-}
-
-void MindRTBackend::EraseSingleOpCache(const ActorInfo &actor_info, const std::string &graph_info,
-                                       const KernelGraphPtr &graph) {
-  MS_EXCEPTION_IF_NULL(graph);
-  MS_EXCEPTION_IF_NULL(graph_compiler_);
-  graph_compiler_->EraseSingleOpCache(graph_info, graph->graph_id());
-  actor_to_graph_compiler_info_.erase(actor_info);
-  (void)graph_info_to_device_context_.erase(graph_info);
+void MindRTBackend::EraseSingleOpCache(const GraphInfo &graph_info) {
+  pynative::OpCompiler::GetInstance().ClearOpCache(graph_info);
 }
 
 void MindRTBackend::ReleaseForwardOutput(const std::vector<TensorPtr> &input_tensors) {
@@ -1440,13 +1401,11 @@ void MindRTBackend::CompileSingleOpGraphs(const std::vector<std::shared_ptr<runt
     return;
   }
   std::vector<KernelGraphPtr> graphs;
-  std::vector<GraphCompilerInfo *> graph_compiler_infos;
   for (const auto &task : build_tasks) {
     MS_EXCEPTION_IF_NULL(task);
     const auto &context = task->context();
     MS_EXCEPTION_IF_NULL(context);
     graphs.push_back(context->graph());
-    graph_compiler_infos.push_back(context->graph_compiler_info());
   }
   MS_EXCEPTION_IF_NULL(build_tasks[0]);
   auto &task_context = build_tasks[0]->context();
@@ -1456,11 +1415,7 @@ void MindRTBackend::CompileSingleOpGraphs(const std::vector<std::shared_ptr<runt
   ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, task_context->is_pynative_infer());
 
   auto device_context = task_context->device_context();
-  graph_compiler_->BuildSingleOpGraphs(graphs, device_context);
-  for (const auto &graph_compile_info : graph_compiler_infos) {
-    MS_EXCEPTION_IF_NULL(graph_compile_info);
-    graph_compile_info->input_tensors_.clear();
-  }
+  pynative::OpCompiler::BatchBuild(graphs, device_context);
 }
 
 void MindRTBackend::OpRunCallback(const std::shared_ptr<runtime::OpTaskContext> &context) {
@@ -1524,26 +1479,22 @@ void MindRTBackend::BatchBuildCallback() {
   }
 }
 
-void MindRTBackend::DispatchOpTask(bool single_op_cache_hit, VectorRef *outputs, GraphCompilerInfo *graph_compiler_info,
+void MindRTBackend::DispatchOpTask(bool single_op_cache_hit, VectorRef *outputs,
+                                   const OpCompilerInfoPtr &op_compiler_info,
                                    const session::BackendOpRunInfoPtr &op_run_info) {
-  MS_EXCEPTION_IF_NULL(graph_compiler_info);
-  // Fetch outputs.
-  if (graph_compiler_info->graphs_.empty()) {
-    MS_LOG(EXCEPTION) << "No graph found, op:" << graph_compiler_info->name_;
-  }
-  const auto &graph = graph_compiler_info->graphs_.front();
+  MS_EXCEPTION_IF_NULL(op_compiler_info);
+  const auto &graph = op_compiler_info->graph_;
   MS_EXCEPTION_IF_NULL(graph);
-  const auto &output_nodes = graph_compiler_->GetGraphOutputNodes(graph->graph_id());
+  const auto &output_nodes = op_compiler_info->graph_output_nodes_;
 
-  runtime::UpdateDeviceAddress(graph, GetTensorWithoutValueMask(op_run_info),
-                               graph_compiler_info->device_contexts_.front());
+  runtime::UpdateDeviceAddress(graph, GetTensorWithoutValueMask(op_run_info), op_compiler_info->device_context_);
   UpdateOutput(output_nodes, outputs);
 
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   auto infer_flag = ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER);
-  auto run_op_context = std::make_shared<runtime::OpTaskContext>(
-    graph_compiler_info, graph, output_nodes, op_run_info, graph_compiler_info->device_contexts_.front(), infer_flag);
+  auto run_op_context = std::make_shared<runtime::OpTaskContext>(graph->graph_id(), graph, output_nodes, op_run_info,
+                                                                 op_compiler_info->device_context_, infer_flag);
 
   // Save build task and run task.
   std::promise<bool> promise;
@@ -1565,28 +1516,28 @@ void MindRTBackend::DispatchOpTask(bool single_op_cache_hit, VectorRef *outputs,
   }
 }
 
-void MindRTBackend::RunOpImpl(bool single_op_cache_hit, GraphCompilerInfo *graph_compiler_info,
+void MindRTBackend::RunOpImpl(bool single_op_cache_hit, const OpCompilerInfoPtr &op_compiler_info,
                               const session::BackendOpRunInfoPtr &op_run_info, VectorRef *outputs) {
   MS_EXCEPTION_IF_NULL(op_run_info);
-  MS_EXCEPTION_IF_NULL(graph_compiler_info);
+  MS_EXCEPTION_IF_NULL(op_compiler_info);
   // Fetch outputs.
-  const auto &graph = graph_compiler_info->graphs_.front();
+  const auto &graph = op_compiler_info->graph_;
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(graph_compiler_);
-  const auto &output_nodes = graph_compiler_->GetGraphOutputNodes(graph->graph_id());
+  const auto &output_nodes = op_compiler_info->graph_output_nodes_;
   MS_EXCEPTION_IF_NULL(outputs);
 
-  auto device_context = graph_compiler_info->device_contexts_.front();
+  auto device_context = op_compiler_info->device_context_;
   auto &op_executor = runtime::OpExecutor::GetInstance();
   bool is_dynamic_shape =
     op_run_info->base_op_run_info.has_dynamic_output || op_run_info->base_op_run_info.has_dynamic_input;
 
-  bool async_exec_disabled = is_dynamic_shape || graph_compiler_info->need_erase_ ||
+  bool async_exec_disabled = is_dynamic_shape || op_compiler_info->need_erase_ ||
                              !op_run_info->base_op_run_info.lazy_build || OpInBlackList(op_run_info) ||
                              GetExecutionMode() == kGraphMode || EnablePyNativeSyncRunning();
   if (!async_exec_disabled) {
     MS_LOG(DEBUG) << "Async exec enabled, op:" << op_run_info->base_op_run_info.op_name;
-    DispatchOpTask(single_op_cache_hit, outputs, graph_compiler_info, op_run_info);
+    DispatchOpTask(single_op_cache_hit, outputs, op_compiler_info, op_run_info);
     return;
   }
 
@@ -1595,7 +1546,7 @@ void MindRTBackend::RunOpImpl(bool single_op_cache_hit, GraphCompilerInfo *graph
     WaitTaskFinish();
   }
   if (!single_op_cache_hit) {
-    CompileSingleOpGraph(graph, device_context, graph_compiler_info);
+    CompileSingleOpGraph(graph, device_context);
   }
   auto tensors_without_value_mask = GetTensorWithoutValueMask(op_run_info);
   runtime::UpdateDeviceAddress(graph, tensors_without_value_mask, device_context);
@@ -1609,8 +1560,8 @@ void MindRTBackend::RunOpImpl(bool single_op_cache_hit, GraphCompilerInfo *graph
   if (op_run_info->base_op_run_info.has_dynamic_output) {
     UpdateOutputAbstract(graph, op_run_info);
   }
-  if (graph_compiler_info->need_erase_) {
-    EraseSingleOpCache(graph_compiler_info->name_, op_run_info->base_op_run_info.graph_info, graph);
+  if (op_compiler_info->need_erase_) {
+    EraseSingleOpCache(op_run_info->base_op_run_info.graph_info);
   }
 }
 
@@ -1624,22 +1575,14 @@ void MindRTBackend::RunOp(const session::BackendOpRunInfoPtr &op_run_info, Vecto
   device_context->Initialize();
 
   bool single_op_cache_hit = true;
-  auto graph_id = graph_compiler_->CompileGraph(op_run_info, &single_op_cache_hit, device_context);
-  std::string actor_info = std::to_string(graph_id) + "_" + op_run_info->base_op_run_info.op_name;
-  if (runtime::OpExecutor::GetInstance().ActorInQueue(actor_info)) {
+  auto op_compiler_info =
+    pynative::OpCompiler::GetInstance().Compile(op_run_info, &single_op_cache_hit, device_context);
+  MS_EXCEPTION_IF_NULL(op_compiler_info);
+  if (runtime::OpExecutor::GetInstance().ActorInQueue(op_compiler_info->graph_id_)) {
     WaitTaskFinish();
   }
 
-  GraphCompilerInfo *graph_compiler_info_ptr;
-  if (single_op_cache_hit) {
-    auto iter = actor_to_graph_compiler_info_.find(actor_info);
-    if (iter == actor_to_graph_compiler_info_.end()) {
-      MS_LOG(EXCEPTION) << "Can not find graph compiler info for actor set: " << actor_info;
-    }
-    graph_compiler_info_ptr = iter->second.get();
-  } else {
-    graph_info_to_device_context_.clear();
-    graph_info_to_device_context_[op_run_info->base_op_run_info.graph_info] = device_context;
+  if (!single_op_cache_hit) {
     auto context_ptr = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context_ptr);
     bool enable_cache = context_ptr->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_OP_GRAPH_CACHE);
@@ -1647,7 +1590,7 @@ void MindRTBackend::RunOp(const session::BackendOpRunInfoPtr &op_run_info, Vecto
     bool is_dynamic_shape =
       op_run_info->base_op_run_info.has_dynamic_output || op_run_info->base_op_run_info.has_dynamic_input;
     if (is_dynamic_shape) {
-      const auto &graph = graph_compiler_->Fetch(op_run_info->base_op_run_info.graph_info);
+      const auto &graph = op_compiler_info->graph_;
       MS_EXCEPTION_IF_NULL(graph);
       graph->UpdateGraphDynamicAttr();
       // Dynamic shape but select static op, must no cache
@@ -1655,26 +1598,16 @@ void MindRTBackend::RunOp(const session::BackendOpRunInfoPtr &op_run_info, Vecto
         enable_cache = false;
       }
     }
-    auto graph_compiler_info = ConstructGraphCompilerInfo(actor_info, op_run_info->base_op_run_info.input_mask,
-                                                          op_run_info->base_op_run_info.input_tensor, !enable_cache);
-    graph_compiler_info_ptr = graph_compiler_info.get();
-
-    auto ret = actor_to_graph_compiler_info_.try_emplace(actor_info, std::move(graph_compiler_info));
-    if (!ret.second) {
-      MS_LOG(WARNING) << "ActorInfo:" << actor_info << " already exist in the map.";
-    }
+    op_compiler_info->need_erase_ = !enable_cache;
   }
 
-  RunOpImpl(single_op_cache_hit, graph_compiler_info_ptr, op_run_info, outputs);
+  RunOpImpl(single_op_cache_hit, op_compiler_info, op_run_info, outputs);
 }
 
-void MindRTBackend::CompileSingleOpGraph(const KernelGraphPtr &graph, const DeviceContext *device_context,
-                                         GraphCompilerInfo *graph_compiler_info) const {
+void MindRTBackend::CompileSingleOpGraph(const KernelGraphPtr &graph, const DeviceContext *device_context) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(device_context);
-  graph_compiler_->BuildSingleOpGraphs({graph}, device_context);
-  MS_EXCEPTION_IF_NULL(graph_compiler_info);
-  graph_compiler_info->input_tensors_.clear();
+  pynative::OpCompiler::BatchBuild({graph}, device_context);
 }
 
 void MindRTBackend::UpdateOutput(const std::vector<session::KernelWithIndex> &output_nodes, VectorRef *const outputs) {

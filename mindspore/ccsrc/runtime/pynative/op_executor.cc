@@ -89,7 +89,7 @@ void OpExecutor::PushOpBuildTask(const std::shared_ptr<OpBuildTask> &op_build_ta
 void OpExecutor::PushOpRunTask(const std::shared_ptr<OpTask> &op_run_task) {
   std::lock_guard<std::mutex> lock(task_mutex_);
   op_run_tasks_.push(op_run_task);
-  actor_in_queue_.insert(op_run_task->context()->graph_compiler_info()->name_);
+  actor_in_queue_.insert(op_run_task->context()->graph_id());
   task_cond_var_.notify_all();
 }
 
@@ -117,9 +117,9 @@ bool OpExecutor::BuildQueueFull() {
   return op_build_tasks_.size() > kMaxQueueSize;
 }
 
-bool OpExecutor::ActorInQueue(const std::string &actor_info) {
+bool OpExecutor::ActorInQueue(GraphId graph_id) {
   std::lock_guard<std::mutex> lock(task_mutex_);
-  auto iter = actor_in_queue_.find(actor_info);
+  auto iter = actor_in_queue_.find(graph_id);
   return iter != actor_in_queue_.end();
 }
 
@@ -152,7 +152,7 @@ void OpExecutor::WorkerLoop() {
       std::unique_lock<std::mutex> lock(task_mutex_);
       if (!op_run_tasks_.empty()) {
         op_run_tasks_.pop();
-        actor_in_queue_.erase(task->context()->graph_compiler_info()->name_);
+        actor_in_queue_.erase(task->context()->graph_id());
       }
 
       if (op_run_tasks_.empty()) {
