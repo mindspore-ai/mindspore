@@ -29,7 +29,7 @@ class EnvironSetKernel : public KernelBase {
   uint32_t ParseKernelParam() override;
 
  private:
-  int32_t attr_value_type_{0};
+  int64_t attr_value_type_{0};
   size_t value_size_{0};
 };
 }  // namespace aicpu

@@ -32,7 +32,7 @@ namespace aicpu {
 class EnvironMgr {
  public:
   static EnvironMgr &GetInstance() noexcept {
-    static EnvironMgr instance;
+    static EnvironMgr instance = EnvironMgr();
     return instance;
   }
 
@@ -49,9 +49,9 @@ class EnvironMgr {
   void Clear();
 
   // Check whether the inputs of EnvironGet kernel or EnvironSet kernel are valid.
-  bool CheckEnvInput(const aicpuops::NodeDef &node_def);
+  bool CheckEnvInput(const aicpuops::NodeDef &node_def) const;
   // Check whether is scalar tensor. Environ handle and env key only support scalar tensor currently.
-  bool IsScalarTensor(const aicpuops::Tensor &tensor);
+  bool IsScalarTensor(const aicpuops::Tensor &tensor) const;
 
  private:
   EnvironMgr() = default;
