@@ -18,6 +18,7 @@
 
 #include <algorithm>
 #include <stack>
+#include <utility>
 #include "acl/acl_rt.h"
 #include "utils/ms_context.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
@@ -182,7 +183,7 @@ void DynamicTbeKernelMod::InitTilingDataPtr() {
   }
 }
 
-bool DynamicTbeKernelMod::CopyTilingToDevice(void *stream_ptr) {
+void DynamicTbeKernelMod::CopyTilingToDevice(void *stream_ptr) {
   InitTilingDataPtr();
   MS_EXCEPTION_IF_NULL(kernel_pack_);
   auto kernel_json_info = kernel_pack_->kernel_json_info();
@@ -195,7 +196,7 @@ bool DynamicTbeKernelMod::CopyTilingToDevice(void *stream_ptr) {
 
   if (tiling_data_.empty() || tiling_data_ptr_ == nullptr) {
     MS_LOG(INFO) << "Tiling size is 0, skip aclrtMemcpyAsync.";
-    return true;
+    return;
   }
   // cppcheck-suppress unreadVariable
   auto lock = device::KernelRuntime::LockRuntime(stream_ptr);
@@ -204,7 +205,6 @@ bool DynamicTbeKernelMod::CopyTilingToDevice(void *stream_ptr) {
   if (ret != RT_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Tiling aclrtMemcpyAsync failed, ret:" << ret;
   }
-  return true;
 }
 
 bool DynamicTbeKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
@@ -267,9 +267,7 @@ bool DynamicTbeKernelMod::Launch(const std::vector<AddressPtr> &inputs, const st
   }
 
   // copy tiling to device
-  if (!CopyTilingToDevice(stream_ptr)) {
-    MS_LOG(EXCEPTION) << "Copy tiling to device failed. op name: " << cnode->fullname_with_scope();
-  }
+  CopyTilingToDevice(stream_ptr);
 
   // pack all addresses into a vector.
   std::vector<void *> runtimeargs;

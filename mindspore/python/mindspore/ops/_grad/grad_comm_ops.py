@@ -19,15 +19,17 @@ import mindspore.common.dtype as mstype
 from mindspore.ops import functional as F
 from mindspore.communication import get_rank, get_group_size
 from mindspore.parallel._utils import _get_enable_parallel_optimizer, _get_grad_accumulation_shard
-from .. import operations as P
-from ...common.tensor import RowTensor
-from ..composite.multitype_ops.zeros_like_impl import zeros_like
-from ..operations.comm_ops import (AllGather, _MiniStepAllGather, _HostAllGather, AllReduce, NeighborExchange, AlltoAll, NeighborExchangeV2,
-                                   Broadcast, _GetTensorSlice, _MirrorOperator, _MirrorMiniStepOperator, ReduceOp,
-                                   ReduceScatter, _HostReduceScatter, _VirtualDiv, _VirtualAdd, _AllSwap,
-                                   _VirtualAssignAdd, _VirtualAccuGrad, _MirrorMicroStepOperator, _MicroStepAllGather)
+from mindspore.ops import operations as P
+from mindspore.ops.operations._inner_ops import Send, Receive
+from mindspore.common.tensor import RowTensor
+from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
+from mindspore.ops.operations.comm_ops import (AllGather, _MiniStepAllGather, _HostAllGather, AllReduce,
+                                               NeighborExchange, AlltoAll, NeighborExchangeV2, Broadcast,
+                                               _GetTensorSlice, _MirrorOperator, _MirrorMiniStepOperator, ReduceOp,
+                                               ReduceScatter, _HostReduceScatter, _VirtualDiv, _VirtualAdd, _AllSwap,
+                                               _VirtualAssignAdd, _VirtualAccuGrad, _MirrorMicroStepOperator,
+                                               _MicroStepAllGather)
 from .grad_base import bprop_getters
-from ..operations._inner_ops import Send, Receive
 from ..operations import _grad_ops as G
 
 

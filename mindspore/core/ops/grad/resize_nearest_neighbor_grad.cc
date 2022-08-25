@@ -50,8 +50,8 @@ abstract::ShapePtr ResizeNearestNeighborGradInferShape(const PrimitivePtr &primi
     }
   } else if (size_ptr->isa<ValueTuple>()) {
     std::vector<ValuePtr> size_vec = size_ptr->cast<ValueTuplePtr>()->value();
-    std::transform(size_vec.begin(), size_vec.end(), std::back_inserter(size_v),
-                   [](const ValuePtr e) { return GetValue<int64_t>(e); });
+    (void)std::transform(size_vec.begin(), size_vec.end(), std::back_inserter(size_v),
+                         [](const ValuePtr e) { return GetValue<int64_t>(e); });
   } else if (size_ptr->isa<AnyValue>()) {
     size_v.push_back(-1);
     size_v.push_back(-1);
