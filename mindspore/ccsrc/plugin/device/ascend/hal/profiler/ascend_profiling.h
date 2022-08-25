@@ -42,7 +42,7 @@ class AscendProfiler : public Profiler {
   void OpDataProducerEnd() override { return; }
   uint64_t GetOptionsMask() const;
   aclprofAicoreMetrics GetAicMetrics() const;
-  void ReportErrorMessage() const;
+  std::string GetErrorMessage() const;
   void GetNodeTaskIdStreamId(const CNodePtr &kernel, uint32_t graph_id, int device_id, const KernelType kernel_type);
   std::map<std::thread::id, uint32_t> last_tid;
   std::map<std::thread::id, uint32_t> last_streamid;

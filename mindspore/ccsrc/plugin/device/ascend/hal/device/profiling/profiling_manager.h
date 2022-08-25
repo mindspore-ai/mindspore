@@ -73,7 +73,7 @@ class ProfilingManager {
   Status ProfHandleStart();
   Status ProfHandleStop();
   Status ProfHandleFinalize();
-  void ReportErrorMessage() const;
+  std::string GetErrorMessage() const;
 
  protected:
   ProfilingManager();

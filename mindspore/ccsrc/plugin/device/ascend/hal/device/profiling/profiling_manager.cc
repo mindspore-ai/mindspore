@@ -145,11 +145,12 @@ rtError_t CtrlCallbackHandle(uint32_t rt_type, void *data, uint32_t /* len */) {
   return RT_ERROR_NONE;
 }
 
-void ProfilingManager::ReportErrorMessage() const {
+std::string ProfilingManager::GetErrorMessage() const {
   const std::string &error_message = ErrorManager::GetInstance().GetErrorMessage();
   if (!error_message.empty() && error_message.find(kUnknownErrorString) == std::string::npos) {
-    MS_LOG(ERROR) << "Ascend error occurred, error message:\n" << error_message;
+    return error_message;
   }
+  return "";
 }
 
 Status ProfilingManager::CallMsprofReport(const NotNull<ReporterData *> reporter_data) const {
@@ -158,7 +159,9 @@ Status ProfilingManager::CallMsprofReport(const NotNull<ReporterData *> reporter
                                  static_cast<void *>(reporter_data.get()), sizeof(ReporterData));
 
   if (ret != UintToInt(PROF_SUCCESS)) {
-    ReportErrorMessage();
+    if (auto error_message = GetErrorMessage(); !error_message.empty()) {
+      MS_LOG(ERROR) << "Ascend error occurred, error message:\n" << error_message;
+    }
     return PROF_FAILED;
   }
   return PROF_SUCCESS;
@@ -240,9 +243,8 @@ void ProfilingManager::QueryHashId(const int32_t &device_id, const std::string &
                                        static_cast<int32_t>(MsprofReporterCallbackType::MSPROF_REPORTER_HASH),
                                        &hash_data, sizeof(MsprofHashData));
   if (ret != UintToInt(PROF_SUCCESS)) {
-    ReportErrorMessage();
     MS_LOG(EXCEPTION) << "[Profiling] Query hash id of long string failed, src string is " << src_str.c_str()
-                      << ", ret is " << ret;
+                      << ", ret is " << ret << ".#dmsg#Ascend Error Message:#dmsg#" << GetErrorMessage();
   }
 
   *hash_id = hash_data.hashId;
