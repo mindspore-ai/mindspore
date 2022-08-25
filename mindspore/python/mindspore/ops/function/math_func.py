@@ -5675,6 +5675,42 @@ def remainder(x, y):
     out = x - tensor_floordiv(x, y) * y
     return out
 
+def accumulate_n(*x):
+    r"""
+    Computes accumulation of all input tensors element-wise.
+
+    AccumulateNV2 is similar to AddN, but there is a significant difference
+    among them: AccumulateNV2 will not wait for all of its inputs to be ready
+    before summing. That is to say, AccumulateNV2 is able to save
+    memory when inputs are ready at different time since the minimum temporary
+    storage is proportional to the output size rather than the input size.
+
+    Inputs:
+        - **x** (Union(tuple[Tensor], list[Tensor])) - The input tuple or list
+          is made up of multiple tensors whose dtype is number to be added together.
+          Each element of tuple or list should have the same shape.
+
+    Outputs:
+        Tensor, has the same shape and dtype as each entry of the `x`.
+
+    Raises:
+        TypeError: If `x` is neither tuple nor list.
+        ValueError: If there is an input element with a different shape.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> x = Tensor(np.array([1, 2, 3]), mindspore.float32)
+        >>> y = Tensor(np.array([4, 5, 6]), mindspore.float32)
+        >>> output = ops.accumulate_n(x, y, x, y)
+        >>> print(output)
+        [10. 14. 18.]
+    """
+
+    accumulate_ = _get_cache_prim(P.AccumulateNV2)()
+    return accumulate_(x)
+
 
 __all__ = [
     'addn',
@@ -5814,6 +5850,7 @@ __all__ = [
     'frac',
     'kron',
     'rot90',
-    'remainder'
+    'remainder',
+    'accumulate_n'
 ]
 __all__.sort()

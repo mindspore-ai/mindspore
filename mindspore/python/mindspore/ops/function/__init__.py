@@ -120,6 +120,7 @@ from .parameter_func import (
     index_add,
 )
 from .math_func import (
+    accumulate_n,
     addn,
     absolute,
     abs,
