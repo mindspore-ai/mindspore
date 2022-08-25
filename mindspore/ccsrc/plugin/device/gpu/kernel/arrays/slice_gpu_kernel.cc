@@ -15,6 +15,7 @@
  */
 
 #include "plugin/device/gpu/kernel/arrays/slice_gpu_kernel.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 namespace mindspore {
 namespace kernel {
 namespace {
@@ -23,153 +24,170 @@ std::unique_ptr<cukernel::GpuKernelHelperBase> CreateSliceKernelPtr(const std::s
                                                                     const uint32_t &device_id) {
   return std::make_unique<cukernel::SliceHelperGpuKernel<T, S>>(kernel_name, device_id);
 }
+
+template <typename T>
+using Complex = mindspore::utils::Complex<T>;
+
 using SlicePtrCreatorFunc =
   std::function<std::unique_ptr<cukernel::GpuKernelHelperBase>(const std::string &, const uint32_t &)>;
 
-const std::vector<std::pair<KernelAttr, SlicePtrCreatorFunc>> kernel_attr = {{KernelAttr()
-                                                                                .AddInputAttr(kNumberTypeFloat64)
-                                                                                .AddInputAttr(kNumberTypeInt64)
-                                                                                .AddInputAttr(kNumberTypeInt64)
-                                                                                .AddOutputAttr(kNumberTypeFloat64),
-                                                                              CreateSliceKernelPtr<double, int64_t>},
-                                                                             {KernelAttr()
-                                                                                .AddInputAttr(kNumberTypeFloat32)
-                                                                                .AddInputAttr(kNumberTypeInt64)
-                                                                                .AddInputAttr(kNumberTypeInt64)
-                                                                                .AddOutputAttr(kNumberTypeFloat32),
-                                                                              CreateSliceKernelPtr<float, int64_t>},
-                                                                             {KernelAttr()
-                                                                                .AddInputAttr(kNumberTypeFloat16)
-                                                                                .AddInputAttr(kNumberTypeInt64)
-                                                                                .AddInputAttr(kNumberTypeInt64)
-                                                                                .AddOutputAttr(kNumberTypeFloat16),
-                                                                              CreateSliceKernelPtr<half, int64_t>},
-                                                                             {KernelAttr()
-                                                                                .AddInputAttr(kNumberTypeInt64)
-                                                                                .AddInputAttr(kNumberTypeInt64)
-                                                                                .AddInputAttr(kNumberTypeInt64)
-                                                                                .AddOutputAttr(kNumberTypeInt64),
-                                                                              CreateSliceKernelPtr<int64_t, int64_t>},
-                                                                             {KernelAttr()
-                                                                                .AddInputAttr(kNumberTypeInt32)
-                                                                                .AddInputAttr(kNumberTypeInt64)
-                                                                                .AddInputAttr(kNumberTypeInt64)
-                                                                                .AddOutputAttr(kNumberTypeInt32),
-                                                                              CreateSliceKernelPtr<int32_t, int64_t>},
-                                                                             {KernelAttr()
-                                                                                .AddInputAttr(kNumberTypeInt16)
-                                                                                .AddInputAttr(kNumberTypeInt64)
-                                                                                .AddInputAttr(kNumberTypeInt64)
-                                                                                .AddOutputAttr(kNumberTypeInt16),
-                                                                              CreateSliceKernelPtr<int16_t, int64_t>},
-                                                                             {KernelAttr()
-                                                                                .AddInputAttr(kNumberTypeInt8)
-                                                                                .AddInputAttr(kNumberTypeInt64)
-                                                                                .AddInputAttr(kNumberTypeInt64)
-                                                                                .AddOutputAttr(kNumberTypeInt8),
-                                                                              CreateSliceKernelPtr<char, int64_t>},
-                                                                             {KernelAttr()
-                                                                                .AddInputAttr(kNumberTypeUInt64)
-                                                                                .AddInputAttr(kNumberTypeInt64)
-                                                                                .AddInputAttr(kNumberTypeInt64)
-                                                                                .AddOutputAttr(kNumberTypeUInt64),
-                                                                              CreateSliceKernelPtr<uint64_t, int64_t>},
-                                                                             {KernelAttr()
-                                                                                .AddInputAttr(kNumberTypeUInt32)
-                                                                                .AddInputAttr(kNumberTypeInt64)
-                                                                                .AddInputAttr(kNumberTypeInt64)
-                                                                                .AddOutputAttr(kNumberTypeUInt32),
-                                                                              CreateSliceKernelPtr<uint32_t, int64_t>},
-                                                                             {KernelAttr()
-                                                                                .AddInputAttr(kNumberTypeUInt16)
-                                                                                .AddInputAttr(kNumberTypeInt64)
-                                                                                .AddInputAttr(kNumberTypeInt64)
-                                                                                .AddOutputAttr(kNumberTypeUInt16),
-                                                                              CreateSliceKernelPtr<uint16_t, int64_t>},
-                                                                             {KernelAttr()
-                                                                                .AddInputAttr(kNumberTypeUInt8)
-                                                                                .AddInputAttr(kNumberTypeInt64)
-                                                                                .AddInputAttr(kNumberTypeInt64)
-                                                                                .AddOutputAttr(kNumberTypeUInt8),
-                                                                              CreateSliceKernelPtr<uchar, int64_t>},
-                                                                             {KernelAttr()
-                                                                                .AddInputAttr(kNumberTypeBool)
-                                                                                .AddInputAttr(kNumberTypeInt64)
-                                                                                .AddInputAttr(kNumberTypeInt64)
-                                                                                .AddOutputAttr(kNumberTypeBool),
-                                                                              CreateSliceKernelPtr<bool, int64_t>},
-                                                                             {KernelAttr()
-                                                                                .AddInputAttr(kNumberTypeFloat64)
-                                                                                .AddInputAttr(kNumberTypeInt32)
-                                                                                .AddInputAttr(kNumberTypeInt32)
-                                                                                .AddOutputAttr(kNumberTypeFloat64),
-                                                                              CreateSliceKernelPtr<double, int32_t>},
-                                                                             {KernelAttr()
-                                                                                .AddInputAttr(kNumberTypeFloat32)
-                                                                                .AddInputAttr(kNumberTypeInt32)
-                                                                                .AddInputAttr(kNumberTypeInt32)
-                                                                                .AddOutputAttr(kNumberTypeFloat32),
-                                                                              CreateSliceKernelPtr<float, int32_t>},
-                                                                             {KernelAttr()
-                                                                                .AddInputAttr(kNumberTypeFloat16)
-                                                                                .AddInputAttr(kNumberTypeInt32)
-                                                                                .AddInputAttr(kNumberTypeInt32)
-                                                                                .AddOutputAttr(kNumberTypeFloat16),
-                                                                              CreateSliceKernelPtr<half, int32_t>},
-                                                                             {KernelAttr()
-                                                                                .AddInputAttr(kNumberTypeInt64)
-                                                                                .AddInputAttr(kNumberTypeInt32)
-                                                                                .AddInputAttr(kNumberTypeInt32)
-                                                                                .AddOutputAttr(kNumberTypeInt64),
-                                                                              CreateSliceKernelPtr<int64_t, int32_t>},
-                                                                             {KernelAttr()
-                                                                                .AddInputAttr(kNumberTypeInt32)
-                                                                                .AddInputAttr(kNumberTypeInt32)
-                                                                                .AddInputAttr(kNumberTypeInt32)
-                                                                                .AddOutputAttr(kNumberTypeInt32),
-                                                                              CreateSliceKernelPtr<int32_t, int32_t>},
-                                                                             {KernelAttr()
-                                                                                .AddInputAttr(kNumberTypeInt16)
-                                                                                .AddInputAttr(kNumberTypeInt32)
-                                                                                .AddInputAttr(kNumberTypeInt32)
-                                                                                .AddOutputAttr(kNumberTypeInt16),
-                                                                              CreateSliceKernelPtr<int16_t, int32_t>},
-                                                                             {KernelAttr()
-                                                                                .AddInputAttr(kNumberTypeInt8)
-                                                                                .AddInputAttr(kNumberTypeInt32)
-                                                                                .AddInputAttr(kNumberTypeInt32)
-                                                                                .AddOutputAttr(kNumberTypeInt8),
-                                                                              CreateSliceKernelPtr<char, int32_t>},
-                                                                             {KernelAttr()
-                                                                                .AddInputAttr(kNumberTypeUInt64)
-                                                                                .AddInputAttr(kNumberTypeInt32)
-                                                                                .AddInputAttr(kNumberTypeInt32)
-                                                                                .AddOutputAttr(kNumberTypeUInt64),
-                                                                              CreateSliceKernelPtr<uint64_t, int32_t>},
-                                                                             {KernelAttr()
-                                                                                .AddInputAttr(kNumberTypeUInt32)
-                                                                                .AddInputAttr(kNumberTypeInt32)
-                                                                                .AddInputAttr(kNumberTypeInt32)
-                                                                                .AddOutputAttr(kNumberTypeUInt32),
-                                                                              CreateSliceKernelPtr<uint32_t, int32_t>},
-                                                                             {KernelAttr()
-                                                                                .AddInputAttr(kNumberTypeUInt16)
-                                                                                .AddInputAttr(kNumberTypeInt32)
-                                                                                .AddInputAttr(kNumberTypeInt32)
-                                                                                .AddOutputAttr(kNumberTypeUInt16),
-                                                                              CreateSliceKernelPtr<uint16_t, int32_t>},
-                                                                             {KernelAttr()
-                                                                                .AddInputAttr(kNumberTypeUInt8)
-                                                                                .AddInputAttr(kNumberTypeInt32)
-                                                                                .AddInputAttr(kNumberTypeInt32)
-                                                                                .AddOutputAttr(kNumberTypeUInt8),
-                                                                              CreateSliceKernelPtr<uchar, int32_t>},
-                                                                             {KernelAttr()
-                                                                                .AddInputAttr(kNumberTypeBool)
-                                                                                .AddInputAttr(kNumberTypeInt32)
-                                                                                .AddInputAttr(kNumberTypeInt32)
-                                                                                .AddOutputAttr(kNumberTypeBool),
-                                                                              CreateSliceKernelPtr<bool, int32_t>}};
+const std::vector<std::pair<KernelAttr, SlicePtrCreatorFunc>> kernel_attr = {
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeComplex64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeComplex64),
+   CreateSliceKernelPtr<Complex<float>, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeComplex128)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeComplex128),
+   CreateSliceKernelPtr<Complex<double>, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat64),
+   CreateSliceKernelPtr<double, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat32),
+   CreateSliceKernelPtr<float, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat16),
+   CreateSliceKernelPtr<half, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt64),
+   CreateSliceKernelPtr<int64_t, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt32),
+   CreateSliceKernelPtr<int32_t, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt16),
+   CreateSliceKernelPtr<int16_t, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt8)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt8),
+   CreateSliceKernelPtr<char, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeUInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt64),
+   CreateSliceKernelPtr<uint64_t, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeUInt32)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt32),
+   CreateSliceKernelPtr<uint32_t, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeUInt16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt16),
+   CreateSliceKernelPtr<uint16_t, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeUInt8)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt8),
+   CreateSliceKernelPtr<uchar, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeBool)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeBool),
+   CreateSliceKernelPtr<bool, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeFloat64),
+   CreateSliceKernelPtr<double, int32_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeFloat32),
+   CreateSliceKernelPtr<float, int32_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeFloat16),
+   CreateSliceKernelPtr<half, int32_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeInt64),
+   CreateSliceKernelPtr<int64_t, int32_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeInt32),
+   CreateSliceKernelPtr<int32_t, int32_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt16)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeInt16),
+   CreateSliceKernelPtr<int16_t, int32_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt8)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeInt8),
+   CreateSliceKernelPtr<char, int32_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeUInt64)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeUInt64),
+   CreateSliceKernelPtr<uint64_t, int32_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeUInt32)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeUInt32),
+   CreateSliceKernelPtr<uint32_t, int32_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeUInt16)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeUInt16),
+   CreateSliceKernelPtr<uint16_t, int32_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeUInt8)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeUInt8),
+   CreateSliceKernelPtr<uchar, int32_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeBool)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeBool),
+   CreateSliceKernelPtr<bool, int32_t>}};
 }  // namespace
 
 bool SliceGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
