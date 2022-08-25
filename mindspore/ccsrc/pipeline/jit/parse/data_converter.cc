@@ -404,13 +404,13 @@ ValuePtr ConvertOtherObj(const py::object &obj, bool forbid_reuse = false) {
   // Start RESOLVE_TYPE_INVALID...
   // The fallback feature is enabled in default.
   // Not support change the flag during the process is alive.
-  static const auto support_fallback = common::GetEnv("MS_DEV_ENABLE_FALLBACK");
-  static const auto use_fallback = (support_fallback != "0");
+  static const auto use_fallback = (common::GetEnv("MS_DEV_ENABLE_FALLBACK") != "0");
   if (use_fallback) {
     if (obj_type == RESOLVE_TYPE_NUMPY_INT_NUMBER || obj_type == RESOLVE_TYPE_NUMPY_FLOAT_NUMBER) {
       return ConvertConstantNumpyNumber(obj, obj_type);
     }
     auto res = std::make_shared<InterpretedObject>(obj, py::str(obj));
+    MS_EXCEPTION_IF_NULL(res);
     MS_LOG(DEBUG) << "Get interpreted object: " << res->ToString();
     return res;
   }

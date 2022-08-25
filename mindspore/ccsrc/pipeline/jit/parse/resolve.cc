@@ -107,8 +107,7 @@ abstract::AbstractBasePtr ClassType::ToAbstract() {
 
   // The fallback feature is enabled in default.
   // Not support change the flag during the process is alive.
-  static const auto support_fallback = common::GetEnv("MS_DEV_ENABLE_FALLBACK");
-  static const auto use_fallback = (support_fallback != "0");
+  static const auto use_fallback = (common::GetEnv("MS_DEV_ENABLE_FALLBACK") != "0");
   if (use_fallback && !IsSupportedCreateInstanceType(obj())) {
     return abs_scalar;
   }
@@ -236,6 +235,7 @@ void ConvertLoadedGraph(const FuncGraphPtr &func_graph, const ValuePtr &value) {
 
 AnfNodePtr ConvertObjectToNode(const AnfNodePtr &origin_node, const py::object &obj, const FuncGraphPtr &func_graph) {
   // When the cell is set recomputed, it should not use old scope from cache.
+  MS_EXCEPTION_IF_NULL(origin_node);
   auto scope = origin_node->scope();
   bool has_recompute_scope = (scope == nullptr) ? false : scope->name().find(kAttrRecompute) == 0;
   ValuePtr convert_result = nullptr;
@@ -387,6 +387,7 @@ AnfNodePtr ResolveObjectAndAddToManager(const FuncGraphManagerPtr &manager, cons
 }  // namespace
 
 std::pair<NameSpacePtr, SymbolPtr> GetNamespaceAndSymbol(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
   if (IsPrimitiveCNode(node, prim::kPrimResolve)) {
     auto resolve_cnode = node->cast<CNodePtr>();
     constexpr size_t namespace_index = 1;
@@ -507,6 +508,7 @@ AnfNodePtr ResolveSequenceWithAttr(const FuncGraphManagerPtr &manager, const py:
 
   constexpr auto prim_index = 0;
   constexpr auto index_index = 2;
+  MS_EXCEPTION_IF_NULL(get_attr_node);
   auto fg = get_attr_node->func_graph();
   MS_EXCEPTION_IF_NULL(fg);
   auto make_tuple_node = fg->NewCNodeInOrder(inputs);
@@ -517,6 +519,8 @@ AnfNodePtr ResolveSymbolWithAttr(const FuncGraphManagerPtr &manager, const AnfNo
                                  const AnfNodePtr &attr_node, const AnfNodePtr &get_attr_node) {
   // {prim::kPrimGetAttr, {prim::kPrimResolve, namespace, symbol}, attr}
   auto [name_space, symbol] = GetNamespaceAndSymbol(object_node);
+  MS_EXCEPTION_IF_NULL(name_space);
+  MS_EXCEPTION_IF_NULL(symbol);
   auto module_name = name_space->module();
   constexpr std::string_view parse_super_name = "namespace";
   if (module_name.find(RESOLVE_NAMESPACE_NAME_CLASS_MEMBER) != std::string::npos &&

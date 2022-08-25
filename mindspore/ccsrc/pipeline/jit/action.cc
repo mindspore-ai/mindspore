@@ -64,14 +64,19 @@
 namespace mindspore {
 namespace pipeline {
 namespace {
-bool ExistControlFlow(const FuncGraphPtr &func_graph) { return !func_graph->func_graphs_used_total().empty(); }
+bool ExistControlFlow(const FuncGraphPtr &func_graph) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  return !func_graph->func_graphs_used_total().empty();
+}
 
 bool EnableGradForScalar(const abstract::AbstractBasePtr &abs) {
+  MS_EXCEPTION_IF_NULL(abs);
   return MsContext::GetInstance()->get_param<bool>(MS_CTX_GRAD_FOR_SCALAR) && abs->BuildType() != nullptr &&
          abs->BuildType()->isa<Number>();
 }
 
 bool EnableTupleBroaden(const abstract::AbstractBasePtr &abs) {
+  MS_EXCEPTION_IF_NULL(abs);
   return abs->isa<abstract::AbstractTuple>() && abs->cast<abstract::AbstractTuplePtr>()->ContainsAllBroadenTensors();
 }
 
@@ -853,7 +858,7 @@ bool EliminateAdRelatedSpecialOpNode(const ResourcePtr &resource) {
 
 bool HasIncorporateCall(const std::vector<AnfNodePtr> &all_nodes) {
   for (const auto &node : all_nodes) {
-    if (!node->isa<CNode>()) {
+    if (node == nullptr || !node->isa<CNode>()) {
       continue;
     }
     auto cnode = node->cast<CNodePtr>();
@@ -904,7 +909,7 @@ bool HasIncorporateCall(const std::vector<AnfNodePtr> &all_nodes) {
 
 bool ExistTarget(const std::vector<AnfNodePtr> &all_nodes, const std::string &target) {
   for (const auto &node : all_nodes) {
-    if (!node->isa<CNode>()) {
+    if (node == nullptr || !node->isa<CNode>()) {
       continue;
     }
     if (GetCNodeTarget(node) == target) {

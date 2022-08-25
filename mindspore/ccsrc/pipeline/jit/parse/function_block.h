@@ -117,6 +117,7 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
 
   // Call this method to update or add a variable.
   void UpdateLocalPyParam(const std::string &name, const AnfNodePtr &node) {
+    MS_EXCEPTION_IF_NULL(node);
     const auto key_iter = local_py_params_keys_.find(name);
     if (key_iter == local_py_params_keys_.end()) {
       MS_LOG(DEBUG) << "Add '" << name << "', " << node->DebugString();

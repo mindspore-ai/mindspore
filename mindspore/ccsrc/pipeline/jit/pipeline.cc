@@ -120,6 +120,7 @@ std::string GetBaseNameForIR(int64_t stage_idx, const std::string &action_name) 
 bool CheckAllTensor(const ValueTuplePtr &value_tuple) {
   auto elements = value_tuple->value();
   for (auto element : elements) {
+    MS_EXCEPTION_IF_NULL(element);
     if (!(element->isa<ValueTuple>() && CheckAllTensor(element->cast<ValueTuplePtr>())) &&
         !(element->isa<MetaTensor>())) {
       return false;
@@ -799,6 +800,7 @@ void GraphExecutorPy::InitCompileCacheInfo(const ResourcePtr &resource, const st
   double t1 = GetTime();
 #endif
   static size_t idx = 0;
+  MS_EXCEPTION_IF_NULL(resource);
   resource->GetCompileCacheResource(compile_cache_dep_files_, weights_, queue_name_, idx++, &compile_cache_consistent_);
 #ifdef ENABLE_PROFILE
   double t2 = GetTime();
@@ -1063,7 +1065,7 @@ void CheckInterpretNodeLineInfos() {
 
 #ifdef ENABLE_DUMP_IR
 void RDRRecordGraph(const size_t action_index, const size_t action_size, const std::string &filename,
-                    const FuncGraphPtr graph) {
+                    const FuncGraphPtr &graph) {
   if (mindspore::RecorderManager::Instance().RdrEnable()) {
     MS_LOG(INFO) << "Recording FuncGraph in pipeline using RDR.";
     if (graph != nullptr) {
@@ -1087,12 +1089,12 @@ void RDRRecordGraph(const size_t action_index, const size_t action_size, const s
 
 #ifdef ENABLE_DUMP_IR
 void RecordIR(const size_t action_index, const size_t action_size, const std::string &action_name,
-              const FuncGraphPtr graph, FuncGraphPtr *user_graph) {
+              const FuncGraphPtr &graph, FuncGraphPtr *user_graph) {
   if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG) && graph != nullptr) {
     *user_graph = graph;
     std::string base_name = GetBaseNameForIR(SizeToLong(action_index), action_name);
 
-    // Generate IR file in human readable format
+    // Generate IR file in human-readable format
     if (action_index == action_size - 1) {
       DumpIR(base_name + ".ir", graph, false, kWholeStack);
     } else {
@@ -1107,7 +1109,7 @@ void RecordIR(const size_t action_index, const size_t action_size, const std::st
 #endif
 
 #ifndef ENABLE_SECURITY
-void SaveGraphForReadability(const std::string &action_name, const FuncGraphPtr graph, const ResourcePtr resource) {
+void SaveGraphForReadability(const std::string &action_name, const FuncGraphPtr &graph, const ResourcePtr &resource) {
   if (graph != nullptr && action_name.find("optimize") != string::npos) {
 #ifdef ENABLE_DUMP_IR
     if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {

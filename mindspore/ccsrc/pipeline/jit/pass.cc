@@ -806,6 +806,7 @@ bool ValidatePass(const ResourcePtr &resource) {
 }
 
 bool MetaUnpackPreparePass(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
   FuncGraphPtr func_graph = resource->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
   auto prepare_map = GetMetaUnpackPreparePhases();
@@ -815,6 +816,7 @@ bool MetaUnpackPreparePass(const ResourcePtr &resource) {
 }
 
 bool PynativeOptPass(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
   FuncGraphPtr func_graph = resource->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
   opt::irpass::OptimizeIRPassLib irpass;
@@ -825,6 +827,7 @@ bool PynativeOptPass(const ResourcePtr &resource) {
 }
 
 bool EliminateAdRelatedSpecialOpOptPass(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
   auto func_graph = resource->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
   opt::irpass::OptimizeIRPassLib irpass;

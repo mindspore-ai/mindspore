@@ -131,6 +131,7 @@ std::pair<AnfNodePtr, bool> FunctionBlock::FindPredInterpretNode(const std::stri
   bool has_found = false;
   while (!block_queue.empty()) {
     const auto cur_block = block_queue.front();
+    MS_EXCEPTION_IF_NULL(cur_block);
     block_queue.pop();
     (void)visited_block.insert(cur_block);
     auto pred_node = cur_block->ReadLocalVariable(var_name);
@@ -381,10 +382,12 @@ AnfNodePtr FunctionBlock::MakeResolve(const NameSpacePtr &name_space, const Symb
 AnfNodePtr FunctionBlock::MakeInterpret(const std::string &script_text, const AnfNodePtr &global_dict_node,
                                         const AnfNodePtr &local_dict_node, const AnfNodePtr &orig_node) {
   MS_LOG(DEBUG) << "MakeInterpret for " << script_text;
+  MS_EXCEPTION_IF_NULL(orig_node);
   ScriptPtr script = std::make_shared<Script>(script_text);
   auto script_node = NewValueNode(script);
   auto node = func_graph_->NewCNodeInOrder(
     {NewValueNode(prim::kPrimPyInterpret), script_node, global_dict_node, local_dict_node});
+  MS_EXCEPTION_IF_NULL(node);
   node->set_interpret_internal_type(orig_node->interpret_internal_type());
   return node;
 }
@@ -637,7 +640,7 @@ void FunctionBlock::AttachIsolatedNodesBeforeReturn() {
     state = states[1];
   } else {
     state = func_graph_->NewCNode(std::move(states));
-    if (state->debug_info()) {
+    if (state != nullptr && state->debug_info() != nullptr) {
       state->debug_info()->set_location(nullptr);
     }
   }
@@ -671,6 +674,7 @@ void FunctionBlock::AttachIsolatedNodesBeforeReturn() {
   // Update new return node's debug_info with old one.
   if (return_node != nullptr && return_node->debug_info()) {
     auto new_return = func_graph_->get_return();
+    MS_EXCEPTION_IF_NULL(new_return);
     new_return->set_debug_info(return_node->debug_info());
   }
 }

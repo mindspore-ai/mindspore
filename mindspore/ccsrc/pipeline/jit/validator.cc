@@ -146,6 +146,7 @@ void ValidateValueNode(const AnfNodePtr &node) {
 }
 
 void CheckValueTuple(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
   auto value_node = node->cast_ptr<ValueNode>();
   MS_EXCEPTION_IF_NULL(value_node);
   const auto &value = value_node->value();

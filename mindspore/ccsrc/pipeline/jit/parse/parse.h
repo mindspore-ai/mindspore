@@ -83,6 +83,7 @@ class LoopContext {
   }
   ~LoopContext() {
     try {
+      MS_EXCEPTION_IF_NULL(loops_);
       loops_->pop();
     } catch (const std::exception &e) {
       MS_LOG(ERROR) << "Exception when pop. Error info " << e.what();
@@ -99,9 +100,9 @@ class LoopContext {
 };
 
 struct ArgsContext {
-  bool need_unpack = false;
-  bool has_interpret_without_internal = false;
-  bool has_interpret_internal = false;
+  bool need_unpack{false};
+  bool has_interpret_without_internal{false};
+  bool has_interpret_internal{false};
 
   std::vector<AnfNodePtr> packed_arguments;
   std::vector<AnfNodePtr> group_arguments;
