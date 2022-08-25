@@ -177,7 +177,7 @@ class MS_CORE_API AbstractBase : public Base {
   /// \param[in] other The other abstract to be joined.
   ///
   /// \return A pointer to the combined abstract.
-  virtual AbstractBasePtr Join(const AbstractBasePtr &) { return shared_from_base<AbstractBase>(); }
+  virtual AbstractBasePtr Join(const AbstractBasePtr &other) { return shared_from_base<AbstractBase>(); }
   bool IsBroaden() const { return value_ == kAnyValue; }
 
   /// \brief Write the abstract's string to the std::ostream.
@@ -1249,8 +1249,8 @@ class MS_CORE_API AbstractRefTensor final : public AbstractTensor {
  public:
   /// \brief Constructor of AbstractRef.
   ///
-  /// \param[in] ref_key The ref key of tensor.
   /// \param[in] ref_value The tensor.
+  /// \param[in] ref_key_value The ref key of tensor.
   AbstractRefTensor(const AbstractTensorPtr &ref_value, const ValuePtr &ref_key_value);
 
   /// \brief Destructor of AbstractEllipsis.
