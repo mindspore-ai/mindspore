@@ -1,7 +1,7 @@
 mindspore.ops.conv2d
 ====================
 
-.. py:function:: mindspore.ops.conv2d(x, weight, kernel_size, mode=1, pad_mode="valid", pad_val=0, stride=1, dilation=1, group=1, date_format="NCHW")
+.. py:function:: mindspore.ops.conv2d(inputs, weight, mode=1, pad_mode="valid", padding=0, stride=1, dilation=1, group=1)
 
     二维卷积层。
 
@@ -18,29 +18,27 @@ mindspore.ops.conv2d
     请参考论文 `Gradient Based Learning Applied to Document Recognition <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_ 。更详细的介绍，参见：http://cs231n.github.io/convolutional-networks/。
 
     参数：
-        - **x** (Tensor) - shape为 :math:`(N, C_{in}, H_{in}, W_{in})` 的Tensor.
+        - **inputs** (Tensor) - shape为 :math:`(N, C_{in}, H_{in}, W_{in})` 的Tensor。
         - **weight** (Tensor) - 设置卷积核的大小为 :math:`(\text{kernel_size[0]}, \text{kernel_size[1]})` ，则shape为 :math:`(C_{out}, C_{in}, \text{kernel_size[0]}, \text{kernel_size[1]})` 。
-        - **kernel_size** (Union[int, tuple[int]]) - 数据类型为int或一个包含2个int组成的元组。指定二维卷积核的高度和宽度。单个整数表示该值同时适用于内核的高度和宽度。包含2个整数的元组表示第一个值用于高度，另一个值用于内核的宽度。
         - **mode** (int) - 指定不同的卷积模式。此值目前未被使用。默认值：1。
         - **pad_mode** (str) - 指定填充模式。取值为"same"，"valid"，或"pad"。默认值："valid"。
 
-          - **same**: 输出的高度和宽度分别与输入整除 `stride` 后的值相同。填充将被均匀地添加到高和宽的两侧，剩余填充量将被添加到维度末端。若设置该模式，`pad_val` 的值必须为0。
-          - **valid**: 在不填充的前提下返回有效计算所得的输出。不满足计算的多余像素会被丢弃。如果设置此模式，则 `pad_val` 的值必须为0。
-          - **pad**: 对输入 `x` 进行填充。在输入的高度和宽度方向上填充 `pad_val` 大小的0。如果设置此模式， `pad_val` 必须大于或等于0。
+          - **same**: 输出的高度和宽度分别与输入整除 `stride` 后的值相同。填充将被均匀地添加到高和宽的两侧，剩余填充量将被添加到维度末端。若设置该模式，`padding` 的值必须为0。
+          - **valid**: 在不填充的前提下返回有效计算所得的输出。不满足计算的多余像素会被丢弃。如果设置此模式，则 `padding` 的值必须为0。
+          - **pad**: 对输入 `x` 进行填充。在输入的高度和宽度方向上填充 `padding` 大小的0。如果设置此模式， `padding` 必须大于或等于0。
         
-        - **pad_val** (Union(int, tuple[int])) - 输入 `x` 的高度和宽度方向上填充的数量。数据类型为int或包含4个int组成的tuple。如果 `pad_val` 是一个int，那么上、下、左、右的填充都等于 `pad_val` 。如果 `pad_val` 是一个有4个int组成的tuple，那么上、下、左、右的填充分别等于 `pad_val[0]` 、 `pad_val[1]` 、 `pad_val[2]` 和 `pad_val[3]` 。值应该要大于等于0，默认值：0。
+        - **padding** (Union(int, tuple[int])) - 输入 `x` 的高度和宽度方向上填充的数量。数据类型为int或包含4个int组成的tuple。如果 `padding` 是一个int，那么上、下、左、右的填充都等于 `padding` 。如果 `padding` 是一个有4个int组成的tuple，那么上、下、左、右的填充分别等于 `padding[0]` 、 `padding[1]` 、 `padding[2]` 和 `padding[3]` 。值必须大于等于0，默认值：0。
         - **stride** (Union(int, tuple[int])) - 卷积核移动的步长，数据类型为int或两个int组成的tuple。一个int表示在高度和宽度方向的移动步长均为该值。两个int组成的tuple分别表示在高度和宽度方向的移动步长。默认值：1。
         - **dilation** (Union(int, tuple[int])) - 卷积核膨胀尺寸。数据类型为int或由2个int组成的tuple。若 :math:`k > 1` ，则卷积核间隔 `k` 个元素进行采样。垂直和水平方向上的 `k` ，其取值范围分别为[1, H]和[1, W]。默认值：1。
         - **group** (int) - 将过滤器拆分为组。默认值：1。
-        - **data_format** (str) - 数据格式的可选值有"NHWC"，"NCHW"。默认值："NCHW"。
 
     返回：
         Tensor，卷积后的值。shape为 :math:`(N, C_{out}, H_{out}, W_{out})` 。
 
     异常：
-        - **TypeError** - `kernel_size` 、 `stride` 、 `pad_val` 或 `dilation` 既不是int也不是tuple。
-        - **TypeError** - `out_channel` 或 `group` 不是int。
-        - **ValueError** - `kernel_size` 、 `stride` 或 `diation` 小于1。
+        - **TypeError** -  `stride` 、 `padding` 或 `dilation` 既不是int也不是tuple。
+        - **TypeError** -  `out_channel` 或 `group` 不是int。
+        - **ValueError** - `stride` 或 `diation` 小于1。
         - **ValueError** - `pad_mode` 不是"same"、"valid"或"pad"。
         - **ValueError** - `padding` 是一个长度不等于4的tuple。
-        - **ValueError** - `pad_mode` 不等于"pad"，`pad_val` 不等于(0, 0, 0, 0)。
+        - **ValueError** - `pad_mode` 不等于"pad"，`padding` 不等于(0, 0, 0, 0)。
