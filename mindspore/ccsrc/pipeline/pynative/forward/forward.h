@@ -23,6 +23,7 @@
 #include <utility>
 #include <stack>
 #include "pipeline/pynative/forward/do_cast.h"
+#include "pipeline/pynative/forward/do_infer.h"
 #include "pipeline/pynative/grad/grad.h"
 #include "pipeline/pynative/dynamic_shape.h"
 #include "backend/common/session/session_factory.h"
@@ -42,13 +43,18 @@ using DynamicShapePtr = std::shared_ptr<DynamicShape>;
 class CastOperation;
 using CastOperationPtr = std::shared_ptr<CastOperation>;
 
+class InferOperation;
+using InferOperationPtr = std::shared_ptr<InferOperation>;
+
 using SessionBackendMap = std::map<std::string, std::shared_ptr<session::SessionBasic>>;
 using MindrtBackendMap = std::map<std::string, std::shared_ptr<compile::MindRTBackend>>;
 
 class ForwardExecutor {
  public:
   ForwardExecutor()
-      : cast_operation_(std::make_shared<CastOperation>()), dynamic_shape_(std::make_shared<DynamicShape>()) {}
+      : cast_operation_(std::make_shared<CastOperation>()),
+        infer_operation_(std::make_shared<InferOperation>()),
+        dynamic_shape_(std::make_shared<DynamicShape>()) {}
   ~ForwardExecutor() = default;
 
   std::function<void(py::object *, const FrontendOpRunInfoPtr &)> RunOpS = [this](auto &&PH1, auto &&PH2) {
@@ -60,10 +66,11 @@ class ForwardExecutor {
   ValuePtr RunOpForward(const FrontendOpRunInfoPtr &op_run_info);
   FrontendOpRunInfoPtr GenerateOpRunInfo(const py::args &args);
   void set_grad_executor(const GradExecutorPtr &grad_executor) { grad_executor_ = GradExecutorWeakPtr(grad_executor); }
-  void ClearNodeAbsMap() { node_abs_map_.clear(); }
-  void EraseFromNodeAbsMap(const std::string &id) { (void)node_abs_map_.erase(id); }
-  void SetNodeAbsMap(const std::string &id, const abstract::AbstractBasePtr &abs) { node_abs_map_[id] = abs; }
-  mindspore::HashMap<std::string, abstract::AbstractBasePtr> &node_abs_map() { return node_abs_map_; }
+  void ClearNodeAbsMap();
+  void EraseFromNodeAbsMap(const std::string &id);
+  void SetNodeAbsMapByValue(const ValuePtr &value, const abstract::AbstractBasePtr &abs);
+  void SetNodeAbsMapById(const std::string &id, const abstract::AbstractBasePtr &abs);
+  const NodeAbsCache &NodeAbsMap() const;
   void ClearRes();
   void set_lazy_build(bool lazy_build) { lazy_build_ = lazy_build; }
   inline DynamicShapePtr dynamic_shape() const {
@@ -84,12 +91,6 @@ class ForwardExecutor {
 
  private:
   GradExecutorPtr grad() const;
-  void GetInputAbstract(const FrontendOpRunInfoPtr &op_run_info);
-  bool GetOutputAbstract(const FrontendOpRunInfoPtr &op_run_info);
-  AbstractBasePtr GetInputAbs(const FrontendOpRunInfoPtr &op_run_info, const ValuePtr &v, size_t index);
-  AbstractBasePtr GetTupleInputAbstract(const FrontendOpRunInfoPtr &op_run_info, const ValuePtr &v,
-                                        const std::string &id, size_t input_index);
-  AbstractBasePtr GetValueAbstract(const FrontendOpRunInfoPtr &op_run_info, size_t i, const ValuePtr &v);
   std::string GetCurrentDeviceTarget(const PrimitivePtr &op_prim);
   session::SessionPtr GetCurrentSession(const std::string &device_target);
   compile::MindRTBackendPtr GetMindRtBackend(const std::string &device_target);
@@ -97,13 +98,19 @@ class ForwardExecutor {
     MS_EXCEPTION_IF_NULL(cast_operation_);
     return cast_operation_;
   }
+  inline InferOperationPtr infer_operation() const {
+    MS_EXCEPTION_IF_NULL(infer_operation_);
+    return infer_operation_;
+  }
   ValuePtr RunOpInVM(const FrontendOpRunInfoPtr &op_run_info) const;
   ValuePtr RunOpInMs(const FrontendOpRunInfoPtr &op_run_info);
   ValuePtr RunOpWithBackendPolicy(const FrontendOpRunInfoPtr &op_run_info);
-  ValuePtr GetOutput(const FrontendOpRunInfoPtr &op_run_info, bool prim_cache_hit);
-  ValuePtr DoNopOutput(const FrontendOpRunInfoPtr &op_run_info) const;
+  ValuePtr GetOutput(const FrontendOpRunInfoPtr &op_run_info);
   // Mix precision and Implicit transform
   void SetCastForInputs(const FrontendOpRunInfoPtr &op_run_info);
+  // Infer output abstract
+  ValuePtr InferOutputAbstract(const FrontendOpRunInfoPtr &op_run_info) const;
+  // Check sync condition in heterogeneous
   void CheckIfNeedSyncForHeterogeneous(const std::string &cur_target);
 
  private:
@@ -111,16 +118,15 @@ class ForwardExecutor {
   bool lazy_build_{false};
   bool enable_mind_rt_{false};
   uint32_t device_id_;
-  PrimAbsCache prim_abs_list_;
   std::string last_target_{"Unknown"};
   std::string device_target_;
   std::stack<CellPtr> forward_cell_stack_;
   GradExecutorWeakPtr grad_executor_;
   CastOperationPtr cast_operation_;
+  InferOperationPtr infer_operation_;
   DynamicShapePtr dynamic_shape_;
   SessionBackendMap session_backends_;
   MindrtBackendMap mindrt_backends_;
-  mindspore::HashMap<std::string, abstract::AbstractBasePtr> node_abs_map_;
 };
 }  // namespace pynative
 }  // namespace mindspore

@@ -29,9 +29,7 @@ namespace pynative {
 namespace {
 // primitive unable to infer value for constant input in PyNative mode
 const std::set<std::string> kVmOperators = {"InsertGradientOf", "stop_gradient", "HookBackward", "CellBackwardHook"};
-const std::set<std::string> kForceInferPrim = {"TopK", "DropoutGenMask"};
 enum class RunOpArgsEnum : size_t { PY_PRIM = 0, PY_NAME, PY_INPUTS, PY_ARGS_NUM };
-std::set<std::string> kNotConstPrimOrConstInput;
 
 // Shallow Copy Value and change shape
 ValuePtr ShallowCopyValue(const FrontendOpRunInfoPtr &op_run_info, const ValuePtr &value) {
@@ -146,62 +144,6 @@ void GetSingleOpGraphInfo(const FrontendOpRunInfoPtr &op_run_info) {
   }
   op_run_info->base_op_run_info.graph_info = buf.str();
 }
-
-void SetNonCostantValueAbs(const AbstractBasePtr &abs, const std::string &id) {
-  MS_EXCEPTION_IF_NULL(abs);
-  if (abs->isa<abstract::AbstractTensor>()) {
-    abs->set_value(kAnyValue);
-  } else if (abs->isa<abstract::AbstractTuple>() || abs->isa<abstract::AbstractList>()) {
-    const auto &abs_seq = abs->cast<abstract::AbstractSequencePtr>();
-    MS_EXCEPTION_IF_NULL(abs_seq);
-    for (auto &item : abs_seq->elements()) {
-      MS_EXCEPTION_IF_NULL(item);
-      if (item->isa<abstract::AbstractTensor>()) {
-        item->set_value(kAnyValue);
-      }
-    }
-  }
-}
-
-bool IsConstPrimOrConstInput(const FrontendOpRunInfoPtr &op_run_info, size_t index) {
-  MS_EXCEPTION_IF_NULL(op_run_info);
-  auto prim = op_run_info->op_prim;
-  MS_EXCEPTION_IF_NULL(prim);
-  if (kNotConstPrimOrConstInput.find(prim->name()) != kNotConstPrimOrConstInput.end()) {
-    MS_LOG(DEBUG) << prim->name() << " is not const prim or have const input";
-    return false;
-  }
-  bool is_const_prim = prim->is_const_prim();
-  const auto &const_input_index = prim->get_const_input_indexes();
-  bool have_const_input = !const_input_index.empty();
-  if (!is_const_prim && !have_const_input) {
-    (void)kNotConstPrimOrConstInput.emplace(prim->name());
-    return false;
-  }
-  bool is_const_input =
-    have_const_input && std::find(const_input_index.begin(), const_input_index.end(), index) != const_input_index.end();
-  MS_LOG(DEBUG) << prim->ToString() << " is const prim " << prim->is_const_prim() << ", is_const_input "
-                << is_const_input;
-  return is_const_prim || is_const_input;
-}
-
-void PynativeInfer(const FrontendOpRunInfoPtr &op_run_info) {
-  MS_EXCEPTION_IF_NULL(op_run_info);
-  auto prim = op_run_info->op_prim;
-  MS_EXCEPTION_IF_NULL(prim);
-  MS_EXCEPTION_IF_NULL(prim);
-  MS_LOG(DEBUG) << "Prim " << prim->name() << " infer input: " << mindspore::ToString(op_run_info->input_abs);
-  prim->BeginRecordAddAttr();
-  auto eval_ret = EvalOnePrim(prim, op_run_info->input_abs);
-  MS_EXCEPTION_IF_NULL(eval_ret);
-  AbstractBasePtr infer_res = eval_ret->abstract();
-  MS_EXCEPTION_IF_NULL(infer_res);
-  prim->EndRecordAddAttr();
-  MS_EXCEPTION_IF_NULL(op_run_info);
-  op_run_info->base_op_run_info.abstract = infer_res;
-  MS_EXCEPTION_IF_NULL(op_run_info->base_op_run_info.abstract);
-  MS_LOG(DEBUG) << "Prim " << prim->name() << " infer result: " << op_run_info->base_op_run_info.abstract->ToString();
-}
 }  // namespace
 
 GradExecutorPtr ForwardExecutor::grad() const {
@@ -225,151 +167,8 @@ void ForwardExecutor::Init() {
   init_ = true;
 }
 
-AbstractBasePtr ForwardExecutor::GetValueAbstract(const FrontendOpRunInfoPtr &op_run_info, size_t i,
-                                                  const ValuePtr &v) {
-  MS_EXCEPTION_IF_NULL(op_run_info);
-  MS_EXCEPTION_IF_NULL(v);
-  const auto &id = PyNativeAlgo::Common::GetIdByValue(v);
-  AbstractBasePtr abs = nullptr;
-  auto it = node_abs_map_.find(id);
-  if (it != node_abs_map_.end()) {
-    abs = it->second;
-  }
-  MS_LOG(DEBUG) << "Abstract cache hit " << (abs != nullptr);
-  bool is_const_prim_or_input = IsConstPrimOrConstInput(op_run_info, i);
-  if (abs == nullptr || is_const_prim_or_input) {
-    abs = v->ToAbstract();
-    MS_EXCEPTION_IF_NULL(abs);
-    if (!is_const_prim_or_input) {
-      SetNonCostantValueAbs(abs, id);
-      if (v->isa<tensor::Tensor>()) {
-        node_abs_map_[id] = abs;
-      }
-    }
-  }
-  return abs;
-}
-
-AbstractBasePtr ForwardExecutor::GetTupleInputAbstract(const FrontendOpRunInfoPtr &op_run_info, const ValuePtr &v,
-                                                       const std::string &id, size_t input_index) {
-  MS_EXCEPTION_IF_NULL(op_run_info);
-  MS_EXCEPTION_IF_NULL(v);
-  abstract::AbstractBasePtrList abs_list;
-  if (!IsConstPrimOrConstInput(op_run_info, input_index)) {
-    auto it = node_abs_map_.find(id);
-    if (it != node_abs_map_.end()) {
-      return it->second;
-    }
-  }
-  MS_LOG(DEBUG) << "Abstract cache not hit";
-  auto tuple = v->cast<ValueSequencePtr>();
-  auto tuple_size = tuple->size();
-  for (size_t i = 0; i < tuple_size; ++i) {
-    const auto &item_id = PyNativeAlgo::Common::GetIdByValue(tuple->value()[i]);
-    const auto &dynamic_shape = PyNativeAlgo::Common::GetPyNativeExecutor()->forward_executor()->dynamic_shape();
-    const auto item_it = dynamic_shape->id_with_dynamic_abs().find(item_id);
-    if (item_it != dynamic_shape->id_with_dynamic_abs().end()) {
-      (void)abs_list.emplace_back(item_it->second);
-    } else {
-      auto abs = GetValueAbstract(op_run_info, input_index, tuple->value()[i]);
-      (void)abs_list.emplace_back(abs);
-    }
-  }
-  abstract::AbstractBasePtr node_abs;
-  if (v->isa<ValueTuple>()) {
-    node_abs = std::make_shared<abstract::AbstractTuple>(abs_list);
-  } else {
-    node_abs = std::make_shared<abstract::AbstractList>(abs_list);
-  }
-  node_abs_map_[id] = node_abs;
-  return node_abs;
-}
-
-AbstractBasePtr ForwardExecutor::GetInputAbs(const FrontendOpRunInfoPtr &op_run_info, const ValuePtr &v, size_t index) {
-  MS_EXCEPTION_IF_NULL(op_run_info);
-  MS_EXCEPTION_IF_NULL(v);
-  const auto &dynamic_shape = PyNativeAlgo::Common::GetPyNativeExecutor()->forward_executor()->dynamic_shape();
-  const auto &id = PyNativeAlgo::Common::GetIdByValue(v);
-  // Get tuple or list abs
-  if (v->isa<ValueSequence>()) {
-    auto abs = GetTupleInputAbstract(op_run_info, v, id, index);
-    auto shape = abs->BuildShape();
-    MS_EXCEPTION_IF_NULL(shape);
-    if (shape->IsDynamic()) {
-      MS_LOG(DEBUG) << "Input " << index << " get input of prev op dynamic output";
-      op_run_info->base_op_run_info.has_dynamic_input = true;
-      dynamic_shape->SaveIdWithDynamicShape(op_run_info, id, v, abs);
-    }
-    MS_LOG(DEBUG) << "Set " << index << "th input id " << id << " abs " << abs->ToString();
-    return abs;
-  }
-  auto out_it = dynamic_shape->id_with_dynamic_abs().find(id);
-  if (out_it != dynamic_shape->id_with_dynamic_abs().end()) {
-    MS_LOG(DEBUG) << "Input " << index << " get input of prev op dynamic output";
-    op_run_info->base_op_run_info.has_dynamic_input = true;
-    dynamic_shape->SaveIdWithDynamicShape(op_run_info, id, v, out_it->second);
-    MS_LOG(DEBUG) << "Set " << index << "th input id " << id << " abs " << out_it->second->ToString();
-    return out_it->second;
-  } else {
-    const auto &input_abs = GetValueAbstract(op_run_info, index, v);
-    const auto &shape = input_abs->BuildShape();
-    MS_EXCEPTION_IF_NULL(shape);
-    // For ms function
-    if (shape->IsDynamic()) {
-      MS_LOG(DEBUG) << "Input " << index << " get dynamic shape";
-      op_run_info->base_op_run_info.has_dynamic_input = true;
-    }
-    MS_LOG(DEBUG) << "Set " << index << "th input id " << id << " abs " << input_abs->ToString();
-    return input_abs;
-  }
-}
-
-void ForwardExecutor::GetInputAbstract(const FrontendOpRunInfoPtr &op_run_info) {
-  MS_EXCEPTION_IF_NULL(op_run_info);
-  for (size_t i = 0; i < op_run_info->input_value.size(); ++i) {
-    (void)op_run_info->input_abs.emplace_back(GetInputAbs(op_run_info, op_run_info->input_value[i], i));
-  }
-}
-
-bool ForwardExecutor::GetOutputAbstract(const FrontendOpRunInfoPtr &op_run_info) {
-  MS_EXCEPTION_IF_NULL(op_run_info);
-  auto op_name = op_run_info->base_op_run_info.op_name;
-  auto prim = op_run_info->op_prim;
-  MS_EXCEPTION_IF_NULL(prim);
-
-  bool prim_cache_hit = false;
-  AbsCacheKey key{prim->name(), prim->Hash(), prim->attrs()};
-  auto temp = prim_abs_list_.find(key);
-  if (temp != prim_abs_list_.end()) {
-    MS_LOG(DEBUG) << "Match prim input args " << op_name << mindspore::ToString(op_run_info->input_abs);
-    auto iter = temp->second.find(op_run_info->input_abs);
-    if (iter != temp->second.end()) {
-      MS_LOG(DEBUG) << "Match prim ok " << iter->second.abs->ToString();
-      op_run_info->base_op_run_info.abstract = iter->second.abs;
-      prim->set_evaluate_added_attrs(iter->second.attrs);
-      prim_cache_hit = true;
-    }
-  }
-
-  if (op_run_info->base_op_run_info.abstract == nullptr || kForceInferPrim.find(op_name) != kForceInferPrim.end()) {
-    // Use python infer method
-    PynativeInfer(op_run_info);
-  }
-  // Get output dynamic shape info from infer steprr
-  auto abstract = op_run_info->base_op_run_info.abstract;
-  MS_EXCEPTION_IF_NULL(abstract);
-  auto shape = abstract->BuildShape();
-  MS_EXCEPTION_IF_NULL(shape);
-  op_run_info->base_op_run_info.has_dynamic_output = shape->IsDynamic();
-  if (PyNativeAlgo::Common::IsDynamicShape(op_run_info)) {
-    MS_LOG(DEBUG) << "Set dynamic op " << op_name;
-  }
-  return prim_cache_hit;
-}
-
 void ForwardExecutor::RunOpInner(py::object *ret, const FrontendOpRunInfoPtr &op_run_info) {
   MS_EXCEPTION_IF_NULL(ret);
-  MS_EXCEPTION_IF_NULL(op_run_info);
   Init();
   *ret = ValueToPyData(RunOpForward(op_run_info));
 }
@@ -377,15 +176,18 @@ void ForwardExecutor::RunOpInner(py::object *ret, const FrontendOpRunInfoPtr &op
 ValuePtr ForwardExecutor::RunOpForward(const FrontendOpRunInfoPtr &op_run_info) {
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_LOG(DEBUG) << "RunOp name: " << op_run_info->base_op_run_info.op_name;
-  // 1.Set cast for inputs
+  // 1. Set cast for inputs
   SetCastForInputs(op_run_info);
-  // 2. Get input abstract
-  GetInputAbstract(op_run_info);
-  // 3.Get output abstract
-  bool prim_cache_hit = GetOutputAbstract(op_run_info);
-  // 4.Get output
-  const auto &out_value = GetOutput(op_run_info, prim_cache_hit);
-  // 5. Do op grad
+  // 2. Infer output abstract
+  ValuePtr infer_value = InferOutputAbstract(op_run_info);
+  // 3. Run op with selected backend
+  ValuePtr out_value;
+  if (op_run_info->output_get_by_infer_value) {
+    out_value = infer_value;
+  } else {
+    out_value = GetOutput(op_run_info);
+  }
+  // 4. Do op grad and record op info
   grad()->ProcessOpGradInfo(op_run_info, out_value);
   return out_value;
 }
@@ -405,64 +207,38 @@ FrontendOpRunInfoPtr ForwardExecutor::GenerateOpRunInfo(const py::args &args) {
 void ForwardExecutor::SetCastForInputs(const FrontendOpRunInfoPtr &op_run_info) {
   MS_EXCEPTION_IF_NULL(op_run_info);
   // No need cast self
-  if (op_run_info->base_op_run_info.op_name == prim::kPrimCast->name() || op_run_info->is_nop_prim) {
+  if (op_run_info->base_op_run_info.op_name == prim::kPrimCast->name()) {
     return;
   }
   cast_operation()->DoCast(op_run_info);
 }
 
-ValuePtr ForwardExecutor::DoNopOutput(const FrontendOpRunInfoPtr &op_run_info) const {
-  MS_EXCEPTION_IF_NULL(op_run_info);
-  // Get First input
-  if (op_run_info->base_op_run_info.input_tensor.empty()) {
-    MS_LOG(EXCEPTION) << "Inputs of " << op_run_info->base_op_run_info.op_name << " is empty";
-  }
-  const auto &value = op_run_info->base_op_run_info.input_tensor[0];
-  if (!value->isa<tensor::Tensor>()) {
-    MS_LOG(EXCEPTION) << "First input of " << op_run_info->base_op_run_info.op_name << " must be a tensor";
-  }
-  const auto &tensor_ptr = value->cast<tensor::TensorPtr>();
-  const auto &v = ShallowCopyValue(op_run_info, tensor_ptr);
-  MS_LOG(DEBUG) << "New copy value is " << v->ToString();
-  return v;
+void ForwardExecutor::ClearNodeAbsMap() { infer_operation()->ClearNodeAbsCache(); }
+
+void ForwardExecutor::EraseFromNodeAbsMap(const std::string &id) { infer_operation()->EraseElemFromNodeAbsCache(id); }
+
+void ForwardExecutor::SetNodeAbsMapByValue(const ValuePtr &value, const abstract::AbstractBasePtr &abs) {
+  infer_operation()->SetNodeAbsCacheByValue(value, abs);
 }
 
-ValuePtr ForwardExecutor::GetOutput(const FrontendOpRunInfoPtr &op_run_info, bool prim_cache_hit) {
-  MS_EXCEPTION_IF_NULL(op_run_info);
-  const auto &prim = op_run_info->op_prim;
-  MS_EXCEPTION_IF_NULL(prim);
-  // Infer output value by constant folding
-  py::dict output = abstract::ConvertAbstractToPython(op_run_info->base_op_run_info.abstract, true);
-  if (!output[ATTR_VALUE].is_none()) {
-    MS_LOG(DEBUG) << "Get output by constant folding, output is " << py::str(output[ATTR_VALUE]);
-    op_run_info->output_get_by_infer_value = true;
-    return PyNativeAlgo::DataConvert::PyObjToValue(output[ATTR_VALUE]);
-  } else if (prim->is_const_prim()) {
-    MS_LOG(DEBUG) << "Get const prim";
-    op_run_info->output_get_by_infer_value = true;
-    return MakeValue("");
-  }
+void ForwardExecutor::SetNodeAbsMapById(const std::string &id, const abstract::AbstractBasePtr &abs) {
+  infer_operation()->SetNodeAbsCacheById(id, abs);
+}
 
-  // Add output abstract info into cache, the const value needs to infer evert step
-  if (!prim_cache_hit && !PyNativeAlgo::Common::IsDynamicShape(op_run_info)) {
-    AbsCacheKey key{prim->name(), prim->Hash(), prim->attrs()};
-    auto &out = prim_abs_list_[key];
-    out[op_run_info->input_abs].abs = op_run_info->base_op_run_info.abstract;
-    out[op_run_info->input_abs].attrs = prim->evaluate_added_attrs();
-  }
+const NodeAbsCache &ForwardExecutor::NodeAbsMap() const { return infer_operation()->node_abs_cache(); }
 
+ValuePtr ForwardExecutor::InferOutputAbstract(const FrontendOpRunInfoPtr &op_run_info) const {
+  return infer_operation()->DoInfer(op_run_info);
+}
+
+ValuePtr ForwardExecutor::GetOutput(const FrontendOpRunInfoPtr &op_run_info) {
   // Run op with selected backend, nop is no need run backend
-  ValuePtr out_real_value = nullptr;
-  if (op_run_info->is_nop_prim) {
-    out_real_value = DoNopOutput(op_run_info);
-  } else {
-    out_real_value = RunOpWithBackendPolicy(op_run_info);
-    if (out_real_value->isa<ValueSequence>()) {
-      const auto &result_v_list = out_real_value->cast<ValueSequencePtr>();
-      if (result_v_list->size() == 1 && op_run_info->base_op_run_info.abstract != nullptr &&
-          !op_run_info->base_op_run_info.abstract->isa<abstract::AbstractSequence>()) {
-        out_real_value = result_v_list->value().front();
-      }
+  auto out_real_value = RunOpWithBackendPolicy(op_run_info);
+  if (out_real_value->isa<ValueSequence>()) {
+    const auto &result_v_list = out_real_value->cast<ValueSequencePtr>();
+    if (result_v_list->size() == 1 && op_run_info->base_op_run_info.abstract != nullptr &&
+        !op_run_info->base_op_run_info.abstract->isa<abstract::AbstractSequence>()) {
+      out_real_value = result_v_list->value().front();
     }
   }
   return out_real_value;
@@ -694,14 +470,14 @@ void ForwardExecutor::ClearRes() {
     MS_EXCEPTION_IF_NULL(item.second);
     item.second->ClearOpExecutorResource();
   }
-  node_abs_map_.clear();
   init_ = false;
   lazy_build_ = false;
-  prim_abs_list_.clear();
+  ClearNodeAbsMap();
+  infer_operation()->ClearPrimAbsList();
+  infer_operation()->ClearConstFlagPrimCache();
   std::stack<CellPtr>().swap(forward_cell_stack_);
   session_backends_.clear();
   mindrt_backends_.clear();
-  kNotConstPrimOrConstInput.clear();
 }
 }  // namespace pynative
 }  // namespace mindspore

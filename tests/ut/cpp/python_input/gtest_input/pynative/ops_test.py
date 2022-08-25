@@ -15,6 +15,7 @@
 """ ops_test """
 import numpy as np
 
+import mindspore
 from mindspore.common.tensor import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops.vm_impl_registry import vm_impl_registry as vm_impl_getters
@@ -51,8 +52,7 @@ def im2col(img, filter_h, filter_w, stride=1, pad=0, dilation=1):
 
 
 # pylint: disable=unused-argument
-def conv2d(x, weight, bias=None, stride=1, pad=0,
-           dilation=1, groups=1, padding_mode='zeros'):
+def conv2d(x, weight, bias=None, stride=1, pad=0, dilation=1):
     """Convolution 2D"""
     if isinstance(pad, int):
         pad_top = pad
@@ -72,7 +72,7 @@ def conv2d(x, weight, bias=None, stride=1, pad=0,
     col = im2col(x, filter_h, filter_w, stride, pad, dilation)
     col_w = np.reshape(weight, (filter_num, -1)).T
     out = np.dot(col, col_w)
-    out = out.reshape(batch_num, out_h, out_w, -1).transpose(0, 3, 1, 2)
+    out = out.reshape((batch_num, out_h, out_w, -1)).transpose(0, 3, 1, 2)
     if bias is not None:
         out += bias
     return out
@@ -92,4 +92,7 @@ def vm_impl_conv2d(self):
     return vm_impl
 
 
+matmul = P.MatMul()
+tensor1 = Tensor(np.ones([1, 3]), dtype=mindspore.float32)
+tensor2 = Tensor(np.ones([3, 1]), dtype=mindspore.float32)
 conv2d_prim = P.Conv2D(64, (3, 3), pad_mode='pad', pad=1, stride=2)
