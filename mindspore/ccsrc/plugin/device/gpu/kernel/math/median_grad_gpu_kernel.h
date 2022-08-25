@@ -93,18 +93,6 @@ class MedianGradGpuKernelMod : public NativeGpuKernelMod {
     input_shape_ = inputs[1]->GetShapeVector();
     input1_dim_ = input_shape_.size();
     std::vector<int64_t> input0_shape = inputs[0]->GetShapeVector();
-
-    if (axis_ < -input1_dim_ || axis_ >= input1_dim_) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'axis' must be in the range [-" << input1_dim_ << ","
-                        << input1_dim_ << "), but got " << axis_;
-    }
-    if (axis_ < 0) {
-      if (input1_dim_ == 0) {
-        axis_ = 0;
-      } else {
-        axis_ += input1_dim_;
-      }
-    }
     input1_size_ = 1;
     input0_size_ = 1;
     for (size_t i = 0; i < input_shape_.size(); i++) {
@@ -152,6 +140,23 @@ class MedianGradGpuKernelMod : public NativeGpuKernelMod {
     input1_dim_ = input_shape_.size();
     input1_size_ = 1;
     input0_size_ = 1;
+    if (input1_dim_ == 0) {
+      if (axis_ < -1 || axis_ > 0) {
+        MS_LOG(EXCEPTION) << "For 'MedianGrad'"
+                          << "', the 'axis' must be in the range [-1,1), but got " << axis_;
+      }
+    } else if (axis_ < -input1_dim_ || axis_ >= input1_dim_) {
+      MS_LOG(EXCEPTION) << "For 'MedianGrad'"
+                        << "', the 'axis' must be in the range [-" << input1_dim_ << "," << input1_dim_ << "), but got "
+                        << axis_;
+    }
+    if (axis_ < 0) {
+      if (input1_dim_ == 0) {
+        axis_ = 0;
+      } else {
+        axis_ += input1_dim_;
+      }
+    }
     for (size_t i = 0; i < input_shape_.size(); i++) {
       input1_size_ *= input_shape_[i];
     }
