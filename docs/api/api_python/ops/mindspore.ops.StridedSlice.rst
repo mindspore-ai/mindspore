@@ -15,15 +15,15 @@
 
     对于5*6*7的Tensor， `x[2:,:3,:]` 等同于 `x[2:5,0:3,0:7]` 。
 
-    如果设置了 `elipsis_mask` 的第i位，则将在其他维度之间插入所需的任意数量的未指定维度。 `ellipsis_mask` 中只允许一个非零位。
+    如果设置了 `ellipsis_mask` 的第i位，则将在其他维度之间插入所需的任意数量的未指定维度。 `ellipsis_mask` 中只允许一个非零位。
     
     对于5*6*7*8的Tensor， `x[2:,...,:6]` 等同于 `x[2:5,:,:,0:6]` 。 `x[2:,...]` 等同于 `x[2:5,:,:,:]` 。
 
-    如果设置了 `new_ax_mask` 的第i位，则忽略 `begin` 、 `end` 和 `strides` ，并在输出Tensor的指定位置添加新的长度为1的维度。
+    如果设置了 `new_axis_mask` 的第i位，则忽略 `begin` 、 `end` 和 `strides` ，并在输出Tensor的指定位置添加新的长度为1的维度。
 
     对于5*6*7的Tensor， `x[:2, newaxis, :6]` 将产生一个shape为 :math:`(2, 1, 7)` 的Tensor。
 
-    如果设置了 `shrink_ax_mask` 的第i位，则第i个大小将维度收缩1，并忽略 `begin[i]` 、 `end[i]` 和 `strides[i]` 索引处的值。
+    如果设置了 `shrink_axis_mask` 的第i位，则第i个大小将维度收缩1，并忽略 `begin[i]` 、 `end[i]` 和 `strides[i]` 索引处的值。
 
     对于5*6*7的Tensor， `x[:, 5, :]` 将使得 `shrink_axis_mask` 等于4。
 
@@ -34,7 +34,7 @@
         - **begin_mask** (int) - 表示切片的起始索引。使用二进制flag对输入Tensor不同维度进行标志，第i位设置为1则begin[i]参数对应的第i维度设置无效，表示该维度的起始索引从0开始。默认值：0。
         - **end_mask** (int) - 表示切片的结束索引。功能类似begin_mask。使用二进制flag对输入Tensor不同维度进行标志，第i位设置为1则end参数对应的该维度设置无效，表示该维度切分的结束索引到列表最后，即切分到尽可能大的维度。默认值：0。
         - **ellipsis_mask** (int) - 不为0的维度不需要进行切片操作。为int型掩码。默认值：0。
-        - **new_axis_mask** (int) - 如果第i位出现1，则begin、end、stride对所有维度参数无效，并在第1位上增加一个大小为1的维度。为int型掩码。默认值：0。
+        - **new_axis_mask** (int) - 如果第i位出现1，则begin、end、stride对所有维度参数无效，并在第i位上增加一个大小为1的维度。为int型掩码。默认值：0。
         - **shrink_axis_mask** (int) - 如果第i位设置为1，则意味着第i维度缩小为1。为int型掩码。默认值：0。
 
     输入：
