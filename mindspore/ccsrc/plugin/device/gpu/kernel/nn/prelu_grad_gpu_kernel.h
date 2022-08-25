@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_PRELU_GRAD_GPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_PRELU_GRAD_GPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_NN_PRELU_GRAD_GPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_NN_PRELU_GRAD_GPU_KERNEL_H_
 
 #include <vector>
 #include <map>
 #include <functional>
+#include <string>
+#include <utility>
 
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
@@ -27,98 +29,37 @@
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
-class PReLUGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class PReLUGradGpuKernelMod : public NativeGpuKernelMod {
  public:
   PReLUGradGpuKernelMod() = default;
   ~PReLUGradGpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    if (is_null_input_) {
-      return true;
-    }
-    auto *dy = GetDeviceAddress<T>(inputs, 0);
-    auto *x = GetDeviceAddress<T>(inputs, 1);
-    auto *w = GetDeviceAddress<T>(inputs, 2);
-    auto *dx = GetDeviceAddress<T>(outputs, 0);
-    auto *dw = GetDeviceAddress<T>(outputs, 1);
-    auto *dw_array = GetDeviceAddress<float>(workspace, 0);
-
-    CalPReLUGrad(input_length_, weight_length_, per_channel_length_, dy, x, w, dx, dw, dw_array,
-                 reinterpret_cast<cudaStream_t>(stream_ptr));
-    return true;
+    return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
   }
 
-  bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    kernel_node_ = kernel_node;
-    ResetResource();
-    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    if (input_num != 3) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs must be 3, but got " << input_num;
-    }
-    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-    if (output_num != 2) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs must be 2, but got " << output_num;
-    }
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
 
-    auto x_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-    auto weight_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 2);
-    is_null_input_ =
-      CHECK_SHAPE_NULL(x_shape, kernel_name, "x") || CHECK_SHAPE_NULL(weight_shape, kernel_name, "weight");
-    if (is_null_input_) {
-      InitSizeLists();
-      return true;
-    }
-    input_length_ = std::accumulate(x_shape.begin(), x_shape.end(), size_t(1), std::multiplies<>());
-    size_t x_rank = x_shape.size();
-    size_t channel_num;
-    if (x_rank == 0) {
-      channel_num = 1;
-      per_channel_length_ = 1;
-    } else if (x_rank == 1) {
-      channel_num = 1;
-      per_channel_length_ = LongToSizeClipNeg(x_shape[0]);
-    } else {
-      channel_num = LongToSizeClipNeg(x_shape[1]);
-      per_channel_length_ = std::accumulate(x_shape.begin() + 2, x_shape.end(), size_t(1), std::multiplies<>());
-    }
-
-    if (weight_shape.size() != 1 || (weight_shape[0] != 1 && LongToSizeClipNeg(weight_shape[0]) != channel_num)) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of weight must be equal to 1 and "
-                        << "weight.shape[0] must be equal to 1 or the channel number, but got the dimension of "
-                        << "weight: " << weight_shape.size() << ", weight.shape[0]: " << weight_shape[0]
-                        << ", the channel num: " << channel_num;
-    }
-    weight_length_ = LongToSizeClipNeg(weight_shape[0]);
-    workspace_size_ = weight_length_ * IntToSize(GET_BLOCKS(input_length_) * GET_THREADS) * sizeof(float);
-    InitSizeLists();
-    return true;
-  }
-
-  void ResetResource() noexcept override {
-    input_length_ = 0;
-    weight_length_ = 0;
-    per_channel_length_ = 0;
-    is_null_input_ = false;
-    input_size_list_.clear();
-    output_size_list_.clear();
-    workspace_size_list_.clear();
-  }
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
  protected:
-  void InitSizeLists() override {
-    size_t data_size = sizeof(T);
-    input_size_list_.push_back(input_length_ * data_size);
-    input_size_list_.push_back(input_length_ * data_size);
-    input_size_list_.push_back(weight_length_ * data_size);
-    output_size_list_.push_back(input_length_ * data_size);
-    output_size_list_.push_back(weight_length_ * data_size);
-    workspace_size_list_.push_back(workspace_size_);
-  }
+  std::vector<KernelAttr> GetOpSupport() override;
+  template <typename T>
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
+
+  using PReLUGradLaunchFunc =
+    std::function<bool(PReLUGradGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &, void *)>;
 
  private:
+  std::string kernel_name_{};
+  PReLUGradLaunchFunc kernel_func_;
+  static std::vector<std::pair<KernelAttr, PReLUGradLaunchFunc>> func_list_;
+
   bool is_null_input_{false};
   size_t input_length_{0};
   size_t weight_length_{0};
@@ -128,4 +69,4 @@ class PReLUGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_PRELU_GRAD_GPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_NN_PRELU_GRAD_GPU_KERNEL_H_
