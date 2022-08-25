@@ -28,7 +28,9 @@
 #ifdef WITH_BACKEND
 #include "mindspore/ccsrc/include/backend/data_queue/data_queue_mgr.h"
 #endif
+#ifndef _WIN32
 #include "mindspore/ccsrc/ps/ps_cache/ps_data/ps_data_prefetch.h"
+#endif
 #ifdef WITH_BACKEND
 #include "utils/ms_context.h"
 #endif
@@ -519,11 +521,13 @@ Status DeviceQueueOp::PushDataToGPU() {
       md_channel_info_->RecordPushStartTime();
 #endif
       // Data prefetch only when PS mode enables cache.
+#ifndef _WIN32
       if (!ps::PsDataPrefetch::GetInstance().PrefetchData(channel_name_, items[0].data_ptr_, items[0].data_len_,
                                                           items[0].data_type_)) {
         RETURN_STATUS_ERROR(StatusCode::kMDTimeOut,
                             "[Internal ERROR] Failed to prefetch data in current PS mode(cache data when sending).");
       }
+#endif
       RETURN_IF_NOT_OK(RetryPushData(items, is_profiling_enable, &push_cost));
 #ifndef ENABLE_SECURITY
       ProfilingRecorder(is_profiling_enable, profiling_node, send_batch, push_cost, &batch_start_time, &end_time,

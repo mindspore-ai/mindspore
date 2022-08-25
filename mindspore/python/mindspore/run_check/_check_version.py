@@ -14,6 +14,7 @@
 # ============================================================================
 """version and config check"""
 import os
+import platform
 import sys
 import time
 import subprocess
@@ -455,5 +456,16 @@ def _set_pb_env():
         os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 
 
+def _add_cuda_path():
+    if platform.system().lower() == 'windows':
+        if __package_name__.lower() == "mindspore_gpu":
+            cuda_home = os.environ.get('CUDA_PATH')
+            if cuda_home is None:
+                logger.error("mindspore-gpu on windows need CUDA_PATH, but not set it now")
+            else:
+                os.add_dll_directory(os.path.join(os.environ['CUDA_PATH'], 'bin'))
+
+
 check_version_and_env_config()
 _set_pb_env()
+_add_cuda_path()
