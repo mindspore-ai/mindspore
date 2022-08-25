@@ -15,10 +15,13 @@
  */
 
 #include "plugin/device/cpu/kernel/unsorted_segment_arithmetic_cpu_kernel.h"
+#include <complex>
 
 namespace mindspore {
 namespace kernel {
 namespace {
+using complex64 = std::complex<float>;
+using complex128 = std::complex<double>;
 using KernelRunFunc = UnsortedSegmentArithmeticCpuKernelMod::KernelRunFunc;
 }  // namespace
 #define UNSORTED_SEGMENT_ARITH_CPU_REGISTER(T_DT, S_DT, T, S)             \
@@ -33,11 +36,11 @@ T GetInitValue(std::string kernel_name) {
   static const std::map<std::string, T> UnsortedSegmentArithmeticInitValueMap{
     {prim::kPrimUnsortedSegmentMax->name(), std::numeric_limits<T>::lowest()},
     {prim::kPrimUnsortedSegmentMin->name(), std::numeric_limits<T>::max()},
-    {prim::kPrimUnsortedSegmentSum->name(), static_cast<T>(0.0)}};
+    {prim::kPrimUnsortedSegmentSum->name(), static_cast<T>(0.0)},
+    {prim::kPrimUnsortedSegmentProd->name(), static_cast<T>(1.0)}};
 
   if (UnsortedSegmentArithmeticInitValueMap.find(kernel_name) == UnsortedSegmentArithmeticInitValueMap.end()) {
     MS_LOG(ERROR) << "For '" << kernel_name << "', the current operator does not support this operation.";
-    return 0;
   }
 
   T init_value = UnsortedSegmentArithmeticInitValueMap.at(kernel_name);
@@ -46,55 +49,40 @@ T GetInitValue(std::string kernel_name) {
 
 template <typename T, typename S>
 bool UnsortedSegmentArithmeticCpuKernelMod::ComputeFunc(T *input_addr, S *ids_addr, T *output_addr) {
-  if (kernel_name_ == prim::kPrimUnsortedSegmentMax->name()) {
-    for (size_t loop = 0; loop < loop_size_; loop++) {
-      auto output_index = ids_addr[loop];
-      if (output_index >= num_segments_) {
-        MS_LOG(ERROR) << "For '" << kernel_name_ << "', segment_ids value should be [0, num_segments)";
-        return false;
-      }
-      if (output_index < 0) {
-        /* segment_ids is less than 0, drop it */
-        continue;
-      }
-      T *cur_input = input_addr + loop * comp_size_;
-      T *cur_output = output_addr + output_index * comp_size_;
-      for (size_t comp = 0; comp < comp_size_; comp++) {
-        cur_output[comp] = cur_input[comp] > cur_output[comp] ? cur_input[comp] : cur_output[comp];
-      }
+  for (size_t loop = 0; loop < loop_size_; loop++) {
+    auto output_index = ids_addr[loop];
+    if (output_index < 0) {
+      /* segment_ids is less than 0, drop it */
+      continue;
     }
-  } else if (kernel_name_ == prim::kPrimUnsortedSegmentMin->name()) {
-    for (size_t loop = 0; loop < loop_size_; loop++) {
-      auto output_index = ids_addr[loop];
-      if (output_index >= num_segments_) {
-        MS_LOG(ERROR) << "For '" << kernel_name_ << "', segment_ids value should be [0, num_segments)";
-        return false;
+    if (kernel_name_ == prim::kPrimUnsortedSegmentMax->name() ||
+        kernel_name_ == prim::kPrimUnsortedSegmentMin->name()) {
+      if constexpr (std::is_same_v<T, complex64>) {
+        MS_LOG(ERROR) << "For '" << kernel_name_ << "', input_x types can not be complex64.";
+      } else if constexpr (std::is_same_v<T, complex128>) {
+        MS_LOG(ERROR) << "For '" << kernel_name_ << "', input_x types can not be complex128.";
+      } else {
+        T *cur_input = input_addr + loop * comp_size_;
+        T *cur_output = output_addr + output_index * comp_size_;
+        for (size_t comp = 0; comp < comp_size_; comp++) {
+          if (kernel_name_ == prim::kPrimUnsortedSegmentMax->name()) {
+            cur_output[comp] = cur_input[comp] > cur_output[comp] ? cur_input[comp] : cur_output[comp];
+          } else if (kernel_name_ == prim::kPrimUnsortedSegmentMin->name()) {
+            cur_output[comp] = cur_input[comp] < cur_output[comp] ? cur_input[comp] : cur_output[comp];
+          }
+        }
       }
-      if (output_index < 0) {
-        /* segment_ids is less than 0, drop it */
-        continue;
-      }
-      T *cur_input = input_addr + loop * comp_size_;
-      T *cur_output = output_addr + output_index * comp_size_;
-      for (size_t comp = 0; comp < comp_size_; comp++) {
-        cur_output[comp] = cur_input[comp] < cur_output[comp] ? cur_input[comp] : cur_output[comp];
-      }
-    }
-  } else if (kernel_name_ == prim::kPrimUnsortedSegmentSum->name()) {
-    for (size_t loop = 0; loop < loop_size_; loop++) {
-      auto output_index = ids_addr[loop];
-      if (output_index >= num_segments_) {
-        MS_LOG(ERROR) << "For '" << kernel_name_ << "', segment_ids value should be [0, num_segments)";
-        return false;
-      }
-      if (output_index < 0) {
-        /* segment_ids is less than 0, drop it */
-        continue;
-      }
+    } else if (kernel_name_ == prim::kPrimUnsortedSegmentSum->name()) {
       T *cur_input = input_addr + loop * comp_size_;
       T *cur_output = output_addr + output_index * comp_size_;
       for (size_t comp = 0; comp < comp_size_; comp++) {
         cur_output[comp] += cur_input[comp];
+      }
+    } else if (kernel_name_ == prim::kPrimUnsortedSegmentProd->name()) {
+      T *cur_input = input_addr + loop * comp_size_;
+      T *cur_output = output_addr + output_index * comp_size_;
+      for (size_t comp = 0; comp < comp_size_; comp++) {
+        cur_output[comp] *= cur_input[comp];
       }
     }
   }
@@ -122,6 +110,12 @@ bool UnsortedSegmentArithmeticCpuKernelMod::LaunchKernel(const std::vector<kerne
       }
     };
     ParallelLaunchAutoSearch(task, out_size_, this, &parallel_search_info_);
+    for (size_t loop = 0; loop < loop_size_; loop++) {
+      if (ids_addr[loop] >= num_segments_) {
+        MS_LOG(ERROR) << "For '" << kernel_name_ << "', segment_ids value should be [0, " << num_segments_ << ")";
+        return false;
+      }
+    }
     bool result = UnsortedSegmentArithmeticCpuKernelMod::ComputeFunc(input_addr, ids_addr, output_addr);
     if (!result) {
       return false;
@@ -192,6 +186,8 @@ const std::vector<std::pair<KernelAttr, KernelRunFunc>> &UnsortedSegmentArithmet
     {UNSORTED_SEGMENT_ARITH_CPU_REGISTER(kNumberTypeFloat64, kNumberTypeInt64, double, int64_t)},
     {UNSORTED_SEGMENT_ARITH_CPU_REGISTER(kNumberTypeFloat32, kNumberTypeInt32, float, int)},
     {UNSORTED_SEGMENT_ARITH_CPU_REGISTER(kNumberTypeFloat32, kNumberTypeInt64, float, int64_t)},
+    {UNSORTED_SEGMENT_ARITH_CPU_REGISTER(kNumberTypeFloat16, kNumberTypeInt32, float16, int)},
+    {UNSORTED_SEGMENT_ARITH_CPU_REGISTER(kNumberTypeFloat16, kNumberTypeInt64, float16, int64_t)},
     {UNSORTED_SEGMENT_ARITH_CPU_REGISTER(kNumberTypeInt32, kNumberTypeInt32, int, int)},
     {UNSORTED_SEGMENT_ARITH_CPU_REGISTER(kNumberTypeInt32, kNumberTypeInt64, int, int64_t)},
     {UNSORTED_SEGMENT_ARITH_CPU_REGISTER(kNumberTypeUInt8, kNumberTypeInt32, uint8_t, int)},
@@ -208,6 +204,10 @@ const std::vector<std::pair<KernelAttr, KernelRunFunc>> &UnsortedSegmentArithmet
     {UNSORTED_SEGMENT_ARITH_CPU_REGISTER(kNumberTypeUInt32, kNumberTypeInt64, uint32_t, int64_t)},
     {UNSORTED_SEGMENT_ARITH_CPU_REGISTER(kNumberTypeUInt64, kNumberTypeInt32, uint64_t, int)},
     {UNSORTED_SEGMENT_ARITH_CPU_REGISTER(kNumberTypeUInt64, kNumberTypeInt64, uint64_t, int64_t)},
+    {UNSORTED_SEGMENT_ARITH_CPU_REGISTER(kNumberTypeComplex64, kNumberTypeInt32, complex64, int)},
+    {UNSORTED_SEGMENT_ARITH_CPU_REGISTER(kNumberTypeComplex64, kNumberTypeInt64, complex64, int64_t)},
+    {UNSORTED_SEGMENT_ARITH_CPU_REGISTER(kNumberTypeComplex128, kNumberTypeInt32, complex128, int)},
+    {UNSORTED_SEGMENT_ARITH_CPU_REGISTER(kNumberTypeComplex128, kNumberTypeInt64, complex128, int64_t)},
     {UNSORTED_SEGMENT_ARITH_CPU_DY_REGISTER(kNumberTypeFloat64, kNumberTypeInt32, kNumberTypeInt32, double, int)},
     {UNSORTED_SEGMENT_ARITH_CPU_DY_REGISTER(kNumberTypeFloat64, kNumberTypeInt64, kNumberTypeInt32, double, int64_t)},
     {UNSORTED_SEGMENT_ARITH_CPU_DY_REGISTER(kNumberTypeFloat32, kNumberTypeInt32, kNumberTypeInt32, float, int)},
@@ -253,5 +253,6 @@ const std::vector<std::pair<KernelAttr, KernelRunFunc>> &UnsortedSegmentArithmet
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, UnsortedSegmentMin, UnsortedSegmentArithmeticCpuKernelMod);
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, UnsortedSegmentMax, UnsortedSegmentArithmeticCpuKernelMod);
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, UnsortedSegmentSum, UnsortedSegmentArithmeticCpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, UnsortedSegmentProd, UnsortedSegmentArithmeticCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

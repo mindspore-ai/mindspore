@@ -38,6 +38,10 @@ abstract::ShapePtr UnsortedSegmentArithmeticInferShape(const PrimitivePtr &primi
   MS_EXCEPTION_IF_NULL(segment_ids_shape_ptr);
   auto num_segments_shape_ptr = input_args[kInputIndex2]->BuildShape();
   MS_EXCEPTION_IF_NULL(num_segments_shape_ptr);
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto ids_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  (void)CheckAndConvertUtils::CheckInteger("input_x shape size", SizeToLong(x_shape.size()), kGreaterThan, 0,
+                                           prim_name);
 
   auto num_segments = input_args[kInputIndex2]->cast<abstract::AbstractScalarPtr>();
   int64_t num_segments_value = 0;
@@ -63,9 +67,6 @@ abstract::ShapePtr UnsortedSegmentArithmeticInferShape(const PrimitivePtr &primi
     MS_EXCEPTION(ValueError) << "For '" << prim_name
                              << "', num_segments value must be greater than 0, but got: " << num_segments_value << ".";
   }
-
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto ids_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
 
   for (auto ids_shape_value : ids_shape) {
     if (ids_shape_value < 0) {
@@ -143,16 +144,17 @@ TypePtr UnsortedSegmentArithmeticInferType(const PrimitivePtr &primitive,
     MS_EXCEPTION(TypeError) << "For '" << prim_name << "', input must be a tensor, but got: " << in_type_ptr->ToString()
                             << ".";
   }
-  std::set<TypePtr> in_type_set = {kFloat16, kFloat32, kInt32};
-  return CheckAndConvertUtils::CheckTensorTypeValid("x", in_type_ptr, in_type_set, prim_name);
+  return CheckAndConvertUtils::CheckSubClass("x", in_type_ptr, {kTensorType}, prim_name);
 }
 }  // namespace
 
 AbstractBasePtr UnsortedSegmentArithmeticInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  const int64_t kInputNum = 3;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, primitive->name());
+  for (const auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
+  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputIndex3, primitive->name());
   auto infer_type = UnsortedSegmentArithmeticInferType(primitive, input_args);
   auto infer_shape = UnsortedSegmentArithmeticInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

@@ -2384,7 +2384,7 @@ class Tile(PrimitiveWithInfer):
         return out
 
 
-class UnsortedSegmentSum(PrimitiveWithInfer):
+class UnsortedSegmentSum(Primitive):
     r"""
     Computes the sum of a tensor along segments.
 
@@ -2415,43 +2415,6 @@ class UnsortedSegmentSum(PrimitiveWithInfer):
     def __init__(self):
         """Initialize UnsortedSegmentSum"""
         self.init_prim_io_names(inputs=['x', 'segment_ids', 'num_segments'], outputs=['y'])
-
-    def __infer__(self, x, segment_ids, num_segments):
-        x_type = x['dtype']
-        x_shp = x['shape']
-        validator.check_subclass("input_x", x_type, mstype.tensor, self.name)
-        validator.check_value_type("x_shape", x_shp, [list], self.name)
-        x_shp_len = len(x_shp)
-        validator.check_positive_int(x_shp_len, "rank of input_x", self.name)
-        segment_ids_shp = segment_ids['shape']
-        segment_ids_type = segment_ids['dtype']
-        validator.check_subclass("segment_ids", segment_ids_type, mstype.tensor, self.name)
-        validator.check_value_type("segment_ids", segment_ids_shp, [list], self.name)
-        segment_ids_shp_len = len(segment_ids_shp)
-        validator.check_positive_int(segment_ids_shp_len, "rank of segment_ids", self.name)
-        validator.check(f'rank of input_x', len(x_shp),
-                        'rank of segments_id', len(segment_ids_shp), Rel.GE, self.name)
-        if not is_shape_unknown(x_shp) and not is_shape_unknown(segment_ids_shp):
-            # only validate when both shapes fully known
-            for i, value in enumerate(segment_ids_shp):
-                validator.check("ids[%d]" % i, value, 'input[%d]' % i, x_shp[i], Rel.EQ, self.name)
-        num_segments_v = num_segments['value']
-        num_segments_type = num_segments['dtype']
-        validator.check_subclass("num_segments", num_segments_type, [mstype.tensor, mstype.number], self.name)
-        if isinstance(num_segments_type, type(mstype.tensor)):
-            validator.check_tensor_dtype_valid("num_segments", num_segments_type, [mstype.int32, mstype.int64],
-                                               self.name)
-            shp = [-1]
-        else:
-            validator.check_value_type('num_segments', num_segments_v, [int], self.name)
-            validator.check_positive_int(num_segments_v, "num_segments", self.name)
-            shp = [num_segments_v]
-
-        shp += x_shp[segment_ids_shp_len:]
-        out = {'shape': shp,
-               'dtype': mstype.tensor_type(x_type.element_type()),
-               'value': None}
-        return out
 
 
 class UnsortedSegmentMin(PrimitiveWithCheck):
@@ -2619,7 +2582,7 @@ class UnsortedSegmentProd(Primitive):
     Refer to :func:`mindspore.ops.unsorted_segment_prod` for more detail.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> from mindspore import Tensor
