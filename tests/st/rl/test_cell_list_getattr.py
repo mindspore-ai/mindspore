@@ -17,6 +17,7 @@ import pytest
 import numpy as np
 from mindspore import context, nn, dtype, Tensor, ms_function, ms_class
 from mindspore.ops import operations as P
+from mindspore.ops import composite as C
 
 
 class Actor(nn.Cell):
@@ -39,12 +40,26 @@ class Trainer(nn.Cell):
         return self.net_list[0].act(x, y)
 
 
-def verify_list_item_getattr(trainer, expect_res):
+class GradNet(nn.Cell):
+    def __init__(self, network, get_all=False, get_by_list=False, sens_param=False):
+        super(GradNet, self).__init__()
+        self.network = network
+        self.grad = C.GradOperation(get_all, get_by_list, sens_param)
+
+    def construct(self, *inputs):
+        grads = self.grad(self.network)(*inputs)
+        return grads
+
+
+def verify_list_item_getattr(trainer, expect_res, expect_grad_res):
     x = Tensor([3], dtype=dtype.float32)
     y = Tensor([6], dtype=dtype.float32)
     res = trainer(x, y)
-    print(f'res: {res}')
     assert np.array_equal(res.asnumpy(), expect_res.asnumpy())
+
+    grad_net = GradNet(trainer)
+    res2 = grad_net(x, y)
+    assert np.array_equal(res2.asnumpy(), expect_grad_res.asnumpy())
 
 
 @pytest.mark.level0
@@ -63,7 +78,8 @@ def test_list_item_getattr():
     actor_list = [Actor()]
     trainer = Trainer(actor_list)
     expect_res = Tensor([9], dtype=dtype.float32)
-    verify_list_item_getattr(trainer, expect_res)
+    expect_grad_res = Tensor([1], dtype=dtype.float32)
+    verify_list_item_getattr(trainer, expect_res, expect_grad_res)
 
 
 @pytest.mark.level0
@@ -84,7 +100,8 @@ def test_cell_list_getattr():
         actor_list.append(Actor())
     trainer = Trainer(actor_list)
     expect_res = Tensor([9], dtype=dtype.float32)
-    verify_list_item_getattr(trainer, expect_res)
+    expect_grad_res = Tensor([1], dtype=dtype.float32)
+    verify_list_item_getattr(trainer, expect_res, expect_grad_res)
 
 
 @pytest.mark.level0
@@ -103,7 +120,8 @@ def test_msclass_list_getattr():
     actor_list = [Actor2()]
     trainer = Trainer(actor_list)
     expect_res = Tensor([9], dtype=dtype.float32)
-    verify_list_item_getattr(trainer, expect_res)
+    expect_grad_res = Tensor([1], dtype=dtype.float32)
+    verify_list_item_getattr(trainer, expect_res, expect_grad_res)
 
 
 class Trainer2(nn.Cell):
@@ -138,7 +156,8 @@ def test_list_item_getattr2():
     actor_list = [Actor(), Actor(), Actor()]
     trainer = Trainer2(actor_list)
     expect_res = Tensor([27], dtype=dtype.float32)
-    verify_list_item_getattr(trainer, expect_res)
+    expect_grad_res = Tensor([3], dtype=dtype.float32)
+    verify_list_item_getattr(trainer, expect_res, expect_grad_res)
 
 
 @pytest.mark.level0
@@ -159,7 +178,8 @@ def test_cell_list_getattr2():
         actor_list.append(Actor())
     trainer = Trainer2(actor_list)
     expect_res = Tensor([27], dtype=dtype.float32)
-    verify_list_item_getattr(trainer, expect_res)
+    expect_grad_res = Tensor([3], dtype=dtype.float32)
+    verify_list_item_getattr(trainer, expect_res, expect_grad_res)
 
 
 @pytest.mark.level0
@@ -178,7 +198,8 @@ def test_msclass_list_getattr2():
     actor_list = [Actor2(), Actor2(), Actor2()]
     trainer = Trainer2(actor_list)
     expect_res = Tensor([27], dtype=dtype.float32)
-    verify_list_item_getattr(trainer, expect_res)
+    expect_grad_res = Tensor([3], dtype=dtype.float32)
+    verify_list_item_getattr(trainer, expect_res, expect_grad_res)
 
 
 class MSRL(nn.Cell):
@@ -212,12 +233,15 @@ class Trainer3(nn.Cell):
         return output
 
 
-def verify_list_item_getattr2(trainer, expect_res):
+def verify_list_item_getattr2(trainer, expect_res, expect_grad_res):
     x = Tensor([2], dtype=dtype.int32)
     y = Tensor([3], dtype=dtype.int32)
     res = trainer.test(x, y)
-    print(f'res: {res}')
     assert np.array_equal(res.asnumpy(), expect_res.asnumpy())
+
+    grad_net = GradNet(trainer)
+    res2 = grad_net(x, y)
+    assert np.array_equal(res2.asnumpy(), expect_grad_res.asnumpy())
 
 
 @pytest.mark.level0
@@ -240,7 +264,8 @@ def test_list_item_getattr3():
     msrl = MSRL(agent_list)
     trainer = Trainer3(msrl)
     expect_res = Tensor([15], dtype=dtype.int32)
-    verify_list_item_getattr2(trainer, expect_res)
+    expect_grad_res = Tensor([3], dtype=dtype.int32)
+    verify_list_item_getattr2(trainer, expect_res, expect_grad_res)
 
 
 @pytest.mark.level0
@@ -263,7 +288,8 @@ def test_cell_list_getattr3():
     msrl = MSRL(agent_list)
     trainer = Trainer3(msrl)
     expect_res = Tensor([15], dtype=dtype.int32)
-    verify_list_item_getattr2(trainer, expect_res)
+    expect_grad_res = Tensor([3], dtype=dtype.int32)
+    verify_list_item_getattr2(trainer, expect_res, expect_grad_res)
 
 
 @pytest.mark.level0
@@ -286,4 +312,5 @@ def test_msclass_list_getattr3():
     msrl = MSRL(agent_list)
     trainer = Trainer3(msrl)
     expect_res = Tensor([15], dtype=dtype.int32)
-    verify_list_item_getattr2(trainer, expect_res)
+    expect_grad_res = Tensor([3], dtype=dtype.int32)
+    verify_list_item_getattr2(trainer, expect_res, expect_grad_res)

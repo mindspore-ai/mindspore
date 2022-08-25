@@ -157,8 +157,13 @@ AnfNodePtr ResolveSymbol(const FuncGraphManagerPtr &manager, const NameSpacePtr 
                          const AnfNodePtr &node);
 AnfNodePtr ResolveSymbolWithAttr(const FuncGraphManagerPtr &manager, const AnfNodePtr &object_node,
                                  const AnfNodePtr &attr_node, const AnfNodePtr &node);
+AnfNodePtr ResolveGetItemWithAttr(const FuncGraphManagerPtr &manager, const AnfNodePtr &getitem_node,
+                                  const AnfNodePtr &attr_node, const AnfNodePtr &node);
 AnfNodePtr ResolveMsClassWithAttr(const FuncGraphManagerPtr &manager, const py::object &cls_obj,
                                   const std::string &attr, const AnfNodePtr &node);
+
+// Check if node is cnode with getitem.
+bool IsGetItemCNode(const AnfNodePtr &node);
 
 // Resolve one graph which normally is the root graph. FuncGraph shall be managed by res->manager().
 bool ResolveFuncGraph(const FuncGraphPtr &func_graph, const pipeline::ResourceBasePtr &res, bool use_profile = true);
