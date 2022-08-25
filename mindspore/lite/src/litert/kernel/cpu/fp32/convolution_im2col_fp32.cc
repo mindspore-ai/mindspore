@@ -16,6 +16,9 @@
 
 #include "src/litert/kernel/cpu/fp32/convolution_im2col_fp32.h"
 #include "src/litert/kernel/cpu/fp32/convolution_im2col_base_fp32.h"
+#if defined(ENABLE_AVX512)
+#include "src/litert/kernel/cpu/fp32/convolution_im2col_avx512_fp32.h"
+#endif
 #if defined(ENABLE_AVX)
 #include "src/litert/kernel/cpu/fp32/convolution_im2col_avx_fp32.h"
 #endif
@@ -31,12 +34,22 @@
 #if defined(ENABLE_ARM64)
 #include "src/litert/kernel/cpu/fp32/convolution_im2col_arm64_fp32.h"
 #endif
+#include "nnacl/intrinsics/ms_simd_cpu_info.h"
 
 namespace mindspore::kernel {
 LiteKernel *CreateConvolutionIm2ColCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                              const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                                              float *origin_weight, float *origin_bias) {
   LiteKernel *kernel = nullptr;
+#if defined(ENABLE_AVX512)
+  if (kernel == nullptr && outputs.front()->format() != NC4HW4) {
+    AVX512_HARDWARE_SELF_AWARENESS_BEGIN;
+    kernel = new (std::nothrow)
+      kernel::ConvolutionIm2ColAVX512CPUKernel(parameter, inputs, outputs, ctx, origin_weight, origin_bias);
+    AVX512_HARDWARE_SELF_AWARENESS_END;
+  }
+#endif
+
 #if defined(ENABLE_AVX)
   if (kernel == nullptr) {
     kernel = new (std::nothrow)
@@ -45,21 +58,25 @@ LiteKernel *CreateConvolutionIm2ColCPUKernel(OpParameter *parameter, const std::
 #endif
 
 #if defined(ENABLE_SSE)
-  if (kernel == nullptr) {
+  if (kernel == nullptr && outputs.front()->format() != NC4HW4) {
     kernel = new (std::nothrow)
       kernel::ConvolutionIm2ColSSECPUKernel(parameter, inputs, outputs, ctx, origin_weight, origin_bias);
   }
 #endif
 
 #if defined(ENABLE_ARM64)
-  kernel = new (std::nothrow)
-    kernel::ConvolutionIm2ColARM64CPUKernel(parameter, inputs, outputs, ctx, origin_weight, origin_bias);
+  if (kernel == nullptr) {
+    kernel = new (std::nothrow)
+      kernel::ConvolutionIm2ColARM64CPUKernel(parameter, inputs, outputs, ctx, origin_weight, origin_bias);
+  }
 #elif defined(ENABLE_ARM32)
-  kernel = new (std::nothrow)
-    kernel::ConvolutionIm2ColARM32CPUKernel(parameter, inputs, outputs, ctx, origin_weight, origin_bias);
+  if (kernel == nullptr && outputs.front()->format() != NC4HW4) {
+    kernel = new (std::nothrow)
+      kernel::ConvolutionIm2ColARM32CPUKernel(parameter, inputs, outputs, ctx, origin_weight, origin_bias);
+  }
 #endif
 
-  if (kernel == nullptr) {
+  if (kernel == nullptr && outputs.front()->format() != NC4HW4) {
     kernel = new (std::nothrow)
       kernel::ConvolutionIm2ColBaseCPUKernel(parameter, inputs, outputs, ctx, origin_weight, origin_bias);
   }

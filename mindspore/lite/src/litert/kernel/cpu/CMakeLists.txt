@@ -59,7 +59,9 @@ if(NOT("${X86_64_SIMD}" STREQUAL "avx" OR "${X86_64_SIMD}" STREQUAL "avx512"))
 endif()
 
 if(NOT("${X86_64_SIMD}" STREQUAL "avx512"))
-    set(KERNEL_SRC_AVX512_FILE ${CMAKE_CURRENT_SOURCE_DIR}/fp32/matmul_fp32_avx512.cc)
+    set(KERNEL_SRC_AVX512_FILE  ${CMAKE_CURRENT_SOURCE_DIR}/fp32/convolution_im2col_avx512_fp32.cc
+                                {CMAKE_CURRENT_SOURCE_DIR}/fp32/matmul_fp32_avx512.cc
+    )
     list(REMOVE_ITEM KERNEL_SRC ${KERNEL_SRC_AVX512_FILE})
 endif()
 
