@@ -126,7 +126,6 @@ Nonlinear Activation Function Layer
     mindspore.nn.SeLU
     mindspore.nn.SiLU
     mindspore.nn.Sigmoid
-    mindspore.nn.Softmin
     mindspore.nn.Softmax
     mindspore.nn.SoftShrink
     mindspore.nn.Tanh
