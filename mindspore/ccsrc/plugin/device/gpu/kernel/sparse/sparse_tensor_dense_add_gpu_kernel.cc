@@ -199,12 +199,16 @@ bool SparseTensorDenseAddGpuKernelMod::LaunchKernel(const std::vector<kernel::Ad
   T *x2_values_addr = GetDeviceAddress<T>(inputs, 3);
   T *y_addr = GetDeviceAddress<T>(outputs, 0);
 
+  size_t *x2_shape = GetDeviceAddress<size_t>(workspace, 0);
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(x2_shape, &x2_shape_[0], workspace_size_, cudaMemcpyHostToDevice,
+                                                     reinterpret_cast<cudaStream_t>(cuda_stream_)),
+                                     "cudaMemcpyAsync x2_shape failed");
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(y_addr, x2_values_addr, output_elements_ * sizeof(T), cudaMemcpyDeviceToDevice,
                     reinterpret_cast<cudaStream_t>(cuda_stream_)),
     "Cuda memcopy input to output Fail");
-  SparseTensorDenseAddKernel(static_cast<size_t>(input_elements_), static_cast<size_t>(rank_), x1_indices_addr,
-                             x1_values_addr, x1_shape_addr, x2_values_addr, y_addr, device_id_,
+  SparseTensorDenseAddKernel(static_cast<size_t>(input_elements_), static_cast<size_t>(rank_), x2_shape,
+                             x1_indices_addr, x1_values_addr, x1_shape_addr, x2_values_addr, y_addr, device_id_,
                              reinterpret_cast<cudaStream_t>(cuda_stream_));
 
   return true;
@@ -242,23 +246,28 @@ int SparseTensorDenseAddGpuKernelMod::Resize(const BaseOperatorPtr &base_operato
     return ret;
   }
   std::vector<int64_t> input_shape_0 = inputs[kSparseTensorDenseAddIndex0]->GetShapeVector();
-  std::vector<int64_t> input_shape_3 = inputs[kSparseTensorDenseAddIndex3]->GetShapeVector();
-  std::vector<int64_t> output_shape = outputs[kSparseTensorDenseAddIndex0]->GetShapeVector();
-  auto in_shape_size_3 = input_shape_3.size();
-  auto output_shape_size = output_shape.size();
-  if (in_shape_size_3 != output_shape_size) {
+  x2_shape_ = inputs[kSparseTensorDenseAddIndex3]->GetShapeVector();
+  std::vector<int64_t> output_shape_ = outputs[kSparseTensorDenseAddIndex0]->GetShapeVector();
+  is_null_output_ = CHECK_SHAPE_NULL(x2_shape_, kernel_name_, "x2_input");
+  if (is_null_output_) {
+    InitSizeLists();
+    return true;
+  }
+  x2_shape_size = x2_shape_.size();
+  auto output_shape_size = output_shape_.size();
+  if (x2_shape_size != output_shape_size) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input four shape size should be the same as"
-                  << " output shape size, but got input four shape size " << input_shape_3 << " output shape size"
+                  << " output shape size, but got input four shape size " << x2_shape_ << " output shape size"
                   << output_shape_size;
     return KRET_RESIZE_FAILED;
   }
   // A Code Block For setting input and output shape.
   input_elements_ = input_shape_0[0];
   for (size_t i = 0; i < output_shape_size; i++) {
-    output_elements_ *= output_shape[i];
+    output_elements_ *= output_shape_[i];
   }
-  rank_ = input_shape_3.size();
-
+  rank_ = x2_shape_.size();
+  InitSizeLists();
   return KRET_OK;
 }
 
