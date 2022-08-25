@@ -115,6 +115,9 @@ void SchedulerHelper::AddDataArrow(AbstractActor *const from_actor, AbstractActo
   to_actor->input_datas_num_++;
   (void)to_actor->input_data_arrow_aids_.emplace_back(std::make_pair(from_actor->GetAID(), data_arrow.get()));
 
+  AddMemorySign(from_actor, to_actor, SizeToInt(from_actor->output_data_arrows_.size() - 1),
+                SizeToInt(to_actor->input_data_arrow_aids_.size() - 1), true);
+
   if (from_kernel == nullptr) {
     return;
   }
@@ -176,6 +179,9 @@ void SchedulerHelper::AddControlArrow(AbstractActor *const from_actor, AbstractA
   (void)from_actor->output_control_arrows_.emplace_back(control_arrow);
   to_actor->input_controls_num_++;
   (void)to_actor->input_control_arrow_aids_.emplace_back(std::make_pair(from_actor->GetAID(), control_arrow.get()));
+
+  AddMemorySign(from_actor, to_actor, SizeToInt(from_actor->output_control_arrows_.size() - 1),
+                SizeToInt(to_actor->input_control_arrow_aids_.size() - 1), false);
 }
 
 void SchedulerHelper::AddPartialArrow(ControlActor *const from_actor, ControlActor *const to_actor, size_t from_index,
@@ -460,6 +466,100 @@ void SchedulerHelper::AddArrowForFusionActor(FusionActor *fusion_actor) {
         std::make_pair(input_control_arrow_aid.first, input_control_arrow));
     }
   }
+}
+
+void SchedulerHelper::AddMemorySign(AbstractActor *const from_actor, AbstractActor *const to_actor,
+                                    int32_t from_position, int32_t to_position, bool is_data_arrow) {
+  MS_EXCEPTION_IF_NULL(from_actor);
+  MS_EXCEPTION_IF_NULL(to_actor);
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ms_context->get_param<int>(MS_CTX_MEMORY_OPTIMIZE_LEVEL) == kOptimizeO0) {
+    return;
+  }
+  if ((from_actor->type() != KernelTransformType::kKernelActor) &&
+      (to_actor->type() != KernelTransformType::kKernelActor)) {
+    return;
+  }
+
+  // Add the somas info.
+  KernelGraphPtr from_graph = nullptr;
+  KernelActor *from_kernel_actor = nullptr;
+  if (from_actor->type() == KernelTransformType::kKernelActor) {
+    from_kernel_actor = dynamic_cast<KernelActor *>(from_actor);
+    MS_EXCEPTION_IF_NULL(from_kernel_actor);
+    from_graph = AnfAlgo::FetchKernelGraph(from_kernel_actor->kernel());
+    MS_EXCEPTION_IF_NULL(from_graph);
+    AddSomasInfo(from_kernel_actor, from_graph);
+  }
+  KernelGraphPtr to_graph = nullptr;
+  KernelActor *to_kernel_actor = nullptr;
+  if (to_actor->type() == KernelTransformType::kKernelActor) {
+    to_kernel_actor = dynamic_cast<KernelActor *>(to_actor);
+    MS_EXCEPTION_IF_NULL(to_kernel_actor);
+    to_graph = AnfAlgo::FetchKernelGraph(to_kernel_actor->kernel());
+    MS_EXCEPTION_IF_NULL(to_graph);
+    AddSomasInfo(to_kernel_actor, to_graph);
+  }
+
+  // Add the memory alloc and free sign at the boundary of the graph.
+  if ((from_graph != nullptr) && (to_graph != nullptr)) {
+    // The same graph no need insert the memory actor.
+    if (from_graph->graph_id() == to_graph->graph_id()) {
+      return;
+    }
+    AddMemoryFreeSign(from_kernel_actor, from_position, from_graph, is_data_arrow);
+    AddMemoryAllocSign(to_kernel_actor, to_position, to_graph, is_data_arrow);
+  } else if (from_graph != nullptr) {
+    AddMemoryFreeSign(from_kernel_actor, from_position, from_graph, is_data_arrow);
+  } else if (to_graph != nullptr) {
+    AddMemoryAllocSign(to_kernel_actor, to_position, to_graph, is_data_arrow);
+  }
+}
+
+void SchedulerHelper::AddMemoryAllocSign(KernelActor *const to_actor, int32_t to_position,
+                                         const KernelGraphPtr &to_graph, bool is_data_arrow) {
+  MS_EXCEPTION_IF_NULL(to_actor);
+  MS_EXCEPTION_IF_NULL(to_graph);
+  // Somas is not work for this graph.
+  if (to_graph->somas_whole_block_size() == 0) {
+    return;
+  }
+
+  // Set the memory alloc info.
+  to_actor->memory_alloc_insert_position_ = std::make_pair(to_position, is_data_arrow);
+}
+
+void SchedulerHelper::AddMemoryFreeSign(KernelActor *const from_actor, int32_t from_position,
+                                        const KernelGraphPtr &from_graph, bool is_data_arrow) {
+  MS_EXCEPTION_IF_NULL(from_actor);
+  MS_EXCEPTION_IF_NULL(from_graph);
+  // Somas is not work for this graph.
+  if (from_graph->somas_whole_block_size() == 0) {
+    return;
+  }
+
+  // Set the memory free info.
+  from_actor->memory_free_insert_position_ = std::make_pair(from_position, is_data_arrow);
+}
+
+void SchedulerHelper::AddSomasInfo(KernelActor *const kernel_actor, const KernelGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(kernel_actor);
+  MS_EXCEPTION_IF_NULL(graph);
+  // Somas is not work for this graph.
+  if (graph->somas_whole_block_size() == 0) {
+    return;
+  }
+
+  if (kernel_actor->somas_info_ != nullptr) {
+    return;
+  }
+
+  // Set the somas info.
+  auto somas_info = graph->MutableSomasInfo();
+  MS_EXCEPTION_IF_NULL(somas_info);
+  somas_info->graph_id_ = graph->graph_id();
+  kernel_actor->somas_info_ = somas_info;
 }
 
 namespace {

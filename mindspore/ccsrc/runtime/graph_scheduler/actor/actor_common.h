@@ -96,7 +96,10 @@ enum class KernelTransformType {
   kSendActor,
   kRecvActor,
   // Fusion actor type.
-  kFusionActor
+  kFusionActor,
+  // Memory actor type.
+  kMemoryAllocActor,
+  kMemoryFreeActor
 };
 
 #define SET_FLAG(value, flag) ((value) = ((value) | (flag)))

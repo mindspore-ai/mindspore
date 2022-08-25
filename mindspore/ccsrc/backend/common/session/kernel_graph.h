@@ -55,6 +55,11 @@ struct SomasInfo {
   size_t whole_block_size_{0};
   // offset -> aligned_size_
   std::map<size_t, size_t> merged_blocks_map_;
+
+  // Alloc the base address of graph during execution, which is variable.
+  void *base_address_{nullptr};
+  // The owner graph id.
+  uint32_t graph_id_{0};
 };
 
 using DeviceType = device::DeviceType;

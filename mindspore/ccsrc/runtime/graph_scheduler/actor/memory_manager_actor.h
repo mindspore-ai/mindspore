@@ -59,6 +59,8 @@ class MemoryManagerActor : public ActorBase {
   void FreeBatchMemory(const std::vector<DeviceTensor *> *free_list,
                        const std::vector<const DeviceContext *> *device_contexts,
                        OpContext<DeviceTensor> *const op_context, const AID &from_aid);
+  // Not use the ref count and free the memory directly, only for free in memory pool.
+  void FreeMemorydirectly(void **free_ptr, const DeviceContext *device_context);
 
   // Wait the MemoryManagerActor to finish running all current messages.
   void Wait(OpContext<DeviceTensor> *const op_context, const AID &from_aid);

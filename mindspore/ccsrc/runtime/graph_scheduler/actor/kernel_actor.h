@@ -37,6 +37,7 @@ using mindspore::device::DeviceContext;
 using mindspore::device::KernelInfo;
 using mindspore::kernel::Address;
 using mindspore::kernel::KernelLaunchInfo;
+using mindspore::session::SomasInfo;
 using mindspore::tensor::TensorPtr;
 
 struct InputDataInfo {
@@ -66,7 +67,10 @@ class KernelActor : public DebugAwareActor {
         strategy_(strategy),
         modifiable_ref_input_indexes_(modifiable_ref_input_indexes),
         modifiable_ref_output_indexes_(modifiable_ref_output_indexes),
-        is_launch_skipped_(false) {
+        is_launch_skipped_(false),
+        somas_info_(nullptr),
+        memory_alloc_insert_position_({-1, false}),
+        memory_free_insert_position_({-1, false}) {
     (void)device_contexts_.emplace_back(device_context);
   }
   ~KernelActor() override = default;
@@ -124,6 +128,7 @@ class KernelActor : public DebugAwareActor {
  private:
   friend class GraphScheduler;
   friend class ControlNodeScheduler;
+  friend class SchedulerHelper;
 #ifdef ENABLE_RPC_ACTOR
   friend class RpcNodeScheduler;
 #endif
@@ -161,6 +166,13 @@ class KernelActor : public DebugAwareActor {
 
   // Whether skip the kernel launch.
   bool is_launch_skipped_;
+
+  // The information used for integration of dynamic and static memory.
+  SomasInfo *somas_info_;
+  // The first of pair is the inserted position and initial value -1 is the invalid position, the second of pair value
+  // true is the data arrow and value false is the control arrow.
+  std::pair<int32_t, bool> memory_alloc_insert_position_;
+  std::pair<int32_t, bool> memory_free_insert_position_;
 };
 
 using KernelActorPtr = std::shared_ptr<KernelActor>;
