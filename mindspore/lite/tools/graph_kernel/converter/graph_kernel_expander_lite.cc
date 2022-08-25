@@ -145,6 +145,24 @@ AnfNodePtr PoolLayoutDeco::Run(const AnfNodePtr &node) {
   return decorated_->Run(cnode);
 }
 
+std::vector<PrimitivePtr> GraphKernelExpanderLite::ConvTuningExpanderOps() {
+  std::vector<PrimitivePtr> conv_tuning_ops = {prim::kPrimConv2DFusion, prim::kPrimAvgPoolFusion,
+                                               prim::kPrimMaxPoolFusion};
+  return conv_tuning_ops;
+}
+
+bool GraphKernelExpanderLite::DisableConvTuning() {
+  const auto &flags = GraphKernelFlags::GetInstance();
+  auto flag_enable_only_list = flags.enable_expand_ops_only;
+  auto flag_disable_list = flags.disable_expand_ops;
+  return std::find(flag_disable_list.begin(), flag_disable_list.end(), prim::kPrimConv2DFusion->name()) !=
+           flag_disable_list.end() ||
+         (!flag_enable_only_list.empty() &&
+          std::find(flag_enable_only_list.begin(), flag_enable_only_list.end(), prim::kPrimConv2DFusion->name()) ==
+            flag_enable_only_list.end()) ||
+         !flags.enable_lite_conv_tuning;
+}
+
 std::vector<PrimitivePtr> GraphKernelExpanderLite::InitOpList() {
   std::vector<OpWithLevel> expand_ops_with_level = {
     {kCPUDevice, OpLevel_0, prim::kPrimAddFusion},       {kCPUDevice, OpLevel_0, prim::kPrimMulFusion},
@@ -157,8 +175,29 @@ std::vector<PrimitivePtr> GraphKernelExpanderLite::InitOpList() {
     {kCPUDevice, OpLevel_1, prim::kPrimShape},           {kCPUDevice, OpLevel_1, prim::kPrimConcat},
     {kCPUDevice, OpLevel_1, prim::kPrimConstantOfShape}, {kCPUDevice, OpLevel_1, prim::kPrimStridedSlice}};
   const auto &flags = GraphKernelFlags::GetInstance();
-  return GkUtils::GetValidOps(expand_ops_with_level, flags.fusion_ops_level, flags.enable_expand_ops_only,
-                              flags.enable_expand_ops, flags.disable_expand_ops);
+  auto conv_tuning_op_list = ConvTuningExpanderOps();
+  if (DisableConvTuning()) {
+    // when disable conv tuning, we use all expander op list
+    std::transform(conv_tuning_op_list.begin(), conv_tuning_op_list.end(), std::back_inserter(expand_ops_with_level),
+                   [](const PrimitivePtr &p) { return std::make_tuple(kCPUDevice, OpLevel_1, p); });
+  }
+  auto valid_op_list = GkUtils::GetValidOps(expand_ops_with_level, flags.fusion_ops_level, flags.enable_expand_ops_only,
+                                            flags.enable_expand_ops, flags.disable_expand_ops);
+  if (!DisableConvTuning()) {
+    // When enable conv tuning, we move conv related expanders to conv tuning pass. They may be added by flag.
+    std::vector<std::string> conv_tuning_op_name(conv_tuning_op_list.size());
+    std::transform(conv_tuning_op_list.begin(), conv_tuning_op_list.end(), std::back_inserter(conv_tuning_op_name),
+                   [](const PrimitivePtr &p) { return p->name(); });
+    for (auto iter = valid_op_list.begin(); iter != valid_op_list.end();) {
+      if (std::find(conv_tuning_op_name.begin(), conv_tuning_op_name.end(), (*iter)->name()) !=
+          conv_tuning_op_name.end()) {
+        iter = valid_op_list.erase(iter);
+      } else {
+        ++iter;
+      }
+    }
+  }
+  return valid_op_list;
 }
 
 bool GraphKernelExpanderLite::CanExpand(const CNodePtr &node) const {

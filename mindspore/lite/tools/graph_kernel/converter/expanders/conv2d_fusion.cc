@@ -17,7 +17,7 @@
 #include <memory>
 
 #include "common/graph_kernel/expanders/op_desc_registry.h"
-#include "tools/graph_kernel/converter/conv_pool_expander.h"
+#include "tools/graph_kernel/converter/conv_tuning_expander.h"
 #include "tools/graph_kernel/converter/expanders/activation.h"
 #include "mindapi/base/types.h"
 #include "ir/dtype.h"
