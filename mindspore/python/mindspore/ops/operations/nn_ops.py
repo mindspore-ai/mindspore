@@ -5232,9 +5232,8 @@ class KLDivLoss(Primitive):
     :math:`\ell(x, target)` represents `output`.
 
     Note:
-        On Ascend, float64 dtype is not currently supported.
-        The output aligns with the mathematical definition of KL divergence
-        only when `reduction` is set to 'batchmean'.
+        - Currently it does not support float64 on `Ascend`.
+        - It behaves the same as the mathematical definition only when `reduction` is set to `batchmean`.
 
     Args:
         reduction (str): Specifies the reduction to be applied to the output.
@@ -5242,7 +5241,6 @@ class KLDivLoss(Primitive):
 
             - On Ascend, the value of `reduction` must be one of 'batchmean', 'none' or 'sum'.
             - On GPU, the value of `reduction` must be one of 'mean', 'none' or 'sum'.
-            - On CPU, the value of `reduction` must be one of 'mean', 'batchmean', 'none' or 'sum'.
 
     Inputs:
         - **logits** (Tensor) - The input Tensor. The data type must be float16, float32 or float64.
