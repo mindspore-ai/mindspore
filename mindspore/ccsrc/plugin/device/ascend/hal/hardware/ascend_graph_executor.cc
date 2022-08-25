@@ -192,7 +192,6 @@ void AscendGraphExecutor::Initialize() {
 }
 
 void AscendGraphExecutor::Destroy() {
-  graph_event_.clear();
   mem_manager_ = nullptr;
   runtime_instance_ = nullptr;
   res_manager_ = nullptr;
@@ -325,8 +324,6 @@ bool AscendGraphExecutor::ExecuteGraph(const KernelGraphPtr &graph) const {
   const uint64_t kUSecondInSecond = 1000000;
   bool ret = false;
   if (graph->is_graph_run_mode()) {
-    InsertEventBeforeRunTask(graph);
-
 #if defined(_WIN32) || defined(_WIN64)
     auto start_time = std::chrono::steady_clock::now();
 #else
@@ -353,23 +350,6 @@ bool AscendGraphExecutor::ExecuteGraph(const KernelGraphPtr &graph) const {
     MS_LOG(EXCEPTION) << graph->ToString() << " does not sink, should launch kernels";
   }
   return ret;
-}
-
-void AscendGraphExecutor::InsertEventBeforeRunTask(const KernelGraphPtr &graph) const {
-  MS_EXCEPTION_IF_NULL(graph);
-  if (!graph->is_graph_run_mode() || graph->is_dynamic_shape()) {
-    return;
-  }
-  MS_LOG(DEBUG) << "Insert event between PyNative and Graph";
-  MS_EXCEPTION_IF_NULL(runtime_instance_);
-  auto model_stream = runtime_instance_->GetModelStream(graph->graph_id());
-  auto compute_event = runtime_instance_->CreateDeviceEvent();
-  MS_EXCEPTION_IF_NULL(compute_event);
-  compute_event->set_wait_stream(model_stream);
-  compute_event->set_record_stream(res_manager_->compute_stream_);
-  compute_event->RecordEvent();
-  compute_event->WaitEvent();
-  graph_event_[graph->graph_id()] = compute_event;
 }
 }  // namespace ascend
 }  // namespace device

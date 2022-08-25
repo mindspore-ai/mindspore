@@ -53,7 +53,6 @@ class AscendGraphExecutor : public GraphExecutor {
   void LoadModel(const NotNull<KernelGraphPtr> &root_graph) const;
 
   // LaunchGraph interface
-  void InsertEventBeforeRunTask(const KernelGraphPtr &graph) const;
   bool ExecuteGraph(const KernelGraphPtr &graph) const;
 
   // Kernel Runtime  --- only for task sink
@@ -65,8 +64,6 @@ class AscendGraphExecutor : public GraphExecutor {
   mutable std::mutex launch_mutex_;
   // Using node to get its atomics
   mutable std::map<CNodePtr, std::vector<CNodePtr>> node_atomics_;
-  // Event for multi-stream
-  mutable std::map<uint32_t, std::shared_ptr<DeviceEvent>> graph_event_;
   AscendDeviceResManager *res_manager_{nullptr};
 };
 }  // namespace ascend
