@@ -427,7 +427,7 @@ def tensor_index_by_list(data, list_index):
     if const_utils.check_type_isinstance(indexes_types, (mstype.Bool, mstype.Int)):
         if data_shape[0] == -1 and all(isinstance(i, bool) for i in list_index):
             const_utils.raise_unimplemented_error(
-                "Not supported to take the subscript of dynamic shape tensor using Boolean type")
+                "Not supported to the dynamic shape tensor slice by using list of Boolean type")
         tensor_index = const_utils.sequence_to_index(list_index, data_shape[0])
         if tensor_index is False:
             const_utils.raise_index_error("When tensor is indexed by list, the list can't be empty.")
@@ -874,7 +874,7 @@ def tensor_setitem_by_tensor_with_tensor(data, index, value_tensor):
 
     if is_shape_unknown(F.shape(data)):
         const_utils.raise_unimplemented_error(
-            "Not supported to take the subscript of dynamic shape tensor using Boolean type")
+            "Not supported to the dynamic shape tensor slice by using tensor of Boolean type")
     return _tensor_setitem_by_bool_tensor_with_tensor(data, index, value_tensor)
 
 
