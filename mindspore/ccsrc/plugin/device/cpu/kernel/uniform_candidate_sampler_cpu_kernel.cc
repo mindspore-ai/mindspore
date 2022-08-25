@@ -160,22 +160,7 @@ void UniformCandidateSamplerCpuKernelMod::CheckInputsAndOutputs(const std::vecto
 
   if (std::any_of(input_shape.begin(), input_shape.end(), [](size_t i) { return i == 0; })) {
     is_null_input_ = true;
-    return;
   }
-
-  auto output_shape = outputs.at(kIndex0)->GetShapeVector();
-  batch_size_ = std::accumulate(output_shape.begin(), output_shape.end(), int64_t(1), std::multiplies<int64_t>());
-  batch_size_ = batch_size_ / num_sampled_;
-  if (batch_size_ == 0) {
-    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the shape of output 'sampled_candidates' can not be 0";
-  }
-  input_size_ =
-    LongToSize(std::accumulate(input_shape.begin(), input_shape.end(), int64_t(1), std::multiplies<int64_t>()));
-  input_size_ = input_size_ / LongToSize(batch_size_);
-
-  (void)output_sizes_.emplace_back(num_sampled_);
-  (void)output_sizes_.emplace_back(input_size_);
-  (void)output_sizes_.emplace_back(num_sampled_);
 }
 
 bool UniformCandidateSamplerCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
