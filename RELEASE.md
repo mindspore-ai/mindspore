@@ -17,7 +17,6 @@
 - [STABLE] Add CPU support for ops.ApplyGradientDescent.
 - [STABLE] Add CPU support for ops.ApplyPowerSign.
 - [STABLE] Add GPU and CPU support for ops.ApplyProximalAdagrad.
-- [STABLE] Add CPU support for ops.ApplyProximalGradientDescent.
 - [STABLE] Add Ascend dynamic shape support for ops.ApplyRmsProp.
 - [STABLE] Add functional interface for ops.max.
 - [STABLE] Add functional interface for ops.atan2.
@@ -42,7 +41,6 @@
 - [STABLE] Add functional interface for ops.nll_loss.
 - [STABLE] Add functional interface for ops.one_hot.
 - [STABLE] Add functional interface for ops.pad.
-- [STABLE] Add CPU support for ops.RandomCategorical.
 - [STABLE] Add CPU support for ops.random_gamma.
 - [STABLE] Add functional interface for ops.amax.
 - [STABLE] Add functional interface for ops.mean.
@@ -62,8 +60,6 @@
 - [STABLE] Add GPU and CPU support for ops.sparse_segment_mean.
 - [STABLE] Add functional interface for ops.squeeze.
 - [STABLE] Add CPU support for ops.standard_laplace.
-- [BETA] Add GPU support for nn.InstanceNorm1d.
-- [BETA] Add GPU support for nn.InstanceNorm3d.
 - [BETA] Add Ascend, GPU, and CPU support for nn.ReflectionPad1d.
 - [BETA] Add Ascend, GPU, and CPU support for nn.ReflectionPad2d.
 - [STABLE] Add Ascend, GPU, and CPU support for nn.SiLU.
