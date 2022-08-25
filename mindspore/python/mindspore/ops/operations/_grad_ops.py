@@ -2632,6 +2632,42 @@ class CdistGrad(Primitive):
         self.init_prim_io_names(inputs=['grad', 'input_x', 'input_y', 'cdist'], outputs=['output'])
 
 
+class PdistGrad(Primitive):
+    """Computes gradient for Pdist operation.
+
+    Args:
+        p (float): the p value for the Pdist formulation. Default: 2.0.
+
+    Inputs:
+        - **y_grad** (Tensor) - The gradients of loss to output of Pdist function.
+        - **x** (Tensor) - Input tensor of shape :math:`(N, M)`.
+        Must be the input `x` of the forward operator Pdist.
+        - **y** (Tensor) - Input tensor of shape :math:`(N*(N-1)/2)`.
+        Must be the output `y` of the forward operator Pdist.
+
+    Outputs:
+        Tensor, with the same shape and dtype as `x`.
+
+    Raises:
+        TypeError: If one of `y_grad`, `x` and `y` is not a Tensor.
+        TypeError: If dtype of `y_grad`, `x` and `y` are not all float16 or float32.
+        TypeError: If `p` is not a float.
+        ValueError: If `p` is a negative float.
+        ValueError: If shape of `y_grad` is not same as `y`.
+        ValueError: If dimension of `x` is not 2.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+    """
+
+    @prim_attr_register
+    def __init__(self, p=2.0):
+        validator.check_value_type("p", p, [float], self.name)
+        if p < 0:
+            raise ValueError('Pdist p must be a non-negative value, but got `{p}`.')
+        self.init_prim_io_names(inputs=['y_grad', 'x', 'y'], outputs=['x_grad'])
+
+
 class MultilabelMarginLossGrad(Primitive):
     """
     Compute the gradients of MultilabelMarginLoss operation.

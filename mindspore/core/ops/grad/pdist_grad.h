@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_PDIST_H_
-#define MINDSPORE_CORE_OPS_PDIST_H_
+#ifndef MINDSPORE_CORE_OPS_PDIST_GRAD_H_
+#define MINDSPORE_CORE_OPS_PDIST_GRAD_H_
 
 #include <algorithm>
 #include <map>
@@ -29,14 +29,12 @@
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNamePdist = "Pdist";
-/// \brief Computes batched the p norm distance between each pair of row vectors in one collection.
-/// Refer to Python API @ref mindspore.ops.Pdist for more details.
-class MIND_API Pdist : public BaseOperator {
+constexpr auto kNamePdistGrad = "PdistGrad";
+class MIND_API PdistGrad : public BaseOperator {
  public:
-  MIND_API_BASE_MEMBER(Pdist);
+  MIND_API_BASE_MEMBER(PdistGrad);
   /// \brief Constructor.
-  Pdist() : BaseOperator(kNamePdist) { InitIOName({"x"}, {"y"}); }
+  PdistGrad() : BaseOperator(kNamePdistGrad) { InitIOName({"y_grad", "x", "y"}, {"x_grad"}); }
 
   void set_p(const float p);
   /// \brief Get p.
@@ -45,9 +43,9 @@ class MIND_API Pdist : public BaseOperator {
   float get_p() const;
 };
 
-abstract::AbstractBasePtr PdistInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const std::vector<abstract::AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr PdistGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                         const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_PDIST_H_
+#endif  // MINDSPORE_CORE_OPS_PDIST_GRAD_H_

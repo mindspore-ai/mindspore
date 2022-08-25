@@ -115,6 +115,8 @@ from mindspore.nn.loss.loss import TripletMarginLoss
 from mindspore.ops.operations.array_ops import Mvlgamma
 from mindspore.ops.operations.other_ops import BartlettWindow
 from mindspore.ops.operations.nn_ops import NthElement
+from mindspore.ops.operations.nn_ops import Pdist
+from mindspore.ops.operations._grad_ops import PdistGrad
 from mindspore.ops.operations.nn_ops import SparseApplyAdagradDA
 from mindspore.ops.operations.nn_ops import NuclearNorm
 from mindspore.ops.operations.nn_ops import PSROIPooling
@@ -3273,6 +3275,14 @@ test_case_nn_ops = [
         'block': NthElementNet(),
         'desc_inputs': [Tensor(np.ones([2, 3, 4], np.float32))],
         'desc_bprop': [Tensor(np.ones([2, 3], np.float32))]}),
+    ('Pdist', {
+        'block': Pdist(p=2.0),
+        'desc_inputs': [Tensor(np.array([[1.0, 1.0], [2.0, 2.0], [3.0, 3.0]]).astype(np.float32))],
+        'desc_bprop': [[3]]}),
+    ('PdistGrad', {
+        'block': PdistGrad(p=2.0),
+        'desc_inputs': [[6], [4, 4], [6]],
+        'skip': ['backward']}),
     ('GridSampler2D', {
         'block': GridSampler2D(interpolation_mode='bilinear', padding_mode='zeros', align_corners=False),
         'desc_inputs': [Tensor(np.arange(16).reshape((2, 2, 2, 2)).astype(np.float32)),

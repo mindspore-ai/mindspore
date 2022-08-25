@@ -10139,7 +10139,40 @@ class GridSampler2D(Primitive):
 class Pdist(Primitive):
     r"""
     Computes the p-norm distance between each pair of row vectors in the input.
-    Refer to :func:`mindspore.ops.pdist` for more detail.
+
+    .. math::
+
+        y[n] = \sqrt[p]{{\mid x_{i} - x_{j} \mid}^p},
+
+    where :math:`x_{i}, x_{j}` are two different row vectors in the input.
+
+    Args:
+        p (float): p value for the p norm distance to calculate between each vector pair ∈[0,∞]. Default: 2.0.
+
+    Inputs:
+        - **x** (Tensor) - Input tensor with dtype of float16 or float32 and shape of :math:`(N, M)`.
+
+    Outputs:
+        Tensor, has the same dtype as `x`, whose shape is :math:`(N * (N - 1) / 2)`.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        TypeError: If dtype of `x` is neither float16 nor float32.
+        TypeError: If `p` is not a float.
+        ValueError: If `p` is a negative float.
+        ValueError: If dimension of `x` is not 2.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> from mindspore import Tensor
+        >>> from mindspore.ops.operations.nn_ops import Pdist
+        >>> x = Tensor(np.array([[1.0, 1.0], [2.0, 2.0], [3.0, 3.0]]).astype(np.float32))
+        >>> op = Pdist(p=2.0)
+        >>> y = op(x)
+        >>> print(y)
+        [1.4142137 2.8284273 1.4142137]
     """
 
     @prim_attr_register
