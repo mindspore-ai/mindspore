@@ -249,7 +249,7 @@ def check_dither(method):
         [density_function, noise_shaping], _ = parse_user_args(
             method, *args, **kwargs)
 
-        type_check(density_function, (DensityFunction), "density_function")
+        type_check(density_function, (DensityFunction,), "density_function")
         type_check(noise_shaping, (bool,), "noise_shaping")
 
         return method(self, *args, **kwargs)
