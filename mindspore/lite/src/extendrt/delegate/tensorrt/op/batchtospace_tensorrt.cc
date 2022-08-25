@@ -38,8 +38,6 @@ int BatchToSpaceTensorRT::IsSupport(const schema::Primitive *primitive,
     MS_LOG(ERROR) << "Unsupported output tensor size, size is " << out_tensors.size();
     return RET_ERROR;
   }
-  dynamic_shape_params_.support_dynamic_ = false;
-  dynamic_shape_params_.support_hw_dynamic_ = false;
   return RET_OK;
 }
 
@@ -68,14 +66,12 @@ int BatchToSpaceTensorRT::AddInnerOp(TensorRTContext *ctx) {
   int ph1 = *(pad_ptr + 1);
   int pw0 = *(pad_ptr + INPUT_SIZE2);
   int pw1 = *(pad_ptr + INPUT_SIZE3);
-  auto in_dims = input_tensor->getDimensions();
-  int in = in_dims.d[0];
-  int ic = in_dims.d[1];
-  int ih = in_dims.d[INPUT_SIZE2];
-  int iw = in_dims.d[INPUT_SIZE3];
 
-  auto plugin =
-    std::make_shared<BatchToSpacePlugin>(input_tensor->getName(), in, ic, ih, iw, bh, ph0, ph1, pw0, pw1, device_id_);
+  auto plugin = std::make_shared<BatchToSpacePlugin>(input_tensor->getName(), bh, ph0, ph1, pw0, pw1, device_id_);
+  if (plugin == nullptr) {
+    MS_LOG(ERROR) << "add batchtospace plugin failed for" << op_name_;
+    return RET_ERROR;
+  }
   nvinfer1::ITensor *inputTensors[] = {input_tensor};
   nvinfer1::IPluginV2Layer *space2batch_opt_layer = ctx->network()->addPluginV2(inputTensors, 1, *plugin);
   if (space2batch_opt_layer == nullptr) {
@@ -104,15 +100,20 @@ int BatchToSpacePlugin::enqueue(const nvinfer1::PluginTensorDesc *inputDesc,
 
 int BatchToSpacePlugin::RunCudaBatchToSpace(const nvinfer1::PluginTensorDesc *inputDesc, const void *const *inputs,
                                             void *const *outputs, cudaStream_t stream) {
-  int on = in_ / (bh_ * bh_);
-  int oc = ic_;
-  int oh = ih_ * bh_ - ph0_ - ph1_;
-  int ow = iw_ * bh_ - pw0_ - pw1_;
+  nvinfer1::Dims input_dims = inputDesc[0].dims;
+  int in = input_dims.d[0];
+  int ic = input_dims.d[1];
+  int ih = input_dims.d[2];
+  int iw = input_dims.d[3];
+  int on = in / (bh_ * bh_);
+  int oc = ic;
+  int oh = ih * bh_ - ph0_ - ph1_;
+  int ow = iw * bh_ - pw0_ - pw1_;
 
   int size = on * oc * oh * ow;
 
-  CalBatchToSpace<float>(size, static_cast<const float *>(inputs[0]), in_, ih_, iw_, ic_, on, oh, ow, oc, ph0_, ph1_,
-                         pw0_, pw1_, bh_, static_cast<float *>(outputs[0]), device_id_, stream);
+  CalBatchToSpace<float>(size, static_cast<const float *>(inputs[0]), in, ih, iw, ic, on, oh, ow, oc, ph0_, ph1_, pw0_,
+                         pw1_, bh_, static_cast<float *>(outputs[0]), device_id_, stream);
   return RET_OK;
 }
 
@@ -126,7 +127,7 @@ nvinfer1::IPluginV2DynamicExt *BatchToSpacePlugin::clone() const noexcept {
   return plugin;
 }
 
-size_t BatchToSpacePlugin::getSerializationSize() const noexcept { return sizeof(int) * 9; }
+size_t BatchToSpacePlugin::getSerializationSize() const noexcept { return sizeof(int) * 5; }
 
 nvinfer1::DimsExprs BatchToSpacePlugin::getOutputDimensions(int index, const nvinfer1::DimsExprs *inputs,
                                                             int nbInputDims,
@@ -147,10 +148,6 @@ nvinfer1::DimsExprs BatchToSpacePlugin::getOutputDimensions(int index, const nvi
 }
 
 void BatchToSpacePlugin::serialize(void *buffer) const noexcept {
-  SerializeValue(&buffer, &in_, sizeof(int));
-  SerializeValue(&buffer, &ic_, sizeof(int));
-  SerializeValue(&buffer, &ih_, sizeof(int));
-  SerializeValue(&buffer, &iw_, sizeof(int));
   SerializeValue(&buffer, &bh_, sizeof(int));
   SerializeValue(&buffer, &ph0_, sizeof(int));
   SerializeValue(&buffer, &ph1_, sizeof(int));
