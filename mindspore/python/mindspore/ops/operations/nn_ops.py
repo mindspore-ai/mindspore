@@ -10046,22 +10046,23 @@ class Pdist(Primitive):
 
     Raises:
         TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is neither float16 nor float32.
+        TypeError: If dtype of `x` is not float16, float32 or float64.
         TypeError: If `p` is not a float.
         ValueError: If `p` is a negative float.
         ValueError: If dimension of `x` is not 2.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``CPU`` ``GPU``
 
     Examples:
         >>> from mindspore import Tensor
         >>> from mindspore.ops.operations.nn_ops import Pdist
+        >>> import numpy as np
         >>> x = Tensor(np.array([[1.0, 1.0], [2.0, 2.0], [3.0, 3.0]]).astype(np.float32))
         >>> op = Pdist(p=2.0)
         >>> y = op(x)
         >>> print(y)
-        [1.4142137 2.8284273 1.4142137]
+        [1.4142135 2.828427  1.4142135]
     """
 
     @prim_attr_register
@@ -10069,7 +10070,7 @@ class Pdist(Primitive):
         """Initialize Pdist"""
         validator.check_value_type("p", p, [float], self.name)
         if p < 0:
-            raise ValueError('Pdist p must be a non-negative value, but got `{p}`.')
+            raise ValueError('Pdist p must be a non-negative value, but got `{}`.'.format(p))
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
 
 

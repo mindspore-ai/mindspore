@@ -26,21 +26,27 @@ namespace ops {
 namespace {
 abstract::ShapePtr PdistInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
+  auto prim_name = primitive->name();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto x_size = x_shape.size();
   const int64_t input_dim = 2;
-  (void)CheckAndConvertUtils::CheckInteger("x dim", SizeToLong(x_size), kGreaterEqual, input_dim, "Pdist");
-  int64_t dim_R = x_shape[x_size - 2];
-  const float out_shape_used = 0.5;
-  dim_R = dim_R * (dim_R - 1) * out_shape_used;
-  std::vector<int64_t> out_shape;
-  for (size_t i = 0; i < x_size - input_dim; i++) {
-    out_shape.push_back(x_shape[i]);
+  (void)CheckAndConvertUtils::CheckInteger("x dim", SizeToLong(x_size), kEqual, input_dim, prim_name);
+
+  auto input_x = input_args[0];
+  MS_EXCEPTION_IF_NULL(input_x);
+  if (x_shape[x_size - input_dim] >= 0) {
+    int64_t dim_R = x_shape[x_size - input_dim];
+    const float out_shape_used = 0.5;
+    dim_R = dim_R * (dim_R - 1) * out_shape_used;
+    std::vector<int64_t> out_shape;
+    for (size_t i = 0; i < x_size - input_dim; i++) {
+      out_shape.push_back(x_shape[i]);
+    }
+    out_shape.push_back(dim_R);
+    return std::make_shared<abstract::Shape>(out_shape);
   }
-  out_shape.push_back(dim_R);
+  std::vector<int64_t> out_shape;
+  out_shape.push_back(-1);
   return std::make_shared<abstract::Shape>(out_shape);
 }
 

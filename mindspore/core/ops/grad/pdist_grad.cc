@@ -37,8 +37,11 @@ abstract::ShapePtr PdistGradInferShape(const PrimitivePtr &primitive, const std:
   CheckAndConvertUtils::CheckValue("y_grad shape", grad_shape, kEqual, "y shape", pdist_shape, prim_name);
   const int64_t x_dim = 2;
   CheckAndConvertUtils::CheckInteger("x dim", x_size, kEqual, x_dim, "PdistGrad");
-  auto out_shape = x_shape;
-  return std::make_shared<abstract::Shape>(out_shape);
+  auto out_shape = input_args[1]->BuildShape();
+  MS_EXCEPTION_IF_NULL(out_shape);
+  auto out_element = out_shape->cast<abstract::ShapePtr>();
+  MS_EXCEPTION_IF_NULL(out_element);
+  return out_element;
 }
 
 TypePtr PdistGradInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
@@ -48,7 +51,7 @@ TypePtr PdistGradInferType(const PrimitivePtr &primitive, const std::vector<Abst
   const size_t y_grad_index = 0;
   const size_t x_index = 1;
   const size_t y_index = 2;
-  const std::set<TypePtr> valid_types = {kFloat32, kFloat16};
+  const std::set<TypePtr> valid_types = {kFloat64, kFloat32, kFloat16};
   std::map<std::string, TypePtr> types;
   (void)types.emplace("y_grad", input_args[y_grad_index]->BuildType());
   (void)types.emplace("x", input_args[x_index]->BuildType());
