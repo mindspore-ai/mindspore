@@ -537,14 +537,13 @@ Parameter操作函数
 调试函数
 ----------------
 
-.. list-table::
-   :widths: 50 50
-   :header-rows: 1
+.. mscnplatformautosummary::
+    :toctree: ops
+    :nosignatures:
+    :template: classtemplate.rst
 
-   * - functional
-     - Description
-   * - mindspore.ops.print\_
-     - Refer to :class:`mindspore.ops.Print`.
+    mindspore.ops.print_
+
 
 其他函数
 ----------------
