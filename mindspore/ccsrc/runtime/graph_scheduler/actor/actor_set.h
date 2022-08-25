@@ -105,6 +105,7 @@ struct ActorSet {
   std::vector<SuperKernelActorPtr> super_kernel_actors_;
   // No input kernel actors need be triggered specifically.
   std::vector<AbstractActorPtr> no_input_kernel_actors_;
+  std::vector<MemoryAwareActorPtr> memory_actors_;
   std::vector<CopyActorPtr> copy_actors_;
   std::vector<FusionActorPtr> fusion_actors_;
   LoopCountActorPtr loop_count_actor_{nullptr};

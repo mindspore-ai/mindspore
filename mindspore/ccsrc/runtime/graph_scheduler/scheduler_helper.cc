@@ -49,6 +49,10 @@ std::vector<AbstractActorPtr> SchedulerHelper::CollectActors(const ActorSet *act
     MS_EXCEPTION_IF_NULL(super_kernel_actor);
     (void)actors.emplace_back(static_cast<AbstractActorPtr>(super_kernel_actor));
   }
+  for (auto &memory_actor : actor_set->memory_actors_) {
+    MS_EXCEPTION_IF_NULL(memory_actor);
+    (void)actors.emplace_back(static_cast<AbstractActorPtr>(memory_actor));
+  }
   for (auto &copy_actor : actor_set->copy_actors_) {
     MS_EXCEPTION_IF_NULL(copy_actor);
     (void)actors.emplace_back(static_cast<AbstractActorPtr>(copy_actor));
@@ -477,6 +481,11 @@ void SchedulerHelper::AddMemorySign(AbstractActor *const from_actor, AbstractAct
   if (ms_context->get_param<int>(MS_CTX_MEMORY_OPTIMIZE_LEVEL) == kOptimizeO0) {
     return;
   }
+  // The link of memory actor no need add the memory sign.
+  if (IsMemoryActor(from_actor->type()) || IsMemoryActor(to_actor->type())) {
+    return;
+  }
+  // Only the link of kernel actor need add the memory sign.
   if ((from_actor->type() != KernelTransformType::kKernelActor) &&
       (to_actor->type() != KernelTransformType::kKernelActor)) {
     return;
@@ -749,6 +758,7 @@ void SchedulerHelper::DumpActorSet(const ActorSet *actor_set, std::ofstream &ofs
   if (actor_set->control_actors_ == nullptr) {
     DumpNoInputKernelActors(actor_set->no_input_kernel_actors_, ofs);
   }
+  DumpMemoryActors(actor_set->memory_actors_, ofs);
   DumpCopyActors(actor_set->copy_actors_, ofs);
   DumpLoopCountActor(actor_set->loop_count_actor_, ofs);
   DumpOutputActor(actor_set->output_actor_, ofs);

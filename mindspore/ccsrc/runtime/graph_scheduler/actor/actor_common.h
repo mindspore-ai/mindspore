@@ -70,6 +70,8 @@ const char kEntranceActorNameSuffix[] = "_EntranceActor";
 const char kExitActorNameSuffix[] = "_ExitActor";
 const char kStackActorNameSuffix[] = "_StackActor";
 const char kFusionActorNameSuffix[] = "_FusionActor";
+const char kMemoryAllocActorNameSuffix[] = "_MemoryAllocActor";
+const char kMemoryFreeActorNameSuffix[] = "_MemoryFreeActor";
 
 enum class KernelTransformType {
   kUnknown,
@@ -278,6 +280,8 @@ bool IsInternalParameter(const AnfNodePtr &node, const KernelGraphPtr &graph);
 bool IsPersistentDeviceTensor(const AnfNodePtr &node);
 
 bool IsControlFlowActor(KernelTransformType actor_type);
+
+bool IsMemoryActor(KernelTransformType actor_type);
 
 // Copy data from src_device_tensor to dst_device_tensor.
 bool Copy(const DeviceTensor *dst_device_tensor, const DeviceTensor *src_device_tensor);

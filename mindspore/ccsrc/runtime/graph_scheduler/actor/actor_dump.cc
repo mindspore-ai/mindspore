@@ -258,6 +258,29 @@ void DumpSuperKernelActor(const SuperKernelActor *actor, std::ofstream &ofs) {
   ofs << "\n";
 }
 
+void DumpMemoryActor(const MemoryAwareActor *actor, std::ofstream &ofs) {
+  MS_EXCEPTION_IF_NULL(actor);
+  ofs << "\tactor_name:" << actor->GetAID().Name() << "\n";
+
+  SomasInfo *somas_info = nullptr;
+  if (actor->type() == KernelTransformType::kMemoryAllocActor) {
+    auto alloc_actor = dynamic_cast<const MemoryAllocActor *>(actor);
+    MS_EXCEPTION_IF_NULL(alloc_actor);
+    somas_info = alloc_actor->somas_info();
+  } else {
+    auto free_actor = dynamic_cast<const MemoryFreeActor *>(actor);
+    MS_EXCEPTION_IF_NULL(free_actor);
+    somas_info = free_actor->somas_info();
+  }
+
+  MS_EXCEPTION_IF_NULL(somas_info);
+  ofs << "\t\tgraph_id:" << somas_info->graph_id_ << "\twhole_block_size:" << somas_info->whole_block_size_ << "\n ";
+
+  DumpAbstractActor(actor, ofs);
+
+  ofs << "\n";
+}
+
 void DumpCopyActor(const CopyActor *actor, std::ofstream &ofs) {
   MS_EXCEPTION_IF_NULL(actor);
   ofs << "\tactor_name:" << actor->GetAID().Name() << "\n";
@@ -619,6 +642,13 @@ void DumpNoInputKernelActors(const std::vector<AbstractActorPtr> &actors, std::o
       MS_EXCEPTION_IF_NULL(super_kernel_actor);
       DumpSuperKernelActor(super_kernel_actor, ofs);
     }
+  }
+}
+
+void DumpMemoryActors(const std::vector<MemoryAwareActorPtr> &actors, std::ofstream &ofs) {
+  ofs << "\n\n[Memory actors:" << actors.size() << "]\n";
+  for (const auto &memory_actor : actors) {
+    DumpMemoryActor(memory_actor.get(), ofs);
   }
 }
 

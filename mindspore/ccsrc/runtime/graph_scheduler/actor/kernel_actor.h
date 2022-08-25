@@ -91,6 +91,9 @@ class KernelActor : public DebugAwareActor {
   const std::set<size_t> &modifiable_ref_output_indexes() const { return modifiable_ref_output_indexes_; }
   bool is_dynamic_shape() const { return is_dynamic_shape_; }
   bool is_launch_skipped() const { return is_launch_skipped_; }
+  SomasInfo *somas_info() const { return somas_info_; }
+  const std::pair<int32_t, bool> &memory_alloc_insert_position() const { return memory_alloc_insert_position_; }
+  const std::pair<int32_t, bool> &memory_free_insert_position() const { return memory_free_insert_position_; }
 
  protected:
   void Init() override;
