@@ -230,6 +230,7 @@ REG_INFER(FakeQuantWithMinMaxVars, PrimType_FakeQuantWithMinMaxVars, CommonInfer
 REG_INFER(Floor, PrimType_Floor, CommonInferShapeWithOneInput)
 REG_INFER(LeakyRelu, PrimType_LeakyRelu, CommonInferShape)
 REG_INFER(Log, PrimType_Log, CommonInferShape)
+REG_INFER(Log1p, PrimType_Log1p, CommonInferShape)
 REG_INFER(LogGrad, PrimType_LogGrad, CommonGradInferShape)
 REG_INFER(LogicalNot, PrimType_LogicalNot, CommonInferShape)
 REG_INFER(LRN, PrimType_LRN, CommonInferShapeWithNHWC)

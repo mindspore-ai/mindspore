@@ -91,6 +91,7 @@
 #include "ops/logical_not.h"
 #include "ops/logical_or.h"
 #include "ops/logical_xor.h"
+#include "ops/log1p.h"
 #include "ops/lp_normalization.h"
 #include "ops/lrn.h"
 #include "ops/lsh_projection.h"
@@ -484,6 +485,7 @@ FUNC_MSOP2SCHEMAOP_DECLARE(NLLLossGrad)
 FUNC_MSOP2SCHEMAOP_DECLARE(FormatTranspose)
 FUNC_MSOP2SCHEMAOP_DECLARE(GatherD)
 FUNC_MSOP2SCHEMAOP_DECLARE(GroupNormFusion)
+FUNC_MSOP2SCHEMAOP_DECLARE(Log1p)
 #endif
 }  // namespace mindspore::lite::ops
 #else

@@ -65,6 +65,17 @@ int ElementLog(const float *input, float *output, const int element_size) {
   return NNACL_OK;
 }
 
+// log1p:
+int ElementLog1p(const float *input, float *output, const int element_size) {
+  for (int i = 0; i < element_size; i++) {
+    if (input[i] < -1.0f) {
+      return NNACL_ERRCODE_LOG_NEGATIVE_OR_ZERO;
+    }
+    output[i] = log1p(input[i]);
+  }
+  return NNACL_OK;
+}
+
 int ElementSquare(const float *input, float *output, const int element_size) {
   int i = 0;
 

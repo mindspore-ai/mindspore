@@ -33,6 +33,8 @@ int ElementCos(const float *input, float *output, const int element_size);
 
 int ElementLog(const float *input, float *output, const int element_size);
 
+int ElementLog1p(const float *input, float *output, const int element_size);
+
 int ElementSquare(const float *input, float *output, const int element_size);
 
 int ElementSqrt(const float *input, float *output, const int element_size);

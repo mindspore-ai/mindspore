@@ -28,6 +28,7 @@ using mindspore::schema::PrimitiveType_Erf;
 using mindspore::schema::PrimitiveType_Floor;
 using mindspore::schema::PrimitiveType_IsFinite;
 using mindspore::schema::PrimitiveType_Log;
+using mindspore::schema::PrimitiveType_Log1p;
 using mindspore::schema::PrimitiveType_LogicalNot;
 using mindspore::schema::PrimitiveType_Neg;
 using mindspore::schema::PrimitiveType_Reciprocal;
