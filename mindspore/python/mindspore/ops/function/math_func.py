@@ -465,9 +465,8 @@ def ceil(x):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore.ops import functional as F
         >>> x = Tensor(np.array([1.1, 2.5, -1.5]), mindspore.float32)
-        >>> output = F.ceil(x)
+        >>> output = ops.ceil(x)
         >>> print(output)
         [ 2.  3. -1.]
     """
@@ -3315,10 +3314,9 @@ def cdist(x, y, p=2.0):
         ``Ascend`` ``CPU``
 
     Examples:
-        >>> from mindspore.ops import functional as F
         >>> x = Tensor(np.array([[[1.0, 1.0], [2.0, 2.0]]]).astype(np.float32))
         >>> y = Tensor(np.array([[[3.0, 3.0], [3.0, 3.0]]]).astype(np.float32))
-        >>> output = F.cdist(x, y, 2.0)
+        >>> output = ops.cdist(x, y, 2.0)
         >>> print(output)
         [[[2.8284273 2.8284273]
           [1.4142137 1.4142137]]]
