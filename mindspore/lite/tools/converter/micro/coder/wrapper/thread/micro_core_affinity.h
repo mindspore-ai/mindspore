@@ -49,5 +49,6 @@ typedef struct {
 
 int BindThreads(enum BindMode bind_mode, ThreadPool *g_pool);
 int BindThreadToCore(int task_id, ThreadPool *g_pool);
+int GetCpuCoreNum(void);
 
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_WRAPPER_THREAD_MICRO_CORE_AFFINITY_H_

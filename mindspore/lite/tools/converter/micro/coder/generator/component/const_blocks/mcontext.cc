@@ -89,28 +89,16 @@ MSContextHandle MSContextCreate() {
 void MSContextDestroy(MSContextHandle *context) {
   MicroContext *micro_context = (MicroContext *)(*context);
   if (micro_context) {
-    if (micro_context->affinity_core_list_) {
-      free(micro_context->affinity_core_list_);
-      micro_context->affinity_core_list_ = NULL;
-    }
     free(micro_context);
     micro_context = NULL;
   }
 }
 
 void MSContextSetThreadNum(MSContextHandle context, int32_t thread_num) {
-  MicroContext *micro_context = (MicroContext *)context;
-  if (micro_context) {
-    micro_context->thread_num_ = thread_num;
-  }
 }
 
 int32_t MSContextGetThreadNum(const MSContextHandle context) {
-  MicroContext *micro_context = (MicroContext *)context;
-  if (micro_context) {
-    return micro_context->thread_num_;
-  }
-  return 0;
+  return 1;
 }
 
 void MSContextSetThreadAffinityMode(MSContextHandle context, int mode) {
@@ -119,23 +107,9 @@ void MSContextSetThreadAffinityMode(MSContextHandle context, int mode) {
 int MSContextGetThreadAffinityMode(const MSContextHandle context) {
   return 0;
 }
-
-void MSContextSetThreadAffinityCoreList(MSContextHandle context, const int32_t *core_list, size_t core_num) {
-}
-
-const int32_t *MSContextGetThreadAffinityCoreList(const MSContextHandle context, size_t *core_num) {
-  return NULL;
-}
-
-void MSContextSetEnableParallel(MSContextHandle context, bool is_parallel) {
-}
-
-bool MSContextGetEnableParallel(const MSContextHandle context) {
-  return false;
-}
 )RAW";
 
-const char context_source[] = R"RAW(
+const char context_source_no_parallel[] = R"RAW(
 /**
  * Copyright 2022 Huawei Technologies Co., Ltd
  *
@@ -173,6 +147,67 @@ MSContextHandle MSContextCreate() {
 void MSContextDestroy(MSContextHandle *context) {
   MicroContext *micro_context = (MicroContext *)(*context);
   if (micro_context) {
+    free(micro_context);
+    micro_context = NULL;
+  }
+}
+
+void MSContextSetThreadNum(MSContextHandle context, int32_t thread_num) {
+}
+
+int32_t MSContextGetThreadNum(const MSContextHandle context) {
+  return 1;
+}
+
+void MSContextSetThreadAffinityMode(MSContextHandle context, int mode) {
+}
+
+int MSContextGetThreadAffinityMode(const MSContextHandle context) {
+  return 0;
+}
+)RAW";
+
+const char context_source[] = R"RAW(
+/**
+ * Copyright 2022 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include "context.h"
+#include "c_api/context_c.h"
+#include "wrapper/thread/micro_core_affinity.h"
+#include <stdlib.h>
+#include <string.h>
+
+#define MAX_THREAD_NUM 4
+
+MSContextHandle MSContextCreate() {
+  MicroContext *micro_context = (MicroContext *)malloc(sizeof(MicroContext));
+  if (micro_context == NULL) {
+    return NULL;
+  }
+  micro_context->enable_parallel_ = false;
+  micro_context->thread_num_ = 1;
+  micro_context->affinity_core_list_ = NULL;
+  micro_context->core_num = 0;
+  micro_context->affinity_mode = 0;
+  return micro_context;
+}
+
+void MSContextDestroy(MSContextHandle *context) {
+  MicroContext *micro_context = (MicroContext *)(*context);
+  if (micro_context) {
     if (micro_context->affinity_core_list_) {
       free(micro_context->affinity_core_list_);
       micro_context->affinity_core_list_ = NULL;
@@ -185,7 +220,13 @@ void MSContextDestroy(MSContextHandle *context) {
 void MSContextSetThreadNum(MSContextHandle context, int32_t thread_num) {
   MicroContext *micro_context = (MicroContext *)context;
   if (micro_context) {
-    micro_context->thread_num_ = thread_num;
+    int core_num = GetCpuCoreNum();
+    if (core_num != 0) {
+      core_num = core_num > MAX_THREAD_NUM ? MAX_THREAD_NUM : core_num;
+    } else {
+      core_num = MAX_THREAD_NUM;
+    }
+    micro_context->thread_num_ = thread_num > core_num ? core_num : thread_num;
   }
 }
 
@@ -210,38 +251,6 @@ int MSContextGetThreadAffinityMode(const MSContextHandle context) {
     return micro_context->affinity_mode;
   }
   return 0;
-}
-
-void MSContextSetThreadAffinityCoreList(MSContextHandle context, const int32_t *core_list, size_t core_num) {
-  MicroContext *micro_context = (MicroContext *)context;
-  if (micro_context) {
-    int *micro_cores = (int *)malloc(sizeof(int32_t) * core_num);
-    (void)memcpy(micro_cores, core_list, sizeof(int32_t) * core_num);
-    micro_context->affinity_core_list_ = micro_cores;
-  }
-}
-
-const int32_t *MSContextGetThreadAffinityCoreList(const MSContextHandle context, size_t *core_num) {
-  MicroContext *micro_context = (MicroContext *)context;
-  if (micro_context) {
-    return micro_context->affinity_core_list_;
-  }
-  return NULL;
-}
-
-void MSContextSetEnableParallel(MSContextHandle context, bool is_parallel) {
-  MicroContext *micro_context = (MicroContext *)context;
-  if (micro_context) {
-    micro_context->enable_parallel_ = is_parallel;
-  }
-}
-
-bool MSContextGetEnableParallel(const MSContextHandle context) {
-  MicroContext *micro_context = (MicroContext *)context;
-  if (micro_context) {
-    return micro_context->enable_parallel_;
-  }
-  return false;
 }
 )RAW";
 }  // namespace mindspore::lite::micro
