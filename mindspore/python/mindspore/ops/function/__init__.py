@@ -266,6 +266,7 @@ from .math_func import (
     remainder
 )
 from .nn_func import (
+    adaptive_avg_pool1d,
     adaptive_avg_pool2d,
     adaptive_max_pool3d,
     avg_pool2d,
