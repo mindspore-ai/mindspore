@@ -18,7 +18,6 @@
 
 #include <string>
 #include "NvInfer.h"
-#include "schema/ops_types_generated.h"
 #include "mindapi/base/types.h"
 #include "src/extendrt/delegate/tensorrt/distribution/distribution_base.h"
 

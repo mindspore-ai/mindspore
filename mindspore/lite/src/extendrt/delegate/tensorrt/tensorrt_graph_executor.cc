@@ -98,6 +98,12 @@ tensor::TensorPtr GetConstNodeValue(AnfNodePtr input_node) {
       return ScalarToTensor(value->cast<ScalarPtr>());
     } else if (value->isa<ValueTuple>()) {
       return opt::CreateTupleTensor(value->cast<ValueTuplePtr>());
+    } else if (value->isa<Int64Imm>()) {
+      auto int64imm = value->cast<Int64ImmPtr>();
+      if (int64imm == nullptr) {
+        return nullptr;
+      }
+      return std::make_shared<tensor::Tensor>(static_cast<int64_t>(int64imm->value()), int64imm->type());
     } else {
       MS_LOG_WARNING << "Unexpected value type " << value->type_name();
     }
@@ -111,6 +117,8 @@ abstract::BaseShapePtr GetValidShapeFromAbstract(const abstract::AbstractBasePtr
   if (abs->isa<abstract::AbstractTensor>()) {
     res_shape = abs->BuildShape();
   } else if (abs->isa<abstract::AbstractScalar>()) {
+    res_shape = std::make_shared<abstract::Shape>(ShapeVector{});
+  } else if (abs->isa<abstract::AbstractType>()) {
     res_shape = std::make_shared<abstract::Shape>(ShapeVector{});
   } else {
     MS_EXCEPTION(TypeError) << "The abstract must be a Scalar or Tensor, but got " << abs->ToString();

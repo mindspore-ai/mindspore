@@ -38,7 +38,8 @@ nvinfer1::Dims ConvertCudaDims(int data, size_t size) {
   return dims;
 }
 
-nvinfer1::Dims ConvertCudaDims(const void *data, int64_t size) {
+template <typename T>
+nvinfer1::Dims ConvertCudaDimsWithType(const void *data, int64_t size) {
   nvinfer1::Dims dims{};
   dims.nbDims = -1;
   if (size > static_cast<int64_t>(dims.MAX_DIMS)) {
@@ -46,9 +47,31 @@ nvinfer1::Dims ConvertCudaDims(const void *data, int64_t size) {
     return dims;
   }
   dims.nbDims = size;
-  const int *dims_data = static_cast<const int *>(data);
+
+  auto *dims_data = static_cast<const T *>(data);
   for (int i = 0; i < size; i++) {
-    dims.d[i] = *(dims_data + i);
+    dims.d[i] = static_cast<const int>(*(dims_data + i));
+  }
+  return dims;
+}
+
+nvinfer1::Dims ConvertCudaDims(const void *data, int64_t size) {
+  auto dims = ConvertCudaDimsWithType<int>(data, size);
+  return dims;
+}
+
+nvinfer1::Dims ConvertCudaDims(const TensorInfo &ms_tensor) {
+  auto data = ms_tensor.Data();
+  auto size = ms_tensor.ElementNum();
+  auto ms_dtype = ms_tensor.DataType();
+
+  nvinfer1::Dims dims{};
+  if (ms_dtype == DataType::kNumberTypeInt32) {
+    dims = ConvertCudaDimsWithType<int>(data, size);
+  } else if (ms_dtype == DataType::kNumberTypeInt64) {
+    dims = ConvertCudaDimsWithType<int64_t>(data, size);
+  } else {
+    MS_LOG(ERROR) << "invalid DataType: " << ms_dtype;
   }
   return dims;
 }

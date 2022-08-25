@@ -139,7 +139,7 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
     target_link_libraries(mindspore-extendrt mindspore-infer-anfalgo
         mindspore-kernel-graph _mindspore_backend_common_optimizer_obj
         _mindspore_backend_common_pass_obj)
-    target_link_libraries(mindspore-extendrt mindspore_core mindspore::protobuf mindspore::pybind11_module)
+    target_link_libraries(mindspore-extendrt mindspore_core mindspore::protobuf)
     add_dependencies(mindspore-extendrt msplugin-ge-litert)
     target_link_libraries(mindspore-extendrt msplugin-ge-litert)
 

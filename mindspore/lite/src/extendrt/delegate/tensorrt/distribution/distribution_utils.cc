@@ -40,10 +40,10 @@ ncclDataType_t ConvertNCCLDataType(nvinfer1::DataType type_id) {
 ncclRedOp_t ConvertNCCLReduceMode(ReduceMode mode) {
   std::unordered_map<ReduceMode, ncclRedOp_t> reduce_ops_ = {
     // higher version support mean {schema::ReduceMode::ReduceMode_ReduceMean, ncclAvg},
-    {ReduceMode::ReduceMax, ncclMax},
-    {ReduceMode::ReduceMin, ncclMin},
-    {ReduceMode::ReduceProd, ncclProd},
-    {ReduceMode::ReduceSum, ncclSum},
+    {ReduceMode::Reduce_Max, ncclMax},
+    {ReduceMode::Reduce_Min, ncclMin},
+    {ReduceMode::Reduce_Prod, ncclProd},
+    {ReduceMode::Reduce_Sum, ncclSum},
   };
   auto iter = reduce_ops_.find(mode);
   ncclRedOp_t nccl_mode;
