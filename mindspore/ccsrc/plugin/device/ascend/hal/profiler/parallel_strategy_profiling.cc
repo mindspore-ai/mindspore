@@ -13,8 +13,6 @@
  * limitations under the License.
  */
 
-#include "plugin/device/ascend/hal/profiler/parallel_strategy_profiling.h"
-
 #include <vector>
 #include "sys/stat.h"
 
@@ -22,10 +20,10 @@
 #include "include/common/utils/parallel_context.h"
 #include "plugin/device/ascend/hal/profiler/options.h"
 #include "plugin/device/ascend/hal/profiler/ascend_profiling.h"
-#include "proto/profiling_parallel.pb.h"
 #include "utils/ms_context.h"
 #include "include/common/utils/utils.h"
 #include "mindspore/core/utils/file_utils.h"
+#include "plugin/device/ascend/hal/profiler/parallel_strategy_profiling.h"
 
 #include "google/protobuf/util/json_util.h"
 
@@ -37,15 +35,17 @@
 namespace mindspore {
 namespace profiler {
 namespace ascend {
-bool has_save_parallel_strategy = false;
-bool has_got_parallel_strategy_data = false;
-bool profiling_parallel_strategy_enabled = true;
-irpb::ProfilingParallel cache_profiling_parallel_pb;
+std::shared_ptr<ParallelStrategy> ParallelStrategy::parallel_strategy_inst_ = std::make_shared<ParallelStrategy>();
 
-bool IsProfilingParallelStrategyEnabled() {
+std::shared_ptr<ParallelStrategy> &ParallelStrategy::GetInstance() {
+  MS_EXCEPTION_IF_NULL(parallel_strategy_inst_);
+  return parallel_strategy_inst_;
+}
+
+bool ParallelStrategy::IsProfilingParallelStrategyEnabled() {
   auto ascend_profiler = Profiler::GetInstance(kAscendDevice);
   MS_EXCEPTION_IF_NULL(ascend_profiler);
-  if (!profiling_parallel_strategy_enabled || !ascend_profiler->IsInitialized()) {
+  if (!ascend_profiler->IsInitialized() || !ascend_profiler->GetParallelStrategyEnableFlag()) {
     MS_LOG(INFO) << "Profiling parallel strategy is disabled.";
     return false;
   }
@@ -68,7 +68,7 @@ bool IsProfilingParallelStrategyEnabled() {
   return false;
 }
 
-bool StringToInt(std::string *str, int32_t *value) {
+bool ParallelStrategy::StringToInt(std::string *str, int32_t *value) {
   try {
     *value = stoi(*str);
   } catch (std::invalid_argument &) {
@@ -78,11 +78,8 @@ bool StringToInt(std::string *str, int32_t *value) {
   return true;
 }
 
-irpb::ProfilingParallel GetProfilingParallel(const FuncGraphPtr &func_graph) {
+irpb::ProfilingParallel ParallelStrategy::GetProfilingParallel(const FuncGraphPtr &func_graph) {
   irpb::ProfilingParallel profiling_parallel;
-  irpb::GraphProto *graph_proto = profiling_parallel.mutable_graph();
-  MS_EXCEPTION_IF_NULL(graph_proto);
-  GetFuncGraphProto(func_graph, graph_proto);
 
   // set parallel model
   auto parallel_context = parallel::ParallelContext::GetInstance();
@@ -137,7 +134,7 @@ irpb::ProfilingParallel GetProfilingParallel(const FuncGraphPtr &func_graph) {
   return profiling_parallel;
 }
 
-void DumpProfileParallelStrategy(const FuncGraphPtr &func_graph) {
+void ParallelStrategy::DumpProfileParallelStrategy(const FuncGraphPtr &func_graph) {
   if (has_save_parallel_strategy || !IsProfilingParallelStrategyEnabled()) {
     return;
   }
@@ -145,6 +142,7 @@ void DumpProfileParallelStrategy(const FuncGraphPtr &func_graph) {
   MS_LOG(INFO) << "Start to DumpProfileParallelStrategy.";
 
   cache_profiling_parallel_pb = GetProfilingParallel(func_graph);
+  graph_proto_str = GetFuncGraphProtoJsonString(func_graph);
 
   auto ascend_profiler = Profiler::GetInstance(kAscendDevice);
   MS_EXCEPTION_IF_NULL(ascend_profiler);
@@ -156,33 +154,35 @@ void DumpProfileParallelStrategy(const FuncGraphPtr &func_graph) {
   SaveParallelStrategyToFile();
 }
 
-void SaveParallelStrategyToFile() {
+void ParallelStrategy::SaveParallelStrategyToFile() {
   if (has_save_parallel_strategy || !has_got_parallel_strategy_data) {
     return;
   }
 
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  std::string dir_path = GetOutputPath();
+  std::string dir = GetOutputPath();
   auto rank_id = common::GetEnv("RANK_ID");
   // If RANK_ID is not set, default value is 0
   if (rank_id.empty()) {
     rank_id = "0";
   }
-  std::string file_path = dir_path + std::string("/parallel_strategy_pb_") + std::string(rank_id) + std::string(".bin");
-
-  MS_LOG(INFO) << "Start to write parallel strategy string, file path is " << file_path;
-  std::ofstream ofs(file_path);
+  std::string parallel_str;
+  (void)google::protobuf::util::MessageToJsonString(cache_profiling_parallel_pb, &parallel_str);
+  std::string parallel_file = std::string("parallel_strategy_") + std::string(rank_id) + std::string(".json");
+  std::string parallel_path = dir + "/" + parallel_file;
+  MS_LOG(INFO) << "Start to write parallel strategy string, file path is " << parallel_path;
+  std::ofstream ofs(parallel_path);
   if (!ofs.is_open()) {
-    MS_LOG(ERROR) << "Open file '" << file_path << "' failed!"
+    MS_LOG(ERROR) << "Open file '" << parallel_path << "' failed!"
                   << " Errno:" << errno << " ErrInfo:" << strerror(errno);
     return;
   }
 
-  ofs << cache_profiling_parallel_pb.SerializeAsString();
+  ofs << parallel_str.substr(0, parallel_str.length() - 1) << ",\"graph\":" << graph_proto_str << "}";
   ofs.close();
 
-  ChangeFileMode(file_path, S_IRUSR | S_IWUSR);
+  ChangeFileMode(parallel_path, S_IRUSR | S_IWUSR);
 
   has_save_parallel_strategy = true;
 

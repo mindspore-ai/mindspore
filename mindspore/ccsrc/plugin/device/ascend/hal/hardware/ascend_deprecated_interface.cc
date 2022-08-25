@@ -239,7 +239,7 @@ uint32_t AscendDeprecatedInterface::InitCollective() {
 }
 
 void AscendDeprecatedInterface::DumpProfileParallelStrategy(const FuncGraphPtr &func_graph) {
-  return profiler::ascend::DumpProfileParallelStrategy(func_graph);
+  return profiler::ascend::ParallelStrategy::GetInstance()->DumpProfileParallelStrategy(func_graph);
 }
 
 bool AscendDeprecatedInterface::OpenTsd(const std::shared_ptr<MsContext> &ms_context_ptr) {

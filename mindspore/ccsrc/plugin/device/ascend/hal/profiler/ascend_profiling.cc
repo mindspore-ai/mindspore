@@ -73,6 +73,17 @@ void AscendProfiler::Init(const std::string &profiling_path, uint32_t device_id,
   profile_data_path_ = profiling_path;
   device_id_ = device_id;
 
+  nlohmann::json options;
+  try {
+    options = nlohmann::json::parse(profiling_options);
+  } catch (nlohmann::json::exception &e) {
+    MS_LOG(EXCEPTION) << "Failed to parse profiling options because of format error, current options is " << options;
+  }
+  if (options["parallel_strategy"] == "off") {
+    is_parallel_strategy = false;
+  } else {
+    is_parallel_strategy = true;
+  }
   aclError ret = aclrtSetDevice(static_cast<int32_t>(device_id));
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Device " << device_id << " call aclrtSetDevice failed, ret[" << static_cast<int>(ret) << "]";
@@ -157,7 +168,7 @@ void AscendProfiler::Start() {
 
   MemoryProfiling::GetInstance().StartMemoryProfiling();
 
-  SaveParallelStrategyToFile();
+  profiler::ascend::ParallelStrategy::GetInstance()->SaveParallelStrategyToFile();
 
   StepProfilingEnable(true);
 }

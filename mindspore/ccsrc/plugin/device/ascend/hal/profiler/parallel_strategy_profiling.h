@@ -17,16 +17,35 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_HAL_PROFILER_PARALLEL_STRATEGY_PROFILING_H
 
 #include <string>
+#include <memory>
 
 #include "ir/func_graph.h"
 #include "base/base.h"
 #include "include/backend/visible.h"
+#include "proto/profiling_parallel.pb.h"
 
 namespace mindspore {
 namespace profiler {
 namespace ascend {
-void DumpProfileParallelStrategy(const FuncGraphPtr &func_graph);
-void SaveParallelStrategyToFile();
+class ParallelStrategy {
+ public:
+  BACKEND_EXPORT static std::shared_ptr<ParallelStrategy> &GetInstance();
+  ParallelStrategy() = default;
+  ~ParallelStrategy() {}
+  BACKEND_EXPORT void DumpProfileParallelStrategy(const FuncGraphPtr &func_graph);
+  void SaveParallelStrategyToFile();
+
+ private:
+  irpb::ProfilingParallel GetProfilingParallel(const FuncGraphPtr &func_graph);
+  bool IsProfilingParallelStrategyEnabled();
+  bool StringToInt(std::string *str, int32_t *value);
+
+  static std::shared_ptr<ParallelStrategy> parallel_strategy_inst_;
+  bool has_save_parallel_strategy = false;
+  bool has_got_parallel_strategy_data = false;
+  irpb::ProfilingParallel cache_profiling_parallel_pb;
+  std::string graph_proto_str;
+};
 }  // namespace ascend
 }  // namespace profiler
 }  // namespace mindspore

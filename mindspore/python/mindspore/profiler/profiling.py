@@ -17,13 +17,11 @@ import os
 import stat
 import time
 import json
-from google.protobuf.json_format import MessageToJson
 
 from mindspore import log as logger, context
 from mindspore.communication.management import GlobalComm, get_rank, get_group_size
 import mindspore._c_expression as c_expression
 import mindspore._c_dataengine as cde
-from mindspore.train.profiling_parallel_pb2 import ProfilingParallel
 from mindspore.profiler.common.exceptions.exceptions import ProfilerFileNotFoundException, \
     ProfilerIOException, ProfilerException, ProfilerRawFileException
 from mindspore.profiler.common.exceptions.exceptions import ProfilerPathErrorException
@@ -323,7 +321,8 @@ class Profiler:
             "aic_metrics": "ArithmeticUtilization",
             "aicpu": "on",
             "profile_memory": profile_memory,
-            "hccl": profiler_communication
+            "hccl": profiler_communication,
+            "parallel_strategy": "on"
         }
 
         return profiling_options
@@ -620,8 +619,6 @@ class Profiler:
                                        self._dev_id, self._rank_id, is_training_mode_flag)
             logger.info("Profiling: analyzing the operation FLOPs.")
             flops_parser.execute()
-            logger.info("Profiling: analyzing the parallel strategy.")
-        self._analyse_parallel_strategy()
         if self._dynamic_status:
             dynamic_parser = DynamicFrameWorkParser(self._output_path, self._rank_id)
             dynamic_parser.write_dynamic_shape_data()
@@ -1202,20 +1199,3 @@ class Profiler:
         hccl_parse = HcclParser(hccl_path, self._dev_id, self._rank_id, self._output_path)
         hccl_parse.parse()
         logger.info("Analyse hccl info successfully.")
-
-    def _analyse_parallel_strategy(self):
-        """Analyse parallel strategy from proto binary to json."""
-        binary_file = os.path.join(self._output_path, 'parallel_strategy_pb_{}.bin'.format(self._rank_id))
-        binary_file = validate_and_normalize_path(binary_file)
-        if not os.path.isfile(binary_file):
-            return
-        with open(binary_file, 'rb') as f:
-            data = f.read()
-        parallel = ProfilingParallel()
-        parallel.ParseFromString(data)
-        parallel_json = MessageToJson(parallel)
-
-        json_file = os.path.join(self._output_path, 'parallel_strategy_{}.json'.format(self._rank_id))
-        with os.fdopen(os.open(json_file, os.O_WRONLY | os.O_CREAT, 0o660), 'w') as f:
-            f.write(parallel_json)
-        os.remove(binary_file)

@@ -22,6 +22,8 @@
 #include <utility>
 #include <vector>
 
+#include "google/protobuf/util/json_util.h"
+
 #include "proto/anf_ir.pb.h"
 #include "ir/graph_utils.h"
 #include "utils/ms_context.h"
@@ -572,9 +574,13 @@ std::string GetFuncGraphProtoString(const FuncGraphPtr &func_graph) {
   return exporter.GetFuncGraphProtoString(func_graph);
 }
 
-void GetFuncGraphProto(const FuncGraphPtr &func_graph, irpb::GraphProto *graph_proto) {
+std::string GetFuncGraphProtoJsonString(const FuncGraphPtr &func_graph) {
   ProtoExporter exporter;
-  exporter.ExportFuncGraph(func_graph, graph_proto);
+  irpb::GraphProto graph_proto = irpb::GraphProto();
+  exporter.ExportFuncGraph(func_graph, &graph_proto);
+  std::string graph_proto_str;
+  (void)google::protobuf::util::MessageToJsonString(graph_proto, &graph_proto_str);
+  return graph_proto_str;
 }
 
 #ifdef ENABLE_DUMP_IR
