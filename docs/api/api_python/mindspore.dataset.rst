@@ -24,6 +24,71 @@ mindspore.dataset
 - MappableDataset，一个抽象类，表示支持随机访问的源数据集。
 - Iterator，用于枚举元素的数据集迭代器的基类。
 
+数据处理Pipeline介绍
+--------------------
+
+.. image:: dataset_pipeline.png
+
+如上图所示，MindSpore Dataset模块使得用户很简便地定义数据预处理Pipeline，并以最高效（多进程/多线程）的方式处理
+数据集中样本，具体的步骤参考如下：
+
+- 加载数据集（Dataset）：用户可以方便地使用*Dataset类来加载已支持的数据集，或者通过UDF Loader + GeneratorDataset
+  实现Python层自定义数据集的加载，同时加载类方法可以使用多种Sampler、数据分片、数据shuffle等功能；
+- 数据集操作（filter/ skip）： 用户通过数据集对象方法 .shuffle / .filter / .skip / .split / .take / … 来实现数据集的
+  进一步混洗、过滤、跳过、最多获取条数等操作；
+- 数据集样本增强操作（map）：用户可以将数据增强算子
+  （`vision类 <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.dataset.vision.html>`_，
+  `nlp类 <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.dataset.text.html>`_，
+  `audio类 <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.dataset.audio.html>`_）
+  添加到map操作来执行，数据预处理过程中可以定义多个map操作，用于执行不同增强操作，数据增强算子也可以是
+  用户自定义增强的PyFunc；
+- 批（batch）：用户在样本完成增强后，使用batch操作将多个样本组织成batch，也可以通过batch的参数per_batch_map
+  来自定义batch逻辑；
+- 迭代器（create_dict_iterator）：最后用户通过数据集对象方法create_dict_iterator来创建迭代器，
+  可以将预处理完成的数据循环输出。
+
+数据处理Pipeline示例如下，完整示例请参考 `datasets_example.py`：
+
+.. code-block:: python
+
+    import numpy as np
+    import mindspore as ms
+    import mindspore.dataset as ds
+    import mindspore.dataset.vision as vision
+    import mindspore.dataset.transforms as transforms
+
+    # 构造图像和标签
+    data1 = np.array(np.random.sample(size=(300, 300, 3)) * 255, dtype=np.uint8)
+    data2 = np.array(np.random.sample(size=(300, 300, 3)) * 255, dtype=np.uint8)
+    data3 = np.array(np.random.sample(size=(300, 300, 3)) * 255, dtype=np.uint8)
+    data4 = np.array(np.random.sample(size=(300, 300, 3)) * 255, dtype=np.uint8)
+
+    label = [1, 2, 3, 4]
+
+    # 加载数据集
+    dataset = ds.NumpySlicesDataset(([data1, data2, data3, data4], label), ["data", "label"])
+
+    # 对data数据增强
+    dataset = dataset.map(operations=vision.RandomCrop(size=(250, 250)), input_columns="data")
+    dataset = dataset.map(operations=vision.Resize(size=(224, 224)), input_columns="data")
+    dataset = dataset.map(operations=vision.Normalize(mean=[0.485 * 255, 0.456 * 255, 0.406 * 255],
+                                                      std=[0.229 * 255, 0.224 * 255, 0.225 * 255]),
+                          input_columns="data")
+    dataset = dataset.map(operations=vision.HWC2CHW(), input_columns="data")
+
+    # 对label变换类型
+    dataset = dataset.map(operations=transforms.TypeCast(ms.int32), input_columns="label")
+
+    # batch操作
+    dataset = dataset.batch(batch_size=2)
+
+    # 创建迭代器
+    epochs = 2
+    ds_iter = dataset.create_dict_iterator(output_numpy=True, num_epochs=epochs)
+    for _ in range(epochs):
+        for item in ds_iter:
+            print("item: {}".format(item), flush=True)
+
 视觉
 -----
 
