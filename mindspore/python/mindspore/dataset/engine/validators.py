@@ -1092,9 +1092,10 @@ def check_generatordataset(method):
         validate_dataset_param_value(nreq_param_int, param_dict, int)
         nreq_param_list = ["column_types"]
         validate_dataset_param_value(nreq_param_list, param_dict, list)
-        nreq_param_bool = ["shuffle"]
+        nreq_param_bool = ["shuffle", "python_multiprocessing"]
         validate_dataset_param_value(nreq_param_bool, param_dict, bool)
 
+        check_pos_int32(param_dict.get("max_rowsize"), "max_rowsize")
         num_shards = param_dict.get("num_shards")
         shard_id = param_dict.get("shard_id")
         check_dataset_num_shards_shard_id(num_shards, shard_id)
@@ -1249,6 +1250,7 @@ def check_batch(method):
             check_num_parallel_workers(num_parallel_workers)
         type_check(drop_remainder, (bool,), "drop_remainder")
         type_check(max_rowsize, (int,), "max_rowsize")
+        check_pos_int32(max_rowsize, "max_rowsize")
 
         if (pad_info is not None) and (per_batch_map is not None):
             raise ValueError("pad_info and per_batch_map can't both be set.")
@@ -1355,6 +1357,7 @@ def check_map(method):
         type_check(python_multiprocessing, (bool,), "python_multiprocessing")
         check_cache_option(cache)
         type_check(max_rowsize, (int,), "max_rowsize")
+        check_pos_int32(max_rowsize, "max_rowsize")
         if offload is not None:
             type_check(offload, (bool,), "offload")
 
