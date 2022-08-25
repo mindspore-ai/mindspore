@@ -748,6 +748,7 @@ Status ModelPool::CreateWorkers(char *graph_buf, size_t size, const ModelPoolCon
     auto ret = lite::PackWeightManager::GetInstance()->InitPackWeight(graph_buf, size, numa_node_id);
     MS_CHECK_FALSE_MSG(ret != kSuccess, kLiteError, "InitWeightManagerByBuf failed.");
     auto new_model_buf = lite::PackWeightManager::GetInstance()->GetNumaModelBuf(graph_buf, numa_node_id);
+    model_bufs_.push_back(new_model_buf);
     MS_CHECK_TRUE_MSG(new_model_buf != nullptr, kLiteError, "get model buf is nullptr from PackWeightManager");
     model_worker = std::make_shared<ModelWorker>();
     if (model_worker == nullptr) {
@@ -840,21 +841,16 @@ Status ModelPool::Init(const std::string &model_path, const std::shared_ptr<Runn
   }
   // read model by path and init packed weight by buffer
   size_t size = 0;
-  auto graph_buf = lite::ReadFile(model_path.c_str(), &size);
-  if (graph_buf == nullptr) {
+  graph_buf_ = lite::ReadFile(model_path.c_str(), &size);
+  if (graph_buf_ == nullptr) {
     MS_LOG(ERROR) << "read file failed.";
     return kLiteNullptr;
   }
-  status = CreateWorkers(graph_buf, size, model_pool_config);
+  status = CreateWorkers(graph_buf_, size, model_pool_config);
   if (status != kSuccess) {
-    delete[] graph_buf;
-    graph_buf = nullptr;
+    lite::PackWeightManager::GetInstance()->DeleteOriginModelBufInfo(graph_buf_);
     MS_LOG(ERROR) << "create worker failed.";
     return kLiteError;
-  }
-  if (graph_buf != nullptr) {
-    delete[] graph_buf;
-    graph_buf = nullptr;
   }
   // initialize the task pool
   tasks_ = new (std::nothrow) PredictTask[kNumMaxTaskQueueSize]();
@@ -1205,5 +1201,13 @@ ModelPool::~ModelPool() {
       th.join();
     }
   }
+  // free weight sharing related memory
+  if (graph_buf_ != nullptr) {
+    lite::PackWeightManager::GetInstance()->DeleteOriginModelBufInfo(graph_buf_);
+    delete[] graph_buf_;
+    graph_buf_ = nullptr;
+  }
+  lite::PackWeightManager::GetInstance()->FreePackWeight(model_bufs_);
+  model_bufs_.clear();
 }
 }  // namespace mindspore
