@@ -1001,9 +1001,9 @@ class Profiler:
 
             training_device_id = host_start_file_path.split('.')[-1]
             if self._dev_id != training_device_id:
-                logger.warning("Find profiling find job path %s, but not current training device id. "
-                               "Current training device id %s, but job path device id: %s, "
-                               "profiler will ignore this job dir.", job_dir, self._dev_id, training_device_id)
+                logger.debug("Find profiling find job path %s, but not current training device id. "
+                             "Current training device id %s, but job path device id: %s, "
+                             "profiler will ignore this job dir.", job_dir, self._dev_id, training_device_id)
                 continue
 
             if not os.listdir(os.path.join(job_dir, 'data')):
