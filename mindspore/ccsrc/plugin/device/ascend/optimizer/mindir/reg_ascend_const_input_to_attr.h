@@ -90,13 +90,23 @@ RER_ASCEND_STATIC_CONST_TO_ATTR(kSplitOpName, 0);
 RER_ASCEND_STATIC_CONST_TO_ATTR(kStridedSliceAssignOpName, 1, 2, 3);
 RER_ASCEND_STATIC_CONST_TO_ATTR(kStridedSliceOpName, 1, 2, 3);
 RER_ASCEND_STATIC_CONST_TO_ATTR(kSubscalarOpName, 1);
-RER_ASCEND_STATIC_CONST_TO_ATTR(kTensorCopySlicesOpName, 2, 3, 4);
 RER_ASCEND_STATIC_CONST_TO_ATTR(kTileOpName, 1);
 RER_ASCEND_STATIC_CONST_TO_ATTR(kTransposeOpName, 1);
 RER_ASCEND_STATIC_CONST_TO_ATTR(kUnsortedSegmentMaxOpName, 2);
 RER_ASCEND_STATIC_CONST_TO_ATTR(kUnsortedSegmentMinOpName, 2);
 RER_ASCEND_STATIC_CONST_TO_ATTR(kUnsortedSegmentProdOpName, 2);
 RER_ASCEND_STATIC_CONST_TO_ATTR(kUnsortedSegmentSumOpName, 2);
+
+// ===============================  new reg interface  =================================================
+#define REG_ASCEND_CONST_TO_ATTR(origin_op_name, target_op_name) \
+  REG_CONST_TO_ATTR(origin_op_name, target_op_name, kAscendDevice, false)
+
+// RTS OP
+REG_ASCEND_CONST_TO_ATTR(kTensorCopySlicesOpName, kTensorCopySlicesOpName)
+  .SetNeedCheckSupported(false)
+  .SetInputAttrInfo(2, "begin", "listInt")
+  .SetInputAttrInfo(3, "end", "listInt")
+  .SetInputAttrInfo(4, "strides", "listInt");
 }  // namespace mindspore::opt
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_MINDIR_REG_ASCEND_CONST_INPUT_TO_ATTR_H_

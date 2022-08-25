@@ -129,7 +129,7 @@ class BACKEND_EXPORT ConvertOpInfoRegister {
 class RegisterHelper {
  public:
   RegisterHelper(const std::string &name, const std::string &device_name, bool is_dynamic_shape, int len, ...);
-  explicit RegisterHelper(const ConvertOpInfo &convert_op_info);
+  RegisterHelper(const ConvertOpInfo &convert_op_info);
   ~RegisterHelper() = default;
 
  private:

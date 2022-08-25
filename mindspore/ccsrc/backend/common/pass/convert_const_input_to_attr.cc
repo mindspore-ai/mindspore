@@ -42,6 +42,12 @@ const AnfNodePtr ConvertConstInputToAttr::Process(const FuncGraphPtr &, const An
                     << ", primitive_target: " << primitive_target;
     backend = primitive_target;
   }
+
+  // Ascend const input to attr move to AscendConvertConstInputToAttr
+  if (backend == kAscendDevice) {
+    return nullptr;
+  }
+
   auto is_dynamic_shape = common::AnfAlgo::IsDynamicShape(node);
   mindspore::HashSet<size_t> input_to_attr = {};
   auto reg_info = opt::ConvertOpInfoRegister::GetInstance().GetConvertOpInfo(name, backend, is_dynamic_shape);
