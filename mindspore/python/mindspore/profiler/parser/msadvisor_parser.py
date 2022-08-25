@@ -160,7 +160,7 @@ class MsadvisorParser:
         Get output path needed by MSAdvisor and created dir.
         """
         msprof_file = os.path.join(self._output_path, "msadvisor")
-        msprof_file = os.path.join(msprof_file, self._rank_id)
+        msprof_file = os.path.join(msprof_file, "device_" + self._rank_id)
         msprof_file = os.path.join(msprof_file, "profiling")
         msprof_file = MsadvisorParser.check_clear_make_dir(msprof_file)
 
