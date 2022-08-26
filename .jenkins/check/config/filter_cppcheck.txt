@@ -59,3 +59,4 @@
 "mindspore/mindspore/lite/examples/quick_start_micro/"                                                "syntaxError"
 "mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/experimental"                               "unreadVariable"
 "mindspore/mindspore/lite/python/src/pybind_module.cc"                                                "syntaxError"
+"mindspore/mindspore/lite/src/runtime/kernel/cpu/fp32/convolution_im2col_fp32.cc"                      "knownConditionTrueFalse"

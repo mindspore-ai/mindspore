@@ -17,6 +17,7 @@
 #include "src/runtime/kernel/cpu/fp32/convolution_delegate_fp32.h"
 #include "src/runtime/kernel_registry.h"
 #include "src/runtime/kernel/cpu/fp32/convolution_fp32.h"
+#include "src/runtime/kernel/cpu/fp32/convolution_im2col_fp32.h"
 #include "src/runtime/kernel/cpu/fp32/convolution_1x1_fp32.h"
 #include "src/runtime/kernel/cpu/fp32/convolution_winograd_fp32.h"
 #include "src/runtime/kernel/cpu/fp32/convolution_depthwise_fp32.h"
@@ -189,9 +190,9 @@ kernel::LiteKernel *ConvolutionDelegateCPUKernel::CpuConvFp32NC4KernelSelect() {
 #endif
 
 #if defined(ENABLE_ARM64) || defined(ENABLE_AVX)
-  auto kernel = new (std::nothrow) kernel::ConvolutionCPUKernel(
-    op_parameter_, in_tensors_, out_tensors_, static_cast<const lite::InnerContext *>(this->ms_context_),
-    origin_weight_, origin_bias_);
+  auto kernel = CreateConvolutionIm2ColCPUKernel(op_parameter_, in_tensors_, out_tensors_,
+                                                 static_cast<const lite::InnerContext *>(this->ms_context_),
+                                                 origin_weight_, origin_bias_);
   return kernel;
 #endif
 
@@ -281,9 +282,9 @@ kernel::LiteKernel *ConvolutionDelegateCPUKernel::CpuConvFp32NHWCKernelSelect() 
         op_parameter_, in_tensors_, out_tensors_, static_cast<const lite::InnerContext *>(this->ms_context_),
         origin_weight_, origin_bias_);
     } else {
-      kernel = new (std::nothrow) kernel::ConvolutionCPUKernel(
-        op_parameter_, in_tensors_, out_tensors_, static_cast<const lite::InnerContext *>(this->ms_context_),
-        origin_weight_, origin_bias_);
+      kernel = CreateConvolutionIm2ColCPUKernel(op_parameter_, in_tensors_, out_tensors_,
+                                                static_cast<const lite::InnerContext *>(this->ms_context_),
+                                                origin_weight_, origin_bias_);
     }
   }
   return kernel;
