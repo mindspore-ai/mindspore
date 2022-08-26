@@ -28,7 +28,6 @@ namespace mindspore {
 namespace {
 constexpr int kNumDeviceInfo = 2;
 constexpr int kNumIndex = 2;
-constexpr int kNumCoreDataLen = 3;
 constexpr int kNumMaxTaskQueueSize = 1000;
 constexpr int kNumPhysicalCoreThreshold = 16;
 constexpr int kDefaultWorkerNumPerPhysicalCpu = 2;
