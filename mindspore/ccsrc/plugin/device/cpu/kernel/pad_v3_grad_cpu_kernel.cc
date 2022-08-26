@@ -63,6 +63,7 @@ void PadV3GradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   } else {
     paddings_num_ = SizeToLong(padding_shape[0]);
   }
+  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   auto kernel_attr = GetKernelAttrFromNode(kernel_node);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -220,7 +221,15 @@ bool PadV3GradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, 
   auto input = reinterpret_cast<T *>(inputs[0]->addr);
   auto output = reinterpret_cast<T *>(outputs[0]->addr);
 
-  std::memset(output, 0, sizeof(T) * output_num_);
+  if (dtype_ == kNumberTypeComplex64 || dtype_ == kNumberTypeComplex128) {
+    for (size_t i = 0; i < LongToSize(output_num_); ++i) {
+      output[i] = static_cast<T>(0);
+    }
+  } else {
+    if (memset_s(output, sizeof(T) * output_num_, 0, sizeof(T) * output_num_) != 0) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', Failed to initialize output memory";
+    }
+  }
 
   auto task = [&](int64_t start, int64_t end) {
     for (int p = start; p < end; p++) {
