@@ -118,24 +118,24 @@ AbstractBasePtr SparseAddInfer(const abstract::AnalysisEnginePtr &, const Primit
   auto a_indices_type = a_indices->element()->BuildType();
   auto b_indices_type = b_indices->element()->BuildType();
   const std::set<TypePtr> indices_valid_types = {kInt64};
-  CheckAndConvertUtils::CheckTensorTypeValid("x1_indices", a_indices->BuildType(), indices_valid_types, op_name);
-  CheckAndConvertUtils::CheckTensorTypeValid("x2_indices", b_indices->BuildType(), indices_valid_types, op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x1_indices", a_indices->BuildType(), indices_valid_types, op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x2_indices", b_indices->BuildType(), indices_valid_types, op_name);
   // a_shape and b_shape should be int64
   auto a_shape_type = a_shape->element()->BuildType();
   auto b_shape_type = b_shape->element()->BuildType();
-  CheckAndConvertUtils::CheckTensorTypeValid("x1_shape", a_shape->BuildType(), indices_valid_types, op_name);
-  CheckAndConvertUtils::CheckTensorTypeValid("x2_shape", b_shape->BuildType(), indices_valid_types, op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x1_shape", a_shape->BuildType(), indices_valid_types, op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x2_shape", b_shape->BuildType(), indices_valid_types, op_name);
   // check a_values and b_values
   auto a_value_type = a_values->element()->BuildType();
   auto b_value_type = b_values->element()->BuildType();
   const std::set<TypePtr> value_valid_types = {kInt8,    kInt16,   kInt32,     kInt64,
                                                kFloat32, kFloat64, kComplex64, kComplex128};
-  CheckAndConvertUtils::CheckTensorTypeValid("x1_values", a_values->BuildType(), value_valid_types, op_name);
-  CheckAndConvertUtils::CheckTensorTypeValid("x2_values", b_values->BuildType(), value_valid_types, op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x1_values", a_values->BuildType(), value_valid_types, op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x2_values", b_values->BuildType(), value_valid_types, op_name);
   // Check thresh
   auto thresh_type = thresh->element()->BuildType();
   const std::set<TypePtr> thresh_valid_types = {kInt8, kInt16, kInt32, kInt64, kFloat32, kFloat64};
-  CheckAndConvertUtils::CheckTensorTypeValid("thresh", thresh->BuildType(), thresh_valid_types, op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("thresh", thresh->BuildType(), thresh_valid_types, op_name);
 
   // Check same nnz
   if (a_indices_shape[0] >= 0 && a_values_shape[0] >= 0) {

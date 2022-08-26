@@ -84,9 +84,9 @@ int SparseAddCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
 }
 
 template <typename T>
-int SparseAddCpuKernelMod::CompareTowIndices(const T &a_indices, const T &b_indices, int64_t a_row, int64_t b_row,
-                                             const size_t dims) {
-  for (size_t dim = 0; dim < dims; dim++) {
+int SparseAddCpuKernelMod::CompareTowIndices(const T &a_indices, const T &b_indices, const int64_t a_row,
+                                             const int64_t b_row, const size_t dims) {
+  for (int64_t dim = 0; dim < SizeToLong(dims); dim++) {
     auto a_idx = a_indices[a_row * 2 + dim];
     auto b_idx = b_indices[b_row * 2 + dim];
     if (a_idx < b_idx) {
@@ -102,7 +102,7 @@ template <typename T, typename S, typename K>
 bool SparseAddCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                          const std::vector<kernel::AddressPtr> &outputs) {
   if (inputs.size() != kInputNum) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be " << kInputNum << ", but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be231 " << kInputNum << ", but got "
                       << inputs.size() << " input(s).";
   }
   if (outputs.size() != kOutputNum) {
@@ -110,44 +110,44 @@ bool SparseAddCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &
                       << outputs.size() << " output(s).";
   }
   // Inputs
-  const auto a_indices = reinterpret_cast<T *>(inputs[kAIndicesIdx]->addr);
-  const auto a_values = reinterpret_cast<S *>(inputs[kAValuesIdx]->addr);
-  const auto a_shape = reinterpret_cast<T *>(inputs[kAShapeIdx]->addr);
-  const auto b_indices = reinterpret_cast<T *>(inputs[kBIndicesIdx]->addr);
-  const auto b_values = reinterpret_cast<S *>(inputs[kBValuesIdx]->addr);
-  const auto thresh = reinterpret_cast<K *>(inputs[kThreshIdx]->addr);
+  const auto a_indices = static_cast<T *>(inputs[kAIndicesIdx]->addr);
+  const auto a_values = static_cast<S *>(inputs[kAValuesIdx]->addr);
+  const auto a_shape = static_cast<T *>(inputs[kAShapeIdx]->addr);
+  const auto b_indices = static_cast<T *>(inputs[kBIndicesIdx]->addr);
+  const auto b_values = static_cast<S *>(inputs[kBValuesIdx]->addr);
+  const auto thresh = static_cast<K *>(inputs[kThreshIdx]->addr);
   // Outputs
-  auto sum_indices = reinterpret_cast<T *>(outputs[kSumIndicesIdx]->addr);
-  auto sum_values = reinterpret_cast<S *>(outputs[kSumValuesIdx]->addr);
-  auto sum_shape = reinterpret_cast<T *>(outputs[kSumShapeIdx]->addr);
+  auto sum_indices = static_cast<T *>(outputs[kSumIndicesIdx]->addr);
+  auto sum_values = static_cast<S *>(outputs[kSumValuesIdx]->addr);
+  auto sum_shape = static_cast<T *>(outputs[kSumShapeIdx]->addr);
 
-  const int64_t a_indices_num = inputs[kAIndicesIdx]->size / ((sizeof(T)) * 2);
-  const int64_t b_indices_num = inputs[kBIndicesIdx]->size / ((sizeof(T)) * 2);
+  const int64_t a_indices_num = SizeToLong(inputs[kAIndicesIdx]->size) / ((sizeof(T)) * 2);
+  const int64_t b_indices_num = SizeToLong(inputs[kBIndicesIdx]->size) / ((sizeof(T)) * 2);
 
   // Use double pointer to calculate the sum of two inputs
   T i = 0, j = 0;
   S sum_ab = 0;
   std::vector<std::pair<bool, T>> whole_indices;
   std::vector<S> whole_values;
-  whole_indices.reserve(a_indices_num + b_indices_num);
+  whole_indices.reserve(LongToSize(a_indices_num + b_indices_num));
   while (i < a_indices_num && j < b_indices_num) {
     switch (CompareTowIndices(a_indices, b_indices, i, j, kNumOfColumn)) {
       case -1:
-        whole_indices.emplace_back(true, i);
+        (void)whole_indices.emplace_back(true, i);
         whole_values.push_back(a_values[i]);
         i += 1;
         break;
       case 0:
         sum_ab = a_values[i] + b_values[j];
         if ((*thresh) <= std::abs(sum_ab)) {
-          whole_indices.emplace_back(true, i);
+          (void)whole_indices.emplace_back(true, i);
           whole_values.push_back(sum_ab);
         }
         i += 1;
         j += 1;
         break;
       case 1:
-        whole_indices.emplace_back(false, j);
+        (void)whole_indices.emplace_back(false, j);
         whole_values.push_back(b_values[j]);
         j += 1;
         break;
@@ -156,13 +156,13 @@ bool SparseAddCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &
 
   if (i < a_indices_num) {
     while (i < a_indices_num) {
-      whole_indices.emplace_back(true, i);
+      (void)whole_indices.emplace_back(true, i);
       whole_values.push_back(a_values[i]);
       i += 1;
     }
   } else {
     while (j < b_indices_num) {
-      whole_indices.emplace_back(false, j);
+      (void)whole_indices.emplace_back(false, j);
       whole_values.push_back(b_values[j]);
       j += 1;
     }
@@ -173,11 +173,11 @@ bool SparseAddCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &
     auto index_from_input = whole_indices[num].second;
     if (copy_from_a) {
       for (size_t column = 0; column < kNumOfColumn; column++) {
-        sum_indices[num * kNumOfColumn + column] = a_indices[index_from_input * kNumOfColumn + column];
+        sum_indices[num * kNumOfColumn + column] = a_indices[LongToSize(index_from_input) * kNumOfColumn + column];
       }
     } else {
       for (size_t column = 0; column < kNumOfColumn; column++) {
-        sum_indices[num * kNumOfColumn + column] = b_indices[index_from_input * kNumOfColumn + column];
+        sum_indices[num * kNumOfColumn + column] = b_indices[LongToSize(index_from_input) * kNumOfColumn + column];
       }
     }
     sum_values[num] = whole_values[num];
