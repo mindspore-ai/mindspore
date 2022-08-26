@@ -47,6 +47,10 @@ if(ENABLE_CPU)
     include(${CMAKE_SOURCE_DIR}/cmake/external_libs/mkl_dnn.cmake)
 endif()
 
+if(MSVC)
+    include(${CMAKE_SOURCE_DIR}/cmake/external_libs/dirent.cmake)
+endif()
+
 if(ENABLE_GPU)
     include(${CMAKE_SOURCE_DIR}/cmake/external_libs/cub.cmake)
     include(${CMAKE_SOURCE_DIR}/cmake/external_libs/fast_transformers.cmake)
