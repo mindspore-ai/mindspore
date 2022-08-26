@@ -177,13 +177,15 @@ std::tuple<ge::NodePtr, ge::ComputeGraphPtr> GenerateStubGeNode(const AnfNodePtr
   size_t output_num = common::AnfAlgo::GetOutputTensorNum(cnode);
   for (size_t i = 0; i < input_num; ++i) {
     auto ge_shape = AnfAlgo::GetInputDeviceShape(cnode, i);
-    op_desc->AddInputDesc(ge::GeTensorDesc(ge::GeShape(ge_shape), ge::Format::FORMAT_NCHW,
-                                           transform::ConvertDataType(AnfAlgo::GetInputDeviceDataType(cnode, i))));
+    (void)op_desc->AddInputDesc(
+      ge::GeTensorDesc(ge::GeShape(ge_shape), ge::Format::FORMAT_NCHW,
+                       transform::ConvertDataType(AnfAlgo::GetInputDeviceDataType(cnode, i))));
   }
   for (size_t i = 0; i < output_num; ++i) {
     auto ge_shape = AnfAlgo::GetOutputDeviceShape(cnode, i);
-    op_desc->AddOutputDesc(ge::GeTensorDesc(ge::GeShape(ge_shape), ge::Format::FORMAT_NCHW,
-                                            transform::ConvertDataType(AnfAlgo::GetOutputDeviceDataType(cnode, i))));
+    (void)op_desc->AddOutputDesc(
+      ge::GeTensorDesc(ge::GeShape(ge_shape), ge::Format::FORMAT_NCHW,
+                       transform::ConvertDataType(AnfAlgo::GetOutputDeviceDataType(cnode, i))));
   }
 
   // set node data type
