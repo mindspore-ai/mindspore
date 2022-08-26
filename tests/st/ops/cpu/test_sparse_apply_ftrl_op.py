@@ -20,6 +20,7 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.common.parameter import Parameter
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
 import mindspore.common.dtype as mstype
 
 
@@ -409,3 +410,40 @@ def test_sparse_apply_ftrl():
                             [0.2915, 0.2915, 0.2915],
                             [0.2915, 0.2915, 0.2915]]]).astype(np.float16)
     assert np.all(out[0].asnumpy() == expect_var)
+
+
+class VmapNetSparseApplyFtrl(nn.Cell):
+    def __init__(self, lr=0.001, l1=0.0, l2=0.0, lr_power=-0.5):
+        super(VmapNetSparseApplyFtrl, self).__init__()
+        self.sparse_apply_ftrl = P.SparseApplyFtrl(lr=lr, l1=l1, l2=l2, lr_power=lr_power)
+
+    def construct(self, var, accum, linear, grad, indices):
+        out = self.sparse_apply_ftrl(var, accum, linear, grad, indices)
+        return out
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_vmap_sparseapplyftrl():
+    """
+    Feature: Vmap feature on SparseApplyFtrl cpu op
+    Description: Compare the vmap result with the manually batch result.
+    Expectation: Output matching expected values
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    var = Parameter(Tensor(np.array([[2.0], [0.1]]).astype(np.float32)))
+    accum = Parameter(Tensor(np.array([[1.0], [0.1]]).astype(np.float32)))
+    linear = Parameter(Tensor(np.array([[0.2], [0.1]]).astype(np.float32)))
+    gradient = Tensor(np.array([[0.5], [0.1]]).astype(np.float32))
+    indices = Tensor([[0], [0]], mstype.int32)
+    sparse_apply_adagrad = VmapNetSparseApplyFtrl()
+    return_vmap = F.vmap(sparse_apply_adagrad, in_axes=(0, 0, 0, 0, 0))(var, accum, linear, gradient, indices)
+
+    expect_var = np.array([[2.10519552e-01], [4.05071862e-03]]).astype(np.float32)
+    expect_accum = np.array([[1.25000000e+00], [1.09999999e-01]]).astype(np.float32)
+    expect_linear = np.array([[-2.35367996e+02], [-1.34347117e+00]]).astype(np.float32)
+    assert len(return_vmap) == 3
+    assert np.all(return_vmap[0].asnumpy() == expect_var)
+    assert np.all(return_vmap[1].asnumpy() == expect_accum)
+    assert np.all(return_vmap[2].asnumpy() == expect_linear)

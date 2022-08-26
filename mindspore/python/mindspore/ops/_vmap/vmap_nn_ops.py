@@ -1803,6 +1803,81 @@ def get_upsample_nearest_3d_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(NN.SparseApplyAdagrad)
+@vmap_rules_getters.register(NN.SparseApplyAdagradV2)
+def get_sparse_apply_adagrad_vmap_rule(prim, axis_size):
+    """VmapRule for `SparseApplyAdagrad`."""
+    if hasattr(prim, 'batch_rank'):
+        batch_rank = prim.batch_rank + 1
+    else:
+        batch_rank = 1
+
+    prim_name = prim.name
+    batch_prim = _vmap_clone_prim(prim)
+    batch_prim.add_prim_attr('batch_rank', batch_rank)
+
+    def vmap_rule(var_bdim, accum_bdim, grad_bdim, indices_bdim, u_monad):
+        var, var_dim = var_bdim
+        accum, accum_dim = accum_bdim
+        grad, grad_dim = grad_bdim
+        indices, indices_dim = indices_bdim
+        if var_dim is None:
+            if any(dim is not None for dim in [accum_dim, grad_dim, indices_dim]):
+                ValueError("The source axis of `var` is None, but the source "
+                           "axis of `accum/grad/indices` is not None. The execution order of "
+                           "operator `{}` cannot be guaranteed.".format(prim_name))
+            var, accum = prim(var, accum, grad, indices, u_monad)
+            return (var, None), (accum, None)
+        if var_dim != 0 or accum_dim != var_dim:
+            ValueError("For `{}`, the source axis of `var` must be equal to `accum`, and not equal to 0, "
+                       "but got the source axis of `var`: {}, `accum`: {}.".format(prim_name, var_dim, accum_dim))
+
+        grad = _bdim_at_front(grad, grad_dim, axis_size)
+        indices = _bdim_at_front(indices, indices_dim, axis_size)
+
+        var, accum = batch_prim(var, accum, grad, indices, u_monad)
+        return (var, 0), (accum, 0)
+    return vmap_rule
+
+
+@vmap_rules_getters.register(NN.SparseApplyFtrl)
+def get_sparse_apply_ftrl_vmap_rule(prim, axis_size):
+    """VmapRule for `SparseApplyFtrl`."""
+    if hasattr(prim, 'batch_rank'):
+        batch_rank = prim.batch_rank + 1
+    else:
+        batch_rank = 1
+
+    prim_name = prim.name
+    batch_prim = _vmap_clone_prim(prim)
+    batch_prim.add_prim_attr('batch_rank', batch_rank)
+
+    def vmap_rule(var_bdim, accum_bdim, linear_bdim, grad_bdim, indices_bdim, u_monad):
+        var, var_dim = var_bdim
+        accum, accum_dim = accum_bdim
+        linear, linear_dim = linear_bdim
+        grad, grad_dim = grad_bdim
+        indices, indices_dim = indices_bdim
+        if var_dim is None:
+            if any(dim is not None for dim in [accum_dim, linear_dim, grad_dim, indices_dim]):
+                ValueError("The source axis of `var` is None, but the source "
+                           "axis of `accum/linear/grad/indices` is not None. The execution order of "
+                           "operator `{}` cannot be guaranteed.".format(prim_name))
+            var, accum, linear = prim(var, accum, linear, grad, indices, u_monad)
+            return (var, None), (accum, None), (linear, None)
+        if var_dim != 0 or accum_dim != var_dim or linear_dim != var_dim:
+            ValueError("For `{}`, the source axis of `var`, `accum` and `linear` must be equal, and "
+                       "not equal to 0, but got the source axis of `var`: {}, `accum`: {}, "
+                       "`linear`:{}.".format(prim_name, var_dim, accum_dim, linear_dim))
+
+        grad = _bdim_at_front(grad, grad_dim, axis_size)
+        indices = _bdim_at_front(indices, indices_dim, axis_size)
+
+        var, accum, linear = batch_prim(var, accum, linear, grad, indices, u_monad)
+        return (var, 0), (accum, 0), (linear, 0)
+    return vmap_rule
+
+
 # Unary vmap
 get_unop_vmap_rule = vmap_rules_getters.register(P.Elu)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.ReLU)(get_unop_vmap_rule)

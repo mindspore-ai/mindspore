@@ -51,23 +51,28 @@ abstract::TupleShapePtr SparseApplyAdagradV2InferShape(const PrimitivePtr &primi
     return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{var_shape_ptr, accum_shape_ptr});
   }
 
+  int64_t batch_rank = 0;
+  if (primitive->HasAttr(kBatchRank)) {
+    batch_rank = GetValue<int64_t>(primitive->GetAttr(kBatchRank));
+  }
   (void)CheckAndConvertUtils::CheckValue("var_shape", var_shape, kEqual, "accum_shape", accum_shape, prim_name);
   // Indices must be rank 1
-  (void)CheckAndConvertUtils::CheckInteger("indices dimension", indices_shape.size(), kEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("indices dimension", indices_shape.size(), kEqual, batch_rank + 1,
+                                           prim_name);
   // Grad dimension must be equal or greater than 1
-  (void)CheckAndConvertUtils::CheckInteger("grad dimension", grad_shape.size(), kGreaterEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("grad dimension", grad_shape.size(), kGreaterEqual, batch_rank + 1,
+                                           prim_name);
   // Indices size must equal with grad first dimension size
-  if (indices_shape[0] != grad_shape[0]) {
+  if (indices_shape[batch_rank] != grad_shape[batch_rank]) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name
                              << "', the indices size must be equal to grad first dimension size. But got indices size: "
-                             << indices_shape[0] << ", grad first dimension size: " << grad_shape[0] << ".";
+                             << indices_shape[batch_rank] << ", grad first dimension size: " << grad_shape[batch_rank]
+                             << ".";
   }
 
-  if (grad_shape.size() > 1) {
-    auto var_indexed_shape = var_shape;
-    auto grad_indexed_shape = grad_shape;
-    var_indexed_shape.erase(var_indexed_shape.begin());
-    grad_indexed_shape.erase(grad_indexed_shape.begin());
+  if (grad_shape.size() > LongToSize(batch_rank) + 1) {
+    ShapeVector var_indexed_shape(var_shape.begin() + batch_rank + 1, var_shape.end());
+    ShapeVector grad_indexed_shape(grad_shape.begin() + batch_rank + 1, grad_shape.end());
     (void)CheckAndConvertUtils::CheckValue("var_shape[1:]", var_indexed_shape, kEqual, "grad_shape[1:]",
                                            grad_indexed_shape, prim_name);
   }

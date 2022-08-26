@@ -15,6 +15,7 @@
  */
 
 #include "plugin/device/cpu/kernel/sparse_apply_adagrad_cpu_kernel.h"
+#include <functional>
 #include <memory>
 #include <map>
 #include <utility>
@@ -67,10 +68,10 @@ void ComputeAdaGrad(MultiThreadComputeParams<T> *input_params, size_t start, siz
 
 template <typename T>
 void SparseApplyAdagradCpuKernelMod::InitWorkspaceSize() {
-  (void)workspace_size_list_.emplace_back(indices_size_ * var_outer_dim_size_ * sizeof(float));
-  (void)workspace_size_list_.emplace_back(indices_size_ * sizeof(T));
-  (void)workspace_size_list_.emplace_back(indices_size_ * var_outer_dim_size_ * sizeof(float));
-  (void)workspace_size_list_.emplace_back(indices_size_ * sizeof(T));
+  (void)workspace_size_list_.emplace_back(batch_size_ * indices_size_ * var_outer_dim_size_ * sizeof(float));
+  (void)workspace_size_list_.emplace_back(batch_size_ * indices_size_ * sizeof(T));
+  (void)workspace_size_list_.emplace_back(batch_size_ * indices_size_ * var_outer_dim_size_ * sizeof(float));
+  (void)workspace_size_list_.emplace_back(batch_size_ * indices_size_ * sizeof(T));
 }
 
 bool SparseApplyAdagradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
@@ -89,6 +90,7 @@ bool SparseApplyAdagradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   auto kernel_ptr = std::make_shared<ops::SparseApplyAdagrad>(base_operator->GetPrim());
   lr_ = kernel_ptr->get_lr();
   update_slots_ = kernel_ptr->get_update_slots();
+  batch_rank_ = base_operator->get_batch_rank();
   if (lr_ <= 0) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', 'lr' must be a positive scalar, but got " << lr_;
     return false;
@@ -122,6 +124,20 @@ int SparseApplyAdagradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   ShapeVector accum_shape = inputs[kAccumIndex]->GetShapeVector();
   ShapeVector grad_shape = inputs[kGradIndex]->GetShapeVector();
   ShapeVector indices_shape = inputs[kIndicesIndex]->GetShapeVector();
+  if (batch_rank_ > 0) {
+    batch_size_ = std::accumulate(var_shape.begin(), var_shape.begin() + batch_rank_, 1, std::multiplies<int64_t>());
+    if (batch_size_ == 0) {
+      MS_LOG(ERROR) << "For '" << kernel_name_
+                    << "', batch_size_ must be greater than 0, but got batch_size: " << batch_size_;
+      return KRET_RESIZE_FAILED;
+    }
+    var_inner_size_ =
+      std::accumulate(var_shape.begin() + batch_rank_, var_shape.end(), size_t(1), std::multiplies<size_t>());
+    indices_inner_size_ =
+      std::accumulate(indices_shape.begin() + batch_rank_, indices_shape.end(), size_t(1), std::multiplies<size_t>());
+    grad_inner_size_ =
+      std::accumulate(grad_shape.begin() + batch_rank_, grad_shape.end(), size_t(1), std::multiplies<size_t>());
+  }
   if (var_shape.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the 'var' must be at least 1-D, but got scalar or None.";
     return KRET_RESIZE_FAILED;
@@ -140,8 +156,8 @@ int SparseApplyAdagradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
                   << grad_shape.size() << " and the dimension of 'var': " << var_shape.size() << ".";
     return KRET_RESIZE_FAILED;
   }
-  var_first_dim_size_ = var_shape[0];
-  for (size_t i = 1; i < var_shape.size(); ++i) {
+  var_first_dim_size_ = var_shape[batch_rank_];
+  for (size_t i = batch_rank_ + 1; i < var_shape.size(); ++i) {
     if (var_shape[i] != grad_shape[i]) {
       MS_LOG(ERROR) << "For '" << kernel_name_ << "', the shape of 'var' and 'grad' must be equal in dimension i=" << i
                     << ", but got 'var_shape[i]': " << var_shape[i] << " and 'grad_shape[i]': " << grad_shape[i];
@@ -149,17 +165,17 @@ int SparseApplyAdagradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
     }
     var_outer_dim_size_ *= var_shape[i];
   }
-  if (indices_shape.size() != 1) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the 'indices' must be a 1-D vector, but got "
-                  << indices_shape.size() << "-D.";
+  if (indices_shape.size() != LongToSize(batch_rank_ + 1)) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the 'indices' must be a " << (batch_rank_ + 1)
+                  << "-D vector, but got " << indices_shape.size() << "-D.";
     return KRET_RESIZE_FAILED;
   }
-  indices_size_ = indices_shape[0];
-  if (grad_shape[0] != SizeToLong(indices_size_)) {
+  indices_size_ = indices_shape[batch_rank_];
+  if (grad_shape[batch_rank_] != SizeToLong(indices_size_)) {
     MS_LOG(ERROR) << "For '" << kernel_name_
                   << "', the first dimension value of 'grad' must be equal to "
                      "the first dimension value of 'indices', but got the first dimension value of 'grad': "
-                  << grad_shape[0] << ", and the first dimension value of 'indices': " << indices_size_;
+                  << grad_shape[batch_rank_] << ", and the first dimension value of 'indices': " << indices_size_;
     return KRET_RESIZE_FAILED;
   }
   indices_data_type_ = inputs[kIndicesIndex]->GetDtype();
@@ -202,25 +218,36 @@ bool SparseApplyAdagradCpuKernelMod::LaunchKernel(const std::vector<kernel::Addr
   auto *workspace_grad = reinterpret_cast<float *>(workspace[2]->addr);
   auto *workspace_indices = reinterpret_cast<T *>(workspace[3]->addr);
 
-  SparseGradient<T> unique_sparse_grad({new_grad, new_indices, indices_size_});
-  SparseGradient<T> workspace_sparse_grad({workspace_grad, workspace_indices, indices_size_});
-  SparseGradient<T> input_sparse_grad({grad, indices, indices_size_});
-  ReduceSparseGradientParam<T> param;
-  param.input_grad_ = &input_sparse_grad;
-  param.workspace_grad_ = &workspace_sparse_grad;
-  param.output_grad_ = &unique_sparse_grad;
-  param.max_index_ = var_first_dim_size_;
-  param.value_stride_ = var_outer_dim_size_;
-  BucketReduceSparseGradient(param);
-  MultiThreadComputeParams<T> input_params;
-  input_params.var_ = var;
-  input_params.accum_ = accum;
-  input_params.lr_ = lr_;
-  input_params.update_slots_ = update_slots_;
-  input_params.sparse_grad_ = unique_sparse_grad;
-  input_params.var_first_dim_size_ = var_first_dim_size_;
-  input_params.var_outer_dim_size_ = var_outer_dim_size_;
-  MultiThreadCompute<T>(ComputeAdaGrad<T>, &input_params, unique_sparse_grad.indices_size_);
+  for (int64_t index = 0; index < batch_size_; index++) {
+    SparseGradient<T> unique_sparse_grad({new_grad, new_indices, indices_size_});
+    SparseGradient<T> workspace_sparse_grad({workspace_grad, workspace_indices, indices_size_});
+    SparseGradient<T> input_sparse_grad({grad, indices, indices_size_});
+    ReduceSparseGradientParam<T> param;
+    param.input_grad_ = &input_sparse_grad;
+    param.workspace_grad_ = &workspace_sparse_grad;
+    param.output_grad_ = &unique_sparse_grad;
+    param.max_index_ = var_first_dim_size_;
+    param.value_stride_ = var_outer_dim_size_;
+    BucketReduceSparseGradient(param);
+    MultiThreadComputeParams<T> input_params;
+    input_params.var_ = var;
+    input_params.accum_ = accum;
+    input_params.lr_ = lr_;
+    input_params.update_slots_ = update_slots_;
+    input_params.sparse_grad_ = unique_sparse_grad;
+    input_params.var_first_dim_size_ = var_first_dim_size_;
+    input_params.var_outer_dim_size_ = var_outer_dim_size_;
+    MultiThreadCompute<T>(ComputeAdaGrad<T>, &input_params, unique_sparse_grad.indices_size_);
+    // apply offset to all address pointers.
+    var += var_inner_size_;
+    accum += var_inner_size_;
+    grad += grad_inner_size_;
+    indices += indices_inner_size_;
+    new_grad += grad_inner_size_;
+    new_indices += indices_inner_size_;
+    workspace_grad += grad_inner_size_;
+    workspace_indices += indices_inner_size_;
+  }
   return true;
 }
 

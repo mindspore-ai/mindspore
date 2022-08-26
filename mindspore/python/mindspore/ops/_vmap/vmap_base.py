@@ -459,4 +459,7 @@ _ops_vmap_clone_prim_dict = {
     "Conv3DBackpropFilter": G.Conv3DBackpropFilter,
     "InstanceNorm": nps.InstanceNorm,
     "InstanceNormGrad": G.InstanceNormGrad,
+    "SparseApplyAdagrad": P.SparseApplyAdagrad,
+    "SparseApplyAdagradV2": P.SparseApplyAdagradV2,
+    "SparseApplyFtrl": P.SparseApplyFtrl,
 }
