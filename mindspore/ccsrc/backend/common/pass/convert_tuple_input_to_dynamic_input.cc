@@ -57,8 +57,7 @@ AnfNodePtr ConvertMakeTupleInputToPlantInputs(const FuncGraphPtr &graph, const C
   MS_EXCEPTION_IF_NULL(cnode_ptr);
   MS_EXCEPTION_IF_NULL(graph);
   if (common::AnfAlgo::CheckPrimitiveType(cnode_ptr, prim::kPrimCall) ||
-      common::AnfAlgo::CheckPrimitiveType(cnode_ptr, prim::kPrimPartial) ||
-      common::AnfAlgo::CheckPrimitiveType(cnode_ptr, prim::kPrimResizeNearestNeighborGrad)) {
+      common::AnfAlgo::CheckPrimitiveType(cnode_ptr, prim::kPrimPartial)) {
     return nullptr;
   }
   bool is_bprop_cut = common::AnfAlgo::CheckPrimitiveType(cnode_ptr, prim::kPrimBpropCut);

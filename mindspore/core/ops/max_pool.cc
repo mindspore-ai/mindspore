@@ -66,11 +66,11 @@ void CheckOutshapeValid(const PrimitivePtr &primitive, const std::vector<int64_t
                         const std::vector<int64_t> &strides) {
   for (auto out : out_shape) {
     if (out <= 0 && out != -1) {
-      MS_EXCEPTION(ValueError) << "For '" << primitive->name()
-                               << "', the each element of the output shape must be larger than 0, but got output "
-                                  "shape: {out_shape}. The input shape: "
-                               << in_shape << ", kernel size: " << kernel_size << ", strides: " << strides
-                               << ". Please check the official api documents for more information about the output.";
+      MS_EXCEPTION(ValueError)
+        << "For '" << primitive->name()
+        << "', the each element of the output shape must be larger than 0, but got output shape: " << out_shape
+        << ". The input shape: " << in_shape << ", kernel size: " << kernel_size << ", strides: " << strides
+        << ". Please check the official api documents for more information about the output.";
     }
   }
 }
