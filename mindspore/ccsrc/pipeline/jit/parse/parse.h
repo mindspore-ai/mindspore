@@ -330,7 +330,7 @@ class Parser {
   // Return a make tuple for input elements list
   AnfNodePtr GenerateMakeTuple(const FunctionBlockPtr &block, const std::vector<AnfNodePtr> &element_nodes);
   // Check if the node is pop operation.
-  bool IsPopOperation(const AnfNodePtr &node);
+  bool IsPopOperation(const AnfNodePtr &node) const;
   // Check if branch block contains break/continue/return statement, and propagate that flag back to block.
   void CheckControlFlowAlterationInIf(std::pair<FunctionBlockPtr, FunctionBlockPtr> *branch_graphs_pair,
                                       const FunctionBlockPtr &branch_block, const FunctionBlockPtr &branch_end,

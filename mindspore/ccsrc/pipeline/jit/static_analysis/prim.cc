@@ -61,6 +61,7 @@ std::pair<bool, bool> InterpretAbstractBoolChecker(const AbstractBasePtr &cond) 
   if (value->isa<parse::InterpretedObject>()) {
     is_interpret = true;
     auto interpreted_obj = value->cast_ptr<parse::InterpretedObject>();
+    MS_EXCEPTION_IF_NULL(interpreted_obj);
     py::object obj = interpreted_obj->obj();
     constexpr char PYTHON_MOD_PARSE_MODULE[] = "mindspore._extends.parse";
     constexpr char PYTHON_MOD_CHECK_OBJ_BOOL[] = "check_obj_bool";
@@ -2281,6 +2282,7 @@ class PartialEvaluator : public Evaluator {
     // Sometimes, node[0] in out_conf becomes phi0;
     if (func->isa<PrimitiveAbstractClosure>()) {
       auto prim_func = dyn_cast_ptr<PrimitiveAbstractClosure>(func);
+      MS_EXCEPTION_IF_NULL(prim_func);
       MS_EXCEPTION_IF_NULL(prim_func->prim());
       if (prim_func->prim()->isa<prim::DoSignaturePrimitive>()) {
         auto do_signature_prim = dyn_cast_ptr<prim::DoSignaturePrimitive>(prim_func->prim());
@@ -2415,12 +2417,15 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
     bool need_symbol = false;
     if (abs->isa<abstract::AbstractScalar>()) {
       auto scalar = abs->cast_ptr<abstract::AbstractScalar>();
+      MS_EXCEPTION_IF_NULL(scalar);
       auto scalar_value = scalar->BuildValue();
+      MS_EXCEPTION_IF_NULL(scalar_value);
       if (scalar_value->isa<StringImm>()) {
         need_symbol = true;
       }
     } else if (abs->isa<abstract::AbstractSequence>()) {
       auto abs_list = abs->cast_ptr<abstract::AbstractSequence>();
+      MS_EXCEPTION_IF_NULL(abs_list);
       const auto &elements = abs_list->elements();
       for (auto &element : elements) {
         if (element->isa<abstract::AbstractScalar>()) {
@@ -2457,6 +2462,7 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
     std::string exception_str;
     // Process raise ValueError("str")
     auto arg_tuple = arg->cast_ptr<abstract::AbstractTuple>();
+    MS_EXCEPTION_IF_NULL(arg_tuple);
     const auto &arg_tuple_elements = arg_tuple->elements();
     if (arg_tuple_elements.size() == 0) {
       MS_LOG(EXCEPTION) << "The arg_tuple_elements can't be empty.";
@@ -2481,6 +2487,7 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
     std::string exception_str;
     // Process raise ValueError("str")
     auto arg_list = arg->cast_ptr<abstract::AbstractList>();
+    MS_EXCEPTION_IF_NULL(arg_list);
     const auto &arg_list_elements = arg_list->elements();
     if (arg_list_elements.size() == 0) {
       MS_LOG(EXCEPTION) << "The arg_list_elements can't be empty.";
@@ -2505,7 +2512,9 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
     std::string str;
     if (abs->isa<abstract::AbstractScalar>()) {
       auto scalar = abs->cast_ptr<abstract::AbstractScalar>();
+      MS_EXCEPTION_IF_NULL(scalar);
       auto scalar_value = scalar->BuildValue();
+      MS_EXCEPTION_IF_NULL(scalar_value);
       if (scalar_value->isa<StringImm>()) {
         str = GetValue<std::string>(scalar_value);
       }
@@ -2630,6 +2639,7 @@ class WithExitEvaluator : public TransitionPrimEvaluator {
     if (!py::hasattr(cls_obj, common::SafeCStr(call_func))) {
       MS_EXCEPTION_IF_NULL(value);
       auto ms_class = dyn_cast_ptr<parse::MsClassObject>(value);
+      MS_EXCEPTION_IF_NULL(ms_class);
       MS_LOG(EXCEPTION) << ms_class->name() << " has no " << call_func << " function, please check the code.";
     }
     py::object call_obj = py::getattr(cls_obj, common::SafeCStr(call_func));
