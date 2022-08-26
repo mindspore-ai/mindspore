@@ -904,7 +904,9 @@ def softmax(x, axis=-1):
         [0.01165623 0.03168492 0.08612854 0.23412167 0.6364086 ]
     """
 
-    validator.check_value_type("axis", axis, int)
+    if not isinstance(axis, int):
+        type_axis = type(axis).__name__
+        raise TypeError(f" the type of 'axis' must be 'int', but got '{axis}' with type '{type_axis}'.")
     softmax_ = P.Softmax(axis=axis)
     return softmax_(x)
 
