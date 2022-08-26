@@ -22,9 +22,6 @@
 #include "include/common/utils/python_adapter.h"
 #include "pipeline/jit/pipeline.h"
 #endif
-#ifndef NO_DLIB
-#include "tdt/tsd_client.h"
-#endif
 
 namespace mindspore {
 namespace transform {

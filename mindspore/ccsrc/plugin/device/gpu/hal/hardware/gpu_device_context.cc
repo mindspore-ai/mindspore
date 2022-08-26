@@ -796,6 +796,13 @@ bool GPUDeviceResManager::BindDeviceToCurrentThread() const {
   return true;
 }
 
+DeprecatedInterface *GPUDeviceContext::GetDeprecatedInterface() {
+  if (deprecated_interface_ == nullptr) {
+    deprecated_interface_ = std::make_unique<GPUDeprecatedInterface>();
+  }
+  return deprecated_interface_.get();
+}
+
 MS_REGISTER_DEVICE(kGPUDevice, GPUDeviceContext);
 }  // namespace gpu
 }  // namespace device

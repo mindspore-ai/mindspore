@@ -23,6 +23,7 @@
 #include "runtime/hardware/device_context.h"
 #include "runtime/hardware/device_context_manager.h"
 #include "runtime/device/memory_manager.h"
+#include "plugin/device/gpu/hal/hardware/gpu_deprecated_interface.h"
 
 namespace mindspore {
 namespace device {
@@ -145,9 +146,12 @@ class GPUDeviceContext : public DeviceInterface<GPUKernelExecutor, GPUDeviceResM
 
   RunMode GetRunMode(const FuncGraphPtr &func_graph) const override { return RunMode::kKernelMode; }
 
+  DeprecatedInterface *GetDeprecatedInterface() override;
+
  private:
   DISABLE_COPY_AND_ASSIGN(GPUDeviceContext);
   bool initialized_;
+  std::unique_ptr<GPUDeprecatedInterface> deprecated_interface_;
 };
 }  // namespace gpu
 }  // namespace device

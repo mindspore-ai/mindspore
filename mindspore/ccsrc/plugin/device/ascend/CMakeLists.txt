@@ -29,6 +29,7 @@ foreach(a_comp ${ASCEND_SUB_COMP})
     endif()
 endforeach()
 
+list(APPEND ASCEND_SUB_OBJECTS_SRC $<TARGET_OBJECTS:_mindspore_transform_graph_ir_obj>)
 add_library(mindspore_ascend SHARED ${ASCEND_SUB_OBJECTS_SRC})
 target_link_libraries(mindspore_ascend PUBLIC mindspore_backend_common)
 target_link_libraries(mindspore_ascend PRIVATE mindspore_core mindspore_common proto_input mindspore::protobuf)
