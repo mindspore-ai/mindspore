@@ -1,0 +1,10 @@
+diff -Npur sqlite-amalgamation-3360000/CMakeLists.txt sqlite-amalgamation-3360000-patch/CMakeLists.txt
+--- sqlite-amalgamation-3360000/CMakeLists.txt	1970-01-01 08:00:00.000000000 +0800
++++ sqlite-amalgamation-3360000-patch/CMakeLists.txt	2021-12-17 16:08:55.519134222 +0800
+@@ -0,0 +1,6 @@
++cmake_minimum_required(VERSION 3.14)
++project (SqliteC)
++add_library(sqlite3 STATIC sqlite3.c)
++set_target_properties(sqlite3 PROPERTIES PUBLIC_HEADER "sqlite3.h;sqlite3ext.h")
++include(GNUInstallDirs)
++install(TARGETS sqlite3 PUBLIC_HEADER)

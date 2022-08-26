@@ -142,6 +142,7 @@ function(__find_pkg_then_add_target pkg_name pkg_exe lib_path)
                     NO_DEFAULT_PATH)
         endif()
         if(NOT ${_LIB_NAME}_LIB)
+            message("not find ${_LIB_SEARCH_NAME} in path: ${${pkg_name}_BASE_DIR}/${lib_path}")
             return()
         endif()
 
@@ -375,8 +376,13 @@ function(mindspore_add_pkg pkg_name)
                     ${${pkg_name}_CMAKE_CFLAGS} ${${pkg_name}_CMAKE_CXXFLAGS} ${${pkg_name}_CMAKE_LDFLAGS}
                     -DCMAKE_INSTALL_PREFIX=${${pkg_name}_BASE_DIR} ${${pkg_name}_SOURCE_DIR}/${PKG_CMAKE_PATH}
                     WORKING_DIRECTORY ${${pkg_name}_SOURCE_DIR}/_build)
-                __exec_cmd(COMMAND ${CMAKE_COMMAND} --build . --target install -- -j${THNUM}
+                if(MSVC)
+                    __exec_cmd(COMMAND ${CMAKE_COMMAND} --build . --config Release --target install --
                         WORKING_DIRECTORY ${${pkg_name}_SOURCE_DIR}/_build)
+                else()
+                    __exec_cmd(COMMAND ${CMAKE_COMMAND} --build . --target install -- -j${THNUM}
+                        WORKING_DIRECTORY ${${pkg_name}_SOURCE_DIR}/_build)
+                endif()
             endif()
         else()
             if(${pkg_name}_CFLAGS)

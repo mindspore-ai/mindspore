@@ -83,7 +83,11 @@ install(
 )
 
 if(USE_GLOG)
-  file(GLOB_RECURSE GLOG_LIB_LIST ${glog_LIBPATH}/libmindspore_glog.dll)
+  if(MSVC)
+    file(GLOB_RECURSE GLOG_LIB_LIST ${glog_LIBPATH}/mindspore_glog.dll)
+  else()
+    file(GLOB_RECURSE GLOG_LIB_LIST ${glog_LIBPATH}/libmindspore_glog.dll)
+  endif()
   install(
     FILES ${GLOG_LIB_LIST}
     DESTINATION ${INSTALL_LIB_DIR}
@@ -98,18 +102,31 @@ if(ENABLE_MINDDATA)
     DESTINATION ${INSTALL_BASE_DIR}
     COMPONENT mindspore
   )
-
-  file(GLOB_RECURSE OPENCV_LIB_LIST
-    ${opencv_LIBPATH}/libopencv_core*
-    ${opencv_LIBPATH}/libopencv_imgcodecs*
-    ${opencv_LIBPATH}/libopencv_imgproc*
-    )
+  if(MSVC)
+    file(GLOB_RECURSE OPENCV_LIB_LIST
+      ${opencv_LIBPATH}/opencv_core*
+      ${opencv_LIBPATH}/opencv_imgcodecs*
+      ${opencv_LIBPATH}/opencv_imgproc*
+      )
+  else()
+    file(GLOB_RECURSE OPENCV_LIB_LIST
+      ${opencv_LIBPATH}/libopencv_core*
+      ${opencv_LIBPATH}/libopencv_imgcodecs*
+      ${opencv_LIBPATH}/libopencv_imgproc*
+      )
+  endif()
   install(
     FILES ${OPENCV_LIB_LIST}
     DESTINATION ${INSTALL_LIB_DIR}
     COMPONENT mindspore
   )
-  file(GLOB_RECURSE TINYXML2_LIB_LIST ${tinyxml2_LIBPATH}/libtinyxml2.dll)
+
+  if(MSVC)
+    file(GLOB_RECURSE TINYXML2_LIB_LIST ${tinyxml2_LIBPATH}/tinyxml2.dll)
+  else()
+    file(GLOB_RECURSE TINYXML2_LIB_LIST ${tinyxml2_LIBPATH}/libtinyxml2.dll)
+  endif()
+
   install(
     FILES ${TINYXML2_LIB_LIST}
     DESTINATION ${INSTALL_LIB_DIR}
@@ -167,7 +184,7 @@ if(ENABLE_GPU)
     )
   endif()
   install(
-    TARGETS gpu_queue
+    TARGETS cuda_ops
     DESTINATION ${INSTALL_LIB_DIR}
     COMPONENT mindspore
   )
@@ -180,12 +197,21 @@ string(REPLACE "\\" "/" SystemRoot $ENV{SystemRoot})
 file(GLOB VC_LIB_LIST ${SystemRoot}/System32/msvcp140.dll ${SystemRoot}/System32/vcomp140.dll)
 
 file(GLOB JPEG_LIB_LIST ${jpeg_turbo_LIBPATH}/*.dll)
-file(GLOB SQLITE_LIB_LIST ${sqlite_LIBPATH}/*.dll)
+
 install(
-  FILES ${CXX_LIB_LIST} ${JPEG_LIB_LIST} ${SQLITE_LIB_LIST} ${VC_LIB_LIST}
+  FILES ${CXX_LIB_LIST} ${JPEG_LIB_LIST} ${VC_LIB_LIST}
   DESTINATION ${INSTALL_LIB_DIR}
   COMPONENT mindspore
 )
+
+if(NOT MSVC)
+  file(GLOB SQLITE_LIB_LIST ${sqlite_LIBPATH}/*.dll)
+  install(
+    FILES ${SQLITE_LIB_LIST}
+    DESTINATION ${INSTALL_LIB_DIR}
+    COMPONENT mindspore
+  )
+endif()
 
 # set python files
 file(GLOB MS_PY_LIST ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/*.py)

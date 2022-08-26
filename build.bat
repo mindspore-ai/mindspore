@@ -15,6 +15,9 @@
 @echo off
 @title mindspore_build
 
+@echo off
+echo Start build at: %date% %time%
+
 SET BASE_PATH=%CD%
 SET BUILD_PATH=%BASE_PATH%/build
 
@@ -55,8 +58,21 @@ IF "%1%" == "lite" (
             -DCMAKE_BUILD_TYPE=Release -G "CodeBlocks - MinGW Makefiles" "%BASE_PATH%/mindspore/lite"
     )
 ) ELSE (
-    cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_CPU=ON -DENABLE_MINDDATA=ON -DUSE_GLOG=ON -DENABLE_GITEE=%ENABLE_GITEE% ^
-          -G "CodeBlocks - MinGW Makefiles" ../..
+    IF "%1%" == "ms_vs_gpu" (
+        echo "======Start gen VS2019 Project for MS gpu ======"
+        cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_CPU=ON -DENABLE_GPU=ON -DMS_REQUIRE_CUDA_VERSION=11.1 -DENABLE_MINDDATA=ON -DUSE_GLOG=ON -DENABLE_GITEE=%ENABLE_GITEE% ^
+            -G "Visual Studio 16 2019" -A x64 ../..
+    ) ELSE (
+        IF "%1%" == "ms_vs_cpu" (
+            echo "======Start gen VS2019 Project for MS cpu ======"
+            cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_CPU=ON -DENABLE_MINDDATA=ON -DUSE_GLOG=ON -DENABLE_GITEE=%ENABLE_GITEE% ^
+                -G "Visual Studio 16 2019" -A x64 ../..
+        ) ELSE (
+            echo "======Start gen MinGW64 Project for MS cpu ======"
+            cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_CPU=ON -DENABLE_MINDDATA=ON -DUSE_GLOG=ON -DENABLE_GITEE=%ENABLE_GITEE% ^
+                -G "CodeBlocks - MinGW Makefiles" ../..
+        )
+    )
 )
 IF NOT %errorlevel% == 0 (
     echo "cmake fail."
@@ -64,7 +80,16 @@ IF NOT %errorlevel% == 0 (
     EXIT /b 1
 )
 
-cmake --build . --target package -- -j%threads%
+IF "%1%" == "ms_vs_gpu" (
+    cmake --build . --config Release --target package
+) ELSE (
+    IF "%1%" == "ms_vs_cpu" (
+        cmake --build . --config Release --target package
+    ) ELSE (
+        cmake --build . --target package -- -j%threads%
+    )
+)
+
 IF NOT %errorlevel% == 0 (
     echo "build fail."
     call :clean
@@ -82,3 +107,6 @@ EXIT /b 0
         )
     )
     cd %BASE_PATH%
+
+@echo off
+echo End build at: %date% %time%
