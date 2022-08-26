@@ -39,7 +39,7 @@ Status AmplitudeToDBOp::Compute(const std::shared_ptr<Tensor> &input, std::share
     return AmplitudeToDB<float>(input_tensor, output, multiplier, amin, db_multiplier, top_db);
   } else {
     input_tensor = input;
-    return AmplitudeToDB<double>(input_tensor, output, multiplier, amin, db_multiplier, top_db);
+    return AmplitudeToDB<double>(input_tensor, output, multiplier, amin, db_multiplier, static_cast<double>(top_db));
   }
 }
 }  // namespace dataset
