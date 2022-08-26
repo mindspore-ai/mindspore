@@ -100,7 +100,7 @@ _builtin_function_or_method_type = type(abs)
 
 # Unsupported python builtin type in graph mode.
 _unsupported_python_builtin_type = (
-    set, dict, slice, bool, str, complex, reversed, type,
+    set, dict, slice, complex, reversed, type,
 )
 
 _unsupported_internal_type = (

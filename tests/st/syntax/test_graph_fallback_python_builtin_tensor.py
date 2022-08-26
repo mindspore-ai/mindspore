@@ -386,3 +386,22 @@ def test_builtin_function_tuple_with_non_constant_tensor():
     assert len(ret) == 2
     assert np.all(ret[0].asnumpy() == np.array([1, 2, 3]))
     assert np.all(ret[1].asnumpy() == np.array([4, 5, 6]))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_bool_with_input_tensor_2():
+    """
+    Feature: JIT Fallback
+    Description: Test bool() in graph mode with tensor input.
+    Expectation: No exception.
+    """
+    @ms_function
+    def foo():
+        x = Tensor([10])
+        return bool(x)
+
+    assert foo()
