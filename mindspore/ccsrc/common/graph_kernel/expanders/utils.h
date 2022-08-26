@@ -43,6 +43,7 @@ class OpDesc {
   virtual ~OpDesc() = default;
 
  protected:
+  virtual void Init() {}
   virtual bool CheckInputs() { return true; }
   virtual NodePtrList Expand(const NodePtrList &inputs) = 0;
   bool CheckOutputs();
