@@ -51,7 +51,7 @@ def judge_result_correct(result, expect):
     assert np.allclose(result, expect, rtol=1.e-2)
 
 
-def test_prelu(x, weight, expect_forward, expect_dx, expect_dw):
+def prelu_test(x, weight, expect_forward, expect_dx, expect_dw):
     prelu_forward = PReLUOpNet()
     prelu_backward = PReLUOpGradNet(prelu_forward)
     forward_output = prelu_forward(x, weight)
@@ -83,7 +83,7 @@ def test_prelu_single_weight():
         expect_forward = Tensor(expect_forward, dtype)
         expect_dx = Tensor(expect_dx, dtype)
         expect_dw = Tensor(expect_dw, dtype)
-        test_prelu(x, weight, expect_forward, expect_dx, expect_dw)
+        prelu_test(x, weight, expect_forward, expect_dx, expect_dw)
 
 
 @pytest.mark.level1
@@ -124,7 +124,7 @@ def test_prelu_multiple_weight():
         expect_forward = Tensor(expect_forward, dtype)
         expect_dx = Tensor(expect_dx, dtype)
         expect_dw = Tensor(expect_dw, dtype)
-        test_prelu(x, weight, expect_forward, expect_dx, expect_dw)
+        prelu_test(x, weight, expect_forward, expect_dx, expect_dw)
 
 
 @pytest.mark.level1
@@ -143,7 +143,7 @@ def test_prelu_single_weight_0_D():
         expect_forward = Tensor(expect_forward, dtype)
         expect_dx = Tensor(expect_dx, dtype)
         expect_dw = Tensor(expect_dw, dtype)
-        test_prelu(x, weight, expect_forward, expect_dx, expect_dw)
+        prelu_test(x, weight, expect_forward, expect_dx, expect_dw)
 
 
 @pytest.mark.level1
@@ -162,7 +162,7 @@ def test_prelu_single_weight_1_D():
         expect_forward = Tensor(expect_forward, dtype)
         expect_dx = Tensor(expect_dx, dtype)
         expect_dw = Tensor(expect_dw, dtype)
-        test_prelu(x, weight, expect_forward, expect_dx, expect_dw)
+        prelu_test(x, weight, expect_forward, expect_dx, expect_dw)
 
 
 @pytest.mark.level1
@@ -181,7 +181,7 @@ def test_prelu_single_weight_2_D():
         expect_forward = Tensor(expect_forward, dtype)
         expect_dx = Tensor(expect_dx, dtype)
         expect_dw = Tensor(expect_dw, dtype)
-        test_prelu(x, weight, expect_forward, expect_dx, expect_dw)
+        prelu_test(x, weight, expect_forward, expect_dx, expect_dw)
 
 
 @pytest.mark.level1
@@ -204,4 +204,4 @@ def test_prelu_multiple_weight_2_D():
         expect_forward = Tensor(expect_forward, dtype)
         expect_dx = Tensor(expect_dx, dtype)
         expect_dw = Tensor(expect_dw, dtype)
-        test_prelu(x, weight, expect_forward, expect_dx, expect_dw)
+        prelu_test(x, weight, expect_forward, expect_dx, expect_dw)

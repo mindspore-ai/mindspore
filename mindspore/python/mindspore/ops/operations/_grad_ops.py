@@ -15,7 +15,6 @@
 
 """Operators for gradients."""
 import math
-from functools import partial
 from mindspore._checkparam import _check_3d_int_or_tuple
 
 from .nn_ops import _check_positive_int_or_tuple
@@ -1846,7 +1845,7 @@ class DynamicGRUV2Grad(PrimitiveWithInfer):
         return x_dtype, x_dtype, x_dtype, x_dtype, x_dtype, x_dtype
 
 
-class PReLUGrad(PrimitiveWithInfer):
+class PReLUGrad(Primitive):
     r"""
     Gradients of PReLU operation.
 
@@ -1865,16 +1864,6 @@ class PReLUGrad(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         pass
-
-    def infer_shape(self, y_backprop_shape, a_shape, w_shape):
-        return y_backprop_shape, w_shape
-
-    def infer_dtype(self, y_backprop_dtype, a_dtype, w_dtype):
-        tuple(map(partial(validator.check_tensor_dtype_valid,
-                          valid_dtypes=(mstype.float16, mstype.float32), prim_name=self.name),
-                  ('y_backprop', "input_x", "weight"),
-                  (y_backprop_dtype, a_dtype, w_dtype)))
-        return y_backprop_dtype, w_dtype
 
 
 class ReluGrad(Primitive):

@@ -824,6 +824,7 @@ GVAR_DEF(PrimitivePtr, kPrimRelu6, std::make_shared<Primitive>(kReLU6));
 GVAR_DEF(PrimitivePtr, kPrimReluV2, std::make_shared<Primitive>(kReLUV2));
 GVAR_DEF(PrimitivePtr, kPrimReluV3, std::make_shared<Primitive>(kReLUV3));
 GVAR_DEF(PrimitivePtr, kPrimPRelu, std::make_shared<Primitive>("PReLU"));
+GVAR_DEF(PrimitivePtr, kPrimPReluGrad, std::make_shared<Primitive>("PReLUGrad"));
 GVAR_DEF(PrimitivePtr, kPrimSelu, std::make_shared<Primitive>("SeLU"));
 GVAR_DEF(PrimitivePtr, kPrimSoftplus, std::make_shared<Primitive>("Softplus"));
 GVAR_DEF(PrimitivePtr, kPrimSoftplusGrad, std::make_shared<Primitive>("SoftplusGrad"));
