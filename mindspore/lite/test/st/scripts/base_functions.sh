@@ -52,6 +52,9 @@ function Convert() {
         esac
         # set parameters
         model_file=$2"/"${model_name}
+        if [[ ${extra_info} == "parallel_predict" ]]; then
+          model_name=`echo ${model_name} | awk -F '/' '{print $1}'`
+        fi
         weight_file=""
         if [[ $model_fmk == "CAFFE" ]]; then
           model_file=${model_file}".prototxt"
@@ -227,6 +230,7 @@ function Run_Benchmark() {
       use_parallel_predict="false"
       if [[ ${extra_info} == "parallel_predict" ]]; then
         use_parallel_predict="true"
+        model_name=`echo ${model_name} | awk -F '/' '{print $1}'`
       fi
       if [[ ${model_name##*.} == "caffemodel" ]]; then
         model_name=${model_name%.*}
@@ -260,6 +264,9 @@ function Run_Benchmark() {
         benchmark_mode="loop"
       fi
       model_file=$2"/${model_name}${infix}.ms"
+      if [[ ${use_parallel_predict} == "true" ]]; then
+        export BENCHMARK_WEIGHT_PATH=${model_file}
+      fi
       input_files=""
       output_file=""
       data_path=$3"/input_output/"
