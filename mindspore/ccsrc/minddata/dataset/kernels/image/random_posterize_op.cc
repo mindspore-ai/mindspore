@@ -33,8 +33,9 @@ RandomPosterizeOp::RandomPosterizeOp(const std::vector<uint8_t> &bit_range)
 
 Status RandomPosterizeOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   CHECK_FAIL_RETURN_UNEXPECTED(input != nullptr, "RandomPosterizeOp: parameter input is nullptr");
-  bit_ = (bit_range_[0] == bit_range_[1]) ? bit_range_[0]
-                                          : std::uniform_int_distribution<uint8_t>(bit_range_[0], bit_range_[1])(rnd_);
+  bit_ = (bit_range_[0] == bit_range_[1])
+           ? bit_range_[0]
+           : static_cast<uint8_t>(std::uniform_int_distribution<uint32_t>(bit_range_[0], bit_range_[1])(rnd_));
   return PosterizeOp::Compute(input, output);
 }
 }  // namespace dataset
