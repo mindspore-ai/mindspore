@@ -54,7 +54,10 @@ Status GraphExecutorSession::CompileGraph(FuncGraphPtr graph, const void *data, 
     MS_LOG(ERROR) << "GraphExecutorSession::CompileGraph compile graph failed";
     return kCoreFailed;
   }
+  return InitGraphInputsOutputs();
+}
 
+Status GraphExecutorSession::InitGraphInputsOutputs() {
   std::vector<tensor::TensorPtr> graph_inputs, graph_outputs;
   kernel_graph_utils_->GetModelInputsInfo(kernel_graph_->graph_id(), &graph_inputs, &input_names_);
   kernel_graph_utils_->GetModelOutputsInfo(kernel_graph_->graph_id(), &graph_outputs, &output_names_);
@@ -66,17 +69,49 @@ Status GraphExecutorSession::CompileGraph(FuncGraphPtr graph, const void *data, 
     MS_LOG(ERROR) << "Graph output size " << graph_outputs.size() << " != output names size " << output_names_.size();
     return kCoreFailed;
   }
-  for (size_t i = 0; i < input_names_.size(); i++) {
-    auto &input = graph_inputs[i];
-    auto data_type = static_cast<enum DataType>(input->data_type());
-    auto impl = std::make_shared<TensorDefaultImpl>(input_names_[i], data_type, input->shape_c());
-    inputs_.push_back(impl);
+  inputs_.clear();
+  auto new_inputs = graph_executor_->GetInputInfos(kernel_graph_);
+  if (new_inputs.empty()) {
+    for (size_t i = 0; i < input_names_.size(); i++) {
+      auto &input = graph_inputs[i];
+      auto data_type = static_cast<enum DataType>(input->data_type());
+      auto impl = std::make_shared<TensorDefaultImpl>(input_names_[i], data_type, input->shape_c());
+      inputs_.push_back(impl);
+    }
+  } else {
+    if (new_inputs.size() != input_names_.size()) {
+      MS_LOG(ERROR) << "Input count " << new_inputs.size() << " get from executor != input names count "
+                    << input_names_.size();
+      return kCoreFailed;
+    }
+    for (size_t i = 0; i < input_names_.size(); i++) {
+      auto &input = new_inputs[i];
+      auto data_type = static_cast<enum DataType>(input.data_type());
+      auto impl = std::make_shared<TensorDefaultImpl>(input_names_[i], data_type, input.shape_c());
+      inputs_.push_back(impl);
+    }
   }
-  for (size_t i = 0; i < output_names_.size(); i++) {
-    auto &output = graph_outputs[i];
-    auto data_type = static_cast<enum DataType>(output->data_type());
-    auto impl = std::make_shared<TensorDefaultImpl>(output_names_[i], data_type, output->shape_c());
-    outputs_.push_back(impl);
+  outputs_.clear();
+  auto new_outputs = graph_executor_->GetOutputInfos(kernel_graph_);
+  if (new_outputs.empty()) {
+    for (size_t i = 0; i < output_names_.size(); i++) {
+      auto &output = graph_outputs[i];
+      auto data_type = static_cast<enum DataType>(output->data_type());
+      auto impl = std::make_shared<TensorDefaultImpl>(output_names_[i], data_type, output->shape_c());
+      outputs_.push_back(impl);
+    }
+  } else {
+    if (new_outputs.size() != output_names_.size()) {
+      MS_LOG(ERROR) << "Output count " << new_outputs.size() << " get from executor != output names count "
+                    << output_names_.size();
+      return kCoreFailed;
+    }
+    for (size_t i = 0; i < output_names_.size(); i++) {
+      auto &output = new_outputs[i];
+      auto data_type = static_cast<enum DataType>(output.data_type());
+      auto impl = std::make_shared<TensorDefaultImpl>(output_names_[i], data_type, output.shape_c());
+      outputs_.push_back(impl);
+    }
   }
   return kSuccess;
 }
@@ -100,30 +135,37 @@ Status GraphExecutorSession::RunGraph(const std::vector<tensor::Tensor> &inputs,
   return kSuccess;
 }
 
-Status GraphExecutorSession::Resize(const std::vector<tensor::TensorPtr> &inputs,
-                                    const std::vector<std::vector<int64_t>> &dims) {
-  std::vector<tensor::Tensor> executor_inputs = TensorUtils::TensorPtrToTensor(inputs);
-  auto litert_graph_executor = std::dynamic_pointer_cast<LiteRTGraphExecutor>(graph_executor_);
-  if (litert_graph_executor != nullptr) {
-    if (!litert_graph_executor->Resize(executor_inputs, dims)) {
-      MS_LOG(ERROR) << "Mode resize failed";
-      return kCoreFailed;
-    }
+Status GraphExecutorSession::Resize(const std::vector<tensor::Tensor> &inputs,
+                                    const std::vector<std::vector<int64_t>> &new_shapes) {
+  MS_LOG(INFO) << "GraphExecutorSession::Resize";
+  MS_EXCEPTION_IF_NULL(graph_executor_);
+  auto ret = graph_executor_->Resize(kernel_graph_, inputs, new_shapes);
+  if (!ret) {
+    return kCoreFailed;
+  }
+  auto new_outputs = graph_executor_->GetOutputInfos(kernel_graph_);
+  if (new_outputs.empty()) {
+    return kSuccess;
+  }
+  if (new_outputs.size() != outputs_.size()) {
+    MS_LOG(ERROR) << "Output count " << new_outputs.size() << " get from executor != last output count "
+                  << outputs_.size();
+    return kCoreFailed;
+  }
+  for (size_t i = 0; i < new_shapes.size(); i++) {
+    auto &input_shape = new_shapes[i];
+    inputs_[i]->SetShape(input_shape);
+    inputs_[i]->SetData(nullptr, false);  // reset data
+  }
+  for (size_t i = 0; i < outputs_.size(); i++) {
+    auto &output = new_outputs[i];
+    outputs_[i]->SetShape(output.shape_c());
+    outputs_[i]->SetData(nullptr, false);  // reset data
   }
   return kSuccess;
 }
 std::vector<MutableTensorImplPtr> GraphExecutorSession::GetOutputs() { return outputs_; }
-std::vector<MutableTensorImplPtr> GraphExecutorSession::GetInputs() {
-  auto litert_graph_executor = std::dynamic_pointer_cast<LiteRTGraphExecutor>(graph_executor_);
-  if (litert_graph_executor != nullptr) {
-    inputs_.clear();
-    auto inputs = litert_graph_executor->GetInputs();
-    for (auto it : inputs) {
-      inputs_.emplace_back(it);
-    }
-  }
-  return inputs_;
-}
+std::vector<MutableTensorImplPtr> GraphExecutorSession::GetInputs() { return inputs_; }
 std::vector<std::string> GraphExecutorSession::GetOutputNames() { return output_names_; }
 std::vector<std::string> GraphExecutorSession::GetInputNames() { return input_names_; }
 MutableTensorImplPtr GraphExecutorSession::GetOutputByTensorName(const std::string &tensorName) {

@@ -22,14 +22,14 @@
 #include <map>
 
 #include "extendrt/session/delegate_session.h"
-#include "runtime/hardware/device_context.h"
+#include "extendrt/session/lite_graph_executor.h"
 #include "extendrt/utils/kernel_graph_utils.h"
 
 namespace mindspore {
 class GraphExecutorSession : public DelegateSession {
  public:
   GraphExecutorSession() = default;
-  explicit GraphExecutorSession(std::shared_ptr<mindspore::device::GraphExecutor> graph_executor)
+  explicit GraphExecutorSession(std::shared_ptr<mindspore::LiteGraphExecutor> graph_executor)
       : graph_executor_(graph_executor) {}
   virtual ~GraphExecutorSession() = default;
 
@@ -37,7 +37,7 @@ class GraphExecutorSession : public DelegateSession {
   Status CompileGraph(FuncGraphPtr graph, const void *data = nullptr, size_t size = 0) override;
   Status RunGraph() override;
   Status RunGraph(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs) override;
-  Status Resize(const std::vector<tensor::TensorPtr> &inputs, const std::vector<std::vector<int64_t>> &dims) override;
+  Status Resize(const std::vector<tensor::Tensor> &inputs, const std::vector<std::vector<int64_t>> &dims) override;
 
   std::vector<MutableTensorImplPtr> GetOutputs() override;
   std::vector<MutableTensorImplPtr> GetInputs() override;
@@ -47,7 +47,7 @@ class GraphExecutorSession : public DelegateSession {
   MutableTensorImplPtr GetInputByTensorName(const std::string &name) override;
 
  private:
-  std::shared_ptr<mindspore::device::GraphExecutor> graph_executor_;
+  std::shared_ptr<mindspore::LiteGraphExecutor> graph_executor_;
   std::map<std::string, std::string> options_;
   bool is_use_kernel_graph_ = true;
   KernelGraphUtilsPtr kernel_graph_utils_;
@@ -57,6 +57,8 @@ class GraphExecutorSession : public DelegateSession {
   std::vector<std::string> input_names_;
   std::vector<MutableTensorImplPtr> outputs_;
   std::vector<std::string> output_names_;
+
+  Status InitGraphInputsOutputs();
 };
 }  // namespace mindspore
 

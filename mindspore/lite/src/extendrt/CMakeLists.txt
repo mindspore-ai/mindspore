@@ -132,6 +132,7 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
         ${CCSRC_DIR}/utils/scoped_long_running.cc
         ${CCSRC_DIR}/utils/cse.cc
         ${CCSRC_DIR}/utils/comm_manager.cc
+        ${CORE_DIR}/utils/status.cc
         )
     add_library(mindspore-kernel-graph OBJECT ${KERNEL_GRAPH_SRC})
     add_dependencies(mindspore-kernel-graph mindspore-lite-proto)

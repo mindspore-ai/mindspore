@@ -19,13 +19,13 @@
 #include <memory>
 
 #include "include/api/delegate.h"
-#include "runtime/hardware/device_context.h"
+#include "extendrt/session/lite_graph_executor.h"
 
 namespace mindspore {
 class GraphExecutorDelegate : public Delegate {
  public:
   GraphExecutorDelegate() = default;
-  explicit GraphExecutorDelegate(std::shared_ptr<mindspore::device::GraphExecutor> graph_executor)
+  explicit GraphExecutorDelegate(std::shared_ptr<mindspore::LiteGraphExecutor> graph_executor)
       : graph_executor_(graph_executor) {}
   virtual ~GraphExecutorDelegate() = default;
 
@@ -33,14 +33,14 @@ class GraphExecutorDelegate : public Delegate {
 
   virtual Status Build(DelegateModel<schema::Primitive> *model);
 
-  std::shared_ptr<mindspore::device::GraphExecutor> GetGraphExecutor() { return graph_executor_; }
+  std::shared_ptr<mindspore::LiteGraphExecutor> GetGraphExecutor() { return graph_executor_; }
 
-  void SetGraphExecutor(std::shared_ptr<mindspore::device::GraphExecutor> graph_executor) {
+  void SetGraphExecutor(std::shared_ptr<mindspore::LiteGraphExecutor> graph_executor) {
     graph_executor_ = graph_executor;
   }
 
  private:
-  std::shared_ptr<mindspore::device::GraphExecutor> graph_executor_;
+  std::shared_ptr<mindspore::LiteGraphExecutor> graph_executor_;
 };
 }  // namespace mindspore
 

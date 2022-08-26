@@ -51,12 +51,16 @@ Status Model::Build(const void *model_data, size_t data_size, ModelType model_ty
       return kLiteFileError;
     }
   }
-
-  Status ret = impl_->Build(model_data, data_size, model_type, model_context);
-  if (ret != kSuccess) {
-    return ret;
+  try {
+    Status ret = impl_->Build(model_data, data_size, model_type, model_context);
+    if (ret != kSuccess) {
+      return ret;
+    }
+    return kSuccess;
+  } catch (const std::exception &exe) {
+    MS_LOG_ERROR << "Catch exception: " << exe.what();
+    return kCoreFailed;
   }
-  return kSuccess;
 }
 
 Status Model::Build(const std::vector<char> &model_path, ModelType model_type,
@@ -70,11 +74,16 @@ Status Model::Build(const std::vector<char> &model_path, ModelType model_type,
     }
   }
 
-  Status ret = impl_->Build(CharToString(model_path), model_type, model_context);
-  if (ret != kSuccess) {
-    return ret;
+  try {
+    Status ret = impl_->Build(CharToString(model_path), model_type, model_context);
+    if (ret != kSuccess) {
+      return ret;
+    }
+    return kSuccess;
+  } catch (const std::exception &exe) {
+    MS_LOG_ERROR << "Catch exception: " << exe.what();
+    return kCoreFailed;
   }
-  return kSuccess;
 }
 
 // to do, now just to adapter benchmark
@@ -95,7 +104,12 @@ Status Model::Resize(const std::vector<MSTensor> &inputs, const std::vector<std:
     MS_LOG(ERROR) << "Failed because this model has not been built.";
     return kMCFailed;
   }
-  return impl_->Resize(inputs, dims);
+  try {
+    return impl_->Resize(inputs, dims);
+  } catch (const std::exception &exe) {
+    MS_LOG_ERROR << "Catch exception: " << exe.what();
+    return kCoreFailed;
+  }
 }
 
 Status Model::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
@@ -104,7 +118,12 @@ Status Model::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor>
     MS_LOG(ERROR) << "Failed because this model has not been built.";
     return kMCFailed;
   }
-  return impl_->Predict(inputs, outputs);
+  try {
+    return impl_->Predict(inputs, outputs);
+  } catch (const std::exception &exe) {
+    MS_LOG_ERROR << "Catch exception: " << exe.what();
+    return kCoreFailed;
+  }
 }
 
 Status Model::PredictWithPreprocess(const std::vector<std::vector<MSTensor>> &inputs, std::vector<MSTensor> *outputs,
@@ -137,7 +156,12 @@ std::vector<MSTensor> Model::GetInputs() {
     MS_LOG(ERROR) << "Failed because this model has not been built.";
     return {};
   }
-  return impl_->GetInputs();
+  try {
+    return impl_->GetInputs();
+  } catch (const std::exception &exe) {
+    MS_LOG_ERROR << "Catch exception: " << exe.what();
+    return {};
+  }
 }
 
 std::vector<MSTensor> Model::GetOutputs() {
@@ -145,7 +169,12 @@ std::vector<MSTensor> Model::GetOutputs() {
     MS_LOG(ERROR) << "Failed because this model has not been built.";
     return {};
   }
-  return impl_->GetOutputs();
+  try {
+    return impl_->GetOutputs();
+  } catch (const std::exception &exe) {
+    MS_LOG_ERROR << "Catch exception: " << exe.what();
+    return {};
+  }
 }
 
 MSTensor Model::GetInputByTensorName(const std::vector<char> &name) {
@@ -153,7 +182,12 @@ MSTensor Model::GetInputByTensorName(const std::vector<char> &name) {
     MS_LOG(ERROR) << "Model implement is null.";
     return MSTensor(nullptr);
   }
-  return impl_->GetInputByTensorName(CharToString(name));
+  try {
+    return impl_->GetInputByTensorName(CharToString(name));
+  } catch (const std::exception &exe) {
+    MS_LOG_ERROR << "Catch exception: " << exe.what();
+    return {};
+  }
 }
 
 std::vector<std::vector<char>> Model::GetOutputTensorNamesChar() {

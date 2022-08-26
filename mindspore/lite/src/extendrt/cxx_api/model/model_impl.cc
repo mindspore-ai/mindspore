@@ -101,7 +101,7 @@ Status ModelImpl::Resize(const std::vector<MSTensor> &inputs, const std::vector<
     MS_LOG(ERROR) << "The size of inputs is incorrect.";
     return kLiteInputParamInvalid;
   }
-  std::vector<mindspore::tensor::TensorPtr> resize_inputs = TensorUtils::MSTensorToTensorPtr(inputs);
+  std::vector<mindspore::tensor::Tensor> resize_inputs = TensorUtils::MSTensorToTensor(inputs);
   return session_->Resize(resize_inputs, dims);
 }
 
@@ -179,7 +179,18 @@ Status ModelImpl::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
     MS_LOG(ERROR) << "ModelImpl::Predict RunGraph failed with " << ret;
     return ret;
   }
-  if (outputs->empty() || org_graph_outputs != graph_outputs) {
+  bool output_remain = false;
+  if (!org_graph_outputs.empty() && org_graph_outputs.size() == graph_outputs.size()) {
+    output_remain = true;
+    for (size_t i = 0; i < org_graph_outputs.size(); i++) {
+      if (org_graph_outputs[i].data_ptr() != graph_outputs[i].data_ptr() ||
+          org_graph_outputs[i].device_address() != graph_outputs[i].device_address()) {
+        output_remain = false;
+        break;
+      }
+    }
+  }
+  if (!output_remain) {
     *outputs = TensorUtils::TensorToMSTensor(graph_outputs, session_->GetOutputNames());
   }
   auto session_outputs = GetOutputs();

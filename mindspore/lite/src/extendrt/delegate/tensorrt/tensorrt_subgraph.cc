@@ -503,21 +503,21 @@ int TensorRTSubGraph::Prepare() {
   return RET_OK;
 }
 
-int TensorRTSubGraph::OnNewInputShapes(const std::vector<tensor::Tensor> &inputs) {
-  if (inputs_.size() != inputs.size()) {
-    MS_LOG(ERROR) << "Graph inputs size " << inputs_.size() << " != resize input size " << inputs.size();
+int TensorRTSubGraph::OnNewInputShapes(const std::vector<ShapeVector> &new_shapes) {
+  if (inputs_.size() != new_shapes.size()) {
+    MS_LOG(ERROR) << "Graph inputs size " << inputs_.size() << " != resize input size " << new_shapes.size();
     return RET_ERROR;
   }
   int batch_size = -1;
   for (size_t i = 0; i < trt_in_tensor_name_.size(); i++) {
-    if (inputs_[i].Shape() == inputs[i].shape()) {
+    if (inputs_[i].Shape() == new_shapes[i]) {
       continue;
     }
     if (input_batchsize_index_ == -1) {
       MS_LOG(ERROR) << "current network don't support resize.";
       return RET_ERROR;
     }
-    inputs_[i].SetShape(inputs[i].shape());
+    inputs_[i].SetShape(new_shapes[i]);
     if (ctx_->network() != nullptr) {
       for (int j = 0; j < ctx_->network()->getNbInputs(); j++) {
         if (trt_in_tensor_name_[i].compare(ctx_->network()->getInput(j)->getName()) != 0) {
@@ -582,7 +582,9 @@ int TensorRTSubGraph::PreExecute(const std::vector<tensor::Tensor> &inputs,
     MS_LOG(ERROR) << "Graph outputs size " << outputs_.size() << " != execute outputs size " << outputs.size();
     return RET_ERROR;
   }
-  auto ret = OnNewInputShapes(inputs);
+  std::vector<ShapeVector> new_shapes;
+  std::transform(inputs.begin(), inputs.end(), std::back_inserter(new_shapes), [](auto &t) { return t.shape_c(); });
+  auto ret = OnNewInputShapes(new_shapes);
   if (ret != RET_OK) {
     return ret;
   }
@@ -617,6 +619,12 @@ int TensorRTSubGraph::PreExecute(const std::vector<tensor::Tensor> &inputs,
     if (outputs.size() > i) {
       auto &output = outputs[i];
       if (output.device_address() && output.device_address()->GetMutablePtr()) {
+        if (output.Size() < outputs_[i].DataSize()) {
+          MS_LOG(ERROR) << "Specified output device data size " << output.Size()
+                        << " cannot less than execute output data size " << outputs_[i].DataSize()
+                        << ", output shape: " << outputs_[i].Shape();
+          return RET_ERROR;
+        }
         device_ptr = output.device_address()->GetMutablePtr();
       }
     }
@@ -661,7 +669,7 @@ int TensorRTSubGraph::PostExecute(std::vector<tensor::Tensor> *outputs) {
       auto dst_device = tensor.device_address();
       if (dst_device == nullptr || dst_device->GetMutablePtr() == nullptr) {
         if (tensor.Size() < outputs_[i].DataSize()) {
-          MS_LOG(ERROR) << "Parameter output data size " << tensor.Size()
+          MS_LOG(ERROR) << "Specified output host data size " << tensor.Size()
                         << " cannot less than execute output data size " << outputs_[i].DataSize()
                         << ", output shape: " << new_shape;
           return RET_ERROR;
@@ -724,7 +732,6 @@ int TensorRTSubGraph::Execute(const std::vector<tensor::Tensor> &inputs, std::ve
   if (ret != RET_OK) {
     return ret;
   }
-  outputs->clear();
   ret = PreExecute(inputs, *outputs);
   if (ret != RET_OK) {
     return ret;
@@ -734,6 +741,10 @@ int TensorRTSubGraph::Execute(const std::vector<tensor::Tensor> &inputs, std::ve
     return RET_ERROR;
   }
   return PostExecute(outputs);
+}
+
+int TensorRTSubGraph::Resize(const std::vector<tensor::Tensor> &, const std::vector<ShapeVector> &new_shapes) {
+  return OnNewInputShapes(new_shapes);
 }
 
 ITensorHelper TensorRTSubGraph::FindTensorRTInputs(TensorRTOp *cur_op, const TensorInfo &in_tensor) {

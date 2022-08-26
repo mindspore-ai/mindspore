@@ -280,8 +280,14 @@ Status GetModelInputsInfo(KernelGraphPtr kernel_graph, std::vector<NodeWithOutpu
     node_index.kernel_index.first = input;
     node_index.kernel_index.second = 0;
 
+    auto abstract = parameter->abstract();
+    MS_EXCEPTION_IF_NULL(abstract);
+    auto name = abstract->name();
+    if (name.empty()) {
+      name = parameter->name();
+    }
     TensorInfo tensor_info =
-      TensorInfo(parameter->name(), static_cast<enum DataType>(data_type), input_shape, format, nullptr, 0, nullptr);
+      TensorInfo(name, static_cast<enum DataType>(data_type), input_shape, format, nullptr, 0, nullptr);
     inputs->push_back(tensor_info);
 
     node_index.tensor_info = tensor_info;
@@ -614,7 +620,12 @@ bool TensorRTExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<ten
     return false;
   }
   if (tensorrt_graph_list_.size() == 1) {
-    return tensorrt_graph_list_[0].sub_graph->Execute(inputs, outputs) == RET_OK;
+    auto &sub_graph = tensorrt_graph_list_[0];
+    if (sub_graph.sub_graph == nullptr) {
+      MS_LOG(ERROR) << "TensorRT subgraph is nullptr.";
+      return false;
+    }
+    return sub_graph.sub_graph->Execute(inputs, outputs) == RET_OK;
   }
   std::map<TensorInfo, std::shared_ptr<tensor::Tensor>> tensor_val_map;
   for (size_t i = 0; i < inputs.size(); i++) {
@@ -661,7 +672,40 @@ bool TensorRTExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<ten
   return true;
 }
 
-static std::shared_ptr<device::GraphExecutor> TensorRTGraphExecutorCreator(
+bool TensorRTExecutor::Resize(const FuncGraphPtr &, const std::vector<tensor::Tensor> &inputs,
+                              const std::vector<std::vector<int64_t>> &new_shapes) {
+  if (tensorrt_graph_list_.size() == 1) {
+    auto &sub_graph = tensorrt_graph_list_[0];
+    if (sub_graph.sub_graph == nullptr) {
+      MS_LOG(ERROR) << "TensorRT subgraph is nullptr.";
+      return false;
+    }
+    return sub_graph.sub_graph->Resize(inputs, new_shapes) == RET_OK;
+  }
+  return false;
+}
+
+std::vector<tensor::Tensor> TensorRTExecutor::GetInputInfos(const FuncGraphPtr &) {
+  std::vector<tensor::Tensor> tensors;
+  for (auto &tensor_info : inputs_) {
+    auto type_id = static_cast<enum TypeId>(tensor_info.DataType());
+    auto shape = tensor_info.Shape();
+    tensors.push_back(tensor::Tensor(type_id, shape));
+  }
+  return tensors;
+}
+
+std::vector<tensor::Tensor> TensorRTExecutor::GetOutputInfos(const FuncGraphPtr &) {
+  std::vector<tensor::Tensor> tensors;
+  for (auto &tensor_info : outputs_) {
+    auto type_id = static_cast<enum TypeId>(tensor_info.DataType());
+    auto shape = tensor_info.Shape();
+    tensors.push_back(tensor::Tensor(type_id, shape));
+  }
+  return tensors;
+}
+
+static std::shared_ptr<LiteGraphExecutor> TensorRTGraphExecutorCreator(
   const std::shared_ptr<mindspore::DelegateConfig> &config) {
   MS_EXCEPTION_IF_NULL(config);
   auto executor = std::make_shared<TensorRTExecutor>(config->GetContext());

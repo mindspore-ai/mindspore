@@ -113,14 +113,8 @@ class TensorTensorImpl : public MutableTensorImpl {
 
   bool IsConst() const override { return false; }
 
-  void SetShape(const std::vector<int64_t> &shape) override {
-    MS_EXCEPTION_IF_NULL(tensor_);
-    tensor_->set_shape(shape);
-  }
-  void SetDataType(mindspore::DataType data_type) override {
-    MS_EXCEPTION_IF_NULL(tensor_);
-    tensor_->set_data_type(static_cast<enum TypeId>(data_type));
-  }
+  void SetShape(const std::vector<int64_t> &) override { MS_LOG_EXCEPTION << "Cannot set shape for TensorTensorImpl"; }
+  void SetDataType(mindspore::DataType) override { MS_LOG_EXCEPTION << "Cannot set data type for TensorTensorImpl"; }
   void SetName(const std::string &name) override {
     MS_EXCEPTION_IF_NULL(tensor_);
     tensor_->set_name(name);

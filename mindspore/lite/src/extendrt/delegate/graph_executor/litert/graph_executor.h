@@ -21,14 +21,13 @@
 #include <memory>
 #include <map>
 
-#include "runtime/hardware/device_context.h"
+#include "extendrt/session/lite_graph_executor.h"
 #include "include/api/context.h"
 #include "include/model.h"
 #include "src/litert/lite_session.h"
 
 namespace mindspore {
-using GraphExecutor = mindspore::device::GraphExecutor;
-class LiteRTGraphExecutor : public GraphExecutor {
+class LiteRTGraphExecutor : public LiteGraphExecutor {
  public:
   LiteRTGraphExecutor() = default;
   explicit LiteRTGraphExecutor(const std::shared_ptr<mindspore::Context> &context);
@@ -36,8 +35,12 @@ class LiteRTGraphExecutor : public GraphExecutor {
   bool CompileGraph(const FuncGraphPtr &graph, const std::map<string, string> &compile_options) override;
   bool RunGraph(const FuncGraphPtr &graph, const std::vector<tensor::Tensor> &inputs,
                 std::vector<tensor::Tensor> *outputs, const std::map<string, string> &compile_options) override;
-  bool Resize(const std::vector<tensor::Tensor> &inputs, const std::vector<std::vector<int64_t>> &dims);
-  std::vector<LiteTensorImplPtr> GetInputs();
+
+  bool Resize(const FuncGraphPtr &, const std::vector<tensor::Tensor> &inputs,
+              const std::vector<ShapeVector> &dims) override;
+  std::vector<tensor::Tensor> GetInputInfos(const FuncGraphPtr &) override;
+  std::vector<tensor::Tensor> GetOutputInfos(const FuncGraphPtr &) override;
+
   std::shared_ptr<lite::LiteSession> CreateLiteSession(lite::InnerContext *context);
   std::vector<MSTensor> GetLiteSessionOutputs();
   void ResetTensorData(std::vector<void *> old_data, const std::vector<lite::Tensor *> &tensors);

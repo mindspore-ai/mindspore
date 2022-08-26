@@ -50,6 +50,8 @@ class TensorRTSubGraph {
 
   int Execute(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs);
 
+  int Resize(const std::vector<tensor::Tensor> &inputs, const std::vector<ShapeVector> &new_shapes);
+
   int BuildTensorRTGraph();
 
   int Init(cudaStream_t stream);
@@ -92,7 +94,7 @@ class TensorRTSubGraph {
   int PreExecute(const std::vector<tensor::Tensor> &inputs, const std::vector<tensor::Tensor> &outputs);
   int PostExecute(std::vector<tensor::Tensor> *outputs);
 
-  int OnNewInputShapes(const std::vector<tensor::Tensor> &inputs);
+  int OnNewInputShapes(const std::vector<ShapeVector> &inputs);
 
   std::string name_;
   std::vector<TensorInfo> inputs_;
