@@ -826,7 +826,7 @@ def get_bprop_resize_nearest_neighbor(self):
     tensor_shape = P.TensorShape()
 
     def bprop(inputs, out, dout):
-        if -1 in shape_op(inputs):
+        if (-1 in shape_op(inputs)) or (-2 in shape_op(inputs)):
             shp = tensor_shape(inputs)
         else:
             shp = shape_op(inputs)

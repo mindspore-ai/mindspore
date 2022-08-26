@@ -1328,6 +1328,9 @@ void UpdateNodeShape(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
   auto kernel_mod = AnfAlgo::GetKernelMod(cnode);
   MS_EXCEPTION_IF_NULL(kernel_mod);
+  if (!kernel_mod->IsNeedRetrieveOutputShape()) {
+    return;
+  }
   auto output_tensor = kernel_mod->RetrieveOutputShape();
   if (output_tensor.empty()) {
     return;

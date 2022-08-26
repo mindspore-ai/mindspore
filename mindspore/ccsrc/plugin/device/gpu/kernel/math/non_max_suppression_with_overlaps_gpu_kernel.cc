@@ -63,6 +63,7 @@ void NMSWithOverlapsFwdGpuKernelMod::InitSizeLists() {
 bool NMSWithOverlapsFwdGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                                           const std::vector<KernelTensorPtr> &inputs,
                                           const std::vector<KernelTensorPtr> &outputs) {
+  is_need_retrieve_output_shape_ = true;
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {

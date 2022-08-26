@@ -33,13 +33,8 @@ abstract::TupleShapePtr SplitInferShape(const PrimitivePtr &primitive, const std
   auto x_shape_ptr = shape->cast<abstract::ShapePtr>();
   auto x_shape = shape_map[kShape];
   auto x_shape_min = shape_map[kMinShape];
-  if (x_shape_min.empty()) {
-    x_shape_min = x_shape;
-  }
   auto x_shape_max = shape_map[kMaxShape];
-  if (x_shape_max.empty()) {
-    x_shape_max = x_shape;
-  }
+
   auto rank = SizeToLong(x_shape.size());
   (void)CheckAndConvertUtils::CheckInteger("rank", rank, kGreaterEqual, 1, prim_name);
   auto axis = GetValue<int64_t>(primitive->GetAttr("axis"));
@@ -63,10 +58,15 @@ abstract::TupleShapePtr SplitInferShape(const PrimitivePtr &primitive, const std
   if (!x_shape_ptr->IsDynamic() || output_shape[pos] > 0) {
     output_shape[pos] = x_shape[pos] / output_num_value;
   }
-  auto output_shape_min = x_shape_min;
-  output_shape_min[pos] = x_shape_min[pos] / output_num_value;
-  auto output_shape_max = x_shape_max;
-  output_shape_max[pos] = x_shape_max[pos] / output_num_value;
+  std::vector<int64_t> output_shape_min;
+  std::vector<int64_t> output_shape_max;
+  if (!x_shape_min.empty() && !x_shape_max.empty()) {
+    output_shape_min = x_shape_min;
+    output_shape_min[pos] = x_shape_min[pos] / output_num_value;
+    output_shape_max = x_shape_max;
+    output_shape_max[pos] = x_shape_max[pos] / output_num_value;
+  }
+
   std::vector<abstract::BaseShapePtr> output_list;
   for (int64_t i = 0; i < output_num_value; ++i) {
     abstract::ShapePtr output = std::make_shared<abstract::Shape>(output_shape, output_shape_min, output_shape_max);

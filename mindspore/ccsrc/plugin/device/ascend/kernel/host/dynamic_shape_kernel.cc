@@ -58,16 +58,13 @@ void TensorShapeKernelMod::Execute() const {
       MS_LOG(EXCEPTION) << "Execute TensorShapeKernel memcpy_s failed!";
     }
   } else {
-    auto runtime_instance = device::KernelRuntimeManager::Instance().GetCurrentKernelRuntime();
-    MS_EXCEPTION_IF_NULL(runtime_instance);
-    auto ret = runtime_instance->SyncStream();
-    if (!ret) {
-      MS_LOG(EXCEPTION) << "Sync stream error!";
-    }
-    if (!output_addr->SyncHostToDevice(output_shape, LongToSize(output_tensor_for_sync->data().nbytes()),
-                                       output_tensor_for_sync->data_type(), output_tensor_for_sync->data_c(),
-                                       output_tensor_for_sync->device_info().host_format_)) {
-      MS_LOG(EXCEPTION) << "TensorShapeKernel SyncHostToDevice failed.";
+    // cppcheck-suppress unreadVariable
+    auto lock = device::KernelRuntime::LockRuntime(stream_);
+    auto status =
+      rtMemcpyAsync(const_cast<void *>(output_addr->GetPtr()), output_addr->GetSize(), output_tensor_for_sync->data_c(),
+                    LongToSize(output_tensor_for_sync->data().nbytes()), RT_MEMCPY_HOST_TO_DEVICE_EX, stream_);
+    if (status != RT_ERROR_NONE) {
+      MS_LOG(EXCEPTION) << "Execute TensorShapeKernel rtMemcpyAsync failed!";
     }
   }
 
