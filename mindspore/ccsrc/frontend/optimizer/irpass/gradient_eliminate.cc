@@ -61,6 +61,7 @@ bool ExpandJPrim::operator()(const FuncGraphPtr &func_graph, const OptimizerPtr 
   // Expand j nodes that don't have embed j nodes.
   bool change = false;
   auto manager = optimizer->manager();
+  MS_EXCEPTION_IF_NULL(manager);
   FuncGraphVector func_graphs;
   HashMap<AnfNodePtr, size_t> j_node_to_index_map;
   size_t index = 0;

@@ -32,6 +32,7 @@ namespace mindspore {
 namespace opt {
 namespace irpass {
 static inline std::vector<CNodePtr> GetCallers(const FuncGraphPtr &fg) {
+  MS_EXCEPTION_IF_NULL(fg);
   const auto &fg_caller_and_indexes = fg->func_graph_cnodes_index();
   std::vector<CNodePtr> caller_cnodes = {};
   // Find all caller of fg.
@@ -90,6 +91,7 @@ static inline std::pair<FuncGraphPtr, std::vector<CNodePtr>> SearchFuncGraphCall
 
 static inline std::pair<mindspore::HashSet<size_t>, mindspore::HashMap<size_t, size_t>> EraseUnusedParameters(
   const FuncGraphPtr &fg, bool eliminate_only_returned_parameter) {
+  MS_EXCEPTION_IF_NULL(fg);
   const FuncGraphManagerPtr &manager = fg->manager();
   MS_EXCEPTION_IF_NULL(manager);
   const auto &manager_node_users = manager->node_users();
@@ -160,14 +162,15 @@ static inline std::pair<mindspore::HashSet<size_t>, mindspore::HashMap<size_t, s
 // Adjust the call arguments of func graph whose parameter's eliminated.
 static inline void AdjustCallerArgs(const FuncGraphPtr &called, const CNodePtr &caller,
                                     const mindspore::HashSet<size_t> &unused_parameter_indexes) {
+  MS_EXCEPTION_IF_NULL(caller->func_graph());
   const FuncGraphManagerPtr &manager = caller->func_graph()->manager();
   MS_EXCEPTION_IF_NULL(manager);
   std::vector<AnfNodePtr> new_args = {caller->input(0)};
-  for (size_t i = 0; i < caller->inputs().size() - 1; i++) {
+  for (size_t i = 0; i < caller->size() - 1; i++) {
     if (unused_parameter_indexes.find(i) == unused_parameter_indexes.end()) {
-      (void)new_args.emplace_back(caller->inputs()[i + 1]);
+      (void)new_args.emplace_back(caller->input(i + 1));
     } else {
-      MS_LOG(DEBUG) << "Erase arg:" << caller->inputs()[i + 1]->DebugString() << ",index:" << i;
+      MS_LOG(DEBUG) << "Erase arg:" << caller->input(i + 1)->DebugString() << ",index:" << i;
     }
   }
   // Remove any Args which may be packed into VarArgs if VarArgs is not used in called FuncGraph;
@@ -176,7 +179,7 @@ static inline void AdjustCallerArgs(const FuncGraphPtr &called, const CNodePtr &
   //       2. The arguments in caller may be less than the formal parameters in called as some parameters can have
   //       default value.
   if (!called->has_vararg() &&
-      caller->inputs().size() > (1 + IntToSize(called->GetPositionalArgsCount()) + called->fv_param_count())) {
+      caller->size() > (1 + IntToSize(called->GetPositionalArgsCount()) + called->fv_param_count())) {
     size_t start_offset = IntToSize(called->GetPositionalArgsCount()) + 1;
     size_t end_offset = called->fv_param_count();
     (void)new_args.erase(new_args.cbegin() + SizeToLong(start_offset), new_args.cend() - SizeToLong(end_offset));
@@ -196,6 +199,7 @@ static inline void AdjustCallerArgs(const FuncGraphPtr &called, const CNodePtr &
 // we should convert getitem(returned_tuple, x) into the eliminating argument itself.
 static inline void AdjustGetItemCall(const CNodePtr &caller,
                                      const mindspore::HashMap<size_t, size_t> &only_return_parameter_indexes) {
+  MS_EXCEPTION_IF_NULL(caller->func_graph());
   const FuncGraphManagerPtr &manager = caller->func_graph()->manager();
   MS_EXCEPTION_IF_NULL(manager);
   if (only_return_parameter_indexes.empty()) {

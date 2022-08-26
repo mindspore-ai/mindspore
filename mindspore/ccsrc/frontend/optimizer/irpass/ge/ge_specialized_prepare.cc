@@ -71,7 +71,9 @@ void GeTensorArrayPrepare::InsertFlowOutputToTA(const std::vector<AnfNodePtr> &a
 }
 
 void GeTensorArrayPrepare::TransformTASizeFromAttrToInput(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
   auto ta_node = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(ta_node);
   int32_t res_size = 0;
   PrimitivePtr prim = GetValueNode<PrimitivePtr>(ta_node->input(0));
   // get size attr

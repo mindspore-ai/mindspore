@@ -31,6 +31,7 @@ AnfNodePtr ExpandShard(const CNodePtr &node) {
 bool ExpandShardPrim::operator()(const FuncGraphPtr &func_graph, const OptimizerPtr &optimizer) {
   bool change = false;
   auto manager = optimizer->manager();
+  MS_EXCEPTION_IF_NULL(manager);
   for (auto &shard_node : prim_nodes_) {
     auto expanded_shard = internal::ExpandShard(shard_node);
     (void)manager->Replace(shard_node, expanded_shard);

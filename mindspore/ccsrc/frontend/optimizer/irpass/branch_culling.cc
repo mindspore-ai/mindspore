@@ -160,8 +160,8 @@ bool HasDependencyOnSubGraph(const FuncGraphPtr &graph, const AnfNodePtr &state)
     }
     auto cur_cnode = cur_node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cur_cnode);
-    for (size_t i = 1; i < cur_cnode->inputs().size(); i++) {
-      nodes.push(cur_cnode->inputs()[i]);
+    for (size_t i = 1; i < cur_cnode->size(); i++) {
+      nodes.push(cur_cnode->input(i));
     }
   }
   return false;
@@ -232,7 +232,7 @@ FuncGraphPtr TransformGraphCondBranchNodes(
     if (should_replace) {
       auto new_node = graph->NewCNode({});
       repl_node[node] = new_node;
-      nodes_changed.emplace_back(node->cast<CNodePtr>(), new_node);
+      (void)nodes_changed.emplace_back(node->cast<CNodePtr>(), new_node);
     }
   }
   RunSwitchNodeReplace(manager, nodes_changed, repl_node, repl_node_inputs, graph);

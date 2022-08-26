@@ -1030,7 +1030,7 @@ AbstractBasePtr InferImplStringGetItem(const AnalysisEnginePtr &, const Primitiv
     num += len;
   }
   std::string res;
-  res.append(1, str.at(num));
+  (void)res.append(1, str.at(num));
   return std::make_shared<AbstractScalar>(res);
 }
 

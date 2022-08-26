@@ -40,6 +40,7 @@ class MinMaximumGrad : public AnfVisitor {
 
     // check single use
     auto mng = optimizer->manager();
+    MS_EXCEPTION_IF_NULL(mng);
     auto &users = mng->node_users();
     if (users.find(grad_) == users.end() || users[grad_].size() != 1) {
       return nullptr;

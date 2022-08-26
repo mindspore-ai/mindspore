@@ -257,7 +257,7 @@ class InlinerBase : public AnfVisitor {
     bool should_simplify = false;
     for (size_t i = 0; i < fg_params.size(); i++) {
       if (mng->node_users()[fg_params[i]].size() != 0) {
-        used_param_index.emplace_back(i);
+        (void)used_param_index.emplace_back(i);
       } else {
         MS_LOG(DEBUG) << "Not used parameter " << fg_params[i]->DebugString() << " for calling " << fg->ToString();
         should_simplify = true;

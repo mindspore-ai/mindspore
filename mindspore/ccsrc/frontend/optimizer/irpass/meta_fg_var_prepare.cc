@@ -135,6 +135,7 @@ AnfNodePtr MetaFgVarPrepare::operator()(const OptimizerPtr &, const AnfNodePtr &
     auto meta_func = value->cast<MetaFuncGraphPtr>();
     MS_EXCEPTION_IF_NULL(meta_func);
     auto grad_op_ptr = meta_func->cast<prim::GradOperationPtr>();
+    MS_EXCEPTION_IF_NULL(grad_op_ptr);
     sens_param = grad_op_ptr->sens_param();
 
     // Remove the tuple/list inputs from order list for grad(UnpackGraph(..), list/tuple)(..)
