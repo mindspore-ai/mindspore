@@ -373,6 +373,23 @@ py::object AbstractTupleValueToPython(const AbstractTuple *tuple_abs) {
   return value_tuple;
 }
 
+tensor::TensorPtr GetShapeValue(const AbstractBasePtr &arg_element) {
+  ValuePtr const_value = nullptr;
+  if (arg_element->isa<abstract::AbstractTensor>()) {
+    auto const_abstract_value = arg_element->cast_ptr<abstract::AbstractTensor>();
+    MS_EXCEPTION_IF_NULL(const_abstract_value);
+    const_value = const_abstract_value->BuildValue();
+  } else if (arg_element->isa<abstract::AbstractScalar>()) {
+    auto const_abstract_value = arg_element->cast_ptr<abstract::AbstractScalar>();
+    MS_EXCEPTION_IF_NULL(const_abstract_value);
+    const_value = const_abstract_value->BuildValue();
+  } else {
+    MS_LOG(EXCEPTION) << "Unsupported shape data:" << arg_element->ToString();
+  }
+  MS_EXCEPTION_IF_NULL(const_value);
+  return const_value->cast<tensor::TensorPtr>();
+}
+
 py::dict AbstractTupleToPython(const AbstractBasePtr &abs_base, bool only_convert_value) {
   auto arg_tuple = dyn_cast_ptr<AbstractTuple>(abs_base);
   MS_EXCEPTION_IF_NULL(arg_tuple);
@@ -446,11 +463,9 @@ py::dict AbstractTupleToPython(const AbstractBasePtr &abs_base, bool only_conver
   if (dyn_shape_value) {
     for (size_t i = 0; i < len; i++) {
       if (!res[i].contains(py::str(ATTR_SHAPE_VALUE))) {
-        auto const_abstract_value = arg_tuple->elements()[i]->cast_ptr<abstract::AbstractTensor>();
-        MS_EXCEPTION_IF_NULL(const_abstract_value);
-        auto const_value = const_abstract_value->BuildValue();
-        MS_EXCEPTION_IF_NULL(const_value);
-        auto const_tensor = const_value->cast<tensor::TensorPtr>();
+        auto arg_element = arg_tuple->elements()[i];
+        MS_EXCEPTION_IF_NULL(arg_element);
+        auto const_tensor = GetShapeValue(arg_element);
         if (const_tensor == nullptr) {
           return dic;
         }
@@ -588,11 +603,9 @@ py::dict AbstractListToPython(const AbstractBasePtr &abs_base, bool only_convert
   if (shape_value) {
     for (size_t i = 0; i < len; i++) {
       if (!res[i].contains(py::str(ATTR_SHAPE_VALUE))) {
-        auto const_abstract_value = arg_list->elements()[i]->cast_ptr<abstract::AbstractTensor>();
-        MS_EXCEPTION_IF_NULL(const_abstract_value);
-        auto const_value = const_abstract_value->BuildValue();
-        MS_EXCEPTION_IF_NULL(const_value);
-        auto const_tensor = const_value->cast<tensor::TensorPtr>();
+        auto arg_element = arg_list->elements()[i];
+        MS_EXCEPTION_IF_NULL(arg_element);
+        auto const_tensor = GetShapeValue(arg_element);
         if (const_tensor == nullptr) {
           return dic;
         }
