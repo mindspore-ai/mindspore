@@ -513,6 +513,14 @@ BaseShapePtr StandardPrimitiveImplReg::InferShape(const PrimitivePtr &prim, cons
   return op_infer_->InferShape(prim, args);
 }
 
+TypePtr StandardPrimitiveImplReg::InferType(const PrimitivePtr &prim, const AbstractBasePtrList &args) const {
+  if (op_infer_ == nullptr) {
+    return nullptr;
+  }
+
+  return op_infer_->InferType(prim, args);
+}
+
 ValuePtr StandardPrimitiveImplReg::InferValue(const PrimitivePtr &prim, const AbstractBasePtrList &args) const {
   if (op_infer_ == nullptr) {
     return nullptr;

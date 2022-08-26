@@ -31,15 +31,6 @@ class MatMulFusion : public OpDesc {
   ~MatMulFusion() = default;
 
  protected:
-  bool CheckInputs() override {
-    const size_t kShapeSize = 2;
-    if (inputs_info_[0].shape.size() != kShapeSize || inputs_info_[1].shape.size() != kShapeSize) {
-      MS_LOG(INFO) << "Only expand MatMulFusion when its input shape size is 2, but got "
-                   << inputs_info_[0].shape.size() << " and " << inputs_info_[1].shape.size();
-      return false;
-    }
-    return true;
-  }
   NodePtrList Expand(const NodePtrList &inputs) override {
     const size_t has_bias_input_size = 3;
     auto a = inputs[0];
@@ -47,11 +38,19 @@ class MatMulFusion : public OpDesc {
     auto bias = (inputs.size() == has_bias_input_size) ? inputs[2] : nullptr;
     auto transpose_a = (attrs_.count("transpose_a") != 0) ? attrs_["transpose_a"] : MakeValue(false);
     auto transpose_b = (attrs_.count("transpose_b") != 0) ? attrs_["transpose_b"] : MakeValue(false);
-    auto matmul = gb.Emit("MatMul", {a, b},
-                          {{"transpose_a", transpose_a},
-                           {"transpose_b", transpose_b},
-                           {"dst_type", kFloat32},
-                           {"pack_b", MakeValue(true)}});
+    auto pack_b = (attrs_.count("pack_b") != 0) ? attrs_["pack_b"] : MakeValue(false);
+    if (b->shape.size() < a->shape.size()) {
+      ShapeVector new_shape(a->shape.size() - b->shape.size(), 1);
+      (void)new_shape.insert(new_shape.end(), b->shape.cbegin(), b->shape.cend());
+      b = gb.Reshape(b, new_shape);
+    } else if (a->shape.size() < b->shape.size()) {
+      ShapeVector new_shape(b->shape.size() - a->shape.size(), 1);
+      (void)new_shape.insert(new_shape.end(), a->shape.cbegin(), a->shape.cend());
+      a = gb.Reshape(a, new_shape);
+    }
+    auto matmul =
+      gb.Emit("MatMul", {a, b},
+              {{"transpose_a", transpose_a}, {"transpose_b", transpose_b}, {"dst_type", kFloat32}, {"pack_b", pack_b}});
     if (bias != nullptr) {
       matmul = gb.Add(matmul, bias);
     }

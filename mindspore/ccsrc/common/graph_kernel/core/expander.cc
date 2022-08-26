@@ -40,6 +40,7 @@ CNodePtr ExpanderDecorator::QuickCloneCNode(const AnfNodePtr &node, bool clone_p
   MS_EXCEPTION_IF_NULL(func_graph);
   CNodePtr new_node = func_graph->NewCNode(cnode->inputs());
   new_node->CloneCNodeInfo(cnode);
+  new_node->set_fullname_with_scope(node->fullname_with_scope());
   if (clone_prim) {
     new_node->set_input(0, NewValueNode(GetCNodePrimitive(node)->Clone()));
   }
