@@ -566,7 +566,7 @@ def ms_kernel(fn=None, reg_info=None, compile_attrs=None):
 
         # we enable ml scheduler automatically for ms_kernel function
         if context.get_context('device_target') == "Ascend":
-            compile_attrs["enable_mlsched"] = True
+            compile_attrs["enable_polytops"] = "always"
 
         setattr(func, "compile_attrs", json.dumps(compile_attrs))
         if reg_info is not None:
