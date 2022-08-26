@@ -15,6 +15,7 @@
 
 """Defines gradient related operators with functional form."""
 
+from __future__ import absolute_import
 from .grad_func import (
     grad,
     value_and_grad,

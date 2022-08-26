@@ -325,7 +325,7 @@ class SparseOptimizerCpuKernelMod : public NativeCpuKernelMod {
         }
       } else {
         for (size_t j = 0; j < param.value_stride_; ++j) {
-          reduced_bucket->value_[value_offset + j] += global_value[global_value_offset + j];
+          *(reduced_bucket->value_ + value_offset + j) += *(global_value + global_value_offset + j);
         }
       }
       last_index = index;

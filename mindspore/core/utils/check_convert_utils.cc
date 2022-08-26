@@ -596,6 +596,7 @@ ShapeVector CheckAndConvertUtils::CheckTensorIntValue(const std::string &type_na
 TypePtr CheckAndConvertUtils::CheckTensorSubClass(const string &type_name, const TypePtr &type,
                                                   const std::set<TypePtr> &template_types, const string &prim_name,
                                                   bool is_mix) {
+  MS_EXCEPTION_IF_NULL(type);
   auto real_type = type;
   if (type->isa<TensorType>()) {
     auto tensor_type = type->cast<TensorTypePtr>();

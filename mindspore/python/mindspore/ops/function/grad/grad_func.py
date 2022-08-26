@@ -15,6 +15,7 @@
 
 """Defines gradient related operators with functional form."""
 
+from __future__ import absolute_import
 from functools import partial
 from mindspore.common import ms_function
 from mindspore.common import Tensor

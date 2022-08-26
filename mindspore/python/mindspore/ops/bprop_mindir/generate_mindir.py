@@ -13,9 +13,11 @@
 # limitations under the License.
 # ============================================================================
 """Generate the mindir for bprop"""
+from __future__ import absolute_import
 import os
 import shutil
 import argparse
+import logging
 
 from mindspore.ops import operations as P
 from mindspore.ops import _constants
@@ -32,6 +34,8 @@ serializable_bprop_ops = [P.ReLU, P.Identity, inner.Range, P.OnesLike, P.ZerosLi
                           P.Select, P.ScatterMax, P.ScatterMin, P.ScatterUpdate, G.ReluGrad, _constants.kTupleGetItem,
                           P.FloorDiv, P.TruncateDiv, P.Minimum, P.Maximum, P.IsNan, P.IsInf, P.ReLUV2, "Depend",
                           "stop_gradient", "Switch", "UpdateState", "Load"]
+
+logging.getLogger().setLevel(logging.INFO)
 
 
 def run_generate():
@@ -50,32 +54,33 @@ if __name__ == "__main__":
 
     args_opt = parser.parse_args()
     # mindspore/ops/_grad/__init__.py
-    bprop_path = g.__file__
-    bprop_installed_dir = bprop_path[: bprop_path.rindex('/')]
-    bprop_mindir_export_dir = bprop_installed_dir + "/../bprop_mindir"
+    BPROP_PATH = g.__file__
+    bprop_installed_dir = BPROP_PATH[: BPROP_PATH.rindex('/')]
+    bprop_mindir_export_dir = os.path.join(bprop_installed_dir, "..", "bprop_mindir")
 
     mindspore_path = args_opt.mindspore_path
     bprop_src_dir = None
     bprop_mindir_src_dir = None
-    if not mindspore_path is None:
+    if mindspore_path is not None:
         mindspore_path = mindspore_path.rstrip('/')
-        bprop_src_dir = mindspore_path + "/mindspore/python/mindspore/ops/_grad"
-        bprop_mindir_src_dir = mindspore_path + "/mindspore/python/mindspore/ops/bprop_mindir"
+        python_ops_dir = os.path.join(mindspore_path, "mindspore", "python", "mindspore", "ops")
+        bprop_src_dir = os.path.join(python_ops_dir, "_grad")
+        bprop_mindir_src_dir = os.path.join(python_ops_dir, "bprop_mindir")
 
-    copy_flag = not bprop_src_dir is None and bprop_src_dir != bprop_installed_dir
+    copy_flag = bprop_src_dir is not None and bprop_src_dir != bprop_installed_dir
     # If the specified bprop source directory is not on the mindspore installed path,
     # copy the bprop source files to the installed path.
-    backup_suffix = "_generate_bak"
+    BACKUP_SUFFIX = "_generate_bak"
     if copy_flag:
-        shutil.rmtree(bprop_installed_dir + backup_suffix, ignore_errors=True)
-        os.rename(bprop_installed_dir, bprop_installed_dir + backup_suffix)
+        shutil.rmtree(bprop_installed_dir + BACKUP_SUFFIX, ignore_errors=True)
+        os.rename(bprop_installed_dir, bprop_installed_dir + BACKUP_SUFFIX)
         os.mkdir(bprop_installed_dir)
         ls = os.listdir(bprop_src_dir)
         for line in ls:
             file_path = os.path.join(bprop_src_dir, line)
             if os.path.isfile(file_path):
-                print("copy: " + file_path)
                 shutil.copy(file_path, bprop_installed_dir)
+                logging.info("copied: %s", file_path)
 
     run_generate()
 
@@ -83,16 +88,16 @@ if __name__ == "__main__":
     # copy the generated mindir files to the mindir directory relative to the specified path.
     if copy_flag:
         shutil.rmtree(bprop_installed_dir)
-        os.rename(bprop_installed_dir + backup_suffix, bprop_installed_dir)
+        os.rename(bprop_installed_dir + BACKUP_SUFFIX, bprop_installed_dir)
         ls = os.listdir(bprop_mindir_export_dir)
         for line in ls:
             file_path = os.path.join(bprop_mindir_export_dir, line)
             if file_path.endswith(".mindir") and os.path.isfile(file_path):
-                print("copy: " + file_path)
+                os.chmod(file_path, 0o664)
                 shutil.copy(file_path, bprop_mindir_src_dir)
+                logging.info("copied: %s", file_path)
 
-        print("The new bprop mindir files has been generated in the path \"" + bprop_mindir_src_dir +
-              "\".")
+        logging.info("The new bprop mindir files has been generated in the path \"%s\"", bprop_mindir_src_dir)
     else:
-        print("The new bprop mindir files has been generated in the path \"" + bprop_mindir_export_dir +
-              "\", copy the *.mindir to your mindspore path or PYTHONPATH if necessary.")
+        logging.info("The new bprop mindir files has been generated in the path \"%s\", "
+                     "copy the *.mindir to your mindspore path or PYTHONPATH if necessary.", bprop_mindir_export_dir)

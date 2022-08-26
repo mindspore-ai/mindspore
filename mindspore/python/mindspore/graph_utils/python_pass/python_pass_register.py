@@ -49,6 +49,10 @@ class PyPassManager(PyPassManager_):
         self.run_only_once_ = run_only_once
         PyPassManager_.__init__(self)
 
+    def __call__(self, py_pass):
+        self.register(py_pass)
+        return py_pass
+
     def register(self, py_pass):
         if not isfunction(py_pass):
             raise TypeError(f"Expect function pass, got : ({type(py_pass)}){py_pass}")
@@ -68,10 +72,6 @@ class PyPassManager(PyPassManager_):
             super().unregister(py_pass.__name__)
             return
         raise TypeError(f"Expect py_pass to be string or function, got ({type(py_pass)}){py_pass}")
-
-    def __call__(self, py_pass):
-        self.register(py_pass)
-        return py_pass
 
     def gen_new_parameter(self, pattern):
         if not isinstance(pattern, NewParameter):
