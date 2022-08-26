@@ -36,9 +36,6 @@ class MIND_API ReLU6 : public BaseOperator {
   /// \brief Init.
   void Init() const {}
 };
-
-abstract::AbstractBasePtr ReLU6Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_RELU6_H_
