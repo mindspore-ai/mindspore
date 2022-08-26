@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -193,11 +193,17 @@ std::string SocketOperation::GetIP(const std::string &url) {
 }
 
 bool SocketOperation::GetSockAddr(const std::string &url, SocketAddress *addr) {
+  if (addr == nullptr) {
+    return false;
+  }
   std::string ip;
   uint16_t port = 0;
 
   size_t len = sizeof(*addr);
-  (void)memset_s(addr, len, 0, len);
+  if (memset_s(addr, len, 0, len) > 0) {
+    MS_LOG(ERROR) << "Failed to call memset_s.";
+    return false;
+  }
 
   size_t index1 = url.find(URL_PROTOCOL_IP_SEPARATOR);
   if (index1 == std::string::npos) {
@@ -300,6 +306,9 @@ std::string SocketOperation::GetPeer(int sock_fd) {
 }
 
 int SocketOperation::Connect(int sock_fd, const struct sockaddr *sa, socklen_t saLen, uint16_t *boundPort) {
+  if (sa == nullptr || boundPort == nullptr) {
+    return RPC_ERROR;
+  }
   int retval = 0;
 
   retval = connect(sock_fd, sa, saLen);

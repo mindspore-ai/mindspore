@@ -31,6 +31,9 @@ bool SSLSocketOperation::Initialize() {
 ssize_t SSLSocketOperation::ReceivePeek(Connection *, char *, uint32_t) { return 0; }
 
 int SSLSocketOperation::Receive(Connection *connection, char *recvBuf, size_t totalRecvLen, size_t *recvLen) {
+  if (connection == nullptr || recvBuf == nullptr || recvLen == nullptr) {
+    return IO_RW_ERROR;
+  }
   char *curRecvBuf = recvBuf;
   *recvLen = 0;
 
@@ -67,6 +70,9 @@ int SSLSocketOperation::Receive(Connection *connection, char *recvBuf, size_t to
 
 int SSLSocketOperation::ReceiveMessage(Connection *connection, struct msghdr *recvMsg, size_t totalRecvLen,
                                        size_t *recvLen) {
+  if (connection == nullptr || recvMsg == nullptr || recvLen == nullptr) {
+    return IO_RW_ERROR;
+  }
   if (totalRecvLen == 0) {
     return IO_RW_OK;
   }
@@ -113,6 +119,9 @@ int SSLSocketOperation::ReceiveMessage(Connection *connection, struct msghdr *re
 
 int SSLSocketOperation::SendMessage(Connection *connection, struct msghdr *sendMsg, size_t totalSendLen,
                                     size_t *sendLen) {
+  if (connection == nullptr || sendMsg == nullptr || sendLen == nullptr) {
+    return IO_RW_ERROR;
+  }
   *sendLen = 0;
   const size_t msg_idx = 0;
 
@@ -161,13 +170,18 @@ void SSLSocketOperation::Close(Connection *connection) {
     SSL_free(ssl_);
     ssl_ = nullptr;
   }
-  // Close the socket.
-  (void)close(connection->socket_fd);
-  connection->socket_fd = -1;
+  if (connection != nullptr) {
+    // Close the socket.
+    (void)close(connection->socket_fd);
+    connection->socket_fd = -1;
+  }
 }
 
 void SSLSocketOperation::NewConnEventHandler(int fd, uint32_t events, void *context) {
   Connection *conn = reinterpret_cast<Connection *>(context);
+  if (conn == nullptr) {
+    return;
+  }
   uint32_t error = events & (EPOLLERR | EPOLLHUP | EPOLLRDHUP);
   if (error > 0) {
     conn->state = ConnectionState::kDisconnecting;
@@ -190,6 +204,9 @@ void SSLSocketOperation::NewConnEventHandler(int fd, uint32_t events, void *cont
 
 void SSLSocketOperation::ConnEstablishedEventHandler(int fd, uint32_t events, void *context) {
   Connection *conn = reinterpret_cast<Connection *>(context);
+  if (conn == nullptr) {
+    return;
+  }
   uint32_t error = events & (EPOLLERR | EPOLLHUP | EPOLLRDHUP);
   if (error > 0) {
     conn->state = ConnectionState::kDisconnecting;
@@ -211,7 +228,8 @@ void SSLSocketOperation::ConnEstablishedEventHandler(int fd, uint32_t events, vo
 }
 
 void SSLSocketOperation::Handshake(int fd, Connection *conn) const {
-  if (conn->state == ConnectionState::kConnected) {
+  if (conn == nullptr || conn->recv_event_loop == nullptr || ssl_ == nullptr ||
+      conn->state == ConnectionState::kConnected) {
     return;
   }
 

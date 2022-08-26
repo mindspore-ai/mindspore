@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,9 @@ namespace mindspore {
 namespace distributed {
 namespace rpc {
 void DoDisconnect(int fd, Connection *conn, uint32_t error, int soError) {
+  if (conn == nullptr) {
+    return;
+  }
   if (LOG_CHECK_EVERY_N()) {
     MS_LOG(INFO) << "Failed to call connect, fd: " << fd << ", to: " << conn->destination.c_str()
                  << ", events: " << error << ", errno: " << soError;
@@ -43,6 +46,9 @@ void ConnectedEventHandler(int fd, uint32_t events, void *context) {
   uint32_t error = events & (EPOLLERR | EPOLLHUP | EPOLLRDHUP);
   int soError = 0;
   Connection *conn = reinterpret_cast<Connection *>(context);
+  if (conn == nullptr || conn->socket_operation == nullptr) {
+    return;
+  }
   conn->socket_operation->ConnEstablishedEventHandler(fd, events, context);
   if (conn->state == ConnectionState::kDisconnecting) {
     DoDisconnect(fd, conn, error, soError);
@@ -67,6 +73,9 @@ void OnAccept(int server, uint32_t events, void *arg) {
     return;
   }
   TCPComm *tcpmgr = reinterpret_cast<TCPComm *>(arg);
+  if (tcpmgr == nullptr || tcpmgr->conn_pool_ == nullptr) {
+    return;
+  }
   if (tcpmgr->recv_event_loop_ == nullptr) {
     MS_LOG(ERROR) << "EventLoop is null, server fd: " << server << ", events: " << events;
     return;
@@ -130,6 +139,7 @@ void OnAccept(int server, uint32_t events, void *arg) {
     acceptFd = -1;
     delete conn->send_metrics;
     delete conn;
+    conn = nullptr;
     return;
   }
   tcpmgr->conn_pool_->AddConnection(conn);
@@ -188,7 +198,10 @@ bool TCPComm::StartServerSocket(const std::string &url, const MemAllocateCallbac
   allocate_cb_ = allocate_cb;
   size_t index = url.find(URL_PROTOCOL_IP_SEPARATOR);
   if (index != std::string::npos) {
-    url_ = url.substr(index + sizeof(URL_PROTOCOL_IP_SEPARATOR) - 1);
+    index = index + sizeof(URL_PROTOCOL_IP_SEPARATOR) - 1;
+    if (index < url.length()) {
+      url_ = url.substr(index);
+    }
   }
 
   // Register read event callback for server socket
@@ -225,6 +238,9 @@ void TCPComm::SetMessageFreeCallback(const std::string &dst_url, const MemFreeCa
 void TCPComm::ReadCallBack(void *connection) {
   const int max_recv_count = 3;
   Connection *conn = reinterpret_cast<Connection *>(connection);
+  if (conn == nullptr) {
+    return;
+  }
   int count = 0;
   int retval = 0;
   do {
@@ -237,7 +253,9 @@ void TCPComm::ReadCallBack(void *connection) {
 
 void TCPComm::EventCallBack(void *connection) {
   Connection *conn = reinterpret_cast<Connection *>(connection);
-
+  if (conn == nullptr) {
+    return;
+  }
   if (conn->state == ConnectionState::kConnected) {
     conn->conn_mutex->lock();
     (void)conn->Flush();
@@ -250,6 +268,9 @@ void TCPComm::EventCallBack(void *connection) {
 
 void TCPComm::WriteCallBack(void *connection) {
   Connection *conn = reinterpret_cast<Connection *>(connection);
+  if (conn == nullptr) {
+    return;
+  }
   if (conn->state == ConnectionState::kConnected) {
     conn->conn_mutex->lock();
     (void)conn->Flush();
@@ -279,6 +300,9 @@ int TCPComm::SetConnectedHandler(Connection *conn) {
 
 /* static method */
 int TCPComm::DoConnect(Connection *conn, const struct sockaddr *sa, socklen_t saLen) {
+  if (conn == nullptr || conn->recv_event_loop == nullptr || sa == nullptr) {
+    return RPC_ERROR;
+  }
   int retval = 0;
   uint16_t localPort = 0;
 
@@ -315,6 +339,9 @@ void TCPComm::DropMessage(MessageBase *msg) {
 }
 
 ssize_t TCPComm::Send(MessageBase *msg, bool sync) {
+  if (msg == nullptr) {
+    return -1;
+  }
   auto task = [msg, this] {
     std::lock_guard<std::mutex> lock(*conn_mutex_);
     // Search connection by the target address
@@ -375,6 +402,9 @@ bool TCPComm::Flush(const std::string &dst_url) {
 }
 
 bool TCPComm::Connect(const std::string &dst_url) {
+  MS_EXCEPTION_IF_NULL(conn_mutex_);
+  MS_EXCEPTION_IF_NULL(conn_pool_);
+
   std::lock_guard<std::mutex> lock(*conn_mutex_);
 
   // Search connection by the target address
@@ -419,6 +449,7 @@ bool TCPComm::Connect(const std::string &dst_url) {
         conn->socket_operation = nullptr;
       }
       delete conn;
+      conn = nullptr;
       return false;
     }
     conn->source = SocketOperation::GetLocalIP() + ":" + std::to_string(SocketOperation::GetPort(sock_fd));
@@ -442,6 +473,7 @@ bool TCPComm::Connect(const std::string &dst_url) {
 }
 
 bool TCPComm::IsConnected(const std::string &dst_url) {
+  MS_EXCEPTION_IF_NULL(conn_pool_);
   Connection *conn = conn_pool_->FindConnection(dst_url);
   if (conn != nullptr && conn->state == ConnectionState::kConnected) {
     return true;
@@ -450,6 +482,11 @@ bool TCPComm::IsConnected(const std::string &dst_url) {
 }
 
 bool TCPComm::Disconnect(const std::string &dst_url) {
+  MS_EXCEPTION_IF_NULL(conn_mutex_);
+  MS_EXCEPTION_IF_NULL(conn_pool_);
+  MS_EXCEPTION_IF_NULL(recv_event_loop_);
+  MS_EXCEPTION_IF_NULL(send_event_loop_);
+
   unsigned int interval = 100000;
   size_t retry = 30;
   while (recv_event_loop_->RemainingTaskNum() != 0 && send_event_loop_->RemainingTaskNum() != 0 && retry > 0) {
