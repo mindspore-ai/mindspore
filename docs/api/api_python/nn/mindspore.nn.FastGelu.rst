@@ -5,7 +5,7 @@ mindspore.nn.FastGelu
 
     快速高斯误差线性单元激活函数（Fast Gaussian Error Linear Units activation function）。
 
-    对输入的每个元素计算FastGelu。
+    对输入的每个元素计算FastGelu。输入是具有任何有效形状的张量。
 
     FastGelu定义如下：
 

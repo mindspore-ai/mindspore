@@ -78,7 +78,7 @@ class Metric(metaclass=ABCMeta):
     subclasse. `update` will accumulate intermediate results in the evaluation process, `eval` will evaluate the final
     result, and `clear` will reinitialize the intermediate results.
 
-    Never use this class directly, but instantiate one of its subclasses instead. For examples,
+    Never use this class directly, but instantiate one of its subclasses instead, for examples,
     :class:`mindspore.nn.MAE`, :class:`mindspore.nn.Recall` etc.
 
     Supported Platforms:

@@ -512,7 +512,7 @@ class _Linear(Cell):
 
 class FixedSparseAttention(nn.Cell):
     """
-    Fixed Sparse Attention Layer
+    Fixed Sparse Attention Layer.
 
     This function contains the sparse attention primitives used in Sparse Transformers (see paper).
     `Generating Long Sequences with Sparse Transformers <https://arxiv.org/abs/1904.10509>`_.

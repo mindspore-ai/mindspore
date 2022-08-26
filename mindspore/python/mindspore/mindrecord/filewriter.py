@@ -186,6 +186,7 @@ class FileWriter:
     def add_index(self, index_fields):
         """
         Select index fields from schema to accelerate reading.
+        schema is added through `add_schema`.
 
         Note:
             The index fields should be primitive type. e.g. int/float/str.

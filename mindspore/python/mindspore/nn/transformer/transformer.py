@@ -189,8 +189,7 @@ default_transformer_recompute_config = TransformerRecomputeConfig()
 
 class TransformerOpParallelConfig(_Config):
     r"""
-        TransformerOpParallelConfig for the setting global data parallel, model parallel and fusion group.
-        The parallel configure setting.
+        TransformerOpParallelConfig for setting parallel configuration, such as the data parallel and model parallel.
 
         Note:
             Except the recompute argument, other arguments will **not** be effective when the user doesn't set
@@ -339,9 +338,9 @@ default_embedding_parallel_config = EmbeddingOpParallelConfig()
 class FeedForward(Cell):
     r"""
         The multilayer perceptron with two linear layers with dropout applied at final output. The first linear
-        will project the input dimension from hidden_size to ffn_hidden_size, the second linear will project the
+        will project the input dimension from hidden_size to ffn_hidden_size. The second linear will project the
         dimension from ffn_hidden_size to hidden_size. The first linear is sharded on the relative dimension,
-        the second linear is sharded on the output dimension. The overview process can be
+        and the second linear is sharded on the output dimension. The overview process can be:
 
         .. math::
             Dropout((xW_1+b_1)W_2 + b_2))
