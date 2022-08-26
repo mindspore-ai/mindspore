@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,13 @@ template <>
 __global__ void ExponentialKernel(const half *input, half *output, const size_t count) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
     output[i] = hexp(input[i]);
+  }
+  return;
+}
+template <typename T>
+__global__ void ExponentialKernel(const Complex<T> *input, Complex<T> *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    output[i] = exp(input[i]);
   }
   return;
 }
@@ -1638,6 +1645,8 @@ template CUDA_LIB_EXPORT void Sign<uint64_t>(const uint64_t *input, uint64_t *ou
                                              cudaStream_t cuda_stream);
 
 // complex64
+template CUDA_LIB_EXPORT void Exponential<Complex<float>>(const Complex<float> *input, Complex<float> *output,
+                                                          const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Real<float>(const Complex<float> *input, float *output, const size_t count,
                                           cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Imag<float>(const Complex<float> *input, float *output, const size_t count,
@@ -1660,6 +1669,8 @@ template CUDA_LIB_EXPORT void Logarithm<Complex<float>>(const Complex<float> *in
                                                         const size_t count, cudaStream_t cuda_stream);
 
 // complex128
+template CUDA_LIB_EXPORT void Exponential<Complex<double>>(const Complex<double> *input, Complex<double> *output,
+                                                           const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Real<double>(const Complex<double> *input, double *output, const size_t count,
                                            cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Imag<double>(const Complex<double> *input, double *output, const size_t count,

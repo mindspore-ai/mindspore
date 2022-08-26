@@ -1045,6 +1045,29 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('broadcast_to')(x.shape)(self)
 
+    def exp(self):
+        """
+        Returns exponential of a tensor element-wise.
+
+        .. math::
+
+            out_i = e^{x_i}
+
+        Returns:
+            Tensor, has the same shape and dtype as the `x`.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> x = Tensor(np.array([1.0, 2.0, 4.0]), mindspore.float32)
+            >>> output = x.exp()
+            >>> print(output)
+            [ 2.718282  7.389056 54.598152]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('exp')()(self)
+
     def square(self):
         """
         Returns square of a tensor element-wise.
