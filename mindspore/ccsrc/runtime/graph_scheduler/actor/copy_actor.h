@@ -20,7 +20,6 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include <utility>
 #include "utils/hash_map.h"
 #include "runtime/graph_scheduler/actor/actor_common.h"
 #include "runtime/graph_scheduler/actor/memory_aware_actor.h"

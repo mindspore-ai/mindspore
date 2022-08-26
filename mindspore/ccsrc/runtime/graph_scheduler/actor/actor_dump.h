@@ -20,7 +20,6 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include <utility>
 #include <fstream>
 #include "runtime/graph_scheduler/actor/abstract_actor.h"
 #include "runtime/graph_scheduler/actor/data_prepare_actor.h"

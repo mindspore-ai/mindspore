@@ -71,7 +71,7 @@ void ControlActor::GetAllDeviceTensors(const OpRealParameterWithBranchID &op_rea
   }
 }
 
-void ControlActor::IncreaseDynamicRefCount(const OpData<DeviceTensor> *op_data) {
+void ControlActor::IncreaseDynamicRefCount(const OpData<DeviceTensor> *op_data) const {
   MS_EXCEPTION_IF_NULL(op_data);
   MS_EXCEPTION_IF_NULL(op_data->data_);
   op_data->data_->IncreaseDynamicRefCount(GetAID().Name());
@@ -294,7 +294,7 @@ void ControlActor::IncreaseDynamicRefCounts(OpContext<DeviceTensor> *const conte
                                " current:" + std::to_string(input_partials_.size()) + " for actor:" + GetAID().Name();
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
     }
-    auto output_partial = input_partials_[output_partial_arrow->from_output_index_];
+    auto output_partial = input_partials_[IntToSize(output_partial_arrow->from_output_index_)];
     IncreaseDynamicRefCount(output_partial);
   }
 }

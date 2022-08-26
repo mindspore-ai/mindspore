@@ -77,7 +77,7 @@ void SuperKernelActor::Init() {
     MS_EXCEPTION_IF_NULL(data_arrow);
     MS_EXCEPTION_IF_NULL(output_node);
     MS_EXCEPTION_IF_NULL(data);
-    auto device_address = AnfAlgo::GetMutableOutputAddr(output_node, data_arrow->from_output_index_, false);
+    auto device_address = AnfAlgo::GetMutableOutputAddr(output_node, IntToSize(data_arrow->from_output_index_), false);
     data->data_ = device_address.get();
   }
 
@@ -128,7 +128,6 @@ void SuperKernelActor::Run(OpContext<DeviceTensor> *const context) {
   }
 
   try {
-    // @TODO: @TBD: run graph with inputs and outputs
     const std::vector<tensor::Tensor> inputs;
     std::vector<tensor::Tensor> outputs;
     const std::map<string, string> compile_options;
@@ -186,7 +185,7 @@ bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context) {
       MS_LOG(ERROR) << "The input index:" << dst_index << "is out of range:" << input_nodes.size() << ".";
       return false;
     }
-    auto dst_node = input_nodes[dst_index];
+    auto dst_node = input_nodes[IntToSize(dst_index)];
     MS_EXCEPTION_IF_NULL(dst_node);
 
     auto dst_param = dst_node->cast<ParameterPtr>();
