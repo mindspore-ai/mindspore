@@ -557,8 +557,6 @@ def get_layernormgrad_vmap_rule(prim, axis_size):
             x_rank = len(x_shape)
             begin_params_axis += x_rank
         batch_params_reduce_axes = tuple(range(1, begin_params_axis))
-        if not batch_params_reduce_axes:
-            return None
         return batch_params_reduce_axes
 
     @constexpr
@@ -590,19 +588,18 @@ def get_layernormgrad_vmap_rule(prim, axis_size):
         dy_shape = F.shape(dy)
         batch_params_reduce_axes = get_batch_params_reduce_axes(params_axis, dy_shape)
 
-        if batch_params_reduce_axes is None:
+        if not batch_params_reduce_axes:
             d_beta = dy
         else:
             d_beta = F.reduce_sum(dy, batch_params_reduce_axes)
 
         d_gamma_tmp = dy * (x - mean) / F.sqrt(var + eps)
-        if batch_params_reduce_axes is None:
+        if not batch_params_reduce_axes:
             d_gamma = d_gamma_tmp
         else:
             d_gamma = F.reduce_sum(d_gamma_tmp, batch_params_reduce_axes)
 
         gamma_shape = F.shape(gamma)
-        dy_shape = F.shape(dy)
         gamma = _handle_broadcasting(gamma, gamma_shape, dy_shape)
         dy = dy * gamma
         gamma_logical_shape = get_logical_shape(gamma_shape)

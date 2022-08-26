@@ -20,6 +20,7 @@ from mindspore import Tensor
 from mindspore.nn import Cell
 from mindspore.ops import composite as C
 from mindspore.ops.operations import Minimum
+from mindspore.ops.functional import vmap
 
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 grad = C.GradOperation(get_all=True, sens_param=True)
@@ -45,21 +46,21 @@ class GradWrap(Cell):
         return gout
 
 
-def gen_data(inputA_np, inputB_np, grad_=None):
-    inputA_me = inputA_np
-    if isinstance(inputA_np, np.ndarray):
-        inputA_me = Tensor(inputA_me)
+def gen_data(x_np, y_np, grad_=None):
+    x_me = x_np
+    if isinstance(x_np, np.ndarray):
+        x_me = Tensor(x_me)
 
-    inputB_me = inputB_np
-    if isinstance(inputB_np, np.ndarray):
-        inputB_me = Tensor(inputB_np)
+    y_me = y_np
+    if isinstance(y_np, np.ndarray):
+        y_me = Tensor(y_np)
 
     if grad_ is None:
         grad_ = Tensor(grad_)
 
     net_me = GradWrap(MinNetMe())
     net_me.set_train()
-    output = net_me(inputA_me, inputB_me, Tensor(grad_))
+    output = net_me(x_me, y_me, Tensor(grad_))
     return output
 
 
@@ -67,10 +68,10 @@ def gen_data(inputA_np, inputB_np, grad_=None):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_min_tensor_grad_4d():
-    inputA_np = np.random.randn(1, 3, 2, 2).astype(np.float32)
-    inputB_np = np.random.randn(1, 3, 2, 2).astype(np.float32)
+    x_np = np.random.randn(1, 3, 2, 2).astype(np.float32)
+    y_np = np.random.randn(1, 3, 2, 2).astype(np.float32)
     grad_ = np.random.randn(1, 3, 2, 2).astype(np.float32)
-    output = gen_data(inputA_np, inputB_np, grad_)
+    output = gen_data(x_np, y_np, grad_)
     print(output[0].asnumpy())
     print(output[1].asnumpy())
 
@@ -169,3 +170,105 @@ def test_min_tensor_grad_result():
     error1 = np.ones(shape=expect1.shape) * 1.0e-5
     assert np.all(np.abs(output[0].asnumpy() - expect0) < error0)
     assert np.all(np.abs(output[1].asnumpy() - expect1) < error1)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_min_grad_vmap():
+    """
+    Feature: minimumgrad vmap
+    Description: test the minimumgrad vmap when in_axes=(0, 0, 0).
+    Expectation: match to np benchmark.
+    """
+    net = GradWrap(MinNetMe())
+    vmap_net = vmap(net, in_axes=(0, 0, 0))
+    np.random.seed(20)
+    x = Tensor(np.random.rand(2, 4))
+    y = Tensor(np.random.rand(2, 4))
+    sens = Tensor(np.random.rand(2, 4))
+    dx, dy = vmap_net(x, y, sens)
+
+    expect0 = np.array([[0.11669374, 0., 0., 0.],
+                        [0.85762554, 0.94977903, 0.56168687, 0.]])
+
+    expect1 = np.array([[0., 0.75128073, 0.23921822, 0.25480601],
+                        [0., 0., 0., 0.17878053]])
+
+    assert np.allclose(dx.asnumpy(), expect0, rtol=1e-6, atol=1e-4)
+    assert np.allclose(dy.asnumpy(), expect1, rtol=1e-6, atol=1e-4)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_min_grad_vmap_none():
+    """
+    Feature: minimumgrad vmap
+    Description: test the minimumgrad vmap when in_axes=(0, None, None) .
+    Expectation: match to np benchmark.
+    """
+    net = GradWrap(MinNetMe())
+    vmap_net = vmap(net, in_axes=(0, None, None))
+    np.random.seed(20)
+    x = Tensor(np.random.rand(2, 4))
+    y = Tensor(np.random.rand(4))
+    sens = Tensor(np.random.rand(4))
+    dx, dy = vmap_net(x, y, sens)
+
+
+    expect0 = np.array([[0.78300363, 0., 0., 0.],
+                        [0.78300363, 0., 0., 0.03666431]])
+
+    expect1 = np.array([[0., 0.85032761, 0.77524489, 0.03666431],
+                        [0., 0.85032761, 0.77524489, 0.]])
+
+    assert np.allclose(dx.asnumpy(), expect0, rtol=1e-6, atol=1e-4)
+    assert np.allclose(dy.asnumpy(), expect1, rtol=1e-6, atol=1e-4)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_min_grad_vmap_scalar():
+    """
+    Feature: minimumgrad vmap
+    Description: test the minimumgrad vmap when x, y is scalar .
+    Expectation: match to np benchmark.
+    """
+    net = GradWrap(MinNetMe())
+    vmap_net = vmap(net, in_axes=(None, None, 0))
+    np.random.seed(20)
+    x = Tensor(1.0)
+    y = Tensor(2.0)
+    sens = Tensor(np.random.rand(2).astype(np.float32))
+    dx, dy = vmap_net(x, y, sens)
+
+
+    expect0 = np.array([0.5881308, 0.8977137])
+    expect1 = np.array([0., 0.])
+    assert np.allclose(dx.asnumpy(), expect0, rtol=1e-6, atol=1e-4)
+    assert np.allclose(dy.asnumpy(), expect1, rtol=1e-6, atol=1e-4)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_min_grad_vmap_special():
+    """
+    Feature: minimumgrad vmap
+    Description: test the minimumgrad vmap when x_rank smaller than y_rank and y_rank smaller than g_rank.
+    Expectation: match to np benchmark.
+    """
+    net = GradWrap(MinNetMe())
+    vmap_net = vmap(net, in_axes=(None, None, 0))
+    np.random.seed(20)
+    x = Tensor(np.random.rand(1).astype(np.float32))
+    y = Tensor(np.random.rand(1, 2).astype(np.float32))
+    sens = Tensor(np.random.rand(2, 1, 2).astype(np.float32))
+    dx, dy = vmap_net(x, y, sens)
+
+    expect0 = np.array([[0.85172707], [1.0704385]])
+    expect1 = np.array([[[0., 0.]], [[0., 0.]]])
+    assert np.allclose(dx.asnumpy(), expect0, rtol=1e-6, atol=1e-4)
+    assert np.allclose(dy.asnumpy(), expect1, rtol=1e-6, atol=1e-4)

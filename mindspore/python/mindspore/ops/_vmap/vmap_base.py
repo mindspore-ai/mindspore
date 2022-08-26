@@ -86,6 +86,41 @@ def _handle_broadcasting(x, x_shape, y_shape):
 
 
 @constexpr
+def _get_broadcasting_with_front_axis_additional_axis(x_shape, y_shape):
+    """ Get the axes that are inserted after broadcasting.
+    Args:
+        x_shape (Tuple): The shape of x.
+        y_shape (Tuple): The shape of y using to broadcasting, whose batch axis is also in the front.
+
+    Returns:
+        If there isn't any additional axis, return empty tuple, else, return tuple with additional axis.
+    """
+    x_len = len(x_shape)
+    y_len = len(y_shape)
+
+    additional_axis = ()
+
+    if x_len >= y_len:
+        return additional_axis
+
+    # scalar case
+    if not x_len:
+        return tuple(range(0, y_len))
+
+    x_index = x_len - 1
+
+    for i in range(y_len - 1, 0, -1):
+        if x_index == 0:
+            additional_axis = (i,) + additional_axis
+        elif x_shape[x_index] == y_shape[i] or y_shape[i] == 1 or x_shape[x_index] == 1:
+            x_index -= 1
+        else:
+            additional_axis = (i,) + additional_axis
+
+    return additional_axis
+
+
+@constexpr
 def _raise_value_error(info, param=None):
     """Constexpr for raise_value_error."""
     if param is None:

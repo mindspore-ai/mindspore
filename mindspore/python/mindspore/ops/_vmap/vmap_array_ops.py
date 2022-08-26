@@ -1811,7 +1811,7 @@ def get_stridedslice_vmap_rule(prim, axis_size):
             _raise_value_error("vmap of `StridedSlice` not support `begin`, `end` or `strided` has batch dimension, "
                                "but got {}, {}, {}".format(begin_dim, end_dim, strided_dim))
 
-        # x_dim is not None, and other is None
+        # x_dim is not None, and the others are None
         x = _bdim_at_front(x, x_dim, axis_size)
         new_begin, new_end, new_strided = get_new_begin_end_strided(begin, end, strided)
         result = batch_stridedslice(x, new_begin, new_end, new_strided)

@@ -25,13 +25,13 @@ from mindspore.ops.operations import math_ops
 from mindspore.ops.operations import linalg_ops
 from mindspore.ops.operations import _inner_ops
 from mindspore.ops.operations import _grad_ops as G
-from ..primitive import Primitive
-from ..composite import _VmapGeneralRule
-from .._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, get_assign_vmap_rule, \
+from mindspore.ops.primitive import Primitive
+from mindspore.ops.composite import _VmapGeneralRule
+from mindspore.ops._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, get_assign_vmap_rule, \
     get_unop_vmap_rule, _raise_value_error, _bdim_at_front, _broadcast_by_axis, _handle_broadcasting, \
-    get_unary_grad_vmap_rule, _vmap_clone_prim, _bdim_at_any
-from ..operations.math_ops import (Bernoulli, BesselJ0, BesselJ1, BesselK0, BesselK0e, BesselY0, BesselY1, BesselK1,
-                                   BesselK1e, Median)
+    get_unary_grad_vmap_rule, _vmap_clone_prim, _bdim_at_any, _get_broadcasting_with_front_axis_additional_axis
+from mindspore.ops.operations.math_ops import Bernoulli, BesselJ0, BesselJ1, BesselK0, BesselK0e, BesselY0, \
+    BesselY1, BesselK1, BesselK1e, Median
 
 
 @constexpr
@@ -885,6 +885,76 @@ def get_square_sum_all_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register('MaximumGrad')
+@vmap_rules_getters.register('MinimumGrad')
+def get_broadcast_binary_op_grad_vmap_rule(prim, axis_size):
+    """VmapRule for grad of binary operations with broadcasting"""
+    broadcast_binary_op_grad_map = {
+        "MinimumGrad": G.MinimumGrad,
+        "MaximumGrad": G.MaximumGrad
+    }
+
+    if isinstance(prim, str):
+        prim = broadcast_binary_op_grad_map.get(prim)()
+
+    @constexpr
+    def get_longest_shape(x_shape, y_shape, g_shape):
+        x_rank = len(x_shape)
+        y_rank = len(y_shape)
+        g_rank = len(g_shape)
+        if x_rank > y_rank:
+            if x_rank > g_rank:
+                return x_shape
+        else:
+            if y_rank > g_rank:
+                return y_shape
+        return g_shape
+
+    def vmap_rule(x_bdim, y_bdim, grad_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, y_bdim, grad_bdim)
+        if is_all_none:
+            return result
+
+        x, x_dim = x_bdim
+        y, y_dim = y_bdim
+        g, g_dim = grad_bdim
+
+        x_shape = F.shape(x)
+        y_shape = F.shape(y)
+        g_shape = F.shape(g)
+
+        if x_dim == y_dim and x_dim == g_dim and \
+            x_shape == y_shape and x_shape == g_shape:
+            dx, dy = prim(x, y, g)
+            return (dx, x_dim), (dy, y_dim)
+
+        x = _bdim_at_front(x, x_dim, axis_size)
+        y = _bdim_at_front(y, y_dim, axis_size)
+        g = _bdim_at_front(g, g_dim, axis_size)
+
+        x_shape = F.shape(x)
+        y_shape = F.shape(y)
+        g_shape = F.shape(g)
+
+        longest_shape = get_longest_shape(x_shape, y_shape, g_shape)
+        x = _handle_broadcasting(x, x_shape, longest_shape)
+        y = _handle_broadcasting(y, y_shape, longest_shape)
+        g = _handle_broadcasting(g, g_shape, longest_shape)
+
+        x_axis_for_reduce = _get_broadcasting_with_front_axis_additional_axis(x_shape, longest_shape)
+        y_axis_for_reduce = _get_broadcasting_with_front_axis_additional_axis(y_shape, longest_shape)
+
+        dx, dy = prim(x, y, g)
+        if x_axis_for_reduce:
+            dx = F.reduce_sum(dx, x_axis_for_reduce)
+
+        if y_axis_for_reduce:
+            dy = F.reduce_sum(dy, y_axis_for_reduce)
+
+        return (dx, 0), (dy, 0)
+    return vmap_rule
+
+
 get_assign_vmap_rule = vmap_rules_getters.register(P.AssignAdd)(get_assign_vmap_rule)
 get_assign_vmap_rule = vmap_rules_getters.register(P.AssignSub)(get_assign_vmap_rule)
 # Unary vmap
@@ -942,6 +1012,8 @@ get_unop_vmap_rule = vmap_rules_getters.register(BesselK1)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(BesselK1e)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.Trunc)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.PopulationCount)(get_unop_vmap_rule)
+get_unop_vmap_rule = vmap_rules_getters.register(P.Square)(get_unop_vmap_rule)
+
 # UnaryGrad vmap
 get_unary_grad_vmap_rule = vmap_rules_getters.register(G.InvGrad)(get_unary_grad_vmap_rule)
 get_unary_grad_vmap_rule = vmap_rules_getters.register(G.LogitGrad)(get_unary_grad_vmap_rule)

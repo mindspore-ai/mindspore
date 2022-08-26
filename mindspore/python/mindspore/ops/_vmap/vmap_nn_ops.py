@@ -1675,7 +1675,7 @@ def get_layernorm_vmap_rule(prim, axis_size):
 
     norm_axis = process_attr_axis(prim.begin_norm_axis)
     params_axis = process_attr_axis(prim.begin_params_axis)
-    batch_prim = P.LayerNorm(norm_axis, params_axis)
+    batch_prim = P.LayerNorm(norm_axis, params_axis, prim.epsilon)
 
     @constexpr
     def get_logical_shape(var_shape):
