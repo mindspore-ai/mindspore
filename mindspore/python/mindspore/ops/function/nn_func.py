@@ -27,6 +27,7 @@ from ..._c_expression import Tensor as Tensor_
 from .._primitive_cache import _get_cache_prim
 from ..._checkparam import Rel
 from ..._checkparam import Validator as validator
+from ..composite.multitype_ops._constexpr_utils import raise_value_error
 
 slice_ = P.Slice()
 fast_gelu_ = P.FastGeLU()
@@ -2064,6 +2065,90 @@ def ctc_greedy_decoder(inputs, sequence_length, merge_repeated=True):
     return _ctc_greedy_decoder(inputs, sequence_length)
 
 
+def conv3d_transpose(inputs, weight, pad_mode='valid', padding=0, stride=1, dilation=1, group=1,
+                     output_padding=0):
+    r"""
+    Computes a 3D transposed convolution, which is also known as a deconvolution
+    (although it is not an actual deconvolution).
+
+    Args:
+        inputs (Tensor): The gradients with respect to the output of the convolution.
+           The shape conforms to the default.
+           data_format :math:`(N, C_{in}, D_{out}, H_{out}, W_{out})`. Currently dout data type only supports float16
+           and float32.
+        weight (Tensor): Set size of kernel is :math:`(K_d, K_h, K_w)`, then the shape is
+           :math:`(C_{in}, C_{out}//group, K_d, K_h, K_w)`. Where :math:`group` is the Args parameter,
+           :math:`//` is the symbol for integer division.
+           Currently weight data type only supports float16 and float32.
+        pad_mode (str): Specifies padding mode. The optional values are
+            "same", "valid", "pad". Default: "valid".
+
+            - same: Adopts the way of completion. The depth, height and width of the output will be equal to
+              the input `x` divided by stride. The padding will be evenly calculated in head and tail, top and bottom,
+              left and right directions possiblily.
+              Otherwise, the last extra padding will be calculated from the tail, bottom and the right side.
+              If this mode is set, `pad` must be 0.
+
+            - valid: Adopts the way of discarding. The possible largest depth, height and width of output
+              will be returned without padding. Extra pixels will be discarded. If this mode is set, `pad`
+              and `output_padding` must be 0.
+
+            - pad: Implicit paddings on both sides of the input in depth, height and width. The number of `pad` will
+              be padded to the input Tensor borders. `pad` must be greater than or equal to 0.
+
+        padding (Union(int, tuple[int])): The padding value to be filled. Default: 0. If `padding` is an integer, the
+            paddings of head, tail, top, bottom, left and right are the same, equal to pad. If `padding` is a tuple of
+            six integers, the padding of head, tail, top, bottom, left and right equal to padding[0], padding[1],
+            padding[2], padding[3], padding[4] and padding[5] correspondingly.
+        stride (Union(int, tuple[int])): The distance of kernel moving, an int number that represents
+            the depth, height and width of movement are both strides, or a tuple of three int numbers that
+            represent depth, height and width of movement respectively. Default: 1.
+        dilation (Union(int, tuple[int])): Specifies the space to use between kernel elements. Default: 1.
+        group (int): Splits input into groups. Default: 1. Only 1 is currently supported.
+        output_padding (Union(int, tuple[int])): Add extra size to each dimension of the output. Default: 0.
+
+
+    Outputs:
+        Tensor, the gradients with respect to the input of convolution 3D.
+        Tensor of shape :math:`(N, C_{out}//group, D_{out}, H_{out}, W_{out})`,
+        where :math:`group` is the Args parameter.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
+    Raises:
+        TypeError: If `group` is not an int.
+        TypeError: If `stride`, `padding` , `dilation` or `output_padding` is neither an int not a tuple.
+        ValueError: If the rank of `inputs`, `weight` is not equal to 5.
+        ValueError: If `stride` or `dilation` is less than 1.
+        ValueError: if inputs[1], weight[1] and weight[2:5] i.e. `in_channel`, `out_channel` and `kernel_size` is less
+                    than 1.
+        ValueError: If `padding` is less than 0.
+        ValueError: If `pad_mode` is not one of 'same', 'valid' nor 'pad'.
+        ValueError: If `padding` is a tuple whose length is not equal to 6.
+        ValueError: If `pad_mode` is not equal to 'padding' and `padding` is not equal to (0, 0, 0, 0, 0, 0).
+        ValueError: If `data_format` is not 'NCDHW'.
+        TypeError: If data type of dout and weight is not float16.
+
+    Examples:
+        >>> dout = Tensor(np.ones([32, 16, 10, 32, 32]), mindspore.float16)
+        >>> weight = Tensor(np.ones([16, 3, 4, 6, 2]), mindspore.float16)
+        >>> output = conv3d_transpose(dout, weight)
+        >>> print(output.shape)
+        (32, 3, 13, 37, 33)
+    """
+    if len(inputs.shape) != 5:
+        raise_value_error("the rank of inputs tensor should be 5.")
+    if len(weight.shape) != 5:
+        raise_value_error("the rank of weight tensor should be 5.")
+    in_channel = inputs.shape[1]
+    out_channel = weight.shape[1]
+    kernel_size = weight.shape[2:5]
+    _conv_3d_transpose = _get_cache_prim(NN_OPS.Conv3DTranspose)(in_channel, out_channel, kernel_size, 1, pad_mode,
+                                                                 padding, stride, dilation, group, output_padding)
+    return _conv_3d_transpose(inputs, weight)
+
+
 def conv2d(x, weight, kernel_size, pad_mode="valid", padding=0, stride=1, dilation=1, group=1):
     r"""
     2D convolution layer.
@@ -2198,6 +2283,7 @@ __all__ = [
     'ctc_loss',
     'ctc_greedy_decoder',
     'dropout',
+    'conv3d_transpose',
     'conv2d'
 ]
 __all__.sort()
