@@ -102,6 +102,12 @@ std::shared_ptr<OpInfo> TbeDynamicShapeUtil::FindOp(const std::string &op_name, 
   return op_info;
 }
 
+std::shared_ptr<OpInfo> TbeDynamicShapeUtil::FindOp(const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto op_name = common::AnfAlgo::GetCNodeName(cnode);
+  return FindOp(op_name, cnode);
+}
+
 inline std::string GetPrimitiveName(const AnfNodePtr &node) {
   if (!node->isa<CNode>()) {
     return "";

@@ -788,6 +788,7 @@ constexpr auto kOpFormat_ND = "ND";
 constexpr auto kOpFormat_NCHW = "NCHW";
 constexpr auto kOpFormat_NHWC = "NHWC";
 constexpr auto kOpFormat_HWCN = "HWCN";
+constexpr auto kOpFormat_CHWN = "CHWN";
 constexpr auto kOpFormat_NC1HWC0 = "NC1HWC0";
 constexpr auto kOpFormat_FRAC_Z = "FRACTAL_Z";
 constexpr auto kOpFormat_FRACTAL_Z = "FRACTAL_Z";
@@ -821,6 +822,7 @@ COMMON_EXPORT bool IsOneOfDynamicShapeConstInputToAttrGPU(const std::string &nam
 COMMON_EXPORT bool IsOneOfComputeDepend(const std::string &name);
 COMMON_EXPORT bool IsOneOfHWSpecialFormat(const std::string &format);
 COMMON_EXPORT bool IsOneOfFormat(const std::string &format);
+COMMON_EXPORT bool IsOneOfServerFormatC04(const std::string &format);
 
 // The map between kernel's output and input ref relationship.
 // Key is the output index while the value is input index which will be used as the reference of output.

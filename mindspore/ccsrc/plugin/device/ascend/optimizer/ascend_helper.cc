@@ -322,10 +322,6 @@ AnfNodePtr AddTransOpNodeToGraphWithFormat(const FuncGraphPtr &func_graph, const
 
     trans_node = reshape_node;
   }
-  if (trans_opname == prim::kPrimTransDataRNN->name()) {
-    common::AnfAlgo::CopyNodeAttr(kAttrHiddenSize, node, trans_data);
-    common::AnfAlgo::CopyNodeAttr(kAttrInputSize, node, trans_data);
-  }
   if (spec_format == kOpFormat_FRAC_Z && groups != 1 &&
       !common::AnfAlgo::HasNodeAttr(kAttrFracZGroup, trans_data->cast<CNodePtr>())) {
     common::AnfAlgo::SetNodeAttr(kAttrGroups, MakeValue(groups), trans_data);
@@ -417,6 +413,9 @@ CNodePtr NewTransOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
       common::AnfAlgo::SetNodeAttr(kAttrGroups, MakeValue(fracz_group), trans_node);
       common::AnfAlgo::SetNodeAttr(kAttrFracZGroup, MakeValue(fracz_group), trans_node);
     }
+  } else if (op_name == prim::kPrimTransDataRNN->name()) {
+    common::AnfAlgo::CopyNodeAttr(kAttrHiddenSize, orig_node, trans_node);
+    common::AnfAlgo::CopyNodeAttr(kAttrInputSize, orig_node, trans_node);
   }
   if (is_dynamic_shape) {
     common::AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), trans_node);

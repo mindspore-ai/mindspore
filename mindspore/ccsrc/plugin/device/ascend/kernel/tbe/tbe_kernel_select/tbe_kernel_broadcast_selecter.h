@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_TBE_KERNEL_BROADCAST_SELECTER_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_TBE_KERNEL_BROADCAST_SELECTER_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_SELECT_TBE_KERNEL_BROADCAST_SELECTER_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_SELECT_TBE_KERNEL_BROADCAST_SELECTER_H_
 
 #include <vector>
 #include <string>
 #include <utility>
 #include "ir/anf.h"
-#include "plugin/device/ascend/kernel/tbe/tbe_kernel_select/common_utils.h"
+#include "plugin/device/ascend/kernel/tbe/tbe_kernel_select/tbe_select_utils.h"
 
 namespace mindspore {
 namespace kernel {

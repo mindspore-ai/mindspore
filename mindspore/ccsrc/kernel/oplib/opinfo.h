@@ -68,6 +68,7 @@ class OpIOInfo {
   const std::string &shape() const { return shape_; }
   const std::vector<std::string> &dtypes() const { return dtypes_; }
   const std::vector<std::string> &formats() const { return formats_; }
+  const std::vector<std::string> &unknown_shape_formats() const { return unknown_shape_formats_; }
   const std::string &value_depend() const { return value_depend_; }
 
   void set_index(const int index) { index_ = index; }
@@ -78,6 +79,9 @@ class OpIOInfo {
   void set_shape(const std::string &shape) { shape_ = shape; }
   void set_dtypes(const std::vector<std::string> &dtype) { dtypes_ = dtype; }
   void set_formats(const std::vector<std::string> &formats) { formats_ = formats; }
+  void set_unknown_shape_formats(const std::vector<std::string> &unknown_shape_formats) {
+    unknown_shape_formats_ = unknown_shape_formats;
+  }
   void set_value_depend(const std::string &value_depend) { value_depend_ = value_depend; }
 
  private:
@@ -89,6 +93,7 @@ class OpIOInfo {
   std::string shape_;
   std::vector<std::string> dtypes_;
   std::vector<std::string> formats_;
+  std::vector<std::string> unknown_shape_formats_;
   std::string value_depend_ = kIgnored;
 };
 
@@ -117,6 +122,7 @@ class OpInfo {
     input_to_attr_index_ = opinfo.input_to_attr_index_;
     real_input_index_ = opinfo.real_input_index_;
     need_check_supported_ = opinfo.need_check_supported();
+    dynamic_rank_support_ = opinfo.dynamic_rank_support();
     is_dynamic_format_ = opinfo.is_dynamic_format();
     for (const auto &attr : opinfo.attrs_ptr()) {
       attrs_ptr_.push_back(std::make_shared<OpAttr>(*attr));
@@ -141,6 +147,7 @@ class OpInfo {
   bool dynamic_compile_static() const { return dynamic_compile_static_; }
   std::string processor() const { return processor_; }
   bool need_check_supported() const { return need_check_supported_; }
+  bool dynamic_rank_support() const { return dynamic_rank_support_; }
   bool is_dynamic_format() const { return is_dynamic_format_; }
   std::vector<std::shared_ptr<OpAttr>> attrs_ptr() const { return attrs_ptr_; }
   std::vector<std::shared_ptr<OpIOInfo>> inputs_ptr() const { return inputs_ptr_; }
@@ -162,6 +169,7 @@ class OpInfo {
   void set_op_pattern(const OpPattern op_pattern) { op_pattern_ = op_pattern; }
   void set_processor(const std::string &processor) { processor_ = processor; }
   void set_need_check_supported(bool need_check_supported) { need_check_supported_ = need_check_supported; }
+  void set_dynamic_rank_support(bool dynamic_rank_support) { dynamic_rank_support_ = dynamic_rank_support; }
   void set_is_dynamic_format(bool is_dynamic_format) { is_dynamic_format_ = is_dynamic_format; }
   void set_input_to_attr_index(const std::vector<size_t> &input_to_attr_index) {
     input_to_attr_index_ = input_to_attr_index;
@@ -197,6 +205,7 @@ class OpInfo {
   bool dynamic_shape_ = false;
   bool dynamic_compile_static_ = false;
   bool need_check_supported_ = false;
+  bool dynamic_rank_support_ = false;
   bool is_dynamic_format_ = false;
   OpPattern op_pattern_ = kCommonPattern;
   std::string processor_;
@@ -211,5 +220,6 @@ class OpInfo {
 using OpAttrPtr = std::shared_ptr<OpAttr>;
 using OpIOInfoPtr = std::shared_ptr<OpIOInfo>;
 using OpInfoPtr = std::shared_ptr<OpInfo>;
+extern std::vector<std::string> SplitStrToVec(const std::string &input);
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_OPLIB_OPINFO_H_

@@ -186,29 +186,22 @@ bool IsOneOfHWSpecialFormat(const std::string &format) {
 }
 
 bool IsOneOfFormat(const std::string &format) {
-  const std::set<std::string> kOpFormatList = {kOpFormat_DEFAULT,
-                                               kOpFormat_NC1KHKWHWC0,
-                                               kOpFormat_ND,
-                                               kOpFormat_NCHW,
-                                               kOpFormat_NHWC,
-                                               kOpFormat_HWCN,
-                                               kOpFormat_NC1HWC0,
-                                               kOpFormat_FRAC_Z,
-                                               kOpFormat_C1HWNCoC0,
-                                               kOpFormat_FRAC_NZ,
-                                               kOpFormat_NC1HWC0_C04,
-                                               kOpFormat_FRACTAL_Z_C04,
-                                               kOpFormat_NDHWC,
-                                               kOpFormat_FRACTAL_ZN_LSTM,
-                                               kOpFormat_FRACTAL_ZN_RNN,
-                                               kOpFormat_ND_RNN_BIAS,
-                                               kOpFormat_NDC1HWC0,
-                                               kOpFormat_NCDHW,
-                                               kOpFormat_FRACTAL_Z_3D,
-                                               kOpFormat_DHWNC,
-                                               kOpFormat_DHWCN};
+  const std::set<std::string> kOpFormatList = {
+    kOpFormat_DEFAULT,        kOpFormat_NC1KHKWHWC0,  kOpFormat_ND,
+    kOpFormat_NCHW,           kOpFormat_NHWC,         kOpFormat_HWCN,
+    kOpFormat_CHWN,           kOpFormat_NC1HWC0,      kOpFormat_FRAC_Z,
+    kOpFormat_C1HWNCoC0,      kOpFormat_FRAC_NZ,      kOpFormat_NC1HWC0_C04,
+    kOpFormat_FRACTAL_Z_C04,  kOpFormat_NDHWC,        kOpFormat_FRACTAL_ZN_LSTM,
+    kOpFormat_FRACTAL_ZN_RNN, kOpFormat_ND_RNN_BIAS,  kOpFormat_NDC1HWC0,
+    kOpFormat_NCDHW,          kOpFormat_FRACTAL_Z_3D, kOpFormat_DHWNC,
+    kOpFormat_DHWCN};
 
   auto iter = kOpFormatList.find(format);
   return iter != kOpFormatList.end();
+}
+
+bool IsOneOfServerFormatC04(const std::string &format) {
+  const std::set<std::string> kServerFormatC04List = {kOpFormat_NC1HWC0_C04, kOpFormat_FRACTAL_Z_C04};
+  return kServerFormatC04List.find(format) != kServerFormatC04List.end();
 }
 }  // namespace mindspore

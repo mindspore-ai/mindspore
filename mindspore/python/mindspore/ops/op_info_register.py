@@ -502,6 +502,7 @@ class TBERegOp(RegOp):
         self.kernel_name_ = ''
         self.partial_flag_ = False
         self.reshape_type_ = ''
+        self.dynamic_rank_support_ = False
         self.dynamic_shape_ = False
         self.dynamic_compile_static_ = False
         self.need_check_supported_ = False
@@ -509,6 +510,29 @@ class TBERegOp(RegOp):
         self.op_pattern_ = ""
         self.real_input_index_ = []
         self.input_to_attr_index_ = []
+        self.unknown_shape_formats_ = []
+
+    def unknown_shape_formats(self, unknown_shape_formats):
+        """
+        Description operator front end and tbe operator input mapping.
+
+        Args:
+            unknown_shape_formats (list): Value of unknown_shape_formats. Default: ().
+        """
+        RegOp._is_list(unknown_shape_formats)
+        self.unknown_shape_formats_.append(unknown_shape_formats)
+        return self
+
+    def dynamic_rank_support(self, dynamic_rank_support):
+        """
+        Description operator front end and tbe operator input mapping.
+
+        Args:
+            dynamic_rank_support (bool): Value of dynamic_rank_support. Default: false.
+        """
+        self._is_bool(dynamic_rank_support)
+        self.dynamic_rank_support_ = dynamic_rank_support
+        return self
 
     def real_input_index(self, real_input_index):
         """
@@ -1146,3 +1170,49 @@ class DataType:
 
     C64_Default = ("complex64", "DefaultFormat")
     C128_Default = ("complex128", "DefaultFormat")
+
+
+class Format:
+    r"""
+    Various combinations of  unknown shape format of ascend ops.
+
+    current support:
+
+    .. code-block::
+        C1HWNCoC0 = "C1HWNCoC0"
+        ChannelLast = "ChannelLast"
+        Default = "DefaultFormat"
+        DHWCN = "DHWCN"
+        FHD = "NC1HWC0"
+        FracNZ = "FRACTAL_NZ"
+        FRACTAL_Z_3D = "FRACTAL_Z_3D"
+        FracZ = "FRACTAL_Z"
+        FracZNLSTM = "FRACTAL_ZN_LSTM"
+        FracZNRNN = "FRACTAL_ZN_RNN"
+        HWCN = "HWCN"
+        NCDHW = "NCDHW"
+        NCHW = "NCHW"
+        ND_RNNBIAS = "ND_RNN_BIAS"
+        NDC1HWC0 = "NDC1HWC0"
+        NDHWC = "NDHWC"
+        NHWC = "NHWC"
+        NULL = "NULL"
+    """
+    C1HWNCoC0 = "C1HWNCoC0"
+    ChannelLast = "ChannelLast"
+    Default = "DefaultFormat"
+    DHWCN = "DHWCN"
+    FHD = "NC1HWC0"
+    FracNZ = "FRACTAL_NZ"
+    FRACTAL_Z_3D = "FRACTAL_Z_3D"
+    FracZ = "FRACTAL_Z"
+    FracZNLSTM = "FRACTAL_ZN_LSTM"
+    FracZNRNN = "FRACTAL_ZN_RNN"
+    HWCN = "HWCN"
+    NCDHW = "NCDHW"
+    NCHW = "NCHW"
+    ND_RNNBIAS = "ND_RNN_BIAS"
+    NDC1HWC0 = "NDC1HWC0"
+    NDHWC = "NDHWC"
+    NHWC = "NHWC"
+    NULL = "NULL"

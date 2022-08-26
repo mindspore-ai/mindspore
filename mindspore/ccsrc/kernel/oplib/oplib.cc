@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include "kernel/oplib/oplib.h"
+
 #include <memory>
 #include <map>
 #include <fstream>
@@ -39,11 +39,13 @@ constexpr auto kIsDynamicFormat = "is_dynamic_format";
 constexpr auto kDynamicFormat = "dynamicFormat";
 constexpr auto kFormatAgnostic = "formatAgnostic";
 constexpr auto kNeedCheckSupported = "need_check_supported";
+constexpr auto kDynamicRankSupport = "dynamic_rank_support";
 constexpr auto kBroadcast = "broadcast";
 constexpr auto kReduce = "reduce";
 constexpr auto kDynamicShape = "dynamic_shape";
 constexpr auto kDynamicCompileStatic = "dynamic_compile_static";
 constexpr auto kDtypeFormat = "dtype_format";
+constexpr auto kUnknownShapeFormat = "unknown_shape_format";
 constexpr auto kInputToAttrIndex = "input_to_attr_index";
 constexpr auto kRealInputIndex = "real_input_index";
 constexpr auto kAttr = "attr";
@@ -68,6 +70,9 @@ constexpr auto kNeedCompile = "need_compile";
 constexpr auto kShape = "shape";
 constexpr auto kProcessor = "processor";
 
+static const std::map<std::string, OpImplyType> OpImplyTypeMap = {
+  {kTbe, kTBE}, {kAkg, kAKG}, {kAiCPU, kAICPU}, {kCpu, kCPU}, {kGpu, kGPU}};
+
 static std::string ImplTypeToStr(OpImplyType impl_type) {
   switch (impl_type) {
     case kTBE:
@@ -84,37 +89,52 @@ static std::string ImplTypeToStr(OpImplyType impl_type) {
       return "unknown";
   }
 }
+
+std::vector<std::string> SplitStrToVec(const std::string &input) {
+  static const std::map<std::string, std::string> kSpecFormat = {{kOpFormat_NCHW, kOpFormat_DEFAULT},
+                                                                 {kOpFormat_ND, kOpFormat_DEFAULT}};
+  if (input.empty()) {
+    MS_LOG(EXCEPTION) << "Op select ret item is null.";
+  }
+  // remove blank elem
+  std::string input_tmp = input;
+  (void)input_tmp.erase(remove(input_tmp.begin(), input_tmp.end(), ' '), input_tmp.end());
+  (void)input_tmp.append(",");
+  // split
+  const char sep = ',';
+  std::vector<std::string> result = {};
+  auto begin = 0U;
+  auto end = input_tmp.find(sep);
+  while (end != std::string::npos) {
+    auto format = input_tmp.substr(begin, end - begin);
+    auto find_iter = kSpecFormat.find(format);
+    if (find_iter != kSpecFormat.end()) {
+      format = find_iter->second;
+    }
+    (void)result.emplace_back(format);
+    begin = end + 1;
+    end = input_tmp.find(sep, begin);
+  }
+  return result;
+}
+
 bool OpLib::RegOp(const std::string &json_string, const std::string &impl_path) {
-  bool ret = false;
   try {
     auto op_json = nlohmann::json::parse(json_string);
     std::string imply_type_string = op_json.at(kImplyType);
-    std::string op_name = op_json.at(kOpName);
-    if (imply_type_string == kTbe) {
-      OpImplyType imply_type = kTBE;
-      ret = DecodeOpInfo(op_json, imply_type, impl_path);
-    } else if (imply_type_string == kAkg) {
-      OpImplyType imply_type = kAKG;
-      ret = DecodeOpInfo(op_json, imply_type, impl_path);
-    } else if (imply_type_string == kAiCPU) {
-      OpImplyType imply_type = kAICPU;
-      ret = DecodeOpInfo(op_json, imply_type, impl_path);
-    } else if (imply_type_string == kCpu) {
-      OpImplyType imply_type = kCPU;
-      ret = DecodeOpInfo(op_json, imply_type, impl_path);
-    } else if (imply_type_string == kGpu) {
-      OpImplyType imply_type = kGPU;
-      ret = DecodeOpInfo(op_json, imply_type, impl_path);
-    } else {
-      MS_LOG(ERROR) << "Not support imply_type";
+    auto find_iter = OpImplyTypeMap.find(imply_type_string);
+    if (find_iter == OpImplyTypeMap.end()) {
+      MS_LOG(ERROR) << "Not support imply_type, " << imply_type_string;
+      return false;
     }
-    if (!ret) {
-      MS_LOG(ERROR) << "RegOp failed: op_name: " << op_name << " imply_type " << imply_type_string;
+    if (!DecodeOpInfo(op_json, find_iter->second, impl_path)) {
+      MS_LOG(ERROR) << "RegOp failed: op_name: " << op_json.at(kOpName) << " imply_type " << imply_type_string;
+      return false;
     }
   } catch (const std::exception &e) {
     MS_LOG(ERROR) << "get op json elements failed: " << e.what();
   }
-  return ret;
+  return true;
 }
 
 void OpLib::DecodeTBESpecificInfo(const nlohmann::json &obj, const std::shared_ptr<OpInfo> &op_info) {
@@ -127,6 +147,9 @@ void OpLib::DecodeTBESpecificInfo(const nlohmann::json &obj, const std::shared_p
   op_info->set_kernel_name(obj.at(kKernelName));
   op_info->set_partial_flag(obj.at(kPartialFlag));
   op_info->set_need_check_supported(obj.at(kNeedCheckSupported));
+  if (obj.find(kDynamicRankSupport) != obj.end()) {
+    op_info->set_dynamic_rank_support(obj.at(kDynamicRankSupport));
+  }
 
   if (obj.find(kDynamicShape) != obj.end()) {
     op_info->set_dynamic_shape(obj.at(kDynamicShape));
@@ -136,8 +159,13 @@ void OpLib::DecodeTBESpecificInfo(const nlohmann::json &obj, const std::shared_p
     op_info->set_dynamic_compile_static_(obj.at(kDynamicCompileStatic));
   }
 
-  if (obj.find(kIsDynamicFormat) != obj.end()) {
-    op_info->set_is_dynamic_format(obj.at(kIsDynamicFormat));
+  auto dynamic_iter = obj.find(kIsDynamicFormat);
+  if (dynamic_iter != obj.end()) {
+    bool is_dynamic_format = dynamic_iter->get<bool>();
+    if (is_dynamic_format) {
+      op_info->set_op_pattern(kDynamicFormatPattern);
+    }
+    op_info->set_is_dynamic_format(is_dynamic_format);
   }
 
   if (obj.find(kInputToAttrIndex) != obj.end()) {
@@ -158,13 +186,12 @@ void OpLib::DecodeTBESpecificInfo(const nlohmann::json &obj, const std::shared_p
   if (obj.find(kOpPattern) != obj.end()) {
     std::string op_pattern = obj.at(kOpPattern);
     auto find_iter = kOpPatternMap.find(op_pattern);
-    if (find_iter == kOpPatternMap.end()) {
-      if (!op_pattern.empty()) {
-        MS_LOG(WARNING) << "Op pattern set value error: " << op_pattern;
-      }
-      op_info->set_op_pattern(kCommonPattern);
-    } else {
+    if (find_iter != kOpPatternMap.end()) {
       op_info->set_op_pattern(find_iter->second);
+    } else {
+      if (!op_pattern.empty()) {
+        MS_LOG(WARNING) << "The error pattern: " << op_pattern;
+      }
     }
   }
 }
@@ -263,6 +290,24 @@ bool OpLib::DecodeOpInfo(const nlohmann::json &obj, const mindspore::kernel::OpI
     if (!DecodeInputOutput(output, imply_type, kOutput, op_info, dtype_format)) {
       MS_LOG(ERROR) << "DecodeInputOutput Failed";
       return false;
+    }
+  }
+  if (obj.find(kUnknownShapeFormat) != obj.end()) {
+    auto unknown_shape_formats_obj = obj.at(kUnknownShapeFormat);
+    if (unknown_shape_formats_obj.size() != op_info->inputs_ptr().size() + op_info->outputs_ptr().size()) {
+      MS_LOG(ERROR) << "If unknown shape exist, the size should be equal (input size + output size).";
+      return false;
+    }
+    for (size_t i = 0; i < op_info->inputs_ptr().size(); ++i) {
+      auto unknown_shape_formats_str = unknown_shape_formats_obj.at(i);
+      auto unknown_shape_formats = SplitStrToVec(unknown_shape_formats_str);
+      op_info->inputs_ptr().at(i)->set_unknown_shape_formats(unknown_shape_formats);
+    }
+    for (size_t i = 0; i < op_info->outputs_ptr().size(); ++i) {
+      auto index = i + op_info->inputs_ptr().size();
+      auto unknown_shape_formats_str = unknown_shape_formats_obj.at(index);
+      auto unknown_shape_formats = SplitStrToVec(unknown_shape_formats_str);
+      op_info->outputs_ptr().at(i)->set_unknown_shape_formats(unknown_shape_formats);
     }
   }
   if (CheckRepetition(op_info)) {
