@@ -1377,8 +1377,6 @@ bool RemoveValueNodeDuplicationsAction(const ResourcePtr &resource) {
 
 bool PipelineSplitAction(const ResourcePtr &resource) { return PipelineSplitPass(resource); }
 
-bool PynativeShardAction(const ResourcePtr &resource) { return PynativeShardPass(resource); }
-
 bool ValidateAction(const ResourcePtr &resource) { return ValidatePass(resource); }
 
 bool GeSpecializedAction(const ResourcePtr &resource) { return GeSpecializedPass(resource); }
@@ -1524,8 +1522,6 @@ static std::vector<ActionItem> CommonPipeline() {
   (void)actions.emplace_back(std::make_pair("inline", OptInlineAction));
   // Add pre-ad, post-inline python pass stub.
   (void)actions.emplace_back(std::make_pair("py_pre_ad", PreAdActionPyStub));
-  // Handle the pynative shard.
-  (void)actions.emplace_back(std::make_pair("pynative_shard", PynativeShardAction));
   // Do PipelineSplit action.
   (void)actions.emplace_back(std::make_pair("pipeline_split", PipelineSplitAction));
 

@@ -704,7 +704,7 @@ void FuncGraphManager::OnEdgeAdded(const AnfNodePtr &node, int index, const AnfN
       }
     }
     if (IsPrimitiveCNode(node, prim::kPrimJ) || IsPrimitiveCNode(node, prim::kPrimVmap) ||
-        IsPrimitiveCNode(node, prim::kPrimTaylor)) {
+        IsPrimitiveCNode(node, prim::kPrimTaylor) || IsPrimitiveCNode(node, prim::kPrimShard)) {
       fg->AddMetaFgPrimValueNode(input);
     }
   } else if (fg != nullptr && fg != input->func_graph()) {

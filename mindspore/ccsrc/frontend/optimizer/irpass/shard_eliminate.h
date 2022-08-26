@@ -16,25 +16,24 @@
 #ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_SHARD_ELIMINATE_H_
 #define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_SHARD_ELIMINATE_H_
 #include <vector>
+#include <memory>
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/irpass.h"
 #include "frontend/optimizer/anf_visitor.h"
 #include "utils/ms_utils.h"
 #include "frontend/operator/ops.h"
+#include "frontend/optimizer/irpass/meta_fg_prim_eliminate.h"
 
 namespace mindspore {
 namespace opt {
 namespace irpass {
-class ExpandShardPrim {
+class ExpandShardPrim : public ExpandMetaFgPrim {
  public:
-  ExpandShardPrim() = default;
+  ExpandShardPrim() { prim_ = prim::kPrimShard; }
   virtual ~ExpandShardPrim() = default;
-  bool operator()(const FuncGraphPtr &func_graph, const OptimizerPtr &optimizer);
-  void GetShardPrim(const FuncGraphPtr &func_graph);
-
- private:
-  std::vector<CNodePtr> shard_nodes_;
+  bool operator()(const FuncGraphPtr &func_graph, const OptimizerPtr &optimizer) override;
 };
+using ExpandShardPrimPtr = std::shared_ptr<ExpandShardPrim>;
 }  // namespace irpass
 }  // namespace opt
 }  // namespace mindspore

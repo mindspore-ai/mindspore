@@ -29,27 +29,14 @@ AnfNodePtr ExpandShard(const CNodePtr &node) {
 }  // namespace internal
 
 bool ExpandShardPrim::operator()(const FuncGraphPtr &func_graph, const OptimizerPtr &optimizer) {
-  GetShardPrim(func_graph);
   bool change = false;
   auto manager = optimizer->manager();
-  for (auto shard_node : shard_nodes_) {
+  for (auto &shard_node : prim_nodes_) {
     auto expanded_shard = internal::ExpandShard(shard_node);
     (void)manager->Replace(shard_node, expanded_shard);
     change = true;
   }
   return change;
-}
-
-void ExpandShardPrim::GetShardPrim(const FuncGraphPtr &func_graph) {
-  shard_nodes_.clear();
-  AnfNodePtr ret = func_graph->get_return();
-  MS_EXCEPTION_IF_NULL(ret);
-  std::vector<AnfNodePtr> all_nodes = DeepScopedGraphSearch(ret);
-  for (auto &node : all_nodes) {
-    if (IsPrimitiveCNode(node, prim::kPrimShard)) {
-      shard_nodes_.push_back(node->cast<CNodePtr>());
-    }
-  }
 }
 }  // namespace irpass
 }  // namespace opt
