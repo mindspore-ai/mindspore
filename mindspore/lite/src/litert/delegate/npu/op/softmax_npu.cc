@@ -47,7 +47,7 @@ int SoftmaxNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensor
 
 ge::Operator *SoftmaxNPUOp::GetNPUOp() { return this->softmax_; }
 
-int SoftmaxNPUOp::HandleAxis() {
+int SoftmaxNPUOp::HandleAxisAndConstantInputs(std::vector<mindspore::MSTensor *> *all_tensors) {
   axis_ = TransFormAxis(axis_);
   if (axis_ == NCHW_INVALID) {
     MS_LOG(ERROR) << "Transform axis for Softmax op failed.";

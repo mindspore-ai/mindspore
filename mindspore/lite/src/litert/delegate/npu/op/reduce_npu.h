@@ -42,7 +42,7 @@ class ReduceNPUOp : public NPUOp {
 
   ge::Operator *GetNPUOp() override;
 
-  int HandleAxis() override;
+  int HandleAxisAndConstantInputs(std::vector<mindspore::MSTensor *> *all_tensors) override;
 
  private:
   schema::ReduceMode reduce_mode_ = schema::ReduceMode_ReduceMean;

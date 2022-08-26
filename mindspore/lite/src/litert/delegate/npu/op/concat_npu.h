@@ -45,7 +45,7 @@ class ConcatNPUOp : public NPUOp {
 
   ge::Operator *GetNPUOp() override;
 
-  int HandleAxis() override;
+  int HandleAxisAndConstantInputs(std::vector<mindspore::MSTensor *> *all_tensors) override;
 
  private:
   hiai::op::ConcatD *concat_ = nullptr;

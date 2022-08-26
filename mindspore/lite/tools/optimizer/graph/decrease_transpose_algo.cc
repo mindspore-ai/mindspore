@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -332,7 +332,7 @@ STATUS DecreaseTransposeAlgo::DoPreInsert(const FuncGraphPtr &func_graph, const 
   auto HandleFunc = [this, &shape](const FuncGraphPtr &func_graph, const CNodePtr &cnode, size_t index,
                                    FormatTransNodeType trans_type) -> STATUS {
     auto before_perm = trans_type == kNHWC2NCHW ? kNH2NC : kNC2NH;
-    if (shape.size() == kInputSizeFour && !cnode->input(index)->isa<CNode>()) {
+    if (!cnode->input(index)->isa<CNode>()) {
       if (ConvertTensorToNCOrNH(func_graph, cnode, index, fmk_type_, train_flag_, trans_type) != lite::RET_OK) {
         MS_LOG(ERROR) << "ConvertTensorToNCOrNH failed.";
         return lite::RET_ERROR;

@@ -42,7 +42,7 @@ class SoftmaxNPUOp : public NPUOp {
                    const std::vector<mindspore::MSTensor> &out_tensors,
                    const std::vector<ge::Operator *> &npu_inputs) override;
 
-  int HandleAxis() override;
+  int HandleAxisAndConstantInputs(std::vector<mindspore::MSTensor *> *all_tensors) override;
 
   ge::Operator *GetNPUOp() override;
 

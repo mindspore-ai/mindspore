@@ -110,7 +110,7 @@ ge::Operator *StridedSliceNPUOp::GetNPUOp() {
   }
 }
 
-int StridedSliceNPUOp::HandleAxis() {
+int StridedSliceNPUOp::HandleAxisAndConstantInputs(std::vector<mindspore::MSTensor *> *all_tensors) {
   if (inputs_.size() < MIN_INPUT_SIZE) {
     MS_LOG(ERROR) << "StridedSlice in tensors size < " << MIN_INPUT_SIZE;
     return RET_ERROR;

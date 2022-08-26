@@ -47,6 +47,8 @@ class ArithmeticNPUOp : public NPUOp {
 
   ge::Operator *GetNPUOp() override;
 
+  int HandleAxisAndConstantInputs(std::vector<mindspore::MSTensor *> *all_tensors) override;
+
  private:
   int SetActivation();
   schema::ActivationType act_type_ = schema::ActivationType_NO_ACTIVATION;

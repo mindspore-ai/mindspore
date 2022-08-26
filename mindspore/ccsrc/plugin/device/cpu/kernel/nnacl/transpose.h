@@ -22,6 +22,8 @@
 // MAX_TRANSPOSE_SERIAL_SIZE = 64 * 3 * 512 * 512
 #define MAX_TRANSPOSE_SERIAL_SIZE 50331648
 #define MAX_TRANSPOSE_DIM_SIZE 20
+#define PERM_NUM_THREE 3
+#define PERM_NUM_FOUR 4
 
 typedef struct TransposeParameter {
   // primitive parameter

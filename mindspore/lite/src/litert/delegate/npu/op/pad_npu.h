@@ -42,7 +42,7 @@ class PadNPUOp : public NPUOp {
 
   ge::Operator *GetNPUOp() override;
 
-  int HandleAxis() override;
+  int HandleAxisAndConstantInputs(std::vector<mindspore::MSTensor *> *all_tensors) override;
 
  private:
   hiai::op::PadV2 *pad_ = nullptr;
