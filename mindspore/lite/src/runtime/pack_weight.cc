@@ -17,6 +17,7 @@
 #include "src/runtime/dynamic_mem_allocator.h"
 namespace mindspore::lite {
 STATUS PackWeight::InitWeightManagerByBuf(const char *model_buf, size_t model_size, int numa_id, bool copy_buf) {
+  std::lock_guard<std::mutex> lock(mtx_weight_);
   MS_CHECK_TRUE_MSG(model_buf != nullptr, RET_ERROR, "model buf is nullptr in pack weight manager.");
   copy_buf_ = copy_buf;
   if (model_buf_map_.find(model_buf) != model_buf_map_.end() &&
@@ -66,6 +67,7 @@ STATUS PackWeight::InitWeightManagerByBuf(const char *model_buf, size_t model_si
 }
 
 char *PackWeight::GetNumaModelBuf(const char *model_buf, int numa_id) {
+  std::lock_guard<std::mutex> lock(mtx_weight_);
   if (model_buf_map_.find(model_buf) == model_buf_map_.end() ||
       find(numa_model_buf_[model_buf].begin(), numa_model_buf_[model_buf].end(), numa_id) ==
         numa_model_buf_[model_buf].end()) {
@@ -224,9 +226,19 @@ void PackWeight::FreeFp16ToFp32Data(ModelConstWeight *weight) {
   weight->fp16_fp32_data.clear();
 }
 
-PackWeight::~PackWeight() {
+void PackWeight::DeleteOriginModelBufInfo(const char *model_buf) {
+  std::lock_guard<std::mutex> lock(mtx_weight_);
+  numa_model_buf_.erase(model_buf);
+  model_buf_map_.erase(model_buf);
+}
+
+void PackWeight::FreePackWeight(std::vector<char *> model_bufs, bool all) {
   std::lock_guard<std::mutex> lock(mtx_weight_);
   for (auto &item : buf_model_weight_) {
+    auto model_buf = const_cast<char *>(item.first);
+    if (!all && find(model_bufs.begin(), model_bufs.end(), model_buf) == model_bufs.end()) {
+      continue;
+    }
     FreePackedWeight(item.second);
     FreeFp16ToFp32Data(item.second);
     FreeTensorData(item.second);
@@ -235,6 +247,9 @@ PackWeight::~PackWeight() {
   if (copy_buf_) {
     for (auto &item : buf_model_weight_) {
       auto model_buf = const_cast<char *>(item.first);
+      if (!all && find(model_bufs.begin(), model_bufs.end(), model_buf) == model_bufs.end()) {
+        continue;
+      }
       if (item.second != nullptr) {
         auto &allocator = item.second->allocator;
         allocator->Free(model_buf);
@@ -242,7 +257,16 @@ PackWeight::~PackWeight() {
         item.second = nullptr;
       }
     }
+  }
+  for (auto &buf : model_bufs) {
+    buf_model_weight_.erase(buf);
+  }
+  if (all) {
     buf_model_weight_.clear();
+    numa_model_buf_.clear();
+    model_buf_map_.clear();
   }
 }
+
+PackWeight::~PackWeight() { FreePackWeight({}, true); }
 }  // namespace mindspore::lite

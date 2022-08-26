@@ -152,6 +152,9 @@ class ModelPool {
   bool can_use_all_physical_core_ = true;
   int can_use_core_num_ = -1;
   int all_core_num_ = -1;
+
+  std::vector<char *> model_bufs_;
+  char *graph_buf_ = nullptr;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_CXX_API_MODEL_POOL_MODEL_POOL_H_
