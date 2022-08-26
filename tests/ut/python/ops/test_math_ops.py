@@ -608,6 +608,16 @@ class RemainderNet(nn.Cell):
         return self.remainder(x, y)
 
 
+class TrapzFunc(nn.Cell):
+    def __init__(self):
+        super(TrapzFunc, self).__init__()
+        self.trapz = ops.trapz
+
+    def construct(self, y, x=None, dx=1.0, dim=-1):
+        out = self.trapz(y, x, dx, dim)
+        return out
+
+
 test_case_math_ops = [
     ('MatMulGrad', {
         'block': GradWrap(NetWithLoss(MatMulNet())),
@@ -715,6 +725,11 @@ test_case_math_ops = [
     ('Exp2', {
         'block': Exp2Func(),
         'desc_inputs': [Tensor(np.array([1.0, 2.0, 3.0], np.float16))],
+    }),
+    ('Trapz', {
+        'block': TrapzFunc(),
+        'desc_inputs': [Tensor(np.array([[0, 1, 2], [3, 4, 5], [6, 7, 8]], np.float32))],
+        'desc_bprop': [Tensor(np.array([2, 8, 14], np.float32))],
     }),
     ('DenseToDenseSetOperation', {
         'block': DenseToDenseSetOperation(set_operation="a-b", validate_indices=True),

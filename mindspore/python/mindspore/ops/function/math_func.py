@@ -5864,6 +5864,186 @@ def iou(anchor_boxes, gt_boxes, mode='iou'):
     return _get_cache_prim(P.IOU)(mode)(anchor_boxes, gt_boxes)
 
 
+def _check_is_float(dtype):
+    return dtype in (mstype.float16, mstype.float32)
+
+
+def _list_comprehensions(obj, item):
+    return tuple([item for _ in range(obj)])
+
+
+def _tuple_setitem(tup, idx, value):
+    tup = list(tup)
+    tup[idx] = value
+    return tuple(tup)
+
+
+def _check_dim_in_range(dim, ndim):
+    if not isinstance(dim, int):
+        raise TypeError(f'axes should be integers, not {type(dim)}')
+    if -ndim > dim or dim >= ndim:
+        raise ValueError(f'dim {dim} is out of bounds for array of dimension {ndim}')
+    return dim % ndim
+
+
+def dotrapezoid(y, dx, dim):
+    y_left = select_(y, dim, 0)
+    y_right = select_(y, dim, -1)
+    y_sum = y.sum(dim)
+    return (y_sum - (y_left  + y_right) * 0.5) * dx
+
+
+def dotrapezoid_tensor(y, dx, dim):
+    y_start_dim_left = [0 for _ in range(dim)]
+    y_start_dim_left = tuple(y_start_dim_left)
+    y_start_dim_right = [0 for _ in range(y.ndim - dim - 1)]
+    y_start_dim_right = tuple(y_start_dim_right)
+    y_slice_size = _tuple_setitem(P.Shape()(y), dim, P.Shape()(y)[dim] - 1)
+    y_slice_left = P.Slice()(y, y_start_dim_left + (0,) + y_start_dim_right, y_slice_size)
+    y_slice_right = P.Slice()(y, y_start_dim_left + (1,) + y_start_dim_right, y_slice_size)
+    return (P.Add()(y_slice_left, y_slice_right) * dx).sum(dim) / 2.
+
+
+def add_padding_to_shape(curr_shape, target_n_dim):
+    curr_size = len(curr_shape)
+    if curr_size >= target_n_dim:
+        target_n_dim = curr_size
+    new_shape = [1 for _ in range(target_n_dim)]
+    for i in range(curr_size):
+        new_shape[target_n_dim - i - 1] = curr_shape[curr_size - i - 1]
+    return new_shape
+
+
+def zeros_like_except(y, dim):
+    _check_dim_in_range(dim, y.ndim)
+    dim = dim + y.ndim if dim < 0 else dim
+    sizes = y.shape[:dim] + y.shape[dim+1:]
+    zeros = P.Zeros()(sizes, y.dtype)
+    return zeros
+
+
+def trapezoid_tensor(y, x, dim):
+    r"""
+    add trapezoid implementation when x is not None.
+    """
+    if y.shape[dim] == 0:
+        return zeros_like_except(y, dim)
+    if x.ndim < y.ndim and x.ndim != 1:
+        x_start_dim_left = [0 for _ in range(dim)]
+        x_start_dim_left = tuple(x_start_dim_left)
+        x_start_dim_right = [0 for _ in range(x.ndim - dim - 1)]
+        x_start_dim_right = tuple(x_start_dim_right)
+        x_slice_size = _tuple_setitem(x.shape, dim, x.shape[dim] - 1)
+        x_left = P.Slice()(x, x_start_dim_left + (0,) + x_start_dim_right, x_slice_size)
+        x_right = P.Slice()(x, x_start_dim_left + (1,) + x_start_dim_right, x_slice_size)
+        dx = x_right - x_left
+        new_sizes = add_padding_to_shape(dx.shape, y.ndim)
+        dx = dx.view(tuple(new_sizes))
+        return dotrapezoid_tensor(y, dx, dim)
+    if x.ndim == 1:
+        if x.shape[0] != y.shape[dim]:
+            raise RuntimeError("There must be one `x` value for each sample point")
+        new_sizes = [1 for _ in range(y.ndim)]
+        new_sizes[dim] = x.shape[0]
+        x_viewed = x.view(tuple(new_sizes))
+    else:
+        x_viewed = x
+    x_start_dim_left = [0 for _ in range(dim)]
+    x_start_dim_left = tuple(x_start_dim_left)
+    x_start_dim_right = [0 for _ in range(x_viewed.ndim - dim - 1)]
+    x_start_dim_right = tuple(x_start_dim_right)
+    x_slice_size = _tuple_setitem(x_viewed.shape, dim, x_viewed.shape[dim] - 1)
+    x_left = P.Slice()(x_viewed, x_start_dim_left + (0,) + x_start_dim_right, x_slice_size)
+    x_right = P.Slice()(x_viewed, x_start_dim_left + (1,) + x_start_dim_right, x_slice_size)
+    dx = x_right - x_left
+    return dotrapezoid_tensor(y, dx, dim)
+
+
+def trapezoid(y, dx, dim):
+    if y.shape[dim] == 0:
+        return zeros_like_except(y, dim)
+    return dotrapezoid(y, dx, dim)
+
+
+def get(ts, depth, dim, index, r):
+    if depth == dim:
+        r.append(ts[index])
+        return 0
+    for item in ts:
+        return get(item, depth + 1, dim, index, r)
+
+
+def select_(feat, dim, index):
+    select_shape = feat.shape
+    select_shape = list(select_shape)
+    select_shape[dim] = 1
+    new_shape = feat.shape[:dim] + feat.shape[dim + 1:]
+    indexes = P.Ones()(tuple(select_shape), mstype.int32) * (index)
+    return feat.gather_elements(dim, indexes).reshape(new_shape)
+
+
+def trapz(y, x=None, dx=1.0, dim=-1):
+    r"""
+        Computes the trapezoidal rule along dim.
+
+        Integrates `y` (x) along given dim. By default x-dim distances between points will be 1.0,
+        alternatively they can be provided with x array or with dx scalar.
+
+        .. math::
+
+            \mathop{ \int }\nolimits_{{}}^{{}}{y}{ \left( {x} \right) } \text{d} x
+
+        Args:
+            y (Tensor): Input tensor to integrate.
+            x (Tensor, optional): The sample points corresponding to the `y` values. If `x` is None,
+            the sample points are assumed to be evenly spaced `dx` apart. The default is None.
+            If x is not None, after subtracting 1 from the axis specified by dim, the shape of x should be same
+            or can be broadcast to y.
+            dx (float, optional): The spacing between sample points when `x` is None. The default is 1.0.
+            dim (int, optional): The dim along which to integrate. Defaults to -1.
+
+        Returns:
+            Tensor of float, definite integral as approximated by trapezoidal rule.
+            If y is a one-dimensional array, the result is a floating-point number. If y is an n-dimensional array,
+            the result is an N-1-dimensional array because the dimension associated with the axis has been deleted.
+
+        Raises:
+            ValueError: If dim is out of range of ``[-y.ndim, y.ndim)``.
+            RuntimeError: If x's ndim is 1, and x's shape[0] is not equal to y's shape[dim].
+            TypeError: If y is not a Tensor.
+            TypeError: If x is not None and is not a Tensor.
+            TypeError: If dx is not a float number.
+            TypeError: If dim is not a Integer.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> y = Tensor(np.array([[1., 1., 1.], [1., 1., 1.], [1., 1., 1.]]).astype(np.float32))
+            >>> x = Tensor(np.array([[1, 2, 3], [1, 3, 5], [1, 4, 7]]).astype(np.float32))
+            >>> output = ops.trapz(y, x)
+            >>> print(output)
+            [2. 4. 6.]
+    """
+
+    if not isinstance(y, (Tensor, Tensor_)):
+        raise TypeError("The input y must be Tensor.")
+    if not isinstance(dx, float):
+        raise TypeError("The input dx must be float.")
+    if not isinstance(dim, int):
+        raise TypeError("The input dim must be int.")
+    if not _check_is_float(y.dtype):
+        y = P.Cast()(y, mstype.float32)
+    _check_dim_in_range(dim, y.ndim)
+    dim = dim + y.ndim if dim < 0 else dim
+    if x is None:
+        return trapezoid(y, dx, dim)
+    if not isinstance(x, (Tensor, Tensor_)):
+        raise TypeError("The input x must be Tensor.")
+    x = P.Cast()(x, mstype.float32)
+    return trapezoid_tensor(y, x, dim)
+
+
 __all__ = [
     'addn',
     'absolute',
@@ -6007,6 +6187,7 @@ __all__ = [
     'remainder',
     'accumulate_n',
     'iou',
-    'bmm'
+    'bmm',
+    'trapz'
 ]
 __all__.sort()
