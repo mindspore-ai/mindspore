@@ -19,12 +19,13 @@ from __future__ import absolute_import
 from .grad_func import (
     grad,
     value_and_grad,
+    jacfwd,
+    jacrev,
     jet,
     derivative,
     jvp,
     vjp,
     custom_vjp,
-    jacfwd,
     linearize
 )
 

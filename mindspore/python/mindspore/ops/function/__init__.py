@@ -375,12 +375,13 @@ from .grad import (
     grad_func,
     grad,
     value_and_grad,
+    jacfwd,
+    jacrev,
     jet,
     derivative,
     jvp,
     vjp,
     custom_vjp,
-    jacfwd,
     linearize
 )
 from .debug_func import (
