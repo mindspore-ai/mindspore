@@ -154,11 +154,11 @@ bool SparseMatrixAddCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
         std::vector<bool> mask_b(max_mask_len, false);
         for (size_t j = static_cast<size_t>(a_indptr[i]); j < static_cast<size_t>(a_indptr[i + 1]); j++) {
           (void)index_set.insert(a_indices[j]);
-          mask_a[a_indices[j]] = true;
+          mask_a[static_cast<size_t>(a_indices[j])] = true;
         }
         for (size_t k = static_cast<size_t>(b_indptr[i]); k < static_cast<size_t>(b_indptr[i + 1]); k++) {
           (void)index_set.insert(b_indices[k]);
-          mask_b[b_indices[k]] = true;
+          mask_b[static_cast<size_t>(b_indices[k])] = true;
         }
         // index_set.size() are the valid numbers to set indptr.
         c_indptr[i + 1] = c_indptr[i] + static_cast<T>(index_set.size());
@@ -168,7 +168,7 @@ bool SparseMatrixAddCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
             a_v = a_values[a_v_idx];
             a_v_idx++;
           }
-          if (mask_b[static_cast<T>(*it)]) {
+          if (mask_b[static_cast<size_t>(*it)]) {
             b_v = b_values[b_v_idx];
             b_v_idx++;
           }
