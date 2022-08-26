@@ -34,8 +34,8 @@ abstract::ShapePtr NonMaxSuppressionWithOverlapsInferShape(const PrimitivePtr &p
   for (const auto &i : input_args) {
     MS_EXCEPTION_IF_NULL(i);
   }
-  CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
-  CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 1);
+  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
+  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 1);
 
   auto overlaps_shape = std::make_shared<abstract::Shape>(
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape]);
@@ -97,18 +97,18 @@ TypePtr NonMaxSuppressionWithOverlapsInferType(const PrimitivePtr &prim,
 
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   std::map<std::string, TypePtr> args;
-  args.insert({"overlaps", overlaps_type});
-  args.insert({"scores", scores_type});
+  (void)args.emplace("overlaps", overlaps_type);
+  (void)args.emplace("scores", scores_type);
   (void)CheckAndConvertUtils::CheckTensorTypeSame(args, valid_types, prim_name);
   // overlap_threshold,score_threshold must be scalar
   std::map<std::string, TypePtr> args2;
-  args2.insert({"overlap_threshold", overlap_threshold_type});
-  args2.insert({"score_threshold", score_threshold_type});
+  (void)args2.emplace("overlap_threshold", overlap_threshold_type);
+  (void)args2.emplace("score_threshold", score_threshold_type);
   (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args2, valid_types, prim_name);
   // max_output_size must be scalar
   const std::set<TypePtr> valid_types2 = {kInt32};
   std::map<std::string, TypePtr> args3;
-  args3.insert({"max_output_size", max_output_size_type});
+  (void)args3.emplace("max_output_size", max_output_size_type);
   (void)CheckAndConvertUtils::CheckTensorTypeSame(args3, valid_types2, prim_name);
   return max_output_size_type;
 }

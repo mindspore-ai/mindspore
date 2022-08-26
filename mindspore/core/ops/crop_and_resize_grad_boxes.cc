@@ -29,7 +29,7 @@ namespace ops {
 void CropAndResizeGradBoxes::Init(ResizeMethod method) { this->set_method(method); }
 
 void CropAndResizeGradBoxes::set_method(ResizeMethod method) {
-  auto swi = (int64_t)method;
+  auto swi = static_cast<int64_t>(method);
   (void)this->AddAttr(kMethod, api::MakeValue(swi));
 }
 
@@ -39,7 +39,7 @@ ResizeMethod CropAndResizeGradBoxes::get_method() const {
 }
 
 namespace {
-constexpr size_t kInputNums = 4;
+constexpr int64_t kInputNums = 4;
 constexpr size_t kGrads = 0;
 constexpr size_t kGradsShapeLen = 4;
 constexpr size_t kHeight = 1;
@@ -69,8 +69,8 @@ abstract::ShapePtr CropAndResizeGradBoxesInferShape(const PrimitivePtr &primitiv
   auto input_shape2 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kBoxes]->BuildShape())[kShape];
   (void)CheckAndConvertUtils::CheckInteger("boxes rank", SizeToLong(input_shape2.size()), kEqual, kBoxesShapeLen,
                                            prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("shape[1] of boxes", SizeToLong(input_shape2[1]), kEqual, kCoordinateLen,
-                                           prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("shape[1] of boxes", SizeToLong(input_shape2[1]), kEqual,
+                                           SizeToLong(kCoordinateLen), prim_name);
   MS_EXCEPTION_IF_NULL(input_args[kBoxIndex]);
   auto input_shape3 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kBoxIndex]->BuildShape())[kShape];
   (void)CheckAndConvertUtils::CheckInteger("box_index rank", SizeToLong(input_shape3.size()), kEqual, kBoxIndShapeLen,
@@ -105,7 +105,7 @@ TypePtr CropAndResizeGradBoxesInferType(const PrimitivePtr &prim, const std::vec
   }
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNums, prim_name);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNums, prim_name);
   const std::set<TypePtr> valid_types = {kInt8, kInt16, kInt32, kInt64, kUInt8, kUInt16, kFloat16, kFloat32, kFloat64};
   const std::set<TypePtr> valid_others = {kFloat32, kFloat64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("grads", input_args[kGrads]->BuildType(), valid_others, prim_name);

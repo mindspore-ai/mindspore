@@ -54,7 +54,7 @@ abstract::TupleShapePtr GridSampler3DGradInferShape(const PrimitivePtr &primitiv
       << input_args[kTwo]->BuildShape()->ToString()
       << ", the shape of 'input_x': " << input_args[kOne]->BuildShape()->ToString() << ".";
   }
-  if (grid_shape[kFour] != kThree) {
+  if (grid_shape[kFour] != SizeToLong(kThree)) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the last dimension of 'grid' must be 3, but got "
                              << std::to_string(grid_shape[kFour]) << ".";
   }
@@ -98,7 +98,7 @@ MIND_API_OPERATOR_IMPL(GridSampler3DGrad, BaseOperator);
 AbstractBasePtr GridSampler3DGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                        const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  const int64_t input_num = kThree;
+  const int64_t input_num = 3;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   auto infer_types = GridSampler3DGradInferType(primitive, input_args);
   auto infer_shapes = GridSampler3DGradInferShape(primitive, input_args);

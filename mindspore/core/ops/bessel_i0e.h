@@ -30,7 +30,7 @@ class MIND_API BesselI0e : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(BesselI0e);
   BesselI0e() : BaseOperator(kNameBesselI0e) { InitIOName({"x"}, {"output"}); }
-  void Init() {}
+  void Init() const {}
 };
 }  // namespace ops
 }  // namespace mindspore

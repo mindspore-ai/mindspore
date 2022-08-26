@@ -31,7 +31,7 @@ class MIND_API BitwiseXor : public BaseOperator {
   MIND_API_BASE_MEMBER(BitwiseXor);
   BitwiseXor() : BaseOperator(kNameBitwiseXor) { InitIOName({"x1", "x2"}, {"y"}); }
   explicit BitwiseXor(const std::string k_name) : BaseOperator(k_name) { InitIOName({"x1", "x2"}, {"y"}); }
-  void Init() {}
+  void Init() const {}
 };
 abstract::AbstractBasePtr BitwiseXorInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                           const std::vector<abstract::AbstractBasePtr> &input_args);

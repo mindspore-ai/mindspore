@@ -116,7 +116,7 @@ bool GatherNdCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
       int indices_i = indices_addr[ind];
       read_index += indices_i * batch_indices_[k];
     }
-    read_index += j;
+    read_index += SizeToInt(j);
     output_addr[write_index] = input_addr[read_index];
   }
   return true;

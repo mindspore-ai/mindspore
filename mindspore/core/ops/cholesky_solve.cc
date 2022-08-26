@@ -50,7 +50,7 @@ abstract::ShapePtr CholeskySolveInferShape(const PrimitivePtr &primitive,
     MS_EXCEPTION(ValueError) << "For CholeskySolve, ranks of inputs should be equal"
                              << ", while got x1 rank " << x1_shape.size() << ", x2 rank " << x2_shape.size() << ".";
   }
-  int64_t rank = x1_shape.size();
+  size_t rank = SizeToLong(x1_shape.size());
   if (rank == kDefalutRank) {
     if (x1_shape[rank - kRowIndex] != x2_shape[rank - kRowIndex]) {
       MS_EXCEPTION(ValueError) << "For CholeskySolve, x1 and x2 should share the same row number"
@@ -100,7 +100,7 @@ AbstractBasePtr CholeskySolveInfer(const abstract::AnalysisEnginePtr &, const Pr
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
   const int64_t input_num = 2;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, op_name);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, op_name);
   auto infer_type = CholeskySolveInferType(primitive, input_args);
   auto infer_shape = CholeskySolveInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

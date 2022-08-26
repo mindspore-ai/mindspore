@@ -37,7 +37,7 @@ abstract::TupleShapePtr UnstackInferShape(const PrimitivePtr &primitive,
   std::vector<abstract::BaseShapePtr> shape_tuple;
   for (int64_t i = 0; i < output_num; ++i) {
     abstract::ShapePtr out_shape = std::make_shared<abstract::Shape>(temp_shape);
-    (void)shape_tuple.push_back(out_shape);
+    shape_tuple.push_back(out_shape);
   }
   return std::make_shared<abstract::TupleShape>(shape_tuple);
 }
@@ -52,16 +52,16 @@ TuplePtr UnstackInferType(const PrimitivePtr &prim, const std::vector<AbstractBa
   (void)CheckAndConvertUtils::CheckInteger("x_rank", x_rank, kGreaterEqual, 1, name);
 
   auto axis_temp = GetValue<int64_t>(prim->GetAttr(kAxis));
-  (void)CheckAndConvertUtils::CheckInRange("axis value", axis_temp, kIncludeLeft, {-x_rank, x_rank}, name);
+  CheckAndConvertUtils::CheckInRange("axis value", axis_temp, kIncludeLeft, {-x_rank, x_rank}, name);
   auto axis = axis_temp < 0 ? LongToSize(axis_temp + x_rank) : LongToSize(axis_temp);
 
   auto output_num = x_shape[axis];
   (void)CheckAndConvertUtils::CheckInteger("output_num", output_num, kGreaterEqual, 1, name);
-  (void)prim->AddAttr("num", MakeValue(SizeToLong(output_num)));
+  (void)prim->AddAttr("num", MakeValue(output_num));
 
   std::vector<TypePtr> type_tuple;
   for (int64_t i = 0; i < output_num; ++i) {
-    (void)type_tuple.push_back(type);
+    type_tuple.push_back(type);
   }
   return std::make_shared<Tuple>(type_tuple);
 }

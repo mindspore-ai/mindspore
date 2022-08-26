@@ -101,7 +101,8 @@ abstract::ShapePtr Col2ImInferShape(const PrimitivePtr &primitive, const std::ve
     MS_EXCEPTION(ValueError) << "For 'Col2Im', 'output_size' must be a 1D Tensor, but got a "
                              << output_size_shape.size() << "-D Tensor.";
   }
-  if (output_size_shape[0] != 2) {
+  constexpr int64_t output_size_dim0 = 2;
+  if (output_size_shape[0] != output_size_dim0) {
     MS_EXCEPTION(ValueError)
       << "For 'Col2Im', 'output_size' must be a 1D Tensor with 2 elements, but got a 1-D Tensor with "
       << output_size_shape[0] << " elements.";

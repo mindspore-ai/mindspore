@@ -43,8 +43,8 @@ abstract::ShapePtr AddcmulInferShape(const PrimitivePtr &primitive, const std::v
   auto value_shape = value_shape_map[kShape];
   auto broadcast_shape = CalBroadCastShape(x1_shape, x2_shape, op_name, "x1", "x2");
   if (input_args[kInputIndex3]->isa<abstract::AbstractTensor>()) {
-    CalBroadCastShape(x1_shape, value_shape, op_name, "x1", "value");
-    CalBroadCastShape(x2_shape, value_shape, op_name, "x2", "value");
+    (void)CalBroadCastShape(x1_shape, value_shape, op_name, "x1", "value");
+    (void)CalBroadCastShape(x2_shape, value_shape, op_name, "x2", "value");
     broadcast_shape = CalBroadCastShape(broadcast_shape, value_shape, op_name);
   }
   broadcast_shape = CalBroadCastShape(broadcast_shape, input_data, op_name);

@@ -44,8 +44,8 @@ class TruncatedNormalCPUKernelMod : public DeprecatedNativeCpuKernelMod {
   static std::vector<std::pair<KernelAttr, TruncatedNormalFunc>> func_list_;
 
   TruncatedNormalFunc kernel_func_;
-  TypeId output_type_;
-  TypeId input_type_;
+  TypeId output_type_{kTypeUnknown};
+  TypeId input_type_{kTypeUnknown};
   size_t seed_{0};
   size_t seed2_{0};
   size_t seedc_{0};

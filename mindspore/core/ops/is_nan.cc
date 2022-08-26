@@ -39,7 +39,7 @@ TypePtr IsNanInferType(const PrimitivePtr &primitive, const std::vector<Abstract
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  CheckAndConvertUtils::CheckTensorTypeValid(
+  (void)CheckAndConvertUtils::CheckTensorTypeValid(
     "x", input_args[0]->BuildType(),
     {kBool, kInt8, kInt16, kInt32, kInt64, kFloat16, kFloat32, kFloat64, kUInt8, kUInt16, kUInt32, kUInt64},
     primitive->name());

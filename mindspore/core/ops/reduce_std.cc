@@ -35,15 +35,14 @@ abstract::TupleShapePtr ReduceStdInferShape(const PrimitivePtr &primitive,
   auto axis = GetValue<std::vector<int64_t>>(primitive->GetAttr("axis"));
   auto keep_dims = GetValue<bool>(primitive->GetAttr("keep_dims"));
   auto temp_shape = input_shape;
-  (void)CheckAndConvertUtils::CheckInRange("axis size", axis.size(), kIncludeLeft, {0, input_rank + 1}, prim_name);
+  CheckAndConvertUtils::CheckInRange("axis size", axis.size(), kIncludeLeft, {0, input_rank + 1}, prim_name);
   if (axis.size() == 0) {
     for (size_t i = 0; i < input_shape.size(); i++) {
       axis.push_back(i);
     }
   } else {
     for (size_t i = 0; i < axis.size(); ++i) {
-      (void)CheckAndConvertUtils::CheckInRange("axis value", axis[i], kIncludeLeft, {-input_rank, input_rank},
-                                               prim_name);
+      CheckAndConvertUtils::CheckInRange("axis value", axis[i], kIncludeLeft, {-input_rank, input_rank}, prim_name);
       if (axis[i] < 0) {
         axis[i] += input_rank;
       }
@@ -51,7 +50,7 @@ abstract::TupleShapePtr ReduceStdInferShape(const PrimitivePtr &primitive,
     for (size_t i = 0; i < axis.size(); ++i) {
       auto temp = axis;
       auto idx = std::find(temp.begin(), temp.end(), axis[i]);
-      temp.erase(idx);
+      (void)temp.erase(idx);
       auto re_idx = std::find(temp.begin(), temp.end(), axis[i]);
       if (re_idx != temp.end()) {
         MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the elements in attribute axis must be different.";
@@ -60,9 +59,9 @@ abstract::TupleShapePtr ReduceStdInferShape(const PrimitivePtr &primitive,
   }
   for (size_t i = 0; i < axis.size(); ++i) {
     if (!keep_dims) {
-      temp_shape[axis[i]] = -1;
+      temp_shape[LongToSize(axis[i])] = -1;
     } else {
-      temp_shape[axis[i]] = 1;
+      temp_shape[LongToSize(axis[i])] = 1;
     }
   }
   if (!keep_dims) {
@@ -121,7 +120,7 @@ AbstractBasePtr ReduceStdInfer(const abstract::AnalysisEnginePtr &, const Primit
                                const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t kInputsNum = 1;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputsNum, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputsNum, primitive->name());
   auto infer_type = ReduceStdInferType(primitive, input_args);
   auto infer_shape = ReduceStdInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

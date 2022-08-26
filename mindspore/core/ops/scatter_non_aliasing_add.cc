@@ -64,8 +64,8 @@ TypePtr ScatterNonAliasingAddInferType(const PrimitivePtr &primitive, const std:
   std::set<TypePtr> type_set = {kInt32};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("indices type", indiecs_type_ptr, type_set, prim_name);
   std::map<std::string, TypePtr> type_dict;
-  type_dict.emplace("input_x", input_args[kInputIndex0]->BuildType());
-  type_dict.emplace("updates", input_args[kInputIndex2]->BuildType());
+  (void)type_dict.emplace("input_x", input_args[kInputIndex0]->BuildType());
+  (void)type_dict.emplace("updates", input_args[kInputIndex2]->BuildType());
   return CheckAndConvertUtils::CheckTensorTypeSame(type_dict, common_valid_types, prim_name);
 }
 }  // namespace
@@ -75,7 +75,7 @@ AbstractBasePtr ScatterNonAliasingAddInfer(const abstract::AnalysisEnginePtr &, 
                                            const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t kInputNum = 3;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, primitive->name());
   auto infer_type = ScatterNonAliasingAddInferType(primitive, input_args);
   auto infer_shape = ScatterNonAliasingAddInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

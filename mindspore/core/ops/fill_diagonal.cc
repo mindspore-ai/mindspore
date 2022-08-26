@@ -26,7 +26,7 @@ namespace ops {
 namespace {
 abstract::ShapePtr FillDiagonalInferShape(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];
-  int64_t x_size = x_shape.size();
+  int64_t x_size = SizeToLong(x_shape.size());
   const int64_t kDimSize2 = 2;
   if (x_size < kDimSize2) {
     MS_EXCEPTION(ValueError) << "The primitive[FillDiagonal] argument [input_x] must be a Tensor whose dimension is "
@@ -35,7 +35,7 @@ abstract::ShapePtr FillDiagonalInferShape(const PrimitivePtr &, const std::vecto
   }
   if (x_size > kDimSize2) {
     for (int64_t i = 1; i < x_size; i++) {
-      if (x_shape[i] != x_shape[i - 1]) {
+      if (x_shape[LongToSize(i)] != x_shape[LongToSize(i - 1)]) {
         MS_EXCEPTION(ValueError) << "The primitive[FillDiagonal] argument [input_x] must be a Tensor with the same "
                                     "size in all dimensions when its dimension is greater than 2";
       }

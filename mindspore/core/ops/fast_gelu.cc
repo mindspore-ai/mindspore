@@ -32,7 +32,7 @@ abstract::ShapePtr FastGeLUInferShape(const PrimitivePtr &primitive, const std::
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   const int64_t kInputNum = 1;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
   auto x = input_args[0]->BuildShape();
   (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
   auto shape_element = x->cast<abstract::ShapePtr>();
@@ -44,7 +44,7 @@ TypePtr FastGeLUInferType(const PrimitivePtr &prim, const std::vector<AbstractBa
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
   const int64_t kInputNum = 1;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
   MS_EXCEPTION_IF_NULL(input_args[0]);
   auto x_type = input_args[0]->BuildType();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};

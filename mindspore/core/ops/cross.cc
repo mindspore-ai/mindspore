@@ -44,16 +44,16 @@ abstract::ShapePtr CrossInferShape(const PrimitivePtr &primitive, const std::vec
                                << ", 'x2' shape: " << x2_shape << ".";
     }
   }
-  if (x1_shape.size() <= 0 || x2_shape.size() <= 0) {
-    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', inputs data dim must be greater than 0, but got "
-                             << x1_shape.size() << ".";
-  }
+  (void)CheckAndConvertUtils::CheckInteger("dim of x1", SizeToLong(x1_shape.size()), kGreaterThan, 0,
+                                           primitive->name());
+  (void)CheckAndConvertUtils::CheckInteger("dim of x2", SizeToLong(x2_shape.size()), kGreaterThan, 0,
+                                           primitive->name());
   int64_t default_dim = -65530;
   if (dim == default_dim) {
     int64_t dim_size_value = 3;
     for (size_t i = 0; i < x1_shape.size(); i++) {
       if (x1_shape[i] == dim_size_value) {
-        dim = i;
+        dim = SizeToLong(i);
         break;
       }
       if (i == x1_shape.size() - 1 && x1_shape[i] != dim_size_value) {
@@ -72,9 +72,9 @@ abstract::ShapePtr CrossInferShape(const PrimitivePtr &primitive, const std::vec
     dim = static_cast<int64_t>(x1_shape.size()) + dim;
   }
   int64_t dim_size = 3;
-  if (x1_shape[dim] != dim_size && x2_shape[dim] != dim_size && dim != default_dim) {
+  if (x1_shape[LongToSize(dim)] != dim_size && x2_shape[LongToSize(dim)] != dim_size && dim != default_dim) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the size of inputs dim must be 3, but got "
-                             << x1_shape[dim] << ".";
+                             << x1_shape[LongToSize(dim)] << ".";
   }
   return std::make_shared<abstract::Shape>(x1_shape);
 }
@@ -92,7 +92,7 @@ TypePtr CrossInferType(const PrimitivePtr &primitive, const std::vector<Abstract
   auto x2_type = input_args[1]->BuildType();
   auto tensor_type = x2_type->cast<TensorTypePtr>();
   auto element = tensor_type->element();
-  CheckAndConvertUtils::CheckTensorTypeValid("x2", x2_type, valid_types, primitive->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x2", x2_type, valid_types, primitive->name());
   return CheckAndConvertUtils::CheckTensorTypeValid("x1", x1_type, {element}, primitive->name());
 }
 AbstractBasePtr CrossInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

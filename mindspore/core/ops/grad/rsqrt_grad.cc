@@ -52,7 +52,7 @@ MIND_API_OPERATOR_IMPL(RsqrtGrad, BaseOperator);
 AbstractBasePtr RsqrtGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  const size_t kInputNum = 2;
+  const int64_t kInputNum = 2;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, primitive->name());
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex1]);

@@ -32,7 +32,7 @@ class MIND_API NthElement : public BaseOperator {
   MIND_API_BASE_MEMBER(NthElement);
   /// \brief Constructor.
   NthElement() : BaseOperator(kNameNthElement) { InitIOName({"input", "n"}, {"output"}); }
-  void Init() {}
+  void Init() const {}
 };
 abstract::AbstractBasePtr NthElementInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                           const std::vector<abstract::AbstractBasePtr> &input_args);

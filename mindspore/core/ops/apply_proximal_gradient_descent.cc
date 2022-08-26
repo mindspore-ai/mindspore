@@ -101,7 +101,7 @@ MIND_API_OPERATOR_IMPL(ApplyProximalGradientDescent, BaseOperator);
 AbstractBasePtr ApplyProximalGradientDescentInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                   const std::vector<AbstractBasePtr> &input_args) {
   const int64_t input_num = 5;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, input_num, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, input_num, primitive->name());
   auto infer_type = ApplyProximalGradientDescentInferType(primitive, input_args);
   auto infer_shape = ApplyProximalGradientDescentInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

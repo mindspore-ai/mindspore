@@ -32,7 +32,7 @@ class MIND_API RightShift : public BaseOperator {
   /// \brief Constructor.
   RightShift() : BaseOperator(kNameRightShift) { InitIOName({"input_x", "input_y"}, {"output"}); }
   /// \brief Init.
-  void Init() {}
+  void Init() const {}
 };
 abstract::AbstractBasePtr RightShiftInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                           const std::vector<abstract::AbstractBasePtr> &input_args);
