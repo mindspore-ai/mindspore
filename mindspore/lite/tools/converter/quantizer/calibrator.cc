@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 
 #define USE_DEPRECATED_API
+
 #include "tools/converter/quantizer/calibrator.h"
 #include <utility>
 #include "tools/converter/preprocess/image_preprocess.h"
@@ -42,6 +43,7 @@ int Calibrator::ComputeThreshold() {
   for (auto &kv : this->outputs_diverg_info_) {
     auto &outputs_diverg_info = kv.second;
     for (auto &diverg_info : outputs_diverg_info) {
+      MS_CHECK_TRUE_RET(diverg_info.second != nullptr, RET_ERROR);
       auto ret = diverg_info.second->ComputeThreshold();
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "Compute threshold failed.";
@@ -56,6 +58,7 @@ int Calibrator::ComputeThreshold() {
       auto cnode = input_infos[i]->GetCNode();
       MS_CHECK_TRUE_MSG(cnode != nullptr, RET_NULL_PTR, "cnode is nullptr.");
       bool already_computed = false;
+      MS_CHECK_GT(cnode->size(), i + 1, RET_ERROR);
       auto input = cnode->input(i + 1);
       if (input->isa<mindspore::CNode>()) {
         auto input_cnode = input->cast<CNodePtr>();
@@ -64,6 +67,7 @@ int Calibrator::ComputeThreshold() {
             break;
           }
           for (const auto &output_diverg_info : outputs_diverg_info.second) {
+            MS_CHECK_TRUE_RET(output_diverg_info.second != nullptr, RET_ERROR);
             auto output_diverg_cnode = output_diverg_info.second->GetCNode();
             if (output_diverg_cnode == input_cnode) {
               if (NodePrimitiveType(input_cnode) != ops::kNameTupleGetItem) {
@@ -89,7 +93,6 @@ int Calibrator::ComputeThreshold() {
 }
 
 int Calibrator::UpdateDivergInterval() {
-  MS_ASSERT(diverg_info != nullptr);
   for (auto &kv : inputs_diverg_info_) {
     for (auto &info : kv.second) {
       info.second->UpdateInterval();
@@ -140,7 +143,7 @@ int Calibrator::AddQuantizedOp(const CNodePtr &cnode) {
     auto tuple = std::reinterpret_pointer_cast<abstract::AbstractTuple>(cnode->abstract());
     MS_CHECK_TRUE_MSG(tuple != nullptr, RET_ERROR, "tuple is nullptr");
     auto elements = tuple->elements();
-    MS_ASSERT(elements.size() > 1);
+    MS_CHECK_GT(elements.size(), 1, RET_ERROR);
     for (size_t i = 0; i < elements.size(); i++) {
       std::unique_ptr<DataDistribution> output_diverg = std::make_unique<DataDistribution>(
         cnode, kDefaultBinNumber, bit_num_, quant_max_, quant_min_, activation_quant_method_, symmetric_);

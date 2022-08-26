@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,10 @@ class BitPack {
  private:
   template <typename T2>
   static void PackFromOriginToUint(std::stack<bool> *ans, std::vector<T2> *packed_data_vec) {
-    MS_ASSERT(ans != nullptr);
+    if (ans == nullptr || packed_data_vec == nullptr) {
+      MS_LOG(ERROR) << "The pointer is nullptr.";
+      return;
+    }
     uint32_t result = 0;
     for (size_t i = 0; i < sizeof(T2) * k8Bit; i++) {
       bool bit_tmp = ans->top();
@@ -62,7 +65,10 @@ class BitPack {
 
   template <typename T2>
   static void DoBinary(int bin_num, T2 n, std::stack<bool> *ans, std::vector<T2> *packed_data_vec) {
-    MS_ASSERT(ans != nullptr);
+    if (ans == nullptr || packed_data_vec == nullptr) {
+      MS_LOG(ERROR) << "The pointer is nullptr.";
+      return;
+    }
     for (int bit_count = 0; bit_count < bin_num; bit_count++) {
       bool a = n % 2;
       n = n / 2;

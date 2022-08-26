@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ int ConcatQuantParamPropogator::PropogateQuantParams(mindspore::schema::MetaGrap
   }
 
   if (output_inited_quant_params_ != 1) {
-    MS_ASSERT(output_inited_quant_params_ == 0);
+    MS_CHECK_TRUE_RET(output_inited_quant_params_ == 0, RET_ERROR);
     float min_min = FLT_MAX;
     float max_max = FLT_MIN;
     bool narrow_range = false;
@@ -70,9 +70,10 @@ int ConcatQuantParamPropogator::PropogateQuantParams(mindspore::schema::MetaGrap
       }
     }
 
-    MS_ASSERT(graph->allTensors.size() > node.outputIndex.front());
+    MS_CHECK_FALSE_MSG(node.outputIndex.empty(), false, "outputIndex is empty.");
+    MS_CHECK_TRUE_RET(graph->allTensors.size() > node.outputIndex.front(), RET_ERROR);
     auto &out_tensor = graph->allTensors.at(node.outputIndex.front());
-    MS_ASSERT(out_tensor != nullptr);
+    MS_CHECK_TRUE_RET(out_tensor != nullptr, RET_NULL_PTR);
     auto out_quant_param = std::make_unique<QuantParamT>();
     MS_CHECK_TRUE_MSG(out_quant_param != nullptr, RET_NULL_PTR, "out_quant_param is nullptr.");
 
