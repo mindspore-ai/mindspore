@@ -580,9 +580,6 @@ int LiteSession::CompileGraph(Model *model) {
   }
 
   is_running_.store(false);
-#if defined(LINUX_RUNTIME)
-  (void)malloc_trim(0);
-#endif
   return RET_OK;
 }
 
