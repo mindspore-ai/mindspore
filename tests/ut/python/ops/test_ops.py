@@ -145,6 +145,7 @@ from mindspore.ops.operations.sparse_ops import CSRSparseMatrixToSparseTensor
 from mindspore.ops.operations.sparse_ops import SparseAddmm
 from mindspore.ops.operations.sparse_ops import SparseConcat
 from mindspore.ops.operations.sparse_ops import SparseTensorToCSRSparseMatrix
+from mindspore.ops.operations.sparse_ops import SparseSparseMaximum
 from mindspore.ops.operations.sparse_ops import SparseSparseMinimum
 from mindspore.ops.operations.sparse_ops import SparseSegmentSqrtN
 from mindspore.ops.operations.sparse_ops import SparseSegmentSqrtNWithNumSegments
@@ -4373,6 +4374,12 @@ test_case_other_ops = [
                         Tensor(np.array([0, 2, 2]).astype(np.int32)),
                         Tensor(np.array([0, 2]).astype(np.int32)),
                         Tensor(np.array([5.3, 2.4]).astype(np.float32))],
+        'skip': ['backward']}),
+    ('SparseSparseMaximum', {
+        'block': SparseSparseMaximum(),
+        'desc_inputs': [Tensor([[0, 0]], mstype.int64), Tensor([1], mstype.int64),
+                        Tensor([3, 3], mstype.int64), Tensor([[0, 0], [1, 1]], mstype.int64),
+                        Tensor([2, 100], mstype.int64), Tensor([3, 3], mstype.int64)],
         'skip': ['backward']}),
     ('SparseReshape', {
         'block': SparseReshape(),

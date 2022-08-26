@@ -234,6 +234,67 @@ class SparseSlice(Primitive):
                                 outputs=['y_indices', 'y_values', 'y_shape'])
 
 
+class SparseSparseMaximum(Primitive):
+    """
+    return a sparse tensor representation max element of two input sparse tensor.
+
+    Inputs:
+        - **x1_indices**  - A 2-D Tensor, type int64, represents the position of the element in the x1 sparse tensor.
+          each element value should be a non-negative int number. the shape of which should be :math:`(n1, m,)`.
+        - **x1_values**  - A 1-D Tensor, represents the value corresponding to the position in the `indices`.
+          the shape of which should be :math:`(n1,)`.
+        - **x1_shape**  - A 1-D Tensor, type int64, which specifies the shape of x1 sparse tensor.
+          the shape of which should be :math:`(m,)`.
+        - **x2_indices**  - A 2-D Tensor, type int64, represents the position of the element in the x2 sparse tensor.
+          each element value should be a non-negative int number. the shape of which should be :math:`(n2, m,)`.
+        - **x2_values**  - A 1-D Tensor, represents the value corresponding to the position in the `indices`.
+          the shape of which should be :math:`(n2,)`.
+        - **x2_shape**  - A 1-D Tensor, type int64, which specifies the shape of x2 sparse tensor.
+          the shape of which should be :math:`(m,)`.
+
+    Returns:
+        - **y_indices**  - A 2-D Tensor, type int64. It represents the position of the element-wise max of
+          two input tensors.
+        - **y_values**  - A 1-D Tensor. It represents the value corresponding to the position
+          in the `y_indices`. Has the same type as x1_values.
+
+    Raises:
+        TypeError: If the dtype of `x1_indices`, `x2_indices`, `x1_indices` and `x2_indices` isn't int64.
+        TypeError: If the dtype of `x1_values` and `x2_values` isn't support.
+        TypeError: If the dtype of `x1_values` and `x2_values` isn't same.
+        TypeError: If the input is not tensor.
+        ValueError: If x1_indices.shape[0] and x1_values.shape[0] isn't same.
+        ValueError: If x2_indices.shape[0] and x2_values.shape[0] isn't same.
+        ValueError: If x1_indices.shape[1] and x1_shape.shape[0] isn't same.
+        ValueError: If x2_indices.shape[0] and x2_values.shape[0] isn't same.
+        ValueError: If the `x1_shape` and `x2_shape` mismatch with each other.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> x1_indices = Tensor([[0, 1], [1, 2]])
+        >>> x1_values = Tensor([1, 2], dtype=ms.float32)
+        >>> x1_shape = Tensor([3, 3])
+        >>> x2_indices = Tensor([[0, 1], [1, 1]])
+        >>> x2_values = Tensor([3, 4], dtype=ms.float32)
+        >>> x2_shape = Tensor([3, 3])
+        >>> SparseSparseMaximum = ops.SparseSparseMaximum()
+        >>> y_indices, y_values = SparseSparseMaximum(x1_indices, x1_values, x1_shape, x2_indices, x2_values, x2_shape)
+        >>> print(y_indices)
+        [[0. 1.]
+         [1. 1.]
+         [1. 2.]]
+        >>> print(y_values)
+        [3. 4. 2.]
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize SparseSparseMaximum."""
+        self.init_prim_io_names(inputs=['x1_indices', 'x1_values', 'x1_shape', 'x2_indices', 'x2_values', 'x2_shape'],
+                                outputs=['y_indices', 'y_values'])
+
+
 class SparseToDense(PrimitiveWithInfer):
     """
     Converts a sparse representation into a dense tensor.
