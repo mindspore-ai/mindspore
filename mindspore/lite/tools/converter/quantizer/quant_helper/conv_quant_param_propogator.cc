@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,12 +28,14 @@ int ConvQuantParamPropogator::PropogateQuantParams(mindspore::schema::MetaGraphT
                                                    const mindspore::schema::CNodeT &node) {
   MS_CHECK_TRUE_MSG(graph != nullptr, RET_NULL_PTR, "graph is nullptr.");
   if (node.inputIndex.size() == kBiasAdd) {
-    MS_ASSERT(graph->allTensors.size() > node.inputIndex.at(kBiasAdd - 1));
+    MS_CHECK_TRUE_RET(graph->allTensors.size() > node.inputIndex.at(kBiasAdd - 1), RET_ERROR);
     auto &bias_tensor = graph->allTensors.at(node.inputIndex.at(kBiasAdd - 1));
     if (bias_tensor->quantParams.empty() || !bias_tensor->quantParams.front()->inited) {
       // check input and weight quant params
       auto &input_tensor = graph->allTensors.at(node.inputIndex.at(0));
       auto &weight_tensor = graph->allTensors.at(node.inputIndex.at(1));
+      MS_CHECK_TRUE_RET(input_tensor != nullptr, RET_NULL_PTR);
+      MS_CHECK_TRUE_RET(weight_tensor != nullptr, RET_NULL_PTR);
       if (input_tensor->quantParams.empty() || !input_tensor->quantParams.front()->inited) {
         return RET_OK;
       }

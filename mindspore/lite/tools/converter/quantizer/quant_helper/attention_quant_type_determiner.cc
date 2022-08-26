@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,16 +33,30 @@ bool AttentionQuantTypeDeterminer::DetermineQuantWeight(const mindspore::schema:
   auto input_index = node->inputIndex;
   MS_CHECK_FALSE_MSG(input_index.empty(), false, "inputIndex is empty.");
   MS_CHECK_TRUE_MSG(input_index.size() > kInputIndex, false, "invalid access.");
+  MS_CHECK_TRUE_MSG(graph.allTensors.size() > input_index.at(kInputIndex), false, "invalid access.");
   auto &input_tensor = graph.allTensors.at(input_index.at(kInputIndex));
+
   MS_CHECK_TRUE_MSG(input_index.size() > kWeightQueryIndex, false, "invalid access.");
+  MS_CHECK_TRUE_MSG(graph.allTensors.size() > input_index.at(kWeightQueryIndex), false, "invalid access.");
   auto &weight_query_tensor = graph.allTensors.at(input_index.at(kWeightQueryIndex));
+
   MS_CHECK_TRUE_MSG(input_index.size() > kWeightKeyIndex, false, "invalid access.");
+  MS_CHECK_TRUE_MSG(graph.allTensors.size() > input_index.at(kWeightKeyIndex), false, "invalid access.");
   auto &weight_key_tensor = graph.allTensors.at(input_index.at(kWeightKeyIndex));
+
   MS_CHECK_TRUE_MSG(input_index.size() > kWeightValueIndex, false, "invalid access.");
+  MS_CHECK_TRUE_MSG(graph.allTensors.size() > input_index.at(kWeightValueIndex), false, "invalid access.");
   auto &weight_value_tensor = graph.allTensors.at(input_index.at(kWeightValueIndex));
+
   MS_CHECK_TRUE_MSG(input_index.size() > kWeightOutputIndex, false, "invalid access.");
+  MS_CHECK_TRUE_MSG(graph.allTensors.size() > input_index.at(kWeightOutputIndex), false, "invalid access.");
   auto &weight_output_tensor = graph.allTensors.at(input_index.at(kWeightOutputIndex));
 
+  MS_CHECK_TRUE_RET(input_tensor != nullptr, false);
+  MS_CHECK_TRUE_RET(weight_query_tensor != nullptr, false);
+  MS_CHECK_TRUE_RET(weight_key_tensor != nullptr, false);
+  MS_CHECK_TRUE_RET(weight_value_tensor != nullptr, false);
+  MS_CHECK_TRUE_RET(weight_output_tensor != nullptr, false);
   if (!quant::TensorQuantParamsInited(*input_tensor) && quant::TensorQuantParamsInited(*weight_query_tensor) &&
       quant::TensorQuantParamsInited(*weight_key_tensor) && quant::TensorQuantParamsInited(*weight_value_tensor) &&
       quant::TensorQuantParamsInited(*weight_output_tensor)) {

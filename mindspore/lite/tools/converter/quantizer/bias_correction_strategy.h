@@ -112,6 +112,7 @@ class BiasCorrectionStrategy {
     CHECK_NULL_RETURN(tensor_data);
     MS_CHECK_GT(elem_count, 0, RET_ERROR);
     // suppose the activation format: NHWC
+    MS_CHECK_TRUE_RET(!shapes.empty(), RET_ERROR);
     auto channels = shapes[shapes.size() - 1];
     MS_CHECK_GT(channels, 0, RET_ERROR);
     per_channel_mean->resize(channels);
@@ -128,6 +129,7 @@ class BiasCorrectionStrategy {
       }
       MS_CHECK_GT(bucket_size, 0, RET_ERROR);
       sum = sum / bucket_size;
+      MS_CHECK_GT(static_cast<int>(per_channel_mean->size()), i, RET_ERROR);
       per_channel_mean->at(i) = sum;
     }
     return RET_OK;

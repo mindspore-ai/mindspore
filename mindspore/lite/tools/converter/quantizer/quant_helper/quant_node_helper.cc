@@ -35,8 +35,9 @@ void QuantNodeBase::UpdateQuantParamsNum(const schema::MetaGraphT &graph, const 
   // update input quant params num
   input_inited_quant_params_ = 0;
   for (auto index : node.inputIndex) {
-    MS_ASSERT(graph.allTensors.size() > index);
+    MS_CHECK_TRUE_RET_VOID(graph.allTensors.size() > index);
     auto &input_tensor = graph.allTensors.at(index);
+    MS_CHECK_TRUE_RET_VOID(input_tensor != nullptr);
     if (!input_tensor->quantParams.empty()) {
       bool is_quant_params_inited =
         !std::any_of(input_tensor->quantParams.begin(), input_tensor->quantParams.end(),
@@ -51,8 +52,9 @@ void QuantNodeBase::UpdateQuantParamsNum(const schema::MetaGraphT &graph, const 
   // update output quant params num
   output_inited_quant_params_ = 0;
   for (auto index : node.outputIndex) {
-    MS_ASSERT(graph.allTensors.size() > index);
+    MS_CHECK_TRUE_RET_VOID(graph.allTensors.size() > index);
     auto &output_tensor = graph.allTensors.at(index);
+    MS_CHECK_TRUE_RET_VOID(output_tensor != nullptr);
     if (!output_tensor->quantParams.empty()) {
       bool is_quant_params_inited =
         !std::any_of(output_tensor->quantParams.begin(), output_tensor->quantParams.end(),
@@ -66,7 +68,7 @@ void QuantNodeBase::UpdateQuantParamsNum(const schema::MetaGraphT &graph, const 
 }
 
 bool QuantTypeDeterminer::DetermineQuantAll(const schema::MetaGraphT &graph, schema::CNodeT *node) {
-  MS_ASSERT(node != nullptr);
+  MS_CHECK_TRUE_RET(node != nullptr, false);
   kernel::KernelKey desc{kernel::kCPU, kNumberTypeInt8, NHWC, node->primitive->value.type, ""};
   if (!KernelRegistry::GetInstance()->SupportKernel(desc)) {
     return false;
@@ -88,7 +90,9 @@ bool QuantTypeDeterminer::DetermineQuantWeight(const schema::MetaGraphT &graph, 
 }
 
 int QuantNodeHelper::NodeQuantPreprocess(schema::MetaGraphT *graph, schema::CNodeT *node) {
-  MS_ASSERT(node != nullptr);
+  MS_CHECK_TRUE_RET(graph != nullptr, RET_NULL_PTR);
+  MS_CHECK_TRUE_RET(node != nullptr, RET_NULL_PTR);
+
   if (quant_type_determiner_->DetermineQuantWeight(*graph, node)) {
     return RET_OK;
   }

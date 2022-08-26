@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,12 +21,14 @@
 namespace mindspore::lite {
 bool CarryDataQuantTypeDeterminer::DetermineQuantAll(const schema::MetaGraphT &graph, schema::CNodeT *node) {
   MS_CHECK_TRUE_MSG(node != nullptr, false, "node is nullptr.");
-  MS_ASSERT(node->inputIndex.size() >= kInputIndexOne);
-  MS_ASSERT(node->outputIndex.size() >= kInputIndexOne);
+  MS_CHECK_TRUE_RET(node->inputIndex.size() >= kInputIndexOne, false);
+  MS_CHECK_TRUE_RET(node->outputIndex.size() >= kInputIndexOne, false);
 
   // check first in tensor
-  MS_ASSERT(graph.allTensors.size() > node->inputIndex.at(0));
+  MS_CHECK_FALSE_MSG(node->inputIndex.empty(), false, "inputIndex is empty.");
+  MS_CHECK_TRUE_RET(graph.allTensors.size() > node->inputIndex.at(0), false);
   auto &in_tensor = graph.allTensors.at(node->inputIndex.at(0));
+  MS_CHECK_TRUE_RET(in_tensor != nullptr, false);
   if (!in_tensor->quantParams.empty()) {
     if (std::any_of(in_tensor->quantParams.begin(), in_tensor->quantParams.end(),
                     [](const std::unique_ptr<QuantParamT> &quant_param) { return !quant_param->inited; })) {
@@ -37,8 +39,10 @@ bool CarryDataQuantTypeDeterminer::DetermineQuantAll(const schema::MetaGraphT &g
   }
 
   // check first out tensor
-  MS_ASSERT(graph.allTensors.size() > node->outputIndex.at(0));
+  MS_CHECK_FALSE_MSG(node->outputIndex.empty(), false, "outputIndex is empty.");
+  MS_CHECK_TRUE_RET(graph.allTensors.size() > node->outputIndex.at(0), false);
   auto &out_tensor = graph.allTensors.at(node->outputIndex.at(0));
+  MS_CHECK_TRUE_RET(out_tensor != nullptr, false);
   if (!out_tensor->quantParams.empty()) {
     if (std::any_of(out_tensor->quantParams.begin(), out_tensor->quantParams.end(),
                     [](const std::unique_ptr<QuantParamT> &quant_param) { return !quant_param->inited; })) {

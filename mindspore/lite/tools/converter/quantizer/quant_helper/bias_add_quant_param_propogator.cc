@@ -27,6 +27,7 @@ int BiasAddQuantParamPropogator::PropogateQuantParams(mindspore::schema::MetaGra
   MS_CHECK_TRUE_MSG(graph != nullptr, RET_NULL_PTR, "graph is nullptr.");
   if (node.inputIndex.size() == kBiasAddSize) {
     auto &bias_tensor = graph->allTensors.at(node.inputIndex.at(kBiasAddSize - 1));
+    MS_CHECK_TRUE_RET(bias_tensor != nullptr, RET_NULL_PTR);
     for (auto &quantParam : bias_tensor->quantParams) {
       quantParam->dstDtype = TypeId::kNumberTypeInt32;
     }
