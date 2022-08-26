@@ -107,7 +107,7 @@ class ModelPool {
 
   Status CheckAffinityCoreList(const std::shared_ptr<RunnerConfig> &runner_config);
 
-  bool CanUseAllPhysicalResources();
+  Status CanUseAllPhysicalResources(int *percentage);
 
   int GetDefaultThreadNum(int worker_num = 0);
 
@@ -138,6 +138,7 @@ class ModelPool {
 
   // use numa
   bool numa_available_ = false;
+  bool bind_core_available_ = true;
   size_t numa_node_num_ = 1;
   std::vector<std::vector<int>> numa_physical_cores_;
   std::vector<std::vector<int>> numa_logical_cores_;

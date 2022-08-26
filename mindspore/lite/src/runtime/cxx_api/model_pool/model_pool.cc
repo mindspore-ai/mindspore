@@ -36,7 +36,7 @@ constexpr int kDefaultThreadsNum = 8;
 constexpr int kInvalidNumaId = -1;
 constexpr int kNumDefaultInterOpParallel = 4;
 
-std::vector<int> ParseCpusetFile() {
+std::vector<int> ParseCpusetFile(int *percentage) {
   std::vector<int> cpu_core = {};
   std::ifstream infile("/sys/fs/cgroup/cpuset/cpuset.cpus", std::ios::in);
   std::string line;
@@ -59,6 +59,28 @@ std::vector<int> ParseCpusetFile() {
       cpu_core.push_back(std::atoi(line.c_str()));
     }
   }
+  std::ifstream quota_file("/sys/fs/cgroup/cpu/cpu.cfs_quota_us", std::ios::in);
+  std::string quota_line;
+  getline(quota_file, quota_line);
+  if (quota_line[quota_line.size() - 1] == '\n') {
+    quota_line = quota_line.substr(0, quota_line.size() - 1);
+  }
+  auto quota = std::atoi(quota_line.c_str());
+  if (quota == -1) {
+    *percentage = -1;
+    return cpu_core;
+  }
+  std::ifstream period_file("/sys/fs/cgroup/cpu/cpu.cfs_period_us", std::ios::in);
+  std::string period_line;
+  getline(period_file, period_line);
+  if (period_line[period_line.size() - 1] == '\n') {
+    period_line = period_line.substr(0, period_line.size() - 1);
+  }
+  auto period = std::atoi(period_line.c_str());
+  if (period == 0) {
+    return {};
+  }
+  *percentage = quota / period;
   return cpu_core;
 }
 
@@ -243,7 +265,11 @@ Status ModelPool::SetBindStrategy(std::vector<std::vector<int>> *all_model_bind_
   }
   std::vector<int> all_core_list = {};
   if (!can_use_all_physical_core_) {
-    std::vector<int> can_use_core_list = ParseCpusetFile();
+    int percentage;
+    std::vector<int> can_use_core_list = ParseCpusetFile(&percentage);
+    if (percentage != -1) {
+      return kLiteFileError;
+    }
     std::sort(physical_core_list.begin(), physical_core_list.end());
     std::sort(logical_core_list.begin(), logical_core_list.end());
     std::vector<int> can_use_physical_list = {};
@@ -457,6 +483,12 @@ std::shared_ptr<Context> ModelPool::GetInitContext(const std::shared_ptr<RunnerC
     MS_LOG(ERROR) << "Init context failed. status=" << kLiteNullptr;
     return nullptr;
   }
+  if (!bind_core_available_) {
+    MS_LOG(WARNING) << "Cannot use all hardware resources, does not support core binding.";
+    context->SetThreadAffinity(mindspore::Power_NoBind);
+    std::vector<int> empty = {};
+    context->SetThreadAffinity(empty);
+  }
   return context;
 }
 
@@ -598,7 +630,13 @@ ModelPoolConfig ModelPool::CreateCpuModelPoolConfig(const std::shared_ptr<Runner
 Status ModelPool::InitModelPoolBindList(const std::shared_ptr<Context> &init_context,
                                         std::vector<std::vector<int>> *bind_core_list,
                                         std::vector<int> *bind_numa_list) {
-  if (init_context->GetThreadAffinityMode() == lite::HIGHER_CPU) {
+  if (!bind_core_available_ || init_context->GetThreadAffinityMode() == lite::NO_BIND) {
+    auto status = SetWorkersNumaId(bind_numa_list);
+    if (status != kSuccess) {
+      MS_LOG(ERROR) << "set worker numa id failed in NO_BIND";
+      return kLiteError;
+    }
+  } else if (bind_core_available_ && init_context->GetThreadAffinityMode() == lite::HIGHER_CPU) {
     // The user specified the id of the bundled core
     if (is_user_core_list_) {
       auto user_core_list = init_context->GetThreadAffinityCoreList();
@@ -615,12 +653,6 @@ Status ModelPool::InitModelPoolBindList(const std::shared_ptr<Context> &init_con
     auto status = SetModelBindMode(bind_core_list, bind_numa_list, init_context);
     if (status != kSuccess) {
       MS_LOG(ERROR) << "SetModelBindMode failed.";
-      return kLiteError;
-    }
-  } else if (init_context->GetThreadAffinityMode() == lite::NO_BIND) {
-    auto status = SetWorkersNumaId(bind_numa_list);
-    if (status != kSuccess) {
-      MS_LOG(ERROR) << "set worker numa id failed in NO_BIND";
       return kLiteError;
     }
   } else {
@@ -805,19 +837,39 @@ Status ModelPool::CreateWorkers(char *graph_buf, size_t size, const ModelPoolCon
   return kSuccess;
 }
 
-bool ModelPool::CanUseAllPhysicalResources() {
-  can_use_core_num_ = ParseCpusetFile().size();
-  all_core_num_ = lite::GetCoreNum();
-  return can_use_core_num_ == all_core_num_;
+Status ModelPool::CanUseAllPhysicalResources(int *percentage) {
+  auto can_use_cores = ParseCpusetFile(percentage);
+  if (can_use_cores.empty()) {
+    MS_LOG(ERROR) << "parse cpu files failed, | can use core list: " << can_use_cores
+                  << " | percentage: " << *percentage;
+    return kLiteError;
+  }
+  if (*percentage == -1) {
+    can_use_core_num_ = can_use_cores.size();
+    all_core_num_ = lite::GetCoreNum();
+    can_use_all_physical_core_ = can_use_core_num_ == all_core_num_;
+  } else {
+    can_use_core_num_ = *percentage;
+    can_use_all_physical_core_ = false;
+  }
+  return kSuccess;
 }
 
 Status ModelPool::Init(const std::string &model_path, const std::shared_ptr<RunnerConfig> &runner_config) {
-  if (!CanUseAllPhysicalResources()) {
+  int percentage;
+  auto status = CanUseAllPhysicalResources(&percentage);
+  if (status != kSuccess) {
+    MS_LOG(ERROR) << "parser sys file failed.";
+    return kLiteError;
+  }
+  if (percentage != -1) {
+    numa_available_ = false;
+    bind_core_available_ = false;
+  } else if (!can_use_all_physical_core_) {
     MS_LOG(INFO) << "the number of usable cores is less than the number of hardware cores of the machine.";
-    can_use_all_physical_core_ = false;
     numa_available_ = false;
   } else {
-    Status status = InitNumaParameter(runner_config);
+    status = InitNumaParameter(runner_config);
     if (status != kSuccess) {
       MS_LOG(ERROR) << "Init numa parameter failed.";
       return kLiteError;
@@ -829,7 +881,6 @@ Status ModelPool::Init(const std::string &model_path, const std::shared_ptr<Runn
     MS_LOG(ERROR) << "CreateModelPoolConfig failed, context is empty.";
     return kLiteError;
   }
-  Status status;
   // create task queue for model pool
   predict_task_queue_ = std::make_shared<PredictTaskQueue>();
   if (predict_task_queue_ == nullptr) {
