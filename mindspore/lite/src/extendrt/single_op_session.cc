@@ -219,6 +219,10 @@ Status SingleOpInferSession::ResizeGraphInputs(const std::vector<tensor::TensorP
     // update input shape
     inputs_[i]->set_shape(dims[i]);
     auto abstract = std::make_shared<abstract::AbstractTensor>(TypeIdToType(type_id), dims[i]);
+    if (abstract == nullptr) {
+      MS_LOG(ERROR) << "Abstract is nullptr.";
+      return kLiteError;
+    }
     graph_input->set_abstract(abstract);
   }
   return kSuccess;

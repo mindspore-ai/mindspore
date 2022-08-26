@@ -163,6 +163,10 @@ int CustomAscendKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
       return lite::RET_ERROR;
     }
   }
+  if (inputs.size() < 1) {
+    MS_LOG(ERROR) << "inputs size is less than one.";
+    return lite::RET_ERROR;
+  }
   inputs_.assign(inputs.begin(), inputs.end() - 1);
   return lite::RET_OK;
 }
