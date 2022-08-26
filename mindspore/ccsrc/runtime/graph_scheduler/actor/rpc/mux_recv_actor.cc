@@ -36,10 +36,13 @@ MessageBase *MuxRecvActor::HandleMessage(MessageBase *const msg) {
     return distributed::rpc::NULL_MSG;
   }
 
-  // The mux recv actor receives requests for the service process. Currently, the requests are processed serially.
-  std::unique_lock<std::mutex> is_ready_lock(is_ready_mtx_);
-  is_ready_cv_.wait(is_ready_lock, [this] { return is_ready_.load(); });
-  is_ready_ = false;
+  // If use void* data, the cv has already been notified in AllocateMessage.
+  if (common::GetEnv("use_void").empty()) {
+    // The mux recv actor receives requests for the service process. Currently, the requests are processed serially.
+    std::unique_lock<std::mutex> is_ready_lock(is_ready_mtx_);
+    is_ready_cv_.wait(is_ready_lock, [this] { return is_ready_.load(); });
+    is_ready_ = false;
+  }
 
   if (msg == nullptr || op_context_ == nullptr) {
     return distributed::rpc::NULL_MSG;
@@ -95,6 +98,22 @@ void MuxRecvActor::ParseFinalizeReqData(size_t data_len, const MessageBase *cons
     MS_EXCEPTION_IF_NULL(op_context_);
     SET_OPCONTEXT_SUCCESS_RET((*op_context_));
   }
+}
+
+void *MuxRecvActor::AllocateMessage(size_t size) {
+  // Block the message handler if the context is invalid.
+  std::unique_lock<std::mutex> lock(context_mtx_);
+  context_cv_.wait(lock, [this] { return is_context_valid_; });
+  lock.unlock();
+
+  // The mux recv actor receives requests for the service process. Currently, the requests are processed serially.
+  if (!common::GetEnv("use_void").empty()) {
+    std::unique_lock<std::mutex> is_ready_lock(is_ready_mtx_);
+    is_ready_cv_.wait(is_ready_lock, [this] { return is_ready_.load(); });
+    is_ready_ = false;
+  }
+
+  return AllocateMemByDeviceRes(size);
 }
 
 void MuxRecvActor::UpdateStatus() {

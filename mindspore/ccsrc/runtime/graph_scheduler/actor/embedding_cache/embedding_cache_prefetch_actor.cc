@@ -143,11 +143,11 @@ ActorRouteTableProxyPtr CreateRouteTableProxy() {
 // Create a sender and receiver pair,The sender and receiver are paired.
 // When creating a sender, need to create and specify the receiver paired with it in advance.
 SendRecvPair CreateSenderReceiverPair(uint32_t worker_rank, uint32_t server_rank, const std::string &cache_operation,
-                                      int32_t param_key) {
+                                      int32_t param_key, device::DeviceContext *cpu_device_context) {
   // Create sender and receiver pair.
-  ReceiverPtr receiver = std::make_shared<Receiver>();
+  ReceiverPtr receiver = std::make_shared<Receiver>(cpu_device_context);
   MS_EXCEPTION_IF_NULL(receiver);
-  SenderPtr sender = std::make_shared<Sender>();
+  SenderPtr sender = std::make_shared<Sender>(cpu_device_context);
   MS_EXCEPTION_IF_NULL(sender);
   sender->set_receiver(receiver);
 
@@ -253,6 +253,13 @@ void EmbeddingCachePrefetchActor::Initialize() {
 
   BuildEmbeddingCacheLookupKernel();
   BuildEmbeddingCacheUpdateKernel();
+
+  // Initialize CPU device context. The origin device context for embedding_cache_actor is GPU or NPU. But we still need
+  // the CPU device context to allocate host memory.
+  device::DeviceContextKey host_key = {"CPU", 0};
+  cpu_device_context_ = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(host_key);
+  MS_EXCEPTION_IF_NULL(cpu_device_context_);
+  cpu_device_context_->Initialize();
 
   // Build and link rpc operators.
   BuildRpcOperators();
@@ -1589,7 +1596,7 @@ void EmbeddingCachePrefetchActor::BuildRpcOperators() {
           MS_LOG(EXCEPTION) << "Invalid parameter key: " << key;
         }
 
-        send_recv_pair_list[key] = CreateSenderReceiverPair(worker_rank_id, i, cache_op, key);
+        send_recv_pair_list[key] = CreateSenderReceiverPair(worker_rank_id, i, cache_op, key, cpu_device_context_);
       }
     }
   }
@@ -1668,7 +1675,12 @@ bool Sender::ConnectServer() {
   MS_ERROR_IF_NULL(route_table_proxy_);
   auto peer_actor_address = route_table_proxy_->LookupRoute(inter_process_edge_);
   server_url_ = peer_actor_address.ip() + ":" + std::to_string(peer_actor_address.port());
-  if (!client_->Connect(server_url_)) {
+
+  auto free_callback = std::bind(&Sender::FreeMessage, this, std::placeholders::_1);
+  size_t retry_count = 60;
+
+  bool ret = use_void_ ? client_->Connect(server_url_, retry_count, free_callback) : client_->Connect(server_url_);
+  if (!ret) {
     MS_LOG(ERROR) << "Failed to connect to server of edge: " << inter_process_edge_ << ", server_url: " << server_url_;
     return false;
   }
@@ -1697,6 +1709,20 @@ std::unique_ptr<MessageBase> Sender::BuildRpcMessage(const std::vector<ShapeVect
                   << data_list.size() << "]";
   }
 
+  RpcDataPtr rpc_data = nullptr;
+  size_t data_size = CalDataSize(shapes, data_types, data_list, finalize_remote);
+  if (use_void_) {
+    MS_EXCEPTION_IF_NULL(cpu_device_context_);
+    rpc_data = static_cast<RpcDataPtr>(cpu_device_context_->device_res_manager_->AllocateMemory(data_size));
+    MS_EXCEPTION_IF_NULL(rpc_data);
+    message->data = rpc_data;
+    message->size = data_size;
+  } else {
+    message->body.resize(data_size);
+    rpc_data = message->body.data();
+  }
+
+  size_t offset = 0;
   for (size_t i = 0; i < data_list.size(); i++) {
     const ShapeVector &shape = shapes[i];
     const AddressPtr &data = data_list[i];
@@ -1710,23 +1736,77 @@ std::unique_ptr<MessageBase> Sender::BuildRpcMessage(const std::vector<ShapeVect
     // Message format:
     // |RPC_DYNAMIC_SHAPE_DATA | dynamic shape PB data size |---dynamic shape PB data----|---real data----|
     // 1. The dynamic shape header.
-    (void)message->body.append(kRpcDynamicShapeData);
+    if (EOK !=
+        memcpy_s(rpc_data + offset, strlen(kRpcDynamicShapeData), kRpcDynamicShapeData, strlen(kRpcDynamicShapeData))) {
+      MS_LOG(EXCEPTION) << "Failed to memcpy_s for kRpcDynamicShapeData";
+    }
+    offset += strlen(kRpcDynamicShapeData);
+
     // 2. The size of the protobuf DynamicShapeMessage.
     size_t ds_pb_msg_size = ds_pb_msg_str.size();
-    (void)message->body.append(reinterpret_cast<char *>(&ds_pb_msg_size), sizeof(ds_pb_msg_size));
+    if (EOK != memcpy_s(rpc_data + offset, sizeof(ds_pb_msg_size), &ds_pb_msg_size, sizeof(ds_pb_msg_size))) {
+      MS_LOG(EXCEPTION) << "Failed to memcpy_s for pb message size.";
+    }
+    offset += sizeof(ds_pb_msg_size);
+
     // 3. Protobuf DynamicShapeMessage.
-    (void)message->body.append(ds_pb_msg_str);
+    if (EOK != memcpy_s(rpc_data + offset, ds_pb_msg_str.size(), ds_pb_msg_str.c_str(), ds_pb_msg_str.size())) {
+      MS_LOG(EXCEPTION) << "Failed to memcpy_s for pb message.";
+    }
+    offset += ds_pb_msg_str.size();
+
     // 4. The real data buffer need to be sent.
-    (void)message->body.append(static_cast<char *>(data->addr), data->size);
+    if (EOK != memcpy_s(rpc_data + offset, data->size, data->addr, data->size)) {
+      MS_LOG(EXCEPTION) << "Failed to memcpy_s for real data.";
+    }
+    offset += data->size;
   }
 
   // 5. Finalize remote command.
   if (finalize_remote) {
-    (void)message->body.append(distributed::kFinalizeMuxRecvActor);
-    (void)message->body.append(reinterpret_cast<char *>(&finalize_remote), sizeof(finalize_remote));
+    size_t header_len = strlen(distributed::kFinalizeMuxRecvActor);
+    if (EOK != memcpy_s(rpc_data + offset, header_len, distributed::kFinalizeMuxRecvActor, header_len)) {
+      MS_LOG(EXCEPTION) << "Failed to memcpy_s for kFinalizeMuxRecvActor.";
+    }
+    offset += header_len;
+
+    if (EOK != memcpy_s(rpc_data + offset, sizeof(finalize_remote), &finalize_remote, sizeof(finalize_remote))) {
+      MS_LOG(EXCEPTION) << "Failed to memcpy_s for finalize_remote.";
+    }
   }
 
   return message;
+}
+
+bool Sender::FreeMessage(void *data) {
+  MS_EXCEPTION_IF_NULL(cpu_device_context_);
+  MS_ERROR_IF_NULL_W_RET_VAL(data, false);
+  cpu_device_context_->device_res_manager_->FreeMemory(data);
+  return true;
+}
+
+size_t Sender::CalDataSize(const std::vector<ShapeVector> &shapes, const std::vector<TypeId> data_types,
+                           const AddressPtrList &data_list, bool finalize_remote) const {
+  size_t data_size = 0;
+  for (size_t i = 0; i < data_list.size(); i++) {
+    const ShapeVector &shape = shapes[i];
+    const AddressPtr &data = data_list[i];
+    const TypeId &type_id = data_types[i];
+
+    rpc::DynamicShapeMessage ds_pb_msg;
+    ds_pb_msg.set_type_id(type_id);
+    *ds_pb_msg.mutable_shape_vector() = {shape.begin(), shape.end()};
+    std::string ds_pb_msg_str = ds_pb_msg.SerializeAsString();
+    data_size += strlen(kRpcDynamicShapeData);
+    data_size += sizeof(size_t);
+    data_size += ds_pb_msg_str.size();
+    data_size += data->size;
+  }
+  if (finalize_remote) {
+    data_size += strlen(distributed::kFinalizeMuxRecvActor);
+    data_size += sizeof(finalize_remote);
+  }
+  return data_size;
 }
 
 Receiver::~Receiver() {
@@ -1762,7 +1842,14 @@ bool Receiver::StartServer() {
   // 1. Create a tcp server and start listening.
   server_ = std::make_unique<TCPServer>();
   MS_EXCEPTION_IF_NULL(server_);
-  if (!server_->Initialize()) {
+
+  std::function<void *(size_t size)> allocate_callback;
+  if (use_void_) {
+    allocate_callback = std::bind(&Receiver::AllocateMessage, this, std::placeholders::_1);
+  } else {
+    allocate_callback = {};
+  }
+  if (!server_->Initialize(allocate_callback)) {
     MS_LOG(EXCEPTION) << "Failed to initialize tcp server for recv actor";
   }
   ip_ = server_->GetIP();
@@ -1846,11 +1933,12 @@ MessageBase *Receiver::HandleMessage(MessageBase *const msg) {
     return distributed::rpc::NULL_MSG;
   }
 
-  const std::string &msg_body = msg->body;
+  RpcDataPtr data = use_void_ ? static_cast<RpcDataPtr>(msg->data) : msg->body.data();
+  size_t data_size = use_void_ ? msg->size : msg->body.size();
   // The data pair: <addr of data, size of data>.
   std::pair<const void *, size_t> real_data;
   // Get real data addr and size.
-  if (!ParseDynamicShapeData(msg_body.c_str(), msg_body.size(), &real_data)) {
+  if (!ParseDynamicShapeData(data, data_size, &real_data)) {
     MS_LOG(EXCEPTION) << "Parse dynamic shape data failed.";
   }
 
@@ -1867,8 +1955,19 @@ MessageBase *Receiver::HandleMessage(MessageBase *const msg) {
   received_msg_ = true;
   received_msg_cv_.notify_one();
 
+  if (use_void_) {
+    MS_EXCEPTION_IF_NULL(cpu_device_context_);
+    cpu_device_context_->device_res_manager_->FreeMemory(data);
+  }
   delete msg;
   return distributed::rpc::NULL_MSG;
+}
+
+void *Receiver::AllocateMessage(size_t size) {
+  MS_EXCEPTION_IF_NULL(cpu_device_context_);
+  void *data = cpu_device_context_->device_res_manager_->AllocateMemory(size);
+  MS_EXCEPTION_IF_NULL(data);
+  return data;
 }
 }  // namespace runtime
 }  // namespace mindspore

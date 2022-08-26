@@ -181,6 +181,10 @@ void *RecvActor::AllocateMessage(size_t size) {
   context_cv_.wait(lock, [this] { return is_context_valid_; });
   lock.unlock();
 
+  return AllocateMemByDeviceRes(size);
+}
+
+void *RecvActor::AllocateMemByDeviceRes(size_t size) {
   // Only need to create recv_data_ once.
   // The real data is allocated and freed multiple times as recv_data_->ptr_.
   if (recv_data_ == nullptr) {
@@ -316,7 +320,8 @@ size_t RecvActor::ParseDynamicShapeData(const RpcDataPtr &dynamic_shape_data, si
     // Step 1: parse the magic header which indicates the dynamic shape.
     std::string dynamic_shape_magic_header(data_to_be_parsed, strlen(kRpcDynamicShapeData));
     if (dynamic_shape_magic_header != kRpcDynamicShapeData) {
-      MS_LOG(EXCEPTION) << "The dynamie shape data must have the magic header RPC_DYNAMIC_SHAPE_DATA";
+      MS_LOG(EXCEPTION) << "The dynamie shape data must have the magic header RPC_DYNAMIC_SHAPE_DATA. But got "
+                        << dynamic_shape_magic_header;
     }
 
     // Step 2: parse the size of serialized protobuf message.
