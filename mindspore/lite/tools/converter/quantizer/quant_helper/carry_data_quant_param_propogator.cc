@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,16 +29,17 @@ int CarryDataQuantParamPropogator::PropogateQuantParams(schema::MetaGraphT *grap
   // refresh in_tensor quant_params by out_tensor quant_params
   if (input_inited_quant_params_ < 1) {
     MS_CHECK_FALSE_MSG(node.outputIndex.empty(), RET_ERROR, "OutputIndex is empty.");
-    MS_ASSERT(graph->allTensors.size() > node.outputIndex.at(0));
+    MS_CHECK_TRUE_RET(graph->allTensors.size() > node.outputIndex.at(0), RET_ERROR);
     auto &out_tensor = graph->allTensors.at(node.outputIndex.at(0));
     auto out_quant_param = GetTensorQuantParam(out_tensor);
     if (out_quant_param == nullptr || !out_quant_param->inited) {
       MS_LOG(DEBUG) << node.name << " dont need to pass quant param.";
       return RET_NO_CHANGE;
     }
-    MS_ASSERT(graph->allTensors.size() > node.inputIndex.at(0));
+    MS_CHECK_FALSE_MSG(node.inputIndex.empty(), RET_ERROR, "inputIndex is empty.");
+    MS_CHECK_TRUE_RET(graph->allTensors.size() > node.inputIndex.at(0), RET_ERROR);
     auto &in_tensor = graph->allTensors.at(node.inputIndex.at(0));
-    MS_ASSERT(in_tensor != nullptr);
+    MS_CHECK_TRUE_RET(in_tensor != nullptr, RET_NULL_PTR);
     auto in_quant_param = GetTensorQuantParam(in_tensor);
     if (in_quant_param != nullptr && !in_quant_param->inited) {
       in_tensor->quantParams.front() = std::move(out_quant_param);
@@ -48,18 +49,18 @@ int CarryDataQuantParamPropogator::PropogateQuantParams(schema::MetaGraphT *grap
   // refresh out_tensor quant_params by in_tensor quant_params
   if (output_inited_quant_params_ < 1) {
     MS_CHECK_FALSE_MSG(node.inputIndex.empty(), RET_ERROR, "inputIndex is empty.");
-    MS_ASSERT(graph->allTensors.size() > node.inputIndex.at(0));
+    MS_CHECK_TRUE_RET(graph->allTensors.size() > node.inputIndex.at(0), RET_ERROR);
     auto &in_tensor = graph->allTensors.at(node.inputIndex.at(0));
-    MS_ASSERT(in_tensor != nullptr);
+    MS_CHECK_TRUE_RET(in_tensor != nullptr, RET_NULL_PTR);
     auto in_quant_param = GetTensorQuantParam(in_tensor);
     if (in_quant_param == nullptr || !in_quant_param->inited) {
       MS_LOG(DEBUG) << node.name << " dont need to pass quant param.";
       return RET_NO_CHANGE;
     }
     for (unsigned int i : node.outputIndex) {
-      MS_ASSERT(graph->allTensors.size() > i);
+      MS_CHECK_TRUE_RET(graph->allTensors.size() > i, RET_ERROR);
       auto &out_tensor = graph->allTensors.at(i);
-      MS_ASSERT(out_tensor != nullptr);
+      MS_CHECK_TRUE_RET(out_tensor != nullptr, RET_NULL_PTR);
       auto out_quant_param = GetTensorQuantParam(out_tensor);
       if (out_quant_param == nullptr) {
         out_tensor->quantParams.emplace_back(std::move(in_quant_param));

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,13 +22,18 @@ namespace mindspore::lite {
 bool ConvQuantTypeDeterminer::DetermineQuantWeight(const mindspore::schema::MetaGraphT &graph,
                                                    mindspore::schema::CNodeT *node) {
   MS_CHECK_TRUE_MSG(node != nullptr, false, "node is nullptr.");
-  MS_ASSERT(node->inputIndex.size() >= kInputIndexTwo);
+  MS_CHECK_TRUE_RET(node->inputIndex.size() >= kInputIndexTwo, false);
   MS_CHECK_TRUE_MSG(graph.allTensors.size() > node->inputIndex.at(kInputIndex), false, "Out of vector range.");
   auto &input_tensor = graph.allTensors.at(node->inputIndex.at(kInputIndex));
   MS_CHECK_TRUE_MSG(graph.allTensors.size() > node->inputIndex.at(kWeightIndex), false, "Out of vector range.");
   auto &weight_tensor = graph.allTensors.at(node->inputIndex.at(kWeightIndex));
+  MS_CHECK_TRUE_RET(node->outputIndex.size() > kOutputIndex, false);
   MS_CHECK_TRUE_MSG(graph.allTensors.size() > node->outputIndex.at(kOutputIndex), false, "Out of vector range.");
   auto &output_tensor = graph.allTensors.at(node->outputIndex.at(kOutputIndex));
+
+  MS_CHECK_TRUE_RET(input_tensor != nullptr, false);
+  MS_CHECK_TRUE_RET(output_tensor != nullptr, false);
+  MS_CHECK_TRUE_RET(weight_tensor != nullptr, false);
   if ((!quant::TensorQuantParamsInited(*input_tensor) || !quant::TensorQuantParamsInited(*output_tensor)) &&
       quant::TensorQuantParamsInited(*weight_tensor)) {
     node->quantType = schema::QuantType_QUANT_WEIGHT;
