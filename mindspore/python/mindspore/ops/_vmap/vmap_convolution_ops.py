@@ -14,17 +14,18 @@
 # ============================================================================
 
 """convolution vmap impl"""
+from __future__ import absolute_import
 
 import numpy as np
 import mindspore.numpy as mnp
 from mindspore.ops import constexpr
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
-from ..operations import nn_ops as nps
-from ..operations import _grad_ops as G
-from ..primitive import Primitive
-from .._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, _raise_value_error, \
-    _vmap_update_prim_attr, _vmap_clone_prim
+from mindspore.ops.operations import nn_ops as nps
+from mindspore.ops.operations import _grad_ops as G
+from mindspore.ops.primitive import Primitive
+from mindspore.ops._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, \
+    _raise_value_error, _vmap_update_prim_attr, _vmap_clone_prim
 
 
 @vmap_rules_getters.register(P.Conv2D)
@@ -192,8 +193,9 @@ def _reshape_expand_dims(src_dim, dst_size, target, prim_name):
 @constexpr
 def _get_new_size_by_index(input_size, batch_size, index):
     """Get the new size of input_size by multiplying input_size[index] by batch_size."""
+    new_size = ()
     if input_size is None:
-        return None
+        return new_size
     new_size = list(input_size)
     new_size[index] *= batch_size
     return tuple(new_size)
