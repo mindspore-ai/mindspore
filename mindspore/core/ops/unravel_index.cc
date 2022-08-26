@@ -48,8 +48,8 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
       int64_t indices_shape_v = indices_shape[0];
       int64_t dims_shape_v = dims_shape[0];
       std::vector<int64_t> output_shape;
-      output_shape.push_back(indices_shape_v);
       output_shape.push_back(dims_shape_v);
+      output_shape.push_back(indices_shape_v);
       return std::make_shared<abstract::Shape>(output_shape);
     }
   } else {
@@ -68,7 +68,7 @@ TypePtr UravelIndexInferType(const PrimitivePtr &prim, const std::vector<Abstrac
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(UnravelIndex, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(UnravelIndex, BaseOperator);
 AbstractBasePtr UnravelIndexInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                   const std::vector<AbstractBasePtr> &input_args) {
   return std::make_shared<abstract::AbstractTensor>(UravelIndexInferType(primitive, input_args),
