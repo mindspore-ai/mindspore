@@ -172,8 +172,9 @@ AbstractBasePtr BatchMatmulInfer(const abstract::AnalysisEnginePtr &, const Prim
   const int64_t input_num = 2;
   (void)CheckAndConvertUtils::CheckInteger("BatchMatmul infer", SizeToLong(input_args.size()), kGreaterEqual, input_num,
                                            primitive->name());
-  return abstract::MakeAbstract(BatchMatmulInferShape(primitive, input_args),
-                                BatchMatmulInferType(primitive, input_args));
+  auto infer_type = BatchMatmulInferType(primitive, input_args);
+  auto infer_shape = BatchMatmulInferShape(primitive, input_args);
+  return abstract::MakeAbstract(infer_shape, infer_type);
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(BatchMatmul, prim::kPrimBatchMatMul, BatchMatmulInfer, nullptr, true);
 }  // namespace ops
