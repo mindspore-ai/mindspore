@@ -134,6 +134,8 @@ def _partial_init(cls_or_self, **kwargs):
         class of wrapper that allows creation of class factories.
         """
 
+        partial_init = _partial_init
+
         def __init__(self, p):
             self.p = p
 
@@ -142,8 +144,6 @@ def _partial_init(cls_or_self, **kwargs):
 
         def __repr__(self):
             return self.p.__repr__()
-
-        partial_init = _partial_init
 
     r = _PartialWrapper(partial(cls_or_self, **kwargs))
     return r
@@ -160,6 +160,8 @@ class _Observer(Cell):
         quant_dtype (QuantDtype): The type of FakeQuant data.
     """
 
+    partial_init = classmethod(_partial_init)
+
     def __init__(self, quant_dtype):
         """Initialize _Observer."""
         super(_Observer, self).__init__()
@@ -171,8 +173,6 @@ class _Observer(Cell):
 
     def construct(self):
         pass
-
-    partial_init = classmethod(_partial_init)
 
 
 class UniformQuantObserver(_Observer):

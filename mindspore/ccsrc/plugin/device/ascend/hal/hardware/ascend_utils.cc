@@ -62,7 +62,7 @@ bool IsDynamicShapeGraph(const FuncGraphPtr &func_graph) {
 
 std::string GetSocVersion() {
   // Get default soc version.
-  static std::string version;
+  static std::string version{};
   if (version.empty()) {
     const int kSocVersionLen = 50;
     char soc_version[kSocVersionLen] = {0};

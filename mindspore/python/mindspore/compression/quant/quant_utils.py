@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -72,6 +72,8 @@ def cal_quantization_params(input_min,
     if data_type == np.int8 and symmetric:
         zp = np.zeros(input_min.shape)
     else:
+        if scale == 0.0:
+            raise ValueError("scale can not be 0.")
         zp_double = quant_min - input_min / scale
         zp = np.floor(zp_double + 0.5)
 

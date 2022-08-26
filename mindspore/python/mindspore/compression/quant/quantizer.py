@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ from __future__ import absolute_import
 from abc import ABC, abstractmethod
 from enum import Enum
 
-from ..._checkparam import Validator
+from mindspore._checkparam import Validator
 
 __all__ = ["OptimizeOption"]
 
@@ -37,7 +37,7 @@ class OptimizeOption(Enum):
     LEARNED_SCALE = "LEARNED_SCALE"
 
     def __str__(self):
-        return self.value
+        return str(self.value)
 
 
 class Quantizer(ABC):

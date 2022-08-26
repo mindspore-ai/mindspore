@@ -49,6 +49,7 @@ AnfNodePtr CreateNodeOfUnaryOp(const FuncGraphPtr &graph, const string &op_name,
 ValueNodePtr CreateValueNode(const FuncGraphPtr &graph, double value) {
   auto tensor = std::make_shared<tensor::Tensor>(value);
   auto kernel_graph = graph->cast<KernelGraphPtr>();
+  MS_EXCEPTION_IF_NULL(kernel_graph);
   ValueNodePtr value_node = kernel_graph->NewValueNode(tensor->ToAbstract(), tensor);
   kernel_graph->AddValueNodeToGraph(value_node);
   return value_node;
