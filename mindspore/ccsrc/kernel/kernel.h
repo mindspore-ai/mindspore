@@ -309,7 +309,7 @@ class KernelMod {
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
   bool is_need_retrieve_output_shape_ = false;
-  uint32_t device_id_;
+  uint32_t device_id_ = 0;
 
  private:
   std::vector<AddressPtr> inputs_addr_;

@@ -31,6 +31,7 @@ from mindspore.ops.operations.math_ops import Logit
 from mindspore.ops.operations.math_ops import LuUnpack
 from mindspore.nn import layer
 from mindspore._checkparam import check_is_number
+from mindspore._checkparam import Rel
 from ..operations.math_ops import (
     Bernoulli,
     BesselJ0,
@@ -58,7 +59,6 @@ from ...common import dtype as mstype
 from ...common.tensor import Tensor
 from ..._c_expression import Tensor as Tensor_
 from ..._checkparam import Validator as validator
-from ..._checkparam import Rel
 from .._primitive_cache import _get_cache_prim
 
 

@@ -37,7 +37,7 @@ constexpr size_t kIndex2 = 2;
 constexpr size_t kIndex3 = 3;
 constexpr auto kAttrPrimitiveTarget = "primitive_target";
 
-void ConvertShapeNHWCToNCHW(std::vector<int64_t> *nhwc_shape) {
+void ConvertShapeNHWCToNCHW(std::vector<int64_t> *const nhwc_shape) {
   if (nhwc_shape->empty()) {
     return;
   }
@@ -75,17 +75,20 @@ void CheckOutshapeValid(const PrimitivePtr &primitive, const std::vector<int64_t
   }
 }
 
-void CheckDataFormat(const PrimitivePtr &primitive, int64_t data_format) {
-  if (data_format == NHWC) {
-    string primitive_target;
+string GetDeviceTarget(const PrimitivePtr &primitive) {
+  string primitive_target;
+  if (primitive->HasAttr(kAttrPrimitiveTarget)) {
+    primitive_target = GetValue<std::string>(primitive->GetAttr(kAttrPrimitiveTarget));
+  } else {
+    auto ms_context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(ms_context);
+    primitive_target = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  }
+  return primitive_target;
+}
 
-    if (primitive->HasAttr(kAttrPrimitiveTarget)) {
-      primitive_target = GetValue<std::string>(primitive->GetAttr(kAttrPrimitiveTarget));
-    } else {
-      auto ms_context = MsContext::GetInstance();
-      MS_EXCEPTION_IF_NULL(ms_context);
-      primitive_target = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-    }
+void CheckDataFormat(const PrimitivePtr &primitive, int64_t data_format, string primitive_target) {
+  if (data_format == NHWC) {
     if (primitive_target != kGPUDevice) {
       MS_EXCEPTION(ValueError) << "For '" << primitive->name()
                                << "', the 'NHWC' format is only supported in GPU target.";
@@ -101,11 +104,12 @@ abstract::ShapePtr MaxPoolInferShape(const PrimitivePtr &primitive, const std::v
   auto op_name = primitive->name();
   std::vector<int64_t> kernel_size = GetValue<std::vector<int64_t>>(primitive->GetAttr(kKernelSize));
   std::vector<int64_t> strides = GetValue<std::vector<int64_t>>(primitive->GetAttr(kStrides));
-  int64_t data_format = CheckAndConvertUtils::GetAndCheckFormat(primitive->GetAttr(kFormat));
+  Format data_format = static_cast<Format>(CheckAndConvertUtils::GetAndCheckFormat(primitive->GetAttr(kFormat)));
   (void)CheckAndConvertUtils::CheckPositiveVector("kernel_size", kernel_size, op_name);
   (void)CheckAndConvertUtils::CheckPositiveVector("strides", strides, op_name);
-  int64_t pad_mode = 0;
-  CheckAndConvertUtils::GetPadModEnumValue(primitive->GetAttr(kPadMode), &pad_mode, true);
+  int64_t pad_mode_int = 0;
+  CheckAndConvertUtils::GetPadModEnumValue(primitive->GetAttr(kPadMode), &pad_mode_int, true);
+  PadMode pad_mode = static_cast<PadMode>(pad_mode_int);
 
   (void)CheckAndConvertUtils::CheckValue<size_t>("length of kernel_size", kernel_size.size(), kEqual, kSizeFour,
                                                  op_name);
@@ -115,9 +119,19 @@ abstract::ShapePtr MaxPoolInferShape(const PrimitivePtr &primitive, const std::v
   if (shape_map.empty()) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the input should exist, but missed.";
   }
-  CheckDataFormat(primitive, data_format);
+  string device_target = GetDeviceTarget(primitive);
+  CheckDataFormat(primitive, data_format, device_target);
   auto in_shape = shape_map[kShape];
+  if (IsDynamicRank(in_shape)) {
+    if (device_target == kAscendDevice) {
+      MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+                               << "', the Ascend platform hasn't support dynamic rank yet.";
+    }
+    std::vector<int64_t> out_shape = {-2};
+    return std::make_shared<abstract::Shape>(out_shape);
+  }
   (void)CheckAndConvertUtils::CheckValue<size_t>("length of input", in_shape.size(), kEqual, kSizeFour, op_name);
+
   if (data_format == NHWC) {
     ConvertShapeNHWCToNCHW(&in_shape);
   }
@@ -133,6 +147,7 @@ abstract::ShapePtr MaxPoolInferShape(const PrimitivePtr &primitive, const std::v
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the pad_mode should be same or valid, but got "
                              << pad_mode << ".";
   }
+
   abstract::ShapePtr shape;
   std::vector<int64_t> out_shape;
   if (data_format == NHWC) {

@@ -53,7 +53,7 @@ class DynamicTbeKernelMod : public TbeKernelMod {
   void InferShapeForNopNode(AnfNodePtr *input_node);
   std::string ParseCompileJson(const CNodePtr &cnode) const;
   void InitTilingDataPtr();
-  bool CopyTilingToDevice(void *stream_ptr);
+  void CopyTilingToDevice(void *stream_ptr);
   void GenFuncStub();
 
   std::string tiling_data_;
