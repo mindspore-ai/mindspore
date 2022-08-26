@@ -1620,8 +1620,8 @@ uint32_t GetHcclRankSize() {
   return rank_size;
 }
 
-void GraphExecutorPy::ExportGraph(const std::string &file_name, const std::string &model_type, const std::string &phase,
-                                  const py::object encrypt, char *key) {
+void GraphExecutorPy::ExportGraph(const std::string &file_name, const std::string &phase, const py::object encrypt,
+                                  char *key) {
   DeviceContext *device_context = nullptr;
   try {
     device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({"GE", 0});

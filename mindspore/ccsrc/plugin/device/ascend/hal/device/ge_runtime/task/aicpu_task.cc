@@ -31,6 +31,7 @@ AicpuTask::AicpuTask(const ModelContext &model_context, const std::shared_ptr<Ai
       args_(nullptr),
       ext_info_(nullptr),
       input_output_addr_(nullptr),
+      io_addrs_size_(0),
       args_size_(0) {
   MS_EXCEPTION_IF_NULL(task_info_);
 

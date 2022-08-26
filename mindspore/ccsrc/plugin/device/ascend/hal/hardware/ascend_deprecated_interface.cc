@@ -106,8 +106,9 @@ bool AscendDeprecatedInterface::InitExecDataset(const std::string &queue_name, i
   MS_EXCEPTION_IF_NULL(context_ptr);
   ge_device_context_->Initialize();
   std::vector<int64_t> ge_types;
-  (void)std::transform(types.begin(), types.end(), std::back_inserter(ge_types),
-                       [](const TypePtr &i) -> int64_t { return transform::ConvertDataType(i->type_id()); });
+  (void)std::transform(types.begin(), types.end(), std::back_inserter(ge_types), [](const TypePtr &i) -> int64_t {
+    return static_cast<int64_t>(transform::ConvertDataType(i->type_id()));
+  });
 
   ConfigManager::GetInstance().set_dataset_mode(DatasetMode::DS_SINK_MODE);
   ConfigManager::GetInstance().set_iter_num(queue_name, size);

@@ -1244,7 +1244,7 @@ class _CellGraphExecutor:
             file_name (str): File name of model to export
             graph_id (str): id of graph to be exported
         """
-        self._graph_executor.export_graph(file_name, 'AIR', graph_id, encrypt_func, enc_key)
+        self._graph_executor.export_graph(file_name, graph_id, encrypt_func, enc_key)
 
     def fetch_info_for_quant_export(self, exec_id):
         """Get graph proto from pipeline."""

@@ -100,8 +100,8 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
 
   FuncGraphPtr BuildGraph(const py::dict &init_params, const std::string &phase,
                           const py::object &broadcast_params = {}) const;
-  void ExportGraph(const std::string &file_name, const std::string &model_type, const std::string &phase,
-                   const py::object encrypt = py::none(), char *key = nullptr);
+  void ExportGraph(const std::string &file_name, const std::string &phase, const py::object encrypt = py::none(),
+                   char *key = nullptr);
 
   void UpdataParamNodeDefaultInput(const std::string &phase,
                                    const std::unordered_map<std::string, tensor::TensorPtr> &params_value);

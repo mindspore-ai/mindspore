@@ -877,6 +877,7 @@ void SetShapeValue(const AbstractBasePtr &tensor, const py::object &output) {
       MS_LOG(EXCEPTION) << "Convert shape max value data failed";
     }
     auto abs_tensor = dyn_cast_ptr<abstract::AbstractTensor>(tensor);
+    MS_EXCEPTION_IF_NULL(abs_tensor);
     abs_tensor->set_value_range(min_value, max_value);
   }
   if (!output.contains(py::str(ATTR_SHAPE_VALUE))) {

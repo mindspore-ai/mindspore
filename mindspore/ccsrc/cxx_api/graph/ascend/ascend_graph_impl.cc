@@ -388,7 +388,7 @@ AscendGraphImpl::MsEnvGuard::~MsEnvGuard() {
         {kAscendDevice, ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
       MS_EXCEPTION_IF_NULL(device_context);
       MS_EXCEPTION_IF_NULL(device_context->GetDeprecatedInterface());
-      if (!device_context->GetDeprecatedInterface()->CloseTsd(ms_context)) {
+      if (!device_context->GetDeprecatedInterface()->CloseTsd(ms_context, false)) {
         MS_LOG(ERROR) << "CloseTsd failed!";
         return;
       }

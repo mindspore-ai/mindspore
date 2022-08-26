@@ -71,6 +71,7 @@ class CPUProfiler : public Profiler {
   void SaveProfileData() override;
   void ClearInst() override;
   void SetGpuHeteroStatus();
+  void RecordGpuOneStepStartEndInfo();
 
   uint64_t base_time_;
   std::string op_name_;

@@ -20,6 +20,8 @@
 #include <memory>
 #include <string>
 #include <map>
+#include "pybind11/pybind11.h"
+#include "pybind11/pytypes.h"
 #include "runtime/hardware/device_context.h"
 #include "runtime/device/memory_manager.h"
 #include "utils/ms_context.h"
