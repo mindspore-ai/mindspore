@@ -169,7 +169,7 @@ _config_level = {
         "loss_scale_manager": None}}
 
 
-def _check_kwargs(key_words):
+def _check_kwargs(key_words, level="O0"):
     """Check kwargs."""
     for arg in key_words:
         if arg not in ['cast_model_type', 'keep_batchnorm_fp32', 'loss_scale_manager']:
@@ -178,6 +178,8 @@ def _check_kwargs(key_words):
     if 'cast_model_type' in key_words:
         validator.check_type_name('cast_model_type', key_words['cast_model_type'],
                                   [mstype.float16, mstype.float32], None)
+        if level in ("O2", "O3") and key_words['cast_model_type'] == mstype.float32:
+            raise TypeError(f"For amp level {level}, the cast_model_type should be float16")
     if 'keep_batchnorm_fp32' in key_words:
         validator.check_value_type('keep_batchnorm_fp32', key_words['keep_batchnorm_fp32'], bool)
     if 'loss_scale_manager' in key_words:
@@ -290,7 +292,7 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', boost_leve
 
     level, enable_boost = _check_level(level, boost_level)
 
-    _check_kwargs(kwargs)
+    _check_kwargs(kwargs, level)
     config = dict(_config_level.get(level), **kwargs)
 
     if config["keep_batchnorm_fp32"] and level == "O3":
