@@ -498,6 +498,9 @@ void AnfExporter::OutputCNodeText(std::ostringstream &oss, const CNodePtr &cnode
     return;
   }
   auto &inputs = cnode->inputs();
+  if (inputs.empty()) {
+    return;
+  }
   std::string op_text = GetAnfNodeText(func_graph, inputs[0], *apply_map);
   std::string fv_text = (cnode->func_graph() != func_graph) ? ("$(" + cnode->func_graph()->ToString() + "):") : "";
   // Non-return node
