@@ -20,37 +20,40 @@
 #include <memory>
 #include <vector>
 #include <utility>
+#include <map>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-class PrintCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class PrintCpuKernelMod : public NativeCpuKernelMod {
  public:
   PrintCpuKernelMod() = default;
   ~PrintCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+              const std::vector<AddressPtr> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &) override {
-    return kernel_func_(this, inputs);
-  }
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
 
-  template <typename T>
-  TypeId CheckType() const;
+  int Resize(
+    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+    const std::vector<KernelTensorPtr> &outputs,
+    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
 
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs);
-  using PrintFunc = std::function<bool(PrintCpuKernelMod *, const std::vector<kernel::AddressPtr> &)>;
-  static std::vector<std::pair<KernelAttr, PrintFunc>> func_list_;
+  void LaunchKernel(size_t index, const std::vector<kernel::AddressPtr> &inputs);
+  using PrintFunc = std::function<void(PrintCpuKernelMod *, size_t, const std::vector<kernel::AddressPtr> &)>;
+  static std::map<TypeId, PrintCpuKernelMod::PrintFunc> func_map_;
   PrintFunc kernel_func_;
 
   std::vector<ShapeVector> input_shapes_;
   std::vector<size_t> input_sizes_;
+  std::vector<TypeId> data_types_;
 };
 }  // namespace kernel
 }  // namespace mindspore
