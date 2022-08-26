@@ -160,6 +160,65 @@ def test_normalize_op_chw(plot=False):
         num_iter += 1
 
 
+def test_normalize_op_video():
+    """
+    Feature: Normalize op
+    Description: Test NormalizeOp in Cpp transformation with 4 dimension input,
+                 where the input tensor is (..., T, H, W, C)
+    Expectation: The dataset is processed successfully
+    """
+    logger.info("Test NormalizeOp in cpp transformations with 4 dimension input")
+    mean = [121.0, 115.0, 100.0]
+    std = [70.0, 68.0, 71.0]
+    input_np_original = np.array([[87, 88, 232, 239],
+                                  [11, 229, 22, 79],
+                                  [250, 20, 173, 213]], dtype=np.float32)
+    expect_output = np.array([[-1.0714285, -1.3088236, 0.11267605, 1.7142857],
+                              [-0.35211268, -0.55714285, 1.0735294, 0.52112675],
+                              [-0.27941176, 0.43661973, 1.3428571, -0.9411765]], dtype=np.float32)
+    shape = (2, 2, 1, 3)
+    input_np_original = input_np_original.reshape(shape)
+    expect_output = expect_output.reshape(shape)
+
+    # define operations
+    normalize_op = vision.Normalize(mean, std, True)
+
+    # doing the Normalization
+    vidio_de_normalized = normalize_op(input_np_original)
+
+    mse = diff_mse(vidio_de_normalized, expect_output)
+    assert mse < 0.01
+
+
+def test_normalize_op_5d():
+    """
+    Feature: Normalize op
+    Description: Test NormalizeOp in Cpp transformation with 5 dim input, where the input tensor is (..., T, H, W, C)
+    Expectation: The dataset is processed successfully
+    """
+    logger.info("Test NormalizeOp in cpp transformations with 5 dimension input")
+    mean = [121.0, 115.0, 100.0]
+    std = [70.0, 68.0, 71.0]
+    input_np_original = np.array([[87, 88, 232, 239],
+                                  [11, 229, 22, 79],
+                                  [250, 20, 173, 213]], dtype=np.float32)
+    expect_output = np.array([[-1.0714285, -1.3088236, 0.11267605, 1.7142857],
+                              [-0.35211268, -0.55714285, 1.0735294, 0.52112675],
+                              [-0.27941176, 0.43661973, 1.3428571, -0.9411765]], dtype=np.float32)
+    shape = (2, 1, 2, 1, 3)
+    input_np_original = input_np_original.reshape(shape)
+    expect_output = expect_output.reshape(shape)
+
+    # define operations
+    normalize_op = vision.Normalize(mean, std, True)
+
+    # doing the Normalization
+    vidio_de_normalized = normalize_op(input_np_original)
+
+    mse = diff_mse(vidio_de_normalized, expect_output)
+    assert mse < 0.01
+
+
 def test_decode_op():
     """
     Feature: Decode op
@@ -466,6 +525,8 @@ if __name__ == "__main__":
     test_decode_normalize_op()
     test_normalize_op_hwc(plot=True)
     test_normalize_op_chw(plot=True)
+    test_normalize_op_video()
+    test_normalize_op_5d()
     test_normalize_md5_01()
     test_normalize_md5_02()
     test_normalize_exception_unequal_size_1()
