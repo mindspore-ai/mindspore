@@ -60,10 +60,12 @@ TEST_F(MindDataTestTensorOpFusionPass, RandomCropDecodeResizeDisabled) {
   ++it;
   auto *map_op = &(*it);
   auto tfuncs = static_cast<MapOp *>(map_op)->TFuncs();
-  auto func_it = tfuncs.begin();
-  EXPECT_EQ((*func_it)->Name(), kDecodeOp);
-  ++func_it;
-  EXPECT_EQ((*func_it)->Name(), kRandomCropAndResizeOp);
+  for (size_t i = 0; i < tfuncs.size(); i++) {
+    auto func_it = tfuncs[i].begin();
+    EXPECT_EQ((*func_it)->Name(), kDecodeOp);
+    ++func_it;
+    EXPECT_EQ((*func_it)->Name(), kRandomCropAndResizeOp);
+  }
 }
 
 /// Feature: MindData Tensor Op Fusion Pass Support
@@ -94,12 +96,13 @@ TEST_F(MindDataTestTensorOpFusionPass, RandomCropDecodeResizeEnabled) {
   ++it;
   auto *map_op = &(*it);
   auto tfuncs = static_cast<MapOp *>(map_op)->TFuncs();
-  auto func_it = tfuncs.begin();
-  // FIXME: Currently the following 2 commented out verifications for this test will fail because this
-  //        optimization is still in ExecutionTree code, and not yet in IR optimization pass
-  //        However, use a bogus check for func_it, to avoid compile error for unused variable.
-  EXPECT_EQ(func_it, func_it);
-  // EXPECT_EQ((*func_it)->Name(), kRandomCropDecodeResizeOp);
-  // EXPECT_EQ(++func_it, tfuncs.end());
+  for (size_t i = 0; i < tfuncs.size(); i++) {
+    auto func_it = tfuncs[i].begin();
+    // FIXME: Currently the following 2 commented out verifications for this test will fail because this
+    //        optimization is still in ExecutionTree code, and not yet in IR optimization pass
+    //        However, use a bogus check for func_it, to avoid compile error for unused variable.
+    EXPECT_EQ(func_it, func_it);
+    // EXPECT_EQ((*func_it)->Name(), kRandomCropDecodeResizeOp);
+    // EXPECT_EQ(++func_it, tfuncs.end());
+  }
 }
-

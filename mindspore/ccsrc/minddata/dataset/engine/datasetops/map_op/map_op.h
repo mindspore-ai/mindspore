@@ -76,11 +76,12 @@ class MapOp : public ParallelOp<std::unique_ptr<MapWorkerJob>, TensorRow> {
   // @note The builder class should be used to call it.
   // @param in_col_names A list of input column names (should match the input/output \p tensorFuncs).
   // @param out_col_names A list of output column names (should match the input/output \p tensorFuncs).
-  // @param tensor_funcs A list of TensorOp pointers for MapOp to apply to each data.
+  // @param tensor_operations A list of TensorOperation pointers for MapOp to apply to each data.
   // @param num_workers The number of worker threads.
   // @param op_connector_size The size of each queue in the connector.
   MapOp(const std::vector<std::string> &in_col_names, const std::vector<std::string> &out_col_names,
-        std::vector<std::shared_ptr<TensorOp>> tensor_funcs, int32_t num_workers, int32_t op_connector_size);
+        std::vector<std::shared_ptr<TensorOperation>> tensor_operations, int32_t num_workers,
+        int32_t op_connector_size);
 
   // Destructor
   ~MapOp() = default;
@@ -130,9 +131,11 @@ class MapOp : public ParallelOp<std::unique_ptr<MapWorkerJob>, TensorRow> {
   const auto &TFuncs() const { return tfuncs_; }
 
   bool IsPython() const override {
-    for (const auto &tensorOp : tfuncs_) {
-      if (tensorOp->Name() == kPyFuncOp) {
-        return true;
+    if (tfuncs_.size() > 0) {
+      for (const auto &tensorOp : tfuncs_[0]) {
+        if (tensorOp->Name() == kPyFuncOp) {
+          return true;
+        }
       }
     }
     return false;
@@ -148,13 +151,16 @@ class MapOp : public ParallelOp<std::unique_ptr<MapWorkerJob>, TensorRow> {
 
  private:
   // A helper function to create jobs for workers.
-  Status GenerateWorkerJob(const std::unique_ptr<MapWorkerJob> *worker_job);
+  Status GenerateWorkerJob(const std::unique_ptr<MapWorkerJob> *worker_job, int32_t worker_id);
 
   // A helper function that fetch worker map job from local queues and extract the data and map job list
-  Status FetchNextWork(uint32_t worker_id, TensorRow *row, std::vector<std::shared_ptr<MapJob>> *job_list);
+  Status FetchNextWork(int32_t worker_id, TensorRow *row, std::vector<std::shared_ptr<MapJob>> *job_list);
 
-  //  Tensorops to be read and applied by worker threads
-  std::vector<std::shared_ptr<TensorOp>> tfuncs_;
+  // TensorOperations to be read
+  std::vector<std::shared_ptr<TensorOperation>> tensor_operations_;
+
+  // TensorOps to be applied by worker threads
+  std::vector<std::vector<std::shared_ptr<TensorOp>>> tfuncs_;
 
   // Variable to store the column name that the tensorOps are consuming
   std::vector<std::string> in_columns_;

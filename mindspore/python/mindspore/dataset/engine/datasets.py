@@ -69,7 +69,7 @@ from .validators import check_batch, check_shuffle, check_map, check_filter, che
     check_sync_wait, check_zip_dataset, check_add_column, check_concat, check_split, check_bucket_batch_by_length, \
     check_save, check_tuple_iterator, check_dict_iterator, check_schema, check_to_device_send, deprecated
 from ..core.config import get_callback_timeout, _init_device_info, get_enable_shared_mem, get_num_parallel_workers, \
-    get_enable_watchdog
+    get_enable_watchdog, get_seed, set_seed
 from ..core.datatypes import mstype_to_detype
 from ..core.validator_helpers import replace_none
 from ..core.py_util_helpers import ExceptionHandler
@@ -2809,7 +2809,7 @@ def _main_process_already_exit():
     return False
 
 
-def _worker_loop(operations, pipe):
+def _worker_loop(operations, pipe, seed=get_seed()):
     """
     Multiprocess worker process loop.
     """
@@ -2820,6 +2820,9 @@ def _worker_loop(operations, pipe):
         """
         signal.signal(signal.SIGINT, signal.SIG_IGN)
 
+    # We set the seed here so the main process will have the same seed, while the child process
+    # will have different seed depending on what is being passed
+    set_seed(seed)
     while not _main_process_already_exit():
         _ignore_sigint()
 
@@ -2837,8 +2840,8 @@ def _worker_loop(operations, pipe):
             return
 
 
-def worker_target(operations):
-    return lambda pipe: _worker_loop(operations, pipe)
+def worker_target(operations, seed=get_seed()):
+    return lambda pipe: _worker_loop(operations, pipe, seed)
 
 
 class _MPWorker(multiprocessing.Process):
@@ -2846,10 +2849,10 @@ class _MPWorker(multiprocessing.Process):
     Worker process for multiprocessing.
     """
 
-    def __init__(self, operations, warning_ctl, max_rowsize=16):
+    def __init__(self, operations, warning_ctl, max_rowsize=16, seed=get_seed()):
         shared_memory = get_enable_shared_mem()
         self.pipe = Pipe(warning_ctl, shared_memory=shared_memory, max_rowsize=max_rowsize)
-        super().__init__(target=worker_target(operations), args=(self.pipe,), daemon=True)
+        super().__init__(target=worker_target(operations, seed), args=(self.pipe,), daemon=True)
 
     def execute(self, idx, *args):
         self.pipe.master_send(idx, args)
@@ -3084,8 +3087,8 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
         # Construct python worker processes
         self.workers = []
         self.warning_ctl = multiprocessing.Value('i', 0)
-        for _ in range(self.num_parallel_workers):
-            worker = _MPWorker(self.operations, self.warning_ctl, self.max_row_size)
+        for i in range(self.num_parallel_workers):
+            worker = _MPWorker(self.operations, self.warning_ctl, self.max_row_size, i + get_seed())
             worker.start()
             self.workers.append(worker)
 
