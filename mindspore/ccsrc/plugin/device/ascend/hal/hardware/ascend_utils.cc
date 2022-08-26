@@ -23,7 +23,6 @@
 #include "runtime/device/ms_device_shape_transfer.h"
 #include "utils/ms_context.h"
 #include "runtime/dev.h"
-#include "common/util/platform_info.h"
 
 namespace mindspore {
 namespace device {
@@ -91,23 +90,6 @@ std::string GetSocVersion() {
     version = soc_version;
   }
   return version;
-}
-
-void PlatformInfoInitialization() {
-  auto soc_version = GetSocVersion();
-  fe::PlatformInfo platform_info;
-  fe::OptionalInfo opti_compilation_info;
-  fe::PlatformInfoManager &inst = fe::PlatformInfoManager::Instance();
-  if (inst.InitializePlatformInfo() != 0) {
-    MS_LOG(WARNING) << "Initialize PlatformInfo failed.";
-    return;
-  }
-  if (inst.GetPlatformInfo(soc_version, platform_info, opti_compilation_info) != 0) {
-    MS_LOG(WARNING) << "GetPlatformInfo failed.";
-    return;
-  }
-  opti_compilation_info.soc_version = soc_version;
-  inst.SetOptionalCompilationInfo(opti_compilation_info);
 }
 
 void AssignOutputNopNodeDeviceAddress(const KernelGraphPtr &graph, const device::DeviceContext *device_context) {

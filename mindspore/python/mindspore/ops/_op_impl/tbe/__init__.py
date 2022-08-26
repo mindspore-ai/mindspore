@@ -95,6 +95,7 @@ from .conv2d_backprop_filter_ds import _conv2d_backprop_filter_ds_tbe
 from .conv2d_backprop_input_ds import _conv2d_backprop_input_ds_tbe
 from .conv2d_transpose import _conv2d_transpose_tbe
 from .confusion_mul_grad import _confusion_mul_grad_tbe
+from .dilation import _dilation_tbe
 from .dropout_do_mask import _dropout_do_mask_tbe
 from .dropout_do_mask_ds import _dropout_do_mask_ds_tbe
 from .dropout_do_mask_v3 import _dropout_do_mask_v3_tbe

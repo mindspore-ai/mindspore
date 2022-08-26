@@ -71,7 +71,7 @@
 
 #include "profiler/device/profiling.h"
 #include "kernel/common_utils.h"
-
+#include "plugin/device/ascend/optimizer/platform.h"
 #ifndef ENABLE_SECURITY
 using mindspore::device::ascend::ProfilingManager;
 using mindspore::device::ascend::ProfilingUtils;
@@ -79,6 +79,7 @@ using mindspore::device::ascend::ProfilingUtils;
 using mindspore::device::ascend::tasksink::TaskGenerator;
 using mindspore::ge::model_runner::ModelRunner;
 using mindspore::kernel::tbe::TbeUtils;
+using mindspore::opt::PlatformInfoInitialization;
 using std::vector;
 
 constexpr uint32_t kTupleTaskId = 0;
@@ -389,7 +390,10 @@ bool AscendKernelRuntime::Init() {
     if (rt_ret != RT_ERROR_NONE) {
       MS_LOG(EXCEPTION) << "Reg SetTaskFailCallback failed, error: " << rt_ret;
     }
-    PlatformInfoInitialization();
+    auto soc_version = device::ascend::GetSocVersion();
+    if (!PlatformInfoInitialization(soc_version)) {
+      MS_LOG(EXCEPTION) << "PlatformInfo Initialization failed.";
+    }
   } catch (const std::exception &e) {
     const string &error_message = ErrorManager::GetInstance().GetErrorMessage();
     if (!error_message.empty() && error_message.find(kUnknowErrorString) == string::npos) {

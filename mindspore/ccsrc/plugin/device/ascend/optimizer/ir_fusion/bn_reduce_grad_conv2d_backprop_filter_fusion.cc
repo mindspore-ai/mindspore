@@ -25,6 +25,7 @@
 #include "mindspore/core/ops/core_ops.h"
 #include "abstract/abstract_value.h"
 #include "backend/common/optimizer/helper.h"
+#include "plugin/device/ascend/optimizer/platform.h"
 
 namespace mindspore {
 namespace opt {
@@ -77,6 +78,7 @@ const AnfNodePtr BNReduceGradConv2dBackpropFilterFusion::Process(const FuncGraph
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
 
+  MS_CHECK_CORE_CNT_32();
   auto conv_back_filter = CheckAnfNodeIfCNodeAndInputSize(node, kConv2DBackpropFilterInputNum);
   auto bnreduce_grad = CheckAnfNodeIfCNodeAndInputSize(conv_back_filter->input(kIndex1), kBNTrainingReduceGradInputNum);
   if (!CheckSupported(conv_back_filter)) {

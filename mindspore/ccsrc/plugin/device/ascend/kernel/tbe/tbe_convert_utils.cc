@@ -30,6 +30,7 @@ namespace tbe {
 const std::unordered_map<std::string, TypeId> type_str_id_maps = {
   {"float", TypeId::kNumberTypeFloat32},
   {"float16", TypeId::kNumberTypeFloat16},
+  {"bfloat16", TypeId::kNumberTypeFloat16},
   {"float32", TypeId::kNumberTypeFloat32},
   {"float64", TypeId::kNumberTypeFloat64},
   {"int", TypeId::kNumberTypeInt},
