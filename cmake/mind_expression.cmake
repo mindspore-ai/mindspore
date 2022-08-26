@@ -15,6 +15,7 @@ endif()
 set(TOP_DIR ${CMAKE_SOURCE_DIR})
 
 include(cmake/utils.cmake)
+include(${CMAKE_SOURCE_DIR}/cmake/external_libs/robin.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/external_libs/eigen.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/external_libs/json.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/dependency_securec.cmake)

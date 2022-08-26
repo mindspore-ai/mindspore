@@ -217,7 +217,7 @@ endif()
 
 if(DEFINED ENV{ENABLE_FAST_HASH_TABLE})
     add_compile_definitions(ENABLE_FAST_HASH_TABLE)
-    include_directories(${TOP_DIR}/third_party/robin_hood/include)
+    set(MSLITE_DEPS_ROBIN_HOOD_HASHING on)
 endif()
 
 if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)

@@ -18,8 +18,8 @@
 #define MINDSPORE_CORE_UTILS_HASH_MAP_H_
 
 #include <functional>
-#if (ENABLE_FAST_HASH_TABLE) && __has_include("robin_hood/robin_hood.h")
-#include "robin_hood/robin_hood.h"
+#if (ENABLE_FAST_HASH_TABLE) && __has_include("include/robin_hood.h")
+#include "include/robin_hood.h"
 
 namespace mindspore {
 template <typename K, typename V, typename Hash = robin_hood::hash<K>, typename KeyEqual = std::equal_to<K>>
