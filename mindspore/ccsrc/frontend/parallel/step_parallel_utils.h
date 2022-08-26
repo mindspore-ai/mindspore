@@ -83,6 +83,7 @@ void SetCastForParamNotRecompute(const std::vector<AnfNodePtr> &all_nodes);
 bool IsPynativeParallel();
 bool IsAutoParallelCareGraph(const FuncGraphPtr &func_graph);
 bool HasNestedMetaFg(const FuncGraphPtr &func_graph);
+bool IsSplittableOperator(const std::string &op_name);
 }  // namespace parallel
 }  // namespace mindspore
 

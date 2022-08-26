@@ -40,7 +40,6 @@ class ArithmeticBase : public OperatorInfo {
   void ReComputeBatchSplitFlagList() override;
 
  protected:
-  Shapes InferParamStrategy(const Shapes &default_strategy) override;
   Status GetAttrs() override {
     infer_strategy_mode_ = BROADCAST_MODE;
     return SUCCESS;

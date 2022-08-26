@@ -178,38 +178,6 @@ Status ArithmeticBase::InferTensorMap() {
   return SUCCESS;
 }
 
-Shapes ArithmeticBase::InferParamStrategy(const Shapes &default_strategy) {
-  Shape left_strategy = default_strategy[0];
-  Shape right_strategy = default_strategy[1];
-  if (left_strategy.size() != right_strategy.size()) {
-    return default_strategy;
-  }
-  int64_t strategy_mul = 1;
-  (void)std::for_each(left_strategy.cbegin(), left_strategy.cend(), [&](int64_t const &data) { strategy_mul *= data; });
-  auto left_shape = inputs_shape_[0];
-  auto left_batch = left_shape[0];
-  auto right_shape = inputs_shape_[1];
-  auto right_batch = right_shape[0];
-
-  if (strategy_mul == 1) {
-    left_strategy = right_strategy;
-  } else {
-    right_strategy = left_strategy;
-  }
-
-  if (left_batch == 1) {
-    left_strategy[0] = 1;
-  }
-  if (right_batch == 1) {
-    right_strategy[0] = 1;
-  }
-
-  Shapes ret;
-  ret.push_back(left_strategy);
-  ret.push_back(right_strategy);
-  return ret;
-}
-
 Status ArithmeticBase::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
 
 std::vector<StrategyPtr> ArithmeticBase::GenerateOpStrategies(int64_t stage_id) {

@@ -1326,10 +1326,9 @@ FuncGraphPtr GetShard(const AnfNodePtr &shard, const std::vector<AnfNodePtr> &or
 }  // namespace
 
 FuncGraphPtr Shard::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
-  constexpr size_t shard_input_size = 5;
-  if (args_spec_list.size() != shard_input_size) {
-    MS_LOG(EXCEPTION) << "'Shard' requires " << shard_input_size
-                      << " inputs. Includes a Cell or function, in_axes, out_axes, device and level.";
+  if (args_spec_list.size() != kShardInputSize) {
+    MS_LOG(EXCEPTION) << "'Shard' requires " << kShardInputSize
+                      << " inputs. Includes a Cell or function, in_axes, out_axes, parameter_plan, device and level.";
   }
 
   MS_EXCEPTION_IF_NULL(args_spec_list[0]);

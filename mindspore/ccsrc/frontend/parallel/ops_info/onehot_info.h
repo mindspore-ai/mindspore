@@ -40,7 +40,6 @@ class OneHotInfo : public OperatorInfo {
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
   ReplaceGraphPtr replace_graph(const CNodePtr &cnode) override;
   std::shared_ptr<Strategies> GenerateBatchStrategies() override;
-  Shapes InferParamStrategy(const Shapes &default_strategy) override;
 
  protected:
   Status CheckStrategy(const StrategyPtr &strategy) override;
