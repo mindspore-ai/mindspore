@@ -172,10 +172,10 @@ Status Task::Join(WaitFlag blocking) {
                               << "the task: " << my_name_ << " will be destroyed by TdtHostDestory.";
               auto queue =
                 device::DataQueueMgr::GetInstance().CreateDataQueue(kAscendDevice, {}, false, 0, nullptr, {});
-              if (queue != nullptr && !queue->Destroy()) {
-                MS_LOG(WARNING) << "Destroy tdt channel failed.";
-              } else {
+              if (queue != nullptr && queue->Destroy()) {
                 MS_LOG(INFO) << "Destroy tdt channel success.";
+              } else {
+                MS_LOG(WARNING) << "Destroy tdt channel failed.";
               }
 
               // just wait 30 seconds

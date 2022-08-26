@@ -42,7 +42,7 @@ const std::map<std::string, aclDataType> kStringTypeToAclType = []() -> std::map
 }();
 
 constexpr auto kUnknownErrorString = "Unknown error occurred";
-std::map<void **, std::thread *> g_acl_handle_map = {};
+std::vector<std::pair<void **, std::thread *>> g_acl_handle_map = {};
 
 constexpr auto kMbufHeadEndOfSequencePos = 128U;
 constexpr auto kEndOfSequenceFlag = 0x5A;
@@ -78,7 +78,7 @@ void ReportErrorMessage() {
 namespace tdt_handle {
 void AddHandle(acltdtChannelHandle **handle, std::thread *use_thread) {
   if (*handle != nullptr) {
-    auto ret = g_acl_handle_map.emplace(reinterpret_cast<void **>(handle), use_thread);
+    auto ret = g_acl_handle_map.emplace_back(reinterpret_cast<void **>(handle), use_thread);
     if (!std::get<1>(ret)) {
       MS_LOG(ERROR) << "Failed to add new handle to acl_handle_map." << std::endl;
     }
@@ -87,7 +87,13 @@ void AddHandle(acltdtChannelHandle **handle, std::thread *use_thread) {
 
 void DelHandle(acltdtChannelHandle **handle) {
   void **void_handle = reinterpret_cast<void **>(handle);
-  g_acl_handle_map.erase(void_handle);
+  for (auto iter = g_acl_handle_map.begin(); iter != g_acl_handle_map.end();) {
+    if (iter->first == void_handle) {
+      iter = g_acl_handle_map.erase(iter);
+    } else {
+      ++iter;
+    }
+  }
 }
 
 bool DestroyHandle() {
@@ -181,13 +187,14 @@ AscendTdtQueue::AscendTdtQueue(const std::string &channel_name) : DataQueue(0), 
   device_id_ = MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID);
 
   // create acl tdt handle
-  if (!channel_name.empty()) {
-    acl_handle_ = acltdtCreateChannel(device_id_, channel_name.c_str());
+  if (!channel_name_.empty()) {
+    acl_handle_ = acltdtCreateChannel(device_id_, channel_name_.c_str());
     if (acl_handle_ == nullptr) {
       MS_LOG(ERROR) << "Create channel for sending data failed, please check DEVICE ID setting, DEVICE ID that passed "
                        "into dataset(from context) and training process should be the same.";
       ReportErrorMessage();
     }
+    tdt_handle::AddHandle(&acl_handle_, nullptr);
   }
 }
 
