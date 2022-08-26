@@ -60,14 +60,10 @@ class FileWriter:
         ...         {"file_name": "3.jpg", "label": 99,
         ...          "data": b"\xaf\xafU<\xb8|6\xbd}\xc1\x99[\xeaj+\x8f\x84\xd3\xcc\xa0,i\xbb\xb9-\xcdz\xecp{T\xb1"}]
         >>> writer = FileWriter(file_name="test.mindrecord", shard_num=1, overwrite=True)
-        >>> writer.add_schema(schema_json, "test_schema")
-        0
-        >>> writer.add_index(indexes)
-        MSRStatus.SUCCESS
-        >>> writer.write_raw_data(data)
-        MSRStatus.SUCCESS
-        >>> writer.commit()
-        MSRStatus.SUCCESS
+        >>> schema_id = writer.add_schema(schema_json, "test_schema")
+        >>> status = writer.add_index(indexes)
+        >>> status = writer.write_raw_data(data)
+        >>> status = writer.commit()
     """
 
     def __init__(self, file_name, shard_num=1, overwrite=False):
@@ -130,17 +126,12 @@ class FileWriter:
             >>> data = [{"file_name": "1.jpg", "label": 0,
             ...          "data": b"\x10c\xb3w\xa8\xee$o&<q\x8c\x8e(\xa2\x90\x90\x96\xbc\xb1\x1e\xd4QER\x13?\xff"}]
             >>> writer = FileWriter(file_name="test.mindrecord", shard_num=1, overwrite=True)
-            >>> writer.add_schema(schema_json, "test_schema")
-            0
-            >>> writer.write_raw_data(data)
-            MSRStatus.SUCCESS
-            >>> writer.commit()
-            MSRStatus.SUCCESS
+            >>> schema_id = writer.add_schema(schema_json, "test_schema")
+            >>> status = writer.write_raw_data(data)
+            >>> status = writer.commit()
             >>> write_append = FileWriter.open_for_append("test.mindrecord")
-            >>> write_append.write_raw_data(data)
-            MSRStatus.SUCCESS
-            >>> write_append.commit()
-            MSRStatus.SUCCESS
+            >>> status = write_append.write_raw_data(data)
+            >>> status = write_append.commit()
         """
         if platform.system().lower() == "windows":
             file_name = file_name.replace("\\", "/")
@@ -352,8 +343,7 @@ class FileWriter:
         Examples:
             >>> from mindspore.mindrecord import FileWriter
             >>> writer = FileWriter(file_name="test.mindrecord", shard_num=1)
-            >>> writer.set_header_size(1 << 25) # 32MB
-            MSRStatus.SUCCESS
+            >>> status = writer.set_header_size(1 << 25) # 32MB
         """
         return self._writer.set_header_size(header_size)
 
@@ -378,8 +368,7 @@ class FileWriter:
         Examples:
             >>> from mindspore.mindrecord import FileWriter
             >>> writer = FileWriter(file_name="test.mindrecord", shard_num=1)
-            >>> writer.set_page_size(1 << 26) # 128MB
-            MSRStatus.SUCCESS
+            >>> status = writer.set_page_size(1 << 26) # 128MB
         """
         return self._writer.set_page_size(page_size)
 

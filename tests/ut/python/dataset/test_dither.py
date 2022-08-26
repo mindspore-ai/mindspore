@@ -30,7 +30,7 @@ def count_unequal_element(data_expected, data_me, rtol, atol):
     loss_count = np.count_nonzero(greater)
     assert (loss_count / total_count) < rtol, \
         "\ndata_expected_std:{0}\ndata_me_error:{1}\nloss:{2}". \
-        format(data_expected[greater], data_me[greater], error[greater])
+            format(data_expected[greater], data_me[greater], error[greater])
 
 
 def test_dither_eager_noise_shaping_false():
@@ -145,14 +145,12 @@ def test_invalid_dither_input():
         assert error_msg in str(error_info.value)
 
     test_invalid_input("invalid density function parameter value", "TPDF", False, TypeError,
-                       "Argument density_function with value TPDF is not of type"
-                       + " [<DensityFunction.TPDF: 'TPDF'>, <DensityFunction.RPDF: 'RPDF'>"
-                       + ", <DensityFunction.GPDF: 'GPDF'>], but got <class 'str'>.")
+                       "Argument density_function with value TPDF is not of type "
+                       + "[<enum 'DensityFunction'>], but got <class 'str'>.")
 
     test_invalid_input("invalid density_function parameter value", 6, False, TypeError,
-                       "Argument density_function with value 6 is not of type"
-                       + " [<DensityFunction.TPDF: 'TPDF'>, <DensityFunction.RPDF: 'RPDF'>"
-                       + ", <DensityFunction.GPDF: 'GPDF'>], but got <class 'int'>.")
+                       "Argument density_function with value 6 is not of type "
+                       + "[<enum 'DensityFunction'>], but got <class 'int'>.")
 
     test_invalid_input("invalid noise_shaping parameter value", DensityFunction.GPDF, 1, TypeError,
                        "Argument noise_shaping with value 1 is not of type [<class 'bool'>], but got <class 'int'>.")
