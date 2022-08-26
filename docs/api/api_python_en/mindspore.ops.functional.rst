@@ -192,6 +192,7 @@ Element-by-Element Operations
     mindspore.ops.trunc
     mindspore.ops.truncate_div
     mindspore.ops.truncate_mod
+    mindspore.ops.xdivy
     mindspore.ops.xlogy
 
 .. list-table::

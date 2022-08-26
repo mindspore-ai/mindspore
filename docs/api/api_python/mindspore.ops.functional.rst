@@ -188,6 +188,7 @@ functional算子是经过初始化后的Primitive，可以直接作为函数使�
     mindspore.ops.trunc
     mindspore.ops.truncate_div
     mindspore.ops.truncate_mod
+    mindspore.ops.xdivy
     mindspore.ops.xlogy
 
 .. list-table::
