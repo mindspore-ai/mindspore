@@ -135,7 +135,7 @@ function Convert() {
         if [ $? = 0 ]; then
             converter_result='converter '${model_type}''${quant_type}' '${model_name}' pass';echo ${converter_result} >> $5
             local model_size
-            if [[ ${export_mindir} =~ "MINDIR" ]]; then
+            if [ "${export_mindir}"x == "MINDIR"x ]; then
               model_size=`ls ${output_file}.mindir  -l|awk -F ' ' '{print $5}'`
             else
               model_size=`ls ${output_file}.ms  -l|awk -F ' ' '{print $5}'`

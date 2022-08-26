@@ -28,14 +28,17 @@ Status ModelImpl::Build(const void *model_data, size_t data_size, ModelType mode
   graph_ = std::make_shared<Graph>();
   auto ret = Serialization::Load(model_data, data_size, model_type, graph_.get());
   if (ret != kSuccess) {
+    MS_LOG(ERROR) << "Serialization::Load model failed.";
     return ret;
   }
   session_ = InferSession::CreateSession(model_context);
   if (session_ == nullptr) {
+    MS_LOG(ERROR) << "Create session failed.";
     return kLiteNullptr;
   }
   ret = session_->Init(model_context);
   if (ret != kSuccess) {
+    MS_LOG(ERROR) << "Init session failed.";
     return ret;
   }
   if (MsContext::GetInstance() == nullptr) {

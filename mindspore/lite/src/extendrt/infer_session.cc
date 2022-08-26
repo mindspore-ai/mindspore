@@ -88,6 +88,7 @@ tensor::TensorPtr DefaultInferSession::GetInputByTensorName(const std::string &n
 std::shared_ptr<InferSession> InferSession::CreateSession(const std::shared_ptr<Context> context) {
   HandleGPUContext(context);
   auto config = SelectSessionArg(context);
+  MS_LOG(DEBUG) << "Session type " << static_cast<int64_t>(config.type_);
   return SessionRegistry::GetInstance().GetSession(config.type_, config);
 }
 
