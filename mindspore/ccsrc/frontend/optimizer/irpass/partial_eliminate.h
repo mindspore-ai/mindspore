@@ -212,7 +212,7 @@ class ChoicePartialEliminater : public AnfVisitor {
   }
 
  private:
-  std::vector<AnfNodePtr> ArgsUnion(const std::vector<AnfNodePtrList> args_list) {
+  static std::vector<AnfNodePtr> ArgsUnion(const std::vector<AnfNodePtrList> args_list) {
     std::set<AnfNodePtr> no_monad_args;
     std::set<AnfNodePtr> monad_args;
     for (const auto &args : args_list) {
@@ -230,8 +230,8 @@ class ChoicePartialEliminater : public AnfVisitor {
     return union_args;
   }
 
-  HashMap<FuncGraphPtr, HashMap<AnfNodePtr, size_t>> GenOldArgsIndexes(const AnfNodePtrList &fg_list,
-                                                                       const std::vector<AnfNodePtrList> &args_list) {
+  static HashMap<FuncGraphPtr, HashMap<AnfNodePtr, size_t>> GenOldArgsIndexes(
+    const AnfNodePtrList &fg_list, const std::vector<AnfNodePtrList> &args_list) {
     HashMap<FuncGraphPtr, HashMap<AnfNodePtr, size_t>> old_args_indexes;
     for (size_t i = 0; i < fg_list.size(); ++i) {
       const auto func_graph = GetValueNode<FuncGraphPtr>(fg_list[i]);
@@ -239,16 +239,16 @@ class ChoicePartialEliminater : public AnfVisitor {
       const auto &args = args_list[i];
       HashMap<AnfNodePtr, size_t> args_indexes;
       size_t arg_index = 0;
-      std::for_each(args.cbegin(), args.cend(), [&args_indexes, &arg_index](const AnfNodePtr &arg) {
+      for (const auto &arg : args) {
         (void)args_indexes.emplace(arg, arg_index++);
-      });
+      }
       old_args_indexes[func_graph] = args_indexes;
     }
     return old_args_indexes;
   }
 
-  AnfNodePtr GetParameterByArg(const HashMap<FuncGraphPtr, HashMap<AnfNodePtr, size_t>> &all_old_args_index_map,
-                               const AnfNodePtr &arg) {
+  static AnfNodePtr GetParameterByArg(const HashMap<FuncGraphPtr, HashMap<AnfNodePtr, size_t>> &all_old_args_index_map,
+                                      const AnfNodePtr &arg) {
     MS_LOG(DEBUG) << "Get parameter by arg:" << arg->DebugString();
     for (const auto &[fg, old_args_index] : all_old_args_index_map) {
       auto it = old_args_index.find(arg);
@@ -352,7 +352,7 @@ class SwitchPartialEliminater : public ChoicePartialEliminater {
     // Create switch call.
     TraceGuard guard2(std::make_shared<TraceCopy>(switch_call->debug_info()));
     AnfNodePtrList switch_call_inputs{new_switch_cnode};
-    switch_call_inputs.insert(switch_call_inputs.end(), new_args.begin(), new_args.end());
+    (void)switch_call_inputs.insert(switch_call_inputs.end(), new_args.begin(), new_args.end());
     const auto new_call_node = switch_call->func_graph()->NewCNode(std::move(switch_call_inputs));
     new_call_node->set_abstract(switch_call->abstract());
     return new_call_node;

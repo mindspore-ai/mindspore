@@ -56,6 +56,7 @@ Primitive::Primitive(const Primitive &prim)
       prim_type_(prim.prim_type_),
       record_evaluate_add_attr_(false),
       is_const_prim_(false),
+      const_input_indexes_(prim.const_input_indexes_),
       id_(prim.id_) {}
 
 Primitive &Primitive::operator=(const Primitive &other) {
@@ -72,6 +73,7 @@ Primitive &Primitive::operator=(const Primitive &other) {
   record_evaluate_add_attr_ = false;
   is_const_prim_ = false;
   id_ = other.id_;
+  const_input_indexes_ = other.const_input_indexes_;
   return *this;
 }
 

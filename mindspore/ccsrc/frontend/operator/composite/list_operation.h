@@ -93,7 +93,9 @@ class ListExtend : public MetaFuncGraph {
     return os;
   }
   friend bool operator==(const ListExtend &lhs, const ListExtend &rhs) { return lhs.name_ == rhs.name_; }
-  void AddNodeToElems(const AbstractBasePtr &arg, const FuncGraphPtr &ret, std::vector<AnfNodePtr> *elems);
+
+ private:
+  static void AddNodeToElems(const AbstractBasePtr &arg, const FuncGraphPtr &ret, std::vector<AnfNodePtr> *elems);
 };
 using ListExtendPtr = std::shared_ptr<ListExtend>;
 

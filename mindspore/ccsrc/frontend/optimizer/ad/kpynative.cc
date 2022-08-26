@@ -794,6 +794,10 @@ AnfNodePtr KPynativeCellImpl::BuildKNodeForCNodeInput(const PynativeAdjointPtr &
         if (input_index < 1) {
           MS_EXCEPTION(ValueError) << "The input_index is smaller than 1.";
         }
+        if (input_index > cnode_adjoint->op_args().size()) {
+          MS_EXCEPTION(ValueError) << "The input_index: " << input_index
+                                   << " out of range:" << cnode_adjoint->op_args().size();
+        }
         return NewValueNode(cnode_adjoint->op_args()[input_index - 1]);
       }
     }
