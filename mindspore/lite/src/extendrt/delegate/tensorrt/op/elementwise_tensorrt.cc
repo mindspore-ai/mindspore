@@ -253,7 +253,7 @@ nvinfer1::ITensor *ElementWiseTensorRT::AddActivation(TensorRTContext *ctx, nvin
 }
 
 int ElementWiseTensorRT::AddConstTensor(TensorRTContext *ctx) {
-  int const_tensor_index = (in_tensors_[0].Data() != nullptr && in_tensors_[0].IsConst()) ? 0 : 1;
+  int const_tensor_index = in_tensors_[0].IsConst() ? 0 : 1;
   auto expect_shape = ConvertMSShape(input(ctx, 1 - const_tensor_index).trt_tensor_->getDimensions());
   nvinfer1::ITensor *constant_input =
     ConvertConstantTensorWithDims(ctx, in_tensors_[const_tensor_index], expect_shape, op_name_);
