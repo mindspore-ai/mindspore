@@ -691,6 +691,7 @@ std::map<std::string, std::pair<PrimitivePyAdapterPtr, std::string>> GraphExecut
     auto cnode = weight->cast_ptr<CNode>();
     MS_EXCEPTION_IF_NULL(cnode);
     auto weight_node = cnode->input(weight_index);
+    MS_EXCEPTION_IF_NULL(weight_node);
     if (!weight_node->isa<Parameter>() && !IsPrimitiveCNode(weight_node, prim::kPrimLoad)) {
       continue;
     }

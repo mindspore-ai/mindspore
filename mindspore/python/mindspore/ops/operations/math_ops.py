@@ -3787,6 +3787,9 @@ class Greater(PrimitiveWithCheck):
         self.init_prim_io_names(inputs=['x', 'y'], outputs=['output'])
 
     def infer_value(self, x, y):
+        """
+        Infer value for Greater.
+        """
         if x is not None and y is not None:
             x = x.asnumpy()
             y = y.asnumpy()

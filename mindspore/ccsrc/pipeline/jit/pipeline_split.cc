@@ -143,6 +143,7 @@ static std::set<FuncGraphPtr> FindForwardGraph(const FuncGraphPtr &root, const s
     auto node_users = node_users_map[input_parameter];
     for (auto node_user : node_users) {
       auto cnode = node_user.first->cast_ptr<CNode>();
+      MS_EXCEPTION_IF_NULL(cnode);
       if (IsValueNode<Primitive>(cnode->inputs()[0]) ||
           (IsValueNode<FuncGraph>(cnode->inputs()[0]) && !root->has_flag(parallel::kTraining))) {
         (void)graph_sets.insert(cnode->func_graph());

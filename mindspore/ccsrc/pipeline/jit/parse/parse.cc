@@ -2779,7 +2779,7 @@ AnfNodePtr Parser::MakeInterpretNode(const FunctionBlockPtr &block, const AnfNod
   return interpreted_node;
 }
 
-bool Parser::IsPopOperation(const AnfNodePtr &node) {
+bool Parser::IsPopOperation(const AnfNodePtr &node) const {
   auto cnode = node->cast<CNodePtr>();
   if (cnode == nullptr) {
     return false;
