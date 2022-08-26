@@ -3,9 +3,7 @@ mindspore.nn.FocalLoss
 
 .. py:class:: mindspore.nn.FocalLoss(weight=None, gamma=2.0, reduction='mean')
 
-    FocalLoss函数。
-
-    解决了类别不平衡的问题。
+    FocalLoss函数解决了类别不平衡的问题。
 
     FocalLoss函数由Kaiming团队在论文 `Focal Loss for Dense Object Detection <https://arxiv.org/pdf/1708.02002.pdf>`_ 中提出，提高了图像目标检测的效果。
 

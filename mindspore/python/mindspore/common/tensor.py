@@ -2609,14 +2609,14 @@ class Tensor(Tensor_):
                 tensor, unless it has an integer dtype with a precision less than :class:`float32`.
                 In that case, :class:`float32` is used. Default: None.
 
-        Raises:
-            ValueError: If the axis is out of range.
-
         Returns:
             Tensor.
 
         See also:
             :func:`mindspore.Tensor.sum`: Return sum of tensor elements over a given axis.
+
+        Raises:
+            ValueError: If the axis is out of range.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``

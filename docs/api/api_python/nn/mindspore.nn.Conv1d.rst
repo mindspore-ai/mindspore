@@ -12,7 +12,7 @@ mindspore.nn.Conv1d
         \text{out}(N_i, C_{\text{out}_j}) = \text{bias}(C_{\text{out}_j}) +
         \sum_{k = 0}^{C_{in} - 1} \text{ccor}({\text{weight}(C_{\text{out}_j}, k), \text{X}(N_i, k)})
 
-    其中， :math:`ccor` 为 `cross-correlation <https://en.wikipedia.org/wiki/Cross-correlation>`_ ， :math:`C_{in}` 为输入空间维度， :math:`out_{j}` 对应输出的第 :math:`j` 个空间维度，:math:`j` 的范围在 :math:`[0，C_{out}-1]` 内，
+    其中， :math:`ccor` 为 `cross-correlation <https://en.wikipedia.org/wiki/Cross-correlation>`_ ， :math:`C_{in}` 为输入空间维度， :math:`out_{j}` 对应输出的第 :math:`j` 个空间维度，:math:`j` 的范围在 :math:`[0，C_{out}-1]` 内。
     :math:`\text{weight}(C_{\text{out}_j}, k)` 是shape为 :math:`\text{kernel_size}` 的卷积核切片，其中 :math:`\text{kernel_size}` 是卷积核的宽度。 :math:`\text{bias}` 为偏置参数， :math:`\text{X}` 为输入Tensor。
     完整卷积核的shape为 :math:`(C_{out}, C_{in} / \text{group}, \text{kernel_size})` ，其中 `group` 是在空间维度上分割输入 `x` 的组数。
     详细介绍请参考论文 `Gradient Based Learning Applied to Document Recognition <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_ 。

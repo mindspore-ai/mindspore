@@ -465,7 +465,8 @@ class LeakyReLU(Cell):
 
 class RReLU(Cell):
     r"""
-    Applies the RReLU function elementally, as described in the paper: https://arxiv.org/pdf/1505.00853.pdf
+
+    Randomized Leaky ReLU activation function.
 
     The activation function is defined as:
 
@@ -474,6 +475,9 @@ class RReLU(Cell):
             {\alpha_{ji}} * x_{ji}, &\text{otherwise.}\end{cases}
 
     where :math:`\alpha_{ji}` ~ :math:`U(l, u)`, :math:`l \le u`.
+
+    Applies the RReLU function elementally, as described in the paper:
+    `Empirical Evaluation of Rectified Activations in Convolution Network <https://arxiv.org/pdf/1505.00853.pdf>`_ .
 
     Args:
         lower (Union[int, float]): Slope of the activation function at x < 0. Default: 1/8.

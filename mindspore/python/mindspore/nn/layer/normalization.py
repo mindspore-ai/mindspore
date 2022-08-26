@@ -944,7 +944,7 @@ class InstanceNorm1d(_InstanceNorm):
     .. math::
         y = \frac{x - \mathrm{E}[x]}{\sqrt{\mathrm{Var}[x] + \epsilon}} * \gamma + \beta
 
-    :math:`\gamma` and :math:`\beta` are learnable parameter vectors of size num_features if affine is True.
+    The size of :math:`\gamma` and :math:`\beta`, learnable parameters vectors, is num_features if affine is True.
     The standard-deviation is calculated via the biased estimator.
 
     This layer uses instance statistics computed from input data in both training and evaluation modes.

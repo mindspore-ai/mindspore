@@ -2857,7 +2857,7 @@ class RandomResizedCropWithBBox(ImageTensorOperation):
 
 class RandomResize(ImageTensorOperation):
     """
-    Resize the input image using a randomly selected interpolation mode :class:`mindspore.dataset.vision.Inter`.
+    Resize the input image using :class:`mindspore.dataset.vision.Inter`, a randomly selected interpolation mode.
 
     Args:
         size (Union[int, Sequence[int]]): The output size of the resized image. The size value(s) must be positive.

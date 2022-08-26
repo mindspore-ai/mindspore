@@ -177,7 +177,7 @@ class ImageNetToMR:
 
     def transform(self):
         """
-        Encapsulate the run function to exit normally.
+        Encapsulate the :func:`mindspore.mindrecord.ImageNetToMR.run` function to exit normally.
 
         Returns:
             MSRStatus, SUCCESS or FAILED.

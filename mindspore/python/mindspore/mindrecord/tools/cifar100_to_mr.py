@@ -114,7 +114,7 @@ class Cifar100ToMR:
 
     def transform(self, fields=None):
         """
-        Encapsulate the run function to exit normally
+        Encapsulate the :func:`mindspore.mindrecord.Cifar100ToMR.run` function to exit normally.
 
         Args:
             fields (list[str]): A list of index field, e.g.["fine_label", "coarse_label"]. Default: None.

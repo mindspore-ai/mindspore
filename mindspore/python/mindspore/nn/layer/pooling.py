@@ -159,7 +159,7 @@ class MaxPool1d(_PoolNd):
 
     Typically the input is of shape :math:`(N_{in}, C_{in}, L_{in})`, MaxPool1d outputs
     regional maximum in the :math:`(L_{in})`-dimension. Given kernel size
-    :math:`ks = (l_{ker})` and stride :math:`s = (s_0)`, the operation is as follows.
+    :math:`ks = (l_{ker})` and stride :math:`s = (s_0)`, the operation is as follows:
 
     .. math::
         \text{output}(N_i, C_j, l) = \max_{n=0, \ldots, l_{ker}-1}

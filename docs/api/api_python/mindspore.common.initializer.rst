@@ -64,7 +64,9 @@ mindspore.common.initializer
     .. math::
         boundary = \text{gain} \times \sqrt{\frac{3}{fan\_mode}}
 
-    :math:`gain` 是一个可选的缩放因子。 :math:`fan\_mode` 是权重Tensor中输入或输出单元的数量，取决于 `mode` 是'fan_in'或是'fan_out'。
+    :math:`gain` 是一个可选的缩放因子。如果:math:`fan\_mode` 是'fan_in'，是权重Tensor中输入单元的数量。如果:math:`fan\_mode` 是'fan_out'，则是权重Tensor中输出单元的数量。
+
+    有关HeUniform算法，详情可参考 `<https://arxiv.org/abs/1502.01852>`_ 。
 
     HeUniform 算法的详细信息，请查看 https://arxiv.org/abs/1502.01852。
 

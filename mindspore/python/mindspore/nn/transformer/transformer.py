@@ -63,8 +63,8 @@ class EmbeddingOpParallelConfig(_Config):
         for the setting data parallel or model parallel for the embedding table.
 
         Args:
-            data_parallel(int): The data parallel way. The input data will be sliced into n parts
-                for class:`VocabEmbedding` according to this value. Default 1.
+            data_parallel(int): The data parallel way. The input data will be sliced into n parts for embedding layer
+                according to this value. Default: 1.
             model_parallel(int): The model parallel way. The embedding table parameters
                 will be sliced at 0-th axis according to the model parallel way. Default: 1.
             vocab_emb_dp(bool): Shard embedding in model parallel or data parallel. If True, the embedding lookup

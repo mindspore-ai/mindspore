@@ -179,7 +179,7 @@ class CsvToMR:
 
     def transform(self):
         """
-        Encapsulate the run function to exit normally.
+        Encapsulate the :func:`mindspore.mindrecord.CsvToMR.run` function to exit normally.
 
         Returns:
             MSRStatus, SUCCESS or FAILED.
