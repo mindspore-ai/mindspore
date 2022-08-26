@@ -2057,16 +2057,19 @@ class SparseCountSparseOutput(Primitive):
         RunTimeError: If indexes are not in bounds of the dense shape
 
     Examples:
+        >>> from mindspore.ops.operations.sparse_ops import SparseCountSparseOutput
         >>> indices = Tensor([[1, 2] ,[2, 3], [2, 1], [0, 2]], dtype=mstype.int64)
         >>> values = Tensor([0, 2, 8, 8], dtype=mstype.int64)
         >>> dense_shape = Tensor([4, 4], dtype=mstype.int64)
         >>> weights = Tensor([1, 2, 1, 0], dtype=mstype.int64)
-        >>> sparse_count_sparse_output = ops.SparseCountSparseOutput()
+        >>> sparse_count_sparse_output = SparseCountSparseOutput()
         >>> out = sparse_count_sparse_output(indices, values, dense_shape, weights)
         >>> print(out)
-       (Tensor(shape=[4, 2], dtype=Int64, value= [[0, 8], [1, 0], [2, 2], [2, 8]]),
-        Tensor(shape=[4], dtype=Int64, value= [0, 1, 2, 1]),
-        Tensor(shape=[2], dtype=Int64, value= [4, 9])
+        (Tensor(shape=[4, 2], dtype=Int64, value=
+        [[0, 8],
+         [1, 0],
+         [2, 2],
+         [2, 8]]), Tensor(shape=[4], dtype=Int64, value= [0, 1, 2, 1]), Tensor(shape=[2], dtype=Int64, value= [4, 9]))
 
     Supported Platforms:
         ``CPU``

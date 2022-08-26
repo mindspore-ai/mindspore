@@ -145,19 +145,7 @@ bool ApplyAdagradV2CpuKernelMod::LaunchKernel(const std::vector<kernel::AddressP
       var[i] -= lr[batch_index] * gradient[i] * (one / dividend);
     }
   };
-  ParallelLaunchAutoSearch(task, length, this, &parallel_search_info_);
-
-  // Copy result to output tensor
-  auto output_var = reinterpret_cast<T *>(outputs[0]->addr);
-  auto output_accum = reinterpret_cast<T *>(outputs[1]->addr);
-  auto ret = memcpy_s(output_var, outputs[0]->size, var, inputs[0]->size);
-  if (ret != EOK) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', launch kernel error: memcpy failed. Error no: " << ret;
-  }
-  ret = memcpy_s(output_accum, outputs[1]->size, accum, inputs[1]->size);
-  if (ret != EOK) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', launch kernel error: memcpy failed. Error no: " << ret;
-  }
+  ParallelLaunch(task, length, 0, this, pool_);
   return true;
 }
 
@@ -176,7 +164,9 @@ std::vector<std::pair<KernelAttr, ApplyAdagradV2CpuKernelMod::ApplyAdagradV2Func
        .AddInputAttr(kNumberTypeFloat32)
        .AddInputAttr(kNumberTypeFloat32)
        .AddOutputAttr(kNumberTypeFloat32)
-       .AddOutputAttr(kNumberTypeFloat32),
+       .AddOutputAttr(kNumberTypeFloat32)
+       .AddOutInRef(0, 0)
+       .AddOutInRef(1, 1),
      &ApplyAdagradV2CpuKernelMod::LaunchKernel<float>},
     {KernelAttr()
        .AddInputAttr(kNumberTypeFloat16)
@@ -184,7 +174,9 @@ std::vector<std::pair<KernelAttr, ApplyAdagradV2CpuKernelMod::ApplyAdagradV2Func
        .AddInputAttr(kNumberTypeFloat16)
        .AddInputAttr(kNumberTypeFloat16)
        .AddOutputAttr(kNumberTypeFloat16)
-       .AddOutputAttr(kNumberTypeFloat16),
+       .AddOutputAttr(kNumberTypeFloat16)
+       .AddOutInRef(0, 0)
+       .AddOutInRef(1, 1),
      &ApplyAdagradV2CpuKernelMod::LaunchKernel<float16>},
 };
 

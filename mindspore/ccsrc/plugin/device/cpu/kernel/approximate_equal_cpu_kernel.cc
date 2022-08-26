@@ -96,7 +96,7 @@ bool ApproximateEqualCpuKernelMod::LaunchKernel(const std::vector<kernel::Addres
       output[i] = abs(x[i] - y[i]) < tol ? true : false;
     }
   };
-  ParallelLaunchAutoSearch(task, length, this, &parallel_search_info_);
+  ParallelLaunch(task, length, 0, this, pool_);
   return true;
 }
 

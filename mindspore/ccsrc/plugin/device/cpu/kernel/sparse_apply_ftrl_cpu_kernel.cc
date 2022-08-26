@@ -34,6 +34,7 @@ constexpr size_t kGradIndex = 3;
 constexpr size_t kIndicesIndex = 4;
 constexpr size_t kSparseApplyFtrlInputsNum = 5;
 constexpr size_t kSparseApplyFtrlWorkspaceSize = 4;
+constexpr size_t kSizeGap = 16;
 constexpr char kKernelName[] = "SparseApplyFtrl";
 
 using KernelRunFunc = SparseApplyFtrlCpuKernelMod::KernelRunFunc;
@@ -403,7 +404,9 @@ const std::vector<std::pair<KernelAttr, KernelRunFunc>> &SparseApplyFtrlCpuKerne
        .AddOutputAttr(kNumberTypeFloat32)
        .AddOutputAttr(kNumberTypeFloat32)
        .AddOutputAttr(kNumberTypeFloat32)
-       .AddOutInRef(0, 0),
+       .AddOutInRef(0, 0)
+       .AddOutInRef(1, 1)
+       .AddOutInRef(2, 2),
      &SparseApplyFtrlCpuKernelMod::LaunchKernel<float, int>},
     {KernelAttr()
        .AddInputAttr(kNumberTypeFloat32)
@@ -414,7 +417,9 @@ const std::vector<std::pair<KernelAttr, KernelRunFunc>> &SparseApplyFtrlCpuKerne
        .AddOutputAttr(kNumberTypeFloat32)
        .AddOutputAttr(kNumberTypeFloat32)
        .AddOutputAttr(kNumberTypeFloat32)
-       .AddOutInRef(0, 0),
+       .AddOutInRef(0, 0)
+       .AddOutInRef(1, 1)
+       .AddOutInRef(2, 2),
      &SparseApplyFtrlCpuKernelMod::LaunchKernel<float, int64_t>}};
   return func_list;
 }
@@ -422,15 +427,12 @@ const std::vector<std::pair<KernelAttr, KernelRunFunc>> &SparseApplyFtrlCpuKerne
 template <typename T, typename S>
 bool SparseApplyFtrlCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                                const std::vector<kernel::AddressPtr> &workspace,
-                                               const std::vector<kernel::AddressPtr> &outputs) const {
+                                               const std::vector<kernel::AddressPtr> &) const {
   auto *var = reinterpret_cast<T *>(inputs[kVarIndex]->addr);
   auto *accum = reinterpret_cast<T *>(inputs[kAccumIndex]->addr);
   auto *linear = reinterpret_cast<T *>(inputs[kLinearIndex]->addr);
   auto *grad = reinterpret_cast<T *>(inputs[kGradIndex]->addr);
   auto *indices = reinterpret_cast<S *>(inputs[kIndicesIndex]->addr);
-  auto *var_out = reinterpret_cast<T *>(outputs[kVarIndex]->addr);
-  auto *accum_out = reinterpret_cast<T *>(outputs[kAccumIndex]->addr);
-  auto *linear_out = reinterpret_cast<T *>(outputs[kLinearIndex]->addr);
 
   SparseGradient<S> input_sparse_grad({grad, indices, indices_size_});
   MultiThreadComputeParams<S> input_params;
@@ -444,20 +446,10 @@ bool SparseApplyFtrlCpuKernelMod::LaunchKernel(const std::vector<kernel::Address
   input_params.sparse_grad_ = input_sparse_grad;
   input_params.var_first_dim_size_ = var_first_dim_size_;
   input_params.var_outer_dim_size_ = var_outer_dim_size_;
-  MultiThreadCompute<S>(ComputeFtrl<S>, &input_params, indices_size_);
-
-  // assign results back to outputs.
-  auto ret = memcpy_s(var_out, outputs[kVarIndex]->size, var, inputs[kVarIndex]->size);
-  if (ret != EOK) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', launch kernel error: memcpy failed. Error no: " << ret;
-  }
-  ret = memcpy_s(accum_out, outputs[kAccumIndex]->size, accum, inputs[kAccumIndex]->size);
-  if (ret != EOK) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', launch kernel error: memcpy failed. Error no: " << ret;
-  }
-  ret = memcpy_s(linear_out, outputs[kLinearIndex]->size, linear, inputs[kLinearIndex]->size);
-  if (ret != EOK) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', launch kernel error: memcpy failed. Error no: " << ret;
+  if (indices_size_ < kSizeGap) {
+    ComputeFtrl(&input_params, 0, indices_size_);
+  } else {
+    MultiThreadCompute<S>(ComputeFtrl<S>, &input_params, indices_size_);
   }
   return true;
 }

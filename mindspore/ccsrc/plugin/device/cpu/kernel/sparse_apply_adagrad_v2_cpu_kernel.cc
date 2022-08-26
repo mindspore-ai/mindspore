@@ -35,6 +35,7 @@ constexpr char kKernelName[] = "SparseApplyAdagradV2";
 
 using KernelRunFunc = SparseApplyAdagradV2CpuKernelMod::KernelRunFunc;
 
+/*
 template <typename T>
 void ComputeAdaGrad(MultiThreadComputeParams<T> *input_params, size_t start, size_t end) {
   MS_EXCEPTION_IF_NULL(input_params);
@@ -64,6 +65,7 @@ void ComputeAdaGrad(MultiThreadComputeParams<T> *input_params, size_t start, siz
     }
   }
 }
+*/
 }  // namespace
 
 template <typename T>
@@ -203,31 +205,35 @@ bool SparseApplyAdagradV2CpuKernelMod::LaunchKernel(const std::vector<kernel::Ad
   auto *accum = reinterpret_cast<float *>(inputs[1]->addr);
   auto *grad = reinterpret_cast<float *>(inputs[2]->addr);
   auto *indices = reinterpret_cast<T *>(inputs[3]->addr);
-  auto *new_grad = reinterpret_cast<float *>(workspace[0]->addr);
-  auto *new_indices = reinterpret_cast<T *>(workspace[1]->addr);
-  auto *workspace_grad = reinterpret_cast<float *>(workspace[2]->addr);
-  auto *workspace_indices = reinterpret_cast<T *>(workspace[3]->addr);
 
-  SparseGradient<T> unique_sparse_grad({new_grad, new_indices, indices_size_});
-  SparseGradient<T> workspace_sparse_grad({workspace_grad, workspace_indices, indices_size_});
   SparseGradient<T> input_sparse_grad({grad, indices, indices_size_});
-  ReduceSparseGradientParam<T> param;
-  param.input_grad_ = &input_sparse_grad;
-  param.workspace_grad_ = &workspace_sparse_grad;
-  param.output_grad_ = &unique_sparse_grad;
-  param.max_index_ = var_first_dim_size_;
-  param.value_stride_ = var_outer_dim_size_;
-  BucketReduceSparseGradient(param);
-  MultiThreadComputeParams<T> input_params;
-  input_params.var_ = var;
-  input_params.accum_ = accum;
-  input_params.lr_ = lr_;
-  input_params.epsilon_ = lr_;
-  input_params.update_slots_ = update_slots_;
-  input_params.sparse_grad_ = unique_sparse_grad;
-  input_params.var_first_dim_size_ = var_first_dim_size_;
-  input_params.var_outer_dim_size_ = var_outer_dim_size_;
-  MultiThreadCompute<T>(ComputeAdaGrad<T>, &input_params, unique_sparse_grad.indices_size_);
+  const auto lr = lr_;
+  const auto epsilon = lr_;
+  const auto update_slots = update_slots_;
+  const auto unique_sparse_grad = input_sparse_grad;
+  const auto var_first_dim_size = var_first_dim_size_;
+  const auto var_outer_dim_size = var_outer_dim_size_;
+  auto task = [this, &var, &accum, lr, epsilon, update_slots, &unique_sparse_grad, var_first_dim_size,
+               var_outer_dim_size](size_t start, size_t end) {
+    for (size_t i = start; i < end; ++i) {
+      T index = unique_sparse_grad.indices_[i];
+      if (index < 0 || LongToSize(index) >= var_first_dim_size) {
+        MS_LOG(EXCEPTION) << "For '" << kKernelName << "', each element in 'indices' must be in range [0, "
+                          << SizeToLong(var_first_dim_size) << "), but got " << index;
+      }
+      size_t start_index = var_outer_dim_size * static_cast<size_t>(index);
+      size_t end_index = start_index + var_outer_dim_size;
+      for (size_t j = start_index, k = var_outer_dim_size * i; j < end_index; ++j, ++k) {
+        auto summed_grad = unique_sparse_grad.value_[k];
+        if (update_slots) {
+          accum[j] += summed_grad * summed_grad;
+        }
+        auto learning_rate = lr * (1 / std::sqrt(accum[j] + epsilon));
+        var[j] -= summed_grad * learning_rate;
+      }
+    }
+  };
+  ParallelLaunch(task, indices_size_, 0);
   return true;
 }
 

@@ -90,7 +90,7 @@ void ApplyGradientDescentCpuKernelMod::LaunchKernel(const std::vector<AddressPtr
       output_addr[pos] = var_addr[pos];
     }
   };
-  ParallelLaunchAutoSearch(task, input_size_, this, &parallel_search_info_);
+  ParallelLaunch(task, input_size_, 0, this, pool_);
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, ApplyGradientDescent, ApplyGradientDescentCpuKernelMod);
