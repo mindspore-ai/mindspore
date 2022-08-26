@@ -11,6 +11,7 @@ else()
     set(BUILD_DIR ${TOP_DIR}/mindspore/lite/build)
 endif()
 set(TEST_CASE_DIR ${TOP_DIR}/mindspore/lite/test/build)
+set(EXTENDRT_BUILD_DIR ${TOP_DIR}/mindspore/lite/build/src/extendrt)
 
 set(RUNTIME_DIR ${RUNTIME_PKG_NAME}/runtime)
 set(RUNTIME_INC_DIR ${RUNTIME_PKG_NAME}/runtime/include)
@@ -23,6 +24,7 @@ set(SECUREC_DIR ${RUNTIME_PKG_NAME}/runtime/third_party/securec)
 set(MINDSPORE_LITE_LIB_NAME libmindspore-lite)
 set(MINDSPORE_LITE_EXTENDRT_LIB_NAME libmindspore-lite)
 set(MINDSPORE_CORE_LIB_NAME libmindspore_core)
+set(MINDSPORE_GE_LITERT_LIB_NAME libmsplugin-ge-litert)
 set(BENCHMARK_NAME benchmark)
 set(MSLITE_NNIE_LIB_NAME libmslite_nnie)
 set(MSLITE_PROPOSAL_LIB_NAME libmslite_proposal)
@@ -407,6 +409,10 @@ if(PLATFORM_ARM64)
     if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
         install(FILES ${TOP_DIR}/mindspore/lite/build/src/extendrt/${MINDSPORE_LITE_EXTENDRT_LIB_NAME}.so
                 DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(FILES ${EXTENDRT_BUILD_DIR}/delegate/graph_executor/litert/${MINDSPORE_GE_LITERT_LIB_NAME}.so
+                DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(FILES ${BUILD_DIR}/tools/converter/libmindspore_converter.so
+                DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${glog_LIBPATH}/libmindspore_glog.so.0.4.0 DESTINATION ${RUNTIME_LIB_DIR}
                 RENAME libmindspore_glog.so.0 COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(TARGETS mindspore_core DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
@@ -642,6 +648,10 @@ elseif(PLATFORM_ARM32)
     if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
         install(FILES ${TOP_DIR}/mindspore/lite/build/src/extendrt/${MINDSPORE_LITE_EXTENDRT_LIB_NAME}.so
                 DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(FILES ${EXTENDRT_BUILD_DIR}/delegate/graph_executor/litert/${MINDSPORE_GE_LITERT_LIB_NAME}.so
+                DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(FILES ${BUILD_DIR}/tools/converter/libmindspore_converter.so
+                DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${glog_LIBPATH}/libmindspore_glog.so.0.4.0 DESTINATION ${RUNTIME_LIB_DIR}
                 RENAME libmindspore_glog.so.0 COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(TARGETS mindspore_core DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
@@ -827,6 +837,10 @@ else()
             COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
     if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
         install(FILES ${TOP_DIR}/mindspore/lite/build/src/extendrt/${MINDSPORE_LITE_EXTENDRT_LIB_NAME}.so
+                DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(FILES ${EXTENDRT_BUILD_DIR}/delegate/graph_executor/litert/${MINDSPORE_GE_LITERT_LIB_NAME}.so
+                DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(FILES ${BUILD_DIR}/tools/converter/libmindspore_converter.so
                 DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${glog_LIBPATH}/libmindspore_glog.so.0.4.0 DESTINATION ${RUNTIME_LIB_DIR}
                 RENAME libmindspore_glog.so.0 COMPONENT ${RUNTIME_COMPONENT_NAME})

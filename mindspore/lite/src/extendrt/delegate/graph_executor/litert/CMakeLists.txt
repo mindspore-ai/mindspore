@@ -30,7 +30,7 @@ set(LITE_SRC
         ${LITE_DIR}/src/litert/infer_manager.cc
         ${LITE_DIR}/src/litert/runtime_shape_fusion_pass.cc
         ${LITE_DIR}/src/litert/runtime_pass.cc
-        ${LITE_DIR}/src/litert/pass/runtime_ncx_pass.cc
+        # ${LITE_DIR}/src/litert/pass/runtime_ncx_pass.cc
         ${LITE_DIR}/src/litert/schema_tensor_wrapper.cc
         ${LITE_DIR}/src/tensor.cc
         ${LITE_DIR}/src/tensorlist.cc

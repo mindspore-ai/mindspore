@@ -55,6 +55,7 @@ class ConverterImpl {
   int Convert(const std::shared_ptr<ConverterPara> &param, schema::MetaGraphT **meta_graph);
   int Convert(const std::shared_ptr<ConverterPara> &param, schema::MetaGraphT **meta_graph, const void *buf,
               const size_t &size);
+  int Convert(const std::shared_ptr<ConverterPara> &param, schema::MetaGraphT **meta_graph, FuncGraphPtr func_graph);
 
  private:
   FuncGraphPtr BuildFuncGraph(const std::shared_ptr<ConverterPara> &param);

@@ -225,6 +225,11 @@ int ConverterImpl::Convert(const std::shared_ptr<ConverterPara> &param, schema::
   return RET_OK;
 }
 
+int ConverterImpl::Convert(const std::shared_ptr<ConverterPara> &param, schema::MetaGraphT **meta_graph,
+                           FuncGraphPtr func_graph) {
+  return RET_OK;
+}
+
 schema::MetaGraphT *ConverterImpl::TransferFuncGraph(const std::shared_ptr<ConverterPara> &param,
                                                      FuncGraphPtr func_graph) {
   MS_CHECK_TRUE_MSG(metagraph_transform_ != nullptr, nullptr, "metagraph_transform_ init failed");
