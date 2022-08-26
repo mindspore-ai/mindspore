@@ -626,7 +626,8 @@ bool EltWiseGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
   kernel_name_ = base_operator->name();
   auto iter = kernel_attr_list_map.find(kernel_name_);
   if (iter == kernel_attr_list_map.end()) {
-    MS_LOG(ERROR) << "For 'EltWiseGrad', the kernel name must be in " << kernel::Map2Str(kernel_attr_list_map)
+    MS_LOG(ERROR) << "For 'EltWiseGrad', the kernel name must be in "
+                  << kernel::Map2Str<std::map, std::vector<std::pair<KernelAttr, FuncCreator>>>(kernel_attr_list_map)
                   << ", but got " << kernel_name_;
     return false;
   }

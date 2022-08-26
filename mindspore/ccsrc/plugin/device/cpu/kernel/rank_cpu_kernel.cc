@@ -36,8 +36,8 @@ void RankCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   };
   auto method = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, METHOD);
   if (kValidMethods.find(method) == kValidMethods.end()) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the method must be in " << Map2Str(kValidMethods)
-                      << ", but got " << method;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the method must be in "
+                      << Map2Str<std::map, Method>(kValidMethods) << ", but got " << method;
   }
   method_ = kValidMethods.at(method);
 
@@ -48,8 +48,8 @@ void RankCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   };
   auto option = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, NA_OPTION);
   if (kValidOptions.find(option) == kValidOptions.end()) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the option must be in " << Map2Str(kValidOptions)
-                      << ", but got " << option;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the option must be in "
+                      << Map2Str<std::map, NaOption>(kValidOptions) << ", but got " << option;
   }
   option_ = kValidOptions.at(option);
 

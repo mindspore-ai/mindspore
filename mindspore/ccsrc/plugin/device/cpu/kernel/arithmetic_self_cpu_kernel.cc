@@ -677,8 +677,11 @@ void ArithmeticSelfCpuKernelFunc::LaunchKernel(const std::vector<AddressPtr> &in
 
   const auto func_pair = arithmeticSelfFuncMap.find(kernel_name_);
   if (arithmeticSelfFuncMap.find(kernel_name_) == arithmeticSelfFuncMap.end()) {
-    MS_LOG(EXCEPTION) << "For 'ArithmeticSelf', only supports operators in " << Map2Str(arithmeticSelfFuncMap)
-                      << ", but got " << kernel_name_;
+    MS_LOG(EXCEPTION)
+      << "For 'ArithmeticSelf', only supports operators in "
+      << Map2Str<std::unordered_map, std::function<void(ArithmeticSelfCpuKernelFunc *, const T *, T *, size_t)>>(
+           arithmeticSelfFuncMap)
+      << ", but got " << kernel_name_;
   }
   func_pair->second(this, input, output, lens);
 }
@@ -981,7 +984,9 @@ bool ArithmeticSelfCpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
   kernel_name_ = base_operator->name();
   auto iter = arith_kernel_attr_list_map.find(kernel_name_);
   if (iter == arith_kernel_attr_list_map.end()) {
-    MS_LOG(ERROR) << "For 'ArithmeticSelf', the kernel name must be in " << kernel::Map2Str(arith_kernel_attr_list_map)
+    MS_LOG(ERROR) << "For 'ArithmeticSelf', the kernel name must be in "
+                  << kernel::Map2Str<std::map, std::vector<std::pair<KernelAttr, ArithFuncCreator>>>(
+                       arith_kernel_attr_list_map)
                   << ", but got " << kernel_name_;
     return false;
   }

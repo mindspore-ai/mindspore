@@ -119,7 +119,7 @@ bool CrossCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inpu
   size_t output_data_stride = r_stride[LongToSize(dim_)];
   const size_t pos = 2;
   auto cross_shard = [this, &a_stride, &b_stride, &r_stride, &output_data_addr, &input1_data_addr, &input2_data_addr,
-                      &output_data_stride, &input1_data_stride, &input2_data_stride](size_t start, size_t end) {
+                      &output_data_stride, &input1_data_stride, &input2_data_stride, &pos](size_t start, size_t end) {
     const size_t input1_data_dim = input1_shape_.size();
     std::vector<int64_t> position_in_dims(input1_data_dim);
     int64_t index_in_curr_dim = SizeToLong(start);

@@ -133,17 +133,17 @@ void ConjugateTransposeCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> 
 
   auto *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
   transpose_param_.data_num_ = SizeToInt(inputs[0]->size / sizeof(T));
-  int output_shape[SizeToInt(output_shape_.size())];
+  std::vector<int> output_shape(SizeToInt(output_shape_.size()));
   for (size_t i = 0; i < output_shape_.size(); ++i) {
     output_shape[i] = SizeToInt(output_shape_[i]);
   }
   size_t data_count = (inputs[0]->size) / sizeof(T);
   if (axes_.size() > kIndex7 || data_count >= kMaxTransposeSerialSize) {
-    ParallelRun(input_addr, output_addr, output_shape, data_count, &transpose_param_);
+    ParallelRun(input_addr, output_addr, output_shape.data(), data_count, &transpose_param_);
     return;
   }
   bool res{static_cast<bool>(NNACL_OK)};
-  res = DoTranspose(input_addr, output_addr, output_shape, &transpose_param_);
+  res = DoTranspose(input_addr, output_addr, output_shape.data(), &transpose_param_);
   if (res != static_cast<bool>(NNACL_OK)) {
     MS_LOG(EXCEPTION) << "ConjugateTranspose run failed.";
   }
@@ -209,17 +209,17 @@ void ConjugateTransposeCpuKernelMod::LaunchComplexKernel(const std::vector<Addre
   auto task = std::bind(ConjComplexFunc<T>, input_addr, input_addr, 0, transpose_param_.data_num_);
   ParallelLaunchAutoSearch(task, transpose_param_.data_num_, this, &parallel_search_info_);
 
-  int output_shape[SizeToInt(output_shape_.size())];
+  std::vector<int> output_shape(SizeToInt(output_shape_.size()));
   for (size_t i = 0; i < output_shape_.size(); ++i) {
     output_shape[i] = SizeToInt(output_shape_[i]);
   }
   size_t data_count = (inputs[0]->size) / sizeof(T);
   if (axes_.size() > kIndex7 || data_count >= kMaxTransposeSerialSize) {
-    ParallelRun(input_addr, output_addr, output_shape, data_count, &transpose_param_);
+    ParallelRun(input_addr, output_addr, output_shape.data(), data_count, &transpose_param_);
     return;
   }
   bool res{static_cast<bool>(NNACL_OK)};
-  res = DoTranspose(input_addr, output_addr, output_shape, &transpose_param_);
+  res = DoTranspose(input_addr, output_addr, output_shape.data(), &transpose_param_);
   if (res != static_cast<bool>(NNACL_OK)) {
     MS_LOG(EXCEPTION) << "ConjugateTranspose run failed.";
   }

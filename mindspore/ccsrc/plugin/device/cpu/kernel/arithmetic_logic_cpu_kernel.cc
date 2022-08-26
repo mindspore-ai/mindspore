@@ -104,8 +104,9 @@ class ArithLogicCpuTypeFunc : public DeprecatedCpuKernelFunc {
       arithmetic_logic_func_map = {{kNotEqual, &ArithLogicCpuTypeFunc<T>::NotEqual}};
     }
     if (arithmetic_logic_func_map.find(kernel_name_) == arithmetic_logic_func_map.end()) {
-      MS_LOG(EXCEPTION) << "For 'ArithmeticLogic', only supports operators in " << Map2Str(arithmetic_logic_func_map)
-                        << ", but got " << kernel_name_;
+      MS_LOG(EXCEPTION) << "For 'ArithmeticLogic', only supports operators in "
+                        << Map2Str<std::unordered_map, TypeComputeFunc>(arithmetic_logic_func_map) << ", but got "
+                        << kernel_name_;
     }
     compute_func_ = arithmetic_logic_func_map.at(kernel_name_);
   }
@@ -187,7 +188,8 @@ class ArithComplexLogicCpuTypeFunc : public DeprecatedCpuKernelFunc {
     static const std::unordered_map<std::string, ComplexTypeComputeFunc> arithmetic_logic_func_map{
       {kEqual, &ArithComplexLogicCpuTypeFunc<T>::Equal}};
     if (arithmetic_logic_func_map.find(kernel_name_) == arithmetic_logic_func_map.end()) {
-      MS_LOG(EXCEPTION) << "For 'ArithmeticLogic', only supports operators in " << Map2Str(arithmetic_logic_func_map)
+      MS_LOG(EXCEPTION) << "For 'ArithmeticLogic', only supports operators in "
+                        << Map2Str<std::unordered_map, ComplexTypeComputeFunc>(arithmetic_logic_func_map)
                         << ", but got " << kernel_name_;
     }
     compute_func_ = arithmetic_logic_func_map.at(kernel_name_);
