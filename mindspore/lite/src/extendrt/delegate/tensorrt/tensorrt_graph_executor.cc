@@ -26,6 +26,8 @@
 #include "src/extendrt/delegate/delegate_utils.h"
 #include "src/extendrt/delegate/graph_executor/factory.h"
 #include "ccsrc/kernel/common_utils.h"
+#include "ccsrc/backend/common/optimizer/helper.h"
+#include "ccsrc/include/common/utils/convert_utils.h"
 
 namespace mindspore::lite {
 namespace {
@@ -86,12 +88,20 @@ tensor::TensorPtr GetConstNodeValue(AnfNodePtr input_node) {
       value = parameter->default_param();
     }
   }
-  if (value && value->isa<tensor::Tensor>()) {
-    auto tensor = value->cast<tensor::TensorPtr>();
-    if (tensor->data().const_data() == nullptr) {
-      return nullptr;
+  if (value != nullptr) {
+    if (value->isa<tensor::Tensor>()) {
+      auto tensor = value->cast<tensor::TensorPtr>();
+      if (tensor == nullptr || tensor->data().const_data() == nullptr) {
+        return nullptr;
+      }
+      return tensor;
+    } else if (value->isa<Scalar>()) {
+      return ScalarToTensor(value->cast<ScalarPtr>());
+    } else if (value->isa<ValueTuple>()) {
+      return opt::CreateTupleTensor(value->cast<ValueTuplePtr>());
+    } else {
+      MS_LOG_WARNING << "Unexpected value type " << value->type_name();
     }
-    return tensor;
   }
   return nullptr;
 }
@@ -145,8 +155,9 @@ TensorInfo KernelTensorAsTensorInfo(const session::KernelWithIndex &tensor_id,
   if (tensor_val) {
     data = tensor_val->data_c();
     data_len = tensor_val->Size();
+    shape = tensor_val->shape_c();
   }
-  TensorInfo tensor_info(name, datatype, shape, format, data, data_len);
+  TensorInfo tensor_info(name, datatype, shape, format, data, data_len, tensor_val);
   return tensor_info;
 }
 
@@ -270,7 +281,7 @@ Status GetModelInputsInfo(KernelGraphPtr kernel_graph, std::vector<NodeWithOutpu
     node_index.kernel_index.second = 0;
 
     TensorInfo tensor_info =
-      TensorInfo(parameter->name(), static_cast<enum DataType>(data_type), input_shape, format, nullptr, 0);
+      TensorInfo(parameter->name(), static_cast<enum DataType>(data_type), input_shape, format, nullptr, 0, nullptr);
     inputs->push_back(tensor_info);
 
     node_index.tensor_info = tensor_info;

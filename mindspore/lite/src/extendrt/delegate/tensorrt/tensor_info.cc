@@ -27,8 +27,15 @@ class TensorInfoImpl {
  public:
   TensorInfoImpl() {}
   TensorInfoImpl(const std::string &name, mindspore::DataType type, const std::vector<int64_t> &shape,
-                 mindspore::Format format, const void *data, size_t data_len)
-      : name_(name), dType_(type), shape_(shape), format_(format), data_(data), data_len_(data_len) {
+                 mindspore::Format format, const void *data, size_t data_len,
+                 const mindspore::tensor::TensorPtr &tensor_val)
+      : name_(name),
+        dType_(type),
+        shape_(shape),
+        format_(format),
+        data_(data),
+        data_len_(data_len),
+        tensor_val_(tensor_val) {
     is_const_ = (data_ != nullptr);
     if (data_ == nullptr || data_len_ == 0) {
       auto ele_num = std::accumulate(shape_.begin(), shape_.end(), 1, std::multiplies<int64_t>());
@@ -46,11 +53,13 @@ class TensorInfoImpl {
   size_t data_len_ = 0;
   bool is_const_ = false;
   std::vector<uint8_t> temp_data_;
+  mindspore::tensor::TensorPtr tensor_val_ = nullptr;
 };
 
 TensorInfo::TensorInfo(const std::string &name, mindspore::DataType type, const std::vector<int64_t> &shape,
-                       mindspore::Format format, const void *data, size_t data_len) {
-  impl_ = std::make_shared<TensorInfoImpl>(name, type, shape, format, data, data_len);
+                       mindspore::Format format, const void *data, size_t data_len,
+                       const mindspore::tensor::TensorPtr &tensor_val) {
+  impl_ = std::make_shared<TensorInfoImpl>(name, type, shape, format, data, data_len, tensor_val);
 }
 
 std::string TensorInfo::Name() const {

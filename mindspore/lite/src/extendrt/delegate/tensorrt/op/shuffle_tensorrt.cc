@@ -123,9 +123,11 @@ int ShuffleTensorRT::AddInnerOp(TensorRTContext *ctx) {
     MS_LOG(ERROR) << "Unsupported op type for " << op_name_;
     return RET_ERROR;
   }
-  auto output_helper = ITensorHelper{shuffler_output_, out_format_, true};
-  ctx->RegisterTensor(output_helper, out_tensors_[0].Name());
-  MS_LOG(DEBUG) << "output " << GetTensorFormat(output_helper);
+  if (ret == RET_OK) {
+    auto output_helper = ITensorHelper{shuffler_output_, out_format_, true};
+    ctx->RegisterTensor(output_helper, out_tensors_[0].Name());
+    MS_LOG(DEBUG) << "output " << GetTensorFormat(output_helper);
+  }
   return ret;
 }
 
@@ -211,13 +213,25 @@ int ShuffleTensorRT::AddTransposeOp(nvinfer1::IShuffleLayer *shuffle_layer) {
     MS_LOG(ERROR) << "AddTransposeOp perm_ternsor data is invalid: " << op_name_;
     return RET_ERROR;
   }
-  int *perm_data = reinterpret_cast<int *>(perm_ternsor.MutableData());
 
   nvinfer1::Permutation perm{};
-  for (int i = 0; i < perm_ternsor.ElementNum(); i++) {
-    perm.order[i] = *perm_data;
-    perm_data++;
+  if (perm_ternsor.DataType() == DataType::kNumberTypeInt64) {
+    int64_t *perm_data = reinterpret_cast<int64_t *>(perm_ternsor.MutableData());
+    for (int i = 0; i < perm_ternsor.ElementNum(); i++) {
+      perm.order[i] = *perm_data;
+      perm_data++;
+    }
+  } else if (perm_ternsor.DataType() == DataType::kNumberTypeInt32) {
+    int *perm_data = reinterpret_cast<int *>(perm_ternsor.MutableData());
+    for (int i = 0; i < perm_ternsor.ElementNum(); i++) {
+      perm.order[i] = *perm_data;
+      perm_data++;
+    }
+  } else {
+    MS_LOG(ERROR) << op_name_ << " perm tensor data type is " << static_cast<int>(perm_ternsor.DataType());
+    return RET_ERROR;
   }
+
   shuffle_layer->setFirstTranspose(perm);
 
   shuffler_output_ = shuffle_layer->getOutput(0);
@@ -256,11 +270,17 @@ int ShuffleTensorRT::AddFlattenOp(nvinfer1::IShuffleLayer *shuffle_layer) {
 }
 
 int ShuffleTensorRT::AddExpandDimsOp(nvinfer1::IShuffleLayer *shuffle_layer) {
-  if (in_tensors_[1].DataType() != DataType::kNumberTypeInt32) {
+  int axis;
+  if (in_tensors_[1].DataType() == DataType::kNumberTypeInt64) {
+    auto axis_data = static_cast<const int64_t *>(in_tensors_[1].Data());
+    axis = axis_data[0];
+  } else if (in_tensors_[1].DataType() == DataType::kNumberTypeInt32) {
+    auto axis_data = static_cast<const int32_t *>(in_tensors_[1].Data());
+    axis = axis_data[0];
+  } else {
     MS_LOG(WARNING) << op_name_ << " axis tensor data type is " << static_cast<int>(in_tensors_[1].DataType());
+    return RET_ERROR;
   }
-  auto axis_data = static_cast<const int *>(in_tensors_[1].Data());
-  int axis = axis_data[0];
   shuffler_output_ = ExpandDim(shuffle_layer, shuffler_input_, axis);
   return shuffler_output_ == nullptr ? RET_ERROR : RET_OK;
 }

@@ -21,6 +21,7 @@
 #include <vector>
 #include <memory>
 #include "include/api/kernel.h"
+#include "core/ir/tensor.h"
 
 namespace mindspore::lite {
 class TensorInfoImpl;
@@ -28,7 +29,8 @@ class TensorInfo {
  public:
   TensorInfo() = default;
   TensorInfo(const std::string &name, mindspore::DataType type, const std::vector<int64_t> &shape,
-             mindspore::Format format, const void *data, size_t data_len);
+             mindspore::Format format, const void *data, size_t data_len,
+             const mindspore::tensor::TensorPtr &tensor_val);
   ~TensorInfo() = default;
 
   std::string Name() const;
