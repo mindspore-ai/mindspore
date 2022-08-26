@@ -89,10 +89,9 @@ std::vector<KernelAttr> NativeCpuKernelMod::GetSupportFromOpLib(const std::strin
   return support_kernel_attrs;
 }
 
-int DeprecatedNativeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs,
-                                         const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int DeprecatedNativeCpuKernelMod::Resize(const BaseOperatorPtr &, const std::vector<KernelTensorPtr> &,
+                                         const std::vector<KernelTensorPtr> &,
+                                         const std::map<uint32_t, tensor::TensorPtr> &) {
   auto cnode = cnode_ptr_.lock();
   MS_EXCEPTION_IF_NULL(cnode);
   MS_LOG(DEBUG) << "Update Args: " << cnode->fullname_with_scope();

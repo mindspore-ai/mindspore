@@ -86,11 +86,11 @@ class GeDeviceContext : public DeviceInterface<GeGraphExecutor, GeDeviceResManag
  private:
   DISABLE_COPY_AND_ASSIGN(GeDeviceContext);
 
-  bool InitGe(const std::shared_ptr<MsContext> &inst_context);
+  void InitGe(const std::shared_ptr<MsContext> &inst_context);
   bool FinalizeGe(const std::shared_ptr<MsContext> &inst_context);
   void GetGeOptions(const std::shared_ptr<MsContext> &inst_context, std::map<std::string, std::string> *ge_options);
   void SetHcclOptions(const std::shared_ptr<MsContext> &inst_context, std::map<std::string, std::string> *ge_options);
-  void SetDisableReuseMemoryFlag(std::map<std::string, std::string> *ge_options);
+  void SetDisableReuseMemoryFlag(std::map<std::string, std::string> *ge_options) const;
 
   std::unique_ptr<AscendDeprecatedInterface> deprecated_interface_;
   bool initialized_;

@@ -132,7 +132,7 @@ PYBIND11_MODULE(_c_expression, m) {
          "Fetch the inputs of Conv or Matmul for quant export.")
     .def("build_data_graph", &GraphExecutorPy::BuildGraph, py::arg("build_params"), py::arg("phase") = py::str("train"),
          py::arg("broadcast_params") = py::dict(), "Build data graph.")
-    .def("export_graph", &GraphExecutorPy::ExportGraph, py::arg("file_name"), py::arg("model_type"), py::arg("phase"),
+    .def("export_graph", &GraphExecutorPy::ExportGraph, py::arg("file_name"), py::arg("phase"),
          py::arg("encrypt") = py::none(), py::arg("key") = nullptr, "Export Graph.")
     .def("has_compiled", &GraphExecutorPy::HasCompiled, py::arg("phase") = py::str(""), "Get if cell compiled.")
     .def("set_py_exe_path", &GraphExecutorPy::PyExePath, py::arg("py_exe_path") = py::str(""),

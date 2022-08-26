@@ -340,7 +340,7 @@ bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map<str
   MS_EXCEPTION_IF_NULL(origin_graph);
   ReorderInputsAsFrontGraph(kg, origin_graph);
   opt::GeOptimization(origin_graph);
-  BuildDFGraph(origin_graph, GetParams(origin_graph), false);
+  (void)BuildDFGraph(origin_graph, GetParams(origin_graph), false);
   AllocInputHostMemory(kg);
   AllocOutputHostMemory(kg);
   kg->set_run_mode(RunMode::kGraphMode);
@@ -445,11 +445,7 @@ void GeDeviceContext::Initialize() {
   device_res_manager_->Initialize();
 
   MS_EXCEPTION_IF_NULL(MsContext::GetInstance());
-  bool ret = InitGe(MsContext::GetInstance());
-  if (!ret) {
-    MS_LOG(EXCEPTION) << "Init ge failed.";
-  }
-
+  InitGe(MsContext::GetInstance());
   std::string rank_id = common::GetEnv("RANK_ID");
   std::string rank_table_file = common::GetEnv("RANK_TABLE_FILE");
   if (!rank_id.empty() && !rank_table_file.empty()) {
@@ -463,7 +459,7 @@ void GeDeviceContext::Initialize() {
 void GeDeviceContext::Destroy() {
   (void)FinalizeGe(MsContext::GetInstance());
   if (deprecated_interface_ != nullptr) {
-    deprecated_interface_->CloseTsd(MsContext::GetInstance(), true);
+    (void)deprecated_interface_->CloseTsd(MsContext::GetInstance(), true);
   }
 }
 
@@ -507,16 +503,16 @@ DeviceAddressPtr GeDeviceResManager::CreateDeviceAddress(void *const device_ptr,
   return device_address;
 }
 
-bool GeDeviceContext::InitGe(const std::shared_ptr<MsContext> &inst_context) {
+void GeDeviceContext::InitGe(const std::shared_ptr<MsContext> &inst_context) {
   MS_EXCEPTION_IF_NULL(inst_context);
 
   if (inst_context->get_param<bool>(MS_CTX_IS_PYNATIVE_GE_INIT)) {
-    return true;
+    return;
   }
 
   if (static_cast<bool>(inst_context->get_param<uint32_t>(MS_CTX_GE_REF))) {
     inst_context->increase_param<uint32_t>(MS_CTX_GE_REF);
-    return true;
+    return;
   }
 
   std::map<std::string, std::string> ge_options;
@@ -530,7 +526,7 @@ bool GeDeviceContext::InitGe(const std::shared_ptr<MsContext> &inst_context) {
   }
   inst_context->increase_param<uint32_t>(MS_CTX_GE_REF);
   MS_LOG(INFO) << "Init ge successful, ge reference = " << inst_context->get_param<uint32_t>(MS_CTX_GE_REF) << ".";
-  return true;
+  return;
 }
 
 void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_ptr,
@@ -641,7 +637,7 @@ void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_
   }
 }
 
-void GeDeviceContext::SetDisableReuseMemoryFlag(std::map<std::string, std::string> *ge_options) {
+void GeDeviceContext::SetDisableReuseMemoryFlag(std::map<std::string, std::string> *ge_options) const {
   MS_EXCEPTION_IF_NULL(ge_options);
   auto env_disable_reuse_memory = common::GetEnv("DISABLE_REUSE_MEMORY");
   if (!env_disable_reuse_memory.empty()) {
