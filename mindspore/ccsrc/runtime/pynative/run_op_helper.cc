@@ -136,6 +136,7 @@ void CopyTensorDataToDevice(const tensor::TensorPtr &tensor, const AnfNodePtr &n
                             const device::DeviceContext *device_context) {
   MS_EXCEPTION_IF_NULL(tensor);
   MS_EXCEPTION_IF_NULL(device_context);
+  MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
   auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
   MS_EXCEPTION_IF_NULL(device_address);
   if ((device_address->GetPtr() == nullptr) &&
@@ -145,7 +146,7 @@ void CopyTensorDataToDevice(const tensor::TensorPtr &tensor, const AnfNodePtr &n
   // Copy data from host tensor to device.
   auto tensor_size = LongToSize(tensor->data().nbytes());
   auto tensor_type = tensor->data_type();
-  MS_LOG(DEBUG) << "Copy to device, node:" << node->DebugString();
+  MS_LOG(DEBUG) << "Copy to device, node:" << common::AnfAlgo::GetNodeDebugString(node);
   if (!device_address->SyncHostToDevice(trans::GetRuntimePaddingShape(node, 0), tensor_size, tensor_type,
                                         tensor->data_c(), tensor->device_info().host_format_)) {
     MS_LOG(EXCEPTION) << "SyncHostToDevice failed";
@@ -179,6 +180,7 @@ void CopyValueNodeTensorToDevice(const ValueNodePtr &node, const device::DeviceC
 void CopyValueNodeStringToDevice(const ValueNodePtr &node, const device::DeviceContext *device_context) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(device_context);
+  MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
   const auto &node_address = AnfAlgo::GetMutableOutputAddr(node, 0, false);
   MS_EXCEPTION_IF_NULL(node_address);
   if (node_address->GetPtr() != nullptr) {
@@ -224,6 +226,10 @@ void CopyParameterDataToDevice(const std::vector<AnfNodePtr> &input_nodes,
                                const device::DeviceContext *device_context) {
   MS_LOG(DEBUG) << "Start";
   auto input_size = input_nodes.size();
+  if (input_size > input_tensors.size()) {
+    MS_LOG(EXCEPTION) << "input_size is bigger than input_tensors size, input_size:" << input_size
+                      << ", input_tensors size:" << input_tensors.size();
+  }
   for (size_t i = 0; i < input_size; ++i) {
     MS_EXCEPTION_IF_NULL(input_tensors[i]);
     if (input_tensors[i]->NeedSyncHostToDeviceImmediately()) {
@@ -264,6 +270,7 @@ bool MallocForKernelInput(const std::shared_ptr<OpRuntimeInfo> &runtime_info,
                           const device::DeviceContext *device_context) {
   MS_EXCEPTION_IF_NULL(runtime_info);
   MS_EXCEPTION_IF_NULL(device_context);
+  MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
   auto input_size = runtime_info->GetInputSize();
   for (size_t i = 0; i < input_size; ++i) {
     auto input_address = runtime_info->GetInputDeviceAddress(i);
@@ -281,6 +288,7 @@ bool MallocForKernelOutput(const std::shared_ptr<OpRuntimeInfo> &runtime_info, c
   MS_EXCEPTION_IF_NULL(runtime_info);
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(device_context);
+  MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
 
   auto kernel_mod = AnfAlgo::GetKernelMod(node);
   MS_EXCEPTION_IF_NULL(kernel_mod);
@@ -334,6 +342,8 @@ kernel::AddressPtrList CreateKernelWorkspaceAddress(const std::shared_ptr<OpRunt
                                                     const device::DeviceContext *device_context, const CNodePtr &kernel,
                                                     bool is_dynamic_shape) {
   MS_EXCEPTION_IF_NULL(runtime_info);
+  MS_EXCEPTION_IF_NULL(device_context);
+  MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
   auto workspace_size = runtime_info->GetWorkspaceSize();
   auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
   MS_EXCEPTION_IF_NULL(kernel_mod);
@@ -390,6 +400,7 @@ kernel::AddressPtrList CreateKernelWorkspaceAddress(const std::shared_ptr<OpRunt
 }
 
 kernel::AddressPtrList CreateKernelOutputAddress(const std::shared_ptr<OpRuntimeInfo> &runtime_info) {
+  MS_EXCEPTION_IF_NULL(runtime_info);
   auto output_size = runtime_info->GetOutputSize();
   kernel::AddressPtrList outputs;
   for (size_t i = 0; i < output_size; ++i) {
