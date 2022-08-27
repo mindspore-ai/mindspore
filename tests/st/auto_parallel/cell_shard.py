@@ -31,7 +31,7 @@ from mindspore.train.model import Model
 from mindspore.context import ParallelMode
 import mindspore.dataset as ds
 
-context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend", max_device_memory="25GB")
 context.set_context(device_id=int(os.getenv('DEVICE_ID')))
 init()
 context.set_auto_parallel_context(gradients_mean=True, parallel_mode=ParallelMode.AUTO_PARALLEL,
@@ -186,6 +186,11 @@ class ResNet(nn.Cell):
                                        in_channel=in_channels[1],
                                        out_channel=out_channels[1],
                                        stride=strides[1])
+        self.layer2.shard(in_strategy=((1, 1, 1, 1),), out_strategy=(None,),
+                          parameter_plan={
+                              'self.layer2.1.conv1.weight': (2, 4, 1, 1),
+                              'self.layer2.0.conv_down_sample.weight': (8, 1, 1, 1),
+                          })
         self.layer3 = self._make_layer(block,
                                        layer_nums[2],
                                        in_channel=in_channels[2],
@@ -197,6 +202,10 @@ class ResNet(nn.Cell):
                                        in_channel=in_channels[3],
                                        out_channel=out_channels[3],
                                        stride=strides[3])
+        self.layer4 = F.shard(self.layer4, in_strategy=((4, 2, 1, 1),), out_strategy=(None,),
+                              parameter_plan={
+                                  'self.layer4.0.conv2.weight': (2, 2, 1, 1),
+                              })
 
         self.mean = P.ReduceMean(keep_dims=True)
         self.end_point = nn.Dense(2048, num_classes, has_bias=True,
@@ -378,6 +387,6 @@ def test_train_feed(num_classes=65536):
     model = Model(net, loss_fn=loss, optimizer=opt)
     model.train(3, dataset, dataset_sink_mode=False, callbacks=parallel_callback)
     loss_value = np.array(parallel_callback.loss_list)
-    expect_out = [11.344119, 10.747664, 11.132818]
+    expect_out = [11.374571, 11.230516, 10.755886]
     print(loss_value)
     assert np.allclose(loss_value, expect_out, 0.0001, 0.0001)

@@ -385,7 +385,7 @@ TEST_F(TestComposite, test_ListSlice_arg_slice_step_negative) {
 /// Description: Test List slice the step is positive
 /// Expectation: No Expectation
 TEST_F(TestComposite, test_ListSlice_arg_slice_step_positive) {
-  MetaFuncGraphPtr list_slice = std::make_shared<prim::SequenceSliceGetItem>("list_slice","make_list","list_getitem");
+  MetaFuncGraphPtr list_slice = std::make_shared<prim::SequenceSliceGetItem>("list_slice", "make_list", "list_getitem");
   FuncGraphPtr list_slice_graph = UTCompositeUtils::MakeFuncGraph(list_slice, 2);
 
   AbstractBasePtrList eles;
@@ -510,7 +510,7 @@ TEST_F(TestComposite, test_shard) {
   inputs.clear();
   inputs.push_back(NewValueNode(shard_op));
   inputs.push_back(NewValueNode(origin_func_graph));
-  for (size_t i = 0; i < 4; ++i) {
+  for (size_t i = 0; i < 5; ++i) {
     inputs.push_back(NewValueNode(MakeValue(0)));
   }
   CNodePtr shard = shard_func_graph->NewCNode(inputs);

@@ -21,6 +21,7 @@ from types import FunctionType
 import mindspore as ms
 from mindspore import context
 from mindspore.common.parameter import Parameter, ParameterTuple
+from mindspore import log as logger
 from ..._c_expression import GradOperation_, HyperMap_, Map_, MultitypeFuncGraph_, Tail_, Shard_, \
     TupleAdd_, UnpackCall_, ZipOperation_, ListAppend_, TupleGetItemTensor_, ListInsert_, \
     SequenceSliceGetItem_, ListSliceSetItem_, VmapOperation_, TaylorOperation_, ListPop_, \
@@ -862,10 +863,11 @@ class Shard(Shard_):
         self.fn = None
         self.in_strategy = None
         self.out_strategy = None
+        self.parameter_plan = None
         self.device = None
         self.level = None
 
-    def __call__(self, fn, in_strategy, out_strategy, device="Ascend", level=0):
+    def __call__(self, fn, in_strategy, out_strategy, parameter_plan=None, device="Ascend", level=0):
         if context.get_context("mode") != context.PYNATIVE_MODE or \
             context.get_auto_parallel_context("parallel_mode") not in ["auto_parallel"]:
             raise AssertionError(f"'Shard' only supports auto parallel under PyNative mode")
@@ -880,14 +882,27 @@ class Shard(Shard_):
         if not isinstance(out_strategy, tuple):
             raise TypeError(f"For 'Shard', the 'out_strategy' should be a tuple, "
                             f"but got {type(out_strategy).__name__}")
+        if not isinstance(parameter_plan, (tuple, type(None))):
+            raise TypeError(f"For 'Shard', the 'parameter_plan' should be a tuple or None, "
+                            f"but got {type(parameter_plan).__name__}")
+        if isinstance(parameter_plan, tuple):
+            for k, v in parameter_plan:
+                if not isinstance(k, str) or not isinstance(v, tuple):
+                    raise TypeError(f"For 'Shard', the type of each key and value in 'parameter_plan' must be str and "
+                                    f"tuple, but got {type(k).__name__} and {type(parameter_plan[v]).__name__}")
         if not isinstance(device, str):
             raise TypeError(f"For 'Shard', the 'device' should be a string, "
                             f"but got {type(device).__name__}")
         if not isinstance(level, int):
             raise TypeError(f"For 'Shard', the 'level' should be an integer, "
                             f"but got {type(level).__name__}")
-        if self.shard_fn is not None and self.fn == fn and self.in_strategy == in_strategy and \
-                self.out_strategy == out_strategy and self.device == device and self.level == level:
+
+        if ms.get_algo_parameters("fully_use_devices") is True:
+            logger.warning("After calling 'shard', the environment variable 'fully_use_devices' "
+                           "will be overwritten as False")
+            ms.set_algo_parameters(fully_use_devices=False)
+
+        if self._is_attrs_has_been_set(fn, in_strategy, out_strategy, parameter_plan, device, level):
             return self.shard_fn
         shard_ = Shard()
 
@@ -895,16 +910,22 @@ class Shard(Shard_):
             args = (fn,) + args
             @ms_function(hash_args=fn)
             def after_shard(*args):
-                return shard_(fn, in_strategy, out_strategy, device, level)(*args)
+                return shard_(fn, in_strategy, out_strategy, parameter_plan, device, level)(*args)
             return after_shard(*args)
 
         self.shard_fn = shard_fn
         self.fn = fn
         self.in_strategy = in_strategy
         self.out_strategy = out_strategy
+        self.parameter_plan = parameter_plan
         self.device = device
         self.level = level
         return self.shard_fn
+
+    def _is_attrs_has_been_set(self, fn, in_strategy, out_strategy, parameter_plan, device, level):
+        return self.shard_fn is not None and self.fn == fn and self.in_strategy == in_strategy and \
+               self.out_strategy == out_strategy and self.parameter_plan == parameter_plan and \
+               self.device == device and self.level == level
 
 
 class _ListAppend(ListAppend_):

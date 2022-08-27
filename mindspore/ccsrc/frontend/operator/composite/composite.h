@@ -267,17 +267,23 @@ class Shard : public MetaFuncGraph {
  public:
   explicit Shard(const string &name) : MetaFuncGraph(name) {
     signatures_ =
-      // def shard(func:read, weight_list:read, in_axes:read, out_axes:read, device:read, level:read):
+      // def shard(func:read, weight_list:read, in_axes:read, out_axes:read, parameter_plan:read, device:read,
+      // level:read):
       std::vector<Signature>({{"func", SignatureEnumRW::kRWRead, SignatureEnumKind::kKindDefault},
                               {"in_axes", SignatureEnumRW::kRWRead, SignatureEnumKind::kKindDefault},
                               {"out_axes", SignatureEnumRW::kRWRead, SignatureEnumKind::kKindDefault},
+                              {"parameter_plan", SignatureEnumRW::kRWRead, SignatureEnumKind::kKindDefault},
                               {"device", SignatureEnumRW::kRWRead, SignatureEnumKind::kKindDefault},
                               {"level", SignatureEnumRW::kRWRead, SignatureEnumKind::kKindDefault}});
+    kShardInputSize = signatures_.size();
   }
   ~Shard() override = default;
   MS_DECLARE_PARENT(Shard, MetaFuncGraph)
 
   FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) override;
+
+ private:
+  size_t kShardInputSize = 0;
 };
 
 class VmapOperation : public MetaFuncGraph {

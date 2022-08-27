@@ -248,18 +248,6 @@ std::shared_ptr<Strategies> OneHotInfo::GenerateBatchStrategies() {
   return std::make_shared<Strategies>(strategy_v);
 }
 
-Shapes OneHotInfo::InferParamStrategy(const Shapes &default_strategy) {
-  // onehot needs to set layout for output, modify the strategy with an additional dimension
-  auto input_strategy = default_strategy[0];
-  input_strategy.push_back(1);
-  Shapes ret;
-  Shape tmp;
-  ret.push_back(input_strategy);
-  ret.push_back(tmp);
-  ret.push_back(tmp);
-  return ret;
-}
-
 Shapes OneHotInfo::InferStrategyIndividualMode(const Shapes &in_strategy) {
   if (in_strategy.size() != 3) {
     MS_LOG(EXCEPTION) << name_ << ": The size of in_strategy must be 3, but got " << in_strategy.size();

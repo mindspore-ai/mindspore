@@ -2111,21 +2111,6 @@ float OperatorInfo::GetFloatAttr(const std::string &attr_name) {
   return attr_iter->second->cast<FP32ImmPtr>()->value();
 }
 
-Shapes OperatorInfo::GenerateParamStrategy(const Shapes &default_strategy) {
-  if (InferAttrs() != SUCCESS) {
-    MS_LOG(EXCEPTION) << name_ << ": Infer attrs failed";
-  }
-
-  Shapes ret = InferParamStrategy(default_strategy);
-  MS_LOG(INFO) << name_ << ": The default strategy is " << default_strategy << ", the ret strategy is " << ret;
-  return ret;
-}
-
-Shapes OperatorInfo::InferParamStrategy(const Shapes &default_strategy) {
-  MS_LOG(WARNING) << name_ << ": It is not supported to infer param strategy, return the default strategy";
-  return default_strategy;
-}
-
 // in_strategy: ((A, B, C, D), ()), return: ((A, B, C, D), (A, B, C, D))
 // in_strategy: ((), (A, B, C, D)), return: ((A, B, C, D), (A, B, C, D))
 Shapes OperatorInfo::InferStrategySameMode(const Shapes &in_strategy) {

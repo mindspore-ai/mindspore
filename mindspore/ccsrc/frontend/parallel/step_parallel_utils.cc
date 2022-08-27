@@ -692,7 +692,7 @@ std::shared_ptr<Value> GetAttrsFromAnfNode(const std::shared_ptr<AnfNode> &node,
   return nullptr;
 }
 
-static bool IsSplittableOperator(const std::string &op_name) {
+bool IsSplittableOperator(const std::string &op_name) {
   // clang-format off
   static const std::set<std::string> splittable_op =
     {MATMUL, TRANSPOSE, GELU, FAST_GELU, TANH, SOFTMAX, SUB, MUL, DIV, RESHAPE, GREATER, LOG_SOFTMAX, ACTIVATION, PRELU,

@@ -103,7 +103,6 @@ class OperatorInfo {
   const OperatorCostPtr &operator_cost() const { return operator_cost_; }
   void set_cost(const OperatorCostPtr &cost) { operator_cost_ = cost; }
   virtual Status SetCostUnderStrategy(const StrategyPtr &strategy) = 0;
-  Shapes GenerateParamStrategy(const Shapes &default_strategy);
   Shapes GenerateFullStrategy(const Shapes &in_strategy);
 
   virtual std::shared_ptr<Strategies> GenerateBatchStrategies();
@@ -236,7 +235,6 @@ class OperatorInfo {
   virtual Status InferTensorInfo();
   virtual void InferReplaceOps() {}
   virtual Status CheckOutputStrategy(const StrategyPtr &out_strategy);
-  virtual Shapes InferParamStrategy(const Shapes &default_strategy);
   virtual Shapes InferStrategyIndividualMode(const Shapes &in_strategy);
   Shapes GenerateFullStrategyBase(const Shapes &in_strategy);
   Shapes InferStrategySameMode(const Shapes &in_strategy);

@@ -40,7 +40,6 @@ class MatMulBase : public OperatorInfo {
   std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
   Status SwapLastTwoElements(Shape *const input);
-  Shapes InferParamStrategy(const Shapes &default_strategy) override;
 
  protected:
   Status InferForwardCommunication() override;

@@ -495,33 +495,6 @@ std::shared_ptr<Strategies> BatchMatMulInfo::GenerateBatchStrategies() {
 
 Status MatMulBase::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
 
-Shapes MatMulBase::InferParamStrategy(const Shapes &default_strategy) {
-  // handle strategy for matmul to deal with corresponding dimension
-  Shape left_matrix_strategy = default_strategy[0];
-  Shape right_matrix_strategy = default_strategy[1];
-  auto index_a = left_matrix_strategy.size() - 1;
-  auto index_b = index_a - 1;
-
-  if (transpose_a_) {
-    index_a -= 1;
-  }
-  if (transpose_b_) {
-    index_b += 1;
-  }
-  if (left_matrix_strategy[index_a] != right_matrix_strategy[index_b]) {
-    if (left_matrix_strategy[index_a] == 1) {
-      left_matrix_strategy[index_a] = right_matrix_strategy[index_b];
-    } else {
-      right_matrix_strategy[index_b] = left_matrix_strategy[index_a];
-    }
-  }
-
-  Shapes ret;
-  ret.push_back(left_matrix_strategy);
-  ret.push_back(right_matrix_strategy);
-  return ret;
-}
-
 // if the transpose_b is false:
 //   in_strategy: ((A, B, C, D), ()), inputs shape: ((a, b, c, d), (a, b, d, e)), return: ((A, B, C, D), (A, B, D, 1))
 //   in_strategy: ((), (A, B, D, E)), inputs shape: ((a, b, c, d), (a, b, d, e)), return: ((A, B, 1, D), (A, B, D, E))

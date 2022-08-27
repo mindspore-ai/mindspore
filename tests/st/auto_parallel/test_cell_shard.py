@@ -26,5 +26,5 @@ def test_cell_shard():
     Description: Test a shrunk version of ResNet50 with a alternative execution of shard and pynative
     Expectation: Run success
     '''
-    ret = os.system("sh run_cell_shard.sh")
+    ret = os.system("mpirun -n 8 --allow-run-as-root pytest -s -v cell_shard.py")
     assert ret == 0
