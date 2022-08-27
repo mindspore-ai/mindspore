@@ -92,7 +92,7 @@ std::vector<TypePtr> SparseConcatInferType(const PrimitivePtr &primitive,
     auto sha_type = inputs_shapes[i]->BuildType();
     (void)values_types.emplace(elementi, inputs_values[i]->BuildType());
     CheckAndConvertUtils::CheckTensorTypeValid("indices" + std::to_string(i), ind_type, {kInt64}, prim_name);
-    CheckAndConvertUtils::CheckTensorTypeValid("shapes" + std::to_string(i), sha_type, {kInt64}, prim_name);
+    CheckAndConvertUtils::CheckTensorTypeValid("shapes" + std::to_string(i), sha_type, {kInt64, kInt32}, prim_name);
   }
   (void)CheckAndConvertUtils::CheckTensorTypeSame(values_types, common_valid_types_with_complex_and_bool, prim_name);
   std::vector<TypePtr> out_type = {};

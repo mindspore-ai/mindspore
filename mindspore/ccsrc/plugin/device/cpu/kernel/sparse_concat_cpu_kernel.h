@@ -46,15 +46,19 @@ class SparseConcatCpuKernelMod : public NativeCpuKernelMod {
   }
 
  private:
-  template <typename S>
+  template <typename S, typename T>
   bool SparseConcat(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
                     const std::vector<kernel::AddressPtr> &outputs, const size_t shape_size, const int size);
-  template <typename S>
+  template <typename S, typename T>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
                     const std::vector<kernel::AddressPtr> &outputs);
+  template <typename S>
+  bool LaunchFunc(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                  const std::vector<kernel::AddressPtr> &outputs);
   int64_t concat_dim_;
   size_t input_num_;
   TypeId values_dtype_{kTypeUnknown};
+  TypeId shapes_dtype_{kTypeUnknown};
 };
 }  // namespace kernel
 }  // namespace mindspore

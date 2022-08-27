@@ -49,6 +49,7 @@ bool SparseConcatCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
   input_num_ = inputs.size();
   size_t N = input_num_ / kCOOTensorNum;
   values_dtype_ = inputs[N]->GetDtype();
+  shapes_dtype_ = inputs[N * kSpInputShapesStart]->GetDtype();
   size_t min_input_mun = 6;
   size_t nocoo_input_num = 0;
   if (((input_num_ % kCOOElementNum) != nocoo_input_num) && (input_num_ < min_input_mun)) {
@@ -59,42 +60,61 @@ bool SparseConcatCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
   CHECK_KERNEL_OUTPUTS_NUM(output_num, kSparseConcatOutputNum, kernel_name_);
   return true;
 }
+
 bool SparseConcatCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                       const std::vector<AddressPtr> &outputs) {
   switch (values_dtype_) {
     case kNumberTypeInt8:
-      return LaunchKernel<int8_t>(inputs, workspace, outputs);
+      return LaunchFunc<uint8_t>(inputs, workspace, outputs);
     case kNumberTypeUInt8:
-      return LaunchKernel<uint8_t>(inputs, workspace, outputs);
+      return LaunchFunc<uint8_t>(inputs, workspace, outputs);
     case kNumberTypeInt16:
-      return LaunchKernel<int16_t>(inputs, workspace, outputs);
+      return LaunchFunc<int16_t>(inputs, workspace, outputs);
     case kNumberTypeUInt16:
-      return LaunchKernel<uint16_t>(inputs, workspace, outputs);
+      return LaunchFunc<uint16_t>(inputs, workspace, outputs);
     case kNumberTypeInt32:
-      return LaunchKernel<int32_t>(inputs, workspace, outputs);
+      return LaunchFunc<int32_t>(inputs, workspace, outputs);
     case kNumberTypeUInt32:
-      return LaunchKernel<uint32_t>(inputs, workspace, outputs);
+      return LaunchFunc<uint32_t>(inputs, workspace, outputs);
     case kNumberTypeInt64:
-      return LaunchKernel<int64_t>(inputs, workspace, outputs);
+      return LaunchFunc<int64_t>(inputs, workspace, outputs);
     case kNumberTypeUInt64:
-      return LaunchKernel<uint64_t>(inputs, workspace, outputs);
+      return LaunchFunc<uint64_t>(inputs, workspace, outputs);
     case kNumberTypeFloat16:
-      return LaunchKernel<float16>(inputs, workspace, outputs);
+      return LaunchFunc<float16>(inputs, workspace, outputs);
     case kNumberTypeFloat32:
-      return LaunchKernel<float>(inputs, workspace, outputs);
+      return LaunchFunc<float>(inputs, workspace, outputs);
     case kNumberTypeBool:
-      return LaunchKernel<bool>(inputs, workspace, outputs);
+      return LaunchFunc<bool>(inputs, workspace, outputs);
     case kNumberTypeFloat64:
-      return LaunchKernel<double>(inputs, workspace, outputs);
+      return LaunchFunc<double>(inputs, workspace, outputs);
     case kNumberTypeComplex64:
-      return LaunchKernel<std::complex<float>>(inputs, workspace, outputs);
+      return LaunchFunc<std::complex<float>>(inputs, workspace, outputs);
     case kNumberTypeComplex128:
-      return LaunchKernel<std::complex<double>>(inputs, workspace, outputs);
+      return LaunchFunc<std::complex<double>>(inputs, workspace, outputs);
     default:
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of input "
                         << TypeIdToType(values_dtype_)->ToString() << " not support.";
   }
+  return false;
 }
+
+template <typename S>
+bool SparseConcatCpuKernelMod::LaunchFunc(const std::vector<AddressPtr> &inputs,
+                                          const std::vector<AddressPtr> &workspace,
+                                          const std::vector<AddressPtr> &outputs) {
+  switch (shapes_dtype_) {
+    case kNumberTypeInt32:
+      return LaunchKernel<S, int32_t>(inputs, workspace, outputs);
+    case kNumberTypeInt64:
+      return LaunchKernel<S, int64_t>(inputs, workspace, outputs);
+    default:
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of COOTensor.shape "
+                        << TypeIdToType(shapes_dtype_)->ToString() << " not support.";
+  }
+  return false;
+}
+
 int SparseConcatCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                      const std::vector<KernelTensorPtr> &outputs,
                                      const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
@@ -107,7 +127,7 @@ struct VmpByValue {
   }
 };
 
-template <typename S>
+template <typename S, typename T>
 bool SparseConcatCpuKernelMod::SparseConcat(const std::vector<kernel::AddressPtr> &inputs,
                                             const std::vector<kernel::AddressPtr> &,
                                             const std::vector<kernel::AddressPtr> &outputs, const size_t shape_size,
@@ -116,7 +136,7 @@ bool SparseConcatCpuKernelMod::SparseConcat(const std::vector<kernel::AddressPtr
   auto output_values = reinterpret_cast<S *>(outputs[kOutputValuesStart]->addr);
   auto output_shape = reinterpret_cast<int64_t *>(outputs[kOutputShapesStart]->addr);
   auto input_coo_num = input_num_ / kCOOTensorNum;
-  const auto &first_shape_ptr = reinterpret_cast<int64_t *>(inputs[kSpInputShapesStart * input_coo_num]->addr);
+  const auto &first_shape_ptr = reinterpret_cast<T *>(inputs[kSpInputShapesStart * input_coo_num]->addr);
   std::map<size_t, int64_t> dim_position_map = {};
   int shape_cnt = 0;
   std::vector<int64_t> in_indices = {};
@@ -129,7 +149,7 @@ bool SparseConcatCpuKernelMod::SparseConcat(const std::vector<kernel::AddressPtr
   for (unsigned int i = 0; i < input_coo_num; i++) {
     const auto &indices_ptr = reinterpret_cast<int64_t *>(inputs[kSpInputIndicesStart * input_coo_num + i]->addr);
     const auto &values_ptr = reinterpret_cast<S *>(inputs[kSpInputValuesStart * input_coo_num + i]->addr);
-    const auto &shape_ptr = reinterpret_cast<int64_t *>(inputs[kOutputShapesStart * input_coo_num + i]->addr);
+    const auto &shape_ptr = reinterpret_cast<T *>(inputs[kOutputShapesStart * input_coo_num + i]->addr);
     auto cur_axis_shape = *(shape_ptr + concat_dim_);
     for (unsigned int j = 0; j < inputs[kSpInputIndicesStart * input_coo_num + i]->size / sizeof(int64_t); j++) {
       if (static_cast<int>(j % shape_size) == concat_dim_) {
@@ -179,13 +199,13 @@ bool SparseConcatCpuKernelMod::SparseConcat(const std::vector<kernel::AddressPtr
   return true;
 }
 
-template <typename S>
+template <typename S, typename T>
 bool SparseConcatCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                             const std::vector<kernel::AddressPtr> &workspace,
                                             const std::vector<kernel::AddressPtr> &outputs) {
   size_t size = input_num_ / 3;
-  const auto &shape = reinterpret_cast<int64_t *>(inputs[kSpInputShapesStart * size]->addr);
-  size_t shape_size = inputs[kSpInputShapesStart * size]->size / sizeof(int64_t);
+  const auto &shape = reinterpret_cast<T *>(inputs[kSpInputShapesStart * size]->addr);
+  size_t shape_size = inputs[kSpInputShapesStart * size]->size / sizeof(T);
   if ((concat_dim_ < (static_cast<int64_t>(shape_size) * (-1))) || (concat_dim_ >= static_cast<int64_t>(shape_size))) {
     MS_LOG(EXCEPTION) << "For op " << kernel_name_ << "Input concat_dim is error, concat_dim is " << concat_dim_
                       << " but COO tensor shape dim size is " << shape_size << " concat_dim value must be in range -"
@@ -193,10 +213,10 @@ bool SparseConcatCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
   }
   concat_dim_ = (concat_dim_ < 0) ? (concat_dim_ + shape_size) : concat_dim_;
   for (unsigned int i = 0; i < size; i++) {
-    const auto &temp_shape = reinterpret_cast<int64_t *>(inputs[kSpInputShapesStart * size + i]->addr);
-    if (shape_size != inputs[kSpInputShapesStart * size + i]->size / sizeof(int64_t)) {
+    const auto &temp_shape = reinterpret_cast<T *>(inputs[kSpInputShapesStart * size + i]->addr);
+    if (shape_size != inputs[kSpInputShapesStart * size + i]->size / sizeof(T)) {
       MS_LOG(EXCEPTION) << "For op " << kernel_name_ << "The input COO sparse tensor shape dims is "
-                        << inputs[kSpInputShapesStart * size + i]->size / sizeof(int64_t)
+                        << inputs[kSpInputShapesStart * size + i]->size / sizeof(T)
                         << " is not equal with the first COO sparse tensor dims: " << shape_size << ".";
     }
     for (unsigned int j = 0; j < shape_size; j++) {
@@ -207,7 +227,7 @@ bool SparseConcatCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
       }
     }
   }
-  SparseConcat<S>(inputs, workspace, outputs, shape_size, size);
+  SparseConcat<S, T>(inputs, workspace, outputs, shape_size, size);
   return true;
 }
 
