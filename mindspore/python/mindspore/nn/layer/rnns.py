@@ -674,7 +674,7 @@ class GRU(_RNNBase):
     information should be reset from old hidden state. New memory state :math:`{n}_t` is
     calculated with the current input, on which the reset gate will be applied. Finally, current hidden state
     :math:`h_{t}` is computed with the calculated update grate and new memory state. The complete
-    formulation is as follows.
+    formulation is as follows:
 
     .. math::
         \begin{array}{ll}

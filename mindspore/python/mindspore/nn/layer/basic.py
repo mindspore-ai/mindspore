@@ -1227,7 +1227,7 @@ class Triu(Cell):
     The upper triangular part of the matrix is defined as the elements on and above the diagonal.
 
     The parameter `k` controls the diagonal to be considered. If `k` = 0, all elements on and above the main diagonal
-    are retained. Positive values do not include as many diagonals above the main diagonal, and similarly,
+    are retained. Positive values do not include as many diagonals above the main diagonal. Similarly,
     negative values include as many diagonals below the main diagonal.
 
     Inputs:
@@ -1327,7 +1327,7 @@ class MatrixDiag(Cell):
 
     Assume `x` has :math:`k` dimensions :math:`[I, J, K, ..., N]`, then the output is a tensor of rank
     :math:`k+1` with dimensions :math:`[I, J, K, ..., N, N]` where:
-    :math:`output[i, j, k, ..., m, n] = 1\{m=n\} * x[i, j, k, ..., n]`
+    :math:`output[i, j, k, ..., m, n] = 1\{m=n\} * x[i, j, k, ..., n]`.
 
     Inputs:
         - **x** (Tensor) - The diagonal values. It can be one of the following data types:

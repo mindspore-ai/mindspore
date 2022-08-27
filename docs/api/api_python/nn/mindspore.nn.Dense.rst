@@ -5,7 +5,7 @@ mindspore.nn.Dense
 
     全连接层。
 
-    公式如下：
+    适用于输入的密集连接层。公式如下：
 
     .. math::
         \text{outputs} = \text{activation}(\text{X} * \text{kernel} + \text{bias}),

@@ -13,7 +13,7 @@ mindspore.nn.LeakyReLU
 
    其中，:math:`\alpha` 表示 `alpha` 参数。
 
-   更多细节详见 `Rectifier Nonlinearities Improve Neural Network Acoustic Models <https://ai.stanford.edu/~amaas/papers/relu_hybrid_icml2013_final.pdf>`_。
+   更多细节详见 `Rectifier Nonlinearities Improve Neural Network Acoustic Models <https://ai.stanford.edu/~amaas/papers/relu_hybrid_icml2013_final.pdf>`_ 。
 
    参数：
        - **alpha** (`Union[int, float]`) - x<0时激活函数的斜率，默认值：0.2。

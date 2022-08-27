@@ -420,7 +420,8 @@ class LeakyReLU(Cell):
 
     where :math:`\alpha` represents the `alpha` parameter.
 
-    See https://ai.stanford.edu/~amaas/papers/relu_hybrid_icml2013_final.pdf
+    For more details, see `Rectifier Nonlinearities Improve Neural Network Acoustic Models
+    <https://ai.stanford.edu/~amaas/papers/relu_hybrid_icml2013_final.pdf>`_.
 
     Args:
         alpha (Union[int, float]): Slope of the activation function at x < 0. Default: 0.2.

@@ -5,7 +5,9 @@ mindspore.nn.L1Loss
 
     L1Loss用于计算预测值和目标值之间的平均绝对误差。
     
-    假设 :math:`x` 和 :math:`y` 为一维Tensor，长度 :math:`N` ，则计算 :math:`x` 和 :math:`y` 的loss而不进行降维操作（即reduction参数设置为"none"）的公式如下：
+    假设 :math:`x` 和 :math:`y` 为一维Tensor，长度 :math:`N` ，则计算 :math:`x` 和 :math:`y` 的loss而不进行降维操作（即reduction参数设置为"none"）。
+
+    公式如下：
     
     .. math::
         \ell(x, y) = L = \{l_1,\dots,l_N\}^\top, \quad \text{with } l_n = \left| x_n - y_n \right|,

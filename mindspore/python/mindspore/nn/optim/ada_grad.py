@@ -49,7 +49,8 @@ class Adagrad(Optimizer):
     <https://proceedings.neurips.cc/paper/2009/file/621bf66ddb7c962aa0d22ac97d69b793-Paper.pdf>`_.
     Adagrad can adaptively assign different learning rates to each parameter in response to the uneven number of
     samples for different parameters.
-    The updating Pseudo codes are as follows,
+
+    The updating Pseudo codes are as follows:
 
     .. math::
        \begin{aligned} \\

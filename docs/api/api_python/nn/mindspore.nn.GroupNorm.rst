@@ -5,9 +5,9 @@ mindspore.nn.GroupNorm
 
     在mini-batch输入上进行组归一化。
 
-    适用单个训练用例的mini-batch输入归一化，详见论文 `Group Normalization <https://arxiv.org/pdf/1803.08494.pdf>`_ 。
+    Group Normalization被广泛用于递归神经网络中。适用单个训练用例的mini-batch输入归一化，详见论文 `Group Normalization <https://arxiv.org/pdf/1803.08494.pdf>`_ 。
 
-    把通道划分为组，然后计算每一组之内的均值和方差，以进行归一化。
+    Group Normalization把通道划分为组，然后计算每一组之内的均值和方差，以进行归一化。
 
     公式如下，
 

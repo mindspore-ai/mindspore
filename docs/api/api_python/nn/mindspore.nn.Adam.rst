@@ -5,6 +5,8 @@ mindspore.nn.Adam
 
     Adaptive Moment Estimation (Adam)算法的实现。
 
+    Adam optimizer可以使用梯度的first-order moment estimation和second-order moment estimation，动态地调整每一个参数的学习率。
+
     请参阅论文 `Adam: A Method for Stochastic Optimization <https://arxiv.org/abs/1412.6980>`_。
 
     公式如下：
