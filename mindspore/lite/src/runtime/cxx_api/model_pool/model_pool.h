@@ -32,6 +32,14 @@
 namespace mindspore {
 using ModelPoolConfig = std::vector<std::shared_ptr<WorkerConfig>>;
 
+struct TensorInfo {
+  std::string name = "";
+  enum DataType data_type;
+  std::vector<int64_t> shape;
+  mindspore::Format format;
+  std::vector<QuantParam> quant_param;
+};
+
 class ModelPool {
  public:
   ModelPool() = default;
@@ -123,8 +131,8 @@ class ModelPool {
   // save all worker thread
   std::vector<std::thread> worker_thread_vec_;
   std::mutex predict_task_mutex_;
-  std::vector<MSTensor> model_pool_inputs_;
-  std::vector<MSTensor> model_pool_outputs_;
+  std::vector<TensorInfo> inputs_info_;
+  std::vector<TensorInfo> outputs_info_;
   size_t workers_num_ = 1;
 
   // create predict task
