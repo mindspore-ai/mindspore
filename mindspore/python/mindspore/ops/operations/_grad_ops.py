@@ -2174,10 +2174,6 @@ class HSwishGrad(Primitive):
         self.init_prim_io_names(inputs=['y_grad', 'x'], outputs=['output'])
 
 
-class HSigmoidGrad(_ActivationGrad):
-    """Gets the gradient of HSigmoid operation."""
-
-
 class SigmoidCrossEntropyWithLogitsGrad(Primitive):
     """Computes the gradients of `SigmoidCrossEntropyWithLogits`."""
 
@@ -3737,3 +3733,11 @@ class FractionalMaxPoolGradWithFixedKsize(Primitive):
         self.data_format = validator.check_string(data_format, ['NCHW'], 'data_format', self.name)
         self.add_prim_attr("data_format", self.data_format)
         self.init_prim_io_names(inputs=['origin_input', 'out_backprop', 'argmax'], outputs=['y'])
+
+
+class HSigmoidGrad(Primitive):
+    """Gets the gradient of HSigmoid operation."""
+    @prim_attr_register
+    def __init__(self):
+        """Initialize HSigmoidGrad"""
+        self.init_prim_io_names(inputs=['grads', 'input_x'], outputs=['output'])
