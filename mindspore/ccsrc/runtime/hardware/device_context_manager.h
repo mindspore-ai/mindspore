@@ -28,6 +28,18 @@
 #include "include/backend/visible.h"
 
 namespace mindspore {
+namespace plugin_loader {
+class PluginLoader {
+ public:
+  static void LoadDynamicLib(const std::string &plugin_file, std::map<std::string, void *> *all_handles);
+  static void CloseDynamicLib(const std::string &dl_name, void *handle);
+  static bool GetPluginPath(std::string *file_path);
+
+ private:
+  static std::string GetDynamicLibName(const std::string &plugin_file);
+};
+}  // namespace plugin_loader
+
 namespace device {
 using DeviceContextCreator = std::function<std::shared_ptr<DeviceContext>(const DeviceContextKey &)>;
 
@@ -39,16 +51,22 @@ class BACKEND_EXPORT DeviceContextManager {
   void UpdateDeviceContextKey(const DeviceContextKey &old_key, const DeviceContextKey &new_key);
   void ClearDeviceContexts();
   void WaitTaskFinishOnDevice() const;
+  void UnloadPlugin();
 
  private:
   DeviceContextManager() = default;
   ~DeviceContextManager() = default;
   DISABLE_COPY_AND_ASSIGN(DeviceContextManager);
+  void LoadPlugin();
+
+  std::map<std::string, void *> plugin_maps_;
+  inline static bool load_init_;
+  inline static std::string plugin_path_;
 
   // The string converted from DeviceContextKey -> DeviceContextPtr.
-  std::map<std::string, DeviceContextPtr> device_contexts_;
+  inline static std::map<std::string, DeviceContextPtr> device_contexts_;
   // The name of device -> DeviceContextCreator.
-  std::map<std::string, DeviceContextCreator> device_context_creators_;
+  inline static std::map<std::string, DeviceContextCreator> device_context_creators_;
 };
 
 class DeviceContextRegister {

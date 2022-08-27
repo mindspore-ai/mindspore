@@ -27,7 +27,7 @@ add_library(mindspore_gpu SHARED ${GPU_SUB_OBJECTS_SRC})
 target_link_libraries(mindspore_gpu PUBLIC mindspore_backend_common)
 target_link_libraries(mindspore_gpu PRIVATE mindspore_core mindspore_common proto_input mindspore::protobuf)
 target_link_libraries(mindspore_gpu PRIVATE securec)
-set_target_properties(mindspore_gpu PROPERTIES INSTALL_RPATH $ORIGIN)
+set_target_properties(mindspore_gpu PROPERTIES INSTALL_RPATH ${MINDSPORE_RPATH})
 target_link_libraries(mindspore_gpu PRIVATE mindspore::dnnl mindspore::mkldnn nnacl)
 target_link_libraries(mindspore_gpu PRIVATE mindspore::ssl mindspore::crypto)
 target_link_libraries(mindspore_gpu PRIVATE mindspore::event mindspore::event_pthreads

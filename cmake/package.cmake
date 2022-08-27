@@ -68,6 +68,7 @@ set(INSTALL_BASE_DIR ".")
 set(INSTALL_BIN_DIR "bin")
 set(INSTALL_CFG_DIR "config")
 set(INSTALL_LIB_DIR "lib")
+set(INSTALL_PLUGIN_DIR "${INSTALL_LIB_DIR}/plugin")
 # set package files
 install(
     TARGETS _c_expression
@@ -98,7 +99,7 @@ install(
 if(ENABLE_D)
     install(
         TARGETS mindspore_ascend
-        DESTINATION ${INSTALL_LIB_DIR}
+        DESTINATION ${INSTALL_PLUGIN_DIR}
         COMPONENT mindspore
     )
 endif()
@@ -106,7 +107,7 @@ endif()
 if(ENABLE_GPU)
     install(
             TARGETS mindspore_gpu
-            DESTINATION ${INSTALL_LIB_DIR}
+            DESTINATION ${INSTALL_PLUGIN_DIR}
             COMPONENT mindspore
     )
 endif()

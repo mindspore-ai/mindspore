@@ -15,12 +15,117 @@
  */
 
 #include "runtime/hardware/device_context_manager.h"
+#if defined(_WIN32) || defined(_WIN64)
+#include <windows.h>
+#endif
+#include <dirent.h>
+#include <algorithm>
+#include <string>
+#include <fstream>
 #include "utils/ms_context.h"
+#include "utils/dlopen_macro.h"
 
 namespace mindspore {
+namespace plugin_loader {
+void PluginLoader::LoadDynamicLib(const std::string &plugin_file, std::map<std::string, void *> *all_handles) {
+  MS_EXCEPTION_IF_NULL(all_handles);
+  void *handle = nullptr;
+  std::string err_msg;
+  if (plugin_file.find("libmindspore_") == std::string::npos) {
+    return;
+  }
+  auto so_name = GetDynamicLibName(plugin_file);
+#if defined(_WIN32) || defined(_WIN64)
+  handle = LoadLibrary(plugin_file.c_str());
+  err_msg = std::to_string(GetLastError());
+#else
+  handle = dlopen(plugin_file.c_str(), RTLD_NOW | RTLD_LOCAL);
+  err_msg = GetDlErrorMsg();
+#endif
+  if (handle == nullptr) {
+    MS_LOG(DEBUG) << "Load dynamic lib: " << so_name << " failed. " << err_msg;
+    return;
+  }
+  (*all_handles)[so_name] = handle;
+}
+
+void PluginLoader::CloseDynamicLib(const std::string &dl_name, void *handle) {
+#if defined(_WIN32) || defined(_WIN64)
+  if (!FreeLibrary(static_cast<HMODULE>(handle))) {
+    MS_LOG(EXCEPTION) << "Closing dynamic lib: " + dl_name + " handle failed. Error: " + std::to_string(GetLastError());
+  }
+
+#else
+  if (dlclose(handle) != 0) {
+    MS_LOG(EXCEPTION) << "Closing dynamic lib: " << dl_name << "failed, error message: " << GetDlErrorMsg();
+  }
+#endif
+}
+
+std::string PluginLoader::GetDynamicLibName(const std::string &plugin_file) {
+  auto pos = plugin_file.rfind('.');
+  if (pos == std::string::npos) {
+    MS_LOG(WARNING) << "Invalid plugin file " << plugin_file;
+    return "unknown_name";
+  }
+  return plugin_file.substr(0, pos);
+}
+
+bool PluginLoader::GetPluginPath(std::string *file_path) {
+  MS_EXCEPTION_IF_NULL(file_path);
+  std::string cur_so_path;
+#if !defined(_WIN32) && !defined(_WIN64)
+  Dl_info dl_info;
+  if (dladdr(reinterpret_cast<void *>(PluginLoader::GetPluginPath), &dl_info) == 0) {
+    MS_LOG(INFO) << "Get dladdr error";
+    return false;
+  }
+  cur_so_path = dl_info.dli_fname;
+#else
+  HMODULE hModule = nullptr;
+  if (GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT | GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS,
+                        (LPCSTR)PluginLoader::GetPluginPath, &hModule) == 0) {
+    MS_LOG(INFO) << "Get GetModuleHandleEx failed.";
+    return false;
+  }
+  char szPath[MAX_PATH];
+  if (GetModuleFileName(hModule, szPath, sizeof(szPath)) == 0) {
+    MS_LOG(INFO) << "Get GetModuleHandleEx failed.";
+    return false;
+  }
+  cur_so_path = std::string(szPath);
+#endif
+  auto pos = cur_so_path.find_last_of('/');
+  if (cur_so_path.empty() || pos == std::string::npos) {
+    MS_LOG(INFO) << "Current so path empty or the path [" << cur_so_path << "] is invalid.";
+    return false;
+  }
+  auto plugin_so_path = cur_so_path.substr(0, pos) + "/plugin";
+  if (plugin_so_path.size() >= PATH_MAX) {
+    MS_LOG(INFO) << "Current path [" << plugin_so_path << "] is invalid.";
+    return false;
+  }
+  char real_path_mem[PATH_MAX] = {0};
+#if defined(_WIN32) || defined(_WIN64)
+  if (_fullpath(real_path_mem, common::SafeCStr(plugin_so_path), PATH_MAX) == nullptr) {
+    MS_LOG(INFO) << "Plugin path is invalid: [" << plugin_so_path << "], skip!";
+    return false;
+  }
+#else
+  if (realpath(common::SafeCStr(plugin_so_path), real_path_mem) == nullptr) {
+    MS_LOG(INFO) << "Plugin path is invalid: [" << plugin_so_path << "], skip!";
+    return false;
+  }
+#endif
+  *file_path = std::string(real_path_mem);
+  return true;
+}
+}  // namespace plugin_loader
+
 namespace device {
 DeviceContextManager &DeviceContextManager::GetInstance() {
   static DeviceContextManager instance{};
+  instance.LoadPlugin();
   return instance;
 }
 
@@ -28,6 +133,41 @@ void DeviceContextManager::Register(const std::string &device_name, DeviceContex
   if (device_context_creators_.find(device_name) == device_context_creators_.end()) {
     (void)device_context_creators_.emplace(device_name, device_context_creator);
   }
+}
+
+void DeviceContextManager::LoadPlugin() {
+  if (load_init_) {
+    return;
+  }
+  if (plugin_path_.empty() && !plugin_loader::PluginLoader::GetPluginPath(&plugin_path_)) {
+    MS_LOG(INFO) << "Plugin path is invalid, skip!";
+    return;
+  }
+  DIR *dir = opendir(plugin_path_.c_str());
+  if (dir == nullptr) {
+    MS_LOG(ERROR) << "Open plugin dir failed, plugin path:" << plugin_path_;
+    return;
+  }
+  struct dirent *entry;
+  while ((entry = readdir(dir)) != nullptr) {
+    auto plugin_file = entry->d_name;
+    plugin_loader::PluginLoader::LoadDynamicLib(plugin_file, &plugin_maps_);
+  }
+  (void)closedir(dir);
+  load_init_ = true;
+}
+
+void DeviceContextManager::UnloadPlugin() {
+  if (plugin_maps_.empty()) {
+    return;
+  }
+  auto iter = plugin_maps_.begin();
+  while (iter != plugin_maps_.end()) {
+    plugin_loader::PluginLoader::CloseDynamicLib(iter->first, iter->second);
+    iter++;
+  }
+  plugin_maps_.clear();
+  load_init_ = false;
 }
 
 void DeviceContextManager::ClearDeviceContexts() {
@@ -49,7 +189,6 @@ DeviceContext *DeviceContextManager::GetOrCreateDeviceContext(const DeviceContex
     name = "GE";
     device_context_key_str = "GE_0";
   }
-
   auto device_context_iter = device_contexts_.find(device_context_key_str);
   if (device_context_iter != device_contexts_.end()) {
     return device_context_iter->second.get();

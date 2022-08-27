@@ -57,7 +57,7 @@ struct OpInfo {
   uint32_t pid;
 };
 
-class ProfilerManager {
+class BACKEND_EXPORT ProfilerManager {
  public:
   static std::shared_ptr<ProfilerManager> &GetInstance();
   ProfilerManager() = default;
@@ -75,7 +75,7 @@ class ProfilerManager {
   bool is_dynamic_shape_net_ = 0;
 };
 
-class Profiler {
+class BACKEND_EXPORT Profiler {
  public:
   static std::shared_ptr<Profiler> GetInstance(const std::string &name) noexcept;
   static bool Register(const std::string &name, const std::shared_ptr<Profiler> &instance);
@@ -125,7 +125,7 @@ class Profiler {
   bool is_parallel_strategy = false;
 
  private:
-  BACKEND_EXPORT inline static std::map<std::string, std::shared_ptr<Profiler>> instance_map_ = {};
+  inline static std::map<std::string, std::shared_ptr<Profiler>> instance_map_ = {};
 };
 }  // namespace profiler
 }  // namespace mindspore

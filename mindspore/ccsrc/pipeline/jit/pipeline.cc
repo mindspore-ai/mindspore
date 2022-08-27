@@ -1605,6 +1605,7 @@ void FinalizeHccl() {
   session::ExecutorManager::Instance().Clear();
   device::DeviceContextManager::GetInstance().ClearDeviceContexts();
   device::KernelRuntimeManager::Instance().ClearRuntimeResource();
+  device::DeviceContextManager::GetInstance().UnloadPlugin();
 }
 
 uint32_t GetHcclRankId() {
@@ -1731,8 +1732,7 @@ void MemoryRecycle() {
   FuncGraphLoopBreaker::Inst().BreakLoop();
 }
 
-void ClearResAtexit() {
-  MS_LOG(INFO) << "Pipeline clear all resource";
+void ClearResPart1() {
   runtime::OpExecutor::GetInstance().WorkerJoin();
   // When the python process exits, the kernels on the device may not have finished executing.
   device::KernelRuntimeManager::Instance().WaitTaskFinishOnDevice();
@@ -1765,7 +1765,6 @@ void ClearResAtexit() {
   MS_LOG(INFO) << "End Finalize StreamSynchronizer...";
 
   (void)distributed::collective::CollectiveManager::instance()->Finalize();
-
   PrimitivePy::ClearHookRes();
   ad::g_k_prims.clear();
   ad::ClearKPynativeCellStaticRes();
@@ -1776,7 +1775,9 @@ void ClearResAtexit() {
   pipeline::GetAttrMap().clear();
   pipeline::GraphExecutorPy::ClearRes();
   pipeline::ReclaimOptimizer();
+}
 
+void ClearResPart2() {
   MS_LOG(INFO) << "Start clear PyNativeExecutor...";
   pynative::PyNativeExecutor::GetInstance()->ClearRes();
   MS_LOG(INFO) << "End clear PyNativeExecutor.";
@@ -1804,7 +1805,6 @@ void ClearResAtexit() {
   ConfigManager::GetInstance().ResetIterNum();
   MS_LOG(INFO) << "End clear ConfigManager.";
 #endif
-
   MS_LOG(INFO) << "Start clear device context...";
   device::DeviceContextManager::GetInstance().ClearDeviceContexts();
   MS_LOG(INFO) << "End clear device context.";
@@ -1829,6 +1829,9 @@ void ClearResAtexit() {
   Debugger::GetInstance()->Reset();
 #endif
   g_args_cache.clear();
+}
+
+void ClearResPart3() {
   // clean static variable to prevent from crash. As static variable is released after
   // Python threads is released.
   MS_LOG(INFO) << "Start clear ClearObjectCache...";
@@ -1854,6 +1857,17 @@ void ClearResAtexit() {
   MS_LOG(INFO) << "Start clear ProtobufLibrary...";
   google::protobuf::ShutdownProtobufLibrary();
   MS_LOG(INFO) << "End clear ProtobufLibrary...";
+
+  MS_LOG(INFO) << "Start unload dynamic lib...";
+  device::DeviceContextManager::GetInstance().UnloadPlugin();
+  MS_LOG(INFO) << "End unload dynamic lib...";
+}
+
+void ClearResAtexit() {
+  MS_LOG(INFO) << "Pipeline clear all resource";
+  ClearResPart1();
+  ClearResPart2();
+  ClearResPart3();
 }
 
 py::bytes PyEncrypt(char *plain_data, size_t plain_len, char *key, size_t key_len, const std::string &enc_mode) {

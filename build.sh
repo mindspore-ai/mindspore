@@ -81,6 +81,7 @@ if [[ "X$COMPILE_LITE" = "Xon" ]]; then
   source mindspore/lite/build_lite.sh
 else
   mkdir -pv "${BUILD_PATH}/package/mindspore/lib"
+  mkdir -pv "${BUILD_PATH}/package/mindspore/lib/plugin"
   update_submodule
 
   build_mindspore

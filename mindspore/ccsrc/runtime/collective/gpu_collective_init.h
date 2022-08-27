@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_DISTRIBUTION_COLLECTIVE_FAKE_INIT_H_
-#define MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_DISTRIBUTION_COLLECTIVE_FAKE_INIT_H_
+#ifndef MINDSPORE_CCSRC_RUNTIME_COLLECTIVE_GPU_COLLECTIVE_INIT_H_
+#define MINDSPORE_CCSRC_RUNTIME_COLLECTIVE_GPU_COLLECTIVE_INIT_H_
 
 #include <string>
 #include "include/backend/visible.h"
@@ -23,12 +23,12 @@
 namespace mindspore {
 namespace device {
 namespace gpu {
-class BACKEND_EXPORT CollectiveFakeInitializer {
+class BACKEND_EXPORT GPUCollectiveInitializer {
  public:
-  CollectiveFakeInitializer() = default;
-  ~CollectiveFakeInitializer() = default;
-  CollectiveFakeInitializer(CollectiveFakeInitializer const &) = delete;
-  CollectiveFakeInitializer &operator=(const CollectiveFakeInitializer &) = delete;
+  GPUCollectiveInitializer() = default;
+  ~GPUCollectiveInitializer() = default;
+  GPUCollectiveInitializer(GPUCollectiveInitializer const &) = delete;
+  GPUCollectiveInitializer &operator=(const GPUCollectiveInitializer &) = delete;
   static void InitCollective();
   static void FinalizeCollective();
   static uint32_t GetRankID(const std::string &group_name);
@@ -38,4 +38,4 @@ class BACKEND_EXPORT CollectiveFakeInitializer {
 }  // namespace device
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_DISTRIBUTION_COLLECTIVE_FAKE_INIT_H_
+#endif  // MINDSPORE_CCSRC_RUNTIME_COLLECTIVE_GPU_COLLECTIVE_INIT_H_
