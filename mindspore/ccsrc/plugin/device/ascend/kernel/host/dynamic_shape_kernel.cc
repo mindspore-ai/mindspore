@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace kernel {
-void TensorShapeKernelMod::Execute() const {
+void TensorShapeKernelMod::Execute(void *stream_ptr) const {
   MS_LOG(INFO) << "Execute TensorShapeKernel Start";
   auto node = anf_node_.lock();
   MS_EXCEPTION_IF_NULL(node);
@@ -59,10 +59,10 @@ void TensorShapeKernelMod::Execute() const {
     }
   } else {
     // cppcheck-suppress unreadVariable
-    auto lock = device::KernelRuntime::LockRuntime(stream_);
+    auto lock = device::KernelRuntime::LockRuntime(stream_ptr);
     auto status =
       rtMemcpyAsync(const_cast<void *>(output_addr->GetPtr()), output_addr->GetSize(), output_tensor_for_sync->data_c(),
-                    LongToSize(output_tensor_for_sync->data().nbytes()), RT_MEMCPY_HOST_TO_DEVICE_EX, stream_);
+                    LongToSize(output_tensor_for_sync->data().nbytes()), RT_MEMCPY_HOST_TO_DEVICE_EX, stream_ptr);
     if (status != RT_ERROR_NONE) {
       MS_LOG(EXCEPTION) << "Execute TensorShapeKernel rtMemcpyAsync failed!";
     }
@@ -78,7 +78,7 @@ bool TensorShapeKernelMod::Launch(const std::vector<AddressPtr> &, const std::ve
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   try {
-    Execute();
+    Execute(stream_ptr);
   } catch (const std::exception &e) {
     MS_LOG(ERROR) << "TensorShapeKernelMod Launch failed. node: " << cnode->fullname_with_scope()
                   << ", Error message is " << e.what();
