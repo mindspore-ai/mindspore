@@ -30,10 +30,10 @@ class KPDecomposition {
 
   int Decomposition();
 
-  std::vector<float> GetMatB() { return mat_b_; }
-  std::vector<int> GetMatShapeB() { return mat_shape_b_; }
-  std::vector<float> GetMatC() { return mat_c_; }
-  std::vector<int> GetMatShapeC() { return mat_shape_c_; }
+  std::vector<float> GetMatB() const { return mat_b_; }
+  std::vector<int> GetMatShapeB() const { return mat_shape_b_; }
+  std::vector<float> GetMatC() const { return mat_c_; }
+  std::vector<int> GetMatShapeC() const { return mat_shape_c_; }
 
  private:
   // Integer factorization to multiply two constraints ==> A = B * C
