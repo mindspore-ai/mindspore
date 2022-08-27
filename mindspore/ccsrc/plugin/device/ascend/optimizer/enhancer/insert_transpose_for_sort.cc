@@ -136,11 +136,14 @@ AnfNodePtr InsertTranspose(const FuncGraphPtr &func_graph, const CNodePtr &node,
                            int64_t axis) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(node);
-  axis = axis < 0 ? (SizeToLong(in_shape.size()) + axis) : axis;
+  int64_t axis_pos = axis < 0 ? (SizeToLong(in_shape.size()) + axis) : axis;
+  if (axis_pos < 0 || axis_pos >= SizeToLong(in_shape.size())) {
+    MS_LOG(EXCEPTION) << "Axis attr value [" << axis << "] of node " << node->fullname_with_scope() << " is invalid";
+  }
   std::vector<int64_t> perm(in_shape.size(), 0);
   int64_t i = 0;
   std::generate(perm.begin(), perm.end(), [&] { return i++; });
-  std::reverse(perm.begin() + axis, perm.end());
+  std::reverse(perm.begin() + axis_pos, perm.end());
 
   auto new_sort = InsertForInput(func_graph, node, perm);
   common::AnfAlgo::SetNodeAttr("axis", MakeValue(IntToLong(-1)), new_sort);

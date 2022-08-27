@@ -140,11 +140,13 @@ std::vector<KernelWithIndex> GetCNodeNeighborFraczNodes(const FuncGraphManagerPt
   for (size_t i = 0; i < input_num; ++i) {
     if (AnfAlgo::GetInputFormat(cnode, i) == kOpFormat_FRAC_Z) {
       auto input = cnode->input(i + 1);
+      MS_EXCEPTION_IF_NULL(input);
       if (node_name == kTupleGetItemName) {
         auto item_index = common::AnfAlgo::GetTupleGetItemOutIndex(cnode);
         while (input->isa<CNode>() && common::AnfAlgo::GetCNodeName(input) == kDependName) {
           common::AnfAlgo::SetNodeAttr(kAttrFracZGroup, MakeValue(groups), input);
           input = input->cast<CNodePtr>()->input(1);
+          MS_EXCEPTION_IF_NULL(input);
         }
         (void)ret.emplace_back(input, item_index);
       } else {
@@ -252,7 +254,8 @@ bool SetFraczGroupAttr::Run(const FuncGraphPtr &func_graph) {
   std::vector<AnfNodePtr> node_list = TopoSort(func_graph->get_return());
   // clear cnode fracz_group first, since the fracz_group info may be out-of-date in later graph of multi-graph scene
   for (auto &node : node_list) {
-    if (node->isa<CNode>() && common::AnfAlgo::HasNodeAttr(kAttrFracZGroup, node->cast<CNodePtr>()) &&
+    if (node != nullptr && node->isa<CNode>() &&
+        common::AnfAlgo::HasNodeAttr(kAttrFracZGroup, node->cast<CNodePtr>()) &&
         common::AnfAlgo::GetCNodeName(node) != kTransDataOpName) {
       common::AnfAlgo::EraseNodeAttr(kAttrFracZGroup, node);
     }

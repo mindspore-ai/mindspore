@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,10 +28,10 @@ import re
 import numpy as np
 import mindspore.context as context
 from mindspore import log as logger
-from ... import nn, ops
-from ..._checkparam import Validator, Rel
-from ...nn.layer import quant
-from ...ops import functional as F
+from mindspore import nn, ops
+from mindspore._checkparam import Validator, Rel
+from mindspore.nn.layer import quant
+from mindspore.ops import functional as F
 from ..common import QuantDtype
 from .quantizer import Quantizer, OptimizeOption
 from .quant_utils import compute_kl_threshold
@@ -336,7 +336,7 @@ class QuantizationAwareTraining(Quantizer):
             subcell = cells[name]
             if subcell == network:
                 continue
-            elif isinstance(subcell, (nn.Conv2dBnAct, nn.DenseBnAct)):
+            if isinstance(subcell, (nn.Conv2dBnAct, nn.DenseBnAct)):
                 prefix = subcell.param_prefix
                 new_subcell = self._convert_method_map[type(subcell)](subcell)
                 new_subcell.update_parameters_name(prefix + '.')
@@ -455,8 +455,7 @@ class QuantizationAwareTraining(Quantizer):
                                                             momentum=1 - bn_inner.momentum,
                                                             has_bias=conv_inner.has_bias,
                                                             bias_init=conv_inner.bias_init,
-                                                            quant_config=self.quant_config,
-                                                            quant_dtype=self.weight_dtype)
+                                                            quant_config=self.quant_config)
                 # change original network Batch Normalization OP parameters to quant network
                 conv_inner.batchnorm.gamma = subcell.batchnorm.gamma
                 conv_inner.batchnorm.beta = subcell.batchnorm.beta

@@ -81,22 +81,22 @@ void GetInputNodeInfoForOneRank(const OutputInfo &output_info, const std::vector
                                 std::vector<AnfNodePtr> *concat_input_nodes) {
   const auto &output_infer_dtype = std::get<kIndex0>(output_info);
   const auto &output_infer_shape = std::get<kIndex1>(output_info);
-  const auto &output_max_shape = std::get<kIndex2>(output_info);
-  const auto &output_min_shape = std::get<kIndex3>(output_info);
+  const auto &output_min_shape = std::get<kIndex2>(output_info);
+  const auto &output_max_shape = std::get<kIndex3>(output_info);
   const auto &output_format = std::get<kIndex4>(output_info);
   const auto &output_device_dtype = std::get<kIndex5>(output_info);
   auto &input_infer_dtype = std::get<kIndex0>(*concat_input_info);
   auto &input_infer_shape = std::get<kIndex1>(*concat_input_info);
-  auto &input_max_shape = std::get<kIndex2>(*concat_input_info);
-  auto &input_min_shape = std::get<kIndex3>(*concat_input_info);
+  auto &input_min_shape = std::get<kIndex2>(*concat_input_info);
+  auto &input_max_shape = std::get<kIndex3>(*concat_input_info);
   auto &input_format = std::get<kIndex4>(*concat_input_info);
   auto &input_device_dtype = std::get<kIndex5>(*concat_input_info);
   for (size_t j = 0; j < LongToSize(rank_size); ++j, index += input_size) {
     concat_input_nodes->push_back(new_tuple_getitems[index]);
     input_infer_dtype.push_back(output_infer_dtype[index]);
     input_infer_shape.push_back(output_infer_shape[index]);
-    input_max_shape.push_back(output_max_shape[index]);
     input_min_shape.push_back(output_min_shape[index]);
+    input_max_shape.push_back(output_max_shape[index]);
     input_format.push_back(output_format[index]);
     input_device_dtype.push_back(output_device_dtype[index]);
   }

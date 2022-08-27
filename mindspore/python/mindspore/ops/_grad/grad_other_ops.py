@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,10 +15,10 @@
 
 """Generate bprop for other ops"""
 
-from .. import operations as P
-from ..operations import _grad_ops as G
-from ..operations import _inner_ops as inner
-from ..composite.multitype_ops.zeros_like_impl import zeros_like
+from mindspore.ops import operations as P
+from mindspore.ops.operations import _grad_ops as G
+from mindspore.ops.operations import _inner_ops as inner
+from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
 from .grad_base import bprop_getters
 
 # Unused parameters are placeholders.

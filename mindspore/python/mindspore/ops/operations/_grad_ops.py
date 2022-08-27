@@ -779,12 +779,14 @@ class _PoolGrad(PrimitiveWithInfer):
             return ret
 
         kernel_size = _grad_check_int_or_tuple("kernel_size", kernel_size, self.is_maxpoolgradwithargmax)
-        self.kernel_size = kernel_size if self.format == "NCHW" else [kernel_size[0], kernel_size[2],
-                                                                      kernel_size[3], kernel_size[1]]
-        self.add_prim_attr("kernel_size", self.kernel_size)
-
         strides = _grad_check_int_or_tuple("strides", strides, self.is_maxpoolgradwithargmax)
-        self.strides = strides if self.format == "NCHW" else [strides[0], strides[2], strides[3], strides[1]]
+        if self.format == "NCHW":
+            self.kernel_size = kernel_size
+            self.strides = strides
+        else:
+            self.kernel_size = [kernel_size[0], kernel_size[2], kernel_size[3], kernel_size[1]]
+            self.strides = [strides[0], strides[2], strides[3], strides[1]]
+        self.add_prim_attr("kernel_size", self.kernel_size)
         self.add_prim_attr("strides", self.strides)
 
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,30 +46,32 @@ CNodePtr Insert(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const std
   if (op_name == kBasicLSTMCellInputGradOpName) {
     auto origin_type = common::AnfAlgo::GetPrevNodeOutputInferDataType(cnode, 1);
     auto origin_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 1);
-    auto dst_shape = {origin_shape[1], origin_shape[0]};
-    auto is_dynamic = IsDynamic(dst_shape);
+    if (origin_shape.size() > 1) {
+      auto dst_shape = {origin_shape[1], origin_shape[0]};
+      auto is_dynamic = IsDynamic(dst_shape);
 
-    transpose_inputs.push_back(common::AnfAlgo::GetInputNode(cnode, 1));
-    CNodePtr transpose = func_graph->NewCNode(transpose_inputs);
-    MS_EXCEPTION_IF_NULL(transpose);
-    if (is_dynamic) {
-      auto shape = {origin_shape[1], origin_shape[0]};
-      auto max_shape = common::AnfAlgo::GetInputMaxShape(cnode, 1);
-      auto min_shape = common::AnfAlgo::GetInputMinShape(cnode, 1);
-      auto min_shape_tmp = min_shape;
-      auto max_shape_tmp = max_shape;
-      if (!min_shape.empty() && !max_shape.empty()) {
-        min_shape_tmp = {min_shape[1], min_shape[0]};
-        max_shape_tmp = {max_shape[1], max_shape[0]};
+      transpose_inputs.push_back(common::AnfAlgo::GetInputNode(cnode, 1));
+      CNodePtr transpose = func_graph->NewCNode(transpose_inputs);
+      MS_EXCEPTION_IF_NULL(transpose);
+      if (is_dynamic) {
+        auto shape = {origin_shape[1], origin_shape[0]};
+        auto max_shape = common::AnfAlgo::GetInputMaxShape(cnode, 1);
+        auto min_shape = common::AnfAlgo::GetInputMinShape(cnode, 1);
+        auto min_shape_tmp = min_shape;
+        auto max_shape_tmp = max_shape;
+        if (!min_shape.empty() && !max_shape.empty()) {
+          min_shape_tmp = {min_shape[1], min_shape[0]};
+          max_shape_tmp = {max_shape[1], max_shape[0]};
+        }
+
+        BaseShapePtr base_shape = std::make_shared<abstract::Shape>(shape, min_shape_tmp, max_shape_tmp);
+        common::AnfAlgo::SetOutputTypeAndDetailShape({origin_type}, {base_shape}, transpose.get());
+      } else {
+        common::AnfAlgo::SetOutputInferTypeAndShape({origin_type}, {dst_shape}, transpose.get());
       }
-
-      BaseShapePtr base_shape = std::make_shared<abstract::Shape>(shape, min_shape_tmp, max_shape_tmp);
-      common::AnfAlgo::SetOutputTypeAndDetailShape({origin_type}, {base_shape}, transpose.get());
-    } else {
-      common::AnfAlgo::SetOutputInferTypeAndShape({origin_type}, {dst_shape}, transpose.get());
+      common::AnfAlgo::SetNodeAttr(kAttrPerm, MakeValue(std::vector<int64_t>{1, 0}), transpose);
+      common::AnfAlgo::SetNodeInput(cnode, transpose, 1);
     }
-    common::AnfAlgo::SetNodeAttr(kAttrPerm, MakeValue(std::vector<int64_t>{1, 0}), transpose);
-    common::AnfAlgo::SetNodeInput(cnode, transpose, 1);
     if (kernel_graph == nullptr) {
       new_node = std::make_shared<CNode>(*cnode);
     } else {
