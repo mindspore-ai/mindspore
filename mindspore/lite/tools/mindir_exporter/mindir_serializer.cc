@@ -30,6 +30,7 @@
 namespace mindspore::lite {
 // unit is byte. model size more than 1G need split.
 constexpr const size_t TOTAL_SAVE = 1024 * 1024 * 1024;
+constexpr const size_t PARA_ROUND = 1024;
 constexpr const int64_t OFFSET = 64;
 
 namespace {
@@ -206,8 +207,6 @@ std::shared_ptr<Parameter> MindIRSerializer::GetFgParaAccordingToProtoName(const
 }
 
 int MindIRSerializer::ChangeParaDataFile(const std::string &file) {
-  data_fs_->close();
-  delete data_fs_;
   auto real_path = CreateExternalPath(file);
   if (fs_->FileExist(real_path)) {
     fs_->DeleteFile(real_path);
@@ -278,6 +277,11 @@ int MindIRSerializer::SplitSave() {
     MS_LOG(ERROR) << "Open " << external_local_path << " failed";
     return false;
   }
+  ret = ChangeParaDataFile(external_local);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "change parameter data file failed.";
+    return ret;
+  }
 
   for (auto &param_proto : *(model_proto_.mutable_graph()->mutable_parameter())) {
     std::string proto_name = param_proto.name();
@@ -293,30 +297,30 @@ int MindIRSerializer::SplitSave() {
     int64_t append_size = 0;
     if (data_length % OFFSET != 0) {
       append_size = OFFSET - (data_length % OFFSET);
-      parameter_size += (append_size + data_length);
-    } else {
-      parameter_size += data_length;
     }
+    parameter_size += ((append_size + data_length) / PARA_ROUND);
     if (parameter_size > static_cast<int64_t>(TOTAL_SAVE)) {
       index++;
       external_local = model_name_ + "data_" + std::to_string(index);
+      data_fs_->close();
+      delete data_fs_;
       ret = ChangeParaDataFile(external_local);
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "change parameter data file failed.";
         return ret;
       }
-      parameter_size = OFFSET;
+      parameter_size = OFFSET / PARA_ROUND;
     }
     *(param_proto.mutable_external_data()->mutable_location()) = external_local;
-    param_proto.mutable_external_data()->set_length(parameter_size);
-    param_proto.mutable_external_data()->set_offset(append_size);
+    param_proto.mutable_external_data()->set_length(data_length);
+    param_proto.mutable_external_data()->set_offset(offset);
     data_fs_->write(static_cast<const char *>(data->data_c()), data_length);
     auto append_data = new char[append_size];
     if (append_data == nullptr) {
       return RET_NULL_PTR;
     }
-    offset += (data_length + append_size);
     data_fs_->write(append_data, append_size);
+    offset += (data_length + append_size);
     delete[] append_data;
   }
 
