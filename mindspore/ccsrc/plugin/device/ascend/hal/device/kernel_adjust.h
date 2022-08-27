@@ -59,7 +59,7 @@ class KernelAdjust {
     return instance;
   }
   // device loop control
-  void InsertDeviceLoopCtrl(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
+  void InsertDeviceLoopCtrl(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) const;
   void AssignLoopCtrlMemory(const session::KernelGraph &kernel_graph_ptr);
   void LoadDeviceLoopCtrlParameters(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
 
@@ -94,7 +94,7 @@ class KernelAdjust {
   CNodePtr CreatTupleGetItemNode(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr, const CNodePtr &node,
                                  size_t output_idx) const;
   CNodePtr CreateEndOfSequenceOP(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
-                                 const CNodePtr &getnext_cnode);
+                                 const CNodePtr &getnext_cnode) const;
   CNodePtr CreateStreamAssignAddnOP(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                     const std::map<std::string, mindspore::ParameterPtr> &switch_loop_input,
                                     bool cur_loop);

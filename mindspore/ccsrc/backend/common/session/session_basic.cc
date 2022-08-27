@@ -2915,7 +2915,7 @@ void SessionBasic::DoAllReduceOnGrads(const std::string &actor_info, const std::
       dynamic_cast<device::DeprecatedKernelExecutor *>(device_context->kernel_executor_.get());
     if (deprecated_kernel_executor != nullptr) {
       static size_t bucket_id = 0;
-      bucket = deprecated_kernel_executor->CreateBucket(bucket_id++, outputs.size());
+      bucket = deprecated_kernel_executor->CreateBucket(SizeToUint(bucket_id++), SizeToUint(outputs.size()));
     } else {
       MS_LOG(EXCEPTION) << "Not Support CreateBucket() in Device Context.";
     }

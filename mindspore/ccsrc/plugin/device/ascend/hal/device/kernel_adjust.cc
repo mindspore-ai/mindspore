@@ -612,7 +612,7 @@ CNodePtr KernelAdjust::CreatTupleGetItemNode(const std::shared_ptr<session::Kern
 }
 
 CNodePtr KernelAdjust::CreateEndOfSequenceOP(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
-                                             const CNodePtr &getnext_cnode) {
+                                             const CNodePtr &getnext_cnode) const {
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
   kernel::KernelBuildInfo::KernelBuildInfoBuilder selected_kernel_builder;
   selected_kernel_builder.SetInputsFormat({kOpFormat_DEFAULT});
@@ -1099,7 +1099,7 @@ std::shared_ptr<Parameter> KernelAdjust::CreateParameter(const std::shared_ptr<s
   return graph_parameter;
 }
 
-void KernelAdjust::InsertDeviceLoopCtrl(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) {
+void KernelAdjust::InsertDeviceLoopCtrl(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) const {
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
   std::map<std::string, tensor::TensorPtr> device_loop_ctrl_tensors;
   std::map<std::string, mindspore::ParameterPtr> device_loop_ctrl_params;

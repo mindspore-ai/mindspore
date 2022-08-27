@@ -35,7 +35,7 @@ void AscendStreamAssign::AssignStreamForNonTaskSink(const std::vector<CNodePtr> 
 uint32_t AscendStreamAssign::GetHcomTaskNum(const CNodePtr &) { return 200; }
 }  // namespace ascend
 
-void KernelAdjust::InsertDeviceLoopCtrl(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) { return; }
+void KernelAdjust::InsertDeviceLoopCtrl(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) const { return; }
 void KernelAdjust::AssignLoopCtrlMemory(const session::KernelGraph &kernel_graph_ptr) { return; }
 void KernelAdjust::LoadDeviceLoopCtrlParameters(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) {
   return;

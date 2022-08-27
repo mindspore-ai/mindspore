@@ -203,7 +203,7 @@ void AscendGraphOptimization::HardWareOptimization(const KernelGraphPtr &graph) 
   if (memo_.find(graph) != memo_.end()) {
     return;
   }
-  memo_.insert(graph);
+  (void)memo_.insert(graph);
   opt::AscendBackendOptimization(graph);
   opt::CommonFinalOptimization(graph);
   if (graphkernel::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
@@ -222,7 +222,7 @@ void AscendGraphOptimization::AddGraphToManager(const NotNull<KernelGraphPtr> gr
   if (memo_.find(graph) != memo_.end()) {
     return;
   }
-  memo_.insert(graph.get());
+  (void)memo_.insert(graph.get());
   manager->AddFuncGraph(graph.get(), is_root);
 
   for (auto &child_graph : graph->child_graph_order()) {
@@ -235,7 +235,7 @@ void AscendGraphOptimization::IRFusionOptimization(const KernelGraphPtr &graph) 
   if (memo_.find(graph) != memo_.end()) {
     return;
   }
-  memo_.insert(graph);
+  (void)memo_.insert(graph);
 
   opt::AscendBackendIRFusionOptimization(graph);
   for (auto &child_graph : graph->child_graph_order()) {
@@ -273,7 +273,7 @@ void AscendGraphOptimization::RecurseSelectKernelInfo(const KernelGraphPtr &grap
   if (memo_.find(graph) != memo_.end()) {
     return;
   }
-  memo_.insert(graph);
+  (void)memo_.insert(graph);
   MS_LOG(INFO) << "Status record: start select kernel info. graph id: " << graph->graph_id();
   SetOperatorInfo(graph);
   MS_LOG(INFO) << "Status record: end select kernel info. graph id: " << graph->graph_id();
@@ -318,7 +318,7 @@ void AscendGraphOptimization::UpdateRefOutputMap(const KernelGraphPtr &graph) {
   if (memo_.find(graph) != memo_.end()) {
     return;
   }
-  memo_.insert(graph);
+  (void)memo_.insert(graph);
 
   for (auto &child_graph : graph->child_graph_order()) {
     auto child_graph_ptr = child_graph.lock();
@@ -394,7 +394,7 @@ void AscendGraphOptimization::GetAllGraphs(const KernelGraphPtr &root_graph) {
   if (memo_.find(root_graph) != memo_.end()) {
     return;
   }
-  memo_.insert(root_graph);
+  (void)memo_.insert(root_graph);
   auto node_list = TopoSort(root_graph->get_return());
   for (auto node : node_list) {
     if (!IsValueNode<FuncGraph>(node)) {
