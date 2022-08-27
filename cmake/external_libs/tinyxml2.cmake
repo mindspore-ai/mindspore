@@ -1,5 +1,10 @@
-set(tinyxml2_CXXFLAGS "-fstack-protector -D_FORTIFY_SOURCE=2 -O2 -Wno-unused-result")
-set(tinyxml2_CFLAGS "-fstack-protector -D_FORTIFY_SOURCE=2 -O2")
+if(MSVC)
+    set(tinyxml2_CXXFLAGS "-D_FORTIFY_SOURCE=2 -O2")
+    set(tinyxml2_CFLAGS "-D_FORTIFY_SOURCE=2 -O2")
+else()
+    set(tinyxml2_CXXFLAGS "-fstack-protector -D_FORTIFY_SOURCE=2 -O2 -Wno-unused-result")
+    set(tinyxml2_CFLAGS "-fstack-protector -D_FORTIFY_SOURCE=2 -O2")
+endif()
 
 if(ENABLE_GITEE)
     set(REQ_URL "https://gitee.com/mirrors/tinyxml2/repository/archive/8.0.0.tar.gz")

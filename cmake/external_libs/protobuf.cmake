@@ -19,8 +19,16 @@ else()
         set(protobuf_CXXFLAGS "-fstack-protector-all -Wno-uninitialized -Wno-unused-parameter -fPIC \
             -fvisibility=hidden -D_FORTIFY_SOURCE=2 -O2")
     elseif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-        set(protobuf_CXXFLAGS "-fstack-protector-all -Wno-maybe-uninitialized -Wno-unused-parameter \
-            -fPIC -fvisibility=hidden -D_FORTIFY_SOURCE=2 -O2")
+        if(MSVC)
+            set(protobuf_CXXFLAGS "/DWIN32 /D_WINDOWS /W3 /GR /EHsc")
+            set(protobuf_CFLAGS "${CMAKE_C_FLAGS}")
+            set(protobuf_LDFLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
+            set(_ms_tmp_CMAKE_STATIC_LIBRARY_PREFIX ${CMAKE_STATIC_LIBRARY_PREFIX})
+            set(CMAKE_STATIC_LIBRARY_PREFIX "lib")
+        else()
+            set(protobuf_CXXFLAGS "-fstack-protector-all -Wno-maybe-uninitialized -Wno-unused-parameter \
+                -fPIC -fvisibility=hidden -D_FORTIFY_SOURCE=2 -O2")
+        endif()
     else()
         set(protobuf_CXXFLAGS "-fstack-protector-all -Wno-maybe-uninitialized -Wno-unused-parameter \
             -fPIC -fvisibility=hidden -D_FORTIFY_SOURCE=2 -O2")
@@ -50,6 +58,18 @@ else()
   set(PROTOBUF_PATCH_ROOT ${CMAKE_SOURCE_DIR}/third_party/patch/protobuf)
 endif()
 
+if(MSVC)
+mindspore_add_pkg(protobuf
+        VER 3.13.0
+        LIBS protobuf
+        EXE protoc
+        URL ${REQ_URL}
+        MD5 ${MD5}
+        CMAKE_PATH cmake/
+        CMAKE_OPTION -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=Release
+            -Dprotobuf_MSVC_STATIC_RUNTIME=OFF
+        PATCHES ${PROTOBUF_PATCH_ROOT}/CVE-2021-22570.patch)
+else()
 mindspore_add_pkg(protobuf
         VER 3.13.0
         LIBS protobuf
@@ -59,11 +79,13 @@ mindspore_add_pkg(protobuf
         CMAKE_PATH cmake/
         CMAKE_OPTION -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=Release
         PATCHES ${PROTOBUF_PATCH_ROOT}/CVE-2021-22570.patch)
+endif()
 
 include_directories(${protobuf_INC})
 include_directories(${CMAKE_BINARY_DIR}/proto_py)
 add_library(mindspore::protobuf ALIAS protobuf::protobuf)
 set(CMAKE_CXX_FLAGS  ${_ms_tmp_CMAKE_CXX_FLAGS})
+# recover original value
 if(MSVC)
     set(CMAKE_STATIC_LIBRARY_PREFIX, ${_ms_tmp_CMAKE_STATIC_LIBRARY_PREFIX})
 endif()

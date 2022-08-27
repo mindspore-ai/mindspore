@@ -17,16 +17,32 @@ endif()
 
 
 if(WIN32)
-    set(sentencepiece_CXXFLAGS "-D_FORTIFY_SOURCE=2 -O2 -Wno-unused-result -Wno-stringop-overflow \
-        -Wno-format-extra-args -Wno-format")
+    if(MSVC)
+        set(sentencepiece_CXXFLAGS "-D_FORTIFY_SOURCE=2 -O2 /EHsc")
+    else()
+        set(sentencepiece_CXXFLAGS "-D_FORTIFY_SOURCE=2 -O2 -Wno-unused-result -Wno-stringop-overflow \
+            -Wno-format-extra-args -Wno-format")
+    endif()
+
     set(sentencepiece_CFLAGS "-D_FORTIFY_SOURCE=2 -O2")
-    mindspore_add_pkg(sentencepiece
-        VER 0.1.92
-        LIBS sentencepiece sentencepiece_train
-        URL ${REQ_URL}
-        CMAKE_OPTION -DCMAKE_BUILD_TYPE=Release -DSPM_USE_BUILTIN_PROTOBUF=ON -DSPM_ENABLE_SHARED=OFF
-        MD5 ${MD5}
-        )
+    if(MSVC)
+        mindspore_add_pkg(sentencepiece
+            VER 0.1.92
+            LIBS sentencepiece sentencepiece_train
+            URL ${REQ_URL}
+            CMAKE_OPTION -DCMAKE_BUILD_TYPE=Release -DSPM_USE_BUILTIN_PROTOBUF=ON -DSPM_ENABLE_SHARED=OFF
+            MD5 ${MD5}
+            PATCHES ${CMAKE_SOURCE_DIR}/third_party/patch/sentencepiece/sentencepiece_msvc.patch001
+            )
+    else()
+        mindspore_add_pkg(sentencepiece
+            VER 0.1.92
+            LIBS sentencepiece sentencepiece_train
+            URL ${REQ_URL}
+            CMAKE_OPTION -DCMAKE_BUILD_TYPE=Release -DSPM_USE_BUILTIN_PROTOBUF=ON -DSPM_ENABLE_SHARED=OFF
+            MD5 ${MD5}
+            )
+    endif()
 else()
     set(sentencepiece_CXXFLAGS "-D_FORTIFY_SOURCE=2 -O2 -Wno-unused-result -Wno-sign-compare")
     set(sentencepiece_CFLAGS "-D_FORTIFY_SOURCE=2 -O2")

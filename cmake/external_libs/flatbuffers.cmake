@@ -1,7 +1,10 @@
 if(MSVC)
-    set(flatbuffers_CXXFLAGS "${CMAKE_CXX_FLAGS}")
+    set(flatbuffers_CXXFLAGS "/DWIN32 /D_WINDOWS /W3 /GR /EHsc")
     set(flatbuffers_CFLAGS "${CMAKE_C_FLAGS}")
     set(flatbuffers_LDFLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
+    set(_ms_tmp_CMAKE_STATIC_LIBRARY_PREFIX ${CMAKE_STATIC_LIBRARY_PREFIX})
+    # flatbuffers.lib cimplied by msvc
+    set(CMAKE_STATIC_LIBRARY_PREFIX "")
 else()
     set(flatbuffers_CXXFLAGS "-fPIC -fPIE -D_FORTIFY_SOURCE=2 -O2 -fstack-protector-strong")
     set(flatbuffers_CFLAGS "-fPIC -fPIE -D_FORTIFY_SOURCE=2 -O2 -fstack-protector-strong")
@@ -61,6 +64,12 @@ endif()
 include_directories(${flatbuffers_INC})
 add_library(mindspore::flatbuffers ALIAS flatbuffers::flatbuffers)
 add_executable(mindspore::flatc ALIAS flatbuffers::flatc)
+
+# recover original value
+if(MSVC)
+    set(CMAKE_STATIC_LIBRARY_PREFIX, ${_ms_tmp_CMAKE_STATIC_LIBRARY_PREFIX})
+endif()
+
 function(ms_build_flatbuffers source_schema_files
                               source_schema_dirs
                               custom_target_name

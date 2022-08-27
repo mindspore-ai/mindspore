@@ -1,5 +1,5 @@
 if(MSVC)
-    set(opencv_CXXFLAGS "${CMAKE_CXX_FLAGS}")
+    set(opencv_CXXFLAGS "/DWIN32 /D_WINDOWS /W3 /GR /EHsc /std:c++17")
     set(opencv_CFLAGS "${CMAKE_C_FLAGS}")
     set(opencv_LDFLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")

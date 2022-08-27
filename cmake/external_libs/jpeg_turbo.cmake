@@ -11,8 +11,12 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(jpeg_turbo_CFLAGS "-fstack-protector-all -Wno-uninitialized -Wno-unused-parameter -fPIC -D_FORTIFY_SOURCE=2 \
         -O2")
 else()
-    set(jpeg_turbo_CFLAGS "-fstack-protector-all -Wno-maybe-uninitialized -Wno-unused-parameter -fPIC \
-        -D_FORTIFY_SOURCE=2 -O2")
+    if(MSVC)
+        set(jpeg_turbo_CFLAGS "-O2")
+    else()
+        set(jpeg_turbo_CFLAGS "-fstack-protector-all -Wno-maybe-uninitialized -Wno-unused-parameter -fPIC \
+            -D_FORTIFY_SOURCE=2 -O2")
+    endif()
 endif()
 
 set(jpeg_turbo_LDFLAGS "-Wl,-z,relro,-z,now,-z,noexecstack,-s")
