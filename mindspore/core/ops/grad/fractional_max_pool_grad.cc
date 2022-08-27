@@ -40,9 +40,9 @@ abstract::ShapePtr FractionalMaxPoolGradInferShape(const PrimitivePtr &primitive
   auto out_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShapeTrack())[kShape];
   auto backprop_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShapeTrack())[kShape];
-  CheckAndConvertUtils::CheckInteger("orig_input_rank", SizeToLong(in_shape.size()), kEqual, x_rank, op_name);
-  CheckAndConvertUtils::CheckInteger("orig_output_rank", SizeToLong(out_shape.size()), kEqual, x_rank, op_name);
-  CheckAndConvertUtils::CheckInteger("backprop_rank", SizeToLong(backprop_shape.size()), kEqual, x_rank, op_name);
+  (void)CheckAndConvertUtils::CheckInteger("orig_input_rank", SizeToLong(in_shape.size()), kEqual, x_rank, op_name);
+  (void)CheckAndConvertUtils::CheckInteger("orig_output_rank", SizeToLong(out_shape.size()), kEqual, x_rank, op_name);
+  (void)CheckAndConvertUtils::CheckInteger("backprop_rank", SizeToLong(backprop_shape.size()), kEqual, x_rank, op_name);
   auto infer_shape = std::make_shared<abstract::Shape>(in_shape);
   return infer_shape;
 }

@@ -50,9 +50,6 @@ abstract::ShapePtr GridSampler2DInferShape(const PrimitivePtr &, const std::vect
 }
 
 TypePtr GridSampler2DInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  if (std::any_of(input_args.begin(), input_args.end(), [](AbstractBasePtr arg) { return arg == nullptr; })) {
-    MS_LOG(EXCEPTION) << "nullptr";
-  }
   std::map<std::string, TypePtr> types;
   std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   TypePtr input_x_type = input_args[0]->BuildType();

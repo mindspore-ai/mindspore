@@ -32,7 +32,8 @@ namespace {
 constexpr auto op_name = "RangeV2";
 
 template <typename T>
-int64_t RangeV2CalculateShape(tensor::TensorPtr start_ptr, tensor::TensorPtr limit_ptr, tensor::TensorPtr delta_ptr) {
+int64_t RangeV2CalculateShape(const tensor::TensorPtr start_ptr, const tensor::TensorPtr limit_ptr,
+                              const tensor::TensorPtr delta_ptr) {
   // DataSize == 1
   if (start_ptr->DataSize() != 1) {
     MS_EXCEPTION(TypeError) << "For RangeV2, start must a scalar but element number more than 1.";
@@ -104,11 +105,11 @@ abstract::ShapePtr RangeV2CheckAndInferShape(const PrimitivePtr &primitive,
 
   ShapeVector out_shape = {};
   if (is_compile) {
-    out_shape.emplace_back(abstract::Shape::SHP_ANY);
+    (void)out_shape.emplace_back(abstract::Shape::SHP_ANY);
     return std::make_shared<abstract::Shape>(out_shape);
   }
 
-  out_shape.emplace_back(shape_size);
+  (void)out_shape.emplace_back(shape_size);
   return std::make_shared<abstract::Shape>(out_shape);
 }
 
@@ -137,7 +138,7 @@ AbstractBasePtr RangeV2Infer(const abstract::AnalysisEnginePtr &, const Primitiv
                              const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 3;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, op_name);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, op_name);
   (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, kInputIndex0);
   (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, kInputIndex1);
   (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, kInputIndex2);

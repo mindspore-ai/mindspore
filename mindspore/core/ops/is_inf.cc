@@ -43,8 +43,8 @@ TypePtr IsInfInferType(const PrimitivePtr &prim, const std::vector<AbstractBaseP
   }
   const int64_t input_num = 1;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim->name());
-  CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->BuildType(), {kFloat16, kFloat32, kFloat64},
-                                             prim->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->BuildType(), {kFloat16, kFloat32, kFloat64},
+                                                   prim->name());
   return std::make_shared<TensorType>(kBool);
 }
 }  // namespace

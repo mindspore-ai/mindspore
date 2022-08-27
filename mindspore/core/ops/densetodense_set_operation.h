@@ -35,7 +35,7 @@ class MIND_API DenseToDenseSetOperation : public BaseOperator {
     InitIOName({"x1", "x2"}, {"y_indices", "y_values", "y_shape"});
   }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.DenseToDenseSetOperation for more details.
-  void Init() {}
+  void Init() const {}
 };
 abstract::AbstractBasePtr DenseToDenseSetOperationInfer(const abstract::AnalysisEnginePtr &,
                                                         const PrimitivePtr &primitive,

@@ -30,7 +30,7 @@ class MIND_API IOU : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(IOU);
   IOU() : BaseOperator(kNameIOU) { InitIOName({"x,y"}, {"output"}); }
-  void Init() {}
+  void Init() const {}
 };
 }  // namespace ops
 }  // namespace mindspore

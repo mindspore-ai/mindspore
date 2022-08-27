@@ -39,8 +39,8 @@ abstract::TupleShapePtr DenseToCSRSparseMatrixInferShape(const PrimitivePtr &pri
   const int64_t kIndicesRank = 2;
   const int64_t kDefalutRank = 2;
   const int64_t kBatchRank = 3;
-  const int64_t rank = dense_input_shape.size();
-  const int64_t indices_rank = indices_shape.size();
+  const int64_t rank = SizeToLong(dense_input_shape.size());
+  const int64_t indices_rank = SizeToLong(indices_shape.size());
   if (rank != kDefalutRank && rank != kBatchRank) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the input dense matrix should "
                              << "have rank 2 or 3, but got " << rank << ".";

@@ -112,19 +112,19 @@ void TrilCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const
   auto matrix_size = matrix_width * matrix_height;
   auto matrixs_num = input_size / matrix_size;
 
-  for (size_t k = 0; k < matrixs_num; ++k) {
-    MatrixMap input(input_addr + k * matrix_size, matrix_width, matrix_height);
-    MatrixMap output(output_addr + k * matrix_size, matrix_width, matrix_height);
+  for (int64_t k = 0; k < SizeToLong(matrixs_num); ++k) {
+    MatrixMap input(input_addr + k * SizeToLong(matrix_size), matrix_width, matrix_height);
+    MatrixMap output(output_addr + k * SizeToLong(matrix_size), matrix_width, matrix_height);
     output = input.template triangularView<Eigen::Lower>();
     if (diagonal_ > 0) {
-      for (size_t i = 0; i < matrix_width; i++) {
-        for (size_t j = i + 1; j <= i + diagonal_ && j < matrix_height; j++) {
+      for (int64_t i = 0; i < SizeToLong(matrix_width); i++) {
+        for (int64_t j = i + 1; j <= i + diagonal_ && j < SizeToLong(matrix_height); j++) {
           output(i, j) = input(i, j);
         }
       }
     } else {
-      for (size_t j = 0; j < matrix_height; j++) {
-        for (size_t i = j; i < j - diagonal_ && i < matrix_width; i++) {
+      for (int64_t j = 0; j < SizeToLong(matrix_height); j++) {
+        for (int64_t i = j; i < j - diagonal_ && i < SizeToLong(matrix_width); i++) {
           output(i, j) = static_cast<T>(0.0);
         }
       }

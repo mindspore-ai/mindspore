@@ -30,7 +30,7 @@ class MIND_API Atanh : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Atanh);
   Atanh() : BaseOperator(kNameAtanh) { InitIOName({"x"}, {"y"}); }
-  void Init() {}
+  void Init() const {}
 };
 abstract::AbstractBasePtr AtanhInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                      const std::vector<abstract::AbstractBasePtr> &input_args);

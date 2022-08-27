@@ -49,12 +49,11 @@ bool UnravelIndexCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inp
   } else {
     MS_EXCEPTION(TypeError) << "Both input data types are supported only support int32, int64.";
   }
-  return true;
 }
 
 template <typename T>
 bool UnravelIndexCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                            const std::vector<AddressPtr> &outputs) {
+                                            const std::vector<AddressPtr> &outputs) const {
   auto *IndicesData = reinterpret_cast<T *>(inputs[0]->addr);
   auto *DimsData = reinterpret_cast<T *>(inputs[1]->addr);
   auto *OutputData = reinterpret_cast<T *>(outputs[0]->addr);
@@ -76,18 +75,18 @@ bool UnravelIndexCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
   if ((inputs[0]->size) / sizeof(T) <= kParallelDataNums) {
     for (size_t j = 0; j < (inputs[0]->size) / sizeof(T); j++) {
       T Quotient = IndicesData[j];
-      for (int i = ((inputs[1]->size) / sizeof(T) - 1); i >= 0; i--) {
-        OutputData[i + j * ((inputs[1]->size) / sizeof(T))] = Quotient % DimsData[i];
-        Quotient = (Quotient / DimsData[i]);
+      for (int i = SizeToInt((inputs[1]->size) / sizeof(T) - 1); i >= 0; i--) {
+        OutputData[IntToSize(i) + j * ((inputs[1]->size) / sizeof(T))] = Quotient % DimsData[IntToSize(i)];
+        Quotient = (Quotient / DimsData[IntToSize(i)]);
       }
     }
   } else {
     auto task = [&](size_t start, size_t end) {
       for (size_t j = start; j < end; j++) {
         T Quotient = IndicesData[j];
-        for (int i = ((inputs[1]->size) / sizeof(T) - 1); i >= 0; i--) {
-          OutputData[i + j * ((inputs[1]->size) / sizeof(T))] = Quotient % DimsData[i];
-          Quotient = (Quotient / DimsData[i]);
+        for (int i = SizeToInt((inputs[1]->size) / sizeof(T) - 1); i >= 0; i--) {
+          OutputData[IntToSize(i) + j * ((inputs[1]->size) / sizeof(T))] = Quotient % DimsData[IntToSize(i)];
+          Quotient = (Quotient / DimsData[IntToSize(i)]);
         }
       }
     };

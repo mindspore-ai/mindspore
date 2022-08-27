@@ -81,7 +81,7 @@ abstract::ShapePtr LpNormInferShape(const PrimitivePtr &primitive, const std::ve
       axis[0] += input_rank;
     }
     if (!keep_dims) {
-      (void)output_shape.erase(output_shape.begin() + LongToSize(axis[0]));
+      (void)output_shape.erase(output_shape.begin() + axis[0]);
     } else {
       output_shape[LongToSize(axis[0])] = 1;
     }
@@ -96,7 +96,7 @@ TypePtr LpNormInferType(const PrimitivePtr &prim, const std::vector<AbstractBase
   auto infer_type = input_args[0]->BuildType();
   MS_EXCEPTION_IF_NULL(infer_type);
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
-  CheckAndConvertUtils::CheckTensorTypeValid("input", infer_type, valid_types, prim->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("input", infer_type, valid_types, prim->name());
   return infer_type;
 }
 }  // namespace

@@ -42,7 +42,7 @@ abstract::ShapePtr ScatterSubInferShape(const PrimitivePtr &primitive, const std
   std::vector<int64_t> updates_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(updates_shape_ptr)[kShape];
   std::vector<int64_t> check_update_shape(indices_shape);
   for (int64_t i = 1; i < SizeToLong(input_x_shape.size()); ++i) {
-    check_update_shape.push_back(input_x_shape[i]);
+    check_update_shape.push_back(input_x_shape[LongToSize(i)]);
   }
   if (updates_shape != check_update_shape) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', "
@@ -68,8 +68,8 @@ TypePtr ScatterSubInferType(const PrimitivePtr &primitive, const std::vector<Abs
                                                    prim_name);
 
   std::map<std::string, TypePtr> type_dict;
-  type_dict.emplace("input_x", input_x_type_ptr);
-  type_dict.emplace("updates", updates_type_ptr);
+  (void)type_dict.emplace("input_x", input_x_type_ptr);
+  (void)type_dict.emplace("updates", updates_type_ptr);
   return CheckAndConvertUtils::CheckTensorTypeSame(type_dict, common_valid_types, prim_name);
 }
 }  // namespace
@@ -79,7 +79,7 @@ AbstractBasePtr ScatterSubInfer(const abstract::AnalysisEnginePtr &, const Primi
                                 const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 3;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, input_num, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, input_num, primitive->name());
   auto infer_type = ScatterSubInferType(primitive, input_args);
   auto infer_shape = ScatterSubInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

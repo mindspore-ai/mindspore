@@ -32,7 +32,7 @@ abstract::ShapePtr ApplyFtrlInferShape(const PrimitivePtr &primitive, const std:
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   const int64_t kInputNum = 8;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
   auto var_shape = input_args[kInputIndex0]->BuildShape();
   auto accum_shape = input_args[kInputIndex1]->BuildShape();
   auto linear_shape = input_args[kInputIndex2]->BuildShape();
@@ -78,7 +78,7 @@ TypePtr ApplyFtrlInferType(const PrimitivePtr &prim, const std::vector<AbstractB
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
   const int64_t kInputNum = 8;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
   auto var_type = input_args[kInputIndex0]->BuildType();
   auto accum_type = input_args[kInputIndex1]->BuildType();
   auto linear_type = input_args[kInputIndex2]->BuildType();
@@ -121,7 +121,7 @@ AbstractBasePtr ApplyFtrlInfer(const abstract::AnalysisEnginePtr &, const Primit
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   const int64_t kInputNum = 8;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
   auto infer_type = ApplyFtrlInferType(primitive, input_args);
   auto infer_shape = ApplyFtrlInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

@@ -35,21 +35,21 @@ constexpr size_t kAdamWeightDecayOutputsNum = 3;
 template <typename T>
 void AdamWeightDecayCpuKernelMod::LaunchAdamWeightDecay(const std::vector<AddressPtr> &inputs,
                                                         const std::vector<AddressPtr> &) {
-  T *var = reinterpret_cast<T *>(inputs[VAR]->addr);
-  T *m = reinterpret_cast<T *>(inputs[M]->addr);
-  T *v = reinterpret_cast<T *>(inputs[V]->addr);
-  T lr = static_cast<T>(reinterpret_cast<float *>(inputs[LR]->addr)[kScalarIndex]);
-  T beta1 = static_cast<T>(reinterpret_cast<float *>(inputs[BETA1]->addr)[kScalarIndex]);
-  T beta2 = static_cast<T>(reinterpret_cast<float *>(inputs[BETA2]->addr)[kScalarIndex]);
-  T epsilon = static_cast<T>(reinterpret_cast<float *>(inputs[EPSILON]->addr)[kScalarIndex]);
-  T decay = static_cast<T>(reinterpret_cast<float *>(inputs[DECAY]->addr)[kScalarIndex]);
-  T *gradient = reinterpret_cast<T *>(inputs[GRAD]->addr);
+  T *var = reinterpret_cast<T *>(inputs[kIndex0]->addr);
+  T *m = reinterpret_cast<T *>(inputs[kIndex1]->addr);
+  T *v = reinterpret_cast<T *>(inputs[kIndex2]->addr);
+  T lr = static_cast<T>(reinterpret_cast<float *>(inputs[kIndex3]->addr)[kScalarIndex]);
+  T beta1 = static_cast<T>(reinterpret_cast<float *>(inputs[kIndex4]->addr)[kScalarIndex]);
+  T beta2 = static_cast<T>(reinterpret_cast<float *>(inputs[kIndex5]->addr)[kScalarIndex]);
+  T epsilon = static_cast<T>(reinterpret_cast<float *>(inputs[kIndex6]->addr)[kScalarIndex]);
+  T decay = static_cast<T>(reinterpret_cast<float *>(inputs[kIndex7]->addr)[kScalarIndex]);
+  T *gradient = reinterpret_cast<T *>(inputs[kIndex8]->addr);
   const T one = static_cast<T>(1.0);
   const T beta1_minus = one - beta1;
   const T beta2_minus = one - beta2;
 
   // multithreading
-  size_t lens = inputs[VAR]->size > 0 ? static_cast<size_t>(inputs[VAR]->size / sizeof(T)) : 1;
+  size_t lens = inputs[kIndex0]->size > 0 ? static_cast<size_t>(inputs[kIndex0]->size / sizeof(T)) : 1;
   std::function<void(size_t, size_t)> task;
   task = [&](size_t start, size_t end) {
     // remaining
@@ -66,18 +66,18 @@ void AdamWeightDecayCpuKernelMod::LaunchAdamWeightDecay(const std::vector<Addres
 
 void AdamWeightDecayCpuKernelMod::LaunchAdamWeightDecayNnacl(const std::vector<AddressPtr> &inputs,
                                                              const std::vector<AddressPtr> &) {
-  auto var = reinterpret_cast<float *>(inputs[VAR]->addr);
-  auto m = reinterpret_cast<float *>(inputs[M]->addr);
-  auto v = reinterpret_cast<float *>(inputs[V]->addr);
-  auto lr = reinterpret_cast<float *>(inputs[LR]->addr)[kScalarIndex];
-  auto beta1 = reinterpret_cast<float *>(inputs[BETA1]->addr)[kScalarIndex];
-  auto beta2 = reinterpret_cast<float *>(inputs[BETA2]->addr)[kScalarIndex];
-  auto epsilon = reinterpret_cast<float *>(inputs[EPSILON]->addr)[kScalarIndex];
-  auto decay = reinterpret_cast<float *>(inputs[DECAY]->addr)[kScalarIndex];
-  auto gradient = reinterpret_cast<float *>(inputs[GRAD]->addr);
+  auto var = reinterpret_cast<float *>(inputs[kIndex0]->addr);
+  auto m = reinterpret_cast<float *>(inputs[kIndex1]->addr);
+  auto v = reinterpret_cast<float *>(inputs[kIndex2]->addr);
+  auto lr = reinterpret_cast<float *>(inputs[kIndex3]->addr)[kScalarIndex];
+  auto beta1 = reinterpret_cast<float *>(inputs[kIndex4]->addr)[kScalarIndex];
+  auto beta2 = reinterpret_cast<float *>(inputs[kIndex5]->addr)[kScalarIndex];
+  auto epsilon = reinterpret_cast<float *>(inputs[kIndex6]->addr)[kScalarIndex];
+  auto decay = reinterpret_cast<float *>(inputs[kIndex7]->addr)[kScalarIndex];
+  auto gradient = reinterpret_cast<float *>(inputs[kIndex8]->addr);
 
   // multithreading
-  size_t lens = inputs[VAR]->size > 0 ? static_cast<size_t>(inputs[VAR]->size / sizeof(float)) : 1;
+  size_t lens = inputs[kIndex0]->size > 0 ? static_cast<size_t>(inputs[kIndex0]->size / sizeof(float)) : 1;
   std::function<void(size_t, size_t)> task;
   task = [&](size_t start, size_t end) {
     int ret = AdamWeightDecayFp32(var, m, v, lr, beta1, beta2, epsilon, decay, gradient, start, end);
@@ -99,37 +99,40 @@ bool AdamWeightDecayCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &
                                          const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kAdamWeightDecayInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kAdamWeightDecayOutputsNum, kernel_name_);
-  if (inputs[VAR]->size != inputs[M]->size) {
+  if (inputs[kIndex0]->size != inputs[kIndex1]->size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the dtype and shape of 'm' and 'var' must be the same, but got the memory size of 'm': "
-                      << inputs[M]->size << " and 'var': " << inputs[VAR]->size;
+                      << inputs[kIndex1]->size << " and 'var': " << inputs[kIndex0]->size;
   }
-  if (inputs[VAR]->size != inputs[V]->size) {
+  if (inputs[kIndex0]->size != inputs[kIndex2]->size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the dtype and shape of 'v' and 'var' must be the same, but got the memory size of 'v': "
-                      << inputs[V]->size << " and 'var': " << inputs[VAR]->size;
+                      << inputs[kIndex2]->size << " and 'var': " << inputs[kIndex0]->size;
   }
-  if (inputs[VAR]->size != inputs[GRAD]->size) {
+  if (inputs[kIndex0]->size != inputs[kIndex8]->size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the dtype and shape of 'grad' and 'var' must be the same, "
                          "but got the memory size of 'grad': "
-                      << inputs[GRAD]->size << " and 'var': " << inputs[VAR]->size;
+                      << inputs[kIndex8]->size << " and 'var': " << inputs[kIndex0]->size;
   }
-  if (inputs[LR]->size != kSizeFloat32) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'lr' must be float, but got 'lr': " << inputs[LR];
+  if (inputs[kIndex3]->size != kSizeFloat32) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'lr' must be float, but got 'lr': " << inputs[kIndex3];
   }
-  if (inputs[BETA1]->size != kSizeFloat32) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'beta1' must be float, but got 'beta1': " << inputs[BETA1];
-  }
-  if (inputs[BETA2]->size != kSizeFloat32) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'beta2' must be float, but got 'beta2': " << inputs[BETA2];
-  }
-  if (inputs[EPSILON]->size != kSizeFloat32) {
+  if (inputs[kIndex4]->size != kSizeFloat32) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the 'epsilon' must be float, but got 'epsilon': " << inputs[EPSILON];
+                      << "', the 'beta1' must be float, but got 'beta1': " << inputs[kIndex4];
   }
-  if (inputs[DECAY]->size != kSizeFloat32) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'decay' must be float, but got 'decay': " << inputs[DECAY];
+  if (inputs[kIndex5]->size != kSizeFloat32) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the 'beta2' must be float, but got 'beta2': " << inputs[kIndex5];
+  }
+  if (inputs[kIndex6]->size != kSizeFloat32) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the 'epsilon' must be float, but got 'epsilon': " << inputs[kIndex6];
+  }
+  if (inputs[kIndex7]->size != kSizeFloat32) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the 'decay' must be float, but got 'decay': " << inputs[kIndex7];
   }
   if (dtype_ == kNumberTypeFloat32) {
     LaunchAdamWeightDecayNnacl(inputs, outputs);

@@ -28,7 +28,7 @@ class MIND_API EluGrad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(EluGrad);
   EluGrad() : BaseOperator(kNameEluGrad) {}
-  void Init() {}
+  void Init() const {}
 };
 }  // namespace ops
 }  // namespace mindspore

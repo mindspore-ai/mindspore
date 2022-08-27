@@ -36,7 +36,7 @@ int64_t TrueValueCal(const std::vector<AbstractBasePtr> &input_args) {
   int64_t true_value = 1;
   const int64_t number_two = 2;
   for (int64_t i = 0; i < rank - number_two; i++) {
-    true_value *= x_shape[i];
+    true_value *= x_shape[LongToSize(i)];
   }
   return true_value;
 }
@@ -54,12 +54,12 @@ abstract::ShapePtr MatrixDiagPartV3InferShape(const PrimitivePtr &primitive,
   CheckAndConvertUtils::CheckInRange<int64_t>("k rank", k_rank, kIncludeBoth, {0, kNumber1}, prim_name);
   auto padding_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
   auto padding_value_rank = SizeToLong(padding_shape.size());
-  CheckAndConvertUtils::CheckInteger("padding_value rank", padding_value_rank, kEqual, 0, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("padding_value rank", padding_value_rank, kEqual, 0, prim_name);
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto rank = SizeToLong(x_shape.size());
-  CheckAndConvertUtils::CheckInteger("x rank", rank, kGreaterEqual, kNumber2, prim_name);
-  int64_t row = x_shape[rank - kNumber2];
-  int64_t col = x_shape[rank - 1];
+  (void)CheckAndConvertUtils::CheckInteger("x rank", rank, kGreaterEqual, kNumber2, prim_name);
+  int64_t row = x_shape[LongToSize(rank - kNumber2)];
+  int64_t col = x_shape[LongToSize(rank - 1)];
   if (input_args[kInputIndex1]->isa<abstract::AbstractTensor>() &&
       input_args[kInputIndex1]->BuildValue()->isa<tensor::Tensor>()) {
     auto k = input_args[kInputIndex1]->cast<abstract::AbstractTensorPtr>();
@@ -81,8 +81,8 @@ abstract::ShapePtr MatrixDiagPartV3InferShape(const PrimitivePtr &primitive,
       auto padding_value_tensor = padding_value_ptr->cast<tensor::TensorPtr>();
       MS_EXCEPTION_IF_NULL(padding_value_tensor);
       size_t padding_value_size = LongToSize(padding_value_tensor->DataSize());
-      CheckAndConvertUtils::CheckInteger("padding_value size", SizeToLong(padding_value_size), kEqual, kNumber1,
-                                         prim_name);
+      (void)CheckAndConvertUtils::CheckInteger("padding_value size", SizeToLong(padding_value_size), kEqual, kNumber1,
+                                               prim_name);
     } else {
       MS_EXCEPTION(TypeError) << "For " << prim_name << ", input k and padding_value must be const Tensor.";
     }
@@ -109,10 +109,10 @@ abstract::ShapePtr MatrixDiagPartV3InferShape(const PrimitivePtr &primitive,
         MS_EXCEPTION(ValueError) << "For " << prim_name << ", k[0] can not be greater than k[1].";
       }
       max_diag_len = std::min(row + std::min(k_val[1], 0), col + std::min(-k_val[0], 0));
-      out_shape.push_back(k_val[1] - k_val[0] + 1);
+      out_shape.push_back(IntToLong(k_val[1]) - IntToLong(k_val[0]) + 1);
       out_shape.push_back(max_diag_len);
       true_value *= max_diag_len;
-      true_value *= (k_val[1] - k_val[0] + 1);
+      true_value *= (IntToLong(k_val[1]) - IntToLong(k_val[0]) + 1);
     }
     auto max_length_ptr = primitive->GetAttr("max_length");
     MS_EXCEPTION_IF_NULL(max_length_ptr);
@@ -129,7 +129,7 @@ abstract::ShapePtr MatrixDiagPartV3InferShape(const PrimitivePtr &primitive,
     ShapeVector infer_shape_min = {0};
     int64_t max_value = (row + col) * std::max(row, col);
     for (int64_t i = 0; i < rank - kNumber2; i++) {
-      max_value *= x_shape[i];
+      max_value *= x_shape[LongToSize(i)];
     }
     ShapeVector infer_shape_max = {max_value};
     return std::make_shared<abstract::Shape>(out_shape, infer_shape_min, infer_shape_max);
@@ -141,7 +141,7 @@ TypePtr MatrixDiagPartV3InferType(const PrimitivePtr &prim, const std::vector<Ab
   auto prim_name = prim->name();
 
   auto x = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
-  CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex1);
+  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex1);
   auto padding_value = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex2);
 
   (void)abstract::CheckDtypeSame(prim_name, x, padding_value);

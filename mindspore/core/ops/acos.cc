@@ -52,8 +52,8 @@ AbstractBasePtr ACosInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
                           const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  const size_t input_num = 1;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
+  const int64_t input_num = 1;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
   auto types = ACosInferType(primitive, input_args);
   auto shapes = ACosInferShape(primitive, input_args);

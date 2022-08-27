@@ -30,7 +30,7 @@ namespace ops {
 namespace {
 constexpr size_t DIM_SIZE4 = 4;
 constexpr size_t DIM_SIZE5 = 5;
-constexpr size_t kInputsSize = 3;
+constexpr int64_t kInputsSize = 3;
 constexpr size_t kDim4FormatNCDHWIndexC = 0;
 constexpr size_t kDim4FormatNCDHWIndexD = 1;
 constexpr size_t kDim4FormatNCDHWIndexH = 2;

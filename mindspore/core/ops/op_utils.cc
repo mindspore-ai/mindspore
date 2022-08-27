@@ -104,8 +104,10 @@ void ReduceFuncCalShapeInferImpl(const PrimitivePtr &primitive, ShapeVector *sha
   if (axis->isa<ValueTuple>() || axis->isa<ValueList>()) {
     auto axis_ptr_list =
       axis->isa<ValueTuple>() ? axis->cast<ValueTuplePtr>()->value() : axis->cast<ValueListPtr>()->value();
-    if (!axis_ptr_list.size()) {
-      if (keep_dims_value) (void)shape->insert(shape->end(), x_shape.size(), 1);
+    if (axis_ptr_list.empty()) {
+      if (keep_dims_value) {
+        (void)shape->insert(shape->end(), x_shape.size(), 1);
+      }
     } else {
       (void)shape->insert(shape->end(), x_shape.begin(), x_shape.end());
       ValuePtrList axis_items = axis_ptr_list;
@@ -134,7 +136,7 @@ void ReduceFuncCalShapeInferImpl(const PrimitivePtr &primitive, ShapeVector *sha
     int64_t axis_value = GetValue<int64_t>(axis);
     axis_value = ReduceFuncCheckAxisInferImpl(primitive, axis_value, x_shape.size());
     if (keep_dims_value) {
-      shape->at(axis_value) = 1;
+      shape->at(LongToSize(axis_value)) = 1;
     } else {
       (void)shape->erase(shape->begin() + axis_value);
     }
@@ -230,7 +232,7 @@ TypePtr ReduceBaseInferType(const PrimitivePtr &prim, const std::vector<abstract
   MS_EXCEPTION_IF_NULL(input_args[0]);
   auto x_type = input_args[0]->BuildType();
   std::set<TypePtr> valid_types = common_valid_types;
-  valid_types.insert(kBool);
+  (void)valid_types.insert(kBool);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x dtype", x_type, valid_types, prim->name());
   return x_type;
 }

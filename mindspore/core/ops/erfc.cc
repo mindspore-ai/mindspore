@@ -34,7 +34,7 @@ abstract::ShapePtr ErfcInferShape(const PrimitivePtr &primitive, const std::vect
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
+  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
   auto x = input_args[0]->BuildShape();
   const int64_t max_dim = 8;
   auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];

@@ -48,7 +48,7 @@ AbstractBasePtr IgammaInfer(const abstract::AnalysisEnginePtr &, const Primitive
                             const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
   const int64_t kInputNum = 2;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
   auto infer_type = IgammaInferType(primitive, input_args);
   auto infer_shape = IgammaInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

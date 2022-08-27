@@ -25,10 +25,8 @@
 
 namespace mindspore {
 namespace ops {
-namespace {
 const std::set<TypePtr> identityn_valid_types = {kBool,   kInt8,   kInt16,  kInt32,   kInt64,   kUInt8,
                                                  kUInt16, kUInt32, kUInt64, kFloat16, kFloat32, kFloat64};
-}  // namespace
 
 AbstractBasePtr IdentityNInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args) {

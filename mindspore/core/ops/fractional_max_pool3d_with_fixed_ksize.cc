@@ -29,7 +29,7 @@ namespace mindspore {
 namespace ops {
 namespace {
 constexpr size_t kDimSize1 = 1;
-constexpr size_t kDimSize2 = 2;
+constexpr int64_t kDimSize2 = 2;
 constexpr size_t kDimSize3 = 3;
 constexpr size_t kDimSize4 = 4;
 constexpr size_t kDimSize5 = 5;
@@ -142,7 +142,7 @@ abstract::TupleShapePtr FractionalMaxPool3DWithFixedKsizeInferShape(const Primit
         << "For '" << op_name
         << "', if 'x' is 4 dimensional, the first dimension size of 'x' and 'random_samples' must be equal.";
     }
-    if (random_samples_shape[kDimSize2] != kDimSize3) {
+    if (random_samples_shape[kDimSize2] != SizeToLong(kDimSize3)) {
       MS_EXCEPTION(ValueError)
         << "For '" << op_name
         << "', if 'x' is 4 dimensional, the second dimension size of 'random_samples' must be equal to 3.";
@@ -153,7 +153,7 @@ abstract::TupleShapePtr FractionalMaxPool3DWithFixedKsizeInferShape(const Primit
         << "For '" << op_name
         << "', if 'x' is 5 dimensional, the second dimension size of 'x' and 'random_samples' must be equal.";
     }
-    if (random_samples_shape[kDimSize2] != kDimSize3) {
+    if (random_samples_shape[kDimSize2] != SizeToLong(kDimSize3)) {
       MS_EXCEPTION(ValueError)
         << "For '" << op_name
         << "', if 'x' is 5 dimensional, the second dimension size of 'random_samples' must be equal to 3.";

@@ -95,20 +95,20 @@ TypePtr SparseApplyAdagradDAInferType(const PrimitivePtr &primitive, const std::
   auto global_step = input_args[8]->BuildType();
 
   std::map<std::string, TypePtr> args;
-  (void)args.insert({"var", var});
-  (void)args.insert({"grad_accum", grad_accum});
-  (void)args.insert({"grad_square_accum", grad_square_accum});
-  (void)args.insert({"grad", grad});
-  (void)args.insert({"lr", lr});
-  (void)args.insert({"l1", l1});
-  (void)args.insert({"l2", l2});
+  (void)args.emplace("var", var);
+  (void)args.emplace("grad_accum", grad_accum);
+  (void)args.emplace("grad_square_accum", grad_square_accum);
+  (void)args.emplace("grad", grad);
+  (void)args.emplace("lr", lr);
+  (void)args.emplace("l1", l1);
+  (void)args.emplace("l2", l2);
   (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args, common_valid_types, prim_name);
 
   const std::set<TypePtr> valids1 = {kInt32, kInt64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("indices", indices, valids1, prim_name);
 
   std::map<std::string, TypePtr> args_global_step;
-  (void)args_global_step.insert({"global_step", global_step});
+  (void)args_global_step.emplace("global_step", global_step);
   const std::set<TypePtr> valids2 = {kInt64};
   (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args_global_step, valids2, prim_name);
   return var;

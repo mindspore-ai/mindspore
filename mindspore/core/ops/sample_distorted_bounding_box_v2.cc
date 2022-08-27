@@ -74,8 +74,7 @@ abstract::TupleShapePtr SampleDistortedBoundingBoxV2InferShape(const PrimitivePt
   (void)CheckAndConvertUtils::CheckInteger("area_range elements", SizeToLong(area_range_dim), kEqual, kSize2,
                                            prim_name);
   for (size_t i = 0; i < area_range_dim; ++i) {
-    (void)CheckAndConvertUtils::CheckInRange<float>("area_range value", area_range[i], kIncludeRight, {0.0, 1.0},
-                                                    prim_name);
+    CheckAndConvertUtils::CheckInRange<float>("area_range value", area_range[i], kIncludeRight, {0.0, 1.0}, prim_name);
   }
   if (area_range[kIndex0] >= area_range[kIndex1]) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name << "', area_range[0] must less than area_range[1].";
@@ -123,7 +122,7 @@ AbstractBasePtr SampleDistortedBoundingBoxV2Infer(const abstract::AnalysisEngine
                                                   const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t kInputsNum = 3;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputsNum, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputsNum, primitive->name());
   auto infer_type = SampleDistortedBoundingBoxV2InferType(primitive, input_args);
   auto infer_shape = SampleDistortedBoundingBoxV2InferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

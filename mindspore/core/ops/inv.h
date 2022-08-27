@@ -28,7 +28,7 @@ class MIND_API Inv : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Inv);
   Inv() : BaseOperator(kNameInv) { InitIOName({"x"}, {"y"}); }
-  void Init() {}
+  void Init() const {}
 };
 abstract::AbstractBasePtr InvInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const std::vector<abstract::AbstractBasePtr> &input_args);

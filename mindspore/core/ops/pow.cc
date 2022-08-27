@@ -47,24 +47,18 @@ TypePtr PowInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr
   TypePtr x1_type = input_args[kInputIndex0]->BuildType();
   TypePtr x2_type = input_args[kInputIndex1]->BuildType();
   std::set<TypePtr> complex_valid_types = {kComplex64, kComplex128};
-  if (complex_valid_types.count(x1_type) || complex_valid_types.count(x2_type)) {
+  if (complex_valid_types.count(x1_type) > 0 || complex_valid_types.count(x2_type) > 0) {
     std::map<std::pair<TypePtr, TypePtr>, TypePtr> type_infer_dict;
     (void)type_infer_dict.emplace(std::make_pair(kComplex64, kComplex64), kComplex64);
     (void)type_infer_dict.emplace(std::make_pair(kComplex128, kComplex128), kComplex128);
     (void)type_infer_dict.emplace(std::make_pair(kComplex128, kComplex64), kComplex128);
     (void)type_infer_dict.emplace(std::make_pair(kComplex64, kComplex128), kComplex128);
-    if (!type_infer_dict.count(std::make_pair(x1_type, x2_type))) {
-      MS_EXCEPTION(TypeError) << "For '" << prim->name()
-                              << "', Complex math binary op expecting Tensor [complex64, complex64],"
-                              << "[complex64, float32], [float32, complex64], [complex128, complex128],"
-                              << "[complex128, float64], [float64, complex128],"
-                              << "but got : " << x1_type->meta_type() << "," << x2_type->meta_type();
+    if (type_infer_dict.count(std::make_pair(x1_type, x2_type)) == 0) {
       MS_EXCEPTION(TypeError) << "For '" << prim->name()
                               << "', complex math binary op expecting Tensor [complex64, complex64],"
                               << "[complex64, float32], [float32, complex64], [complex128, complex128],"
                               << "[complex128, float64], [float64, complex128],"
                               << "but got : [" << x1_type->meta_type() << "," << x2_type->meta_type() << "].";
-      return type_infer_dict[std::make_pair(x1_type, x2_type)];
     }
   }
   std::map<std::string, TypePtr> types;
@@ -80,7 +74,7 @@ AbstractBasePtr PowInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr
                          const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
   const int64_t kInputNum = 2;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, prim_name);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, prim_name);
   auto infer_type = PowInferType(primitive, input_args);
   auto infer_shape = PowInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

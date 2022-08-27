@@ -29,7 +29,7 @@ abstract::ShapePtr FastGeLUGradInferShape(const PrimitivePtr &primitive,
                                           const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t kInputNum = 2;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, primitive->name());
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
@@ -44,7 +44,7 @@ TypePtr FastGeLUGradInferType(const PrimitivePtr &prim, const std::vector<Abstra
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
   const int64_t kInputNum = 2;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
   MS_EXCEPTION_IF_NULL(input_args[0]);
   auto x_type = input_args[0]->BuildType();
   MS_EXCEPTION_IF_NULL(x_type);

@@ -29,7 +29,7 @@ class MIND_API GeLUGrad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(GeLUGrad);
   GeLUGrad() : BaseOperator(kNameGeLUGrad) { InitIOName({"dy", "x", "y"}, {"z"}); }
-  void Init() {}
+  void Init() const {}
 };
 abstract::AbstractBasePtr GeLUGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                         const std::vector<abstract::AbstractBasePtr> &input_args);

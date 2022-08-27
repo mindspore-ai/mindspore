@@ -35,8 +35,8 @@ abstract::TupleShapePtr SparseApplyAdadeltaInferShape(const PrimitivePtr &primit
     MS_EXCEPTION_IF_NULL(item);
   }
   // Indices and grad must be tensor
-  CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex5);
-  CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex6);
+  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex5);
+  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex6);
   // Get input shape
   auto var_shape_ptr = input_args[0]->BuildShape();
   auto accum_shape_ptr = input_args[1]->BuildShape();

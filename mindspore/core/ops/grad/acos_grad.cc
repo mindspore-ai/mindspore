@@ -52,8 +52,8 @@ AbstractBasePtr ACosGradInfer(const abstract::AnalysisEnginePtr &, const Primiti
                               const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  const size_t input_num = 2;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
+  const int64_t input_num = 2;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex1]);
   auto types = ACosGradInferType(primitive, input_args);

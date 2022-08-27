@@ -42,7 +42,7 @@ abstract::TupleShapePtr FractionalMaxPoolInferShape(const PrimitivePtr &primitiv
     MS_EXCEPTION(ValueError) << "For '" << op_name << "', the size of parameter 'pooling_ratio' must be 4, but got "
                              << std::to_string(pooling_ratio.size()) << ".";
   }
-  if (pooling_ratio[kInputIndex0] != 1.0) {
+  if (!common::IsFloatEqual(pooling_ratio[kInputIndex0], 1.0)) {
     MS_EXCEPTION(ValueError) << "For '" << op_name
                              << "', the first element of parameter 'pooling_ratio' must be 1.0, but got "
                              << std::to_string(pooling_ratio[0]) << ".";
@@ -57,14 +57,14 @@ abstract::TupleShapePtr FractionalMaxPoolInferShape(const PrimitivePtr &primitiv
                              << "', the third element of pooling ratio must be greater than or equal to 1.0, but got "
                              << std::to_string(pooling_ratio[kInputIndex2]) << ".";
   }
-  if (pooling_ratio[kInputIndex3] != 1.0) {
+  if (!common::IsFloatEqual(pooling_ratio[kInputIndex3], 1.0)) {
     MS_EXCEPTION(ValueError) << "For '" << op_name
                              << "', the forth element of parameter 'pooling_ratio' must be 1.0, but got "
                              << std::to_string(pooling_ratio[kInputIndex3]) << ".";
   }
   std::vector<int64_t> out_shape(x_rank);
   for (int i = 0; i < x_rank; ++i) {
-    out_shape[i] = static_cast<int64_t>(std::floor(in_shape[i] / pooling_ratio[i]));
+    out_shape[IntToSize(i)] = static_cast<int64_t>(std::floor(in_shape[IntToSize(i)] / pooling_ratio[IntToSize(i)]));
   }
 
   int64_t row = out_shape[kInputIndex1] + 1;

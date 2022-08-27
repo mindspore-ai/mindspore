@@ -78,7 +78,7 @@ TypePtr AccumulateNV2InferType(const PrimitivePtr &prim, const std::vector<Abstr
     (void)types.emplace(element_i, elements[i]->BuildType());
   }
   std::set<TypePtr> valid_types = common_valid_types;
-  valid_types.insert(kBool);
+  (void)valid_types.insert(kBool);
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim_name);
   return elements[0]->BuildType();
 }

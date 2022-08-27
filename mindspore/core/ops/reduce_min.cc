@@ -29,8 +29,8 @@ AbstractBasePtr ReduceMinInfer(const abstract::AnalysisEnginePtr &, const Primit
                                const std::vector<AbstractBasePtr> &input_args) {
   const int64_t input_num = 1;
   MS_EXCEPTION_IF_NULL(primitive);
-  CheckAndConvertUtils::CheckInteger("input size", SizeToLong(input_args.size()), kGreaterEqual, input_num,
-                                     primitive->name());
+  (void)CheckAndConvertUtils::CheckInteger("input size", SizeToLong(input_args.size()), kGreaterEqual, input_num,
+                                           primitive->name());
   return abstract::MakeAbstract(ReduceBaseInferShape(primitive, input_args, kNameReduceMin),
                                 ReduceBaseInferType(primitive, input_args));
 }

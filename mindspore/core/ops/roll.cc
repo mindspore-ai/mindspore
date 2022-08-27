@@ -45,8 +45,6 @@ TypePtr RollInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePt
 }
 }  // namespace
 
-void Roll::Init(const std::vector<int64_t> axis, const std::vector<int64_t> shift) {}
-
 std::vector<int64_t> Roll::get_axis() const {
   std::vector<int64_t> axis_me;
   axis_me = GetValue<std::vector<int64_t>>(GetAttr(kAxis));

@@ -34,8 +34,8 @@ abstract::ShapePtr NonMaxSuppressionV3InferShape(const PrimitivePtr &primitive,
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
-  CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 1);
+  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
+  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 1);
   auto boxes_shape = std::make_shared<abstract::Shape>(
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape]);
   auto scores_shape = std::make_shared<abstract::Shape>(
