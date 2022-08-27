@@ -100,14 +100,18 @@ void SliceGradCpuKernelMod::ClearVectors() {
 void SliceGradCpuKernelMod::ExpandAllMemberDims(size_t expand_dims) {
   auto output_len = output_shape_.size();
   auto strides_len = strides_.size();
+  // expand begin, end, strides dims equal to output dims
+  if (strides_len < output_len) {
+    for (size_t i = strides_len; i < output_len; ++i) {
+      begin_.push_back(0);
+      end_.push_back(output_shape_[i]);
+      strides_.push_back(1);
+    }
+  }
+  // expand output, begin, end, strides dims equal to max dims 8
   if (output_len < expand_dims) {
     for (size_t i = 0; i < expand_dims - output_len; ++i) {
       (void)output_shape_.insert(output_shape_.begin(), 1);
-    }
-  }
-
-  if (strides_len < expand_dims) {
-    for (size_t i = 0; i < expand_dims - strides_len; ++i) {
       (void)begin_.insert(begin_.begin(), 0);
       (void)strides_.insert(strides_.begin(), 1);
       (void)end_.insert(end_.begin(), 1);
