@@ -55,7 +55,7 @@ void EnvironMgr::Clear() {
   envs_.clear();
 }
 
-bool EnvironMgr::IsScalarTensor(const aicpuops::Tensor &tensor) {
+bool EnvironMgr::IsScalarTensor(const aicpuops::Tensor &tensor) const {
   aicpuops::TensorShape shape = tensor.tensor_shape();
   if (shape.dim_size() == 0) {
     AICPU_LOGD("The shape is empty.");
@@ -69,7 +69,7 @@ bool EnvironMgr::IsScalarTensor(const aicpuops::Tensor &tensor) {
   return false;
 }
 
-bool EnvironMgr::CheckEnvInput(const aicpuops::NodeDef &node_def) {
+bool EnvironMgr::CheckEnvInput(const aicpuops::NodeDef &node_def) const {
   ::google::protobuf::Map<::std::string, ::aicpuops::AttrValue> nodedef_map = node_def.attrs();
   auto value_type_attr = nodedef_map[kEnvValueTypeAttr].i();
   if ((value_type_attr != kObjectTypeTensorType) && (value_type_attr != kObjectTypeEnvType)) {
