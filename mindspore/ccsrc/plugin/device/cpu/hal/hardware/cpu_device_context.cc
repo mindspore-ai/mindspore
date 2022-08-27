@@ -340,7 +340,6 @@ bool CPUKernelExecutor::LaunchKernel(const CNodePtr &kernel, const std::vector<A
                                      const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs,
                                      size_t /* stream_id */) const {
   MS_EXCEPTION_IF_NULL(kernel);
-  MS_LOG(DEBUG) << "Launch kernel: " << kernel->fullname_with_scope();
   auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
   MS_EXCEPTION_IF_NULL(kernel_mod);
 
@@ -355,10 +354,16 @@ bool CPUKernelExecutor::LaunchKernel(const CNodePtr &kernel, const std::vector<A
   const auto &profiler_inst = profiler::cpu::CPUProfiler::GetInstance();
   MS_EXCEPTION_IF_NULL(profiler_inst);
   if (profiler_inst->GetEnableFlag()) {
-    return LaunchKernelWithProfiling(kernel, inputs, workspace, outputs);
+    MS_LOG(DEBUG) << "Begin launch kernel: " << kernel->fullname_with_scope();
+    auto ret = LaunchKernelWithProfiling(kernel, inputs, workspace, outputs);
+    MS_LOG(DEBUG) << "End launch kernel: " << kernel->fullname_with_scope();
+    return ret;
   }
 #endif
-  return DoLaunchKernel(kernel_mod, inputs, workspace, outputs);
+  MS_LOG(DEBUG) << "Begin launch kernel: " << kernel->fullname_with_scope();
+  auto ret = DoLaunchKernel(kernel_mod, inputs, workspace, outputs);
+  MS_LOG(DEBUG) << "End launch kernel: " << kernel->fullname_with_scope();
+  return ret;
 }
 
 bool CPUDeviceResManager::LoadCollectiveCommLib() {

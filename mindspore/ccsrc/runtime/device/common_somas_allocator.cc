@@ -53,11 +53,11 @@ uint8_t *CommonSomasAllocator::GetNodeOutputPtr(const AnfNodePtr &node, size_t i
   MS_EXCEPTION_IF_NULL(node);
   auto kernel_info = dynamic_cast<KernelInfo *>(node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
-  if (index >= kernel_info->somas_output_offset_aligned_size_list().size()) {
+  if (index >= kernel_info->somas_output_result().size()) {
     MS_LOG(EXCEPTION) << "index:[" << index << "] is larger than it's output size:["
-                      << kernel_info->somas_output_offset_aligned_size_list().size() << "]";
+                      << kernel_info->somas_output_result().size() << "]";
   }
-  auto somas_offset_aligned_size = kernel_info->somas_output_offset_aligned_size_list()[index];
+  auto somas_offset_aligned_size = kernel_info->somas_output_result()[index];
   if (somas_offset_aligned_size.second == 0) {
     return nullptr;
   }
@@ -70,11 +70,11 @@ uint8_t *CommonSomasAllocator::GetNodeWorkSpacePtr(const AnfNodePtr &node, size_
   MS_EXCEPTION_IF_NULL(node);
   auto kernel_info = dynamic_cast<KernelInfo *>(node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
-  if (index >= kernel_info->somas_workspace_offset_aligned_size_list().size()) {
+  if (index >= kernel_info->somas_workspace_result().size()) {
     MS_LOG(EXCEPTION) << "index:[" << index << "] is larger than it's output size:["
-                      << kernel_info->somas_workspace_offset_aligned_size_list().size() << "]";
+                      << kernel_info->somas_workspace_result().size() << "]";
   }
-  auto somas_offset_aligned_size = kernel_info->somas_workspace_offset_aligned_size_list()[index];
+  auto somas_offset_aligned_size = kernel_info->somas_workspace_result()[index];
   if (somas_offset_aligned_size.second == 0) {
     return nullptr;
   }

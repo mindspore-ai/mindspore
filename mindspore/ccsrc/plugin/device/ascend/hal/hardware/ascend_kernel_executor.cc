@@ -375,7 +375,6 @@ bool AscendKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<Add
   auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
   KernelType kernel_type = AnfAlgo::GetKernelType(kernel);
   MS_EXCEPTION_IF_NULL(kernel);
-  MS_LOG(DEBUG) << "Launch kernel: " << kernel->fullname_with_scope();
   (void)res_manager_->BindDeviceToCurrentThread();
 
   std::vector<AddressPtr> real_inputs;
@@ -407,7 +406,6 @@ bool AscendKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<Add
   if (nop_op_to_memcpy_.find(kernel) != nop_op_to_memcpy_.end()) {
     (void)MemoryCopyAsync(kernel, real_inputs, outputs);
   } else {
-    MS_LOG(DEBUG) << "Launch kernel " << kernel->fullname_with_scope();
 #ifndef ENABLE_SECURITY
     auto profiler_inst = profiler::ascend::PynativeProfiler::GetInstance();
     MS_EXCEPTION_IF_NULL(profiler_inst);
@@ -415,7 +413,9 @@ bool AscendKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<Add
     profiler_inst->OpDataProducerBegin(res_manager_->runtime_instance_, stream, t_id, kernel->fullname_with_scope(),
                                        is_dynamic_shape);
 #endif
+    MS_LOG(DEBUG) << "Begin launch kernel: " << kernel->fullname_with_scope();
     ret = kernel_mod->Launch(real_inputs, workspace, outputs, stream);
+    MS_LOG(DEBUG) << "End launch kernel: " << kernel->fullname_with_scope();
 #ifndef ENABLE_SECURITY
     profiler_inst->OpDataProducerEnd(t_id, is_dynamic_shape);
 #endif

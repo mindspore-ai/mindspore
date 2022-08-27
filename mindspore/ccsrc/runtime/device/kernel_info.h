@@ -58,8 +58,6 @@ class KernelInfo : public KernelInfoDevice {
   DeviceAddressPtr GetMutableWorkspaceAddr(size_t index) const;
   bool WorkspaceAddrExist(size_t index) const;
   bool SetWorkspaceAddr(const DeviceAddressPtr &output_address, size_t index);
-  bool SetSomasResult(std::vector<std::pair<size_t, size_t>> &&output_somas_result,
-                      std::vector<std::pair<size_t, size_t>> &&workspace_somas_result);
   void set_kernel_mod(const kernel::KernelModPtr &kernel_mod);
   kernel::KernelMod *MutableKernelMod() const;
   const kernel::KernelMod *kernel_mod() const;
@@ -73,12 +71,7 @@ class KernelInfo : public KernelInfoDevice {
   uint32_t graph_id() const { return graph_id_; }
   bool operator==(const KernelInfo &other) const;
   bool is_feature_map() const { return is_feature_map_; }
-  const std::vector<std::pair<size_t, size_t>> &somas_output_offset_aligned_size_list() const {
-    return somas_output_result_;
-  }
-  const std::vector<std::pair<size_t, size_t>> &somas_workspace_offset_aligned_size_list() const {
-    return somas_workspace_result_;
-  }
+
   const std::vector<std::shared_ptr<DeviceAddress>> &output_address_list() const { return output_address_list_; }
   const std::vector<std::shared_ptr<DeviceAddress>> &workspace_address_list() const { return workspace_address_list_; }
 
@@ -86,6 +79,13 @@ class KernelInfo : public KernelInfoDevice {
   // index.
   void set_ref_map(const bool &all_ref, const OutputInputRefMap &ref_map);
   const OutputInputRefMap &out_in_ref_map() const { return out_in_ref_map_; }
+
+  // The interface of somas.
+  bool SetSomasResult(std::vector<std::pair<size_t, size_t>> &&output_somas_result,
+                      std::vector<std::pair<size_t, size_t>> &&workspace_somas_result);
+  bool IsTensorEnableSomas(const std::vector<std::pair<size_t, size_t>> &somas_result, size_t tensor_index) const;
+  const std::vector<std::pair<size_t, size_t>> &somas_output_result() const { return somas_output_result_; }
+  const std::vector<std::pair<size_t, size_t>> &somas_workspace_result() const { return somas_workspace_result_; }
 
  private:
   bool is_feature_map_;
