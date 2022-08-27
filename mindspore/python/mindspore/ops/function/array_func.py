@@ -4258,6 +4258,7 @@ __all__ = [
     'ones_like',
     'shape',
     'shape_',
+    'reverse_sequence',
     'dyn_shape',
     'rank',
     'range',
