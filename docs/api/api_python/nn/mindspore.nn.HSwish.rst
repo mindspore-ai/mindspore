@@ -5,7 +5,7 @@ mindspore.nn.HSwish
 
     Hard Swish激活函数。
 
-    对输入的每个元素计算Hard Swish。
+    对输入的每个元素计算Hard Swish。input是具有任何有效形状的张量。
 
     Hard Swish定义如下：
 

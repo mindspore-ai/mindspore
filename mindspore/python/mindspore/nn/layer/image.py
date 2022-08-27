@@ -303,9 +303,9 @@ class MSSSIM(Cell):
     r"""
     Returns MS-SSIM index between two images.
 
-    Its implementation is based on Wang, Zhou, Eero P. Simoncelli, and Alan C. Bovik. `Multiscale structural similarity
-    for image quality assessment <https://ieeexplore.ieee.org/document/1292216>`_.
-    Signals, Systems and Computers, 2004.
+    Its implementation is based on `Multiscale structural similarity
+    for image quality assessment <https://ieeexplore.ieee.org/document/1292216>`_
+    by Zhou Wang, Eero P. Simoncelli, and Alan C. Bovik, published on Signals, Systems and Computers in 2004.
 
     .. math::
 

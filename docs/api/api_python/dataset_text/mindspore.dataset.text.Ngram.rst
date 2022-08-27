@@ -8,7 +8,7 @@ mindspore.dataset.text.Ngram
     关于N-gram是什么以及它是如何工作的，请参阅 `N-gram <https://en.wikipedia.org/wiki/N-gram#Examples>`_ 。
 
     参数：
-        - **n** (list[int]) -  n-gram 中的 n，它是一个正整数列表。例如 n=[4, 3]，结果将是Tensor包含一个4-gram和一个3-gram的字符串。
+        - **n** (list[int]) - n-gram 中的 n，它是一个正整数列表。例如 n=[4, 3]，结果将是Tensor包含一个4-gram和一个3-gram的字符串。
           如果输入的字符不足以构造一个n-gram，则返回一个空字符串。例如在["mindspore", "best"] 应用 3-gram 将导致生成一个空字符串。
         - **left_pad** (tuple, 可选) - 指定序列的左侧填充，传入tuple的形式为 ("pad_token",pad_width)。
           pad_width 的上限值为 `n` -1。例如，指定 `left_pad=("_", 2)` 将用 "__" 填充序列的左侧。默认值：("", 0)。

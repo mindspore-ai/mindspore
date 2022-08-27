@@ -51,7 +51,7 @@ def imshow_det_bbox(image, bboxes, labels, segm=None, class_names=None, score_th
             is required to indicate the image compression type, e.g. 'jpg', 'png'.
 
     Returns:
-        ndarray: The image with bboxes drawn on it.
+        ndarray, The image with bboxes drawn on it.
 
     Raises:
         ImportError: If opencv-python is not installed.

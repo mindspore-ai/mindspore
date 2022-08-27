@@ -26,7 +26,7 @@ class SparseToDense(Cell):
     In Python, for the ease of use, three tensors are collected into a SparseTensor class.
     MindSpore uses three independent dense tensors: indices, value and dense shape to represent the sparse tensor.
     Separate indexes, values and dense shape tensors can be wrapped in a Sparse Tensor object
-    before being passed to the OPS below.
+    before :class:`mindspore.ops.SparseToDense` is called.
 
     Inputs:
         - **coo_tensor** (:class:`mindspore.COOTensor`) - the sparse COOTensor to convert.

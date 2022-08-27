@@ -241,7 +241,7 @@ class MnistToMR:
 
     def transform(self):
         """
-        Encapsulate the run function to exit normally.
+        Encapsulate the :func:`mindspore.mindrecord.MnistToMR.run` function to exit normally.
 
         Returns:
             MSRStatus, SUCCESS or FAILED.

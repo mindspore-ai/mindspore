@@ -318,7 +318,7 @@ class TFRecordToMR:
 
     def transform(self):
         """
-        Encapsulate the run function to exit normally.
+        Encapsulate the :func:`mindspore.mindrecord.TFRecordToMR.run` function to exit normally.
 
         Returns:
             MSRStatus, SUCCESS or FAILED.

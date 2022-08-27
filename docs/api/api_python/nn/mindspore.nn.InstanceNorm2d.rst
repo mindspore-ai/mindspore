@@ -16,7 +16,7 @@ mindspore.nn.InstanceNorm2d
 
     此层使用从训练和验证模式的输入数据计算得到的实例数据。
 
-    InstanceNorm2d和BatchNorm2d类似，不同之处在于InstanceNorm2d应用于RGB图像等通道数据的每个通道，而BatchNorm2d通常应用于批处理。
+    InstanceNorm2d和BatchNorm2d类似。不同之处在于InstanceNorm2d应用于RGB图像等通道数据的每个通道，而BatchNorm2d通常应用于批处理。
 
     .. note::
         需要注意的是，更新滑动平均和滑动方差的公式为 :math:`\hat{x}_\text{new} = (1 - \text{momentum}) \times x_t + \text{momentum} \times \hat{x}` ,其中 :math:`\hat{x}` 是估计的统计量， :math:`x_t` 是新的观察值。

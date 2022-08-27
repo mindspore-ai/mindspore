@@ -3,7 +3,7 @@ mindspore.nn.HSigmoid
 
 .. py:class:: mindspore.nn.HSigmoid
 
-    Hard Sigmoid激活函数，按元素计算输出。
+    Hard Sigmoid激活函数。按元素计算输出。
 
     Hard Sigmoid定义为：
 

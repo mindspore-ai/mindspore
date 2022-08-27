@@ -315,7 +315,8 @@ class Ngram(TextTensorOperation):
     """
     Generate n-gram from a 1-D string Tensor.
 
-    Refer to https://en.wikipedia.org/wiki/N-gram#Examples for an overview of what n-gram is and how it works.
+    Refer to `N-gram <https://en.wikipedia.org/wiki/N-gram#Examples>`_
+    for an overview of what n-gram is and how it works.
 
     Args:
         n (list[int]): n in n-gram, which is a list of positive integers. For example, if n=[4, 3], then the result

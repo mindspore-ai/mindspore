@@ -324,7 +324,7 @@ class Conv1d(_Conv):
 
     Calculates the 1D convolution on the input tensor which is typically of shape :math:`(N, C_{in}, L_{in})`,
     where :math:`N` is batch size, :math:`C_{in}` is a number of channels and :math:`L_{in}` is a length of sequence.
-    For the tensor of each batch, its shape is :math:`(C_{in}, L_{in})`, the formula is defined as:
+    For the tensor of each batch, its shape is :math:`(C_{in}, L_{in})`, and the formula is defined as:
 
     .. math::
 
@@ -333,7 +333,7 @@ class Conv1d(_Conv):
 
     where :math:`ccor` is the `cross-correlation <https://en.wikipedia.org/wiki/Cross-correlation>`_,
     :math:`C_{in}` is the channel number of the input, :math:`out_{j}` corresponds to the jth channel of
-    the output and :math:`j` is in the range of :math:`[0，C_{out}-1]`. :math:`\text{weight}(C_{\text{out}_j}, k)`
+    the output and :math:`j` is in the range of :math:`[0, C_{out}-1]`. :math:`\text{weight}(C_{\text{out}_j}, k)`
     is a convolution kernel slice with shape :math:`\text{kernel_size}`, where :math:`\text{kernel_size}`
     is the width of the convolution kernel. :math:`\text{bias}` is the bias parameter,
     and :math:`\text{X}` is the input tensor. The shape of full convolution kernel is
@@ -386,18 +386,18 @@ class Conv1d(_Conv):
         pad_mode is 'same':
 
         .. math::
-            L_{out} ＝ \left \lceil{\frac{L_{in}}{\text{stride}}} \right \rceil
+            L_{out} = \left \lceil{\frac{L_{in}}{\text{stride}}} \right \rceil
 
         pad_mode is 'valid':
 
         .. math::
-            L_{out} ＝ \left \lceil{\frac{L_{in} - \text{dilation} \times (\text{kernel_size} - 1) }
+            L_{out} = \left \lceil{\frac{L_{in} - \text{dilation} \times (\text{kernel_size} - 1) }
             {\text{stride}}} \right \rceil
 
         pad_mode is 'pad':
 
         .. math::
-            L_{out} ＝ \left \lfloor{\frac{L_{in} + 2 \times padding - (\text{kernel_size} - 1) \times
+            L_{out} = \left \lfloor{\frac{L_{in} + 2 \times padding - (\text{kernel_size} - 1) \times
             \text{dilation} - 1 }{\text{stride}} + 1} \right \rfloor
 
     Raises:
@@ -961,8 +961,8 @@ class Conv2dTranspose(_Conv):
     r"""
     2D transposed convolution layer.
 
-    Calculates a 2D transposed convolution, which can be regarded as Conv2d for the gradient of the input.
-    It also called deconvolution (although it is not an actual deconvolution).
+    Calculates a 2D transposed convolution, which can be regarded as Conv2d for the gradient of the input,
+    also called deconvolution (although it is not an actual deconvolution).
 
     The input is typically of shape :math:`(N, C, H, W)`, where :math:`N` is batch size, :math:`C` is a number of
     channels, :math:`H_{in}, W_{in}` are the height and width of the feature layer respectively.

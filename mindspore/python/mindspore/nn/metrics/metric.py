@@ -72,7 +72,7 @@ def rearrange_inputs(func):
 
 class Metric(metaclass=ABCMeta):
     """
-    Base class of metric. This class is used to evaluate metrics.
+    Base class of metric, which is used to evaluate metrics.
 
     The `clear`, `update`, and `eval` should be called when evaluating metric, and they should be overridden by
     subclasse. `update` will accumulate intermediate results in the evaluation process, `eval` will evaluate the final

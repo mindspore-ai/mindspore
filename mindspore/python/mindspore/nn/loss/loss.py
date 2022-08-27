@@ -773,7 +773,8 @@ class MultiClassDiceLoss(LossBase):
     r"""
     When there are multiple classifications, label is transformed into multiple binary classifications by one hot.
     For each channel section in the channel, it can be regarded as a binary classification problem, so it can be
-    obtained through the binary loss of each category, and then the average value.
+    obtained through the binary :class:`mindspore.nn.DiceLoss` losses of each category,
+    and then the average value of the binary losses.
 
     Args:
         weights (Union[Tensor, None]): Tensor of shape :math:`(num\_classes, dim)`. The weight shape[0] should be
@@ -1517,10 +1518,12 @@ def _check_input_dtype(labels_dtype, cls_name):
 
 class FocalLoss(LossBase):
     r"""
-    The loss function proposed by Kaiming team in their paper ``Focal Loss for Dense Object Detection`` improves the
-    effect of image object detection. It is a loss function to solve the imbalance of categories and the difference of
-    classification difficulty. If you want to learn more, please refer to the paper.
-    `Focal Loss for Dense Object Detection <https://arxiv.org/pdf/1708.02002.pdf>`_. The function is shown as follows:
+    It is a loss function to solve the imbalance of categories and the difference of
+    classification difficulty.
+    The loss function proposed by Kaiming team in their paper
+    `Focal Loss for Dense Object Detection <https://arxiv.org/pdf/1708.02002.pdf>`_ improves the
+    effect of image object detection.
+    The function is shown as follows:
 
     .. math::
         FL(p_t) = -(1-p_t)^\gamma log(p_t)

@@ -10,6 +10,8 @@ mindspore.nn.ReLU6
     .. math::
         Y = \min(\max(0, x), 6).
 
+    input是具有任何有效形状的张量。
+
     输入：
         - **x** (Tensor) - ReLU6的输入，任意维度的Tensor，其数据类型为float16或float32。
 
