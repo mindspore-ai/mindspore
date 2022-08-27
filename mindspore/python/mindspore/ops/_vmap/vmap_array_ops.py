@@ -1866,6 +1866,37 @@ def get_stridedslice_grad_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(P.TopK)
+def get_topk_vmap_rule(prim, axis_size):
+    """VmapRule for `TopK` operation."""
+    if isinstance(prim, str):
+        prim_name = prim
+        prim = Primitive(prim)
+    else:
+        prim_name = prim.name
+
+    def vmap_rule(x_bdim, k_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, k_bdim)
+        if is_all_none:
+            return result
+
+        x, x_dim = x_bdim
+        k, k_dim = k_bdim
+
+        if k_dim is not None:
+            _raise_value_error("The source axis of `k` in {} must be None, but got {}.".format(prim_name, k_dim))
+
+        if F.rank(x) and x_dim in (-1, F.rank(x) - 1):
+            x = _bdim_at_front(x, x_dim, axis_size)
+            values, indices = prim(x, k)
+            return (values, 0), (indices, 0)
+
+        values, indices = prim(x, k)
+        return (values, x_dim), (indices, x_dim)
+
+    return vmap_rule
+
+
 get_unsupported_dynamic_vmap_rule = vmap_rules_getters.register(NonZero)(get_unsupported_dynamic_vmap_rule)
 get_unsupported_dynamic_vmap_rule = vmap_rules_getters.register(P.Unique)(get_unsupported_dynamic_vmap_rule)
 get_unsupported_dynamic_vmap_rule = \
