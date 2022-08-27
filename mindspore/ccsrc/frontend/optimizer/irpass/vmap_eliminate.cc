@@ -385,6 +385,7 @@ void ExpandVmapValueNode(const FuncGraphPtr &vmap_fg, const pipeline::ResourceBa
                          int axis_size) {
   // Map ValueNode.
   auto manager = resource->manager();
+  MS_EXCEPTION_IF_NULL(manager);
   auto value_nodes = vmap_fg->value_nodes();
   for (const auto &value_pair : value_nodes) {
     auto node = value_pair.first;
@@ -498,6 +499,7 @@ bool ExpandVmapPrim::operator()(const FuncGraphPtr &, const OptimizerPtr &optimi
   // Expand vmap nodes that don't have embed j or vmap nodes.
   bool change = false;
   auto manager = optimizer->manager();
+  MS_EXCEPTION_IF_NULL(manager);
   for (auto &vmap_node : prim_nodes_) {
     auto VmapPrim = GetValueNode<PrimitivePtr>(vmap_node->input(0));
     MS_EXCEPTION_IF_NULL(VmapPrim);

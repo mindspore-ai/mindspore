@@ -100,6 +100,7 @@ static inline bool isTraversable(const AnfNodePtr &node) {
 static AnfNodePtr DoTransform(const OptimizerPtr &optimizer, const AnfNodePtr &node,
                               const SubstitutionPtr &substitution) {
   auto manager = optimizer->manager();
+  MS_EXCEPTION_IF_NULL(manager);
   bool is_match = substitution->predicate_(node);
   if (is_match) {
     TraceGuard trace_guard(std::make_shared<TraceOpt>(node->debug_info()));
@@ -164,6 +165,7 @@ static void UpdateTransformingListWithUserNodes(const OptimizerPtr &optimizer, c
     return;
   }
   auto manager = optimizer->manager();
+  MS_EXCEPTION_IF_NULL(manager);
   auto &node_users = manager->node_users();
   auto users_iterator = node_users.find(node);
   if (users_iterator == node_users.end()) {
@@ -226,9 +228,10 @@ bool SubstitutionList::ApplySubstitutionToIR(const OptimizerPtr &optimizer, cons
   double start = GetTime();
 #endif
   FuncGraphManagerPtr manager = optimizer->manager();
+  MS_EXCEPTION_IF_NULL(manager);
   auto seen = NewSeenGeneration();
   std::deque<AnfNodePtr> todo;
-  todo.emplace_back(func_graph->output());
+  (void)todo.emplace_back(func_graph->output());
   bool changes = false;
 
   auto &all_nodes = manager->all_nodes();
@@ -330,6 +333,7 @@ bool SubstitutionList::operator()(const FuncGraphPtr &func_graph, const Optimize
   MS_EXCEPTION_IF_NULL(optimizer);
   MS_EXCEPTION_IF_NULL(func_graph);
   FuncGraphManagerPtr manager = optimizer->manager();
+  MS_EXCEPTION_IF_NULL(manager);
   manager->AddFuncGraph(func_graph);
   bool changes = false;
   static const auto traverse_mode =

@@ -97,7 +97,8 @@ void TransformNodeAbstractIfEnvType(const AnfNodePtr &node, const abstract::Abst
 
 TypeId GetValueType(const CNodePtr &cnode) {
   // (EnvironSet/EnvironGet, environ, key, value/default)
-  if (cnode->inputs().size() != 4) {
+  constexpr size_t environ_input_size = 4;
+  if (cnode->size() != environ_input_size) {
     MS_LOG(EXCEPTION) << "EnvrionSet/EnvironGet cnode should have 4 inputs, but: " << cnode->DebugString();
   }
   const auto &value_abstract = cnode->input(3)->abstract();

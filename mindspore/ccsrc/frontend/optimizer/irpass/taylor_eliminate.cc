@@ -136,6 +136,7 @@ bool ExpandTaylorPrim::operator()(const FuncGraphPtr &, const OptimizerPtr &opti
   // Search all taylor nodes.
   bool change = false;
   auto manager = optimizer->manager();
+  MS_EXCEPTION_IF_NULL(manager);
   for (auto &taylor_node : prim_nodes_) {
     auto taylor_fg_node = taylor_node->input(1);
     auto taylor_fg = GetValueNode<FuncGraphPtr>(taylor_fg_node);

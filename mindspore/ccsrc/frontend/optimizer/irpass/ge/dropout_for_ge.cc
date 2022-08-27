@@ -137,8 +137,10 @@ AnfNodePtr DropoutForGE::operator()(const OptimizerPtr &opt, const AnfNodePtr &n
 
 AnfNodePtr DropoutGradForGE::operator()(const OptimizerPtr &opt, const AnfNodePtr &node) {
   Reset();
+  MS_EXCEPTION_IF_NULL(node->func_graph());
   AnfVisitor::Match(prim::kPrimDropoutGrad, {IsNode, IsNode})(node);
   auto dropout_grad_node = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(dropout_grad_node);
   auto origin_prim = GetValueNode<PrimitivePtr>(dropout_grad_node->input(0));
   auto keep_prob = origin_prim->GetAttr(kKeepProbAttrName);
 

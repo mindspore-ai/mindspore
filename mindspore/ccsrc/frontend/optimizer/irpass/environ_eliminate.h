@@ -92,6 +92,7 @@ class EnvironGetAddEliminater : public AnfVisitor {
     // {prim::kPrimEnvironGet, {...}, C, Z}
     auto cnode = node->cast<CNodePtr>();
     auto inp1 = cnode->input(1)->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(inp1);
     auto c = cnode->input(2);
     auto z = cnode->input(3);
 
@@ -140,6 +141,7 @@ class EnvironGetSetEliminater : public AnfVisitor {
     // {prim::kPrimEnvironGet, {...}, C2, Z}
     auto cnode = node->cast<CNodePtr>();
     auto inp1 = cnode->input(1)->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(inp1);
     auto key2 = cnode->input(2);
     auto c2 = GetValueNode<SymbolicKeyInstancePtr>(key2);
     auto default_v = cnode->input(3);
@@ -227,7 +229,8 @@ class SplitEnvironGetSetWithTupleValue : public AnfVisitor {
   ~SplitEnvironGetSetWithTupleValue() override = default;
 
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
-    if (!(IsPrimitiveCNode(node, prim::kPrimEnvironSet) || IsPrimitiveCNode(node, prim::kPrimEnvironGet))) {
+    if (!(IsPrimitiveCNode(node, prim::kPrimEnvironSet) || IsPrimitiveCNode(node, prim::kPrimEnvironGet)) ||
+        node->func_graph() == nullptr) {
       return nullptr;
     }
     // {prim::kPrimEnvironSet, E, key, node_with_abstract_is_tuple} or

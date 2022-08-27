@@ -313,8 +313,8 @@ void GetLoadsFromUpdateState(const CNodePtr &update_state, std::vector<CNodePtr>
 
 void GetLoadsFollowLoad(const CNodePtr &update_state, const CNodePtr &load, std::vector<CNodePtr> *update_states,
                         std::vector<CNodePtr> *loads) {
-  update_states->emplace_back(update_state);
-  loads->emplace_back(load);
+  (void)update_states->emplace_back(update_state);
+  (void)loads->emplace_back(load);
   auto &load_attach = load->input(kAttachIndex);
   if (IsPrimitiveCNode(load_attach, prim::kPrimUpdateState)) {
     GetLoadsFromUpdateState(load_attach->cast<CNodePtr>(), update_states, loads);
@@ -338,10 +338,10 @@ void GetLoadsFollowTuple(const CNodePtr &update_state, const CNodePtr &make_tupl
     return;
   }
   // Add update_state and load nodes.
-  update_states->emplace_back(update_state);
+  (void)update_states->emplace_back(update_state);
   for (size_t i = 1; i < inputs.size(); ++i) {
     auto &element = inputs.at(i);
-    loads->emplace_back(element->cast<CNodePtr>());
+    (void)loads->emplace_back(element->cast<CNodePtr>());
   }
   // Follow prev update state if found.
   auto prev_node = update_state->input(kInputIndex);
@@ -398,7 +398,7 @@ void EliminateUselessNodesForUpdateStates(const std::vector<CNodePtr> &update_st
   std::vector<AnfNodePtr> depend_nodes;
   for (auto &user : us_users) {
     if (IsPrimitiveCNode(user.first, prim::kPrimDepend) && user.second == kAttachIndex) {
-      depend_nodes.emplace_back(user.first);
+      (void)depend_nodes.emplace_back(user.first);
     }
   }
   if (depend_nodes.empty()) {
@@ -450,7 +450,7 @@ AnfNodePtr EliminateUpdateStateForLoads(const CNodePtr &old_update_state, const 
   AnfNodePtrList make_tuple_inputs;
   std::set<AnfNodePtr> loaded_para_set;
   make_tuple_inputs.reserve(loads.size() + 1);
-  make_tuple_inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
+  (void)make_tuple_inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
   auto input_monad = loads.back()->input(kAttachIndex);
   for (auto iter = loads.rbegin(); iter != loads.rend(); ++iter) {
     auto &load = *iter;
@@ -458,7 +458,7 @@ AnfNodePtr EliminateUpdateStateForLoads(const CNodePtr &old_update_state, const 
     const bool is_new_load = result.second;
     if (is_new_load) {
       // Put Load node as a tuple element, if the parameter is not loaded by other Load.
-      make_tuple_inputs.emplace_back(load);
+      (void)make_tuple_inputs.emplace_back(load);
     }
     auto load_attach = load->input(kAttachIndex);
     if (load_attach != input_monad) {
@@ -818,6 +818,7 @@ bool UpdatestateDependEliminater::operator()(const FuncGraphPtr &func_graph, con
 
   bool change = false;
   auto manager = optimizer->manager();
+  MS_EXCEPTION_IF_NULL(manager);
   auto &all_nodes = manager->all_nodes();
   std::vector<AnfNodePtr> todo = DeepScopedGraphSearchWithFilter(func_graph->get_return(), AlwaysInclude, filter);
   for (auto &node : todo) {
@@ -852,6 +853,7 @@ bool UpdatestateAssignEliminater::operator()(const FuncGraphPtr &func_graph, con
 
   bool change = false;
   auto manager = optimizer->manager();
+  MS_EXCEPTION_IF_NULL(manager);
   auto &all_nodes = manager->all_nodes();
   std::vector<AnfNodePtr> todo = DeepScopedGraphSearchWithFilter(func_graph->get_return(), AlwaysInclude, filter);
   for (auto &node : todo) {
@@ -888,6 +890,7 @@ bool UpdatestateLoadsEliminater::operator()(const FuncGraphPtr &func_graph, cons
 
   bool change = false;
   auto manager = optimizer->manager();
+  MS_EXCEPTION_IF_NULL(manager);
   auto &all_nodes = manager->all_nodes();
   std::vector<AnfNodePtr> todo = DeepScopedGraphSearchWithFilter(func_graph->get_return(), AlwaysInclude, filter);
   for (auto &node : todo) {
