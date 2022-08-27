@@ -89,6 +89,7 @@
 #include "plugin/device/ascend/optimizer/ir_fusion/bn_reduce_grad_conv2d_backprop_filter_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/transposed_update_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/softmax_dropout_do_mask_v3_fusion.h"
+#include "plugin/device/ascend/optimizer/ir_fusion/conv2d_backprop_input_dilation_fusion.h"
 #include "plugin/device/ascend/optimizer/format_type/insert_trans_op.h"
 #include "plugin/device/ascend/optimizer/format_type/trans_op_format_refine.h"
 #include "plugin/device/ascend/optimizer/format_type/dynamic_rnn_grad_reformat.h"
@@ -177,6 +178,7 @@
 #include "include/common/debug/dump_proto.h"
 #include "include/common/debug/draw.h"
 #include "plugin/device/ascend/optimizer/optimizer_factory.h"
+#include "plugin/device/ascend/hal/hardware/ascend_utils.h"
 
 namespace mindspore {
 namespace opt {
@@ -362,6 +364,7 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
   ir_fusion_pm->AddPass(std::make_shared<BnGradSplit>());
   ir_fusion_pm->AddPass(std::make_shared<SyncBnSplit>());
   ir_fusion_pm->AddPass(std::make_shared<SyncBnGradSplit>());
+  ir_fusion_pm->AddPass(std::make_shared<Conv2dBackpropInputDilationFusion>());
   ir_fusion_pm->AddPass(std::make_shared<LayerNormGradSplit>());
   ir_fusion_pm->AddPass(std::make_shared<AdamWeightDecayFission>());
   ir_fusion_pm->AddPass(std::make_shared<ScaleGradFission>());
@@ -431,6 +434,7 @@ void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::Kerne
   ir_fusion_pm->AddPass(std::make_shared<EraseVisitAttr>());
   ir_fusion_pm->AddPass(std::make_shared<BnSplit>());
   ir_fusion_pm->AddPass(std::make_shared<BnGradSplit>());
+  ir_fusion_pm->AddPass(std::make_shared<Conv2dBackpropInputDilationFusion>());
   ir_fusion_pm->AddPass(std::make_shared<LayerNormGradSplit>());
   ir_fusion_pm->AddPass(std::make_shared<Conv2dBackpropFilterMul>());
   //  ir_fusion_pm->AddPass(std::make_shared<TopKSplit>());
