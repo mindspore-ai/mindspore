@@ -62,6 +62,10 @@ Neural Network
     mindspore.ops.pad
     mindspore.ops.padding
     mindspore.ops.pdist
+    mindspore.ops.prelu
+    mindspore.ops.relu
+    mindspore.ops.relu6
+
 
 Loss Functions
 ^^^^^^^^^^^^^^

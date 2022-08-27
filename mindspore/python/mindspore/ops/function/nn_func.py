@@ -35,7 +35,6 @@ softsign_ = P.Softsign()
 hardswish_ = P.HSwish()
 mish_ = NN_OPS.Mish()
 selu_ = NN_OPS.SeLU()
-prelu_ = NN_OPS.PReLU()
 
 
 def adaptive_avg_pool2d(input_x, output_size):
@@ -978,7 +977,7 @@ def softmax(x, axis=-1):
     if not isinstance(axis, int):
         type_axis = type(axis).__name__
         raise TypeError(f" the type of 'axis' must be 'int', but got '{axis}' with type '{type_axis}'.")
-    softmax_ = P.Softmax(axis=axis)
+    softmax_ = _get_cache_prim(P.Softmax)(axis=axis)
     return softmax_(x)
 
 
@@ -1308,6 +1307,82 @@ def pad(input_x, paddings):
     return slice_(out, slice_begin, slice_size)
 
 
+def relu(x):
+    r"""
+    Computes ReLU (Rectified Linear Unit activation function) of input tensors element-wise.
+
+    It returns max(x, 0) element-wise. Specially, the neurons with the negative output
+    will be suppressed and the active neurons will stay the same.
+
+    .. math::
+
+        ReLU(x) = (x)^+ = max(0, x)
+
+    Note:
+        In general, this operator is more commonly used. The difference from `ReLuV2` is that the `ReLuV2` will
+        output one more Mask.
+
+    Args:
+        x (Tensor): Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
+          additional dimensions, data type is
+          `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
+
+    Returns:
+        Tensor of shape :math:`(N, *)`, with the same dtype and shape as the `input_x`.
+
+    Raises:
+        TypeError: If dtype of `input_x` is not a number.
+        TypeError: If `input_x` is not a Tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
+        >>> output = ops.relu(input_x)
+        >>> print(output)
+        [[0. 4. 0.]
+         [2. 0. 9.]]
+    """
+    relu_ = _get_cache_prim(NN_OPS.ReLU)()
+    return relu_(x)
+
+
+def relu6(x):
+    r"""
+    Computes ReLU (Rectified Linear Unit) upper bounded by 6 of input tensors element-wise.
+
+    .. math::
+
+        \text{ReLU6}(x) = \min(\max(0,x), 6)
+
+    It returns :math:`\min(\max(0,x), 6)` element-wise.
+
+    Args:
+        x(Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
+          additional dimensions, with float16 or float32 data type.
+
+    Returns:
+        Tensor, with the same dtype and shape as the `input_x`.
+
+    Raises:
+        TypeError: If dtype of `input_x` is neither float16 nor float32.
+        TypeError: If `input_x` is not a Tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
+        >>> result = ops.relu6(input_x)
+        >>> print(result)
+        [[0. 4. 0.]
+         [2. 0. 6.]]
+    """
+    relu6_ = _get_cache_prim(NN_OPS.ReLU6)()
+    return relu6_(x)
+
+
 def prelu(x, weight):
     r"""
     Parametric Rectified Linear Unit activation function.
@@ -1331,7 +1406,7 @@ def prelu(x, weight):
           On GPU devices, when the input is a scalar, the shape is 1.
 
     Returns:
-        Tensor, with the same type as `x`.
+        Tensor, with the same dtype as `x`.
 
     For detailed information, please refer to :class:`mindspore.nn.PReLU`.
 
@@ -1356,6 +1431,7 @@ def prelu(x, weight):
           [ 2.00  3.00]
           [ 4.0   5.00]]]
     """
+    prelu_ = _get_cache_prim(NN_OPS.PReLU)()
     return prelu_(x, weight)
 
 
