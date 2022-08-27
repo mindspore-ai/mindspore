@@ -94,7 +94,7 @@ if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86_avx512" || 
     fi
 fi
 
-if [[ $backend == "all" || $backend == "codegen" || $backend == "cortex_codegen" ]]; then
+if [[ $backend == "all" || $backend == "codegen" || $backend == "cortex_codegen" || $backend == "quant_codegen" ]]; then
     # run codegen
     sh $cur_path/scripts/run_benchmark_codegen.sh -r $release_path -m $models_path -d $device_id -e $backend -l $level
     x86_status=$?
