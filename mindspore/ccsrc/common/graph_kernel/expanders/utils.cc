@@ -33,6 +33,7 @@ inner::LiteGraphPtr OpDesc::Run(const BaseInfoList &inputs, const BaseInfoList &
                   [this](const std::unique_ptr<Validator> &v) { return !(v->Check(*this)); })) {
     return nullptr;
   }
+  Init();
   if (!this->CheckInputs()) {
     return nullptr;
   }
