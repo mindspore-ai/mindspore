@@ -47,6 +47,7 @@ Neural Network
     mindspore.ops.adaptive_avg_pool1d
     mindspore.ops.adaptive_avg_pool2d
     mindspore.ops.adaptive_avg_pool3d
+    mindspore.ops.adaptive_max_pool1d
     mindspore.ops.adaptive_max_pool3d
     mindspore.ops.avg_pool2d
     mindspore.ops.conv2d
@@ -255,6 +256,7 @@ Reduction Functions
     mindspore.ops.min
     mindspore.ops.norm
     mindspore.ops.prod
+    mindspore.ops.argmax
 
 .. list-table::
    :widths: 50 50

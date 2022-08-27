@@ -23,6 +23,7 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.common import dtype as mstype
 import mindspore.ops as ops
+from mindspore.ops import functional as F
 
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
@@ -78,3 +79,25 @@ def test_argmax_high_dims():
         ms_output = Argmax(Tensor(x))
         np_output = np.argmax(x, axis=rnd_axis)
         assert (ms_output.asnumpy() == np_output).all()
+
+
+def adaptive_argmax_functional(nptype):
+    x = Tensor(np.array([[1, 20, 5], [67, 8, 9], [130, 24, 15]]).astype(nptype))
+    output = F.argmax(x, axis=-1, output_type=mstype.int32)
+    expected = np.array([1, 0, 0]).astype(np.int32)
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_argmax_float32_functional():
+    """
+    Feature: test argmax functional api.
+    Description: test float32 inputs.
+    Expectation: the result match with expected result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    adaptive_argmax_functional(np.float32)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
+    adaptive_argmax_functional(np.float32)
