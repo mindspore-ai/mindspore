@@ -68,8 +68,9 @@ constexpr auto kJsonKeyTargetInfo = "target_info";
 constexpr auto kJsonKeyComputeCapability = "compute_capability";
 constexpr auto kJsonKeySmCount = "sm_count";
 constexpr auto kJsonKeySystem = "system";
-constexpr auto kJsonKeyArch = "arch";
-constexpr auto kJsonKeyFeature = "feature";
+constexpr auto kJsonKeyCpuArch = "arch";
+constexpr auto kJsonKeyCpuFeature = "feature";
+constexpr auto kJsonKeyCpuType = "cpu";
 constexpr auto kJsonKeyNodeName = "node_name";
 
 // dump option
