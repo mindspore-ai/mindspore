@@ -84,7 +84,8 @@ Status MapNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
       RETURN_STATUS_UNEXPECTED("MapNode containing random operation is not supported as a descendant of cache.");
     }
   }
-  auto map_op = std::make_shared<MapOp>(input_columns_, output_columns_, tensor_ops, num_workers_, connector_que_size_);
+  auto map_op =
+    std::make_shared<MapOp>(input_columns_, output_columns_, operations_, num_workers_, connector_que_size_);
 
   if (!callbacks_.empty()) {
     map_op->AddCallbacks(callbacks_);

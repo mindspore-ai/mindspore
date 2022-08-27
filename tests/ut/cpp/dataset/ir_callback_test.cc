@@ -25,7 +25,7 @@
 #include "minddata/dataset/engine/tree_adapter.h"
 #include "minddata/dataset/include/dataset/datasets.h"
 #include "minddata/dataset/include/dataset/transforms.h"
-#include "minddata/dataset/kernels/data/no_op.h"
+#include "minddata/dataset/kernels/ir/data/transforms_ir.h"
 #include "utils/log_adapter.h"
 
 using namespace mindspore::dataset;
@@ -187,9 +187,10 @@ class MindDataTestCallback : public UT::DatasetOpTesting {
     // config mapOp
     std::vector<std::string> input_columns = {"label"};
     std::vector<std::string> output_columns = {};
-    std::vector<std::shared_ptr<TensorOp>> op_list;
-    std::shared_ptr<TensorOp> my_no_op = std::make_shared<NoOp>();
-    op_list.push_back(my_no_op);
+    std::vector<std::shared_ptr<TensorOperation>> op_list;
+    std::shared_ptr<TensorOperation> my_op =
+      std::make_shared<transforms::TypeCastOperation>(DataType(DataType::DE_FLOAT64));
+    op_list.push_back(my_op);
     std::shared_ptr<MapOp> map_op =
       std::make_shared<MapOp>(input_columns, output_columns, std::move(op_list), num_workers, op_connector_size);
 
@@ -252,9 +253,10 @@ TEST_F(MindDataTestCallback, TestMultiEpochCallback) {
   // config mapOp
   std::vector<std::string> input_columns = {"label"};
   std::vector<std::string> output_columns = {};
-  std::vector<std::shared_ptr<TensorOp>> op_list;
-  std::shared_ptr<TensorOp> my_no_op = std::make_shared<NoOp>();
-  op_list.push_back(my_no_op);
+  std::vector<std::shared_ptr<TensorOperation>> op_list;
+  std::shared_ptr<TensorOperation> my_op =
+    std::make_shared<transforms::TypeCastOperation>(DataType(DataType::DE_FLOAT64));
+  op_list.push_back(my_op);
   std::shared_ptr<MapOp> map_op =
     std::make_shared<MapOp>(input_columns, output_columns, std::move(op_list), num_workers, op_connector_size);
   std::vector<std::shared_ptr<DSCallback>> cbs = {};

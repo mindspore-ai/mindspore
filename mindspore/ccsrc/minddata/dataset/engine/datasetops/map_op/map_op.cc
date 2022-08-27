@@ -25,6 +25,7 @@
 #include "minddata/dataset/core/global_context.h"
 
 #include "minddata/dataset/engine/datasetops/map_op/cpu_map_job.h"
+#include "minddata/dataset/engine/ir/datasetops/map_node.h"
 #include "minddata/dataset/kernels/tensor_op.h"
 #include "minddata/dataset/util/log_adapter.h"
 #include "minddata/dataset/util/task_manager.h"
@@ -33,14 +34,25 @@ namespace mindspore {
 namespace dataset {
 // Constructor of MapOp
 MapOp::MapOp(const std::vector<std::string> &in_col_names, const std::vector<std::string> &out_col_names,
-             std::vector<std::shared_ptr<TensorOp>> tensor_funcs, int32_t num_workers, int32_t op_connector_size)
+             std::vector<std::shared_ptr<TensorOperation>> tensor_operations, int32_t num_workers,
+             int32_t op_connector_size)
     : ParallelOp(num_workers, op_connector_size),
-      tfuncs_(std::move(tensor_funcs)),
+      tensor_operations_(tensor_operations),
       in_columns_(in_col_names),
       out_columns_(out_col_names),
       python_mp_(nullptr) {
   // Set connector size via config.
   // If caller didn't specify the out_col_names, assume they are same as the in_columns.
+
+  // Build TensorOp from TensorOperation vector
+  // This is to ensure each iterator holds its own copy of the TensorOp objects.
+  for (int32_t i = 0; i < num_workers; i++) {
+    tfuncs_.push_back(std::vector<std::shared_ptr<TensorOp>>());
+    (void)std::transform(
+      tensor_operations_.begin(), tensor_operations_.end(), std::back_inserter(tfuncs_[i]),
+      [](std::shared_ptr<TensorOperation> operation) -> std::shared_ptr<TensorOp> { return operation->Build(); });
+  }
+
   if (out_columns_.empty() || out_columns_[0].empty()) {
     out_columns_ = in_columns_;
   }
@@ -61,16 +73,18 @@ void MapOp::Print(std::ostream &out, bool show_all) const {
     for (size_t i = 0; i < in_columns_.size(); i++) {
       out << " " << in_columns_[i];
     }
-    out << "\n  TensorOps:";
     for (size_t i = 0; i < tfuncs_.size(); i++) {
-      out << " " << *(tfuncs_[i].get());
+      out << "\n  TensorOps with worker_id " << i << ":";
+      for (size_t j = 0; j < tfuncs_[i].size(); j++) {
+        out << " " << *(tfuncs_[i][j].get());
+      }
     }
     out << "\n\n";
   }
 }
 
 // A helper function that fetch worker map job from local queues and extract the data and map job list
-Status MapOp::FetchNextWork(uint32_t worker_id, TensorRow *row, std::vector<std::shared_ptr<MapJob>> *job_list) {
+Status MapOp::FetchNextWork(int32_t worker_id, TensorRow *row, std::vector<std::shared_ptr<MapJob>> *job_list) {
   std::unique_ptr<MapWorkerJob> worker_job;
   // Fetch the next worker job and TensorRow
   RETURN_IF_NOT_OK(worker_in_queues_[static_cast<const int>(worker_id)]->PopFront(&worker_job));
@@ -81,10 +95,10 @@ Status MapOp::FetchNextWork(uint32_t worker_id, TensorRow *row, std::vector<std:
   return Status::OK();
 }
 
-Status MapOp::GenerateWorkerJob(const std::unique_ptr<MapWorkerJob> *worker_job) {
+Status MapOp::GenerateWorkerJob(const std::unique_ptr<MapWorkerJob> *worker_job, int32_t worker_id) {
   std::shared_ptr<MapJob> map_job = nullptr;
   MapTargetDevice prev_target = MapTargetDevice::kCpu;
-  for (size_t i = 0; i < tfuncs_.size(); i++) {
+  for (size_t j = 0; j < tfuncs_[worker_id].size(); j++) {
     // Currently we only have CPU as the device target
     // In the future, we will have heuristic or control from user to select target device
     MapTargetDevice target_device = MapTargetDevice::kCpu;
@@ -95,12 +109,12 @@ Status MapOp::GenerateWorkerJob(const std::unique_ptr<MapWorkerJob> *worker_job)
     if (map_job == nullptr) {
       map_job = std::make_shared<CpuMapJob>();
     }
-    RETURN_IF_NOT_OK(map_job->AddOperation(tfuncs_[i]));
+    RETURN_IF_NOT_OK(map_job->AddOperation(tfuncs_[worker_id][j]));
 
     // Push map_job into worker_job if one of the two conditions is true:
     // 1) It is the last tensor operation in tfuncs_
     // 2) The the target device of the current tensor operation is different with previous one
-    if ((i + 1 == tfuncs_.size()) || ((i != 0) && (prev_target != target_device))) {
+    if ((j + 1 == tfuncs_[worker_id].size()) || ((j != 0) && (prev_target != target_device))) {
       (*worker_job)->jobs.push_back(std::move(map_job));
     }
 
@@ -140,12 +154,13 @@ Status MapOp::operator()() {
       RETURN_IF_NOT_OK(callback_manager_.StepBegin(CallbackParam(op_current_epochs_ + 1, ep_step, total_step)));
 
       std::unique_ptr<MapWorkerJob> worker_job = std::make_unique<MapWorkerJob>(std::move(new_row));
+      int32_t cur_worker_id = NextWorkerID();
 
       // Populate map worker job for a worker to execute
-      RETURN_IF_NOT_OK(GenerateWorkerJob(&worker_job));
+      RETURN_IF_NOT_OK(GenerateWorkerJob(&worker_job, cur_worker_id));
 
       // Push map worker job to the corresponding worker's queue
-      RETURN_IF_NOT_OK(worker_in_queues_[NextWorkerID()]->Add(std::move(worker_job)));
+      RETURN_IF_NOT_OK(worker_in_queues_[cur_worker_id]->Add(std::move(worker_job)));
 
       RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));
     }
@@ -391,6 +406,12 @@ Status MapOp::SendQuitFlagToWorker(int32_t worker_id) {
 
 Status MapOp::AddNewWorkers(int32_t num_new_workers) {
   RETURN_IF_NOT_OK(ParallelOp::AddNewWorkers(num_new_workers));
+  for (int32_t i = 0; i < num_new_workers; i++) {
+    tfuncs_.push_back(std::vector<std::shared_ptr<TensorOp>>());
+    (void)std::transform(
+      tensor_operations_.begin(), tensor_operations_.end(), std::back_inserter(tfuncs_[tfuncs_.size() - 1]),
+      [](std::shared_ptr<TensorOperation> operation) -> std::shared_ptr<TensorOp> { return operation->Build(); });
+  }
   if (python_mp_ != nullptr) {
     CHECK_FAIL_RETURN_UNEXPECTED(num_new_workers > 0, "Number of workers added should be greater than 0.");
     python_mp_->add_new_workers(num_new_workers);
@@ -400,6 +421,9 @@ Status MapOp::AddNewWorkers(int32_t num_new_workers) {
 
 Status MapOp::RemoveWorkers(int32_t num_workers) {
   RETURN_IF_NOT_OK(ParallelOp::RemoveWorkers(num_workers));
+  for (int32_t i = 0; i < num_workers; i++) {
+    tfuncs_.pop_back();
+  }
   if (python_mp_ != nullptr) {
     CHECK_FAIL_RETURN_UNEXPECTED(num_workers > 0, "Number of workers removed should be greater than 0.");
     python_mp_->remove_workers(num_workers);

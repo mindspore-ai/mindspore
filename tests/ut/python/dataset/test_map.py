@@ -15,11 +15,14 @@
 """
 Test Map op in Dataset
 """
+import numpy as np
 import pytest
+
 import mindspore.dataset as ds
 import mindspore.dataset.text as text
 from mindspore.dataset.transforms import transforms
 import mindspore.dataset.vision as vision
+from util import config_get_set_seed, config_get_set_num_parallel_workers
 
 DATA_DIR = "../data/dataset/testPK/data"
 
@@ -169,8 +172,169 @@ def test_map_operations1():
     assert num_iter == 5
 
 
+def test_c_map_randomness_repeatability(set_seed_to=1111, set_num_parallel_workers_to=4, num_repeat=10):
+    """
+    Feature: Map op
+    Description: Test repeatability of Map op with C implemented random ops with num_parallel_workers > 1
+    Expectation: The dataset would be the same each iteration
+    """
+    data_dir_tf = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
+    schema_dir_tf = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
+    original_seed = config_get_set_seed(set_seed_to)
+    original_num_parallel_workers = config_get_set_num_parallel_workers(set_num_parallel_workers_to)
+
+    # First dataset
+    data1 = ds.TFRecordDataset(data_dir_tf, schema_dir_tf, columns_list=["image"], shuffle=False)
+    transforms_list1 = [vision.Decode(),
+                        vision.RandomResizedCrop((256, 512), (2, 2), (1, 3)),
+                        vision.RandomColorAdjust(
+                            brightness=(0.5, 0.5), contrast=(0.5, 0.5), saturation=(0.5, 0.5), hue=(0, 0))]
+    data1 = data1.map(operations=transforms_list1, input_columns=["image"])
+
+    for _ in range(num_repeat):
+        # Next datasets
+        data2 = ds.TFRecordDataset(data_dir_tf, schema_dir_tf, columns_list=["image"], shuffle=False)
+        transforms_list2 = [vision.Decode(),
+                            vision.RandomResizedCrop((256, 512), (2, 2), (1, 3)),
+                            vision.RandomColorAdjust(
+                                brightness=(0.5, 0.5), contrast=(0.5, 0.5), saturation=(0.5, 0.5), hue=(0, 0))]
+        data2 = data2.map(operations=transforms_list2, input_columns=["image"])
+
+        # Expect to have the same image every time
+        for img1, img2 in zip(data1.create_tuple_iterator(num_epochs=1, output_numpy=True),
+                              data2.create_tuple_iterator(num_epochs=1, output_numpy=True)):
+            np.testing.assert_equal(img1, img2)
+
+    # Restore config setting
+    ds.config.set_seed(original_seed)
+    ds.config.set_num_parallel_workers(original_num_parallel_workers)
+
+
+def test_c_map_randomness_repeatability_with_shards(set_seed_to=312, set_num_parallel_workers_to=9, num_repeat=10):
+    """
+    Feature: Map op
+    Description: Test repeatability of Map op with C implemented random ops with num_parallel_workers > 1 and sharding
+    Expectation: The dataset would be the same each iteration
+    """
+    image_folder_dir = "../data/dataset/testPK/data"
+    num_samples = 55
+    num_shards = 2
+    shard_id = 0
+    shuffle = False
+    class_index = dict()
+    original_seed = config_get_set_seed(set_seed_to)
+    original_num_parallel_workers = config_get_set_num_parallel_workers(set_num_parallel_workers_to)
+
+    # First dataset
+    data1 = ds.ImageFolderDataset(image_folder_dir, num_samples=num_samples, num_shards=num_shards,
+                                  shard_id=shard_id,
+                                  shuffle=shuffle, class_indexing=class_index)
+    transforms_list1 = [vision.Decode(),
+                        vision.RandomResizedCrop((256, 512), (2, 2), (1, 3)),
+                        vision.RandomColorAdjust(
+                            brightness=(0.5, 0.5), contrast=(0.5, 0.5), saturation=(0.5, 0.5), hue=(0, 0))]
+    data1 = data1.map(operations=transforms_list1, input_columns=["image"])
+
+    for _ in range(num_repeat):
+        # Next datasets
+        data2 = ds.ImageFolderDataset(image_folder_dir, num_samples=num_samples, num_shards=num_shards,
+                                      shard_id=shard_id,
+                                      shuffle=shuffle, class_indexing=class_index)
+        transforms_list2 = [vision.Decode(),
+                            vision.RandomResizedCrop((256, 512), (2, 2), (1, 3)),
+                            vision.RandomColorAdjust(
+                                brightness=(0.5, 0.5), contrast=(0.5, 0.5), saturation=(0.5, 0.5), hue=(0, 0))]
+        data2 = data2.map(operations=transforms_list2, input_columns=["image"])
+
+        # Expect to have the same image every time
+        for img1, img2 in zip(data1.create_tuple_iterator(num_epochs=1, output_numpy=True),
+                              data2.create_tuple_iterator(num_epochs=1, output_numpy=True)):
+            np.testing.assert_equal(img1, img2)
+
+    # Restore config setting
+    ds.config.set_seed(original_seed)
+    ds.config.set_num_parallel_workers(original_num_parallel_workers)
+
+
+def test_python_map_mp_repeatability(set_seed_to=1805, set_num_parallel_workers_to=5, num_repeat=5):
+    """
+    Feature: Map op
+    Description: Test repeatability of Map op with Python multiprocessing with Python implemented
+    random ops and num_parallel_workers > 1
+    Expectation: The dataset would be the same each iteration
+    """
+    data_dir = "../data/dataset/testImageNetData/train/"
+    original_seed = config_get_set_seed(set_seed_to)
+    original_num_parallel_workers = config_get_set_num_parallel_workers(set_num_parallel_workers_to)
+
+    # First dataset
+    data1 = ds.ImageFolderDataset(dataset_dir=data_dir, shuffle=False, num_samples=1)
+    transforms_list1 = [vision.Decode(to_pil=True),
+                        vision.Grayscale(3),
+                        vision.RandomPerspective(0.4, 1.0),
+                        vision.RandomLighting(0.01)]
+    data1 = data1.map(transforms_list1, num_parallel_workers=set_num_parallel_workers_to, python_multiprocessing=True)
+
+    for _ in range(num_repeat):
+        # Next datasets
+        data2 = ds.ImageFolderDataset(dataset_dir=data_dir, shuffle=False, num_samples=1)
+        transforms_list2 = [vision.Decode(to_pil=True),
+                            vision.Grayscale(3),
+                            vision.RandomPerspective(0.4, 1.0),
+                            vision.RandomLighting(0.01)]
+        data2 = data2.map(transforms_list2, num_parallel_workers=set_num_parallel_workers_to,
+                          python_multiprocessing=True)
+
+        # Expect to have the same image every time
+        for img1, img2 in zip(data1.create_tuple_iterator(num_epochs=1, output_numpy=True),
+                              data2.create_tuple_iterator(num_epochs=1, output_numpy=True)):
+            np.testing.assert_equal(img1, img2)
+
+    # Restore config setting
+    ds.config.set_seed(original_seed)
+    ds.config.set_num_parallel_workers(original_num_parallel_workers)
+
+
+def test_python_map_mp_seed_repeatability(set_seed_to=1337, set_num_parallel_workers_to=6, num_repeat=10):
+    """
+    Feature: Map op
+    Description: Test repeatability of Map op with Python multiprocessing with num_parallel_workers > 1
+    Expectation: The set of seeds of each process would be the same as expected
+    """
+    # Generate md int numpy array from [[0, 1], [2, 3]] to [[63, 64], [65, 66]]
+    def generator_md():
+        for i in range(64):
+            yield (np.array([[i, i + 1], [i + 2, i + 3]]),)
+
+    original_seed = config_get_set_seed(set_seed_to)
+    original_num_parallel_workers = config_get_set_num_parallel_workers(set_num_parallel_workers_to)
+
+    for _ in range(num_repeat):
+        expected_seed = {i: 0 for i in range(set_seed_to, set_seed_to + set_num_parallel_workers_to)}
+        data1 = ds.GeneratorDataset(generator_md, ["data"])
+        data1 = data1.map([lambda x: ds.config.get_seed()],
+                          num_parallel_workers=set_num_parallel_workers_to, python_multiprocessing=True)
+        for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
+            seed_used = int(list(item.values())[0])
+            if seed_used in expected_seed:
+                expected_seed[seed_used] += 1
+            else:
+                assert False # Seed not found
+
+        if 0 in expected_seed.values():
+            assert False # Not all seed used
+
+    # Restore config setting
+    ds.config.set_seed(original_seed)
+    ds.config.set_num_parallel_workers(original_num_parallel_workers)
+
+
 if __name__ == '__main__':
     test_map_c_transform_exception()
     test_map_py_transform_exception()
     test_map_text_and_data_transforms()
     test_map_operations1()
+    test_c_map_randomness_repeatability()
+    test_c_map_randomness_repeatability_with_shards()
+    test_python_map_mp_repeatability()
+    test_python_map_mp_seed_repeatability()
