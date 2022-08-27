@@ -77,9 +77,8 @@ int64_t ShardTaskList::SizeOfRows() const {
     return static_cast<int64_t>(0);
   }
 
-  // 1 task is 1 page
-  const size_t kBlobInfoIndex = 2;
-  auto sum_num_rows = [](int64_t x, ShardTask y) { return x + std::get<kBlobInfoIndex>(y)[0]; };
+  // 1 task is 1 page,blob index start from 2
+  auto sum_num_rows = [](int64_t x, ShardTask y) { return x + std::get<2>(y)[0]; };
   int64_t nRows = std::accumulate(task_list_.begin(), task_list_.end(), 0, sum_num_rows);
   return nRows;
 }
