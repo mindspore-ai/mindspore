@@ -497,8 +497,11 @@ void SchedulerHelper::AddMemorySign(AbstractActor *const from_actor, AbstractAct
   if (from_actor->type() == KernelTransformType::kKernelActor) {
     from_kernel_actor = dynamic_cast<KernelActor *>(from_actor);
     MS_EXCEPTION_IF_NULL(from_kernel_actor);
+    MS_EXCEPTION_IF_NULL(from_kernel_actor->kernel());
     from_graph = AnfAlgo::FetchKernelGraph(from_kernel_actor->kernel());
-    MS_EXCEPTION_IF_NULL(from_graph);
+    if (from_graph == nullptr) {
+      MS_LOG(EXCEPTION) << "No association graph for node: " << from_kernel_actor->kernel()->fullname_with_scope();
+    }
     AddSomasInfo(from_kernel_actor, from_graph);
   }
   KernelGraphPtr to_graph = nullptr;
@@ -506,8 +509,11 @@ void SchedulerHelper::AddMemorySign(AbstractActor *const from_actor, AbstractAct
   if (to_actor->type() == KernelTransformType::kKernelActor) {
     to_kernel_actor = dynamic_cast<KernelActor *>(to_actor);
     MS_EXCEPTION_IF_NULL(to_kernel_actor);
+    MS_EXCEPTION_IF_NULL(to_kernel_actor->kernel());
     to_graph = AnfAlgo::FetchKernelGraph(to_kernel_actor->kernel());
-    MS_EXCEPTION_IF_NULL(to_graph);
+    if (to_graph == nullptr) {
+      MS_LOG(EXCEPTION) << "No association graph for node: " << to_kernel_actor->kernel()->fullname_with_scope();
+    }
     AddSomasInfo(to_kernel_actor, to_graph);
   }
 
