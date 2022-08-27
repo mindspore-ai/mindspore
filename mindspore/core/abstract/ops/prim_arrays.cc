@@ -34,6 +34,11 @@ namespace {
 int64_t GetUnsortedSegmentOpScalarArg(const AbstractBasePtrList &args_spec_list, const std::string &op_name) {
   int64_t num_segments_value = 0;
   constexpr size_t scalar_index = 2;
+  constexpr size_t min_len = 3;
+  if (args_spec_list.size() < min_len) {
+    MS_LOG(EXCEPTION) << "Index out of range, the len of args_spec_list is: " << args_spec_list.size()
+                      << " and the index is " << scalar_index;
+  }
   if (args_spec_list[scalar_index]->isa<AbstractTensor>()) {  // num_segments is Tensor
     auto num_segments = args_spec_list[scalar_index]->cast<AbstractTensorPtr>();
     MS_EXCEPTION_IF_NULL(num_segments);
@@ -1247,14 +1252,14 @@ AbstractBasePtr InferImplTensorCopySlices(const AnalysisEnginePtr &, const Primi
 AbstractBasePtr InferImplOCRRecognitionPreHandle(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                  const AbstractBasePtrList &args_spec_list) {
   const std::string op_name = primitive->name();
-  const size_t size_expected = 5;
-  const int64_t universe_min_batch = 16;
-  const int64_t universe_max_batch = 256;
-  const int64_t image_h = 64;
-  const int64_t image_w = 512;
-  const int64_t images_min_batch = 4;
-  const int64_t images_max_batch = 256;
-  const int64_t images_channels = 3;
+  constexpr size_t size_expected = 5;
+  constexpr int64_t universe_min_batch = 16;
+  constexpr int64_t universe_max_batch = 256;
+  constexpr int64_t image_h = 64;
+  constexpr int64_t image_w = 512;
+  constexpr int64_t images_min_batch = 4;
+  constexpr int64_t images_max_batch = 256;
+  constexpr int64_t images_channels = 3;
   CheckArgsSize(op_name, args_spec_list, size_expected);
   ValuePtr format_value = primitive->GetAttr("format");
   std::string format = GetValue<std::string>(format_value);

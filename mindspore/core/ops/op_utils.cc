@@ -436,7 +436,7 @@ ValuePtr InferComputeShapeTensorValue(const PrimitivePtr &prim, const AbstractBa
 }
 
 void CheckSparseShape(ShapeVector sparse_shp, ShapeVector dense_shp) {
-  constexpr auto kCSRMulBatchPos = 2;
+  constexpr auto csr_mul_batch_pos = 2;
   int dlen = SizeToInt(sparse_shp.size()) - SizeToInt(dense_shp.size());
   if (dlen < 0) {
     MS_EXCEPTION(ValueError) << "Currently, only support dense tensor broadcast to sparse tensor, "
@@ -455,7 +455,7 @@ void CheckSparseShape(ShapeVector sparse_shp, ShapeVector dense_shp) {
   for (size_t i = 0; i < sparse_shp.size(); i++) {
     auto s = sparse_shp[i];
     auto d = dense_shp[i];
-    if (i < kCSRMulBatchPos) {
+    if (i < csr_mul_batch_pos) {
       if (d != s && d != 1) {
         MS_EXCEPTION(ValueError) << "Dense shape cannot broadcast to sparse shape.";
       }

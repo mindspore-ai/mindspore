@@ -124,11 +124,11 @@ AbstractBasePtr InferImplBatchNorm(const AnalysisEnginePtr &, const PrimitivePtr
                                    const AbstractBasePtrList &args_spec_list) {
   // Inference inputs: 5 tensors (x, gamma, beta, mean, variance).
   // Training inputs: 6 (x, gamma, beta, mean, variance, Umonad).
-  constexpr auto kBatchNormInferInputNum = 5;
-  constexpr auto kBatchNormTrainInputNum = 6;
+  constexpr auto batch_norm_infer_input_num = 5;
+  constexpr auto batch_norm_train_input_num = 6;
   const std::string op_name = primitive->name();
   MS_EXCEPTION_IF_CHECK_FAIL(
-    args_spec_list.size() == kBatchNormInferInputNum || args_spec_list.size() == kBatchNormTrainInputNum,
+    args_spec_list.size() == batch_norm_infer_input_num || args_spec_list.size() == batch_norm_train_input_num,
     "Check BatchNorm input size fail!");
   CheckArgsSize(op_name, args_spec_list, args_spec_list.size());
   AbstractTensorPtr input_x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
@@ -142,10 +142,10 @@ AbstractBasePtr InferImplBatchNorm(const AnalysisEnginePtr &, const PrimitivePtr
   (void)CheckTensorDType(input_tensor, {kFloat16, kFloat32}, "For 'BatchNorm', input argument \'input_x\'");
   AbstractTensorPtrList tensorPtrList = std::vector<AbstractTensorPtr>();
   // In GE process, the input of mean and variance is None
-  constexpr size_t kNumofValidInputInGE = 3;
-  constexpr size_t kNumofValidInputInVM = 5;
+  constexpr size_t num_of_valid_input_ge = 3;
+  constexpr size_t num_of_valid_input_vm = 5;
   auto env_ge = common::GetEnv("MS_ENABLE_GE");
-  size_t args_spec_list_size = env_ge == "1" ? kNumofValidInputInGE : kNumofValidInputInVM;
+  size_t args_spec_list_size = env_ge == "1" ? num_of_valid_input_ge : num_of_valid_input_vm;
   for (size_t i = 1; i < args_spec_list_size; ++i) {
     auto param = CheckArg<AbstractTensor>(op_name, args_spec_list, i);
     tensorPtrList.push_back(param);
@@ -298,9 +298,9 @@ AbstractBasePtr InferImplPad(const AnalysisEnginePtr &, const PrimitivePtr &prim
 
 AbstractBasePtr InferImplBiasDropoutAdd(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                         const AbstractBasePtrList &args_spec_list) {
-  size_t kInputSize = 3;
+  size_t input_size = 3;
   auto op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, kInputSize);
+  CheckArgsSize(op_name, args_spec_list, input_size);
   auto x = abstract::CheckArg<abstract::AbstractTensor>(op_name, args_spec_list, 0);
   MS_EXCEPTION_IF_NULL(x);
   MS_EXCEPTION_IF_NULL(x->shape());
