@@ -29,11 +29,8 @@ bool HcomSendKernel::Launch(const std::vector<AddressPtr> &inputs, const std::ve
   }
   MS_EXCEPTION_IF_NULL(inputs[0]);
   MS_EXCEPTION_IF_NULL(stream_ptr);
-  if (stream_ == nullptr) {
-    stream_ = stream_ptr;
-  }
   auto hccl_result = hccl::HcclAdapter::GetInstance().HcclSend(inputs[0]->addr, hccl_count_, hccl_data_type_list_[0],
-                                                               dest_rank_, stream_, group_);
+                                                               dest_rank_, stream_ptr, group_);
   if (hccl_result != HCCL_SUCCESS) {
     MS_LOG(ERROR) << "HcomSend failed, ret:" << hccl_result;
     return false;

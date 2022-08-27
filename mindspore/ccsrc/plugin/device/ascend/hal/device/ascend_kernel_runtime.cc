@@ -264,6 +264,10 @@ void *AscendKernelRuntime::GetModelStream(uint32_t graph_id) const {
   return ModelRunner::Instance().GetModelStream(graph_id);
 }
 
+void *AscendKernelRuntime::GetKernelStream(const AnfNodePtr &kernel) const {
+  return AscendStreamMng::GetInstance().GetStream(AnfAlgo::GetStreamId(kernel));
+}
+
 void AscendKernelRuntime::ClearGlobalIdleMem() {
   if (mem_manager_ != nullptr) {
     mem_manager_->ClearGlobalIdleMem();
@@ -468,10 +472,7 @@ bool AscendKernelRuntime::Load(const session::KernelGraph &graph, bool is_task_s
   if (!LoadTask(graph)) {
     return false;
   }
-  if (!mindspore::kernel::AicpuOpKernelLoad::GetInstance().LaunchAicpuKernelSo()) {
-    return false;
-  }
-  return true;
+  return mindspore::kernel::AicpuOpKernelLoad::GetInstance().LaunchAicpuKernelSo();
 }
 
 bool AscendKernelRuntime::GenTask(const session::KernelGraph &graph) {
@@ -798,40 +799,17 @@ bool AscendKernelRuntime::Run(const session::KernelGraph &graph, bool is_task_si
   return ret;
 }
 
-void AscendKernelRuntime::SetKernelModRtStream(const std::vector<CNodePtr> &kernels) {
-  for (size_t i = 0; i < kernels.size(); ++i) {
-    auto &node = kernels[i];
-    auto kernel_mod = AnfAlgo::GetKernelMod(node);
-    auto ascend_kernel_mod = dynamic_cast<kernel::AscendKernelMod *>(kernel_mod);
-    MS_EXCEPTION_IF_NULL(ascend_kernel_mod);
-    auto stream_id = AnfAlgo::GetStreamId(kernels[i]);
-    auto iter = stream_id_map_.find(stream_id);
-    if (iter == stream_id_map_.end()) {
-      void *stream = nullptr;
-      auto ret = rtStreamCreate(&stream, 0);
-      if (ret != RT_ERROR_NONE) {
-        MS_LOG(EXCEPTION) << "create communication stream failed, ret:" << ret;
-      }
-      stream_id_map_[stream_id] = stream;
-      ascend_kernel_mod->set_stream(stream);
-    } else {
-      ascend_kernel_mod->set_stream(iter->second);
-    }
-  }
-}
-
-void AscendKernelRuntime::SetKernelModStream(const std::vector<CNodePtr> &kernels,
-                                             std::vector<size_t> *last_stream_nodes) {
-  SetKernelModRtStream(kernels);
-  std::map<void *, size_t> last_kernel;
+void AscendKernelRuntime::GetLastNodesOnStream(const std::vector<CNodePtr> &kernels,
+                                               std::vector<size_t> *stream_last_nodes) {
+  std::map<size_t, size_t> last_kernel;
   for (size_t i = 0; i < kernels.size(); ++i) {
     const auto stream_id = AnfAlgo::GetStreamId(kernels[i]);
     if (stream_id > 0) {
-      last_kernel[stream_id_map_[stream_id]] = i;
+      last_kernel[stream_id] = i;
     }
   }
-  (void)std::transform(last_kernel.begin(), last_kernel.end(), std::back_inserter(*last_stream_nodes),
-                       [](const std::pair<void *, size_t> &item) { return item.second; });
+  (void)std::transform(last_kernel.begin(), last_kernel.end(), std::back_inserter(*stream_last_nodes),
+                       [](const std::pair<size_t, size_t> &item) { return item.second; });
 }
 
 void AscendKernelRuntime::GetShadowBackendNodeMap(const session::KernelGraph &graph,
@@ -883,21 +861,18 @@ void AscendKernelRuntime::GenKernelEvents(const session::KernelGraph &graph) {
   if (kernels.empty() || graph_kernel_events_map_.find(graph.graph_id()) != graph_kernel_events_map_.end()) {
     return;
   }
-  std::vector<size_t> last_stream_nodes;
-  SetKernelModStream(kernels, &last_stream_nodes);
+  std::vector<size_t> stream_last_nodes;
+  GetLastNodesOnStream(kernels, &stream_last_nodes);
   auto kernel_events = std::pair<std::map<AnfNodePtr, std::vector<std::function<void()>>>,
                                  std::map<AnfNodePtr, std::vector<std::function<void()>>>>();
   auto &kernel_pre_run_events = kernel_events.first;
   auto &kernel_post_run_events = kernel_events.second;
-  auto stream_num = stream_id_map_.size();
+  auto stream_num = kWorldGroupStreamIndex + 1;
   std::vector<std::vector<bool>> kernel_hit(kernels.size(), std::vector<bool>(stream_num, false));
   for (size_t i = 0; i < kernels.size(); ++i) {
     auto &kernel = kernels[i];
     auto curr_stream_id = AnfAlgo::GetStreamId(kernel);
-    if (stream_id_map_.find(curr_stream_id) == stream_id_map_.end()) {
-      MS_LOG(EXCEPTION) << "Stream " << curr_stream_id << "has not been created";
-    }
-    auto wait_stream = stream_id_map_[curr_stream_id];
+    auto wait_stream = AscendStreamMng::GetInstance().GetStream(curr_stream_id);
     std::vector<bool> stream_hit(stream_num, false);
     std::vector<AnfNodePtr> used_kernels;
     std::set<AnfNodePtr> visited_kernels;
@@ -915,7 +890,7 @@ void AscendKernelRuntime::GenKernelEvents(const session::KernelGraph &graph) {
           stream_hit[pre_cnode_stream_id] = true;
           kernel_hit[IntToSize(k)][curr_stream_id] = true;
           found_depend = true;
-          auto record_stream = stream_id_map_[pre_cnode_stream_id];
+          auto record_stream = AscendStreamMng::GetInstance().GetStream(pre_cnode_stream_id);
           auto event = CreateDeviceEvent();
           event->set_wait_stream(wait_stream);
           event->set_record_stream(record_stream);
@@ -932,7 +907,7 @@ void AscendKernelRuntime::GenKernelEvents(const session::KernelGraph &graph) {
       (void)kernel_pre_run_events[kernel].emplace_back([pre_event]() { pre_event->WaitEvent(); });
     }
   }
-  ProcessBoundaryEvent(kernels, &kernel_post_run_events, last_stream_nodes);
+  ProcessBoundaryEvent(kernels, &kernel_post_run_events, stream_last_nodes);
   graph_kernel_events_map_[graph.graph_id()] = std::move(kernel_events);
 }
 
@@ -967,7 +942,7 @@ void AscendKernelRuntime::ProcessBoundaryEvent(
       auto post_event = CreateDeviceEvent();
       MS_EXCEPTION_IF_NULL(post_event);
       auto id = AnfAlgo::GetStreamId(kernel);
-      auto record_stream = stream_id_map_[id];
+      auto record_stream = AscendStreamMng::GetInstance().GetStream(id);
       post_event->set_wait_stream(stream_);
       post_event->set_record_stream(record_stream);
       (void)(*kernel_run_events)[kernel].emplace_back([post_event]() { post_event->RecordEvent(); });
@@ -1118,13 +1093,19 @@ bool AscendKernelRuntime::RunTask(const session::KernelGraph &graph) {
 
 bool AscendKernelRuntime::SyncStream() {
   SetCurrentContext();
-  for (const auto &iter : stream_id_map_) {
+  {
     // cppcheck-suppress unreadVariable
-    auto lock = device::KernelRuntime::LockRuntime(iter.second);
-    if (rtStreamSynchronize(iter.second) != RT_ERROR_NONE) {  // o for switch stream
-      MS_LOG(ERROR) << "Call runtime rtStreamSynchronize error.";
+    auto lock = device::KernelRuntime::LockRuntime(stream_);
+    if (!AscendStreamMng::GetInstance().SyncStream(stream_)) {
+      MS_LOG(ERROR) << "Sync default stream failed.";
       return false;
     }
+  }
+  // cppcheck-suppress unreadVariable
+  auto lock = device::KernelRuntime::LockRuntime(communication_stream_);
+  if (!AscendStreamMng::GetInstance().SyncStream(communication_stream_)) {
+    MS_LOG(ERROR) << "Sync default stream failed.";
+    return false;
   }
   return true;
 }
@@ -1191,41 +1172,21 @@ void AscendKernelRuntime::SetRtDevice(uint32_t device_id) {
 }
 
 void AscendKernelRuntime::CreateDefaultStream(uint32_t device_id) {
-  auto iter = device_stream_id_map_.find(device_id);
-  if (iter != device_stream_id_map_.end()) {
-    auto stream_map = (*iter->second);
-    stream_id_map_[kDefaultStreamIndex] = stream_map[kDefaultStreamIndex];
-    stream_ = stream_map[kDefaultStreamIndex];
-    stream_id_map_[kIndependentStreamIndex] = stream_map[kIndependentStreamIndex];
-    independent_stream_ = stream_map[kIndependentStreamIndex];
-    stream_id_map_[kWorldGroupStreamIndex] = stream_map[kWorldGroupStreamIndex];
-    communication_stream_ = stream_map[kWorldGroupStreamIndex];
+  size_t compute_stream_id;
+  if (!AscendStreamMng::GetInstance().CreateStreamWithFlags(&compute_stream_id, RT_STREAM_HUGE)) {
+    MS_LOG(EXCEPTION) << "Create default compute stream failed.";
   }
+  MS_LOG(INFO) << "Create ascend default stream, stream id: " << compute_stream_id;
+  stream_ = AscendStreamMng::GetInstance().GetStream(compute_stream_id);
+  MS_EXCEPTION_IF_NULL(stream_);
 
-  auto stream_id_map = std::make_shared<std::map<uint32_t, void *>>();
-  stream_id_map->clear();
-  device_stream_id_map_[device_id] = stream_id_map;
-
-  auto ret = rtStreamCreateWithFlags(&stream_, 0, RT_STREAM_HUGE);
-  if (ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "Call rtStreamCreate, ret[" << ret << "]";
+  size_t communication_stream_id;
+  if (!AscendStreamMng::GetInstance().CreateStream(&communication_stream_id)) {
+    MS_LOG(EXCEPTION) << "Create communication stream stream failed.";
   }
-  stream_id_map_[kDefaultStreamIndex] = stream_;
-  (void)stream_id_map->insert(std::make_pair(kDefaultStreamIndex, stream_));
-
-  ret = rtStreamCreateWithFlags(&independent_stream_, 0, RT_STREAM_HUGE);
-  if (ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "Call rtStreamCreate, ret[" << ret << "]";
-  }
-  stream_id_map_[kIndependentStreamIndex] = independent_stream_;
-  (void)stream_id_map->insert(std::make_pair(kIndependentStreamIndex, independent_stream_));
-
-  ret = rtStreamCreate(&communication_stream_, 0);
-  if (ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "create communication stream failed, ret:" << ret;
-  }
-  stream_id_map_[kWorldGroupStreamIndex] = communication_stream_;
-  (void)stream_id_map->insert(std::make_pair(kWorldGroupStreamIndex, communication_stream_));
+  MS_LOG(INFO) << "Create ascend communication stream, stream id: " << communication_stream_id;
+  communication_stream_ = AscendStreamMng::GetInstance().GetStream(communication_stream_id);
+  MS_EXCEPTION_IF_NULL(communication_stream_);
 }
 
 bool AscendKernelRuntime::InitDevice() {
@@ -1257,21 +1218,10 @@ bool AscendKernelRuntime::InitDevice() {
 
 bool AscendKernelRuntime::ResetDevice(uint32_t device_id) {
   SetCurrentContext();
-  int32_t ret;
-  if (device_stream_id_map_.find(device_id) != device_stream_id_map_.end()) {
-    auto stream_id_map = *(device_stream_id_map_[device_id]);
-    for (auto &iter : stream_id_map) {
-      ret = rtStreamDestroy(iter.second);
-      if (ret != RT_ERROR_NONE) {
-        MS_LOG(EXCEPTION) << "Call rtStreamDestroy, ret[" << ret << "]";
-      }
-      iter.second = nullptr;
-    }
-    (void)device_stream_id_map_.erase(device_id);
-  }
+  AscendStreamMng::GetInstance().DestroyAllStreams();
 
   if (initialized_device_set_.find(device_id) != initialized_device_set_.end()) {
-    ret = rtDeviceReset(UintToInt(device_id));
+    auto ret = rtDeviceReset(UintToInt(device_id));
     if (ret != RT_ERROR_NONE) {
       MS_EXCEPTION(DeviceProcessError) << "Call rtDeviceReset, ret[" << ret << "]";
     }

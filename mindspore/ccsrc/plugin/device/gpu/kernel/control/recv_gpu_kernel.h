@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_CONTROL_RECV_GPU_KERNEL_H_
 
 #include <vector>
+#include "include/common/utils/utils.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 
@@ -29,16 +30,16 @@ class RecvGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   ~RecvGpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-              void *) override {
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaStreamWaitEvent(wait_stream_, wait_event_, 0),
+              void *stream_ptr) override {
+    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
+                               cudaStreamWaitEvent(reinterpret_cast<cudaStream_t>(stream_ptr), wait_event_, 0),
                                "Waiting cuda event failed.");
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
     MS_EXCEPTION_IF_NULL(kernel_node);
     kernel_node_ = kernel_node;
-    wait_stream_ = reinterpret_cast<cudaStream_t>(GetAttr<uintptr_t>(kernel_node, "wait_event_stream"));
-    wait_event_ = reinterpret_cast<cudaEvent_t>(GetAttr<uintptr_t>(kernel_node, "wait_event"));
+    wait_event_ = reinterpret_cast<cudaEvent_t>(GetAttr<uintptr_t>(kernel_node, kAttrWaitEvent));
     InitSizeLists();
     return true;
   }
@@ -52,7 +53,6 @@ class RecvGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   }
 
  private:
-  cudaStream_t wait_stream_{nullptr};
   cudaEvent_t wait_event_{nullptr};
 };
 }  // namespace kernel

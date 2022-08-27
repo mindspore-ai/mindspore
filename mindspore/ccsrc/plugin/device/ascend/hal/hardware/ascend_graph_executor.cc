@@ -17,6 +17,7 @@
 #include "plugin/device/ascend/hal/hardware/ascend_graph_executor.h"
 #include <unordered_map>
 #include <algorithm>
+#include "include/common/utils/utils.h"
 #include "plugin/device/ascend/hal/hardware/ascend_utils.h"
 #include "backend/common/session/kernel_graph.h"
 #include "plugin/device/ascend/hal/device/kernel_build_ascend.h"

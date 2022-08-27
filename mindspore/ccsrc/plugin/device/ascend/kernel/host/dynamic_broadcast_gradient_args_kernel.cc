@@ -220,9 +220,6 @@ bool DynamicBroadcastGradientArgsKernelMod::Launch(const std::vector<AddressPtr>
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  if (stream_ == nullptr) {
-    stream_ = stream_ptr;
-  }
 
   try {
     Execute();

@@ -127,9 +127,7 @@ bool DynamicAicpuOpKernelMod::Launch(const std::vector<AddressPtr> &inputs, cons
     MS_LOG(ERROR) << "stream_ptr should not be nullptr.";
     return false;
   }
-  if (stream_ == nullptr) {
-    stream_ = stream_ptr;
-  }
+  stream_ = stream_ptr;
   auto node = anf_node_.lock();
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
@@ -145,7 +143,7 @@ bool DynamicAicpuOpKernelMod::Launch(const std::vector<AddressPtr> &inputs, cons
   AllocateExtInfoDeviceAddr(cnode);
   MS_EXCEPTION_IF_NULL(ext_info_handler_);
   auto ret = aclrtMemcpyAsync(ext_info_addr_dev_, ext_info_size_, ext_info_handler_->GetExtInfo(),
-                              ext_info_handler_->GetExtInfoLen(), ACL_MEMCPY_HOST_TO_DEVICE, stream_);
+                              ext_info_handler_->GetExtInfoLen(), ACL_MEMCPY_HOST_TO_DEVICE, stream_ptr);
   if (ret != RT_ERROR_NONE) {
     MS_LOG(ERROR) << "UpdateExtInfo aclrtMemcpy failed. Node info: " << cnode->fullname_with_scope();
     return false;
@@ -159,13 +157,13 @@ bool DynamicAicpuOpKernelMod::Launch(const std::vector<AddressPtr> &inputs, cons
     flag = RT_KERNEL_CUSTOM_AICPU;
   }
   // cppcheck-suppress unreadVariable
-  auto lock = device::KernelRuntime::LockRuntime(stream_);
+  auto lock = device::KernelRuntime::LockRuntime(stream_ptr);
   rtArgsEx_t argsInfo = {};
   argsInfo.args = args_.data();
   argsInfo.argsSize = static_cast<uint32_t>(args_.length());
-  ret =
-    rtCpuKernelLaunchWithFlag(reinterpret_cast<const void *>(node_so_.c_str()),
-                              reinterpret_cast<const void *>(node_name_.c_str()), 1, &argsInfo, nullptr, stream_, flag);
+  ret = rtCpuKernelLaunchWithFlag(reinterpret_cast<const void *>(node_so_.c_str()),
+                                  reinterpret_cast<const void *>(node_name_.c_str()), 1, &argsInfo, nullptr, stream_ptr,
+                                  flag);
   if (ret != RT_ERROR_NONE) {
     MS_LOG(ERROR) << "Aicpu op launch failed!";
     return false;

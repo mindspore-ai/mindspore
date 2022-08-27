@@ -24,44 +24,58 @@
 #include "plugin/device/gpu/hal/device/gpu_common.h"
 #include "plugin/device/gpu/hal/device/kernel_info_setter.h"
 #include "plugin/device/gpu/hal/device/gpu_device_manager.h"
+#include "plugin/device/gpu/hal/hardware/gpu_device_context.h"
 
 namespace mindspore {
 namespace device {
 namespace gpu {
 void AssignGpuStream(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  if (kernel_graph->has_flag(kFlagPyNativeRunInGraph)) {
-    // All operators in pynative mode use default_stream.
-    return;
-  }
   std::vector<CNodePtr> allreduce_kernels;
   auto execution_kernels = kernel_graph->execution_order();
-  for (auto kernel_node : execution_kernels) {
-    std::string kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    if (kernel_name == kAllReduceOpName) {
+  // All operators in pynative mode use default_stream.
+  const bool use_default_stream = kernel_graph->has_flag(kFlagPyNativeRunInGraph);
+  if (use_default_stream) {
+    AssignDefaultGpuStream(kernel_graph);
+    return;
+  }
+  const auto default_stream_id = GPUDeviceManager::GetInstance().default_stream_id();
+  for (const auto &kernel_node : execution_kernels) {
+    if (common::AnfAlgo::GetCNodeName(kernel_node) == kAllReduceOpName) {
       allreduce_kernels.emplace_back(kernel_node);
     } else {
-      CudaDeviceStream compute_stream = GPUDeviceManager::GetInstance().default_stream();
-      MS_EXCEPTION_IF_NULL(compute_stream);
-      common::AnfAlgo::SetNodeAttr(kAttrStreamId, MakeValue(reinterpret_cast<uintptr_t>(compute_stream)), kernel_node);
+      AnfAlgo::SetStreamId(default_stream_id, kernel_node.get());
     }
   }
-  if (allreduce_kernels.size() > 1) {
-    // Assign multiple streams only when there're multiple AllReduce nodes.
-    std::vector<SendRecvPair> send_recv_pairs;
-    if (FindAllReduceStreamSwitchPos(kernel_graph, &send_recv_pairs)) {
-      CudaDeviceStream comm_stream = nullptr;
-      GPUDeviceManager::GetInstance().CreateStream(&comm_stream);
-      std::transform(allreduce_kernels.begin(), allreduce_kernels.end(), allreduce_kernels.begin(),
-                     [&](CNodePtr allreduce_kernel) {
-                       common::AnfAlgo::SetNodeAttr(kAttrStreamId, MakeValue(reinterpret_cast<uintptr_t>(comm_stream)),
-                                                    allreduce_kernel);
-                       return allreduce_kernel;
-                     });
-      InsertStreamSwitchNode(kernel_graph, send_recv_pairs);
-    } else {
-      return;
+  std::vector<SendRecvPair> send_recv_pairs;
+  const bool multi_stream =
+    allreduce_kernels.size() > 1 && FindAllReduceStreamSwitchPos(kernel_graph, &send_recv_pairs);
+  // Assign multiple streams only when there're multiple AllReduce nodes.
+  size_t allreduce_stream_id = default_stream_id;
+  if (multi_stream) {
+    if (!GPUDeviceManager::GetInstance().CreateStream(&allreduce_stream_id)) {
+      MS_LOG(EXCEPTION) << "Fail to create new stream for communication operator";
     }
+    std::transform(allreduce_kernels.begin(), allreduce_kernels.end(), allreduce_kernels.begin(),
+                   [&](CNodePtr allreduce_kernel) {
+                     AnfAlgo::SetStreamId(allreduce_stream_id, allreduce_kernel.get());
+                     return allreduce_kernel;
+                   });
+    InsertStreamSwitchNode(kernel_graph, send_recv_pairs);
+  } else {
+    std::transform(allreduce_kernels.begin(), allreduce_kernels.end(), allreduce_kernels.begin(),
+                   [&](CNodePtr allreduce_kernel) {
+                     AnfAlgo::SetStreamId(default_stream_id, allreduce_kernel.get());
+                     return allreduce_kernel;
+                   });
+  }
+}
+
+void AssignDefaultGpuStream(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  const auto default_stream_id = GPUDeviceManager::GetInstance().default_stream_id();
+  for (const auto &kernel_node : kernel_graph->execution_order()) {
+    AnfAlgo::SetStreamId(default_stream_id, kernel_node.get());
   }
 }
 
@@ -196,10 +210,10 @@ bool GenSendRecvCNodesForAllReduce(const std::shared_ptr<session::KernelGraph> &
   common::AnfAlgo::SetNodeAttr(kAttrRecordEvent, MakeValue(reinterpret_cast<uintptr_t>(event)), *send_node);
   common::AnfAlgo::SetNodeAttr(kAttrWaitEvent, MakeValue(reinterpret_cast<uintptr_t>(event)), *recv_node);
 
-  uintptr_t send_stream = common::AnfAlgo::GetNodeAttr<uintptr_t>(mock_send_node, kAttrStreamId);
-  common::AnfAlgo::SetNodeAttr(kAttrRecordEventStream, MakeValue(send_stream), *send_node);
-  uintptr_t recv_stream = common::AnfAlgo::GetNodeAttr<uintptr_t>(mock_recv_node, kAttrStreamId);
-  common::AnfAlgo::SetNodeAttr(kAttrWaitEventStream, MakeValue(recv_stream), *recv_node);
+  const size_t send_stream_id = AnfAlgo::GetStreamId(mock_send_node);
+  AnfAlgo::SetStreamId(send_stream_id, send_node->get());
+  const size_t recv_stream_id = AnfAlgo::GetStreamId(mock_recv_node);
+  AnfAlgo::SetStreamId(recv_stream_id, recv_node->get());
   return true;
 }
 

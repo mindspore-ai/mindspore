@@ -69,7 +69,7 @@ using KernelGraph = mindspore::session::KernelGraph;
 static thread_local bool cur_thread_device_inited{false};
 
 void GPUDeviceContext::Initialize() {
-  if (initialized_ == true) {
+  if (initialized_) {
     if (!device_res_manager_->BindDeviceToCurrentThread()) {
       MS_LOG(EXCEPTION) << "BindDeviceToCurrentThread failed.";
     }
@@ -162,16 +162,6 @@ bool GPUDeviceResManager::InitDevice() {
 
   // Initialize device resource, such as stream, cudnn and cublas handle.
   GPUDeviceManager::GetInstance().InitDevice();
-
-  auto stream = GPUDeviceManager::GetInstance().default_stream();
-  MS_ERROR_IF_NULL(stream);
-  streams_.push_back(stream);
-
-  void *communication_stream = nullptr;
-  GPUDeviceManager::GetInstance().CreateStream(&communication_stream);
-  MS_ERROR_IF_NULL(communication_stream);
-  streams_.push_back(communication_stream);
-
   return true;
 }
 
@@ -497,6 +487,7 @@ void GPUKernelExecutor::OptimizeGraph(const FuncGraphPtr &graph) const {
     RunOpHideNopNode(kernel_graph);
     RunOpRemoveNopNode(kernel_graph);
     UpdateKernelRefInfo(kernel_graph);
+    AssignDefaultGpuStream(kernel_graph);
   } else {
     // Optimization pass which is irrelevant to device type or format.
     OptimizeGraphWithoutDeviceInfo(kernel_graph);
@@ -588,16 +579,18 @@ void GPUKernelExecutor::CreateKernel(const std::vector<CNodePtr> &nodes) const {
 }
 
 bool GPUKernelExecutor::LaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
-                                     const std::vector<AddressPtr> &workspace,
-                                     const std::vector<AddressPtr> &outputs) const {
+                                     const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs,
+                                     size_t stream_id) const {
   MS_EXCEPTION_IF_NULL(kernel);
   if (!res_manager_->BindDeviceToCurrentThread()) {
     return false;
   }
   bool ret = true;
 
-  auto stream = GetLaunchKernelStream(kernel);
-  MS_EXCEPTION_IF_NULL(stream);
+  auto stream = GPUDeviceManager::GetInstance().GetStream(stream_id);
+  if (stream == nullptr) {
+    stream = GPUDeviceManager::GetInstance().default_stream();
+  }
 
 #ifndef ENABLE_SECURITY
   const auto &profiler_inst = profiler::gpu::GPUProfiler::GetInstance();
@@ -649,7 +642,7 @@ bool GPUKernelExecutor::LaunchKernelWithProfiling(const CNodePtr &kernel, const 
     profiler_inst->SetStepTraceOpName(profiling_trace);
   }
 
-  profiler_inst->OpDataProducerBegin(kernel->fullname_with_scope(), res_manager_->streams_.front());
+  profiler_inst->OpDataProducerBegin(kernel->fullname_with_scope(), GPUDeviceManager::GetInstance().default_stream());
   bool ret = DoLaunchKernel(kernel, inputs, workspace, outputs, stream);
   profiler_inst->OpDataProducerEnd();
   profiler_inst->RecordFrameWorkInfo(kernel);
@@ -674,37 +667,16 @@ bool GPUKernelExecutor::DoLaunchKernel(const CNodePtr &kernel, const std::vector
   return kernel_mod->Launch(inputs, workspace, outputs, stream);
 }
 
-void *GPUKernelExecutor::GetLaunchKernelStream(const CNodePtr &kernel) const {
-  void *stream = nullptr;
-  if (common::AnfAlgo::HasNodeAttr(kAttrStream, kernel)) {
-    auto stream_id = common::AnfAlgo::GetNodeAttr<size_t>(kernel, kAttrStream);
-    auto iter = res_manager_->stream_ids_.find(stream_id);
-    if (iter == res_manager_->stream_ids_.end()) {
-      MS_LOG(EXCEPTION) << "Can not find stream for stream id: " << stream_id;
-    }
-    stream = iter->second;
-  } else {
-    stream = res_manager_->streams_.front();
-  }
+bool GPUDeviceResManager::CreateStream(size_t *stream_id) const {
+  return GPUDeviceManager::GetInstance().CreateStream(stream_id);
+}
 
-  MS_EXCEPTION_IF_NULL(stream);
-  return stream;
+bool GPUDeviceResManager::DestroyStream(size_t stream_id) const {
+  return GPUDeviceManager::GetInstance().DestroyStream(stream_id);
 }
 
 bool GPUDeviceResManager::SyncStream(size_t stream_id) const {
-  void *stream = nullptr;
-  auto iter = stream_ids_.find(stream_id);
-  if (iter != stream_ids_.end()) {
-    stream = iter->second;
-  } else {
-    if (stream_id >= streams_.size()) {
-      MS_LOG(EXCEPTION) << "The stream_id: " << stream_id << " is greater than stream array size: " << streams_.size();
-    }
-    stream = streams_[stream_id];
-  }
-
-  MS_EXCEPTION_IF_NULL(stream);
-  bool result = GPUDeviceManager::GetInstance().SyncStream(stream);
+  bool result = GPUDeviceManager::GetInstance().SyncStream(stream_id);
 #ifdef ENABLE_DUMP_IR
   if (!result) {
     mindspore::RDR::TriggerAll();
@@ -713,24 +685,6 @@ bool GPUDeviceResManager::SyncStream(size_t stream_id) const {
   mindspore::RDR::ClearMemAddressInfo();
 #endif
   return result;
-}
-
-bool GPUDeviceResManager::CreateStream(void **stream) const {
-  MS_EXCEPTION_IF_NULL(stream);
-  if (!CudaDriver::CreateStream(stream)) {
-    MS_LOG(ERROR) << "Failed to create CUDA stream.";
-    return false;
-  }
-  return true;
-}
-
-bool GPUDeviceResManager::DestroyStream(void *stream) const {
-  MS_EXCEPTION_IF_NULL(stream);
-  if (!CudaDriver::DestroyStream(stream)) {
-    MS_LOG(ERROR) << "Failed to destroy CUDA stream.";
-    return false;
-  }
-  return true;
 }
 
 uint32_t GPUKernelExecutor::GetRankID() const {
@@ -750,14 +704,14 @@ std::shared_ptr<Bucket> GPUKernelExecutor::CreateBucket(uint32_t bucket_id, uint
   MS_EXCEPTION_IF_NULL(device_context);
   auto bucket = std::make_shared<GPUBucket>(bucket_id, bucket_size, device_context->device_context_key().device_id_);
   MS_EXCEPTION_IF_NULL(bucket);
-  // One computation stream, one communication stream.
-  const size_t min_num_of_stream = 2;
-  if (min_num_of_stream > res_manager_->streams_.size()) {
-    MS_LOG(EXCEPTION) << "The total stream num: " << res_manager_->streams_.size()
-                      << " is less than: " << min_num_of_stream;
-  }
+  const auto default_stream = GPUDeviceManager::GetInstance().default_stream();
+  MS_EXCEPTION_IF_NULL(default_stream);
+  // Create a new communication stream for Bucket
+  CudaDeviceStream comm_stream;
+  GPUDeviceManager::GetInstance().CreateStream(&comm_stream);
+  MS_EXCEPTION_IF_NULL(comm_stream);
 
-  bucket->Init({res_manager_->streams_[0]}, {res_manager_->streams_[1]});
+  bucket->Init({default_stream}, {comm_stream});
   return bucket;
 }
 

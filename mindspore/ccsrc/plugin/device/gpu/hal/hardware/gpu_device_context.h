@@ -47,6 +47,8 @@ class GPUDeviceResManager : public DeviceResManager {
   DeviceAddressPtr CreateDeviceAddress(void *const device_ptr, size_t device_size, const string &format, TypeId type_id,
                                        const ShapeVector &shape = ShapeVector()) const override;
 
+  bool CreateStream(size_t *stream_id) const override;
+  bool DestroyStream(size_t stream_id) const override;
   bool SyncStream(size_t stream_id = 0) const override;
 
   bool LoadCollectiveCommLib() override;
@@ -58,16 +60,10 @@ class GPUDeviceResManager : public DeviceResManager {
 
   bool AllocateMemory(DeviceAddress *const &address) const override;
 
-  // Really create a cuda stream.
-  bool CreateStream(void **stream) const override;
-  // Really destroy a cuda stream.
-  bool DestroyStream(void *stream) const override;
-
  private:
   friend class GPUKernelExecutor;
   bool InitDevice();
   std::shared_ptr<MemoryManager> mem_manager_;
-  std::vector<void *> streams_;
 };
 
 class GPUKernelExecutor : public DeprecatedKernelExecutor {
@@ -86,7 +82,8 @@ class GPUKernelExecutor : public DeprecatedKernelExecutor {
   void PreprocessBeforeRun(const FuncGraphPtr &graph) const override;
 
   bool LaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
-                    const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs) const override;
+                    const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs,
+                    size_t stream_id) const override;
 
   uint32_t GetRankID() const override;
 
@@ -121,10 +118,6 @@ class GPUKernelExecutor : public DeprecatedKernelExecutor {
   bool DoLaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
                       const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs,
                       void *stream) const;
-
-  // Get the used to launch kernel, if there is a stream saved in attrs of kernel, use this stream, otherwise use
-  // default stream.
-  void *GetLaunchKernelStream(const CNodePtr &kernel) const;
 
   // The cublas handle is not thread safety specifically, it is not recommended that multiple threads access the same
   // cublas handle at the same time, so need the launch mutex when multiple threads launch the cublas kernels.

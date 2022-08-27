@@ -166,9 +166,10 @@ bool GPUDeviceAddress::SyncDeviceToDevice(const DeviceSync *src_device_addr) con
 }
 
 bool GPUDeviceAddress::AsyncHostToDevice(const ShapeVector &, size_t size, TypeId, const void *host_ptr,
-                                         void *stream) const {
+                                         size_t stream_id) const {
   MS_ERROR_IF_NULL(host_ptr);
   MS_ERROR_IF_NULL(ptr_);
+  const auto stream = GPUDeviceManager::GetInstance().GetStream(stream_id);
   MS_ERROR_IF_NULL(stream);
 
   CHECK_RET_WITH_RETURN_ERROR(CudaDriver::CopyHostMemToDeviceAsync(ptr_, host_ptr, size, stream),
@@ -176,9 +177,11 @@ bool GPUDeviceAddress::AsyncHostToDevice(const ShapeVector &, size_t size, TypeI
   return true;
 }
 
-bool GPUDeviceAddress::AsyncDeviceToHost(const ShapeVector &, size_t size, TypeId, void *host_ptr, void *stream) const {
+bool GPUDeviceAddress::AsyncDeviceToHost(const ShapeVector &, size_t size, TypeId, void *host_ptr,
+                                         size_t stream_id) const {
   MS_ERROR_IF_NULL(host_ptr);
   MS_ERROR_IF_NULL(ptr_);
+  const auto stream = GPUDeviceManager::GetInstance().GetStream(stream_id);
   MS_ERROR_IF_NULL(stream);
 
   CHECK_RET_WITH_RETURN_ERROR(CudaDriver::CopyDeviceMemToHostAsync(host_ptr, ptr_, size, stream),

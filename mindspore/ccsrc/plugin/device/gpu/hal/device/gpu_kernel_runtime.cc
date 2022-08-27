@@ -843,6 +843,14 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, bo
   return true;
 }
 
+void *GPUKernelRuntime::GetKernelStream(const AnfNodePtr &kernel) const {
+  auto stream = GPUDeviceManager::GetInstance().GetStream(AnfAlgo::GetStreamId(kernel));
+  if (stream == nullptr) {
+    return GPUDeviceManager::GetInstance().default_stream();
+  }
+  return stream;
+}
+
 void GPUKernelRuntime::LaunchKernelWithoutMock(const session::KernelGraph *graph, const AnfNodePtr &kernel,
                                                const AddressPtrList &inputs, const AddressPtrList &workspaces,
                                                const AddressPtrList &outputs, bool profiling) {

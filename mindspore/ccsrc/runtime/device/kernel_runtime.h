@@ -161,6 +161,7 @@ class KernelRuntime {
   virtual void KernelLaunchProfiling(const std::string &kernel_name) {}
   void InitGraphInputTensors(const std::shared_ptr<MemScheduler> &mem_scheduler,
                              const session::KernelGraph &graph) const;
+  virtual void *GetKernelStream(const AnfNodePtr &kernel) const { return nullptr; }
 
  private:
   static TbeLaunchKernelModCallBack tbe_call_;
@@ -217,7 +218,6 @@ class KernelRuntime {
   std::shared_ptr<Debugger> debugger_;
 #endif
   void *stream_{nullptr};
-  void *independent_stream_{nullptr};
   void *communication_stream_{nullptr};
   std::shared_ptr<MemoryManager> mem_manager_{nullptr};
   std::map<uint32_t, std::pair<std::map<AnfNodePtr, std::vector<std::function<void()>>>,

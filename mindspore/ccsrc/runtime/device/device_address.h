@@ -151,13 +151,13 @@ class DeviceAddress : public mindspore::DeviceSync {
 
   // Asynchronously copy host memory to device side.
   virtual bool AsyncHostToDevice(const ShapeVector &shape, size_t size, TypeId type, const void *host_ptr,
-                                 void *stream) const {
+                                 size_t stream_id) const {
     return true;
   }
 
   // Asynchronously copy device memory to host side.
   virtual bool AsyncDeviceToHost(const ShapeVector &shape, size_t size, TypeId type, void *host_ptr,
-                                 void *stream) const {
+                                 size_t stream_id) const {
     return true;
   }
 

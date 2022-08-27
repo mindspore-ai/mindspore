@@ -54,9 +54,6 @@ bool AkgKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vect
     MS_LOG(ERROR) << "kernel pack should not be nullptr. Kernel name: " << kernel_name_;
     return false;
   }
-  if (stream_ == nullptr) {
-    stream_ = stream_ptr;
-  }
   uint32_t block_dim = DEFAULT_BLOCK_DIM;  // default blockdim equal to 1.
   auto func_stub = KernelManager::GenFuncStub(*kernel_pack_, false, &block_dim);
   if (func_stub == 0) {
@@ -76,7 +73,7 @@ bool AkgKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vect
   }
 
   rtL2Ctrl_t *l2ctrl = nullptr;
-  auto stream = static_cast<rtStream_t *>(stream_);
+  auto stream = static_cast<rtStream_t *>(stream_ptr);
   auto ret = rtKernelLaunch(reinterpret_cast<void *>(func_stub), block_dim, runtime_args.data(),
                             SizeToUint(sizeof(void *) * runtime_args.size()), l2ctrl, stream);
   if (ret != RT_ERROR_NONE) {

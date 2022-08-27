@@ -18,8 +18,11 @@
 #define MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_ASCEND_STREAM_MANAGER_H_
 
 #include <memory>
+#include <vector>
+#include <mutex>
 #include "utils/hash_map.h"
 #include "runtime/event.h"
+#include "runtime/stream.h"
 
 namespace mindspore {
 namespace device {
@@ -40,46 +43,38 @@ class AscendStreamMng {
 
   uint32_t ApplyNewEvent() { return cur_event_num_++; }
 
-  rtEvent_t ApplyRtEvent() const {
-    auto rt_resource = std::make_shared<rtEvent_t>();
-    auto ret = rtEventCreate(rt_resource.get());
-    if (ret != RT_ERROR_NONE) {
-      MS_LOG(ERROR) << "rtEventCreate failed, ret:" << ret;
-      *rt_resource = nullptr;
-    }
-    return *rt_resource;
-  }
+  rtEvent_t ApplyRtEvent() const;
 
-  void DeleteEvent() {
-    if (cur_event_num_ == 0) {
-      MS_LOG(WARNING) << "total event num is 0, no event to delete";
-    } else {
-      --cur_event_num_;
-    }
-  }
+  void DeleteEvent();
 
-  void DeleteStream() {
-    if (cur_stream_num_ == 0) {
-      MS_LOG(WARNING) << " total stream num is 0, no stream to delete";
-    } else {
-      --cur_stream_num_;
-    }
-  }
+  void DeleteStream();
+
+  uint32_t GetCurAllocStreamId() const;
 
   uint32_t cur_stream_num() const { return cur_stream_num_; }
 
-  uint32_t GetCurAllocStreamId() const {
-    if (cur_stream_num_ == 0) {
-      MS_LOG(EXCEPTION) << "stream nums is 0, no stream id should be get";
-    }
-    return cur_stream_num_ - 1;
-  }
-
   uint32_t cur_event_num() const { return cur_event_num_; }
 
+  bool CreateStream(rtStream_t *stream, int32_t priority = 0);
+  bool CreateStream(size_t *stream_id, int32_t priority = 0);
+  bool CreateStreamWithFlags(rtStream_t *stream, uint32_t flags, int32_t priority = 0);
+  bool CreateStreamWithFlags(size_t *stream_id, uint32_t flags, int32_t priority = 0);
+  bool DestroyStream(size_t stream_id);
+  bool DestroyAllStreams();
+  rtStream_t GetStream(size_t stream_id) const;
+  bool SyncStream(size_t stream_id) const;
+  bool SyncStream(rtStream_t stream) const;
+
  private:
+  // Count streams and events number in task sink scenario
   uint32_t cur_stream_num_{0};
   uint32_t cur_event_num_{0};
+
+  // Ensure the thread safety for creating and destroying stream.
+  std::mutex stream_mutex_;
+
+  // all gpu CUDA streams including default_stream_.
+  std::vector<void *> streams_;
 };
 }  // namespace ascend
 }  // namespace device
