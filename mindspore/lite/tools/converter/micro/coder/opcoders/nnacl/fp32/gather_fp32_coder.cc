@@ -47,7 +47,7 @@ int GatherFP32Coder::DoCode(CoderContext *context) {
   std::vector<int> in_shape = input0->shape();
   int in_rank = static_cast<int>(in_shape.size());
   MS_CHECK_PTR(parameter_);
-  int axis = (reinterpret_cast<GatherParameter *>(parameter_))->axis_;
+  int axis = *(reinterpret_cast<int *>(input_tensors_.at(THIRD_INPUT)->data()));
   MS_CHECK_TRUE(static_cast<int>(in_shape.size()) >= axis, "invalid axis in gather parameter");
   const int limit = in_shape.at(axis);
 

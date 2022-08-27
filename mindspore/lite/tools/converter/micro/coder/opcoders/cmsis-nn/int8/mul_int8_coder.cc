@@ -74,5 +74,5 @@ int MulInt8Coder::DoCode(CoderContext *const context) {
   context->AppendCode(code.str());
   return RET_OK;
 }
-REG_OPERATOR_CODER(kCortex_M, kNumberTypeInt8, PrimitiveType_MulFusion, CPUOpCoderCreator<MulInt8Coder>)
+REG_OPERATOR_CODER(kAllTargets, kNumberTypeInt8, PrimitiveType_MulFusion, CPUOpCoderCreator<MulInt8Coder>)
 }  // namespace mindspore::lite::micro::cmsis

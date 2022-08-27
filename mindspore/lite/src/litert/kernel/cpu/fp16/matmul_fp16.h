@@ -35,7 +35,6 @@ class MatmulFP16CPUKernel : public MatmulBaseFP16CPUKernel {
  private:
   int InitAShape() override;
   int InitBShape() override;
-  int InitBroadcastParams();
 };
 }  // namespace mindspore::kernel
 

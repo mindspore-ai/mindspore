@@ -16,6 +16,7 @@
 
 #include "src/litert/kernel/cpu/int8/matmul_base_int8.h"
 #include "src/litert/kernel/cpu/int8/opt_op_handler.h"
+#include "src/litert/kernel/cpu/fp32/matmul_fp32_base.h"
 
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_MEMORY_FAILED;
@@ -351,9 +352,9 @@ int MatmulBaseInt8CPUKernel::TransferB() {
   CHECK_NULL_RETURN(weight_data);
   CHECK_NULL_RETURN(b_pack_func_);
   for (int i = 0; i < param_->batch; i++) {
-    auto current_weight = weight_data + i * param_->deep_ * param_->col_;
-    auto current_b_pack = pack_b_ptr_ + i * param_->col_align_ * param_->deep_align_;
-    auto current_sums = weight_bias_sums_ + i * param_->col_align_;
+    auto current_weight = weight_data + b_offset_[i] * param_->deep_ * param_->col_;
+    auto current_b_pack = pack_b_ptr_ + b_offset_[i] * param_->col_align_ * param_->deep_align_;
+    auto current_sums = weight_bias_sums_ + b_offset_[i] * param_->col_align_;
     if (param_->b_transpose_) {
       b_pack_func_(current_weight, current_b_pack, param_->col_, param_->deep_);
       CalcWeightBiasSums(current_weight, param_->deep_, param_->col_, quant_param_->input_.zp_,
@@ -435,6 +436,15 @@ int MatmulBaseInt8CPUKernel::Prepare() {
 
   return RET_OK;
 }
+int MatmulBaseInt8CPUKernel::MatmulReSize() {
+  auto ret = MatmulFp32BaseCPUKernel::InitBroadcastParams(
+    in_tensors_[kInputIndex]->shape(), in_tensors_[kWeightIndex]->shape(), param_, &a_offset_, &b_offset_);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "InitBroadcastParams failed.";
+    return RET_ERROR;
+  }
+  return MatmulBaseInt8CPUKernel::ReSize();
+}
 
 int MatmulBaseInt8CPUKernel::ReSize() {
   FreeTmpBuffer();
@@ -506,7 +516,7 @@ int MatmulBaseInt8CPUKernel::Run() {
   CHECK_NULL_RETURN(c_ptr);
   int32_t tmp_weight_zp = filter_per_channel_ ? 1 : quant_param_->filter_zp_[0];
   for (int i = 0; i < param_->batch; i++) {
-    auto current_src_a = a_ptr + i * param_->row_ * param_->deep_;
+    auto current_src_a = a_ptr + a_offset_[i] * param_->row_ * param_->deep_;
     if (param_->a_transpose_) {
       MS_CHECK_TRUE_RET(a_pack_func_ != nullptr, RET_ERROR);
       a_pack_func_(current_src_a, pack_a_ptr_, param_->deep_, param_->row_);
@@ -517,8 +527,8 @@ int MatmulBaseInt8CPUKernel::Run() {
       CalcInputSums(current_src_a, param_->row_, param_->deep_, tmp_weight_zp, input_sums_, RowMajor);
     }
 
-    batch_b_ptr_ = pack_b_ptr_ + i * param_->col_align_ * param_->deep_align_;
-    batch_sums_ = weight_bias_sums_ + i * param_->col_align_;
+    batch_b_ptr_ = pack_b_ptr_ + b_offset_[i] * param_->col_align_ * param_->deep_align_;
+    batch_sums_ = weight_bias_sums_ + b_offset_[i] * param_->col_align_;
     batch_c_ptr_ = c_ptr + i * param_->row_ * param_->col_;
 
     auto ret = ParallelLaunch(this->ms_context_, MatmulBaseInt8Run, this, thread_count_);

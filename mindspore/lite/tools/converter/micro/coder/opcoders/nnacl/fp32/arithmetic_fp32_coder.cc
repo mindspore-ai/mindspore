@@ -204,13 +204,8 @@ int ArithmeticFP32Coder::ConstTensorBroadCast(CoderContext *const context) {
   }
   FreeConstTileBuff();
   NNaclFp32Serializer init_code;
-  Collect(context,
-          {
-            "wrapper/fp32/arithmetic_fp32_wrapper.h",
-          },
-          {
-            "arithmetic_fp32_wrapper.c",
-          });
+  Collect(context, {"wrapper/fp32/arithmetic_fp32_wrapper.h", "nnacl/fp32/arithmetic_fp32.h"},
+          {"arithmetic_fp32_wrapper.c", "arithmetic_fp32.c"});
   if (input_tensor_->IsConst() &&
       arithmetic_parameter_->in_elements_num0_ != arithmetic_parameter_->out_elements_num_) {
     input0_ptr_ = reinterpret_cast<float *>(

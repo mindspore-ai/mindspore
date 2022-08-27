@@ -142,6 +142,20 @@ int StridedSliceBaseCoder::DoFastCode(CoderContext *ctx) {
 }
 
 int StridedSliceBaseCoder::DoNormalCode(CoderContext *ctx) {
+  switch (input_tensor_->data_type()) {
+    case kNumberTypeInt8:
+      strided_slice_parameter_->data_type = ::kNumberTypeInt8;
+      break;
+    case kNumberTypeFloat32:
+      strided_slice_parameter_->data_type = ::kNumberTypeFloat32;
+      break;
+    case kNumberTypeInt32:
+      strided_slice_parameter_->data_type = ::kNumberTypeInt32;
+      break;
+    default:
+      MS_LOG(ERROR) << "Not supported data type: " << input_tensor_->data_type();
+      return RET_ERROR;
+  }
   nnacl::NNaclFp32Serializer code;
   code.CodeStruct("strided_slice_parameter", *strided_slice_parameter_);
   code.CodeFunction("DoStridedSlice", input_tensor_, output_tensor_,

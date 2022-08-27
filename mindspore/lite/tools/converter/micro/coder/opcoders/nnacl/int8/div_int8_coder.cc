@@ -74,6 +74,7 @@ int DivInt8Coder::DoCode(CoderContext *const context) {
     code.CodeFunction("DivInt8", input0, input1, output_tensor_, element_num, "&param");
   }
 
+  context->AppendCode(code.str());
   return RET_OK;
 }
 }  // namespace mindspore::lite::micro::nnacl

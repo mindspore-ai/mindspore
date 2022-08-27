@@ -28,6 +28,8 @@ int FullconnectionInt8CPUKernel::Prepare() {
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   CHECK_NULL_RETURN(param_);
   param_->batch = 1;
+  a_offset_.resize(param_->batch, 0);
+  b_offset_.resize(param_->batch, 0);
   param_->a_transpose_ = false;
   param_->b_transpose_ = true;
 

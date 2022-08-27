@@ -74,6 +74,7 @@ int SubInt8Coder::Prepare(CoderContext *const context) {
 }
 
 int SubInt8Coder::DoCode(CoderContext *const context) {
+  Collect(context, {"nnacl/int8/arithmetic_int8.h", "nnacl/int8/sub_int8.h"}, {"arithmetic_int8.c", "sub_int8.c"});
   NNaclInt8Serializer code;
   // Todo: Parallel run wrapper
   auto element_num = output_tensor_->ElementsNum();
@@ -99,6 +100,7 @@ int SubInt8Coder::DoCode(CoderContext *const context) {
     code.CodeFunction("SubInt8", input0, input1, output_tensor_, element_num, "&param");
   }
 
+  context->AppendCode(code.str());
   return RET_OK;
 }
 

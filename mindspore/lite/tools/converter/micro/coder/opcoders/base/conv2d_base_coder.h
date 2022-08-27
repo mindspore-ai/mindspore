@@ -76,6 +76,8 @@ class Conv2DBaseCoder : public OperatorCoder {
   Tensor *bias_tensor_{nullptr};
 
   std::string convert_func_;
+
+  bool conv_transpore_ = false;
 };
 }  // namespace mindspore::lite::micro
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_BASE_CONV2D_BASE_CODER_H_
