@@ -39,6 +39,28 @@ int FixedBitWeightQuantization::QuantFilter(const AnfNodePtr &parameter_node, co
   }
 }
 
+int FixedBitWeightQuantization::StatisticsFilter(const AnfNodePtr &parameter_node, const tensor::TensorPtr &weight,
+                                                 const PrimitivePtr &primitive, schema::QuantType quant_type,
+                                                 int quant_max, int quant_min, size_t bit_num,
+                                                 WeightQuantType weight_quant_type, TypeId quant_data_type, int index,
+                                                 int preferred_dim, bool symmetric, bool narrow_range) {
+  size_t elem_count = weight->DataSize();
+  if (quant_data_type == kNumberTypeInt8) {
+    std::vector<int8_t> quant_data(elem_count);
+    return FixedBitStatisticsFilter<int8_t>(parameter_node, weight, primitive, quant_type, quant_max, quant_min,
+                                            bit_num, weight_quant_type, index, preferred_dim, &quant_data, symmetric,
+                                            narrow_range);
+  } else if (quant_data_type == kNumberTypeInt16) {
+    std::vector<int16_t> quant_data(elem_count);
+    return FixedBitStatisticsFilter<int16_t>(parameter_node, weight, primitive, quant_type, quant_max, quant_min,
+                                             bit_num, weight_quant_type, index, preferred_dim, &quant_data, symmetric,
+                                             narrow_range);
+  } else {
+    MS_LOG(ERROR) << quant_data_type << " dont support.";
+    return RET_ERROR;
+  }
+}
+
 int FixedBitWeightQuantization::QuantBias(const ParameterPtr &bias, const PrimitivePtr &primitive) {
   CHECK_NULL_RETURN(bias);
   CHECK_NULL_RETURN(primitive);

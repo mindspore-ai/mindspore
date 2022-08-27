@@ -57,12 +57,12 @@ int DoWeightQuant(const FuncGraphPtr &old_graph, const std::shared_ptr<Converter
       MS_LOG(ERROR) << "Grid search with scale failed.";
       return status;
     }
-    auto quantizer = std::make_unique<WeightQuantizer>(param);
+    auto quantizer = std::make_unique<WeightQuantizer>(param, init_scale);
     if (quantizer == nullptr) {
       MS_LOG(ERROR) << "New WeightQuantizer failed";
       return RET_ERROR;
     }
-    status = static_cast<WeightQuantizer *>(quantizer.get())->DoQuantize(old_graph, init_scale);
+    status = static_cast<WeightQuantizer *>(quantizer.get())->DoQuantize(old_graph);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "DoQuantization failed " << status;
       return RET_ERROR;

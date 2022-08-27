@@ -102,11 +102,11 @@
 #include "tools/converter/quantizer/quant_helper/remove_unused_quant_param.h"
 #include "tools/converter/adapter/acl/plugin/acl_pass_plugin.h"
 #include "tools/converter/quantizer/quant_helper/quant_type_determiner.h"
-#include "tools/converter/quantizer/quant_helper/propagete_quant_param_pass.h"
-#include "tools/converter/quantizer/quant_helper/dtype_transform_pass.h"
-#include "tools/converter/quantizer/quant_helper/graph_inout_transform_pass.h"
+#include "tools/converter/quantizer/quant_helper/propagate_quant_param_pass.h"
+#include "tools/converter/quantizer/quant_helper/transform_uint8_pass.h"
 #include "tools/converter/quantizer/quant_helper/quant_node_pass.h"
 #include "tools/converter/quantizer/insert_quant_node_manager.h"
+#include "tools/converter/quantizer/weight_quantizer.h"
 
 using std::string;
 namespace mindspore::lite {
@@ -434,6 +434,22 @@ STATUS AnfTransform::QATTransform(const FuncGraphPtr &func_graph, const std::sha
     MS_LOG(ERROR) << "Run quant type determine failed.";
     return ret;
   }
+
+  const std::set<PrimitivePtr> support_primitive_types = {prim::kPrimConv2DFusion, prim::kPrimConv2dTransposeFusion,
+                                                          prim::kPrimMatMulFusion, prim::kPrimFullConnection,
+                                                          prim::kPrimLstm,         prim::kPrimGather,
+                                                          prim::kPrimAdam,         prim::kPrimSGD,
+                                                          prim::kPrimApplyMomentum};
+  std::set<PrimitivePtr> per_layer_primitive_types = {
+    prim::kPrimMatMulFusion, prim::kPrimFullConnection, prim::kPrimLstm, prim::kPrimGather, prim::kPrimAdam,
+    prim::kPrimSGD,          prim::kPrimApplyMomentum};
+  auto weight_quantizer = quant::WeightQuantizer();
+  ret = weight_quantizer.WeightQuant(func_graph, support_primitive_types, per_layer_primitive_types,
+                                     support_primitive_types, true, true, false);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Run supplement weight quant param pass failed.";
+    return ret;
+  }
   auto transform_uint8_pass = quant::TransformUint8Pass(func_graph);
   ret = transform_uint8_pass.Transform();
   if (ret != RET_OK) {
@@ -447,7 +463,7 @@ STATUS AnfTransform::QATTransform(const FuncGraphPtr &func_graph, const std::sha
     return ret;
   }
   quant::InsertQuantNodeManager inset_quant_node_pass;
-  ret = inset_quant_node_pass.InsertQuantDtypeCastNode(func_graph);
+  ret = inset_quant_node_pass.InsertFP32DtypeCastNode(func_graph);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Add QuantCast error";
     return RET_ERROR;

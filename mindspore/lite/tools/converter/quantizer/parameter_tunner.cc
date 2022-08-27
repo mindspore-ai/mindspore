@@ -130,9 +130,9 @@ int ParameterOptimizer::WeightQuantModelInference(const FuncGraphPtr &func_graph
       return ret;
     }
 
-    auto quantizer = std::make_unique<quant::WeightQuantizer>(param);
+    auto quantizer = std::make_unique<quant::WeightQuantizer>(param, 1.0f / scale);
     CHECK_NULL_RETURN(quantizer);
-    auto status = quantizer->DoQuantize(func_graph_bak, 1.0f / scale);
+    auto status = quantizer->DoQuantize(func_graph_bak);
     if (status != RET_OK) {
       MS_LOG(WARNING) << "DoQuantization failed " << status;
       continue;

@@ -25,6 +25,7 @@
 #include <utility>
 #include <vector>
 #include <set>
+#include <algorithm>
 #include "tools/converter/quantizer/quantizer.h"
 #include "tools/converter/quantizer/quantize_util.h"
 #include "tools/converter/quantizer/quant_params.h"
@@ -41,7 +42,21 @@
 namespace mindspore::lite::quant {
 class WeightQuantizer : public Quantizer {
  public:
-  explicit WeightQuantizer(const std::shared_ptr<ConverterPara> &param) : Quantizer(param) {
+  WeightQuantizer() {
+    quant_min_ = QuantMin(bit_num_, false, false);
+    quant_max_ = QuantMax(bit_num_, false);
+    symmetric_quant_min_ = QuantMin(bit_num_, false, true);
+    symmetric_quant_max_ = QuantMax(bit_num_, false);
+    // parse type_id_
+    MS_ASSERT(bit_num_ > 0 && bit_num_ <= k16Bit);
+    if (bit_num_ > 0 && bit_num_ <= k8Bit) {
+      type_id_ = kNumberTypeInt8;
+    } else if (bit_num_ <= k16Bit) {
+      type_id_ = kNumberTypeInt16;
+    }
+  }
+
+  explicit WeightQuantizer(const std::shared_ptr<ConverterPara> &param, double init_scale = 0) : Quantizer(param) {
     bit_num_ = param_->commonQuantParam.bit_num;
     if (bit_num_ == 0) {
       type_id_ = kNumberTypeInt16;
@@ -63,31 +78,44 @@ class WeightQuantizer : public Quantizer {
         type_id_ = kNumberTypeInt16;
       }
     }
+    quant_strategy_ = std::make_unique<QuantStrategy>(param_->commonQuantParam.min_quant_weight_size,
+                                                      param_->commonQuantParam.min_quant_weight_channel,
+                                                      param_->commonQuantParam.skip_quant_node);
+    if (init_scale > 0) {
+      mixed_bit_init_scale_ = init_scale;
+    }
+    if (!param_->commonQuantParam.skip_quant_node.empty()) {
+      std::copy(param_->commonQuantParam.skip_quant_node.cbegin(), param_->commonQuantParam.skip_quant_node.cend(),
+                std::inserter(skip_quant_node_, skip_quant_node_.begin()));
+    }
+    quant_type_ = param_->commonQuantParam.quant_type;
   }
+
   ~WeightQuantizer() override = default;
 
   int DoQuantize(FuncGraphPtr func_graph) override;
 
-  int DoQuantize(const FuncGraphPtr &func_graph, double init_scale);
-
   int WeightQuant(const FuncGraphPtr &func_graph, const std::set<PrimitivePtr> &support_weight_quant_types,
                   const std::set<PrimitivePtr> &per_layer_types, const std::set<PrimitivePtr> &symmetric_types,
-                  bool compression = true);
+                  bool compression = true, bool check_quant_conditions = false, bool update_tensor = true);
 
   std::set<tensor::TensorPtr> GetWeightQuantizedTensors() { return this->weight_quantized_tensors_; }
 
  private:
+  int WeightQuantPerCNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
+                          const std::set<PrimitivePtr> &support_weight_quant_types,
+                          const std::set<PrimitivePtr> &per_layer_types, const std::set<PrimitivePtr> &symmetric_types,
+                          bool compression = true, bool update_tensor = true);
   int LinearQuant(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const std::set<PrimitivePtr> &per_layer_types,
                   const std::set<PrimitivePtr> &symmetric_types, const std::vector<int> &weight_indices,
-                  bool compression = true);
+                  bool compression = true, bool update_tensor = true);
   int MarkGraphWeightQuantType(const FuncGraphPtr &func_graph);
   int MarkCnodeWeightQuantType(const CNodePtr &cnode);
-  int DoCNodeWeightQuant(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const std::vector<int> &weight_indices,
-                         WeightQuantType weight_quant_type, int q_min, int q_max, bool symmetric = false,
-                         bool compression = true);
   int DoCompression(const CNodePtr &cnode, const ParameterPtr &parameter, int idx);
   int DoMixBitQuant(const CNodePtr &cnode, const ParameterPtr &parameter, int idx, const tensor::TensorPtr &tensor_info,
-                    int preferred_dim, WeightQuantType weight_quant_type, bool symmetric = true);
+                    int preferred_dim, WeightQuantType weight_quant_type, bool symmetric = true,
+                    bool update_tensor = true);
+  bool CheckWeightQuantExist(const CNodePtr &cnode);
 
  private:
   bool linear_quant_{true};
@@ -102,6 +130,9 @@ class WeightQuantizer : public Quantizer {
   int symmetric_quant_min_{-127};
   int symmetric_quant_max_{127};
   TypeId type_id_{kNumberTypeInt8};
+  std::set<std::string> skip_quant_node_;
+  std::unique_ptr<QuantStrategy> quant_strategy_;
+  schema::QuantType quant_type_{schema::QuantType_WeightQuant};
 };
 }  // namespace mindspore::lite::quant
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_WEIGHT_QUANTIZER_H_

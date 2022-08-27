@@ -70,7 +70,7 @@ std::vector<int> ConvertShapeVectorToInt32(const ShapeVector &dims);
 
 int DeQuantData(const mindspore::MSTensor *tensor, std::vector<double> *dequant_data, int preferred_dim = 0);
 
-int GetQuantType(const CNodePtr &cnode);
+int GetQuantType(const CNodePtr &cnode, schema::QuantType *quant_type);
 
 void GetFuncGraphs(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr> *all_func_graphs);
 

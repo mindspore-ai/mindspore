@@ -18,6 +18,7 @@
 #include <utility>
 #include <memory>
 #include <algorithm>
+#include <set>
 #include "ops/primitive_c.h"
 #include "tools/converter/ops/ops_def.h"
 #include "tools/optimizer/common/gllo_utils.h"
@@ -26,30 +27,41 @@
 
 namespace mindspore {
 namespace lite {
-bool TFFakeQuantAdjust::SetInputQuantParam(const CNodePtr &cnode, const QuantParamHolderPtr &quant_param_holder,
-                                           size_t index) {
+bool TFFakeQuantAdjust::SetQuantParam(const CNodePtr &cnode, const CNodePtr &post_cnode, size_t index) {
+  MS_CHECK_TRUE_RET(post_cnode != nullptr, false);
+  auto quant_param_holder = quant::GetCNodeQuantHolder(post_cnode);
   MS_CHECK_TRUE_MSG(quant_param_holder != nullptr, false, "Primitive quant param holder nullptr.");
+
   auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
   auto min_value = primitive->GetAttr("min");
   MS_CHECK_FALSE(min_value == nullptr, false);
   auto max_value = primitive->GetAttr("max");
   MS_CHECK_FALSE(max_value == nullptr, false);
-  MS_LOG(INFO) << "min: " << GetValue<float>(min_value) << " max: " << GetValue<float>(max_value);
+  auto num_bits_value = primitive->GetAttr("num_bits");
+  MS_CHECK_FALSE(num_bits_value == nullptr, false);
+  auto narrow_range_value = primitive->GetAttr("narrow_range");
+  MS_CHECK_FALSE(narrow_range_value == nullptr, false);
 
   std::vector<schema::QuantParamT> quant_params;
-  auto quant_param = std::make_unique<QuantParamT>();
-  quant_param->min = GetValue<float>(min_value);
-  quant_param->max = GetValue<float>(max_value);
-  quant_param->scale = (std::max(abs(quant_param->min), abs(quant_param->max))) / quant::kQuantRange;
-  quant_param->zeroPoint = 0;
-  quant_param->inited = true;
-  quant_params.push_back(*std::move(quant_param));
+  schema::QuantParamT quant_param;
+  auto real_min = GetValue<float>(min_value);
+  auto real_max = GetValue<float>(max_value);
+  auto bit_num = GetValue<int>(num_bits_value);
+  bool narrow_range = GetValue<bool>(narrow_range_value);
+  MS_LOG(DEBUG) << "min: " << real_min << " max: " << real_max << " bit_num: " << bit_num << " narrow_range"
+                << narrow_range;
+  auto ret = CalQuantizationParams(&quant_param, real_min, real_max, bit_num, narrow_range);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Failed to calculate quant params, post node name: " << post_cnode->fullname_with_scope();
+    return false;
+  }
+
+  quant_params.push_back(quant_param);
   quant_param_holder->set_input_quant_param(index, quant_params);
   return true;
 }
 
-bool TFFakeQuantAdjust::Adjust(const FuncGraphPtr &func_graph) {
-  MS_CHECK_TRUE_RET(func_graph != nullptr, false);
+bool TFFakeQuantAdjust::RemoveFakeQuant(const FuncGraphPtr &func_graph) {
   for (auto &cnode : func_graph->GetOrderedCnodes()) {
     if (!opt::CheckPrimitiveType(cnode, std::make_unique<Primitive>(lite::kNameFakeQuantWithMinMaxVars))) {
       continue;
@@ -62,14 +74,22 @@ bool TFFakeQuantAdjust::Adjust(const FuncGraphPtr &func_graph) {
     MS_CHECK_TRUE_RET(manager != nullptr, true);
     auto node_users = manager->node_users()[cnode];
     for (auto &node_user : node_users) {
-      auto next_quant_holder = quant::GetCNodeQuantHolder(node_user.first->cast<CNodePtr>());
-      auto ret = SetInputQuantParam(cnode, next_quant_holder, node_user.second - quant::kPrimOffset);
-      if (!ret) {
+      auto status = SetQuantParam(cnode, node_user.first->cast<CNodePtr>(), node_user.second - quant::kPrimOffset);
+      if (!status) {
         MS_LOG(ERROR) << "Set quant param failed.";
         return false;
       }
       manager->SetEdge(node_user.first, node_user.second, cnode->inputs()[kIndex1]);
     }
+  }
+  return true;
+}
+
+bool TFFakeQuantAdjust::Adjust(const FuncGraphPtr &func_graph) {
+  MS_CHECK_TRUE_RET(func_graph != nullptr, false);
+  if (!RemoveFakeQuant(func_graph)) {
+    MS_LOG(ERROR) << "RemoveFakeQuant failed.";
+    return false;
   }
   return true;
 }

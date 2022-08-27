@@ -54,12 +54,46 @@ PrimitiveCPtr TFFakeQuantParser::Parse(const tensorflow::NodeDef &tf_op,
   prim->AddAttr("min", MakeValue(min_value));
   prim->AddAttr("max", MakeValue(max_value));
 
+  bool narrow_range = false;
+  if (ParseNarrowRange(tf_op, &narrow_range) != RET_OK) {
+    MS_LOG(ERROR) << "parse narrow_range failed";
+    return nullptr;
+  }
+  prim->AddAttr("narrow_range", MakeValue(narrow_range));
+
+  int num_bits = 8;
+  if (ParseNumBits(tf_op, &num_bits) != RET_OK) {
+    MS_LOG(ERROR) << "parse num_bits failed";
+    return nullptr;
+  }
+  prim->AddAttr("num_bits", MakeValue(num_bits));
+
   *output_size = 1;
   if (AddOpInput(tf_op, 0, inputs) != RET_OK) {
     MS_LOG(ERROR) << "Add op input failed.";
     return nullptr;
   }
   return prim;
+}
+
+STATUS TFFakeQuantParser::ParseNumBits(const tensorflow::NodeDef &node_def, int *num_bits) {
+  tensorflow::AttrValue attr_value;
+  if (!TensorFlowUtils::FindAttrValue(node_def, "num_bits", &attr_value)) {
+    MS_LOG(ERROR) << "The attr num_bits should be specified";
+    return RET_ERROR;
+  }
+  *num_bits = attr_value.i();
+  return RET_OK;
+}
+
+STATUS TFFakeQuantParser::ParseNarrowRange(const tensorflow::NodeDef &node_def, bool *narrow_range) {
+  tensorflow::AttrValue attr_value;
+  if (!TensorFlowUtils::FindAttrValue(node_def, "narrow_range", &attr_value)) {
+    MS_LOG(ERROR) << "The attr narrow_range should be specified";
+    return RET_ERROR;
+  }
+  *narrow_range = attr_value.b();
+  return RET_OK;
 }
 
 TFNodeRegistrar g_tfFakeQuantParser("FakeQuantWithMinMaxVars", new TFFakeQuantParser());

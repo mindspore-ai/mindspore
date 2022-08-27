@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "tools/converter/quantizer/quant_helper/propagete_quant_param_pass.h"
+#include "tools/converter/quantizer/quant_helper/propagate_quant_param_pass.h"
 #include <unordered_map>
 #include <memory>
 #include <set>
@@ -41,7 +41,7 @@ int PropagateQuantParamPass::PropagateSelf(const CNodePtr &cnode, bool forward) 
     CHECK_NULL_RETURN(curr_quant_holder);
     auto curr_input_quant_params = curr_quant_holder->get_input_quant_params();
     auto curr_output_quant_params = curr_quant_holder->get_output_quant_params();
-    if (curr_input_quant_params.empty() || curr_output_quant_params.empty()) {
+    if (curr_input_quant_params.empty() && curr_output_quant_params.empty()) {
       return RET_OK;
     }
     std::string primitive_name;
@@ -50,18 +50,20 @@ int PropagateQuantParamPass::PropagateSelf(const CNodePtr &cnode, bool forward) 
       MS_LOG(ERROR) << "Get primitive type failed.";
       return ret;
     }
-    MS_LOG(INFO) << primitive_name << ":" << cnode->fullname_with_scope() << " propagate self";
-    auto curr_input_quant_param = curr_input_quant_params.at(0);
-    auto curr_output_quant_param = curr_output_quant_params.at(0);
-    if (forward) {
-      // input->output
-      if (IsValid(curr_input_quant_param) && !IsValid(curr_output_quant_param)) {
-        curr_quant_holder->set_output_quant_param(0, curr_input_quant_param);
+    MS_LOG(DEBUG) << primitive_name << ": " << cnode->fullname_with_scope() << " propagate self";
+    if (forward) {  // input->output
+      if (!curr_input_quant_params.empty() && CheckValidQuantParams(curr_input_quant_params.front())) {
+        auto curr_input_quant_param = curr_input_quant_params.front();
+        if (curr_output_quant_params.empty() || !CheckValidQuantParams(curr_output_quant_params.front())) {
+          curr_quant_holder->set_output_quant_param(0, curr_input_quant_param);
+        }
       }
-    } else {
-      // output->input
-      if (!IsValid(curr_input_quant_param) && IsValid(curr_output_quant_param)) {
-        curr_quant_holder->set_input_quant_param(0, curr_output_quant_param);
+    } else {  // output->input
+      if (!curr_output_quant_params.empty() && CheckValidQuantParams(curr_output_quant_params.front())) {
+        auto curr_output_quant_param = curr_output_quant_params.front();
+        if (curr_input_quant_params.empty() || !CheckValidQuantParams(curr_input_quant_params.front())) {
+          curr_quant_holder->set_input_quant_param(0, curr_output_quant_param);
+        }
       }
     }
   }
@@ -88,7 +90,7 @@ int PropagateQuantParamPass::ForwardTupleGetItem(const CNodePtr &cnode) {
     return RET_NULL_PTR;
   }
   auto input_primitive_quant_holder = GetCNodeQuantHolder(input_cnode_primitive);
-  MS_CHECK_TRUE_MSG(input_primitive_quant_holder != nullptr, RET_NULL_PTR, "input_primitive_quant_holder is nullptr.");
+  MS_CHECK_TRUE_MSG(input_primitive_quant_holder != nullptr, RET_NULL_PTR, "quant_holder is nullptr.");
 
   auto curr_quant_holder = GetCNodeQuantHolder(cnode);
   MS_CHECK_TRUE_MSG(curr_quant_holder != nullptr, RET_NULL_PTR, "curr_quant_holder is nullptr.");
@@ -97,9 +99,9 @@ int PropagateQuantParamPass::ForwardTupleGetItem(const CNodePtr &cnode) {
     curr_quant_holder->set_input_quant_param(0, quant_param);
     curr_quant_holder->set_output_quant_param(0, quant_param);
   } else {
-    MS_LOG(WARNING) << "this TupleGetItem node's input node: " << input_cnode->fullname_with_scope()
-                    << "'s output quant_params size: " << input_primitive_quant_holder->get_output_quant_params().size()
-                    << ", but index: " << index;
+    MS_LOG(INFO) << "this TupleGetItem node's input node: " << input_cnode->fullname_with_scope()
+                 << "'s output quant_params size: " << input_primitive_quant_holder->get_output_quant_params().size()
+                 << ", but index: " << index;
   }
   curr_quant_holder->set_quant_type(schema::QuantType_QUANT_ALL);
   return RET_OK;
@@ -118,15 +120,16 @@ int PropagateQuantParamPass::ForwardPropagate(const std::list<CNodePtr> &nodes) 
     if (IsGraphInput(cnode) || opt::IsSpecialType(cnode) || opt::CheckPrimitiveType(cnode, prim::kPrimLstm)) {
       continue;
     }
-    if (opt::CheckPrimitiveType(cnode, prim::kPrimLstm)) {
-      continue;
-    }
     // Infer quant param with forward (output->input).
     auto curr_quant_holder = GetCNodeQuantHolder(cnode);
     if (curr_quant_holder == nullptr) {
       continue;
     }
     auto curr_input_quant_params = curr_quant_holder->get_input_quant_params();
+    if (curr_input_quant_params.empty()) {
+      std::vector<schema::QuantParamT> place_quant(1);
+      curr_input_quant_params.emplace_back(place_quant);
+    }
     for (size_t i = 0; i < curr_input_quant_params.size(); ++i) {
       auto quant_param = curr_input_quant_params.at(i);
       if (!quant_param.empty() && quant_param.at(0).inited) {
@@ -157,12 +160,13 @@ int PropagateQuantParamPass::ForwardPropagate(const std::list<CNodePtr> &nodes) 
       size_t before_out_index = before_cnode_map.second;
       auto before_quant_holder = GetCNodeQuantHolder(before_cnode);
       if (before_quant_holder == nullptr) {
-        MS_LOG(WARNING) << cnode->fullname_with_scope() << " get before_quant_holder failed.";
+        MS_LOG(INFO) << cnode->fullname_with_scope() << " get before_quant_holder failed.";
         continue;
       }
       auto before_output_quant_param = before_quant_holder->get_output_quant_params();
       if (before_output_quant_param.size() > before_out_index && before_quant_holder->IsOutputQuantParamsInited()) {
-        MS_LOG(INFO) << before_cnode->fullname_with_scope() << " forward propagate to " << cnode->fullname_with_scope();
+        MS_LOG(DEBUG) << before_cnode->fullname_with_scope() << " forward propagate to "
+                      << cnode->fullname_with_scope();
         curr_quant_holder->set_input_quant_param(i, before_output_quant_param.at(before_out_index));
       }
     }
@@ -184,46 +188,46 @@ int PropagateQuantParamPass::BackwardPropagate(const std::list<CNodePtr> &nodes)
   }
   for (auto iter = nodes.rbegin(); iter != nodes.rend(); iter++) {
     auto cnode = *iter;
-    auto inputs = cnode->inputs();
     if (IsGraphInput(cnode) || opt::IsSpecialType(cnode) || opt::CheckPrimitiveType(cnode, prim::kPrimLstm)) {
       continue;
     }
-    if (opt::CheckPrimitiveType(cnode, prim::kPrimLstm)) {
-      continue;
-    }
-    // Infer quant param with forward (output<-input).
+    // Infer quant param with backward (output<-input).
     auto curr_quant_holder = GetCNodeQuantHolder(cnode);
     if (curr_quant_holder == nullptr) {
       continue;
     }
     auto curr_output_quant_params = curr_quant_holder->get_output_quant_params();
+    if (curr_output_quant_params.empty()) {  // multi output
+      std::vector<schema::QuantParamT> place_quant(1);
+      curr_output_quant_params.emplace_back(place_quant);
+    }
     for (size_t i = 0; i < curr_output_quant_params.size(); ++i) {
-      if (IsValid(curr_output_quant_params.at(i))) {
+      if (CheckValidQuantParams(curr_output_quant_params.at(i))) {
         continue;
       }
       // output<-input
       auto depend_iter = node_depends_.find(cnode);
       if (depend_iter == node_depends_.end()) {
-        MS_LOG(WARNING) << cnode->fullname_with_scope() << " find depend failed.";
+        MS_LOG(INFO) << cnode->fullname_with_scope() << " find depend failed.";
         continue;
       }
       if (depend_iter->second.backwards.size() == 1) {
-        auto input_cnode = depend_iter->second.backwards.at(0);
-        if (BackwardPerNode(input_cnode, cnode, i) != RET_OK) {
-          MS_LOG(WARNING) << cnode->fullname_with_scope() << "back propagate quant param at: " << i << " failed.";
+        auto post_cnode = depend_iter->second.backwards.at(0);
+        if (BackwardPerNode(post_cnode, cnode, i) != RET_OK) {
+          MS_LOG(INFO) << cnode->fullname_with_scope() << " backward propagate failed, index: " << i;
           continue;
         }
       } else if (depend_iter->second.backwards.size() > 1) {
         if (cnode->isa<abstract::AbstractTuple>() && cnode->cast<abstract::AbstractTuplePtr>()->size() > 1) {
           // Single output, multiple references
-          for (auto &input_cnode : depend_iter->second.backwards) {
-            if (BackwardPerNode(input_cnode, cnode, i) != RET_OK) {
-              MS_LOG(WARNING) << cnode->fullname_with_scope() << "back propagate quant param at: " << i << " failed.";
+          for (auto &post_cnode : depend_iter->second.backwards) {
+            if (BackwardPerNode(post_cnode, cnode, i) != RET_OK) {
+              MS_LOG(INFO) << cnode->fullname_with_scope() << " backward propagate failed, index: " << i;
               continue;
             }
           }
         } else {
-          MS_LOG(INFO) << "Support for multi output.";
+          MS_LOG(DEBUG) << "Dont support multi output.";
         }
       }
     }
@@ -318,39 +322,45 @@ int PropagateQuantParamPass::DoSingleGraphPropagate(const FuncGraphPtr &fun_grap
   return RET_OK;
 }
 
-int PropagateQuantParamPass::BackwardPerNode(const CNodePtr &input_cnode, const CNodePtr &cnode, size_t curr_index) {
-  MS_CHECK_TRUE_RET(input_cnode != nullptr, RET_ERROR);
+int PropagateQuantParamPass::BackwardPerNode(const CNodePtr &post_cnode, const CNodePtr &cnode, size_t curr_index) {
+  MS_CHECK_TRUE_RET(post_cnode != nullptr, RET_ERROR);
   MS_CHECK_TRUE_RET(cnode != nullptr, RET_ERROR);
   auto curr_quant_holder = GetCNodeQuantHolder(cnode);
   MS_CHECK_TRUE_RET(curr_quant_holder != nullptr, RET_ERROR);
   auto curr_output_quant_param = curr_quant_holder->get_output_quant_params();
-  MS_CHECK_FALSE_MSG(curr_output_quant_param.empty(), RET_ERROR, "Output quant params is empty.");
-  if (IsValid(curr_output_quant_param.at(curr_index))) {
+  if (curr_output_quant_param.empty()) {
+    std::vector<schema::QuantParamT> place_quant(1);
+    curr_output_quant_param.emplace_back(place_quant);
+  }
+  if (CheckValidQuantParams(curr_output_quant_param.at(curr_index))) {
     return RET_OK;
   }
   // find input index
   size_t input_index = 0;
-  auto iter = std::find(input_cnode->inputs().cbegin(), input_cnode->inputs().cend(), cnode);
-  if (iter == input_cnode->inputs().cend()) {
+  auto iter = std::find(post_cnode->inputs().cbegin(), post_cnode->inputs().cend(), cnode);
+  if (iter == post_cnode->inputs().cend()) {
     MS_LOG(ERROR) << cnode->fullname_with_scope() << "find backward node failed!";
     return RET_ERROR;
   } else {
-    input_index = std::distance(input_cnode->inputs().cbegin(), iter) - kPrimOffset;
+    input_index = std::distance(post_cnode->inputs().cbegin(), iter) - kPrimOffset;
   }
 
-  auto input_quant_holder = GetCNodeQuantHolder(input_cnode);
+  auto input_quant_holder = GetCNodeQuantHolder(post_cnode);
   MS_CHECK_TRUE_RET(input_quant_holder != nullptr, RET_ERROR);
   auto input_quant_params = input_quant_holder->get_input_quant_params();
-  MS_CHECK_FALSE_MSG(input_quant_params.size() <= input_index, RET_ERROR,
-                     input_cnode->fullname_with_scope() + " input quant params out_of_range.");
-  if (IsValid(input_quant_params.at(input_index))) {
-    MS_LOG(INFO) << input_cnode->fullname_with_scope() << " backward propagate to " << cnode->fullname_with_scope();
+  if (input_quant_params.size() <= input_index) {
+    MS_LOG(INFO) << "Post cnode input quant param not exist, post node name: " << post_cnode->fullname_with_scope()
+                 << " index: " << input_index;
+    return RET_ERROR;
+  }
+  if (CheckValidQuantParams(input_quant_params.at(input_index))) {
+    MS_LOG(INFO) << post_cnode->fullname_with_scope() << " backward propagate to " << cnode->fullname_with_scope();
     curr_quant_holder->set_output_quant_param(curr_index, input_quant_params.at(input_index));
   }
   return RET_OK;
 }
 
-bool PropagateQuantParamPass::IsValid(const std::vector<schema::QuantParamT> quant_params) {
+bool PropagateQuantParamPass::CheckValidQuantParams(const std::vector<schema::QuantParamT> quant_params) {
   return (!quant_params.empty() && quant_params.at(0).inited);
 }
 }  // namespace mindspore::lite::quant

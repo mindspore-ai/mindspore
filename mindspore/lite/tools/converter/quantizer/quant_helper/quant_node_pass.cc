@@ -333,8 +333,8 @@ int QuantNodePass::Quant() {
         MS_LOG(INFO) << node_name << " full quant failed.";
       }
     } else {
-      MS_LOG(ERROR) << node_name << " is not support quant type:" << quant_type;
-      return RET_ERROR;
+      MS_LOG(WARNING) << "Not supported quant type: " << quant_type << " cnode name: " << node_name;
+      continue;
     }
   }
   return RET_OK;
