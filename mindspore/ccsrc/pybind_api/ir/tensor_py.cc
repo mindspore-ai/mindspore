@@ -65,6 +65,8 @@ static TypeId GetDataType(const py::buffer_info &buf) {
             return TypeId::kNumberTypeInt32;
           case kPyBufItemSize8:
             return TypeId::kNumberTypeInt64;
+          default:
+            break;
         }
         break;
       case 'B':
@@ -81,10 +83,14 @@ static TypeId GetDataType(const py::buffer_info &buf) {
             return TypeId::kNumberTypeUInt32;
           case kPyBufItemSize8:
             return TypeId::kNumberTypeUInt64;
+          default:
+            break;
         }
         break;
       case '?':
         return TypeId::kNumberTypeBool;
+      default:
+        break;
     }
   } else if (buf.format.size() >= 2) {
     // Support np.str_ dtype, format: {x}w. {x} is a number that means the maximum length of the string items.
