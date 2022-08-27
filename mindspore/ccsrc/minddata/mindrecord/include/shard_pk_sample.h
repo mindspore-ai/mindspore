@@ -27,7 +27,7 @@
 
 namespace mindspore {
 namespace mindrecord {
-class __attribute__((visibility("default"))) ShardPkSample : public ShardCategory {
+class MINDRECORD_API ShardPkSample : public ShardCategory {
  public:
   ShardPkSample(const std::string &category_field, int64_t num_elements, int64_t num_samples);
 

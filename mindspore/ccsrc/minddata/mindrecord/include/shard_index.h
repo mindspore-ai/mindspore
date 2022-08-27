@@ -27,6 +27,7 @@
 
 #include "minddata/mindrecord/include/common/log_adapter.h"
 #include "minddata/mindrecord/include/common/shard_utils.h"
+#include "minddata/mindrecord/include/mindrecord_macro.h"
 #include "minddata/mindrecord/include/shard_error.h"
 #include "minddata/mindrecord/include/shard_schema.h"
 
@@ -38,7 +39,7 @@ using std::pair;
 using std::string;
 using std::vector;
 
-class __attribute__((visibility("default"))) Index {
+class MINDRECORD_API Index {
  public:
   Index();
 

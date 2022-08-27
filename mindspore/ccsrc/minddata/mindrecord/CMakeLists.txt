@@ -8,6 +8,11 @@ aux_source_directory(io DIR_LIB_SRCS)
 aux_source_directory(meta DIR_LIB_SRCS)
 aux_source_directory(common DIR_LIB_SRCS)
 
+if(MSVC)
+    # define this for msvc:dllexport or dllimport
+    add_compile_definitions(BUILDING_MINDRECORD_DLL)
+endif()
+
 # set(CMAKE_CXX_COMPILER "g++")
 # set(CMAKE_CXX_FLAGS "-Wall -fvisibility=hidden")
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")

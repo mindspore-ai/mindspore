@@ -46,7 +46,7 @@
 
 namespace mindspore {
 namespace mindrecord {
-class __attribute__((visibility("default"))) ShardWriter {
+class MINDRECORD_API ShardWriter {
  public:
   ShardWriter();
 
@@ -89,7 +89,7 @@ class __attribute__((visibility("default"))) ShardWriter {
   /// \param[in] blob_data the vector of image data
   /// \param[in] sign validate data or not
   /// \return MSRStatus the status of MSRStatus to judge if write successfully
-  Status WriteRawData(std::map<uint64_t, std::vector<json>> &raw_data, vector<vector<uint8_t>> &blob_data,
+  Status WriteRawData(std::map<uint64_t, std::vector<json>> &raw_data, vector<vector<uint8_t>> &blob_data,  // NOLINT
                       bool sign = true, bool parallel_writer = false);
 
   /// \brief write raw data by group size for call from python
@@ -97,8 +97,8 @@ class __attribute__((visibility("default"))) ShardWriter {
   /// \param[in] blob_data the vector of blob json data, python-handle format
   /// \param[in] sign validate data or not
   /// \return MSRStatus the status of MSRStatus to judge if write successfully
-  Status WriteRawData(std::map<uint64_t, std::vector<py::handle>> &raw_data,
-                      std::map<uint64_t, std::vector<py::handle>> &blob_data, bool sign = true,
+  Status WriteRawData(std::map<uint64_t, std::vector<py::handle>> &raw_data,                     // NOLINT
+                      std::map<uint64_t, std::vector<py::handle>> &blob_data, bool sign = true,  // NOLINT
                       bool parallel_writer = false);
 
   Status MergeBlobData(const std::vector<string> &blob_fields,
@@ -112,25 +112,29 @@ class __attribute__((visibility("default"))) ShardWriter {
   Status WriteShardHeader();
 
   /// \brief erase error data
-  void DeleteErrorData(std::map<uint64_t, std::vector<json>> &raw_data, std::vector<std::vector<uint8_t>> &blob_data);
+  void DeleteErrorData(std::map<uint64_t, std::vector<json>> &raw_data,  // NOLINT
+                       std::vector<std::vector<uint8_t>> &blob_data);    // NOLINT
 
   /// \brief populate error data
-  void PopulateMutexErrorData(const int &row, const std::string &message, std::map<int, std::string> &err_raw_data);
+  void PopulateMutexErrorData(const int &row, const std::string &message,
+                              std::map<int, std::string> &err_raw_data);  // NOLINT
 
   /// \brief check data
   void CheckSliceData(int start_row, int end_row, json schema, const std::vector<json> &sub_raw_data,
-                      std::map<int, std::string> &err_raw_data);
+                      std::map<int, std::string> &err_raw_data);  // NOLINT
 
   /// \brief write shard header data to disk
-  Status ValidateRawData(std::map<uint64_t, std::vector<json>> &raw_data, std::vector<std::vector<uint8_t>> &blob_data,
+  Status ValidateRawData(std::map<uint64_t, std::vector<json>> &raw_data,  // NOLINT
+                         std::vector<std::vector<uint8_t>> &blob_data,     // NOLINT
                          bool sign, std::shared_ptr<std::pair<int, int>> *count_ptr);
 
   /// \brief fill data array in multiple thread run
-  void FillArray(int start, int end, std::map<uint64_t, vector<json>> &raw_data,
-                 std::vector<std::vector<uint8_t>> &bin_data);
+  void FillArray(int start, int end, std::map<uint64_t, vector<json>> &raw_data,  // NOLINT
+                 std::vector<std::vector<uint8_t>> &bin_data);                    // NOLINT
 
   /// \brief serialized raw data
-  Status SerializeRawData(std::map<uint64_t, std::vector<json>> &raw_data, std::vector<std::vector<uint8_t>> &bin_data,
+  Status SerializeRawData(std::map<uint64_t, std::vector<json>> &raw_data,  // NOLINT
+                          std::vector<std::vector<uint8_t>> &bin_data,      // NOLINT
                           uint32_t row_count);
 
   /// \brief write all data parallel
@@ -143,8 +147,8 @@ class __attribute__((visibility("default"))) ShardWriter {
 
   /// \brief break image data up into multiple row groups
   Status CutRowGroup(int start_row, int end_row, const std::vector<std::vector<uint8_t>> &blob_data,
-                     std::vector<std::pair<int, int>> &rows_in_group, const std::shared_ptr<Page> &last_raw_page,
-                     const std::shared_ptr<Page> &last_blob_page);
+                     std::vector<std::pair<int, int>> &rows_in_group,  // NOLINT
+                     const std::shared_ptr<Page> &last_raw_page, const std::shared_ptr<Page> &last_blob_page);
 
   /// \brief append partial blob data to previous page
   Status AppendBlobPage(const int &shard_id, const std::vector<std::vector<uint8_t>> &blob_data,
@@ -158,18 +162,19 @@ class __attribute__((visibility("default"))) ShardWriter {
 
   /// \brief shift last row group to next raw page for new appending
   Status ShiftRawPage(const int &shard_id, const std::vector<std::pair<int, int>> &rows_in_group,
-                      std::shared_ptr<Page> &last_raw_page);
+                      std::shared_ptr<Page> &last_raw_page);  // NOLINT
 
   /// \brief write raw data page to disk
   Status WriteRawPage(const int &shard_id, const std::vector<std::pair<int, int>> &rows_in_group,
-                      std::shared_ptr<Page> &last_raw_page, const std::vector<std::vector<uint8_t>> &bin_raw_data);
+                      std::shared_ptr<Page> &last_raw_page,  // NOLINT
+                      const std::vector<std::vector<uint8_t>> &bin_raw_data);
 
   /// \brief generate empty raw data page
-  Status EmptyRawPage(const int &shard_id, std::shared_ptr<Page> &last_raw_page);
+  Status EmptyRawPage(const int &shard_id, std::shared_ptr<Page> &last_raw_page);  // NOLINT
 
   /// \brief append a row group at the end of raw page
   Status AppendRawPage(const int &shard_id, const std::vector<std::pair<int, int>> &rows_in_group, const int &chunk_id,
-                       int &last_row_groupId, std::shared_ptr<Page> last_raw_page,
+                       int &last_row_groupId, std::shared_ptr<Page> last_raw_page,  // NOLINT
                        const std::vector<std::vector<uint8_t>> &bin_raw_data);
 
   /// \brief write blob chunk to disk
@@ -190,17 +195,17 @@ class __attribute__((visibility("default"))) ShardWriter {
   Status SetBlobDataSize(const std::vector<std::vector<uint8_t>> &blob_data);
 
   /// \brief populate last raw page pointer
-  Status SetLastRawPage(const int &shard_id, std::shared_ptr<Page> &last_raw_page);
+  Status SetLastRawPage(const int &shard_id, std::shared_ptr<Page> &last_raw_page);  // NOLINT
 
   /// \brief populate last blob page pointer
-  Status SetLastBlobPage(const int &shard_id, std::shared_ptr<Page> &last_blob_page);
+  Status SetLastBlobPage(const int &shard_id, std::shared_ptr<Page> &last_blob_page);  // NOLINT
 
   /// \brief check the data by schema
   Status CheckData(const std::map<uint64_t, std::vector<json>> &raw_data);
 
   /// \brief check the data and type
   Status CheckDataTypeAndValue(const std::string &key, const json &value, const json &data, const int &i,
-                               std::map<int, std::string> &err_raw_data);
+                               std::map<int, std::string> &err_raw_data);  // NOLINT
 
   /// \brief Lock writer and save pages info
   Status LockWriter(bool parallel_writer, std::unique_ptr<int> *fd_ptr);
@@ -209,7 +214,8 @@ class __attribute__((visibility("default"))) ShardWriter {
   Status UnlockWriter(int fd, bool parallel_writer = false);
 
   /// \brief Check raw data before writing
-  Status WriteRawDataPreCheck(std::map<uint64_t, std::vector<json>> &raw_data, vector<vector<uint8_t>> &blob_data,
+  Status WriteRawDataPreCheck(std::map<uint64_t, std::vector<json>> &raw_data,  // NOLINT
+                              vector<vector<uint8_t>> &blob_data,               // NOLINT
                               bool sign, int *schema_count, int *row_count);
 
   /// \brief Get full path from file name

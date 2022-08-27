@@ -23,6 +23,7 @@
 #include <utility>
 #include <vector>
 #include "minddata/mindrecord/include/common/shard_utils.h"
+#include "minddata/mindrecord/include/mindrecord_macro.h"
 #include "minddata/mindrecord/include/shard_error.h"
 #include "minddata/mindrecord/include/shard_index.h"
 #include "minddata/mindrecord/include/shard_page.h"
@@ -31,7 +32,7 @@
 
 namespace mindspore {
 namespace mindrecord {
-class __attribute__((visibility("default"))) ShardHeader {
+class MINDRECORD_API ShardHeader {
  public:
   ShardHeader();
 
@@ -136,8 +137,9 @@ class __attribute__((visibility("default"))) ShardHeader {
   Status FileToPages(const std::string dump_file_name);
 
   static Status Initialize(const std::shared_ptr<ShardHeader> *header_ptr, const json &schema,
-                           const std::vector<std::string> &index_fields, std::vector<std::string> &blob_fields,
-                           uint64_t &schema_id);
+                           const std::vector<std::string> &index_fields,
+                           std::vector<std::string> &blob_fields,  // NOLINT
+                           uint64_t &schema_id);                   // NOLINT
 
  private:
   Status InitializeHeader(const std::vector<json> &headers, bool load_dataset);
@@ -146,7 +148,7 @@ class __attribute__((visibility("default"))) ShardHeader {
   /// \param[in] the shard data real path
   /// \param[in] the headers which read from the shard data
   /// \return SUCCESS/FAILED
-  Status GetHeaders(const vector<string> &real_addresses, std::vector<json> &headers);
+  Status GetHeaders(const vector<string> &real_addresses, std::vector<json> &headers);  // NOLINT
 
   Status ValidateField(const std::vector<std::string> &field_name, json schema, const uint64_t &schema_id);
 
@@ -155,7 +157,8 @@ class __attribute__((visibility("default"))) ShardHeader {
 
   static Status ValidateHeader(const std::string &path, std::shared_ptr<json> *header_ptr);
 
-  void GetHeadersOneTask(int start, int end, std::vector<json> &headers, const vector<string> &realAddresses);
+  void GetHeadersOneTask(int start, int end, std::vector<json> &headers,  // NOLINT
+                         const vector<string> &realAddresses);
 
   Status ParseIndexFields(const json &index_fields);
 
@@ -181,7 +184,7 @@ class __attribute__((visibility("default"))) ShardHeader {
 
   std::shared_ptr<Index> InitIndexPtr();
 
-  Status GetAllSchemaID(std::set<uint64_t> &bucket_count);
+  Status GetAllSchemaID(std::set<uint64_t> &bucket_count);  // NOLINT
 
   uint32_t shard_count_;
   uint64_t header_size_;
