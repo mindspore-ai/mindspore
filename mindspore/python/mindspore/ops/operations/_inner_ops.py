@@ -2099,7 +2099,7 @@ class TopTypeof(Primitive):
             'slice': call_constant_folding(self.prim, slice(None, None, None)),
             'list': call_constant_folding(self.prim, []),
             'tuple': call_constant_folding(self.prim, ()),
-            'Tensor': call_constant_folding(self.prim, Tensor(np.ones([1,], dtype=np.float32))),
+            'Tensor': call_constant_folding(self.prim, Tensor(np.ones([1], dtype=np.float32))),
             'NoneType': call_constant_folding(self.prim, None),
             'int': call_constant_folding(self.prim, 0),
             'bool': call_constant_folding(self.prim, False),
