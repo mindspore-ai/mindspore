@@ -105,11 +105,15 @@ class RoundKernel {
 
   void InitEvalDataSize();
 
+  void InitTrainDataSize();
+
   void UpdateClientUploadAccuracy(const float upload_accuracy, const size_t eval_data_size);
 
   float upload_accuracy() const;
 
   size_t eval_data_size() const;
+
+  size_t train_data_size() const;
 
   bool verifyResponse(const std::shared_ptr<ps::core::MessageHandler> &message, const void *data, size_t len);
 
@@ -161,6 +165,8 @@ class RoundKernel {
   std::atomic<float> upload_accuracy_;
 
   std::atomic<size_t> eval_data_size_;
+
+  std::atomic<size_t> train_data_size_;
 
   // The mutex for send_data_and_time_
   std::mutex send_data_rate_mutex_;

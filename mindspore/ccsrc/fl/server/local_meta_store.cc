@@ -81,32 +81,39 @@ bool LocalMetaStore::verifyAggregationFeatureMap(const std::unordered_map<std::s
 }
 
 bool LocalMetaStore::verifyAggregationFeatureMap(const std::map<std::string, UploadData> &model) {
-  if (model.size() > aggregation_feature_map_.size()) {
-    return false;
-  }
-
-  for (const auto &weight : model) {
-    std::string weight_name = weight.first;
+  std::unordered_map<std::string, Feature> feature_map;
+  for (auto weight : model) {
+    std::string weight_fullname = weight.first;
     auto upload_data = weight.second;
     for (const auto &item : upload_data) {
       size_t weight_size = item.second.size;
-      if (aggregation_feature_map_.count(weight_name) == 0) {
-        return false;
-      }
-      if (weight_size != aggregation_feature_map_[weight_name].weight_size) {
-        return false;
-      }
       float *weight_data_arr = reinterpret_cast<float *>(item.second.addr);
       std::vector<float> weight_data = {weight_data_arr, weight_data_arr + weight_size / sizeof(float)};
-      for (const auto &data : weight_data) {
-        if (std::isnan(data) || std::isinf(data)) {
-          MS_LOG(WARNING) << "The aggregation weight: " << weight_name << " is nan or inf.";
-          return false;
-        }
-      }
+
+      Feature feature;
+      feature.weight_size = weight_size;
+      feature.weight_data = weight_data;
+      feature_map[weight_fullname] = feature;
     }
   }
-  return true;
+  return verifyAggregationFeatureMap(feature_map);
+}
+
+bool LocalMetaStore::verifyAggregationFeatureMap(const std::map<std::string, AddressPtr> &model) {
+  std::unordered_map<std::string, Feature> feature_map;
+  for (auto weight : model) {
+    std::string weight_fullname = weight.first;
+    if (weight.second == nullptr) {
+      continue;
+    }
+    Feature feature;
+    feature.weight_size = weight.second->size;
+    float *data = reinterpret_cast<float *>(weight.second->addr);
+    std::vector<float> weight_data(data, data + weight.second->size / sizeof(float));
+    feature.weight_data = weight_data;
+    feature_map[weight_fullname] = feature;
+  }
+  return verifyAggregationFeatureMap(feature_map);
 }
 }  // namespace server
 }  // namespace fl

@@ -44,6 +44,7 @@ void UpdateModelKernel::InitKernel(size_t threshold_count) {
   InitClientUploadLoss();
   InitClientUploadAccuracy();
   InitEvalDataSize();
+  InitTrainDataSize();
   executor_ = &Executor::GetInstance();
   MS_EXCEPTION_IF_NULL(executor_);
   if (!executor_->initialized()) {
@@ -182,7 +183,14 @@ void UpdateModelKernel::ResetParticipationTimeAndNum() {
 }
 
 void UpdateModelKernel::RunAggregation() {
+  if (!LocalMetaStore::GetInstance().verifyAggregationFeatureMap(Executor::GetInstance().GetModel())) {
+    MS_LOG(WARNING) << "Verify feature map failed before aggregation";
+  }
   auto is_last_iter_valid = Executor::GetInstance().RunAllWeightAggregation();
+  if (!LocalMetaStore::GetInstance().verifyAggregationFeatureMap(Executor::GetInstance().GetModel())) {
+    MS_LOG(WARNING) << "Verify feature map failed after aggregation";
+  }
+
   auto curr_iter_num = LocalMetaStore::GetInstance().curr_iter_num();
   if (is_last_iter_valid) {
     size_t total_data_size = LocalMetaStore::GetInstance().value<size_t>(kCtxFedAvgTotalDataSize);
@@ -255,8 +263,17 @@ ResultCode UpdateModelKernel::VerifyUpdateModel(const schema::RequestUpdateModel
     MS_LOG(DEBUG) << "verify signature passed!";
   }
 
-  std::unordered_map<std::string, Feature> feature_map;
-  if (ps::PSContext::instance()->upload_compress_type() != kDiffSparseQuant) {
+  bool verifyFeatureMapIsSuccess;
+  if (ps::PSContext::instance()->encrypt_type() == ps::kDSEncryptType && update_model_req->sign() != 0) {
+    if (update_model_req->index_array() == nullptr) {
+      verifyFeatureMapIsSuccess = false;
+    } else {
+      verifyFeatureMapIsSuccess = VerifySignDSFeatureMap(update_model_req, device_meta);
+    }
+  } else if (IsCompress(update_model_req)) {
+    verifyFeatureMapIsSuccess = VerifyUploadCompressFeatureMap(update_model_req, device_meta);
+  } else {
+    std::unordered_map<std::string, Feature> feature_map;
     auto upload_feature_map = update_model_req->feature_map();
     for (uint32_t i = 0; i < upload_feature_map->size(); i++) {
       const auto &item = upload_feature_map->Get(i);
@@ -278,18 +295,6 @@ ResultCode UpdateModelKernel::VerifyUpdateModel(const schema::RequestUpdateModel
       feature.weight_data = weight_data;
       feature_map[weight_full_name] = feature;
     }
-  }
-
-  bool verifyFeatureMapIsSuccess;
-  if (ps::PSContext::instance()->encrypt_type() == ps::kDSEncryptType && update_model_req->sign() != 0) {
-    if (update_model_req->index_array() == nullptr) {
-      verifyFeatureMapIsSuccess = false;
-    } else {
-      verifyFeatureMapIsSuccess = VerifySignDSFeatureMap(update_model_req, device_meta);
-    }
-  } else if (IsCompress(update_model_req)) {
-    verifyFeatureMapIsSuccess = VerifyUploadCompressFeatureMap(update_model_req, device_meta);
-  } else {
     verifyFeatureMapIsSuccess = LocalMetaStore::GetInstance().verifyAggregationFeatureMap(feature_map);
   }
   if (!verifyFeatureMapIsSuccess) {

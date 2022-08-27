@@ -86,6 +86,8 @@ class Round {
 
   void InitKernelEvalDataSize();
 
+  void InitKernelTrainDataSize();
+
   float kernel_upload_accuracy() const;
 
   size_t kernel_eval_data_size() const;
