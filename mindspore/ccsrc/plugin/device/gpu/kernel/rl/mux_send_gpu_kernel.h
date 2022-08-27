@@ -90,7 +90,7 @@ class MuxSendGpuKernel : public MuxBaseGpuKernel {
     auto prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
     MS_EXCEPTION_IF_NULL(prim);
 
-    src_rank_ = GetValue<int64_t>(prim->GetAttr("sr_tag"));
+    src_rank_ = cgn_->rank_id();
     dest_rank_ = GetValue<int64_t>(prim->GetAttr("dest_rank"));
 
     nccl_data_type_ = nccl_dtype(AnfAlgo::GetInputDeviceDataType(kernel_node, 0));
@@ -99,7 +99,7 @@ class MuxSendGpuKernel : public MuxBaseGpuKernel {
     total_size_ = 0;
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     for (size_t i = 0; i < input_num; ++i) {
-      auto shape_signed = common::AnfAlgo::GetOutputInferShape(kernel_node, i);
+      auto shape_signed = AnfAlgo::GetInputDeviceShape(kernel_node, i);
       if (IsDynamic(shape_signed)) {
         return true;
       }
