@@ -819,8 +819,8 @@ class Normalize(ImageTensorOperation):
         TypeError: If `mean` is not of type sequence.
         TypeError: If `std` is not of type sequence.
         ValueError: If `mean` is not in range [0.0, 255.0].
-        ValueError: If `mean` is not in range (0.0, 255.0].
-        RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
+        ValueError: If `std` is not in range (0.0, 255.0].
+        RuntimeError: If given tensor shape is not <H, W> or <...,H, W, C>.
 
     Supported Platforms:
         ``CPU`` ``Ascend`` ``GPU``
