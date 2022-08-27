@@ -37,7 +37,7 @@ void MemoryManager::MallocSomasDynamicMem(const session::KernelGraph &graph) {
   MS_EXCEPTION_IF_NULL(somas_allocator_ptr);
   somas_allocator_ptr_ = somas_allocator_ptr;
 
-  if (!(somas_allocator_ptr->Assign(graph))) {
+  if (!(device::CommonSomasAllocator::Assign(graph))) {
     MS_LOG(EXCEPTION) << "Somas Allocate Failed.";
   }
 

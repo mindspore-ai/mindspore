@@ -90,12 +90,12 @@ void MergeBlocks(std::vector<Block> *block_list, std::stack<Block> *merged_block
     return (block1.start_offset_ < block2.start_offset_) ||
            ((block1.start_offset_ == block2.start_offset_) && (block1.end_offset_ < block2.end_offset_));
   });
-  merged_blocks->push(Block((*block_list)[0].start_offset_, (*block_list)[0].size_));
+  merged_blocks->emplace((*block_list)[0].start_offset_, (*block_list)[0].size_);
   for (size_t i = 1; i < block_list->size(); i++) {
     Block &top = merged_blocks->top();
     auto &block = (*block_list)[i];
     if (block.start_offset_ >= top.end_offset_) {
-      merged_blocks->push(Block(block.start_offset_, block.size_));
+      merged_blocks->emplace(block.start_offset_, block.size_);
     } else if (block.end_offset_ > top.end_offset_) {
       top.end_offset_ = block.end_offset_;
       top.size_ = top.end_offset_ - top.start_offset_;
@@ -193,17 +193,17 @@ std::pair<bool, std::string> Somas::GetDebugConfig() const {
   return std::make_pair(enable_save_graphs, save_graphs_path);
 }
 
-std::vector<vector<uint32_t>> Somas::GetStreamGroupInfo(const session::KernelGraph &graph) const {
+std::vector<vector<uint32_t>> Somas::GetStreamGroupInfo() const {
   std::vector<vector<uint32_t>> stream_group;
   return stream_group;
 }
 
-std::map<std::string, UnReuseType> Somas::GetUnReuseNodeType(const session::KernelGraph &graph) const {
+std::map<std::string, UnReuseType> Somas::GetUnReuseNodeType() const {
   std::map<std::string, UnReuseType> node_type;
   return node_type;
 }
 
-std::map<std::string, UnReuseType> Somas::GetUnReuseNodeName(const session::KernelGraph &graph) const {
+std::map<std::string, UnReuseType> Somas::GetUnReuseNodeName() const {
   std::map<std::string, UnReuseType> name_type;
   return name_type;
 }
@@ -221,12 +221,12 @@ bool Somas::ConfigSomas(const session::KernelGraph &graph) {
   auto debug_config = GetDebugConfig();
   save_debug_info_ = debug_config.first;
   debug_info_path_ = debug_config.second;
-  streams_groups_ = GetStreamGroupInfo(graph);
+  streams_groups_ = GetStreamGroupInfo();
   un_reuse_node_type_.clear();
-  auto device_un_reuse_type = GetUnReuseNodeType(graph);
+  auto device_un_reuse_type = GetUnReuseNodeType();
   un_reuse_node_type_.insert(device_un_reuse_type.begin(), device_un_reuse_type.end());
   un_reuse_node_name_.clear();
-  auto device_un_reuse_name = GetUnReuseNodeName(graph);
+  auto device_un_reuse_name = GetUnReuseNodeName();
   un_reuse_node_name_.insert(device_un_reuse_name.begin(), device_un_reuse_name.end());
   return true;
 }
@@ -257,7 +257,7 @@ bool Somas::CalcSomasModelHash(const session::KernelGraph &graph) {
   return Common::SaveStringToFile(filename, model_str);
 }
 
-bool Somas::SaveSomasResult(const session::KernelGraph &graph) {
+void Somas::SaveSomasResult(const session::KernelGraph &graph) {
   nlohmann::json somas_json;
   somas_json[kGraphId] = graph.graph_id();
   somas_json[kHashId] = hash_id_;
@@ -286,10 +286,9 @@ bool Somas::SaveSomasResult(const session::KernelGraph &graph) {
   std::string filename = Common::GetCompilerCachePath() + "/somas_meta/somas_graph_" +
                          std::to_string(graph.graph_id()) + "_" + hash_id_ + ".json";
   (void)Common::SaveStringToFile(filename, somas_json.dump());
-  return true;
 }
 
-bool Somas::UpdateSomasResultToGraph(const session::KernelGraph &graph) {
+void Somas::UpdateSomasResultToGraph(const session::KernelGraph &graph) {
   auto &execution_nodes = graph.execution_order();
   std::vector<Block> block_list;
   for (auto &node : execution_nodes) {
@@ -322,7 +321,6 @@ bool Somas::UpdateSomasResultToGraph(const session::KernelGraph &graph) {
     somas_info->merged_blocks_map_[block.start_offset_] = block.size_;
     dump_merged_blocks_.emplace_back(block.start_offset_, block.size_);
   }
-  return true;
 }
 
 bool Somas::LoadSomasResult(const session::KernelGraph &graph, const string &filename) {
@@ -348,7 +346,7 @@ bool Somas::LoadSomasResult(const session::KernelGraph &graph, const string &fil
     retry_tmp.close();
   }
 
-  auto ret = VerifySomasResult(graph, somas_json);
+  auto ret = VerifySomasResult(somas_json);
   if (!ret) {
     MS_LOG(WARNING) << "Verify Somas Result Failed.";
     return false;
@@ -358,7 +356,7 @@ bool Somas::LoadSomasResult(const session::KernelGraph &graph, const string &fil
   return ret;
 }
 
-bool Somas::VerifySomasResult(const session::KernelGraph &graph, const nlohmann::json &somas_json) const {
+bool Somas::VerifySomasResult(const nlohmann::json &somas_json) const {
   const auto &hash_id = somas_json[kHashId];
   const auto &node_size = somas_json[kNodeSize];
   const auto &tensor_size = somas_json[kTensorSize];
@@ -525,7 +523,7 @@ void Somas::AddControlTensor(const SomasNodePtr &from, const SomasNodePtr &to) {
   control_tensors_list_.push_back(tensor);
 }
 
-void Somas::AddControlTensorFromExecOrder(const session::KernelGraph &graph) {
+void Somas::AddControlTensorFromExecOrder() {
   // Loop to add control edges within each stream (node order within stream)
   for (const auto &stream_kv : streams_map_) {
     auto stream = stream_kv.second;
@@ -585,7 +583,7 @@ void Somas::AddControlTensorFromExecOrder(const session::KernelGraph &graph) {
 
 void Somas::InitControlTensors(const session::KernelGraph &graph) {
   if (depend_exec_order_) {
-    AddControlTensorFromExecOrder(graph);
+    AddControlTensorFromExecOrder();
   }
 }
 
@@ -594,7 +592,7 @@ bool Somas::CommonSpecNodeProcess(const session::KernelGraph &graph) {
   SummaryInputProcess(graph);
 #endif
   RefNodeProcess(graph);
-  CommunicationNodeProcess(graph);
+  CommunicationNodeProcess();
   return true;
 }
 
@@ -1011,42 +1009,43 @@ void Somas::RefNodeProcess(const session::KernelGraph &graph) {
         output_tensor->type_ = kUnion;
         total_output_size += size;
 
-        if (AnfUtils::IsRealCNodeKernel(origin_pair.first)) {
-          if (nodes_map_.find(origin_pair.first.get()) == nodes_map_.end()) {
-            auto cnode = origin_pair.first->cast<CNodePtr>();
-            if (!common::AnfAlgo::IsNopNode(cnode)) {
-              MS_LOG(EXCEPTION) << "Node[" << origin_pair.first->fullname_with_scope() << "] find input node["
-                                << cnode->fullname_with_scope()
-                                << "] doesn't exist in nodes_map and is not a nop node!!!!";
-            }
-            origin_pair = common::AnfAlgo::VisitKernelWithReturnType(cnode->input(kNopNodeRealInputIndex), 0, false);
-          }
-          if (!origin_pair.first->isa<CNode>()) {
-            MS_LOG(EXCEPTION) << "The origin_pair.first is not a cnode. Info origin_pair.first: "
-                              << origin_pair.first->DebugString();
-          }
-          auto ori_node = origin_pair.first->cast<CNodePtr>();
-          auto ori_index = origin_pair.second;
-          if (nodes_map_.find(ori_node.get()) == nodes_map_.end()) {
-            MS_LOG(EXCEPTION)
-              << "The ori_node is not included in nodes_map_ constructed from exec_order of graph. Info ori_node: "
-              << ori_node->DebugString();
-          }
-          auto &repeat_node = nodes_map_[ori_node.get()].at(0);
-          MS_EXCEPTION_IF_NULL(repeat_node);
-          auto input_tensor = repeat_node->output_tensors_[ori_index];
-          MS_EXCEPTION_IF_NULL(input_tensor);
-          input_tensor->type_ = kUnion;
-          total_input_size += input_tensor->aligned_size_;
-          std::vector<size_t> refnode_input_output;
-          refnode_input_output.push_back(input_tensor->GetId());
-          refnode_input_output.push_back(output_tensor->GetId());
-          union_tensors_list_.push_back(refnode_input_output);
-          MS_LOG(INFO) << "RefNode: input " << input_tensor->GetId() << " output " << output_tensor->GetId();
-        } else {
+        if (!AnfUtils::IsRealCNodeKernel(origin_pair.first)) {
           output_tensor->type_ = kGraphInput;
           output_tensor->aligned_size_ = 0;
+          continue;
         }
+
+        if (nodes_map_.find(origin_pair.first.get()) == nodes_map_.end()) {
+          auto cnode = origin_pair.first->cast<CNodePtr>();
+          if (!common::AnfAlgo::IsNopNode(cnode)) {
+            MS_LOG(EXCEPTION) << "Node[" << origin_pair.first->fullname_with_scope() << "] find input node["
+                              << cnode->fullname_with_scope()
+                              << "] doesn't exist in nodes_map and is not a nop node!!!!";
+          }
+          origin_pair = common::AnfAlgo::VisitKernelWithReturnType(cnode->input(kNopNodeRealInputIndex), 0, false);
+        }
+        if (!origin_pair.first->isa<CNode>()) {
+          MS_LOG(EXCEPTION) << "The origin_pair.first is not a cnode. Info origin_pair.first: "
+                            << origin_pair.first->DebugString();
+        }
+        auto ori_node = origin_pair.first->cast<CNodePtr>();
+        auto ori_index = origin_pair.second;
+        if (nodes_map_.find(ori_node.get()) == nodes_map_.end()) {
+          MS_LOG(EXCEPTION)
+            << "The ori_node is not included in nodes_map_ constructed from exec_order of graph. Info ori_node: "
+            << ori_node->DebugString();
+        }
+        auto &repeat_node = nodes_map_[ori_node.get()].at(0);
+        MS_EXCEPTION_IF_NULL(repeat_node);
+        auto input_tensor = repeat_node->output_tensors_[ori_index];
+        MS_EXCEPTION_IF_NULL(input_tensor);
+        input_tensor->type_ = kUnion;
+        total_input_size += input_tensor->aligned_size_;
+        std::vector<size_t> refnode_input_output;
+        refnode_input_output.push_back(input_tensor->GetId());
+        refnode_input_output.push_back(output_tensor->GetId());
+        union_tensors_list_.push_back(refnode_input_output);
+        MS_LOG(INFO) << "RefNode: input " << input_tensor->GetId() << " output " << output_tensor->GetId();
       }
     }
   }
@@ -1117,7 +1116,7 @@ void Somas::UnReuseNodeProcess(const session::KernelGraph &graph) {
   }
 }
 
-void Somas::CommunicationNodeProcess(const session::KernelGraph &graph) {
+void Somas::CommunicationNodeProcess() {
   for (const auto &node : nodes_list_) {
     MS_EXCEPTION_IF_NULL(node);
     if (node->GetType() != kCommunicationNode) {
@@ -1260,6 +1259,9 @@ void Somas::ComputeBasicMatrix() {
                  << kParallelComputeSizeThreshold;
     MS_LOG(INFO) << "Enter Multi-Thread Mode...";
     size_t process_num = common::ThreadPool::GetInstance().GetSyncRunThreadNum();
+    if (process_num == IntToSize(0)) {
+      MS_LOG(EXCEPTION) << "Threads Num is Zero !!!!!";
+    }
     MS_LOG(INFO) << "Threads Num is " << process_num;
 
     int64_t start_index = 0;
@@ -1504,11 +1506,9 @@ bool Somas::Solve(const session::KernelGraph &graph) {
   return true;
 }
 
-void Somas::GetContiguousListContainUnionTensor() {
-  // key: contiguous list index with first union tensor; value: contiguous list index with other union tensor
-  contiguous_list_with_ref_index_map_.clear();
-  std::map<size_t, size_t> ref_tensors_in_contiguous_map = GetRefTensorsInContiguousList();
+std::map<size_t, std::map<size_t, std::set<size_t>>> Somas::GetContiguousRefListErrorCheckMap() {
   std::map<size_t, std::map<size_t, std::set<size_t>>> contiguous_ref_list_error_check_map;
+  std::map<size_t, size_t> ref_tensors_in_contiguous_map = GetRefTensorsInContiguousList();
   for (const auto &ref_pair : ref_tensors_in_contiguous_map) {
     size_t ref_first = ref_pair.first;
     size_t ref_second = ref_pair.second;
@@ -1560,7 +1560,14 @@ void Somas::GetContiguousListContainUnionTensor() {
                       << contiguous_list_with_ref_index_map_[index_first] << " and " << index_second;
     }
   }
+  return contiguous_ref_list_error_check_map;
+}
 
+void Somas::GetContiguousListContainUnionTensor() {
+  // key: contiguous list index with first union tensor; value: contiguous list index with other union tensor
+  contiguous_list_with_ref_index_map_.clear();
+  std::map<size_t, std::map<size_t, std::set<size_t>>> contiguous_ref_list_error_check_map =
+    GetContiguousRefListErrorCheckMap();
   for (const auto &check_list_pair : contiguous_ref_list_error_check_map) {
     auto first_list = check_list_pair.first;
     auto index_set_map = check_list_pair.second;
@@ -1796,24 +1803,10 @@ void Somas::DumpTensors(std::ostringstream &oss) const {
       << "\tlife_start:"
       << "\tlife_end:"
       << "\tsource node name:\n";
-
-  for (const auto &tensor : tensors_list_) {
-    MS_EXCEPTION_IF_NULL(tensor);
-    auto node = GetSomasNode(tensor->GetSourceNodeId());
-    MS_EXCEPTION_IF_NULL(node);
-    auto scope_name = node->scope_full_name_;
-    std::string split_name = GetSplitName(scope_name);
-    oss << "%" << tensor->GetId() << "T"
-        << "\t"
-        << "#" << tensor->GetAlignedSize() << "S"
-        << "\t"
-        << "#" << tensor->GetOriginalSize() << "S"
-        << "\t"
-        << "&" << tensor->GetOffset() << ""
-        << "\t" << tensor->GetTypeString() << "\t" << tensor->GetLifelongString() << "\t" << tensor->lifetime_.start_
-        << "\t" << tensor->lifetime_.end_ << "\t" << split_name << "\n";
-  }
-  for (const auto &tensor : control_tensors_list_) {
+  std::vector<SomasTensorPtr> dump_tensors_list;
+  dump_tensors_list.insert(dump_tensors_list.end(), tensors_list_.begin(), tensors_list_.end());
+  dump_tensors_list.insert(dump_tensors_list.end(), control_tensors_list_.begin(), control_tensors_list_.end());
+  for (const auto &tensor : dump_tensors_list) {
     MS_EXCEPTION_IF_NULL(tensor);
     auto node = GetSomasNode(tensor->GetSourceNodeId());
     MS_EXCEPTION_IF_NULL(node);

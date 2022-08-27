@@ -27,8 +27,6 @@
 namespace mindspore {
 namespace device {
 namespace ascend {
-using KernelGraph = session::KernelGraph;
-using UnReuseType = somas::UnReuseType;
 using TensorType = somas::TensorType;
 using LifeLongType = somas::LifeLongType;
 using mindspore::profiler::ascend::MemoryProfiling;
@@ -103,13 +101,13 @@ bool AscendSomas::GetDependExecOrderFlag(const session::KernelGraph &graph) cons
   }
 }
 
-std::vector<vector<uint32_t>> AscendSomas::GetStreamGroupInfo(const session::KernelGraph &graph) const {
+std::vector<vector<uint32_t>> AscendSomas::GetStreamGroupInfo() const {
   std::vector<vector<uint32_t>> stream_group;
   stream_group = device::ascend::AscendStreamAssign::GetInstance().get_stream_group();
   return stream_group;
 }
 
-std::map<std::string, UnReuseType> AscendSomas::GetUnReuseNodeType(const session::KernelGraph &graph) const {
+std::map<std::string, UnReuseType> AscendSomas::GetUnReuseNodeType() const {
   std::map<std::string, UnReuseType> node_type;
   node_type[kGetNextOpName] = UnReuseType::kUnReuseOutput;
   return node_type;
@@ -149,24 +147,19 @@ void AscendSomas::InitEventInfo(const session::KernelGraph &graph) {
   }
 
   for (auto &event : event_map_) {
-    auto pair = event.second;
-    auto send_iter = nodes_map_.find(pair.send_.get());
+    auto send_iter = nodes_map_.find(event.second.send_.get());
+    auto recv_iter = nodes_map_.find(event.second.recv_.get());
     if (send_iter == nodes_map_.end()) {
-      MS_LOG(WARNING) << "Can't find somas node for " << pair.send_->fullname_with_scope();
+      MS_LOG(WARNING) << "Can't find Ascend somas node for " << event.second.send_->fullname_with_scope();
       continue;
     }
-
-    auto recv_iter = nodes_map_.find(pair.recv_.get());
     if (recv_iter == nodes_map_.end()) {
-      MS_LOG(WARNING) << "Can't find somas node for " << pair.recv_->fullname_with_scope();
+      MS_LOG(WARNING) << "Can't find Ascend somas node for " << event.second.recv_->fullname_with_scope();
       continue;
     }
-
-    auto &somas_send = send_iter->second.at(0);
-    auto &somas_recv = recv_iter->second.at(0);
-    AddControlTensor(somas_send, somas_recv);
+    AddControlTensor(send_iter->second.at(0), recv_iter->second.at(0));
   }
-  MS_LOG(DEBUG) << "Somas InitEventInfo end.";
+  MS_LOG(DEBUG) << "Ascend Somas InitEventInfo end.";
 }
 
 bool AscendSomas::DevSpecNodeProcess(const session::KernelGraph &graph) {

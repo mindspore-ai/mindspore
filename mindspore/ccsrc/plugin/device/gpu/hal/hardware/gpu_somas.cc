@@ -80,13 +80,13 @@ void GPUSomas::InitEventInfo(const session::KernelGraph &graph) {
     auto pair = event.second;
     auto send_iter = nodes_map_.find(pair.send_.get());
     if (send_iter == nodes_map_.end()) {
-      MS_LOG(WARNING) << "Can't find somas node for " << pair.send_->fullname_with_scope();
+      MS_LOG(WARNING) << "Can't find GPU somas node for " << pair.send_->fullname_with_scope();
       continue;
     }
 
     auto recv_iter = nodes_map_.find(pair.recv_.get());
     if (recv_iter == nodes_map_.end()) {
-      MS_LOG(WARNING) << "Can't find somas node for " << pair.recv_->fullname_with_scope();
+      MS_LOG(WARNING) << "Can't find GPU somas node for " << pair.recv_->fullname_with_scope();
       continue;
     }
 
@@ -94,7 +94,7 @@ void GPUSomas::InitEventInfo(const session::KernelGraph &graph) {
     auto &somas_recv = recv_iter->second.at(0);
     AddControlTensor(somas_send, somas_recv);
   }
-  MS_LOG(DEBUG) << "Somas InitEventInfo end.";
+  MS_LOG(DEBUG) << "GPU Somas InitEventInfo end.";
 }
 
 bool GPUSomas::DevSpecNodeProcess(const session::KernelGraph &graph) { return InplaceNodeProcess(graph); }
