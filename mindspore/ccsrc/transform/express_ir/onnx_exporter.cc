@@ -38,6 +38,7 @@ const int kTwoNum = 2;
 const int kThreeNum = 3;
 const int kFourNum = 4;
 const int kFiveNum = 5;
+const int kSixNum = 6;
 const int64_t kOneNumLong = 1;
 const float weight_for_mul = 0.5;
 enum OpMergeMode {
@@ -378,6 +379,18 @@ void AddSplitOp(const std::string &input, const std::vector<std::string> &output
   for (int64_t n : split) {
     split_attr_proto->add_ints(n);
   }
+}
+
+void AddExpandOp(const std::string &input, const std::string &output, const std::vector<int64_t> &shape,
+                 onnx::GraphProto *graph_proto) {
+  onnx::NodeProto *expand_node_proto = graph_proto->add_node();
+  expand_node_proto->set_op_type("Expand");
+  expand_node_proto->set_name(output + "_Expand");
+  expand_node_proto->add_input(input);
+  auto shape_name = output + "_expand_shape_initializer";
+  AddInt64Tensor1DInitializer(shape_name, shape, graph_proto);
+  expand_node_proto->add_input(shape_name);
+  expand_node_proto->add_output(output);
 }
 
 void AddReshapeOp(const std::string &input, const std::string &output, const std::vector<int64_t> &shape,
@@ -1193,6 +1206,8 @@ class OnnxExporter {
                               std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
   void ExportPrimSqueeze(const FuncGraphPtr &func_graph, const CNodePtr &node,
                          std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
+  void ExportPrimDynamicRNN(const FuncGraphPtr &func_graph, const CNodePtr &node,
+                            std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *const graph_proto);
   void ExportPrimLSTM(const FuncGraphPtr &, const CNodePtr &node, std::map<AnfNodePtr, std::string> *node_map_ptr,
                       onnx::GraphProto *graph_proto);
   void ExportPrimReverseV2(const FuncGraphPtr &func_graph, const CNodePtr &node,
@@ -2854,6 +2869,147 @@ void MakeLSTMWeight(const std::string &input, const std::string &output, const s
   AddConcatOp({split_i_name, split_o_name, split_f_name, split_c_name}, output, 1, graph_proto);
 }
 
+void MakeLSTMWeight2(const std::string &input, const std::string &output, const std::vector<int64_t> &output_shape,
+                     onnx::GraphProto *graph_proto) {
+  auto reshaped_name = output + "__split";
+  AddReshapeOp(input, reshaped_name, output_shape, graph_proto);
+
+  auto split_i_name = output + "__concat_i";
+  auto split_o_name = output + "__concat_o";
+  auto split_f_name = output + "__concat_f";
+  auto split_c_name = output + "__concat_c";
+  int64_t hidden_size = output_shape[kOneNum] / kFourNum;
+  AddSplitOp(reshaped_name, {split_i_name, split_c_name, split_f_name, split_o_name},
+             {hidden_size, hidden_size, hidden_size, hidden_size}, 1, graph_proto);
+
+  AddConcatOp({split_i_name, split_o_name, split_f_name, split_c_name}, output, 1, graph_proto);
+}
+
+void OnnxExporter::ExportPrimDynamicRNN(const FuncGraphPtr &func_graph, const CNodePtr &node,
+                                        std::map<AnfNodePtr, std::string> *node_map_ptr,
+                                        onnx::GraphProto *const graph_proto) {
+  auto node_name = RegisterNodeWithUniqueName(node, node_map_ptr);
+
+  auto x_input_name = GetNodeInputName(node->input(kOneNum), node_map_ptr, graph_proto);
+  auto weight_input_name = GetNodeInputName(node->input(kTwoNum), node_map_ptr, graph_proto);
+  auto bias_input_name = GetNodeInputName(node->input(kThreeNum), node_map_ptr, graph_proto);
+  auto init_h_input_name = GetNodeInputName(node->input(kFiveNum), node_map_ptr, graph_proto);
+  auto init_c_input_name = GetNodeInputName(node->input(kSixNum), node_map_ptr, graph_proto);
+
+  auto hidden_size = GetOpAttribute<int64_t>(node, "hidden_size");
+  auto direction_input = GetOpAttribute<std::string>(node, "direction");
+  auto x_input_shape = dyn_cast<abstract::Shape>(node->input(kOneNum)->Shape())->shape();
+  auto seq_len = x_input_shape[0];
+  auto batch_size = x_input_shape[1];
+  auto num_dir = direction_input == "UNIDIRECTIONAL" ? 1 : 2;
+  auto input_size = x_input_shape[kTwoNum];
+
+  auto onnx_input_weights_name = node_name + "_onnx_input_weights";
+  auto onnx_hidden_weights_name = node_name + "_onnx_hidden_weights";
+  auto onnx_bias_name = node_name + "_onnx_bias";
+
+  const int num_gates = 4;
+  auto gate_size = num_gates * hidden_size;
+
+  auto weight_input_name_reshape = weight_input_name + "_reshape";
+  AddReshapeOp(weight_input_name, weight_input_name_reshape, {(input_size * gate_size) + (hidden_size * gate_size)},
+               graph_proto);
+
+  auto input_weights_name = node_name + "_input_weights";
+  auto hidden_weights_name = node_name + "_hidden_weights";
+  std::vector<int64_t> split_sizes = {input_size * gate_size, hidden_size * gate_size};
+  std::vector<std::string> split_outputs = {input_weights_name, hidden_weights_name};
+
+  AddSplitOp(weight_input_name_reshape, split_outputs, split_sizes, 0, graph_proto);
+
+  auto input_weights_name_reshape = input_weights_name + "_reshape";
+  auto hidden_weights_name_reshape = hidden_weights_name + "_reshape";
+  AddReshapeOp(input_weights_name, input_weights_name_reshape, {num_dir, input_size, gate_size}, graph_proto);
+  AddReshapeOp(hidden_weights_name, hidden_weights_name_reshape, {num_dir, hidden_size, gate_size}, graph_proto);
+
+  // Transpose input_weights_name
+  onnx::NodeProto *transpose_node_proto_1 = graph_proto->add_node();
+  auto input_weights_name_reshape_transposed = input_weights_name_reshape + "_transposed";
+  transpose_node_proto_1->set_name(input_weights_name_reshape_transposed);
+  transpose_node_proto_1->set_op_type("Transpose");
+  transpose_node_proto_1->add_input(input_weights_name_reshape);
+  transpose_node_proto_1->add_output(input_weights_name_reshape_transposed);
+
+  onnx::AttributeProto *perm_proto_1 = transpose_node_proto_1->add_attribute();
+  perm_proto_1->set_name("perm");
+  perm_proto_1->set_type(onnx::AttributeProto_AttributeType_INTS);
+  perm_proto_1->add_ints(kZeroNum);
+  perm_proto_1->add_ints(kTwoNum);
+  perm_proto_1->add_ints(kOneNum);
+
+  // Transpose  hidden_weights_name
+  onnx::NodeProto *transpose_node_proto_2 = graph_proto->add_node();
+  auto hidden_weights_name_reshape_transposed = hidden_weights_name_reshape + "_transposed";
+  transpose_node_proto_2->set_name(hidden_weights_name_reshape_transposed);
+  transpose_node_proto_2->set_op_type("Transpose");
+  transpose_node_proto_2->add_input(hidden_weights_name_reshape);
+  transpose_node_proto_2->add_output(hidden_weights_name_reshape_transposed);
+
+  onnx::AttributeProto *perm_proto_2 = transpose_node_proto_2->add_attribute();
+  perm_proto_2->set_name("perm");
+  perm_proto_2->set_type(onnx::AttributeProto_AttributeType_INTS);
+  perm_proto_2->add_ints(kZeroNum);
+  perm_proto_2->add_ints(kTwoNum);
+  perm_proto_2->add_ints(kOneNum);
+
+  MakeLSTMWeight2(input_weights_name_reshape_transposed, onnx_input_weights_name, {num_dir, gate_size, input_size},
+                  graph_proto);
+  MakeLSTMWeight2(hidden_weights_name_reshape_transposed, onnx_hidden_weights_name, {num_dir, gate_size, hidden_size},
+                  graph_proto);
+
+  auto bias_input_name_reshape = bias_input_name + "_reshape";
+  AddReshapeOp(bias_input_name, bias_input_name_reshape, {num_dir, gate_size}, graph_proto);
+
+  auto bias_output_name = node_name + "_bias_output_name";
+  MakeLSTMWeight2(bias_input_name_reshape, bias_output_name, {num_dir, gate_size}, graph_proto);
+
+  auto bias_concat = bias_output_name + "_concat";
+  std::vector<std::string> concat_inputs = {bias_output_name, bias_output_name};
+  AddConcatOp(concat_inputs, bias_concat, 1, graph_proto);
+
+  auto div_second_operand_name = node_name + "_div_second_operand";
+  const float div_second_operand = 2.0;
+  AddFloatScalarInitializer(div_second_operand_name, div_second_operand, onnx::TensorProto_DataType_FLOAT16,
+                            graph_proto);
+
+  AddOp("Div", {bias_concat, div_second_operand_name}, {onnx_bias_name}, graph_proto);
+
+  // Create LSTM node
+  onnx::NodeProto *lstm_node_proto = graph_proto->add_node();
+  lstm_node_proto->set_op_type("LSTM");
+  lstm_node_proto->add_input(x_input_name);
+  lstm_node_proto->add_input(onnx_input_weights_name);
+  lstm_node_proto->add_input(onnx_hidden_weights_name);
+  lstm_node_proto->add_input(onnx_bias_name);
+  lstm_node_proto->add_input("");
+  lstm_node_proto->add_input(init_h_input_name);
+  lstm_node_proto->add_input(init_c_input_name);
+
+  auto Y_output_name = node_name + "_Y";
+  auto Y_h_output_name = node_name + "_Y_h";
+  auto Y_c_output_name = node_name + "_Y_c";
+  lstm_node_proto->add_output(Y_output_name);
+  lstm_node_proto->add_output(Y_h_output_name);
+  lstm_node_proto->add_output(Y_c_output_name);
+
+  onnx::AttributeProto *hidden_size_proto = lstm_node_proto->add_attribute();
+  hidden_size_proto->set_name("hidden_size");
+  hidden_size_proto->set_type(onnx::AttributeProto_AttributeType_INT);
+  hidden_size_proto->set_i(hidden_size);
+
+  auto output_name_Y = MakeOutputName(node_name, kZeroNum);
+  auto output_name_Y_h = MakeOutputName(node_name, kOneNum);
+  auto output_name_Y_c = MakeOutputName(node_name, kTwoNum);
+  AddReshapeOp(Y_output_name, output_name_Y, {seq_len, batch_size, num_dir * hidden_size}, graph_proto);
+  AddExpandOp(Y_h_output_name, output_name_Y_h, {seq_len, batch_size, hidden_size}, graph_proto);
+  AddExpandOp(Y_c_output_name, output_name_Y_c, {seq_len, batch_size, hidden_size}, graph_proto);
+}
+
 void ExportLSTMWeights(const CNodePtr &node, const std::string &node_name, const std::string &weights_name,
                        onnx::TensorProto_DataType dtype, const std::string &onnx_input_weights_name,
                        const std::string &onnx_hidden_weights_name, const std::string &onnx_bias_name,
@@ -3157,6 +3313,7 @@ void OnnxExporter::ExportCNode(const FuncGraphPtr &func_graph, const CNodePtr &n
     {prim::kPrimLstm, &OnnxExporter::ExportPrimLSTM},
     {prim::kPrimReverseV2, &OnnxExporter::ExportPrimReverseV2},
     {prim::kPrimTensorCopySlices, &OnnxExporter::ExportPrimTensorCopySlices},
+    {prim::kPrimDynamicRNN, &OnnxExporter::ExportPrimDynamicRNN},
     {prim::kPrimStack, &OnnxExporter::ExportPrimStack},
   };
 
