@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ class LiteRTGraphExecutor : public GraphExecutor {
   bool CompileGraph(const FuncGraphPtr &graph, const std::map<string, string> &compile_options) override;
   bool RunGraph(const FuncGraphPtr &graph, const std::vector<tensor::Tensor> &inputs,
                 std::vector<tensor::Tensor> *outputs, const std::map<string, string> &compile_options) override;
-  bool Resize(const std::vector<tensor::Tensor> &inputs, const std::vector<std::vector<int64_t>> &dims) override;
+  bool Resize(const std::vector<tensor::Tensor> &inputs, const std::vector<std::vector<int64_t>> &dims);
   std::vector<tensor::TensorPtr> GetInputs();
   std::shared_ptr<lite::LiteSession> CreateLiteSession(lite::InnerContext *context);
   std::vector<MSTensor> GetLiteSessionInputs();

@@ -7,6 +7,7 @@ set(MSLITE_EXTEND_RUNTIME_SRC ${MSLITE_EXTEND_RUNTIME_SRC}
     ${MODEL_LOADER_FRAMEWORK_SRC})
 if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
     set(ENABLE_CPU on)
+    set(LOAD_PLUGIN_STATIC on)
     add_compile_definitions(USE_GLOG)
     string(REPLACE "-fno-rtti" "" CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
     string(REPLACE "-fno-rtti" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
@@ -141,6 +142,7 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
     add_dependencies(mindspore-extendrt mindspore-infer-anfalgo)
     add_dependencies(mindspore-extendrt mindspore-kernel-graph)
     add_subdirectory(cxx_api)
+    add_subdirectory(delegate/graph_executor/litert)
 
     # when cpu kernel is need
     #if(NOT MSLITE_ENABLE_ACL)
@@ -156,6 +158,8 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
         mindspore-kernel-graph _mindspore_backend_common_optimizer_obj
         _mindspore_backend_common_pass_obj)
     target_link_libraries(mindspore-extendrt mindspore_core mindspore::protobuf mindspore::pybind11_module)
+    add_dependencies(mindspore-extendrt msplugin-ge-litert)
+    target_link_libraries(mindspore-extendrt msplugin-ge-litert)
 
     if(NOT WIN32)
         target_link_libraries(mindspore-extendrt dl)
