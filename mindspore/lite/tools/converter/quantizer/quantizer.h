@@ -28,6 +28,8 @@
 namespace mindspore::lite::quant {
 class Quantizer {
  public:
+  Quantizer() {}
+
   explicit Quantizer(const std::shared_ptr<mindspore::ConverterPara> &param) : param_(param) {}
 
   virtual ~Quantizer() = default;
@@ -35,7 +37,7 @@ class Quantizer {
   virtual int DoQuantize(FuncGraphPtr func_graph) = 0;
 
  protected:
-  const std::shared_ptr<mindspore::ConverterPara> param_;
+  const std::shared_ptr<mindspore::ConverterPara> param_{nullptr};
 };
 }  // namespace mindspore::lite::quant
 #endif

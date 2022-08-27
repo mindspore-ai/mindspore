@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANT_HELPER_DTYPE_TRANSFORM_PASS_H_
-#define MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANT_HELPER_DTYPE_TRANSFORM_PASS_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANT_HELPER_TRANSFORM_UINT8_PASS_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANT_HELPER_TRANSFORM_UINT8_PASS_H_
 
 #include <memory>
 #include <vector>
@@ -29,7 +29,7 @@
 
 namespace mindspore::lite::quant {
 /**
- * Transform CNode(dtype uint8toint8, transform weigh data)
+ * Transform CNode(dtype uint8toint8, transform weight data)
  * Insert QuantCastNode
  * */
 class TransformUint8Pass {
@@ -45,15 +45,9 @@ class TransformUint8Pass {
 
   int Uint8toInt8(uint8_t *data, int size);
 
-  int GetQuantType(const CNodePtr &cnode, schema::QuantType *quant_type);
-
   int DoNodeDTypeTrans(const CNodePtr &cnode);
 
   bool CheckNeedDTypeTrans(const CNodePtr &cnode);
-
-  int InsertForwardCastNode(const CNodePtr &cnode, schema::QuantType curr_quant_type);
-
-  int InsertBackwardCastNode(const CNodePtr &cnode, schema::QuantType curr_quant_type);
 
   bool IsSharedWeightParameter(const AnfNodePtr &anf_node);
 
@@ -63,4 +57,4 @@ class TransformUint8Pass {
   std::map<std::string, std::vector<schema::QuantParamT>> shared_weight_quant_params_;
 };
 }  // namespace mindspore::lite::quant
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANT_HELPER_DTYPE_TRANSFORM_PASS_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANT_HELPER_TRANSFORM_UINT8_PASS_H_

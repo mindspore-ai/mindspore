@@ -32,6 +32,11 @@ class TFFakeQuantParser : public TFNodeParser {
   PrimitiveCPtr Parse(const tensorflow::NodeDef &tf_op,
                       const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                       std::vector<std::string> *inputs, int *output_size) override;
+
+ private:
+  STATUS ParseNumBits(const tensorflow::NodeDef &node_def, int *num_bits);
+
+  STATUS ParseNarrowRange(const tensorflow::NodeDef &node_def, bool *narrow_range);
 };
 }  // namespace lite
 }  // namespace mindspore

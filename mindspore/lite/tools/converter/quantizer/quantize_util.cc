@@ -80,15 +80,16 @@ QuantParamHolderPtr GetCNodeQuantHolder(const PrimitivePtr &primitive) {
   return quant_params_holder;
 }
 
-int GetQuantType(const CNodePtr &cnode) {
-  MS_CHECK_TRUE_RET(cnode != nullptr, RET_NULL_PTR);
-  auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "primitive is nullptr";
+int GetQuantType(const CNodePtr &cnode, schema::QuantType *quant_type) {
+  CHECK_NULL_RETURN(cnode);
+  auto quant_param_holder = GetCNodeQuantHolder(cnode);
+  CHECK_NULL_RETURN(quant_param_holder);
+  if (quant_param_holder == nullptr) {
+    MS_LOG(ERROR) << "quant_param_holder is nullptr";
     return RET_ERROR;
   }
-  auto quant_param_holder = GetCNodeQuantHolder(primitive);
-  return quant_param_holder->quant_type();
+  *quant_type = quant_param_holder->quant_type();
+  return RET_OK;
 }
 
 void GetFuncGraphs(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr> *all_func_graphs) {

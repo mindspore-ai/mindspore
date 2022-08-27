@@ -139,24 +139,6 @@ int InsertQuantNodeManager::InsertCastNode(const FuncGraphPtr &graph, const CNod
   return RET_OK;
 }
 
-bool InsertQuantNodeManager::CheckInited(const AnfNodePtr &input_node, size_t index) const {
-  auto input_cnode = std::dynamic_pointer_cast<mindspore::CNode>(input_node);
-  if (input_cnode == nullptr || input_cnode->inputs().empty()) {
-    MS_LOG(DEBUG) << "input: " << index << " " << input_cnode->fullname_with_scope() << ": "
-                  << " PrimitiveC is null";
-    return false;
-  }
-  auto input_cnode_primitive_c = GetValueNode<std::shared_ptr<mindspore::Primitive>>(input_cnode->input(0));
-  if (input_cnode_primitive_c == nullptr) {
-    MS_LOG(DEBUG) << "input: " << index << " " << input_cnode->fullname_with_scope() << ": "
-                  << " PrimitiveC is null";
-    return false;
-  }
-  auto input_primitive_quant_holder = GetCNodeQuantHolder(input_cnode_primitive_c);
-  return (input_primitive_quant_holder->IsInputQuantParamsInited() ||
-          input_primitive_quant_holder->IsOutputQuantParamsInited());
-}
-
 int InsertQuantNodeManager::CheckDataType(const AnfNodePtr &input_node, TypeId check_type_id) const {
   if (opt::CheckPrimitiveType(input_node, prim::kPrimQuantDTypeCast)) {
     return RET_NO_CHANGE;
@@ -309,6 +291,37 @@ int InsertQuantNodeManager::InsertDynamicQuantNode(const FuncGraphPtr &graph,
   return RET_OK;
 }
 
+int InsertQuantNodeManager::InsertFP32DtypeCastNode(const FuncGraphPtr &graph) {
+  CHECK_NULL_RETURN(graph);
+  auto cnodes = graph->GetOrderedCnodes();
+  for (auto &cnode : cnodes) {
+    schema::QuantType curr_quant_type;
+    if (GetQuantType(cnode, &curr_quant_type) != RET_OK) {
+      MS_LOG(INFO) << "Get quant type failed, cnode name: " << cnode->fullname_with_scope();
+      continue;
+    }
+    if (curr_quant_type != schema::QuantType_QUANT_ALL) {
+      MS_LOG(INFO) << "Invalid cnode quant type, cnode name: " << cnode->fullname_with_scope()
+                   << " quant type: " << curr_quant_type;
+      continue;
+    }
+    auto status = InsertForwardCastNode(graph, cnode, kNumberTypeFloat32, curr_quant_type);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "InsertForwardCastNode failed, cnode name: " << cnode->fullname_with_scope();
+      return status;
+    }
+    // DetectionPostProcess op(Uint8toFp32, not need backward cast node)
+    if (!CheckNodeInSet(cnode, kUint8toFP32Operator)) {
+      status = InsertBackwardCastNode(graph, cnode, kNumberTypeFloat32, curr_quant_type);
+      if (status != RET_OK) {
+        MS_LOG(ERROR) << "InsertBackwardCastNode failed, cnode name: " << cnode->fullname_with_scope();
+        return status;
+      }
+    }
+  }  // for
+  return RET_OK;
+}
+
 int InsertQuantNodeManager::InserQuantCastNode(const FuncGraphPtr &graph, const CNodePtr &cnode,
                                                InsertDirection insert_direction, TypeId cast_dtype,
                                                CastNodeType cast_node_type, size_t index,
@@ -325,7 +338,7 @@ int InsertQuantNodeManager::InserQuantCastNode(const FuncGraphPtr &graph, const 
 int InsertQuantNodeManager::InserForwardQuantCastNode(const FuncGraphPtr &graph, const CNodePtr &cnode,
                                                       TypeId cast_dtype, size_t index) {
   if (cast_dtype != kNumberTypeUInt8 && cast_dtype != kNumberTypeFloat32) {
-    MS_LOG(ERROR) << "Invalie cast dtype: " << cast_dtype;
+    MS_LOG(ERROR) << "Invalid cast dtype: " << cast_dtype;
     return RET_NOT_SUPPORT;
   }
 
@@ -336,10 +349,7 @@ int InsertQuantNodeManager::InserForwardQuantCastNode(const FuncGraphPtr &graph,
     return RET_ERROR;
   }
   auto ret = CheckDataType(input_node, cast_dtype);
-  if (ret == RET_NO_CHANGE) {
-    MS_LOG(DEBUG) << "input node not dtype: " << cast_dtype;
-    return RET_OK;
-  } else if (ret != RET_OK) {
+  if (ret != RET_OK) {
     MS_LOG(ERROR) << "Check data type failed, input node name: " << input_node->fullname_with_scope();
     return ret;
   }
@@ -382,20 +392,22 @@ int InsertQuantNodeManager::InserForwardQuantCastNode(const FuncGraphPtr &graph,
                << " dst_type: " << dst_dtype;
   return RET_OK;
 }
+
 int InsertQuantNodeManager::InserBackwardDeQuantCastNode(const FuncGraphPtr &graph, const CNodePtr &cnode,
                                                          TypeId cast_dtype, size_t index,
                                                          const AnfNodePtr &output_node) {
   if (cast_dtype != kNumberTypeUInt8 && cast_dtype != kNumberTypeFloat32) {
-    MS_LOG(ERROR) << "Invalie cast dtype: " << cast_dtype;
+    MS_LOG(ERROR) << "Invalid cast dtype: " << cast_dtype;
     return RET_NOT_SUPPORT;
+  }
+  // If cnode is QuantDTypeCast, do nothint.
+  if (opt::CheckPrimitiveType(cnode, prim::kPrimQuantDTypeCast)) {
+    return RET_NO_CHANGE;
   }
   CHECK_NULL_RETURN(output_node);
   auto ret = CheckDataType(output_node, cast_dtype);
-  if (ret == RET_NO_CHANGE) {
-    MS_LOG(DEBUG) << "input node not dtype: " << cast_dtype;
-    return RET_OK;
-  } else if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Check data type failed, output node name: " << output_node->fullname_with_scope();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Check data type failed, cnode name: " << output_node->fullname_with_scope();
     return ret;
   }
   auto manager = graph->manager();
@@ -441,6 +453,66 @@ int InsertQuantNodeManager::InserBackwardDeQuantCastNode(const FuncGraphPtr &gra
   manager->SetEdge(output_node, index, quant_cast_cnode);
   MS_LOG(INFO) << "InserBackwardDeQuantCastNode cnode name: " << cnode->fullname_with_scope()
                << " src dtype:" << src_dtype << " dst_type: " << dst_dtype;
+  return RET_OK;
+}
+
+int InsertQuantNodeManager::InsertForwardCastNode(const FuncGraphPtr &graph, const CNodePtr &cnode, TypeId cast_dtype,
+                                                  schema::QuantType curr_quant_type) {
+  // inputs
+  for (size_t index = 1; index < cnode->size(); index++) {
+    auto input_node = cnode->input(index);
+    CHECK_NULL_RETURN(input_node);
+    if (!input_node->isa<mindspore::CNode>() && !IsGraphInput(input_node)) {
+      MS_LOG(DEBUG) << "Invalid input node, not CNode and graph input.";
+      continue;
+    }
+    schema::QuantType input_quant_type;
+    if (GetQuantType(cnode, &input_quant_type) != RET_OK) {
+      MS_LOG(WARNING) << "Get quant type failed, input node name: " << input_node->fullname_with_scope();
+      return RET_ERROR;
+    }
+    schema::QuantType pre_quant_type = schema::QuantType_QUANT_NONE;
+    if (input_node->isa<mindspore::CNode>()) {
+      if (GetQuantType(input_node->cast<mindspore::CNodePtr>(), &pre_quant_type) != RET_OK) {
+        MS_LOG(ERROR) << "Get quant type failed, cnode name: " << cnode->fullname_with_scope();
+        return RET_ERROR;
+      }
+    }
+    if (pre_quant_type == schema::QuantType_QUANT_NONE && curr_quant_type == schema::QuantType_QUANT_ALL) {
+      auto status = InserQuantCastNode(graph, cnode, FORWARD, cast_dtype, kQuant, index, nullptr);
+      if (status != RET_OK && status != RET_NO_CHANGE) {
+        MS_LOG(ERROR) << "InserQuantCastNode failed, cnode name: " << cnode->fullname_with_scope();
+        return status;
+      }
+    }
+  }
+  return RET_OK;
+}
+
+int InsertQuantNodeManager::InsertBackwardCastNode(const FuncGraphPtr &graph, const CNodePtr &cnode, TypeId cast_dtype,
+                                                   schema::QuantType curr_quant_type) {
+  // outputs
+  auto manager = graph->manager();
+  if (manager == nullptr) {
+    manager = Manage(graph, true);
+  }
+  CHECK_NULL_RETURN(manager);
+  auto node_users = manager->node_users()[cnode];
+  for (auto &node_user : node_users) {
+    auto output_cnode = node_user.first->cast<CNodePtr>();
+    schema::QuantType post_quant_type;
+    if (GetQuantType(output_cnode, &post_quant_type) != RET_OK) {
+      MS_LOG(ERROR) << "Get quant type failed, cnode name: " << output_cnode->fullname_with_scope();
+      return RET_ERROR;
+    }
+    if (curr_quant_type == schema::QuantType_QUANT_ALL && post_quant_type == schema::QuantType_QUANT_NONE) {
+      auto status = InserQuantCastNode(graph, cnode, BACKWARD, cast_dtype, kDeQuant, node_user.second, node_user.first);
+      if (status != RET_OK && status != RET_NO_CHANGE) {
+        MS_LOG(ERROR) << "InserQuantCastNode dequant failed, cnode name: " << cnode->fullname_with_scope();
+        return status;
+      }
+    }
+  }  // node_users
   return RET_OK;
 }
 }  // namespace mindspore::lite::quant

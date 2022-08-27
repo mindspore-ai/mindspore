@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-#include "tools/converter/quantizer/quant_helper/dtype_transform_pass.h"
-#include <set>
+#include "tools/converter/quantizer/quant_helper/transform_uint8_pass.h"
 #include <vector>
 #include <string>
 #include <memory>
@@ -46,18 +45,19 @@ int TransformUint8Pass::Transform() {
       return RET_ERROR;
     }
     if (curr_quant_type != schema::QuantType_QUANT_ALL) {
-      MS_LOG(ERROR) << "Invalid cnode quant type, cnode name: " << cnode->fullname_with_scope()
-                    << " quant type: " << curr_quant_type;
+      MS_LOG(INFO) << "Invalid cnode quant type, cnode name: " << cnode->fullname_with_scope()
+                   << " quant type: " << curr_quant_type;
       continue;
     }
-    status = InsertForwardCastNode(cnode, curr_quant_type);
+    quant::InsertQuantNodeManager insert_node_manager;
+    status = insert_node_manager.InsertForwardCastNode(this->func_graph_, cnode, kNumberTypeUInt8, curr_quant_type);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "InsertForwardCastNode failed, cnode name: " << cnode->fullname_with_scope();
       return status;
     }
     // DetectionPostProcess op(Uint8toFp32, not need backward cast node)
     if (!CheckNodeInSet(cnode, kUint8toFP32Operator)) {
-      status = InsertBackwardCastNode(cnode, curr_quant_type);
+      status = insert_node_manager.InsertBackwardCastNode(this->func_graph_, cnode, kNumberTypeUInt8, curr_quant_type);
       if (status != RET_OK) {
         MS_LOG(ERROR) << "InsertBackwardCastNode failed, cnode name: " << cnode->fullname_with_scope();
         return status;
@@ -145,14 +145,6 @@ int TransformUint8Pass::Uint8toInt8(uint8_t *data, int size) {
   return RET_OK;
 }
 
-int TransformUint8Pass::GetQuantType(const CNodePtr &cnode, schema::QuantType *quant_type) {
-  CHECK_NULL_RETURN(cnode);
-  auto quant_param_holder = GetCNodeQuantHolder(cnode);
-  CHECK_NULL_RETURN(quant_param_holder);
-  *quant_type = quant_param_holder->quant_type();
-  return RET_OK;
-}
-
 /**
  * Transform CNode(dtype,uint8toint8,weigh data)
  * */
@@ -222,70 +214,6 @@ int TransformUint8Pass::DoNodeDTypeTrans(const CNodePtr &cnode) {
   return RET_OK;
 }
 
-int TransformUint8Pass::InsertForwardCastNode(const CNodePtr &cnode, schema::QuantType curr_quant_type) {
-  // inputs
-  quant::InsertQuantNodeManager insert_node_manager;
-  for (size_t index = 1; index < cnode->size(); index++) {
-    auto input_node = cnode->input(index);
-    CHECK_NULL_RETURN(input_node);
-    if (!input_node->isa<mindspore::CNode>() && !IsGraphInput(input_node)) {
-      MS_LOG(DEBUG) << "Invalid input node, not CNode and graph input.";
-      continue;
-    }
-    schema::QuantType input_quant_type;
-    if (GetQuantType(cnode, &input_quant_type) != RET_OK) {
-      MS_LOG(WARNING) << "Get quant type failed, input node name: " << input_node->fullname_with_scope();
-      return RET_ERROR;
-    }
-    schema::QuantType pre_quant_type = schema::QuantType_QUANT_NONE;
-    if (input_node->isa<mindspore::CNode>()) {
-      if (GetQuantType(input_node->cast<mindspore::CNodePtr>(), &pre_quant_type) != RET_OK) {
-        MS_LOG(ERROR) << "Get quant type failed, cnode name: " << cnode->fullname_with_scope();
-        return RET_ERROR;
-      }
-    }
-    if (pre_quant_type == schema::QuantType_QUANT_NONE && curr_quant_type == schema::QuantType_QUANT_ALL) {
-      auto status = insert_node_manager.InserQuantCastNode(this->func_graph_, cnode, FORWARD, kNumberTypeUInt8, kQuant,
-                                                           index, nullptr);
-      if (status != RET_OK) {
-        MS_LOG(ERROR) << "InserQuantCastNode failed, cnode name: " << cnode->fullname_with_scope();
-        return status;
-      }
-      MS_LOG(INFO) << "InserQuantCastNode forward Uint8toInt8, cnode name: " << cnode->fullname_with_scope();
-    }
-  }
-  return RET_OK;
-}
-
-int TransformUint8Pass::InsertBackwardCastNode(const CNodePtr &cnode, schema::QuantType curr_quant_type) {
-  // outputs
-  auto manager = this->func_graph_->manager();
-  if (manager == nullptr) {
-    manager = Manage(this->func_graph_, true);
-  }
-  CHECK_NULL_RETURN(manager);
-  auto node_users = manager->node_users()[cnode];
-  quant::InsertQuantNodeManager insert_node_manager;
-  for (auto &node_user : node_users) {
-    auto output_cnode = node_user.first->cast<CNodePtr>();
-    schema::QuantType post_quant_type;
-    if (GetQuantType(output_cnode, &post_quant_type) != RET_OK) {
-      MS_LOG(ERROR) << "Get quant type failed, cnode name: " << output_cnode->fullname_with_scope();
-      return RET_ERROR;
-    }
-    if (curr_quant_type == schema::QuantType_QUANT_ALL && post_quant_type == schema::QuantType_QUANT_NONE) {
-      auto status = insert_node_manager.InserQuantCastNode(this->func_graph_, cnode, BACKWARD, kNumberTypeUInt8,
-                                                           kDeQuant, node_user.second, node_user.first);
-      if (status != RET_OK) {
-        MS_LOG(ERROR) << "InserQuantCastNode dequant failed, cnode name: " << cnode->fullname_with_scope();
-        return status;
-      }
-      MS_LOG(INFO) << "InserQuantCastNode backward Int8toUint8, cnode name: " << cnode->fullname_with_scope();
-    }
-  }  // node_users
-  return RET_OK;
-}
-
 bool TransformUint8Pass::CheckNeedDTypeTrans(const CNodePtr &cnode) {
   if (opt::IsSpecialType(cnode)) {
     return false;
@@ -305,7 +233,7 @@ bool TransformUint8Pass::CheckNeedDTypeTrans(const CNodePtr &cnode) {
 
   TypeId cnode_dtype = kTypeUnknown;
   if (opt::GetDataTypeFromAnfNode(cnode, &cnode_dtype) != RET_OK) {
-    MS_LOG(ERROR) << "Get data type failed, cnode name: " << cnode->fullname_with_scope();
+    MS_LOG(WARNING) << "Get data type failed, cnode name: " << cnode->fullname_with_scope();
     return false;
   }
   bool is_fp32_output =

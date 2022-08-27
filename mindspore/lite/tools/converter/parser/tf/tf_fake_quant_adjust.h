@@ -29,7 +29,8 @@ class TFFakeQuantAdjust {
   bool Adjust(const FuncGraphPtr &func_graph);
 
  private:
-  bool SetInputQuantParam(const CNodePtr &cnode, const QuantParamHolderPtr &quant_param_holder, size_t index);
+  bool SetQuantParam(const CNodePtr &cnode, const CNodePtr &post_cnode, size_t index);
+  bool RemoveFakeQuant(const FuncGraphPtr &func_graph);
 };
 }  // namespace lite
 }  // namespace mindspore
