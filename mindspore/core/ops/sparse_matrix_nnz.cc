@@ -46,44 +46,42 @@ abstract::ShapePtr SparseMatrixNNZInferShape(const PrimitivePtr &, const std::ve
   const int64_t rank_x = dense_shape[0];
   const int kInputNoBatch = 2;
   const int kInputWithBatch = 3;
+  const int kZero = 0;
   const int kOne = 1;
-  if (dense_shape.size() != kOne) {
-    MS_EXCEPTION(ValueError) << "For SparseMatrixNNZ, x_dense_shape should be 1-D, bug got " << dense_shape.size()
+  if (!IsDynamicRank(dense_shape) && dense_shape.size() != kOne) {
+    MS_EXCEPTION(ValueError) << "For SparseMatrixNNZ, x_dense_shape should be 1-D, but got " << dense_shape.size()
                              << "-D.";
   }
-  if (batch_pointer.size() != kOne) {
-    MS_EXCEPTION(ValueError) << "For SparseMatrixNNZ, x_batch_pointers should be 1-D, bug got " << batch_pointer.size()
+  if (!IsDynamicRank(batch_pointer) && batch_pointer.size() != kOne) {
+    MS_EXCEPTION(ValueError) << "For SparseMatrixNNZ, x_batch_pointers should be 1-D, but got " << batch_pointer.size()
                              << "-D.";
   }
-  if (row_pointer.size() != kOne) {
-    MS_EXCEPTION(ValueError) << "For SparseMatrixNNZ, x_row_pointers should be 1-D, bug got " << row_pointer.size()
+  if (!IsDynamicRank(row_pointer) && row_pointer.size() != kOne) {
+    MS_EXCEPTION(ValueError) << "For SparseMatrixNNZ, x_row_pointers should be 1-D, but got " << row_pointer.size()
                              << "-D.";
   }
-  if (col_indices.size() != kOne) {
-    MS_EXCEPTION(ValueError) << "For SparseMatrixNNZ, x_col_indices should be 1-D, bug got " << col_indices.size()
+  if (!IsDynamicRank(col_indices) && col_indices.size() != kOne) {
+    MS_EXCEPTION(ValueError) << "For SparseMatrixNNZ, x_col_indices should be 1-D, but got " << col_indices.size()
                              << "-D.";
   }
-  if (values.size() != kOne) {
-    MS_EXCEPTION(ValueError) << "For SparseMatrixNNZ, x_values should be 1-D, bug got " << values.size() << "-D.";
+  if (!IsDynamicRank(values) && values.size() != kOne) {
+    MS_EXCEPTION(ValueError) << "For SparseMatrixNNZ, x_values should be 1-D, but got " << values.size() << "-D.";
   }
 
-  if (!IsDynamic(dense_shape) && rank_x != kInputNoBatch && rank_x != kInputWithBatch) {
+  if (rank_x > kZero && rank_x != kInputNoBatch && rank_x != kInputWithBatch) {
     MS_EXCEPTION(ValueError) << "For SparseMatrixNNZ, the shape of x_dense_shape must be (2,) or (3,), but got ("
                              << rank_x << ",).";
   }
-  if (!IsDynamic(values) && !IsDynamic(col_indices) && values[0] != col_indices[0]) {
-    MS_EXCEPTION(ValueError) << "For SparseMatrixNNZ, 'x_col_indices' and 'x_values' should have the same length, bug "
+  if (values[0] > 0 && col_indices[0] > 0 && values[0] != col_indices[0]) {
+    MS_EXCEPTION(ValueError) << "For SparseMatrixNNZ, 'x_col_indices' and 'x_values' should have the same length, but "
                                 "got length of x_col_indices is "
                              << col_indices[0] << " and length of x_values is " << values[0] << ".";
   }
-  if (IsDynamic(batch_pointer)) {
-    return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeDimAny});
+  std::vector<int64_t> output_shape = {-1};
+  if (batch_pointer[0] > 0) {
+    output_shape[0] = batch_pointer[0] - 1;
   }
-  const int64_t batch_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape][0];
-  int64_t y_shape = batch_shape - 1;
-  std::vector<int64_t> inShape = {y_shape};
-  return std::make_shared<abstract::Shape>(inShape);
+  return std::make_shared<abstract::Shape>(output_shape);
 }
 
 TypePtr SparseMatrixNNZInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {

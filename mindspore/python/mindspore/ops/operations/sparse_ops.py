@@ -1364,7 +1364,7 @@ class SparseMatrixNNZ(Primitive):
         ValueError: If shape[0] of `x_dense_shape` is not 2 or 3.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> dense_shape = Tensor([2,3], dtype=mstype.int32)
