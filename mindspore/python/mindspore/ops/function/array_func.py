@@ -3919,10 +3919,10 @@ def diag(input_x):
         >>> input_x = Tensor([1, 2, 3, 4]).astype('int32')
         >>> output = ops.diag(input_x)
         >>> print(output)
-        [[1, 0, 0, 0]
-         [0, 2, 0, 0]
-         [0, 0, 3, 0]
-         [0, 0, 0, 4]]
+        [[1 0 0 0]
+         [0 2 0 0]
+         [0 0 3 0]
+         [0 0 0 4]]
     """
     return diag_(input_x)
 
