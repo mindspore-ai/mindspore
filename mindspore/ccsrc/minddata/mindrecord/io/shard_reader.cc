@@ -57,7 +57,8 @@ Status ShardReader::GetMeta(const std::string &file_path, std::shared_ptr<json> 
   *meta_data_ptr = {{"header_size", (*header_ptr)["header_size"]}, {"page_size", (*header_ptr)["page_size"]},
                     {"version", (*header_ptr)["version"]},         {"index_fields", (*header_ptr)["index_fields"]},
                     {"schema", (*header_ptr)["schema"]},           {"blob_fields", (*header_ptr)["blob_fields"]}};
-  *addresses_ptr = std::make_shared<std::vector<std::string>>((*header_ptr)["shard_addresses"]);
+  std::vector<std::string> addresses_vec = (*header_ptr)["shard_addresses"];
+  *addresses_ptr = std::make_shared<std::vector<std::string>>(addresses_vec);
   return Status::OK();
 }
 
