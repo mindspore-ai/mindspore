@@ -56,6 +56,11 @@ class PriorityReplayBuffer {
   bool UpdatePriorities(size_t *indices, float *priorities, const size_t &batch_size, cudaStream_t stream);
 
  private:
+  size_t GetStartIndex() const { return total_num_ - total_num_ % capacity_; }
+  size_t GetLastRoundIndex() const {
+    return std::max(SizeToLong(total_num_) - SizeToLong(capacity_), static_cast<int64_t>(0));
+  }
+
   float alpha_{1.};
 
   std::vector<size_t> schema_;
@@ -63,13 +68,15 @@ class PriorityReplayBuffer {
   curandState *rand_state_{nullptr};
 
   size_t capacity_{0};
-  size_t valid_size_{0};
-  size_t head_{-1UL};
   std::vector<uint8_t *> fifo_replay_buffer_;
 
   size_t capacity_pow_two_{0};
   float *max_priority_{nullptr};
   Tree *sum_tree_{nullptr};
+
+  // Member variables for distributed scenario:
+  // The operand of `UpdatePriorities()` is replaced by `Push()`.
+  size_t total_num_{-1UL};
 };
 
 template <typename Tree>
@@ -116,20 +123,19 @@ PriorityReplayBuffer<Tree>::~PriorityReplayBuffer() {
 
 template <typename Tree>
 bool PriorityReplayBuffer<Tree>::Push(const std::vector<AddressPtr> &transition, float *priority, cudaStream_t stream) {
-  // Head point to the latest item.
-  head_ = head_ >= capacity_ ? 0 : head_ + 1;
-  valid_size_ = valid_size_ >= capacity_ ? capacity_ : valid_size_ + 1;
+  total_num_++;
+  size_t idx = total_num_ % capacity_;
 
   // Copy transition to FIFO.
   for (size_t i = 0; i < transition.size(); i++) {
-    size_t offset = head_ * schema_[i];
+    size_t offset = idx * schema_[i];
     CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemcpyAsync(fifo_replay_buffer_[i] + offset, transition[i]->addr, schema_[i],
                                                       cudaMemcpyDeviceToDevice, stream),
                                       "cudaMemcpyAsync failed.");
   }
 
   // Set max priority for the newest transition.
-  SumTreePush(sum_tree_, alpha_, head_, capacity_pow_two_, priority, max_priority_, stream);
+  SumTreePush(sum_tree_, alpha_, idx, capacity_pow_two_, priority, max_priority_, stream);
   return true;
 }
 
@@ -145,7 +151,8 @@ bool PriorityReplayBuffer<Tree>::Sample(const size_t &batch_size, float *beta, s
     InitRandState(batch_size, seed_, rand_state_, stream);
   }
 
-  SumTreeSample(sum_tree_, rand_state_, capacity_pow_two_, beta, batch_size, indices, weights, stream);
+  size_t base_idx = GetStartIndex();
+  SumTreeSample(sum_tree_, rand_state_, capacity_pow_two_, base_idx, beta, batch_size, indices, weights, stream);
 
   for (size_t i = 0; i < schema_.size(); i++) {
     auto output_addr = static_cast<uint8_t *>(transition[i]->addr);
@@ -158,7 +165,8 @@ bool PriorityReplayBuffer<Tree>::Sample(const size_t &batch_size, float *beta, s
 template <typename Tree>
 bool PriorityReplayBuffer<Tree>::UpdatePriorities(size_t *indices, float *priorities, const size_t &batch_size,
                                                   cudaStream_t stream) {
-  SumTreeUpdate(sum_tree_, capacity_pow_two_, alpha_, max_priority_, indices, priorities, batch_size, stream);
+  size_t last = GetLastRoundIndex();
+  SumTreeUpdate(sum_tree_, capacity_pow_two_, last, alpha_, max_priority_, indices, priorities, batch_size, stream);
   return true;
 }
 }  // namespace gpu

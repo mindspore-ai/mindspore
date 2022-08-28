@@ -86,11 +86,13 @@ CUDA_LIB_EXPORT void SumTreePush(T *tree, const float &alpha, const size_t &idx,
 
 // Sample a batch item. Return indices and correction weights.
 template <typename T>
-CUDA_LIB_EXPORT void SumTreeSample(T *tree, curandState *state, const size_t &capacity, float *beta,
-                                   const size_t &batch_size, size_t *indices, float *weights, cudaStream_t stream);
+CUDA_LIB_EXPORT void SumTreeSample(T *tree, curandState *state, const size_t &capacity, const size_t &round_start,
+                                   float *beta, const size_t &batch_size, size_t *indices, float *weights,
+                                   cudaStream_t stream);
 
 // Update item priority.
 template <typename T>
-CUDA_LIB_EXPORT void SumTreeUpdate(T *tree, const size_t &capacity, const float &alpha, float *max_priority,
-                                   size_t *indices, float *priorities, const size_t &batch_size, cudaStream_t stream);
+CUDA_LIB_EXPORT void SumTreeUpdate(T *tree, const size_t &capacity, const size_t &last_idx, const float &alpha,
+                                   float *max_priority, size_t *indices, float *priorities, const size_t &batch_size,
+                                   cudaStream_t stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMP_PRIORITY_REPLAY_BUFFER_IMPL_H_
