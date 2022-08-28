@@ -899,9 +899,9 @@ bool AnfAlgo::IsInplaceNode(const mindspore::AnfNodePtr &kernel, const string &t
 }
 
 bool AnfAlgo::IsCommunicationOp(const AnfNodePtr &node) {
-  static const std::set<std::string> kCommunicationOpNames = {kAllReduceOpName,     kAllGatherOpName, kBroadcastOpName,
-                                                              kReduceScatterOpName, kHcomSendOpName,  kReceiveOpName,
-                                                              kAllToAllVOpName};
+  static const std::set<std::string> kCommunicationOpNames = {kAllReduceOpName,     kAllGatherOpName,  kBroadcastOpName,
+                                                              kReduceScatterOpName, kHcomSendOpName,   kReceiveOpName,
+                                                              kAllToAllVOpName,     kMuxReceiveOpName, kMuxSendOpName};
   MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<CNode>()) {
     return false;
