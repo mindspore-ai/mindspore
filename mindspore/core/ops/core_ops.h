@@ -132,6 +132,7 @@ constexpr auto kLinearSumAssignment = "LinearSumAssignment";
 constexpr auto kCross = "Cross";
 constexpr auto kEditDistance = "EditDistance";
 constexpr auto kNextAfter = "NextAfter";
+constexpr auto kMaximumGradGrad = "MaximumGradGrad";
 constexpr auto kSparseSegmentMean = "SparseSegmentMean";
 constexpr auto kSparseSegmentSqrtN = "SparseSegmentSqrtN";
 constexpr auto kSparseSegmentSqrtNGrad = "SparseSegmentSqrtNGrad";

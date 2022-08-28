@@ -93,6 +93,7 @@ from mindspore.ops.operations.math_ops import RaggedRange
 from mindspore.ops.operations.math_ops import TridiagonalMatMul
 from mindspore.ops.operations.image_ops import ResizeBicubic
 from mindspore.ops.operations._grad_ops import ResizeBicubicGrad
+from mindspore.ops.operations._grad_ops import MaximumGradGrad
 from mindspore.ops.operations.array_ops import RangeV2
 from mindspore.ops.operations.array_ops import ListDiff
 from mindspore.ops.operations.nn_ops import FractionalMaxPool, DataFormatVecPermute
@@ -1652,6 +1653,10 @@ test_case_math_ops = [
     ('MinimumGrad', {
         'block': G.MinimumGrad(),
         'desc_inputs': [[2, 3, 3, 5], [2, 3, 3, 5], [2, 3, 3, 5]],
+        'skip': ['backward']}),
+    ('MaximumGradGrad', {
+        'block': MaximumGradGrad(),
+        'desc_inputs': [[2, 3, 3, 5], [2, 3, 3, 5], [2, 3, 3, 5], [2, 3, 3, 5]],
         'skip': ['backward']}),
     ('StridedSlice_00', {
         'block': P.StridedSlice(shrink_axis_mask=0),
