@@ -183,13 +183,17 @@ void PackWeightManager::Free(void *tensor_data) {
 
 void PackWeightManager::FreePackWeight(std::vector<char *> model_bufs) {
 #ifdef SHARING_MODEL_WEIGHT
-  pack_weight_->FreePackWeight(model_bufs, false);
+  if (pack_weight_ != nullptr) {
+    pack_weight_->FreePackWeight(model_bufs, false);
+  }
 #endif
   return;
 }
 void PackWeightManager::DeleteOriginModelBufInfo(const char *model_buf) {
 #ifdef SHARING_MODEL_WEIGHT
-  pack_weight_->DeleteOriginModelBufInfo(model_buf);
+  if (pack_weight_ != nullptr) {
+    pack_weight_->DeleteOriginModelBufInfo(model_buf);
+  }
 #endif
   return;
 }
