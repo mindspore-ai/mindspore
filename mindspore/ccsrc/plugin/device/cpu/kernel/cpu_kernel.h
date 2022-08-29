@@ -290,7 +290,7 @@ class MultipleBroadcastIterator {
   using shape_info = ShapeVector;
   MultipleBroadcastIterator(std::vector<shape_info> multi_inputs, shape_info output_shape);
   virtual ~MultipleBroadcastIterator() = default;
-  inline size_t GetInputPos(size_t index) const { return input_pos_[index]; }
+  inline size_t GetInputPos(size_t index) const { return LongToSize(input_pos_[index]); }
   void SetPos(size_t pos);
   void GenNextPos();
 

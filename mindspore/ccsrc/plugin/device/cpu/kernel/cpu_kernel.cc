@@ -168,7 +168,8 @@ void CPUKernelUtils::ExpandDimsTo4(ShapeVector *shape) {
 }
 
 size_t CPUKernelUtils::CalcOffset(const ShapeVector &shape, size_t dim0, size_t dim1, size_t dim2, size_t dim3) {
-  size_t offset = dim0 * shape[1] * shape[2] * shape[3] + dim1 * shape[2] * shape[3] + dim2 * shape[3] + dim3;
+  size_t offset = dim0 * LongToSize(shape[1]) * LongToSize(shape[2]) * LongToSize(shape[3]) +
+                  dim1 * LongToSize(shape[2]) * LongToSize(shape[3]) + dim2 * LongToSize(shape[3]) + dim3;
   return offset;
 }
 
