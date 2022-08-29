@@ -40,9 +40,7 @@ bool VmOptimizeAction(const ResourcePtr &resource);
 bool PynativeElimOpt(const ResourcePtr &resource);
 bool TaskEmitAction(const ResourcePtr &resource);
 bool ExecuteAction(const ResourcePtr &resource);
-bool StartPSWorkerAction(const ResourcePtr &resource);
 bool StartFLWorkerAction(const ResourcePtr &resource);
-bool StartPSServerAction(const ResourcePtr &resource);
 bool StartPSSchedulerAction(const ResourcePtr &resource);
 // This action is only for federated learning only. In later version, parameter server mode and federated learning will
 // use the same action.

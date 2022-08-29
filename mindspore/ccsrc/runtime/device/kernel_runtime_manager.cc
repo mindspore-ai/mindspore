@@ -16,18 +16,10 @@
 
 #include "runtime/device/kernel_runtime_manager.h"
 #include "utils/log_adapter.h"
-#ifdef WITH_BACKEND
-#include "ps/ps_cache/ps_cache_manager.h"
-#endif
 
 namespace mindspore {
 namespace device {
 void KernelRuntimeManager::ClearRuntimeResource() {
-#ifdef WITH_BACKEND
-  if (ps::PSContext::instance()->is_worker() && ps::PsDataPrefetch::GetInstance().cache_enable()) {
-    ps::ps_cache_instance.SyncEmbeddingTable();
-  }
-#endif
   std::lock_guard<std::mutex> guard(lock_);
   for (auto &iter : runtime_map_) {
     MS_LOG(INFO) << "Release device " << iter.first;
@@ -128,11 +120,6 @@ void KernelRuntimeManager::ReleaseKernelRuntime(const std::string &device_name, 
   if (runtime == nullptr) {
     return;
   }
-#ifdef WITH_BACKEND
-  if (ps::PSContext::instance()->is_worker() && ps::PsDataPrefetch::GetInstance().cache_enable()) {
-    ps::ps_cache_instance.SyncEmbeddingTable();
-  }
-#endif
   runtime->ReleaseDeviceRes();
   runtime_map_.erase(runtime_iter);
 }

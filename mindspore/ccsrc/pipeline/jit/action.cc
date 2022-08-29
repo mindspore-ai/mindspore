@@ -53,9 +53,7 @@
 #include "load_mindir/infer_mindir.h"
 #include "debug/data_dump/dump_json_parser.h"
 #ifdef WITH_BACKEND
-#include "ps/parameter_server.h"
 #include "ps/scheduler.h"
-#include "ps/worker.h"
 #include "fl/worker/fl_worker.h"
 #include "fl/server/server.h"
 #include "distributed/cluster/cluster_context.h"
@@ -1169,29 +1167,8 @@ bool ExecuteAction(const ResourcePtr &resource) {
 }
 
 #ifdef WITH_BACKEND
-bool StartPSWorkerAction(const ResourcePtr &) {
-  ps::Worker::GetInstance().Run();
-  return true;
-}
 bool StartFLWorkerAction(const ResourcePtr &) {
   fl::worker::FLWorker::GetInstance().Run();
-  return true;
-}
-
-bool StartPSServerAction(const ResourcePtr &resource) {
-  if (distributed::cluster::ClusterContext::instance()->initialized()) {
-    MS_LOG(INFO) << "This node is server. Start wait for finalizing.";
-    if (!distributed::cluster::ClusterContext::instance()->Finalize(UINT32_MAX)) {
-      MS_LOG(ERROR) << "Failed to finalize server.";
-      return false;
-    }
-    MS_LOG(INFO) << "Server is successfully finalized.";
-    return true;
-  }
-  MS_EXCEPTION_IF_NULL(resource);
-  FuncGraphPtr func_graph = resource->func_graph();
-  auto &ps = ps::ParameterServer::GetInstance();
-  ps.Run(func_graph);
   return true;
 }
 
@@ -1578,8 +1555,6 @@ std::vector<ActionItem> VmPipeline(const ResourcePtr &resource) {
       std::string server_mode = ps::PSContext::instance()->server_mode();
       if (server_mode == ps::kServerModeFL || server_mode == ps::kServerModeHybrid) {
         (void)actions.emplace_back(std::make_pair("worker", StartFLWorkerAction));
-      } else {
-        (void)actions.emplace_back(std::make_pair("worker", StartPSWorkerAction));
       }
     }
   }
@@ -1620,18 +1595,6 @@ std::vector<ActionItem> ServerPipeline(const ResourcePtr &resource) {
   (void)actions.emplace_back(std::make_pair("optimize", VmOptimizeAction));
   (void)actions.emplace_back(std::make_pair("validate", ValidateAction));
   (void)actions.emplace_back(std::make_pair("server", StartServerAction));
-  return actions;
-}
-
-std::vector<ActionItem> PServerPipeline(const ResourcePtr &resource) {
-  if (resource->EnableCompileCache() && resource->func_graph() != nullptr) {
-    return {std::make_pair("pserver", StartPSServerAction)};
-  }
-  auto actions = CommonPipeline();
-  (void)actions.emplace_back(std::make_pair("optimize", VmOptimizeAction));
-  (void)actions.emplace_back(std::make_pair("auto_monad_reorder", OrderEnforceAction));
-  (void)actions.emplace_back(std::make_pair("validate", ValidateAction));
-  (void)actions.emplace_back(std::make_pair("pserver", StartPSServerAction));
   return actions;
 }
 

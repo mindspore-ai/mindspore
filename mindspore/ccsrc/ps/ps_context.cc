@@ -21,7 +21,6 @@
 #include "utils/ms_utils.h"
 #if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
 #include "distributed/cluster/cluster_context.h"
-#include "ps/ps_cache/ps_cache_manager.h"
 #include "ps/ps_cache/ps_data/ps_data_prefetch.h"
 #include "distributed/embedding_cache/embedding_cache_utils.h"
 #else
@@ -98,7 +97,6 @@ void PSContext::Reset() {
   is_sched_ = false;
 #if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
   if (ps::PsDataPrefetch::GetInstance().cache_enable()) {
-    ps_cache_instance.Finalize();
     set_cache_enable(false);
   }
 #endif
@@ -166,7 +164,6 @@ void PSContext::InsertHashTableSize(const std::string &param_name, size_t cache_
     embedding_cache_table_manager.InsertHashTableSize(param_name, cache_vocab_size, embedding_size, vocab_size,
                                                       param_key);
   }
-  ps_cache_instance.InsertHashTableSize(param_name, cache_vocab_size, embedding_size, vocab_size);
 #endif
 }
 
@@ -177,21 +174,12 @@ void PSContext::ReInsertHashTableSize(const std::string &new_param_name, const s
     embedding_cache_table_manager.ReInsertHashTableSize(new_param_name, cur_param_name, cache_vocab_size,
                                                         embedding_size);
   }
-  ps_cache_instance.ReInsertHashTableSize(new_param_name, cur_param_name, cache_vocab_size, embedding_size);
 #endif
 }
 
-void PSContext::InsertWeightInitInfo(const std::string &param_name, size_t global_seed, size_t op_seed) const {
-#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
-  ps_cache_instance.InsertWeightInitInfo(param_name, global_seed, op_seed);
-#endif
-}
+void PSContext::InsertWeightInitInfo(const std::string &, size_t, size_t) const { return; }
 
-void PSContext::InsertAccumuInitInfo(const std::string &param_name, float init_val) const {
-#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
-  ps_cache_instance.InsertAccumuInitInfo(param_name, init_val);
-#endif
-}
+void PSContext::InsertAccumuInitInfo(const std::string &, float) const { return; }
 
 void PSContext::CloneHashTable(const std::string &dest_param_name, int32_t dest_param_key,
                                const std::string &src_param_name, int32_t src_param_key) const {
@@ -199,7 +187,6 @@ void PSContext::CloneHashTable(const std::string &dest_param_name, int32_t dest_
   if (enable_distributed_mindrt()) {
     embedding_cache_table_manager.CloneHashTable(dest_param_name, dest_param_key, src_param_name, src_param_key);
   }
-  ps_cache_instance.CloneHashTable(dest_param_name, src_param_name);
 #endif
 }
 
@@ -216,11 +203,7 @@ bool PSContext::cache_enable() const {
   return false;
 }
 
-void PSContext::set_rank_id(uint32_t rank_id) const {
-#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
-  ps_cache_instance.set_rank_id(rank_id);
-#endif
-}
+void PSContext::set_rank_id(uint32_t) const { return; }
 
 void PSContext::set_server_mode(const std::string &server_mode) {
   if (server_mode != kServerModePS && server_mode != kServerModeFL && server_mode != kServerModeHybrid) {

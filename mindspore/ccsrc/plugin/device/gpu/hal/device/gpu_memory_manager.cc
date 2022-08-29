@@ -18,7 +18,6 @@
 #include "plugin/device/gpu/hal/device/gpu_memory_allocator.h"
 #include "utils/ms_context.h"
 #include "include/common/utils/convert_utils.h"
-#include "ps/ps_cache/ps_cache_manager.h"
 #include "plugin/device/gpu/hal/device/gpu_device_manager.h"
 #include "plugin/device/gpu/hal/device/gpu_common.h"
 namespace mindspore {
@@ -73,9 +72,6 @@ bool GPUMemoryManager::MallocContinuousMemFromMemPool(const DeviceAddressPtrList
 void GPUMemoryManager::Initialize() {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  if (ps::ps_cache_instance.initialized_ps_cache()) {
-    return;
-  }
   auto device_addr = MallocMemFromMemPool(1, false);
   if (!device_addr) {
     MS_LOG(EXCEPTION) << "Dynamic memory pool init error.";

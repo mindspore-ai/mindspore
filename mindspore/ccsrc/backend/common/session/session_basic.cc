@@ -48,7 +48,7 @@
 #include "include/common/utils/parallel_context.h"
 #include "kernel/oplib/oplib.h"
 #ifdef WITH_BACKEND
-#include "ps/ps_cache/ps_cache_manager.h"
+#include "ps/ps_cache/ps_data/ps_data_prefetch.h"
 #include "ps/constants.h"
 #include "ps/util.h"
 #include "ps/ps_context.h"
@@ -545,16 +545,6 @@ void GetNodeUsedList(const FuncGraphPtr &kernel_graph, const AnfNodePtr &node,
       node_users_list->push_back(node_user.first);
     }
   }
-}
-
-// Check whether the Parameter initialized in server is used by the operator executed on the device side.
-bool UseParamInitInServer(const FuncGraphPtr &kernel_graph, const AnfNodePtr &param_node) {
-  std::vector<AnfNodePtr> node_users_list;
-  GetNodeUsedList(kernel_graph, param_node, &node_users_list);
-
-  // Check if there is real CNode among all users of the node.
-  return std::any_of(node_users_list.begin(), node_users_list.end(),
-                     [](const AnfNodePtr &node) { return AnfUtils::IsRealKernel(node); });
 }
 #endif
 
@@ -3062,131 +3052,6 @@ void SessionBasic::DumpGraphs(const std::vector<KernelGraphPtr> &graphs) const {
 }
 
 void SessionBasic::UnifyMindIR(const KernelGraphPtr &graph) { opt::CommonUnifyMindIR(graph); }
-
-#ifdef WITH_BACKEND
-void SessionBasic::InitPsWorker(const KernelGraphPtr &kernel_graph) const {
-  if (!ps::PSContext::instance()->is_worker()) {
-    return;
-  }
-
-  // Check whether the Parameter initialized in server is used by the operator executed on the device side.
-  CheckPSModeConsistence(kernel_graph);
-
-  if (ps::PsDataPrefetch::GetInstance().cache_enable()) {
-    if (!ps::ps_cache_instance.initialized_ps_cache()) {
-      auto context_ptr = MsContext::GetInstance();
-      MS_EXCEPTION_IF_NULL(context_ptr);
-      auto device_target = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-      auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(device_target, device_id_);
-      MS_EXCEPTION_IF_NULL(runtime_instance);
-      auto context = runtime_instance->context();
-      const auto &kernels = kernel_graph->execution_order();
-      if (kernels.size() > 0 && common::AnfAlgo::GetCNodeName(kernels[0]) == "InitDataSetQueue") {
-        GetBatchElements(kernels[0]);
-        ps::ps_cache_instance.Initialize();
-      }
-      ps::ps_cache_instance.DoProcessData(device_id_, context);
-    }
-  } else {
-    // Assign parameter keys.
-    AssignParamKey(kernel_graph);
-  }
-}
-
-void SessionBasic::GetBatchElements(const AnfNodePtr &kernel_node) const {
-  auto shapes = common::AnfAlgo::GetNodeAttr<std::vector<std::vector<int64_t>>>(kernel_node, "shapes");
-  auto types = common::AnfAlgo::GetNodeAttr<std::vector<TypePtr>>(kernel_node, "types");
-  if (shapes.size() != types.size() || shapes.size() == 0 || types.size() == 0) {
-    MS_LOG(EXCEPTION) << "Invalid shapes of op[InitDataSetQueue]: shapes size " << shapes.size() << ", types size "
-                      << types;
-  }
-  size_t batch_elements = 1;
-  const auto &shape = shapes[0];
-  for (size_t i = 0; i < shape.size(); ++i) {
-    batch_elements *= LongToSize(shape[i]);
-  }
-  ps::ps_cache_instance.set_batch_elements(batch_elements);
-}
-
-void SessionBasic::CheckPSModeConsistence(const KernelGraphPtr &kernel_graph) const {
-  auto input_nodes = kernel_graph->inputs();
-  for (const auto &input_node : input_nodes) {
-    if (!input_node->isa<Parameter>()) {
-      continue;
-    }
-    auto pk_node = input_node->cast<ParameterPtr>();
-    MS_EXCEPTION_IF_NULL(pk_node);
-    auto param_info_ptr = pk_node->param_info();
-    const std::string &param_name = pk_node->fullname_with_scope();
-
-    // If the Parameter is initialized on the server, and the user of the Parameter contains real CNode which executes
-    // in device, an error message will be reported, and it is allowed to be used only by the side effect operator.
-    if (param_info_ptr != nullptr && param_info_ptr->init_in_server() &&
-        UseParamInitInServer(kernel_graph, input_node) && !ps::ps_cache_instance.IsHashTable(param_name)) {
-      MS_LOG(EXCEPTION) << "Can not initialize the parameter[" << param_name
-                        << "] in server, this parameter is used by kernel which executes in device";
-    }
-  }
-}
-
-void SessionBasic::AssignParamKey(const KernelGraphPtr &kernel_graph) const {
-  MS_EXCEPTION_IF_NULL(kernel_graph);
-  // PS embeddingLookup cache check.
-  if (ps::PsDataPrefetch::GetInstance().cache_enable()) {
-    MS_LOG(EXCEPTION) << "The other parameter can't set ps mode when the embeddingLookup cache is enabled in "
-                         "parameter server training mode.";
-  }
-  std::vector<AnfNodePtr> node_list = TopoSort(kernel_graph->get_return());
-  for (auto &node : node_list) {
-    if (node != nullptr && node->isa<CNode>()) {
-      // Assign key for forward kernel EmbeddingLookup.
-      // The key will be assigned to embedding table ande Push kernel as well.
-      if (common::AnfAlgo::GetCNodeName(node) == kEmbeddingLookupOpName) {
-        size_t embedding_table_idx = 0;
-        auto embedding_table = common::AnfAlgo::GetInputNode(node->cast<CNodePtr>(), embedding_table_idx);
-        size_t key = ps::Worker::GetInstance().SetParamKey(embedding_table->fullname_with_scope());
-        common::AnfAlgo::SetNodeAttr(kAttrPsKey, MakeValue(key), node);
-      } else if (common::AnfAlgo::GetCNodeName(node) == kPushOpName) {
-        auto pull_node = FindPullNode(node, node_list);
-        if (!pull_node) {
-          MS_LOG(EXCEPTION) << "Assigning parameter key failed: can't find Pull node of the Push node.";
-        }
-
-        // Second input of Pull node is the trainable parameter.
-        size_t parameter_index = 1;
-        auto parameter_node = common::AnfAlgo::GetInputNode(pull_node->cast<CNodePtr>(), parameter_index);
-        size_t key = ps::Worker::GetInstance().SetParamKey(parameter_node->fullname_with_scope());
-        common::AnfAlgo::SetNodeAttr(kAttrPsKey, MakeValue(key), node);
-        common::AnfAlgo::SetNodeAttr(kAttrPsKey, MakeValue(key), pull_node);
-
-        std::string optimizer_name = common::AnfAlgo::GetNodeAttr<std::string>(node, kAttrOptimizerType);
-        ps::Worker::GetInstance().SetKeyOptimId(key, optimizer_name);
-      }
-    }
-  }
-}
-
-void SessionBasic::InitPSParamAndOptim(const KernelGraphPtr &kernel_graph,
-                                       const std::vector<tensor::TensorPtr> &inputs_const) const {
-  if (!ps::PSContext::instance()->is_worker()) {
-    return;
-  }
-  std::vector<tensor::TensorPtr> inputs(inputs_const);
-  MS_EXCEPTION_IF_NULL(kernel_graph);
-  auto input_nodes = kernel_graph->inputs();
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  for (size_t i = 0; i < inputs.size(); ++i) {
-    auto tensor = inputs[i];
-    MS_EXCEPTION_IF_NULL(tensor);
-    auto input_node = input_nodes[i];
-    MS_EXCEPTION_IF_NULL(input_node);
-    if (input_node->isa<Parameter>() && AnfAlgo::OutputAddrExist(input_node, 0)) {
-      ps::Worker::GetInstance().InitPSParamAndOptim(input_node, tensor);
-    }
-  }
-}
-#endif
 }  // namespace session
 void DumpGraphExeOrder(const std::string &file_name, const std::string &target_dir,
                        const std::vector<CNodePtr> &execution_order) {
