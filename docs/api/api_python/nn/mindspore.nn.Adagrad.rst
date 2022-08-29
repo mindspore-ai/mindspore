@@ -8,6 +8,8 @@ mindspore.nn.Adagrad
     Adagrad用于在线学习和随机优化。
     请参阅论文 `Efficient Learning using Forward-Backward Splitting <https://proceedings.neurips.cc/paper/2009/file/621bf66ddb7c962aa0d22ac97d69b793-Paper.pdf>`_。
 
+    Adagrad可以根据不同参数的样本数量不均，自适应地给每个参数分配不同的学习率。
+
     公式如下：
 
     .. math::

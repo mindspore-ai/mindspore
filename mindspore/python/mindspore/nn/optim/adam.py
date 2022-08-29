@@ -321,7 +321,7 @@ class Adam(Optimizer):
     moment estimation and the second-order moment estimation of the gradient.
     The Adam algorithm is proposed in `Adam: A Method for Stochastic Optimization <https://arxiv.org/abs/1412.6980>`_.
 
-    The updating formulas are as follows,
+    The updating formulas are as follows:
 
     .. math::
         \begin{array}{l}

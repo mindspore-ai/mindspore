@@ -37,7 +37,7 @@ class ImageGradients(Cell):
     r"""
     Returns two tensors, the first is along the height dimension and the second is along the width dimension.
 
-    Assume an image shape is :math:`h*w`. The gradients along the height and the width are :math:`dy` and :math:`dx`,
+    Assume an image shape is :math:`h*w`, the gradients along the height and the width are :math:`dy` and :math:`dx`,
     respectively.
 
     .. math::

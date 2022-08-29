@@ -1165,7 +1165,7 @@ class BCELoss(LossBase):
     BCELoss creates a criterion to measure the binary cross entropy between the true labels and predicted labels.
 
     Set the predicted labels as :math:`x`, true labels as :math:`y`, the output loss as :math:`\ell(x, y)`.
-    Let,
+    The formula is as follow:
 
     .. math::
         L = \{l_1,\dots,l_N\}^\top, \quad

@@ -304,10 +304,10 @@ class BatchNorm1d(_BatchNorm):
     r"""
     Batch Normalization layer over a 2D input.
 
-    Batch Normalization is widely used in convolutional networks. This layer
+    This layer
     applies Batch Normalization over a 2D input (a mini-batch of 1D inputs) to
-    reduce internal covariate shift as described in the paper
-    `Batch Normalization: Accelerating Deep Network Training by
+    reduce internal covariate shift. Batch Normalization is widely used in convolutional networks.
+    For the setailed contents, refer to `Batch Normalization: Accelerating Deep Network Training by
     Reducing Internal Covariate Shift <https://arxiv.org/abs/1502.03167>`_. It
     rescales and recenters the feature using a mini-batch of data and
     the learned parameters which can be described in the following formula.
@@ -1210,7 +1210,7 @@ class GroupNorm(Cell):
     normalization on a mini-batch of inputs for each single training case as described
     in the paper `Group Normalization <https://arxiv.org/pdf/1803.08494.pdf>`_. Group Normalization
     divides the channels into groups and computes within each group the mean and variance for normalization,
-    and it performs very stable over a wide range of batch size. It can be described using the following formula.
+    and it performs very stable over a wide range of batch size. It can be described using the following formula:
 
     .. math::
         y = \frac{x - \mathrm{E}[x]}{\sqrt{\mathrm{Var}[x] + \epsilon}} * \gamma + \beta
