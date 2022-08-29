@@ -89,6 +89,20 @@ def create_compile_dirs(compile_dirs):
 
 def select_best(src_dirs, dst_dir, op_name):
     """Select best compile result."""
+
+    def _copy_file(src_path, dst_path):
+        try:
+            if os.path.isfile(dst_path):
+                os.remove(dst_path)
+        except OSError:
+            pass
+
+        try:
+            shutil.copy(src_path, dst_path)
+        except PermissionError:
+            # If dst_path already exits and only has READ permission
+            pass
+
     max_block_dim = 1
     max_block_dim_idx = -1
     for i, src_dir in enumerate(src_dirs):
@@ -104,8 +118,8 @@ def select_best(src_dirs, dst_dir, op_name):
     if max_block_dim_idx >= 0:
         o_path = os.path.join(src_dirs[max_block_dim_idx], op_name + ".o")
         json_path = os.path.join(src_dirs[max_block_dim_idx], op_name + ".json")
-        shutil.copy(o_path, dst_dir)
-        shutil.copy(json_path, dst_dir)
+        _copy_file(o_path, os.path.join(dst_dir, op_name + ".o"))
+        _copy_file(json_path, os.path.join(dst_dir, op_name + ".json"))
         logger.info("{}, best compile result dir: {}".format(op_name, src_dirs[max_block_dim_idx]))
         return True
     logger.info("{}, best compile result dir not found".format(op_name))
