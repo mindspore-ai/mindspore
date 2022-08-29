@@ -160,6 +160,8 @@ template CUDA_LIB_EXPORT void DropoutBackward<float>(const float *dy, const floa
                                                      float drop_prob, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void DropoutBackward<half>(const half *dy, const half *mask, half *dx, size_t num_count,
                                                     float drop_prob, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void DropoutBackward<double>(const double *dy, const double *mask, double *dx,
+                                                      size_t num_count, float drop_prob, cudaStream_t cuda_stream);
 
 template CUDA_LIB_EXPORT void FusedDropoutForward<float>(const float *input, float *mask, float *output,
                                                          size_t num_count, float drop_prob, uint64_t seed,

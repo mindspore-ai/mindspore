@@ -14,100 +14,61 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_DROPOUT_GRAD_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_DROPOUT_GRAD_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_NN_DROPOUT_GRAD_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_NN_DROPOUT_GRAD_KERNEL_H_
 
-#include <vector>
+#include <map>
 #include <string>
+#include <utility>
+#include <vector>
+
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/dropout_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
-class DropoutGradBwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class DropoutGradBwdGpuKernelMod : public NativeGpuKernelMod {
  public:
-  DropoutGradBwdGpuKernelMod()
-      : cudnn_handle_(nullptr), is_null_input_(false), kernel_name_("DropoutGrad"), num_count_(0), keep_prob_(0.0) {}
+  DropoutGradBwdGpuKernelMod() = default;
   ~DropoutGradBwdGpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    if (is_null_input_) {
-      return true;
-    }
-
-    T *dy = GetDeviceAddress<T>(inputs, 0);
-    T *mask = GetDeviceAddress<T>(inputs, 1);
-    T *dx = GetDeviceAddress<T>(outputs, 0);
-
-    DropoutBackward(dy, mask, dx, num_count_, keep_prob_, reinterpret_cast<cudaStream_t>(stream_ptr));
-
-    return true;
-  }
-  bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-    kernel_node_ = kernel_node;
-    InitResource();
-
-    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    if (input_num != 2) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 2, but got " << input_num;
-    }
-
-    auto shape_signed = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
-    if (IsDynamic(shape_signed)) {
-      return true;
-    }
-    auto input_shape = Convert2SizeTClipNeg(shape_signed);
-    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "input");
-    if (is_null_input_) {
-      InitSizeLists();
-      return true;
-    }
-
-    num_count_ = 1;
-    for (size_t x : input_shape) {
-      num_count_ *= x;
-    }
-    keep_prob_ = GetAttr<float>(kernel_node, "keep_prob");
-
-    InitSizeLists();
-    return true;
+    MS_EXCEPTION_IF_NULL(kernel_func_);
+    return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
   }
 
-  void ResetResource() noexcept override {
-    cudnn_handle_ = nullptr;
-    is_null_input_ = false;
-    kernel_name_ = "DropoutGrad";
-    num_count_ = 0;
-    keep_prob_ = 0.0;
-    input_size_list_.clear();
-    output_size_list_.clear();
-    workspace_size_list_.clear();
-  }
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  void ResetResource() noexcept;
 
  protected:
-  void InitResource() override { cudnn_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCudnnHandle(); }
-  void InitSizeLists() override {
-    size_t dy_size = num_count_ * sizeof(T);
-    size_t mask_size = dy_size;
-    size_t dx_size = dy_size;
-
-    input_size_list_.push_back(dy_size);
-    input_size_list_.push_back(mask_size);
-    output_size_list_.push_back(dx_size);
-  }
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &others);
+  void InitSizeLists();
+  template <typename T>
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  cudnnHandle_t cudnn_handle_;
-  bool is_null_input_;
-  std::string kernel_name_;
+  using DropoutGradFunc = std::function<bool(DropoutGradBwdGpuKernelMod *, const std::vector<AddressPtr> &,
+                                             const std::vector<AddressPtr> &, const std::vector<AddressPtr> &, void *)>;
+  static std::vector<std::pair<KernelAttr, DropoutGradFunc>> func_list_;
+  DropoutGradFunc kernel_func_;
+  bool is_null_input_{false};
   size_t num_count_;
   float keep_prob_;
+  size_t dy_size_{0};
+  size_t mask_size_{0};
+  size_t output_size_{0};
+  std::vector<int64_t> dy_shape_;
+  std::vector<int64_t> mask_shape_;
+  std::vector<int64_t> output_shape_;
 };
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_DROPOUT_GRAD_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_NN_DROPOUT_GRAD_KERNEL_H_
