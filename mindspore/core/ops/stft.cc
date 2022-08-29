@@ -66,12 +66,12 @@ abstract::ShapePtr STFTInferShape(const PrimitivePtr &primitive, const std::vect
   (void)CheckAndConvertUtils::CheckInteger("window_shape", window_shape.back(), kEqual, win_length, op_name);
 
   std::vector<int64_t> out_shape = {};
-  for (int64_t index = 0; index < batch_rank; index++) {
+  for (size_t index = 0; index < LongToSize(batch_rank); index++) {
     (void)CheckAndConvertUtils::CheckInteger("batch_shape", x_shape[index], kEqual, window_shape[index], op_name);
     (void)out_shape.emplace_back(x_shape[index]);
   }
-  if (x_shape.size() - batch_rank == kSTFT2DInputDims) {
-    (void)out_shape.emplace_back(x_shape[batch_rank]);
+  if (x_shape.size() - LongToSize(batch_rank) == kSTFT2DInputDims) {
+    (void)out_shape.emplace_back(x_shape[LongToSize(batch_rank)]);
   }
   int64_t n_frames = 1 + (len - n_fft) / hop_length;
   int64_t fft_length = n_fft;

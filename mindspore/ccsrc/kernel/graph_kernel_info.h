@@ -31,7 +31,7 @@ class GraphKernelInfo {
  public:
   GraphKernelInfo() = default;
   virtual ~GraphKernelInfo() = default;
-  virtual void SetKernelInfo(const CNodePtr &kernel_node, KernelType kernel_type) {}
+  virtual void SetKernelInfo(const CNodePtr &, KernelType) {}
 };
 
 using GraphKernelInfoCreator = std::function<std::shared_ptr<GraphKernelInfo>()>;

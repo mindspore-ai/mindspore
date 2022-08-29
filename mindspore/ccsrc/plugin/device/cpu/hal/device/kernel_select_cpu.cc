@@ -516,7 +516,7 @@ std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kerne
   return {};
 }
 
-void CPUGraphKernelInfo::SetKernelInfo(const CNodePtr &kernel_node, KernelType kernel_type) {
+void CPUGraphKernelInfo::SetKernelInfo(const CNodePtr &kernel_node, KernelType) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   auto [msg, etype] = SetKernelInfoWithMsg(kernel_node);
   if (msg.empty()) {

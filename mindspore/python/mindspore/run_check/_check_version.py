@@ -27,6 +27,7 @@ from mindspore import log as logger
 from ..version import __version__
 from ..default_config import __package_name__
 
+
 class EnvChecker(metaclass=ABCMeta):
     """basic class for environment check"""
 

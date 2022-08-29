@@ -152,7 +152,7 @@ struct TbeLaunchKernelModRegister {
           }
           AddressPtr workspace_addr_ptr =
             std::make_shared<kernel::Address>(device_address_ptr->GetMutablePtr(), device_address_ptr->GetSize());
-          workspace_addr->emplace_back(workspace_addr_ptr);
+          (void)workspace_addr->emplace_back(workspace_addr_ptr);
         }
       });
   }
