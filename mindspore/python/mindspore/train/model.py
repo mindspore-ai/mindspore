@@ -724,8 +724,8 @@ class Model:
             if need_exec_callback_epoch_end:
                 list_callback.on_train_epoch_end(run_context)
             if "metrics" in cb_params or "eval_results" in cb_params:
-                cb_params.pop("metrics")
-                cb_params.pop("eval_results")
+                cb_params.pop("metrics", None)
+                cb_params.pop("eval_results", None)
 
             should_stop = run_context.get_stop_requested()
             if should_stop:
@@ -933,8 +933,8 @@ class Model:
             if not is_embedding_cache_server:
                 list_callback.on_train_epoch_end(run_context)
             if "metrics" in cb_params or "eval_results" in cb_params:
-                cb_params.pop("metrics")
-                cb_params.pop("eval_results")
+                cb_params.pop("metrics", None)
+                cb_params.pop("eval_results", None)
             should_stop = run_context.get_stop_requested()
             if should_stop:
                 break
