@@ -21,7 +21,7 @@
 
 #include "minddata/dataset/engine/ir/datasetops/root_node.h"
 #include "minddata/dataset/engine/ir/datasetops/skip_node.h"
-#include "minddata/dataset/engine/ir/datasetops/transfer_node.h"
+#include "minddata/dataset/engine/ir/datasetops/data_queue_node.h"
 #include "minddata/dataset/util/status.h"
 
 namespace mindspore {
@@ -60,12 +60,12 @@ Status AddSkipPass::InjectionFinder::Visit(std::shared_ptr<BuildSentenceVocabNod
 }
 #endif
 
-Status AddSkipPass::InjectionFinder::VisitAfter(std::shared_ptr<TransferNode> node, bool *const modified) {
+Status AddSkipPass::InjectionFinder::VisitAfter(std::shared_ptr<DataQueueNode> node, bool *const modified) {
   RETURN_UNEXPECTED_IF_NULL(node);
   RETURN_UNEXPECTED_IF_NULL(modified);
   CHECK_FAIL_RETURN_UNEXPECTED(node->Children().size() > 0,
                                "Invalid data, the number of children should be greater than zero.");
-  // Assumption: There is only one TransferNode in a pipeline. This assumption is not validated here.
+  // Assumption: There is only one DataQueueNode in a pipeline. This assumption is not validated here.
   // Move the injection point to the child of this node.
   injection_point_ = node->Children()[0];
   return Status::OK();

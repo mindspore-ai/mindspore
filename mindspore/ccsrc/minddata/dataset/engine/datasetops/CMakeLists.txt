@@ -8,7 +8,7 @@ set(DATASET_ENGINE_DATASETOPS_SRC_FILES
     dataset_op.cc
     pipeline_op.cc
     batch_op.cc
-    device_queue_op.cc
+    data_queue_op.cc
     project_op.cc
     rename_op.cc
     repeat_op.cc

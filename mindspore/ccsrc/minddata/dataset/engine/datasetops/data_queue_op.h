@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_DEVICE_QUEUE_OP_H_
-#define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_DEVICE_QUEUE_OP_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_DATA_QUEUE_OP_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_DATA_QUEUE_OP_H_
 
 #include <memory>
 #include <string>
@@ -44,7 +44,7 @@ using mindspore::device::DataQueueStatus;
 constexpr int32_t kTimeOutMilliSeconds = 25000;
 const int kDataInfoQueueCapacity = 128;
 
-class DeviceQueueOp : public PipelineOp {
+class DataQueueOp : public PipelineOp {
  public:
   static const uint32_t INVALID_HANDLE = 0xffffffffUL;
   const uint32_t WAIT_TIME = 5;
@@ -53,12 +53,12 @@ class DeviceQueueOp : public PipelineOp {
 
   //  Name: constructor
   //  Description
-  DeviceQueueOp(const std::string channel_name, DeviceType device_type, int32_t device_id, bool send_epoch_end,
-                int32_t total_batch, bool create_data_info_queue);
+  DataQueueOp(const std::string channel_name, DeviceType device_type, int32_t device_id, bool send_epoch_end,
+              int32_t total_batch, bool create_data_info_queue);
 
   //  Name: destructor
   //  Description
-  ~DeviceQueueOp();
+  ~DataQueueOp();
 
   /// \brief Getter function
   /// \return connector size of current op
@@ -85,7 +85,7 @@ class DeviceQueueOp : public PipelineOp {
              bool show_all) const override;  // In: T/F if it should print everything
 
   // Provide stream operator for displaying it
-  friend std::ostream &operator<<(std::ostream &out, const DeviceQueueOp &to) {
+  friend std::ostream &operator<<(std::ostream &out, const DataQueueOp &to) {
     to.Print(out, false);
     return out;
   }
@@ -108,7 +108,7 @@ class DeviceQueueOp : public PipelineOp {
   Status FilterMetadata(TensorRow *row);
 
   // Name: CheckExceptions(TensorRow);
-  // Description: Check whether the TensorRow meets the condition for performing DeviceQueueOp
+  // Description: Check whether the TensorRow meets the condition for performing DataQueueOp
   Status CheckExceptions(const TensorRow &row) const;
 
   // Name: PrintBeginInfoWhenFirstBatch(bool)
@@ -181,4 +181,4 @@ class DeviceQueueOp : public PipelineOp {
 };
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_DEVICE_QUEUE_OP_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_DATA_QUEUE_OP_H_

@@ -48,7 +48,7 @@
 #include "minddata/dataset/engine/ir/datasetops/sync_wait_node.h"
 #endif
 #include "minddata/dataset/engine/ir/datasetops/take_node.h"
-#include "minddata/dataset/engine/ir/datasetops/transfer_node.h"
+#include "minddata/dataset/engine/ir/datasetops/data_queue_node.h"
 #include "minddata/dataset/engine/ir/datasetops/zip_node.h"
 
 namespace mindspore {
@@ -255,10 +255,10 @@ Status IRNodePass::Visit(std::shared_ptr<TFRecordNode> node, bool *const modifie
 Status IRNodePass::VisitAfter(std::shared_ptr<TFRecordNode> node, bool *const modified) {
   return VisitAfter(std::static_pointer_cast<NonMappableSourceNode>(node), modified);
 }
-Status IRNodePass::Visit(std::shared_ptr<TransferNode> node, bool *const modified) {
+Status IRNodePass::Visit(std::shared_ptr<DataQueueNode> node, bool *const modified) {
   return Visit(std::static_pointer_cast<DatasetNode>(node), modified);
 }
-Status IRNodePass::VisitAfter(std::shared_ptr<TransferNode> node, bool *const modified) {
+Status IRNodePass::VisitAfter(std::shared_ptr<DataQueueNode> node, bool *const modified) {
   return VisitAfter(std::static_pointer_cast<DatasetNode>(node), modified);
 }
 Status IRNodePass::Visit(std::shared_ptr<ZipNode> node, bool *const modified) {

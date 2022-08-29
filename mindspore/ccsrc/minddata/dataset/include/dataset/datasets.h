@@ -86,7 +86,7 @@ class MS_API Dataset : public std::enable_shared_from_this<Dataset> {
  public:
   // need friend class so they can access the children_ field
   friend class Iterator;
-  friend class TransferNode;
+  friend class DataQueueNode;
 
   /// \brief Constructor
   Dataset();

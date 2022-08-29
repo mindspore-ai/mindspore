@@ -21,7 +21,7 @@
 #include <utility>
 #include <vector>
 #include "minddata/dataset/engine/consumers/tree_consumer.h"
-#include "minddata/dataset/engine/datasetops/device_queue_op.h"
+#include "minddata/dataset/engine/datasetops/data_queue_op.h"
 #include "minddata/dataset/engine/opt/pre/getter_pass.h"
 #ifndef ENABLE_SECURITY
 #include "minddata/dataset/engine/perf/auto_tune.h"
@@ -298,11 +298,11 @@ Status ToDevice::Send() {
 }
 
 Status ToDevice::Continue() {
-  // tree_.root() must be DeviceQueueOp
+  // tree_.root() must be DataQueueOp
   std::shared_ptr<DatasetOp> root = std::shared_ptr<DatasetOp>(tree_adapter_->GetRoot());
   CHECK_FAIL_RETURN_UNEXPECTED(root != nullptr, "Root is a nullptr.");
-  DeviceQueueOp *op = dynamic_cast<DeviceQueueOp *>(root.get());
-  CHECK_FAIL_RETURN_UNEXPECTED(op != nullptr, "ContinueSend only supported by DeviceQueueOp");
+  DataQueueOp *op = dynamic_cast<DataQueueOp *>(root.get());
+  CHECK_FAIL_RETURN_UNEXPECTED(op != nullptr, "ContinueSend only supported by DataQueueOp");
   op->ContinueSend();
   return Status::OK();
 }
@@ -310,8 +310,8 @@ Status ToDevice::Continue() {
 Status ToDevice::Stop() {
   std::shared_ptr<DatasetOp> root = std::shared_ptr<DatasetOp>(tree_adapter_->GetRoot());
   CHECK_FAIL_RETURN_UNEXPECTED(root != nullptr, "Root is a nullptr.");
-  DeviceQueueOp *op = dynamic_cast<DeviceQueueOp *>(root.get());
-  CHECK_FAIL_RETURN_UNEXPECTED(op != nullptr, "StopSend only supported by DeviceQueueOp");
+  DataQueueOp *op = dynamic_cast<DataQueueOp *>(root.get());
+  CHECK_FAIL_RETURN_UNEXPECTED(op != nullptr, "StopSend only supported by DataQueueOp");
   op->StopSend();
 
   return Status::OK();
@@ -320,11 +320,11 @@ Status ToDevice::Stop() {
 Status ToDevice::GetDataInfo(std::vector<DataType> *const types, std::vector<TensorShape> *const shapes) {
   RETURN_UNEXPECTED_IF_NULL(types);
   RETURN_UNEXPECTED_IF_NULL(shapes);
-  // tree_.root() must be DeviceQueueOp
+  // tree_.root() must be DataQueueOp
   std::shared_ptr<DatasetOp> root = std::shared_ptr<DatasetOp>(tree_adapter_->GetRoot());
   CHECK_FAIL_RETURN_UNEXPECTED(root != nullptr, "Root is a nullptr.");
-  DeviceQueueOp *op = dynamic_cast<DeviceQueueOp *>(root.get());
-  CHECK_FAIL_RETURN_UNEXPECTED(op != nullptr, "GetDataInfo only supported by DeviceQueueOp");
+  DataQueueOp *op = dynamic_cast<DataQueueOp *>(root.get());
+  CHECK_FAIL_RETURN_UNEXPECTED(op != nullptr, "GetDataInfo only supported by DataQueueOp");
   DATA_INFO data_info;
   RETURN_IF_NOT_OK(op->GetDataInfo(&data_info));
   for (auto el : data_info) {
@@ -338,8 +338,8 @@ Status ToDevice::Terminate() {
 #ifdef ENABLE_TDTQUE
   std::shared_ptr<DatasetOp> root = std::shared_ptr<DatasetOp>(tree_adapter_->GetRoot());
   CHECK_FAIL_RETURN_UNEXPECTED(root != nullptr, "Root is a nullptr.");
-  DeviceQueueOp *op = dynamic_cast<DeviceQueueOp *>(root.get());
-  CHECK_FAIL_RETURN_UNEXPECTED(op != nullptr, "StopSend only supported by DeviceQueueOp");
+  DataQueueOp *op = dynamic_cast<DataQueueOp *>(root.get());
+  CHECK_FAIL_RETURN_UNEXPECTED(op != nullptr, "StopSend only supported by DataQueueOp");
   op->StopWaiting();
 #endif
   return TreeConsumer::Terminate();
@@ -358,12 +358,12 @@ Status TreeConsumer::Reset(int64_t step) {
     RETURN_IF_NOT_OK(this->Terminate());
   }
 #ifdef WITH_BACKEND
-  MS_EXCEPTION_IF_NULL(MsContext::GetInstance());
+  RETURN_UNEXPECTED_IF_NULL(MsContext::GetInstance());
   if (MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice) {
     // clear the device if GPU is used.
     std::shared_ptr<DatasetOp> root = std::shared_ptr<DatasetOp>(tree_adapter_->GetRoot());
     CHECK_FAIL_RETURN_UNEXPECTED(root != nullptr, "Root is a nullptr.");
-    DeviceQueueOp *op = dynamic_cast<DeviceQueueOp *>(root.get());
+    DataQueueOp *op = dynamic_cast<DataQueueOp *>(root.get());
     if (op != nullptr) {
       MS_LOG(INFO) << "Clearing the GPU device";
       RETURN_IF_NOT_OK(op->ClearDevice());

@@ -168,7 +168,7 @@ Status AutoTune::SetAutotuneConfigJson() {
   if (autotune_config_json_.empty()) {
     nlohmann::json out_json;
     RETURN_IF_NOT_OK(Serdes::SaveToJSON(tree_adapter_->RootIRNode(), "", &out_json));
-    // We do not want to serialize TransferNode/DeviceQueueOp
+    // We do not want to serialize DataQueueNode/DataQueueOp
     if (out_json["op_type"] == kTransferNode) {
       CHECK_FAIL_RETURN_UNEXPECTED(
         out_json["children"].size() == 1,
@@ -186,7 +186,7 @@ Status AutoTune::SummarizeTreeConfiguration(std::vector<std::string> *out) {
   constexpr int val_width = 2;
   for (int i = static_cast<int>(ops_.size()) - 1; i >= 0; --i) {
     const auto op = ops_[i];
-    if (!op->inlined() && op->Name() != "DeviceQueueOp") {
+    if (!op->inlined() && op->Name() != "DataQueueOp") {
       std::stringstream s;
       s << std::left << std::setw(op_name_width) << op->NameWithID() << "(num_parallel_workers:" << std::right
         << std::setw(val_width) << (op->NumWorkers() == 0 ? "NA" : std::to_string(op->NumWorkers()))
@@ -213,7 +213,7 @@ void AutoTune::PostMainLogging() const {
 void AutoTune::PrintTreeConfiguration() const {
   ExecutionTree const *tree = tree_adapter_->tree_.get();
   for (auto itr = tree->begin(); itr != tree->end(); (void)itr++) {
-    if (!itr->inlined() && itr->Name() != "DeviceQueueOp") {
+    if (!itr->inlined() && itr->Name() != "DataQueueOp") {
       MS_LOG(INFO) << itr->NameWithID() << " num_parallel_workers: " << itr->NumWorkers()
                    << " prefetch_size: " << itr->ConnectorCapacity();
     }
@@ -395,7 +395,7 @@ Status AutoTune::RunIterationStep() {
 Status AutoTune::RegisterWorkersQueue() {
   ExecutionTree *tree = tree_adapter_->tree_.get();
   for (auto itr = tree->begin(); itr != tree->end(); (void)itr++) {
-    if (!itr->inlined() && itr->Name() != "DeviceQueueOp") {
+    if (!itr->inlined() && itr->Name() != "DataQueueOp") {
       (void)phase_1_best_workers.push_back(itr->NumWorkers());
       (void)phase_1_best_queue.push_back(itr->ConnectorCapacity());
     }
@@ -410,7 +410,7 @@ Status AutoTune::ResetWorkersQueue() {
   ExecutionTree *tree = tree_adapter_->tree_.get();
   int counter = 0;
   for (auto itr = tree->begin(); itr != tree->end(); (void)itr++) {
-    if (!itr->inlined() && itr->Name() != "DeviceQueueOp") {
+    if (!itr->inlined() && itr->Name() != "DataQueueOp") {
       int32_t target_workers = phase_1_best_workers[counter];
       int32_t target_queue = phase_1_best_queue[counter];
       RETURN_IF_NOT_OK(RequestNumWorkerChange(itr->id(), -1, &target_workers));
@@ -689,7 +689,7 @@ Status AutoTune::AnalyseMemory() {
   if (phase_3_state_ == AutoTuneMemPhase::kAutoTuneMemInit) {
     count_down_ = 0;
     for (auto op_id : parallel_ops_ids_) {
-      if ((SkipOpsCheck(op_id)) || (ops_[op_id]->Name() == "DeviceQueueOp")) {
+      if ((SkipOpsCheck(op_id)) || (ops_[op_id]->Name() == "DataQueueOp")) {
         // Op not supported - ignore throughout AT
         (void)OP_values.push_back(-1);
         continue;

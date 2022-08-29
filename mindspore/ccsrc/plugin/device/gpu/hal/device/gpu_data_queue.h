@@ -39,7 +39,6 @@ class BACKEND_EXPORT GpuDataQueueDynamic : public DataQueue {
   bool Destroy() override;
 
   void SetThreadDevice() override;
-  std::shared_ptr<void> AllocHostMem(size_t size) override;
 
  private:
   struct NodeInfo {
@@ -65,7 +64,6 @@ class BACKEND_EXPORT GpuQueue : public DataQueue {
   bool Destroy() override;
 
   void SetThreadDevice() override;
-  std::shared_ptr<void> AllocHostMem(size_t size) override;
 
  private:
   struct NodeInfo {

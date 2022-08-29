@@ -54,9 +54,9 @@ json ConnectorSize::ParseOpInfo(const DatasetOp &node) const {
   json_node["op_type"] = node.Name();
   json_node["num_workers"] = node.NumWorkers();
   json metrics;
-  // DeviceQueueOp is a special op,it is not inlined but its output queue is invalid.
+  // DataQueueOp is a special op,it is not inlined but its output queue is invalid.
   // So we should not output its queue size.
-  if (!node.inlined() && node.Name() != "DeviceQueueOp") {
+  if (!node.inlined() && node.Name() != "DataQueueOp") {
     metrics["output_queue"] = {{"length", node.ConnectorCapacity()}};
   }
   json_node["metrics"] = metrics;
@@ -90,7 +90,7 @@ Status ConnectorSize::SaveToFile(const std::string &dir_path, const std::string 
                          [&](const ConnectorSizeSample &sample) { return sample[idx]; });
 
     auto &ops_data = output["op_info"];
-    if (ops_data[idx]["metrics"].contains("output_queue") && ops_data[idx]["op_type"] != "DeviceQueueOp") {
+    if (ops_data[idx]["metrics"].contains("output_queue") && ops_data[idx]["op_type"] != "DataQueueOp") {
       ops_data[idx]["metrics"]["output_queue"]["size"] = cur_queue_size;
     }
   }

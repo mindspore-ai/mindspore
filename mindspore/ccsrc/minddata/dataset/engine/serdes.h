@@ -40,7 +40,7 @@
 #include "minddata/dataset/engine/ir/datasetops/repeat_node.h"
 #include "minddata/dataset/engine/ir/datasetops/shuffle_node.h"
 #include "minddata/dataset/engine/ir/datasetops/skip_node.h"
-#include "minddata/dataset/engine/ir/datasetops/transfer_node.h"
+#include "minddata/dataset/engine/ir/datasetops/data_queue_node.h"
 #include "minddata/dataset/engine/ir/datasetops/take_node.h"
 #include "minddata/dataset/engine/ir/datasetops/zip_node.h"
 

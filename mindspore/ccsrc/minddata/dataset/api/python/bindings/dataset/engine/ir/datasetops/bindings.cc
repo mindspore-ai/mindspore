@@ -37,7 +37,7 @@
 #include "minddata/dataset/engine/ir/datasetops/shuffle_node.h"
 #include "minddata/dataset/engine/ir/datasetops/skip_node.h"
 #include "minddata/dataset/engine/ir/datasetops/take_node.h"
-#include "minddata/dataset/engine/ir/datasetops/transfer_node.h"
+#include "minddata/dataset/engine/ir/datasetops/data_queue_node.h"
 #include "minddata/dataset/engine/ir/datasetops/zip_node.h"
 
 // IR non-leaf nodes - for android
@@ -294,13 +294,13 @@ PYBIND_REGISTER(TakeNode, 2, ([](const py::module *m) {
                     }));
                 }));
 
-PYBIND_REGISTER(TransferNode, 2, ([](const py::module *m) {
-                  (void)py::class_<TransferNode, DatasetNode, std::shared_ptr<TransferNode>>(*m, "TransferNode",
-                                                                                             "to create a TransferNode")
+PYBIND_REGISTER(DataQueueNode, 2, ([](const py::module *m) {
+                  (void)py::class_<DataQueueNode, DatasetNode, std::shared_ptr<DataQueueNode>>(
+                    *m, "DataQueueNode", "to create a DataQueueNode")
                     .def(py::init([](const std::shared_ptr<DatasetNode> &self, const std::string &queue_name,
                                      const std::string &device_type, int32_t device_id, bool send_epoch_end,
                                      int32_t total_batch, bool create_data_info_queue) {
-                      auto transfer = std::make_shared<TransferNode>(
+                      auto transfer = std::make_shared<DataQueueNode>(
                         self, queue_name, device_type, device_id, send_epoch_end, total_batch, create_data_info_queue);
                       THROW_IF_ERROR(transfer->ValidateParams());
                       return transfer;
