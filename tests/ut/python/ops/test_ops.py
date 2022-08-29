@@ -110,6 +110,7 @@ from mindspore.ops.operations.nn_ops import GridSampler2D
 from mindspore.ops.operations.nn_ops import GridSampler3D
 from mindspore.ops.operations.nn_ops import MaxUnpool2D
 from mindspore.ops.operations.nn_ops import MaxUnpool3D
+from mindspore.ops.operations.linalg_ops import Geqrf
 from mindspore.nn.loss.loss import MultiMarginLoss
 from mindspore.nn.loss.loss import MultilabelMarginLoss
 from mindspore.nn.loss.loss import TripletMarginLoss
@@ -4012,6 +4013,10 @@ test_case_other_ops = [
         'desc_inputs': (Tensor(np.ones((1, 3, 6, 6), np.float32)),
                         Tensor(np.ones((2, 4), np.int32))),
         'desc_bprop': [[2]]}),
+    ('Geqrf', {
+        'block': Geqrf(),
+        'desc_inputs': [Tensor([[3, 5, 6], [4, 7, 8], [2, 4, 5]], mstype.float32)],
+        'skip': ['backward']}),
     ('ScatterNd', {
         'block': P.ScatterNd(),
         'desc_const': [(3, 3)],
