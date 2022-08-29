@@ -1897,6 +1897,31 @@ def get_topk_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(P.Im2Col)
+def get_im2col_vmap_rule(prim, axis_size):
+    """VmapRule for `Im2Col` operations."""
+    if isinstance(prim, str):
+        prim = Primitive(prim)
+
+    def vmap_rule(x_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim)
+        if is_all_none:
+            return result
+        x, x_dim = x_bdim
+        x = _bdim_at_front(x, x_dim, axis_size)
+        x_shape = x.shape
+        x_new_shape = (-1,) + x_shape[2:]
+        x = x.reshape(x_new_shape)
+
+        out = prim(x)
+        out_shape = out.shape
+        original_shape = x_shape[:2] + out_shape[1:]
+        out = out.reshape(original_shape)
+        return out, 0
+
+    return vmap_rule
+
+
 get_unsupported_dynamic_vmap_rule = vmap_rules_getters.register(NonZero)(get_unsupported_dynamic_vmap_rule)
 get_unsupported_dynamic_vmap_rule = vmap_rules_getters.register(P.Unique)(get_unsupported_dynamic_vmap_rule)
 get_unsupported_dynamic_vmap_rule = \
