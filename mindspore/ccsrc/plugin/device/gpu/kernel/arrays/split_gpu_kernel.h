@@ -20,16 +20,16 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <map>
+#include <utility>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/split_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
-class SplitFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class SplitFwdGpuKernelMod : public NativeGpuKernelMod {
  public:
-  SplitFwdGpuKernelMod() { ResetResource(); }
+  SplitFwdGpuKernelMod() {}
   ~SplitFwdGpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
@@ -37,142 +37,37 @@ class SplitFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     if (is_null_input_) {
       return true;
     }
-    T *input = GetDeviceAddress<T>(inputs, 0);
-    T **outputs_device = GetDeviceAddress<T *>(workspace, 0);
-    for (size_t i = 0; i < outputs.size(); i++) {
-      outputs_host_[i] = GetDeviceAddress<T>(outputs, i);
-    }
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                               cudaMemcpyAsync(outputs_device, outputs_host_.get(), sizeof(T *) * output_num_,
-                                               cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
-                               "Split opt cudaMemcpyAsync outputs failed");
-    SplitKernel(input_size_, axis_step_, all_size_before_axis_, all_size_axis_, input, outputs_device,
-                reinterpret_cast<cudaStream_t>(stream_ptr));
-    return true;
+    cuda_stream_ = stream_ptr;
+    return kernel_func_(this, inputs, workspace, outputs);
   }
-
-  bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-    kernel_node_ = kernel_node;
-    auto input_shape_signed = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
-    if (IsDynamic(input_shape_signed)) {
-      return true;
-    }
-    auto input_shape = Convert2SizeTClipNeg(input_shape_signed);
-    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "input");
-    if (is_null_input_) {
-      InitSizeLists();
-      return true;
-    }
-    int dims = SizeToInt(input_shape.size());
-    axis_ = static_cast<int64_t>(GetAttr<int64_t>(kernel_node, "axis"));
-    if (axis_ < -dims || axis_ >= dims) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'axis' must be in the range [-" << dims << "," << dims
-                        << "), but got " << axis_;
-    }
-    if (axis_ < 0) {
-      axis_ += dims;
-    }
-
-    auto origin_data_format = AnfAlgo::GetOriginDataFormat(kernel_node);
-    auto input_format = AnfAlgo::GetInputFormat(kernel_node, 0);
-    axis_ = AxisTransform(origin_data_format, input_format, axis_);
-
-    output_num_ = static_cast<int64_t>(GetAttr<int64_t>(kernel_node, "output_num"));
-
-    (void)CheckParam(kernel_node);
-    input_size_ = 1;
-    all_size_before_axis_ = 1;
-    all_size_axis_ = 1;
-
-    for (int i = 0; i < SizeToInt(input_shape.size()); i++) {
-      input_size_ *= static_cast<size_t>(input_shape[i]);
-      if (i > axis_) {
-        all_size_before_axis_ *= static_cast<size_t>(input_shape[i]);
-        all_size_axis_ *= input_shape[i];
-      }
-      if (i == axis_) {
-        all_size_before_axis_ *= input_shape[i];
-      }
-    }
-    input_size_list_.push_back(input_size_ * sizeof(T));
-    axis_step_ = input_shape[axis_] / output_num_;
-
-    for (int i = 0; i < output_num_; i++) {
-      size_t output_size = 1;
-      auto output_shape = AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, i);
-      is_null_input_ = CHECK_SHAPE_NULL(output_shape, kernel_name_, "output");
-      if (is_null_input_) {
-        InitSizeLists();
-        return true;
-      }
-      for (size_t j = 0; j < output_shape.size(); j++) {
-        output_size *= static_cast<size_t>(output_shape[j]);
-      }
-      output_size_list_.push_back(output_size * sizeof(T));
-    }
-    workspace_size_list_.push_back(sizeof(T *) * output_num_);
-    InitSizeLists();
-    outputs_host_ = std::make_unique<T *[]>(output_num_);
-    return true;
-  }
-
-  void ResetResource() noexcept override {
-    axis_ = 0;
-    output_num_ = 1;
-    input_size_ = 1;
-    axis_step_ = 1;
-    all_size_before_axis_ = 1;
-    all_size_axis_ = 1;
-    is_null_input_ = false;
-    kernel_name_ = "Split";
-    outputs_host_ = nullptr;
-    input_size_list_.clear();
-    output_size_list_.clear();
-    workspace_size_list_.clear();
-  }
-
- protected:
-  void InitSizeLists() override {}
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+  int Resize(
+    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+    const std::vector<KernelTensorPtr> &outputs,
+    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  void CheckParam(const CNodePtr &kernel_node) {
-    auto input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    int dims = SizeToInt(input_shape.size());
-    int output_num = SizeToInt(common::AnfAlgo::GetOutputTensorNum(kernel_node));
-    if (output_num <= 0) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be greater than 0, but got "
-                        << output_num;
-    }
-    if (input_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 1, but got " << input_num;
-    }
-    if (dims == 0) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input cannot be 0, but got " << dims;
-    }
-    if (axis_ < -dims || axis_ >= dims) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'axis' must be in the range [-" << dims << "," << dims
-                        << "), but got " << axis_;
-    }
-    if (input_shape[axis_] > 0 && output_num_ > input_shape[axis_]) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs cannot be greater than "
-                        << input_shape[axis_] << ", but got " << output_num_;
-    }
-    if (output_num_ != output_num) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be " << output_num_ << ", but got "
-                        << output_num;
-    }
-  }
-  int axis_;
-  int output_num_;
-  size_t input_size_;
-  int axis_step_;
-  int all_size_before_axis_;
-  int all_size_axis_;
-  bool is_null_input_;
-  std::unique_ptr<T *[]> outputs_host_;
+  template <typename T>
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<AddressPtr> &outputs);
+  void CheckParam(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs) const;
+  using SplitFunc =
+    std::function<bool(SplitFwdGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+  SplitFunc kernel_func_{};
+  static std::vector<std::pair<KernelAttr, SplitFunc>> func_list_;
 
+  int axis_{0};
+  int output_num_{1};
+  size_t input_size_{1};
+  int axis_step_{1};
+  int all_size_before_axis_{1};
+  int all_size_axis_{1};
+  bool is_null_input_{false};
+  std::unique_ptr<void *[]> outputs_host_ { nullptr };
+  void *cuda_stream_{nullptr};
   std::string kernel_name_;
 };
 }  // namespace kernel

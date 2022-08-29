@@ -18,6 +18,7 @@ import pytest
 
 import mindspore.context as context
 import mindspore.nn as nn
+import mindspore.common.dtype as mstype
 from mindspore import Tensor
 from mindspore.ops import operations as P
 
@@ -236,6 +237,29 @@ def test_out_uint32():
     outputs = op_wrapper(input_x)
 
     assert np.allclose(outputs[0].asnumpy(), [0])
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_split_dynamic_shape():
+    """
+    Feature: Split ops with dynamic shape
+    Description: test cases with dynamic shape inputs
+    Expectation: success
+    """
+    op = P.Split(-1, 2)
+    op_wrapper = OpNetWrapper(op)
+
+    input_x = Tensor(np.arange(192).astype(np.int32).reshape((2, 2, 2, 2, 2, 6)))
+    outputs = op_wrapper(input_x)
+
+    dyn_input = Tensor(shape=[2, 2, 2, 2, 2, None], dtype=mstype.int32)
+    op_wrapper.set_inputs(dyn_input)
+    dyn_outputs = op_wrapper(input_x)
+
+    assert (outputs[0].asnumpy() == dyn_outputs[0].asnumpy()).all()
+    assert (outputs[1].asnumpy() == dyn_outputs[1].asnumpy()).all()
 
 
 if __name__ == '__main__':

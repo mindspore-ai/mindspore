@@ -20,6 +20,7 @@
 #include <complex>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "include/common/thread_pool.h"
+#include "ops/split.h"
 
 namespace mindspore {
 namespace kernel {
@@ -29,24 +30,18 @@ using complex64 = std::complex<float>;
 using complex128 = std::complex<double>;
 }  // namespace
 
-void SplitCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  axis_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
-  output_num_ = LongToSize(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "output_num"));
+bool SplitCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                             const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::Split>(base_operator);
+  axis_ = kernel_ptr->get_axis();
+  output_num_ = kernel_ptr->get_output_num();
   if (output_num_ == 0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'output_num' must be positive int, but got 0.";
   }
-  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_),
-                       [](const int64_t &value) { return LongToInt(value); });
-  if (input_shape_.size() < 1 || input_shape_.size() > SPLIT_STRIDES_SIZE) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input tensor must be in range [1, "
-                      << SPLIT_STRIDES_SIZE << "], but got " << input_shape_.size();
-  }
-  CheckParam();
 
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   std::vector<KernelAttr> support_list;
   (void)std::transform(
     func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
@@ -58,11 +53,29 @@ void SplitCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   kernel_func_ = std::get<1>(func_list_[index]);
   const size_t kTwoIdx = 2;
   init_io_func_ = std::get<kTwoIdx>(func_list_[index]);
+  return true;
+}
+
+int SplitCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                              const std::vector<KernelTensorPtr> &outputs,
+                              const std::map<uint32_t, tensor::TensorPtr> &) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSplitInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num_, kernel_name_);
+  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
+    return ret;
+  }
+  input_shape_.clear();
+  auto input_shape = inputs[0]->GetShapeVector();
+  (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_),
+                       [](const int64_t &value) { return LongToInt(value); });
+  CheckParam();
+  init_io_func_(this);
+  return ret;
 }
 
 template <typename T>
-void SplitCpuKernelMod::InitIOSize(const CNodePtr &kernel_node) {
-  DeprecatedNativeCpuKernelMod::InitInputOutputSize(kernel_node);
+void SplitCpuKernelMod::InitIOSize() {
   (void)workspace_size_list_.emplace_back((sizeof(T *) * LongToSize(output_num_)));
 }
 
