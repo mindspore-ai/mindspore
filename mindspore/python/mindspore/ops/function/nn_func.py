@@ -128,6 +128,76 @@ def adaptive_avg_pool2d(input_x, output_size):
     return adaptive_avgpool2d_(input_x)
 
 
+def adaptive_avg_pool3d(input_x, output_size):
+    r"""
+    3D adaptive average pooling for temporal data.
+
+    This operator applies a 3D adaptive average pooling to an input signal composed of multiple input planes.
+    That is, for any input size, the size of the specified output is :math:`(D, H, W)`.
+    The number of output features is equal to the number of input planes.
+
+    Suppose the last 3 dimension size of x is :math:`(inD, inH, inW)`, the last 3 dimension size of output is
+    :math:`(outD, outH, outW)`.
+
+    .. math::
+        \begin{array}{ll} \\
+            \forall \quad od \in [0,outD-1], oh \in [0,outH-1], ow \in [0,outW-1]\\
+            output[od,oh,ow] = \\
+            \qquad mean(x[istartD:iendD+1,istartH:iendH+1,istartW:iendW+1])\\
+            where,\\
+            \qquad istartD= \left\lceil \frac{od * inD}{outD} \right\rceil \\
+            \qquad iendD=\left\lfloor \frac{(od+1)* inD}{outD} \right\rfloor \\
+            \qquad istartH=\left\lceil \frac{oh * inH}{outH} \right\rceil \\
+            \qquad iendH=\left\lfloor \frac{(oh+1) * inH}{outH} \right\rfloor \\
+            \qquad istartW=\left\lceil \frac{ow * inW}{outW} \right\rceil \\
+            \qquad iendW=\left\lfloor \frac{(ow+1) * inW}{outW} \right\rfloor
+        \end{array}
+
+    Args:
+        input_x (Tensor): The input of adaptive_avg_pool3d, which is a 5D or 4D Tensor.
+        output_size (Union[int, tuple]): The target output size. `ouput_size` can be a tuple :math:`(D, H, W)`,
+            or an int D for :math:`(D, D, D)`. :math:`(D)`, :math:`(H)` and :math:`(W)` can be int or None
+            which means the output size is the same as that of the input.
+
+    Returns:
+        Tensor, with the same type as the `input_x`.
+
+    Raises:
+        TypeError: If `input_x` is not a Tensor.
+        TypeError: If dtype of `input_x` is not float16, float32 or float64.
+        ValueError: If the dimension of `input_x` is not 4D or 5D.
+        ValueError: If `output_size` value is not positive.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
+    Examples:
+        >>> # case 1: output_size=(3, 3, 4)
+        >>> output_size=(3, 3, 4)
+        >>> input_x_val = np.random.randn(4, 3, 5, 6, 7)
+        >>> input_x = Tensor(input_x_val, mindspore.float32)
+        >>> output = ops.adaptive_avg_pool3d(input_x, output_size)
+        >>> print(output.shape)
+        (4, 3, 3, 3, 4)
+        >>> # case 2: output_size=4
+        >>> output_size=5
+        >>> input_x_val = np.random.randn(2, 3, 8, 6, 12)
+        >>> input_x = Tensor(input_x_val, mindspore.float32)
+        >>> output = ops.adaptive_avg_pool3d(input_x, output_size)
+        >>> print(output.shape)
+        (2, 3, 5, 5, 5)
+        >>> # case 3: output_size=(None, 4, 5)
+        >>> output_size=(None, 4, 5)
+        >>> input_x_val = np.random.randn(4, 1, 9, 10, 8)
+        >>> input_x = Tensor(input_x_val, mindspore.float32)
+        >>> output = ops.adaptive_avg_pool3d(input_x, output_size)
+        >>> print(output.shape)
+        (4, 1, 9, 4, 5)
+    """
+    adaptive_avg_pool3d_ = _get_cache_prim(NN_OPS.AdaptiveAvgPool3D)(output_size)
+    return adaptive_avg_pool3d_(input_x)
+
+
 def avg_pool2d(x, kernel_size=1, strides=1, pad_mode='valid', data_format='NCHW'):
     r"""
     Average pooling operation.
@@ -2289,6 +2359,7 @@ def hardsigmoid(input_x):
 
 __all__ = [
     'adaptive_avg_pool2d',
+    'adaptive_avg_pool3d',
     'adaptive_max_pool3d',
     'avg_pool2d',
     'binary_cross_entropy_with_logits',

@@ -679,6 +679,35 @@ def get_adaptive_avgpool2d_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(NN.AdaptiveAvgPool3D)
+def get_adaptive_avgpool3d_vmap_rule(prim, axis_size):
+    """VmapRule for `AdaptiveAvgPool3D` operation."""
+    dhw_reverse_index = -3
+    max_dims = 5
+
+    def vmap_rule(x_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim)
+        if is_all_none:
+            return result
+
+        x, x_dim = x_bdim
+        x = _bdim_at_front(x, x_dim, axis_size)
+        if F.rank(x) == max_dims:
+            out = prim(x)
+            return (out, 0)
+
+        x_shape = F.shape(x)
+        shape = (-1,) + x_shape[dhw_reverse_index:]
+        x = F.reshape(x, shape)
+        out = prim(x)
+        out_shape = F.shape(out)
+        real_out_shape = x_shape[:dhw_reverse_index] + out_shape[dhw_reverse_index:]
+        out = F.reshape(out, real_out_shape)
+        return (out, 0)
+
+    return vmap_rule
+
+
 @vmap_rules_getters.register(P.AvgPool)
 def get_avgpool_vmap_rule(prim, axis_size):
     """VmapRule for `AvgPool`."""

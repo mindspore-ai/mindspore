@@ -45,6 +45,7 @@ functional算子是经过初始化后的Primitive，可以直接作为函数使�
     :template: classtemplate.rst
 
     mindspore.ops.adaptive_avg_pool2d
+    mindspore.ops.adaptive_avg_pool3d
     mindspore.ops.adaptive_max_pool3d
     mindspore.ops.avg_pool2d
     mindspore.ops.ctc_greedy_decoder

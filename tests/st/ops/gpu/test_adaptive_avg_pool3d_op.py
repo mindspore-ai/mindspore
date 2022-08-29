@@ -22,7 +22,7 @@ import pytest
 import mindspore
 import mindspore.context as context
 import mindspore.nn as nn
-from mindspore import Tensor
+from mindspore import Tensor, ops
 import mindspore.ops.operations.nn_ops as P
 from mindspore.ops.operations import _grad_ops as G
 from mindspore.common.api import ms_function
@@ -53,8 +53,58 @@ class GradNet(nn.Cell):
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+@pytest.mark.parametrize("shape", [(1, 32, 9, 9, 9), (3, 9, 5, 4)])
+def test_net_normal_with_functional(mode, shape):
+    '''
+    Feature: Test adaptive_avg_pool3d functional interface
+    Description: A randomly generated 5-dimensional matrix, Expected pooled output size
+    Expectation: Successfully get output with expected output size
+    '''
+    context.set_context(mode=mode)
+    x = Tensor(np.random.randn(*shape).astype(np.float32))
+    output_size = (3, 4, 5)
+    output = ops.adaptive_avg_pool3d(x, output_size)
+    expect_shape = shape[:-3] + output_size
+    assert output.asnumpy().shape == expect_shape
+
+    output_size = 3
+    output = ops.adaptive_avg_pool3d(x, output_size)
+    expect_shape = shape[:-3] + (output_size, output_size, output_size)
+    assert output.asnumpy().shape == expect_shape
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+@pytest.mark.parametrize("shape", [(1, 32, 9, 9, 9), (3, 9, 5, 4)])
+def test_net_normal_with_nn(mode, shape):
+    '''
+    Feature: Test AdaptiveAvgPool3d nn interface
+    Description: A randomly generated 5-dimensional matrix, Expected pooled output size
+    Expectation: Successfully get output with expected output size
+    '''
+    context.set_context(mode=mode)
+    x = Tensor(np.random.randn(*shape).astype(np.float32))
+    output_size = (3, 4, 5)
+    net = nn.AdaptiveAvgPool3d(output_size)
+    output = net(x)
+    expect_shape = shape[:-3] + output_size
+    assert output.asnumpy().shape == expect_shape
+
+    output_size = 3
+    output = ops.adaptive_avg_pool3d(x, output_size)
+    expect_shape = shape[:-3] + (output_size, output_size, output_size)
+    assert output.asnumpy().shape == expect_shape
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
 def test_net_normal():
-    '''Feature: If AdaptiveAvgPool3D is normal
+    '''
+    Feature: If AdaptiveAvgPool3D is normal
     Description: A randomly generated 5-dimensional matrix, Expected pooled output size
     Expectation: Successfully get output with expected output size
     '''

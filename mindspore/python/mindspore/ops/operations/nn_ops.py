@@ -166,42 +166,7 @@ class AdaptiveAvgPool3D(Primitive):
     r"""
     AdaptiveAvgPool3D operation.
 
-    This operator applies a 3D adaptive average pooling to an input signal composed of multiple input planes.
-    That is, for any input size, the size of the specified output is D x H x W.
-    The number of output features is equal to the number of input planes.
-
-    Suppose the last 3 dimension size of x is inD, inH, inW, the last 3 dimension size of output is outD, outH, outW.
-
-    .. math::
-        \begin{array}{ll} \\
-            \forall \quad od \in [0,outD-1], oh \in [0,outH-1], ow \in [0,outW-1]\\
-            output[od,oh,ow] = \\
-            \qquad mean(x[istartD:iendD+1,istartH:iendH+1,istartW:iendW+1])\\
-            where,\\
-            \qquad istartD= \left\lceil \frac{od * inD}{outD} \right\rceil \\
-            \qquad iendD=\left\lfloor \frac{(od+1)* inD}{outD} \right\rfloor \\
-            \qquad istartH=\left\lceil \frac{oh * inH}{outH} \right\rceil \\
-            \qquad iendH=\left\lfloor \frac{(oh+1) * inH}{outH} \right\rfloor \\
-            \qquad istartW=\left\lceil \frac{ow * inW}{outW} \right\rceil \\
-            \qquad iendW=\left\lfloor \frac{(ow+1) * inW}{outW} \right\rfloor
-        \end{array}
-
-    Args:
-        - output_size (Union[int, tuple]) - The size of output tensor, which is of shape [3],
-          with int32 data type.
-
-    Inputs:
-        - **x** (Tensor) - The input of AdaptiveAvgPool3D, which is a 5D or 4D tensor.
-
-    Outputs:
-        Tensor, with the same type as the `x`.
-
-        Shape of the output is `x_shape[:len(x_shape) - output_size.size] + output_size`.
-
-    Raises:
-        TypeError: If `x` is not a tensor.
-        ValueError: If the dimension of `x` is not 4D or 5D.
-        ValueError: If `output_size` value is not positive.
+    Refer to :func:`mindspore.ops.adaptive_avg_pool3d` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
