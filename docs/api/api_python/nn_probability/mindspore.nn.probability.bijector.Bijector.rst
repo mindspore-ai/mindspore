@@ -32,6 +32,9 @@ mindspore.nn.probability.bijector.Bijector
         参数：
             - **value** (Tensor) - 输入数据。
             - **para** (Tensor) - Bijector参数。
+
+        返回：
+            Tensor，参数经过数据类型转换之后的值。
         
     .. py:method:: construct(name, *args, **kwargs)
 
@@ -45,6 +48,9 @@ mindspore.nn.probability.bijector.Bijector
             - **args** (list) - 函数所需的位置参数列表。
             - **kwargs** (dict) - 函数所需的关键字参数字典。
         
+        返回：
+            Tensor，name对应函数的值。
+
     .. py:method:: forward(value, *args, **kwargs)
 
         正映射，计算输入随机变量 :math:`X = value` 经过映射后的值 :math:`Y = g(value)`。
