@@ -15,6 +15,7 @@
 import mindspore.context as context
 from mindspore import Tensor, ms_function
 from mindspore.common import dtype as mstype
+import pytest
 
 
 def setup_module():
@@ -927,3 +928,142 @@ def test_if_else_in_if_for_return_in_else():
     expect = Tensor([-5], mstype.int32)
     ret = foo(x, y, bias)
     assert ret == expect
+
+
+def test_if_by_if_break_in_if_in_while():
+    """
+    Feature: Parallel if transformation.
+    Description: break in if in while loop requires that the after-if func graph should not
+                 be called, and this information should be propagated through for to
+                 the outer if part. The by if can be transformed.
+    Expectation: success
+    """
+
+    @ms_function
+    def foo(x, y, z):
+        out = z
+        while x < y:
+            if y > 2 * x:
+                out = out + out
+                if y > 3 * x:
+                    y = y - 1
+                if y == 3 * x:
+                    break
+        out = out + out
+        return out
+
+    x = Tensor(2, mstype.int32)
+    y = Tensor(8, mstype.int32)
+    z = Tensor([5], mstype.int32)
+    expect = Tensor([40], mstype.int32)
+    ret = foo(x, y, z)
+    assert ret == expect
+
+
+def test_if_raise_raise():
+    """
+    Feature: Parallel if transformation.
+    Description: raise in if requires that the after-if func graph should not
+                 be called, so it cannot be transformed. The outer if can be
+                 transformed.
+    Expectation: success
+    """
+
+    @ms_function
+    def foo(x, y, z):
+        out = z
+        if x >= y:
+            if x > y:
+                raise ValueError("x is bigger y")
+        else:
+            out = out * 2
+        out = out + out
+        return out
+
+    x = 3
+    y = 2
+    z = Tensor([5], mstype.int32)
+    with pytest.raises(ValueError):
+        foo(x, y, z)
+
+
+def test_if_raise_not_raise():
+    """
+    Feature: Parallel if transformation.
+    Description: raise in if requires that the after-if func graph should not
+                 be called, so it cannot be transformed. The outer if can be
+                 transformed.
+    Expectation: success
+    """
+
+    @ms_function
+    def foo(x, y, z):
+        out = z
+        if x >= y:
+            if x > y:
+                raise ValueError("x is bigger y")
+        else:
+            out = out * 2
+        out = out + out
+        return out
+
+    x = 2
+    y = 2
+    z = Tensor([5], mstype.int32)
+    expected = Tensor([10], mstype.int32)
+    ret = foo(x, y, z)
+    assert ret == expected
+
+
+def test_if_assert_success():
+    """
+    Feature: Parallel if transformation.
+    Description: assert in if will not affect the inner and outer if transformation.
+    Expectation: success
+    """
+
+    @ms_function
+    def foo(x, y, z):
+        out = z
+        out = z
+        if x >= y:
+            if x > y:
+                assert x > y
+                out = out * 3
+        else:
+            out = out * 2
+        out = out + out
+        return out
+
+    x = 3
+    y = 2
+    z = Tensor([5], mstype.int32)
+    expected = Tensor([30], mstype.int32)
+    ret = foo(x, y, z)
+    assert ret == expected
+
+
+def test_if_assert_failure():
+    """
+    Feature: Parallel if transformation.
+    Description: assert in if will not affect the inner and outer if transformation.
+    Expectation: success
+    """
+
+    @ms_function
+    def foo(x, y, z):
+        out = z
+        if x >= y:
+            if x > y:
+                assert x == y
+                out = out * 3
+        else:
+            out = out * 2
+        out = out + out
+        return out
+
+    x = 3
+    y = 2
+    z = Tensor([5], mstype.int32)
+    with pytest.raises(Exception):
+        foo(x, y, z)
