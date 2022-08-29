@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,20 +24,33 @@ class CDiv(Expander):
     def _expand(self, graph_builder):
         """CDiv Implementation"""
         input_x, input_y = self.inputs
-        x_real = graph_builder.emit('CReal', [input_x])
-        y_real = graph_builder.emit('CReal', [input_y])
-        x_imag = graph_builder.emit('CImag', [input_x])
-        y_imag = graph_builder.emit('CImag', [input_y])
-        squre_y_real = graph_builder.emit('Mul', [y_real, y_real])
-        squre_y_imag = graph_builder.emit('Mul', [y_imag, y_imag])
-        final_denominator = graph_builder.emit('Add', [squre_y_real, squre_y_imag])
-        x_real_mul_y_real = graph_builder.emit('Mul', [x_real, y_real])
-        x_imag_mul_y_imag = graph_builder.emit('Mul', [x_imag, y_imag])
-        x_real_mul_y_imag = graph_builder.emit('Mul', [x_real, y_imag])
-        x_imag_mul_y_real = graph_builder.emit('Mul', [x_imag, y_real])
-        final_numerator_real = graph_builder.emit('Add', [x_real_mul_y_real, x_imag_mul_y_imag])
-        final_numerator_imag = graph_builder.emit('Sub', [x_imag_mul_y_real, x_real_mul_y_imag])
-        result_real = graph_builder.emit('RealDiv', [final_numerator_real, final_denominator])
-        result_imag = graph_builder.emit('RealDiv', [final_numerator_imag, final_denominator])
-        result = graph_builder.emit('Complex', [result_real, result_imag])
+        if input_x.dtype == input_y.dtype:
+            x_real = graph_builder.emit('CReal', [input_x])
+            y_real = graph_builder.emit('CReal', [input_y])
+            x_imag = graph_builder.emit('CImag', [input_x])
+            y_imag = graph_builder.emit('CImag', [input_y])
+            squre_y_real = graph_builder.emit('Mul', [y_real, y_real])
+            squre_y_imag = graph_builder.emit('Mul', [y_imag, y_imag])
+            final_denominator = graph_builder.emit('Add', [squre_y_real, squre_y_imag])
+            x_real_mul_y_real = graph_builder.emit('Mul', [x_real, y_real])
+            x_imag_mul_y_imag = graph_builder.emit('Mul', [x_imag, y_imag])
+            x_real_mul_y_imag = graph_builder.emit('Mul', [x_real, y_imag])
+            x_imag_mul_y_real = graph_builder.emit('Mul', [x_imag, y_real])
+            final_numerator_real = graph_builder.emit('Add', [x_real_mul_y_real, x_imag_mul_y_imag])
+            final_numerator_imag = graph_builder.emit('Sub', [x_imag_mul_y_real, x_real_mul_y_imag])
+            result_real = graph_builder.emit('RealDiv', [final_numerator_real, final_denominator])
+            result_imag = graph_builder.emit('RealDiv', [final_numerator_imag, final_denominator])
+            result = graph_builder.emit('Complex', [result_real, result_imag])
+        elif input_x.dtype == "complex64" or input_x.dtype == "complex128":
+            x_real = graph_builder.emit('CReal', [input_x])
+            x_imag = graph_builder.emit('CImag', [input_x])
+            x_real_div_y = graph_builder.emit('RealDiv', [x_real, input_y])
+            x_imag_div_y = graph_builder.emit('RealDiv', [x_imag, input_y])
+            result = graph_builder.emit('Complex', [x_real_div_y, x_imag_div_y])
+        elif input_y.dtype == "complex64" or input_y.dtype == "complex128":
+            y_real = graph_builder.emit('CReal', [input_y])
+            y_imag = graph_builder.emit('CImag', [input_y])
+            y_real_div_x = graph_builder.emit('RealDiv', [y_real, input_x])
+            y_imag_div_x = graph_builder.emit('RealDiv', [y_imag, input_x])
+            result = graph_builder.emit('Complex', [y_real_div_x, y_imag_div_x])
         return result

@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ from .batchnorm_grad import BatchNormGrad
 from .bias_add_grad import BiasAddGrad
 from .clip_by_norm_no_div_sum import ClipByNormNoDivSum
 from .conv2d import Conv2D
-from .complex import CAbs, CAdd, CDiv, CMul, CSub
+from .complex import CAbs, CAdd, CDiv, CMul, CSub, CRealDiv
 from .dropout_grad import DropoutGrad
 from .equal_count import EqualCount
 from .erfc import Erfc
