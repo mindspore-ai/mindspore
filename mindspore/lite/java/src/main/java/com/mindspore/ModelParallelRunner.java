@@ -60,10 +60,13 @@ public class ModelParallelRunner {
      * @return init status.
      */
     public boolean init(String modelPath, RunnerConfig runnerConfig) {
+        rwLock.writeLock().lock();
         if (runnerConfig == null || modelPath == null) {
+            rwLock.writeLock().unlock();
             return false;
         }
         modelParallelRunnerPtr = this.init(modelPath, runnerConfig.getRunnerConfigPtr());
+        rwLock.writeLock().unlock();
         return modelParallelRunnerPtr != 0L;
     }
 
@@ -74,10 +77,13 @@ public class ModelParallelRunner {
      * @return init status.
      */
     public boolean init(String modelPath) {
+        rwLock.writeLock().lock();
         if (modelPath == null) {
+            rwLock.writeLock().unlock();
             return false;
         }
         modelParallelRunnerPtr = this.init(modelPath, 0L);
+        rwLock.writeLock().unlock();
         return modelParallelRunnerPtr != 0;
     }
 
