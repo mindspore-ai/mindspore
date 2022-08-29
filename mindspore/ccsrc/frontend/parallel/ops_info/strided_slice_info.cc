@@ -31,6 +31,22 @@
 
 namespace mindspore {
 namespace parallel {
+// 1, The mask is a int number, it needs to be converted to binary and reversed.
+//    (e.g. the input's dimension is 4, and mask is 2, binary is [0, 0, 1, 0], after reversing: [0, 1, 0, 0])
+// 2, If the ith bit of `begin_mask` is set, `begin[i]` is ignored.
+// 3, If the ith bit of `end_mask` is set, `end[i]` is ignored.
+// 4, If the ith bit of `ellipsis_mask` is set, begin[i]/end[i]/strides[i] replace to `...`, it is not supported now.
+// 5, If the ith bit of `new_axis_mask` is set:
+//    (e.g. input shape: (A, B, C, D), begin: (0, 0), end: (m, n), strides: (1, 1), new_axis_mask: 2)
+//    1) The corresponding position is expanded by one dimension; (input shape:(A, 1, B, C, D))
+//    2) Ignore the corresponding position of begin/end/strides; (begin: (0, ig), end: (m, ig), strides: (1, ig))
+//    3) The output shape is (m, 1, B, C, D)
+// 6, If the ith bit of `shrink_axis_mask` is set, delete that dimension.
+//    (e.g. input shape: (A, B, C, D), begin: (0, 0), end: (m, n), strides: (1, 1), shrink_axis_mask: 2,
+//     the output shape: (m, C, D)
+// 7, If the ith bit of `new_axis_mask` and `shrink_axis_mask` are both set, ignore the ith bit of `shrink_axis_mask`.
+// 8, The size of begin/mask/strides must be equal, but it can smaller than input's dimension.
+// 9, The mask part exceeding the begin/end/strides length is not effective.
 Status StridedSliceInfo::GetMask(const std::string &mask_name, int64_t *mask_value) {
   if (mask_value == nullptr) {
     return FAILED;
@@ -46,10 +62,7 @@ Status StridedSliceInfo::GetMask(const std::string &mask_name, int64_t *mask_val
     }
   }
 
-  if (*mask_value != 0) {
-    MS_LOG(INFO) << "For StridedSlice op attr:" << mask_name << ", the value is " << *mask_value;
-  }
-
+  MS_LOG(INFO) << name_ << ": The attr name: " << mask_name << ", the value is " << *mask_value;
   return SUCCESS;
 }
 
@@ -62,28 +75,38 @@ static std::vector<bool> Dec2Bin(int64_t mask) {
   return result;
 }
 
-void StridedSliceInfo::ComputeBeginMask(int64_t begin_mask) {
-  auto begin_mask_bitmap = Dec2Bin(begin_mask);
-  for (size_t i = 0; i < begin_mask_bitmap.size(); ++i) {
-    if (i < kStridedSliceMaxDims && begin_mask_bitmap[i]) {
+// If the ith bit of `begin_mask` is set, `begin[i]` is ignored.
+// The mask part exceeding the begin length is not effective.
+void StridedSliceInfo::ComputeBeginMask() {
+  for (size_t i = 0; i < begin_mask_bitmap_.size() && i < begin_.size(); ++i) {
+    if (begin_mask_bitmap_[i]) {
       begin_[i] = strides_[i] < 0 ? inputs_shape_[0][i] - 1 : 0;
     }
   }
-}
 
-void StridedSliceInfo::ComputeEndMask(int64_t end_mask) {
-  auto end_mask_bitmap = Dec2Bin(end_mask);
-  for (size_t j = 0; j < end_mask_bitmap.size(); ++j) {
-    if (j < kStridedSliceMaxDims && end_mask_bitmap[j]) {
-      end_[j] = strides_[j] < 0 ? -1 : inputs_shape_[0][j];
-    }
+  if (begin_mask_) {
+    MS_LOG(INFO) << name_ << ": The begin is modified to " << begin_;
   }
 }
 
-void StridedSliceInfo::ComputeEllipsisMask(int64_t ellipsis_mask) {
-  auto ellipsis_mask_bitmap = Dec2Bin(ellipsis_mask);
-  for (size_t k = 0; k < ellipsis_mask_bitmap.size(); ++k) {
-    if (k < kStridedSliceMaxDims && ellipsis_mask_bitmap[k]) {
+// If the ith bit of `end_mask` is set, `end[i]` is ignored.
+// The mask part exceeding the end length is not effective.
+void StridedSliceInfo::ComputeEndMask() {
+  for (size_t j = 0; j < end_mask_bitmap_.size() && j < end_.size(); ++j) {
+    if (end_mask_bitmap_[j]) {
+      end_[j] = strides_[j] < 0 ? -1 : inputs_shape_[0][j];
+    }
+  }
+
+  if (end_mask_) {
+    MS_LOG(INFO) << name_ << ": The end is modified to " << end_;
+  }
+}
+
+// If the ith bit of `ellipsis_mask` is set, begin[i]/end[i]/strides[i] replace to `...`, it is not supported now.
+void StridedSliceInfo::ComputeEllipsisMask() {
+  for (size_t k = 0; k < ellipsis_mask_bitmap_.size() && k < begin_.size(); ++k) {
+    if (ellipsis_mask_bitmap_[k]) {
       begin_[k] = 0;
       end_[k] = inputs_shape_[0][k];
       strides_[k] = 1;
@@ -91,24 +114,74 @@ void StridedSliceInfo::ComputeEllipsisMask(int64_t ellipsis_mask) {
   }
 }
 
-void StridedSliceInfo::ComputeNewAxisMask(int64_t new_axis_mask) {
-  auto new_axis_mask_bitmap = Dec2Bin(new_axis_mask);
-  for (size_t l = 0; l < new_axis_mask_bitmap.size(); ++l) {
-    if (l < kStridedSliceMaxDims && new_axis_mask_bitmap[l]) {
+// If the ith bit of `new_axis_mask` is set:
+//    (e.g. input shape: (A, B, C, D), begin: (0, 0, 0, 0), end: (m, n, o, p), strides: (1, 1, 1, 1), new_axis_mask: 2)
+//    Here, the size of begin/end/strides is equal to input's dimension through ComplementBeginEndStrides()
+//    1) The corresponding position is expanded by one dimension; (input shape:(A, 1, B, C, D))
+//    2) Ignore the corresponding position of begin/end/strides;
+//       (begin: (0, ig, 0, 0), end: (m, ig, o, p), strides: (1, ig, 1, 1))
+//    3) The output shape is (m, 1, o, p, D)
+// So, use input_shape_in_process_ to generate a tmp input shape
+void StridedSliceInfo::ComputeNewAxisMask() {
+  input_shape_in_process_ = Shape(inputs_shape_[0].size(), 0);
+  for (size_t l = 0; l < new_axis_mask_bitmap_.size() && l < begin_.size() && l < input_shape_in_process_.size(); ++l) {
+    if (new_axis_mask_bitmap_[l]) {
+      input_shape_in_process_[l] = 1;
       begin_[l] = 0;
-      end_[l] = inputs_shape_[0][l];
+      end_[l] = 1;
       strides_[l] = 1;
     }
   }
+
+  size_t count = 0;
+  for (auto &ele : input_shape_in_process_) {
+    if (ele != 0) {
+      continue;
+    }
+    ele = inputs_shape_[0][count];
+    count++;
+  }
+
+  (void)input_shape_in_process_.insert(input_shape_in_process_.end(), inputs_shape_[0].begin() + count,
+                                       inputs_shape_[0].end());
+
+  if (new_axis_mask_) {
+    MS_LOG(INFO) << name_ << ": The begin is modified to " << begin_ << ", the end is modified to " << end_
+                 << ", the strides is modified to " << strides_ << ", the input shape in process is "
+                 << input_shape_in_process_;
+  }
 }
 
-void StridedSliceInfo::ComputeShrinkAxisMask(int64_t shrink_axis_mask) {
-  auto shrink_axis_mask_bitmap = Dec2Bin(shrink_axis_mask);
-  for (size_t m = 0; m < shrink_axis_mask_bitmap.size(); ++m) {
-    if (m < kStridedSliceMaxDims && shrink_axis_mask_bitmap[m]) {
-      end_[m] = end_[m] > begin_[m] ? begin_[m] + 1 : begin_[m] - 1;
-      strides_[m] = end_[m] > begin_[m] ? 1 : -1;
+// If the ith bit of `shrink_axis_mask` is set, delete that dimension.
+// So, here set begin/end/strides to make this dimension splitable
+void StridedSliceInfo::ComputeShrinkAxisMask() {
+  bool flag = false;
+  for (size_t m = 0; m < shrink_axis_mask_bitmap_.size() && m < begin_.size(); ++m) {
+    if (shrink_axis_mask_bitmap_[m]) {
+      begin_[m] = 0;
+      end_[m] = inputs_shape_[0][m];
+      strides_[m] = 1;
+      flag = true;
     }
+  }
+
+  if (flag) {
+    MS_LOG(INFO) << name_ << ": The begin is modified to " << begin_ << ", the end is modified to " << end_
+                 << ", the strides is modified to " << strides_;
+  }
+}
+
+// If the ith bit of `new_axis_mask` and `shrink_axis_mask` are both set, ignore the ith bit of `shrink_axis_mask`.
+void StridedSliceInfo::AdjustShrinkAxisMask() {
+  bool flag = false;
+  for (size_t i = 0; i < new_axis_mask_bitmap_.size(); ++i) {
+    if (new_axis_mask_bitmap_[i]) {
+      shrink_axis_mask_bitmap_[i] = false;
+      flag = true;
+    }
+  }
+  if (flag) {
+    MS_LOG(INFO) << name_ << ": The shrink axis mask is modified to " << shrink_axis_mask_bitmap_;
   }
 }
 
@@ -124,22 +197,45 @@ Status StridedSliceInfo::GetAttrs() {
     return FAILED;
   }
 
+  if (ellipsis_mask_ != 0) {
+    MS_LOG(ERROR) << name_ << ": It can not support ellipsis_mask now";
+    return FAILED;
+  }
+
+  // convert mask to bit map
+  begin_mask_bitmap_ = Dec2Bin(begin_mask_);
+  end_mask_bitmap_ = Dec2Bin(end_mask_);
+  ellipsis_mask_bitmap_ = Dec2Bin(ellipsis_mask_);
+  new_axis_mask_bitmap_ = Dec2Bin(new_axis_mask_);
+  shrink_axis_mask_bitmap_ = Dec2Bin(shrink_axis_mask_);
+  MS_LOG(INFO) << name_ << ": The begin mask bitmap is " << begin_mask_bitmap_;
+  MS_LOG(INFO) << name_ << ": The end mask bitmap is " << end_mask_bitmap_;
+  MS_LOG(INFO) << name_ << ": The ellipsis mask bitmap is " << ellipsis_mask_bitmap_;
+  MS_LOG(INFO) << name_ << ": The new axis mask bitmap is " << new_axis_mask_bitmap_;
+  MS_LOG(INFO) << name_ << ": The shrink axis mask bitmap is " << shrink_axis_mask_bitmap_;
+
+  // if the ith bit of `new_axis_mask` and `shrink_axis_mask` are both set, ignore the ith bit of `shrink_axis_mask`
+  AdjustShrinkAxisMask();
+
+  // get begin/end/strides, the size of begin/mask/strides must be equal, but it can smaller than input's dimension
   if (input_value_.size() != STRIDED_SLICE_INPUTS_SIZE) {
     MS_LOG(ERROR) << name_ << ": The size of input value must be " << STRIDED_SLICE_INPUTS_SIZE << ", but got "
                   << input_value_.size();
     return FAILED;
   }
-
   if ((TransValueSequeueToVector(input_value_[STRIDED_SLICE_BEGIN_INDEX], &begin_) != SUCCESS) ||
       (TransValueSequeueToVector(input_value_[STRIDED_SLICE_END_INDEX], &end_) != SUCCESS) ||
       (TransValueSequeueToVector(input_value_[STRIDED_SLICE_STRIDES_INDEX], &strides_) != SUCCESS)) {
     return FAILED;
   }
-  ComputeBeginMask(begin_mask_);
-  ComputeEndMask(end_mask_);
-  ComputeEllipsisMask(ellipsis_mask_);
-  ComputeNewAxisMask(new_axis_mask_);
-  ComputeShrinkAxisMask(shrink_axis_mask_);
+  MS_LOG(INFO) << name_ << ": The begin is " << begin_ << ", the end is " << end_ << ", the stride is " << strides_;
+
+  // handle the masks, it will modify the begin/end/strides, the new begin/end/strides are only used for CheckStrategy()
+  ComputeBeginMask();
+  ComputeEndMask();
+  ComputeEllipsisMask();
+  ComputeNewAxisMask();
+  ComputeShrinkAxisMask();
   return SUCCESS;
 }
 
@@ -161,23 +257,44 @@ Status StridedSliceInfo::CheckStrategy(const StrategyPtr &strategy) {
     MS_LOG(ERROR) << name_ << ": The size of strategy must be larger or equal to the size of strides";
     return FAILED;
   }
-  for (size_t i = 0; i < strides_.size(); ++i) {
-    if ((strides_[i] != 1) && (strategy_value[i] > 1)) {
-      MS_LOG(ERROR) << name_ << ": When a certain dimension is split, now does not support that the stride is not 1";
+
+  // change the strategy if the new mask axis is set
+  Shape strategy_in_process = Shape(strategy_value.size(), 0);
+  for (size_t i = 0; i < new_axis_mask_bitmap_.size() && i < begin_.size() && i < strategy_value.size(); ++i) {
+    if (new_axis_mask_bitmap_[i]) {
+      strategy_in_process[i] = 1;
+    }
+  }
+
+  size_t count = 0;
+  for (auto &ele : strategy_in_process) {
+    if (ele != 0) {
+      continue;
+    }
+    ele = strategy_value[count];
+    count++;
+  }
+
+  (void)strategy_in_process.insert(strategy_in_process.end(), strategy_value.begin() + count, strategy_value.end());
+  MS_LOG(INFO) << name_ << ": The strategy in process is " << strategy_in_process;
+
+  for (size_t j = 0; j < strides_.size(); ++j) {
+    if ((strides_[j] != 1) && (strategy_in_process[j] > 1)) {
+      MS_LOG(ERROR)
+        << name_
+        << ": When a certain dimension is split, now does not support that the stride is not 1, the strides is "
+        << strides_ << ", the strategy is " << strategy_in_process << ", the index is " << j;
       return FAILED;
     }
   }
 
-  if ((begin_.size() != end_.size()) || (begin_.size() != strides_.size())) {
-    MS_LOG(ERROR) << name_ << ": The size of begin " << begin_.size() << ", end " << end_.size() << " and strides "
-                  << strides_.size() << " must be equal";
-    return FAILED;
-  }
-
-  for (size_t i = 0; i < begin_.size(); ++i) {
-    bool no_fully_fetch = ((begin_[i] != 0) || (end_[i] < inputs_shape_[0][i]));
-    if (no_fully_fetch && (strategy_value[i] != 1)) {
-      MS_LOG(ERROR) << name_ << "When a dimension is not fully fetched, the dimension can not be split now";
+  for (size_t k = 0; k < begin_.size(); ++k) {
+    bool no_fully_fetch = ((begin_[k] != 0) || (end_[k] < input_shape_in_process_[k]));
+    if (no_fully_fetch && (strategy_in_process[k] != 1)) {
+      MS_LOG(ERROR) << name_
+                    << ": When a dimension is not fully fetched, the dimension can not be split now, the begin is "
+                    << begin_ << ", the end is " << end_ << ", the index is " << k << ", the input shape in process is "
+                    << input_shape_in_process_;
       return FAILED;
     }
   }
@@ -211,13 +328,26 @@ Status StridedSliceInfo::InferTensorMap() {
   }
 
   inputs_tensor_map_.push_back(tensor_map);
-  if (new_axis_mask_ != 0) {
-    tensor_map.insert(tensor_map.cbegin() + (new_axis_mask_ - 1), -1);
+
+  // If the ith bit of `new_axis_mask` is set, the corresponding position is expanded by one dimension, and this
+  // dimension need to insert MAP_NONE for output tensor map.
+  for (size_t j = 0; j < new_axis_mask_bitmap_.size() && j < begin_.size(); ++j) {
+    if (new_axis_mask_bitmap_[j]) {
+      tensor_map.insert(tensor_map.cbegin() + j, MAP_NONE);
+    }
   }
-  if (shrink_axis_mask_ != 0) {
-    tensor_map.erase(tensor_map.cbegin() + (shrink_axis_mask_ - 1));
+
+  // If the ith bit of `shrink_axis_mask` is set, delete that dimension.
+  Shape out_tensor_map;
+  for (size_t k = 0; k < shrink_axis_mask_bitmap_.size() && k < tensor_map.size(); ++k) {
+    if (k < begin_.size() && shrink_axis_mask_bitmap_[k]) {
+      continue;
+    }
+    out_tensor_map.push_back(tensor_map[k]);
   }
-  outputs_tensor_map_.push_back(tensor_map);
+
+  MS_LOG(INFO) << name_ << ": The output tensor map is " << out_tensor_map;
+  outputs_tensor_map_.push_back(out_tensor_map);
   return SUCCESS;
 }
 
