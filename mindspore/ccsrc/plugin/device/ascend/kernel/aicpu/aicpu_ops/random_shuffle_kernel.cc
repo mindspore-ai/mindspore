@@ -55,7 +55,7 @@ uint32_t RandomShuffleKernel::TensorShuffle() {
     permutation[i] = i;
   }
 
-  (void)IndexShuffle<size_t>(block_num_, permutation.data());
+  IndexShuffle<size_t>(block_num_, permutation.data());
 
   const size_t &size = block_size_ * data_size_;
   for (size_t i = 0; i < block_num_; i++) {
@@ -77,7 +77,7 @@ uint32_t RandomShuffleKernel::ParseKernelParam() {
   int64_t seed2 = attrs["seed2"].i();
   std::random_device rd;
   int64_t seed = (seed2 != 0) ? seed2 : (seed1 != 0) ? seed1 : rd();
-  generator_.seed(seed);
+  generator_.seed(static_cast<uint64_t>(seed));
 
   const size_t &num_input = node_def_.inputs_size();
   if (num_input != 1) {
@@ -92,14 +92,14 @@ uint32_t RandomShuffleKernel::ParseKernelParam() {
   const auto &dtype = static_cast<::aicpuops::DataType>(input.tensor_type());
   data_size_ = GetDataTypeSize(dtype);
 
-  size_t dim = static_cast<size_t>(shape.dim_size());
+  size_t dim = IntToSize(shape.dim_size());
   if (dim == 0) {
     // Input is a scalar: keep block number to be 1.
     return kAicpuKernelStateSucess;
   }
 
   for (size_t i = 1; i < dim; i++) {
-    block_size_ *= static_cast<size_t>(shape.dim(i).size());
+    block_size_ *= static_cast<size_t>(shape.dim(SizeToInt(i)).size());
   }
 
   return kAicpuKernelStateSucess;

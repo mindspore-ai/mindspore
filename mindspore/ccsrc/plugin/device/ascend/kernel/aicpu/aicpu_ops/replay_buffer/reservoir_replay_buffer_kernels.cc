@@ -27,12 +27,12 @@ uint32_t ReservoirReplayBufferCreate::ParseKernelParam() {
   AICPU_LOGI("Enter ParseKernelParam.");
 
   ::google::protobuf::Map<::std::string, ::aicpuops::AttrValue> attrs = node_def_.attrs();
-  capacity_ = attrs["capacity"].i();
   int64_t seed1 = attrs["seed"].i();
   int64_t seed2 = attrs["seed2"].i();
-
   std::random_device rd;
   seed_ = (seed2 != 0) ? seed2 : (seed1 != 0) ? seed1 : rd();
+
+  capacity_ = attrs["capacity"].i();
 
   aicpuops::AttrValue_ArrayValue shape = attrs["schema"].array();
   for (int i = 0; i < shape.i_size(); i++) {
@@ -63,14 +63,14 @@ uint32_t ReservoirReplayBufferPush::ParseKernelParam() {
 
   const size_t &num_input = node_def_.inputs_size();
   for (size_t i = 0; i < num_input; i++) {
-    ::aicpuops::Tensor input = node_def_.inputs(i);
+    ::aicpuops::Tensor input = node_def_.inputs(SizeToInt(i));
     const auto &dtype = static_cast<::aicpuops::DataType>(input.tensor_type());
     size_t len = GetDataTypeSize(dtype);
     ::aicpuops::TensorShape shape = input.tensor_shape();
     for (int j = 0; j < shape.dim_size(); j++) {
-      len *= shape.dim(j).size();
+      len *= LongToSize(shape.dim(j).size());
     }
-    inputs_.emplace_back(std::make_shared<Address>(reinterpret_cast<void *>(io_addrs_[i]), len));
+    (void)inputs_.emplace_back(std::make_shared<Address>(reinterpret_cast<void *>(io_addrs_[i]), len));
   }
 
   return kAicpuKernelStateSucess;
@@ -80,7 +80,7 @@ uint32_t ReservoirReplayBufferPush::DoCompute() {
   AICPU_LOGI("Do compute start");
 
   auto buffer = ReservoirReplayBufferFactory::GetInstance().GetByHandle(handle_);
-  buffer->Push(inputs_);
+  (void)buffer->Push(inputs_);
 
   const size_t &num_input = node_def_.inputs_size();
   auto *output_data = reinterpret_cast<int64_t *>(io_addrs_[num_input]);

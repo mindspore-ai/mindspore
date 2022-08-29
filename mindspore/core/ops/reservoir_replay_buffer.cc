@@ -16,8 +16,8 @@
 
 #include "ops/reservoir_replay_buffer.h"
 #include <string>
-#include <algorithm>
 #include <functional>
+#include <algorithm>
 #include <memory>
 #include <vector>
 #include "ops/op_utils.h"
@@ -38,7 +38,7 @@ void ReservoirReplayBufferCreate::set_shapes(const std::vector<std::vector<int64
 void ReservoirReplayBufferCreate::set_types(const std::vector<TypePtr> &types) {
   auto res = std::dynamic_pointer_cast<PrimitiveC>(impl_);
   MS_EXCEPTION_IF_NULL(res);
-  res->AddAttr(kTypes, MakeValue(types));
+  (void)res->AddAttr(kTypes, MakeValue(types));
 }
 
 void ReservoirReplayBufferCreate::set_schema(const std::vector<int64_t> &schema) {
@@ -94,8 +94,8 @@ void ReservoirReplayBufferCreate::Init(const int64_t &capacity, std::vector<std:
   auto op_name = this->name();
   if (shapes.size() != types.size()) {
     MS_LOG(EXCEPTION) << "For " << op_name
-                      << " the rank of shapes and types should be the same, but got the rank of shapes is "
-                      << shapes.size() << ", and types is " << types.size();
+                      << " the rank of shapes and types should be same, but got the rank of shapes is " << shapes.size()
+                      << ", and types is " << types.size();
   }
 
   std::vector<int64_t> schema;
@@ -140,7 +140,7 @@ void ReservoirReplayBufferSample::set_shapes(const std::vector<std::vector<int64
 void ReservoirReplayBufferSample::set_types(const std::vector<TypePtr> &types) {
   auto res = std::dynamic_pointer_cast<PrimitiveC>(impl_);
   MS_EXCEPTION_IF_NULL(res);
-  res->AddAttr(kTypes, MakeValue(types));
+  (void)res->AddAttr(kTypes, MakeValue(types));
 }
 
 void ReservoirReplayBufferSample::set_schema(const std::vector<int64_t> &schema) {
@@ -183,8 +183,8 @@ void ReservoirReplayBufferSample::Init(const int64_t &handle, const int64_t &bat
   auto op_name = this->name();
   if (shapes.size() != types.size()) {
     MS_LOG(EXCEPTION) << "For " << op_name
-                      << " the rank of shapes and types should be the same, but got the rank of shapes is "
-                      << shapes.size() << ", and types is " << types.size();
+                      << " the rank of shapes and types should be same, but got the rank of shapes is " << shapes.size()
+                      << ", and rank of types is " << types.size();
   }
 
   std::vector<int64_t> schema;
@@ -219,7 +219,7 @@ MIND_API_OPERATOR_IMPL(ReservoirReplayBufferSample, BaseOperator);
 MIND_API_OPERATOR_IMPL(ReservoirReplayBufferDestroy, BaseOperator);
 
 namespace {
-AbstractBasePtr CreateInfer(const abstract::AnalysisEnginePtr &prim, const PrimitivePtr &primitive,
+AbstractBasePtr CreateInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                             const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
 
@@ -232,7 +232,7 @@ AbstractBasePtr CreateInfer(const abstract::AnalysisEnginePtr &prim, const Primi
   return abstract::MakeAbstract(out_shape, kInt64);
 }
 
-AbstractBasePtr PushInfer(const abstract::AnalysisEnginePtr &prim, const PrimitivePtr &primitive,
+AbstractBasePtr PushInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &) {
   MS_EXCEPTION_IF_NULL(primitive);
   const ShapeVector &shape = {1};
@@ -240,8 +240,8 @@ AbstractBasePtr PushInfer(const abstract::AnalysisEnginePtr &prim, const Primiti
   return abstract::MakeAbstract(out_shape, kInt64);
 }
 
-AbstractBasePtr SampleInfer(const abstract::AnalysisEnginePtr &prim, const PrimitivePtr &primitive,
-                            const std::vector<AbstractBasePtr> &input_args) {
+AbstractBasePtr SampleInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                            const std::vector<AbstractBasePtr> &) {
   MS_EXCEPTION_IF_NULL(primitive);
 
   const std::string &prim_name = primitive->name();
@@ -255,7 +255,7 @@ AbstractBasePtr SampleInfer(const abstract::AnalysisEnginePtr &prim, const Primi
   AbstractBasePtrList output;
   for (size_t i = 0; i < shapes.size(); ++i) {
     auto shape = shapes[i];
-    shape.emplace(shape.begin(), batch_size);
+    (void)shape.emplace(shape.begin(), batch_size);
     auto element = std::make_shared<abstract::AbstractScalar>(kAnyValue, types[i]);
     auto tensor = std::make_shared<abstract::AbstractTensor>(element, std::make_shared<abstract::Shape>(shape));
     output.emplace_back(tensor);
@@ -265,7 +265,7 @@ AbstractBasePtr SampleInfer(const abstract::AnalysisEnginePtr &prim, const Primi
 }
 
 AbstractBasePtr DestroyInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                             const std::vector<AbstractBasePtr> &input_args) {
+                             const std::vector<AbstractBasePtr> &) {
   MS_EXCEPTION_IF_NULL(primitive);
 
   const ShapeVector &shape = {1};

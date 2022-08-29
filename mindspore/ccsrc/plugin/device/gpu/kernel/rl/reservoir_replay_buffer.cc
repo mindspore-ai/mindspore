@@ -31,15 +31,15 @@ namespace kernel {
 namespace gpu {
 ReservoirReplayBuffer::ReservoirReplayBuffer(const uint64_t &seed, const size_t &capacity,
                                              const std::vector<size_t> &schema) {
-  schema_ = schema;
-  seed_ = seed;
   capacity_ = capacity;
 
   // Init random generator.
+  seed_ = seed;
   generator_.seed(seed_);
 
   // Allocate device memory.
   auto &allocator = device::gpu::GPUMemoryAllocator::GetInstance();
+  schema_ = schema;
   for (const auto &size : schema) {
     fifo_replay_buffer_.emplace_back(static_cast<uint8_t *>(allocator.AllocTensorMem(size * capacity)));
   }

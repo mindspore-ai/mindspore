@@ -32,8 +32,8 @@ constexpr size_t kInWeightsIndex = 1;
 constexpr size_t kTransitionIndex = 2;
 
 bool ReservoirReplayBufferCreateCpuKernel::Init(const BaseOperatorPtr &base_operator,
-                                                const std::vector<KernelTensorPtr> &inputs,
-                                                const std::vector<KernelTensorPtr> &outputs) {
+                                                const std::vector<KernelTensorPtr> &,
+                                                const std::vector<KernelTensorPtr> &) {
   auto kernel_ptr = std::dynamic_pointer_cast<ops::ReservoirReplayBufferCreate>(base_operator);
   if (!kernel_ptr) {
     MS_LOG(ERROR) << "cast ReservoirReplayBufferCreate ops failed!";
@@ -56,8 +56,8 @@ bool ReservoirReplayBufferCreateCpuKernel::Init(const BaseOperatorPtr &base_oper
   }
 
   std::vector<size_t> schema_in_size;
-  std::transform(schema.begin(), schema.end(), std::back_inserter(schema_in_size),
-                 [](const int64_t &arg) -> size_t { return LongToSize(arg); });
+  (void)std::transform(schema.begin(), schema.end(), std::back_inserter(schema_in_size),
+                       [](const int64_t &arg) -> size_t { return LongToSize(arg); });
 
   auto &factory = ReservoirReplayBufferFactory::GetInstance();
   std::tie(handle_, reservoir_replay_buffer_) = factory.Create(seed, capacity, schema_in_size);
@@ -76,7 +76,7 @@ bool ReservoirReplayBufferCreateCpuKernel::Launch(const std::vector<AddressPtr> 
 
 bool ReservoirReplayBufferPushCpuKernel::Init(const BaseOperatorPtr &base_operator,
                                               const std::vector<KernelTensorPtr> &inputs,
-                                              const std::vector<KernelTensorPtr> &outputs) {
+                                              const std::vector<KernelTensorPtr> &) {
   auto kernel_ptr = std::dynamic_pointer_cast<ops::ReservoirReplayBufferPush>(base_operator);
   if (!kernel_ptr) {
     MS_LOG(ERROR) << "cast ReservoirReplayBufferPush ops failed!";
@@ -110,7 +110,7 @@ bool ReservoirReplayBufferPushCpuKernel::Launch(const std::vector<AddressPtr> &i
 }
 
 bool ReservoirReplayBufferSampleCpuKernel::Init(const BaseOperatorPtr &base_operator,
-                                                const std::vector<KernelTensorPtr> &inputs,
+                                                const std::vector<KernelTensorPtr> &,
                                                 const std::vector<KernelTensorPtr> &outputs) {
   auto kernel_ptr = std::dynamic_pointer_cast<ops::ReservoirReplayBufferSample>(base_operator);
   if (!kernel_ptr) {
@@ -119,7 +119,7 @@ bool ReservoirReplayBufferSampleCpuKernel::Init(const BaseOperatorPtr &base_oper
   }
 
   handle_ = kernel_ptr->get_handle();
-  batch_size_ = kernel_ptr->get_batch_size();
+  batch_size_ = LongToSize(kernel_ptr->get_batch_size());
   reservoir_replay_buffer_ = ReservoirReplayBufferFactory::GetInstance().GetByHandle(handle_);
   MS_EXCEPTION_IF_NULL(reservoir_replay_buffer_);
 
@@ -140,8 +140,8 @@ bool ReservoirReplayBufferSampleCpuKernel::Launch(const std::vector<AddressPtr> 
 }
 
 bool ReservoirReplayBufferDestroyCpuKernel::Init(const BaseOperatorPtr &base_operator,
-                                                 const std::vector<KernelTensorPtr> &inputs,
-                                                 const std::vector<KernelTensorPtr> &outputs) {
+                                                 const std::vector<KernelTensorPtr> &,
+                                                 const std::vector<KernelTensorPtr> &) {
   auto kernel_ptr = std::dynamic_pointer_cast<ops::ReservoirReplayBufferDestroy>(base_operator);
   if (!kernel_ptr) {
     MS_LOG(ERROR) << "cast ReservoirReplayBufferDestroy ops failed!";
