@@ -248,7 +248,7 @@ class Profiler:
     def _cpu_profiler_init(self, kwargs):
         """Cpu profiler init."""
         if context.get_context("mode") == context.PYNATIVE_MODE:
-            raise RuntimeError("Pynative model is not supported on CPU currently.")
+            raise RuntimeError("Pynative mode is not supported on CPU currently.")
 
         self.start_profile = kwargs.pop("start_profile", True)
         if not isinstance(self.start_profile, bool):
@@ -261,7 +261,7 @@ class Profiler:
         self._md_profiler = cde.GlobalContext.profiling_manager()
         self._md_profiler.init()
         if context.get_context("mode") == context.PYNATIVE_MODE:
-            raise RuntimeError("Pynative model is not supported on GPU currently.")
+            raise RuntimeError("Pynative mode is not supported on GPU currently.")
         self._parse_parameter_for_gpu(kwargs)
 
         gpu_profiler = c_expression.Profiler
@@ -415,7 +415,7 @@ class Profiler:
         logger.info("Profiling: all the data have been analyzed.")
 
     def _ascend_pynative_analyse(self):
-        """Collect and analyse ascend pynative model performance data."""
+        """Collect and analyse ascend pynative mode performance data."""
         self._ascend_profiler.finalize()
         op_intermediate_parser = OPIntermediateParser(self._output_path, self._rank_id)
         op_intermediate_parser.parser_pynative_op_type()
@@ -463,7 +463,10 @@ class Profiler:
             logger.info("MSAdvisor starts running.")
             msadvisor.analyse()
         except (ProfilerFileNotFoundException, ValueError, FileNotFoundError, OSError) as err:
-            logger.warning("MSAdvisor running failed. %s", err)
+            if context.get_context("mode") == context.PYNATIVE_MODE:
+                logger.warning("Pynative mode does not support MSAdvisor analyzer currently.")
+            else:
+                logger.warning("MSAdvisor running failed. %s", err)
         finally:
             pass
 
@@ -669,7 +672,7 @@ class Profiler:
              ...         self.profiler.analyse()
         """
         if not self.start_profile and context.get_context("mode") == context.PYNATIVE_MODE:
-            raise RuntimeError("Pynative model does not support conditional collection of performance data.")
+            raise RuntimeError("Pynative mode does not support conditional collection of performance data.")
 
         self._start_time = int(time.time() * 10000000)
         logger.info("Profiling: start time: %d", self._start_time)
