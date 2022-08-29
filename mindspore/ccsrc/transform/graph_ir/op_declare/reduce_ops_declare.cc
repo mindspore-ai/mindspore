@@ -89,6 +89,7 @@ INPUT_MAP(ReduceMean) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(axes)}};
 ATTR_MAP(ReduceMean) = {{"keep_dims", ATTR_DESC(keep_dims, AnyTraits<bool>())}};
 OUTPUT_MAP(ReduceMean) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ReduceMean, prim::kPrimReduceMean->name(), ADPT_DESC(ReduceMean))
+REG_ADPT_DESC(ReduceMeanV1, "ReduceMeanV1", ADPT_DESC(ReduceMean))
 
 // ReduceMinD
 INPUT_MAP(ReduceMinD) = {{1, INPUT_DESC(x)}};
@@ -105,4 +106,9 @@ INPUT_ATTR_MAP(ReduceMaxD) = {
 ATTR_MAP(ReduceMaxD) = {{"keep_dims", ATTR_DESC(keep_dims, AnyTraits<bool>())}};
 OUTPUT_MAP(ReduceMaxD) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ReduceMaxD, prim::kPrimReduceMax->name(), ADPT_DESC(ReduceMaxD))
+
+INPUT_MAP(ReduceMax) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(axes)}};
+ATTR_MAP(ReduceMax) = {{"keep_dims", ATTR_DESC(keep_dims, AnyTraits<bool>())}};
+OUTPUT_MAP(ReduceMax) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(ReduceMax, "ReduceMaxV1", ADPT_DESC(ReduceMax))
 }  // namespace mindspore::transform

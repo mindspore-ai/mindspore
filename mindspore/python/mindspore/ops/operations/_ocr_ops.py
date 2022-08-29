@@ -35,7 +35,7 @@ class GetShape(PrimitiveWithInfer):
         self.init_prim_io_names(inputs=["x"], outputs=["y"])
 
     def infer_shape(self, x):
-        return (x[0],)
+        return (len(x[0]),)
 
     def infer_dtype(self, x):
         return mstype.int32

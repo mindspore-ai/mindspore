@@ -22,6 +22,9 @@
 #include "ops/elewise_calculation_ops.h"
 
 namespace mindspore::transform {
+DECLARE_OP_ADAPTER(ClipByValue)
+DECLARE_OP_USE_OUTPUT(ClipByValue)
+
 DECLARE_OP_ADAPTER(AccumulateNV2)
 DECLARE_OP_USE_DYN_INPUT(AccumulateNV2)
 DECLARE_OP_USE_OUTPUT(AccumulateNV2)

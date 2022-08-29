@@ -30,6 +30,7 @@ REG_ADPT_DESC(CumsumD, kNameCumSum, ADPT_DESC(CumsumD))
 INPUT_MAP(GatherV2) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(indices)}, {3, INPUT_DESC(axis)}};
 ATTR_MAP(GatherV2) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(GatherV2) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(GatherV2, prim::kPrimGatherV2->name(), ADPT_DESC(GatherV2))
 
 // CumprodD
 INPUT_MAP(CumprodD) = {{1, INPUT_DESC(x)}};
@@ -38,6 +39,11 @@ ATTR_MAP(CumprodD) = {{"exclusive", ATTR_DESC(exclusive, AnyTraits<bool>())},
                       {"reverse", ATTR_DESC(reverse, AnyTraits<bool>())}};
 OUTPUT_MAP(CumprodD) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(CumprodD, kNameCumProd, ADPT_DESC(CumprodD))
+
+INPUT_MAP(Tile) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(multiples)}};
+ATTR_MAP(Tile) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(Tile) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Tile, "TileV1", ADPT_DESC(Tile))
 
 INPUT_MAP(Slice) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(offsets)}, {3, INPUT_DESC(size)}};
 ATTR_MAP(Slice) = EMPTY_ATTR_MAP;
@@ -108,6 +114,12 @@ ATTR_MAP(RangeD) = {{"start", ATTR_DESC(start, AnyTraits<float>())},
                     {"delta", ATTR_DESC(delta, AnyTraits<float>())}};
 OUTPUT_MAP(RangeD) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(RangeD, kNameRange, ADPT_DESC(RangeD))
+
+// RangeV2
+INPUT_MAP(Range) = {{1, INPUT_DESC(start)}, {2, INPUT_DESC(limit)}, {3, INPUT_DESC(delta)}};
+ATTR_MAP(Range) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(Range) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(RangeV2, kNameRangeV2, ADPT_DESC(Range))
 
 // InplaceAddD
 INPUT_MAP(InplaceAddD) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(v)}};

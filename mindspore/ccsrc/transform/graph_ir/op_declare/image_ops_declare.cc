@@ -60,4 +60,12 @@ ATTR_MAP(CropAndResize) = {{"extrapolation_value", ATTR_DESC(extrapolation_value
                            {"method", ATTR_DESC(method, AnyTraits<std::string>())}};
 OUTPUT_MAP(CropAndResize) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(CropAndResize, kNameCropAndResize, ADPT_DESC(CropAndResize))
+
+// DecodeImage
+INPUT_MAP(DecodeImage) = {{1, INPUT_DESC(contents)}};
+ATTR_MAP(DecodeImage) = {{"channels", ATTR_DESC(channels, AnyTraits<int64_t>())},
+                         {"dtype", ATTR_DESC(dtype, AnyTraits<GEType>())},
+                         {"expand_animations", ATTR_DESC(expand_animations, AnyTraits<bool>())}};
+OUTPUT_MAP(DecodeImage) = {{0, OUTPUT_DESC(image)}};
+REG_ADPT_DESC(DecodeImage, kNameDecodeImage, ADPT_DESC(DecodeImage))
 }  // namespace mindspore::transform

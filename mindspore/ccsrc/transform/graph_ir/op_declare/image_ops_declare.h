@@ -39,5 +39,8 @@ DECLARE_OP_USE_OUTPUT(ResizeBilinearV2Grad)
 
 DECLARE_OP_ADAPTER(CropAndResize)
 DECLARE_OP_USE_OUTPUT(CropAndResize)
+
+DECLARE_OP_ADAPTER(DecodeImage)
+DECLARE_OP_USE_OUTPUT(DecodeImage)
 }  // namespace mindspore::transform
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_IMAGE_OPS_DECLARE_H_
