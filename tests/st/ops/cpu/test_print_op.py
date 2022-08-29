@@ -32,6 +32,12 @@ class PrintNet(nn.Cell):
         return x
 
 
+class PrintFunc(nn.Cell):
+    def construct(self, x):
+        ops.print_("scalar int:", 2, "scalar float:", 1.2, "scalar bool:", False, "Tensor :", x)
+        return x
+
+
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
@@ -67,4 +73,21 @@ def test_print_op_dynamic_shape(mode):
     x = Tensor(np.random.randn(3, 4, 5).astype(np.float32))
     x_dyn = Tensor(shape=[None, None, None], dtype=ms.float32)
     net.set_inputs(x_dyn)
+    net(x)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_print_op_functional(mode):
+    """
+    Feature: cpu Print op.
+    Description: test Print with functional interface.
+    Expectation: success.
+    """
+    context.set_context(mode=mode, device_target="CPU")
+
+    net = PrintFunc()
+    x = Tensor(np.random.randn(3, 4, 5).astype(np.float32))
     net(x)

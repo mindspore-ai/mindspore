@@ -421,33 +421,12 @@ class HookBackward(PrimitiveWithInfer):
 
 class Print(Primitive):
     """
-    Outputs the tensor or string to stdout. The outputs are printed to screen by default.
-    It can also be saved in a file by setting the parameter  `print_file_path` in `context`.
-    Once set, the output will be saved in the file specified by print_file_path.
-    parse_print can be employed to reload the data.
-    For more information, please refer to :func:`mindspore.context.set_context` and :func:`mindspore.parse_print`.
+    Outputs the inputs to stdout.
 
-    Note:
-        In pynative mode, please use python print function.
-        In graph mode, the bool, int and float would be converted into Tensor to print,
-        str remains unchanged.
-        This function is used for debugging. When too much data is printed at the same time,
-        in order not to affect the main process, the framework may discard some data. At this time,
-        if you need to record the data completely, you can recommended to use the `Summary` function, and can check
-        `Summary <https://www.mindspore.cn/mindinsight/docs/zh-CN/master/summary_record.html?highlight=summary#>`_.
-
-    Inputs:
-        - **input_x** (Union[Tensor, bool, int, float, str]) - The graph node to attach to.
-          Supports multiple inputs which are separated by ','.
-
-    Outputs:
-        Tensor, has the same data type and shape as original `input_x`.
-
-    Raises:
-        TypeError: If `input_x` is not one of the following: Tensor, bool, int, float, str.
+    Refer to :func:`mindspore.ops.print` for more detail.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> class PrintDemo(nn.Cell):

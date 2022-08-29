@@ -39,7 +39,6 @@ from .operations.array_ops import UniqueConsecutive
 from .operations.nn_ops import AdaptiveMaxPool2D
 from .function.sparse_func import sparse_add
 from .composite import _Vmap
-from .._c_expression import security
 
 typeof = Primitive('typeof')
 hastype = Primitive('hastype')
@@ -62,8 +61,6 @@ reduce_min = P.ReduceMin()
 reduce_mean = P.ReduceMean()
 sort = P.Sort()
 tensor_range = P.Range()
-if not security.enable_security():
-    print_ = P.Print()
 tensor_scatter_update = P.TensorScatterUpdate()
 scatter_nd_update = P.ScatterNdUpdate()
 mixed_precision_cast = _inner_ops.MixedPrecisionCast()

@@ -360,6 +360,9 @@ from .grad import (
     vjp,
     linearize
 )
+from .debug_func import (
+    print_,
+)
 
 __all__ = []
 __all__.extend(array_func.__all__)
@@ -370,4 +373,5 @@ __all__.extend(linalg_func.__all__)
 __all__.extend(sparse_func.__all__)
 __all__.extend(random_func.__all__)
 __all__.extend(grad_func.__all__)
+__all__.extend(debug_func.__all__)
 __all__.sort()
