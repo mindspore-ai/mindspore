@@ -5462,7 +5462,7 @@ class COOTensor(COOTensor_):
 
     def coalesce(self):
         """
-        Return the coalesced sparse tensor of the input
+        Return the coalesced sparse tensor of the input.
 
         Returns:
             COOTensor.

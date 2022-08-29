@@ -80,7 +80,7 @@ mindspore.COOTensor
     .. py:method:: dtype
         :property:
 
-        返回稀疏矩阵非零元素值数据类型。
+        返回COOTensor数据类型（:class:`mindspore.dtype`）。
 
     .. py:method:: indices
         :property:

@@ -12,3 +12,5 @@ mindspore.ParallelMode
     - HYBRID_PARALLEL：手动实现数据并行和模型并行。
     - SEMI_AUTO_PARALLEL：半自动并行模式。
     - AUTO_PARALLEL：自动并行模式。
+
+    MODE_LIST：所有支持的并行模式列表。

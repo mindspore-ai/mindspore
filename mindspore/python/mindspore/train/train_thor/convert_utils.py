@@ -22,7 +22,7 @@ from mindspore import context
 
 class ConvertNetUtils:
     """
-    Convert net to thor layer net
+    Convert net to thor layer net, used to compute and store second-order information matrix.
     """
     def __init__(self):
         self._convert_method_map = {nn.Dense: ConvertNetUtils._convert_dense,

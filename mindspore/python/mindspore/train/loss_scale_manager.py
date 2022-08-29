@@ -99,7 +99,7 @@ class FixedLossScaleManager(LossScaleManager):
 
     def update_loss_scale(self, overflow):
         """
-        Update loss scale value. The interface at `FixedLossScaleManager` will do nothing.
+        Update loss scale value. The interface at :class:`mindspore.FixedLossScaleManager` will do nothing.
 
         Args:
             overflow (bool): Whether it overflows.

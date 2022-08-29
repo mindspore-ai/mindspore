@@ -3,7 +3,7 @@ mindspore.dataset.transforms.Concatenate
 
 .. py:class:: mindspore.dataset.transforms.Concatenate(axis=0, prepend=None, append=None)
 
-    在Tensor的某一个轴上进行元素拼接。目前仅支持拼接形状为1D的Tensor。
+    在Tensor的某一个轴上进行元素拼接，目前仅支持拼接形状为1D的Tensor。
 
     参数：
         - **axis** (int, 可选) - 指定一个轴用于拼接Tensor，默认值：0。

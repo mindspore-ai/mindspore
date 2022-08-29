@@ -156,7 +156,7 @@
 
     .. py:method:: get_flags()
 
-        获取该Cell的自定义属性。自定义属性通过 `add_flags` 方法添加。
+        获取该Cell的自定义属性，自定义属性通过 `add_flags` 方法添加。
 
     .. py:method:: get_func_graph_proto()
 
@@ -175,6 +175,8 @@
     .. py:method:: get_parameters(expand=True)
 
         返回Cell中parameter的迭代器。
+
+        获取Cell的参数。如果 `expand` 为true，获取此cell和所有subcells的参数。
 
         参数：
             - **expand** (bool) - 如果为True，则递归地获取当前Cell和所有子Cell的parameter。否则，只生成当前Cell的子Cell的parameter。默认值：True。
@@ -406,21 +408,6 @@
 
         .. note:: 如果一个Cell需要使用自动并行或半自动并行模式来进行训练、评估或预测，则该Cell需要调用此接口。
 
-    .. py:method:: set_jit_config(jit_config)
-
-        为Cell设置编译时所使用的JitConfig配置项。
-
-        参数：
-            - **jit_config** (JitConfig) - Cell的Jit配置信息。目前支持下面两个配置项。
-  
-              - **jit_level** (str) - 用于设置优化图的'level'参数。 取值范围['O0'、'O1'、'O2']。默认值：'O1'。
-
-                - O0：基本优化。
-                - O1：手动优化。
-                - O2：手动优化和图算融合。
-
-              - **task_sink** (bool) - 是否通过数据集方式传递数据。默认值：True。
-
     .. py:method:: set_boost(boost_type)
 
         为了提升网络性能，可以配置boost内的算法让框架自动使能该算法来加速网络训练。
@@ -483,6 +470,21 @@
         .. note::
             这是一个实验接口，可能会被更改或者删除。
 
+    .. py:method:: set_jit_config(jit_config)
+
+        为Cell设置编译时所使用的JitConfig配置项。
+
+        参数：
+            - **jit_config** (JitConfig) - Cell的Jit配置信息。目前支持下面两个配置项。
+  
+              - **jit_level** (str) - 用于设置优化图的'level'参数。 取值范围['O0'、'O1'、'O2']。默认值：'O1'。
+
+                - O0：基本优化。
+                - O1：手动优化。
+                - O2：手动优化和图算融合。
+
+              - **task_sink** (bool) - 是否通过数据集方式传递数据。默认值：True。
+
     .. py:method:: set_parallel_input_with_inputs(*inputs)
 
         通过并行策略对输入张量进行切分。
@@ -524,7 +526,7 @@
     .. py:method:: shard(in_strategy, out_strategy, device="Ascend", level=0)
 
         指定输入/输出Tensor的分布策略，其余算子的策略推导得到。在PyNative模式下，可以利用此方法指定某个Cell以图模式进行分布式执行。 in_strategy/out_strategy需要为元组类型，
-        其中的每一个元素指定对应的输入/输出的Tensor分布策略，可参考： `mindspore.ops.Primitive.shard` 的描述，也可以设置为None，会默认以数据并行执行。
+        其中的每一个元素指定对应的输入/输出的Tensor分布策略，可参考： `mindspore.ops.Primitive.shard` 的描述。也可以设置为None，会默认以数据并行执行。
         其余算子的并行策略由输入输出指定的策略推导得到。
 
         .. note:: 需设置为PyNative模式，并且ParallelMode.AUTO_PARALLEL，同时设置 `set_auto_parallel_context` 中的搜索模式(search mode)为"sharding_propagation"。

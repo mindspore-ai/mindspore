@@ -3,7 +3,7 @@ mindspore.dataset.transforms.Slice
 
 .. py:class:: mindspore.dataset.transforms.Slice(*slices)
 
-    对Tensor进行切片操作，功能类似于NumPy的索引(目前只支持1D形状的Tensor)。
+    使用给定的slices，对Tensor进行切片操作。功能类似于NumPy的索引(目前只支持1D形状的Tensor)。
 
     参数：
         - **slices** ((Union[int, list[int], slice, None, Ellipsis]) - 指定切片的信息，可以为

@@ -1402,7 +1402,7 @@ class MatrixDiagPart(Cell):
 
     Assume `x` has :math:`k` dimensions :math:`[I, J, K, ..., M, N]`, then the output is a tensor of rank
     :math:`k-1` with dimensions :math:`[I, J, K, ..., min(M, N)]` where:
-    :math:`output[i, j, k, ..., n] = x[i, j, k, ..., n, n]`
+    :math:`output[i, j, k, ..., n] = x[i, j, k, ..., n, n]`.
 
     Inputs:
         - **x** (Tensor) - The batched tensor. It can be one of the following data types:

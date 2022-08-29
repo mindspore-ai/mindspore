@@ -5,7 +5,7 @@ mindspore.dtype
 
     创建一个MindSpore数据类型的对象。
 
-    `dtype` 的实际路径为 `/mindspore/common/dtype.py` ，运行以下命令导入环境：
+    `dtype` 的实际路径为 `/mindspore/common/dtype.py` 。运行以下命令导入环境：
 
     .. code-block::
 
@@ -13,7 +13,7 @@ mindspore.dtype
 
     - **数值型**
 
-      目前，MindSpore支持 ``Int``，``Uint`` 和 ``Float`` 数据类型，详情请参照以下表格。
+      目前，MindSpore支持 ``Int``，``Uint`` 和 ``Float`` 数据类型。详情请参照以下表格。
 
       ==============================================   =============================
       定义                                              描述
