@@ -2361,7 +2361,86 @@ def hardsigmoid(input_x):
     return hardsigmoid_(input_x)
 
 
+def adaptive_avg_pool1d(input_x, output_size):
+    r"""
+    1D adaptive average pooling for temporal data.
+
+    Applies a 1D adaptive average pooling over an input Tensor which can be regarded as
+    a composition of 1D input planes.
+
+    Typically, the input is of shape :math:`(N_{in}, C_{in}, L_{in})`,
+    adaptive_avg_pool1d outputs regional average in the :math:`L_{in}`-dimension.
+    The output is of shape :math:`(N_{in}, C_{in}, L_{out})`,
+    where :math:`L_{out}` is defined by `output_size`.
+
+    Note:
+        :math:`L_{in}` must be divisible by `output_size`.
+
+    Args:
+        input_x (Tensor) - Tensor of shape :math:`(N, C_{in}, L_{in})`, with float16 or float32 data type.
+        output_size (int): the target output size :math:`L_{out}`.
+
+    Returns:
+        Tensor of shape :math:`(N, C_{in}, L_{out})`, has the same type as `input_x`.
+
+    Raises:
+        TypeError: If `output_size` is not an int.
+        TypeError: If `input_x` is neither float16 nor float32.
+        ValueError: If `output_size` is less than 1.
+        ValueError: If length of shape of `input_x` is not equal to 3.
+        ValueError: If the last dimension of `input_x` is smaller than `output_size`.
+        ValueError: If the last dimension of `input_x` is not divisible by `output_size`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> input_x = Tensor(np.random.randint(0, 10, [1, 3, 6]), mindspore.float32)
+        >>> output = ops.adaptive_avg_pool1d(input_x, output_size=2)
+        >>> print(output.shape)
+        (1, 3, 2)
+    """
+    if not isinstance(input_x, (Tensor, Tensor_)):
+        raise TypeError("For adaptive_avg_pool1d, the input input_x must be tensor")
+
+    x_in_shape = input_x.shape
+    x_dtype = _get_cache_prim(P.DType)()(input_x)
+
+    validator.check_int(output_size, 1, Rel.GE, "output_size", 'adaptive_avg_pool1d')
+    validator.check_value_type('output_size', output_size, [int], 'adaptive_avg_pool1d')
+
+    if len(x_in_shape) != 3:
+        raise ValueError("For adaptive_avg_pool1d input must has 3 dim, but got {}.".format(len(x_in_shape)))
+    if x_in_shape[2] < output_size:
+        raise ValueError("For adaptive_avg_pool1d input's last dimension must be greater or equal to "
+                         "output size {}, but got {}.".format(output_size, x_in_shape[2]))
+    if x_in_shape[2] % output_size != 0:
+        raise ValueError("For adaptive_avg_pool1d input's last dimension must be divisible by "
+                         "output size {}, but got {}.".format(output_size, x_in_shape[2]))
+    if x_dtype not in [mstype.float16, mstype.float32]:
+        raise TypeError("For adaptive_avg_pool1d, the input_x dtype must be float16 or float32, "
+                        "but got {}.".format(x_dtype))
+
+    expand_ = _get_cache_prim(P.ExpandDims)()
+    squeeze_ = _get_cache_prim(P.Squeeze)(2)
+
+    width = x_in_shape[2]
+    stride = width // output_size
+    kernel_size = width - (output_size - 1) * stride
+    stride = (1, width // output_size)
+    kernel_size = (1, kernel_size)
+
+    avg_pool_ = _get_cache_prim(P.AvgPool)(kernel_size=kernel_size, strides=stride)
+
+    input_x = expand_(input_x, 2)
+    input_x = avg_pool_(input_x)
+    input_x = squeeze_(input_x)
+
+    return input_x
+
+
 __all__ = [
+    'adaptive_avg_pool1d',
     'adaptive_avg_pool2d',
     'adaptive_avg_pool3d',
     'adaptive_max_pool3d',
