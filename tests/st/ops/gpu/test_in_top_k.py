@@ -51,17 +51,17 @@ def in_top_k(nptype):
 
     k = 1
     in_top_k_net = InTopKNet(k)
-    targets = Tensor(np.array([0, 1, 0]).astype(np.int32))
+    targets = Tensor(np.array([0, 1, 0]).astype(np.int64))
     output = in_top_k_net(predictions, targets)
     expected_output = np.array([True, True, True])
     np.testing.assert_array_equal(output.asnumpy(), expected_output)
 
-    targets = Tensor(np.array([1, 0, 2]).astype(np.int32))
+    targets = Tensor(np.array([1, 0, 2]).astype(np.int64))
     output = in_top_k_net(predictions, targets)
     expected_output = np.array([False, False, True])
     np.testing.assert_array_equal(output.asnumpy(), expected_output)
 
-    targets = Tensor(np.array([2, 2, 1]).astype(np.int32))
+    targets = Tensor(np.array([2, 2, 1]).astype(np.int64))
     output = in_top_k_net(predictions, targets)
     expected_output = np.array([False, True, True])
     np.testing.assert_array_equal(output.asnumpy(), expected_output)
@@ -85,17 +85,17 @@ def in_top_k(nptype):
 
     k = 3
     in_top_k_net = InTopKNet(k)
-    targets = Tensor(np.array([2, 2, 2]).astype(np.int32))
+    targets = Tensor(np.array([2, 2, 2]).astype(np.int64))
     output = in_top_k_net(predictions, targets)
     expected_output = np.array([True, True, True])
     np.testing.assert_array_equal(output.asnumpy(), expected_output)
 
-    targets = Tensor(np.array([1, 1, 0]).astype(np.int32))
+    targets = Tensor(np.array([1, 1, 0]).astype(np.int64))
     output = in_top_k_net(predictions, targets)
     expected_output = np.array([True, True, True])
     np.testing.assert_array_equal(output.asnumpy(), expected_output)
 
-    targets = Tensor(np.array([0, 0, 1]).astype(np.int32))
+    targets = Tensor(np.array([0, 0, 1]).astype(np.int64))
     output = in_top_k_net(predictions, targets)
     expected_output = np.array([True, True, True])
     np.testing.assert_array_equal(output.asnumpy(), expected_output)

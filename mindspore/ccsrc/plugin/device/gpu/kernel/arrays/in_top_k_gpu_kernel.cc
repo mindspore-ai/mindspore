@@ -97,14 +97,14 @@ void InTopKGpuKernelMod::InitSizeLists() {
   }
 }
 
-template <typename T>
+template <typename T, typename S>
 bool InTopKGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                       const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   if (is_null_input_) {
     return true;
   }
   T *predictions_device = GetDeviceAddress<T>(inputs, kIndex0);
-  int32_t *targets_device = GetDeviceAddress<int32_t>(inputs, kIndex1);
+  S *targets_device = GetDeviceAddress<S>(inputs, kIndex1);
 
   bool *output_device = GetDeviceAddress<bool>(outputs, kIndex0);
 
@@ -156,9 +156,13 @@ bool InTopKGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
 
 std::vector<std::pair<KernelAttr, InTopKGpuKernelMod::InTopKFunc>> InTopKGpuKernelMod::func_list_ = {
   {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
-   &InTopKGpuKernelMod::LaunchKernel<half>},
+   &InTopKGpuKernelMod::LaunchKernel<half, int32_t>},
   {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
-   &InTopKGpuKernelMod::LaunchKernel<float>},
+   &InTopKGpuKernelMod::LaunchKernel<float, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
+   &InTopKGpuKernelMod::LaunchKernel<half, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
+   &InTopKGpuKernelMod::LaunchKernel<float, int64_t>},
 };
 
 std::vector<KernelAttr> InTopKGpuKernelMod::GetOpSupport() {

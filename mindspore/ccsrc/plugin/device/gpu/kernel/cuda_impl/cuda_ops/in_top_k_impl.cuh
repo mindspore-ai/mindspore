@@ -19,8 +19,8 @@
 #include <cuda_runtime.h>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
-template <typename T>
-CUDA_LIB_EXPORT void CalInTopK(const T *predictions, const int32_t *targets, bool *output, const T *top_k_output,
+template <typename T, typename S>
+CUDA_LIB_EXPORT void CalInTopK(const T *predictions, const S *targets, bool *output, const T *top_k_output,
                                size_t batch_size, size_t class_id_count, int64_t k, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_IN_TOP_K_IMPL_CUH_
