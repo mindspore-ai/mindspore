@@ -60,6 +60,7 @@ mindspore.Tensor
     mindspore.Tensor.cosh
     mindspore.Tensor.erf
     mindspore.Tensor.erfc
+    mindspore.Tensor.exp
     mindspore.Tensor.inv
     mindspore.Tensor.invert
     mindspore.Tensor.lerp

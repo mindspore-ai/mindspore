@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 import numpy as np
 import pytest
 
+import mindspore as ms
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -65,3 +66,24 @@ def test_exp():
     diff1 = output1.asnumpy() - expect1
     assert np.all(diff1 < error1)
     assert output1.shape == expect1.shape
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_exp_dyn():
+    """
+    Feature: dynamic shape operator Exp on GPU
+    Description: test dynamic shape of Exp
+    Expectation: success or throw AssertionError exception.
+    """
+    x_np = np.random.uniform(-2, 2, 1).astype(np.float32)
+    input_dyn = Tensor(shape=[None,], dtype=ms.float32)
+
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    net = NetExp()
+    net.set_inputs(input_dyn)
+    out = net(ms.Tensor(x_np))
+    expect = np.exp(x_np)
+    error = np.ones(shape=expect.shape) * 1.0e-5
+    diff = out.asnumpy() - expect
+    assert np.all(diff < error)
