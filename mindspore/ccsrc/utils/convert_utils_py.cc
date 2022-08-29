@@ -577,7 +577,8 @@ ShapeVector ConvertToShapeVector(const VectorRef &value_list, size_t index) {
   };
 
   if (utils::isa<tensor::Tensor>(ref)) {
-    (void)std::transform(value_list.begin() + index, value_list.end(), std::back_inserter(shape), converter);
+    (void)std::transform(value_list.begin() + SizeToLong(index), value_list.end(), std::back_inserter(shape),
+                         converter);
   } else if (utils::isa<VectorRef>(ref)) {
     VectorRef shape_ref = utils::cast<VectorRef>(ref);
     (void)std::transform(shape_ref.begin(), shape_ref.end(), std::back_inserter(shape), converter);

@@ -1076,7 +1076,7 @@ def diagonal(x, offset=0, axis1=0, axis2=1):
     res = F.reduce_sum(prod_val.astype(mstype.float32), -1)
 
     begin = ()
-    for i in range(ndim - 2):
+    for _ in range(ndim - 2):
         begin += (0,)
     last_dim_begin = max_(0, -offset)
     begin += (last_dim_begin,)

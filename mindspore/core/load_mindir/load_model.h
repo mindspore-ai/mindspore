@@ -38,7 +38,7 @@ class MS_CORE_API MindIRLoader {
   void set_weights_value_map(const std::map<string, ValuePtr> &weights_value_map) {
     weights_value_map_ = weights_value_map;
   }
-  const LayoutMap &layout_map() { return layout_map_; }
+  const LayoutMap &layout_map() const { return layout_map_; }
   void InitModelParser(MSANFModelParser *model_parser);
   FuncGraphPtr LoadMindIR(const void *buffer, const size_t &size);
   FuncGraphPtr LoadMindIR(const std::string &file_name);

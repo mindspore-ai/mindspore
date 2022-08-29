@@ -14,6 +14,7 @@
 # ============================================================================
 
 """bprop mindir."""
+from __future__ import absolute_import
 from .generate_mindir import serializable_bprop_ops
 
 __all__ = ['serializable_bprop_ops']
