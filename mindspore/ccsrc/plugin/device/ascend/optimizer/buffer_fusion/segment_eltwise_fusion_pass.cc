@@ -53,6 +53,7 @@ void SegmentEltwiseFusionPass::MatchSegmentEltwise(const CNodePtr &cnode, const 
     auto previous_size = record.size();
     while (CheckEltWiseNode(kernel_graph, previous_eltwise_input)) {
       (void)record.insert(previous_eltwise_input);
+      MS_EXCEPTION_IF_NULL(previous_eltwise_input);
       auto previous_node = previous_eltwise_input->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(previous_node);
       previous_eltwise_input = previous_node->input(kIndex1);

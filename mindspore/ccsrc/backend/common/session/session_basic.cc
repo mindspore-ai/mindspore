@@ -956,7 +956,7 @@ void SessionBasic::ProcessNodeRetFunc(const CNodePtr &cnode, KernelGraph *graph,
   if (common::AnfAlgo::CheckPrimitiveType(return_input, prim::kPrimPartial)) {
     auto return_input_cnode = return_input->cast<CNodePtr>();
     auto partial_inputs = return_input_cnode->inputs();
-    call_inputs.insert(call_inputs.cend(), partial_inputs.cbegin() + kFirstDataInputIndex, partial_inputs.cend());
+    (void)call_inputs.insert(call_inputs.cend(), partial_inputs.cbegin() + kFirstDataInputIndex, partial_inputs.cend());
   } else if (IsValueNode<KernelGraph>(return_input)) {  // return node is kernel graph
     call_inputs.emplace_back(return_input);
   } else {  // return node is value node
@@ -1044,7 +1044,7 @@ std::vector<AnfNodePtr> SessionBasic::CreateCallSwitchLayerInputs(const CNodePtr
       ProcessNodeRetFunc(cnode, partial_kernel_graph.get(), real_inputs);
     }
     // partial node add input args
-    new_partial_inputs.insert(new_partial_inputs.cend(), real_inputs.cbegin(), real_inputs.cend());
+    (void)new_partial_inputs.insert(new_partial_inputs.cend(), real_inputs.cbegin(), real_inputs.cend());
     // create new partial node
     auto new_partial = graph->NewCNode(new_partial_inputs);
     new_make_tuple_inputs.emplace_back(new_partial);
@@ -1388,7 +1388,7 @@ void SessionBasic::GetSingleOpGraphInfo(const CNodePtr &kernel, const InputTenso
 
 BackendOpRunInfoPtr SessionBasic::GetSingleOpRunInfo(const CNodePtr &cnode, const GraphInfo &graph_info,
                                                      const InputTensorInfo &tensor_info,
-                                                     GraphOutputInfo *const graph_output_info) const {
+                                                     const GraphOutputInfo *const graph_output_info) const {
   MS_EXCEPTION_IF_NULL(cnode);
   auto primitive = common::AnfAlgo::GetCNodePrimitive(cnode);
   const auto &abstract = cnode->abstract();
@@ -2249,7 +2249,7 @@ std::vector<AnfNodePtr> ExtendNodeUsers(const FuncGraphManagerPtr &front_func_gr
         continue;
       }
       auto res = ExtendNodeUsers(front_func_graph_manager, user.first);
-      result.insert(result.cend(), res.cbegin(), res.cend());
+      (void)result.insert(result.cend(), res.cbegin(), res.cend());
     } else if (common::AnfAlgo::CheckPrimitiveType(user.first, prim::kPrimMakeTuple)) {
       auto res = ExtendNodeUsers(front_func_graph_manager, user.first);
       (void)result.insert(result.cend(), res.cbegin(), res.cend());

@@ -29,14 +29,14 @@ void MatmulDropoutDoMaskV3AddFusionPass::MatchMatmulDropoutDoMaskV3Add(const CNo
                                                                        FusedNodeRecord *candidate_fusion) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(candidate_fusion);
-  auto add_input = cnode->input(2);
+  auto add_input = cnode->input(kIndex2);
   MS_EXCEPTION_IF_NULL(add_input);
   if (!add_input->isa<CNode>() || !common::AnfAlgo::CheckPrimitiveType(add_input, prim::kPrimDropoutDoMaskV3)) {
     return;
   }
   auto dropout_do_mask_v3 = add_input->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(dropout_do_mask_v3);
-  auto matmul = dropout_do_mask_v3->input(1);
+  auto matmul = dropout_do_mask_v3->input(kIndex1);
   MS_EXCEPTION_IF_NULL(matmul);
   if (!matmul->isa<CNode>() || !common::AnfAlgo::CheckPrimitiveType(matmul, prim::kPrimMatMul)) {
     return;

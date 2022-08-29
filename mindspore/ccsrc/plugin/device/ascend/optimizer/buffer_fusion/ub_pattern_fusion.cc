@@ -36,13 +36,13 @@ namespace mindspore {
 namespace opt {
 using mindspore::kernel::tbe::TbeUtils;
 namespace {
-const int8_t MAX_PATTERN_SIZE = 7;
-const int8_t MIN_PATTERN_SIZE = 2;
-const int8_t ELTWISE_INPUT_SIZE = 2;
-const int8_t ELTWISE_USE = 1;
-const int8_t MULTI_ELTWISE_USE = 2;
-const int8_t MAX_MULTI_ELTWISE_SIZE = 4;
-const int8_t MAX_PURE_BUFFER_SUCC_SIZE = 3;
+constexpr int8_t MAX_PATTERN_SIZE = 7;
+constexpr int8_t MIN_PATTERN_SIZE = 2;
+constexpr int8_t ELTWISE_INPUT_SIZE = 2;
+constexpr int8_t ELTWISE_USE = 1;
+constexpr int8_t MULTI_ELTWISE_USE = 2;
+constexpr int8_t MAX_MULTI_ELTWISE_SIZE = 4;
+constexpr int8_t MAX_PURE_BUFFER_SUCC_SIZE = 3;
 constexpr size_t kFusionNodeNumThreshold = 2;
 constexpr auto kOpAttrFusionId = "fusion_id";
 
@@ -173,6 +173,7 @@ AnfNodePtr CreateTupleGetItem(const AnfNodePtr &buffer_fusion_kernel, session::K
 void ReplaceInputNodeInOtherFusionScope(mindspore::HashMap<int64_t, BufferFusionInfo_t> *buffer_fusion_infos,
                                         int64_t fusion_id, const AnfNodePtr &output_item,
                                         const AnfNodePtr &replace_item) {
+  MS_EXCEPTION_IF_NULL(buffer_fusion_infos);
   for (int64_t id = fusion_id + 1; id <= SizeToLong(buffer_fusion_infos->size()); ++id) {
     auto itr = std::find((*buffer_fusion_infos)[id].inputs_list.begin(), (*buffer_fusion_infos)[id].inputs_list.end(),
                          output_item);
@@ -251,6 +252,7 @@ void GetFusionScopeInputNodeList(const session::KernelGraph &kernel_graph,
 
     for (size_t node_idx = 0; node_idx < fusion_info.anf_nodes.size(); ++node_idx) {
       const auto &node = fusion_info.anf_nodes[node_idx];
+      MS_EXCEPTION_IF_NULL(node);
       auto cnode = node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
       size_t old_input_num = fusion_info.inputs_list.size();
