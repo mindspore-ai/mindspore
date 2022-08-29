@@ -2,6 +2,10 @@ set(MINDSPORE_PROJECT_DIR ${TOP_DIR})
 
 find_required_package(Patch)
 
+if(MSLITE_DEPS_ROBIN_HOOD_HASHING)
+    include(${TOP_DIR}/cmake/external_libs/robin.cmake)
+endif()
+
 if(MSLITE_DEPS_FLATBUFFERS)
     include(${TOP_DIR}/cmake/external_libs/flatbuffers.cmake)
 endif()

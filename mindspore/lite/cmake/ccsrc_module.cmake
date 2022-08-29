@@ -16,6 +16,7 @@ message(${COMM_PROTO_IN})
 ms_protobuf_generate(COMM_PROTO_SRCS COMM_PROTO_HDRS ${COMM_PROTO_IN})
 list(APPEND MINDSPORE_PROTO_LIST ${COMM_PROTO_SRCS})
 
+include(${TOP_DIR}/cmake/external_libs/robin.cmake)
 include(${TOP_DIR}/cmake/external_libs/eigen.cmake)
 include(${TOP_DIR}/cmake/external_libs/mkl_dnn.cmake)
 
