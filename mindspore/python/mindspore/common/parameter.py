@@ -218,6 +218,8 @@ class Parameter(Tensor_):
         self._unique = False
         self.is_in_parallel = _is_in_parallel_mode()
         self._pipeline_stage_list = []
+        if -1 in self.shape:
+            raise ValueError(f"All shape elements of the Parameter must be positive. But got None.")
         if isinstance(default_input, (Tensor_, Tensor)):
             Tensor_.__init__(self, default_input.dtype, default_input.shape)
         elif isinstance(default_input, int):
