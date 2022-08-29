@@ -18,20 +18,20 @@
 #include "custom_aot_extra.h"
 
 constexpr int THREADS = 1024;
-__global__ void CustomAddKernel(float *input1, float *input2, float *output, float *tmp, float scale, float pad_u,
-                                float pad_d, size_t size) {
+__global__ void CustomAddKernel(float *input1, float *input2, float *output, float *tmp, float scale, float padding,
+                                size_t size) {
   auto idx = blockIdx.x * THREADS + threadIdx.x;
   // Add with attr
   if (idx < size) {
-    tmp[idx] = input1[idx] + input2[idx] * scale + pad_u;
-    output[idx] = tmp[idx] + input2[idx] * scale + pad_d;
+    tmp[idx] = input1[idx] + input2[idx] * scale + padding;
+    output[idx] = tmp[idx] + input2[idx] * scale + padding;
   }
 }
 
 class add_kernel_attr : public AotKernelData {
  public:
   float scale;
-  std::vector<float> paddings;
+  float padding;
 };
 
 void foo_destroy(void *kernel_ptr) { delete static_cast<add_kernel_attr *>(kernel_ptr); }
@@ -46,7 +46,14 @@ extern "C" int CustomAddInit(int *ndims, int64_t **shapes, const char **dtypes, 
 
   add_kernel_attr *kernel_ptr = new add_kernel_attr;
   kernel_ptr->scale = extra->Attr<float>("scale");
-  kernel_ptr->paddings = extra->Attr<std::vector<float>>("paddings");
+  size_t padding_index = static_cast<size_t>(extra->Attr<int64_t>("padding_index"));
+  std::vector<float> paddings_list = extra->Attr<std::vector<float>>("paddings");
+
+  if (extra->Attr<bool>("use_padding") && padding_index < paddings_list.size()) {
+    kernel_ptr->padding = paddings_list[padding_index];
+  } else {
+    kernel_ptr->padding = 0;
+  }
   extra->SetKernelData(kernel_ptr);
 
   return 0;
@@ -69,18 +76,12 @@ extern "C" int CustomAdd(int nparam, void **params, int *ndims, int64_t **shapes
   }
   int n = size / THREADS;
 
-  // Cumprod of output's shape to compute elements' num
-  for (int i = 0; i < ndims[OUTPUT_INDEX]; i++) {
-    size *= shapes[OUTPUT_INDEX][i];
-  }
   auto kernel_ptr = static_cast<add_kernel_attr *>(extra->KernelData());
 
   float scale = kernel_ptr->scale;
-  float paddings_up = kernel_ptr->paddings[0];
-  float paddings_down = kernel_ptr->paddings[1];
+  float padding = kernel_ptr->padding;
 
   // Do the computation
-  CustomAddKernel<<<n + 1, THREADS, 0, custream>>>(input1, input2, output, tmp, scale, paddings_up, paddings_down,
-                                                   size);
+  CustomAddKernel<<<n + 1, THREADS, 0, custream>>>(input1, input2, output, tmp, scale, padding, size);
   return 0;
 }

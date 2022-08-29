@@ -49,7 +49,6 @@ extern "C" int CustomAddInit(int *ndims, int64_t **shapes, const char **dtypes, 
 extern "C" int CustomAdd(int nparam, void **params, int *ndims, int64_t **shapes, const char **dtypes, void *stream,
                          void *extra_void) {
   constexpr int OUTPUT_INDEX = 2;
-  constexpr int TOTAL_PARAM_NUM = 3;
 
   float *input1 = static_cast<float *>(params[0]);
   float *input2 = static_cast<float *>(params[1]);
@@ -58,10 +57,6 @@ extern "C" int CustomAdd(int nparam, void **params, int *ndims, int64_t **shapes
   int size = 1;
 
   AotExtra *extra = static_cast<AotExtra *>(extra_void);
-  for (int i = 0; i < ndims[OUTPUT_INDEX]; i++) {
-    size *= shapes[OUTPUT_INDEX][i];
-  }
-
   // Cumprod of output's shape to compute elements' num
   for (int i = 0; i < ndims[OUTPUT_INDEX]; i++) {
     size *= shapes[OUTPUT_INDEX][i];

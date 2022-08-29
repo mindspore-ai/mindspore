@@ -200,8 +200,10 @@ bool SelectCustomKernel(const CNodePtr &kernel_node, const std::shared_ptr<Kerne
   }
   kernel::OpImplyType imply_type = GetImplyType(*kernel_type);
   auto op_info_ptr = mindspore::kernel::OpLib::FindOp(op_name, imply_type);
-  // If Custom op has not set reg info, then infer info from inputs
-  if (op_info_ptr == nullptr) {
+  // If Custom op has not set reg info,
+  // or the no info about inputs in reg info(the case of undetermined input size),
+  // then infer info from inputs
+  if (op_info_ptr == nullptr || op_info_ptr->inputs_ptr().size() == 0) {
     MS_LOG(WARNING) << "Not find operator information for op[" << op_name
                     << "]. Infer operator information from inputs.";
     return true;

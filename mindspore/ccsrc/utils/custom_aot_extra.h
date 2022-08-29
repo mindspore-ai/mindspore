@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 #include "ir/anf.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 class AotKernelData {
@@ -33,7 +34,8 @@ class AotExtra {
   virtual bool HasAttr(std::string name) = 0;
 
   template <typename T>
-  inline T Attr(std::string name) {
+  inline T Attr(std::string name) const {
+    MS_EXCEPTION_IF_CHECK_FAIL(name.length() > 0, "The input name is an empty string");
     return T();
   }
 
@@ -52,13 +54,13 @@ class AotExtra {
 
  private:
   virtual bool GetAttrBool(std::string name) = 0;
-  virtual int GetAttrInt(std::string name) = 0;
+  virtual int64_t GetAttrInt(std::string name) = 0;
   virtual float GetAttrFloat(std::string name) = 0;
   virtual std::string GetAttrStr(std::string name) = 0;
 
-  virtual std::vector<int> GetAttrIntVec(std::string name) = 0;
+  virtual std::vector<int64_t> GetAttrIntVec(std::string name) = 0;
   virtual std::vector<float> GetAttrFloatVec(std::string name) = 0;
-  virtual std::vector<std::vector<int>> GetAttrInt2DVec(std::string name) = 0;
+  virtual std::vector<std::vector<int64_t>> GetAttrInt2DVec(std::string name) = 0;
   virtual std::vector<std::vector<float>> GetAttrFloat2DVec(std::string name) = 0;
   std::vector<size_t> workspace_;
 
@@ -68,23 +70,23 @@ class AotExtra {
 class AotExtraImpl : public AotExtra {
  public:
   AotExtraImpl() : cnode_(nullptr) {}
-  void SetKernelNode(CNodePtr cnode) { cnode_ = cnode; }
+  void SetKernelNode(const CNodePtr &cnode) { cnode_ = cnode; }
   bool HasAttr(std::string name) final { return common::AnfAlgo::HasNodeAttr(name, cnode_); }
 
  private:
   bool GetAttrBool(std::string name) { return common::AnfAlgo::GetNodeAttr<bool>(this->cnode_, name); }
-  int GetAttrInt(std::string name) { return common::AnfAlgo::GetNodeAttr<int>(this->cnode_, name); }
+  int64_t GetAttrInt(std::string name) { return common::AnfAlgo::GetNodeAttr<int64_t>(this->cnode_, name); }
   float GetAttrFloat(std::string name) { return common::AnfAlgo::GetNodeAttr<float>(this->cnode_, name); }
   std::string GetAttrStr(std::string name) { return common::AnfAlgo::GetNodeAttr<std::string>(this->cnode_, name); }
 
-  std::vector<int> GetAttrIntVec(std::string name) {
-    return common::AnfAlgo::GetNodeAttr<std::vector<int>>(this->cnode_, name);
+  std::vector<int64_t> GetAttrIntVec(std::string name) {
+    return common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(this->cnode_, name);
   }
   std::vector<float> GetAttrFloatVec(std::string name) {
     return common::AnfAlgo::GetNodeAttr<std::vector<float>>(this->cnode_, name);
   }
-  std::vector<std::vector<int>> GetAttrInt2DVec(std::string name) {
-    return common::AnfAlgo::GetNodeAttr<std::vector<std::vector<int>>>(this->cnode_, name);
+  std::vector<std::vector<int64_t>> GetAttrInt2DVec(std::string name) {
+    return common::AnfAlgo::GetNodeAttr<std::vector<std::vector<int64_t>>>(this->cnode_, name);
   }
   std::vector<std::vector<float>> GetAttrFloat2DVec(std::string name) {
     return common::AnfAlgo::GetNodeAttr<std::vector<std::vector<float>>>(this->cnode_, name);
