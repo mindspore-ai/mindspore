@@ -177,6 +177,7 @@ bool FootPrint::findOffset(const std::vector<DynamicBitSet> *constraints, const 
 }
 
 void FootPrint::addTensorsInfo(BlockTensor *elemIndex) {
+  MS_EXCEPTION_IF_NULL(elemIndex);
   m_starts_.push_back(elemIndex);
   auto allocated_tensor = elemIndex->m_start_tensor_;
   while (allocated_tensor != nullptr) {

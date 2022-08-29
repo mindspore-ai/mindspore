@@ -78,8 +78,8 @@ namespace session {
 MS_REG_SESSION(kSessionBasic, SessionBasic);
 
 namespace {
-const int kSummaryGetItem = 2;
-const size_t max_depth = 128;
+constexpr int kSummaryGetItem = 2;
+constexpr size_t max_depth = 128;
 constexpr int64_t kInvalidShape = -2;
 
 bool RecursiveCheck(const FuncGraphManagerPtr &manager, const std::pair<AnfNodePtr, int64_t> &kernel, size_t *idx) {
@@ -542,7 +542,7 @@ void GetNodeUsedList(const FuncGraphPtr &kernel_graph, const AnfNodePtr &node,
     if (common::AnfAlgo::GetCNodeName(node_user.first) == prim::kPrimLoad->name()) {
       GetNodeUsedList(kernel_graph, node_user.first, node_users_list);
     } else {
-      node_users_list->push_back(node_user.first);
+      (void)node_users_list->emplace_back(node_user.first);
     }
   }
 }
@@ -730,6 +730,7 @@ ParameterPtr SessionBasic::CreateNewParameterFromParameter(const AnfNodePtr &anf
   MS_EXCEPTION_IF_NULL(graph_inputs);
   ParameterPtr new_parameter = nullptr;
   auto func_graph = anf->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
   if (func_graph->manager() != nullptr && func_graph->exist_multi_target() &&
       graph->device_target() == device::DeviceType::kCPU) {
     auto iter = default_param_map_.find(anf);
@@ -1306,6 +1307,7 @@ void SessionBasic::SetInputNodeUsage(const KernelGraphPtr &graph, const FuncGrap
   MS_EXCEPTION_IF_NULL(manager);
   auto input_nodes = graph->input_nodes();
   for (auto &input_node : input_nodes) {
+    MS_EXCEPTION_IF_NULL(input_node);
     if (input_node->isa<Parameter>()) {
       auto node_ptr = input_node->cast<ParameterPtr>();
       MS_EXCEPTION_IF_NULL(node_ptr);
@@ -1437,6 +1439,7 @@ void SessionBasic::GetParameterIndex(const KernelGraph *graph, const std::vector
       }
       const auto &input = inputs[index];
       MS_EXCEPTION_IF_NULL(input);
+      MS_EXCEPTION_IF_NULL(param);
       // Check shape of input and parameter
       const auto &input_shape = input->shape();
       const auto &param_shape = common::AnfAlgo::GetOutputInferShape(param, 0);
@@ -1504,6 +1507,7 @@ void SessionBasic::GetForwardOpOutputRefCount(const KernelGraph *graph, const st
   }
   MS_EXCEPTION_IF_NULL(forward_op_output_tensor_id);
   for (const auto &kernel : graph->execution_order()) {
+    MS_EXCEPTION_IF_NULL(kernel);
     const auto input_tensor_num = common::AnfAlgo::GetInputTensorNum(kernel);
     for (size_t i = 1; i <= input_tensor_num; ++i) {
       const auto &input = kernel->input(i);
@@ -1523,6 +1527,7 @@ void SessionBasic::GetForwardOpOutputRefCount(const KernelGraph *graph, const st
   }
   // Forward op output use as sens, so need add reference
   for (const auto &tensor : inputs) {
+    MS_EXCEPTION_IF_NULL(tensor);
     if (tensor->is_forward_output()) {
       (*forward_op_output_tensor_id)[tensor->id()] += 1;
     }
@@ -1761,7 +1766,10 @@ void SessionBasic::GetOpInputTensors(const CNodePtr &cnode,
     MS_EXCEPTION_IF_NULL(real_input_abs);
     if (real_input_abs->isa<abstract::AbstractTuple>()) {
       auto tuple_abs = real_input_abs->cast<abstract::AbstractTuplePtr>();
-      base_shape = tuple_abs->elements()[kernel_with_index.second]->BuildShape();
+      MS_EXCEPTION_IF_NULL(tuple_abs);
+      auto tuple_abs_elem = tuple_abs->elements()[kernel_with_index.second];
+      MS_EXCEPTION_IF_NULL(tuple_abs_elem);
+      base_shape = tuple_abs_elem->BuildShape();
     } else {
       base_shape = real_input_abs->BuildShape();
     }
@@ -2068,7 +2076,7 @@ void SessionBasic::GetModelInputsInfo(uint32_t graph_id, std::vector<tensor::Ten
     }
     auto parameter = kernel_graph_inputs[i]->cast<ParameterPtr>();
     if (!common::AnfAlgo::IsParameterWeight(parameter)) {
-      vector<int64_t> input_shape = AnfAlgo::GetOutputDeviceShape(parameter, 0);
+      auto input_shape = AnfAlgo::GetOutputDeviceShape(parameter, 0);
       auto kernel_build_info = AnfAlgo::GetSelectKernelBuildInfo(parameter);
       auto data_type = kernel_build_info->GetOutputDeviceType(0);
       auto ms_tensor = std::make_shared<tensor::Tensor>(data_type, input_shape);
@@ -2619,6 +2627,7 @@ void SessionBasic::RunGraphImpl(const GraphId &graph_id, const std::vector<tenso
 void SessionBasic::ProcessInputTensorsForHeterogeneous(const std::string &cur_target,
                                                        const std::vector<tensor::TensorPtr> &input_tensors) const {
   for (auto &tensor : input_tensors) {
+    MS_EXCEPTION_IF_NULL(tensor);
     auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
     if (device_address != nullptr) {
       if (device_address->GetDeviceType() != device::GetDeviceTypeByName(cur_target)) {
@@ -2767,13 +2776,16 @@ std::vector<uint32_t> GenerateBucketSizeList(const KernelGraphPtr &graph, const 
     auto parallel_mode = parallel_context->parallel_mode();
     if (parallel_mode == parallel::kSemiAutoParallel || parallel_mode == parallel::kAutoParallel) {
       auto ret = graph->get_return();
+      MS_EXCEPTION_IF_NULL(ret);
       auto current_node = ret->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(current_node);
       while (IsPrimitiveCNode(current_node->input(1), prim::kPrimMakeTuple)) {
         current_node = current_node->input(1)->cast<CNodePtr>();
       }
       auto inputs = current_node->inputs();
       for (size_t i = 1; i < inputs.size(); ++i) {
         auto node = inputs[i];
+        MS_EXCEPTION_IF_NULL(node);
         if (!node->isa<CNode>()) {
           continue;
         }
