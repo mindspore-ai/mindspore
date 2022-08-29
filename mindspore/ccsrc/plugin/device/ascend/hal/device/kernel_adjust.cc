@@ -173,12 +173,19 @@ bool KernelAdjust::IsTaskSink() const {
   MS_EXCEPTION_IF_NULL(ms_context);
   return ms_context->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
 }
+bool KernelAdjust::ExistInitDataSetQueue(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) const {
+  MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
+  const std::vector<CNodePtr> &cnode_list = kernel_graph_ptr->execution_order();
+  return std::any_of(cnode_list.begin(), cnode_list.end(), [](const CNodePtr &cnode) {
+    return common::AnfAlgo::GetCNodeName(cnode) == kInitDatasetQueueOpName;
+  });
+}
 
 void KernelAdjust::InsertEndGraphTaskSink(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) {
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
   if (IsTaskSink()) {
     auto exec_order = kernel_graph_ptr->execution_order();
-    if (exec_order.empty()) {
+    if (exec_order.empty() || ExistInitDataSetQueue(kernel_graph_ptr)) {
       return;
     }
     CNodePtr fpbp_endgraph_app = CreateEndGraphOp(kernel_graph_ptr);

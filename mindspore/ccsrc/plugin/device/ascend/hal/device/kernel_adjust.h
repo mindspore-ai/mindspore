@@ -106,6 +106,7 @@ class KernelAdjust {
 #endif
   bool ExistIndependent(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) const;
   bool ExistGetNext(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) const;
+  bool ExistInitDataSetQueue(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) const;
   void InsertGetNextLoopStreamSwitch(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                      std::vector<CNodePtr> *exec_order, uint32_t *getnext_switch_stream_id,
                                      uint32_t *getnext_stream_id,
