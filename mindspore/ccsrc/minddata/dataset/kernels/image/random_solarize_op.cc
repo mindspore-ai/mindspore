@@ -33,8 +33,10 @@ Status RandomSolarizeOp::Compute(const std::shared_ptr<Tensor> &input, std::shar
                                "RandomSolarize: min of threshold: " + std::to_string(threshold_min_) +
                                  " is greater than max of threshold: " + std::to_string(threshold_max_));
 
-  float threshold_min = std::uniform_int_distribution(threshold_min_, threshold_max_)(rnd_);
-  float threshold_max = std::uniform_int_distribution(threshold_min_, threshold_max_)(rnd_);
+  float threshold_min = static_cast<float>(
+    std::uniform_int_distribution(static_cast<uint32_t>(threshold_min_), static_cast<uint32_t>(threshold_max_))(rnd_));
+  float threshold_max = static_cast<float>(
+    std::uniform_int_distribution(static_cast<uint32_t>(threshold_min_), static_cast<uint32_t>(threshold_max_))(rnd_));
 
   if (threshold_max < threshold_min) {
     std::swap(threshold_min, threshold_max);
