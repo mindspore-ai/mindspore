@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,9 +29,11 @@
 namespace mindspore {
 namespace kernel {
 void GetRealInputSize(const nlohmann::json &input_json, std::vector<size_t> *input_size_list, size_t *size_i) {
+  MS_EXCEPTION_IF_NULL(input_size_list);
+  MS_EXCEPTION_IF_NULL(size_i);
   size_t kMaxShapeIdx = 1;
   int64_t kDynShapeValue = -2;
-  if (input_json[kJShape].size() == 1 && input_json[kJShape][0] == kDynShapeValue) {
+  if (input_json[kJShape].size() == IntToSize(1) && input_json[kJShape][0] == kDynShapeValue) {
     auto input_max_shape = input_json[kJRange];
     for (auto &max_shape : input_max_shape) {
       if (max_shape[kMaxShapeIdx] < 0) {
@@ -67,6 +69,7 @@ void GetRealInputSize(const nlohmann::json &input_json, std::vector<size_t> *inp
 }
 
 void GetInputSizeList(const nlohmann::json &input_json, std::vector<size_t> *input_size_list) {
+  MS_EXCEPTION_IF_NULL(input_size_list);
   for (size_t i = 0; i < input_json.size(); i++) {
     if (input_json[i].is_array()) {
       for (size_t m = 0; m < input_json[i].size(); m++) {
@@ -87,9 +90,11 @@ void GetInputSizeList(const nlohmann::json &input_json, std::vector<size_t> *inp
 }
 
 void GetRealOutputSize(const nlohmann::json &output_json, std::vector<size_t> *output_size_list, size_t *size_i) {
+  MS_EXCEPTION_IF_NULL(output_size_list);
+  MS_EXCEPTION_IF_NULL(size_i);
   size_t kMaxShapeIdx = 1;
   int64_t kDynShapeValue = -2;
-  if (output_json[kJShape].size() == 1 && output_json[kJShape][0] == kDynShapeValue) {
+  if (output_json[kJShape].size() == IntToSize(1) && output_json[kJShape][0] == kDynShapeValue) {
     auto output_max_shape = output_json[kJRange];
     for (auto &max_shape : output_max_shape) {
       if (max_shape[kMaxShapeIdx] < 0) {
@@ -203,6 +208,7 @@ bool TbeKernelBuild::CalOutputSize(const nlohmann::json &fusion_op_list,
     auto kernel_idx = common::AnfAlgo::VisitKernel(output_node, 0);
     auto real_node = kernel_idx.first;
     size_t real_idx = kernel_idx.second;
+    MS_EXCEPTION_IF_NULL(real_node);
     auto full_name = real_node->fullname_with_scope();
     for (const auto &op : fusion_op_list) {
       if (op[kJName] != full_name) {

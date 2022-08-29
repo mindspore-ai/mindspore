@@ -40,11 +40,13 @@ bool CheckValueType(const AnfNodePtr &input_node, size_t inputs_num) {
   auto value_node = input_node->cast<ValueNodePtr>();
   MS_EXCEPTION_IF_NULL(value_node);
   auto value = value_node->value();
+  MS_EXCEPTION_IF_NULL(value);
   if (!value->isa<tensor::Tensor>()) {
     MS_EXCEPTION(ValueError) << "The strides of StridedSliceGrad must be a constant. Total inputs of cnode is  "
                              << inputs_num;
   }
   auto tensor = value->cast<tensor::TensorPtr>();
+  MS_EXCEPTION_IF_NULL(tensor);
   TypePtr data_type = tensor->Dtype();
   MS_EXCEPTION_IF_NULL(data_type);
   TypeId type_id = data_type->type_id();
@@ -75,7 +77,7 @@ static bool CheckStridedSlice(const CNodePtr &cnode) {
   } else {
     auto inputs = cnode->inputs();
     const size_t kInputNum = 5;
-    if (inputs.size() == kInputNum + 1) {
+    if (inputs.size() == kInputNum + IntToSize(1)) {
       auto input_node = inputs[kInputNum];
       MS_EXCEPTION_IF_NULL(input_node);
       // Input node can be a cnode, like cast or transdata, which output is a valuenode

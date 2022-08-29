@@ -20,7 +20,6 @@
 #include <vector>
 #include <algorithm>
 #include "include/common/utils/utils.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_select/tbe_select_utils.h"
 #include "kernel/common_utils.h"
@@ -40,7 +39,7 @@ bool TbeKernelReduceSelecter::GetShapeInfo(SupportFormat *support_format) {
   axis_.clear();
   auto input_num = common::AnfAlgo::GetInputTensorNum(cnode_ptr_);
   auto output_num = common::AnfAlgo::GetOutputTensorNum(cnode_ptr_);
-  if (input_num != 1 || output_num != 1) {
+  if (input_num != IntToSize(1) || output_num != IntToSize(1)) {
     MS_LOG(EXCEPTION) << "Reduce operator only support one input/output, input num: " << input_num
                       << ", output num: " << output_num;
   }

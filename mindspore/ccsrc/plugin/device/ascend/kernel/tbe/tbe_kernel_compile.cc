@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -101,8 +101,6 @@ constexpr auto kMS_BUILD_PROCESS_NUM = "MS_BUILD_PROCESS_NUM";
 constexpr auto kMS_PARA_DEBUG_PATH = "PARA_DEBUG_PATH";
 constexpr auto kTBE_IMPL_PATH = "TBE_IMPL_PATH";
 constexpr auto kTUNE_OPS_NAME = "TUNE_OPS_NAME";
-constexpr auto kDefPath = "/usr/local/Ascend/ascend-toolkit/latest/opp/op_impl/built-in/ai_core/tbe/";
-constexpr auto kBkPath = "/usr/local/Ascend/opp/op_impl/built-in/ai_core/tbe/";
 constexpr int KSleepSeconds = 3;
 constexpr int KSleepInterval = 1000;
 
@@ -190,7 +188,7 @@ uint32_t GetProcessNum() {
                         << "', it should be a digit, but got: " << env_process_num;
     }
     process_num = UlongToUint(std::stoul(env_process_num));
-    if (process_num < 1 || process_num > kDEFAULT_PROCESS_NUM) {
+    if (process_num < IntToUint(1) || process_num > kDEFAULT_PROCESS_NUM) {
       MS_LOG(EXCEPTION) << "Invalid environment variable '" << kMS_BUILD_PROCESS_NUM
                         << "', the value should be in [1, 24], but got: " << process_num;
     }
