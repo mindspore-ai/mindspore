@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include <dirent.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <cstring>
@@ -27,6 +26,7 @@
 
 #include "load_mindir/load_model.h"
 #include "utils/crypto.h"
+#include "utils/os.h"
 
 using std::string;
 using std::vector;

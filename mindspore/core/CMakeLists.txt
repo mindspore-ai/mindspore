@@ -70,8 +70,9 @@ elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
 endif()
 
 set_property(SOURCE ${CORE_SRC_LIST} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_CORE)
-add_library(core_obj OBJECT ${CORE_SRC_LIST})
 add_library(core_proto_obj OBJECT ${PROTO_SRCS})
+add_library(core_obj OBJECT ${CORE_SRC_LIST})
+add_dependencies(core_obj core_proto_obj)
 add_library(mindspore_core SHARED $<TARGET_OBJECTS:core_obj> $<TARGET_OBJECTS:core_proto_obj>)
 target_link_libraries(mindspore_core PRIVATE mindspore::protobuf securec)
 

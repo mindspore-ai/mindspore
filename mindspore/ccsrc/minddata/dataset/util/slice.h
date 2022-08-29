@@ -16,10 +16,10 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_UTIL_SLICE_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_UTIL_SLICE_H_
 
-#include <unistd.h>
 #include <cstddef>
 #include <utility>
 #include "./securec.h"
+#include "utils/os.h"
 #include "minddata/dataset/util/allocator.h"
 #include "minddata/dataset/util/status.h"
 
