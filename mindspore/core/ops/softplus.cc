@@ -25,32 +25,29 @@
 
 namespace mindspore {
 namespace ops {
-// softplus
-namespace {
-abstract::ShapePtr SoftplusInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
-  auto in_shape = shape_map[kShape];
-  return std::make_shared<abstract::Shape>(in_shape);
-}
-
-TypePtr SoftplusInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(prim);
-  auto prim_name = prim->name();
-  // check
-  std::set<TypePtr> valid_index_types = {kFloat16, kFloat32};
-  auto x_type = input_args[0]->BuildType();
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_index_types, prim_name);
-  return x_type;
-}
-}  // namespace
-
 MIND_API_OPERATOR_IMPL(Softplus, BaseOperator);
-AbstractBasePtr SoftplusInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                              const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  return abstract::MakeAbstract(SoftplusInferShape(primitive, input_args), SoftplusInferType(primitive, input_args));
-}
-REGISTER_PRIMITIVE_EVAL_IMPL(Softplus, prim::kPrimSoftplus, SoftplusInfer, nullptr, true);
+class SoftplusInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    MS_EXCEPTION_IF_NULL(primitive);
+    auto prim_name = primitive->name();
+    (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kGreaterEqual, 1,
+                                             prim_name);
+    (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
+    return input_args[0]->BuildShape();
+  }
+
+  TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
+    MS_EXCEPTION_IF_NULL(prim);
+    auto prim_name = prim->name();
+    // check
+    std::set<TypePtr> valid_index_types = {kFloat16, kFloat32};
+    auto x_type = input_args[0]->BuildType();
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_index_types, prim_name);
+    return x_type;
+  }
+};
+REGISTER_PRIMITIVE_OP_INFER_IMPL(Softplus, prim::kPrimSoftplus, SoftplusInfer, false);
 }  // namespace ops
 }  // namespace mindspore
