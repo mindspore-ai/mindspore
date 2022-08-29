@@ -313,13 +313,6 @@ py::object GetMsClassPyObj(const abstract::PartialAbstractClosurePtr &ms_class_a
                       << "got: " << ms_class_args.size() << ".";
   }
   auto first_arg = ms_class_args[0];
-  MS_EXCEPTION_IF_NULL(first_arg);
-  auto arg_type = first_arg->BuildType();
-  auto arg_type_id = arg_type->type_id();
-  if (arg_type_id != kObjectTypeClass) {
-    MS_LOG(EXCEPTION) << "When the first input to IsInstance is PartialAbstractClosure, its first arg should be of "
-                      << "type kObjectTypeClass but got: " << TypeIdToString(arg_type_id) << ".";
-  }
   auto class_value = first_arg->BuildValue();
   MS_EXCEPTION_IF_NULL(class_value);
   return ValueToPyData(class_value);

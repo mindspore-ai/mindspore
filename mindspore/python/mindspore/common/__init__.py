@@ -20,7 +20,7 @@ from mindspore.common.dtype import Type, int8, byte, int16, short, int32, intc, 
     uint8, ubyte, uint16, ushort, uint32, uintc, uint64, uintp, float16, half, \
     float32, single, float64, double, bool_, float_, list_, tuple_, int_, \
     uint, number, tensor, string, type_none, tensor_type, Int, \
-    complex64, complex128, dtype_to_nptype, issubclass_, \
+    complex64, complex128, dtype_to_nptype, issubclass_, _null, _null_type, \
     dtype_to_pytype, pytype_to_dtype, get_py_obj_dtype
 from mindspore.common.dump import set_dump
 from mindspore.common.parameter import Parameter, ParameterTuple
@@ -47,8 +47,9 @@ __all__ = [
     "int_", "uint",
     "number", "tensor",
     "string", "type_none",
+    "_null",
     "tensor_type",
-    "Type", "Int",
+    "Type", "Int", "_null_type",
     "complex64", "complex128",
     # __method__ from dtype
     "dtype_to_nptype", "issubclass_", "dtype_to_pytype",

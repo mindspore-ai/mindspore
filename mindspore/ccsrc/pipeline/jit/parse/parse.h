@@ -188,6 +188,11 @@ class Parser {
   AnfNodePtr ParseIfExp(const FunctionBlockPtr &block, const py::object &node);
   // Process class type define
   AnfNodePtr ParseAttribute(const FunctionBlockPtr &block, const py::object &node);
+  // Process ms Tensor
+  AnfNodePtr ParseMsTensor(const FunctionBlockPtr &block, const py::object &node, const py::object &value_body,
+                           const AnfNodePtr &value_node);
+  // Process dtype._null
+  AnfNodePtr ParseNull(const FunctionBlockPtr &block, const py::object &value_body);
   // Process a compare expression
   AnfNodePtr ParseCompare(const FunctionBlockPtr &block, const py::object &node);
   // Process a bool operation

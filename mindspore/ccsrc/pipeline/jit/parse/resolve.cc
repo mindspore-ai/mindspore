@@ -647,9 +647,6 @@ AnfNodePtr ResolveMsClassWithAttr(const FuncGraphManagerPtr &manager, const py::
     return nullptr;
   }
   py::object attr_obj = py::getattr(cls_obj, common::SafeCStr(attr));
-  if (py::isinstance<py::none>(attr_obj)) {
-    return nullptr;
-  }
   AnfNodePtr res_node = ResolveObjectAndAddToManager(manager, attr_obj, get_attr_node);
   TraceManager::ClearParseOrResolveDebugInfo();
   return res_node;

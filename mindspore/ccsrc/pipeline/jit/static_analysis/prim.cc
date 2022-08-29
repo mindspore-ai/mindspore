@@ -1429,7 +1429,8 @@ EvalResultPtr GetEvaluatedValueForNameSpaceString(const AbstractBasePtrList &arg
   if (new_node == nullptr) {
     MS_LOG(EXCEPTION) << "Resolve node failed";
   }
-  if (IsValueNode<None>(new_node)) {
+
+  if (IsValueNode<TypeNull>(new_node)) {
     // Do not find the attribute.
     constexpr auto max_args_len = 3;
     bool has_default = (args_spec_list.size() == max_args_len);
@@ -1514,7 +1515,7 @@ EvalResultPtr GetEvaluatedValueForMsClassAttrOrMethod(const AbstractBasePtrList 
   FuncGraphPtr func_graph = out_node->func_graph();
   // If the attribute is not found and the default is not set, AttributeError will be raised.
   auto new_node = parse::ResolveMsClassWithAttr(func_graph->manager(), ms_class->obj(), item_name, out_node);
-  if (new_node == nullptr || IsValueNode<None>(new_node)) {
+  if (new_node == nullptr) {
     constexpr auto max_args_len = 3;
     bool has_default = (args_spec_list.size() == max_args_len);
     if (!has_default) {

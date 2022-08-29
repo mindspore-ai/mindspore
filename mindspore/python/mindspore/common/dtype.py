@@ -40,7 +40,7 @@ __dtype__ = [
     "int_", "uint",
     "number", "tensor",
     "string", "type_none",
-    "tensor_type",
+    "tensor_type", "_null",
     "Type", "Int",
     "complex64", "complex128"
 ]
@@ -92,6 +92,7 @@ string = typing.String()
 list_ = typing.List()
 tuple_ = typing.Tuple()
 type_none = typing.TypeNone()
+_null = typing.TypeNull()
 
 tensor = typing.TensorType()
 index_slices = typing.RowTensorType()
@@ -122,6 +123,7 @@ tensor_type = typing.TensorType
 csr_tensor_type = typing.CSRTensorType
 anything_type = typing.TypeAnything
 ref_type = typing.RefType
+_null_type = typing.TypeNull
 
 number_type = (int8,
                int16,

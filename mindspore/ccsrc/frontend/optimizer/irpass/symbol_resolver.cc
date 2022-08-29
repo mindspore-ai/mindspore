@@ -45,17 +45,19 @@ AnfNodePtr Resolver::operator()(const OptimizerPtr &optimizer, const AnfNodePtr 
       auto name_space = GetValueNode<parse::NameSpacePtr>(object_node);
       auto attr_str = GetValue<std::string>(GetValueNode(attr_node));
       parse::SymbolPtr symbol = std::make_shared<parse::Symbol>(attr_str);
-      return parse::ResolveSymbol(optimizer->manager(), name_space, symbol, node);
+      auto ret = parse::ResolveSymbol(optimizer->manager(), name_space, symbol, node);
+      // If object has no attribute, ret will be null. The attribute may not be used.
+      // Let getattr be resolved in static_analysis.
+      if (IsValueNode<TypeNull>(ret)) {
+        return nullptr;
+      }
+      return ret;
     }
     // {prim::kPrimGetAttr, MsClassObject, attr}
     if (IsValueNode<parse::MsClassObject>(object_node)) {
       auto ms_class = GetValueNode<parse::MsClassObjectPtr>(object_node)->obj();
       auto attr_str = GetValue<std::string>(GetValueNode(attr_node));
-      auto new_node = parse::ResolveMsClassWithAttr(optimizer->manager(), ms_class, attr_str, node);
-      if (new_node == nullptr || IsValueNode<None>(new_node)) {
-        MS_EXCEPTION(AttributeError) << py::str(ms_class) << " object has no attribute: " << attr_str << ".";
-      }
-      return new_node;
+      return parse::ResolveMsClassWithAttr(optimizer->manager(), ms_class, attr_str, node);
     }
     // {prim::kPrimGetAttr, bool, attr}
     if (IsValueNode<BoolImm>(object_node)) {
@@ -68,7 +70,13 @@ AnfNodePtr Resolver::operator()(const OptimizerPtr &optimizer, const AnfNodePtr 
     auto name_space = GetValueNode<parse::NameSpacePtr>(ns_node.GetNode(node));
     auto symbol = GetValueNode<parse::SymbolPtr>(sym_node.GetNode(node));
     auto manager = optimizer->manager();
-    return parse::ResolveSymbol(manager, name_space, symbol, node);
+    auto ret = parse::ResolveSymbol(manager, name_space, symbol, node);
+    // If object has no attribute, ret will be null. The attribute may not be used.
+    // Let getattr be resolved in static_analysis.
+    if (IsValueNode<TypeNull>(ret)) {
+      return nullptr;
+    }
+    return ret;
   };
 
   // {prim::kPrimGetAttr, object, attr}

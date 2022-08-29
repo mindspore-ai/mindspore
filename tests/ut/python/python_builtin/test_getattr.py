@@ -523,7 +523,7 @@ def test_getattr_ms_class_with_default():
         return getattr(ms_obj, "none", 10)
 
     out = foo()
-    assert out == 10
+    assert out is None
 
 
 def test_getattr_ms_class_with_concate_attr_and_default():
@@ -565,24 +565,6 @@ def test_getattr_ms_class_with_wrong_attr():
     assert "object has no attribute" in str(err.value)
 
 
-def test_getattr_ms_class_with_wrong_attr_2():
-    """
-    Feature: Syntax getattr.
-    Description: Graph syntax getattr support list input.
-    Expectation: AttributeError.
-    """
-    ms_obj = MSClass1()
-
-    @ms_function
-    def foo():
-        abs_func = getattr(ms_obj, "none")
-        return abs_func
-
-    with pytest.raises(AttributeError) as err:
-        foo()
-    assert "object has no attribute" in str(err.value)
-
-
 class Net(nn.Cell):
 
     def __init__(self):
@@ -591,6 +573,7 @@ class Net(nn.Cell):
         self.a1 = Tensor([1])
         self.a2 = Tensor([2])
         self.a3 = Tensor([3])
+        self.none = None
 
     def construct(self):
         return self.a0
@@ -610,6 +593,22 @@ def test_getattr_cell_obj():
 
     out = foo()
     assert out == 0
+
+
+def test_getattr_cell_obj_2():
+    """
+    Feature: Syntax getattr.
+    Description: Graph syntax getattr support cell object input.
+    Expectation: No exception.
+    """
+    cell_obj = Net()
+
+    @ms_function
+    def foo():
+        return getattr(cell_obj, "none")
+
+    out = foo()
+    assert out is None
 
 
 def test_getattr_cell_obj_concate_input():

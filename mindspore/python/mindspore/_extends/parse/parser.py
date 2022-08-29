@@ -244,7 +244,7 @@ def resolve_symbol(namespace, symbol):
     except Exception as e:
         if isinstance(e, NotImplementedError):
             raise e
-        resolve_ = None
+        resolve_ = mstype._null
         logger.debug("Resolve exception occurred, value: %r", e)
         logger.debug("Resolve type is invalid, namespace: %s, symbol: %s",
                      namespace.__str__(), symbol)
