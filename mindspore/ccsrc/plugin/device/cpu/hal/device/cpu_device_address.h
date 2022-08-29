@@ -49,6 +49,9 @@ class CPUDeviceAddress : public DeviceAddress {
                      TypeId host_type, bool trans_flag) const override;
   void ClearDeviceMemory() override;
   DeviceType GetDeviceType() const override { return DeviceType::kCPU; }
+
+ protected:
+  void DoClearDeviceMemory();
 };
 }  // namespace cpu
 }  // namespace device

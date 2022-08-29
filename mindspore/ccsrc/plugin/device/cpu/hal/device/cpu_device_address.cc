@@ -46,9 +46,9 @@ bool CopySameTypeMem(void *dst_ptr, size_t dst_size, const void *src_ptr, size_t
   }
 }
 }  // namespace
-CPUDeviceAddress::~CPUDeviceAddress() { ClearDeviceMemory(); }
+CPUDeviceAddress::~CPUDeviceAddress() { DoClearDeviceMemory(); }
 
-void CPUDeviceAddress::ClearDeviceMemory() {
+void CPUDeviceAddress::DoClearDeviceMemory() {
   if (ptr_ == nullptr) {
     return;
   }
@@ -57,6 +57,8 @@ void CPUDeviceAddress::ClearDeviceMemory() {
     ptr_ = nullptr;
   }
 }
+
+void CPUDeviceAddress::ClearDeviceMemory() { DoClearDeviceMemory(); }
 
 bool CPUDeviceAddress::DumpMemToFile(const std::string &filepath, const std::string &, const ShapeVector &host_shape,
                                      TypeId host_type, bool) const {

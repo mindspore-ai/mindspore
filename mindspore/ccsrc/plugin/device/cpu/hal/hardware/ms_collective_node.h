@@ -33,7 +33,7 @@ class BACKEND_EXPORT CollectiveNode : public PSWorkerNode {
   bool Finish(const uint32_t &timeout = kTimeoutInSeconds) override;
 
   // Register the address of this collective node and then lookup the addresses of all the other nodes.
-  bool SynchronizeAddresses();
+  void SynchronizeAddresses();
 
  protected:
   bool InitClientToScheduler() override;
