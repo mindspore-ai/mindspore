@@ -36,6 +36,7 @@ toptypeof = TopTypeof()
 
 def strided_slice(data, begin_strides, end_strides, step_strides, begin_mask=0, end_mask=0, ellipsis_mask=0,
                   new_axis_mask=0, shrink_axis_mask=0):
+    """strided_slice primitive cache"""
     strided_slice_ = _get_cache_prim(P.StridedSlice)(begin_mask, end_mask, ellipsis_mask, new_axis_mask,
                                                      shrink_axis_mask)
     return strided_slice_(data, begin_strides, end_strides, step_strides)
