@@ -45,6 +45,7 @@ Neural Network
     :template: classtemplate.rst
 
     mindspore.ops.adaptive_avg_pool2d
+    mindspore.ops.adaptive_avg_pool3d
     mindspore.ops.adaptive_max_pool3d
     mindspore.ops.avg_pool2d
     mindspore.ops.conv2d

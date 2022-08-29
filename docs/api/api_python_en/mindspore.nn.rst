@@ -185,6 +185,7 @@ Pooling Layer
 
     mindspore.nn.AdaptiveAvgPool1d
     mindspore.nn.AdaptiveAvgPool2d
+    mindspore.nn.AdaptiveAvgPool3d
     mindspore.nn.AdaptiveMaxPool1d
     mindspore.nn.AdaptiveMaxPool2d
     mindspore.nn.AdaptiveMaxPool3d
