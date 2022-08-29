@@ -55,6 +55,7 @@ class LinSpaceCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper
                         const std::vector<AddressPtr> &outputs);
   int64_t batch_num_{0};
   bool multi_dims_{false};
+  TypeId num_dtype_{kTypeUnknown};
 };
 }  // namespace kernel
 }  // namespace mindspore

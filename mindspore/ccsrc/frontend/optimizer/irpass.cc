@@ -167,9 +167,6 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
   addn_zero_filter_ = MakeSubstitution(std::make_shared<AddNZeroFilter>(), "addn_zero_filter", prim::kPrimAddN);
   addn_check_dump_ = MakeSubstitution(std::make_shared<AddNCheckDump>(), "addn_check_dump", prim::kPrimAddN);
 
-  // linspace
-  lin_space_val_ = MakeSubstitution(std::make_shared<LinSpaceValue>(), "lin_space_val", prim::kPrimLinSpace);
-
   // AccumulateNV2
   accumulaten_eliminater_ =
     MakeSubstitution(std::make_shared<AccumulateNV2Eliminater>(), "accumulaten_eliminater", prim::kPrimAccumulateNV2);

@@ -82,6 +82,7 @@ constexpr auto kMaskedSelect = "MaskedSelect";
 constexpr auto kMaskedSelectGrad = "MaskedSelectGrad";
 constexpr auto kDynamicStitch = "DynamicStitch";
 constexpr auto kSearchSorted = "SearchSorted";
+constexpr auto kLinSpace = "LinSpace";
 constexpr auto kResizeBilinear = "ResizeBilinear";
 constexpr auto kResizeBilinearGrad = "ResizeBilinearGrad";
 constexpr auto kTensorScatterElements = "TensorScatterElements";
@@ -119,9 +120,9 @@ constexpr auto kRandomShuffle = "RandomShuffle";
 constexpr auto kHSigmoid = "HSigmoid";
 constexpr auto kHSigmoidGrad = "HSigmoidGrad";
 
-const std::set<std::string> kCpuKernelOps{kIdentity,           kMaskedSelect,          kMaskedSelectGrad,
-                                          kDynamicStitch,      kSearchSorted,          kResizeBilinear,
-                                          kResizeBilinearGrad, kTensorScatterElements, kUniqueConsecutive};
+const std::set<std::string> kCpuKernelOps{
+  kIdentity,       kMaskedSelect,       kMaskedSelectGrad,      kDynamicStitch,     kSearchSorted,
+  kResizeBilinear, kResizeBilinearGrad, kTensorScatterElements, kUniqueConsecutive, kLinSpace};
 const std::set<std::string> kCacheKernelOps{kUpdateCache, kCacheSwapTable,      kSubAndFilter, kPadAndShift, kDropout3D,
                                             kDropout2D,   kNonMaxSuppressionV3, kGetNext,      kInitData,    kPrint};
 const std::set<std::string> kCpuKernelBaseOps{kRandomChoiceWithMask,
