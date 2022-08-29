@@ -1,17 +1,16 @@
-mindspore.dataset.Cifar100Dataset
-=================================
+mindspore.dataset.YesNoDataset
+==============================
 
-.. py:class:: mindspore.dataset.Cifar100Dataset(dataset_dir, usage=None, num_samples=None, num_parallel_workers=None, shuffle=None, sampler=None, num_shards=None, shard_id=None, cache=None)
+.. py:class:: mindspore.dataset.YesNoDataset(dataset_dir, num_samples=None, num_parallel_workers=None, shuffle=None, sampler=None, num_shards=None, shard_id=None, cache=None)
 
-    读取和解析CIFAR-100数据集的源文件构建数据集。
+    读取和解析YesNo数据集的源数据集。
 
-    生成的数据集有三列: `[image, coarse_label, fine_label]` 。 `image` 列的数据类型为uint8。 `coarse_label` 和 `fine_labels` 列的数据类型为uint32。
+    生成的数据集有三列 `[waveform, sample_rate, labels]` 。
+    列 `waveform` 的数据类型为float32，列 `sample_rate` 的数据类型为int32，列 `labels` 的数据类型为int32。
 
     参数：
         - **dataset_dir** (str) - 包含数据集文件的根目录路径。
-        - **usage** (str, 可选) - 指定数据集的子集，可取值为'train'，'test'或'all'。
-          取值为'train'时将会读取50,000个训练样本，取值为'test'时将会读取10,000个测试样本，取值为'all'时将会读取全部60,000个样本。默认值：None，读取全部样本图片。
-        - **num_samples** (int, 可选) - 指定从数据集中读取的样本数，可以小于数据集总数。默认值：None，读取全部样本图片。
+        - **num_samples** (int, 可选) - 指定从数据集中读取的样本数。默认值：None，读取全部样本。
         - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用mindspore.dataset.config中配置的线程数。
         - **shuffle** (bool, 可选) - 是否混洗数据集。默认值：None，下表中会展示不同参数配置的预期行为。
         - **sampler** (Sampler, 可选) - 指定从数据集中选取样本的采样器，默认值：None，下表中会展示不同配置的预期行为。
@@ -20,14 +19,13 @@ mindspore.dataset.Cifar100Dataset
         - **cache** (DatasetCache, 可选) - 单节点数据缓存服务，用于加快数据集处理，详情请阅读 `单节点数据缓存 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/dataset/cache.html>`_ 。默认值：None，不使用缓存。
 
     异常：
-        - **RuntimeError** - `dataset_dir` 路径下不包含数据文件。
+        - **RuntimeError** - `dataset_dir` 路径下不包含任何数据文件。
         - **ValueError** - `num_parallel_workers` 参数超过系统最大线程数。
-        - **ValueError** - `usage` 参数取值不为'train'、'test'或'all'。
         - **RuntimeError** - 同时指定了 `sampler` 和 `shuffle` 参数。
         - **RuntimeError** - 同时指定了 `sampler` 和 `num_shards` 参数或同时指定了 `sampler` 和 `shard_id` 参数。
         - **RuntimeError** - 指定了 `num_shards` 参数，但是未指定 `shard_id` 参数。
         - **RuntimeError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
-        - **ValueError** - `shard_id` 参数错误（小于0或者大于等于 `num_shards`）。
+        - **ValueError** - `shard_id` 参数值错误（小于0或者大于等于 `num_shards` ）。
 
     .. note:: 此数据集可以指定参数 `sampler` ，但参数 `sampler` 和参数 `shuffle` 的行为是互斥的。下表展示了几种合法的输入参数组合及预期的行为。
 
@@ -57,36 +55,35 @@ mindspore.dataset.Cifar100Dataset
          - False
          - 不允许
 
-    **关于CIFAR-100数据集：**
+    **关于YesNo数据集：**
 
-    CIFAR-100数据集和CIFAR-10数据集非常相似，CIFAR-100有100个类别，每类包含600张图片，其中500张训练图片和100张测试图片。这100个类别又被分成20个超类。每个图片都有一个"fine"标签（所属子类）和一个"coarse"标签(所属超类)。
+    Yesno是一个音频数据集，由60个录音组成，由一个人用希伯来语说是或不是；每个录音都有8个字长。
 
-    以下为原始CIFAR-100数据集的结构，您可以将数据集文件解压得到如下的文件结构，并通过MindSpore的API进行读取。
+    以下是原始的YesNo数据集结构，可以将数据集文件解压缩到此目录结构中，并由MindSpore的API读取。
 
     .. code-block::
 
         .
-        └── cifar-100-binary
-            ├── train.bin
-            ├── test.bin
-            ├── fine_label_names.txt
-            └── coarse_label_names.txt
+        └── yes_no_dataset_dir
+             ├── 1_1_0_0_1_1_0_0.wav
+             ├── 1_0_0_0_1_1_0_0.wav
+             ├── 1_1_0_0_1_1_0_0.wav
+             └──....
 
     **引用：**
 
     .. code-block::
 
-        @techreport{Krizhevsky09,
-        author       = {Alex Krizhevsky},
-        title        = {Learning multiple layers of features from tiny images},
-        institution  = {},
-        year         = {2009},
-        howpublished = {http://www.cs.toronto.edu/~kriz/cifar.html}
+        @NetworkResource{Kaldi_audio_project,
+        author    = {anonymous},
+        url       = "http://wwww.openslr.org/1/"
         }
 
-    .. include:: mindspore.dataset.Dataset.add_sampler.rst
-
     .. include:: mindspore.dataset.Dataset.rst
+
+    .. include:: mindspore.dataset.Dataset.b.rst
+
+    .. include:: mindspore.dataset.Dataset.c.rst
 
     .. include:: mindspore.dataset.Dataset.d.rst
 
@@ -97,7 +94,5 @@ mindspore.dataset.Cifar100Dataset
     .. include:: mindspore.dataset.Dataset.save.rst
 
     .. include:: mindspore.dataset.Dataset.g.rst
-
-    .. include:: mindspore.dataset.Dataset.use_sampler.rst
 
     .. include:: mindspore.dataset.Dataset.zip.rst

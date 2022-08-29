@@ -1,16 +1,17 @@
-mindspore.dataset.Cifar100Dataset
-=================================
+mindspore.dataset.EMnistDataset
+===============================
 
-.. py:class:: mindspore.dataset.Cifar100Dataset(dataset_dir, usage=None, num_samples=None, num_parallel_workers=None, shuffle=None, sampler=None, num_shards=None, shard_id=None, cache=None)
+.. py:class:: mindspore.dataset.EMnistDataset(dataset_dir, name, usage=None, num_samples=None, num_parallel_workers=None, shuffle=None, sampler=None, num_shards=None, shard_id=None, cache=None)
 
-    读取和解析CIFAR-100数据集的源文件构建数据集。
+    读取和解析EMNIST数据集的源文件构建数据集。
 
-    生成的数据集有三列: `[image, coarse_label, fine_label]` 。 `image` 列的数据类型为uint8。 `coarse_label` 和 `fine_labels` 列的数据类型为uint32。
+    生成的数据集有两列: `[image, label]`。 `image` 列的数据类型为uint8。 `label` 列的数据类型为uint32。
 
     参数：
         - **dataset_dir** (str) - 包含数据集文件的根目录路径。
-        - **usage** (str, 可选) - 指定数据集的子集，可取值为'train'，'test'或'all'。
-          取值为'train'时将会读取50,000个训练样本，取值为'test'时将会读取10,000个测试样本，取值为'all'时将会读取全部60,000个样本。默认值：None，读取全部样本图片。
+        - **name** (str) - 按给定规则对数据集进行拆分，可以是'byclass'、'bymerge'、'balanced'、'letters'、'digits'或'mnist'。
+        - **usage** (str, 可选) - 指定数据集的子集，可取值为 'train'、'test' 或 'all'。
+          取值为'train'时将会读取60,000个训练样本，取值为'test'时将会读取10,000个测试样本，取值为'all'时将会读取全部70,000个样本。默认值：None，读取全部样本图片。
         - **num_samples** (int, 可选) - 指定从数据集中读取的样本数，可以小于数据集总数。默认值：None，读取全部样本图片。
         - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用mindspore.dataset.config中配置的线程数。
         - **shuffle** (bool, 可选) - 是否混洗数据集。默认值：None，下表中会展示不同参数配置的预期行为。
@@ -20,14 +21,11 @@ mindspore.dataset.Cifar100Dataset
         - **cache** (DatasetCache, 可选) - 单节点数据缓存服务，用于加快数据集处理，详情请阅读 `单节点数据缓存 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/dataset/cache.html>`_ 。默认值：None，不使用缓存。
 
     异常：
-        - **RuntimeError** - `dataset_dir` 路径下不包含数据文件。
-        - **ValueError** - `num_parallel_workers` 参数超过系统最大线程数。
-        - **ValueError** - `usage` 参数取值不为'train'、'test'或'all'。
         - **RuntimeError** - 同时指定了 `sampler` 和 `shuffle` 参数。
         - **RuntimeError** - 同时指定了 `sampler` 和 `num_shards` 参数或同时指定了 `sampler` 和 `shard_id` 参数。
         - **RuntimeError** - 指定了 `num_shards` 参数，但是未指定 `shard_id` 参数。
         - **RuntimeError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
-        - **ValueError** - `shard_id` 参数错误（小于0或者大于等于 `num_shards`）。
+        - **ValueError** - `shard_id` 参数错误（小于0或者大于等于 `num_shards` ）。
 
     .. note:: 此数据集可以指定参数 `sampler` ，但参数 `sampler` 和参数 `shuffle` 的行为是互斥的。下表展示了几种合法的输入参数组合及预期的行为。
 
@@ -57,31 +55,45 @@ mindspore.dataset.Cifar100Dataset
          - False
          - 不允许
 
-    **关于CIFAR-100数据集：**
+    **关于EMNIST数据集：**
+    
+    EMNIST数据集由一组手写字符数字组成，源自NIST特别版数据库19，并转换为与MNIST数据集直接匹配的28x28像素图像格式和数据集结构。
+    有关数据集内容和转换过程的更多信息可在 https://arxiv.org/abs/1702.05373v1 上查阅。
 
-    CIFAR-100数据集和CIFAR-10数据集非常相似，CIFAR-100有100个类别，每类包含600张图片，其中500张训练图片和100张测试图片。这100个类别又被分成20个超类。每个图片都有一个"fine"标签（所属子类）和一个"coarse"标签(所属超类)。
+    EMNIST按照不同的规则拆分成不同的子数据集的样本数和类数如下：
 
-    以下为原始CIFAR-100数据集的结构，您可以将数据集文件解压得到如下的文件结构，并通过MindSpore的API进行读取。
+    按类拆分：814,255个样本和62个样本不平衡类。
+    按合并拆分：814,255个样本和47个样本不平衡类。
+    平衡拆分：131,600个样本和47个样本平衡类。
+    按字母拆分：145,600个样本和26个样本平衡类。
+    按数字拆分：280,000个样本和10个样本平衡类。
+    MNIST: 70,000个样本符和10个样本平衡类。
+
+    以下是原始EMNIST数据集结构。
+    可以将数据集文件解压缩到此目录结构中，并由MindSpore的API读取。
 
     .. code-block::
 
         .
-        └── cifar-100-binary
-            ├── train.bin
-            ├── test.bin
-            ├── fine_label_names.txt
-            └── coarse_label_names.txt
+        └── mnist_dataset_dir
+             ├── emnist-mnist-train-images-idx3-ubyte
+             ├── emnist-mnist-train-labels-idx1-ubyte
+             ├── emnist-mnist-test-images-idx3-ubyte
+             ├── emnist-mnist-test-labels-idx1-ubyte
+             ├── ...
 
     **引用：**
 
     .. code-block::
 
-        @techreport{Krizhevsky09,
-        author       = {Alex Krizhevsky},
-        title        = {Learning multiple layers of features from tiny images},
-        institution  = {},
-        year         = {2009},
-        howpublished = {http://www.cs.toronto.edu/~kriz/cifar.html}
+        @article{cohen_afshar_tapson_schaik_2017,
+        title        = {EMNIST: Extending MNIST to handwritten letters},
+        DOI          = {10.1109/ijcnn.2017.7966217},
+        journal      = {2017 International Joint Conference on Neural Networks (IJCNN)},
+        author       = {Cohen, Gregory and Afshar, Saeed and Tapson, Jonathan and Schaik, Andre Van},
+        year         = {2017},
+        howpublished = {https://www.westernsydney.edu.au/icns/reproducible_research/
+                        publication_support_materials/emnist}
         }
 
     .. include:: mindspore.dataset.Dataset.add_sampler.rst

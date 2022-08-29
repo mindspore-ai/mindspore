@@ -58,8 +58,8 @@ class CSVDataset(SourceDataset, UnionBaseDataset):
             (default=None, will include all images).
         num_parallel_workers (int, optional): Number of workers to read the data
             (default=None, number set in the config).
-        shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
-            (default=Shuffle.GLOBAL).
+        shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch
+            (default=Shuffle.GLOBAL). Bool type and Shuffle enum are both supported to pass in.
             If shuffle is False, no shuffling will be performed.
             If shuffle is True, performs global shuffle.
             There are three levels of shuffling, desired shuffle enum defined by mindspore.dataset.Shuffle.
@@ -72,7 +72,8 @@ class CSVDataset(SourceDataset, UnionBaseDataset):
             When this argument is specified, `num_samples` reflects the maximum sample number of per shard.
         shard_id (int, optional): The shard ID within `num_shards` (default=None). This
             argument can only be specified when `num_shards` is also specified.
-        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_
             (default=None, which means no cache is used).
 
     Raises:
@@ -117,8 +118,8 @@ class MindDataset(MappableDataset, UnionBaseDataset):
             it represents for a list of dataset files to be read directly.
         columns_list (list[str], optional): List of columns to be read (default=None).
         num_parallel_workers (int, optional): The number of readers (default=None).
-        shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
-            (default=None, performs global shuffle).
+        shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch
+            (default=None, performs global shuffle). Bool type and Shuffle enum are both supported to pass in.
             If shuffle is False, no shuffling will be performed.
             If shuffle is True, performs global shuffle.
             There are three levels of shuffling, desired shuffle enum defined by mindspore.dataset.Shuffle.
@@ -143,7 +144,8 @@ class MindDataset(MappableDataset, UnionBaseDataset):
             plus num_padded should be divisible by num_shards.
         num_samples (int, optional): The number of samples to be included in the dataset
             (default=None, all samples).
-        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_
             (default=None, which means no cache is used).
 
     Raises:
@@ -255,8 +257,8 @@ class TFRecordDataset(SourceDataset, UnionBaseDataset):
             If both num_samples and numRows(parsed from schema) are greater than 0, read num_samples rows.
         num_parallel_workers (int, optional): Number of workers to read the data
             (default=None, number set in the config).
-        shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
-            (default=Shuffle.GLOBAL).
+        shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch
+            (default=Shuffle.GLOBAL). Bool type and Shuffle enum are both supported to pass in.
             If shuffle is False, no shuffling will be performed.
             If shuffle is True, performs global shuffle.
             There are three levels of shuffling, desired shuffle enum defined by mindspore.dataset.Shuffle.
@@ -274,7 +276,8 @@ class TFRecordDataset(SourceDataset, UnionBaseDataset):
             is false, number of rows of each shard may be not equal, and may lead to a failure in distributed training.
             When the number of samples of per TFRecord file are not equal, it is suggested to set to true.
             This argument should only be specified when `num_shards` is also specified.
-        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_
             (default=None, which means no cache is used).
 
     Raises:
@@ -344,8 +347,8 @@ class OBSMindDataset(GeneratorDataset):
         sync_obs_path (str): Remote dir path used for synchronization, users need to
             create it on cloud storage in advance. Path is in the format of s3://bucketName/objectKey.
         columns_list (list[str], optional): List of columns to be read (default=None, read all columns).
-        shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
-            (default=None, performs global shuffle).
+        shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch
+            (default=None, performs global shuffle). Bool type and Shuffle enum are both supported to pass in.
             If shuffle is False, no shuffling will be performed.
             If shuffle is True, performs global shuffle.
             There are three levels of shuffling, desired shuffle enum defined by mindspore.dataset.Shuffle.

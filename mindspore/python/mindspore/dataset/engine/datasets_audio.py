@@ -59,7 +59,8 @@ class CMUArcticDataset(MappableDataset, AudioBaseDataset):
             When this argument is specified, `num_samples` reflects the max sample number of per shard.
         shard_id (int, optional): The shard ID within `num_shards` (default=None). This
             argument can only be specified when `num_shards` is also specified.
-        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_
             (default=None, which means no cache is used).
 
     Raises:
@@ -194,7 +195,8 @@ class GTZANDataset(MappableDataset, AudioBaseDataset):
             When this argument is specified, `num_samples` reflects the max sample number of per shard.
         shard_id (int, optional): The shard ID within `num_shards` (default=None). This
             argument can only be specified when `num_shards` is also specified.
-        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_
             (default=None, which means no cache is used).
 
     Raises:
@@ -329,7 +331,8 @@ class LibriTTSDataset(MappableDataset, AudioBaseDataset):
             When this argument is specified, `num_samples` reflects the max sample number of per shard.
         shard_id (int, optional): The shard ID within `num_shards` (default=None). This
             argument can only be specified when `num_shards` is also specified.
-        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_
             (default=None, which means no cache is used).
 
     Raises:
@@ -474,7 +477,8 @@ class LJSpeechDataset(MappableDataset, AudioBaseDataset):
             the maximum sample number of per shard.
         shard_id (int, optional): The shard ID within `num_shards` (default=None). This
             argument can only be specified when `num_shards` is also specified.
-        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_
             (default=None, which means no cache is used).
 
     Raises:
@@ -613,7 +617,8 @@ class SpeechCommandsDataset(MappableDataset, AudioBaseDataset):
             When this argument is specified, `num_samples` reflects the maximum sample number of per shard.
         shard_id (int, optional): The shard ID within `num_shards` (default=None). This argument can only be specified
             when `num_shards` is also specified.
-        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_
             (default=None, which means no cache is used).
 
     Raises:
@@ -735,7 +740,7 @@ class TedliumDataset(MappableDataset, AudioBaseDataset):
             'dev' will read from dev samples,
             'all' will read from all samples.
             For release3, can only be 'all', it will read from data samples (default=None, all samples).
-        extensions (str): Extensions of the SPH files, only '.sph' is valid.
+        extensions (str, optional): Extensions of the SPH files, only '.sph' is valid.
             (default=None, ".sph").
         num_samples (int, optional): The number of audio samples to be included in the dataset
             (default=None, all samples).
@@ -750,7 +755,8 @@ class TedliumDataset(MappableDataset, AudioBaseDataset):
             the maximum sample number of per shard.
         shard_id (int, optional): The shard ID within `num_shards` (default=None). This
             argument can only be specified when `num_shards` is also specified.
-        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_
             (default=None, which means no cache is used).
 
     Raises:
@@ -945,7 +951,8 @@ class YesNoDataset(MappableDataset, AudioBaseDataset):
             When this argument is specified, `num_samples` reflects the maximum sample number of per shard.
         shard_id (int, optional): The shard ID within `num_shards` (default=None). This argument can only
             be specified when `num_shards` is also specified.
-        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_
             (default=None, which means no cache is used).
 
     Raises:
