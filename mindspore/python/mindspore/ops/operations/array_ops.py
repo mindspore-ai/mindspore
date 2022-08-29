@@ -3647,10 +3647,10 @@ class Diag(PrimitiveWithCheck):
         >>> diag = ops.Diag()
         >>> output = diag(input_x)
         >>> print(output)
-        [[1, 0, 0, 0]
-         [0, 2, 0, 0]
-         [0, 0, 3, 0]
-         [0, 0, 0, 4]]
+        [[1 0 0 0]
+         [0 2 0 0]
+         [0 0 3 0]
+         [0 0 0 4]]
     """
 
     @prim_attr_register
