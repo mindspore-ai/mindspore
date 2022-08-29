@@ -70,10 +70,14 @@ void PyNativeExecutorTry(const std::function<void(T *ret, const Args &...)> &met
     throw(std::runtime_error(ex.what()));
   } catch (...) {
     inst->ClearRes();
+#ifndef _MSC_VER
     auto exception_type = abi::__cxa_current_exception_type();
     MS_EXCEPTION_IF_NULL(exception_type);
     std::string ex_name(exception_type->name());
     MS_LOG(EXCEPTION) << "Error occurred when compile graph. Exception name: " << ex_name;
+#else
+    MS_LOG(EXCEPTION) << "Error occurred when compile graph.";
+#endif
   }
 }
 }  // namespace

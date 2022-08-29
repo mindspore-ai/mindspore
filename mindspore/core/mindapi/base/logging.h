@@ -25,7 +25,7 @@
 #include "utils/macros.h"
 
 namespace mindspore::api {
-enum class LogLevel : uint8_t { DEBUG = 0, INFO, WARNING, ERROR, EXCEPTION };
+enum class LogLevel : uint8_t { kDebug = 0, kInfo, kWarning, kError, kException };
 
 class LogWriterImpl;
 
@@ -90,11 +90,11 @@ class MIND_API LogWriter {
 #define MIND_LOG_IF(L) \
   if (MIND_LOG_WRITER::IsEnabled(MIND_LOG_LEVEL(L))) MIND_LOG_WRITE(L)
 
-#define MIND_LOG_DEBUG MIND_LOG_IF(DEBUG)
-#define MIND_LOG_INFO MIND_LOG_IF(INFO)
-#define MIND_LOG_WARNING MIND_LOG_IF(WARNING)
-#define MIND_LOG_ERROR MIND_LOG_IF(ERROR)
-#define MIND_LOG_EXCEPTION MIND_LOG_THROW(EXCEPTION)
+#define MIND_LOG_DEBUG MIND_LOG_IF(kDebug)
+#define MIND_LOG_INFO MIND_LOG_IF(kInfo)
+#define MIND_LOG_WARNING MIND_LOG_IF(kWarning)
+#define MIND_LOG_ERROR MIND_LOG_IF(kError)
+#define MIND_LOG_EXCEPTION MIND_LOG_THROW(kException)
 #define MIND_LOG(level) MIND_LOG_##level
 
 #if !defined(MIND_LOG_NO_MS_LOG) && !defined(MS_LOG)

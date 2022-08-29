@@ -205,11 +205,11 @@ void TcpServer::Start() {
   MS_LOG(INFO) << "Start tcp server!";
   MS_EXCEPTION_IF_NULL(base_);
   int ret = event_base_dispatch(base_);
-  MSLOG_IF(INFO, ret == 0, NoExceptionType) << "Event base dispatch success!";
-  MSLOG_IF(mindspore::ERROR, ret == 1, NoExceptionType)
+  MSLOG_IF(MsLogLevel::kInfo, ret == 0, NoExceptionType) << "Event base dispatch success!";
+  MSLOG_IF(MsLogLevel::kError, ret == 1, NoExceptionType)
     << "Event base dispatch failed with no events pending or active!";
-  MSLOG_IF(mindspore::ERROR, ret == -1, NoExceptionType) << "Event base dispatch failed with error occurred!";
-  MSLOG_IF(mindspore::EXCEPTION, ret < -1, AbortedError) << "Event base dispatch with unexpected error code!";
+  MSLOG_IF(MsLogLevel::kError, ret == -1, NoExceptionType) << "Event base dispatch failed with error occurred!";
+  MSLOG_IF(MsLogLevel::kException, ret < -1, AbortedError) << "Event base dispatch with unexpected error code!";
 }
 
 void TcpServer::Stop() {

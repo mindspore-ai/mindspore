@@ -36,7 +36,7 @@ PluginLoader::~PluginLoader() {
   std::transform(plugins_.begin(), plugins_.end(), std::back_inserter(keys), [](const auto &p) { return p.first; });
   for (std::string &key : keys) {
     Status rc = UnloadPlugin(key);
-    MSLOG_IF(ERROR, rc.IsError(), mindspore::NoExceptionType) << rc.ToString();
+    MSLOG_IF(MsLogLevel::kError, rc.IsError(), mindspore::NoExceptionType) << rc.ToString();
   }
 }
 

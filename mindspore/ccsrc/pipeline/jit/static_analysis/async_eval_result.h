@@ -57,7 +57,7 @@ class AnalysisSchedule {
   void Wait();
   void Add2Schedule(const AsyncInferTaskPtr &async_infer_task_ptr);
   void WaitForRun() const;
-  void Yield(AsyncInferTask *asyncTask);
+  void YieldTask(AsyncInferTask *asyncTask);
 
   void EnterWaiting() {
     {
@@ -327,7 +327,7 @@ class AsyncInferTask {
 
   AbstractBasePtr GetResult() {
     StaticAnalysisException::Instance().CheckException();
-    AnalysisSchedule::GetInstance().Yield(this);
+    AnalysisSchedule::GetInstance().YieldTask(this);
     std::unique_lock<std::mutex> lock(lock_);
     MS_LOG(DEBUG) << AnalysisSchedule::thread_id() << " waiting.";
     condition_var_.wait(lock, [this] { return ready_; });

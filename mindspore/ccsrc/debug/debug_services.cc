@@ -613,7 +613,7 @@ void DebugServices::CheckWatchpoints(std::vector<std::string> *const name, std::
   if (tensor_list_size == 0) {
     return;
   }
-  if (IS_OUTPUT_ON(INFO)) {
+  if (IS_OUTPUT_ON(mindspore::kInfo)) {
     wp_progress_enabled_ = true;
     wp_progress_thread_ =
       std::make_unique<std::thread>([this, tensor_list_size]() { CheckWatchpointProgress(tensor_list_size); });
@@ -668,7 +668,7 @@ void DebugServices::CheckWatchpoints(std::vector<std::string> *const name, std::
   MS_LOG(INFO) << "tensor_list byte size is " << tensor_list_byte_size / pow(10.0, 6.0) << " MB";
   MS_LOG(INFO) << "CheckWatchpoints Took: " << std::fixed << std::setprecision(precision)
                << (ms_double.count()) / ms_to_s << "s";
-  if (IS_OUTPUT_ON(INFO) && wp_progress_thread_ && wp_progress_thread_->joinable()) {
+  if (IS_OUTPUT_ON(mindspore::kInfo) && wp_progress_thread_ && wp_progress_thread_->joinable()) {
     wp_progress_enabled_ = false;
     wp_progress_thread_->join();
     MS_LOG(INFO) << "Join wp_progress_thread_.";

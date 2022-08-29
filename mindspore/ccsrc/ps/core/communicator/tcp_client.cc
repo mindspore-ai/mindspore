@@ -315,11 +315,11 @@ void TcpClient::Start() {
   int ret = event_base_dispatch(event_base_);
   // is_started_ should be false when finish dispatch
   is_started_ = false;
-  MSLOG_IF(INFO, ret == 0, NoExceptionType) << "Event base dispatch success!";
-  MSLOG_IF(mindspore::ERROR, ret == 1, NoExceptionType)
+  MSLOG_IF(MsLogLevel::kInfo, ret == 0, NoExceptionType) << "Event base dispatch success!";
+  MSLOG_IF(MsLogLevel::kError, ret == 1, NoExceptionType)
     << "Event base dispatch failed with no events pending or active!";
-  MSLOG_IF(mindspore::ERROR, ret == -1, NoExceptionType) << "Event base dispatch failed with error occurred!";
-  MSLOG_IF(mindspore::EXCEPTION, ret < -1, AbortedError) << "Event base dispatch with unexpected error code!";
+  MSLOG_IF(MsLogLevel::kError, ret == -1, NoExceptionType) << "Event base dispatch failed with error occurred!";
+  MSLOG_IF(MsLogLevel::kException, ret < -1, AbortedError) << "Event base dispatch with unexpected error code!";
 }
 
 void TcpClient::StartWithNoBlock() {
@@ -327,10 +327,10 @@ void TcpClient::StartWithNoBlock() {
   MS_LOG(INFO) << "Start tcp client with no block!";
   MS_EXCEPTION_IF_NULL(event_base_);
   int ret = event_base_loop(event_base_, EVLOOP_NONBLOCK);
-  MSLOG_IF(INFO, ret == 0, NoExceptionType) << "Event base loop success!";
-  MSLOG_IF(mindspore::ERROR, ret == 1, NoExceptionType) << "Event base loop failed with no events pending or active!";
-  MSLOG_IF(mindspore::ERROR, ret == -1, NoExceptionType) << "Event base loop failed with error occurred!";
-  MSLOG_IF(mindspore::EXCEPTION, ret < -1, AbortedError) << "Event base loop with unexpected error code!";
+  MSLOG_IF(MsLogLevel::kInfo, ret == 0, NoExceptionType) << "Event base loop success!";
+  MSLOG_IF(MsLogLevel::kError, ret == 1, NoExceptionType) << "Event base loop failed with no events pending or active!";
+  MSLOG_IF(MsLogLevel::kError, ret == -1, NoExceptionType) << "Event base loop failed with error occurred!";
+  MSLOG_IF(MsLogLevel::kException, ret < -1, AbortedError) << "Event base loop with unexpected error code!";
 }
 
 void TcpClient::SetMessageCallback(const OnMessage &cb) { message_callback_ = cb; }

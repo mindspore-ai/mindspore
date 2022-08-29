@@ -38,7 +38,7 @@ void AnalysisSchedule::Schedule() {
   MS_LOG(DEBUG) << "Success to exit.";
 }
 
-void AnalysisSchedule::Yield(AsyncInferTask *async_infer_task) {
+void AnalysisSchedule::YieldTask(AsyncInferTask *async_infer_task) {
   MS_EXCEPTION_IF_NULL(async_infer_task);
   {
     std::lock_guard<std::mutex> activeLock(activate_thread_lock_);

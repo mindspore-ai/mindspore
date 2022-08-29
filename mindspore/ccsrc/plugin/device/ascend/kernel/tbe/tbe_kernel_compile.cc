@@ -138,13 +138,13 @@ void PrintInfo(const nlohmann::json &info, const std::string &job_name, const in
   auto message = GetJsonValue<std::string>(info, kMessage);
   if (level == 0) {
     MS_LOG(DEBUG) << "Job id:" << job_id << ", name :" << job_name << ", message:" << message;
-  } else if (level == static_cast<int>(INFO)) {
+  } else if (level == static_cast<int>(MsLogLevel::kInfo)) {
     MS_LOG(INFO) << "Job id:" << job_id << ", name :" << job_name << ", message:" << message;
-  } else if (level == static_cast<int>(WARNING)) {
+  } else if (level == static_cast<int>(MsLogLevel::kWarning)) {
     MS_LOG(WARNING) << "Job id:" << job_id << ", name :" << job_name << ", message:" << message;
-  } else if (level == static_cast<int>(ERROR)) {
+  } else if (level == static_cast<int>(MsLogLevel::kError)) {
     MS_LOG(ERROR) << "Job id:" << job_id << ", name :" << job_name << ", message:" << message;
-  } else if (level == static_cast<int>(EXCEPTION)) {
+  } else if (level == static_cast<int>(MsLogLevel::kException)) {
     ReportToErrorManager(message);
   }
 }
@@ -238,7 +238,8 @@ std::vector<std::string> GetTuneOpsList(const std::string &d) {
 }
 }  // namespace
 
-void TbeKernelCompileManager::PrintProcessLog(const nlohmann::json &json, int adjust_log_level = EXCEPTION) const {
+void TbeKernelCompileManager::PrintProcessLog(const nlohmann::json &json,
+                                              int adjust_log_level = MsLogLevel::kException) const {
   auto all_logs = GetJsonValue<std::vector<nlohmann::json>>(json, kProcessInfo);
   auto job_id = GetJsonValue<int>(json, kJobId);
   auto json_name = GetJsonValue<std::string>(json, kFusionOpName);
@@ -590,7 +591,7 @@ std::string TbeKernelCompileManager::ParseSelectAndCheckResult(const nlohmann::j
       return kFailed;
     }
     if (res != kFullySupported) {
-      PrintProcessLog(json, static_cast<int>(DEBUG));
+      PrintProcessLog(json, static_cast<int>(MsLogLevel::kDebug));
     }
   } else if (json.at(kStatus) == kFailed) {
     auto all_logs = GetJsonValue<std::vector<nlohmann::json>>(json, kProcessInfo);

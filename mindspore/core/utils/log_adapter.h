@@ -38,6 +38,9 @@
 #else
 #include "toolchain/slog.h"
 #endif
+
+#undef SM_DEBUG
+
 // NOTICE: when relative path of 'log_adapter.h' changed, macro 'LOG_HDR_FILE_REL_PATH' must be changed
 #define LOG_HDR_FILE_REL_PATH "mindspore/core/utils/log_adapter.h"
 
@@ -157,7 +160,7 @@ class LogStream {
   std::shared_ptr<std::stringstream> sstream_;
 };
 
-enum MsLogLevel : int { DEBUG = 0, INFO, WARNING, ERROR, EXCEPTION };
+enum MsLogLevel : int { kDebug = 0, kInfo, kWarning, kError, kException };
 
 enum SubModuleId : int {
   SM_UNKNOWN = 0,        // unknown submodule
@@ -229,7 +232,7 @@ MS_EXPORT extern enum MsLogLevel this_thread_max_log_level;
 MS_EXPORT extern thread_local enum MsLogLevel this_thread_max_log_level;
 class TryCatchGuard {
  public:
-  TryCatchGuard() : origin_log_level_(this_thread_max_log_level) { this_thread_max_log_level = MsLogLevel::WARNING; }
+  TryCatchGuard() : origin_log_level_(this_thread_max_log_level) { this_thread_max_log_level = MsLogLevel::kWarning; }
   ~TryCatchGuard() { this_thread_max_log_level = origin_log_level_; }
 
  private:
@@ -284,13 +287,13 @@ class MS_CORE_API LogWriter {
                                       excp_type) < mindspore::LogStream()
 
 #if !defined(BUILD_LITE_INFERENCE) || defined(BUILD_CORE_RUNTIME)
-#define MSLOG_THROW(excp_type)                                                                                         \
-  mindspore::LogWriter(mindspore::LocationInfo(FILE_NAME, __LINE__, __FUNCTION__), mindspore::EXCEPTION, SUBMODULE_ID, \
-                       excp_type) ^                                                                                    \
+#define MSLOG_THROW(excp_type)                                                                            \
+  mindspore::LogWriter(mindspore::LocationInfo(FILE_NAME, __LINE__, __FUNCTION__), mindspore::kException, \
+                       SUBMODULE_ID, excp_type) ^                                                         \
     mindspore::LogStream()
 #else
-#define MSLOG_THROW(excp_type)                                                                                     \
-  mindspore::LogWriter(mindspore::LocationInfo(FILE_NAME, __LINE__, __FUNCTION__), mindspore::ERROR, SUBMODULE_ID, \
+#define MSLOG_THROW(excp_type)                                                                                      \
+  mindspore::LogWriter(mindspore::LocationInfo(FILE_NAME, __LINE__, __FUNCTION__), mindspore::kError, SUBMODULE_ID, \
                        excp_type) < mindspore::LogStream()
 #endif
 
@@ -301,10 +304,10 @@ inline bool IS_OUTPUT_ON(enum MsLogLevel level) noexcept(true) {
 
 #define MS_LOG(level) MS_LOG_##level
 
-#define MS_LOG_DEBUG MSLOG_IF(mindspore::DEBUG, IS_OUTPUT_ON(mindspore::DEBUG), mindspore::NoExceptionType)
-#define MS_LOG_INFO MSLOG_IF(mindspore::INFO, IS_OUTPUT_ON(mindspore::INFO), mindspore::NoExceptionType)
-#define MS_LOG_WARNING MSLOG_IF(mindspore::WARNING, IS_OUTPUT_ON(mindspore::WARNING), mindspore::NoExceptionType)
-#define MS_LOG_ERROR MSLOG_IF(mindspore::ERROR, IS_OUTPUT_ON(mindspore::ERROR), mindspore::NoExceptionType)
+#define MS_LOG_DEBUG MSLOG_IF(mindspore::kDebug, IS_OUTPUT_ON(mindspore::kDebug), mindspore::NoExceptionType)
+#define MS_LOG_INFO MSLOG_IF(mindspore::kInfo, IS_OUTPUT_ON(mindspore::kInfo), mindspore::NoExceptionType)
+#define MS_LOG_WARNING MSLOG_IF(mindspore::kWarning, IS_OUTPUT_ON(mindspore::kWarning), mindspore::NoExceptionType)
+#define MS_LOG_ERROR MSLOG_IF(mindspore::kError, IS_OUTPUT_ON(mindspore::kError), mindspore::NoExceptionType)
 
 #define MS_LOG_EXCEPTION MSLOG_THROW(mindspore::NoExceptionType)
 #define MS_EXCEPTION(type) MSLOG_THROW(type)

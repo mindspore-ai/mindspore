@@ -1053,7 +1053,7 @@ std::vector<CNodePtr> KernelGraph::FindNodeByPrimitive(const std::vector<Primiti
 }
 
 void KernelGraph::PrintGraphExecuteOrder() const {
-  if (!(IS_OUTPUT_ON(INFO))) {
+  if (!(IS_OUTPUT_ON(mindspore::kInfo))) {
     return;
   }
   MS_LOG(INFO) << "Graph " << graph_id_ << " execution order:";
