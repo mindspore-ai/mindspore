@@ -1290,6 +1290,8 @@ class Model:
             outputs = eval_network(*inputs)
             cb_params.net_outputs = outputs
             list_callback.on_eval_step_end(run_context)
+            if _is_role_sched():
+                os._exit(0)
             self._update_metrics(outputs)
             if add_eval_loss:
                 eval_loss_fn = get_metric_fn("loss")
@@ -1333,6 +1335,8 @@ class Model:
             outputs = self._eval_network(*next_element)
             cb_params.net_outputs = outputs
             list_callback.on_eval_step_end(run_context)
+            if _is_role_sched():
+                os._exit(0)
             self._update_metrics(outputs)
             if add_eval_loss:
                 eval_loss_fn = get_metric_fn("loss")
