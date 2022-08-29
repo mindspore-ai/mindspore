@@ -41,6 +41,7 @@ AnfNodePtr AddCastOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr
                                 const TypeId &input_type, const TypeId &output_type,
                                 const abstract::BaseShapePtr &origin_shape) {
   MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(origin_shape);
   std::string input_format = format;
   std::string output_format = format;
   CNodePtr cast = func_graph->NewCNode({NewValueNode(std::make_shared<Primitive>(prim::kPrimCast->name())), input});
@@ -117,8 +118,12 @@ void SyncWeightNodeWithCast(const FuncGraphPtr &func_graph, const CNodePtr &cnod
                             const AnfNodePtr &cast, const std::string &format, const TypeId &device_type,
                             const TypeId &origin_type, const abstract::BaseShapePtr &origin_shape,
                             std::vector<AnfNodePtr> *make_tuple_inputs) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(cast);
+  MS_EXCEPTION_IF_NULL(make_tuple_inputs);
   auto first_depend_node =
     func_graph->NewCNode({NewValueNode(std::make_shared<Primitive>(prim::kPrimDepend->name())), cast, cnode});
+  MS_EXCEPTION_IF_NULL(first_depend_node);
   first_depend_node->set_abstract(cast->abstract());
   auto post_cast = AddCastOpNodeToGraph(func_graph, first_depend_node, format, device_type, origin_type, origin_shape);
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
@@ -128,6 +133,7 @@ void SyncWeightNodeWithCast(const FuncGraphPtr &func_graph, const CNodePtr &cnod
 }
 
 void InsertCast(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(cnode);
   size_t in_num = common::AnfAlgo::GetInputTensorNum(cnode);
   std::vector<AnfNodePtr> make_tuple_inputs{NewValueNode(std::make_shared<Primitive>(prim::kPrimMakeTuple->name()))};
@@ -148,6 +154,7 @@ void InsertCast(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
       cast->set_scope(cnode->scope());
       cnode->set_input(input_index + 1, cast);
       auto real_input = common::AnfAlgo::VisitKernel(cur_input, 0).first;
+      MS_EXCEPTION_IF_NULL(real_input);
       if (common::AnfAlgo::IsUpdateParameterKernel(cnode) && real_input->isa<Parameter>() &&
           common::AnfAlgo::IsParameterWeight(real_input->cast<ParameterPtr>())) {
         SyncWeightNodeWithCast(func_graph, cnode, cur_input, cast, dev_fmt, device_type, origin_type, origin_shape,
@@ -158,6 +165,7 @@ void InsertCast(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
       auto make_tuple = func_graph->NewCNode(make_tuple_inputs);
       auto second_depend_node =
         func_graph->NewCNode({NewValueNode(std::make_shared<Primitive>(prim::kPrimDepend->name())), cnode, make_tuple});
+      MS_EXCEPTION_IF_NULL(second_depend_node);
       second_depend_node->set_abstract(cnode->abstract());
       auto used_node_list = GetRealNodeUsedList(func_graph, cnode);
       if (used_node_list != nullptr && used_node_list->empty()) {
@@ -165,6 +173,7 @@ void InsertCast(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
       }
       for (size_t j = 0; j < used_node_list->size(); j++) {
         auto used_node = used_node_list->at(j).first;
+        MS_EXCEPTION_IF_NULL(used_node);
         if (!used_node->isa<CNode>()) {
           continue;
         }
@@ -175,6 +184,7 @@ void InsertCast(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
 }
 
 void InsertCastForGraphOutput(const FuncGraphPtr &func_graph, const AnfNodePtr &func_output) {
+  MS_EXCEPTION_IF_NULL(func_output);
   size_t input_num = common::AnfAlgo::GetInputTensorNum(func_output);
   if (!func_output->isa<CNode>()) {
     return;
@@ -183,6 +193,7 @@ void InsertCastForGraphOutput(const FuncGraphPtr &func_graph, const AnfNodePtr &
   MS_EXCEPTION_IF_NULL(func_output_node);
   for (size_t i = 0; i < input_num; i++) {
     auto input_node = common::AnfAlgo::GetInputNode(func_output_node, i);
+    MS_EXCEPTION_IF_NULL(input_node);
     auto abstract = input_node->abstract();
     MS_EXCEPTION_IF_NULL(abstract);
     if (!abstract->isa<abstract::AbstractTensor>()) {
@@ -194,6 +205,7 @@ void InsertCastForGraphOutput(const FuncGraphPtr &func_graph, const AnfNodePtr &
       continue;
     }
     auto kernel_node = common::AnfAlgo::VisitKernel(input_node, 0).first;
+    MS_EXCEPTION_IF_NULL(kernel_node);
     auto infer_type = common::AnfAlgo::GetPrevNodeOutputInferDataType(func_output, i);
     auto device_type = AnfAlgo::GetPrevNodeOutputDeviceDataType(func_output, i);
     const std::string dev_fmt = AnfAlgo::GetPrevNodeOutputFormat(func_output, i);

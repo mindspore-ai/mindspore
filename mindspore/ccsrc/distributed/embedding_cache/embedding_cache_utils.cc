@@ -116,6 +116,7 @@ size_t EmbeddingCacheTableManager::QueryHashTableSize(const std::string &param_n
 
 void EmbeddingCacheTableManager::AllocMemForEmbeddingCacheTable(const device::DeviceContext *device_context) {
   MS_EXCEPTION_IF_NULL(device_context);
+  MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
 
   size_t max_embedding_size = 0;
   for (auto &item : hash_tables_) {

@@ -70,6 +70,7 @@ void MemOffloadStrategy::CountMemUsage() {
       continue;
     }
     auto first_event = mem_events[kInitOrMallocMemEventIndex];
+    MS_EXCEPTION_IF_NULL(first_event);
     const bool is_high_priority = IsHighPriorityMem(item.first);
     if (continuous_mem_info_helper_->IsContinuousInputMem(item.first)) {
       continue;
@@ -77,6 +78,7 @@ void MemOffloadStrategy::CountMemUsage() {
       high_priority_mem_size += first_event->mem_size;
     } else {
       auto last_event = mem_events[mem_events.size() - 1];
+      MS_EXCEPTION_IF_NULL(last_event);
       for (size_t start_index = first_event->index; start_index <= last_event->index; ++start_index) {
         total_mem_used[start_index] += first_event->mem_size;
       }
@@ -137,6 +139,7 @@ void MemOffloadStrategy::GenEventSpan() {
       if (i == kFirstGetMemEventIndex && is_high_priority) {
         latest_get_event = tensor_events[tensor_events.size() - 1];
       }
+      MS_EXCEPTION_IF_NULL(latest_get_event);
       auto span = GetSpanBetweenMemEvents(latest_get_event->index, event->index);
       // High priority memory that is only used once in a total step
       if (is_high_priority && span == 0 && latest_get_event == event) {
@@ -156,6 +159,7 @@ void MemOffloadStrategy::GenSwapEventSet() {
   if (!manual_offload_keys_.empty()) {
     for (const auto &iter : event_span_) {
       auto &event = iter.second.first;
+      MS_EXCEPTION_IF_NULL(event);
       if (manual_offload_keys_.find(event->key) != manual_offload_keys_.end()) {
         (void)swap_events_.emplace(event);
       }
@@ -163,10 +167,13 @@ void MemOffloadStrategy::GenSwapEventSet() {
     return;
   }
   // greedy span filter
+  MS_EXCEPTION_IF_NULL(continuous_mem_info_helper_);
   continuous_mem_info_helper_->ClearContinuousMallocIndex();
   std::vector<size_t> cur_mem_used(min_mem_used_.begin(), min_mem_used_.end());
 
   auto compare_total_size = [](const ContinuousMemInfoPtr &l, const ContinuousMemInfoPtr &r) -> bool {
+    MS_EXCEPTION_IF_NULL(l);
+    MS_EXCEPTION_IF_NULL(r);
     return l->total_size_ < r->total_size_;
   };
   auto all_continuous_mem_info = continuous_mem_info_helper_->GetAllContinuousMemInfo();
@@ -187,6 +194,8 @@ void MemOffloadStrategy::GenSwapEventSet() {
 
 void MemOffloadStrategy::AddToSwapEventSetIfOutOfMem(const std::shared_ptr<MemEvent> &event, size_t span,
                                                      std::vector<size_t> *mem_used) {
+  MS_EXCEPTION_IF_NULL(event);
+  MS_EXCEPTION_IF_NULL(mem_used);
   const auto start_index = (GetPreMemEventIndex(event->index, span) + 1) % total_step_;
   bool revert = false;
   size_t cur_index = start_index;
@@ -217,6 +226,9 @@ void MemOffloadStrategy::GenContinuousMemSwapEvent(const ContinuousMemInfoPtr &c
                                                    std::vector<size_t> *mem_used,
                                                    std::set<std::shared_ptr<MemEvent>> *events_no_need_swap) {
   MS_EXCEPTION_IF_NULL(continuous_mem_info);
+  MS_EXCEPTION_IF_NULL(mem_used);
+  MS_EXCEPTION_IF_NULL(events_no_need_swap);
+  MS_EXCEPTION_IF_NULL(continuous_mem_info_helper_);
   if (continuous_mem_info->key_index_map_.empty()) {
     return;
   }
@@ -238,6 +250,7 @@ void MemOffloadStrategy::GenContinuousMemSwapEvent(const ContinuousMemInfoPtr &c
     const bool is_high_priority = IsHighPriorityMem(key_index.first);
     for (size_t i = kFirstGetMemEventIndex; i < events_iter->second.size(); ++i) {
       const auto &mem_event = events_iter->second[i];
+      MS_EXCEPTION_IF_NULL(mem_event);
       if (!is_high_priority && mem_event->index > continuous_mem_used_index) {
         continue;
       }
@@ -274,6 +287,7 @@ void MemOffloadStrategy::GenContinuousMemSwapEvent(const ContinuousMemInfoPtr &c
 
 size_t MemOffloadStrategy::GetMaxSpanForContinuousMem(const ContinuousMemInfoPtr &continuous_mem_info,
                                                       const std::vector<size_t> &mem_used) const {
+  MS_EXCEPTION_IF_NULL(continuous_mem_info);
   const size_t continuous_mem_used_index = continuous_mem_info->compute_index_;
   size_t earliest_malloc_index = GetFirstMallocIndex(continuous_mem_info);
   size_t max_span_mem_in_device = GetSpanBetweenMemEvents(earliest_malloc_index, continuous_mem_used_index);
@@ -289,6 +303,7 @@ size_t MemOffloadStrategy::GetMaxSpanForContinuousMem(const ContinuousMemInfoPtr
 }
 
 size_t MemOffloadStrategy::GetFirstMallocIndex(const ContinuousMemInfoPtr &continuous_mem_info) const {
+  MS_EXCEPTION_IF_NULL(continuous_mem_info);
   size_t earliest_malloc_index = continuous_mem_info->compute_index_;
   for (const auto &key_index : continuous_mem_info->key_index_map_) {
     const auto &events_iter = mem_events_.find(key_index.first);
@@ -296,6 +311,7 @@ size_t MemOffloadStrategy::GetFirstMallocIndex(const ContinuousMemInfoPtr &conti
       MS_LOG(EXCEPTION) << "Can not find events for continuous input memory, device address key: " << key_index.first;
     }
     const auto &first_event = events_iter->second[kInitOrMallocMemEventIndex];
+    MS_EXCEPTION_IF_NULL(first_event);
     if (first_event->index < earliest_malloc_index) {
       earliest_malloc_index = first_event->index;
     }
@@ -304,12 +320,15 @@ size_t MemOffloadStrategy::GetFirstMallocIndex(const ContinuousMemInfoPtr &conti
 }
 
 void MemOffloadStrategy::GenContinuousMemAllocSteps() {
+  MS_EXCEPTION_IF_NULL(continuous_mem_info_helper_);
   for (const auto &continuous_mem_info : continuous_mem_info_helper_->GetAllContinuousMemInfo()) {
     GenContinuousMemAllocStep(continuous_mem_info);
   }
 }
 
 void MemOffloadStrategy::GenContinuousMemAllocStep(const ContinuousMemInfoPtr &continuous_mem_info) {
+  MS_EXCEPTION_IF_NULL(continuous_mem_info);
+  MS_EXCEPTION_IF_NULL(continuous_mem_info_helper_);
   if (!continuous_mem_info->is_input_) {
     continuous_mem_info_helper_->AddContinuousMallocIndex(continuous_mem_info, continuous_mem_info->compute_index_);
   } else {
@@ -345,6 +364,7 @@ void MemOffloadStrategy::GenComputeMemEvents() {
     }
 
     const auto &last_event = mem_events[mem_events.size() - 1];
+    MS_EXCEPTION_IF_NULL(last_event);
     size_t pre_index = is_high_priority ? last_event->index : first_event->index;
     for (size_t i = kFirstGetMemEventIndex; i < mem_events.size(); ++i) {
       auto &event = mem_events[i];
@@ -431,8 +451,10 @@ void ContinuousMemInfoHelper::AddContinuousMemInfo(bool is_input, size_t compute
 }
 
 void MemOffloadStrategy::CountContinuousMemUsage(std::vector<size_t> *total_mem_used) const {
+  MS_EXCEPTION_IF_NULL(continuous_mem_info_helper_);
   const auto &input_continuous_mem_info_ = continuous_mem_info_helper_->GetAllContinuousMemInfo();
   for (const auto &continuous_mem_info : input_continuous_mem_info_) {
+    MS_EXCEPTION_IF_NULL(continuous_mem_info);
     if (!continuous_mem_info->is_input_ || continuous_mem_info->key_index_map_.empty()) {
       continue;
     }
@@ -446,10 +468,12 @@ void MemOffloadStrategy::CountContinuousMemUsage(std::vector<size_t> *total_mem_
       }
       const auto &mem_events = events_iter->second;
       const auto &first_event = mem_events[kInitOrMallocMemEventIndex];
+      MS_EXCEPTION_IF_NULL(first_event);
       if (first_event->index < earliest_malloc_index) {
         earliest_malloc_index = first_event->index;
       }
       const auto &last_events = mem_events[mem_events.size() - 1];
+      MS_EXCEPTION_IF_NULL(last_events);
       const auto end_step = IsHighPriorityMem(key) ? total_step_ - 1 : last_events->index;
       const auto mem_size = last_events->mem_size;
       for (size_t start_index = compute_index + 1; start_index <= end_step; start_index += 1) {

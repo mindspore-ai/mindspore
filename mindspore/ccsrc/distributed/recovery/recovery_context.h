@@ -46,6 +46,7 @@ class BACKEND_EXPORT RecoveryContext {
   static std::shared_ptr<RecoveryContext> &GetInstance() {
     if (instance_ == nullptr) {
       instance_.reset(new (std::nothrow) RecoveryContext());
+      MS_EXCEPTION_IF_NULL(instance_);
       instance_->Initialize();
     }
     return instance_;

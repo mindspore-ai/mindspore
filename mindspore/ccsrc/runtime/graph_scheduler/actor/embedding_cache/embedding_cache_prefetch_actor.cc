@@ -191,6 +191,7 @@ bool MemcpyHostToDeviceAsync(void *dst, const void *src, size_t size, const Devi
   MS_ERROR_IF_NULL(dst);
   MS_ERROR_IF_NULL(src);
   MS_ERROR_IF_NULL(device_context);
+  MS_ERROR_IF_NULL(device_context->device_res_manager_);
 
   void *device_ptr = dst;
   const void *host_ptr = src;
@@ -210,6 +211,7 @@ bool MemcpyDeviceToHostAsync(void *dst, const void *src, size_t size, const Devi
   MS_ERROR_IF_NULL(dst);
   MS_ERROR_IF_NULL(src);
   MS_ERROR_IF_NULL(device_context);
+  MS_ERROR_IF_NULL(device_context->device_res_manager_);
 
   void *device_ptr = const_cast<void *>(src);
   void *host_ptr = dst;
@@ -251,8 +253,8 @@ void EmbeddingCachePrefetchActor::Initialize() {
   BuildEmbeddingCacheLookupKernel();
   BuildEmbeddingCacheUpdateKernel();
 
-  // Initialize CPU device context. The origin device context for embedding_cache_actor is GPU or NPU. But we still need
-  // the CPU device context to allocate host memory.
+  // Initialize CPU device context. The origin device context for embedding cache prefetch actor is GPU or NPU. But we
+  // still need the CPU device context to allocate host memory.
   device::DeviceContextKey host_key = {"CPU", 0};
   cpu_device_context_ = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(host_key);
   MS_EXCEPTION_IF_NULL(cpu_device_context_);
@@ -1303,6 +1305,7 @@ bool EmbeddingCachePrefetchActor::SendToRemote(const std::string &cache_operatio
   auto iter = rpc_operators_.find(cache_operation);
   if (iter == rpc_operators_.end()) {
     MS_LOG(ERROR) << "Can not find rpc operator for cache operation: " << cache_operation;
+    return false;
   }
 
   const std::vector<SendRecvPairList> &send_recv_pair_lists = iter->second;
@@ -1347,6 +1350,7 @@ std::unique_ptr<std::vector<char>> EmbeddingCachePrefetchActor::ReceiveFromRemot
   auto iter = rpc_operators_.find(cache_operation);
   if (iter == rpc_operators_.end()) {
     MS_LOG(ERROR) << "Can not find rpc operator for cache operation: " << cache_operation;
+    return nullptr;
   }
 
   const std::vector<SendRecvPairList> &send_recv_pair_lists = iter->second;
@@ -1710,6 +1714,7 @@ std::unique_ptr<MessageBase> Sender::BuildRpcMessage(const std::vector<ShapeVect
   size_t data_size = CalDataSize(shapes, data_types, data_list, finalize_remote);
   if (use_void_) {
     MS_EXCEPTION_IF_NULL(cpu_device_context_);
+    MS_EXCEPTION_IF_NULL(cpu_device_context_->device_res_manager_);
     rpc_data = static_cast<RpcDataPtr>(cpu_device_context_->device_res_manager_->AllocateMemory(data_size));
     MS_EXCEPTION_IF_NULL(rpc_data);
     message->data = rpc_data;
@@ -1753,6 +1758,7 @@ std::unique_ptr<MessageBase> Sender::BuildRpcMessage(const std::vector<ShapeVect
     offset += ds_pb_msg_str.size();
 
     // 4. The real data buffer need to be sent.
+    MS_EXCEPTION_IF_NULL(data);
     if (EOK != memcpy_s(rpc_data + offset, data->size, data->addr, data->size)) {
       MS_LOG(EXCEPTION) << "Failed to memcpy_s for real data.";
     }
@@ -1777,6 +1783,7 @@ std::unique_ptr<MessageBase> Sender::BuildRpcMessage(const std::vector<ShapeVect
 
 bool Sender::FreeMessage(void *data) {
   MS_EXCEPTION_IF_NULL(cpu_device_context_);
+  MS_EXCEPTION_IF_NULL(cpu_device_context_->device_res_manager_);
   MS_ERROR_IF_NULL_W_RET_VAL(data, false);
   cpu_device_context_->device_res_manager_->FreeMemory(data);
   return true;
@@ -1797,6 +1804,7 @@ size_t Sender::CalDataSize(const std::vector<ShapeVector> &shapes, const std::ve
     data_size += strlen(kRpcDynamicShapeData);
     data_size += sizeof(size_t);
     data_size += ds_pb_msg_str.size();
+    MS_EXCEPTION_IF_NULL(data);
     data_size += data->size;
   }
   if (finalize_remote) {
@@ -1954,6 +1962,7 @@ MessageBase *Receiver::HandleMessage(MessageBase *const msg) {
 
   if (use_void_) {
     MS_EXCEPTION_IF_NULL(cpu_device_context_);
+    MS_EXCEPTION_IF_NULL(cpu_device_context_->device_res_manager_);
     cpu_device_context_->device_res_manager_->FreeMemory(data);
   }
   delete msg;
@@ -1962,6 +1971,7 @@ MessageBase *Receiver::HandleMessage(MessageBase *const msg) {
 
 void *Receiver::AllocateMessage(size_t size) {
   MS_EXCEPTION_IF_NULL(cpu_device_context_);
+  MS_EXCEPTION_IF_NULL(cpu_device_context_->device_res_manager_);
   void *data = cpu_device_context_->device_res_manager_->AllocateMemory(size);
   MS_EXCEPTION_IF_NULL(data);
   return data;
