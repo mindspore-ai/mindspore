@@ -110,11 +110,11 @@ def _get_grad_weights_id(weights=None):
     """generate id of parameters"""
     res = ""
     if isinstance(weights, Parameter):
-        res = weights.name
+        res = weights.name + str(weights.requires_grad)
     if isinstance(weights, ParameterTuple):
-        res = ''.join(item.name for item in weights)
+        res = ''.join(item.name + str(item.requires_grad) for item in weights)
     if isinstance(weights, list):
-        res = ''.join(item.name for item in weights if isinstance(item, Parameter))
+        res = ''.join(item.name + str(item.requires_grad) for item in weights if isinstance(item, Parameter))
     return res
 
 
