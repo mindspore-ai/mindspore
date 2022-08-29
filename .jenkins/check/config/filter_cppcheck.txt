@@ -33,6 +33,8 @@
 "mindspore/mindspore/ccsrc/frontend/parallel/graph_util/graph_splitter.cc"                            "knownConditionTrueFalse"
 "mindspore/mindspore/ccsrc/backend/graph_compiler/backend.cc"                                         "knownConditionTrueFalse"
 "mindspore/mindspore/ccsrc/backend/graph_compiler/backend.cc"                                         "variableScope"
+"mindspore/mindspore/ccsrc/backend/graph_compiler/backend_base.cc"                                    "knownConditionTrueFalse"
+"mindspore/mindspore/ccsrc/backend/graph_compiler/backend_base.cc"                                    "variableScope"
 "mindspore/mindspore/core/ops/max_pool.cc"                                                            "zerodivcond"
 
 # MindData

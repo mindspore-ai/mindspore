@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@
 #include "utils/hash_map.h"
 #include "include/common/utils/contract.h"
 #include "ir/anf.h"
+#include "backend/graph_compiler/backend_base.h"
 #include "backend/graph_compiler/segment_runner.h"
 #include "backend/graph_compiler/graph_partition.h"
 #include "backend/graph_compiler/vm.h"
@@ -39,43 +40,6 @@
 
 namespace mindspore {
 namespace compile {
-using GraphOutputInfo = session::GraphOutputInfo;
-using DeviceContext = device::DeviceContext;
-using ActorInfo = runtime::ActorInfo;
-using GraphCompiler = runtime::GraphCompiler;
-using GraphCompilerInfo = runtime::GraphCompilerInfo;
-using ControlNodeParser = runtime::ControlNodeParser;
-using FuncGraphToKernelGraphGroup = runtime::FuncGraphToKernelGraphGroup;
-using ControlNodeParserPtr = runtime::ControlNodeParserPtr;
-using KernelWithIndex = session::KernelWithIndex;
-
-enum SwitchCondStatus {
-  kCondOk = 0,
-  kCondAlreadyRun,
-};
-
-class BACKEND_EXPORT Backend {
- public:
-  explicit Backend(const std::string &name);
-
-  virtual ~Backend() = default;
-
-  LinkFuncType convert_fn() { return convert_fn_; }
-  std::string name() { return name_; }
-  virtual bool GetCond(const BaseRef &c, bool *value);
-  virtual bool GetIndex(const BaseRef &c, int64_t *value);
-  virtual GraphId CompileGraph(NotNull<FuncGraphPtr> fg) { return kInvalidGraphId; }
-  virtual void SetDebugger() {}
-
-  bool is_multi_graph_sink() const { return is_multi_graph_sink_; }
-  void set_is_multi_graph_sink(bool flag) { is_multi_graph_sink_ = flag; }
-
- protected:
-  std::string name_;
-  LinkFuncType convert_fn_;
-  bool is_multi_graph_sink_;
-};
-
 class BACKEND_EXPORT MsBackend : public Backend {
  public:
   MsBackend(const std::string &name, const std::string &target, uint32_t device_id);
@@ -102,58 +66,29 @@ class BACKEND_EXPORT MsBackend : public Backend {
   mindspore::HashMap<GraphId, LinConvertResult> graph_id_map_;
 };
 
-class BACKEND_EXPORT MindRTBackend : public Backend {
+class BACKEND_EXPORT MindRTBackend : public MindRTBackendBase {
  public:
-  MindRTBackend(const std::string &backend_name, const std::string &device_name, uint32_t device_id);
+  MindRTBackend(const std::string &backend_name, const std::string &device_name, uint32_t device_id)
+      : MindRTBackendBase(backend_name, device_name, device_id) {}
   ~MindRTBackend() override = default;
 
-  // The parameter root_graph is a root graph, and the root graph maybe contain multiple sub graphs, It will traverse
-  // all sub graphs to call CompileGraph.
-  const ActorInfo &CompileGraphs(const FuncGraphPtr &func_graph);
-
-  // Run Graph in the graph mode.
-  void RunGraph(const ActorInfo &actor_info, const VectorRef &args, VectorRef *outputs);
   // Run single op in the PyNative mode.
   void RunOp(const session::BackendOpRunInfoPtr &op_run_info, VectorRef *outputs);
-#ifdef ENABLE_DEBUGGER
-  void SetDebuggerInit();
-#endif
 
   // Execute all tasks in queue when lazy build is enabled in PyNative mode.
-  void WaitTaskFinish() const;
+  void WaitTaskFinish() const override;
   // Clear resource when python exit.
   void ClearOpExecutorResource() const;
-  // Get the device target.
-  std::string GetDeviceTarget() { return device_name_; }
+
   // Sync default stream in PyNative mode.
   void SyncStream();
 
  private:
-  // The parameter func_graph is a graph, it can be either a root graph or a sub graph,
-  // The result of graph compiler is stored in graph_id_to_device_context_ and control_nodes_.
-  void CompileGraph(const FuncGraphPtr &func_graph, device::RunMode run_mode);
-
-  // Compile the kernel graph by the segment which is from the function graph partition.
-  void CompileGraph(const GraphSegmentPtr &segment, device::RunMode run_mode);
-
   // CreateKernel, Transform and Schedule have not been finished when LazyBuild is enabled in PyNative mode.
   void CompileSingleOpGraph(const KernelGraphPtr &graph, const DeviceContext *device_context) const;
 
   // Get saved OpBuildTask in OpExecutor and build all the kernels together in PyNative mode.
   void CompileSingleOpGraphs(const std::vector<std::shared_ptr<runtime::OpBuildTask>> &build_tasks);
-
-  void ConstructOutputs(runtime::ActorSet *actor_set, VectorRef *outputs, const FuncGraphPtr &root_graph);
-
-  // Restore the outputs tuple by the origin funcGraph output node and output tensors.
-  void ConstructOutputs(const AnfNodePtr &output_node, const std::vector<tensor::TensorPtr> &output_tensors,
-                        size_t *output_position, VectorRef *outputs);
-  // In the control flow, the output of the call node needs to be created by abstract.
-  BaseRef ConstructOutputByAbstract(const abstract::AbstractBasePtr &abstract,
-                                    const std::vector<tensor::TensorPtr> &output_tensors, size_t *output_position);
-  // Construct the GraphCompilerInfo by the compilation results of graph, used in Graph mode.
-  std::shared_ptr<GraphCompilerInfo> ConstructGraphCompilerInfo(const FuncGraphPtr &root_graph);
-
-  void ParseControlNodes(const GraphCompilerInfo &graph_compile_info);
 
   // In PyNative mode, the size of single op cache list will be increasing, which lead to memory cost increasing,
   // so the latest single op cache should be erased when cache list size exceeds threshold value.
@@ -171,48 +106,24 @@ class BACKEND_EXPORT MindRTBackend : public Backend {
                       const session::BackendOpRunInfoPtr &op_run_info);
 
   void RunGraphByCondition(const ActorInfo &actor_info, const GraphCompilerInfo &graph_compiler_info,
-                           const VectorRef &args, VectorRef *outputs);
+                           const VectorRef &args, VectorRef *outputs) override;
   // Split complete kernel graph to single op graph in PyNative back
   // propagation, then compile and run single op graph.
   void RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_info, const VectorRef &args, VectorRef *outputs);
 
   void RunGraphByActors(const ActorInfo &actor_info, const GraphCompilerInfo &graph_compiler_info,
                         const VectorRef &args, VectorRef *outputs);
-
   void UpdateOutput(const std::vector<session::KernelWithIndex> &output_nodes, VectorRef *const outputs);
 
   void ReleaseForwardOutput(const std::vector<TensorPtr> &input_tensors);
 
   void OpRunCallback(const std::shared_ptr<runtime::OpTaskContext> &context);
 
-  // When compiling FuncGraph, it is divided according to the control nodes, and obtain the control nodes and several
-  // node segments. Node segments will be compiled into kernelGraphs which are expressed as GraphId and bound to
-  // the corresponding device_context.
-  std::map<GraphId, DeviceContext *> graph_id_to_device_context_;
-  // Funcgraph will be cut into multiple kernel graphs, and the map is used to save the correspondence.
-  // The kernel graphs which not cut by control flow are placed in the same group.
-  std::map<FuncGraphPtr, std::vector<std::vector<GraphId>>> func_graph_to_kernel_graph_ids_;
-  std::map<GraphInfo, DeviceContext *> graph_info_to_device_context_;
-  std::vector<AnfNodePtr> control_nodes_;
-
-  mindspore::HashMap<ActorInfo, std::shared_ptr<GraphCompilerInfo>> actor_to_graph_compiler_info_;
-
   // Cache output tensor ref count of kernels for back propagation graph in PyNative mode.
   std::map<GraphId, std::map<KernelWithIndex, size_t>> cnode_ref_counts_;
 
   // Cache forward op output value node tensor ref count of kernels for back propagation graph in PyNative mode.
   std::map<std::string, size_t> forward_op_output_tensor_id_;
-
-  FuncGraphPtr root_graph_;
-  GraphPartitionPtr graph_partition_;
-  std::shared_ptr<GraphCompiler> graph_compiler_;
-  std::string device_name_;
-  uint32_t device_id_;
-  int ms_execution_mode_{kGraphMode};
-  int real_execution_mode_{kGraphMode};
-  void CompileSubGraph(const FuncGraphPtr &func_graph, device::RunMode run_mode = device::RunMode::kUnknown);
-  void ProcessNotSupportCnode(const FuncGraphPtr &func_graph, const device::DeviceType &old_target,
-                              const device::DeviceType &new_target) const;
 };
 using MindRTBackendPtr = std::shared_ptr<compile::MindRTBackend>;
 }  // namespace compile
