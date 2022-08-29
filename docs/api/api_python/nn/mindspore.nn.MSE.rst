@@ -30,7 +30,7 @@ mindspore.nn.MSE
 
     .. py:method:: update(*inputs)
 
-        使用预测值 :math:`y_{pred}` 和真实值 :math:`y` 更新局部变量。。
+        使用预测值 :math:`y_{pred}` 和真实值 :math:`y` 更新局部变量。
 
         **参数：**
 
