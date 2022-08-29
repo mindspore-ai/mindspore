@@ -23,6 +23,7 @@
 #include <utility>
 #include <vector>
 #include <stack>
+#include <set>
 
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
@@ -65,7 +66,7 @@ struct Block {
   size_t size_;
   size_t end_offset_;
 
-  Block(size_t start, size_t size) : start_offset_(start), size_(size) { end_offset_ = start_offset_ + size_; }
+  Block(size_t start, size_t size) : start_offset_(start), size_(size), end_offset_(start + size) {}
 };
 
 void MergeBlocks(std::vector<Block> *block_list, std::stack<Block> *merged_blocks);
@@ -83,7 +84,7 @@ class Somas {
   bool Assign(const KernelGraphPtr &graph_ptr);
   std::string SomasInfo(bool calc_hash = false) const;
 #ifndef ENABLE_SECURITY
-  virtual void ConvertToProfilingNode(uint32_t graph_id) const {}
+  virtual void ConvertToProfilingNode(uint32_t /* graph_id */) const {}
 #endif
 
  private:
@@ -94,12 +95,12 @@ class Somas {
   virtual size_t GetCommunicationReservedSize() const;
 
   virtual bool GetEnableCacheFlag(const session::KernelGraph &graph) const;
-  virtual std::vector<vector<uint32_t>> GetStreamGroupInfo(const session::KernelGraph &graph) const;
+  virtual std::vector<vector<uint32_t>> GetStreamGroupInfo() const;
   virtual bool GetDependExecOrderFlag(const session::KernelGraph &graph) const = 0;
   virtual std::pair<bool, std::string> GetDebugConfig() const;
 
-  virtual std::map<std::string, UnReuseType> GetUnReuseNodeType(const session::KernelGraph &graph) const;
-  virtual std::map<std::string, UnReuseType> GetUnReuseNodeName(const session::KernelGraph &graph) const;
+  virtual std::map<std::string, UnReuseType> GetUnReuseNodeType() const;
+  virtual std::map<std::string, UnReuseType> GetUnReuseNodeName() const;
 
   virtual bool InitDevSpecControlTensors(const session::KernelGraph &graph) = 0;
   virtual bool DevSpecNodeProcess(const session::KernelGraph &graph) = 0;
@@ -109,7 +110,7 @@ class Somas {
   std::string device_name_{"SOMAS"};
   size_t communication_gap_size_{0};
 
-  size_t depend_exec_order_{false};
+  bool depend_exec_order_{false};
   bool enable_cache_{false};
   bool save_debug_info_{false};
   std::string debug_info_path_;
@@ -167,7 +168,8 @@ class Somas {
 #endif
   void RefNodeProcess(const session::KernelGraph &graph);
   void UnReuseNodeProcess(const session::KernelGraph &graph);
-  void CommunicationNodeProcess(const session::KernelGraph &graph);
+  void CommunicationNodeProcess();
+  std::map<size_t, std::map<size_t, std::set<size_t>>> GetContiguousRefListErrorCheckMap();
   void GetContiguousListContainUnionTensor();
   std::map<size_t, size_t> GetRefTensorsInContiguousList();
   common::KernelWithIndex GetVisitKernelWithReturnType(const AnfNodePtr &ori_node, size_t ori_index);
@@ -201,8 +203,8 @@ class Somas {
   void UpdateContiguousTensorsOffset(const std::map<size_t, size_t> &contiguous_ref_list_map);
 
   // cache
-  bool SaveSomasResult(const session::KernelGraph &graph);
-  bool VerifySomasResult(const session::KernelGraph &graph, const nlohmann::json &somas_json) const;
+  void SaveSomasResult(const session::KernelGraph &graph);
+  bool VerifySomasResult(const nlohmann::json &somas_json) const;
   bool LoadSomasResult(const session::KernelGraph &graph, const string &filename);
   bool UpdateTensorsOffset(const std::vector<nlohmann::json> &tensors_json);
   bool CalcSomasModelHash(const session::KernelGraph &graph);
@@ -221,7 +223,7 @@ class Somas {
   // update graph
   std::vector<std::pair<size_t, size_t>> GetNodeOutputSomasResult(const AnfNodePtr &node) const;
   std::vector<std::pair<size_t, size_t>> GetNodeWorkSpaceSomasResult(const AnfNodePtr &node) const;
-  bool UpdateSomasResultToGraph(const session::KernelGraph &graph);
+  void UpdateSomasResultToGraph(const session::KernelGraph &graph);
 
  protected:
   std::vector<SomasParameterPtr> parameters_list_;
@@ -237,7 +239,7 @@ class Somas {
   std::vector<vector<size_t>> contiguous_tensors_list_;
 
   void AddControlTensor(const SomasNodePtr &from, const SomasNodePtr &to);
-  void AddControlTensorFromExecOrder(const session::KernelGraph &graph);
+  void AddControlTensorFromExecOrder();
   void GraphOutputProcess(const session::KernelGraph &graph);
   void UpdateContiguousTensorList();
   SomasNodePtr GetSomasNode(size_t node_id) const;

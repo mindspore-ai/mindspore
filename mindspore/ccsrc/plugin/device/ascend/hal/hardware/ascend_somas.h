@@ -42,8 +42,8 @@ class AscendSomas : public somas::Somas {
   size_t GetAlignSize(size_t original_size) const override;
 
   bool GetDependExecOrderFlag(const session::KernelGraph &graph) const override;
-  std::vector<vector<uint32_t>> GetStreamGroupInfo(const session::KernelGraph &graph) const override;
-  std::map<std::string, UnReuseType> GetUnReuseNodeType(const session::KernelGraph &graph) const override;
+  std::vector<vector<uint32_t>> GetStreamGroupInfo() const override;
+  std::map<std::string, UnReuseType> GetUnReuseNodeType() const override;
 
   bool InitDevSpecControlTensors(const session::KernelGraph &graph) override;
   bool DevSpecNodeProcess(const session::KernelGraph &graph) override;
