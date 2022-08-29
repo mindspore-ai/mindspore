@@ -99,9 +99,10 @@ Task *TaskManager::FindMe() {
   TaskManager &tm = TaskManager::GetInstance();
   SharedLock lock(&tm.lru_lock_);
   auto id = this_thread::get_id();
-  auto tk = std::find_if(tm.lru_.begin(), tm.lru_.end(), [id](const Task &tk) { return tk.id_ == id; });
-  if (tk != tm.lru_.end()) {
-    return &(*tk);
+  for (auto iter = tm.lru_.begin(); iter != tm.lru_.end(); ++iter) {
+    if (iter->id_ == id) {
+      return &(*iter);
+    }
   }
   // If we get here, either I am the watchdog or the master thread.
   if (tm.master_->id_ == id) {
@@ -241,8 +242,13 @@ void TaskManager::ReturnFreeTask(Task *p) noexcept {
   // Take it out from lru_ if any
   {
     UniqueLock lck(&lru_lock_);
-    auto it = std::find(lru_.begin(), lru_.end(), *p);
-    if (it != lru_.end()) {
+    auto iter = lru_.begin();
+    for (; iter != lru_.end(); ++iter) {
+      if (*iter == *p) {
+        break;
+      }
+    }
+    if (iter != lru_.end()) {
       lru_.Remove(p);
     }
   }
