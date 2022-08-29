@@ -23,6 +23,7 @@
 #include "include/api/status.h"
 #include "include/api/context.h"
 #include "ops/base_operator.h"
+#include "ops/custom.h"
 
 namespace mindspore {
 class KernelExecutorImpl;
@@ -40,35 +41,38 @@ class MS_API KernelExecutor {
   ///                       catch `std::runtime_error` to ensure execute without crash.
   /// \param[in] ms_context Define the context used to store options during execution.
   /// \param[in] inputs A vector where single operator inputs are arranged in sequence.
-  /// \param[in] outputs A vector where single operator outputs are arranged in sequence.
   ///
   /// \return Status.
   Status Build(const std::shared_ptr<ops::BaseOperator> &op, const std::vector<MSTensor> &inputs,
-               const std::vector<MSTensor> &outputs, const std::shared_ptr<Context> &ms_context);
+               const std::shared_ptr<Context> &ms_context);
+
+  /// \brief Build a single operator so that it can run on a device.
+  ///
+  /// \param[in] op Define an Custom operator.
+  ///
+  /// \param[in] ms_context Define the context used to store options during execution.
+  /// \param[in] inputs A vector where single operator inputs are arranged in sequence.
+  /// \param[in] output_num Custom operator outputs size.
+  ///
+  /// \return Status.
+  Status Build(const std::shared_ptr<ops::Custom> &op, const std::vector<MSTensor> &inputs,
+               const std::shared_ptr<Context> &ms_context, const int output_num);
 
   /// \brief ReSize KernelExecutor. Change the shape and data type of inputs.
   ///        Notice: Conv2DFusion can't update weight and bias by this method.
   ///
   /// \param[in] inputs A vector where single operator inputs are arranged in sequence.
-  /// \param[in] outputs A vector where single operator outputs are arranged in sequence.
   ///
   /// \return Status.
-  Status ReSize(const std::vector<MSTensor> &inputs, const std::vector<MSTensor> &outputs);
-
-  /// \brief Set outputs infer shape info.
-  ///
-  /// \param[in] outputs A vector where single operator outputs are arranged in sequence.
-  ///
-  /// \return Status.
-  Status Infer(std::vector<MSTensor> *outputs);
+  Status ReSize(const std::vector<MSTensor> &inputs);
 
   /// \brief Execute KernelExecutor.
   ///
   /// \param[in] inputs A vector where single operator inputs are arranged in sequence.
-  /// \param[in] outputs A vector where single operator outputs are arranged in sequence.
+  /// \param[in] outputs Which is a pointer to a vector.The outputs are filled in the container in sequence.
   ///
   /// \return Status.
-  Status Execute(const std::vector<MSTensor> &inputs, const std::vector<MSTensor> &outputs);
+  Status Execute(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs);
 
  private:
   std::shared_ptr<KernelExecutorImpl> impl_ = nullptr;
