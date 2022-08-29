@@ -41,6 +41,9 @@ class InTopKInfer : public abstract::OpInferBase {
     auto prim_name = primitive->name();
     auto x1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
     auto x2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+    if (IsDynamicRank(x1_shape) || IsDynamicRank(x2_shape)) {
+      return std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
+    }
     (void)CheckAndConvertUtils::CheckInteger("input x1 rank", SizeToLong(x1_shape.size()), kEqual, kInputx1ShapeSize,
                                              prim_name);
     (void)CheckAndConvertUtils::CheckInteger("input x2 rank", SizeToLong(x2_shape.size()), kEqual, kInputx2ShapeSize,
