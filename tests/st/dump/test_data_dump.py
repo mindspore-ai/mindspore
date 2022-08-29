@@ -216,7 +216,7 @@ def test_async_dump_net_multi_layer_mode1():
     with tempfile.TemporaryDirectory(dir='/tmp') as tmp_dir:
         dump_path = os.path.join(tmp_dir, 'async_dump_net_multi_layer_mode1')
         json_file_path = os.path.join(tmp_dir, "test_async_dump_net_multi_layer_mode1.json")
-        generate_dump_json(dump_path, json_file_path, 'test_async_dump_net_multi_layer_mode1')
+        generate_dump_json(dump_path, json_file_path, 'test_async_dump_net_multi_layer_mode1', 'test')
         os.environ['MINDSPORE_DUMP_CONFIG'] = json_file_path
         weight = Tensor(np.ones((1000, 2048)).astype(np.float32))
         bias = Tensor(np.ones((1000,)).astype(np.float32))
@@ -297,11 +297,13 @@ def run_e2e_dump_execution_graph():
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @security_off_wrap
 def test_dump_with_execution_graph():
-    """Test dump with execution graph on GPU."""
-    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+    """Test dump with execution graph."""
+    context.set_context(mode=context.GRAPH_MODE)
     run_e2e_dump_execution_graph()
 
 

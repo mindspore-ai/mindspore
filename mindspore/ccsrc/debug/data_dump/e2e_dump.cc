@@ -358,9 +358,10 @@ void E2eDump::DumpSingleAnfNode(const AnfNodePtr &anf_node, const size_t output_
       bool ret = addr->LoadMemToHost(tensor_name, 0, format, int_shapes, type, 0, true, root_graph_id, false, true);
       if (!ret) {
         MS_LOG(ERROR) << "LoadMemToHost failed, tensor_name: " << tensor_name;
+      } else {
+        TensorStatDump stat_dump("Parameter", dump_name, task_id, stream_id, timestamp, false, 0, 0);
+        (void)stat_dump.DumpTensorStatsToFile(node_name, dump_path, debugger);
       }
-      TensorStatDump stat_dump("Parameter", dump_name, task_id, stream_id, timestamp, false, 0, 0);
-      (void)stat_dump.DumpTensorStatsToFile(node_name, dump_path, debugger);
     }
     if (dump_json_parser.IsTensorDump()) {
       DumpMemToFile(file_path, *addr, int_shapes, type, trans_flag);

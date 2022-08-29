@@ -58,7 +58,7 @@ async_dump_dict_2 = {
         "input_output": 2,
         "kernels": [
             "default/TensorAdd-op10",
-            "Gradients/Default/network-WithLossCell/_backbone-ReLUReduceMeanDenseRelu/dense-Dense/gradBiasAdd/"\
+            "Gradients/Default/network-WithLossCell/_backbone-ReLUReduceMeanDenseRelu/dense-Dense/gradBiasAdd/" \
             "BiasAddGrad-op8",
             "Default/network-WithLossCell/_loss_fn-SoftmaxCrossEntropyWithLogits/SoftmaxCrossEntropyWithLogits-op5",
             "Default/optimizer-Momentum/tuple_getitem-op29",
@@ -99,11 +99,13 @@ async_dump_dict_3 = {
     }
 }
 
-def generate_dump_json(dump_path, json_file_name, test_key):
+
+def generate_dump_json(dump_path, json_file_name, test_key, net_name='Net'):
     """
     Util function to generate dump configuration json file.
     """
-    if test_key == "test_async_dump":
+    data = {}
+    if test_key in ["test_async_dump", "test_async_dump_dataset_sink"]:
         data = async_dump_dict
         data["common_dump_settings"]["path"] = dump_path
     elif test_key in ("test_e2e_dump", "test_e2e_dump_trans_false"):
@@ -133,6 +135,7 @@ def generate_dump_json(dump_path, json_file_name, test_key):
     else:
         raise ValueError(
             "Failed to generate dump json file. The test name value " + test_key + " is invalid.")
+    data["common_dump_settings"]["net_name"] = net_name
     with open(json_file_name, 'w') as f:
         json.dump(data, f)
 
@@ -143,23 +146,31 @@ def generate_dump_json_with_overflow(dump_path, json_file_name, test_key, op):
     """
     if test_key == "test_async_dump":
         data = async_dump_dict
-        data["common_dump_settings"]["path"] = dump_path
-        data["common_dump_settings"]["op_debug_mode"] = op
+        common_dump_settings = data.get("common_dump_settings", "")
+        if not isinstance(common_dump_settings, dict):
+            raise ValueError("Common_dump_settings should be dict, but got %s." % type(common_dump_settings))
+        common_dump_settings["path"] = dump_path
+        common_dump_settings["op_debug_mode"] = op
     elif test_key == "test_async_dump_npy":
         data = async_dump_dict
-        data["common_dump_settings"]["path"] = dump_path
-        data["common_dump_settings"]["op_debug_mode"] = op
-        data["common_dump_settings"]["file_format"] = "npy"
+        common_dump_settings = data.get("common_dump_settings", "")
+        if not isinstance(common_dump_settings, dict):
+            raise ValueError("Common_dump_settings should be dict, but got %s." % type(common_dump_settings))
+        common_dump_settings["path"] = dump_path
+        common_dump_settings["op_debug_mode"] = op
+        common_dump_settings["file_format"] = "npy"
     else:
         raise ValueError(
             "Failed to generate dump json file. Overflow only support in async dump")
     with open(json_file_name, 'w') as f:
         json.dump(data, f)
 
-def generate_statistic_dump_json(dump_path, json_file_name, test_key, saved_data):
+
+def generate_statistic_dump_json(dump_path, json_file_name, test_key, saved_data, net_name='Net'):
     """
     Util function to generate dump configuration json file for statistic dump.
     """
+    data = {}
     if test_key == "test_gpu_e2e_dump":
         data = e2e_dump_dict
     elif test_key == "test_async_dump":
@@ -171,8 +182,10 @@ def generate_statistic_dump_json(dump_path, json_file_name, test_key, saved_data
             "Failed to generate statistic dump json file. The test name value " + test_key + " is invalid.")
     data["common_dump_settings"]["path"] = dump_path
     data["common_dump_settings"]["saved_data"] = saved_data
+    data["common_dump_settings"]["net_name"] = net_name
     with open(json_file_name, 'w') as f:
         json.dump(data, f)
+
 
 def generate_cell_dump_json(dump_path, json_file_name, test_key, dump_mode):
     """
@@ -189,7 +202,8 @@ def generate_cell_dump_json(dump_path, json_file_name, test_key, dump_mode):
         json.dump(data, f)
 
 
-def check_dump_structure(dump_path, json_file_path, num_card, num_graph, num_iteration):
+def check_dump_structure(dump_path, json_file_path, num_card, num_graph, num_iteration, root_graph_id=None,
+                         test_iteration_id=None):
     """
     Util to check if the dump structure is correct.
     """
@@ -197,8 +211,12 @@ def check_dump_structure(dump_path, json_file_path, num_card, num_graph, num_ite
         data = json.load(f)
     net_name = data["common_dump_settings"]["net_name"]
     assert os.path.isdir(dump_path)
+    if root_graph_id is None:
+        root_graph_id = [i for i in range(num_graph)]
+    if test_iteration_id is None:
+        test_iteration_id = [i for i in range(num_iteration)]
     for rank_id in range(num_card):
-        rank_path = os.path.join(dump_path, "rank_"+str(rank_id))
+        rank_path = os.path.join(dump_path, "rank_" + str(rank_id))
         assert os.path.exists(rank_path)
 
         net_name_path = os.path.join(rank_path, net_name)
@@ -209,9 +227,6 @@ def check_dump_structure(dump_path, json_file_path, num_card, num_graph, num_ite
         assert os.path.exists(execution_order_path)
 
         for graph_id in range(num_graph):
-            graph_id_path = os.path.join(net_name_path, str(graph_id))
-            assert os.path.exists(graph_id_path)
-
             graph_pb_file = os.path.join(graph_path, "ms_output_trace_code_graph_" + str(graph_id) + ".pb")
             graph_ir_file = os.path.join(graph_path, "ms_output_trace_code_graph_" + str(graph_id) + ".ir")
             assert os.path.exists(graph_pb_file)
@@ -220,10 +235,15 @@ def check_dump_structure(dump_path, json_file_path, num_card, num_graph, num_ite
             execution_order_file = os.path.join(execution_order_path, "ms_execution_order_graph_"
                                                 + str(graph_id) + ".csv")
             assert os.path.exists(execution_order_file)
-
-            for iteration_id in range(num_iteration):
-                it_id_path = os.path.join(graph_id_path, str(iteration_id))
-                assert os.path.isdir(it_id_path)
+            if graph_id in root_graph_id:
+                execution_history_file = os.path.join(execution_order_path,
+                                                      "ms_global_execution_order_graph_" + str(graph_id) + ".csv")
+                assert os.path.exists(execution_history_file)
+                graph_id_path = os.path.join(net_name_path, str(graph_id))
+                assert os.path.exists(graph_id_path)
+                for iteration_id in test_iteration_id:
+                    it_id_path = os.path.join(graph_id_path, str(iteration_id))
+                    assert os.path.isdir(it_id_path)
 
 
 def find_nth_pos(string, substring, n):
