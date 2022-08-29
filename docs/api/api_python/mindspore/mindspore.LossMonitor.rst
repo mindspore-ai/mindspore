@@ -18,17 +18,17 @@ mindspore.LossMonitor
 
     - **ValueError** - 当 `per_print_times` 不是整数或小于零。
 
-    .. py:method:: step_end(run_context)
+    .. py:method:: on_train_epoch_end(run_context)
 
-        step结束时打印训练loss。
+        LossMoniter用于 `model.fit`，即边训练边推理场景时，打印训练的loss和当前epoch推理的metrics。
 
         **参数：**
 
         - **run_context** (RunContext) - 包含模型的相关信息。详情请参考 :class:`mindspore.RunContext`。
 
-    .. py:method:: on_train_epoch_end(run_context)
+    .. py:method:: step_end(run_context)
 
-        LossMoniter用于 `model.fit`，即边训练边推理场景时，打印训练的loss和当前epoch推理的metrics。
+        step结束时打印训练loss。
 
         **参数：**
 

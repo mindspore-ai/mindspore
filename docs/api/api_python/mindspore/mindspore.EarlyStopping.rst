@@ -30,17 +30,17 @@ mindspore.EarlyStopping
 
         - **run_context** (RunContext) - 包含模型的相关信息。详情请参考 :class:`mindspore.RunContext`。
 
-    .. py:method:: on_train_epoch_end(run_context)
+    .. py:method:: on_train_end(run_context)
 
-        训练过程中，若监控指标在等待 `patience` 个epoch后仍没有改善，则停止训练。
+        打印是第几个epoch执行早停。
 
         **参数：**
 
         - **run_context** (RunContext) - 包含模型的相关信息。详情请参考 :class:`mindspore.RunContext`。
 
-    .. py:method:: on_train_end(run_context)
+    .. py:method:: on_train_epoch_end(run_context)
 
-        打印是第几个epoch执行早停。
+        训练过程中，若监控指标在等待 `patience` 个epoch后仍没有改善，则停止训练。
 
         **参数：**
 
