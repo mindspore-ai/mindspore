@@ -97,7 +97,9 @@ file(GLOB KERNEL_SRC
     ${NNACL_DIR}/experimental/*.c
 )
 
-set(KERNEL_AVX512_FILE ${NNACL_DIR}/fp32/matmul_avx512_fp32.c)
+set(KERNEL_AVX512_FILE  ${NNACL_DIR}/fp32/matmul_avx512_fp32.c
+                        ${NNACL_DIR}/fp32/conv_im2col_avx512_fp32.c
+)
 list(REMOVE_ITEM KERNEL_SRC ${KERNEL_AVX512_FILE})
 
 set(KERNEL_AVX_FILE ${NNACL_DIR}/fp32/conv_sw_avx_fp32.c

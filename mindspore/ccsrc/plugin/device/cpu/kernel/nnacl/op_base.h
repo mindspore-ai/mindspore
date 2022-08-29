@@ -52,6 +52,7 @@
 #define C56NUM 56
 #define C64NUM 64
 #define C128NUM 128
+#define C150NUM 150
 #define C256NUM 256
 #define C1500NUM 1500
 #define TILE_NUM 8
