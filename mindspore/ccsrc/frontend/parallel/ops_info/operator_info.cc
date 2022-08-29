@@ -567,7 +567,7 @@ Operator CreateGetTensorSliceOp(const TensorLayout &tensor_layout) {
 }
 
 OperatorVector CreateMirrorOps(const std::string &group_name, size_t dev_num) {
-  if ((dev_num == 0) || (dev_num == 1)) {
+  if (dev_num == 0) {
     MS_LOG(EXCEPTION) << "Invalid dev num: " << dev_num;
   }
   OperatorVector op_for_weight;
