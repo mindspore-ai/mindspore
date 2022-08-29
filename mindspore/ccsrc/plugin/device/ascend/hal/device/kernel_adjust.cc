@@ -225,7 +225,7 @@ void KernelAdjust::CopyMemcpyList(const std::shared_ptr<session::KernelGraph> &k
 
 void KernelAdjust::InsertEosDoneRecv(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                      std::vector<CNodePtr> *exec_order, uint32_t eos_done_event_id,
-                                     uint32_t fpbp_stream_id) {
+                                     uint32_t fpbp_stream_id) const {
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
   MS_EXCEPTION_IF_NULL(exec_order);
   CNodePtr eos_done_recv = CreateRecvApplyKernel(kernel_graph_ptr, eos_done_event_id);
@@ -249,7 +249,7 @@ void KernelAdjust::InsertGetNextLoopStreamActive(const std::shared_ptr<session::
 
 void KernelAdjust::InsertFpBpStartRecv(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                        std::vector<CNodePtr> *exec_order, uint32_t fpbp_start_event_id,
-                                       uint32_t fpbp_stream_id) {
+                                       uint32_t fpbp_stream_id) const {
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
   MS_EXCEPTION_IF_NULL(exec_order);
   CNodePtr fpbp_start_recv = CreateRecvApplyKernel(kernel_graph_ptr, fpbp_start_event_id);
@@ -335,7 +335,7 @@ void KernelAdjust::SetBeforeGetNextStreamID(std::vector<CNodePtr> *exec_order, c
 
 void KernelAdjust::InsertGetNextLoopFpBpStartSend(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                                   std::vector<CNodePtr> *exec_order, uint32_t *fpbp_start_event_id,
-                                                  uint32_t getnext_stream_id) {
+                                                  uint32_t getnext_stream_id) const {
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
   MS_EXCEPTION_IF_NULL(exec_order);
   MS_EXCEPTION_IF_NULL(fpbp_start_event_id);
@@ -349,7 +349,7 @@ void KernelAdjust::InsertGetNextLoopFpBpStartSend(const std::shared_ptr<session:
 
 void KernelAdjust::InsertGetNextLoopEosStartSend(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                                  std::vector<CNodePtr> *exec_order, uint32_t *eos_start_event_id,
-                                                 uint32_t getnext_stream_id) {
+                                                 uint32_t getnext_stream_id) const {
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
   MS_EXCEPTION_IF_NULL(exec_order);
   MS_EXCEPTION_IF_NULL(eos_start_event_id);
@@ -385,7 +385,7 @@ void KernelAdjust::InsertEosStreamSwitch(const std::shared_ptr<session::KernelGr
 
 void KernelAdjust::InsertGetNextLoopEosStartRecv(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                                  std::vector<CNodePtr> *exec_order, uint32_t eos_start_event_id,
-                                                 uint32_t eos_stream_id) {
+                                                 uint32_t eos_stream_id) const {
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
   MS_EXCEPTION_IF_NULL(exec_order);
   CNodePtr eos_start_recv = CreateRecvApplyKernel(kernel_graph_ptr, eos_start_event_id);
@@ -396,7 +396,7 @@ void KernelAdjust::InsertGetNextLoopEosStartRecv(const std::shared_ptr<session::
 
 void KernelAdjust::InsertEosOp(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                std::vector<CNodePtr> *exec_order, const CNodePtr &getnext_cnode,
-                               uint32_t eos_stream_id) {
+                               uint32_t eos_stream_id) const {
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
   MS_EXCEPTION_IF_NULL(exec_order);
   MS_EXCEPTION_IF_NULL(getnext_cnode);
@@ -409,7 +409,7 @@ void KernelAdjust::InsertEosOp(const std::shared_ptr<session::KernelGraph> &kern
 
 void KernelAdjust::InsertEosDoneSend(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                      std::vector<CNodePtr> *exec_order, uint32_t *eos_done_event_id,
-                                     uint32_t eos_stream_id) {
+                                     uint32_t eos_stream_id) const {
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
   MS_EXCEPTION_IF_NULL(exec_order);
   MS_EXCEPTION_IF_NULL(eos_done_event_id);
