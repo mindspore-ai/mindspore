@@ -29,11 +29,75 @@
 namespace mindspore {
 namespace opt {
 namespace {
+std::function<bool(const CNodePtr &)> check_node = [](const CNodePtr &cnode) {
+  if (IsSpecialType(cnode) || CheckPrimitiveType(cnode, prim::kPrimTranspose)) {
+    return true;
+  }
+  TransposeStrategy transpose_strategy;
+  return transpose_strategy.CanChangeOpAxis(cnode);
+};
+
+void DealWithInputNodes(const FuncGraphPtr &func_graph, const CNodePtr &cur_node, std::set<CNodePtr> *in_nodes,
+                        AnfNodeIndexSet *not_trans_in_nodes, std::set<CNodePtr> *middle_nodes,
+                        std::queue<CNodePtr> *queue_nodes, std::queue<bool> *is_pre_nodes) {
+  MS_ASSERT(func_graph != nullptr && cur_node != nullptr);
+  MS_ASSERT(out_nodes != nullptr && not_trans_out_nodes != nullptr && middle_nodes != nullptr);
+  MS_ASSERT(queue_nodes != nullptr && is_pre_nodes != nullptr);
+  for (size_t i = 1; i < cur_node->size(); ++i) {
+    if (!utils::isa<CNodePtr>(cur_node->input(i))) {
+      continue;
+    }
+    auto cur_node_input = cur_node->input(i)->cast<CNodePtr>();
+    MS_ASSERT(cur_node_input != nullptr);
+    if (middle_nodes->find(cur_node_input) != middle_nodes->end() ||
+        in_nodes->find(cur_node_input) != in_nodes->end()) {
+      continue;
+    }
+    if (!check_node(cur_node_input)) {
+      not_trans_in_nodes->insert(std::make_pair(cur_node, i));
+      continue;
+    }
+    queue_nodes->push(cur_node_input);
+    is_pre_nodes->push(true);
+  }
+}
+
+STATUS DealWithOutputNodes(const FuncGraphPtr &func_graph, const CNodePtr &cur_node, std::set<CNodePtr> *out_nodes,
+                           AnfNodeIndexSet *not_trans_out_nodes, std::set<CNodePtr> *middle_nodes,
+                           std::queue<CNodePtr> *queue_nodes, std::queue<bool> *is_pre_nodes) {
+  MS_ASSERT(func_graph != nullptr && cur_node != nullptr);
+  MS_ASSERT(out_nodes != nullptr && not_trans_out_nodes != nullptr && middle_nodes != nullptr);
+  MS_ASSERT(queue_nodes != nullptr && is_pre_nodes != nullptr);
+  auto cur_node_users = func_graph->manager()->node_users()[cur_node];
+  if (cur_node_users.empty()) {
+    out_nodes->insert(cur_node);
+    return lite::RET_OK;
+  }
+  for (auto &cur_node_user : cur_node_users) {
+    MS_CHECK_TRUE_RET(utils::isa<CNodePtr>(cur_node_user.first), lite::RET_ERROR);
+    auto cur_node_post = cur_node_user.first->cast<CNodePtr>();
+    MS_CHECK_TRUE_RET(cur_node_post != nullptr, lite::RET_ERROR);
+    if (middle_nodes->find(cur_node_post) != middle_nodes->end() ||
+        out_nodes->find(cur_node_post) != out_nodes->end()) {
+      continue;
+    }
+    if (!check_node(cur_node_post)) {
+      not_trans_out_nodes->insert(cur_node_user);
+      continue;
+    }
+    queue_nodes->push(cur_node_post);
+    is_pre_nodes->push(false);
+  }
+  return lite::RET_OK;
+}
+
 STATUS FindAreaSurroundedByTranspose(const FuncGraphPtr &func_graph, const CNodePtr &root_node,
                                      std::set<CNodePtr> *in_nodes, std::set<CNodePtr> *out_nodes,
+                                     AnfNodeIndexSet *not_trans_in_nodes, AnfNodeIndexSet *not_trans_out_nodes,
                                      std::set<CNodePtr> *middle_nodes) {
   MS_ASSERT(func_graph != nullptr && root_node != nullptr);
   MS_ASSERT(in_nodes != nullptr && out_nodes != nullptr && middle_nodes != nullptr);
+  MS_ASSERT(not_trans_in_nodes != nullptr && not_trans_out_nodes != nullptr);
   std::queue<CNodePtr> queue_nodes{};
   queue_nodes.push(root_node);
   std::queue<bool> is_pre_nodes;
@@ -59,42 +123,19 @@ STATUS FindAreaSurroundedByTranspose(const FuncGraphPtr &func_graph, const CNode
       // insert pre nodes.
       auto origin_inputs = cur_node->inputs();
       lite::RemoveIfDepend(cur_node);
-      for (size_t i = 1; i < cur_node->size(); ++i) {
-        if (!utils::isa<CNodePtr>(cur_node->input(i))) {
-          continue;
-        }
-        auto cur_node_input = cur_node->input(i)->cast<CNodePtr>();
-        MS_ASSERT(cur_node_input != nullptr);
-        if (middle_nodes->find(cur_node_input) != middle_nodes->end() ||
-            in_nodes->find(cur_node_input) != in_nodes->end()) {
-          continue;
-        }
-        queue_nodes.push(cur_node_input);
-        is_pre_nodes.push(true);
-      }
       if (CheckIsAllInputsParam(cur_node)) {
         in_nodes->insert(cur_node);
+      } else {
+        DealWithInputNodes(func_graph, cur_node, in_nodes, not_trans_in_nodes, middle_nodes, &queue_nodes,
+                           &is_pre_nodes);
       }
       cur_node->set_inputs(origin_inputs);
     }
     // insert post nodes
-    auto cur_node_users = func_graph->manager()->node_users()[cur_node];
-    for (auto &cur_node_user : cur_node_users) {
-      if (!utils::isa<CNodePtr>(cur_node_user.first)) {
-        MS_LOG(ERROR) << "post node is not cnode.";
-        return lite::RET_ERROR;
-      }
-      auto cur_node_post = cur_node_user.first->cast<CNodePtr>();
-      MS_CHECK_TRUE_MSG(cur_node_post != nullptr, RET_ERROR, "cast ptr failed");
-      if (middle_nodes->find(cur_node_post) != middle_nodes->end() ||
-          out_nodes->find(cur_node_post) != out_nodes->end()) {
-        continue;
-      }
-      queue_nodes.push(cur_node_post);
-      is_pre_nodes.push(false);
-    }
-    if (cur_node_users.empty()) {
-      out_nodes->insert(cur_node);
+    if (DealWithOutputNodes(func_graph, cur_node, out_nodes, not_trans_out_nodes, middle_nodes, &queue_nodes,
+                            &is_pre_nodes) != lite::RET_OK) {
+      MS_LOG(ERROR) << "deal with output failed.";
+      return lite::RET_ERROR;
     }
   }
   return lite::RET_OK;
@@ -120,8 +161,15 @@ void SetTransType(const std::set<CNodePtr> &cnodes, FormatTransNodeType *trans_t
 }
 
 bool JudgeCanOptimizerForMultiOp(const std::set<CNodePtr> &in_nodes, const std::set<CNodePtr> &out_nodes,
-                                 const std::set<CNodePtr> &middle_nodes, TransTypePair *trans_info) {
+                                 const AnfNodeIndexSet &not_trans_in_nodes, const AnfNodeIndexSet &not_trans_out_nodes,
+                                 const std::set<CNodePtr> &middle_nodes, TransTypePair *trans_info, bool all_trans) {
   MS_ASSERT(trans_info != nullptr);
+  if (all_trans && (!not_trans_in_nodes.empty() || !not_trans_out_nodes.empty())) {
+    return false;
+  }
+  if (not_trans_in_nodes.size() + not_trans_out_nodes.size() >= in_nodes.size() + out_nodes.size()) {
+    return false;
+  }
   SetTransType(in_nodes, &trans_info->pre_);
   if (trans_info->pre_ == kNONE) {
     return false;
@@ -132,17 +180,6 @@ bool JudgeCanOptimizerForMultiOp(const std::set<CNodePtr> &in_nodes, const std::
   }
   if (trans_info->pre_ == trans_info->post_) {
     return false;
-  }
-  TransposeStrategy transpose_strategy;
-  for (auto &middle_cnode : middle_nodes) {
-    if (IsSpecialType(middle_cnode)) {
-      continue;
-    }
-    auto middle_node_prim = GetValueNode<PrimitivePtr>(middle_cnode->input(0));
-    MS_CHECK_TRUE_MSG(middle_node_prim != nullptr, false, "GetValueNode failed");
-    if (!transpose_strategy.CanChangeOpAxis(middle_cnode)) {
-      return false;
-    }
   }
   return true;
 }
@@ -174,12 +211,10 @@ int ConvertTensorToNCOrNH(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
     return lite::RET_OK;
   }
   ShapeVector expand_shape(data_info.shape_.begin(), data_info.shape_.end());
-  if (data_info.shape_.size() == 1) {
-    expand_shape = {1, 1, 1, data_info.shape_[0]};
-  } else if (data_info.shape_.size() == kInputSizeTwo) {
-    expand_shape = {1, 1, data_info.shape_[0], data_info.shape_[1]};
-  } else if (data_info.shape_.size() == kInputSizeThree) {
-    expand_shape = {1, data_info.shape_[0], data_info.shape_[1], data_info.shape_[kInputIndexTwo]};
+  bool need_expand = !CheckPrimitiveType(cnode, prim::kPrimScaleFusion);
+  if (need_expand && expand_shape.size() <= DIMENSION_4D) {
+    ShapeVector tmp_shape(DIMENSION_4D - expand_shape.size(), 1);
+    expand_shape.insert(expand_shape.begin(), tmp_shape.begin(), tmp_shape.end());
   }
   auto tensor = std::make_shared<tensor::Tensor>(static_cast<TypeId>(data_info.data_type_), expand_shape,
                                                  data_info.data_.data(), data_info.data_.size());
@@ -437,6 +472,54 @@ STATUS DecreaseTransposeAlgo::HandleGraphSingleNode(const FuncGraphPtr &func_gra
   return RET_OK;
 }
 
+int DecreaseTransposeAlgo::InsertPreTransForNonTransInOut(const FuncGraphPtr &func_graph,
+                                                          const AnfNodeIndexSet &not_trans_in_nodes,
+                                                          const AnfNodeIndexSet &not_trans_out_nodes,
+                                                          TransTypePair trans_info) {
+  std::function<bool(const AnfNodePtr &, size_t, FormatTransNodeType)> insert_pre_trans =
+    [&](const AnfNodePtr &node, size_t index, FormatTransNodeType format_trans_type) -> bool {
+    MS_CHECK_TRUE_RET(node != nullptr, false);
+    auto cnode = node->cast<CNodePtr>();
+    MS_CHECK_TRUE_RET(cnode != nullptr, false);
+    if (CheckPrimitiveType(node, prim::kPrimTupleGetItem)) {
+      auto node_users = func_graph->manager()->node_users()[node];
+      return std::all_of(node_users.begin(), node_users.end(),
+                         [&insert_pre_trans, &format_trans_type](const std::pair<AnfNodePtr, int> &pair) {
+                           return insert_pre_trans(pair.first, pair.second, format_trans_type);
+                         });
+    } else if (CheckPrimitiveType(cnode->input(1), prim::kPrimMakeTuple) ||
+               CheckPrimitiveType(cnode->input(1), kPrimMakeTupleV2)) {
+      auto make_tuple_cnode = cnode->input(1)->cast<CNodePtr>();
+      MS_CHECK_TRUE_RET(make_tuple_cnode != nullptr, false);
+      for (size_t i = 0; i < make_tuple_cnode->size(); i++) {
+        if (!insert_pre_trans(make_tuple_cnode->input(i), i, format_trans_type)) {
+          return false;
+        }
+      }
+      return true;
+    }
+    auto perm = format_trans_type == kNHWC2NCHW ? kNC2NH : kNH2NC;
+    return GenNewInput(func_graph, cnode, perm, true, index) == lite::RET_OK;
+  };
+  bool deal_inputs = std::all_of(not_trans_in_nodes.begin(), not_trans_in_nodes.end(),
+                                 [&insert_pre_trans, &trans_info](const std::pair<AnfNodePtr, int> &pair) {
+                                   return insert_pre_trans(pair.first, pair.second, trans_info.pre_);
+                                 });
+  if (!deal_inputs) {
+    MS_LOG(ERROR) << "Insert transpose for inputs failed.";
+    return lite::RET_ERROR;
+  }
+  bool deal_outputs = std::all_of(not_trans_out_nodes.begin(), not_trans_out_nodes.end(),
+                                  [&insert_pre_trans, &trans_info](const std::pair<AnfNodePtr, int> &pair) {
+                                    return insert_pre_trans(pair.first, pair.second, trans_info.post_);
+                                  });
+  if (!deal_outputs) {
+    MS_LOG(ERROR) << "Insert transpose for outputs failed.";
+    return lite::RET_ERROR;
+  }
+  return lite::RET_OK;
+}
+
 STATUS DecreaseTransposeAlgo::HandleGraphMultiNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
                                                    std::set<CNodePtr> *visit_transposes) {
   MS_ASSERT(func_graph != nullptr && cnode != nullptr && visit_transposes != nullptr);
@@ -445,7 +528,10 @@ STATUS DecreaseTransposeAlgo::HandleGraphMultiNode(const FuncGraphPtr &func_grap
   std::set<CNodePtr> middle_nodes{};
   std::set<CNodePtr> in_nodes{};
   std::set<CNodePtr> out_nodes{};
-  auto status = FindAreaSurroundedByTranspose(func_graph, cnode, &in_nodes, &out_nodes, &middle_nodes);
+  AnfNodeIndexSet not_trans_in_nodes;
+  AnfNodeIndexSet not_trans_out_nodes;
+  auto status = FindAreaSurroundedByTranspose(func_graph, cnode, &in_nodes, &out_nodes, &not_trans_in_nodes,
+                                              &not_trans_out_nodes, &middle_nodes);
   if (status != lite::RET_OK) {
     MS_LOG(ERROR) << "find an area surrounded by transpose failed.";
     return status;
@@ -456,33 +542,35 @@ STATUS DecreaseTransposeAlgo::HandleGraphMultiNode(const FuncGraphPtr &func_grap
     }
   }
   TransTypePair trans_info;
-  if (!JudgeCanOptimizerForMultiOp(in_nodes, out_nodes, middle_nodes, &trans_info)) {
+  if (!JudgeCanOptimizerForMultiOp(in_nodes, out_nodes, not_trans_in_nodes, not_trans_out_nodes, middle_nodes,
+                                   &trans_info, (train_flag_ || all_trans_))) {
     return lite::RET_NO_CHANGE;
   }
   auto node_list = TopoSort(func_graph->get_return());
   std::vector<CNodePtr> middle_ops_vec;
   for (auto &node : node_list) {
-    if (!utils::isa<CNodePtr>(node)) {
-      continue;
-    }
-    if (middle_nodes.find(node->cast<CNodePtr>()) != middle_nodes.end()) {
+    if (utils::isa<CNodePtr>(node) && middle_nodes.find(node->cast<CNodePtr>()) != middle_nodes.end()) {
       middle_ops_vec.push_back(node->cast<CNodePtr>());
       middle_nodes.erase(node->cast<CNodePtr>());
     }
   }
-  for (auto &in_cnode : in_nodes) {
-    manager->Replace(in_cnode, in_cnode->input(1));
+  std::for_each(in_nodes.begin(), in_nodes.end(),
+                [&manager](const CNodePtr &in_cnode) { manager->Replace(in_cnode, in_cnode->input(1)); });
+  std::for_each(out_nodes.begin(), out_nodes.end(),
+                [&manager](const CNodePtr &out_node) { manager->Replace(out_node, out_node->input(1)); });
+
+  if (InsertPreTransForNonTransInOut(func_graph, not_trans_in_nodes, not_trans_out_nodes, trans_info) != lite::RET_OK) {
+    MS_LOG(ERROR) << "Insert pre transpose failed for non-transpose inputs or outputs.";
+    return lite::RET_ERROR;
   }
-  for (auto &out_cnode : out_nodes) {
-    manager->Replace(out_cnode, out_cnode->input(1));
-  }
+
   for (auto &middle_cnode : middle_ops_vec) {
     if (IsSpecialType(middle_cnode)) {
       continue;
     }
     status = HandleGraphSingleNode(func_graph, trans_info, middle_cnode);
     if (status != RET_OK) {
-      MS_LOG(ERROR) << "Decrease transpose for op failed.";
+      MS_LOG(ERROR) << "Decrease transpose failed for op: " << middle_cnode->fullname_with_scope();
       return status;
     }
   }

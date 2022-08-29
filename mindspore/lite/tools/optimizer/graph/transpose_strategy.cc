@@ -449,6 +449,18 @@ bool TransposeStrategy::CanChangeOpAxis(const CNodePtr &cnode) {
     if (CheckPrimitiveType(cnode, prim::kPrimStridedSlice) && cnode->size() != kOnnxStridedSlice) {
       return false;
     }
+  } else if (CheckPrimitiveType(cnode, prim::kPrimScaleFusion)) {
+    MS_CHECK_TRUE_RET(cnode->size() >= kInputSizeThree, false);
+    auto weight_param = cnode->input(kInputIndexTwo);
+    MS_CHECK_TRUE_RET(weight_param != nullptr, false);
+    std::vector<int64_t> weight_shape;
+    if (FetchShapeFromAbstract(weight_param->abstract(), &weight_shape) != lite::RET_OK) {
+      MS_LOG(ERROR) << "Get shape from abstract failed.";
+      return false;
+    }
+    if (weight_shape.size() != 1) {
+      return false;
+    }
   } else if (IsDynamicFormatOpWithAxis(prim->name())) {
     if (prim->GetAttr(ops::kAxis) == nullptr) {
       return false;
@@ -470,7 +482,8 @@ STATUS TransposeStrategy::ChangeOpAxis(const FuncGraphPtr &func_graph, const CNo
     process_funcs = {
       {prim::kPrimConcat->name(), ChangeCommonOp},     {prim::kPrimSplit->name(), ChangeCommonOp},
       {prim::kPrimCrop->name(), ChangeOpCrop},         {prim::kPrimPadFusion->name(), ChangeOpPad},
-      {prim::kPrimSliceFusion->name(), ChangeOpSlice}, {prim::kPrimStridedSlice->name(), ChangeOpStrideSlice}};
+      {prim::kPrimSliceFusion->name(), ChangeOpSlice}, {prim::kPrimStridedSlice->name(), ChangeOpStrideSlice},
+      {prim::kPrimScaleFusion->name(), ChangeCommonOp}};
   auto iter = process_funcs.find(prim->name());
   if (iter != process_funcs.end()) {
     return iter->second(func_graph, cnode, trans_type, &node_infer_shape_);

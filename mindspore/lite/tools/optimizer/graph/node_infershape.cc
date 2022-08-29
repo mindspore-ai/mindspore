@@ -153,12 +153,10 @@ STATUS NodeInferShape::InferShape(const CNodePtr &cnode) {
   } else {
     MS_LOG(WARNING) << "infer shape failed.";
   }
-  if (CheckPrimitiveType(cnode, prim::kPrimCustom)) {
-    std::vector<int64_t> outputs_format;
-    std::transform(outputs.begin(), outputs.end(), std::back_inserter(outputs_format),
-                   [](const lite::Tensor *output) { return output->format(); });
-    (void)anf_prim->AddAttr(kOutputsFormat, MakeValue(outputs_format));
-  }
+  std::vector<int64_t> outputs_format;
+  std::transform(outputs.begin(), outputs.end(), std::back_inserter(outputs_format),
+                 [](const lite::Tensor *output) { return output->format(); });
+  (void)anf_prim->AddAttr(kOutputsFormat, MakeValue(outputs_format));
   return ret;
 }
 

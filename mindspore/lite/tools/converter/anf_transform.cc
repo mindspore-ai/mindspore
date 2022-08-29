@@ -56,6 +56,7 @@
 #include "tools/optimizer/fusion/onnx_gelu_fusion.h"
 #include "tools/optimizer/fusion/squeeze_fusion.h"
 #include "tools/optimizer/fusion/reshape_reshape_fusion.h"
+#include "tools/optimizer/fusion/reshape_transpose_fusion.h"
 #include "tools/optimizer/fusion/transpose_matmul_fusion.h"
 #include "tools/optimizer/fusion/scale_activation_fusion.h"
 #include "tools/optimizer/fusion/scale_scale_fusion.h"
@@ -203,6 +204,7 @@ int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const std::shared
                                     std::make_shared<opt::SqueezeFusion>(),
                                     std::make_shared<opt::TransposeFusion>(),
                                     std::make_shared<opt::ReshapeReshapeFusion>(),
+                                    std::make_shared<opt::ReshapeTransposeFusion>(),
                                     std::make_shared<opt::ConvBiasaddFusion>(),
                                     std::make_shared<opt::ConvBatchNormFusion>(param->fmk_type),
                                     std::make_shared<opt::ConvScaleFusion>(param->fmk_type),
@@ -408,6 +410,29 @@ int AnfTransform::RunConstFoldPass(const FuncGraphPtr &old_graph, const std::sha
   return RET_OK;
 }
 
+int RunDecreaseTransposePass(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param) {
+  MS_ASSERT(old_graph != nullptr && param != nullptr);
+  auto pass = std::make_shared<opt::DecreaseTransposeAlgo>(param->fmk_type, param->train_model, false);
+  MS_CHECK_TRUE_RET(pass != nullptr, RET_ERROR);
+  if (!pass->Run(old_graph)) {
+    MS_LOG(ERROR) << "Run DecreaseTransposeAlgo pass failed";
+    return RET_ERROR;
+  }
+
+  auto optimizer = std::make_shared<opt::GraphOptimizer>();
+  auto decrease_trans_pm = std::make_shared<opt::PassManager>("decrease transpose fusion pass manager", false);
+  CHECK_NULL_RETURN(optimizer);
+  CHECK_NULL_RETURN(decrease_trans_pm);
+  decrease_trans_pm->AddPass(std::make_shared<opt::ReshapeTransposeFusion>());
+  decrease_trans_pm->AddPass(std::make_shared<opt::TransposeFusion>());
+  optimizer->AddPassManager(decrease_trans_pm);
+  if (optimizer->Optimize(old_graph) == nullptr) {
+    MS_LOG(ERROR) << "run decrease transpose failed.";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
 bool AnfTransform::CheckExternalExtension(const std::shared_ptr<ConverterPara> &param) {
   return (!param->plugins_path.empty() && param->commonQuantParam.quant_type != schema::QuantType_QUANT_NONE);
 }
@@ -505,6 +530,13 @@ int AnfTransform::RunFormatTrans(const FuncGraphPtr &old_graph) {
 }
 
 bool RunEliminateRedundantPass(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param) {
+  if (!RunOptimizerPass(old_graph, {"InferShapePass"})) {
+    MS_LOG(WARNING) << "Run infershape opt pass failed.";
+  } else if (!RunOptimizerPass(old_graph, {"DecreaseTransposeAlgo"})) {
+    MS_LOG(ERROR) << "Run transpose opt pass failed.";
+    return false;
+  }
+
   auto eliminate_cast_pass = std::make_shared<opt::EliminateRedundantCastPass>(param->fmk_type, param->train_model);
   MS_CHECK_TRUE_RET(eliminate_cast_pass != nullptr, false);
   if (!eliminate_cast_pass->Run(old_graph)) {
@@ -556,15 +588,6 @@ FuncGraphPtr AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph,
     return nullptr;
   }
 
-  if (!RunOptimizerPass(old_graph, {"InferShapePass"})) {
-    MS_LOG(WARNING) << "Run infershape opt pass failed.";
-  } else {
-    if (!RunOptimizerPass(old_graph, {"DecreaseTransposeAlgo"})) {
-      MS_LOG(ERROR) << "Run transpose opt pass failed.";
-      return nullptr;
-    }
-  }
-
   if (!RunEliminateRedundantPass(old_graph, param)) {
     MS_LOG(ERROR) << "Run elimination of redundant pass failed.";
     return nullptr;
@@ -585,15 +608,15 @@ FuncGraphPtr AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph,
 
   if (!RunOptimizerPass(old_graph, {"InferShapePass"})) {
     MS_LOG(WARNING) << "Run infershape opt pass failed.";
-    if (!RunOptimizerPass(old_graph, {"SpecifyGraphInputFormat", "SpecialNodePostProcess"})) {
-      MS_LOG(ERROR) << "specify the input format of exported model failed.";
-      return nullptr;
-    }
+    status = RunOptimizerPass(old_graph, {"SpecifyGraphInputFormat", "SpecialNodePostProcess"}) ? RET_OK : RET_ERROR;
   } else {
-    if (!RunOptimizerPass(old_graph, {"SpecifyGraphInputFormat", "SpecialNodePostProcess", "DecreaseTransposeAlgo"})) {
-      MS_LOG(ERROR) << "Run transpose opt pass failed.";
-      return nullptr;
-    }
+    status = RunOptimizerPass(old_graph, {"SpecifyGraphInputFormat", "SpecialNodePostProcess"})
+               ? RunDecreaseTransposePass(old_graph, param)
+               : RET_ERROR;
+  }
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "Run transpose opt pass failed.";
+    return nullptr;
   }
 
   status = RunGraphPass(old_graph, param);
