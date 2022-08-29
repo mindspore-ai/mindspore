@@ -37,7 +37,7 @@ TypePtr AssignAddInferType(const PrimitivePtr &primitive, const std::vector<Abst
   (void)types.emplace("ref", input_args[kInputIndex0]->BuildType());
   (void)types.emplace("value", input_args[kInputIndex1]->BuildType());
   // check_scalar_or_tensor_types_same
-  return CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, "AssignAdd");
+  return CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types_with_complex, "AssignAdd");
 }
 }  // namespace
 
