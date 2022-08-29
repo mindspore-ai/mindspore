@@ -89,6 +89,7 @@ from mindspore.ops.operations.math_ops import Gcd
 from mindspore.ops.operations.math_ops import Histogram
 from mindspore.ops.operations.math_ops import Median
 from mindspore.ops.operations._grad_ops import MedianGrad
+from mindspore.ops.operations._grad_ops import MinimumGradGrad
 from mindspore.ops.operations.math_ops import RaggedRange
 from mindspore.ops.operations.math_ops import TridiagonalMatMul
 from mindspore.ops.operations.image_ops import ResizeBicubic
@@ -1656,6 +1657,10 @@ test_case_math_ops = [
         'skip': ['backward']}),
     ('MaximumGradGrad', {
         'block': MaximumGradGrad(),
+        'desc_inputs': [[2, 3, 3, 5], [2, 3, 3, 5], [2, 3, 3, 5], [2, 3, 3, 5]],
+        'skip': ['backward']}),
+    ('MinimumGradGrad', {
+        'block': MinimumGradGrad(),
         'desc_inputs': [[2, 3, 3, 5], [2, 3, 3, 5], [2, 3, 3, 5], [2, 3, 3, 5]],
         'skip': ['backward']}),
     ('StridedSlice_00', {
