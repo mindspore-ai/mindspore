@@ -120,6 +120,7 @@ void GatherActor::GatherInput(OpContext<DeviceTensor> *const context) {
 
   MS_EXCEPTION_IF_NULL(input_partials_[0]);
   gather_input_ = std::make_shared<OpPartial>();
+  MS_EXCEPTION_IF_NULL(gather_input_);
   // The first input partial is the base of gather inputs.
   gather_input_->func_graph_ = input_partials_[0]->func_graph_;
   gather_input_->device_tensors_ = input_partials_[0]->device_tensors_;

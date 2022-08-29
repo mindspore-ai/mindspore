@@ -47,6 +47,7 @@ void StackActor::Init() {
   // Fetch the total number of input partial.
   size_t total_partials_num = 0;
   for (const auto &formal_parameter : formal_parameters_) {
+    MS_EXCEPTION_IF_NULL(formal_parameter.first);
     const auto &abstract = formal_parameter.first->abstract();
     MS_EXCEPTION_IF_NULL(abstract);
     const auto &real_abstract = FetchAbstractByIndex(abstract, formal_parameter.second);

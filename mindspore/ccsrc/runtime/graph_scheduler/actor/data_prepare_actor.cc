@@ -218,6 +218,7 @@ void UpdateRefNodeOutputDeviceAddress(const KernelGraphPtr &graph) {
       // AnfAlgo::SetOutputAddr cannot update the device_address of frontend Tensor
       // if the output of RefNode is used by subsequent nodes.
       // Because the frontend Tensor is copied from backend Tensor and the shared_ptr of Tensor is different.
+      MS_EXCEPTION_IF_NULL(input_addr);
       if (input_addr->GetMutablePtr() == nullptr) {
         AnfAlgo::SetOutputAddr(input_addr, output_index, ref_node.get());
       } else {
@@ -231,6 +232,7 @@ void UpdateGraphsRefNodeAddress(const std::vector<KernelGraphPtr> &graphs) {
   for (const auto &graph : graphs) {
     // The DeviceAddress of the graph parameter has been updated.
     // The output address of RefNode needs to be consistent with the address of parameter.
+    MS_EXCEPTION_IF_NULL(graph);
     if (!graph->is_graph_run_mode()) {
       UpdateRefNodeOutputDeviceAddress(graph);
     }
@@ -425,7 +427,7 @@ void DataPrepareActor::PrepareData(const std::vector<std::vector<TensorPtr>> &in
   if (IsRunningFailed(context)) {
     return;
   }
-
+  MS_EXCEPTION_IF_NULL(graph_compiler_info_);
   UpdateGraphsRefNodeAddress(graph_compiler_info_->graphs_);
   // Debug actor is blocked, must wait debug actor callback message to process continue.
   if (debug_aid_ != nullptr && strategy_ == GraphExecutionStrategy::kPipeline) {
@@ -442,6 +444,7 @@ void DataPrepareActor::PrepareData(const std::vector<std::vector<TensorPtr>> &in
 }
 
 void DataPrepareActor::SendDebugReq(OpContext<DeviceTensor> *const context) {
+  MS_EXCEPTION_IF_NULL(graph_compiler_info_);
   ActorDispatcher::SendSync(*debug_aid_, &DebugActor::DebugOnStepBegin, graph_compiler_info_->graphs_,
                             graph_compiler_info_->origin_parameters_order_, graph_compiler_info_->device_contexts_,
                             context, &GetAID());
@@ -482,6 +485,7 @@ void DataPrepareActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const contex
 
 void DataPrepareActor::PrepareDataForDeviceTensorStore(const std::vector<std::vector<TensorPtr>> &input_tensors,
                                                        OpContext<DeviceTensor> *const context) {
+  MS_EXCEPTION_IF_NULL(graph_compiler_info_);
   const auto &parser = graph_compiler_info_->control_node_parser_;
   MS_EXCEPTION_IF_NULL(parser);
   for (size_t i = 0; i < graph_compiler_info_->graphs_.size(); ++i) {
@@ -514,12 +518,13 @@ void DataPrepareActor::PrepareDataForDeviceTensorStore(const std::vector<std::ve
     RecoveryContext::GetInstance()->set_need_sync_weight_to_device(false);
   }
 
-  PrepareDeviceTensorStoreForControlNode(graph_compiler_info_->control_node_parser_, input_tensors.back(), context);
+  PrepareDeviceTensorStoreForControlNode(parser, input_tensors.back(), context);
 }
 
 void DataPrepareActor::PrepareDataForHostTensorQueue(const std::vector<std::vector<TensorPtr>> &input_tensors,
                                                      OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
+  MS_EXCEPTION_IF_NULL(graph_compiler_info_);
   if ((host_data_source_actor_ == nullptr) || (host_tensor_queue_ == nullptr)) {
     return;
   }
@@ -764,6 +769,7 @@ void DataPrepareActor::PrepareDataForWeightNode(const AnfNodePtr &backend_node, 
         host_tensor_address = device_context->device_res_manager_->CreateDeviceAddress(
           nullptr, device_tensor->GetSize(), device_tensor->format(), device_tensor->type_id(),
           device_tensor->host_shape());
+        MS_EXCEPTION_IF_NULL(host_tensor_address);
         host_tensor_address->set_from_persistent_mem(tensor->is_parameter());
       } else {
         host_tensor_address = device_tensor;
@@ -880,6 +886,7 @@ void DataPrepareActor::PrepareDeviceTensorStoreForControlNode(const ControlNodeP
 void DataPrepareActor::PrepareHostTensorQueueForControlNode(const std::vector<TensorPtr> &tensors,
                                                             std::vector<TensorPtr> *const host_tensors,
                                                             OpContext<DeviceTensor> *const context) {
+  MS_EXCEPTION_IF_NULL(graph_compiler_info_);
   MS_EXCEPTION_IF_NULL(graph_compiler_info_->control_node_parser_);
   MS_EXCEPTION_IF_NULL(host_data_source_actor_);
   MS_EXCEPTION_IF_NULL(host_tensors);

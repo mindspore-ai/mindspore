@@ -34,6 +34,7 @@ void CustomActor::Init() {
 }
 
 void CustomActor::Run(OpContext<DeviceTensor> *const ctx) {
+  MS_EXCEPTION_IF_NULL(ctx);
   auto node = kernel_.lock();
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_ZERO("device_contexts_ size", device_contexts_.size());
@@ -69,6 +70,7 @@ void CustomActor::Run(OpContext<DeviceTensor> *const ctx) {
     // maybe changed.
     if (AnfUtils::GetCustomActorType(kernel_.lock()) == kInfer) {
       auto base_node = AnfUtils::GetCustomActorBaseNode(kernel_.lock());
+      MS_EXCEPTION_IF_NULL(base_node);
       auto kernel_info = dynamic_cast<KernelInfo *>(base_node->kernel_info());
       AnfAlgo::UpdateOutputAddrSize(kernel_info, base_node);
       // Update the shape of internal parameter.

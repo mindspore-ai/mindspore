@@ -61,6 +61,7 @@ void ControlActor::GetAllDeviceTensors(const OpPartialPtr &op_partial, std::vect
 
 void ControlActor::GetAllDeviceTensors(const OpRealParameterWithBranchID &op_real_parameter,
                                        std::vector<DeviceTensor *> *device_tensors) {
+  MS_EXCEPTION_IF_NULL(device_tensors);
   for (auto &device_tensor : op_real_parameter.device_tensors_) {
     (void)device_tensors->emplace_back(device_tensor.second);
   }
@@ -101,8 +102,8 @@ void ControlActor::IncreaseDynamicRefCount(const OpRealParameterWithBranchID &op
 size_t ControlActor::FetchNodePosition(const KernelWithIndex &node) const {
   const auto &iter = find(formal_parameters_.begin(), formal_parameters_.end(), node);
   if (iter == formal_parameters_.end()) {
-    MS_LOG(EXCEPTION) << "Invalid formal parameter:" << node.first->DebugString() << " index:" << node.second
-                      << " for actor:" << GetAID();
+    MS_LOG(EXCEPTION) << "Invalid formal parameter:" << (node.first != nullptr ? node.first->DebugString() : "")
+                      << " index:" << node.second << " for actor:" << GetAID();
   }
   return iter - formal_parameters_.begin();
 }
@@ -213,6 +214,7 @@ void ControlActor::FetchInput(OpContext<DeviceTensor> *const context) {
     if (device_tensors.empty()) {
       auto &device_context = device_contexts_[device_tensor_store_key.first];
       MS_EXCEPTION_IF_NULL(device_context);
+      MS_EXCEPTION_IF_NULL(device_tensor_store_key.second);
       std::string error_info = GetAID().Name() +
                                " get device tensor store failed: " + device_tensor_store_key.second->DebugString() +
                                ", device type:" + std::to_string(static_cast<int>(device_context->GetDeviceType()));
