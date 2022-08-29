@@ -37,9 +37,6 @@ class Factory {
   using CreatorFunc = std::function<std::shared_ptr<C>()>;
 
  public:
-  Factory(const Factory &) = delete;
-  void operator=(const Factory &) = delete;
-
   static Factory &Instance() {
     static Factory instance{};
     return instance;
