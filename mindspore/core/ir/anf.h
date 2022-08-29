@@ -665,16 +665,6 @@ class MS_CORE_API CNode final : public AnfNode, public EffectInfoHolder {
   /// \param debug_infos A node debug info of an anf node.
   void AddFusedDebugInfoList(const std::vector<NodeDebugInfoPtr> &debug_infos);
 
-  /// \brief Check whether this node is in ms_function or not in PyNative Mode.
-  ///
-  /// \return True if in ms_function, otherwise false.
-  bool is_parallel() const { return flags_[kIsParallel]; }
-
-  /// \brief Set is_parallel_ for CNode.
-  ///
-  /// \param[in] parallel Boolean.
-  void set_parallel(bool parallel) { flags_[kIsParallel] = parallel; }
-
   /// \brief Check whether contains a input or indirect input, which is Depend CNode with isolated side-effect node.
   ///
   /// \return True if contains, otherwise false.
@@ -692,8 +682,7 @@ class MS_CORE_API CNode final : public AnfNode, public EffectInfoHolder {
   static constexpr size_t kInForwardFlag = 1;
   static constexpr size_t kEffectHandled = 2;
   static constexpr size_t kIsLoad = 3;
-  static constexpr size_t kIsParallel = 4;
-  static constexpr size_t kNumFlags = 5;
+  static constexpr size_t kNumFlags = 4;
   static constexpr auto kFuncGraphVarKey = "fg_var";
   static constexpr auto kOutputValueKey = "out_value";
 

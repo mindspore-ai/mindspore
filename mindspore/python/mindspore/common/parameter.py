@@ -217,6 +217,7 @@ class Parameter(Tensor_):
         self._cast_type = None
         self._unique = False
         self.is_in_parallel = _is_in_parallel_mode()
+        self.is_in_shard = False
         self._pipeline_stage_list = []
         if isinstance(default_input, (Tensor_, Tensor)):
             Tensor_.__init__(self, default_input.dtype, default_input.shape)

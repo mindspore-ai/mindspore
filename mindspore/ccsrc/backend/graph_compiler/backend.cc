@@ -1113,12 +1113,6 @@ void MindRTBackend::RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_i
 
       graph_output_info.graph_output_tensors.clear();
       graph_compiler_->RecoverGraphOutput(kernel, op_outputs, cnode_ref_count, &op_output_map, &graph_output_info);
-
-      // Save grad node to Bucket
-      if (graph->has_flag(kFlagIsPynativeBpropGraph) && (!common::AnfAlgo::IsControlOpExecInBackend(kernel)) &&
-          !kernel->is_parallel() && pynative::GraphAdapter::IsAutoParallel()) {
-        graph_compiler_->AddGradAddrToBucket(graph->graph_id(), graph_output_info.graph_output_tensors);
-      }
     }
     WaitTaskFinish();
     // Clear bucket resources every step

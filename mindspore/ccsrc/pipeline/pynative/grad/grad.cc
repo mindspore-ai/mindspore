@@ -22,7 +22,6 @@
 #include "ir/cell.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "pipeline/jit/parse/parse_dynamic.h"
-#include "include/common/utils/parallel_context.h"
 #include "pipeline/jit/parse/data_converter.h"
 #include "pipeline/jit/debug/trace.h"
 #include "frontend/optimizer/ad/prim_bprop_optimizer.h"
@@ -585,10 +584,6 @@ void GradExecutor::GradNetInner(const py::object *ret, const prim::GradOperation
   compile::SetMindRTEnable();
   resource->SetBackendAsync([]() { return compile::CreateBackend(); });
   MS_LOG(DEBUG) << "Start task emit action";
-  auto parallel_mode = parallel::ParallelContext::GetInstance()->parallel_mode();
-  if (parallel_mode == parallel::kSemiAutoParallel || parallel_mode == parallel::kAutoParallel) {
-    ms_function()->MarkMsFunctionNodes(resource);
-  }
   TaskEmitAction(resource);
   MS_LOG(DEBUG) << "Start execute action";
   ExecuteAction(resource);

@@ -25,6 +25,7 @@ from mindspore.context import ParallelMode
 from mindspore._checkparam import Validator as validator
 from mindspore import ops, nn
 from mindspore.common import dtype as mstype
+from mindspore.common.api import is_pynative_parallel
 from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.ops.primitive import constexpr
 from mindspore.ops import composite as C
@@ -357,7 +358,8 @@ class TrainOneStepCell(Cell):
         self.reducer_flag = False
         self.grad_reducer = F.identity
         self.parallel_mode = _get_parallel_mode()
-        self.reducer_flag = self.parallel_mode in (ParallelMode.DATA_PARALLEL, ParallelMode.HYBRID_PARALLEL)
+        self.reducer_flag = self.parallel_mode in (ParallelMode.DATA_PARALLEL, ParallelMode.HYBRID_PARALLEL) or \
+                            is_pynative_parallel()
         if self.reducer_flag:
             self.mean = _get_gradients_mean()
             self.degree = _get_device_num()

@@ -36,7 +36,6 @@ class MsFunction {
   MsFunction() = default;
   ~MsFunction() = default;
   void set_graph_phase(const std::string &graph_phase) { graph_phase_ = graph_phase; }
-  void MarkMsFunctionNodes(const pipeline::ResourcePtr &resource) const;
   py::object GradMsFunction(const py::object &out, const py::args &args);
 
  private:

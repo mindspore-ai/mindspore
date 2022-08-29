@@ -104,38 +104,6 @@ void MsFunction::ReplaceNewTensorsInGradGraph(const TopCellInfoPtr &top_cell, co
   top_cell->set_op_info_with_ms_func_forward_tensors(op_run_info->op_info, total_output_tensors);
 }
 
-void MsFunction::MarkMsFunctionNodes(const pipeline::ResourcePtr &resource) const {
-  auto func_graph = resource->func_graph();
-  std::vector<size_t> in_ms_function;
-  const auto &parameters = func_graph->parameters();
-  for (const auto &parameter : parameters) {
-    auto param = parameter->cast<ParameterPtr>();
-    if (!param->has_default()) {
-      continue;
-    }
-    auto iter = std::find(ms_function_params_.begin(), ms_function_params_.end(), param->name());
-    if (iter != ms_function_params_.end()) {
-      (void)in_ms_function.emplace_back(1);
-    } else {
-      (void)in_ms_function.emplace_back(0);
-    }
-  }
-
-  auto ret = func_graph->get_return();
-  auto ret_cnode = ret->cast<CNodePtr>();
-  auto grads = ret_cnode->input(1)->cast<CNodePtr>();
-  for (size_t i = 1; i < grads->inputs().size(); i++) {
-    if (in_ms_function[i - 1] != 0) {
-      auto node = grads->input(i);
-      if (!node->isa<CNode>()) {
-        continue;
-      }
-      auto cnode = node->cast<CNodePtr>();
-      cnode->set_parallel(true);
-    }
-  }
-}
-
 void MsFunction::UpdateMsFunctionForwardTensors(const FrontendOpRunInfoPtr &op_run_info,
                                                 const ValuePtr &new_forward_value) const {
   MS_EXCEPTION_IF_NULL(op_run_info);
