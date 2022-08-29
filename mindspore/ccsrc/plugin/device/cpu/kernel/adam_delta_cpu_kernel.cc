@@ -19,7 +19,6 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include <cfloat>
 
 #include "kernel/common_utils.h"
 #include "plugin/device/cpu/kernel/nnacl/fp32/adam_fp32.h"

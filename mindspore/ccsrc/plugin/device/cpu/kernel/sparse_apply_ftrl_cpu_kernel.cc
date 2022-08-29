@@ -35,6 +35,7 @@ constexpr size_t kIndicesIndex = 4;
 constexpr size_t kSparseApplyFtrlInputsNum = 5;
 constexpr size_t kSparseApplyFtrlWorkspaceSize = 4;
 constexpr size_t kSizeGap = 16;
+constexpr float kPowToSqrtValue = 0.5;
 constexpr char kKernelName[] = "SparseApplyFtrl";
 
 using KernelRunFunc = SparseApplyFtrlCpuKernelMod::KernelRunFunc;
@@ -66,7 +67,7 @@ void ComputeFtrl(MultiThreadComputeParams<T> *input_params, size_t start, size_t
       auto accum_new = accum[j] + summed_grad * summed_grad;
       float y;
       linear[j] += summed_grad;
-      if (std::fabs(lr_power + 0.5) <= std::numeric_limits<float>::epsilon()) {
+      if (std::fabs(lr_power + kPowToSqrtValue) <= std::numeric_limits<float>::epsilon()) {
         y = std::sqrt(accum_new);
         linear[j] -= ((y - std::sqrt(accum[j])) / lr) * var[j];
       } else {
