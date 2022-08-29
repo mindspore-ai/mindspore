@@ -16,6 +16,7 @@
 
 #include "runtime/device/kernel_info.h"
 #include <utility>
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace device {
@@ -114,6 +115,25 @@ bool KernelInfo::SetSomasResult(std::vector<std::pair<size_t, size_t>> &&output_
   somas_output_result_ = std::move(output_somas_result);
   somas_workspace_result_ = std::move(workspace_somas_result);
   return true;
+}
+
+bool KernelInfo::IsTensorEnableSomas(const std::vector<std::pair<size_t, size_t>> &somas_result,
+                                     size_t tensor_index) const {
+  // Somas is currently closed in the runtime.
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if ((ms_context->get_param<int>(MS_CTX_MEMORY_OPTIMIZE_LEVEL) == kOptimizeO0) ||
+      (ms_context->get_param<int>(MS_CTX_MEMORY_OPTIMIZE_LEVEL) == kOptimizeO1)) {
+    return false;
+  }
+
+  if (somas_result.empty()) {
+    return false;
+  }
+  if (tensor_index >= somas_result.size()) {
+    MS_LOG(EXCEPTION) << "The tensor index:" << tensor_index << " is out of range:" << somas_result.size();
+  }
+  return (somas_result[tensor_index].second != 0);
 }
 
 void KernelInfo::set_kernel_mod(const kernel::KernelModPtr &kernel_mod) { kernel_mod_ = kernel_mod; }

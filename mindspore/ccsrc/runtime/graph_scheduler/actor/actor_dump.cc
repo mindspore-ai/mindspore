@@ -205,17 +205,31 @@ void DumpKernelActor(const KernelActor *actor, std::ofstream &ofs) {
 
   const auto &kernel = actor->kernel();
   MS_EXCEPTION_IF_NULL(kernel);
+  auto kernel_info = dynamic_cast<KernelInfo *>(kernel->kernel_info());
+  MS_EXCEPTION_IF_NULL(kernel_info);
   ofs << "\t\tkernel_name:" << kernel->fullname_with_scope()
       << "\tinputs_num:" << common::AnfAlgo::GetInputTensorNum(kernel)
       << "\toutputs_num:" << common::AnfAlgo::GetOutputTensorNum(kernel)
       << "\tis_dynamic_shape:" << actor->is_dynamic_shape() << "\tis_launch_skipped:" << actor->is_launch_skipped()
       << "\n";
+  const auto &somas_outputs = kernel_info->somas_output_result();
   for (size_t i = 0; i < common::AnfAlgo::GetOutputTensorNum(kernel); ++i) {
     const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(kernel, i, false);
     MS_EXCEPTION_IF_NULL(device_tensor);
     ofs << "\t\t\toutput_index:" << i << "\tptr:" << device_tensor->GetPtr() << "\tsize:" << device_tensor->GetSize()
         << "\toriginal_ref_count:" << device_tensor->original_ref_count()
-        << "\tdynamic_ref_count:" << device_tensor->dynamic_ref_count() << "\n ";
+        << "\tdynamic_ref_count:" << device_tensor->dynamic_ref_count()
+        << "\tis_somas_enable:" << kernel_info->IsTensorEnableSomas(somas_outputs, i) << "\n ";
+  }
+  const auto &somas_workspace = kernel_info->somas_workspace_result();
+  const auto &workspace_addresses = kernel_info->workspace_address_list();
+  for (size_t i = 0; i < workspace_addresses.size(); ++i) {
+    auto &device_tensor = workspace_addresses[i];
+    MS_EXCEPTION_IF_NULL(device_tensor);
+    ofs << "\t\t\tworkspace_index:" << i << "\tptr:" << device_tensor->GetPtr() << "\tsize:" << device_tensor->GetSize()
+        << "\toriginal_ref_count:" << device_tensor->original_ref_count()
+        << "\tdynamic_ref_count:" << device_tensor->dynamic_ref_count()
+        << "\tis_somas_enable:" << kernel_info->IsTensorEnableSomas(somas_workspace, i) << "\n ";
   }
 
   DumpAbstractActor(actor, ofs);
@@ -231,6 +245,18 @@ void DumpKernelActor(const KernelActor *actor, std::ofstream &ofs) {
     for (auto &ref_output_index : actor->modifiable_ref_output_indexes()) {
       ofs << "\t\t\tmodifiable_ref_output_index:" << ref_output_index << "\n ";
     }
+  }
+
+  const int32_t kInvalidPosition = -1;
+  if (actor->memory_alloc_insert_position().first != kInvalidPosition) {
+    std::string arrow_type = actor->memory_alloc_insert_position().second ? "data_arrow" : "control_arrow";
+    ofs << "\t\tmemory_alloc_insert_position:" << actor->memory_alloc_insert_position().first
+        << "\tinsert_arrow_type:" << arrow_type << "\n";
+  }
+  if (actor->memory_free_insert_position().first != kInvalidPosition) {
+    std::string arrow_type = actor->memory_free_insert_position().second ? "data_arrow" : "control_arrow";
+    ofs << "\t\tmemory_free_insert_position:" << actor->memory_free_insert_position().first
+        << "\tinsert_arrow_type:" << arrow_type << "\n";
   }
   ofs << "\n";
 }

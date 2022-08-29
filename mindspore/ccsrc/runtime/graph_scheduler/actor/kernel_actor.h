@@ -136,6 +136,11 @@ class KernelActor : public DebugAwareActor {
   friend class RpcNodeScheduler;
 #endif
 
+  // Init the device tensors and kernel launch info.
+  void InitInputInfo();
+  void InitOutputInfo();
+  void InitWorkspaceInfo();
+
   // Fetch the device tensor for launch.
   void FetchInputDeviceTensor(OpContext<DeviceTensor> *const context);
   void FetchOutputDeviceTensor(OpContext<DeviceTensor> *const context);
@@ -152,6 +157,9 @@ class KernelActor : public DebugAwareActor {
   // Back refresh the dynamic device tensor stores that have been triggered copy.
   void RefreshDeviceTensorCopyStore(OpContext<DeviceTensor> *const context);
 
+  // Set the memory address for the tensors which use the somas.
+  void SetSomasMemory(OpContext<DeviceTensor> *const context);
+
   // The real input number of kernel launch.
   size_t real_input_num_;
 
@@ -163,9 +171,6 @@ class KernelActor : public DebugAwareActor {
   // Record the modifiable ref indexes. Used to refresh the ref data which are modified in the running.
   std::set<size_t> modifiable_ref_input_indexes_;
   std::set<size_t> modifiable_ref_output_indexes_;
-
-  // Cache output data by output index to modify the output data effectively.
-  std::vector<std::vector<OpData<DeviceTensor> *>> output_data_by_output_index_;
 
   // Whether skip the kernel launch.
   bool is_launch_skipped_;

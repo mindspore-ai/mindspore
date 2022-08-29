@@ -27,6 +27,20 @@
 
 namespace mindspore {
 namespace runtime {
+namespace {
+bool IsSomasEnable(const SomasInfo *somas_info) {
+  // Somas is currently closed in the runtime.
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if ((ms_context->get_param<int>(MS_CTX_MEMORY_OPTIMIZE_LEVEL) == kOptimizeO0) ||
+      (ms_context->get_param<int>(MS_CTX_MEMORY_OPTIMIZE_LEVEL) == kOptimizeO1)) {
+    return false;
+  }
+
+  return ((somas_info != nullptr) && (somas_info->whole_block_size_ != 0));
+}
+}  // namespace
+
 using distributed::collective::CollectiveManager;
 using distributed::recovery::RecoveryContext;
 
@@ -42,46 +56,18 @@ void KernelActor::Init() {
   MS_EXCEPTION_IF_NULL(kernel_);
   real_input_num_ = common::AnfAlgo::GetInputTensorNum(kernel_);
   kernel_info_ = dynamic_cast<KernelInfo *>(kernel_->kernel_info());
+  MS_EXCEPTION_IF_NULL(kernel_info_);
   is_dynamic_shape_ = common::AnfAlgo::IsDynamicShape(kernel_);
-
-  for (size_t i = 0; i < real_input_num_; ++i) {
-    const auto &input_device_tensor = AnfAlgo::GetPrevNodeMutableOutputAddr(kernel_, i, false);
-    MS_EXCEPTION_IF_NULL(input_device_tensor);
-    (void)real_input_data_infos_.emplace_back(
-      std::make_shared<InputDataInfo>(input_device_tensor->format(), input_device_tensor->host_shape(),
-                                      input_device_tensor->GetSize(), input_device_tensor->type_id()));
+  if (is_dynamic_shape_ && IsSomasEnable(somas_info_)) {
+    MS_LOG(EXCEPTION) << "Not support the somas for the dynamic shape: " << GetAID().Name();
   }
 
   // Init the device tensors and kernel launch info.
-  copy_input_device_tensors_.resize(real_input_num_);
-  input_device_tensors_.resize(real_input_num_);
-  for (auto &input_address : input_device_tensors_) {
-    (void)memory_free_list_.emplace_back(input_address);
-    (void)launch_info_.inputs_.emplace_back(std::make_shared<Address>());
-  }
-  MS_EXCEPTION_IF_NULL(kernel_info_);
-  for (auto &output_address : kernel_info_->output_address_list()) {
-    MS_EXCEPTION_IF_NULL(output_address);
-    (void)output_device_tensors_.emplace_back(output_address.get());
-    (void)memory_alloc_list_.emplace_back(output_address.get());
-    (void)memory_free_list_.emplace_back(output_address.get());
-    (void)launch_info_.outputs_.emplace_back(std::make_shared<Address>());
-  }
-  for (auto &external_reference_tensor : external_reference_tensors_) {
-    (void)memory_free_list_.emplace_back(external_reference_tensor);
-  }
-  // The size of workspace maybe changed in dynamic shape, so put workspace_address in the end of memory_alloc_list_ and
-  // memory_free_list_, for the operation of dynamic_shape condition in FetchWorkspaceDeviceTensor.
-  for (auto &workspace_address : kernel_info_->workspace_address_list()) {
-    MS_EXCEPTION_IF_NULL(workspace_address);
-    (void)workspace_device_tensors_.emplace_back(workspace_address.get());
-    (void)memory_alloc_list_.emplace_back(workspace_address.get());
-    (void)memory_free_list_.emplace_back(workspace_address.get());
-    (void)launch_info_.workspaces_.emplace_back(std::make_shared<Address>());
-  }
+  InitInputInfo();
+  InitOutputInfo();
+  InitWorkspaceInfo();
 
   // Init the output data.
-  output_data_by_output_index_.resize(output_device_tensors_.size());
   InitOutputData();
   if (output_data_.size() != output_data_arrows_.size()) {
     MS_LOG(EXCEPTION) << "The output data size is wrong: " << GetAID().Name();
@@ -95,9 +81,85 @@ void KernelActor::Init() {
       MS_LOG(EXCEPTION) << "The output index is out of range: " << GetAID().Name();
     }
     data->data_ = output_device_tensors_[IntToSize(data_arrow->from_output_index_)];
-    (void)output_data_by_output_index_[IntToSize(data_arrow->from_output_index_)].emplace_back(data);
-
     ++output_data_index;
+  }
+}
+
+void KernelActor::InitInputInfo() {
+  for (size_t i = 0; i < real_input_num_; ++i) {
+    const auto &input_device_tensor = AnfAlgo::GetPrevNodeMutableOutputAddr(kernel_, i, false);
+    MS_EXCEPTION_IF_NULL(input_device_tensor);
+    (void)real_input_data_infos_.emplace_back(
+      std::make_shared<InputDataInfo>(input_device_tensor->format(), input_device_tensor->host_shape(),
+                                      input_device_tensor->GetSize(), input_device_tensor->type_id()));
+  }
+
+  copy_input_device_tensors_.resize(real_input_num_);
+  input_device_tensors_.resize(real_input_num_);
+  for (auto &input_address : input_device_tensors_) {
+    (void)memory_free_list_.emplace_back(input_address);
+    (void)launch_info_.inputs_.emplace_back(std::make_shared<Address>());
+  }
+}
+
+void KernelActor::InitOutputInfo() {
+  MS_EXCEPTION_IF_NULL(kernel_info_);
+  const auto &output_addresses = kernel_info_->output_address_list();
+  const auto &somas_outputs = kernel_info_->somas_output_result();
+  bool output_need_somas = false;
+  for (size_t i = 0; i < output_addresses.size(); ++i) {
+    auto &output_address = output_addresses[i];
+    MS_EXCEPTION_IF_NULL(output_address);
+    (void)output_device_tensors_.emplace_back(output_address.get());
+    (void)launch_info_.outputs_.emplace_back(std::make_shared<Address>());
+
+    // The output taken over by soma does not need to allocate memory.
+    if (kernel_info_->IsTensorEnableSomas(somas_outputs, i)) {
+      MS_EXCEPTION_IF_CHECK_FAIL((somas_outputs[i].second >= output_address->GetSize()), "The somas size is wrong.");
+      UpdateRefCount(output_address.get(), true);
+      output_need_somas = true;
+    } else {
+      (void)memory_alloc_list_.emplace_back(output_address.get());
+      (void)memory_free_list_.emplace_back(output_address.get());
+    }
+  }
+
+  if (output_need_somas && (!IsSomasEnable(somas_info_))) {
+    MS_LOG(EXCEPTION) << "The somas is not enable for: " << GetAID().Name();
+  }
+
+  for (auto &external_reference_tensor : external_reference_tensors_) {
+    (void)memory_free_list_.emplace_back(external_reference_tensor);
+  }
+}
+
+void KernelActor::InitWorkspaceInfo() {
+  MS_EXCEPTION_IF_NULL(kernel_info_);
+  // The size of workspace maybe changed in dynamic shape, so put workspace_address in the end of memory_alloc_list_ and
+  // memory_free_list_, for the operation of dynamic_shape condition in FetchWorkspaceDeviceTensor.
+  const auto &workspace_addresses = kernel_info_->workspace_address_list();
+  const auto &somas_workspace = kernel_info_->somas_workspace_result();
+  bool workspace_need_somas = false;
+  for (size_t i = 0; i < workspace_addresses.size(); ++i) {
+    auto &workspace_address = workspace_addresses[i];
+    MS_EXCEPTION_IF_NULL(workspace_address);
+    (void)workspace_device_tensors_.emplace_back(workspace_address.get());
+    (void)launch_info_.workspaces_.emplace_back(std::make_shared<Address>());
+
+    // The workspace taken over by soma does not need to allocate memory.
+    if (kernel_info_->IsTensorEnableSomas(somas_workspace, i)) {
+      MS_EXCEPTION_IF_CHECK_FAIL((somas_workspace[i].second >= workspace_address->GetSize()),
+                                 "The somas size is wrong.");
+      UpdateRefCount(workspace_address.get(), true);
+      workspace_need_somas = true;
+    } else {
+      (void)memory_alloc_list_.emplace_back(workspace_address.get());
+      (void)memory_free_list_.emplace_back(workspace_address.get());
+    }
+  }
+
+  if (workspace_need_somas && (!IsSomasEnable(somas_info_))) {
+    MS_LOG(EXCEPTION) << "The somas is not enable for: " << GetAID().Name();
   }
 }
 
@@ -129,9 +191,12 @@ void KernelActor::FetchWorkspaceDeviceTensor() {
   if (launch_info_.workspaces_.size() > workspace_sizes.size()) {
     size_t size = launch_info_.workspaces_.size() - workspace_sizes.size();
     (void)workspace_device_tensors_.erase(workspace_device_tensors_.end() - size, workspace_device_tensors_.end());
+    (void)launch_info_.workspaces_.erase(launch_info_.workspaces_.end() - size, launch_info_.workspaces_.end());
+
+    MS_EXCEPTION_IF_CHECK_FAIL((memory_alloc_list_.size() >= size), "The memory alloc list size is wrong.");
+    MS_EXCEPTION_IF_CHECK_FAIL((memory_free_list_.size() >= size), "The memory free list size is wrong.");
     (void)memory_alloc_list_.erase(memory_alloc_list_.end() - size, memory_alloc_list_.end());
     (void)memory_free_list_.erase(memory_free_list_.end() - size, memory_free_list_.end());
-    (void)launch_info_.workspaces_.erase(launch_info_.workspaces_.end() - size, launch_info_.workspaces_.end());
   } else if (launch_info_.workspaces_.size() < workspace_sizes.size()) {
     for (size_t i = launch_info_.workspaces_.size(); i < workspace_sizes.size(); ++i) {
       auto device_address = device_contexts_[0]->device_res_manager_->CreateDeviceAddress(
@@ -141,9 +206,9 @@ void KernelActor::FetchWorkspaceDeviceTensor() {
       AnfAlgo::SetWorkspaceAddr(device_address, i, kernel_.get());  // set to kernel_info
       MS_EXCEPTION_IF_NULL(device_address);
       (void)workspace_device_tensors_.emplace_back(device_address.get());
+      (void)launch_info_.workspaces_.emplace_back(std::make_shared<Address>());
       (void)memory_alloc_list_.emplace_back(device_address.get());
       (void)memory_free_list_.emplace_back(device_address.get());
-      (void)launch_info_.workspaces_.emplace_back(std::make_shared<Address>());
     }
   }
   // Set workspace address new size
@@ -191,8 +256,47 @@ void FreeMemory(const std::vector<DeviceTensor *> &free_list, const DeviceContex
 }
 }  // namespace
 
+void KernelActor::SetSomasMemory(OpContext<DeviceTensor> *const context) {
+  MS_EXCEPTION_IF_NULL(context);
+  MS_EXCEPTION_IF_NULL(kernel_info_);
+  if (!IsSomasEnable(somas_info_)) {
+    return;
+  }
+  if (somas_info_->base_address_ == nullptr) {
+    std::string error_info = "The somas base address isn't allocated when running " + GetAID().Name();
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR(*context, error_info);
+  }
+
+  // Set the memory address for the output tensors which use the somas.
+  const auto &somas_outputs = kernel_info_->somas_output_result();
+  MS_EXCEPTION_IF_CHECK_FAIL((output_device_tensors_.size() >= somas_outputs.size()), "The output num is wrong.");
+  for (size_t i = 0; i < somas_outputs.size(); ++i) {
+    if (somas_outputs[i].second > 0) {
+      // In this scenario, the Init function can ensure that the pointer of the relevant operation is not nullptr.
+      // In order to perform performance, the pointer validity is not checked here.
+      output_device_tensors_[i]->set_ptr(AddressOffset(somas_info_->base_address_, somas_outputs[i].first));
+    }
+  }
+
+  // Set the memory address for the workspace tensors which use the somas.
+  const auto &somas_workspace = kernel_info_->somas_workspace_result();
+  MS_EXCEPTION_IF_CHECK_FAIL((workspace_device_tensors_.size() >= somas_workspace.size()), "The output num is wrong.");
+  for (size_t i = 0; i < somas_workspace.size(); ++i) {
+    if (somas_workspace[i].second > 0) {
+      // In this scenario, the Init function can ensure that the pointer of the relevant operation is not nullptr.
+      // In order to perform performance, the pointer validity is not checked here.
+      workspace_device_tensors_[i]->set_ptr(AddressOffset(somas_info_->base_address_, somas_workspace[i].first));
+    }
+  }
+}
+
 void KernelActor::SendMemoryAllocReq(OpContext<DeviceTensor> *const context) {
   running_dependent_msg_num_ = 1;
+
+  // Set the memory address for the tensors which use the somas.
+  SetSomasMemory(context);
+
+  // Allocate the memory address for other tensors which don't use the somas.
   if (strategy_ == GraphExecutionStrategy::kPipeline) {
     if (ActorDispatcher::is_memory_allocation_sync()) {
       ActorDispatcher::SendSync(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, &memory_alloc_list_,
@@ -361,13 +465,14 @@ void KernelActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *const context)
   if (data_iter != input_op_datas_.end()) {
     for (auto &input_data : data_iter->second) {
       MS_EXCEPTION_IF_NULL(input_data);
-      if (IntToSize(input_data->index_) >= input_device_tensors_.size()) {
+      size_t input_index = IntToSize(input_data->index_);
+      if (input_index >= input_device_tensors_.size()) {
         SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*context), "The input index is out of range.");
       }
 
-      if (input_device_tensors_[IntToSize(input_data->index_)] != input_data->data_) {
-        input_device_tensors_[IntToSize(input_data->index_)] = input_data->data_;
-        memory_free_list_[IntToSize(input_data->index_)] = input_data->data_;
+      if (input_device_tensors_[input_index] != input_data->data_) {
+        input_device_tensors_[input_index] = input_data->data_;
+        memory_free_list_[input_index] = input_data->data_;
       }
       CopyInputDeviceTensor(input_data, context);
     }
@@ -407,30 +512,36 @@ void KernelActor::FetchOutputDeviceTensor(OpContext<DeviceTensor> *const context
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*context), error_info);
   }
 
+  const auto &somas_outputs = kernel_info_->somas_output_result();
+  // Update the size of output device tensor.
   for (size_t i = 0; i < output_addresses.size(); ++i) {
     auto output_address = output_addresses[i].get();
     MS_EXCEPTION_IF_NULL(output_address);
-    if (output_size_list[i] != output_address->GetSize()) {
-      // 1. The size of output address may be changed in dynamic shape scenario.
-      // 2. If the format of the DeviceAddress is different, then the size is originally different.
-      //    Such as NCHW(1,1,1,3) and NC1HWC0(1,1,1,1,16). So we don't need to update the size.
-      // 3. For example, we need to call cudnnGetRNNTrainingReserveSize to get real output size in LstmGpuKernelMod!
-      if (AnfAlgo::GetOutputFormat(kernel_, i) == output_address->format()) {
-        output_address->SetSize(output_size_list[i]);
-      }
+    // The output device tensor can't be changed.
+    if (output_device_tensors_[i] != output_address) {
+      std::string error_info =
+        "The device tensor can't be changed of " + GetAID().Name() + " with output index " + std::to_string(i);
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*context), error_info);
     }
 
-    // When the tensor is the output of graph or in dynamic shape scenario, the output tensor may be changed.
-    if (output_device_tensors_[i] != output_address) {
-      output_device_tensors_[i] = output_address;
-      memory_alloc_list_[i] = output_address;
-      memory_free_list_[real_input_num_ + i] = output_address;
+    if (output_size_list[i] == output_address->GetSize()) {
+      continue;
+    }
 
-      // Update output data.
-      for (auto &output_data : output_data_by_output_index_[i]) {
-        MS_EXCEPTION_IF_NULL(output_data);
-        output_data->data_ = output_address;
-      }
+    // Somas doesn't support the variable size.
+    if (kernel_info_->IsTensorEnableSomas(somas_outputs, i) && (somas_outputs[i].second < output_size_list[i])) {
+      std::string error_info =
+        "Somas doesn't support variable size of " + GetAID().Name() + " with output index " + std::to_string(i) +
+        ".  Suggest to turn off memory optimization by setting the context memory_optimize_level' to 'O0' ";
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*context), error_info);
+    }
+
+    // 1. The size of output address may be changed in dynamic shape scenario.
+    // 2. If the format of the DeviceAddress is different, then the size is originally different.
+    //    Such as NCHW(1,1,1,3) and NC1HWC0(1,1,1,1,16). So we don't need to update the size.
+    // 3. For example, we need to call cudnnGetRNNTrainingReserveSize to get real output size in LstmGpuKernelMod!
+    if (AnfAlgo::GetOutputFormat(kernel_, i) == output_address->format()) {
+      output_address->SetSize(output_size_list[i]);
     }
   }
 }
@@ -474,8 +585,11 @@ bool KernelActor::LaunchKernel(OpContext<DeviceTensor> *const) {
   }
 
   MS_EXCEPTION_IF_NULL(device_contexts_[0]);
-  return device_contexts_[0]->kernel_executor_->LaunchKernel(kernel_, launch_info_.inputs_, launch_info_.workspaces_,
-                                                             launch_info_.outputs_, kernel_info_->stream_id());
+  MS_LOG(DEBUG) << "Begin launch kernel of actor: " << GetAID().Name();
+  auto ret = device_contexts_[0]->kernel_executor_->LaunchKernel(
+    kernel_, launch_info_.inputs_, launch_info_.workspaces_, launch_info_.outputs_, kernel_info_->stream_id());
+  MS_LOG(DEBUG) << "End launch kernel of actor: " << GetAID().Name();
+  return ret;
 }
 
 void KernelActor::PostLaunchKernel(OpContext<DeviceTensor> *const context) {
