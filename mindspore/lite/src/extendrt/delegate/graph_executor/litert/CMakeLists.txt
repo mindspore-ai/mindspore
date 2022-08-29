@@ -332,17 +332,6 @@ if(MSLITE_ENABLE_MINDRT)
     target_link_libraries(msplugin-ge-litert mindrt_mid)
 endif()
 
-if(SUPPORT_TENSORRT)
-    target_link_libraries(msplugin-ge-litert tensorrt_kernel_mid cuda_kernel_mid gpu_distribution_collective)
-endif()
-
-if(MSLITE_GPU_BACKEND STREQUAL opencl)
-    target_link_libraries(msplugin-ge-litert opencl_kernel_mid)
-endif()
-
-if(SUPPORT_NPU)
-    target_link_libraries(msplugin-ge-litert npu_kernel_mid)
-endif()
 if(PLATFORM_ARM32 OR PLATFORM_ARM64 AND NOT TARGET_HIMIX
         AND NOT TARGET_MIX210 AND NOT TARGET_OHOS_LITE AND NOT MACHINE_LINUX_ARM64)
     target_link_libraries(msplugin-ge-litert log)
@@ -369,15 +358,8 @@ if(MSLITE_ENABLE_RUNTIME_CONVERT)
             mindir_serializer_mid mindspore::protobuf ${SECUREC_LIBRARY})
     target_link_libraries(msplugin-ge-litert
             ccsrc_debug_common_mid_ mindir_proto_mid _mindspore_transform_express_ir_obj)
-    if(MSLITE_ENABLE_ACL)
-        target_link_libraries(msplugin-ge-litert lite_acl_mid
-                mindspore_shared_lib)
-    endif()
 endif()
 
-if(SUPPORT_CUDA AND NOT MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
-    target_link_libraries(msplugin-ge-litert cuda_lite_kernel_mid cuda_ops mindspore_core)
-endif()
 
 target_link_libraries(msplugin-ge-litert mindspore::protobuf)
 
