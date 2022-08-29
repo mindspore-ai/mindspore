@@ -77,12 +77,18 @@ void ReportErrorMessage() {
 
 namespace tdt_handle {
 void AddHandle(acltdtChannelHandle **handle, std::thread *use_thread) {
-  if (*handle != nullptr) {
-    auto ret = g_acl_handle_map.emplace_back(reinterpret_cast<void **>(handle), use_thread);
-    if (!std::get<1>(ret)) {
-      MS_LOG(ERROR) << "Failed to add new handle to acl_handle_map." << std::endl;
+  void **void_handle = reinterpret_cast<void **>(handle);
+  if (*handle == nullptr) {
+    return;
+  }
+
+  for (auto iter = g_acl_handle_map.cbegin(); iter != g_acl_handle_map.cend(); ++iter) {
+    if (iter->first == void_handle) {
+      return;
     }
   }
+
+  g_acl_handle_map.emplace_back(void_handle, use_thread);
 }
 
 void DelHandle(acltdtChannelHandle **handle) {
