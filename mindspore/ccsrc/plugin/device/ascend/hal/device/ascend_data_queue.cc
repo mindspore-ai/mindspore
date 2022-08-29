@@ -49,7 +49,8 @@ constexpr auto kEndOfSequenceFlag = 0x5A;
 constexpr auto kTransIdOffset = 64UL;
 constexpr auto kSleepMilliSeconds = 500;
 
-std::atomic<bool> g_acl_destroy_all = false;
+std::mutex g_acl_destroy_all_mutex = {};
+bool g_acl_destroy_all = false;
 
 bool GetAclDataType(const std::string &str_type, aclDataType *acl_type) {
   MS_EXCEPTION_IF_NULL(acl_type);
@@ -103,6 +104,7 @@ void DelHandle(acltdtChannelHandle **handle) {
 }
 
 bool DestroyHandle() {
+  std::lock_guard<std::mutex> lock(g_acl_destroy_all_mutex);
   bool destroy_all = true;
   for (auto &item : g_acl_handle_map) {
     acltdtChannelHandle **handle = reinterpret_cast<acltdtChannelHandle **>(item.first);
@@ -132,7 +134,10 @@ bool DestroyHandle() {
   return destroy_all;
 }
 
-bool IsClosed() { return g_acl_destroy_all; }
+bool IsClosed() {
+  std::lock_guard<std::mutex> lock(g_acl_destroy_all_mutex);
+  return g_acl_destroy_all;
+}
 }  // namespace tdt_handle
 
 AscendDataQueueDynamic::AscendDataQueueDynamic(const size_t capacity)
@@ -183,7 +188,8 @@ DataQueueStatus AscendDataQueueDynamic::Pop() {
 
 bool AscendDataQueueDynamic::Destroy() { return true; }
 
-AscendTdtQueue::AscendTdtQueue(const std::string &channel_name) : DataQueue(0), channel_name_(channel_name) {
+AscendTdtQueue::AscendTdtQueue(const std::string &channel_name)
+    : DataQueue(0), acl_handle_(nullptr), channel_name_(channel_name) {
   // init ErrorManager, 0 means success
   if (ErrorManager::GetInstance().Init() != 0) {
     MS_LOG(WARNING) << "[Internal Error] Init ErrorManager failed.";
