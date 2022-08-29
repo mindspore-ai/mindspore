@@ -15,6 +15,7 @@
 """
 Test Map op in Dataset
 """
+import random
 import numpy as np
 import pytest
 
@@ -172,7 +173,7 @@ def test_map_operations1():
     assert num_iter == 5
 
 
-def test_c_map_randomness_repeatability(set_seed_to=1111, set_num_parallel_workers_to=4, num_repeat=10):
+def test_c_map_randomness_repeatability(set_seed_to=1111, set_num_parallel_workers_to=3, num_repeat=5):
     """
     Feature: Map op
     Description: Test repeatability of Map op with C implemented random ops with num_parallel_workers > 1
@@ -210,7 +211,7 @@ def test_c_map_randomness_repeatability(set_seed_to=1111, set_num_parallel_worke
     ds.config.set_num_parallel_workers(original_num_parallel_workers)
 
 
-def test_c_map_randomness_repeatability_with_shards(set_seed_to=312, set_num_parallel_workers_to=9, num_repeat=10):
+def test_c_map_randomness_repeatability_with_shards(set_seed_to=312, set_num_parallel_workers_to=5, num_repeat=5):
     """
     Feature: Map op
     Description: Test repeatability of Map op with C implemented random ops with num_parallel_workers > 1 and sharding
@@ -256,8 +257,7 @@ def test_c_map_randomness_repeatability_with_shards(set_seed_to=312, set_num_par
     ds.config.set_num_parallel_workers(original_num_parallel_workers)
 
 
-@pytest.mark.skip(reason="fail")
-def test_python_map_mp_repeatability(set_seed_to=1805, set_num_parallel_workers_to=5, num_repeat=5):
+def test_python_map_mp_repeatability(set_seed_to=1605, set_num_parallel_workers_to=2, num_repeat=3):
     """
     Feature: Map op
     Description: Test repeatability of Map op with Python multiprocessing with Python implemented
@@ -267,11 +267,12 @@ def test_python_map_mp_repeatability(set_seed_to=1805, set_num_parallel_workers_
     data_dir = "../data/dataset/testImageNetData/train/"
     original_seed = config_get_set_seed(set_seed_to)
     original_num_parallel_workers = config_get_set_num_parallel_workers(set_num_parallel_workers_to)
+    # Disable shared memory
+    ds.config.set_enable_shared_mem(False)
 
     # First dataset
     data1 = ds.ImageFolderDataset(dataset_dir=data_dir, shuffle=False, num_samples=1)
     transforms_list1 = [vision.Decode(to_pil=True),
-                        vision.Grayscale(3),
                         vision.RandomPerspective(0.4, 1.0),
                         vision.RandomLighting(0.01)]
     data1 = data1.map(transforms_list1, num_parallel_workers=set_num_parallel_workers_to, python_multiprocessing=True)
@@ -280,7 +281,6 @@ def test_python_map_mp_repeatability(set_seed_to=1805, set_num_parallel_workers_
         # Next datasets
         data2 = ds.ImageFolderDataset(dataset_dir=data_dir, shuffle=False, num_samples=1)
         transforms_list2 = [vision.Decode(to_pil=True),
-                            vision.Grayscale(3),
                             vision.RandomPerspective(0.4, 1.0),
                             vision.RandomLighting(0.01)]
         data2 = data2.map(transforms_list2, num_parallel_workers=set_num_parallel_workers_to,
@@ -296,8 +296,7 @@ def test_python_map_mp_repeatability(set_seed_to=1805, set_num_parallel_workers_
     ds.config.set_num_parallel_workers(original_num_parallel_workers)
 
 
-@pytest.mark.skip(reason="fail")
-def test_python_map_mp_seed_repeatability(set_seed_to=1337, set_num_parallel_workers_to=6, num_repeat=10):
+def test_python_map_mp_seed_repeatability(set_seed_to=1337, set_num_parallel_workers_to=4, num_repeat=5):
     """
     Feature: Map op
     Description: Test repeatability of Map op with Python multiprocessing with num_parallel_workers > 1
@@ -310,21 +309,38 @@ def test_python_map_mp_seed_repeatability(set_seed_to=1337, set_num_parallel_wor
 
     original_seed = config_get_set_seed(set_seed_to)
     original_num_parallel_workers = config_get_set_num_parallel_workers(set_num_parallel_workers_to)
+    # Disable shared memory
+    ds.config.set_enable_shared_mem(False)
+
+    expected_result_np_array = {i: [] for i in range(set_seed_to, set_seed_to + set_num_parallel_workers_to)}
+    data1 = ds.GeneratorDataset(generator_md, ["data"])
+    data1 = data1.map([lambda x: [ds.config.get_seed()] + [random.randrange(1, 1000) for i in range(100)]],
+                      num_parallel_workers=set_num_parallel_workers_to, python_multiprocessing=True)
+    for item1 in data1.create_dict_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
+        seed_used1 = int(list(item1.values())[0][0])
+        result_np_array1 = list(item1.values())[0]
+        try:
+            expected_result_np_array[seed_used1].append(result_np_array1)
+        except KeyError:
+            raise AssertionError("Not all expected seeds were used")
 
     for _ in range(num_repeat):
         expected_seed = {i: 0 for i in range(set_seed_to, set_seed_to + set_num_parallel_workers_to)}
-        data1 = ds.GeneratorDataset(generator_md, ["data"])
-        data1 = data1.map([lambda x: ds.config.get_seed()],
+        data2 = ds.GeneratorDataset(generator_md, ["data"])
+        data2 = data2.map([lambda x: [ds.config.get_seed()] + [random.randrange(1, 1000) for i in range(100)]],
                           num_parallel_workers=set_num_parallel_workers_to, python_multiprocessing=True)
-        for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
-            seed_used = int(list(item.values())[0])
-            if seed_used in expected_seed:
-                expected_seed[seed_used] += 1
+        for item2 in data2.create_dict_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
+            seed_used2 = int(list(item2.values())[0][0])
+            result_np_array2 = list(item2.values())[0]
+            if seed_used2 in expected_seed:
+                cur_iter = expected_seed[seed_used2]
+                np.testing.assert_array_equal(result_np_array2, expected_result_np_array[seed_used2][cur_iter])
+                expected_seed[seed_used2] += 1
             else:
-                assert False # Seed not found
+                raise AssertionError("Seed not found")
 
         if 0 in expected_seed.values():
-            assert False # Not all seed used
+            raise AssertionError("Not all expected seeds were used")
 
     # Restore config setting
     ds.config.set_seed(original_seed)
