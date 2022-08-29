@@ -39,7 +39,7 @@ constexpr float kFloatNum0 = 0.0;
 constexpr float kFloatNum1 = 1.0;
 }  // namespace
 
-uint64_t SampleDistortedBoundingBoxV2CPUKernelMod::New64() {
+const uint64_t SampleDistortedBoundingBoxV2CPUKernelMod::New64() {
   std::random_device device("/dev/urandom");
   static std::mt19937_64 rng = std::mt19937_64(device());
   return (rng)();
@@ -47,8 +47,8 @@ uint64_t SampleDistortedBoundingBoxV2CPUKernelMod::New64() {
 
 void SampleDistortedBoundingBoxV2CPUKernelMod::InitMSPhiloxRandom(int64_t seed, int64_t seed2) {
   if (seed == 0 && seed2 == 0) {
-    seed = New64();
-    seed2 = New64();
+    seed = static_cast<int64_t>(New64());
+    seed2 = static_cast<int64_t>(New64());
   }
   generator_ = random::MSPhiloxRandom(seed, seed2);
 }
@@ -60,7 +60,7 @@ float SampleDistortedBoundingBoxV2CPUKernelMod::RandFloat() {
   const uint32_t val = (exp << 23) | man;
 
   float result;
-  memcpy_s(&result, sizeof(result), &val, sizeof(val));
+  (void)memcpy_s(&result, sizeof(result), &val, sizeof(val));
   return result - 1.0f;
 }
 
@@ -134,7 +134,7 @@ bool SampleDistortedBoundingBoxV2CPUKernelMod::GenerateRandomCrop(int ms_origina
   const float ms_max_area = ms_max_relative_crop_area * ms_original_width * ms_original_height;
   const float ms_bias = 0.5;
 
-  if (ms_aspect_ratio == 0) {
+  if (ms_aspect_ratio == 0.0) {
     return false;
   }
   int height = static_cast<int>(lrintf(std::sqrt(ms_min_area / ms_aspect_ratio)));
@@ -150,7 +150,7 @@ bool SampleDistortedBoundingBoxV2CPUKernelMod::GenerateRandomCrop(int ms_origina
   max_height = std::min(max_height, ms_original_height);
   height = std::min(height, max_height);
   if (height < max_height) {
-    height += Uniform(max_height - height + 1);
+    height += static_cast<int>(Uniform(static_cast<uint32_t>(max_height - height + 1)));
   }
   int width = static_cast<int>(lrintf(height * ms_aspect_ratio));
   float area = static_cast<float>(width * height);
@@ -173,11 +173,11 @@ bool SampleDistortedBoundingBoxV2CPUKernelMod::GenerateRandomCrop(int ms_origina
 
   int y = 0;
   if (height < ms_original_height) {
-    y = Uniform(ms_original_height - height);
+    y = static_cast<int>(Uniform(static_cast<uint32_t>(ms_original_height - height)));
   }
   int x = 0;
   if (width < ms_original_width) {
-    x = Uniform(ms_original_width - width);
+    x = static_cast<int>(Uniform(static_cast<uint32_t>(ms_original_width - width)));
   }
 
   ms_crop_rect->min_x_ = x;
@@ -216,7 +216,7 @@ void SampleDistortedBoundingBoxV2CPUKernelMod::InitKernel(const CNodePtr &kernel
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', image_size must be 1-dimensional, got: ["
                       << shape_dim_image_size << "].";
   }
-  if (shape_image_size[kIndex0] != kShapeSize3) {
+  if (LongToSize(shape_image_size[kIndex0]) != kShapeSize3) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', image_size must contain 3 elements, got: ["
                       << shape_image_size[kIndex0] << "].";
   }
@@ -224,7 +224,7 @@ void SampleDistortedBoundingBoxV2CPUKernelMod::InitKernel(const CNodePtr &kernel
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', bounding_boxes must be 3-dimensional"
                       << " [batch, num_boxes, coords], got: [" << shape_dim_bounding_boxes << "].";
   }
-  if (shape_bounding_boxes[shape_dim_bounding_boxes - 1] != kShapeSize4) {
+  if (LongToSize(shape_bounding_boxes[shape_dim_bounding_boxes - 1]) != kShapeSize4) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', bounding_boxes must have shape [4], got: ["
                       << shape_bounding_boxes[shape_dim_bounding_boxes - 1] << "].";
   }

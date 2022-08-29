@@ -69,7 +69,7 @@ bool PackFwdCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
   auto *output = reinterpret_cast<T *>(outputs[0]->addr);
   std::unique_ptr<T *[]> inputs_host = std::make_unique<T *[]>(input_num_);
   for (size_t i = 0; i < inputs.size(); i++) {
-    inputs_host[i] = reinterpret_cast<T *>(inputs[i]->addr);
+    inputs_host[i] = static_cast<T *>(inputs[i]->addr);
   }
 
   // multi-threading

@@ -83,7 +83,7 @@ class SampleDistortedBoundingBoxV2CPUKernelMod : public DeprecatedNativeCpuKerne
 
   float RandFloat();
   uint32_t Uniform(uint32_t n);
-  uint64_t New64();
+  const uint64_t New64();
   void InitMSPhiloxRandom(int64_t seed, int64_t seed2);
   uint32_t GenerateSingle();
   bool SatisfiesOverlapConstraints(const Region &crop, float minimum_object_covered,

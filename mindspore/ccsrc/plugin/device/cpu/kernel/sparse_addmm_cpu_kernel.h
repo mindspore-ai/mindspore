@@ -51,7 +51,6 @@ class SparseAddmmCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   std::vector<size_t> b_shape_;
   size_t output_size_{0};
   size_t values_size_{0};
-  enum input_list_ { INDICES, VALUES, SPARSE_SHAPE, DENSE, DENSE_X2, ALPHA, BETA };
 };
 }  // namespace kernel
 }  // namespace mindspore

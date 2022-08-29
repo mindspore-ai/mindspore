@@ -41,14 +41,14 @@ constexpr size_t kIndex6 = 6;
 void SparseAddmmCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  auto indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, INDICES);
-  if (indices_shape.size() != kIndicesSizeNum && indices_shape[1] != kIndices2rdDimNum) {
+  auto indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kIndex0);
+  if (indices_shape.size() != kIndicesSizeNum && LongToSize(indices_shape[1]) != kIndices2rdDimNum) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', it requires 'indices' should be a 2-D Tensor and the second dimension length "
                          "should be 2, but got 'indices' shape: "
                       << Vector2Str(indices_shape);
   }
-  auto values_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, VALUES);
+  auto values_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kIndex1);
   if (values_shape.size() != 1 || values_shape[0] != indices_shape[0]) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', it requires 'values' should be a 1-D Tensor and the first dimension length "
@@ -57,7 +57,7 @@ void SparseAddmmCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   }
   output_shape_ = Convert2SizeT(common::AnfAlgo::GetOutputInferShape(kernel_node, 0));
   values_size_ = LongToSize(values_shape[0]);
-  b_shape_ = Convert2SizeT(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, DENSE));
+  b_shape_ = Convert2SizeT(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kIndex3));
   if (b_shape_.size() != kSparseAddmmDenseShapeSize) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'dense' should be "
                       << kSparseAddmmDenseShapeSize << "-D, but got " << b_shape_.size() << "-D";
@@ -85,14 +85,14 @@ bool SparseAddmmCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset output failed. Error no: " << ret;
   }
 
-  auto *a_indices = reinterpret_cast<I *>(inputs[kIndex0]->addr);
-  auto *a_values = reinterpret_cast<T *>(inputs[kIndex1]->addr);
-  auto *x1_shape = reinterpret_cast<I *>(inputs[kIndex2]->addr);
-  auto *b = reinterpret_cast<T *>(inputs[kIndex3]->addr);
-  auto *c = reinterpret_cast<T *>(inputs[kIndex4]->addr);
-  auto *alpha = reinterpret_cast<T *>(inputs[kIndex5]->addr);
-  auto *beta = reinterpret_cast<T *>(inputs[kIndex6]->addr);
-  auto *out = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+  auto *a_indices = static_cast<I *>(inputs[kIndex0]->addr);
+  auto *a_values = static_cast<T *>(inputs[kIndex1]->addr);
+  auto *x1_shape = static_cast<I *>(inputs[kIndex2]->addr);
+  auto *b = static_cast<T *>(inputs[kIndex3]->addr);
+  auto *c = static_cast<T *>(inputs[kIndex4]->addr);
+  auto *alpha = static_cast<T *>(inputs[kIndex5]->addr);
+  auto *beta = static_cast<T *>(inputs[kIndex6]->addr);
+  auto *out = static_cast<T *>(outputs[kIndex0]->addr);
 
   const size_t indices_length = inputs[kIndex0]->size / sizeof(I);
   const size_t values_length = inputs[kIndex1]->size / sizeof(T);
@@ -137,19 +137,21 @@ bool SparseAddmmCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
 
     const size_t row_s = IntToSize(row);
     const size_t col_s = IntToSize(col);
+    const T alpha_value = *(alpha);
     for (size_t n = 0; n < out_dim_1; ++n) {
       if (col_s * b_dim_1 + n >= b_length) {
         MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the index of 'b' out of bounds.";
       }
       const T b_value = b[col_s * b_dim_1 + n];
-      out[row_s * out_dim_1 + n] += *(alpha)*a_values[i] * b_value;
+      out[row_s * out_dim_1 + n] += alpha_value * a_values[i] * b_value;
     }
   }
 
+  const T beta_value = *(beta);
   for (size_t i = 0; i < out_dim_0; ++i) {
     for (size_t j = 0; j < out_dim_1; ++j) {
       const T c_value = c[i * out_dim_1 + j];
-      out[i * out_dim_1 + j] += *(beta)*c_value;
+      out[i * out_dim_1 + j] += beta_value * c_value;
     }
   }
 
