@@ -910,7 +910,7 @@ class Cell(Cell_):
             This is an experimental interface that is subject to change or deletion.
         """
         if self.grad_ops_label:
-            logger.warning(f'For Cell, set_inputs must be set before the gradient function of the network is'
+            logger.warning(f'For Cell, set_inputs must be set before the gradient function of the network is '
                            f'generated.')
         for ele in inputs:
             if isinstance(ele, str):
@@ -1682,29 +1682,6 @@ class Cell(Cell_):
             raise ValueError(f"Negative 'fusion_size' {fusion_size} is invalid.")
         Tensor._flatten_tensors(self.trainable_params(), fusion_size)  # pylint: disable=W0212
 
-    def _run_forward_pre_hook(self, inputs):
-        """
-        Running forward pre hook function registered on Cell object.
-
-        Args:
-            inputs: The input objects of cell object.
-
-        Returns:
-            - **outputs** - New input objects or none.
-
-        Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-        """
-        cell_id = self.cls_name + "(" + str(id(self)) + ")"
-        for fn in self._forward_pre_hook.values():
-            ret = fn(cell_id, inputs)
-            if ret is not None:
-                if not isinstance(ret, tuple):
-                    inputs = (ret,)
-                else:
-                    inputs = ret
-        return inputs
-
     def register_forward_pre_hook(self, hook_fn):
         """
         Register forward pre hook function for Cell object.
@@ -1784,26 +1761,28 @@ class Cell(Cell_):
         handle = HookHandle(self, self._forward_pre_hook_key, "_forward_pre_hook")
         return handle
 
-    def _run_forward_hook(self, inputs, output):
+    def _run_forward_pre_hook(self, inputs):
         """
-        Running forward hook function registered on Cell object.
+        Running forward pre hook function registered on Cell object.
 
         Args:
-            inputs: The input objects of Cell object.
-            output: The output object of Cell object.
+            inputs: The input objects of cell object.
 
         Returns:
-            - **output** - New output object or none.
+            - **outputs** - New input objects or none.
 
         Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
         """
         cell_id = self.cls_name + "(" + str(id(self)) + ")"
-        for fn in self._forward_hook.values():
-            ret = fn(cell_id, inputs, output)
+        for fn in self._forward_pre_hook.values():
+            ret = fn(cell_id, inputs)
             if ret is not None:
-                output = ret
-        return output
+                if not isinstance(ret, tuple):
+                    inputs = (ret,)
+                else:
+                    inputs = ret
+        return inputs
 
     def register_forward_hook(self, hook_fn):
         """
@@ -1886,29 +1865,26 @@ class Cell(Cell_):
         handle = HookHandle(self, self._forward_hook_key, "_forward_hook")
         return handle
 
-    def _backward_hook_construct(self, *inputs):
+    def _run_forward_hook(self, inputs, output):
         """
-        Backward hook construct method to replace original construct method.
+        Running forward hook function registered on Cell object.
 
         Args:
             inputs: The input objects of Cell object.
+            output: The output object of Cell object.
 
         Returns:
-            - **outputs** - The output objects of Cell object.
+            - **output** - New output object or none.
 
         Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
         """
-        if len(inputs) > 1:
-            inputs = self._cell_backward_hook(inputs)
-        else:
-            inputs = self._cell_backward_hook(*inputs)
-        if isinstance(inputs, tuple):
-            outputs = self.construct(*inputs)
-        else:
-            outputs = self.construct(inputs)
-        outputs = self._cell_backward_hook(outputs)
-        return outputs
+        cell_id = self.cls_name + "(" + str(id(self)) + ")"
+        for fn in self._forward_hook.values():
+            ret = fn(cell_id, inputs, output)
+            if ret is not None:
+                output = ret
+        return output
 
     def register_backward_hook(self, hook_fn):
         """
@@ -1986,6 +1962,30 @@ class Cell(Cell_):
             backward_hook_key = self._cell_backward_hook.register_backward_hook(hook_fn)
             handle = HookHandle(self, backward_hook_key, "_cell_backward_hook")
         return handle
+
+    def _backward_hook_construct(self, *inputs):
+        """
+        Backward hook construct method to replace original construct method.
+
+        Args:
+            inputs: The input objects of Cell object.
+
+        Returns:
+            - **outputs** - The output objects of Cell object.
+
+        Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+        """
+        if len(inputs) > 1:
+            inputs = self._cell_backward_hook(inputs)
+        else:
+            inputs = self._cell_backward_hook(*inputs)
+        if isinstance(inputs, tuple):
+            outputs = self.construct(*inputs)
+        else:
+            outputs = self.construct(inputs)
+        outputs = self._cell_backward_hook(outputs)
+        return outputs
 
     def set_param_ps(self, recurse=True, init_in_server=False):
         """

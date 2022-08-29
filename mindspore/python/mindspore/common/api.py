@@ -1053,15 +1053,15 @@ class _CellGraphExecutor:
         else:
             _set_dataset_mode_config('normal')
 
-    def _build_data_graph(self, obj, phase):
-        self._graph_executor.build_data_graph(obj.parameters_dict(), phase, obj.parameters_broadcast_dict())
-
     @staticmethod
     def _use_vm_mode():
         enable_ge = context.get_context("enable_ge")
         enable_debug_runtime = context.get_context("enable_debug_runtime")
         exe_mode = context.get_context("mode") == context.PYNATIVE_MODE
         return not enable_ge or (enable_debug_runtime and exe_mode)
+
+    def _build_data_graph(self, obj, phase):
+        self._graph_executor.build_data_graph(obj.parameters_dict(), phase, obj.parameters_broadcast_dict())
 
     def _set_compile_cache_dep_files(self, phase):
         # If enable compile cache, get the dependency files list

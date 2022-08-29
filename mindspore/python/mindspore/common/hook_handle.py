@@ -45,6 +45,11 @@ class HookHandle:
         self._hook_key = hook_key
         self._hook_type = hook_type
 
+    def __del__(self):
+        self._hook_cell = None
+        self._hook_key = None
+        self._hook_type = None
+
     def remove(self):
         """
         Remove the cell hook function, which corresponds to this 'HookHandle' object.
@@ -101,8 +106,3 @@ class HookHandle:
                 _pynative_executor.set_hook_changed(hook_cell)
             elif self._hook_type == "_cell_backward_hook":
                 hook_cell._cell_backward_hook.remove_backward_hook(self._hook_key)
-
-    def __del__(self):
-        self._hook_cell = None
-        self._hook_key = None
-        self._hook_type = None

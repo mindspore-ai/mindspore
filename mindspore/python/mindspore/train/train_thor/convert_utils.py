@@ -235,7 +235,7 @@ class ConvertModelUtils:
 
         optim_name = type(optimizer).__name__
         if optim_name in ("ThorAscend", "ThorGpu"):
-            from .model_thor import ModelThor
+            from mindspore.train.train_thor.model_thor import ModelThor
             if isinstance(network, nn.TrainOneStepCell):
                 model = ModelThor(network=network)
             else:
