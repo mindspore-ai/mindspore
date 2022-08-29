@@ -38,7 +38,7 @@ static const std::vector<MatcherPtr> &GetMetaFgOps() {
   return meta_fg_ops;
 }
 
-static AnfNodePtr GenerateUnpackGraphNode(const AnfNodePtr &origin_node, std::vector<AnfNodePtr> inputs_y,
+static AnfNodePtr GenerateUnpackGraphNode(const AnfNodePtr &origin_node, const std::vector<AnfNodePtr> &inputs_y,
                                           const AnfNodePtr &func_node, bool is_unpack, bool sens_param) {
   MS_EXCEPTION_IF_NULL(func_node);
   FuncGraphPtr func_graph = origin_node->func_graph();

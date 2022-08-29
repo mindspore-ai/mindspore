@@ -223,7 +223,7 @@ static AnfNodePtr SkipHookNodeInBackProp(const AnfNodePtr &node) {
       MS_LOG(WARNING)
         << "Hook operation does not work in graph mode or ms_function, it will be eliminated during compilation.";
       constexpr size_t idx = 2;
-      auto v_node = tuple_get_item->input(idx)->cast_ptr<ValueNode>();
+      auto v_node = dyn_cast_ptr<ValueNode>(tuple_get_item->input(idx));
       MS_EXCEPTION_IF_NULL(v_node);
       auto out_idx = GetValue<int64_t>(v_node->value());
       return inp->cast_ptr<CNode>()->input(LongToSize(out_idx) + 1);

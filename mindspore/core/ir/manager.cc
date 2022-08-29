@@ -662,10 +662,10 @@ void FuncGraphManager::AddEdge(const AnfNodePtr &node, const AnfNodePtr &value) 
 void FuncGraphManager::MoveAllCNodeDropGraph(const FuncGraphPtr &source, const FuncGraphPtr &target,
                                              const ScopePtr &scope) {
   MS_EXCEPTION_IF_NULL(source);
-  AnfNodePtr source_return = source->get_return();
+  CNodePtr source_return = source->get_return();
   MS_EXCEPTION_IF_NULL(source_return);
   AnfNodePtr source_output = source->output();
-  AnfNodePtr source_prim = source_return->cast_ptr<CNode>()->input(0);
+  const auto &source_prim = source_return->input(0);
 
   int index = 0;
   (void)node_users_[source_prim].erase(make_pair(source_return, index));
