@@ -130,7 +130,15 @@ bool ParseAttrValue(const std::string &type, const mindspore::ValuePtr &value, n
 
   switch (result->second) {
     case ATTR_DTYPE::ATTR_INT32:
-      (*attr_obj)[kJValue] = value->isa<Int32Imm>() ? GetValue<int>(value) : GetValue<int64_t>(value);
+      if (value->isa<Int32Imm>()) {
+        (*attr_obj)[kJValue] = GetValue<int>(value);
+      } else if (value->isa<Int64Imm>()) {
+        (*attr_obj)[kJValue] = GetValue<int64_t>(value);
+      } else {
+        MS_LOG(ERROR) << "Parse int32 attr value failed. Attr value:" << value->ToString()
+                      << ", Type:" << value->type_name();
+        return false;
+      }
       break;
     case ATTR_DTYPE::ATTR_INT64:
       (*attr_obj)[kJValue] = GetValue<int64_t>(value);
@@ -173,7 +181,8 @@ bool ParseAttrValue(const std::string &type, const mindspore::ValuePtr &value, n
       break;
 
     default:
-      MS_LOG(ERROR) << "Type: " << type << "not support";
+      MS_LOG(ERROR) << "Parse attr value failed. Attr Type: " << type << "not support. Attr value:" << value->ToString()
+                    << ", Type:" << value->type_name();
       return false;
   }
   return true;
@@ -475,6 +484,7 @@ void TbeJsonCreator::GenDesJsonCommon(nlohmann::json *output_desc) const {
 }
 
 void ParseConstValue(const mindspore::ValuePtr &value, nlohmann::json *json_obj) {
+  MS_EXCEPTION_IF_NULL(json_obj);
   if (value->isa<tensor::Tensor>()) {
     auto tensor = value->cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(tensor);

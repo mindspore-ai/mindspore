@@ -30,8 +30,6 @@
 namespace mindspore {
 namespace pynative {
 namespace PyNativeAlgo {
-const std::set<std::string> kAxisNone = {"ReduceSum"};
-
 std::string Common::GetIdByValue(const ValuePtr &v) {
   MS_EXCEPTION_IF_NULL(v);
   if (v->isa<tensor::Tensor>()) {
@@ -398,14 +396,10 @@ void DataConvert::ConvertTupleValueToTensor(const FrontendOpRunInfoPtr &op_run_i
 
   const auto &tuple_inputs = value_seq->value();
   if (tuple_inputs.empty()) {
-    if (kAxisNone.find(op_prim->name()) != kAxisNone.end()) {
-      (void)op_run_info->base_op_run_info.input_tensor.emplace_back(
-        std::make_shared<tensor::Tensor>(static_cast<int64_t>(0), kInt64));
-      (void)op_run_info->base_op_run_info.input_mask.emplace_back(kParameterDataTensorMask);
-      return;
-    } else {
-      MS_LOG(EXCEPTION) << "The size of input list or tuple is 0!";
-    }
+    std::vector<int64_t> axis = {};
+    (void)op_run_info->base_op_run_info.input_tensor.emplace_back(std::make_shared<tensor::Tensor>(axis, kInt64));
+    (void)op_run_info->base_op_run_info.input_mask.emplace_back(kValueNodeTensorMask);
+    return;
   }
   if (tuple_inputs[0]->isa<tensor::Tensor>()) {
     PlantTensorTupleToVector(op_run_info, value_seq, op_prim, index);
@@ -442,6 +436,15 @@ void DataConvert::ConvertValueToTensor(const FrontendOpRunInfoPtr &op_run_info, 
     }
     tensor_ptr = std::make_shared<tensor::Tensor>(input, kInt64);
     tensor_mask = kValueNodeTensorMask;
+  } else if (v->isa<Type>()) {
+    int64_t type_id = v->cast<TypePtr>()->type_id();
+    tensor_ptr = std::make_shared<tensor::Tensor>(type_id, kInt64);
+    tensor_mask = kValueNodeTensorMask;
+  } else if (v->isa<StringImm>()) {
+    auto value_string = GetValue<std::string>(v);
+    const ShapeVector shape = {1, SizeToLong(value_string.size())};
+    tensor_ptr = std::make_shared<tensor::Tensor>(kObjectTypeString, shape, value_string.data(), value_string.size());
+    tensor_mask = kValueNodeTensorMask;
   } else if (v->isa<ValueSequence>()) {
     ConvertTupleValueToTensor(op_run_info, v->cast<ValueSequencePtr>(), op_prim, index);
     return;
@@ -470,6 +473,11 @@ bool DataConvert::NeedConvertConstInputToAttr(const FrontendOpRunInfoPtr &op_run
     MS_EXCEPTION_IF_NULL(op_prim);
     opt::GetCustomOpAttrIndex(op_prim, input_to_attr_ptr);
     return !input_to_attr_ptr->empty();
+  }
+
+  // Ascend const input to attr move to AscendConvertConstInputToAttr
+  if (device_target == kAscendDevice) {
+    return false;
   }
 
   auto reg_info = opt::ConvertOpInfoRegister::GetInstance().GetConvertOpInfo(

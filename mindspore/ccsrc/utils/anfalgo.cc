@@ -1236,9 +1236,6 @@ bool AnfAlgo::IsKernelDynamicImpl(const AnfNodePtr &node) {
   }
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  if (!HasNodeAttr(kAttrIsKernelDynamicImpl, cnode)) {
-    return false;
-  }
   return GetBooleanAttr(node, kAttrIsKernelDynamicImpl);
 }
 

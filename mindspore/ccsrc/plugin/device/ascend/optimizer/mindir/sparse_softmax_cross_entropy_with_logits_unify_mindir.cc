@@ -651,7 +651,7 @@ const AnfNodePtr PynativeSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR::Process
   }
 
   CNodePtr softmax_node;
-  auto one_hot_node = CreateOneHot(graph, sparse_softmax_node, *this, true);
+  auto one_hot_node = CreateOneHot(graph, sparse_softmax_node, *this);
   softmax_node = CreateSoftmaxCrossEntropyWithLogits(graph, sparse_softmax_node, one_hot_node, *this);
 
   std::vector<AnfNodePtr> softmax_node_outputs;
