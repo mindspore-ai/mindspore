@@ -15,9 +15,9 @@
 
 #include "minddata/dataset/kernels/image/dvpp/utils/MDAclProcess.h"
 
+#include <chrono>
 #include <thread>
 #include <sys/stat.h>
-#include <sys/time.h>
 #include "minddata/dataset/include/dataset/constants.h"
 #include "minddata/dataset/core/tensor_shape.h"
 #include "minddata/dataset/kernels/image/image_utils.h"
@@ -29,6 +29,22 @@ const mode_t DEFAULT_FILE_PERMISSION = 0077;
 }  // namespace
 
 mode_t SetFileDefaultUmask() { return umask(DEFAULT_FILE_PERMISSION); }
+
+/*
+ * @description: get progress runtime
+ * @return: runtime which is vector
+ */
+std::vector<double> RunTimeUtil::GetRunTime() {
+  auto sec_duration = std::chrono::duration_cast<std::chrono::seconds>(this->end - this->start);
+  uint64_t sec = sec_duration.count();
+
+  auto us_duration = std::chrono::duration_cast<std::chrono::microseconds>(this->end - this->start);
+  uint64_t us = us_duration.count();
+  double cost_ms = static_cast<double>(SEC2MS * sec + us / SEC2MS);
+  double fps = static_cast<double>(1.0 * SEC2MS / cost_ms);
+  std::vector<double> run_time = {cost_ms, fps};
+  return run_time;
+}
 
 /*
  * @description: Constructor
@@ -255,19 +271,19 @@ APP_ERROR MDAclProcess::JPEG_D(const RawData &ImageInfo) {
   MS_LOG(INFO) << "It's deprecated to use kCpu as input device for Dvpp operators to compute, because it's slow and "
                   "unsafe, we recommend you to set input device as MapTargetDevice::kAscend for Dvpp operators. "
                   "This API will be removed later";
-  struct timeval begin = {0};
-  struct timeval end = {0};
-  gettimeofday(&begin, nullptr);
+  RunTimeUtil time_util;
+  time_util.Start();
   // deal with image
   APP_ERROR ret = JPEG_D_(ImageInfo);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to decode, ret = " << ret;
     return ret;
   }
-  gettimeofday(&end, nullptr);
+  time_util.End();
   // Calculate the time cost of preprocess
-  const double costMs = SEC2MS * (end.tv_sec - begin.tv_sec) + (end.tv_usec - begin.tv_usec) / SEC2MS;
-  const double fps = 1 * SEC2MS / costMs;
+  std::vector<double> run_time = time_util.GetRunTime();
+  const double costMs = run_time[0];
+  const double fps = run_time[1];
   MS_LOG(INFO) << "[dvpp decode Delay] cost: " << costMs << "ms\tfps: " << fps;
   // Get output of resize module
   std::shared_ptr<DvppDataInfo> DecodeOutData = dvppCommon_->GetDecodedImage();
@@ -296,19 +312,19 @@ APP_ERROR MDAclProcess::JPEG_D(const RawData &ImageInfo) {
 }
 
 APP_ERROR MDAclProcess::JPEG_D() {
-  struct timeval begin = {0};
-  struct timeval end = {0};
-  gettimeofday(&begin, nullptr);
+  RunTimeUtil time_util;
+  time_util.Start();
   // deal with image
   APP_ERROR ret = JPEG_D_();
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to decode, ret = " << ret;
     return ret;
   }
-  gettimeofday(&end, nullptr);
+  time_util.End();
   // Calculate the time cost of preprocess
-  const double costMs = SEC2MS * (end.tv_sec - begin.tv_sec) + (end.tv_usec - begin.tv_usec) / SEC2MS;
-  const double fps = 1 * SEC2MS / costMs;
+  std::vector<double> run_time = time_util.GetRunTime();
+  const double costMs = run_time[0];
+  const double fps = run_time[1];
   MS_LOG(INFO) << "[dvpp decode Delay] cost: " << costMs << "ms\tfps: " << fps;
   // Get output of resize module
   std::shared_ptr<DvppDataInfo> DecodeOutData = dvppCommon_->GetDecodedImage();
@@ -343,19 +359,19 @@ APP_ERROR MDAclProcess::JPEG_R(const DvppDataInfo &ImageInfo) {
   MS_LOG(INFO) << "It's deprecated to use kCpu as input device for Dvpp operators to compute, because it's slow and "
                   "unsafe, we recommend you to set input device as MapTargetDevice::kAscend for Dvpp operators. "
                   "This API will be removed later";
-  struct timeval begin = {0};
-  struct timeval end = {0};
-  gettimeofday(&begin, nullptr);
+  RunTimeUtil time_util;
+  time_util.Start();
   // deal with image
   APP_ERROR ret = JPEG_R_(ImageInfo);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to resize, ret = " << ret;
     return ret;
   }
-  gettimeofday(&end, nullptr);
+  time_util.End();
   // Calculate the time cost of preprocess
-  const double costMs = SEC2MS * (end.tv_sec - begin.tv_sec) + (end.tv_usec - begin.tv_usec) / SEC2MS;
-  const double fps = 1 * SEC2MS / costMs;
+  std::vector<double> run_time = time_util.GetRunTime();
+  const double costMs = run_time[0];
+  const double fps = run_time[1];
   MS_LOG(INFO) << "[dvpp resize Delay] cost: " << costMs << "ms\tfps: " << fps;
   // Get output of resize module
   std::shared_ptr<DvppDataInfo> ResizeOutData = dvppCommon_->GetResizedImage();
@@ -383,19 +399,19 @@ APP_ERROR MDAclProcess::JPEG_R(const DvppDataInfo &ImageInfo) {
 }
 
 APP_ERROR MDAclProcess::JPEG_R(std::string &last_step) {
-  struct timeval begin = {0};
-  struct timeval end = {0};
-  gettimeofday(&begin, nullptr);
+  RunTimeUtil time_util;
+  time_util.Start();
   // deal with image
   APP_ERROR ret = JPEG_R_(last_step);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to resize, ret = " << ret;
     return ret;
   }
-  gettimeofday(&end, nullptr);
+  time_util.End();
   // Calculate the time cost of preprocess
-  const double costMs = SEC2MS * (end.tv_sec - begin.tv_sec) + (end.tv_usec - begin.tv_usec) / SEC2MS;
-  const double fps = 1 * SEC2MS / costMs;
+  std::vector<double> run_time = time_util.GetRunTime();
+  const double costMs = run_time[0];
+  const double fps = run_time[1];
   MS_LOG(INFO) << "[dvpp resize Delay] cost: " << costMs << "ms\tfps: " << fps;
   // Get output of resize module
   std::shared_ptr<DvppDataInfo> ResizeOutData = dvppCommon_->GetResizedImage();
@@ -461,19 +477,19 @@ APP_ERROR MDAclProcess::JPEG_C(const DvppDataInfo &ImageInfo) {
   MS_LOG(INFO) << "It's deprecated to use kCpu as input device for Dvpp operators to compute, because it's slow and "
                   "unsafe, we recommend you to set input device as MapTargetDevice::kAscend for Dvpp operators. "
                   "This API will be removed later";
-  struct timeval begin = {0};
-  struct timeval end = {0};
-  gettimeofday(&begin, nullptr);
+  RunTimeUtil time_util;
+  time_util.Start();
   // deal with image
   APP_ERROR ret = JPEG_C_(ImageInfo);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to crop image, ret = " << ret;
     return ret;
   }
-  gettimeofday(&end, nullptr);
+  time_util.End();
   // Calculate the time cost of preprocess
-  const double costMs = SEC2MS * (end.tv_sec - begin.tv_sec) + (end.tv_usec - begin.tv_usec) / SEC2MS;
-  const double fps = 1 * SEC2MS / costMs;
+  std::vector<double> run_time = time_util.GetRunTime();
+  const double costMs = run_time[0];
+  const double fps = run_time[1];
   MS_LOG(INFO) << "[dvpp crop Delay] cost: " << costMs << "ms\tfps: " << fps;
   // Get output of resize module
   std::shared_ptr<DvppDataInfo> CropOutData = dvppCommon_->GetCropedImage();
@@ -501,19 +517,19 @@ APP_ERROR MDAclProcess::JPEG_C(const DvppDataInfo &ImageInfo) {
 }
 
 APP_ERROR MDAclProcess::JPEG_C(std::string &last_step) {
-  struct timeval begin = {0};
-  struct timeval end = {0};
-  gettimeofday(&begin, nullptr);
+  RunTimeUtil time_util;
+  time_util.Start();
   // deal with image
   APP_ERROR ret = JPEG_C_(last_step);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to crop image, ret = " << ret;
     return ret;
   }
-  gettimeofday(&end, nullptr);
+  time_util.End();
   // Calculate the time cost of preprocess
-  const double costMs = SEC2MS * (end.tv_sec - begin.tv_sec) + (end.tv_usec - begin.tv_usec) / SEC2MS;
-  const double fps = 1 * SEC2MS / costMs;
+  std::vector<double> run_time = time_util.GetRunTime();
+  const double costMs = run_time[0];
+  const double fps = run_time[1];
   MS_LOG(INFO) << "[dvpp crop Delay] cost: " << costMs << "ms\tfps: " << fps;
   // Get output of resize module
   std::shared_ptr<DvppDataInfo> CropOutData = dvppCommon_->GetCropedImage();
@@ -594,19 +610,19 @@ APP_ERROR MDAclProcess::PNG_D(const RawData &ImageInfo) {
   MS_LOG(INFO) << "It's deprecated to use kCpu as input device for Dvpp operators to compute, because it's slow and "
                   "unsafe, we recommend you to set input device as MapTargetDevice::kAscend for Dvpp operators. "
                   "This API will be removed later";
-  struct timeval begin = {0};
-  struct timeval end = {0};
-  gettimeofday(&begin, nullptr);
+  RunTimeUtil time_util;
+  time_util.Start();
   // deal with image
   APP_ERROR ret = PNG_D_(ImageInfo);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to decode, ret = " << ret;
     return ret;
   }
-  gettimeofday(&end, nullptr);
+  time_util.End();
   // Calculate the time cost of preprocess
-  const double costMs = SEC2MS * (end.tv_sec - begin.tv_sec) + (end.tv_usec - begin.tv_usec) / SEC2MS;
-  const double fps = 1 * SEC2MS / costMs;
+  std::vector<double> run_time = time_util.GetRunTime();
+  const double costMs = run_time[0];
+  const double fps = run_time[1];
   MS_LOG(INFO) << "[dvpp Delay] cost: " << costMs << "ms\tfps: " << fps;
   // Get output of resize module
   std::shared_ptr<DvppDataInfo> DecodeOutData = dvppCommon_->GetDecodedImage();
@@ -634,19 +650,19 @@ APP_ERROR MDAclProcess::PNG_D(const RawData &ImageInfo) {
 }
 
 APP_ERROR MDAclProcess::PNG_D() {
-  struct timeval begin = {0};
-  struct timeval end = {0};
-  gettimeofday(&begin, nullptr);
+  RunTimeUtil time_util;
+  time_util.Start();
   // deal with image
   APP_ERROR ret = PNG_D_();
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to decode, ret = " << ret;
     return ret;
   }
-  gettimeofday(&end, nullptr);
+  time_util.End();
   // Calculate the time cost of preprocess
-  const double costMs = SEC2MS * (end.tv_sec - begin.tv_sec) + (end.tv_usec - begin.tv_usec) / SEC2MS;
-  const double fps = 1 * SEC2MS / costMs;
+  std::vector<double> run_time = time_util.GetRunTime();
+  const double costMs = run_time[0];
+  const double fps = run_time[1];
   MS_LOG(INFO) << "[dvpp decode Delay] cost: " << costMs << "ms\tfps: " << fps;
   // Get output of resize module
   std::shared_ptr<DvppDataInfo> DecodeOutData = dvppCommon_->GetDecodedImage();
@@ -686,19 +702,19 @@ APP_ERROR MDAclProcess::JPEG_DRC(const RawData &ImageInfo) {
   MS_LOG(INFO) << "It's deprecated to use kCpu as input device for Dvpp operators to compute, because it's slow and "
                   "unsafe, we recommend you to set input device as MapTargetDevice::kAscend for Dvpp operators. "
                   "This API will be removed later";
-  struct timeval begin = {0};
-  struct timeval end = {0};
-  gettimeofday(&begin, nullptr);
+  RunTimeUtil time_util;
+  time_util.Start();
   // deal with image
   APP_ERROR ret = JPEG_DRC_(ImageInfo);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to decode or resize or crop, ret = " << ret;
     return ret;
   }
-  gettimeofday(&end, nullptr);
+  time_util.End();
   // Calculate the time cost of preprocess
-  const double costMs = SEC2MS * (end.tv_sec - begin.tv_sec) + (end.tv_usec - begin.tv_usec) / SEC2MS;
-  const double fps = 1 * SEC2MS / costMs;
+  std::vector<double> run_time = time_util.GetRunTime();
+  const double costMs = run_time[0];
+  const double fps = run_time[1];
   MS_LOG(INFO) << "[dvpp Delay] cost: " << costMs << "ms\tfps: " << fps;
   // Get output of resize module
   std::shared_ptr<DvppDataInfo> CropOutData = dvppCommon_->GetCropedImage();
@@ -726,9 +742,8 @@ APP_ERROR MDAclProcess::JPEG_DRC(const RawData &ImageInfo) {
 }
 
 APP_ERROR MDAclProcess::JPEG_DRC() {
-  struct timeval begin = {0};
-  struct timeval end = {0};
-  gettimeofday(&begin, nullptr);
+  RunTimeUtil time_util;
+  time_util.Start();
   // deal with image
   APP_ERROR ret = JPEG_D_();
   if (ret != APP_ERR_OK) {
@@ -753,10 +768,11 @@ APP_ERROR MDAclProcess::JPEG_DRC() {
     MS_LOG(ERROR) << "Decode Data returns NULL";
     return APP_ERR_COMM_INVALID_POINTER;
   }
-  gettimeofday(&end, nullptr);
+  time_util.End();
   // Calculate the time cost of preprocess
-  const double costMs = SEC2MS * (end.tv_sec - begin.tv_sec) + (end.tv_usec - begin.tv_usec) / SEC2MS;
-  const double fps = 1 * SEC2MS / costMs;
+  std::vector<double> run_time = time_util.GetRunTime();
+  const double costMs = run_time[0];
+  const double fps = run_time[1];
   MS_LOG(INFO) << "[dvpp (Decode + Resize + Crop) Delay] cost: " << costMs << "ms\tfps: " << fps;
   return APP_ERR_OK;
 }
@@ -824,19 +840,19 @@ APP_ERROR MDAclProcess::JPEG_DR(const RawData &ImageInfo) {
   MS_LOG(INFO) << "It's deprecated to use kCpu as input device for Dvpp operators to compute, because it's slow and "
                   "unsafe, we recommend you to set input device as MapTargetDevice::kAscend for Dvpp operators. "
                   "This API will be removed later";
-  struct timeval begin = {0};
-  struct timeval end = {0};
-  gettimeofday(&begin, nullptr);
+  RunTimeUtil time_util;
+  time_util.Start();
   // deal with image
   APP_ERROR ret = JPEG_DR_(ImageInfo);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to decode or resize, ret = " << ret;
     return ret;
   }
-  gettimeofday(&end, nullptr);
+  time_util.End();
   // Calculate the time cost of preprocess
-  const double costMs = SEC2MS * (end.tv_sec - begin.tv_sec) + (end.tv_usec - begin.tv_usec) / SEC2MS;
-  const double fps = 1 * SEC2MS / costMs;
+  std::vector<double> run_time = time_util.GetRunTime();
+  const double costMs = run_time[0];
+  const double fps = run_time[1];
   MS_LOG(INFO) << "[dvpp Delay] cost: " << costMs << "ms\tfps: " << fps;
   // Get output of resize module
   std::shared_ptr<DvppDataInfo> ResizeOutData = dvppCommon_->GetResizedImage();
@@ -864,9 +880,8 @@ APP_ERROR MDAclProcess::JPEG_DR(const RawData &ImageInfo) {
 }
 
 APP_ERROR MDAclProcess::JPEG_DR() {
-  struct timeval begin = {0};
-  struct timeval end = {0};
-  gettimeofday(&begin, nullptr);
+  RunTimeUtil time_util;
+  time_util.Start();
   // deal with image
   APP_ERROR ret = JPEG_D_();
   if (ret != APP_ERR_OK) {
@@ -885,10 +900,11 @@ APP_ERROR MDAclProcess::JPEG_DR() {
     MS_LOG(ERROR) << "Decode Data returns NULL";
     return APP_ERR_COMM_INVALID_POINTER;
   }
-  gettimeofday(&end, nullptr);
+  time_util.End();
   // Calculate the time cost of preprocess
-  const double costMs = SEC2MS * (end.tv_sec - begin.tv_sec) + (end.tv_usec - begin.tv_usec) / SEC2MS;
-  const double fps = 1 * SEC2MS / costMs;
+  std::vector<double> run_time = time_util.GetRunTime();
+  const double costMs = run_time[0];
+  const double fps = run_time[1];
   MS_LOG(INFO) << "[dvpp (Decode + Resize) Delay] cost: " << costMs << "ms\tfps: " << fps;
   return APP_ERR_OK;
 }
@@ -930,7 +946,7 @@ void MDAclProcess::CropConfigFilter(CropRoiConfig &cfg, DvppCropInputInfo &cropi
     if (cfg.up % 2 != 0) {
       cfg.up++;
     }
-    cfg.down = resizeHeight_ - (resizeHeight_ - cropHeight_) / 2;
+    cfg.down = resizeHeight_ - (resizeHeight_ - cropHeight_) / YUV_BGR_SIZE_CONVERT_2;
     if (cfg.down % 2 == 0) {
       cfg.down--;
     }
@@ -939,7 +955,7 @@ void MDAclProcess::CropConfigFilter(CropRoiConfig &cfg, DvppCropInputInfo &cropi
     if (cfg.up % 2 != 0) {
       cfg.up++;
     }
-    cfg.down = resizeinfo.height - (resizeinfo.height - cropHeight_) / 2;
+    cfg.down = resizeinfo.height - (resizeinfo.height - cropHeight_) / YUV_BGR_SIZE_CONVERT_2;
     if (cfg.down % 2 == 0) {
       cfg.down--;
     }
