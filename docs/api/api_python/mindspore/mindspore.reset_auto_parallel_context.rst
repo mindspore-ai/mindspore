@@ -10,6 +10,7 @@ mindspore.reset_auto_parallel_context
     - gradients_mean：False。
     - gradient_fp32_sync：True。
     - parallel_mode：'stand_alone'。
+    - search_mode：'dynamic_programming'。
     - auto_parallel_search_mode：'dynamic_programming'。
     - parameter_broadcast：False。
     - strategy_ckpt_load_file：''。
@@ -18,3 +19,4 @@ mindspore.reset_auto_parallel_context
     - enable_parallel_optimizer：False。
     - enable_alltoall: False。
     - pipeline_stages：1。
+    - fusion_threshold: 64。
