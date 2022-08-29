@@ -25,6 +25,7 @@ mindspore.ops.functional
     mindspore.ops.ctc_greedy_decoder
     mindspore.ops.conv2d
     mindspore.ops.conv3d
+    mindspore.ops.crop_and_resize
     mindspore.ops.deformable_conv2d
     mindspore.ops.dropout2d
     mindspore.ops.dropout3d

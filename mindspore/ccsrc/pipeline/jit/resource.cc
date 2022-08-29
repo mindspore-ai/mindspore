@@ -252,6 +252,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"argmax", std::string("argmax")},                                  // P.Argmax()
        {"argmin", std::string("argmin")},                                  // P.Argmax()
        {"resize", std::string("resize")},                                  // P.Reshape()
+       {"crop_and_resize", std::string("crop_and_resize")},                // P.crop_and_resize
        {"select", std::string("select")},                                  // P.Select()
        {"choose", std::string("choose")},                                  // P.Select()
        {"diagonal", std::string("diagonal")},                              // P.Eye()
