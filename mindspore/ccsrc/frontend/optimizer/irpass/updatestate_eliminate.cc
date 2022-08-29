@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -780,9 +780,14 @@ AnfNodePtr UpdatestatePureNodeEliminater::operator()(const OptimizerPtr &, const
   if (cnode == nullptr) {
     return update_state_node->input(kInputIndex);
   }
-  if (IsPrimitiveCNode(cnode, prim::kPrimTupleGetItem) || IsPrimitiveCNode(cnode, prim::kPrimDepend) ||
-      IsPrimitiveCNode(cnode, prim::kPrimPartial) || IsPrimitiveCNode(cnode, prim::kPrimMakeTuple) ||
-      IsPrimitiveCNode(cnode, prim::kPrimCall) || IsValueNode<FuncGraph>(cnode->input(0))) {
+  auto first_input = cnode->input(0);
+  bool is_special_ops = cnode->IsApply(prim::kPrimTupleGetItem) || cnode->IsApply(prim::kPrimDepend) ||
+                        cnode->IsApply(prim::kPrimPartial) || cnode->IsApply(prim::kPrimMakeTuple) ||
+                        cnode->IsApply(prim::kPrimCall) || IsValueNode<FuncGraph>(first_input) ||
+                        IsPrimitiveCNode(first_input, prim::kPrimJ) || IsPrimitiveCNode(first_input, prim::kPrimVmap) ||
+                        IsPrimitiveCNode(first_input, prim::kPrimTaylor) ||
+                        IsPrimitiveCNode(first_input, prim::kPrimShard);
+  if (is_special_ops) {
     return nullptr;
   }
   if (CheckHasMonadInput(cnode)) {
