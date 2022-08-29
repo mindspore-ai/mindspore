@@ -59,7 +59,6 @@ bool ApplyAddsignCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, con
     default:
       MS_EXCEPTION(TypeError) << "For '" << kernel_name_ << "', can not support the data type "
                               << TypeIdToString(dtype_);
-      return false;
   }
   return true;
 }
@@ -97,13 +96,13 @@ void ApplyAddsignCpuKernelMod::CheckParam(const std::vector<AddressPtr> &inputs,
 template <typename T>
 void ApplyAddsignCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                             const std::vector<AddressPtr> &outputs) {
-  auto *var = reinterpret_cast<T *>(inputs[kVar]->addr);
-  auto *m = reinterpret_cast<T *>(inputs[kM]->addr);
-  const auto *lr = reinterpret_cast<T *>(inputs[kLr]->addr);
-  const auto *alpha = reinterpret_cast<T *>(inputs[kAlpha]->addr);
-  const auto *sign_decay = reinterpret_cast<T *>(inputs[kSignDecay]->addr);
-  const auto *beta = reinterpret_cast<T *>(inputs[kBeta]->addr);
-  const auto *gradient = reinterpret_cast<T *>(inputs[kGrad]->addr);
+  auto *var = static_cast<T *>(inputs[kVar]->addr);
+  auto *m = static_cast<T *>(inputs[kM]->addr);
+  const auto *lr = static_cast<T *>(inputs[kLr]->addr);
+  const auto *alpha = static_cast<T *>(inputs[kAlpha]->addr);
+  const auto *sign_decay = static_cast<T *>(inputs[kSignDecay]->addr);
+  const auto *beta = static_cast<T *>(inputs[kBeta]->addr);
+  const auto *gradient = static_cast<T *>(inputs[kGrad]->addr);
 
   size_t length = inputs[kVar]->size / sizeof(T);
   auto task = [this, &var, &m, &lr, &alpha, &sign_decay, &beta, &gradient](size_t start, size_t end) {
@@ -111,8 +110,8 @@ void ApplyAddsignCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
   };
   CPUKernelUtils::ParallelForAutoSearch(task, length, &parallel_search_info_);
 
-  auto output_var = reinterpret_cast<T *>(outputs[kVar]->addr);
-  auto output_m = reinterpret_cast<T *>(outputs[kM]->addr);
+  auto output_var = static_cast<T *>(outputs[kVar]->addr);
+  auto output_m = static_cast<T *>(outputs[kM]->addr);
   auto ret_var = memcpy_s(output_var, outputs[kVar]->size, var, inputs[kVar]->size);
   if (ret_var != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', launch kernel error: memcpy failed. Error no: " << ret_var;

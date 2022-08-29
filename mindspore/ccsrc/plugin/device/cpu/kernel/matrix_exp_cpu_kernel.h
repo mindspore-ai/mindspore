@@ -52,22 +52,22 @@ class MatrixExpCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelpe
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
  private:
-  bool CheckInputShape();
+  bool CheckInputShape() const;
 
   template <typename Derived1, typename Derived2, typename Derived3>
   void MTaylorApproximant(const Eigen::MatrixBase<Derived1> &A, const Eigen::MatrixBase<Derived2> &I, int order,
-                          Eigen::MatrixBase<Derived3> *E);
+                          Eigen::MatrixBase<Derived3> *E) const;
 
   template <typename Derived1, typename Derived2>
   void MexpImpl(const Eigen::MatrixBase<Derived1> &A, const Eigen::MatrixBase<Derived2> &I,
-                Eigen::MatrixBase<Derived1> *mexp);
+                Eigen::MatrixBase<Derived1> *mexp) const;
 
   template <typename T>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
                     const std::vector<kernel::AddressPtr> &outputs);
 
   void TyepChangeForFp16(int64_t i, int64_t m, int64_t size_mm, mindspore::Float16 *input_x,
-                         mindspore::Float16 *output_y);
+                         mindspore::Float16 *output_y) const;
 
   template <typename T>
   bool LaunchKernelFP16(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,

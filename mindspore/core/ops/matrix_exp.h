@@ -29,7 +29,7 @@ class MIND_API MatrixExp : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(MatrixExp);
   MatrixExp() : BaseOperator(kNameMatrixExp) { InitIOName({"x"}, {"y"}); }
-  void Init() {}
+  void Init() const {}
 };
 abstract::AbstractBasePtr MatrixExpInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                          const std::vector<abstract::AbstractBasePtr> &input_args);

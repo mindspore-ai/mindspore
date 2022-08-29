@@ -46,7 +46,7 @@ abstract::ShapePtr ScatterNonAliasingAddInferShape(const PrimitivePtr &primitive
   auto last_dim = indices_shape.back();
   indices_shape.pop_back();
   if (last_dim < SizeToLong(input_x_shape.size())) {
-    indices_shape.insert(indices_shape.end(), input_x_shape.begin() + last_dim, input_x_shape.end());
+    (void)indices_shape.insert(indices_shape.end(), input_x_shape.begin() + last_dim, input_x_shape.end());
   }
   if (updates_shape != indices_shape) {
     MS_EXCEPTION(ValueError) << "For " << prim_name << ", "

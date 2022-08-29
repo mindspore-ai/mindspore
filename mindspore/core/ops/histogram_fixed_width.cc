@@ -68,7 +68,7 @@ void HistogramFixedWidth::Init(const int32_t nbins, const TypeId dtype) {
 AbstractBasePtr HistogramFixedWidthInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  const size_t kInputsNum = 2;
+  const int64_t kInputsNum = 2;
   (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputsNum, primitive->name());
   auto infer_type = HistogramFixedWidthInferType(primitive, input_args);
   auto infer_shape = HistogramFixedWidthInferShape(primitive, input_args);
