@@ -222,6 +222,7 @@ void TbeUtils::UpdateCache(const std::string &kernel_name) {
 KernelPackPtr TbeUtils::SearchCache(const std::string &kernel_name, const bool is_akg) {
   // search cache.
   KernelMeta *bin_map = KernelMeta::GetInstance();
+  MS_EXCEPTION_IF_NULL(bin_map);
   return bin_map->GetKernelPack(kernel_name, is_akg);
 }
 
@@ -299,6 +300,8 @@ uintptr_t KernelManager::GenFuncStub(const mindspore::kernel::KernelPack &kernel
     return 0;
   }
   if (kernel_json_info.has_kernel_list) {
+    MS_EXCEPTION_IF_NULL(handle);
+    MS_EXCEPTION_IF_NULL(origin_key);
     *handle = module;
     *origin_key = func_name;
     return 1;

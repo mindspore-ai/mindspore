@@ -91,7 +91,7 @@ bool TbeKernelBroadCastSelecter::IsBroadCastSupport5HD(SupportFormat *support_fo
         if (!Is4DShape(shape)) {
           return false;
         }
-        if (shape[kChannelC] % kAlignmented16 != 0) {
+        if (shape.at(kChannelC) % kAlignmented16 != 0) {
           return false;
         }
         (void)input_support_format.emplace_back(kOpFormat_NC1HWC0);
@@ -103,7 +103,7 @@ bool TbeKernelBroadCastSelecter::IsBroadCastSupport5HD(SupportFormat *support_fo
         return false;
       }
     }
-    auto shape_tmp = input_shapes_[0];
+    auto shape_tmp = input_shapes_.at(0);
     auto broadcast_c_axis =
       std::any_of(input_shapes_.begin(), input_shapes_.end(),
                   [&shape_tmp](const ShapeVector &elem) { return shape_tmp.at(kChannelC) != elem.at(kChannelC); });
@@ -139,7 +139,7 @@ bool TbeKernelBroadCastSelecter::IsBroadCastSupportFracZ(SupportFormat *support_
         if (!Is4DShape(shape)) {
           return false;
         }
-        if (shape[kChannelN] % kAlignmented16 != 0 || shape[kChannelC] % kAlignmented16 != 0) {
+        if (shape.at(kChannelN) % kAlignmented16 != 0 || shape.at(kChannelC) % kAlignmented16 != 0) {
           return false;
         }
         (void)input_support_format.emplace_back(kOpFormat_FRAC_Z);
@@ -173,7 +173,7 @@ bool TbeKernelBroadCastSelecter::IsBroadCastSupportC1HWNCoC0(SupportFormat *supp
         if (!Is4DShape(shape)) {
           return false;
         }
-        if (shape[kChannelN] % kAlignmented16 != 0) {
+        if (shape.at(kChannelN) % kAlignmented16 != 0) {
           return false;
         }
         (void)input_support_format.emplace_back(kOpFormat_C1HWNCoC0);
@@ -185,7 +185,7 @@ bool TbeKernelBroadCastSelecter::IsBroadCastSupportC1HWNCoC0(SupportFormat *supp
         return false;
       }
     }
-    auto shape_tmp = input_shapes_[0];
+    auto shape_tmp = input_shapes_.at(0);
     auto broadcast_nc_axis =
       std::any_of(input_shapes_.begin(), input_shapes_.end(), [&shape_tmp](const ShapeVector &elem) {
         return (shape_tmp.at(kChannelC) != elem.at(kChannelC) || shape_tmp.at(kChannelN) != elem.at(kChannelN));
@@ -237,7 +237,7 @@ bool TbeKernelBroadCastSelecter::IsBroadCastSupportFracNZ(SupportFormat *support
       return false;
     }
 
-    auto shape_tmp = input_shapes_[0];
+    auto shape_tmp = input_shapes_.at(0);
     auto broadcast_last_dim =
       std::any_of(input_shapes_.begin(), input_shapes_.end(), [&shape_tmp](const ShapeVector &elem) {
         return (shape_tmp.at(shape_tmp.size() - 1) != elem.at(elem.size() - 1)) ||
@@ -273,7 +273,7 @@ bool TbeKernelBroadCastSelecter::IsBroadCastSupportNDC1HWC0(SupportFormat *suppo
         (void)input_support_format.emplace_back(kOpFormat_NCDHW);
       } else if (!Is5DShape(shape)) {
         return false;
-      } else if (shape[kChannelC] % kAlignmented16 != 0) {
+      } else if (shape.at(kChannelC) % kAlignmented16 != 0) {
         return false;
       } else {
         (void)input_support_format.emplace_back(kOpFormat_NDC1HWC0);
@@ -285,7 +285,7 @@ bool TbeKernelBroadCastSelecter::IsBroadCastSupportNDC1HWC0(SupportFormat *suppo
         return false;
       }
     }
-    auto shape_tmp = input_shapes_[0];
+    auto shape_tmp = input_shapes_.at(0);
     auto broadcast_c_axis =
       std::any_of(input_shapes_.begin(), input_shapes_.end(),
                   [&shape_tmp](const ShapeVector &elem) { return shape_tmp.at(kChannelC) != elem.at(kChannelC); });

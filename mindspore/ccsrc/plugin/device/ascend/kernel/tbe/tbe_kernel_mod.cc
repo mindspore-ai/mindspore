@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,12 +63,21 @@ bool TbeKernelMod::Launch(const std::vector<mindspore::kernel::AddressPtr> &inpu
   // pack all addresses into a vector.
   std::vector<void *> runtimeargs;
   (void)std::transform(std::begin(inputs), std::end(inputs), std::back_inserter(runtimeargs),
-                       [](const AddressPtr &input) -> void * { return input->addr; });
+                       [](const AddressPtr &input) -> void * {
+                         MS_EXCEPTION_IF_NULL(input);
+                         return input->addr;
+                       });
   (void)std::transform(std::begin(outputs), std::end(outputs), std::back_inserter(runtimeargs),
-                       [](const AddressPtr &output) -> void * { return output->addr; });
+                       [](const AddressPtr &output) -> void * {
+                         MS_EXCEPTION_IF_NULL(output);
+                         return output->addr;
+                       });
   if (!workspace.empty()) {
     (void)std::transform(std::begin(workspace), std::end(workspace), std::back_inserter(runtimeargs),
-                         [](const AddressPtr &addr) -> void * { return addr->addr; });
+                         [](const AddressPtr &addr) -> void * {
+                           MS_EXCEPTION_IF_NULL(addr);
+                           return addr->addr;
+                         });
   }
   rtL2Ctrl_t *l2ctrl = nullptr;
   const void *stubFunc = reinterpret_cast<void *>(func_stub);
@@ -99,12 +108,21 @@ std::vector<TaskInfoPtr> TbeKernelMod::GenTask(const std::vector<AddressPtr> &in
 
   // pack all addresses into a vector.
   (void)std::transform(std::begin(inputs), std::end(inputs), std::back_inserter(input_data_addrs),
-                       [](const AddressPtr &input) -> void * { return input->addr; });
+                       [](const AddressPtr &input) -> void * {
+                         MS_EXCEPTION_IF_NULL(input);
+                         return input->addr;
+                       });
   (void)std::transform(std::begin(outputs), std::end(outputs), std::back_inserter(output_data_addrs),
-                       [](const AddressPtr &output) -> void * { return output->addr; });
+                       [](const AddressPtr &output) -> void * {
+                         MS_EXCEPTION_IF_NULL(output);
+                         return output->addr;
+                       });
   if (!workspaces.empty()) {
     (void)std::transform(std::begin(workspaces), std::end(workspaces), std::back_inserter(workspace_addrs),
-                         [](const AddressPtr &workspace) -> void * { return workspace->addr; });
+                         [](const AddressPtr &workspace) -> void * {
+                           MS_EXCEPTION_IF_NULL(workspace);
+                           return workspace->addr;
+                         });
   }
 
   stream_id_ = stream_id;
@@ -124,6 +142,7 @@ std::vector<TaskInfoPtr> TbeKernelMod::GenTask(const std::vector<AddressPtr> &in
 }
 
 vector<size_t> TbeKernelMod::GenParameters() {
+  MS_EXCEPTION_IF_NULL(kernel_pack_);
   auto kernel_json_info = kernel_pack_->kernel_json_info();
   return kernel_json_info.parameters;
 }

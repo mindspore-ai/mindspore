@@ -119,6 +119,7 @@ std::string OpTilingCalculateAdapter::GetInputName(const CNodePtr &node, size_t 
 
 void OpTilingCalculateAdapter::ConvertInputShapeAndType(const CNodePtr &node, ::ge::OpDescPtr *op_desc) {
   MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(op_desc);
   MS_EXCEPTION_IF_NULL(*op_desc);
   auto input_size = common::AnfAlgo::GetInputTensorNum(node);
   for (size_t i = 0; i < input_size; i++) {
@@ -149,6 +150,7 @@ void OpTilingCalculateAdapter::ConvertInputShapeAndType(const CNodePtr &node, ::
 
 void OpTilingCalculateAdapter::ConvertOutputShapeAndType(const CNodePtr &node, ::ge::OpDescPtr *op_desc) {
   MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(op_desc);
   MS_EXCEPTION_IF_NULL(*op_desc);
   auto output_size = common::AnfAlgo::GetOutputTensorNum(node);
   for (size_t i = 0; i < output_size; i++) {
@@ -173,6 +175,7 @@ void OpTilingCalculateAdapter::ConvertOutputShapeAndType(const CNodePtr &node, :
 
 void OpTilingCalculateAdapter::ConvertAttrs(const CNodePtr &node, ::ge::OpDescPtr *op_desc) const {
   MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(op_desc);
   MS_EXCEPTION_IF_NULL(*op_desc);
   auto primitive = GetCNodePrimitive(node);
   if (primitive == nullptr || SkipOpConvert(primitive->name())) {
@@ -214,6 +217,7 @@ void OpTilingCalculateAdapter::ConvertAttrs(const CNodePtr &node, ::ge::OpDescPt
 
 void OpTilingCalculateAdapter::ConvertCompileInfo(const CNodePtr &node, ::ge::OpDescPtr *op_desc) {
   MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(op_desc);
   MS_EXCEPTION_IF_NULL(*op_desc);
   MS_LOG(INFO) << "For op " << op_name_ << ", get compile_info: " << op_compile_info_;
   std::string compile_info_key = std::to_string(std::hash<std::string>()(op_compile_info_));
@@ -223,6 +227,7 @@ void OpTilingCalculateAdapter::ConvertCompileInfo(const CNodePtr &node, ::ge::Op
 
 void OpTilingCalculateAdapter::ConvertAtomicCompileInfo(const CNodePtr &node, ::ge::OpDescPtr *op_desc) const {
   MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(op_desc);
   MS_EXCEPTION_IF_NULL(*op_desc);
   auto kernel_mod = dynamic_cast<kernel::AscendKernelMod *>(AnfAlgo::GetKernelMod(node));
   MS_EXCEPTION_IF_NULL(kernel_mod);
@@ -276,6 +281,7 @@ void OpTilingCalculateAdapter::ConvertAtomicCompileInfo(const CNodePtr &node, ::
                                                       const tensor::TensorPtr &tensor_data,
                                                       ::ge::ComputeGraphPtr *ge_graph, size_t index) const {
   MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(ge_graph);
   MS_EXCEPTION_IF_NULL(*ge_graph);
   MS_EXCEPTION_IF_NULL(tensor_data);
   ::ge::OpDescPtr op_desc = std::make_shared<::ge::OpDesc>(name, CONSTANTOP);
@@ -305,6 +311,7 @@ std::vector<std::tuple<std::size_t, ::ge::NodePtr>> OpTilingCalculateAdapter::Co
   const CNodePtr &node, const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map, ::ge::OpDescPtr *op_desc,
   ::ge::ComputeGraphPtr *ge_graph) {
   MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(op_desc);
   MS_EXCEPTION_IF_NULL(*op_desc);
   auto depends_list_me = abstract::GetValueDependArgIndices(node);
   if (depends_list_me.empty() || AnfAlgo::IsDynamicShapeSkipExecute(node)) {
@@ -416,6 +423,7 @@ void OpTilingCalculateAdapter::InitOpIoName(const CNodePtr &node) {
   ConvertAtomicCompileInfo(node, &op_desc);
   std::vector<std::tuple<std::size_t, ::ge::NodePtr>> constant_ops =
     ConvertDepends(node, depend_tensor_map, &op_desc, ge_graph);
+  MS_EXCEPTION_IF_NULL(ge_graph);
   MS_EXCEPTION_IF_NULL(*ge_graph);
   auto ge_node = (*ge_graph)->AddNode(op_desc);
   AddEdge(ge_node, constant_ops);
@@ -431,6 +439,7 @@ void OpTilingCalculateAdapter::InitOpIoName(const CNodePtr &node) {
   const CNodePtr &node, ::ge::ComputeGraphPtr *ge_graph, const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map,
   const std::string &op_compile_info) {
   MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(ge_graph);
   MS_EXCEPTION_IF_NULL(*ge_graph);
   return CreateGeNode(node, ge_graph, depend_tensor_map, op_compile_info);
 }
@@ -439,6 +448,7 @@ void OpTilingCalculateAdapter::InitOpIoName(const CNodePtr &node) {
   const CNodePtr &node, ::ge::ComputeGraphPtr *ge_graph, const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map,
   const std::string &op_compile_info) {
   MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(ge_graph);
   MS_EXCEPTION_IF_NULL(*ge_graph);
   auto ge_node = CreateGeNode(node, ge_graph, depend_tensor_map, op_compile_info);
   MS_EXCEPTION_IF_NULL(ge_node);
