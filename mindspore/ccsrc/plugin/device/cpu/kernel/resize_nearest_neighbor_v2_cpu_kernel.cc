@@ -110,31 +110,33 @@ bool ResizeNearestNeighborV2CpuKernelMod::LaunchKernel(const std::vector<kernel:
   const int64_t out_height = y_shape_[dim_idx_map_['H']];
   const int64_t out_width = y_shape_[dim_idx_map_['W']];
 
-  const float height_scale = Scaling(in_height, out_height, align_corners_);
-  const float width_scale = Scaling(in_width, out_width, align_corners_);
+  const float height_scale = Scaling(static_cast<size_t>(in_height), static_cast<size_t>(out_height), align_corners_);
+  const float width_scale = Scaling(static_cast<size_t>(in_width), static_cast<size_t>(out_width), align_corners_);
 
   auto x_4d = EigenTensor(x_shape_, inputs[kIndex0]->addr).tensor<T, kDim4>();
   auto y_4d = EigenTensor(y_shape_, outputs[kIndex0]->addr).tensor<T, kDim4>();
   for (int64_t b = 0; b < batch_size; ++b) {
     for (int64_t y = 0; y < out_height; ++y) {
       int64_t in_y =
-        std::min((align_corners_) ? static_cast<int64_t>(roundf(Scaler(y, height_scale, half_pixel_centers_)))
-                                  : static_cast<int64_t>(floorf(Scaler(y, height_scale, half_pixel_centers_))),
+        std::min((align_corners_)
+                   ? static_cast<int64_t>(roundf(Scaler(static_cast<size_t>(y), height_scale, half_pixel_centers_)))
+                   : static_cast<int64_t>(floorf(Scaler(static_cast<size_t>(y), height_scale, half_pixel_centers_))),
                  in_height - 1);
       if (half_pixel_centers_) {
         in_y = std::max(static_cast<int64_t>(0), in_y);
       }
       for (int64_t x = 0; x < out_width; ++x) {
         int64_t in_x =
-          std::min((align_corners_) ? static_cast<int64_t>(roundf(Scaler(x, width_scale, half_pixel_centers_)))
-                                    : static_cast<int64_t>(floorf(Scaler(x, width_scale, half_pixel_centers_))),
+          std::min((align_corners_)
+                     ? static_cast<int64_t>(roundf(Scaler(static_cast<size_t>(x), width_scale, half_pixel_centers_)))
+                     : static_cast<int64_t>(floorf(Scaler(static_cast<size_t>(x), width_scale, half_pixel_centers_))),
                    in_width - 1);
         if (half_pixel_centers_) {
           in_x = std::max(static_cast<int64_t>(0), in_x);
         }
         // data_format = NHWC
         if (dim_idx_map_['C'] == kIndex3) {
-          std::copy_n(&x_4d(b, in_y, in_x, 0), channels, &y_4d(b, y, x, 0));
+          (void)std::copy_n(&x_4d(b, in_y, in_x, 0), channels, &y_4d(b, y, x, 0));
         } else {
           // data_format = NCHW
           for (int64_t c = 0; c < channels; ++c) {

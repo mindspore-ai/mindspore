@@ -29,7 +29,7 @@ constexpr auto kUpsampleNearest3DOutputNum = 1;
 constexpr size_t kGrainSize = 32768;
 
 template <typename T>
-inline T data_index_init(T *offset) {
+inline T data_index_init(const T *offset) {
   return *offset;
 }
 
@@ -106,7 +106,7 @@ bool UpsampleNearest3DCpuKernelMod::LaunchKernel(const std::vector<kernel::Addre
 
   auto x_ptr = reinterpret_cast<T *>(inputs[kIndex0]->addr);
   auto y_ptr = reinterpret_cast<T *>(outputs[kIndex0]->addr);
-  std::fill_n(y_ptr, CPUKernelUtils::CalcElementNum(y_shape_), T(0));
+  (void)std::fill_n(y_ptr, CPUKernelUtils::CalcElementNum(y_shape_), T(0));
   if (input_depth == output_depth && input_height == output_height && input_width == output_width) {
     auto cpy_ret = memcpy_s(y_ptr, outputs[kIndex0]->size, x_ptr, outputs[kIndex0]->size);
     if (cpy_ret != EOK) {
@@ -119,16 +119,18 @@ bool UpsampleNearest3DCpuKernelMod::LaunchKernel(const std::vector<kernel::Addre
     int64_t od = 0;
     int64_t oh = 0;
     int64_t ow = 0;
-    data_index_init(&begin, &n, &channels, &od, &output_depth, &oh, &output_height, &ow, &output_width);
+    // data_index_init异常判断
+    (void)data_index_init(&begin, &n, &channels, &od, &output_depth, &oh, &output_height, &ow, &output_width);
     for (int64_t idx = begin; idx < end; ++idx) {
       int64_t id = NearestIndex(od, input_depth, output_depth, static_cast<double>(attr_scales_[kIndex0]));
       int64_t ih = NearestIndex(oh, input_height, output_height, static_cast<double>(attr_scales_[kIndex1]));
       int64_t iw = NearestIndex(ow, input_width, output_width, static_cast<double>(attr_scales_[kIndex2]));
       y_ptr[idx] = x_ptr[n * input_slice_size + id * input_height * input_width + ih * input_width + iw];
-      data_index_step(&n, &channels, &od, &output_depth, &oh, &output_height, &ow, &output_width);
+      (void)data_index_step(&n, &channels, &od, &output_depth, &oh, &output_height, &ow, &output_width);
     }
   };
-  CPUKernelUtils::ParallelFor(loop3d, CPUKernelUtils::CalcElementNum(y_shape_), static_cast<float>(kGrainSize));
+  CPUKernelUtils::ParallelFor(loop3d, static_cast<size_t>(CPUKernelUtils::CalcElementNum(y_shape_)),
+                              static_cast<float>(kGrainSize));
   return true;
 }
 std::vector<KernelAttr> UpsampleNearest3DCpuKernelMod::GetOpSupport() {

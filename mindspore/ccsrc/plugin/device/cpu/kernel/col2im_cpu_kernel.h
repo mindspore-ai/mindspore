@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_COL2IM_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_COL2IM_CPU_KERNEL_H_
 
-#include <memory>
 #include <vector>
 
 #include "plugin/device/cpu/kernel/cpu_kernel.h"

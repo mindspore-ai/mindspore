@@ -59,10 +59,10 @@ void ListDiffCPUKernelMod::InitKernel(const CNodePtr &kernel_node) {
 
 template <typename T, typename Tidx>
 bool ListDiffCPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
-  auto x_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto y_addr = reinterpret_cast<T *>(inputs[1]->addr);
-  auto out_addr = reinterpret_cast<T *>(outputs[0]->addr);
-  auto idx_addr = reinterpret_cast<Tidx *>(outputs[1]->addr);
+  auto x_addr = static_cast<T *>(inputs[0]->addr);
+  auto y_addr = static_cast<T *>(inputs[1]->addr);
+  auto out_addr = static_cast<T *>(outputs[0]->addr);
+  auto idx_addr = static_cast<Tidx *>(outputs[1]->addr);
   MS_EXCEPTION_IF_NULL(x_addr);
   MS_EXCEPTION_IF_NULL(y_addr);
   MS_EXCEPTION_IF_NULL(out_addr);
@@ -128,8 +128,6 @@ bool ListDiffCPUKernelMod::Launch(const std::vector<AddressPtr> &inputs, const s
         << "For [" << kernel_name_
         << "] input data type should be in [int8, int16, int32, int64, uint8, uint16, float16, float32, float64],"
         << " but get" << TypeIdLabel(out_type_) << ".";
-      result = false;
-      break;
     }
   }
   return result;

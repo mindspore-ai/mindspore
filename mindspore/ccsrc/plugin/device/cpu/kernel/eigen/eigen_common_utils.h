@@ -49,18 +49,38 @@ using ComplexMatrixSquare = Eigen::Matrix<std::complex<T>, Dynamic, Dynamic, Row
 template <typename T, int NDIMS = kDim1, typename IndexType = Eigen::DenseIndex>
 struct TTypes {
   // Rank-<NDIMS> tensor of scalar type T.
-  typedef Eigen::TensorMap<Eigen::Tensor<T, NDIMS, Eigen::RowMajor, IndexType>, Eigen::Aligned> Tensor;
-  typedef Eigen::TensorMap<Eigen::Tensor<const T, NDIMS, Eigen::RowMajor, IndexType>, Eigen::Aligned> ConstTensor;
+  typedef Eigen::TensorMap<Eigen::Tensor<T, NDIMS, static_cast<Eigen::StorageOptions>(Eigen::RowMajor), IndexType>,
+                           static_cast<Eigen::AlignmentType>(Eigen::Aligned)>
+    Tensor;
+  typedef Eigen::TensorMap<
+    Eigen::Tensor<const T, NDIMS, static_cast<Eigen::StorageOptions>(Eigen::RowMajor), IndexType>,
+    static_cast<Eigen::AlignmentType>(Eigen::Aligned)>
+    ConstTensor;
 
   // Rank-1 tensor (vector) of scalar type T.
-  typedef Eigen::TensorMap<Eigen::Tensor<T, kDim1, Eigen::RowMajor, IndexType>, Eigen::Aligned> Flat;
-  typedef Eigen::TensorMap<Eigen::Tensor<const T, kDim1, Eigen::RowMajor, IndexType>, Eigen::Aligned> ConstFlat;
-  typedef Eigen::TensorMap<Eigen::Tensor<T, kDim1, Eigen::RowMajor, IndexType>, Eigen::Aligned> Vec;
-  typedef Eigen::TensorMap<Eigen::Tensor<const T, kDim1, Eigen::RowMajor, IndexType>, Eigen::Aligned> ConstVec;
+  typedef Eigen::TensorMap<Eigen::Tensor<T, kDim1, static_cast<Eigen::StorageOptions>(Eigen::RowMajor), IndexType>,
+                           static_cast<Eigen::AlignmentType>(Eigen::Aligned)>
+    Flat;
+  typedef Eigen::TensorMap<
+    Eigen::Tensor<const T, kDim1, static_cast<Eigen::StorageOptions>(Eigen::RowMajor), IndexType>,
+    static_cast<Eigen::AlignmentType>(Eigen::Aligned)>
+    ConstFlat;
+  typedef Eigen::TensorMap<Eigen::Tensor<T, kDim1, static_cast<Eigen::StorageOptions>(Eigen::RowMajor), IndexType>,
+                           static_cast<Eigen::AlignmentType>(Eigen::Aligned)>
+    Vec;
+  typedef Eigen::TensorMap<
+    Eigen::Tensor<const T, kDim1, static_cast<Eigen::StorageOptions>(Eigen::RowMajor), IndexType>,
+    static_cast<Eigen::AlignmentType>(Eigen::Aligned)>
+    ConstVec;
 
   // Rank-2 tensor (matrix) of scalar type T.
-  typedef Eigen::TensorMap<Eigen::Tensor<T, kDim2, Eigen::RowMajor, IndexType>, Eigen::Aligned> Matrix;
-  typedef Eigen::TensorMap<Eigen::Tensor<const T, kDim2, Eigen::RowMajor, IndexType>, Eigen::Aligned> ConstMatrix;
+  typedef Eigen::TensorMap<Eigen::Tensor<T, kDim2, static_cast<Eigen::StorageOptions>(Eigen::RowMajor), IndexType>,
+                           static_cast<Eigen::AlignmentType>(Eigen::Aligned)>
+    Matrix;
+  typedef Eigen::TensorMap<
+    Eigen::Tensor<const T, kDim2, static_cast<Eigen::StorageOptions>(Eigen::RowMajor), IndexType>,
+    static_cast<Eigen::AlignmentType>(Eigen::Aligned)>
+    ConstMatrix;
 };
 
 class EigenTensor {
@@ -69,7 +89,7 @@ class EigenTensor {
   EigenTensor(ShapeVector &shape, void *data_ptr) : tensor_shape(shape), tensor_data_ptr(data_ptr) {}
   EigenTensor(std::vector<size_t> &shape, void *data_ptr) : tensor_data_ptr(data_ptr) {
     for (size_t dim : shape) {
-      tensor_shape.emplace_back(static_cast<int64_t>(dim));
+      (void)tensor_shape.emplace_back(static_cast<int64_t>(dim));
     }
   }
   ~EigenTensor() = default;

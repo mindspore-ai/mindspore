@@ -31,10 +31,12 @@ namespace {
 abstract::ShapePtr UpsampleNearest3DInferShape(const PrimitivePtr &primitive,
                                                const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
+  size_t long_kdim2 = SizeToLong(kDim2);
+  size_t long_kdim3 = SizeToLong(kDim3);
+  size_t long_kdim5 = SizeToLong(kDim5);
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto x_shape_ptr = input_args[kInputIndex0]->BuildShape();
-  (void)CheckAndConvertUtils::CheckInteger("dimension of x", SizeToLong(x_shape.size()), kEqual, SizeToLong(kDim5),
-                                           prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("dimension of x", SizeToLong(x_shape.size()), kEqual, long_kdim5, prim_name);
 
   auto output_size_ptr = primitive->GetAttr(kOutputSize);
   MS_EXCEPTION_IF_NULL(output_size_ptr);
@@ -45,20 +47,20 @@ abstract::ShapePtr UpsampleNearest3DInferShape(const PrimitivePtr &primitive,
   auto scales = GetValue<std::vector<float>>(scales_ptr);
 
   ShapeVector y_shape;
-  y_shape.emplace_back(x_shape[kInputIndex0]);
-  y_shape.emplace_back(x_shape[kInputIndex1]);
+  (void)y_shape.emplace_back(x_shape[kInputIndex0]);
+  (void)y_shape.emplace_back(x_shape[kInputIndex1]);
 
   if (!output_size.empty() && scales.empty()) {
     (void)CheckAndConvertUtils::CheckPositiveVector(kOutputSize, output_size, prim_name);
     (void)CheckAndConvertUtils::CheckInteger("elements number of output_size", SizeToLong(output_size.size()), kEqual,
-                                             SizeToLong(kDim3), prim_name);
-    y_shape.insert(y_shape.end(), output_size.begin(), output_size.end());
+                                             long_kdim3, prim_name);
+    (void)y_shape.insert(y_shape.end(), output_size.begin(), output_size.end());
   } else if (output_size.empty() && !scales.empty()) {
     (void)CheckAndConvertUtils::CheckPositiveVector(kScales, scales, prim_name);
-    (void)CheckAndConvertUtils::CheckInteger("elements number of scales", SizeToLong(scales.size()), kEqual,
-                                             SizeToLong(kDim3), prim_name);
-    for (size_t idx = 0; idx < kDim3; ++idx) {
-      y_shape.emplace_back(static_cast<int64_t>(floor(x_shape[idx + kDim2] * scales[idx])));
+    (void)CheckAndConvertUtils::CheckInteger("elements number of scales", SizeToLong(scales.size()), kEqual, long_kdim3,
+                                             prim_name);
+    for (size_t idx = 0; idx < long_kdim3; ++idx) {
+      (void)y_shape.emplace_back(static_cast<int64_t>(floor(x_shape[idx + long_kdim2] * scales[idx])));
     }
   } else if (output_size.empty() && scales.empty()) {
     MS_EXCEPTION(ValueError) << "For " << prim_name << ", only one of 'scales' and 'output_size' can be specified."

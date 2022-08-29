@@ -36,11 +36,13 @@ abstract::ShapePtr ResizeNearestNeighborV2GradInferShape(const PrimitivePtr &pri
   auto grads_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto size_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
   auto size_ptr = input_args[kInputIndex1]->BuildValue();
-
-  (void)CheckAndConvertUtils::CheckInteger("dimension of grads", SizeToLong(grads_shape.size()), kEqual,
-                                           SizeToLong(kDim4), prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("dimension of size", SizeToLong(size_shape.size()), kEqual,
-                                           SizeToLong(kDim1), prim_name);
+  size_t long_kdim1 = SizeToLong(kDim1);
+  size_t long_kdim2 = SizeToLong(kDim2);
+  size_t long_kdim4 = SizeToLong(kDim4);
+  (void)CheckAndConvertUtils::CheckInteger("dimension of grads", SizeToLong(grads_shape.size()), kEqual, long_kdim4,
+                                           prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("dimension of size", SizeToLong(size_shape.size()), kEqual, long_kdim1,
+                                           prim_name);
 
   auto data_format = CheckAndConvertUtils::GetAndCheckFormat(primitive->GetAttr(kFormat));
   std::map<char, size_t> dim_idx_map;
@@ -53,10 +55,11 @@ abstract::ShapePtr ResizeNearestNeighborV2GradInferShape(const PrimitivePtr &pri
   if (align_corners && half_pixel_centers) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name << ". If half_pixel_centers is True, align_corners must be False.";
   }
+  mindspore::Format format_enum = static_cast<mindspore::Format>(data_format);
 
-  if (data_format == Format::NCHW) {
+  if (format_enum == Format::NCHW) {
     dim_idx_map = {{'N', kInputIndex0}, {'C', kInputIndex1}, {'H', kInputIndex2}, {'W', kInputIndex3}};
-  } else if (data_format == Format::NHWC) {
+  } else if (format_enum == Format::NHWC) {
     dim_idx_map = {{'N', kInputIndex0}, {'H', kInputIndex1}, {'W', kInputIndex2}, {'C', kInputIndex3}};
   } else {
     MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the attr of 'data_format' only support [" << kFormatNCHW
@@ -64,7 +67,7 @@ abstract::ShapePtr ResizeNearestNeighborV2GradInferShape(const PrimitivePtr &pri
   }
 
   bool is_compile = IsNoneOrAnyValue(size_ptr);
-  ShapeVector y_shape(kDim4);
+  ShapeVector y_shape(long_kdim4);
   if (is_compile) {
     y_shape[dim_idx_map['N']] = grads_shape[dim_idx_map['N']];
     y_shape[dim_idx_map['C']] = grads_shape[dim_idx_map['C']];
@@ -78,7 +81,7 @@ abstract::ShapePtr ResizeNearestNeighborV2GradInferShape(const PrimitivePtr &pri
   } else {
     MS_EXCEPTION_IF_NULL(size_ptr);
     auto size_value = CheckAndConvertUtils::CheckTensorIntValue("input size", size_ptr, prim_name);
-    if (size_value.size() != kDim2) {
+    if (size_value.size() != long_kdim2) {
       MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the elements number of 'size' should be 2, but get "
                                << size_value.size() << " number.";
     }
