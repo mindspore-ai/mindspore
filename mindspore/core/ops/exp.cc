@@ -37,8 +37,8 @@ template <typename T>
 void ImpleExp(void *origin, void *target, size_t size) {
   MS_EXCEPTION_IF_NULL(origin);
   MS_EXCEPTION_IF_NULL(target);
-  auto origin_data = reinterpret_cast<T *>(origin);
-  auto target_data = reinterpret_cast<T *>(target);
+  auto origin_data = static_cast<T *>(origin);
+  auto target_data = static_cast<T *>(target);
   for (size_t i = 0; i < size; ++i) {
     target_data[i] = static_cast<T>(exp(static_cast<double>(origin_data[i])));
   }
@@ -48,8 +48,8 @@ template <typename T>
 void ImpleComplexExp(void *origin, void *target, size_t size) {
   MS_EXCEPTION_IF_NULL(origin);
   MS_EXCEPTION_IF_NULL(target);
-  auto origin_data = reinterpret_cast<T *>(origin);
-  auto target_data = reinterpret_cast<T *>(target);
+  auto origin_data = static_cast<T *>(origin);
+  auto target_data = static_cast<T *>(target);
   for (size_t i = 0; i < size; ++i) {
     target_data[i] = static_cast<T>(exp(origin_data[i]));
   }

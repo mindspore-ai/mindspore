@@ -62,7 +62,7 @@ void CheckNumericsCpuKernelMod::CheckNanOrInf(T value) const {
 
 template <typename T>
 void CheckNumericsCpuKernelMod::LaunchKernelFloat(const std::vector<AddressPtr> &inputs,
-                                                  const std::vector<kernel::AddressPtr> &outputs) {
+                                                  const std::vector<kernel::AddressPtr> &outputs) const {
   T *input = reinterpret_cast<T *>(inputs[0]->addr);
   auto *output = reinterpret_cast<T *>(outputs[0]->addr);
   size_t elem_num = inputs[0]->size / sizeof(T);

@@ -54,7 +54,7 @@ template <typename T>
 void CumProdCpuKernelMod::InitWorkspaceSize() {
   input_size_0_ = sizeof(T);
   for (size_t i = 0; i < shape_.size(); i++) {
-    input_size_0_ *= shape_[i];
+    input_size_0_ *= static_cast<size_t>(shape_[i]);
   }
   (void)workspace_size_list_.emplace_back(input_size_0_);
 }
@@ -136,13 +136,13 @@ bool CumProdCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
 
 void CumProdCpuKernelMod::Reshape() {
   dims_[0] = 1;
-  dims_[1] = shape_[IntToSize(axis_)];
+  dims_[1] = static_cast<size_t>(shape_[IntToSize(axis_)]);
   dims_[kDimSize2] = 1;
   for (size_t i = 0; i < IntToSize(axis_); i++) {
-    dims_[0] *= shape_[i];
+    dims_[0] *= static_cast<size_t>(shape_[i]);
   }
   for (size_t i = IntToSize(axis_) + 1; i < shape_.size(); i++) {
-    dims_[kDimSize2] *= shape_[i];
+    dims_[kDimSize2] *= static_cast<size_t>(shape_[i]);
   }
   stride_ = dims_[1] * dims_[kDimSize2];
   stride2_ = dims_[kDimSize2];
@@ -160,7 +160,7 @@ void CumProdCpuKernelMod::LeftMove(const T *input, T *output, size_t dim0, size_
     }
     size_t offset = k1 * stride + k2;
     for (size_t j = 0; j < dim1; ++j) {
-      size_t read_index = j * stride2 + offset;
+      size_t read_index = static_cast<size_t>(j * stride2 + offset);
       if (j == 0) {
         output[read_index] = (T)1;
       } else {
@@ -183,11 +183,11 @@ void CumProdCpuKernelMod::RightMove(const T *input, T *output, size_t dim0, size
     }
     size_t offset = k1 * stride + k2;
     for (int j = SizeToInt(dim1 - 1); j >= 0; --j) {
-      size_t read_index = j * stride2 + offset;
+      size_t read_index = static_cast<size_t>(j * stride2 + offset);
       if (j == SizeToInt(dim1 - 1)) {
         output[read_index] = (T)1;
       } else {
-        size_t read_index2 = (j + 1) * stride2 + offset;
+        size_t read_index2 = static_cast<size_t>((j + 1) * stride2 + offset);
         output[read_index] = input[read_index2];
       }
     }
@@ -206,7 +206,7 @@ void CumProdCpuKernelMod::Copy(T *input, T *output, size_t dim0, size_t dim1, si
     }
     size_t offset = k1 * stride + k2;
     for (size_t j = 0; j < dim1; ++j) {
-      size_t read_index = j * stride2 + offset;
+      size_t read_index = static_cast<size_t>(j * stride2 + offset);
       input[read_index] = output[read_index];
     }
   }
@@ -224,12 +224,12 @@ void CumProdCpuKernelMod::CumProdKernelReverse(const T *input, T *output, size_t
     }
     size_t offset = k1 * stride + k2;
     for (int j = SizeToInt(dim1 - 1); j >= 0; --j) {
-      size_t read_index = j * stride2 + offset;
+      size_t read_index = static_cast<size_t>(j * stride2 + offset);
       if (j == SizeToInt(dim1 - 1)) {
         output[read_index] = input[read_index];
       } else {
-        size_t read_index2 = (j + 1) * stride2 + offset;
-        output[read_index] = output[read_index2] * input[read_index];
+        size_t read_index2 = static_cast<size_t>((j + 1) * stride2 + offset);
+        output[read_index] = output[read_index2] * static_cast<T>(input[read_index]);
       }
     }
   }
@@ -247,12 +247,12 @@ void CumProdCpuKernelMod::CumProdKernel(const T *input, T *output, size_t dim0, 
     }
     size_t offset = k1 * stride + k2;
     for (size_t j = 0; j < dim1; ++j) {
-      size_t read_index = j * stride2 + offset;
+      size_t read_index = static_cast<size_t>(j * stride2 + offset);
       if (j == 0) {
         output[read_index] = input[read_index];
       } else {
         size_t read_index2 = (j - 1) * stride2 + offset;
-        output[read_index] = output[read_index2] * input[read_index];
+        output[read_index] = output[read_index2] * static_cast<T>(input[read_index]);
       }
     }
   }
@@ -285,9 +285,9 @@ template <typename T>
 void CumProdCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                        const std::vector<kernel::AddressPtr> &workspace,
                                        const std::vector<kernel::AddressPtr> &outputs) {
-  const auto *input = reinterpret_cast<T *>(inputs[0]->addr);
-  auto *ws = reinterpret_cast<T *>(workspace[0]->addr);
-  auto output = reinterpret_cast<T *>(outputs[0]->addr);
+  const auto *input = static_cast<T *>(inputs[0]->addr);
+  auto *ws = static_cast<T *>(workspace[0]->addr);
+  auto output = static_cast<T *>(outputs[0]->addr);
   // multithreading
   size_t lens = inputs[0]->size > 0 ? static_cast<size_t>(inputs[0]->size / sizeof(T)) : 1;
   auto task = [this, &input, &output, &ws](size_t start, size_t end) {
