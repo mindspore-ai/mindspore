@@ -29,10 +29,6 @@ int ElementOptDiv(const float *in0, const float *in1, float *out, int size, cons
       out[index] = in0[0] / in1[index];
     }
   } else {
-    if (in1[0] == 0) {
-      return NNACL_ERRCODE_DIVISOR_ZERO;
-    }
-
     SIMD_RUN_NO_SCALAR(ElementOptDivNum1, index, in0, in1, out, size);
     for (; index < size; index++) {
       out[index] = in0[index] / in1[0];
