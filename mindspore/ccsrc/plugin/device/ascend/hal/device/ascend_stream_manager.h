@@ -64,6 +64,7 @@ class AscendStreamMng {
   rtStream_t GetStream(size_t stream_id) const;
   bool SyncStream(size_t stream_id) const;
   bool SyncStream(rtStream_t stream) const;
+  const std::vector<void *> &GetAllStreams() const { return streams_; }
 
  private:
   // Count streams and events number in task sink scenario
