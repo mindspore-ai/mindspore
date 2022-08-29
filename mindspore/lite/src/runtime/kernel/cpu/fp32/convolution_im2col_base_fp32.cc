@@ -25,6 +25,7 @@
 
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_INFER_INVALID;
+using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
@@ -44,13 +45,20 @@ int ConvolutionIm2ColBaseCPUKernel::InitTmpBuffer() {
 
   int unit_size =
     conv_param_->kernel_h_ * conv_param_->kernel_w_ * conv_param_->input_channel_ * row_tile_ * thread_count_;
-
+  if (packed_input_ != nullptr) {
+    ctx_->allocator->Free(packed_input_);
+    packed_input_ = nullptr;
+  }
   packed_input_ = reinterpret_cast<float *>(ctx_->allocator->Malloc(unit_size * sizeof(float)));
   if (packed_input_ == nullptr) {
     MS_LOG(ERROR) << "malloc packed input failed.";
     return RET_ERROR;
   }
 
+  if (col_major_input_ != nullptr) {
+    ctx_->allocator->Free(col_major_input_);
+    col_major_input_ = nullptr;
+  }
   col_major_input_ = reinterpret_cast<float *>(ctx_->allocator->Malloc(unit_size * sizeof(float)));
   if (col_major_input_ == nullptr) {
     MS_LOG(ERROR) << "malloc col_major_input_ failed.";
