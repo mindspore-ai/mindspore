@@ -170,9 +170,7 @@ Status Task::Join(WaitFlag blocking) {
             if (wait_times > 5 && my_name_.find("DataQueueOp") != std::string::npos) {
               MS_LOG(WARNING) << "Wait " << wait_times << " seconds, "
                               << "the task: " << my_name_ << " will be destroyed by TdtHostDestory.";
-              auto queue =
-                device::DataQueueMgr::GetInstance().CreateDataQueue(kAscendDevice, {}, false, 0, nullptr, {});
-              if (queue != nullptr && queue->Destroy()) {
+              if (device::DataQueueMgr::DestoryTdtHandle()) {
                 MS_LOG(INFO) << "Destroy tdt channel success.";
               } else {
                 MS_LOG(WARNING) << "Destroy tdt channel failed.";

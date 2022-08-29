@@ -29,7 +29,6 @@ class GPUMemoryAllocator : public DynamicMemPoolBestFit {
   ~GPUMemoryAllocator() override = default;
   bool Init();
   void CheckMaxDeviceMemory() const;
-  bool Finalize();
   bool AllocBufferQueueMem(size_t size, DeviceMemPtr *addr);
 
   size_t AllocDeviceMem(size_t size, DeviceMemPtr *addr) override;

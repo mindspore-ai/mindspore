@@ -41,7 +41,7 @@ struct DataQueueItem {
 
 class DataQueue {
  public:
-  explicit DataQueue(const size_t capacity);
+  explicit DataQueue(const std::string &channel_name, const size_t capacity);
   virtual ~DataQueue() = default;
 
   virtual void RegisterRelease(const std::function<void(void *, int32_t)> &func) { host_release_ = func; }
@@ -53,13 +53,13 @@ class DataQueue {
   virtual DataQueueStatus Push(std::vector<DataQueueItem> data) = 0;
   virtual DataQueueStatus Front(std::vector<DataQueueItem> *data) const = 0;
   virtual DataQueueStatus Pop() = 0;
-  virtual bool Destroy() = 0;
   virtual void SetThreadDevice() = 0;
 
   virtual size_t Size() { return size_; }
   virtual size_t Capacity() { return capacity_; }
 
  protected:
+  const std::string channel_name_;
   size_t head_;
   size_t tail_;
   size_t size_;

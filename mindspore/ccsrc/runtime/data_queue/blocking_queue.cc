@@ -19,13 +19,13 @@
 
 namespace mindspore {
 namespace device {
-const size_t kTimeout = 100;
 void BlockingQueue::RegisterRelease(const std::function<void(void *, int32_t)> &func) { queue_->RegisterRelease(func); }
 
 DataQueueStatus BlockingQueue::Push(const std::vector<DataQueueItem> &data, unsigned int) {
   std::unique_lock<std::mutex> locker(mutex_);
   if (queue_->IsFull()) {
-    if (not_full_cond_.wait_for(locker, std::chrono::microseconds(kTimeout)) == std::cv_status::timeout) {
+    if (not_full_cond_.wait_for(locker, std::chrono::microseconds(kPushTimeoutMicroseconds)) ==
+        std::cv_status::timeout) {
       return DataQueueStatus::TIMEOUT;
     }
   }
@@ -39,7 +39,8 @@ DataQueueStatus BlockingQueue::Push(const std::vector<DataQueueItem> &data, unsi
 
 DataQueueStatus BlockingQueue::Front(std::vector<DataQueueItem> *data) {
   std::unique_lock<std::mutex> locker(mutex_);
-  bool timeout = not_empty_cond_.wait_for(locker, std::chrono::seconds(30), [this] { return !queue_->IsEmpty(); });
+  bool timeout =
+    not_empty_cond_.wait_for(locker, std::chrono::seconds(kPopTimeoutSeconds), [this] { return !queue_->IsEmpty(); });
   if (!timeout) {
     return DataQueueStatus::TIMEOUT;
   }
@@ -76,14 +77,6 @@ DataQueueStatus BlockingQueue::Clear() {
     }
   }
   return DataQueueStatus::SUCCESS;
-}
-
-bool BlockingQueue::Destroy() {
-  if (queue_ != nullptr) {
-    return queue_->Destroy();
-  } else {
-    return true;
-  }
 }
 }  // namespace device
 }  // namespace mindspore

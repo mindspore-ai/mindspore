@@ -65,16 +65,6 @@ void GPUMemoryAllocator::CheckMaxDeviceMemory() const {
   }
 }
 
-bool GPUMemoryAllocator::Finalize() {
-  if (buffer_q_addr_ != nullptr) {
-    if (!CudaDriver::FreeDeviceMem(buffer_q_addr_)) {
-      MS_LOG(ERROR) << "Could not free buffer queue memory.";
-      return false;
-    }
-  }
-  return true;
-}
-
 bool GPUMemoryAllocator::AllocBufferQueueMem(size_t size, DeviceMemPtr *addr) {
   auto alloc_size = AllocDeviceMem(size, addr);
   buffer_q_addr_ = *addr;

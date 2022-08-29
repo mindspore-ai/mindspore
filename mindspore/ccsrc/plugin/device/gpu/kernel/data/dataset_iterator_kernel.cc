@@ -122,7 +122,11 @@ bool DatasetIteratorKernelMod::ReadDevice(std::vector<DataQueueItem> *data) {
 #endif
       break;
     }
-
+    if (ret == device::DataQueueStatus::ERROR_INPUT) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', get dynamic-shape data from queue " << queue_name_
+                        << ", you need to call network.set_inputs() to "
+                           "configure dynamic dims of input data before running the network";
+    }
     if (ret == device::DataQueueStatus::TIMEOUT) {
       repeat++;
       if (repeat < 10) {
@@ -154,7 +158,7 @@ bool DatasetIteratorKernelMod::Launch(const std::vector<AddressPtr> &, const std
     return true;
   }
   if (!is_opened_) {
-    auto ret = DataQueueMgr::GetInstance().OpenDynamicBufQueue(queue_name_);
+    auto ret = DataQueueMgr::GetInstance().Open(queue_name_);
     if (ret != device::DataQueueStatus::SUCCESS) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', gpu Queue(" << queue_name_ << ") Open Failed: " << ret;
     }

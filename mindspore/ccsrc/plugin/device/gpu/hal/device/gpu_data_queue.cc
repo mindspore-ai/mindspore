@@ -33,7 +33,8 @@ void SetThreadToDeviceId(uint32_t device_id) {
   }
 }
 }  // namespace
-GpuDataQueueDynamic::GpuDataQueueDynamic(const size_t capacity) : DataQueue(capacity), node_info_(nullptr) {
+GpuDataQueueDynamic::GpuDataQueueDynamic(const std::string &channel_name, const size_t capacity)
+    : DataQueue(channel_name, capacity), node_info_(nullptr) {
   node_info_ = std::make_unique<NodeInfo[]>(capacity);
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
@@ -82,42 +83,48 @@ DataQueueStatus GpuDataQueueDynamic::Pop() {
   return DataQueueStatus::SUCCESS;
 }
 
-bool GpuDataQueueDynamic::Destroy() { return true; }
-
 void GpuDataQueueDynamic::SetThreadDevice() { SetThreadToDeviceId(device_id_); }
 
-GpuQueue::GpuQueue(size_t capacity, void *addr, const std::vector<size_t> &shape)
-    : DataQueue(capacity), buffer_(addr), shape_(shape), len_(0), stream_(0), node_info_(nullptr) {
+GpuQueue::GpuQueue(const std::string &channel_name, size_t capacity, const std::vector<size_t> &shape)
+    : DataQueue(channel_name, capacity), shape_(shape), len_(0), stream_(0), node_info_(nullptr) {
+  if (channel_name.empty()) {
+    return;
+  }
   CHECK_CUDA_RET_WITH_ERROR(cudaStreamCreate(&stream_), "Cuda Create Stream Failed");
   node_info_ = std::make_unique<NodeInfo[]>(capacity);
   for (auto item : shape) {
     len_ += item;
+  }
+  size_t buffer_size = len_ * capacity;
+  if (!device::gpu::GPUMemoryAllocator::GetInstance().AllocBufferQueueMem(buffer_size, &buffer_)) {
+    MS_LOG(EXCEPTION) << "Memory not enough: failed to allocate GPU buffer queue memory[" << buffer_size << "].";
   }
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   device_id_ = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
 }
 
-GpuQueue::~GpuQueue() { buffer_ = nullptr; }
+GpuQueue::~GpuQueue() {
+  if (buffer_ != nullptr && !device::gpu::GPUMemoryAllocator::GetInstance().FreeDeviceMem(buffer_)) {
+    MS_LOG(ERROR) << "Free GPU data queue memory failed";
+  }
+  if (stream_ != nullptr && cudaStreamDestroy(stream_) != cudaSuccess) {
+    MS_LOG(ERROR) << "Destroy the stream of GPU data queue failed";
+  }
+}
 
 DataQueueStatus GpuQueue::Push(std::vector<DataQueueItem> data) {
   void *addr = reinterpret_cast<uint8_t *>(buffer_) + tail_ * len_;
   for (size_t i = 0; i < data.size(); i++) {
     auto &item = data[i];
     MS_EXCEPTION_IF_NULL(item.data_ptr);
-    if (item.data_len != shape_[i] && !ds_detected_) {
-      MS_LOG(WARNING) << "Detected that dataset is dynamic shape, it is suggested to call network.set_inputs() to "
-                         "configure dynamic dims of input data before running the network";
+    if (item.data_len != shape_[i]) {
       ds_detected_ = true;
-    }
-    if (item.data_len > shape_[i]) {
-      MS_LOG(ERROR) << "Data size(" << item.data_len << ") of item " << item.data_ptr << " exceeds the max capacity("
-                    << shape_[i] << "), "
-                    << "you need to call network.set_inputs() to "
+      ++size_;
+      MS_LOG(ERROR) << "Detected that dataset is dynamic shape, you need to call network.set_inputs() to "
                        "configure dynamic dims of input data before running the network";
       return DataQueueStatus::ERROR_INPUT;
     }
-
     CHECK_CUDA_RET_WITH_ERROR(cudaMemcpyAsync(addr, item.data_ptr, item.data_len, cudaMemcpyHostToDevice, stream_),
                               "Cuda Memcpy Error");
     item.device_addr = addr;
@@ -134,6 +141,9 @@ DataQueueStatus GpuQueue::Push(std::vector<DataQueueItem> data) {
 }
 
 DataQueueStatus GpuQueue::Front(std::vector<DataQueueItem> *data) const {
+  if (ds_detected_) {
+    return DataQueueStatus::ERROR_INPUT;
+  }
   CHECK_CUDA_RET_WITH_ERROR(cudaEventSynchronize(*(node_info_[head_].event_)), "Cuda Event Syn Failed");
   CHECK_CUDA_RET_WITH_ERROR(cudaEventDestroy(*(node_info_[head_].event_)), "Cuda Destroy Event Failed");
   for (auto &item : node_info_[head_].data_) {
@@ -149,29 +159,16 @@ DataQueueStatus GpuQueue::Pop() {
   return DataQueueStatus::SUCCESS;
 }
 
-bool GpuQueue::Destroy() {
-  if (stream_ != nullptr) {
-    auto ret = cudaStreamDestroy(stream_);
-    if (ret == cudaSuccess) {
-      return true;
-    } else {
-      return false;
-    }
-  } else {
-    return true;
-  }
-}
-
 void GpuQueue::SetThreadDevice() { SetThreadToDeviceId(device_id_); }
 
 namespace {
-std::shared_ptr<DataQueue> CreateGpuDataQueue(const std::string &, bool dynamic_shape, size_t capacity, void *addr,
+std::shared_ptr<DataQueue> CreateGpuDataQueue(const std::string &channel_name, bool dynamic_shape, size_t capacity,
                                               const std::vector<size_t> &shape) {
   if (dynamic_shape) {
-    return std::make_shared<GpuDataQueueDynamic>(capacity);
+    return std::make_shared<GpuDataQueueDynamic>(channel_name, capacity);
   }
 
-  return std::make_shared<GpuQueue>(capacity, addr, shape);
+  return std::make_shared<GpuQueue>(channel_name, capacity, shape);
 }
 
 REGISTER_DATA_QUEUE_CREATOR(kGPUDevice, CreateGpuDataQueue);

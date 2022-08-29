@@ -40,18 +40,17 @@ void DataQueueMgr::RegisterDataQueueCreator(const std::string &device_name, Data
 
 std::shared_ptr<DataQueue> DataQueueMgr::CreateDataQueue(const std::string &device_name,
                                                          const std::string &channel_name, bool dynamic_shape,
-                                                         size_t capacity, void *addr,
-                                                         const std::vector<size_t> &shape) {
+                                                         size_t capacity, const std::vector<size_t> &shape) {
   auto iter = data_queue_creator_map_.find(device_name);
   if (iter == data_queue_creator_map_.end()) {
     return nullptr;
   }
 
-  return iter->second(channel_name, dynamic_shape, capacity, addr, shape);
+  return iter->second(channel_name, dynamic_shape, capacity, shape);
 }
 
-DataQueueStatus DataQueueMgr::Create(const std::string &channel_name, void *addr, const std::vector<size_t> &shape,
-                                     const size_t &capacity) {
+DataQueueStatus DataQueueMgr::Create(const std::string &channel_name, const std::vector<size_t> &shape,
+                                     const size_t capacity) {
   MS_LOG(INFO) << "Static GPU queue: " << channel_name << " created";
   if (name_queue_map_.find(channel_name) != name_queue_map_.end()) {
     MS_LOG(ERROR) << "Queue already exist: " << channel_name;
@@ -60,7 +59,7 @@ DataQueueStatus DataQueueMgr::Create(const std::string &channel_name, void *addr
 
   MS_EXCEPTION_IF_NULL(MsContext::GetInstance());
   std::shared_ptr<DataQueue> data_queue = CreateDataQueue(
-    MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET), channel_name, false, capacity, addr, shape);
+    MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET), channel_name, false, capacity, shape);
   if (data_queue != nullptr) {
     std::shared_ptr<BlockingQueue> queue = std::make_shared<BlockingQueue>();
     DataQueueStatus rt = queue->Create(data_queue);
@@ -78,37 +77,14 @@ DataQueueStatus DataQueueMgr::Create(const std::string &channel_name, void *addr
 }
 
 DataQueueStatus DataQueueMgr::Open(const std::string &channel_name, const std::function<void(void *, int32_t)> func) {
-  MS_LOG(INFO) << "Gpu queue: " << channel_name << " open.";
+  MS_LOG(INFO) << "Data queue: " << channel_name << " opened by dataset";
   if (name_queue_map_.find(channel_name) == name_queue_map_.end()) {
-    MS_LOG(ERROR) << "Queue not exist " << channel_name;
+    MS_LOG(ERROR) << "Data queue not exist " << channel_name;
     return DataQueueStatus::QUEUE_NOT_EXIST;
   }
 
   name_queue_map_[channel_name]->RegisterRelease(func);
   open_by_dataset_++;
-  return DataQueueStatus::SUCCESS;
-}
-DataQueueStatus DataQueueMgr::OpenDynamicBufQueue(const std::string &channel_name,
-                                                  const std::function<void(void *, int32_t)> func) {
-  std::unique_lock<std::mutex> locker(mutex_);
-  if (name_queue_map_.find(channel_name) == name_queue_map_.end()) {
-    DataQueueStatus status = CreateDynamicBufQueue(channel_name, default_capacity_);
-    MS_EXCEPTION_IF_CHECK_FAIL(status == DataQueueStatus::SUCCESS, "Create dynamic buffer queue failed");
-    MS_LOG_INFO << "Create dynamic buffer queue: " << channel_name;
-    cv_.notify_all();
-  }
-  name_queue_map_[channel_name]->RegisterRelease(func);
-  open_by_dataset_++;
-  return DataQueueStatus::SUCCESS;
-}
-
-DataQueueStatus DataQueueMgr::OpenDynamicBufQueue(const std::string &channel_name) {
-  std::unique_lock<std::mutex> locker(mutex_);
-  auto time_out = cv_.wait_for(locker, std::chrono::seconds(MAX_WAIT_TIME_IN_SEC),
-                               [this, &channel_name] { return name_queue_map_.count(channel_name); });
-  if (!time_out) {
-    return DataQueueStatus::TIMEOUT;
-  }
   return DataQueueStatus::SUCCESS;
 }
 
@@ -119,7 +95,7 @@ DataQueueStatus DataQueueMgr::CreateDynamicBufQueue(const std::string &channel_n
   }
   MS_EXCEPTION_IF_NULL(MsContext::GetInstance());
   std::string device_name = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-  std::shared_ptr<DataQueue> device_queue = CreateDataQueue(device_name, channel_name, true, capacity, nullptr, {});
+  std::shared_ptr<DataQueue> device_queue = CreateDataQueue(device_name, channel_name, true, capacity);
   if (device_queue != nullptr) {
     std::shared_ptr<BlockingQueue> queue = std::make_shared<BlockingQueue>();
     DataQueueStatus rt = queue->Create(device_queue);
@@ -133,7 +109,7 @@ DataQueueStatus DataQueueMgr::CreateDynamicBufQueue(const std::string &channel_n
   }
 
   MS_LOG(ERROR) << "Dynamic data queue only support Ascend/GPU target, bug got " << device_name;
-  return DataQueueStatus::QUEUE_EXIST;
+  return DataQueueStatus::INTERNAL_ERROR;
 }
 
 DataQueueStatus DataQueueMgr::Open(const std::string &channel_name) const {
@@ -160,7 +136,6 @@ DataQueueStatus DataQueueMgr::Front(const std::string &channel_name, std::vector
     MS_LOG(ERROR) << "Queue not exist " << channel_name;
     return DataQueueStatus::QUEUE_NOT_EXIST;
   }
-
   return iter->second->Front(data);
 }
 
@@ -172,6 +147,15 @@ DataQueueStatus DataQueueMgr::Pop(const std::string &channel_name) {
   }
 
   return iter->second->Pop();
+}
+
+void DataQueueMgr::Release() { name_queue_map_.clear(); }
+
+void DataQueueMgr::Free(const std::string &channel_name) {
+  auto iter = name_queue_map_.find(channel_name);
+  if (iter != name_queue_map_.end()) {
+    name_queue_map_.erase(iter);
+  }
 }
 
 DataQueueStatus DataQueueMgr::Clear(const std::string &channel_name) {
@@ -192,21 +176,6 @@ void DataQueueMgr::Close(const std::string &channel_name) const noexcept {
 bool DataQueueMgr::IsInit() const { return init_; }
 
 bool DataQueueMgr::IsClosed() const { return closed_; }
-
-bool DataQueueMgr::Destroy() {
-  MS_LOG(INFO) << "Destroy all data queue.";
-  for (auto iter = name_queue_map_.begin(); iter != name_queue_map_.end(); ++iter) {
-    std::shared_ptr<BlockingQueue> queue = iter->second;
-    if (queue != nullptr) {
-      if (!queue->Destroy()) {
-        return false;
-      }
-      queue.reset();
-    }
-  }
-  name_queue_map_.clear();
-  return true;
-}
 
 inline bool DataQueueMgr::isCreated(const std::string &channel_name) const {
   return name_queue_map_.find(channel_name) != name_queue_map_.end();
@@ -266,19 +235,30 @@ DataQueueStatus DataQueueMgr::SetThreadDevice(const std::string &channel_name) {
   if (queue == nullptr) {
     return DataQueueStatus::QUEUE_NOT_EXIST;
   }
-
   queue->SetThreadDevice();
   return DataQueueStatus::SUCCESS;
 }
+
 #ifndef BUILD_LITE
 bool PopDataFromDataQueue(const AnfNodePtr &data_kernel) {
   auto queue_name = common::AnfAlgo::GetNodeAttr<std::string>(data_kernel, "shared_name");
   device::DataQueueMgr &buf_mgr = device::DataQueueMgr::GetInstance();
-  auto ret = buf_mgr.OpenDynamicBufQueue(queue_name);
+  auto ret = buf_mgr.Open(queue_name);
   MS_EXCEPTION_IF_CHECK_FAIL(ret == device::DataQueueStatus::SUCCESS, "Open dynamic data queue failed");
   std::vector<device::DataQueueItem> data;
   auto kernel_info = dynamic_cast<device::KernelInfo *>(data_kernel->kernel_info());
-  (void)buf_mgr.Front(queue_name, &data);
+  auto front_ret = DataQueueStatus::TIMEOUT;
+  int trys = MAX_POP_TIMES;
+  while (front_ret == DataQueueStatus::TIMEOUT && trys > 0) {
+    front_ret = buf_mgr.Front(queue_name, &data);
+    trys--;
+  }
+  if (front_ret != DataQueueStatus::SUCCESS) {
+    if (front_ret == DataQueueStatus::TIMEOUT) {
+      MS_LOG(ERROR) << "Getnext gets peek data time out, that most likely caused by data processing being too slow";
+    }
+    MS_LOG(EXCEPTION) << "Getnext gets peek data from data queue failed: " << front_ret;
+  }
   (void)buf_mgr.Pop(queue_name);
   std::vector<std::shared_ptr<device::DeviceAddress>> device_tensors;
   for (auto &device_tensor : kernel_info->output_address_list()) {
