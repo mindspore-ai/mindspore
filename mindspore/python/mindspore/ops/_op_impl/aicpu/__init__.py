@@ -149,6 +149,7 @@ from .select import _select_aicpu
 from .add_v2 import _add_v2_aicpu
 from .masked_select import _masked_select_aicpu
 from .masked_select_grad import _masked_select_grad_aicpu
+from .maximum_grad_grad import _maximum_grad_grad_aicpu
 from .mirror_pad_grad import _mirror_pad_grad_aicpu
 from .mul import _mul_aicpu
 from .non_max_suppression_with_overlaps import _non_max_suppression_with_overlaps_aicpu
