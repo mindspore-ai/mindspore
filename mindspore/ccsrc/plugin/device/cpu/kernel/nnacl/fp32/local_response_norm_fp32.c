@@ -16,9 +16,13 @@
 
 #include "nnacl/fp32/local_response_norm_fp32.h"
 #include <math.h>
+#include "nnacl/errorcode.h"
 
 int LocalResponseNorm(const float *input_ptr, int out_size, int channel, float *output_ptr,
                       const LocalResponseNormParameter *param) {
+  NNACL_CHECK_NULL_RETURN_ERR(input_ptr);
+  NNACL_CHECK_NULL_RETURN_ERR(output_ptr);
+  NNACL_CHECK_NULL_RETURN_ERR(param);
   int depth_radius = param->depth_radius_;
   float bias = param->bias_;
   float alpha = param->alpha_;

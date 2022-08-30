@@ -16,8 +16,11 @@
 
 #include "nnacl/fp32/invert_permutation_fp32.h"
 #include "nnacl/errorcode.h"
+#include "nnacl/op_base.h"
 
 int InvertPermutation(const int *input, int *output, int num) {
+  NNACL_CHECK_NULL_RETURN_ERR(input);
+  NNACL_CHECK_NULL_RETURN_ERR(output);
   for (int i = 0; i < num; i++) {
     int index = input[i];
     if (index >= num) {

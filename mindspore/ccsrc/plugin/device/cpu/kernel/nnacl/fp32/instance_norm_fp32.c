@@ -23,6 +23,9 @@ int InstanceNorm(const float *src_data, float *dst_data, const float *gamma_data
                  const InstanceNormParameter *param, size_t task_id) {
   NNACL_CHECK_NULL_RETURN_ERR(src_data);
   NNACL_CHECK_NULL_RETURN_ERR(dst_data);
+  NNACL_CHECK_NULL_RETURN_ERR(gamma_data);
+  NNACL_CHECK_NULL_RETURN_ERR(beta_data);
+  NNACL_CHECK_NULL_RETURN_ERR(param);
   NNACL_CHECK_ZERO_RETURN_ERR(param->op_parameter_.thread_num_);
   int channel_step = UP_DIV(param->channel_, param->op_parameter_.thread_num_);
   int channel_begin = (int)(task_id)*channel_step;
@@ -222,6 +225,9 @@ int InstanceNormNC4HW4(const float *src_data, float *dst_data, const float *gamm
                        const InstanceNormParameter *param, size_t task_id) {
   NNACL_CHECK_NULL_RETURN_ERR(src_data);
   NNACL_CHECK_NULL_RETURN_ERR(dst_data);
+  NNACL_CHECK_NULL_RETURN_ERR(gamma_data);
+  NNACL_CHECK_NULL_RETURN_ERR(beta_data);
+  NNACL_CHECK_NULL_RETURN_ERR(param);
   NNACL_CHECK_ZERO_RETURN_ERR(param->op_parameter_.thread_num_);
   int channel = param->channel_;
   int hw_plane = param->inner_size_;
@@ -267,6 +273,9 @@ int InstanceNormNC8HW8(const float *src_data, float *dst_data, const float *gamm
                        const InstanceNormParameter *param, size_t task_id) {
   NNACL_CHECK_NULL_RETURN_ERR(src_data);
   NNACL_CHECK_NULL_RETURN_ERR(dst_data);
+  NNACL_CHECK_NULL_RETURN_ERR(gamma_data);
+  NNACL_CHECK_NULL_RETURN_ERR(beta_data);
+  NNACL_CHECK_NULL_RETURN_ERR(param);
   NNACL_CHECK_ZERO_RETURN_ERR(param->op_parameter_.thread_num_);
   int channel = param->channel_, hw_plane = param->inner_size_;
   int channel_step = UP_DIV(UP_DIV(channel, C8NUM), param->op_parameter_.thread_num_) * C8NUM;
