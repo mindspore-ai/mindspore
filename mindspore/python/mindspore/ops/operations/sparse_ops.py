@@ -295,6 +295,58 @@ class SparseSparseMaximum(Primitive):
                                 outputs=['y_indices', 'y_values'])
 
 
+class SetSize(Primitive):
+    """
+     Number of unique elements along last dimension of input set.
+
+    Args:
+        validate_indices (bool): If true, sparse tensor is transposed before multiplication. Default: True.
+
+    Inputs:
+        - **set_indices** (Tensor) - A 2-D Tensor, represents the position of the element in the sparse tensor.
+          Support int64, each element value should be a non-negative int number. The shape is :math:`(n, 2)`.
+        - **set_values** (Tensor) - A 1-D Tensor, represents the value corresponding to the position in
+          the `set_indices`. Support int8, int16, int32, int64, uint8, uint16, string, the shape should
+          be :math:`(n,)`.
+        - **set_shape** (Tensor) - A 1-D Tensor, represents the shape of a SparseTensor,
+          Support int64, the shape should be :math:`(n,)`.
+
+    Outputs:
+        Tensor. The dtype is int32, and the shape is set_shape[0:-1].
+
+    Raises:
+        TypeError: If the type of inputs is not Tensor.
+        TypeError: If the type of `set_values` is not one of the following dtype: int8, int16, uint8, uint16,
+            int32, int64.
+        TypeError: If the type of `validate_indices` is not bool, or the dtype of `set_indices` and `set_shape`
+            is ont int64.
+        ValueError: If the shape of `set_shape`, shape of `set_indices` and shape of `set_values` don't meet the
+            parameter description.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> set_indices = Tensor(np.array([[0, 1], [1, 2]]).astype(np.int64))
+        >>> set_values = Tensor(np.array([1, 2]).astype(np.int64))
+        >>> set_shape = Tensor(np.array([3, 4]).astype(np.int64))
+        >>> setsize = op.SetSize()
+        >>> out = setsize(set_indices, set_values, set_shape)
+        >>> print(out)
+        [1 1 0]
+    """
+
+    @prim_attr_register
+    def __init__(self, validate_indices=True):
+        """Initialize SetSize."""
+        self.validate_indices = validate_indices
+        validator.check_bool(validate_indices, "validate_indices", self.name)
+        self.init_prim_io_names(inputs=['set_indices', 'set_values', 'set_shape'],
+                                outputs=['size'])
+        self.add_prim_attr("validate_indices", self.validate_indices)
+        self.add_prim_attr("max_length", 1000)
+
+
 class SparseToDense(PrimitiveWithInfer):
     """
     Converts a sparse representation into a dense tensor.

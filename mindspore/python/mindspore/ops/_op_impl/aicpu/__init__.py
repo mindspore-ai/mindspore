@@ -168,6 +168,7 @@ from .upsample_trilinear_3d_grad import _upsample_trilinear_3d_grad_aicpu
 from .cache_swap_table import _cache_swap_table_aicpu
 from .uniform_int import _uniform_int_aicpu
 from .uniform_real import _uniform_real_aicpu
+from .set_size import _set_size_aicpu
 from .standard_laplace import _standard_laplace_aicpu
 from .strided_slice import _strided_slice_aicpu
 from .neg import _neg_aicpu

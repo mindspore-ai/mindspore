@@ -134,6 +134,7 @@ from mindspore.ops.operations.array_ops import NonZero
 from mindspore.ops.operations._grad_ops import MaxPoolGradV1
 from mindspore.ops.operations.nn_ops import ReLUV3
 from mindspore.ops.operations.sparse_ops import CSRSparseMatrixToDense
+from mindspore.ops.operations.sparse_ops import SetSize
 from mindspore.ops.operations.sparse_ops import DenseToCSRSparseMatrix, Sspaddmm
 from mindspore.ops.operations.sparse_ops import SparseTensorDenseMatmul
 from mindspore.ops.operations.sparse_ops import SparseToDenseV2
@@ -1392,6 +1393,17 @@ class NuclearNormNet(nn.Cell):
 
     def construct(self, x):
         return self.nuclearnorm(x)
+
+
+class SetSizeNet(nn.Cell):
+    def __init__(self, validate_indices=True):
+        super(SetSizeNet, self).__init__()
+        self.set_size = SetSize(validate_indices=validate_indices)
+
+
+    def construct(self, set_indices, set_values, set_shape):
+        out = self.set_size(set_indices, set_values, set_shape)
+        return out
 
 
 test_case_math_ops = [
@@ -4271,6 +4283,12 @@ test_case_other_ops = [
         'block': ScatterSub((6,), np.uint8),
         'desc_inputs': (Tensor(np.array([2, 0, 5], np.int32)),
                         Tensor(np.array([1, 1, 0], np.uint8))),
+        'skip': ['backward']}),
+    ('SetSize', {
+        'block': SetSizeNet(validate_indices=True),
+        'desc_inputs': (Tensor(np.array([[0, 1, 0], [0, 1, 1], [0, 2, 0], [0, 2, 1], [1, 1, 2]], np.int64)),
+                        Tensor(np.array([7, 8, 2, 2, 5], np.uint8)),
+                        Tensor(np.array([2, 3, 4], np.int64))),
         'skip': ['backward']}),
     ('SmoothL1Loss', {
         'block': P.SmoothL1Loss(),

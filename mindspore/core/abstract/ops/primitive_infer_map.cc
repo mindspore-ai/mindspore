@@ -128,7 +128,7 @@ PrimShapeDependMap &GetHostDependsMap() {
   static const auto &kStandardLaplace = prim::kPrimStandardLaplace->name();
   static const auto &kCropAndResizeGradImage = prim::kPrimCropAndResizeGradImage->name();
   static const auto &kTraceGrad = prim::kPrimTraceGrad->name();
-
+  static const auto &kSetSize = prim::kPrimSetSize->name();
   // Common host depends.
   static PrimShapeDependMap host_depends{{kExtractGlimpse, ShapeSet{1}},
                                          {kSegmentMax, ShapeSet{1}},
@@ -193,7 +193,8 @@ PrimShapeDependMap &GetHostDependsMap() {
                                          {kStandardLaplace, ShapeSet{0}},
                                          {kCropAndResizeGradImage, ShapeSet{3}},
                                          {prim::kPrimCumSum->name(), ShapeSet{1}},
-                                         {kAdaptiveMaxPool3DGrad, ShapeSet{1}}};
+                                         {kAdaptiveMaxPool3DGrad, ShapeSet{1}},
+                                         {kSetSize, ShapeSet{2}}};
   return host_depends;
 }
 
