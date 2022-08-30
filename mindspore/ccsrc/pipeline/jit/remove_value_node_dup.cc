@@ -27,9 +27,9 @@
 
 namespace mindspore {
 namespace pipeline {
-static inline bool IsSameValue(Value *v1, Value *v2) {
+static inline bool IsSameValue(const Value *v1, const Value *v2) {
   if (v1->isa<tensor::Tensor>() && v2->isa<tensor::Tensor>()) {
-    return static_cast<tensor::Tensor *>(v1)->ValueEqual(*(static_cast<tensor::Tensor *>(v2)));
+    return static_cast<const tensor::Tensor *>(v1)->ValueEqual(*(static_cast<const tensor::Tensor *>(v2)));
   }
   return *v1 == *v2;
 }

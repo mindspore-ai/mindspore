@@ -31,9 +31,11 @@ void GenerateFloatRandoms(std::uint64_t seed, const py::buffer &py_buf, Args... 
   if (info.format != py::format_descriptor<float>::format()) {
     MS_LOG(EXCEPTION) << "Unsupported data type '" << info.format << "'.";
   }
-
   // Get buffer pointer and size.
-  const size_t buf_size = info.size;
+  if (info.size < 0) {
+    MS_LOG(EXCEPTION) << "Negative buffer size: " << info.size << ".";
+  }
+  const size_t buf_size = static_cast<size_t>(info.size);
   float *buf = reinterpret_cast<float *>(info.ptr);
   MS_EXCEPTION_IF_NULL(buf);
 

@@ -131,24 +131,28 @@ void Cloner::CloneCNode(const AnfNodePtr &node, const FuncGraphPtr &target) {
 
 void Cloner::CloneValueNode(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
+  auto value_node = node->cast_ptr<ValueNode>();
+  MS_EXCEPTION_IF_NULL(value_node);
   auto debug_info = CloneNodeDebugInfo(node->debug_info(), relation_);
   ValueNodePtr new_const = NewValueNode(GetValueNode(node), std::move(debug_info));
   ScopePtr scope = ((node->scope() == kDefaultScope) && (this->scope() != nullptr)) ? this->scope() : node->scope();
   new_const->set_scope(scope);
   new_const->set_abstract(node->abstract());
-  new_const->set_has_new_value(node->cast_ptr<ValueNode>()->has_new_value());
+  new_const->set_has_new_value(value_node->has_new_value());
   repl_node_[node] = std::move(new_const);
 }
 
 void Cloner::CloneFuncGraphValueNode(const AnfNodePtr &node, const FuncGraphPtr &target) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(target);
+  auto value_node = node->cast_ptr<ValueNode>();
+  MS_EXCEPTION_IF_NULL(value_node);
   auto debug_info = CloneNodeDebugInfo(node->debug_info(), relation_);
   ValueNodePtr new_const = NewValueNode(target, std::move(debug_info));
   ScopePtr scope = ((node->scope() == kDefaultScope) && (this->scope() != nullptr)) ? this->scope() : node->scope();
   new_const->set_scope(scope);
   new_const->set_abstract(node->abstract());
-  new_const->set_has_new_value(node->cast_ptr<ValueNode>()->has_new_value());
+  new_const->set_has_new_value(value_node->has_new_value());
   repl_node_[node] = std::move(new_const);
 }
 

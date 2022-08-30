@@ -422,8 +422,8 @@ MeTensorPtr TransformUtil::GenerateMeTensor(const GeTensorPtr &ge_tensor, const 
                                             const TypeId &me_type) {
   MeTensor me_tensor(me_type, me_dims);
 
-  // Get the writable data pointer of the tensor and cast it to its data type
-  auto me_data_ptr = reinterpret_cast<uint8_t *>(me_tensor.data_c());
+  // Get the writable data pointer of the tensor and cast it to its data type.
+  auto me_data_ptr = me_tensor.data_c();
   size_t me_data_size = static_cast<size_t>(me_tensor.data().nbytes());
   MS_EXCEPTION_IF_NULL(me_data_ptr);
   MS_EXCEPTION_IF_NULL(ge_tensor);
@@ -433,7 +433,7 @@ MeTensorPtr TransformUtil::GenerateMeTensor(const GeTensorPtr &ge_tensor, const 
     return nullptr;
   }
 
-  // Copy or use the writable data pointer of the ME tensor
+  // Copy or use the writable data pointer of the ME tensor.
   MS_EXCEPTION_IF_NULL(ge_tensor->GetData());
   if (ge_tensor->GetSize() == 0) {
     MS_LOG(ERROR) << "GE tensor data size is zero!";
@@ -441,7 +441,7 @@ MeTensorPtr TransformUtil::GenerateMeTensor(const GeTensorPtr &ge_tensor, const 
   }
 
   // Use memcpy here, not memcpy_s, just because the size of ge_tensor may be bigger than 2GB
-  // which is the size limit of memcpy_s
+  // which is the size limit of memcpy_s.
   (void)memcpy(me_data_ptr, ge_tensor->GetData(), ge_tensor->GetSize());
 
   return make_shared<MeTensor>(me_tensor);

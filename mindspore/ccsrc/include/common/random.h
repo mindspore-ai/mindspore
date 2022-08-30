@@ -101,7 +101,7 @@ void GenerateRandomsParallel(std::uint64_t input_seed, T *buf, size_t buf_size, 
     task_buf += task_size;
   }
   // Parallel execute tasks by thread pool.
-  thread_pool.SyncRun(tasks);
+  (void)thread_pool.SyncRun(tasks);
 }
 
 //
@@ -111,11 +111,13 @@ class Philox {
  public:
   explicit Philox(uint64_t seed)
       : key_({static_cast<uint32_t>(seed), static_cast<uint32_t>(seed >> kShift32)}),
-        counter_({0, 0, static_cast<uint32_t>(seed), static_cast<uint32_t>(seed >> kShift32)}) {}
+        counter_({0, 0, static_cast<uint32_t>(seed), static_cast<uint32_t>(seed >> kShift32)}),
+        results_({}) {}
 
   Philox(uint64_t seed, uint64_t seed2)
       : key_({static_cast<uint32_t>(seed), static_cast<uint32_t>(seed >> kShift32)}),
-        counter_({0, 0, static_cast<uint32_t>(seed2), static_cast<uint32_t>(seed2 >> kShift32)}) {}
+        counter_({0, 0, static_cast<uint32_t>(seed2), static_cast<uint32_t>(seed2 >> kShift32)}),
+        results_({}) {}
 
   ~Philox() = default;
 
@@ -227,8 +229,12 @@ class Philox {
 
   // Advance counter for one step.
   void skip_one() {
-    if ((++counter_[kIndex0] == 0) && (++counter_[kIndex1] == 0) && (++counter_[kIndex2] == 0)) {
-      ++counter_[kIndex3];
+    if (++counter_[kIndex0] == 0) {
+      if (++counter_[kIndex1] == 0) {
+        if (++counter_[kIndex2] == 0) {
+          ++counter_[kIndex3];
+        }
+      }
     }
   }
 
@@ -241,8 +247,10 @@ class Philox {
       ++hi;
     }
     counter_[kIndex1] += hi;
-    if (counter_[kIndex1] < hi && (++counter_[kIndex2] == 0)) {
-      ++counter_[kIndex3];
+    if (counter_[kIndex1] < hi) {
+      if (++counter_[kIndex2] == 0) {
+        ++counter_[kIndex3];
+      }
     }
   }
 };
@@ -257,12 +265,12 @@ class UniformDistribution {
   ~UniformDistribution() = default;
 
   template <typename Generator>
-  T operator()(Generator &&g) {
+  T operator()(Generator &&g) const {
     const auto min_num = g.min();
     const auto max_num = g.max();
     const long double range = static_cast<long double>(max_num) - static_cast<long double>(min_num) + 1.0L;
-    T s = T(g() - min_num) / range;
-    if (__builtin_expect(s >= T(1), 0)) {
+    T s = static_cast<T>(T(g() - min_num) / range);
+    if (s >= T(1)) {
       s = std::nextafter(T(1), T(0));
     }
     return (b_ - a_) * s + a_;
@@ -283,7 +291,7 @@ class NormalDistribution {
   ~NormalDistribution() = default;
 
   template <typename Generator>
-  T operator()(Generator &&g) {
+  T operator()(Generator &&g) const {
     if (has_next_) {
       has_next_ = false;
       return next_;
@@ -305,8 +313,8 @@ class NormalDistribution {
  private:
   T mean_;
   T sigma_;
-  T next_ = 0;
-  bool has_next_ = false;
+  mutable T next_ = 0;
+  mutable bool has_next_ = false;
 
   static T to_float(uint32_t input) {
     constexpr uint32_t mask = 0x7fffffu;
@@ -318,9 +326,6 @@ class NormalDistribution {
     val.int_val = (input & mask) | exp;
     return T(val.float_val - 1.0f);
   }
-
-  template <typename Generator>
-  T generate(Generator &&g) {}
 };
 
 //
@@ -330,8 +335,8 @@ template <typename T>
 class TruncatedNormal {
  public:
   TruncatedNormal(T a, T b, T mean, T sigma) : lower_(a), upper_(b), mean_(mean), sigma_(sigma) {
-    if (sigma == 0) {
-      MS_LOG(EXCEPTION) << "TruncatedNormal: 'sigma' can not be zero.";
+    if (sigma <= 0) {
+      MS_LOG(EXCEPTION) << "TruncatedNormal: invalid sigma " << sigma << ".";
     } else {
       alpha_ = (a - mean) / sigma;
       beta_ = (b - mean) / sigma;
@@ -341,7 +346,7 @@ class TruncatedNormal {
   ~TruncatedNormal() = default;
 
   template <typename Generator>
-  T operator()(Generator &&g) {
+  T operator()(Generator &&g) const {
     // Inverse CDF (Cumulative Distribution Function) method.
     const T u = std_uniform_(g);
     const T cdf_a = cdf(alpha_);
@@ -375,9 +380,9 @@ class TruncatedNormal {
 
   static T erfc_inv(T z) {
     // Keep z in range (0, 2).
-    if (__builtin_expect((z <= 0), 0)) {
+    if (z <= 0) {
       z = std::nextafterf(0.0f, 2.0f);
-    } else if (__builtin_expect((z >= 2.0f), 0)) {
+    } else if (z >= 2.0f) {
       z = std::nextafterf(2.0f, 0.0f);
     }
     T p, q, s;
@@ -434,10 +439,10 @@ class TruncatedNormal {
       return g / (Y + r);
     }
     // Avoid static check warning for 'function body too long'.
-    return erf_inv_imp2(p, q);
+    return erf_inv_imp2(q);
   }
 
-  static T erf_inv_imp2(T p, T q) {
+  static T erf_inv_imp2(T q) {
     T x = std::sqrt(-std::log(q));
     if (x < 3.0f) {
       constexpr float Y = 0.807220458984375f;

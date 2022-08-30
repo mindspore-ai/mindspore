@@ -625,7 +625,9 @@ AbstractBasePtr ReduceDim(int *axis, const AbstractBasePtr &orig_abs, int *axis_
     MS_LOG(EXCEPTION) << "The orig_abs should be AbstractTensor when axis is " << *axis << ", but got a "
                       << orig_abs->ToString() << ".";
   }
-  ShapeVector orig_shape = dyn_cast_ptr<abstract::Shape>(orig_abs->BuildShape())->shape();
+  auto orig_abs_shape = dyn_cast_ptr<abstract::Shape>(orig_abs->BuildShape());
+  MS_EXCEPTION_IF_NULL(orig_abs_shape);
+  ShapeVector orig_shape = orig_abs_shape->shape();
   int shape_len = SizeToInt(orig_shape.size());
   if (*axis < -shape_len || *axis >= shape_len) {
     MS_LOG(EXCEPTION) << "The axis: " << *axis << " in 'in_axes' is out of bounds for array of dimension ["
@@ -688,7 +690,10 @@ AbstractBasePtr ExtendDim(int *axis, const AbstractBasePtr &orig_abs, int axis_s
   AbstractBasePtr out_abs = nullptr;
   ShapeVector orig_shape;
   if (orig_abs->isa<abstract::AbstractTensor>()) {
-    orig_shape = dyn_cast_ptr<abstract::Shape>(orig_abs->BuildShape())->shape();
+    auto shape = dyn_cast_ptr<abstract::Shape>(orig_abs->BuildShape());
+    if (shape != nullptr) {
+      orig_shape = shape->shape();
+    }
   }
   int shape_len = SizeToInt(orig_shape.size() + 1);
   if (*axis < -shape_len || *axis >= shape_len) {
@@ -736,7 +741,7 @@ AbstractBasePtr GetPhysicalViewAbs(const AbstractBasePtr &logical_view_abs, cons
           return GetPhysicalViewAbs(arg_spec, sub_out_axes, axis_size);
         }
         if (sub_out_axes->isa<Int64Imm>()) {
-          int axis = dyn_cast_ptr<Int64Imm>(sub_out_axes)->value();
+          int axis = static_cast<int>(dyn_cast_ptr<Int64Imm>(sub_out_axes)->value());
           return ExtendDim(&axis, arg_spec, axis_size);
         } else if (sub_out_axes->isa<None>()) {
           return arg_spec;
