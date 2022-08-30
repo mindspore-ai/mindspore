@@ -97,7 +97,7 @@ Format MaxPool3DWithArgmax::get_format() const {
   (void)std::transform(attr_value_str.begin(), attr_value_str.end(), attr_value_str.begin(), toupper);
   auto iter = valid_dataformat.find(attr_value_str);
   if (iter == valid_dataformat.end()) {
-    MS_LOG(EXCEPTION) << "Invalid format " << attr_value_str << ", use NCDHW";
+    MS_LOG(EXCEPTION) << "for MaxPool3DWithArgmax, Invalid format " << attr_value_str << ", use NCDHW";
   }
   return Format(iter->second);
 }
@@ -116,7 +116,7 @@ TypeId MaxPool3DWithArgmax::get_argmax_type() const {
   (void)std::transform(attr_value_str.begin(), attr_value_str.end(), attr_value_str.begin(), toupper);
   auto iter = valid_argmax_type.find(attr_value_str);
   if (iter == valid_argmax_type.end()) {
-    MS_LOG(EXCEPTION) << "Invalid argmax type " << attr_value_str << ", use int64 or int32";
+    MS_LOG(EXCEPTION) << "for MaxPool3DWithArgmax, Invalid argmax type " << attr_value_str << ", use int64 or int32";
   }
   return TypeId(iter->second);
 }
@@ -133,7 +133,7 @@ TuplePtr MaxPool3DWithArgmaxInferType(const PrimitivePtr &prim, const std::vecto
   } else if (Targmax == "int64") {
     argmax_dtype = std::make_shared<TensorType>(kInt64);
   } else {
-    MS_EXCEPTION(TypeError) << "The type of argmax should be int32 or int64 ";
+    MS_EXCEPTION(TypeError) << "for " << prim->name() << ", The type of argmax should be int32 or int64 ";
   }
   std::vector<TypePtr> type_list = {output_dtype, argmax_dtype};
   return std::make_shared<Tuple>(type_list);
@@ -194,6 +194,11 @@ abstract::TupleShapePtr MaxPool3DWithArgmaxInferShape(const PrimitivePtr &prim,
     }
   }
   ShapeVector output_shape = {x_shape[0], x_shape[1], D_out, H_out, W_out};
+  if (D_out <= 0 || H_out <= 0 || W_out <= 0) {
+    MS_EXCEPTION(ValueError) << "for " << prim->name() << ", shape of out is [" << x_shape[0] << ", " << x_shape[1]
+                             << ", " << D_out << ", " << H_out << ", " << W_out
+                             << "]. It should be not less than zero.";
+  }
   ShapeVector argmax_shape = output_shape;
   std::vector<abstract::BaseShapePtr> shape_list = {std::make_shared<abstract::Shape>(output_shape),
                                                     std::make_shared<abstract::Shape>(argmax_shape)};

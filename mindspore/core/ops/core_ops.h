@@ -285,6 +285,7 @@ constexpr auto kHSwishGrad = "HSwishGrad";
 constexpr auto kNuclearNorm = "NuclearNorm";
 constexpr auto kSparseApplyAdagradDA = "SparseApplyAdagradDA";
 constexpr auto kMaxPool3DWithArgmax = "MaxPool3DWithArgmax";
+constexpr auto kMaxPool3DGradWithArgmax = "MaxPool3DGradWithArgmax";
 constexpr auto kUpsampleTrilinear3DGrad = "UpsampleTrilinear3DGrad";
 constexpr auto kIFMR = "IFMR";
 constexpr auto kSparseApplyMomentum = "SparseApplyMomentum";

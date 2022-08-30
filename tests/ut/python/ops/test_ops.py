@@ -101,7 +101,7 @@ from mindspore.ops.operations.nn_ops import FractionalMaxPool, DataFormatVecPerm
 from mindspore.ops.operations._grad_ops import FractionalMaxPoolGrad
 from mindspore.ops.operations.nn_ops import FractionalMaxPool3DWithFixedKsize
 from mindspore.ops.operations._grad_ops import FractionalMaxPool3DGradWithFixedKsize
-from mindspore.ops.operations.nn_ops import FractionalMaxPoolWithFixedKsize
+from mindspore.ops.operations.nn_ops import FractionalMaxPoolWithFixedKsize, MaxPool3DWithArgmax
 from mindspore.ops.operations._grad_ops import FractionalMaxPoolGradWithFixedKsize
 from mindspore.ops.operations.nn_ops import FractionalAvgPool
 from mindspore.ops.operations._grad_ops import FractionalAvgPoolGrad
@@ -2520,6 +2520,11 @@ test_case_nn_ops = [
         'block': UpsampleNearest3DGrad(input_size=[2, 3, 4, 512, 256], output_size=[4, 64, 48], scales=None),
         'desc_inputs': [([2, 3, 4, 64, 48], {'dtype': np.float32})],
         'skip': ['backward']}),
+    ('MaxPool3DWithArgmax', {
+        'block': MaxPool3DWithArgmax(ksize=4, strides=2, pads=1, dilation=1, ceil_mode=False,
+                                     data_format="NCDHW", argmax_type=mstype.int64),
+        'desc_inputs': [[100, 3, 28, 28, 28]],
+        'desc_bprop': [[100, 3, 14, 14, 14], ([100, 3, 14, 14, 14], {'dtype': np.int64})]}),
     ('CeLU', {
         'block': P.CeLU(),
         'desc_inputs': [[1, 2, 3]],

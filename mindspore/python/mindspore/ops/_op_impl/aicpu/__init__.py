@@ -99,6 +99,8 @@ from .sign import _sign_aicpu
 from .squeeze import _squeeze_aicpu
 from .acos import _acos_aicpu
 from .acos_grad import _acos_grad_aicpu
+from .max_pool3d_with_argmax import _max_pool3d_with_argmax_aicpu
+from .max_pool3d_grad_with_argmax import _max_pool3d_grad_with_argmax_aicpu
 from .real_div import _real_div_aicpu
 from .expand import _expand_aicpu
 from .expand_dims import _expand_dims_aicpu
