@@ -17,6 +17,7 @@ from typing import Optional
 from typing import NamedTuple
 from ...common import Tensor
 from ._bfgs import minimize_bfgs
+from ._lbfgs import minimize_lbfgs
 
 
 class OptimizeResults(NamedTuple):
@@ -73,12 +74,13 @@ def minimize(func, x0, args=(), *, method, tol=None, options=None):
       x0 (Tensor): initial guess. Array of real elements of size :math:`(n,)`, where `n` is
         the number of independent variables.
       args (Tuple): extra arguments passed to the objective function. Default: ().
-      method (str): solver type. Currently only `"BFGS"` is supported.
+      method (str): solver type. Currently only `"BFGS" or "LBFGS"` is supported.
       tol (float, optional): tolerance for termination. For detailed control, use solver-specific
         options. Default: None.
       options (Mapping[str, Any], optional): a dictionary of solver options. All methods accept the following
         generic options, Default: None.
-
+        - history_size (int): size of buffer used to help to update inv hessian, Default: 20
+          only used with method="LBFGS"
         - maxiter (int): Maximum number of iterations to perform. Depending on the
           method each iteration may use several function evaluations.
 
@@ -98,6 +100,9 @@ def minimize(func, x0, args=(), *, method, tol=None, options=None):
         >>>     return (x ** 2 + y - 11.) ** 2 + (x + y ** 2 - 7.) ** 2
         >>> res = minimize(func, x0, method='BFGS', options=dict(maxiter=None, gtol=1e-6))
         >>> print(res.x)
+        >>> l_res = minimize(func, x0, method='LBFGS', options=dict(maxiter=None, gtol=1e-6))
+        >>> print(res.x)
+        [3. 2.]
         [3. 2.]
     """
     if options is None:
@@ -122,6 +127,19 @@ def minimize(func, x0, args=(), *, method, tol=None, options=None):
                                fun=results.f_k,
                                jac=results.g_k,
                                hess_inv=results.H_k,
+                               nfev=results.nfev,
+                               njev=results.ngev,
+                               nit=results.k)
+
+    if method.lower() == 'lbfgs':
+        results = minimize_lbfgs(fun_with_args(args), x0, **options)
+        success = results.converged and not results.failed
+        return OptimizeResults(x=results.x_k,
+                               success=success,
+                               status=results.status,
+                               fun=results.f_k,
+                               jac=results.g_k,
+                               hess_inv=None,
                                nfev=results.nfev,
                                njev=results.ngev,
                                nit=results.k)

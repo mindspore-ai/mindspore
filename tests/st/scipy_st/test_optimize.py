@@ -366,3 +366,180 @@ def test_line_search_graph(maxiter, func, x, p):
 
     match_array(msp_res.a_k, osp_res[0], error=5)
     match_array(msp_res.f_k, osp_res[3], error=5)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('dtype', [onp.float32])
+@pytest.mark.parametrize('func_x0', [(rosenbrock, onp.zeros(2))])
+def test_lbfgs1(dtype, func_x0):
+    """
+    Feature: ALL TO ALL
+    Description: test cases for lbfgs in PYNATIVE mode
+    Expectation: the result match bfgs
+    """
+    func, x0 = func_x0
+    x0 = x0.astype(dtype)
+    x0_tensor = Tensor(x0)
+    ms_res = msp.optimize.minimize(func(mnp), x0_tensor, method='LBFGS',
+                                   options=dict(maxiter=None, gtol=1e-6))
+    ma_res = msp.optimize.minimize(func(mnp), x0_tensor, method='BFGS',
+                                   options=dict(maxiter=None, gtol=1e-6))
+    match_array(ms_res.x.asnumpy(), ma_res.x, error=5, err_msg=str(ms_res))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('dtype', [onp.float32])
+@pytest.mark.parametrize('func_x0', [(himmelblau, onp.zeros(2))])
+def test_lbfgs2(dtype, func_x0):
+    """
+    Feature: ALL TO ALL
+    Description: test cases for lbfgs in PYNATIVE mode
+    Expectation: the result match bfgs
+    """
+    func, x0 = func_x0
+    x0 = x0.astype(dtype)
+    x0_tensor = Tensor(x0)
+    ms_res = msp.optimize.minimize(func(mnp), x0_tensor, method='LBFGS',
+                                   options=dict(maxiter=None, gtol=1e-6))
+    ma_res = msp.optimize.minimize(func(mnp), x0_tensor, method='BFGS',
+                                   options=dict(maxiter=None, gtol=1e-6))
+    match_array(ms_res.x.asnumpy(), ma_res.x, error=5, err_msg=str(ms_res))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('dtype', [onp.float32])
+@pytest.mark.parametrize('func_x0', [(matyas, onp.ones(2))])
+def test_lbfgs3(dtype, func_x0):
+    """
+    Feature: ALL TO ALL
+    Description: test cases for lbfgs in PYNATIVE mode
+    Expectation: the result match bfgs
+    """
+    func, x0 = func_x0
+    x0 = x0.astype(dtype)
+    x0_tensor = Tensor(x0)
+    ms_res = msp.optimize.minimize(func(mnp), x0_tensor, method='LBFGS',
+                                   options=dict(maxiter=None, gtol=1e-6))
+    ma_res = msp.optimize.minimize(func(mnp), x0_tensor, method='BFGS',
+                                   options=dict(maxiter=None, gtol=1e-6))
+    match_array(ms_res.x.asnumpy(), ma_res.x, error=5, err_msg=str(ms_res))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('dtype', [onp.float64])
+@pytest.mark.parametrize('func_x0', [(rosenbrock, onp.zeros(2))])
+def test_lbfgs4(dtype, func_x0):
+    """
+    Feature: ALL TO ALL
+    Description: test cases for lbfgs in PYNATIVE mode
+    Expectation: the result match bfgs
+    """
+    func, x0 = func_x0
+    x0 = x0.astype(dtype)
+    x0_tensor = Tensor(x0)
+    ms_res = msp.optimize.minimize(func(mnp), x0_tensor, method='LBFGS',
+                                   options=dict(maxiter=None, gtol=1e-6))
+    ma_res = msp.optimize.minimize(func(mnp), x0_tensor, method='BFGS',
+                                   options=dict(maxiter=None, gtol=1e-6))
+    match_array(ms_res.x.asnumpy(), ma_res.x, error=5, err_msg=str(ms_res))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('dtype', [onp.float64])
+@pytest.mark.parametrize('func_x0', [(himmelblau, onp.zeros(2))])
+def test_lbfgs5(dtype, func_x0):
+    """
+    Feature: ALL TO ALL
+    Description: test cases for lbfgs in PYNATIVE mode
+    Expectation: the result match bfgs
+    """
+    func, x0 = func_x0
+    x0 = x0.astype(dtype)
+    x0_tensor = Tensor(x0)
+    ms_res = msp.optimize.minimize(func(mnp), x0_tensor, method='LBFGS',
+                                   options=dict(maxiter=None, gtol=1e-6))
+    ma_res = msp.optimize.minimize(func(mnp), x0_tensor, method='BFGS',
+                                   options=dict(maxiter=None, gtol=1e-6))
+    match_array(ms_res.x.asnumpy(), ma_res.x, error=5, err_msg=str(ms_res))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('dtype', [onp.float64])
+@pytest.mark.parametrize('func_x0', [(matyas, onp.ones(2))])
+def test_lbfgs6(dtype, func_x0):
+    """
+    Feature: ALL TO ALL
+    Description: test cases for lbfgs in PYNATIVE mode
+    Expectation: the result match bfgs
+    """
+    func, x0 = func_x0
+    x0 = x0.astype(dtype)
+    x0_tensor = Tensor(x0)
+    ms_res = msp.optimize.minimize(func(mnp), x0_tensor, method='LBFGS',
+                                   options=dict(maxiter=None, gtol=1e-6))
+    ma_res = msp.optimize.minimize(func(mnp), x0_tensor, method='BFGS',
+                                   options=dict(maxiter=None, gtol=1e-6))
+    match_array(ms_res.x.asnumpy(), ma_res.x, error=5, err_msg=str(ms_res))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('dtype', [onp.float32, onp.float64])
+def test_lbfgs_fixes4594(dtype):
+    """
+    Feature: ALL TO ALL
+    Description: test cases for lbfgs in PYNATIVE mode
+    Expectation: the result match bfgs
+    """
+    n = 2
+    a = Tensor(onp.eye(n, dtype=dtype)) * 1e4
+
+    def func(x):
+        return mnp.mean((mnp.dot(a, x)) ** 2)
+
+    results = msp.optimize.minimize(func, Tensor(onp.ones(n, dtype=dtype)), method='LBFGS',
+                                    options=dict(maxiter=None, gtol=1e-6)).x
+    onp.testing.assert_allclose(results.asnumpy(), onp.zeros(n, dtype=dtype), rtol=1e-6, atol=1e-6)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('dtype', [onp.float32, onp.float64])
+@pytest.mark.parametrize('func_x0', [(rosenbrock, onp.zeros(2)), (rosenbrock, onp.zeros(300))])
+def test_lbfgs_graph(dtype, func_x0):
+    """
+    Feature: ALL TO ALL
+    Description: test cases for lbfgs in GRAPH mode
+    Expectation: the result match bfgs
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    func, x0 = func_x0
+    x0 = x0.astype(dtype)
+    x0_tensor = Tensor(x0)
+    ms_res = msp.optimize.minimize(func(mnp), x0_tensor, method='LBFGS',
+                                   options=dict(maxiter=None, gtol=1e-6))
+    ma_res = msp.optimize.minimize(func(mnp), x0_tensor, method='BFGS',
+                                   options=dict(maxiter=None, gtol=1e-6))
+    match_array(ms_res.x.asnumpy(), ma_res.x, error=5, err_msg=str(ms_res))
