@@ -1269,7 +1269,7 @@ KernelGraphPtr SessionBasic::ConstructKernelGraph(const AnfNodePtrList &lst, con
     MS_EXCEPTION_IF_NULL(new_cnode);
     new_cnode->set_abstract(cnode->abstract());
     new_cnode->set_scope(cnode->scope());
-    new_cnode->set_parallel(cnode->is_parallel());
+    new_cnode->set_attrs(cnode->attrs());
     // record map relations between anf from ME and new anf node used in backend
     graph->FrontBackendMapAdd(node, new_cnode);
   }
@@ -2770,33 +2770,7 @@ std::vector<uint32_t> GenerateBucketSizeList(const KernelGraphPtr &graph, const 
     if (grads_count == 0) {
       MS_LOG(EXCEPTION) << "Bprop graph has no grad";
     }
-    uint32_t remove_number = 0;
-    auto parallel_context = parallel::ParallelContext::GetInstance();
-    MS_EXCEPTION_IF_NULL(parallel_context);
-    auto parallel_mode = parallel_context->parallel_mode();
-    if (parallel_mode == parallel::kSemiAutoParallel || parallel_mode == parallel::kAutoParallel) {
-      auto ret = graph->get_return();
-      MS_EXCEPTION_IF_NULL(ret);
-      auto current_node = ret->cast<CNodePtr>();
-      MS_EXCEPTION_IF_NULL(current_node);
-      while (IsPrimitiveCNode(current_node->input(1), prim::kPrimMakeTuple)) {
-        current_node = current_node->input(1)->cast<CNodePtr>();
-      }
-      auto inputs = current_node->inputs();
-      for (size_t i = 1; i < inputs.size(); ++i) {
-        auto node = inputs[i];
-        MS_EXCEPTION_IF_NULL(node);
-        if (!node->isa<CNode>()) {
-          continue;
-        }
-        auto cnode = node->cast<CNodePtr>();
-        if (cnode->is_parallel()) {
-          remove_number += 1;
-        }
-      }
-    }
-    MS_LOG(INFO) << "auto parallel remove_number " << remove_number;
-    return {grads_count - remove_number};
+    return {grads_count};
   }
 
   std::vector<uint32_t> bucket_size_list;

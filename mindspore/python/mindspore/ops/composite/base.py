@@ -19,6 +19,7 @@
 from functools import partial
 from types import FunctionType
 import mindspore as ms
+import mindspore.nn as nn
 from mindspore import context
 from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore import log as logger
@@ -905,6 +906,10 @@ class Shard(Shard_):
         if self._is_attrs_has_been_set(fn, in_strategy, out_strategy, parameter_plan, device, level):
             return self.shard_fn
         shard_ = Shard()
+
+        if isinstance(fn, nn.Cell):
+            for param in fn.trainable_params():
+                param.is_in_shard = True
 
         def shard_fn(*args):
             args = (fn,) + args

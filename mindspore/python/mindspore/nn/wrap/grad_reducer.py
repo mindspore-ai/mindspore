@@ -26,7 +26,6 @@ from mindspore.parallel._auto_parallel_context import auto_parallel_context
 import mindspore.common.dtype as mstype
 from mindspore.common.tensor import Tensor
 from mindspore.common.api import ms_function
-from mindspore.common.api import is_pynative_parallel
 
 
 reduce_opt = C.MultitypeFuncGraph("reduce_opt")
@@ -126,8 +125,6 @@ def _tensors_allreduce_post(degree, mean, allreduce_filter, grad):
     Args:
         degree (int): The mean coefficient.
         mean (bool): When mean is true, the mean coefficient (degree) would apply on gradients.
-        allgather (Primitive): The communication operator for sparse gradients.
-        allreduce (Primitive): The communication operator for gradients.
         allreduce_filter (bool): When it is true, allreduce would apply.
         grad (Tensor): The gradient tensor before operation.
 
@@ -137,7 +134,7 @@ def _tensors_allreduce_post(degree, mean, allreduce_filter, grad):
     if allreduce_filter:
         if mean:
             grad = F.tensor_mul(grad, F.cast(degree, F.dtype(grad)))
-        return grad
+            return grad
     return grad
 
 
@@ -395,7 +392,7 @@ class DistributedGradReducer(Cell):
             self.degree = degree
         self.degree = Tensor(1.0 / self.degree, mstype.float32)
         self.mean = mean
-        self.allreduce_filter = tuple(x.layerwise_parallel is False for x in parameters)
+        self.allreduce_filter = tuple((x.layerwise_parallel is False) and (x.is_in_shard is False) for x in parameters)
         is_parallel_optimizer = context.get_auto_parallel_context("enable_parallel_optimizer")
         split_indices = auto_parallel_context().get_all_reduce_fusion_split_indices()
         if is_parallel_optimizer and split_indices:
@@ -413,7 +410,6 @@ class DistributedGradReducer(Cell):
         self.ps_parameters = tuple(ps_filter(x) for x in parameters)
         self.enable_parameter_server = any(self.ps_parameters)
         self.mode = context.get_context("mode")
-        self.is_pynative_parallel = is_pynative_parallel()
         self.enable_tuple_broaden = True
 
     @ms_function
@@ -431,9 +427,8 @@ class DistributedGradReducer(Cell):
         """
         datatypes = self.map_(F.partial(_get_datatype), grads)
         grads = self.map_(F.partial(_cast_datatype, mstype.float32), grads)
-        if self.is_pynative_parallel:
-            new_grad = self.map_(F.partial(reduce_opt, self.degree, self.mean), self.allreduce_filter, grads)
-        elif self.split_fusion:
+
+        if self.split_fusion:
             if self.enable_parameter_server:
                 new_grad = self.map_(F.partial(reduce_opt, self.degree, self.mean, self.allgather),
                                      self.op_list, self.allreduce_filter, grads, self.ps_parameters)

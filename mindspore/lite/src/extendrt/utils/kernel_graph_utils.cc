@@ -115,7 +115,7 @@ KernelGraphPtr KernelGraphUtils::ConstructKernelGraphFromNodeList(const AnfNodeP
     MS_EXCEPTION_IF_NULL(new_cnode);
     new_cnode->set_abstract(cnode->abstract());
     new_cnode->set_scope(cnode->scope());
-    new_cnode->set_parallel(cnode->is_parallel());
+    new_cnode->set_attrs(cnode->attrs());
     if (IsPrimitiveCNode(cnode, prim::kPrimLoad)) {
       new_cnode->set_fullname_with_scope(cnode->input(kFirstDataInputIndex)->fullname_with_scope());
     }
