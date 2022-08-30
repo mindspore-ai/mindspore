@@ -49,6 +49,9 @@ abstract::ShapePtr ReverseSequenceInferShape(const PrimitivePtr &primitive,
   auto seq_lengths_shape_ptr = CheckAndConvertUtils::GetTensorInputShape("ReverseSequence", input_args, 1);
   MS_EXCEPTION_IF_NULL(seq_lengths_shape_ptr);
   auto x_shape = x_shape_ptr->shape();
+  if (IsDynamicRank(x_shape)) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
+  }
   auto seq_lengths_shape = seq_lengths_shape_ptr->shape();
 
   auto seq_dim_ptr = primitive->GetAttr("seq_dim");
