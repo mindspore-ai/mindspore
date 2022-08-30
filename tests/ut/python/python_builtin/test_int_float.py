@@ -173,6 +173,26 @@ def test_fallback_int_with_no_input():
     assert ret == 0
 
 
+def test_fallback_int_with_base_input():
+    """
+    Feature: JIT Fallback
+    Description: Test int() in graph mode with string input.
+    Expectation: No exception.
+    """
+    @ms_function
+    def foo():
+        x1 = int('12', 16)
+        x2 = int('0xa', 16)
+        x3 = int('10', 8)
+        return x1, x2, x3
+
+    ret = foo()
+    assert len(ret) == 3
+    assert ret[0] == 18
+    assert ret[1] == 10
+    assert ret[2] == 8
+
+
 def test_fallback_float_with_input_tensor():
     """
     Feature: JIT Fallback

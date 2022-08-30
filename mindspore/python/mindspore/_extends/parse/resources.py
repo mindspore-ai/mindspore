@@ -182,4 +182,6 @@ convert_class_to_function_map = {
     "class 'tuple'": M.tuple_func,
     "class 'int'":   M.int_func,
     "class 'float'": M.float_func,
+    "class 'bool'":  M.bool_func,
+    "class 'str'":   M.str_func
 }

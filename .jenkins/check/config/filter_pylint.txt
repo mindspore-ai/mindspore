@@ -62,6 +62,7 @@
 "mindspore/mindspore/python/mindspore/ops/functional.py"                                                                 "unused-wildcard-import"
 "mindspore/mindspore/python/mindspore/_extends/parse/standard_method.py"                                                 "redefined-builtin"
 "mindspore/mindspore/python/mindspore/_extends/parse/standard_method.py"                                                 "protected-access"
+"mindspore/mindspore/python/mindspore/_extends/parse/standard_method.py"                                                 "len-as-condition"
 "mindspore/mindspore/python/mindspore/common/tensor.py"                                                                  "redefined-builtin"
 "mindspore/mindspore/python/mindspore/ops/function/array_func.py"                                                        "redefined-builtin"
 "mindspore/mindspore/python/mindspore/ops/operations/array_ops.py"                                                       "redefined-builtin"

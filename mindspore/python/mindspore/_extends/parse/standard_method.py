@@ -1870,25 +1870,74 @@ def ms_round(*data):
 
 
 @constexpr
-def cast_to_int(data):
-    if isinstance(data, Tensor_):
-        data = Tensor(data, internal=True)
-    return int(data)
+def cast_to_str(data):
+    return str(data)
+
+
+def str_func(*data):
+    """Implementation of `str`."""
+    data_len = len(data)
+    if data_len >= 2:
+        const_utils.raise_type_error("str() requires 0 or 1 arguments.")
+    if data_len == 0:
+        return ''
+    data = data[0]
+    if isinstance(data, (CSRTensor, COOTensor, RowTensor)):
+        const_utils.raise_type_error("str() does not support sparse tensor input.")
+    if not F.isconstant(data):
+        const_utils.raise_type_error("str() does not support non-constant input.")
+    return cast_to_str(data)
+
+
+@constexpr
+def cast_to_bool(data):
+    return bool(data)
+
+
+def bool_func(*data):
+    """Implementation of `bool`."""
+    data_len = len(data)
+    if data_len >= 2:
+        const_utils.raise_type_error("bool() requires 0 or 1 arguments.")
+    if data_len == 0:
+        return False
+    data = data[0]
+    if isinstance(data, (CSRTensor, COOTensor, RowTensor)):
+        const_utils.raise_type_error("bool() does not support sparse tensor input.")
+    if isinstance(data, (Tensor, Tensor_)):
+        tensor_shape = F.shape(data)
+        tensor_shape_len = len(tensor_shape)
+        if tensor_shape_len == 0 or (tensor_shape_len == 1 and tensor_shape[0] == 1):
+            return data != 0
+        const_utils.raise_value_error("The truth value of an array with several elements is ambiguous.")
+    if not F.isconstant(data):
+        return len(data) != 0
+    return cast_to_bool(data)
+
+
+@constexpr
+def cast_to_int(*data):
+    target = data[0]
+    if isinstance(target, Tensor_):
+        target = Tensor(target, internal=True)
+    if len(data) == 1:
+        return int(target)
+    return int(target, data[1])
 
 
 def int_func(*data):
     """Implementation of `int`."""
     data_len = len(data)
-    if data_len >= 2:
-        const_utils.raise_type_error("int() requires 0 or 1 arguments.")
+    if data_len >= 3:
+        const_utils.raise_type_error("int() requires 0, 1 or 2 arguments.")
     if data_len == 0:
         return 0
-    data = data[0]
-    if not F.isconstant(data):
+    target = data[0]
+    if not F.isconstant(target):
         const_utils.raise_type_error("int() does not support non-constant input.")
-    if isinstance(data, (CSRTensor, COOTensor, RowTensor)):
+    if isinstance(target, (CSRTensor, COOTensor, RowTensor)):
         const_utils.raise_type_error("int() does not support sparse tensor input.")
-    return cast_to_int(data)
+    return cast_to_int(*data)
 
 
 @constexpr
