@@ -229,6 +229,7 @@ union PrimitiveType {
     FormatTranspose,
     GatherD,
     GroupNormFusion,
+    Log1p,
 }
 
 table Abs {
@@ -1283,4 +1284,7 @@ table GroupNormFusion {
     num_groups: long;
     epsilon: float = 1e-5;
     affine: bool = true;
+}
+
+table Log1p {
 }

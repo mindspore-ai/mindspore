@@ -270,6 +270,7 @@ REG_MINDSPORE_OPERATOR(NLLLossGrad)
 REG_MINDSPORE_OPERATOR(FormatTranspose)
 REG_MINDSPORE_OPERATOR(GatherD)
 REG_MINDSPORE_OPERATOR(GroupNormFusion)
+REG_MINDSPORE_OPERATOR(Log1p)
 }  // namespace lite
 }  // namespace mindspore
 
