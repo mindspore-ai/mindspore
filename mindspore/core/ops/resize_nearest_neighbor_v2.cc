@@ -39,11 +39,12 @@ abstract::ShapePtr ResizeNearestNeighborV2InferShape(const PrimitivePtr &primiti
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto size_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
   auto size_ptr = input_args[kInputIndex1]->BuildValue();
-
-  (void)CheckAndConvertUtils::CheckInteger("dimension of x", SizeToLong(x_shape.size()), kEqual, SizeToLong(kDim4),
+  size_t long_kdim1 = SizeToLong(kDim1);
+  size_t long_kdim2 = SizeToLong(kDim2);
+  size_t long_kdim4 = SizeToLong(kDim4);
+  (void)CheckAndConvertUtils::CheckInteger("dimension of x", SizeToLong(x_shape.size()), kEqual, long_kdim4, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("dimension of size", SizeToLong(size_shape.size()), kEqual, long_kdim1,
                                            prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("dimension of size", SizeToLong(size_shape.size()), kEqual,
-                                           SizeToLong(kDim1), prim_name);
 
   auto align_corners_ptr = primitive->GetAttr(kAlignCorners);
   MS_EXCEPTION_IF_NULL(align_corners_ptr);
@@ -57,10 +58,10 @@ abstract::ShapePtr ResizeNearestNeighborV2InferShape(const PrimitivePtr &primiti
 
   auto data_format = CheckAndConvertUtils::GetAndCheckFormat(primitive->GetAttr(kFormat));
   std::map<char, size_t> dim_idx_map;
-
-  if (data_format == Format::NCHW) {
+  mindspore::Format format_enum = static_cast<mindspore::Format>(data_format);
+  if (format_enum == Format::NCHW) {
     dim_idx_map = {{'N', kInputIndex0}, {'C', kInputIndex1}, {'H', kInputIndex2}, {'W', kInputIndex3}};
-  } else if (data_format == Format::NHWC) {
+  } else if (format_enum == Format::NHWC) {
     dim_idx_map = {{'N', kInputIndex0}, {'H', kInputIndex1}, {'W', kInputIndex2}, {'C', kInputIndex3}};
   } else {
     MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the attr of 'data_format' only support [" << kFormatNCHW
@@ -68,7 +69,7 @@ abstract::ShapePtr ResizeNearestNeighborV2InferShape(const PrimitivePtr &primiti
   }
 
   bool is_compile = IsNoneOrAnyValue(size_ptr);
-  ShapeVector y_shape(kDim4);
+  ShapeVector y_shape(long_kdim4);
   y_shape[dim_idx_map['N']] = x_shape[dim_idx_map['N']];
   y_shape[dim_idx_map['C']] = x_shape[dim_idx_map['C']];
   if (is_compile) {
@@ -82,7 +83,7 @@ abstract::ShapePtr ResizeNearestNeighborV2InferShape(const PrimitivePtr &primiti
   } else {
     MS_EXCEPTION_IF_NULL(size_ptr);
     auto size_value = CheckAndConvertUtils::CheckTensorIntValue("input size", size_ptr, prim_name);
-    if (size_value.size() != kDim2) {
+    if (size_value.size() != long_kdim2) {
       MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the elements number of 'size' should be 2, but get "
                                << size_value.size() << " number.";
     }

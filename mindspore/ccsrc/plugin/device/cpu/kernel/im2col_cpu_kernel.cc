@@ -98,7 +98,6 @@ bool Im2ColCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, c
         << "', the dtype of 'x' should be one of [float16, float32, float64, uin8, int8, uint16, int16, "
            "uint32, int32, uint64, int64], but got "
         << TypeIdLabel(y_type_) << ".";
-      break;
   }
   return res;
 }
@@ -108,7 +107,7 @@ bool Im2ColCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inp
                                       const std::vector<kernel::AddressPtr> &outputs) {
   // init output data
   auto y_data_ptr = reinterpret_cast<T *>(outputs[kIndex0]->addr);
-  std::fill_n(y_data_ptr, CPUKernelUtils::CalcElementNum(y_shape_), T(0));
+  (void)std::fill_n(y_data_ptr, CPUKernelUtils::CalcElementNum(y_shape_), T(0));
 
   int64_t batch_size = x_shape_[kIndex0];
   int64_t x_height = x_shape_[kIndex2];

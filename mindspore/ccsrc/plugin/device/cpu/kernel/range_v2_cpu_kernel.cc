@@ -51,7 +51,6 @@ bool RangeV2CpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, 
       MS_EXCEPTION(TypeError) << "For '" << kernel_name_
                               << "', the dtype of input must be int32, int64, float32, float64, but got "
                               << TypeIdLabel(dtype_) << ".";
-      break;
   }
   return true;
 }
@@ -59,10 +58,10 @@ bool RangeV2CpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, 
 template <typename T>
 void RangeV2CpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                        const std::vector<AddressPtr> &outputs) const {
-  auto start = reinterpret_cast<T *>(inputs[kIndex0]->addr)[kIndex0];
-  auto delta = reinterpret_cast<T *>(inputs[kIndex2]->addr)[kIndex0];
+  auto start = static_cast<T *>(inputs[kIndex0]->addr)[kIndex0];
+  auto delta = static_cast<T *>(inputs[kIndex2]->addr)[kIndex0];
 
-  auto output_addr = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+  auto output_addr = static_cast<T *>(outputs[kIndex0]->addr);
   size_t elem_num = outputs[kIndex0]->size / sizeof(T);
   T val = start;
   for (size_t i = 0; i < elem_num; i++) {

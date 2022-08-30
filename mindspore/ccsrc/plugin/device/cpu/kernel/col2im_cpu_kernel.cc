@@ -60,7 +60,6 @@ bool Col2ImCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, c
     default:
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of 'x' should be float16, float32, but got "
                         << TypeIdLabel(y_type_) << ".";
-      break;
   }
   return res;
 }
@@ -71,7 +70,7 @@ bool Col2ImCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inp
   auto x_data_ptr = reinterpret_cast<T *>(inputs[kIndex0]->addr);
   auto output_size_ptr = reinterpret_cast<int32_t *>(inputs[kIndex1]->addr);
   auto y_data_ptr = reinterpret_cast<T *>(outputs[kIndex0]->addr);
-  std::fill_n(y_data_ptr, CPUKernelUtils::CalcElementNum(y_shape_), static_cast<T>(0));
+  (void)std::fill_n(y_data_ptr, CPUKernelUtils::CalcElementNum(y_shape_), static_cast<T>(0));
 
   const int64_t output_height = static_cast<int64_t>(output_size_ptr[kIndex0]);
   const int64_t output_width = static_cast<int64_t>(output_size_ptr[kIndex1]);
