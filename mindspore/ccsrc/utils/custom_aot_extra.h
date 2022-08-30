@@ -20,7 +20,7 @@
 #include <string>
 #include <vector>
 #include "ir/anf.h"
-#include "include/common/utils/anfalgo.h"
+#include "mindspore/ccsrc/include/common/utils/anfalgo.h"
 
 namespace mindspore {
 class AotKernelData {

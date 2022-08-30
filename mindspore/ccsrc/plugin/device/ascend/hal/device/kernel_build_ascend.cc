@@ -27,6 +27,7 @@
 #include "plugin/device/ascend/kernel/aicpu/aicpu_kernel_build.h"
 #include "plugin/device/ascend/kernel/host/host_kernel_build.h"
 #include "plugin/device/ascend/kernel/hccl/hccl_kernel_build.h"
+#include "plugin/device/ascend/kernel/bisheng/bisheng_kernel_build.h"
 #include "plugin/device/ascend/kernel/rts/rt_kernel_build.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_utils.h"
 #include "plugin/device/ascend/kernel/ascend_kernel_mod.h"
@@ -56,6 +57,10 @@ static kernel::KernelModPtr SerialCompileImpl(const AnfNodePtr &anf_node) {
     }
     case KernelType::HCCL_KERNEL: {
       kernel_mod_ptr = kernel::HcclOpBuild(anf_node);
+      break;
+    }
+    case KernelType::BISHENG_KERNEL: {
+      kernel_mod_ptr = kernel::BiShengOpBuild(anf_node);
       break;
     }
     default: {
