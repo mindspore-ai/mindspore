@@ -21,15 +21,7 @@ from mindspore import Tensor, COOTensor, ms_function, nn, ops
 from mindspore.common import dtype as mstype
 from mindspore.ops import functional as F
 
-from .sparse_utils import get_platform, compare_res
-
-
-def compare_coo(coo1, coo2):
-    assert isinstance(coo1, COOTensor)
-    assert isinstance(coo2, COOTensor)
-    assert (coo1.indices.asnumpy() == coo2.indices.asnumpy()).all()
-    assert (coo1.values.asnumpy() == coo2.values.asnumpy()).all()
-    assert coo1.shape == coo2.shape
+from .sparse_utils import get_platform, compare_res, compare_coo
 
 
 @pytest.mark.level0
@@ -160,6 +152,7 @@ def test_coo_method():
     """
     if get_platform() != "linux":
         return
+
     class COOToCSRNet(nn.Cell):
         def construct(self, coo_tensor):
             return coo_tensor.to_csr()

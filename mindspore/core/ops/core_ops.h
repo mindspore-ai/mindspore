@@ -295,6 +295,13 @@ constexpr auto kAdaptiveMaxPool3DGrad = "AdaptiveMaxPool3DGrad";
 // Random
 constexpr auto kStandardNormal = "StandardNormal";
 
+// RowTensor
+constexpr auto kMakeRowTensor = "MakeRowTensor";
+constexpr auto kRowTensorGetValues = "RowTensorGetValues";
+constexpr auto kRowTensorGetIndices = "RowTensorGetIndices";
+constexpr auto kRowTensorGetDenseShape = "RowTensorGetDenseShape";
+constexpr auto kRowTensorAdd = "RowTensorAdd";
+
 // CSRTensor
 constexpr auto kMakeCSRTensor = "MakeCSRTensor";
 constexpr auto kCSRTensorGetValues = "CSRTensorGetValues";
@@ -307,7 +314,7 @@ constexpr auto kIsCSRFunc = "IsCSRFunc";
 constexpr auto kMakeCOOTensor = "MakeCOOTensor";
 constexpr auto kCOOTensorGetValues = "COOTensorGetValues";
 constexpr auto kCOOTensorGetIndices = "COOTensorGetIndices";
-constexpr auto kCOOTensorGetDenseShapes = "COOTensorGetDenseShape";
+constexpr auto kCOOTensorGetDenseShape = "COOTensorGetDenseShape";
 constexpr auto kCOOTensorDenseMatmul = "COOTensorDenseMatmul";
 
 // Sparse ops
@@ -965,17 +972,17 @@ GVAR_DEF(PrimitivePtr, kPrimFakeQuantWithMinMaxVarsPerChannel,
 GVAR_DEF(PrimitivePtr, kPrimMerge, std::make_shared<Primitive>("Merge"));
 
 // RowTensor
-GVAR_DEF(PrimitivePtr, kPrimMakeRowTensor, std::make_shared<Primitive>("MakeRowTensor"));
-GVAR_DEF(PrimitivePtr, kPrimRowTensorGetValues, std::make_shared<Primitive>("RowTensorGetValues"));
-GVAR_DEF(PrimitivePtr, kPrimRowTensorGetIndices, std::make_shared<Primitive>("RowTensorGetIndices"));
-GVAR_DEF(PrimitivePtr, kPrimRowTensorGetDenseShape, std::make_shared<Primitive>("RowTensorGetDenseShape"));
-GVAR_DEF(PrimitivePtr, kPrimRowTensorAdd, std::make_shared<Primitive>("RowTensorAdd"));
+GVAR_DEF(PrimitivePtr, kPrimMakeRowTensor, std::make_shared<Primitive>(kMakeRowTensor));
+GVAR_DEF(PrimitivePtr, kPrimRowTensorGetValues, std::make_shared<Primitive>(kRowTensorGetValues));
+GVAR_DEF(PrimitivePtr, kPrimRowTensorGetIndices, std::make_shared<Primitive>(kRowTensorGetIndices));
+GVAR_DEF(PrimitivePtr, kPrimRowTensorGetDenseShape, std::make_shared<Primitive>(kRowTensorGetDenseShape));
+GVAR_DEF(PrimitivePtr, kPrimRowTensorAdd, std::make_shared<Primitive>(kRowTensorAdd));
 
 // COOTensor
 GVAR_DEF(PrimitivePtr, kPrimMakeCOOTensor, std::make_shared<Primitive>(kMakeCOOTensor));
 GVAR_DEF(PrimitivePtr, kPrimCOOTensorGetValues, std::make_shared<Primitive>(kCOOTensorGetValues));
 GVAR_DEF(PrimitivePtr, kPrimCOOTensorGetIndices, std::make_shared<Primitive>(kCOOTensorGetIndices));
-GVAR_DEF(PrimitivePtr, kPrimCOOTensorGetDenseShape, std::make_shared<Primitive>(kCOOTensorGetDenseShapes));
+GVAR_DEF(PrimitivePtr, kPrimCOOTensorGetDenseShape, std::make_shared<Primitive>(kCOOTensorGetDenseShape));
 
 // CSRTensor
 GVAR_DEF(PrimitivePtr, kPrimMakeCSRTensor, std::make_shared<Primitive>(kMakeCSRTensor));
