@@ -232,6 +232,7 @@ OpDefCopyer GetSimpleOpCopyer() {
 
 STATUS AddTensor2Node(schema::MetaGraphT *graphT, uint32_t nodeIdx, std::unique_ptr<TensorT> tensor,
                       InsertPlace place) {
+  MS_CHECK_TRUE_MSG(graphT != nullptr, RET_NULL_PTR, "graphT is nullptr");
   if (nodeIdx >= graphT->nodes.size()) {
     MS_LOG(ERROR) << "nodeIdx out of range: " << nodeIdx;
     return RET_PARAM_INVALID;
@@ -539,7 +540,9 @@ TypeId GetAbstractTensorDtype(const abstract::AbstractTensorPtr &tensor) {
 }
 
 TypeId GetParameterDtype(const ParameterPtr &param_node) {
+  MS_CHECK_TRUE_MSG(param_node != nullptr, kTypeUnknown, "param_node is nullptr");
   auto abstract_base = param_node->abstract();
+  MS_CHECK_TRUE_MSG(abstract_base != nullptr, kTypeUnknown, "abstract_base is nullptr");
   auto abstract_tensor = abstract_base->cast<abstract::AbstractTensorPtr>();
   MS_CHECK_TRUE_MSG(abstract_tensor != nullptr, kTypeUnknown, "Cast to abstract tensor failed!");
   auto type_ptr = abstract_tensor->element()->GetTypeTrack();
@@ -637,6 +640,7 @@ STATUS UpdateFuncGraphInputAndOutputNames(const FuncGraphPtr &func_graph) {
 }
 
 STATUS UpdateGraphOutputName(schema::MetaGraphT *meta_graph) {
+  MS_CHECK_TRUE_MSG(meta_graph != nullptr, RET_NULL_PTR, "meta_graph is nullptr");
   auto output_names = ConverterInnerContext::GetInstance()->GetGraphOutputTensorNames();
   if (output_names.size() > meta_graph->outputIndex.size()) {
     MS_LOG(ERROR) << "the num of setting output_names is greater than actual, " << output_names.size() << " > "

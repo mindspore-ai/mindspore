@@ -31,7 +31,7 @@ class GatherDCPUKernel : public GatherBaseCPUKernel {
 
   int Run() override;
 
- private:
+ protected:
   int AssignIndicesData(bool isIndicesInt32) override;
 };
 }  // namespace mindspore::kernel

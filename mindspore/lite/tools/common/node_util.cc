@@ -174,7 +174,7 @@ STATUS GetFilterDim(const std::vector<int32_t> &oriDims, kTransFilterType type, 
 
 STATUS SetFilterDim(schema::TensorT *tensor, kTransFilterType type, int32_t filterK, int32_t filterC, int32_t filterH,
                     int32_t filterW) {
-  MS_ASSERT(tensor != nullptr);
+  MS_CHECK_TRUE_MSG(tensor != nullptr, RET_NULL_PTR, "tensor is nullptr");
   if (type == kKCHW2HWCK || type == kCKHW2HWCK || type == kNHWC2HWCK || type == kKHWC2HWCK || type == kCHWK2HWCK) {
     tensor->dims = {filterH, filterW, filterC, filterK};
   } else if (type == kKCHW2HWKC || type == kCKHW2HWKC) {
@@ -291,9 +291,9 @@ STATUS TransFilterFormat(schema::TensorT *tensor, schema::Format dstFormat) {
 }
 
 size_t GetCNodeOutputsSize(const std::shared_ptr<AnfNode> &anf_node, bool train_flag) {
-  MS_ASSERT(anf_node != nullptr);
+  MS_CHECK_TRUE_MSG(anf_node != nullptr, 0, "anf_node is nullptr");
   auto cnode = anf_node->cast<CNodePtr>();
-  MS_ASSERT(cnode != nullptr);
+  MS_CHECK_TRUE_MSG(cnode != nullptr, 0, "cnode is nullptr");
   if (train_flag &&
       (opt::CheckPrimitiveType(cnode, prim::kPrimConv2DFusion) || opt::CheckPrimitiveType(cnode, prim::kPrimAdam))) {
     return 1;
