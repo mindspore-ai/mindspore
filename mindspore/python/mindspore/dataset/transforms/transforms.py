@@ -203,9 +203,9 @@ class Compose(CompoundOperation):
     Compose a list of transforms into a single transform.
 
     .. Note::
-        Compose takes a list of transformations either provided in transforms.py or from user-defined implementation;
-        each can be an initialized transformation class or a lambda function, as long as the output from the last
-        transformation is a single tensor of type numpy.ndarray.
+        Compose takes a list of transformations in `mindspore.dataset.transforms` / `mindspore.dataset.vision`
+        and user-defined Python callable objects to combine as single data augmentation.
+        For user-defined Python callable objects, the return value is required to be type numpy.ndarray.
 
     Args:
         transforms (list): List of transformations to be applied.
@@ -425,7 +425,7 @@ class Fill(TensorOperation):
     The output tensor will have the same shape and type as the input tensor.
 
     Args:
-        fill_value (Union[str, bytes, int, float, bool]) : scalar value
+        fill_value (Union[str, bytes, int, float, bool]): scalar value
             to fill the tensor with.
 
     Raises:

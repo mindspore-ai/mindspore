@@ -89,7 +89,7 @@ def _get_unique_parameter_key():
 class Parameter(Tensor_):
     """
     `Parameter` is a `Tensor` subclass, when they are assigned as Cell attributes they are automatically added to
-    the list of its parameters, and will appear e.g. in `cell.get_parameters()` iterator.
+    the list of its parameters, and will appear, e.g. in `cell.get_parameters()` iterator.
 
     Note:
         In auto_parallel mode of  "semi_auto_parallel" and "auto_parallel", if init `Parameter` by
@@ -407,9 +407,10 @@ class Parameter(Tensor_):
         """
         Get the communication recompute status(bool) of optimizer parallel for the parameter.
 
-        In `AUTO_PARALLEL` and `SEMI_AUTO_PARALLEL` mode, when applying parallel optimizer, some AllGather operators
+        In `AUTO_PARALLEL` and `SEMI_AUTO_PARALLEL` mode, when applying parallel optimizer,
+        some :class:`mindspore.ops.AllGather` operators
         used for parameters gathering are inserted automatically. It is used to control the recompute attr for those
-        AllGather operators.
+        :class:`mindspore.ops.AllGather` operators.
 
         Note:
             - Only `Graph` mode is supported.
@@ -535,10 +536,6 @@ class Parameter(Tensor_):
     def requires_grad(self):
         """
         Return whether the parameter requires gradient.
-
-        The main function of requires_grad is to tell auto grad to start recording operations on a Tensor.
-        If a Tensor has requires_grad=False, then Tensor requires_grad will make auto grad start recording
-        operations on the tensor.
         """
         return self.param_info.requires_grad
 

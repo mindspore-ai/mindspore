@@ -5,7 +5,7 @@ mindspore.nn.BiDense
 
     双线性全连接层。
 
-    公式如下：
+    两个输入的密集连接层。公式如下：
 
     .. math::
         y = x_1^T A x_2 + b,

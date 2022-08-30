@@ -5,7 +5,7 @@ mindspore.ReduceLROnPlateau
 
     当 `monitor` 停止改进时降低学习率。
 
-    模型通常受益于学习率的改变，此回调监控训练过程，当在 `patience` 个epoch范围内指标效果变好的程度没有超过 `min_delta` 时，根据 `factor` 的设置值降低学习率。
+    一旦学习停止，模型通常受益于降低2-10倍的学习率。此回调监控训练过程，当在 `patience` 个epoch范围内指标效果没有变好时，学习率就会降低。
 
     .. note::
         暂不支持分组学习率场景。

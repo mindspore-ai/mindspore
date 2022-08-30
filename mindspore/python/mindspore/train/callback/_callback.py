@@ -85,7 +85,7 @@ class Callback:
     Each method of Callback class corresponds to a stage in training or eval process, and those methods
     have the same input `run_context`, which hold context information of the model in
     training or eval process. When defining a Callback subclass or creating a custom Callback,
-    Note that you should override methods with names prefixed with "on_train" or "on_eval",
+    note that you should override methods with names prefixed with "on_train" or "on_eval",
     otherwise ValueError will be raised if the custimized Callbacks used in `model.fit`.
 
     When creating a custom Callback, model context information can be obtained in Callback

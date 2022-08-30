@@ -111,7 +111,7 @@ class CELU(Cell):
 
 class Softmin(Cell):
     r"""
-    Softmin activation function. It is a two-category function :class:`mindspore.nn.Sigmoid` in the promotion of
+    Softmin activation function, which is a two-category function :class:`mindspore.nn.Sigmoid` in the promotion of
     multi-classification, and the purpose is to show the results of multi-classification in the form of probability.
 
     Calculate the value of the exponential function for the elements of the input Tensor on the `axis`, and then
@@ -328,7 +328,7 @@ class ReLU(Cell):
 
         \text{ReLU}(x) = (x)^+ = \max(0, x),
 
-    It returns element-wise :math:`\max(0, x)`, specially, the neurons with the negative output
+    It returns element-wise :math:`\max(0, x)`. Specially, the neurons with the negative output
     will be suppressed and the active neurons will stay the same.
 
     The picture about ReLU looks like this `ReLU <https://en.wikipedia.org/wiki/
@@ -574,7 +574,7 @@ class SiLU(Cell):
 
         \text{SiLU}(x) = x * \sigma(x),
 
-    where :math:`x_i` is input, :math:`\sigma(x)` is Sigmoid function, which is defined as:
+    where :math:`x_i` is input, :math:`\sigma(x)` is Sigmoid function.
 
     .. math::
 
