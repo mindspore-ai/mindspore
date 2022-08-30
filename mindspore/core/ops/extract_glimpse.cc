@@ -18,7 +18,6 @@
 #include <vector>
 #include <memory>
 #include <string>
-#include <utility>
 #include <map>
 #include "ops/extract_glimpse.h"
 #include "mindapi/src/helper.h"
@@ -70,7 +69,7 @@ abstract::ShapePtr ExtractGlimpseInferShape(const PrimitivePtr &primitive,
     if (size_value_tensor == nullptr) {
       MS_EXCEPTION(TypeError) << "For '" << primitive->name() << "', the input size must be const Tensor.";
     }
-    int32_t *size_data = reinterpret_cast<int32_t *>(size_value_tensor->data_c());
+    int32_t *size_data = static_cast<int32_t *>(size_value_tensor->data_c());
     int32_t g_height = size_data[0], g_width = size_data[1];
     if (g_height == 0 || g_width == 0) {
       MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the value of parameter "
@@ -112,10 +111,10 @@ TypePtr ExtractGlimpseInferType(const PrimitivePtr &primitive, const std::vector
   if (!input_args[kMagicNumber]->isa<abstract::AbstractTensor>()) {
     MS_EXCEPTION(TypeError) << "For " << primitive->name() << ", the input offsets only support tensor!";
   }
-  CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->BuildType(), {kFloat32}, primitive->name());
-  CheckAndConvertUtils::CheckTensorTypeValid("size", input_args[1]->BuildType(), {kInt32}, primitive->name());
-  CheckAndConvertUtils::CheckTensorTypeValid("offsets", input_args[kMagicNumber]->BuildType(), {kFloat32},
-                                             primitive->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->BuildType(), {kFloat32}, primitive->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("size", input_args[1]->BuildType(), {kInt32}, primitive->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("offsets", input_args[kMagicNumber]->BuildType(), {kFloat32},
+                                                   primitive->name());
   auto res = input_args[0]->BuildType();
   return res;
 }

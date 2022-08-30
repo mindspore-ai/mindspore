@@ -154,10 +154,10 @@ bool SparseTensorDenseMatmulCpuKernelMod::LaunchKernelComplex(const std::vector<
   }
 
   const size_t b_index = 3;
-  const auto *a_indices = reinterpret_cast<I *>(inputs[0]->addr);
-  const auto *a_values = reinterpret_cast<T *>(inputs[1]->addr);
-  const auto *b = reinterpret_cast<T *>(inputs[b_index]->addr);
-  auto *out = reinterpret_cast<T *>(outputs[0]->addr);
+  const auto *a_indices = static_cast<I *>(inputs[0]->addr);
+  const auto *a_values = static_cast<T *>(inputs[1]->addr);
+  const auto *b = static_cast<T *>(inputs[b_index]->addr);
+  auto *out = static_cast<T *>(outputs[0]->addr);
   const size_t indices_length = inputs[0]->size / sizeof(I);
   const size_t values_length = inputs[1]->size / sizeof(T);
   const size_t b_length = inputs[b_index]->size / sizeof(T);

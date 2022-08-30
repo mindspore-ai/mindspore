@@ -55,7 +55,7 @@ abstract::ShapePtr SegmentMinInferShape(const PrimitivePtr &primitive, const std
     auto data_size = segment_ids_tensor->DataSize();
     auto segment_ids_type_id = segment_ids_tensor->data_type();
     if (segment_ids_type_id == kNumberTypeInt64) {
-      int64_t *segment_ids_data = reinterpret_cast<int64_t *>(segment_ids_tensor->data_c());
+      int64_t *segment_ids_data = static_cast<int64_t *>(segment_ids_tensor->data_c());
       if (segment_ids_data[0] < 0) {
         MS_EXCEPTION(ValueError) << "The values of segment_ids must be nonnegative. but got " << segment_ids_data[0]
                                  << ".";
@@ -67,7 +67,7 @@ abstract::ShapePtr SegmentMinInferShape(const PrimitivePtr &primitive, const std
       }
       out_shape[0] = segment_ids_data[data_size - 1] + 1;
     } else if (segment_ids_type_id == kNumberTypeInt32) {
-      int32_t *segment_ids_data = reinterpret_cast<int32_t *>(segment_ids_tensor->data_c());
+      int32_t *segment_ids_data = static_cast<int32_t *>(segment_ids_tensor->data_c());
       if (segment_ids_data[0] < 0) {
         MS_EXCEPTION(ValueError) << "The values of segment_ids must be nonnegative. but got " << segment_ids_data[0]
                                  << ".";

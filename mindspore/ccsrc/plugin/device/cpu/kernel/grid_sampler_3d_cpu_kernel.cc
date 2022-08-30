@@ -169,9 +169,9 @@ void GridSampler3DCpuKernelMod::ComputeTask(T *x_addr, T *grid_addr, T *output_a
 template <typename T>
 void GridSampler3DCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                              const std::vector<AddressPtr> &outputs) {
-  auto x_data_addr = reinterpret_cast<T *>(inputs[kZero]->addr);
-  auto grid_data_addr = reinterpret_cast<T *>(inputs[kOne]->addr);
-  auto output_data_addr = reinterpret_cast<T *>(outputs[kZero]->addr);
+  auto x_data_addr = static_cast<T *>(inputs[kZero]->addr);
+  auto grid_data_addr = static_cast<T *>(inputs[kOne]->addr);
+  auto output_data_addr = static_cast<T *>(outputs[kZero]->addr);
   size_t loop_count =
     LongToSize(output_shape_[kZero] * output_shape_[kTwo] * output_shape_[kThree] * output_shape_[kFour]);
   auto task = [this, &x_data_addr, &grid_data_addr, &output_data_addr](size_t start, size_t end) {

@@ -91,15 +91,15 @@ bool ExtractGlimpseCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressP
   const size_t kInputIndex4 = 3;
   const size_t kNumber8 = 8;
   const size_t kNumber1024 = 1024;
-  float *x_data = reinterpret_cast<float *>(inputs[0]->addr);
-  int32_t *ss_data = reinterpret_cast<int32_t *>(inputs[1]->addr);
-  float *offsets_data = reinterpret_cast<float *>(inputs[kInputIndex3]->addr);
-  float *y_data = reinterpret_cast<float *>(outputs[0]->addr);
-  uint64_t batch_cnt = input_shape_[0];
-  uint64_t image_height = input_shape_[1];
-  uint64_t image_width = input_shape_[kInputIndex3];
-  uint64_t channels = input_shape_[kInputIndex4];
-  uint64_t g_height = ss_data[0], g_width = ss_data[1];
+  float *x_data = static_cast<float *>(inputs[0]->addr);
+  int32_t *ss_data = static_cast<int32_t *>(inputs[1]->addr);
+  float *offsets_data = static_cast<float *>(inputs[kInputIndex3]->addr);
+  float *y_data = static_cast<float *>(outputs[0]->addr);
+  uint64_t batch_cnt = static_cast<uint64_t>(input_shape_[0]);
+  uint64_t image_height = static_cast<uint64_t>(input_shape_[1]);
+  uint64_t image_width = static_cast<uint64_t>(input_shape_[kInputIndex3]);
+  uint64_t channels = static_cast<uint64_t>(input_shape_[kInputIndex4]);
+  uint64_t g_height = static_cast<uint64_t>(ss_data[0]), g_width = static_cast<uint64_t>(ss_data[1]);
   uint64_t size1 = image_width * image_height * channels;
   uint64_t size2 = image_width * channels;
   uint64_t size3 = g_height * g_width * channels;
@@ -110,8 +110,8 @@ bool ExtractGlimpseCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressP
       float x = offsets_data[i << 1];
       float y = offsets_data[1 + (i << 1)];
       if (normalized_) {
-        x *= image_height;
-        y *= image_width;
+        x *= static_cast<float>(image_height);
+        y *= static_cast<float>(image_width);
       }
       if (centered_) {
         x /= 2.0f;
@@ -123,9 +123,9 @@ bool ExtractGlimpseCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressP
       y -= g_width / 2.0f;
       auto task = [&](int64_t st, int64_t ed) {
         for (int64_t v = st; v < ed; v++) {
-          int64_t j = v / g_width, k = v % g_width;
-          uint64_t a = FloatToLong(x) + j, b = FloatToLong(y) + k;
-          uint64_t pos_y = i * size3 + j * size4 + k * channels;
+          int64_t j = v / static_cast<int64_t>(g_width), k = v % static_cast<int64_t>(g_width);
+          uint64_t a = static_cast<uint64_t>(FloatToLong(x) + j), b = static_cast<uint64_t>(FloatToLong(y) + k);
+          uint64_t pos_y = i * size3 + static_cast<int64_t>(j) * size4 + static_cast<int64_t>(k) * channels;
           if (a >= image_height || b >= image_width) {
             for (uint64_t u = 0; u < channels; u++) {
               Necessity(u, uniform_noise_, y_data, pos_y, noise_);
@@ -139,7 +139,7 @@ bool ExtractGlimpseCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressP
         }
       };
       if (g_size < kNumber8 * kNumber1024) {
-        task(0, g_size);
+        task(0, static_cast<int64_t>(g_size));
       } else {
         CPUKernelUtils::ParallelFor(task, g_size);
       }
@@ -150,8 +150,8 @@ bool ExtractGlimpseCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressP
         float x = offsets_data[i << 1];
         float y = offsets_data[1 + (i << 1)];
         if (normalized_) {
-          x *= image_height;
-          y *= image_width;
+          x *= static_cast<float>(image_height);
+          y *= static_cast<float>(image_width);
         }
         if (centered_) {
           x /= 2.0f;
@@ -162,9 +162,9 @@ bool ExtractGlimpseCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressP
         x -= g_height / 2.0f;
         y -= g_width / 2.0f;
         for (uint64_t v = 0; v < g_size; v++) {
-          int64_t j = v / g_width, k = v % g_width;
-          uint64_t a = FloatToLong(x) + j, b = FloatToLong(y) + k;
-          uint64_t pos_y = i * size3 + j * size4 + k * channels;
+          int64_t j = static_cast<int64_t>(v / g_width), k = static_cast<int64_t>(v % g_width);
+          uint64_t a = static_cast<uint64_t>(FloatToLong(x) + j), b = static_cast<uint64_t>(FloatToLong(y) + k);
+          uint64_t pos_y = i * size3 + static_cast<int64_t>(j) * size4 + static_cast<int64_t>(k) * channels;
           if (a >= image_height || b >= image_width) {
             for (uint64_t u = 0; u < channels; u++) {
               Necessity(u, uniform_noise_, y_data, pos_y, noise_);

@@ -152,9 +152,9 @@ bool SegmentProdCPUKernelMod::Launch(const std::vector<kernel::AddressPtr> &inpu
 template <typename T1, typename T2>
 bool SegmentProdCPUKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                            const std::vector<kernel::AddressPtr> &outputs) {
-  auto input_x_data_addr = reinterpret_cast<T1 *>(inputs[0]->addr);
-  auto segment_ids_data_addr = reinterpret_cast<T2 *>(inputs[1]->addr);
-  auto output_data_addr = reinterpret_cast<T1 *>(outputs[0]->addr);
+  auto input_x_data_addr = static_cast<T1 *>(inputs[0]->addr);
+  auto segment_ids_data_addr = static_cast<T2 *>(inputs[1]->addr);
+  auto output_data_addr = static_cast<T1 *>(outputs[0]->addr);
   std::vector<int64_t> segments;
   int64_t seg_tmp = 1;
   for (size_t i = 0; i < segment_ids_num_ - 1; ++i) {
@@ -179,10 +179,10 @@ bool SegmentProdCPUKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
   const size_t num_segments = segments.size();
   if (num_segments < kSegmentsThreshold) {
     for (size_t i = 0; i < num_segments; ++i) {
-      const size_t count = segments[i];
+      const size_t count = static_cast<size_t>(segments[i]);
       size_t count_no = 0;
       for (size_t j = 0; j < i; ++j) {
-        count_no += segments[j];
+        count_no += static_cast<size_t>(segments[j]);
       }
       size_t input_addr_base = count_no * num_compare_per;
       auto task = [&](size_t start, size_t end) {
@@ -193,7 +193,8 @@ bool SegmentProdCPUKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
             int tmp_addr = prod_init_addr + k * num_compare_per;
             prod_value *= input_x_data_addr[tmp_addr];
           }
-          output_data_addr[segment_ids_data_addr[count_no] * num_compare_per + j] = prod_value;
+          size_t output_index = static_cast<size_t>(segment_ids_data_addr[count_no] * num_compare_per + j);
+          output_data_addr[output_index] = prod_value;
         }
       };
       if (num_compare_per < kDataSizeThreshold) {
@@ -205,10 +206,10 @@ bool SegmentProdCPUKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
   } else {
     auto task = [&](size_t start, size_t end) {
       for (size_t i = start; i < end; ++i) {
-        const size_t count = segments[i];
+        const size_t count = static_cast<size_t>(segments[i]);
         size_t count_no = 0;
         for (size_t j = 0; j < i; ++j) {
-          count_no += segments[j];
+          count_no += static_cast<size_t>(segments[j]);
         }
         size_t input_addr_base = count_no * num_compare_per;
         for (size_t j = 0; j < num_compare_per; ++j) {
@@ -218,7 +219,8 @@ bool SegmentProdCPUKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
             int tmp_addr = prod_init_addr + k * num_compare_per;
             prod_value *= input_x_data_addr[tmp_addr];
           }
-          output_data_addr[segment_ids_data_addr[count_no] * num_compare_per + j] = prod_value;
+          size_t output_index = static_cast<size_t>(segment_ids_data_addr[count_no] * num_compare_per + j);
+          output_data_addr[output_index] = prod_value;
         }
       }
     };
@@ -230,9 +232,9 @@ bool SegmentProdCPUKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
 template <typename T1, typename T2>
 bool SegmentProdCPUKernelMod::LaunchKernelComplex(const std::vector<kernel::AddressPtr> &inputs,
                                                   const std::vector<kernel::AddressPtr> &outputs) {
-  auto input_x_data_addr = reinterpret_cast<T1 *>(inputs[0]->addr);
-  auto segment_ids_data_addr = reinterpret_cast<T2 *>(inputs[1]->addr);
-  auto output_data_addr = reinterpret_cast<T1 *>(outputs[0]->addr);
+  auto input_x_data_addr = static_cast<T1 *>(inputs[0]->addr);
+  auto segment_ids_data_addr = static_cast<T2 *>(inputs[1]->addr);
+  auto output_data_addr = static_cast<T1 *>(outputs[0]->addr);
   std::vector<int64_t> segments;
   int64_t seg_tmp = 1;
   for (size_t i = 0; i < segment_ids_num_ - 1; ++i) {
@@ -257,10 +259,10 @@ bool SegmentProdCPUKernelMod::LaunchKernelComplex(const std::vector<kernel::Addr
   const size_t num_segments = segments.size();
   if (num_segments < kSegmentsThreshold) {
     for (size_t i = 0; i < num_segments; ++i) {
-      const size_t count = segments[i];
+      const size_t count = static_cast<size_t>(segments[i]);
       size_t count_no = 0;
       for (size_t j = 0; j < i; ++j) {
-        count_no += segments[j];
+        count_no += static_cast<size_t>(segments[j]);
       }
       size_t input_addr_base = count_no * num_compare_per;
       auto task = [&](size_t start, size_t end) {
@@ -271,7 +273,8 @@ bool SegmentProdCPUKernelMod::LaunchKernelComplex(const std::vector<kernel::Addr
             int tmp_addr = prod_init_addr + k * num_compare_per;
             prod_value = ComputeProd(prod_value, input_x_data_addr[tmp_addr]);
           }
-          output_data_addr[segment_ids_data_addr[count_no] * num_compare_per + j] = prod_value;
+          size_t output_index = static_cast<size_t>(segment_ids_data_addr[count_no] * num_compare_per + j);
+          output_data_addr[output_index] = prod_value;
         }
       };
       if (num_compare_per < kDataSizeThreshold) {
@@ -283,10 +286,10 @@ bool SegmentProdCPUKernelMod::LaunchKernelComplex(const std::vector<kernel::Addr
   } else {
     auto task = [&](size_t start, size_t end) {
       for (size_t i = start; i < end; ++i) {
-        const size_t count = segments[i];
+        const size_t count = static_cast<size_t>(segments[i]);
         size_t count_no = 0;
         for (size_t j = 0; j < i; ++j) {
-          count_no += segments[j];
+          count_no += static_cast<size_t>(segments[j]);
         }
         size_t input_addr_base = count_no * num_compare_per;
         for (size_t j = 0; j < num_compare_per; ++j) {
@@ -296,7 +299,8 @@ bool SegmentProdCPUKernelMod::LaunchKernelComplex(const std::vector<kernel::Addr
             int tmp_addr = prod_init_addr + k * num_compare_per;
             prod_value = ComputeProd(prod_value, input_x_data_addr[tmp_addr]);
           }
-          output_data_addr[segment_ids_data_addr[count_no] * num_compare_per + j] = prod_value;
+          size_t output_index = static_cast<size_t>(segment_ids_data_addr[count_no] * num_compare_per + j);
+          output_data_addr[output_index] = prod_value;
         }
       }
     };

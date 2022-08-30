@@ -119,9 +119,9 @@ template <typename T1, typename T2>
 bool SegmentMaxCPUKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                           const std::vector<kernel::AddressPtr> &,
                                           const std::vector<kernel::AddressPtr> &outputs) {
-  auto input_x_data_addr = reinterpret_cast<T1 *>(inputs[0]->addr);
-  auto segment_ids_data_addr = reinterpret_cast<T2 *>(inputs[1]->addr);
-  auto output_data_addr = reinterpret_cast<T1 *>(outputs[0]->addr);
+  auto input_x_data_addr = static_cast<T1 *>(inputs[0]->addr);
+  auto segment_ids_data_addr = static_cast<T2 *>(inputs[1]->addr);
+  auto output_data_addr = static_cast<T1 *>(outputs[0]->addr);
   std::vector<int64_t> segments = CalcSegmentIds(segment_ids_data_addr);
   for (size_t i = 0; i < output_num_; ++i) {
     output_data_addr[i] = static_cast<T1>(0);
@@ -133,7 +133,7 @@ bool SegmentMaxCPUKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> 
   const size_t num_segments = segments.size();
   if (num_segments < kSegmentsThreshold) {
     for (size_t i = 0; i < num_segments; ++i) {
-      const size_t count = segments[i];
+      const size_t count = static_cast<size_t>(segments[i]);
       int64_t count_no = 0;
       for (size_t j = 0; j < i; ++j) {
         count_no += segments[j];
@@ -161,7 +161,7 @@ bool SegmentMaxCPUKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> 
   } else {
     auto task = [&](size_t start, size_t end) {
       for (size_t i = start; i < end; ++i) {
-        const size_t count = segments[i];
+        const size_t count = static_cast<size_t>(segments[i]);
         int64_t count_no = 0;
         for (size_t j = 0; j < i; ++j) {
           count_no += segments[j];

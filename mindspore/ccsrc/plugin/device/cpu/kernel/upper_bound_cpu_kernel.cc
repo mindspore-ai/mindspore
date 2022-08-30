@@ -51,9 +51,9 @@ template <typename I, typename O>
 bool UpperBoundCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                           const std::vector<kernel::AddressPtr> &,
                                           const std::vector<kernel::AddressPtr> &outputs) {
-  auto sorted_x_data_addr = reinterpret_cast<I *>(inputs[0]->addr);
-  auto values_data_addr = reinterpret_cast<I *>(inputs[1]->addr);
-  auto output_data_addr = reinterpret_cast<O *>(outputs[0]->addr);
+  auto sorted_x_data_addr = static_cast<I *>(inputs[0]->addr);
+  auto values_data_addr = static_cast<I *>(inputs[1]->addr);
+  auto output_data_addr = static_cast<O *>(outputs[0]->addr);
   size_t sorted_x_data_column = static_cast<size_t>(sorted_x_shape_[1]);
   size_t values_data_column = static_cast<size_t>(values_shape_[1]);
   auto task = [this, &values_data_addr, &sorted_x_data_addr, &output_data_addr, &sorted_x_data_column,
