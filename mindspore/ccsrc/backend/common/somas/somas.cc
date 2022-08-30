@@ -735,9 +735,9 @@ void Somas::InitCommonNodeInputs(const CNodePtr &kernel) {
       auto index = AnfAlgo::GetInputIndexInKernel(kernel, i);
       size_t input_size = 0;
       if (index >= input_size_list.size()) {
-        MS_LOG(WARNING) << "Node: " << kernel->fullname_with_scope() << " input idx: " << index
-                        << " greater than the size of input_size_list: " << input_size_list.size()
-                        << ", so use 0 as parameter size.";
+        MS_LOG(INFO) << "Node: " << kernel->fullname_with_scope() << " input idx: " << index
+                     << " greater than the size of input_size_list: " << input_size_list.size()
+                     << ", so use 0 as parameter size.";
       } else {
         input_size = input_size_list.at(index);
       }
@@ -849,9 +849,9 @@ SomasParameterPtr Somas::CreateSomasParameter(const AnfNodePtr &node, size_t ind
     }
     addr = device_addr->GetPtr();
     if (device_addr->GetSize() != param_size) {
-      MS_LOG(WARNING) << "Dev Size and Param Size is not equal, Node: " << node->fullname_with_scope()
-                      << " Dev Size: " << device_addr->GetSize() << " param_size: " << param_size
-                      << " Kernel: " << kernel_name;
+      MS_LOG(INFO) << "Dev Size and Param Size is not equal, Node: " << node->fullname_with_scope()
+                   << " Dev Size: " << device_addr->GetSize() << " param_size: " << param_size
+                   << " Kernel: " << kernel_name;
     }
   }
 
