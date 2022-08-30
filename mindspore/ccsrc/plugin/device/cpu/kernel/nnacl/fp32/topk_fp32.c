@@ -15,8 +15,11 @@
  */
 
 #include "nnacl/fp32/topk_fp32.h"
+#include "nnacl/errorcode.h"
 
 int DescendCmp(const void *a, const void *b) {
+  NNACL_CHECK_NULL_RETURN_ERR(a);
+  NNACL_CHECK_NULL_RETURN_ERR(b);
   float sub = ((const TopkNode *)b)->element - ((const TopkNode *)a)->element;
   if (sub > 0) {
     return 1;
