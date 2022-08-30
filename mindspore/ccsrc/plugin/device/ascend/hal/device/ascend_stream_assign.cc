@@ -2751,7 +2751,8 @@ StreamActiveKind AscendStreamAssign::GetStreamActiveKind(const NotNull<KernelGra
 
   for (size_t i = index + 1; i < exe_orders.size(); i++) {
     auto cnode = exe_orders[i];
-    if (common::AnfAlgo::GetCNodeName(cnode) == kSendOpName || common::AnfAlgo::GetCNodeName(cnode) == kRecvOpName) {
+    if (common::AnfAlgo::GetCNodeName(cnode) == kSendOpName || common::AnfAlgo::GetCNodeName(cnode) == kRecvOpName ||
+        common::AnfAlgo::GetCNodeName(cnode) == kEndGraph) {
       continue;
     }
 

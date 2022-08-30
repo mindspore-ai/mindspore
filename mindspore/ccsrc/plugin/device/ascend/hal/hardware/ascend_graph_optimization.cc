@@ -173,7 +173,7 @@ void AscendGraphOptimization::PostOptimization(const KernelGraphPtr &graph) cons
   MS_LOG(INFO) << "Status record: end post optimization. graph id: " << graph->graph_id();
 }
 
-void AscendGraphOptimization::CommOpReuse(const KernelGraphPtr &graph) {
+void AscendGraphOptimization::CommOpReuse(const KernelGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
   auto max_comm_op_reuse_num_env = common::GetEnv("MS_COMM_COMPILER_OPT");
   if (!graph->is_graph_run_mode() || max_comm_op_reuse_num_env.empty()) {

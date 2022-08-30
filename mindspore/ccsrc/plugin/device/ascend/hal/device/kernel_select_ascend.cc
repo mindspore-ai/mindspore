@@ -38,9 +38,9 @@ namespace mindspore {
 namespace device {
 namespace ascend {
 namespace {
-const int kWeightUnInitScore = 1;
-const int kWeightInitScore = 2;
-const int kFeatureMapBaseScore = 10;
+constexpr int kWeightUnInitScore = 1;
+constexpr int kWeightInitScore = 2;
+constexpr int kFeatureMapBaseScore = 10;
 constexpr auto kPriChoosenFormat = "pri_format";
 enum MatchCountPriority : size_t {
   MATCH_COUNT_PRIORITY_BEGIN = 0,

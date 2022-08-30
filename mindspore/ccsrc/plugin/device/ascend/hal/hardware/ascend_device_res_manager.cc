@@ -84,6 +84,7 @@ void AscendDeviceResManager::FreeMemory(void *ptr) const {
 bool AscendDeviceResManager::AllocateMemory(DeviceAddress *const &address) const {
   MS_EXCEPTION_IF_NULL(address);
   MS_EXCEPTION_IF_NULL(runtime_instance_);
+  MS_EXCEPTION_IF_NULL(mem_manager_);
   auto device_name_in_address = GetDeviceNameByType(static_cast<const DeviceType>(address->GetDeviceType()));
   if (device_name_in_address != device_context_->device_context_key().device_name_) {
     MS_LOG(EXCEPTION) << "The device address type is wrong: type name in address:" << device_name_in_address
@@ -108,6 +109,7 @@ bool AscendDeviceResManager::AllocateMemory(DeviceAddress *const &address) const
 
 std::vector<void *> AscendDeviceResManager::AllocateContinuousMemory(const std::vector<size_t> &size_list) const {
   MS_EXCEPTION_IF_NULL(runtime_instance_);
+  MS_EXCEPTION_IF_NULL(mem_manager_);
   runtime_instance_->SetContext();
   std::vector<size_t> align_size_list;
   for (size_t i = 0; i < size_list.size(); i++) {
