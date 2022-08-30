@@ -89,6 +89,8 @@ def test_mindir_export_split():
     assert export_data == correct_data
     assert oct(os.stat(os.path.join("mindir_export_split_variables", "data_0")).st_mode)[-3:] == "400"
     assert oct(os.stat("mindir_export_split_graph.mindir").st_mode)[-3:] == "400"
+    context.set_context(mode=context.GRAPH_MODE)
+    ms.train.serialization.TOTAL_SAVE = 1024 * 1024
 
 
 def test_mindir_export_larger_error():
@@ -116,6 +118,8 @@ def test_mindir_export_larger_error():
     with pytest.raises(RuntimeError) as e:
         export(add, x, file_name="net", file_format="MINDIR")
         assert e.message == "The parameter size is exceed 1T,cannot export to the file"
+    ms.train.serialization.TOTAL_SAVE = 1024 * 1024
+    ms.train.serialization.PARAMETER_SPLIT_SIZE = 1024 * 1024 * 1024
 
 
 def test_mindir_export_larger_parameter_exceed_1t_mock():
@@ -151,6 +155,9 @@ def test_mindir_export_larger_parameter_exceed_1t_mock():
     correct_data += get_correct_data(add_net.z)
     export_data = get_data("larger_parameter_exceed_1T_mock")
     assert export_data == correct_data
+    context.set_context(mode=context.GRAPH_MODE)
+    ms.train.serialization.TOTAL_SAVE = 1024 * 1024
+    ms.train.serialization.PARAMETER_SPLIT_SIZE = 1024 * 1024 * 1024
 
 
 class AddNet(nn.Cell):
@@ -200,6 +207,7 @@ def test_ms_mindir_enc_2g_0001():
     export(net, *inputs, file_name=os.path.join(mindir_dir, "AddNet.mindir"), file_format="MINDIR", enc_key=key)
     graph = load(os.path.join(mindir_dir, "AddNet_graph.mindir"), dec_key=key)
     assert graph is not None
+    ms.train.serialization.TOTAL_SAVE = 1024 * 1024
 
 
 def test_mindir_export_remove_parameter():
@@ -226,3 +234,4 @@ def test_mindir_export_remove_parameter():
     shutil.rmtree("./mindir_export_split_variables/")
     with pytest.raises(RuntimeError, match=" please check the correct of the file."):
         load("mindir_export_split_graph.mindir")
+    ms.train.serialization.TOTAL_SAVE = 1024 * 1024
