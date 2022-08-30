@@ -41,7 +41,6 @@ bool ReservoirReplayBufferCreateGpuKernel::Init(const BaseOperatorPtr &base_oper
     return false;
   }
 
-  const int64_t &capacity = kernel_ptr->get_capacity();
   const std::vector<int64_t> &schema = kernel_ptr->get_schema();
   const int64_t &seed0 = kernel_ptr->get_seed0();
   const int64_t &seed1 = kernel_ptr->get_seed1();
@@ -60,6 +59,7 @@ bool ReservoirReplayBufferCreateGpuKernel::Init(const BaseOperatorPtr &base_oper
   std::transform(schema.begin(), schema.end(), std::back_inserter(schema_in_size),
                  [](const int64_t &arg) -> size_t { return LongToSize(arg); });
 
+  const int64_t &capacity = kernel_ptr->get_capacity();
   auto &factory = ReservoirReplayBufferFactory::GetInstance();
   std::tie(handle_, reservoir_replay_buffer_) = factory.Create(seed, capacity, schema_in_size);
   MS_EXCEPTION_IF_NULL(reservoir_replay_buffer_);
@@ -113,8 +113,8 @@ bool ReservoirReplayBufferPushGpuKernel::Init(const BaseOperatorPtr &base_operat
                                     "cudaMemcpy failed.");
 
   for (size_t i = 0; i < inputs.size(); i++) {
-    TypeId type_id = inputs[i]->GetDtype();
-    size_t type_size = GetTypeByte(TypeIdToType(type_id));
+    TypeId type = inputs[i]->GetDtype();
+    size_t type_size = GetTypeByte(TypeIdToType(type));
     const std::vector<int64_t> &shape = inputs[i]->GetShapeVector();
     size_t tensor_size = std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
     input_size_list_.push_back(tensor_size);
@@ -180,7 +180,7 @@ bool ReservoirReplayBufferDestroyGpuKernel::Init(const BaseOperatorPtr &base_ope
                                                  const std::vector<KernelTensorPtr> &outputs) {
   auto kernel_ptr = std::dynamic_pointer_cast<ops::ReservoirReplayBufferDestroy>(base_operator);
   if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast ReservoirReplayBufferDestroy ops failed!";
+    MS_LOG(ERROR) << "Cast ReservoirReplayBufferDestroy ops failed!";
     return false;
   }
 

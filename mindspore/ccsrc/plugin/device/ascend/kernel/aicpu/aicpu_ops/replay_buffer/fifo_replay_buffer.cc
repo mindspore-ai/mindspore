@@ -51,8 +51,8 @@ bool FIFOReplayBuffer::Push(const std::vector<AddressPtr> &inputs) {
   }
 
   // Head point to the latest item.
-  head_ = head_ >= capacity_ ? 0 : head_ + 1;
   size_ = size_ >= capacity_ ? capacity_ : size_ + 1;
+  head_ = head_ >= capacity_ ? 0 : head_ + 1;
 
   return Emplace(head_, inputs);
 }

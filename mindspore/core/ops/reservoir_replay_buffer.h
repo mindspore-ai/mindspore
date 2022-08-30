@@ -82,15 +82,18 @@ class MIND_API ReservoirReplayBufferSample : public BaseOperator {
             const std::vector<TypePtr> &types);
 
   void set_handle(const int64_t &handle);
-  void set_batch_size(const int64_t &batch_size);
-  void set_shapes(const std::vector<std::vector<int64_t>> &shapes);
-  void set_types(const std::vector<TypePtr> &types);
-  void set_schema(const std::vector<int64_t> &schama);
-
   int64_t get_handle() const;
+
+  void set_batch_size(const int64_t &batch_size);
   int64_t get_batch_size() const;
+
+  void set_shapes(const std::vector<std::vector<int64_t>> &shapes);
   std::vector<std::vector<int64_t>> get_shapes() const;
+
+  void set_types(const std::vector<TypePtr> &types);
   std::vector<TypePtr> get_types() const;
+
+  void set_schema(const std::vector<int64_t> &schama);
   std::vector<int64_t> get_schema() const;
 };
 

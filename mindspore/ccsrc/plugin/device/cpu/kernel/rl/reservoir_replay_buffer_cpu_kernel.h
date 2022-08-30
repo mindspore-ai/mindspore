@@ -42,7 +42,7 @@ class ReservoirReplayBufferCreateCpuKernel : public NativeCpuKernelMod {
               const std::vector<AddressPtr> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override {
-    static std::vector<KernelAttr> support_list = {KernelAttr().AddOutputAttr(kNumberTypeInt64)};
+    static const std::vector<KernelAttr> support_list = {KernelAttr().AddOutputAttr(kNumberTypeInt64)};
     return support_list;
   }
 
@@ -65,7 +65,7 @@ class ReservoirReplayBufferPushCpuKernel : public NativeCpuKernelMod {
               const std::vector<AddressPtr> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() {
-    std::vector<KernelAttr> support_list = {KernelAttr().AddSkipCheckAttr(true)};
+    static const std::vector<KernelAttr> support_list = {KernelAttr().AddSkipCheckAttr(true)};
     return support_list;
   }
 
@@ -88,7 +88,7 @@ class ReservoirReplayBufferSampleCpuKernel : public NativeCpuKernelMod {
               const std::vector<AddressPtr> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() {
-    std::vector<KernelAttr> support_list = {KernelAttr().AddSkipCheckAttr(true)};
+    static const std::vector<KernelAttr> support_list = {KernelAttr().AddSkipCheckAttr(true)};
     return support_list;
   }
 
@@ -113,7 +113,7 @@ class ReservoirReplayBufferDestroyCpuKernel : public NativeCpuKernelMod {
               const std::vector<AddressPtr> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override {
-    static std::vector<KernelAttr> support_list = {KernelAttr().AddOutputAttr(kNumberTypeInt64)};
+    static const std::vector<KernelAttr> support_list = {KernelAttr().AddOutputAttr(kNumberTypeInt64)};
     return support_list;
   }
 

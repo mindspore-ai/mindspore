@@ -44,16 +44,16 @@ class GeluGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
+    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     InitResource();
-    input_size_ = sizeof(T);
     auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
     if (is_null_input_) {
       InitSizeLists();
       return true;
     }
+    input_size_ = sizeof(T);
     input_size_ *= SizeOf(input_shape);
     InitSizeLists();
     return true;
