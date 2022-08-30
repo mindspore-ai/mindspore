@@ -26,7 +26,7 @@ from mindspore.scipy.ops import SolveTriangular
 class NetSolveTriangular(nn.Cell):
     def __init__(self):
         super(NetSolveTriangular, self).__init__()
-        self.sta = SolveTriangular()
+        self.sta = SolveTriangular(lower=True, unit_diagonal=False, trans='N')
 
     def construct(self, a, b):
         return self.sta(a, b)

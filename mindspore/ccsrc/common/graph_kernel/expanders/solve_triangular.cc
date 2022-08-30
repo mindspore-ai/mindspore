@@ -20,9 +20,9 @@
 
 #include "common/graph_kernel/expanders/op_desc_registry.h"
 #include "common/graph_kernel/expanders/utils.h"
+#include "common/graph_kernel/expanders/custom_op_utils.h"
 
 namespace mindspore::graphkernel::expanders {
-constexpr int64_t kBlock = 16;
 class SolveTriangular : public OpDesc {
  public:
   SolveTriangular() {}
@@ -30,9 +30,16 @@ class SolveTriangular : public OpDesc {
 
  protected:
   NodePtrList Expand(const NodePtrList &inputs) override {
+    bool lower = GetValue<bool>(attrs_["lower"]);
+    bool unit_diagonal = GetValue<bool>(attrs_["unit_diagonal"]);
+    std::string trans = GetValue<std::string>(attrs_["trans"]);
     auto input_x = inputs[0];
     auto input_y = inputs[1];
     auto num = input_x->shape[0];
+    if (num % kBlock != 0) {
+      MS_LOG(EXCEPTION) << "Can only expand SolveTriangular with the size divisible by 16. Now the size is " << num;
+    }
+
     auto loop_count = static_cast<int64_t>(num / kBlock);
     std::vector<int64_t> strides{1, 1};
 
@@ -45,16 +52,20 @@ class SolveTriangular : public OpDesc {
 
       auto stride_x = gb.StridedSlice(input_x, begin_1, end_1, strides);
       auto stride_y = gb.StridedSlice(input_y, begin_2, end_2, strides);
-      std::string func_type = "hybrid";
-      std::string func_name = "trsmL";
-      std::string func_source_str =
-        "def trsmL(a, b):\n    inverse_0 = allocate(b.shape, b.dtype)\n    row = b.shape[0]\n    col = b.shape[1]\n    "
-        "for l in range(col // 16):\n        for i in range(row):\n            for j in range(i):\n                for "
-        "k in range(16):\n                    inverse_0[i, l * 16 + k] = a[i, j] * b[j, l * 16 + k]\n                  "
-        "  b[i, l * 16 + k] = b[i, l * 16 + k] - inverse_0[i, l * 16 + k]\n            for k in range(16):\n           "
-        "     b[i, l * 16 + k] = b[i, l * 16 + k] / a[i, i]\n\n    return b\n";
+      std::string func_type = kFuncType;
+      std::string func_name = kTrsmName;
+      // get the name of trsm via its attrs
+      func_name = func_name + (lower ? "L_" : "U_") + trans + "_" + (unit_diagonal ? "U" : "D");
+      auto iter = kTrsmFuncStrMap.find(func_name);
+      if (iter == kTrsmFuncStrMap.end()) {
+        MS_LOG(EXCEPTION) << "Can't expand SolveTriangular with the following attr set: {lower: " << lower
+                          << " , unit_diagonal: " << unit_diagonal << ", trans: " << trans << "}.";
+      }
+      std::string func_source_str = iter->second;
+
       size_t inplace_assign_output = 1;
-      std::string func_compile_attrs = "{\"enable_mlsched\": true}";
+      std::string func_compile_attrs = kTrsmLAttrs;
+
       auto custom_result = gb.Custom({stride_x, stride_y}, {stride_y->shape, stride_y->type, stride_y->format},
                                      func_name, func_type, func_source_str, inplace_assign_output, func_compile_attrs);
       ShapeVector indices_shape{kBlock, kBlock, 2};
