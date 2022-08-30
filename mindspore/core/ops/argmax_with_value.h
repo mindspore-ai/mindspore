@@ -28,7 +28,7 @@ constexpr auto kNameArgMaxWithValue = "ArgMaxWithValue";
 class MIND_API ArgMaxWithValue : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ArgMaxWithValue);
-  ArgMaxWithValue() : BaseOperator(kNameArgMaxWithValue) { InitIOName({"input_x"}, {"index", "output_x"}); }
+  ArgMaxWithValue() : BaseOperator(kNameArgMaxWithValue) { InitIOName({"x"}, {"index", "values"}); }
 
   int64_t axis() const;
   bool keep_dims() const;

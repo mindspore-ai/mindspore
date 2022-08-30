@@ -48,7 +48,7 @@ abstract::TupleShapePtr ArgMaxWithValueInferShape(const PrimitivePtr &primitive,
   auto x_rank = static_cast<int64_t>(x_shape.size());
   if (x_rank == 0) {
     if (axis != -1 && axis != 0) {
-      MS_EXCEPTION(ValueError) << "For ArgMaxWithValue with 0d input tensor, axis must be one of 0 or -1, but got"
+      MS_EXCEPTION(ValueError) << "For ArgMaxWithValue with 0d input tensor, axis must be one of 0 or -1, but got "
                                << axis << ".";
     }
     return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{x_shape_ptr, x_shape_ptr});
@@ -80,9 +80,10 @@ abstract::TupleShapePtr ArgMaxWithValueInferShape(const PrimitivePtr &primitive,
 }
 
 TuplePtr ArgMaxWithValueInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64, kInt8,   kInt16, kInt32,
+                                         kInt64,   kUInt8,   kUInt16,  kUInt32, kUInt64};
   TypePtr input_x_type = input_args[0]->BuildType();
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x", input_x_type, valid_types, prim->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_x_type, valid_types, prim->name());
   auto index_type = std::make_shared<TensorType>(kInt32);
   return std::make_shared<Tuple>(std::vector<TypePtr>{index_type, input_x_type});
 }
