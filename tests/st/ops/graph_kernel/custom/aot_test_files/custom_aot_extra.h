@@ -51,13 +51,13 @@ class AotExtra {
 
  private:
   virtual bool GetAttrBool(std::string name) = 0;
-  virtual int GetAttrInt(std::string name) = 0;
+  virtual int64_t GetAttrInt(std::string name) = 0;
   virtual float GetAttrFloat(std::string name) = 0;
   virtual std::string GetAttrStr(std::string name) = 0;
 
-  virtual std::vector<int> GetAttrIntVec(std::string name) = 0;
+  virtual std::vector<int64_t> GetAttrIntVec(std::string name) = 0;
   virtual std::vector<float> GetAttrFloatVec(std::string name) = 0;
-  virtual std::vector<std::vector<int>> GetAttrInt2DVec(std::string name) = 0;
+  virtual std::vector<std::vector<int64_t>> GetAttrInt2DVec(std::string name) = 0;
   virtual std::vector<std::vector<float>> GetAttrFloat2DVec(std::string name) = 0;
   std::vector<size_t> workspace_;
 
@@ -70,7 +70,7 @@ inline bool AotExtra::Attr(std::string name) {
 }
 
 template <>
-inline int AotExtra::Attr(std::string name) {
+inline int64_t AotExtra::Attr(std::string name) {
   return GetAttrInt(name);
 }
 
@@ -85,7 +85,7 @@ inline std::string AotExtra::Attr(std::string name) {
 }
 
 template <>
-inline std::vector<int> AotExtra::Attr(std::string name) {
+inline std::vector<int64_t> AotExtra::Attr(std::string name) {
   return GetAttrIntVec(name);
 }
 
@@ -95,7 +95,7 @@ inline std::vector<float> AotExtra::Attr(std::string name) {
 }
 
 template <>
-inline std::vector<std::vector<int>> AotExtra::Attr(std::string name) {
+inline std::vector<std::vector<int64_t>> AotExtra::Attr(std::string name) {
   return GetAttrInt2DVec(name);
 }
 

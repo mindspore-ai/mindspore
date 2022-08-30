@@ -93,7 +93,8 @@ def _compile_aot(file):
     func_path = cache_path + file_name + ".so"
     include_file = "{} -I{}".format(include_file, file_folder)
 
-    if not os.path.exists(func_path):
+    if func_path not in Custom.compiled_bin:
+        Custom.compiled_bin.append(func_path)
 
         if file.endswith("cpp") or file.endswith("cc"):
             cmd = ["g++", "-std=c++17", "--shared", "-fPIC"]
@@ -128,10 +129,6 @@ def _compile_aot(file):
             msg = "Compilation error in compiling {}:\n".format(file)
             msg += out.decode('utf-8')
             raise RuntimeError(msg)
-
-        if not bytearray(open(func_path, "rb").read()):
-            raise RuntimeError(
-                "Compilation error: empty result is generated for {}".format(file))
 
     return func_path
 
@@ -447,6 +444,7 @@ class Custom(ops.PrimitiveWithInfer):
 
     registered_func = {}
     attr_dict = {}  # Save input_names and attr_names for func.
+    compiled_bin = []  # Save names for compiled bin.
 
     def __init__(self, func, out_shape=None, out_dtype=None, func_type="hybrid", bprop=None, reg_info=None):
         ops.PrimitiveWithInfer.__init__(self, "Custom")
@@ -594,8 +592,9 @@ class Custom(ops.PrimitiveWithInfer):
                 raise TypeError(
                     "{}, 'func' should be like 'file_name:func_name', but got {}".format(
                         self.log_prefix, self.func))
-            if not file_name_list[0].endswith("so"):
-                file_path = _compile_aot(file_name_list[0])
+            file_path = os.path.abspath(file_name_list[0])
+            if not file_path.endswith("so"):
+                file_path = _compile_aot(file_path)
                 self.func = file_path + ":" + file_name_list[1]
 
         elif self.func_type == "julia":
@@ -708,7 +707,7 @@ class Custom(ops.PrimitiveWithInfer):
 
             target = self._get_target(reg_info)
             # Reg info for func is only registered once for a certain target
-            if self._has_registered(target):
+            if self._has_registered(target, reg_info):
                 continue
             # Register
             reg_info = self._reformat_reg_info(reg_info, target)
@@ -720,7 +719,7 @@ class Custom(ops.PrimitiveWithInfer):
                                  "'custom_info_register' to bind it to 'func' if 'func' is a function."
                                  .format(self.log_prefix))
             self._save_attr(reg_info)
-            self._save_register_status(target)
+            self._save_register_status(target, reg_info)
 
     def _get_expanded_list(self, data):
         """Recursive function to parse elements in list or tuple."""
@@ -734,33 +733,43 @@ class Custom(ops.PrimitiveWithInfer):
             data_list.append(data)
         return data_list
 
-    def _get_registered_targets(self):
+    def _get_registered_targets(self, reg_info=None):
         """Get the registered targets of func."""
         targets = []
+        if reg_info is None:
+            reg_info = {}
         if callable(self.func):
             targets = getattr(self.func, "registered_targets", [])
         elif isinstance(self.func, str):
-            targets = Custom.registered_func.get(self.func, [])
+            if isinstance(reg_info.get("op_name"), str):
+                reg_op_name = reg_info.get("op_name")
+            else:
+                reg_op_name = self.func
+            targets = Custom.registered_func.get(reg_op_name, [])
         if not isinstance(targets, list):
             targets = [targets]
         return targets
 
-    def _has_registered(self, target):
+    def _has_registered(self, target, reg_info):
         """Check if registration information is registered in target."""
-        registered_targets = self._get_registered_targets()
+        registered_targets = self._get_registered_targets(reg_info)
         return target in registered_targets
 
-    def _save_register_status(self, target):
+    def _save_register_status(self, target, reg_info):
         """Save registration status for target."""
         if callable(self.func):
             registered_targets = getattr(self.func, "registered_targets", [])
             registered_targets.append(target)
             setattr(self.func, "registered_targets", registered_targets)
         elif isinstance(self.func, str):
-            if isinstance(Custom.registered_func.get(self.func), list):
-                Custom.registered_func[self.func].append(target)
+            if isinstance(reg_info.get("op_name"), str):
+                reg_op_name = reg_info.get("op_name")
             else:
-                Custom.registered_func[self.func] = [target]
+                reg_op_name = self.func
+            if isinstance(Custom.registered_func.get(reg_op_name), list):
+                Custom.registered_func.get(reg_op_name).append(target)
+            else:
+                Custom.registered_func[reg_op_name] = [target]
 
     def _get_op_name(self, reg_info):
         if self.func_type == "aicpu":
@@ -797,9 +806,9 @@ class Custom(ops.PrimitiveWithInfer):
             reg_info["processor"] = reg_info.get("processor", target_to_processor.get(target))
         if self.func_type == "aot":
             if reg_info.get("attr") is not None and isinstance(reg_info["attr"], list):
-                for i, item in enumerate(reg_info["attr"]):
+                for item in reg_info["attr"]:
                     if isinstance(item, dict) and item.get("value") is not None:
-                        self.add_prim_attr(reg_info["attr"][i]["name"], reg_info["attr"][i]["value"])
+                        self.add_prim_attr(item["name"], item["value"])
         return reg_info
 
     def _get_target(self, reg_info):
@@ -861,26 +870,19 @@ class Custom(ops.PrimitiveWithInfer):
         cur_attr = {"input_names": input_names, "attr_names": attr_names}
         # If func does not have attr, save current attr.
         # Else, check if current attr is same as previous saved one.
-        prev_input_names = input_names
         prev_attr_names = attr_names
         if callable(self.func):
             func_attr = getattr(self.func, "func_attr", None)
             if not isinstance(func_attr, dict):
                 setattr(self.func, "func_attr", cur_attr)
             else:
-                prev_input_names = func_attr.get("input_names")
                 prev_attr_names = func_attr.get("attr_names")
         elif isinstance(self.func, str):
             func_attr = Custom.attr_dict.get(self.func)
             if not isinstance(func_attr, dict):
                 Custom.attr_dict[self.func] = cur_attr
             else:
-                prev_input_names = func_attr.get("input_names")
                 prev_attr_names = func_attr.get("attr_names")
-        if len(input_names) != len(prev_input_names):
-            raise ValueError("{}, length of input names set in registration information must be the same as previous "
-                             "saved one, but got {} vs {}"
-                             .format(self.log_prefix, len(input_names), len(prev_input_names)))
         if attr_names != prev_attr_names:
             raise ValueError("{}, attr names set in registration information must be the same as previous saved one, "
                              "but got {} vs {}".format(self.log_prefix, attr_names, prev_attr_names))

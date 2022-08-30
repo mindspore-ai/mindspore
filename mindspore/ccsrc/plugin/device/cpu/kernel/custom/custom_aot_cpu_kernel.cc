@@ -162,12 +162,10 @@ bool CustomAOTCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const 
   }
 
 #if !defined(_WIN32) && !defined(_WIN64)
+
   if (!handle_) {
-    handle_ = dlopen(file_path_.c_str(), RTLD_LAZY | RTLD_LOCAL);
-    if (!handle_) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "' on CPU, dlopen file '" << file_path_
-                        << "' must be successful, but error occurs! Error message is: " << dlerror();
-    }
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "' on CPU, dlopen file '" << file_path_
+                      << "' must be successful, but error occurs! Error message is: " << dlerror();
   }
 
   if (!aot_func_) {

@@ -459,8 +459,11 @@ std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kerne
                           << "but got [" << tp << "] for Custom operator [" << op_name << "]";
       }
     }
-    // If Custom op has not set reg info, then infer info from inputs
-    if (mindspore::kernel::OpLib::FindOp(op_name, kernel::OpImplyType::kCPU) == nullptr) {
+    // If Custom op has not set reg info,
+    // or the no info about inputs in reg info(the case of undetermined input size),
+    // then infer info from inputs
+    auto op_reg_info = mindspore::kernel::OpLib::FindOp(op_name, kernel::OpImplyType::kCPU);
+    if (op_reg_info == nullptr || op_reg_info->inputs_ptr().size() == 0) {
       MS_LOG(WARNING) << "Not find operator information for Custom operator[" << op_name << "]. "
                       << "Infer operator information from inputs. For more details, "
                       << "please refer to 'mindspore.ops.Custom' at https://www.mindspore.cn.";

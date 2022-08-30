@@ -55,12 +55,9 @@ class CustomAOTGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       params.push_back(GetDeviceAddress<void>(workspace, i));
     }
     if (!handle_) {
-      handle_ = dlopen(file_path_.c_str(), RTLD_LAZY | RTLD_LOCAL);
-      if (!handle_) {
-        MS_LOG(ERROR) << "For '" << kernel_name_ << "' on GPU, dlopen file '" << file_path_
-                      << "' should be successful, but error occurs! Error message is: " << dlerror();
-        return false;
-      }
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "' on GPU, dlopen file '" << file_path_
+                    << "' should be successful, but error occurs! Error message is: " << dlerror();
+      return false;
     }
 
     if (!aot_func_) {
@@ -157,11 +154,12 @@ class CustomAOTGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     if (!handle_) {
       handle_ = dlopen(file_path_.c_str(), RTLD_LAZY | RTLD_LOCAL);
       if (!handle_) {
-        MS_LOG(ERROR) << "For '" << kernel_name_ << "' on CPU, dlopen file '" << file_path_
+        MS_LOG(ERROR) << "For '" << kernel_name_ << "' on GPU, dlopen file '" << file_path_
                       << "' should be successful, but error occurs! Error message is: " << dlerror();
         return false;
       }
     }
+
     init_func_ = reinterpret_cast<std::add_pointer<int(int *, int64_t **, const char **, AotExtra *)>::type>(
       dlsym(handle_, (func_name_ + "Init").c_str()));
     if (init_func_ != nullptr) {
