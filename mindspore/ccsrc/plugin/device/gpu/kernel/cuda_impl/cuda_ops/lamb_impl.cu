@@ -26,9 +26,9 @@ __global__ void ApplyLambEralyKernel(const size_t size, T *variable, T *m, T *v,
                                      float *g_hat_var) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += gridDim.x * blockDim.x) {
     float next_m = (beta1[0] * m[i] + (1 - beta1[0]) * gradient[i]);
-    float next_v = (beta2[0] * v[i] + (1 - beta2[0]) * pow(gradient[i], kSqareNum));
-    float next_mm = next_m / (1 - pow(beta1[0], global_step[0]));
-    float next_vv = next_v / (1 - pow(beta2[0], global_step[0]));
+    float next_v = (beta2[0] * v[i] + (1 - beta2[0]) * pow(gradient[i], static_cast<T>(kSqareNum)));
+    float next_mm = next_m / (1 - pow(beta1[0], static_cast<float>(global_step[0])));
+    float next_vv = next_v / (1 - pow(beta2[0], static_cast<float>(global_step[0])));
     var_float[i] = variable[i];
     grad_float[i] = gradient[i];
     g_hat_var[i] = (next_mm / sqrt(next_vv + epsilon[0]) + decay[0] * variable[i]);
@@ -50,9 +50,10 @@ __global__ void ApplyLambEralyKernel(const size_t size, half *variable, half *m,
     float float_decay = decay[0];
 
     float next_m = (beta1[0] * __half2float(m[i]) + (1 - beta1[0]) * float_gradient);
-    float next_v = (beta2[0] * __half2float(v[i]) + (1 - beta2[0]) * pow(float_gradient, kSqareNum));
-    float next_mm = next_m / (1 - pow(beta1[0], global_step[0]));
-    float next_vv = next_v / (1 - pow(beta2[0], global_step[0]));
+    float tmp_gradient = pow(float_gradient, static_cast<float>(kSqareNum));
+    float next_v = beta2[0] * __half2float(v[i]) + (1 - beta2[0]) * tmp_gradient;
+    float next_mm = next_m / (1 - pow(beta1[0], static_cast<float>(global_step[0])));
+    float next_vv = next_v / (1 - pow(beta2[0], static_cast<float>(global_step[0])));
     var_float[i] = float_var;
     grad_float[i] = float_gradient;
     g_hat_var[i] = next_mm / sqrt(next_vv + epsilon[0]) + float_decay * float_var;

@@ -126,10 +126,30 @@ struct MaximumFunc {
   __device__ __host__ __forceinline__ T operator()(const T &lhs, const T &rhs) { return lhs > rhs ? lhs : rhs; }
 };
 
+#ifndef _WIN32
 template <typename T>
 struct PowerFunc {
   __device__ __host__ __forceinline__ T operator()(const T &lhs, const T &rhs) { return pow(lhs, rhs); }
 };
+
+#else
+template <typename T>
+struct PowerFunc {
+  __device__ __host__ __forceinline__ T operator()(const T &lhs, const T &rhs) {
+    return static_cast<T>(pow(static_cast<double>(lhs), static_cast<double>(rhs)));
+  }
+};
+
+template <>
+struct PowerFunc<float> {
+  __device__ __host__ __forceinline__ float operator()(const float &lhs, const float &rhs) { return pow(lhs, rhs); }
+};
+
+template <>
+struct PowerFunc<double> {
+  __device__ __host__ __forceinline__ double operator()(const double &lhs, const double &rhs) { return pow(lhs, rhs); }
+};
+#endif
 
 template <>
 struct PowerFunc<half> {
