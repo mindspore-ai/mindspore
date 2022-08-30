@@ -140,9 +140,9 @@ void GetSupportOriFormat(const CNodePtr &cnode, SupportFormat *support_format) {
   MS_EXCEPTION_IF_NULL(op_info);
   // Note: in reduce/broadcast case: dynamic/optional input/output not care.
   if (op_info->inputs_ptr().size() != input_num || op_info->outputs_ptr().size() != output_num) {
-    MS_LOG(WARNING) << "Input/output maybe have optional or dynamic io, input num:" << input_num
-                    << ", output_num:" << output_num << ", op_info->inputs size: " << op_info->inputs_ptr().size()
-                    << ", op_info->output size: " << op_info->outputs_ptr().size();
+    MS_LOG(INFO) << "Input/output maybe have optional or dynamic io, input num:" << input_num
+                 << ", output_num:" << output_num << ", op_info->inputs size: " << op_info->inputs_ptr().size()
+                 << ", op_info->output size: " << op_info->outputs_ptr().size();
   }
   SupportFormatItem input_item(input_num, kOpFormat_DEFAULT);
   (void)support_format->input_format.emplace_back(input_item);
@@ -197,10 +197,9 @@ void GenerateSupportFormatDType(const OpInfoPtr &op_info, const SupportFormat &s
                                 SupportFormatDType *support_format_dtype) {
   MS_EXCEPTION_IF_NULL(op_info);
   if (op_info->inputs_ptr().size() != support_format.input_format.at(0).size()) {
-    MS_LOG(WARNING) << "Op name: " << op_info->op_name()
-                    << " has optional input, but in the graph, this input not exist."
-                    << "op info input num: " << op_info->inputs_ptr().size()
-                    << "graph node input num: " << support_format.input_format.at(0).size();
+    MS_LOG(INFO) << "Op name: " << op_info->op_name() << " has optional input, but in the graph, this input not exist."
+                 << "op info input num: " << op_info->inputs_ptr().size()
+                 << "graph node input num: " << support_format.input_format.at(0).size();
   }
   // TODO(jjfeing) usr format as dynamic format
   auto type_size = op_info->outputs_ptr().at(0)->dtypes().size();

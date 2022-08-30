@@ -22,7 +22,6 @@
 #include <utility>
 #include <vector>
 #include <iterator>
-#include <algorithm>
 #include "kernel/common_utils.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_convert_utils.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_dynamic_shape_util.h"
@@ -124,19 +123,11 @@ bool TbeKernelSelect::CheckCNode() {
 }
 
 bool TbeKernelSelect::CheckIsAnyKernelInfo() {
-  if (!check_cnode) {
-    return false;
-  }
-
   TbeMetadataInfoEx();
   return !kernel_info_list_->empty();
 }
 
 bool TbeKernelSelect::FindKernelInfo(const KernelBuildInfoPtr &select_kernel_build_info) {
-  if (!check_cnode) {
-    return false;
-  }
-
   TbeMetadataInfoEx();
   for (auto &kernel_info : *kernel_info_list_) {
     auto builder = KernelBuildInfo::KernelBuildInfoBuilder(kernel_info);
@@ -784,6 +775,10 @@ bool TbeKernelSelect::Initialize() {
   full_name_ = cnode_ptr_->fullname_with_scope();
   op_info_ = tbe::TbeDynamicShapeUtil::FindOp(node_name_, cnode_ptr_);
   if (!op_info_) {
+    return false;
+  }
+  if (!TbePropertyChecker::CheckTbeProperties(cnode_ptr_)) {
+    MS_LOG(INFO) << "Warning: node(" << full_name_ << ") is not supported by tbe ai_core.";
     return false;
   }
   auto json_creator = std::make_shared<SelectTbeJsonCreator>();

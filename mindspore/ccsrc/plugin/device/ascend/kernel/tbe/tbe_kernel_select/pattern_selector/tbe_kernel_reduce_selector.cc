@@ -226,7 +226,7 @@ void TbeKernelReduceSelector::FilterInvalidFormatDType(SupportFormatDType *suppo
     auto output_dtype = output_dtypes.at(i);
     auto output_format = output_formats.at(i);
     if (input_format == kOpFormat_NC1HWC0 && output_format == kOpFormat_DEFAULT && input_dtype == "float16") {
-      MS_LOG(WARNING) << "Input 5hd, input type fp16 ane output default not supported.";
+      MS_LOG(INFO) << "Input 5hd, input type fp16 ane output default not supported.";
       continue;
     }
     // TODO(jjfeing)
