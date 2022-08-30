@@ -17,8 +17,10 @@ This is the test module for saveOp.
 """
 import os
 from string import punctuation
+
 import numpy as np
 import pytest
+
 import mindspore.dataset as ds
 from mindspore import log as logger
 from mindspore.mindrecord import FileWriter
@@ -34,6 +36,7 @@ def remove_file(file_name):
         os.remove("{}".format(file_name))
     if os.path.exists("{}.db".format(file_name)):
         os.remove("{}.db".format(file_name))
+
 
 def test_case_00():
     """
@@ -86,12 +89,11 @@ def test_case_00():
     data_value_to_list = []
 
     for item in data:
-        new_data = {}
-        new_data['image1'] = np.asarray(list(item["image1"]), dtype=np.uint8)
-        new_data['image2'] = np.asarray(list(item["image2"]), dtype=np.uint8)
-        new_data['image3'] = np.asarray(list(item["image3"]), dtype=np.uint8)
-        new_data['image4'] = np.asarray(list(item["image4"]), dtype=np.uint8)
-        new_data['image5'] = np.asarray(list(item["image5"]), dtype=np.uint8)
+        new_data = {'image1': np.asarray(list(item["image1"]), dtype=np.uint8),
+                    'image2': np.asarray(list(item["image2"]), dtype=np.uint8),
+                    'image3': np.asarray(list(item["image3"]), dtype=np.uint8),
+                    'image4': np.asarray(list(item["image4"]), dtype=np.uint8),
+                    'image5': np.asarray(list(item["image5"]), dtype=np.uint8)}
         data_value_to_list.append(new_data)
 
     d2 = ds.MindDataset(dataset_files=file_name_auto,
@@ -111,7 +113,6 @@ def test_case_00():
     assert num_iter == 5
     remove_file(file_name)
     remove_file(file_name_auto)
-
 
     file_name_auto = './'
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
@@ -138,9 +139,8 @@ def test_case_00():
 
     data_value_to_list = []
     for item in data:
-        new_data = {}
-        new_data['file_name'] = np.asarray(item["file_name"], dtype='S')
-        new_data['label'] = np.asarray(list([item["label"]]), dtype=np.int32)
+        new_data = {'file_name': np.asarray(item["file_name"], dtype=np.str_),
+                    'label': np.asarray(list([item["label"]]), dtype=np.int32)}
         data_value_to_list.append(new_data)
 
     d2 = ds.MindDataset(dataset_files=file_name_auto,
@@ -275,20 +275,19 @@ def test_case_02():  # muti-bytes
     data_value_to_list = []
 
     for item in data:
-        new_data = {}
-        new_data['file_name'] = np.asarray(item["file_name"], dtype='S')
-        new_data['float32_array'] = item["float32_array"]
-        new_data['float64_array'] = item["float64_array"]
-        new_data['float32'] = item["float32"]
-        new_data['float64'] = item["float64"]
-        new_data['source_sos_ids'] = item["source_sos_ids"]
-        new_data['source_sos_mask'] = item["source_sos_mask"]
-        new_data['label'] = np.asarray(list([item["label"]]), dtype=np.int32)
-        new_data['image1'] = np.asarray(list(item["image1"]), dtype=np.uint8)
-        new_data['image2'] = np.asarray(list(item["image2"]), dtype=np.uint8)
-        new_data['image3'] = np.asarray(list(item["image3"]), dtype=np.uint8)
-        new_data['image4'] = np.asarray(list(item["image4"]), dtype=np.uint8)
-        new_data['image5'] = np.asarray(list(item["image5"]), dtype=np.uint8)
+        new_data = {'file_name': np.asarray(item["file_name"], dtype=np.str_),
+                    'float32_array': item["float32_array"],
+                    'float64_array': item["float64_array"],
+                    'float32': item["float32"],
+                    'float64': item["float64"],
+                    'source_sos_ids': item["source_sos_ids"],
+                    'source_sos_mask': item["source_sos_mask"],
+                    'label': np.asarray(list([item["label"]]), dtype=np.int32),
+                    'image1': np.asarray(list(item["image1"]), dtype=np.uint8),
+                    'image2': np.asarray(list(item["image2"]), dtype=np.uint8),
+                    'image3': np.asarray(list(item["image3"]), dtype=np.uint8),
+                    'image4': np.asarray(list(item["image4"]), dtype=np.uint8),
+                    'image5': np.asarray(list(item["image5"]), dtype=np.uint8)}
         data_value_to_list.append(new_data)
 
     d2 = ds.MindDataset(dataset_files=file_name_auto,
@@ -518,6 +517,7 @@ def test_case_08():
         i = i + 1
     remove_file(file_name_auto)
 
+
 def test_case_09():
     """
     Feature: Save op
@@ -560,9 +560,9 @@ def test_case_10():
     # apply dataset operations
     d1 = ds.GeneratorDataset(generator_dynamic_2d_1, ["data"], shuffle=False)
 
-    with pytest.raises(Exception, match=
-                       "Tensor with dynamic shape do not currently support saving. Except for the shape of "
-                       "dimension 0, the other dimension shapes must be fixed. "
-                       "You can reshape the Tensor to a fixed shape before saving."):
+    with pytest.raises(Exception,
+                       match="Tensor with dynamic shape do not currently support saving. "
+                             "Except for the shape of dimension 0, the other dimension shapes must be fixed. "
+                             "You can reshape the Tensor to a fixed shape before saving."):
         d1.save(file_name_auto)
     remove_file(file_name_auto)

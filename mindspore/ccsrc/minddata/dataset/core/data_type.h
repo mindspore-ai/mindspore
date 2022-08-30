@@ -51,6 +51,7 @@ class DataType {
     DE_FLOAT32,
     DE_FLOAT64,
     DE_STRING,
+    DE_BYTES,
     NUM_OF_TYPES
   };
 
@@ -64,7 +65,7 @@ class DataType {
 
 #ifdef ENABLE_PYTHON
   static inline const TypeInfo kTypeInfo[] = {
-    // name, sizeInBytes, pybindTypem formatDescriptor, openCV
+    // name, sizeInBytes, pybindType, pybindFormatDescriptor, openCV
     {"unknown", 0, "object", "", kCVInvalidType},                                        // DE_UNKNOWN
     {"bool", 1, "bool", py::format_descriptor<bool>::format(), CV_8U},                   // DE_BOOL
     {"int8", 1, "int8", py::format_descriptor<int8_t>::format(), CV_8S},                 // DE_INT8
@@ -78,7 +79,8 @@ class DataType {
     {"float16", 2, "float16", "e", CV_16F},                                              // DE_FLOAT16
     {"float32", 4, "float32", py::format_descriptor<float>::format(), CV_32F},           // DE_FLOAT32
     {"float64", 8, "double", py::format_descriptor<double>::format(), CV_64F},           // DE_FLOAT64
-    {"string", 0, "bytes", "S", kCVInvalidType}                                          // DE_STRING
+    {"string", 0, "str", "U", kCVInvalidType},                                           // DE_STRING
+    {"bytes", 0, "bytes", "S", kCVInvalidType}                                           // DE_BYTES
   };
 #else
 #ifndef ENABLE_ANDROID
@@ -97,7 +99,8 @@ class DataType {
     {"float16", 2, "float16", "", CV_16F},         // DE_FLOAT16
     {"float32", 4, "float32", "", CV_32F},         // DE_FLOAT32
     {"float64", 8, "double", "", CV_64F},          // DE_FLOAT64
-    {"string", 0, "bytes", "", kCVInvalidType}     // DE_STRING
+    {"string", 0, "str", "", kCVInvalidType},      // DE_STRING
+    {"bytes", 0, "bytes", "", kCVInvalidType}      // DE_BYTES
   };
 #else
   // android and no python
@@ -116,7 +119,8 @@ class DataType {
     {"float16", 2, "float16", ""},                 // DE_FLOAT16
     {"float32", 4, "float32", ""},                 // DE_FLOAT32
     {"float64", 8, "double", ""},                  // DE_FLOAT64
-    {"string", 0, "bytes", "", kCVInvalidType}     // DE_STRING
+    {"string", 0, "str", "", kCVInvalidType},      // DE_STRING
+    {"bytes", 0, "bytes", "", kCVInvalidType}      // DE_BYTES
   };
 #endif
 #endif
@@ -234,7 +238,9 @@ class DataType {
 
   bool IsBool() const { return type_ == DataType::DE_BOOL; }
 
-  bool IsNumeric() const { return type_ != DataType::DE_STRING; }
+  bool IsNumeric() const { return IsInt() || IsFloat() || IsBool(); }
+
+  bool IsString() const { return type_ == DataType::DE_STRING || type_ == DataType::DE_BYTES; }
 
   Type value() const { return type_; }
 
@@ -372,6 +378,11 @@ inline bool DataType::IsLooselyCompatible<int8_t>() const {
 template <>
 inline bool DataType::IsLooselyCompatible<uint8_t>() const {
   return type_ == DataType::DE_UINT8;
+}
+
+template <>
+inline bool DataType::IsLooselyCompatible<std::string>() const {
+  return type_ == DataType::DE_STRING || type_ == DataType::DE_BYTES;
 }
 }  // namespace dataset
 }  // namespace mindspore

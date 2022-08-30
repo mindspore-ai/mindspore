@@ -57,8 +57,8 @@ def test_yelp_review_dataset_quoted():
     data = ds.YelpReviewDataset(DATA_POLARITY_DIR, usage='test', shuffle=False)
     buffer = []
     for d in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        buffer.extend([d['label'].item().decode("utf8"),
-                       d['text'].item().decode("utf8")])
+        buffer.extend([d['label'],
+                       d['text']])
     assert buffer == ["2", "\\\"Yelp\\\" service was very good.\\n",
                       "1", "\\\"Yelp\\\" service was very bad.\\n"]
 

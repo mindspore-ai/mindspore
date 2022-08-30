@@ -43,10 +43,10 @@ def test_yahoo_answers_dataset_quoted():
     data = ds.YahooAnswersDataset(DATA_DIR, usage="test", shuffle=False)
     buffer = []
     for d in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        buffer.extend([d['class'].item().decode("utf8"),
-                       d['title'].item().decode("utf8"),
-                       d['content'].item().decode("utf8"),
-                       d['answer'].item().decode("utf8")])
+        buffer.extend([d['class'],
+                       d['title'],
+                       d['content'],
+                       d['answer']])
     assert buffer == ["4", "My pet", "My pet is a toy bear.", "He is white.",
                       "1", "My favourite seasion", "My favorite season is summer.",
                       "In summer it is often sunny and hot."]

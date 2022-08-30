@@ -32,7 +32,7 @@ def test_wiki_text_dataset_test():
     test_content = [" no it was black friday ", " I am happy ", " finish math homework "]
     for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
         logger.info("{}".format(i["text"]))
-        strs = i["text"].item().decode("utf8")
+        strs = i["text"]
         assert strs == test_content[count]
         count += 1
     assert count == 3
@@ -49,7 +49,7 @@ def test_wiki_text_dataset_train():
     train_content = [" go to china ", " I lova MindSpore ", " black white grapes "]
     for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
         logger.info("{}".format(i["text"]))
-        strs = i["text"].item().decode("utf8")
+        strs = i["text"]
         assert strs == train_content[count]
         count += 1
     assert count == 3
@@ -66,7 +66,7 @@ def test_wiki_text_dataset_valid():
     valid_content = [" just ahead of them there was a huge fissure ", " zhejiang, china ", " MindSpore Ascend "]
     for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
         logger.info("{}".format(i["text"]))
-        strs = i["text"].item().decode("utf8")
+        strs = i["text"]
         assert strs == valid_content[count]
         count += 1
     assert count == 3
@@ -121,7 +121,7 @@ def test_wiki_text_dataset_shuffle_false_and_workers_4():
             " black white grapes ",
             " MindSpore Ascend "]
     for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        strs = i["text"].item().decode("utf8")
+        strs = i["text"]
         assert strs == line[count]
         count += 1
     assert count == 9
@@ -150,7 +150,7 @@ def test_wiki_text_dataset_shuffle_false_and_workers_1():
             " zhejiang, china ",
             " MindSpore Ascend "]
     for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        strs = i["text"].item().decode("utf8")
+        strs = i["text"]
         assert strs == line[count]
         count += 1
     assert count == 9
@@ -179,7 +179,7 @@ def test_wiki_text_dataset_shuffle_files_and_workers_4():
             " black white grapes ",
             " finish math homework "]
     for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        strs = i["text"].item().decode("utf8")
+        strs = i["text"]
         assert strs == line[count]
         count += 1
     assert count == 9
@@ -208,7 +208,7 @@ def test_wiki_text_dataset_shuffle_files_and_workers_1():
             " I am happy ",
             " finish math homework "]
     for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        strs = i["text"].item().decode("utf8")
+        strs = i["text"]
         assert strs == line[count]
         count += 1
     assert count == 9
@@ -237,7 +237,7 @@ def test_wiki_text_dataset_shuffle_global4():
             " I lova MindSpore ",
             " black white grapes "]
     for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        strs = i["text"].item().decode("utf8")
+        strs = i["text"]
         assert strs == line[count]
         count += 1
     assert count == 9
@@ -266,7 +266,7 @@ def test_wiki_text_dataset_shuffle_global1():
             " no it was black friday ",
             " just ahead of them there was a huge fissure "]
     for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        strs = i["text"].item().decode("utf8")
+        strs = i["text"]
         assert strs == line[count]
         count += 1
     assert count == 9
@@ -320,7 +320,7 @@ def test_wiki_text_dataset_repeat():
             " I am happy ",
             " finish math homework ",]
     for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        strs = i["text"].item().decode("utf8")
+        strs = i["text"]
         assert strs == line[count]
         count += 1
     assert count == 9

@@ -86,7 +86,8 @@ std::shared_ptr<TensorOp> toPyFuncOp(py::object func, DataType::Type data_type);
 Status ToJson(const py::handle &padded_sample, nlohmann::json *const padded_sample_json,
               std::map<std::string, std::string> *sample_bytes);
 
-Status toPadInfo(py::dict value, std::map<std::string, std::pair<TensorShape, std::shared_ptr<Tensor>>> *pad_info);
+Status toPadInfo(const py::dict &value,
+                 std::map<std::string, std::pair<TensorShape, std::shared_ptr<Tensor>>> *pad_info);
 
 py::list shapesToListOfShape(std::vector<TensorShape> shapes);
 

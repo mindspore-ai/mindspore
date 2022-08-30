@@ -14,7 +14,6 @@
 # ==============================================================================
 import numpy as np
 import mindspore.dataset as ds
-import mindspore.dataset.text as text
 import mindspore.dataset.vision as vision
 
 DATA_DIR = "../data/dataset/testCOCO/train/"
@@ -43,7 +42,7 @@ def test_coco_detection():
     bbox = []
     category_id = []
     for data in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
-        file_name.append(text.to_str(data["filename"]))
+        file_name.append(data["filename"])
         image_shape.append(data["image"].shape)
         bbox.append(data["bbox"])
         category_id.append(data["category_id"])
@@ -86,7 +85,7 @@ def test_coco_stuff():
     segmentation = []
     iscrowd = []
     for data in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
-        file_name.append(text.to_str(data["filename"]))
+        file_name.append(data["filename"])
         image_shape.append(data["image"].shape)
         segmentation.append(data["segmentation"])
         iscrowd.append(data["iscrowd"])
@@ -137,7 +136,7 @@ def test_coco_keypoint():
     keypoints = []
     num_keypoints = []
     for data in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
-        file_name.append(text.to_str(data["filename"]))
+        file_name.append(data["filename"])
         image_shape.append(data["image"].shape)
         keypoints.append(data["keypoints"])
         num_keypoints.append(data["num_keypoints"])
@@ -176,7 +175,7 @@ def test_coco_panoptic():
     iscrowd = []
     area = []
     for data in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
-        file_name.append(text.to_str(data["filename"]))
+        file_name.append(data["filename"])
         image_shape.append(data["image"].shape)
         bbox.append(data["bbox"])
         category_id.append(data["category_id"])
@@ -211,22 +210,22 @@ def test_coco_captioning():
     image_shape = []
     captions_list = []
     for data in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
-        file_name.append(text.to_str(data["filename"]))
+        file_name.append(data["filename"])
         image_shape.append(data["image"].shape)
         captions_list.append(data["captions"])
         num_iter += 1
     assert num_iter == 2
     assert file_name == ["000000391895", "000000318219"]
     assert image_shape[0] == (2268, 4032, 3)
-    np.testing.assert_array_equal(np.array([[b"This is a banana"], [b"This banana is yellow"],
-                                            [b"This banana is on a white table"],
-                                            [b"The tail of this banana is facing up"],
-                                            [b"This banana has spots"]]), captions_list[0])
+    np.testing.assert_array_equal(np.array([["This is a banana"], ["This banana is yellow"],
+                                            ["This banana is on a white table"],
+                                            ["The tail of this banana is facing up"],
+                                            ["This banana has spots"]]), captions_list[0])
     assert image_shape[1] == (561, 595, 3)
-    np.testing.assert_array_equal(np.array([[b"This is an orange"], [b"This orange is orange"],
-                                            [b"This orange is on a dark cloth"],
-                                            [b"The head of this orange is facing up"],
-                                            [b"This orange has spots"]]), captions_list[1])
+    np.testing.assert_array_equal(np.array([["This is an orange"], ["This orange is orange"],
+                                            ["This orange is on a dark cloth"],
+                                            ["The head of this orange is facing up"],
+                                            ["This orange has spots"]]), captions_list[1])
 
 
 def test_coco_meta_column():

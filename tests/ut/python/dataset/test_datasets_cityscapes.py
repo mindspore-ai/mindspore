@@ -82,7 +82,7 @@ def test_cityscapes_polygon():
     with open(json_file, "r") as f:
         expected = json.load(f)
     for item in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        task_dict = json.loads(str(item['task'], encoding="utf-8"))
+        task_dict = json.loads(str(item['task']))
         assert task_dict == expected
         count = count + 1
     assert count == 1

@@ -86,8 +86,8 @@ def test_concatenate_op_multi_input_string():
     Description: Test Concatenate op on multi dimension array of strings
     Expectation: Output is equal to the expected output
     """
-    prepend_tensor = np.array(["dw", "df"], dtype='S')
-    append_tensor = np.array(["dwsdf", "df"], dtype='S')
+    prepend_tensor = np.array(["dw", "df"])
+    append_tensor = np.array(["dwsdf", "df"])
 
     data = ([["1", "2", "d"]], [["3", "4", "e"]])
     data = ds.NumpySlicesDataset(data, column_names=["col1", "col2"])
@@ -96,7 +96,7 @@ def test_concatenate_op_multi_input_string():
 
     data = data.map(operations=concatenate_op, input_columns=["col1", "col2"], column_order=["out1"],
                     output_columns=["out1"])
-    expected = np.array(["dw", "df", "1", "2", "d", "3", "4", "e", "dwsdf", "df"], dtype='S')
+    expected = np.array(["dw", "df", "1", "2", "d", "3", "4", "e", "dwsdf", "df"])
     for data_row in data.create_tuple_iterator(num_epochs=1, output_numpy=True):
         np.testing.assert_array_equal(data_row[0], expected)
 

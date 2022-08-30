@@ -265,7 +265,8 @@ Status ToJson(const py::handle &padded_sample, nlohmann::json *const padded_samp
   return Status::OK();
 }
 
-Status toPadInfo(py::dict value, std::map<std::string, std::pair<TensorShape, std::shared_ptr<Tensor>>> *pad_info) {
+Status toPadInfo(const py::dict &value,
+                 std::map<std::string, std::pair<TensorShape, std::shared_ptr<Tensor>>> *pad_info) {
   constexpr size_t kExpectedTupleSize = 2;
   for (auto p : value) {
     if (!p.second.is_none()) {
@@ -274,10 +275,18 @@ Status toPadInfo(py::dict value, std::map<std::string, std::pair<TensorShape, st
                                    "tuple in pad_info must be (list,int) or (list,float)");
       TensorShape shape = tp[0].is_none() ? TensorShape::CreateUnknownRankShape() : TensorShape(tp[0]);
       std::shared_ptr<Tensor> pad_val = nullptr;
-      if (py::isinstance<py::str>(tp[1])) {
+      // Do not change the order of py::bytes and py::str. Because py::bytes is also an instance of py::str.
+      if (py::isinstance<py::bytes>(tp[1])) {
         std::string pad_val_string = tp[1].is_none() ? "" : toString(tp[1]);
         CHECK_FAIL_RETURN_UNEXPECTED(
-          Tensor::CreateFromVector(std::vector<std::string>{pad_val_string}, TensorShape::CreateScalar(), &pad_val),
+          Tensor::CreateFromVector(std::vector<std::string>{pad_val_string}, TensorShape::CreateScalar(),
+                                   DataType(DataType::DE_BYTES), &pad_val),
+          "Cannot create pad_value Tensor");
+      } else if (py::isinstance<py::str>(tp[1])) {
+        std::string pad_val_string = tp[1].is_none() ? "" : toString(tp[1]);
+        CHECK_FAIL_RETURN_UNEXPECTED(
+          Tensor::CreateFromVector(std::vector<std::string>{pad_val_string}, TensorShape::CreateScalar(),
+                                   DataType(DataType::DE_STRING), &pad_val),
           "Cannot create pad_value Tensor");
       } else {
         float pad_val_float = tp[1].is_none() ? 0 : toFloat(tp[1]);

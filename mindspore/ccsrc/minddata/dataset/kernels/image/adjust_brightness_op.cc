@@ -24,9 +24,6 @@ namespace dataset {
 Status AdjustBrightnessOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
 
-  CHECK_FAIL_RETURN_UNEXPECTED(input->type() != DataType::DE_STRING,
-                               "AdjustBrightness: input tensor type should be int, float or double, but got: string.");
-
   return AdjustBrightness(input, output, brightness_factor_);
 }
 }  // namespace dataset

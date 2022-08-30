@@ -16,7 +16,7 @@ import copy
 import numpy as np
 import mindspore.dataset.text as text
 import mindspore.dataset as ds
-from mindspore.dataset.text import SentencePieceModel, to_str, SPieceTokenizerOutType
+from mindspore.dataset.text import SentencePieceModel, SPieceTokenizerOutType
 
 VOCAB_FILE = "../data/dataset/test_sentencepiece/vocab.txt"
 DATA_FILE = "../data/dataset/testTokenizerData/sentencepiece_tokenizer.txt"
@@ -46,7 +46,7 @@ def test_from_vocab_to_str_unigram():
     dataset = dataset.map(operations=tokenizer)
     expect = ["▁", "I", "▁use", "▁MindSpore", "▁", "to", "▁", "t", "r", "a", "i", "n", "▁", "m", "y", "▁model", "."]
     for i in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
-        ret = to_str(i["text"])
+        ret = i["text"]
         for key, value in enumerate(ret):
             assert value == expect[key]
 
@@ -64,7 +64,7 @@ def test_from_vocab_to_str_bpe():
     expect = ["▁", "I", "▁", "u", "s", "e", "▁", "M", "in", "d", "S", "p", "or", "e", "▁t", "o", "▁t", "ra", "in", "▁m",
               "y", "▁m", "ode", "l", "."]
     for i in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
-        ret = to_str(i["text"])
+        ret = i["text"]
         for key, value in enumerate(ret):
             assert value == expect[key]
 
@@ -82,7 +82,7 @@ def test_from_vocab_to_str_char():
     expect = ["▁", "I", "▁", "u", "s", "e", "▁", "M", "i", "n", "d", "S", "p", "o", "r", "e", "▁", "t", "o", "▁", "t",
               "r", "a", "i", "n", "▁", "m", "y", "▁", "m", "o", "d", "e", "l", "."]
     for i in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
-        ret = to_str(i["text"])
+        ret = i["text"]
         for key, value in enumerate(ret):
             assert value == expect[key]
 
@@ -99,7 +99,7 @@ def test_from_vocab_to_str_word():
     dataset = dataset.map(operations=tokenizer)
     expect = ["▁I", "▁use", "▁MindSpore", "▁to", "▁train▁my▁model."]
     for i in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
-        ret = to_str(i["text"])
+        ret = i["text"]
         for key, value in enumerate(ret):
             assert value == expect[key]
 
@@ -134,7 +134,7 @@ def test_from_file_to_str():
     dataset = dataset.map(operations=tokenizer)
     expect = ["▁", "I", "▁use", "▁MindSpore", "▁", "to", "▁", "t", "r", "a", "i", "n", "▁", "m", "y", "▁model", "."]
     for i in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
-        ret = to_str(i["text"])
+        ret = i["text"]
         for key, value in enumerate(ret):
             assert value == expect[key]
 
@@ -170,7 +170,7 @@ def test_build_from_dataset():
     dataset = dataset.map(operations=tokenizer)
     expect = ["▁", "I", "▁use", "▁MindSpore", "▁", "to", "▁", "t", "r", "a", "i", "n", "▁", "m", "y", "▁model", "."]
     for i in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
-        ret = to_str(i["text"])
+        ret = i["text"]
         for key, value in enumerate(ret):
             assert value == expect[key]
 
@@ -189,7 +189,7 @@ def zip_test(dataset):
     dataset_zip = ds.zip((dataset_1, dataset_2))
     expect = ["▁", "I", "▁use", "▁MindSpore", "▁", "to", "▁", "t", "r", "a", "i", "n", "▁", "m", "y", "▁model", "."]
     for i in dataset_zip.create_dict_iterator(num_epochs=1, output_numpy=True):
-        ret = to_str(i["text"])
+        ret = i["text"]
         for key, value in enumerate(ret):
             assert value == expect[key]
 
@@ -199,7 +199,7 @@ def concat_test(dataset):
     dataset = dataset.concat(dataset_1)
     expect = ["▁", "I", "▁use", "▁MindSpore", "▁", "to", "▁", "t", "r", "a", "i", "n", "▁", "m", "y", "▁model", "."]
     for i in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
-        ret = to_str(i["text"])
+        ret = i["text"]
         for key, value in enumerate(ret):
             assert value == expect[key]
 

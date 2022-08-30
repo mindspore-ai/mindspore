@@ -27,6 +27,7 @@ def test_fillop_basic():
     Description: Test Fill op basic usage (positive int onto an array of uint8)
     Expectation: Output is equal to the expected output
     """
+
     def gen():
         yield (np.array([4, 5, 6, 7], dtype=np.uint8),)
 
@@ -45,6 +46,7 @@ def test_fillop_down_type_cast():
     Description: Test Fill op with a negative number onto an array of unsigned int8
     Expectation: Output is equal to the expected output
     """
+
     def gen():
         yield (np.array([4, 5, 6, 7], dtype=np.uint8),)
 
@@ -63,6 +65,7 @@ def test_fillop_up_type_cast():
     Description: Test Fill op with a int onto an array of floats
     Expectation: Output is equal to the expected output
     """
+
     def gen():
         yield (np.array([4, 5, 6, 7], dtype=np.float),)
 
@@ -81,14 +84,15 @@ def test_fillop_string():
     Description: Test Fill op with a string onto an array of strings
     Expectation: Output is equal to the expected output
     """
+
     def gen():
-        yield (np.array(["45555", "45555"], dtype='S'),)
+        yield (np.array(["45555", "45555"], dtype=np.str_),)
 
     data = ds.GeneratorDataset(gen, column_names=["col"])
     fill_op = data_trans.Fill("error")
 
     data = data.map(operations=fill_op, input_columns=["col"])
-    expected = np.array(['error', 'error'], dtype='S')
+    expected = np.array(['error', 'error'], dtype=np.str_)
     for data_row in data.create_tuple_iterator(num_epochs=1, output_numpy=True):
         np.testing.assert_array_equal(data_row[0], expected)
 
@@ -99,14 +103,15 @@ def test_fillop_bytes():
     Description: Test Fill op with bytes onto an array of strings
     Expectation: Output is equal to the expected output
     """
+
     def gen():
-        yield (np.array(["A", "B", "C"], dtype='S'),)
+        yield (np.array(["A", "B", "C"], dtype=np.bytes_),)
 
     data = ds.GeneratorDataset(gen, column_names=["col"])
     fill_op = data_trans.Fill(b'abc')
 
     data = data.map(operations=fill_op, input_columns=["col"])
-    expected = np.array([b'abc', b'abc', b'abc'], dtype='S')
+    expected = np.array([b'abc', b'abc', b'abc'], dtype=np.bytes_)
     for data_row in data.create_tuple_iterator(num_epochs=1, output_numpy=True):
         np.testing.assert_array_equal(data_row[0], expected)
 
@@ -117,6 +122,7 @@ def test_fillop_error_handling():
     Description: Test Fill op with a mismatch data type (string onto an array of ints)
     Expectation: Error is raised as expected
     """
+
     def gen():
         yield (np.array([4, 4, 4, 4]),)
 
@@ -127,7 +133,7 @@ def test_fillop_error_handling():
     with pytest.raises(RuntimeError) as error_info:
         for _ in data:
             pass
-    assert "fill datatype is string but the input datatype is not string" in str(error_info.value)
+    assert "fill_value and the input tensor must be of the same data type" in str(error_info.value)
 
 
 if __name__ == "__main__":

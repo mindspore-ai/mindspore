@@ -556,11 +556,10 @@ def to_bytes(array, encoding='utf8'):
         numpy.ndarray, NumPy array of `bytes`.
 
     Examples:
-        >>> text_file_dataset_dir = ["/path/to/text_file_dataset_file"]
-        >>> dataset = ds.TextFileDataset(dataset_files=text_file_dataset_dir, shuffle=False)
+        >>> data = np.array([["1", "2", "3"]], dtype=np.str_)
+        >>> dataset = ds.NumpySlicesDataset(data, column_names=["text"])
         >>> for item in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
-        ...     data = text.to_str(item["text"])
-        ...     byte_encoded_data = text.to_bytes(data)
+        ...     bytes_data = text.to_bytes(item["text"])
     """
 
     if not isinstance(array, np.ndarray):
@@ -581,10 +580,10 @@ def to_str(array, encoding='utf8'):
         numpy.ndarray, NumPy array of `str`.
 
     Examples:
-        >>> text_file_dataset_dir = ["/path/to/text_file_dataset_file"]
-        >>> dataset = ds.TextFileDataset(dataset_files=text_file_dataset_dir, shuffle=False)
+        >>> data = np.array([["1", "2", "3"]], dtype=np.bytes_)
+        >>> dataset = ds.NumpySlicesDataset(data, column_names=["text"])
         >>> for item in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
-        ...     data = text.to_str(item["text"])
+        ...     str_data = text.to_str(item["text"])
     """
 
     if not isinstance(array, np.ndarray):

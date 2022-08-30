@@ -515,10 +515,10 @@ def test_Mindrecord_Padded(remove_mindrecord_file):
     num_readers = 4
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     data_set = ds.MindDataset(file_name + "0", ['file_name'], num_readers, shuffle=False)
-    data1 = [{'file_name': np.array(b'image_00011.jpg', dtype='|S15')},
-             {'file_name': np.array(b'image_00012.jpg', dtype='|S15')},
-             {'file_name': np.array(b'image_00013.jpg', dtype='|S15')},
-             {'file_name': np.array(b'image_00014.jpg', dtype='|S15')}]
+    data1 = [{'file_name': np.array('image_00011.jpg', dtype=np.str_)},
+             {'file_name': np.array('image_00012.jpg', dtype=np.str_)},
+             {'file_name': np.array('image_00013.jpg', dtype=np.str_)},
+             {'file_name': np.array('image_00014.jpg', dtype=np.str_)}]
     ds1 = ds.PaddedDataset(data1)
     ds2 = data_set + ds1
     shard_num = 8
@@ -527,7 +527,7 @@ def test_Mindrecord_Padded(remove_mindrecord_file):
         ds2.use_sampler(testsampler)
         tem_list = []
         for ele in ds2.create_dict_iterator(num_epochs=1, output_numpy=True):
-            tem_list.append(int(ele['file_name'].tostring().decode().lstrip('image_').rstrip('.jpg')))
+            tem_list.append(int(ele['file_name'].item().lstrip('image_').rstrip('.jpg')))
         result_list.append(tem_list)
     assert result_list == verify_list
 
@@ -548,9 +548,9 @@ def test_clue_padded_and_skip_with_0_samples():
 
     data_copy1 = copy.deepcopy(data)
 
-    sample = {"label": np.array(1, np.string_),
-              "sentence1": np.array(1, np.string_),
-              "sentence2": np.array(1, np.string_)}
+    sample = {"label": np.array(1, np.str_),
+              "sentence1": np.array(1, np.str_),
+              "sentence2": np.array(1, np.str_)}
     samples = [sample]
     padded_ds = ds.PaddedDataset(samples)
     dataset = data + padded_ds

@@ -15,7 +15,6 @@
  */
 #include "minddata/dataset/core/tensor.h"
 
-#include <algorithm>
 #include <iomanip>
 #include <iostream>
 #include <fstream>
@@ -25,24 +24,22 @@
 #include <vector>
 #include <utility>
 
-#include "minddata/dataset/core/type_id.h"
-
-#include "utils/ms_utils.h"
-#include "minddata/dataset/include/dataset/constants.h"
-#include "minddata/dataset/util/validators.h"
-
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/core/cv_tensor.h"
 #endif
-
 #include "minddata/dataset/core/global_context.h"
-
 #ifdef ENABLE_PYTHON
 #include "minddata/dataset/core/pybind_support.h"
+#endif
+#include "minddata/dataset/core/tensor_shape.h"
+#include "minddata/dataset/core/type_id.h"
+#include "minddata/dataset/include/dataset/constants.h"
+#include "minddata/dataset/util/validators.h"
+#include "utils/ms_utils.h"
+
+#ifdef ENABLE_PYTHON
 namespace py = pybind11;
 #endif
-
-#include "minddata/dataset/core/tensor_shape.h"
 
 namespace mindspore {
 namespace dataset {
@@ -184,18 +181,17 @@ Status Tensor::CreateFromNpString(py::array arr, std::shared_ptr<Tensor> *out) {
   arr.resize({arr.size()});  // flatten the py::array so we can iterate once
   std::vector<std::string> strings;
   strings.reserve(arr.size());
-
-  if (arr.dtype().kind() == 'U') {
-    (void)std::for_each(arr.begin(), arr.end(),
-                        [&strings](const auto &s) { strings.emplace_back(py::cast<py::str>(s)); });
-  } else {
-    (void)std::for_each(arr.begin(), arr.end(),
-                        [&strings](const auto &s) { strings.emplace_back(py::cast<py::bytes>(s)); });
-  }
-
+  (void)std::for_each(arr.begin(), arr.end(),
+                      [&strings](const auto &s) { strings.emplace_back(py::cast<py::str>(s)); });
   arr.resize(shape);  // resize arr back to the original shape
 
-  return CreateFromVector(strings, TensorShape{shape}, out);
+  if (arr.dtype().kind() == 'U') {  // numpy dtype type is "U"
+    RETURN_IF_NOT_OK(CreateFromVector(strings, TensorShape{shape}, DataType(DataType::DE_STRING), out));
+  } else {  // numpy dtype type is "S"
+    RETURN_IF_NOT_OK(CreateFromVector(strings, TensorShape{shape}, DataType(DataType::DE_BYTES), out));
+  }
+
+  return Status::OK();
 }
 
 Status Tensor::CreateFromNpArray(const py::array &arr, std::shared_ptr<Tensor> *out) {
@@ -204,7 +200,7 @@ Status Tensor::CreateFromNpArray(const py::array &arr, std::shared_ptr<Tensor> *
   CHECK_FAIL_RETURN_UNEXPECTED(type != DataType::DE_UNKNOWN,
                                "Failed to create tensor from numpy array, data type is unknown.");
 
-  if (type == DataType::DE_STRING) {
+  if (type.IsString()) {
     return CreateFromNpString(arr, out);
   }
 
@@ -539,7 +535,7 @@ Status Tensor::GetItemPtr(T **ptr, const std::vector<dsize_t> &index) const {
 Status Tensor::GetItemPtr(uchar **ptr, const std::vector<dsize_t> &index, offset_t *length) const {
   RETURN_UNEXPECTED_IF_NULL(ptr);
   RETURN_UNEXPECTED_IF_NULL(length);
-  if (type_ == DataType::DE_STRING) {
+  if (type_.IsString()) {
     if (data_ == nullptr) {
       std::string err = "Data is not allocated yet";
       RETURN_STATUS_UNEXPECTED(err);
@@ -559,8 +555,8 @@ Status Tensor::GetItemPtr(uchar **ptr, const std::vector<dsize_t> &index, offset
 Status Tensor::StartAddrOfIndex(std::vector<dsize_t> ind, uchar **start_addr_of_index, TensorShape *remaining) {
   RETURN_UNEXPECTED_IF_NULL(start_addr_of_index);
   RETURN_UNEXPECTED_IF_NULL(remaining);
-  if (type() == DataType::DE_STRING) {
-    RETURN_STATUS_UNEXPECTED("StartAddrOfIndex does not support string tensors yet.");
+  if (type().IsString()) {
+    RETURN_STATUS_UNEXPECTED("StartAddrOfIndex does not support string and bytes tensors yet.");
   }
 
   dsize_t flat_ind;
@@ -592,7 +588,7 @@ Status Tensor::InsertTensor(const std::vector<dsize_t> &ind, const std::shared_p
   } else {
     err_msg += (ind.size() + tensor->Rank() != Rank()) ? "[Tensor] incorrect index\n" : "";
   }
-  err_msg += (type() == DataType::DE_STRING) ? "[Tensor] Cannot insert into a tensor of type string\n" : "";
+  err_msg += (type().IsString()) ? "[Tensor] Cannot insert into a tensor of type string or bytes\n" : "";
   err_msg += (!shape().known() || !tensor->shape().known()) ? "[Tensor] unknown shape\n" : "";
 
   err_msg += tensor->type().SizeInBytes() != type().SizeInBytes() ? "[Tensor] incorrect datatype\n" : "";
@@ -652,11 +648,11 @@ std::vector<dsize_t> Tensor::Strides() const {
 Status Tensor::GetBufferInfo(Tensor *t, py::buffer_info *out) {
   RETURN_UNEXPECTED_IF_NULL(t);
   RETURN_UNEXPECTED_IF_NULL(out);
-  CHECK_FAIL_RETURN_UNEXPECTED(t->type().IsNumeric(), "Cannot use GetBufferInfo on tensor of strings.");
+  CHECK_FAIL_RETURN_UNEXPECTED(t->type().IsNumeric(), "Cannot use GetBufferInfo on tensor of strings or bytes.");
 
   std::string format_desc = t->type().GetPybindFormat();
   if (format_desc.empty()) {
-    RETURN_STATUS_UNEXPECTED("Cannot convert DE type tp pybind format");
+    RETURN_STATUS_UNEXPECTED("Cannot convert DE type to pybind format");
   }
   *out = py::buffer_info(t->GetMutableBuffer(),   /* Pointer to buffer */
                          t->type().SizeInBytes(), /* Size of one scalar */
@@ -694,7 +690,7 @@ Status Tensor::to_json(nlohmann::json *out_json) {
     RETURN_IF_NOT_OK(to_json_convert<float>(&args));
   } else if (type_ == DataType::DE_FLOAT64) {
     RETURN_IF_NOT_OK(to_json_convert<double>(&args));
-  } else if (type_ == DataType::DE_STRING) {
+  } else if (type_.IsString()) {
     std::vector<std::string> data_out;
     for (auto it = this->begin<std::string_view>(); it != this->end<std::string_view>(); ++it) {
       data_out.emplace_back(*it);
@@ -747,7 +743,9 @@ Status Tensor::from_json(nlohmann::json op_params, std::shared_ptr<Tensor> *tens
   } else if (type == "float64") {
     RETURN_IF_NOT_OK(from_json_convert<double>(op_params["data"], shape, tensor));
   } else if (type == "string") {
-    RETURN_IF_NOT_OK(from_json_convert<std::string>(op_params["data"], shape, tensor));
+    RETURN_IF_NOT_OK(from_json_convert(op_params["data"], shape, DataType(DataType::DE_STRING), tensor));
+  } else if (type == "bytes") {
+    RETURN_IF_NOT_OK(from_json_convert(op_params["data"], shape, DataType(DataType::DE_BYTES), tensor));
   } else {
     return Status(StatusCode::kMDUnexpectedError, "Type is not supported for tensor");
   }
@@ -759,6 +757,13 @@ Status Tensor::from_json_convert(const nlohmann::json &json_data, const TensorSh
                                  std::shared_ptr<Tensor> *tensor) {
   std::vector<T> data = json_data;
   RETURN_IF_NOT_OK(CreateFromVector(data, shape, tensor));
+  return Status::OK();
+}
+
+Status Tensor::from_json_convert(const nlohmann::json &json_data, const TensorShape &shape, const DataType &type,
+                                 std::shared_ptr<Tensor> *tensor) {
+  std::vector<std::string> data = json_data;
+  RETURN_IF_NOT_OK(CreateFromVector(data, shape, type, tensor));
   return Status::OK();
 }
 
@@ -792,12 +797,12 @@ Status Tensor::GetItemAt(T *o, const std::vector<dsize_t> &index) const {
 Status Tensor::GetItemAt(std::string_view *o, const std::vector<dsize_t> &index) const {
   RETURN_UNEXPECTED_IF_NULL(data_);
   RETURN_UNEXPECTED_IF_NULL(o);
-  CHECK_FAIL_RETURN_UNEXPECTED(type_ == DataType::DE_STRING, "Tensor type is not a string");
+  CHECK_FAIL_RETURN_UNEXPECTED(type_.IsString(), "Tensor type is not of string or bytes.");
 
   uchar *start = nullptr;
   offset_t length = 0;
   RETURN_IF_NOT_OK(GetItemPtr(&start, index, &length));
-  std::string_view sv{reinterpret_cast<const char *>(start)};
+  std::string_view sv{reinterpret_cast<const char *>(start), length};
   o->swap(sv);
   return Status::OK();
 }
@@ -830,58 +835,23 @@ Status Tensor::GetDataAsNumpy(py::array *data) {
     *data = py::array_t<float>(shape_.AsVector(), reinterpret_cast<float *>(data_));
   } else if (type_ == DataType::DE_FLOAT64) {
     *data = py::array_t<double>(shape_.AsVector(), reinterpret_cast<double *>(data_));
-  } else if (type_ == DataType::DE_STRING) {
+  } else if (type_.IsString()) {
     RETURN_IF_NOT_OK(GetDataAsNumpyStrings(data));
   } else {
     RETURN_STATUS_UNEXPECTED("Got unexpected type when returning numpy");
   }
   return Status::OK();
 }
+
 Status Tensor::GetDataAsNumpyStrings(py::array *data) {
   RETURN_UNEXPECTED_IF_NULL(data);
-  auto itr = begin<std::string_view>();
-  uint64_t max_value = 0;
-  for (; itr != end<std::string_view>(); ++itr) {
-#if defined(__APPLE__)
-    max_value = fmax((*itr).length(), max_value);
-#else
-    max_value = std::max((*itr).length(), max_value);
-#endif
+  if (type_ == DataType::DE_STRING) {
+    RETURN_IF_NOT_OK(GetDataAsNumpyStrings<py::str>(data));
+  } else if (type_ == DataType::DE_BYTES) {
+    RETURN_IF_NOT_OK(GetDataAsNumpyStrings<py::bytes>(data));
+  } else {
+    RETURN_STATUS_UNEXPECTED("Can not convert a numeric Tensor to a string NumPy array.");
   }
-  // if all strings are empty, numpy stores a byte for each string |S1
-  max_value = (max_value == 0 ? 1 : max_value);
-  uint64_t total_size = shape_.NumOfElements() * max_value;
-  char *tmp_data = reinterpret_cast<char *>(data_allocator_->allocate(total_size));
-  if (tmp_data == nullptr) {
-    RETURN_STATUS_UNEXPECTED("Cannot create temp array.");
-  }
-  int ret_code = memset_s(tmp_data, total_size, 0, total_size);
-  CHECK_FAIL_RETURN_UNEXPECTED(ret_code == 0, "Failed to initialize temp memory");
-
-  itr = begin<std::string_view>();
-  uint64_t i = 0;
-  for (; itr != end<std::string_view>(); itr++, i++) {
-    if (!(*itr).empty()) {
-      ret_code = memcpy_s(tmp_data + i * max_value, total_size, (*itr).data(), (*itr).length());
-      CHECK_FAIL_RETURN_UNEXPECTED(ret_code == 0, "Failed to copy string data.");
-    }
-  }
-  auto strides = shape_.Strides();
-  (void)std::transform(strides.begin(), strides.end(), strides.begin(),
-                       [&max_value](const auto &s) { return s * max_value; });
-  *data = py::array(py::dtype("S" + std::to_string(max_value)), shape_.AsVector(), strides, tmp_data);
-  data_allocator_->deallocate(reinterpret_cast<uchar *>(tmp_data));
-  return Status::OK();
-}
-Status Tensor::GetDataAsNumpyUnicodeStrings(py::array *data) {
-  RETURN_UNEXPECTED_IF_NULL(data);
-  std::vector<std::string_view> string_pointers;
-  string_pointers.reserve(Size());
-  // Iterate over tensor and create a vector of string_views of strings in the tensor.
-  (void)std::transform(begin<std::string_view>(), end<std::string_view>(), std::back_inserter(string_pointers),
-                       [](const auto &element) { return element; });
-  *data = py::array(py::cast(string_pointers));
-  data->resize(shape_.AsVector());
   return Status::OK();
 }
 #endif
@@ -1007,8 +977,9 @@ Status Tensor::GetFloatAt(T *o, const std::vector<dsize_t> &index) const {
   }
   return Status::OK();
 }
+
 Status Tensor::GetStringAt(dsize_t index, uchar **string_start, offset_t *length) const {
-  CHECK_FAIL_RETURN_UNEXPECTED(type_ == DataType::DE_STRING, "Type is not string");
+  CHECK_FAIL_RETURN_UNEXPECTED(type_.IsString(), "Type is not string or bytes.");
   RETURN_UNEXPECTED_IF_NULL(data_);
   RETURN_UNEXPECTED_IF_NULL(string_start);
   RETURN_UNEXPECTED_IF_NULL(length);
@@ -1018,6 +989,7 @@ Status Tensor::GetStringAt(dsize_t index, uchar **string_start, offset_t *length
   *length = offset_ptr[index + 1] - start - 1;  // -1 to skip the \0 from the string length
   return Status::OK();
 }
+
 Status Tensor::CopyLastDimAt(const std::shared_ptr<Tensor> &src, const std::vector<dsize_t> &index) {
   RETURN_UNEXPECTED_IF_NULL(src);
   CHECK_FAIL_RETURN_UNEXPECTED(src->type() == type_, "Source Tensor has a different type");
@@ -1073,18 +1045,18 @@ Status Tensor::GetSliceOption(const SliceOption &slice_option, const int32_t &sl
   return Status::OK();
 }
 
-Status Tensor::Slice(std::shared_ptr<Tensor> *out, const std::vector<SliceOption> slice_options_) {
+Status Tensor::Slice(std::shared_ptr<Tensor> *out, const std::vector<SliceOption> &slice_options) {
   RETURN_UNEXPECTED_IF_NULL(out);
   std::vector<SliceOption> converted_slice_objects;
 
-  CHECK_FAIL_RETURN_UNEXPECTED(slice_options_.size() <= static_cast<size_t>(std::numeric_limits<dsize_t>::max()),
+  CHECK_FAIL_RETURN_UNEXPECTED(slice_options.size() <= static_cast<size_t>(std::numeric_limits<dsize_t>::max()),
                                "The size of slice_options_ must not be more than \"INT64_MAX\".");
-  for (size_t k = 0; k < slice_options_.size(); k++) {
-    SliceOption slice_option = slice_options_[k];
+  for (size_t k = 0; k < slice_options.size(); k++) {
+    SliceOption slice_option = slice_options[k];
 
     if (slice_option.all_) {
-      mindspore::dataset::Slice slice = mindspore::dataset::Slice(shape_[static_cast<dsize_t>(k)]);
-      converted_slice_objects.push_back(SliceOption(slice));
+      auto slice = mindspore::dataset::Slice(shape_[static_cast<dsize_t>(k)]);
+      converted_slice_objects.emplace_back(slice);
       continue;
     }
 
@@ -1097,8 +1069,8 @@ Status Tensor::Slice(std::shared_ptr<Tensor> *out, const std::vector<SliceOption
   }
 
   // partial slices, pass in the rest
-  if (slice_options_.size() != Rank()) {
-    for (dsize_t j = static_cast<dsize_t>(slice_options_.size()); j < Rank(); j++) {
+  if (slice_options.size() != Rank()) {
+    for (auto j = static_cast<dsize_t>(slice_options.size()); j < Rank(); j++) {
       mindspore::dataset::Slice slice = mindspore::dataset::Slice(0, shape_[j]);
       converted_slice_objects.emplace_back(SliceOption(slice));
     }
@@ -1106,12 +1078,12 @@ Status Tensor::Slice(std::shared_ptr<Tensor> *out, const std::vector<SliceOption
 
   // determine final shape:
   TensorShape t = TensorShape({});
-  dsize_t slice_len = slice_options_.size();
+  dsize_t slice_len = slice_options.size();
   dsize_t slice_len_ind;
   for (int i = 0; i < shape_.Rank(); i++) {
     if (i < slice_len) {
       // if it's a slice
-      if (converted_slice_objects[i].indices_.size() == 0 && converted_slice_objects[i].slice_.step_ != 0) {
+      if (converted_slice_objects[i].indices_.empty() && converted_slice_objects[i].slice_.step_ != 0) {
         slice_len_ind = (converted_slice_objects[i].slice_.stop_ - converted_slice_objects[i].slice_.start_) /
                         converted_slice_objects[i].slice_.step_;
         if ((converted_slice_objects[i].slice_.stop_ - converted_slice_objects[i].slice_.start_) %
@@ -1125,7 +1097,7 @@ Status Tensor::Slice(std::shared_ptr<Tensor> *out, const std::vector<SliceOption
       } else {
         // if its a vector of indices
         // need to introduce a way of handling indices and slices
-        if (converted_slice_objects[i].indices_.size() >= 1) {
+        if (!converted_slice_objects[i].indices_.empty()) {
           t = t.AppendDim(converted_slice_objects[i].indices_.size());
         }
       }
@@ -1167,7 +1139,7 @@ Status Tensor::SliceNumeric(std::shared_ptr<Tensor> *out, const std::vector<std:
 
   // to handle partial slices
   dsize_t current_stride = shape_.Strides()[indices[0].size() - 1];
-  dsize_t indices_size = static_cast<dsize_t>(indices.size());
+  auto indices_size = static_cast<dsize_t>(indices.size());
   for (dsize_t i = 0; i < indices_size; i++) {
     std::vector<dsize_t> cur_index = HandleNegIndices(indices[i], dim_length);
     if (i < indices_size - 1) {
@@ -1196,13 +1168,14 @@ Status Tensor::SliceNumeric(std::shared_ptr<Tensor> *out, const std::vector<std:
   }
   return Status::OK();
 }
+
 Status Tensor::SliceString(std::shared_ptr<Tensor> *out, const std::vector<std::vector<dsize_t>> &indices,
                            const TensorShape &shape) {
   RETURN_UNEXPECTED_IF_NULL(out);
   std::vector<dsize_t> dim_length = shape_.AsVector();
   std::vector<std::string> strings;
 
-  for (std::vector<dsize_t> index : indices) {
+  for (const std::vector<dsize_t> &index : indices) {
     std::vector<dsize_t> cur_index = HandleNegIndices(index, dim_length);
     dsize_t cur_flat_index;
     RETURN_IF_NOT_OK(shape_.ToFlatIndex(cur_index, &cur_flat_index));
@@ -1210,16 +1183,16 @@ Status Tensor::SliceString(std::shared_ptr<Tensor> *out, const std::vector<std::
     RETURN_IF_NOT_OK(GetItemAt(&sv, {cur_index}));
     strings.emplace_back(sv);
   }
-  return CreateFromVector(strings, shape, out);
+  return CreateFromVector(strings, shape, type_, out);
 }
+
 Status Tensor::CreateFromMSTensor(const MSTensor &in, TensorPtr *out) {
-  if (in.Data().get() == nullptr) {
+  if (in.Data() == nullptr) {
     *out = nullptr;
     return Status::OK();
   }
   return Tensor::CreateFromMemory(TensorShape(in.Shape()), MSTypeToDEType(static_cast<TypeId>(in.DataType())),
                                   (const uchar *)(in.Data().get()), in.DataSize(), out);
 }
-
 }  // namespace dataset
 }  // namespace mindspore

@@ -47,7 +47,7 @@ class DatasetGeneratorLarge:
         self.data = np.array(range(4000))
 
     def __getitem__(self, item):
-        return (self.data + item, self.data *10)
+        return (self.data + item, self.data * 10)
 
     def __len__(self):
         return 10
@@ -488,6 +488,7 @@ def test_generator_14():
 
     ds.config.set_prefetch_size(prefetch_original)
 
+
 def test_generator_15():
     """
     Feature: GeneratorDataset
@@ -513,6 +514,7 @@ def test_generator_15():
             i = 0
 
     ds.config.set_prefetch_size(prefetch_original)
+
 
 def test_generator_16():
     """
@@ -591,6 +593,7 @@ def test_generator_18():
         np.testing.assert_array_equal(item["out0"], golden)
 
     ds.config.set_enable_shared_mem(mem_original)
+
 
 def test_generator_19():
     """
@@ -680,6 +683,7 @@ def test_generator_error_1():
     Description: Test GeneratorDataset with no data type of the converted NumPy array
     Expectation: Error is raised as expected
     """
+
     def generator_np():
         for i in range(64):
             yield (np.array([{i}]),)
@@ -697,6 +701,7 @@ def test_generator_error_2():
     Description: Test GeneratorDataset with no data type of 1th item of the input
     Expectation: Error is raised as expected
     """
+
     def generator_np():
         for i in range(64):
             yield ({i},)
@@ -740,7 +745,7 @@ def test_generator_error_4():
 
         for _ in data1:
             pass
-    assert "the number of columns returned in 'map' operations should match the number of 'output_columns'"\
+    assert "the number of columns returned in 'map' operations should match the number of 'output_columns'" \
            in str(info.value)
 
 
@@ -1022,6 +1027,7 @@ def test_explicit_deepcopy():
     for d1, d2 in zip(ds1, ds2):
         assert d1 == d2
 
+
 def test_func_generator_dataset_005():
     """
     Feature: GeneratorDataset
@@ -1050,12 +1056,14 @@ def test_func_generator_dataset_005():
         i += 1
     assert i == 2
 
+
 def test_func_generator_dataset_with_zip_source():
     """
     Feature: Verify the source is zip
     Description: The source input is zip
     Expectation: Success
     """
+
     def synthetic_data(w, b, num_examples):
         """生成 y = Xw + b + 噪声。"""
         X = np.random.normal(0, 1, (num_examples, len(w)))
@@ -1107,6 +1115,7 @@ def test_generator_single_input_0():
     Description: Input int
     Expectation: Success
     """
+
     def generator_int():
         for i in range(64):
             yield i
@@ -1254,7 +1263,7 @@ def test_generator_single_input_2():
         i = 0
         for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
             s = chr(ord('a') + i)
-            golden = np.array(bytes(s, encoding='utf8'))
+            golden = np.array(s)
             np.testing.assert_array_equal(item["data"], golden)
             i = i + 1
 
@@ -1309,7 +1318,7 @@ def test_generator_single_input_3():
         i = 0
         for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
             b = bytes('a' * i, encoding='UTF-8')
-            golden = np.frombuffer(b, dtype=np.uint8)
+            golden = np.array(b)
             np.testing.assert_array_equal(item["data"], golden)
             i = i + 1
 
@@ -1432,6 +1441,7 @@ def test_generator_single_input_6():
     Description: Input np.array
     Expectation: Throw exception
     """
+
     def generator_nested_np():
         for i in range(64):
             yield np.array([[i, i + 1], [i, i + 1, i + 2]])
@@ -1485,6 +1495,7 @@ def test_generator_with_single_numpy():
     Description: Single numpy, tuple numpy with single columns and multi columns
     Expectation: Success
     """
+
     class get_dataset_generator:
         def __init__(self, value):
             np.random.seed(58)
@@ -1693,6 +1704,7 @@ def test_generator_with_single_numpy_with_next():
     Description: Single numpy, tuple numpy with single columns and multi columns
     Expectation: Success
     """
+
     class get_dataset_generator:
         def __init__(self, value):
             np.random.seed(58)
@@ -1920,6 +1932,7 @@ def test_generator_with_single_numpy_with_yield():
     Description: Single numpy, tuple numpy with single columns and multi columns
     Expectation: Success
     """
+
     def get_dataset_generator(value):
         for _ in range(20):
             yield value

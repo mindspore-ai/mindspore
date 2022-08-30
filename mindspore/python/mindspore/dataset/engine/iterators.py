@@ -183,7 +183,7 @@ class Iterator:
         return self._transform_md_to_tensor(t)
 
     def _transform_md_to_tensor(self, t):
-        array = t.as_decoded_array()
+        array = t.as_array()
         if self._do_copy:
             return Tensor(array)
         return Tensor.from_numpy(array)

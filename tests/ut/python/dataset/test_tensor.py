@@ -46,7 +46,7 @@ def test_basic():
 
     arr2 = n.as_array()
     # decoding only impacts string arrays
-    arr3 = n.as_decoded_array()
+    arr3 = n.as_array()
     arr[0] = 2
     x = np.array([2, 2, 3, 4, 5])
     np.testing.assert_array_equal(x, arr2)

@@ -689,7 +689,7 @@ Status SaveToDisk::FetchItemData(std::shared_ptr<Tensor> tensor, std::string col
   } else if (column_type == DataType::DE_FLOAT32 || column_type == DataType::DE_FLOAT64) {
     s = FetchFloatData(tensor, column_name, row_raw_data, &data_ptr);
     RETURN_IF_NOT_OK(s);
-  } else if (column_type == DataType::DE_STRING) {
+  } else if (column_type.IsString()) {
     std::string_view sv;
     RETURN_IF_NOT_OK(tensor->GetItemAt(&sv, {}));  // assume scalar string tensor
     std::string ss(sv);

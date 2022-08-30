@@ -76,7 +76,7 @@ def test_sbu_content_check():
     # in this example, each dictionary has keys "image" and "caption"
     for i, data in enumerate(dataset.create_dict_iterator(num_epochs=1, output_numpy=True)):
         assert data["image"].shape == images[i].shape
-        assert data["caption"].item().decode("utf8") == captions[i]
+        assert data["caption"] == captions[i]
         num_iter += 1
     assert num_iter == 5
 
@@ -271,13 +271,13 @@ def test_sbu_visualize(plot=False):
     image_list, caption_list = [], []
     for item in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
         image = item["image"]
-        caption = item["caption"].item().decode("utf8")
+        caption = item["caption"]
         image_list.append(image)
         caption_list.append("caption {}".format(caption))
         assert isinstance(image, np.ndarray)
 
         assert image.dtype == np.uint8
-        assert isinstance(caption, str)
+        assert caption.dtype.type == np.str_
         num_iter += 1
     assert num_iter == 5
     if plot:

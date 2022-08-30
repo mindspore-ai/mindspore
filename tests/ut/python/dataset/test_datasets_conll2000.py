@@ -82,7 +82,7 @@ def test_conll2000_dataset_shuffle_false_num_parallel_workers_4():
             "To", "economists", ",", "foreign", "exchange", "."]
     for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
         for j in range(numword):
-            strs = i["word"][j].item().decode("utf8")
+            strs = i["word"][j]
             assert strs == line[count*6+j]
         count += 1
     assert count == 5
@@ -109,7 +109,7 @@ def test_conll2000_dataset_shuffle_false_num_parallel_workers_1():
             "To", "economists", ",", "foreign", "exchange", "."]
     for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
         for j in range(numword):
-            strs = i["word"][j].item().decode("utf8")
+            strs = i["word"][j]
             assert strs == line[count*6+j]
         count += 1
     assert count == 5
@@ -136,7 +136,7 @@ def test_conll2000_dataset_shuffle_files_num_parallel_workers_4():
             "To", "economists", ",", "foreign", "exchange", "."]
     for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
         for j in range(numword):
-            strs = i["word"][j].item().decode("utf8")
+            strs = i["word"][j]
             assert strs == line[count*6+j]
         count += 1
     assert count == 5
@@ -163,7 +163,7 @@ def test_conll2000_dataset_shuffle_files_num_parallel_workers_1():
             "To", "economists", ",", "foreign", "exchange", "."]
     for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
         for j in range(numword):
-            strs = i["word"][j].item().decode("utf8")
+            strs = i["word"][j]
             assert strs == line[count*6+j]
         count += 1
     assert count == 5
@@ -190,7 +190,7 @@ def test_conll2000_dataset_shuffle_global_num_parallel_workers_4():
             "The", "1.8", "billion", "in", "September", "."]
     for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
         for j in range(numword):
-            strs = i["word"][j].item().decode("utf8")
+            strs = i["word"][j]
             assert strs == line[count*6+j]
         count += 1
     assert count == 5
@@ -217,7 +217,7 @@ def test_conll2000_dataset_shuffle_global_num_parallel_workers_1():
             "He", "reckons", "the", "current", "account", "."]
     for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
         for j in range(numword):
-            strs = i["word"][j].item().decode("utf8")
+            strs = i["word"][j]
             assert strs == line[count*6+j]
         count += 1
     assert count == 5
@@ -270,7 +270,7 @@ def test_conll2000_dataset_repeat():
             "The", "1.8", "billion", "in", "September", ".",]
     for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
         for j in range(numword):
-            strs = i["word"][j].item().decode("utf8")
+            strs = i["word"][j]
             assert strs == line[count*6+j]
         count += 1
     assert count == 6

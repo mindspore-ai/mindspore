@@ -53,9 +53,9 @@ def test_filter_wikipedia_xml_pipeline():
     logger.info("test FilterWikipediaXML in pipeline mode")
 
     # Original text
-    input02 = np.array(["Welcome to China", "中国", "ABC"], dtype=np.unicode_)
+    input02 = np.array(["Welcome to China", "中国", "ABC"])
     # Expect text
-    expected = np.array(["welcome to china", "", "abc"], dtype=np.string_)
+    expected = np.array(["welcome to china", "", "abc"])
     dataset = ds.NumpySlicesDataset(input02, ["text"], shuffle=False)
     filter_wikipedia_xml_op = a_c_trans.FilterWikipediaXML()
     # Filtered waveform by filter_wikipedia_xml

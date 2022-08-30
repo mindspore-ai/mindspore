@@ -112,7 +112,7 @@ def test_penn_treebank_dataset_shuffle_false4():
             " black white grapes ",
             " everyone in our football team is fuming "]
     for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        strs = i["text"].item().decode("utf8")
+        strs = i["text"]
         assert strs == line[count]
         count += 1
     assert count == 9
@@ -141,7 +141,7 @@ def test_penn_treebank_dataset_shuffle_false1():
             " <unk> <unk> the proportion of female workers in this company <unk> <unk> ",
             " everyone in our football team is fuming "]
     for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        strs = i["text"].item().decode("utf8")
+        strs = i["text"]
         assert strs == line[count]
         count += 1
     assert count == 9
@@ -170,7 +170,7 @@ def test_penn_treebank_dataset_shuffle_files4():
             " black white grapes ",
             " you pay less for the supermaket's own brands "]
     for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        strs = i["text"].item().decode("utf8")
+        strs = i["text"]
         assert strs == line[count]
         count += 1
     assert count == 9
@@ -199,7 +199,7 @@ def test_penn_treebank_dataset_shuffle_files1():
             " clash twits poetry formulate flip loyalty splash ",
             " you pay less for the supermaket's own brands "]
     for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        strs = i["text"].item().decode("utf8")
+        strs = i["text"]
         assert strs == line[count]
         count += 1
     assert count == 9
@@ -228,7 +228,7 @@ def test_penn_treebank_dataset_shuffle_global4():
             " <unk> the wardrobe was very small in our room ",
             " black white grapes "]
     for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        strs = i["text"].item().decode("utf8")
+        strs = i["text"]
         assert strs == line[count]
         count += 1
     assert count == 9
@@ -257,7 +257,7 @@ def test_penn_treebank_dataset_shuffle_global1():
             " no it was black friday ",
             " just ahead of them there was a huge fissure "]
     for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        strs = i["text"].item().decode("utf8")
+        strs = i["text"]
         assert strs == line[count]
         count += 1
     assert count == 9
@@ -311,7 +311,7 @@ def test_penn_treebank_dataset_repeat():
             " clash twits poetry formulate flip loyalty splash ",
             " you pay less for the supermaket's own brands ",]
     for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        strs = i["text"].item().decode("utf8")
+        strs = i["text"]
         assert strs == line[count]
         count += 1
     assert count == 9

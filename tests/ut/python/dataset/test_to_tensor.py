@@ -268,7 +268,7 @@ def test_to_tensor_int64_unsupported():
         with pytest.raises(RuntimeError) as error_info:
             op = vision.ToTensor(output_type=my_output_type)
             _ = op(image)
-        error_message = "ToTensor: Input includes unsupported data type in [uint32, int64, uint64, string]."
+        error_message = "ToTensor: Input includes unsupported data type in [uint32, int64, uint64, string, bytes]."
         assert error_message in str(error_info.value)
 
     test_config(np.int8)
@@ -294,7 +294,7 @@ def test_to_tensor_uint32_unsupported():
         with pytest.raises(RuntimeError) as error_info:
             op = vision.ToTensor(output_type=my_output_type)
             _ = op(image)
-        error_message = "ToTensor: Input includes unsupported data type in [uint32, int64, uint64, string]."
+        error_message = "ToTensor: Input includes unsupported data type in [uint32, int64, uint64, string, bytes]."
         assert error_message in str(error_info.value)
 
     test_config(np.int8)
@@ -320,7 +320,7 @@ def test_to_tensor_uint64_unsupported():
         with pytest.raises(RuntimeError) as error_info:
             op = vision.ToTensor(output_type=my_output_type)
             _ = op(image)
-        error_message = "ToTensor: Input includes unsupported data type in [uint32, int64, uint64, string]."
+        error_message = "ToTensor: Input includes unsupported data type in [uint32, int64, uint64, string, bytes]."
         assert error_message in str(error_info.value)
 
     test_config(np.int8)
@@ -393,7 +393,8 @@ def test_to_tensor_eager_error_string():
     with pytest.raises(RuntimeError) as error_info:
         op = vision.ToTensor(output_type=my_np_type)
         _ = op(image)
-    assert "ToTensor: Input includes unsupported data type in [uint32, int64, uint64, string]." in str(error_info.value)
+    assert "ToTensor: Input includes unsupported data type in [uint32, int64, uint64, string, bytes]." \
+           in str(error_info.value)
 
 
 if __name__ == "__main__":

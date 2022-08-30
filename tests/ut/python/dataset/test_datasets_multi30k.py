@@ -38,7 +38,7 @@ def test_data_file_multi30k_text():
             "This is the third English sentence in train."
             ]
     for i in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
-        strs = i["text"].item().decode("utf8")
+        strs = i["text"]
         assert strs == line[count]
         count += 1
     assert count == 3
@@ -61,7 +61,7 @@ def test_data_file_multi30k_translation():
             "This is the third Germany sentence in train."
             ]
     for i in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
-        strs = i["translation"].item().decode("utf8")
+        strs = i["translation"]
         assert strs == line[count]
         count += 1
     assert count == 3
@@ -103,7 +103,7 @@ def test_dataset_num_samples_none():
             "This is the second English sentence in valid."
             ]
     for i in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
-        strs = i["text"].item().decode("utf8")
+        strs = i["text"]
         assert strs == line[count]
         count += 1
     assert count == 8
@@ -227,7 +227,7 @@ def test_multi30k_dataset_en_pipeline():
     dataset = dataset.map(input_columns=["text"], operations=filter_wikipedia_xml_op, num_parallel_workers=1)
     count = 0
     for i in dataset.create_dict_iterator(output_numpy=True):
-        strs = i["text"].item().decode("utf8")
+        strs = i["text"]
         assert strs == expected[count]
         count += 1
 
@@ -246,7 +246,7 @@ def test_multi30k_dataset_de_pipeline():
     dataset = dataset.map(input_columns=["translation"], operations=filter_wikipedia_xml_op, num_parallel_workers=1)
     count = 0
     for i in dataset.create_dict_iterator(output_numpy=True):
-        strs = i["translation"].item().decode("utf8")
+        strs = i["translation"]
         assert strs == expected[count]
         count += 1
 

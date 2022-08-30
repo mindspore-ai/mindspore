@@ -168,13 +168,13 @@ def test_cmu_arctic_sequential_sampler():
     data1 = ds.CMUArcticDataset(DATA_DIR, name="aew", sampler=sampler)
     data2 = ds.CMUArcticDataset(DATA_DIR, name="aew", shuffle=False, num_samples=num_samples)
 
-    utterance_id_expected = [b'a0001', b'a0002']
+    utterance_id_expected = ['a0001', 'a0002']
     utterance_id_list1, utterance_id_list2 = [], []
 
     sample_rate_expected = [16000, 16000]
     sample_rate_list1, sample_rate_list2 = [], []
 
-    transcript_expected = [b'Dog.', b'Cat.']
+    transcript_expected = ['Dog.', 'Cat.']
     transcript_list1, transcript_list2 = [], []
     num_iter = 0
     for item1, item2 in zip(data1.create_dict_iterator(output_numpy=True, num_epochs=1),

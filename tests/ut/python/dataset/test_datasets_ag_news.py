@@ -93,9 +93,9 @@ def test_ag_news_dataset_quoted():
     data = ds.AGNewsDataset(FILE_DIR, usage='test', shuffle=False)
     buffer = []
     for d in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        buffer.extend([d['index'].item().decode("utf8"),
-                       d['title'].item().decode("utf8"),
-                       d['description'].item().decode("utf8")])
+        buffer.extend([d['index'],
+                       d['title'],
+                       d['description']])
     assert buffer == ["3", "Background of the selection",
                       "In this day and age, the internet is growing rapidly, "
                       "the total number of connected devices is increasing and "

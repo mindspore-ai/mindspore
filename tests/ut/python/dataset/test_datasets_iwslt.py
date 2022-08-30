@@ -42,8 +42,8 @@ def test_iwslt2016_dataset_quoted():
     data = ds.IWSLT2016Dataset(DATA_IWSLT2016_DIR, usage='train', language_pair=["de", "en"], shuffle=False)
     buffer = []
     for d in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        buffer.extend([d['text'].item().decode("utf8"),
-                       d['translation'].item().decode("utf8")])
+        buffer.extend([d['text'],
+                       d['translation']])
     assert buffer == ["Code schreiben macht Freude.",
                       "Writing code is a joy.",
                       "Ich hoffe in Zukunft weniger Überstunden machen zu können.",
@@ -155,8 +155,8 @@ def test_iwslt2017_dataset_quoted():
     data = ds.IWSLT2017Dataset(DATA_IWSLT2017_DIR, usage='train', language_pair=["de", "en"], shuffle=False)
     buffer = []
     for d in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        buffer.extend([d['text'].item().decode("utf8"),
-                       d['translation'].item().decode("utf8")])
+        buffer.extend([d['text'],
+                       d['translation']])
     assert buffer == ["Schönes Wetter heute.",
                       "The weather is nice today.",
                       "Ich bin heute gut gelaunt.",

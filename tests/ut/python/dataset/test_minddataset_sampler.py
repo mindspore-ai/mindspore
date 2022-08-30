@@ -21,7 +21,6 @@ import numpy as np
 
 import mindspore.dataset as ds
 from mindspore import log as logger
-from mindspore.dataset.text import to_str
 from mindspore.mindrecord import FileWriter
 
 FILES_NUM = 4
@@ -79,7 +78,7 @@ def test_cv_minddataset_pk_sample_no_column(add_and_remove_cv_file):
         logger.info(
             "-------------- cv reader basic: {} ------------------------".format(num_iter))
         logger.info("-------------- item[file_name]: \
-                {}------------------------".format(to_str(item["file_name"])))
+                {}------------------------".format(item["file_name"]))
         logger.info(
             "-------------- item[label]: {} ----------------------------".format(item["label"]))
         num_iter += 1
@@ -106,7 +105,7 @@ def test_cv_minddataset_pk_sample_basic(add_and_remove_cv_file):
         logger.info("-------------- item[data]: \
                 {}------------------------".format(item["data"][:10]))
         logger.info("-------------- item[file_name]: \
-                {}------------------------".format(to_str(item["file_name"])))
+                {}------------------------".format(item["file_name"]))
         logger.info(
             "-------------- item[label]: {} ----------------------------".format(item["label"]))
         num_iter += 1
@@ -131,7 +130,7 @@ def test_cv_minddataset_pk_sample_shuffle(add_and_remove_cv_file):
         logger.info(
             "-------------- cv reader basic: {} ------------------------".format(num_iter))
         logger.info("-------------- item[file_name]: \
-                {}------------------------".format(to_str(item["file_name"])))
+                {}------------------------".format(item["file_name"]))
         logger.info(
             "-------------- item[label]: {} ----------------------------".format(item["label"]))
         num_iter += 1
@@ -158,7 +157,7 @@ def test_cv_minddataset_pk_sample_shuffle_1(add_and_remove_cv_file):
         logger.info(
             "-------------- cv reader basic: {} ------------------------".format(num_iter))
         logger.info("-------------- item[file_name]: \
-                {}------------------------".format(to_str(item["file_name"])))
+                {}------------------------".format(item["file_name"]))
         logger.info(
             "-------------- item[label]: {} ----------------------------".format(item["label"]))
         num_iter += 1
@@ -185,7 +184,7 @@ def test_cv_minddataset_pk_sample_shuffle_2(add_and_remove_cv_file):
         logger.info(
             "-------------- cv reader basic: {} ------------------------".format(num_iter))
         logger.info("-------------- item[file_name]: \
-                {}------------------------".format(to_str(item["file_name"])))
+                {}------------------------".format(item["file_name"]))
         logger.info(
             "-------------- item[label]: {} ----------------------------".format(item["label"]))
         num_iter += 1
@@ -210,7 +209,7 @@ def test_cv_minddataset_pk_sample_out_of_range_0(add_and_remove_cv_file):
         logger.info(
             "-------------- cv reader basic: {} ------------------------".format(num_iter))
         logger.info("-------------- item[file_name]: \
-                {}------------------------".format(to_str(item["file_name"])))
+                {}------------------------".format(item["file_name"]))
         logger.info(
             "-------------- item[label]: {} ----------------------------".format(item["label"]))
         num_iter += 1
@@ -236,7 +235,7 @@ def test_cv_minddataset_pk_sample_out_of_range_1(add_and_remove_cv_file):
         logger.info(
             "-------------- cv reader basic: {} ------------------------".format(num_iter))
         logger.info("-------------- item[file_name]: \
-                {}------------------------".format(to_str(item["file_name"])))
+                {}------------------------".format(item["file_name"]))
         logger.info(
             "-------------- item[label]: {} ----------------------------".format(item["label"]))
         num_iter += 1
@@ -262,7 +261,7 @@ def test_cv_minddataset_pk_sample_out_of_range_2(add_and_remove_cv_file):
         logger.info(
             "-------------- cv reader basic: {} ------------------------".format(num_iter))
         logger.info("-------------- item[file_name]: \
-                {}------------------------".format(to_str(item["file_name"])))
+                {}------------------------".format(item["file_name"]))
         logger.info(
             "-------------- item[label]: {} ----------------------------".format(item["label"]))
         num_iter += 1
@@ -590,8 +589,7 @@ def test_cv_minddataset_sequential_sampler_basic(add_and_remove_cv_file):
             "-------------- item[file_name]: {} ------------------------".format(item["file_name"]))
         logger.info(
             "-------------- item[label]: {} ----------------------------".format(item["label"]))
-        assert item['file_name'] == np.array(
-            data[num_iter + 1]['file_name'], dtype='S')
+        assert item['file_name'] == np.array(data[num_iter + 1]['file_name'])
         num_iter += 1
     assert num_iter == 4
 
@@ -621,8 +619,7 @@ def test_cv_minddataset_sequential_sampler_offeset(add_and_remove_cv_file):
             "-------------- item[file_name]: {} ------------------------".format(item["file_name"]))
         logger.info(
             "-------------- item[label]: {} ----------------------------".format(item["label"]))
-        assert item['file_name'] == np.array(
-            data[(num_iter + 2) % dataset_size]['file_name'], dtype='S')
+        assert item['file_name'] == np.array(data[(num_iter + 2) % dataset_size]['file_name'])
         num_iter += 1
     assert num_iter == 10
 
@@ -653,8 +650,7 @@ def test_cv_minddataset_sequential_sampler_exceed_size(add_and_remove_cv_file):
             "-------------- item[file_name]: {} ------------------------".format(item["file_name"]))
         logger.info(
             "-------------- item[label]: {} ----------------------------".format(item["label"]))
-        assert item['file_name'] == np.array(
-            data[(num_iter + 2) % dataset_size]['file_name'], dtype='S')
+        assert item['file_name'] == np.array(data[(num_iter + 2) % dataset_size]['file_name'])
         num_iter += 1
     assert num_iter == 10
 
@@ -683,8 +679,7 @@ def test_cv_minddataset_split_basic(add_and_remove_cv_file):
             "-------------- item[file_name]: {} ------------------------".format(item["file_name"]))
         logger.info(
             "-------------- item[label]: {} ----------------------------".format(item["label"]))
-        assert item['file_name'] == np.array(data[num_iter]['file_name'],
-                                             dtype='S')
+        assert item['file_name'] == np.array(data[num_iter]['file_name'])
         num_iter += 1
     assert num_iter == 8
     num_iter = 0
@@ -695,8 +690,7 @@ def test_cv_minddataset_split_basic(add_and_remove_cv_file):
             "-------------- item[file_name]: {} ------------------------".format(item["file_name"]))
         logger.info(
             "-------------- item[label]: {} ----------------------------".format(item["label"]))
-        assert item['file_name'] == np.array(data[num_iter + 8]['file_name'],
-                                             dtype='S')
+        assert item['file_name'] == np.array(data[num_iter + 8]['file_name'])
         num_iter += 1
     assert num_iter == 2
 
@@ -725,8 +719,7 @@ def test_cv_minddataset_split_exact_percent(add_and_remove_cv_file):
             "-------------- item[file_name]: {} ------------------------".format(item["file_name"]))
         logger.info(
             "-------------- item[label]: {} ----------------------------".format(item["label"]))
-        assert item['file_name'] == np.array(
-            data[num_iter]['file_name'], dtype='S')
+        assert item['file_name'] == np.array(data[num_iter]['file_name'])
         num_iter += 1
     assert num_iter == 8
     num_iter = 0
@@ -737,8 +730,7 @@ def test_cv_minddataset_split_exact_percent(add_and_remove_cv_file):
             "-------------- item[file_name]: {} ------------------------".format(item["file_name"]))
         logger.info(
             "-------------- item[label]: {} ----------------------------".format(item["label"]))
-        assert item['file_name'] == np.array(data[num_iter + 8]['file_name'],
-                                             dtype='S')
+        assert item['file_name'] == np.array(data[num_iter + 8]['file_name'])
         num_iter += 1
     assert num_iter == 2
 
@@ -767,8 +759,7 @@ def test_cv_minddataset_split_fuzzy_percent(add_and_remove_cv_file):
             "-------------- item[file_name]: {} ------------------------".format(item["file_name"]))
         logger.info(
             "-------------- item[label]: {} ----------------------------".format(item["label"]))
-        assert item['file_name'] == np.array(
-            data[num_iter]['file_name'], dtype='S')
+        assert item['file_name'] == np.array(data[num_iter]['file_name'])
         num_iter += 1
     assert num_iter == 4
     num_iter = 0
@@ -779,8 +770,7 @@ def test_cv_minddataset_split_fuzzy_percent(add_and_remove_cv_file):
             "-------------- item[file_name]: {} ------------------------".format(item["file_name"]))
         logger.info(
             "-------------- item[label]: {} ----------------------------".format(item["label"]))
-        assert item['file_name'] == np.array(data[num_iter + 4]['file_name'],
-                                             dtype='S')
+        assert item['file_name'] == np.array(data[num_iter + 4]['file_name'])
         num_iter += 1
     assert num_iter == 6
 

@@ -65,9 +65,9 @@ def test_amazon_review_dataset_quoted():
     data = ds.AmazonReviewDataset(FULL_DIR, usage='test', shuffle=False)
     buffer = []
     for d in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        buffer.extend([d['label'].item().decode("utf8"),
-                       d['title'].item().decode("utf8"),
-                       d['content'].item().decode("utf8")])
+        buffer.extend([d['label'],
+                       d['title'],
+                       d['content']])
     assert buffer == ["1", "amazing", "unlimited buyback!",
                       "4", "delightful", "a funny book!",
                       "3", "Small", "It is a small ball!"]
@@ -82,9 +82,9 @@ def test_amazon_review_full_dataset_usage_all():
     buffer = []
     data = ds.AmazonReviewDataset(FULL_DIR, usage='all', shuffle=False)
     for d in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        buffer.extend([d['label'].item().decode("utf8"),
-                       d['title'].item().decode("utf8"),
-                       d['content'].item().decode("utf8")])
+        buffer.extend([d['label'],
+                       d['title'],
+                       d['content']])
     assert buffer == ["1", "amazing", "unlimited buyback!",
                       "3", "Satisfied", "good quality.",
                       "4", "delightful", "a funny book!",
@@ -102,9 +102,9 @@ def test_amazon_review_polarity_dataset_usage_all():
     buffer = []
     data = ds.AmazonReviewDataset(POLARITY_DIR, usage='all', shuffle=False)
     for d in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        buffer.extend([d['label'].item().decode("utf8"),
-                       d['title'].item().decode("utf8"),
-                       d['content'].item().decode("utf8")])
+        buffer.extend([d['label'],
+                       d['title'],
+                       d['content']])
     assert buffer == ["1", "DVD", "It is very good!",
                       "2", "Great Read", "I thought this book was excellent!",
                       "2", "Book", "I would read it again lol.",
@@ -192,7 +192,7 @@ def test_amazon_review_dataset_pipeline():
     Description: Test AmazonReviewDataset in pipeline mode
     Expectation: The data is processed successfully
     """
-    expected_columns1 = np.array(["3", "5", "1"], dtype=np.string_)
+    expected_columns1 = np.array(["3", "5", "1"])
     dataset = ds.AmazonReviewDataset(FULL_DIR, 'train', shuffle=False)
     filter_wikipedia_xml_op = a_c_trans.CaseFold()
     dataset = dataset.map(input_columns=["label"], operations=filter_wikipedia_xml_op, num_parallel_workers=1)
@@ -202,7 +202,7 @@ def test_amazon_review_dataset_pipeline():
         i += 1
     assert i == 3
 
-    expected_columns2 = np.array(["satisfied", "good", "bad"], dtype=np.string_)
+    expected_columns2 = np.array(["satisfied", "good", "bad"])
     dataset = ds.AmazonReviewDataset(FULL_DIR, 'train', shuffle=False)
     filter_wikipedia_xml_op = a_c_trans.CaseFold()
     dataset = dataset.map(input_columns=["title"], operations=filter_wikipedia_xml_op, num_parallel_workers=1)
@@ -214,7 +214,7 @@ def test_amazon_review_dataset_pipeline():
 
     expected_columns3 = np.array(["good quality.",
                                   "this is an very good product.",
-                                  "work badly."], dtype=np.string_)
+                                  "work badly."])
     dataset = ds.AmazonReviewDataset(FULL_DIR, 'train', shuffle=False)
     filter_wikipedia_xml_op = a_c_trans.CaseFold()
     dataset = dataset.map(input_columns=["content"], operations=filter_wikipedia_xml_op, num_parallel_workers=1)

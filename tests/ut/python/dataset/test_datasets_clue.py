@@ -31,9 +31,9 @@ def test_clue():
     data = data.skip(3)
     for d in data.create_dict_iterator(num_epochs=1, output_numpy=True):
         buffer.append({
-            'label': d['label'].item().decode("utf8"),
-            'sentence1': d['sentence1'].item().decode("utf8"),
-            'sentence2': d['sentence2'].item().decode("utf8")
+            'label': d['label'],
+            'sentence1': d['sentence1'],
+            'sentence2': d['sentence2']
         })
     assert len(buffer) == 3
 
@@ -50,9 +50,9 @@ def test_clue_num_shards():
     data = ds.CLUEDataset(train_file, task='AFQMC', usage='train', num_shards=3, shard_id=1)
     for d in data.create_dict_iterator(num_epochs=1, output_numpy=True):
         buffer.append({
-            'label': d['label'].item().decode("utf8"),
-            'sentence1': d['sentence1'].item().decode("utf8"),
-            'sentence2': d['sentence2'].item().decode("utf8")
+            'label': d['label'],
+            'sentence1': d['sentence1'],
+            'sentence2': d['sentence2']
         })
     assert len(buffer) == 1
 
@@ -100,9 +100,9 @@ def test_clue_afqmc():
     data = ds.CLUEDataset(train_file, task='AFQMC', usage='train', shuffle=False)
     for d in data.create_dict_iterator(num_epochs=1, output_numpy=True):
         buffer.append({
-            'label': d['label'].item().decode("utf8"),
-            'sentence1': d['sentence1'].item().decode("utf8"),
-            'sentence2': d['sentence2'].item().decode("utf8")
+            'label': d['label'],
+            'sentence1': d['sentence1'],
+            'sentence2': d['sentence2']
         })
     assert len(buffer) == 3
 
@@ -112,8 +112,8 @@ def test_clue_afqmc():
     for d in data.create_dict_iterator(num_epochs=1, output_numpy=True):
         buffer.append({
             'id': d['id'],
-            'sentence1': d['sentence1'].item().decode("utf8"),
-            'sentence2': d['sentence2'].item().decode("utf8")
+            'sentence1': d['sentence1'],
+            'sentence2': d['sentence2']
         })
     assert len(buffer) == 3
 
@@ -122,9 +122,9 @@ def test_clue_afqmc():
     data = ds.CLUEDataset(eval_file, task='AFQMC', usage='eval', shuffle=False)
     for d in data.create_dict_iterator(num_epochs=1, output_numpy=True):
         buffer.append({
-            'label': d['label'].item().decode("utf8"),
-            'sentence1': d['sentence1'].item().decode("utf8"),
-            'sentence2': d['sentence2'].item().decode("utf8")
+            'label': d['label'],
+            'sentence1': d['sentence1'],
+            'sentence2': d['sentence2']
         })
     assert len(buffer) == 3
 
@@ -144,9 +144,9 @@ def test_clue_cmnli():
     data = ds.CLUEDataset(train_file, task='CMNLI', usage='train', shuffle=False)
     for d in data.create_dict_iterator(num_epochs=1, output_numpy=True):
         buffer.append({
-            'label': d['label'].item().decode("utf8"),
-            'sentence1': d['sentence1'].item().decode("utf8"),
-            'sentence2': d['sentence2'].item().decode("utf8")
+            'label': d['label'],
+            'sentence1': d['sentence1'],
+            'sentence2': d['sentence2']
         })
     assert len(buffer) == 3
 
@@ -189,9 +189,9 @@ def test_clue_csl():
     for d in data.create_dict_iterator(num_epochs=1, output_numpy=True):
         buffer.append({
             'id': d['id'],
-            'abst': d['abst'].item().decode("utf8"),
-            'keyword': [i.item().decode("utf8") for i in d['keyword']],
-            'label': d['label'].item().decode("utf8")
+            'abst': d['abst'],
+            'keyword': [i for i in d['keyword']],
+            'label': d['label']
         })
     assert len(buffer) == 3
 
@@ -201,8 +201,8 @@ def test_clue_csl():
     for d in data.create_dict_iterator(num_epochs=1, output_numpy=True):
         buffer.append({
             'id': d['id'],
-            'abst': d['abst'].item().decode("utf8"),
-            'keyword': [i.item().decode("utf8") for i in d['keyword']],
+            'abst': d['abst'],
+            'keyword': [i for i in d['keyword']],
         })
     assert len(buffer) == 3
 
@@ -212,9 +212,9 @@ def test_clue_csl():
     for d in data.create_dict_iterator(num_epochs=1, output_numpy=True):
         buffer.append({
             'id': d['id'],
-            'abst': d['abst'].item().decode("utf8"),
-            'keyword': [i.item().decode("utf8") for i in d['keyword']],
-            'label': d['label'].item().decode("utf8")
+            'abst': d['abst'],
+            'keyword': [i for i in d['keyword']],
+            'label': d['label']
         })
     assert len(buffer) == 3
 
@@ -234,9 +234,9 @@ def test_clue_iflytek():
     data = ds.CLUEDataset(train_file, task='IFLYTEK', usage='train', shuffle=False)
     for d in data.create_dict_iterator(num_epochs=1, output_numpy=True):
         buffer.append({
-            'label': d['label'].item().decode("utf8"),
-            'label_des': d['label_des'].item().decode("utf8"),
-            'sentence': d['sentence'].item().decode("utf8"),
+            'label': d['label'],
+            'label_des': d['label_des'],
+            'sentence': d['sentence'],
         })
     assert len(buffer) == 3
 
@@ -246,7 +246,7 @@ def test_clue_iflytek():
     for d in data.create_dict_iterator(num_epochs=1, output_numpy=True):
         buffer.append({
             'id': d['id'],
-            'sentence': d['sentence'].item().decode("utf8")
+            'sentence': d['sentence']
         })
     assert len(buffer) == 3
 
@@ -255,9 +255,9 @@ def test_clue_iflytek():
     data = ds.CLUEDataset(eval_file, task='IFLYTEK', usage='eval', shuffle=False)
     for d in data.create_dict_iterator(num_epochs=1, output_numpy=True):
         buffer.append({
-            'label': d['label'].item().decode("utf8"),
-            'label_des': d['label_des'].item().decode("utf8"),
-            'sentence': d['sentence'].item().decode("utf8")
+            'label': d['label'],
+            'label_des': d['label_des'],
+            'sentence': d['sentence']
         })
     assert len(buffer) == 3
 
@@ -277,11 +277,11 @@ def test_clue_tnews():
     data = ds.CLUEDataset(train_file, task='TNEWS', usage='train', shuffle=False)
     for d in data.create_dict_iterator(num_epochs=1, output_numpy=True):
         buffer.append({
-            'label': d['label'].item().decode("utf8"),
-            'label_desc': d['label_desc'].item().decode("utf8"),
-            'sentence': d['sentence'].item().decode("utf8"),
+            'label': d['label'],
+            'label_desc': d['label_desc'],
+            'sentence': d['sentence'],
             'keywords':
-                d['keywords'].item().decode("utf8") if d['keywords'].size > 0 else d['keywords']
+                d['keywords'] if d['keywords'].size > 0 else d['keywords']
         })
     assert len(buffer) == 3
 
@@ -291,9 +291,9 @@ def test_clue_tnews():
     for d in data.create_dict_iterator(num_epochs=1, output_numpy=True):
         buffer.append({
             'id': d['id'],
-            'sentence': d['sentence'].item().decode("utf8"),
+            'sentence': d['sentence'],
             'keywords':
-                d['keywords'].item().decode("utf8") if d['keywords'].size > 0 else d['keywords']
+                d['keywords'] if d['keywords'].size > 0 else d['keywords']
         })
     assert len(buffer) == 3
 
@@ -302,11 +302,11 @@ def test_clue_tnews():
     data = ds.CLUEDataset(eval_file, task='TNEWS', usage='eval', shuffle=False)
     for d in data.create_dict_iterator(num_epochs=1, output_numpy=True):
         buffer.append({
-            'label': d['label'].item().decode("utf8"),
-            'label_desc': d['label_desc'].item().decode("utf8"),
-            'sentence': d['sentence'].item().decode("utf8"),
+            'label': d['label'],
+            'label_desc': d['label_desc'],
+            'sentence': d['sentence'],
             'keywords':
-                d['keywords'].item().decode("utf8") if d['keywords'].size > 0 else d['keywords']
+                d['keywords'] if d['keywords'].size > 0 else d['keywords']
         })
     assert len(buffer) == 3
 
@@ -328,11 +328,11 @@ def test_clue_wsc():
         buffer.append({
             'span1_index': d['span1_index'],
             'span2_index': d['span2_index'],
-            'span1_text': d['span1_text'].item().decode("utf8"),
-            'span2_text': d['span2_text'].item().decode("utf8"),
+            'span1_text': d['span1_text'],
+            'span2_text': d['span2_text'],
             'idx': d['idx'],
-            'label': d['label'].item().decode("utf8"),
-            'text': d['text'].item().decode("utf8")
+            'label': d['label'],
+            'text': d['text']
         })
     assert len(buffer) == 3
 
@@ -343,10 +343,10 @@ def test_clue_wsc():
         buffer.append({
             'span1_index': d['span1_index'],
             'span2_index': d['span2_index'],
-            'span1_text': d['span1_text'].item().decode("utf8"),
-            'span2_text': d['span2_text'].item().decode("utf8"),
+            'span1_text': d['span1_text'],
+            'span2_text': d['span2_text'],
             'idx': d['idx'],
-            'text': d['text'].item().decode("utf8")
+            'text': d['text']
         })
     assert len(buffer) == 3
 
@@ -357,11 +357,11 @@ def test_clue_wsc():
         buffer.append({
             'span1_index': d['span1_index'],
             'span2_index': d['span2_index'],
-            'span1_text': d['span1_text'].item().decode("utf8"),
-            'span2_text': d['span2_text'].item().decode("utf8"),
+            'span1_text': d['span1_text'],
+            'span2_text': d['span2_text'],
             'idx': d['idx'],
-            'label': d['label'].item().decode("utf8"),
-            'text': d['text'].item().decode("utf8")
+            'label': d['label'],
+            'text': d['text']
         })
     assert len(buffer) == 3
 

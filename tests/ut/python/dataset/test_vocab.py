@@ -207,7 +207,7 @@ def test_from_list():
     """
     def gen(texts):
         for word in texts.split(" "):
-            yield (np.array(word, dtype='S'),)
+            yield (np.array(word, dtype=np.str_),)
 
     def test_config(lookup_str, vocab_input, special_tokens, special_first, unknown_token):
         try:
@@ -280,7 +280,7 @@ def test_from_file():
     """
     def gen(texts):
         for word in texts.split(" "):
-            yield (np.array(word, dtype='S'),)
+            yield (np.array(word, dtype=np.str_),)
 
     def test_config(lookup_str, vocab_size, special_tokens, special_first):
         try:
@@ -316,7 +316,7 @@ def test_lookup_cast_type():
     """
     def gen(texts):
         for word in texts.split(" "):
-            yield (np.array(word, dtype='S'),)
+            yield (np.array(word, dtype=np.str_),)
 
     def test_config(lookup_str, data_type=None):
         try:

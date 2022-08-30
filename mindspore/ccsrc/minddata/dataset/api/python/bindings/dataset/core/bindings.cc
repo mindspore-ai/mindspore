@@ -93,23 +93,11 @@ PYBIND_REGISTER(Tensor, 0, ([](const py::module *m) {
                     .def("__str__", &Tensor::ToString)
                     .def("shape", &Tensor::shape)
                     .def("type", &Tensor::type)
-                    .def("as_array",
-                         [](py::object &t) {
-                           auto &tensor = py::cast<Tensor &>(t);
-                           if (tensor.type() == DataType::DE_STRING) {
-                             py::array res;
-                             THROW_IF_ERROR(tensor.GetDataAsNumpyStrings(&res));
-                             return res;
-                           }
-                           py::buffer_info info;
-                           THROW_IF_ERROR(Tensor::GetBufferInfo(&tensor, &info));
-                           return py::array(pybind11::dtype(info), info.shape, info.strides, info.ptr, t);
-                         })
-                    .def("as_decoded_array", [](py::object &t) {
+                    .def("as_array", [](py::object &t) {
                       auto &tensor = py::cast<Tensor &>(t);
-                      if (tensor.type() == DataType::DE_STRING) {
+                      if (tensor.type().IsString()) {
                         py::array res;
-                        THROW_IF_ERROR(tensor.GetDataAsNumpyUnicodeStrings(&res));
+                        THROW_IF_ERROR(tensor.GetDataAsNumpyStrings(&res));
                         return res;
                       }
                       py::buffer_info info;

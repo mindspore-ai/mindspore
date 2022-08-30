@@ -89,8 +89,8 @@ Status TensorRow::ValidateTensorRow(const TensorRow &input, const DataType &data
   if (data_type == DataType::DE_UNKNOWN) {
     RETURN_STATUS_UNEXPECTED("ConvertFromTensorRow: Data type was not recognized.");
   }
-  if (data_type == DataType::DE_STRING) {
-    RETURN_STATUS_UNEXPECTED("ConvertFromTensorRow: Data type string is not supported.");
+  if (data_type.IsString()) {
+    RETURN_STATUS_UNEXPECTED("ConvertFromTensorRow: Data type string and bytes are not supported.");
   }
   if (input.size() != 1) {
     RETURN_STATUS_UNEXPECTED("ConvertFromTensorRow: The input TensorRow must have exactly one tensor.");

@@ -60,7 +60,7 @@ def test_enwik9_total_rows_dataset_shuffle_false_parallel_worker_two():
             "    </revision>",
             "  </page>"]
     for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        strs = i["text"].item().decode("utf8")
+        strs = i["text"]
         assert strs == line[count]
         count += 1
     assert count == 13
@@ -93,7 +93,7 @@ def test_enwik9_total_rows_dataset_shuffle_false_parallel_worker_one():
             "    </revision>",
             "  </page>"]
     for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        strs = i["text"].item().decode("utf8")
+        strs = i["text"]
         assert strs == line[count]
         count += 1
     assert count == 13
@@ -126,7 +126,7 @@ def test_enwik9_total_rows_dataset_shuffle_true_parallel_worker_two():
             "      <text xml:space=\"preserve\">666</text>",
             "      <contributor>"]
     for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        strs = i["text"].item().decode("utf8")
+        strs = i["text"]
         assert strs == line[count]
         count += 1
     assert count == 13
@@ -159,7 +159,7 @@ def test_enwik9_total_rows_dataset_shuffle_true_parallel_worker_one():
             "      <text xml:space=\"preserve\">666</text>",
             "      <contributor>"]
     for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        strs = i["text"].item().decode("utf8")
+        strs = i["text"]
         assert strs == line[count]
         count += 1
     assert count == 13
@@ -230,7 +230,7 @@ def test_enwik9_total_rows_dataset_repeat():
             "    </revision>",
             "  </page>"]
     for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        strs = i["text"].item().decode("utf8")
+        strs = i["text"]
         assert strs == line[count]
         count += 1
     assert count == 26

@@ -1375,7 +1375,7 @@ def test_write_with_multi_bytes_and_array_and_read_by_MindDataset():
         data_value_to_list = []
         for item in data:
             new_data = {}
-            new_data['file_name'] = np.asarray(item["file_name"], dtype='S')
+            new_data['file_name'] = np.asarray(item["file_name"], dtype=np.str_)
             new_data['label'] = np.asarray(list([item["label"]]), dtype=np.int32)
             new_data['image1'] = np.asarray(list(item["image1"]), dtype=np.uint8)
             new_data['image2'] = np.asarray(list(item["image2"]), dtype=np.uint8)
@@ -1589,7 +1589,7 @@ def test_write_with_multi_bytes_and_MindDataset():
         data_value_to_list = []
         for item in data:
             new_data = {}
-            new_data['file_name'] = np.asarray(item["file_name"], dtype='S')
+            new_data['file_name'] = np.asarray(item["file_name"], dtype=np.str_)
             new_data['label'] = np.asarray(list([item["label"]]), dtype=np.int32)
             new_data['image1'] = np.asarray(list(item["image1"]), dtype=np.uint8)
             new_data['image2'] = np.asarray(list(item["image2"]), dtype=np.uint8)

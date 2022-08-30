@@ -49,6 +49,7 @@ Status SerializeOneTensorMeta(const std::shared_ptr<flatbuffers::FlatBufferBuild
     CASE(DE_FLOAT32);
     CASE(DE_FLOAT64);
     CASE(DE_STRING);
+    CASE(DE_BYTES);
     default:
       MS_LOG(ERROR) << "Unknown tensor. Dumping content:\n" << *ts;
       RETURN_STATUS_UNEXPECTED("Unknown type");
@@ -130,6 +131,7 @@ Status RestoreOneTensor(const TensorMetaMsg *col_ts, const ReadableSlice &data, 
     CASE(DE_FLOAT32);
     CASE(DE_FLOAT64);
     CASE(DE_STRING);
+    CASE(DE_BYTES);
   }
 #undef CASE
 

@@ -23,17 +23,19 @@ def test_tensor_empty():
     Description: Test empty tensor using GeneratorDataset
     Expectation: Output is equal to the expected output
     """
+
     def gen():
         for _ in range(4):
-            (yield np.array([], dtype=np.int64), np.array([], dtype='S').reshape([0, 4]), np.array([1],
-                                                                                                   dtype=np.float64))
+            yield (np.array([], dtype=np.int64), np.array([1], dtype=np.float64),
+                   np.array([], dtype=np.str_).reshape([0, 4]), np.array([], dtype=np.bytes_).reshape([1, 0]))
 
-    data = ds.GeneratorDataset(gen, column_names=["col1", "col2", "col3"])
+    data = ds.GeneratorDataset(gen, column_names=["int64", "float64", "str", "bytes"])
 
     for d in data.create_tuple_iterator(num_epochs=1, output_numpy=True):
         np.testing.assert_array_equal(np.array([], dtype=np.int64), d[0])
-        np.testing.assert_array_equal(np.array([], dtype='S').reshape([0, 4]), d[1])
-        np.testing.assert_array_equal(np.array([1], dtype=np.float64), d[2])
+        np.testing.assert_array_equal(np.array([1], dtype=np.float64), d[1])
+        np.testing.assert_array_equal(np.array([], dtype=np.str_).reshape([0, 4]), d[2])
+        np.testing.assert_array_equal(np.array([], dtype=np.bytes_).reshape([1, 0]), d[3])
 
 
 def test_tensor_empty_map():
@@ -42,6 +44,7 @@ def test_tensor_empty_map():
     Description: Test empty tensor using GeneratorDataset and map it using a function op
     Expectation: Output is equal to the expected output
     """
+
     def gen():
         for _ in range(4):
             (yield np.array([], dtype=np.int64), np.array([], dtype='S'), np.array([1], dtype=np.float64))
@@ -68,6 +71,7 @@ def test_tensor_empty_batch():
     Description: Test empty tensor using GeneratorDataset and apply batch op
     Expectation: Output is equal to the expected output
     """
+
     def gen():
         for _ in range(4):
             (yield np.array([], dtype=np.int64), np.array([], dtype='S').reshape([0, 4]), np.array([1],
