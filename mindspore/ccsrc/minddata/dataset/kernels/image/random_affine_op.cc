@@ -19,6 +19,11 @@
 #include <cmath>
 #include <limits>
 
+#ifndef ENABLE_ANDROID
+#include "minddata/dataset/kernels/image/image_utils.h"
+#else
+#include "minddata/dataset/kernels/image/lite_image_utils.h"
+#endif
 #include "minddata/dataset/kernels/image/math_utils.h"
 #include "minddata/dataset/util/random.h"
 
@@ -35,13 +40,12 @@ const std::vector<uint8_t> RandomAffineOp::kFillValue = {0, 0, 0};
 RandomAffineOp::RandomAffineOp(std::vector<float_t> degrees, std::vector<float_t> translate_range,
                                std::vector<float_t> scale_range, std::vector<float_t> shear_ranges,
                                InterpolationMode interpolation, std::vector<uint8_t> fill_value)
-    : AffineOp(0.0),
-      degrees_range_(degrees),
+    : degrees_range_(degrees),
       translate_range_(translate_range),
       scale_range_(scale_range),
-      shear_ranges_(shear_ranges) {
-  interpolation_ = interpolation;
-  fill_value_ = fill_value;
+      shear_ranges_(shear_ranges),
+      interpolation_(interpolation),
+      fill_value_(fill_value) {
   rnd_.seed(GetSeed());
   is_deterministic_ = false;
 }
@@ -81,13 +85,12 @@ Status RandomAffineOp::Compute(const std::shared_ptr<Tensor> &input, std::shared
   float_t shear_y = 0.0;
   RETURN_IF_NOT_OK(GenerateRealNumber(shear_ranges_[2], shear_ranges_[3], &rnd_, &shear_y));
   // assign to base class variables
-  degrees_ = fmod(degrees, 360.0);
-  scale_ = scale;
-  translation_[0] = translation_x;
-  translation_[1] = translation_y;
-  shear_[0] = shear_x;
-  shear_[1] = shear_y;
-  return AffineOp::Compute(input, output);
+  degrees = fmod(degrees, 360.0);
+  std::vector<float_t> translation(2);
+  translation = {translation_x, translation_y};
+  std::vector<float_t> shear(2);
+  shear = {shear_x, shear_y};
+  return Affine(input, output, degrees, translation, scale, shear, interpolation_, fill_value_);
 }
 }  // namespace dataset
 }  // namespace mindspore

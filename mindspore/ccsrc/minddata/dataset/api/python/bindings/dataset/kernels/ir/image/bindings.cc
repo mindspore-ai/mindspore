@@ -26,6 +26,7 @@
 #include "minddata/dataset/kernels/ir/vision/adjust_hue_ir.h"
 #include "minddata/dataset/kernels/ir/vision/adjust_saturation_ir.h"
 #include "minddata/dataset/kernels/ir/vision/adjust_sharpness_ir.h"
+#include "minddata/dataset/kernels/ir/vision/affine_ir.h"
 #include "minddata/dataset/kernels/ir/vision/auto_augment_ir.h"
 #include "minddata/dataset/kernels/ir/vision/auto_contrast_ir.h"
 #include "minddata/dataset/kernels/ir/vision/bounding_box_augment_ir.h"
@@ -145,6 +146,19 @@ PYBIND_REGISTER(AdjustSharpnessOperation, 1, ([](const py::module *m) {
                       auto adjust_sharpness = std::make_shared<vision::AdjustSharpnessOperation>(sharpness_factor);
                       THROW_IF_ERROR(adjust_sharpness->ValidateParams());
                       return adjust_sharpness;
+                    }));
+                }));
+
+PYBIND_REGISTER(AffineOperation, 1, ([](const py::module *m) {
+                  (void)py::class_<vision::AffineOperation, TensorOperation, std::shared_ptr<vision::AffineOperation>>(
+                    *m, "AffineOperation")
+                    .def(py::init([](float degrees, const std::vector<float> &translation, float scale,
+                                     const std::vector<float> &shear, InterpolationMode interpolation,
+                                     const std::vector<uint8_t> &fill_value) {
+                      auto affine = std::make_shared<vision::AffineOperation>(degrees, translation, scale, shear,
+                                                                              interpolation, fill_value);
+                      THROW_IF_ERROR(affine->ValidateParams());
+                      return affine;
                     }));
                 }));
 

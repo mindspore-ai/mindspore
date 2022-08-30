@@ -63,16 +63,16 @@ from . import py_transforms_util as util
 from .py_transforms_util import is_pil
 from .utils import AutoAugmentPolicy, Border, ConvertMode, ImageBatchFormat, Inter, SliceMode, parse_padding
 from .validators import check_adjust_brightness, check_adjust_contrast, check_adjust_gamma, check_adjust_hue, \
-    check_adjust_saturation, check_adjust_sharpness, check_alpha, check_auto_augment, check_auto_contrast, \
-    check_bounding_box_augment_cpp, check_center_crop, check_convert_color, check_crop, check_cut_mix_batch_c, \
-    check_cutout_new, check_decode, check_erase, check_five_crop, check_gaussian_blur, check_hsv_to_rgb, \
-    check_linear_transform, check_mix_up, check_mix_up_batch_c, check_normalize, check_normalizepad, \
-    check_num_channels, check_pad, check_pad_to_size, check_positive_degrees, check_posterize, check_prob, \
-    check_random_adjust_sharpness, check_random_affine, check_random_auto_contrast, check_random_color_adjust, \
-    check_random_crop, check_random_erasing, check_random_perspective, check_random_posterize, \
-    check_random_resize_crop, check_random_rotation, check_random_select_subpolicy_op, check_random_solarize, \
-    check_range, check_rescale, check_resize, check_resize_interpolation, check_resized_crop, check_rgb_to_hsv, \
-    check_rotate, check_slice_patches, check_solarize, check_ten_crop, check_trivial_augment_wide, \
+    check_adjust_saturation, check_adjust_sharpness, check_affine, check_alpha, check_auto_augment, \
+    check_auto_contrast, check_bounding_box_augment_cpp, check_center_crop, check_convert_color, check_crop, \
+    check_cut_mix_batch_c, check_cutout_new, check_decode, check_erase, check_five_crop, check_gaussian_blur, \
+    check_hsv_to_rgb, check_linear_transform, check_mix_up, check_mix_up_batch_c, check_normalize, \
+    check_normalizepad, check_num_channels, check_pad, check_pad_to_size, check_positive_degrees, check_posterize, \
+    check_prob, check_random_adjust_sharpness, check_random_affine, check_random_auto_contrast, \
+    check_random_color_adjust, check_random_crop, check_random_erasing, check_random_perspective, \
+    check_random_posterize, check_random_resize_crop, check_random_rotation, check_random_select_subpolicy_op, \
+    check_random_solarize, check_range, check_rescale, check_resize, check_resize_interpolation, check_resized_crop, \
+    check_rgb_to_hsv, check_rotate, check_slice_patches, check_solarize, check_ten_crop, check_trivial_augment_wide, \
     check_uniform_augment, check_to_tensor, FLOAT_MAX_INTEGER
 from ..core.datatypes import mstype_to_detype, nptype_to_detype
 from ..transforms.py_transforms_util import Implementation
@@ -357,6 +357,80 @@ class AdjustSharpness(ImageTensorOperation):
 
     def parse(self):
         return cde.AdjustSharpnessOperation(self.sharpness_factor)
+
+
+class Affine(ImageTensorOperation):
+    """
+    Apply Affine transformation to the input image, keeping the center of the image unchanged.
+
+    Args:
+        degrees (float): Rotation angle in degrees between -180 and 180, clockwise direction.
+        translate (Sequence): The horizontal and vertical translations, must be a sequence of size 2.
+        scale (float): Scaling factor, which must be positive.
+        shear (Union[float, Sequence]): Shear angle value in degrees between -180 to 180.
+            If a number is provided, a shearing parallel to X axis with a factor selected from
+            (- `shear` , `shear` ) will be applied.
+            If a sequence is provided, a shearing parallel to X axis with a factor selected
+            from ( `shear` [0], `shear` [1]) will be applied.
+        resample (Inter, optional): An optional resampling filter. Default: Inter.NEAREST.
+            It can be any of [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC, Inter.AREA].
+
+            - Inter.BILINEAR, means resample method is bilinear interpolation.
+
+            - Inter.NEAREST, means resample method is nearest-neighbor interpolation.
+
+            - Inter.BICUBIC, means resample method is bicubic interpolation.
+
+            - Inter.AREA, means resample method is pixel area interpolation.
+
+        fill_value (Union[int, tuple[int, int, int]], optional): Optional fill_value to fill the area
+            outside the transform in the output image. There must be three elements in tuple and the value
+            of single element is [0, 255]. Default: 0.
+
+    Raises:
+        TypeError: If `degrees` is not of type float.
+        TypeError: If `translate` is not of type Sequence[float, float].
+        TypeError: If `scale` is not of type float.
+        TypeError: If `shear` is not of float or Sequence[float, float].
+        TypeError: If `resample` is not of type :class:`mindspore.dataset.vision.Inter` .
+        TypeError: If `fill_value` is not of type int or tuple[int, int, int].
+        ValueError: If `scale` is non positive.
+        RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> from mindspore.dataset.vision import Inter
+        >>>
+        >>> decode_op = vision.Decode()
+        >>> affine_op = vision.Affine(degrees=15, translate=[0.2, 0.2], scale=1.1, shear=[1.0, 1.0],
+        ...                           resample=Inter.BILINEAR)
+        >>> affine_list = [decode_op, affine_op]
+        >>> image_folder_dataset = image_folder_dataset.map(operations=affine_list, input_columns=["image"])
+    """
+
+    @check_affine
+    def __init__(self, degrees, translate, scale, shear, resample=Inter.NEAREST, fill_value=0):
+        super().__init__()
+        # Parameter checking
+        if isinstance(shear, numbers.Number):
+            shear = (shear, 0.)
+
+        if isinstance(fill_value, numbers.Number):
+            fill_value = (fill_value, fill_value, fill_value)
+
+        self.degrees = degrees
+        self.translate = translate
+        self.scale_ = scale
+        self.shear = shear
+        self.resample = Inter.to_c_type(resample)
+        self.fill_value = fill_value
+        self.implementation = Implementation.C
+
+    def parse(self):
+        return cde.AffineOperation(self.degrees, self.translate, self.scale_, self.shear, self.resample,
+                                   self.fill_value)
 
 
 class AutoAugment(ImageTensorOperation):

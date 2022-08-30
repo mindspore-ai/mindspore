@@ -43,6 +43,9 @@ constexpr dsize_t kMinImageRank = 2;      // images have at least 2 dimensions
 constexpr int32_t kMaxPixelValue = 255;
 constexpr dsize_t kHeightIndex = 0;  // index of height of HWC images
 constexpr dsize_t kWidthIndex = 1;   // index of width of HWC images
+constexpr dsize_t kRIndex = 0;       // index of red channel in RGB format
+constexpr dsize_t kGIndex = 1;       // index of green channel in RGB format
+constexpr dsize_t kBIndex = 2;       // index of blue channel in RGB format
 
 void JpegErrorExitCustom(j_common_ptr cinfo);
 
@@ -146,16 +149,28 @@ Status Pad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output
 /// \param[in] orientation The orientation of EXIF
 Status Rotate(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const uint64_t orientation);
 
+/// \brief Get an affine matrix that applies affine transformation
+/// \param[in] input Input Tensor
+/// \param[in] matrix The transformation matrix
+/// \param[in] degrees Range of the rotation degrees
+/// \param[in] translation The horizontal and vertical translations
+/// \param[in] scale The scaling factor
+/// \param[in] shear The shear angle
+Status GetAffineMatrix(const std::shared_ptr<Tensor> &input, std::vector<float_t> *matrix, float_t degrees,
+                       const std::vector<float_t> &translation, float_t scale, const std::vector<float_t> &shear);
+
 /// \brief Geometrically transform the input image
 /// \param[in] input Input Tensor
 /// \param[out] output Transformed Tensor
-/// \param[in] mat The transformation matrix
-/// \param[in] interpolation The interpolation mode, support only bilinear for now
-/// \param[in] fill_r Red fill value for pad
-/// \param[in] fill_g Green fill value for pad
-/// \param[in] fill_b Blue fill value for pad
-Status Affine(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const std::vector<float_t> &mat,
-              InterpolationMode interpolation, uint8_t fill_r = 0, uint8_t fill_g = 0, uint8_t fill_b = 0);
+/// \param[in] degrees Range of the rotation degrees
+/// \param[in] translation The horizontal and vertical translations
+/// \param[in] scale The scaling factor
+/// \param[in] shear The shear angle
+/// \param[in] interpolation The interpolation mode
+/// \param[in] fill_value Fill value for pad
+Status Affine(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float_t degrees,
+              const std::vector<float_t> &translation, float_t scale, const std::vector<float_t> &shear,
+              InterpolationMode interpolation, const std::vector<uint8_t> &fill_value);
 
 /// \brief Filter the input image with a Gaussian kernel
 /// \param[in] input Input Tensor

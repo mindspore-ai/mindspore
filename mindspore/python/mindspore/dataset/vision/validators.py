@@ -29,6 +29,41 @@ from mindspore.dataset.transforms.validators import check_transform_op_type
 from .utils import Inter, Border, ImageBatchFormat, ConvertMode, SliceMode, AutoAugmentPolicy
 
 
+def check_affine(method):
+    """Wrapper method to check the parameters of Affine."""
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [degrees, translate, scale, shear, resample, fill_value], _ = parse_user_args(method, *args, **kwargs)
+
+        type_check(degrees, (int, float), "degrees")
+        check_degrees(degrees)
+
+        type_check(translate, (list, tuple), "translate")
+        if len(translate) != 2:
+            raise TypeError("The length of translate should be 2.")
+        for i, t in enumerate(translate):
+            type_check(t, (int, float), "translate[{}]".format(i))
+            check_value(t, [-1.0, 1.0], "translate[{}]".format(i))
+
+        type_check(scale, (int, float), "scale")
+        check_positive(scale, "scale")
+
+        type_check(shear, (numbers.Number, tuple, list), "shear")
+        if isinstance(shear, (list, tuple)):
+            if len(shear) != 2:
+                raise TypeError("The length of shear should be 2.")
+            for i, _ in enumerate(shear):
+                type_check(shear[i], (int, float), "shear[{}]".format(i))
+
+        type_check(resample, (Inter,), "resample")
+
+        check_fill_value(fill_value)
+
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
 def check_crop_size(size):
     """Wrapper method to check the parameters of crop size."""
     type_check(size, (int, list, tuple), "size")

@@ -48,6 +48,8 @@ Status AffineOperation::ValidateParams() {
   RETURN_IF_NOT_OK(ValidateScalar("Affine", "translate", translation_[0], {-1, 1}, false, false));
   RETURN_IF_NOT_OK(ValidateScalar("Affine", "translate", translation_[1], {-1, 1}, false, false));
 
+  // Scale
+  RETURN_IF_NOT_OK(ValidateScalar("Affine", "scale", scale_, {0}, true));
   // Shear
   constexpr size_t kExpectedShearSize = 2;
   if (shear_.size() != kExpectedShearSize) {
