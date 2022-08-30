@@ -36,7 +36,7 @@ class TensorOperation;
 // Transform operations for performing computer vision.
 namespace vision {
 /// \brief Apply brightness adjustment on input image.
-class MS_API AdjustBrightness final : public TensorTransform {
+class DATASET_API AdjustBrightness final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] brightness_factor Adjusts image brightness, non negative real number.
@@ -66,7 +66,7 @@ class MS_API AdjustBrightness final : public TensorTransform {
 };
 
 /// \brief Apply contrast adjustment on input image.
-class MS_API AdjustContrast final : public TensorTransform {
+class DATASET_API AdjustContrast final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] contrast_factor Adjusts image contrast, non negative real number.
@@ -97,7 +97,7 @@ class MS_API AdjustContrast final : public TensorTransform {
 
 /// \brief AdjustGamma TensorTransform.
 /// \note Apply gamma correction on input image.
-class MS_API AdjustGamma final : public TensorTransform {
+class DATASET_API AdjustGamma final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] gamma Non negative real number, which makes the output image pixel value
@@ -129,7 +129,7 @@ class MS_API AdjustGamma final : public TensorTransform {
 };
 
 /// \note Apply hue adjustment on input image.
-class MS_API AdjustHue final : public TensorTransform {
+class DATASET_API AdjustHue final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] hue_factor How much to shift the hue channel, must be in the interval [-0.5, 0.5].
@@ -159,7 +159,7 @@ class MS_API AdjustHue final : public TensorTransform {
 };
 
 /// \brief Adjust the color saturation of the input image.
-class MS_API AdjustSaturation final : public TensorTransform {
+class DATASET_API AdjustSaturation final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] saturation_factor Adjust image saturation, non negative real number.
@@ -189,7 +189,7 @@ class MS_API AdjustSaturation final : public TensorTransform {
 };
 
 /// \brief Apply adjust sharpness on input image. Input image is expected to be in [H, W, C] or [H, W] format.
-class MS_API AdjustSharpness final : public TensorTransform {
+class DATASET_API AdjustSharpness final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] sharpness_factor How much to adjust the sharpness. Can be any Non negative real number.
@@ -220,7 +220,7 @@ class MS_API AdjustSharpness final : public TensorTransform {
 };
 
 /// \brief Apply AutoAugment data augmentation method.
-class MS_API AutoAugment final : public TensorTransform {
+class DATASET_API AutoAugment final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] policy An enum for the data auto augmentation policy (default=AutoAugmentPolicy::kImageNet).
@@ -261,7 +261,7 @@ class MS_API AutoAugment final : public TensorTransform {
 };
 
 /// \brief Apply automatic contrast on the input image.
-class MS_API AutoContrast final : public TensorTransform {
+class DATASET_API AutoContrast final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] cutoff Percent of pixels to cut off from the histogram, the valid range of cutoff value is 0 to 50.
@@ -293,7 +293,7 @@ class MS_API AutoContrast final : public TensorTransform {
 
 /// \brief BoundingBoxAugment TensorTransform.
 /// \note  Apply a given image transform on a random selection of bounding box regions of a given image.
-class MS_API BoundingBoxAugment final : public TensorTransform {
+class DATASET_API BoundingBoxAugment final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] transform Raw pointer to the TensorTransform operation.
@@ -354,7 +354,7 @@ class MS_API BoundingBoxAugment final : public TensorTransform {
 };
 
 /// \brief Change the color space of the image.
-class MS_API ConvertColor final : public TensorTransform {
+class DATASET_API ConvertColor final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] convert_mode The mode of image channel conversion.
@@ -382,7 +382,7 @@ class MS_API ConvertColor final : public TensorTransform {
 
 /// \brief Mask a random section of each image with the corresponding part of another randomly
 ///     selected image in that batch.
-class MS_API CutMixBatch final : public TensorTransform {
+class DATASET_API CutMixBatch final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] image_batch_format The format of the batch.
@@ -411,7 +411,7 @@ class MS_API CutMixBatch final : public TensorTransform {
 };
 
 /// \brief Randomly cut (mask) out a given number of square patches from the input image.
-class MS_API CutOut final : public TensorTransform {
+class DATASET_API CutOut final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] length Integer representing the side length of each square patch.
@@ -441,7 +441,7 @@ class MS_API CutOut final : public TensorTransform {
 };
 
 /// \brief Apply histogram equalization on the input image.
-class MS_API Equalize final : public TensorTransform {
+class DATASET_API Equalize final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \par Example
@@ -463,7 +463,7 @@ class MS_API Equalize final : public TensorTransform {
 };
 
 /// \brief Erase the input image with given value.
-class MS_API Erase final : public TensorTransform {
+class DATASET_API Erase final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] top Vertical ordinate of the upper left corner of erased region.
@@ -501,16 +501,16 @@ class MS_API Erase final : public TensorTransform {
 /// \param[in] image Tensor of the image.
 /// \param[out] channels Channels of the image.
 /// \return The status code.
-Status MS_API GetImageNumChannels(const mindspore::MSTensor &image, dsize_t *channels);
+Status DATASET_API GetImageNumChannels(const mindspore::MSTensor &image, dsize_t *channels);
 
 /// \brief Get the size of input image.
 /// \param[in] image Tensor of the image.
 /// \param[out] size Size of the image as [height, width].
 /// \return The status code.
-Status MS_API GetImageSize(const mindspore::MSTensor &image, std::vector<dsize_t> *size);
+Status DATASET_API GetImageSize(const mindspore::MSTensor &image, std::vector<dsize_t> *size);
 
 /// \brief Flip the input image horizontally.
-class MS_API HorizontalFlip final : public TensorTransform {
+class DATASET_API HorizontalFlip final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \par Example
@@ -532,7 +532,7 @@ class MS_API HorizontalFlip final : public TensorTransform {
 };
 
 /// \brief Apply invert on the input image in RGB mode.
-class MS_API Invert final : public TensorTransform {
+class DATASET_API Invert final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \par Example
@@ -555,7 +555,7 @@ class MS_API Invert final : public TensorTransform {
 
 /// \brief Apply MixUp transformation on an input batch of images and labels. The labels must be in
 ///     one-hot format and Batch must be called before calling this function.
-class MS_API MixUpBatch final : public TensorTransform {
+class DATASET_API MixUpBatch final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] alpha hyperparameter of beta distribution (default = 1.0).
@@ -583,7 +583,7 @@ class MS_API MixUpBatch final : public TensorTransform {
 
 /// \brief Normalize the input image with respect to mean and standard deviation and pads an extra
 ///     channel with value zero.
-class MS_API NormalizePad final : public TensorTransform {
+class DATASET_API NormalizePad final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] mean A vector of mean values for each channel, with respect to channel order.
@@ -625,7 +625,7 @@ class MS_API NormalizePad final : public TensorTransform {
 };
 
 /// \brief Pad the image according to padding parameters.
-class MS_API Pad final : public TensorTransform {
+class DATASET_API Pad final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] padding A vector representing the number of pixels to pad the image.
@@ -675,7 +675,7 @@ class MS_API Pad final : public TensorTransform {
 };
 
 /// \brief Pad the image to a fixed size.
-class MS_API PadToSize final : public TensorTransform {
+class DATASET_API PadToSize final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] size A two element vector representing the target size to pad, in order of [height, width].
@@ -717,7 +717,7 @@ class MS_API PadToSize final : public TensorTransform {
 };
 
 /// \brief Posterize an image by reducing the number of bits for each color channel.
-class MS_API Posterize final : public TensorTransform {
+class DATASET_API Posterize final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] bits The number of bits to keep for each channel,
@@ -748,7 +748,7 @@ class MS_API Posterize final : public TensorTransform {
 };
 
 /// \brief Automatically adjust the contrast of the image with a given probability.
-class MS_API RandomAutoContrast final : public TensorTransform {
+class DATASET_API RandomAutoContrast final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] cutoff Percent of the lightest and darkest pixels to be cut off from
@@ -783,7 +783,7 @@ class MS_API RandomAutoContrast final : public TensorTransform {
 };
 
 /// \brief Randomly adjust the sharpness of the input image with a given probability.
-class MS_API RandomAdjustSharpness final : public TensorTransform {
+class DATASET_API RandomAdjustSharpness final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] degree A float representing sharpness adjustment degree, which must be non negative.
@@ -817,7 +817,7 @@ class MS_API RandomAdjustSharpness final : public TensorTransform {
 /// \brief Blend an image with its grayscale version with random weights
 ///        t and 1 - t generated from a given range. If the range is trivial
 ///        then the weights are determinate and t equals to the bound of the interval.
-class MS_API RandomColor final : public TensorTransform {
+class DATASET_API RandomColor final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] t_lb Lower bound random weights.
@@ -848,7 +848,7 @@ class MS_API RandomColor final : public TensorTransform {
 };
 
 /// \brief Randomly adjust the brightness, contrast, saturation, and hue of the input image.
-class MS_API RandomColorAdjust final : public TensorTransform {
+class DATASET_API RandomColorAdjust final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] brightness Brightness adjustment factor. Must be a vector of one or two values
@@ -889,7 +889,7 @@ class MS_API RandomColorAdjust final : public TensorTransform {
 };
 
 /// \brief Crop the input image at a random location.
-class MS_API RandomCrop final : public TensorTransform {
+class DATASET_API RandomCrop final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] size A vector representing the output size of the cropped image.
@@ -945,7 +945,7 @@ class MS_API RandomCrop final : public TensorTransform {
 };
 
 /// \brief Equivalent to RandomResizedCrop TensorTransform, but crop the image before decoding.
-class MS_API RandomCropDecodeResize final : public TensorTransform {
+class DATASET_API RandomCropDecodeResize final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] size A vector representing the output size of the cropped image.
@@ -992,7 +992,7 @@ class MS_API RandomCropDecodeResize final : public TensorTransform {
 
 /// \brief Crop the input image at a random location and adjust bounding boxes accordingly.
 ///        If the cropped area is out of bbox, the returned bbox will be empty.
-class MS_API RandomCropWithBBox final : public TensorTransform {
+class DATASET_API RandomCropWithBBox final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] size A vector representing the output size of the cropped image.
@@ -1046,7 +1046,7 @@ class MS_API RandomCropWithBBox final : public TensorTransform {
 };
 
 /// \brief Randomly apply histogram equalization on the input image with a given probability.
-class MS_API RandomEqualize final : public TensorTransform {
+class DATASET_API RandomEqualize final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] prob A float representing the probability of equalization, which
@@ -1077,7 +1077,7 @@ class MS_API RandomEqualize final : public TensorTransform {
 };
 
 /// \brief Randomly flip the input image horizontally with a given probability.
-class MS_API RandomHorizontalFlip final : public TensorTransform {
+class DATASET_API RandomHorizontalFlip final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] prob A float representing the probability of flip.
@@ -1107,7 +1107,7 @@ class MS_API RandomHorizontalFlip final : public TensorTransform {
 };
 
 /// \brief Randomly flip the input image horizontally with a given probability and adjust bounding boxes accordingly.
-class MS_API RandomHorizontalFlipWithBBox final : public TensorTransform {
+class DATASET_API RandomHorizontalFlipWithBBox final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] prob A float representing the probability of flip.
@@ -1136,7 +1136,7 @@ class MS_API RandomHorizontalFlipWithBBox final : public TensorTransform {
 };
 
 /// \brief Randomly invert the input image with a given probability.
-class MS_API RandomInvert final : public TensorTransform {
+class DATASET_API RandomInvert final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] prob A float representing the probability of the image being inverted, which
@@ -1167,7 +1167,7 @@ class MS_API RandomInvert final : public TensorTransform {
 };
 
 /// \brief Add AlexNet-style PCA-based noise to an image.
-class MS_API RandomLighting final : public TensorTransform {
+class DATASET_API RandomLighting final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] alpha A float representing the intensity of the image (default=0.05).
@@ -1197,7 +1197,7 @@ class MS_API RandomLighting final : public TensorTransform {
 };
 
 /// \brief Reduce the number of bits for each color channel randomly.
-class MS_API RandomPosterize final : public TensorTransform {
+class DATASET_API RandomPosterize final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] bit_range Range of random posterize to compress image.
@@ -1228,7 +1228,7 @@ class MS_API RandomPosterize final : public TensorTransform {
 };
 
 /// \brief Resize the input image using a randomly selected interpolation mode.
-class MS_API RandomResize final : public TensorTransform {
+class DATASET_API RandomResize final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] size A vector representing the output size of the resized image.
@@ -1261,7 +1261,7 @@ class MS_API RandomResize final : public TensorTransform {
 
 /// \brief Resize the input image using a randomly selected interpolation mode and adjust
 ///     bounding boxes accordingly.
-class MS_API RandomResizeWithBBox final : public TensorTransform {
+class DATASET_API RandomResizeWithBBox final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] size A vector representing the output size of the resized image.
@@ -1292,7 +1292,7 @@ class MS_API RandomResizeWithBBox final : public TensorTransform {
 };
 
 /// \brief Crop the input image to a random size and aspect ratio.
-class MS_API RandomResizedCrop final : public TensorTransform {
+class DATASET_API RandomResizedCrop final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] size A vector representing the output size of the cropped image.
@@ -1340,7 +1340,7 @@ class MS_API RandomResizedCrop final : public TensorTransform {
 
 /// \brief Crop the input image to a random size and aspect ratio.
 ///        If cropped area is out of bbox, the return bbox will be empty.
-class MS_API RandomResizedCropWithBBox final : public TensorTransform {
+class DATASET_API RandomResizedCropWithBBox final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] size A vector representing the output size of the cropped image.
@@ -1387,7 +1387,7 @@ class MS_API RandomResizedCropWithBBox final : public TensorTransform {
 };
 
 /// \brief Rotate the image according to parameters.
-class MS_API RandomRotation final : public TensorTransform {
+class DATASET_API RandomRotation final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] degrees A float vector of size 2, representing the starting and ending degrees.
@@ -1434,7 +1434,7 @@ class MS_API RandomRotation final : public TensorTransform {
 ///     (operation, prob), where operation is a TensorTransform operation and prob is the probability that this
 ///     operation will be applied. Once a sub-policy is selected, each operation within the sub-policy with be
 ///     applied in sequence according to its probability.
-class MS_API RandomSelectSubpolicy final : public TensorTransform {
+class DATASET_API RandomSelectSubpolicy final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] policy Vector of sub-policies to choose from, in which the TensorTransform objects are raw pointers.
@@ -1509,7 +1509,7 @@ class MS_API RandomSelectSubpolicy final : public TensorTransform {
 };
 
 /// \brief Adjust the sharpness of the input image by a fixed or random degree.
-class MS_API RandomSharpness final : public TensorTransform {
+class DATASET_API RandomSharpness final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] degrees A float vector of size 2, representing the range of random sharpness
@@ -1541,7 +1541,7 @@ class MS_API RandomSharpness final : public TensorTransform {
 };
 
 /// \brief Invert pixels randomly within a specified range.
-class MS_API RandomSolarize final : public TensorTransform {
+class DATASET_API RandomSolarize final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] threshold A vector with two elements specifying the pixel range to invert.
@@ -1573,7 +1573,7 @@ class MS_API RandomSolarize final : public TensorTransform {
 };
 
 /// \brief Randomly flip the input image vertically with a given probability.
-class MS_API RandomVerticalFlip final : public TensorTransform {
+class DATASET_API RandomVerticalFlip final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] prob A float representing the probability of flip.
@@ -1603,7 +1603,7 @@ class MS_API RandomVerticalFlip final : public TensorTransform {
 };
 
 /// \brief Randomly flip the input image vertically with a given probability and adjust bounding boxes accordingly.
-class MS_API RandomVerticalFlipWithBBox final : public TensorTransform {
+class DATASET_API RandomVerticalFlipWithBBox final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] prob A float representing the probability of flip.
@@ -1632,7 +1632,7 @@ class MS_API RandomVerticalFlipWithBBox final : public TensorTransform {
 };
 
 /// \brief Rescale the pixel value of input image.
-class MS_API Rescale final : public TensorTransform {
+class DATASET_API Rescale final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] rescale Rescale factor.
@@ -1663,7 +1663,7 @@ class MS_API Rescale final : public TensorTransform {
 };
 
 /// \brief Crop the given image and zoom to the specified size.
-class MS_API ResizedCrop final : public TensorTransform {
+class DATASET_API ResizedCrop final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] top Horizontal ordinate of the upper left corner of the crop image.
@@ -1707,7 +1707,7 @@ class MS_API ResizedCrop final : public TensorTransform {
 };
 
 /// \brief Resize the input image to the given size and adjust bounding boxes accordingly.
-class MS_API ResizeWithBBox final : public TensorTransform {
+class DATASET_API ResizeWithBBox final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] size The output size of the resized image.
@@ -1745,7 +1745,7 @@ class MS_API ResizeWithBBox final : public TensorTransform {
 };
 
 /// \brief Change the format of input tensor from 4-channel RGBA to 3-channel BGR.
-class MS_API RGBA2BGR final : public TensorTransform {
+class DATASET_API RGBA2BGR final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \par Example
@@ -1770,7 +1770,7 @@ class MS_API RGBA2BGR final : public TensorTransform {
 };
 
 /// \brief Change the input 4 channel RGBA tensor to 3 channel RGB.
-class MS_API RGBA2RGB final : public TensorTransform {
+class DATASET_API RGBA2RGB final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \par Example
@@ -1795,7 +1795,7 @@ class MS_API RGBA2RGB final : public TensorTransform {
 };
 
 /// \note Slice the tensor to multiple patches in horizontal and vertical directions.
-class MS_API SlicePatches final : public TensorTransform {
+class DATASET_API SlicePatches final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] num_height The number of patches in vertical direction (default=1).
@@ -1832,7 +1832,7 @@ class MS_API SlicePatches final : public TensorTransform {
 };
 
 /// \brief Invert pixels within a specified range.
-class MS_API Solarize final : public TensorTransform {
+class DATASET_API Solarize final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] threshold A vector with two elements specifying the pixel range to invert.
@@ -1864,7 +1864,7 @@ class MS_API Solarize final : public TensorTransform {
 };
 
 /// \brief Swap the red and blue channels of the input image.
-class MS_API SwapRedBlue final : public TensorTransform {
+class DATASET_API SwapRedBlue final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \par Example
@@ -1889,7 +1889,7 @@ class MS_API SwapRedBlue final : public TensorTransform {
 };
 
 /// \brief Divide the pixel values by 255 and convert from HWC format to CHW format with required datatype.
-class MS_API ToTensor final : public TensorTransform {
+class DATASET_API ToTensor final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] output_type The type of the output tensor of type mindspore::DataType or String
@@ -1921,7 +1921,7 @@ class MS_API ToTensor final : public TensorTransform {
 };
 
 /// \brief Dataset-independent data-augmentation with TrivialAugment Wide.
-class MS_API TrivialAugmentWide final : public TensorTransform {
+class DATASET_API TrivialAugmentWide final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] num_magnitude_bins The number of different magnitude values. Default: 31.
@@ -1958,7 +1958,7 @@ class MS_API TrivialAugmentWide final : public TensorTransform {
 };
 
 /// \brief Randomly perform transformations, as selected from input transform list, on the input tensor.
-class MS_API UniformAugment final : public TensorTransform {
+class DATASET_API UniformAugment final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] transforms Raw pointer to vector of TensorTransform operations.
@@ -2025,7 +2025,7 @@ class MS_API UniformAugment final : public TensorTransform {
 };
 
 /// \brief Flip the input image vertically.
-class MS_API VerticalFlip final : public TensorTransform {
+class DATASET_API VerticalFlip final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \par Example

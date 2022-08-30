@@ -24,5 +24,14 @@
 #endif  // _WIN32
 #endif
 
-#endif  // MINDSPORE_INCLUDE_API_VISIBLE_H
+#ifdef _MSC_VER
+#ifdef BUILDING_DATASET_DLL
+#define DATASET_API __declspec(dllexport)
+#else
+#define DATASET_API __declspec(dllimport)
+#endif
+#else
+#define DATASET_API __attribute__((visibility("default")))
+#endif  // _MSC_VER
 
+#endif  // MINDSPORE_INCLUDE_API_VISIBLE_H

@@ -29,26 +29,26 @@ using uchar = unsigned char;
 using dsize_t = int64_t;
 
 /// \brief The modulation in Flanger
-enum class MS_API Modulation {
+enum class DATASET_API Modulation {
   kSinusoidal = 0,  ///< Use sinusoidal modulation.
   kTriangular = 1   ///< Use triangular modulation.
 };
 
 /// \brief The interpolation in Flanger
-enum class MS_API Interpolation {
+enum class DATASET_API Interpolation {
   kLinear = 0,    ///< Use linear for delay-line interpolation.
   kQuadratic = 1  ///< Use quadratic for delay-line interpolation.
 };
 
 /// \brief The dataset auto augment policy in AutoAugment
-enum class MS_API AutoAugmentPolicy {
+enum class DATASET_API AutoAugmentPolicy {
   kImageNet = 0,  ///< AutoAugment policy learned on the ImageNet dataset.
   kCifar10 = 1,   ///< AutoAugment policy learned on the Cifar10 dataset.
   kSVHN = 2       ///< AutoAugment policy learned on the SVHN dataset.
 };
 
 /// \brief The color conversion code
-enum class MS_API ConvertMode {
+enum class DATASET_API ConvertMode {
   COLOR_BGR2BGRA = 0,                 ///< Add alpha channel to BGR image.
   COLOR_RGB2RGBA = COLOR_BGR2BGRA,    ///< Add alpha channel to RGB image.
   COLOR_BGRA2BGR = 1,                 ///< Remove alpha channel to BGR image.
@@ -72,46 +72,46 @@ enum class MS_API ConvertMode {
 };
 
 // \brief Possible density function in Dither.
-enum MS_API DensityFunction {
+enum DATASET_API DensityFunction {
   kTPDF = 0,  ///< Use triangular probability density function.
   kRPDF = 1,  ///< Use rectangular probability density function.
   kGPDF = 2   ///< Use gaussian probability density function.
 };
 
 /// \brief Values of norm in CreateDct.
-enum class MS_API NormMode {
+enum class DATASET_API NormMode {
   kNone = 0,  ///< None type norm.
   kOrtho = 1  ///< Ortho type norm.
 };
 
 /// \brief Possible options for norm in MelscaleFbanks.
-enum class MS_API NormType {
+enum class DATASET_API NormType {
   kNone = 0,    ///< None type norm.
   kSlaney = 1,  ///< Slaney type norm.
 };
 
 /// \brief The mode for manual offload.
-enum class MS_API ManualOffloadMode {
+enum class DATASET_API ManualOffloadMode {
   kUnspecified,  ///< Not set, will use auto_offload setting instead.
   kDisabled,     ///< Do not perform offload.
   kEnabled       ///< Attempt to offload.
 };
 
 /// \brief Target devices to perform map operation.
-enum class MS_API MapTargetDevice {
+enum class DATASET_API MapTargetDevice {
   kCpu,       ///< CPU Device.
   kGpu,       ///< Gpu Device.
   kAscend310  ///< Ascend310 Device.
 };
 
 /// \brief Possible options for mel_type in MelscaleFbanks.
-enum class MS_API MelType {
+enum class DATASET_API MelType {
   kHtk = 0,     ///< Htk scale type.
   kSlaney = 1,  ///< Slaney scale type.
 };
 
 /// \brief The initial type of tensor implementation.
-enum class MS_API TensorImpl {
+enum class DATASET_API TensorImpl {
   kNone,      ///< None type tensor.
   kFlexible,  ///< Flexible type tensor, can be converted to any type.
   kCv,        ///< CV type tensor.
@@ -119,7 +119,7 @@ enum class MS_API TensorImpl {
 };
 
 /// \brief The mode for shuffling data.
-enum class MS_API ShuffleMode {
+enum class DATASET_API ShuffleMode {
   kFalse = 0,   ///< No shuffling is performed.
   kFiles = 1,   ///< Shuffle files only.
   kGlobal = 2,  ///< Shuffle both the files and samples.
@@ -127,20 +127,20 @@ enum class MS_API ShuffleMode {
 };
 
 /// \brief Possible scale for input audio.
-enum class MS_API ScaleType {
+enum class DATASET_API ScaleType {
   kMagnitude = 0,  ///< Audio scale is magnitude.
   kPower = 1,      ///< Audio scale is power.
 };
 
 /// \brief The scale for gain type.
-enum class MS_API GainType {
+enum class DATASET_API GainType {
   kAmplitude = 0,  ///< Audio gain type is amplitude.
   kPower = 1,      ///< Audio gain type is power.
   kDb = 2,         ///< Audio gain type is db.
 };
 
 /// \brief The method of padding.
-enum class MS_API BorderType {
+enum class DATASET_API BorderType {
   kConstant = 0,  ///< Fill the border with constant values.
   kEdge = 1,      ///< Fill the border with the last value on the edge.
   kReflect = 2,   ///< Reflect the values on the edge omitting the last value of edge.
@@ -148,7 +148,7 @@ enum class MS_API BorderType {
 };
 
 /// \brief Possible fix rotation angle for Rotate Op.
-enum class MS_API FixRotationAngle {
+enum class DATASET_API FixRotationAngle {
   k0Degree = 1,             ///< Rotate 0 degree.
   k0DegreeAndMirror = 2,    ///< Rotate 0 degree and apply horizontal flip.
   k180Degree = 3,           ///< Rotate 180 degree.
@@ -160,7 +160,7 @@ enum class MS_API FixRotationAngle {
 };
 
 /// \brief Possible types for windows function.
-enum class MS_API WindowType {
+enum class DATASET_API WindowType {
   kBartlett = 0,  ///< Bartlett window function.
   kBlackman = 1,  ///< Blackman window function.
   kHamming = 2,   ///< Hamming window function.
@@ -169,20 +169,20 @@ enum class MS_API WindowType {
 };
 
 /// \brief Possible options for Image format types in a batch.
-enum class MS_API ImageBatchFormat {
+enum class DATASET_API ImageBatchFormat {
   kNHWC = 0,  ///< Indicate the input batch is of NHWC format.
   kNCHW = 1   ///< Indicate the input batch is of NCHW format.
 };
 
 /// \brief Possible options for Image format types.
-enum class MS_API ImageFormat {
+enum class DATASET_API ImageFormat {
   HWC = 0,  ///< Indicate the input batch is of NHWC format
   CHW = 1,  ///< Indicate the input batch is of NHWC format
   HW = 2    ///< Indicate the input batch is of NHWC format
 };
 
 /// \brief Possible options for interpolation method.
-enum class MS_API InterpolationMode {
+enum class DATASET_API InterpolationMode {
   kLinear = 0,            ///< Interpolation method is linear interpolation.
   kNearestNeighbour = 1,  ///< Interpolation method is nearest-neighbor interpolation.
   kCubic = 2,             ///< Interpolation method is bicubic interpolation.
@@ -191,13 +191,13 @@ enum class MS_API InterpolationMode {
 };
 
 /// \brief Possible formats for Vdec output image.
-enum class MS_API VdecOutputFormat {
+enum class DATASET_API VdecOutputFormat {
   kYuvSemiplanar420 = 1,  ///< Output image with PIXEL_FORMAT_YUV_SEMIPLANAR_420.
   kYvuSemiplanar420 = 2,  ///< Output image with PIXEL_FORMAT_YVU_SEMIPLANAR_420.
 };
 
 /// \brief Possible formats for Vdec input video.
-enum class MS_API VdecStreamFormat {
+enum class DATASET_API VdecStreamFormat {
   kH265MainLevel = 0,  ///< Input video with H265_MAIN_LEVEL
   kH264BaselineLevel,  ///< Input video with H264_BASELINE_LEVEL
   kH264MainLevel,      ///< Input video with H264_MAIN_LEVEL
@@ -205,26 +205,26 @@ enum class MS_API VdecStreamFormat {
 };
 
 /// \brief Possible tokenize modes for JiebaTokenizer.
-enum class MS_API JiebaMode {
+enum class DATASET_API JiebaMode {
   kMix = 0,  ///< Tokenize with MPSegment algorithm.
   kMp = 1,   ///< Tokenize with Hiddel Markov Model Segment algorithm.
   kHmm = 2   ///< Tokenize with a mix of MPSegment and HMMSegment algorithm.
 };
 
 /// \brief Possible options for SPieceTokenizerOutType.
-enum class MS_API SPieceTokenizerOutType {
+enum class DATASET_API SPieceTokenizerOutType {
   kString = 0,  ///< Output of sentencepiece tokenizer is string type.
   kInt = 1      ///< Output of sentencepiece tokenizer is int type.
 };
 
 /// \brief Possible options for SPieceTokenizerLoadType.
-enum class MS_API SPieceTokenizerLoadType {
+enum class DATASET_API SPieceTokenizerLoadType {
   kFile = 0,  ///< Load sentencepiece tokenizer from local sentencepiece vocab file.
   kModel = 1  ///< Load sentencepiece tokenizer from sentencepiece vocab instance.
 };
 
 /// \brief Type options for SentencePiece Model.
-enum class MS_API SentencePieceModel {
+enum class DATASET_API SentencePieceModel {
   kUnigram = 0,  ///< Based on Unigram model.
   kBpe = 1,      ///< Based on Byte Pair Encoding (BPE) model.
   kChar = 2,     ///< Based on Char model.
@@ -232,7 +232,7 @@ enum class MS_API SentencePieceModel {
 };
 
 /// \brief Possible options to specify a specific normalize mode.
-enum class MS_API NormalizeForm {
+enum class DATASET_API NormalizeForm {
   kNone = 0,  ///< Keep the input string tensor unchanged.
   kNfc,       ///< Normalize with Normalization Form C.
   kNfkc,      ///< Normalize with Normalization Form KC.
@@ -241,7 +241,7 @@ enum class MS_API NormalizeForm {
 };
 
 /// \brief Possible options for Mask.
-enum class MS_API RelationalOp {
+enum class DATASET_API RelationalOp {
   kEqual = 0,     ///< equal to `==`
   kNotEqual,      ///< equal to `!=`
   kLess,          ///< equal to `<`
@@ -251,26 +251,26 @@ enum class MS_API RelationalOp {
 };
 
 /// \brief Possible modes for slice patches.
-enum class MS_API SliceMode {
+enum class DATASET_API SliceMode {
   kPad = 0,   ///< Pad some pixels before slice to patches.
   kDrop = 1,  ///< Drop remainder pixels before slice to patches.
 };
 
 /// \brief Possible options for SamplingStrategy.
-enum class MS_API SamplingStrategy {
+enum class DATASET_API SamplingStrategy {
   kRandom = 0,     ///< Random sampling with replacement.
   kEdgeWeight = 1  ///< Sampling with edge weight as probability.
 };
 
 /// \brief Possible values for output format in get all neighbors function of gnn dataset
-enum class MS_API OutputFormat {
+enum class DATASET_API OutputFormat {
   kNormal = 0,  ///< Normal format.
   kCoo = 1,     ///< COO format.
   kCsr = 2      ///< CSR format.
 };
 
 /// \brief Possible options for fade shape.
-enum class MS_API FadeShape {
+enum class DATASET_API FadeShape {
   kLinear = 0,       ///< Fade shape is linear mode.
   kExponential = 1,  ///< Fade shape is exponential mode.
   kLogarithmic = 2,  ///< Fade shape is logarithmic mode.
@@ -279,7 +279,7 @@ enum class MS_API FadeShape {
 };
 
 /// \brief Sample method for audio resample.
-enum class MS_API ResampleMethod {
+enum class DATASET_API ResampleMethod {
   kSincInterpolation = 0,  ///< Resample audio by sinc interpolation method
   kKaiserWindow = 1,       ///< Resample audio by Kaiser window
 };
@@ -288,12 +288,12 @@ enum class MS_API ResampleMethod {
 /// \param[in] bits a 32bit int to be tested
 /// \param[in] bitMask a 32bit int representing bit mask
 /// \return bool Result for the check
-inline bool MS_API BitTest(uint32_t bits, uint32_t bitMask) { return (bits & bitMask) == bitMask; }
+inline bool DATASET_API BitTest(uint32_t bits, uint32_t bitMask) { return (bits & bitMask) == bitMask; }
 
 /// \brief Convenience function to set bitmask for a 32bit int
 /// \param[in] bits a 32bit int to deal with
 /// \param[in] bitMask a 32bit int representing bit mask
-inline void MS_API BitSet(uint32_t *bits, uint32_t bitMask) {
+inline void DATASET_API BitSet(uint32_t *bits, uint32_t bitMask) {
   if (bits == nullptr) {
     return;
   }
@@ -303,7 +303,7 @@ inline void MS_API BitSet(uint32_t *bits, uint32_t bitMask) {
 /// \brief Convenience function to clear bitmask from a 32bit int
 /// \param[in] bits a 32bit int to deal with
 /// \param[in] bitMask a 32bit int representing bit mask
-inline void MS_API BitClear(uint32_t *bits, uint32_t bitMask) {
+inline void DATASET_API BitClear(uint32_t *bits, uint32_t bitMask) {
   if (bits == nullptr) {
     return;
   }

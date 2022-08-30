@@ -33,7 +33,7 @@ class TensorOp;
 class Tensor;
 
 // class to run tensor operations in eager mode
-class MS_API Execute {
+class DATASET_API Execute {
  public:
   /// \brief Constructor.
   /// \param[in] op TensorOperation to be applied in Eager mode, it accepts operation in type of shared pointer.
