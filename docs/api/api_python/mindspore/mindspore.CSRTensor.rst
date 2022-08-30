@@ -70,22 +70,6 @@ mindspore.CSRTensor
 
         返回每个非零元素所占字节数。
 
-    .. py:method:: mv(dense_vector)
-
-        返回CSRTensor右乘稠密矩阵的矩阵乘法运算结果。
-        形状为 `[M, N]` 的CSRTensor，需要适配形状为 `[N, 1]` 的稠密向量，得到结果为 `[M, 1]` 的稠密向量。
-
-        .. note::
-            如果运行后端是CPU，那么仅支持在安装了LLVM12.0.1的机器运行。
-
-        **参数：**
-
-        - **dense_vector** (Tensor) - 形状为 `[N，1]` 的二维张量，其中N等于CSRTensor的列数。
-
-        **返回：**
-
-        Tensor。
-
     .. py:method:: mm(dense_matrix)
 
         返回CSRTensor右乘稠密矩阵的矩阵乘法运算结果。
@@ -97,6 +81,22 @@ mindspore.CSRTensor
         **参数：**
 
         - **dense_matrix** (Tensor) - 形状为 `[N，K]` 的二维矩阵，其中N等于CSRTensor的列数。
+
+        **返回：**
+
+        Tensor。
+
+    .. py:method:: mv(dense_vector)
+
+        返回CSRTensor右乘稠密矩阵的矩阵乘法运算结果。
+        形状为 `[M, N]` 的CSRTensor，需要适配形状为 `[N, 1]` 的稠密向量，得到结果为 `[M, 1]` 的稠密向量。
+
+        .. note::
+            如果运行后端是CPU，那么仅支持在安装了LLVM12.0.1的机器运行。
+
+        **参数：**
+
+        - **dense_vector** (Tensor) - 形状为 `[N，1]` 的二维张量，其中N等于CSRTensor的列数。
 
         **返回：**
 
