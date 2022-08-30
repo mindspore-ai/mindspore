@@ -23,10 +23,10 @@ from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops.operations import nn_ops as NN
 from mindspore.ops import functional as F
 from mindspore.ops import constexpr
-from .._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, get_unop_vmap_rule, _bdim_at_any, \
-    _bdim_at_front, _bdim_at_back, _handle_broadcasting, get_unary_grad_vmap_rule, _raise_value_error, _vmap_clone_prim
-from .._vmap.vmap_array_ops import _get_reduce_batch_axis
-from ..primitive import Primitive
+from mindspore.ops._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, get_unop_vmap_rule, \
+    _bdim_at_any, _bdim_at_front, _bdim_at_back, _handle_broadcasting, get_unary_grad_vmap_rule, _raise_value_error, \
+    _vmap_clone_prim, _get_reduce_batch_axis
+from mindspore.ops.primitive import Primitive
 
 
 @vmap_rules_getters.register(P.ApplyAdaMax)
@@ -99,13 +99,13 @@ def get_apply_adadelta_rule(prim, axis_size):
 
         if var_dim is None:
             if any(dim is not None for dim in [accum, accum_dim, lr_dim, rho_dim, epsilon_dim, grad_dim]):
-                ValueError("The source axis of `var` is None, but the source "
-                           "axis of `accum/accum_dim/lr/rho/epsilon/grad` is not None. The execution order of "
-                           "operator `{}` cannot be guaranteed.".format(prim_name))
+                raise ValueError("The source axis of `var` is None, but the source "
+                                 "axis of `accum/accum_dim/lr/rho/epsilon/grad` is not None. The execution order of "
+                                 "operator `{}` cannot be guaranteed.".format(prim_name))
             var, accum, accum_update = prim(var, accum, accum_update, lr, rho, epsilon, grad, u_monad)
             return (var, None), (accum, None), (accum_update, None)
         if var_dim != 0 or accum_dim != var_dim or accum_update_dim != var_dim:
-            ValueError(
+            raise ValueError(
                 "For `{}`, the source axis of `var` must be equal to `accum` and `accum_update`, and not equal to 0, "
                 "but got the source axis of `var`: {}, `accum`: {}, `accum_update`: {}.".format(
                     prim_name, var_dim, accum_dim, accum_update_dim))
@@ -144,15 +144,15 @@ def get_apply_ftrl_rule(prim, axis_size):
 
         if var_dim is None:
             if any(dim is not None for dim in [accum_dim, linear_dim, grad_dim, lr_dim, l1_dim, l2_dim, lr_power_dim]):
-                ValueError("The source axis of `var` is None, "
-                           "but the source axis of `accum/linear/grad/lr/l1/l1/lr_power` is not None. "
-                           "The execution order of operator `{}` cannot be guaranteed.".format(prim_name))
+                raise ValueError("The source axis of `var` is None, "
+                                 "but the source axis of `accum/linear/grad/lr/l1/l1/lr_power` is not None. "
+                                 "The execution order of operator `{}` cannot be guaranteed.".format(prim_name))
             var = prim(var, accum, linear, grad, lr, l1, l2, lr_power, u_monad)
-            return (var, None)
+            return var, None
         if var_dim != 0 or accum_dim != var_dim or linear_dim != var_dim:
-            ValueError("For `{}`, the source axis of `var/accum/linear` must be 0, "
-                       "but get `var`: {}, `accum`: {}, `linear`: {}.".format(prim_name, var_dim, accum_dim,
-                                                                              linear_dim))
+            raise ValueError("For `{}`, the source axis of `var/accum/linear` must be 0, "
+                             "but get `var`: {}, `accum`: {}, `linear`: {}.".format(prim_name, var_dim, accum_dim,
+                                                                                    linear_dim))
         grad = _bdim_at_front(grad, grad_dim, axis_size)
         lr = _bdim_at_front(lr, lr_dim, axis_size)
         l1 = _bdim_at_front(l1, l1_dim, axis_size)
@@ -160,7 +160,7 @@ def get_apply_ftrl_rule(prim, axis_size):
         lr_power = _bdim_at_front(lr_power, lr_power_dim, axis_size)
 
         var = batch_prim(var, accum, linear, grad, lr, l1, l2, lr_power, u_monad)
-        return (var, 0)
+        return var, 0
 
     return vmap_rule
 
@@ -187,9 +187,9 @@ def get_apply_proximal_adagrad_rule(prim, axis_size):
 
         if var_dim is None:
             if any(dim is not None for dim in [accum_dim, lr_dim, l1_dim, l2_dim, grad_dim]):
-                ValueError("The source axis of `var` is None, but the source "
-                           "axis of `accum/lr/l1/l2/grad` is not None. The execution order of "
-                           "operator `{}` cannot be guaranteed.".format(prim_name))
+                raise ValueError("The source axis of `var` is None, but the source "
+                                 "axis of `accum/lr/l1/l2/grad` is not None. The execution order of "
+                                 "operator `{}` cannot be guaranteed.".format(prim_name))
             var, accum = prim(var, accum, lr, l1, l2, grad, u_monad)
             return (var, None), (accum, None)
 
@@ -227,9 +227,9 @@ def get_apply_gradient_descent_rule(prim, axis_size):
 
         if var_dim is None:
             if any(dim is not None for dim in [alpha_dim, delta_dim]):
-                ValueError("The source axis of `var` is None, but the source "
-                           "axis of `alpha/delta` is not None. The execution order of "
-                           "operator `{}` cannot be guaranteed.".format(prim_name))
+                raise ValueError("The source axis of `var` is None, but the source "
+                                 "axis of `alpha/delta` is not None. The execution order of "
+                                 "operator `{}` cannot be guaranteed.".format(prim_name))
             var = prim(var, alpha, delta, u_monad)
             return var, None
 
@@ -267,11 +267,11 @@ def get_apply_proximal_gradient_descent_rule(prim, axis_size):
 
         if var_dim is None:
             if any(dim is not None for dim in [alpha_dim, l1_dim, l2_dim, delta_dim]):
-                ValueError("The source axis of `var` is None, but the source "
-                           "axis of `alpha/l1/l2/delta` is not None. The execution order of "
-                           "operator `{}` cannot be guaranteed.".format(prim_name))
+                raise ValueError("The source axis of `var` is None, but the source "
+                                 "axis of `alpha/l1/l2/delta` is not None. The execution order of "
+                                 "operator `{}` cannot be guaranteed.".format(prim_name))
             var = prim(var, alpha, l1, l2, delta, u_monad)
-            return (var, None)
+            return var, None
 
         if var_dim != 0:
             raise ValueError("For `{}`, the source axis of `var` must not equal to 0, "
@@ -283,7 +283,7 @@ def get_apply_proximal_gradient_descent_rule(prim, axis_size):
         delta = _bdim_at_front(delta, delta_dim, axis_size)
 
         var = batch_prim(var, alpha, l1, l2, delta, u_monad)
-        return (var, 0)
+        return var, 0
 
     return vmap_rule
 
@@ -509,7 +509,7 @@ def get_in_top_k_vmap_rule(prim, axis_size):
         x2 = F.reshape(x2, (-1,))
         output = prim(x1, x2)
         output = F.reshape(output, x2_shape)
-        return (output, 0)
+        return output, 0
 
     return vmap_rule
 
@@ -533,7 +533,7 @@ def get_common_activation_grad_vmap_rule(prim, axis_size):
         dy_shape = F.shape(dy)
         if x_dim == dy_dim and x_shape == dy_shape:
             out = prim(x, dy)
-            return (out, x_dim)
+            return out, x_dim
 
         if F.rank(x):
             x = _bdim_at_front(x, x_dim, 1)
@@ -546,7 +546,7 @@ def get_common_activation_grad_vmap_rule(prim, axis_size):
                                "after batch transforming, but got x_shape {}, dy_shape {}"
                                .format(prim_name, x_shape, dy_shape))
         out = prim(x, dy)
-        return (out, 0)
+        return out, 0
 
     return vmap_rule
 
@@ -573,7 +573,7 @@ def get_pad_vmap_rule(prim, axis_size):
             new_paddings = _get_paddings(paddings, x_dim)
             op = P.Pad(new_paddings)
             out = op(x)
-        return (out, x_dim)
+        return out, x_dim
 
     return vmap_rule
 
@@ -629,7 +629,7 @@ def get_matmul_vmap_rule(prim, axis_size):
         out = prim(x, offsets)
         out_shape = F.shape(out)
         out = F.reshape(out, batch_origin_shape[:(nchw_size + 1 - chw_size)] + out_shape[chw_reverse_index:])
-        return (out, 0)
+        return out, 0
 
     return vmap_rule
 
@@ -674,7 +674,7 @@ def get_adaptive_avgpool2d_vmap_rule(prim, axis_size):
         out_shape = F.shape(out)
         real_out_shape = x_shape[:hw_reverse_index] + out_shape[hw_reverse_index:]
         out = F.reshape(out, real_out_shape)
-        return (out, 0)
+        return out, 0
 
     return vmap_rule
 
@@ -694,7 +694,7 @@ def get_adaptive_avgpool3d_vmap_rule(prim, axis_size):
         x = _bdim_at_front(x, x_dim, axis_size)
         if F.rank(x) == max_dims:
             out = prim(x)
-            return (out, 0)
+            return out, 0
 
         x_shape = F.shape(x)
         shape = (-1,) + x_shape[dhw_reverse_index:]
@@ -703,7 +703,7 @@ def get_adaptive_avgpool3d_vmap_rule(prim, axis_size):
         out_shape = F.shape(out)
         real_out_shape = x_shape[:dhw_reverse_index] + out_shape[dhw_reverse_index:]
         out = F.reshape(out, real_out_shape)
-        return (out, 0)
+        return out, 0
 
     return vmap_rule
 
@@ -727,7 +727,7 @@ def get_avgpool_vmap_rule(prim, axis_size):
         out_shape = F.shape(out)
         real_out_shape = x_shape[:chw_reverse_index] + out_shape[chw_reverse_index:]
         out = F.reshape(out, real_out_shape)
-        return (out, 0)
+        return out, 0
 
     return vmap_rule
 
@@ -791,15 +791,15 @@ def get_instance_norm_rule(prim, axis_size):
         variance, variance_dim = variance_bdim
         if gamma_dim is None:
             if any(dim is not None for dim in [input_x_dim, beta_dim, mean_dim, variance_dim]):
-                ValueError("The source axis of `gamma` is None, but the source "
-                           "axis of `input_x/beta/mean/variance` is not None. The execution order of "
-                           "operator `{}` cannot be guaranteed.".format(prim_name))
+                raise ValueError("The source axis of `gamma` is None, but the source "
+                                 "axis of `input_x/beta/mean/variance` is not None. The execution order of "
+                                 "operator `{}` cannot be guaranteed.".format(prim_name))
             output_x, updated_moving_mean, updated_moving_variance = prim(input_x, gamma, beta, mean, variance, u_monad)
             return (output_x, None), (updated_moving_mean, None), (updated_moving_variance, None)
 
         if gamma_dim != 0 or beta_dim != gamma_dim or mean_dim != gamma_dim or variance_dim != gamma_dim:
             # pylint: disable=too-many-format-args
-            ValueError(
+            raise ValueError(
                 "For `{}`, the source axis of `var` must be equal to `accum` and `accum_update`, and not equal to 0, "
                 "but got the source axis of `var`: {}, `accum`: {}, `accum_update`: {}.".format(
                     prim_name, gamma_dim, beta_dim, mean_dim, variance_dim))
@@ -863,7 +863,7 @@ def get_kl_div_loss_vmap_rule(prim, axis_size):
         else:
             raise RuntimeError("For KLDivLoss vmap, reduction should be one of "
                                "['none', 'mean', 'batchmean', 'sum'], but got '{}'".format(prim_reduction))
-        return (out, 0)
+        return out, 0
 
     return vmap_rule
 
@@ -892,7 +892,7 @@ def get_kl_div_loss_grad_vmap_rule(prim, axis_size):
         target = _bdim_at_front(target, target_dim, axis_size)
 
         out = kldivloss_grad(dy, x, target)
-        return (out, 0)
+        return out, 0
 
     return vmap_rule
 
@@ -942,7 +942,7 @@ def get_smooth_l1_loss_vmap_rule(prim, axis_size):
         else:
             raise RuntimeError("For SmoothL1Loss vmap, reduction should be one of "
                                "['none', 'mean', 'sum'], but got '{}'".format(prim_reduction))
-        return (out, 0)
+        return out, 0
 
     return vmap_rule
 
@@ -973,7 +973,7 @@ def get_smooth_l1_loss_grad_vmap_rule(prim, axis_size):
         target = _bdim_at_front(target, target_dim, axis_size)
 
         out = smooth_l1_loss_grad(x, target, dy)
-        return (out, 0)
+        return out, 0
 
     return vmap_rule
 
@@ -1117,7 +1117,7 @@ def get_pad_v3_vmap_rule(prim, axis_size):
         else:
             _raise_value_error("The dim of `input_x` in `{}` must be bigger than {}, "
                                "but got {}.".format(prim.name, pad_dim, x_ndim))
-        return (out, 0)
+        return out, 0
 
     return vmap_rule
 
@@ -1162,7 +1162,7 @@ def get_mirror_pad_vmap_rule(prim, axis_size):
         else:
             _raise_value_error("The dim of `input_x` in `{}` must be bigger than {}, "
                                "but got {}.".format(prim.name, pad_dim, x_ndim))
-        return (out, 0)
+        return out, 0
 
     return vmap_rule
 
@@ -1283,16 +1283,16 @@ def get_apply_adam_with_amsgrad_rule(prim, axis_size):
         if var_dim is None:
             if any(dim is not None for dim in [m_dim, v_dim, vhat_dim, beta1_power_dim,
                                                beta2_power_dim, lr_dim, grad_dim]):
-                ValueError("The source axis of `var` is None, "
-                           "but the source axis of `m/v/vhat/beta1_power/beta2_power/lr/grad` is not None. "
-                           "The execution of operator `{}` cannot be guaranteed.".format(prim_name))
+                raise ValueError("The source axis of `var` is None, "
+                                 "but the source axis of `m/v/vhat/beta1_power/beta2_power/lr/grad` is not None. "
+                                 "The execution of operator `{}` cannot be guaranteed.".format(prim_name))
             out_var, out_m, out_v, out_vhat = prim(var, m, v, vhat, beta1_power, beta2_power, lr, grad, u_monad)
-            return ((out_var, None), (out_m, None), (out_v, None), (out_vhat, None))
+            return (out_var, None), (out_m, None), (out_v, None), (out_vhat, None)
 
         if any(dim != 0 for dim in [var_dim, m_dim, v_dim, vhat_dim]):
-            ValueError("For `{}`, the source axis of `var/m/v/vhat` must be 0, "
-                       "but get `var`: {}, `m`: {}, `v`: {}, `vhat`: {}".format(prim_name, var_dim,
-                                                                                m_dim, v_dim, vhat_dim))
+            raise ValueError("For `{}`, the source axis of `var/m/v/vhat` must be 0, "
+                             "but get `var`: {}, `m`: {}, `v`: {}, `vhat`: {}".format(prim_name, var_dim,
+                                                                                      m_dim, v_dim, vhat_dim))
 
         beta1_power = _bdim_at_front(beta1_power, beta1_power_dim, axis_size)
         beta2_power = _bdim_at_front(beta2_power, beta2_power_dim, axis_size)
@@ -1300,7 +1300,7 @@ def get_apply_adam_with_amsgrad_rule(prim, axis_size):
         grad = _bdim_at_front(grad, grad_dim, axis_size)
 
         out_var, out_m, out_v, out_vhat = batch_prim(var, m, v, vhat, beta1_power, beta2_power, lr, grad, u_monad)
-        return ((out_var, 0), (out_m, 0), (out_v, 0), (out_vhat, 0))
+        return (out_var, 0), (out_m, 0), (out_v, 0), (out_vhat, 0)
 
     return vmap_rule
 
@@ -1503,13 +1503,13 @@ def get_adaptive_max_pool_2d_vmap_rule(prim, axis_size):
                 return (out, 0), (indices, 0)
             out = prim(x)
             out = F.reshape(out, output_shape)
-            return (out, 0)
+            return out, 0
         # for the case of CHW
         if return_indices:
             out, indices = prim(x)
             return (out, 0), (indices, 0)
         out = prim(x)
-        return (out, 0)
+        return out, 0
 
     return vmap_rule
 
@@ -1590,7 +1590,7 @@ def get_rmsprop_vmap_rule(prim, axis_size):
         res = batch_prim(var, mean_square, moment, lr, grad, decay, momentum, epsilon,
                          u_monad)  # High dimensional operator;
 
-        return (res, 0)
+        return res, 0
 
     return vmap_rule
 
@@ -1647,7 +1647,7 @@ def get_apply_centered_rmsprop_vmap_rule(prim, axis_size):
 
         var = batch_prim(var, mean_grad, mean_square,
                          mom, grad, lr, rho, momentum, eps, u_monad)
-        return (var, 0)
+        return var, 0
 
     return vmap_rule
 
@@ -1682,7 +1682,7 @@ def get_max_pool_vmap_rule(prim, axis_size):
             out_shape = out.shape
             original_shape = get_original_shape(x_shape, out_shape)
             out = out.reshape(original_shape)
-            return (out, 0)
+            return out, 0
         out, indices = prim(x)
         out_shape = out.shape
         original_shape = get_original_shape(x_shape, out_shape)

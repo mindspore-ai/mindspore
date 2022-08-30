@@ -24,12 +24,11 @@ from mindspore.common import Tensor
 from mindspore.ops.operations import math_ops
 from mindspore.ops.operations import linalg_ops
 from mindspore.ops.operations import _inner_ops
-from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops.primitive import Primitive
 from mindspore.ops.composite import _VmapGeneralRule
 from mindspore.ops._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, get_assign_vmap_rule, \
     get_unop_vmap_rule, _raise_value_error, _bdim_at_front, _broadcast_by_axis, _handle_broadcasting, \
-    get_unary_grad_vmap_rule, _vmap_clone_prim, _bdim_at_any, _get_broadcasting_with_front_axis_additional_axis
+    _vmap_clone_prim, _bdim_at_any, _get_reduce_batch_axis, _get_reduce_out_dim
 from mindspore.ops.operations.math_ops import Bernoulli, BesselJ0, BesselJ1, BesselK0, BesselK0e, BesselY0, \
     BesselY1, BesselK1, BesselK1e, Median
 
@@ -93,7 +92,7 @@ def get_broadcast_binary_op_vmap_rule(prim, axis_size):
         y = _handle_broadcasting(y, y_shape, x_shape)
 
         out = prim(x, y)
-        return (out, 0)
+        return out, 0
 
     return vmap_rule
 
@@ -120,7 +119,7 @@ def get_cdist_vmap_rule(prim, axis_size):
         y = _bdim_at_front(y, y_dim, axis_size)
 
         out = batch_prim(x, y)
-        return (out, 0)
+        return out, 0
 
     return vmap_rule
 
@@ -147,7 +146,7 @@ def get_stft_vmap_rule(prim, axis_size):
         win = _bdim_at_front(win, win_dim, axis_size)
 
         out = batch_prim(x, win)
-        return (out, 0)
+        return out, 0
 
     return vmap_rule
 
@@ -200,52 +199,6 @@ def get_lerp_vamp_rule(prim, axis_size):
     return vmap_rule
 
 
-@vmap_rules_getters.register(G.MaximumGradGrad)
-@vmap_rules_getters.register(G.MinimumGradGrad)
-def get_broadcast_grad_grad_vmap_rule(prim, axis_size):
-    """VmapRule for GradGrad operations with broadcasting."""
-
-    def vmap_rule(x1_bdim, x2_bdim, dx1_bdim, dx2_bdim):
-        is_all_none, result = vmap_general_preprocess(prim, x1_bdim, x2_bdim, dx1_bdim, dx2_bdim)
-        if is_all_none:
-            return result
-
-        x1, x1_dim = x1_bdim
-        x2, x2_dim = x2_bdim
-        dx1, dx1_dim = dx1_bdim
-        dx2, dx2_dim = dx2_bdim
-        x1_shape = F.shape(x1)
-        x2_shape = F.shape(x2)
-        dx1_shape = F.shape(dx1)
-        dx2_shape = F.shape(dx2)
-
-        if x1_dim == x2_dim and dx1_dim == dx2_dim and x1_dim == dx1_dim \
-                and x1_shape == x2_shape and dx1_shape == dx2_shape:
-            sopd_x1, sopd_x2, sopd_grad = prim(x1, x2, dx1, dx2)
-            return (sopd_x1, x1_dim), (sopd_x2, x1_dim), (sopd_grad, x1_dim)
-
-        if F.rank(x1):
-            x1 = _bdim_at_front(x1, x1_dim, 1)
-        if F.rank(x2):
-            x2 = _bdim_at_front(x2, x2_dim, 1)
-        if F.rank(dx1):
-            dx1 = _bdim_at_front(dx1, dx2_dim, 1)
-        if F.rank(dx2):
-            dx2 = _bdim_at_front(dx2, dx2_dim, 1)
-        x1_shape = F.shape(x1)
-        x2_shape = F.shape(x2)
-        dx1_shape = F.shape(dx1)
-        dx2_shape = F.shape(dx2)
-        x1 = _handle_broadcasting(x1, x1_shape, x2_shape)
-        x2 = _handle_broadcasting(x2, x2_shape, x1_shape)
-        dx1 = _handle_broadcasting(dx1, dx1_shape, dx2_shape)
-        dx2 = _handle_broadcasting(dx2, dx2_shape, dx1_shape)
-        sopd_x1, sopd_x2, sopd_grad = prim(x1, x2, dx1, dx2)
-        return (sopd_x1, 0), (sopd_x2, 0), (sopd_grad, 0)
-
-    return vmap_rule
-
-
 @vmap_rules_getters.register(Bernoulli)
 def get_bernoulli_op_vmap_rule(prim, axis_size):
     """VmapRule for Bernoulli operation."""
@@ -294,7 +247,7 @@ def get_add_n_vmap_rule(prim, axis_size):
             vals = vals + (x,)
 
         out = prim(vals)
-        return (out, 0)
+        return out, 0
 
     return vmap_rule
 
@@ -323,7 +276,7 @@ def get_matmul_vmap_rule(prim, axis_size):
         b = _bdim_at_front(b, b_dim, axis_size)
 
         out = batch_matmul(a, b)
-        return (out, 0)
+        return out, 0
 
     return vmap_rule
 
@@ -368,7 +321,7 @@ def get_broadcast_to_vmap_rule(prim, axis_size):
         batch_shape = (axis_size,) + shape
         x = _handle_broadcasting(x, x_shape, batch_shape)
         out = P.BroadcastTo(batch_shape)(x)
-        return (out, 0)
+        return out, 0
 
     return vmap_rule
 
@@ -395,50 +348,9 @@ def get_inplace_ops_vmap_rule(prim, axis_size):
         else:
             v = mnp.moveaxis(v, v_dim, -1)
         out = prim(x, v)
-        return (out, out.ndim - 1)
+        return out, out.ndim - 1
 
     return vmap_rule
-
-
-@constexpr
-def _get_reduce_batch_axis(axis, x_dim, x_ndim):
-    """get batch_axis for reduce* operation."""
-    # For axis, it's value in Union[int, list, tuple]
-    logical_x_ndim = x_ndim - 1
-    if isinstance(axis, int):
-        axis = (axis,)
-
-    batch_axis = ()
-    if axis:
-        for index in axis:
-            if index < 0:
-                index += logical_x_ndim
-            if index < x_dim:
-                batch_axis = batch_axis + (index,)
-            else:
-                batch_axis = batch_axis + (index + 1,)
-    else:
-        batch_axis_list = [index for index in range(x_ndim)]
-        del batch_axis_list[x_dim]
-        batch_axis = tuple(batch_axis_list)
-    return batch_axis
-
-
-@constexpr
-def _get_reduce_out_dim(keep_dims, x_dim, x_ndim, batch_axis):
-    """get out_dim for reduce* operation."""
-    if keep_dims:
-        out_dim = x_dim
-    else:
-        out_dim = 0
-        for i in range(x_ndim):
-            if i == x_dim:
-                break
-            if i in batch_axis:
-                continue
-            else:
-                out_dim += 1
-    return out_dim
 
 
 @vmap_rules_getters.register(P.ReduceSum)
@@ -448,6 +360,17 @@ def _get_reduce_out_dim(keep_dims, x_dim, x_ndim, batch_axis):
 @vmap_rules_getters.register(P.ReduceProd)
 def get_reducer_vmap_rule(prim, axis_size):
     """VmapRule for reduce operations, such as `ReduceSum`."""
+    reduce_op_map = {
+        "ReduceSum": P.ReduceSum,
+        "ReduceMax": P.ReduceMax,
+        "ReduceMin": P.ReduceMin,
+        "ReduceMean": P.ReduceMean,
+        "ReduceProd": P.ReduceProd
+    }
+
+    if isinstance(prim, str):
+        prim = reduce_op_map.get(prim)()
+
     keep_dims = prim.keep_dims
     prim_name = prim.name
 
@@ -466,8 +389,8 @@ def get_reducer_vmap_rule(prim, axis_size):
         batch_axis = _get_reduce_batch_axis(axis, x_dim, x_ndim)
 
         out = prim(x, batch_axis)
-        out_dim = _get_reduce_out_dim(keep_dims, x_dim, x_ndim, batch_axis)
-        return (out, out_dim)
+        out_dim = _get_reduce_out_dim(x_dim, batch_axis, keep_dims)
+        return out, out_dim
 
     return vmap_rule
 
@@ -548,52 +471,14 @@ def get_index_add_vmap_rule(prim, axis_size):
 
         if x_dim == y_dim:
             out = op(x, indices, y, u_monad)
-            return (out, x_dim)
+            return out, x_dim
         if y_dim is None:
             y = _broadcast_by_axis(y, x_dim, axis_size)
         else:
             y = mnp.moveaxis(y, y_dim, x_dim)
         out = op(x, indices, y, u_monad)
-        return (out, x_dim)
+        return out, x_dim
 
-    return vmap_rule
-
-
-@vmap_rules_getters.register(G.MedianGrad)
-def get_median_grad_vmap_rule(prim, axis_size):
-    """VmapRule for MedianGrad."""
-    prim_vmap = _VmapGeneralRule(prim, axis_size)
-    global_median = prim.global_median
-    axis = prim.axis
-    keep_dims = prim.keep_dims
-
-    @constexpr
-    def trans_grad_axis(axis, rank, dim, keep_dims):
-        if axis < 0:
-            axis += rank - 1
-        axis_new = axis + 1 if dim <= axis else axis
-        if keep_dims:
-            dim_new = dim
-        else:
-            dim_new = dim - 1 if dim > axis_new else dim
-        return dim_new
-
-    def vmap_rule(dy_bdim, x_bdim, y_bdim, indices_bdim):
-        if global_median is True:
-            return prim_vmap(dy_bdim, x_bdim, y_bdim, indices_bdim)
-        dy, dy_dim = dy_bdim
-        x, x_dim = x_bdim
-        y, y_dim = y_bdim
-        indices, indices_dim = indices_bdim
-        rank = len(x.shape)
-        dim_new = trans_grad_axis(axis, rank, x_dim, keep_dims)
-
-        dy = _bdim_at_front(dy, dy_dim, axis_size)
-        x = _bdim_at_front(x, x_dim, axis_size)
-        y = _bdim_at_front(y, y_dim, axis_size)
-        indices = _bdim_at_front(indices, indices_dim, axis_size)
-        x_grad = G.MedianGrad(global_median, axis, keep_dims)(dy, x, y, indices)
-        return (x_grad, dim_new)
     return vmap_rule
 
 
@@ -638,7 +523,7 @@ def get_reducer_std_vmap_rule(prim, axis_size):
         batch_axis = _get_reduce_batch_axis(axis, x_dim, x_ndim)
         reduce_std = math_ops.ReduceStd(batch_axis, unbiased=unbiased, keep_dims=keep_dims)
         out_std, out_mean = reduce_std(x)
-        out_dim = _get_reduce_out_dim(keep_dims, x_dim, x_ndim, batch_axis)
+        out_dim = _get_reduce_out_dim(x_dim, batch_axis, keep_dims)
         return (out_std, out_dim), (out_mean, out_dim)
 
     return vmap_rule
@@ -662,7 +547,7 @@ def get_lp_norm_vmap_rule(prim, axis_size):
         batch_axis = _get_reduce_batch_axis(axis, x_dim, x_ndim)
         lp_norm_op = math_ops.LpNorm(batch_axis, p, keep_dims, epsilon)
         out = lp_norm_op(x)
-        out_dim = _get_reduce_out_dim(keep_dims, x_dim, x_ndim, batch_axis)
+        out_dim = _get_reduce_out_dim(x_dim, batch_axis, keep_dims)
         return out, out_dim
 
     return vmap_rule
@@ -703,7 +588,7 @@ def get_renorm_rule(prim, axis_size):
         out = op(x)
         out = F.reshape(out, from_shape)
         out = mnp.moveaxis(out, des_dim, src_dim)
-        return (out, batch_dim)
+        return out, batch_dim
 
     return vmap_rule
 
@@ -885,78 +770,9 @@ def get_square_sum_all_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
-@vmap_rules_getters.register('MaximumGrad')
-@vmap_rules_getters.register('MinimumGrad')
-def get_broadcast_binary_op_grad_vmap_rule(prim, axis_size):
-    """VmapRule for grad of binary operations with broadcasting"""
-    broadcast_binary_op_grad_map = {
-        "MinimumGrad": G.MinimumGrad,
-        "MaximumGrad": G.MaximumGrad
-    }
-
-    if isinstance(prim, str):
-        prim = broadcast_binary_op_grad_map.get(prim)()
-
-    @constexpr
-    def get_longest_shape(x_shape, y_shape, g_shape):
-        x_rank = len(x_shape)
-        y_rank = len(y_shape)
-        g_rank = len(g_shape)
-        if x_rank > y_rank:
-            if x_rank > g_rank:
-                return x_shape
-        else:
-            if y_rank > g_rank:
-                return y_shape
-        return g_shape
-
-    def vmap_rule(x_bdim, y_bdim, grad_bdim):
-        is_all_none, result = vmap_general_preprocess(prim, x_bdim, y_bdim, grad_bdim)
-        if is_all_none:
-            return result
-
-        x, x_dim = x_bdim
-        y, y_dim = y_bdim
-        g, g_dim = grad_bdim
-
-        x_shape = F.shape(x)
-        y_shape = F.shape(y)
-        g_shape = F.shape(g)
-
-        if x_dim == y_dim and x_dim == g_dim and \
-            x_shape == y_shape and x_shape == g_shape:
-            dx, dy = prim(x, y, g)
-            return (dx, x_dim), (dy, y_dim)
-
-        x = _bdim_at_front(x, x_dim, axis_size)
-        y = _bdim_at_front(y, y_dim, axis_size)
-        g = _bdim_at_front(g, g_dim, axis_size)
-
-        x_shape = F.shape(x)
-        y_shape = F.shape(y)
-        g_shape = F.shape(g)
-
-        longest_shape = get_longest_shape(x_shape, y_shape, g_shape)
-        x = _handle_broadcasting(x, x_shape, longest_shape)
-        y = _handle_broadcasting(y, y_shape, longest_shape)
-        g = _handle_broadcasting(g, g_shape, longest_shape)
-
-        x_axis_for_reduce = _get_broadcasting_with_front_axis_additional_axis(x_shape, longest_shape)
-        y_axis_for_reduce = _get_broadcasting_with_front_axis_additional_axis(y_shape, longest_shape)
-
-        dx, dy = prim(x, y, g)
-        if x_axis_for_reduce:
-            dx = F.reduce_sum(dx, x_axis_for_reduce)
-
-        if y_axis_for_reduce:
-            dy = F.reduce_sum(dy, y_axis_for_reduce)
-
-        return (dx, 0), (dy, 0)
-    return vmap_rule
-
-
 get_assign_vmap_rule = vmap_rules_getters.register(P.AssignAdd)(get_assign_vmap_rule)
 get_assign_vmap_rule = vmap_rules_getters.register(P.AssignSub)(get_assign_vmap_rule)
+
 # Unary vmap
 get_unop_vmap_rule = vmap_rules_getters.register(P.Abs)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.ACos)(get_unop_vmap_rule)
@@ -1013,10 +829,3 @@ get_unop_vmap_rule = vmap_rules_getters.register(BesselK1e)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.Trunc)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.PopulationCount)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.Square)(get_unop_vmap_rule)
-
-# UnaryGrad vmap
-get_unary_grad_vmap_rule = vmap_rules_getters.register(G.InvGrad)(get_unary_grad_vmap_rule)
-get_unary_grad_vmap_rule = vmap_rules_getters.register(G.LogitGrad)(get_unary_grad_vmap_rule)
-get_unary_grad_vmap_rule = vmap_rules_getters.register('AbsGrad')(get_unary_grad_vmap_rule)
-get_unary_grad_vmap_rule = vmap_rules_getters.register('ReciprocalGrad')(get_unary_grad_vmap_rule)
-get_unary_grad_vmap_rule = vmap_rules_getters.register('SqrtGrad')(get_unary_grad_vmap_rule)

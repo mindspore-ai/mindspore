@@ -15,9 +15,10 @@
 
 """sparse_ops vmap impl."""
 
-from .._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, _raise_value_error
-from ..primitive import Primitive
-from ..operations.sparse_ops import DenseToCSRSparseMatrix, CSRSparseMatrixToSparseTensor, CSRSparseMatrixToDense
+from mindspore.ops._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, _raise_value_error
+from mindspore.ops.primitive import Primitive
+from mindspore.ops.operations.sparse_ops import DenseToCSRSparseMatrix, CSRSparseMatrixToSparseTensor, \
+    CSRSparseMatrixToDense
 
 
 @vmap_rules_getters.register(CSRSparseMatrixToSparseTensor)

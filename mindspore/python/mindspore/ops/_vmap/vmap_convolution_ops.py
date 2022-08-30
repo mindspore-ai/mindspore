@@ -240,13 +240,13 @@ def _conv_vmap_rule(prim, batch_size, input_bdim, weight_bdim, attr_list):
         _vmap_update_prim_attr(prim, 'out_channel', new_w_shape[0])
         out = prim(new_input, new_weight)
         out = _reshape_expand_dims(c_axis, batch_size, out, prim_name)
-        return (out, c_axis)
+        return out, c_axis
 
     def _get_output_for_x_vmap():
         new_input, _ = _reshape_merge_dims(x_dim, 0, input_x)
         out = prim(new_input, weight)
         out = _reshape_expand_dims(0, batch_size, out, prim_name)
-        return (out, 0)
+        return out, 0
 
     def _get_output_for_w_vmap():
         if groups > 1:
@@ -261,13 +261,13 @@ def _conv_vmap_rule(prim, batch_size, input_bdim, weight_bdim, attr_list):
             out = _reshape_expand_dims(c_axis, groups, out, prim_name)
             out = _reshape_expand_dims(c_axis + 1, batch_size, out, prim_name)
             out, _ = _reshape_merge_dims(c_axis, c_axis + 1, out)
-            return (out, c_axis)
+            return out, c_axis
 
         new_weight, new_w_shape = _reshape_merge_dims(w_dim, 0, weight)
         _vmap_update_prim_attr(prim, 'out_channel', new_w_shape[0])
         out = prim(input_x, new_weight)
         out = _reshape_expand_dims(c_axis, batch_size, out, prim_name)
-        return (out, c_axis)
+        return out, c_axis
 
     if x_dim is not None and w_dim is not None:
         if prim_name == "Conv3D":
@@ -324,7 +324,7 @@ def _conv_transpose_vmap_rule(prim, batch_size, dout_bdim, weight_bdim, input_si
 
         out = _get_conv_transpose_output(new_dout, new_weight, new_input_size)
         out = _reshape_expand_dims(c_axis, batch_size, out, prim_name)
-        return (out, c_axis)
+        return out, c_axis
 
     def _get_output_for_dout_vmap():
         new_dout, _ = _reshape_merge_dims(dout_dim, 0, dout)
@@ -332,7 +332,7 @@ def _conv_transpose_vmap_rule(prim, batch_size, dout_bdim, weight_bdim, input_si
 
         out = _get_conv_transpose_output(new_dout, weight, new_input_size)
         out = _reshape_expand_dims(0, batch_size, out, prim_name)
-        return (out, 0)
+        return out, 0
 
     def _get_output_for_weight_vmap():
         new_weight, _ = _reshape_merge_dims(w_dim, c_axis, weight)
@@ -346,7 +346,7 @@ def _conv_transpose_vmap_rule(prim, batch_size, dout_bdim, weight_bdim, input_si
             out, _ = _reshape_merge_dims(c_axis, c_axis + 1, out)
         else:
             out = _reshape_expand_dims(c_axis, batch_size, out, prim_name)
-        return (out, c_axis)
+        return out, c_axis
 
     if dout_dim is not None and w_dim is not None:
         if prim_name in ("Conv3DTranspose", "Conv3DBackpropInput"):
@@ -397,7 +397,7 @@ def _conv_backprop_filter_vmap_rule(prim, batch_size, dout_bdim, input_bdim, wei
 
         out = _get_conv_backprop_filter_output(new_dout, new_input, new_w_size)
         out = _reshape_expand_dims(0, batch_size, out, prim_name)
-        return (out, 0)
+        return out, 0
 
     def _get_output_for_x_vmap():
         new_w_size = _get_new_size_by_index(weight_size, batch_size, c_axis)
@@ -411,7 +411,7 @@ def _conv_backprop_filter_vmap_rule(prim, batch_size, dout_bdim, input_bdim, wei
 
         out = _get_conv_backprop_filter_output(dout, new_input, new_w_size)
         out = _reshape_expand_dims(c_axis, batch_size, out, prim_name)
-        return (out, c_axis)
+        return out, c_axis
 
     def _get_output_for_dout_vmap():
         new_w_size = _get_new_size_by_index(weight_size, batch_size, 0)
@@ -425,12 +425,12 @@ def _conv_backprop_filter_vmap_rule(prim, batch_size, dout_bdim, input_bdim, wei
             out = _reshape_expand_dims(0, groups, out, prim_name)
             out = _reshape_expand_dims(1, batch_size, out, prim_name)
             out, _ = _reshape_merge_dims(0, 1, out)
-            return (out, 0)
+            return out, 0
 
         new_dout, _ = _reshape_merge_dims(dout_dim, c_axis, dout)
         out = _get_conv_backprop_filter_output(new_dout, input_x, new_w_size)
         out = _reshape_expand_dims(0, batch_size, out, prim_name)
-        return (out, 0)
+        return out, 0
 
     if dout_dim is not None and x_dim is not None:
         if prim_name == "Conv3DBackpropFilter":

@@ -17,8 +17,8 @@
 from __future__ import absolute_import
 
 from mindspore.ops import operations as P
-from ..primitive import Primitive
-from .._vmap.vmap_base import vmap_rules_getters, get_assign_vmap_rule, _raise_value_error, \
+from mindspore.ops.primitive import Primitive
+from mindspore.ops._vmap.vmap_base import vmap_rules_getters, get_assign_vmap_rule, _raise_value_error, \
     get_unsupported_dynamic_vmap_rule
 
 
@@ -31,7 +31,7 @@ def get_load_vmap_rule(prim, axis_size):
     def vmap_rule(ref_bdim, u_monad):
         var, dim = ref_bdim
         out = prim(var, u_monad)
-        return (out, dim)
+        return out, dim
 
     return vmap_rule
 
@@ -45,7 +45,7 @@ def get_identity_vmap_rule(prim, axis_size):
     def vmap_rule(ref_bdim):
         var, dim = ref_bdim
         out = prim(var)
-        return (out, dim)
+        return out, dim
 
     return vmap_rule
 
