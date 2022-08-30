@@ -63,6 +63,7 @@ int BenchmarkUnifiedApi::GenerateGLTexture(std::map<std::string, GLuint> *input_
     }
     int status = GenerateRandomData(tensor.DataSize(), input_data, static_cast<int>(tensor.DataType()));
     if (status != RET_OK) {
+      free(input_data);
       std::cerr << "GenerateRandomData for inTensor failed: " << status << std::endl;
       MS_LOG(ERROR) << "GenerateRandomData for inTensor failed:" << status;
       return status;
@@ -80,8 +81,8 @@ int BenchmarkUnifiedApi::GenerateGLTexture(std::map<std::string, GLuint> *input_
 
 int BenchmarkUnifiedApi::FillGLTextureToTensor(std::map<std::string, GLuint> *gl_texture, mindspore::MSTensor *tensor,
                                                std::string name, void *data) {
-  MS_ASSERT(gl_texture != nullptr);
-  MS_ASSERT(tensor != nullptr);
+  MS_CHECK_TRUE_MSG(gl_texture != nullptr, RET_ERROR, "gl_texture is nullptr");
+  MS_CHECK_TRUE_MSG(tensor != nullptr, RET_ERROR, "tensor is nullptr");
 
   auto image_id = 0;
 
@@ -137,7 +138,6 @@ int BenchmarkUnifiedApi::LoadAndBindGLTexture() {
   }
 
   for (auto &tensor : ms_outputs_for_api_) {
-    MS_ASSERT(tensor != nullptr);
     auto status = FillGLTextureToTensor(&output_gl_texture, &tensor, tensor.Name());
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Fill GLTexture to output tensor" << status;
@@ -163,7 +163,6 @@ int BenchmarkUnifiedApi::ReadGLTextureFile(std::map<std::string, GLuint> *input_
   } else {
     for (size_t i = 0; i < flags_->input_data_list_.size(); i++) {
       auto tensor = ms_inputs_for_api_.at(i);
-      MS_ASSERT(tensor != nullptr);
       size_t size;
       char *bin_buf = ReadFile(flags_->input_data_list_[i].c_str(), &size);
       if (bin_buf == nullptr) {
@@ -236,13 +235,27 @@ int BenchmarkUnifiedApi::GenerateInputData() {
       for (size_t j = 0; j < flags_->resize_dims_[i].size(); j++) {
         size *= flags_->resize_dims_[i][j];
       }
-      void *input_data = malloc(size);
+      void *input_data = new (std::nothrow) char[size];
+      if (input_data == nullptr) {
+        MS_LOG(ERROR) << "new input_data failed";
+        for (auto &data : inputs) {
+          auto buf = static_cast<char *>(data);
+          delete[] buf;
+          data = nullptr;
+        }
+        return RET_ERROR;
+      }
+      inputs.push_back(input_data);
       int status = GenerateRandomData(size, input_data, static_cast<int>(ms_inputs_for_api_[i].DataType()));
       if (status != RET_OK) {
         MS_LOG(ERROR) << "GenerateRandomData for inTensor failed:" << status;
+        for (auto &data : inputs) {
+          auto buf = static_cast<char *>(data);
+          delete[] buf;
+          data = nullptr;
+        }
         return status;
       }
-      inputs.push_back(input_data);
     }
     all_inputs_data_.push_back(inputs);
     return RET_OK;
@@ -299,6 +312,11 @@ int BenchmarkUnifiedApi::ReadInputFile() {
       char *bin_buf = ReadFile(flags_->input_data_list_[i].c_str(), &size);
       if (bin_buf == nullptr) {
         MS_LOG(ERROR) << "ReadFile return nullptr";
+        for (auto &data : inputs) {
+          auto buf = static_cast<char *>(data);
+          delete[] buf;
+          data = nullptr;
+        }
         return RET_ERROR;
       }
       inputs.push_back(bin_buf);
@@ -317,7 +335,6 @@ int BenchmarkUnifiedApi::ReadInputFile() {
   } else {
     for (size_t i = 0; i < flags_->input_data_list_.size(); i++) {
       auto &cur_tensor = ms_inputs_for_api_.at(i);
-      MS_ASSERT(cur_tensor != nullptr);
       size_t size;
       char *bin_buf = ReadFile(flags_->input_data_list_[i].c_str(), &size);
       if (bin_buf == nullptr) {
@@ -346,6 +363,7 @@ int BenchmarkUnifiedApi::ReadInputFile() {
         auto input_data = cur_tensor.MutableData();
         if (input_data == nullptr) {
           MS_LOG(ERROR) << "input_data is nullptr.";
+          delete[] bin_buf;
           return RET_ERROR;
         }
         memcpy(input_data, bin_buf, tensor_data_size);
@@ -377,6 +395,10 @@ void BenchmarkUnifiedApi::UpdateDistributionName(const std::shared_ptr<mindspore
   }
 
   if (name->size() == 0) {
+    return;
+  }
+
+  if (context->MutableDeviceInfo().size() == 0) {
     return;
   }
 
@@ -546,9 +568,11 @@ int BenchmarkUnifiedApi::CompareOutput() {
         MS_CHECK_TRUE_MSG(new_tensor != nullptr, RET_ERROR, "new tensor failed");
         if (new_tensor->MutableData() == nullptr) {
           MS_LOG(ERROR) << "CopyDeviceTextureToHost failed";
+          delete new_tensor;
           return RET_ERROR;
         }
         ret = CompareDataGetTotalBiasAndSize(tensor_name, new_tensor, &total_bias, &total_size);
+        delete new_tensor;
       } else {
         ret = CompareDataGetTotalBiasAndSize(tensor_name, &tensor, &total_bias, &total_size);
       }
@@ -866,7 +890,6 @@ int BenchmarkUnifiedApi::MarkAccuracy() {
 int BenchmarkUnifiedApi::PrintInputData() {
   for (size_t i = 0; i < ms_inputs_for_api_.size(); i++) {
     mindspore::MSTensor input = ms_inputs_for_api_[i];
-    MS_ASSERT(input != nullptr);
     auto tensor_data_type = static_cast<int>(input.DataType());
 
     std::cout << "InData " << i << ": ";
@@ -936,6 +959,10 @@ void BenchmarkUnifiedApi::ModelParallelRunnerRun(int task_num, int parallel_idx)
     }
     int idx = parallel_idx + flags_->warm_up_loop_count_;
     auto in = model_runner_.GetInputs();
+    if (idx >= static_cast<int>(all_inputs_data_.size())) {
+      MS_LOG(ERROR) << "idx is to big :" << idx;
+      return;
+    }
     auto in_data = all_inputs_data_[idx];
     auto output = all_outputs_[idx];
     for (size_t tensor_index = 0; tensor_index < in.size(); tensor_index++) {
@@ -1104,7 +1131,13 @@ int BenchmarkUnifiedApi::RunBenchmark() {
 
   // Load graph
   std::string model_name = flags_->model_file_.substr(flags_->model_file_.find_last_of(DELIM_SLASH) + 1);
-  mindspore::ModelType model_type = ModelTypeMap.at(flags_->model_type_);
+  auto iter = ModelTypeMap.find(flags_->model_type_);
+  if (iter == ModelTypeMap.end()) {
+    MS_LOG(ERROR) << "model_type " << flags_->model_type_ << " is invalid.";
+    std::cerr << "model_type " << flags_->model_type_ << " is invalid.";
+    return RET_ERROR;
+  }
+  mindspore::ModelType model_type = iter->second;
 
   MS_LOG(INFO) << "start unified benchmark run";
   std::cout << "start unified benchmark run" << std::endl;
@@ -1558,12 +1591,8 @@ BenchmarkUnifiedApi::~BenchmarkUnifiedApi() {
   for (auto &input : all_inputs_data_) {
     for (auto &data : input) {
       if (data != nullptr) {
-        if (flags_->input_data_list_.empty()) {
-          free(data);
-        } else {
-          auto buf = static_cast<char *>(data);
-          delete[] buf;
-        }
+        auto buf = static_cast<char *>(data);
+        delete[] buf;
         data = nullptr;
       }
     }

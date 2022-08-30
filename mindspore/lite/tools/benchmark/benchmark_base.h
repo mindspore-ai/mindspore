@@ -272,10 +272,15 @@ class MS_API BenchmarkBase {
           return RET_ERROR;
         }
         castedMSShape.push_back(dim);
+        MS_CHECK_FALSE_MSG(SIZE_MUL_OVERFLOW(shapeSize, static_cast<size_t>(dim)), RET_ERROR, "mul overflow");
         shapeSize *= static_cast<size_t>(dim);
       }
 
       CheckTensor *calibTensor = iter->second;
+      if (calibTensor == nullptr) {
+        MS_LOG(ERROR) << "calibTensor is nullptr.";
+        return RET_ERROR;
+      }
       if (!CheckShapeValid(calibTensor->shape, castedMSShape)) {
         std::ostringstream oss;
         oss << "Shape of mslite output(";
@@ -289,6 +294,10 @@ class MS_API BenchmarkBase {
         oss << ") are different";
         std::cerr << oss.str() << std::endl;
         MS_LOG(ERROR) << oss.str().c_str();
+        return RET_ERROR;
+      }
+      if (calibTensor->data.size() != shapeSize) {
+        MS_LOG(ERROR) << "calibTensor data size " << calibTensor->data.size() << " is not equal to " << shapeSize;
         return RET_ERROR;
       }
       size_t errorCount = 0;
@@ -376,10 +385,15 @@ class MS_API BenchmarkBase {
           return RET_ERROR;
         }
         castedMSShape.push_back(size_t(dim));
+        MS_CHECK_FALSE_MSG(SIZE_MUL_OVERFLOW(shapeSize, static_cast<size_t>(dim)), RET_ERROR, "mul overflow");
         shapeSize *= static_cast<size_t>(dim);
       }
 
       CheckTensor *calibTensor = iter->second;
+      if (calibTensor == nullptr) {
+        MS_LOG(ERROR) << "calibTensor is nullptr.";
+        return RET_ERROR;
+      }
       if (!CheckShapeValid(calibTensor->shape, castedMSShape)) {
         std::ostringstream oss;
         oss << "Shape of mslite output(";
@@ -393,6 +407,10 @@ class MS_API BenchmarkBase {
         oss << ") are different";
         std::cerr << oss.str() << std::endl;
         MS_LOG(ERROR) << oss.str().c_str();
+        return RET_ERROR;
+      }
+      if (calibTensor->data.size() != shapeSize) {
+        MS_LOG(ERROR) << "calibTensor data size " << calibTensor->data.size() << " is not equal to " << shapeSize;
         return RET_ERROR;
       }
 
