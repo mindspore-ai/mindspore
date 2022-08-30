@@ -150,7 +150,8 @@ Status PyFuncOp::from_json(nlohmann::json json_obj, std::vector<std::shared_ptr<
 
 bool PyFuncOp::IsRandom() {
   bool random = true;
-  if (py::hasattr(py_func_ptr_, "random") && py::reinterpret_borrow<py::bool_>(py_func_ptr_.attr("random")) == false) {
+  if (py::hasattr(py_func_ptr_, "random") &&
+      static_cast<bool>(py::reinterpret_borrow<py::bool_>(py_func_ptr_.attr("random"))) == false) {
     random = false;
   }
   return random;
