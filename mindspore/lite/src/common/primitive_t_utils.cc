@@ -53,7 +53,7 @@ OpParameter *GetOpParameter(schema::PrimitiveT *primitive_t) {
 
 std::unique_ptr<schema::PrimitiveT> GetPrimitiveT(const std::shared_ptr<mindspore::ops::BaseOperator> &op) {
   if (op == nullptr) {
-    MS_LOG(DEBUG) << "base operator is nullptr";
+    MS_LOG(ERROR) << "base operator is nullptr";
     return nullptr;
   }
 
@@ -62,7 +62,6 @@ std::unique_ptr<schema::PrimitiveT> GetPrimitiveT(const std::shared_ptr<mindspor
     return nullptr;
   }
 
-  MS_LOG(DEBUG) << "export operator: " << op->name();
   auto creator = MSOpsRegistry::GetInstance()->GetPrimitiveCreator(op->name());
   if (creator != nullptr) {
     return creator(op->GetPrim());

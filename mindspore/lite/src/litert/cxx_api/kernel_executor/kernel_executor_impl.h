@@ -29,18 +29,23 @@ class KernelExecutorImpl {
   KernelExecutorImpl() = default;
   ~KernelExecutorImpl();
   Status Build(const std::shared_ptr<ops::BaseOperator> &op, const std::vector<MSTensor> &inputs,
-               const std::vector<MSTensor> &outputs, const std::shared_ptr<Context> &ms_context);
-  Status ReSize(const std::vector<MSTensor> &inputs, const std::vector<MSTensor> &outputs);
-  Status Infer(std::vector<MSTensor> *outputs);
-  Status Execute(const std::vector<MSTensor> &inputs, const std::vector<MSTensor> &outputs);
+               const std::shared_ptr<Context> &ms_context);
+  Status Build(const std::shared_ptr<ops::Custom> &op, const std::vector<MSTensor> &inputs,
+               const std::shared_ptr<Context> &ms_context, const int output_num);
+  Status ReSize(const std::vector<MSTensor> &inputs);
+  Status Execute(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs);
 
  protected:
+  Status BuildInit(const std::shared_ptr<ops::BaseOperator> &op, const std::vector<MSTensor> &inputs,
+                   const std::shared_ptr<Context> &ms_context);
   Status GetCustomKernel(const std::shared_ptr<Context> &ms_context);
   Status GetCpuKernel(const std::shared_ptr<Context> &ms_context);
   Status GetOpParameter();
-  Status InitInOutTensor(const std::vector<MSTensor> &inputs, const std::vector<MSTensor> &outputs);
-  void FreeInOutTensor();
+  void InitTensors(const std::vector<MSTensor> &inputs, const int output_num);
+  void FreeAllResource();
+  std::vector<MSTensor> GetOutputs();
   bool TensorIsValid(const MSTensor &ms_tensor, const lite::Tensor *lite_tensor);
+  void Int8TensorAddQuantParam(lite::Tensor *lite_tensor);
 
  private:
   const schema::Primitive *primitive_ = nullptr;

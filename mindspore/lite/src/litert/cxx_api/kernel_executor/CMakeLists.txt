@@ -1,6 +1,6 @@
 add_compile_definitions(BUILD_CORE_RUNTIME)
 add_definitions(-DPRIMITIVE_WRITEABLE)
-if(MSLITE_ENABLE_RUNTIME_GLOG)
+if(MSLITE_ENABLE_RUNTIME_GLOG OR MSLITE_ENABLE_CONVERTER)
     set(USE_GLOG on)
     add_definitions(-DUSE_GLOG)
 endif()

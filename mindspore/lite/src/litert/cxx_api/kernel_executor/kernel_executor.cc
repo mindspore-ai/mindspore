@@ -19,7 +19,7 @@
 
 namespace mindspore {
 Status KernelExecutor::Build(const std::shared_ptr<ops::BaseOperator> &op, const std::vector<MSTensor> &inputs,
-                             const std::vector<MSTensor> &outputs, const std::shared_ptr<Context> &ms_context) {
+                             const std::shared_ptr<Context> &ms_context) {
   if (impl_ == nullptr) {
     impl_ = std::make_shared<KernelExecutorImpl>();
     if (impl_ == nullptr) {
@@ -28,30 +28,31 @@ Status KernelExecutor::Build(const std::shared_ptr<ops::BaseOperator> &op, const
     }
   }
 
-  Status ret = impl_->Build(op, inputs, outputs, ms_context);
-  if (ret != kSuccess) {
-    return ret;
-  }
-  return kSuccess;
+  return impl_->Build(op, inputs, ms_context);
 }
 
-Status KernelExecutor::ReSize(const std::vector<MSTensor> &inputs, const std::vector<MSTensor> &outputs) {
+Status KernelExecutor::Build(const std::shared_ptr<ops::Custom> &op, const std::vector<MSTensor> &inputs,
+                             const std::shared_ptr<Context> &ms_context, const int output_num) {
+  if (impl_ == nullptr) {
+    impl_ = std::make_shared<KernelExecutorImpl>();
+    if (impl_ == nullptr) {
+      MS_LOG(ERROR) << "implement is null.";
+      return kLiteNullptr;
+    }
+  }
+
+  return impl_->Build(op, inputs, ms_context, output_num);
+}
+
+Status KernelExecutor::ReSize(const std::vector<MSTensor> &inputs) {
   if (impl_ == nullptr) {
     MS_LOG(ERROR) << "implement is null.";
     return kLiteNullptr;
   }
-  return impl_->ReSize(inputs, outputs);
+  return impl_->ReSize(inputs);
 }
 
-Status KernelExecutor::Infer(std::vector<MSTensor> *outputs) {
-  if (impl_ == nullptr) {
-    MS_LOG(ERROR) << "implement is null.";
-    return kLiteNullptr;
-  }
-  return impl_->Infer(outputs);
-}
-
-Status KernelExecutor::Execute(const std::vector<MSTensor> &inputs, const std::vector<MSTensor> &outputs) {
+Status KernelExecutor::Execute(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) {
   if (impl_ == nullptr) {
     MS_LOG(ERROR) << "implement is null.";
     return kLiteNullptr;

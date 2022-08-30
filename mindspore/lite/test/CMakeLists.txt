@@ -144,6 +144,10 @@ if(MSLITE_ENABLE_CONVERTER)
         )
 endif()
 
+if(MSLITE_ENABLE_KERNEL_EXECUTOR)
+    list(APPEND TEST_UT_SRC ${TEST_DIR}/ut/src/runtime/kernel_executor_tests.cc)
+endif()
+
 set(TEST_SRC
         ${TEST_UT_SRC}
         ${TEST_LITE_SRC}
@@ -245,4 +249,8 @@ endif()
 
 if(MSLITE_ENABLE_CONVERTER AND MSLITE_ENABLE_ACL)
     target_link_libraries(lite-test lite_acl_mid mindspore_shared_lib)
+endif()
+
+if(MSLITE_ENABLE_KERNEL_EXECUTOR)
+    target_link_libraries(lite-test kernel_executor)
 endif()

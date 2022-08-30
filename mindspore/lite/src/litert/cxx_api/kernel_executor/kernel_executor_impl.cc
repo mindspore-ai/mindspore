@@ -15,6 +15,9 @@
  */
 
 #include <algorithm>
+#include <string>
+#include <unordered_set>
+#include <unordered_map>
 #include "src/common/ops/ops_utils.h"
 #include "src/litert/cxx_api/converters.h"
 #include "src/common/prim_util.h"
@@ -26,23 +29,165 @@
 #include "src/litert/cxx_api/kernel_executor/kernel_executor_impl.h"
 
 namespace mindspore {
+namespace {
 constexpr size_t INITIAL_SIZE = 1024;
+std::unordered_set<std::string> support_ops = {
+  "Abs",       "Activation",    "AddFusion", "ArgMaxFusion", "ArgMinFusion", "AvgPoolFusion",
+  "BatchNorm", "Ceil",          "Concat",    "Custom",       "Conv2DFusion", "Conv2dTransposeFusion",
+  "DivFusion", "Equal",         "Flatten",   "Gather",       "GatherNd",     "MatMulFusion",
+  "Maximum",   "MaxPoolFusion", "Minimum",   "MulFusion",    "PadFusion",    "PReLUFusion",
+  "Range",     "Reshape",       "Resize",    "Softmax",      "StridedSlice", "TopKFusion",
+  "Transpose", "Where",
+};
+std::unordered_map<std::string, int> ops_output_num = {
+  {"ArgMaxFusion", 2},
+  {"ArgMinFusion", 2},
+  {"TopKFusion", 2},
+};
+}  // namespace
 
 KernelExecutorImpl::~KernelExecutorImpl() {
   if (context_ != nullptr) {
     delete context_;
     context_ = nullptr;
   }
-
-  if (kernel_ != nullptr) {
-    delete kernel_;
-    kernel_ = nullptr;
-  }
-  FreeInOutTensor();
+  FreeAllResource();
+  inputs_.clear();
 }
 
 Status KernelExecutorImpl::Build(const std::shared_ptr<ops::BaseOperator> &op, const std::vector<MSTensor> &inputs,
-                                 const std::vector<MSTensor> &outputs, const std::shared_ptr<Context> &ms_context) {
+                                 const std::shared_ptr<Context> &ms_context) {
+  Status status = BuildInit(op, inputs, ms_context);
+  if (status != kSuccess) {
+    return status;
+  }
+  auto op_name = op->name();
+  if (support_ops.find(op_name) == support_ops.end()) {
+    MS_LOG(ERROR) << "unsupported operator.";
+    return kLiteError;
+  }
+  if (prim_type_ == schema::PrimitiveType_Custom) {
+    MS_LOG(ERROR) << "Custom operator need output_num.";
+    return kLiteError;
+  } else {
+    int output_num = ops_output_num.find(op_name) != ops_output_num.end() ? ops_output_num.at(op_name) : 1;
+    InitTensors(inputs, output_num);
+    status = GetCpuKernel(ms_context);
+  }
+
+  if (status != kSuccess) {
+    MS_LOG(ERROR) << "get kernel error.";
+    FreeAllResource();
+    return status;
+  }
+  int ret = kernel_->Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "kernel Prepare error.";
+    FreeAllResource();
+    return static_cast<StatusCode>(ret);
+  }
+  return kSuccess;
+}
+
+Status KernelExecutorImpl::Build(const std::shared_ptr<ops::Custom> &op, const std::vector<MSTensor> &inputs,
+                                 const std::shared_ptr<Context> &ms_context, const int output_num) {
+  if (output_num < 1) {
+    MS_LOG(ERROR) << "output_num must be greater than 0";
+    return kLiteError;
+  }
+  Status status = BuildInit(op, inputs, ms_context);
+  if (status != kSuccess) {
+    return status;
+  }
+  InitTensors(inputs, output_num);
+  status = GetCustomKernel(ms_context);
+  if (status != kSuccess) {
+    MS_LOG(ERROR) << "get kernel error.";
+    FreeAllResource();
+    return status;
+  }
+  int ret = kernel_->Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "kernel Prepare error.";
+    FreeAllResource();
+    return static_cast<StatusCode>(ret);
+  }
+  return kSuccess;
+}
+
+Status KernelExecutorImpl::ReSize(const std::vector<MSTensor> &inputs) {
+  if (kernel_ == nullptr) {
+    MS_LOG(ERROR) << "kernel is nullptr.";
+    return kLiteNullptr;
+  }
+  if (inputs.size() == 0) {
+    MS_LOG(ERROR) << "wrong inputs size.";
+    return kLiteError;
+  }
+  InitTensors(inputs, 0);
+  kernel_->set_in_tensors(inputs_);
+  kernel_->set_out_tensors(outputs_);
+  int ret;
+  if (kernel_->type() == schema::PrimitiveType_Custom) {
+    ret = KernelInferShape(inputs_, outputs_, primitive_, context_->GetProviders(), schema_version_);
+  } else {
+    ret = KernelInferShape(inputs_, outputs_, parameter_);
+  }
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "do infer shape error.";
+    return static_cast<StatusCode>(ret);
+  }
+  ret = kernel_->ReSize();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "kernel Resize error.";
+    FreeAllResource();
+    return static_cast<StatusCode>(ret);
+  }
+  return kSuccess;
+}
+
+Status KernelExecutorImpl::Execute(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) {
+  if (kernel_ == nullptr) {
+    MS_LOG(ERROR) << "kernel is nullptr.";
+    return kLiteNullptr;
+  }
+  if (outputs == nullptr) {
+    MS_LOG(ERROR) << "outputs is nullptr.";
+    return kLiteNullptr;
+  }
+  if (inputs.size() != inputs_.size()) {
+    MS_LOG(ERROR) << "wrong inputs size.";
+    return kLiteError;
+  }
+
+  for (size_t i = 0; i < inputs.size(); ++i) {
+    auto user_input = inputs[i];
+    auto input = inputs_[i];
+    if (!TensorIsValid(user_input, input)) {
+      MS_LOG(ERROR) << "inputs is invalid.";
+      return kLiteError;
+    }
+    if (user_input.impl() == nullptr) {
+      MS_LOG(ERROR) << "Tensor " << user_input.Name() << " is nullptr.";
+      return kLiteError;
+    }
+    auto lite_impl = std::static_pointer_cast<LiteTensorImpl>(user_input.impl());
+    inputs_[i] = static_cast<lite::Tensor *>(lite_impl->lite_tensor());
+  }
+  kernel_->set_in_tensors(inputs_);
+  int ret = kernel_->Execute();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "execute error.";
+    return static_cast<StatusCode>(ret);
+  }
+  auto res = GetOutputs();
+  outputs->clear();
+  outputs->insert(outputs->end(), res.begin(), res.end());
+  return kSuccess;
+}
+
+Status KernelExecutorImpl::BuildInit(const std::shared_ptr<ops::BaseOperator> &op, const std::vector<MSTensor> &inputs,
+                                     const std::shared_ptr<Context> &ms_context) {
   if (op == nullptr) {
     MS_LOG(ERROR) << "base operator is nullptr.";
     return kLiteNullptr;
@@ -51,15 +196,16 @@ Status KernelExecutorImpl::Build(const std::shared_ptr<ops::BaseOperator> &op, c
     MS_LOG(ERROR) << "wrong inputs size.";
     return kLiteError;
   }
-  if (outputs.size() == 0) {
-    MS_LOG(ERROR) << "wrong outputs size.";
-    return kLiteError;
-  }
   if (ms_context == nullptr) {
     MS_LOG(ERROR) << "context is nullptr.";
     return kLiteNullptr;
   }
+  FreeAllResource();
   data_type_ = static_cast<enum TypeId>(inputs[FIRST_INPUT].DataType());
+  if (data_type_ != kNumberTypeInt8 && data_type_ != kNumberTypeFloat16 && data_type_ != kNumberTypeFloat32) {
+    MS_LOG(ERROR) << "unsupported datatype.";
+    return kLiteNullptr;
+  }
   std::unique_ptr<mindspore::schema::PrimitiveT> prim_t = lite::GetPrimitiveT(op);
   flatbuffers::FlatBufferBuilder fbb(INITIAL_SIZE);
   primitive_ = lite::ConvertToPrimitive(prim_t.get(), &fbb);
@@ -76,124 +222,7 @@ Status KernelExecutorImpl::Build(const std::shared_ptr<ops::BaseOperator> &op, c
     return kLiteNullptr;
   }
   int ret = context_->Init();
-  if (ret != RET_OK) {
-    return static_cast<StatusCode>(ret);
-  }
-
-  Status status = InitInOutTensor(inputs, outputs);
-  if (status != kSuccess) {
-    MS_LOG(ERROR) << "InitInOutTensor error.";
-    return status;
-  }
-
-  if (prim_type_ == schema::PrimitiveType_Custom) {
-    status = GetCustomKernel(ms_context);
-  } else {
-    status = GetCpuKernel(ms_context);
-  }
-
-  if (status != kSuccess) {
-    MS_LOG(ERROR) << "get kernel error.";
-    return status;
-  }
-  ret = kernel_->Prepare();
   return static_cast<StatusCode>(ret);
-}
-
-Status KernelExecutorImpl::ReSize(const std::vector<MSTensor> &inputs, const std::vector<MSTensor> &outputs) {
-  if (inputs.size() == 0) {
-    MS_LOG(ERROR) << "wrong inputs size.";
-    return kLiteError;
-  }
-  if (outputs.size() == 0) {
-    MS_LOG(ERROR) << "wrong outputs size.";
-    return kLiteError;
-  }
-  Status status = InitInOutTensor(inputs, outputs);
-  if (status != kSuccess) {
-    MS_LOG(ERROR) << "InitInOutTensor error.";
-    return status;
-  }
-  if (kernel_ == nullptr) {
-    MS_LOG(ERROR) << "kernel is nullptr.";
-    return kLiteNullptr;
-  }
-  kernel_->set_in_tensors(inputs_);
-  kernel_->set_out_tensors(outputs_);
-  int ret;
-  if (kernel_->type() == schema::PrimitiveType_Custom) {
-    ret = KernelInferShape(inputs_, outputs_, primitive_, context_->GetProviders(), schema_version_);
-  } else {
-    ret = KernelInferShape(inputs_, outputs_, parameter_);
-  }
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "do infer shape error.";
-    return static_cast<StatusCode>(ret);
-  }
-  ret = kernel_->ReSize();
-  return static_cast<StatusCode>(ret);
-}
-Status KernelExecutorImpl::Infer(std::vector<MSTensor> *outputs) {
-  if (outputs == nullptr) {
-    MS_LOG(ERROR) << "outputs is nullptr.";
-    return kLiteNullptr;
-  }
-  if (outputs->size() != outputs_.size()) {
-    MS_LOG(ERROR) << "wrong outputs size.";
-    return kLiteError;
-  }
-  for (size_t i = 0; i < outputs->size(); ++i) {
-    auto user_output = outputs->at(i);
-    auto output = outputs_[i];
-    user_output.SetFormat(output->format());
-    auto output_shape = output->shape();
-    std::vector<int64_t> shape;
-    std::transform(output_shape.begin(), output_shape.end(), std::back_inserter(shape),
-                   [](auto s) { return static_cast<int64_t>(s); });
-    user_output.SetShape(shape);
-  }
-  return kSuccess;
-}
-
-Status KernelExecutorImpl::Execute(const std::vector<MSTensor> &inputs, const std::vector<MSTensor> &outputs) {
-  if (inputs.size() != inputs_.size()) {
-    MS_LOG(ERROR) << "wrong inputs size.";
-    return kLiteError;
-  }
-  if (outputs.size() != outputs_.size()) {
-    MS_LOG(ERROR) << "wrong outputs size.";
-    return kLiteError;
-  }
-  if (kernel_ == nullptr) {
-    MS_LOG(ERROR) << "kernel is nullptr.";
-    return kLiteNullptr;
-  }
-  for (size_t i = 0; i < inputs.size(); ++i) {
-    auto user_input = inputs[i];
-    auto input = inputs_[i];
-    if (!TensorIsValid(user_input, input)) {
-      MS_LOG(ERROR) << "inputs is invalid.";
-      return kLiteError;
-    }
-    input->set_data(user_input.MutableData());
-  }
-
-  for (size_t i = 0; i < outputs.size(); ++i) {
-    auto user_output = outputs[i];
-    auto output = outputs_[i];
-    if (!TensorIsValid(user_output, output)) {
-      MS_LOG(ERROR) << "outputs is invalid.";
-      return kLiteError;
-    }
-    output->set_data(user_output.MutableData());
-  }
-  int ret = kernel_->Execute();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "execute error.";
-    return static_cast<StatusCode>(ret);
-  }
-
-  return kSuccess;
 }
 
 Status KernelExecutorImpl::GetOpParameter() {
@@ -214,7 +243,6 @@ Status KernelExecutorImpl::GetOpParameter() {
 
 Status KernelExecutorImpl::GetCustomKernel(const std::shared_ptr<Context> &ms_context) {
   int get_kernel = lite::RET_ERROR;
-
   // find kernel match arch, data_type, kernel_arch and provider
   for (auto &&device : context_->device_list_) {
     if (!device.provider_.empty() && !device.provider_device_.empty()) {
@@ -258,14 +286,41 @@ Status KernelExecutorImpl::GetCpuKernel(const std::shared_ptr<Context> &ms_conte
   return static_cast<StatusCode>(get_kernel);
 }
 
-void KernelExecutorImpl::FreeInOutTensor() {
-  for (auto &input : inputs_) {
-    if (input != nullptr) {
-      delete input;
-      input = nullptr;
-    }
-  }
+void KernelExecutorImpl::InitTensors(const std::vector<MSTensor> &inputs, const int output_num) {
   inputs_.clear();
+  for (const auto &tensor : inputs) {
+    if (tensor.impl() == nullptr) {
+      MS_LOG(ERROR) << "Tensor " << tensor.Name() << " is nullptr.";
+    }
+    auto lite_impl = std::static_pointer_cast<LiteTensorImpl>(tensor.impl());
+    auto lite_tensor = static_cast<lite::Tensor *>(lite_impl->lite_tensor());
+    if (data_type_ == kNumberTypeInt8 && lite_tensor->quant_params().empty()) {
+      Int8TensorAddQuantParam(lite_tensor);
+    }
+    inputs_.emplace_back(lite_tensor);
+  }
+  for (int i = 0; i < output_num; ++i) {
+    lite::Tensor *output_tensor = new (std::nothrow) lite::Tensor();
+    if (output_tensor == nullptr) {
+      MS_LOG(ERROR) << "Failed to allocate tensor.";
+    }
+    if (data_type_ == kNumberTypeInt8) {
+      Int8TensorAddQuantParam(output_tensor);
+    }
+    outputs_.emplace_back(output_tensor);
+  }
+}
+
+void KernelExecutorImpl::FreeAllResource() {
+  if (kernel_ != nullptr) {
+    delete kernel_;
+    kernel_ = nullptr;
+    // free kernel will free parameter.
+    parameter_ = nullptr;
+  } else if (parameter_ != nullptr) {
+    delete parameter_;
+    parameter_ = nullptr;
+  }
   for (auto &output : outputs_) {
     if (output != nullptr) {
       delete output;
@@ -275,56 +330,58 @@ void KernelExecutorImpl::FreeInOutTensor() {
   outputs_.clear();
 }
 
-Status KernelExecutorImpl::InitInOutTensor(const std::vector<MSTensor> &inputs, const std::vector<MSTensor> &outputs) {
-  FreeInOutTensor();
-  for (auto input : inputs) {
-    auto input_shape = input.Shape();
-    std::vector<int> shape;
-    std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(shape),
-                   [](auto s) { return static_cast<int>(s); });
-    lite::Tensor *input_tensor = new (std::nothrow)
-      lite::Tensor(static_cast<enum TypeId>(input.DataType()), shape, input.format(), lite::Category::GRAPH_INPUT);
-    if (input_tensor == nullptr) {
-      delete input_tensor;
-      return kLiteNullptr;
-    }
-    input_tensor->set_data(input.MutableData());
-    inputs_.emplace_back(input_tensor);
+std::vector<MSTensor> KernelExecutorImpl::GetOutputs() {
+  std::vector<MSTensor> empty;
+  std::vector<MSTensor> res;
+  if (outputs_.empty()) {
+    MS_LOG(ERROR) << "The outputs is empty.";
+    return empty;
   }
-
-  for (auto output : outputs) {
-    auto output_shape = output.Shape();
-    std::vector<int> shape;
-    std::transform(output_shape.begin(), output_shape.end(), std::back_inserter(shape),
-                   [](auto s) { return static_cast<int>(s); });
-    lite::Tensor *output_tensor =
-      new (std::nothrow) lite::Tensor(static_cast<enum TypeId>(output.DataType()), shape, output.format());
-    if (output_tensor == nullptr) {
-      delete output_tensor;
-      return kLiteNullptr;
+  res.resize(outputs_.size());
+  for (size_t i = 0; i < outputs_.size(); i++) {
+    auto impl = std::make_shared<LiteTensorImpl>(outputs_[i]);
+    if (impl == nullptr || impl->lite_tensor() == nullptr) {
+      MS_LOG(ERROR) << "Create tensor failed.";
+      return empty;
     }
-    outputs_.emplace_back(output_tensor);
+    auto tensor = MSTensor(impl);
+    if (tensor == nullptr) {
+      MS_LOG(ERROR) << "Create tensor failed.";
+      return empty;
+    }
+    res[i] = tensor;
   }
-  return kSuccess;
+  return res;
 }
 
 bool KernelExecutorImpl::TensorIsValid(const MSTensor &ms_tensor, const lite::Tensor *lite_tensor) {
   if (static_cast<enum TypeId>(ms_tensor.DataType()) != lite_tensor->data_type()) {
+    MS_LOG(ERROR) << "DataType is invalid.";
     return false;
   }
   if (ms_tensor.format() != lite_tensor->format()) {
+    MS_LOG(ERROR) << "Format is invalid.";
     return false;
   }
   auto ms_tensor_shape = ms_tensor.Shape();
   auto lite_tensor_shape = lite_tensor->shape();
   if (ms_tensor_shape.size() != lite_tensor_shape.size()) {
+    MS_LOG(ERROR) << "Shape is invalid.";
     return false;
   }
   for (size_t i = 0; i < ms_tensor_shape.size(); i++) {
     if (ms_tensor_shape[i] != lite_tensor_shape[i]) {
+      MS_LOG(ERROR) << "Shape is invalid.";
       return false;
     }
   }
   return true;
+}
+
+void KernelExecutorImpl::Int8TensorAddQuantParam(lite::Tensor *lite_tensor) {
+  lite::LiteQuantParam quant_param;
+  quant_param.scale = 1;
+  quant_param.zeroPoint = 0;
+  lite_tensor->set_quant_params({quant_param});
 }
 }  // namespace mindspore
