@@ -30,6 +30,7 @@ namespace mindspore {
 namespace opt {
 namespace {
 constexpr auto kGradientsFlag = "Gradients";
+constexpr auto kMicroInterleavedTag = "micro_interleaved_been_tag";
 const size_t interleaved_size = 2;
 const size_t node_size_two = 2;
 const size_t node_size_three = 3;
@@ -64,13 +65,14 @@ void SpreadMicroInterleavedIndexForForwardCommNodes(const CNodePtr &input_node, 
         continue;
       }
       auto input_cnode = input->cast<CNodePtr>();
-      if (input_cnode->HasAttr(parallel::MICRO_INTERLEAVED_INDEX)) {
+      if (input_cnode->HasAttr(kMicroInterleavedTag)) {
         continue;
       }
       bool is_pipeline = (pipeline_micro >= 0 && input_cnode->HasPrimalAttr(parallel::MICRO));
       if (is_pipeline && GetValue<int64_t>(input_cnode->GetPrimalAttr(parallel::MICRO)) != pipeline_micro) {
         continue;
       }
+      input_cnode->AddAttr(kMicroInterleavedTag, MakeValue<bool>(True));
       node_queue.push(input_cnode);
       if (input_cnode->HasPrimalAttr(parallel::FORWARD_NODE_UNIQUE_ID)) {
         if (pipeline_micro >= 0 && !input_cnode->HasPrimalAttr(parallel::MICRO)) {
