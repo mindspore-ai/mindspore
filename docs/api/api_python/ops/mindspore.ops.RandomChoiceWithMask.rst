@@ -1,5 +1,5 @@
 ﻿mindspore.ops.RandomChoiceWithMask
-==================================
+=====================================
 
 .. py:class:: mindspore.ops.RandomChoiceWithMask(count=256, seed=0, seed2=0)
 

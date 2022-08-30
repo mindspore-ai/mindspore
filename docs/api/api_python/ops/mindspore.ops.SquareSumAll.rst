@@ -1,5 +1,5 @@
 ﻿mindspore.ops.SquareSumAll
-==========================
+============================
 
 .. py:class:: mindspore.ops.SquareSumAll
 

@@ -1,5 +1,5 @@
 ﻿mindspore.ops.tensor_scatter_max
-================================
+===================================
 
 .. py:function:: mindspore.ops.tensor_scatter_max(input_x, indices, updates)
 

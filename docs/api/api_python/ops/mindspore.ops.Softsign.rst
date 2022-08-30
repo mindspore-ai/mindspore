@@ -1,5 +1,5 @@
 ﻿mindspore.ops.Softsign
-======================
+========================
 
 .. py:class:: mindspore.ops.Softsign
 

@@ -1,5 +1,5 @@
 ﻿mindspore.ops.RealDiv
-=====================
+=======================
 
 .. py:class:: mindspore.ops.RealDiv
 

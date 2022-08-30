@@ -1,5 +1,5 @@
 ﻿mindspore.ops.tensor_scatter_elements
-=====================================
+=======================================
 
 .. py:function:: mindspore.ops.tensor_scatter_elements(input_x, indices, updates, axis=0, reduction="none")
 

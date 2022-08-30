@@ -1,5 +1,5 @@
 ﻿mindspore.ops.LogicalNot
-========================
+==========================
 
 .. py:class:: mindspore.ops.LogicalNot
 

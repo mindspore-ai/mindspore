@@ -1,5 +1,5 @@
 ﻿mindspore.dataset.OBSMindDataset
-================================
+==================================
 
 .. py:class:: mindspore.dataset.OBSMindDataset(dataset_files, server, ak, sk, sync_obs_path, columns_list=None, shuffle=Shuffle.GLOBAL, num_shards=None, shard_id=None, shard_equal_rows=True)
 

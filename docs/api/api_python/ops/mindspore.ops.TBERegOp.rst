@@ -1,5 +1,5 @@
 ﻿mindspore.ops.TBERegOp
-======================
+========================
 
 .. py:class:: mindspore.ops.TBERegOp(op_name)
 

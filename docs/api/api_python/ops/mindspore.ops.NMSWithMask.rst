@@ -1,5 +1,5 @@
 ﻿mindspore.ops.NMSWithMask
-=========================
+===========================
 
 .. py:class:: mindspore.ops.NMSWithMask(iou_threshold=0.5)
 

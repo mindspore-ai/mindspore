@@ -1,5 +1,5 @@
 ﻿mindspore.ops.unsorted_segment_sum
-==================================
+====================================
 
 .. py:function:: mindspore.ops.unsorted_segment_sum(input_x, segment_ids, num_segments)
 

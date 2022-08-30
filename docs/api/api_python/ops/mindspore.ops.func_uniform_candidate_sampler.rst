@@ -1,5 +1,5 @@
 ﻿mindspore.ops.uniform_candidate_sampler
-=======================================
+=========================================
 
 .. py:function:: mindspore.ops.uniform_candidate_sampler(true_classes, num_true, num_sampled, unique, range_max, seed=0, remove_accidental_hits=False)
 

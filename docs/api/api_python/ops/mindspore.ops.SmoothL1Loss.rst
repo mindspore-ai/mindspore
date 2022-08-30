@@ -1,5 +1,5 @@
 ﻿mindspore.ops.SmoothL1Loss
-==========================
+============================
 
 .. py:class:: mindspore.ops.SmoothL1Loss(beta=1.0, reduction='none')
 
