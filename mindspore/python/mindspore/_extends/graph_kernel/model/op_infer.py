@@ -286,39 +286,45 @@ class CImag(OpInfer):
     """CImag op infer"""
 
     def _check_type(self):
-        if self.inputs[0].dtype != "complex64":
-            raise GKException(
-                "For 'CImag', input[0] should be of type complex64, but got {}".format(self.inputs[0].dtype))
+        if self.inputs[0].dtype != "complex64" and self.inputs[0].dtype != "complex128":
+            raise GKException("For 'CImag', input[0] should be of type complex64 or"
+                              "type complex128, but got {}".format(self.inputs[0].dtype))
 
     def _infer_type(self):
-        return "float32"
+        if self.inputs[0].dtype == "complex64":
+            return "float32"
+        return "float64"
 
 
 class CReal(OpInfer):
     """CReal op infer"""
 
     def _check_type(self):
-        if self.inputs[0].dtype != "complex64":
-            raise GKException(
-                "For 'CReal', input[0] should be of type complex64, but got {}".format(self.inputs[0].dtype))
+        if self.inputs[0].dtype != "complex64" and self.inputs[0].dtype != "complex128":
+            raise GKException("For 'CReal', input[0] should be of type complex64 or"
+                              "type complex128, but got {}".format(self.inputs[0].dtype))
 
     def _infer_type(self):
-        return "float32"
+        if self.inputs[0].dtype == "complex64":
+            return "float32"
+        return "float64"
 
 
 class Complex(OpInfer):
     """Complex op infer"""
 
     def _check_type(self):
-        if self.inputs[0].dtype != "float32":
-            raise GKException(
-                "For 'Complex', input[0] should be of type float32, but got {}".format(self.inputs[0].dtype))
+        if self.inputs[0].dtype != "float32" and self.inputs[0].dtype != "float64":
+            raise GKException("For 'Complex', input[0] should be of type float32 or type float64,"
+                              "but got {}".format(self.inputs[0].dtype))
         if self.inputs[0].dtype != self.inputs[1].dtype:
             raise GKException("For 'Complex', inputs data type mismatch ({} vs {})"
                               .format(self.inputs[0].dtype, self.inputs[1].dtype))
 
     def _infer_type(self):
-        return "complex64"
+        if self.inputs[0].dtype == "float32":
+            return "complex64"
+        return "complex128"
 
 
 class Less(_CompareOp):

@@ -134,9 +134,14 @@ bool GraphKernelCluster::IsClusterableOp(const AnfNodePtr &node) {
     return false;
   }
 
-  // For AICPU operators, only the Reshape can be clustered.
   auto cb = Callback::Instance();
   MS_EXCEPTION_IF_NULL(cb);
+  // if node's output type is complex64 or complex128, cannot be added to the cluster list.
+  auto node_output_type = cb->GetOutputType(node, 0);
+  if (node_output_type == kNumberTypeComplex64 || node_output_type == kNumberTypeComplex128) {
+    return false;
+  }
+  // For AICPU operators, only the Reshape can be clustered.
   if (cb->GetTargetFromContext() == kAscendDevice) {
     if (cb->GetProcessor(node) != "aicore" && !IsPrimitiveCNode(node, prim::kPrimReshape)) {
       return false;
