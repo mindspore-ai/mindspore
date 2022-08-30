@@ -67,6 +67,7 @@ constexpr auto kDelta = "delta";
 constexpr auto kDependMode = "depend_mode";
 constexpr auto kDepthRadius = "depth_radius";
 constexpr auto kDetectionsPerClass = "detections_per_class";
+constexpr auto kDescending = "descending";
 constexpr auto kDilation = "dilation";
 constexpr auto kDilations = "dilations";
 constexpr auto kDropout = "dropout";
