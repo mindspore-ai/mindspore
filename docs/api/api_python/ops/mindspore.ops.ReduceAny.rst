@@ -1,5 +1,5 @@
 ﻿mindspore.ops.ReduceAny
-=======================
+=========================
 
 .. py:class:: mindspore.ops.ReduceAny(keep_dims=False)
 

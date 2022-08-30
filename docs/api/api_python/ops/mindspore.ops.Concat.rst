@@ -1,5 +1,5 @@
 ﻿mindspore.ops.Concat
-====================
+======================
 
 .. py:class:: mindspore.ops.Concat(axis=0)
 

@@ -1,5 +1,5 @@
 ﻿mindspore.ops.ApplyFtrl
-=======================
+=========================
 
 .. py:class:: mindspore.ops.ApplyFtrl(use_locking=False)
 

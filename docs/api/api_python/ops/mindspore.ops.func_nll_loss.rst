@@ -1,5 +1,5 @@
 ﻿mindspore.ops.nll_loss
-======================
+========================
 
 .. py:function:: mindspore.ops.nll_loss(inputs, target, weight=None, ignore_index=-100, reduction='mean', label_smoothing=0.0)
 

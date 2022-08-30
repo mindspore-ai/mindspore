@@ -1,5 +1,5 @@
 ﻿mindspore.dataset.InMemoryGraphDataset
-======================================
+========================================
 
 .. py:class:: mindspore.dataset.InMemoryGraphDataset(data_dir, save_dir="./processed", column_names="graph", num_samples=None, num_parallel_workers=1, shuffle=None, num_shards=None, shard_id=None, python_multiprocessing=True, max_rowsize=6)
 

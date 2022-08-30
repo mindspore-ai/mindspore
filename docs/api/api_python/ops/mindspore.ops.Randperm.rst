@@ -1,5 +1,5 @@
 ﻿mindspore.ops.Randperm
-======================
+========================
 
 .. py:class:: mindspore.ops.Randperm(max_length=1, pad=-1, dtype=mstype.int32)
 

@@ -1,5 +1,5 @@
 ﻿mindspore.ops.tensor_scatter_sub
-================================
+==================================
 
 .. py:function:: mindspore.ops.tensor_scatter_sub(input_x, indices, updates)
 

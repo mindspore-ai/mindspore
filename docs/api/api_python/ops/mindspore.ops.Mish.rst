@@ -1,5 +1,5 @@
 ﻿mindspore.ops.Mish
-==================
+====================
 
 .. py:class:: mindspore.ops.Mish
 

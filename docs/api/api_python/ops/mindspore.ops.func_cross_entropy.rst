@@ -1,5 +1,5 @@
 ﻿mindspore.ops.cross_entropy
-===========================
+=============================
 
 .. py:function:: mindspore.ops.cross_entropy(inputs, target, weight=None, ignore_index=-100, reduction='mean', label_smoothing=0.0)
 

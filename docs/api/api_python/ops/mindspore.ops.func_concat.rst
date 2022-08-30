@@ -1,5 +1,5 @@
 ﻿mindspore.ops.concat
-====================
+======================
 
 .. py:function:: mindspore.ops.concat(input_x, axis=0)
 

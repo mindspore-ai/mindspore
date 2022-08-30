@@ -1,5 +1,5 @@
 ﻿mindspore.ops.ApplyCenteredRMSProp
-==================================
+====================================
 
 .. py:class:: mindspore.ops.ApplyCenteredRMSProp(use_locking=False)
 

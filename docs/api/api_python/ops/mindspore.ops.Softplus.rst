@@ -1,5 +1,5 @@
 ﻿mindspore.ops.Softplus
-======================
+========================
 
 .. py:class:: mindspore.ops.Softplus
 

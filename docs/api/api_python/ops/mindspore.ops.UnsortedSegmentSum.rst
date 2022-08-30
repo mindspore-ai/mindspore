@@ -1,5 +1,5 @@
 ﻿mindspore.ops.UnsortedSegmentSum
-================================
+==================================
 
 .. py:class:: mindspore.ops.UnsortedSegmentSum
 

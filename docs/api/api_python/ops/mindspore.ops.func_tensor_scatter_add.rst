@@ -1,5 +1,5 @@
 ﻿mindspore.ops.tensor_scatter_add
-================================
+==================================
 
 .. py:function:: mindspore.ops.tensor_scatter_add(input_x, indices, updates)
 

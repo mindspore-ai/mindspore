@@ -1,5 +1,5 @@
 ﻿mindspore.ops.Dropout3D
-=======================
+=========================
 
 .. py:class:: mindspore.ops.Dropout3D(keep_prob=0.5)
 

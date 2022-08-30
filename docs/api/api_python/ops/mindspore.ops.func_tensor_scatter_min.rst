@@ -1,5 +1,5 @@
 ﻿mindspore.ops.tensor_scatter_min
-================================
+==================================
 
 .. py:function:: mindspore.ops.tensor_scatter_min(input_x, indices, updates)
 
