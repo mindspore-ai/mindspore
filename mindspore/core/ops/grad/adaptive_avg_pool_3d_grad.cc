@@ -36,8 +36,8 @@ abstract::ShapePtr InferShapeAdaptiveAvgPool3DGrad(const PrimitivePtr &primitive
   const int64_t orig_input_shape_dims = SizeToLong(orig_input_shape_shape.size());
   CheckAndConvertUtils::CheckInRange("input_grad_dim", input_grad_dims, kIncludeBoth, {4, 5},
                                      kNameAdaptiveAvgPool3DGrad);
-  CheckAndConvertUtils::CheckInteger("orig_input_shape_dims", orig_input_shape_dims, kEqual, 1,
-                                     kNameAdaptiveAvgPool3DGrad);
+  (void)CheckAndConvertUtils::CheckInteger("orig_input_shape_dims", orig_input_shape_dims, kEqual, 1,
+                                           kNameAdaptiveAvgPool3DGrad);
   CheckAndConvertUtils::CheckInRange("orig_input_shape_elem", orig_input_shape_shape[0], kIncludeBoth, {4, 5},
                                      kNameAdaptiveAvgPool3DGrad);
   std::vector<int64_t> orig_input_shape_value_vec(input_grad_dims);
@@ -49,10 +49,10 @@ abstract::ShapePtr InferShapeAdaptiveAvgPool3DGrad(const PrimitivePtr &primitive
     MS_EXCEPTION_IF_NULL(orig_input_shape_value);
     if (!orig_input_shape_value->isa<None>() && !orig_input_shape_value->isa<AnyValue>()) {
       auto orig_input_shape_tensor = orig_input_shape_value->cast<tensor::TensorPtr>();
-      auto value = reinterpret_cast<int32_t *>(orig_input_shape_tensor->data_c());
+      auto value = static_cast<int32_t *>(orig_input_shape_tensor->data_c());
       MS_EXCEPTION_IF_NULL(value);
       for (int64_t i = 0; i < input_grad_dims; ++i) {
-        orig_input_shape_value_vec[i] = value[i] > 0 ? value[i] : 1;
+        orig_input_shape_value_vec[i] = value[i] > 0 ? static_cast<int64_t>(value[i]) : 1;
       }
       gen_value_succ = true;
     }
@@ -73,7 +73,6 @@ abstract::ShapePtr InferShapeAdaptiveAvgPool3DGrad(const PrimitivePtr &primitive
     }
     return std::make_shared<abstract::Shape>(output_shape);
   }
-  MS_EXCEPTION(ValueError) << "AdaptiveAvgPool3D generate shape value failed";
 }
 
 TypePtr InferTypeAdaptiveAvgPool3DGrad(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
@@ -81,10 +80,10 @@ TypePtr InferTypeAdaptiveAvgPool3DGrad(const PrimitivePtr &primitive, const std:
   auto orig_input_shape_dtype = input_args[1]->BuildType();
   const std::set<TypePtr> input_grad_valid = {kInt8, kInt16, kInt32, kInt64, kUInt8, kFloat16, kFloat32, kFloat64};
   const std::set<TypePtr> orig_inputs_valid = {kInt32};
-  CheckAndConvertUtils::CheckTensorTypeValid("input_grad", input_grad_dtype, input_grad_valid,
-                                             kNameAdaptiveAvgPool3DGrad);
-  CheckAndConvertUtils::CheckTensorTypeValid("orig_input_shape", orig_input_shape_dtype, orig_inputs_valid,
-                                             kNameAdaptiveAvgPool3DGrad);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("input_grad", input_grad_dtype, input_grad_valid,
+                                                   kNameAdaptiveAvgPool3DGrad);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("orig_input_shape", orig_input_shape_dtype, orig_inputs_valid,
+                                                   kNameAdaptiveAvgPool3DGrad);
   return input_grad_dtype;
 }
 }  // namespace

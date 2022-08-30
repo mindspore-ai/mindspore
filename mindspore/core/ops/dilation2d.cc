@@ -41,7 +41,7 @@ abstract::ShapePtr Dilation2DInferShape(const PrimitivePtr &primitive, const std
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   const int64_t input_num = 2;
-  (void)CheckAndConvertUtils::CheckInteger("input number", input_args.size(), kEqual, input_num, primitive->name());
+  CheckAndConvertUtils::CheckInteger("input number", input_args.size(), kEqual, input_num, primitive->name());
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
@@ -53,9 +53,9 @@ abstract::ShapePtr Dilation2DInferShape(const PrimitivePtr &primitive, const std
 
   const int64_t x_shape_size = 4;
   const int64_t filter_shape_size = 3;
-  (void)CheckAndConvertUtils::CheckInteger("x shape size", x_shape.size(), kEqual, x_shape_size, primitive->name());
-  (void)CheckAndConvertUtils::CheckInteger("filter shape size", filter_shape.size(), kEqual, filter_shape_size,
-                                           primitive->name());
+  CheckAndConvertUtils::CheckInteger("x shape size", x_shape.size(), kEqual, x_shape_size, primitive->name());
+  CheckAndConvertUtils::CheckInteger("filter shape size", filter_shape.size(), kEqual, filter_shape_size,
+                                     primitive->name());
   const uint64_t n_axis = 0;
   const uint64_t shapeIndex1 = 1;
   const uint64_t shapeIndex2 = 2;
@@ -63,7 +63,7 @@ abstract::ShapePtr Dilation2DInferShape(const PrimitivePtr &primitive, const std
   uint64_t h_axis = shapeIndex1;
   uint64_t w_axis = shapeIndex2;
   uint64_t c_axis = shapeIndex3;
-  int64_t data_format = CheckAndConvertUtils::GetAndCheckFormat(primitive->GetAttr("format"));
+  Format data_format = Format(CheckAndConvertUtils::GetAndCheckFormat(primitive->GetAttr("format")));
   if (data_format == Format::NCHW) {
     c_axis = shapeIndex1;
     h_axis = shapeIndex2;
@@ -127,7 +127,7 @@ abstract::ShapePtr Dilation2DInferShape(const PrimitivePtr &primitive, const std
 TypePtr Dilation2DInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   const int64_t input_num = 2;
-  (void)CheckAndConvertUtils::CheckInteger("input number", input_args.size(), kEqual, input_num, prim->name());
+  CheckAndConvertUtils::CheckInteger("input number", input_args.size(), kEqual, input_num, prim->name());
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }

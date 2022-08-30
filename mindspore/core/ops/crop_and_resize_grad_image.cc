@@ -62,25 +62,25 @@ abstract::ShapePtr CropAndResizeGradImageInferShape(const PrimitivePtr &primitiv
   auto prim_name = primitive->name();
   MS_EXCEPTION_IF_NULL(input_args[ImagekGrads]);
   auto input_shape0 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[ImagekGrads]->BuildShape())[kShape];
-  (void)CheckAndConvertUtils::CheckInteger("grads rank", SizeToLong(input_shape0.size()), kEqual, ImagekGradsShapeLen,
-                                           prim_name);
+  CheckAndConvertUtils::CheckInteger("grads rank", SizeToLong(input_shape0.size()), kEqual, ImagekGradsShapeLen,
+                                     prim_name);
   MS_EXCEPTION_IF_NULL(input_args[ImagekBoxes]);
   auto input_shape1 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[ImagekBoxes]->BuildShape())[kShape];
-  (void)CheckAndConvertUtils::CheckInteger("boxes rank", SizeToLong(input_shape1.size()), kEqual, ImagekBoxesShapeLen,
-                                           prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("shape[1] of boxes", SizeToLong(input_shape1[1]), kEqual,
-                                           ImagekCoordinateLen, prim_name);
+  CheckAndConvertUtils::CheckInteger("boxes rank", SizeToLong(input_shape1.size()), kEqual, ImagekBoxesShapeLen,
+                                     prim_name);
+  CheckAndConvertUtils::CheckInteger("shape[1] of boxes", SizeToLong(input_shape1[1]), kEqual, ImagekCoordinateLen,
+                                     prim_name);
   MS_EXCEPTION_IF_NULL(input_args[ImagekBoxIndex]);
   auto input_shape2 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[ImagekBoxIndex]->BuildShape())[kShape];
-  (void)CheckAndConvertUtils::CheckInteger("box_index rank", SizeToLong(input_shape2.size()), kEqual,
-                                           ImagekBoxIndShapeLen, prim_name);
+  CheckAndConvertUtils::CheckInteger("box_index rank", SizeToLong(input_shape2.size()), kEqual, ImagekBoxIndShapeLen,
+                                     prim_name);
   MS_EXCEPTION_IF_NULL(input_args[ImagekImagesSize]);
   auto input_shape3 =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[ImagekImagesSize]->BuildShape())[kShape];
-  (void)CheckAndConvertUtils::CheckInteger("image_size rank", SizeToLong(input_shape3.size()), kEqual,
-                                           ImagekImageSizeShapeLen, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("length of image_size", SizeToLong(input_shape3[0]), kEqual,
-                                           ImagekGradsShapeLen, prim_name);
+  CheckAndConvertUtils::CheckInteger("image_size rank", SizeToLong(input_shape3.size()), kEqual,
+                                     ImagekImageSizeShapeLen, prim_name);
+  CheckAndConvertUtils::CheckInteger("length of image_size", SizeToLong(input_shape3[0]), kEqual, ImagekGradsShapeLen,
+                                     prim_name);
 
   if (input_shape0[ImagekHeight] <= 0 || input_shape0[ImagekWidth] <= 0) {
     MS_EXCEPTION(ValueError) << "the height and width of grads must be over 0.";
@@ -104,7 +104,7 @@ abstract::ShapePtr CropAndResizeGradImageInferShape(const PrimitivePtr &primitiv
   const int64_t kMaxSize = GetValue<int64_t>(max_Byte_ptr);
   int64_t kMaxLen = 0;
   if (type_size > 0) {
-    kMaxLen = kMaxSize / type_size;
+    kMaxLen = kMaxSize / static_cast<int64_t>(type_size);
   } else {
     MS_EXCEPTION(ValueError) << "the value of T is incorrect.";
   }
@@ -118,7 +118,7 @@ abstract::ShapePtr CropAndResizeGradImageInferShape(const PrimitivePtr &primitiv
       auto output_size_tensor = output_size_value->cast<tensor::TensorPtr>();
       const std::vector<int64_t> const_output_size_shape = output_size_tensor->shape_c();
       if (const_output_size_shape.size() == ImagekOutputSizeD) {
-        auto value = reinterpret_cast<int32_t *>(output_size_tensor->data_c());
+        auto value = static_cast<int32_t *>(output_size_tensor->data_c());
         MS_EXCEPTION_IF_NULL(value);
         for (int64_t i = 0; i < ImagekOutputSizeLen; ++i) {
           if (value[i] > 0) {
@@ -127,7 +127,7 @@ abstract::ShapePtr CropAndResizeGradImageInferShape(const PrimitivePtr &primitiv
                                        << ", but got " << value[i]
                                        << "! The value in output_size should be reduced or kMaxLen should be increased";
             }
-            output_size_value_vec[i] = value[i];
+            output_size_value_vec[i] = static_cast<int64_t>(value[i]);
           } else {
             MS_EXCEPTION(ValueError) << "CropAndResizeGradImage expected output_size to have "
                                         "positive data, but got "
@@ -155,7 +155,6 @@ abstract::ShapePtr CropAndResizeGradImageInferShape(const PrimitivePtr &primitiv
   } else {
     return std::make_shared<abstract::Shape>(output_size_value_vec);
   }
-  MS_EXCEPTION(ValueError) << "CropAndResizeGradImage generate shape value failed";
 }
 
 TypePtr CropAndResizeGradImageInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
@@ -164,7 +163,7 @@ TypePtr CropAndResizeGradImageInferType(const PrimitivePtr &prim, const std::vec
   }
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, ImagekInputNums, prim_name);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, ImagekInputNums, prim_name);
   const std::set<TypePtr> inputs_types = {kFloat32, kFloat64};
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("grads", input_args[ImagekGrads]->BuildType(), inputs_types,
@@ -176,7 +175,7 @@ TypePtr CropAndResizeGradImageInferType(const PrimitivePtr &prim, const std::vec
   (void)CheckAndConvertUtils::CheckTensorTypeValid("image_size", input_args[ImagekImagesSize]->BuildType(), {kInt32},
                                                    prim_name);
   auto out_T = prim->GetAttr("T")->cast<TypePtr>();
-  CheckAndConvertUtils::CheckSubClass("T", out_T, valid_types, prim_name);
+  (void)CheckAndConvertUtils::CheckSubClass("T", out_T, valid_types, prim_name);
   return out_T;
 }
 }  // namespace

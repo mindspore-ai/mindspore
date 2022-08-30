@@ -57,7 +57,7 @@ TypePtr SoftMarginLossInferType(const PrimitivePtr &primitive, const std::vector
 }  // namespace
 
 void SoftMarginLoss::set_reduction(const std::string &reduction) {
-  CheckAndConvertUtils::CheckString(kReduction, reduction, {"none", "sum", "mean"}, this->name());
+  (void)CheckAndConvertUtils::CheckString(kReduction, reduction, {"none", "sum", "mean"}, this->name());
   (void)this->AddAttr(kReduction, api::MakeValue(reduction));
 }
 
