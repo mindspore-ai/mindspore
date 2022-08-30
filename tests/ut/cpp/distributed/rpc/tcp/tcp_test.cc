@@ -268,7 +268,8 @@ TEST_F(TCPTest, SendSyncMessage) {
 
   // Send the message.
   client->Connect(server_url);
-  auto bytes_num = client->SendSync(std::move(message));
+  size_t bytes_num = 0;
+  (void)client->SendSync(std::move(message), &bytes_num);
 
   EXPECT_EQ(msg_size, bytes_num);
 

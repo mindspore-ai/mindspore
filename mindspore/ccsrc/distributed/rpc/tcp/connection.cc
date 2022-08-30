@@ -157,8 +157,9 @@ Connection::Connection()
   recv_kernel_msg.msg_iovlen = RECV_MSG_IO_VEC_LEN;
 
   // Initialize the send message header.
+  // This variable will be deleted in the `Close` method.
   send_metrics = new SendMetrics();
-  for (unsigned int i = 0; i < BUSMAGIC_LEN; i++) {
+  for (unsigned int i = 0; i < MAGICID_LEN; i++) {
     if (i < sizeof(RPC_MAGICID) - 1) {
       send_msg_header.magic[i] = RPC_MAGICID[i];
     } else {
@@ -185,6 +186,7 @@ void Connection::InitSocketOperation() {
   if (socket_operation != nullptr) {
     return;
   }
+  // This variable will be deleted in the `Close` method.
   if (!enable_ssl) {
     socket_operation = new (std::nothrow) TCPSocketOperation();
   } else {
@@ -357,6 +359,7 @@ void Connection::FillSendMessage(MessageBase *msg, const std::string &advertiseU
     return;
   }
   if (msg->type == MessageBase::Type::KMSG) {
+    // The total len of array variable `send_io_vec` is `SEND_MSG_IO_VEC_LEN` whose value is 5 currently.
     size_t index = 0;
     if (!isHttpKmsg) {
       send_to = msg->to;
@@ -429,7 +432,10 @@ void Connection::FillRecvMessage() {
     return;
   }
 
+  // The total len of array variable `recv_io_vec` is `RECV_MSG_IO_VEC_LEN` whose value is 4 currently.
   int i = 0;
+
+  // This new message will be assigned to `recv_message` later.
   MessageBase *msg = new (std::nothrow) MessageBase();
   MS_EXCEPTION_IF_NULL(msg);
 
@@ -471,8 +477,8 @@ void Connection::FillRecvMessage() {
   recv_message = msg;
 }
 
-int Connection::Flush() {
-  int total_send_bytes = 0;
+size_t Connection::Flush() {
+  size_t total_send_bytes = 0;
   while (!send_message_queue.empty() || total_send_len != 0) {
     if (total_send_len == 0) {
       FillSendMessage(send_message_queue.front(), source, false);
@@ -490,7 +496,9 @@ int Connection::Flush() {
         output_buffer_size -= real_data_size;
         total_send_bytes += real_data_size;
 
-        FreeMessageMemory(send_message);
+        if (!FreeMessageMemory(send_message)) {
+          MS_LOG(ERROR) << "Failed to free memory of the send message.";
+        }
         delete send_message;
         send_message = nullptr;
         break;
@@ -621,7 +629,7 @@ bool Connection::FreeMessageMemory(MessageBase *msg) {
   return true;
 }
 
-void *Connection::GetMessageBaseRealData(MessageBase *msg) {
+void *Connection::GetMessageBaseRealData(const MessageBase *msg) const {
   MS_ERROR_IF_NULL_W_RET_VAL(msg, nullptr);
   // The 'data' attribute is preferred.
   if (msg->data != nullptr) {
@@ -637,7 +645,7 @@ void *Connection::GetMessageBaseRealData(MessageBase *msg) {
   return nullptr;
 }
 
-size_t Connection::GetMessageBaseRealDataSize(MessageBase *msg) {
+size_t Connection::GetMessageBaseRealDataSize(MessageBase *msg) const {
   MS_ERROR_IF_NULL_W_RET_VAL(msg, 0);
   // The 'size' attribute is preferred.
   if (msg->data != nullptr) {

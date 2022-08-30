@@ -88,6 +88,7 @@ void OnAccept(int server, uint32_t events, void *arg) {
     return;
   }
 
+  // This new connection will be added to connection pool.
   Connection *conn = new (std::nothrow) Connection();
   if (conn == nullptr) {
     MS_LOG(ERROR) << "Failed to create new connection, server fd:" << server << ", events: " << events
@@ -338,11 +339,11 @@ void TCPComm::DropMessage(MessageBase *msg) {
   ptr = nullptr;
 }
 
-ssize_t TCPComm::Send(MessageBase *msg, bool sync) {
+bool TCPComm::Send(MessageBase *msg, size_t *const send_bytes, bool sync) {
   if (msg == nullptr) {
-    return -1;
+    return false;
   }
-  auto task = [msg, this] {
+  auto task = [msg, send_bytes, this] {
     std::lock_guard<std::mutex> lock(*conn_mutex_);
     // Search connection by the target address
     std::string destination = msg->to.Url();
@@ -351,28 +352,29 @@ ssize_t TCPComm::Send(MessageBase *msg, bool sync) {
       MS_LOG(ERROR) << "Can not found remote link and send fail name: " << msg->name.c_str()
                     << ", from: " << msg->from.Url().c_str() << ", to: " << destination;
       DropMessage(msg);
-      int error_no = -1;
-      return error_no;
+      return false;
     }
 
     if (conn->send_message_queue.size() >= SENDMSG_QUEUELEN) {
       MS_LOG(WARNING) << "The message queue is full(max len:" << SENDMSG_QUEUELEN
                       << ") and the name of dropped message is: " << msg->name.c_str() << ", fd: " << conn->socket_fd
                       << ", to: " << conn->destination.c_str();
-      conn->FreeMessageMemory(msg);
+      if (!conn->FreeMessageMemory(msg)) {
+        MS_LOG(ERROR) << "Failed to free memory of the message.";
+      }
       DropMessage(msg);
-      int error_no = -1;
-      return error_no;
+      return false;
     }
 
     if (conn->state != ConnectionState::kConnected) {
       MS_LOG(WARNING) << "Invalid connection state " << conn->state
                       << " and the name of dropped message is: " << msg->name.c_str() << ", fd: " << conn->socket_fd
                       << ", to: " << conn->destination.c_str();
-      conn->FreeMessageMemory(msg);
+      if (!conn->FreeMessageMemory(msg)) {
+        MS_LOG(ERROR) << "Failed to free memory of the message.";
+      }
       DropMessage(msg);
-      int error_no = -1;
-      return error_no;
+      return false;
     }
 
     if (conn->total_send_len == 0) {
@@ -380,7 +382,11 @@ ssize_t TCPComm::Send(MessageBase *msg, bool sync) {
     } else {
       (void)conn->send_message_queue.emplace(msg);
     }
-    return conn->Flush();
+    auto bytes = conn->Flush();
+    if (send_bytes != nullptr) {
+      *send_bytes = bytes;
+    }
+    return true;
   };
   if (sync) {
     return task();

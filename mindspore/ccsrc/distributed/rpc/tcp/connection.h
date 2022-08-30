@@ -110,7 +110,7 @@ struct Connection {
   }
 
   // Send all the messages in the message queue.
-  int Flush();
+  size_t Flush();
 
   /**
    * @description: Set callback to allocate memory for this connection when receiving message from the remote.
@@ -256,14 +256,14 @@ struct Connection {
    * @param {MessageBase} *msg: The MessageBase object.
    * @return {void *}: The pointer to the memory of the real data.
    */
-  void *GetMessageBaseRealData(MessageBase *msg);
+  void *GetMessageBaseRealData(const MessageBase *msg) const;
 
   /**
    * @description: Get size of the real data size.
    * @param {MessageBase} *msg: The MessageBase object.
    * @return {size_t}: The size of the real data.
    */
-  size_t GetMessageBaseRealDataSize(MessageBase *msg);
+  size_t GetMessageBaseRealDataSize(MessageBase *msg) const;
 
   std::string advertise_addr_;
 };

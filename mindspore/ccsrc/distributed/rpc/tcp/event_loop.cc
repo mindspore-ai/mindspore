@@ -29,6 +29,7 @@
 #include <thread>
 
 #include "actor/log.h"
+#include "utils/convert_utils_base.h"
 #include "distributed/rpc/tcp/constants.h"
 
 namespace mindspore {
@@ -67,7 +68,7 @@ int EventLoopRun(EventLoop *evloop, int timeout) {
       }
     } else if (nevent > 0) {
       /* save the epoll modify in "stop" while dispatching handlers */
-      evloop->HandleEvent(events, nevent);
+      evloop->HandleEvent(events, IntToSize(nevent));
     } else {
       MS_LOG(ERROR) << "Failed to call epoll_wait, epoll_fd_: " << evloop->epoll_fd_ << ", ret: 0,errno: " << errno;
       evloop->is_stop_ = true;
@@ -145,7 +146,7 @@ size_t EventLoop::AddTask(std::function<int()> &&task) {
     // wakeup event loop
     uint64_t one = 1;
     ssize_t retval = write(task_queue_event_fd_, &one, sizeof(one));
-    if (retval != sizeof(one)) {
+    if (retval <= 0 || retval != sizeof(one)) {
       MS_LOG(WARNING) << "Failed to write queue Event fd: " << task_queue_event_fd_ << ",errno:" << errno;
     }
   }
@@ -466,7 +467,8 @@ void EventLoop::Stop() {
   is_stop_ = true;
   uint64_t one = 1;
 
-  if (write(task_queue_event_fd_, &one, sizeof(one)) != sizeof(one)) {
+  auto retval = write(task_queue_event_fd_, &one, sizeof(one));
+  if (retval <= 0 || retval != sizeof(one)) {
     MS_LOG(WARNING) << "Failed to write task_queue_event_fd_ fd:" << task_queue_event_fd_ << ",errno:" << errno;
   }
   return;

@@ -344,7 +344,7 @@ bool ComputeGraphNode::SendMessageToMSN(const std::string msg_name, const std::s
 
   if (sync) {
     auto retval = tcp_client_->SendSync(std::move(message));
-    if (retval > 0) {
+    if (retval) {
       return true;
     } else {
       return false;
