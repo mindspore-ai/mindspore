@@ -53,6 +53,13 @@ class ExecutionTree {
 
   class Iterator {
    public:
+    // support iterator traits
+    using iterator_category = std::bidirectional_iterator_tag;
+    using value_type = DatasetOp;
+    using difference_type = ptrdiff_t;
+    using pointer = DatasetOp *;
+    using reference = DatasetOp &;
+
     // Constructor
     // @param root The root node to start iterating from
     explicit Iterator(const std::shared_ptr<DatasetOp> &root = nullptr);
