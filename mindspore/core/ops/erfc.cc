@@ -51,7 +51,7 @@ TypePtr ErfcInferType(const PrimitivePtr &primitive, const std::vector<AbstractB
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   auto infer_type = input_args[0]->BuildType();
   MS_EXCEPTION_IF_NULL(infer_type);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("input number", infer_type, valid_types, prim_name);

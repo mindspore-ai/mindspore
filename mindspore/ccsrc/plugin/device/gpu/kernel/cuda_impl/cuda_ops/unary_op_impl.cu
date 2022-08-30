@@ -130,6 +130,14 @@ __global__ void ErfcKernel(const double *input, double *output, const size_t cou
   return;
 }
 template <typename T>
+__global__ void NegativeKernel(const Complex<T> *input, Complex<T> *output, const size_t count) {
+  T neg_one = static_cast<T>(-1);
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    output[i] = neg_one * input[i];
+  }
+  return;
+}
+template <typename T>
 __global__ void NegativeKernel(const T *input, T *output, const size_t count) {
   T neg_one = static_cast<T>(-1);
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
@@ -271,6 +279,13 @@ __global__ void SinKernel(const half *input, half *output, const size_t count) {
   return;
 }
 template <typename T>
+__global__ void SinKernel(const Complex<T> *input, Complex<T> *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    output[i] = sin(input[i]);
+  }
+  return;
+}
+template <typename T>
 __global__ void SinhKernel(const T *input, T *output, const size_t count) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < count; i += blockDim.x * gridDim.x) {
     output[i] = sinhf(input[i]);
@@ -334,6 +349,13 @@ __global__ void AsinKernel(const double *input, double *output, const size_t cou
   return;
 }
 template <typename T>
+__global__ void AsinKernel(const Complex<T> *input, Complex<T> *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    output[i] = asin(input[i]);
+  }
+  return;
+}
+template <typename T>
 __global__ void AsinhKernel(const T *input, T *output, const size_t count) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
     output[i] = asinhf(input[i]);
@@ -342,6 +364,13 @@ __global__ void AsinhKernel(const T *input, T *output, const size_t count) {
 }
 template <>
 __global__ void AsinhKernel(const double *input, double *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    output[i] = asinh(input[i]);
+  }
+  return;
+}
+template <typename T>
+__global__ void AsinhKernel(const Complex<T> *input, Complex<T> *output, const size_t count) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
     output[i] = asinh(input[i]);
   }
@@ -365,6 +394,13 @@ template <>
 __global__ void CosKernel(const half *input, half *output, const size_t count) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
     output[i] = hcos(input[i]);
+  }
+  return;
+}
+template <typename T>
+__global__ void CosKernel(const Complex<T> *input, Complex<T> *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    output[i] = cos(input[i]);
   }
   return;
 }
@@ -411,6 +447,13 @@ __global__ void ACosKernel(const double *input, double *output, const size_t cou
   return;
 }
 template <typename T>
+__global__ void ACosKernel(const Complex<T> *input, Complex<T> *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    output[i] = acos(input[i]);
+  }
+  return;
+}
+template <typename T>
 __global__ void AcoshKernel(const T *input, T *output, const size_t count) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
     output[i] = acoshf(input[i]);
@@ -419,6 +462,13 @@ __global__ void AcoshKernel(const T *input, T *output, const size_t count) {
 }
 template <>
 __global__ void AcoshKernel(const double *input, double *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    output[i] = acosh(input[i]);
+  }
+  return;
+}
+template <typename T>
+__global__ void AcoshKernel(const Complex<T> *input, Complex<T> *output, const size_t count) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
     output[i] = acosh(input[i]);
   }
@@ -826,6 +876,11 @@ void Erfc(const T *input, T *output, const size_t count, cudaStream_t cuda_strea
   return;
 }
 template <typename T>
+void Negative(const Complex<T> *input, Complex<T> *output, const size_t count, cudaStream_t cuda_stream) {
+  NegativeKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
+  return;
+}
+template <typename T>
 void Negative(const T *input, T *output, const size_t count, cudaStream_t cuda_stream) {
   NegativeKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
   return;
@@ -866,6 +921,11 @@ void Sin(const T *input, T *output, const size_t count, cudaStream_t cuda_stream
   return;
 }
 template <typename T>
+void Sin(const Complex<T> *input, Complex<T> *output, const size_t count, cudaStream_t cuda_stream) {
+  SinKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
+  return;
+}
+template <typename T>
 void Sinh(const T *input, T *output, const size_t count, cudaStream_t cuda_stream) {
   SinhKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
   return;
@@ -886,6 +946,11 @@ void Cos(const T *input, T *output, const size_t count, cudaStream_t cuda_stream
   return;
 }
 template <typename T>
+void Cos(const Complex<T> *input, Complex<T> *output, const size_t count, cudaStream_t cuda_stream) {
+  CosKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
+  return;
+}
+template <typename T>
 void Cosh(const T *input, T *output, const size_t count, cudaStream_t cuda_stream) {
   CoshKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
   return;
@@ -896,7 +961,17 @@ void Asin(const T *input, T *output, const size_t count, cudaStream_t cuda_strea
   return;
 }
 template <typename T>
+void Asin(const Complex<T> *input, Complex<T> *output, const size_t count, cudaStream_t cuda_stream) {
+  AsinKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
+  return;
+}
+template <typename T>
 void ACos(const T *input, T *output, const size_t count, cudaStream_t cuda_stream) {
+  ACosKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
+  return;
+}
+template <typename T>
+void ACos(const Complex<T> *input, Complex<T> *output, const size_t count, cudaStream_t cuda_stream) {
   ACosKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
   return;
 }
@@ -911,7 +986,17 @@ void Asinh(const T *input, T *output, const size_t count, cudaStream_t cuda_stre
   return;
 }
 template <typename T>
+void Asinh(const Complex<T> *input, Complex<T> *output, const size_t count, cudaStream_t cuda_stream) {
+  AsinhKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
+  return;
+}
+template <typename T>
 void Acosh(const T *input, T *output, const size_t count, cudaStream_t cuda_stream) {
+  AcoshKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
+  return;
+}
+template <typename T>
+void Acosh(const Complex<T> *input, Complex<T> *output, const size_t count, cudaStream_t cuda_stream) {
   AcoshKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
   return;
 }
@@ -1704,6 +1789,18 @@ template CUDA_LIB_EXPORT void Conj<float>(const Complex<float> *input, Complex<f
                                           cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Sqrt<Complex<float>>(const Complex<float> *input, Complex<float> *output,
                                                    const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Sin<Complex<float>>(const Complex<float> *input, Complex<float> *output,
+                                                  const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Cos<Complex<float>>(const Complex<float> *input, Complex<float> *output,
+                                                  const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void ACos<Complex<float>>(const Complex<float> *input, Complex<float> *output,
+                                                  const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Acosh<Complex<float>>(const Complex<float> *input, Complex<float> *output,
+                                                  const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Asin<Complex<float>>(const Complex<float> *input, Complex<float> *output,
+                                                   const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Asinh<Complex<float>>(const Complex<float> *input, Complex<float> *output,
+                                                    const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Tan<Complex<float>>(const Complex<float> *input, Complex<float> *output,
                                                   const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Cosh<Complex<float>>(const Complex<float> *input, Complex<float> *output,
@@ -1736,6 +1833,18 @@ template CUDA_LIB_EXPORT void Conj<double>(const Complex<double> *input, Complex
                                            cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Sqrt<Complex<double>>(const Complex<double> *input, Complex<double> *output,
                                                     const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Sin<Complex<double>>(const Complex<double> *input, Complex<double> *output,
+                                                   const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Cos<Complex<double>>(const Complex<double> *input, Complex<double> *output,
+                                                   const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void ACos<Complex<double>>(const Complex<double> *input, Complex<double> *output,
+                                                   const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Acosh<Complex<double>>(const Complex<double> *input, Complex<double> *output,
+                                                   const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Asin<Complex<double>>(const Complex<double> *input, Complex<double> *output,
+                                                    const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Asinh<Complex<double>>(const Complex<double> *input, Complex<double> *output,
+                                                     const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Tan<Complex<double>>(const Complex<double> *input, Complex<double> *output,
                                                    const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Cosh<Complex<double>>(const Complex<double> *input, Complex<double> *output,

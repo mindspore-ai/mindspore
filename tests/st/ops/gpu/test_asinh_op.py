@@ -26,15 +26,26 @@ np.random.seed(1)
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_asinh_fp32():
+    """
+    Feature: asinh kernel
+    Description: test asinh float32
+    Expectation: just test
+    """
     x_np = np.random.rand(4, 2).astype(np.float32) * 10
     output_ms = P.Asinh()(Tensor(x_np))
     output_np = np.arcsinh(x_np)
     assert np.allclose(output_ms.asnumpy(), output_np, 1e-4, 1e-4)
 
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_asinh_fp16():
+    """
+    Feature: asinh kernel
+    Description: test asinh float16
+    Expectation: just test
+    """
     x_np = np.random.rand(4, 2).astype(np.float16) * 10
     output_ms = P.Asinh()(Tensor(x_np))
     output_np = np.arcsinh(x_np.astype(np.float32)).astype(np.float16)
@@ -66,3 +77,48 @@ def test_asinh_forward_float32_tensor_api():
     test_asinh_forward_tensor_api(np.float32)
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     test_asinh_forward_tensor_api(np.float32)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_asinh_fp64():
+    """
+    Feature: asinh kernel
+    Description: test asinh float64
+    Expectation: just test
+    """
+    x_np = np.random.rand(4, 2).astype(np.float64) * 10
+    output_ms = P.Asinh()(Tensor(x_np))
+    output_np = np.arcsinh(x_np)
+    assert np.allclose(output_ms.asnumpy(), output_np, 1e-5, 1e-5)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_asinh_complex64():
+    """
+    Feature: asinh kernel
+    Description: test asinh complex64
+    Expectation: just test
+    """
+    x_np = np.random.rand(4, 2).astype(np.complex64) * 10
+    output_ms = P.Asinh()(Tensor(x_np))
+    output_np = np.arcsinh(x_np)
+    assert np.allclose(output_ms.asnumpy(), output_np, 1e-3, 1e-3)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_asinh_complex128():
+    """
+    Feature: asinh kernel
+    Description: test asinh complex128
+    Expectation: just test
+    """
+    x_np = np.random.rand(4, 2).astype(np.complex128) * 10
+    output_ms = P.Asinh()(Tensor(x_np))
+    output_np = np.arcsinh(x_np)
+    assert np.allclose(output_ms.asnumpy(), output_np, 1e-6, 1e-6)
