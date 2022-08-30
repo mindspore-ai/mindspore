@@ -24,7 +24,7 @@ using mindspore::lite::RET_OK;
 namespace mindspore::kernel {
 void ConvolutionIm2ColAVX512CPUKernel::InitGlobalVariable() {
   oc_tile_ = C16NUM;
-  row_tile_ = C150NUM;
+  row_tile_ = MSMIN(UP_DIV(conv_param_->output_h_ * conv_param_->output_w_, op_parameter_->thread_num_), C150NUM);
 
   rowMajor2ColNMajorFunc = RowMajor2Col64Major;
 }
@@ -34,7 +34,7 @@ int ConvolutionIm2ColAVX512CPUKernel::InitTmpBuffer() {
   CHECK_NULL_RETURN(out_tensors_[0]);
   CHECK_NULL_RETURN(out_tensors_[0]->MutableData());
 
-  int unit_size =
+  size_t unit_size =
     conv_param_->kernel_h_ * conv_param_->kernel_w_ * conv_param_->input_channel_ * row_tile_ * thread_count_;
 
   if (packed_input_ != nullptr) {
@@ -54,10 +54,10 @@ int ConvolutionIm2ColAVX512CPUKernel::InitTmpBuffer() {
     }
 
     // avx512 need to malloc dst aligned to C16NUM
-    int oc_algin = UP_ROUND(conv_param_->output_channel_, oc_tile_);
-    int pack_output_size = conv_param_->output_batch_ * conv_param_->output_h_ * conv_param_->output_w_ * oc_algin;
+    size_t oc_algin = UP_ROUND(conv_param_->output_channel_, oc_tile_);
+    size_t pack_output_size = conv_param_->output_batch_ * conv_param_->output_h_ * conv_param_->output_w_ * oc_algin;
     tmp_output_ =
-      reinterpret_cast<float *>(ctx_->allocator->Malloc(pack_output_size * static_cast<int>(sizeof(float))));
+      reinterpret_cast<float *>(ctx_->allocator->Malloc(pack_output_size * static_cast<size_t>(sizeof(float))));
     if (tmp_output_ == nullptr) {
       MS_LOG(ERROR) << "malloc tmp output data failed.";
       return RET_NULL_PTR;
