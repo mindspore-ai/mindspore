@@ -61,6 +61,7 @@ int ResizeTensorRT::IsSupport(const schema::Primitive *primitive, const std::vec
   }
   dynamic_shape_params_.support_hw_dynamic_ =
     (resize_op_->new_height() > 0 && resize_op_->new_width() > 0) ? false : true;
+  dynamic_shape_params_.support_hw_dynamic_ &= resize_op_->method() != schema::ResizeMethod_LINEAR;
 
   return RET_OK;
 }
@@ -126,11 +127,14 @@ nvinfer1::ITensor *ResizeTensorRT::RunPlugin(TensorRTContext *ctx, nvinfer1::ITe
     bool using_half_pixel = (resize_op_->coordinate_transform_mode() == schema::CoordinateTransformMode_HALF_PIXEL);
     auto plugin = std::make_shared<ResizeLinear2DPlugin>(resize_in_tensor->getName(), resize_shape[0], resize_shape[1],
                                                          using_half_pixel, device_id_);
-
+    if (plugin == nullptr) {
+      MS_LOG(ERROR) << "add ResizeLinear2D plugin failed for " << op_name_;
+      return nullptr;
+    }
     nvinfer1::ITensor *inputTensors[] = {resize_in_tensor};
     nvinfer1::IPluginV2Layer *resize_layer = ctx->network()->addPluginV2(inputTensors, 1, *plugin);
     if (resize_layer == nullptr) {
-      MS_LOG(ERROR) << "add spacetobatch op failed for TensorRT.";
+      MS_LOG(ERROR) << "add resize op failed for TensorRT.";
       return nullptr;
     }
     resize_layer->setName(op_name_.c_str());
@@ -347,7 +351,7 @@ nvinfer1::IPluginV2DynamicExt *ResizeLinear2DPlugin::clone() const noexcept {
   return plugin;
 }
 
-size_t ResizeLinear2DPlugin::getSerializationSize() const noexcept { return sizeof(int) * INPUT_SIZE2; }
+size_t ResizeLinear2DPlugin::getSerializationSize() const noexcept { return sizeof(int) * INPUT_SIZE2 + sizeof(bool); }
 
 nvinfer1::DimsExprs ResizeLinear2DPlugin::getOutputDimensions(int32_t index, const nvinfer1::DimsExprs *inputs,
                                                               int nbInputDims,
@@ -366,6 +370,7 @@ nvinfer1::DimsExprs ResizeLinear2DPlugin::getOutputDimensions(int32_t index, con
 void ResizeLinear2DPlugin::serialize(void *buffer) const noexcept {
   SerializeValue(&buffer, &resize_h_, sizeof(int));
   SerializeValue(&buffer, &resize_w_, sizeof(int));
+  SerializeValue(&buffer, &using_half_pixel_, sizeof(bool));
 }
 REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Resize, ResizeTensorRT)
 }  // namespace mindspore::lite
