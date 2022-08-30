@@ -79,7 +79,11 @@ class DatasetCache:
         self.cache_client = CacheClient(session_id, size, spilling, hostname, port, num_connections, prefetch_size)
 
     def get_stat(self):
-        """Get the statistics from a cache."""
+        """
+        Get the statistics from a cache. After data pipeline, three types of statistics can be obtained,
+        including average number of cache hits (avg_cache_sz), number of caches in memory (num_mem_cached)
+        and number of caches in disk (num_disk_cached).
+        """
         return self.cache_client.GetStat()
 
     def __deepcopy__(self, memodict):

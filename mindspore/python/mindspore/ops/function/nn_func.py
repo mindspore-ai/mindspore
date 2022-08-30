@@ -2247,11 +2247,12 @@ def conv2d(x, weight, kernel_size, pad_mode="valid", padding=0, stride=1, dilati
     If the 'pad_mode' is set to be "valid", the output height and width will be
     :math:`\left \lfloor{
     1 + \frac{H_{in} + \text{padding[0]} + \text{padding[1]} - \text{kernel_size[0]} -
-              (\text{kernel_size[0]} - 1) \times(\text{dilation[0]} - 1)} {\text { stride[0] }}} \right \rfloor` and
+    (\text{kernel_size[0]} - 1) \times(\text{dilation[0]} - 1)} {\text { stride[0] }}} \right \rfloor` and
+
     :math:`\left \lfloor{
     1 + \frac{W_{in} + \text{padding[2]} + \text{padding[3]} - \text{kernel_size[1]} -
-              (\text{kernel_size[1]} - 1) \times(\text{dilation[1]} - 1)} {\text { stride[1] }
-    }} \right \rfloor` respectively.
+    (\text{kernel_size[1]} - 1) \times(\text{dilation[1]} - 1)} {\text { stride[1] }}} \right \rfloor` respectively.
+
     Where :math:`dilation` is Spacing between kernel elements, :math:`stride` is The step length of each step,
     :math:`padding` is zero-padding added to both sides of the input.
 

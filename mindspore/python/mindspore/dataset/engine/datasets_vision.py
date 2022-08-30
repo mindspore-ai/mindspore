@@ -1246,8 +1246,7 @@ class DIV2KDataset(MappableDataset, VisionBaseDataset):
     A source dataset that reads and parses DIV2KDataset dataset.
 
     The generated dataset has two columns :py:obj:`[hr_image, lr_image]`.
-    The tensor of column :py:obj:`hr_image` is of the uint8 type.
-    The tensor of column :py:obj:`lr_image` is of the uint8 type.
+    The tensor of column :py:obj:`hr_image` and the tensor of column :py:obj:`lr_image` are of the uint8 type.
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.

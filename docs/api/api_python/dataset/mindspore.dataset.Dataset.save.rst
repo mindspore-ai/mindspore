@@ -1,6 +1,6 @@
 .. py:method:: save(file_name, num_files=1, file_type='mindrecord')
 
-    将数据处理管道中正处理的数据保存为通用的数据集格式。支持的数据集格式：'mindrecord'，然后可以使用'MindDataset'类来读取保存的'mindrecord'文件。
+    将数据处理管道中正处理的数据保存为通用的数据集格式。数据集格式仅支持：'mindrecord'。可以使用'MindDataset'类来读取保存的'mindrecord'文件。
 
     将数据保存为'mindrecord'格式时存在隐式类型转换。转换表展示如何执行类型转换。
 

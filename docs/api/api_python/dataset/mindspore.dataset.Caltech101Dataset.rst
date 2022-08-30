@@ -11,7 +11,7 @@ mindspore.dataset.Caltech101Dataset
     - `target_type` = 'annotation'，输出列为 `[image, annotation]` 。
     - `target_type` = 'all'，输出列为 `[image, category, annotation]` 。
   
-    列 'image' 为 uint8 类型，列 'category' 为 uint32 类型，列 'annotation' 是一个二维的ndarray，存储了图像的轮廓，由一系列的点组成。
+    列 'image' 为 uint8 类型。列 'category' 为 uint32 类型。列 'annotation' 是一个二维的ndarray，存储了图像的轮廓，由一系列的点组成。
 
     参数：
         - **dataset_dir** (str) - 包含数据集文件的根目录路径，该路径下将包含2个子目录，目录101_ObjectCategories用于存储图像，

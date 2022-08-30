@@ -244,7 +244,7 @@ class Bijector(Cell):
             **kwargs (dict): the dictionary of keyword arguments forwarded to subclasses.
 
         Returns:
-            Tensor, the value of the  transformed random variable.
+            Tensor, the value of the transformed random variable.
         """
         return self._forward(value, *args, **kwargs)
 
