@@ -52,7 +52,7 @@ usage()
   echo "    -V Specify the device version, if -e gpu, default CUDA 10.1, if -e ascend, default Ascend 910"
   echo "    -I Enable compiling mindspore lite for arm64, arm32 or x86_64, default disable mindspore lite compilation"
   echo "    -A Enable compiling mindspore lite aar package, option: on/off, default: off"
-  echo "    -K Compile with AKG, default on if -e gpu or -e ascend, else default off"
+  echo "    -K Compile with AKG, default on"
   echo "    -B Enable debugger, default on"
   echo "    -E Enable IBVERBS for parameter server, default off"
   echo "    -l Compile with python dependency, default on"

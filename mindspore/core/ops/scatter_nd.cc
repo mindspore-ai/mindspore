@@ -36,7 +36,6 @@ void ScatterNdCheckShape(const PrimitivePtr &prim, const AbstractBasePtrList &in
   if (out_shape.empty()) {
     MS_EXCEPTION(ValueError) << "For '" << prim->name() << "', the input 'shape' can not be empty.";
   }
-
   // the last dimension of indices_shape, use the same variable 'N' as document.
   if (indices_shape.back() == abstract::Shape::SHP_ANY) {
     MS_EXCEPTION(ValueError) << "For '" << prim->name() << "', the last dimension of 'indices' can not be dynamic.";
