@@ -13,6 +13,7 @@ set(REG_SRC ${CONVERT_REG_SRC}
         ${KERNEL_REG_DIR}/../common/string_util.cc
         ${KERNEL_REG_DIR}/../common/utils.cc
         ${KERNEL_REG_DIR}/../extendrt/delegate/tensorrt/distribution/distribution_base.cc
+        ${KERNEL_REG_DIR}/../extendrt/delegate/plugin/tensorrt_executor_plugin.cc
         ${CORE_DIR}/utils/log_adapter.cc
         ${CORE_DIR}/utils/status.cc
         ${CONVERTER_DIR}/converter_context.cc

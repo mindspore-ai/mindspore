@@ -669,6 +669,16 @@ class MS_CORE_API Tensor final : public MetaTensor {
   /// \return tensor compression type.
   TensorCompressionType compression_type() const { return compression_type_; }
 
+  /// \brief Set tensor name.
+  ///
+  /// \param[in] tensor_name The tensor name.
+  void set_name(const std::string &tensor_name) { tensor_name_ = tensor_name; }
+
+  /// \brief Get the tensor name.
+  ///
+  /// \return tensor name.
+  const std::string &name() const { return tensor_name_; }
+
  private:
   void ExecuteLazyTask() const;
 
@@ -695,6 +705,8 @@ class MS_CORE_API Tensor final : public MetaTensor {
   std::function<void(void)> lazy_callback_{nullptr};
   UserData user_data_;
   TensorCompressionType compression_type_{kNoCompression};
+
+  std::string tensor_name_;
 };
 
 // CSRTensor entity class

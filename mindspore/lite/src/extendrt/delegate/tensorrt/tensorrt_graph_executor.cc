@@ -295,29 +295,19 @@ Status GetModelOutputsInfo(KernelGraphPtr kernel_graph, std::vector<NodeWithOutp
   MS_EXCEPTION_IF_NULL(kernel_graph);
   MS_EXCEPTION_IF_NULL(tensor_info_list_ptr);
   auto &tensor_info_list = *tensor_info_list_ptr;
-  auto kernel_graph_outputs = kernel_graph->outputs();
+  auto outputs = kernel_graph->outputs();
   // find parameters of graph inputs
-  for (size_t i = 0; i < kernel_graph_outputs.size(); ++i) {
-    auto output = kernel_graph_outputs[i];
+  for (size_t i = 0; i < outputs.size(); ++i) {
+    auto output = outputs[i];
     auto cur_abstract = output->abstract();
+    size_t output_num = 1;
     if (cur_abstract->isa<abstract::AbstractTuple>()) {
       auto abs_tuple = cur_abstract->Clone()->cast<abstract::AbstractTuplePtr>();
       MS_EXCEPTION_IF_NULL(abs_tuple);
-      size_t output_num = abs_tuple->elements().size();
-      for (size_t output_idx = 0; output_idx < output_num; ++output_idx) {
-        auto tensor_id = common::AnfAlgo::VisitKernelWithReturnType(output, output_idx);
-        auto it =
-          std::find_if(tensor_info_list.begin(), tensor_info_list.end(),
-                       [&tensor_id](const NodeWithOutputIndex &index) { return index.kernel_index == tensor_id; });
-        if (it != tensor_info_list.end()) {
-          output_tensors->push_back(it->tensor_info);
-        } else {
-          MS_LOG_ERROR << "Cannot find output tensor info " << tensor_id.first->fullname_with_scope();
-          return mindspore::kLiteError;
-        }
-      }
-    } else {
-      auto tensor_id = common::AnfAlgo::VisitKernelWithReturnType(output, 0);
+      output_num = abs_tuple->elements().size();
+    }
+    for (size_t output_idx = 0; output_idx < output_num; ++output_idx) {
+      auto tensor_id = common::AnfAlgo::VisitKernelWithReturnType(output, output_idx);
       auto it =
         std::find_if(tensor_info_list.begin(), tensor_info_list.end(),
                      [&tensor_id](const NodeWithOutputIndex &index) { return index.kernel_index == tensor_id; });
@@ -443,12 +433,6 @@ Status TensorRTExecutor::BuildSubGraph(const KernelGraphPtr &kernel_graph) {
   if (status != kSuccess) {
     return status;
   }
-  auto build_trt_graph = [kernel_graph](const std::vector<TensorRTOp *> &tensorrt_ops) {
-    auto inputs = GraphInTensors<TensorRTOp>(tensorrt_ops);
-    auto outputs = GraphOutTensors<TensorRTOp>(tensorrt_ops);
-    auto ctx = TrtGraphContext{tensorrt_ops, inputs, outputs, nullptr};
-    return ctx;
-  };
   for (const auto &kernel_node : kernel_nodes) {
     auto node_name = kernel_node->fullname_with_scope();
     std::string kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
@@ -468,11 +452,11 @@ Status TensorRTExecutor::BuildSubGraph(const KernelGraphPtr &kernel_graph) {
     tensorrt_op->SetRuntime(this->runtime_);
     tensorrt_ops.push_back(tensorrt_op);
   }
-  if (!tensorrt_ops.empty()) {
-    auto trt_ctx = build_trt_graph(tensorrt_ops);
-    tensorrt_ops.clear();
-    tensorrt_graph_list_.push_back(trt_ctx);
+  status = GetModelOutputsInfo(kernel_graph, &tensor_info_list, &outputs_);
+  if (status != kSuccess) {
+    return status;
   }
+  tensorrt_graph_list_.push_back(TrtGraphContext{tensorrt_ops, inputs_, outputs_, nullptr});
   status = UpdateTrtSubGraphInputsDepend();
   if (status != kSuccess) {
     return status;
@@ -485,10 +469,6 @@ Status TensorRTExecutor::BuildSubGraph(const KernelGraphPtr &kernel_graph) {
       MS_LOG(ERROR) << "Create tensorrt graph failed";
       return mindspore::kLiteError;
     }
-  }
-  status = GetModelOutputsInfo(kernel_graph, &tensor_info_list, &outputs_);
-  if (status != kSuccess) {
-    return status;
   }
   return mindspore::kSuccess;
 }
@@ -625,20 +605,27 @@ bool TensorRTExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<ten
     MS_LOG(ERROR) << "TensorRTGraph is nullptr.";
     return false;
   }
-  tensor_val_map_.clear();
   if (inputs.size() != inputs_.size()) {
-    MS_LOG(ERROR) << "Graph inputs size " << inputs_.size() << " != execute input size " << inputs.size();
+    MS_LOG(ERROR) << "Graph inputs size " << inputs_.size() << " != execute outputs size " << inputs.size();
     return false;
   }
+  if (!outputs->empty() && outputs_.size() != outputs->size()) {
+    MS_LOG(ERROR) << "Graph outputs size " << inputs_.size() << " != expected outputs size " << outputs->size();
+    return false;
+  }
+  if (tensorrt_graph_list_.size() == 1) {
+    return tensorrt_graph_list_[0].sub_graph->Execute(inputs, outputs) == RET_OK;
+  }
+  std::map<TensorInfo, std::shared_ptr<tensor::Tensor>> tensor_val_map;
   for (size_t i = 0; i < inputs.size(); i++) {
-    tensor_val_map_[inputs_[i]] = std::make_shared<tensor::Tensor>(inputs[i]);
+    tensor_val_map[inputs_[i]] = std::make_shared<tensor::Tensor>(inputs[i]);
   }
   for (auto &sub_graph : tensorrt_graph_list_) {
     std::vector<tensor::Tensor> sub_inputs;
     std::vector<tensor::Tensor> sub_outputs;
     for (auto &item : sub_graph.inputs) {
-      auto it = tensor_val_map_.find(item);
-      if (it == tensor_val_map_.end()) {
+      auto it = tensor_val_map.find(item);
+      if (it == tensor_val_map.end()) {
         MS_LOG(ERROR) << "Cannot find input tensor " << item.Name() << " in tensor val map";
         return false;
       }
@@ -659,12 +646,13 @@ bool TensorRTExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<ten
       return false;
     }
     for (size_t i = 0; i < sub_graph.outputs.size(); i++) {
-      tensor_val_map_[sub_graph.outputs[i]] = std::make_shared<tensor::Tensor>(sub_outputs[i]);
+      tensor_val_map[sub_graph.outputs[i]] = std::make_shared<tensor::Tensor>(sub_outputs[i]);
     }
   }
+  outputs->clear();
   for (auto &item : outputs_) {
-    auto it = tensor_val_map_.find(item);
-    if (it == tensor_val_map_.end()) {
+    auto it = tensor_val_map.find(item);
+    if (it == tensor_val_map.end()) {
       MS_LOG(ERROR) << "Cannot find input tensor " << item.Name() << " in tensor val map";
       return false;
     }

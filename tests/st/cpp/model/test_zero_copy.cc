@@ -137,9 +137,9 @@ TEST_F(TestZeroCopy, TestDeviceTensor) {
     // Apply transform on images
     Status rc = Transform(image, &image);
     ASSERT_TRUE(rc == kSuccess);
-    MSTensor *device_tensor =
-      MSTensor::CreateDevTensor(image.Name(), image.DataType(), image.Shape(),
-                                image.MutableData(), image.DataSize());
+    MSTensor device_tensor =
+      MSTensor::CreateDeviceTensor(image.Name(), image.DataType(), image.Shape(),
+                                   image.MutableData(), image.DataSize());
     MSTensor *tensor =
       MSTensor::CreateTensor(image.Name(), image.DataType(), image.Shape(),
                              image.Data().get(), image.DataSize());
@@ -158,7 +158,7 @@ TEST_F(TestZeroCopy, TestDeviceTensor) {
     inputs.clear();
     start_time = (TimeValue){0};
     end_time = (TimeValue){0};
-    inputs.push_back(*device_tensor);
+    inputs.push_back(device_tensor);
 
     // infer with device tensor
     (void)gettimeofday(&start_time, nullptr);

@@ -914,9 +914,10 @@ void KernelGraphUtils::GetModelInputsInfo(uint32_t graph_id, std::vector<tensor:
       auto kernel_build_info = AnfAlgo::GetSelectKernelBuildInfo(parameter);
       auto data_type = kernel_build_info->GetOutputDeviceType(0);
       auto ms_tensor = std::make_shared<tensor::Tensor>(data_type, input_shape);
-      inputs->push_back(ms_tensor);
       auto abstract = parameter->abstract();
       MS_EXCEPTION_IF_NULL(abstract);
+      ms_tensor->set_name(abstract->name());
+      inputs->push_back(ms_tensor);
       inputs_name->push_back(abstract->name());
     }
   }
@@ -972,6 +973,12 @@ void KernelGraphUtils::GetModelOutputsInfo(uint32_t graph_id, std::vector<tensor
   }
   *outputs = TransformVectorRefToMultiTensor(vector_outputs);
   GetOutputNames(anf_outputs, output_names);
+  if (outputs->size() != output_names->size()) {
+    MS_LOG_EXCEPTION << "Output tensor size " << outputs->size() << " != output name size " << output_names->size();
+  }
+  for (size_t i = 0; i < outputs->size(); i++) {
+    outputs->at(i)->set_name(output_names->at(i));
+  }
 }
 
 CNodePtr KernelGraphUtils::CreateNewCNode(const CNodePtr &cnode, KernelGraphPtr graph,

@@ -15,9 +15,10 @@
  */
 
 #include "src/extendrt/delegate/tensorrt/distribution/distribution_base.h"
+#include "src/extendrt/delegate/plugin/tensorrt_executor_plugin.h"
 
 namespace mindspore::lite {
-int GetGPUGroupSize() { return 1; }
+int GetGPUGroupSize() { return TensorRTPlugin::GetInstance().GetGPUGroupSize(); }
 
-int GetRankID() { return 0; }
+int GetRankID() { return TensorRTPlugin::GetInstance().GetRankID(); }
 }  // namespace mindspore::lite

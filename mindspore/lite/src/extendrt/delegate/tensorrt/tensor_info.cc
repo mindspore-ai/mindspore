@@ -38,13 +38,29 @@ class TensorInfoImpl {
         tensor_val_(tensor_val) {
     is_const_ = (data_ != nullptr);
     if (data_ == nullptr || data_len_ == 0) {
-      auto ele_num = std::accumulate(shape_.begin(), shape_.end(), 1, std::multiplies<int64_t>());
-      auto type_size = DataTypeSize(static_cast<enum TypeId>(dType_));
+      auto ele_num = ElementNum();
+      auto type_size = item_size();
       temp_data_.resize(ele_num * type_size);
       data_ = temp_data_.data();
       data_len_ = temp_data_.size();
     }
   }
+  void SetShape(const std::vector<int64_t> &shape) {
+    shape_ = shape;
+    auto new_elem_num = ElementNum();
+    auto type_size = item_size();
+    auto data_size = new_elem_num * type_size;
+    if (data_size != temp_data_.size() && data_ == temp_data_.data()) {
+      temp_data_.resize(data_size);
+      data_ = temp_data_.data();
+      data_len_ = data_size;
+    }
+  }
+
+  int64_t ElementNum() const { return std::accumulate(shape_.begin(), shape_.end(), 1, std::multiplies<int64_t>()); }
+
+  size_t item_size() const { return DataTypeSize(static_cast<enum TypeId>(dType_)); }
+
   std::string name_;
   mindspore::DataType dType_ = mindspore::DataType::kTypeUnknown;
   std::vector<int64_t> shape_;
@@ -109,7 +125,7 @@ size_t TensorInfo::DataSize() const {
   if (impl_ == nullptr) {
     return 0;
   }
-  return impl_->data_len_;
+  return ElementNum() * item_size();
 }
 
 bool TensorInfo::IsConst() const {
@@ -119,13 +135,18 @@ bool TensorInfo::IsConst() const {
   return impl_->is_const_ && impl_->data_ != nullptr;
 }
 
-size_t TensorInfo::item_size() const { return DataTypeSize(static_cast<enum TypeId>(DataType())); }
+size_t TensorInfo::item_size() const {
+  if (impl_ == nullptr) {
+    return 0;
+  }
+  return impl_->item_size();
+}
 
 void TensorInfo::SetShape(const std::vector<int64_t> &shape) {
   if (impl_ == nullptr) {
     return;
   }
-  impl_->shape_ = shape;
+  impl_->SetShape(shape);
 }
 
 void TensorInfo::SetData(const void *data, size_t data_len) {
@@ -140,11 +161,7 @@ int64_t TensorInfo::ElementNum() const {
   if (impl_ == nullptr) {
     return 0;
   }
-  if (impl_->shape_.empty()) {
-    // element number of scalar is 1
-    return 1;
-  }
-  return std::accumulate(impl_->shape_.begin(), impl_->shape_.end(), 1, std::multiplies<int64_t>());
+  return impl_->ElementNum();
 }
 
 TensorInfo &TensorInfo::operator=(const TensorInfo &other) {

@@ -129,8 +129,7 @@ Status LiteInferSession::RunGraph() {
   auto ret = lite_session_->RunGraph();
   return static_cast<StatusCode>(ret);
 }
-Status LiteInferSession::RunGraph(const std::vector<tensor::TensorPtr> &inputs,
-                                  std::vector<tensor::TensorPtr> *outputs) {
+Status LiteInferSession::RunGraph(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs) {
   MS_LOG(INFO) << "SingleOpInferSession::RunGraph with input and outputs";
   MS_EXCEPTION_IF_NULL(outputs);
   MS_EXCEPTION_IF_NULL(lite_session_);
@@ -145,7 +144,7 @@ Status LiteInferSession::RunGraph(const std::vector<tensor::TensorPtr> &inputs,
   std::vector<void *> old_data;
   for (size_t i = 0; i < inputs.size(); i++) {
     auto input = input_tensors.at(i);
-    auto user_input = inputs.at(i);
+    auto user_input = &inputs[i];
     if (user_input->data_type() != input->data_type()) {
       ResetTensorData(old_data, input_tensors);
       MS_LOG(EXCEPTION) << "Tensor " << user_input->id() << " has a different data type from input"
@@ -200,7 +199,7 @@ Status LiteInferSession::RunGraph(const std::vector<tensor::TensorPtr> &inputs,
     return kLiteError;
   }
   outputs->clear();
-  *outputs = TensorUtils::MSTensorToTensorPtr(res);
+  *outputs = TensorUtils::MSTensorToTensor(res);
   return kSuccess;
 }
 Status LiteInferSession::Resize(const std::vector<tensor::TensorPtr> &inputs,
@@ -208,37 +207,23 @@ Status LiteInferSession::Resize(const std::vector<tensor::TensorPtr> &inputs,
   return kSuccess;
 }
 
-std::vector<tensor::TensorPtr> LiteInferSession::GetOutputs() {
+std::vector<MutableTensorImplPtr> LiteInferSession::GetOutputs() {
   auto outputs = lite_session_->GetOutputs();
-  std::vector<tensor::TensorPtr> output_tensors;
+  std::vector<MutableTensorImplPtr> output_tensors;
   for (auto &iter : outputs) {
     auto output = iter.second;
-    auto type_id = output->data_type();
-    auto shape = output->shape();
-    ShapeVector shape_vec;
-    std::transform(shape.begin(), shape.end(), std::back_inserter(shape_vec),
-                   [](int s) { return static_cast<int64_t>(s); });
-    auto data = output->data();
-    auto data_size = output->Size();
-    auto tensor_ptr = std::make_shared<mindspore::tensor::Tensor>(type_id, shape_vec, data, data_size);
-    output_tensors.emplace_back(tensor_ptr);
+    auto impl = std::make_shared<LiteTensorImpl>(output);
+    output_tensors.emplace_back(impl);
   }
   return output_tensors;
 }
 
-std::vector<tensor::TensorPtr> LiteInferSession::GetInputs() {
+std::vector<MutableTensorImplPtr> LiteInferSession::GetInputs() {
   auto inputs = lite_session_->GetInputs();
-  std::vector<tensor::TensorPtr> input_tensors;
+  std::vector<MutableTensorImplPtr> input_tensors;
   for (auto &input : inputs) {
-    auto type_id = input->data_type();
-    auto shape = input->shape();
-    ShapeVector shape_vec;
-    std::transform(shape.begin(), shape.end(), std::back_inserter(shape_vec),
-                   [](int s) { return static_cast<int64_t>(s); });
-    auto data = input->data();
-    auto data_size = input->Size();
-    auto tensor_ptr = std::make_shared<mindspore::tensor::Tensor>(type_id, shape_vec, data, data_size);
-    input_tensors.emplace_back(tensor_ptr);
+    auto impl = std::make_shared<LiteTensorImpl>(input);
+    input_tensors.emplace_back(impl);
   }
   return input_tensors;
 }
@@ -252,8 +237,26 @@ std::vector<std::string> LiteInferSession::GetOutputNames() {
 }
 
 std::vector<std::string> LiteInferSession::GetInputNames() { return ConvertToTensorNames(lite_session_->GetInputs()); }
-tensor::TensorPtr LiteInferSession::GetOutputByTensorName(const std::string &tensorName) { return nullptr; }
-tensor::TensorPtr LiteInferSession::GetInputByTensorName(const std::string &name) { return nullptr; }
+MutableTensorImplPtr LiteInferSession::GetOutputByTensorName(const std::string &name) {
+  auto outputs = lite_session_->GetOutputs();
+  for (auto &iter : outputs) {
+    auto output = iter.second;
+    if (output->tensor_name() == name) {
+      return std::make_shared<LiteTensorImpl>(output);
+    }
+  }
+  return nullptr;
+}
+
+MutableTensorImplPtr LiteInferSession::GetInputByTensorName(const std::string &name) {
+  auto inputs = lite_session_->GetInputs();
+  for (auto &input : inputs) {
+    if (input->tensor_name() == name) {
+      return std::make_shared<LiteTensorImpl>(input);
+    }
+  }
+  return nullptr;
+}
 
 std::shared_ptr<lite::LiteSession> LiteInferSession::CreateLiteSession(lite::InnerContext *context) {
   auto session = std::make_shared<lite::LiteSession>();

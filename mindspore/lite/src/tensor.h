@@ -128,16 +128,13 @@ class Tensor {
 
   // note: in the case of that old_data is valid, set_data just releases the ownership of it but not frees it. Of
   //       course, you can call FreeData before calling set_data to ensure the data can be freed by current tensor.
-  void set_data(void *data) {
-    if (this->data_ == data) {
-      return;
-    }
-    if (allocator_ != nullptr) {
+  void set_data(void *data, bool own_data = true) {
+    if (allocator_ != nullptr && this->data_ != data) {
       allocator_->IncRefCount(data, 1);
       allocator_->DecRefCount(this->data_, 1);
     }
     this->data_ = data;
-    this->own_data_ = true;
+    this->own_data_ = own_data;
   }
 
   Category category() const { return this->category_; }

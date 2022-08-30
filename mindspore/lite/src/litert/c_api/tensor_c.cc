@@ -146,7 +146,7 @@ MSFormat MSTensorGetFormat(const MSTensorHandle tensor) {
     return kMSFormatNHWC;
   }
   auto impl = static_cast<mindspore::LiteTensorImpl *>(tensor);
-  return static_cast<MSFormat>(impl->format());
+  return static_cast<MSFormat>(impl->Format());
 }
 
 void MSTensorSetData(MSTensorHandle tensor, void *data) {
@@ -155,7 +155,7 @@ void MSTensorSetData(MSTensorHandle tensor, void *data) {
     return;
   }
   auto impl = static_cast<mindspore::LiteTensorImpl *>(tensor);
-  return impl->SetData(data);
+  return impl->SetData(data, true);
 }
 
 const void *MSTensorGetData(const MSTensorHandle tensor) {

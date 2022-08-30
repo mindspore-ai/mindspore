@@ -43,15 +43,15 @@ class DefaultInferSession : public InferSession {
   Status Init(const std::shared_ptr<Context> context) override;
   Status CompileGraph(FuncGraphPtr graph, const void *data = nullptr, size_t size = 0) override;
   Status RunGraph() override;
-  Status RunGraph(const std::vector<tensor::TensorPtr> &inputs, std::vector<tensor::TensorPtr> *outputs) override;
+  Status RunGraph(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs) override;
   Status Resize(const std::vector<tensor::TensorPtr> &inputs, const std::vector<std::vector<int64_t>> &dims) override;
 
-  std::vector<tensor::TensorPtr> GetOutputs() override;
-  std::vector<tensor::TensorPtr> GetInputs() override;
+  std::vector<MutableTensorImplPtr> GetOutputs() override;
+  std::vector<MutableTensorImplPtr> GetInputs() override;
   std::vector<std::string> GetOutputNames() override;
   std::vector<std::string> GetInputNames() override;
-  tensor::TensorPtr GetOutputByTensorName(const std::string &tensorName) override;
-  tensor::TensorPtr GetInputByTensorName(const std::string &name) override;
+  MutableTensorImplPtr GetOutputByTensorName(const std::string &tensorName) override;
+  MutableTensorImplPtr GetInputByTensorName(const std::string &name) override;
 
  private:
   KernelGraphUtilsPtr kernel_graph_utils_;
@@ -71,20 +71,19 @@ Status DefaultInferSession::CompileGraph(FuncGraphPtr graph, const void *data, s
 }
 
 Status DefaultInferSession::RunGraph() { return kSuccess; }
-Status DefaultInferSession::RunGraph(const std::vector<tensor::TensorPtr> &inputs,
-                                     std::vector<tensor::TensorPtr> *outputs) {
+Status DefaultInferSession::RunGraph(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs) {
   return kSuccess;
 }
 Status DefaultInferSession::Resize(const std::vector<tensor::TensorPtr> &inputs,
                                    const std::vector<std::vector<int64_t>> &dims) {
   return kSuccess;
 }
-std::vector<tensor::TensorPtr> DefaultInferSession::GetOutputs() { return std::vector<tensor::TensorPtr>(); }
-std::vector<tensor::TensorPtr> DefaultInferSession::GetInputs() { return std::vector<tensor::TensorPtr>(); }
+std::vector<MutableTensorImplPtr> DefaultInferSession::GetOutputs() { return {}; }
+std::vector<MutableTensorImplPtr> DefaultInferSession::GetInputs() { return {}; }
 std::vector<std::string> DefaultInferSession::GetOutputNames() { return std::vector<std::string>(); }
 std::vector<std::string> DefaultInferSession::GetInputNames() { return std::vector<std::string>(); }
-tensor::TensorPtr DefaultInferSession::GetOutputByTensorName(const std::string &tensorName) { return nullptr; }
-tensor::TensorPtr DefaultInferSession::GetInputByTensorName(const std::string &name) { return nullptr; }
+MutableTensorImplPtr DefaultInferSession::GetOutputByTensorName(const std::string &tensorName) { return nullptr; }
+MutableTensorImplPtr DefaultInferSession::GetInputByTensorName(const std::string &name) { return nullptr; }
 std::shared_ptr<InferSession> InferSession::CreateSession(const std::shared_ptr<Context> context) {
   HandleGPUContext(context);
   auto config = SelectSessionArg(context);
