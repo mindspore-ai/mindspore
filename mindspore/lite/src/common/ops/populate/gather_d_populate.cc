@@ -29,7 +29,7 @@ OpParameter *PopulateGatherDParameter(const void *prim) {
     MS_LOG(ERROR) << "malloc GatherParameter failed.";
     return nullptr;
   }
-  memset(param, 0, sizeof(GatherParameter));
+  (void)memset(param, 0, sizeof(GatherParameter));
 
   param->op_parameter_.type_ = primitive->value_type();
   return reinterpret_cast<OpParameter *>(param);

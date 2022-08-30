@@ -270,7 +270,7 @@ std::unique_ptr<TensorT> CopyTensorDefT(const std::unique_ptr<TensorT> &oldTenso
 }
 
 size_t GetRefCount(MetaGraphT *graphT, uint32_t tensorIdx) {
-  MS_ASSERT(graphT != nullptr);
+  MS_CHECK_TRUE_MSG(graphT != nullptr, 0, "graphT is nullptr");
   MS_ASSERT(graphT->allTensors.size() > tensorIdx);
   size_t refCount = 0;
   for (auto &node : graphT->nodes) {
@@ -335,7 +335,7 @@ int GenerateRandomData(size_t size, void *data, int data_type) {
 }
 
 int GenerateRandomData(mindspore::MSTensor *tensor) {
-  MS_ASSERT(tensor != nullptr);
+  MS_CHECK_TRUE_MSG(tensor != nullptr, RET_NULL_PTR, "tensor is nullptr");
   auto input_data = tensor->MutableData();
   if (input_data == nullptr) {
     MS_LOG(ERROR) << "MallocData for inTensor failed";
