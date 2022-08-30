@@ -1156,7 +1156,7 @@ class HorizontalFlip(ImageTensorOperation):
     Flip the input image horizontally.
 
     Raises:
-        RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
+        RuntimeError: If given tensor shape is not <H, W> or <..., H, W, C>.
 
     Supported Platforms:
         ``CPU``
