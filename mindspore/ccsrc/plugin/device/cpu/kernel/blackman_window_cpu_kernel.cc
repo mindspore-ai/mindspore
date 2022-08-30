@@ -56,8 +56,8 @@ bool BlackmanWindowCpuKernelMod::BlackmanWindowKernelFunc(const std::vector<kern
 
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kBlackmanWindowInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kBlackmanWindowOutputsNum, kernel_name_);
-  auto input = reinterpret_cast<T1 *>(inputs[0]->addr);
-  auto output = reinterpret_cast<T2 *>(outputs[0]->addr);
+  auto input = static_cast<T1 *>(inputs[0]->addr);
+  auto output = static_cast<T2 *>(outputs[0]->addr);
 
   if (*input < 0) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', input window_length should be >= 0, but got " << *input;
