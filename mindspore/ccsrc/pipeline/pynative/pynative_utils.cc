@@ -439,6 +439,7 @@ void DataConvert::ConvertValueToTensor(const FrontendOpRunInfoPtr &op_run_info, 
   } else if (v->isa<Type>()) {
     int64_t type_id = v->cast<TypePtr>()->type_id();
     tensor_ptr = std::make_shared<tensor::Tensor>(type_id, kInt64);
+    tensor_ptr->set_user_data(kTensorValueIsType, v);
     tensor_mask = kValueNodeTensorMask;
   } else if (v->isa<StringImm>()) {
     auto value_string = GetValue<std::string>(v);
