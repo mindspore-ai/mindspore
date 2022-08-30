@@ -126,6 +126,7 @@ from .sparse_ops import (SparseToDense, SparseTensorDenseMatmul, SparseTensorDen
 from .spectral_ops import (BartlettWindow, BlackmanWindow)
 
 __all__ = [
+    'Cauchy',
     'HSVToRGB',
     'CeLU',
     'Ger',

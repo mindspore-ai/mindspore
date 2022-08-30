@@ -7719,14 +7719,14 @@ class Cauchy(Primitive):
         ValueError: If data of `size` is not a positive integer.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> size = [1]
         >>> net = ops.Cauchy(size)
         >>> y = net()
-        >>> print(y)
-        [0.03128606]
+        >>> print(y.shape)
+        (1,)
     """
 
     @prim_attr_register
