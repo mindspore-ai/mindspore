@@ -15,7 +15,6 @@
  */
 #include "minddata/dataset/engine/gnn/graph_data_client.h"
 
-#include <unistd.h>
 #include <functional>
 #include <map>
 

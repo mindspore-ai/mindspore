@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include <unistd.h>
 #include "minddata/dataset/text/ir/kernels/text_ir.h"
 
 #ifndef _WIN32
