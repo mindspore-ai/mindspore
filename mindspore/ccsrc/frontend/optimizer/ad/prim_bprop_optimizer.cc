@@ -217,18 +217,14 @@ FuncGraphPtr PrimBpropOptimizer::GetOptBpropFromCache(const FuncGraphPtr &bprop_
 
   PrimBpropOptGraphLevel2InfoPtr level_2_graph_info;
   PrimBpropOptGraphInfoPtr level_1_graph_info;
-  ECacheQrtRes cache_res = GetOptBpfgFromCache(prim, abs_list, &level_2_graph_info, &level_1_graph_info);
+  ECacheQrtRes cache_res =
+    GetOptBpfgFromCache(prim, abs_list, need_grad_flags, &level_2_graph_info, &level_1_graph_info);
 
   MS_LOG(DEBUG) << "Cache match result " << cache_res << ", prim: " << prim->ToString();
   if (cache_res == E_LEVEL_2) {
     MS_LOG(DEBUG) << "Level 2 cache matched, prim: " << prim->ToString();
     level_2_graph_info->TryFreeArgsValue(op_args, out);
-    auto level2_graph_clone = BasicClone(level_2_graph_info->opt_func_graph());
-    if (!need_grad_flags.empty()) {
-      return GetBpropGrahWithNoGradInput(level_2_graph_info, AddOutToAbsList(out, abs_list), need_grad_flags, op_args,
-                                         out);
-    }
-    return level2_graph_clone;
+    return BasicClone(level_2_graph_info->opt_func_graph());
   }
 
   // do step1 opt
@@ -245,13 +241,7 @@ FuncGraphPtr PrimBpropOptimizer::GetOptBpropFromCache(const FuncGraphPtr &bprop_
   level_2_graph_info->TryFreeArgsValue(op_args, out);
   auto enable_grad_cache = MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_OP_GRAPH_CACHE);
   if (enable_grad_cache) {
-    level_1_graph_info->graph_level_2_cache_[abs_list] = level_2_graph_info;
-  }
-
-  if (!need_grad_flags.empty()) {
-    return GetBpropGrahWithNoGradInput(level_2_graph_info, new_abs_list, need_grad_flags, op_args, out);
-  }
-  if (enable_grad_cache) {
+    level_1_graph_info->graph_level_2_cache_[abs_list][need_grad_flags] = level_2_graph_info;
     return BasicClone(level_2_graph_info->opt_func_graph());
   }
   return level_2_graph_info->opt_func_graph();
@@ -331,18 +321,6 @@ PrimBpropOptGraphLevel2InfoPtr PrimBpropOptimizer::PrimBpropOptStep2(
   return level_2_graph_info;
 }
 
-FuncGraphPtr PrimBpropOptimizer::GetBpropGrahWithNoGradInput(const PrimBpropOptGraphLevel2InfoPtr &level_2_graph_info,
-                                                             const abstract::AbstractBasePtrList &abs_list,
-                                                             const std::vector<bool> &need_grad_flags,
-                                                             const ValuePtrList &op_args, const ValuePtr &out) {
-  MS_EXCEPTION_IF_NULL(level_2_graph_info);
-  auto level2_graph_clone = BasicClone(level_2_graph_info->opt_func_graph());
-  level2_graph_clone->set_attr(kAttrNeedGradFlagOfInputs, MakeValue(need_grad_flags));
-  auto no_grad_graph_info = PrimBpropOptStep2(level2_graph_clone, abs_list, need_grad_flags);
-  no_grad_graph_info->TryFreeArgsValue(op_args, out);
-  return no_grad_graph_info->opt_func_graph();
-}
-
 FuncGraphPtr PrimBpropOptimizer::BpropGraphFinalOpt(const pipeline::ResourcePtr &res) const {
   MS_EXCEPTION_IF_NULL(res);
   auto after_opt_bg = BpropGraphFinalOptPass(res);
@@ -351,6 +329,7 @@ FuncGraphPtr PrimBpropOptimizer::BpropGraphFinalOpt(const pipeline::ResourcePtr 
 
 ECacheQrtRes PrimBpropOptimizer::GetOptBpfgFromCache(const PrimitivePtr &prim,
                                                      const abstract::AbstractBasePtrList &abs_list,
+                                                     const std::vector<bool> &need_grad_flags,
                                                      PrimBpropOptGraphLevel2InfoPtr *level_2_graph_info,
                                                      PrimBpropOptGraphInfoPtr *level_1_graph_info) {
   MS_EXCEPTION_IF_NULL(prim);
@@ -371,7 +350,13 @@ ECacheQrtRes PrimBpropOptimizer::GetOptBpfgFromCache(const PrimitivePtr &prim,
   if (second_iter == (*level_1_graph_info)->graph_level_2_cache_.end()) {
     return E_LEVEL_1;
   }
-  *level_2_graph_info = second_iter->second;
+
+  auto level_2_iter = (second_iter->second).find(need_grad_flags);
+  if (level_2_iter == second_iter->second.end()) {
+    return E_LEVEL_1;
+  }
+
+  *level_2_graph_info = level_2_iter->second;
   return E_LEVEL_2;
 }
 
