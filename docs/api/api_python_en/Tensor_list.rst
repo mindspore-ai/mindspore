@@ -249,6 +249,7 @@ Other Methods
     :nosignatures:
 
     mindspore.Tensor.flush_from_cache
+    mindspore.Tensor.set_const_arg
 
 {% elif objname[0].istitle() %}
 {{ fullname | underline }}

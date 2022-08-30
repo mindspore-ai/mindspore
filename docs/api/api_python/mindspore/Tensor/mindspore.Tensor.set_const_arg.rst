@@ -12,4 +12,4 @@ mindspore.Tensor.set_const_arg
         Tensor，被指定了是否是一个常量网络入参。
 
     异常：
-        - **TypeError** - 如果`const_arg`不是一个布尔值。
+        - **TypeError** - 如果 `const_arg` 不是一个布尔值。
