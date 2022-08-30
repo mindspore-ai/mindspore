@@ -22,7 +22,6 @@
 #include <utility>
 #include <map>
 #include <string>
-#include "mindapi/base/type_id.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 

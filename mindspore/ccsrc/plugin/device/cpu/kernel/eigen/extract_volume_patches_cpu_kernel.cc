@@ -44,7 +44,6 @@ bool ExtractVolumePatchesKernelMod::Init(const BaseOperatorPtr &base_operator,
   auto kernel_ptr = std::dynamic_pointer_cast<ops::ExtractVolumePatches>(base_operator);
   if (kernel_ptr == nullptr) {
     MS_LOG(EXCEPTION) << "cast ExtractVolumePatches ops failed!";
-    return false;
   }
   kernel_name_ = kernel_ptr->name();
   kernel_size_ = kernel_ptr->get_kernel_size();
@@ -66,7 +65,7 @@ int ExtractVolumePatchesKernelMod::Resize(const BaseOperatorPtr &base_operator,
   if (ret != 0) {
     return ret;
   }
-  return KRET_OK;
+  return static_cast<int>(KRET_OK);
 }
 
 template <typename T>
@@ -78,11 +77,14 @@ bool ExtractVolumePatchesKernelMod::LaunchKernel(const std::vector<kernel::Addre
   constexpr size_t on = 0, oc = 1, od = 2, oh = 3, ow = 4;
   constexpr size_t kd = 2, kh = 3, kw = 4;
   constexpr size_t sd = 2, sh = 3, sw = 4;
-  Eigen::TensorMap<Eigen::Tensor<T, dims, Eigen::RowMajor, Eigen::DenseIndex>, Eigen::Aligned> eigen_inputs(
-    reinterpret_cast<T *>(inputs[0]->addr), input_shape_[xn], input_shape_[xc], input_shape_[xd], input_shape_[xh],
+  constexpr int storage_option = static_cast<int>(Eigen::RowMajor);
+  constexpr int alignment_type = static_cast<int>(Eigen::Aligned);
+
+  Eigen::TensorMap<Eigen::Tensor<T, dims, storage_option, Eigen::DenseIndex>, alignment_type> eigen_inputs(
+    static_cast<T *>(inputs[0]->addr), input_shape_[xn], input_shape_[xc], input_shape_[xd], input_shape_[xh],
     input_shape_[xw]);
-  Eigen::TensorMap<Eigen::Tensor<T, dims, Eigen::RowMajor, Eigen::DenseIndex>, Eigen::Aligned> eigen_outputs(
-    reinterpret_cast<T *>(outputs[0]->addr), output_shape_[on], output_shape_[oc], output_shape_[od], output_shape_[oh],
+  Eigen::TensorMap<Eigen::Tensor<T, dims, storage_option, Eigen::DenseIndex>, alignment_type> eigen_outputs(
+    static_cast<T *>(outputs[0]->addr), output_shape_[on], output_shape_[oc], output_shape_[od], output_shape_[oh],
     output_shape_[ow]);
   eigen_outputs.device(Eigen::DefaultDevice()) =
     eigen_inputs.shuffle(Eigen::array<int, dims>{xn, xd, xh, xw, xc})

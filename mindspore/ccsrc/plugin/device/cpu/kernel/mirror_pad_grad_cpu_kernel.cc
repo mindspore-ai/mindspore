@@ -46,11 +46,11 @@ void MirrorPadGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   }
 
   ShapeVector input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  dims_ = SizeToLong(input_shape.size());
+  dims_ = input_shape.size();
 
   for (int64_t i = 0; i < dims_; ++i) {
     input_size_ *= input_shape[i];
-    input_shape_.push_back(SizeToLong(input_shape[i]));
+    input_shape_.push_back(input_shape[i]);
   }
 
   auto padding_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
@@ -58,8 +58,8 @@ void MirrorPadGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 
   ShapeVector output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
   for (auto x : output_shape) {
-    output_size_ *= SizeToLong(x);
-    output_shape_.push_back(SizeToLong(x));
+    output_size_ *= x;
+    output_shape_.push_back(x);
   }
 }
 
@@ -116,7 +116,7 @@ template <typename T>
 void MirrorPadGradCpuKernelMod::slice(std::vector<int64_t> extents, std::vector<int64_t> rhs_offsets,
                                       std::vector<int64_t> input_strides, std::vector<T> inputs_addr,
                                       const std::vector<AddressPtr> &outputs) const {
-  auto *outputs_addr = reinterpret_cast<T *>(outputs[0]->addr);
+  auto *outputs_addr = static_cast<T *>(outputs[0]->addr);
   int64_t output_inx = 0;
   while (output_inx < output_size_) {
     int64_t tmp = output_inx;
@@ -145,8 +145,8 @@ std::vector<std::pair<int64_t, int64_t>> MirrorPadGradCpuKernelMod::extract_padd
 template <typename T1, typename T2>
 void MirrorPadGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                              const std::vector<AddressPtr> &outputs) const {
-  auto *inputs_data = reinterpret_cast<T1 *>(inputs[0]->addr);
-  auto *paddings_arg = reinterpret_cast<T2 *>(inputs[1]->addr);
+  auto *inputs_data = static_cast<T1 *>(inputs[0]->addr);
+  auto *paddings_arg = static_cast<T2 *>(inputs[1]->addr);
   int64_t block_num = 1;
 
   std::vector<T1> inputs_addr;

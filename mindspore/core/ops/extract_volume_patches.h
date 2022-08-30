@@ -24,7 +24,6 @@
 #include "ir/anf.h"
 #include "ops/base_operator.h"
 #include "mindapi/base/types.h"
-#include "ops/op_name.h"
 
 namespace mindspore {
 namespace ops {

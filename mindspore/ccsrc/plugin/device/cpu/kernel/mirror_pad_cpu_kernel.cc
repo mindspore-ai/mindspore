@@ -48,7 +48,7 @@ void MirrorPadCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   dims_ = int64_t(input_shape.size());
 
   for (int64_t i = 0; i < dims_; ++i) {
-    input_shape_.push_back(SizeToLong(input_shape[i]));
+    input_shape_.push_back(input_shape[i]);
     input_elements_ *= input_shape_[i];
   }
 
@@ -57,7 +57,7 @@ void MirrorPadCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 
   auto output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
   for (int64_t i = 0; i < dims_; ++i) {
-    output_shape_.push_back(SizeToLong(output_shape[i]));
+    output_shape_.push_back(output_shape[i]);
     output_elements_ *= output_shape_[i];
   }
 }
@@ -130,7 +130,7 @@ void MirrorPadCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
 
   const int64_t padd_dim = num_paddings_;
   const int64_t mode = mode_;
-  const int64_t element_size = SizeToLong(sizeof(T1));
+  const int64_t element_size = sizeof(T1);
 
   int64_t paddings[MAX_PADDINGS * PADDING_SIZE];  // local and fixed size to keep in registers
   for (int i = 0; i < MAX_PADDINGS * PADDING_SIZE; i++) {
