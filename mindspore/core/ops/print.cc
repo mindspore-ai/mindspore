@@ -75,7 +75,7 @@ class PrintInfer : public abstract::OpInferBase {
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
-    return std::make_shared<TensorType>(kInt);
+    return std::make_shared<TensorType>(kInt32);
   }
 };
 
