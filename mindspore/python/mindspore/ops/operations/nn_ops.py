@@ -3888,14 +3888,14 @@ class GeLU(Primitive):
     :math:`x_i` is the input element.
 
     Inputs:
-        - **x** (Tensor) - The input of the activation function GeLU, the data type is float16 or float32.
+        - **x** (Tensor) - The input of the activation function GeLU, the data type is float16, float32 or float64.
 
     Outputs:
         Tensor, with the same type and shape as `x`.
 
     Raises:
         TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is neither float16 nor float32.
+        TypeError: If dtype of `x` is not float16, float32 or float64.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
