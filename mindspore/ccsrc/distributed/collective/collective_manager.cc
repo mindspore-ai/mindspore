@@ -90,6 +90,7 @@ bool ExecuteFuncInThread(const std::function<bool()> &func, const int64_t timeou
       thread_blocker.notify_one();
     }
   });
+  MS_EXCEPTION_IF_NULL(executive_thread);
   executive_thread->detach();
 
   std::unique_lock<std::mutex> locker(exec_ret_mutex);
@@ -229,6 +230,7 @@ bool CollectiveManager::CreateCommunicationGroup(const std::string &group_name,
 
   // Step 5: Initialize communication group on the device side.
   std::function<bool()> init_device_comm_group_func = [&, this]() {
+    MS_EXCEPTION_IF_NULL(device_ctx_);
     device_ctx_->Initialize();
     return group->Initialize(root_info);
   };
@@ -310,6 +312,7 @@ bool CollectiveManager::InitHostCommlib() {
   device::DeviceContextKey host_key = {"CPU", 0};
   host_ctx_ = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(host_key);
   MS_EXCEPTION_IF_NULL(host_ctx_);
+  MS_EXCEPTION_IF_NULL(host_ctx_->device_res_manager_);
   if (!host_ctx_->device_res_manager_->LoadCollectiveCommLib()) {
     MS_LOG(ERROR) << "Failed to load communication library on the host side.";
     return false;
@@ -360,6 +363,7 @@ bool CollectiveManager::InitDeviceCommLib() {
   // We can initialize device context now because device id(local_rank_id_) is already assigned.
   device_ctx_->Initialize();
 
+  MS_EXCEPTION_IF_NULL(device_ctx_->device_res_manager_);
   if (!device_ctx_->device_res_manager_->LoadCollectiveCommLib()) {
     MS_LOG(ERROR) << "Failed to load communication library on the device side.";
     return false;

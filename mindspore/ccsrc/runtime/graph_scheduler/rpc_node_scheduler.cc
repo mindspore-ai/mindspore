@@ -97,6 +97,7 @@ RpcActorSetPtr RpcNodeScheduler::Build(const ActorSet *actor_set) {
   // Create route table proxy for each rpc actor and set.
   for (auto &rpc_actor : rpc_actors) {
     auto proxy = CreateRouteTableProxy();
+    MS_EXCEPTION_IF_NULL(rpc_actor);
     MS_EXCEPTION_IF_NULL(proxy);
     rpc_actor->set_actor_route_table_proxy(proxy);
   }
@@ -119,6 +120,7 @@ void RpcNodeScheduler::Link(const ActorSet *actor_set) const {
   // The inter-process edge is connected to a remote peer. So the peer info attributes in the kernel should be
   // sufficient for route table.
   for (auto &send_actor : send_actors) {
+    MS_EXCEPTION_IF_NULL(send_actor);
     CNodePtr rpc_send_kernel = send_actor->kernel();
     MS_EXCEPTION_IF_NULL(rpc_send_kernel);
 
@@ -139,6 +141,7 @@ void RpcNodeScheduler::Link(const ActorSet *actor_set) const {
     send_actor->SetRouteInfo(send_dst_ranks[0], send_dst_roles[0], send_src_node_name, send_dst_node_name);
   }
   for (auto &recv_actor : recv_actors) {
+    MS_EXCEPTION_IF_NULL(recv_actor);
     CNodePtr rpc_recv_kernel = recv_actor->kernel();
     MS_EXCEPTION_IF_NULL(rpc_recv_kernel);
 
@@ -212,6 +215,7 @@ void RpcNodeScheduler::ResetOpcontext(const RpcActorSetPtr &rpc_actors) const {
 void RpcNodeScheduler::UpdateRpcActorRefCounts(RpcActorSetPtr rpc_actor_set) {
   MS_EXCEPTION_IF_NULL(rpc_actor_set);
   for (const auto send_actor : rpc_actor_set->send_actors_) {
+    MS_EXCEPTION_IF_NULL(send_actor);
     auto kernel_mod = AnfAlgo::GetKernelMod(send_actor->kernel_);
     MS_EXCEPTION_IF_NULL(kernel_mod);
     size_t workspace_num = kernel_mod->GetWorkspaceSizeList().size();

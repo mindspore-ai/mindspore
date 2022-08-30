@@ -83,6 +83,7 @@ bool SendActor::LaunchKernel(OpContext<DeviceTensor> *const context) {
     std::string peer_server_url = peer.second;
     auto message = BuildRpcMessage(send_output, peer_server_url);
     MS_ERROR_IF_NULL_W_RET_VAL(message, false);
+    MS_ERROR_IF_NULL_W_RET_VAL(client_, false);
     MS_LOG(INFO) << "Rpc actor send message for inter-process edge: " << peer.first;
     client_->SendAsync(std::move(message));
   }
@@ -208,6 +209,7 @@ size_t SendActor::SerializeSingleDynamicShapeInput(RpcDataPtr rpc_data, const Sh
 
 void SendActor::SerializeDynamicShapeMessage(MessageBase *message, const kernel::AddressPtrList &data_list,
                                              const kernel::AddressPtr &workspace_addr) const {
+  MS_EXCEPTION_IF_NULL(workspace_addr);
   size_t offset = 0;
   RpcDataPtr rpc_data = static_cast<RpcDataPtr>(workspace_addr->addr);
   size_t input_size = common::AnfAlgo::GetInputTensorNum(kernel_);
@@ -240,6 +242,9 @@ void SendActor::SerializeDynamicShapeMessage(MessageBase *message, const kernel:
 
 void SendActor::SerializeCommonMessage(MessageBase *message, const kernel::AddressPtrList &data_list,
                                        const kernel::AddressPtr &workspace_addr) const {
+  MS_EXCEPTION_IF_NULL(message);
+  MS_EXCEPTION_IF_NULL(workspace_addr);
+  MS_EXCEPTION_IF_NULL(workspace_addr->addr);
   size_t total_size = 0;
   total_size =
     std::accumulate(data_list.begin(), data_list.end(), total_size,
@@ -257,7 +262,9 @@ void SendActor::SerializeCommonMessage(MessageBase *message, const kernel::Addre
     }
 
     RpcDataPtr rpc_data = static_cast<RpcDataPtr>(workspace_addr->addr);
+    MS_EXCEPTION_IF_NULL(rpc_data);
     for (size_t i = 0; i < data_list.size(); i++) {
+      MS_EXCEPTION_IF_NULL(data_list[i]);
       if (!CopyRpcDataWithOffset(&rpc_data, data_list[i]->addr, data_list[i]->size)) {
         MS_LOG(EXCEPTION) << "Failed to copy data for rpc send input " << i;
       }

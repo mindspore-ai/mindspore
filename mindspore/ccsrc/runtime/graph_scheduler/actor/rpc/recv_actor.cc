@@ -102,6 +102,7 @@ void RecvActor::RunOpInterProcessData(MessageBase *const msg, OpContext<DeviceTe
 
   MS_ERROR_IF_NULL_WO_RET_VAL(msg);
   MS_ERROR_IF_NULL_WO_RET_VAL(op_context_);
+  MS_ERROR_IF_NULL_WO_RET_VAL(context);
   auto &sequential_num = context->sequential_num_;
   (void)input_op_inter_process_[sequential_num].emplace_back(msg->From().Name());
 
@@ -150,6 +151,7 @@ bool RecvActor::CheckRunningCondition(const OpContext<DeviceTensor> *context) co
 }
 
 void RecvActor::EraseInput(const OpContext<DeviceTensor> *context) {
+  MS_EXCEPTION_IF_NULL(context);
   KernelActor::EraseInput(context);
   if (input_op_inter_process_.count(context->sequential_num_) != 0) {
     (void)input_op_inter_process_.erase(context->sequential_num_);
@@ -193,7 +195,10 @@ void *RecvActor::AllocateMemByDeviceRes(size_t size) {
   } else {
     recv_data_->SetSize(size);
   }
-  if (!device_contexts_[0]->device_res_manager_->AllocateMemory(recv_data_.get())) {
+
+  MS_ERROR_IF_NULL_W_RET_VAL(device_contexts_[kIndex0], nullptr);
+  MS_ERROR_IF_NULL_W_RET_VAL(device_contexts_[kIndex0]->device_res_manager_, nullptr);
+  if (!device_contexts_[kIndex0]->device_res_manager_->AllocateMemory(recv_data_.get())) {
     MS_LOG(ERROR) << "Failed to allocate memory size " << size;
     return nullptr;
   }
@@ -219,7 +224,9 @@ void RecvActor::AddArgSpecForInput(AbstractBasePtrList *args_spec_list, const Sh
   out_tensor->data_sync();
 
   auto real_abs = real_input->abstract();
+  MS_EXCEPTION_IF_NULL(real_abs);
   auto updated_shape = std::make_shared<abstract::Shape>(shapes);
+  MS_EXCEPTION_IF_NULL(updated_shape);
   if (real_abs->isa<abstract::AbstractTensor>()) {
     real_abs->set_value(out_tensor);
     real_abs->set_shape(updated_shape);
@@ -228,6 +235,7 @@ void RecvActor::AddArgSpecForInput(AbstractBasePtrList *args_spec_list, const Sh
     MS_EXCEPTION_IF_NULL(abstract_tuple);
     MS_EXCEPTION_IF_CHECK_FAIL((real_input_index < abstract_tuple->elements().size()), "Index is out of range.");
     auto tuple_elements = abstract_tuple->elements()[real_input_index];
+    MS_EXCEPTION_IF_NULL(tuple_elements);
     tuple_elements->set_value(out_tensor);
     tuple_elements->set_shape(updated_shape);
   }

@@ -216,6 +216,7 @@ DeviceMemPtr DynamicMemPoolBestFit::AddMemBlockAndMemBuf(size_t size, bool from_
     return nullptr;
   }
   // If unit_size is changed by other function(not context), change unit_size back
+  MS_EXCEPTION_IF_NULL(common_mem_);
   common_mem_->unit_size_ = config_unit_size_;
 
   auto mem_mng = common_mem_;
@@ -278,6 +279,7 @@ bool DynamicMemPoolBestFit::IsSplit(size_t tensor_size, size_t mem_buf_size) con
 void DynamicMemPoolBestFit::SplitMemBuf(size_t size, const DynamicMemBufPtr &mem_buf,
                                         const MemStatusManagerPtr &mem_mng) {
   MS_EXCEPTION_IF_NULL(mem_buf);
+  MS_EXCEPTION_IF_NULL(mem_mng);
   const auto &mem_block = FindMemBlock(mem_buf->device_addr_, mem_mng);
   MS_EXCEPTION_IF_NULL(mem_block);
   // Divide new memory buf
@@ -304,6 +306,7 @@ bool DynamicMemPoolBestFit::CmpMemBlock(const DeviceMemPtr &device_addr, const D
 DynamicMemBlockPtr DynamicMemPoolBestFit::FindMemBlock(const DeviceMemPtr &device_addr,
                                                        const MemStatusManagerPtr &mem_mng) const {
   MS_EXCEPTION_IF_NULL(device_addr);
+  MS_EXCEPTION_IF_NULL(mem_mng);
   auto &&iter =
     std::upper_bound(mem_mng->mem_block_list_.begin(), mem_mng->mem_block_list_.end(), device_addr, CmpMemBlock);
   if (iter != mem_mng->mem_block_list_.begin()) {
@@ -348,6 +351,7 @@ void DynamicMemPoolBestFit::CombineMemBuf(const DynamicMemBlockPtr &mem_block, c
                                           const MemStatusManagerPtr &mem_mng) {
   MS_EXCEPTION_IF_NULL(mem_block);
   MS_EXCEPTION_IF_NULL(device_addr);
+  MS_EXCEPTION_IF_NULL(mem_mng);
   const auto &iter = mem_block->block_all_mem_buf_map_.find(device_addr);
   if (iter == mem_block->block_all_mem_buf_map_.end()) {
     DumpDynamicMemPoolDebugInfo();
@@ -421,7 +425,9 @@ void DynamicMemPoolBestFit::ReleaseDeviceRes() {
   DumpDynamicMemPoolStateInfo();
 
   auto fn = [this](const MemStatusManagerPtr &mem_mng) {
+    MS_EXCEPTION_IF_NULL(mem_mng);
     for (auto &iter : mem_mng->mem_block_list_) {
+      MS_EXCEPTION_IF_NULL(iter);
       auto &device_addr = iter->device_addr_base_;
       if (device_addr != nullptr) {
         if (!FreeDeviceMem(device_addr)) {
@@ -440,6 +446,7 @@ void DynamicMemPoolBestFit::ReleaseDeviceRes() {
 void DynamicMemPoolBestFit::DumpDynamicMemPoolStateInfo() {
   size_t total_used_size_list[ALLOCATOR_TYPE_NUM] = {0};
   auto fn = [&](const MemStatusManagerPtr &mem_mng, const std::string &mem_type) {
+    MS_EXCEPTION_IF_NULL(mem_mng);
     if (mem_mng->mem_block_list_.empty()) {
       return;
     }
@@ -447,6 +454,7 @@ void DynamicMemPoolBestFit::DumpDynamicMemPoolStateInfo() {
     std::ostringstream buf;
     for (size_t i = 0; i < mem_mng->mem_block_list_.size(); ++i) {
       size_t mem_block_used_size = 0;
+      MS_EXCEPTION_IF_NULL(mem_mng->mem_block_list_[i]);
       for (auto mb = mem_mng->mem_block_list_[i]->block_all_mem_buf_map_.begin();
            mb != mem_mng->mem_block_list_[i]->block_all_mem_buf_map_.end(); ++mb) {
         if (mb->second->status_ == DynamicMemBufStatus::kMemBufUsed) {
@@ -486,6 +494,7 @@ void DynamicMemPoolBestFit::DumpDynamicMemPoolStateInfo() {
 
 void DynamicMemPoolBestFit::DumpDynamicMemPoolDebugInfo() {
   auto fn = [](const MemStatusManagerPtr &mem_mng, const std::string &mem_type) {
+    MS_EXCEPTION_IF_NULL(mem_mng);
     size_t total_mem = 0;
     size_t total_used_mem = 0;
     size_t total_idle_mem1 = 0;
