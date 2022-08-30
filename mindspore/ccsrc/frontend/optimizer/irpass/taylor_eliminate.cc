@@ -95,6 +95,7 @@ FuncGraphPtr GetTaylorPrimitive(const AnfNodePtr &node, const pipeline::Resource
 FuncGraphPtr TaylorFunctor(const FuncGraphPtr &func_graph, const pipeline::ResourceBasePtr &resources) {
   const auto &value_nodes = func_graph->value_nodes();
   auto manager = resources->manager();
+  MS_EXCEPTION_IF_NULL(manager);
   manager->AddFuncGraph(func_graph);
   std::vector<AnfNodePtr> taylor_node_list;
   for (const auto &value_pair : value_nodes) {
@@ -112,6 +113,7 @@ FuncGraphPtr TaylorFunctor(const FuncGraphPtr &func_graph, const pipeline::Resou
   }
   for (size_t i = 0; i < taylor_node_list.size(); i++) {
     FuncGraphPtr taylor_node_graph = GetTaylorPrimitive(taylor_node_list[i], resources);
+    MS_EXCEPTION_IF_NULL(taylor_node_graph);
     (void)manager->Replace(taylor_node_list[i], NewValueNode(taylor_node_graph));
   }
   taylor_ops_cache_.clear();
@@ -120,6 +122,7 @@ FuncGraphPtr TaylorFunctor(const FuncGraphPtr &func_graph, const pipeline::Resou
 }
 
 AnfNodePtr ExpandTaylor(const ValueNodePtr &vnode, const pipeline::ResourceBasePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
   if (IsValueNode<FuncGraph>(vnode)) {
     ScopeGuard scope_guard(vnode->scope());
     auto func_graph = GetValueNode<FuncGraphPtr>(vnode);
@@ -139,10 +142,11 @@ bool ExpandTaylorPrim::operator()(const FuncGraphPtr &, const OptimizerPtr &opti
   MS_EXCEPTION_IF_NULL(manager);
   for (auto &taylor_node : prim_nodes_) {
     auto taylor_fg_node = taylor_node->input(1);
+    MS_EXCEPTION_IF_NULL(taylor_fg_node);
     auto taylor_fg = GetValueNode<FuncGraphPtr>(taylor_fg_node);
     if (taylor_fg == nullptr) {
       MS_LOG(EXCEPTION) << "Unexpected Taylor node, input func graph should not be null, node: "
-                        << taylor_fg->ToString();
+                        << taylor_fg_node->ToString();
     }
     // Copy original forward graph in case of the influence of usage in other place.
     auto taylor_fg_copy = BasicClone(taylor_fg, true);
