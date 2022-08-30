@@ -78,6 +78,8 @@ class GraphKernelExpanderLite : public GraphKernelExpander {
   ~GraphKernelExpanderLite() override = default;
 
  protected:
+  bool DisableConvTuning();
+  std::vector<PrimitivePtr> ConvTuningExpanderOps();
   std::vector<PrimitivePtr> InitOpList() override;
   ExpanderPtr InitExpander(const AnfNodePtr &node) override;
   bool CanExpand(const CNodePtr &node) const override;

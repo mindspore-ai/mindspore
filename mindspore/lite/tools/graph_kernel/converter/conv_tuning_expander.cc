@@ -13,7 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "tools/graph_kernel/converter/conv_pool_expander.h"
+#include "tools/graph_kernel/converter/conv_tuning_expander.h"
+#include <algorithm>
 #include <map>
 #include <sstream>
 #include <string>
@@ -222,19 +223,28 @@ void TuneConvOps(const AnfNodePtrList &conv_list) {
   SetTuneAttrs(conv_list, output_file);
 }
 
-std::vector<PrimitivePtr> ConvPoolExpander::InitOpList() {
-  std::vector<OpWithLevel> expand_ops_with_level = {{kCPUDevice, OpLevel_1, prim::kPrimConv2DFusion},
-                                                    {kCPUDevice, OpLevel_1, prim::kPrimAvgPoolFusion},
-                                                    {kCPUDevice, OpLevel_1, prim::kPrimMaxPoolFusion}};
-  const auto &flags = GraphKernelFlags::GetInstance();
-  return GkUtils::GetValidOps(expand_ops_with_level, flags.fusion_ops_level, flags.enable_expand_ops_only,
-                              flags.enable_expand_ops, flags.disable_expand_ops);
+std::vector<PrimitivePtr> ConvTuningExpander::InitOpList() {
+  auto expand_only_list = GraphKernelFlags::GetInstance().enable_expand_ops_only;
+  auto conv_expand_list = GraphKernelExpanderLite::ConvTuningExpanderOps();
+  if (expand_only_list.empty()) {
+    return conv_expand_list;
+  }
+  std::vector<PrimitivePtr> conv_only_list;
+  for (auto conv_expand : conv_expand_list) {
+    if (std::find(expand_only_list.begin(), expand_only_list.end(), conv_expand->name()) != expand_only_list.end()) {
+      conv_only_list.emplace_back(conv_expand);
+    }
+  }
+  return conv_only_list;
 }
 
-bool ConvPoolExpander::Run(const FuncGraphPtr &func_graph) {
+bool ConvTuningExpander::Run(const FuncGraphPtr &func_graph) {
+  if (GraphKernelExpanderLite::DisableConvTuning()) {
+    return false;
+  }
   bool changed = false;
-  auto &flags = GraphKernelFlags::GetInstance();
-  if (flags.enable_lite_conv_tuning) {
+  auto valid_op_list = InitOpList();
+  if (std::find(valid_op_list.begin(), valid_op_list.end(), prim::kPrimConv2DFusion) != valid_op_list.end()) {
     MS_EXCEPTION_IF_NULL(func_graph);
     MS_EXCEPTION_IF_NULL(func_graph->get_return());
     auto todos = TopoSort(func_graph->get_return());
