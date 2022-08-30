@@ -169,7 +169,7 @@ class AdaptiveAvgPool3D(Primitive):
     Refer to :func:`mindspore.ops.adaptive_avg_pool3d` for more details.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``GPU``
 
     Examples:
         >>> import mindspore

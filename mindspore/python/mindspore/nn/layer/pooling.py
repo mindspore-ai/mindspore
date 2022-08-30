@@ -613,7 +613,7 @@ class AdaptiveAvgPool3d(Cell):
         ValueError: If `output_size` value is not positive.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``GPU``
 
     Examples:
         >>> # case 1: output_size=(3, 3, 4)
