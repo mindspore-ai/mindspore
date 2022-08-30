@@ -647,7 +647,7 @@ AnfNodePtr CreateGradOutputs(const FuncGraphPtr &k_child, const AnfNodePtr &grad
   PrimitivePtr get_tuple_item_op = prim::kPrimTupleGetItem;
   PrimitivePtr make_tuple_op = prim::kPrimMakeTuple;
   std::vector<AnfNodePtr> elements = {NewValueNode(make_tuple_op)};
-  elements.emplace_back(
+  (void)elements.emplace_back(
     k_child->NewCNodeInOrder({NewValueNode(get_tuple_item_op), f_app, NewValueNode(static_cast<int64_t>(1))}));
   auto aux_output = k_child->NewCNodeInOrder(elements);
   auto unpack_node =
