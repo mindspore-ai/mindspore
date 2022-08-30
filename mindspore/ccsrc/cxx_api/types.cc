@@ -354,7 +354,7 @@ std::vector<std::vector<char>> MSTensor::TensorToStringChars(const MSTensor &ten
 
     str.resize(str_len);
     const uint8_t *cur_data = reinterpret_cast<const uint8_t *>(data) + offset;
-    auto ret = memcpy_s(static_cast<void *>(str.data()), SizeToInt(str.size()), cur_data, str_len);
+    auto ret = memcpy_s(static_cast<void *>(str.data()), str.size(), cur_data, static_cast<size_t>(str_len));
     if (ret != EOK) {
       MS_LOG(ERROR) << "memcpy_s failed, ret = " << ret;
       return {};

@@ -306,7 +306,7 @@ class BACKEND_EXPORT SessionBasic : public std::enable_shared_from_this<SessionB
 
   BackendOpRunInfoPtr GetSingleOpRunInfo(const CNodePtr &cnode, const GraphInfo &graph_info,
                                          const InputTensorInfo &tensor_info,
-                                         GraphOutputInfo *const graph_output_info) const;
+                                         const GraphOutputInfo *const graph_output_info) const;
   tensor::TensorPtr GetValueNodeOutputTensor(const AnfNodePtr &node, size_t output_index) const;
   tensor::TensorPtr GetParameterOutputTensor(const AnfNodePtr &node,
                                              const std::map<AnfNodePtr, size_t> &parameter_index,

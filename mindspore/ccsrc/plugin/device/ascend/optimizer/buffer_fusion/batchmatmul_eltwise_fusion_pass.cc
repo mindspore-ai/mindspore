@@ -32,6 +32,7 @@ CNodePtr FindInputNode(const CNodePtr &cnode, const string &node_type, const ker
   auto input_num = common::AnfAlgo::GetInputTensorNum(cnode);
   for (size_t i = 1; i <= input_num; ++i) {
     auto input = cnode->input(i);
+    MS_EXCEPTION_IF_NULL(input);
     if (input->isa<CNode>() && common::AnfAlgo::GetCNodeName(input) == node_type &&
         AnfAlgo::GetFusionType(input) == fusion_type) {
       return input->cast<CNodePtr>();
@@ -52,6 +53,7 @@ bool BatchMatmulEltwiseFusionPass::MatchPattern1(const CNodePtr &eltwise1,
   auto input_num = common::AnfAlgo::GetInputTensorNum(eltwise1);
   for (size_t i = 1; i <= input_num; ++i) {
     auto eltwise1_input = eltwise1->input(i);
+    MS_EXCEPTION_IF_NULL(eltwise1_input);
     if (eltwise1_input->isa<CNode>() && MatchPattern2(eltwise1_input->cast<CNodePtr>(), record)) {
       record->insert(eltwise1);
       return true;

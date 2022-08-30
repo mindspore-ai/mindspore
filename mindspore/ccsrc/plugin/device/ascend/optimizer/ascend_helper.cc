@@ -49,6 +49,7 @@ std::string GetTransOpName(const std::string &spec_format) {
 }
 
 AnfNodePtr GetOriginNode(bool is_insert_output, const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
   auto orig_node = node;
   if (is_insert_output && node->isa<CNode>() && common::AnfAlgo::GetCNodeName(node) == prim::kTupleGetItem) {
     auto cnode = node->cast<CNodePtr>();
@@ -60,12 +61,14 @@ AnfNodePtr GetOriginNode(bool is_insert_output, const AnfNodePtr &node) {
 CNodePtr CreateReshapeNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_node, const AnfNodePtr &orig_node,
                            const KernelSelectPtr &kernel_select, const abstract::ShapePtr &dst_shape, bool is_dynamic,
                            const std::vector<int> &padding_axis = std::vector<int>{}) {
+  MS_EXCEPTION_IF_NULL(input_node);
   std::vector<AnfNodePtr> trans_inputs;
   auto prim = std::make_shared<Primitive>(prim::kPrimReshape->name());
   (void)trans_inputs.emplace_back(NewValueNode(prim));
   (void)trans_inputs.emplace_back(input_node);
   auto reshape = NewCNode(trans_inputs, func_graph, {orig_node});
   MS_EXCEPTION_IF_NULL(reshape);
+  MS_EXCEPTION_IF_NULL(dst_shape);
   if (is_dynamic) {
     common::AnfAlgo::SetOutputTypeAndDetailShape({common::AnfAlgo::GetOutputInferDataType(input_node, 0)}, {dst_shape},
                                                  reshape.get());
@@ -80,6 +83,7 @@ CNodePtr CreateReshapeNode(const FuncGraphPtr &func_graph, const AnfNodePtr &inp
   common::AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), reshape);
   common::AnfAlgo::SetNodeAttr(kAttrShape, MakeValue(dst_shape->shape()), reshape);
   reshape->set_scope(input_node->scope());
+  MS_EXCEPTION_IF_NULL(kernel_select);
   kernel_select->SelectKernel(reshape);
   return reshape;
 }
@@ -105,6 +109,7 @@ void ReFreshInferShape(const AnfNodePtr &trans_node, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(trans_node);
   MS_EXCEPTION_IF_NULL(node);
   auto real_input_node = common::AnfAlgo::VisitKernelWithReturnType(node, 0).first;
+  MS_EXCEPTION_IF_NULL(real_input_node);
   if (!real_input_node->isa<CNode>()) {
     return;
   }
@@ -127,6 +132,7 @@ void SetGroupAttr(const ParameterPtr &param, const AnfNodePtr &out_trans, const 
   // not set with groups attr and cannot be eliminated in EliminateReduntantOp. So to solve this problem,
   // set the groups and fracz_group attr here for these paired TransData nodes.
   if (fz_group > 1) {
+    MS_EXCEPTION_IF_NULL(out_trans);
     if (out_trans->isa<CNode>()) {
       // if has transdata after parameter
       common::AnfAlgo::SetNodeAttr(kAttrGroups, MakeValue(fz_group), out_trans);
@@ -266,6 +272,7 @@ AnfNodePtr AddTransOpNodeToGraphWithFormat(const FuncGraphPtr &func_graph, const
   }
   std::string spec_format = input_format == kOpFormat_DEFAULT ? dst_format : input_format;
   auto input_node_out_shape = common::AnfAlgo::GetOutputDetailShape(input_node, 0);
+  MS_EXCEPTION_IF_NULL(input_node_out_shape);
   auto out_shape_ptr = input_node_out_shape->cast<abstract::ShapePtr>();
   MS_EXCEPTION_IF_NULL(out_shape_ptr);
   ShapeVector out_shape = out_shape_ptr->shape();
@@ -477,6 +484,7 @@ AnfNodePtr InsertTransOpForOutput(const FuncGraphPtr &func_graph, const AnfNodeP
   if (outputs_num == 0) {
     return node;
   }
+  MS_EXCEPTION_IF_NULL(func_graph);
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
   // Single output
   if (outputs_num == 1 && (!common::AnfAlgo::IsTupleOutput(node))) {
@@ -504,6 +512,7 @@ AnfNodePtr InsertTransOpForInput(const FuncGraphPtr &func_graph, const AnfNodePt
     new_inputs.push_back(input_node);
   }
   CNodePtr new_cnode = nullptr;
+  MS_EXCEPTION_IF_NULL(func_graph);
   // cnode changed so make a new cnode to differ from original one.
   auto kernel_graph = func_graph->cast<std::shared_ptr<session::KernelGraph>>();
   if (kernel_graph == nullptr) {

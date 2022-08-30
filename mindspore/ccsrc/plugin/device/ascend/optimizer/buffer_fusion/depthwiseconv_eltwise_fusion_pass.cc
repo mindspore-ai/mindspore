@@ -65,6 +65,7 @@ void DepthwiseConvEltwiseFusionPass::MatchSingleFusionPattern(const session::Ker
     if (AnfAlgo::GetKernelType(cnode) == KernelType::TBE_KERNEL &&
         AnfAlgo::GetFusionType(cnode) == kernel::FusionType::ELEMWISE) {
       auto eltwise_input = cnode->input(kIndex1);
+      MS_EXCEPTION_IF_NULL(eltwise_input);
       if (eltwise_input->isa<CNode>() &&
           common::AnfAlgo::CheckPrimitiveType(eltwise_input, prim::kPrimDepthwiseConv2dNative)) {
         MatchDepthwiseConvRelu(cnode, candidate_fusion, true);

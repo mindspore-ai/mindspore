@@ -30,18 +30,18 @@
 
 namespace mindspore {
 namespace opt {
-const size_t MAX_ELTWISE_NUM = 3;
-const size_t MIN_ELTWISE_SIZE = 2;
-const size_t ELTWISE_INPUT_SIZE = 2;
-const size_t ELTWISE_DOUBLE_IN_INPUT_SIZE = 3;
-const size_t ELTWISE_SINGLE_OUTPUT_SIZE = 1;
-const size_t ELTWISE_DOUBLE_OUTPUT_SIZE = 2;
-const size_t CONV_DOUBLE_IN_INPUT_SIZE = 3;
-const size_t CONV_QUART_IN_INPUT_SIZE = 5;
-const size_t ELTWISE_USE = 1;
-const size_t ELTWISE_MULTI_USE = 2;
-const size_t MAX_ELTWISE_SIZE = 6;
-const size_t MULTI_ELTWISE_SIZE = 4;
+constexpr size_t MAX_ELTWISE_NUM = 3;
+constexpr size_t MIN_ELTWISE_SIZE = 2;
+constexpr size_t ELTWISE_INPUT_SIZE = 2;
+constexpr size_t ELTWISE_DOUBLE_IN_INPUT_SIZE = 3;
+constexpr size_t ELTWISE_SINGLE_OUTPUT_SIZE = 1;
+constexpr size_t ELTWISE_DOUBLE_OUTPUT_SIZE = 2;
+constexpr size_t CONV_DOUBLE_IN_INPUT_SIZE = 3;
+constexpr size_t CONV_QUART_IN_INPUT_SIZE = 5;
+constexpr size_t ELTWISE_USE = 1;
+constexpr size_t ELTWISE_MULTI_USE = 2;
+constexpr size_t MAX_ELTWISE_SIZE = 6;
+constexpr size_t MULTI_ELTWISE_SIZE = 4;
 
 constexpr int64_t kBNTrainingUpdateOutputUsedTotalNum = 5;
 constexpr int64_t kConvOutputUsedTotalNum = 4;
