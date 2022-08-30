@@ -91,9 +91,9 @@ abstract::ShapePtr SparseSliceGradInferShape(const PrimitivePtr &primitive,
 
 TypePtr SparseSliceGradInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = prim->name();
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("backprop_val_grad", input_args[kInputIndex0]->BuildType(),
-                                                   {kUInt8, kInt8, kInt16, kInt32, kInt64, kFloat32, kFloat64},
-                                                   prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid(
+    "backprop_val_grad", input_args[kInputIndex0]->BuildType(),
+    {kUInt8, kInt8, kUInt16, kInt16, kInt32, kInt64, kFloat16, kFloat32, kFloat64}, prim_name);
   std::map<std::string, TypePtr> in_args = {{"indices", input_args[kInputIndex1]->BuildType()},
                                             {"start", input_args[kInputIndex2]->BuildType()},
                                             {"new_indices", input_args[kInputIndex3]->BuildType()}};
@@ -103,6 +103,7 @@ TypePtr SparseSliceGradInferType(const PrimitivePtr &prim, const std::vector<Abs
 }
 }  // namespace
 
+MIND_API_OPERATOR_IMPL(SparseSliceGrad, BaseOperator);
 AbstractBasePtr SparseSliceGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                      const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
