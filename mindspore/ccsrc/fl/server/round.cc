@@ -252,6 +252,8 @@ void Round::InitKernelClientUploadAccuracy() { kernel_->InitClientUploadAccuracy
 
 void Round::InitKernelEvalDataSize() { kernel_->InitEvalDataSize(); }
 
+void Round::InitKernelTrainDataSize() { kernel_->InitTrainDataSize(); }
+
 float Round::kernel_upload_loss() const { return kernel_->upload_loss(); }
 
 float Round::kernel_upload_accuracy() const { return kernel_->upload_accuracy(); }

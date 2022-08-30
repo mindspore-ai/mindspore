@@ -92,6 +92,8 @@ class LocalMetaStore {
 
   bool verifyAggregationFeatureMap(const std::map<std::string, UploadData> &model);
 
+  bool verifyAggregationFeatureMap(const std::map<std::string, AddressPtr> &model);
+
  private:
   LocalMetaStore() : key_to_meta_({}), curr_iter_num_(0) {}
   ~LocalMetaStore() = default;

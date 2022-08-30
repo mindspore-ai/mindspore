@@ -112,8 +112,8 @@ void RoundKernel::Summarize() {
   }
 
   if (name_ == "updateModel" && accept_client_num() > 0) {
-    MS_LOG(INFO) << "Client upload avg loss: " << (upload_loss_ / accept_client_num())
-                 << ", upload avg accuracy: " << (upload_accuracy_ / accept_client_num());
+    MS_LOG(INFO) << "Client upload avg loss: " << (upload_loss_ / train_data_size_)
+                 << ", upload avg accuracy: " << (upload_accuracy_ / eval_data_size_);
   }
 }
 
@@ -134,8 +134,11 @@ void RoundKernel::InitClientUploadAccuracy() { upload_accuracy_ = 0.0f; }
 
 void RoundKernel::InitEvalDataSize() { eval_data_size_ = 0; }
 
+void RoundKernel::InitTrainDataSize() { train_data_size_ = 0; }
+
 void RoundKernel::UpdateClientUploadLoss(const float upload_loss, const float data_size) {
   upload_loss_ = upload_loss_ + upload_loss * data_size;
+  train_data_size_ += data_size;
 }
 
 void RoundKernel::UpdateClientUploadAccuracy(const float upload_accuracy, const size_t eval_data_size) {
@@ -146,6 +149,8 @@ void RoundKernel::UpdateClientUploadAccuracy(const float upload_accuracy, const 
 float RoundKernel::upload_loss() const { return upload_loss_; }
 
 size_t RoundKernel::eval_data_size() const { return eval_data_size_; }
+
+size_t RoundKernel::train_data_size() const { return train_data_size_; }
 
 float RoundKernel::upload_accuracy() const { return upload_accuracy_; }
 

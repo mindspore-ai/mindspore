@@ -607,23 +607,9 @@ void Iteration::Next(bool is_iteration_valid, const std::string &reason) {
   MS_LOG(INFO) << "Prepare for next iteration.";
   is_last_iteration_valid_ = is_iteration_valid;
   if (is_iteration_valid) {
-    // Store the model which is successfully aggregated for this iteration.
     const auto &model = Executor::GetInstance().GetModel();
-    std::unordered_map<std::string, Feature> feature_map;
-    for (auto weight : model) {
-      std::string weight_fullname = weight.first;
-      if (weight.second == nullptr) {
-        continue;
-      }
-      Feature feature;
-      feature.weight_size = weight.second->size;
-      float *data = reinterpret_cast<float *>(weight.second->addr);
-      std::vector<float> weight_data(data, data + weight.second->size / sizeof(float));
-      feature.weight_data = weight_data;
-      feature_map[weight_fullname] = feature;
-    }
-
-    if (LocalMetaStore::GetInstance().verifyAggregationFeatureMap(feature_map)) {
+    if (LocalMetaStore::GetInstance().verifyAggregationFeatureMap(model)) {
+      // Store the model which is successfully aggregated for this iteration.
       ModelStore::GetInstance().StoreModelByIterNum(iteration_num_, model);
       ModelStore::GetInstance().StoreCompressModelByIterNum(iteration_num_, model);
       iteration_result_ = IterationResult::kSuccess;
@@ -817,6 +803,7 @@ void Iteration::EndLastIter() {
     round->InitKernelClientUploadLoss();
     round->InitKernelClientUploadAccuracy();
     round->InitKernelEvalDataSize();
+    round->InitKernelTrainDataSize();
     round->ResetParticipationTimeAndNum();
   }
   round_client_num_map_.clear();

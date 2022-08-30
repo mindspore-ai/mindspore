@@ -28,6 +28,7 @@
 #include "schema/fl_job_generated.h"
 #include "ps/ps_context.h"
 #include "fl/worker/fl_worker.h"
+#include "fl/server/local_meta_store.h"
 
 namespace mindspore {
 namespace kernel {
@@ -118,13 +119,16 @@ class FusedPullWeightKernelMod : public NativeCpuKernelMod {
     }
 
     auto feature_map = ParseFeatureMap(pull_weight_rsp);
+    if (!fl::server::LocalMetaStore::GetInstance().verifyAggregationFeatureMap(feature_map)) {
+      MS_LOG(WARNING) << "Verify feature map failed for pull weight.";
+    }
     for (size_t i = 0; i < weight_full_names_.size(); i++) {
       const std::string &weight_name = weight_full_names_[i];
       if (feature_map.count(weight_name) == 0) {
         MS_LOG(EXCEPTION) << "The weights for " << weight_name << " is not pulled from server.";
       }
       int ret =
-        memcpy_s(inputs[i]->addr, inputs[i]->size, feature_map[weight_name].addr, feature_map[weight_name].size);
+        memcpy_s(inputs[i]->addr, inputs[i]->size, feature_map[weight_name]->addr, feature_map[weight_name]->size);
       if (ret != 0) {
         MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
       }
@@ -166,6 +170,11 @@ class FusedPullWeightKernelMod : public NativeCpuKernelMod {
     weight_full_names_ = common::AnfAlgo::GetNodeAttr<std::vector<std::string>>(kernel_node, kAttrPsKey);
     MS_LOG(INFO) << "Weight full name as key " << weight_full_names_ << ", key index is " << indices_
                  << ", server number is " << server_num_;
+    for (size_t i = 0; i < weight_full_names_.size(); i++) {
+      fl::server::Feature feature;
+      feature.weight_size = input_size_list_[i];
+      fl::server::LocalMetaStore::GetInstance().put_aggregation_feature_map(weight_full_names_[i], feature);
+    }
     if (server_num_ == 0 || weight_full_names_.empty() || indices_.empty()) {
       MS_LOG(EXCEPTION)
         << "Attributes of FusedPullWeightKernelMod are invalid: server number is 0 or weight_full_names_ is "
@@ -196,7 +205,7 @@ class FusedPullWeightKernelMod : public NativeCpuKernelMod {
     return true;
   }
 
-  std::map<std::string, Address> ParseFeatureMap(const schema::ResponsePullWeight *pull_weight_rsp) {
+  std::map<std::string, AddressPtr> ParseFeatureMap(const schema::ResponsePullWeight *pull_weight_rsp) {
     MS_EXCEPTION_IF_NULL(pull_weight_rsp);
     auto fbs_feature_map = pull_weight_rsp->feature_map();
     if (fbs_feature_map->size() != weight_full_names_.size()) {
@@ -204,12 +213,15 @@ class FusedPullWeightKernelMod : public NativeCpuKernelMod {
                         << fbs_feature_map->size() << " weights.";
     }
 
-    std::map<std::string, Address> feature_map;
+    std::map<std::string, AddressPtr> feature_map;
     for (size_t i = 0; i < fbs_feature_map->size(); i++) {
       std::string weight_full_name = fbs_feature_map->Get(i)->weight_fullname()->str();
       float *weight_data = const_cast<float *>(fbs_feature_map->Get(i)->data()->data());
       size_t weight_size = fbs_feature_map->Get(i)->data()->size() * sizeof(float);
-      feature_map[weight_full_name] = {weight_data, weight_size};
+      AddressPtr address_ptr = std::make_shared<Address>();
+      address_ptr->addr = weight_data;
+      address_ptr->size = weight_size;
+      feature_map[weight_full_name] = address_ptr;
     }
     return feature_map;
   }
