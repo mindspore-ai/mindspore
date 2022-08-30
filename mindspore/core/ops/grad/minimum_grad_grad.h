@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_MINIMUM_GRAD_GRAD_H_
-#define MINDSPORE_CORE_OPS_MINIMUM_GRAD_GRAD_H_
+#ifndef MINDSPORE_CORE_OPS_GRAD_MINIMUM_GRAD_GRAD_H_
+#define MINDSPORE_CORE_OPS_GRAD_MINIMUM_GRAD_GRAD_H_
 
 #include <vector>
 #include <memory>
+
 #include "ops/base_operator.h"
 #include "mindapi/base/types.h"
 
@@ -29,7 +30,7 @@ class MIND_API MinimumGradGrad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(MinimumGradGrad);
   MinimumGradGrad() : BaseOperator(kNameMinimumGradGrad) {
-    InitIOName({"x1", "x2", "dx1", "dx2"}, {"sopd_x1", "sopd_x2", "sopd_grad"});
+    InitIOName({"x1", "x2", "grad_y1", "grad_y2"}, {"sopd_x1", "sopd_x2", "sopd_grad"});
   }
   void Init(const bool grad_x = true, const bool grad_y = true);
   void set_grad_x(const bool grad_x);
@@ -41,4 +42,4 @@ abstract::AbstractBasePtr MinimumGradGradInfer(const abstract::AnalysisEnginePtr
                                                const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
-#endif  // MINDSPORE_CORE_OPS_MINIMUM_GRAD_GRAD_H_
+#endif  // MINDSPORE_CORE_OPS_GRAD_MINIMUM_GRAD_GRAD_H_
