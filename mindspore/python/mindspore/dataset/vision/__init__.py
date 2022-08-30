@@ -39,6 +39,34 @@ Descriptions of common data processing terms are as follows:
 - TensorOperation, the base class of all data processing operations implemented in C++.
 - ImageTensorOperation, the base class of all image processing operations. It is a derived class of TensorOperation.
 - PyTensorOperation, the base class of all data processing operations implemented in Python.
+
+The data transform operator can be executed in the data processing pipeline or in the eager mode:
+
+- Pipeline mode is generally used to process datasets. For examples, please refer to
+  `introduction to data processing pipeline`.
+- Eager mode is generally used for scattered samples. Examples of image preprocessing are as follows:
+
+    .. code-block::
+
+        import numpy as np
+        import mindspore.dataset.vision as vision
+        from PIL import Image,ImageFont,ImageDraw
+
+        # draw circle
+        img = Image.new("RGB", (300, 300), (255, 255, 255))
+        draw = ImageDraw.Draw(img)
+        draw.ellipse(((0, 0), (100, 100)), fill=(255, 0, 0), outline=(255, 0, 0), width=5)
+        img.save("./1.jpg")
+        with open("./1.jpg", "rb") as f:
+            data = f.read()
+
+        data_decoded = vision.Decode()(data)
+        data_croped = vision.RandomCrop(size=(250, 250))(data_decoded)
+        data_resized = vision.Resize(size=(224, 224))(data_croped)
+        data_normalized = vision.Normalize(mean=[0.485 * 255, 0.456 * 255, 0.406 * 255],
+                                           std=[0.229 * 255, 0.224 * 255, 0.225 * 255])(data_resized)
+        data_hwc2chw = vision.HWC2CHW()(data_normalized)
+        print("data: {}, shape: {}".format(data_hwc2chw, data_hwc2chw.shape), flush=True)
 """
 from . import c_transforms
 from . import py_transforms
