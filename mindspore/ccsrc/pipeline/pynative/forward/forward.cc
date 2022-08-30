@@ -162,7 +162,6 @@ void ForwardExecutor::Init() {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   device_target_ = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-  device_id_ = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
   enable_mind_rt_ = ms_context->get_param<bool>(MS_CTX_ENABLE_MINDRT);
   init_ = true;
 }
@@ -433,6 +432,7 @@ ValuePtr ForwardExecutor::RunOpInMs(const FrontendOpRunInfoPtr &op_run_info) {
   mindspore::ScopedLongRunning long_running;
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
+  device_id_ = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
   ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, true);
   const auto &cur_target = GetCurrentDeviceTarget(op_run_info->op_prim);
   op_run_info->base_op_run_info.device_target = cur_target;
