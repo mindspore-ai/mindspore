@@ -437,6 +437,11 @@ AbstractBasePtr InferImplLoad(const AnalysisEnginePtr &, const PrimitivePtr &pri
                               const AbstractBasePtrList &args_spec_list) {
   // Inputs: Ref/Tensor, universal
   CheckArgsSize(primitive->name(), args_spec_list, 2);
+  auto ref_abs = dyn_cast<abstract::AbstractRefTensor>(args_spec_list[0]);
+  if (ref_abs != nullptr) {
+    // Return tensor value if input is Ref.
+    return ref_abs->CloneAsTensor();
+  }
   return args_spec_list[0]->Broaden();
 }
 
