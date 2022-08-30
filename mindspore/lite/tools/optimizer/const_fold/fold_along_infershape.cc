@@ -42,6 +42,17 @@ bool ConstFoldAlongInferShape::CheckCanFold(const FuncGraphPtr &func_graph, cons
   if (IsSpecialType(cnode) || CheckPrimitiveType(cnode, prim::kPrimCustom) || IsMarkedTrainOp(cnode)) {
     return false;
   }
+  auto inputs = cnode->inputs();
+  auto graph_inputs =
+    sub_inputs_map_.find(func_graph) != sub_inputs_map_.end() ? sub_inputs_map_[func_graph] : func_graph->get_inputs();
+  auto is_all_const = std::all_of(inputs.begin(), inputs.end(), [&graph_inputs](const AnfNodePtr &node) {
+    return (node->isa<ValueNode>() && !IsValueNode<FuncGraph>(node)) ||
+           (node->isa<Parameter>() && node->cast<ParameterPtr>()->has_default() &&
+            std::find(graph_inputs.begin(), graph_inputs.end(), node) == graph_inputs.end());
+  });
+  if (is_all_const) {
+    return true;
+  }
   auto prim = GetCNodePrimitive(cnode);
   if (prim == nullptr) {
     return false;
@@ -54,14 +65,7 @@ bool ConstFoldAlongInferShape::CheckCanFold(const FuncGraphPtr &func_graph, cons
       lite::ConverterInnerContext::GetInstance()->GetGraphInputTensorShapeMapSize() != 0) {
     return true;
   }
-  auto inputs = cnode->inputs();
-  auto graph_inputs =
-    sub_inputs_map_.find(func_graph) != sub_inputs_map_.end() ? sub_inputs_map_[func_graph] : func_graph->get_inputs();
-  return std::all_of(inputs.begin(), inputs.end(), [&graph_inputs](const AnfNodePtr &node) {
-    return (node->isa<ValueNode>() && !IsValueNode<FuncGraph>(node)) ||
-           (node->isa<Parameter>() && node->cast<ParameterPtr>()->has_default() &&
-            std::find(graph_inputs.begin(), graph_inputs.end(), node) == graph_inputs.end());
-  });
+  return false;
 }
 }  // namespace opt
 }  // namespace mindspore
