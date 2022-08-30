@@ -22,6 +22,11 @@
 namespace mindspore {
 namespace device {
 namespace gpu {
+GPUDeviceManager &GPUDeviceManager::GetInstance() {
+  static GPUDeviceManager instance;
+  return instance;
+}
+
 void GPUDeviceManager::InitDevice() {
   CHECK_OP_RET_WITH_EXCEPT(CudaDriver::SetDevice(SizeToInt(cur_dev_id_)), "Failed to set current device id");
   if (dev_alive_) {
@@ -150,6 +155,9 @@ const cusolverDnHandle_t &GPUDeviceManager::GetCusolverDnHandle() const { return
 const cusparseHandle_t &GPUDeviceManager::GetCuSparseHandle() const { return cusparse_handle_; }
 
 bool GPUDeviceManager::SyncStream(size_t stream_id) const {
+  if (!dev_alive_) {
+    return false;
+  }
   auto stream = GetStream(stream_id);
   if (stream == nullptr) {
     MS_LOG(EXCEPTION) << "Get CUDA stream for stream id failed.";
@@ -158,7 +166,19 @@ bool GPUDeviceManager::SyncStream(size_t stream_id) const {
 }
 
 bool GPUDeviceManager::SyncStream(const CudaDeviceStream &stream) const {
-  return dev_alive_ ? CudaDriver::SyncStream(stream) : false;
+  return dev_alive_ && CudaDriver::SyncStream(stream);
+}
+
+bool GPUDeviceManager::SyncAllStreams() const {
+  if (!dev_alive_) {
+    return false;
+  }
+  for (const auto &stream : gpu_streams_) {
+    if (stream != nullptr && !SyncStream(stream)) {
+      return false;
+    }
+  }
+  return true;
 }
 
 bool GPUDeviceManager::CopyDeviceMemToHost(const HostMemPtr &dst, const DeviceMemPtr &src, size_t size) const {

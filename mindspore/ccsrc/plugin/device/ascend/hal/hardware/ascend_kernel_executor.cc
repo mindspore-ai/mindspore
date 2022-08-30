@@ -308,11 +308,15 @@ std::shared_ptr<Bucket> AscendKernelExecutor::CreateBucket(uint32_t bucket_id, u
   MS_EXCEPTION_IF_NULL(parallel_context);
   auto parallel_mode = parallel_context->parallel_mode();
   if (parallel_mode == parallel::kAutoParallel || parallel_mode == parallel::kSemiAutoParallel) {
-    bucket->Init({AscendStreamMng::GetInstance().GetStream(kDefaultStreamIndex)},
-                 {AscendStreamMng::GetInstance().GetStream(kDefaultStreamIndex)});
+    const auto compute_stream = AscendStreamMng::GetInstance().GetStream(kDefaultStreamIndex);
+    MS_EXCEPTION_IF_NULL(compute_stream);
+    bucket->Init({compute_stream}, {compute_stream});
   } else {
-    bucket->Init({AscendStreamMng::GetInstance().GetStream(kDefaultStreamIndex)},
-                 {AscendStreamMng::GetInstance().GetStream(kWorldGroupStreamIndex)});
+    const auto compute_stream = AscendStreamMng::GetInstance().GetStream(kDefaultStreamIndex);
+    MS_EXCEPTION_IF_NULL(compute_stream);
+    const auto comm_stream = AscendStreamMng::GetInstance().GetStream(kWorldGroupStreamIndex);
+    MS_EXCEPTION_IF_NULL(comm_stream);
+    bucket->Init({compute_stream}, {comm_stream});
   }
   return bucket;
 }
@@ -337,9 +341,10 @@ bool AscendKernelExecutor::MemoryCopyAsync(const CNodePtr &node, const vector<Ad
     return false;
   }
 
-  aclError status =
-    aclrtMemcpyAsync(outputs[0]->addr, outputs[0]->size, inputs[0]->addr, inputs[0]->size, ACL_MEMCPY_DEVICE_TO_DEVICE,
-                     AscendStreamMng::GetInstance().GetStream(kDefaultStreamIndex));
+  const auto stream = AscendStreamMng::GetInstance().GetStream(kDefaultStreamIndex);
+  MS_EXCEPTION_IF_NULL(stream);
+  aclError status = aclrtMemcpyAsync(outputs[0]->addr, outputs[0]->size, inputs[0]->addr, inputs[0]->size,
+                                     ACL_MEMCPY_DEVICE_TO_DEVICE, stream);
   if (status != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "MemCpyAsync op aclrtMemcpyAsync failed, ret:" << status;
     return false;
@@ -387,6 +392,9 @@ bool AscendKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<Add
   MS_EXCEPTION_IF_NULL(kernel_mod);
 
   auto stream = AscendStreamMng::GetInstance().GetStream(stream_id);
+  if (stream == nullptr) {
+    stream = AscendStreamMng::GetInstance().GetStream(kDefaultStreamIndex);
+  }
   MS_EXCEPTION_IF_NULL(stream);
 
   bool is_dynamic_shape = common::AnfAlgo::IsDynamicShape(kernel);

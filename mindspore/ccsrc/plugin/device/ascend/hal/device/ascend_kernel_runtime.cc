@@ -266,7 +266,11 @@ void *AscendKernelRuntime::GetModelStream(uint32_t graph_id) const {
 }
 
 void *AscendKernelRuntime::GetKernelStream(const AnfNodePtr &kernel) const {
-  return AscendStreamMng::GetInstance().GetStream(AnfAlgo::GetStreamId(kernel));
+  const auto stream = AscendStreamMng::GetInstance().GetStream(AnfAlgo::GetStreamId(kernel));
+  if (stream == nullptr) {
+    return stream_;
+  }
+  return stream;
 }
 
 void AscendKernelRuntime::ClearGlobalIdleMem() {
@@ -883,6 +887,7 @@ void AscendKernelRuntime::GenKernelEvents(const session::KernelGraph &graph) {
     auto &kernel = kernels[i];
     auto curr_stream_id = AnfAlgo::GetStreamId(kernel);
     auto wait_stream = AscendStreamMng::GetInstance().GetStream(curr_stream_id);
+    MS_EXCEPTION_IF_NULL(wait_stream);
     std::vector<bool> stream_hit(stream_num, false);
     std::vector<AnfNodePtr> used_kernels;
     std::set<AnfNodePtr> visited_kernels;
@@ -901,6 +906,7 @@ void AscendKernelRuntime::GenKernelEvents(const session::KernelGraph &graph) {
           kernel_hit[IntToSize(k)][curr_stream_id] = true;
           found_depend = true;
           auto record_stream = AscendStreamMng::GetInstance().GetStream(pre_cnode_stream_id);
+          MS_EXCEPTION_IF_NULL(record_stream);
           auto event = CreateDeviceEvent();
           event->set_wait_stream(wait_stream);
           event->set_record_stream(record_stream);
@@ -953,6 +959,7 @@ void AscendKernelRuntime::ProcessBoundaryEvent(
       MS_EXCEPTION_IF_NULL(post_event);
       auto id = AnfAlgo::GetStreamId(kernel);
       auto record_stream = AscendStreamMng::GetInstance().GetStream(id);
+      MS_EXCEPTION_IF_NULL(record_stream);
       post_event->set_wait_stream(stream_);
       post_event->set_record_stream(record_stream);
       (void)(*kernel_run_events)[kernel].emplace_back([post_event]() { post_event->RecordEvent(); });
@@ -1106,14 +1113,14 @@ bool AscendKernelRuntime::SyncStream() {
   {
     // cppcheck-suppress unreadVariable
     auto lock = device::KernelRuntime::LockRuntime(stream_);
-    if (!AscendStreamMng::GetInstance().SyncStream(stream_)) {
+    if (stream_ != nullptr && !AscendStreamMng::GetInstance().SyncStream(stream_)) {
       MS_LOG(ERROR) << "Sync default stream failed.";
       return false;
     }
   }
   // cppcheck-suppress unreadVariable
   auto lock = device::KernelRuntime::LockRuntime(communication_stream_);
-  if (!AscendStreamMng::GetInstance().SyncStream(communication_stream_)) {
+  if (communication_stream_ != nullptr && !AscendStreamMng::GetInstance().SyncStream(communication_stream_)) {
     MS_LOG(ERROR) << "Sync default stream failed.";
     return false;
   }

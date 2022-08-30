@@ -51,7 +51,8 @@ class GPUDeviceResManager : public DeviceResManager {
 
   bool CreateStream(size_t *stream_id) const override;
   bool DestroyStream(size_t stream_id) const override;
-  bool SyncStream(size_t stream_id = 0) const override;
+  bool SyncStream(size_t stream_id) const override;
+  bool SyncAllStreams() const override;
 
   bool LoadCollectiveCommLib() override;
 

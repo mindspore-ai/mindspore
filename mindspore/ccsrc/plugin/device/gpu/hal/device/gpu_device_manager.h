@@ -45,6 +45,7 @@ class GPUDeviceManager {
   CudaDeviceStream GetStream(size_t stream_id) const;
   bool SyncStream(size_t stream_id) const;
   bool SyncStream(const CudaDeviceStream &stream) const;
+  bool SyncAllStreams() const;
   const CudaDeviceStream &default_stream() const;
   size_t default_stream_id() const;
 
@@ -62,10 +63,7 @@ class GPUDeviceManager {
   bool CopyDeviceMemToDeviceAsync(const DeviceMemPtr &dst, const DeviceMemPtr &src, size_t size,
                                   CudaDeviceStream stream) const;
 
-  static GPUDeviceManager &GetInstance() {
-    static GPUDeviceManager instance;
-    return instance;
-  }
+  static GPUDeviceManager &GetInstance();
 
  private:
   GPUDeviceManager() : dev_id_init_(false), cur_dev_id_(0), dev_alive_(false) {}

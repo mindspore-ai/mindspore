@@ -688,7 +688,7 @@ void MindRTBackend::SyncStream() {
   const auto &device_context =
     device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_name_, device_id_});
   MS_EXCEPTION_IF_NULL(device_context);
-  auto ret = device_context->device_res_manager_->SyncStream();
+  auto ret = device_context->device_res_manager_->SyncAllStreams();
   if (!ret) {
     MS_LOG(EXCEPTION) << "Sync Stream failed";
   }

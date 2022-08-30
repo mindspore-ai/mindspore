@@ -21,6 +21,11 @@
 namespace mindspore {
 namespace device {
 namespace ascend {
+AscendStreamMng &AscendStreamMng::GetInstance() {
+  static AscendStreamMng instance;
+  return instance;
+}
+
 rtEvent_t AscendStreamMng::ApplyRtEvent() const {
   auto rt_resource = std::make_shared<rtEvent_t>();
   auto ret = rtEventCreate(rt_resource.get());
@@ -126,18 +131,20 @@ bool AscendStreamMng::DestroyAllStreams() {
 
 rtStream_t AscendStreamMng::GetStream(size_t stream_id) const {
   if (stream_id >= streams_.size()) {
-    if (streams_.empty()) {
-      MS_LOG(EXCEPTION) << "Ascend stream not found for stream id " << stream_id;
-    }
-    return streams_[kDefaultStreamIndex];
+    MS_LOG(DEBUG) << "Stream for stream id[" << stream_id << "] not found, return nullptr.";
+    return nullptr;
   }
   return streams_[stream_id];
 }
 
 bool AscendStreamMng::SyncStream(size_t stream_id) const {
-  auto stream = GetStream(stream_id);
+  if (stream_id >= streams_.size()) {
+    MS_LOG(EXCEPTION) << "Stream for stream id[" << stream_id << "] has not been created.";
+  }
+  const auto stream = streams_[stream_id];
   if (stream == nullptr) {
-    MS_LOG(EXCEPTION) << "Get Ascend stream for stream id failed.";
+    MS_LOG(WARNING) << "Stream for stream id[" << stream_id << "] has been destroyed.";
+    return false;
   }
   return SyncStream(stream);
 }
@@ -147,6 +154,15 @@ bool AscendStreamMng::SyncStream(rtStream_t stream) const {
   if (rtStreamSynchronize(stream) != RT_ERROR_NONE) {  // o for switch stream
     MS_LOG(ERROR) << "Call runtime rtStreamSynchronize error.";
     return false;
+  }
+  return true;
+}
+
+bool AscendStreamMng::SyncAllStreams() const {
+  for (const auto &stream : streams_) {
+    if (stream != nullptr && !SyncStream(stream)) {
+      return false;
+    }
   }
   return true;
 }

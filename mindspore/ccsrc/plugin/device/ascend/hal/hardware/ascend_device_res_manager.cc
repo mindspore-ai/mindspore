@@ -141,18 +141,10 @@ bool AscendDeviceResManager::DestroyStream(size_t stream_id) const {
 }
 
 bool AscendDeviceResManager::SyncStream(size_t stream_id) const {
-  if (AscendStreamMng::GetInstance().GetAllStreams().empty()) {
-    if (runtime_instance_ != nullptr) {
-      return runtime_instance_->SyncStream();
-    }
-    return true;
-  }
-  const auto stream = AscendStreamMng::GetInstance().GetStream(stream_id);
-  if (stream != nullptr) {
-    return AscendStreamMng::GetInstance().SyncStream(stream_id);
-  }
-  return true;
+  return AscendStreamMng::GetInstance().SyncStream(stream_id);
 }
+
+bool AscendDeviceResManager::SyncAllStreams() const { return AscendStreamMng::GetInstance().SyncAllStreams(); }
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

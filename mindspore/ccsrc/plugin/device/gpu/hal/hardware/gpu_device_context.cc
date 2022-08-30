@@ -619,7 +619,7 @@ bool GPUKernelExecutor::LaunchKernel(const CNodePtr &kernel, const std::vector<A
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   if ((ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) &&
-      ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE) && !res_manager_->SyncStream()) {
+      ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE) && !res_manager_->SyncAllStreams()) {
     return false;
   }
 
@@ -654,7 +654,7 @@ bool GPUKernelExecutor::LaunchKernelWithProfiling(const CNodePtr &kernel, const 
                 << (op_launch_start_end_time.second - op_launch_start_end_time.first) / kBasicTimeTransferUnit;
 
   if (profiler_inst->GetSyncEnableFlag()) {
-    CHECK_RET_WITH_RETURN_ERROR(res_manager_->SyncStream(), "Profiler SyncStream failed.");
+    CHECK_RET_WITH_RETURN_ERROR(res_manager_->SyncAllStreams(), "Profiler SyncStream failed.");
   }
   return ret;
 }
@@ -679,6 +679,18 @@ bool GPUDeviceResManager::DestroyStream(size_t stream_id) const {
 
 bool GPUDeviceResManager::SyncStream(size_t stream_id) const {
   bool result = GPUDeviceManager::GetInstance().SyncStream(stream_id);
+#ifdef ENABLE_DUMP_IR
+  if (!result) {
+    mindspore::RDR::TriggerAll();
+  }
+  // clear RDR gpu memory info
+  mindspore::RDR::ClearMemAddressInfo();
+#endif
+  return result;
+}
+
+bool GPUDeviceResManager::SyncAllStreams() const {
+  bool result = GPUDeviceManager::GetInstance().SyncAllStreams();
 #ifdef ENABLE_DUMP_IR
   if (!result) {
     mindspore::RDR::TriggerAll();

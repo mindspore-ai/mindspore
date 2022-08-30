@@ -113,6 +113,7 @@ void ProfilingReporter::ReportStepPoint(const std::vector<std::shared_ptr<StepPo
     MS_EXCEPTION_IF_NULL(cnode);
     const auto stream_id = AnfAlgo::GetStreamId(cnode);
     const auto stream = AscendStreamMng::GetInstance().GetStream(stream_id);
+    MS_EXCEPTION_IF_NULL(stream);
     // The tag of this function should report all tags, it will be saved to ts_track.data.<device_id>.slice_<index>
     // The first step index set to 1, here keep same with ge
     (void)rtProfilerTraceEx(1, rt_model_id_, point->tag(), stream);

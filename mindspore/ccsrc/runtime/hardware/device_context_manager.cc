@@ -84,7 +84,7 @@ void DeviceContextManager::WaitTaskFinishOnDevice() const {
   for (const auto &item : device_contexts_) {
     auto device_context = item.second;
     try {
-      if (device_context != nullptr && !device_context->device_res_manager_->SyncStream()) {
+      if (device_context != nullptr && !device_context->device_res_manager_->SyncAllStreams()) {
         MS_LOG(ERROR) << "SyncStream failed";
         return;
       }

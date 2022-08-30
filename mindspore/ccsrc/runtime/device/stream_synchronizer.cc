@@ -61,7 +61,7 @@ bool StreamSynchronizer::SyncStream(const std::string &device_name, uint32_t tim
   // If disable recovery or timeout==0, sync stream directly to improve performance.
   if (!RecoveryContext::GetInstance()->enable_recovery() || timeout == 0) {
     device_context->Initialize();
-    return device_context->device_res_manager_->SyncStream();
+    return device_context->device_res_manager_->SyncAllStreams();
   }
 
   std::unique_lock<std::mutex> lock(task_mutex_);
@@ -100,7 +100,7 @@ void StreamSynchronizer::DoSyncStreamTask() {
 
     device_context_->Initialize();
     // Really sync stream.
-    sync_stream_ret_ = device_context_->device_res_manager_->SyncStream();
+    sync_stream_ret_ = device_context_->device_res_manager_->SyncAllStreams();
 
     {
       std::unique_lock<std::mutex> lock(task_mutex_);
