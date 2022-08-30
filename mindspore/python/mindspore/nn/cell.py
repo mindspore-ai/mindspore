@@ -34,9 +34,9 @@ from mindspore import context
 from mindspore._c_expression import init_pipeline, update_func_graph_hyper_params, Cell_, FuncGraph, MixedPrecisionType
 from mindspore._checkparam import Validator
 from mindspore.common import dtype as mstype
-from mindspore.common.api import _cell_graph_executor, _pynative_executor, _check_all_tensor, cells_compile_cache
+from mindspore.common.api import _cell_graph_executor, _pynative_executor, _get_args_for_run, cells_compile_cache
 from mindspore.common.parameter import Parameter, ParameterTuple
-from mindspore.common.tensor import Tensor, CSRTensor, COOTensor
+from mindspore.common.tensor import Tensor
 from mindspore.ops.operations import Cast
 from mindspore.ops.primitive import Primitive
 from mindspore.ops.operations import _inner_ops as inner
@@ -974,22 +974,7 @@ class Cell(Cell_):
         self._auto_parallel_compile_and_run = True
         self.compile(*inputs)
 
-        new_inputs = []
-        for i in inputs:
-            if isinstance(i, Tensor):
-                if i.has_init:
-                    i.init_data()
-                new_inputs.append(i)
-            elif isinstance(i, (CSRTensor, COOTensor)):
-                new_inputs.append(i)
-            elif hasattr(i, "__ms_mutable__") and getattr(i, "__ms_mutable__"):
-                new_inputs.append(i)
-            elif context.get_context("grad_for_scalar") and isinstance(i, (int, float)):
-                new_inputs.append(i)
-            elif hasattr(self, "enable_tuple_broaden") and self.enable_tuple_broaden and isinstance(i, tuple) and \
-                    _check_all_tensor(i):
-                new_inputs.append(i)
-
+        new_inputs = _get_args_for_run(self, inputs)
         return _cell_graph_executor(self, *new_inputs, phase=self.phase)
 
     def auto_parallel_compile_and_run(self):

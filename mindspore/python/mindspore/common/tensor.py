@@ -61,6 +61,8 @@ class Tensor(Tensor_):
             'True' means that the tensor is created by framework.
             'False' means that the tensor is created by user.
             Default: False
+        const_arg (bool): Whether the tensor is a constant when it is used for the argument of a network.
+            Default: False.
 
     Outputs:
         Tensor.
@@ -117,7 +119,7 @@ class Tensor(Tensor_):
     """
     delta_seed = 0
 
-    def __init__(self, input_data=None, dtype=None, shape=None, init=None, internal=False):
+    def __init__(self, input_data=None, dtype=None, shape=None, init=None, internal=False, const_arg=False):
         self.init_finished = False
         if internal:
             Tensor_.__init__(self, input_data)
@@ -167,6 +169,8 @@ class Tensor(Tensor_):
                 else:
                     Tensor_.__init__(self, input_data)
 
+        validator.check_value_type('const_arg', const_arg, bool, 'Tensor')
+        self.const_arg = const_arg
         self.virtual_flag = False
         self.init = init
         self.init_finished = True
@@ -192,6 +196,7 @@ class Tensor(Tensor_):
         new_obj = Tensor(self)
         new_obj.init = self.init
         new_obj.virtual_flag = self.virtual_flag
+        new_obj.const_arg = self.const_arg
         return new_obj
 
     def __repr__(self):
@@ -445,6 +450,33 @@ class Tensor(Tensor_):
             array = np.ascontiguousarray(array)
 
         return Tensor(Tensor_.from_numpy(array))
+
+    def set_const_arg(self, const_arg=True):
+        """
+        Specify whether the tensor is a constant when it is used for the argument of a network.
+
+        Args:
+            const_arg (bool): Whether the tensor is a constant when it is used for the argument of a network.
+                Default: True.
+
+        Returns:
+            Tensor, has been specified whether to be a const network argument.
+
+        Raises:
+            TypeError: If `const_arg` is not a bool.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import numpy as np
+            >>> from mindspore import Tensor
+            >>> x = Tensor(np.array([[1,2,3],[4,5,6]], dtype=np.float32))
+            >>> x.set_const_arg(True)
+        """
+        validator.check_value_type('const_arg', const_arg, bool, 'set_const_arg')
+        self.const_arg = const_arg
+        return self
 
     def assign_value(self, value):
         """

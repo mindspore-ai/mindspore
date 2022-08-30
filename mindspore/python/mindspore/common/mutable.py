@@ -16,6 +16,7 @@
 from __future__ import absolute_import
 
 from mindspore.common.tensor import Tensor
+from mindspore._c_expression import Tensor as Tensor_
 
 
 class _Tuple(tuple):
@@ -42,7 +43,7 @@ def _check_all_tensor(value):
             if not _check_all_tensor(element):
                 return False
         return True
-    return isinstance(value, Tensor)
+    return isinstance(value, Tensor_)
 
 
 def mutable(input_data):
@@ -67,8 +68,6 @@ def mutable(input_data):
         - This is an experimental prototype that is subject to change or deletion.
         - The runtime has not yet supported to handle the scalar data flow. So we only support tuple[Tensor],
           list[Tensor] or dict[Tensor] for network input to avoid the re-compiled problem now.
-        - Tensor is mutable by default, when the `input_data` is Tensor, we just return the origin Tensor and nothing
-          is done.
         - Currently we only support to use this api outside the network temporarily.
         - Currently this api only works in GRAPH mode.
 
@@ -122,9 +121,6 @@ def mutable(input_data):
          [ 1.50000000e+00, 1.50000000e+00, 1.50000000e+00]]))
     """
 
-    if isinstance(input_data, Tensor):
-        return input_data
-
     if not _check_all_tensor(input_data):
         raise TypeError(
             f"For 'mutable', the 'input_data' should be one of (Tensor, tuple[Tensor], list[Tensor], dict[Tensor]) "
@@ -137,6 +133,11 @@ def mutable(input_data):
         ret = _Tuple(input_data)
     elif isinstance(input_data, dict):
         ret = _Dict(input_data)
+    elif isinstance(input_data, Tensor):
+        ret.set_const_arg(False)
+    elif isinstance(input_data, Tensor_):
+        ret = Tensor(input_data, internal=True)
+        ret.set_const_arg(False)
 
     setattr(ret, "__ms_mutable__", True)
     return ret
