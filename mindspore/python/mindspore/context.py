@@ -358,6 +358,12 @@ class _Context:
             raise ValueError("The num of thread must bigger than 0.")
         self.set_param(ms_ctx_param.runtime_num_threads, runtime_num_threads)
 
+    def set_op_timeout(self, op_timeout):
+        """Set the maximum duration of executing an operator in seconds."""
+        if op_timeout <= 0:
+            raise ValueError("The num of op exe timeout must bigger than 0.")
+        self.set_param(ms_ctx_param.op_timeout, op_timeout)
+
     setters = {
         'mode': set_mode,
         'save_graphs_path': set_save_graphs_path,
@@ -372,7 +378,8 @@ class _Context:
         'print_file_path': set_print_file_path,
         'env_config_path': set_env_config_path,
         'runtime_num_threads': set_runtime_num_threads,
-        'memory_optimize_level': set_memory_optimize_level
+        'memory_optimize_level': set_memory_optimize_level,
+        'op_timeout': set_op_timeout
     }
 
     @property
@@ -676,7 +683,8 @@ def _check_target_specific_cfgs(device, arg_key):
                  enable_graph_kernel=bool, reserve_class_name_in_scope=bool, check_bprop=bool,
                  max_device_memory=str, print_file_path=str, max_call_depth=int, env_config_path=str,
                  graph_kernel_flags=str, save_compile_cache=bool, runtime_num_threads=int, load_compile_cache=bool,
-                 grad_for_scalar=bool, pynative_synchronize=bool, mempool_block_size=str, disable_format_transform=bool)
+                 grad_for_scalar=bool, pynative_synchronize=bool, mempool_block_size=str, disable_format_transform=bool,
+                 op_timeout=int)
 def set_context(**kwargs):
     """
     Set context for running environment.
@@ -703,6 +711,8 @@ def set_context(**kwargs):
     |                         |  variable_memory_max_size    |  Ascend                    |
     |                         +------------------------------+----------------------------+
     |                         |  mempool_block_size          |  GPU/Ascend                |
+    |                         +------------------------------+----------------------------+
+    |                         |  op_timeout                  |  Ascend                    |
     +-------------------------+------------------------------+----------------------------+
     | Debug Configuration     |  save_graphs                 |  CPU/GPU/Ascend            |
     |                         +------------------------------+----------------------------+
@@ -761,6 +771,8 @@ def set_context(**kwargs):
         mempool_block_size (str): Set the size of the memory pool block for devices.
             The format is "xxGB". Default: "1GB". Minimum size is "1G". The actual used memory block size is the minimum
             of the available memory of the device and mempool_block_size.
+        op_timeout (int): Set the maximum duration of executing an operator in seconds.
+            If the execution time exceeds this value, system will terminate the task. Default: 28.
         save_graphs (bool): Whether to save graphs. Default: False.
             When the `save_graphs` attribute is set as True, attribute of `save_graphs_path` is used to set the
             intermediate compilation graph storage path. By default, the graphs are saved in the current directory.
@@ -1313,3 +1325,18 @@ def get_fl_context(attr_key):
         >>> ms.get_fl_context("server_mode")
     """
     return _get_ps_context(attr_key)
+
+
+_hccl_connect_timeout = '600'
+
+
+def _init_parallel_env():
+    """Set hccl connect timeout."""
+    if 'ascend' not in __device_target__:
+        return
+
+    if 'HCCL_CONNECT_TIMEOUT' not in os.environ:
+        os.environ['HCCL_CONNECT_TIMEOUT'] = _hccl_connect_timeout
+
+
+_init_parallel_env()

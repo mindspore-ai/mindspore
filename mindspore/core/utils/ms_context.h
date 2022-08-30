@@ -46,6 +46,7 @@ const char kGpuInferenceDevice[] = "GpuInference";
 const char kDavinciDevice[] = "Davinci";
 const char KNpuLog[] = "_npu_log";
 const unsigned int MAX_CALL_DEPTH_DEFAULT = 1000;
+const unsigned int kOpTimeout = 28;
 const int kOptimizeO0 = 0;
 const int kOptimizeO1 = 1;
 
@@ -101,6 +102,7 @@ enum MsCtxParam : unsigned {
   MS_CTX_GE_REF,
   MS_CTX_MAX_CALL_DEPTH,
   MS_CTX_TSD_REF,
+  MS_CTX_OP_TIMEOUT,
   MS_CTX_TYPE_UINT32_END,
 
   // parameter of type float

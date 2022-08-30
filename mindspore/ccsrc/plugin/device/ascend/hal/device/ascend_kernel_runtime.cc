@@ -398,6 +398,12 @@ bool AscendKernelRuntime::Init() {
     if (!PlatformInfoInitialization(soc_version)) {
       MS_LOG(EXCEPTION) << "PlatformInfo Initialization failed.";
     }
+
+    uint32_t op_timeout = ms_context->get_param<uint32_t>(MS_CTX_OP_TIMEOUT);
+    auto acl_ret = aclrtSetOpWaitTimeout(op_timeout);
+    if (acl_ret != ACL_SUCCESS) {
+      MS_LOG(EXCEPTION) << "Set op wait timeout failed, error: " << acl_ret;
+    }
   } catch (const std::exception &e) {
     const string &error_message = ErrorManager::GetInstance().GetErrorMessage();
     if (!error_message.empty() && error_message.find(kUnknowErrorString) == string::npos) {
