@@ -398,9 +398,8 @@ class Constant(Initializer):
 
     Examples:
         >>> import mindspore
-        >>> from mindspore.common.initializer import initializer
-        >>> tensor1 = initializer(0, [1, 2, 3], mindspore.float32)
-        >>> tensor2 = initializer(5, [1, 2, 3], mindspore.float32)
+        >>> from mindspore.common.initializer import initializer, Constant
+        >>> tensor1 = initializer(Constant(3), [1, 2, 3], mindspore.float32)
     """
 
     def __init__(self, value):
