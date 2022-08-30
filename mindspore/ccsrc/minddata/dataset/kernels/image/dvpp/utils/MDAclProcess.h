@@ -16,6 +16,7 @@
 #ifndef MDACLMANAGER_H
 #define MDACLMANAGER_H
 
+#include <chrono>
 #include <climits>
 #include <cstdio>
 #include <map>
@@ -38,6 +39,19 @@
 #include "minddata/dataset/util/status.h"
 
 mode_t SetFileDefaultUmask();
+
+class RunTimeUtil {
+ public:
+  RunTimeUtil() {}
+  ~RunTimeUtil() {}
+  inline void Start() { this->start = std::chrono::system_clock::now(); }
+  inline void End() { this->end = std::chrono::system_clock::now(); }
+  std::vector<double> GetRunTime();
+
+ private:
+  std::chrono::system_clock::time_point start;
+  std::chrono::system_clock::time_point end;
+};
 
 class MDAclProcess {
  public:
