@@ -30,8 +30,8 @@ namespace ops {
 namespace {
 abstract::ShapePtr ResizeAreaInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   constexpr int64_t size_num = 2;
-  constexpr int64_t indexid2 = 2;
-  constexpr int64_t indexid3 = 3;
+  constexpr size_t indexid2 = 2;
+  constexpr size_t indexid3 = 3;
   constexpr int64_t image_shape_size = 4;
   constexpr int64_t size_shape_size = 1;
   auto input0_shape = input_args[0]->cast<abstract::AbstractTensorPtr>();
@@ -55,17 +55,16 @@ abstract::ShapePtr ResizeAreaInferShape(const PrimitivePtr &primitive, const std
                                            image_shape_size, primitive->name());
   (void)CheckAndConvertUtils::CheckInteger("size dimension", SizeToLong(size_shape.size()), kEqual, size_shape_size,
                                            primitive->name());
-  (void)CheckAndConvertUtils::CheckInteger("input1 num", SizeToLong(size_shape[0]), kEqual, size_num,
-                                           primitive->name());
+  (void)CheckAndConvertUtils::CheckInteger("input1 num", size_shape[0], kEqual, size_num, primitive->name());
 
   if (!input_args[1]->BuildValue()->isa<AnyValue>() && !input_args[1]->BuildValue()->isa<None>()) {
-    auto input1_shape_ptr = reinterpret_cast<int32_t *>(input1_shape_tensor->data_c());
+    auto input1_shape_ptr = static_cast<int32_t *>(input1_shape_tensor->data_c());
     if (input1_shape_ptr[0] <= 0 || input1_shape_ptr[1] <= 0) {
       MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the size must be positive "
                                << ", but got " << input1_shape_ptr[0] << " , " << input1_shape_ptr[1];
     }
     std::vector<int64_t> output_shape;
-    for (auto i = 0; i <= indexid3; ++i) {
+    for (size_t i = 0; i <= indexid3; ++i) {
       if (i == 0 || i == indexid3) {
         output_shape.push_back(images_shape[i]);
       } else {

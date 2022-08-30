@@ -40,14 +40,14 @@ void RGBToHSVCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   input_dtype = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   input0_elements_nums_ = 1;
   for (size_t i = 0; i < input_shape.size(); i++) {
-    input0_elements_nums_ *= input_shape[i];
+    input0_elements_nums_ *= static_cast<size_t>(input_shape[i]);
   }
 
   if (input_dtype != kNumberTypeFloat32 && input_dtype != kNumberTypeFloat64 && input_dtype != kNumberTypeFloat16) {
     MS_EXCEPTION(TypeError) << "For " << kernel_name_ << ", the type of inputs are invalid";
   }
 
-  if (input_shape[input_shape.size() - 1] != kNumberOfRGB) {
+  if (input_shape[input_shape.size() - 1] != static_cast<int64_t>(kNumberOfRGB)) {
     MS_EXCEPTION(ValueError) << "For " << kernel_name_ << ", the last dimension of the input tensor must be size 3.";
   }
 
@@ -138,7 +138,6 @@ bool RGBToHSVCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
   } else {
     MS_EXCEPTION(TypeError) << "For " << kernel_name_
                             << ", it does not support this input data type: " << TypeIdLabel(dtype_) << ".";
-    return false;
   }
   return res_;
 }

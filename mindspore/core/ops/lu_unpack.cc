@@ -33,7 +33,8 @@ abstract::TupleShapePtr LuUnpackInferShape(const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckInteger("input number", input_args.size(), kEqual, kLuUnpackInputsNum, prim_name);
+  int64_t input_size = static_cast<int64_t>(input_args.size());
+  (void)CheckAndConvertUtils::CheckInteger("input number", input_size, kEqual, kLuUnpackInputsNum, prim_name);
   for (const auto &i : input_args) {
     MS_EXCEPTION_IF_NULL(i);
   }
@@ -65,7 +66,6 @@ abstract::TupleShapePtr LuUnpackInferShape(const PrimitivePtr &primitive,
     if (LU_data_shape[i] != LU_pivots_shape[i]) {
       MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "',"
                                << " the batch dimensions of LU_data's does not match LU_pivots's batch dimensions.";
-      break;
     }
   }
 
@@ -93,8 +93,8 @@ abstract::TupleShapePtr LuUnpackInferShape(const PrimitivePtr &primitive,
 TuplePtr LuUnpackInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = prim->name();
   MS_EXCEPTION_IF_NULL(prim);
-  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, kLuUnpackInputsNum,
-                                           prim_name);
+  int64_t input_size = static_cast<int64_t>(input_args.size());
+  (void)CheckAndConvertUtils::CheckInteger("input number", input_size, kEqual, kLuUnpackInputsNum, prim_name);
   for (const auto &i : input_args) {
     MS_EXCEPTION_IF_NULL(i);
   }

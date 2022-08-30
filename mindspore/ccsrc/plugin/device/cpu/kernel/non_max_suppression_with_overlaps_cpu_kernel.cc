@@ -75,28 +75,28 @@ bool NonMaxSuppressionWithOverlapsCpuKernelMod::Launch(const std::vector<kernel:
   Eigen::TensorMap<Eigen::Tensor<float, kOverlapsRank, Eigen::RowMajor>> overlaps_map(
     reinterpret_cast<float *>(inputs[0]->addr), num_boxes_, num_boxes_);
   std::vector<float> scores_data(num_boxes_);
-  std::copy_n(reinterpret_cast<float *>(inputs[1]->addr), num_boxes_, scores_data.begin());
+  (void)std::copy_n(reinterpret_cast<float *>(inputs[1]->addr), num_boxes_, scores_data.begin());
   auto max_output_size_ = *reinterpret_cast<int32_t *>(inputs[2]->addr);
   if (max_output_size_ < 0) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the input max_output_size must be non-negative.";
   }
   auto overlap_threshold = *reinterpret_cast<float *>(inputs[3]->addr);
   auto score_threshold = *reinterpret_cast<float *>(inputs[4]->addr);
-  std::unique_ptr<int32_t[]> indices_data = std::make_unique<int32_t[]>(max_output_size_);
+  std::unique_ptr<int32_t[]> indices_data = std::make_unique<int32_t[]>(static_cast<size_t>(max_output_size_));
   if (indices_data == nullptr) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', new indices_data failed.";
   }
 
   struct Candidate {
-    uint32_t box_index;
+    int32_t box_index;
     float score;
-    int suppress_begin_index;
+    int32_t suppress_begin_index;
   };
   auto cmp = [](const Candidate boxes_i, const Candidate boxes_j) { return boxes_i.score < boxes_j.score; };
   std::priority_queue<Candidate, std::deque<Candidate>, decltype(cmp)> candidate_priority_queue(cmp);
-  for (uint32_t i = 0; i < scores_data.size(); ++i) {
+  for (size_t i = 0; i < scores_data.size(); ++i) {
     if (scores_data[i] > score_threshold) {
-      candidate_priority_queue.emplace(Candidate({i, scores_data[i]}));
+      candidate_priority_queue.emplace(Candidate({static_cast<int32_t>(i), scores_data[i]}));
     }
   }
   float similarity = static_cast<float>(0.0);
@@ -109,7 +109,7 @@ bool NonMaxSuppressionWithOverlapsCpuKernelMod::Launch(const std::vector<kernel:
     next_candidate = candidate_priority_queue.top();
     candidate_priority_queue.pop();
     bool should_suppress = false;
-    for (int j = cnt - 1; j >= next_candidate.suppress_begin_index; --j) {
+    for (int32_t j = cnt - 1; j >= next_candidate.suppress_begin_index; --j) {
       similarity = overlaps_map(next_candidate.box_index, indices_data[j]);
       if (similarity >= overlap_threshold) {
         should_suppress = true;
@@ -123,7 +123,7 @@ bool NonMaxSuppressionWithOverlapsCpuKernelMod::Launch(const std::vector<kernel:
     }
   }
   auto value = reinterpret_cast<int32_t *>(outputs[0]->addr);
-  for (int j = 0; j < std::min(cnt, max_output_size_); ++j) {
+  for (int32_t j = 0; j < std::min(cnt, max_output_size_); ++j) {
     *(value + j) = indices_data[j];
   }
   if (!node_wpt_.expired()) {

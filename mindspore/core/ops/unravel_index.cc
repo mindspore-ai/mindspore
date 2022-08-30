@@ -37,14 +37,14 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
     auto dims_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
     const int64_t indices_shape_dim = SizeToLong(indices_shape.size());
     const int64_t dims_shape_dim = SizeToLong(dims_shape.size());
-    CheckAndConvertUtils::CheckInteger("dims shape", dims_shape_dim, kEqual, 1, op_name);
+    (void)CheckAndConvertUtils::CheckInteger("dims shape", dims_shape_dim, kEqual, 1, op_name);
     if (indices_shape_dim == 0) {
       int64_t dims_shape_v = dims_shape[0];
       std::vector<int64_t> output_shape;
       output_shape.push_back(dims_shape_v);
       return std::make_shared<abstract::Shape>(output_shape);
     } else {
-      CheckAndConvertUtils::CheckInteger("indices shape", indices_shape_dim, kEqual, 1, op_name);
+      (void)CheckAndConvertUtils::CheckInteger("indices shape", indices_shape_dim, kEqual, 1, op_name);
       int64_t indices_shape_v = indices_shape[0];
       int64_t dims_shape_v = dims_shape[0];
       std::vector<int64_t> output_shape;

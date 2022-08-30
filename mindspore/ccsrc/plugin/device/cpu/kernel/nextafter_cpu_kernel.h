@@ -20,7 +20,6 @@
 #include <utility>
 #include <memory>
 #include <vector>
-#include <map>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
@@ -43,7 +42,7 @@ class NextAfterCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   TypeId input_dtype_;
   CNodeWeakPtr node_wpt_;
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
   using NextAfterFunc = std::function<bool(NextAfterCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
                                            const std::vector<kernel::AddressPtr> &)>;
   static std::vector<std::pair<KernelAttr, NextAfterFunc>> func_list_;

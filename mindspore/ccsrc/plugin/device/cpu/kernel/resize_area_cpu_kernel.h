@@ -28,8 +28,8 @@
 namespace mindspore {
 namespace kernel {
 struct ResizeAreaCachedInterpolation {
-  size_t start;
-  size_t end;
+  int64_t start;
+  int64_t end;
   float start_scale;
   float end_minus_one_scale;
   bool needs_bounding = true;
@@ -67,8 +67,8 @@ class ResizeAreaCPUKernelMod : public DeprecatedNativeCpuKernelMod {
   int64_t channels_{3};
   int64_t in_height_{0};
   int64_t in_width_{0};
-  int32_t out_height_{0};
-  int32_t out_width_{0};
+  int64_t out_height_{0};
+  int64_t out_width_{0};
   std::vector<int64_t> input0_shape_;
   std::vector<int64_t> input1_shape_;
 };

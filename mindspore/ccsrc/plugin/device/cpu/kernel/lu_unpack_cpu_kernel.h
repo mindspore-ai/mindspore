@@ -45,10 +45,10 @@ class LuUnpackCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
 
   template <typename T_data, typename T_pivots>
-  static bool LuUnpack(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs,
-                       int64_t Lu_data_dim1, int64_t Lu_pivots_dim, T_pivots *Lu_pivots_working_ptr,
+  static void LuUnpack(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs,
+                       int64_t Lu_data_dim1, int64_t Lu_pivots_dim, T_pivots *const Lu_pivots_working_ptr,
                        int64_t matrix_index, int64_t matrix_size, int64_t matrix_width, int64_t matrix_height,
-                       int64_t pivots_stride, int64_t L_stride, int64_t U_stride, T_data *P_eye);
+                       int64_t pivots_stride, int64_t L_stride, int64_t U_stride, T_data *const P_eye);
   using LuUnpackFunc = std::function<bool(LuUnpackCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
                                           const std::vector<kernel::AddressPtr> &)>;
   static std::vector<std::pair<KernelAttr, LuUnpackFunc>> func_list_;

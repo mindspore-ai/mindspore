@@ -61,7 +61,7 @@ bool ResizeAreaCPUKernelMod::Launch(const std::vector<kernel::AddressPtr> &input
                                     const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kResizeAreaInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kResizeAreaOutputsNum, kernel_name_);
-  auto out_size = reinterpret_cast<int32_t *>(inputs[1]->addr);
+  auto out_size = static_cast<int32_t *>(inputs[1]->addr);
   if (inputs[1]->size / sizeof(size_type_) != kInput2ElementNum) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the num of elements in size should be 2, but got "
                              << inputs[1]->size / sizeof(size_type_);
@@ -72,19 +72,19 @@ bool ResizeAreaCPUKernelMod::Launch(const std::vector<kernel::AddressPtr> &input
   }
   out_height_ = out_size[0];
   out_width_ = out_size[1];
-  height_scale_ = Scaling(in_height_, out_height_, align_corners_);
-  width_scale_ = Scaling(in_width_, out_width_, align_corners_);
+  height_scale_ = static_cast<int64_t>(Scaling(in_height_, out_height_, align_corners_));
+  width_scale_ = static_cast<int64_t>(Scaling(in_width_, out_width_, align_corners_));
   std::vector<ResizeAreaCachedInterpolation> x_interps(out_width_);
-  for (int32_t x = 0; x < out_width_; x++) {
+  for (int64_t x = 0; x < out_width_; x++) {
     float transit_x0 = x * width_scale_;
     float transit_x1 = (x + 1) * width_scale_;
-    size_t v = std::floor(transit_x0);
-    x_interps[x].start = v;
-    x_interps[x].start_scale = (v + 1 > transit_x1 ? width_scale_ : v + 1 - transit_x0);
+    int64_t v = std::floor(transit_x0);
+    x_interps[static_cast<size_t>(x)].start = v;
+    x_interps[static_cast<size_t>(x)].start_scale = (v + 1 > transit_x1 ? width_scale_ : v + 1 - transit_x0);
     v = std::ceil(transit_x1);
-    x_interps[x].end = v;
-    v = x_interps[x].end - 1;
-    x_interps[x].end_minus_one_scale = (v + 1 > transit_x1 ? transit_x1 - v : 1.0);
+    x_interps[static_cast<size_t>(x)].end = v;
+    v = x_interps[static_cast<size_t>(x)].end - 1;
+    x_interps[static_cast<size_t>(x)].end_minus_one_scale = (v + 1 > transit_x1 ? transit_x1 - v : 1.0);
   }
   if (dtype_ == kNumberTypeFloat16) {
     return LaunchKernel<float16>(inputs, outputs, x_interps);
@@ -106,22 +106,20 @@ bool ResizeAreaCPUKernelMod::Launch(const std::vector<kernel::AddressPtr> &input
     return LaunchKernel<uint16_t>(inputs, outputs, x_interps);
   } else {
     MS_EXCEPTION(TypeError) << "For '" << kernel_name_ << "', unsupported input data type: " << dtype_;
-    return false;
   }
-  return true;
 }
 
 template <typename T>
 bool ResizeAreaCPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs,
                                           const std::vector<ResizeAreaCachedInterpolation> &x_interps) const {
-  auto input_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto output_addr = reinterpret_cast<float *>(outputs[0]->addr);
+  auto input_addr = static_cast<T *>(inputs[0]->addr);
+  auto output_addr = static_cast<float *>(outputs[0]->addr);
   float scale = 1.0 / (height_scale_ * width_scale_);
-  auto out_size = reinterpret_cast<int32_t *>(inputs[1]->addr);
+  auto out_size = static_cast<int32_t *>(inputs[1]->addr);
   std::vector<float> y_scales;
   std::vector<const T *> y_ptrs;
   for (int64_t b = 0; b < batch_size_; ++b) {
-    for (int32_t y = 0; y < out_height_; ++y) {
+    for (int64_t y = 0; y < out_height_; ++y) {
       y_scales.clear();
       y_ptrs.clear();
       const float transit_y0 = y * height_scale_;
@@ -141,7 +139,7 @@ bool ResizeAreaCPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
         y_ptrs.push_back(input_addr + (b * in_height_ * in_width_ * channels_ +
                                        ResizeAreaBound(i, in_height_) * in_width_ * channels_));
       }
-      for (int32_t x = 0; x < out_width_; ++x) {
+      for (size_t x = 0; x < static_cast<size_t>(out_width_); ++x) {
         const ResizeAreaCachedInterpolation &x_interp = x_interps[x];
         if (x_interp.needs_bounding) {
           ComputePatchSum<true>(scale, y_ptrs, y_scales, x_interp, output_addr);
@@ -183,17 +181,21 @@ void ResizeAreaCPUKernelMod::ComputePatchSum(float scale, const std::vector<cons
     for (size_t i = 0; i < y_ptrs.size(); ++i) {
       const T *ptr = y_ptrs[i];
       float scale_x = x_interp.start_scale;
-      float sum_y = static_cast<float>(ptr[channels_ * BOUND_IF_NEEDED(x_interp.start, in_width_) + c]) * scale_x;
+      float sum_y =
+        static_cast<float>(ptr[static_cast<size_t>(channels_ * BOUND_IF_NEEDED(x_interp.start, in_width_) + c)]) *
+        scale_x;
       if (x_interp.start + 1 != x_interp.end) {
-        for (size_t x = x_interp.start + 1; x < x_interp.end - 1; ++x) {
-          sum_y += static_cast<float>(ptr[channels_ * BOUND_IF_NEEDED(x, in_width_) + c]);
+        for (int64_t x = x_interp.start + 1; x < x_interp.end - 1; ++x) {
+          sum_y += static_cast<float>(ptr[static_cast<size_t>(channels_ * BOUND_IF_NEEDED(x, in_width_) + c)]);
         }
         scale_x = x_interp.end_minus_one_scale;
-        sum_y += static_cast<float>(ptr[channels_ * BOUND_IF_NEEDED(x_interp.end - 1, in_width_) + c]) * scale_x;
+        sum_y +=
+          static_cast<float>(ptr[static_cast<size_t>(channels_ * BOUND_IF_NEEDED(x_interp.end - 1, in_width_) + c)]) *
+          scale_x;
       }
       sum += sum_y * y_scales[i];
     }
-    output_patch_ptr[c] = sum * scale;
+    output_patch_ptr[static_cast<size_t>(c)] = sum * scale;
   }
 #undef BOUND_IF_NEEDED
 }
