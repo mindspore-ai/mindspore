@@ -58,7 +58,7 @@ def test_net(data_type, index_type, error):
     dim0 = x.shape[0]
     indices = np.random.randint(0, dim0, size=index_shape).astype(index_type)
     segment_ids = np.random.randint(0, 2 * dim0, size=index_shape).astype(index_type)
-    segment_ids = sorted(segment_ids)
+    segment_ids = np.array(sorted(segment_ids)).astype(index_type)
     np_out = sparse_segment_mean_numpy(x, indices, segment_ids)
 
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")

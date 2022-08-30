@@ -185,10 +185,10 @@ class Tensor(Tensor_):
     def _set_default_dtype(input_data, dtype):
         """Set tensor default dtype"""
         if isinstance(input_data, (float, list, tuple)):
-            if np.array(input_data).dtype == np.float64 or np.array(input_data).dtype == np.float32:
+            if np.array(input_data).dtype == np.float64:
                 return mstype.float32
-        elif isinstance(input_data, (int, list, tuple)):
-            if np.array(input_data).dtype == np.int64 or np.array(input_data).dtype == np.int32:
+        if isinstance(input_data, (int, list, tuple)):
+            if np.array(input_data).dtype == np.int32 or np.array(input_data).dtype == np.int64:
                 return mstype.int64
         return dtype
 
