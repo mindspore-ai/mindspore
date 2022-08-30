@@ -17,8 +17,10 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_MINDRECORD_INCLUDE_SHARD_WRITER_H_
 #define MINDSPORE_CCSRC_MINDDATA_MINDRECORD_INCLUDE_SHARD_WRITER_H_
 
+#ifndef _MSC_VER
 #include <libgen.h>
 #include <sys/file.h>
+#endif
 #include <unistd.h>
 #include <algorithm>
 #include <array>

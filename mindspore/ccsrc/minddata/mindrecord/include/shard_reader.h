@@ -17,14 +17,12 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_MINDRECORD_INCLUDE_SHARD_READER_H_
 #define MINDSPORE_CCSRC_MINDDATA_MINDRECORD_INCLUDE_SHARD_READER_H_
 
-#include <dirent.h>
 #include <signal.h>
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
 #include <sys/prctl.h>
 #endif
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <unistd.h>
 #include <algorithm>
 #include <chrono>
 #include <cstdint>
