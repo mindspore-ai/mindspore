@@ -87,7 +87,7 @@ string GetDeviceTarget(const PrimitivePtr &primitive) {
   return primitive_target;
 }
 
-void CheckDataFormat(const PrimitivePtr &primitive, int64_t data_format, string primitive_target) {
+void CheckDataFormat(const PrimitivePtr &primitive, Format data_format, const string &primitive_target) {
   if (data_format == NHWC) {
     if (primitive_target != kGPUDevice) {
       MS_EXCEPTION(ValueError) << "For '" << primitive->name()

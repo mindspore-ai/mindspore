@@ -17,15 +17,15 @@
 import math
 from mindspore._checkparam import _check_3d_int_or_tuple
 
-from .nn_ops import _check_positive_int_or_tuple
-from .. import signature as sig
-from .._utils import get_concat_offset
-from ..primitive import Primitive, PrimitiveWithInfer, prim_attr_register
-from ... import context
-from ..._checkparam import Validator as validator, Rel
-from ...common import dtype as mstype
-from ...communication.management import GlobalComm
-from .._utils import is_shape_unknown
+from mindspore.ops.operations.nn_ops import _check_positive_int_or_tuple
+from mindspore.ops import signature as sig
+from mindspore.ops._utils import get_concat_offset
+from mindspore.ops.primitive import Primitive, PrimitiveWithInfer, prim_attr_register
+import mindspore.context as context
+from mindspore._checkparam import Validator as validator, Rel
+from mindspore.common import dtype as mstype
+from mindspore.communication.management import GlobalComm
+from mindspore.ops._utils import is_shape_unknown
 
 
 class AbsGrad(PrimitiveWithInfer):
