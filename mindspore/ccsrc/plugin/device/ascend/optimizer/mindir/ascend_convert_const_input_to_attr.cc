@@ -126,10 +126,15 @@ ValuePtr GetTensorValue(const tensor::TensorPtr &tensor) {
 }
 
 ValuePtr CreateValueFromTensor(const tensor::TensorPtr &tensor) {
+  ValuePtr ret;
+  if (tensor->has_user_data(kTensorValueIsType)) {
+    ret = tensor->user_data<mindspore::Type>(kTensorValueIsType);
+    return ret;
+  }
+
   TypePtr data_type = tensor->Dtype();
   MS_EXCEPTION_IF_NULL(data_type);
   TypeId type_id = data_type->type_id();
-  ValuePtr ret;
   switch (type_id) {
     case kNumberTypeInt8: {
       ret = GetTensorValue<int8_t, Int8Imm>(tensor);

@@ -685,6 +685,7 @@ constexpr auto kPrimalAttrForwardNodeName = "forward_node_name";
 constexpr auto kValueTargetSwitch = "target_switch";
 constexpr auto kValueTargetOther = "target_other";
 constexpr auto kValueTrue = "true";
+constexpr auto kTensorValueIsType = "tensor_value_is_type";
 
 // env key
 constexpr auto kGraphOpRun = "GRAPH_OP_RUN";
