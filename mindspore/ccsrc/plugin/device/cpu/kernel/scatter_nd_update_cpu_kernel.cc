@@ -216,7 +216,6 @@ void ScatterUpdateCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
   params.indices_unit_rank_ = indices_unit_rank_;
   params.out_strides_ = &out_strides_;
 
-  std::vector<common::Task> tasks;
   size_t start = 0;
   int status = 0;
   if (!Compute<T, S>(&params, start, num_units_)) {
