@@ -104,6 +104,9 @@ GpuQueue::GpuQueue(size_t capacity, void *addr, const std::vector<size_t> &shape
 GpuQueue::~GpuQueue() { buffer_ = nullptr; }
 
 DataQueueStatus GpuQueue::Push(std::vector<DataQueueItem> data) {
+  if (IsFull()) {
+    return DataQueueStatus::TIMEOUT;
+  }
   void *addr = reinterpret_cast<uint8_t *>(buffer_) + tail_ * len_;
   for (size_t i = 0; i < data.size(); i++) {
     auto &item = data[i];
