@@ -635,7 +635,7 @@ bool MSANFModelParser::ImportParametersForGraph(const FuncGraphPtr &outputFuncGr
       return false;
     }
   }
-  outputFuncGraph->set_fv_param_count(importProto.parameter_size());
+  outputFuncGraph->set_fv_param_count(IntToSize(importProto.parameter_size()));
   return true;
 }
 

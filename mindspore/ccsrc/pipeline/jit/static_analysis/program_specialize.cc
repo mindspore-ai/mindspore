@@ -77,6 +77,7 @@ bool CanSpecializeValueNode(const AnfNodePtr &node) {
 }
 
 void PurifyAbstractOfSequence(ProgramSpecializer *const specializer) {
+  MS_EXCEPTION_IF_NULL(specializer);
   constexpr int recursive_level = 2;
   for (auto &abstract_and_node : specializer->sequence_abstract_list()) {
     auto &sequence_abs = abstract_and_node.first;
@@ -210,6 +211,7 @@ std::shared_ptr<FuncGraphSpecializer> ProgramSpecializer::GetFuncGraphSpecialize
 void ProgramSpecializer::PutSpecializedAbstract(const CNodePtr &cnode, const AnfNodePtr &func,
                                                 const AbstractFunctionPtr &old_abs_func,
                                                 const AbstractFunctionPtr &new_abs_func) {
+  MS_EXCEPTION_IF_NULL(old_abs_func);
   auto iter = specialized_abs_map_.find(old_abs_func);
   if (iter == specialized_abs_map_.end()) {
     MS_LOG(DEBUG) << "Emplace cnode: " << cnode->DebugString() << ", func: " << func->ToString()
@@ -230,6 +232,7 @@ void ProgramSpecializer::PutSpecializedAbstract(const CNodePtr &cnode, const Anf
 }
 
 AbstractBasePtr ProgramSpecializer::GetSpecializedAbstract(const AbstractFunctionPtr &old_abs_func) {
+  MS_EXCEPTION_IF_NULL(old_abs_func);
   auto iter = specialized_abs_map_.find(old_abs_func);
   if (iter != specialized_abs_map_.end()) {
     MS_LOG(DEBUG) << "Find abstract for old_abstract: " << old_abs_func->ToString()
@@ -244,10 +247,12 @@ AbstractBasePtr ProgramSpecializer::GetSpecializedAbstract(const AbstractFunctio
 }
 
 AbstractBasePtr ProgramSpecializer::SpecializeAbstractFuncRecursively(const AbstractFunctionPtr &old_abs_func) {
+  MS_EXCEPTION_IF_NULL(old_abs_func);
   AbstractBasePtr new_abs = nullptr;
   if (old_abs_func->isa<AbstractFuncUnion>()) {
     AbstractFuncAtomPtrList func_atoms;
     auto build_new_abs = [this, &func_atoms](const AbstractFuncAtomPtr &poss) {
+      MS_EXCEPTION_IF_NULL(poss);
       auto resolved_atom = poss;
       if (poss->isa<AsyncAbstractFuncAtom>()) {
         auto async_abs_func = poss->cast_ptr<AsyncAbstractFuncAtom>();
@@ -303,6 +308,7 @@ AbstractBasePtr ProgramSpecializer::SpecializeAbstractFuncRecursively(const Abst
 void ProgramSpecializer::SpecializeCNodeInput0FuncGraph() {
   const auto &all_nodes = mng_->all_nodes();
   for (auto node : all_nodes) {
+    MS_EXCEPTION_IF_NULL(node);
     if (!node->isa<CNode>()) {
       continue;
     }
@@ -311,6 +317,7 @@ void ProgramSpecializer::SpecializeCNodeInput0FuncGraph() {
     if (IsValueNode<FuncGraph>(input0)) {
       continue;
     }
+    MS_EXCEPTION_IF_NULL(node);
     const auto &old_abs = input0->abstract();
     if (!(old_abs->isa<FuncGraphAbstractClosure>() || old_abs->isa<MetaFuncGraphAbstractClosure>() ||
           old_abs->isa<AbstractFuncUnion>() || old_abs->isa<PartialAbstractClosure>())) {

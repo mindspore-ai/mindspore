@@ -153,6 +153,7 @@ void CheckFuncReturn(const FuncGraphPtr &fn, const std::shared_ptr<ParseFunction
 std::vector<std::pair<CNodePtr, size_t>> GetFreeVariable(const FuncGraphPtr &func_graph) {
   // Considering the performance, we didn't use Manager here.
   std::vector<std::pair<CNodePtr, size_t>> free_variables;
+  MS_EXCEPTION_IF_NULL(func_graph);
   std::vector<AnfNodePtr> nodes =
     TopoSort(func_graph->get_return(), SuccIncoming, [&func_graph](const AnfNodePtr &node) -> IncludeType {
       MS_EXCEPTION_IF_NULL(node);
@@ -206,12 +207,15 @@ void Parser::LiftIfBranchGraphFV() {
   for (auto &branch_call_tuple : if_branch_calls_) {
     auto call_cnode = std::get<0>(branch_call_tuple);
     auto true_branch_graph = std::get<1>(branch_call_tuple)->func_graph();
+    MS_EXCEPTION_IF_NULL(true_branch_graph);
     auto false_branch_graph = std::get<2>(branch_call_tuple)->func_graph();
+    MS_EXCEPTION_IF_NULL(false_branch_graph);
     const auto &true_free_variables = GetFreeVariable(true_branch_graph);
     const auto &false_free_variables = GetFreeVariable(false_branch_graph);
     // Handle true branch.
     for (auto &free_node_pair : true_free_variables) {
       auto &cnode = free_node_pair.first;
+      MS_EXCEPTION_IF_NULL(cnode);
       auto index = free_node_pair.second;
       // Move the free variable to parent.
       auto &free_node = cnode->input(index);
@@ -227,6 +231,7 @@ void Parser::LiftIfBranchGraphFV() {
     // Handle false branch.
     for (auto &free_node_pair : false_free_variables) {
       auto &cnode = free_node_pair.first;
+      MS_EXCEPTION_IF_NULL(cnode);
       auto index = free_node_pair.second;
       // Move the free variable to parent.
       auto &free_node = cnode->input(index);
@@ -256,6 +261,7 @@ bool IsDependOfIsolatedNodes(const AnfNodePtr &node) {
 }
 
 std::pair<CNodePtr, AnfNodePtr> GetRealOutputNodes(const FuncGraphPtr &call_graph) {
+  MS_EXCEPTION_IF_NULL(call_graph);
   auto graph_output = call_graph->output();
   if (graph_output == nullptr) {
     MS_LOG(EXCEPTION) << "graph_output is null, call_graph: " << call_graph->ToString();
@@ -280,6 +286,7 @@ void TransformParallelCallFormerToMiddle(const FuncGraphPtr &former_call_graph, 
   // The 'former_graph_output' is middle graph call or depend.
   const auto &[former_graph_output_cnode, former_graph_dependency_node] = GetRealOutputNodes(former_call_graph);
   MS_EXCEPTION_IF_NULL(former_graph_output_cnode);
+  MS_EXCEPTION_IF_NULL(former_call_graph);
   std::vector<AnfNodePtr> inputs({NewValueNode(latter_call_graph)});
   if (use_arguments_pack) {
     for (size_t i = 0; i < middle_graph_output_cnode_size - 1; ++i) {
@@ -305,6 +312,8 @@ bool TransformParallelCallMiddleToLatter(const FuncGraphPtr &middle_call_graph,
                                          const CNodePtr &middle_graph_output_cnode,
                                          const AnfNodePtr &middle_graph_dependency_node,
                                          size_t middle_graph_output_cnode_size) {
+  MS_EXCEPTION_IF_NULL(middle_graph_output_cnode);
+  MS_EXCEPTION_IF_NULL(middle_call_graph);
   bool use_arguments_pack = false;
   constexpr auto output_inputs_num = 2;
   AnfNodePtr new_middle_graph_output = nullptr;
@@ -350,6 +359,7 @@ bool CheckMiddleGraphOutputContainScalar(
     constexpr auto recur_2 = 2;
     const auto &middle_graph_output_pair = GetRealOutputNodes(middle_call_graph);
     const auto middle_graph_output_cnode = middle_graph_output_pair.first;
+    MS_EXCEPTION_IF_NULL(middle_graph_output_cnode);
     auto middle_graph_output_cnode_size = middle_graph_output_cnode->inputs().size();
     if (middle_graph_output_cnode_size <= 1) {
       MS_LOG(DEBUG) << "CNode's inputs size should exceed 1, " << middle_graph_output_cnode->DebugString(recur_2);
@@ -377,6 +387,7 @@ bool CheckMiddleGraphOutputPyInterpret(
     constexpr auto recur_2 = 2;
     const auto &middle_graph_output_pair = GetRealOutputNodes(middle_call_graph);
     const auto middle_graph_output_cnode = middle_graph_output_pair.first;
+    MS_EXCEPTION_IF_NULL(middle_graph_output_cnode);
     auto middle_graph_output_cnode_size = middle_graph_output_cnode->inputs().size();
     if (middle_graph_output_cnode_size <= 1) {
       MS_LOG(DEBUG) << "CNode's inputs size should exceed 1, " << middle_graph_output_cnode->DebugString(recur_2);
@@ -663,6 +674,7 @@ FunctionBlockPtr Parser::ParseLambdaFunction(const py::object &node, const Funct
   func_block->Mature();
   auto current_fg = func_block->func_graph();
 
+  MS_EXCEPTION_IF_NULL(current_fg);
   auto function_name = ast_->function_name();
   MS_LOG(DEBUG) << "The function name is " << function_name;
   MS_EXCEPTION_IF_NULL(current_fg->debug_info());
@@ -1250,6 +1262,7 @@ AnfNodePtr Parser::GenerateAnfNodeForCall(const FunctionBlockPtr &block, const A
 
 void Parser::ParseArgsInCall(const FunctionBlockPtr &block, const py::list &args, ArgsContext *args_context) {
   MS_LOG(DEBUG) << "Process ast args in call";
+  MS_EXCEPTION_IF_NULL(args_context);
   for (size_t i = 0; i < args.size(); i++) {
     auto arg_node = AstSubType(py::cast<int32_t>(ast_->CallParseModFunction(PYTHON_PARSE_GET_AST_TYPE, args[i])));
     if (arg_node == AST_SUB_TYPE_STARRED) {

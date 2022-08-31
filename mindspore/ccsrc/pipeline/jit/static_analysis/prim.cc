@@ -55,6 +55,7 @@ namespace mindspore {
 namespace abstract {
 namespace interpret_abstract_bool_checker {
 std::pair<bool, bool> InterpretAbstractBoolChecker(const AbstractBasePtr &cond) {
+  MS_EXCEPTION_IF_NULL(cond);
   bool is_interpret = false;
   bool has_true = false;
   auto value = cond->BuildValue();
@@ -1146,10 +1147,12 @@ EvalResultPtr StandardPrimEvaluator::EvalPyCheckPrim(const AnalysisEnginePtr &en
 namespace {
 void CheckSequenceArgumentForCppPrimitive(const PrimitivePtr &prim, const AbstractBasePtrList &args) {
   // To check tuple/list operations with a white list of Python primitive.
+  MS_EXCEPTION_IF_NULL(prim);
   auto iter = prims_transparent_pass_sequence.find(prim->name());
   if (iter == prims_transparent_pass_sequence.end()) {
     // The primitive use all elements of each argument.
     for (size_t i = 0; i < args.size(); ++i) {
+      MS_EXCEPTION_IF_NULL(args[i]);
       if (args[i]->isa<abstract::AbstractSequence>()) {
         MS_LOG(DEBUG) << "Primitive \'" << prim->name() << "\' is consuming tuple/list arguments[" << i
                       << "]: " << args[i]->ToString();
@@ -1183,9 +1186,11 @@ void CheckSequenceArgumentForCppPrimitive(const PrimitivePtr &prim, const Abstra
 }
 
 void CheckSequenceArgumentForPythonPrimitive(const PrimitivePtr &prim, const AbstractBasePtrList &args) {
+  MS_EXCEPTION_IF_NULL(prim);
   // Consider all primitive implemented python infer() real use the tuple/list arguments.
   for (size_t i = 0; i < args.size(); ++i) {
     if (args[i]->isa<abstract::AbstractSequence>()) {
+      MS_EXCEPTION_IF_NULL(args[i]);
       MS_LOG(DEBUG) << "Primitive \'" << prim->name() << "\' is consuming tuple/list arguments[" << i
                     << "]: " << args[i]->ToString();
       SetSequenceElementsUseFlagsRecursively(args[i], true);
@@ -1511,6 +1516,7 @@ EvalResultPtr GetEvaluatedValueForMsClassAttrOrMethod(const AbstractBasePtrList 
 
   MS_EXCEPTION_IF_NULL(item_value);
   MS_EXCEPTION_IF_NULL(data_value);
+  MS_EXCEPTION_IF_NULL(out_conf);
   // Get the name of item.
   if (!item_value->isa<StringImm>()) {
     MS_LOG(EXCEPTION) << "Expect a string, but got: " << item_value->ToString();
@@ -1642,6 +1648,7 @@ EvalResultPtr GetEvaluatedValueForBuiltinTypeAttrOrMethod(const AnalysisEnginePt
 }
 
 ValuePtr GetMsClassObject(const AbstractBasePtr &abs) {
+  MS_EXCEPTION_IF_NULL(abs);
   if (!abs->isa<abstract::PartialAbstractClosure>()) {
     return nullptr;
   }
@@ -1944,6 +1951,7 @@ class ResolveEvaluator : public TransitionPrimEvaluator {
 };
 
 bool IsContainUndetermined(const AbstractBasePtr &arg) {
+  MS_EXCEPTION_IF_NULL(arg);
   if (arg->isa<AbstractSequence>()) {
     auto seq_arg = arg->cast_ptr<AbstractSequence>();
     return std::any_of(seq_arg->elements().begin(), seq_arg->elements().end(), IsContainUndetermined);
@@ -2161,6 +2169,7 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
 
   void CheckInterpretInput(const AbstractDictionaryPtr &abstract_dict, const std::string &script) const {
     // Check whether this node should be interpretive executed.
+    MS_EXCEPTION_IF_NULL(abstract_dict);
     const auto &elements = abstract_dict->elements();
     if (elements.empty()) {
       return;
@@ -2183,6 +2192,8 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
   }
 
   void AddGlobalPythonFunction(const AbstractDictionaryPtr &global_dict, py::object *global_params_dict) const {
+    MS_EXCEPTION_IF_NULL(global_dict);
+    MS_EXCEPTION_IF_NULL(global_params_dict);
     const auto &global_dict_elements = global_dict->elements();
     for (const auto &element : global_dict_elements) {
       const auto &element_name = element.first;
@@ -2257,6 +2268,7 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
   }
 
   AbstractDictionaryPtr FilterParameters(const AbstractDictionaryPtr &abstract_dict) const {
+    MS_EXCEPTION_IF_NULL(abstract_dict);
     std::vector<AbstractAttribute> kv;
     const auto &keys_values = abstract_dict->elements();
     // Filter out the element of Function type.
@@ -2438,6 +2450,7 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
  private:
   // string need add quotation marks
   bool CheckNeedSymbol(const AnfNodePtr &, const AbstractBasePtr &abs) const {
+    MS_EXCEPTION_IF_NULL(abs);
     bool need_symbol = false;
     if (abs->isa<abstract::AbstractScalar>()) {
       auto scalar = abs->cast_ptr<abstract::AbstractScalar>();
@@ -2452,6 +2465,7 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
       MS_EXCEPTION_IF_NULL(abs_list);
       const auto &elements = abs_list->elements();
       for (auto &element : elements) {
+        MS_EXCEPTION_IF_NULL(element);
         if (element->isa<abstract::AbstractScalar>()) {
           auto scalar = element->cast_ptr<abstract::AbstractScalar>();
           auto scalar_value = scalar->BuildValue();
@@ -2466,6 +2480,7 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
   }
   std::string GetExceptionString(const AbstractBasePtr &arg, const AnfNodePtr &input, const AnfNodePtr &node) {
     std::string exception_str;
+    MS_EXCEPTION_IF_NULL(arg);
     if (arg->isa<abstract::AbstractTensor>()) {
       MS_LOG(EXCEPTION) << "Currently only supports raise in constant scenarios. "
                         << "Tensor type data cannot exist in the raise statement. "
@@ -2483,6 +2498,7 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
   }
 
   std::string GetTupleString(const AbstractBasePtr &arg, const AnfNodePtr &input, const AnfNodePtr &node) {
+    MS_EXCEPTION_IF_NULL(arg);
     std::string exception_str;
     // Process raise ValueError("str")
     auto arg_tuple = arg->cast_ptr<abstract::AbstractTuple>();
@@ -2508,6 +2524,7 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
   }
 
   std::string GetListString(const AbstractBasePtr &arg, const AnfNodePtr &input, const AnfNodePtr &node) {
+    MS_EXCEPTION_IF_NULL(arg);
     std::string exception_str;
     // Process raise ValueError("str")
     auto arg_list = arg->cast_ptr<abstract::AbstractList>();
@@ -2533,6 +2550,7 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
   }
 
   std::string GetExceptionType(const AbstractBasePtr &abs) const {
+    MS_EXCEPTION_IF_NULL(abs);
     std::string str;
     if (abs->isa<abstract::AbstractScalar>()) {
       auto scalar = abs->cast_ptr<abstract::AbstractScalar>();
@@ -2548,6 +2566,8 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
   }
 
   std::string GetScalarStringValue(const AbstractBasePtr &abs, const AnfNodePtr &node) const {
+    MS_EXCEPTION_IF_NULL(abs);
+    MS_EXCEPTION_IF_NULL(node);
     std::string str;
     if (abs->isa<abstract::AbstractScalar>()) {
       auto scalar = abs->cast<abstract::AbstractScalarPtr>();
