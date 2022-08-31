@@ -28,6 +28,7 @@ using mindspore::schema::PrimitiveType_ScaleFusion;
 
 namespace mindspore::kernel {
 namespace {
+constexpr int kOffsetTensorIndex = 2;
 int CheckInputsOutputsDataType(const std::vector<lite::Tensor *> &in_tensors,
                                const std::vector<lite::Tensor *> &out_tensors) {
   if (std::any_of(in_tensors.begin(), in_tensors.end(), [](const lite::Tensor *input) {
@@ -79,7 +80,7 @@ int ScaleCPUKernel::InitScaleOffset() {
     scale_ = nullptr;
   }
 
-  if (in_tensors_.size() == 2) {
+  if (in_tensors_.size() == C2NUM) {
     scale_param_->const_offset_ = true;
     offset_ = reinterpret_cast<float *>(malloc(scale_tensor->ElementsNum() * sizeof(float)));
     if (offset_ == nullptr) {
@@ -89,7 +90,7 @@ int ScaleCPUKernel::InitScaleOffset() {
     memset(offset_, 0, scale_tensor->ElementsNum() * sizeof(float));
   } else if (in_tensors_.size() == C3NUM && reinterpret_cast<float *>(in_tensors_.at(THIRD_INPUT)->data()) != nullptr) {
     scale_param_->const_offset_ = true;
-    auto offset_tensor = in_tensors_.at(2);
+    auto offset_tensor = in_tensors_.at(kOffsetTensorIndex);
     MS_CHECK_TRUE_RET(scale_tensor->ElementsNum() == offset_tensor->ElementsNum(), RET_ERROR);
     offset_ = reinterpret_cast<float *>(malloc(offset_tensor->ElementsNum() * sizeof(float)));
     if (offset_ == nullptr) {
@@ -222,7 +223,7 @@ int ScaleCPUKernel::Run() {
     CHECK_NULL_RETURN(scale_);
   }
   if (!scale_param_->const_offset_) {
-    auto offset_tensor = in_tensors_.at(2);
+    auto offset_tensor = in_tensors_.at(kOffsetTensorIndex);
     offset_ = reinterpret_cast<float *>(offset_tensor->data());
     CHECK_NULL_RETURN(offset_);
   }

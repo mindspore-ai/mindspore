@@ -47,7 +47,7 @@ int NonZeroCPUKernel::Run() {
   CHECK_NULL_RETURN(input_data);
   CHECK_NULL_RETURN(output_data);
   auto input_dim_size = in_tensor->shape().size();
-  if (out_tensor->shape().size() != 2) {
+  if (out_tensor->shape().size() != C2NUM) {
     MS_LOG(ERROR) << "out tensor shape size must be equal to 2!";
     return RET_ERROR;
   }

@@ -155,7 +155,7 @@ int WhereCPUKernel::RunWithTripleInputs() {
   CHECK_NULL_RETURN(condition);
   auto x = in_tensors_.at(1);
   CHECK_NULL_RETURN(x);
-  auto y = in_tensors_.at(2);
+  auto y = in_tensors_.at(C2NUM);
   CHECK_NULL_RETURN(y);
   int condition_nums = condition->ElementsNum();
   int x_num = x->ElementsNum();
