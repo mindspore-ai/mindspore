@@ -74,7 +74,7 @@ class MindDataBase {
 class Status : PluginBase {
  public:
   static Status OK() noexcept { return Status(); }
-  static Status ERROR(const std::string &msg) noexcept { return Status(msg); }
+  static Status Error(const std::string &msg) noexcept { return Status(msg); }
   Status(const Status &) = default;
   Status(Status &&) = default;
 
