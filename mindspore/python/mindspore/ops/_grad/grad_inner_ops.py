@@ -24,6 +24,9 @@ from ..operations import _inner_ops as inner
 from ..composite.multitype_ops.zeros_like_impl import zeros_like
 from ..operations import image_ops as IMG
 
+dyn_shape_op = P.TensorShape()
+reshape = P.Reshape()
+
 
 def _get_matrix_diag_assist(x_shape, x_dtype):
     base_eye = P.Eye()(x_shape[-1], x_shape[-1], x_dtype).flatten()
@@ -153,6 +156,23 @@ def get_bprop_ps_roi_pooling(self):
         )(dout[0], rois, mapping_channel)
 
         return dx, zeros_like(rois)
+
+    return bprop
+
+
+@bprop_getters.register(inner.DynamicBroadcastTo)
+def get_bprop_dynamic_broadcast_to(self):
+    """Generate bprop for DynamicBroadcastTo"""
+    reduce_keep_dim = P.ReduceSum(keep_dims=True)
+
+    def bprop(x, shp, out, dout):
+        x_shape = dyn_shape_op(x)
+        broadcast_shape = dyn_shape_op(out)
+
+        _, reduction_axes = inner.DynamicBroadcastGradientArgs()(broadcast_shape, x_shape)
+        reduced_grad = reduce_keep_dim(dout, reduction_axes)
+        dx = reshape(reduced_grad, x_shape)
+        return dx, zeros_like(shp)
 
     return bprop
 
