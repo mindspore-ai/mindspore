@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
-"""nn_ops vmap impl."""
+"""The vmap implement of grad operator corresponding to nn_ops."""
 
 from __future__ import division
 from functools import reduce
@@ -98,7 +98,7 @@ def get_nll_loss_grad_vmap_rule(prim, axis_size):
         out = prim(x, loss_grad, target, weight, total_weight)
         output = F.reshape(out, x_shape)
         out_dim = 0
-        return (output, out_dim)
+        return output, out_dim
 
     return vmap_rule
 
@@ -127,7 +127,7 @@ def get_avg_pool_grad_vmap_rule(prim, axis_size):
         dy = F.reshape(dy, (-1,) + dy_shape[chw_reverse_index:])
         out = prim(x, y, dy)
         out = F.reshape(out, x_shape)
-        return (out, 0)
+        return out, 0
 
     return vmap_rule
 
@@ -155,7 +155,7 @@ def get_avg_pool3d_grad_vmap_rule(prim, axis_size):
         out_shape = F.shape(out)
         return_shape = dy_shape[:cdhw_reverse_index] + out_shape[cdhw_reverse_index:]
         out = F.reshape(out, return_shape)
-        return (out, 0)
+        return out, 0
 
     return vmap_rule
 
@@ -187,7 +187,7 @@ def get_max_pool3d_grad_with_argmax_vmap_rule(prim, axis_size):
         input_mask = F.reshape(mask, mask_in_shape)
         out = prim(input_x, input_dy, input_mask)
         out = F.reshape(out, x_shape)
-        return (out, 0)
+        return out, 0
 
     return vmap_rule
 
@@ -219,7 +219,7 @@ def get_cdist_grad_vmap_rule(prim, axis_size):
         cdist = _bdim_at_front(cdist, cdist_dim, axis_size)
 
         out = batch_prim(grad, x, y, cdist)
-        return (out, 0)
+        return out, 0
 
     return vmap_rule
 
@@ -261,7 +261,7 @@ def get_adaptive_avgpool2d_vmap_rule(prim, axis_size):
         out_shape = F.shape(out)
         real_out_shape = dy_shape[:hw_reverse_index] + out_shape[hw_reverse_index:]
         out = F.reshape(out, real_out_shape)
-        return (out, 0)
+        return out, 0
 
     return vmap_rule
 
@@ -424,7 +424,7 @@ def get_maxpool_grad_grad_vmap_rule(prim, axis_size):
         real_out_shape = in0_shape[:chw_reverse_index] + \
             out_shape[chw_reverse_index:]
         out = F.reshape(out, real_out_shape)
-        return (out, 0)
+        return out, 0
 
     return vmap_rule
 
@@ -462,7 +462,7 @@ def get_maxpool_3d_grad_grad_vmap_rule(prim, axis_size):
         real_out_shape = x_shape[:cdhw_reverse_index] + \
             out_shape[cdhw_reverse_index:]
         out = F.reshape(out, real_out_shape)
-        return (out, 0)
+        return out, 0
 
     return vmap_rule
 
@@ -537,7 +537,7 @@ def get_mirror_pad_grad_grad_vmap_rule(prim, axis_size):
         else:
             _raise_value_error("The dim of `input_x` in `{}` must be bigger than {}, "
                                "but got {}.".format(prim.name, pad_dim, x_ndim))
-        return (out, 0)
+        return out, 0
 
     return vmap_rule
 

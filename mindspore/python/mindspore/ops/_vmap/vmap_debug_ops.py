@@ -17,8 +17,8 @@
 from __future__ import absolute_import
 
 from mindspore.ops import operations as P
-from ..primitive import Primitive
-from .._vmap.vmap_base import vmap_rules_getters, _raise_value_error
+from mindspore.ops.primitive import Primitive
+from mindspore.ops._vmap.vmap_base import vmap_rules_getters, _raise_value_error
 
 
 @vmap_rules_getters.register(P.Print)

@@ -14,6 +14,8 @@
 # ============================================================================
 
 """Vmap operations."""
+from __future__ import absolute_import
+
 from mindspore._c_expression import VmapGeneralPreprocess_, VmapGeneralRulePyAdapter_
 
 

@@ -17,8 +17,8 @@
 """random_ops vmap impl."""
 from __future__ import absolute_import
 
-from ..operations.random_ops import UniformCandidateSampler, RandomShuffle
-from .._vmap.vmap_base import vmap_rules_getters, _bdim_at_front, _vmap_clone_prim, vmap_general_preprocess
+from mindspore.ops.operations.random_ops import UniformCandidateSampler, RandomShuffle
+from mindspore.ops._vmap.vmap_base import vmap_rules_getters, _bdim_at_front, _vmap_clone_prim, vmap_general_preprocess
 
 
 @vmap_rules_getters.register(UniformCandidateSampler)
@@ -65,6 +65,6 @@ def get_random_shuffle_vmap_rule(prim, axis_size):
         x, x_dim = x_bdim
         x = _bdim_at_front(x, x_dim, axis_size)
         out = batch_prim(x)
-        return (out, 0)
+        return out, 0
 
     return vmap_rule

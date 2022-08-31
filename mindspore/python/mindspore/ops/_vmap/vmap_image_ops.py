@@ -17,10 +17,10 @@
 from __future__ import absolute_import
 
 from mindspore.ops import functional as F
-
-from ..operations import _grad_ops as G
-from ..operations import image_ops as IMG
-from .._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, _bdim_at_front, _raise_value_error
+from mindspore.ops.operations import _grad_ops as G
+from mindspore.ops.operations import image_ops as IMG
+from mindspore.ops._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, _bdim_at_front, \
+    _raise_value_error
 
 
 @vmap_rules_getters.register(IMG.ResizeBilinearV2)
@@ -50,7 +50,7 @@ def get_resize_dynamic_input_rule(prim, axis_size):
         # (b*n, c, o_h, o_w) -> (b, n, c, o_h, o_w) for 4-D input
         # (b*n, c, o_w) -> (b, n, c, o_w) for 3-D input
         out = F.reshape(out, x_shape[:2] + out_shape[1:])
-        return (out, 0)
+        return out, 0
 
     return vmap_rule
 
@@ -80,6 +80,6 @@ def get_resize_grad_dynamic_rule(prim, axis_size):
         # (b*n, c, o_h, o_w) -> (b, n, c, o_h, o_w) for 4-D input
         # (b*n, c, o_w) -> (b, n, c, o_w) for 3-D input
         out = F.reshape(out, img_shape)
-        return (out, 0)
+        return out, 0
 
     return vmap_rule

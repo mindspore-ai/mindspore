@@ -17,19 +17,20 @@
 from __future__ import absolute_import
 
 import mindspore.numpy as mnp
+from mindspore.common import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
-from mindspore.ops.operations import math_ops
 from mindspore.ops import constexpr
+from mindspore.ops.operations import math_ops
 from mindspore.ops.operations import _grad_ops as G
-from .._register_for_op import Registry
-from ..composite import _VmapGeneralPreprocess
-from ..primitive import Primitive
-from ..operations.random_ops import UniformCandidateSampler
-from ...common import Tensor
-from ..operations import nn_ops as nps
+from mindspore.ops.operations import nn_ops as nps
+from mindspore.ops.composite import _VmapGeneralPreprocess
+from mindspore.ops.primitive import Primitive
+from mindspore.ops.operations.random_ops import UniformCandidateSampler
+from mindspore.ops._grad.grad_base import BpropRegistry as VmapRuleRegistry
 
-vmap_rules_getters = Registry()
+
+vmap_rules_getters = VmapRuleRegistry()
 
 
 def get_vmap_rule(prim, axis_size):
@@ -179,7 +180,7 @@ def vmap_bind_all_none(inputs):
         for res in inputs:
             results = results + ((res, None),)
         return results
-    return (inputs, None)
+    return inputs, None
 
 
 vmap_general_preprocess = _VmapGeneralPreprocess()
@@ -232,7 +233,7 @@ def vmap_monad_rule(prim, axis_size):
                     _raise_value_error("vmap currently not support the side effect op: {}.".format(prim_name))
                 vals = vals + (val,)
         out = prim(*vals)
-        return (out, None)
+        return out, None
 
     return vmap_rule
 
@@ -316,7 +317,7 @@ def get_assign_vmap_rule(prim, axis_size):
             else:
                 val = mnp.moveaxis(val, val_dim, var_dim)
         out = prim(var, val, u_monad)
-        return (out, var_dim)
+        return out, var_dim
 
     return vmap_rule
 
@@ -329,7 +330,7 @@ def get_unop_vmap_rule(prim, axis_size):
     def vmap_rule(x_bdim):
         var, dim = x_bdim
         out = prim(var)
-        return (out, dim)
+        return out, dim
 
     return vmap_rule
 
@@ -394,7 +395,7 @@ def get_unary_grad_vmap_rule(prim, axis_size):
             dout = mnp.moveaxis(dout, dout_dim, x_dim)
             out_dim = x_dim
         out = prim(x, dout)
-        return (out, out_dim)
+        return out, out_dim
 
     return vmap_rule
 
@@ -417,8 +418,8 @@ def _vmap_clone_prim(prim):
     """
     new_ops = _ops_vmap_clone_prim_dict.get(prim.name, None)
     if new_ops is None:
-        ValueError("Failed to get the primitive object of {} from `_ops_vmap_clone_prim_dict`. Please register "
-                   "the primitive object in the dictionary.".format(prim.name))
+        raise ValueError("Failed to get the primitive object of {} from `_ops_vmap_clone_prim_dict`. Please register "
+                         "the primitive object in the dictionary.".format(prim.name))
     init_args = prim.init_attrs
     cloned = new_ops(**init_args)
 
@@ -430,6 +431,50 @@ def _vmap_clone_prim(prim):
         cloned.set_prim_instance_name(prim.instance_name)
 
     return cloned
+
+
+@constexpr
+def _get_reduce_batch_axis(axis, x_dim, x_ndim):
+    """get batch_axis for reduce* operation."""
+    # For axis, it's value in Union[int, list, tuple]
+    logical_x_ndim = x_ndim - 1
+    if isinstance(axis, int):
+        if axis < 0:
+            axis += logical_x_ndim
+        if axis < x_dim:
+            return axis
+        return axis + 1
+
+    batch_axis = ()
+    if axis:
+        for index in axis:
+            if index < 0:
+                index += logical_x_ndim
+            if index < x_dim:
+                batch_axis = batch_axis + (index,)
+            else:
+                batch_axis = batch_axis + (index + 1,)
+    else:
+        batch_axis_list = list(range(x_ndim))
+        del batch_axis_list[x_dim]
+        batch_axis = tuple(batch_axis_list)
+    return batch_axis
+
+
+@constexpr
+def _get_reduce_out_dim(x_dim, batch_axis, keep_dims=False):
+    """get out_dim for reduce* operation."""
+    if isinstance(batch_axis, int):
+        batch_axis = (batch_axis,)
+
+    if keep_dims:
+        out_dim = x_dim
+    else:
+        out_dim = x_dim
+        for element in batch_axis:
+            if element < x_dim:
+                out_dim -= 1
+    return out_dim
 
 
 _ops_vmap_clone_prim_dict = {
