@@ -39,18 +39,13 @@ class ScatterFunctorKernelMod : public DeprecatedNativeGpuKernelMod {
   ~ScatterFunctorKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+              const std::vector<AddressPtr> &, void *stream_ptr) override {
     T *input = GetDeviceAddress<T>(inputs, 0);
     S *indices = GetDeviceAddress<S>(inputs, 1);
     T *updates = GetDeviceAddress<T>(inputs, 2);
-    T *output = GetDeviceAddress<T>(outputs, 0);
     S size_limit = static_cast<S>(first_dim_size_);
     ScatterFunc(scatter_functor_type_, size_limit, inner_size_, indices_size_, indices, updates, input,
                 reinterpret_cast<cudaStream_t>(stream_ptr));
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                               cudaMemcpyAsync(&output[0], &input[0], input_size_ * sizeof(T), cudaMemcpyDeviceToDevice,
-                                               reinterpret_cast<cudaStream_t>(stream_ptr)),
-                               "cudaMemcpyAsync output failed");
     return true;
   }
 

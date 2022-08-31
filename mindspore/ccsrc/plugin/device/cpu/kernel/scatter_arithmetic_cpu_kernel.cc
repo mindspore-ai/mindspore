@@ -124,13 +124,7 @@ bool ScatterArithmeticCpuKernelFunc<T>::RunFunc(const std::vector<kernel::Addres
   auto *input = reinterpret_cast<T *>(inputs[INPUT_INDEX_]->addr);
   auto *indices = reinterpret_cast<int *>(inputs[INDICES_INDEX_]->addr);
   auto *updates = reinterpret_cast<T *>(inputs[UPDATES_INDEX_]->addr);
-  auto *output = reinterpret_cast<T *>(outputs[OUTPUT_INDEX_]->addr);
   compute_func_(this, input, indices, updates);
-  auto bufferSize = outputs[OUTPUT_INDEX_]->size;
-  auto ret = memcpy_s(output, bufferSize, input, input_size_ * sizeof(T));
-  if (ret != EOK) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memory copy failed. Error no: " << ret;
-  }
   return true;
 }
 
@@ -257,133 +251,154 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, SpecializeScatter
                               .AddInputAttr(kNumberTypeInt32)
                               .AddInputAttr(kNumberTypeInt32)
                               .AddInputAttr(kNumberTypeInt32)
-                              .AddOutputAttr(kNumberTypeInt32),
+                              .AddOutputAttr(kNumberTypeInt32)
+                              .AddOutInRef(0, 0),
                             SpecializeScatterArithFunc<int32_t>},
                            {KernelAttr()
                               .AddInputAttr(kNumberTypeFloat32)
                               .AddInputAttr(kNumberTypeInt32)
                               .AddInputAttr(kNumberTypeFloat32)
-                              .AddOutputAttr(kNumberTypeFloat32),
+                              .AddOutputAttr(kNumberTypeFloat32)
+                              .AddOutInRef(0, 0),
                             SpecializeScatterArithFunc<float>},
                            {KernelAttr()
                               .AddInputAttr(kNumberTypeInt64)
                               .AddInputAttr(kNumberTypeInt32)
                               .AddInputAttr(kNumberTypeInt64)
-                              .AddOutputAttr(kNumberTypeInt64),
+                              .AddOutputAttr(kNumberTypeInt64)
+                              .AddOutInRef(0, 0),
                             SpecializeScatterArithFunc<int64_t>}}},
                          {kScatterSub,
                           {{KernelAttr()
                               .AddInputAttr(kNumberTypeInt32)
                               .AddInputAttr(kNumberTypeInt32)
                               .AddInputAttr(kNumberTypeInt32)
-                              .AddOutputAttr(kNumberTypeInt32),
+                              .AddOutputAttr(kNumberTypeInt32)
+                              .AddOutInRef(0, 0),
                             SpecializeScatterArithFunc<int32_t>},
                            {KernelAttr()
                               .AddInputAttr(kNumberTypeFloat32)
                               .AddInputAttr(kNumberTypeInt32)
                               .AddInputAttr(kNumberTypeFloat32)
-                              .AddOutputAttr(kNumberTypeFloat32),
+                              .AddOutputAttr(kNumberTypeFloat32)
+                              .AddOutInRef(0, 0),
                             SpecializeScatterArithFunc<float>},
                            {KernelAttr()
                               .AddInputAttr(kNumberTypeInt64)
                               .AddInputAttr(kNumberTypeInt32)
                               .AddInputAttr(kNumberTypeInt64)
-                              .AddOutputAttr(kNumberTypeInt64),
+                              .AddOutputAttr(kNumberTypeInt64)
+                              .AddOutInRef(0, 0),
                             SpecializeScatterArithFunc<int64_t>}}},
                          {kScatterMul,
                           {{KernelAttr()
                               .AddInputAttr(kNumberTypeInt32)
                               .AddInputAttr(kNumberTypeInt32)
                               .AddInputAttr(kNumberTypeInt32)
-                              .AddOutputAttr(kNumberTypeInt32),
+                              .AddOutputAttr(kNumberTypeInt32)
+                              .AddOutInRef(0, 0),
                             SpecializeScatterArithFunc<int32_t>},
                            {KernelAttr()
                               .AddInputAttr(kNumberTypeFloat32)
                               .AddInputAttr(kNumberTypeInt32)
                               .AddInputAttr(kNumberTypeFloat32)
-                              .AddOutputAttr(kNumberTypeFloat32),
+                              .AddOutputAttr(kNumberTypeFloat32)
+                              .AddOutInRef(0, 0),
                             SpecializeScatterArithFunc<float>},
                            {KernelAttr()
                               .AddInputAttr(kNumberTypeInt64)
                               .AddInputAttr(kNumberTypeInt32)
                               .AddInputAttr(kNumberTypeInt64)
-                              .AddOutputAttr(kNumberTypeInt64),
+                              .AddOutputAttr(kNumberTypeInt64)
+                              .AddOutInRef(0, 0),
                             SpecializeScatterArithFunc<int64_t>}}},
                          {kScatterDiv,
                           {{KernelAttr()
                               .AddInputAttr(kNumberTypeInt32)
                               .AddInputAttr(kNumberTypeInt32)
                               .AddInputAttr(kNumberTypeInt32)
-                              .AddOutputAttr(kNumberTypeInt32),
+                              .AddOutputAttr(kNumberTypeInt32)
+                              .AddOutInRef(0, 0),
                             SpecializeScatterArithFunc<int32_t>},
                            {KernelAttr()
                               .AddInputAttr(kNumberTypeFloat32)
                               .AddInputAttr(kNumberTypeInt32)
                               .AddInputAttr(kNumberTypeFloat32)
-                              .AddOutputAttr(kNumberTypeFloat32),
+                              .AddOutputAttr(kNumberTypeFloat32)
+                              .AddOutInRef(0, 0),
                             SpecializeScatterArithFunc<float>},
                            {KernelAttr()
                               .AddInputAttr(kNumberTypeInt64)
                               .AddInputAttr(kNumberTypeInt32)
                               .AddInputAttr(kNumberTypeInt64)
-                              .AddOutputAttr(kNumberTypeInt64),
+                              .AddOutputAttr(kNumberTypeInt64)
+                              .AddOutInRef(0, 0),
                             SpecializeScatterArithFunc<int64_t>}}},
                          {kScatterMax,
                           {{KernelAttr()
                               .AddInputAttr(kNumberTypeInt32)
                               .AddInputAttr(kNumberTypeInt32)
                               .AddInputAttr(kNumberTypeInt32)
-                              .AddOutputAttr(kNumberTypeInt32),
+                              .AddOutputAttr(kNumberTypeInt32)
+                              .AddOutInRef(0, 0),
                             SpecializeScatterArithFunc<int32_t>},
                            {KernelAttr()
                               .AddInputAttr(kNumberTypeFloat32)
                               .AddInputAttr(kNumberTypeInt32)
                               .AddInputAttr(kNumberTypeFloat32)
-                              .AddOutputAttr(kNumberTypeFloat32),
+                              .AddOutputAttr(kNumberTypeFloat32)
+                              .AddOutInRef(0, 0),
                             SpecializeScatterArithFunc<float>},
                            {KernelAttr()
                               .AddInputAttr(kNumberTypeInt64)
                               .AddInputAttr(kNumberTypeInt32)
                               .AddInputAttr(kNumberTypeInt64)
-                              .AddOutputAttr(kNumberTypeInt64),
+                              .AddOutputAttr(kNumberTypeInt64)
+                              .AddOutInRef(0, 0),
                             SpecializeScatterArithFunc<int64_t>}}},
                          {kScatterMin,
                           {{KernelAttr()
                               .AddInputAttr(kNumberTypeInt32)
                               .AddInputAttr(kNumberTypeInt32)
                               .AddInputAttr(kNumberTypeInt32)
-                              .AddOutputAttr(kNumberTypeInt32),
+                              .AddOutputAttr(kNumberTypeInt32)
+                              .AddOutInRef(0, 0),
                             SpecializeScatterArithFunc<int32_t>},
                            {KernelAttr()
                               .AddInputAttr(kNumberTypeFloat32)
                               .AddInputAttr(kNumberTypeInt32)
                               .AddInputAttr(kNumberTypeFloat32)
-                              .AddOutputAttr(kNumberTypeFloat32),
+                              .AddOutputAttr(kNumberTypeFloat32)
+                              .AddOutInRef(0, 0),
                             SpecializeScatterArithFunc<float>},
                            {KernelAttr()
                               .AddInputAttr(kNumberTypeInt64)
                               .AddInputAttr(kNumberTypeInt32)
                               .AddInputAttr(kNumberTypeInt64)
-                              .AddOutputAttr(kNumberTypeInt64),
+                              .AddOutputAttr(kNumberTypeInt64)
+                              .AddOutInRef(0, 0),
                             SpecializeScatterArithFunc<int64_t>}}},
                          {kScatterUpdate,
                           {{KernelAttr()
                               .AddInputAttr(kNumberTypeInt32)
                               .AddInputAttr(kNumberTypeInt32)
                               .AddInputAttr(kNumberTypeInt32)
-                              .AddOutputAttr(kNumberTypeInt32),
+                              .AddOutputAttr(kNumberTypeInt32)
+                              .AddOutInRef(0, 0),
                             SpecializeScatterArithFunc<int32_t>},
                            {KernelAttr()
                               .AddInputAttr(kNumberTypeFloat32)
                               .AddInputAttr(kNumberTypeInt32)
                               .AddInputAttr(kNumberTypeFloat32)
-                              .AddOutputAttr(kNumberTypeFloat32),
+                              .AddOutputAttr(kNumberTypeFloat32)
+                              .AddOutInRef(0, 0),
                             SpecializeScatterArithFunc<float>},
                            {KernelAttr()
                               .AddInputAttr(kNumberTypeInt64)
                               .AddInputAttr(kNumberTypeInt32)
                               .AddInputAttr(kNumberTypeInt64)
-                              .AddOutputAttr(kNumberTypeInt64),
+                              .AddOutputAttr(kNumberTypeInt64)
+                              .AddOutInRef(0, 0),
                             SpecializeScatterArithFunc<int64_t>}}}};
 }  // namespace
 
