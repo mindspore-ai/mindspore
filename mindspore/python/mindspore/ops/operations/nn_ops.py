@@ -559,28 +559,7 @@ class ReLU(Primitive):
     r"""
     Computes ReLU (Rectified Linear Unit activation function) of input tensors element-wise.
 
-    It returns max(x, 0) element-wise. Specially, the neurons with the negative output
-    will be suppressed and the active neurons will stay the same.
-
-    .. math::
-
-        ReLU(x) = (x)^+ = max(0, x)
-
-    Note:
-        In general, this operator is more commonly used. The difference from `ReLuV2` is that the `ReLuV2` will
-        output one more Mask.
-
-    Inputs:
-        - **input_x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
-          additional dimensions, data type is
-          `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
-
-    Outputs:
-        Tensor of shape :math:`(N, *)`, with the same type and shape as the `input_x`.
-
-    Raises:
-        TypeError: If dtype of `input_x` is not a number.
-        TypeError: If `input_x` is not a Tensor.
+    Refer to :func:`mindspore.ops.relu` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -735,22 +714,7 @@ class ReLU6(PrimitiveWithCheck):
     r"""
     Computes ReLU (Rectified Linear Unit) upper bounded by 6 of input tensors element-wise.
 
-    .. math::
-
-        \text{ReLU6}(x) = \min(\max(0,x), 6)
-
-    It returns :math:`\min(\max(0,x), 6)` element-wise.
-
-    Inputs:
-        - **input_x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
-          additional dimensions, with float16 or float32 data type.
-
-    Outputs:
-        Tensor, with the same type and shape as the `input_x`.
-
-    Raises:
-        TypeError: If dtype of `input_x` is neither float16 nor float32.
-        TypeError: If `input_x` is not a Tensor.
+    Refer to :func:`mindspore.ops.relu6` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4016,34 +3980,7 @@ class PReLU(PrimitiveWithInfer):
     r"""
     Parametric Rectified Linear Unit activation function.
 
-    PReLU is described in the paper `Delving Deep into Rectifiers: Surpassing Human-Level Performance on
-    ImageNet Classification <https://arxiv.org/abs/1502.01852>`_. Defined as follows:
-
-    .. math::
-        prelu(x_i)= \max(0, x_i) + \min(0, w * x_i),
-
-    where :math:`x_i` is an element of a channel of the input, `w` is the weight of the channel.
-
-    Note:
-        Scalar or 1-D input x is not supported on Ascend.
-
-    Inputs:
-        - **x** (Tensor) - The input Tensor of the activation function. The data type is float16 or float32.
-          The shape is :math:`(N, C, *)` where :math:`*` means, any number of additional dimensions.
-        - **weight** (Tensor) -  Weight Tensor. The data type is float16 or float32.
-          The weight can only be a vector, and the length is the same as the number of channels C of the `input_x`.
-          On GPU devices, when the input is a scalar, the shape is 1.
-
-    Outputs:
-        Tensor, with the same type as `x`.
-
-    For detailed information, please refer to :class:`mindspore.nn.PReLU`.
-
-    Raises:
-        TypeError: If dtype of `x` or `weight` is neither float16 nor float32.
-        TypeError: If the `x` or the `weight` is not a Tensor.
-        ValueError: If the `x` is a 0-D or 1-D Tensor on Ascend.
-        ValueError: If the `weight` is not a 1-D Tensor.
+    Refer to :func:`mindspore.ops.prelu` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
