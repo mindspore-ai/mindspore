@@ -77,9 +77,9 @@ bool MaxUnpool2DGradCpuKernelMod::LaunchKernel(const std::vector<kernel::Address
     MS_LOG(WARNING) << "MaxUnpool2DGrad output memory size should be greater than 0, but got 0.";
     return false;
   }
-  auto *raw_grads = reinterpret_cast<DATA_T *>(inputs[kInputIndex1]->addr);
-  auto *raw_indices = reinterpret_cast<INDICES_T *>(inputs[kInputIndex2]->addr);
-  auto *raw_output = reinterpret_cast<DATA_T *>(outputs[kInputIndex0]->addr);
+  auto *raw_grads = static_cast<DATA_T *>(inputs[kInputIndex1]->addr);
+  auto *raw_indices = static_cast<INDICES_T *>(inputs[kInputIndex2]->addr);
+  auto *raw_output = static_cast<DATA_T *>(outputs[kInputIndex0]->addr);
   if (data_format_ == "NHWC") {
     size_t num_batch = LongToSize(grads_shape_[kInputIndex0]);
     size_t oheight = LongToSize(grads_shape_[kInputIndex1]);
@@ -101,12 +101,11 @@ bool MaxUnpool2DGradCpuKernelMod::LaunchKernel(const std::vector<kernel::Address
         for (size_t i = 0; i < iheight; i++) {
           for (size_t j = 0; j < iwidth; j++) {
             ind_p_k_id = i * iwidth * num_channels + j * num_channels + k;
-            maxp = ind_p_k[ind_p_k_id];
+            maxp = static_cast<size_t>(ind_p_k[ind_p_k_id]);
             if (ind_p_k[ind_p_k_id] < 0 || maxp >= owidth * oheight) {
               MS_LOG(EXCEPTION) << "MaxUnpool2DGrad: internal error, output_size H * W should "
                                    "be bigger than some indicis, now H * W is "
                                 << owidth * oheight << " and value of argmax is " << maxp << "." << std::endl;
-              return false;
             } else {
               output_p_k[ind_p_k_id] = grads_p_k[maxp * num_channels + k];
             }
@@ -138,12 +137,11 @@ bool MaxUnpool2DGradCpuKernelMod::LaunchKernel(const std::vector<kernel::Address
         for (size_t i = 0; i < iheight; i++) {
           for (size_t j = 0; j < iwidth; j++) {
             ind_p_k_id = i * iwidth + j;
-            maxp = ind_p_k[ind_p_k_id];
+            maxp = static_cast<size_t>(ind_p_k[ind_p_k_id]);
             if (ind_p_k[ind_p_k_id] < 0 || maxp >= owidth * oheight) {
               MS_LOG(EXCEPTION) << "MaxUnpool2DGrad: internal error, output_size H * W should "
                                    "be bigger than some indicis, now H * W is "
                                 << owidth * oheight << " and value of argmax is " << maxp << "." << std::endl;
-              return false;
             } else {
               output_p_k[ind_p_k_id] = grads_p_k[maxp];
             }

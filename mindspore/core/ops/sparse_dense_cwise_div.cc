@@ -66,7 +66,7 @@ abstract::ShapePtr SparseDenseCwiseDivInferShape(const PrimitivePtr &primitive,
                              << "',  shape[1] of `x1_indices` must be equal to shape[0] of `x1_shape`, but got "
                              << indices_shape[1] << " vs " << shape_shape[0] << ".";
   }
-  if (dense_shape.size() > size_t(shape_shape[0])) {
+  if (dense_shape.size() > static_cast<size_t>(shape_shape[0])) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name
                              << "',  the dims of `x2` should be less or equal to the shape[0] of `x1_shape`, but got "
                              << dense_shape.size() << " vs " << shape_shape[0] << ".";
@@ -83,8 +83,8 @@ TypePtr SparseDenseCwiseDivInferType(const PrimitivePtr &primitive, const std::v
   (void)CheckAndConvertUtils::CheckTensorTypeValid("indices", indiecs_type_ptr, type_set, prim_name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("shape", shape_type_ptr, type_set, prim_name);
   std::map<std::string, TypePtr> type_dict;
-  type_dict.emplace("values", input_args[kInputIndex1]->BuildType());
-  type_dict.emplace("shape", input_args[kInputIndex3]->BuildType());
+  (void)type_dict.emplace("values", input_args[kInputIndex1]->BuildType());
+  (void)type_dict.emplace("shape", input_args[kInputIndex3]->BuildType());
   return CheckAndConvertUtils::CheckTensorTypeSame(type_dict, common_valid_types_with_complex, prim_name);
 }
 }  // namespace

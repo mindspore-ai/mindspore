@@ -51,7 +51,7 @@ TypePtr GatherNdInferType(const PrimitivePtr &primitive, const std::vector<Abstr
   auto x_type = input_args[kInputIndex0]->BuildType();
   auto indices_type = input_args[kInputIndex1]->BuildType();
   std::set<TypePtr> check_list(common_valid_types_with_complex);
-  check_list.insert(kBool);
+  (void)check_list.insert(kBool);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("indices", indices_type, int_types, "GatherNd");
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, check_list, "GatherNd");
   return x_type;

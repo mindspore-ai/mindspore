@@ -22,7 +22,6 @@
 #include <iostream>
 #include <map>
 #include <functional>
-#include <numeric>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -51,16 +50,16 @@ class SparseMatrixTransposeCpuKernelMod : public DeprecatedNativeCpuKernelMod {
 
  private:
   template <typename indiceT, typename valueT>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
   template <typename indiceT, typename valueT>
-  bool LaunchcomplexKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  void LaunchcomplexKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
-  int64_t x_batch_pointers_size_;
-  int64_t x_value_size_;
-  int64_t x_col_indice_size_;
-  int64_t x_row_pointer_size_;
-  int64_t rank_x_;
+  size_t x_batch_pointers_size_;
+  size_t x_value_size_;
+  size_t x_col_indice_size_;
+  size_t x_row_pointer_size_;
+  size_t rank_x_;
   bool conjugate;
   TypeId indiceT_{kTypeUnknown};
   TypeId valueT_{kTypeUnknown};

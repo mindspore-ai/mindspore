@@ -31,7 +31,7 @@ constexpr size_t kSparseSegmentSqrtNOutputsNum = 1;
     .AddOutputAttr(kNumberType##t4)
 }  // namespace
 
-void SparseSegmentSqrtNCpuKernelMod::CheckParam(const CNodePtr &kernel_node) {
+void SparseSegmentSqrtNCpuKernelMod::CheckParam(const CNodePtr &kernel_node) const {
   size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   CHECK_KERNEL_INPUTS_NUM(input_num, kSparseSegmentSqrtNInputsNum, kernel_name_);
   size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
@@ -105,14 +105,17 @@ bool SparseSegmentSqrtNCpuKernelMod::Launch(const std::vector<kernel::AddressPtr
 template <typename T1, typename T2, typename T3>
 void SparseSegmentSqrtNCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                                   const std::vector<kernel::AddressPtr> &outputs) {
-  size_t n = std::accumulate(x_shape_.begin(), x_shape_.end(), kIndex1, std::multiplies<int>()) / x_shape_[kIndex0];
-  size_t m = std::accumulate(segment_ids_shape_.begin(), segment_ids_shape_.end(), kIndex1, std::multiplies<int>());
-  size_t k = std::accumulate(y_shape_.begin(), y_shape_.end(), kIndex1, std::multiplies<int>());
+  size_t n = static_cast<size_t>(
+    std::accumulate(x_shape_.begin(), x_shape_.end(), kIndex1, std::multiplies<int64_t>()) / x_shape_[kIndex0]);
+  size_t m = static_cast<size_t>(
+    std::accumulate(segment_ids_shape_.begin(), segment_ids_shape_.end(), kIndex1, std::multiplies<int64_t>()));
+  size_t k =
+    static_cast<size_t>(std::accumulate(y_shape_.begin(), y_shape_.end(), kIndex1, std::multiplies<int64_t>()));
   auto x_shape_0 = static_cast<T2>(x_shape_[kIndex0]);
-  auto x_addr = reinterpret_cast<T1 *>(inputs[kIndex0]->addr);
-  auto indices_addr = reinterpret_cast<T2 *>(inputs[kIndex1]->addr);
-  auto segment_ids_addr = reinterpret_cast<T3 *>(inputs[kIndex2]->addr);
-  auto y_addr = reinterpret_cast<T1 *>(outputs[kIndex0]->addr);
+  auto x_addr = static_cast<T1 *>(inputs[kIndex0]->addr);
+  auto indices_addr = static_cast<T2 *>(inputs[kIndex1]->addr);
+  auto segment_ids_addr = static_cast<T3 *>(inputs[kIndex2]->addr);
+  auto y_addr = static_cast<T1 *>(outputs[kIndex0]->addr);
 
   for (size_t i = 0; i < k; i++) {
     y_addr[i] = (T1)0;
@@ -139,27 +142,27 @@ void SparseSegmentSqrtNCpuKernelMod::LaunchKernel(const std::vector<kernel::Addr
   int oldindex = -1;
   int countnum = 0;
   for (size_t i = 0; i < m; i++) {
-    if (oldindex == segment_ids_addr[i]) {
+    if (oldindex == static_cast<int>(segment_ids_addr[i])) {
       countnum++;
     } else {
       if (countnum != 0) {
         for (size_t j = 0; j < n; j++) {
-          y_addr[j + oldindex * n] /= (T1)(sqrt(countnum));
+          y_addr[j + static_cast<size_t>(oldindex) * n] /= static_cast<T1>(sqrt(countnum));
         }
       }
       countnum = 1;
-      oldindex = segment_ids_addr[i];
+      oldindex = static_cast<int>(segment_ids_addr[i]);
       for (size_t j = 0; j < n; j++) {
-        y_addr[j + oldindex * n] = (T1)0;
+        y_addr[j + static_cast<size_t>(oldindex) * n] = static_cast<T1>(0);
       }
     }
     for (size_t j = 0; j < n; j++) {
-      y_addr[j + oldindex * n] += x_addr[j + indices_addr[i] * n];
+      y_addr[j + static_cast<size_t>(oldindex) * n] += x_addr[j + static_cast<size_t>(indices_addr[i]) * n];
     }
   }
   if (countnum != 0) {
     for (size_t j = 0; j < n; j++) {
-      y_addr[j + oldindex * n] /= (T1)(sqrt(countnum));
+      y_addr[j + static_cast<size_t>(oldindex) * n] /= static_cast<T1>(sqrt(countnum));
     }
   }
 }

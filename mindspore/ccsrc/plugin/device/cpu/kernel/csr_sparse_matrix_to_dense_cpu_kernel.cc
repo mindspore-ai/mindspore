@@ -39,8 +39,9 @@ void CSRSparseMatrixToDenseCpuKernelMod::InitKernel(const CNodePtr &kernel_node)
   node_wpt_ = kernel_node;
   indices_type = AnfAlgo::GetInputDeviceDataType(kernel_node, kInputIndex0);
   values_type = AnfAlgo::GetInputDeviceDataType(kernel_node, kInputIndex4);
-  rank_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kInputIndex0)[kZero];
-  batch_size_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kInputIndex1)[kZero] - kOne;
+  rank_ = static_cast<size_t>(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kInputIndex0)[kZero]);
+  batch_size_ =
+    static_cast<size_t>(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kInputIndex1)[kZero]) - kOne;
 }
 
 bool CSRSparseMatrixToDenseCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
@@ -112,8 +113,8 @@ template <typename indiceT, typename valueT>
 void CSRSparseMatrixToDenseCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                                       const std::vector<AddressPtr> &outputs) {
   const size_t shift = (rank_ == kDefaultRank) ? kZero : kOne;
-  num_rows_ = *(static_cast<indiceT *>(inputs[kInputIndex0]->addr) + shift);
-  num_cols_ = *(static_cast<indiceT *>(inputs[kInputIndex0]->addr) + shift + kOne);
+  num_rows_ = static_cast<size_t>(*(static_cast<indiceT *>(inputs[kInputIndex0]->addr) + shift));
+  num_cols_ = static_cast<size_t>(*(static_cast<indiceT *>(inputs[kInputIndex0]->addr) + shift + kOne));
   indiceT *batch_ptrs = static_cast<indiceT *>(inputs[kInputIndex1]->addr);
   indiceT *row_ptrs = static_cast<indiceT *>(inputs[kInputIndex2]->addr);
   indiceT *col_ind = static_cast<indiceT *>(inputs[kInputIndex3]->addr);
@@ -124,13 +125,13 @@ void CSRSparseMatrixToDenseCpuKernelMod::LaunchKernel(const std::vector<AddressP
     for (size_t i = kZero; i < num_rows_ * num_cols_; ++i) {
       y_data[dense_offset + i] = valueT(kZero);
     }
-    const size_t csr_batch_offset = batch_ptrs[batch_idx];
+    const size_t csr_batch_offset = static_cast<size_t>(batch_ptrs[batch_idx]);
     for (size_t row_idx = kZero; row_idx < num_rows_; ++row_idx) {
       const size_t row_offset = batch_idx * (num_rows_ + kOne) + row_idx;
-      const size_t col_begin = row_ptrs[row_offset];
-      const size_t col_end = row_ptrs[row_offset + kOne];
+      const size_t col_begin = static_cast<size_t>(row_ptrs[row_offset]);
+      const size_t col_end = static_cast<size_t>(row_ptrs[row_offset + kOne]);
       for (size_t i = col_begin; i < col_end; ++i) {
-        const size_t col_idx = col_ind[csr_batch_offset + i];
+        const size_t col_idx = static_cast<size_t>(col_ind[csr_batch_offset + i]);
         y_data[dense_offset + (row_idx * num_cols_) + col_idx] = values[csr_batch_offset + i];
       }
     }

@@ -58,8 +58,8 @@ void CSRSparseMatrixToSparseTensorCpuKernelMod::InitKernel(const CNodePtr &kerne
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   auto x_indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kInputIndex4);
   auto dense_shape_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kInputIndex0);
-  total_nnz_ = x_indices_shape[kZero];
-  rank_ = dense_shape_shape[kZero];
+  total_nnz_ = static_cast<size_t>(x_indices_shape[kZero]);
+  rank_ = static_cast<size_t>(dense_shape_shape[kZero]);
   size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   CHECK_KERNEL_INPUTS_NUM(input_num, kCSRSparseMatrixToSparseTensorInputsNum, kKernelName);
   size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
@@ -129,9 +129,9 @@ void CSRSparseMatrixToSparseTensorCpuKernelMod::LaunchKernel(const std::vector<k
   indiceT *x_row_pointers_ptr = static_cast<indiceT *>(inputs[kInputIndex2]->addr);
   indiceT *x_col_indices_ptr = static_cast<indiceT *>(inputs[kInputIndex3]->addr);
   valueT *x_values_ptr = static_cast<valueT *>(inputs[kInputIndex4]->addr);
-  batch_size_ = (rank_ == kRankWithoutBatch) ? kOne : x_dense_shape_ptr[kZero];
+  batch_size_ = (rank_ == kRankWithoutBatch) ? kOne : static_cast<size_t>(x_dense_shape_ptr[kZero]);
   const size_t shift = (rank_ == kRankWithoutBatch) ? kZero : kOne;
-  num_rows_ = *(static_cast<indiceT *>(inputs[kInputIndex0]->addr) + shift);
+  num_rows_ = static_cast<size_t>(*(static_cast<indiceT *>(inputs[kInputIndex0]->addr) + shift));
   indiceT *indices_ptr = static_cast<indiceT *>(outputs[kOutputIndex0]->addr);
   valueT *values_ptr = static_cast<valueT *>(outputs[kOutputIndex1]->addr);
   indiceT *dense_shape_ptr = static_cast<indiceT *>(outputs[kOutputIndex2]->addr);
@@ -141,22 +141,22 @@ void CSRSparseMatrixToSparseTensorCpuKernelMod::LaunchKernel(const std::vector<k
   for (size_t i = kZero; i < total_nnz_; i++) {
     values_ptr[i] = x_values_ptr[i];
   }
-  for (int64_t batch_idx = kZero; batch_idx < SizeToLong(batch_size_); ++batch_idx) {
+  for (int64_t batch_idx = static_cast<int64_t>(kZero); batch_idx < SizeToLong(batch_size_); ++batch_idx) {
     const int64_t batch_offset = x_batch_pointers_ptr[batch_idx];
     for (int row_idx = kZero; row_idx < SizeToLong(num_rows_); ++row_idx) {
-      const int64_t row_offset = batch_idx * (num_rows_ + kOne) + row_idx;
-      const int64_t col_begin = x_row_pointers_ptr[row_offset];
-      const int64_t col_end = x_row_pointers_ptr[row_offset + kOne];
+      const int64_t row_offset = static_cast<int64_t>(batch_idx * (num_rows_ + kOne) + row_idx);
+      const int64_t col_begin = static_cast<int64_t>(x_row_pointers_ptr[row_offset]);
+      const int64_t col_end = static_cast<int64_t>(x_row_pointers_ptr[row_offset + kOne]);
       for (int64_t i = col_begin; i < col_end; ++i) {
-        const int64_t col_idx = x_col_indices_ptr[batch_offset + i];
-        const int64_t indices_offset = rank_ * (batch_offset + i);
+        const int64_t col_idx = static_cast<int64_t>(x_col_indices_ptr[batch_offset + i]);
+        const int64_t indices_offset = static_cast<int64_t>(rank_ * (batch_offset + i));
         if (rank_ == kRankWithoutBatch) {
-          indices_ptr[indices_offset] = row_idx;
-          indices_ptr[indices_offset + kOne] = col_idx;
+          indices_ptr[indices_offset] = static_cast<indiceT>(row_idx);
+          indices_ptr[indices_offset + kOne] = static_cast<indiceT>(col_idx);
         } else {
-          indices_ptr[indices_offset] = batch_idx;
-          indices_ptr[indices_offset + kOne] = row_idx;
-          indices_ptr[indices_offset + kTwo] = col_idx;
+          indices_ptr[indices_offset] = static_cast<indiceT>(batch_idx);
+          indices_ptr[indices_offset + kOne] = static_cast<indiceT>(row_idx);
+          indices_ptr[indices_offset + kTwo] = static_cast<indiceT>(col_idx);
         }
       }
     }

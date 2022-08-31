@@ -50,33 +50,33 @@ abstract::ShapePtr CholeskySolveInferShape(const PrimitivePtr &primitive,
     MS_EXCEPTION(ValueError) << "For CholeskySolve, ranks of inputs should be equal"
                              << ", while got x1 rank " << x1_shape.size() << ", x2 rank " << x2_shape.size() << ".";
   }
-  size_t rank = SizeToLong(x1_shape.size());
+  size_t rank = x1_shape.size();
   if (rank == kDefalutRank) {
     if (x1_shape[rank - kRowIndex] != x2_shape[rank - kRowIndex]) {
       MS_EXCEPTION(ValueError) << "For CholeskySolve, x1 and x2 should share the same row number"
-                               << ", while row number of x1 is " << x1_shape[rank - kRowIndex]
-                               << ", row number of x2 is " << x2_shape[rank - kRowIndex];
+                               << ", while row number of x1 is " << static_cast<size_t>(x1_shape[rank - kRowIndex])
+                               << ", row number of x2 is " << static_cast<size_t>(x2_shape[rank - kRowIndex]);
     }
     if (x2_shape[rank - kRowIndex] != x2_shape[rank - kColIndex]) {
       MS_EXCEPTION(ValueError) << "For CholeskySolve, x2 should be square"
-                               << ", but got " << x2_shape[rank - kRowIndex] << " × " << x2_shape[rank - kColIndex]
-                               << " matrix.";
+                               << ", but got " << static_cast<size_t>(x2_shape[rank - kRowIndex]) << " x "
+                               << static_cast<size_t>(x2_shape[rank - kColIndex]) << " matrix.";
     }
   } else {
     if (x1_shape[rank - kBatchIndex] != x2_shape[rank - kBatchIndex]) {
       MS_EXCEPTION(ValueError) << "For CholeskySolve, x1 and x2 should share the same batch size"
-                               << ", while x1 is of size " << x1_shape[rank - kBatchIndex] << ", and x2 is of size "
-                               << x2_shape[rank - kBatchIndex];
+                               << ", while x1 is of size " << static_cast<size_t>(x1_shape[rank - kBatchIndex])
+                               << ", and x2 is of size " << static_cast<size_t>(x2_shape[rank - kBatchIndex]);
     }
     if (x1_shape[rank - kRowIndex] != x2_shape[rank - kRowIndex]) {
       MS_EXCEPTION(ValueError) << "For CholeskySolve, x1 and x2 should share the same row number"
-                               << ", while row number of x1 is " << x1_shape[rank - kRowIndex]
-                               << ", row number of x2 is " << x2_shape[rank - kRowIndex];
+                               << ", while row number of x1 is " << static_cast<size_t>(x1_shape[rank - kRowIndex])
+                               << ", row number of x2 is " << static_cast<size_t>(x2_shape[rank - kRowIndex]);
     }
     if (x2_shape[rank - kRowIndex] != x2_shape[rank - kColIndex]) {
       MS_EXCEPTION(ValueError) << "For CholeskySolve, x2 should be batch squares"
-                               << ", but got batch " << x2_shape[rank - kRowIndex] << " × "
-                               << x2_shape[rank - kColIndex] << " matrices.";
+                               << ", but got batch " << static_cast<size_t>(x2_shape[rank - kRowIndex]) << " x "
+                               << static_cast<size_t>(x2_shape[rank - kColIndex]) << " matrices.";
     }
   }
   return std::make_shared<abstract::Shape>(x1_shape);

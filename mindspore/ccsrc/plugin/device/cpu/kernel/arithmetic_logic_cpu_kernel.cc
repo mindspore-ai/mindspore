@@ -343,9 +343,23 @@ void ArithLogicCpuTypeFunc<T>::LogicalXor(const T *input1, const T *input2, bool
   auto task = [input1, input2, out, &base_iter](size_t start, size_t end) {
     auto iter = base_iter;
     iter.SetPos(start);
-    for (size_t i = start; i < end; i++) {
-      out[i] = input1[iter.GetInputPosA()] != input2[iter.GetInputPosB()];
-      iter.GenNextPos();
+    if constexpr (std::is_same_v<T, float>) {
+      for (size_t i = start; i < end; i++) {
+        out[i] = !(common::IsFloatEqual(input1[iter.GetInputPosA()], input2[iter.GetInputPosB()]));
+        iter.GenNextPos();
+      }
+    } else {
+      if constexpr (std::is_same_v<T, double>) {
+        for (size_t i = start; i < end; i++) {
+          out[i] = !(common::IsDoubleEqual(input1[iter.GetInputPosA()], input2[iter.GetInputPosB()]));
+          iter.GenNextPos();
+        }
+      } else {
+        for (size_t i = start; i < end; i++) {
+          out[i] = input1[iter.GetInputPosA()] != input2[iter.GetInputPosB()];
+          iter.GenNextPos();
+        }
+      }
     }
   };
   CPUKernelUtils::ParallelFor(task, output_size_);

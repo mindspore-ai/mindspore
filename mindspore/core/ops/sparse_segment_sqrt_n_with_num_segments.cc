@@ -42,9 +42,10 @@ abstract::ShapePtr SparseSegmentSqrtNWithNumSegmentsInferShape(const PrimitivePt
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
   auto num_segments_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
-  (void)CheckAndConvertUtils::CheckInteger("indices_shape", indices_shape.size(), kEqual, kInputIndex1, prim->name());
-  (void)CheckAndConvertUtils::CheckInteger("segment_ids_shape", segment_ids_shape.size(), kEqual, kInputIndex1,
-                                           prim->name());
+  (void)CheckAndConvertUtils::CheckInteger("indices_shape", static_cast<int64_t>(indices_shape.size()), kEqual,
+                                           static_cast<int64_t>(kInputIndex1), prim->name());
+  (void)CheckAndConvertUtils::CheckInteger("segment_ids_shape", static_cast<int64_t>(segment_ids_shape.size()), kEqual,
+                                           static_cast<int64_t>(kInputIndex1), prim->name());
   if (x_shape.size() < kInputIndex1) {
     MS_EXCEPTION(ValueError) << "For " << prim_name << ", rank of x cannot less than 1.";
   }
@@ -55,7 +56,7 @@ abstract::ShapePtr SparseSegmentSqrtNWithNumSegmentsInferShape(const PrimitivePt
     MS_EXCEPTION(ValueError) << "For " << prim_name << ", num_segments should be at most 1-D.";
   }
   if (num_segments_shape.size() == kInputIndex1) {
-    if (num_segments_shape[kInputIndex0] != kInputIndex1) {
+    if (num_segments_shape[kInputIndex0] != static_cast<int64_t>(kInputIndex1)) {
       MS_EXCEPTION(ValueError) << "For " << prim_name << ", the num element of num_segments should be 1.";
     }
   }
@@ -67,13 +68,13 @@ abstract::ShapePtr SparseSegmentSqrtNWithNumSegmentsInferShape(const PrimitivePt
     MS_EXCEPTION_IF_NULL(num_segments_value_ptr);
     auto num_segments_value_ptr_tensor =
       CheckAndConvertUtils::CheckTensorIntValue("num_segments", num_segments_value_ptr, prim->name());
-    size_t dim_zero = num_segments_value_ptr_tensor.back();
+    size_t dim_zero = static_cast<size_t>(num_segments_value_ptr_tensor.back());
     if (dim_zero < kInputIndex1) {
       MS_EXCEPTION(ValueError) << "For " << prim_name
                                << ", num_segments must bigger than the last number of segment_ids.";
     } else {
       ShapeVector y_shape = x_shape;
-      y_shape[kInputIndex0] = dim_zero;
+      y_shape[kInputIndex0] = static_cast<int64_t>(dim_zero);
       return std::make_shared<abstract::Shape>(y_shape);
     }
   } else {
@@ -105,7 +106,7 @@ AbstractBasePtr SparseSegmentSqrtNWithNumSegmentsInfer(const abstract::AnalysisE
                                                        const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
-  const int64_t input_num = kInputIndex4;
+  const int64_t input_num = static_cast<size_t>(kInputIndex4);
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
   auto types = SparseSegmentSqrtNWithNumSegmentsInferType(prim, input_args);
   auto shapes = SparseSegmentSqrtNWithNumSegmentsInferShape(prim, input_args);

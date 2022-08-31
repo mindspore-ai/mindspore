@@ -23,8 +23,8 @@
 #include <map>
 #include <memory>
 #include <string>
-#include <unordered_map>
 #include <utility>
+#include <unordered_map>
 #include <vector>
 
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
@@ -46,7 +46,7 @@ class SparseSparseMinimumCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  private:
   template <typename T>
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
-  void CheckParam(const CNodePtr &kernel_node);
+  void CheckParam(const CNodePtr &kernel_node) const;
   TypeId dtype_{kTypeUnknown};
   int64_t x1_nnz_;
   int64_t x2_nnz_;

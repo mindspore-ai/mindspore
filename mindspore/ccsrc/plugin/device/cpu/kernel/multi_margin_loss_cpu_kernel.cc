@@ -88,7 +88,7 @@ void MultiMarginLossCPUKernelMod::LaunchKernel(const std::vector<kernel::Address
         if (d == LongToSize(target_addr[i])) {
           continue;
         }
-        calc_data[d] = static_cast<T>(margin) + x_addr[start + d] - x_addr[start + target_addr[i]];
+        calc_data[d] = static_cast<T>(margin) + x_addr[start + d] - x_addr[start + LongToSize(target_addr[i])];
         if (calc_data[d] > static_cast<T>(0)) {
           calc_data[d] = (p == 1) ? calc_data[d] : calc_data[d] * calc_data[d];
           if (weight_defined_) {
@@ -151,8 +151,8 @@ void MultiMarginLossCPUKernelMod::LaunchKernelFP16(const std::vector<kernel::Add
         if (d == LongToSize(target_addr[i])) {
           continue;
         }
-        calc_data[d] =
-          margin + static_cast<float>(x_addr[start + d]) - static_cast<float>(x_addr[start + target_addr[i]]);
+        calc_data[d] = margin + static_cast<float>(x_addr[start + d]) -
+                       static_cast<float>(x_addr[start + LongToSize(target_addr[i])]);
         if (calc_data[d] > 0) {
           calc_data[d] = (p == 1) ? calc_data[d] : calc_data[d] * calc_data[d];
           if (weight_defined_) {

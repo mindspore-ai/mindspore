@@ -64,10 +64,11 @@ abstract::ShapePtr TripletMarginLossInferShape(const PrimitivePtr &primitive,
       MS_EXCEPTION(ValueError) << "For " << op_name << ", inputs' shape can't broadcast.";
     }
   }
-  out_shape.erase(out_shape.begin() + 1);
+  (void)out_shape.erase(out_shape.begin() + 1);
   int64_t reduction;
   (void)CheckAndConvertUtils::GetReductionEnumValue(primitive->GetAttr(kReduction), &reduction);
-  if (reduction == REDUCTION_SUM || reduction == MEAN) {
+  mindspore::Reduction reduction_ = static_cast<mindspore::Reduction>(reduction);
+  if (reduction_ == REDUCTION_SUM || reduction_ == MEAN) {
     out_shape.resize(0);
   }
   return std::make_shared<abstract::Shape>(out_shape);
@@ -79,9 +80,9 @@ TypePtr TripletMarginLossInferType(const PrimitivePtr &primitive, const std::vec
                                          kInt64,     kInt8,       kUInt16,  kUInt32,  kUInt64,  kUInt8};
   const std::set<TypePtr> valid_types2 = {kFloat32};
   std::map<std::string, TypePtr> types;
-  types.emplace("x", input_args[kInputIndex0]->BuildType());
-  types.emplace("positive", input_args[kInputIndex1]->BuildType());
-  types.emplace("negative", input_args[kInputIndex2]->BuildType());
+  (void)types.emplace("x", input_args[kInputIndex0]->BuildType());
+  (void)types.emplace("positive", input_args[kInputIndex1]->BuildType());
+  (void)types.emplace("negative", input_args[kInputIndex2]->BuildType());
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, op_name);
   auto margin = input_args[kInputIndex3]->BuildType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("margin", margin, valid_types2, op_name);

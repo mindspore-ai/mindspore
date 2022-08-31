@@ -32,7 +32,7 @@ class MvlgammaCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   void InitKernel(const CNodePtr &kernel_node) override;
 
   template <typename T>
-  T MvlgammaSingle(const T &x, const int64_t &p);
+  T MvlgammaSingle(const T &x, const int64_t &p) const;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;

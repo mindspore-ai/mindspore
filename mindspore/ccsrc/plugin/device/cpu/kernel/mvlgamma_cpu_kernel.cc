@@ -26,8 +26,8 @@ namespace {
 constexpr double HALF = 0.5;
 constexpr double QUARTER = 0.25;
 constexpr double PI = 3.14159265358979323846264338327950288;
-constexpr size_t kInputsNum = 1;
-constexpr size_t kOutputsNum = 1;
+constexpr int64_t kInputsNum = 1;
+constexpr int64_t kOutputsNum = 1;
 }  // namespace
 
 void MvlgammaCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
@@ -36,7 +36,7 @@ void MvlgammaCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   output_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
   attr_p_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "p");
-  input_tensor_size_ = SizeOf(input_shape_);
+  input_tensor_size_ = static_cast<int64_t>(SizeOf(input_shape_));
 
   if (attr_p_ < 1) {
     MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", the attr 'p' has to be greater than or equal to 1.";
@@ -45,14 +45,14 @@ void MvlgammaCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-T MvlgammaCpuKernelMod::MvlgammaSingle(const T &x, const int64_t &p) {
+T MvlgammaCpuKernelMod::MvlgammaSingle(const T &x, const int64_t &p) const {
   if (!(x > HALF * (p - 1))) {
     MS_EXCEPTION(ValueError) << "For " << kernel_name_ << ", all elements of 'x' must be greater than (p-1)/2.";
   }
   const auto p2_sub_p = static_cast<T>(p * (p - 1));
   T output = p2_sub_p * std::log(PI) * QUARTER;
   for (int64_t i = 0; i < p; i++) {
-    output += lgamma(x - HALF * i);
+    output += lgamma(x - static_cast<T>(HALF) * i);
   }
   return output;
 }
@@ -74,10 +74,10 @@ bool MvlgammaCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
 
-  auto input_x = reinterpret_cast<T *>(inputs[0]->addr);
-  auto output_y = reinterpret_cast<T *>(outputs[0]->addr);
+  auto input_x = static_cast<T *>(inputs[0]->addr);
+  auto output_y = static_cast<T *>(outputs[0]->addr);
 
-  for (int64_t i = 0; i < input_tensor_size_; i++) {
+  for (size_t i = 0; i < static_cast<size_t>(input_tensor_size_); i++) {
     *(output_y + i) = MvlgammaSingle<T>(*(input_x + i), attr_p_);
   }
   return true;

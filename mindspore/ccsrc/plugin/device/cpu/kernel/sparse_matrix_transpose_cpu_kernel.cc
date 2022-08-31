@@ -20,24 +20,24 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr int64_t kTwo = 2;
-constexpr int64_t kInputsNum = 5;
-constexpr int64_t kOutputsNum = 5;
-constexpr int64_t kInputIndex0 = 0;
-constexpr int64_t kInputIndex1 = 1;
-constexpr int64_t kInputIndex2 = 2;
-constexpr int64_t kInputIndex3 = 3;
-constexpr int64_t kInputIndex4 = 4;
-constexpr int64_t kOutputIndex0 = 0;
-constexpr int64_t kOutputIndex1 = 1;
-constexpr int64_t kOutputIndex2 = 2;
-constexpr int64_t kOutputIndex3 = 3;
-constexpr int64_t kOutputIndex4 = 4;
-constexpr int64_t kDenseShape0 = 0;
-constexpr int64_t kDenseShape1 = 1;
-constexpr int64_t kDenseShape2 = 2;
-constexpr int64_t kRankWithOutBatch = 2;
-constexpr int64_t kRankWithBatch = 3;
+constexpr size_t kTwo = 2;
+constexpr size_t kInputsNum = 5;
+constexpr size_t kOutputsNum = 5;
+constexpr size_t kInputIndex0 = 0;
+constexpr size_t kInputIndex1 = 1;
+constexpr size_t kInputIndex2 = 2;
+constexpr size_t kInputIndex3 = 3;
+constexpr size_t kInputIndex4 = 4;
+constexpr size_t kOutputIndex0 = 0;
+constexpr size_t kOutputIndex1 = 1;
+constexpr size_t kOutputIndex2 = 2;
+constexpr size_t kOutputIndex3 = 3;
+constexpr size_t kOutputIndex4 = 4;
+constexpr size_t kDenseShape0 = 0;
+constexpr size_t kDenseShape1 = 1;
+constexpr size_t kDenseShape2 = 2;
+constexpr size_t kRankWithOutBatch = 2;
+constexpr size_t kRankWithBatch = 3;
 KernelAttr AddKernel(const TypeId &ms_type1, const TypeId &ms_type2, const TypeId &ms_type3, const TypeId &ms_type4,
                      const TypeId &ms_type5, const TypeId &ms_type6, const TypeId &ms_type7, const TypeId &ms_type8,
                      const TypeId &ms_type9, const TypeId &ms_type10) {
@@ -60,16 +60,14 @@ KernelAttr AddKernel(const TypeId &ms_type1, const TypeId &ms_type2, const TypeI
             kNumberType##t7, kNumberType##t8, kNumberType##t9, kNumberType##t10)
 
 #define SPARSE_MATRIX_TRANSPOSE_COMPUTE_CASE(DTYPE, VTYPEONE, VTYPETWO, inputs, outputs) \
-  case (DTYPE): {                                                                        \
+  case DTYPE:                                                                            \
     LaunchKernel<VTYPEONE, VTYPETWO>(inputs, outputs);                                   \
-    break;                                                                               \
-  }
+    break;
 
 #define SPARSE_MATRIX_TRANSPOSE_COMPUTE_COMPLEX_CASE(DTYPE, VTYPEONE, VTYPETWO, inputs, outputs) \
-  case (DTYPE): {                                                                                \
+  case DTYPE:                                                                                    \
     LaunchcomplexKernel<VTYPEONE, VTYPETWO>(inputs, outputs);                                    \
-    break;                                                                                       \
-  }
+    break;
 
 #define NODE_CHECK_AND_OUTPUT_TYPE(node_)           \
   do {                                              \
@@ -99,12 +97,12 @@ KernelAttr AddKernel(const TypeId &ms_type1, const TypeId &ms_type2, const TypeI
 void SparseMatrixTransposeCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  int64_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   CHECK_KERNEL_INPUTS_NUM(input_num, kInputsNum, kernel_name_);
-  int64_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
   CHECK_KERNEL_OUTPUTS_NUM(output_num, kOutputsNum, kernel_name_);
   std::vector<int64_t> input_dense_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kInputIndex0);
-  rank_x_ = input_dense_shape[0];
+  rank_x_ = static_cast<size_t>(input_dense_shape[0]);
   if (rank_x_ != kRankWithOutBatch && rank_x_ != kRankWithBatch) {
     MS_LOG(EXCEPTION) << "For SparseMatrixTranspose,the rank must be 2 or 3, but got" << rank_x_ << "!";
   }
@@ -113,10 +111,10 @@ void SparseMatrixTransposeCpuKernelMod::InitKernel(const CNodePtr &kernel_node) 
   std::vector<int64_t> x_row_pointers_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kInputIndex2);
   std::vector<int64_t> x_col_indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kInputIndex3);
   std::vector<int64_t> x_value_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kInputIndex4);
-  x_value_size_ = x_value_shape[0];
-  x_batch_pointers_size_ = x_batch_pointers_shape[0];
-  x_col_indice_size_ = x_col_indices_shape[0];
-  x_row_pointer_size_ = x_row_pointers_shape[0];
+  x_value_size_ = static_cast<size_t>(x_value_shape[0]);
+  x_batch_pointers_size_ = static_cast<size_t>(x_batch_pointers_shape[0]);
+  x_col_indice_size_ = static_cast<size_t>(x_col_indices_shape[0]);
+  x_row_pointer_size_ = static_cast<size_t>(x_row_pointers_shape[0]);
   if (x_col_indice_size_ != x_value_size_) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the input of col indice shape should equals "
                       << "values shape to match the CSR form input.";
@@ -147,7 +145,6 @@ bool SparseMatrixTransposeCpuKernelMod::Launch(const std::vector<kernel::Address
         SPARSE_MATRIX_TRANSPOSE_COMPUTE_COMPLEX_CASE(kNumberTypeComplex128, int32_t, complex128, inputs, outputs)
         default:
           MS_LOG(EXCEPTION) << "data type of values is not included.";
-          break;
       }
       break;
     case kNumberTypeInt64:
@@ -167,19 +164,17 @@ bool SparseMatrixTransposeCpuKernelMod::Launch(const std::vector<kernel::Address
         SPARSE_MATRIX_TRANSPOSE_COMPUTE_COMPLEX_CASE(kNumberTypeComplex128, int64_t, complex128, inputs, outputs)
         default:
           MS_LOG(EXCEPTION) << "data type of values is not included.";
-          break;
       }
       break;
     default:
       MS_LOG(EXCEPTION) << "The data type of dense_shape, batch_pointers, "
                         << "row_pointers, col_indices is not int32 or int64.";
-      break;
   }
   return true;
 }
 
 template <typename indiceT, typename valueT>
-bool SparseMatrixTransposeCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+void SparseMatrixTransposeCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                                      const std::vector<kernel::AddressPtr> &outputs) {
   indiceT *x_dense_shape = static_cast<indiceT *>(inputs[kInputIndex0]->addr);
   indiceT *x_batch_pointers = static_cast<indiceT *>(inputs[kInputIndex1]->addr);
@@ -191,14 +186,14 @@ bool SparseMatrixTransposeCpuKernelMod::LaunchKernel(const std::vector<kernel::A
   indiceT *y_row_pointers_addr = static_cast<indiceT *>(outputs[kOutputIndex2]->addr);
   indiceT *y_col_indices_addr = static_cast<indiceT *>(outputs[kOutputIndex3]->addr);
   valueT *y_values_addr = static_cast<valueT *>(outputs[kOutputIndex4]->addr);
-  std::vector<int64_t> y_row_pointers_shape;
-  int64_t batch_pointers = x_batch_pointers_size_;
+  std::vector<indiceT> y_row_pointers_shape;
+  size_t batch_pointers = x_batch_pointers_size_;
   if (rank_x_ == kRankWithBatch) {
     y_dense_shape_addr[kDenseShape0] = x_dense_shape[kDenseShape0];
     y_dense_shape_addr[kDenseShape1] = x_dense_shape[kDenseShape2];
     y_dense_shape_addr[kDenseShape2] = x_dense_shape[kDenseShape1];
     y_row_pointers_shape.push_back(x_dense_shape[kDenseShape0] * (x_dense_shape[kDenseShape2] + 1));
-    int64_t batch = x_dense_shape[kDenseShape0];
+    size_t batch = static_cast<size_t>(x_dense_shape[kDenseShape0]);
     BATCH_CHECK(batch, batch_pointers, kernel_name_)
   } else {
     y_dense_shape_addr[kDenseShape0] = x_dense_shape[kDenseShape1];
@@ -209,92 +204,93 @@ bool SparseMatrixTransposeCpuKernelMod::LaunchKernel(const std::vector<kernel::A
                         << "2 to match the CSR form input when input has no batch.";
     }
   }
-  for (int64_t i = 0; i < batch_pointers; ++i) {
+  for (size_t i = 0; i < batch_pointers; ++i) {
     y_batch_pointers_addr[i] = x_batch_pointers[i];
   }
-  int64_t num_rows = x_dense_shape[rank_x_ - kTwo];
-  int64_t num_cols = x_dense_shape[rank_x_ - 1];
-  int64_t num_batch = batch_pointers - 1;
-  std::vector<int64_t> y_part_row_pointers(num_cols + 1);
-  std::vector<int64_t> part_row_pointers(num_rows + 1);
+  size_t num_rows = static_cast<size_t>(x_dense_shape[rank_x_ - kTwo]);
+  size_t num_cols = static_cast<size_t>(x_dense_shape[rank_x_ - 1]);
+  size_t num_batch = batch_pointers - static_cast<size_t>(1);
+  std::vector<indiceT> y_part_row_pointers(num_cols + 1);
+  std::vector<indiceT> part_row_pointers(num_rows + 1);
   if (x_row_pointer_size_ != num_batch * (num_rows + 1)) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the input of row pionters shape should equals"
                       << " batch*(rows + 1 ) to match the CSR form input when input has no batch.";
   }
-  for (int64_t j = 0; j < num_batch; ++j) {
-    int64_t n = x_batch_pointers[j + 1] - x_batch_pointers[j];
+  for (size_t j = 0; j < num_batch; ++j) {
+    size_t n = static_cast<size_t>(x_batch_pointers[j + 1] - x_batch_pointers[j]);
     std::vector<valueT> part_values(n);
     std::vector<indiceT> part_col_indices(n);
     std::vector<indiceT> y_part_col_indices(n);
     std::vector<valueT> y_part_values(n);
-    for (int64_t i = 0; i < num_cols + 1; ++i) {
-      y_part_row_pointers[i] = 0;
+    for (size_t i = 0; i < num_cols + 1; ++i) {
+      y_part_row_pointers[i] = static_cast<indiceT>(0);
     }
-    for (int64_t k = 0; k < num_rows + 1; ++k) {
+    for (size_t k = 0; k < num_rows + 1; ++k) {
       part_row_pointers[k] = x_row_pointers[(num_rows + 1) * j + k];
     }
-    for (int64_t k = 0; k < n; ++k) {
-      part_values[k] = x_values[x_batch_pointers[j] + k];
-      part_col_indices[k] = x_col_indices[x_batch_pointers[j] + k];
+    for (size_t k = 0; k < n; ++k) {
+      part_values[k] = x_values[static_cast<size_t>(x_batch_pointers[j]) + k];
+      part_col_indices[k] = x_col_indices[static_cast<size_t>(x_batch_pointers[j]) + k];
     }
-    for (int64_t i = 0; i < n; ++i) {
-      y_part_row_pointers[part_col_indices[i] + 1] += 1;
+    for (size_t i = 0; i < n; ++i) {
+      y_part_row_pointers[static_cast<size_t>(part_col_indices[i]) + 1] += static_cast<indiceT>(1);
     }
-    for (int64_t i = 1; i < num_cols + 1; ++i) {
+    for (size_t i = 1; i < num_cols + 1; ++i) {
       y_part_row_pointers[i] += y_part_row_pointers[i - 1];
     }
-    for (int64_t k = 0; k < num_cols + 1; ++k) {
+    for (size_t k = 0; k < num_cols + 1; ++k) {
       y_row_pointers_addr[(num_cols + 1) * j + k] = y_part_row_pointers[k];
     }
-    std::vector<int64_t> current_col_count(num_cols);
-    for (int64_t row_idx = 0; row_idx < num_rows; ++row_idx) {
-      const int64_t row_begin = part_row_pointers[row_idx];
-      const int64_t row_end = part_row_pointers[row_idx + 1];
-      for (int64_t i = row_begin; i < row_end; ++i) {
-        const int64_t col_idx = part_col_indices[i];
-        const int64_t offset = y_part_row_pointers[col_idx] + current_col_count[col_idx];
-        y_part_col_indices[offset] = row_idx;
+    std::vector<size_t> current_col_count(num_cols);
+    for (size_t row_idx = 0; row_idx < num_rows; ++row_idx) {
+      const size_t row_begin = static_cast<size_t>(part_row_pointers[row_idx]);
+      const size_t row_end = static_cast<size_t>(part_row_pointers[row_idx + 1]);
+      for (size_t i = row_begin; i < row_end; ++i) {
+        const size_t col_idx = static_cast<size_t>(part_col_indices[i]);
+        const size_t offset = static_cast<size_t>(y_part_row_pointers[col_idx]) + current_col_count[col_idx];
+        y_part_col_indices[offset] = static_cast<indiceT>(row_idx);
         y_part_values[offset] = part_values[i];
-        current_col_count[col_idx] += 1;
+        current_col_count[col_idx] += static_cast<size_t>(1);
       }
     }
-    for (int64_t k = 0; k < n; ++k) {
-      y_values_addr[x_batch_pointers[j] + k] = y_part_values[k];
-      y_col_indices_addr[x_batch_pointers[j] + k] = y_part_col_indices[k];
+    for (size_t k = 0; k < n; ++k) {
+      y_values_addr[static_cast<size_t>(x_batch_pointers[j]) + k] = y_part_values[k];
+      y_col_indices_addr[static_cast<size_t>(x_batch_pointers[j]) + k] = y_part_col_indices[k];
     }
   }
   auto node_ = node_wpt_.lock();
   NODE_CHECK_AND_OUTPUT_TYPE(node_)
-  int64_t output_nm = common::AnfAlgo::GetOutputTensorNum(node_);
+  size_t output_nm = common::AnfAlgo::GetOutputTensorNum(node_);
   std::vector<TypeId> dtypes(output_nm);
-  for (int64_t i = 0; i < output_nm; i++) {
+  for (size_t i = 0; i < output_nm; i++) {
     dtypes[i] = AnfAlgo::GetOutputDeviceDataType(node_, i);
   }
-  SET_OUTPUT_SHAPE_AND_TYPE(node_, dtypes, y_row_pointers_shape)
-  return true;
+  std::vector<int64_t> y_row_pointers_shape_(1);
+  y_row_pointers_shape_[0] = static_cast<int64_t>(y_row_pointers_shape[0]);
+  SET_OUTPUT_SHAPE_AND_TYPE(node_, dtypes, y_row_pointers_shape_)
 }
 
 template <typename indiceT, typename valueT>
-bool SparseMatrixTransposeCpuKernelMod::LaunchcomplexKernel(const std::vector<kernel::AddressPtr> &inputs,
+void SparseMatrixTransposeCpuKernelMod::LaunchcomplexKernel(const std::vector<kernel::AddressPtr> &inputs,
                                                             const std::vector<kernel::AddressPtr> &outputs) {
-  indiceT *x_dense_shape = reinterpret_cast<indiceT *>(inputs[kInputIndex0]->addr);
-  indiceT *x_batch_pointers = reinterpret_cast<indiceT *>(inputs[kInputIndex1]->addr);
-  indiceT *x_row_pointers = reinterpret_cast<indiceT *>(inputs[kInputIndex2]->addr);
-  indiceT *x_col_indices = reinterpret_cast<indiceT *>(inputs[kInputIndex3]->addr);
-  valueT *x_values = reinterpret_cast<valueT *>(inputs[kInputIndex4]->addr);
-  indiceT *y_dense_shape_addr = reinterpret_cast<indiceT *>(outputs[kOutputIndex0]->addr);
-  indiceT *y_batch_pointers_addr = reinterpret_cast<indiceT *>(outputs[kOutputIndex1]->addr);
-  indiceT *y_row_pointers_addr = reinterpret_cast<indiceT *>(outputs[kOutputIndex2]->addr);
-  indiceT *y_col_indices_addr = reinterpret_cast<indiceT *>(outputs[kOutputIndex3]->addr);
-  valueT *y_values_addr = reinterpret_cast<valueT *>(outputs[kOutputIndex4]->addr);
-  std::vector<int64_t> y_row_pointers_shape;
-  int64_t batch_pointers = x_batch_pointers_size_;
+  indiceT *x_dense_shape = static_cast<indiceT *>(inputs[kInputIndex0]->addr);
+  indiceT *x_batch_pointers = static_cast<indiceT *>(inputs[kInputIndex1]->addr);
+  indiceT *x_row_pointers = static_cast<indiceT *>(inputs[kInputIndex2]->addr);
+  indiceT *x_col_indices = static_cast<indiceT *>(inputs[kInputIndex3]->addr);
+  valueT *x_values = static_cast<valueT *>(inputs[kInputIndex4]->addr);
+  indiceT *y_dense_shape_addr = static_cast<indiceT *>(outputs[kOutputIndex0]->addr);
+  indiceT *y_batch_pointers_addr = static_cast<indiceT *>(outputs[kOutputIndex1]->addr);
+  indiceT *y_row_pointers_addr = static_cast<indiceT *>(outputs[kOutputIndex2]->addr);
+  indiceT *y_col_indices_addr = static_cast<indiceT *>(outputs[kOutputIndex3]->addr);
+  valueT *y_values_addr = static_cast<valueT *>(outputs[kOutputIndex4]->addr);
+  std::vector<indiceT> y_row_pointers_shape;
+  size_t batch_pointers = x_batch_pointers_size_;
   if (rank_x_ == kRankWithBatch) {
     y_dense_shape_addr[kDenseShape0] = x_dense_shape[kDenseShape0];
     y_dense_shape_addr[kDenseShape1] = x_dense_shape[kDenseShape2];
     y_dense_shape_addr[kDenseShape2] = x_dense_shape[kDenseShape1];
     y_row_pointers_shape.push_back(x_dense_shape[kDenseShape0] * (x_dense_shape[kDenseShape2] + 1));
-    int64_t batch = x_dense_shape[kDenseShape0];
+    size_t batch = static_cast<size_t>(x_dense_shape[kDenseShape0]);
     BATCH_CHECK(batch, batch_pointers, kernel_name_)
   } else {
     y_dense_shape_addr[kDenseShape0] = x_dense_shape[kDenseShape1];
@@ -305,74 +301,75 @@ bool SparseMatrixTransposeCpuKernelMod::LaunchcomplexKernel(const std::vector<ke
                         << "2 to match the CSR form input when input has no batch.";
     }
   }
-  for (int64_t i = 0; i < batch_pointers; ++i) {
+  for (size_t i = 0; i < batch_pointers; ++i) {
     y_batch_pointers_addr[i] = x_batch_pointers[i];
   }
-  int64_t num_rows = x_dense_shape[rank_x_ - kTwo];
-  int64_t num_cols = x_dense_shape[rank_x_ - 1];
-  int64_t num_batch = batch_pointers - 1;
-  std::vector<int64_t> y_part_row_pointers(num_cols + 1);
-  std::vector<int64_t> part_row_pointers(num_rows + 1);
+  size_t num_rows = static_cast<size_t>(x_dense_shape[rank_x_ - kTwo]);
+  size_t num_cols = static_cast<size_t>(x_dense_shape[rank_x_ - 1]);
+  size_t num_batch = batch_pointers - static_cast<size_t>(1);
+  std::vector<indiceT> y_part_row_pointers(num_cols + 1);
+  std::vector<indiceT> part_row_pointers(num_rows + 1);
   if (x_row_pointer_size_ != num_batch * (num_rows + 1)) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the input of row pionters shape should equals"
                       << " batch*(rows + 1 ) to match the CSR form input when input has no batch.";
   }
-  for (int64_t j = 0; j < num_batch; ++j) {
-    int64_t n = x_batch_pointers[j + 1] - x_batch_pointers[j];
+  for (size_t j = 0; j < num_batch; ++j) {
+    size_t n = static_cast<size_t>(x_batch_pointers[j + 1] - x_batch_pointers[j]);
     std::vector<valueT> part_values(n);
     std::vector<indiceT> part_col_indices(n);
     std::vector<indiceT> y_part_col_indices(n);
     std::vector<valueT> y_part_values(n);
-    for (int64_t i = 0; i < num_cols + 1; ++i) {
-      y_part_row_pointers[i] = 0;
+    for (size_t i = 0; i < num_cols + 1; ++i) {
+      y_part_row_pointers[i] = static_cast<indiceT>(0);
     }
-    for (int64_t k = 0; k < num_rows + 1; ++k) {
+    for (size_t k = 0; k < num_rows + 1; ++k) {
       part_row_pointers[k] = x_row_pointers[(num_rows + 1) * j + k];
     }
-    for (int64_t k = 0; k < n; ++k) {
-      part_values[k] = x_values[x_batch_pointers[j] + k];
-      part_col_indices[k] = x_col_indices[x_batch_pointers[j] + k];
+    for (size_t k = 0; k < n; ++k) {
+      part_values[k] = x_values[static_cast<size_t>(x_batch_pointers[j]) + k];
+      part_col_indices[k] = x_col_indices[static_cast<size_t>(x_batch_pointers[j]) + k];
     }
-    for (int64_t i = 0; i < n; ++i) {
-      y_part_row_pointers[part_col_indices[i] + 1] += 1;
+    for (size_t i = 0; i < n; ++i) {
+      y_part_row_pointers[static_cast<size_t>(part_col_indices[i]) + 1] += static_cast<indiceT>(1);
     }
-    for (int64_t i = 1; i < num_cols + 1; ++i) {
+    for (size_t i = 1; i < num_cols + 1; ++i) {
       y_part_row_pointers[i] += y_part_row_pointers[i - 1];
     }
-    for (int64_t k = 0; k < num_cols + 1; ++k) {
+    for (size_t k = 0; k < num_cols + 1; ++k) {
       y_row_pointers_addr[(num_cols + 1) * j + k] = y_part_row_pointers[k];
     }
-    std::vector<int64_t> current_col_count(num_cols);
-    for (int64_t row_idx = 0; row_idx < num_rows; ++row_idx) {
-      const int64_t row_begin = part_row_pointers[row_idx];
-      const int64_t row_end = part_row_pointers[row_idx + 1];
-      for (int64_t i = row_begin; i < row_end; ++i) {
-        const int64_t col_idx = part_col_indices[i];
-        const int64_t offset = y_part_row_pointers[col_idx] + current_col_count[col_idx];
-        y_part_col_indices[offset] = row_idx;
+    std::vector<size_t> current_col_count(num_cols);
+    for (size_t row_idx = 0; row_idx < num_rows; ++row_idx) {
+      const size_t row_begin = static_cast<size_t>(part_row_pointers[row_idx]);
+      const size_t row_end = static_cast<size_t>(part_row_pointers[row_idx + 1]);
+      for (size_t i = row_begin; i < row_end; ++i) {
+        const size_t col_idx = static_cast<size_t>(part_col_indices[i]);
+        const size_t offset = static_cast<size_t>(y_part_row_pointers[col_idx]) + current_col_count[col_idx];
+        y_part_col_indices[offset] = static_cast<indiceT>(row_idx);
         y_part_values[offset] = part_values[i];
-        current_col_count[col_idx] += 1;
+        current_col_count[col_idx] += static_cast<size_t>(1);
       }
     }
-    for (int64_t k = 0; k < n; ++k) {
-      y_values_addr[x_batch_pointers[j] + k] = y_part_values[k];
-      y_col_indices_addr[x_batch_pointers[j] + k] = y_part_col_indices[k];
+    for (size_t k = 0; k < n; ++k) {
+      y_values_addr[static_cast<size_t>(x_batch_pointers[j]) + k] = y_part_values[k];
+      y_col_indices_addr[static_cast<size_t>(x_batch_pointers[j]) + k] = y_part_col_indices[k];
     }
   }
   if (conjugate == true) {
-    for (int64_t i = 0; i < x_value_size_; ++i) {
+    for (size_t i = 0; i < x_value_size_; ++i) {
       y_values_addr[i] = std::conj(y_values_addr[i]);
     }
   }
   auto node_ = node_wpt_.lock();
   NODE_CHECK_AND_OUTPUT_TYPE(node_)
-  int64_t output_nm = common::AnfAlgo::GetOutputTensorNum(node_);
+  size_t output_nm = common::AnfAlgo::GetOutputTensorNum(node_);
   std::vector<TypeId> dtypes(output_nm);
-  for (int64_t i = 0; i < output_nm; i++) {
+  for (size_t i = 0; i < output_nm; i++) {
     dtypes[i] = AnfAlgo::GetOutputDeviceDataType(node_, i);
   }
-  SET_OUTPUT_SHAPE_AND_TYPE(node_, dtypes, y_row_pointers_shape)
-  return true;
+  std::vector<int64_t> y_row_pointers_shape_(1);
+  y_row_pointers_shape_[0] = static_cast<int64_t>(y_row_pointers_shape[0]);
+  SET_OUTPUT_SHAPE_AND_TYPE(node_, dtypes, y_row_pointers_shape_)
 }
 std::vector<KernelAttr> SparseMatrixTransposeCpuKernelMod::GetOpSupport() {
   static std::vector<KernelAttr> kernel_attr_list = {

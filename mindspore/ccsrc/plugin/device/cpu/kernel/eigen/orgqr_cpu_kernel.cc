@@ -36,14 +36,14 @@ bool OrgqrCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
   std::vector<int64_t> x_shape = inputs[0]->GetShapeVector();
   std::vector<int64_t> tau_shape = inputs[1]->GetShapeVector();
-  int64_t shape_size = x_shape.size();
+  int64_t shape_size = static_cast<int64_t>(x_shape.size());
   m_ = *(x_shape.end() - kTwo);
   n_ = *(x_shape.end() - 1);
   p_ = *(tau_shape.end() - 1);
   int64_t size_mn = m_ * n_;
   int64_t num_elements = 1;
   for (int64_t i = 0; i < shape_size; i++) {
-    num_elements *= x_shape[i];
+    num_elements *= x_shape[static_cast<size_t>(i)];
   }
   martrix_num_ = num_elements / size_mn;
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);

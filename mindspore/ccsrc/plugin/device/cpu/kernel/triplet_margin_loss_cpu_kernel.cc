@@ -281,8 +281,10 @@ void TripletMarginLossCPUKernelMod::realtype_nobroadcast_task(size_t start, size
           *(negative_data + a) = *(negative_data + a) * temp2;
         }
       }
-      positive_distance = std::pow(static_cast<double>(calculate_positive.sum()), (1 / static_cast<float>(p)));
-      negative_distance = std::pow(static_cast<double>(calculate_negative.sum()), (1 / static_cast<float>(p)));
+      positive_distance =
+        static_cast<float>(std::pow(static_cast<double>(calculate_positive.sum()), (1 / static_cast<float>(p))));
+      negative_distance =
+        static_cast<float>(std::pow(static_cast<double>(calculate_negative.sum()), (1 / static_cast<float>(p))));
       if (swap == true) {
         calculate_swap = ((calculate_swap)).abs();
         for (size_t a = 0; a < once_compute_size; a++) {
@@ -291,7 +293,8 @@ void TripletMarginLossCPUKernelMod::realtype_nobroadcast_task(size_t start, size
             *(swap_data + a) = *(swap_data + a) * temp3;
           }
         }
-        swap_distance = std::pow(static_cast<double>(calculate_swap.sum()), (1 / static_cast<float>(p)));
+        swap_distance =
+          static_cast<float>(std::pow(static_cast<double>(calculate_swap.sum()), (1 / static_cast<float>(p))));
         negative_distance = (negative_distance < swap_distance) ? negative_distance : swap_distance;
       }
       *(output_reduction_none_data + index * i + j) =
@@ -356,18 +359,18 @@ void TripletMarginLossCPUKernelMod::realtype_broadcast_task(size_t start, size_t
         TripletMarginLossCPUKernelMod::realtype_swap<T>(start, positive_broadcast, negative_broadcast, calculate_swap,
                                                         j, k, calc_swap_sum, inputs, outputs);
       }
-      positive_distance = std::pow(static_cast<double>(calc_1_sum), (1 / static_cast<float>(p)));
+      positive_distance = static_cast<float>(std::pow(static_cast<double>(calc_1_sum), (1 / static_cast<float>(p))));
       if (x_reshape_vector[1] == 1 && positive_reshape_vector[1] == 1 && broadcast_shape[1] != 1) {
-        positive_distance /= std::pow(broadcast_shape[1], (1 / static_cast<float>(p)));
+        positive_distance /= static_cast<float>(std::pow(broadcast_shape[1], (1 / static_cast<float>(p))));
       }
-      negative_distance = std::pow(static_cast<double>(calc_2_sum), (1 / static_cast<float>(p)));
+      negative_distance = static_cast<float>(std::pow(static_cast<double>(calc_2_sum), (1 / static_cast<float>(p))));
       if (x_reshape_vector[1] == 1 && negative_reshape_vector[1] == 1 && broadcast_shape[1] != 1) {
-        negative_distance /= std::pow(broadcast_shape[1], (1 / static_cast<float>(p)));
+        negative_distance /= static_cast<float>(std::pow(broadcast_shape[1], (1 / static_cast<float>(p))));
       }
       if (swap == true) {
-        swap_distance = std::pow(static_cast<double>(calc_swap_sum), (1 / static_cast<float>(p)));
+        swap_distance = static_cast<float>(std::pow(static_cast<double>(calc_swap_sum), (1 / static_cast<float>(p))));
         if (positive_reshape_vector[1] == 1 && negative_reshape_vector[1] == 1 && broadcast_shape[1] != 1) {
-          swap_distance /= std::pow(broadcast_shape[1], (1 / static_cast<float>(p)));
+          swap_distance /= static_cast<float>(std::pow(broadcast_shape[1], (1 / static_cast<float>(p))));
         }
         negative_distance = (negative_distance < swap_distance) ? negative_distance : swap_distance;
       }
@@ -431,18 +434,18 @@ void TripletMarginLossCPUKernelMod::realtype_broadcast_compute(float *output_red
         TripletMarginLossCPUKernelMod::realtype_swap<T>(i * data_num_each_batch, positive_broadcast, negative_broadcast,
                                                         calculate_swap, j, k, calc_swap_sum, inputs, outputs);
       }
-      positive_distance = std::pow(static_cast<double>(calc_1_sum), (1 / static_cast<float>(p)));
+      positive_distance = static_cast<float>(std::pow(static_cast<double>(calc_1_sum), (1 / static_cast<float>(p))));
       if (x_reshape_vector[1] == 1 && positive_reshape_vector[1] == 1 && broadcast_shape[1] != 1) {
-        positive_distance /= std::pow(broadcast_shape[1], (1 / static_cast<float>(p)));
+        positive_distance /= static_cast<float>(std::pow(broadcast_shape[1], (1 / static_cast<float>(p))));
       }
-      negative_distance = std::pow(static_cast<double>(calc_2_sum), (1 / static_cast<float>(p)));
+      negative_distance = static_cast<float>(std::pow(static_cast<double>(calc_2_sum), (1 / static_cast<float>(p))));
       if (x_reshape_vector[1] == 1 && negative_reshape_vector[1] == 1 && broadcast_shape[1] != 1) {
-        negative_distance /= std::pow(broadcast_shape[1], (1 / static_cast<float>(p)));
+        negative_distance /= static_cast<float>(std::pow(broadcast_shape[1], (1 / static_cast<float>(p))));
       }
       if (swap == true) {
-        swap_distance = std::pow(static_cast<double>(calc_swap_sum), (1 / static_cast<float>(p)));
+        swap_distance = static_cast<float>(std::pow(static_cast<double>(calc_swap_sum), (1 / static_cast<float>(p))));
         if (positive_reshape_vector[1] == 1 && negative_reshape_vector[1] == 1 && broadcast_shape[1] != 1) {
-          swap_distance /= std::pow(broadcast_shape[1], (1 / static_cast<float>(p)));
+          swap_distance /= static_cast<float>(std::pow(broadcast_shape[1], (1 / static_cast<float>(p))));
         }
         negative_distance = (negative_distance < swap_distance) ? negative_distance : swap_distance;
       }
@@ -502,8 +505,10 @@ void TripletMarginLossCPUKernelMod::realtype_nobroadcast_compute(float *output_r
           *(negative_data + n) = *(negative_data + n) * temp2;
         }
       }
-      positive_distance = std::pow(static_cast<double>(calculate_positive.sum()), (1 / static_cast<float>(p)));
-      negative_distance = std::pow(static_cast<double>(calculate_negative.sum()), (1 / static_cast<float>(p)));
+      positive_distance =
+        static_cast<float>(std::pow(static_cast<double>(calculate_positive.sum()), (1 / static_cast<float>(p))));
+      negative_distance =
+        static_cast<float>(std::pow(static_cast<double>(calculate_negative.sum()), (1 / static_cast<float>(p))));
       if (swap == true) {
         calculate_swap = ((calculate_swap)).abs();
         for (size_t n = 0; n < once_compute_size; n++) {
@@ -512,7 +517,8 @@ void TripletMarginLossCPUKernelMod::realtype_nobroadcast_compute(float *output_r
             *(swap_data + n) = *(swap_data + n) * temp3;
           }
         }
-        swap_distance = std::pow(static_cast<double>(calculate_swap.sum()), (1 / static_cast<float>(p)));
+        swap_distance =
+          static_cast<float>(std::pow(static_cast<double>(calculate_swap.sum()), (1 / static_cast<float>(p))));
         negative_distance = (negative_distance < swap_distance) ? negative_distance : swap_distance;
       }
       *(output_reduction_none_data + index * i + j) =
@@ -564,11 +570,13 @@ void TripletMarginLossCPUKernelMod::complextype_nobroadcast_task(size_t start, s
         (calculate_positive * (calculate_positive.matrix().conjugate().array())).real().sqrt();
       auto calculate_negative_float =
         (calculate_negative * (calculate_negative.matrix().conjugate().array())).real().sqrt();
-      positive_distance = std::pow(calculate_positive_float.pow(p).sum(), 1 / static_cast<float>(p));
-      negative_distance = std::pow(calculate_negative_float.pow(p).sum(), 1 / static_cast<float>(p));
+      positive_distance =
+        static_cast<float>(std::pow(calculate_positive_float.pow(p).sum(), 1 / static_cast<float>(p)));
+      negative_distance =
+        static_cast<float>(std::pow(calculate_negative_float.pow(p).sum(), 1 / static_cast<float>(p)));
       if (swap == true) {
         auto calculate_swap_float = (calculate_swap * (calculate_swap.matrix().conjugate().array())).real().sqrt();
-        swap_distance = std::pow(calculate_swap_float.pow(p).sum(), 1 / static_cast<float>(p));
+        swap_distance = static_cast<float>(std::pow(calculate_swap_float.pow(p).sum(), 1 / static_cast<float>(p)));
         negative_distance = (negative_distance < swap_distance) ? negative_distance : swap_distance;
       }
       *(output_reduction_none_data + index * i + j) =
@@ -623,10 +631,12 @@ void TripletMarginLossCPUKernelMod::complextype_broadcast_task(size_t start, siz
           x_broadcast[start + j + k * index] - positive_broadcast[start + j + k * index] + static_cast<T>(eps);
         calculate_negative[k] =
           x_broadcast[start + j + k * index] - negative_broadcast[start + j + k * index] + static_cast<T>(eps);
-        float calculate_positive_float = sqrt((calculate_positive[k].real() * calculate_positive[k].real() +
-                                               calculate_positive[k].imag() * calculate_positive[k].imag()));
-        float calculate_negative_float = sqrt((calculate_negative[k].real() * calculate_negative[k].real() +
-                                               calculate_negative[k].imag() * calculate_negative[k].imag()));
+        float calculate_positive_float =
+          static_cast<float>(sqrt((calculate_positive[k].real() * calculate_positive[k].real() +
+                                   calculate_positive[k].imag() * calculate_positive[k].imag())));
+        float calculate_negative_float =
+          static_cast<float>(sqrt((calculate_negative[k].real() * calculate_negative[k].real() +
+                                   calculate_negative[k].imag() * calculate_negative[k].imag())));
         temp1 = calculate_positive_float;
         temp2 = calculate_negative_float;
         for (int l = 1; l < p; l++) {
@@ -638,18 +648,18 @@ void TripletMarginLossCPUKernelMod::complextype_broadcast_task(size_t start, siz
         TripletMarginLossCPUKernelMod::complextype_swap<T>(start, positive_broadcast, negative_broadcast,
                                                            calculate_swap, j, k, calc_swap_sum, inputs, outputs);
       }
-      positive_distance = std::pow(static_cast<double>(calc_1_sum), (1 / static_cast<float>(p)));
+      positive_distance = static_cast<float>(std::pow(static_cast<double>(calc_1_sum), (1 / static_cast<float>(p))));
       if (x_reshape_vector[1] == 1 && positive_reshape_vector[1] == 1 && broadcast_shape[1] != 1) {
-        positive_distance /= std::pow(broadcast_shape[1], (1 / static_cast<float>(p)));
+        positive_distance /= static_cast<float>(std::pow(broadcast_shape[1], (1 / static_cast<float>(p))));
       }
-      negative_distance = std::pow(static_cast<double>(calc_2_sum), (1 / static_cast<float>(p)));
+      negative_distance = static_cast<float>(std::pow(static_cast<double>(calc_2_sum), (1 / static_cast<float>(p))));
       if (x_reshape_vector[1] == 1 && negative_reshape_vector[1] == 1 && broadcast_shape[1] != 1) {
-        negative_distance /= std::pow(broadcast_shape[1], (1 / static_cast<float>(p)));
+        negative_distance /= static_cast<float>(std::pow(broadcast_shape[1], (1 / static_cast<float>(p))));
       }
       if (swap == true) {
-        swap_distance = std::pow(static_cast<double>(calc_swap_sum), (1 / static_cast<float>(p)));
+        swap_distance = static_cast<float>(std::pow(static_cast<double>(calc_swap_sum), (1 / static_cast<float>(p))));
         if (positive_reshape_vector[1] == 1 && negative_reshape_vector[1] == 1 && broadcast_shape[1] != 1) {
-          swap_distance /= std::pow(broadcast_shape[1], (1 / static_cast<float>(p)));
+          swap_distance /= static_cast<float>(std::pow(broadcast_shape[1], (1 / static_cast<float>(p))));
         }
         negative_distance = (negative_distance < swap_distance) ? negative_distance : swap_distance;
       }
@@ -700,10 +710,12 @@ void TripletMarginLossCPUKernelMod::complextype_broadcast_compute(float *output_
                                 positive_broadcast[i * data_num_each_batch + j + k * index] + static_cast<T>(eps);
         calculate_negative[k] = x_broadcast[i * data_num_each_batch + j + k * index] -
                                 negative_broadcast[i * data_num_each_batch + j + k * index] + static_cast<T>(eps);
-        float calculate_positive_float = sqrt((calculate_positive[k].real() * calculate_positive[k].real() +
-                                               calculate_positive[k].imag() * calculate_positive[k].imag()));
-        float calculate_negative_float = sqrt((calculate_negative[k].real() * calculate_negative[k].real() +
-                                               calculate_negative[k].imag() * calculate_negative[k].imag()));
+        float calculate_positive_float =
+          static_cast<float>(sqrt((calculate_positive[k].real() * calculate_positive[k].real() +
+                                   calculate_positive[k].imag() * calculate_positive[k].imag())));
+        float calculate_negative_float =
+          static_cast<float>(sqrt((calculate_negative[k].real() * calculate_negative[k].real() +
+                                   calculate_negative[k].imag() * calculate_negative[k].imag())));
         temp1 = calculate_positive_float;
         temp2 = calculate_negative_float;
         for (int l = 1; l < p; l++) {
@@ -716,18 +728,18 @@ void TripletMarginLossCPUKernelMod::complextype_broadcast_compute(float *output_
                                                            negative_broadcast, calculate_swap, j, k, calc_swap_sum,
                                                            inputs, outputs);
       }
-      positive_distance = std::pow(static_cast<double>(calc_1_sum), (1 / static_cast<float>(p)));
+      positive_distance = static_cast<float>(std::pow(static_cast<double>(calc_1_sum), (1 / static_cast<float>(p))));
       if (x_reshape_vector[1] == 1 && positive_reshape_vector[1] == 1 && broadcast_shape[1] != 1) {
-        positive_distance /= std::pow(broadcast_shape[1], (1 / static_cast<float>(p)));
+        positive_distance /= static_cast<float>(std::pow(broadcast_shape[1], (1 / static_cast<float>(p))));
       }
-      negative_distance = std::pow(static_cast<double>(calc_2_sum), (1 / static_cast<float>(p)));
+      negative_distance = static_cast<float>(std::pow(static_cast<double>(calc_2_sum), (1 / static_cast<float>(p))));
       if (x_reshape_vector[1] == 1 && negative_reshape_vector[1] == 1 && broadcast_shape[1] != 1) {
-        negative_distance /= std::pow(broadcast_shape[1], (1 / static_cast<float>(p)));
+        negative_distance /= static_cast<float>(std::pow(broadcast_shape[1], (1 / static_cast<float>(p))));
       }
       if (swap == true) {
-        swap_distance = std::pow(static_cast<double>(calc_swap_sum), (1 / static_cast<float>(p)));
+        swap_distance = static_cast<float>(std::pow(static_cast<double>(calc_swap_sum), (1 / static_cast<float>(p))));
         if (positive_reshape_vector[1] == 1 && negative_reshape_vector[1] == 1 && broadcast_shape[1] != 1) {
-          swap_distance /= std::pow(broadcast_shape[1], (1 / static_cast<float>(p)));
+          swap_distance /= static_cast<float>(std::pow(broadcast_shape[1], (1 / static_cast<float>(p))));
         }
         negative_distance = (negative_distance < swap_distance) ? negative_distance : swap_distance;
       }
@@ -778,11 +790,13 @@ void TripletMarginLossCPUKernelMod::complextype_nobroadcast_compute(float *outpu
         (calculate_positive * (calculate_positive.matrix().conjugate().array())).real().sqrt();
       auto calculate_negative_float =
         (calculate_negative * (calculate_negative.matrix().conjugate().array())).real().sqrt();
-      positive_distance = std::pow(calculate_positive_float.pow(p).sum(), 1 / static_cast<float>(p));
-      negative_distance = std::pow(calculate_negative_float.pow(p).sum(), 1 / static_cast<float>(p));
+      positive_distance =
+        static_cast<float>(std::pow(calculate_positive_float.pow(p).sum(), 1 / static_cast<float>(p)));
+      negative_distance =
+        static_cast<float>(std::pow(calculate_negative_float.pow(p).sum(), 1 / static_cast<float>(p)));
       if (swap == true) {
         auto calculate_swap_float = (calculate_swap * (calculate_swap.matrix().conjugate().array())).real().sqrt();
-        swap_distance = std::pow(calculate_swap_float.pow(p).sum(), 1 / static_cast<float>(p));
+        swap_distance = static_cast<float>(std::pow(calculate_swap_float.pow(p).sum(), 1 / static_cast<float>(p)));
         negative_distance = (negative_distance < swap_distance) ? negative_distance : swap_distance;
       }
       *(output_reduction_none_data + index * i + j) =
@@ -817,8 +831,8 @@ void TripletMarginLossCPUKernelMod::complextype_swap(size_t start, std::vector<T
   if (swap == true) {
     calculate_swap[k] =
       positive_broadcast[start + j + k * index] - negative_broadcast[start + j + k * index] + static_cast<T>(eps);
-    float calculate_swap_float =
-      sqrt((calculate_swap[k].real() * calculate_swap[k].real() + calculate_swap[k].imag() * calculate_swap[k].imag()));
+    float calculate_swap_float = static_cast<float>(sqrt(
+      (calculate_swap[k].real() * calculate_swap[k].real() + calculate_swap[k].imag() * calculate_swap[k].imag())));
     float temp3 = calculate_swap_float;
     for (int l = 1; l < p; l++) {
       calculate_swap_float = calculate_swap_float * temp3;
