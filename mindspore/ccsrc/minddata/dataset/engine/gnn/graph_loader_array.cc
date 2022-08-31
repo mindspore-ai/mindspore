@@ -19,7 +19,6 @@
 #include <sys/ipc.h>
 #endif
 
-#include <unistd.h>
 #include <future>
 #include <tuple>
 #include <utility>

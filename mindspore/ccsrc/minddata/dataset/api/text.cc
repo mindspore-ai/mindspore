@@ -15,7 +15,6 @@
  */
 #include "minddata/dataset/include/dataset/text.h"
 
-#include <unistd.h>
 #include <fstream>
 #include <regex>
 

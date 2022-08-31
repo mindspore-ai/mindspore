@@ -15,7 +15,6 @@
  */
 #include "minddata/dataset/core/config_manager.h"
 
-#include <unistd.h>
 #include <fstream>
 #include <iostream>
 #include <limits>
