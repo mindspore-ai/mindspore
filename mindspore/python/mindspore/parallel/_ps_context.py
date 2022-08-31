@@ -59,128 +59,30 @@ _set_ps_context_func_map = {
     "server_mode": ps_context().set_server_mode,
     "ms_role": ps_context().set_ms_role,
     "enable_ps": set_ps_enable,
-    "enable_fl": ps_context().set_ps_enable,
     "worker_num": ps_context().set_worker_num,
     "server_num": ps_context().set_server_num,
     "scheduler_ip": ps_context().set_scheduler_ip,
     "scheduler_port": ps_context().set_scheduler_port,
-    "fl_server_port": ps_context().set_fl_server_port,
-    "enable_fl_client": ps_context().set_fl_client_enable,
-    "start_fl_job_threshold": ps_context().set_start_fl_job_threshold,
-    "start_fl_job_time_window": ps_context().set_start_fl_job_time_window,
-    "update_model_ratio": ps_context().set_update_model_ratio,
-    "update_model_time_window": ps_context().set_update_model_time_window,
-    "share_secrets_ratio": ps_context().set_share_secrets_ratio,
-    "cipher_time_window": ps_context().set_cipher_time_window,
-    "reconstruct_secrets_threshold": ps_context().set_reconstruct_secrets_threshold,
-    "fl_name": ps_context().set_fl_name,
-    "fl_iteration_num": ps_context().set_fl_iteration_num,
-    "client_epoch_num": ps_context().set_client_epoch_num,
-    "client_batch_size": ps_context().set_client_batch_size,
-    "client_learning_rate": ps_context().set_client_learning_rate,
-    "worker_step_num_per_iteration": ps_context().set_worker_step_num_per_iteration,
-    "root_first_ca_path": ps_context().set_root_first_ca_path,
-    "root_second_ca_path": ps_context().set_root_second_ca_path,
-    "pki_verify": ps_context().set_pki_verify,
-    "equip_crl_path": ps_context().set_equip_crl_path,
-    "replay_attack_time_diff": ps_context().set_replay_attack_time_diff,
     "enable_ssl": ps_context().set_enable_ssl,
     "client_password": ps_context().set_client_password,
     "server_password": ps_context().set_server_password,
     "scheduler_manage_port": ps_context().set_scheduler_manage_port,
     "config_file_path": ps_context().set_config_file_path,
-    "dp_eps": ps_context().set_dp_eps,
-    "dp_delta": ps_context().set_dp_delta,
-    "dp_norm_clip": ps_context().set_dp_norm_clip,
-    "encrypt_type": ps_context().set_encrypt_type,
-    "http_url_prefix": ps_context().set_http_url_prefix,
-    "global_iteration_time_window": ps_context().set_global_iteration_time_window,
-    "sign_k": ps_context().set_sign_k,
-    "sign_eps": ps_context().set_sign_eps,
-    "sign_thr_ratio": ps_context().set_sign_thr_ratio,
-    "sign_global_lr": ps_context().set_sign_global_lr,
-    "sign_dim_out": ps_context().set_sign_dim_out,
-    "checkpoint_dir": ps_context().set_checkpoint_dir,
-    "upload_compress_type": ps_context().set_upload_compress_type,
-    "upload_sparse_rate": ps_context().set_upload_sparse_rate,
-    "download_compress_type": ps_context().set_download_compress_type,
-    "instance_name": ps_context().set_instance_name,
-    "participation_time_level": ps_context().set_participation_time_level,
-    "continuous_failure_times": ps_context().set_continuous_failure_times,
 }
 
 _get_ps_context_func_map = {
     "server_mode": ps_context().server_mode,
     "ms_role": ps_context().ms_role,
     "enable_ps": ps_context().is_ps_mode,
-    "enable_fl": ps_context().is_ps_mode,
     "worker_num": ps_context().worker_num,
     "server_num": ps_context().server_num,
     "scheduler_ip": ps_context().scheduler_ip,
     "scheduler_port": ps_context().scheduler_port,
-    "fl_server_port": ps_context().fl_server_port,
-    "enable_fl_client": ps_context().fl_client_enable,
-    "start_fl_job_threshold": ps_context().start_fl_job_threshold,
-    "start_fl_job_time_window": ps_context().start_fl_job_time_window,
-    "update_model_ratio": ps_context().update_model_ratio,
-    "update_model_time_window": ps_context().update_model_time_window,
-    "share_secrets_ratio": ps_context().share_secrets_ratio,
-    "cipher_time_window": ps_context().cipher_time_window,
-    "reconstruct_secrets_threshold": ps_context().reconstruct_secrets_threshold,
-    "fl_name": ps_context().fl_name,
-    "fl_iteration_num": ps_context().fl_iteration_num,
-    "client_epoch_num": ps_context().client_epoch_num,
-    "client_batch_size": ps_context().client_batch_size,
-    "client_learning_rate": ps_context().client_learning_rate,
-    "worker_step_num_per_iteration": ps_context().worker_step_num_per_iteration,
-    "dp_eps": ps_context().dp_eps,
-    "dp_delta": ps_context().dp_delta,
-    "dp_norm_clip": ps_context().dp_norm_clip,
-    "encrypt_type": ps_context().encrypt_type,
-    "root_first_ca_path": ps_context().root_first_ca_path,
-    "root_second_ca_path": ps_context().root_second_ca_path,
-    "pki_verify": ps_context().pki_verify,
-    "equip_crl_path": ps_context().equip_crl_path,
-    "replay_attack_time_diff": ps_context().replay_attack_time_diff,
     "enable_ssl": ps_context().enable_ssl,
     "client_password": ps_context().client_password,
     "server_password": ps_context().server_password,
     "scheduler_manage_port": ps_context().scheduler_manage_port,
     "config_file_path": ps_context().config_file_path,
-    "http_url_prefix": ps_context().http_url_prefix,
-    "global_iteration_time_window": ps_context().global_iteration_time_window,
-    "sign_k": ps_context().sign_k,
-    "sign_eps": ps_context().sign_eps,
-    "sign_thr_ratio": ps_context().sign_thr_ratio,
-    "sign_global_lr": ps_context().sign_global_lr,
-    "sign_dim_out": ps_context().sign_dim_out,
-    "checkpoint_dir": ps_context().checkpoint_dir,
-    "upload_compress_type": ps_context().upload_compress_type,
-    "upload_sparse_rate": ps_context().upload_sparse_rate,
-    "download_compress_type": ps_context().download_compress_type,
-    "instance_name": ps_context().instance_name,
-    "participation_time_level": ps_context().participation_time_level,
-    "continuous_failure_times": ps_context().continuous_failure_times,
-}
-
-_check_positive_int_keys = ["server_num", "scheduler_port", "fl_server_port",
-                            "start_fl_job_threshold", "start_fl_job_time_window", "update_model_time_window",
-                            "fl_iteration_num", "client_epoch_num", "client_batch_size", "cipher_time_window",
-                            "reconstruct_secrets_threshold"]
-
-_check_non_negative_int_keys = ["worker_num"]
-
-_check_positive_float_keys = ["update_model_ratio", "client_learning_rate"]
-
-_check_port_keys = ["scheduler_port", "fl_server_port"]
-
-_check_string_keys = {
-    "upload_compress_type": ["NO_COMPRESS", "DIFF_SPARSE_QUANT"],
-    "download_compress_type": ["NO_COMPRESS", "QUANT"],
-}
-
-_check_float_range_keys = {
-    "upload_sparse_rate": {"lower_limit": 0.0, "upper_limit": 1.0, "rel": Rel.INC_RIGHT},
 }
 
 def _get_ps_mode_rank():
@@ -227,11 +129,9 @@ def _set_ps_context(**kwargs):
         >>> import mindspore as ms
         >>> ms.set_ps_context(enable_ps=True, enable_ssl=True, client_password='123456', server_password='123456')
     """
-    kwargs = _check_conflict_value(kwargs)
     for key, value in kwargs.items():
         if key not in _set_ps_context_func_map:
             raise ValueError("Set PS context keyword %s is not recognized!" % key)
-        _check_value(key, value)
         set_func = _set_ps_context_func_map[key]
         set_func(value)
 
@@ -319,10 +219,6 @@ def _is_ps_mode():
     return _get_ps_context("server_mode") == "PARAMETER_SERVER"
 
 
-def _is_fl_mode():
-    return _get_ps_context("server_mode") in ("FEDERATED_LEARNING", "HYBRID_TRAINING")
-
-
 def _enable_distributed_mindrt():
     '''
     Whether the distributed MindRT is enabled.
@@ -330,39 +226,3 @@ def _enable_distributed_mindrt():
     '''
     return ps_context().enable_distributed_mindrt()
 
-
-def _check_value(key, value):
-    """
-    Validate the value for parameter server context keys.
-    """
-    if key in _check_positive_int_keys:
-        Validator.check_positive_int(value, key)
-
-    if key in _check_non_negative_int_keys:
-        Validator.check_non_negative_int(value, key)
-
-    if key in _check_positive_float_keys:
-        Validator.check_positive_float(value, key)
-
-    if key in _check_string_keys:
-        string_keys = _check_string_keys[key]
-        Validator.check_string(value, string_keys)
-
-    if key in _check_float_range_keys:
-        range_keys = _check_float_range_keys[key]
-        Validator.check_float_range(value, **range_keys)
-
-    if key in _check_port_keys:
-        if value < 1 or value > 65535:
-            raise ValueError("The range of %s must be 1 to 65535, but got %d." % (key, value))
-
-
-def _check_conflict_value(kwargs):
-    if "upload_compress_type" in kwargs and "encrypt_type" in kwargs:
-        if kwargs["upload_compress_type"] != "NO_COMPRESS" and kwargs["encrypt_type"] in ("SIGNDS", "PW_ENCRYPT"):
-            logger.warning("The '{}' and '{}' are conflicted, and in '{}' mode the"
-                           " 'upload_compress_type' will be 'NO_COMPRESS'".format(kwargs["encrypt_type"],
-                                                                                  kwargs["upload_compress_type"],
-                                                                                  kwargs["encrypt_type"]))
-            kwargs["upload_compress_type"] = "NO_COMPRESS"
-    return kwargs

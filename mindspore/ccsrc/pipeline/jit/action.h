@@ -37,20 +37,14 @@ bool AutoMonadAction(const ResourcePtr &resource);
 bool AbstractSpecializeAction(const ResourcePtr &resource);
 bool GeOptimizeAction(const ResourcePtr &resource);
 bool VmOptimizeAction(const ResourcePtr &resource);
-bool PynativeElimOpt(const ResourcePtr &resource);
 bool TaskEmitAction(const ResourcePtr &resource);
 bool ExecuteAction(const ResourcePtr &resource);
-bool StartFLWorkerAction(const ResourcePtr &resource);
 bool StartPSSchedulerAction(const ResourcePtr &resource);
-// This action is only for federated learning only. In later version, parameter server mode and federated learning will
-// use the same action.
-bool StartServerAction(const ResourcePtr &resource);
 bool DistributedSplitAction(const ResourcePtr &resource);
 
 std::vector<ActionItem> GePipeline();
 std::vector<ActionItem> VmPipeline(const ResourcePtr &resource);
 std::vector<ActionItem> MindIRPipeline();
-std::vector<ActionItem> PServerPipeline(const ResourcePtr &resource);
 std::vector<ActionItem> ServerPipeline(const ResourcePtr &resource);
 std::vector<ActionItem> PSchedulerPipeline(const ResourcePtr &resource);
 abstract::AnalysisResult AbstractAnalyze(const ResourcePtr &resource, const FuncGraphPtr &func_graph,

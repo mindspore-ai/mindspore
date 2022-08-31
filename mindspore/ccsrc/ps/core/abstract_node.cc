@@ -55,7 +55,6 @@ void AbstractNode::Register(const std::shared_ptr<TcpClient> &client) {
   register_message.set_ip(node_info_.ip_);
   register_message.set_port(node_info_.port_);
   register_message.set_is_recover(is_recover.load());
-  register_message.set_fl_iteration_num(PSContext::instance()->fl_iteration_num());
 
   MS_LOG(INFO) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
                << " the node id:" << node_info_.node_id_ << " begin to register to the scheduler!";

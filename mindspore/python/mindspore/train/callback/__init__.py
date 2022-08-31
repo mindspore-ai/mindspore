@@ -29,13 +29,11 @@ from mindspore.train.callback._time_monitor import TimeMonitor
 from mindspore.train.callback._summary_collector import SummaryCollector
 from mindspore.train.callback._lr_scheduler_callback import LearningRateScheduler
 from mindspore.train.callback._landscape import SummaryLandscape
-from mindspore.train.callback._fl_manager import FederatedLearningManager
 from mindspore.train.callback._history import History
 from mindspore.train.callback._lambda_callback import LambdaCallback
 from mindspore.train.callback._early_stop import EarlyStopping
 from mindspore.train.callback._reduce_lr_on_plateau import ReduceLROnPlateau
 
-
 __all__ = ["Callback", "LossMonitor", "TimeMonitor", "ModelCheckpoint",
            "SummaryCollector", "CheckpointConfig", "RunContext", "LearningRateScheduler", "SummaryLandscape",
-           "FederatedLearningManager", "History", "LambdaCallback", "ReduceLROnPlateau", "EarlyStopping"]
+           "History", "LambdaCallback", "ReduceLROnPlateau", "EarlyStopping"]

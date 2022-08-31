@@ -459,72 +459,9 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("scheduler_ip", &PSContext::scheduler_ip, "Get scheduler ip.")
     .def("set_scheduler_port", &PSContext::set_scheduler_port, "Set scheduler port.")
     .def("scheduler_port", &PSContext::scheduler_port, "Get scheduler port.")
-    .def("set_fl_server_port", &PSContext::set_fl_server_port, "Set federated learning server port.")
-    .def("fl_server_port", &PSContext::fl_server_port, "Get federated learning server port.")
-    .def("set_fl_client_enable", &PSContext::set_fl_client_enable, "Set federated learning client.")
-    .def("fl_client_enable", &PSContext::fl_client_enable, "Get federated learning client.")
-    .def("set_start_fl_job_threshold", &PSContext::set_start_fl_job_threshold,
-         "Set threshold count for startFLJob round.")
-    .def("start_fl_job_threshold", &PSContext::start_fl_job_threshold, "Get threshold count for startFLJob round.")
-    .def("set_start_fl_job_time_window", &PSContext::set_start_fl_job_time_window,
-         "Set time window for startFLJob round.")
-    .def("start_fl_job_time_window", &PSContext::start_fl_job_time_window, "Get time window for startFLJob round.")
-    .def("set_update_model_ratio", &PSContext::set_update_model_ratio,
-         "Set threshold count ratio for updateModel round.")
-    .def("update_model_ratio", &PSContext::update_model_ratio, "Get threshold count ratio for updateModel round.")
-    .def("set_update_model_time_window", &PSContext::set_update_model_time_window,
-         "Set time window for updateModel round.")
-    .def("update_model_time_window", &PSContext::update_model_time_window, "Get time window for updateModel round.")
-    .def("set_share_secrets_ratio", &PSContext::set_share_secrets_ratio,
-         "Set threshold count ratio for share secrets round.")
-    .def("share_secrets_ratio", &PSContext::share_secrets_ratio, "Get threshold count ratio for share secrets round.")
-    .def("set_cipher_time_window", &PSContext::set_cipher_time_window, "Set time window for each cipher round.")
-    .def("cipher_time_window", &PSContext::cipher_time_window, "Get time window for cipher rounds.")
-    .def("set_reconstruct_secrets_threshold", &PSContext::set_reconstruct_secrets_threshold,
-         "Set threshold count for reconstruct secrets round.")
-    .def("reconstruct_secrets_threshold", &PSContext::reconstruct_secrets_threshold,
-         "Get threshold count for reconstruct secrets round.")
-    .def("set_fl_name", &PSContext::set_fl_name, "Set federated learning name.")
-    .def("fl_name", &PSContext::fl_name, "Get federated learning name.")
-    .def("set_fl_iteration_num", &PSContext::set_fl_iteration_num, "Set federated learning iteration number.")
-    .def("fl_iteration_num", &PSContext::fl_iteration_num, "Get federated learning iteration number.")
-    .def("set_client_epoch_num", &PSContext::set_client_epoch_num, "Set federated learning client epoch number.")
-    .def("client_epoch_num", &PSContext::client_epoch_num, "Get federated learning client epoch number.")
-    .def("set_client_batch_size", &PSContext::set_client_batch_size, "Set federated learning client batch size.")
-    .def("client_batch_size", &PSContext::client_batch_size, "Get federated learning client batch size.")
-    .def("set_client_learning_rate", &PSContext::set_client_learning_rate,
-         "Set federated learning client learning rate.")
-    .def("client_learning_rate", &PSContext::client_learning_rate,
-         "Get worker's standalone training step number before communicating with server.")
-    .def("set_worker_step_num_per_iteration", &PSContext::set_worker_step_num_per_iteration,
-         "Set worker's standalone training step number before communicating with server..")
-    .def("worker_step_num_per_iteration", &PSContext::worker_step_num_per_iteration,
-         "Get federated learning client learning rate.")
-    .def("set_secure_aggregation", &PSContext::set_secure_aggregation,
-         "Set federated learning client using secure aggregation.")
-    .def("set_dp_eps", &PSContext::set_dp_eps, "Set dp epsilon for federated learning secure aggregation.")
-    .def("dp_eps", &PSContext::dp_eps, "Get dp epsilon for federated learning secure aggregation.")
-    .def("set_dp_delta", &PSContext::set_dp_delta, "Set dp delta for federated learning secure aggregation.")
-    .def("dp_delta", &PSContext::dp_delta, "Get dp delta for federated learning secure aggregation.")
-    .def("set_dp_norm_clip", &PSContext::set_dp_norm_clip,
-         "Set dp norm clip for federated learning secure aggregation.")
-    .def("dp_norm_clip", &PSContext::dp_norm_clip, "Get dp norm clip for federated learning secure aggregation.")
-    .def("set_encrypt_type", &PSContext::set_encrypt_type,
-         "Set encrypt type for federated learning secure aggregation.")
-    .def("encrypt_type", &PSContext::encrypt_type, "Get encrypt type for federated learning secure aggregation.")
-    .def("set_root_first_ca_path", &PSContext::set_root_first_ca_path, "Set root first ca path.")
-    .def("root_first_ca_path", &PSContext::root_first_ca_path, "Get root first ca path.")
-    .def("set_root_second_ca_path", &PSContext::set_root_second_ca_path, "Set root second ca path.")
-    .def("root_second_ca_path", &PSContext::root_second_ca_path, "Get root second ca path.")
-    .def("set_pki_verify", &PSContext::set_pki_verify, "Set pki verify.")
-    .def("pki_verify", &PSContext::pki_verify, "Get pki verify.")
     .def("set_scheduler_manage_port", &PSContext::set_scheduler_manage_port,
          "Set scheduler manage port used to scale out/in.")
     .def("scheduler_manage_port", &PSContext::scheduler_manage_port, "Get scheduler manage port used to scale out/in.")
-    .def("set_equip_crl_path", &PSContext::set_equip_crl_path, "Set root second crl path.")
-    .def("set_replay_attack_time_diff", &PSContext::set_replay_attack_time_diff, "Set replay attack time diff.")
-    .def("equip_crl_path", &PSContext::equip_crl_path, "Get root second crl path.")
-    .def("replay_attack_time_diff", &PSContext::replay_attack_time_diff, "Get replay attack time diff.")
     .def("set_enable_ssl", &PSContext::set_enable_ssl, "Set PS SSL mode enabled or disabled.")
     .def("enable_ssl", &PSContext::enable_ssl, "Get PS SSL mode enabled or disabled.")
     .def("set_client_password", &PSContext::set_client_password, "Set the client password to decode the p12 file.")
@@ -535,37 +472,6 @@ PYBIND11_MODULE(_c_expression, m) {
          "Set configuration files required by the communication layer.")
     .def("config_file_path", &PSContext::config_file_path,
          "Get configuration files required by the communication layer.")
-    .def("set_encrypt_type", &PSContext::set_encrypt_type,
-         "Set encrypt type for federated learning secure aggregation.")
-    .def("set_sign_k", &PSContext::set_sign_k, "Set sign k for federated learning SignDS.")
-    .def("sign_k", &PSContext::sign_k, "Get sign k for federated learning SignDS.")
-    .def("set_sign_eps", &PSContext::set_sign_eps, "Set sign eps for federated learning SignDS.")
-    .def("sign_eps", &PSContext::sign_eps, "Get sign eps for federated learning SignDS.")
-    .def("set_sign_thr_ratio", &PSContext::set_sign_thr_ratio, "Set sign thr ratio for federated learning SignDS.")
-    .def("sign_thr_ratio", &PSContext::sign_thr_ratio, "Get sign thr ratio for federated learning SignDS.")
-    .def("set_sign_global_lr", &PSContext::set_sign_global_lr, "Set sign global lr for federated learning SignDS.")
-    .def("sign_global_lr", &PSContext::sign_global_lr, "Get sign global lr for federated learning SignDS.")
-    .def("set_sign_dim_out", &PSContext::set_sign_dim_out, "Set sign dim out for federated learning SignDS.")
-    .def("sign_dim_out", &PSContext::sign_dim_out, "Get sign dim out for federated learning SignDS.")
-    .def("set_http_url_prefix", &PSContext::set_http_url_prefix, "Set http url prefix for http communication.")
-    .def("http_url_prefix", &PSContext::http_url_prefix, "http url prefix for http communication.")
-    .def("set_global_iteration_time_window", &PSContext::set_global_iteration_time_window,
-         "Set global iteration time window.")
-    .def("global_iteration_time_window", &PSContext::global_iteration_time_window, "Get global iteration time window.")
-    .def("set_upload_compress_type", &PSContext::set_upload_compress_type, "Set upload compress type.")
-    .def("upload_compress_type", &PSContext::upload_compress_type, "Get upload compress type.")
-    .def("set_upload_sparse_rate", &PSContext::set_upload_sparse_rate, "Set upload sparse rate.")
-    .def("upload_sparse_rate", &PSContext::upload_sparse_rate, "Get upload sparse rate.")
-    .def("set_download_compress_type", &PSContext::set_download_compress_type, "Set download compress type.")
-    .def("download_compress_type", &PSContext::download_compress_type, "Get download compress type.")
-    .def("set_checkpoint_dir", &PSContext::set_checkpoint_dir, "Set server checkpoint directory.")
-    .def("checkpoint_dir", &PSContext::checkpoint_dir, "Server checkpoint directory.")
-    .def("set_instance_name", &PSContext::set_instance_name, "Set instance name.")
-    .def("instance_name", &PSContext::instance_name, "Get instance name.")
-    .def("set_participation_time_level", &PSContext::set_participation_time_level, "Set participation time level.")
-    .def("participation_time_level", &PSContext::participation_time_level, "Get participation time level.")
-    .def("set_continuous_failure_times", &PSContext::set_continuous_failure_times, "Set continuous failure times")
-    .def("continuous_failure_times", &PSContext::continuous_failure_times, "Get continuous failure times.")
     .def("enable_distributed_mindrt", &PSContext::enable_distributed_mindrt, "Whether distributed MindRT is enabled.");
   (void)m.def("_encrypt", &mindspore::pipeline::PyEncrypt, "Encrypt the data.");
   (void)m.def("_decrypt", &mindspore::pipeline::PyDecrypt, "Decrypt the data.");

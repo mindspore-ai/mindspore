@@ -70,10 +70,9 @@
 #include "ps/constants.h"
 #include "ps/util.h"
 #include "ps/ps_cache/ps_data/ps_data_prefetch.h"
-#include "fl/server/server.h"
-#include "fl/worker/fl_worker.h"
 #include "distributed/cluster/cluster_context.h"
 #include "runtime/graph_scheduler/embedding_cache_scheduler.h"
+#include "ps/scheduler.h"
 #endif
 #ifdef ENABLE_DUMP_IR
 #include "debug/rdr/graph_recorder.h"
@@ -755,11 +754,6 @@ std::vector<ActionItem> GetPipeline(const ResourcePtr &resource, const std::stri
       return PSchedulerPipeline(resource);
     }
   } else {
-    const std::string &server_mode = ps::PSContext::instance()->server_mode();
-    if ((server_mode == ps::kServerModeFL || server_mode == ps::kServerModeHybrid) &&
-        ps::PSContext::instance()->is_server()) {
-      return ServerPipeline(resource);
-    }
     if (ps::PSContext::instance()->is_scheduler()) {
       return PSchedulerPipeline(resource);
     }
@@ -1722,16 +1716,6 @@ void ClearResAtexit() {
   device::DeviceContextManager::GetInstance().WaitTaskFinishOnDevice();
 
   RecordExitStatus();
-#ifdef WITH_BACKEND
-  if (!distributed::cluster::ClusterContext::instance()->initialized() && ps::PSContext::instance()->is_ps_mode() &&
-      ps::PSContext::instance()->is_worker()) {
-    MS_LOG(INFO) << "Start finalizing worker.";
-    const std::string &server_mode = ps::PSContext::instance()->server_mode();
-    if ((server_mode == ps::kServerModeFL || server_mode == ps::kServerModeHybrid)) {
-      fl::worker::FLWorker::GetInstance().Finalize();
-    }
-  }
-#endif
 #ifdef ENABLE_DUMP_IR
   mindspore::RDR::Snapshot();
   mindspore::RDR::ResetRecorder();

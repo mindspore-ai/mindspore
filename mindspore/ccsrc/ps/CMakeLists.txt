@@ -41,6 +41,8 @@ if(NOT ENABLE_CPU OR WIN32)
     list(REMOVE_ITEM _PS_SRC_FILES "core/communicator/http_msg_handler.cc")
     list(REMOVE_ITEM _PS_SRC_FILES "core/communicator/tcp_msg_handler.cc")
     list(REMOVE_ITEM _PS_SRC_FILES "core/instance_manager.cc")
+    list(REMOVE_ITEM _PS_SRC_FILES "core/collective_ops_impl.cc")
+    list(REMOVE_ITEM _PS_SRC_FILES "core/local_meta_store.cc")
 endif()
 
 

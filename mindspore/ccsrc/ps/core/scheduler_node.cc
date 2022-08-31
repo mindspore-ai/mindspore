@@ -19,7 +19,7 @@
 #include <string>
 
 #include "include/common/debug/common.h"
-#include "fl/server/common.h"
+#include "ps/core/common.h"
 #include "ps/core/scheduler_recovery.h"
 
 namespace mindspore {
@@ -415,11 +415,6 @@ void SchedulerNode::ProcessRegister(const std::shared_ptr<TcpServer> &server,
     if (!node_manager_.IsAllNodesAlive()) {
       MS_LOG(ERROR)
         << "Do not broadcast nodes info because some server nodes are not alive, and cluster will exit later.";
-      return;
-    }
-    if (!node_manager_.VerifyClusterNodesParam()) {
-      MS_LOG(ERROR) << "Do not broadcast nodes info because some server nodes info are not inconsistent, and cluster "
-                       "will exit later.";
       return;
     }
     if (!BuildingNetwork()) {

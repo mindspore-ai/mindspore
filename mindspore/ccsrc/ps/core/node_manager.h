@@ -138,8 +138,6 @@ class NodeManager {
 
   const std::unordered_map<std::string, NodeInfo> &QueryTimeOutNodesInfo() const;
 
-  bool VerifyClusterNodesParam();
-
  private:
   std::mutex node_mutex_;
   std::mutex cluster_mutex_;

@@ -54,8 +54,6 @@
 #include "debug/data_dump/dump_json_parser.h"
 #ifdef WITH_BACKEND
 #include "ps/scheduler.h"
-#include "fl/worker/fl_worker.h"
-#include "fl/server/server.h"
 #include "distributed/cluster/cluster_context.h"
 #endif
 
@@ -759,17 +757,6 @@ bool VmOptimizeAction(const ResourcePtr &resource) {
   return ret;
 }
 
-bool PynativeElimOpt(const ResourcePtr &resource) {
-  MS_EXCEPTION_IF_NULL(resource);
-  if (resource->manager() == nullptr) {
-    MS_LOG(EXCEPTION) << "PynativeElimOpt error, manager is null.";
-  }
-  if (resource->func_graph() == nullptr) {
-    MS_LOG(EXCEPTION) << "PynativeElimOpt error, graph is null.";
-  }
-  return PynativeOptPass(resource);
-}
-
 static bool IsCtrlSink() {
   auto ms_ctx = MsContext::GetInstance();
   if (ms_ctx->get_param<int>(MS_CTX_EXECUTION_MODE) != kGraphMode) {
@@ -1166,96 +1153,6 @@ bool ExecuteAction(const ResourcePtr &resource) {
 }
 
 #ifdef WITH_BACKEND
-bool StartFLWorkerAction(const ResourcePtr &) {
-  fl::worker::FLWorker::GetInstance().Run();
-  return true;
-}
-
-bool StartServerAction(const ResourcePtr &resource) {
-  MS_EXCEPTION_IF_NULL(resource);
-  FuncGraphPtr func_graph = resource->func_graph();
-  const std::string &server_mode_ = ps::PSContext::instance()->server_mode();
-  uint32_t worker_num = ps::PSContext::instance()->initial_worker_num();
-  uint32_t server_num = ps::PSContext::instance()->initial_server_num();
-  uint16_t fl_server_port = ps::PSContext::instance()->fl_server_port();
-
-  // Update model threshold is a certain ratio of start_fl_job threshold.
-  // update_model_threshold = start_fl_job_threshold * update_model_ratio.
-  size_t start_fl_job_threshold = ps::PSContext::instance()->start_fl_job_threshold();
-  float update_model_ratio = ps::PSContext::instance()->update_model_ratio();
-  size_t update_model_threshold = static_cast<size_t>(std::ceil(start_fl_job_threshold * update_model_ratio));
-  uint64_t start_fl_job_time_window = ps::PSContext::instance()->start_fl_job_time_window();
-  uint64_t update_model_time_window = ps::PSContext::instance()->update_model_time_window();
-
-  std::vector<fl::server::RoundConfig> rounds_config = {
-    {"startFLJob", true, start_fl_job_time_window, true, start_fl_job_threshold},
-    {"updateModel", true, update_model_time_window, true, update_model_threshold},
-    {"getModel"},
-    {"pullWeight"},
-    {"pushWeight", false, 3000, true, server_num, true},
-    {"pushMetrics", false, 3000, true, 1}};
-
-  float share_secrets_ratio = ps::PSContext::instance()->share_secrets_ratio();
-  uint64_t cipher_time_window = ps::PSContext::instance()->cipher_time_window();
-  size_t minimum_clients_for_reconstruct = ps::PSContext::instance()->reconstruct_secrets_threshold() + 1;
-
-  size_t exchange_keys_threshold =
-    std::max(static_cast<size_t>(std::ceil(start_fl_job_threshold * share_secrets_ratio)), update_model_threshold);
-  size_t get_keys_threshold =
-    std::max(static_cast<size_t>(std::ceil(exchange_keys_threshold * share_secrets_ratio)), update_model_threshold);
-  size_t share_secrets_threshold =
-    std::max(static_cast<size_t>(std::ceil(get_keys_threshold * share_secrets_ratio)), update_model_threshold);
-  size_t get_secrets_threshold =
-    std::max(static_cast<size_t>(std::ceil(share_secrets_threshold * share_secrets_ratio)), update_model_threshold);
-  size_t client_list_threshold = std::max(static_cast<size_t>(std::ceil(update_model_threshold * share_secrets_ratio)),
-                                          minimum_clients_for_reconstruct);
-  size_t push_list_sign_threshold = std::max(
-    static_cast<size_t>(std::ceil(client_list_threshold * share_secrets_ratio)), minimum_clients_for_reconstruct);
-  size_t get_list_sign_threshold = std::max(
-    static_cast<size_t>(std::ceil(push_list_sign_threshold * share_secrets_ratio)), minimum_clients_for_reconstruct);
-#ifdef ENABLE_ARMOUR
-  std::string encrypt_type = ps::PSContext::instance()->encrypt_type();
-  if (encrypt_type == ps::kPWEncryptType) {
-    MS_LOG(INFO) << "Add secure aggregation rounds.";
-    rounds_config.push_back({"exchangeKeys", true, cipher_time_window, true, exchange_keys_threshold});
-    rounds_config.push_back({"getKeys", true, cipher_time_window, true, get_keys_threshold});
-    rounds_config.push_back({"shareSecrets", true, cipher_time_window, true, share_secrets_threshold});
-    rounds_config.push_back({"getSecrets", true, cipher_time_window, true, get_secrets_threshold});
-    rounds_config.push_back({"getClientList", true, cipher_time_window, true, client_list_threshold});
-    rounds_config.push_back({"reconstructSecrets", true, cipher_time_window, true, minimum_clients_for_reconstruct});
-    if (ps::PSContext::instance()->pki_verify()) {
-      rounds_config.push_back({"pushListSign", true, cipher_time_window, true, push_list_sign_threshold});
-      rounds_config.push_back({"getListSign", true, cipher_time_window, true, get_list_sign_threshold});
-    }
-  }
-  if (encrypt_type == ps::kStablePWEncryptType) {
-    MS_LOG(INFO) << "Add stable secure aggregation rounds.";
-    rounds_config.push_back({"exchangeKeys", true, cipher_time_window, true, exchange_keys_threshold});
-    rounds_config.push_back({"getKeys", true, cipher_time_window, true, get_keys_threshold});
-  }
-#endif
-  fl::server::CipherConfig cipher_config = {share_secrets_ratio,     cipher_time_window,
-                                            exchange_keys_threshold, get_keys_threshold,
-                                            share_secrets_threshold, get_secrets_threshold,
-                                            client_list_threshold,   push_list_sign_threshold,
-                                            get_list_sign_threshold, minimum_clients_for_reconstruct};
-
-  size_t executor_threshold = 0;
-  if (server_mode_ == ps::kServerModeFL || server_mode_ == ps::kServerModeHybrid) {
-    executor_threshold = update_model_threshold;
-    fl::server::Server::GetInstance().Initialize(true, true, fl_server_port, rounds_config, cipher_config, func_graph,
-                                                 executor_threshold);
-  } else if (server_mode_ == ps::kServerModePS) {
-    executor_threshold = worker_num;
-    fl::server::Server::GetInstance().Initialize(true, false, 0, rounds_config, cipher_config, func_graph,
-                                                 executor_threshold);
-  } else {
-    MS_LOG(EXCEPTION) << "Server mode " << server_mode_ << " is not supported.";
-  }
-  fl::server::Server::GetInstance().Run();
-  return true;
-}
-
 bool StartPSSchedulerAction(const ResourcePtr &) {
   if (distributed::cluster::ClusterContext::instance()->initialized()) {
     MS_LOG(INFO) << "This node is scheduler. Start wait for finalizing.";
@@ -1552,9 +1449,6 @@ std::vector<ActionItem> VmPipeline(const ResourcePtr &resource) {
       MS_LOG(INFO) << "This worker is initialized. No need to add worker action.";
     } else {
       std::string server_mode = ps::PSContext::instance()->server_mode();
-      if (server_mode == ps::kServerModeFL || server_mode == ps::kServerModeHybrid) {
-        (void)actions.emplace_back(std::make_pair("worker", StartFLWorkerAction));
-      }
     }
   }
 #endif
@@ -1587,13 +1481,9 @@ std::vector<ActionItem> MindIRPipeline() {
 
 #ifdef WITH_BACKEND
 std::vector<ActionItem> ServerPipeline(const ResourcePtr &resource) {
-  if (resource->EnableCompileCache() && resource->func_graph() != nullptr) {
-    return {std::make_pair("server", StartServerAction)};
-  }
   auto actions = CommonPipeline();
   (void)actions.emplace_back(std::make_pair("optimize", VmOptimizeAction));
   (void)actions.emplace_back(std::make_pair("validate", ValidateAction));
-  (void)actions.emplace_back(std::make_pair("server", StartServerAction));
   return actions;
 }
 

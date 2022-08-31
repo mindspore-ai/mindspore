@@ -7,7 +7,6 @@ if(ENABLE_CPU)
         "*.cc"
         "eigen/*.cc"
         "mkldnn/*.cc"
-        "fl/*.cc"
         "ps/*.cc"
         "pyfunc/*.cc"
         "rl/*.cc"
@@ -37,14 +36,6 @@ if(NOT ENABLE_CPU OR WIN32)
     list(REMOVE_ITEM CPU_SRC_LIST "ps/sparse_apply_adam_ps_kernel.cc")
     list(REMOVE_ITEM CPU_SRC_LIST "ps/sparse_apply_ftrl_ps_kernel.cc")
     list(REMOVE_ITEM CPU_SRC_LIST "ps/sparse_apply_lazy_adam_ps_kernel.cc")
-    list(REMOVE_ITEM CPU_SRC_LIST "fl/fused_pull_weight_kernel.cc")
-    list(REMOVE_ITEM CPU_SRC_LIST "fl/fused_push_weight_kernel.cc")
-    list(REMOVE_ITEM CPU_SRC_LIST "fl/get_model_kernel.cc")
-    list(REMOVE_ITEM CPU_SRC_LIST "fl/start_fl_job_kernel.cc")
-    list(REMOVE_ITEM CPU_SRC_LIST "fl/update_model_kernel.cc")
-    list(REMOVE_ITEM CPU_SRC_LIST "fl/push_metrics_kernel.cc")
-    list(REMOVE_ITEM CPU_SRC_LIST "fl/get_keys_kernel.cc")
-    list(REMOVE_ITEM CPU_SRC_LIST "fl/exchange_keys_kernel.cc")
     list(REMOVE_ITEM CPU_SRC_LIST "allreduce_cpu_kernel.cc")
 endif()
 

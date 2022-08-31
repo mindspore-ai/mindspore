@@ -23,7 +23,7 @@
 #include "runtime/collective/collective_communication_lib.h"
 #include "plugin/device/cpu/hal/hardware/ms_communication_group.h"
 #include "distributed/cluster/cluster_context.h"
-#include "fl/server/collective_ops_impl.h"
+#include "ps/core/collective_ops_impl.h"
 #include "plugin/device/cpu/hal/hardware/ms_collective_node.h"
 #include "plugin/device/cpu/hal/hardware/allreduce_impl.h"
 #include "distributed/cluster/topology/compute_graph_node.h"
