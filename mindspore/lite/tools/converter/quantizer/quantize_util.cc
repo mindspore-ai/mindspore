@@ -245,12 +245,10 @@ bool TensorQuantParamsInited(const schema::TensorT &tensor) {
     return false;
   }
 
-  for (auto &quant_param : tensor.quantParams) {
-    if (!quant_param->inited) {
-      return false;
-    }
-  }
-  return true;
+  bool is_quant_params_inited =
+    std::all_of(tensor.quantParams.cbegin(), tensor.quantParams.cend(),
+                [](const std::unique_ptr<mindspore::schema::QuantParamT> &quant_param) { return quant_param->inited; });
+  return is_quant_params_inited;
 }
 
 std::string NodePrimitiveType(const CNodePtr &cnode) {

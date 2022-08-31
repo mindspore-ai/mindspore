@@ -64,6 +64,8 @@ std::vector<LiteQuantParam> DebugInfoManager::ConvertTensorsQuantParam(const min
 
 void DebugInfoManager::AddQuantParamExtend(const mindspore::lite::LiteGraph::Node *node,
                                            const mindspore::schema::Tensor *tensor) {
+  CHECK_NULL_RETURN_VOID(node);
+  CHECK_NULL_RETURN_VOID(tensor);
   auto q_param = ConvertTensorsQuantParam(tensor);
   if (!q_param.empty()) {
     QuantParamExtend quant_param_extend;
@@ -223,6 +225,7 @@ int DebugInfoManager::SaveInfo(const std::string &file_path) {
 
 int DebugInfoManager::SetOriginStaticInfo(QuantDebugInfo *quant_debug_info, const mindspore::lite::Tensor &tensor,
                                           const quant::DebugMode &debug_mode) {
+  CHECK_NULL_RETURN(quant_debug_info);
   if (debug_mode == quant::DETAIL) {
     TypeId data_type = tensor.data_type();
     if (data_type == kNumberTypeFloat32) {
@@ -420,6 +423,8 @@ int DebugInfoManager::GetDataFromTensorMap(const mindspore::schema::Tensor &sche
 
 int DebugInfoManager::GetConstTensor(const std::map<std::string, mindspore::schema::Tensor *> &input_tensor_map,
                                      mindspore::lite::Tensor *tensor, mindspore::lite::Tensor *new_tensor) {
+  CHECK_NULL_RETURN(tensor);
+  CHECK_NULL_RETURN(new_tensor);
   auto iter = input_tensor_map.find(tensor->tensor_name());
   if (iter == input_tensor_map.end()) {
     MS_LOG(ERROR) << tensor->tensor_name() << " find failed.";
@@ -484,6 +489,7 @@ MSKernelCallBack DebugInfoManager::GetQuantBeforeCallBack(
     for (size_t i = 0; i < inputs.size(); ++i) {
       auto tensor = inputs.at(i);
       auto lite_tensor = quant::MSTensorToLiteTensor(tensor);
+      MS_CHECK_TRUE_RET(lite_tensor != nullptr, false);
       if (debug_mode == quant::FAST && (origin_outputs_.find(tensor.Name()) == origin_outputs_.end())) {
         continue;
       }

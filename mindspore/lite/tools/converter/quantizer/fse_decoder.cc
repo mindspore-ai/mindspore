@@ -29,10 +29,10 @@ constexpr int kAlignOffset = 7;
 }  // namespace
 int FSEDecoder::FSECreateStatesForDecoding(const uint32_t *symbol_frequency, int symbol_frequency_count, int table_log,
                                            uint16_t *new_state, uint8_t *bit_count, uint16_t *symbol_table) {
-  MS_ASSERT(symbol_frequency != nullptr);
-  MS_ASSERT(new_state != nullptr);
-  MS_ASSERT(bit_count != nullptr);
-  MS_ASSERT(symbol_table != nullptr);
+  CHECK_NULL_RETURN(symbol_frequency);
+  CHECK_NULL_RETURN(new_state);
+  CHECK_NULL_RETURN(bit_count);
+  CHECK_NULL_RETURN(symbol_table);
   const size_t table_size = 1 << table_log;
   const size_t table_mask = table_size - 1;
   int step = ((table_size >> 1) + (table_size >> kTableExtend) + kTableExtend);
@@ -64,9 +64,9 @@ int FSEDecoder::FSECreateStatesForDecoding(const uint32_t *symbol_frequency, int
 
 int FSEDecoder::DeCompress(const SchemaTensorWrapper &src_tensor, Tensor *dst_tensor,
                            schema::WeightQuantCompressType compress_type) {
-  MS_ASSERT(src_tensor.handler() != nullptr);
-  MS_ASSERT(src_tensor.data() != nullptr);
-  MS_ASSERT(dst_tensor != nullptr);
+  CHECK_NULL_RETURN(src_tensor.handler());
+  CHECK_NULL_RETURN(src_tensor.data());
+  CHECK_NULL_RETURN(dst_tensor);
   if (dst_tensor->MutableData() == nullptr) {
     MS_LOG(ERROR) << "tensor data is nullptr.";
     return RET_ERROR;
@@ -80,7 +80,7 @@ int FSEDecoder::DeCompress(const SchemaTensorWrapper &src_tensor, Tensor *dst_te
 
   size_t i = 0;
   auto data8 = reinterpret_cast<int8_t *>(const_cast<void *>(src_tensor.data()));
-
+  CHECK_NULL_RETURN(data8);
   int frequency_count = *(reinterpret_cast<uint16_t *>(&data8[i]));
   i += sizeof(uint16_t);
   if (i > total_size) {

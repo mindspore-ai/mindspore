@@ -59,7 +59,6 @@ int BiasCorrectionStrategy::QuantOriginFeatureMap(const float *origin_feature_ma
                                            activation_q_min_);
     quant_datas->push_back(quant_data);
   }
-  MS_CHECK_INT_MUL_NOT_OVERFLOW(quant_datas->size(), sizeof(int8_t), RET_ERROR);
   if (quant_size != quant_datas->size() * sizeof(int8_t)) {
     MS_LOG(ERROR) << "unexpected feature_map_tensor size: " << quant_datas->size()
                   << " not the same with: " << quant_datas->size() * sizeof(int8_t);

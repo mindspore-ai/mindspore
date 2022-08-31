@@ -52,7 +52,7 @@ int DataDistribution::RecordMaxMinValueArray(const std::vector<float> &data) {
 
 void DataDistribution::UpdateInterval() {
   auto max_value = std::max(fabs(this->real_max_), fabs(this->real_min_));
-  MS_ASSERT(bin_num_ != 0);
+  MS_CHECK_TRUE_RET_VOID(bin_num_ != 0);
   this->interval_ = max_value / static_cast<float>(bin_num_);
 }
 
@@ -81,10 +81,11 @@ void DataDistribution::DumpHistogram() {
 
 void DataDistribution::HandleBinForKL(int quant_bint_nums, int bin_index, std::vector<float> *quantized_histogram,
                                       std::vector<float> *expanded_histogram) {
-  MS_ASSERT(quantized_histogram != nullptr && expanded_histogram != nullptr);
-  MS_ASSERT(quant_bint_nums != 0);
+  CHECK_NULL_RETURN_VOID(quantized_histogram);
+  CHECK_NULL_RETURN_VOID(expanded_histogram);
+  MS_CHECK_TRUE_RET_VOID(quant_bint_nums != 0);
   const float bin_interval = static_cast<float>(bin_index) / static_cast<float>(quant_bint_nums);
-  MS_ASSERT(quant_bint_nums <= quantized_histogram->size());
+  MS_CHECK_TRUE_RET_VOID(quant_bint_nums <= static_cast<int>(quantized_histogram->size()));
   // merge i bins to target bins
   for (int i = 0; i < quant_bint_nums; ++i) {
     const float start = i * bin_interval;
