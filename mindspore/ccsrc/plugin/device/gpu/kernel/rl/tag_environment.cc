@@ -42,8 +42,8 @@ constexpr auto kPartiallyObsAttr = "partially_observation";
 
 TagEnvironment::~TagEnvironment() {
   auto &allocator = device::gpu::GPUMemoryAllocator::GetInstance();
-  allocator.FreeTensorMem(agent_state_device_);
-  allocator.FreeTensorMem(game_setting_device_);
+  if (agent_state_device_) allocator.FreeTensorMem(agent_state_device_);
+  if (game_setting_device_) allocator.FreeTensorMem(game_setting_device_);
   FinalizeAgentState(agent_state_host_);
 }
 
@@ -72,21 +72,26 @@ bool TagEnvironment::InitAgentState(AgentState *agent_state) {
   int total_agents_num = env_num_ * agent_num_;
   auto &allocator = device::gpu::GPUMemoryAllocator::GetInstance();
   agent_state->loc_x = static_cast<int *>(allocator.AllocTensorMem(sizeof(int) * total_agents_num));
+  MS_EXCEPTION_IF_NULL(agent_state->loc_x);
   agent_state->loc_y = static_cast<int *>(allocator.AllocTensorMem(sizeof(int) * total_agents_num));
+  MS_EXCEPTION_IF_NULL(agent_state->loc_y);
   agent_state->still_in_game = static_cast<bool *>(allocator.AllocTensorMem(sizeof(bool) * total_agents_num));
+  MS_EXCEPTION_IF_NULL(agent_state->still_in_game);
   agent_state->rand_state =
     static_cast<curandState *>(allocator.AllocTensorMem(sizeof(curandState) * total_agents_num));
+  MS_EXCEPTION_IF_NULL(agent_state->rand_state);
   agent_state->time_step = static_cast<int *>(allocator.AllocTensorMem(sizeof(int) * env_num_));
+  MS_EXCEPTION_IF_NULL(agent_state->time_step);
   return true;
 }
 
 bool TagEnvironment::FinalizeAgentState(const AgentState &agent_setting) {
   auto &allocator = device::gpu::GPUMemoryAllocator::GetInstance();
-  allocator.FreeTensorMem(agent_setting.time_step);
-  allocator.FreeTensorMem(agent_setting.still_in_game);
-  allocator.FreeTensorMem(agent_setting.rand_state);
-  allocator.FreeTensorMem(agent_setting.loc_x);
-  allocator.FreeTensorMem(agent_setting.loc_y);
+  if (agent_setting.time_step) allocator.FreeTensorMem(agent_setting.time_step);
+  if (agent_setting.still_in_game) allocator.FreeTensorMem(agent_setting.still_in_game);
+  if (agent_setting.rand_state) allocator.FreeTensorMem(agent_setting.rand_state);
+  if (agent_setting.loc_x) allocator.FreeTensorMem(agent_setting.loc_x);
+  if (agent_setting.loc_y) allocator.FreeTensorMem(agent_setting.loc_y);
   return true;
 }
 
@@ -97,6 +102,7 @@ bool TagEnvironment::Init(const CNodePtr &cnode, void *stream_ptr) {
   // Move the game setting to device.
   auto &allocator = device::gpu::GPUMemoryAllocator::GetInstance();
   game_setting_device_ = static_cast<GameSetting *>(allocator.AllocTensorMem(sizeof(GameSetting)));
+  MS_EXCEPTION_IF_NULL(game_setting_device_);
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(game_setting_device_, &game_setting_host_, sizeof(GameSetting), cudaMemcpyHostToDevice,
                     reinterpret_cast<cudaStream_t>(stream_ptr)),
@@ -104,6 +110,7 @@ bool TagEnvironment::Init(const CNodePtr &cnode, void *stream_ptr) {
 
   // Move the agent state to device.
   agent_state_device_ = static_cast<AgentState *>(allocator.AllocTensorMem(sizeof(AgentState)));
+  MS_EXCEPTION_IF_NULL(agent_state_device_);
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(agent_state_device_, &agent_state_host_, sizeof(AgentState), cudaMemcpyHostToDevice,
                     reinterpret_cast<cudaStream_t>(stream_ptr)),
@@ -185,6 +192,7 @@ void TagEnvironment::StepKernelProfiling(const int *action, float *state, float 
   InitAgentState(&agent_state);
   auto &allocator = device::gpu::GPUMemoryAllocator::GetInstance();
   AgentState *agent_state_device = static_cast<AgentState *>(allocator.AllocTensorMem(sizeof(AgentState)));
+  MS_EXCEPTION_IF_NULL(agent_state_device);
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(agent_state_device, &agent_state, sizeof(AgentState), cudaMemcpyHostToDevice, stream),
     "cudaMemcpy failed.");
@@ -225,7 +233,7 @@ void TagEnvironment::StepKernelProfiling(const int *action, float *state, float 
   optimal_kernel_ = bind_cost < cross_cost ? kBindBlock : kCrossBlock;
 
   // Free tmp agent state
-  allocator.FreeTensorMem(agent_state_device);
+  if (agent_state_device) allocator.FreeTensorMem(agent_state_device);
   FinalizeAgentState(agent_state);
 
   MS_LOG(INFO) << "Tag environment profiling finish. Bind cost: " << bind_cost << ", cross cost: " << cross_cost;

@@ -87,6 +87,7 @@ uint32_t PriorityReplayBufferPush::DoCompute() {
   AICPU_LOGI("Do compute start");
 
   auto buffer = PriorityReplayBufferFactory::GetInstance().GetByHandle(handle_);
+  AICPU_CHECK_NULLPTR(buffer, kAicpuKernelStateFailed, "The instance not exist.");
   (void)buffer->Push(inputs_);
 
   const size_t &num_input = node_def_.inputs_size();
@@ -114,6 +115,7 @@ uint32_t PriorityReplayBufferSample::DoCompute() {
   std::vector<float> weights;
   std::vector<std::vector<AddressPtr>> samples;
   auto prioriory_replay_buffer = PriorityReplayBufferFactory::GetInstance().GetByHandle(handle_);
+  AICPU_CHECK_NULLPTR(prioriory_replay_buffer, kAicpuKernelStateFailed, "The instance not exist.");
   auto beta = reinterpret_cast<float *>(io_addrs_[kBetaIndex]);
   std::tie(indices, weights, samples) = prioriory_replay_buffer->Sample(batch_size_, beta[0]);
 
@@ -190,6 +192,7 @@ uint32_t PriorityReplayBufferUpdate::DoCompute() {
   }
 
   auto prioriory_replay_buffer = PriorityReplayBufferFactory::GetInstance().GetByHandle(handle_);
+  AICPU_CHECK_NULLPTR(prioriory_replay_buffer, kAicpuKernelStateFailed, "The instance not exist.");
   (void)prioriory_replay_buffer->UpdatePriorities(indices, priorities);
 
   // Return a placeholder in case of dead code eliminate optimization.

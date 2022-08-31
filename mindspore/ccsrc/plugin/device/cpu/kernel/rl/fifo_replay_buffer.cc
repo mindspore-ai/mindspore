@@ -35,6 +35,7 @@ FIFOReplayBuffer::FIFOReplayBuffer(size_t capacity, const std::vector<size_t> &s
     }
 
     void *ptr = device::cpu::CPUMemoryPool::GetInstance().AllocTensorMem(alloc_size);
+    MS_EXCEPTION_IF_NULL(ptr);
     AddressPtr item = std::make_shared<Address>(ptr, alloc_size);
     (void)buffer_.emplace_back(item);
   }
@@ -42,7 +43,7 @@ FIFOReplayBuffer::FIFOReplayBuffer(size_t capacity, const std::vector<size_t> &s
 
 FIFOReplayBuffer::~FIFOReplayBuffer() {
   for (const auto &item : buffer_) {
-    device::cpu::CPUMemoryPool::GetInstance().FreeTensorMem(item->addr);
+    if (item->addr) device::cpu::CPUMemoryPool::GetInstance().FreeTensorMem(item->addr);
     item->addr = nullptr;
   }
 }

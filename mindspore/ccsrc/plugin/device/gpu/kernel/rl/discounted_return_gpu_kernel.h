@@ -36,8 +36,8 @@ class DiscountedReturnGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   ~DiscountedReturnGpuKernelMod() = default;
 
   bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     MS_EXCEPTION_IF_NULL(kernel_node);
+    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     gamma_ = common::AnfAlgo::GetNodeAttr<float>(kernel_node, kGammaAttrName);
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     kernel_node_ = kernel_node;
