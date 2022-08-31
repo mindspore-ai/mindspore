@@ -1222,13 +1222,48 @@ class MaximumGradGrad(Primitive):
         self.init_prim_io_names(inputs=['x1', 'x2', 'dy1', 'dy2'], outputs=['sopd_x1', 'sopd_x2', 'sopd_grad'])
 
 
-class MaxPoolGradWithArgmax(_PoolGrad):
+class MaxPoolGradWithArgmax(Primitive):
     """Computes the gradients of MaxPoolWithArgmax."""
-
     @prim_attr_register
-    def __init__(self, kernel_size=1, strides=1, pad_mode="VALID"):
-        self.init_prim_io_names(inputs=['x', 'grad', 'argmax'], outputs=['output'])
-        super(MaxPoolGradWithArgmax, self).__init__(kernel_size, strides, pad_mode)
+    def __init__(self, kernel_size=1, strides=1, pad_mode="VALID", data_format="NCHW"):
+        self.init_prim_io_names(inputs=['x_origin', 'out_origin', 'grad'], outputs=['output'])
+        validator.check_value_type('kernel_size', kernel_size, [int, tuple], self.name)
+        validator.check_value_type('strides', strides, [int, tuple], self.name)
+        validator.check_value_type('pad_mode', pad_mode, [str], self.name)
+        self.pad_mode = validator.check_string(pad_mode.upper(), ['VALID', 'SAME'], 'pad_mode', self.name)
+        self.add_prim_attr("pad_mode", self.pad_mode)
+        self.format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.name)
+        if context.get_context("device_target") != "GPU" and self.format == "NHWC":
+            raise ValueError("NHWC format only support in GPU target.")
+        self.is_maxpoolgradwithargmax = (self.name == "MaxPoolGradWithArgmax")
+        if not self.is_maxpoolgradwithargmax:
+            self.add_prim_attr('data_format', self.format)
+
+        def _grad_check_int_or_tuple(arg_name, arg_val):
+            validator.check_value_type(arg_name, arg_val, (int, tuple), self.name)
+            error_msg = ValueError(f"For '{self.name}' the '{arg_name}' must be an positive int number "
+                                   f"or a tuple of two or four positive int numbers, but got {arg_val}")
+            if isinstance(arg_val, int):
+                ret = (1, arg_val, arg_val, 1)
+            elif len(arg_val) == 2:
+                ret = (1, arg_val[0], arg_val[1], 1)
+            elif len(arg_val) == 4:
+                ret = arg_val
+            else:
+                raise error_msg
+            # whether all elements of tuple are positive integers
+            for item in ret:
+                if not isinstance(item, int) or item <= 0:
+                    raise error_msg
+            return ret
+
+        kernel_size = _grad_check_int_or_tuple("kernel_size", kernel_size)
+        self.kernel_size = kernel_size
+        self.add_prim_attr("kernel_size", self.kernel_size)
+
+        strides = _grad_check_int_or_tuple("strides", strides)
+        self.strides = strides
+        self.add_prim_attr("strides", self.strides)
 
 
 class MaxPool3DGradWithArgmax(Primitive):

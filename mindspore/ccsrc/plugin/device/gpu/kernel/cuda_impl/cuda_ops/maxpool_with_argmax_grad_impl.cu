@@ -74,23 +74,43 @@ void CalMaxPoolWithArgmaxGrad(const T* dy,
   return;
 }
 
-template CUDA_LIB_EXPORT void CalMaxPoolWithArgmaxGrad<float, int>(const float* dy,
-                                                                   const int* index,
-                                                                   const int n,
-                                                                   const int c,
-                                                                   const int xHeight,
-                                                                   const int xWidth,
-                                                                   const int dyHeight,
-                                                                   const int dyWidth,
-                                                                   float* dx,
-                                                                   cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalMaxPoolWithArgmaxGrad<half, int>(const half* dy,
-                                                                  const int* index,
-                                                                  const int n,
-                                                                  const int c,
-                                                                  const int xHeight,
-                                                                  const int xWidth,
-                                                                  const int dyHeight,
-                                                                  const int dyWidth,
-                                                                  half* dx,
+template CUDA_LIB_EXPORT void CalMaxPoolWithArgmaxGrad<int8_t, int>(const int8_t *dy, const int *index, const int n,
+                                                                    const int c, const int xHeight, const int xWidth,
+                                                                    const int dyHeight, const int dyWidth, int8_t *dx,
+                                                                    cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalMaxPoolWithArgmaxGrad<int16_t, int>(const int16_t *dy, const int *index, const int n,
+                                                                     const int c, const int xHeight, const int xWidth,
+                                                                     const int dyHeight, const int dyWidth, int16_t *dx,
+                                                                     cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalMaxPoolWithArgmaxGrad<int64_t, int>(const int64_t *dy, const int *index, const int n,
+                                                                     const int c, const int xHeight, const int xWidth,
+                                                                     const int dyHeight, const int dyWidth, int64_t *dx,
+                                                                     cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalMaxPoolWithArgmaxGrad<uint8_t, int>(const uint8_t *dy, const int *index, const int n,
+                                                                     const int c, const int xHeight, const int xWidth,
+                                                                     const int dyHeight, const int dyWidth, uint8_t *dx,
+                                                                     cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalMaxPoolWithArgmaxGrad<uint16_t, int>(const uint16_t *dy, const int *index, const int n,
+                                                                      const int c, const int xHeight, const int xWidth,
+                                                                      const int dyHeight, const int dyWidth,
+                                                                      uint16_t *dx, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalMaxPoolWithArgmaxGrad<uint32_t, int>(const uint32_t *dy, const int *index, const int n,
+                                                                      const int c, const int xHeight, const int xWidth,
+                                                                      const int dyHeight, const int dyWidth,
+                                                                      uint32_t *dx, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalMaxPoolWithArgmaxGrad<uint64_t, int>(const uint64_t *dy, const int *index, const int n,
+                                                                      const int c, const int xHeight, const int xWidth,
+                                                                      const int dyHeight, const int dyWidth,
+                                                                      uint64_t *dx, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalMaxPoolWithArgmaxGrad<half, int>(const half *dy, const int *index, const int n,
+                                                                  const int c, const int xHeight, const int xWidth,
+                                                                  const int dyHeight, const int dyWidth, half *dx,
                                                                   cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalMaxPoolWithArgmaxGrad<float, int>(const float *dy, const int *index, const int n,
+                                                                   const int c, const int xHeight, const int xWidth,
+                                                                   const int dyHeight, const int dyWidth, float *dx,
+                                                                   cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalMaxPoolWithArgmaxGrad<double, int>(const double *dy, const int *index, const int n,
+                                                                    const int c, const int xHeight, const int xWidth,
+                                                                    const int dyHeight, const int dyWidth, double *dx,
+                                                                    cudaStream_t cuda_stream);

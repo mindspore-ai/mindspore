@@ -14,19 +14,22 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_MAXPOOLWITHARGMAX_GPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_MAXPOOLWITHARGMAX_GPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_NN_MAXPOOL_WITH_ARGMAX_GPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_NN_MAXPOOL_WITH_ARGMAX_GPU_KERNEL_H_
 
 #include <algorithm>
 #include <vector>
 #include <string>
-#include <map>
 #include <utility>
+#include <map>
 #include "mindspore/core/utils/ms_context.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/maxpool_with_argmax_impl.cuh"
 #include "plugin/device/gpu/kernel/kernel_constants.h"
+#include "mindspore/core/ops/max_pool_with_argmax.h"
+#include "plugin/factory/ms_factory.h"
+#include "mindspore/ccsrc/kernel/common_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -39,8 +42,7 @@ constexpr size_t kInputIndexForW = 3;
 constexpr size_t kOutputIndexForH = 2;
 constexpr size_t kOutputIndexForW = 3;
 
-class MaxPoolWithArgmaxGpuKernelMod : public NativeGpuKernelMod,
-                                      public MatchKernelHelper<MaxPoolWithArgmaxGpuKernelMod> {
+class MaxPoolWithArgmaxGpuKernelMod : public NativeGpuKernelMod {
  public:
   MaxPoolWithArgmaxGpuKernelMod()
       : n_(0),
@@ -62,53 +64,31 @@ class MaxPoolWithArgmaxGpuKernelMod : public NativeGpuKernelMod,
         output_size_(0) {}
   ~MaxPoolWithArgmaxGpuKernelMod() override = default;
 
-  std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
+
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
 
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
              const std::vector<KernelTensorPtr> &outputs,
              const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    stream_ptr_ = stream_ptr;
-    return kernel_func_(this, inputs, workspace, outputs);
-  }
-
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
-  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
-
  protected:
-  template <typename T, typename S>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs) {
-    T *input_addr = GetDeviceAddress<T>(inputs, 0);
-    T *output_addr = GetDeviceAddress<T>(outputs, 0);
-    S *index_addr = GetDeviceAddress<S>(outputs, 1);
-    CalMaxPoolWithArgmax(input_addr, n_, c_, input_height_, input_width_, window_height_, window_width_, stride_height_,
-                         stride_width_, pad_top_, pad_left_, output_height_, output_width_, output_addr, index_addr,
-                         device_id_, reinterpret_cast<cudaStream_t>(stream_ptr_));
-    return true;
-  }
+  std::vector<KernelAttr> GetOpSupport() override;
+  using MaxPoolWithArgmaxFunc =
+    std::function<bool(MaxPoolWithArgmaxGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &, void *)>;
 
  private:
-  void SetPad() {
-    MS_EXCEPTION_IF_ZERO("stride height", stride_height_);
-    MS_EXCEPTION_IF_ZERO("stride width", stride_width_);
+  template <typename T, typename S>
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  void SetPad();
+  MaxPoolWithArgmaxFunc kernel_func_;
+  static std::vector<std::pair<KernelAttr, MaxPoolWithArgmaxFunc>> func_list_;
 
-    int tmp_height = (input_height_ / stride_height_) * stride_height_ == input_height_
-                       ? (input_height_ / stride_height_)
-                       : (input_height_ / stride_height_) + 1;
-    pad_height_ = std::max<int>(0, (tmp_height - 1) * stride_height_ + window_height_ - input_height_);
-
-    int tmp_width = (input_width_ / stride_width_) * stride_width_ == input_width_ ? (input_width_ / stride_width_)
-                                                                                   : (input_width_ / stride_width_) + 1;
-    pad_width_ = std::max<int>(0, (tmp_width - 1) * stride_width_ + window_width_ - input_width_);
-    pad_top_ = pad_height_ / 2;
-    pad_left_ = pad_width_ / 2;
-  }
-
-  PadMode pad_mode_{PadMode::VALID};
+  std::string pad_mode_;
   int n_;
   int c_;
   int input_height_;
@@ -132,4 +112,4 @@ class MaxPoolWithArgmaxGpuKernelMod : public NativeGpuKernelMod,
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_MAXPOOLWITHARGMAX_GPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_NN_MAXPOOL_WITH_ARGMAX_GPU_KERNEL_H_
