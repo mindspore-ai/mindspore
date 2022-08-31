@@ -186,21 +186,21 @@ FuncGraphPtr ProgramSpecializer::Run(const FuncGraphPtr &fg, const AnalysisConte
 FuncGraphPtr ProgramSpecializer::SpecializeFuncGraph(const FuncGraphPtr &fg, const AnalysisContextPtr &context) {
   MS_EXCEPTION_IF_NULL(fg);
   MS_EXCEPTION_IF_NULL(context);
-  auto iter = specializations_.find(context->SpecializeKey());
+  auto iter = specializations_.find(context);
   if (iter != specializations_.end()) {
     MS_EXCEPTION_IF_NULL(iter->second);
     return iter->second->specialized_func_graph();
   }
-  std::shared_ptr<FuncGraphSpecializer> fg_spec = std::make_shared<FuncGraphSpecializer>(this, fg, context);
-  FuncGraphPtr specialized_func_graph = fg_spec->specialized_func_graph();
-  specializations_[context->SpecializeKey()] = fg_spec;
+  auto fg_spec = std::make_shared<FuncGraphSpecializer>(this, fg, context);
+  auto specialized_func_graph = fg_spec->specialized_func_graph();
+  specializations_[context] = fg_spec;
   fg_spec->Run();
   return specialized_func_graph;
 }
 
 std::shared_ptr<FuncGraphSpecializer> ProgramSpecializer::GetFuncGraphSpecializer(const AnalysisContextPtr &context) {
   MS_EXCEPTION_IF_NULL(context);
-  auto iter = specializations_.find(context->SpecializeKey());
+  auto iter = specializations_.find(context);
   if (iter != specializations_.end()) {
     return iter->second;
   }

@@ -197,6 +197,8 @@ class MS_CORE_API FuncGraphAbstractClosure final : public AbstractFuncAtom {
 
   bool IsEqualExceptTrackingId(const FuncGraphAbstractClosure &other) const;
 
+  std::size_t HashWithoutTrackingId() const;
+
  private:
   FuncGraphPtr func_graph_;
   AnalysisContextPtr context_;
@@ -240,7 +242,7 @@ class MS_CORE_API MetaFuncGraphAbstractClosure final : public AbstractFuncAtom {
   /// \return The MetaFuncGraph that this MetaFuncGraphAbstractClosure corresponding to.
   const MetaFuncGraphPtr &meta_func_graph() const { return meta_func_graph_; }
 
-  AnalysisContextPtr context() const override { return kDummyAnalysisContext; }
+  AnalysisContextPtr context() const override { return AnalysisContext::DummyContext(); }
 
   /// \brief Get the Scope that this MetaFuncGraphAbstractClosure corresponding to.
   ///

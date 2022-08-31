@@ -47,6 +47,8 @@ using BaseFuncGraphEvaluatorPtr = std::shared_ptr<BaseFuncGraphEvaluator>;
 // Specialize a func graph using analyzed abstract values.
 class ProgramSpecializer {
  public:
+  using DeferSpecializeNodesMap =
+    mindspore::HashMap<AnalysisContextPtr, std::vector<std::pair<FuncGraphSpecializer *, CNodePtr>>>;
   explicit ProgramSpecializer(const std::shared_ptr<AnalysisEngine> &engine) : engine_(engine), top_context_(nullptr) {
     mng_ = engine_->func_graph_manager();
   }
@@ -71,23 +73,16 @@ class ProgramSpecializer {
 
   std::vector<std::pair<AbstractSequencePtr, AnfNodePtr>> &sequence_abstract_list() { return sequence_abstract_list_; }
   std::vector<std::pair<AnfNodePtr, size_t>> &dead_node_list() { return dead_node_list_; }
-  std::unordered_map<AnalysisContextPtr, std::vector<std::pair<FuncGraphSpecializer *, CNodePtr>>, ContextHasher,
-                     ContextEqual>
-    &defer_specialize_nodes() {
-    return defer_specialize_nodes_;
-  }
+  DeferSpecializeNodesMap &defer_specialize_nodes() { return defer_specialize_nodes_; }
 
  private:
   std::shared_ptr<AnalysisEngine> engine_;
   mindspore::HashSet<AnfNodePtr> seen_;
   FuncGraphManagerPtr mng_;
-  std::unordered_map<AnalysisContextPtr, std::shared_ptr<FuncGraphSpecializer>, ContextHasher, ContextEqual>
-    specializations_;
+  mindspore::HashMap<AnalysisContextPtr, std::shared_ptr<FuncGraphSpecializer>> specializations_;
   // If caller's input0 is a poly func, and the func's parent has not been specialized, then the caller specialization
   // need to be deferred after parent specialized.
-  std::unordered_map<AnalysisContextPtr, std::vector<std::pair<FuncGraphSpecializer *, CNodePtr>>, ContextHasher,
-                     ContextEqual>
-    defer_specialize_nodes_;
+  DeferSpecializeNodesMap defer_specialize_nodes_;
   AnalysisContextPtr top_context_;
   // The list to purify tuple/list elements.
   std::vector<std::pair<AbstractSequencePtr, AnfNodePtr>> sequence_abstract_list_;

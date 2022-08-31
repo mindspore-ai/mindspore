@@ -120,7 +120,8 @@ AnalysisResult AnalysisEngine::Run(const FuncGraphPtr &func_graph, const Abstrac
     // Running the analyzer.
     ResetFunctionCallDepth();
     ResetStackFrameDepth();
-    AnalysisContextPtr dummy_context = AnalysisContext::DummyContext();
+    // Create a new root dummy context for the new analysis session.
+    AnalysisContextPtr dummy_context = AnalysisContext::NewDummyContext();
     MS_LOG(DEBUG) << func_graph->ToString() << ": Run begin.";
     AnalysisContextPtr root_context = Run(func_graph, dummy_context, args_conf_list);
     AnalysisSchedule::GetInstance().Wait();

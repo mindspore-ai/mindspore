@@ -17,105 +17,24 @@
 #include "abstract/analysis_context.h"
 
 #include <vector>
+#include <utility>
 #include <algorithm>
 
+#include "utils/flags.h"
+#include "utils/hashing.h"
 #include "utils/ms_utils.h"
-#include "utils/symbolic.h"
 #include "utils/trace_base.h"
 #include "abstract/abstract_value.h"
 #include "abstract/abstract_function.h"
 
 namespace mindspore {
 namespace abstract {
-std::vector<AnalysisContextPtr> AnalysisContext::all_context_;
-AnalysisContextPtr AnalysisContext::NewContext(const FuncGraphPtr &func_graph,
-                                               const AbstractBasePtrList &args_spec_list) {
-  // Find func graph's parent and its parent context firstly.
-  MS_EXCEPTION_IF_NULL(func_graph);
-  FuncGraphPtr parent_graph = func_graph->parent();
-  AnalysisContextPtr parent_context = nullptr;
-  auto iter = extant_context_cache_.find(parent_graph);
-  if (iter != extant_context_cache_.end()) {
-    parent_context = iter->second.lock();
-  }
-  if (parent_context == nullptr) {  // If parent context is not found, we'll raise exception.
-    std::ostringstream oss;
-    oss << "BUG: Failed to find parent context in current context: " << this->ToString()
-        << ", func_graph: " << func_graph->ToString() << ", parent_graph: ";
-    if (parent_graph != nullptr) {
-      oss << parent_graph->ToString();
-    } else {
-      oss << "nullptr";
-    }
-    MS_LOG(EXCEPTION) << oss.str() << " NodeInfo: " << trace::GetDebugInfo(func_graph->debug_info());
-  }
+// Sotre all root dummy contexts here.
+std::vector<AnalysisContextPtr> AnalysisContext::dummy_contexts_;
 
-  // Check if we created a context for func graph with the same arguments before.
-  auto children_context_map_iter = parent_context->children_cache_.find(func_graph);
-  if (children_context_map_iter != parent_context->children_cache_.end()) {
-    auto children_context_map = children_context_map_iter->second;
-    auto children_context_iter = children_context_map.find(args_spec_list);
-    if (children_context_iter != children_context_map.end()) {
-      return children_context_iter->second.lock();
-    }
-  }
-
-  // Create a new context for the func graph and its specific arguments.
-  AnalysisContextPtr new_context = CreateContext(parent_context, func_graph, args_spec_list);
-  // To avoid cycle-reference, use weak_ptr here.
-  auto weak_new_context = std::weak_ptr<AnalysisContext>(new_context);
-  new_context->extant_context_cache_[func_graph] = weak_new_context;
-  parent_context->children_cache_[func_graph][args_spec_list] = weak_new_context;
-  return new_context;
-}
-
-AnalysisContextPtr AnalysisContext::FindOwnOrParentContext(const FuncGraphPtr &func_graph) {
-  auto p_iter = extant_context_cache_.find(func_graph);
-  AnalysisContextPtr extant_context = nullptr;
-  if (p_iter != extant_context_cache_.end()) {
-    extant_context = p_iter->second.lock();
-  } else {
-    auto iter_parent = extant_context_cache_.find(func_graph->parent());
-    if (iter_parent != extant_context_cache_.end()) {
-      extant_context = iter_parent->second.lock();
-    }
-  }
-  // If this happen, it would be a bug in code. But we raise exception to keep the scene.
-  if (extant_context == nullptr) {
-    std::ostringstream oss;
-    oss << "BUG: Failed to find context for: " << func_graph->ToString() << ", parent_graph: ";
-    if (func_graph->parent() != nullptr) {
-      oss << func_graph->parent()->ToString();
-    } else {
-      oss << "nullptr";
-    }
-    oss << " extant context list: {";
-    for (const auto &iter : extant_context_cache_) {
-      if (iter.first == nullptr) {
-        oss << " [graph: nullptr";
-      } else {
-        oss << " [graph: " << iter.first->ToString();
-      }
-      // iter.second cannot be nullptr even iter.first is nullptr as it will
-      // always be a Context() object.
-      oss << ", context: " << iter.second.lock()->ToString() << "]";
-    }
-    oss << "}";
-    MS_LOG(EXCEPTION) << oss.str() << " NodeInfo: " << trace::GetDebugInfo(func_graph->debug_info());
-  }
-  return extant_context;
-}
-
-AnalysisContextPtr AnalysisContext::DummyContext() {
-  AnalysisContextPtr dummy_context = CreateContext(nullptr, nullptr, AbstractBasePtrList());
-  dummy_context->extant_context_cache_[nullptr] = std::weak_ptr<AnalysisContext>(dummy_context);
-  return dummy_context;
-}
-
-const AnalysisContextPtr kDummyAnalysisContext =
-  AnalysisContext::CreateContext(nullptr, nullptr, AbstractBasePtrList());
-
-static inline bool IsEqualExceptTrackingId(const AbstractBasePtr &a1, const AbstractBasePtr &a2) {
+// Special equal function for 'while' header:
+// Ignore tracking_id when checking equality of FuncGraphAbstractClosure.
+static bool IsEqualForWhileHeader(const AbstractBasePtr &a1, const AbstractBasePtr &a2) {
   auto f1 = dyn_cast_ptr<abstract::FuncGraphAbstractClosure>(a1);
   if (f1 != nullptr) {
     auto f2 = dyn_cast_ptr<abstract::FuncGraphAbstractClosure>(a2);
@@ -124,77 +43,126 @@ static inline bool IsEqualExceptTrackingId(const AbstractBasePtr &a1, const Abst
   return common::IsEqual(a1, a2);
 }
 
-static inline bool AbstractListEqualExceptTrackingId(const AbstractBasePtrList &lhs, const AbstractBasePtrList &rhs) {
+// Special abstract list equal compare function for 'while' header.
+static bool ArgsEqualForWhileHeader(const AbstractBasePtrList &lhs, const AbstractBasePtrList &rhs) {
   const std::size_t size = lhs.size();
   if (size != rhs.size()) {
     return false;
   }
   for (std::size_t i = 0; i < size; ++i) {
-    if (!IsEqualExceptTrackingId(lhs[i], rhs[i])) {
+    if (!IsEqualForWhileHeader(lhs[i], rhs[i])) {
       return false;
     }
   }
   return true;
 }
 
-bool AnalysisContext::operator==(const AnalysisContext &other) const {
-  if (this == &other) {
-    return true;
+// Special abstract list hash for 'while' header:
+// Ignore tracking_id when calculate hash for FuncGraphAbstractClosure.
+static std::size_t ArgsHashForWhileHeader(const AbstractBasePtrList &args) {
+  std::size_t hash_value = args.size();
+  for (auto &abs : args) {
+    auto fg_abs = dyn_cast_ptr<abstract::FuncGraphAbstractClosure>(abs);
+    if (fg_abs != nullptr) {
+      hash_value = hash_combine(hash_value, fg_abs->HashWithoutTrackingId());
+    } else {
+      hash_value = hash_combine(hash_value, abs->hash());
+    }
   }
-  if (func_graph_ != other.func_graph_) {
-    return false;
-  }
-  if (args_spec_list_.size() != other.args_spec_list_.size()) {
-    return false;
-  }
-  if (!common::IsEqual(parent_, other.parent_)) {
-    return false;
-  }
-  if (func_graph_ != nullptr && func_graph_->has_flag(GRAPH_FLAG_IS_WHILE_HEADER)) {
-    // Special handling for 'while' header:
-    // Ignore tracking_id when checking equality of FuncGraphAbstractClosure objects.
-    return AbstractListEqualExceptTrackingId(args_spec_list_, other.args_spec_list_);
-  }
-  return AbstractBasePtrListDeepEqual(args_spec_list_, other.args_spec_list_);
-}
-
-// brief The key which controls the graph cloning in Specialize.
-// Originally, specialize use context directly as the key for cloning graph. The graph will be cloned multiple times
-// for different context, which means the graph is called from different node with different arguments and different
-// free values. In order to decrease the number of cloned graphs, we add this `SpecializeKey` method to control what
-// graph can be reused.
-// The graph called with different shape should not be reused, because the combination of `shape` and `Fill` relies
-// on correct shape to specialize a tensor constant.
-AnalysisContextPtr AnalysisContext::SpecializeKey() const {
-  AbstractBasePtrList args_broad_shp;
-  (void)std::transform(args_spec_list_.begin(), args_spec_list_.end(), std::back_inserter(args_broad_shp),
-                       [](const AbstractBasePtr &arg) -> AbstractBasePtr {
-                         MS_EXCEPTION_IF_NULL(arg);
-                         if (arg->isa<AbstractRefTensor>()) {
-                           MS_LOG(DEBUG) << "refkey broaden";
-                           return arg->Broaden();
-                         }
-                         return arg;
-                       });
-  AnalysisContextPtr context_new = CreateContext(nullptr, func_graph_, args_broad_shp);
-  context_new->parent_ = parent_;
-  return context_new;
-}
-
-std::size_t AnalysisContext::hash() const {
-  if (hash_ != 0) {
-    // Use cached hash code.
-    return hash_;
-  }
-  std::size_t hash_value = 0;
-  if (parent_ != nullptr) {
-    hash_value = hash_combine(hash_value, parent_->hash());
-  }
-  if (func_graph_ != nullptr) {
-    hash_value = hash_combine(hash_value, func_graph_->hash());
-  }
-  hash_ = hash_value;
   return hash_value;
+}
+
+// Checking children equality.
+bool AnalysisContext::ChildEqual::operator()(const ChildKey &a, const ChildKey &b) const noexcept {
+  if (a.first != b.first) {
+    return false;
+  }
+  if (a.first != nullptr && a.first->has_flag(GRAPH_FLAG_IS_WHILE_HEADER)) {
+    return ArgsEqualForWhileHeader(a.second, b.second);
+  }
+  return AbstractBasePtrListDeepEqual(a.second, b.second);
+}
+
+// Calculate children hash.
+std::size_t AnalysisContext::ChildHash::operator()(const ChildKey &key) const noexcept {
+  std::size_t hash_value = PointerHash<FuncGraphPtr>{}(key.first);
+  if (key.first != nullptr && key.first->has_flag(GRAPH_FLAG_IS_WHILE_HEADER)) {
+    return hash_combine(hash_value, ArgsHashForWhileHeader(key.second));
+  }
+  return hash_combine(hash_value, AbstractBasePtrListHash(key.second));
+}
+
+AnalysisContextPtr AnalysisContext::NewContext(const FuncGraphPtr &fg, const AbstractBasePtrList &args_spec_list) {
+  // Find func graph's parent and its parent context firstly.
+  MS_EXCEPTION_IF_NULL(fg);
+  FuncGraphPtr parent_graph = fg->parent();
+  auto parent_context = FindContext(parent_graph);
+  if (parent_context == nullptr) {
+    // If parent context is not found, we'll raise exception.
+    MS_LOG(EXCEPTION) << "BUG: Failed to find parent context in current context: " << this->ToString()
+                      << ", func_graph: " << fg->ToString()
+                      << ", parent_graph: " << (parent_graph == nullptr ? "null" : parent_graph->ToString()) << " "
+                      << trace::GetDebugInfo(fg->debug_info());
+  }
+  // Create or find child context from the parent context.
+  auto result = parent_context->children_.emplace(std::make_pair(fg, args_spec_list), nullptr);
+  if (result.second) {
+    // If exist child not found, create a new context for the func graph with its specific arguments.
+    result.first->second = CreateContext(parent_context, fg, args_spec_list);
+  }
+  return result.first->second;
+}
+
+AnalysisContext *AnalysisContext::FindContext(const FuncGraphPtr &fg) {
+  if (fg == nullptr) {
+    return DummyContext().get();
+  }
+  if (fg == func_graph_) {
+    return this;
+  }
+  for (auto p = parent_; p != nullptr; p = p->parent_) {
+    if (p->func_graph_ == fg) {
+      return p;
+    }
+  }
+  return nullptr;
+}
+
+AnalysisContextPtr AnalysisContext::FindOwnOrParentContext(FuncGraph *fg) {
+  if (fg == nullptr) {
+    return DummyContext();
+  }
+  auto parent_fg = fg->parent();
+  if (func_graph_.get() == fg || func_graph_ == parent_fg) {
+    return shared_from_this();
+  }
+  for (auto p = parent_; p != nullptr; p = p->parent_) {
+    if (p->func_graph_.get() == fg || p->func_graph_ == parent_fg) {
+      return p->shared_from_this();
+    }
+  }
+  // Context not found, it would be a bug in code so we raise exception.
+  std::ostringstream oss;
+  oss << "BUG: Failed to find context for: " << fg->ToString()
+      << ", parent: " << (parent_fg == nullptr ? "null" : parent_fg->ToString()) << " from contexts: [" << ToString();
+  for (auto p = parent_; p != nullptr; p = p->parent_) {
+    oss << ", " << p->ToString();
+  }
+  oss << "] " << trace::GetDebugInfo(fg->debug_info());
+  MS_LOG(EXCEPTION) << oss.str();
+}
+
+AnalysisContextPtr AnalysisContext::DummyContext() {
+  if (dummy_contexts_.empty()) {
+    (void)NewDummyContext();
+  }
+  return dummy_contexts_.back();
+}
+
+AnalysisContextPtr AnalysisContext::NewDummyContext() {
+  auto dummy_context = CreateContext(nullptr, nullptr, AbstractBasePtrList());
+  dummy_contexts_.push_back(dummy_context);
+  return dummy_context;
 }
 
 std::string AnalysisContext::ToString() const {
@@ -217,26 +185,38 @@ std::string AnalysisContext::ToString() const {
 }
 
 void AnalysisContext::Clear() {
+  // Recursively clear children.
+  for (auto &child : children_) {
+    if (child.second != nullptr) {
+      child.second->Clear();
+    }
+  }
+  children_.clear();
   parent_ = nullptr;
   func_graph_ = nullptr;
   args_spec_list_.clear();
-  extant_context_cache_.clear();
-  children_cache_.clear();
-  hash_ = 0;
+}
+
+AnalysisContextPtr AnalysisContext::CreateContext(AnalysisContext *parent, const FuncGraphPtr &fg,
+                                                  const AbstractBasePtrList &args_spec_list) {
+  // This is a hack to solve the problem that std::make_shared can only use public constructor.
+  struct MakeSharedEnabler : public AnalysisContext {
+    MakeSharedEnabler(AnalysisContext *parent, const FuncGraphPtr &fg, const AbstractBasePtrList &args_spec_list)
+        : AnalysisContext(parent, fg, args_spec_list) {}
+    ~MakeSharedEnabler() = default;
+  };
+  return std::make_shared<MakeSharedEnabler>(parent, fg, args_spec_list);
 }
 
 void AnalysisContext::ClearContext() {
-  for (auto &context : all_context_) {
-    context->Clear();
+  // Clear all root dummy contexts and their children.
+  for (auto &context : dummy_contexts_) {
+    if (context != nullptr) {
+      // Children contexts will be cleared recursively.
+      context->Clear();
+    }
   }
-  all_context_.clear();
-}
-
-AnalysisContextPtr AnalysisContext::CreateContext(const AnalysisContextPtr &parent, const FuncGraphPtr &fg,
-                                                  const AbstractBasePtrList &args_spec_list) {
-  auto context = std::make_shared<AnalysisContext>(parent, fg, args_spec_list);
-  (void)all_context_.emplace_back(context);
-  return context;
+  dummy_contexts_.clear();
 }
 }  // namespace abstract
 }  // namespace mindspore
