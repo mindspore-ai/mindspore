@@ -39,12 +39,29 @@ bool UpperBoundGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const st
   kernel_func_ = func_list_[index].second;
   unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).first);
   unit_out_size_ = abstract::TypeIdSize(kernel_attr.GetOutputAttr(kIndex0).first);
+  return true;
+}
+
+int UpperBoundGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                   const std::vector<KernelTensorPtr> &outputs,
+                                   const std::map<uint32_t, tensor::TensorPtr> &) {
+  for (const auto &input : inputs) {
+    // If any input shape contains -1, means input shape is dynamic, so just return do nothing.
+    auto input_shape = input->GetShapeVector();
+    if (!IsValidShape(input_shape)) {
+      return KRET_UNKNOWN_SHAPE;
+    }
+  }
+  ResetResource();
   std::vector<int64_t> sorted_x_shape_ = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
                                                               inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
   std::vector<int64_t> values_shape_ = std::vector<int64_t>(inputs.at(kIndex1)->GetDeviceShapeAdaptively().begin(),
                                                             inputs.at(kIndex1)->GetDeviceShapeAdaptively().end());
   sorted_x_elements_ = std::accumulate(sorted_x_shape_.begin(), sorted_x_shape_.end(), 1, std::multiplies<int64_t>());
   values_elements_ = std::accumulate(values_shape_.begin(), values_shape_.end(), 1, std::multiplies<int64_t>());
+  if (sorted_x_elements_ == 0 || values_elements_ == 0) {
+    is_null_input_ = true;
+  }
   int64_t sorted_x_dims = sorted_x_shape_.size();
   if (sorted_x_dims != INPUT_DIMS) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'sorted_x' should be 2-D, but got "
@@ -65,43 +82,15 @@ bool UpperBoundGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const st
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the rows of 'sorted_x' and 'values' should be the same.";
     return false;
   }
-  is_null_input_ = (sorted_x_elements_ == 0 || values_elements_ == 0);
-  if (is_null_input_) {
-    InitSizeLists();
-    return true;
-  }
-  outputs_ = outputs;
-  InitSizeLists();
-  if (!is_input_dynamic_shape_.has_value()) {
-    bool is_input_dynamic_shape = false;
-    for (const auto &input : inputs) {
-      auto input_shape_d = input->GetShapeVector();
-      if (std::any_of(input_shape_d.begin(), input_shape_d.end(), [](int64_t dim) { return dim < 0; })) {
-        is_input_dynamic_shape = true;
-        break;
-      }
-    }
-    is_input_dynamic_shape_ = is_input_dynamic_shape;
-  }
-  return true;
-}
 
-int UpperBoundGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs,
-                                   const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (is_input_dynamic_shape_.has_value() && is_input_dynamic_shape_.value()) {
-    DestroyResource();
-    ResetResource();
-    if (Init(base_operator, inputs, outputs)) {
-      return KRET_OK;
-    } else {
-      return KRET_RESIZE_FAILED;
-    }
-  } else {
-    kernel_ptr_ = base_operator;
-    outputs_ = outputs;
-    return KRET_OK;
-  }
+  size_t sorted_x_size = sorted_x_elements_ * unit_size_;
+  size_t values_size = values_elements_ * unit_size_;
+  size_t output_size = values_elements_ * unit_out_size_;
+  input_size_list_.emplace_back(sorted_x_size);
+  input_size_list_.emplace_back(values_size);
+  output_size_list_.emplace_back(output_size);
+
+  return KRET_OK;
 }
 
 template <typename T, typename S>

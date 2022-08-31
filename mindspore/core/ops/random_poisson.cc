@@ -34,6 +34,10 @@ abstract::ShapePtr RandomPoissonInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
   auto shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto rate_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  if (IsDynamicRank(shape_shape) || IsDynamicRank(rate_shape)) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
+  }
   if (shape_shape.size() != 1) {
     MS_EXCEPTION(ValueError) << "For RandomPoisson, the argument[shape] must be a 1-D tensor, but got "
                              << shape_shape.size() << "-D";
@@ -45,7 +49,6 @@ abstract::ShapePtr RandomPoissonInferShape(const PrimitivePtr &primitive,
     auto out_shape = CheckAndConvertUtils::CheckTensorIntValue("shape", shape_value, op_name);
     (void)CheckAndConvertUtils::CheckPositiveVector("shape", out_shape, op_name);
 
-    auto rate_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
     size_t rate_rank = rate_shape.size();
     for (size_t i = 0; i < rate_rank; i++) {
       out_shape.push_back(rate_shape[i]);

@@ -56,6 +56,9 @@ abstract::ShapePtr TruncatedNormalInferShape(const PrimitivePtr &primitive,
   }
   auto shape_input_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
   auto shape_input = shape_input_map[kShape];
+  if (IsDynamicRank(shape_input)) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
+  }
   if (shape_input[0] == 0) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', input can not be an empty tensor.";
   }

@@ -34,13 +34,6 @@ bool BartlettWindowGpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  std::vector<int64_t> input_shape = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                          inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
-  int64_t input_dims = input_shape.size();
-  if (input_dims != 0) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'x' must be 0-D, but got " << input_dims << "-D.";
-    return false;
-  }
   unit_input_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).first);
   unit_output_size_ = abstract::TypeIdSize(kernel_attr.GetOutputAttr(kIndex0).first);
   periodic_ = kernel_ptr_->get_periodic();
@@ -58,6 +51,13 @@ int BartlettWindowGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
     }
   }
   ResetResource();
+  std::vector<int64_t> input_shape = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
+                                                          inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+  int64_t input_dims = input_shape.size();
+  if (input_dims != 0) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'x' must be 0-D, but got " << input_dims << "-D.";
+    return false;
+  }
   std::vector<int64_t> output_shape = std::vector<int64_t>(outputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
                                                            outputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
   output_elements_ = std::accumulate(output_shape.begin(), output_shape.end(), int64_t(1), std::multiplies<int64_t>());

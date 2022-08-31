@@ -37,6 +37,13 @@ abstract::TupleShapePtr ApplyAddSignInferShape(const PrimitivePtr &primitive,
   }
   auto var_shape = input_args[kInputIndex0]->BuildShape();
   auto m_shape = input_args[kInputIndex1]->BuildShape();
+  auto var_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(var_shape)[kShape];
+  auto m_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(m_shape)[kShape];
+  if (IsDynamicRank(var_shape_map) || IsDynamicRank(m_shape_map)) {
+    abstract::ShapePtr var_shape_dyn = std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
+    abstract::ShapePtr m_shape_dyn = std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
+    return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{var_shape_dyn, m_shape_dyn});
+  }
   auto lr_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
   auto alpha_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
   auto sign_decay_shape =
@@ -63,22 +70,22 @@ abstract::TupleShapePtr ApplyAddSignInferShape(const PrimitivePtr &primitive,
   const int64_t kShapeSize = 1;
   auto lr_shape_rank = SizeToLong(lr_shape.size());
   (void)CheckAndConvertUtils::CheckInteger("lr_shape_rank", lr_shape_rank, kLessEqual, kShapeSize, prim_name);
-  if (lr_shape_rank == 1) {
+  if (lr_shape_rank == 1 && lr_shape[0] > 0) {
     (void)CheckAndConvertUtils::CheckInteger("lr_shape[0]", lr_shape[0], kEqual, kShapeSize, prim_name);
   }
   auto alpha_shape_rank = SizeToLong(alpha_shape.size());
   (void)CheckAndConvertUtils::CheckInteger("alpha_shape_rank", alpha_shape_rank, kLessEqual, kShapeSize, prim_name);
-  if (alpha_shape_rank == 1) {
+  if (alpha_shape_rank == 1 && alpha_shape[0] > 0) {
     (void)CheckAndConvertUtils::CheckInteger("alpha_shape[0]", alpha_shape[0], kEqual, kShapeSize, prim_name);
   }
   (void)CheckAndConvertUtils::CheckInteger("sign_decay_shape_rank", SizeToLong(sign_decay_shape.size()), kLessEqual,
                                            kShapeSize, prim_name);
-  if (sign_decay_shape.size() == 1) {
+  if (sign_decay_shape.size() == 1 && sign_decay_shape[0] > 0) {
     (void)CheckAndConvertUtils::CheckInteger("sign_decay_shape[0]", sign_decay_shape[0], kEqual, kShapeSize, prim_name);
   }
   auto beta_shape_rank = SizeToLong(beta_shape.size());
   (void)CheckAndConvertUtils::CheckInteger("beta_shape_rank", beta_shape_rank, kLessEqual, kShapeSize, prim_name);
-  if (beta_shape_rank == 1) {
+  if (beta_shape_rank == 1 && beta_shape[0] > 0) {
     (void)CheckAndConvertUtils::CheckInteger("beta_shape[0]", beta_shape[0], kEqual, kShapeSize, prim_name);
   }
   return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{var_shape, m_shape});
