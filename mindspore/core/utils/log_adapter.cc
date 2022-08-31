@@ -193,8 +193,10 @@ static inline std::string GetEnv(const std::string &envvar) {
 // When GLOG_logtostderr is set to 0, logs are output to a file, then will print duplicate message
 // in exception log and stack. Otherwise when GLOG_logtostderr is set to 1, logs are output to the screen,
 // then will only print message in exception stack.
+static MsLogLevel GetGlobalLogLevel();
 void LogWriter::RemoveLabelBeforeOutputLog(const std::ostringstream &msg) const {
-  if (GetEnv("GLOG_logtostderr") == "0") {
+  auto logLevel = GetGlobalLogLevel();
+  if (logLevel <= MsLogLevel::kInfo || GetEnv("GLOG_logtostderr") == "0") {
     std::string str = msg.str();
     auto replace = [&](const std::string &orgStr, const std::string &newStr) {
       std::string::size_type pos;
