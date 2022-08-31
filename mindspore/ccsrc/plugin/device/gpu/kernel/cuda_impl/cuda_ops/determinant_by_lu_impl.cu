@@ -79,6 +79,68 @@ __global__ void CalculateDeterminantByLuKernel(const T *lu_input, const int *piv
   }
 }
 
+#ifdef _WIN32
+template <>
+__global__ void CalculateDeterminantByLuKernel(const Complex<float> *lu_input, const int *pivot, int m, int batch_size,
+                                               bool is_sign_log_determinant, Complex<float> *determinant_output,
+                                               Complex<float> *sign_output) {
+  for (size_t index = blockIdx.x * blockDim.x + threadIdx.x; index < (batch_size); index += blockDim.x * gridDim.x) {
+    const int permutation_order = PermutationOrder(m, pivot + index * m);
+    Complex<float> prod_sign = permutation_order % 2 ? (-1) : 1;
+    Complex<float> sum_abs_log_det = 0;
+    int matrix_size = m * m;
+    int stride = m + 1;
+    size_t lu_i_index = matrix_size * index;
+    // Get lu data's diagonal by stride.
+    for (int i = 0; i < m; ++i, lu_i_index += stride) {
+      const Complex<float> abs_i = abs(lu_input[lu_i_index]);
+      sum_abs_log_det += log(abs_i);
+      prod_sign = prod_sign * (lu_input[lu_i_index] / abs_i);
+    }
+    if (!mindspore::utils::isfinite(sum_abs_log_det)) {
+      prod_sign = 0;
+      sum_abs_log_det = CalInFiniteValue(sum_abs_log_det);
+    }
+    if (is_sign_log_determinant) {
+      sign_output[index] = prod_sign;
+      determinant_output[index] = sum_abs_log_det;
+    } else {
+      determinant_output[index] = prod_sign * exp(sum_abs_log_det);
+    }
+  }
+}
+
+template <>
+__global__ void CalculateDeterminantByLuKernel(const Complex<double> *lu_input, const int *pivot, int m, int batch_size,
+                                               bool is_sign_log_determinant, Complex<double> *determinant_output,
+                                               Complex<double> *sign_output) {
+  for (size_t index = blockIdx.x * blockDim.x + threadIdx.x; index < (batch_size); index += blockDim.x * gridDim.x) {
+    const int permutation_order = PermutationOrder(m, pivot + index * m);
+    Complex<double> prod_sign = permutation_order % 2 ? (-1) : 1;
+    Complex<double> sum_abs_log_det = 0;
+    int matrix_size = m * m;
+    int stride = m + 1;
+    size_t lu_i_index = matrix_size * index;
+    // Get lu data's diagonal by stride.
+    for (int i = 0; i < m; ++i, lu_i_index += stride) {
+      const Complex<double> abs_i = abs(lu_input[lu_i_index]);
+      sum_abs_log_det += log(abs_i);
+      prod_sign = prod_sign * (lu_input[lu_i_index] / abs_i);
+    }
+    if (!mindspore::utils::isfinite(sum_abs_log_det)) {
+      prod_sign = 0;
+      sum_abs_log_det = CalInFiniteValue(sum_abs_log_det);
+    }
+    if (is_sign_log_determinant) {
+      sign_output[index] = prod_sign;
+      determinant_output[index] = sum_abs_log_det;
+    } else {
+      determinant_output[index] = prod_sign * exp(sum_abs_log_det);
+    }
+  }
+}
+#endif
+
 template <typename T>
 void CalculateDeterminantByLu(const T *lu_input, const int *pivot, int m, int batch_size,
                               bool is_sign_log_determinant, T *determinant_output, T *sign_output,

@@ -28,13 +28,37 @@ __global__ void LogSpaceKernel(const T start, const T add,
   return;
 }
 
+#ifdef _WIN32
+template <>
+__global__ void LogSpaceKernel(const float start, const float add,
+                               const int64_t steps, const size_t base, float *output) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < steps; i += gridDim.x * blockDim.x) {
+    output[i] = pow(static_cast<float>(base), start + (add * i));
+  }
+  return;
+}
+
+template <>
+__global__ void LogSpaceKernel(const double start, const double add,
+                               const int64_t steps, const size_t base, double *output) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < steps; i += gridDim.x * blockDim.x) {
+    output[i] = pow(static_cast<double>(base), start + (add * i));
+  }
+  return;
+}
+#endif
+
 template <>
 __global__ void LogSpaceKernel(const half start, const half add,
                                const int64_t steps, const size_t base, half *output) {
   float start_float = __half2float(start);
   float add_value = __half2float(add);
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < steps; i += gridDim.x * blockDim.x) {
+#ifndef _WIN32
     output[i] = __float2half(pow(base, start_float + (add_value * i)));
+#else
+    output[i] = __float2half(pow(static_cast<float>(base), start_float + (add_value * i)));
+#endif
   }
   return;
 }
