@@ -16,12 +16,7 @@
 
 #include "minddata/dataset/kernels/image/auto_augment_op.h"
 
-#include "minddata/dataset/kernels/image/affine_op.h"
-#include "minddata/dataset/kernels/image/auto_contrast_op.h"
-#include "minddata/dataset/kernels/image/invert_op.h"
-#include "minddata/dataset/kernels/image/posterize_op.h"
-#include "minddata/dataset/kernels/image/sharpness_op.h"
-#include "minddata/dataset/kernels/image/solarize_op.h"
+#include "minddata/dataset/kernels/image/image_utils.h"
 #include "minddata/dataset/util/random.h"
 
 namespace mindspore {

@@ -2952,3 +2952,16 @@ TEST_F(MindDataTestExecute, TestResizedCrop) {
 
   EXPECT_EQ(rc, Status::OK());
 }
+
+/// Feature: RandAugment
+/// Description: test RandAugment eager
+/// Expectation: load one image data and process rand augmentation on it
+TEST_F(MindDataTestExecute, TestRandAugmentEager) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestRandAugmentEager.";
+  auto image = ReadFileToTensor("data/dataset/apple.jpg");
+  auto decode = vision::Decode();
+  auto rand_augment_op = vision::RandAugment(3, 4, 5, InterpolationMode::kLinear, {0, 0, 0});
+  auto transform = Execute({decode, rand_augment_op});
+  Status rc = transform(image, &image);
+  EXPECT_EQ(rc, Status::OK());
+}

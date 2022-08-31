@@ -1403,3 +1403,24 @@ def check_trivial_augment_wide(method):
         return method(self, *args, **kwargs)
 
     return new_method
+
+
+def check_rand_augment(method):
+    """Wrapper method to check the parameters of RandAugment."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [num_ops, magnitude, num_magnitude_bins, interpolation, fill_value], _ = parse_user_args(method, *args,
+                                                                                                 **kwargs)
+
+        type_check(num_ops, (int,), "num_ops")
+        check_value(num_ops, (0, FLOAT_MAX_INTEGER), "num_ops")
+        type_check(num_magnitude_bins, (int,), "num_magnitude_bins")
+        check_value(num_magnitude_bins, (2, FLOAT_MAX_INTEGER), "num_magnitude_bins")
+        type_check(magnitude, (int,), "magnitude")
+        check_value(magnitude, (0, num_magnitude_bins), "magnitude", right_open_interval=True)
+        type_check(interpolation, (Inter,), "interpolation")
+        check_fill_value(fill_value)
+        return method(self, *args, **kwargs)
+
+    return new_method
