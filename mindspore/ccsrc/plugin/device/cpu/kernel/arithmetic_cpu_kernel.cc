@@ -20,6 +20,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <typeinfo>
 #include <unordered_map>
 #include <utility>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
@@ -521,9 +522,22 @@ void ArithmeticCpuTypeFunc<T>::DivNoNan(const T *input1, const T *input2, T *out
       auto divisor = input2[iter.GetInputPosB()];
       iter.GenNextPos();
       auto zero = static_cast<T>(0);
-      if (divisor == zero) {
-        out[i] = zero;
-        continue;
+      if constexpr (std::is_same_v<T, double>) {
+        if (common::IsDoubleEqual(divisor, zero)) {
+          out[i] = zero;
+          continue;
+        }
+      }
+      if constexpr (std::is_same_v<T, float>) {
+        if (common::IsFloatEqual(divisor, zero)) {
+          out[i] = zero;
+          continue;
+        }
+      } else {
+        if (divisor == zero) {
+          out[i] = zero;
+          continue;
+        }
       }
       out[i] = static_cast<T>(dividend) / static_cast<T>(divisor);
     }

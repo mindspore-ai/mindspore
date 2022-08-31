@@ -16,6 +16,7 @@
 
 #include "mindspore/ccsrc/plugin/device/cpu/kernel/non_zero_cpu_kernel.h"
 #include <algorithm>
+#include <typeinfo>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
@@ -70,8 +71,8 @@ bool NonZeroCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
                                        const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
-  auto input_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto output_addr = reinterpret_cast<int64_t *>(outputs[0]->addr);
+  auto input_addr = static_cast<T *>(inputs[0]->addr);
+  auto output_addr = static_cast<int64_t *>(outputs[0]->addr);
 
   size_t input_num = inputs[0]->size / sizeof(T);
   size_t non_zero_num = NonZeroCompute(input_addr, output_addr, input_num);
@@ -96,14 +97,27 @@ size_t NonZeroCpuKernelMod::NonZeroCompute(const T *input, int64_t *output, size
   }
 
   for (size_t elem_i = 0; elem_i < input_num; ++elem_i) {
-    if (input[elem_i] != static_cast<T>(0)) {
-      size_t index = elem_i;
-      for (size_t pos_j = 0; pos_j < input_rank_; ++pos_j) {
-        output[non_zero_count * input_rank_ + pos_j] = index / dim_strides[pos_j];
-        index %= dim_strides[pos_j];
+    auto zero = static_cast<T>(0);
+    if constexpr (std::is_same_v<T, double>) {
+      if (common::IsDoubleEqual(input[elem_i], zero)) {
+        continue;
       }
-      non_zero_count++;
     }
+    if constexpr (std::is_same_v<T, float>) {
+      if (common::IsFloatEqual(input[elem_i], zero)) {
+        continue;
+      }
+    } else {
+      if (input[elem_i] == zero) {
+        continue;
+      }
+    }
+    size_t index = elem_i;
+    for (size_t pos_j = 0; pos_j < input_rank_; ++pos_j) {
+      output[non_zero_count * input_rank_ + pos_j] = static_cast<int64_t>(index / dim_strides[pos_j]);
+      index %= dim_strides[pos_j];
+    }
+    non_zero_count++;
   }
   return non_zero_count;
 }

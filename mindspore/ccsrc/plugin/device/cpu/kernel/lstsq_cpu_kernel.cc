@@ -82,7 +82,7 @@ void LstsqCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, cons
     k = static_cast<size_t>(input_1_shape_[1]);
   }
 
-  typedef Eigen::Matrix<T1, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MartixXd;
+  typedef Eigen::Matrix<T1, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MartixXd;  // NOLINT
   MartixXd A(m, n);
   MartixXd B(m, k);
   for (size_t i = 0; i < m * n; i++) {
@@ -104,7 +104,7 @@ void LstsqCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, cons
   }
   for (size_t i = 0; i < n; i++) {
     for (size_t j = 0; j < k; j++) {
-      *(output_addr + i * k + j) = static_cast<T2>(result(i, j));
+      *(output_addr + i * k + j) = static_cast<T2>(result(i, j));  // NOLINT
     }
   }
 }
