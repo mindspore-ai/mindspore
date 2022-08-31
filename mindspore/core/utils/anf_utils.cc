@@ -22,6 +22,7 @@
 #include "mindspore/core/ops/core_ops.h"
 #include "utils/trace_base.h"
 #include "utils/hash_map.h"
+#include "utils/os.h"
 #include "include/common/utils/utils.h"
 
 namespace mindspore {

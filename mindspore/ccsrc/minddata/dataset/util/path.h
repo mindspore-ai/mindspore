@@ -16,10 +16,9 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_UTIL_PATH_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_UTIL_PATH_H_
 
-#include <dirent.h>
 #include <memory>
 #include <string>
-
+#include "utils/os.h"
 #include "minddata/dataset/util/status.h"
 
 namespace mindspore {

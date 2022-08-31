@@ -15,7 +15,6 @@
  */
 
 #include "utils/system/sha256.h"
-#include <dirent.h>
 #include <sys/stat.h>
 #include <iomanip>
 #include <fstream>
@@ -25,6 +24,7 @@
 #include "securec/include/securec.h"
 #include "utils/log_adapter.h"
 #include "utils/convert_utils_base.h"
+#include "utils/os.h"
 
 namespace mindspore {
 namespace system {

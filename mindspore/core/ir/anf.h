@@ -39,6 +39,7 @@
 #include "utils/info.h"
 #include "utils/hashing.h"
 #include "utils/ms_utils.h"
+#include "utils/os.h"
 
 // A MindSpore ANF IR defined here.
 // with BNF followed:

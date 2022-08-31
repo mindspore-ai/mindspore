@@ -18,12 +18,12 @@
 #define MINDSPORE_CORE_UTILS_FILE_UTILS_H_
 
 #include <sys/stat.h>
-#include <unistd.h>
 #include <string>
 #include <optional>
 #include "mindspore/core/utils/ms_utils.h"
 #include "utils/macros.h"
 #include "utils/log_adapter.h"
+#include "utils/os.h"
 
 namespace mindspore {
 class MS_CORE_API FileUtils {

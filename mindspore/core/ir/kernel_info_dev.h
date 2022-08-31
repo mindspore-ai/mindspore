@@ -22,6 +22,7 @@
 #include <utility>
 #include <string>
 #include "utils/info.h"
+#include "utils/os.h"
 
 namespace mindspore {
 enum Axis : int {

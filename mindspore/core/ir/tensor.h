@@ -33,6 +33,7 @@
 #include "utils/shape_utils.h"
 #include "utils/ms_exception.h"
 #include "ir/device_event.h"
+#include "utils/os.h"
 
 // brief mindspore namespace.
 //
