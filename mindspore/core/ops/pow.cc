@@ -47,7 +47,7 @@ TypePtr PowInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr
   TypePtr x1_type = input_args[kInputIndex0]->BuildType();
   TypePtr x2_type = input_args[kInputIndex1]->BuildType();
   std::set<TypePtr> complex_valid_types = {kComplex64, kComplex128};
-  if (complex_valid_types.count(x1_type) > 0 || complex_valid_types.count(x2_type) > 0) {
+  if ((complex_valid_types.count(x1_type) > 0) || (complex_valid_types.count(x2_type) > 0)) {
     std::map<std::pair<TypePtr, TypePtr>, TypePtr> type_infer_dict;
     (void)type_infer_dict.emplace(std::make_pair(kComplex64, kComplex64), kComplex64);
     (void)type_infer_dict.emplace(std::make_pair(kComplex128, kComplex128), kComplex128);

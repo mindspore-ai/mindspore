@@ -56,7 +56,7 @@ array2d<double, num_prods_18, num_prods_18> b18 = {
    {0., 0., -9.23364619367118555360e-02, -1.69364939002081722752e-02, -1.40086798182036094347e-05}}};
 }  // namespace
 
-bool MatrixExpCpuKernelMod::CheckInputShape() {
+bool MatrixExpCpuKernelMod::CheckInputShape() const {
   static constexpr int kNumber1 = 1;
   static constexpr int kNumber2 = 2;
   size_t shape_size_x = input_shape_.size();
@@ -107,7 +107,7 @@ int MatrixExpCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
 template <typename Derived1, typename Derived2, typename Derived3>
 void MatrixExpCpuKernelMod::MTaylorApproximant(const Eigen::MatrixBase<Derived1> &A,
                                                const Eigen::MatrixBase<Derived2> &I, int order,
-                                               Eigen::MatrixBase<Derived3> *E) {
+                                               Eigen::MatrixBase<Derived3> *E) const {
   constexpr int exp_order_1 = 1, exp_order_2 = 2, exp_order_4 = 4, exp_order_8 = 8, exp_order_12 = 12;
   auto A2 = A * A;
   auto A3 = A * A2;
@@ -144,7 +144,7 @@ void MatrixExpCpuKernelMod::MTaylorApproximant(const Eigen::MatrixBase<Derived1>
 
 template <typename Derived1, typename Derived2>
 void MatrixExpCpuKernelMod::MexpImpl(const Eigen::MatrixBase<Derived1> &A, const Eigen::MatrixBase<Derived2> &I,
-                                     Eigen::MatrixBase<Derived1> *mexp) {
+                                     Eigen::MatrixBase<Derived1> *mexp) const {
   const auto norm = A.cwiseAbs().colwise().sum().maxCoeff();
   constexpr std::array<int, total_n_degs> m_vals = {1, 2, 4, 8, 12, 18};
   constexpr int cut_deg = 2;
@@ -203,12 +203,12 @@ bool MatrixExpCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMatrixExpOutputsNum, kernel_name_);
   auto input_x = reinterpret_cast<T *>(inputs[0]->addr);
   auto output_y = reinterpret_cast<T *>(outputs[0]->addr);
-  int64_t m = *(input_shape_.end() - 1);
+  int64_t m = SizeToLong(*(input_shape_.end() - 1));
   int64_t size_mm = m * m;
   typedef Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MatrixXd;
   MatrixXd I(m, m);
   I.setIdentity();
-  int64_t total = inputs[0]->size / sizeof(T);
+  int64_t total = SizeToLong(inputs[0]->size / sizeof(T));
   int64_t matrix_num = total / size_mm;
   auto task = [this, &input_x, &output_y, &I, m](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
@@ -224,7 +224,7 @@ bool MatrixExpCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &
 }
 
 void MatrixExpCpuKernelMod::TyepChangeForFp16(int64_t i, int64_t m, int64_t size_mm, mindspore::Float16 *input_x,
-                                              mindspore::Float16 *output_y) {
+                                              mindspore::Float16 *output_y) const {
   typedef Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MatrixXd;
   MatrixXd I(m, m);
   I.setIdentity();
@@ -253,12 +253,12 @@ bool MatrixExpCpuKernelMod::LaunchKernelFP16(const std::vector<kernel::AddressPt
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMatrixExpOutputsNum, kernel_name_);
   auto input_x = reinterpret_cast<T *>(inputs[0]->addr);
   auto output_y = reinterpret_cast<T *>(outputs[0]->addr);
-  int64_t m = *(input_shape_.end() - 1);
+  int64_t m = SizeToLong(*(input_shape_.end() - 1));
   int64_t size_mm = m * m;
   typedef Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MatrixXd;
   MatrixXd I(m, m);
   I.setIdentity();
-  int64_t total = inputs[0]->size / sizeof(T);
+  int64_t total = SizeToLong(inputs[0]->size / sizeof(T));
   int64_t matrix_num = total / size_mm;
   auto task = [this, &input_x, &output_y, m, size_mm](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {

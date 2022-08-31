@@ -82,7 +82,6 @@ bool CompareAndBitpackCpuKernelMod::Launch(const std::vector<kernel::AddressPtr>
       break;
     default:
       MS_LOG(EXCEPTION) << "CompareAndBitpack invalid input type " << TypeIdLabel(dtype_) << " which is not supported.";
-      return false;
   }
   return res;
 }
@@ -93,16 +92,16 @@ bool CompareAndBitpackCpuKernelMod::LaunchKernel(const std::vector<kernel::Addre
   T *input0 = reinterpret_cast<T *>(inputs[0]->addr);
   T *input1 = reinterpret_cast<T *>(inputs[1]->addr);
   uint8_t *output = reinterpret_cast<uint8_t *>(outputs[0]->addr);
-  int64_t data_num = outputs[0]->size;
+  int64_t data_num = SizeToLong(outputs[0]->size);
   T thresh = *input1;
-  const int32_t shift_num1 = 1;
-  const int32_t shift_num2 = 2;
-  const int32_t shift_num3 = 3;
-  const int32_t shift_num4 = 4;
-  const int32_t shift_num5 = 5;
-  const int32_t shift_num6 = 6;
-  const int32_t shift_num7 = 7;
-  const int32_t shift_num8 = 8;
+  const int64_t shift_num1 = 1;
+  const int64_t shift_num2 = 2;
+  const int64_t shift_num3 = 3;
+  const int64_t shift_num4 = 4;
+  const int64_t shift_num5 = 5;
+  const int64_t shift_num6 = 6;
+  const int64_t shift_num7 = 7;
+  const int64_t shift_num8 = 8;
   if (dtype_ == kNumberTypeBool) {
     // Specialization for bool on systems where sizeof(bool) == 1.
     for (int64_t i = 0; i < data_num; ++i) {

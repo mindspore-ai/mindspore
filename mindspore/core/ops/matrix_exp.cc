@@ -38,12 +38,12 @@ abstract::ShapePtr MatrixExpInferShape(const PrimitivePtr &primitive, const std:
   auto x_rank = SizeToLong(x_shape.size());
   constexpr int64_t number1 = 1;
   constexpr int64_t number2 = 2;
-  CheckAndConvertUtils::CheckInteger("x rank", x_rank, kGreaterEqual, number2, prim_name);
-  if (x_shape[x_rank - number1] != x_shape[x_rank - number2]) {
+  (void)CheckAndConvertUtils::CheckInteger("x rank", x_rank, kGreaterEqual, number2, prim_name);
+  if (SizeToLong(x_shape[x_rank - number1]) != SizeToLong(x_shape[x_rank - number2])) {
     MS_EXCEPTION(ValueError) << "For " << prim_name << ", the input expects a tensor of squared matrices"
                              << ", but got shape " << x_shape << ".";
   }
-  CheckAndConvertUtils::CheckInteger("row size", x_shape[x_rank - number1], kGreaterEqual, number1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("row size", x_shape[x_rank - number1], kGreaterEqual, number1, prim_name);
   return shape_element;
 }
 

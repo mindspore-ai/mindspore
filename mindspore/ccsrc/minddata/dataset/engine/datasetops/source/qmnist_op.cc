@@ -35,6 +35,8 @@ const int32_t kQMnistLabelFileMagicNumber = 3074;
 const size_t kQMnistImageRows = 28;
 const size_t kQMnistImageCols = 28;
 const size_t kQMnistLabelLength = 8;
+uint32_t kNum4 = 4;
+uint32_t kNum12 = 12;
 
 QMnistOp::QMnistOp(const std::string &folder_path, const std::string &usage, bool compat,
                    std::unique_ptr<DataSchema> data_schema, std::shared_ptr<SamplerRT> sampler, int32_t num_workers,
@@ -237,9 +239,9 @@ Status QMnistOp::ReadImageAndLabel(std::ifstream *image_reader, std::ifstream *l
                              ": the data file is damaged or the content is incomplete.");
   }
   // uint32_t use 4 bytes in memory
-  (void)label_reader->read(reinterpret_cast<char *>(labels_buf.get()), label_length * num_labels * 4);
+  (void)label_reader->read(reinterpret_cast<char *>(labels_buf.get()), label_length * num_labels * kNum4);
   if (label_reader->fail()) {
-    RETURN_STATUS_UNEXPECTED("Invalid file, failed to read " + std::to_string(label_length * num_labels * 4) +
+    RETURN_STATUS_UNEXPECTED("Invalid file, failed to read " + std::to_string(label_length * num_labels * kNum4) +
                              " bytes from " + label_names_[index] +
                              ": the data file is damaged or content is incomplete.");
   }
@@ -252,7 +254,7 @@ Status QMnistOp::ReadImageAndLabel(std::ifstream *image_reader, std::ifstream *l
                                               reinterpret_cast<unsigned char *>(image), &image_tensor));
 
     auto label = &labels_buf[data_index * label_length];
-    for (int64_t label_index = 0; label_index < label_length; label_index++) {
+    for (int64_t label_index = 0; label_index < static_cast<int64_t>(label_length); label_index++) {
       label[label_index] = SwapEndian(label[label_index]);
     }
     std::shared_ptr<Tensor> label_tensor;
@@ -275,7 +277,7 @@ Status QMnistOp::CheckLabel(const std::string &file_name, std::ifstream *label_r
   int64_t label_len = label_reader->seekg(0, std::ios::end).tellg();
   (void)label_reader->seekg(0, std::ios::beg);
   // The first 12 bytes of the label file are type, number and length
-  CHECK_FAIL_RETURN_UNEXPECTED(label_len >= 12,
+  CHECK_FAIL_RETURN_UNEXPECTED(label_len >= kNum12,
                                "Invalid file, load " + file_name +
                                  " failed: the first 12 bytes of the label file should be type, number and length, " +
                                  "but got the first read bytes : " + std::to_string(label_len));
@@ -293,10 +295,10 @@ Status QMnistOp::CheckLabel(const std::string &file_name, std::ifstream *label_r
                                                                file_name + " should be equal to 8, but got " +
                                                                std::to_string(length) + ".");
 
-  CHECK_FAIL_RETURN_UNEXPECTED((label_len - 12) == num_items * kQMnistLabelLength * 4,
+  CHECK_FAIL_RETURN_UNEXPECTED((label_len - kNum12) == static_cast<int64_t>(num_items * kQMnistLabelLength * kNum4),
                                "Invalid data, the total bytes of labels loading from Qmnist label file: " + file_name +
-                                 " should be " + std::to_string(label_len - 12) + ", but got " +
-                                 std::to_string(num_items * kQMnistLabelLength * 4) + ".");
+                                 " should be " + std::to_string(label_len - kNum12) + ", but got " +
+                                 std::to_string(num_items * kQMnistLabelLength * kNum4) + ".");
   *num_labels = num_items;
   return Status::OK();
 }

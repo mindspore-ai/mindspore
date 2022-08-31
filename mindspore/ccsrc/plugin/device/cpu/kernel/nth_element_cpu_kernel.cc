@@ -90,7 +90,7 @@ bool NthElementCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &input
 template <typename T>
 void NthElementCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                           const std::vector<AddressPtr> &outputs) {
-  auto *n_data = reinterpret_cast<int32_t *>(inputs[1]->addr);
+  auto *n_data = static_cast<int32_t *>(inputs[1]->addr);
   input_n_val_ = *n_data;
   if (input_n_val_ < 0 || input_n_val_ >= static_cast<int>(input_shape_.back())) {
     MS_LOG(EXCEPTION) << "For NthElement, the value of input n must be in [0, input.shape[-1]), "
@@ -101,14 +101,14 @@ void NthElementCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
     input_n_val_ = static_cast<int32_t>(last_dim - input_n_val_ - 1);
   }
   size_t index = IntToSize(input_n_val_);
-  T *input_addrs = reinterpret_cast<T *>(inputs[0]->addr);
-  T *output_addrs = reinterpret_cast<T *>(outputs[0]->addr);
+  T *input_addrs = static_cast<T *>(inputs[0]->addr);
+  T *output_addrs = static_cast<T *>(outputs[0]->addr);
   if (input_elements_ <= kParallelDataNums) {
     std::vector<T> buf(last_dim);
     for (size_t i = 0; i < output_elements_; i++) {
-      const T *input_start = input_addrs + i * last_dim;
+      const T *input_start = input_addrs + SizeToLong(i) * last_dim;
       const T *input_end = input_start + last_dim;
-      std::copy(input_start, input_end, buf.begin());
+      (void)std::copy(input_start, input_end, buf.begin());
       std::nth_element(buf.begin(), buf.begin() + input_n_val_, buf.end());
       output_addrs[i] = buf[index];
     }
@@ -116,9 +116,9 @@ void NthElementCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
     auto shard_nth_element = [this, &last_dim, &input_addrs, &output_addrs, &index](size_t start, size_t end) {
       std::vector<T> buf(last_dim);
       for (size_t i = start; i < end; ++i) {
-        const T *input_start = input_addrs + i * last_dim;
+        const T *input_start = input_addrs + SizeToLong(i) * last_dim;
         const T *input_end = input_start + last_dim;
-        std::copy(input_start, input_end, buf.begin());
+        (void)std::copy(input_start, input_end, buf.begin());
         std::nth_element(buf.begin(), buf.begin() + input_n_val_, buf.end());
         output_addrs[i] = buf[index];
       }

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <complex>
 #include "plugin/device/cpu/kernel/sinc_cpu_kernel.h"
 #include "mindspore/core/ops/sinc.h"
 
@@ -52,15 +53,15 @@ bool SincCpuKernelMod::LaunchSameKernel(const std::vector<kernel::AddressPtr> &i
                                         const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSincInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSincOutputsNum, kernel_name_);
-  auto input = reinterpret_cast<T *>(inputs[0]->addr);
-  auto output = reinterpret_cast<T *>(outputs[0]->addr);
+  auto input = static_cast<T *>(inputs[0]->addr);
+  auto output = static_cast<T *>(outputs[0]->addr);
   size_t total = inputs[0]->size / sizeof(T);
   auto task = [&input, &output](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      if (input[i] == T(0.0f)) {
-        output[i] = T(1.0f);
+      if (input[i] == static_cast<T>(0.0f)) {
+        output[i] = static_cast<T>(1.0f);
       } else {
-        T pi = T(3.14159265358979323846L);
+        T pi = static_cast<T>(3.14159265358979323846L);
         T product = pi * input[i];
         output[i] = sin(product) / product;
       }
@@ -76,8 +77,8 @@ bool SincCpuKernelMod::LaunchDiffKernel(const std::vector<kernel::AddressPtr> &i
                                         const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSincInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSincOutputsNum, kernel_name_);
-  auto input = reinterpret_cast<T *>(inputs[0]->addr);
-  auto output = reinterpret_cast<float *>(outputs[0]->addr);
+  auto input = static_cast<T *>(inputs[0]->addr);
+  auto output = static_cast<float *>(outputs[0]->addr);
   size_t total = inputs[0]->size / sizeof(T);
   auto task = [&input, &output](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
@@ -100,8 +101,8 @@ bool SincCpuKernelMod::LaunchBoolKernel(const std::vector<kernel::AddressPtr> &i
                                         const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSincInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSincOutputsNum, kernel_name_);
-  auto input = reinterpret_cast<bool *>(inputs[0]->addr);
-  auto output = reinterpret_cast<float *>(outputs[0]->addr);
+  auto input = static_cast<bool *>(inputs[0]->addr);
+  auto output = static_cast<float *>(outputs[0]->addr);
   size_t total = inputs[0]->size / sizeof(T);
   auto task = [&input, &output](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {

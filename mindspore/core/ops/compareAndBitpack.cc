@@ -35,8 +35,8 @@ abstract::ShapePtr CompareAndBitpackInferShape(const PrimitivePtr &primitive,
   auto x_rank = SizeToLong(x_shape.size());
 
   // threshold must be a scalar tensor
-  const int64_t kShapeSize_ = 0;
-  const int64_t divisible_num = 8;
+  const size_t kShapeSize_ = 0;
+  const size_t divisible_num = 8;
   auto threshold_shape_size = threshold_shape.size();
   (void)CheckAndConvertUtils::CheckInteger("threshold's rank'", threshold_shape_size, kEqual, kShapeSize_,
                                            primitive->name());
@@ -48,7 +48,7 @@ abstract::ShapePtr CompareAndBitpackInferShape(const PrimitivePtr &primitive,
   (void)CheckAndConvertUtils::Check("x innermost dimension % 8", x_shape[x_rank - 1] % divisible_num, kEqual, 0,
                                     primitive->name());
 
-  std::vector<int64_t> out_shape;
+  ShapeVector out_shape;
   for (int dim = 0; dim < x_rank - 1; dim = dim + 1) {
     (void)out_shape.emplace_back(x_shape[dim]);
   }
@@ -64,7 +64,7 @@ TypePtr CompareAndBitpackInferType(const PrimitivePtr &primitive, const std::vec
   std::map<std::string, TypePtr> types;
   (void)types.emplace("x", input_args[kInputIndex0]->BuildType());
   (void)types.emplace("threshold", input_args[kInputIndex1]->BuildType());
-  CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, primitive->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, primitive->name());
   return std::make_shared<TensorType>(kUInt8);
 }
 }  // namespace

@@ -40,7 +40,7 @@ abstract::ShapePtr ScatterSubInferShape(const PrimitivePtr &primitive, const std
   std::vector<int64_t> input_x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_x_shape_ptr)[kShape];
   std::vector<int64_t> indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(indices_shape_ptr)[kShape];
   std::vector<int64_t> updates_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(updates_shape_ptr)[kShape];
-  std::vector<int64_t> check_update_shape(indices_shape);
+  ShapeVector check_update_shape(indices_shape);
   for (int64_t i = 1; i < SizeToLong(input_x_shape.size()); ++i) {
     check_update_shape.push_back(input_x_shape[LongToSize(i)]);
   }

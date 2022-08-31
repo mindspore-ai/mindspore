@@ -83,7 +83,7 @@ bool BetaincCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
   T *input1 = reinterpret_cast<T *>(inputs[1]->addr);
   T *input2 = reinterpret_cast<T *>(inputs[2]->addr);
   T *output = reinterpret_cast<T *>(outputs[0]->addr);
-  std::int64_t total = inputs[0]->size / sizeof(T);
+  auto total = inputs[0]->size / sizeof(T);
   auto task = [&input0, &input1, &input2, &output](std::int64_t begin, std::int64_t end) {
     for (std::int64_t i = begin; i < end; i++) {
       output[i] = ScalarBetainc(input0[i], input1[i], input2[i]);
