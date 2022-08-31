@@ -21,14 +21,15 @@
 #define _CRT_RAND_S
 #endif
 #include <stdlib.h>
+#ifndef _MSC_VER
 #include <libgen.h>
+#endif
 #include <limits.h>
 #include <sys/stat.h>
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
 #include <sys/statfs.h>
 #include <sys/wait.h>
 #endif
-#include <unistd.h>
 #include <cassert>
 #include <cmath>
 #include <cstdio>
