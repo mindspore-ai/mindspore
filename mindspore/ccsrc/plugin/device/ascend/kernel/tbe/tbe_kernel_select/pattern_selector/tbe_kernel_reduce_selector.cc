@@ -53,8 +53,8 @@ void TbeKernelReduceSelector::GetReduceNodeInfo() {
   auto input_num = common::AnfAlgo::GetInputTensorNum(cnode_ptr_);
   auto output_num = common::AnfAlgo::GetOutputTensorNum(cnode_ptr_);
   if (input_num != 1 || output_num != 1) {
-    MS_LOG(WARNING) << "Reduce operator input/output is not 1, input num: " << input_num
-                    << ", output num: " << output_num << ", node info: " << cnode_ptr_->DebugString();
+    MS_LOG(INFO) << "Reduce operator input/output is not 1, input num: " << input_num << ", output num: " << output_num
+                 << ", node info: " << cnode_ptr_->DebugString();
   }
   // get input/output shape
   for (size_t i = 0; i < input_num; ++i) {
@@ -197,7 +197,7 @@ void TbeKernelReduceSelector::GetReduceSupportFracNZ(SupportFormat *support_form
 
 void TbeKernelReduceSelector::GetReduceAttrKeepDim() {
   if (!common::AnfAlgo::HasNodeAttr(kAttrKeepDims, cnode_ptr_)) {
-    MS_LOG(WARNING) << "This node doesn't have keep_attr.";
+    MS_LOG(INFO) << "This node doesn't have keep_attr.";
     keep_dims_ = false;
     return;
   }
@@ -207,7 +207,7 @@ void TbeKernelReduceSelector::GetReduceAttrKeepDim() {
 void TbeKernelReduceSelector::FilterInvalidFormatDType(SupportFormatDType *support_format_dtype) {
   MS_EXCEPTION_IF_NULL(support_format_dtype);
   if (support_format_dtype->input_dtypes.size() != 1 || support_format_dtype->output_dtypes.size() != 1) {
-    MS_LOG(WARNING) << "The reduce node input or output num is not 1.";
+    MS_LOG(INFO) << "The reduce node input or output num is not 1.";
     return;
   }
 
@@ -231,7 +231,7 @@ void TbeKernelReduceSelector::FilterInvalidFormatDType(SupportFormatDType *suppo
     }
     // TODO(jjfeing)
     if (input_format == kOpFormat_NC1HWC0 && !CheckUBSizeEnable(input_format, input_dtype)) {
-      MS_LOG(WARNING) << "Input 5hd, total size need to greater than block size.";
+      MS_LOG(INFO) << "Input 5hd, total size need to greater than block size.";
       continue;
     }
     (void)input_dtypes_new.emplace_back(input_dtype);
