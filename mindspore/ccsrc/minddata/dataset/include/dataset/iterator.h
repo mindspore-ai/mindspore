@@ -45,7 +45,7 @@ using MSTensorMapChar = std::map<std::vector<char>, mindspore::MSTensor>;
 using MSTensorVec = std::vector<mindspore::MSTensor>;
 
 // Abstract class for iterating over the dataset.
-class MS_API Iterator {
+class DATASET_API Iterator {
  public:
   /// \brief Constructor.
   Iterator();
@@ -146,7 +146,7 @@ class MS_API Iterator {
   IteratorConsumer *consumer_;
 };
 
-class MS_API PullIterator : public Iterator {
+class DATASET_API PullIterator : public Iterator {
  public:
   /// \brief Constructor.
   PullIterator();

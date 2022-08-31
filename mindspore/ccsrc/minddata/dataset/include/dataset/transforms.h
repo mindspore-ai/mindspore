@@ -47,7 +47,7 @@ class UniformAugment;
 // Abstract class to represent a tensor transform operation in the data pipeline.
 /// \class TensorTransform transforms.h
 /// \brief A base class to represent a tensor transform operation in the data pipeline.
-class MS_API TensorTransform : public std::enable_shared_from_this<TensorTransform> {
+class DATASET_API TensorTransform : public std::enable_shared_from_this<TensorTransform> {
   friend class Dataset;
   friend class Execute;
   friend class transforms::Compose;
@@ -76,7 +76,7 @@ class MS_API TensorTransform : public std::enable_shared_from_this<TensorTransfo
 };
 
 /// \brief Slice object used in SliceOption.
-class MS_API Slice {
+class DATASET_API Slice {
  public:
   /// \brief Constructor, with start, stop and step default to 0.
   Slice() : start_(0), stop_(0), step_(0) {}
@@ -122,7 +122,7 @@ class MS_API Slice {
 };
 
 /// \brief SliceOption used in Slice TensorTransform.
-class MS_API SliceOption {
+class DATASET_API SliceOption {
  public:
   /// \param[in] all Slice the whole dimension
   /// \par Example
@@ -166,7 +166,7 @@ class MS_API SliceOption {
 namespace transforms {
 
 /// \brief Compose a list of transforms into a single transform.
-class MS_API Compose final : public TensorTransform {
+class DATASET_API Compose final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] transforms A vector of raw pointers to TensorTransform objects to be applied.
@@ -229,7 +229,7 @@ class MS_API Compose final : public TensorTransform {
 };
 
 /// \brief Concatenate all tensors into a single tensor.
-class MS_API Concatenate final : public TensorTransform {
+class DATASET_API Concatenate final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] axis Concatenate the tensors along given axis, only support 0 or -1 so far (default=0).
@@ -263,7 +263,7 @@ class MS_API Concatenate final : public TensorTransform {
 
 /// \brief Duplicate the input tensor to a new output tensor.
 ///     The input tensor is carried over to the output list.
-class MS_API Duplicate final : public TensorTransform {
+class DATASET_API Duplicate final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \par Example
@@ -289,7 +289,7 @@ class MS_API Duplicate final : public TensorTransform {
 
 /// \brief Fill all elements in the tensor with the specified value.
 ///    The output tensor will have the same shape and type as the input tensor.
-class MS_API Fill final : public TensorTransform {
+class DATASET_API Fill final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] fill_value Scalar value to fill the tensor with.
@@ -322,7 +322,7 @@ class MS_API Fill final : public TensorTransform {
 
 /// \brief Mask content of the input tensor with the given predicate.
 ///     Any element of the tensor that matches the predicate will be evaluated to True, otherwise False.
-class MS_API Mask final : public TensorTransform {
+class DATASET_API Mask final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] op One of the relational operators: EQ, NE LT, GT, LE or GE.
@@ -357,7 +357,7 @@ class MS_API Mask final : public TensorTransform {
 };
 
 /// \brief Convert the labels into OneHot format.
-class MS_API OneHot final : public TensorTransform {
+class DATASET_API OneHot final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] num_classes number of classes.
@@ -388,7 +388,7 @@ class MS_API OneHot final : public TensorTransform {
 };
 
 /// \brief Pad input tensor according to pad_shape
-class MS_API PadEnd final : public TensorTransform {
+class DATASET_API PadEnd final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] pad_shape List of integers representing the shape needed, need to have same rank with input tensor.
@@ -421,7 +421,7 @@ class MS_API PadEnd final : public TensorTransform {
 };
 
 /// \brief Randomly perform a series of transforms with a given probability.
-class MS_API RandomApply final : public TensorTransform {
+class DATASET_API RandomApply final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] transforms A vector of raw pointers to TensorTransform objects to be applied.
@@ -487,7 +487,7 @@ class MS_API RandomApply final : public TensorTransform {
 };
 
 /// \brief Randomly select one transform from a list of transforms to perform on the input tensor.
-class MS_API RandomChoice final : public TensorTransform {
+class DATASET_API RandomChoice final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] transforms A vector of raw pointers to TensorTransform objects to be applied.
@@ -552,7 +552,7 @@ class MS_API RandomChoice final : public TensorTransform {
 /// \brief Extract a tensor out using the given n slices.
 ///     The functionality of Slice is similar to the feature of indexing of NumPy.
 ///     (Currently only rank-1 tensors are supported).
-class MS_API Slice final : public TensorTransform {
+class DATASET_API Slice final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] slice_input Vector of SliceOption.
@@ -582,7 +582,7 @@ class MS_API Slice final : public TensorTransform {
 };
 
 /// \brief Cast the MindSpore data type of a tensor to another.
-class MS_API TypeCast final : public TensorTransform {
+class DATASET_API TypeCast final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] data_type mindspore::DataType to be cast to.
@@ -612,7 +612,7 @@ class MS_API TypeCast final : public TensorTransform {
 
 /// \brief Return an output tensor that contains all the unique elements of the input tensor in
 ///     the same order as they appear in the input tensor.
-class MS_API Unique final : public TensorTransform {
+class DATASET_API Unique final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \par Example

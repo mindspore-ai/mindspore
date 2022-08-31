@@ -37,7 +37,7 @@ class TensorOperation;
 // Transform operations for performing computer audio.
 namespace audio {
 /// \brief Compute the angle of complex tensor input.
-class MS_API Angle final : public TensorTransform {
+class DATASET_API Angle final : public TensorTransform {
  public:
   /// \brief Constructor.
   Angle();
@@ -52,7 +52,7 @@ class MS_API Angle final : public TensorTransform {
 };
 
 /// \brief Design two-pole allpass filter. Similar to SoX implementation.
-class MS_API AllpassBiquad final : public TensorTransform {
+class DATASET_API AllpassBiquad final : public TensorTransform {
  public:
   /// \param[in] sample_rate Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
   /// \param[in] central_freq Central frequency (in Hz).
@@ -74,7 +74,7 @@ class MS_API AllpassBiquad final : public TensorTransform {
 
 /// \brief AmplitudeToDB TensorTransform.
 /// \notes Turn a tensor from the power/amplitude scale to the decibel scale.
-class MS_API AmplitudeToDB final : public TensorTransform {
+class DATASET_API AmplitudeToDB final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] stype Scale of input tensor, must be one of [ScaleType::kPower, ScaleType::kMagnitude] (Default:
@@ -99,7 +99,7 @@ class MS_API AmplitudeToDB final : public TensorTransform {
 };
 
 /// \brief Design two-pole band filter.
-class MS_API BandBiquad final : public TensorTransform {
+class DATASET_API BandBiquad final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] sample_rate Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
@@ -122,7 +122,7 @@ class MS_API BandBiquad final : public TensorTransform {
 };
 
 /// \brief Design two-pole band-pass filter.
-class MS_API BandpassBiquad final : public TensorTransform {
+class DATASET_API BandpassBiquad final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] sample_rate Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
@@ -146,7 +146,7 @@ class MS_API BandpassBiquad final : public TensorTransform {
 };
 
 /// \brief Design two-pole band-reject filter. Similar to SoX implementation.
-class MS_API BandrejectBiquad final : public TensorTransform {
+class DATASET_API BandrejectBiquad final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] sample_rate Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
@@ -168,7 +168,7 @@ class MS_API BandrejectBiquad final : public TensorTransform {
 };
 
 /// \brief Design a bass tone-control effect.
-class MS_API BassBiquad final : public TensorTransform {
+class DATASET_API BassBiquad final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] sample_rate Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
@@ -191,7 +191,7 @@ class MS_API BassBiquad final : public TensorTransform {
 };
 
 /// \brief Perform a biquad filter of input tensor.
-class MS_API Biquad final : public TensorTransform {
+class DATASET_API Biquad final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] b0 Numerator coefficient of current input, x[n].
@@ -217,7 +217,7 @@ class MS_API Biquad final : public TensorTransform {
 
 /// \brief ComplexNorm TensorTransform.
 /// \notes Compute the norm of complex tensor input.
-class MS_API ComplexNorm final : public TensorTransform {
+class DATASET_API ComplexNorm final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] power Power of the norm, which must be non-negative (Default: 1.0).
@@ -238,7 +238,7 @@ class MS_API ComplexNorm final : public TensorTransform {
 
 /// \brief ComputeDeltas Transform.
 /// \note Compute delta coefficients of a spectrogram.
-class MS_API ComputeDeltas final : public TensorTransform {
+class DATASET_API ComputeDeltas final : public TensorTransform {
  public:
   /// \brief Construct a new Compute Deltas object.
   /// \f[
@@ -263,7 +263,7 @@ class MS_API ComputeDeltas final : public TensorTransform {
 };
 
 /// \brief Apply contrast effect.
-class MS_API Contrast final : public TensorTransform {
+class DATASET_API Contrast final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] enhancement_amount Controls the amount of the enhancement (Default: 75.0).
@@ -283,7 +283,7 @@ class MS_API Contrast final : public TensorTransform {
 };
 
 /// \brief Turn a waveform from the decibel scale to the power/amplitude scale.
-class MS_API DBToAmplitude final : public TensorTransform {
+class DATASET_API DBToAmplitude final : public TensorTransform {
  public:
   /// \brief Constructor
   /// \param[in] ref Reference which the output will be scaled by.
@@ -304,7 +304,7 @@ class MS_API DBToAmplitude final : public TensorTransform {
 };
 
 /// \brief Apply a DC shift to the audio.
-class MS_API DCShift : public TensorTransform {
+class DATASET_API DCShift : public TensorTransform {
  public:
   /// \brief Constructor
   /// \param[in] shift Indicates the amount to shift the audio, the value must be in the range [-2.0, 2.0].
@@ -336,7 +336,7 @@ class MS_API DCShift : public TensorTransform {
 Status CreateDct(mindspore::MSTensor *output, int32_t n_mfcc, int32_t n_mels, NormMode norm = NormMode::kNone);
 
 /// \brief Design two-pole deemph filter. Similar to SoX implementation.
-class MS_API DeemphBiquad final : public TensorTransform {
+class DATASET_API DeemphBiquad final : public TensorTransform {
  public:
   /// \param[in] sample_rate Sampling rate of the waveform, the value can only be 44100 (Hz) or 48000(hz).
   explicit DeemphBiquad(int32_t sample_rate);
@@ -355,7 +355,7 @@ class MS_API DeemphBiquad final : public TensorTransform {
 };
 
 /// \brief Detect pitch frequency.
-class MS_API DetectPitchFrequency final : public TensorTransform {
+class DATASET_API DetectPitchFrequency final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] sample_rate Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
@@ -383,7 +383,7 @@ class MS_API DetectPitchFrequency final : public TensorTransform {
 
 /// \brief Dither increases the perceived dynamic range of audio stored at a
 ///     particular bit-depth by eliminating nonlinear truncation distortion.
-class MS_API Dither final : public TensorTransform {
+class DATASET_API Dither final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] density_function The density function of a continuous random variable.
@@ -408,7 +408,7 @@ class MS_API Dither final : public TensorTransform {
 };
 
 /// \brief EqualizerBiquad TensorTransform. Apply highpass biquad filter on audio.
-class MS_API EqualizerBiquad final : public TensorTransform {
+class DATASET_API EqualizerBiquad final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] sample_rate Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
@@ -431,7 +431,7 @@ class MS_API EqualizerBiquad final : public TensorTransform {
 };
 
 /// \brief Add fade in or/and fade out on the input audio.
-class MS_API Fade final : public TensorTransform {
+class DATASET_API Fade final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] fade_in_len Length of fade-in (time frames), which must be non-negative
@@ -455,7 +455,7 @@ class MS_API Fade final : public TensorTransform {
 };
 
 /// \brief Design IIR forward and backward filter.
-class MS_API Filtfilt final : public TensorTransform {
+class DATASET_API Filtfilt final : public TensorTransform {
  public:
   /// \param[in] a_coeffs Numerator coefficients of difference equation of dimension of (n_order + 1).
   ///     Lower delays coefficients are first, e.g. [a0, a1, a2, ...].
@@ -480,7 +480,7 @@ class MS_API Filtfilt final : public TensorTransform {
 };
 
 /// \brief Apply a flanger effect to the audio.
-class MS_API Flanger final : public TensorTransform {
+class DATASET_API Flanger final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] sample_rate Sampling rate of the waveform, e.g. 44100 (Hz).
@@ -513,7 +513,7 @@ class MS_API Flanger final : public TensorTransform {
 
 /// \brief FrequencyMasking TensorTransform.
 /// \notes Apply masking to a spectrogram in the frequency domain.
-class MS_API FrequencyMasking final : public TensorTransform {
+class DATASET_API FrequencyMasking final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] iid_masks Whether to apply different masks to each example.
@@ -539,7 +539,7 @@ class MS_API FrequencyMasking final : public TensorTransform {
 };
 
 /// \brief Apply amplification or attenuation to the whole waveform.
-class MS_API Gain final : public TensorTransform {
+class DATASET_API Gain final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] gain_db Gain adjustment in decibels (dB) (Default: 1.0).
@@ -559,7 +559,7 @@ class MS_API Gain final : public TensorTransform {
 };
 
 /// \brief Waveform calculation from linear scalar amplitude spectrogram using GriffinLim transform.
-class MS_API GriffinLim final : public TensorTransform {
+class DATASET_API GriffinLim final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \notes Calculated by formula:
@@ -594,7 +594,7 @@ class MS_API GriffinLim final : public TensorTransform {
 };
 
 /// \brief HighpassBiquad TensorTransform. Apply highpass biquad filter on audio.
-class MS_API HighpassBiquad final : public TensorTransform {
+class DATASET_API HighpassBiquad final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] sample_rate Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
@@ -617,7 +617,7 @@ class MS_API HighpassBiquad final : public TensorTransform {
 
 /// \brief InverseMelScale TensorTransform
 /// \notes Solve for a normal STFT from a mel frequency STFT, using a conversion matrix.
-class MS_API InverseMelScale final : public TensorTransform {
+class DATASET_API InverseMelScale final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] n_stft Number of bins in STFT, must be positive.
@@ -653,7 +653,7 @@ class MS_API InverseMelScale final : public TensorTransform {
 };
 
 /// \brief Design filter. Similar to SoX implementation.
-class MS_API LFilter final : public TensorTransform {
+class DATASET_API LFilter final : public TensorTransform {
  public:
   /// \param[in] a_coeffs Numerator coefficients of difference equation of dimension of (n_order + 1).
   ///     Lower delays coefficients are first, e.g. [a0, a1, a2, ...].
@@ -685,11 +685,11 @@ class MS_API LFilter final : public TensorTransform {
 /// \param n_filter: Number of (linear) triangular filter.
 /// \param sample_rate: Sample rate.
 /// \return Status code.
-Status MS_API LinearFbanks(MSTensor *output, int32_t n_freqs, float f_min, float f_max, int32_t n_filter,
-                           int32_t sample_rate);
+Status DATASET_API LinearFbanks(MSTensor *output, int32_t n_freqs, float f_min, float f_max, int32_t n_filter,
+                                int32_t sample_rate);
 
 /// \brief Design biquad lowpass filter and perform filtering. Similar to SoX implementation.
-class MS_API LowpassBiquad final : public TensorTransform {
+class DATASET_API LowpassBiquad final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] sample_rate Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
@@ -711,7 +711,7 @@ class MS_API LowpassBiquad final : public TensorTransform {
 };
 
 /// \brief Separate a complex-valued spectrogram with shape (..., 2) into its magnitude and phase.
-class MS_API Magphase final : public TensorTransform {
+class DATASET_API Magphase final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] power Power of the norm, which must be non-negative (Default: 1.0).
@@ -780,7 +780,7 @@ class MaskAlongAxisIID final : public TensorTransform {
 
 /// \brief MelScale TensorTransform.
 /// \notes Convert normal STFT to STFT at the Mel scale.
-class MS_API MelScale final : public TensorTransform {
+class DATASET_API MelScale final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] n_mels Number of mel filter, which must be positive (Default: 128).
@@ -817,12 +817,13 @@ class MS_API MelScale final : public TensorTransform {
 /// \param[in] norm Norm to use, can be NormType::kNone or NormType::kSlaney (Default: NormType::kNone).
 /// \param[in] mel_type Scale to use, can be MelType::kHtk or MelType::kSlaney (Default: MelType::kHtz).
 /// \return Status code.
-Status MS_API MelscaleFbanks(MSTensor *output, int32_t n_freqs, float f_min, float f_max, int32_t n_mels,
-                             int32_t sample_rate, NormType norm = NormType::kNone, MelType mel_type = MelType::kHtk);
+Status DATASET_API MelscaleFbanks(MSTensor *output, int32_t n_freqs, float f_min, float f_max, int32_t n_mels,
+                                  int32_t sample_rate, NormType norm = NormType::kNone,
+                                  MelType mel_type = MelType::kHtk);
 
 /// \brief MuLawDecoding TensorTransform.
 /// \note Decode mu-law encoded signal.
-class MS_API MuLawDecoding final : public TensorTransform {
+class DATASET_API MuLawDecoding final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] quantization_channels Number of channels, which must be positive (Default: 256).
@@ -843,7 +844,7 @@ class MS_API MuLawDecoding final : public TensorTransform {
 
 /// \brief MuLawEncoding TensorTransform.
 /// \note Encode signal based on mu-law companding.
-class MS_API MuLawEncoding final : public TensorTransform {
+class DATASET_API MuLawEncoding final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] quantization_channels Number of channels, which must be positive (Default: 256).
@@ -863,7 +864,7 @@ class MS_API MuLawEncoding final : public TensorTransform {
 };
 
 /// \brief Overdrive TensorTransform.
-class MS_API Overdrive final : public TensorTransform {
+class DATASET_API Overdrive final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] gain Coefficient of overload in dB, in range of [0, 100] (Default: 20.0).
@@ -884,7 +885,7 @@ class MS_API Overdrive final : public TensorTransform {
 };
 
 /// \brief Phaser TensorTransform.
-class MS_API Phaser final : public TensorTransform {
+class DATASET_API Phaser final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] sample_rate Sampling rate of the waveform, e.g. 44100 (Hz).
@@ -915,7 +916,7 @@ class MS_API Phaser final : public TensorTransform {
 
 /// \brief PhaseVocoder TensorTransform
 /// \notes Given a STFT tensor, speed up in time without modifying pitch by factor of rate.
-class MS_API PhaseVocoder final : public TensorTransform {
+class DATASET_API PhaseVocoder final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] rate Speed-up factor.
@@ -937,7 +938,7 @@ class MS_API PhaseVocoder final : public TensorTransform {
 
 /// \brief Resample TensorTransform.
 /// \notes Resample a signal from one frequency to another. A sampling method can be given.
-class MS_API Resample : public TensorTransform {
+class DATASET_API Resample : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] orig_freq The original frequency of the signal, which must be positive (default=16000).
@@ -966,7 +967,7 @@ class MS_API Resample : public TensorTransform {
 };
 
 /// \brief Apply RIAA vinyl playback equalization.
-class MS_API RiaaBiquad final : public TensorTransform {
+class DATASET_API RiaaBiquad final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] sample_rate Sampling rate of the waveform, e.g. 44100 (Hz),
@@ -987,7 +988,7 @@ class MS_API RiaaBiquad final : public TensorTransform {
 };
 
 /// \brief Apply sliding-window cepstral mean (and optionally variance) normalization per utterance.
-class MS_API SlidingWindowCmn final : public TensorTransform {
+class DATASET_API SlidingWindowCmn final : public TensorTransform {
  public:
   /// \brief Constructor of SlidingWindowCmnOp.
   /// \param[in] cmn_window The window in frames for running average CMN computation (Default: 600).
@@ -1013,7 +1014,7 @@ class MS_API SlidingWindowCmn final : public TensorTransform {
 };
 
 /// \brief Create a spectral centroid from an audio signal.
-class MS_API SpectralCentroid : public TensorTransform {
+class DATASET_API SpectralCentroid : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] sample_rate Sampling rate of the waveform, e.g. 44100 (Hz).
@@ -1046,7 +1047,7 @@ class MS_API SpectralCentroid : public TensorTransform {
 };
 
 /// \brief Create a spectrogram from an audio signal.
-class MS_API Spectrogram : public TensorTransform {
+class DATASET_API Spectrogram : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] n_fft Size of FFT, creates n_fft / 2 + 1 bins (Default: 400).
@@ -1092,7 +1093,7 @@ class MS_API Spectrogram : public TensorTransform {
 
 /// \brief TimeMasking TensorTransform.
 /// \notes Apply masking to a spectrogram in the time domain.
-class MS_API TimeMasking final : public TensorTransform {
+class DATASET_API TimeMasking final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] iid_masks Whether to apply different masks to each example.
@@ -1119,7 +1120,7 @@ class MS_API TimeMasking final : public TensorTransform {
 
 /// \brief TimeStretch TensorTransform
 /// \notes Stretch STFT in time at a given rate, without changing the pitch.
-class MS_API TimeStretch final : public TensorTransform {
+class DATASET_API TimeStretch final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] hop_length Length of hop between STFT windows (Default: None, will use ((n_freq - 1) * 2) // 2).
@@ -1143,7 +1144,7 @@ class MS_API TimeStretch final : public TensorTransform {
 };
 
 /// \brief Design a treble tone-control effect.
-class MS_API TrebleBiquad final : public TensorTransform {
+class DATASET_API TrebleBiquad final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] sample_rate Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
@@ -1167,7 +1168,7 @@ class MS_API TrebleBiquad final : public TensorTransform {
 
 /// \brief Vad TensorTransform.
 /// \notes Attempt to trim silent background sounds from the end of the voice recording.
-class MS_API Vad final : public TensorTransform {
+class DATASET_API Vad final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] sample_rate Sample rate of audio signal.
@@ -1218,7 +1219,7 @@ class MS_API Vad final : public TensorTransform {
 
 /// \brief Vol TensorTransform.
 /// \notes Add a volume to an waveform.
-class MS_API Vol final : public TensorTransform {
+class DATASET_API Vol final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] gain Gain value, varies according to the value of gain_type. If gain_type is GainType::kAmplitude,

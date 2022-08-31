@@ -35,7 +35,7 @@ namespace vision {
 
 /// \brief Decode and resize JPEG image using the hardware algorithm of
 ///     Ascend series chip DVPP module.
-class MS_API DvppDecodeResizeJpeg final : public TensorTransform {
+class DATASET_API DvppDecodeResizeJpeg final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] resize Parameter vector of two integers for each dimension, with respect to H,W order.
@@ -67,7 +67,7 @@ class MS_API DvppDecodeResizeJpeg final : public TensorTransform {
 
 /// \brief Decode, resize and crop JPEG image using the hardware algorithm of
 ///     Ascend series chip DVPP module.
-class MS_API DvppDecodeResizeCropJpeg final : public TensorTransform {
+class DATASET_API DvppDecodeResizeCropJpeg final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] crop Parameter vector of two integers for each dimension after final crop, with respect to H,W order.
@@ -100,7 +100,7 @@ class MS_API DvppDecodeResizeCropJpeg final : public TensorTransform {
 
 /// \brief Decode H264/H265 video using the hardware algorithm of
 ///     DVPP module on Ascend series chip.
-class MS_API DvppDecodeVideo final : public TensorTransform {
+class DATASET_API DvppDecodeVideo final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] size Parameter vector of two integers for each dimension of input video frames, with respect to H,W
@@ -176,7 +176,7 @@ class MS_API DvppDecodeVideo final : public TensorTransform {
 
 /// \brief Decode PNG image using the hardware algorithm of
 ///     Ascend series chip DVPP module.
-class MS_API DvppDecodePng final : public TensorTransform {
+class DATASET_API DvppDecodePng final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \par Example

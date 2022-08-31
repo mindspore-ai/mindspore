@@ -11,6 +11,11 @@ else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-maybe-uninitialized")
 endif()
 
+if(MSVC)
+    # define this for msvc:dllexport or dllimport
+    add_compile_definitions(BUILDING_DATASET_DLL)
+endif()
+
 # fix for GCC8.0
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-class-memaccess  -Wno-stringop-truncation")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-format")
