@@ -214,6 +214,12 @@ std::map<std::string, std::vector<std::pair<KernelAttr, UnaryOpGpuKernelMod::Una
     {kRsqrt,
      {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
        &UnaryOpGpuKernelMod::LaunchKernel<float>},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+       &UnaryOpGpuKernelMod::LaunchKernel<double>},
+      {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+       &UnaryOpGpuKernelMod::LaunchKernel<utils::Complex<float>>},
+      {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+       &UnaryOpGpuKernelMod::LaunchKernel<utils::Complex<double>>},
       {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
        &UnaryOpGpuKernelMod::LaunchKernel<half>}}},
     {kSin,
@@ -455,10 +461,11 @@ bool UnaryOpGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
   const bool is_t_complex = (std::is_same_v<T, utils::Complex<float>>) || (std::is_same_v<T, utils::Complex<double>>);
   if constexpr (is_t_complex) {
     std::map<std::string, std::function<void(const T *, T *, const size_t, cudaStream_t)>> func_map_complex = {
-      {kSqrt, Sqrt<T>}, {kTan, Tan<T>},       {kCosh, Cosh<T>},       {kAtanh, Atanh<T>},
-      {kInv, Inv<T>},   {kLog, Logarithm<T>}, {kExp, Exponential<T>}, {kNeg, Negative<T>},
-      {kSin, Sin<T>},   {kCos, Cos<T>},       {kACos, ACos<T>},       {kAcosh, Acosh<T>},
-      {kAsin, Asin<T>}, {kAsinh, Asinh<T>},   {kSquare, Square<T>},   {kReciprocal, Reciprocal<T>}};
+      {kSqrt, Sqrt<T>},  {kTan, Tan<T>},       {kCosh, Cosh<T>},       {kAtanh, Atanh<T>},
+      {kInv, Inv<T>},    {kLog, Logarithm<T>}, {kExp, Exponential<T>}, {kNeg, Negative<T>},
+      {kSin, Sin<T>},    {kCos, Cos<T>},       {kACos, ACos<T>},       {kAcosh, Acosh<T>},
+      {kAsin, Asin<T>},  {kAsinh, Asinh<T>},   {kSquare, Square<T>},   {kReciprocal, Reciprocal<T>},
+      {kRsqrt, Rsqrt<T>}};
     copy(func_map_complex.begin(), func_map_complex.end(), inserter(func_map, func_map.begin()));
   } else {
     std::map<std::string, std::function<void(const T *, T *, const size_t, cudaStream_t)>> func_map_normal = {

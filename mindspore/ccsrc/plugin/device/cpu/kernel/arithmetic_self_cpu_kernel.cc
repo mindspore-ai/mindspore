@@ -750,7 +750,8 @@ void ArithmeticSelfCpuKernelFunc::LaunchKernelFloat16(const std::vector<AddressP
                           {prim::kPrimSin->name(), Sin<float16>},     {prim::kPrimCos->name(), Cos<float16>},
                           {prim::kPrimAsin->name(), Asin<float16>},   {prim::kPrimACos->name(), ACos<float16>},
                           {prim::kPrimSinh->name(), Sinh<float16>},   {prim::kPrimCosh->name(), Cosh<float16>},
-                          {prim::kPrimAsinh->name(), Asinh<float16>}, {prim::kPrimErfc->name(), Erfc<float16>}};
+                          {prim::kPrimAsinh->name(), Asinh<float16>}, {prim::kPrimErfc->name(), Erfc<float16>},
+                          {prim::kPrimRsqrt->name(), Rsqrt<float16>}};
 
   const auto func_pair = arithmeticSelfFuncMap.find(kernel_name_);
   if (arithmeticSelfFuncMap.find(kernel_name_) == arithmeticSelfFuncMap.end()) {
@@ -864,7 +865,8 @@ std::shared_ptr<CpuKernelFunc> CreateArithSelfFunc() { return std::make_shared<A
 using ArithFuncCreator = std::function<std::shared_ptr<CpuKernelFunc>()>;
 static std::map<std::string, std::vector<std::pair<KernelAttr, ArithFuncCreator>>> arith_kernel_attr_list_map = {
   {kRsqrt,
-   {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},
+   {{KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), CreateArithSelfFunc},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc},
     {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64), CreateArithSelfFunc},
     {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128), CreateArithSelfFunc}}},

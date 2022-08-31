@@ -59,6 +59,38 @@ __global__ void RsqrtGradKernel(const T *input, const T *dout, T *output, const 
   return;
 }
 
+template <>
+__global__ void RsqrtGradKernel(const Complex<float> *input, const Complex<float> *dout, Complex<float> *output,
+                                     const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < count; i += blockDim.x * gridDim.x) {
+    Complex<float> neg = static_cast<Complex<float>>(-0.5);
+    Complex<float> input_f = static_cast<Complex<float>>(input[i]);
+    Complex<float> dout_f = static_cast<Complex<float>>(dout[i]);
+    Complex<float> res_vmul = input_f * input_f * input_f;
+    res_vmul = neg * res_vmul * dout_f;
+    float real = res_vmul.real();
+    float imag = res_vmul.imag();
+    output[i] = Complex<float>(real, -imag);
+  }
+  return;
+}
+
+template <>
+__global__ void RsqrtGradKernel(const Complex<double> *input, const Complex<double> *dout, Complex<double> *output,
+                                     const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < count; i += blockDim.x * gridDim.x) {
+    Complex<double> neg = static_cast<Complex<double>>(-0.5);
+    Complex<double> input_f = static_cast<Complex<double>>(input[i]);
+    Complex<double> dout_f = static_cast<Complex<double>>(dout[i]);
+    Complex<double> res_vmul = input_f * input_f * input_f;
+    res_vmul = neg * res_vmul * dout_f;
+    double real = res_vmul.real();
+    double imag = res_vmul.imag();
+    output[i] = Complex<double>(real, -imag);
+  }
+  return;
+}
+
 template <typename T>
 __global__ void AsinGradKernel(const T *input, const T *dout, T *output, const size_t count) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
@@ -594,7 +626,12 @@ template CUDA_LIB_EXPORT void ReciprocalGrad<Complex<float>>(const Complex<float
 template CUDA_LIB_EXPORT void InvGrad<Complex<float>>(const Complex<float> *input, const Complex<float> *dout,
                                                       Complex<float> *output, const size_t count,
                                                       cudaStream_t cuda_stream);
-
+template CUDA_LIB_EXPORT void RsqrtGrad<Complex<float>>(const Complex<float> *input, const Complex<float> *dout,
+                                                      Complex<float> *output, const size_t count,
+                                                      cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void RsqrtGrad<Complex<double>>(const Complex<double> *input, const Complex<double> *dout,
+                                                              Complex<double> *output, const size_t count,
+                                                              cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void ReciprocalGrad<Complex<double>>(const Complex<double> *input, const Complex<double> *dout,
                                                               Complex<double> *output, const size_t count,
                                                               cudaStream_t cuda_stream);
