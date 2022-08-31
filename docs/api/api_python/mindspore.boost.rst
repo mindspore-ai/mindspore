@@ -159,7 +159,7 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
 
         参数：
             - **network** (Cell) - 训练网络。
-            - **optimizer** (Union[Cell]) - 用于更新权重的优化器。
+            - **optimizer** (Cell) - 用于更新权重的优化器。
 
 .. py:class:: mindspore.boost.OptimizerProcess(opt)
 
@@ -244,7 +244,7 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
 
         参数：
             - **loss** (Tensor) - 网络训练的loss值。
-            - **grads** (Tuple(Tensor)) - 网络训练过程中的梯度。
+            - **grads** (tuple(Tensor)) - 网络训练过程中的梯度。
 
         返回：
             Tensor，网络训练过程中得到的loss值。
@@ -269,9 +269,9 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
 
         参数：
             - **loss** (Tensor) - 网络训练的loss值。
-            - **grads** (Tuple(Tensor)) - 网络训练过程中的梯度。
+            - **grads** (tuple(Tensor)) - 网络训练过程中的梯度。
             - **sens** (Tensor) - 作为反向传播输入要填充的缩放数。
-            - **inputs** (Tuple(Tensor)) - 网络训练的输入。
+            - **inputs** (tuple(Tensor)) - 网络训练的输入。
 
         返回：
             Tensor，网络训练过程中得到的loss值。
@@ -281,7 +281,7 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
         使用梯度冻结算法训练。
 
         参数：
-            - **inputs** (Tuple(Tensor)) - 网络训练的输入。
+            - **inputs** (tuple(Tensor)) - 网络训练的输入。
 
         返回：
             Tensor，网络训练过程中得到的loss值。
@@ -295,7 +295,7 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
 
     参数：
         - **network** (Cell) - 训练网络，当前网络只支持单个输出。
-        - **optimizer** (Union[Cell]) - 用于更新网络参数的优化器。
+        - **optimizer** (Cell) - 用于更新网络参数的优化器。
         - **scale_sense** (Union[Tensor, Cell]) - 如果此值为Cell类型，`BoostTrainOneStepWithLossScaleCell` 会调用它来更新损失缩放系数。如果此值为Tensor类型，可调用 `set_sense_scale` 来更新损失缩放系数，shape为 :math:`()` 或 :math:`(1,)` 。
 
     输入：
@@ -337,17 +337,17 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
 
         参数：
             - **network** (Cell) - 训练网络。
-            - **optimizer** (Union[Cell]) - 用于更新权重的优化器。
+            - **optimizer** (Cell) - 用于更新权重的优化器。
 
     .. py:method:: generate_freeze_index_sequence(parameter_groups_number, freeze_strategy, freeze_p, total_steps)
 
         生成梯度冻结每一步需要冻结的层数。
 
         参数：
-            - **parameter_groups_number** (numbers.Number) - 梯度冻结训练的权重个数。
+            - **parameter_groups_number** (int) - 梯度冻结训练的权重个数。
             - **freeze_strategy** (int) - 梯度冻结训练的策略。
             - **freeze_p** (float) - 梯度冻结训练的概率。
-            - **total_steps** (numbers.Number) - 整个训练过程的总的步数。
+            - **total_steps** (int) - 整个训练过程的总的步数。
 
     .. py:method:: split_parameters_groups(net, freeze_para_groups_number)
 

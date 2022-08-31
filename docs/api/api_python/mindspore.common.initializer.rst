@@ -68,8 +68,6 @@ mindspore.common.initializer
 
     有关HeUniform算法，详情可参考 `<https://arxiv.org/abs/1502.01852>`_ 。
 
-    HeUniform 算法的详细信息，请查看 https://arxiv.org/abs/1502.01852。
-
     参数：
         - **negative_slope** (int, float, bool) - 本层激活函数的负数区间斜率（仅适用于非线性激活函数'leaky_relu'），默认值为0。
         - **mode** (str) - 可选'fan_in'或'fan_out'，'fan_in'会保留前向传递中权重方差的量级，'fan_out'会保留反向传递的量级，默认为'fan_in'。
@@ -85,10 +83,10 @@ mindspore.common.initializer
     其中， :math:`gain` 是一个可选的缩放因子。如果 `mode` 是'fan_in'，则 :math:`fan\_mode` 是权重Tensor中输入单元的数量，如果 `mode` 是'fan_out'，
     :math:`fan\_mode` 是权重Tensor中输出单元的数量。
 
-    HeUniform 算法的详细信息，请查看 https://arxiv.org/abs/1502.01852。
+    HeNormal 算法的详细信息，请查看 https://arxiv.org/abs/1502.01852。
 
     参数：
-        - **negative_slope** (int, float, bool) - 本层激活函数的负数区间斜率（仅适用于非线性激活函数'leaky_relu'），默认值为0。
+        - **negative_slope** (int, float) - 本层激活函数的负数区间斜率（仅适用于非线性激活函数'leaky_relu'），默认值为0。
         - **mode** (str) - 可选'fan_in'或'fan_out'，'fan_in'会保留前向传递中权重方差的量级，'fan_out'会保留反向传递的量级，默认为'fan_in'。
         - **nonlinearity** (str) - 非线性激活函数，推荐使用'relu'或'leaky_relu'，默认为'leaky_relu'。
 

@@ -169,7 +169,7 @@ class CrossEntropyLoss(Cell):
           padded inputs it will not be counted into loss.
 
     Outputs:
-        Tensor. The corresponding cross entropy loss
+        Tensor. The corresponding cross entropy loss.
 
     Examples:
         >>> import numpy as np

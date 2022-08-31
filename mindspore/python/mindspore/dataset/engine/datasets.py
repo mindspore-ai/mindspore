@@ -622,7 +622,7 @@ class Dataset:
     @check_sync_wait
     def sync_wait(self, condition_name, num_batch=1, callback=None):
         """
-        Add a blocking condition to the input Dataset, and a synchronize action will be applied.
+        Add a blocking condition to the input Dataset and a synchronize action will be applied.
 
         Args:
             condition_name (str): The condition name that is used to toggle sending next row.

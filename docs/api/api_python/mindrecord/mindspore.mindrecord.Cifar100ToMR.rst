@@ -13,7 +13,6 @@
     异常：
         - **ValueError** - 参数 `source` 或 `destination` 无效。
 
-
     .. py:method:: run(fields=None)
 
         执行从CIFAR-100数据集到MindRecord格式数据集的转换。
