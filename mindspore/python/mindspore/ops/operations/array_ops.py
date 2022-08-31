@@ -692,7 +692,7 @@ class Col2Im(Primitive):
         Tensor, a 4-D Tensor with same type of input `x`.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``CPU``
 
     Raises:
         TypeError: If :attr:`kernel_size` data type is not in Union[int, tuple[int], list[int]].

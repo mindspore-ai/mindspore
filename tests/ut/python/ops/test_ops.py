@@ -35,7 +35,7 @@ from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops.operations import _quant_ops as Q
 from mindspore.ops.operations.math_ops import BesselJ0, BesselJ1, BesselK0, BesselK1, BesselK0e, \
-                                              BesselK1e, BesselY0, BesselY1, Bucketize
+                                              BesselI0, BesselI1, BesselK1e, BesselY0, BesselY1, Bucketize
 from mindspore.ops.operations.math_ops import ReduceStd
 from mindspore.ops.operations.math_ops import Sinc
 from mindspore.ops.operations.array_ops import ConjugateTranspose
@@ -2249,11 +2249,11 @@ test_case_math_ops = [
         'desc_inputs': [Tensor(np.array([[True, False], [True, True]]))],
         'desc_bprop': []}),
     ('BesselI0', {
-        'block': P.BesselI0(),
+        'block': BesselI0(),
         'desc_inputs': [[2, 3]],
         'desc_bprop': [[2, 3]]}),
     ('BesselI1', {
-        'block': P.BesselI1(),
+        'block': BesselI1(),
         'desc_inputs': [[2, 3]],
         'desc_bprop': [[2, 3]]}),
     ('BesselI0e', {
