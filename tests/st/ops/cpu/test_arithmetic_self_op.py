@@ -250,6 +250,10 @@ def test_reciprocal(shape, dtype, tol):
     net = ReciprocalNet()
     prop = 100 if np.random.random() > 0.5 else -100
     x = np.random.randn(*shape).astype(dtype) * prop
+    if dtype in (np.int32, np.int64):
+        # In Mac-arm platform, if x contains 0 element, 1/0 will be -1 in that platform.
+        # Therefore, here we eliminate 0 uniformly.
+        x[x == 0] = 1
     output = net(Tensor(x))
     expect_output = np.reciprocal(x).astype(dtype)
     diff = output.asnumpy() - expect_output
@@ -273,6 +277,10 @@ def test_inv(shape, dtype, tol):
     inv = P.Inv()
     prop = 100 if np.random.random() > 0.5 else -100
     x = np.random.randn(*shape).astype(dtype) * prop
+    if dtype in (np.int32, np.int64):
+        # In Mac-arm platform, if x contains 0 element, 1/0 will be -1 in that platform.
+        # Therefore, here we eliminate 0 uniformly.
+        x[x == 0] = 1
     output = inv(Tensor(x))
     expect_output = np.reciprocal(x).astype(dtype)
     assert np.allclose(output.asnumpy(), expect_output, atol=tol, rtol=tol, equal_nan=True)
