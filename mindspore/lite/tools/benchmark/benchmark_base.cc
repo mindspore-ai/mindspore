@@ -79,8 +79,11 @@ const std::unordered_map<mindspore::Format, std::string> kTensorFormatMap{
   {mindspore::NC4, "NC4"},   {mindspore::NC4HW4, "NC4HW4"}, {mindspore::NCDHW, "NCDHW"}};
 
 int BenchmarkBase::GenerateRandomData(size_t size, void *data, int data_type) {
-  if (data == nullptr && size > 0) {
-    data = malloc(size);
+  if (data == nullptr) {
+    return RET_ERROR;
+  }
+  if (size == 0) {
+    return RET_OK;
   }
   switch (data_type) {
     case kNumberTypeFloat32:
@@ -155,6 +158,7 @@ int BenchmarkBase::ReadCalibData() {
     auto ret = ReadTensorData(in_file, tensor_name, dims);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Read tensor data failed, tensor name: " << tensor_name;
+      in_file.close();
       return RET_ERROR;
     }
   }
@@ -173,7 +177,17 @@ int BenchmarkBase::ReadTensorData(std::ifstream &in_file_stream, const std::stri
   }
   std::vector<float> data;
   std::vector<std::string> strings_data;
-  size_t shape_size = std::accumulate(dims.begin(), dims.end(), 1u, std::multiplies<size_t>());
+  size_t shape_size = 1;
+  if (!dims.empty()) {
+    for (size_t i = 0; i < dims.size(); ++i) {
+      if (dims[i] == 0) {
+        MS_LOG(ERROR) << "dim is 0.";
+        return RET_ERROR;
+      }
+      MS_CHECK_FALSE_MSG(SIZE_MUL_OVERFLOW(shape_size, dims[i]), RET_ERROR, "mul overflow");
+      shape_size *= dims[i];
+    }
+  }
   auto tensor_data_type = GetDataTypeByTensorName(tensor_name);
   if (tensor_data_type == static_cast<int>(kTypeUnknown)) {
     MS_LOG(ERROR) << "get data type failed.";
