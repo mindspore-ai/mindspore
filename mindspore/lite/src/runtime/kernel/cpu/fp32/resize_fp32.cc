@@ -59,8 +59,8 @@ int ResizeCPUKernel::ReSize() {
   }
 
   if (!const_shape_) {
-    new_height_ = out_tensors_.at(0)->shape()[1];
-    new_width_ = out_tensors_.at(0)->shape()[2];
+    new_height_ = out_tensors_.at(0)->shape()[kNHWC_H];
+    new_width_ = out_tensors_.at(0)->shape()[kNHWC_W];
   }
 
   auto ret = MallocTmpBuffer();
@@ -95,10 +95,10 @@ void ResizeCPUKernel::CalTmpBufferLen(int *x_len, int *y_len, int *x_weight_len,
     *y_weight_len = new_height_;
   }
   if (method_ == static_cast<int>(schema::ResizeMethod_CUBIC)) {
-    *x_len = new_width_ * 4;
-    *y_len = new_height_ * 4;
-    *x_weight_len = new_width_ * 4;
-    *y_weight_len = new_height_ * 4;
+    *x_len = new_width_ * C4NUM;
+    *y_len = new_height_ * C4NUM;
+    *x_weight_len = new_width_ * C4NUM;
+    *y_weight_len = new_height_ * C4NUM;
   }
 }
 
@@ -191,10 +191,10 @@ int ResizeCPUKernel::RunImpl(int task_id) {
   int unit = UP_DIV(new_height_, op_parameter_->thread_num_);
   int h_begin = unit * task_id;
   int h_end = std::min(h_begin + unit, new_height_);
-  int c = input_shape.at(3);
+  int c = input_shape.at(kNHWC_C);
   switch (method_) {
     case static_cast<int>(schema::ResizeMethod_LINEAR): {
-      float *line0 = static_cast<float *>(line_buffer_) + new_width_ * c * 2 * task_id;
+      float *line0 = static_cast<float *>(line_buffer_) + new_width_ * c * C2NUM * task_id;
       float *line1 = line0 + new_width_ * c;
       return ResizeBilinear(input_data, output_data, input_shape.data(), out_tensors_.at(0)->shape().data(),
                             coordinate_.y_bottoms_, coordinate_.y_tops_, coordinate_.x_lefts_, coordinate_.x_rights_,

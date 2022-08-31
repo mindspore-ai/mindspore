@@ -30,6 +30,7 @@ namespace mindspore::kernel {
 RelativePositionAttentionCPUKernel::~RelativePositionAttentionCPUKernel() { FreeAllPackData(); }
 
 namespace {
+constexpr int kWeightQTensorIndex = 4;
 constexpr int kActivationTensorShapeSize = 3;
 constexpr int kActivationTensorBatch = 1;
 constexpr int kTensorShapeBatchIndex = 0;
@@ -58,18 +59,18 @@ int RelativePositionAttentionCPUKernel::CheckInputs() {
     MS_LOG(ERROR) << "input_k is abnormal.";
     return RET_ERROR;
   }
-  input_v_tensor_ = this->in_tensors_.at(2);
+  input_v_tensor_ = this->in_tensors_.at(k3DimsLeftMatrixDeepIndex);
   if (!AttentionActivationTensorCheck(input_v_tensor_)) {
     MS_LOG(ERROR) << "input_v is abnormal.";
     return RET_ERROR;
   }
-  input_p_tensor_ = this->in_tensors_.at(3);
+  input_p_tensor_ = this->in_tensors_.at(kActivationTensorShapeSize);
   if (!AttentionActivationTensorCheck(input_p_tensor_)) {
     MS_LOG(ERROR) << "input_p is abnormal.";
     return RET_ERROR;
   }
   // Sequence length Q / 2 should be equal to sequence length of K
-  if (input_p_tensor_->shape().at(1) / 2 != input_k_tensor_->shape().at(1)) {
+  if (input_p_tensor_->shape().at(1) / C2NUM != input_k_tensor_->shape().at(1)) {
     MS_LOG(ERROR) << "Sequence length of input_p / 2 != sequence length of input_k";
     return RET_ERROR;
   }
@@ -109,37 +110,37 @@ bool AttentionWeightTensorCheck(const lite::Tensor *tensor) {
 }  // namespace
 
 int RelativePositionAttentionCPUKernel::CheckWeights() {
-  weight_q_tensor_ = this->in_tensors_.at(4);
+  weight_q_tensor_ = this->in_tensors_.at(kWeightQTensorIndex);
   if (!AttentionWeightTensorCheck(weight_q_tensor_)) {
     MS_LOG(ERROR) << "weight_q is abnormal.";
     return RET_ERROR;
   }
-  weight_k_tensor_ = this->in_tensors_.at(5);
+  weight_k_tensor_ = this->in_tensors_.at(5);  // inputs: 5:WK
   if (!AttentionWeightTensorCheck(weight_k_tensor_)) {
     MS_LOG(ERROR) << "weight_k is abnormal.";
     return RET_ERROR;
   }
-  weight_v_tensor_ = this->in_tensors_.at(6);
+  weight_v_tensor_ = this->in_tensors_.at(6);  // inputs: 6:WV
   if (!AttentionWeightTensorCheck(weight_v_tensor_)) {
     MS_LOG(ERROR) << "weight_v is abnormal.";
     return RET_ERROR;
   }
-  weight_p_tensor_ = this->in_tensors_.at(7);
+  weight_p_tensor_ = this->in_tensors_.at(7);  // inputs: 7:WP
   if (!AttentionWeightTensorCheck(weight_p_tensor_)) {
     MS_LOG(ERROR) << "weight_p is abnormal.";
     return RET_ERROR;
   }
-  pos_u_tensor_ = this->in_tensors_.at(8);
+  pos_u_tensor_ = this->in_tensors_.at(8);  // inputs: 8:PU
   if (!AttentionWeightTensorCheck(pos_u_tensor_)) {
     MS_LOG(ERROR) << "pos_u is abnormal.";
     return RET_ERROR;
   }
-  pos_v_tensor_ = this->in_tensors_.at(9);
+  pos_v_tensor_ = this->in_tensors_.at(9);  // inputs: 9:PV
   if (!AttentionWeightTensorCheck(pos_v_tensor_)) {
     MS_LOG(ERROR) << "pos_v is abnormal.";
     return RET_ERROR;
   }
-  weight_o_tensor_ = this->in_tensors_.at(10);
+  weight_o_tensor_ = this->in_tensors_.at(10);  // inputs: 10:WO
   if (!AttentionWeightTensorCheck(weight_o_tensor_)) {
     MS_LOG(ERROR) << "weight_o is abnormal.";
     return RET_ERROR;
@@ -168,10 +169,10 @@ int RelativePositionAttentionCPUKernel::CheckBiases() {
   if (!param_->use_bias_) {
     return RET_OK;
   }
-  bias_q_tensor_ = this->in_tensors_.at(11);
-  bias_k_tensor_ = this->in_tensors_.at(12);
-  bias_v_tensor_ = this->in_tensors_.at(13);
-  bias_o_tensor_ = this->in_tensors_.at(14);
+  bias_q_tensor_ = this->in_tensors_.at(11);  // inputs : 11:BQ
+  bias_k_tensor_ = this->in_tensors_.at(12);  // inputs : 12:BK
+  bias_v_tensor_ = this->in_tensors_.at(13);  // inputs : 13:BV
+  bias_o_tensor_ = this->in_tensors_.at(14);  // inputs : 14:BO
   if (!AttentionBiasTensorCheck(bias_q_tensor_)) {
     MS_LOG(ERROR) << "bias_q is abnormal.";
     return RET_ERROR;
@@ -536,7 +537,7 @@ int RelativePositionAttentionCPUKernel::PackRunBuffersLogits(int batch, int num_
     return RET_ERROR;
   }
   // relative shift output shape is [batch * num_heads, q_seq, p_seq / 2]
-  (void)InitMatrix(&logits_with_v_shifted_mat_, batch * num_heads, param_->q_seq_, param_->p_seq_ / 2, false);
+  (void)InitMatrix(&logits_with_v_shifted_mat_, batch * num_heads, param_->q_seq_, param_->p_seq_ / C2NUM, false);
   ret = MallocLeftTensor(&logits_with_v_shifted_mat_, param_->row_tile_, ms_context_->allocator, false);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Malloc logits_with_v_shifted buffer failed";
