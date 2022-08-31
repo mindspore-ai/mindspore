@@ -35,8 +35,9 @@ from mindspore.common.tensor import CSRTensor as PythonCSRTensor
 from mindspore.common.tensor import COOTensor as PythonCOOTensor
 from mindspore.common.tensor import RowTensor as PythonRowTensor
 from mindspore.common.initializer import initializer
-from mindspore._c_expression import GraphExecutor_, Tensor, MetaTensor, CSRTensor, RowTensor, COOTensor,\
-    PynativeExecutor_, verify_inputs_signature, init_exec_dataset, _set_dataset_mode_config, init_pipeline
+from mindspore._c_expression import GraphExecutor_, Tensor, MetaTensor, CSRTensor, RowTensor, COOTensor, \
+    PynativeExecutor_, verify_inputs_signature, init_exec_dataset, _set_dataset_mode_config, init_pipeline, \
+    _ms_memory_recycle
 from mindspore.parallel._tensor import _load_tensor_by_layout
 from mindspore.parallel._ps_context import _is_role_pserver, _is_role_sched, _enable_distributed_mindrt
 from mindspore.parallel._utils import _check_full_batch, _get_parameter_broadcast, _get_pipeline_stages
