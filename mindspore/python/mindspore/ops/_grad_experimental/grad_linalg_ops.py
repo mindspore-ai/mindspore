@@ -14,8 +14,8 @@
 # ============================================================================
 
 """Define the grad rules of linalg related operations."""
-import mindspore
 import numpy as np
+import mindspore
 
 from .. import Tensor
 from .. import functional as F

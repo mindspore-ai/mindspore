@@ -66,7 +66,7 @@ class ScatterUpdateCpuKernelMod : public DeprecatedNativeCpuKernelMod {
 
   TypeId dtype_value{kTypeUnknown};
   TypeId dtype_shape{kTypeUnknown};
-  int unit_size_{0};
+  size_t unit_size_{0};
   size_t num_units_{0};
   size_t indices_unit_rank_{0};
   std::vector<size_t> out_strides_;
