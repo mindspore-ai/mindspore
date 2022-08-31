@@ -26,7 +26,7 @@
 #include "kernel/kernel.h"
 
 namespace mindspore::kernel {
-enum OpImplyType { kAKG = 0, kTBE = 1, kAICPU = 2, kCPU = 3, kGPU };
+enum OpImplyType { kAKG = 0, kTBE = 1, kAICPU = 2, kCPU = 3, kGPU = 4, kBISHENG };
 enum OpIOType { kInput = 0, kOutput };
 constexpr auto kIgnored = "ignored";
 
