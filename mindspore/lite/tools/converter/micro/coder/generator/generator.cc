@@ -95,8 +95,8 @@ int Generator::CodeDataCFile() {
   for (size_t i = 0; i < inputs_num; i++) {
     Tensor *tensor = ctx_->graph_inputs()[i];
     cofs << "#define NET_INPUT" << i << "_SIZE " << tensor->ElementsNum() << "\n";
-    data_def << "float input" << i << "_data[NET_INPUT" << 0 << "_SIZE];\n";
-    calib_data_def << "float calib_input" << i << "_data[NET_INPUT" << 0 << "_SIZE] = {};\n";
+    data_def << "float input" << i << "_data[NET_INPUT" << i << "_SIZE];\n";
+    calib_data_def << "float calib_input" << i << "_data[NET_INPUT" << i << "_SIZE] = {};\n";
     input_tensors_def << "  {\n"
                       << "    \"" << tensor->tensor_name() << "\",\n"
                       << "    NET_INPUT" << i << "_SIZE,\n"
@@ -113,8 +113,8 @@ int Generator::CodeDataCFile() {
   for (size_t i = 0; i < outputs_num; i++) {
     Tensor *tensor = ctx_->graph_eval_outputs()[i];
     cofs << "#define NET_OUTPUT" << i << "_SIZE " << tensor->ElementsNum() << "\n";
-    data_def << "float output" << i << "_data[NET_OUTPUT" << 0 << "_SIZE];\n";
-    calib_data_def << "float calib_output" << i << "_data[NET_OUTPUT" << 0 << "_SIZE] = {};\n";
+    data_def << "float output" << i << "_data[NET_OUTPUT" << i << "_SIZE];\n";
+    calib_data_def << "float calib_output" << i << "_data[NET_OUTPUT" << i << "_SIZE] = {};\n";
     output_tensors_def << "  {\n"
                        << "    \"" << tensor->tensor_name() << "\",\n"
                        << "    NET_OUTPUT" << i << "_SIZE,\n"
@@ -167,7 +167,10 @@ int Generator::CodeStaticContent() {
     load_input_c_txt = load_input_c_cortex;
     benchmark_source_txt = benchmark_source_cortex;
     context_source_txt = context_source_cortex;
+  } else if (config_->support_parallel() == false) {
+    context_source_txt = context_source_no_parallel;
   }
+
   std::vector<std::pair<std::string, std::string>> const_blocks = {
     {config_->code_path() + "/" + "CMakeLists.txt", bench_cmake_lists_txt},
     {net_main_file_path_ + "calib_output.h", calib_header_txt},

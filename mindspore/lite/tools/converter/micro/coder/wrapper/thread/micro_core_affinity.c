@@ -15,7 +15,11 @@
  */
 
 #include "wrapper/thread/micro_core_affinity.h"
+#if defined(_MSC_VER) || defined(_WIN32)
+#include <windows.h>
+#else
 #include <unistd.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -24,11 +28,15 @@
 #include "nnacl/op_base.h"
 
 int GetCpuCoreNum() {
-#ifdef __ANDROID__
-  return (int)sysconf(_SC_NPROCESSORS_CONF);
+  int core_num = 1;
+#if defined(_MSC_VER) || defined(_WIN32)
+  SYSTEM_INFO sysinfo;
+  GetSystemInfo(&sysinfo);
+  core_num = sysinfo.dwNumberOfProcessors;
+#else
+  core_num = sysconf(_SC_NPROCESSORS_CONF);
 #endif
-  LOG_INFO("Not android platform do not support set core affinity");
-  return 1;
+  return core_num;
 }
 
 int ConcatCPUPath(int cpuID, const char *str1, const char *str2, char *str3) {

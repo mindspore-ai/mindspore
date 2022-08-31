@@ -46,6 +46,7 @@ const char benchmark_source[] = R"RAW(/**
 #include <string.h>
 
 #define kMaxThreadNum 4
+#define kBindDefault 1
 
 void usage() {
   printf(
@@ -132,34 +133,37 @@ int main(int argc, const char **argv) {
   }
   printf("=======run benchmark======\n");
 
-  MSContextHandle ms_context_handle = NULL;
+  MSContextHandle ms_context_handle = MSContextCreate();
   if (argc >= 6) {
     int thread_num = atoi(argv[5]);
     if (thread_num < 1 || thread_num > kMaxThreadNum) {
       printf("Thread number error! It should be greater than 0 and less than 5\n");
       return kMSStatusLiteParamInvalid;
     }
-    int bind_mode = 1;
-    if (argc >= 7) {
-      bind_mode = atoi(argv[6]);
-      if (bind_mode < 0 || bind_mode > 2) {
-        printf("Thread bind mode error! 0: No bind, 1: Bind hign cpu, 2: Bind mid cpu.\n");
-        return kMSStatusLiteParamInvalid;
-      }
-    }
-    ms_context_handle = MSContextCreate();
-    if (ms_context_handle) {
-      MSContextSetThreadNum(ms_context_handle, thread_num);
-      MSContextSetThreadAffinityMode(ms_context_handle, bind_mode);
-    }
-    printf("context: ThreadNum: %d, BindMode: %d\n", thread_num, bind_mode);
+    MSContextSetThreadNum(ms_context_handle, thread_num);
   }
+  printf("ThreadNum: %d.\n", MSContextGetThreadNum(ms_context_handle));
+
+  int bind_mode = kBindDefault;
+  if (argc >= 7) {
+    bind_mode = atoi(argv[6]);
+    if (bind_mode < 0 || bind_mode > 2) {
+      printf("Thread bind mode error! 0: No bind, 1: Bind hign cpu, 2: Bind mid cpu.\n");
+      return kMSStatusLiteParamInvalid;
+    }
+  }
+  MSContextSetThreadAffinityMode(ms_context_handle, bind_mode);
+  printf("BindMode: %d.\n", MSContextGetThreadAffinityMode(ms_context_handle));
 
   void *model_buffer = NULL;
   int model_size = 0;
   // read .bin file by ReadBinaryFile;
   if (argc >= 3) {
     model_buffer = ReadInputData(argv[2], &model_size);
+    if (model_buffer == NULL) {
+      printf("Read model file failed.");
+      return kMSStatusLiteParamInvalid;
+    }
   }
   MSModelHandle model_handle = MSModelCreate();
   int ret = MSModelBuild(model_handle, model_buffer, model_size, kMSModelTypeMindIR, ms_context_handle);

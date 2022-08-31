@@ -67,9 +67,15 @@ void SetSpinCountMaxValue(void) {
 }
 
 int CreateThreadPool(int thread_num) {
+  ClearThreadPool();
   if (thread_num <= 0) {
     return RET_TP_SYSTEM_ERROR;
   }
+  int core_num = GetCpuCoreNum();
+  if (core_num != 0) {
+    thread_num = thread_num > core_num ? core_num : thread_num;
+  }
+
   g_pool = (ThreadPool *)malloc(sizeof(ThreadPool));
   if (g_pool == NULL) {
     return RET_TP_SYSTEM_ERROR;
@@ -164,6 +170,9 @@ int ParallelLaunch(int (*func)(void *, int, float, float), void *content, int ta
 }
 
 void ClearThreadPool() {
+  if (g_pool == NULL) {
+    return;
+  }
   if (g_pool->shutdown) {
     return;
   }
