@@ -99,8 +99,8 @@ void SparseToDenseV2CpuKernelMod::CheckValidateTwoDim(const std::vector<kernel::
   if (ret != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset output failed. Error no: " << ret;
   }
-  const auto *indices_addr = reinterpret_cast<I *>(inputs[kIndex0]->addr);
-  const auto *output_shape_addr = reinterpret_cast<I *>(inputs[kIndex1]->addr);
+  const auto *indices_addr = static_cast<I *>(inputs[kIndex0]->addr);
+  const auto *output_shape_addr = static_cast<I *>(inputs[kIndex1]->addr);
   bool valid = true;
   bool different = false;
   bool increasing = true;
@@ -152,8 +152,8 @@ void SparseToDenseV2CpuKernelMod::CheckValidateOneDim(const std::vector<kernel::
   if (ret != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset output failed. Error no: " << ret;
   }
-  const auto *indices_addr = reinterpret_cast<I *>(inputs[kIndex0]->addr);
-  const auto *output_shape_addr = reinterpret_cast<I *>(inputs[kIndex1]->addr);
+  const auto *indices_addr = static_cast<I *>(inputs[kIndex0]->addr);
+  const auto *output_shape_addr = static_cast<I *>(inputs[kIndex1]->addr);
   bool valid = true;
   bool different = false;
   bool increasing = true;
@@ -191,11 +191,11 @@ bool SparseToDenseV2CpuKernelMod::LaunchKernel(const std::vector<kernel::Address
   } else if (validate_indices_ == true && indices_dims_ == kSparseToDenseV2OneDim) {
     (void)SparseToDenseV2CpuKernelMod::CheckValidateOneDim<I, T>(inputs, workspace, outputs);
   }
-  const auto *indices_addr = reinterpret_cast<I *>(inputs[kIndex0]->addr);
-  const auto *output_shape_addr = reinterpret_cast<I *>(inputs[kIndex1]->addr);
-  const auto *values_addr = reinterpret_cast<T *>(inputs[kIndex2]->addr);
-  const auto *default_value_addr = reinterpret_cast<T *>(inputs[kIndex3]->addr);
-  auto *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
+  const auto *indices_addr = static_cast<I *>(inputs[kIndex0]->addr);
+  const auto *output_shape_addr = static_cast<I *>(inputs[kIndex1]->addr);
+  const auto *values_addr = static_cast<T *>(inputs[kIndex2]->addr);
+  const auto *default_value_addr = static_cast<T *>(inputs[kIndex3]->addr);
+  auto *output_addr = static_cast<T *>(outputs[0]->addr);
   const size_t indices_length = inputs[kIndex0]->size / sizeof(I);
   const size_t output_length = outputs[0]->size / sizeof(T);
   const size_t values_length = inputs[kIndex2]->size / sizeof(T);
