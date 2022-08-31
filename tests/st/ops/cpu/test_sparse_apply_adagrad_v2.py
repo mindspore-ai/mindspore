@@ -21,6 +21,7 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.common.parameter import Parameter
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
 import mindspore.common.dtype as mstype
 
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
@@ -134,3 +135,26 @@ def test_sparseapplyadagradv2_dynamic_shape_support():
         indices = Tensor(np.arange(i), mstype.int32)
 
         sparse_apply_adagrad_v2(var, accum, gradient, indices)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_vmap_sparseapplyadagradopv2():
+    """
+    Feature: Vmap feature on SparseApplyAdagradv2 cpu op
+    Description: Compare the vmap result with the manually batch result.
+    Expectation: Output matching expected values
+    """
+    var = Parameter(Tensor(np.array([[0.2], [0.1]]).astype(np.float32)))
+    accum = Parameter(Tensor(np.array([[0.1], [0.1]]).astype(np.float32)))
+    gradient = Tensor(np.array([[0.7], [0.1]]).astype(np.float32))
+    indices = Tensor([[0], [0]], mindspore.int32)
+    sparse_apply_adagrad = Net(update_slots=True)
+    return_vmap = F.vmap(sparse_apply_adagrad, in_axes=(0, 0, 0, 0))(var, accum, gradient, indices)
+
+    expect_var = np.array([[0.19999999], [0.1]]).astype(np.float32)
+    expect_accum = np.array([[0.59], [0.11]]).astype(np.float32)
+    assert len(return_vmap) == 2
+    assert np.all(return_vmap[0].asnumpy() == expect_var)
+    assert np.all(return_vmap[1].asnumpy() == expect_accum)

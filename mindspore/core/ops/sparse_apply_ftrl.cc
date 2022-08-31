@@ -53,20 +53,22 @@ abstract::TupleShapePtr SparseApplyFtrlInferShape(const PrimitivePtr &primitive,
   auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kIndicesIndex]->BuildShape())[kShape];
   auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kGradIndex]->BuildShape())[kShape];
 
+  int64_t batch_rank = 0;
+  if (primitive->HasAttr(kBatchRank)) {
+    batch_rank = GetValue<int64_t>(primitive->GetAttr(kBatchRank));
+  }
   (void)CheckAndConvertUtils::CheckValue("var shape", var_shape, kEqual, "accum shape", accum_shape, prim_name);
   (void)CheckAndConvertUtils::CheckValue("var shape", var_shape, kEqual, "linear shape", linear_shape, prim_name);
   // indices rank == 1
-  (void)CheckAndConvertUtils::CheckInteger("indices rank", indices_shape.size(), kEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("indices rank", indices_shape.size(), kEqual, batch_rank + 1, prim_name);
   // grad_shape[0] == indices_shape[0]
-  (void)CheckAndConvertUtils::CheckInteger("grad rank", grad_shape.size(), kGreaterEqual, 1, prim_name);
-  (void)CheckAndConvertUtils::CheckValue("grad_shape[0]", grad_shape[0], kEqual, "indices_shape[0]", indices_shape[0],
-                                         prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("grad rank", grad_shape.size(), kGreaterEqual, batch_rank + 1, prim_name);
+  (void)CheckAndConvertUtils::CheckValue("grad_shape[0]", grad_shape[batch_rank], kEqual, "indices_shape[0]",
+                                         indices_shape[batch_rank], prim_name);
   // grad_shape[1:] == var_shape[1:] while grad_shape[0] == indices_shape[0]
-  if (var_shape.size() > 1) {
-    auto left_shape = var_shape;
-    auto right_shape = grad_shape;
-    left_shape.erase(left_shape.begin());
-    right_shape.erase(right_shape.begin());
+  if (var_shape.size() > LongToSize(batch_rank + 1)) {
+    ShapeVector left_shape(var_shape.begin() + batch_rank + 1, var_shape.end());
+    ShapeVector right_shape(grad_shape.begin() + batch_rank + 1, grad_shape.end());
     (void)CheckAndConvertUtils::CheckValue("var_shape[1:]", left_shape, kEqual, "grad_shape[1:]", right_shape,
                                            prim_name);
   }

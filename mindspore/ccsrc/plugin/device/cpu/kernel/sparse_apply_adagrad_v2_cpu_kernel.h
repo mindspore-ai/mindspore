@@ -53,6 +53,11 @@ class SparseApplyAdagradV2CpuKernelMod : public SparseOptimizerCpuKernelMod,
   bool update_slots_{true};
 
  private:
+  int64_t batch_rank_{0};
+  int64_t batch_size_{1};
+  size_t indices_inner_size_{0};
+  size_t grad_inner_size_{0};
+  size_t var_inner_size_{0};
   template <typename T>
   void InitWorkspaceSize();
 

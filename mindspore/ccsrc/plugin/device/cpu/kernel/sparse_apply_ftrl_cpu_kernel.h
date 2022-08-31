@@ -93,6 +93,11 @@ class BACKEND_EXPORT SparseApplyFtrlCpuKernelMod : public SparseOptimizerCpuKern
   float lr_power_{0.0};
 
  private:
+  int64_t batch_rank_{0};
+  int64_t batch_size_{1};
+  size_t indices_inner_size_{0};
+  size_t grad_inner_size_{0};
+  size_t var_inner_size_{0};
   template <typename T, typename S>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
                     const std::vector<kernel::AddressPtr> &) const;

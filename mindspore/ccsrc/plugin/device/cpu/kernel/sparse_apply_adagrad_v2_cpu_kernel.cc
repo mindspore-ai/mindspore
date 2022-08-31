@@ -15,6 +15,7 @@
  */
 
 #include "plugin/device/cpu/kernel/sparse_apply_adagrad_v2_cpu_kernel.h"
+#include <functional>
 #include <memory>
 #include <map>
 #include <utility>
@@ -34,46 +35,14 @@ constexpr size_t kSparseApplyAdagradV2WorkspaceSize = 4;
 constexpr char kKernelName[] = "SparseApplyAdagradV2";
 
 using KernelRunFunc = SparseApplyAdagradV2CpuKernelMod::KernelRunFunc;
-
-/*
-template <typename T>
-void ComputeAdaGrad(MultiThreadComputeParams<T> *input_params, size_t start, size_t end) {
-  MS_EXCEPTION_IF_NULL(input_params);
-  auto var = input_params->var_;
-  auto accum = input_params->accum_;
-  const auto lr = input_params->lr_;
-  const auto epsilon = input_params->epsilon_;
-  const auto update_slots = input_params->update_slots_;
-  const auto unique_sparse_grad = input_params->sparse_grad_;
-  const auto var_first_dim_size = input_params->var_first_dim_size_;
-  const auto var_outer_dim_size = input_params->var_outer_dim_size_;
-  for (size_t i = start; i < end; ++i) {
-    T index = unique_sparse_grad.indices_[i];
-    if (index < 0 || LongToSize(index) >= var_first_dim_size) {
-      MS_LOG(EXCEPTION) << "For '" << kKernelName << "', each element in 'indices' must be in range [0, "
-                        << SizeToLong(var_first_dim_size) << "), but got " << index;
-    }
-    size_t start_index = var_outer_dim_size * static_cast<size_t>(index);
-    size_t end_index = start_index + var_outer_dim_size;
-    for (size_t j = start_index, k = var_outer_dim_size * i; j < end_index; ++j, ++k) {
-      auto summed_grad = unique_sparse_grad.value_[k];
-      if (update_slots) {
-        accum[j] += summed_grad * summed_grad;
-      }
-      auto learning_rate = lr * (1 / std::sqrt(accum[j] + epsilon));
-      var[j] -= summed_grad * learning_rate;
-    }
-  }
-}
-*/
 }  // namespace
 
 template <typename T>
 void SparseApplyAdagradV2CpuKernelMod::InitWorkspaceSize() {
-  (void)workspace_size_list_.emplace_back(indices_size_ * var_outer_dim_size_ * sizeof(float));
-  (void)workspace_size_list_.emplace_back(indices_size_ * sizeof(T));
-  (void)workspace_size_list_.emplace_back(indices_size_ * var_outer_dim_size_ * sizeof(float));
-  (void)workspace_size_list_.emplace_back(indices_size_ * sizeof(T));
+  (void)workspace_size_list_.emplace_back(batch_size_ * indices_size_ * var_outer_dim_size_ * sizeof(float));
+  (void)workspace_size_list_.emplace_back(batch_size_ * indices_size_ * sizeof(T));
+  (void)workspace_size_list_.emplace_back(batch_size_ * indices_size_ * var_outer_dim_size_ * sizeof(float));
+  (void)workspace_size_list_.emplace_back(batch_size_ * indices_size_ * sizeof(T));
 }
 
 bool SparseApplyAdagradV2CpuKernelMod::Init(const BaseOperatorPtr &base_operator,
@@ -93,6 +62,7 @@ bool SparseApplyAdagradV2CpuKernelMod::Init(const BaseOperatorPtr &base_operator
   lr_ = kernel_ptr->get_lr();
   epsilon_ = kernel_ptr->get_epsilon();
   update_slots_ = kernel_ptr->get_update_slots();
+  batch_rank_ = base_operator->get_batch_rank();
   if (lr_ <= 0) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', 'lr' must be a positive scalar, but got " << lr_;
     return false;
@@ -130,6 +100,20 @@ int SparseApplyAdagradV2CpuKernelMod::Resize(const BaseOperatorPtr &base_operato
   ShapeVector accum_shape = inputs[kAccumIndex]->GetShapeVector();
   ShapeVector grad_shape = inputs[kGradIndex]->GetShapeVector();
   ShapeVector indices_shape = inputs[kIndicesIndex]->GetShapeVector();
+  if (batch_rank_ > 0) {
+    batch_size_ = std::accumulate(var_shape.begin(), var_shape.begin() + batch_rank_, 1, std::multiplies<int64_t>());
+    if (batch_size_ == 0) {
+      MS_LOG(ERROR) << "For '" << kernel_name_
+                    << "', batch_size_ must be greater than 0, but got batch_size: " << batch_size_;
+      return KRET_RESIZE_FAILED;
+    }
+    var_inner_size_ =
+      std::accumulate(var_shape.begin() + batch_rank_, var_shape.end(), size_t(1), std::multiplies<size_t>());
+    indices_inner_size_ =
+      std::accumulate(indices_shape.begin() + batch_rank_, indices_shape.end(), size_t(1), std::multiplies<size_t>());
+    grad_inner_size_ =
+      std::accumulate(grad_shape.begin() + batch_rank_, grad_shape.end(), size_t(1), std::multiplies<size_t>());
+  }
   if (var_shape.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the 'var' must be at least 1-D, but got scalar or None.";
     return KRET_RESIZE_FAILED;
@@ -148,8 +132,8 @@ int SparseApplyAdagradV2CpuKernelMod::Resize(const BaseOperatorPtr &base_operato
                   << grad_shape.size() << " and the dimension of 'var': " << var_shape.size() << ".";
     return KRET_RESIZE_FAILED;
   }
-  var_first_dim_size_ = var_shape[0];
-  for (size_t i = 1; i < var_shape.size(); ++i) {
+  var_first_dim_size_ = var_shape[batch_rank_];
+  for (size_t i = batch_rank_ + 1; i < var_shape.size(); ++i) {
     if (var_shape[i] != grad_shape[i]) {
       MS_LOG(ERROR) << "For '" << kernel_name_ << "', the shape of 'var' and 'grad' must be equal in dimension i=" << i
                     << ", but got 'var_shape[i]': " << var_shape[i] << " and 'grad_shape[i]': " << grad_shape[i];
@@ -157,17 +141,17 @@ int SparseApplyAdagradV2CpuKernelMod::Resize(const BaseOperatorPtr &base_operato
     }
     var_outer_dim_size_ *= var_shape[i];
   }
-  if (indices_shape.size() != 1) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the 'indices' must be a 1-D vector, but got "
-                  << indices_shape.size() << "-D.";
+  if (indices_shape.size() != LongToSize(batch_rank_ + 1)) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the 'indices' must be a " << (batch_rank_ + 1)
+                  << "-D vector, but got " << indices_shape.size() << "-D.";
     return KRET_RESIZE_FAILED;
   }
-  indices_size_ = indices_shape[0];
-  if (grad_shape[0] != SizeToLong(indices_size_)) {
+  indices_size_ = indices_shape[batch_rank_];
+  if (grad_shape[batch_rank_] != SizeToLong(indices_size_)) {
     MS_LOG(ERROR) << "For '" << kernel_name_
                   << "', the first dimension value of 'grad' must be equal to "
                      "the first dimension value of 'indices', but got the first dimension value of 'grad': "
-                  << grad_shape[0] << ", and the first dimension value of 'indices': " << indices_size_;
+                  << grad_shape[batch_rank_] << ", and the first dimension value of 'indices': " << indices_size_;
     return KRET_RESIZE_FAILED;
   }
   indices_data_type_ = inputs[kIndicesIndex]->GetDtype();
@@ -206,34 +190,41 @@ bool SparseApplyAdagradV2CpuKernelMod::LaunchKernel(const std::vector<kernel::Ad
   auto *grad = reinterpret_cast<float *>(inputs[2]->addr);
   auto *indices = reinterpret_cast<T *>(inputs[3]->addr);
 
-  SparseGradient<T> input_sparse_grad({grad, indices, indices_size_});
-  const auto lr = lr_;
-  const auto epsilon = lr_;
-  const auto update_slots = update_slots_;
-  const auto unique_sparse_grad = input_sparse_grad;
-  const auto var_first_dim_size = var_first_dim_size_;
-  const auto var_outer_dim_size = var_outer_dim_size_;
-  auto task = [this, &var, &accum, lr, epsilon, update_slots, &unique_sparse_grad, var_first_dim_size,
-               var_outer_dim_size](size_t start, size_t end) {
-    for (size_t i = start; i < end; ++i) {
-      T index = unique_sparse_grad.indices_[i];
-      if (index < 0 || LongToSize(index) >= var_first_dim_size) {
-        MS_LOG(EXCEPTION) << "For '" << kKernelName << "', each element in 'indices' must be in range [0, "
-                          << SizeToLong(var_first_dim_size) << "), but got " << index;
-      }
-      size_t start_index = var_outer_dim_size * static_cast<size_t>(index);
-      size_t end_index = start_index + var_outer_dim_size;
-      for (size_t j = start_index, k = var_outer_dim_size * i; j < end_index; ++j, ++k) {
-        auto summed_grad = unique_sparse_grad.value_[k];
-        if (update_slots) {
-          accum[j] += summed_grad * summed_grad;
+  for (int64_t index = 0; index < batch_size_; index++) {
+    SparseGradient<T> input_sparse_grad({grad, indices, indices_size_});
+    const auto lr = lr_;
+    const auto epsilon = lr_;
+    const auto update_slots = update_slots_;
+    const auto unique_sparse_grad = input_sparse_grad;
+    const auto var_first_dim_size = var_first_dim_size_;
+    const auto var_outer_dim_size = var_outer_dim_size_;
+    auto task = [this, &var, &accum, lr, epsilon, update_slots, &unique_sparse_grad, var_first_dim_size,
+                 var_outer_dim_size](size_t start, size_t end) {
+      for (size_t i = start; i < end; ++i) {
+        T index = unique_sparse_grad.indices_[i];
+        if (index < 0 || LongToSize(index) >= var_first_dim_size) {
+          MS_LOG(EXCEPTION) << "For '" << kKernelName << "', each element in 'indices' must be in range [0, "
+                            << SizeToLong(var_first_dim_size) << "), but got " << index;
         }
-        auto learning_rate = lr * (1 / std::sqrt(accum[j] + epsilon));
-        var[j] -= summed_grad * learning_rate;
+        size_t start_index = var_outer_dim_size * static_cast<size_t>(index);
+        size_t end_index = start_index + var_outer_dim_size;
+        for (size_t j = start_index, k = var_outer_dim_size * i; j < end_index; ++j, ++k) {
+          auto summed_grad = unique_sparse_grad.value_[k];
+          if (update_slots) {
+            accum[j] += summed_grad * summed_grad;
+          }
+          auto learning_rate = lr * (1 / std::sqrt(accum[j] + epsilon));
+          var[j] -= summed_grad * learning_rate;
+        }
       }
-    }
-  };
-  ParallelLaunch(task, indices_size_, 0);
+    };
+    ParallelLaunch(task, indices_size_, 0);
+    // apply offset to all address pointers.
+    var += var_inner_size_;
+    accum += var_inner_size_;
+    grad += grad_inner_size_;
+    indices += indices_inner_size_;
+  }
   return true;
 }
 
