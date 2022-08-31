@@ -17,6 +17,7 @@ The MSAdvisor analyzer.
 """
 
 import os
+import stat
 import subprocess
 
 from mindspore import log as logger
@@ -41,6 +42,7 @@ class Msadvisor:
         output_path = os.path.join(output_path, "device_" + self._rank_id)
         output_path = validate_and_normalize_path(output_path)
         logger.info("MSAdvisor is running. Log and result files are saved in %s", output_path)
+
         try:
             running_result = subprocess.run(["msadvisor", "-d", output_path, "-c", "all"], capture_output=True)
         except FileNotFoundError as err:
@@ -52,11 +54,34 @@ class Msadvisor:
             raise err
         finally:
             pass
+
         if running_result.returncode == 0:
             logger.info("MSAdvisor process finished.")
+
+            recommendation_path = os.path.join(output_path, "recommendation")
+            recommendation_path = validate_and_normalize_path(recommendation_path)
+            os.chmod(recommendation_path, stat.S_IRWXU)
+            file_list = os.listdir(recommendation_path)
+            file_list.sort(key=lambda fn: os.path.getmtime(os.path.join(recommendation_path, fn)))
+            recommendation_path = os.path.join(recommendation_path, file_list[-1])
+            recommendation_path = validate_and_normalize_path(recommendation_path)
+            os.chmod(recommendation_path, stat.S_IRUSR | stat.S_IRUSR)
         else:
             logger.warning("MSAdvisor running failed,"
                            "please check MSAdvisor running log.")
+
+        log_path = os.path.join(output_path, "log")
+        log_path = validate_and_normalize_path(log_path)
+        os.chmod(log_path, stat.S_IRWXU)
+        file_list = os.listdir(log_path)
+        file_list.sort(key=lambda fn: os.path.getmtime(os.path.join(log_path, fn)))
+        log_path = os.path.join(log_path, file_list[-1])
+        log_path = validate_and_normalize_path(log_path)
+        os.chmod(log_path, stat.S_IRWXU)
+        file_list = os.listdir(log_path)
+        log_path = os.path.join(log_path, file_list[0])
+        log_path = validate_and_normalize_path(log_path)
+        os.chmod(log_path, stat.S_IRUSR | stat.S_IRUSR)
 
     def analyse(self):
         """
