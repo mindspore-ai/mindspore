@@ -42,7 +42,7 @@ void DataSaver::ParseOpInfo(const OpInfoMap &op_info_maps) {
   float total_time_sum = GetTotalOpTime(op_info_maps);
   for (auto item : op_info_maps) {
     op_timestamps_map_[item.first] = item.second.start_duration;
-    if (total_time_sum == 0.0) {
+    if (common::IsFloatEqual(total_time_sum, 0.0)) {
       MS_LOG(ERROR) << "The total operation times can not be 0.";
       return;
     }

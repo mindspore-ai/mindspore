@@ -45,8 +45,8 @@ bool OnesLikeCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
                                         const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kOnesLikeInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOnesLikeOutputsNum, kernel_name_);
-  auto input_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto output_addr = reinterpret_cast<T *>(outputs[0]->addr);
+  auto input_addr = static_cast<T *>(inputs[0]->addr);
+  auto output_addr = static_cast<T *>(outputs[0]->addr);
   size_t output_size = outputs[0]->size / sizeof(T);
   auto task = [this, output_addr, input_addr](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {

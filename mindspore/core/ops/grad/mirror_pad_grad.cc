@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace ops {
 namespace {
-constexpr size_t kPaddingsSecondDim = 2;
+constexpr int64_t kPaddingsSecondDim = 2;
 constexpr int64_t kMaxPaddings = 5;
 abstract::ShapePtr MirrorPadGradInferShape(const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args) {
@@ -51,11 +51,10 @@ abstract::ShapePtr MirrorPadGradInferShape(const PrimitivePtr &primitive,
                              << paddings_shape[0];
   }
   for (size_t i = 0; i < paddings_arg.size(); i = i + kPaddingsSecondDim) {
-    paddings_attr.push_back(std::make_pair(paddings_arg[LongToSize(i)], paddings_arg[LongToSize(i + 1)]));
+    paddings_attr.push_back(std::make_pair(paddings_arg[i], paddings_arg[i + 1]));
   }
-  (void)CheckAndConvertUtils::CheckInteger("paddings_size", SizeToLong(paddings_attr.size()), kEqual,
-                                           static_cast<size_t>(x_shape.size()), prim_name);
-  int64_t size = SizeToLong(x_shape.size());
+  (void)CheckAndConvertUtils::CheckInteger("paddings_size", paddings_attr.size(), kEqual, x_shape.size(), prim_name);
+  int64_t size = x_shape.size();
   if (size < 0 || size > kMaxPaddings) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name
                              << "', the dimension of input only supports less than or equal to 5 dims, but got " << size
@@ -67,31 +66,29 @@ abstract::ShapePtr MirrorPadGradInferShape(const PrimitivePtr &primitive,
     return input_args[0]->BuildShape()->cast<abstract::ShapePtr>();
   }
   for (int64_t i = 0; i < size; i++) {
-    if (paddings_attr[LongToSize(i)].first < 0 || paddings_attr[LongToSize(i)].second < 0) {
+    if (paddings_attr[i].first < 0 || paddings_attr[i].second < 0) {
       MS_EXCEPTION(ValueError) << "For '" << prim_name << "', all elements of paddings must be >= 0.";
     }
-    int64_t out_size =
-      x_shape[LongToSize(i)] - (paddings_attr[LongToSize(i)].first + paddings_attr[LongToSize(i)].second);
+    int64_t out_size = x_shape[i] - (paddings_attr[i].first + paddings_attr[i].second);
     if (mode == "SYMMETRIC") {
-      if (paddings_attr[LongToSize(i)].first > out_size || paddings_attr[LongToSize(i)].second > out_size)
+      if (paddings_attr[i].first > out_size || paddings_attr[i].second > out_size)
         MS_EXCEPTION(ValueError) << "For '" << prim_name
                                  << "', paddings must be no greater "
                                     "than the dimension size: ["
-                                 << paddings_attr[LongToSize(i)].first << "], [" << paddings_attr[LongToSize(i)].second
-                                 << "] greater than [" << out_size << "]";
+                                 << paddings_attr[i].first << "], [" << paddings_attr[i].second << "] greater than ["
+                                 << out_size << "]";
     } else if (mode == "REFLECT") {
-      if (paddings_attr[LongToSize(i)].first >= out_size || paddings_attr[LongToSize(i)].second >= out_size)
+      if (paddings_attr[i].first >= out_size || paddings_attr[i].second >= out_size)
         MS_EXCEPTION(ValueError) << "For '" << prim_name
                                  << "', paddings must be no greater "
                                     "than the dimension size: ["
-                                 << paddings_attr[LongToSize(i)].first << "], [" << paddings_attr[LongToSize(i)].second
-                                 << "] not less than [" << out_size << "]";
+                                 << paddings_attr[i].first << "], [" << paddings_attr[i].second << "] not less than ["
+                                 << out_size << "]";
     }
   }
   std::vector<int64_t> out_shape;
   for (size_t i = 0; i < x_shape.size(); i++) {
-    (void)out_shape.emplace_back(x_shape[LongToSize(i)] - paddings_attr[LongToSize(i)].first -
-                                 paddings_attr[LongToSize(i)].second);
+    (void)out_shape.emplace_back(x_shape[i] - paddings_attr[i].first - paddings_attr[i].second);
   }
   return std::make_shared<abstract::Shape>(out_shape);
 }
@@ -100,7 +97,8 @@ TypePtr MirrorPadGradInferType(const PrimitivePtr &prim, const std::vector<Abstr
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  CheckAndConvertUtils::CheckTensorTypeValid("paddings", input_args[1]->BuildType(), {kInt32, kInt64}, prim->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("paddings", input_args[1]->BuildType(), {kInt32, kInt64},
+                                                   prim->name());
   return CheckAndConvertUtils::CheckTensorTypeValid(
     "input_x", input_args[0]->BuildType(),
     {kInt8, kInt16, kInt32, kInt64, kUInt, kUInt8, kUInt16, kFloat16, kFloat32, kFloat64, kComplex64, kComplex128},

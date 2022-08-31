@@ -30,9 +30,9 @@ bool ReLUV3CpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inp
                                       const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kReLUV3InputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kReLUV3OutputsNum, kernel_name_);
-  auto *input = reinterpret_cast<T *>(inputs[kIndex0]->addr);
+  auto *input = static_cast<T *>(inputs[kIndex0]->addr);
   MS_ERROR_IF_NULL_W_RET_VAL(input, false);
-  auto *output = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+  auto *output = static_cast<T *>(outputs[kIndex0]->addr);
   MS_ERROR_IF_NULL_W_RET_VAL(output, false);
 
   size_t lens = outputs[0]->size > 0 ? static_cast<size_t>(outputs[0]->size / sizeof(T)) : 1;
