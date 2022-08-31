@@ -4075,6 +4075,43 @@ def max(x, axis=0, keep_dims=False):
     return argmax_with_value_op(x)
 
 
+def argmax(x, axis=-1, output_type=mstype.int32):
+    """
+    Calculates the indices of the maximum value of a tensor across the axis.
+
+    If the shape of input tensor is :math:`(x_1, ..., x_N)`, the shape of the output tensor will be
+    :math:`(x_1, ..., x_{axis-1}, x_{axis+1}, ..., x_N)`.
+
+    Args:
+        x (Tensor): Input tensor. :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+          Support data type list as follows:
+          Ascend: Float16, Float32.
+          CPU: Float16, Float32, Float64.
+          GPU: Float16, Float32.
+        axis (int): Axis where the Argmax operation applies to. Default: -1.
+        output_type (:class:`mindspore.dtype`): An optional data type of `mindspore.dtype.int32`.
+          Default: `mindspore.dtype.int32`.
+
+    Returns:
+        Tensor, indices of the max value of input tensor across the axis.
+
+    Raises:
+        TypeError: If `axis` is not an int.
+        TypeError: If `output_type` is neither int32 nor int64.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([[1, 20, 5], [67, 8, 9], [130, 24, 15]]).astype(np.float32))
+        >>> output = ops.argmax(x, axis=-1, output_type=mindspore.int32)
+        >>> print(output)
+        [1 0 0]
+    """
+    argmax_op = P.Argmax(axis, output_type)
+    return argmax_op(x)
+
+
 def min(x, axis=0, keep_dims=False):
     """
     Calculates the minimum value with corresponding index, and returns indices and values.
@@ -4324,6 +4361,7 @@ __all__ = [
     'split',
     "index_fill",
     'max',
+    'argmax',
     'min',
     'unsorted_segment_sum',
     'population_count',
