@@ -55,7 +55,7 @@ AbstractBasePtr DropoutGradInfer(const abstract::AnalysisEnginePtr &, const Prim
   auto mask_type = input_args[mask_index]->BuildType();
 
   (void)CheckAndConvertUtils::CheckTensorTypeValid("mask", mask_type, {kTensorType}, op_name);
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   auto out_type = CheckAndConvertUtils::CheckTensorTypeValid("x", dy_type, valid_types, op_name);
   auto shape = CheckAndConvertUtils::GetTensorInputShape(op_name, input_args, dy_index);
   auto res = abstract::MakeAbstract(shape, out_type);
