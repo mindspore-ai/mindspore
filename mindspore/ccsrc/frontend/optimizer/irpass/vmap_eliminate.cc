@@ -69,7 +69,7 @@ CNodePtr BuildBindInAxisTupleInput(const AnfNodePtr &input, const ValuePtr &in_a
   return fg->NewCNode(ret_inputs);
 }
 
-AnfNodePtr BindInAxis(const CNodePtr &vmap_app, const ValuePtr &in_axes) {
+AnfNodePtr BindInAxis(const CNodePtr &vmap_app, const ValuePtr &in_axes, size_t *u_monad_offset) {
   FuncGraphPtr vmap_fg = vmap_app->func_graph();
   bool is_in_axes_value_sequence = in_axes->isa<ValueSequence>();
   ValueSequencePtr in_axes_to_value_sequence = dyn_cast<ValueSequence>(in_axes);
@@ -82,16 +82,21 @@ AnfNodePtr BindInAxis(const CNodePtr &vmap_app, const ValuePtr &in_axes) {
   }
 
   // Check the last two (if exists) is monad input.
-  int abstract_monad_count = 0;
+  size_t io_monad_offset = 0;
   constexpr size_t max_monad_input_num = 2;
   if (HasAbstractMonad(inputs[inputs_size - 1])) {
-    abstract_monad_count++;
-    if (inputs_size >= max_monad_input_num && HasAbstractMonad(inputs[inputs_size - max_monad_input_num])) {
-      abstract_monad_count++;
+    if (HasAbstractUMonad(inputs[inputs_size - 1])) {
+      *u_monad_offset = 1;
+    } else if (inputs_size >= max_monad_input_num && HasAbstractUMonad(inputs[inputs_size - max_monad_input_num])) {
+      io_monad_offset++;
+      *u_monad_offset = io_monad_offset + 1;
+    } else {
+      io_monad_offset++;
     }
   }
 
-  auto real_params_size = inputs_size - IntToSize(abstract_monad_count);
+  size_t abstract_monad_count = *u_monad_offset > io_monad_offset ? *u_monad_offset : io_monad_offset;
+  auto real_params_size = inputs_size - abstract_monad_count;
   if (is_in_axes_value_sequence && real_params_size - 1 != in_axes_to_value_sequence->size()) {
     MS_LOG(EXCEPTION) << "The length of vmap_app inputs (except primitive input and monad input) is: "
                       << real_params_size - 1 << " and the length of in_axis is: " << in_axes_to_value_sequence->size()
@@ -226,18 +231,42 @@ int GetAxisSize(const CNodePtr &cnode, ValuePtr *const in_axes) {
   return axis_size;
 }
 
-AnfNodePtr MatchOutAxis(const AnfNodePtr &expanded_vmap_node, int parameters_size, int axis_size,
+AnfNodePtr MatchOutAxis(const AnfNodePtr &expanded_vmap_node, int parameters_size, size_t u_monad_offset, int axis_size,
                         const ValuePtr &out_axes) {
   FuncGraphPtr vmap_post_fg = std::make_shared<FuncGraph>();
   std::vector<AnfNodePtr> exec_node;
   exec_node.push_back(expanded_vmap_node);
+  AnfNodePtr u_monad_node = nullptr;
+  int offset = SizeToInt(u_monad_offset);
+  int u_monad_index = parameters_size > offset ? parameters_size - offset : parameters_size;
   for (int i = 0; i < parameters_size; ++i) {
+    if (i == u_monad_index) {
+      u_monad_node = vmap_post_fg->add_parameter();
+      exec_node.push_back(u_monad_node);
+      continue;
+    }
     exec_node.push_back(vmap_post_fg->add_parameter());
   }
   auto vmap_outputs = vmap_post_fg->NewCNode(exec_node);
+
+  if (u_monad_node != nullptr) {
+    auto update_state_prim = NewValueNode(prim::kPrimUpdateState);
+    auto update_state_cnode = vmap_post_fg->NewCNode({update_state_prim, u_monad_node, vmap_outputs});
+    update_state_cnode->set_abstract(u_monad_node->abstract());
+    u_monad_node = update_state_cnode;
+  }
+
   auto match_out_axis_app =
     vmap_post_fg->NewCNode({NewValueNode(std::make_shared<prim::VmapMatchOutAxis>("VmapMatchOutAxis")), vmap_outputs,
                             NewValueNode(out_axes), NewValueNode(static_cast<int64_t>(axis_size))});
+
+  if (u_monad_node != nullptr) {
+    auto depend_prim = NewValueNode(prim::kPrimDepend);
+    auto state_depend = vmap_post_fg->NewCNode({depend_prim, match_out_axis_app, u_monad_node});
+    state_depend->set_abstract(match_out_axis_app->abstract());
+    vmap_post_fg->set_output(state_depend);
+    return NewValueNode(vmap_post_fg);
+  }
   vmap_post_fg->set_output(match_out_axis_app);
 
   return NewValueNode(vmap_post_fg);
@@ -550,7 +579,8 @@ bool ExpandVmapPrim::operator()(const FuncGraphPtr &, const OptimizerPtr &optimi
       MS_LOG(DEBUG) << "The axis size corresponding to the current level vmap scope is " << axis_size << ".";
 
       // Step1: Bind the inputs with the corresponding in_axes.
-      auto bind_axes_node = internal::BindInAxis(vmap_app, in_axes);
+      size_t u_monad_offset = 0;
+      auto bind_axes_node = internal::BindInAxis(vmap_app, in_axes, &u_monad_offset);
       MS_EXCEPTION_IF_NULL(bind_axes_node);
       (void)manager->Replace(vmap_app, bind_axes_node);
 
@@ -560,7 +590,7 @@ bool ExpandVmapPrim::operator()(const FuncGraphPtr &, const OptimizerPtr &optimi
       MS_EXCEPTION_IF_NULL(expanded_vmap);
 
       // Step3: Convert the outputs according to the out_axes to the specified physical perspective.
-      auto match_out_axis = internal::MatchOutAxis(expanded_vmap, parameters_size, axis_size, out_axes);
+      auto match_out_axis = internal::MatchOutAxis(expanded_vmap, parameters_size, u_monad_offset, axis_size, out_axes);
       MS_EXCEPTION_IF_NULL(match_out_axis);
       manager->SetEdge(bind_axes_node, user_index, match_out_axis);
     }

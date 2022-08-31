@@ -14,7 +14,8 @@
 # ============================================================================
 import mindspore.context as context
 from mindspore import Tensor, ms_function
-from mindspore.common import dtype as mstype
+from mindspore.common import dtype as mstype, Parameter
+from mindspore.nn import Cell
 import pytest
 
 
@@ -1067,3 +1068,82 @@ def test_if_assert_failure():
     z = Tensor([5], mstype.int32)
     with pytest.raises(Exception):
         foo(x, y, z)
+
+
+def test_weight_multiple_one_in_if():
+    """
+    Feature: Parallel if transformation.
+    Description: If the return value of the subgraph is Load, need to insert TensorMove.
+                 "x = self.w * 1" mean that x is a copy of self.w, x and self.w are not the same object.
+    Expectation: success
+    """
+
+    class Net(Cell):
+        def __init__(self):
+            super().__init__()
+            self.w = Parameter(Tensor([4], mstype.int32), name='weight')
+
+        def construct(self, x, y):
+            if y != self.w:
+                x = self.w * 1
+                self.w = self.w - 1
+            return x + y
+
+    x = Tensor([2], mstype.int32)
+    y = Tensor([3], mstype.int32)
+    expect = Tensor([7], mstype.int32)
+    ret = Net()(x, y)
+    assert ret == expect
+
+
+def test_weight_in_if():
+    """
+    Feature: Parallel if transformation.
+    Description: "x = self.w" mean that x is another name for self.w, x and self.w are the same object.
+    Expectation: success
+    """
+
+    class Net(Cell):
+        def __init__(self):
+            super().__init__()
+            self.w = Parameter(Tensor([4], mstype.int32), name='weight')
+
+        def construct(self, x, y):
+            if y != self.w:
+                x = self.w
+                self.w = self.w - 1
+            return x + y
+
+    x = Tensor([2], mstype.int32)
+    y = Tensor([3], mstype.int32)
+    expect = Tensor([6], mstype.int32)
+    ret = Net()(x, y)
+    assert ret == expect
+
+
+def test_weight_tuple_in_if():
+    """
+    Feature: Parallel if transformation.
+    Description: If the return value of the subgraph is Tuple(Load), need to insert TensorMove to each load.
+    Expectation: success
+    """
+
+    class Net(Cell):
+        def __init__(self):
+            super().__init__()
+            self.w1 = Parameter(Tensor([4], mstype.int32), name='weight1')
+            self.w2 = Parameter(Tensor([5], mstype.int32), name='weight2')
+
+        def construct(self, x, y):
+            if y != self.w1:
+                x = self.w1 * 1
+                self.w1 = self.w1 - 1
+                y = self.w2 / 1
+                self.w2 = self.w2 - 1
+            return x + y
+    input_x = Tensor([2], mstype.int32)
+    input_y = Tensor([3], mstype.int32)
+    expect = Tensor([9], mstype.int32)
+    net = Net()
+    ret = net(input_x, input_y)
+    assert ret == expect
