@@ -26,7 +26,7 @@ from mindspore.ops.operations.nn_ops import MultilabelMarginLoss as MultilabelMa
 from mindspore.ops.operations.nn_ops import TripletMarginLoss as TripletMarginLossOp
 from mindspore.ops import functional as F
 from mindspore import nn
-from mindspore.ops.primitive import constexpr
+from mindspore.ops.primitive import constexpr, check_expr
 from mindspore.nn.cell import Cell
 from mindspore.nn.layer.activation import get_activation
 from mindspore._checkparam import Validator as validator
@@ -176,7 +176,7 @@ class _Loss(LossBase):
         raise NotImplementedError
 
 
-@constexpr
+@check_expr
 def _check_is_tensor(param_name, input_data, cls_name):
     """Internal function, used to check whether the input data is Tensor."""
     if input_data is not None and not isinstance(F.typeof(input_data), mstype.tensor_type):
