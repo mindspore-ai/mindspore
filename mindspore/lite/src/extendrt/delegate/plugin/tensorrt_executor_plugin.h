@@ -13,24 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_EXTENDRT_TENSORRT_PLUGIN_H_
-#define MINDSPORE_LITE_SRC_EXTENDRT_TENSORRT_PLUGIN_H_
+#ifndef MINDSPORE_LITE_SRC_EXTENDRT_TENSORRT_EXECUTOR_PLUGIN_H_
+#define MINDSPORE_LITE_SRC_EXTENDRT_TENSORRT_EXECUTOR_PLUGIN_H_
 #include "include/api/status.h"
 #include "utils/log_adapter.h"
 #include "utils/macros.h"
 
 namespace mindspore::lite {
-class MS_API TensorRTPlugin {
+class MS_API TensorRTExecutorPlugin {
  public:
-  static TensorRTPlugin &GetInstance();
+  static TensorRTExecutorPlugin &GetInstance();
   bool Register();
 
   int GetGPUGroupSize();
   int GetRankID();
 
  private:
-  TensorRTPlugin();
-  ~TensorRTPlugin();
+  TensorRTExecutorPlugin();
+  ~TensorRTExecutorPlugin();
 
   void *handle_ = nullptr;
   bool is_registered_ = false;
@@ -38,12 +38,12 @@ class MS_API TensorRTPlugin {
   int rank_id_ = 0;
 };
 
-class TensorRTPluginImplBase {
+class TensorRTExecutorPluginImplBase {
  public:
-  TensorRTPluginImplBase() = default;
-  virtual ~TensorRTPluginImplBase() = default;
+  TensorRTExecutorPluginImplBase() = default;
+  virtual ~TensorRTExecutorPluginImplBase() = default;
   virtual int GetGPUGroupSize() const = 0;
   virtual int GetRankID() const = 0;
 };
 }  // namespace mindspore::lite
-#endif  // MINDSPORE_LITE_SRC_EXTENDRT_TENSORRT_PLUGIN_H_
+#endif  // MINDSPORE_LITE_SRC_EXTENDRT_TENSORRT_EXECUTOR_PLUGIN_H_

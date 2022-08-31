@@ -20,7 +20,7 @@
 #include "extendrt/delegate/plugin/tensorrt_executor_plugin.h"
 
 namespace mindspore::lite {
-class TensorRTPluginImpl : public TensorRTPluginImplBase {
+class TensorRTPluginImpl : public TensorRTExecutorPluginImplBase {
  public:
   TensorRTPluginImpl() = default;
   ~TensorRTPluginImpl() = default;
@@ -29,5 +29,5 @@ class TensorRTPluginImpl : public TensorRTPluginImplBase {
 };
 }  // namespace mindspore::lite
 
-extern "C" MS_API mindspore::lite::TensorRTPluginImplBase *CreateTensorRTPluginImpl();
+extern "C" MS_API mindspore::lite::TensorRTExecutorPluginImplBase *CreateTensorRTPluginImpl();
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_KERNEL_ASCEND_ASCEND_KERNEL_API_H_

@@ -23,6 +23,6 @@ int TensorRTPluginImpl::GetGPUGroupSize() const { return 1; }  // GetGroupSize(N
 int TensorRTPluginImpl::GetRankID() const { return 0; }  // GetRankIDByGroup(NCCL_WORLD_GROUP);
 }  // namespace mindspore::lite
 
-mindspore::lite::TensorRTPluginImplBase *CreateTensorRTPluginImpl() {
+mindspore::lite::TensorRTExecutorPluginImplBase *CreateTensorRTPluginImpl() {
   return new mindspore::lite::TensorRTPluginImpl();
 }
