@@ -47,6 +47,8 @@ class OpTilingCalculateAdapter {
                                             const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map,
                                             const std::string &op_compile_info);
 
+  void UpdateWorkspace(const ::ge::NodePtr &ge_node, const std::vector<int64_t> &workspace_size_list);
+
  private:
   void ConvertInputShapeAndType(const CNodePtr &node, ::ge::OpDescPtr *op_desc);
   void ConvertOutputShapeAndType(const CNodePtr &node, ::ge::OpDescPtr *op_desc);
