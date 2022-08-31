@@ -77,7 +77,7 @@ void AddcmulCpuKernelMod::AddcmulMul1(const T *input1, const T *input2, T *outpu
     };
     output_size_ = 1;
     for (size_t i = 0; i < output_shape_.size(); ++i) {
-      output_size_ *= output_shape_[i];
+      output_size_ *= static_cast<int64_t>(output_shape_[i]);
     }
     ParallelLaunchAutoSearch(mul_task, output_size_, this, &parallel_search_info_);
   }
@@ -130,10 +130,10 @@ void AddcmulCpuKernelMod::AddcmulAdd(const T *input1, const T *input2, T *output
 template <typename T>
 bool AddcmulCpuKernelMod::AddcmulCompute(const std::vector<AddressPtr> &inputs,
                                          const std::vector<AddressPtr> &outputs) {
-  auto *input0 = reinterpret_cast<T *>(inputs[kInputData]->addr);
-  const auto *input1 = reinterpret_cast<T *>(inputs[kInputX1]->addr);
-  const auto *input2 = reinterpret_cast<T *>(inputs[kInputX2]->addr);
-  const auto *input3 = reinterpret_cast<T *>(inputs[kInputValue]->addr);
+  auto *input0 = static_cast<T *>(inputs[kInputData]->addr);
+  const auto *input1 = static_cast<T *>(inputs[kInputX1]->addr);
+  const auto *input2 = static_cast<T *>(inputs[kInputX2]->addr);
+  const auto *input3 = static_cast<T *>(inputs[kInputValue]->addr);
   auto *output = reinterpret_cast<T *>(outputs[kOutputData]->addr);
 
   AddcmulMul1(input1, input2, output);
@@ -167,7 +167,6 @@ bool AddcmulCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const st
                          "but got "
                       << TypeIdLabel(dtype_);
   }
-  return true;
 }
 
 std::vector<KernelAttr> AddcmulCpuKernelMod::GetOpSupport() {

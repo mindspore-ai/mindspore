@@ -82,7 +82,6 @@ bool AddcdivCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const st
                       << "', the type of 'x' should be float16, float32, float64, int64, but got "
                       << TypeIdLabel(dtype_);
   }
-  return true;
 }
 
 template <typename T>
@@ -104,11 +103,11 @@ bool AddcdivCpuKernelMod::AddcdivCheck(const std::vector<AddressPtr> &inputs, co
 template <typename T1, typename T2>
 bool AddcdivCpuKernelMod::AddcdivCompute(const std::vector<AddressPtr> &inputs,
                                          const std::vector<AddressPtr> &outputs) {
-  auto *input0 = reinterpret_cast<T1 *>(inputs[kInputData]->addr);
-  const auto *input1 = reinterpret_cast<T1 *>(inputs[kInputX1]->addr);
-  const auto *input2 = reinterpret_cast<T1 *>(inputs[kInputX2]->addr);
-  const auto *input3 = reinterpret_cast<T2 *>(inputs[kInputValue]->addr);
-  auto *output = reinterpret_cast<T1 *>(outputs[kOutputData]->addr);
+  auto *input0 = static_cast<T1 *>(inputs[kInputData]->addr);
+  const auto *input1 = static_cast<T1 *>(inputs[kInputX1]->addr);
+  const auto *input2 = static_cast<T1 *>(inputs[kInputX2]->addr);
+  const auto *input3 = static_cast<T2 *>(inputs[kInputValue]->addr);
+  auto *output = static_cast<T1 *>(outputs[kOutputData]->addr);
   AddcdivMul(input1, input3, output);
   AddcdivDiv(output, input2, output);
   AddcdivAdd(input0, output, output);
@@ -133,7 +132,7 @@ void AddcdivCpuKernelMod::AddcdivMul(const T1 *input1, const T2 *input2, T1 *out
     };
     output_size_ = 1;
     for (size_t i = 0; i < output_shape_.size(); ++i) {
-      output_size_ *= output_shape_[i];
+      output_size_ *= static_cast<int64_t>(output_shape_[i]);
     }
     ParallelLaunchAutoSearch(mul_task, output_size_, this, &parallel_search_info_);
   }
@@ -155,7 +154,7 @@ void AddcdivCpuKernelMod::AddcdivAdd(const T *input1, const T *input2, T *output
     };
     output_size_ = 1;
     for (size_t i = 0; i < output_shape_.size(); ++i) {
-      output_size_ *= output_shape_[i];
+      output_size_ *= static_cast<int64_t>(output_shape_[i]);
     }
     ParallelLaunchAutoSearch(add_task, output_size_, this, &parallel_search_info_);
   }
@@ -215,7 +214,7 @@ void AddcdivCpuKernelMod::AddcdivDiv(const T *input1, const T *input2, T *output
     };
     output_size_ = 1;
     for (size_t i = 0; i < output_shape_.size(); ++i) {
-      output_size_ *= output_shape_[i];
+      output_size_ *= static_cast<int64_t>(output_shape_[i]);
     }
     ParallelLaunchAutoSearch(div_task, output_size_, this, &parallel_search_info_);
   }

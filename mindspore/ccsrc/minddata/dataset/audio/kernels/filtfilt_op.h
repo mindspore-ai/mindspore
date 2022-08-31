@@ -35,11 +35,11 @@ class FiltfiltOp : public TensorOp {
 
   void Print(std::ostream &out) const override {
     out << Name() << ": a_coeffs: ";
-    for (auto i = 0; i < a_coeffs_.size(); i++) {
+    for (size_t i = 0; i < a_coeffs_.size(); i++) {
       out << a_coeffs_[i] << " ";
     }
     out << "b_coeffs: ";
-    for (auto i = 0; i < b_coeffs_.size(); i++) {
+    for (size_t i = 0; i < b_coeffs_.size(); i++) {
       out << b_coeffs_[i] << " ";
     }
     out << "clamp: " << clamp_ << std::endl;

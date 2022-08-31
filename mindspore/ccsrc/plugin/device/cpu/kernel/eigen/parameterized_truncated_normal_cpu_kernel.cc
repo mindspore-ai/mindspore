@@ -157,7 +157,7 @@ bool ParameterizedTruncatedNormalCpuKernelMod::BatchGenerate(const std::vector<A
 }
 
 template <typename T>
-void ParameterizedTruncatedNormalCpuKernelMod::Generate(int64_t size, T mean, T stddev, T minval, T maxval,
+void ParameterizedTruncatedNormalCpuKernelMod::Generate(const int64_t size, const T mean, T stddev, T minval, T maxval,
                                                         T **output_ptr) {
   const T stddev_inside_bound = T(1.3);
   if ((isinf(minval) && minval < T(0)) || maxval < mean) {
@@ -186,8 +186,8 @@ void ParameterizedTruncatedNormalCpuKernelMod::Generate(int64_t size, T mean, T 
 }
 
 template <typename T>
-void ParameterizedTruncatedNormalCpuKernelMod::GenerateCase1(int64_t size, T norm_min, T norm_max, T stddev, T mean,
-                                                             T **output_ptr) {
+void ParameterizedTruncatedNormalCpuKernelMod::GenerateCase1(const int64_t size, const T norm_min, const T norm_max,
+                                                             const T stddev, const T mean, T **output_ptr) {
   auto output = *output_ptr;
   std::normal_distribution<double> normal_dist(0, 1);
   int sample_num = 0;
@@ -217,8 +217,8 @@ void ParameterizedTruncatedNormalCpuKernelMod::GenerateCase1(int64_t size, T nor
 }
 
 template <typename T>
-void ParameterizedTruncatedNormalCpuKernelMod::GenerateCase2(int64_t size, T norm_min, T norm_max, T stddev, T mean,
-                                                             T **output_ptr) {
+void ParameterizedTruncatedNormalCpuKernelMod::GenerateCase2(const int64_t size, const T norm_min, const T norm_max,
+                                                             const T stddev, const T mean, T **output_ptr) {
   auto output = *output_ptr;
   std::uniform_real_distribution<double> unifrom_dist(0, 1);
   int sample_num = 0;
@@ -254,8 +254,8 @@ void ParameterizedTruncatedNormalCpuKernelMod::GenerateCase2(int64_t size, T nor
 }
 
 template <typename T>
-void ParameterizedTruncatedNormalCpuKernelMod::GenerateCase3(int64_t size, T norm_min, T norm_max, T stddev, T mean,
-                                                             T **output_ptr) {
+void ParameterizedTruncatedNormalCpuKernelMod::GenerateCase3(const int64_t size, const T norm_min, const T norm_max,
+                                                             const T stddev, const T mean, T **output_ptr) {
   auto output = *output_ptr;
   std::uniform_real_distribution<double> unifrom_dist(0, 1);
   int sample_num = 0;

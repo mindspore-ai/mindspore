@@ -70,8 +70,9 @@ bool AdjustContrastv2CpuKernelMod::LaunchAdjustContrastv2Kernel(const std::vecto
   std::int64_t per_unit_size{total / std::min(kAdjustContrastv2ParallelNum - 2L, total)};
   return ParallelForAdjustContrastv2(total, per_unit_size, [&](std::int64_t begin, std::int64_t end) {
     for (std::int64_t i = begin; i < end; i += 1) {
-      AdjustContrastv2(&(input[i * per_batch_elements]), &(output[i * per_batch_elements]), contrast_factor[0],
-                       x_dim_sizes[n - 1], per_batch_elements);
+      AdjustContrastv2(&(input[i * static_cast<int64_t>(per_batch_elements)]),
+                       &(output[i * static_cast<int64_t>(per_batch_elements)]), contrast_factor[0], x_dim_sizes[n - 1],
+                       per_batch_elements);
     }
   });
 }

@@ -20,7 +20,6 @@
 #include <type_traits>
 #include <memory>
 #include <functional>
-#include "plugin/device/cpu/kernel/nnacl/errorcode.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "utils/ms_utils.h"
 
@@ -87,7 +86,7 @@ void RaggedRangeCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 bool RaggedRangeCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                      const std::vector<kernel::AddressPtr> &workspace,
                                      const std::vector<kernel::AddressPtr> &outputs) {
-  size_t nrows = in_sizes_.empty() ? 1 : in_sizes_[0];
+  size_t nrows = static_cast<size_t>(in_sizes_.empty() ? 1 : in_sizes_[0]);
   if (input_type_ == kNumberTypeInt32 && tsplits_type_ == kNumberTypeInt32) {
     RaggedRangeLaunch<int32_t, int32_t>(nrows, inputs, broadcast_starts_, broadcast_limits_, broadcast_deltas_,
                                         outputs);
@@ -115,23 +114,23 @@ bool RaggedRangeCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inpu
 template <typename T, typename TSPLITS>
 void RaggedRangeCpuKernelMod::RaggedRangeLaunch(const size_t nrows, const std::vector<kernel::AddressPtr> &inputs,
                                                 bool broadcast_starts, bool broadcast_limits, bool broadcast_deltas,
-                                                const std::vector<kernel::AddressPtr> &outputs) {
-  T *starts_addr = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  T *limits_addr = reinterpret_cast<T *>(inputs[kIndex1]->addr);
-  T *deltas_addr = reinterpret_cast<T *>(inputs[kIndex2]->addr);
-  TSPLITS *rt_nested_splits_addr = reinterpret_cast<TSPLITS *>(outputs[0]->addr);
+                                                const std::vector<kernel::AddressPtr> &outputs) const {
+  T *starts_addr = static_cast<T *>(inputs[kIndex0]->addr);
+  T *limits_addr = static_cast<T *>(inputs[kIndex1]->addr);
+  T *deltas_addr = static_cast<T *>(inputs[kIndex2]->addr);
+  TSPLITS *rt_nested_splits_addr = static_cast<TSPLITS *>(outputs[0]->addr);
   rt_nested_splits_addr[0] = 0;
   for (size_t row = 0; row < nrows; ++row) {
     T start = broadcast_starts ? starts_addr[0] : starts_addr[row];
     T limit = broadcast_limits ? limits_addr[0] : limits_addr[row];
     T delta = broadcast_deltas ? deltas_addr[0] : deltas_addr[row];
-    if (delta == (T)0) {
+    if (delta == static_cast<T>(0)) {
       MS_LOG(EXCEPTION) << "For RaggedRange, requires delta != 0.";
     }
     rt_nested_splits_addr[row + 1] =
       rt_nested_splits_addr[row] + RaggedRangeCpuKernelMod::RangeSize<T, TSPLITS>(start, limit, delta);
   }
-  T *rt_dense_values_addr = reinterpret_cast<T *>(outputs[1]->addr);
+  T *rt_dense_values_addr = static_cast<T *>(outputs[1]->addr);
   if (nrows <= kParallelDataNums) {
     int value_index = 0;
     for (size_t row = 0; row < nrows; ++row) {
@@ -162,8 +161,8 @@ void RaggedRangeCpuKernelMod::RaggedRangeLaunch(const size_t nrows, const std::v
 }
 
 template <typename T, typename TSPLITS>
-TSPLITS RaggedRangeCpuKernelMod::RangeSize(T start, T limit, T delta) {
-  size_t res;
+TSPLITS RaggedRangeCpuKernelMod::RangeSize(const T start, const T limit, const T delta) const {
+  int64_t res;
   if (((delta > (T)0) && (limit < start)) || ((delta < (T)0) && (limit > start))) {
     res = 0;
   } else {

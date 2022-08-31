@@ -44,9 +44,10 @@ class RaggedRangeCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   std::vector<int> in_sizes_;
   template <typename T, typename TSPLITS>
   void RaggedRangeLaunch(const size_t nrows, const std::vector<kernel::AddressPtr> &inputs, bool broadcast_starts,
-                         bool broadcast_limits, bool broadcast_deltas, const std::vector<kernel::AddressPtr> &outputs);
+                         bool broadcast_limits, bool broadcast_deltas,
+                         const std::vector<kernel::AddressPtr> &outputs) const;
   template <typename T, typename TSPLITS>
-  TSPLITS RangeSize(T start, T limit, T delta);
+  TSPLITS RangeSize(T start, T limit, T delta) const;
 };
 }  // namespace kernel
 }  // namespace mindspore

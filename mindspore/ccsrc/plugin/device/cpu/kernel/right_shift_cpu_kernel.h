@@ -18,10 +18,7 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_RIGHT_SHIFT_CPU_KERNEL_H_
 
 #include <functional>
-#include <memory>
 #include <vector>
-#include <iostream>
-#include <string>
 
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
