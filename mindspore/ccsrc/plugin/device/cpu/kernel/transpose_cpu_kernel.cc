@@ -55,7 +55,7 @@ void TransposeFwdCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     }
   }
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  if (perm_.size() != input_shape_.size()) {
+  if (!IsDynamicRank(input_shape_) && perm_.size() != input_shape_.size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the perm's size must be equal to input_shape's size, but got "
                       << perm_.size() << " vs " << input_shape_.size();
   }

@@ -60,7 +60,7 @@ abstract::ShapePtr TransposeInferShape(const PrimitivePtr &primitive, const std:
     p = (p >= 0) ? p : (p_value_raw.size() + p);
     p_value.emplace_back(p);
   }
-  if (x_shape.size() != p_value.size()) {
+  if (!IsDynamicRank(x_shape) && x_shape.size() != p_value.size()) {
     MS_EXCEPTION(ValueError) << "For '" << op_name << "', the dim of 'input_x' and 'input_perm' must be equal, but got "
                              << x_shape.size() << " and " << p_value.size() << " respectively.";
   }
@@ -76,6 +76,9 @@ abstract::ShapePtr TransposeInferShape(const PrimitivePtr &primitive, const std:
     if (std::find(tmp.begin(), tmp.end(), dim) != tmp.end()) {
       MS_EXCEPTION(ValueError) << "For '" << op_name << "', the value of perm is wrong.";
     }
+  }
+  if (IsDynamicRank(x_shape)) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
   }
   std::vector<int64_t> in_shape(p_value);
   (void)std::transform(in_shape.begin(), in_shape.end(), in_shape.begin(), [x_shape](size_t i) { return x_shape[i]; });
