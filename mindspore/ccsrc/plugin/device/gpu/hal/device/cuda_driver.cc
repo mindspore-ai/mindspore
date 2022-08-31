@@ -22,6 +22,9 @@ namespace mindspore {
 namespace device {
 namespace gpu {
 size_t CudaDriver::AllocDeviceMem(size_t size, DeviceMemPtr *addr) {
+  if (size <= 0) {
+    MS_LOG(EXCEPTION) << "cudaMalloc alloc size is under 0.";
+  }
   size_t retreat_count = 0;
   auto ret = cudaMalloc(reinterpret_cast<void **>(addr), size);
   // If free memory is not enough, then retry with mem_malloc_retry_rate_.
@@ -43,6 +46,9 @@ size_t CudaDriver::AllocDeviceMem(size_t size, DeviceMemPtr *addr) {
 }
 
 bool CudaDriver::FreeDeviceMem(const DeviceMemPtr &addr) {
+  if (addr == nullptr) {
+    return true;
+  }
   auto ret = cudaFree(addr);
   if (ret != cudaSuccess) {
     MS_LOG(ERROR) << "cudaFree failed, ret[" << static_cast<int>(ret) << "], " << cudaGetErrorString(ret);

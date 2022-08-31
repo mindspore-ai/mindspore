@@ -43,10 +43,7 @@ bool CollectiveNode::Start(const uint32_t &timeout) {
   }
   is_already_stopped_ = false;
 
-  if (!SynchronizeAddresses()) {
-    MS_LOG(EXCEPTION) << "Failed to synchronize the addresses of all the cpu collective nodes.";
-  }
-
+  SynchronizeAddresses();
   node_info_.rank_id_ = cgn_->rank_id();
   MS_LOG(INFO) << "The cpu collective rank " << node_info_.rank_id_ << " has been started successfully.";
   return true;
@@ -72,7 +69,7 @@ bool CollectiveNode::Finish(const uint32_t &timeout) {
   return true;
 }
 
-bool CollectiveNode::SynchronizeAddresses() {
+void CollectiveNode::SynchronizeAddresses() {
   if (cgn_ != nullptr) {
     // Register the address of this node.
     auto rank_id = kRankIdPrefix + cgn_->role() + "_" + std::to_string(cgn_->rank_id());
@@ -126,7 +123,6 @@ bool CollectiveNode::SynchronizeAddresses() {
       }
     }
   }
-  return true;
 }
 }  // namespace core
 }  // namespace ps

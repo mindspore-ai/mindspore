@@ -110,9 +110,7 @@ bool MsCollectiveCommLib::BroadcastUniqueID(const std::string &group_name, size_
   CHECK_IF_NULL(group);
 
   if (!synchronized_) {
-    if (!node_->SynchronizeAddresses()) {
-      return false;
-    }
+    node_->SynchronizeAddresses();
   } else {
     synchronized_ = false;
   }

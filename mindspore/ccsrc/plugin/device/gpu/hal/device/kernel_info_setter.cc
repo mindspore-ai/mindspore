@@ -85,6 +85,7 @@ bool CheckKernelInfo(const std::shared_ptr<KernelBuildInfo> &alternative_kernel_
 }
 
 std::string GetSupportedTypesStr(const CNodePtr &kernel_node, KernelType kernel_type) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
   std::string supported_type_lists;
   // Custom op gets reg info from OpLib instead of NativeGpuKernelMod.
   if (!IsPrimitiveCNode(kernel_node, prim::kPrimCustom)) {
@@ -295,6 +296,7 @@ void TransformFormatPosition(std::vector<size_t> *format_position, size_t positi
 }
 
 bool IsNeedProcessFormatInfo(const CNodePtr &kernel_node, const std::vector<TypeId> &inputs_type) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
   if (!FormatTransformChecker::GetInstance().format_transform()) {
     return false;
   }
@@ -376,6 +378,8 @@ void UpdateKernelFormatInfo(const CNodePtr &kernel_node, const std::vector<TypeI
 }
 
 void SetGraphKernelInfo(const CNodePtr &kernel_node, const FuncGraphPtr &func_graph) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  MS_EXCEPTION_IF_NULL(func_graph);
   std::vector<AnfNodePtr> node_list, input_list, output_list;
   kernel::GetValidKernelNodes(func_graph, &node_list, &input_list, &output_list);
 
@@ -395,6 +399,7 @@ void SetGraphKernelInfo(const CNodePtr &kernel_node, const FuncGraphPtr &func_gr
 
   // set graph kernel innner nodes kernel info.
   auto kernel_info_setter = GraphKernelInfoManager::Instance().GetGraphKernelInfo(kGPUDevice);
+  MS_EXCEPTION_IF_NULL(kernel_info_setter);
   for (size_t i = 0; i < node_list.size(); ++i) {
     const auto &anf_node = node_list[i];
     MS_EXCEPTION_IF_NULL(anf_node);

@@ -45,6 +45,9 @@ GpuDataQueueDynamic::GpuDataQueueDynamic(const size_t capacity) : DataQueue(capa
 }
 
 DataQueueStatus GpuDataQueueDynamic::Push(std::vector<DataQueueItem> data) {
+  if (data.size() == 0) {
+    return DataQueueStatus::SUCCESS;
+  }
   for (size_t i = 0; i < data.size(); i++) {
     auto &item = data[i];
     if (item.data_ptr == nullptr) {
