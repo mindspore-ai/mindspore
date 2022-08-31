@@ -76,6 +76,7 @@ class CTCLossV2CpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelpe
   // Stands for C
   int64_t num_labels_{0};
   // Stands for S
+  bool zero_infinity_{false};
   int64_t max_target_length_{0};
   template <typename T, typename S>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,

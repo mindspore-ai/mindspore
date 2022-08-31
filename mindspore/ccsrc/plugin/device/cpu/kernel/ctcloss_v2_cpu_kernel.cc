@@ -36,6 +36,7 @@ bool CTCLossV2CpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   }
   auto kernel_ptr = std::make_shared<ops::CTCLossV2>(base_operator->GetPrim());
   blank_ = kernel_ptr->get_blank();
+  zero_infinity_ = kernel_ptr->get_zero_infinity();
   if (!MatchKernelFunc(base_operator, inputs, outputs)) {
     return false;
   }
@@ -190,6 +191,10 @@ bool CTCLossV2CpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &
     }
   };
   ParallelLaunchAutoSearch(task, LongToSize(batch_sizes_), this, &parallel_search_info_);
+  if (zero_infinity_) {
+    constexpr S zero = static_cast<S>(0);
+    std::replace(neg_log_p, neg_log_p + batch_sizes_, std::numeric_limits<S>::infinity(), zero);
+  }
   return true;
 }
 const std::vector<std::pair<KernelAttr, CTCLossV2CpuKernelMod::KernelRunFunc>> &CTCLossV2CpuKernelMod::GetFuncList()
