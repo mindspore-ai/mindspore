@@ -5,6 +5,10 @@
     对数据集中的每一条数据进行长度计算。根据该条数据的长度计算结果和每个分桶的范围将该数据归类到特定的桶里面。
     当某个分桶中数据条数达到指定的大小 `bucket_batch_sizes` 时，将根据 `pad_info` 的信息对分桶进行填充，再进行批处理。
 
+    执行流程参考下图：
+
+    .. image:: bucket_batch_by_length_cn.png
+
     参数：
         - **column_names** (list[str]) - 传递给参数 `element_length_function` 的数据列，用于计算数据的长度。
         - **bucket_boundaries** (list[int]) - 指定各个分桶的上边界值，列表的数值必须严格递增。

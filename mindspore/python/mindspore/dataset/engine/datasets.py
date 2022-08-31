@@ -479,6 +479,10 @@ class Dataset:
         corresponding size specified in bucket_batch_sizes, the entire bucket will be
         padded according to pad_info, and then form a batch.
 
+        Refer to the following figure for the execution process:
+
+        .. image:: bucket_batch_by_length_en.png
+
         Args:
             column_names (list[str]): Columns passed to element_length_function.
             bucket_boundaries (list[int]): A list consisting of the upper boundaries
