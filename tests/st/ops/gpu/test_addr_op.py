@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,53 +15,34 @@
 
 import numpy as np
 import pytest
-
 import mindspore.context as context
 from mindspore import Tensor
-from mindspore.ops import operations as P
-context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_asin_fp32():
-    x_np = np.array([0.74, 0.04, 0.30, 0.56]).astype(np.float32)
-    output_ms = P.Asin()(Tensor(x_np))
-    output_np = np.arcsin(x_np)
-    assert np.allclose(output_ms.asnumpy(), output_np)
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_asin_fp16():
-    x_np = np.array([0.74, 0.04, 0.30, 0.56]).astype(np.float16)
-    output_ms = P.Asin()(Tensor(x_np))
-    output_np = np.arcsin(x_np)
-    assert np.allclose(output_ms.asnumpy(), output_np)
 
 
-def test_asin_tensor_api(nptype):
+def test_addr_tensor_api(nptype):
     """
-    Feature: test asin tensor api.
+    Feature: test addr tensor api.
     Description: test inputs given their dtype.
     Expectation: the result match with expected result.
     """
-    x = Tensor(np.array([0.74, 0.04, 0.30, 0.56]).astype(nptype))
-    output = x.asin()
-    expected = np.array([0.8330704, 0.04001067, 0.30469266, 0.5943858]).astype(nptype)
+    x = Tensor(np.array([[2., 2.], [3., 2.], [3., 4.]]).astype(nptype))
+    vec1 = Tensor(np.array([2., 3., 2.]).astype(nptype))
+    vec2 = Tensor(np.array([3., 4.]).astype(nptype))
+    output = x.addr(vec1, vec2)
+    expected = np.array([[8., 10.], [12., 14.], [9., 12.]]).astype(nptype)
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_asin_float32_tensor_api():
+def test_addr_float32_tensor_api():
     """
-    Feature: test asin tensor api.
+    Feature: test addr tensor api.
     Description: test float32 inputs.
     Expectation: the result match with expected result.
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    test_asin_tensor_api(np.float32)
+    test_addr_tensor_api(np.float32)
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-    test_asin_tensor_api(np.float32)
+    test_addr_tensor_api(np.float32)

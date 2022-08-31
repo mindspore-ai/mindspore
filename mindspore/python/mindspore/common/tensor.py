@@ -664,6 +664,80 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('addcmul')()(self, x1, x2, value)
 
+    def add(self, y):
+        r"""
+        Performs the element-wise addition of input tensors.
+
+        .. math::
+            output[i] = x[i] + y[i]
+
+        Args:
+            y (Tensor): The tensor to be added.
+
+        Returns:
+            Tensor, has the same shape and dtype as input tensors.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> x = Tensor(np.array([1, 2, 3]), mindspore.float32)
+            >>> y = Tensor(np.array([4, 5, 6]), mindspore.float32)
+            >>> z = x.add(y)
+            >>> print(z)
+            [[ 5.  7.  9.]]
+        """
+
+        self._init_check()
+        return tensor_operator_registry.get('add')()(self, y)
+
+    def addr(self, vec1, vec2, beta=1, alpha=1):
+        r"""
+        Executes the outer-product of `vec1` and `vec2` and adds it to the input tensor.
+
+        If `vec1` is a vector of size :vec1:`N` and `vec2` is a vector of size :vec1:`M`, then `x` must be
+        broadcastable with a vec1rix of size :vec1:`(N, M)` and `out` will be a vec1rix of size :vec1:`(N, M)`.
+
+        The optional values `beta` and `alpha` are the scale factors on the outer product between `vec1` and `vec2`
+        and the added vec1rix `x` respectively. If `beta` is 0, then `x` will be ignored.
+
+        .. math::
+            output = β x + α (vec1 ⊗ vec2)
+
+        Args:
+            vec1 (Tensor): The first tensor to be multiplied. The shape of the tensor is :vec1:`(N,)`.
+            vec2 (Tensor): The second tensor to be multiplied. The shape of the tensor is :vec1:`(M,)`.
+            beta (scalar[int, float, bool], optional): Multiplier for `x` (β). The `beta` must be int or
+                float or bool, Default: 1.
+            alpha (scalar[int, float, bool], optional): Multiplier for `vec1` @ `vec2` (α). The `alpha` must
+                be int or float or bool, Default: 1.
+
+        Outputs:
+            Tensor, the shape of the output tensor is :vec1:`(N, M)`, has the same dtype as `x`.
+
+        Raises:
+            TypeError: If `x`, `vec1`, `vec2` is not a Tensor.
+            TypeError: If inputs `x`, `vec1`, 'vec2' are not the same dtype.
+            ValueError: If `x` is not a 2-D Tensor.
+                If `vec1`, `vec2` is not a 1-D Tensor.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> x = Tensor(np.array([[2., 2.], [3., 2.], [3., 4.]], np.float32))
+            >>> vec1 = Tensor(np.array([2., 3., 2.], np.float32))
+            >>> vec2 = Tensor(np.array([3, 4], np.float32))
+            >>> output = x.addr(vec1, vec2)
+            >>> print(output)
+            [[ 8. 10.]
+            [12. 14.]
+            [ 9. 12.]]
+        """
+
+        self._init_check()
+        return tensor_operator_registry.get('addr')(self, vec1, vec2, beta=1, alpha=1)
+
     def all(self, axis=(), keep_dims=False):
         """
         Check all tensor elements along a given axis evaluate to True.
@@ -1339,6 +1413,30 @@ class Tensor(Tensor_):
         """
         self._init_check()
         return tensor_operator_registry.get('acosh')(self)
+
+    def asin(self):
+        r"""
+        Computes arcsine of input tensors element-wise.
+
+        .. math::
+
+        out_i = sin^{-1}(x_i)
+
+        Returns:
+            Tensor, has the same shape and dtype as `x`.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> from mindspore import Tensor
+            >>> x = Tensor(np.array([0.74, 0.04, 0.30, 0.56]), mindspore.float32)
+            >>> output = x.asin()
+            >>> print(output)
+            [0.8330704  0.04001067 0.30469266 0.5943858]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('asin')(self)
 
     def abs(self):
         """

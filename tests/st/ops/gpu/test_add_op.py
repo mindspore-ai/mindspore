@@ -25,6 +25,7 @@ from mindspore.common.parameter import Parameter
 from mindspore.ops import operations as P
 from mindspore.ops.operations import _inner_ops as inner
 
+
 class AddNet(nn.Cell):
     def __init__(self, nptype):
         super(AddNet, self).__init__()
@@ -54,9 +55,9 @@ class AddNet(nn.Cell):
 
     @ms_function
     def construct(self):
-        return (
-            self.add(self.x, self.y), self.add(self.x1, self.y1), self.add(self.x2, self.y2),
-            self.add(self.x3, self.y3))
+        output = (self.add(self.x, self.y), self.add(self.x1, self.y1),
+                  self.add(self.x2, self.y2), self.add(self.x3, self.y3))
+        return output
 
 
 def add(nptype):
@@ -159,6 +160,7 @@ def test_add_float16():
 def test_add_int64():
     add(np.int64)
 
+
 @pytest.mark.skip(reason='0 in shape is not support')
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
@@ -166,9 +168,10 @@ def test_add_int64():
 def test_add_int32():
     add(np.int32)
 
-class Tensoradd_d(nn.Cell):
+
+class AddNetDynamic(nn.Cell):
     def __init__(self):
-        super(Tensoradd_d, self).__init__()
+        super(AddNetDynamic, self).__init__()
         self.test_dynamic = inner.GpuConvertToDynamicShape()
         self.add = P.Add()
 
@@ -180,7 +183,7 @@ class Tensoradd_d(nn.Cell):
 
 def add_dynamic(nptype):
     context.set_context(device_target='GPU', mode=context.GRAPH_MODE)
-    net = Tensoradd_d()
+    net = AddNetDynamic()
 
     x1 = Tensor(np.arange(3).reshape(3).astype(nptype))
     y1 = Tensor(np.array([2]).astype(nptype))
@@ -223,11 +226,13 @@ def add_dynamic(nptype):
     assert (output1.asnumpy() == expect1).all()
     assert (output2.asnumpy() == expect2).all()
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_add_dynamic_float64():
     add_dynamic(np.float64)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
@@ -235,11 +240,13 @@ def test_add_dynamic_float64():
 def test_add_dynamic_float32():
     add_dynamic(np.float32)
 
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_add_dynamic_float16():
     add_dynamic(np.float16)
+
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
@@ -247,8 +254,37 @@ def test_add_dynamic_float16():
 def test_add_dynamic_int64():
     add_dynamic(np.int64)
 
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_add_dynamic_int32():
     add_dynamic(np.int32)
+
+
+def test_add_tensor_api(nptype):
+    """
+    Feature: test add tensor api.
+    Description: test inputs given their dtype.
+    Expectation: the result match with expected result.
+    """
+    input_x = Tensor(np.array([1, 2, 3]).astype(nptype))
+    input_y = Tensor(np.array([4, 5, 6]).astype(nptype))
+    output = input_x.add(input_y)
+    expected = np.array([5, 7, 9]).astype(np.int32)
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_add_float32_tensor_api():
+    """
+    Feature: test add tensor api.
+    Description: test float32 inputs.
+    Expectation: the result match with expected result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    test_add_tensor_api(np.float32)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    test_add_tensor_api(np.float32)

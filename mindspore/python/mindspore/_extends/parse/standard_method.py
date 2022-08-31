@@ -2987,8 +2987,29 @@ def acos(x):
     return F.acos(x)
 
 
+def asin(x):
+    r"""
+    Computes arcsine of input tensors element-wise.
+    """
+    return F.asin(x)
+
+
 def acosh(x):
     r"""
     Computes inverse hyperbolic cosine of the inputs element-wise.
     """
     return F.acosh(x)
+
+
+def add(x, y):
+    r"""
+    Computes the element-wise addition of input tensors.
+    """
+    return F.add(x, y)
+
+
+def addr(x, vec1, vec2, beta=1, alpha=1):
+    r"""
+    Computes the outer-product of `vec1` and `vec2` and adds it to the vec1rix `x`.
+    """
+    return F.addr(x, vec1, vec2, beta=1, alpha=1)
