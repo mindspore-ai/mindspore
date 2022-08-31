@@ -23,6 +23,7 @@ from mindspore.common.tensor import Tensor
 from mindspore.common.initializer import initializer, Initializer
 from mindspore.communication.management import get_group_size, get_rank
 from mindspore.ops import operations as P
+from mindspore.ops.operations._thor_ops import ThorIm2Col
 from mindspore.common.parameter import Parameter
 from mindspore._checkparam import Validator, Rel, twice
 from mindspore import context
@@ -403,7 +404,7 @@ class Conv2dThor(_ConvThor):
             self._process_ascend_conv2d_thor(kernel_size, stride)
         else:
             self.is_Ascend = False
-            self.img2col = P.Im2Col(kernel_size=kernel_size, stride=stride, pad_mode="same")
+            self.img2col = ThorIm2Col(kernel_size=kernel_size, stride=stride, pad_mode="same")
             self.matmul = P.MatMul(transpose_b=True)
             self.reduce_mean = P.ReduceMean(keep_dims=False)
             self.matrix_a_cov = Parameter(Tensor(np.zeros([self.matrix_a_dim, self.matrix_a_dim]).astype(np.float32)),

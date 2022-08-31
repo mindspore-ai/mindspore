@@ -450,7 +450,7 @@ class CusMatMulCubeFraczLeftCast(PrimitiveWithInfer):
         return mstype.float16
 
 
-class Im2Col(PrimitiveWithInfer):
+class ThorIm2Col(PrimitiveWithInfer):
     """
     extracts image paths from image.
 
@@ -474,7 +474,7 @@ class Im2Col(PrimitiveWithInfer):
                  pad=0,
                  stride=1,
                  dilation=1):
-        """Initialize Im2Col"""
+        """Initialize ThorIm2Col"""
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
         self.kernel_size = _check_positive_int_or_tuple('kernel_size', kernel_size, self.name)
         self.add_prim_attr('kernel_size', self.kernel_size)
