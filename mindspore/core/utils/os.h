@@ -18,65 +18,52 @@
 #define MINDSPORE_CORE_UTILS_OS_H_
 
 #ifdef _MSC_VER
+#include <io.h>
+#include <process.h>
+#include <BaseTsd.h>
 #include "dirent.h"  // NOLINT
 #else
 #include <dirent.h>
-#endif
-
-#ifdef _MSC_VER
-#include <io.h>
-#include <process.h>
-#else
 #include <unistd.h>
 #endif
 
 #ifdef _MSC_VER
+
+// https://docs.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation?tabs=cmd
 #ifndef PATH_MAX
-#define PATH_MAX 260
-#endif
+#define PATH_MAX (260)
 #endif
 
-#ifdef _MSC_VER
 #ifndef F_OK
-#define F_OK 0 /* Check for file existence */
+#define F_OK (0) /* Check for file existence */
 #endif
 
 #ifndef X_OK
-#define X_OK 1 /* Check for execute permission. */
+#define X_OK (1) /* Check for execute permission. */
 #endif
 
 #ifndef W_OK
-#define W_OK 2 /* Check for write permission */
+#define W_OK (2) /* Check for write permission */
 #endif
 
 #ifndef R_OK
-#define R_OK 4 /* Check for read permission */
-#endif
+#define R_OK (4) /* Check for read permission */
 #endif
 
-#ifdef _MSC_VER
-#define mode_t int
-#endif
-#ifdef _MSC_VER
-#include <BaseTsd.h>
+using mode_t = int;
+
 using ssize_t = SSIZE_T;
-#endif
 
-#ifdef _MSC_VER
 using off64_t = off_t;
-#endif
 
-#ifdef _MSC_VER
-typedef int pid_t;
-#endif
+using pid_t = int;
 
-#ifdef _MSC_VER
 #ifndef _S_IRWXU
 #define _S_IRWXU (_S_IREAD | _S_IWRITE | _S_IEXEC)
 #endif
 
 #ifndef S_IRWXU
-#define S_IRWXU _S_IRWXU
+#define S_IRWXU (_S_IRWXU)
 #endif
 
 #ifndef S_IRWXG
