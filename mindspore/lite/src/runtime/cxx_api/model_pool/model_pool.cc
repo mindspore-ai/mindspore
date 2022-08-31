@@ -588,6 +588,7 @@ ModelPoolConfig ModelPool::CreateCpuModelPoolConfig(const std::shared_ptr<Runner
     context->SetInterOpParallelNum(init_context->GetInterOpParallelNum());
     if (init_context->GetThreadAffinityMode() != lite::NO_BIND) {
       // bind by core id
+      context->SetThreadAffinity(init_context->GetThreadAffinityMode());
       context->SetThreadAffinity(all_worker_bind_list[i]);
     } else {
       // not bind core , not use numa
