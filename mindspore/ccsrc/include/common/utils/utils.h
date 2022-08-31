@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CCSRC_INCLUDE_COMMON_UTILS_UTILS_H_
 #define MINDSPORE_CCSRC_INCLUDE_COMMON_UTILS_UTILS_H_
 
-#include <unistd.h>
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -831,13 +830,11 @@ COMMON_EXPORT bool IsOneOfServerFormatC04(const std::string &format);
 using OutputInputRefMap = std::map<size_t, size_t>;
 
 static inline uint64_t GetCurrentUSec() {
-  struct timeval tv;
-  int ret = gettimeofday(&tv, nullptr);
-  if (ret != 0) {
-    MS_LOG(EXCEPTION) << "Fail gettimeofday, ret = " << ret;
-  }
-  constexpr int64_t constNum = 1000000;
-  return static_cast<uint64_t>(tv.tv_usec + tv.tv_sec * constNum);
+  constexpr int64_t const_num = 1000000;
+  auto time_now = std::chrono::system_clock::now();
+  auto tv_sec = std::chrono::duration_cast<std::chrono::seconds>(time_now.time_since_epoch()).count();
+  auto tv_usec = std::chrono::duration_cast<std::chrono::microseconds>(time_now.time_since_epoch()).count();
+  return static_cast<uint64_t>(tv_usec + tv_sec * const_num);
 }
 
 #define PROF_START(stage) uint64_t start_usec_##stage = mindspore::GetCurrentUSec()
