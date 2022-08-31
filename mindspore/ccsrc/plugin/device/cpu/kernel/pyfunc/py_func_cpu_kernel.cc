@@ -61,6 +61,7 @@ py::object RawMemoryToScalar(const void *data, const TypeId &type) {
 }
 
 void ScalarToRawMemory(const py::object &obj, const TypeId &type, const AddressPtr &address) {
+  MS_EXCEPTION_IF_NULL(address);
   switch (type) {
     case kNumberTypeBool: {
       bool data = py::cast<bool>(obj);
@@ -133,6 +134,7 @@ void ScalarToRawMemory(const py::object &obj, const TypeId &type, const AddressP
 }
 
 void ArrayToRawMemory(const py::array &array, const AddressPtr &address) {
+  MS_EXCEPTION_IF_NULL(address);
   if (static_cast<unsigned int>(array.flags()) &
       static_cast<unsigned int>(pybind11::detail::npy_api::NPY_ARRAY_C_CONTIGUOUS_)) {
     const py::buffer_info &buf_info = array.request();
@@ -175,10 +177,12 @@ py::tuple RawMemoryToPyObjects(const std::vector<AddressPtr> &inputs, const PyFu
   for (size_t i = 0; i < inputs.size(); i++) {
     switch (input_infos.object_types[i]) {
       case PythonOjectType::kScalar:
+        MS_EXCEPTION_IF_NULL(inputs[i]);
         result[i] = RawMemoryToScalar(inputs[i]->addr, input_infos.dtypes[i]);
         break;
       case PythonOjectType::kNumpyArray: {
         const tensor::TensorPtr &tensor = input_tensors[i];
+        MS_EXCEPTION_IF_NULL(tensor);
         CHECK_RET_WITH_EXCEPT(memcpy_s(tensor->data_c(), tensor->Size(), inputs[i]->addr, inputs[i]->size), EOK,
                               "memcpy failed.");
         result[i] = python_adapter::PyAdapterCallback::TensorToNumpy(*tensor);
@@ -238,16 +242,20 @@ void PyFuncCpuKernelMod::BuildFuncInfo(const CNodePtr &kernel_node) {
 
   if (common::AnfAlgo::HasNodeAttr("in_types", kernel_node)) {
     const auto &in_type_ptrs = common::AnfAlgo::GetNodeAttr<std::vector<TypePtr>>(kernel_node, "in_types");
-    (void)std::for_each(in_type_ptrs.begin(), in_type_ptrs.end(),
-                        [&in_types](auto p) { (void)in_types.emplace_back(p->type_id()); });
+    (void)std::for_each(in_type_ptrs.begin(), in_type_ptrs.end(), [&in_types](auto p) {
+      MS_EXCEPTION_IF_NULL(p);
+      (void)in_types.emplace_back(p->type_id());
+    });
   } else {
     in_types = AnfAlgo::GetAllInputDeviceTypes(kernel_node);
   }
 
   if (common::AnfAlgo::HasNodeAttr("out_types", kernel_node)) {
     const auto &out_type_ptrs = common::AnfAlgo::GetNodeAttr<std::vector<TypePtr>>(kernel_node, "out_types");
-    (void)std::for_each(out_type_ptrs.begin(), out_type_ptrs.end(),
-                        [&out_types](auto p) { (void)out_types.emplace_back(p->type_id()); });
+    (void)std::for_each(out_type_ptrs.begin(), out_type_ptrs.end(), [&out_types](auto p) {
+      MS_EXCEPTION_IF_NULL(p);
+      (void)out_types.emplace_back(p->type_id());
+    });
   } else {
     out_types = AnfAlgo::GetAllOutputDeviceTypes(kernel_node);
   }

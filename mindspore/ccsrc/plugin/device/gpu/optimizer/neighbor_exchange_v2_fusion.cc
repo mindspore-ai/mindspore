@@ -168,6 +168,7 @@ CNodePtr CreateSplitNode(const FuncGraphPtr &graph, const AnfNodePtr &split_inpu
     slice_node_info.slice_size = splitv_node_info->size_splits[idx];
     std::vector<AnfNodePtr> slice_inputs = {NewValueNode(std::make_shared<Primitive>(kSliceOpName)), split_input};
     slice = CreateSliceNode(graph, slice_inputs, slice_node_info, pass);
+    MS_EXCEPTION_IF_NULL(slice);
     AddNewOutputs(graph, slice, 1, &make_tuple_inputs);
     abstract_list.emplace_back(slice->abstract());
     slice_node_info.slice_begin += splitv_node_info->size_splits[idx];
@@ -582,6 +583,7 @@ CNodePtr NeighborExchangeV2Fusion::CreateMiddleConcat(const FuncGraphPtr &graph,
                                                       const std::vector<AnfNodePtr> &all_to_all_v_outputs,
                                                       const std::vector<int64_t> &recv_rank_ids,
                                                       const std::vector<int64_t> &recv_lens, int64_t concat_dim) const {
+  MS_EXCEPTION_IF_NULL(neighbor_exchange_v2);
   std::vector<AnfNodePtr> concat_input_all = {NewValueNode(std::make_shared<Primitive>(kConcatOpName))};
   int64_t input_num_all = 0;
   auto neighbor_exchange_v2_input = neighbor_exchange_v2->input(kNeighborExchangeV2InputIdx);
@@ -632,6 +634,7 @@ CNodePtr NeighborExchangeV2Fusion::AllToAllvRecvEmpty(const FuncGraphPtr &graph,
   MS_EXCEPTION_IF_NULL(all_to_all_v);
   // add depend for input & alltoallv
   auto neighbor_exchange_v2_input = neighbor_exchange_v2->input(kNeighborExchangeV2InputIdx);
+  MS_EXCEPTION_IF_NULL(neighbor_exchange_v2_input);
   std::vector<AnfNodePtr> depend_input = {NewValueNode(std::make_shared<Primitive>(prim::kPrimDepend->name())),
                                           neighbor_exchange_v2_input, all_to_all_v};
   auto depend = graph->NewCNode(depend_input);

@@ -145,6 +145,7 @@ void RecoveryContext::ObtainGlobalLatestCkptInfo() {
   device::DeviceContextKey host_key = {"CPU", 0};
   device::DeviceContext *host_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(host_key);
   MS_EXCEPTION_IF_NULL(host_context);
+  MS_EXCEPTION_IF_NULL(host_context->device_res_manager_);
   device::CollectiveCommunicationLib *host_comm_lib_instance = host_context->device_res_manager_->collective_comm_lib();
   MS_EXCEPTION_IF_NULL(host_comm_lib_instance);
 

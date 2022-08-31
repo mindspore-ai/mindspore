@@ -41,13 +41,19 @@ class Data {
   virtual ~Data() = default;
 
   // Get the memory data of Data
-  T *data() const { return data_->data(); }
+  T *data() const {
+    MS_EXCEPTION_IF_NULL(data_);
+    return data_->data();
+  }
 
   // Get the mutable memory data of Data
   std::shared_ptr<std::vector<T>> MutableData() const { return data_; }
 
   // Get the element number of Data
-  size_t size() const { return data_->size(); }
+  size_t size() const {
+    MS_EXCEPTION_IF_NULL(data_);
+    return data_->size();
+  }
 
   // Get the dimension information of Data.
   std::shared_ptr<std::vector<int>> shape() const { return shape_; }

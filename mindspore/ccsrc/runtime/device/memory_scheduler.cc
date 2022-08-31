@@ -74,6 +74,7 @@ void MemScheduler::Init(const void *key, void *host_ptr, size_t mem_size, MemPri
     mem_priority_[key] = priority;
     Record(key, kInit, mem_size);
   }
+  MS_EXCEPTION_IF_NULL(auto_mem_offload_);
   auto_mem_offload_->SetInitHostPtr(key, host_ptr, mem_size);
 }
 
@@ -89,15 +90,20 @@ void *MemScheduler::GetOrMalloc(const void *key, size_t mem_size, MemPriority pr
   if (strategy_ == nullptr) {
     return nullptr;
   }
+  MS_EXCEPTION_IF_NULL(auto_mem_offload_);
   return auto_mem_offload_->Get(key);
 }
 
 void *MemScheduler::Malloc(const std::shared_ptr<MemEvent> &event, void *stream) {
+  MS_EXCEPTION_IF_NULL(event);
+  MS_EXCEPTION_IF_NULL(continuous_mem_info_helper_);
+  MS_EXCEPTION_IF_NULL(auto_mem_offload_);
   const bool is_continuous_mem = continuous_mem_info_helper_->IsContinuousMem(event->key);
   if (!is_continuous_mem) {
     return auto_mem_offload_->Malloc(event->key, event->mem_size, stream, GetNoReuseKeys());
   }
   const auto &continuous_mem_info = continuous_mem_info_helper_->GetContinuousMemInfo(event->key);
+  MS_EXCEPTION_IF_NULL(continuous_mem_info);
   if (!continuous_mem_info_helper_->NeedMallocContinuousMem(continuous_mem_info, current_step_) ||
       cur_step_allocated_continuous_mem_.count(continuous_mem_info) != 0) {
     return auto_mem_offload_->Malloc(event->key, event->mem_size, stream, GetNoReuseKeys());
@@ -121,6 +127,8 @@ void *MemScheduler::Malloc(const std::shared_ptr<MemEvent> &event, void *stream)
 }
 
 bool MemScheduler::PreComputeMock(const MemEventPtr &event) {
+  MS_EXCEPTION_IF_NULL(event);
+  MS_EXCEPTION_IF_NULL(auto_mem_offload_);
   void *device_ptr = nullptr;
   if (auto_mem_offload_->Get(event->key) != nullptr) {
     return true;
@@ -131,6 +139,8 @@ bool MemScheduler::PreComputeMock(const MemEventPtr &event) {
 }
 
 bool MemScheduler::PreComputeInit(const std::shared_ptr<MemEvent> &event, void *stream) {
+  MS_EXCEPTION_IF_NULL(event);
+  MS_EXCEPTION_IF_NULL(auto_mem_offload_);
   auto device_ptr = auto_mem_offload_->Get(event->key);
   const bool new_malloc = device_ptr == nullptr;
   if (new_malloc) {
@@ -151,6 +161,8 @@ bool MemScheduler::PreComputeMalloc(const std::shared_ptr<MemEvent> &event, void
 }
 
 bool MemScheduler::PreComputeSwapIn(const std::shared_ptr<MemEvent> &event, void *stream) {
+  MS_EXCEPTION_IF_NULL(event);
+  MS_EXCEPTION_IF_NULL(auto_mem_offload_);
   if (Malloc(event, stream) == nullptr) {
     return false;
   }
@@ -158,6 +170,8 @@ bool MemScheduler::PreComputeSwapIn(const std::shared_ptr<MemEvent> &event, void
 }
 
 bool MemScheduler::PreComputeGet(const std::shared_ptr<MemEvent> &event, void *stream) {
+  MS_EXCEPTION_IF_NULL(event);
+  MS_EXCEPTION_IF_NULL(auto_mem_offload_);
   return auto_mem_offload_->Get(event->key, stream, GetNoReuseKeys()) != nullptr;
 }
 
@@ -203,6 +217,7 @@ bool MemScheduler::PostCompute(void *stream) {
     compute_time_[current_step_] = GetCurrentTime() - compute_start_time_;
   }
   auto &events = strategy_->GetPostComputeEvents(current_step_);
+  MS_EXCEPTION_IF_NULL(auto_mem_offload_);
   for (auto &event : events) {
     MS_EXCEPTION_IF_NULL(event);
     MS_LOG(DEBUG) << "Post compute " << current_step_ << ": " << event->key << " v " << event->type;

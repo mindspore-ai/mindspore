@@ -52,6 +52,8 @@ void FinalizeEmbeddingCachePrefetch(const std::string &exception) {
 
 void GetFirstEmbeddingCacheTableInfo(const KernelGraph &graph, AnfNodePtr *const first_cache_input_index,
                                      size_t *const first_cache_size) {
+  MS_EXCEPTION_IF_NULL(first_cache_input_index);
+  MS_EXCEPTION_IF_NULL(first_cache_size);
   for (const auto &kernel : graph.execution_order()) {
     MS_EXCEPTION_IF_NULL(kernel);
     auto kernel_name = common::AnfAlgo::GetCNodeName(kernel);
