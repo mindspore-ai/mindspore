@@ -49,7 +49,7 @@ class Log1pCpuKernelMod : public DeprecatedNativeCpuKernelMod {
 
  private:
   template <typename T>
-  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs) const;
 
   TypeId input_dtype_{kTypeUnknown};
 };

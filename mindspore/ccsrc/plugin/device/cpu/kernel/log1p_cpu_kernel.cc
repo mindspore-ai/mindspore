@@ -61,12 +61,12 @@ bool Log1pCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, co
 
 template <typename T>
 void Log1pCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                     const std::vector<kernel::AddressPtr> &outputs) {
-  const auto *input = reinterpret_cast<T *>(inputs[0]->addr);
-  auto *output = reinterpret_cast<T *>(outputs[0]->addr);
+                                     const std::vector<kernel::AddressPtr> &outputs) const {
+  const auto *input = static_cast<T *>(inputs[0]->addr);
+  auto *output = static_cast<T *>(outputs[0]->addr);
   size_t elem_num = inputs[0]->size / sizeof(T);
   for (size_t i = 0; i < elem_num; i++) {
-    output[i] = log(input[i] + T(1));
+    output[i] = static_cast<T>(log(input[i] + T(1)));
   }
 }
 

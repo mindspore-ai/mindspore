@@ -87,16 +87,18 @@ abstract::ShapePtr AvgPoolInferShape(const PrimitivePtr &primitive,
   auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
   auto in_shape = shape_map[kShape];
   int64_t format = CheckAndConvertUtils::GetAndCheckFormat(primitive->GetAttr("format"));
+  mindspore::Format format_enum = static_cast<mindspore::Format>(format);
   const int64_t x_size = 4;
   const int64_t attr_size = 4;
   (void)CheckAndConvertUtils::CheckInteger("x_rank", SizeToLong(in_shape.size()), kEqual, x_size, op_name);
-  if (format == NHWC) {
+  if (format_enum == NHWC) {
     in_shape = {in_shape[0], in_shape[3], in_shape[1], in_shape[2]};
   }
 
   auto kernel_size = GetValue<std::vector<int64_t>>(primitive->GetAttr(kKernelSize));
   int64_t pad_mode;
   CheckAndConvertUtils::GetPadModEnumValue(primitive->GetAttr(kPadMode), &pad_mode, true);
+  mindspore::PadMode pad_mode_enum = static_cast<mindspore::PadMode>(pad_mode);
 
   auto batch = in_shape[0];
   auto channel = in_shape[1];
@@ -120,16 +122,16 @@ abstract::ShapePtr AvgPoolInferShape(const PrimitivePtr &primitive,
   int64_t out_h = abstract::Shape::SHP_ANY;
   int64_t out_w = abstract::Shape::SHP_ANY;
 
-  if (pad_mode == VALID) {
+  if (pad_mode_enum == VALID) {
     out_h = static_cast<int64_t>(std::ceil((in_h - (kernel_h - 1)) / static_cast<float>(stride_h)));
     out_w = static_cast<int64_t>(std::ceil((in_w - (kernel_w - 1)) / static_cast<float>(stride_w)));
-  } else if (pad_mode == SAME) {
+  } else if (pad_mode_enum == SAME) {
     out_h = static_cast<int64_t>(std::ceil(in_h / static_cast<float>(stride_h)));
     out_w = static_cast<int64_t>(std::ceil(in_w / static_cast<float>(stride_w)));
   }
   std::vector<int64_t> out_shape = {batch, channel, out_h, out_w};
 
-  if (format == NHWC) {
+  if (format_enum == NHWC) {
     out_shape = {batch, out_h, out_w, channel};
   }
 
