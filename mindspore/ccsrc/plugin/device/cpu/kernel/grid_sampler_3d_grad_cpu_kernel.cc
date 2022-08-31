@@ -221,11 +221,11 @@ void GridSampler3DGradCpuKernelMod::ComputeTask(T *grad_addr, T *x_addr, T *grid
 template <typename T>
 void GridSampler3DGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                                  const std::vector<AddressPtr> &outputs) {
-  auto grad_data_addr = reinterpret_cast<T *>(inputs[kZero]->addr);
-  auto x_data_addr = reinterpret_cast<T *>(inputs[kOne]->addr);
-  auto grid_data_addr = reinterpret_cast<T *>(inputs[kTwo]->addr);
-  auto dx_data_addr = reinterpret_cast<T *>(outputs[kZero]->addr);
-  auto dgrid_data_addr = reinterpret_cast<T *>(outputs[kOne]->addr);
+  auto grad_data_addr = static_cast<T *>(inputs[kZero]->addr);
+  auto x_data_addr = static_cast<T *>(inputs[kOne]->addr);
+  auto grid_data_addr = static_cast<T *>(inputs[kTwo]->addr);
+  auto dx_data_addr = static_cast<T *>(outputs[kZero]->addr);
+  auto dgrid_data_addr = static_cast<T *>(outputs[kOne]->addr);
   size_t loop_count = LongToSize(x_shape_[kZero]);
   for (size_t i = kZero; i < dx_size_; i++) {
     dx_data_addr[i] = static_cast<T>(kZero);

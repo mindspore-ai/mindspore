@@ -133,7 +133,7 @@ abstract::ShapePtr SparseTensorDenseMatmulInferShape(const PrimitivePtr &primiti
   auto x1_shape_tensor = x1_shape_value->cast<tensor::TensorPtr>();
   MS_EXCEPTION_IF_NULL(x1_shape_tensor);
   // x1_shape has only one type --- int64
-  int64_t *x1_shape_data = reinterpret_cast<int64_t *>(x1_shape_tensor->data_c());
+  int64_t *x1_shape_data = static_cast<int64_t *>(x1_shape_tensor->data_c());
   // x1_shape is input[2], right here can use x1_shape_data[0], x1_shape_data[1]
   // directly
   int64_t x1_row = x1_shape_data[0], x1_col = x1_shape_data[1];

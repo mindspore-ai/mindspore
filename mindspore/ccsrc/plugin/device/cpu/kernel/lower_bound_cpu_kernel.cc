@@ -68,9 +68,9 @@ template <typename I, typename O>
 bool LowerBoundCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                           const std::vector<AddressPtr> &,
                                           const std::vector<kernel::AddressPtr> &outputs) {
-  auto sorted_x_data_addr = reinterpret_cast<I *>(inputs[0]->addr);
-  auto values_data_addr = reinterpret_cast<I *>(inputs[1]->addr);
-  auto output_data_addr = reinterpret_cast<O *>(outputs[0]->addr);
+  auto sorted_x_data_addr = static_cast<I *>(inputs[0]->addr);
+  auto values_data_addr = static_cast<I *>(inputs[1]->addr);
+  auto output_data_addr = static_cast<O *>(outputs[0]->addr);
   size_t sorted_x_data_column = static_cast<size_t>(sorted_x_shape_[1]);
   size_t values_data_column = static_cast<size_t>(values_shape_[1]);
   auto task = [this, &values_data_addr, &sorted_x_data_addr, &output_data_addr, &sorted_x_data_column,
@@ -88,7 +88,7 @@ bool LowerBoundCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> 
           low = mid + 1;
         }
       }
-      output_data_addr[i] = static_cast<O>(low - seq_row * sorted_x_data_column);
+      output_data_addr[i] = static_cast<O>(low - static_cast<int64_t>(seq_row * sorted_x_data_column));
     }
   };
   const size_t kDataSizeThreshold_ = 4 * 1024;

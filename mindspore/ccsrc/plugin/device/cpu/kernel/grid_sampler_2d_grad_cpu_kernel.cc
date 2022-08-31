@@ -66,11 +66,11 @@ void GridSampler2DGradCpuKernelMod::ComputeTask(const std::vector<AddressPtr> &i
   GridSamplerPadding padding;
   bool align_corners = align_corners_;
 
-  auto grad_data_addr = reinterpret_cast<T *>(inputs[kZero]->addr);
-  auto x_data_addr = reinterpret_cast<T *>(inputs[kOne]->addr);
-  auto grid_data_addr = reinterpret_cast<T *>(inputs[kTwo]->addr);
-  auto dx_data_addr = reinterpret_cast<T *>(outputs[kZero]->addr);
-  auto dgrid_data_addr = reinterpret_cast<T *>(outputs[kOne]->addr);
+  auto grad_data_addr = static_cast<T *>(inputs[kZero]->addr);
+  auto x_data_addr = static_cast<T *>(inputs[kOne]->addr);
+  auto grid_data_addr = static_cast<T *>(inputs[kTwo]->addr);
+  auto dx_data_addr = static_cast<T *>(outputs[kZero]->addr);
+  auto dgrid_data_addr = static_cast<T *>(outputs[kOne]->addr);
   if (interpolation_mode_ == "bilinear") {
     interp = GridSamplerInterpolation::Bilinear;
   } else if (interpolation_mode_ == "nearest") {
@@ -102,7 +102,6 @@ void GridSampler2DGradCpuKernelMod::ComputeTask(const std::vector<AddressPtr> &i
     case padding: {                                                                 \
       ApplyGridSample2D<T, kTwo, interp, padding, align_corners> grid_sample(XAcc); \
       VARDEF;                                                                       \
-      return;                                                                       \
     }                                                                               \
   } while (0);
 
@@ -114,7 +113,6 @@ void GridSampler2DGradCpuKernelMod::ComputeTask(const std::vector<AddressPtr> &i
         PROCESS_CASE(interp, GridSamplerPadding::Border, align_corners);     \
         PROCESS_CASE(interp, GridSamplerPadding::Reflection, align_corners); \
       }                                                                      \
-      return;                                                                \
     }                                                                        \
   } while (0);
 
@@ -142,8 +140,8 @@ void GridSampler2DGradCpuKernelMod::ComputeTask(const std::vector<AddressPtr> &i
 template <typename T>
 void GridSampler2DGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                                  const std::vector<AddressPtr> &outputs) {
-  auto dx_data_addr = reinterpret_cast<T *>(outputs[kZero]->addr);
-  auto dgrid_data_addr = reinterpret_cast<T *>(outputs[kOne]->addr);
+  auto dx_data_addr = static_cast<T *>(outputs[kZero]->addr);
+  auto dgrid_data_addr = static_cast<T *>(outputs[kOne]->addr);
   for (size_t i = kZero; i < dx_size_; i++) {
     dx_data_addr[i] = static_cast<T>(kZero);
   }

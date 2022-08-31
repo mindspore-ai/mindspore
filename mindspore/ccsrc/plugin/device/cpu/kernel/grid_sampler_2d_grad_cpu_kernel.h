@@ -190,7 +190,7 @@ struct Vec256 {
     int_same_size_t<T> buffer[size()];
     mask.store(buffer);
     for (int64_t i = 0; i < size(); i++) {
-      if (buffer[i] & 0x01) {
+      if (buffer[i] & static_cast<int_same_size_t<T>>(0x01)) {
         vec[i] = b[i];
       } else {
         vec[i] = a[i];
@@ -224,7 +224,7 @@ struct Vec256 {
     return ret;
   }
 
-  inline T round_impl(T z) { return std::nearbyint(z); }
+  inline T round_impl(const T z) { return std::nearbyint(z); }
   Vec256<T> round() const {
     Vec256<T> ret;
     for (int64_t i = 0; i != size(); i++) {
@@ -324,8 +324,8 @@ typename RETURN_TYPE inline MaskGather(const Vec256<T> &src, T const *base_addr,
   vindex.store(static_cast<void *>(index_arr));
   T buffer[kSize];
   for (int64_t i = 0; i < kSize; i++) {
-    if (mask_arr[i] & 0x01) {
-      buffer[i] = base_addr[index_arr[i] * scale / sizeof(T)];
+    if (mask_arr[i] & static_cast<int_same_size_t<T>>(0x01)) {
+      buffer[i] = base_addr[static_cast<size_t>(index_arr[i] * static_cast<size_t>(scale) / sizeof(T))];
     } else {
       buffer[i] = src_arr[i];
     }
@@ -450,7 +450,7 @@ class TensorAcc {
   int64_t size(int64_t i) const { return sizes[i]; }
   T *data() { return dataptr; }
   const T *data() const { return dataptr; }
-  TensorAcc<T, N - 1> operator[](int64_t i) {
+  TensorAcc<T, N - 1> operator[](const int64_t i) {
     return TensorAcc<T, N - 1>(this->dataptr + this->strides[0] * i, this->sizes + 1, this->strides + 1);
   }
 
@@ -685,7 +685,7 @@ template <typename T>
 static inline void MaskScatterAdd(const T *src, T *base_addr, const vec256::int_same_size_t<T> *offsets,
                                   const vec256::int_same_size_t<T> *mask, int64_t len) {
   for (int64_t i = 0; i < len; i++) {
-    if (mask[i] & 0x01) {
+    if (mask[i] & static_cast<vec256::int_same_size_t<T>>(0x01)) {
       base_addr[offsets[i]] += src[i];
     }
   }

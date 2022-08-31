@@ -75,17 +75,17 @@ abstract::ShapePtr SegmentProdInferShape(const PrimitivePtr &primitive,
     auto data_size = segment_ids_tensor->DataSize();
     auto segment_ids_type_id = segment_ids_tensor->data_type();
     if (segment_ids_type_id == kNumberTypeInt64) {
-      int64_t *segment_ids_data = reinterpret_cast<int64_t *>(segment_ids_tensor->data_c());
+      int64_t *segment_ids_data = static_cast<int64_t *>(segment_ids_tensor->data_c());
       CheckSegmentIDDataProd<int64_t>(segment_ids_data, data_size);
-      out_shape[0] = static_cast<size_t>(segment_ids_data[data_size - 1] + 1);
+      out_shape[0] = static_cast<int64_t>(segment_ids_data[data_size - 1] + 1);
     } else if (segment_ids_type_id == kNumberTypeInt32) {
-      int32_t *segment_ids_data = reinterpret_cast<int32_t *>(segment_ids_tensor->data_c());
+      int32_t *segment_ids_data = static_cast<int32_t *>(segment_ids_tensor->data_c());
       CheckSegmentIDDataProd<int32_t>(segment_ids_data, data_size);
-      out_shape[0] = static_cast<size_t>(segment_ids_data[data_size - 1] + 1);
+      out_shape[0] = static_cast<int64_t>(segment_ids_data[data_size - 1] + 1);
     }
     uint32_t length = 1;
     for (size_t i = 0; i < out_shape.size(); ++i) {
-      length *= out_shape[i];
+      length *= static_cast<uint32_t>(out_shape[i]);
     }
     if (length > max_length) {
       MS_EXCEPTION(ValueError) << "For '" << prim_name
@@ -97,7 +97,7 @@ abstract::ShapePtr SegmentProdInferShape(const PrimitivePtr &primitive,
   } else {
     uint32_t length = 1;
     for (size_t i = 1; i < x_shape.size(); ++i) {
-      length *= x_shape[i];
+      length *= static_cast<uint32_t>(x_shape[i]);
     }
     const uint32_t max_shape_value = static_cast<uint32_t>(max_length) / length;
     ShapeVector min_shape(x_shape);
