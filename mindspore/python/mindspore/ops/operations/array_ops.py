@@ -5698,7 +5698,7 @@ class ReverseSequence(PrimitiveWithInfer):
         - **seq_lengths** (Tensor) - Must be a 1-D vector with int32 or int64 types.
 
     Outputs:
-        Reversed tensor with the same shape and data type as input.
+        Tensor, with the same shape and data type as `x`.
 
     Raises:
         TypeError: If `seq_dim` or `batch_dim` is not an int.

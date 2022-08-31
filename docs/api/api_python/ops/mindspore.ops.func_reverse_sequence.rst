@@ -12,7 +12,7 @@ mindspore.ops.reverse_sequence
         - **batch_dim** (int) - 指定切片维度。默认值：0。
 
     返回：
-        Tensor，shape和数据类型与输入相同。
+        Tensor，shape和数据类型与输入 `x` 相同。
 
     异常：
         - **TypeError** - `seq_dim` 或 `batch_dim` 不是int。
