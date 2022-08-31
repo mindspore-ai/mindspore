@@ -99,3 +99,16 @@ ACL_FUNC_VISIBILITY aclError aclrtMemsetAsync(void *dst, size_t destMax, int32_t
                                               aclrtStream stream) {
   return ACL_ERROR_NONE;
 }
+
+/**
+ * @ingroup AscendCL
+ * @brief Set the timeout interval for waiting of op
+ *
+ * @param timeout [IN]    op wait timeout
+ *
+ * @retval ACL_SUCCESS The function is successfully executed.
+ * @retval OtherValues Failure
+ */
+ACL_FUNC_VISIBILITY aclError aclrtSetOpWaitTimeout(uint32_t timeout) {
+  return ACL_SUCCESS;
+}
