@@ -20,6 +20,7 @@
 
 #include <algorithm>
 #include <exception>
+#include <unordered_set>
 #include "frontend/operator/ops.h"
 #include "frontend/operator/composite/do_signature.h"
 #include "abstract/abstract_function.h"
@@ -27,7 +28,6 @@
 #include "include/common/utils/utils.h"
 #include "ir/graph_utils.h"
 #include "utils/log_adapter.h"
-#include "utils/hash_set.h"
 #include "pipeline/jit/debug/trace.h"
 
 namespace mindspore {
@@ -1058,7 +1058,7 @@ const EvaluatorCacheMgrPtr FuncGraphSpecializer::GetEvalCache(const EvaluatorPtr
 std::pair<AbstractBasePtrList, AbstractBasePtr> FuncGraphSpecializer::BuildFromBroadedArgsVal(
   const EvaluatorPtr &eval) {
   MS_EXCEPTION_IF_NULL(eval);
-  mindspore::HashSet<AbstractBasePtrList, AbstractBasePtrListHasher, AbstractBasePtrListEqual> choices;
+  std::unordered_set<AbstractBasePtrList, AbstractBasePtrListHasher, AbstractBasePtrListEqual> choices;
   EvalResultPtr res = nullptr;
   AbstractBasePtrList broaded_argvals;
   std::vector<AbstractBasePtrList> args_vector;

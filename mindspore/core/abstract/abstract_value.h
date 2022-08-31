@@ -711,12 +711,7 @@ class MS_CORE_API AbstractTensor : public AbstractUndetermined {
   std::string ToString() const override;
 
   std::size_t hash() const override {
-    const auto &value = GetValueTrack();
-    if (value != nullptr && !value->isa<AnyValue>()) {
-      // For AbstractTensor with specific value, it will not be considered equal
-      // to other AbstractTensors unless the tensor value pointer is same.
-      return hash_combine(tid(), PointerHash<ValuePtr>{}(value));
-    }
+    // We have to exclude value from hash, since it may change after hash() called.
     auto hash_sum = hash_combine(tid(), element_->hash());
     const auto &shape = GetShapeTrack();
     if (shape != nullptr) {

@@ -26,7 +26,6 @@
 #include <iomanip>
 #include <unordered_map>
 
-#include "utils/hash_map.h"
 #include "pybind_api/pybind_patch.h"
 #include "pybind11/pybind11.h"
 #include "ir/param_info.h"
@@ -101,7 +100,7 @@ const char IR_TYPE_MINDIR[] = "mind_ir";
 GraphExecutorPyPtr GraphExecutorPy::executor_ = nullptr;
 std::mutex GraphExecutorPy::instance_lock_;
 
-mindspore::HashMap<abstract::AbstractBasePtrList, uint64_t, abstract::AbstractBasePtrListHasher,
+std::unordered_map<abstract::AbstractBasePtrList, uint64_t, abstract::AbstractBasePtrListHasher,
                    abstract::AbstractBasePtrListEqual>
   g_args_cache;
 

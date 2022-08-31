@@ -24,6 +24,7 @@
 #include <string>
 #include <vector>
 #include <list>
+#include <unordered_map>
 #include <memory>
 #include <functional>
 #include <utility>
@@ -449,7 +450,7 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   std::shared_ptr<bool> switch_input_;
   std::shared_ptr<bool> switch_layer_input_;
   int64_t stage_;
-  mindspore::HashMap<AbstractBasePtrList, FuncGraphPtr, abstract::AbstractBasePtrListHasher,
+  std::unordered_map<AbstractBasePtrList, FuncGraphPtr, abstract::AbstractBasePtrListHasher,
                      abstract::AbstractBasePtrListEqual>
     func_graph_cache_;
 
