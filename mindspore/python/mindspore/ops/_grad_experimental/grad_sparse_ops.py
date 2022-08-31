@@ -15,20 +15,22 @@
 
 """bprop primitives"""
 from mindspore.ops.operations.sparse_ops import CSRSparseMatrixToSparseTensor
+from mindspore.ops.operations.sparse_ops import SparseReorder
 from mindspore.ops.operations.sparse_ops import SparseTensorToCSRSparseMatrix
 from mindspore.ops.operations.sparse_ops import SparseToDenseV2
 from mindspore.ops.operations.sparse_ops import SparseSegmentSqrtN
 from mindspore.ops.operations.sparse_ops import SparseSegmentSqrtNWithNumSegments
 from mindspore.ops.operations.sparse_ops import SparseSegmentMeanWithNumSegments
 from mindspore.common import dtype as mstype
+from mindspore import Tensor
 from .. import functional as F
 from .. import operations as P
 from ..composite.multitype_ops.zeros_like_impl import zeros_like
 from ..operations import _grad_ops as G
 from .._grad.grad_base import bprop_getters
 
-
 # Unused parameters are placeholders.
+
 
 @bprop_getters.register(SparseTensorToCSRSparseMatrix)
 def get_bprop_sparse_tensor_to_csr_sparse_matrix(self):
@@ -116,4 +118,23 @@ def get_bprop_sparse_segment_mean_with_num_segments(self):
         all_d = (dx, zeros_like(indices), zeros_like(segment_ids), zeros_like(num_segments))
         return all_d
 
+    return bprop
+
+
+@bprop_getters.register(SparseReorder)
+def get_bprop_sparse_reorder(self):
+    """Grad definition for `SparseReorder` operation."""
+    sparse_reorder_op = SparseReorder()
+    range_op = P.Range()
+    gather_op = P.Gather()
+    def bprop(indices, values, shape, out, dout):
+        num_entries = F.shape(indices)[0]
+        start = Tensor(0, dtype=mstype.int32)
+        limit = Tensor(num_entries, dtype=mstype.int32)
+        delta = Tensor(1, dtype=mstype.int32)
+        entry_indices = range_op(start, limit, delta)
+        output = sparse_reorder_op(indices, entry_indices, shape)
+        inverted_permutation = F.sort(output[1].astype(mstype.float32))[1]
+        axis = 0
+        return None, gather_op(dout[1], inverted_permutation, axis), None
     return bprop

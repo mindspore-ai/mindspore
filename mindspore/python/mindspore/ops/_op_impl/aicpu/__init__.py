@@ -347,3 +347,4 @@ from .unsorted_segment_sum import _unsorted_segment_sum_aicpu
 from .unsorted_segment_prod import _unsorted_segment_prod_aicpu
 from .hard_sigmoid import _hard_sigmoid_aicpu
 from .hard_sigmoid_grad import _hard_sigmoid_grad_aicpu
+from .sparse_reorder import _sparse_reorder_aicpu

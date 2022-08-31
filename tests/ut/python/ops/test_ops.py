@@ -158,6 +158,7 @@ from mindspore.ops.operations.other_ops import BlackmanWindow
 from mindspore.ops.operations.nn_ops import SparseApplyCenteredRMSProp
 from mindspore.ops.operations.nn_ops import SparseApplyProximalGradientDescent
 from mindspore.ops.operations.sparse_ops import SparseReshape
+from mindspore.ops.operations.sparse_ops import SparseReorder
 from mindspore.nn.layer import normalization
 from mindspore.ops.operations.array_ops import RightShift
 from mindspore.ops.operations.array_ops import LeftShift
@@ -4429,6 +4430,13 @@ test_case_other_ops = [
                         Tensor(np.array([2, 3, 6], np.int64)),
                         Tensor(np.array([9, -1], np.int64))],
         'skip': ['backward']}),
+    ('SparseReorder', {
+        'block': SparseReorder(),
+        'desc_inputs': [Tensor(np.array([[3, 2], [1, 1], [4, 4], [2, 1]]).astype(np.int64)),
+                        Tensor(np.array([3, 1, 4, 2]).astype(np.int64)),
+                        Tensor(np.array([7, 7]).astype(np.int64))],
+        'desc_bprop': [Tensor(np.array([[3, 2], [1, 1], [4, 4], [2, 1]]).astype(np.int64)),
+                       Tensor(np.array([3, 1, 4, 2]).astype(np.int64))]}),
 ]
 
 test_case_quant_ops = [
