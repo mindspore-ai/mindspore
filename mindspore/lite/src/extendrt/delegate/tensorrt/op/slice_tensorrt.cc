@@ -76,8 +76,8 @@ class StrideSliceTensorRTUtil final : public SliceTensorRTUtil {
       stride_dims = nvinfer1::Dims{size_dims.nbDims, {}};
       std::fill(start_dims.d, start_dims.d + start_dims.nbDims, 0);
       std::fill(stride_dims.d, stride_dims.d + stride_dims.nbDims, 1);
-      if (start_value == -1) {
-        start_value = input_dims.d[axis_value] - 1;
+      if (start_value < 0) {
+        start_value = input_dims.d[axis_value] + start_value;
       }
       for (int i = 0; i < start_dims.nbDims; i++) {
         if (i == axis_value) {

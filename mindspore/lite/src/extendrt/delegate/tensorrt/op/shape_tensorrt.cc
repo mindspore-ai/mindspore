@@ -31,8 +31,6 @@ int ShapeTensorRT::IsSupport(const schema::Primitive *primitive, const std::vect
     MS_LOG(ERROR) << "Unsupported output tensor size, size is " << out_tensors.size();
     return RET_ERROR;
   }
-  dynamic_shape_params_.support_dynamic_ = false;
-  dynamic_shape_params_.support_hw_dynamic_ = false;
   return RET_OK;
 }
 int ShapeTensorRT::AddInnerOp(TensorRTContext *ctx) {
