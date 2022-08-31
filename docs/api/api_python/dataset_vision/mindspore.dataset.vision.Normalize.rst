@@ -21,4 +21,4 @@ mindspore.dataset.vision.Normalize
     - **TypeError** - 如果 `std` 不是sequence类型。
     - **TypeError** - 如果 `is_hwc` 不是bool类型。
     - **ValueError** - 如果 `mean` 不在 [0.0, 255.0] 范围内。
-    - **ValueError** - 如果 `mean` 不在范围内 (0.0, 255.0]。
+    - **ValueError** - 如果 `mean` 不在 (0.0, 255.0] 范围内。

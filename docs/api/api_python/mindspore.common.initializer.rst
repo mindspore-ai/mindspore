@@ -89,7 +89,7 @@ mindspore.common.initializer
     其中， :math:`gain` 是一个可选的缩放因子。如果 `mode` 是'fan_in'，则 :math:`fan\_mode` 是权重Tensor中输入单元的数量，如果 `mode` 是'fan_out'，
     :math:`fan\_mode` 是权重Tensor中输出单元的数量。
 
-    HeUniform 算法的详细信息，请查看 https://arxiv.org/abs/1502.01852。
+    HeNormal 算法的详细信息，请查看 https://arxiv.org/abs/1502.01852。
 
     **参数：**
 

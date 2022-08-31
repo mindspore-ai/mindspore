@@ -260,7 +260,7 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
         **参数：**
 
         - **loss** (Tensor) - 网络训练的loss值。
-        - **grads** (Tuple(Tensor)) - 网络训练过程中的梯度。
+        - **grads** (tuple(Tensor)) - 网络训练过程中的梯度。
 
         **返回：**
 
@@ -289,9 +289,9 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
         **参数：**
 
         - **loss** (Tensor) - 网络训练的loss值。
-        - **grads** (Tuple(Tensor)) - 网络训练过程中的梯度。
+        - **grads** (tuple(Tensor)) - 网络训练过程中的梯度。
         - **sens** (Tensor) - 作为反向传播输入要填充的缩放数。
-        - **inputs** (Tuple(Tensor)) - 网络训练的输入。
+        - **inputs** (tuple(Tensor)) - 网络训练的输入。
 
         **返回：**
 
@@ -303,7 +303,7 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
 
         **参数：**
 
-        - **inputs** (Tuple(Tensor)) - 网络训练的输入。
+        - **inputs** (tuple(Tensor)) - 网络训练的输入。
 
         **返回：**
 
@@ -324,7 +324,7 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
 
     **输入：**
 
-    - **(*inputs)** (Tuple(Tensor)) - 网络的所有输入组成的元组。
+    - **(*inputs)** (tuple(Tensor)) - 网络的所有输入组成的元组。
 
     **输出：**
 
