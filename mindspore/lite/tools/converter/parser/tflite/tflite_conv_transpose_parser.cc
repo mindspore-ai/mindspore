@@ -65,6 +65,10 @@ PrimitiveCPtr TfliteDeConvParser::Parse(const std::unique_ptr<tflite::OperatorT>
 
   // calculate pad params
   const auto &data_tensor = tflite_subgraph->tensors.at(tflite_op->inputs.at(THIRD_INPUT));
+  if (data_tensor == nullptr) {
+    MS_LOG(ERROR) << "data_tensor is nullptr";
+    return nullptr;
+  }
   std::vector<int64_t> params;
   int status = getPaddingParam(data_tensor, padMode, tflite_attr->stride_h, tflite_attr->stride_w,
                                weight_shape[kWeightKernelH], weight_shape[kWeightKernelW], &params);

@@ -146,6 +146,7 @@ STATUS FunctionalizeCond::IdentifySubgraphInput(const FuncGraphPtr &graph, std::
 }
 
 FuncGraphPtr FunctionalizeCond::CreateBranchGraph(const AnfNodePtr &node, std::string name, BranchType branch_type) {
+  MS_CHECK_TRUE_RET(node != nullptr, nullptr);
   auto graph = FunctionalizeControlOpPass::NewFuncGraph(name, converter::kFmkTypeTf);
   if (graph == nullptr) {
     MS_LOG(ERROR) << "new graph Partial Node return nullptr";
@@ -164,6 +165,7 @@ FuncGraphPtr FunctionalizeCond::CreateBranchGraph(const AnfNodePtr &node, std::s
       return nullptr;
     }
     auto return_prim_c = return_prim_ptr->GetPrim();
+    MS_CHECK_TRUE_RET(return_prim_c != nullptr, nullptr);
     auto value_node = NewValueNode(return_prim_c);
     MS_CHECK_TRUE_RET(value_node != nullptr, nullptr);
     std::vector<AnfNodePtr> op_inputs{value_node, node};  // If subgraph only has one output tensor

@@ -55,6 +55,7 @@ lite::STATUS ReorderCnodeInputs(CNode *cnode, const std::vector<size_t> &perm) {
   MSLITE_CHECK_PTR(cnode);
   std::vector<AnfNodePtr> new_inputs = {cnode->input(0)};
   auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
+  MSLITE_CHECK_PTR(primitive);
   auto input_quant_params = primitive->GetAttr("quant_params");
   if (input_quant_params == nullptr) {
     MS_LOG(ERROR) << "quant params holder is null";
@@ -204,6 +205,7 @@ bool TfliteInputsAdjust::Run(const FuncGraphPtr &graph) {
       continue;
     }
     auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
+    MS_CHECK_TRUE_RET(primitive != nullptr, false);
     if (lite::IsContain(single_input_ops, primitive->name()) || CheckResize(cnode)) {
       if (ReorderCnodeInputs(cnode.get(), {1}) != lite::RET_OK) {
         MS_LOG(ERROR) << "Reorder single input failed";

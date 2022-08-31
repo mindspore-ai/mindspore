@@ -38,6 +38,14 @@ FuncGraphPtr FunctionalizeControlOpPass::NewFuncGraph(const std::string &subgrap
 
 std::string FunctionalizeControlOpPass::NodeClusterName(const AnfNodePtr &node) {
   std::string cluster_name{};
+  if (node == nullptr) {
+    MS_LOG(ERROR) << "node is nullptr.";
+    return cluster_name;
+  }
+  if (!utils::isa<CNodePtr>(node)) {
+    MS_LOG(ERROR) << "node is invalid.";
+    return cluster_name;
+  }
   // tf node name use '/' split node name
   auto cnode = utils::cast<CNodePtr>(node);
   std::string word_in_name = "while/";
@@ -88,6 +96,7 @@ size_t FunctionalizeControlOpPass::WhichCluster(const std::string &cluster_name)
 }
 
 STATUS FunctionalizeControlOpPass::BuildWhileSubgraph(const FuncGraphPtr &func_graph) {
+  CHECK_NULL_RETURN(func_graph);
   int ret = RET_OK;
   for (auto &node_cluster : node_clusters_) {
     for (auto &node : node_cluster.second) {
@@ -128,6 +137,10 @@ STATUS FunctionalizeControlOpPass::BuildIfSubgraph(const FuncGraphPtr &func_grap
 }
 
 bool FunctionalizeControlOpPass::Run(const FuncGraphPtr &func_graph) {
+  if (func_graph == nullptr) {
+    MS_LOG(ERROR) << "func_graph is nullptr, build while subgraph failed.";
+    return false;
+  }
   // use name to find the frame
   InitNodeClusters(func_graph);
   if (BuildWhileSubgraph(func_graph) != RET_OK) {

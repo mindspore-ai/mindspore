@@ -523,10 +523,14 @@ STATUS FunctionalizeWhile::IdentifyBodySubgraphOutput() {
   tmp_output.resize(input_enter_nodes_.size());
 
   for (auto &node_pair : body_subgraph_output_map_) {
+    CHECK_NULL_RETURN(node_pair.first);
     auto next_iteration_cnode = utils::cast<CNodePtr>(node_pair.first);
     auto switch_node = BlongToWhichSwitch(next_iteration_cnode);
+    CHECK_NULL_RETURN(switch_node);
     auto merge_node = BlongToWhichMerge(switch_node);
+    CHECK_NULL_RETURN(merge_node);
     auto enter_node = BlongToWhichEnter(merge_node);
+    CHECK_NULL_RETURN(enter_node);
     int pos = PosInInputEnterNodes(enter_node);
     if (pos == POS_INVALID) {
       continue;
