@@ -46,6 +46,7 @@
 #include "tools/converter/config_parser/quant_param_parser.h"
 #include "tools/common/string_util.h"
 #include "src/common/file_utils.h"
+#include "ops/dynamic_shape.h"
 
 namespace mindspore {
 extern "C" {
@@ -207,7 +208,12 @@ int ConverterImpl::Convert(const std::shared_ptr<ConverterPara> &param, schema::
 
   // export protobuf
   if (param->export_mindir == kMindIR) {
-    auto status = UpdateFuncGraphInputAndOutputNames(graph);
+    auto status = ReplaceShapeWithDynamicShape(graph);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "Replace shape node with dynamic shape node failed";
+      return RET_ERROR;
+    }
+    status = UpdateFuncGraphInputAndOutputNames(graph);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Update input and output names of funcgraph failed.";
       return RET_ERROR;
@@ -227,6 +233,25 @@ int ConverterImpl::Convert(const std::shared_ptr<ConverterPara> &param, schema::
 
 int ConverterImpl::Convert(const std::shared_ptr<ConverterPara> &param, schema::MetaGraphT **meta_graph,
                            FuncGraphPtr func_graph) {
+  MindsporeImporter ms_importer;
+  auto func_graph_ptr = ms_importer.CheckAndUpdateFuncGraph(param, func_graph);
+  if (func_graph_ptr == nullptr) {
+    MS_LOG(ERROR) << "Check and update funcgraph failed";
+    return RET_ERROR;
+  }
+
+  if (UpdateFuncGraphInputsAndOutputsDtype(func_graph_ptr) != RET_OK) {
+    MS_LOG(ERROR) << "Update graph inputs and outputs dtype failed";
+    return RET_ERROR;
+  }
+  MS_CHECK_TRUE_MSG(funcgraph_transform_ != nullptr, RET_ERROR, "funcgraph_transform init failed");
+  // funcgraph transform
+  func_graph_ptr = funcgraph_transform_->Transform(func_graph_ptr, param);
+  if (func_graph_ptr == nullptr) {
+    MS_LOG(ERROR) << "Transform anf graph return nullptr";
+    return RET_ERROR;
+  }
+  *meta_graph = TransferFuncGraph(param, func_graph_ptr);
   return RET_OK;
 }
 
@@ -559,6 +584,60 @@ std::string ConverterImpl::GetStrFromConfigFile(const std::string &file, const s
     }
   }
   return res;
+}
+
+int ConverterImpl::ReplaceShapeWithDynamicShape(const FuncGraphPtr &graph) {
+  auto node_list = graph->TopoSort(graph->return_node());
+  for (auto &node : node_list) {
+    if (opt::CheckPrimitiveType(node, prim::kPrimShape)) {
+      if (!utils::isa<CNodePtr>(node)) {
+        continue;
+      }
+      CNodePtr cnode = node->cast<CNodePtr>();
+      auto ori_abstract = cnode->abstract();
+      if (ori_abstract == nullptr) {
+        MS_LOG(ERROR) << cnode->fullname_with_scope() << " get abstract failed";
+        return RET_ERROR;
+      }
+      auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+      if (prim == nullptr) {
+        MS_LOG(ERROR) << cnode->fullname_with_scope() << "get value node failed";
+        return RET_ERROR;
+      }
+      auto value = prim->GetAttr("infer_done");
+      if (value == nullptr) {
+        MS_LOG(ERROR) << cnode->fullname_with_scope() << " get infer_node attr failed";
+        return RET_ERROR;
+      }
+      bool infer_node = GetValue<bool>(value);
+      if (!infer_node) {
+        auto dynamic_shape_prim = std::make_shared<ops::DynamicShape>();
+        if (dynamic_shape_prim == nullptr) {
+          MS_LOG(ERROR) << "Make DynamicShape op failed";
+          return RET_ERROR;
+        }
+        auto dynamic_shape_prim_c = dynamic_shape_prim->GetPrim();
+        if (dynamic_shape_prim_c == nullptr) {
+          MS_LOG(ERROR) << "Get the primitive of dynamic shape op failed";
+          return RET_ERROR;
+        }
+        auto inputs = cnode->inputs();
+        inputs.erase(inputs.begin());
+        auto dynamic_shape_node = graph->NewCNode(dynamic_shape_prim_c, inputs);
+        dynamic_shape_node->set_abstract(ori_abstract);
+        auto manager = Manage(graph, true);
+        if (manager == nullptr) {
+          MS_LOG(ERROR) << "Replace shape node " << cnode->fullname_with_scope() << " failed";
+          return RET_ERROR;
+        }
+        if (!manager->Replace(cnode, dynamic_shape_node)) {
+          MS_LOG(ERROR) << "Replace shape node " << cnode->fullname_with_scope() << " failed";
+          return RET_ERROR;
+        }
+      }
+    }
+  }
+  return RET_OK;
 }
 
 int CheckFmkType(const std::shared_ptr<ConverterPara> &param) {

@@ -37,6 +37,7 @@
 #include "tools/optimizer/format/to_format_base.h"
 #include "nnacl/op_base.h"
 #include "ops/op_utils.h"
+#include "src/common/common.h"
 
 namespace mindspore::lite {
 namespace {
@@ -96,7 +97,13 @@ int CommonAnfAdjust(const FuncGraphPtr &func_graph) {
     // remove remaining cyclic nodes
     asylic_pm->AddPass(std::make_shared<opt::UnusedNodeRemovePass>());
     asylic_optimizer->AddPassManager(asylic_pm);
-    if (!asylic_optimizer->Optimize(func_graph)) {
+
+    bool is_optimized = false;
+    auto value = func_graph->get_attr(kIsOptimized);
+    if (value != nullptr) {
+      is_optimized = GetValue<bool>(value);
+    }
+    if (!is_optimized && !asylic_optimizer->Optimize(func_graph)) {
       MS_LOG(ERROR) << "gru cf fusion pass failed.";
       ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
       return RET_ERROR;

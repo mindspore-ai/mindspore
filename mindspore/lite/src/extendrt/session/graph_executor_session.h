@@ -49,8 +49,10 @@ class GraphExecutorSession : public DelegateSession {
  private:
   std::shared_ptr<mindspore::device::GraphExecutor> graph_executor_;
   std::map<std::string, std::string> options_;
+  bool is_use_kernel_graph_ = true;
   KernelGraphUtilsPtr kernel_graph_utils_;
   KernelGraphPtr kernel_graph_;
+  FuncGraphPtr func_graph_;
   std::vector<MutableTensorImplPtr> inputs_;
   std::vector<std::string> input_names_;
   std::vector<MutableTensorImplPtr> outputs_;

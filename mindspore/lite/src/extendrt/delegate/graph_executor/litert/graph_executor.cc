@@ -169,11 +169,9 @@ bool LiteRTGraphExecutor::Resize(const std::vector<tensor::Tensor> &inputs,
     MS_LOG(EXCEPTION) << "Wrong input size.";
   }
   std::vector<std::vector<int>> user_shapes;
-  std::transform(inputs.begin(), inputs.end(), std::back_inserter(user_shapes), [](auto &input) {
-    auto user_shape = input.shape_c();
+  std::transform(dims.begin(), dims.end(), std::back_inserter(user_shapes), [](auto &input) {
     std::vector<int> shape;
-    std::transform(user_shape.begin(), user_shape.end(), std::back_inserter(shape),
-                   [](auto s) { return static_cast<int>(s); });
+    std::transform(input.begin(), input.end(), std::back_inserter(shape), [](auto s) { return static_cast<int>(s); });
     return shape;
   });
   auto ret = lite_session_->Resize(input_tensors, user_shapes);
@@ -184,19 +182,14 @@ bool LiteRTGraphExecutor::Resize(const std::vector<tensor::Tensor> &inputs,
   return true;
 }
 
-std::vector<tensor::TensorPtr> LiteRTGraphExecutor::GetInputs() {
-  auto input_tensors = GetLiteSessionInputs();
-  return TensorUtils::MSTensorToTensorPtr(input_tensors);
-}
-
 void LiteRTGraphExecutor::ResetTensorData(std::vector<void *> old_data, const std::vector<lite::Tensor *> &tensors) {
   for (size_t j = 0; j < old_data.size(); j++) {
     tensors.at(j)->set_data(old_data.at(j));
   }
 }
 
-std::vector<MSTensor> LiteRTGraphExecutor::GetLiteSessionInputs() {
-  std::vector<MSTensor> empty;
+std::vector<LiteTensorImplPtr> LiteRTGraphExecutor::GetInputs() {
+  std::vector<LiteTensorImplPtr> empty;
   if (lite_session_ == nullptr) {
     MS_LOG(ERROR) << "Session is null.";
     return empty;
@@ -206,7 +199,7 @@ std::vector<MSTensor> LiteRTGraphExecutor::GetLiteSessionInputs() {
     MS_LOG(ERROR) << "The input of model is empty";
     return empty;
   }
-  std::vector<MSTensor> input_tensors;
+  std::vector<LiteTensorImplPtr> input_tensors;
   input_tensors.resize(inputs.size());
   for (size_t i = 0; i < input_tensors.size(); ++i) {
     auto impl = std::make_shared<LiteTensorImpl>(inputs[i]);
@@ -214,12 +207,7 @@ std::vector<MSTensor> LiteRTGraphExecutor::GetLiteSessionInputs() {
       MS_LOG(ERROR) << "Create tensor failed";
       return empty;
     }
-    auto tensor = MSTensor(impl);
-    if (tensor == nullptr) {
-      MS_LOG(ERROR) << "Create tensor failed";
-      return empty;
-    }
-    input_tensors[i] = tensor;
+    input_tensors[i] = impl;
   }
   return input_tensors;
 }

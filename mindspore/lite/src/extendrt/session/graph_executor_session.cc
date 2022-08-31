@@ -21,6 +21,8 @@
 #include "extendrt/session/graph_executor_session.h"
 #include "src/extendrt/utils/kernel_build_utils.h"
 #include "extendrt/utils/tensor_default_impl.h"
+#include "extendrt/utils/tensor_utils.h"
+#include "extendrt/delegate/graph_executor/litert/graph_executor.h"
 
 namespace mindspore {
 Status GraphExecutorSession::Init(const std::shared_ptr<Context> context) {
@@ -31,6 +33,7 @@ Status GraphExecutorSession::Init(const std::shared_ptr<Context> context) {
 
 Status GraphExecutorSession::CompileGraph(FuncGraphPtr graph, const void *data, size_t size) {
   MS_LOG(INFO) << "GraphExecutorSession::CompileGraph";
+  func_graph_ = graph;
   std::vector<KernelGraphPtr> all_out_graph;
   kernel_graph_ = kernel_graph_utils_->ConstructKernelGraph(graph, &all_out_graph, mindspore::device::DeviceType::kCPU);
   MS_EXCEPTION_IF_NULL(kernel_graph_);
@@ -38,9 +41,20 @@ Status GraphExecutorSession::CompileGraph(FuncGraphPtr graph, const void *data, 
   for (const auto &kernel_node : kernel_nodes) {
     mindspore::infer::SetKernelInfo(kernel_node);
   }
-  if (!graph_executor_->CompileGraph(kernel_graph_, options_)) {
+  bool ret = true;
+  if (is_use_kernel_graph_) {
+    if (!graph_executor_->CompileGraph(kernel_graph_, options_)) {
+      is_use_kernel_graph_ = false;
+      ret = graph_executor_->CompileGraph(func_graph_, options_);
+    }
+  } else {
+    ret = graph_executor_->CompileGraph(func_graph_, options_);
+  }
+  if (!ret) {
+    MS_LOG(ERROR) << "GraphExecutorSession::CompileGraph compile graph failed";
     return kCoreFailed;
   }
+
   std::vector<tensor::TensorPtr> graph_inputs, graph_outputs;
   kernel_graph_utils_->GetModelInputsInfo(kernel_graph_->graph_id(), &graph_inputs, &input_names_);
   kernel_graph_utils_->GetModelOutputsInfo(kernel_graph_->graph_id(), &graph_outputs, &output_names_);
@@ -73,8 +87,14 @@ Status GraphExecutorSession::RunGraph(const std::vector<tensor::Tensor> &inputs,
   MS_LOG(INFO) << "GraphExecutorSession::RunGraph";
   MS_EXCEPTION_IF_NULL(graph_executor_);
   MS_EXCEPTION_IF_NULL(outputs);
-  auto ret = graph_executor_->RunGraph(kernel_graph_, inputs, outputs, options_);
+  bool ret = true;
+  if (is_use_kernel_graph_) {
+    ret = graph_executor_->RunGraph(kernel_graph_, inputs, outputs, options_);
+  } else {
+    ret = graph_executor_->RunGraph(func_graph_, inputs, outputs, options_);
+  }
   if (!ret) {
+    MS_LOG(ERROR) << "GraphExecutorSession::RunGraph run graph failed";
     return kCoreFailed;
   }
   return kSuccess;
@@ -82,10 +102,28 @@ Status GraphExecutorSession::RunGraph(const std::vector<tensor::Tensor> &inputs,
 
 Status GraphExecutorSession::Resize(const std::vector<tensor::TensorPtr> &inputs,
                                     const std::vector<std::vector<int64_t>> &dims) {
+  std::vector<tensor::Tensor> executor_inputs = TensorUtils::TensorPtrToTensor(inputs);
+  auto litert_graph_executor = std::dynamic_pointer_cast<LiteRTGraphExecutor>(graph_executor_);
+  if (litert_graph_executor != nullptr) {
+    if (!litert_graph_executor->Resize(executor_inputs, dims)) {
+      MS_LOG(ERROR) << "Mode resize failed";
+      return kCoreFailed;
+    }
+  }
   return kSuccess;
 }
 std::vector<MutableTensorImplPtr> GraphExecutorSession::GetOutputs() { return outputs_; }
-std::vector<MutableTensorImplPtr> GraphExecutorSession::GetInputs() { return inputs_; }
+std::vector<MutableTensorImplPtr> GraphExecutorSession::GetInputs() {
+  auto litert_graph_executor = std::dynamic_pointer_cast<LiteRTGraphExecutor>(graph_executor_);
+  if (litert_graph_executor != nullptr) {
+    inputs_.clear();
+    auto inputs = litert_graph_executor->GetInputs();
+    for (auto it : inputs) {
+      inputs_.emplace_back(it);
+    }
+  }
+  return inputs_;
+}
 std::vector<std::string> GraphExecutorSession::GetOutputNames() { return output_names_; }
 std::vector<std::string> GraphExecutorSession::GetInputNames() { return input_names_; }
 MutableTensorImplPtr GraphExecutorSession::GetOutputByTensorName(const std::string &tensorName) {

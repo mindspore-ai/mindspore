@@ -55,6 +55,8 @@ class AnfTransform {
 
   static bool StoreBuiltinPass(const std::shared_ptr<ConverterPara> &param);
 
+  static int RunFormatTrans(const FuncGraphPtr &old_graph);
+
   static STATUS MarkTrainInputOp(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
 
   static STATUS MarkTrainWeightSharingOp(const FuncGraphPtr &func_graph, const CNodePtr &cnode);

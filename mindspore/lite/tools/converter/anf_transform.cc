@@ -496,6 +496,14 @@ int AnfTransform::DoFormatForMindIR(const FuncGraphPtr &old_graph, const std::sh
   return RET_OK;
 }
 
+int AnfTransform::RunFormatTrans(const FuncGraphPtr &old_graph) {
+  if (!RunOptimizerPass(old_graph, {"ToNHWCFormat", "DecreaseTransposeAlgo"})) {
+    MS_LOG(ERROR) << "Run ToNHWCFormat pass failed";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
 bool RunEliminateRedundantPass(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param) {
   auto eliminate_cast_pass = std::make_shared<opt::EliminateRedundantCastPass>(param->fmk_type, param->train_model);
   MS_CHECK_TRUE_RET(eliminate_cast_pass != nullptr, false);
@@ -673,6 +681,18 @@ FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &main_graph, const std::
     MS_LOG(ERROR) << "store pass failed.";
     return nullptr;
   }
+  auto value = main_graph->get_attr(kIsOptimized);
+  if (value != nullptr) {
+    if (GetValue<bool>(value)) {
+      auto ret = RunFormatTrans(main_graph);
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "Run Format trans pass failed.";
+        return nullptr;
+      }
+      return main_graph;
+    }
+  }
+  MS_LOG(DEBUG) << "Graph do not have isOptimized attr";
   auto new_graph = TransformFuncGraph(main_graph, param);
   if (new_graph == nullptr) {
     MS_LOG(ERROR) << "optimizer failed.";

@@ -32,12 +32,12 @@ class MindsporeImporter {
   ~MindsporeImporter() = default;
   FuncGraphPtr ImportMindIR(const std::shared_ptr<ConverterPara> &param);
   FuncGraphPtr ImportMindIR(const std::shared_ptr<ConverterPara> &param, const void *buff, const size_t &size);
+  FuncGraphPtr CheckAndUpdateFuncGraph(const std::shared_ptr<ConverterPara> &param, FuncGraphPtr func_graph);
 
  private:
   static void RemoveUnusedGraphInput(const FuncGraphPtr &func_graph);
   STATUS GetFuncGraphOutputName(const CNodePtr &cnode);
   STATUS TraceOutput(const AnfNodePtr &node);
-  FuncGraphPtr CheckAndUpdateFuncGraph(const std::shared_ptr<ConverterPara> &param, FuncGraphPtr func_graph);
   STATUS Mindir2AnfAdjust(const FuncGraphPtr &func_graph, const std::shared_ptr<ConverterPara> &param);
   std::vector<std::string> output_tensor_name_;
 };
