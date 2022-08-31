@@ -419,7 +419,7 @@ ShapeVector GetShapeValue(const PrimitivePtr &primitive, const AbstractBasePtr &
     auto elements = arg->cast<abstract::AbstractTuplePtr>()->elements();
     MS_EXCEPTION_IF_CHECK_FAIL(!elements.empty() && !elements[0]->isa<abstract::AbstractTensor>(),
                                "Input cannot be a tuple of tensor");
-    auto out_shape = GetValue<std::vector<int64_t>>(abs_value);
+    auto out_shape = CheckAndConvertUtils::CheckTupleInt("input[shape]", abs_value, primitive->name());
     return out_shape;
   }
 
