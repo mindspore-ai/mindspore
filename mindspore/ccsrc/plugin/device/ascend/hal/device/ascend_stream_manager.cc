@@ -54,17 +54,16 @@ uint32_t AscendStreamMng::GetCurAllocStreamId() const {
   return cur_stream_num_ - 1;
 }
 
-bool AscendStreamMng::CreateStream(rtStream_t *stream, int32_t priority) {
+void AscendStreamMng::CreateStream(rtStream_t *stream, int32_t priority) {
   std::lock_guard<std::mutex> lock_streams(stream_mutex_);
   const auto ret = rtStreamCreate(stream, priority);
   if (ret != RT_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Create stream failed, ret:" << ret;
   }
   (void)streams_.emplace_back(*stream);
-  return true;
 }
 
-bool AscendStreamMng::CreateStream(size_t *stream_id, int32_t priority) {
+void AscendStreamMng::CreateStream(size_t *stream_id, int32_t priority) {
   std::lock_guard<std::mutex> lock_streams(stream_mutex_);
   rtStream_t stream;
   const auto ret = rtStreamCreate(&stream, priority);
@@ -73,20 +72,18 @@ bool AscendStreamMng::CreateStream(size_t *stream_id, int32_t priority) {
   }
   *stream_id = streams_.size();
   (void)streams_.emplace_back(stream);
-  return true;
 }
 
-bool AscendStreamMng::CreateStreamWithFlags(rtStream_t *stream, uint32_t flags, int32_t priority) {
+void AscendStreamMng::CreateStreamWithFlags(rtStream_t *stream, uint32_t flags, int32_t priority) {
   std::lock_guard<std::mutex> lock_streams(stream_mutex_);
   const auto ret = rtStreamCreateWithFlags(stream, priority, flags);
   if (ret != RT_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Create stream failed, ret:" << ret;
   }
   (void)streams_.emplace_back(*stream);
-  return true;
 }
 
-bool AscendStreamMng::CreateStreamWithFlags(size_t *stream_id, uint32_t flags, int32_t priority) {
+void AscendStreamMng::CreateStreamWithFlags(size_t *stream_id, uint32_t flags, int32_t priority) {
   std::lock_guard<std::mutex> lock_streams(stream_mutex_);
   rtStream_t stream;
   const auto ret = rtStreamCreateWithFlags(&stream, priority, flags);
@@ -95,7 +92,6 @@ bool AscendStreamMng::CreateStreamWithFlags(size_t *stream_id, uint32_t flags, i
   }
   *stream_id = streams_.size();
   (void)streams_.emplace_back(stream);
-  return true;
 }
 
 bool AscendStreamMng::DestroyStream(size_t stream_id) {

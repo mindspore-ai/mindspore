@@ -55,10 +55,10 @@ class AscendStreamMng {
 
   uint32_t cur_event_num() const { return cur_event_num_; }
 
-  bool CreateStream(rtStream_t *stream, int32_t priority = 0);
-  bool CreateStream(size_t *stream_id, int32_t priority = 0);
-  bool CreateStreamWithFlags(rtStream_t *stream, uint32_t flags, int32_t priority = 0);
-  bool CreateStreamWithFlags(size_t *stream_id, uint32_t flags, int32_t priority = 0);
+  void CreateStream(rtStream_t *stream, int32_t priority = 0);
+  void CreateStream(size_t *stream_id, int32_t priority = 0);
+  void CreateStreamWithFlags(rtStream_t *stream, uint32_t flags, int32_t priority = 0);
+  void CreateStreamWithFlags(size_t *stream_id, uint32_t flags, int32_t priority = 0);
   bool DestroyStream(size_t stream_id);
   bool DestroyAllStreams();
   rtStream_t GetStream(size_t stream_id) const;

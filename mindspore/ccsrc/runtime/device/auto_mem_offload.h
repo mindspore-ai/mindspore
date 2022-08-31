@@ -59,15 +59,14 @@ class AutoMemoryOffload {
   ~AutoMemoryOffload() = default;
   void *Get(const void *key, void *stream = nullptr, const HashSet<const void *> &not_offload = {});
   void *Malloc(const void *key, size_t mem_size, void *stream, const HashSet<const void *> &not_offload);
-  std::vector<void *> MallocContinuous(const std::vector<const void *> &keys, const std::vector<size_t> &size_list,
-                                       void *stream, const HashSet<const void *> &not_offload);
+  bool MallocContinuous(const std::vector<const void *> &keys, const std::vector<size_t> &size_list, void *stream,
+                        const HashSet<const void *> &pinned_memory);
   void Free(const void *key);
   void Clear();
   void SetInitHostPtr(const void *key, void *host_ptr, size_t mem_size);
   void UpdateHighPriorityMem(const void *key);
 
-  // Return the host ptr where the data is copied to
-  void *SwapOut(const void *key, void *stream);
+  void SwapOut(const void *key, void *stream);
   // Return the device ptr where the data is copied to
   void *SwapIn(const void *key, void *stream);
 
@@ -75,6 +74,11 @@ class AutoMemoryOffload {
   size_t GetMemSize(const void *key);
   void GetHostPtr(const void *key, void **host_ptr, bool *from_init);
   void GetOrMallocHostPtr(const void *key, size_t mem_size, void **host_ptr, bool *from_init);
+  template <typename MallocInfo>
+  bool TryAllocMemory(
+    const MallocInfo &info, size_t total_size, void *stream, const HashSet<const void *> &pinned_memory,
+    const std::function<bool(const MallocInfo &, const std::shared_ptr<MemHandler> &, HashMap<const void *, void *> *,
+                             HashMap<const void *, size_t> *)> &alloc_func);
   std::shared_ptr<MemHandler> mem_handler_;
   HashMap<const void *, void *> mem_result_;
   HashMap<const void *, size_t> mem_size_;

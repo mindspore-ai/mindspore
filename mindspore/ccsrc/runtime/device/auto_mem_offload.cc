@@ -47,11 +47,11 @@ void MemHandler::FreeHost(void *ptr) {
   }
   MS_EXCEPTION_IF_NULL(iter->second);
   auto mem_size = iter->second->size();
-  cached_host_mem_[mem_size].emplace(iter->first);
+  (void)cached_host_mem_[mem_size].emplace(iter->first);
 }
 
 void AutoMemoryOffload::SetInitHostPtr(const void *key, void *host_ptr, size_t mem_size) {
-  init_from_host_keys_.insert(key);
+  (void)init_from_host_keys_.insert(key);
   init_host_ptr_[key] = host_ptr;
   mem_size_[key] = mem_size;
 }
@@ -96,96 +96,90 @@ void *AutoMemoryOffload::Get(const void *key, void *stream, const HashSet<const 
   return device_ptr;
 }
 
-std::vector<void *> AutoMemoryOffload::MallocContinuous(const std::vector<const void *> &keys,
-                                                        const std::vector<size_t> &size_list, void *stream,
-                                                        const HashSet<const void *> &not_offload) {
+bool AutoMemoryOffload::MallocContinuous(const std::vector<const void *> &keys, const std::vector<size_t> &size_list,
+                                         void *stream, const HashSet<const void *> &pinned_memory) {
   MS_EXCEPTION_IF_NULL(mem_handler_);
-  auto device_ptr = mem_handler_->MallocContinuousMemFromMemPool(size_list);
-  if (device_ptr.size() == keys.size() || stream == nullptr) {
-    for (size_t i = 0; i < device_ptr.size(); i += 1) {
-      mem_result_[keys[i]] = device_ptr[i];
-      mem_size_[keys[i]] = size_list[i];
-      continuous_mem_key_.insert(keys[i]);
-    }
-    return device_ptr;
-  }
   const size_t total_size = std::accumulate(size_list.begin(), size_list.end(), 0);
-  using KeySizePair = std::pair<const void *, size_t>;
-  auto less = [](const KeySizePair &a, const KeySizePair &b) -> bool { return a.second < b.second; };
-  std::priority_queue<KeySizePair, std::vector<KeySizePair>, decltype(less)> mem_can_offload(less);
-  for (const auto &mem : mem_result_) {
-    const auto offload_key = mem.first;
-    if (not_offload.count(offload_key) != 0 || continuous_mem_key_.count(offload_key) != 0) {
-      continue;
-    }
-    const auto device_mem_size = GetMemSize(offload_key);
-    if (device_mem_size >= total_size) {
-      SwapOut(offload_key, stream);
-      Free(offload_key);
-      device_ptr = mem_handler_->MallocContinuousMemFromMemPool(size_list);
+  using MallocInfo = std::pair<const std::vector<const void *> &, const std::vector<size_t> &>;
+  std::function<bool(const MallocInfo &, const std::shared_ptr<MemHandler> &mem_handler,
+                     HashMap<const void *, void *> *, HashMap<const void *, size_t> *)>
+    malloc_func = [](const MallocInfo &info, const std::shared_ptr<MemHandler> &mem_handler,
+                     HashMap<const void *, void *> *mem_result, HashMap<const void *, size_t> *mem_size) {
+      const auto keys = info.first;
+      const auto size_list = info.second;
+      auto device_ptr = mem_handler->MallocContinuousMemFromMemPool(size_list);
       if (device_ptr.size() != keys.size()) {
-        continue;
+        return false;
       }
       for (size_t i = 0; i < device_ptr.size(); i += 1) {
-        mem_result_[keys[i]] = device_ptr[i];
-        mem_size_[keys[i]] = size_list[i];
-        continuous_mem_key_.insert(keys[i]);
+        (*mem_result)[keys[i]] = device_ptr[i];
+        (*mem_size)[keys[i]] = size_list[i];
       }
-      return device_ptr;
-    }
-    mem_can_offload.push({offload_key, device_mem_size});
+      return true;
+    };
+  if (!TryAllocMemory<MallocInfo>(std::make_pair(keys, size_list), total_size, stream, pinned_memory, malloc_func)) {
+    return false;
   }
-  while (!mem_can_offload.empty()) {
-    const auto &max_mem_in_device = mem_can_offload.top();
-    const auto offload_mem_key = max_mem_in_device.first;
-    auto offload_device_ptr = mem_result_[offload_mem_key];
-    MS_EXCEPTION_IF_NULL(offload_device_ptr);
-    SwapOut(offload_mem_key, stream);
-    Free(offload_mem_key);
-    device_ptr = mem_handler_->MallocContinuousMemFromMemPool(size_list);
-    if (device_ptr.size() != keys.size()) {
-      mem_can_offload.pop();
-      continue;
-    }
-    for (size_t i = 0; i < keys.size(); i += 1) {
-      mem_result_[keys[i]] = device_ptr[i];
-      mem_size_[keys[i]] = size_list[i];
-      continuous_mem_key_.insert(keys[i]);
-    }
-    return device_ptr;
+  for (auto key : keys) {
+    continuous_mem_key_.insert(key);
   }
-  return {};
+  return true;
 }
 
 void *AutoMemoryOffload::Malloc(const void *key, size_t mem_size, void *stream,
-                                const HashSet<const void *> &not_offload) {
-  MS_EXCEPTION_IF_NULL(mem_handler_);
+                                const HashSet<const void *> &pinned_memory) {
   auto iter = mem_result_.find(key);
   if (iter != mem_result_.end()) {
     return iter->second;
   }
-  auto device_ptr = mem_handler_->MallocDevice(mem_size);
-  if (device_ptr != nullptr || stream == nullptr) {
-    mem_result_[key] = device_ptr;
-    mem_size_[key] = mem_size;
-    return device_ptr;
+
+  using MallocInfo = std::pair<const void *, size_t>;
+  std::function<bool(const MallocInfo &, const std::shared_ptr<MemHandler> &mem_handler,
+                     HashMap<const void *, void *> *, HashMap<const void *, size_t> *)>
+    malloc_func = [](const MallocInfo &info, const std::shared_ptr<MemHandler> &mem_handler,
+                     HashMap<const void *, void *> *mem_result, HashMap<const void *, size_t> *mem_size) {
+      MS_EXCEPTION_IF_NULL(mem_handler);
+      const auto key = info.first;
+      const auto size = info.second;
+      auto device_ptr = mem_handler->MallocDevice(size);
+      if (device_ptr == nullptr) {
+        return false;
+      }
+      (*mem_result)[key] = device_ptr;
+      (*mem_size)[key] = size;
+      return true;
+    };
+  return TryAllocMemory<MallocInfo>(std::make_pair(key, mem_size), mem_size, stream, pinned_memory, malloc_func)
+           ? mem_result_[key]
+           : nullptr;
+}
+
+template <typename MallocInfo>
+bool AutoMemoryOffload::TryAllocMemory(
+  const MallocInfo &info, size_t total_size, void *stream, const HashSet<const void *> &pinned_memory,
+  const std::function<bool(const MallocInfo &, const std::shared_ptr<MemHandler> &, HashMap<const void *, void *> *,
+                           HashMap<const void *, size_t> *)> &alloc_func) {
+  if (alloc_func(info, mem_handler_, &mem_result_, &mem_size_)) {
+    return true;
+  }
+  if (stream == nullptr) {
+    return false;
   }
   using KeySizePair = std::pair<const void *, size_t>;
   auto less = [](const KeySizePair &a, const KeySizePair &b) -> bool { return a.second < b.second; };
   std::priority_queue<KeySizePair, std::vector<KeySizePair>, decltype(less)> mem_can_offload(less);
   for (const auto &i : mem_result_) {
     const auto offload_key = i.first;
-    if (not_offload.count(offload_key) != 0) {
+    if (pinned_memory.count(offload_key) != 0) {
       continue;
     }
     const auto device_mem_size = GetMemSize(offload_key);
-    if (device_mem_size >= mem_size) {
+    if (device_mem_size >= total_size) {
       SwapOut(offload_key, stream);
       Free(offload_key);
-      device_ptr = mem_handler_->MallocDevice(mem_size);
-      mem_result_[key] = device_ptr;
-      mem_size_[key] = mem_size;
-      return device_ptr;
+      if (alloc_func(info, mem_handler_, &mem_result_, &mem_size_)) {
+        return true;
+      }
     }
     mem_can_offload.push({offload_key, device_mem_size});
   }
@@ -196,18 +190,15 @@ void *AutoMemoryOffload::Malloc(const void *key, size_t mem_size, void *stream,
     MS_EXCEPTION_IF_NULL(offload_device_ptr);
     SwapOut(offload_mem_key, stream);
     Free(offload_mem_key);
-    device_ptr = mem_handler_->MallocDevice(mem_size);
-    if (device_ptr != nullptr) {
-      mem_result_[key] = device_ptr;
-      mem_size_[key] = mem_size;
-      return device_ptr;
+    if (alloc_func(info, mem_handler_, &mem_result_, &mem_size_)) {
+      return true;
     }
     mem_can_offload.pop();
   }
-  return nullptr;
+  return false;
 }
 
-void *AutoMemoryOffload::SwapOut(const void *key, void *stream) {
+void AutoMemoryOffload::SwapOut(const void *key, void *stream) {
   const auto iter = mem_result_.find(key);
   void *host_ptr = nullptr;
   bool from_init = false;
@@ -217,7 +208,7 @@ void *AutoMemoryOffload::SwapOut(const void *key, void *stream) {
     if (host_ptr == nullptr) {
       MS_LOG(EXCEPTION) << "Can not find device ptr for key " << key;
     }
-    return host_ptr;
+    return;
   }
   const auto device_ptr = iter->second;
   GetOrMallocHostPtr(key, mem_size, &host_ptr, &from_init);
@@ -229,7 +220,6 @@ void *AutoMemoryOffload::SwapOut(const void *key, void *stream) {
       (void)updated_device_mem_.erase(updated_iter);
     }
   }
-  return host_ptr;
 }
 
 void *AutoMemoryOffload::SwapIn(const void *key, void *stream) {
@@ -306,6 +296,6 @@ void AutoMemoryOffload::Clear() {
   init_from_host_keys_.clear();
 }
 
-void AutoMemoryOffload::UpdateHighPriorityMem(const void *key) { updated_device_mem_.insert(key); }
+void AutoMemoryOffload::UpdateHighPriorityMem(const void *key) { (void)updated_device_mem_.insert(key); }
 }  // namespace device
 }  // namespace mindspore

@@ -55,8 +55,10 @@ void AscendDeviceResManager::Destroy() {
   if (runtime_instance_) {
     runtime_instance_ = nullptr;
   }
+  if (!AscendStreamMng::GetInstance().DestroyAllStreams()) {
+    MS_LOG(EXCEPTION) << "Fail to destroy all streams when destroy DeviceResManager.";
+  }
   MS_LOG(INFO) << "Device resource manager Destroy success.";
-  AscendStreamMng::GetInstance().DestroyAllStreams();
 }
 
 bool AscendDeviceResManager::BindDeviceToCurrentThread() const {
@@ -130,7 +132,8 @@ DeviceAddressPtr AscendDeviceResManager::CreateDeviceAddress(void *const device_
 }
 
 bool AscendDeviceResManager::CreateStream(size_t *stream_id) const {
-  return AscendStreamMng::GetInstance().CreateStream(stream_id);
+  AscendStreamMng::GetInstance().CreateStream(stream_id);
+  return true;
 }
 
 bool AscendDeviceResManager::DestroyStream(size_t stream_id) const {

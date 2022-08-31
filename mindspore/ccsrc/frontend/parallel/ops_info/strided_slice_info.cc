@@ -70,8 +70,8 @@ constexpr auto kStridedSliceMaxDims = 8;
 static std::vector<bool> Dec2Bin(int64_t mask) {
   auto mask_str = std::bitset<kStridedSliceMaxDims>(mask).to_string();
   std::vector<bool> result;
-  std::transform(mask_str.rbegin(), mask_str.rend(), std::back_inserter(result),
-                 [](const char &c) { return c == '1'; });
+  (void)std::transform(mask_str.rbegin(), mask_str.rend(), std::back_inserter(result),
+                       [](const char &c) { return c == '1'; });
   return result;
 }
 

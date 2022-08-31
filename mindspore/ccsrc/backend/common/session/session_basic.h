@@ -315,7 +315,7 @@ class BACKEND_EXPORT SessionBasic : public std::enable_shared_from_this<SessionB
                                          const std::map<KernelWithIndex, tensor::TensorPtr> &op_output) const;
   void GetOpInputTensors(const CNodePtr &cnode, const std::map<KernelWithIndex, tensor::TensorPtr> &op_output,
                          const std::map<AnfNodePtr, size_t> &parameter_index,
-                         const std::vector<tensor::TensorPtr> &graph_inputs, InputTensorInfo *input_tensor_info);
+                         const std::vector<tensor::TensorPtr> &graph_inputs, InputTensorInfo *input_tensor_info) const;
   tensor::TensorPtr GetOpInputTensorByIndex(const CNodePtr &cnode,
                                             const std::map<KernelWithIndex, tensor::TensorPtr> &op_output,
                                             const std::map<AnfNodePtr, size_t> &parameter_index,

@@ -810,7 +810,7 @@ bool AscendKernelRuntime::Run(const session::KernelGraph &graph, bool is_task_si
 }
 
 void AscendKernelRuntime::GetLastNodesOnStream(const std::vector<CNodePtr> &kernels,
-                                               std::vector<size_t> *stream_last_nodes) {
+                                               std::vector<size_t> *stream_last_nodes) const {
   std::map<size_t, size_t> last_kernel;
   for (size_t i = 0; i < kernels.size(); ++i) {
     const auto stream_id = AnfAlgo::GetStreamId(kernels[i]);
@@ -1183,17 +1183,13 @@ void AscendKernelRuntime::SetRtDevice(uint32_t device_id) {
 
 void AscendKernelRuntime::CreateDefaultStream(uint32_t device_id) {
   size_t compute_stream_id;
-  if (!AscendStreamMng::GetInstance().CreateStreamWithFlags(&compute_stream_id, RT_STREAM_HUGE)) {
-    MS_LOG(EXCEPTION) << "Create default compute stream failed.";
-  }
+  AscendStreamMng::GetInstance().CreateStreamWithFlags(&compute_stream_id, RT_STREAM_HUGE);
   MS_LOG(INFO) << "Create ascend default stream, stream id: " << compute_stream_id;
   stream_ = AscendStreamMng::GetInstance().GetStream(compute_stream_id);
   MS_EXCEPTION_IF_NULL(stream_);
 
   size_t communication_stream_id;
-  if (!AscendStreamMng::GetInstance().CreateStream(&communication_stream_id)) {
-    MS_LOG(EXCEPTION) << "Create communication stream stream failed.";
-  }
+  AscendStreamMng::GetInstance().CreateStream(&communication_stream_id);
   MS_LOG(INFO) << "Create ascend communication stream, stream id: " << communication_stream_id;
   communication_stream_ = AscendStreamMng::GetInstance().GetStream(communication_stream_id);
   MS_EXCEPTION_IF_NULL(communication_stream_);
@@ -1228,7 +1224,10 @@ bool AscendKernelRuntime::InitDevice() {
 
 bool AscendKernelRuntime::ResetDevice(uint32_t device_id) {
   SetCurrentContext();
-  AscendStreamMng::GetInstance().DestroyAllStreams();
+  if (!AscendStreamMng::GetInstance().DestroyAllStreams()) {
+    MS_LOG(ERROR) << "Fail to destroy all streams when reset device.";
+    return false;
+  }
 
   if (initialized_device_set_.find(device_id) != initialized_device_set_.end()) {
     auto ret = rtDeviceReset(UintToInt(device_id));
