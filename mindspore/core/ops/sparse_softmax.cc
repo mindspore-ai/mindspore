@@ -1,0 +1,90 @@
+/**
+ * Copyright 2022 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include "ops/sparse_softmax.h"
+#include <set>
+#include <map>
+#include <string>
+#include "abstract/ops/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
+#include "ops/op_utils.h"
+#include "utils/check_convert_utils.h"
+#include "utils/tensor_construct_utils.h"
+
+namespace mindspore {
+namespace ops {
+namespace {
+namespace {
+constexpr size_t kIndicesSize = 2;
+constexpr size_t kValuesSize = 1;
+constexpr size_t kShapeSize = 1;
+constexpr size_t kShapeMin = 2;
+}  // namespace
+
+abstract::ShapePtr SparseSoftmaxInferShape(const PrimitivePtr &primitive,
+                                           const std::vector<AbstractBasePtr> &input_args) {
+  auto prim_name = primitive->name();
+  auto indices_shape_ptr = input_args[kInputIndex0]->BuildShape();
+  auto values_shape_ptr = input_args[kInputIndex1]->BuildShape();
+  auto shape_shape_ptr = input_args[kInputIndex2]->BuildShape();
+  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(indices_shape_ptr)[kShape];
+  auto values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(values_shape_ptr)[kShape];
+  auto shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(shape_shape_ptr)[kShape];
+  (void)CheckAndConvertUtils::CheckInteger("indices dimension", indices_shape.size(), kEqual, kIndicesSize, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("values dimension", values_shape.size(), kEqual, kValuesSize, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("shape dimension", shape_shape.size(), kEqual, kShapeSize, prim_name);
+  auto shape_shape_size = LongToSize(shape_shape[kInputIndex0]);
+  (void)CheckAndConvertUtils::CheckInteger("shape size", shape_shape_size, kGreaterEqual, kShapeMin, prim_name);
+  if (indices_shape[kInputIndex0] != values_shape[kInputIndex0]) {
+    MS_EXCEPTION(ValueError) << "For " << prim_name << " the indices size[0] must equal to values number "
+                             << values_shape[kInputIndex0] << ", but got " << indices_shape[kInputIndex0] << ".";
+  }
+  if (indices_shape[kInputIndex1] != shape_shape[kInputIndex0]) {
+    MS_EXCEPTION(ValueError) << "For " << prim_name << " the indices size[1] must equal to shape number "
+                             << shape_shape[kInputIndex0] << ", but got " << indices_shape[kInputIndex1] << ".";
+  }
+  return std::make_shared<abstract::Shape>(values_shape);
+}
+
+TypePtr SparseSoftmaxInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  auto prim_name = prim->name();
+  auto infer_type_indices = input_args[kInputIndex0]->BuildType();
+  auto infer_type_values = input_args[kInputIndex1]->BuildType();
+  auto infer_type_shape = input_args[kInputIndex2]->BuildType();
+  const std::set<TypePtr> valid_types = {kInt64};
+  std::map<std::string, TypePtr> types;
+  (void)types.insert({"indices", infer_type_indices});
+  (void)types.insert({"shape", infer_type_shape});
+  (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim_name);
+  const std::set<TypePtr> valid_types_values = {kFloat32, kFloat64};
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("values", infer_type_values, valid_types_values, prim_name);
+  return infer_type_values;
+}
+}  // namespace
+
+MIND_API_OPERATOR_IMPL(SparseSoftmax, BaseOperator);
+AbstractBasePtr SparseSoftmaxInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                   const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  const int64_t input_num = 3;
+  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
+  auto infertype = SparseSoftmaxInferType(primitive, input_args);
+  auto infershape = SparseSoftmaxInferShape(primitive, input_args);
+  return abstract::MakeAbstract(infershape, infertype);
+}
+REGISTER_PRIMITIVE_EVAL_IMPL(SparseSoftmax, prim::kPrimSparseSoftmax, SparseSoftmaxInfer, nullptr, true);
+}  // namespace ops
+}  // namespace mindspore

@@ -335,6 +335,7 @@ from .linear_sum_assignment import _linear_sum_assignment_aicpu
 from .orgqr import _orgqr_aicpu
 from .sparsesparsemaximum import _sparsesparsemaximum_aicpu
 from .sparse_to_dense_v2 import _sparse_to_dense_v2_aicpu
+from .sparse_softmax import _sparse_softmax_aicpu
 from .sparse_sparse_minimum import _sparse_sparse_minimum_aicpu
 from .broadcast_to import _broadcast_to_aicpu
 from .random_shuffle import _random_shuffle_aicpu

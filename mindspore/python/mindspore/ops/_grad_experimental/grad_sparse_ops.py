@@ -18,11 +18,14 @@ from mindspore.ops.operations.sparse_ops import CSRSparseMatrixToSparseTensor
 from mindspore.ops.operations.sparse_ops import SparseReorder
 from mindspore.ops.operations.sparse_ops import SparseTensorToCSRSparseMatrix
 from mindspore.ops.operations.sparse_ops import SparseToDenseV2
+from mindspore.ops.operations.sparse_ops import SparseSoftmax
+from mindspore.ops.operations.sparse_ops import SparseDenseCwiseAdd
 from mindspore.ops.operations.sparse_ops import SparseSegmentSqrtN
 from mindspore.ops.operations.sparse_ops import SparseSegmentSqrtNWithNumSegments
 from mindspore.ops.operations.sparse_ops import SparseSegmentMeanWithNumSegments
 from mindspore.common import dtype as mstype
 from mindspore import Tensor
+from mindspore.ops.primitive import constexpr
 from .. import functional as F
 from .. import operations as P
 from ..composite.multitype_ops.zeros_like_impl import zeros_like
@@ -30,6 +33,30 @@ from ..operations import _grad_ops as G
 from .._grad.grad_base import bprop_getters
 
 # Unused parameters are placeholders.
+
+
+@constexpr
+def _create_tensor(data, dtype):
+    return Tensor(data, dtype=dtype)
+
+
+@bprop_getters.register(SparseSoftmax)
+def get_bprop_sparse_softmax(self):
+    """Generate bprop for SparseSoftmax"""
+    sparse_to_dense = SparseToDenseV2()
+    sparse_dense_cwise_add = SparseDenseCwiseAdd()
+    reduce_sum = P.ReduceSum(keep_dims=True)
+    mul = P.Mul()
+    def bprop(indices, values, shape, out, dout):
+        default_values = _create_tensor(0, values.dtype)
+        out_dout = mul(out, dout)
+        sp_product = sparse_to_dense(indices, shape, out_dout, default_values)
+        sum_reduced = -reduce_sum(sp_product, -1)
+        sp_sum = sparse_dense_cwise_add(indices, dout, shape, sum_reduced)
+        grad_x = mul(sp_sum, out)
+        return zeros_like(indices), grad_x, zeros_like(shape)
+
+    return bprop
 
 
 @bprop_getters.register(SparseTensorToCSRSparseMatrix)
