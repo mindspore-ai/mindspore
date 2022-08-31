@@ -27,20 +27,23 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_ModelParallelRunner_init(J
     MS_LOG(ERROR) << "Make ModelParallelRunner failed";
     return (jlong) nullptr;
   }
-  auto model_path_str = env->GetStringUTFChars(model_path, JNI_FALSE);
+  const char *c_model_path = env->GetStringUTFChars(model_path, nullptr);
+  std::string str_model_path(c_model_path, env->GetStringLength(model_path));
   if (runner_config_ptr == 0L) {
-    auto ret = runner->Init(model_path_str);
+    auto ret = runner->Init(str_model_path);
     if (ret != mindspore::kSuccess) {
       delete runner;
+      env->ReleaseStringUTFChars(model_path, c_model_path);
       return (jlong) nullptr;
     }
   } else {
     auto *c_runner_config = reinterpret_cast<mindspore::RunnerConfig *>(runner_config_ptr);
     auto origin_context = c_runner_config->GetContext();
     if (origin_context == nullptr) {
-      auto ret = runner->Init(model_path_str);
+      auto ret = runner->Init(str_model_path);
       if (ret != mindspore::kSuccess) {
         delete runner;
+        env->ReleaseStringUTFChars(model_path, c_model_path);
         return (jlong) nullptr;
       }
       return (jlong)runner;
@@ -49,6 +52,7 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_ModelParallelRunner_init(J
     if (copy_context == nullptr) {
       MS_LOG(ERROR) << "new context is nullptr.";
       delete runner;
+      env->ReleaseStringUTFChars(model_path, c_model_path);
       return (jlong) nullptr;
     }
     copy_context->SetThreadNum(origin_context->GetThreadNum());
@@ -66,6 +70,7 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_ModelParallelRunner_init(J
         if (copy_device_info == nullptr) {
           MS_LOG(ERROR) << "new copy_device_info is nullptr.";
           delete runner;
+          env->ReleaseStringUTFChars(model_path, c_model_path);
           return (jlong) nullptr;
         }
         auto enable_fp16 = origin_device_info->GetEnableFP16();
@@ -77,6 +82,7 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_ModelParallelRunner_init(J
         if (copy_device_info == nullptr) {
           MS_LOG(ERROR) << "new copy_device_info is nullptr.";
           delete runner;
+          env->ReleaseStringUTFChars(model_path, c_model_path);
           return (jlong) nullptr;
         }
         auto enable_fp16 = origin_device_info->GetEnableFP16();
@@ -88,6 +94,7 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_ModelParallelRunner_init(J
     if (runner_config == nullptr) {
       delete runner;
       MS_LOG(ERROR) << "Make RunnerConfig failed";
+      env->ReleaseStringUTFChars(model_path, c_model_path);
       return (jlong) nullptr;
     }
     runner_config->SetContext(copy_context);
@@ -96,12 +103,14 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_ModelParallelRunner_init(J
     for (auto &item : config_info) {
       runner_config->SetConfigInfo(item.first, item.second);
     }
-    auto ret = runner->Init(model_path_str, runner_config);
+    auto ret = runner->Init(str_model_path, runner_config);
     if (ret != mindspore::kSuccess) {
       delete runner;
+      env->ReleaseStringUTFChars(model_path, c_model_path);
       return (jlong) nullptr;
     }
   }
+  env->ReleaseStringUTFChars(model_path, c_model_path);
   return (jlong)runner;
 }
 
