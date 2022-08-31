@@ -21,7 +21,6 @@
 #else
 #include <stdlib.h>
 #endif
-#include <unistd.h>
 #include "./securec.h"
 #include "minddata/dataset/util/circular_pool.h"
 #include "minddata/dataset/util/random.h"
