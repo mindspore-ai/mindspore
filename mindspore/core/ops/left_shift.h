@@ -31,8 +31,6 @@ class MIND_API LeftShift : public BaseOperator {
   MIND_API_BASE_MEMBER(LeftShift);
   /// \brief Constructor.
   LeftShift() : BaseOperator(kNameLeftShift) { InitIOName({"x1", "x2"}, {"y"}); }
-  /// \brief Init.
-  void Init() {}
 };
 abstract::AbstractBasePtr LeftShiftInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                          const std::vector<abstract::AbstractBasePtr> &input_args);

@@ -51,9 +51,9 @@ void HammingWindowCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 template <typename T, typename S>
 bool HammingWindowCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                              const std::vector<AddressPtr> & /* workspace */,
-                                             const std::vector<AddressPtr> &outputs) {
-  auto *length_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto *output = reinterpret_cast<S *>(outputs[0]->addr);
+                                             const std::vector<AddressPtr> &outputs) const {
+  auto *length_addr = static_cast<T *>(inputs[0]->addr);
+  auto *output = static_cast<S *>(outputs[0]->addr);
   int64_t window_length_ = static_cast<int64_t>(*length_addr);
   if (window_length_ < 0) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the value of input 'length' cannot be negative, but got "
@@ -72,7 +72,7 @@ bool HammingWindowCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
       output[i] = static_cast<S>(result);
     }
   };
-  ParallelLaunch(func, window_length_);
+  ParallelLaunch(func, LongToSize(window_length_));
   return true;
 }
 
@@ -128,8 +128,8 @@ std::vector<std::pair<KernelAttr, HammingWindowCpuKernelMod::HammingWindowFunc>>
 
 std::vector<KernelAttr> HammingWindowCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
-  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                 [](const std::pair<KernelAttr, HammingWindowFunc> &item) { return item.first; });
+  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, HammingWindowFunc> &item) { return item.first; });
   return support_list;
 }
 

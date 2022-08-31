@@ -17,6 +17,7 @@
 #include "plugin/device/cpu/kernel/median_grad_cpu_kernel.h"
 
 #include <algorithm>
+#include <type_traits>
 
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
@@ -46,13 +47,13 @@ void MedianGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   input2_dim_ = input2_shape_.size();
   input0_num_elements_ = 1;
   input1_num_elements_ = 1;
-  axis_ = axis_ >= 0 ? axis_ : axis_ + input1_dim_;
+  axis_ = axis_ >= 0 ? axis_ : axis_ + static_cast<int>(input1_dim_);
 
   for (size_t i = 0; i < input1_dim_; i++) {
-    input1_num_elements_ *= input1_shape_[i];
+    input1_num_elements_ *= static_cast<size_t>(input1_shape_[i]);
   }
   for (size_t i = 0; i < input0_dim_; i++) {
-    input0_num_elements_ *= input0_shape_[i];
+    input0_num_elements_ *= static_cast<size_t>(input0_shape_[i]);
   }
   if (input0_type_ != input1_type_) {
     MS_EXCEPTION(TypeError) << "For " << kernel_name_ << ", the dtype of y_grad should be same with x, but got "
@@ -114,19 +115,33 @@ bool MedianGradCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const
 
 template <typename T1, typename T2>
 bool MedianGradCpuKernelMod::GlobalMedianGradCompute(const std::vector<AddressPtr> &inputs,
-                                                     const std::vector<AddressPtr> &outputs) {
-  auto y_grad = reinterpret_cast<T1 *>(inputs[0]->addr);
-  auto x = reinterpret_cast<T1 *>(inputs[1]->addr);
-  auto y = reinterpret_cast<T1 *>(inputs[2]->addr);
-  auto x_grad = reinterpret_cast<T2 *>(outputs[0]->addr);
+                                                     const std::vector<AddressPtr> &outputs) const {
+  auto y_grad = static_cast<T1 *>(inputs[0]->addr);
+  auto x = static_cast<T1 *>(inputs[1]->addr);
+  auto y = static_cast<T1 *>(inputs[2]->addr);
+  auto x_grad = static_cast<T2 *>(outputs[0]->addr);
 
   int64_t count_repeat = 0;
   for (size_t i = 0; i < input1_num_elements_; i++) {
-    count_repeat += (*(x + i) == *y) ? 1 : 0;
+    bool is_equal = false;
+    if constexpr (std::is_same_v<T1, double>) {
+      is_equal = common::IsDoubleEqual(*(x + i), *y);
+    } else if constexpr (std::is_same_v<T1, float>) {
+      is_equal = common::IsFloatEqual(*(x + i), *y);
+    }
+
+    count_repeat += is_equal ? 1 : 0;
   }
   auto sharder_mediangrad = [&](int64_t start, int64_t end) {
     for (int64_t i = start; i < end; i++) {
-      *(x_grad + i) = (*(x + i) == *y) ? static_cast<T2>(*y_grad / count_repeat) : 0;
+      bool is_equal = false;
+      if constexpr (std::is_same_v<T1, double>) {
+        is_equal = common::IsDoubleEqual(*(x + i), *y);
+      } else if constexpr (std::is_same_v<T1, float>) {
+        is_equal = common::IsFloatEqual(*(x + i), *y);
+      }
+
+      *(x_grad + i) = is_equal ? static_cast<T2>(*y_grad / count_repeat) : 0;
     }
   };
   CPUKernelUtils::ParallelFor(sharder_mediangrad, input1_num_elements_);
@@ -136,9 +151,9 @@ bool MedianGradCpuKernelMod::GlobalMedianGradCompute(const std::vector<AddressPt
 template <typename T1, typename T2>
 bool MedianGradCpuKernelMod::MedianGradCompute(const std::vector<AddressPtr> &inputs,
                                                const std::vector<AddressPtr> &outputs) {
-  auto y_grad = reinterpret_cast<T1 *>(inputs[0]->addr);
-  auto indices = reinterpret_cast<int64_t *>(inputs[3]->addr);
-  auto x_grad = reinterpret_cast<T2 *>(outputs[0]->addr);
+  auto y_grad = static_cast<T1 *>(inputs[0]->addr);
+  auto indices = static_cast<int64_t *>(inputs[3]->addr);
+  auto x_grad = static_cast<T2 *>(outputs[0]->addr);
 
   for (size_t i = 0; i < input1_num_elements_; i++) {
     *(x_grad + i) = 0;
@@ -157,9 +172,9 @@ bool MedianGradCpuKernelMod::MedianGradCompute(const std::vector<AddressPtr> &in
   int64_t element_num_y = 1;
   int64_t element_num_x = 1;
   for (size_t i = 0; i < shape_keepdim.size(); i++) {
-    element_num_each_dim_x.insert(element_num_each_dim_x.begin(), element_num_x);
+    (void)element_num_each_dim_x.insert(element_num_each_dim_x.begin(), element_num_x);
     element_num_x *= input1_shape_[shape_keepdim.size() - 1 - i];
-    element_num_each_dim_y.insert(element_num_each_dim_y.begin(), element_num_y);
+    (void)element_num_each_dim_y.insert(element_num_each_dim_y.begin(), element_num_y);
     element_num_y *= shape_keepdim[shape_keepdim.size() - 1 - i];
   }
 
@@ -182,7 +197,7 @@ bool MedianGradCpuKernelMod::MedianGradCompute(const std::vector<AddressPtr> &in
           update_element_pos += dim_vec[i] * element_num_each_dim_x[i];
         }
       }
-      *(x_grad + update_element_pos) = *(y_grad + nth_element);
+      *(x_grad + update_element_pos) = static_cast<T2>(*(y_grad + nth_element));
     }
   };
   CPUKernelUtils::ParallelFor(sharder_mediangrad, input0_num_elements_);

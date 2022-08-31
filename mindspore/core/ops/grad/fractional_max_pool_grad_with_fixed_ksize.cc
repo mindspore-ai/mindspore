@@ -83,16 +83,16 @@ TypePtr FractionalMaxPoolGradWithFixedKsizeInferType(const PrimitivePtr &primiti
   auto prim_name = primitive->name();
 
   const std::set<TypePtr> origin_input_valid_types = {kInt32, kInt64};
-  CheckAndConvertUtils::CheckTensorTypeValid("origin_input dtype", input_args[kInputsIndex0]->BuildType(),
-                                             origin_input_valid_types, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("origin_input dtype", input_args[kInputsIndex0]->BuildType(),
+                                                   origin_input_valid_types, prim_name);
 
   const std::set<TypePtr> out_backprop_valid_types = {kFloat16, kFloat32, kFloat64, kInt32, kInt64};
   auto y_dtype = CheckAndConvertUtils::CheckTensorTypeValid(
     "out_backprop dtype", input_args[kInputsIndex1]->BuildType(), out_backprop_valid_types, prim_name);
 
   const std::set<TypePtr> argmax_valid_types = {kInt64};
-  CheckAndConvertUtils::CheckTensorTypeValid("argmax dtype", input_args[kInputsIndex2]->BuildType(), argmax_valid_types,
-                                             prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("argmax dtype", input_args[kInputsIndex2]->BuildType(),
+                                                   argmax_valid_types, prim_name);
 
   return std::make_shared<TensorType>(y_dtype);
 }

@@ -37,10 +37,10 @@ class FractionalMaxPoolGradWithFixedKsizeCPUKernelMod : public DeprecatedNativeC
 
  private:
   template <typename backprop_t>
-  bool GradComputeTemplate(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  bool GradComputeTemplate(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) const;
   template <typename backprop_t>
   void FractionalMaxPoolGradWithFixedKsizeCompute(backprop_t *out_backpropForPlane, int64_t *argmaxForPlane,
-                                                  backprop_t *outputForPlane);
+                                                  backprop_t *outputForPlane) const;
   std::vector<int64_t> input_shape_;
   std::vector<int64_t> out_backprop_shape_;
   std::vector<int64_t> argmax_shape_;

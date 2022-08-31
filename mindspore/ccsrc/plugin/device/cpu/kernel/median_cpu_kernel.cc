@@ -17,6 +17,7 @@
 #include "plugin/device/cpu/kernel/median_cpu_kernel.h"
 
 #include <algorithm>
+#include <type_traits>
 
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
@@ -46,7 +47,7 @@ void MedianCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
                                << input_dim_ << "), but got " << axis_ << ".";
     }
     for (size_t i = 0; i < input_dim_; i++) {
-      input_num_elements_ *= input_shape_[i];
+      input_num_elements_ *= static_cast<size_t>(input_shape_[i]);
     }
   } else {
     if (axis_ > 0 || axis_ < -1) {
@@ -101,8 +102,8 @@ bool MedianCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std
 template <typename T>
 bool MedianCpuKernelMod::GlobalMedianCompute(const std::vector<AddressPtr> &inputs,
                                              const std::vector<AddressPtr> &outputs) {
-  auto *input0 = reinterpret_cast<T *>(inputs[0]->addr);
-  auto *output0 = reinterpret_cast<T *>(outputs[0]->addr);
+  auto *input0 = static_cast<T *>(inputs[0]->addr);
+  auto *output0 = static_cast<T *>(outputs[0]->addr);
   output_num_elements_ = 1;
   int64_t median_pos = static_cast<int64_t>((input_num_elements_ - 1) / kHalf);
   std::nth_element(input0, input0 + median_pos, input0 + static_cast<int64_t>(input_num_elements_));
@@ -112,9 +113,9 @@ bool MedianCpuKernelMod::GlobalMedianCompute(const std::vector<AddressPtr> &inpu
 
 template <typename T>
 bool MedianCpuKernelMod::MedianCompute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
-  auto *input0 = reinterpret_cast<T *>(inputs[0]->addr);
-  auto *output0 = reinterpret_cast<T *>(outputs[0]->addr);
-  auto *output1 = reinterpret_cast<int64_t *>(outputs[1]->addr);
+  auto *input0 = static_cast<T *>(inputs[0]->addr);
+  auto *output0 = static_cast<T *>(outputs[0]->addr);
+  auto *output1 = static_cast<int64_t *>(outputs[1]->addr);
   if (input_dim_ == 0) {
     output_num_elements_ = 1;
     *output0 = *input0;
@@ -122,9 +123,9 @@ bool MedianCpuKernelMod::MedianCompute(const std::vector<AddressPtr> &inputs, co
     return true;
   }
   if (axis_ < 0) {
-    axis_ += input_dim_;
+    axis_ += static_cast<int>(input_dim_);
   }
-  size_t dim_data_num = input_shape_[axis_];
+  size_t dim_data_num = static_cast<size_t>(input_shape_[axis_]);
   T *temp_median_vec = new T[dim_data_num];
   int64_t *temp_median_index_vec = new int64_t[dim_data_num];
   size_t group = 1;
@@ -132,12 +133,12 @@ bool MedianCpuKernelMod::MedianCompute(const std::vector<AddressPtr> &inputs, co
   int64_t median_pos = static_cast<int64_t>((dim_data_num - 1) / kHalf);
   if (axis_ != 0) {
     for (size_t i = 0; i < static_cast<size_t>(axis_); i++) {
-      group *= input_shape_[i];
+      group *= static_cast<size_t>(input_shape_[i]);
     }
   }
   if (axis_ != static_cast<int>(input_dim_ - 1)) {
     for (size_t i = static_cast<size_t>(axis_ + 1); i < input_dim_; i++) {
-      jump *= input_shape_[i];
+      jump *= static_cast<size_t>(input_shape_[i]);
     }
   }
   auto start = input0;
@@ -148,12 +149,17 @@ bool MedianCpuKernelMod::MedianCompute(const std::vector<AddressPtr> &inputs, co
         temp_median_index_vec[k] = static_cast<int64_t>(k);
         temp_median_vec[k] = *num_index;
       }
-      std::nth_element(
-        temp_median_index_vec, temp_median_index_vec + median_pos, temp_median_index_vec + dim_data_num,
-        [&temp_median_vec, dim_data_num](size_t pos1, size_t pos2) {
-          return (*(temp_median_vec + pos1) < *(temp_median_vec + pos2)) ||
-                 (pos1 < dim_data_num && *(temp_median_vec + pos1) == *(temp_median_vec + pos2) && pos1 < pos2);
-        });
+      std::nth_element(temp_median_index_vec, temp_median_index_vec + median_pos, temp_median_index_vec + dim_data_num,
+                       [&temp_median_vec, dim_data_num](size_t pos1, size_t pos2) {
+                         bool is_equal = false;
+                         if constexpr (std::is_same_v<T, double>) {
+                           is_equal = common::IsDoubleEqual(*(temp_median_vec + pos1), *(temp_median_vec + pos2));
+                         } else if constexpr (std::is_same_v<T, float>) {
+                           is_equal = common::IsFloatEqual(*(temp_median_vec + pos1), *(temp_median_vec + pos2));
+                         }
+                         return (*(temp_median_vec + pos1) < *(temp_median_vec + pos2)) ||
+                                (pos1 < dim_data_num && is_equal && pos1 < pos2);
+                       });
       std::nth_element(temp_median_vec, temp_median_vec + median_pos, temp_median_vec + dim_data_num);
       *(output0 + i * jump + j) = *(temp_median_vec + median_pos);
       *(output1 + i * jump + j) = *(temp_median_index_vec + median_pos);
