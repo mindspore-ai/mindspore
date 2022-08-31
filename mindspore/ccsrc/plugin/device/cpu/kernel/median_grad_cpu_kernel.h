@@ -51,7 +51,7 @@ class MedianGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   size_t input0_num_elements_;
   size_t input1_num_elements_;
   template <typename T1, typename T2>
-  bool GlobalMedianGradCompute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  bool GlobalMedianGradCompute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) const;
   template <typename T1, typename T2>
   bool MedianGradCompute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 };

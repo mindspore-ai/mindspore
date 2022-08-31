@@ -114,11 +114,11 @@ bool FractionalMaxPoolGradWithFixedKsizeCPUKernelMod::Launch(const std::vector<A
 }
 
 template <typename backprop_t>
-bool FractionalMaxPoolGradWithFixedKsizeCPUKernelMod::GradComputeTemplate(const std::vector<AddressPtr> &inputs,
-                                                                          const std::vector<AddressPtr> &outputs) {
-  backprop_t *out_backprop_ptr = reinterpret_cast<backprop_t *>(inputs[1]->addr);
-  int64_t *argmax_ptr = reinterpret_cast<int64_t *>(inputs[2]->addr);
-  backprop_t *output_ptr = reinterpret_cast<backprop_t *>(outputs[0]->addr);
+bool FractionalMaxPoolGradWithFixedKsizeCPUKernelMod::GradComputeTemplate(
+  const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) const {
+  backprop_t *out_backprop_ptr = static_cast<backprop_t *>(inputs[1]->addr);
+  int64_t *argmax_ptr = static_cast<int64_t *>(inputs[2]->addr);
+  backprop_t *output_ptr = static_cast<backprop_t *>(outputs[0]->addr);
 
   auto shard_fractional_max_pool_grad_with_fixed_ksize = [&](size_t start, size_t end) {
     for (size_t n = start; n < end; n++) {
@@ -129,13 +129,13 @@ bool FractionalMaxPoolGradWithFixedKsizeCPUKernelMod::GradComputeTemplate(const 
       FractionalMaxPoolGradWithFixedKsizeCompute<backprop_t>(out_backpropForPlane, argmaxForPlane, outputForPlane);
     }
   };
-  CPUKernelUtils::ParallelFor(shard_fractional_max_pool_grad_with_fixed_ksize, input_n_);
+  CPUKernelUtils::ParallelFor(shard_fractional_max_pool_grad_with_fixed_ksize, LongToSize(input_n_));
   return true;
 }
 
 template <typename backprop_t>
 void FractionalMaxPoolGradWithFixedKsizeCPUKernelMod::FractionalMaxPoolGradWithFixedKsizeCompute(
-  backprop_t *out_backpropForPlane, int64_t *argmaxForPlane, backprop_t *outputForPlane) {
+  backprop_t *out_backpropForPlane, int64_t *argmaxForPlane, backprop_t *outputForPlane) const {
   for (int64_t plane = 0; plane < input_c_; plane++) {
     backprop_t *out_backpropPlane = out_backpropForPlane + plane * out_backprop_h_ * out_backprop_w_;
     int64_t *argmaxPlane = argmaxForPlane + plane * out_backprop_h_ * out_backprop_w_;

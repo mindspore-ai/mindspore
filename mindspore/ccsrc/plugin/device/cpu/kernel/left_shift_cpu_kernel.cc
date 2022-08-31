@@ -75,14 +75,13 @@ bool LeftShiftCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
                          "but got "
                       << TypeIdLabel(input_type_1_);
   }
-  return true;
 }
 
 template <typename T>
 bool LeftShiftCpuKernelMod::IntCompute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
-  auto *input1 = reinterpret_cast<T *>(inputs[0]->addr);
-  const auto *input2 = reinterpret_cast<T *>(inputs[1]->addr);
-  auto *output = reinterpret_cast<T *>(outputs[0]->addr);
+  auto *input1 = static_cast<T *>(inputs[0]->addr);
+  const auto *input2 = static_cast<T *>(inputs[1]->addr);
+  auto *output = static_cast<T *>(outputs[0]->addr);
   if (output_shape_.size() == 0) {
     (void)output_shape_.insert(output_shape_.begin(), 1);
   }
@@ -114,9 +113,9 @@ bool LeftShiftCpuKernelMod::IntCompute(const std::vector<AddressPtr> &inputs, co
 
 template <typename T>
 bool LeftShiftCpuKernelMod::UIntCompute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
-  auto *input1 = reinterpret_cast<T *>(inputs[0]->addr);
-  const auto *input2 = reinterpret_cast<T *>(inputs[1]->addr);
-  auto *output = reinterpret_cast<T *>(outputs[0]->addr);
+  auto *input1 = static_cast<T *>(inputs[0]->addr);
+  const auto *input2 = static_cast<T *>(inputs[1]->addr);
+  auto *output = static_cast<T *>(outputs[0]->addr);
   if (output_shape_.size() == 0) {
     (void)output_shape_.insert(output_shape_.begin(), 1);
   }

@@ -163,7 +163,7 @@ bool FractionalMaxPoolWithFixedKsizeCPUKernelMod::Launch(const std::vector<Addre
 template <typename scalar_t>
 bool FractionalMaxPoolWithFixedKsizeCPUKernelMod::DoComputeWithRandomSamplesType(const std::vector<AddressPtr> &inputs,
                                                                                  const std::vector<AddressPtr> &outputs,
-                                                                                 TypeId random_samples_type_) {
+                                                                                 TypeId random_samples_type_) const {
   switch (random_samples_type_) {
     case kNumberTypeFloat16:
       return ComputeTemplate<scalar_t, float16>(inputs, outputs);
@@ -174,17 +174,16 @@ bool FractionalMaxPoolWithFixedKsizeCPUKernelMod::DoComputeWithRandomSamplesType
     default:
       MS_EXCEPTION(TypeError) << "For '" << kernel_name_ << "', random_samples_type" << random_samples_type_
                               << "not support, must be in [{DT_FLOAT16, DT_FLOAT, DT_DOUBLE}].";
-      return false;
   }
 }
 
 template <typename scalar_t, typename random_sample_t>
 bool FractionalMaxPoolWithFixedKsizeCPUKernelMod::ComputeTemplate(const std::vector<AddressPtr> &inputs,
-                                                                  const std::vector<AddressPtr> &outputs) {
-  scalar_t *input_ptr = reinterpret_cast<scalar_t *>(inputs[0]->addr);
-  random_sample_t *random_samples_ptr = reinterpret_cast<random_sample_t *>(inputs[1]->addr);
-  scalar_t *output_ptr = reinterpret_cast<scalar_t *>(outputs[0]->addr);
-  int64_t *argmax_ptr = reinterpret_cast<int64_t *>(outputs[1]->addr);
+                                                                  const std::vector<AddressPtr> &outputs) const {
+  scalar_t *input_ptr = static_cast<scalar_t *>(inputs[0]->addr);
+  random_sample_t *random_samples_ptr = static_cast<random_sample_t *>(inputs[1]->addr);
+  scalar_t *output_ptr = static_cast<scalar_t *>(outputs[0]->addr);
+  int64_t *argmax_ptr = static_cast<int64_t *>(outputs[1]->addr);
   MS_EXCEPTION_IF_NULL(input_ptr);
   MS_EXCEPTION_IF_NULL(random_samples_ptr);
   MS_EXCEPTION_IF_NULL(output_ptr);
@@ -201,18 +200,21 @@ bool FractionalMaxPoolWithFixedKsizeCPUKernelMod::ComputeTemplate(const std::vec
                                                                         outputForPlane, argmaxForPlane);
     }
   };
-  CPUKernelUtils::ParallelFor(shard_fractional_max_pool_with_fixed_ksize, input_n_);
+  CPUKernelUtils::ParallelFor(shard_fractional_max_pool_with_fixed_ksize, LongToSize(input_n_));
 
   return true;
 }
 
 template <typename scalar_t, typename random_sample_t>
 void FractionalMaxPoolWithFixedKsizeCPUKernelMod::FractionalMaxPoolWithFixedKsizeCompute(
-  scalar_t *inputForPlane, random_sample_t *random_samplesForPlane, scalar_t *outputForPlane, int64_t *argmaxForPlane) {
+  scalar_t *inputForPlane, random_sample_t *random_samplesForPlane, scalar_t *outputForPlane,
+  int64_t *argmaxForPlane) const {
   for (int64_t plane = 0; plane < input_c_; plane++) {
     random_sample_t *random_samplesPlane = random_samplesForPlane + plane * 2;
-    auto sequenceW = GenerateIntervals<random_sample_t>(random_samplesPlane[0], input_w_, output_w_, ksize_w_);
-    auto sequenceH = GenerateIntervals<random_sample_t>(random_samplesPlane[1], input_h_, output_h_, ksize_h_);
+    std::vector<int> sequenceW = GenerateIntervals<random_sample_t>(
+      random_samplesPlane[0], static_cast<int>(input_w_), static_cast<int>(output_w_), static_cast<int>(ksize_w_));
+    std::vector<int> sequenceH = GenerateIntervals<random_sample_t>(
+      random_samplesPlane[1], static_cast<int>(input_h_), static_cast<int>(output_h_), static_cast<int>(ksize_h_));
 
     scalar_t *inputPlane = inputForPlane + plane * input_h_ * input_w_;
     scalar_t *outputPlane = outputForPlane + plane * output_h_ * output_w_;
@@ -255,7 +257,8 @@ void FractionalMaxPoolWithFixedKsizeCPUKernelMod::FractionalMaxPoolWithFixedKsiz
 
 template <typename random_sample_t>
 std::vector<int> FractionalMaxPoolWithFixedKsizeCPUKernelMod::GenerateIntervals(random_sample_t sample, int input_size,
-                                                                                int output_size, int kernel_size) {
+                                                                                int output_size,
+                                                                                int kernel_size) const {
   std::vector<int> sequence(output_size);
   if (output_size > 1) {
     random_sample_t alpha =

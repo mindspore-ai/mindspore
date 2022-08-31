@@ -38,14 +38,14 @@ class FractionalMaxPoolWithFixedKsizeCPUKernelMod : public DeprecatedNativeCpuKe
  private:
   template <typename scalar_t>
   bool DoComputeWithRandomSamplesType(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs,
-                                      TypeId random_samples_type);
+                                      TypeId random_samples_type) const;
   template <typename scalar_t, typename random_sample_t>
-  bool ComputeTemplate(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  bool ComputeTemplate(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) const;
   template <typename scalar_t, typename random_sample_t>
   void FractionalMaxPoolWithFixedKsizeCompute(scalar_t *inputForPlane, random_sample_t *random_samplesForPlane,
-                                              scalar_t *outputForPlane, int64_t *argmaxForPlane);
+                                              scalar_t *outputForPlane, int64_t *argmaxForPlane) const;
   template <typename random_sample_t>
-  std::vector<int> GenerateIntervals(random_sample_t sample, int input_size, int output_size, int kernel_size);
+  std::vector<int> GenerateIntervals(random_sample_t sample, int input_size, int output_size, int kernel_size) const;
   std::vector<int64_t> input_shape_;
   std::vector<int64_t> random_samples_shape_;
   std::vector<int64_t> output_shape_;

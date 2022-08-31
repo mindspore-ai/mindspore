@@ -26,10 +26,10 @@ namespace ops {
 namespace {
 const int64_t MAX_WINDOW_LEN = 1024 * 1024;
 
-#define WINDOW_LENGTH_CASE(DTYPE, TYPE, LENGTH_VALUE, LENGTH_TENSOR)                         \
-  case (DTYPE): {                                                                            \
-    LENGTH_VALUE = static_cast<int64_t>(*reinterpret_cast<TYPE *>(LENGTH_TENSOR->data_c())); \
-    break;                                                                                   \
+#define WINDOW_LENGTH_CASE(DTYPE, TYPE, LENGTH_VALUE, LENGTH_TENSOR)                    \
+  case (DTYPE): {                                                                       \
+    LENGTH_VALUE = static_cast<int64_t>(*static_cast<TYPE *>(LENGTH_TENSOR->data_c())); \
+    break;                                                                              \
   }
 
 abstract::ShapePtr HammingWindowInferShape(const PrimitivePtr &primitive,
@@ -41,7 +41,8 @@ abstract::ShapePtr HammingWindowInferShape(const PrimitivePtr &primitive,
   auto length_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto length_size = length_shape.size();
   const int64_t length_dim = 1;
-  CheckAndConvertUtils::CheckInteger("length dim", length_size, kEqual, length_dim, primitive->name());
+  (void)CheckAndConvertUtils::CheckInteger("length dim", SizeToLong(length_size), kEqual, length_dim,
+                                           primitive->name());
   if (input_args[0]->isa<abstract::AbstractTensor>() && !input_args[0]->BuildValue()->isa<AnyValue>() &&
       !input_args[0]->BuildValue()->isa<None>()) {
     auto length = input_args[0]->cast<abstract::AbstractTensorPtr>();
@@ -74,7 +75,7 @@ abstract::ShapePtr HammingWindowInferShape(const PrimitivePtr &primitive,
                                 << TypeIdLabel(input_type_value);
       }
     }
-    CheckAndConvertUtils::CheckInteger("length value", length_value, kGreaterEqual, 0, primitive->name());
+    (void)CheckAndConvertUtils::CheckInteger("length value", length_value, kGreaterEqual, 0, primitive->name());
     out_shape.push_back(length_value);
     return std::make_shared<abstract::Shape>(out_shape);
   } else {
@@ -92,7 +93,7 @@ TypePtr HammingWindowInferType(const PrimitivePtr &primitive, const std::vector<
   auto input_type = input_args[0]->BuildType();
   MS_EXCEPTION_IF_NULL(input_type);
   const std::set<TypePtr> valid_input_types = {kInt8, kInt16, kInt32, kInt64, kUInt8, kUInt16, kUInt32, kUInt64};
-  CheckAndConvertUtils::CheckTensorTypeValid("length", input_type, valid_input_types, primitive->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("length", input_type, valid_input_types, primitive->name());
   auto dtype_attr = primitive->GetAttr("dtype");
   MS_EXCEPTION_IF_NULL(dtype_attr);
   int64_t dtype_value = GetValue<int64_t>(dtype_attr);

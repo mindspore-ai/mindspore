@@ -18,11 +18,8 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_HAMMING_WINDOW_CPU_KERNEL_H_
 
 #include <functional>
-#include <memory>
 #include <vector>
 #include <utility>
-#include <iostream>
-#include <string>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
@@ -44,7 +41,7 @@ class HammingWindowCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  private:
   template <typename T, typename S>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
-                    const std::vector<kernel::AddressPtr> &outputs);
+                    const std::vector<kernel::AddressPtr> &outputs) const;
   using HammingWindowFunc =
     std::function<bool(HammingWindowCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
                        const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
