@@ -494,7 +494,6 @@ py::dict AbstractDictionaryToPython(const AbstractBasePtr &abs_base) {
     auto cur_key = cur_attr.first;
     auto cur_value = cur_attr.second;
 
-    py::dict out = py::dict();
     py::dict cur_value_out = ConvertAbstractToPython(cur_value);
     shape_list[i] = cur_value_out[ATTR_SHAPE];
     dtype_list[i] = cur_value_out[ATTR_DTYPE];
