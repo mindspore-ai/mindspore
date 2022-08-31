@@ -2164,7 +2164,7 @@ class ArgMaxWithValue(Primitive):
 
     .. warning::
         - If there are multiple maximum values, the index of the first maximum value is used.
-        - The value range of "axis" is [-dims, dims - 1]. "dims" is the dimension length of "input_x".
+        - The value range of "axis" is [-dims, dims - 1]. "dims" is the dimension length of "x".
 
     Also see: func: `mindspore.ops.max`.
 
@@ -2174,20 +2174,20 @@ class ArgMaxWithValue(Primitive):
                           the output will reduce dimension if false. Default: False.
 
     Inputs:
-        - **input_x** (Tensor) - The input tensor, can be any dimension. Set the shape of input tensor as
-          :math:`(x_1, x_2, ..., x_N)`. And the data type only support mindspore.float16 or float32.
+        - **x** (Tensor) - The input tensor, can be any dimension. Set the shape of input tensor as
+          :math:`(x_1, x_2, ..., x_N)`.
 
     Outputs:
         tuple (Tensor), tuple of 2 tensors, containing the corresponding index and the maximum value of the input
         tensor.
 
-        - **index** (Tensor) - The index for the maximum value of the input tensor. If `keep_dims` is true, the shape of
-          output tensors is :math:`(x_1, x_2, ..., x_{axis-1}, 1, x_{axis+1}, ..., x_N)`. Otherwise, the shape is
-          :math:`(x_1, x_2, ..., x_{axis-1}, x_{axis+1}, ..., x_N)` .
-        - **output_x** (Tensor) - The maximum value of input tensor, with the same shape as index.
+        - index (Tensor) - The index for the maximum value of the input tensor, with dtype int32. If `keep_dims`
+          is true, the shape of output tensors is :math:`(x_1, x_2, ..., x_{axis-1}, 1, x_{axis+1}, ..., x_N)`.
+          Otherwise, the shape is :math:`(x_1, x_2, ..., x_{axis-1}, x_{axis+1}, ..., x_N)` .
+        - values (Tensor) - The maximum value of input tensor, with the same shape as index, and same dtype as x.
 
     Raises:
-        TypeError: If data type `input_x` is not float16, float32 and float64.
+        TypeError: If `x` is not Tensor.
         TypeError: If `keep_dims` is not a bool.
         TypeError: If `axis` is not an int.
 
@@ -2207,7 +2207,7 @@ class ArgMaxWithValue(Primitive):
     @prim_attr_register
     def __init__(self, axis=0, keep_dims=False):
         """Initialize ArgMaxWithValue"""
-        self.init_prim_io_names(inputs=['input_x'], outputs=['index', 'output_x'])
+        self.init_prim_io_names(inputs=['x'], outputs=['index', 'values'])
         validator.check_value_type("axis", axis, [int], self.name)
         validator.check_value_type('keep_dims', keep_dims, [bool], self.name)
         self.axis = axis

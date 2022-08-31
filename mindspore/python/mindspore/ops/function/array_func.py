@@ -4039,8 +4039,8 @@ def max(x, axis=0, keep_dims=False):
     Also see: class: `mindspore.ops.ArgMaxWithValue`.
 
     Args:
-        x (Tensor): The input tensor, can be any dimension. Set the shape of input tensor as
-          :math:`(x_1, x_2, ..., x_N)`. And the data type only support mindspore.float16 or float32.
+        x (Tensor) - The input tensor, can be any dimension. Set the shape of input tensor as
+          :math:`(x_1, x_2, ..., x_N)`.
         axis (int): The dimension to reduce. Default: 0.
         keep_dims (bool): Whether to reduce dimension, if true, the output will keep same dimension with the input,
                           the output will reduce dimension if false. Default: False.
@@ -4049,13 +4049,13 @@ def max(x, axis=0, keep_dims=False):
         tuple (Tensor), tuple of 2 tensors, containing the corresponding index and the maximum value of the input
         tensor.
 
-        - **index** (Tensor) - The index for the maximum value of the input tensor. If `keep_dims` is true, the shape of
-          output tensors is :math:`(x_1, x_2, ..., x_{axis-1}, 1, x_{axis+1}, ..., x_N)`. Otherwise, the shape is
-          :math:`(x_1, x_2, ..., x_{axis-1}, x_{axis+1}, ..., x_N)` .
-        - **values** (Tensor) - The maximum value of input tensor, with the same shape as index.
+        - index (Tensor) - The index for the maximum value of the input tensor, with dtype int32. If `keep_dims`
+          is true, the shape of output tensors is :math:`(x_1, x_2, ..., x_{axis-1}, 1, x_{axis+1}, ..., x_N)`.
+          Otherwise, the shape is :math:`(x_1, x_2, ..., x_{axis-1}, x_{axis+1}, ..., x_N)` .
+        - values (Tensor) - The maximum value of input tensor, with the same shape as index, and same dtype as x.
 
     Raises:
-        TypeError: If data type `x` is not float16, float32 or float64.
+        TypeError: If `x` is not Tensor.
         TypeError: If `keep_dims` is not a bool.
         TypeError: If `axis` is not an int.
 

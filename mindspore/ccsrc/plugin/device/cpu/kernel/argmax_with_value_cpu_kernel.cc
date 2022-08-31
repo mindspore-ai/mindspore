@@ -45,7 +45,7 @@ bool check_validation(const std::vector<size_t> &shape, const size_t num_before_
   size_t out0_size = output_num * sizeof(int);
   size_t out1_size = output_num * data_size;
   if (inputs[0]->size != input_size) {
-    MS_LOG(EXCEPTION) << "For '" << kKernelName << "', the memory size of 'input_x' must be " << input_size
+    MS_LOG(EXCEPTION) << "For '" << kKernelName << "', the memory size of 'x' must be " << input_size
                       << ", but got the memory size is " << inputs[0]->size;
   }
   if (outputs[0]->size != out0_size) {
@@ -73,11 +73,11 @@ bool ArgMaxWithValueCpuKernelMod::LaunchKernel(const std::vector<kernel::Address
   for (size_t i = 0; i < num_before_axis_; i++) {
     size_t src_index_i = i * dim_axis_ * num_after_axis_;
     for (size_t j = 0; j < num_after_axis_; j++) {
-      std::vector<float> array_axis;
+      std::vector<T> array_axis;
       size_t src_index_j = src_index_i + j;
       for (size_t k = 0; k < dim_axis_; k++) {
         size_t src_index_k = k * num_after_axis_ + src_index_j;
-        array_axis.push_back(static_cast<float>(input[src_index_k]));
+        array_axis.push_back(input[src_index_k]);
       }
       auto max_ops = std::max_element(array_axis.begin(), array_axis.end());
       auto max_index = static_cast<int32_t>(std::distance(array_axis.begin(), max_ops));
@@ -97,24 +97,15 @@ void ArgMaxWithValueCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   size_t shape_len = shape_.size();
   int64_t axis = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
   axis += SizeToLong(shape_len);
-  if (shape_len == 0) {
-    if (axis != -1 && axis != 0) {
-      MS_LOG(EXCEPTION) << "For ArgMaxWithValue with 0d input tensor, axis must be one of 0 or -1, but got" << axis
-                        << ".";
-    }
+  if (shape_len == 0 && axis != -1 && axis != 0) {
+    MS_LOG(EXCEPTION) << "For ArgMaxWithValue with 0d input tensor, axis must be one of 0 or -1, but got " << axis
+                      << ".";
     axis = 0;
   }
-  if (axis < 0) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'axis' must be in range [-1, " << (shape_len - 1)
-                      << "], but got " << axis << ".";
-  }
-  if (shape_len > 0) {
-    axis = axis % SizeToLong(shape_len);
-  }
-
   num_before_axis_ = 1;
   num_after_axis_ = 1;
   if (shape_len > 0) {
+    axis = axis % SizeToLong(shape_len);
     for (size_t i = 0; i < shape_len; i++) {
       if (SizeToLong(i) < axis) {
         num_before_axis_ *= shape_[i];
@@ -126,20 +117,61 @@ void ArgMaxWithValueCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   }
 
   auto build_info = AnfAlgo::GetSelectKernelBuildInfo(kernel_node);
-  if (build_info->GetInputNum() < 1) {
-    MS_LOG(EXCEPTION) << "Argmax input size can not less than 1!";
-  }
   auto input_type_id = build_info->GetInputDeviceType(0);
   switch (input_type_id) {
+    case kNumberTypeFloat64:
+      kernel_func_ = &ArgMaxWithValueCpuKernelMod::LaunchKernel<double>;
+      break;
     case kNumberTypeFloat32:
       kernel_func_ = &ArgMaxWithValueCpuKernelMod::LaunchKernel<float>;
       break;
     case kNumberTypeFloat16:
       kernel_func_ = &ArgMaxWithValueCpuKernelMod::LaunchKernel<float16>;
       break;
+    case kNumberTypeInt64:
+      kernel_func_ = &ArgMaxWithValueCpuKernelMod::LaunchKernel<int64_t>;
+      break;
+    case kNumberTypeInt32:
+      kernel_func_ = &ArgMaxWithValueCpuKernelMod::LaunchKernel<int32_t>;
+      break;
+    case kNumberTypeInt16:
+      kernel_func_ = &ArgMaxWithValueCpuKernelMod::LaunchKernel<int16_t>;
+      break;
+    case kNumberTypeInt8:
+      kernel_func_ = &ArgMaxWithValueCpuKernelMod::LaunchKernel<int8_t>;
+      break;
+    case kNumberTypeUInt64:
+      kernel_func_ = &ArgMaxWithValueCpuKernelMod::LaunchKernel<uint64_t>;
+      break;
+    case kNumberTypeUInt32:
+      kernel_func_ = &ArgMaxWithValueCpuKernelMod::LaunchKernel<uint32_t>;
+      break;
+    case kNumberTypeUInt16:
+      kernel_func_ = &ArgMaxWithValueCpuKernelMod::LaunchKernel<uint16_t>;
+      break;
+    case kNumberTypeUInt8:
+      kernel_func_ = &ArgMaxWithValueCpuKernelMod::LaunchKernel<uint8_t>;
+      break;
     default:
       MS_LOG(EXCEPTION) << "Argmax kernel does not support " << TypeIdToString(input_type_id);
   }
+}
+
+std::vector<KernelAttr> ArgMaxWithValueCpuKernelMod::GetOpSupport() {
+  static std::vector<KernelAttr> kernel_attr_list = {
+    KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
+    KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
+    KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat16),
+    KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt64),
+    KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+    KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt16),
+    KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt8),
+    KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt64),
+    KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt32),
+    KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt16),
+    KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt8),
+  };
+  return kernel_attr_list;
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, ArgMaxWithValue, ArgMaxWithValueCpuKernelMod);
