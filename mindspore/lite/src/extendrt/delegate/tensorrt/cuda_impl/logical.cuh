@@ -26,4 +26,10 @@ void LogicalOr(const T *input1, const T *input2, T *output, int element_cnt, cud
 template <typename T>
 void LogicalNot(const T *input1, T *output, int element_cnt, cudaStream_t stream);
 
+template <typename T>
+void GreaterOrEqual(const T *input1, const T *input2, T *output, int element_cnt, cudaStream_t stream);
+
+template <typename T>
+void LessOrEqual(const T *input1, const T *input2, T *output, int element_cnt, cudaStream_t stream);
+
 #endif  // MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_CDUA_IMPL_LOGICAL_H_

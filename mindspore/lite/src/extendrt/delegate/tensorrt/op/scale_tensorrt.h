@@ -48,7 +48,7 @@ class ScaleTensorRT : public TensorRTOp {
 
   Format out_format_;
 
-  bool out_same_format_{false};
+  bool out_same_format_{true};
 
   nvinfer1::ScaleMode mode_;
 

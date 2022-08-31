@@ -16,6 +16,7 @@
 
 #include "src/extendrt/delegate/tensorrt/op/shape_tensorrt.h"
 #include "ops/shape.h"
+#include "ops/dynamic_shape.h"
 
 namespace mindspore::lite {
 int ShapeTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
@@ -32,8 +33,6 @@ int ShapeTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::ve
     MS_LOG(ERROR) << "Unsupported output tensor size, size is " << out_tensors.size();
     return RET_ERROR;
   }
-  dynamic_shape_params_.support_dynamic_ = false;
-  dynamic_shape_params_.support_hw_dynamic_ = false;
   return RET_OK;
 }
 int ShapeTensorRT::AddInnerOp(TensorRTContext *ctx) {
@@ -55,4 +54,5 @@ int ShapeTensorRT::AddInnerOp(TensorRTContext *ctx) {
   return RET_OK;
 }
 REGISTER_TENSORRT_CREATOR(ops::kNameShape, ShapeTensorRT)
+REGISTER_TENSORRT_CREATOR(ops::kNameDynamicShape, ShapeTensorRT)
 }  // namespace mindspore::lite

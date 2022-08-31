@@ -88,7 +88,7 @@ int FullyConnectedTensorRT::AddInnerOp(TensorRTContext *ctx) {
 }
 
 int FullyConnectedTensorRT::PreprocessInputs(TensorRTContext *ctx, ITensorHelper *fc_input) {
-  auto ret = PreprocessInputs2SameDim(ctx, input(ctx, !in_tensors_[1].IsConst()), fc_input);
+  auto ret = PreprocessInputs2SameDim(ctx, input(ctx, in_tensors_[1].IsConst() ? 0 : 1), fc_input);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "PreprocessInputs2SameDim failed for " << op_name_;
     return ret;

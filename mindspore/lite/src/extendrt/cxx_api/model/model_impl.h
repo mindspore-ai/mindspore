@@ -29,6 +29,8 @@
 #include "include/common/utils/utils.h"
 #include "ir/func_graph.h"
 #include "extendrt/infer_session.h"
+#include "src/common/config_infos.h"
+
 #ifndef _WIN32
 #include <dlfcn.h>
 #endif
@@ -73,10 +75,11 @@ class ModelImpl {
   std::shared_ptr<Graph> graph_ = nullptr;
   std::shared_ptr<InferSession> session_ = nullptr;
   std::shared_ptr<Context> context_ = nullptr;
+  ConfigInfos config_info_;
+  std::map<std::string, TypeId> execution_plan_;
 #ifndef _WIN32
   void *handle_ = nullptr;
 #endif
-  std::map<std::string, std::map<std::string, std::string>> config_info_;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_MODEL_MODEL_IMPL_H_

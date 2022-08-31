@@ -34,6 +34,7 @@
 #include "ops/equal.h"
 #include "ops/less.h"
 #include "ops/greater.h"
+#include "ops/floor_mod.h"
 
 namespace mindspore::lite {
 namespace {
@@ -118,8 +119,12 @@ int ElementWiseTensorRT::AddInnerOp(TensorRTContext *ctx) {
     MS_LOG(ERROR) << "PreprocessInputTensors failed.";
     return RET_ERROR;
   }
-  nvinfer1::IElementWiseLayer *cal_layer =
-    ctx->network()->addElementWise(*x_input.trt_tensor_, *y_input.trt_tensor_, element_wise_op_);
+  nvinfer1::IElementWiseLayer *cal_layer;
+  if (type_ == ops::kNameFloorMod) {
+    cal_layer = AddFoorMod(ctx, x_input.trt_tensor_, y_input.trt_tensor_);
+  } else {
+    cal_layer = ctx->network()->addElementWise(*x_input.trt_tensor_, *y_input.trt_tensor_, element_wise_op_);
+  }
 
   if (cal_layer == nullptr) {
     MS_LOG(ERROR) << "addElementWise failed for TensorRT.";
@@ -164,7 +169,8 @@ int ElementWiseTensorRT::AddInnerOp(TensorRTContext *ctx) {
     MS_LOG(INFO) << "bool result cast to int32" << op_name_;
   }
 #endif
-  auto output_helper = ITensorHelper{op_out_tensor, x_input.format_, x_input.same_format_};
+  auto is_tensor = x_input.is_tensor || y_input.is_tensor;
+  auto output_helper = ITensorHelper{op_out_tensor, x_input.format_, x_input.same_format_, is_tensor};
   ctx->RegisterTensor(output_helper, out_tensors_[0].Name());
   MS_LOG(DEBUG) << "output " << GetTensorFormat(output_helper);
   return RET_OK;
@@ -196,6 +202,25 @@ int ElementWiseTensorRT::PreprocessInputTensors(TensorRTContext *ctx, ITensorHel
     input_tensor->trt_tensor_ = reshape_layer->getOutput(0);
   }
   return RET_OK;
+}
+
+nvinfer1::IElementWiseLayer *ElementWiseTensorRT::AddFoorMod(TensorRTContext *ctx, nvinfer1::ITensor *x0_trt,
+                                                             nvinfer1::ITensor *x1_trt) {
+  nvinfer1::IElementWiseLayer *layer_0 =
+    ctx->network()->addElementWise(*x0_trt, *x1_trt, nvinfer1::ElementWiseOperation::kFLOOR_DIV);
+  layer_0->setName((op_name_ + "_floor_div").c_str());
+  auto result_0 = layer_0->getOutput(0);
+
+  nvinfer1::IElementWiseLayer *layer_1 =
+    ctx->network()->addElementWise(*result_0, *x1_trt, nvinfer1::ElementWiseOperation::kPROD);
+  layer_1->setName((op_name_ + "_prod").c_str());
+  auto result_1 = layer_1->getOutput(0);
+
+  nvinfer1::IElementWiseLayer *layer_2 =
+    ctx->network()->addElementWise(*x0_trt, *result_1, nvinfer1::ElementWiseOperation::kSUB);
+  layer_2->setName((op_name_ + "_sub").c_str());
+
+  return layer_2;
 }
 
 nvinfer1::ITensor *ElementWiseTensorRT::AddActivation(TensorRTContext *ctx, nvinfer1::ITensor *in_tensor) {
@@ -255,11 +280,13 @@ nvinfer1::ITensor *ElementWiseTensorRT::AddActivation(TensorRTContext *ctx, nvin
 int ElementWiseTensorRT::AddConstTensor(TensorRTContext *ctx) {
   int const_tensor_index = in_tensors_[0].IsConst() ? 0 : 1;
   auto expect_shape = ConvertMSShape(input(ctx, 1 - const_tensor_index).trt_tensor_->getDimensions());
-  nvinfer1::ITensor *constant_input =
-    ConvertConstantTensorWithDims(ctx, in_tensors_[const_tensor_index], expect_shape, op_name_);
+  auto &const_tensor = in_tensors_[const_tensor_index];
+  nvinfer1::ITensor *constant_input = ConvertConstantTensorWithDims(ctx, const_tensor, expect_shape, op_name_);
   CHECK_NULL_RETURN(constant_input);
-  auto const_helper = ITensorHelper{constant_input, input(ctx, 1 - const_tensor_index).format_, true};
-  ctx->RegisterTensor(const_helper, in_tensors_[const_tensor_index].Name());
+  auto const_shape = const_tensor.Shape();
+  auto is_scalar = const_shape.empty() || (const_shape.size() == 1 && const_shape[0] == 1);
+  auto const_helper = ITensorHelper{constant_input, input(ctx, 1 - const_tensor_index).format_, true, !is_scalar};
+  ctx->RegisterTensor(const_helper, const_tensor.Name());
   return RET_OK;
 }
 
@@ -273,6 +300,7 @@ REGISTER_TENSORRT_CREATOR(ops::kNameEltwise, ElementWiseTensorRT)
 REGISTER_TENSORRT_CREATOR(ops::kNameMinimum, ElementWiseTensorRT)
 REGISTER_TENSORRT_CREATOR(ops::kNameMaximum, ElementWiseTensorRT)
 REGISTER_TENSORRT_CREATOR(ops::kNameBiasAdd, ElementWiseTensorRT)
+REGISTER_TENSORRT_CREATOR(ops::kNameFloorMod, ElementWiseTensorRT)
 #if TRT_VERSION_GE(7, 2)
 REGISTER_TENSORRT_CREATOR(ops::kNameEqual, ElementWiseTensorRT)
 REGISTER_TENSORRT_CREATOR(ops::kNameLess, ElementWiseTensorRT)

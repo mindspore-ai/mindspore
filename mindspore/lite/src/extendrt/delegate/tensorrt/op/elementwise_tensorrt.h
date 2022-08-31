@@ -37,6 +37,8 @@ class ElementWiseTensorRT : public TensorRTOp {
  private:
   nvinfer1::ITensor *AddActivation(TensorRTContext *ctx, nvinfer1::ITensor *in_tensor);
 
+  nvinfer1::IElementWiseLayer *AddFoorMod(TensorRTContext *ctx, nvinfer1::ITensor *x0_trt, nvinfer1::ITensor *x1_trt);
+
   int AddConstTensor(TensorRTContext *ctx);
 
   bool SameTensor(nvinfer1::ITensor *trt_tensor, TensorInfo *ms_tensor);

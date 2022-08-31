@@ -71,24 +71,32 @@ class StrideSliceTensorRTUtil final : public SliceTensorRTUtil {
       }
       int axis_value = *(static_cast<const int *>(in_tensors.at(axis_index).Data()));
       int start_value = *(static_cast<const int *>(begin.Data()));
-      int size_value = *(static_cast<const int *>(end.Data()));
+      int end_value = *(static_cast<const int *>(end.Data()));
+      int stride_value = *(static_cast<const int *>(stride.Data()));
       auto input_dims = helper.trt_tensor_->getDimensions();
       start_dims.nbDims = input_dims.nbDims;
       size_dims.nbDims = input_dims.nbDims;
+      stride_dims = nvinfer1::Dims{size_dims.nbDims, {}};
+      std::fill(start_dims.d, start_dims.d + start_dims.nbDims, 0);
+      std::fill(stride_dims.d, stride_dims.d + stride_dims.nbDims, 1);
+      if (start_value < 0) {
+        start_value = input_dims.d[axis_value] + start_value;
+      }
       for (int i = 0; i < start_dims.nbDims; i++) {
         if (i == axis_value) {
           start_dims.d[i] = start_value;
-          size_dims.d[i] = size_value >= 0 ? std::min(size_value, input_dims.d[i]) - start_dims.d[i]
-                                           : size_value + input_dims.d[i] - start_dims.d[i];
+          stride_dims.d[i] = stride_value;
+          if (end_value >= 0) {
+            size_dims.d[i] = std::min(end_value, input_dims.d[i]) - start_dims.d[i];
+          } else if (end_value >= -input_dims.d[i]) {
+            size_dims.d[i] = end_value + input_dims.d[i] - start_dims.d[i];
+          } else {
+            size_dims.d[i] = input_dims.d[i];
+          }
         } else {
-          start_dims.d[i] = 0;
           size_dims.d[i] = helper.trt_tensor_->getDimensions().d[i];
         }
       }
-
-      int stride_value = *(static_cast<const int *>(stride.Data()));
-      stride_dims = nvinfer1::Dims{size_dims.nbDims, {}};
-      std::fill(stride_dims.d, stride_dims.d + stride_dims.nbDims, stride_value);
     }
     return std::make_tuple(start_dims, size_dims, stride_dims);
   }
@@ -103,7 +111,7 @@ class StrideSliceTensorRTUtil final : public SliceTensorRTUtil {
           shape.erase(shape.begin() + i);
         }
       }
-      return Reshape(ctx, input, shape);
+      return shape.empty() ? nullptr : Reshape(ctx, input, shape);
     }
     return input;
   }
@@ -136,8 +144,8 @@ class SliceFusionTensorRTUtil final : public SliceTensorRTUtil {
     const auto &begin = in_tensors.at(1);
     const auto &size = in_tensors.at(SIZE_INDEX);
 
-    auto start_dims = lite::ConvertCudaDims(begin.Data(), begin.ElementNum());
-    auto size_dims = lite::ConvertCudaDims(size.Data(), size.ElementNum());
+    auto start_dims = lite::ConvertCudaDims(begin);
+    auto size_dims = lite::ConvertCudaDims(size);
     for (int i = 0; i != size_dims.nbDims; ++i) {
       if (size_dims.d[i] == -1) {
         size_dims.d[i] = helper.trt_tensor_->getDimensions().d[i];
@@ -278,17 +286,16 @@ int SliceTensorRT::AddInnerOp(TensorRTContext *ctx) {
   this->layer_ = slice_layer;
   slice_layer->setName(op_name_.c_str());
   nvinfer1::ITensor *out_tensor = slice_layer->getOutput(0);
-  out_tensor = util_->PostProcess(ctx, out_tensor, in_tensors_, out_tensors_);
-  if (out_tensor == nullptr) {
-    MS_LOG(ERROR) << "output tensor create failed";
-    return RET_ERROR;
+  auto post_tensor = util_->PostProcess(ctx, out_tensor, in_tensors_, out_tensors_);
+  bool rank_0 = false;
+  if (post_tensor == nullptr) {
+    rank_0 = true;
+    post_tensor = out_tensor;
   }
-  auto helper = ITensorHelper{out_tensor, slice_input.format_, slice_input.same_format_};
+  auto helper = ITensorHelper{post_tensor, slice_input.format_, slice_input.same_format_, !rank_0};
   ctx->RegisterTensor(helper, out_tensors_[0].Name());
   MS_LOG(DEBUG) << "slice output : " << GetTensorFormat(helper);
   return RET_OK;
 }
-REGISTER_TENSORRT_CREATOR(ops::kNameStridedSlice, SliceTensorRT)
-REGISTER_TENSORRT_CREATOR(ops::kNameSliceFusion, SliceTensorRT)
 REGISTER_TENSORRT_CREATOR(ops::kNameCrop, SliceTensorRT)
 }  // namespace mindspore::lite

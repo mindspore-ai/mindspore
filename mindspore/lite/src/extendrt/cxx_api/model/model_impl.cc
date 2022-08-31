@@ -44,7 +44,7 @@ Status ModelImpl::BuildByBufferImpl(const void *model_data, size_t data_size, Mo
     // user does not set mindir_path, convert from model_path
     mindir_path = model_path.substr(0, model_path.rfind("/"));
   }
-  session_ = InferSession::CreateSession(model_context);
+  session_ = InferSession::CreateSession(model_context, config_info_);
   if (session_ == nullptr) {
     MS_LOG(ERROR) << "Create session failed.";
     return kLiteNullptr;
@@ -254,7 +254,6 @@ Status ModelImpl::Predict() {
   auto outputs = GetOutputs();
   return Predict(inputs, &outputs);
 }
-
 bool ModelImpl::HasPreprocess() { return graph_->graph_data_->GetPreprocess().empty() ? false : true; }
 
 Status ModelImpl::Preprocess(const std::vector<std::vector<MSTensor>> &inputs, std::vector<MSTensor> *outputs) {
@@ -345,19 +344,13 @@ Status ModelImpl::PredictWithPreprocess(const std::vector<std::vector<MSTensor>>
 }
 
 Status ModelImpl::LoadConfig(const std::string &config_path) {
-  std::map<std::string, std::map<std::string, std::string>> all_config_info;
+  ConfigInfos all_config_info;
   int ret = lite::GetAllSectionInfoFromConfigFile(config_path, &all_config_info);
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "GetAllSectionInfoFromConfigFile fail!ret: " << ret;
     return kLiteFileError;
   }
   config_info_ = all_config_info;
-  std::map<std::string, std::string> config_info = all_config_info[kExecutionPlan];
-  if (config_info.empty()) {
-    MS_LOG(WARNING) << "No valid execution plan info in config file.";
-    return kSuccess;
-  }
-
   return kSuccess;
 }
 

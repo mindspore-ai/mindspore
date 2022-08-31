@@ -40,6 +40,7 @@ namespace mindspore::lite {
 constexpr int INPUT_SIZE2 = 2;
 constexpr int INPUT_SIZE3 = 3;
 constexpr int INPUT_SIZE4 = 4;
+constexpr int INPUT_SIZE5 = 5;
 
 struct BindingHelper {
   std::string name_;
@@ -115,6 +116,7 @@ class TensorRTOp {
   nvinfer1::ILayer *layer() { return layer_; }
 
   bool GetSupportInputBool();
+  bool IsDynamicInput(TensorRTContext *ctx, size_t k);
 
   void SetSupportInputBool(bool support_input_bool);
   template <class OpsT>

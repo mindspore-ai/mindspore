@@ -24,11 +24,15 @@
 #include "runtime/hardware/device_context.h"
 #include "src/extendrt/delegate_graph_executor.h"
 #include "include/api/context.h"
+#include "src/common/config_infos.h"
+
 namespace mindspore {
 using mindspore::device::GraphExecutor;
 // TODO(zhaizhiqiang): Wrap graph executor as delegate.
 // typedef std::shared_ptr<GraphSinkDelegate> (*DelegateCreator)(const std::shared_ptr<Context> &);
-typedef std::shared_ptr<GraphExecutor> (*DelegateCreator)(const std::shared_ptr<Context> &);
+using DelegateCreator =
+  std::function<std::shared_ptr<GraphExecutor>(const std::shared_ptr<Context> &, const ConfigInfos &)>;
+
 class MS_API DelegateRegistry {
  public:
   DelegateRegistry() = default;
@@ -48,7 +52,7 @@ class MS_API DelegateRegistry {
   }
 
   std::shared_ptr<GraphExecutor> GetDelegate(const mindspore::DeviceType &device_type, const std::string &provider,
-                                             const std::shared_ptr<Context> &ctx) {
+                                             const std::shared_ptr<Context> &ctx, const ConfigInfos &config_infos) {
     //  find common delegate
     auto it = creator_map_.find(device_type);
     if (it == creator_map_.end()) {
@@ -58,7 +62,7 @@ class MS_API DelegateRegistry {
     if (creator_it == it->second.end()) {
       return nullptr;
     }
-    return creator_it->second(ctx);
+    return creator_it->second(ctx, config_infos);
   }
 
  private:

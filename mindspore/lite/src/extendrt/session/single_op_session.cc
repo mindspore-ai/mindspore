@@ -277,7 +277,8 @@ MutableTensorImplPtr SingleOpInferSession::GetInputByTensorName(const std::strin
   return nullptr;
 }
 
-static std::shared_ptr<InferSession> SingleOpSessionCreator(const std::shared_ptr<Context> &ctx) {
+static std::shared_ptr<InferSession> SingleOpSessionCreator(const std::shared_ptr<Context> &ctx,
+                                                            const ConfigInfos &config_infos) {
   auto session = std::make_shared<SingleOpInferSession>();
   session->Init(ctx);
   return session;

@@ -61,7 +61,7 @@ int ReduceTensorRT::AddInnerOp(TensorRTContext *ctx) {
     CHECK_NULL_RETURN(reduce_input);
   }
 
-  uint32_t reduceAxis = GetAxis();
+  uint32_t reduceAxis = GetAxis(ctx);
   auto reduce_operation_opt = TryConvertTRTReduceMode(reduce_op->get_mode());
   if (!reduce_operation_opt) {
     MS_LOG(WARNING) << "invalid reduce for TensorRT, need check: " << static_cast<int>(reduce_op->get_mode());
@@ -88,7 +88,7 @@ int ReduceTensorRT::AddInnerOp(TensorRTContext *ctx) {
   return RET_OK;
 }
 
-uint32_t ReduceTensorRT::GetAxis() {
+uint32_t ReduceTensorRT::GetAxis(TensorRTContext *ctx) {
   // axis
   uint32_t reduceAxis = 0;
   auto axis_tensor = this->in_tensors_[1];
@@ -102,7 +102,8 @@ uint32_t ReduceTensorRT::GetAxis() {
   auto axis_data = reinterpret_cast<const int *>(axis_tensor.Data());
   CHECK_NULL_RETURN(axis_data);
   for (int i = 0; i < axis_tensor.ElementNum(); i++) {
-    int format_axis_data = (*axis_data == -1) ? in_tensors_[0].Shape().size() - 1 : *axis_data;
+    auto input_0 = input(ctx, 0).trt_tensor_;
+    int format_axis_data = (*axis_data == -1) ? input_0->getDimensions().nbDims - 1 : *axis_data;
     MS_LOG(DEBUG) << op_name_ << " reduceAxis at index : " << *axis_data;
     reduceAxis |= 1u << format_axis_data;
     axis_data++;

@@ -94,7 +94,8 @@ class TensorDefaultImpl : public MutableTensorImpl {
 
   void SetDeviceData(void *data) override { device_data_ = data; }
   void *GetDeviceData() override { return device_data_; }
-  bool IsConst() const override { return false; }
+  bool IsConst() const override { return is_const_; }
+  void SetIsConst(bool is_const) { is_const_ = is_const; }
 
   bool IsDevice() const override { return device_data_ != nullptr; }
 
@@ -137,6 +138,8 @@ class TensorDefaultImpl : public MutableTensorImpl {
   mutable Buffer buffer_;
   mutable const void *data_ = nullptr;
   bool own_data_ = false;
+
+  bool is_const_ = false;
 
   void ResizeData() const {
     if (data_ != nullptr && data_ != buffer_.Data()) {

@@ -23,6 +23,9 @@
 #include "extendrt/infer_session.h"
 #include "include/api/context.h"
 namespace mindspore {
+using InferSessionRegFunc =
+  std::function<std::shared_ptr<InferSession>(const std::shared_ptr<Context> &, const ConfigInfos &)>;
+
 class SessionRegistry {
  public:
   SessionRegistry() = default;
@@ -30,21 +33,18 @@ class SessionRegistry {
 
   static SessionRegistry &GetInstance();
 
-  void RegSession(const mindspore::SessionType &session_type,
-                  const std::function<std::shared_ptr<InferSession>(const std::shared_ptr<Context> &)> &creator);
+  void RegSession(const mindspore::SessionType &session_type, const InferSessionRegFunc &creator);
 
-  std::shared_ptr<InferSession> GetSession(const mindspore::SessionType &session_type,
-                                           const std::shared_ptr<Context> &);
+  std::shared_ptr<InferSession> GetSession(const mindspore::SessionType &session_type, const std::shared_ptr<Context> &,
+                                           const ConfigInfos &);
 
  private:
-  mindspore::HashMap<SessionType, std::function<std::shared_ptr<InferSession>(const std::shared_ptr<Context> &)>>
-    session_map_;
+  mindspore::HashMap<SessionType, InferSessionRegFunc> session_map_;
 };
 
 class SessionRegistrar {
  public:
-  SessionRegistrar(const mindspore::SessionType &session_type,
-                   const std::function<std::shared_ptr<InferSession>(const std::shared_ptr<Context> &)> &creator) {
+  SessionRegistrar(const mindspore::SessionType &session_type, const InferSessionRegFunc &creator) {
     SessionRegistry::GetInstance().RegSession(session_type, creator);
   }
   ~SessionRegistrar() = default;

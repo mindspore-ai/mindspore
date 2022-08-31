@@ -138,7 +138,14 @@ nvinfer1::ITensor *ConvertConstantTensor1D(TensorRTContext *ctx, int *weights_ve
 
 int ParseData2Vector(const TensorInfo &ms_tensor, std::vector<float> *dst);
 
-void DebugDims(const nvinfer1::Dims &dims);
+void DebugDims(const std::string &key, const nvinfer1::Dims &dims);
+
+nvinfer1::ITensor *ExpandDim(TensorRTContext *ctx, nvinfer1::ITensor *input_tensor, int axis);
+
+nvinfer1::ITensor *Broadcast(TensorRTContext *ctx, nvinfer1::ITensor *input, nvinfer1::ITensor *shape);
+
+template <typename T>
+nvinfer1::DataType GetNvinferDataType();
 
 template <typename T1, typename T2>
 bool SameDims(const std::vector<T1> &shape1, const std::vector<T2> &shape2) {

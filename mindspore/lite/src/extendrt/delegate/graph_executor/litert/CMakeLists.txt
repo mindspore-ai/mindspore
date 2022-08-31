@@ -26,6 +26,7 @@ set(LITE_SRC
         ${LITE_DIR}/src/common/log.cc
         ${LITE_DIR}/src/common/prim_util.cc
         ${LITE_DIR}/src/common/tensor_util.cc
+        ${LITE_DIR}/src/common/config_infos.cc
         ${LITE_DIR}/src/litert/allocator.cc
         ${LITE_DIR}/src/litert/inner_allocator.cc
         ${LITE_DIR}/src/litert/runtime_allocator.cc

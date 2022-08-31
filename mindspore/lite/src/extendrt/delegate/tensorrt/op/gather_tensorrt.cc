@@ -85,7 +85,7 @@ int GatherTensorRT::AddInnerOp(TensorRTContext *ctx) {
   nvinfer1::ITensor *op_output = gather_layer->getOutput(0);
   auto old_shape = ConvertMSShape(op_output->getDimensions());
   // keep shape
-  if (in_tensors_[1].Shape().empty() && old_shape.size() > 1) {
+  if (indices_tensor.trt_tensor_->getDimensions().nbDims == 0 && old_shape.size() > 1) {
     auto squeeze = ctx->network()->addShuffle(*op_output);
     if (squeeze == nullptr) {
       MS_LOG(ERROR) << "add output squeeze failed for " << op_name_;

@@ -29,7 +29,7 @@
 namespace mindspore::lite {
 int SpaceToBatchTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
                                     const std::vector<TensorInfo> &out_tensors) {
-  if (in_tensors.size() != 3) {
+  if (in_tensors.size() != INPUT_SIZE3) {
     MS_LOG(ERROR) << "Unsupported input tensor size, size is " << in_tensors.size();
     return RET_ERROR;
   }
@@ -38,8 +38,6 @@ int SpaceToBatchTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const 
     MS_LOG(ERROR) << "Unsupported output tensor size, size is " << out_tensors.size();
     return RET_ERROR;
   }
-  dynamic_shape_params_.support_dynamic_ = false;
-  dynamic_shape_params_.support_hw_dynamic_ = false;
   return RET_OK;
 }
 
@@ -52,19 +50,17 @@ int SpaceToBatchTensorRT::AddInnerOp(TensorRTContext *ctx) {
     MS_LOG(ERROR) << "block_h not equal block_w " << op_name_;
     return RET_ERROR;
   }
-  const int *pad_ptr = reinterpret_cast<const int *>(in_tensors_[2].Data());
+  const int *pad_ptr = reinterpret_cast<const int *>(in_tensors_[INPUT_SIZE2].Data());
   int ph0 = *(pad_ptr + 0);
   int ph1 = *(pad_ptr + 1);
-  int pw0 = *(pad_ptr + 2);
-  int pw1 = *(pad_ptr + 3);
-  auto in_dims = input_tensor->getDimensions();
-  int in = in_dims.d[0];
-  int ic = in_dims.d[1];
-  int ih = in_dims.d[2];
-  int iw = in_dims.d[3];
+  int pw0 = *(pad_ptr + INPUT_SIZE2);
+  int pw1 = *(pad_ptr + INPUT_SIZE3);
 
-  auto plugin =
-    std::make_shared<SpaceToBatchPlugin>(input_tensor->getName(), in, ic, ih, iw, bh, ph0, ph1, pw0, pw1, device_id_);
+  auto plugin = std::make_shared<SpaceToBatchPlugin>(input_tensor->getName(), bh, ph0, ph1, pw0, pw1, device_id_);
+  if (plugin == nullptr) {
+    MS_LOG(ERROR) << "add spacetobatch plugin failed for" << op_name_;
+    return RET_ERROR;
+  }
   nvinfer1::ITensor *inputTensors[] = {input_tensor};
   nvinfer1::IPluginV2Layer *space2batch_opt_layer = ctx->network()->addPluginV2(inputTensors, 1, *plugin);
   if (space2batch_opt_layer == nullptr) {
@@ -93,15 +89,20 @@ int SpaceToBatchPlugin::enqueue(const nvinfer1::PluginTensorDesc *inputDesc,
 
 int SpaceToBatchPlugin::RunCudaSpaceToBatch(const nvinfer1::PluginTensorDesc *inputDesc, const void *const *inputs,
                                             void *const *outputs, cudaStream_t stream) {
-  int on = in_ * bh_ * bh_;
-  int oc = ic_;
-  int oh = (ih_ + ph0_ + ph1_) / bh_;
-  int ow = (iw_ + pw0_ + pw1_) / bh_;
+  nvinfer1::Dims input_dims = inputDesc[0].dims;
+  int in = input_dims.d[0];
+  int ic = input_dims.d[1];
+  int ih = input_dims.d[2];
+  int iw = input_dims.d[3];
+  int on = in * bh_ * bh_;
+  int oc = ic;
+  int oh = (ih + ph0_ + ph1_) / bh_;
+  int ow = (iw + pw0_ + pw1_) / bh_;
 
-  int size = in_ * ic_ * ih_ * iw_;
+  int size = in * ic * ih * iw;
 
-  CalSpaceToBatch<float>(size, static_cast<const float *>(inputs[0]), in_, ih_, iw_, ic_, on, oh, ow, oc, ph0_, ph1_,
-                         pw0_, pw1_, bh_, static_cast<float *>(outputs[0]), device_id_, stream);
+  CalSpaceToBatch<float>(size, static_cast<const float *>(inputs[0]), in, ih, iw, ic, on, oh, ow, oc, ph0_, ph1_, pw0_,
+                         pw1_, bh_, static_cast<float *>(outputs[0]), device_id_, stream);
   return RET_OK;
 }
 
@@ -115,7 +116,7 @@ nvinfer1::IPluginV2DynamicExt *SpaceToBatchPlugin::clone() const noexcept {
   return plugin;
 }
 
-size_t SpaceToBatchPlugin::getSerializationSize() const noexcept { return sizeof(int) * 9; }
+size_t SpaceToBatchPlugin::getSerializationSize() const noexcept { return sizeof(int) * 5; }
 
 nvinfer1::DimsExprs SpaceToBatchPlugin::getOutputDimensions(int32_t index, const nvinfer1::DimsExprs *inputs,
                                                             int nbInputDims,
@@ -127,19 +128,15 @@ nvinfer1::DimsExprs SpaceToBatchPlugin::getOutputDimensions(int32_t index, const
   dims.d[1] = inputs[0].d[1];
   auto bh = exprBuilder.constant(bh_);
   auto ph_sum = exprBuilder.constant(ph0_ + ph1_);
-  auto sum0 = exprBuilder.operation(nvinfer1::DimensionOperation::kSUM, *inputs[0].d[2], *ph_sum);
-  dims.d[2] = exprBuilder.operation(nvinfer1::DimensionOperation::kFLOOR_DIV, *sum0, *bh);
+  auto sum0 = exprBuilder.operation(nvinfer1::DimensionOperation::kSUM, *inputs[0].d[INPUT_SIZE2], *ph_sum);
+  dims.d[INPUT_SIZE2] = exprBuilder.operation(nvinfer1::DimensionOperation::kFLOOR_DIV, *sum0, *bh);
   auto pw_sum = exprBuilder.constant(pw0_ + pw1_);
-  auto sum1 = exprBuilder.operation(nvinfer1::DimensionOperation::kSUM, *inputs[0].d[3], *pw_sum);
-  dims.d[3] = exprBuilder.operation(nvinfer1::DimensionOperation::kFLOOR_DIV, *sum1, *bh);
+  auto sum1 = exprBuilder.operation(nvinfer1::DimensionOperation::kSUM, *inputs[0].d[INPUT_SIZE3], *pw_sum);
+  dims.d[INPUT_SIZE3] = exprBuilder.operation(nvinfer1::DimensionOperation::kFLOOR_DIV, *sum1, *bh);
   return dims;
 }
 
 void SpaceToBatchPlugin::serialize(void *buffer) const noexcept {
-  SerializeValue(&buffer, &in_, sizeof(int));
-  SerializeValue(&buffer, &ic_, sizeof(int));
-  SerializeValue(&buffer, &ih_, sizeof(int));
-  SerializeValue(&buffer, &iw_, sizeof(int));
   SerializeValue(&buffer, &bh_, sizeof(int));
   SerializeValue(&buffer, &ph0_, sizeof(int));
   SerializeValue(&buffer, &ph1_, sizeof(int));

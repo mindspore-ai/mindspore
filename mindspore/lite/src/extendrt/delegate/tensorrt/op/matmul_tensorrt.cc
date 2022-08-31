@@ -235,8 +235,8 @@ nvinfer1::ITensor *MatMulTensorRT::AddBias(TensorRTContext *ctx, nvinfer1::ITens
   if (in_tensors_.size() == kBiasIndex + 1) {
     nvinfer1::ITensor *bias = nullptr;
     if (in_tensors_[kBiasIndex].Shape().size() < static_cast<size_t>(out_tensor->getDimensions().nbDims)) {
-      std::vector<int64_t> expect_dims(out_tensors_[0].Shape());
-      expect_dims[0] = out_tensor->getDimensions().d[0];
+      std::vector<int64_t> expect_dims(input_tensor->getDimensions().nbDims, 1);
+      expect_dims[expect_dims.size() - 1] = in_tensors_[kBiasIndex].Shape().back();
       bias = ConvertTensorWithExpandDims(ctx, in_tensors_[kBiasIndex], expect_dims, op_name_);
     } else if (in_tensors_[kBiasIndex].Shape().size() == static_cast<size_t>(out_tensor->getDimensions().nbDims)) {
       bias = ConvertConstantTensor(ctx, in_tensors_[kBiasIndex], op_name_);
