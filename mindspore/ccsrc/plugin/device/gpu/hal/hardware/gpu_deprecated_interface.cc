@@ -38,7 +38,7 @@ void GPUDeprecatedInterface::FilterExcludedOps(const std::vector<PrimitivePtr> &
     cuGetErrorName(ret, &msg);
     MS_LOG(ERROR) << "Get CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MAJOR fail, error message: " << msg;
   }
-  if (major_version >= MINIMUM_MAJOR_VERSION) {
+  if (major_version == MINIMUM_MAJOR_VERSION) {
     *dst_ops = src_ops;
     return;
   }
@@ -65,9 +65,11 @@ void GPUDeprecatedInterface::FilterExcludedOps(const std::vector<PrimitivePtr> &
     ss << ")";
     MS_LOG(WARNING) << "Some operators" << ss.str()
                     << " can not be enabled in GraphKernel because the current device's computing capacity is "
-                    << major_version << ", which is < " << MINIMUM_MAJOR_VERSION
-                    << ". For better performance, it is recommended to use devices with a computing capacity >= "
-                    << MINIMUM_MAJOR_VERSION;
+                    << major_version << ", which is != " << MINIMUM_MAJOR_VERSION
+                    << ". For better performance, it is recommended to use devices with a computing capacity == "
+                    << MINIMUM_MAJOR_VERSION
+                    << ". Because akg has special optimization for computing capacity == 7, other computing capacity "
+                       "may not be applicable";
   }
   *dst_ops = res;
 }

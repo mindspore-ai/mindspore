@@ -50,7 +50,13 @@ class CRealDiv(Expander):
         elif input_y.dtype == "complex64" or input_y.dtype == "complex128":
             y_real = graph_builder.emit('CReal', [input_y])
             y_imag = graph_builder.emit('CImag', [input_y])
-            y_real_div_x = graph_builder.emit('RealDiv', [y_real, input_x])
-            y_imag_div_x = graph_builder.emit('RealDiv', [y_imag, input_x])
+            neg_y_imag = graph_builder.emit('Neg', [y_imag])
+            squre_y_real = graph_builder.emit('Mul', [y_real, y_real])
+            squre_y_imag = graph_builder.emit('Mul', [y_imag, y_imag])
+            final_denominator = graph_builder.emit('Add', [squre_y_real, squre_y_imag])
+            x_mul_y_real = graph_builder.emit('Mul', [input_x, y_real])
+            x_mul_neg_y_imag = graph_builder.emit('Mul', [input_x, neg_y_imag])
+            y_real_div_x = graph_builder.emit('RealDiv', [x_mul_y_real, final_denominator])
+            y_imag_div_x = graph_builder.emit('RealDiv', [x_mul_neg_y_imag, final_denominator])
             result = graph_builder.emit('Complex', [y_real_div_x, y_imag_div_x])
         return result

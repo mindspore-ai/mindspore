@@ -39,6 +39,6 @@ class CSub(Expander):
         elif input_y.dtype == "complex64" or input_y.dtype == "complex128":
             y_real = graph_builder.emit('CReal', [input_y])
             y_imag = graph_builder.emit('CImag', [input_y])
-            y_real_sub_x = graph_builder.emit('Sub', [y_real, input_x])
-            result = graph_builder.emit('Complex', [y_real_sub_x, y_imag])
+            x_sub_y_real = graph_builder.emit('Sub', [input_x, y_real])
+            result = graph_builder.emit('Complex', [x_sub_y_real, y_imag])
         return result
