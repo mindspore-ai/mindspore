@@ -26,10 +26,10 @@ abstract::ShapePtr RGBToHSVInferShape(const PrimitivePtr &primitive, const std::
   auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
 
   const int64_t input_dims = SizeToLong(input_shape.size());
-  const int64_t input_last_dims = SizeToLong(input_shape.cend()[-1]);
+  const int64_t input_last_dims = input_shape.cend()[-1];
   const int64_t numberofRGB_3 = 3;
-  CheckAndConvertUtils::CheckInteger("last dimension of input 'images'", input_last_dims, kEqual, numberofRGB_3,
-                                     kNameRGBToHSV);
+  (void)CheckAndConvertUtils::CheckInteger("last dimension of input 'images'", input_last_dims, kEqual, numberofRGB_3,
+                                           kNameRGBToHSV);
   if (input_dims < 1) {
     MS_LOG(EXCEPTION) << "For " << primitive->name() << ", the dimension of input 'images' must be 1-D or higher rank.";
   }

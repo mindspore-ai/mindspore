@@ -17,7 +17,6 @@
 #include "plugin/device/cpu/kernel/nextafter_cpu_kernel.h"
 #include <cmath>
 #include <algorithm>
-#include <utility>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
@@ -56,9 +55,9 @@ bool NextAfterCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
     MS_EXCEPTION(TypeError) << "For '" << kernel_name_ << "', the operator should have 2 inputs and 1 outputs, but got "
                             << inputs.size() << "input(s) and " << outputs.size() << "output(s)";
   }
-  T *x1 = reinterpret_cast<T *>(inputs[0]->addr);
-  T *x2 = reinterpret_cast<T *>(inputs[1]->addr);
-  T *output = reinterpret_cast<T *>(outputs[0]->addr);
+  T *x1 = static_cast<T *>(inputs[0]->addr);
+  T *x2 = static_cast<T *>(inputs[1]->addr);
+  T *output = static_cast<T *>(outputs[0]->addr);
 
   size_t elem_num = inputs[0]->size / sizeof(T);
 

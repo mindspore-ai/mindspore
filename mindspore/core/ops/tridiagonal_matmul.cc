@@ -62,30 +62,33 @@ abstract::ShapePtr TridiagonalMatMulInferShape(const PrimitivePtr &primitive,
   (void)CheckAndConvertUtils::CheckValue("dimension of 'subdiag'", subdiag_dim, kEqual, "the dimension of 'rhs'",
                                          rhs_dim, prim_name);
   (void)CheckAndConvertUtils::CheckValue(
-    "M in the shape of 'superdiag' [..., 1, M]", superdiag_shape.at(superdiag_dim - position_col), kEqual,
-    "M in the shape of 'rhs' [..., M, N]", rhs_shape.at(rhs_dim - position_row), prim_name);
+    "M in the shape of 'superdiag' [..., 1, M]", superdiag_shape.at(LongToSize(superdiag_dim - position_col)), kEqual,
+    "M in the shape of 'rhs' [..., M, N]", rhs_shape.at(LongToSize(rhs_dim - position_row)), prim_name);
   (void)CheckAndConvertUtils::CheckValue(
-    "M in the shape of 'maindiag' [..., 1, M]", maindiag_shape.at(maindiag_dim - position_col), kEqual,
-    "M in the shape of 'rhs' [..., M, N]", rhs_shape.at(rhs_dim - position_row), prim_name);
+    "M in the shape of 'maindiag' [..., 1, M]", maindiag_shape.at(LongToSize(maindiag_dim - position_col)), kEqual,
+    "M in the shape of 'rhs' [..., M, N]", rhs_shape.at(LongToSize(rhs_dim - position_row)), prim_name);
   (void)CheckAndConvertUtils::CheckValue(
-    "M in the shape of 'subdiag' [..., 1, M]", subdiag_shape.at(subdiag_dim - position_col), kEqual,
-    "M in the shape of 'rhs' [..., M, N]", rhs_shape.at(rhs_dim - position_row), prim_name);
+    "M in the shape of 'subdiag' [..., 1, M]", subdiag_shape.at(LongToSize(subdiag_dim - position_col)), kEqual,
+    "M in the shape of 'rhs' [..., M, N]", rhs_shape.at(LongToSize(rhs_dim - position_row)), prim_name);
   (void)CheckAndConvertUtils::CheckValue("1 in the shape of 'superdiag' [..., 1, M]",
-                                         superdiag_shape.at(superdiag_dim - position_row), kEqual, is_vector,
-                                         prim_name);
+                                         superdiag_shape.at(LongToSize(superdiag_dim - position_row)), kEqual,
+                                         is_vector, prim_name);
   (void)CheckAndConvertUtils::CheckValue("1 in the shape of 'maindiag' [..., 1, M]",
-                                         maindiag_shape.at(maindiag_dim - position_row), kEqual, is_vector, prim_name);
+                                         maindiag_shape.at(LongToSize(maindiag_dim - position_row)), kEqual, is_vector,
+                                         prim_name);
   (void)CheckAndConvertUtils::CheckValue("1 in the shape of 'subdiag' [..., 1, M]",
-                                         subdiag_shape.at(subdiag_dim - position_row), kEqual, is_vector, prim_name);
+                                         subdiag_shape.at(LongToSize(subdiag_dim - position_row)), kEqual, is_vector,
+                                         prim_name);
   for (int64_t i = 0; i < rhs_dim - position_row; ++i) {
-    (void)CheckAndConvertUtils::CheckValue(std::to_string(i) + "th dimension of 'superdiag'", superdiag_shape.at(i),
-                                           kEqual, std::to_string(i) + "th dimension of 'rhs'", rhs_shape.at(i),
-                                           prim_name);
-    (void)CheckAndConvertUtils::CheckValue(std::to_string(i) + "th dimension of 'maindiag'", maindiag_shape.at(i),
-                                           kEqual, std::to_string(i) + "th dimension of 'rhs'", rhs_shape.at(i),
-                                           prim_name);
-    (void)CheckAndConvertUtils::CheckValue(std::to_string(i) + "th dimension of 'subdiag'", subdiag_shape.at(i), kEqual,
-                                           std::to_string(i) + "th dimension of 'rhs'", rhs_shape.at(i), prim_name);
+    (void)CheckAndConvertUtils::CheckValue(
+      std::to_string(i) + "th dimension of 'superdiag'", superdiag_shape.at(LongToSize(i)), kEqual,
+      std::to_string(i) + "th dimension of 'rhs'", rhs_shape.at(LongToSize(i)), prim_name);
+    (void)CheckAndConvertUtils::CheckValue(
+      std::to_string(i) + "th dimension of 'maindiag'", maindiag_shape.at(LongToSize(i)), kEqual,
+      std::to_string(i) + "th dimension of 'rhs'", rhs_shape.at(LongToSize(i)), prim_name);
+    (void)CheckAndConvertUtils::CheckValue(
+      std::to_string(i) + "th dimension of 'subdiag'", subdiag_shape.at(LongToSize(i)), kEqual,
+      std::to_string(i) + "th dimension of 'rhs'", rhs_shape.at(LongToSize(i)), prim_name);
   }
   return std::make_shared<abstract::Shape>(rhs_shape);
 }

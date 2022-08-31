@@ -100,10 +100,10 @@ struct LegacyScalerGrad {
 class CachedInterpolationCalculator {
  public:
   CachedInterpolationCalculator() : indexes_{-1, -1, -1, -1} {}
-  inline int Advance(const int64_t x_0, const int64_t x_1, const int64_t x_2, const int64_t x_3) {
+  inline size_t Advance(const int64_t x_0, const int64_t x_1, const int64_t x_2, const int64_t x_3) {
     const std::array<int64_t, 4> new_x_indices{{x_0, x_1, x_2, x_3}};
-    int64_t cached_values_hand = 0;
-    int64_t new_indices_hand = 0;
+    size_t cached_values_hand = 0;
+    size_t new_indices_hand = 0;
     while (cached_values_hand < cached_values_hand_max) {
       if (indexes_[cached_values_hand] == new_x_indices[new_indices_hand]) {
         if (new_indices_hand < cached_values_hand) {
@@ -200,14 +200,16 @@ static void ComputeGradientXWeightsAndIndices(const ResizerGradState &RGS, const
   CachedInterpolationCalculator calc;
   if (half_pixel_centers) {
     for (int64_t x = 0; x < RGS.resized_width; ++x) {
-      GetWeightsAndIndicesGrad<HalfPixelScalerGrad, true>(RGS.width_scale, x, RGS.original_width, &(*x_wais)[x]);
-      auto &x_wai = (*x_wais)[x];
+      GetWeightsAndIndicesGrad<HalfPixelScalerGrad, true>(RGS.width_scale, x, RGS.original_width,
+                                                          &(*x_wais)[static_cast<size_t>(x)]);
+      auto &x_wai = (*x_wais)[static_cast<size_t>(x)];
       x_wai.advance = calc.Advance(x_wai.index_0, x_wai.index_1, x_wai.index_2, x_wai.index_3);
     }
   } else {
     for (int64_t x = 0; x < RGS.resized_width; ++x) {
-      GetWeightsAndIndicesGrad<LegacyScalerGrad, false>(RGS.width_scale, x, RGS.original_width, &(*x_wais)[x]);
-      auto &x_wai = (*x_wais)[x];
+      GetWeightsAndIndicesGrad<LegacyScalerGrad, false>(RGS.width_scale, x, RGS.original_width,
+                                                        &(*x_wais)[static_cast<size_t>(x)]);
+      auto &x_wai = (*x_wais)[static_cast<size_t>(x)];
       x_wai.advance = calc.Advance(x_wai.index_0, x_wai.index_1, x_wai.index_2, x_wai.index_3);
     }
   }
@@ -217,11 +219,11 @@ const int64_t Calindex(const ResizerGradState &RGS, const int64_t &x1, const int
   if (!flag_) {
     return static_cast<int64_t>(static_cast<int64_t>(x1 * RGS.original_height * RGS.original_width * RGS.channels) +
                                 static_cast<int64_t>(x2 * RGS.original_width * RGS.channels) +
-                                static_cast<int64_t>(x3 * RGS.channels) + static_cast<size_t>(x4));
+                                static_cast<int64_t>(x3 * RGS.channels) + static_cast<int64_t>(x4));
   } else {
     return static_cast<int64_t>(static_cast<int64_t>(x1 * RGS.resized_height * RGS.resized_width * RGS.channels) +
                                 static_cast<int64_t>(x2 * RGS.resized_width * RGS.channels) +
-                                static_cast<int64_t>(x3 * RGS.channels) + static_cast<size_t>(x4));
+                                static_cast<int64_t>(x3 * RGS.channels) + static_cast<int64_t>(x4));
   }
 }
 template <typename T>
@@ -237,7 +239,7 @@ void CalNonUtil(const ResizerGradState &RGS, const bool half_pixel_centers,
         GetWeightsAndIndicesGrad<LegacyScalerGrad, false>(RGS.height_scale, y, RGS.original_height, &y_wai);
       }
       for (int64_t x = 0; x < RGS.resized_width; ++x) {
-        const WeightsAndIndices &x_wai = x_wais[x];
+        const WeightsAndIndices &x_wai = x_wais[static_cast<size_t>(x)];
         for (int64_t c = 0; c < RGS.channels; ++c) {
           T curr_input_grad = input_grad[Calindex(RGS, b, y, x, c, flag)];
           // row 0 of 0, 1, 2, 3
@@ -303,7 +305,7 @@ inline void ResizeBicubicGrad(const float *input_grad, const ResizerGradState &R
             GetWeightsAndIndicesGrad<LegacyScalerGrad, false>(RGS.height_scale, y, RGS.original_height, &y_wai);
           }
           for (int64_t x = 0; x < RGS.resized_width; ++x) {
-            const WeightsAndIndices &x_wai = x_wais[x];
+            const WeightsAndIndices &x_wai = x_wais[static_cast<size_t>(x)];
             for (int64_t c = 0; c < RGS.channels; ++c) {
               T curr_input_grad = input_grad[Calindex(RGS, b, y, x, c, flag)];
               // row 0 of 0, 1, 2, 3
@@ -346,7 +348,7 @@ inline void ResizeBicubicGrad(const float *input_grad, const ResizerGradState &R
           }
         }
       };
-      CPUKernelUtils::ParallelFor(task, RGS.resized_height);
+      CPUKernelUtils::ParallelFor(task, static_cast<size_t>(RGS.resized_height));
     }
   } else {
     CalNonUtil(RGS, half_pixel_centers, x_wais, flag, input_grad, output_grad);
@@ -384,8 +386,8 @@ void ResizeBicubicGradCPUKernelMod::InitKernel(const CNodePtr &kernel_node) {
 template <typename T>
 bool ResizeBicubicGradCPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                                  const std::vector<AddressPtr> &outputs) const {
-  auto input0_addr = reinterpret_cast<float *>(inputs[0]->addr);
-  auto output_addr = reinterpret_cast<T *>(outputs[0]->addr);
+  auto input0_addr = static_cast<float *>(inputs[0]->addr);
+  auto output_addr = static_cast<T *>(outputs[0]->addr);
   ResizerGradState sta;
   sta.CalculateSize(kernel_node_ptr);
   ResizeBicubicGrad(input0_addr, sta, half_pixel_centers, output_addr);
@@ -414,11 +416,9 @@ bool ResizeBicubicGradCPUKernelMod::Launch(const std::vector<kernel::AddressPtr>
       return LaunchKernel<float>(inputs, outputs);
     } else {
       MS_EXCEPTION(TypeError) << "For '" << kernel_name_ << "', unsupported Original image data type: " << dtype1_;
-      return false;
     }
   } else {
     MS_EXCEPTION(TypeError) << "For '" << kernel_name_ << "', unsupported Grads data type: " << dtype0_;
-    return false;
   }
 }
 
@@ -431,8 +431,8 @@ std::vector<std::pair<KernelAttr, ResizeBicubicGradCPUKernelMod::ResizeBicubicGr
 
 std::vector<KernelAttr> ResizeBicubicGradCPUKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
-  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                 [](const std::pair<KernelAttr, ResizeBicubicGradFunc> &pair) { return pair.first; });
+  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, ResizeBicubicGradFunc> &pair) { return pair.first; });
 
   return support_list;
 }

@@ -119,8 +119,8 @@ std::vector<std::pair<KernelAttr, NonDeterministicIntsCPUKernelMod::NonDetermini
 
 std::vector<KernelAttr> NonDeterministicIntsCPUKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
-  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                 [](const std::pair<KernelAttr, NonDeterministicIntsFunc> &pair) { return pair.first; });
+  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, NonDeterministicIntsFunc> &pair) { return pair.first; });
   return support_list;
 }
 

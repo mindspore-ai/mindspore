@@ -74,11 +74,11 @@ void LuUnpackCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   kernel_func_ = func_list_[index].second;
 }
 template <typename T_data, typename T_pivots>
-bool LuUnpackCpuKernelMod::LuUnpack(const std::vector<kernel::AddressPtr> &inputs,
+void LuUnpackCpuKernelMod::LuUnpack(const std::vector<kernel::AddressPtr> &inputs,
                                     const std::vector<kernel::AddressPtr> &outputs, int64_t Lu_data_dim1,
-                                    int64_t Lu_pivots_dim, T_pivots *Lu_pivots_working_ptr, int64_t matrix_index,
+                                    int64_t Lu_pivots_dim, T_pivots *const Lu_pivots_working_ptr, int64_t matrix_index,
                                     int64_t matrix_size, int64_t matrix_width, int64_t matrix_height,
-                                    int64_t pivots_stride, int64_t L_stride, int64_t U_stride, T_data *P_eye) {
+                                    int64_t pivots_stride, int64_t L_stride, int64_t U_stride, T_data *const P_eye) {
   using MatrixMap = Eigen::Map<Eigen::Matrix<T_data, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>;
   MatrixMap input(reinterpret_cast<T_data *>(inputs[kFirstInputIndex]->addr) + matrix_index * matrix_size, matrix_width,
                   matrix_height);
@@ -111,14 +111,15 @@ bool LuUnpackCpuKernelMod::LuUnpack(const std::vector<kernel::AddressPtr> &input
   }
   //  Swap
   std::vector<T_pivots> final_order;
-  final_order.resize(Lu_data_dim1);
-  for (int i = 0; i < Lu_data_dim1; i++) {
+  size_t Lu_data_dim1_unsigned = static_cast<size_t>(Lu_data_dim1);
+  final_order.resize(Lu_data_dim1_unsigned);
+  for (size_t i = 0; i < Lu_data_dim1_unsigned; i++) {
     final_order[i] = T_pivots(i);
   }
   for (T_pivots id = 0; id < Lu_pivots_dim; id++) {
-    int64_t perm_id = 0;
-    int64_t perm_pivots_id = 0;
-    for (int64_t i = 0; i < Lu_data_dim1; i++) {
+    size_t perm_id = 0;
+    size_t perm_pivots_id = 0;
+    for (size_t i = 0; i < Lu_data_dim1_unsigned; i++) {
       if (id == final_order[i]) {
         perm_id = i;
       }
@@ -134,15 +135,14 @@ bool LuUnpackCpuKernelMod::LuUnpack(const std::vector<kernel::AddressPtr> &input
   }
   //  Index_select
   auto output_y0 = reinterpret_cast<T_data *>(outputs[kFirstOutputIndex]->addr);
-  int64_t indices_num = final_order.size();
-  int64_t inner_size = Lu_data_dim1;
-  int64_t slice_size = inner_size * sizeof(T_data);
-  for (int64_t j = 0; j < indices_num; ++j) {
-    auto params_idx = final_order[j] * inner_size;
-    auto out_idx = j * inner_size;
-    memcpy(output_y0 + matrix_index * pivots_stride + out_idx, P_eye + params_idx, slice_size);
+  size_t indices_num = final_order.size();
+  size_t inner_size = Lu_data_dim1_unsigned;
+  size_t slice_size = static_cast<size_t>(inner_size * sizeof(T_data));
+  for (size_t j = 0; j < indices_num; ++j) {
+    size_t params_idx = static_cast<size_t>(final_order[j] * inner_size);
+    size_t out_idx = j * inner_size;
+    (void)std::memcpy(output_y0 + matrix_index * pivots_stride + out_idx, P_eye + params_idx, slice_size);
   }
-  return true;
 }
 
 template <typename T_data, typename T_pivots>

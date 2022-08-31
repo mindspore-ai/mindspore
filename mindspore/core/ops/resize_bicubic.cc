@@ -94,7 +94,7 @@ abstract::ShapePtr ResizeBicubicInferShape(const PrimitivePtr &primitive,
   bool half_pixel_centers = GetValue<bool>(half_pixel_centers_ptr);
   AttrTest(align_corners, half_pixel_centers);
   if (!input_args[1]->BuildValue()->isa<AnyValue>() && !input_args[1]->BuildValue()->isa<None>()) {
-    auto input1_shape_ptr = reinterpret_cast<int32_t *>(input1_shape_tensor->data_c());
+    auto input1_shape_ptr = static_cast<int32_t *>(input1_shape_tensor->data_c());
     if (input1_shape_ptr[0] <= 0 || input1_shape_ptr[1] <= 0) {
       MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the size must be positive "
                                << ", but got " << input1_shape_ptr[0] << " , " << input1_shape_ptr[1];

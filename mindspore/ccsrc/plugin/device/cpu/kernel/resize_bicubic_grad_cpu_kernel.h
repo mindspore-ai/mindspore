@@ -17,11 +17,9 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_RESIZE_BICUBIC_GRAD_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_RESIZE_BICUBIC_GRAD_CPU_KERNEL_H_
 
-#include <memory>
-#include <unordered_map>
 #include <vector>
-#include <algorithm>
 #include <utility>
+#include <algorithm>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 

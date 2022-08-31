@@ -24,9 +24,9 @@ namespace kernel {
 namespace {
 constexpr size_t kInputSize = 4;
 constexpr size_t kOutputSize = 1;
-constexpr int64_t row = 2;
-constexpr int64_t is_matrix = 2;
-constexpr int64_t col = 1;
+constexpr size_t row = 2;
+constexpr size_t is_matrix = 2;
+constexpr size_t col = 1;
 constexpr int64_t is_vector = 1;
 constexpr size_t kInputShapeIndex0 = 0;
 constexpr size_t kInputShapeIndex1 = 1;
@@ -81,8 +81,8 @@ void TridiagonalMatMulCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
                       << ", the col of 'subdiag': " << input2_shape[input2_shape.size() - col]
                       << ", the row of 'rhs': " << input3_shape[input2_shape.size() - row];
   }
-  int64_t rhs_shape_num = input3_shape.size() - row;
-  for (int64_t i = 0; i < rhs_shape_num; i++) {
+  size_t rhs_shape_num = input3_shape.size() - row;
+  for (size_t i = 0; i < rhs_shape_num; i++) {
     if ((input0_shape[i] != input3_shape[i]) || (input1_shape[i] != input3_shape[i]) ||
         (input2_shape[i] != input3_shape[i])) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
@@ -111,7 +111,6 @@ bool TridiagonalMatMulCpuKernelMod::Launch(const std::vector<kernel::AddressPtr>
     LaunchTridiagonalMatMul<std::complex<double>>(inputs, outputs);
   } else {
     MS_LOG(EXCEPTION) << "TridiagonalMatMul kernel data type " << TypeIdLabel(dtype_) << " not support.";
-    return false;
   }
   return true;
 }
@@ -134,14 +133,14 @@ void TridiagonalMatMulCpuKernelMod::LaunchTridiagonalMatMul(const std::vector<Ad
   T *y_ptr = reinterpret_cast<T *>(outputs[0]->addr);
   MS_EXCEPTION_IF_NULL(y_ptr);
   auto rhs_shape = AnfAlgo::GetInputDeviceShape(node_, kInputShapeIndex3);
-  int64_t m = rhs_shape[rhs_shape.size() - row];
-  int64_t n = rhs_shape[rhs_shape.size() - col];
-  int64_t size_mn = m * n;
+  size_t m = static_cast<size_t>(rhs_shape[rhs_shape.size() - row]);
+  size_t n = static_cast<size_t>(rhs_shape[rhs_shape.size() - col]);
+  size_t size_mn = m * n;
   using VectorMap = Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, 1>>;
   using MatrixMap = Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>;
   size_t rhs_num = 1;
   for (size_t i = 0; i < rhs_shape.size(); i++) {
-    rhs_num *= rhs_shape[i];
+    rhs_num *= static_cast<size_t>(rhs_shape[i]);
   }
   size_t rhs_matrix_num = rhs_num / size_mn;
   for (size_t i = 0; i < rhs_matrix_num; i++) {
@@ -151,7 +150,7 @@ void TridiagonalMatMulCpuKernelMod::LaunchTridiagonalMatMul(const std::vector<Ad
     MatrixMap rhs(rhs_ptr + i * m * n, m, n);
     MatrixMap y(y_ptr + i * m * n, m, n);
     y.array() = rhs.array().colwise() * maindiag.array();
-    for (int64_t j = 0; j < m - 1; j++) {
+    for (size_t j = 0; j < m - 1; j++) {
       y.array().row(j) += rhs.array().row(j + 1) * superdiag(j);
       y.array().row(j + 1) += rhs.array().row(j) * subdiag(j + 1);
     }
