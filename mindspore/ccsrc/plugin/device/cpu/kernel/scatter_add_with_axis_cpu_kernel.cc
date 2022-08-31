@@ -82,15 +82,16 @@ void ScatterAddWithAxisCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   int64_t sub_data_fix = 1;
   int64_t sub_index_fix = 1;
   for (int64_t i = value_dim_num_x2 - 1; i >= 0; --i) {
-    if (x_shape_[i] < indices_shape_[i] || indices_shape_[i] != updates_shape_[i] || updates_shape_[i] <= 0) {
-      MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the " << i << " dimension verification failed: "
-                               << "input0[" << x_shape_[i] << "], input1[" << indices_shape_[i] << "], input2["
-                               << updates_shape_[i] << "]";
+    size_t j = static_cast<size_t>(i);
+    if (x_shape_[j] < indices_shape_[j] || indices_shape_[j] != updates_shape_[j] || updates_shape_[j] <= 0) {
+      MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the " << j << " dimension verification failed: "
+                               << "input0[" << x_shape_[j] << "], input1[" << indices_shape_[j] << "], input2["
+                               << updates_shape_[j] << "]";
     }
     if (i > 0) {
-      sub_data_fix *= x_shape_[i];
+      sub_data_fix *= x_shape_[j];
       data_dim_vec_.push_back(sub_data_fix);
-      sub_index_fix *= indices_shape_[i];
+      sub_index_fix *= indices_shape_[j];
       index_dim_vec_.push_back(sub_index_fix);
     }
   }
@@ -102,7 +103,6 @@ bool ScatterAddWithAxisCpuKernelMod::Launch(const std::vector<AddressPtr> &input
   // check param
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
-  bool ret = true;
   switch (x_type_) {
     DO_COMPUTE_CASE(kNumberTypeFloat16, float16, indices_type_, inputs, outputs);
     DO_COMPUTE_CASE(kNumberTypeFloat32, float, indices_type_, inputs, outputs);
@@ -124,24 +124,22 @@ bool ScatterAddWithAxisCpuKernelMod::Launch(const std::vector<AddressPtr> &input
                               << "] is unsupported. It should be "
                                  "float16|float|double|bool|int8|int16|int32|int64|uint8|unint32|"
                                  "unit64|complex16|complex32.";
-      ret = false;
   }
-  return ret;
+  return true;
 }
 
 template <typename T, typename TI>
 void ScatterAddWithAxisCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                                   const std::vector<AddressPtr> &outputs) {
-  T *input_x1 = reinterpret_cast<T *>(inputs[0]->addr);
-  TI *input_x2 = reinterpret_cast<TI *>(inputs[1]->addr);
-  T *input_x3 = reinterpret_cast<T *>(inputs[2]->addr);
-  T *output_y = reinterpret_cast<T *>(outputs[0]->addr);
+  T *input_x1 = static_cast<T *>(inputs[0]->addr);
+  TI *input_x2 = static_cast<TI *>(inputs[1]->addr);
+  T *input_x3 = static_cast<T *>(inputs[2]->addr);
+  T *output_y = static_cast<T *>(outputs[0]->addr);
   int64_t value_dim_num_x1 = static_cast<int64_t>(x_shape_.size());
   axis_ = axis_ < 0 ? axis_ + value_dim_num_x1 : axis_;
-  int64_t axis_dim_value = x_shape_[axis_];
-  int64_t initial_size = inputs[0]->size;
-  int64_t total_value_num = initial_size / sizeof(T);
-  int64_t update_value_num = inputs[2]->size / sizeof(T);
+  int64_t axis_dim_value = static_cast<int64_t>(x_shape_[axis_]);
+  int64_t total_value_num = static_cast<int64_t>(inputs[0]->size / sizeof(T));
+  int64_t update_value_num = static_cast<int64_t>(inputs[2]->size / sizeof(T));
 
   // using input to initial output
   auto ret = memcpy_s(output_y, outputs[0]->size, input_x1, inputs[0]->size);
@@ -159,9 +157,9 @@ void ScatterAddWithAxisCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> 
     }
     int64_t input_x2_value = input_x2[i] < 0 ? input_x2[i] + axis_dim_value : input_x2[i];
     for (int64_t j = static_cast<int64_t>(index_dim_vec_.size()) - 1; j >= 0; --j) {
-      int64_t index_tmp = counter == axis_ ? input_x2_value : remain_index / index_dim_vec_[j];
-      index_value += (index_tmp * data_dim_vec_[j]);
-      remain_index %= index_dim_vec_[j];
+      int64_t index_tmp = counter == axis_ ? input_x2_value : remain_index / index_dim_vec_[LongToSize(j)];
+      index_value += (index_tmp * data_dim_vec_[LongToSize(j)]);
+      remain_index %= index_dim_vec_[LongToSize(j)];
       ++counter;
     }
     index_value += (counter == axis_ ? input_x2_value : remain_index);

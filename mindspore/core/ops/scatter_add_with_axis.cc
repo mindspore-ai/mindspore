@@ -64,10 +64,10 @@ TypePtr ScatterAddWithAxisInferType(const PrimitivePtr &primitive, const std::ve
   std::set<TypePtr> type_set = {kInt32, kInt64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("indices type", indiecs_type_ptr, type_set, prim_name);
   std::map<std::string, TypePtr> type_dict;
-  type_dict.emplace("input_x", input_args[kInputIndex0]->BuildType());
-  type_dict.emplace("updates", input_args[kInputIndex2]->BuildType());
+  (void)type_dict.emplace("input_x", input_args[kInputIndex0]->BuildType());
+  (void)type_dict.emplace("updates", input_args[kInputIndex2]->BuildType());
   std::set<TypePtr> check_list(common_valid_types);
-  check_list.insert(kBool);
+  (void)check_list.insert(kBool);
   return CheckAndConvertUtils::CheckTensorTypeSame(type_dict, check_list, prim_name);
 }
 }  // namespace

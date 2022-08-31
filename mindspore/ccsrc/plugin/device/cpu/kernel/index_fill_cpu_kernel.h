@@ -40,7 +40,7 @@ class IndexFillCpuKernelMod : public DeprecatedNativeCpuKernelMod {
 
  private:
   template <typename T>
-  void DoFill(uint32_t data_num, const T *input_x, const int32_t *input_dim, const std::map<int32_t, bool> &index_dict,
+  void DoFill(int32_t data_num, const T *input_x, const int32_t *input_dim, const std::map<int32_t, bool> &index_dict,
               const T *input_value, T *output_y, const int32_t x_dim_nums);
   template <typename T>
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);

@@ -74,7 +74,6 @@ bool IndexFillCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const 
                                    const std::vector<AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
-  bool ret = true;
   switch (x_type_) {
     INDEXFILL_COMPUTE_CASE(kNumberTypeUInt8, uint8_t, inputs, outputs)
     INDEXFILL_COMPUTE_CASE(kNumberTypeUInt16, uint16_t, inputs, outputs)
@@ -89,13 +88,12 @@ bool IndexFillCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const 
     INDEXFILL_COMPUTE_CASE(kNumberTypeFloat64, double, inputs, outputs)
     default:
       MS_EXCEPTION(TypeError) << "Unsupported input data type: " << TypeIdToType(x_type_)->ToString();
-      ret = false;
   }
-  return ret;
+  return true;
 }
 
 template <typename T>
-void IndexFillCpuKernelMod::DoFill(uint32_t data_num, const T *input_x, const int32_t *input_dim,
+void IndexFillCpuKernelMod::DoFill(int32_t data_num, const T *input_x, const int32_t *input_dim,
                                    const std::map<int32_t, bool> &index_dict, const T *input_value, T *output_y,
                                    const int32_t x_dim_nums) {
   int32_t dim_flag = 0;
@@ -106,9 +104,9 @@ void IndexFillCpuKernelMod::DoFill(uint32_t data_num, const T *input_x, const in
   int32_t remain_dims = 1;
   if (dim_flag == x_dim_nums) {
     if (dim_flag != 0) {
-      remain_dims = LongToInt(x_shape_[*input_dim]);
+      remain_dims = LongToInt(x_shape_[IntToSize(*input_dim)]);
     }
-    for (uint32_t i = 0; i < data_num; i++) {
+    for (int32_t i = 0; i < data_num; i++) {
       int32_t index_flag = 0;
       if (remain_dims != 0) {
         index_flag = i % remain_dims;
@@ -122,12 +120,12 @@ void IndexFillCpuKernelMod::DoFill(uint32_t data_num, const T *input_x, const in
     }
   } else {
     for (int32_t i = *input_dim + 1; i < x_dim_nums; i++) {
-      remain_dims *= LongToInt(x_shape_[i]);
+      remain_dims *= LongToInt(x_shape_[IntToSize(i)]);
     }
-    for (uint32_t i = 0; i < data_num; i++) {
+    for (int32_t i = 0; i < data_num; i++) {
       int32_t index_flag = 0;
       if (remain_dims != 0) {
-        index_flag = (i / remain_dims) % LongToInt(x_shape_[*input_dim]);
+        index_flag = (i / remain_dims) % LongToInt(x_shape_[IntToSize(*input_dim)]);
       }
       auto f = index_dict.find(index_flag);
       if (f != index_dict.end()) {
@@ -142,13 +140,13 @@ void IndexFillCpuKernelMod::DoFill(uint32_t data_num, const T *input_x, const in
 template <typename T>
 void IndexFillCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                          const std::vector<AddressPtr> &outputs) {
-  T *input_0 = reinterpret_cast<T *>(inputs[0]->addr);
-  int32_t *input_1 = reinterpret_cast<int32_t *>(inputs[1]->addr);
-  int32_t *input_2 = reinterpret_cast<int32_t *>(inputs[2]->addr);
-  T *input_3 = reinterpret_cast<T *>(inputs[3]->addr);
-  T *output_0 = reinterpret_cast<T *>(outputs[0]->addr);
-  int32_t x_dim_nums = x_shape_.size();
-  uint32_t data_num = inputs[0]->size / sizeof(T);
+  T *input_0 = static_cast<T *>(inputs[0]->addr);
+  int32_t *input_1 = static_cast<int32_t *>(inputs[1]->addr);
+  int32_t *input_2 = static_cast<int32_t *>(inputs[2]->addr);
+  T *input_3 = static_cast<T *>(inputs[3]->addr);
+  T *output_0 = static_cast<T *>(outputs[0]->addr);
+  int32_t x_dim_nums = static_cast<int32_t>(x_shape_.size());
+  int32_t data_num = static_cast<int32_t>(inputs[0]->size / sizeof(T));
   uint32_t index_num = inputs[2]->size / sizeof(int32_t);
   int32_t cur_dim = *input_1;
   if (cur_dim < 0) {
@@ -163,7 +161,7 @@ void IndexFillCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                           << "', the input of 'index' out of range (expected to be in range of [-1, 0], "
                           << "but got " << input_2[i] << ")";
       } else {
-        index_dict.insert(std::pair<int32_t, bool>(0, true));
+        (void)index_dict.insert(std::pair<int32_t, bool>(0, true));
       }
     }
   } else if (cur_dim < -x_dim_nums || cur_dim >= x_dim_nums) {
@@ -171,7 +169,7 @@ void IndexFillCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                       << (0 - x_dim_nums) << ", " << (x_dim_nums - 1) << "], but got " << cur_dim << ")";
   } else {
     for (uint32_t i = 0; i < index_num; i++) {
-      int32_t cur_index = LongToInt(x_shape_[*input_1]);
+      int32_t cur_index = LongToInt(x_shape_[IntToSize(*input_1)]);
       if (input_2[i] < -cur_index || input_2[i] >= cur_index) {
         MS_LOG(EXCEPTION) << "For '" << kernel_name_
                           << "', the input of 'index' out of range (expected to be in range of [" << (0 - cur_index)
@@ -180,7 +178,7 @@ void IndexFillCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
         if (input_2[i] < 0) {
           input_2[i] = input_2[i] + cur_index;
         }
-        index_dict.insert(std::pair<int32_t, bool>(input_2[i], true));
+        (void)index_dict.insert(std::pair<int32_t, bool>(input_2[i], true));
       }
     }
   }
