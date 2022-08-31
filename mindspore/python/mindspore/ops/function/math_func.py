@@ -32,7 +32,7 @@ from mindspore.ops.operations.math_ops import LuUnpack
 from mindspore.nn import layer
 from mindspore._checkparam import check_is_number
 from mindspore._checkparam import Rel
-from ..operations.math_ops import (
+from mindspore.ops.operations.math_ops import (
     Bernoulli,
     BesselJ0,
     BesselJ1,
@@ -55,11 +55,10 @@ from ..operations.math_ops import (
     SparseSegmentMean,
     InplaceUpdateV2,
 )
-from ...common import dtype as mstype
-from ...common.tensor import Tensor
+from mindspore.common.tensor import Tensor
+from mindspore._checkparam import Validator as validator
+from mindspore.ops._primitive_cache import _get_cache_prim
 from ..._c_expression import Tensor as Tensor_
-from ..._checkparam import Validator as validator
-from .._primitive_cache import _get_cache_prim
 
 
 @constexpr
@@ -4835,8 +4834,7 @@ def gumbel_softmax(logits, tau=1, hard=False, dim=-1):
         raise TypeError("The input logits must be tensor")
     if logits.shape == ():
         raise ValueError("For gumbel_softmax, the 0-D input is not supported.")
-    dtype_op = _get_cache_prim(P.DType)()
-    logits_dtype = dtype_op(logits)
+    logits_dtype = _get_cache_prim(P.DType)()(logits)
     _check_input_dtype("logits", logits_dtype, [mstype.float16, mstype.float32], "gumbel_softmax")
     _check_attr_dtype("tau", tau, [float], "gumbel_softmax")
     _check_attr_dtype("hard", hard, [bool], "gumbel_softmax")
@@ -4847,22 +4845,19 @@ def gumbel_softmax(logits, tau=1, hard=False, dim=-1):
     else:
         _check_int_range(dim, -len(logits.shape), len(logits.shape), 'dim', "gumbel_softmax")
 
-    shape_op = _get_cache_prim(P.Shape)()
-    cast_op = _get_cache_prim(P.Cast)()
     log_op = _get_cache_prim(P.Log)()
     const_op = _get_cache_prim(P.ScalarToArray)()
-    softmax_op = _get_cache_prim(P.Softmax)(dim)
-    onehot_op = _get_cache_prim(P.OneHot)(dim)
 
-    sample_shape = shape_op(logits)
+    sample_shape = _get_cache_prim(P.Shape)()(logits)
     uniform = C.uniform(sample_shape, const_op(0.0), const_op(1.0))
-    uniform = cast_op(uniform, logits_dtype)
+    uniform = _get_cache_prim(P.Cast)()(uniform, logits_dtype)
     gumbel = neg_tensor(log_op(neg_tensor(log_op(uniform))))
     gumbel = (logits + gumbel) / tau
-    y_soft = softmax_op(gumbel)
+    y_soft = _get_cache_prim(P.Softmax)(dim)(gumbel)
     if hard:
         index = y_soft.argmax(axis=dim)
-        y_hard = onehot_op(index, sample_shape[dim], Tensor(1, logits_dtype), Tensor(0, logits_dtype))
+        y_hard = _get_cache_prim(P.OneHot)(dim)(index, sample_shape[dim], Tensor(1, logits_dtype),
+                                                Tensor(0, logits_dtype))
         ret = y_hard - ops.stop_gradient(y_soft) + y_soft
     else:
         ret = y_soft
