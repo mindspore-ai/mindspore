@@ -68,7 +68,7 @@ from .validators import check_adjust_brightness, check_adjust_contrast, check_ad
     check_cut_mix_batch_c, check_cutout_new, check_decode, check_erase, check_five_crop, check_gaussian_blur, \
     check_hsv_to_rgb, check_linear_transform, check_mix_up, check_mix_up_batch_c, check_normalize, \
     check_normalizepad, check_num_channels, check_pad, check_pad_to_size, check_positive_degrees, check_posterize, \
-    check_prob, check_random_adjust_sharpness, check_random_affine, check_random_auto_contrast, \
+    check_prob, check_rand_augment, check_random_adjust_sharpness, check_random_affine, check_random_auto_contrast, \
     check_random_color_adjust, check_random_crop, check_random_erasing, check_random_perspective, \
     check_random_posterize, check_random_resize_crop, check_random_rotation, check_random_select_subpolicy_op, \
     check_random_solarize, check_range, check_rescale, check_resize, check_resize_interpolation, check_resized_crop, \
@@ -1715,6 +1715,66 @@ class Posterize(ImageTensorOperation):
 
     def parse(self):
         return cde.PosterizeOperation(self.bits)
+
+
+class RandAugment(ImageTensorOperation):
+    """
+    Apply RandAugment data augmentation method based on
+    `RandAugment: Learning Augmentation Strategies from Data <https://arxiv.org/pdf/1909.13719.pdf>`.
+    This operation works only with 3-channel RGB images.
+
+    Args:
+        num_ops (int, optional): Number of augmentation transformations to apply sequentially. Default: 2.
+        magnitude (int, optional): Magnitude for all the transformations and its value should be smaller than the value
+            of num_magnitude_bins. Default: 9.
+        num_magnitude_bins (int, optional): The number of different magnitude values. The number of different magnitude
+            values, must be greater than or equal to 2. Default: 31.
+        interpolation (Inter, optional): Image interpolation mode for Resize operator.
+            It can be any of [Inter.NEAREST, Inter.BILINEAR, Inter.BICUBIC, Inter.AREA]. Default: Inter.NEAREST.
+
+            - Inter.NEAREST: means interpolation method is nearest-neighbor interpolation.
+
+            - Inter.BILINEAR: means interpolation method is bilinear interpolation.
+
+            - Inter.BICUBIC: means the interpolation method is bicubic interpolation.
+
+            - Inter.AREA: means the interpolation method is area interpolation.
+
+        fill_value (Union[int, tuple[int, int, int]], optional): Pixel fill value for the area outside the transformed
+            image. It can be an int or a 3-tuple. If it is a 3-tuple, it is used to fill R, G, B channels respectively.
+            If it is an integer, it is used for all RGB channels. The fill_value values must be in range [0, 255].
+            Default: 0.
+
+    Raises:
+        TypeError: If `num_ops` is not of type int.
+        TypeError: If `magnitude` is not of type int.
+        TypeError: If `num_magnitude_bins` is not of type int.
+        TypeError: If `interpolation` not of type int.
+        TypeError: If `fill_value` is not an int or a tuple of length 3.
+        RuntimeError: If given tensor shape is not <H, W, C>.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> transforms_list = [vision.Decode(), vision.RandAugment()]
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list, input_columns=["image"])
+    """
+
+    @check_rand_augment
+    def __init__(self, num_ops=2, magnitude=9, num_magnitude_bins=31, interpolation=Inter.NEAREST, fill_value=0):
+        super().__init__()
+        self.num_ops = num_ops
+        self.magnitude = magnitude
+        self.num_magnitude_bins = num_magnitude_bins
+        self.interpolation = interpolation
+        if isinstance(fill_value, int):
+            fill_value = tuple([fill_value] * 3)
+        self.fill_value = fill_value
+
+    def parse(self):
+        return cde.RandAugmentOperation(self.num_ops, self.magnitude, self.num_magnitude_bins,
+                                        Inter.to_c_type(self.interpolation), self.fill_value)
 
 
 class RandomAdjustSharpness(ImageTensorOperation):

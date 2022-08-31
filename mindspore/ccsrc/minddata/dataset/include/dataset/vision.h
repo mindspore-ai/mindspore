@@ -747,6 +747,44 @@ class MS_API Posterize final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief Apply RandAugment data augmentation method.
+class MS_API RandAugment final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] num_ops Number of augmentation transformations to apply sequentially. Default: 2.
+  /// \param[in] magnitude Magnitude for all the transformations. Default: 9.
+  /// \param[in] num_magnitude_bins The number of different magnitude values. Default: 31.
+  /// \param[in] interpolation An enum for the mode of interpolation. Default: InterpolationMode::kNearestNeighbour.
+  ///     - InterpolationMode::kLinear, Interpolation method is blinear interpolation.
+  ///     - InterpolationMode::kNearestNeighbour, Interpolation method is nearest-neighbor interpolation.
+  ///     - InterpolationMode::kCubic, Interpolation method is bicubic interpolation.
+  /// \param[in] fill_value A vector representing the pixel intensity of the borders. Default: {0, 0, 0}.
+  /// \par Example
+  /// \code
+  ///     /* Define operations */
+  ///     auto decode_op = vision::Decode();
+  ///     auto rand_augment_op = vision::RandAugment();
+  ///     /* dataset is an instance of Dataset object */
+  ///     dataset = dataset->Map({decode_op, rand_augment_op}, // operations
+  ///                            {"image"});                   // input columns
+  /// \endcode
+  explicit RandAugment(int32_t num_ops = 2, int32_t magnitude = 9, int32_t num_magnitude_bins = 31,
+                       InterpolationMode interpolation = InterpolationMode::kNearestNeighbour,
+                       const std::vector<uint8_t> &fill_value = {0, 0, 0});
+
+  /// \brief Destructor.
+  ~RandAugment() = default;
+
+ protected:
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief Automatically adjust the contrast of the image with a given probability.
 class MS_API RandomAutoContrast final : public TensorTransform {
  public:

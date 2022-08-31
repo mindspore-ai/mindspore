@@ -48,6 +48,7 @@
 #include "minddata/dataset/kernels/ir/vision/pad_ir.h"
 #include "minddata/dataset/kernels/ir/vision/pad_to_size_ir.h"
 #include "minddata/dataset/kernels/ir/vision/posterize_ir.h"
+#include "minddata/dataset/kernels/ir/vision/rand_augment_ir.h"
 #include "minddata/dataset/kernels/ir/vision/random_adjust_sharpness_ir.h"
 #include "minddata/dataset/kernels/ir/vision/random_affine_ir.h"
 #include "minddata/dataset/kernels/ir/vision/random_auto_contrast_ir.h"
@@ -651,6 +652,31 @@ struct Posterize::Data {
 Posterize::Posterize(uint8_t bits) : data_(std::make_shared<Data>(bits)) {}
 
 std::shared_ptr<TensorOperation> Posterize::Parse() { return std::make_shared<PosterizeOperation>(data_->bits_); }
+
+// RandAugment Transform Operation
+struct RandAugment::Data {
+  Data(int32_t num_ops, int32_t magnitude, int32_t num_magnitude_bins, InterpolationMode interpolation,
+       const std::vector<uint8_t> &fill_value)
+      : num_ops_(num_ops),
+        magnitude_(magnitude),
+        num_magnitude_bins_(num_magnitude_bins),
+        interpolation_(interpolation),
+        fill_value_(fill_value) {}
+  int32_t num_ops_;
+  int32_t magnitude_;
+  int32_t num_magnitude_bins_;
+  InterpolationMode interpolation_;
+  std::vector<uint8_t> fill_value_;
+};
+
+RandAugment::RandAugment(int32_t num_ops, int32_t magnitude, int32_t num_magnitude_bins,
+                         InterpolationMode interpolation, const std::vector<uint8_t> &fill_value)
+    : data_(std::make_shared<Data>(num_ops, magnitude, num_magnitude_bins, interpolation, fill_value)) {}
+
+std::shared_ptr<TensorOperation> RandAugment::Parse() {
+  return std::make_shared<RandAugmentOperation>(data_->num_ops_, data_->magnitude_, data_->num_magnitude_bins_,
+                                                data_->interpolation_, data_->fill_value_);
+}
 
 // RandomAdjustSharpness Transform Operation.
 struct RandomAdjustSharpness::Data {

@@ -48,6 +48,7 @@
 #include "minddata/dataset/kernels/ir/vision/pad_ir.h"
 #include "minddata/dataset/kernels/ir/vision/pad_to_size_ir.h"
 #include "minddata/dataset/kernels/ir/vision/posterize_ir.h"
+#include "minddata/dataset/kernels/ir/vision/rand_augment_ir.h"
 #include "minddata/dataset/kernels/ir/vision/random_adjust_sharpness_ir.h"
 #include "minddata/dataset/kernels/ir/vision/random_affine_ir.h"
 #include "minddata/dataset/kernels/ir/vision/random_auto_contrast_ir.h"
@@ -417,6 +418,19 @@ PYBIND_REGISTER(
         auto posterize = std::make_shared<vision::PosterizeOperation>(bits);
         THROW_IF_ERROR(posterize->ValidateParams());
         return posterize;
+      }));
+  }));
+
+PYBIND_REGISTER(
+  RandAugmentOperation, 1, ([](const py::module *m) {
+    (void)py::class_<vision::RandAugmentOperation, TensorOperation, std::shared_ptr<vision::RandAugmentOperation>>(
+      *m, "RandAugmentOperation")
+      .def(py::init([](int32_t num_ops, int32_t magnitude, int32_t num_magnitude_bins, InterpolationMode interpolation,
+                       const std::vector<uint8_t> &fill_value) {
+        auto rand_augment = std::make_shared<vision::RandAugmentOperation>(num_ops, magnitude, num_magnitude_bins,
+                                                                           interpolation, fill_value);
+        THROW_IF_ERROR(rand_augment->ValidateParams());
+        return rand_augment;
       }));
   }));
 

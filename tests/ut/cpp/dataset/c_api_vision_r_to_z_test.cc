@@ -899,3 +899,235 @@ TEST_F(MindDataTestPipeline, TestResizedCropParamCheck) {
   // Expect failure: invalid size for Crop
   EXPECT_EQ(iter3, nullptr);
 }
+
+
+/// Feature: RandAugment
+/// Description: test RandAugment pipeline
+/// Expectation: create an ImageFolder dataset then do rand augmentation on it
+TEST_F(MindDataTestPipeline, TestRandAugment) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandAugment.";
+
+  std::string MindDataPath = "data/dataset";
+  std::string folder_path = MindDataPath + "/testImageNetData2/train/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 5));
+
+  EXPECT_NE(ds, nullptr);
+
+  auto rand_augment_op = vision::RandAugment(3, 4, 5, InterpolationMode::kLinear, {0, 0, 0});
+
+  ds = ds->Map({rand_augment_op});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    iter->GetNextRow(&row);
+  }
+  EXPECT_EQ(i, 5);
+
+  iter->Stop();
+}
+
+/// Feature: RandAugment
+/// Description: test RandAugment with invalid fill_value
+/// Expectation: pipeline iteration failed with wrong argument fill_value
+TEST_F(MindDataTestPipeline, TestRandAugmentInvalidFillValue) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandAugmentInvalidFillValue.";
+
+  std::string MindDataPath = "data/dataset";
+  std::string folder_path = MindDataPath + "/testImageNetData/train/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
+  EXPECT_NE(ds, nullptr);
+
+  auto rand_augment_op = vision::RandAugment(3, 4, 5, InterpolationMode::kNearestNeighbour, {20, 20});
+
+  ds = ds->Map({rand_augment_op});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_EQ(iter, nullptr);
+}
+
+/// Feature: RandAugment
+/// Description: test RandAugment with invalid num_ops
+/// Expectation: pipeline iteration failed with wrong argument num_ops
+TEST_F(MindDataTestPipeline, TestRandAugmentInvalidNumOps) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandAugmentInvalidNumOps.";
+
+  std::string MindDataPath = "data/dataset";
+  std::string folder_path = MindDataPath + "/testImageNetData/train/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
+  EXPECT_NE(ds, nullptr);
+
+  auto rand_augment_op = vision::RandAugment(-1, 4, 5);
+
+  ds = ds->Map({rand_augment_op});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_EQ(iter, nullptr);
+}
+
+/// Feature: RandAugment
+/// Description: test RandAugment with num_ops equal to 0
+/// Expectation: pipeline iteration success with num_ops equal to 0
+TEST_F(MindDataTestPipeline, TestRandAugmentNumOpsZero) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandAugmentNumOpsZero.";
+
+  std::string MindDataPath = "data/dataset";
+  std::string folder_path = MindDataPath + "/testImageNetData2/train/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
+
+  EXPECT_NE(ds, nullptr);
+
+  auto rand_augment_op = vision::RandAugment(0, 4, 5, InterpolationMode::kLinear, {0, 0, 0});
+
+  ds = ds->Map({rand_augment_op});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    iter->GetNextRow(&row);
+  }
+  EXPECT_EQ(i, 2);
+
+  iter->Stop();
+}
+
+/// Feature: RandAugment
+/// Description: test RandAugment with invalid magnitude
+/// Expectation: pipeline iteration failed with wrong argument magnitude
+TEST_F(MindDataTestPipeline, TestRandAugmentInvalidMagnitude) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandAugmentInvalidMagnitude.";
+
+  std::string MindDataPath = "data/dataset";
+  std::string folder_path = MindDataPath + "/testImageNetData/train/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
+  EXPECT_NE(ds, nullptr);
+
+  auto rand_augment_op = vision::RandAugment(2, -1, 2, InterpolationMode::kLinear, {0, 0, 0});
+
+  ds = ds->Map({rand_augment_op});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_EQ(iter, nullptr);
+}
+
+/// Feature: RandAugment
+/// Description: test RandAugment with magnitude equal to 0
+/// Expectation: pipeline iteration success with magnitude equal to 0
+TEST_F(MindDataTestPipeline, TestRandAugmentMagnitudeZero) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandAugmentMagnitudeZero.";
+
+  std::string MindDataPath = "data/dataset";
+  std::string folder_path = MindDataPath + "/testImageNetData2/train/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 5));
+
+  EXPECT_NE(ds, nullptr);
+
+  auto rand_augment_op = vision::RandAugment(3, 0, 2, InterpolationMode::kLinear, {0, 0, 0});
+
+  ds = ds->Map({rand_augment_op});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    iter->GetNextRow(&row);
+  }
+  EXPECT_EQ(i, 5);
+
+  iter->Stop();
+}
+
+/// Feature: RandAugment
+/// Description: test RandAugment with invalid num_magnitude_bins
+/// Expectation: pipeline iteration failed with wrong argument num_magnitude_bins
+TEST_F(MindDataTestPipeline, TestRandAugmentInvalidNumMagBins) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandAugmentInvalidNumMagBins.";
+
+  std::string MindDataPath = "data/dataset";
+  std::string folder_path = MindDataPath + "/testImageNetData2/train/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 5));
+
+  EXPECT_NE(ds, nullptr);
+
+  auto rand_augment_op = vision::RandAugment(3, 2, 1, InterpolationMode::kLinear, {0, 0, 0});
+
+  ds = ds->Map({rand_augment_op});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_EQ(iter, nullptr);
+}
+
+/// Feature: RandAugment
+/// Description: test RandAugment with num_magnitude_bins equal to 2
+/// Expectation: pipeline iteration success with num_magnitude_bins equal to 2
+TEST_F(MindDataTestPipeline, TestRandAugmentNumMagBins) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandAugmentNumMagBins.";
+  std::string MindDataPath = "data/dataset";
+  std::string folder_path = MindDataPath + "/testImageNetData2/train/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 5));
+
+  EXPECT_NE(ds, nullptr);
+
+  auto rand_augment_op = vision::RandAugment(3, 0, 2, InterpolationMode::kLinear, {0, 0, 0});
+
+  ds = ds->Map({rand_augment_op});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+
+  EXPECT_NE(iter, nullptr);
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    iter->GetNextRow(&row);
+  }
+  EXPECT_EQ(i, 5);
+
+  iter->Stop();
+}
+
+/// Feature: RandAugment
+/// Description: test RandAugment with magnitude greater than num_magnitude_bins
+/// Expectation: pipeline iteration failed with invalid magnitude value
+TEST_F(MindDataTestPipeline, TestRandAugmentMagGreNMBError) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandAugmentMagGreNMBError.";
+  std::string MindDataPath = "data/dataset";
+  std::string folder_path = MindDataPath + "/testImageNetData2/train/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 5));
+  EXPECT_NE(ds, nullptr);
+
+  auto rand_augment_op = vision::RandAugment(3, 5, 4);
+  ds = ds->Map({rand_augment_op});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_EQ(iter, nullptr);
+}
