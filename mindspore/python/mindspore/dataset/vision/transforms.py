@@ -4097,7 +4097,7 @@ class VerticalFlip(ImageTensorOperation):
     Flip the input image vertically.
 
     Raises:
-        RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
+        RuntimeError: If given tensor shape is not <H, W> or <..., H, W, C>.
 
     Supported Platforms:
         ``CPU``
