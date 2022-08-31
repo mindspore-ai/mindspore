@@ -304,3 +304,4 @@ def test_init_data_after_flatten_weights():
     assert np.allclose(data, 2)
     net.para2.init_data()
     assert np.allclose(data, 1)
+    context.set_auto_parallel_context(parallel_mode="stand_alone")
