@@ -82,6 +82,7 @@ bool ClusterContext::Initialize() {
   if (!IsScheduler()) {
     // Only node which is not the scheduler needs route table proxy.
     auto cgn = std::dynamic_pointer_cast<distributed::cluster::topology::ComputeGraphNode>(node_base_);
+    MS_EXCEPTION_IF_NULL(cgn);
     actor_route_table_proxy_ = std::make_shared<ActorRouteTableProxy>(cgn);
     MS_EXCEPTION_IF_NULL(actor_route_table_proxy_);
   }

@@ -26,6 +26,7 @@ MemReuseChecker &MemReuseChecker::GetInstance() {
 }
 
 void MemReuseChecker::CheckSignalOps(const CNodePtr &c_node) const {
+  MS_EXCEPTION_IF_NULL(c_node);
   std::string node_name = common::AnfAlgo::GetCNodeName(c_node);
   if (node_name == kSendOpName || node_name == kRecvOpName) {
     MS_LOG(INFO) << "MemReuseChecker check op_name of  Send or Send";
@@ -42,6 +43,7 @@ void MemReuseChecker::CheckWorkSpace(const std::vector<size_t> &max_list) {
 }
 
 void MemReuseChecker::CheckOutRef(const KernelRefs &kernel_refs, const CNodePtr &c_node, size_t output_idx) const {
+  MS_EXCEPTION_IF_NULL(c_node);
   auto key = c_node.get();
   auto iter = kernel_refs.find(key);
   auto node_name = common::AnfAlgo::GetCNodeName(c_node);
@@ -60,6 +62,7 @@ int64_t MemReuseChecker::CalculOriInput(const KernelGraph *graph) const {
   MS_EXCEPTION_IF_NULL(graph);
   int64_t static_input_size = 0;
   for (auto &item : graph->inputs()) {
+    MS_EXCEPTION_IF_NULL(item);
     if (!item->isa<Parameter>()) {
       continue;
     }
@@ -98,6 +101,7 @@ int64_t MemReuseChecker::CalculOriValue(const KernelGraph *graph) const {
 }
 
 int64_t MemReuseChecker::CalculOriStatic(const KernelGraph *graph) const {
+  MS_EXCEPTION_IF_NULL(graph);
   // cal static inputs
   auto static_input_size = CalculOriInput(graph);
   // do not calcul outpput size
@@ -111,6 +115,7 @@ int64_t MemReuseChecker::CalculOriDy(const KernelGraph *graph) const {
   int64_t ori_dy_size = 0;
   auto kerenls = graph->execution_order();
   for (auto &kernel : kerenls) {
+    MS_EXCEPTION_IF_NULL(kernel);
     auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
     MS_EXCEPTION_IF_NULL(kernel_mod);
     for (auto &dy_size : kernel_mod->GetOutputSizeList()) {
@@ -126,6 +131,7 @@ int64_t MemReuseChecker::CalculOriWk(const KernelGraph *graph) const {
   int64_t ori_wk_size = 0;
   auto kerenls = graph->execution_order();
   for (auto &kernel : kerenls) {
+    MS_EXCEPTION_IF_NULL(kernel);
     auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
     MS_EXCEPTION_IF_NULL(kernel_mod);
     for (auto &wk_size : kernel_mod->GetWorkspaceSizeList()) {
@@ -151,6 +157,7 @@ std::string MemReuseChecker::GetSplitName(const std::string &scope_name) const {
 
 void MemReuseChecker::CheckMemReuseIR(const KernelRefCountPtrList &total_refs_list,
                                       const KernelDefPtrMaps &kernel_def_ptr_list, const KernelGraph *graph) {
+  MS_EXCEPTION_IF_NULL(graph);
   total_ori_static_size_ = CalculOriStatic(graph);
   total_ori_input_size_ = CalculOriInput(graph);
   total_ori_value_size_ = CalculOriValue(graph);
@@ -195,9 +202,11 @@ void MemReuseChecker::ExportKernelDependence() {
   size_t i = 0;
   for (const auto &kernel_front : kernel_front_map_) {
     auto kernel = kernel_front.first;
+    MS_EXCEPTION_IF_NULL(kernel);
     auto front = kernel_front.second;
     ofs << "[" << i++ << "] " << kernel->scope_full_name() << "\n";
     for (const auto &node : front) {
+      MS_EXCEPTION_IF_NULL(node);
       ofs << node->scope_full_name() << "\n";
     }
     ofs << "\n\n";
@@ -207,6 +216,7 @@ void MemReuseChecker::ExportKernelDependence() {
 }
 
 bool MemReuseChecker::CheckGraphOutputAssigned(const session::KernelGraph *graph) const {
+  MS_EXCEPTION_IF_NULL(graph);
   // set real graph output node to be special who's refcount equal kMaxRefCount
   for (const auto &output : graph->outputs()) {
     MS_EXCEPTION_IF_NULL(output);
@@ -214,6 +224,7 @@ bool MemReuseChecker::CheckGraphOutputAssigned(const session::KernelGraph *graph
     for (size_t i = 0; i < input_num; ++i) {
       if (output->isa<CNode>()) {
         auto cnode = output->cast<CNodePtr>();
+        MS_EXCEPTION_IF_NULL(cnode);
         auto input_node = cnode->input(i + 1);
         auto kernel_input_with_idx = common::AnfAlgo::VisitKernel(input_node, 0);
         auto kernel_input = kernel_input_with_idx.first;
@@ -238,12 +249,14 @@ bool MemReuseChecker::CheckGraphOutputAssigned(const session::KernelGraph *graph
 }
 
 void MemReuseChecker::ExportMemOpIr(const KernelDef *def, std::ofstream &ofs, int def_idx) const {
+  MS_EXCEPTION_IF_NULL(def);
   auto scope_name = def->scope_full_name();
   std::string split_name = GetSplitName(scope_name);
   ofs << "$" << def_idx << "\t" << split_name << "\t" << static_cast<int>(def->type_) << "\t";
   ofs << "inputs[";
   for (auto &in : def->inputs_) {
     for (auto &in_ref : in.second) {
+      MS_EXCEPTION_IF_NULL(in_ref);
       ofs << "%" << in_ref->index_ << "T"
           << ",";
     }
@@ -252,6 +265,7 @@ void MemReuseChecker::ExportMemOpIr(const KernelDef *def, std::ofstream &ofs, in
   ofs << "\toutpus[";
   for (auto &ou : def->outputs_) {
     for (auto &ou_ref : ou.second) {
+      MS_EXCEPTION_IF_NULL(ou_ref);
       ofs << "%" << ou_ref->index_ << "T"
           << ",";
     }
@@ -340,10 +354,12 @@ void MemReuseChecker::ExportNormalOpIr(const std::vector<CNodePtr> &cnodes) {
 }
 
 void MemReuseChecker::SetTesnorFromAndToInfo(const KernelDef *op_def) {
+  MS_EXCEPTION_IF_NULL(op_def);
   auto split_name = GetSplitName(op_def->scope_full_name());
   for (auto &in : op_def->inputs_) {
     auto in_tensors = in.second;
     for (auto &tensor : in_tensors) {
+      MS_EXCEPTION_IF_NULL(tensor);
       auto indx = tensor->index_;
       tensor_to_[indx].push_back(split_name);
     }
@@ -351,6 +367,7 @@ void MemReuseChecker::SetTesnorFromAndToInfo(const KernelDef *op_def) {
   for (auto &ou : op_def->outputs_) {
     auto ou_tensors = ou.second;
     for (auto &tensor : ou_tensors) {
+      MS_EXCEPTION_IF_NULL(tensor);
       auto indx = tensor->index_;
       tensor_from_[indx].push_back(split_name);
     }
@@ -358,8 +375,10 @@ void MemReuseChecker::SetTesnorFromAndToInfo(const KernelDef *op_def) {
 }
 
 void MemReuseChecker::CheckNormalIR(const session::KernelGraph *graph) {
+  MS_EXCEPTION_IF_NULL(graph);
   const auto &cnodes = graph->execution_order();
   for (const auto &node : cnodes) {
+    MS_EXCEPTION_IF_NULL(node);
     std::vector<const void *> curr_ous;
     size_t output_num = common::AnfAlgo::GetOutputTensorNum(node);
     for (size_t i = 0; i < output_num; ++i) {

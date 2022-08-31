@@ -130,6 +130,7 @@ bool MetaServerNode::InitTCPServer() {
 }
 
 MessageBase *const MetaServerNode::HandleMessage(MessageBase *const message) {
+  MS_ERROR_IF_NULL_W_RET_VAL(message, rpc::NULL_MSG);
   const auto &name = message->Name();
 
   // Handle system messages.
@@ -161,6 +162,7 @@ MessageBase *const MetaServerNode::HandleMessage(MessageBase *const message) {
 }
 
 MessageBase *const MetaServerNode::ProcessRegister(MessageBase *const message) {
+  MS_ERROR_IF_NULL_W_RET_VAL(message, rpc::NULL_MSG);
   RegistrationMessage registration;
   const std::string &body = message->Body();
   (void)registration.ParseFromArray(body.c_str(), SizeToInt(body.length()));
@@ -173,6 +175,7 @@ MessageBase *const MetaServerNode::ProcessRegister(MessageBase *const message) {
   if (nodes_.find(node_id) == nodes_.end()) {
     auto rank_id = AllocateRankId(role);
     std::shared_ptr<NodeInfo> node_info = std::make_shared<NodeInfo>(node_id);
+    MS_ERROR_IF_NULL_W_RET_VAL(node_info, rpc::NULL_MSG);
     node_info->host_name = host_name;
     node_info->role = role;
     node_info->rank_id = rank_id;
@@ -209,6 +212,7 @@ MessageBase *const MetaServerNode::ProcessRegister(MessageBase *const message) {
 }
 
 MessageBase *const MetaServerNode::ProcessUnregister(MessageBase *const message) {
+  MS_ERROR_IF_NULL_W_RET_VAL(message, rpc::NULL_MSG);
   UnregistrationMessage unregistration;
   const std::string &body = message->Body();
   (void)unregistration.ParseFromArray(body.c_str(), SizeToInt(body.length()));
@@ -243,6 +247,7 @@ MessageBase *const MetaServerNode::ProcessUnregister(MessageBase *const message)
 }
 
 MessageBase *const MetaServerNode::ProcessHeartbeat(MessageBase *const message) {
+  MS_ERROR_IF_NULL_W_RET_VAL(message, rpc::NULL_MSG);
   HeartbeatMessage heartbeat;
   const std::string &body = message->Body();
   (void)heartbeat.ParseFromArray(body.c_str(), SizeToInt(body.length()));
@@ -252,6 +257,7 @@ MessageBase *const MetaServerNode::ProcessHeartbeat(MessageBase *const message) 
   std::shared_lock<std::shared_mutex> lock(nodes_mutex_);
   if (nodes_.find(node_id) != nodes_.end()) {
     auto &node = nodes_[node_id];
+    MS_ERROR_IF_NULL_W_RET_VAL(node, rpc::NULL_MSG);
     (void)time(&(node->last_update));
     node->state = NodeState::kRegistered;
 
@@ -271,6 +277,7 @@ MessageBase *const MetaServerNode::ProcessHeartbeat(MessageBase *const message) 
 }
 
 MessageBase *const MetaServerNode::ProcessWriteMetadata(MessageBase *const message) {
+  MS_ERROR_IF_NULL_W_RET_VAL(message, rpc::NULL_MSG);
   const std::string &body = message->Body();
   MetadataMessage meta_msg;
   (void)meta_msg.ParseFromArray(body.c_str(), SizeToInt(body.length()));
@@ -284,6 +291,7 @@ MessageBase *const MetaServerNode::ProcessWriteMetadata(MessageBase *const messa
 }
 
 MessageBase *const MetaServerNode::ProcessReadMetadata(MessageBase *const message) {
+  MS_ERROR_IF_NULL_W_RET_VAL(message, rpc::NULL_MSG);
   const std::string &body = message->Body();
   MetadataMessage meta_msg;
   (void)meta_msg.ParseFromArray(body.c_str(), SizeToInt(body.length()));
@@ -305,6 +313,7 @@ MessageBase *const MetaServerNode::ProcessReadMetadata(MessageBase *const messag
 }
 
 MessageBase *const MetaServerNode::ProcessDeleteMetadata(MessageBase *const message) {
+  MS_ERROR_IF_NULL_W_RET_VAL(message, rpc::NULL_MSG);
   const std::string &body = message->Body();
   MetadataMessage meta_msg;
   (void)meta_msg.ParseFromArray(body.c_str(), SizeToInt(body.length()));
@@ -325,6 +334,7 @@ MessageBase *const MetaServerNode::ProcessDeleteMetadata(MessageBase *const mess
 }
 
 MessageBase *const MetaServerNode::ProcessGetHostNames(MessageBase *const message) {
+  MS_ERROR_IF_NULL_W_RET_VAL(message, rpc::NULL_MSG);
   // Convert result to the message.
   nlohmann::json hostnames = nlohmann::json::array();
   nlohmann::json retval = nlohmann::json::object();
@@ -344,10 +354,10 @@ MessageBase *const MetaServerNode::ProcessGetHostNames(MessageBase *const messag
     // The hostnames must are sorted strictly by the rank id.
     for (auto iter = nodes_.begin(); iter != nodes_.end(); ++iter) {
       auto node_info = iter->second;
+      MS_EXCEPTION_IF_NULL(node_info);
       if (node_info->role != node_role) {
         continue;
       }
-      MS_EXCEPTION_IF_NULL(node_info);
       if (node_info->rank_id >= 0 && node_info->rank_id < tmp_hostnames.size()) {
         tmp_hostnames[node_info->rank_id] = node_info->host_name;
       } else {
@@ -432,7 +442,7 @@ void MetaServerNode::UpdateTopoState() {
 bool MetaServerNode::TransitionToInitialized() {
   if (nodes_.size() == total_node_num_) {
     // Persist the cluster metadata into storage through configuration.
-    if (recovery::IsEnableRecovery() && configuration_->Empty()) {
+    if (recovery::IsEnableRecovery() && configuration_ != nullptr && configuration_->Empty()) {
       if (!Persist()) {
         MS_LOG(EXCEPTION) << "Failed to persist the metadata of the cluster.";
       }
@@ -448,6 +458,7 @@ bool MetaServerNode::Recovery() {
   std::shared_lock<std::shared_mutex> lock(nodes_mutex_);
   std::string recovery_path = recovery::RecoveryPath();
   configuration_ = std::make_unique<recovery::FileConfiguration>(recovery_path + "/" + kRecoveryFileName);
+  MS_EXCEPTION_IF_NULL(configuration_);
 
   RETURN_IF_FALSE_WITH_LOG(configuration_->Initialize(),
                            "Failed to initialize the recovery file configuration from file path: " << recovery_path);
@@ -474,6 +485,7 @@ bool MetaServerNode::Recovery() {
     for (auto iter = node_states.begin(); iter != node_states.end(); ++iter) {
       const auto &node_id = iter.key();
       std::shared_ptr<NodeInfo> node_info = std::make_shared<NodeInfo>(node_id);
+      MS_EXCEPTION_IF_NULL(node_info);
       (void)time(&(node_info->last_update));
       node_info->host_name = iter.value().at(kHostName);
       node_info->role = iter.value().at(kRole);
@@ -491,7 +503,6 @@ bool MetaServerNode::Recovery() {
 }
 
 bool MetaServerNode::Persist() {
-  MS_EXCEPTION_IF_NULL(configuration_);
   if (total_node_num_ != nodes_.size()) {
     MS_LOG(ERROR) << "Invalid number of alive node: " << nodes_.size()
                   << ", the expected total number of node is: " << total_node_num_;
@@ -512,6 +523,7 @@ bool MetaServerNode::Persist() {
     node_states[node_id] = node_state;
   }
 
+  MS_EXCEPTION_IF_NULL(configuration_);
   configuration_->Put(kComputeNodeStates, node_states.dump());
   RETURN_IF_FALSE_WITH_LOG(configuration_->Flush(), "Failed to flush configuration.");
   return true;

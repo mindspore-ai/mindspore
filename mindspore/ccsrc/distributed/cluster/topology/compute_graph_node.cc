@@ -155,6 +155,7 @@ bool ComputeGraphNode::Finalize(bool force) {
 
 bool ComputeGraphNode::Register() {
   MS_EXCEPTION_IF_NULL(hb_client_);
+  MS_EXCEPTION_IF_NULL(tcp_client_);
   const auto &server_url = meta_server_addr_.GetUrl();
   if (!hb_client_->IsConnected(server_url)) {
     if (!hb_client_->Connect(server_url, kNoRetry)) {
@@ -314,6 +315,9 @@ bool ComputeGraphNode::ReconnectIfNeeded(const std::function<bool(void)> &func, 
 }
 
 bool ComputeGraphNode::Reconnect() {
+  MS_ERROR_IF_NULL_W_RET_VAL(tcp_client_, false);
+  MS_ERROR_IF_NULL_W_RET_VAL(hb_client_, false);
+
   auto server_url = meta_server_addr_.GetUrl();
   // Disconnect from meta server node firstly.
   while (tcp_client_->IsConnected(server_url)) {
@@ -424,6 +428,7 @@ bool ComputeGraphNode::ExchangeMetadata(const std::string &biz, const size_t &ra
                                         const std::vector<std::string> &values,
                                         std::map<std::string, std::string> *results, uint32_t timeout) {
   std::unique_lock<std::shared_mutex> lock(exchange_meta_mutex_);
+  MS_ERROR_IF_NULL_W_RET_VAL(results, false);
   MS_LOG(INFO) << "Start to exchange metadata for the biz: " << biz;
   if (names_prefix.size() != values.size()) {
     return false;
