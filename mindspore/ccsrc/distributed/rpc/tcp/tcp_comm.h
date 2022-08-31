@@ -19,7 +19,6 @@
 
 #include <string>
 #include <memory>
-#include <vector>
 #include <mutex>
 
 #include "actor/msg.h"
@@ -65,7 +64,7 @@ class TCPComm {
 
   // Send the message from the source to the destination.
   // The flag sync means if the message is sent directly or added to the task queue.
-  ssize_t Send(MessageBase *msg, bool sync = false);
+  bool Send(MessageBase *msg, size_t *const send_bytes, bool sync = false);
 
   // Force the data in the send buffer to be sent out.
   bool Flush(const std::string &dst_url);

@@ -36,11 +36,12 @@ int TCPSocketOperation::Receive(Connection *connection, char *recvBuf, size_t to
   while (*recvLen != totalRecvLen) {
     ssize_t retval = recv(fd, curRecvBuf, totalRecvLen - *recvLen, static_cast<int>(0));
     if (retval > 0) {
-      *recvLen += retval;
+      size_t received_bytes = static_cast<size_t>(retval);
+      *recvLen += received_bytes;
       if (*recvLen == totalRecvLen) {
         return IO_RW_OK;
       }
-      curRecvBuf = curRecvBuf + retval;
+      curRecvBuf = curRecvBuf + received_bytes;
       // Failed to receive message.
     } else if (retval < 0) {
       if (EAGAIN == errno) {
@@ -68,25 +69,26 @@ int TCPSocketOperation::ReceiveMessage(Connection *connection, struct msghdr *re
   while (*recvLen < totalRecvLen) {
     auto retval = recvmsg(connection->socket_fd, recvMsg, 0);
     if (retval > 0) {
-      *recvLen += retval;
+      size_t received_bytes = static_cast<size_t>(retval);
+      *recvLen += received_bytes;
       if (*recvLen == totalRecvLen) {
         recvMsg->msg_iovlen = 0;
         break;
       }
 
-      unsigned int iovlen = recvMsg->msg_iovlen;
+      size_t iovlen = recvMsg->msg_iovlen;
       if (iovlen > 0) {
         size_t tmpLen = 0;
-        for (unsigned int i = 0; i < iovlen; ++i) {
-          if (recvMsg->msg_iov[i].iov_len + tmpLen <= static_cast<size_t>(retval)) {
+        for (size_t i = 0; i < iovlen; ++i) {
+          if (recvMsg->msg_iov[i].iov_len + tmpLen <= received_bytes) {
             tmpLen += recvMsg->msg_iov[i].iov_len;
           } else {
-            recvMsg->msg_iov[i].iov_len -= IntToSize(retval - tmpLen);
+            recvMsg->msg_iov[i].iov_len -= (received_bytes - tmpLen);
             recvMsg->msg_iov[i].iov_base =
-              reinterpret_cast<char *>(recvMsg->msg_iov[i].iov_base) + static_cast<unsigned int>(retval) - tmpLen;
+              reinterpret_cast<char *>(recvMsg->msg_iov[i].iov_base) + received_bytes - tmpLen;
 
             recvMsg->msg_iov = &recvMsg->msg_iov[i];
-            recvMsg->msg_iovlen -= i;
+            recvMsg->msg_iovlen -= SizeToInt(i);
             break;
           }
         }
@@ -138,7 +140,8 @@ int TCPSocketOperation::SendMessage(Connection *connection, struct msghdr *sendM
       }
       std::this_thread::sleep_for(eagainCount * std::chrono::microseconds(sleep_interval_factor));
     } else {
-      *sendLen += retval;
+      size_t send_bytes = static_cast<size_t>(retval);
+      *sendLen += send_bytes;
 
       if (*sendLen == totalSendLen) {
         sendMsg->msg_iovlen = 0;
@@ -147,12 +150,11 @@ int TCPSocketOperation::SendMessage(Connection *connection, struct msghdr *sendM
 
       size_t tmpBytes = 0;
       for (unsigned int i = 0; i < sendMsg->msg_iovlen; ++i) {
-        if (sendMsg->msg_iov[i].iov_len + tmpBytes < static_cast<size_t>(retval)) {
+        if (sendMsg->msg_iov[i].iov_len + tmpBytes < send_bytes) {
           tmpBytes += sendMsg->msg_iov[i].iov_len;
         } else {
-          sendMsg->msg_iov[i].iov_len -= (retval - tmpBytes);
-          sendMsg->msg_iov[i].iov_base =
-            reinterpret_cast<char *>(sendMsg->msg_iov[i].iov_base) + static_cast<unsigned int>(retval) - tmpBytes;
+          sendMsg->msg_iov[i].iov_len -= (send_bytes - tmpBytes);
+          sendMsg->msg_iov[i].iov_base = reinterpret_cast<char *>(sendMsg->msg_iov[i].iov_base) + send_bytes - tmpBytes;
 
           sendMsg->msg_iov = &sendMsg->msg_iov[i];
           sendMsg->msg_iovlen -= i;

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ using MemFreeCallback = std::function<bool(void *data)>;
 constexpr int SEND_MSG_IO_VEC_LEN = 5;
 constexpr int RECV_MSG_IO_VEC_LEN = 4;
 
-constexpr unsigned int BUSMAGIC_LEN = 4;
+constexpr unsigned int MAGICID_LEN = 4;
 constexpr int SENDMSG_QUEUELEN = 1024;
 constexpr int SENDMSG_DROPED = -1;
 
@@ -88,7 +88,7 @@ static const int SOCKET_KEEPINTERVAL = 5;
 // probes without getting a reply.
 static const int SOCKET_KEEPCOUNT = 3;
 
-static const char RPC_MAGICID[] = "BUS0";
+static const char RPC_MAGICID[] = "RPC0";
 static const char URL_PROTOCOL_IP_SEPARATOR[] = "://";
 static const char URL_IP_PORT_SEPARATOR[] = ":";
 static const char TCP_RECV_EVLOOP_THREADNAME[] = "RECV_EVENT_LOOP";
@@ -113,7 +113,7 @@ inline void KillProcess(const std::string &ret) {
  */
 struct MessageHeader {
   MessageHeader() {
-    for (unsigned int i = 0; i < BUSMAGIC_LEN; ++i) {
+    for (unsigned int i = 0; i < MAGICID_LEN; ++i) {
       if (i < sizeof(RPC_MAGICID) - 1) {
         magic[i] = RPC_MAGICID[i];
       } else {
@@ -122,7 +122,7 @@ struct MessageHeader {
     }
   }
 
-  char magic[BUSMAGIC_LEN];
+  char magic[MAGICID_LEN];
   uint32_t name_len{0};
   uint32_t to_len{0};
   uint32_t from_len{0};

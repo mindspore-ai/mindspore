@@ -1637,8 +1637,7 @@ bool Sender::Send(const std::vector<ShapeVector> &shapes, const std::vector<Type
   MS_ERROR_IF_NULL(message);
   MS_ERROR_IF_NULL(client_);
   if (sync) {
-    auto ret = client_->SendSync(std::move(message));
-    return ret > 0;
+    return client_->SendSync(std::move(message));
   }
 
   client_->SendAsync(std::move(message));

@@ -104,13 +104,15 @@ bool TCPClient::Disconnect(const std::string &dst_url, size_t timeout_in_sec) {
   return rt;
 }
 
-int TCPClient::SendSync(std::unique_ptr<MessageBase> &&msg) { return tcp_comm_->Send(msg.release(), true); }
+bool TCPClient::SendSync(std::unique_ptr<MessageBase> &&msg, size_t *const send_bytes) {
+  return tcp_comm_->Send(msg.release(), send_bytes, true);
+}
 
-void TCPClient::SendAsync(std::unique_ptr<MessageBase> &&msg) { (void)tcp_comm_->Send(msg.release(), false); }
+void TCPClient::SendAsync(std::unique_ptr<MessageBase> &&msg) { (void)tcp_comm_->Send(msg.release(), nullptr, false); }
 
 MessageBase *TCPClient::ReceiveSync(std::unique_ptr<MessageBase> &&msg, uint32_t timeout) {
-  auto retval = tcp_comm_->Send(msg.release(), true);
-  if (retval > 0) {
+  bool retval = tcp_comm_->Send(msg.release(), nullptr, true);
+  if (retval) {
     std::unique_lock<std::mutex> lock(mutex_);
     bool res =
       wait_msg_cond_.wait_for(lock, std::chrono::seconds(timeout), [this] { return received_message_ != nullptr; });

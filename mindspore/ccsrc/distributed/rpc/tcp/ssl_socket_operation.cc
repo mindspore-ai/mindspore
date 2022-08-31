@@ -39,14 +39,15 @@ int SSLSocketOperation::Receive(Connection *connection, char *recvBuf, size_t to
 
   // Continue to receive data util the number of bytes reaches the expectation.
   while (*recvLen != totalRecvLen) {
-    auto retval = SSL_read(ssl_, curRecvBuf, totalRecvLen - *recvLen);
+    auto retval = SSL_read(ssl_, curRecvBuf, SizeToInt(totalRecvLen - *recvLen));
     // Data received successfully.
     if (retval > 0) {
-      *recvLen += retval;
+      size_t received_bytes = static_cast<size_t>(retval);
+      *recvLen += received_bytes;
       if (*recvLen == totalRecvLen) {
         return IO_RW_OK;
       }
-      curRecvBuf = curRecvBuf + retval;
+      curRecvBuf = curRecvBuf + received_bytes;
     } else {
       // Failed to receive data.
       if (retval < 0 && errno == EAGAIN) {
@@ -81,19 +82,25 @@ int SSLSocketOperation::ReceiveMessage(Connection *connection, struct msghdr *re
 
   // Continue to receive data util the number of bytes reaches the expectation.
   while (*recvLen != totalRecvLen) {
-    auto retval = SSL_read(ssl_, recvMsg->msg_iov[msg_idx].iov_base, recvMsg->msg_iov[msg_idx].iov_len);
+    auto retval = SSL_read(ssl_, recvMsg->msg_iov[msg_idx].iov_base, SizeToInt(recvMsg->msg_iov[msg_idx].iov_len));
     // Data received successfully.
     if (retval > 0) {
-      *recvLen += retval;
+      size_t received_bytes = static_cast<size_t>(retval);
+      *recvLen += received_bytes;
       if (*recvLen == totalRecvLen) {
         recvMsg->msg_iovlen = 0;
         break;
       }
 
-      if (recvMsg->msg_iov[msg_idx].iov_len > IntToSize(retval)) {
-        recvMsg->msg_iov[msg_idx].iov_len -= retval;
-        recvMsg->msg_iov[msg_idx].iov_base = reinterpret_cast<char *>(recvMsg->msg_iov[msg_idx].iov_base) + retval;
+      if (recvMsg->msg_iov[msg_idx].iov_len > received_bytes) {
+        recvMsg->msg_iov[msg_idx].iov_len -= received_bytes;
+        recvMsg->msg_iov[msg_idx].iov_base =
+          reinterpret_cast<char *>(recvMsg->msg_iov[msg_idx].iov_base) + received_bytes;
       } else {
+        // Check if the index is out of bounds.
+        if (recvMsg->msg_iovlen <= 1) {
+          return IO_RW_ERROR;
+        }
         recvMsg->msg_iov = &recvMsg->msg_iov[1];
         recvMsg->msg_iovlen -= 1;
       }
@@ -127,19 +134,24 @@ int SSLSocketOperation::SendMessage(Connection *connection, struct msghdr *sendM
 
   // Continue to send data util all the bytes have been sent out.
   while (*sendLen != totalSendLen) {
-    auto retval = SSL_write(ssl_, sendMsg->msg_iov[msg_idx].iov_base, sendMsg->msg_iov[msg_idx].iov_len);
+    auto retval = SSL_write(ssl_, sendMsg->msg_iov[msg_idx].iov_base, SizeToInt(sendMsg->msg_iov[msg_idx].iov_len));
     // Data sent successfully.
     if (retval > 0) {
-      *sendLen += retval;
+      size_t send_bytes = static_cast<size_t>(retval);
+      *sendLen += send_bytes;
 
       if (*sendLen == totalSendLen) {
         sendMsg->msg_iovlen = 0;
         break;
       }
-      if (sendMsg->msg_iov[msg_idx].iov_len > IntToSize(retval)) {
-        sendMsg->msg_iov[msg_idx].iov_len -= retval;
-        sendMsg->msg_iov[msg_idx].iov_base = reinterpret_cast<char *>(sendMsg->msg_iov[msg_idx].iov_base) + retval;
+      if (sendMsg->msg_iov[msg_idx].iov_len > send_bytes) {
+        sendMsg->msg_iov[msg_idx].iov_len -= send_bytes;
+        sendMsg->msg_iov[msg_idx].iov_base = reinterpret_cast<char *>(sendMsg->msg_iov[msg_idx].iov_base) + send_bytes;
       } else {
+        // Check if the index is out of bounds.
+        if (msg_idx + 1 >= sendMsg->msg_iovlen) {
+          return IO_RW_ERROR;
+        }
         sendMsg->msg_iov = &sendMsg->msg_iov[msg_idx + 1];
         sendMsg->msg_iovlen -= 1;
       }
@@ -253,7 +265,7 @@ void SSLSocketOperation::Handshake(int fd, Connection *conn) const {
     MS_LOG(ERROR) << "Invalid error code: " << err;
     return;
   }
-  auto err_msg = ERR_reason_error_string(err);
+  auto err_msg = ERR_reason_error_string(static_cast<uint64_t>(err));
   MS_LOG(ERROR) << "Failed to do the ssl handshake, retval: " << retval << ", errno: " << err
                 << ", err info: " << err_msg;
   if (err == SSL_ERROR_WANT_WRITE) {

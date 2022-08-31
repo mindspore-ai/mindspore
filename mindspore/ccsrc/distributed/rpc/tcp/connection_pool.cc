@@ -134,13 +134,11 @@ void ConnectionPool::DeleteConnInfo(Connection *conn) {
   // If run in single link pattern, link fd and send fd may not be the same, we should send Exit message bind
   // on link fd and remote link fd. Here 'deleted' flag should be set true to avoid duplicate Exit message with
   // same aid.
-  if (conn != nullptr) {
-    conn->deleted = true;
-    DeleteConnInfo(conn->socket_fd);
+  conn->deleted = true;
+  DeleteConnInfo(conn->socket_fd);
 
-    if (conn->socket_fd != fd) {
-      MS_LOG(INFO) << "delete linker bind on link fd:" << conn->socket_fd << ",delete fd:" << fd;
-    }
+  if (conn->socket_fd != fd) {
+    MS_LOG(INFO) << "delete linker bind on link fd:" << conn->socket_fd << ",delete fd:" << fd;
   }
 }
 
@@ -185,6 +183,7 @@ void ConnectionPool::AddConnInfo(int fd, const std::string &dst_url, DeleteCallB
   if (linker != nullptr) {
     return;
   }
+  // This linker will be deleted in `DeleteConnInfo` or `DeleteAllConnInfos`.
   linker = new (std::nothrow) ConnectionInfo();
   if (linker == nullptr) {
     MS_LOG(ERROR) << "new ConnectionInfo fail dAid:" << dst_url;
