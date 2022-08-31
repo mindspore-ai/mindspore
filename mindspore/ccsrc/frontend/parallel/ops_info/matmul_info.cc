@@ -26,6 +26,7 @@
 
 #include "ir/value.h"
 #include "frontend/parallel/auto_parallel/graph_costmodel.h"
+#include "frontend/parallel/graph_util/generate_graph.h"
 #include "frontend/parallel/device_manager.h"
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/dynamic_creator.h"
@@ -165,6 +166,12 @@ Status MatMul::CheckStrategy(const StrategyPtr &strategy) {
     return FAILED;
   }
 
+  int64_t mat_a_device = std::accumulate(mat_a_strategy.begin(), mat_a_strategy.end(), 1, std::multiplies<int64_t>());
+  if (mat_a_size == mat_b_size && transpose_b_ == false && mat_a_size == 2 && mat_a_strategy == mat_b_strategy &&
+      mat_a_device == stage_device_size_) {
+    candidate_flag_ = True;
+    return SUCCESS;
+  }
   // for example: mat_a_strategy:[2,4,8,16], mat_b_strategy:[4,16,32]
   // dev_matrix_shape:[2,4,8,16,32] (transpose_b is false)
   // [16] in the example above
@@ -253,13 +260,19 @@ Status MatMulBase::InferDevMatrixShape() {
   Strategies stra = strategy_->GetInputDim();
   Dimensions mat_a_strategy = stra.at(0);
   Dimensions mat_b_strategy = stra.at(1);
-
+  if (candidate_flag_) {
+    dev_matrix_shape_ = mat_a_strategy;
+    return SUCCESS;
+  }
   SetDevMatrixShape(mat_a_strategy, mat_b_strategy, transpose_b_, &dev_matrix_shape_);
   origin_dev_matrix_shape_ = dev_matrix_shape_;
   return SUCCESS;
 }
 
 Status MatMulBase::InferForwardCommunication() {
+  if (candidate_flag_) {
+    return SUCCESS;
+  }
   forward_op_.clear();
   size_t dimension = origin_dev_matrix_shape_.size();
   size_t relevant_dimension_index = SECOND_FROM_END(dimension);
@@ -304,6 +317,12 @@ Status MatMulBase::InferTensorMap() {
     tensor_map_index.push_back(static_cast<int64_t>(LAST_INDEX(size) - i));
   }
 
+  if (candidate_flag_) {
+    inputs_tensor_map_.push_back({1, 0});
+    inputs_tensor_map_.push_back({1, 0});
+    outputs_tensor_map_.push_back({1, 0});
+    return SUCCESS;
+  }
   // infer output tensor map: [4,3,2,0], delete the second-from-end element
   TensorMap output_tensor_map = tensor_map_index;
   (void)output_tensor_map.erase(output_tensor_map.cbegin() + static_cast<different_type>(SECOND_FROM_END(size)));
@@ -541,6 +560,100 @@ Shapes MatMulBase::InferStrategyIndividualMode(const Shapes &in_strategy) {
     }
   }
   return ret_strategy;
+}
+
+// PCL matmul
+ReplaceGraphPtr MatMul::replace_graph(const CNodePtr &cnode) {
+  if (!candidate_flag_) {
+    return nullptr;
+  }
+
+  GenerateGraph gen_g = GenerateGraph(attrs_);
+  if (gen_g.Init(cnode) != SUCCESS) {
+    MS_LOG(EXCEPTION) << name_ << "GenerateGraph Init failed";
+  }
+
+  std::vector<Group> x_group_list;
+  std::vector<Group> w_group_list;
+  if (CreateGroupByDim(1, &x_group_list) != SUCCESS) {
+    MS_LOG(EXCEPTION) << name_ << "Create group failed";
+  }
+  if (CreateGroupByDim(0, &w_group_list) != SUCCESS) {
+    MS_LOG(EXCEPTION) << name_ << "Create group failed";
+  }
+  bool x_flag = !x_group_list.empty();
+  bool w_flag = !w_group_list.empty();
+  AnfNodePtr matmul_left_input, matmul_right_input;
+  AnfNodePtr x_all_gather, w_all_gather;
+  if (x_flag) {
+    OperatorAttrs x_all_gather_attrs;
+    Attr x_attr_group = std::make_pair(GROUP, MakeValue(x_group_list[0].name()));
+    x_all_gather_attrs.push_back(x_attr_group);
+    x_all_gather = gen_g.PushBack({gen_g.NewOpInst(ALL_GATHER, x_all_gather_attrs), gen_g.virtual_input_node()});
+    // split
+    int64_t split_count = dev_matrix_shape_[1];
+    int64_t split_axis = 0;
+
+    Attr split_axis_attr = std::make_pair(AXIS, MakeValue(split_axis));
+    Attr split_count_attr = std::make_pair(OUTPUT_NUM, MakeValue(split_count));
+    OperatorAttrs split_attrs = {split_axis_attr, split_count_attr};
+    auto split = gen_g.PushBack({gen_g.NewOpInst(SPLIT, split_attrs), x_all_gather});
+
+    // tuple get item
+    std::vector<AnfNodePtr> make_tuple_inputs;
+    make_tuple_inputs.push_back(NewValueNode(prim::kPrimMakeTuple));
+
+    for (int64_t i = 0; i < split_count; ++i) {
+      auto tuple_get_item = gen_g.PushBack({gen_g.NewOpInst(TUPLE_GETITEM), split, CreatInt64Imm(i)});
+      make_tuple_inputs.push_back(tuple_get_item);
+    }
+
+    // make tuple
+    auto make_tuple = gen_g.PushBack(make_tuple_inputs);
+    // concat
+    int64_t concat_axis = 1;
+    Attr concat_axis_attr = std::make_pair(AXIS, MakeValue(concat_axis));
+    OperatorAttrs concat_attrs = {concat_axis_attr};
+    auto concat = gen_g.PushBack({gen_g.NewOpInst(CONCAT, concat_attrs), make_tuple});
+    matmul_left_input = concat;
+  } else {
+    matmul_left_input = gen_g.virtual_input_node();
+  }
+
+  if (w_flag) {
+    OperatorAttrs w_all_gather_attrs;
+    Attr w_attr_group = std::make_pair(GROUP, MakeValue(w_group_list[0].name()));
+    w_all_gather_attrs.push_back(w_attr_group);
+    w_all_gather = gen_g.PushBack({gen_g.NewOpInst(ALL_GATHER, w_all_gather_attrs), gen_g.virtual_input_node()});
+    matmul_right_input = w_all_gather;
+  } else {
+    matmul_right_input = gen_g.virtual_input_node();
+  }
+
+  // matmul
+  Attr transpose_a_attr = std::make_pair(TRANSPOSE_A, MakeValue(transpose_a_));
+  Attr transpose_b_attr = std::make_pair(TRANSPOSE_B, MakeValue(transpose_b_));
+  OperatorAttrs matmul_attrs = {transpose_a_attr, transpose_b_attr};
+  auto matmul = gen_g.PushBack({gen_g.NewOpInst(MATMUL, matmul_attrs), matmul_left_input, matmul_right_input});
+
+  std::pair<AnfNodePtr, int64_t> left_input_node, right_input_node;
+  if (x_flag) {
+    left_input_node = std::make_pair(x_all_gather, 1);
+  } else {
+    left_input_node = std::make_pair(matmul, 1);
+  }
+
+  if (w_flag) {
+    right_input_node = std::make_pair(w_all_gather, 2);
+  } else {
+    right_input_node = std::make_pair(matmul, 2);
+  }
+
+  std::vector<std::pair<AnfNodePtr, int64_t>> input_nodes = {left_input_node, right_input_node};
+  replace_graph_ = std::make_shared<std::pair<std::vector<std::pair<AnfNodePtr, int64_t>>, AnfNodePtr>>(
+    std::make_pair(input_nodes, matmul));
+
+  return replace_graph_;
 }
 REGISTER(MatMulInfo);
 REGISTER(BatchMatMulInfo);
