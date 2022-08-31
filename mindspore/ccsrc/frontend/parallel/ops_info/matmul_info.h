@@ -50,6 +50,7 @@ class MatMulBase : public OperatorInfo {
   Status GetAttrs() override;
   Shapes InferStrategyIndividualMode(const Shapes &in_strategy) override;
 
+  bool candidate_flag_ = false;
   bool transpose_a_ = false;
   bool transpose_b_ = false;
   bool forward_reduce_scatter_ = false;
@@ -64,6 +65,7 @@ class MatMul : public MatMulBase {
   MatMul(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape, const PrimitiveAttrs &attrs)
       : MatMulBase(name, inputs_shape, outputs_shape, attrs) {}
   ~MatMul() override = default;
+  ReplaceGraphPtr replace_graph(const CNodePtr &cnode) override;
 
  protected:
   Status CheckStrategy(const StrategyPtr &strategy) override;

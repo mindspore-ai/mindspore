@@ -84,6 +84,67 @@ def test_two_matmul():
     compile_net(net, x, y, b)
 
 
+# model_parallel test
+def test_two_matmul_both_a_b_strategy():
+    """
+    Feature: test method for matmul operator when both strategies are (a,b)
+    Description: transpose_b is false, input dimension 2
+    Expectation: compile success
+    """
+    class Net(nn.Cell):
+        def __init__(self, strategy1, strategy2):
+            super().__init__()
+            self.matmul1 = P.MatMul().shard(strategy1)
+            self.matmul2 = P.MatMul().shard(strategy2)
+
+        def construct(self, x, y, b):
+            out = self.matmul1(x, y)
+            out = self.matmul2(out, b)
+            return out
+
+    context.set_auto_parallel_context(device_num=32, global_rank=0, gradients_mean=True)
+    strategy1 = ((8, 4), (8, 4))
+    strategy2 = ((8, 4), (8, 4))
+    net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+
+    x = Tensor(np.ones([128, 32]), dtype=ms.float32)
+    y = Tensor(np.ones([32, 64]), dtype=ms.float32)
+    b = Tensor(np.ones([64, 64]), dtype=ms.float32)
+
+    compile_net(net, x, y, b)
+
+
+def test_two_matmul_no_need_gather():
+    """
+    Feature: test method for matmul operator when a/b is equal to 1.
+    Description: transpose_b is false, input dimension 2.
+    Expectation: compile success
+    """
+    class Net(nn.Cell):
+        def __init__(self, strategy1, strategy2):
+            super().__init__()
+            self.matmul1 = P.MatMul().shard(strategy1)
+            self.matmul2 = P.MatMul().shard(strategy2)
+
+        def construct(self, x, y, b):
+            out = self.matmul1(x, y)
+            out = self.matmul2(out, b)
+            return out
+
+    context.set_auto_parallel_context(device_num=8, global_rank=0, gradients_mean=True)
+    strategy1 = ((8, 1), (8, 1))
+    strategy2 = ((8, 1), (8, 1))
+    net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+
+    x = Tensor(np.ones([128, 32]), dtype=ms.float32)
+    y = Tensor(np.ones([32, 64]), dtype=ms.float32)
+    b = Tensor(np.ones([64, 64]), dtype=ms.float32)
+
+    compile_net(net, x, y, b)
+
+
 def test_two_matmul_repeated_calculation1():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
