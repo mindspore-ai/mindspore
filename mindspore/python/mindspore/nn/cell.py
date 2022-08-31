@@ -506,8 +506,13 @@ class Cell(Cell_):
             in_strategy (tuple): Define the layout of inputs, each element of the tuple should be a tuple or None. Tuple
                              defines the layout of the corresponding input and None represents a data parallel strategy.
             out_strategy (tuple): Define the layout of outputs similar with in_strategy.
-            parameter_plan (Union[dict, None]): Define the layout of parameter. Each element in dict defines the layout
-                                                of the parameter like "param_name: layout". Default: None.
+            parameter_plan (Union[dict, None]): Define the layout for the specified parameters. Each element in dict
+                                                defines the layout of the parameter like "param_name: layout".
+                                                The key is a parameter name of type 'str'.
+                                                The value is a 1-D integer tuple, indicating the corresponding layout.
+                                                If the parameter name is incorrect or the corresponding parameter
+                                                has been set, the parameter setting will be ignored.
+                                                Default: None.
             device (string): Select a certain device target. It is not in use right now.
                              Support ["CPU", "GPU", "Ascend"]. Default: "Ascend".
             level (int): Option for parallel strategy infer algorithm, namely the object function, maximize computation
@@ -534,20 +539,15 @@ class Cell(Cell_):
             ...     self.block1 = Block()
             ...     self.block2 = Block()
             ...     self.block2.shard(in_strategy=((2, 1),), out_strategy=(None,),
-            ...                       device={'self.block2.shard.dense1.weight': (4, 1)})
+            ...                       parameter_plan={'self.block2.shard.dense1.weight': (4, 1)})
             ...   def construct(self, x):
             ...     x = self.block1(x)
             ...     x = self.block2(x)
             ...     return x
         """
         # Transfer parameter_plan from dict to tuple
-        parameter_plan_tuple = None
-        if isinstance(parameter_plan, dict):
-            parameter_plan_tuple = ()
-            for k in parameter_plan:
-                parameter_plan_tuple += ((k, parameter_plan[k]),)
         shard_fn = Shard()
-        fn = shard_fn(self, in_strategy, out_strategy, parameter_plan_tuple, device, level)
+        fn = shard_fn(self, in_strategy, out_strategy, parameter_plan, device, level)
         object.__setattr__(self, "_shard_fn", fn)
         return self
 

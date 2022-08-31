@@ -38,7 +38,7 @@ from .operations.math_ops import Median
 from .operations.array_ops import UniqueConsecutive
 from .operations.nn_ops import AdaptiveMaxPool2D
 from .function.sparse_func import sparse_add
-from .composite import _Vmap
+from .composite import _Vmap, Shard
 
 typeof = Primitive('typeof')
 hastype = Primitive('hastype')
@@ -77,12 +77,13 @@ partial = P.Partial()
 # depend: mount a node to another node
 depend = P.Depend()
 identity = P.identity()
+shard_fn = Shard()
 
 
 def shard(fn, in_strategy, out_strategy, parameter_plan=None, device="Ascend", level=0):
     if not isinstance(fn, ms.nn.Cell):
         raise TypeError(f"Type of fn must be 'Cell', but got type {type(fn)}")
-    return fn.shard(in_strategy, out_strategy, parameter_plan, device, level)
+    return shard_fn(fn, in_strategy, out_strategy, parameter_plan, device, level)
 
 
 @deprecated("1.8", "range", False)
