@@ -8,21 +8,21 @@ mindspore.dataset.audio
 - Pipeline模式一般用于处理数据集，示例可参考 `数据处理Pipeline介绍 <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.dataset.html#数据处理pipeline介绍>`_。
 - Eager模式一般用于零散样本，音频预处理举例如下：
 
-    .. code-block::
+  .. code-block::
 
-        import numpy as np
-        import mindspore.dataset.audio as audio
-        from mindspore.dataset.audio import ResampleMethod
+      import numpy as np
+      import mindspore.dataset.audio as audio
+      from mindspore.dataset.audio import ResampleMethod
 
-        # 音频输入
-        waveform = np.random.random([1, 30])
+      # 音频输入
+      waveform = np.random.random([1, 30])
 
-        # 增强操作
-        resample_op = audio.Resample(orig_freq=48000, new_freq=16000,
-                                     resample_method=ResampleMethod.SINC_INTERPOLATION,
-                                     lowpass_filter_width=6, rolloff=0.99, beta=None)
-        waveform_resampled = resample_op(waveform)
-        print("waveform reampled: {}".format(waveform_resampled), flush=True)
+      # 增强操作
+      resample_op = audio.Resample(orig_freq=48000, new_freq=16000,
+                                   resample_method=ResampleMethod.SINC_INTERPOLATION,
+                                   lowpass_filter_width=6, rolloff=0.99, beta=None)
+      waveform_resampled = resample_op(waveform)
+      print("waveform reampled: {}".format(waveform_resampled), flush=True)
 
 变换
 -----

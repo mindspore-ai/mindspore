@@ -31,27 +31,27 @@ API样例中常用的导入模块如下：
 - Pipeline模式一般用于处理数据集，示例可参考 `数据处理Pipeline介绍 <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.dataset.html#数据处理pipeline介绍>`_。
 - Eager模式一般用于零散样本，图像预处理举例如下：
 
-    .. code-block::
+  .. code-block::
 
-        import numpy as np
-        import mindspore.dataset.vision as vision
-        from PIL import Image,ImageFont,ImageDraw
+      import numpy as np
+      import mindspore.dataset.vision as vision
+      from PIL import Image,ImageFont,ImageDraw
 
-        # 画圆形
-        img = Image.new("RGB", (300, 300), (255, 255, 255))
-        draw = ImageDraw.Draw(img)
-        draw.ellipse(((0, 0), (100, 100)), fill=(255, 0, 0), outline=(255, 0, 0), width=5)
-        img.save("./1.jpg")
-        with open("./1.jpg", "rb") as f:
-            data = f.read()
+      # 画圆形
+      img = Image.new("RGB", (300, 300), (255, 255, 255))
+      draw = ImageDraw.Draw(img)
+      draw.ellipse(((0, 0), (100, 100)), fill=(255, 0, 0), outline=(255, 0, 0), width=5)
+      img.save("./1.jpg")
+      with open("./1.jpg", "rb") as f:
+          data = f.read()
 
-        data_decoded = vision.Decode()(data)
-        data_croped = vision.RandomCrop(size=(250, 250))(data_decoded)
-        data_resized = vision.Resize(size=(224, 224))(data_croped)
-        data_normalized = vision.Normalize(mean=[0.485 * 255, 0.456 * 255, 0.406 * 255],
-                                           std=[0.229 * 255, 0.224 * 255, 0.225 * 255])(data_resized)
-        data_hwc2chw = vision.HWC2CHW()(data_normalized)
-        print("data: {}, shape: {}".format(data_hwc2chw, data_hwc2chw.shape), flush=True)
+      data_decoded = vision.Decode()(data)
+      data_croped = vision.RandomCrop(size=(250, 250))(data_decoded)
+      data_resized = vision.Resize(size=(224, 224))(data_croped)
+      data_normalized = vision.Normalize(mean=[0.485 * 255, 0.456 * 255, 0.406 * 255],
+                                         std=[0.229 * 255, 0.224 * 255, 0.225 * 255])(data_resized)
+      data_hwc2chw = vision.HWC2CHW()(data_normalized)
+      print("data: {}, shape: {}".format(data_hwc2chw, data_hwc2chw.shape), flush=True)
 
 变换
 -----

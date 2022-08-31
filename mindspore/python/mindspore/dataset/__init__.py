@@ -49,24 +49,26 @@ As shown in the above figure, the mindspore dataset module makes it easy for use
 pipelines and transform samples in the dataset in the most efficient (multi-process / multi-thread) manner.
 The specific steps are as follows:
 
-- Loading datasets: Users can easily load supported datasets using the *Dataset class, or load Python layer
-  customized datasets through UDF Loader + GeneratorDataset. At the same time, the loading class method can
+- Loading datasets: Users can easily load supported datasets using the `*Dataset` class, or load Python layer
+  customized datasets through `UDF Loader` + `GeneratorDataset`. At the same time, the loading class method can
   accept a variety of parameters such as sampler, data slicing, and data shuffle;
-- Dataset operation: The user uses the dataset object method .shuffle / .filter / .skip / .split / .take / ...
-  to further shuffle, filter, skip, and obtain the maximum number of samples of datasets;
+- Dataset operation: The user uses the dataset object method `.shuffle` / `.filter` / `.skip` / `.split` /
+  `.take` / ... to further shuffle, filter, skip, and obtain the maximum number of samples of datasets;
 - Dataset sample transform operation: The user can add data transform operators
-  (`vision class <https://www.mindspore.cn/docs/en/master/api_python/mindspore.dataset.vision.html>`_,
-  `NLP class <https://www.mindspore.cn/docs/en/master/api_python/mindspore.dataset.text.html>`_,
-  `audio class <https://www.mindspore.cn/docs/en/master/api_python/mindspore.dataset.audio.html>`_) to the map
+  (`vision transform <https://www.mindspore.cn/docs/en/master/api_python/mindspore.dataset.vision.html>`_,
+  `NLP transform <https://www.mindspore.cn/docs/en/master/api_python/mindspore.dataset.text.html>`_,
+  `audio transform <https://www.mindspore.cn/docs/en/master/api_python/mindspore.dataset.audio.html>`_) to the map
   operation to perform transformations. During data preprocessing, multiple map operations can be defined to
   perform different transform operations to different fields. The data transform operator can also be a
-  user-defined transform pyfunc (Python function);
+  user-defined transform `pyfunc` (Python function);
 - Batch: After the transformation of the samples, the user can use the batch operation to organize multiple samples
-  into batches, or use self-defined batch logic with the parameter per_batch_map applied;
+  into batches, or use self-defined batch logic with the parameter `per_batch_map` applied;
 - Iterator: Finally, the user can use the dataset object method `create_dict_iterator` to create an
   iterator, which can output the preprocessed data cyclically.
 
-The data processing pipeline example is as follows. Please refer to `datasets_example.py` for complete example.
+The data processing pipeline example is as follows. Please refer to
+`datasets_example.py <https://gitee.com/mindspore/mindspore/tree/master/docs/api/api_python_en/datasets_example.py>`_
+for complete example.
 
 .. code-block::
 
