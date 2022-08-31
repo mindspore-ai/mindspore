@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -84,6 +84,7 @@ def test_auto_monad_addn_adam():
     allclose_nparray(new_var_pyn.asnumpy(), new_var.asnumpy(), 0.001, 0.001)
     allclose_nparray(new_m_pyn.asnumpy(), new_m.asnumpy(), 0.001, 0.001)
     allclose_nparray(new_v_pyn.asnumpy(), new_v.asnumpy(), 0.001, 0.001)
+    context.set_context(mode=context.GRAPH_MODE)
 
 
 class AutoMonadTwoAssignTwoAddnDependencyNet(Cell):
@@ -257,3 +258,133 @@ def test_parameter_tuple_assign():
     out = net(x)
     assert out[0] == 2
     assert out[1] == 0
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_parameter_tuple_assign_addn():
+    """
+    Feature: Auto monad feature.
+    Description: Parameter tuple assign and addn.
+    Expectation: No exception.
+    """
+    class Net(Cell):
+        def __init__(self):
+            super().__init__()
+            self.assign = P.Assign()
+            self.addn = P.AddN()
+            self.param1 = Parameter(Tensor(1), name="param1")
+            self.param2 = Parameter(Tensor(2), name="param2")
+
+        def construct(self, x):
+            params = (self.param1, self.param2)
+            res1 = self.addn(params)
+            self.assign(params[0], x)
+            res2 = self.addn(params)
+            self.assign(params[1], x * 2)
+            res3 = self.addn(params)
+            res4 = params[0] + params[1]
+            res = (res1, res2, res3, res4)
+            return res
+
+    x = Tensor(3)
+    net = Net()
+    out = net(x)
+    assert out == (3, 5, 9, 9)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_parameter_tuple_assign_addn_inner_net():
+    """
+    Feature: Auto monad feature.
+    Description: Parameter tuple assign and addn.
+    Expectation: No exception.
+    """
+    class InnerNet(Cell):
+        def __init__(self):
+            super().__init__()
+            self.assign = P.Assign()
+            self.addn = P.AddN()
+            self.param1 = Parameter(Tensor(1), name="param1")
+            self.param2 = Parameter(Tensor(2), name="param2")
+
+        def construct(self, x):
+            params = (self.param1, self.param2)
+            res1 = self.addn(params)
+            self.assign(params[0], x)
+            res2 = self.addn(params)
+            res = (res1, res2, self.param1, self.param2)
+            return res
+
+    class Net(Cell):
+        def __init__(self):
+            super().__init__()
+            self.inner_net = InnerNet()
+            self.addn = P.AddN()
+            self.assign = P.Assign()
+
+        def construct(self, x, y):
+            inner_net_res = self.inner_net(x)
+            params = (inner_net_res[2], inner_net_res[3])
+            out_res1 = self.addn(params)
+            self.assign(inner_net_res[2], y)
+            out_res2 = self.addn(params)
+            self.assign(inner_net_res[3], 2 * y)
+            return out_res1 + out_res2, inner_net_res[2] + inner_net_res[3]
+
+    input_x = Tensor(3)
+    input_y = Tensor(5)
+    net = Net()
+    out = net(input_x, input_y)
+    assert out == (12, 15)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_parameter_tuple_assign_addn_inner_net_control_flow():
+    """
+    Feature: Auto monad feature.
+    Description: Parameter tuple assign and addn.
+    Expectation: No exception.
+    """
+    class InnerNet(Cell):
+        def __init__(self):
+            super().__init__()
+            self.param1 = Parameter(Tensor(1), name="param1")
+            self.param2 = Parameter(Tensor(2), name="param2")
+
+        def construct(self, x):
+            if x > 0:
+                return self.param1, self.param2
+            return self.param2, self.param1
+
+    class Net(Cell):
+        def __init__(self):
+            super().__init__()
+            self.inner_net = InnerNet()
+            self.addn = P.AddN()
+            self.assign = P.Assign()
+
+        def construct(self, x, y):
+            inner_params = self.inner_net(x)
+            out_res1 = self.addn(inner_params)
+            self.assign(inner_params[1], y)
+            out_res2 = self.addn(inner_params)
+            self.assign(inner_params[0], 2 * y)
+            return out_res1 + out_res2, inner_params[0] + inner_params[1]
+
+    input_x = Tensor(3)
+    input_y = Tensor(5)
+    net = Net()
+    out = net(input_x, input_y)
+    assert out == (9, 15)

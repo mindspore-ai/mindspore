@@ -254,6 +254,20 @@ class COMMON_EXPORT AnfAlgo {
     return (abs != nullptr) && abs->isa<abstract::AbstractRefTensor>();
   }
 
+  // Check whether the sequence node has Ref abstract.
+  static inline bool SequenceHasAbstractRef(const AnfNodePtr &node) {
+    MS_EXCEPTION_IF_NULL(node);
+    auto &abs = node->abstract();
+    if ((abs != nullptr) && (abs->isa<abstract::AbstractSequence>())) {
+      auto abs_seq = abs->cast_ptr<abstract::AbstractSequence>();
+      AbstractBasePtrList elements = abs_seq->elements();
+      return std::any_of(elements.begin(), elements.end(), [](const AbstractBasePtr &element) {
+        return (element != nullptr) && element->isa<abstract::AbstractRefTensor>();
+      });
+    }
+    return false;
+  }
+
   // Get the real output node and indexes of get item, make tuple, depend, load.
   static AnfNodePtr GetTupleIndexes(const AnfNodePtr &node, std::vector<size_t> *const index_stack);
   static bool IsNopNode(const AnfNodePtr &node);

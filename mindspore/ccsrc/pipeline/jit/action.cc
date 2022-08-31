@@ -28,6 +28,7 @@
 #include "ir/param_info.h"
 #include "ir/cell.h"
 #include "include/common/utils/python_adapter.h"
+#include "include/common/utils/anfalgo.h"
 #include "abstract/abstract_value.h"
 #include "frontend/parallel/costmodel_context.h"
 #include "include/common/utils/parallel_context.h"
@@ -1019,7 +1020,7 @@ bool ExistTarget(const std::vector<AnfNodePtr> &all_nodes, const std::string &ta
 // If the return value of subgraph is Ref in control flow scenarios, should run graph mode with kernelbykernel.
 bool ExistSwitchRef(const FuncGraphPtr &func_graph, const std::vector<AnfNodePtr> &all_nodes) {
   // %1 = switch(cond, func1, func2)
-  // %2 = %1()  if the abstract of the node is AbstractRefTensor, return true.
+  // %2 = %1()  if the abstract of the node is AbstractRefTensor or Tuple/List(AbstractRefTensor, ...), return true.
   auto manager = func_graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
   auto &node_users = manager->node_users();
@@ -1032,8 +1033,7 @@ bool ExistSwitchRef(const FuncGraphPtr &func_graph, const std::vector<AnfNodePtr
       auto &users = iter->second;
       for (auto &user : users) {
         auto &user_node = user.first;
-        const auto &abs = user_node->abstract();
-        if (abs != nullptr && abs->isa<abstract::AbstractRefTensor>()) {
+        if (common::AnfAlgo::HasAbstractRef(user_node) || common::AnfAlgo::SequenceHasAbstractRef(user_node)) {
           return true;
         }
       }
