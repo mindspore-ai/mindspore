@@ -9,7 +9,7 @@ mindspore.nn.probability.bijector.PowerTransform
     .. math::
         Y = g(X) = (1 + X * c)^{1 / c}, X >= -1 / c
 
-    其中幂c >= 0。
+    其中c >= 0。
 
     PowerTransform Bijector将输入从 `[-1/c, inf]` 映射到 `[0, inf]` 。
 
