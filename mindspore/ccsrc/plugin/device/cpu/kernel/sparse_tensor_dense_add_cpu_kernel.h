@@ -56,7 +56,6 @@ class SparseTensorDenseAddCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   ShapeVector x2_shape_;
   ShapeVector output_shape_;
   size_t values_size_{0};
-  enum input_list_ { INDICES, VALUES, SPARSE_SHAPE, DENSE };
 };
 }  // namespace kernel
 }  // namespace mindspore

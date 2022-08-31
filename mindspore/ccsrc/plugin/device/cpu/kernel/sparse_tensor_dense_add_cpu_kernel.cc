@@ -35,28 +35,28 @@ using complex128 = std::complex<double>;
 void SparseTensorDenseAddCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  auto indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, INDICES);
+  auto indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kIndex0);
   if (indices_shape.size() != kIndicesShapeSize) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it requires 'x1_indices' must be a " << kIndicesShapeSize
                       << "-D Tensor, but got " << indices_shape.size() << "-D";
   }
-  auto values_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, VALUES);
+  auto values_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kIndex1);
   if (values_shape.size() != 1 || values_shape[0] != indices_shape[0]) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', it requires 'x1_values' must be a 1-D Tensor and the first dimension length "
                       << "must be equal to the first dimension length of 'indices', but got 'x1_values' shape: "
                       << Vector2Str(values_shape) << " and 'x1_indices' shape: " << Vector2Str(indices_shape);
   }
-  auto shape_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, SPARSE_SHAPE);
-  x2_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, DENSE);
-  size_t x1_rank = shape_shape_[0];
+  auto shape_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kIndex2);
+  x2_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kIndex3);
+  size_t x1_rank = static_cast<size_t>(shape_shape_[0]);
   size_t x2_rank = x2_shape_.size();
   if (x1_rank != x2_rank) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', x1 and x2 must have same ranks, but got 'x1' shape: " << Vector2Str(shape_shape_)
                       << "and 'x2' shape: " << Vector2Str(x2_shape_);
   }
-  values_size_ = values_shape[0];
+  values_size_ = static_cast<size_t>(values_shape[0]);
   output_shape_ = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
   auto kernel_attr = GetKernelAttrFromNode(kernel_node);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -80,11 +80,11 @@ bool SparseTensorDenseAddCpuKernelMod::LaunchKernel(const std::vector<kernel::Ad
   if (ret != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset output failed. Error no: " << ret;
   }
-  const auto *indices_addr = reinterpret_cast<I *>(inputs[0]->addr);
-  const auto *values_addr = reinterpret_cast<T *>(inputs[1]->addr);
-  const auto *shape_addr = reinterpret_cast<I *>(inputs[2]->addr);
-  const auto *x2_addr = reinterpret_cast<T *>(inputs[3]->addr);
-  auto *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
+  const auto *indices_addr = static_cast<I *>(inputs[0]->addr);
+  const auto *values_addr = static_cast<T *>(inputs[1]->addr);
+  const auto *shape_addr = static_cast<I *>(inputs[2]->addr);
+  const auto *x2_addr = static_cast<T *>(inputs[3]->addr);
+  auto *output_addr = static_cast<T *>(outputs[0]->addr);
   const size_t indices_length = inputs[0]->size / sizeof(I);
   const size_t values_length = inputs[1]->size / sizeof(T);
   const size_t x2_length = inputs[3]->size / sizeof(T);
@@ -97,8 +97,8 @@ bool SparseTensorDenseAddCpuKernelMod::LaunchKernel(const std::vector<kernel::Ad
     output_addr[i] = x2_addr[i];
   }
   for (size_t i = 0; i < rank; i++) {
-    size_t x1_shape_i = shape_addr[i];
-    size_t x2_shape_i = x2_shape_[i];
+    size_t x1_shape_i = static_cast<size_t>(shape_addr[i]);
+    size_t x2_shape_i = static_cast<size_t>(x2_shape_[i]);
     if (x1_shape_i != x2_shape_i) {
       MS_EXCEPTION(RuntimeError) << "For '" << kernel_name_ << "', Dimension [" << i << "] does not equal"
                                  << "(no broadcasting is supported): x1_shape side " << x1_shape_i
@@ -114,15 +114,16 @@ bool SparseTensorDenseAddCpuKernelMod::LaunchKernel(const std::vector<kernel::Ad
       if (i * rank + j >= indices_length) {
         MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the index of 'x1_indices' out of bounds.";
       }
-      int index = indices_addr[i * rank + j];
-      if (index >= SizeToInt(output_shape_[j]) || index < 0) {
+      int index = static_cast<int>(indices_addr[i * rank + j]);
+      int output_shape_j = static_cast<int>(output_shape_[j]);
+      if (index >= output_shape_j || index < 0) {
         MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the " << i << "th x1_value in " << j
                                  << "th dimension index: " << index << " of 'output' out of bounds: [0, "
-                                 << output_shape_[j] << ")";
+                                 << output_shape_j << ")";
       }
       size_t count = 1;
       for (size_t k = j + 1; k < rank; k++) {
-        count *= output_shape_[k];
+        count *= static_cast<size_t>(output_shape_[k]);
       }
       out_index += IntToSize(index) * count;
     }
