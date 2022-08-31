@@ -39,12 +39,13 @@ abstract::ShapePtr InferShapeAdaptiveAvgPool3D(const PrimitivePtr &primitive,
   const auto &output_size_ptr = primitive->GetAttr("output_size");
   MS_EXCEPTION_IF_NULL(output_size_ptr);
   const auto &output_size = GetValue<std::vector<int64_t>>(output_size_ptr);
-  CheckAndConvertUtils::CheckInteger("length of output_size", output_size.size(), kEqual, kOutputSizeLen, op_name);
+  (void)CheckAndConvertUtils::CheckInteger("length of output_size", output_size.size(), kEqual, kOutputSizeLen,
+                                           op_name);
 
   // Update the output shape by output size and input shape.
   auto input_size_iter = x_shape.rbegin();
   auto output_size_iter = output_size.rbegin();
-  for (; output_size_iter != output_size.rend(); output_size_iter++, input_size_iter++) {
+  for (; output_size_iter != output_size.rend(); ++output_size_iter, ++input_size_iter) {
     // If output size is none, the input shape should be used.
     if (*output_size_iter != kPyValueNone) {
       *input_size_iter = *output_size_iter;
@@ -57,7 +58,7 @@ TypePtr InferTypeAdaptiveAvgPool3D(const PrimitivePtr &primitive, const std::vec
   auto op_name = primitive->name();
   auto x_dtype = input_args[0]->BuildType();
   const std::set<TypePtr> x_valid_types = {kInt8, kInt16, kInt32, kInt64, kUInt8, kFloat16, kFloat32, kFloat64};
-  CheckAndConvertUtils::CheckTensorTypeValid("x", x_dtype, x_valid_types, op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_dtype, x_valid_types, op_name);
   return x_dtype;
 }
 }  // namespace
