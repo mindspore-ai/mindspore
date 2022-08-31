@@ -159,15 +159,3 @@ def test_ps_roi_pooling_grad():
     Expectation: success.
     """
     ps_roi_pooling_grad_case(np.float32)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu
-@pytest.mark.env_onecard
-def test_ps_roi_pooling_grad_dynamic_shape():
-    """
-    Feature: PSROIPoolingGrad op.
-    Description: Test the normal behavior of PSROIPooingGrad op.
-    Expectation: success.
-    """
-    ps_roi_pooling_grad_case(np.float32, dynamic_shape=True)

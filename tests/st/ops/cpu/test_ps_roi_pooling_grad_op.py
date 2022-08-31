@@ -172,18 +172,6 @@ def _ps_roi_pooling_grad_case(data_type, mode, y_size_adjust=None, dynamic_shape
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_ps_roi_pooling_grad_dynamic_shape():
-    """
-    Feature: PSROIPoolingGrad op.
-    Description: Test the dynamic shape behavior of PSROIPooingGrad op.
-    Expectation: success.
-    """
-    _ps_roi_pooling_grad_case(np.float32, CTX_MODE, dynamic_shape=True)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
 def test_ps_roi_pooling_grad_mind_ir():
     """
     Feature: PSROIPoolingGrad op.
@@ -224,12 +212,17 @@ def test_ps_roi_pooling_grad_mind_ir():
             file_name=file_name,
             file_format='MINDIR')
 
-        graph = ms.load(file_name)
-        new_net = nn.GraphCell(graph)
-        new_out = new_net(dy_ms, rois_ms)
-    assert np.allclose(
-        old_out.asnumpy(), new_out.asnumpy(),
-        atol=ALL_CLOSE_CRITERION, rtol=ALL_CLOSE_CRITERION)
+        try:
+            graph = ms.load(file_name)
+            new_net = nn.GraphCell(graph)
+            new_out = new_net(dy_ms, rois_ms)
+            assert np.allclose(
+                old_out.asnumpy(), new_out.asnumpy(),
+                atol=ALL_CLOSE_CRITERION, rtol=ALL_CLOSE_CRITERION)
+        finally:
+            # Get write mode so that we can delete the file on Windows.
+            os.chmod(file_name, 0o700)
+            os.remove(file_name)
 
 
 @pytest.mark.level0
