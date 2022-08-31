@@ -257,6 +257,7 @@ GraphId GraphCompiler::CompileGraph(const GraphSegmentPtr &segment, const AnfNod
                                     bool run_in_pynative) {
   MS_EXCEPTION_IF_NULL(session_);
   MS_EXCEPTION_IF_NULL(segment);
+  MS_EXCEPTION_IF_NULL(device_context);
   MS_LOG(INFO) << "Status record: start compile graph.";
   auto nodes = segment->nodes_;
   auto device_terget = device_context->GetDeviceType();
@@ -338,6 +339,7 @@ GraphId GraphCompiler::CompileWholeGraphForGraphRunMode(const FuncGraphPtr &func
                                                         const DeviceContext *device_context) {
   MS_EXCEPTION_IF_NULL(session_);
   MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(device_context);
   MS_LOG(INFO) << "Status record: start compile graph.";
   // Generate kernel graph.
   std::vector<KernelGraphPtr> all_graphs;
@@ -352,8 +354,10 @@ GraphId GraphCompiler::CompileWholeGraphForGraphRunMode(const FuncGraphPtr &func
   }
 
   // todo: waiting for GraphExecutor
+  MS_EXCEPTION_IF_NULL(MsContext::GetInstance());
   if (MsContext::GetInstance()->backend_policy() == "ge") {
     auto manager = MakeManager();
+    MS_EXCEPTION_IF_NULL(manager);
     for (const auto &graph : all_graphs) {
       MS_EXCEPTION_IF_NULL(graph);
       manager->AddFuncGraph(graph);
@@ -442,6 +446,7 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
   }
 #endif
 
+  MS_EXCEPTION_IF_NULL(device_context->kernel_executor_);
   // Execute optimization pass.
   device_context->kernel_executor_->OptimizeGraph(graph);
 
@@ -501,6 +506,7 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
 
 #ifdef ENABLE_DEBUGGER
   auto debugger = Debugger::GetInstance();
+  MS_EXCEPTION_IF_NULL(debugger);
   // Dump graph for GPU mindRT if dump is enabled.
   debugger->DumpInGraphCompiler(graph);
   if (debugger && debugger->DebuggerBackendEnabled()) {
@@ -519,6 +525,7 @@ KernelGraphPtr GraphCompiler::Fetch(GraphId graph_id) const {
 }
 
 void GraphCompiler::CreateDeviceAddress(const KernelGraphPtr &graph, const DeviceContext *device_context) const {
+  MS_EXCEPTION_IF_NULL(graph);
   MS_LOG(INFO) << "Status record: start create device address. graph id: " << graph->graph_id();
   DeviceAddressUtils::CreateParameterDeviceAddress(device_context, graph);
   DeviceAddressUtils::CreateValueNodeDeviceAddress(device_context, graph);
@@ -576,6 +583,7 @@ void GraphCompiler::CalculateForwardOpOutputCount(const KernelGraphPtr &graph,
                                                   const std::vector<tensor::TensorPtr> &inputs,
                                                   std::map<std::string, size_t> *forward_op_output_tensor_id) const {
   MS_EXCEPTION_IF_NULL(session_);
+  MS_EXCEPTION_IF_NULL(forward_op_output_tensor_id);
   forward_op_output_tensor_id->clear();
   session_->GetForwardOpOutputRefCount(graph.get(), inputs, forward_op_output_tensor_id);
 }

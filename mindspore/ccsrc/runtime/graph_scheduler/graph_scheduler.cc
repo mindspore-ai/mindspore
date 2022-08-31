@@ -348,6 +348,7 @@ void GraphScheduler::ClearActorData(const ActorSet *actor_set) {
   }
 
   for (auto &data_source_actor : actor_set->data_source_actors_) {
+    MS_EXCEPTION_IF_NULL(data_source_actor);
     data_source_actor->ReleaseDataNodeAddress();
   }
 
@@ -849,6 +850,7 @@ std::vector<DataSourceActorPtr> GraphScheduler::BuildDataSourceActor(const Graph
 
       if (IsHostQueueDSActor(input_node, graph, root_parameters, graph_compiler_info.strategy_)) {
         // In control flow, parameters from subgraph need not init in data source actor.
+        MS_EXCEPTION_IF_NULL(graph_compiler_info.control_node_parser_);
         if (graph_compiler_info.control_node_parser_->IsInited()) {
           auto node_with_index = graph->GetElementInTupleBackendFrontIndexMap(input_node);
           if ((node_with_index.first != nullptr) && node_with_index.first->isa<Parameter>() &&
@@ -1059,6 +1061,7 @@ DataPrepareActorPtr GraphScheduler::BuildDataPrepareActor(const GraphCompilerInf
                                                           const HostTensorQueuePtr &host_queue) {
   HostQueueDSActorPtr host_queue_ds_actor = nullptr;
   auto iter = std::find_if(data_source_actors.begin(), data_source_actors.end(), [&](const auto &data_source_actor) {
+    MS_EXCEPTION_IF_NULL(data_source_actor);
     return data_source_actor->type_ == KernelTransformType::kHostDataSourceActor;
   });
   if (iter != data_source_actors.end()) {
@@ -1521,8 +1524,8 @@ void GraphScheduler::LinkControlArrowByAutoMonad(AbstractActor *to_actor, const 
                                                   prim::kPrimMakeTuple};
   const auto &input_kernel_with_output_idx =
     common::AnfAlgo::VisitKernelWithReturnType(from_node, 0, false, return_types);
-  MS_EXCEPTION_IF_NULL(input_kernel_with_output_idx.first);
   auto input_anfnode = input_kernel_with_output_idx.first;
+  MS_EXCEPTION_IF_NULL(input_anfnode);
   CNodePtr input_cnode = nullptr;
   if (input_anfnode->isa<CNode>()) {
     input_cnode = input_anfnode->cast<CNodePtr>();
@@ -1682,6 +1685,7 @@ void GraphScheduler::LinkControlArrowBySendRecvNodes(const KernelGraphPtr &graph
       SchedulerHelper::AddControlArrow(send_actor, recv_actor);
       // to_recv_actor --> outputs of from_allreduce_actor
       for (auto &output_data_arrow : parallel_actor->output_data_arrows_) {
+        MS_EXCEPTION_IF_NULL(output_data_arrow);
         auto output_actor = FetchActor(output_data_arrow->to_op_id_.Name());
         if (output_actor != nullptr) {
           SchedulerHelper::AddControlArrow(recv_actor, output_actor);
@@ -1764,6 +1768,7 @@ void GraphScheduler::LinkControlArrowForCustomActor(const ActorSet *actor_set,
 
     auto all_nodes = TopoSort(graph->get_return());
     for (const auto &node : all_nodes) {
+      MS_EXCEPTION_IF_NULL(node);
       if (!IsPrimitiveCNode(node, prim::kPrimDepend)) {
         continue;
       }
@@ -1943,27 +1948,32 @@ void GraphScheduler::LinkControlArrowForLoopCountActor(LoopCountActor *loop_coun
   // Collect the actors which have no output.
   std::vector<AbstractActor *> no_output_actors;
   for (auto &super_actor : actor_set->super_kernel_actors_) {
+    MS_EXCEPTION_IF_NULL(super_actor);
     if ((super_actor->output_data_arrows_.size() == 0) && (super_actor->output_control_arrows_.size() == 0)) {
       (void)no_output_actors.emplace_back(super_actor.get());
     }
   }
   for (auto &kernel_actor : actor_set->kernel_actors_) {
+    MS_EXCEPTION_IF_NULL(kernel_actor);
     // The no output kernel control side in subgraph needs to be connected to the corresponding output switch actor.
     if ((kernel_actor->output_data_arrows_.size() == 0) && (kernel_actor->output_control_arrows_.size() == 0)) {
       (void)no_output_actors.emplace_back(kernel_actor.get());
     }
   }
   for (auto &data_actor : actor_set->data_source_actors_) {
+    MS_EXCEPTION_IF_NULL(data_actor);
     if ((data_actor->output_data_arrows_.size() == 0) && (data_actor->output_control_arrows_.size() == 0)) {
       (void)no_output_actors.emplace_back(data_actor.get());
     }
   }
   for (auto &copy_actor : copy_actors_) {
+    MS_EXCEPTION_IF_NULL(copy_actor);
     if ((copy_actor->output_data_arrows_.size() == 0) && (copy_actor->output_control_arrows_.size() == 0)) {
       (void)no_output_actors.emplace_back(copy_actor.get());
     }
   }
   for (auto &custom_actor : actor_set->custom_actors_) {
+    MS_EXCEPTION_IF_NULL(custom_actor);
     if ((custom_actor->output_data_arrows_.size() == 0) && (custom_actor->output_control_arrows_.size() == 0)) {
       (void)no_output_actors.emplace_back(custom_actor.get());
     }
@@ -2016,6 +2026,7 @@ void GraphScheduler::LinkOutputResultArrowForOutputActor(OutputActor *to_actor,
     std::set<std::vector<size_t>> unique_output_positions;
     std::set<KernelWithIndex> unique_outputs;
     for (const auto &output : outputs) {
+      MS_EXCEPTION_IF_NULL(output.first);
       if (IsInternalParameter(output.first, graph)) {
         MS_LOG(INFO) << "Ignore the internal parameter node:" << output.first->DebugString();
         continue;
@@ -2177,6 +2188,7 @@ void GraphScheduler::PersistDeviceTensor(const GraphCompilerInfo &graph_compiler
         continue;
       }
       auto device_tensor = AnfAlgo::GetMutableOutputAddr(value_node, 0, false);
+      MS_EXCEPTION_IF_NULL(device_tensor);
       const auto &front_node = AnfAlgo::FetchFrontNodeByBackendNode(value_node, *graph);
       device_tensor->SetNodeIndex(value_node, 0);
       SchedulerHelper::AddDeviceTensorStore(front_node.get(), device_tensor);
@@ -2257,6 +2269,7 @@ void GraphScheduler::PersistDeviceTensorForRootGraphControlNode(const GraphCompi
     auto sub_device_tensor = AnfAlgo::GetMutableOutputAddr(backend_node, index, false);
     MS_EXCEPTION_IF_NULL(sub_device_tensor);
 
+    MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
     auto new_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(
       nullptr, sub_device_tensor->GetSize(), sub_device_tensor->format(), sub_device_tensor->type_id(),
       sub_device_tensor->host_shape());

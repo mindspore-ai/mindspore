@@ -37,7 +37,7 @@ class AllReduceLauncher {
 
   bool Execute(const void *input_data, void *const output_data, size_t data_size) const;
 
-  std::shared_ptr<ps::core::CollectiveNode> collective_node();
+  const std::shared_ptr<ps::core::CollectiveNode> &collective_node() const;
 
  private:
   size_t rank_id_{0};

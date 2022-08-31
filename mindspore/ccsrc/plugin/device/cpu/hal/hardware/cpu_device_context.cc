@@ -60,6 +60,7 @@ void CPUDeviceContext::Initialize() {
   if (initialized_) {
     return;
   }
+  MS_EXCEPTION_IF_NULL(device_res_manager_);
   device_res_manager_->Initialize();
 
 #ifndef ENABLE_SECURITY
@@ -74,7 +75,10 @@ void CPUDeviceContext::Initialize() {
   initialized_ = true;
 }
 
-void CPUDeviceContext::Destroy() { device_res_manager_->Destroy(); }
+void CPUDeviceContext::Destroy() {
+  MS_EXCEPTION_IF_NULL(device_res_manager_);
+  device_res_manager_->Destroy();
+}
 
 void CPUDeviceResManager::Initialize() {
   mem_manager_ = std::make_shared<CPUMemoryManager>();
@@ -101,6 +105,7 @@ void CPUDeviceResManager::FreeMemory(void *ptr) const {
 }
 
 std::vector<void *> CPUDeviceResManager::AllocateContinuousMemory(const std::vector<size_t> &size_list) const {
+  MS_EXCEPTION_IF_NULL(mem_manager_);
   return mem_manager_->MallocContinuousMemFromMemPool(size_list);
 }
 
@@ -226,11 +231,13 @@ void SetKernelInfoBeforeCreateKernel(const std::vector<CNodePtr> &nodes) {
 }  // namespace
 
 void CPUKernelExecutor::SetOperatorInfo(const KernelGraphPtr &graph) const {
+  MS_EXCEPTION_IF_NULL(graph);
 #ifdef ENABLE_AKG
   bool do_expand = false;
   auto mng = graph->manager();
   if (mng == nullptr) {
     mng = Manage(graph, true);
+    MS_EXCEPTION_IF_NULL(mng);
     graph->set_manager(mng);
   }
 #endif
@@ -291,13 +298,13 @@ void CPUKernelExecutor::CreateKernel(const std::vector<CNodePtr> &nodes) const {
     std::shared_ptr<kernel::NativeCpuKernelMod> cpu_kernel =
       kernel::Factory<kernel::NativeCpuKernelMod>::Instance().Create(kernel_name);
 
-    if (!cpu_kernel) {
+    if (cpu_kernel == nullptr) {
       MS_LOG(EXCEPTION) << "Build cpu operator[" << node->fullname_with_scope() << "] failed";
     }
 
     // This branch would be removed When KernelMode rectification is complete
     auto discard_cpu_kernel_mod = std::dynamic_pointer_cast<kernel::DeprecatedNativeCpuKernelMod>(cpu_kernel);
-    if (discard_cpu_kernel_mod) {
+    if (discard_cpu_kernel_mod != nullptr) {
       discard_cpu_kernel_mod->SetCpuRefMapToKernelInfo(node);
       discard_cpu_kernel_mod->Init(node);
       AnfAlgo::SetKernelMod(discard_cpu_kernel_mod, node.get());

@@ -79,6 +79,7 @@ bool MSCollectiveOpsImpl::RingAllGatherImpl(uint32_t send_to_rank, uint32_t recv
   uint32_t timeout =
     context_ptr->get_param<bool>(MS_CTX_ENABLE_RECOVERY) ? kCollectiveCommMaxTimeout : kCollectiveCommTimeout;
 
+  MS_EXCEPTION_IF_NULL(topo_node_);
   for (size_t i = 0; i < rank_size_ - 1; i++) {
     size_t send_chunk_index = (rank_id_ - i + rank_size_) % rank_size_;
     T *send_chunk = output_buff + chunk_offset[send_chunk_index];
@@ -128,6 +129,7 @@ bool MSCollectiveOpsImpl::Broadcast(const void *sendbuff, void *recvbuff, size_t
   MS_ERROR_IF_NULL_W_RET_VAL(sendbuff, false);
 
   // Initialize collective communication parameters.
+  MS_EXCEPTION_IF_NULL(topo_node_);
   rank_id_ = SizeToUint(topo_node_->rank_id());
   rank_size_ = group_info.size;
   if (rank_size_ == 0) {
@@ -188,6 +190,7 @@ bool MSCollectiveOpsImpl::AllGather(const void *sendbuff, void *recvbuff, size_t
   MS_ERROR_IF_NULL_W_RET_VAL(sendbuff, false);
 
   // Initialize collective communication parameters.
+  MS_EXCEPTION_IF_NULL(topo_node_);
   rank_id_ = SizeToUint(topo_node_->rank_id());
   rank_size_ = SizeToUint(topo_node_->rank_size());
   if (rank_size_ == 0) {

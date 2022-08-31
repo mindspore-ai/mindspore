@@ -44,6 +44,7 @@ bool CollectiveNode::Start(const uint32_t &timeout) {
   is_already_stopped_ = false;
 
   SynchronizeAddresses();
+  MS_EXCEPTION_IF_NULL(cgn_);
   node_info_.rank_id_ = cgn_->rank_id();
   MS_LOG(INFO) << "The cpu collective rank " << node_info_.rank_id_ << " has been started successfully.";
   return true;

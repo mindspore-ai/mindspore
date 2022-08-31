@@ -120,6 +120,7 @@ bool MultiActorFusion::AddDependency(
   }
 
   // Collect the input actor infos from the input data and input control.
+  MS_EXCEPTION_IF_NULL(actor_info->first);
   std::set<std::pair<AbstractActor *, bool>> input_actor_infos;
   for (auto &input_data_arrow_aid : actor_info->first->input_data_arrow_aids()) {
     (void)input_actor_infos.insert(actor_infos->at(input_data_arrow_aid.first.Name()));

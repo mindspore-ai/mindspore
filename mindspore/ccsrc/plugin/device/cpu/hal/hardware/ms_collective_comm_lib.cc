@@ -78,6 +78,7 @@ bool MsCollectiveCommLib::CreateCommunicationGroup(const std::string &group_name
 
 bool MsCollectiveCommLib::AllGatherHostHashName(size_t host_hash_name, std::vector<size_t> *host_hash_names) const {
   CHECK_IF_NULL(host_hash_names);
+  CHECK_IF_NULL(cgn_);
 
   bool success = false;
   const size_t interval = 3;
@@ -106,6 +107,7 @@ bool MsCollectiveCommLib::AllGatherHostHashName(size_t host_hash_name, std::vect
 bool MsCollectiveCommLib::BroadcastUniqueID(const std::string &group_name, size_t root_info_size, void *root_info) {
   CHECK_IF_NULL(root_info);
   CHECK_IF_NULL(node_);
+  CHECK_IF_NULL(cgn_);
   auto group = GetGroup(group_name);
   CHECK_IF_NULL(group);
 
@@ -191,7 +193,7 @@ bool MsCollectiveCommLib::AllReduce(const void *send_buff, void *recv_buff, size
                                     CollectiveOpReduceType reduce_op, const std::string &group_name, void *) {
   CHECK_IF_NULL(send_buff);
   CHECK_IF_NULL(recv_buff);
-  CHECK_IF_NULL(node_);
+  CHECK_IF_NULL(launcher_);
   if (data_type != TypeId::kNumberTypeFloat32) {
     MS_LOG(EXCEPTION) << "AllReduce only support float32.";
   }
@@ -236,6 +238,7 @@ bool MsCollectiveCommLib::Broadcast(const void *send_buff, void *recv_buff, size
   }
 
   auto group = groups_[group_name];
+  CHECK_IF_NULL(group);
   CommunicationGroupInfo group_info = {};
   group_info.size = group->group_size();
   group_info.global_rank = global_rank_id_;

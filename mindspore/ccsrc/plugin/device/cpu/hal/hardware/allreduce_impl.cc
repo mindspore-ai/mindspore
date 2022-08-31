@@ -28,7 +28,10 @@ constexpr size_t kWaitTimeout = 30;
 }  // namespace
 
 bool AllReduceLauncher::Initialize() {
-  auto node_base = distributed::cluster::ClusterContext::instance()->node_base();
+  const auto &cluster_ctx = distributed::cluster::ClusterContext::instance();
+  MS_EXCEPTION_IF_NULL(cluster_ctx);
+  auto node_base = cluster_ctx->node_base();
+  MS_EXCEPTION_IF_NULL(node_base);
   rank_id_ = node_base->rank_id();
 
   auto cgn = std::dynamic_pointer_cast<distributed::cluster::topology::ComputeGraphNode>(node_base);
@@ -38,8 +41,6 @@ bool AllReduceLauncher::Initialize() {
     return false;
   }
 
-  const auto &cluster_ctx = distributed::cluster::ClusterContext::instance();
-  MS_EXCEPTION_IF_NULL(cluster_ctx);
   node_role_ = cluster_ctx->node_role();
   rank_size_ = static_cast<size_t>(cluster_ctx->node_num(cluster_ctx->node_role()));
   return true;
@@ -80,6 +81,7 @@ bool AllReduceLauncher::RingAllReduce(const void *input_data, void *const output
     MS_LOG(ERROR) << "RingAllReduce memcpy_s input_data error, errorno(" << memcpy_ret << ")";
     return false;
   }
+  MS_EXCEPTION_IF_CHECK_FAIL((rank_size_ != 0), "The rank size is zero.");
   size_t data_num = data_size / sizeof(float);
   size_t chunk_size = data_num / rank_size_;
   size_t remainder_size = data_num % rank_size_;
@@ -106,6 +108,7 @@ bool AllReduceLauncher::RingAllReduce(const void *input_data, void *const output
 
   // Ring ReduceScatter.
   MS_LOG(DEBUG) << "Start Ring ReduceScatter.";
+  MS_EXCEPTION_IF_NULL(abs_node_);
   for (size_t i = 0; i < rank_size_ - 1; i++) {
     // Step 1: Async send data to next rank.
     size_t send_chunk_index = (rank_id_ - i + rank_size_) % rank_size_;
@@ -127,6 +130,7 @@ bool AllReduceLauncher::RingAllReduce(const void *input_data, void *const output
       return false;
     }
     // Step 3: Reduce the data, so we can overlap the time cost of send.
+    MS_EXCEPTION_IF_NULL(rec_ptr);
     const auto *tmp_data = reinterpret_cast<float *>(rec_ptr->data());
     for (size_t j = 0; j < chunk_sizes[rec_chunk_index]; j++) {
       rec_chunk[j] += tmp_data[j];
@@ -158,6 +162,7 @@ bool AllReduceLauncher::RingAllReduce(const void *input_data, void *const output
       MS_LOG(ERROR) << "Ring AllGather wait receiving " << rec_req_id << " failed.";
       return false;
     }
+    MS_EXCEPTION_IF_NULL(rec_ptr);
     memcpy_ret = memcpy_s(rec_chunk, chunk_sizes[rec_chunk_index] * sizeof(float), rec_ptr->data(), rec_ptr->size());
     if (memcpy_ret != 0) {
       MS_LOG(ERROR) << "Ring AllGather memcpy_s received data error, errorno(" << memcpy_ret << ")";
@@ -172,7 +177,7 @@ bool AllReduceLauncher::RingAllReduce(const void *input_data, void *const output
   return true;
 }
 
-std::shared_ptr<ps::core::CollectiveNode> AllReduceLauncher::collective_node() { return abs_node_; }
+const std::shared_ptr<ps::core::CollectiveNode> &AllReduceLauncher::collective_node() const { return abs_node_; }
 
 bool AllReduceLauncher::ReduceBroadcastAllReduce(const void *input_data, void *const output_data,
                                                  size_t data_size) const {
@@ -185,6 +190,7 @@ bool AllReduceLauncher::ReduceBroadcastAllReduce(const void *input_data, void *c
   float *output_buff = reinterpret_cast<float *>(output_data);
   // Reduce data to rank 0 process.
   MS_LOG(DEBUG) << "Start Reduce to rank 0 process.";
+  MS_EXCEPTION_IF_NULL(abs_node_);
   if (rank_id_ == 0) {
     for (uint32_t i = 1; i < rank_size_; i++) {
       std::shared_ptr<std::vector<unsigned char>> rec_ptr = nullptr;
@@ -194,6 +200,7 @@ bool AllReduceLauncher::ReduceBroadcastAllReduce(const void *input_data, void *c
         MS_LOG(ERROR) << "Reduce wait receiving " << rec_req_id << " failed.";
         return false;
       }
+      MS_EXCEPTION_IF_NULL(rec_ptr);
       const auto *tmp_data = reinterpret_cast<float *>(rec_ptr->data());
       for (size_t j = 0; j < data_num; j++) {
         output_buff[j] += tmp_data[j];
@@ -230,6 +237,7 @@ bool AllReduceLauncher::ReduceBroadcastAllReduce(const void *input_data, void *c
       MS_LOG(ERROR) << "Broadcast wait receiving " << rec_req_id << " failed.";
       return false;
     }
+    MS_EXCEPTION_IF_NULL(rec_ptr);
     memcpy_ret = memcpy_s(output_buff, data_num * sizeof(float), rec_ptr->data(), rec_ptr->size());
     if (memcpy_ret != 0) {
       MS_LOG(ERROR) << "Broadcast memcpy_s received data error, errorno(" << memcpy_ret << ")";

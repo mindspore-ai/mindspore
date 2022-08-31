@@ -44,6 +44,7 @@ class DeviceTensorStore {
   //  Support value modifiable.
   void Insert(AnfNode *key, const DeviceTensorPtr &value) {
     MS_EXCEPTION_IF_NULL(key);
+    MS_EXCEPTION_IF_NULL(value);
     std::unique_lock<std::shared_mutex> lock(map_mutex_);
     const auto &iter = device_tensors_.find(key);
     if (iter == device_tensors_.end()) {
@@ -52,6 +53,7 @@ class DeviceTensorStore {
     }
 
     for (size_t i = 0; i < iter->second.size(); ++i) {
+      MS_EXCEPTION_IF_NULL(iter->second[i]);
       if (iter->second[i]->GetDeviceType() == value->GetDeviceType()) {
         iter->second[i] = value;
         return;

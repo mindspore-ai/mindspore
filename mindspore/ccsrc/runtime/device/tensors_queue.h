@@ -70,7 +70,7 @@ class TensorsQueue {
  private:
   // Using a vector of address list to store the tensors.
   // Using to cursors to simulate the behavior of circular queue.
-  std::vector<mindspore::kernel::AddressPtrList> tensors_q;
+  std::vector<mindspore::kernel::AddressPtrList> tensors_q_;
   size_t front_ = 0;
   size_t rear_ = 0;
 };

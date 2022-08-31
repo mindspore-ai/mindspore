@@ -78,6 +78,7 @@ const AnfNodePtr MatMulBiasAddFusion::Process(const FuncGraphPtr &graph, const A
   const AnfNodePtr &matmul = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), 0);
   MS_EXCEPTION_IF_NULL(matmul);
   auto outlist = GetRealNodeUsedList(graph, matmul);
+  MS_EXCEPTION_IF_NULL(outlist);
   if (outlist->size() >= 2) {
     return nullptr;
   }
