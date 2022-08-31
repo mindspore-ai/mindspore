@@ -18,7 +18,7 @@ mindspore.ops.conv2d
     请参考论文 `Gradient Based Learning Applied to Document Recognition <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_ 。更详细的介绍，参见：http://cs231n.github.io/convolutional-networks/。
 
     参数：
-        - **x** (Tensor): shape为 :math:`(N, C_{in}, H_{in}, W_{in})` 的Tensor.
+        - **x** (Tensor) - shape为 :math:`(N, C_{in}, H_{in}, W_{in})` 的Tensor.
         - **weight** (Tensor) - 设置卷积核的大小为 :math:`(\text{kernel_size[0]}, \text{kernel_size[1]})` ，则shape为 :math:`(C_{out}, C_{in}, \text{kernel_size[0]}, \text{kernel_size[1]})` 。
         - **kernel_size** (Union[int, tuple[int]]) - 数据类型为int或一个包含2个int组成的元组。指定二维卷积核的高度和宽度。单个整数表示该值同时适用于内核的高度和宽度。包含2个整数的元组表示第一个值用于高度，另一个值用于内核的宽度。
         - **mode** (int) - 指定不同的卷积模式。此值目前未被使用。默认值：1。

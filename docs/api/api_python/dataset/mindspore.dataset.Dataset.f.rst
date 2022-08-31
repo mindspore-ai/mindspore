@@ -7,7 +7,7 @@
         - **columns** (Union[str, list[str]]) - 要选择的数据列的列名列表。
 
     返回：
-        ProjectDataset，project操作后的数据集对象。
+        Dataset，project操作后的数据集对象。
 
 .. py:method:: rename(input_columns, output_columns)
 

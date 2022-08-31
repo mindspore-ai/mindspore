@@ -478,7 +478,6 @@ class Dataset:
         bucketed based on its length and bucket boundaries. When a bucket reaches its
         corresponding size specified in bucket_batch_sizes, the entire bucket will be
         padded according to pad_info, and then form a batch.
-        Each batch will be full, except one special case: the last batch for each bucket may not be full.
 
         Args:
             column_names (list[str]): Columns passed to element_length_function.
@@ -544,7 +543,6 @@ class Dataset:
         """
         Combine batch_size number of consecutive rows into batches.
 
-        For any child node, a batch is treated as a single row.
         For any column, all the elements within that column must have the same shape.
         If a per_batch_map callable is provided, it will be applied to the batches of tensors.
 
@@ -624,7 +622,7 @@ class Dataset:
     @check_sync_wait
     def sync_wait(self, condition_name, num_batch=1, callback=None):
         """
-        Add a blocking condition to the input Dataset. A synchronize action will be applied.
+        Add a blocking condition to the input Dataset, and a synchronize action will be applied.
 
         Args:
             condition_name (str): The condition name that is used to toggle sending next row.
@@ -706,9 +704,6 @@ class Dataset:
     def flat_map(self, func):
         """
         Map `func` to each row in dataset and flatten the result.
-
-        The specified `func` is a function that must take one `numpy.ndarray` as input
-        and return a `Dataset`.
 
         Args:
             func (function): A function that must take one `numpy.ndarray` as an argument and
@@ -1229,8 +1224,6 @@ class Dataset:
     @check_project
     def project(self, columns):
         """
-        Project certain columns in input dataset.
-
         The specified columns will be selected from the dataset and passed into
         the pipeline with the order specified. The other columns are discarded.
 
@@ -1455,8 +1448,6 @@ class Dataset:
     def create_dict_iterator(self, num_epochs=-1, output_numpy=False):
         """
         Create an iterator over the dataset. The data retrieved will be a dictionary datatype.
-
-        The order of the columns in the dictionary may not be the same as the original order.
 
         Args:
             num_epochs (int, optional): Maximum number of epochs that iterator can be iterated

@@ -46,4 +46,5 @@ mindspore.ops.KLDivLoss
         - **TypeError** - `reduction` 不是str。
         - **TypeError** - `logits` 或 `labels` 不是Tensor。
         - **TypeError** - `logits` 或 `labels` 的数据类型不是支持的类型。
+        - **ValueError** - `logits` 和 `labels` 的shape不一致。
         - **RuntimeError** - `logits` 或 `labels` 是标量并且 `reduction` 是"batchmean"。

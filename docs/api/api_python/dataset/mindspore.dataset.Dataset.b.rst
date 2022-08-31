@@ -1,8 +1,8 @@
 .. py:method:: bucket_batch_by_length(column_names, bucket_boundaries, bucket_batch_sizes, element_length_function=None, pad_info=None, pad_to_bucket_boundary=False, drop_remainder=False)
 
-    根据数据的长度进行分桶，每个桶将在数据填满的时候进行填充和批处理操作。
+    根据数据的长度进行分桶。每个桶将在数据填满的时候进行填充和批处理操作。
 
-    对数据集中的每一条数据进行长度计算，根据该条数据的长度计算结果和每个分桶的范围将该数据归类到特定的桶里面。
+    对数据集中的每一条数据进行长度计算。根据该条数据的长度计算结果和每个分桶的范围将该数据归类到特定的桶里面。
     当某个分桶中数据条数达到指定的大小 `bucket_batch_sizes` 时，将根据 `pad_info` 的信息对分桶进行填充，再进行批处理。
 
     参数：

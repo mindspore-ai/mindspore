@@ -7,7 +7,7 @@
 
 .. py:method:: concat(datasets)
 
-    对传入的多个数据集对象进行拼接操作，也可以使用"+"运算符来进行数据集进行拼接。
+    对传入的多个数据集对象进行拼接操作。可以使用"+"运算符来进行数据集进行拼接。
 
     .. note::
         用于拼接的多个数据集对象，每个数据集对象的列名、每列数据的维度（rank）和数据类型必须相同。
@@ -31,7 +31,7 @@
 
 .. py:method:: create_tuple_iterator(columns=None, num_epochs=-1, output_numpy=False, do_copy=True)
 
-    基于数据集对象创建迭代器，输出数据为 `numpy.ndarray` 组成的列表。
+    基于数据集对象创建迭代器。输出数据为 `numpy.ndarray` 组成的列表。
 
     可以通过参数 `columns` 指定输出的所有列名及列的顺序。如果columns未指定，列的顺序将保持不变。
 
@@ -122,7 +122,7 @@
 
 .. py:method:: get_repeat_count()
 
-    获取 `RepeatDataset` 中定义的repeat操作的次数。默认值：1。
+    获取 `RepeatDataset` 中定义的repeat操作的次数，默认值：1。
 
     返回：
         int，repeat操作的次数。

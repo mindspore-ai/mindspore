@@ -17,7 +17,7 @@
 
     4. 重复步骤2和3，直到混洗缓冲区中没有数据行为止。
 
-    在第一个epoch中可以通过 `dataset.config.set_seed` 来设置随机种子，在随后的每个epoch，种子都会被设置成一个新产生的随机值。
+    在第一个epoch中可以通过 `dataset.config.set_seed` 来设置随机种子。在随后的每个epoch，种子都会被设置成一个新产生的随机值。
 
     参数：
         - **buffer_size** (int) - 用于混洗的缓冲区大小（必须大于1）。将 `buffer_size` 设置为数据集大小将进行全局混洗。
@@ -83,8 +83,8 @@
 
     参数：
         - **condition_name** (str) - 用于触发发送下一行数据的条件名称。
-        - **num_batch** (int) - 每个epoch开始时无阻塞的batch数。
-        - **callback** (function) - `sync_update` 操作中将调用的回调函数。
+        - **num_batch** (int) - 每个epoch开始时无阻塞的batch数。默认值：1。
+        - **callback** (function) - `sync_update` 操作中将调用的回调函数。默认值：None。
 
     返回：
         SyncWaitDataset，添加了阻塞条件的数据集对象。

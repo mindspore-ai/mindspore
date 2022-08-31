@@ -4281,6 +4281,10 @@ def logsumexp(x, axis, keep_dims=False):
 
         logsumexp(x) = \log(\sum(e^(x-x_{max}))) + x_{max}
 
+    Note:
+        The dimension of input Tensor on Ascend should be less than or equal to 8,
+        and the dimension of input Tensor on CPU should be less than 8.
+
     Args:
         x (Tensor): The input tensor. With float16 or float32 data type.
         axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Default: (), reduce all dimensions.
@@ -5348,14 +5352,14 @@ def xdivy(x, y):
     When the inputs are one tensor and one scalar,
     the scalar could only be a constant.
 
-    Inputs:
-        - **x** (Union[Tensor, Number, bool]) - The first input is a number, or a bool,
+    Args:
+        x (Union[Tensor, Number, bool]): The first input is a number, or a bool,
           or a tensor whose data type is float16, float32, float64, complex64, complex128 or bool.
-        - **y** (Union[Tensor, Number, bool]) - The second input is a number,
+        y (Union[Tensor, Number, bool]): The second input is a number,
           or a bool when the first input is a tensor, or a tensor whose data type is float16,
           float32, float64, complex64, complex128 or bool.
 
-    Outputs:
+    Returns:
         Tensor, the shape is the same as the one after broadcasting,
         and the data type is the one with higher precision or higher digits among the two inputs.
 
