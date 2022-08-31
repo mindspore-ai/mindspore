@@ -347,6 +347,52 @@ class SetSize(Primitive):
         self.add_prim_attr("max_length", 1000)
 
 
+class SparseReorder(Primitive):
+    """
+    Reorders a SparseTensor into the canonical, row-major ordering
+
+    Inputs:
+        - **indices** (Tensor) - A 2-D Tensor, represents the position of the element in the sparse tensor.
+          Support int64, each element value should be a non-negative int number.The shape is :math:`(n, d)`.
+        - **values** (Tensor) - A 1-D Tensor, represents the value corresponding to the position in the `indices`.
+          The shape should be :math:`(n,)`.
+        - **shape** (Tensor) - A 1-D Tensor, represents the shape corresponding to the position in the `indices`.
+          Support int64, each element value should be a non-negative int number.The shape should be :math:`(d,)`.
+    Outputs:
+        - **y_indices** (Tensor) - Has the same type as "indices".
+        - **y_values** (Tensor) -  Has the same type as "values" .
+
+    Raises:
+        TypeError: If `indices` or `shape` is not tensor or its dtype is not int64.
+        TypeError: If `values` is not tensor or its dtype is incorrect.
+        ValueError: If the index exceeds the bounds.
+        ValueError: If the size of `indices` tensor shape is not equal to 2.
+        ValueError: If the size of `values` or `shape` tensor shape is not equal to 1.
+        ValueError: If `values` the first dimension length is not equal the first dimension length of 'indices'.
+        ValueError: If `shape` the first dimension length is not equal the second dimension length of 'indices'.
+
+    Supported Platforms:
+        ``Ascend````CPU``
+
+    Examples:
+        >>> indices = Tensor([[2, 1], [0, 1]], dtype=ms.int64)
+        >>> values = Tensor([1, 2], dtype=ms.int16)
+        >>> shape = Tensor([3,3], dtype=ms.int64)
+        >>> sparse_reorder = op.SparseReorder()
+        >>> y_indices,y_values = sparse_reorder(indices, values, shape)
+        >>> print(y_indices)
+        [[0 1]
+         [2 1]]
+        >>> print(y_values)
+        [2 1]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize SparseReorder."""
+        self.init_prim_io_names(inputs=['indices', 'values', 'shape'], outputs=['y_indices', 'y_values'])
+
+
 class SparseToDense(PrimitiveWithInfer):
     """
     Converts a sparse representation into a dense tensor.

@@ -351,6 +351,7 @@ constexpr auto kSparseAddGrad = "SparseAddGrad";
 constexpr auto kSparseTensorDenseAdd = "SparseTensorDenseAdd";
 constexpr auto kSparseSlice = "SparseSlice";
 constexpr auto kSparseSliceGrad = "SparseSliceGrad";
+constexpr auto kSparseReorder = "SparseReorder";
 
 // Meta Function Graph
 constexpr auto kJ = "J";
@@ -645,6 +646,7 @@ GVAR_DEF(PrimitivePtr, kPrimSegmentMean, std::make_shared<Primitive>(kSegmentMea
 GVAR_DEF(PrimitivePtr, kPrimSegmentProd, std::make_shared<Primitive>(kSegmentProd));
 GVAR_DEF(PrimitivePtr, kPrimSparseSparseMinimum, std::make_shared<Primitive>(kSparseSparseMinimum));
 GVAR_DEF(PrimitivePtr, kPrimSparseReshape, std::make_shared<Primitive>(kSparseReshape));
+GVAR_DEF(PrimitivePtr, kPrimSparseReorder, std::make_shared<Primitive>(kSparseReorder));
 
 // image
 GVAR_DEF(PrimitivePtr, kPrimCropAndResizeGradBoxes, std::make_shared<Primitive>(kCropAndResizeGradBoxes));
