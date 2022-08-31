@@ -536,6 +536,48 @@ class _Reduce(PrimitiveWithCheck):
         return value
 
 
+class EuclideanNorm(Primitive):
+    """
+    Computes the euclidean norm of elements across dimensions of a tensor.
+    Reduces input along the dimensions given in axis.
+
+    Args:
+        keep_dims (bool): If true, the reduceed dimensions are retained with length 1.
+                          If false, don't keep these dimensions. Default: False.
+
+    Inputs:
+        - **x** (Tensor) - The input tensor. Must be one of the following types :float16, float32, float64, int8, int16,
+          int32, int64, complex64, complex128, uint8, uint16, uint32, uint64. The tensor to reduce.
+        - **axes** (Tensor) - The dimensions to reduce. Must be one of the following types: int32, int64.
+          Must be in the range [-rank(input), rank(input)).
+
+    Outputs:
+        Tensor, has the same type as the 'x'.
+
+    Raises:
+        TypeError: If `keep_dims` is not a bool.
+        TypeError: If `x` is not a Tensor.
+        ValueError: If `axes` is out of range.
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
+        >>> x = Tensor(np.array([[3, 5], [4, 12]])).astype(np.int32)
+        >>> axes = Tensor([0])
+        >>> op = ops.EuclideanNorm(keep_dims=True)
+        >>> output = op(x, axes)
+        >>> print(output)
+        [[5 13]]
+    """
+
+    @prim_attr_register
+    def __init__(self, keep_dims=False):
+        """Initialize"""
+        self.init_prim_io_names(inputs=['x', 'axes'], outputs=['y'])
+        validator.check_value_type("keep_dims", keep_dims, [bool], self.name)
+
+
 class ReduceMean(_Reduce):
     """
     Reduces a dimension of a tensor by averaging all elements in the dimension, by default. And also can reduce
