@@ -14,22 +14,22 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_GE_CONVERT_RESIZE_NEAREST_NEIGHBOR_GRAD_H_
-#define MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_GE_CONVERT_RESIZE_NEAREST_NEIGHBOR_GRAD_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_GE_CONVERT_RESIZE_NEAREST_NEIGHBOR_X_DTYPE_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_GE_CONVERT_RESIZE_NEAREST_NEIGHBOR_X_DTYPE_H_
 
 #include "backend/common/optimizer/optimizer.h"
 
 namespace mindspore {
 namespace opt {
-class ConvertResizeNearestNeighborGrad : public PatternProcessPass {
+class ConvertResizeNearestNeighborXDtype : public PatternProcessPass {
  public:
-  explicit ConvertResizeNearestNeighborGrad(bool multigraph = true)
-      : PatternProcessPass("convert_resize_nearest_neighbor_grad", multigraph) {}
-  ~ConvertResizeNearestNeighborGrad() override = default;
+  explicit ConvertResizeNearestNeighborXDtype(bool multigraph = true)
+      : PatternProcessPass("convert_resize_nearest_neighbor_x_dtype", multigraph) {}
+  ~ConvertResizeNearestNeighborXDtype() override = default;
 
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &node, const EquivPtr &) const override;
 };
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_GE_CONVERT_RESIZE_NEAREST_NEIGHBOR_GRAD_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_GE_CONVERT_RESIZE_NEAREST_NEIGHBOR_X_DTYPE_H_

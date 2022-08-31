@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "plugin/device/ascend/optimizer/ge/convert_resize_nearest_neighbor_grad.h"
+#include "plugin/device/ascend/optimizer/ge/convert_resize_nearest_neighbor_x_dtype.h"
 
 #include <vector>
 #include <memory>
@@ -24,14 +24,28 @@
 
 namespace mindspore {
 namespace opt {
-const BaseRef ConvertResizeNearestNeighborGrad::DefinePattern() const {
+namespace {
+bool NeedConvert(const BaseRef &ref) {
+  if (utils::isa<AnfNodePtr>(ref)) {
+    AnfNodePtr node = utils::cast<AnfNodePtr>(ref);
+    MS_EXCEPTION_IF_NULL(node);
+    if (IsPrimitive(node, prim::kPrimResizeNearestNeighborV2) ||
+        IsPrimitive(node, prim::kPrimResizeNearestNeighborV2Grad)) {
+      return true;
+    }
+  }
+  return false;
+}
+}  // namespace
+const BaseRef ConvertResizeNearestNeighborXDtype::DefinePattern() const {
+  VarPtr convert = std::make_shared<CondVar>(NeedConvert);
   VarPtr inputs = std::make_shared<SeqVar>();
-  return VectorRef({prim::kPrimResizeNearestNeighborGrad, inputs});
+  return VectorRef({convert, inputs});
 }
 
-// Convert ResizeNearestNeighborGrad tuple input from int64 to int32.
-const AnfNodePtr ConvertResizeNearestNeighborGrad::Process(const FuncGraphPtr &, const AnfNodePtr &node,
-                                                           const EquivPtr &) const {
+// Convert ResizeNearestNeighborX tuple input from int64 to int32.
+const AnfNodePtr ConvertResizeNearestNeighborXDtype::Process(const FuncGraphPtr &, const AnfNodePtr &node,
+                                                             const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);

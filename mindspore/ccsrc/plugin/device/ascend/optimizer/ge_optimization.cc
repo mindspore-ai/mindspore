@@ -24,7 +24,8 @@
 #include "include/common/debug/anf_ir_dump.h"
 
 #include "plugin/device/ascend/optimizer/ge/reduce_axis_update.h"
-#include "plugin/device/ascend/optimizer/ge/convert_resize_nearest_neighbor_grad.h"
+#include "plugin/device/ascend/optimizer/ge/convert_resize_nearest_neighbor_x_dtype.h"
+#include "plugin/device/ascend/optimizer/ge/convert_attr_to_input.h"
 
 namespace mindspore {
 namespace opt {
@@ -44,7 +45,8 @@ void GeOptimization(const FuncGraphPtr &func_graph) {
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>("ge_optimization_pm");
   pm->AddPass(std::make_shared<opt::ReduceAxisUpdate>());
-  pm->AddPass(std::make_shared<opt::ConvertResizeNearestNeighborGrad>());
+  pm->AddPass(std::make_shared<opt::ConvertAttrToInput>());
+  pm->AddPass(std::make_shared<opt::ConvertResizeNearestNeighborXDtype>());
   optimizer->AddPassManager(pm);
   (void)optimizer->Optimize(func_graph);
 
