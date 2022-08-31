@@ -450,24 +450,28 @@ def get_reverse_sequence_vmap_rule(prim, axis_size):
 
     @constexpr
     def get_batch_seq_dim(dim, batch_dim_, seq_dim_):
-        if seq_dim_ == dim:
-            seq_dim_ += 1
-            if seq_dim_ == batch_dim_:
-                batch_dim_ += 1
-        elif batch_dim_ == dim:
+        if dim is None:
             batch_dim_ += 1
-            if seq_dim_ == batch_dim_:
+            seq_dim_ += 1
+        else:
+            if seq_dim_ == dim:
                 seq_dim_ += 1
+                if seq_dim_ == batch_dim_:
+                    batch_dim_ += 1
+            elif batch_dim_ == dim:
+                batch_dim_ += 1
+                if seq_dim_ == batch_dim_:
+                    seq_dim_ += 1
         return batch_dim_, seq_dim_
 
     @constexpr
     def get_seq_dim(dim, batch_dim_, seq_dim_):
+        if dim is None:
+            return seq_dim_
         if seq_dim_ < dim and seq_dim_ < batch_dim_:
             seq_dim_ = seq_dim_ + 1
         elif seq_dim_ > dim and seq_dim_ > batch_dim_:
             seq_dim_ = seq_dim_ - 1
-        else:
-            seq_dim_ = seq_dim_
         return seq_dim_
 
     def vmap_rule(x_bdim, seq_lengths_bdim):
@@ -476,12 +480,17 @@ def get_reverse_sequence_vmap_rule(prim, axis_size):
             return result
         x, dim = x_bdim
         seq_lengths, seq_lengths_dim = seq_lengths_bdim
-        seq_lengths = mnp.moveaxis(seq_lengths, seq_lengths_dim, 0)
+        seq_lengths = _bdim_at_front(seq_lengths, seq_lengths_dim, axis_size)
         origin_shape = x.shape
         batch_dim_ = batch_dim
         seq_dim_ = seq_dim
         batch_dim_, seq_dim_ = get_batch_seq_dim(dim, batch_dim_, seq_dim_)
-        x = mnp.moveaxis(x, [dim, batch_dim_], [0, 1])
+        if dim is None:
+            x = _bdim_at_front(x, dim, axis_size)
+            origin_shape = x.shape
+            x = mnp.moveaxis(x, batch_dim_, 1)
+        else:
+            x = mnp.moveaxis(x, [dim, batch_dim_], [0, 1])
         shape = x.shape
         shape = (shape[0] * shape[1],) + tuple(_ for _ in shape[2:])
         x = reshape(x, shape)
@@ -489,6 +498,8 @@ def get_reverse_sequence_vmap_rule(prim, axis_size):
         seq_lengths = reshape(seq_lengths, (-1,))
         x = P.ReverseSequence(seq_dim=seq_dim_)(x, seq_lengths)
         shape = x.shape
+        if dim is None:
+            dim = 0
         shape = (origin_shape[dim], origin_shape[batch_dim_],) + tuple(_ for _ in shape[1:])
         out = reshape(x, shape)
         if batch_dim_ not in (0, 1):
