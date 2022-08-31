@@ -92,7 +92,7 @@ def make_sampler(shuffle, is_full_dataset, start, end):
     Generate a proper sampler based on inputs.
 
     Args:
-        Shuffle (Union[bool, Shuffle level]): Shuffle level.
+        Shuffle (Union[bool, Shuffle]): Shuffle level.
         is_full_dataset (bool): Whether to include full dataset file.
         start (int): Start index of sample for non-full dataset file.
         end (int): End index of sample for non-full dataset file.
