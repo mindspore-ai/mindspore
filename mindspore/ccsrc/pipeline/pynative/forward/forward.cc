@@ -80,7 +80,7 @@ MsBackendPolicy GetBackendPolicy(const std::string &device_target) {
   return backend_policy;
 }
 
-void GetSingleOpGraphInfo(const FrontendOpRunInfoPtr &op_run_info) {
+void GetSingleOpGraphInfo(const FrontendOpRunInfoPtr &op_run_info, const std::string &cur_target) {
   MS_EXCEPTION_IF_NULL(op_run_info);
   const std::vector<tensor::TensorPtr> &input_tensors = op_run_info->base_op_run_info.input_tensor;
   const std::vector<int64_t> &tensors_mask = op_run_info->base_op_run_info.input_mask;
@@ -89,6 +89,7 @@ void GetSingleOpGraphInfo(const FrontendOpRunInfoPtr &op_run_info) {
                       << tensors_mask.size();
   }
   std::ostringstream buf;
+  buf << cur_target << "_";
   buf << op_run_info->base_op_run_info.op_name;
   bool has_const_input = false;
   const auto &op_prim = op_run_info->op_prim;
@@ -440,7 +441,7 @@ ValuePtr ForwardExecutor::RunOpInMs(const FrontendOpRunInfoPtr &op_run_info) {
   PyNativeAlgo::DataConvert::GetInputTensor(op_run_info, cur_target);
   dynamic_shape()->UpdateInputTensorToDynamicShape(op_run_info);
   // get graph info for checking it whether existing in the cache
-  GetSingleOpGraphInfo(op_run_info);
+  GetSingleOpGraphInfo(op_run_info, cur_target);
   auto backend_op_run_info =
     std::make_shared<BackendOpRunInfo>(op_run_info->base_op_run_info, op_run_info->op_prim.get(), true, false);
 #if defined(__APPLE__)

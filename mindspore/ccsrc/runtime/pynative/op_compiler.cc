@@ -81,6 +81,7 @@ OpCompiler &OpCompiler::GetInstance() {
 OpCompilerInfoPtr OpCompiler::Compile(const session::BackendOpRunInfoPtr &op_run_info, bool *single_op_cache_hit,
                                       device::DeviceContext *device_context) {
   MS_EXCEPTION_IF_NULL(op_run_info);
+  MS_EXCEPTION_IF_NULL(device_context);
   auto graph_info = op_run_info->base_op_run_info.graph_info;
   auto iter = op_compiler_infos_.find(graph_info);
   // Check if the graph cache exists.
@@ -99,7 +100,6 @@ OpCompilerInfoPtr OpCompiler::Compile(const session::BackendOpRunInfoPtr &op_run
     op_run_info, op_run_info->base_op_run_info.input_tensor, op_run_info->base_op_run_info.input_mask,
     device_context->GetDeviceType() == device::DeviceType::kAscend);
   MS_EXCEPTION_IF_NULL(graph);
-  MS_EXCEPTION_IF_NULL(device_context);
 
   graph->set_run_mode(device::RunMode::kKernelMode);
   graph->set_is_from_single_op(true);

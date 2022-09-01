@@ -322,13 +322,22 @@ bool NeedDiscardTensorProperties(const std::string &op_device_target,
   return true;
 }
 
+TensorPtr TensorDataDeepCopy(const TensorPtr &tensor) {
+  MS_EXCEPTION_IF_NULL(tensor);
+  auto data = tensor->data_ptr();
+  if (data == nullptr) {
+    return tensor;
+  }
+  return std::make_shared<Tensor>(*tensor, tensor->data_type());
+}
+
 ParameterPtr ConstructRunOpParameter(const std::shared_ptr<KernelGraph> &graph, const tensor::TensorPtr &input_tensor,
                                      const BackendOpRunInfoPtr &op_run_info, int64_t tensor_mask) {
   MS_EXCEPTION_IF_NULL(graph);
   auto param = graph->NewParameter();
   MS_EXCEPTION_IF_NULL(param);
   if (tensor_mask == kParameterWeightTensorMask) {
-    param->set_default_param(input_tensor);
+    param->set_default_param(TensorDataDeepCopy(input_tensor));
   }
 
   // set the kernel info of parameter
@@ -1337,6 +1346,7 @@ void SessionBasic::GetSingleOpGraphInfo(const CNodePtr &kernel, const InputTenso
   std::ostringstream buf;
   auto prim = common::AnfAlgo::GetCNodePrimitive(kernel);
   MS_EXCEPTION_IF_NULL(prim);
+  buf << GetOpRunDeviceTarget(prim) << "_";
   buf << prim->id();
   bool has_const_input = false;
   for (size_t i = 0; i < input_tensors.size(); ++i) {
