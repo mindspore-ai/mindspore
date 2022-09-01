@@ -6850,8 +6850,7 @@ class ExtractVolumePatches(Primitive):
         padding (str): A string from: "SAME", "VALID". The type of padding algorithm to use.
 
     Inputs:
-        - **input_x** (Tensor) - A Tensor. Must be one of the following types: float16, float32.
-          5-D Tensor with shape :math:`(x_n, x_c, x_d, x_h, x_w)`.
+        - **input_x** (Tensor) - A Tensor. 5-D Tensor with shape :math:`(x_n, x_c, x_d, x_h, x_w)`.
 
     Outputs:
         Tensor, has the same type as input.
@@ -6880,10 +6879,6 @@ class ExtractVolumePatches(Primitive):
         ``Ascend`` ``CPU``
 
     Example:
-        >>> from mindspore import Tensor
-        >>> from mindspore import ops as P
-        >>> from mindspore import dtype as mstype
-        >>> import numpy as np
         >>> kernel_size = (1, 1, 2, 2, 2)
         >>> strides = (1, 1, 1, 1, 1)
         >>> padding = "VALID"
