@@ -45,6 +45,7 @@ set(DATASET_ENGINE_IR_DATASETOPS_SOURCE_SRC_FILES
         places365_node.cc
         qmnist_node.cc
         random_node.cc
+        rendered_sst2_node.cc
         sbu_node.cc
         semeion_node.cc
         sogou_news_node.cc

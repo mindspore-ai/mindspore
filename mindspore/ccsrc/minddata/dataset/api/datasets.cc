@@ -116,6 +116,7 @@
 #include "minddata/dataset/engine/ir/datasetops/source/places365_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/qmnist_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/random_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/rendered_sst2_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/sbu_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/semeion_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/sogou_news_node.h"
@@ -2002,6 +2003,33 @@ RandomDataDataset::RandomDataDataset(const int32_t &total_rows, const std::vecto
                                      const std::shared_ptr<DatasetCache> &cache) {
   auto ds =
     std::make_shared<RandomNode>(total_rows, CharToString(schema_path), VectorCharToString(columns_list), cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+
+RenderedSST2Dataset::RenderedSST2Dataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+                                         bool decode, const std::shared_ptr<Sampler> &sampler,
+                                         const std::shared_ptr<DatasetCache> &cache) {
+  auto sampler_obj = sampler ? sampler->Parse() : nullptr;
+  auto ds =
+    std::make_shared<RenderedSST2Node>(CharToString(dataset_dir), CharToString(usage), decode, sampler_obj, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+
+RenderedSST2Dataset::RenderedSST2Dataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+                                         bool decode, const Sampler *sampler,
+                                         const std::shared_ptr<DatasetCache> &cache) {
+  auto sampler_obj = sampler ? sampler->Parse() : nullptr;
+  auto ds =
+    std::make_shared<RenderedSST2Node>(CharToString(dataset_dir), CharToString(usage), decode, sampler_obj, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+
+RenderedSST2Dataset::RenderedSST2Dataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+                                         bool decode, const std::reference_wrapper<Sampler> &sampler,
+                                         const std::shared_ptr<DatasetCache> &cache) {
+  auto sampler_obj = sampler.get().Parse();
+  auto ds =
+    std::make_shared<RenderedSST2Node>(CharToString(dataset_dir), CharToString(usage), decode, sampler_obj, cache);
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
 

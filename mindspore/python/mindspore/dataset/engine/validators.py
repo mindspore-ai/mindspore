@@ -1166,6 +1166,34 @@ def check_random_dataset(method):
     return new_method
 
 
+def check_rendered_sst2_dataset(method):
+    """A wrapper that wraps a parameter checker around the original Dataset(RenderedSST2Dataset)."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        _, param_dict = parse_user_args(method, *args, **kwargs)
+
+        nreq_param_int = ['num_samples', 'num_parallel_workers', 'num_shards', 'shard_id']
+        nreq_param_bool = ['shuffle', 'decode']
+
+        dataset_dir = param_dict.get('dataset_dir')
+        usage = param_dict.get('usage')
+        check_dir(dataset_dir)
+        if usage is not None:
+            check_valid_str(usage, ['val', 'all', 'train', 'test'])
+
+        validate_dataset_param_value(nreq_param_int, param_dict, int)
+        validate_dataset_param_value(nreq_param_bool, param_dict, bool)
+        check_sampler_shuffle_shard_options(param_dict)
+
+        cache = param_dict.get('cache')
+        check_cache_option(cache)
+
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
 def check_pad_info(key, val):
     """check the key and value pair of pad_info in batch"""
     type_check(key, (str,), "key in pad_info")

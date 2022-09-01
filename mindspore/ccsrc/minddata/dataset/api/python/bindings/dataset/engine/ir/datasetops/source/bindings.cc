@@ -56,6 +56,7 @@
 #include "minddata/dataset/engine/ir/datasetops/source/mnist_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/penn_treebank_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/random_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/rendered_sst2_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/semeion_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/speech_commands_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/squad_node.h"
@@ -641,6 +642,18 @@ PYBIND_REGISTER(
         return random_node;
       }));
   }));
+
+PYBIND_REGISTER(RenderedSST2Node, 2, ([](const py::module *m) {
+                  (void)py::class_<RenderedSST2Node, DatasetNode, std::shared_ptr<RenderedSST2Node>>(
+                    *m, "RenderedSST2Node", "to create a RenderedSST2Node")
+                    .def(py::init([](const std::string &dataset_dir, const std::string &usage, bool decode,
+                                     const py::handle &sampler) {
+                      auto rendered_sst2 =
+                        std::make_shared<RenderedSST2Node>(dataset_dir, usage, decode, toSamplerObj(sampler), nullptr);
+                      THROW_IF_ERROR(rendered_sst2->ValidateParams());
+                      return rendered_sst2;
+                    }));
+                }));
 
 PYBIND_REGISTER(SBUNode, 2, ([](const py::module *m) {
                   (void)py::class_<SBUNode, DatasetNode, std::shared_ptr<SBUNode>>(*m, "SBUNode",
