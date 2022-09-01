@@ -26,6 +26,7 @@
 #include <memory>
 #include <mutex>
 #include <condition_variable>
+#include "utils/callback_handler.h"
 #include "include/backend/visible.h"
 #include "include/backend/data_queue/data_queue.h"
 #ifndef BUILD_LITE
@@ -35,13 +36,12 @@
 namespace mindspore {
 namespace device {
 constexpr unsigned int MAX_WAIT_TIME_IN_SEC = 60;
-
+const unsigned int MAX_POP_TIMES = 4;
 class BlockingQueue;
 
 // channel_name, dynamic_shape, capacity, addr, shape
 using DataQueueCreator =
-  std::function<std::shared_ptr<DataQueue>(const std::string &, bool, size_t, void *, const std::vector<size_t> &)>;
-
+  std::function<std::shared_ptr<DataQueue>(const std::string &, bool, size_t, const std::vector<size_t> &)>;
 class Semaphore {
  public:
   explicit Semaphore(int count = 0) : count_(count) {}
@@ -78,11 +78,10 @@ class BACKEND_EXPORT DataQueueMgr {
   static DataQueueMgr &GetInstance() noexcept;
   void RegisterDataQueueCreator(const std::string &device_name, DataQueueCreator &&creator);
   std::shared_ptr<DataQueue> CreateDataQueue(const std::string &device_name, const std::string &channel_name,
-                                             bool dynamic_shape, size_t capacity, void *addr,
-                                             const std::vector<size_t> &shape);
+                                             bool dynamic_shape, size_t capacity = 0,
+                                             const std::vector<size_t> &shape = {});
 
-  DataQueueStatus Create(const std::string &channel_name, void *addr, const std::vector<size_t> &shape,
-                         const size_t &capacity);
+  DataQueueStatus Create(const std::string &channel_name, const std::vector<size_t> &shape, const size_t capacity);
 
   // call for Push thread
   DataQueueStatus Open(const std::string &channel_name, std::function<void(void *, int32_t)> func);
@@ -93,11 +92,10 @@ class BACKEND_EXPORT DataQueueMgr {
                        unsigned int timeout_in_sec);
   DataQueueStatus Front(const std::string &channel_name, std::vector<DataQueueItem> *data);
   DataQueueStatus Pop(const std::string &channel_name);
+  void Free(const std::string &channel_name);
   DataQueueStatus Clear(const std::string &channel_name);
-
-  DataQueueStatus OpenDynamicBufQueue(const std::string &channel_name, const std::function<void(void *, int32_t)> func);
+  void Release();
   DataQueueStatus CreateDynamicBufQueue(const std::string &channel_name, const size_t &capacity);
-  DataQueueStatus OpenDynamicBufQueue(const std::string &channel_name);
   std::shared_ptr<DataQueue> GetDataQueue(const std::string &channel_name) const;
   DataQueueStatus SetThreadDevice(const std::string &channel_name);
 
@@ -127,7 +125,6 @@ class BACKEND_EXPORT DataQueueMgr {
 
   bool init_;
   bool closed_;
-  std::mutex mutex_;
   std::mutex close_mutex_;
   std::condition_variable cv_;
   // how many queues opened by dataset
@@ -139,6 +136,8 @@ class BACKEND_EXPORT DataQueueMgr {
   std::map<std::string, std::shared_ptr<BlockingQueue>> name_queue_map_;
 
   std::map<std::string, DataQueueCreator> data_queue_creator_map_ = {};  // key: device name, value: DataQueueCreator
+
+  HANDLER_DEFINE(bool, DestoryTdtHandle);
 };
 #ifndef BUILD_LITE
 bool PopDataFromDataQueue(const AnfNodePtr &data_kernel);

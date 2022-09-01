@@ -292,7 +292,7 @@ void GPUKernelRuntime::ReleaseDeviceRes() {
         MS_LOG(ERROR) << "Could not close gpu data queue.";
       }
     }
-    CHECK_OP_RET_WITH_ERROR(DataQueueMgr::GetInstance().Destroy(), "Could not destroy gpu data queue.");
+    DataQueueMgr::GetInstance().Release();
   }
 
   // Destroy remaining memory swap events and free host memory.

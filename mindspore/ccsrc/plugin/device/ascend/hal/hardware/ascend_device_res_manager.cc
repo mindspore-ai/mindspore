@@ -48,7 +48,7 @@ void AscendDeviceResManager::Initialize() {
 void AscendDeviceResManager::Destroy() {
   MS_LOG(INFO) << "Device resource manager Destroy start...";
   if (DataQueueMgr::GetInstance().IsInit()) {
-    MS_EXCEPTION_IF_CHECK_FAIL(DataQueueMgr::GetInstance().Destroy(), "Could not destroy ascend data queue.");
+    DataQueueMgr::GetInstance().Release();
   }
 
   rank_id_ = 0;

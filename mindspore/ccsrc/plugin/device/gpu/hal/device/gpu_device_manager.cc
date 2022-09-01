@@ -78,7 +78,6 @@ void GPUDeviceManager::ReleaseDevice() {
     CHECK_CUSPARSE_RET_WITH_ERROR(cusparseDestroy(cusparse_handle_), "Failed to destroy cusparse handle.");
   }
 
-  CHECK_OP_RET_WITH_ERROR(GPUMemoryAllocator::GetInstance().Finalize(), "Failed to destroy gpu memory allocator");
   dev_alive_ = false;
 }
 

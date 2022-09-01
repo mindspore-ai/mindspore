@@ -33,13 +33,12 @@ namespace mindspore {
 namespace device {
 class BACKEND_EXPORT AscendDataQueueDynamic : public DataQueue {
  public:
-  explicit AscendDataQueueDynamic(const size_t capacity);
+  explicit AscendDataQueueDynamic(const std::string &channel_name, const size_t capacity);
   ~AscendDataQueueDynamic() override = default;
 
   DataQueueStatus Push(std::vector<DataQueueItem> data) override;
   DataQueueStatus Front(std::vector<DataQueueItem> *data) const override;
   DataQueueStatus Pop() override;
-  bool Destroy() override;
   void SetThreadDevice() override {}
 
  private:
@@ -67,7 +66,6 @@ class AscendTdtQueue : public DataQueue {
   DataQueueStatus Push(std::vector<DataQueueItem> data) override;
   DataQueueStatus Front(std::vector<DataQueueItem> *data) const override { return DataQueueStatus::SUCCESS; }
   DataQueueStatus Pop() override { return DataQueueStatus::SUCCESS; }
-  bool Destroy() override;
   void SetThreadDevice() override {}
 
  private:
@@ -77,7 +75,6 @@ class AscendTdtQueue : public DataQueue {
   bool Translate(const std::vector<DataQueueItem> &data, acltdtDataset **output_acl_dataset);
 
   acltdtChannelHandle *acl_handle_;
-  std::string channel_name_;
   uint32_t device_id_;
 };
 
@@ -89,7 +86,6 @@ class AscendHostQueue : public DataQueue {
   DataQueueStatus Push(std::vector<DataQueueItem> data) override;
   DataQueueStatus Front(std::vector<DataQueueItem> *data) const override { return DataQueueStatus::SUCCESS; }
   DataQueueStatus Pop() override { return DataQueueStatus::SUCCESS; }
-  bool Destroy() override { return true; }
   void SetThreadDevice() override {}
 
   struct DataItemInfo {
@@ -119,7 +115,6 @@ class AscendHostQueue : public DataQueue {
                                  size_t dim_size, void *data_ptr, uint64_t data_len);
   void HostQueueFreeBuff(void *buff);
 
-  std::string channel_name_;
   uint32_t device_id_;
   std::mutex queue_id_to_trans_id_map_mutex_;
   std::map<uint32_t, uint64_t> queue_id_to_trans_id_map_;

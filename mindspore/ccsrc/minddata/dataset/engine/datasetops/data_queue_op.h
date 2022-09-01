@@ -140,6 +140,7 @@ class DataQueueOp : public PipelineOp {
   Status PushDataToGPU();
   Status WorkerEntry(int32_t worker_id);
   Status SetThreadDevice();
+  Status CreateDynamicDataQueue();
 
   QueueList<TensorRow> receive_queues_;
   std::vector<std::shared_ptr<MemoryPool>> pool_;
@@ -147,6 +148,7 @@ class DataQueueOp : public PipelineOp {
   const uint32_t kDeviceQueGpuNumThreads = 2;
   const uint32_t kDeviceQueGpuQueueCapacity = 8;
   const uint32_t kDeviceQueGpuThreadMemory = 1024;
+  const uint32_t kDynamicHostQueueCapacity = 2;
   uint32_t num_workers_;
   uint32_t queue_capacity_;
 

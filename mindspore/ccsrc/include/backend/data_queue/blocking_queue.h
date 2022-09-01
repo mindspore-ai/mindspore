@@ -39,7 +39,6 @@ class BlockingQueue {
   DataQueueStatus Front(std::vector<DataQueueItem> *data);
   DataQueueStatus Pop();
   DataQueueStatus Clear();
-  bool Destroy();
   size_t Size() { return queue_->Size(); }
   size_t Capacity() { return queue_->Capacity(); }
   const std::shared_ptr<DataQueue> &Queue() const { return queue_; }
@@ -49,6 +48,8 @@ class BlockingQueue {
   std::condition_variable not_full_cond_;
   std::condition_variable not_empty_cond_;
   std::shared_ptr<DataQueue> queue_;
+  const size_t kPushTimeoutMicroseconds = 100;
+  const size_t kPopTimeoutSeconds = 30;
 };
 }  // namespace device
 }  // namespace mindspore

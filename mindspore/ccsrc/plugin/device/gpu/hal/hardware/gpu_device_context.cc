@@ -170,7 +170,7 @@ void GPUDeviceResManager::Destroy() {
     if (!DataQueueMgr::GetInstance().IsClosed() && !DataQueueMgr::GetInstance().CloseNotify()) {
       MS_LOG(ERROR) << "Could not close gpu data queue.";
     }
-    CHECK_OP_RET_WITH_ERROR(DataQueueMgr::GetInstance().Destroy(), "Could not destroy gpu data queue.");
+    DataQueueMgr::GetInstance().Release();
   }
 
   // Release stream, cudnn and cublas handle, etc.

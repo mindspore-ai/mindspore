@@ -140,8 +140,8 @@ bool IsClosed() {
 }
 }  // namespace tdt_handle
 
-AscendDataQueueDynamic::AscendDataQueueDynamic(const size_t capacity)
-    : DataQueue(capacity), stream_(nullptr), node_info_(nullptr) {
+AscendDataQueueDynamic::AscendDataQueueDynamic(const std::string &channel_name, const size_t capacity)
+    : DataQueue(channel_name, capacity), stream_(nullptr), node_info_(nullptr) {
   auto context_key = device_context_->device_context_key();
   auto runtime_instance = dynamic_cast<ascend::AscendKernelRuntime *>(
     device::KernelRuntimeManager::Instance().GetKernelRuntime(context_key.device_name_, context_key.device_id_));
@@ -186,10 +186,7 @@ DataQueueStatus AscendDataQueueDynamic::Pop() {
   return DataQueueStatus::SUCCESS;
 }
 
-bool AscendDataQueueDynamic::Destroy() { return true; }
-
-AscendTdtQueue::AscendTdtQueue(const std::string &channel_name)
-    : DataQueue(0), acl_handle_(nullptr), channel_name_(channel_name) {
+AscendTdtQueue::AscendTdtQueue(const std::string &channel_name) : DataQueue(channel_name, 0), acl_handle_(nullptr) {
   // init ErrorManager, 0 means success
   if (ErrorManager::GetInstance().Init() != 0) {
     MS_LOG(WARNING) << "[Internal Error] Init ErrorManager failed.";
@@ -221,8 +218,6 @@ AscendTdtQueue::~AscendTdtQueue() {
     }
   }
 }
-
-bool AscendTdtQueue::Destroy() { return tdt_handle::DestroyHandle(); }
 
 bool AscendTdtQueue::IsOpen() const { return !tdt_handle::IsClosed(); }
 
@@ -364,7 +359,7 @@ void AscendTdtQueue::DestroyAclDataset(acltdtDataset *acl_dataset, bool include_
 }
 
 AscendHostQueue::AscendHostQueue(const std::string &channel_name)
-    : DataQueue(0), channel_name_(channel_name), queue_id_to_trans_id_map_(), queue_id_(0) {
+    : DataQueue(channel_name, 0), queue_id_to_trans_id_map_(), queue_id_(0) {
   // init ErrorManager, 0 means success
   if (ErrorManager::GetInstance().Init() != 0) {
     MS_LOG(WARNING) << "[Internal Error] Init ErrorManager failed.";
@@ -627,9 +622,9 @@ void AscendHostQueue::HostQueueFreeBuff(void *buff) {
 
 namespace {
 std::shared_ptr<DataQueue> CreateAscendDataQueue(const std::string &channel_name, bool dynamic_shape, size_t capacity,
-                                                 void *, const std::vector<size_t> &) {
+                                                 const std::vector<size_t> &) {
   if (dynamic_shape) {
-    return std::make_shared<AscendDataQueueDynamic>(capacity);
+    return std::make_shared<AscendDataQueueDynamic>(channel_name, capacity);
   }
 
   int32_t is_heterogeneous = 0;
@@ -642,6 +637,11 @@ std::shared_ptr<DataQueue> CreateAscendDataQueue(const std::string &channel_name
 }
 
 REGISTER_DATA_QUEUE_CREATOR(kAscendDevice, CreateAscendDataQueue);
+struct DevicePlugFuncRegister {
+  DevicePlugFuncRegister() noexcept {
+    DataQueueMgr::SetDestoryTdtHandleHandler([]() -> bool { return tdt_handle::DestroyHandle(); });
+  }
+} ascend_device_func_register;
 }  // namespace
 }  // namespace device
 }  // namespace mindspore

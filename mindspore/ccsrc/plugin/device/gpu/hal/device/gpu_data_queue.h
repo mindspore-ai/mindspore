@@ -22,6 +22,7 @@
 #include <memory>
 #include <vector>
 #include <functional>
+#include <string>
 #include "include/backend/data_queue/data_queue.h"
 #include "runtime/hardware/device_context_manager.h"
 #include "include/backend/visible.h"
@@ -30,13 +31,12 @@ namespace mindspore {
 namespace device {
 class BACKEND_EXPORT GpuDataQueueDynamic : public DataQueue {
  public:
-  explicit GpuDataQueueDynamic(const size_t capacity);
+  explicit GpuDataQueueDynamic(const std::string &channel_name, const size_t capacity);
   ~GpuDataQueueDynamic() override = default;
 
   DataQueueStatus Push(std::vector<DataQueueItem> data) override;
   DataQueueStatus Front(std::vector<DataQueueItem> *data) const override;
   DataQueueStatus Pop() override;
-  bool Destroy() override;
 
   void SetThreadDevice() override;
 
@@ -55,13 +55,12 @@ class BACKEND_EXPORT GpuDataQueueDynamic : public DataQueue {
 
 class BACKEND_EXPORT GpuQueue : public DataQueue {
  public:
-  GpuQueue(size_t capacity, void *addr, const std::vector<size_t> &shape);
+  GpuQueue(const std::string &channel_name, size_t capacity, const std::vector<size_t> &shape);
   ~GpuQueue() override;
 
   DataQueueStatus Push(std::vector<DataQueueItem> data) override;
   DataQueueStatus Front(std::vector<DataQueueItem> *data) const override;
   DataQueueStatus Pop() override;
-  bool Destroy() override;
 
   void SetThreadDevice() override;
 
@@ -71,14 +70,14 @@ class BACKEND_EXPORT GpuQueue : public DataQueue {
     std::vector<DataQueueItem> data_;
   };
 
-  void *buffer_;
+  void *buffer_{nullptr};
 
   std::vector<size_t> shape_;
   size_t len_;
   cudaStream_t stream_;
   std::unique_ptr<NodeInfo[]> node_info_;
-  bool ds_detected_{false};
   uint32_t device_id_;
+  bool ds_detected_{false};
 };
 }  // namespace device
 }  // namespace mindspore

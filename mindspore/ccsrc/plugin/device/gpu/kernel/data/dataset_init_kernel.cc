@@ -51,17 +51,9 @@ void DatasetInitKernelMod::InitSizeLists() { return; }
 
 bool DatasetInitKernelMod::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
                                   const std::vector<AddressPtr> &, void *) {
-  void *addr = nullptr;
-  size_t len = total_bytes_ * buffer_q_capacity_;
-
-  if (!device::gpu::GPUMemoryAllocator::GetInstance().AllocBufferQueueMem(len, &addr)) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memory not enough: failed to allocate GPU buffer queue memory["
-                      << len << "].";
-  }
-
-  auto status = DataQueueMgr::GetInstance().Create(queue_name_, addr, shapes_, buffer_q_capacity_);
+  auto status = DataQueueMgr::GetInstance().Create(queue_name_, shapes_, buffer_q_capacity_);
   if (status != device::DataQueueStatus::SUCCESS) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', init Dataset Failed. len: " << len << ", status:" << status;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', init Dataset Failed, status:" << status;
   }
 
   return true;

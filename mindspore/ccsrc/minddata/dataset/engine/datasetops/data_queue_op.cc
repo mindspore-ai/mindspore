@@ -79,7 +79,7 @@ DataQueueOp::DataQueueOp(const std::string channel_name, DeviceType device_type,
   MS_EXCEPTION_IF_NULL(MsContext::GetInstance());
   if (MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice && !dynamic_shape_) {
     ascend_data_queue_ =
-      device::DataQueueMgr::GetInstance().CreateDataQueue(kAscendDevice, channel_name, dynamic_shape_, 0, nullptr, {});
+      device::DataQueueMgr::GetInstance().CreateDataQueue(kAscendDevice, channel_name, dynamic_shape_);
   }
 #endif
 #ifdef ENABLE_DUMP_IR
@@ -440,6 +440,18 @@ Status DataQueueOp::SetThreadDevice() {
   return Status::OK();
 }
 
+Status DataQueueOp::CreateDynamicDataQueue() {
+#ifdef WITH_BACKEND
+  if (dynamic_shape_) {
+    auto ret = device::DataQueueMgr::GetInstance().CreateDynamicBufQueue(channel_name_, kDynamicHostQueueCapacity);
+    if (ret != DataQueueStatus::SUCCESS && ret != DataQueueStatus::QUEUE_EXIST) {
+      RETURN_STATUS_ERROR(StatusCode::kMEFailed, "Create dynamic data queue failed");
+    }
+  }
+#endif
+  return Status::OK();
+}
+
 Status DataQueueOp::LaunchParallelCopyThread() {
 #ifdef WITH_BACKEND
   RETURN_UNEXPECTED_IF_NULL(tree_);
@@ -502,12 +514,7 @@ Status DataQueueOp::PushDataToGPU() {
   bool eoe_flag = item.eoe_flag;
   int64_t send_batch = 0;
   auto release_function = std::bind(&DataQueueOp::ReleaseData, this, std::placeholders::_1, std::placeholders::_2);
-  DataQueueStatus ret;
-  if (dynamic_shape_) {
-    ret = device::DataQueueMgr::GetInstance().OpenDynamicBufQueue(channel_name_, release_function);
-  } else {
-    ret = device::DataQueueMgr::GetInstance().Open(channel_name_, release_function);
-  }
+  auto ret = device::DataQueueMgr::GetInstance().Open(channel_name_, release_function);
   if (ret != DataQueueStatus::SUCCESS) {
     RETURN_STATUS_UNEXPECTED("[Internal ERROR] Failed to open channel for sending data.");
   }
@@ -617,6 +624,7 @@ Status DataQueueOp::WorkerEntry(int32_t worker_id) {
 
 Status DataQueueOp::SendDataToGPU() {
 #ifdef WITH_BACKEND
+  RETURN_IF_NOT_OK(CreateDynamicDataQueue());
   RETURN_IF_NOT_OK(LaunchParallelCopyThread());
   MS_LOG(INFO) << "Device queue, sending data to GPU.";
 #ifndef ENABLE_SECURITY
@@ -709,7 +717,6 @@ Status DataQueueOp::ClearDevice() {
 
   ret = device::DataQueueMgr::GetInstance().Clear(channel_name_);
   CHECK_FAIL_RETURN_UNEXPECTED(ret == DataQueueStatus::SUCCESS, "Failed to clear the device.");
-
   device::DataQueueMgr::GetInstance().Close(channel_name_);
   device::DataQueueMgr::GetInstance().CloseConfirm();
 #endif
@@ -840,6 +847,8 @@ Status DataQueueOp::RetryPushData(const std::vector<DataQueueItem> &items, const
     DataQueueStatus ret = device::DataQueueMgr::GetInstance().Push(channel_name_, items, WAIT_TIME);
     if (ret != DataQueueStatus::SUCCESS) {
       if (ret == DataQueueStatus::ERROR_INPUT) {
+        device::DataQueueMgr::GetInstance().Close(channel_name_);
+        device::DataQueueMgr::GetInstance().CloseConfirm();
         return Status(
           StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
           "Invalid data, the types or shapes of current row is different with previous row(i.e. do batch operation but "
@@ -869,15 +878,14 @@ Status DataQueueOp::RetryPushData(const std::vector<DataQueueItem> &items, const
 
 Status DataQueueOp::SendDataToAscendDynamic() {
 #ifdef WITH_BACKEND
-  MS_LOG(DEBUG) << "Dynamic Device queue, sending data to Ascend.";
-
+  MS_LOG(DEBUG) << "Dynamic Data queue, sending data to Ascend.";
   int64_t send_batch = 0;
   uint64_t data_queue_cost = 0;
-
   bool is_break_loop = false;
 
+  RETURN_IF_NOT_OK(CreateDynamicDataQueue());
   std::function<void(void *, int32_t)> release_function([](void *, int32_t) { return; });
-  auto ret = device::DataQueueMgr::GetInstance().OpenDynamicBufQueue(channel_name_, release_function);
+  auto ret = device::DataQueueMgr::GetInstance().Open(channel_name_, release_function);
   if (ret != DataQueueStatus::SUCCESS) {
     return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
                   "[Internal ERROR] Failed to open channel for sending data.");
