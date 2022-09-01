@@ -24,14 +24,17 @@
 namespace mindspore {
 namespace ops {
 constexpr int64_t kScatterNdInputNum = 2LL;
-void ScatterNdCheckShape(const PrimitivePtr &prim, const AbstractBasePtrList &inputs, const ShapeVector &out_shape) {
+bool ScatterNdCheckShape(const PrimitivePtr &prim, const AbstractBasePtrList &inputs, const ShapeVector &out_shape) {
   auto indices_shape_ptr = inputs[kInputIndex0]->BuildShape();
   ShapeVector indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(indices_shape_ptr)[kShape];
+  auto updates_shape_ptr = inputs[kInputIndex1]->BuildShape();
+  ShapeVector updates_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(updates_shape_ptr)[kShape];
+  if (IsDynamicRank(indices_shape) || IsDynamicRank(updates_shape)) {
+    return false;
+  }
   const int64_t kIndicesRank = 2LL;
   (void)CheckAndConvertUtils::CheckInteger("rank(indices)", SizeToLong(indices_shape.size()), kGreaterEqual,
                                            kIndicesRank, prim->name());
-  auto updates_shape_ptr = inputs[kInputIndex1]->BuildShape();
-  ShapeVector updates_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(updates_shape_ptr)[kShape];
 
   if (out_shape.empty()) {
     MS_EXCEPTION(ValueError) << "For '" << prim->name() << "', the input 'shape' can not be empty.";
@@ -89,6 +92,7 @@ void ScatterNdCheckShape(const PrimitivePtr &prim, const AbstractBasePtrList &in
     buffer << ").";
     MS_EXCEPTION(ValueError) << buffer.str();
   }
+  return true;
 }
 
 TypePtr ScatterNdInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
@@ -129,7 +133,9 @@ abstract::BaseShapePtr ScatterNdInferShape(const PrimitivePtr &prim, const std::
     buffer << ").";
     MS_EXCEPTION(ValueError) << buffer.str();
   }
-  ScatterNdCheckShape(prim, input_args, out_shape);
+  if (!ScatterNdCheckShape(prim, input_args, out_shape)) {
+    return std::make_shared<abstract::Shape>(ShapeVector{UNKNOWN_RANK});
+  }
   return shape;
 }
 
