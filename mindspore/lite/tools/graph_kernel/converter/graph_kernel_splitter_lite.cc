@@ -43,13 +43,12 @@ bool GraphKernelSplitterWithTuning::StartTuning(const std::string &dir_path) con
   attrs << "}";
   std::ostringstream py_cmd;
   std::string tune_interface = "poly_graph_split_with_json_dir";
-  py_cmd << "from mindspore._extends.parallel_compile.akg_compiler.get_file_path import get_akg_path\n";
-  py_cmd << "import sys; sys.path.insert(0, get_akg_path())\n";
+  py_cmd << kAddAkgPath;
   py_cmd << "from akg.ms import " << tune_interface << "\n";
   py_cmd << "if not " << tune_interface << "(\'" << dir_path << "\', " << attrs.str() << "):\n";
   py_cmd << "    raise RuntimeError(\'Tune fail. info path: " << dir_path << "\')";
-  std::string cmd = "unset LD_LIBRARY_PATH;python -c \"" + py_cmd.str() + "\"";
-  MS_LOG(INFO) << "GraphKernel online tuning content: \n" << cmd;
+  std::string cmd = "python -c \"" + py_cmd.str() + "\"";
+  MS_LOG(INFO) << "GraphKernel split tuning content: \n" << cmd;
   auto ret = std::system(cmd.c_str());
   if (!WIFEXITED(ret)) {
     MS_LOG(ERROR) << "Python process start fail! process content is as follows:\n" << cmd;
@@ -62,7 +61,7 @@ bool GraphKernelSplitterWithTuning::StartTuning(const std::string &dir_path) con
   return true;
 }
 
-void RenameKernelFiles(const FuncGraphPtr &func_graph) {
+void SignTunedGraphs(const FuncGraphPtr &func_graph) {
   auto kernel_meta = FileUtils::GetRealPath("./kernel_meta/");
   if (!kernel_meta.has_value()) {
     return;
@@ -84,14 +83,14 @@ void RenameKernelFiles(const FuncGraphPtr &func_graph) {
     auto node_name = GetValue<std::string>(fg->get_attr(kAttrNodeName));
     auto kernel_obj = kernel_meta.value() + "/best_split_" + node_name + ".o";
     if (fs->FileExist(kernel_obj)) {
+      // sign the funcgraph with its current kernel name, the tuned result can be used if
+      // its kernel name is the same as the signature when building kernels.
       AkgKernelJsonGenerator json_generator(option);
       std::vector<AnfNodePtr> node_list, input_list, output_list;
       GkUtils::GetValidKernelNodes(fg, &node_list, &input_list, &output_list);
       (void)json_generator.CollectFusedJson(node_list, input_list, output_list);
-      auto new_kernel_obj = kernel_meta.value() + "/Tuned_" + json_generator.kernel_name() + ".o";
-      // only rename file, but not change the "node_name" attr.
-      MS_LOG(INFO) << "Rename " << kernel_obj << " to " << new_kernel_obj;
-      std::rename(kernel_obj.c_str(), new_kernel_obj.c_str());
+      fg->set_attr(kTunedSign, MakeValue(json_generator.kernel_name()));
+      MS_LOG(INFO) << "The " << kernel_obj << " is the tuning result of " << json_generator.kernel_name();
     }
   }
 }
@@ -118,10 +117,9 @@ bool GraphKernelSplitterWithTuning::Run(const FuncGraphPtr &func_graph) {
     AnfUtils::SetNodeAttr(kAttrNodeName, MakeValue(iter.second), iter.first);
   }
   auto changed = GraphKernelSplitter::Run(func_graph);
-  if (!changed) {
-    return false;
+  if (tuning_flag_) {
+    SignTunedGraphs(func_graph);
   }
-  RenameKernelFiles(func_graph);
-  return true;
+  return changed;
 }
 }  // namespace mindspore::graphkernel

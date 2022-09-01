@@ -18,11 +18,21 @@
 #define MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_AKG_AKG_BUILD_H_
 #include <string>
 #include <map>
+#include <set>
 #include <vector>
 #include "utils/anf_utils.h"
 #include "kernel/akg/akg_kernel_json_generator.h"
 
 namespace mindspore::graphkernel {
+constexpr auto kTunedSign = "tuned_signature";
+constexpr auto kAddAkgPath =
+  "import sys; import subprocess;\n"
+  "str = \'from mindspore._extends.parallel_compile.akg_compiler.get_file_path import get_akg_path;"
+  "      print(get_akg_path())\'\n"
+  "cmd = \'unset LD_LIBRARY_PATH;python -c \\\"{}\\\"\'.format(str)\n"
+  "p = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)\n"
+  "sys.path.insert(0, p.communicate()[-2].decode().strip())\n";
+
 constexpr size_t PROCESS_LIMIT = 8;
 constexpr size_t TIME_OUT = 100;
 
@@ -41,6 +51,6 @@ class AkgKernelBuilder {
 };
 
 std::string SaveNodesInfo(const AnfNodePtrList &nodes, const std::string &dir, const DumpOption &option,
-                          std::map<AnfNodePtr, std::string> *node_name, std::vector<std::string> *kernel_names);
+                          std::map<AnfNodePtr, std::string> *node_kernel, std::set<std::string> *kernel_names);
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_AKG_AKG_BUILD_H_
