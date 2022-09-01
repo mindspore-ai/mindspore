@@ -1,7 +1,7 @@
 mindspore.dataset.YelpReviewDataset
 ===================================
 
-.. py:class:: mindspore.dataset.YelpReviewDataset(ataset_dir, usage=None, num_samples=None, shuffle=Shuffle.GLOBAL, num_shards=None, shard_id=None, num_parallel_workers=None, cache=None)
+.. py:class:: mindspore.dataset.YelpReviewDataset(dataset_dir, usage=None, num_samples=None, shuffle=Shuffle.GLOBAL, num_shards=None, shard_id=None, num_parallel_workers=None, cache=None)
 
     读取和解析Yelp Review Full和Yelp Review Polarity数据集的源数据集。
 

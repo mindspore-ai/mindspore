@@ -31,7 +31,7 @@ class PowerTransform(Bijector):
 
     The power transform maps inputs from `[-1/c, inf]` to `[0, inf]`.
 
-    This Bijector is equivalent to the :class:`mindspore.nn.probability.bijector.Exp bijector when `c=0`.
+    This Bijector is equivalent to the :class:`mindspore.nn.probability.bijector.Exp` bijector when `c=0`.
 
     Args:
         power (float, list, numpy.ndarray, Tensor): The scale factor. Default: 0.

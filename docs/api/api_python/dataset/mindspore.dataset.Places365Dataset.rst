@@ -1,7 +1,7 @@
 mindspore.dataset.Places365Dataset
 ==================================
 
-.. py:class:: mindspore.dataset.Places365Dataset(dataset_dir, usage=None， small=True, decode=False, num_samples=None, num_parallel_workers=None, shuffle=None, sampler=None, num_shards=None, shard_id=None, cache=None)
+.. py:class:: mindspore.dataset.Places365Dataset(dataset_dir, usage=None, small=True, decode=False, num_samples=None, num_parallel_workers=None, shuffle=None, sampler=None, num_shards=None, shard_id=None, cache=None)
 
     读取和解析PhotoTour数据集的源数据集。
 
