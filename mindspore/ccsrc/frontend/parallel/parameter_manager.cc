@@ -42,6 +42,7 @@
 #include "include/common/utils/comm_manager.h"
 #include "utils/ms_context.h"
 #include "utils/symbolic.h"
+#include "pipeline/jit/pipeline.h"
 #include "mindspore/core/utils/parallel_node_check.h"
 #include "frontend/parallel/step_parallel_utils.h"
 
@@ -357,6 +358,80 @@ bool IsFullySplitParameter(const ParameterPtr &param_ptr, size_t allow_repeat_nu
     return true;
   }
   return false;
+}
+
+py::object GetPyParameterObj(const ParamInfoPtr &param_info, const std::string &obj) {
+  py::object py_obj = py::cast(param_info);
+  if (py::isinstance<py::none>(py_obj)) {
+    return py::none();
+  }
+  return python_adapter::GetPyObjAttr(py_obj, obj);
+}
+
+void SliceParameterObj(const ParameterPtr &parameter, const TensorLayout &tensor_layout) {
+  auto param_info = parameter->param_info();
+  if (param_info == nullptr) {
+    MS_LOG(WARNING) << "parameter: " << parameter->DebugString() << " doesn't have param_info.";
+    return;
+  }
+  // create python layout obj
+  const auto &device_arrangement = tensor_layout.device_arrangement().array();
+  const auto &tensor_map = tensor_layout.tensor_map().array();
+  const auto &slice_shape = tensor_layout.slice_shape().array();
+  int64_t field_size = tensor_layout.get_field_size();
+  bool uniform_split = tensor_layout.uniform_split();
+  std::string opt_shard_group = tensor_layout.opt_shard_group();
+  py::tuple layout =
+    py::make_tuple(device_arrangement, tensor_map, slice_shape, field_size, uniform_split, opt_shard_group);
+
+  // get parameter obj
+  constexpr char OBJ[] = "obj";
+  constexpr char CLONED_OBJ[] = "cloned_obj";
+  // python path of _slice_parameter
+  constexpr char SLICE_PARAMETER_FN_PATH[] = "mindspore.parallel._utils";
+  constexpr char SLICE_PARAMETER_FN_NAME[] = "_slice_parameter";
+  auto graph_executor = pipeline::GraphExecutorPy::GetInstance();
+  MS_EXCEPTION_IF_NULL(graph_executor);
+  auto phase = graph_executor->phase();
+  auto py_obj = GetPyParameterObj(param_info, OBJ);
+  if (!py::isinstance<py::none>(py_obj)) {
+    // Call Python _slice_parameter Fn to slice python parameter obj
+    (void)python_adapter::CallPyFn(SLICE_PARAMETER_FN_PATH, SLICE_PARAMETER_FN_NAME, py_obj, py::str(phase), layout);
+  } else {
+    MS_LOG(WARNING) << "Parameter: " << parameter->DebugString() << " can't find python obj.";
+    return;
+  }
+
+  // handle cloned parameter, like accu_grad and optimizer param
+  auto cloned_py_obj = GetPyParameterObj(param_info, CLONED_OBJ);
+  if (!py::isinstance<py::none>(cloned_py_obj)) {
+    if (!py::isinstance<py::list>(cloned_py_obj)) {
+      MS_LOG(EXCEPTION) << "parameter: " << parameter->DebugString() << " doesn't have correct cloned obj";
+    }
+    auto obj_list = py::cast<py::list>(cloned_py_obj);
+    for (size_t i = 0; i < obj_list.size(); ++i) {
+      py::object each_cloned_obj = obj_list[i];
+      (void)python_adapter::CallPyFn(SLICE_PARAMETER_FN_PATH, SLICE_PARAMETER_FN_NAME, each_cloned_obj, py::str(phase),
+                                     layout);
+    }
+  }
+}
+
+void AutoParallelPostProcess(const FuncGraphPtr &root) {
+  auto parameters = root->parameters();
+  for (auto &param : parameters) {
+    if (ParameterIsCloned(param)) {
+      continue;
+    }
+    auto layout = param->user_data<TensorLayout>();
+    if (layout == nullptr) {
+      MS_LOG(INFO) << "parameter:" << param->DebugString() << " doesn't have layout. No need to split.";
+      continue;
+    }
+    auto param_ptr = param->cast<ParameterPtr>();
+    MS_EXCEPTION_IF_NULL(param_ptr);
+    SliceParameterObj(param_ptr, *layout);
+  }
 }
 
 static void InsertFullySplitParamGradAccu(const std::pair<AnfNodePtr, int> &node_user,

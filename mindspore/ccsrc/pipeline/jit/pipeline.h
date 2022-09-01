@@ -139,6 +139,8 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
   GraphExecutorPy() = default;
   void GetWeightInfo(const CNodePtr &root_node, const AnfNodePtr &weight_node,
                      std::map<std::string, std::pair<PrimitivePyAdapterPtr, std::string>> *fake_quant_table) const;
+  //
+  void ParallelPostProcess(const string &phase);
   void GetGeBackendPolicy() const;
   // filter some pipeline actions according to phase, e.g. when exporting onnx, it is no need to execute actions after
   // 'validate' stage
