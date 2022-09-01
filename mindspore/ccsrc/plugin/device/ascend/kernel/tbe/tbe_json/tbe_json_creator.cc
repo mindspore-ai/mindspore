@@ -77,36 +77,69 @@ static std::map<ATTR_DTYPE, std::string> tbe_attr_dtype_to_string_map = {
   {ATTR_LIST_LIST_FLOAT, "list_list_float"},
 };
 
-bool ParseListIntValue(const mindspore::ValuePtr &value, std::vector<int64_t> *attr_value) {
+bool ParseAttrListInt(const mindspore::ValuePtr &value, nlohmann::json *attr_obj) {
+  MS_EXCEPTION_IF_NULL(value);
+  MS_EXCEPTION_IF_NULL(attr_obj);
+  std::vector<int64_t> attr_value;
   auto value_type = value->type();
   if (value_type == nullptr) {
     MS_LOG(ERROR) << "Value's type is null.";
     return false;
   }
   if (value_type->ToString() == kVTypeInt64) {
-    attr_value->push_back(GetValue<int64_t>(value));
+    attr_value.push_back(GetValue<int64_t>(value));
   } else {
     auto vec = value->isa<ValueTuple>() ? value->cast<ValueTuplePtr>()->value() : value->cast<ValueListPtr>()->value();
     if (!vec.empty()) {
       if (vec[0]->isa<Int32Imm>()) {
         std::vector<int32_t> attr_value_me = GetValue<std::vector<int32_t>>(value);
-        (void)std::transform(attr_value_me.begin(), attr_value_me.end(), std::back_inserter(*attr_value),
+        (void)std::transform(attr_value_me.begin(), attr_value_me.end(), std::back_inserter(attr_value),
                              [](const int &value) { return static_cast<int64_t>(value); });
       } else {
-        *attr_value = GetValue<std::vector<int64_t>>(value);
+        attr_value = GetValue<std::vector<int64_t>>(value);
       }
     }
   }
+  (*attr_obj)[kJValue] = attr_value;
   return true;
 }
 
-void ParseFloat(const mindspore::ValuePtr &value, nlohmann::json *attr_obj) {
+bool ParseAttrListFloat(const mindspore::ValuePtr &value, nlohmann::json *attr_obj) {
+  MS_EXCEPTION_IF_NULL(value);
+  MS_EXCEPTION_IF_NULL(attr_obj);
+  auto value_type = value->type();
+  if (value_type == nullptr) {
+    MS_LOG(ERROR) << "Value's type is null.";
+    return false;
+  }
+  (*attr_obj)[kJValue] = value_type->ToString() == kVTypeFloat ? std::vector<float>{GetValue<float>(value)}
+                                                               : GetValue<std::vector<float>>(value);
+  return true;
+}
+
+bool ParseAttrFloat(const mindspore::ValuePtr &value, nlohmann::json *attr_obj) {
   auto attr_value = GetValue<float>(value);
   if (std::isinf(attr_value)) {
     (*attr_obj)[kJValue] = (attr_value < 0) ? "-inf" : "inf";
-    return;
+    return true;
   }
   (*attr_obj)[kJValue] = attr_value;
+  return true;
+}
+
+bool ParseAttrInt32(const mindspore::ValuePtr &value, nlohmann::json *attr_obj) {
+  MS_EXCEPTION_IF_NULL(value);
+  MS_EXCEPTION_IF_NULL(attr_obj);
+  if (value->isa<Int32Imm>()) {
+    (*attr_obj)[kJValue] = GetValue<int>(value);
+  } else if (value->isa<Int64Imm>()) {
+    (*attr_obj)[kJValue] = GetValue<int64_t>(value);
+  } else {
+    MS_LOG(ERROR) << "Parse int32 attr value failed. Attr value:" << value->ToString()
+                  << ", Type:" << value->type_name();
+    return false;
+  }
+  return true;
 }
 
 bool ParseAttrValue(const std::string &type, const mindspore::ValuePtr &value, nlohmann::json *attr_obj) {
@@ -130,16 +163,7 @@ bool ParseAttrValue(const std::string &type, const mindspore::ValuePtr &value, n
 
   switch (result->second) {
     case ATTR_DTYPE::ATTR_INT32:
-      if (value->isa<Int32Imm>()) {
-        (*attr_obj)[kJValue] = GetValue<int>(value);
-      } else if (value->isa<Int64Imm>()) {
-        (*attr_obj)[kJValue] = GetValue<int64_t>(value);
-      } else {
-        MS_LOG(ERROR) << "Parse int32 attr value failed. Attr value:" << value->ToString()
-                      << ", Type:" << value->type_name();
-        return false;
-      }
-      break;
+      return ParseAttrInt32(value, attr_obj);
     case ATTR_DTYPE::ATTR_INT64:
       (*attr_obj)[kJValue] = GetValue<int64_t>(value);
       break;
@@ -152,34 +176,17 @@ bool ParseAttrValue(const std::string &type, const mindspore::ValuePtr &value, n
       (*attr_obj)[kJValue] = GetValue<bool>(value);
       break;
     case ATTR_DTYPE::ATTR_FLOAT32:
-      ParseFloat(value, attr_obj);
-      break;
-    case ATTR_DTYPE::ATTR_LIST_INT32: {
-      std::vector<int64_t> attr_value;
-      if (!ParseListIntValue(value, &attr_value)) {
-        MS_LOG(ERROR) << "Parse list_value failed, maybe the input is a nullptr.";
-        return false;
-      }
-      (*attr_obj)[kJValue] = attr_value;
-      break;
-    }
-    case ATTR_DTYPE::ATTR_LIST_FLOAT32: {
-      auto value_type = value->type();
-      if (value_type == nullptr) {
-        MS_LOG(ERROR) << "Value's type is null.";
-        return false;
-      }
-      (*attr_obj)[kJValue] = value_type->ToString() == kVTypeFloat ? std::vector<float>{GetValue<float>(value)}
-                                                                   : GetValue<std::vector<float>>(value);
-      break;
-    }
+      return ParseAttrFloat(value, attr_obj);
+    case ATTR_DTYPE::ATTR_LIST_INT32:
+      return ParseAttrListInt(value, attr_obj);
+    case ATTR_DTYPE::ATTR_LIST_FLOAT32:
+      return ParseAttrListFloat(value, attr_obj);
     case ATTR_DTYPE::ATTR_LIST_UINT64:
       (*attr_obj)[kJValue] = GetValue<std::vector<size_t>>(value);
       break;
     case ATTR_DTYPE::ATTR_LIST_LIST_INT64:
       (*attr_obj)[kJValue] = GetValue<std::vector<std::vector<int64_t>>>(value);
       break;
-
     default:
       MS_LOG(ERROR) << "Parse attr value failed. Attr Type: " << type << "not support. Attr value:" << value->ToString()
                     << ", Type:" << value->type_name();

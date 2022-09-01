@@ -1325,7 +1325,7 @@ void KernelRuntime::GenKernelEvents(const session::KernelGraph &graph) {
         }
       }
       if (found_nearest_child) {
-        kernel_pre_run_events[child].emplace_back([post_event]() { post_event->WaitEvent(); });
+        (void)kernel_pre_run_events[child].emplace_back([post_event]() { post_event->WaitEvent(); });
         break;
       }
     }
