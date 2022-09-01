@@ -296,15 +296,18 @@ bool AdjustHueCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs
                                    const std::vector<kernel::AddressPtr> &outputs) {
   switch (dtype_) {
     case kNumberTypeFloat16:
-      detail::LaunchAdjustHueKernelHalf<Eigen::half>(inputs, outputs);
+      if (detail::LaunchAdjustHueKernelHalf<Eigen::half>(inputs, outputs) != EOK) {
+        return false;
+      }
       break;
     case kNumberTypeFloat32:
-      detail::LaunchAdjustHueKernel<float>(inputs, outputs);
+      if (detail::LaunchAdjustHueKernel<float>(inputs, outputs) != EOK) {
+        return false;
+      }
       break;
     default:
       MS_LOG(EXCEPTION) << "For AdjustHue, the type of 'image' should be float16, float32, but got "
                         << TypeIdLabel(dtype_) << ".";
-      return false;
   }
   return true;
 }

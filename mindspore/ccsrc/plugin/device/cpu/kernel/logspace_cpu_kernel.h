@@ -41,7 +41,7 @@ class LogSpaceCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  private:
   template <typename T, typename S>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
-                    const std::vector<kernel::AddressPtr> &outputs);
+                    const std::vector<kernel::AddressPtr> &outputs) const;
   using LogSpaceFunc =
     std::function<bool(LogSpaceCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
                        const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;

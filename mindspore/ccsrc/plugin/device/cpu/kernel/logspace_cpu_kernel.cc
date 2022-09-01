@@ -41,11 +41,11 @@ void LogSpaceCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   if (input_shape_size_2 > 0) {
     MS_EXCEPTION(ValueError) << "For LogSpace, input[end] must be 0-D, but got " << input_shape_size_2 << "-D.";
   }
-  steps_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "steps");
+  steps_ = common::AnfAlgo::GetNodeAttr<size_t>(kernel_node, "steps");
   if (steps_ < 0) {
     MS_EXCEPTION(ValueError) << "For LogSpace, attr[steps] must be greater than 0, but got steps: " << steps_ << ".";
   }
-  base_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "base");
+  base_ = common::AnfAlgo::GetNodeAttr<size_t>(kernel_node, "base");
   auto kernel_attr = GetKernelAttrFromNode(kernel_node);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -57,12 +57,12 @@ void LogSpaceCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 template <typename T, typename S>
 bool LogSpaceCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                         const std::vector<kernel::AddressPtr> &,
-                                        const std::vector<kernel::AddressPtr> &outputs) {
-  auto *input_start_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto *input_end_addr = reinterpret_cast<T *>(inputs[1]->addr);
+                                        const std::vector<kernel::AddressPtr> &outputs) const {
+  auto *input_start_addr = static_cast<T *>(inputs[0]->addr);
+  auto *input_end_addr = static_cast<T *>(inputs[1]->addr);
   auto input_start = static_cast<double>(input_start_addr[0]);
   auto input_end = static_cast<double>(input_end_addr[0]);
-  auto *output_addr = reinterpret_cast<S *>(outputs[0]->addr);
+  auto *output_addr = static_cast<S *>(outputs[0]->addr);
   if (steps_ > 0) {
     double w = (input_end - input_start) / (steps_ - 1);
     double q = pow(base_, w);
@@ -95,8 +95,8 @@ std::vector<std::pair<KernelAttr, LogSpaceCpuKernelMod::LogSpaceFunc>> LogSpaceC
 
 std::vector<KernelAttr> LogSpaceCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
-  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                 [](const std::pair<KernelAttr, LogSpaceFunc> &item) { return item.first; });
+  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, LogSpaceFunc> &item) { return item.first; });
   return support_list;
 }
 

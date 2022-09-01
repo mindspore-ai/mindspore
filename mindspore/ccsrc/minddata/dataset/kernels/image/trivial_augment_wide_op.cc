@@ -40,25 +40,26 @@ Status TrivialAugmentWideOp::Compute(const std::shared_ptr<Tensor> &input, std::
   std::vector<dsize_t> image_size;
   RETURN_IF_NOT_OK(ImageSize(input, &image_size));
   Space space = GetSpace(num_magnitude_bins_);
-  int32_t space_size = space.size();
+  size_t space_size = space.size();
   std::vector<std::string> op_name_list;
-  std::for_each(space.begin(), space.end(),
-                [&op_name_list](const std::map<std::string, std::tuple<std::vector<float>, bool>>::value_type &p) {
-                  op_name_list.push_back(p.first);
-                });
+  (void)std::for_each(
+    space.begin(), space.end(),
+    [&op_name_list](const std::map<std::string, std::tuple<std::vector<float>, bool>>::value_type &p) {
+      op_name_list.push_back(p.first);
+    });
 
   int32_t op_index = RandInt(0, space_size);
-  const std::string op_name = op_name_list[op_index];
+  const std::string op_name = op_name_list[static_cast<size_t>(op_index)];
   std::vector<float> magnitudes = std::get<0>(space[op_name]);
   bool sign = std::get<1>(space[op_name]);
   float magnitude = 0.0;
   if (magnitudes.size() != 1) {
     int32_t magnitude_index = RandInt(0, magnitudes.size());
-    magnitude = magnitudes[magnitude_index];
+    magnitude = magnitudes[static_cast<size_t>(magnitude_index)];
   }
   const int kRandUpperBound = 2;
   int32_t random_number = RandInt(0, kRandUpperBound);
-  if (sign && random_number) {
+  if (static_cast<int32_t>(sign) && random_number) {
     magnitude *= -1.0;
   }
   std::shared_ptr<Tensor> img = input;
@@ -67,7 +68,7 @@ Status TrivialAugmentWideOp::Compute(const std::shared_ptr<Tensor> &input, std::
   return Status::OK();
 }
 
-Space TrivialAugmentWideOp::GetSpace(int32_t num_bins) {
+Space TrivialAugmentWideOp::GetSpace(int32_t num_bins) const {
   Space space = {{"Identity", {{0.0}, false}},
                  {"ShearX", {Linspace(0.0, 0.99, num_bins), true}},
                  {"ShearY", {Linspace(0.0, 0.99, num_bins), true}},

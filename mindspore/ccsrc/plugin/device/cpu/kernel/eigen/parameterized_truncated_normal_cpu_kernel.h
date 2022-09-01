@@ -39,13 +39,16 @@ class ParameterizedTruncatedNormalCpuKernelMod : public DeprecatedNativeCpuKerne
   template <typename T>
   T GetBatchSizeCheckDims(const std::vector<AddressPtr> &inputs);
   template <typename T>
-  void GenerateCase1(int64_t size, T norm_min, T norm_max, T stddev, T mean, T **output_ptr);
+  void GenerateCase1(const int64_t size, const T norm_min, const T norm_max, const T stddev, const T mean,
+                     T **output_ptr);
   template <typename T>
-  void GenerateCase2(int64_t size, T norm_min, T norm_max, T stddev, T mean, T **output_ptr);
+  void GenerateCase2(const int64_t size, const T norm_min, const T norm_max, const T stddev, const T mean,
+                     T **output_ptr);
   template <typename T>
-  void GenerateCase3(int64_t size, T norm_min, T norm_max, T stddev, T mean, T **output_ptr);
+  void GenerateCase3(const int64_t size, const T norm_min, const T norm_max, const T stddev, const T mean,
+                     T **output_ptr);
   template <typename T>
-  void Generate(int64_t size, T mean, T stddev, T minval, T maxval, T **output_ptr);
+  void Generate(const int64_t size, const T mean, T stddev, T minval, T maxval, T **output_ptr);
   template <typename T_shape, typename T>
   bool BatchGenerate(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
   std::vector<int64_t> input_shape_;

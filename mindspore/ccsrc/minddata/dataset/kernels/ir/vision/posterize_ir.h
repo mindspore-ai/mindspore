@@ -17,12 +17,9 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IR_VISION_POSTERIZE_IR_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IR_VISION_POSTERIZE_IR_H_
 
-#include <algorithm>
 #include <map>
 #include <memory>
 #include <string>
-#include <utility>
-#include <vector>
 
 #include "include/api/status.h"
 #include "minddata/dataset/include/dataset/constants.h"

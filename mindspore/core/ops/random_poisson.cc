@@ -46,8 +46,8 @@ abstract::ShapePtr RandomPoissonInferShape(const PrimitivePtr &primitive,
     (void)CheckAndConvertUtils::CheckPositiveVector("shape", out_shape, op_name);
 
     auto rate_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
-    auto rate_rank = SizeToLong(rate_shape.size());
-    for (int64_t i = 0; i < rate_rank; i++) {
+    size_t rate_rank = rate_shape.size();
+    for (size_t i = 0; i < rate_rank; i++) {
       out_shape.push_back(rate_shape[i]);
     }
 

@@ -97,7 +97,7 @@ bool MatrixDiagPartV3CpuKernelMod::LaunchKernel(const std::vector<kernel::Addres
   int64_t lower_diag_index = 0;
   upper_diag_index_ = 0;
   size_t k_len = static_cast<size_t>(inputs[1]->size / sizeof(int32_t));
-  auto k_Data = reinterpret_cast<int32_t *>(inputs[1]->addr);
+  auto k_Data = static_cast<int32_t *>(inputs[1]->addr);
   MS_EXCEPTION_IF_NULL(k_Data);
   const size_t k_len_max = 2;
   if (k_len == 0 || k_len > k_len_max) {
@@ -151,12 +151,12 @@ bool MatrixDiagPartV3CpuKernelMod::DoLaunch(const std::vector<kernel::AddressPtr
     MS_LOG(EXCEPTION) << "For MatrixDiagPartV3, padding_value must have only one element, received "
                       << padding_value_num << " elements. ";
   }
-  auto *padding_value_data = reinterpret_cast<T *>(inputs[kIndexPaddingValue]->addr);
+  auto *padding_value_data = static_cast<T *>(inputs[kIndexPaddingValue]->addr);
   MS_EXCEPTION_IF_NULL(padding_value_data);
   T padding_value = padding_value_data[0];
-  auto output_data = reinterpret_cast<T *>(outputs[0]->addr);
+  auto output_data = static_cast<T *>(outputs[0]->addr);
   MS_EXCEPTION_IF_NULL(output_data);
-  auto input_data = reinterpret_cast<T *>(inputs[0]->addr);
+  auto input_data = static_cast<T *>(inputs[0]->addr);
   MS_EXCEPTION_IF_NULL(input_data);
   size_t Num_array = LongToSize(num_array_);
 

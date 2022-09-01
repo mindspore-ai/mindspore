@@ -126,7 +126,7 @@ bool LaunchAdjustSaturationKernel(const std::vector<AddressPtr> &inputs, const s
   auto scale{static_cast<std::float_t *>(inputs[1]->addr)};
   auto output{static_cast<T *>(outputs[0]->addr)};
   constexpr int64_t kChannelSize = 3;
-  std::int64_t num_elements = inputs[0]->size / sizeof(T);
+  std::int64_t num_elements = static_cast<int64_t>(inputs[0]->size / sizeof(T));
   auto sharder_adjustsaturation = [input, scale, output, kChannelSize](int64_t start, int64_t end) {
     for (int64_t i = start * kChannelSize; i < end * kChannelSize; i = i + kChannelSize) {
       float h, s, v;
@@ -170,9 +170,7 @@ bool AdjustSaturationCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> 
     return detail::LaunchAdjustSaturationKernel<Eigen::half>(inputs, outputs);
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', unsupported input data type " << TypeIdLabel(input_type_);
-    return false;
   }
-  return true;
 }
 std::vector<KernelAttr> AdjustSaturationCpuKernelMod::GetOpSupport() {
   static const std::vector<KernelAttr> support_list = {

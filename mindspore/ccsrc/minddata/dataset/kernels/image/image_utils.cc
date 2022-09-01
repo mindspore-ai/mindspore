@@ -1560,7 +1560,7 @@ Status Erase(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outp
 
     cv::Rect idx = cv::Rect(w_start, h_start, true_width, true_height);
     cv::Scalar fill_color = cv::Scalar(fill_r, fill_g, fill_b);
-    input_img(idx).setTo(fill_color);
+    (void)input_img(idx).setTo(fill_color);
 
     std::shared_ptr<CVTensor> output_cv;
     RETURN_IF_NOT_OK(CVTensor::CreateFromMat(input_img, input_cv->Rank(), &output_cv));
@@ -2085,13 +2085,13 @@ Status ToTensor(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
 
 // round half to even
 float Round(float value) {
-  const float kHalf = 0.5;
+  float kHalf = 0.5;
   const int32_t kEven = 2;
   float rnd = round(value);
   float rnd_l = floor(value);
   float rnd_h = ceil(value);
   if (value - rnd_l == kHalf) {
-    if (fmod(rnd, kEven) == 0) {
+    if (common::IsDoubleEqual(fmod(rnd, kEven), 0.0)) {
       return rnd;
     } else if (value > 0) {
       return rnd_l;
@@ -2105,7 +2105,7 @@ float Round(float value) {
 std::vector<float> Linspace(float start, float end, int n, float scale, float offset, bool round) {
   std::vector<float> linear(n);
   float step = (n == 1) ? 0 : ((end - start) / (n - 1));
-  for (auto i = 0; i < linear.size(); ++i) {
+  for (size_t i = 0; i < linear.size(); ++i) {
     linear[i] = (start + i * step) * scale + offset;
     if (round) {
       linear[i] = Round(linear[i]);

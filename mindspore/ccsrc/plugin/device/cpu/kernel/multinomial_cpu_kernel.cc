@@ -71,22 +71,22 @@ bool MultinomialCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
 int MultinomialCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                     const std::vector<KernelTensorPtr> &outputs,
                                     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KRET_OK;
   ResetResource();
-  if ((ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs)) != 0) {
+  int ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != 0) {
     return ret;
   }
 
-  size_t elem_num = std::accumulate(input_shape_.begin(), input_shape_.end(), 1, std::multiplies<size_t>());
+  int64_t elem_num = std::accumulate(input_shape_.begin(), input_shape_.end(), 1, std::multiplies<size_t>());
 
   if (input0_dtype_ == kNumberTypeFloat16) {
-    workspace_size_list_.emplace_back(elem_num * sizeof(float16));
+    (void)workspace_size_list_.emplace_back(elem_num * sizeof(float16));
   } else if (input0_dtype_ == kNumberTypeFloat32) {
-    workspace_size_list_.emplace_back(elem_num * sizeof(float));
+    (void)workspace_size_list_.emplace_back(elem_num * sizeof(float16));
   } else if (input0_dtype_ == kNumberTypeFloat64) {
-    workspace_size_list_.emplace_back(elem_num * sizeof(double));
+    (void)workspace_size_list_.emplace_back(elem_num * sizeof(float16));
   }
-  return KRET_OK;
+  return static_cast<int>(KRET_OK);
 }
 
 void MultinomialCpuKernelMod::ResetResource() noexcept {
