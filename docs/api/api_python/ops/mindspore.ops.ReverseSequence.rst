@@ -14,7 +14,7 @@ mindspore.ops.ReverseSequence
         - **seq_lengths** (Tensor) - 指定反转长度，为一维向量，其数据类型为int32或int64。
 
     输出：
-        shape和数据类型与输入相同。
+        Tensor，shape和数据类型与输入 `x` 相同。
 
     异常：
         - **TypeError** - `seq_dim` 或 `batch_dim` 不是int。

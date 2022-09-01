@@ -869,7 +869,7 @@ def reverse_sequence(x, seq_lengths, seq_dim, batch_dim=0):
         batch_dim (int): The input is sliced in this dimension. Default: 0.
 
     Returns:
-        Reversed tensor with the same shape and data type as input.
+        Tensor, with the same shape and data type as `x`.
 
     Raises:
         TypeError: If `seq_dim` or `batch_dim` is not an int.

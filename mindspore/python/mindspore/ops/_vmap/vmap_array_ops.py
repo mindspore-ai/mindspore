@@ -461,25 +461,23 @@ def get_reverse_sequence_vmap_rule(prim, axis_size):
         seq_lengths, seq_lengths_dim = seq_lengths_bdim
         seq_lengths = _bdim_at_front(seq_lengths, seq_lengths_dim, axis_size)
         origin_shape = x.shape
-        batch_dim_ = batch_dim
-        seq_dim_ = seq_dim
-        batch_dim_, seq_dim_ = get_batch_seq_dim(dim, batch_dim_, seq_dim_)
+        batch_dim_, seq_dim_ = get_batch_seq_dim(dim, batch_dim, seq_dim)
         if dim is None:
             x = _bdim_at_front(x, dim, axis_size)
             origin_shape = x.shape
             x = mnp.moveaxis(x, batch_dim_, 1)
+            real_dim = 0
         else:
             x = mnp.moveaxis(x, [dim, batch_dim_], [0, 1])
+            real_dim = dim
         shape = x.shape
-        shape = (shape[0] * shape[1],) + tuple(_ for _ in shape[2:])
+        shape = (shape[0] * shape[1],) + tuple(shape[2:])
         x = reshape(x, shape)
         seq_dim_ = get_seq_dim(dim, batch_dim_, seq_dim_)
         seq_lengths = reshape(seq_lengths, (-1,))
         x = P.ReverseSequence(seq_dim=seq_dim_)(x, seq_lengths)
         shape = x.shape
-        if dim is None:
-            dim = 0
-        shape = (origin_shape[dim], origin_shape[batch_dim_],) + tuple(_ for _ in shape[1:])
+        shape = (origin_shape[real_dim], origin_shape[batch_dim_],) + tuple(shape[1:])
         out = reshape(x, shape)
         if batch_dim_ not in (0, 1):
             out = mnp.moveaxis(out, 1, batch_dim_)
