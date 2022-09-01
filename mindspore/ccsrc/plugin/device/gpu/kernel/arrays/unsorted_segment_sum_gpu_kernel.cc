@@ -18,6 +18,9 @@
 
 namespace mindspore {
 namespace kernel {
+namespace {
+using KernelRunFunc = UnsortedSegmentSumGpuKernelMod::KernelRunFunc;
+}  // namespace
 #define UNSORTED_SEGMENT_SUM_GPU_REGISTER(T_DT, S_DT, T, S)               \
   KernelAttr().AddInputAttr(T_DT).AddInputAttr(S_DT).AddOutputAttr(T_DT), \
     &UnsortedSegmentSumGpuKernelMod::LaunchKernel<T, S>
@@ -36,9 +39,9 @@ void UnsortedSegmentSumGpuKernelMod::ResetResource() {
 }
 
 void UnsortedSegmentSumGpuKernelMod::InitSizeLists() {
-  input_size_list_.push_back(input_dim0_ * input_dim1_ * data_unit_size_);
-  input_size_list_.push_back(input_dim0_ * ids_unit_size_);
-  output_size_list_.push_back(output_dim0_ * output_dim1_ * data_unit_size_);
+  input_size_list_.push_back(batch_size_ * input_dim0_ * input_dim1_ * data_unit_size_);
+  input_size_list_.push_back(batch_size_ * input_dim0_ * ids_unit_size_);
+  output_size_list_.push_back(batch_size_ * output_dim0_ * output_dim1_ * data_unit_size_);
 }
 
 bool UnsortedSegmentSumGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
@@ -50,17 +53,14 @@ bool UnsortedSegmentSumGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   }
 
   kernel_name_ = base_operator->name();
+  batch_rank_ = base_operator->get_batch_rank();
 
-  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
-  if (!is_match) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "' does not support this kernel type: " << kernel_attr;
+  data_unit_size_ = abstract::TypeIdSize(inputs.at(kIndex0)->GetDtype());
+  ids_unit_size_ = abstract::TypeIdSize(inputs.at(kIndex1)->GetDtype());
+
+  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
     return false;
   }
-  kernel_func_ = func_list_[index].second;
-
-  data_unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).first);
-  ids_unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex1).first);
   return true;
 }
 
@@ -79,8 +79,25 @@ int UnsortedSegmentSumGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   auto ids_shapes = inputs[kIndex1]->GetDeviceShapeAdaptively();
   auto output_shapes = outputs[kIndex0]->GetDeviceShapeAdaptively();
 
+  batch_size_ = 1;
+  for (int64_t i = 0; i < batch_rank_; i++) {
+    batch_size_ *= input_shapes[i];
+  }
+  in_stride_ = 1;
+  for (size_t i = batch_rank_; i < input_shapes.size(); i++) {
+    in_stride_ *= input_shapes[i];
+  }
+  ids_stride_ = 1;
+  for (size_t i = batch_rank_; i < ids_shapes.size(); i++) {
+    ids_stride_ *= ids_shapes[i];
+  }
+  out_stride_ = 1;
+  for (size_t i = batch_rank_; i < output_shapes.size(); i++) {
+    out_stride_ *= output_shapes[i];
+  }
+
   auto axis = ids_shapes.size();
-  for (size_t i = 0; i < input_shapes.size(); i++) {
+  for (size_t i = batch_rank_; i < input_shapes.size(); i++) {
     if (i < axis) {
       input_dim0_ *= input_shapes[i];
     } else {
@@ -88,8 +105,8 @@ int UnsortedSegmentSumGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
     }
   }
 
-  output_dim0_ = output_shapes[0];
-  for (size_t j = 1; j < output_shapes.size(); j++) {
+  output_dim0_ = output_shapes[batch_rank_];
+  for (size_t j = batch_rank_ + 1; j < output_shapes.size(); j++) {
     output_dim1_ *= output_shapes[j];
   }
 
@@ -100,18 +117,24 @@ int UnsortedSegmentSumGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 template <typename T, typename S>
 bool UnsortedSegmentSumGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                                   const std::vector<AddressPtr> &workspace,
-                                                  const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+                                                  const std::vector<AddressPtr> &outputs) {
   T *input_addr = GetDeviceAddress<T>(inputs, kIndex0);
-  S *indices_addr = GetDeviceAddress<S>(inputs, kIndex1);
+  S *ids_addr = GetDeviceAddress<S>(inputs, kIndex1);
   T *output_addr = GetDeviceAddress<T>(outputs, kIndex0);
 
-  UnsortedSegmentSum(input_dim0_, input_dim1_, output_dim0_, output_dim1_, input_addr, indices_addr, output_addr,
-                     reinterpret_cast<cudaStream_t>(stream_ptr), device_id_);
+  for (int64_t i = 0; i < batch_size_; i++) {
+    T *input_batch_addr = input_addr + i * in_stride_;
+    S *ids_batch_addr = ids_addr + i * ids_stride_;
+    T *output_batch_addr = output_addr + i * out_stride_;
+    UnsortedSegmentSum(input_dim0_, input_dim1_, output_dim0_, output_dim1_, input_batch_addr, ids_batch_addr,
+                       output_batch_addr, reinterpret_cast<cudaStream_t>(stream_ptr_), device_id_);
+  }
+
   return true;
 }
 
-std::vector<std::pair<KernelAttr, UnsortedSegmentSumGpuKernelMod::UnsortedSegmentSumFunc>>
-  UnsortedSegmentSumGpuKernelMod::func_list_ = {
+const std::vector<std::pair<KernelAttr, KernelRunFunc>> &UnsortedSegmentSumGpuKernelMod::GetFuncList() const {
+  static const std::vector<std::pair<KernelAttr, KernelRunFunc>> func_list = {
     {UNSORTED_SEGMENT_SUM_GPU_REGISTER(kNumberTypeFloat64, kNumberTypeInt32, double, int)},
     {UNSORTED_SEGMENT_SUM_GPU_REGISTER(kNumberTypeFloat64, kNumberTypeInt64, double, int64_t)},
     {UNSORTED_SEGMENT_SUM_GPU_REGISTER(kNumberTypeFloat32, kNumberTypeInt32, float, int)},
@@ -182,14 +205,8 @@ std::vector<std::pair<KernelAttr, UnsortedSegmentSumGpuKernelMod::UnsortedSegmen
     {UNSORTED_SEGMENT_SUM_GPU_DY_REGISTER(kNumberTypeUInt64, kNumberTypeInt32, kNumberTypeInt32, uint64_t, int)},
     {UNSORTED_SEGMENT_SUM_GPU_DY_REGISTER(kNumberTypeUInt64, kNumberTypeInt64, kNumberTypeInt32, uint64_t, int64_t)},
     {UNSORTED_SEGMENT_SUM_GPU_DY_REGISTER(kNumberTypeUInt64, kNumberTypeInt32, kNumberTypeInt64, uint64_t, int)},
-    {UNSORTED_SEGMENT_SUM_GPU_DY_REGISTER(kNumberTypeUInt64, kNumberTypeInt64, kNumberTypeInt64, uint64_t, int64_t)},
-};
-
-std::vector<KernelAttr> UnsortedSegmentSumGpuKernelMod::GetOpSupport() {
-  std::vector<KernelAttr> support_list;
-  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                       [](const std::pair<KernelAttr, UnsortedSegmentSumFunc> &pair) { return pair.first; });
-  return support_list;
+    {UNSORTED_SEGMENT_SUM_GPU_DY_REGISTER(kNumberTypeUInt64, kNumberTypeInt64, kNumberTypeInt64, uint64_t, int64_t)}};
+  return func_list;
 }
 
 MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, UnsortedSegmentSum, UnsortedSegmentSumGpuKernelMod);
