@@ -94,4 +94,6 @@ template <typename T>
 CUDA_LIB_EXPORT void Conj(const Complex<T> *input, Complex<T> *output, const size_t count, cudaStream_t cuda_stream);
 template <typename T>
 CUDA_LIB_EXPORT void Conj(const T *input, T *output, const size_t count, cudaStream_t cuda_stream);
+template <typename T>
+CUDA_LIB_EXPORT void Sigmoid(const T *input, T *output, const size_t count, cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_UNARY_OP_IMPL_CUH_

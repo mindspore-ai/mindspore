@@ -686,6 +686,29 @@ __global__ void RoundKernel(const double *input, double *output, const size_t co
   return;
 }
 template <typename T>
+__global__ void SigmoidKernel(const T *input, T *output, const size_t count) {
+  T one = static_cast<T>(1.0);
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    output[i] = one / (one + exp(-input[i]));
+  }
+  return;
+}
+template <>
+__global__ void SigmoidKernel(const half *input, half *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    output[i] = half(1.0) / (half(1.0) + hexp(-input[i]));
+  }
+  return;
+}
+template <typename T>
+__global__ void SigmoidKernel(const Complex<T> *input, Complex<T> *output, const size_t count) {
+  Complex<T> one{1.0, 0};
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    output[i] = one / (one + exp(-input[i]));
+  }
+  return;
+}
+template <typename T>
 __global__ void SignKernel(const T *input, T *output, const size_t count) {
   T zero = 0.0;
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
@@ -815,6 +838,11 @@ void Square(const T *input, T *output, const size_t count, cudaStream_t cuda_str
 template <typename T>
 void Sqrt(const T *input, T *output, const size_t count, cudaStream_t cuda_stream) {
   SqrtKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
+  return;
+}
+template <typename T>
+void Sigmoid(const T *input, T *output, const size_t count, cudaStream_t cuda_stream) {
+  SigmoidKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
   return;
 }
 template <typename T>
@@ -1024,6 +1052,8 @@ template CUDA_LIB_EXPORT void Imag<double>(const double *input, double *output, 
                                            cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Conj<double>(const double *input, double *output, const size_t count,
                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Sigmoid<double>(const double *input, double *output, const size_t count,
+                                              cudaStream_t cuda_stream);
 
 // float
 template CUDA_LIB_EXPORT void Exponential<float>(const float *input, float *output, const size_t count,
@@ -1096,6 +1126,8 @@ template CUDA_LIB_EXPORT void Imag<float>(const float *input, float *output, con
                                           cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Conj<float>(const float *input, float *output, const size_t count,
                                           cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Sigmoid<float>(const float *input, float *output, const size_t count,
+                                             cudaStream_t cuda_stream);
 
 // half
 template CUDA_LIB_EXPORT void Exponential<half>(const half *input, half *output, const size_t count,
@@ -1148,6 +1180,8 @@ template CUDA_LIB_EXPORT void Sign<half>(const half *input, half *output, const 
 template CUDA_LIB_EXPORT void Real<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Imag<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Conj<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Sigmoid<half>(const half *input, half *output, const size_t count,
+                                            cudaStream_t cuda_stream);
 
 // int8
 template CUDA_LIB_EXPORT void Exponential<char>(const char *input, char *output, const size_t count,
@@ -1663,6 +1697,8 @@ template CUDA_LIB_EXPORT void Reciprocal<Complex<float>>(const Complex<float> *i
                                                          const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Inv<Complex<float>>(const Complex<float> *input, Complex<float> *output,
                                                   const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Sigmoid<Complex<float>>(const Complex<float> *input, Complex<float> *output,
+                                                      const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Tanh<Complex<float>>(const Complex<float> *input, Complex<float> *output,
                                                    const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Logarithm<Complex<float>>(const Complex<float> *input, Complex<float> *output,
@@ -1687,6 +1723,8 @@ template CUDA_LIB_EXPORT void Reciprocal<Complex<double>>(const Complex<double> 
                                                           const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Inv<Complex<double>>(const Complex<double> *input, Complex<double> *output,
                                                    const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Sigmoid<Complex<double>>(const Complex<double> *input, Complex<double> *output,
+                                                       const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Tanh<Complex<double>>(const Complex<double> *input, Complex<double> *output,
                                                     const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Logarithm<Complex<double>>(const Complex<double> *input, Complex<double> *output,

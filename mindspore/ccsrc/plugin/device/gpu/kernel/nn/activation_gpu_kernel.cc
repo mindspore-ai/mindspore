@@ -54,7 +54,13 @@ std::map<std::string, std::vector<std::pair<KernelAttr, ActivationFwdGpuKernelMo
      {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
        &ActivationFwdGpuKernelMod::LaunchKernel<float>},
       {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-       &ActivationFwdGpuKernelMod::LaunchKernel<half>}}}};
+       &ActivationFwdGpuKernelMod::LaunchKernel<half>},
+      {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+       &ActivationFwdGpuKernelMod::LaunchKernel<utils::Complex<float>>},
+      {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+       &ActivationFwdGpuKernelMod::LaunchKernel<utils::Complex<double>>},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+       &ActivationFwdGpuKernelMod::LaunchKernel<double>}}}};
 
 bool ActivationFwdGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                      const std::vector<KernelTensorPtr> &outputs) {
@@ -93,10 +99,8 @@ bool ActivationFwdGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   mode_ = mode_iter->second;
 
   const auto dtype = inputs.at(kIndex0)->GetDtype();
-  if (((dtype == kNumberTypeFloat64) || (dtype == kNumberTypeComplex64) || (dtype == kNumberTypeComplex128)) &&
-      (kernel_name_ != kTanh)) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', only tanh support complex input, but got " << kernel_name_
-                  << " with dtype " << TypeIdLabel(inputs.at(kIndex0)->GetDtype());
+  if ((dtype == kNumberTypeFloat64) || (dtype == kNumberTypeComplex64) || (dtype == kNumberTypeComplex128)) {
+    is_additional_dtype_ = true;
   }
   return true;
 }
@@ -118,9 +122,7 @@ int ActivationFwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
     return KRET_OK;
   }
 
-  const auto dtype = inputs.at(kIndex0)->GetDtype();
-  if (((dtype == kNumberTypeFloat64) || (dtype == kNumberTypeComplex64) || (dtype == kNumberTypeComplex128)) &&
-      (kernel_name_ == kTanh)) {
+  if (is_additional_dtype_) {
     // Does not call Cudnn
     return KRET_OK;
   }
@@ -184,10 +186,12 @@ bool ActivationFwdGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPt
   T *input = GetDeviceAddress<T>(inputs, kIndex0);
   T *output = GetDeviceAddress<T>(outputs, kIndex0);
 
-  constexpr bool use_unary =
-    std::is_same_v<T, double> || std::is_same_v<T, utils::Complex<float>> || std::is_same_v<T, utils::Complex<double>>;
-  if constexpr (use_unary) {
-    Tanh(input, output, input_size_list_[0] / sizeof(T), reinterpret_cast<cudaStream_t>(cuda_stream_));
+  if (is_additional_dtype_) {
+    if (kernel_name_ == kTanh) {
+      Tanh(input, output, input_size_list_[0] / sizeof(T), reinterpret_cast<cudaStream_t>(cuda_stream_));
+    } else {
+      Sigmoid(input, output, input_size_list_[0] / sizeof(T), reinterpret_cast<cudaStream_t>(cuda_stream_));
+    }
     return true;
   }
 

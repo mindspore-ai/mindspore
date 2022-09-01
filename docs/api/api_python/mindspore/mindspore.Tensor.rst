@@ -70,6 +70,7 @@ mindspore.Tensor
     mindspore.Tensor.logit
     mindspore.Tensor.pow
     mindspore.Tensor.round
+    mindspore.Tensor.sigmoid
     mindspore.Tensor.std
     mindspore.Tensor.svd
     mindspore.Tensor.tan

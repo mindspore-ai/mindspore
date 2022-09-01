@@ -35,6 +35,7 @@ softsign_ = P.Softsign()
 hardswish_ = P.HSwish()
 mish_ = NN_OPS.Mish()
 selu_ = NN_OPS.SeLU()
+sigmoid_ = NN_OPS.Sigmoid()
 
 
 def adaptive_avg_pool2d(input_x, output_size):
@@ -1062,6 +1063,40 @@ def selu(input_x):
         [ 2.101402 -1.7462534 9.456309 ]]
     """
     return selu_(input_x)
+
+
+def sigmoid(input_x):
+    r"""
+    Sigmoid activation function.
+
+    Computes Sigmoid of input element-wise. The Sigmoid function is defined as:
+
+    .. math::
+
+        \text{sigmoid}(x_i) = \frac{1}{1 + \exp(-x_i)}
+
+    where :math:`x_i` is an element of the input_x.
+
+    Args:
+        input_x (Tensor) - Tensor of any dimension, the data type is float16, float32, float64, complex64 or complex128.
+
+    Returns:
+        Tensor, with the same type and shape as the input_x.
+
+    Raises:
+        TypeError: If dtype of `input_x` is not float16, float32, float64, complex64 or complex128.
+        TypeError: If `input_x` is not a Tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> input_x = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
+        >>> output = ops.sigmoid(input_x)
+        >>> print(output)
+        [0.7310586  0.880797   0.95257413 0.98201376 0.9933072 ]
+    """
+    return sigmoid_(input_x)
 
 
 def deformable_conv2d(x, weight, offsets, kernel_size, strides, padding, bias=None, dilations=(1, 1, 1, 1), groups=1,
@@ -2639,6 +2674,7 @@ __all__ = [
     'ctc_greedy_decoder',
     'dropout',
     'conv3d_transpose',
-    'conv2d'
+    'conv2d',
+    'sigmoid'
 ]
 __all__.sort()
