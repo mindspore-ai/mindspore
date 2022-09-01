@@ -55,6 +55,7 @@ bool KernelInfo::SetOutputAddr(const DeviceAddressPtr &output_address, size_t in
     }
   } else if (kernel_mod_ != nullptr && output_address_list_.empty()) {
     // set cnode
+    MS_EXCEPTION_IF_NULL(select_kernel_build_info_);
     for (size_t i = 0; i < select_kernel_build_info_->GetOutputNum(); i++) {
       output_address_list_.emplace_back(nullptr);
     }
@@ -172,6 +173,7 @@ bool KernelInfo::operator==(const KernelInfo &other) const {
 
 void KernelInfo::set_ref_map(const bool &all_ref, const OutputInputRefMap &ref_map) {
   if (all_ref) {
+    MS_EXCEPTION_IF_NULL(select_kernel_build_info_);
     for (size_t i = 0; i < select_kernel_build_info_->GetInputNum(); i++) {
       out_in_ref_map_[i] = i;
     }

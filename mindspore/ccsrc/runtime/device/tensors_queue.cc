@@ -38,7 +38,7 @@ void TensorsQueue::CreateTensorsQueue() {
       element_addrs.push_back(create_dev);
       MS_LOG(DEBUG) << "Create  " << element_size << "bytes for " << name_;
     }
-    tensors_q.push_back(element_addrs);
+    tensors_q_.push_back(element_addrs);
   }
   MS_LOG(DEBUG) << "Create a TensorsQueue: " << name_ << ", Q size is " << size_ << ", elements num is "
                 << elements_num_;
@@ -71,7 +71,8 @@ bool TensorsQueue::Put(const mindspore::kernel::AddressPtrList &dev_addr) {
   }
   // Get the element in position rear_ and change the value by input, the we increase the rear_.
   // We can get a effect like a circle queue and reuse the addrs.
-  mindspore::kernel::AddressPtrList element = tensors_q[rear_];
+  MS_EXCEPTION_IF_CHECK_FAIL((tensors_q_.size() > rear_), "The index is out of range.");
+  mindspore::kernel::AddressPtrList element = tensors_q_[rear_];
   for (int64_t i = 0; i < elements_num_; i++) {
     CopyTensor(element[LongToSize(i)], dev_addr[LongToSize(i) + IntToSize(1)]);
   }
@@ -89,7 +90,8 @@ bool TensorsQueue::Put(const mindspore::kernel::AddressPtrList &dev_addr, void *
     MS_LOG(WARNING) << "The " << name_ << " is full, total size is " << size_;
     return false;
   }
-  mindspore::kernel::AddressPtrList element = tensors_q[rear_];
+  MS_EXCEPTION_IF_CHECK_FAIL((tensors_q_.size() > rear_), "The index is out of range.");
+  mindspore::kernel::AddressPtrList element = tensors_q_[rear_];
   for (int64_t i = 0; i < elements_num_; i++) {
     CopyTensor(element[LongToSize(i)], dev_addr[LongToSize(i) + IntToSize(1)], stream);
   }
@@ -104,12 +106,13 @@ bool TensorsQueue::Put(const mindspore::kernel::AddressPtrList &dev_addr, void *
 
 bool TensorsQueue::Get(const mindspore::kernel::AddressPtrList &dev_addr, const bool &pop_after_get, void *stream) {
   // Get a tensor addrs list from the queue.
-  // If pop_after_get is true, we will pop the addrs from tensors_q.
+  // If pop_after_get is true, we will pop the addrs from tensors_q_.
   if (IsEmpty()) {
     MS_LOG(WARNING) << "The TensorsQueue " << name_ << " is empty";
     return false;
   }
-  mindspore::kernel::AddressPtrList element = tensors_q[front_];
+  MS_EXCEPTION_IF_CHECK_FAIL((tensors_q_.size() > front_), "The index is out of range.");
+  mindspore::kernel::AddressPtrList element = tensors_q_[front_];
   for (int64_t i = 0; i < elements_num_; i++) {
     CopyTensor(dev_addr[LongToSize(i)], element[LongToSize(i)], stream);
   }
@@ -130,7 +133,8 @@ bool TensorsQueue::Get(const mindspore::kernel::AddressPtrList &dev_addr, const 
     MS_LOG(WARNING) << "The TensorsQueue " << name_ << " is empty";
     return false;
   }
-  mindspore::kernel::AddressPtrList element = tensors_q.front();
+  MS_EXCEPTION_IF_CHECK_FAIL((tensors_q_.size() > front_), "The index is out of range.");
+  mindspore::kernel::AddressPtrList element = tensors_q_.front();
   for (int64_t i = 0; i < elements_num_; i++) {
     CopyTensor(dev_addr[LongToSize(i)], element[LongToSize(i)]);
   }
@@ -147,7 +151,7 @@ bool TensorsQueue::Get(const mindspore::kernel::AddressPtrList &dev_addr, const 
 }
 
 void TensorsQueue::Clear() {
-  // Clear the tensors_q and return the element addr back to tensors_store.
+  // Clear the tensors_q_ and return the element addr back to tensors_store.
   if (IsEmpty()) {
     MS_LOG(WARNING) << "The TensorsQueue " << name_ << " is already empty when execute Clear.";
   }
@@ -158,7 +162,8 @@ void TensorsQueue::Clear() {
 
 void TensorsQueue::Free() {
   while (!IsEmpty()) {
-    auto element = tensors_q[front_];
+    MS_EXCEPTION_IF_CHECK_FAIL((tensors_q_.size() > front_), "The index is out of range.");
+    auto element = tensors_q_[front_];
     for (const auto &addr : element) {
       if (addr != nullptr) {
         FreeMemory(static_cast<DeviceMemPtr>(addr->addr));

@@ -24,6 +24,7 @@ namespace mindspore {
 namespace opt {
 namespace {
 bool IsParameter(const mindspore::AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
   return node->isa<Parameter>() || (IsPrimitiveCNode(node, prim::kPrimLoad) &&
                                     (common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), 0))->isa<Parameter>());
 }
@@ -42,6 +43,7 @@ bool GetDealList(const std::vector<AnfNodePtr> &node_list, std::vector<std::vect
       continue;
     }
     auto input0 = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(cast_node), 0);
+    MS_EXCEPTION_IF_NULL(input0);
     if (IsParameter(input0)) {
       auto dst = common::AnfAlgo::GetOutputInferDataType(cast_node, 0);
       auto src = common::AnfAlgo::GetPrevNodeOutputInferDataType(cast_node, 0);
@@ -100,6 +102,7 @@ bool CastAllFusion::Run(const FuncGraphPtr &graph) {
       inputs.push_back(common::AnfAlgo::GetInputNode(cnode, 0));
     }
     if (cast_list.size() > 0) {
+      MS_EXCEPTION_IF_NULL(cast_list[0]);
       TraceGuard guard(std::make_shared<TraceOpt>(cast_list[0]->debug_info()));
       auto cast_all = graph->NewCNode(inputs);
       auto kernel_info = std::make_shared<device::KernelInfo>();

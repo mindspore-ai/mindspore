@@ -45,6 +45,7 @@ void MemHandler::FreeHost(void *ptr) {
   if (iter == host_mem_block_map_.end()) {
     MS_LOG(EXCEPTION) << "Free ptr not be created from manager!";
   }
+  MS_EXCEPTION_IF_NULL(iter->second);
   auto mem_size = iter->second->size();
   cached_host_mem_[mem_size].emplace(iter->first);
 }
@@ -61,6 +62,7 @@ void AutoMemoryOffload::Free(const void *key) {
     return;
   }
   auto ptr = iter->second;
+  MS_EXCEPTION_IF_NULL(mem_handler_);
   mem_handler_->FreeDevice(ptr);
   (void)mem_result_.erase(key);
 }
@@ -84,6 +86,7 @@ void *AutoMemoryOffload::Get(const void *key, void *stream, const HashSet<const 
   if (device_ptr == nullptr) {
     return nullptr;
   }
+  MS_EXCEPTION_IF_NULL(mem_handler_);
   mem_handler_->SwapIn(host_ptr, device_ptr, mem_size, stream);
   if (!from_init) {
     (void)swap_host_ptr_.erase(key);
@@ -96,6 +99,7 @@ void *AutoMemoryOffload::Get(const void *key, void *stream, const HashSet<const 
 std::vector<void *> AutoMemoryOffload::MallocContinuous(const std::vector<const void *> &keys,
                                                         const std::vector<size_t> &size_list, void *stream,
                                                         const HashSet<const void *> &not_offload) {
+  MS_EXCEPTION_IF_NULL(mem_handler_);
   auto device_ptr = mem_handler_->MallocContinuousMemFromMemPool(size_list);
   if (device_ptr.size() == keys.size() || stream == nullptr) {
     for (size_t i = 0; i < device_ptr.size(); i += 1) {
@@ -155,6 +159,7 @@ std::vector<void *> AutoMemoryOffload::MallocContinuous(const std::vector<const 
 
 void *AutoMemoryOffload::Malloc(const void *key, size_t mem_size, void *stream,
                                 const HashSet<const void *> &not_offload) {
+  MS_EXCEPTION_IF_NULL(mem_handler_);
   auto iter = mem_result_.find(key);
   if (iter != mem_result_.end()) {
     return iter->second;
@@ -228,6 +233,7 @@ void *AutoMemoryOffload::SwapOut(const void *key, void *stream) {
 }
 
 void *AutoMemoryOffload::SwapIn(const void *key, void *stream) {
+  MS_EXCEPTION_IF_NULL(mem_handler_);
   const size_t mem_size = GetMemSize(key);
   const auto &iter = mem_result_.find(key);
   if (iter == mem_result_.end()) {
@@ -255,6 +261,7 @@ size_t AutoMemoryOffload::GetMemSize(const void *key) {
 
 void AutoMemoryOffload::GetOrMallocHostPtr(const void *key, size_t mem_size, void **host_ptr, bool *from_init) {
   MS_EXCEPTION_IF_NULL(host_ptr);
+  MS_EXCEPTION_IF_NULL(mem_handler_);
   GetHostPtr(key, host_ptr, from_init);
   if (*host_ptr != nullptr) {
     return;

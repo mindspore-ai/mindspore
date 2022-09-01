@@ -80,6 +80,7 @@ bool ExistRoute(const CNodePtr &src, const CNodePtr &dst) {
     size_t input_num = common::AnfAlgo::GetInputTensorNum(current_node);
     for (size_t input_index = 0; input_index < input_num; ++input_index) {
       const AnfNodePtr &input_node = common::AnfAlgo::GetInputNode(current_node, input_index);
+      MS_EXCEPTION_IF_NULL(input_node);
       const auto &cnode = input_node->cast<CNodePtr>();
       if (cnode == nullptr) {
         continue;
@@ -106,6 +107,8 @@ bool ExistDependencyFromAcc2Cover(const std::vector<AnfNodeIndex> &inplace_node,
   }
 
   size_t acc_index = cover_index == 1 ? 0 : 1;
+  MS_EXCEPTION_IF_CHECK_FAIL((inplace_node.size() > cover_index), "The index is out of range.");
+  MS_EXCEPTION_IF_NULL(inplace_node[cover_index].node);
   const CNodePtr &cover_node = inplace_node[cover_index].node->cast<CNodePtr>();
   const CNodePtr &acc_node = inplace_node[acc_index].node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cover_node);
@@ -117,6 +120,7 @@ std::pair<size_t, bool> GetCoverIndex(const std::vector<AnfNodeIndex> &inplace_n
   if (inplace_node.size() != inplace_node_size) {
     return {0, false};
   }
+  MS_EXCEPTION_IF_CHECK_FAIL((inplace_node.size() > 1), "The index is out of range.");
   auto first_node = inplace_node[0].node;
   auto second_node = inplace_node[1].node;
   if (common::AnfAlgo::GetCNodeName(first_node) != kConv2DBackpropInputOpName ||
@@ -176,6 +180,7 @@ void CheckInplaceNodeInputs(std::vector<AnfNodeIndex> *inplace_node, size_t cove
   MS_EXCEPTION_IF_NULL(inplace_node);
   MS_EXCEPTION_IF_NULL(graph);
   size_t acc_index = cover_index == 1 ? 0 : 1;
+  MS_EXCEPTION_IF_NULL(inplace_node->at(cover_index).node);
   const CNodePtr &cover_node = inplace_node->at(cover_index).node->cast<CNodePtr>();
   const CNodePtr &acc_node = inplace_node->at(acc_index).node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cover_node);
@@ -311,7 +316,7 @@ bool CudnnInplaceAggregate::Run(const FuncGraphPtr &graph) {
 
   for (auto node : node_list) {
     AnfNodeIndex aggregate_node;
-    AnfNodePtr skip_node;
+    AnfNodePtr skip_node = nullptr;
     std::vector<AnfNodeIndex> inplace_node;
     // 1. Pattern Match.
     if (!PatternMatch(graph, node, &aggregate_node, &skip_node, &inplace_node)) {
@@ -332,6 +337,12 @@ bool CudnnInplaceAggregate::Run(const FuncGraphPtr &graph) {
       }
       return false;
     });
+
+    MS_EXCEPTION_IF_NULL(aggregate_node.node);
+    MS_EXCEPTION_IF_NULL(skip_node);
+    MS_EXCEPTION_IF_CHECK_FAIL((inplace_node.size() > 1), "The index is out of range.");
+    MS_EXCEPTION_IF_NULL(inplace_node[0].node);
+    MS_EXCEPTION_IF_NULL(inplace_node[1].node);
     MS_LOG(INFO) << "[inplace optimizer] aggregate node: " << aggregate_node.index << ", "
                  << aggregate_node.node->DebugString() << "; skip node: " << skip_node->DebugString() << std::endl
                  << "; inplace node 0: " << inplace_node[0].index << ", " << inplace_node[0].node->DebugString()

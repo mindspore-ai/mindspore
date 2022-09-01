@@ -73,6 +73,7 @@ ParameterPtr CPUSession::CreateNewParameterFromParameter(const AnfNodePtr &anf, 
   }
   auto valid_inputs = graph->MutableValidInputs();
   auto graph_inputs = graph->MutableInputs();
+  MS_EXCEPTION_IF_NULL(valid_inputs);
   MS_EXCEPTION_IF_NULL(graph_inputs);
   TraceManager::DebugTrace(std::make_shared<TraceCopy>(anf->debug_info()));
   ParameterPtr new_parameter = graph->NewParameter(anf->cast<ParameterPtr>());
@@ -114,6 +115,7 @@ void CPUSession::GraphKernelOptimize(const std::shared_ptr<KernelGraph> &kernel_
   if (!graphkernel::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
     return;
   }
+  MS_EXCEPTION_IF_NULL(kernel_graph);
   graphkernel::GraphKernelOptimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
 #endif
@@ -176,9 +178,9 @@ void CPUSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
     }
     auto address = AnfAlgo::GetMutableOutputAddr(input_node, 0);
     auto tensor = inputs_const[input_idx];
-    auto tensor_address = tensor->device_address();
     MS_EXCEPTION_IF_NULL(address);
     MS_EXCEPTION_IF_NULL(tensor);
+    auto tensor_address = tensor->device_address();
     if (tensor_address == nullptr || tensor_address == address) {
       continue;
     }
@@ -241,6 +243,7 @@ void CPUSession::SetOutputFlags(const VectorRef &base_ref) {
       SetOutputFlags(ref_iter);
     } else if (utils::isa<tensor::TensorPtr>(base_ref[i])) {
       auto tensor_ptr = utils::cast<std::shared_ptr<tensor::Tensor>>(base_ref[i]);
+      MS_EXCEPTION_IF_NULL(tensor_ptr);
       tensor_ptr->SetNeedWait(false);
       tensor_ptr->data_sync(false);
     }
@@ -272,6 +275,7 @@ void CPUSession::RunOpImpl(const GraphInfo &graph_info, const BackendOpRunInfoPt
   MS_EXCEPTION_IF_NULL(op_run_info);
   ProcessInputTensorsForHeterogeneous("CPU", *input_tensors);
   const auto &kernel_graph = BuildOpImpl(op_run_info, graph_info, *input_tensors, tensors_mask);
+  MS_EXCEPTION_IF_NULL(kernel_graph);
   EraseValueNodeTensor(tensors_mask, input_tensors);
 
   // Remove reorder after PS feature finish adapting push/pull in auto_monad.
@@ -305,6 +309,7 @@ void CPUSession::SetKernelInfo(const KernelGraph *kernel_graph) const {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto &kernel_nodes = kernel_graph->execution_order();
   auto kernel_info_setter = GraphKernelInfoManager::Instance().GetGraphKernelInfo(kCPUDevice);
+  MS_EXCEPTION_IF_NULL(kernel_info_setter);
   for (const auto &kernel_node : kernel_nodes) {
     MS_EXCEPTION_IF_NULL(kernel_node);
     kernel_info_setter->SetKernelInfo(kernel_node, KernelType::UNKNOWN_KERNEL_TYPE);
@@ -313,6 +318,7 @@ void CPUSession::SetKernelInfo(const KernelGraph *kernel_graph) const {
 
 namespace {
 void KernelNotSupportException(const AnfNodePtr &kernel_node) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
   std::string kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
   std::stringstream operator_info;
   operator_info << "Operator[" << kernel_name << "] ";
@@ -377,7 +383,7 @@ void CPUSession::BuildKernel(const KernelGraph *kernel_graph) const {
     }
     // This branch would be removed When KernelMode rectification is complete
     auto discard_cpu_kernel_mod = std::dynamic_pointer_cast<kernel::DeprecatedNativeCpuKernelMod>(cpu_kernel_mod);
-    if (discard_cpu_kernel_mod) {
+    if (discard_cpu_kernel_mod != nullptr) {
       try {
         discard_cpu_kernel_mod->SetCpuRefMapToKernelInfo(kernel_node);
         discard_cpu_kernel_mod->Init(kernel_node);

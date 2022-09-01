@@ -19,6 +19,7 @@ namespace mindspore {
 namespace device {
 bool TensorArray::CheckValue(const TypeId &dtype, const ShapeVector &shape) {
   MS_LOG(DEBUG) << "Check the data shape and type for " << name_;
+  MS_EXCEPTION_IF_NULL(dtype_);
   if (dtype != dtype_->type_id()) {
     MS_LOG(ERROR) << "Invalid data type " << TypeIdLabel(dtype) << " for " << name_ << ", the origin type is "
                   << TypeIdLabel(dtype_->type_id());
@@ -66,6 +67,7 @@ bool TensorArray::Write(const int64_t index, const mindspore::kernel::AddressPtr
     // 1 create new mem : index > real_size ? index - real_size : 0
     // 2 reuse old mem : index > real_size ? real_size - valid_size : index - valid_size
     // 3 fill zeros : index - valid_size
+    MS_EXCEPTION_IF_NULL(dev_value);
     size_t create_size = (LongToSize(index) > tensors_.size()) ? (LongToSize(index) - tensors_.size()) : 0;
     for (size_t i = 0; i < create_size; i++) {
       kernel::AddressPtr create_dev = std::make_shared<kernel::Address>();
@@ -75,6 +77,8 @@ bool TensorArray::Write(const int64_t index, const mindspore::kernel::AddressPtr
     }
     tensors_.push_back(dev_value);
     for (size_t i = valid_size_; i < LongToSize(index); i++) {
+      MS_EXCEPTION_IF_CHECK_FAIL((tensors_.size() > i), "The index is out of range.");
+      MS_EXCEPTION_IF_NULL(tensors_[i]);
       auto tensor_size = tensors_[i]->size;
       ClearMemory(tensors_[i]->addr, tensor_size);
     }
@@ -109,7 +113,11 @@ void TensorArray::Free() {
 size_t TensorArray::GetValidSize() const { return valid_size_; }
 size_t TensorArray::GetRealSize() const { return tensors_.size(); }
 
-const void *TensorArray::GetTensorAddr(const size_t &index) const { return tensors_[index]->addr; }
+const void *TensorArray::GetTensorAddr(const size_t &index) const {
+  MS_EXCEPTION_IF_CHECK_FAIL((tensors_.size() > index), "The index is out of range.");
+  MS_EXCEPTION_IF_NULL(tensors_[index]);
+  return tensors_[index]->addr;
+}
 
 void TensorArray::SetMaxSize(const int64_t size, const bool is_dynamic) {
   is_dynamic_ = is_dynamic;
