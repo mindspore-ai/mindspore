@@ -15,35 +15,35 @@
 
 """Multitype ops"""
 
-from .add_impl import add
-from .sub_impl import sub
-from .mul_impl import mul
-from .div_impl import div
-from .pow_impl import pow_
-from .floordiv_impl import floordiv
-from .mod_impl import mod
-from .getitem_impl import getitem
-from .setitem_impl import setitem
-from .zeros_like_impl import zeros_like
-from .ones_like_impl import ones_like
-from .equal_impl import equal
-from .not_equal_impl import not_equal
-from .less_impl import less
-from .less_equal_impl import less_equal
-from .greater_impl import greater
-from .greater_equal_impl import greater_equal
-from .negative_impl import negative
-from .logical_and_impl import logical_and
-from .logical_or_impl import logical_or
-from .logic_not_impl import logical_not
-from .bitwise_and_impl import bitwise_and
-from .bitwise_or_impl import bitwise_or
-from .bitwise_xor_impl import bitwise_xor
-from .left_shift_impl import left_shift
-from .right_shift_impl import right_shift
-from .uadd_impl import uadd
-from .in_impl import in_
-from .not_in_impl import not_in_
+from mindspore.ops.composite.multitype_ops.add_impl import add
+from mindspore.ops.composite.multitype_ops.sub_impl import sub
+from mindspore.ops.composite.multitype_ops.mul_impl import mul
+from mindspore.ops.composite.multitype_ops.div_impl import div
+from mindspore.ops.composite.multitype_ops.pow_impl import pow_
+from mindspore.ops.composite.multitype_ops.floordiv_impl import floordiv
+from mindspore.ops.composite.multitype_ops.mod_impl import mod
+from mindspore.ops.composite.multitype_ops.getitem_impl import getitem
+from mindspore.ops.composite.multitype_ops.setitem_impl import setitem
+from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
+from mindspore.ops.composite.multitype_ops.ones_like_impl import ones_like
+from mindspore.ops.composite.multitype_ops.equal_impl import equal
+from mindspore.ops.composite.multitype_ops.not_equal_impl import not_equal
+from mindspore.ops.composite.multitype_ops.less_impl import less
+from mindspore.ops.composite.multitype_ops.less_equal_impl import less_equal
+from mindspore.ops.composite.multitype_ops.greater_impl import greater
+from mindspore.ops.composite.multitype_ops.greater_equal_impl import greater_equal
+from mindspore.ops.composite.multitype_ops.negative_impl import negative
+from mindspore.ops.composite.multitype_ops.logical_and_impl import logical_and
+from mindspore.ops.composite.multitype_ops.logical_or_impl import logical_or
+from mindspore.ops.composite.multitype_ops.logic_not_impl import logical_not
+from mindspore.ops.composite.multitype_ops.bitwise_and_impl import bitwise_and
+from mindspore.ops.composite.multitype_ops.bitwise_or_impl import bitwise_or
+from mindspore.ops.composite.multitype_ops.bitwise_xor_impl import bitwise_xor
+from mindspore.ops.composite.multitype_ops.left_shift_impl import left_shift
+from mindspore.ops.composite.multitype_ops.right_shift_impl import right_shift
+from mindspore.ops.composite.multitype_ops.uadd_impl import uadd
+from mindspore.ops.composite.multitype_ops.in_impl import in_
+from mindspore.ops.composite.multitype_ops.not_in_impl import not_in_
 __all__ = [
     'add',
     'sub',

@@ -1181,7 +1181,7 @@ void AscendKernelRuntime::SetRtDevice(uint32_t device_id) {
   (void)initialized_device_set_.insert(device_id);
 }
 
-void AscendKernelRuntime::CreateDefaultStream(uint32_t device_id) {
+void AscendKernelRuntime::CreateDefaultStream() {
   size_t compute_stream_id;
   if (!AscendStreamMng::GetInstance().CreateStreamWithFlags(&compute_stream_id, RT_STREAM_HUGE)) {
     MS_LOG(EXCEPTION) << "Create default compute stream failed.";
@@ -1222,7 +1222,7 @@ bool AscendKernelRuntime::InitDevice() {
     return false;
   }
 
-  CreateDefaultStream(device_id_);
+  CreateDefaultStream();
   return true;
 }
 

@@ -217,7 +217,7 @@ Strategies PrepareGatherV2(const std::vector<std::shared_ptr<OperatorInfo>> &ops
   std::sort(index.begin(), index.end(), [&output_shape](const int64_t &a, const int64_t &b) {
     return (output_shape[LongToSize(a + 1)] > output_shape[LongToSize(b + 1)]);
   });
-  std::transform(std::begin(index), std::end(index), std::begin(index), [](int64_t x) { return x + 1; });
+  (void)std::transform(std::begin(index), std::end(index), std::begin(index), [](int64_t x) { return x + 1; });
   (void)index.insert(index.cbegin(), 0);
 
   Dimensions strategie(output_shape.size(), 1);
@@ -281,7 +281,7 @@ Dimensions PrepareGatherV2OutputStrategy(const std::vector<std::shared_ptr<Opera
   }
   std::sort(index.begin(), index.end(),
             [&output_shape](const size_t &a, const size_t &b) { return (output_shape[a + 1] > output_shape[b + 1]); });
-  std::transform(std::begin(index), std::end(index), std::begin(index), [](int64_t x) { return x + 1; });
+  (void)std::transform(std::begin(index), std::end(index), std::begin(index), [](int64_t x) { return x + 1; });
   (void)index.insert(index.cbegin(), 0);
 
   Dimensions strategie(output_shape.size(), 1);
@@ -592,7 +592,7 @@ Strategies PrepareStrategy(const std::shared_ptr<Graph> &graph, const std::vecto
 void GeneratePartitionedOperatorStrategy(const std::shared_ptr<Graph> &graph,
                                          const std::vector<std::shared_ptr<OperatorInfo>> &ops,
                                          const std::shared_ptr<std::vector<size_t>> &index_list) {
-  for (size_t iter_ops = 0; iter_ops < (size_t)index_list->size(); iter_ops++) {
+  for (size_t iter_ops = 0; iter_ops < index_list->size(); iter_ops++) {
     Strategies strategies;
     size_t iter_graph = index_list->at(iter_ops);
     if (iter_graph != SIZE_MAX && ops[iter_ops]->type() != GET_NEXT) {

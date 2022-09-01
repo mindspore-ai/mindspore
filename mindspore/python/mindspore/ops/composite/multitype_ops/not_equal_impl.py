@@ -15,9 +15,9 @@
 
 """Implementation for internal polymorphism `not equal` operations."""
 
-from . import _constexpr_utils as const_utils
-from ...composite import base
-from ... import functional as F
+from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
+from mindspore.ops.composite import base
+from mindspore.ops import functional as F
 
 
 not_equal = base.MultitypeFuncGraph("not_equal", True)

@@ -236,7 +236,9 @@ def get_bprop_all_gather(self):
         instance_name = "grad_" + self.instance_name
         reduce_scatter.set_prim_instance_name(instance_name)
     mean_flag = self.get_attr_dict()["mean_flag"]
-    scale = 1 / self.rank_size
+    if self.rank_size == 0:
+        raise ValueError(f"The 'rank_size' can not be zero, but got {self.rank_size}.")
+    scale = 1.0 / self.rank_size
 
     def bprop(x, out, dout):
         dx = reduce_scatter(dout)
@@ -295,7 +297,7 @@ def get_bprop_micro_step_all_gather(self):
     fusion = self.get_attr_dict()["fusion"]
     mean_flag = self.get_attr_dict()["mean_flag"]
     do_mirror = self.get_attr_dict()["do_mirror"]
-    scale = 1 / self.rank_size
+    scale = 1.0 / self.rank_size
     all_reduce = AllReduce(ReduceOp.SUM, self.group).add_prim_attr("fusion", fusion)
     rank = get_rank(self.group)
     dev_num = get_group_size(self.group)

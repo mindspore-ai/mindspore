@@ -16,7 +16,7 @@
 import numpy as np
 
 from mindspore.common.tensor import Tensor
-from ..communication.management import get_rank, get_group_size
+from mindspore.communication.management import get_rank, get_group_size
 
 
 def _get_tensor_strategy(dev_mat, tensor_map):
