@@ -78,7 +78,8 @@ class Cifar100ToMR:
         Execute transformation from cifar100 to MindRecord.
 
         Args:
-            fields (list[str]): A list of index field, e.g.["fine_label", "coarse_label"]. Default: None. For index
+            fields (list[str], optional):
+                A list of index field, e.g.["fine_label", "coarse_label"]. Default: None. For index
                 field settings, please refer to :func:`mindspore.mindrecord.FileWriter.add_index`.
 
         Returns:
@@ -118,7 +119,8 @@ class Cifar100ToMR:
         Encapsulate the :func:`mindspore.mindrecord.Cifar100ToMR.run` function to exit normally.
 
         Args:
-            fields (list[str]): A list of index field, e.g.["fine_label", "coarse_label"]. Default: None. For index
+            fields (list[str], optional):
+                A list of index field, e.g.["fine_label", "coarse_label"]. Default: None. For index
                 field settings, please refer to :func:`mindspore.mindrecord.FileWriter.add_index`.
 
         Returns:

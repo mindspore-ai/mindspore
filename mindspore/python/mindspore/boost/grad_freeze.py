@@ -198,7 +198,7 @@ class GradientFreeze:
         param_groups (Union[tuple, list]): Groups of parameters for gradients freezing training.
         freeze_type (int): Strategy of gradients freezing training.
         freeze_p (float): probability of gradients freezing training.
-        total_steps (numbers.Number): Steps of the whole training.
+        total_steps (int): Steps of the whole training.
 
     Examples:
         >>> gradient_freeze_class = boost.GradientFreeze(10, 1, 0.5, 2000)

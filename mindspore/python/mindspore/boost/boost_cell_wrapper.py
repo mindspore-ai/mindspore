@@ -254,7 +254,7 @@ class BoostTrainOneStepCell(TrainOneStepCell):
             inputs (tuple(Tensor)): Tuple of input tensors with shape :math:`(N, \ldots)`.
 
         Returns:
-            - **loss** (Tensor) -  Network loss, tensor with shape :math:`()`.
+            - **loss** (Tensor) - Network loss, tensor with shape :math:`()`.
         """
         loss = F.depend(loss, self.hyper_map(F.partial(gradient_accumulation_op, self.max_accumulation_step),
                                              self.grad_accumulation, grads))
@@ -284,7 +284,7 @@ class BoostTrainOneStepCell(TrainOneStepCell):
             grads (tuple(Tensor)): Tuple of gradient tensors.
 
         Returns:
-            - **loss** (Tensor) -  Network loss, tensor with shape :math:`()`.
+            - **loss** (Tensor) - Network loss, tensor with shape :math:`()`.
         """
         loss = F.depend(loss, self.optimizer(grads))
         rank_weights = self.weights[self.start[self.server_rank]: self.end[self.server_rank]]

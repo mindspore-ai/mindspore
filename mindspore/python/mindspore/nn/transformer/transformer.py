@@ -59,7 +59,7 @@ __all__ = [
 
 class EmbeddingOpParallelConfig(_Config):
     r"""
-        The parallel config of class:`VocabEmbedding`
+        The parallel config of :class:`VocabEmbedding`
         for the setting data parallel or model parallel for the embedding table.
 
         Args:
@@ -625,7 +625,7 @@ class VocabEmbedding(Cell):
         True and in the `AUTO_PARALLEL` mode, the embedding lookup will be trained by the data parallel way, as the
         parameters will be repeated on each device. If false, the embedding table will be sharded into n parts at
         the 0-th dimension of the embedding table, where the n is the model parallel way determined by the
-        parallel_config(EmbeddingOpParallelConfig).
+        parallel_config (EmbeddingOpParallelConfig).
 
         Note:
             When `AUTO_PARALLEL` or `SEMI_AUTO_PARALLEL` mode is enabled, this layer support only 2-d dimension inputs,
@@ -2252,7 +2252,7 @@ class TransformerEncoder(Cell):
             seq_length(int): The seq_length of the input tensor.
             num_heads(int): The number of the heads.
             attention_dropout_rate(float): The dropout rate of the attention scores. Default:0.1.
-            hidden_dropout_rate(float): The dropout rate of the final output of the layer. Default:0.1.
+            hidden_dropout_rate(float): The dropout rate of the final output of the layer. Default: 0.1.
             hidden_act(str): The activation of the internal feedforward layer. Supports 'relu',
                 'relu6', 'tanh', 'gelu', 'fast_gelu', 'elu', 'sigmoid', 'prelu', 'leakyrelu', 'hswish',
                 'hsigmoid', 'logsigmoid' and so on. Default: gelu.
@@ -2263,7 +2263,8 @@ class TransformerEncoder(Cell):
                 Should be mstype.float32 or mstype.float16. Default mstype.float32.
             param_init_type(dtype.Number): The parameter initialization type of the module.
                 Should be mstype.float32 or mstype.float16. Default mstype.float32.
-            lambda_func: A function can determine the fusion index, pipeline stages and recompute attribute. If the
+            lambda_func(function): A function can determine the fusion index,
+            pipeline stages and recompute attribute. If the
                 user wants to determine the pipeline stage and gradient aggregation fusion, the user can pass a
                 function that accepts `network`, `layer_id`, `offset`, `parallel_config`, `layers`. The `network(Cell)`
                 represents the transformer block, `layer_id(int)` means the layer index for the current module, counts
@@ -2516,7 +2517,8 @@ class TransformerDecoder(Cell):
             hidden_act(str): The activation of the internal feedforward layer. Supports 'relu',
                 'relu6', 'tanh', 'gelu', 'fast_gelu', 'elu', 'sigmoid', 'prelu', 'leakyrelu', 'hswish',
                 'hsigmoid', 'logsigmoid' and so on. Default: gelu.
-            lambda_func: A function can determine the fusion index, pipeline stages and recompute attribute. If the
+            lambda_func(function): A function can determine the fusion index,
+            pipeline stages and recompute attribute. If the
                 user wants to determine the pipeline stage and gradient aggregation fusion, the user can pass a
                 function that accepts `network`, `layer_id`, `offset`, `parallel_config`, `layers`. The `network(Cell)`
                 represents the transformer block, `layer_id(int)` means the layer index for the current module, counts

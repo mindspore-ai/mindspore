@@ -1015,12 +1015,12 @@ class FiveCrop(PyTensorOperation):
     Crop the given image into one central crop and four corners.
 
     Args:
-        size (Union[int, sequence]): The size of the cropped image.
+        size (Union[int, Sequence[int, int]]): The size of the cropped image.
             If a single integer is provided, a square of size (size, size) will be cropped with this value.
-            If a sequence of length 2 is provided, an image of size (height, width) will be cropped.
+            If a Sequence of length 2 is provided, an image of size (height, width) will be cropped.
 
     Raises:
-        TypeError: If `size` is not of type integer or sequence of integer.
+        TypeError: If `size` is not of type integer or Sequence of integer.
         ValueError: If `size` is not positive.
 
     Supported Platforms:
@@ -1561,7 +1561,8 @@ class Pad(ImageTensorOperation, PyTensorOperation):
     Pad the image according to padding parameters.
 
     Args:
-        padding (Union[int, Sequence[tuple]]): The number of pixels to pad each border of the image.
+        padding (Union[int, Sequence[int, int], Sequence[int, int, int, int]]): The number of pixels
+        to pad each border of the image.
             If a single number is provided, it pads all borders with this value.
             If a tuple or lists of 2 values are provided, it pads the (left and top)
             with the first value and (right and bottom) with the second value.
@@ -1591,7 +1592,7 @@ class Pad(ImageTensorOperation, PyTensorOperation):
         left, top, right and bottom respectively.
 
     Raises:
-        TypeError: If `padding` is not of type int or Sequence[int].
+        TypeError: If `padding` is not of type int or Sequence[int, int], Sequence[int, int, int, int]].
         TypeError: If `fill_value` is not of type int or tuple[int].
         TypeError: If `padding_mode` is not of type :class:`mindspore.dataset.vision.Border`.
         ValueError: If `padding` is negative.
@@ -2457,12 +2458,12 @@ class RandomErasing(PyTensorOperation):
 
     Args:
         prob (float, optional): Probability of performing erasing. Default: 0.5.
-        scale (sequence, optional): Range of area scale of the erased area relative
+        scale (Sequence[float, float], optional): Range of area scale of the erased area relative
             to the original image to select from, arranged in order of (min, max).
             Default: (0.02, 0.33).
-        ratio (sequence, optional): Range of aspect ratio of the erased area to select
+        ratio (Sequence[float, float], optional): Range of aspect ratio of the erased area to select
             from, arraged in order of (min, max). Default: (0.3, 3.3).
-        value (Union[int, str, sequence]): Pixel value used to pad the erased area.
+        value (Union[int, str, Sequence[int, int, int]]): Pixel value used to pad the erased area.
             If a single integer is provided, it will be used for all RGB channels.
             If a sequence of length 3 is provided, it will be used for R, G, B channels respectively.
             If a string of 'random' is provided, each pixel will be erased with a random value obtained
@@ -3822,7 +3823,7 @@ class TenCrop(PyTensorOperation):
     Crop the given image into one central crop and four corners with the flipped version of these.
 
     Args:
-        size (Union[int, sequence]): The size of the cropped image.
+        size (Union[int, Sequence[int, int]]): The size of the cropped image.
             If a single integer is provided, a square of size (size, size) will be cropped with this value.
             If a sequence of length 2 is provided, an image of size (height, width) will be cropped.
         use_vertical_flip (bool, optional): If True, flip the images vertically. Otherwise, flip them
@@ -4103,7 +4104,7 @@ class UniformAugment(CompoundOperation):
     the input. Thus, the latter one can deal with the output of the previous one.
 
     Args:
-         transforms (sequence): Sequence of transformations to select from.
+         transforms (Sequence): Sequence of transformations to select from.
          num_ops (int, optional): Number of transformations to be sequentially and randomly applied. Default: 2.
 
     Raises:

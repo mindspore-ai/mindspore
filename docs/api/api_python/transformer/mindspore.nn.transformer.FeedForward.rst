@@ -16,7 +16,7 @@
         - **expert_num** (int) - 表示线性层中使用的专家数量。对于expert_num > 1用例，使用BatchMatMul。BatchMatMul中的第一个维度表示expert_num。默认值：1。
         - **expert_group_size** (int) - 表示每个数据并行组收到的词语（token）数量。默认值：None。该参数只在自动并行且非策略传播模式下起作用。
         - **param_init_type** (dtype.Number) - 表示参数初始化类型。其值应为mstype.float32或mstype.float16。默认值：mstype.float32。
-        - **parallel_config** (OpParallelConfig) - 表示配置该网络的并行度的并行配置。更多详情，请参见 :class:`mindspore.nn.transformer.OpParallelConfig` 。默认值为 `default_dpmp_config` ，表示一个带有默认参数的 `OpParallelConfig` 实例。
+        - **parallel_config** (OpParallelConfig, MoEParallelConfig) - 表示配置该网络的并行度的并行配置。更多详情，请参见 :class:`mindspore.nn.transformer.OpParallelConfig` 。默认值为 `default_dpmp_config` ，表示一个带有默认参数的 `OpParallelConfig` 实例。
 
     输入：
         - **x** (Tensor) - 应为 `[batch, seq_length, hidden_size]或[batch * seq_length, hidden_size]` 。表示浮点Tensor。

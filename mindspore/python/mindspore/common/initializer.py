@@ -305,7 +305,7 @@ class HeUniform(Initializer):
         boundary = \text{gain} \times \sqrt{\frac{3}{fan\_mode}}
 
     where :math:`gain` is an optional scaling factor. If :math:`fan\_mode` is 'fan_in', it is the number of input units
-    of the weight tensor, while if :math:`fan\_mode` is 'fan_out',
+    of the weight tensor. If :math:`fan\_mode` is 'fan_out',
     it is the number of output units of the weight tensor.
 
     For details of HeUniform algorithm, please check
@@ -355,7 +355,7 @@ class HeNormal(Initializer):
     where :math:`gain` is an optional scaling factor. :math:`fan\_mode` is the number of input or output units of
     the weight tensor, depending on the `mode` is 'fan_in' or 'fan_out'.
 
-    For details of HeUniform algorithm, please check `<https://arxiv.org/abs/1502.01852>`_.
+    For details of HeNormal algorithm, please check `<https://arxiv.org/abs/1502.01852>`_.
 
     Args:
         negative_slope (int, float): The negative slope of the rectifier used after this layer

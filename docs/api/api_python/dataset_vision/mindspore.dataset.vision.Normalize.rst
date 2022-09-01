@@ -20,4 +20,4 @@ mindspore.dataset.vision.Normalize
         - **TypeError** - 如果 `is_hwc` 不是bool类型。
         - **ValueError** - 如果 `mean` 不在 [0.0, 255.0] 范围内。
         - **ValueError** - 如果 `std` 不在 (0.0, 255.0] 范围内。
-        - **RuntimeError** - 如果给定的tensor形状不是<H, W>或<...,H, W, C>。
+        - **RuntimeError** - 如果给定的tensor format不是<H, W>或<...,H, W, C>。

@@ -5911,7 +5911,9 @@ class CSRTensor(CSRTensor_):
 
     def mv(self, dense_vector):
         """
-        Sparse matrix-vector multiplication.
+        Return the matrix multiplication result of the right-multiply dense matrix of the CSRTensor.
+        The CSRTensor with shape `[M, N]` needs to adapt the dense vector with shape `[N, 1]`
+        to get the dense vector with result `[M, 1]`.
 
         Note:
             Currently only supports CPU backend with LLVM 12.0.1 installed.
@@ -5943,7 +5945,9 @@ class CSRTensor(CSRTensor_):
 
     def mm(self, dense_matrix):
         """
-        Sparse matrix-matrix multiplication.
+        Return the matrix multiplication result of the right-multiply dense matrix of the CSRTensor.
+        The CSRTensor with shape `[M, N]` needs to adapt the dense matrix with shape `[N, K]`
+        to get the dense matrix with result `[M, K]`.
 
         Note:
             Currently only supports CPU backend with LLVM 12.0.1 installed.

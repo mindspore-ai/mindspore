@@ -548,7 +548,7 @@ Differential Functions
 Debugging Functions
 -------------------
 
-.. mscnplatformautosummary::
+.. msplatformautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
