@@ -401,7 +401,7 @@ bool TbeKernelSelect::IsShapeMatchFormat(const ShapeVector &shape, const std::st
   }
   // check format is valid.
   if (!IsOneOfFormat(format)) {
-    MS_LOG(WARNING) << "Got the unknown format " << format;
+    MS_LOG(INFO) << "Got the unknown format " << format;
     return false;
   }
   return true;
