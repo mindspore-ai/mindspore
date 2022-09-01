@@ -438,6 +438,26 @@ def _calc_out_shape(sp_input, concat_dim):
     return tuple(out_shape_list)
 
 
+@constexpr
+def _set_sparse_concat_input(sp_input):
+    "split COOTensor to normal tensor"
+    if len(sp_input) < 2:
+        raise_value_error("For sparse_concat, not support COOTensor input number < 2.")
+    in_indices = []
+    in_values = []
+    in_shapes = []
+    for element in sp_input:
+        if isinstance(element, tuple):
+            in_indices.append(element[0])
+            in_values.append(element[1])
+            in_shapes.append(Tensor(element[2], dtype=mstype.int64))
+        else:
+            in_indices.append(element.indices)
+            in_values.append(element.values)
+            in_shapes.append(Tensor(element.shape, dtype=mstype.int64))
+    return in_indices, in_values, in_shapes
+
+
 def sparse_concat(sp_input, concat_dim=0):
     """
     concatenates the input SparseTensor(COO format) along the specified dimension.
@@ -482,19 +502,9 @@ def sparse_concat(sp_input, concat_dim=0):
          [1 2]
          [1 5]]), values=Tensor(shape=[4], dtype=Int32, value=[1 3 2 4]))
     """
-    if len(sp_input) < 2:
-        raise_value_error("For sparse_concat, not support COOTensor input number < 2.")
     sparse_concat_op = SparseConcat(concat_dim)
-    indices = sp_input[0].indices
-    values = sp_input[0].values
-    sp_input_0_shape = sp_input[0].shape
-    shape = Tensor(sp_input_0_shape)
-    for i in range(1, len(sp_input)):
-        in_indices = (indices, sp_input[i].indices)
-        in_values = (values, sp_input[i].values)
-        sp_input_i_shape = sp_input[i].shape
-        in_shapes = (shape, Tensor(sp_input_i_shape))
-        indices, values, shape = sparse_concat_op(in_indices, in_values, in_shapes)
+    in_indices, in_values, in_shapes = _set_sparse_concat_input(sp_input)
+    indices, values, _ = sparse_concat_op(in_indices, in_values, in_shapes)
     out_shape = _calc_out_shape(sp_input, concat_dim)
     return COOTensor(indices, values, out_shape)
 
