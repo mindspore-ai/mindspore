@@ -22,6 +22,7 @@
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/select_impl.cuh"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace kernel {
@@ -40,12 +41,13 @@ class SelectGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     T *input_x = GetDeviceAddress<T>(inputs, 1);
     T *input_y = GetDeviceAddress<T>(inputs, 2);
     T *output = GetDeviceAddress<T>(outputs, 0);
-    CalSelect(output_size_ / sizeof(T), input_cond, input_x, input_y, output,
+    CalSelect(output_size_ / sizeof(T), input_cond, input_x, input_y, output, device_id_,
               reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    device_id_ = MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID);
     kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     (void)CheckParam(kernel_node);
