@@ -25,8 +25,8 @@ namespace {
 constexpr auto kTensorRtPluginSoName = "libtensorrt_plugin.so";
 constexpr auto kFunCreateTRTPluginImp = "CreateTensorRTPluginImpl";
 }  // namespace
-TensorRTPlugin::TensorRTPlugin() = default;
-TensorRTPlugin::~TensorRTPlugin() {
+TensorRTExecutorPlugin::TensorRTExecutorPlugin() = default;
+TensorRTExecutorPlugin::~TensorRTExecutorPlugin() {
 #if !defined(_WIN32)
   MS_LOG(DEBUG) << "~AscendKernelPlugin() begin.";
   DLSoClose(handle_);
@@ -34,12 +34,12 @@ TensorRTPlugin::~TensorRTPlugin() {
 #endif
 }
 
-TensorRTPlugin &TensorRTPlugin::GetInstance() {
-  static TensorRTPlugin instance;
+TensorRTExecutorPlugin &TensorRTExecutorPlugin::GetInstance() {
+  static TensorRTExecutorPlugin instance;
   return instance;
 }
 
-bool TensorRTPlugin::Register() {
+bool TensorRTExecutorPlugin::Register() {
 #if !defined(_WIN32)
   if (is_registered_) {
     return true;
@@ -57,7 +57,7 @@ bool TensorRTPlugin::Register() {
     MS_LOG(ERROR) << "DLSoOpen failed, so path: " << plugin_path;
     return false;
   }
-  auto create_kernel_func = reinterpret_cast<mindspore::lite::TensorRTPluginImplBase *(*)(void)>(function);
+  auto create_kernel_func = reinterpret_cast<mindspore::lite::TensorRTExecutorPluginImplBase *(*)(void)>(function);
   if (create_kernel_func == nullptr) {
     MS_LOG(ERROR) << "Cast " << kFunCreateTRTPluginImp << " failed.";
     return false;
@@ -75,7 +75,7 @@ bool TensorRTPlugin::Register() {
   return true;
 }
 
-int TensorRTPlugin::GetGPUGroupSize() {
+int TensorRTExecutorPlugin::GetGPUGroupSize() {
 #ifdef SUPPORT_TENSORRT
   if (!is_registered_) {
     Register();
@@ -84,7 +84,7 @@ int TensorRTPlugin::GetGPUGroupSize() {
   return group_size_;
 }
 
-int TensorRTPlugin::GetRankID() {
+int TensorRTExecutorPlugin::GetRankID() {
 #ifdef SUPPORT_TENSORRT
   if (!is_registered_) {
     Register();

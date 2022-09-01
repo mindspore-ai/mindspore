@@ -107,7 +107,7 @@ void InferSession::HandleGPUContext(const std::shared_ptr<Context> &context) {
     }
     auto provider = gpu_device->GetProvider();
     if (provider.empty() || provider == default_gpu_provider) {
-      if (!lite::TensorRTPlugin::GetInstance().Register()) {
+      if (!lite::TensorRTExecutorPlugin::GetInstance().Register()) {
         MS_LOG_WARNING << "Failed to register TensorRT plugin";
         return;
       }

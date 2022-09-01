@@ -18,7 +18,7 @@
 #include "src/extendrt/delegate/plugin/tensorrt_executor_plugin.h"
 
 namespace mindspore::lite {
-int GetGPUGroupSize() { return TensorRTPlugin::GetInstance().GetGPUGroupSize(); }
+int GetGPUGroupSize() { return TensorRTExecutorPlugin::GetInstance().GetGPUGroupSize(); }
 
-int GetRankID() { return TensorRTPlugin::GetInstance().GetRankID(); }
+int GetRankID() { return TensorRTExecutorPlugin::GetInstance().GetRankID(); }
 }  // namespace mindspore::lite
