@@ -53,10 +53,10 @@ int LocalResponseNormCPUKernel::DoLocalResponseNorm(int task_id) const {
   auto in_shape = input_tensor->shape();
   MS_CHECK_TRUE_RET(in_shape.size() == C4NUM, RET_ERROR);
 
-  int batch = in_shape.at(0);
-  int height = in_shape.at(1);
-  int width = in_shape.at(2);
-  int channel = in_shape.at(3);
+  int batch = in_shape.at(kNHWC_N);
+  int height = in_shape.at(kNHWC_H);
+  int width = in_shape.at(kNHWC_W);
+  int channel = in_shape.at(kNHWC_C);
 
   int outer_size = batch * width * height;
   MS_CHECK_TRUE_RET(thread_count_ != 0, RET_ERROR);

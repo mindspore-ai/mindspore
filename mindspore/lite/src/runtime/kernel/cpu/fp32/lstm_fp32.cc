@@ -31,6 +31,11 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_LSTM;
 
 namespace mindspore::kernel {
+namespace {
+constexpr int kOutputHiddenStatusIndex = 1;
+constexpr int kOutputCellStatusIndex = 2;
+}  // namespace
+
 int LstmInputMulWeightRun(void *cdata, int task_id, float, float) {
   auto kernel = reinterpret_cast<const LstmCPUKernel *>(cdata);
   CHECK_NULL_RETURN(kernel);
@@ -93,7 +98,7 @@ int LstmCPUKernel::InitInputWeightBias() {
 
   int offset = weight_batch_ * (cw_size + hh_size);
   float *bias_data = (has_bias) ? weight_i_data + offset : nullptr;
-  int dir_mul = lstm_param_->bidirectional_ ? 2 : 1;
+  int dir_mul = lstm_param_->bidirectional_ ? C2NUM : C1NUM;
   int b_stride = (gpu_orig_state_) ? gate_num * (dir_mul * b_size) : gate_num * (b_size);
   if (in_tensors_.size() > mindir_input_tensors) {
     bias_data = reinterpret_cast<float *>(in_tensors_.at(onnx_bias_index)->data());
@@ -209,9 +214,9 @@ int LstmCPUKernel::InitParam() {
   } else {
     lstm_param_->hidden_size_ = w_shape.at(SECOND_INPUT) / gate_num;
   }
-  lstm_param_->output_step_ = lstm_param_->bidirectional_ ? 2 * lstm_param_->batch_ * lstm_param_->hidden_size_
+  lstm_param_->output_step_ = lstm_param_->bidirectional_ ? C2NUM * lstm_param_->batch_ * lstm_param_->hidden_size_
                                                           : lstm_param_->batch_ * lstm_param_->hidden_size_;
-  weight_batch_ = lstm_param_->bidirectional_ ? 2 * gate_num : gate_num;
+  weight_batch_ = lstm_param_->bidirectional_ ? C2NUM * gate_num : gate_num;
   state_is_vec_ = lstm_param_->batch_ == 1;
   // determine FB origin
   gpu_orig_state_ = false;
@@ -428,8 +433,8 @@ void LstmCPUKernel::LstmUnidirectional(float *output, const float *weight_h, con
                                        float *buffer[], bool is_backward) {
   float *gate = buffer[input_gate_index];
   float *input_gate = gate;
-  float *forget_gate = gate + lstm_param_->seq_len_ * lstm_param_->batch_ * lstm_param_->hidden_size_ * 2;
-  float *cell_gate = gate + lstm_param_->seq_len_ * lstm_param_->batch_ * lstm_param_->hidden_size_ * 3;
+  float *forget_gate = gate + lstm_param_->seq_len_ * lstm_param_->batch_ * lstm_param_->hidden_size_ * C2NUM;
+  float *cell_gate = gate + lstm_param_->seq_len_ * lstm_param_->batch_ * lstm_param_->hidden_size_ * C3NUM;
   float *output_gate = gate + lstm_param_->seq_len_ * lstm_param_->batch_ * lstm_param_->hidden_size_;
   float *tmp = buffer[tmp_hidden_output_index];
   int dir_mult = lstm_param_->bidirectional_ ? C2NUM : C1NUM;
@@ -568,10 +573,10 @@ int LstmCPUKernel::Run() {
   auto cell_state = in_tensors_.at(cell_state_input_index_);
   CHECK_NULL_RETURN(cell_state->data());
 
-  auto output_hidden_state = out_tensors_[1];
+  auto output_hidden_state = out_tensors_[kOutputHiddenStatusIndex];
   CHECK_NULL_RETURN(output_hidden_state->data());
   (void)memcpy(output_hidden_state->data(), hidden_state->data(), hidden_state->ElementsNum() * sizeof(float));
-  auto output_cell_state = out_tensors_[2];
+  auto output_cell_state = out_tensors_[kOutputCellStatusIndex];
   CHECK_NULL_RETURN(output_cell_state->data());
   (void)memcpy(output_cell_state->data(), cell_state->data(), cell_state->ElementsNum() * sizeof(float));
 

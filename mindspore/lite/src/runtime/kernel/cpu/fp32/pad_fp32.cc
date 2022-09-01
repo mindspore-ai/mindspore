@@ -97,7 +97,7 @@ void PadCPUKernel::InitMirrorPadBlock() {
   mirror_pad_block_.clear();
   std::vector<int> left_pads(DEFAULT_PAD_NDIMS);
   for (size_t i = 0; i < DEFAULT_PAD_NDIMS; ++i) {
-    left_pads[i] = pad_param_->paddings_[2 * i];
+    left_pads[i] = pad_param_->paddings_[C2NUM * i];
   }
   std::vector<int> input_separate_dims;
   std::vector<int> output_separate_dims;
@@ -160,17 +160,17 @@ void PadCPUKernel::InitMirrorPadBlock() {
           continue;
         }
         switch (pad_cord[i]) {
-          case 0:
+          case C0NUM:
             dst_offset += separate_offset[si] * output_separate_stride[si];
             block.size_[di] = input_separate_dims[si];
             block.out_stride_[di] = output_separate_stride[si];
             break;
-          case 2:
+          case C2NUM:
             dst_offset += (separate_offset[si] + input_separate_dims[si]) * output_separate_stride[si];
             block.size_[di] = right_pads[si];
             block.out_stride_[di] = output_separate_stride[si];
             break;
-          case 1:
+          case C1NUM:
             if (separate_offset[si] > 0) {
               block.size_[di] = separate_offset[si];
               block.out_stride_[di] = output_separate_stride[si];
@@ -312,12 +312,12 @@ int PadCPUKernel::CheckPaddings(const int *paddings, int length, const int *inpu
   }
   for (auto i = 0; i < length; ++i) {
     int max_valid = input_shape[i] - offset;
-    if (paddings[i * 2] > max_valid) {
-      MS_LOG(WARNING) << prefix << "paddings " << paddings[i * 2] << " should be less than " << max_valid + 1;
+    if (paddings[i * C2NUM] > max_valid) {
+      MS_LOG(WARNING) << prefix << "paddings " << paddings[i * C2NUM] << " should be less than " << max_valid + 1;
       MS_LOG(WARNING) << "Running mirror pad with padding bigger than shape.";
     }
-    if (paddings[i * 2 + 1] > max_valid) {
-      MS_LOG(WARNING) << prefix << "paddings " << paddings[i * 2 + 1] << " should be less than " << max_valid + 1;
+    if (paddings[i * C2NUM + 1] > max_valid) {
+      MS_LOG(WARNING) << prefix << "paddings " << paddings[i * C2NUM + 1] << " should be less than " << max_valid + 1;
       MS_LOG(WARNING) << "Running mirror pad with padding bigger than shape.";
     }
   }
@@ -334,8 +334,8 @@ int PadCPUKernel::CopyPaddingFromInput() {
   CHECK_NULL_RETURN(paddings);
   auto input_shape = in_tensors_.at(0)->shape();
   int rank = static_cast<int>(input_shape.size());
-  if (padding_tensor->ElementsNum() != rank * 2) {
-    MS_LOG(ERROR) << "Pad second input elements num" << padding_tensor->ElementsNum() << ", should be " << rank * 2;
+  if (padding_tensor->ElementsNum() != rank * C2NUM) {
+    MS_LOG(ERROR) << "Pad second input elements num" << padding_tensor->ElementsNum() << ", should be " << rank * C2NUM;
     return RET_ERROR;
   }
 
@@ -353,14 +353,14 @@ int PadCPUKernel::CopyPaddingFromInput() {
 
 void PadCPUKernel::CalculateStrides() {
   pad_param_->in_strides[DEFAULT_PAD_NDIMS - 1] = 1;
-  for (auto i = DEFAULT_PAD_NDIMS - 2; i >= 0; --i) {
+  for (auto i = DEFAULT_PAD_NDIMS - C2NUM; i >= 0; --i) {
     pad_param_->in_strides[i] = in_[i + 1] * pad_param_->in_strides[i + 1];
   }
   for (auto i = 0; i < DEFAULT_PAD_NDIMS; ++i) {
-    out_[i] = in_[i] + pad_param_->paddings_[i * 2] + pad_param_->paddings_[i * 2 + 1];
+    out_[i] = in_[i] + pad_param_->paddings_[i * C2NUM] + pad_param_->paddings_[i * C2NUM + 1];
   }
   pad_param_->out_strides[DEFAULT_PAD_NDIMS - 1] = 1;
-  for (auto i = DEFAULT_PAD_NDIMS - 2; i >= 0; --i) {
+  for (auto i = DEFAULT_PAD_NDIMS - C2NUM; i >= 0; --i) {
     pad_param_->out_strides[i] = out_[i + 1] * pad_param_->out_strides[i + 1];
   }
 }
@@ -393,7 +393,7 @@ int PadCPUKernel::HandleMirrorPad() {
 
 int PadCPUKernel::Run() {
   if (in_tensors_.size() == kInputSize2) {
-    auto pad_value = in_tensors_.at(2);
+    auto pad_value = in_tensors_.at(kPadCommonInputSize);
     auto value_num = pad_value->ElementsNum();
     if (value_num != 1) {
       MS_LOG(ERROR) << "The number of padding value should be only one, but got " << value_num;

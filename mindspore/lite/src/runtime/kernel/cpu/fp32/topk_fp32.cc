@@ -56,7 +56,7 @@ int TopKCPUKernel::Run() {
   auto output_index = reinterpret_cast<int32_t *>(out_tensors_.at(1)->data());
   CHECK_NULL_RETURN(output_index);
 
-  if (in_tensors_.size() == 2) {
+  if (in_tensors_.size() == C2NUM) {
     auto input_k = reinterpret_cast<int *>(in_tensors_.at(1)->data());
     CHECK_NULL_RETURN(input_k);
     topk_param_->k_ = input_k[0];

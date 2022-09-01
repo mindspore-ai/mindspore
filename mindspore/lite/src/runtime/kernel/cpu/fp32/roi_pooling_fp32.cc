@@ -57,17 +57,17 @@ int ROIPoolingCPUKernel::ReSize() {
     return RET_ERROR;
   }
   param_->ndim_ = ndims;
-  param_->input_n_ = in_shape.at(0);
-  param_->input_h_ = in_shape.at(1);
-  param_->input_w_ = in_shape.at(2);
-  param_->input_c_ = in_shape.at(3);
-  param_->output_n_ = out_shape.at(0);
-  param_->output_h_ = out_shape.at(1);
-  param_->output_w_ = out_shape.at(2);
-  param_->output_c_ = out_shape.at(3);
+  param_->input_n_ = in_shape.at(kNHWC_N);
+  param_->input_h_ = in_shape.at(kNHWC_H);
+  param_->input_w_ = in_shape.at(kNHWC_W);
+  param_->input_c_ = in_shape.at(kNHWC_C);
+  param_->output_n_ = out_shape.at(kNHWC_N);
+  param_->output_h_ = out_shape.at(kNHWC_H);
+  param_->output_w_ = out_shape.at(kNHWC_W);
+  param_->output_c_ = out_shape.at(kNHWC_C);
   param_->in_strides_[ndims - 1] = 1;
   param_->out_strides_[ndims - 1] = 1;
-  for (int i = ndims - 2; i >= 0; --i) {
+  for (int i = ndims - C2NUM; i >= 0; --i) {
     param_->in_strides_[i] = in_shape.at(i + 1) * param_->in_strides_[i + 1];
     param_->out_strides_[i] = out_shape.at(i + 1) * param_->out_strides_[i + 1];
   }
