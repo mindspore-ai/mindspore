@@ -320,6 +320,7 @@ constexpr auto kCOOTensorDenseMatmul = "COOTensorDenseMatmul";
 // Sparse ops
 constexpr auto kSparseTensorDenseMatmul = "SparseTensorDenseMatmul";
 constexpr auto kSparseToDenseV2 = "SparseToDenseV2";
+constexpr auto kSparseSoftmax = "SparseSoftmax";
 constexpr auto kSparseAddmm = "SparseAddmm";
 constexpr auto kSparseSparseMaximum = "SparseSparseMaximum";
 constexpr auto kCSRReduceSum = "CSRReduceSum";
@@ -996,6 +997,7 @@ GVAR_DEF(PrimitivePtr, kPrimCSRTensorGetDenseShape, std::make_shared<Primitive>(
 // Sparse ops
 GVAR_DEF(PrimitivePtr, kPrimSparseTensorDenseMatmul, std::make_shared<Primitive>(kSparseTensorDenseMatmul));
 GVAR_DEF(PrimitivePtr, kPrimSparseToDenseV2, std::make_shared<Primitive>(kSparseToDenseV2));
+GVAR_DEF(PrimitivePtr, kPrimSparseSoftmax, std::make_shared<Primitive>(kSparseSoftmax));
 GVAR_DEF(PrimitivePtr, kPrimSparseAddmm, std::make_shared<Primitive>(kSparseAddmm));
 GVAR_DEF(PrimitivePtr, kPrimSparseSparseMaximum, std::make_shared<Primitive>(kSparseSparseMaximum));
 GVAR_DEF(PrimitivePtr, kPrimCOOTensorDenseMatmul, std::make_shared<Primitive>(kCOOTensorDenseMatmul));

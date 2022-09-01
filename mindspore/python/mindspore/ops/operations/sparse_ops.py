@@ -517,6 +517,50 @@ class SparseToDenseV2(Primitive):
             inputs=['indices', 'output_shape', 'values', 'default_value'], outputs=['output'])
 
 
+class SparseSoftmax(Primitive):
+    """
+    Similar to softmax but with the catch that the implicitly zero elements do not participate.
+
+    Inputs:
+        - **indices** (Tensor) - A 2-D Tensor, represents the position of the element in the sparse tensor.
+          Support int64, each element value should be a non-negative int number. The shape is :math:`(n, m)`.
+        - **values** (Tensor) - A 1-D Tensor, represents the value corresponding to the position in the `indices`.
+          The shape should be :math:`(n,)`.
+        - **shape** (Tensor) - A 1-D Tensor, represents the shape of sparse tensor,
+          should have 2 or more than 2 elements, represent sparse tensor shape is :math:`(N, ... , C)`.
+
+    Returns:
+        Tensor, calculated from sparse tensor. The dtype is same as `values`, and the shape is same as `values`.
+
+    Raises:
+        TypeError: If the dtype of `indices` or `shape` is not int64.
+        TypeError: If the dtype of `values` is neither float32 nor float64.
+        ValueError: If the shape[0] of indices isn't equal to size of values.
+        ValueError: If the shape[1] of indices isn't equal to size of shape.
+        ValueError: If the indices is not 2D.
+        ValueError: If the values is not 1D.
+        ValueError: If the shape is not 1D.
+        ValueError: If the size of shape < 2.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> indices = Tensor([[0,0], [0,3], [1,2], [1,5], [2,0], [2,5]])
+        >>> values = Tensor([1.0 ,2.0 ,3.0 ,4.0 ,5.0 ,6.0 ], dtype=ms.float64)
+        >>> shape = Tensor([6, 6])
+        >>> sparsesoftmax = ops.SparseSoftmax()
+        >>> out = sparsesoftmax(indices, values, shape)
+        >>> print(out)
+        [0.26894142 0.73105858 0.26894142 0.73105858 0.26894142 0.73105858]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize SparseSoftmax."""
+        self.init_prim_io_names(inputs=['indices', 'values', 'shape'], outputs=['output'])
+
+
 class SparseTensorDenseAdd(Primitive):
     """
     Add a sparse tensor and a dense tensor to get a dense tensor.

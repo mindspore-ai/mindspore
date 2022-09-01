@@ -139,6 +139,7 @@ from mindspore.ops.operations.sparse_ops import SetSize
 from mindspore.ops.operations.sparse_ops import DenseToCSRSparseMatrix, Sspaddmm
 from mindspore.ops.operations.sparse_ops import SparseTensorDenseMatmul
 from mindspore.ops.operations.sparse_ops import SparseToDenseV2
+from mindspore.ops.operations.sparse_ops import SparseSoftmax
 from mindspore.ops.operations.sparse_ops import SparseMatrixNNZ
 from mindspore.ops.operations.sparse_ops import SparseTensorDenseAdd
 from mindspore.ops.operations.sparse_ops import SparseDenseCwiseAdd
@@ -3400,6 +3401,12 @@ test_case_array_ops = [
                         Tensor(np.array([1.0]).astype(np.float32)),
                         Tensor(0.0, dtype=mstype.float32)],
         'desc_bprop': [Tensor(np.array([[0.0, 1.0], [0.0, 0.0]]).astype(np.float32))]}),
+    ('SparseSoftmax', {
+        'block': SparseSoftmax(),
+        'desc_inputs': [Tensor(np.array([[0, 0], [0, 3], [1, 2], [1, 5], [2, 0], [2, 5]]).astype(np.int64)),
+                        Tensor(np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]).astype(np.float32)),
+                        Tensor(np.array([6, 6]).astype(np.int64))],
+        'desc_bprop': [Tensor(np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]).astype(np.float32))]}),
     ('DepthToSpace', {
         'block': P.DepthToSpace(2),
         'desc_inputs': [[1, 12, 1, 1]],
