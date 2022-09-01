@@ -127,7 +127,7 @@ class AdjustBrightness(ImageTensorOperation, PyTensorOperation):
     def parse(self):
         return cde.AdjustBrightnessOperation(self.brightness_factor)
 
-    def execute_py(self, img):
+    def _execute_py(self, img):
         """
         Execute method.
 
@@ -171,7 +171,7 @@ class AdjustContrast(ImageTensorOperation, PyTensorOperation):
     def parse(self):
         return cde.AdjustContrastOperation(self.contrast_factor)
 
-    def execute_py(self, img):
+    def _execute_py(self, img):
         """
         Execute method.
 
@@ -227,7 +227,7 @@ class AdjustGamma(ImageTensorOperation, PyTensorOperation):
     def parse(self):
         return cde.AdjustGammaOperation(self.gamma, self.gain)
 
-    def execute_py(self, img):
+    def _execute_py(self, img):
         """
         Execute method.
 
@@ -270,7 +270,7 @@ class AdjustHue(ImageTensorOperation, PyTensorOperation):
     def parse(self):
         return cde.AdjustHueOperation(self.hue_factor)
 
-    def execute_py(self, img):
+    def _execute_py(self, img):
         """
         Execute method.
 
@@ -313,7 +313,7 @@ class AdjustSaturation(ImageTensorOperation, PyTensorOperation):
     def parse(self):
         return cde.AdjustSaturationOperation(self.saturation_factor)
 
-    def execute_py(self, img):
+    def _execute_py(self, img):
         """
         Execute method.
 
@@ -542,7 +542,7 @@ class AutoContrast(ImageTensorOperation, PyTensorOperation):
     def parse(self):
         return cde.AutoContrastOperation(self.cutoff, self.ignore)
 
-    def execute_py(self, img):
+    def _execute_py(self, img):
         """
         Execute method.
 
@@ -640,7 +640,7 @@ class CenterCrop(ImageTensorOperation, PyTensorOperation):
     def parse(self):
         return cde.CenterCropOperation(self.size)
 
-    def execute_py(self, img):
+    def _execute_py(self, img):
         """
         Execute method.
 
@@ -908,7 +908,10 @@ class Decode(ImageTensorOperation, PyTensorOperation):
                             "but got {0}.".format(img.ndim))
         return super().__call__(img)
 
-    def execute_py(self, img):
+    def parse(self):
+        return cde.DecodeOperation(True)
+
+    def _execute_py(self, img):
         """
         Execute method.
 
@@ -919,9 +922,6 @@ class Decode(ImageTensorOperation, PyTensorOperation):
             img (NumPy, PIL Image), Decoded image.
         """
         return util.decode(img)
-
-    def parse(self):
-        return cde.DecodeOperation(True)
 
 
 class Equalize(ImageTensorOperation, PyTensorOperation):
@@ -947,7 +947,7 @@ class Equalize(ImageTensorOperation, PyTensorOperation):
     def parse(self):
         return cde.EqualizeOperation()
 
-    def execute_py(self, img):
+    def _execute_py(self, img):
         """
         Execute method.
 
@@ -1046,7 +1046,7 @@ class FiveCrop(PyTensorOperation):
         self.random = False
         self.implementation = Implementation.PY
 
-    def execute_py(self, img):
+    def _execute_py(self, img):
         """
         Execute method.
 
@@ -1138,7 +1138,7 @@ class Grayscale(PyTensorOperation):
         self.random = False
         self.implementation = Implementation.PY
 
-    def execute_py(self, img):
+    def _execute_py(self, img):
         """
         Execute method.
 
@@ -1208,7 +1208,7 @@ class HsvToRgb(PyTensorOperation):
         self.random = False
         self.implementation = Implementation.PY
 
-    def execute_py(self, hsv_imgs):
+    def _execute_py(self, hsv_imgs):
         """
         Execute method.
 
@@ -1276,7 +1276,7 @@ class Invert(ImageTensorOperation, PyTensorOperation):
     def parse(self):
         return cde.InvertOperation()
 
-    def execute_py(self, img):
+    def _execute_py(self, img):
         """
         Execute method.
 
@@ -1334,7 +1334,7 @@ class LinearTransformation(PyTensorOperation):
         self.random = False
         self.implementation = Implementation.PY
 
-    def execute_py(self, np_img):
+    def _execute_py(self, np_img):
         """
         Execute method.
 
@@ -1623,7 +1623,7 @@ class Pad(ImageTensorOperation, PyTensorOperation):
     def parse(self):
         return cde.PadOperation(self.padding, self.fill_value, self.c_padding_mode)
 
-    def execute_py(self, img):
+    def _execute_py(self, img):
         """
         Execute method.
 
@@ -1940,7 +1940,7 @@ class RandomAffine(ImageTensorOperation, PyTensorOperation):
         return cde.RandomAffineOperation(self.degrees, self.translate, self.scale, self.shear,
                                          self.c_resample, self.fill_value)
 
-    def execute_py(self, img):
+    def _execute_py(self, img):
         """
         Execute method.
 
@@ -2039,7 +2039,7 @@ class RandomColor(ImageTensorOperation, PyTensorOperation):
     def parse(self):
         return cde.RandomColorOperation(*self.degrees)
 
-    def execute_py(self, img):
+    def _execute_py(self, img):
         """
         Execute method.
 
@@ -2118,7 +2118,7 @@ class RandomColorAdjust(ImageTensorOperation, PyTensorOperation):
     def parse(self):
         return cde.RandomColorAdjustOperation(self.brightness, self.contrast, self.saturation, self.hue)
 
-    def execute_py(self, img):
+    def _execute_py(self, img):
         """
         Execute method.
 
@@ -2231,7 +2231,7 @@ class RandomCrop(ImageTensorOperation, PyTensorOperation):
         return cde.RandomCropOperation(self.size, self.padding, self.pad_if_needed, self.fill_value,
                                        self.c_padding_mode)
 
-    def execute_py(self, img):
+    def _execute_py(self, img):
         """
         Execute method.
 
@@ -2510,7 +2510,7 @@ class RandomErasing(PyTensorOperation):
         self.max_attempts = max_attempts
         self.implementation = Implementation.PY
 
-    def execute_py(self, np_img):
+    def _execute_py(self, np_img):
         """
         Execute method.
 
@@ -2559,7 +2559,7 @@ class RandomGrayscale(PyTensorOperation):
         self.prob = prob
         self.implementation = Implementation.PY
 
-    def execute_py(self, img):
+    def _execute_py(self, img):
         """
         Execute method.
 
@@ -2610,7 +2610,7 @@ class RandomHorizontalFlip(ImageTensorOperation, PyTensorOperation):
     def parse(self):
         return cde.RandomHorizontalFlipOperation(self.prob)
 
-    def execute_py(self, img):
+    def _execute_py(self, img):
         """
         Execute method.
 
@@ -2715,7 +2715,7 @@ class RandomLighting(ImageTensorOperation, PyTensorOperation):
     def parse(self):
         return cde.RandomLightingOperation(self.alpha)
 
-    def execute_py(self, img):
+    def _execute_py(self, img):
         """
         Execute method.
 
@@ -2772,7 +2772,7 @@ class RandomPerspective(PyTensorOperation):
         self.interpolation = Inter.to_python_type(interpolation)
         self.implementation = Implementation.PY
 
-    def execute_py(self, img):
+    def _execute_py(self, img):
         """
         Execute method.
 
@@ -2915,7 +2915,7 @@ class RandomResizedCrop(ImageTensorOperation, PyTensorOperation):
         return cde.RandomResizedCropOperation(self.size, self.scale, self.ratio, self.c_interpolation,
                                               self.max_attempts)
 
-    def execute_py(self, img):
+    def _execute_py(self, img):
         """
         Execute method.
 
@@ -3173,7 +3173,7 @@ class RandomRotation(ImageTensorOperation, PyTensorOperation):
         return cde.RandomRotationOperation(self.degrees, self.c_resample, self.expand, self.c_center,
                                            self.fill_value)
 
-    def execute_py(self, img):
+    def _execute_py(self, img):
         """
         Execute method.
 
@@ -3266,7 +3266,7 @@ class RandomSharpness(ImageTensorOperation, PyTensorOperation):
     def parse(self):
         return cde.RandomSharpnessOperation(self.degrees)
 
-    def execute_py(self, img):
+    def _execute_py(self, img):
         """
         Execute method.
 
@@ -3343,7 +3343,7 @@ class RandomVerticalFlip(ImageTensorOperation, PyTensorOperation):
     def parse(self):
         return cde.RandomVerticalFlipOperation(self.prob)
 
-    def execute_py(self, img):
+    def _execute_py(self, img):
         """
         Execute method.
 
@@ -3486,7 +3486,7 @@ class Resize(ImageTensorOperation, PyTensorOperation):
             raise TypeError("Current Interpolation is not supported with NumPy input.")
         return cde.ResizeOperation(self.c_size, self.c_interpolation)
 
-    def execute_py(self, img):
+    def _execute_py(self, img):
         """
         Execute method.
 
@@ -3647,7 +3647,7 @@ class RgbToHsv(PyTensorOperation):
         self.random = False
         self.implementation = Implementation.PY
 
-    def execute_py(self, rgb_imgs):
+    def _execute_py(self, rgb_imgs):
         """
         Execute method.
 
@@ -3860,7 +3860,7 @@ class TenCrop(PyTensorOperation):
         self.random = False
         self.implementation = Implementation.PY
 
-    def execute_py(self, img):
+    def _execute_py(self, img):
         """
         Execute method.
 
@@ -3900,7 +3900,7 @@ class ToNumpy(PyTensorOperation):
         # Use "Implementation.C" to indicate to select C++ implementation for next op in transforms list
         self.implementation = Implementation.C
 
-    def execute_py(self, img):
+    def _execute_py(self, img):
         """
         Execute method.
 
@@ -3943,7 +3943,7 @@ class ToPIL(PyTensorOperation):
         self.random = False
         self.implementation = Implementation.PY
 
-    def execute_py(self, img):
+    def _execute_py(self, img):
         """
         Execute method.
 
@@ -4140,7 +4140,7 @@ class UniformAugment(CompoundOperation):
         operations = self.parse_transforms()
         return cde.UniformAugOperation(operations, self.num_ops)
 
-    def execute_py(self, img):
+    def _execute_py(self, img):
         """
         Execute method.
 

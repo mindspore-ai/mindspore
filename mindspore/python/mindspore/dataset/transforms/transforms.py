@@ -52,8 +52,8 @@ class TensorOperation:
         """
         # Check if Python implementation of op, or PIL input
         if (self.implementation == Implementation.PY) or \
-                (len(input_tensor_list) == 1 and is_pil(input_tensor_list[0]) and getattr(self, 'execute_py', None)):
-            return self.execute_py(*input_tensor_list)
+                (len(input_tensor_list) == 1 and is_pil(input_tensor_list[0]) and getattr(self, '_execute_py', None)):
+            return self._execute_py(*input_tensor_list)
 
         tensor_row = []
         for tensor in input_tensor_list:
@@ -93,7 +93,7 @@ class PyTensorOperation:
         Returns:
             PIL Image, augmented image.
         """
-        return self.execute_py(img)
+        return self._execute_py(img)
 
     @classmethod
     def from_json(cls, json_string):
@@ -326,8 +326,12 @@ class Compose(CompoundOperation):
             new_ops.append(composed_op)
         return new_ops
 
+    def parse(self):
+        operations = self.parse_transforms()
+        return cde.ComposeOperation(operations)
+
     @check_compose_call
-    def execute_py(self, *args):
+    def _execute_py(self, *args):
         """
         Execute method.
 
@@ -335,10 +339,6 @@ class Compose(CompoundOperation):
             lambda function, Lambda function that takes in an args to apply transformations on.
         """
         return util.compose(self.transforms, *args)
-
-    def parse(self):
-        operations = self.parse_transforms()
-        return cde.ComposeOperation(operations)
 
 
 class Concatenate(TensorOperation):
@@ -659,7 +659,11 @@ class RandomApply(CompoundOperation):
         super().__init__(transforms)
         self.prob = prob
 
-    def execute_py(self, img):
+    def parse(self):
+        operations = self.parse_transforms()
+        return cde.RandomApplyOperation(self.prob, operations)
+
+    def _execute_py(self, img):
         """
         Execute method.
 
@@ -670,10 +674,6 @@ class RandomApply(CompoundOperation):
             img (PIL image), Transformed image.
         """
         return util.random_apply(img, self.transforms, self.prob)
-
-    def parse(self):
-        operations = self.parse_transforms()
-        return cde.RandomApplyOperation(self.prob, operations)
 
 
 class RandomChoice(CompoundOperation):
@@ -708,7 +708,11 @@ class RandomChoice(CompoundOperation):
     def __init__(self, transforms):
         super().__init__(transforms)
 
-    def execute_py(self, img):
+    def parse(self):
+        operations = self.parse_transforms()
+        return cde.RandomChoiceOperation(operations)
+
+    def _execute_py(self, img):
         """
         Execute method.
 
@@ -720,10 +724,6 @@ class RandomChoice(CompoundOperation):
             img (PIL image), Transformed image.
         """
         return util.random_choice(img, self.transforms)
-
-    def parse(self):
-        operations = self.parse_transforms()
-        return cde.RandomChoiceOperation(operations)
 
 
 class RandomOrder(PyTensorOperation):
@@ -759,7 +759,7 @@ class RandomOrder(PyTensorOperation):
         self.transforms = transforms
         self.implementation = Implementation.PY
 
-    def execute_py(self, img):
+    def _execute_py(self, img):
         """
         Execute method.
 
