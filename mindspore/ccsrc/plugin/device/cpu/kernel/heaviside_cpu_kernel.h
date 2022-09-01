@@ -18,12 +18,8 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_HEAVISIDE_CPU_KERNEL_H_
 
 #include <functional>
-#include <iostream>
-#include <map>
-#include <memory>
-#include <string>
-#include <utility>
 #include <vector>
+#include <utility>
 
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/device/cpu/kernel/nnacl/arithmetic.h"

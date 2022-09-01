@@ -47,7 +47,6 @@ bool HeavisideCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
                       << "', 'x' and 'values' should have the same data "
                          "type, but got the dtype of 'x': "
                       << input0_dtype_ << " and the dtype of 'values': " << input1_dtype_ << ".";
-    return false;
   }
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -67,14 +66,14 @@ bool HeavisideCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kHeavisideOutputsNum, kernel_name_);
 
   BroadcastIterator base_iter(input0_shape, input1_shape, output_shape);
-  const T *input0 = reinterpret_cast<const T *>(inputs[0]->addr);
-  const T *input1 = reinterpret_cast<const T *>(inputs[1]->addr);
-  auto *output = reinterpret_cast<T *>(outputs[0]->addr);
+  const T *input0 = static_cast<const T *>(inputs[0]->addr);
+  const T *input1 = static_cast<const T *>(inputs[1]->addr);
+  auto *output = static_cast<T *>(outputs[0]->addr);
   auto task = [this, &input0, &input1, &output, &base_iter](size_t start, size_t end) {
     auto iter = base_iter;
     iter.SetPos(start);
     for (size_t i = start; i < end; i++) {
-      output[i] = static_cast<T>(0) == input0[iter.GetInputPosA()]
+      output[i] = static_cast<T>(0) == static_cast<T>(input0[iter.GetInputPosA()])
                     ? input1[iter.GetInputPosB()]
                     : static_cast<T>(input0[iter.GetInputPosA()] > static_cast<T>(0));
       iter.GenNextPos();
@@ -82,7 +81,7 @@ bool HeavisideCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   };
   size_t output_size_ = 1;
   for (size_t i = 0; i < output_shape.size(); ++i) {
-    output_size_ *= output_shape[i];
+    output_size_ *= static_cast<size_t>(output_shape[i]);
   }
   ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
   return true;

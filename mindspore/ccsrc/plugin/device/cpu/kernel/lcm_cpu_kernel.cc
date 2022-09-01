@@ -57,7 +57,7 @@ bool LcmCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kLcmInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kLcmOutputsNum, kernel_name_);
   const T *x1 = reinterpret_cast<const T *>(inputs[0]->addr);
-  const T *x2 = reinterpret_cast<const T *>(inputs[1]->addr);
+  const T *x2 = static_cast<const T *>(inputs[1]->addr);
   T *y = reinterpret_cast<T *>(outputs[0]->addr);
   if (y_shape_.size() == 0) {
     (void)y_shape_.insert(y_shape_.begin(), 1);
