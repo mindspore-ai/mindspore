@@ -177,7 +177,7 @@ AbstractBasePtr BaseFuncGraphEvaluator::LaunchStackFrame(const AnalysisEnginePtr
 }
 
 AbstractBasePtr BaseFuncGraphEvaluator::LaunchRecursiveEval(const AnalysisEnginePtr &engine, const FuncGraphPtr &fg,
-                                                            const AnalysisContextPtr &context) {
+                                                            const AnalysisContextPtr &context) const {
   MS_EXCEPTION_IF_NULL(fg);
   MS_EXCEPTION_IF_NULL(engine);
   const AnfNodePtr &func_node = fg->get_return();

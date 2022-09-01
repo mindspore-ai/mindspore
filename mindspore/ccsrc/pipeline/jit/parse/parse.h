@@ -339,10 +339,9 @@ class Parser {
   // Check if branch block contains break/continue/return statement, and propagate that flag back to block.
   void CheckControlFlowAlterationInIf(std::pair<FunctionBlockPtr, FunctionBlockPtr> *branch_graphs_pair,
                                       const FunctionBlockPtr &branch_block, const FunctionBlockPtr &branch_end,
-                                      const FunctionBlockPtr &after_block, const FunctionBlockPtr &block);
+                                      const FunctionBlockPtr &after_block, const FunctionBlockPtr &block) const;
   // Check if body block contains return statement, and propagate that flag back to block.
-  void CheckReturnInLoop(const FunctionBlockPtr &block, const FunctionBlockPtr &header_block,
-                         const FunctionBlockPtr &body_block, const FunctionBlockPtr &after_block);
+  void CheckReturnInLoop(const FunctionBlockPtr &block, const FunctionBlockPtr &body_block) const;
 
   // The shared_ptr will be hold by GraphManager, so just hold a weak ref here.
   static FuncGraphWeakPtr top_func_graph_;

@@ -1819,7 +1819,7 @@ FunctionBlockPtr Parser::ParseGlobal(const FunctionBlockPtr &block, const py::ob
 
 void Parser::CheckControlFlowAlterationInIf(std::pair<FunctionBlockPtr, FunctionBlockPtr> *branch_graphs_pair,
                                             const FunctionBlockPtr &branch_block, const FunctionBlockPtr &branch_end,
-                                            const FunctionBlockPtr &after_block, const FunctionBlockPtr &block) {
+                                            const FunctionBlockPtr &after_block, const FunctionBlockPtr &block) const {
   if (branch_block->is_return_statement_inside()) {
     MS_LOG(DEBUG)
       << "Inside the branch block has return statement, ignore for transformation to parallel-if call, branch block:"
@@ -1944,8 +1944,7 @@ FunctionBlockPtr Parser::ParseIf(const FunctionBlockPtr &block, const py::object
   return after_block;
 }
 
-void Parser::CheckReturnInLoop(const FunctionBlockPtr &block, const FunctionBlockPtr &header_block,
-                               const FunctionBlockPtr &body_block, const FunctionBlockPtr &after_block) {
+void Parser::CheckReturnInLoop(const FunctionBlockPtr &block, const FunctionBlockPtr &body_block) const {
   // Propagate flag of return statement in body_block back.
   if (body_block->is_return_statement_inside()) {
     MS_LOG(DEBUG) << "Propagate flag of return statement in body_block back, body_block: " << body_block->ToString()
@@ -2016,11 +2015,11 @@ FunctionBlockPtr Parser::ParseWhile(const FunctionBlockPtr &block, const py::obj
   if (end_block) {
     after_block->Jump(end_block, {});
     end_block->Mature();
-    CheckReturnInLoop(block, header_block, body_block, after_block);
+    CheckReturnInLoop(block, body_block);
     return end_block;
   }
   // No 'break', no end_block.
-  CheckReturnInLoop(block, header_block, body_block, after_block);
+  CheckReturnInLoop(block, body_block);
   return after_block;
 }
 
@@ -2188,11 +2187,11 @@ FunctionBlockPtr Parser::ParseForUnroll(const FunctionBlockPtr &block, const py:
     // end_block exists if we encounter 'break' in loop body.
     after_block->Jump(end_block, {});
     end_block->Mature();
-    CheckReturnInLoop(block, header_block, body_block, after_block);
+    CheckReturnInLoop(block, body_block);
     return end_block;
   }
   // No 'break', no end_block.
-  CheckReturnInLoop(block, header_block, body_block, after_block);
+  CheckReturnInLoop(block, body_block);
   return after_block;
 }
 
