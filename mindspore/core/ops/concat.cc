@@ -49,6 +49,9 @@ abstract::ShapePtr ConcatInferShape(const PrimitivePtr &primitive, const std::ve
   for (size_t i = 1; i < elements.size(); ++i) {
     std::string elementi = "element" + std::to_string(i);
     auto elementi_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(elements[i]->BuildShape())[kShape];
+    if (IsDynamicRank(elementi_shape)) {
+      return std::make_shared<abstract::Shape>(ShapeVector{UNKNOWN_RANK});
+    }
     (void)CheckAndConvertUtils::CheckInteger(elementi + " shape rank", SizeToLong(elementi_shape.size()), kEqual,
                                              SizeToLong(element0_shape.size()), prim_name);
     for (size_t j = 0; j < element0_rank; ++j) {
