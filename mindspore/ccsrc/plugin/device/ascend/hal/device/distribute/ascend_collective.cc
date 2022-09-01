@@ -46,6 +46,7 @@ bool HcclCollectiveGroup::InitCollective() {
   }
   collective_handle_ = dlopen(kAscendCollectiveFileName, RTLD_NOW);
   if (collective_handle_ == nullptr) {
+    MS_LOG(DEBUG) << "Load lib" << kAscendCollectiveFileName << " failed, error message: " << dlerror();
     MS_LOG(EXCEPTION)
       << "Loading libascend_collective.so failed. Many reasons could cause this:\n1.libascend_collective.so is not "
          "installed.\n2.hccl is not "
