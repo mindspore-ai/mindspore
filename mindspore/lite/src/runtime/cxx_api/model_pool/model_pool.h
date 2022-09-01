@@ -23,6 +23,7 @@
 #include <queue>
 #include <map>
 #include <set>
+#include <shared_mutex>
 #include "src/runtime/dynamic_mem_allocator.h"
 #include "include/api/status.h"
 #include "include/api/context.h"
@@ -56,6 +57,8 @@ class ModelPool {
 
   Status Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
                  const MSKernelCallBack &before = nullptr, const MSKernelCallBack &after = nullptr);
+
+  bool IsInitialized() { return is_initialized_; }
 
  private:
   ModelPoolConfig CreateModelPoolConfig(const std::shared_ptr<RunnerConfig> &runner_config);
@@ -164,6 +167,9 @@ class ModelPool {
 
   std::vector<char *> model_bufs_;
   char *graph_buf_ = nullptr;
+
+  std::shared_mutex model_pool_mutex_;
+  bool is_initialized_ = false;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_CXX_API_MODEL_POOL_MODEL_POOL_H_
