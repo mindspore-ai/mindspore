@@ -7,6 +7,7 @@ file(GLOB_RECURSE _PIPELINE_SRC_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
     "remove_value_node_dup.cc"
     "pipeline_split.cc"
     "compile_cache_manager.cc"
+    "event_message_print.cc"
     "parse/*.cc"
     "static_analysis/*.cc"
     "debug/*.cc"
