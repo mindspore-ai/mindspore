@@ -23,10 +23,10 @@
 #include <string>
 #include <vector>
 #include <utility>
+#include <unordered_map>
 
 #include "utils/macros.h"
 #include "utils/hashing.h"
-#include "utils/hash_map.h"
 #include "ir/func_graph.h"
 #include "abstract/abstract_value.h"
 
@@ -99,7 +99,7 @@ class MS_CORE_API AnalysisContext : public std::enable_shared_from_this<Analysis
   AbstractBasePtrList args_spec_list_;
 
   // Children contexts discriminated by func_graph & arguments.
-  mindspore::HashMap<ChildKey, AnalysisContextPtr, ChildHash, ChildEqual> children_;
+  std::unordered_map<ChildKey, AnalysisContextPtr, ChildHash, ChildEqual> children_;
 
   // Root dummy contexts.
   static std::vector<AnalysisContextPtr> dummy_contexts_;

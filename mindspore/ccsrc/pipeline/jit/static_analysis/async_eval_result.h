@@ -27,6 +27,7 @@
 #include <functional>
 #include <list>
 #include <set>
+#include <unordered_map>
 #include <fstream>
 #include <chrono>
 #include <mutex>
@@ -391,7 +392,7 @@ class AsyncInferTask {
 };
 
 using EvaluatorCacheMap =
-  mindspore::HashMap<AbstractBasePtrList, EvalResultPtr, AbstractBasePtrListHasher, AbstractBasePtrListEqual>;
+  std::unordered_map<AbstractBasePtrList, EvalResultPtr, AbstractBasePtrListHasher, AbstractBasePtrListEqual>;
 using EvalResultCache = NormalCache<AbstractBasePtrList, EvalResultPtr, EvaluatorCacheMap>;
 
 class EvaluatorCacheMgr {

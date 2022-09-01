@@ -26,6 +26,8 @@
 #include <utility>
 #include <map>
 #include <set>
+#include <unordered_map>
+#include <unordered_set>
 #include <mutex>
 #include "utils/ms_utils.h"
 #include "utils/hash_map.h"
@@ -268,7 +270,7 @@ struct PrimitiveEvalCacheEqual {
 class PrimitiveEvalCache {
  public:
   using EvalCache =
-    mindspore::HashMap<PrimitiveEvalCacheKey, EvalResultPtr, PrimitiveEvalCacheHash, PrimitiveEvalCacheEqual>;
+    std::unordered_map<PrimitiveEvalCacheKey, EvalResultPtr, PrimitiveEvalCacheHash, PrimitiveEvalCacheEqual>;
   using PrimToEvalCache = mindspore::HashMap<std::string, EvalCache>;
   EvalResultPtr Get(const PrimitivePtr &prim, const AbstractBasePtrList &args) const;
   void Put(const PrimitivePtr &prim, AttrValueMap &&attrs, const AbstractBasePtrList &args,
@@ -356,15 +358,15 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
 
   const PrimEvaluatorMap &prim_constructors_;
   FuncGraphManagerPtr func_graph_manager_;
-  mindspore::HashMap<AbstractFunctionPtr, EvaluatorPtr, AbstractFunctionHasher, AbstractFunctionEqual> evaluators_;
-  mindspore::HashMap<std::pair<AbstractFunctionPtr, AbstractBasePtrList>, EvaluatorPtr, PartialAppHasher>
+  std::unordered_map<AbstractFunctionPtr, EvaluatorPtr, AbstractFunctionHasher, AbstractFunctionEqual> evaluators_;
+  std::unordered_map<std::pair<AbstractFunctionPtr, AbstractBasePtrList>, EvaluatorPtr, PartialAppHasher>
     constructors_app_;
 
   AnfNodeConfigMap anfnode_config_map_;
   // Use a list to trace multiple evaluators.
   std::list<EvaluatorArgs> eval_trace_;
   std::map<EvaluatorPtr, EvaluatorPtr> multi_poss_;
-  mindspore::HashSet<EvaluatorArgs, EvaluatorArgsHasher, EvaluatorArgsEqual> continued_evals_;
+  std::unordered_set<EvaluatorArgs, EvaluatorArgsHasher, EvaluatorArgsEqual> continued_evals_;
   // Root or top func_graph for static analysis;
   FuncGraphPtr root_func_graph_{nullptr};
   AnalysisContextPtr root_context_{nullptr};
