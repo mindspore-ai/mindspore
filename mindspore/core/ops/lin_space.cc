@@ -27,18 +27,11 @@
 namespace mindspore {
 namespace ops {
 namespace {
+#define IsNoneOrAnyValue(value_ptr) ((value_ptr->isa<None>()) || (value_ptr->isa<AnyValue>()))
 TypePtr LinSpaceInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
-  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex1);
-  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractScalar>(prim_name, input_args, kInputIndex2);
-
-  auto num_value = input_args[kInputIndex2]->BuildValue();
-  MS_EXCEPTION_IF_NULL(num_value);
-  if (!num_value->isa<Int64Imm>()) {
-    MS_EXCEPTION(TypeError) << "For primitive[" << prim_name << "], the 'num' must be a Int, but got "
-                            << num_value->ToString();
-  }
+  CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
+  CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex1);
 
   auto start_dtype = input_args[kInputIndex0]->BuildType();
   auto stop_dtype = input_args[kInputIndex1]->BuildType();
@@ -57,19 +50,55 @@ abstract::ShapePtr LinSpaceInferShape(const PrimitivePtr &primitive, const std::
   auto stop_shape_ptr = input_args[kInputIndex1]->BuildShape();
   MS_EXCEPTION_IF_NULL(stop_shape_ptr);
 
+  auto num_value = input_args[kInputIndex2]->BuildValue();
+  MS_EXCEPTION_IF_NULL(num_value);
+
+  bool is_compile = IsNoneOrAnyValue(num_value);
   // Do it later
   if (start_shape_ptr->IsDynamic() || stop_shape_ptr->IsDynamic()) {
     return input_args[kInputIndex0]->BuildShape()->cast<abstract::ShapePtr>();
   }
 
-  const auto start_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(start_shape_ptr)[kShape];
-  const auto stop_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(stop_shape_ptr)[kShape];
-
-  // Checked in LinSpaceInferType, num is a Scalar
-  const auto num_value = input_args[kInputIndex2]->BuildValue();
-  const int64_t num = num_value->cast<Int64ImmPtr>()->value();
+  int64_t num = 0;
+  if (!is_compile) {
+    if (input_args[kInputIndex2]->isa<abstract::AbstractTensor>()) {
+      if (num_value->isa<tensor::Tensor>()) {
+        auto num_shape_ptr = input_args[kInputIndex2]->BuildShape();
+        const auto num_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(num_shape_ptr)[kShape];
+        if (num_shape.size() != 0) {
+          MS_EXCEPTION(TypeError) << "For primitive[" << prim_name
+                                  << "], the 'num' must be int or 0D int32/int64 Tensor, but got " << num_shape.size()
+                                  << "D Tensor.";
+        }
+        auto num_input = CheckAndConvertUtils::CheckTensorIntValue("num", num_value, prim_name);
+        num = num_input[0];
+      } else {
+        MS_EXCEPTION(TypeError) << "For primitive[" << prim_name
+                                << "], the 'num' must be int or 0D int32/int64 Tensor, but got "
+                                << num_value->ToString() << ".";
+      }
+    } else if (input_args[kInputIndex2]->isa<abstract::AbstractScalar>()) {
+      MS_EXCEPTION_IF_NULL(num_value);
+      if (!num_value->isa<Int64Imm>()) {
+        MS_EXCEPTION(TypeError) << "For primitive[" << prim_name
+                                << "], the 'num' must be int or 0D int32/int64 Tensor, but got "
+                                << num_value->ToString() << ".";
+      }
+      num = num_value->cast<Int64ImmPtr>()->value();
+    } else {
+      MS_EXCEPTION(TypeError) << "For primitive[" << prim_name
+                              << "], the 'num' must be int or 0D int32/int64 Tensor, but got " << num_value->ToString()
+                              << ".";
+    }
+  } else {
+    ShapeVector out_shape = {abstract::Shape::SHP_ANY};
+    return std::make_shared<abstract::Shape>(out_shape);
+  }
 
   (void)CheckAndConvertUtils::CheckValue<int64_t>("num", num, kGreaterThan, 0, prim_name);
+
+  const auto start_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(start_shape_ptr)[kShape];
+  const auto stop_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(stop_shape_ptr)[kShape];
 
   size_t batch_rank = 0;
   if (primitive->HasAttr(kBatchRank)) {
@@ -101,6 +130,7 @@ AbstractBasePtr LinSpaceInfer(const abstract::AnalysisEnginePtr &, const Primiti
   auto infer_shape = LinSpaceInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
+REGISTER_HOST_DEPENDS(kNameLinSpace, {2});
 REGISTER_PRIMITIVE_EVAL_IMPL(LinSpace, prim::kPrimLinSpace, LinSpaceInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

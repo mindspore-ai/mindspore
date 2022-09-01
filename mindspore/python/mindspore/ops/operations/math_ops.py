@@ -5305,7 +5305,7 @@ class Eps(PrimitiveWithInfer):
         return out
 
 
-class LinSpace(PrimitiveWithInfer):
+class LinSpace(Primitive):
     r"""
     Returns a Tensor whose value is `num` evenly spaced in the interval `start` and `stop` (including `start` and
     `stop`), and the length of the output Tensor is `num`.
@@ -5328,14 +5328,7 @@ class LinSpace(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """Initialize LinSpace"""
-
-    def check_elim(self, start, stop, num):
-        if not isinstance(num, int):
-            return False, None
-        if num != 1:
-            return False, None
-        start_npy = start.asnumpy().reshape((1,))
-        return True, Tensor(start_npy)
+        self.init_prim_io_names(inputs=['start', 'stop', 'num'], outputs=['output'])
 
 
 class MatrixInverse(Primitive):

@@ -30,6 +30,7 @@ using KernelRunFunc = LinSpaceCpuKernelMod::KernelRunFunc;
 bool LinSpaceCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                 const std::vector<KernelTensorPtr> &outputs) {
   kernel_name_ = base_operator->name();
+  num_dtype_ = inputs[kIndex2]->GetDtype();
 
   if (!MatchKernelFunc(base_operator, inputs, outputs)) {
     return false;
@@ -52,7 +53,6 @@ int LinSpaceCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
   multi_dims_ = (batch_num_ != 1);
 
   const auto dtype_size = abstract::TypeIdSize(inputs.at(kIndex0)->GetDtype());
-
   // Deal with workspace_size_list_
   workspace_size_list_.clear();
   workspace_size_list_ = {LongToSize(batch_num_) * dtype_size};
@@ -64,7 +64,13 @@ template <typename T>
 bool LinSpaceCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                         const std::vector<kernel::AddressPtr> &workspace,
                                         const std::vector<kernel::AddressPtr> &outputs) {
-  const int64_t num = *reinterpret_cast<int64_t *>(inputs[kIndex2]->addr);
+  int64_t num;
+  if (num_dtype_ == kNumberTypeInt32) {
+    int32_t num_val = *reinterpret_cast<int32_t *>(inputs[kIndex2]->addr);
+    num = IntToLong(num_val);
+  } else {
+    num = *reinterpret_cast<int64_t *>(inputs[kIndex2]->addr);
+  }
   // Deal wtih num equal to 1
   if (num == 1) {
     const auto input = inputs[kIndex0];
@@ -143,7 +149,18 @@ const std::vector<std::pair<KernelAttr, KernelRunFunc>> &LinSpaceCpuKernelMod::G
        .AddInputAttr(kNumberTypeInt64)
        .AddOutputAttr(kNumberTypeFloat64),
      &LinSpaceCpuKernelMod::LaunchKernel<double>},
-  };
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeInt32)
+       .AddOutputAttr(kNumberTypeFloat32),
+     &LinSpaceCpuKernelMod::LaunchKernel<float>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddInputAttr(kNumberTypeInt32)
+       .AddOutputAttr(kNumberTypeFloat64),
+     &LinSpaceCpuKernelMod::LaunchKernel<double>}};
   return func_list;
 }
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, LinSpace, LinSpaceCpuKernelMod);

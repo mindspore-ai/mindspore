@@ -178,23 +178,3 @@ def test_lin_space_num():
     result_ms = ops.vmap(net, (0, 0))(start, stop).asnumpy()
     result_np = np.linspace(start_np, stop_np, num_np, axis=-1)
     assert np.allclose(result_ms, result_np)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_lin_space_num_1():
-    """
-    Feature: ALL To ALL
-    Description: test cases for LinSpace Net
-    Expectation: the result match to numpy
-    """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target='CPU')
-    start_np = 5
-    stop_np = 150
-
-    start = Tensor(start_np, dtype=mstype.float32)
-    stop = Tensor(stop_np, dtype=mstype.float32)
-    num = Tensor(1)
-    with pytest.raises(TypeError):
-        ops.linspace(start, stop, num)

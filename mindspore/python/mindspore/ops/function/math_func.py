@@ -2126,19 +2126,19 @@ def linspace(start, stop, num):
         \end{aligned}
 
     Args:
-        start (Tensor): Start value of interval. The tensor data type must be float32 and with shape of 0-D.
-        stop (Tensor): Last value of interval. The tensor data type must be float32 and with shape of 0-D.
-        num (int): Number of ticks in the interval, inclusive of start and stop.
-            Must be positive int number.
+        start (Tensor): Start value of interval. The tensor data type must be float32 or float64 and with shape of 0-D.
+        stop (Tensor): Last value of interval. The tensor data type must be float32 or float64 and with shape of 0-D.
+        num (Union[Tensor, int]): Number of ticks in the interval, inclusive of start and stop.
+            Must be positive int number or 0D int32/int64 Tensor.
 
     Returns:
         Tensor, has the same dtype as `start`, and the shape of :math:`(num)`
 
     Raises:
         TypeError: If `start` or `stop` is not a Tensor.
-        TypeError: If dtype of `start` or dtype of `stop` is not float32.
+        TypeError: If dtype of `start` or dtype of `stop` is not float32 or float64.
         ValueError: If shape of `start` or shape of `stop` is not 0-D.
-        TypeError: If `num` is not int.
+        TypeError: If `num` is not int or 0D int32/int64 Tensor.
         ValueError: If `num` is not positive int number.
 
     Supported Platforms:

@@ -319,7 +319,6 @@ opt::OptPassConfig GetOptPassA1(const opt::irpass::OptimizeIRPassLib &irpass) {
     irpass.tile_eliminate_,
     irpass.transpose_eliminate_,
     irpass.minmaximum_grad_,
-    irpass.lin_space_val_,
 
     // Arithmetic simplifications
     irpass.arithmetic_simplify_,
