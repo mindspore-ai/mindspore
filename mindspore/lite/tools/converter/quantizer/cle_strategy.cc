@@ -266,6 +266,7 @@ int CLEStrategy::EqualizationAdjust(const CNodePtr &cnode, const std::vector<dou
   }
 
   auto raw_datas = static_cast<float *>(layer1_data_info.data_ptr_);
+  CHECK_NULL_RETURN(raw_datas);
   auto dims = layer1_data_info.shape_;
   int elem_count = 1;
   auto ret = GetElementNumFromShape(layer1_data_info.shape_, &elem_count);
@@ -277,6 +278,7 @@ int CLEStrategy::EqualizationAdjust(const CNodePtr &cnode, const std::vector<dou
   for (int i = 0; i < elem_count; i++) {
     auto raw_data = raw_datas[i];
     auto bucket_index = GetBucketIndex(dims, preferred_dim, i);
+    MS_CHECK_GT(static_cast<int>(scales.size()), bucket_index, RET_ERROR);
     if (multiplication) {
       raw_datas[i] = raw_data * scales.at(bucket_index);
     } else {
@@ -320,6 +322,9 @@ int CLEStrategy::EqualizationWithThreeLayer(const CombinationLayer &layer_group,
   auto layer1 = layer_group.layer1;
   auto layer2 = layer_group.layer2;
   auto layer3 = layer_group.layer3;
+  CHECK_NULL_RETURN(layer1);
+  CHECK_NULL_RETURN(layer2);
+  CHECK_NULL_RETURN(layer3);
   auto layer1_name = layer1->fullname_with_scope();
   auto layer2_name = layer2->fullname_with_scope();
   auto layer3_name = layer3->fullname_with_scope();

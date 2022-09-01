@@ -217,9 +217,9 @@ int MixedBitWeightQuantization::DoQuantization(float *weights, std::vector<int64
                                                std::vector<schema::QuantParamT> *quant_params,
                                                std::vector<int16_t> *quant_datas, const std::string &node_name,
                                                bool use_auto_tune_alg) {
-  MS_ASSERT(weights != nullptr);
-  MS_ASSERT(quant_params != nullptr);
-  MS_ASSERT(quant_datas != nullptr);
+  CHECK_NULL_RETURN(weights);
+  CHECK_NULL_RETURN(quant_params);
+  CHECK_NULL_RETURN(quant_datas);
   int weight_count = 1;
   int dims = shape.size();
   int input_shape[4] = {0, 0, 0, 0};
@@ -254,8 +254,10 @@ int MixedBitWeightQuantization::DoQuantization(float *weights, std::vector<int64
 
 int MixedBitWeightQuantization::QuantizeByScale(const float *weights, int weightsc, float scale,
                                                 schema::QuantParamT *quant_params, std::vector<int16_t> *quant_datas) {
-  MS_ASSERT(weights != nullptr);
-  MS_ASSERT(weightsc <= quant_datas->size());
+  CHECK_NULL_RETURN(weights);
+  CHECK_NULL_RETURN(quant_params);
+  CHECK_NULL_RETURN(quant_datas);
+  MS_CHECK_GE(static_cast<int>(quant_datas->size()), weightsc, RET_ERROR);
   const float upround_offset = 0.5;
   for (int i = 0; i < weightsc; i++) {
     auto q = static_cast<int>(floorf(weights[i] / scale + upround_offset));

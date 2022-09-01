@@ -223,9 +223,9 @@ int FSEEncoder::NormalizeFrequency(FSEQuant *q, int *table_log) {
 
 int FSEEncoder::FSEEncode(FSEBitStream *bs, const uint16_t *data, int data_count, uint32_t *frequency,
                           int frequency_count, int table_log) {
-  MS_ASSERT(bs != nullptr);
-  MS_ASSERT(data != nullptr);
-  MS_ASSERT(frequency != nullptr);
+  CHECK_NULL_RETURN(bs);
+  CHECK_NULL_RETURN(data);
+  CHECK_NULL_RETURN(frequency);
   int table_size = 1 << table_log;
   // symbolTT.deltaNbBits stores a value which, when added with state,
   // makes the result of >> 16 produces either n or n+1, as required.
