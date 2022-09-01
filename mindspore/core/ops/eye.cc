@@ -193,6 +193,19 @@ AbstractBasePtr EyeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr
   auto infer_shape = EyeInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
+
+int64_t Eye::get_num_rows() const {
+  auto value_ptr = GetAttr("num_rows");
+  MS_EXCEPTION_IF_NULL(value_ptr);
+  return GetValue<int64_t>(value_ptr);
+}
+
+int64_t Eye::get_num_columns() const {
+  auto value_ptr = GetAttr("num_columns");
+  MS_EXCEPTION_IF_NULL(value_ptr);
+  return GetValue<int64_t>(value_ptr);
+}
+
 REGISTER_PRIMITIVE_EVAL_IMPL(Eye, prim::kPrimEye, EyeInfer, EyeInferValue, false);
 }  // namespace ops
 }  // namespace mindspore
