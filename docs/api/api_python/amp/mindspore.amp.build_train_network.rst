@@ -1,7 +1,7 @@
-mindspore.build_train_network
-=======================================
+mindspore.amp.build_train_network
+=================================
 
-.. py:function:: mindspore.build_train_network(network, optimizer, loss_fn=None, level='O0', boost_level='O0', **kwargs)
+.. py:function:: mindspore.amp.build_train_network(network, optimizer, loss_fn=None, level='O0', boost_level='O0', **kwargs)
 
     构建混合精度训练网络。
 
@@ -24,7 +24,7 @@ mindspore.build_train_network
 
         - **cast_model_type** (mindspore.dtype) - 支持float16，float32。如果设置了该参数，网络将被转化为设置的数据类型，而不会根据设置的level进行转换。
         - **keep_batchnorm_fp32** (bool) - 当网络被设置为float16时，配置为True，则BatchNorm将保持在float32下运行。设置level不会影响该属性。
-        - **loss_scale_manager** (Union[None, LossScaleManager]) - 如果不为None，必须是 :class:`mindspore.LossScaleManager` 的子类，用于缩放损失系数(loss scale)。设置level不会影响该属性。
+        - **loss_scale_manager** (Union[None, LossScaleManager]) - 如果不为None，必须是 :class:`mindspore.amp.LossScaleManager` 的子类，用于缩放损失系数(loss scale)。设置level不会影响该属性。
 
     异常：
         - **ValueError** - 在CPU上，属性 `loss_scale_manager` 不是 `None` 或 `FixedLossScaleManager` （其属性 `drop_overflow_update=False` ）。
