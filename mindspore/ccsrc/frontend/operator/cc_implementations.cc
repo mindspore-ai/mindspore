@@ -314,14 +314,51 @@ LOGIC_OP(Ne)
 LOGIC_OP(Le)
 LOGIC_OP(Ge)
 
-template <typename T, typename U>
-T InnerBitAnd(T x, U y) {
+template <typename T>
+T InnerBitAnd(T x, T y) {
   return x & y;
 }
 
-template <typename T, typename U>
-T InnerBitOr(T x, U y) {
+template <typename T>
+T InnerBitOr(T x, T y) {
   return x | y;
+}
+
+template <typename T>
+T InnerBitXor(T x, T y) {
+  return x ^ y;
+}
+
+template <typename T>
+T InnerBitLeftShift(T x, T y) {
+  if (y < 0) {
+    MS_EXCEPTION(ValueError) << "For shift operator, shift count must be a non-negative integer.";
+  }
+  if (x == 0) {
+    return x;
+  }
+  if (x < 0) {
+    if (x == -1) {
+      constexpr T max_bit_count = 64;
+      if (y == max_bit_count - 1) {
+        return std::numeric_limits<T>::min();
+      }
+    }
+    if (x == std::numeric_limits<T>::min() || static_cast<T>(__builtin_clzll(static_cast<uint64_t>(-x))) <= y) {
+      MS_EXCEPTION(RuntimeError) << "Arithmetic left shift causes int64 integer overflow.";
+    }
+  } else if (static_cast<T>(__builtin_clzll(static_cast<uint64_t>(x))) <= y) {
+    MS_EXCEPTION(RuntimeError) << "Arithmetic left shift causes int64 integer overflow.";
+  }
+  return x << y;
+}
+
+template <typename T>
+T InnerBitRightShift(T x, T y) {
+  if (y < 0) {
+    MS_EXCEPTION(ValueError) << "For shift operator, shift count must be a non-negative integer.";
+  }
+  return x >> y;
 }
 
 #define BIT_OP(op_t)                                                                                      \
@@ -336,15 +373,15 @@ T InnerBitOr(T x, U y) {
     MS_EXCEPTION_IF_NULL(x);                                                                              \
     MS_EXCEPTION_IF_NULL(y);                                                                              \
     if (x->isa<Int32Imm>() && y->isa<Int32Imm>()) {                                                       \
-      int32_t res = InnerBit##op_t(GetValue<int>(x), GetValue<int>(y));                                   \
+      int32_t res = InnerBit##op_t(IntToLong(GetValue<int>(x)), IntToLong(GetValue<int>(y)));             \
       return MakeValue(res);                                                                              \
     }                                                                                                     \
     if (x->isa<Int64Imm>() && y->isa<Int32Imm>()) {                                                       \
-      int64_t res = InnerBit##op_t(GetValue<int64_t>(x), GetValue<int>(y));                               \
+      int64_t res = InnerBit##op_t(GetValue<int64_t>(x), IntToLong(GetValue<int>(y)));                    \
       return MakeValue(res);                                                                              \
     }                                                                                                     \
     if (x->isa<Int32Imm>() && y->isa<Int64Imm>()) {                                                       \
-      int64_t res = InnerBit##op_t(GetValue<int64_t>(y), GetValue<int>(x));                               \
+      int64_t res = InnerBit##op_t(IntToLong(GetValue<int>(x)), GetValue<int64_t>(y));                    \
       return MakeValue(res);                                                                              \
     }                                                                                                     \
     if (x->isa<Int64Imm>() && y->isa<Int64Imm>()) {                                                       \
@@ -356,8 +393,12 @@ T InnerBitOr(T x, U y) {
                             << ", value of x:" << x->ToString() << ", type of y:" << y->type_name()       \
                             << ", value of y:" << y->ToString();                                          \
   }
+
 BIT_OP(And)
 BIT_OP(Or)
+BIT_OP(Xor)
+BIT_OP(LeftShift)
+BIT_OP(RightShift)
 
 ValuePtr ScalarUAdd(const ValuePtrList &list) {
   constexpr size_t scalar_input_size = 1;

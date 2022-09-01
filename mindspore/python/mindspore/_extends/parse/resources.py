@@ -90,6 +90,8 @@ ops_symbol_map = {
     ast.Pow:        '**',
     ast.LShift:     '<<',
     ast.RShift:     '>>',
+    ast.BitAnd:     '&',
+    ast.BitOr:      '|',
     ast.BitXor:     '^',
 
     # undefined type
@@ -108,11 +110,11 @@ convert_object_map = {
     T.floordiv:     multitype_ops.floordiv,
     T.mod:          multitype_ops.mod,
     T.pow:          multitype_ops.pow_,
-    T.lshift:       NO_IMPLEMENT,
-    T.rshift:       NO_IMPLEMENT,
+    T.lshift:       multitype_ops.left_shift,
+    T.rshift:       multitype_ops.right_shift,
     T.and_:         multitype_ops.bitwise_and,
     T.or_:          multitype_ops.bitwise_or,
-    T.xor:          NO_IMPLEMENT,
+    T.xor:          multitype_ops.bitwise_xor,
     T.pos:          multitype_ops.uadd,
     T.neg:          multitype_ops.negative,
     T.invert:       F.logical_not,

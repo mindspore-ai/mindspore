@@ -521,6 +521,25 @@ def test_np_augassign_2():
     assert out_bitxor == 1
 
 
+def test_np_augassign_3():
+    """
+    Feature: JIT Fallback
+    Description: Test augassign method in graph mode.
+    Expectation: No exception.
+    """
+    @ms_function
+    def np_augassign():
+        value_bitand = np.int_(6)
+        value_bitand &= 3
+        value_bitor = np.int_(0)
+        value_bitor |= 1
+        return Tensor(value_bitand), Tensor(value_bitor)
+
+    out_bitand, out_bitor = np_augassign()
+    assert out_bitand == 2
+    assert out_bitor == 1
+
+
 def test_np_subscript():
     """
     Feature: JIT Fallback

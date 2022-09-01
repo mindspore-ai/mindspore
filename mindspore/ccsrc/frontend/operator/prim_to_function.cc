@@ -22,25 +22,26 @@ namespace mindspore {
 namespace prim {
 
 PrimToFunction::PrimToFunction()
-    : prim_func_type_map_({{"bool_not", kPrimTypeNumOneArg},       {"scalar_cos", kPrimTypeNumOneArg},
-                           {"scalar_exp", kPrimTypeNumOneArg},     {kScalarFloor, kPrimTypeNumOneArg},
-                           {"scalar_log", kPrimTypeNumOneArg},     {"scalar_sin", kPrimTypeNumOneArg},
-                           {"scalar_tan", kPrimTypeNumOneArg},     {kScalarTrunc, kPrimTypeNumOneArg},
-                           {"typeof", kPrimTypeNumOneArg},         {kScalarUadd, kPrimTypeNumOneArg},
-                           {kScalarUsub, kPrimTypeNumOneArg},      {kScalarAdd, kPrimTypeNumTwoArgs},
-                           {"bool_and", kPrimTypeNumTwoArgs},      {"bool_eq", kPrimTypeNumTwoArgs},
-                           {"bool_or", kPrimTypeNumTwoArgs},       {kScalarDiv, kPrimTypeNumTwoArgs},
-                           {"scalar_eq", kPrimTypeNumTwoArgs},     {"scalar_ge", kPrimTypeNumTwoArgs},
-                           {"scalar_gt", kPrimTypeNumTwoArgs},     {"scalar_le", kPrimTypeNumTwoArgs},
-                           {"scalar_lt", kPrimTypeNumTwoArgs},     {"scalar_ne", kPrimTypeNumTwoArgs},
-                           {kScalarMod, kPrimTypeNumTwoArgs},      {kScalarMul, kPrimTypeNumTwoArgs},
-                           {kScalarPow, kPrimTypeNumTwoArgs},      {kScalarSub, kPrimTypeNumTwoArgs},
-                           {kScalarFloordiv, kPrimTypeNumTwoArgs}, {"bit_and", kPrimTypeNumTwoArgs},
-                           {"bit_or", kPrimTypeNumTwoArgs},        {kStringNot, kPrimTypeStrOneArg},
-                           {kStringIn, kPrimTypeStrTwoArgs},       {kStringConcat, kPrimTypeStrTwoArgs},
-                           {kStringEq, kPrimTypeStrTwoArgs},       {kStringLt, kPrimTypeStrTwoArgs},
-                           {kStringGt, kPrimTypeStrTwoArgs},       {kStringLe, kPrimTypeStrTwoArgs},
-                           {kStringGe, kPrimTypeStrTwoArgs}}) {}
+    : prim_func_type_map_({{"bool_not", kPrimTypeNumOneArg},        {"scalar_cos", kPrimTypeNumOneArg},
+                           {"scalar_exp", kPrimTypeNumOneArg},      {kScalarFloor, kPrimTypeNumOneArg},
+                           {"scalar_log", kPrimTypeNumOneArg},      {"scalar_sin", kPrimTypeNumOneArg},
+                           {"scalar_tan", kPrimTypeNumOneArg},      {kScalarTrunc, kPrimTypeNumOneArg},
+                           {"typeof", kPrimTypeNumOneArg},          {kScalarUadd, kPrimTypeNumOneArg},
+                           {kScalarUsub, kPrimTypeNumOneArg},       {kScalarAdd, kPrimTypeNumTwoArgs},
+                           {"bool_and", kPrimTypeNumTwoArgs},       {"bool_eq", kPrimTypeNumTwoArgs},
+                           {"bool_or", kPrimTypeNumTwoArgs},        {kScalarDiv, kPrimTypeNumTwoArgs},
+                           {"scalar_eq", kPrimTypeNumTwoArgs},      {"scalar_ge", kPrimTypeNumTwoArgs},
+                           {"scalar_gt", kPrimTypeNumTwoArgs},      {"scalar_le", kPrimTypeNumTwoArgs},
+                           {"scalar_lt", kPrimTypeNumTwoArgs},      {"scalar_ne", kPrimTypeNumTwoArgs},
+                           {kScalarMod, kPrimTypeNumTwoArgs},       {kScalarMul, kPrimTypeNumTwoArgs},
+                           {kScalarPow, kPrimTypeNumTwoArgs},       {kScalarSub, kPrimTypeNumTwoArgs},
+                           {kScalarFloordiv, kPrimTypeNumTwoArgs},  {"bit_and", kPrimTypeNumTwoArgs},
+                           {"bit_or", kPrimTypeNumTwoArgs},         {"bit_xor", kPrimTypeNumTwoArgs},
+                           {"bit_left_shift", kPrimTypeNumTwoArgs}, {"bit_right_shift", kPrimTypeNumTwoArgs},
+                           {kStringNot, kPrimTypeStrOneArg},        {kStringConcat, kPrimTypeStrTwoArgs},
+                           {kStringIn, kPrimTypeStrTwoArgs},        {kStringEq, kPrimTypeStrTwoArgs},
+                           {kStringLt, kPrimTypeStrTwoArgs},        {kStringGt, kPrimTypeStrTwoArgs},
+                           {kStringLe, kPrimTypeStrTwoArgs},        {kStringGe, kPrimTypeStrTwoArgs}}) {}
 
 bool PrimToFunction::GetFunction(const PrimitivePtr &prim, FunctionPtr *func) const {
   if (func != nullptr) {

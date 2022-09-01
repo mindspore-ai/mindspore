@@ -36,6 +36,9 @@ from ..._c_expression import call_constant_folding
 # Bit operation
 bit_and = Primitive("bit_and")
 bit_or = Primitive("bit_or")
+bit_xor = Primitive("bit_xor")
+bit_left_shift = Primitive("bit_left_shift")
+bit_right_shift = Primitive("bit_right_shift")
 # String operation
 string_lt = Primitive("string_lt")
 string_gt = Primitive("string_gt")
