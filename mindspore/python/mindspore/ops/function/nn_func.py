@@ -1195,11 +1195,11 @@ def deformable_conv2d(x, weight, offsets, kernel_size, strides, padding, bias=No
     out_channel = weight_shape[0]
     strides_conv = (kernel_size[0], kernel_size[1])
     conv = _get_cache_prim(P.Conv2D)(out_channel, kernel_size, 1, "valid", 0, strides_conv, 1, groups)
-    bias_add = _get_cache_prim(P.BiasAdd)()
+    bias_add_ = _get_cache_prim(P.BiasAdd)()
 
     output = conv(fm_offset, weight)
     if bias is not None:
-        output = bias_add(output, bias)
+        output = bias_add_(output, bias)
     return output
 
 
@@ -2543,7 +2543,7 @@ def adaptive_avg_pool1d(input_x, output_size):
     validator.check_value_type('output_size', output_size, [int], 'adaptive_avg_pool1d')
 
     if len(x_in_shape) != 3:
-        raise ValueError("For adaptive_avg_pool1d input must has 3 dim, but got {}.".format(len(x_in_shape)))
+        raise ValueError("For adaptive_avg_pool1d input must have 3 dim, but got {}.".format(len(x_in_shape)))
     if x_in_shape[2] < output_size:
         raise ValueError("For adaptive_avg_pool1d input's last dimension must be greater or equal to "
                          "output size {}, but got {}.".format(output_size, x_in_shape[2]))
@@ -2621,7 +2621,7 @@ def adaptive_max_pool1d(input_x, output_size):
     validator.check_value_type('output_size', output_size, [int], 'adaptive_max_pool1d')
 
     if len(x_in_shape) != 3:
-        raise ValueError("For adaptive_max_pool1d input must has 3 dim, but got {}.".format(len(x_in_shape)))
+        raise ValueError("For adaptive_max_pool1d input must have 3 dim, but got {}.".format(len(x_in_shape)))
     if x_in_shape[2] < output_size:
         raise ValueError("For adaptive_max_pool1d input's last dimension must be greater or equal to "
                          "output size {}, but got {}.".format(output_size, x_in_shape[2]))
@@ -2650,6 +2650,174 @@ def adaptive_max_pool1d(input_x, output_size):
     return input_x
 
 
+def batch_norm(input_x, running_mean, running_var, weight, bias, training=False, momentum=0.1, eps=1e-5):
+    r"""
+    Batch Normalization for input data and updated parameters.
+
+    Batch Normalization is widely used in convolutional neural networks. This operation
+    applies Batch Normalization over inputs to avoid internal covariate shift as described
+    in the paper `Batch Normalization: Accelerating Deep Network Training by Reducing Internal
+    Covariate Shift <https://arxiv.org/abs/1502.03167>`_. It rescales and recenters the
+    features using a mini-batch of data and the learned parameters can be described
+    in the following formula,
+
+    .. math::
+
+        y = \frac{x - mean}{\sqrt{variance + \epsilon}} * \gamma + \beta
+
+    where :math:`\gamma` is scale, :math:`\beta` is bias, :math:`\epsilon` is epsilon, :math:`mean` is the
+    mean of input_x, :math:`variance` is the variance of input_x.
+
+    .. warning::
+        - If the operation is used for inference, and outputs "reserve_space_1" and "reserve_space_2" are available,
+          then "reserve_space_1" has the same value as "mean" and "reserve_space_2" has the same value as "variance".
+        - For Ascend 310, the result accuracy fails to reach 1‰ due to the square root instruction.
+
+    Args:
+        If `training` is False, `scale`, `bias`, `mean` and `variance` are Tensors.
+
+            input_x (Tensor) - Tensor of shape :math:`(N, C)`, with float16 or float32 data type.
+            running_mean (Tensor) - Tensor of shape :math:`(C,)`, has the same data type with `scale`.
+            running_var (Tensor) - Tensor of shape :math:`(C,)`, has the same data type with `scale`.
+            weight (Tensor) - Tensor of shape :math:`(C,)`, with float16 or float32 data type.
+            bias (Tensor) - Tensor of shape :math:`(C,)`, has the same data type with `scale`.
+
+        If `training` is True, `scale`, `bias`, `mean` and `variance` are Parameters.
+
+            input_x (Tensor) - Tensor of shape :math:`(N, C)`, with float16 or float32 data type.
+            running_mean (Parameter) - Parameter of shape :math:`(C,)`, has the same data type with `scale`.
+            running_var (Parameter) - Parameter of shape :math:`(C,)`, has the same data type with `scale`.
+            weight (Parameter) - Parameter of shape :math:`(C,)`, with float16 or float32 data type.
+            bias (Parameter) - Parameter of shape :math:`(C,)`, has the same data type with `scale`.
+
+        training (bool): If `training` is True, `mean` and `variance` are computed during training.
+            If `training` is False, they're loaded from checkpoint during inference. Default: False.
+        momentum (float): The hyper parameter to compute moving average for running_mean and running_var
+            (e.g. :math:`new\_running\_mean = (1 - momentum) * running\_mean + momentum * current\_mean`).
+            Momentum value must be [0, 1]. Default: 0.1.
+        eps (float): A small value added for numerical stability. Default: 1e-5.
+
+    Returns:
+        output_x (Tensor) - The same type and shape as the input_x. The shape is :math:`(N, C)`.
+
+    Raises:
+        TypeError: If `training` is not a bool.
+        TypeError: If dtype of `epsilon` or `momentum` is not float.
+        TypeError: If `input_x`, `scale`, `bias`, `mean` or `variance` is not a Tensor.
+        TypeError: If dtype of `input_x`, `scale` is neither float16 nor float32.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU`` ``GPU``
+
+    Examples:
+        >>> input_x = Tensor(np.ones([2, 2]), mindspore.float32)
+        >>> running_mean = Tensor(np.ones([2]), mindspore.float32)
+        >>> running_var = Tensor(np.ones([2]), mindspore.float32)
+        >>> weight = Tensor(np.ones([2]), mindspore.float32)
+        >>> bias = Tensor(np.ones([2]), mindspore.float32)
+        >>> output = ops.batch_norm(input_x, running_mean, running_var, weight, bias)
+        >>> print(output)
+        [[1. 1.]
+         [1. 1.]]
+    """
+    batch_norm_op = _get_cache_prim(P.BatchNorm)(is_training=training, epsilon=eps, momentum=momentum)
+    output = batch_norm_op(input_x, weight, bias, running_mean, running_var)
+    return output[0]
+
+
+def bias_add(input_x, bias):
+    r"""
+    Returns the sum of the input Tensor and the bias Tensor. Before adding, the bias Tensor will be broadcasted to be
+    consistent with the shape of the input Tensor.
+
+    Args:
+        input_x (Tensor) - The input tensor. The shape can be 2-5 dimensions.
+            The data type should be float16 or float32.
+        bias (Tensor) - The bias tensor, with shape :math:`(C)`. C must be the same as channel dimension C of
+            `input_x`. The data type should be float16 or float32.
+
+    Returns:
+        Tensor, with the same shape and data type as `input_x`.
+
+    Raises:
+        TypeError: If `input_x` or `bias` is not a Tensor.
+        TypeError: If dtype of `input_x` or `bias` is neither float16 nor float32.
+        TypeError: If dtype of `input_x` or `bias` is inconsistent.
+        TypeError: If dimension of `input_x` is not in the range [2, 5].
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> input_x = Tensor(np.arange(6).reshape((2, 3)), mindspore.float32)
+        >>> bias = Tensor(np.random.random(3).reshape((3)), mindspore.float32)
+        >>> output = ops.bias_add(input_x, bias)
+        >>> print(output.shape)
+        (2, 3)
+    """
+    bias_add_op = _get_cache_prim(P.BiasAdd)(data_format="NCHW")
+    return bias_add_op(input_x, bias)
+
+
+def binary_cross_entropy(logits, labels, weight, reduction='mean'):
+    r"""
+    Computes the binary cross entropy between the logits and the labels.
+
+    Sets logits as :math:`x`, labels as :math:`y`, output as :math:`\ell(x, y)`.
+    Let,
+
+    .. math::
+        L = \{l_1,\dots,l_N\}^\top, \quad
+        l_n = - w_n \left[ y_n \cdot \log x_n + (1 - y_n) \cdot \log (1 - x_n) \right]
+
+    In which, :math:`L` indicates the loss of all batch_sizes, :math:`l` indicates the loss of one batch_size,
+    and n indicates one batch_size in the 1-N range. Then,
+
+    .. math::
+        \ell(x, y) = \begin{cases}
+        L, & \text{if reduction} = \text{'none';}\\
+        \operatorname{mean}(L), & \text{if reduction} = \text{'mean';}\\
+        \operatorname{sum}(L),  & \text{if reduction} = \text{'sum'.}
+        \end{cases}
+
+    .. warning::
+        - The value of "x" must range from 0 to 1.
+        - The value of "y" must be "0" or "1".
+
+    Args:
+        logits (Tensor) - The input Tensor. The data type must be float16 or float32,
+            The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
+        labels (Tensor) - The label Tensor which has the same shape and data type as `logits`.
+        weight (Tensor, optional) - A rescaling weight applied to the loss of each batch element.
+            And it must have the same shape and data type as `logits`. Default: None.
+        reduction (str): Specifies the reduction to be applied to the output.
+            Its value must be one of 'none', 'mean' or 'sum'. Default: 'mean'.
+
+    Returns:
+        Tensor, has the same dtype as `logits`. if `reduction` is 'none', then it has the same shape as `logits`.
+        Otherwise, it is a scalar Tensor.
+
+    Raises:
+        TypeError: If dtype of `logits`, `labels` or `weight` (if given) is neither float16 nor float32.
+        ValueError: If `reduction` is not one of 'none', 'mean' or 'sum'.
+        ValueError: If shape of `labels` is not the same as `logits` or `weight` (if given).
+        TypeError: If `logits`, `labels` or `weight` is not a Tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> logits = Tensor(np.array([0.2, 0.7, 0.1]), mindspore.float32)
+        >>> labels = Tensor(np.array([0., 1., 0.]), mindspore.float32)
+        >>> weight = Tensor(np.array([1, 2, 2]), mindspore.float32)
+        >>> output = ops.binary_cross_entropy(logits, labels, weight)
+        >>> print(output)
+        0.38240486
+    """
+    binary_cross_entropy_op = _get_cache_prim(P.BinaryCrossEntropy)(reduction=reduction)
+    return binary_cross_entropy_op(logits, labels, weight)
+
+
 __all__ = [
     'adaptive_avg_pool1d',
     'adaptive_avg_pool2d',
@@ -2657,6 +2825,9 @@ __all__ = [
     'adaptive_max_pool1d',
     'adaptive_max_pool3d',
     'avg_pool2d',
+    'batch_norm',
+    'bias_add',
+    'binary_cross_entropy',
     'binary_cross_entropy_with_logits',
     'max_pool3d',
     'kl_div',
