@@ -283,7 +283,7 @@ bool ReduceCpuKernelFunc<T>::RunFunc(const std::vector<kernel::AddressPtr> &inpu
       *output_addr = input_addr[0];
       reduce_func_(input_addr, output_addr, 1, input_size, nullptr);
       if (reduce_type_ == ReduceFuncType::kReduceMeanType) {
-        *output_addr /= static_cast<float>(input_size);
+        *output_addr /= SizeToFloat(input_size);
       }
     } else {
       AccelerateLongVector(input_addr, output_addr, input_size);
@@ -316,7 +316,7 @@ bool ReduceCpuKernelFunc<T>::RunFunc(const std::vector<kernel::AddressPtr> &inpu
           for (size_t i = start; i < end; ++i) {
             (void)ReduceSumDim2Axis1(stride, input_addr + i * stride, output_addr + i);
             if (reduce_type_ == ReduceFuncType::kReduceMeanType) {
-              output_addr[i] /= static_cast<float>(stride);
+              output_addr[i] /= SizeToFloat(stride);
             }
           }
         };
@@ -369,7 +369,7 @@ void ReduceCpuKernelFunc<T>::AccelerateLongVector(T *input_addr, T *output_addr,
   };
   ParallelLaunchAutoSearch(task, input_size, this, &parallel_search_info_);
   if (reduce_type_ == ReduceFuncType::kReduceMeanType) {
-    *output_addr /= static_cast<float>(input_size);
+    *output_addr /= SizeToFloat(input_size);
   }
 }
 
