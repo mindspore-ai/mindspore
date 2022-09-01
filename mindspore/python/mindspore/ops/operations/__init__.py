@@ -105,7 +105,7 @@ from .random_ops import (RandomChoiceWithMask, StandardNormal, Gamma, RandomGamm
                          RandomCategorical, StandardLaplace, Multinomial, UniformCandidateSampler,
                          LogUniformCandidateSampler)
 from .rl_ops import (BufferAppend, BufferGetItem, BufferSample)
-from .sparse_ops import (SparseToDense, SparseTensorDenseMatmul)
+from .sparse_ops import (SparseToDense, SparseTensorDenseMatmul, SparseTensorDenseAdd)
 from .sponge_ops import (BondForce, BondEnergy, BondAtomEnergy, BondForceWithAtomEnergy, BondForceWithAtomVirial,
                          DihedralForce, DihedralEnergy, DihedralAtomEnergy, DihedralForceWithAtomEnergy, AngleForce,
                          AngleEnergy, AngleAtomEnergy, AngleForceWithAtomEnergy, PMEReciprocalForce,

@@ -566,7 +566,8 @@ Sparse Operator
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
-
+    
+    mindspore.ops.SparseTensorDenseAdd
     mindspore.ops.SparseTensorDenseMatmul
     mindspore.ops.SparseToDense
 
