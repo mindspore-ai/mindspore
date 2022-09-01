@@ -1078,7 +1078,7 @@ def sigmoid(input_x):
     where :math:`x_i` is an element of the input_x.
 
     Args:
-        input_x (Tensor) - Tensor of any dimension, the data type is float16, float32, float64, complex64 or complex128.
+        input_x (Tensor): Tensor of any dimension, the data type is float16, float32, float64, complex64 or complex128.
 
     Returns:
         Tensor, with the same type and shape as the input_x.
