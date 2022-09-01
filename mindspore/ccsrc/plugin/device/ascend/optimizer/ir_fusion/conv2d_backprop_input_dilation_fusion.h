@@ -37,7 +37,7 @@ class Conv2dBackpropInputDilationFusion : public PatternProcessPass {
 
  protected:
   AnfNodePtr CreateConv2DbpInput(const FuncGraphPtr &, const AnfNodePtr &, const AnfNodePtr &, const EquivPtr &) const;
-  AnfNodePtr CreateDilation(const FuncGraphPtr &, const AnfNodePtr &, const AnfNodePtr &, const AnfNodePtr &) const;
+  AnfNodePtr CreateDilation(const FuncGraphPtr &, const AnfNodePtr &, const AnfNodePtr &) const;
   AnfNodePtr CreatePad(const FuncGraphPtr &, const AnfNodePtr &, const AnfNodePtr &,
                        const std::vector<AnfNodePtr> &) const;
 

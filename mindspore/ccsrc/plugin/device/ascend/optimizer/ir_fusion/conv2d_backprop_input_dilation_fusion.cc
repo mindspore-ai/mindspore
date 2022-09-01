@@ -100,7 +100,7 @@ AnfNodePtr Conv2dBackpropInputDilationFusion::CreateConv2DbpInput(const FuncGrap
 }
 
 AnfNodePtr Conv2dBackpropInputDilationFusion::CreateDilation(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
-                                                             const AnfNodePtr &grad, const AnfNodePtr &in) const {
+                                                             const AnfNodePtr &in) const {
   std::vector<AnfNodePtr> dilation_inputs = {NewValueNode(std::make_shared<Primitive>("Dilation")), in};
   auto dilation = NewCNode(dilation_inputs, func_graph);
   MS_EXCEPTION_IF_NULL(dilation);
@@ -134,7 +134,7 @@ const AnfNodePtr Conv2dBackpropInputDilationFusion::Process(const FuncGraphPtr &
   auto input = common::AnfAlgo::GetInputNode(cnode, 0);
   AnfNodePtr conv = CreateConv2DbpInput(graph, node, input, equiv);
   common::AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), conv);
-  AnfNodePtr dilation = CreateDilation(graph, node, input, conv);
+  AnfNodePtr dilation = CreateDilation(graph, node, conv);
   return dilation;
 }
 }  // namespace opt

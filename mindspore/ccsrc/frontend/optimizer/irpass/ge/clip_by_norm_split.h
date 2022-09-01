@@ -17,11 +17,6 @@
 #ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_CLIP_BY_NORM_FOR_GE_H_
 #define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_CLIP_BY_NORM_FOR_GE_H_
 
-#include <algorithm>
-#include <memory>
-#include <vector>
-#include <string>
-
 #include "frontend/optimizer/optimizer_caller.h"
 #include "frontend/optimizer/anf_visitor.h"
 #include "frontend/operator/ops.h"

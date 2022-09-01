@@ -36,7 +36,7 @@ class EndGraphTask : public TaskRepeater<EndGraphTaskInfo> {
  private:
   std::shared_ptr<EndGraphTaskInfo> task_info_;
   rtStream_t stream_;
-  rtModel_t rt_model_handle_;
+  rtModel_t rt_model_handle_ = nullptr;
 };
 }  // namespace mindspore::ge::model_runner
 #endif  // MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_GE_RUNTIME_END_GRAPH_TASK_H_

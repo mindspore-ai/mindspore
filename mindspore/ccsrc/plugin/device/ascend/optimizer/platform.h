@@ -25,37 +25,37 @@ namespace mindspore {
 namespace opt {
 #define GET_PLATFORM fe::PlatformInfoManager::Instance()
 
-#define MS_CHECK_CUBE_VECTOR_SPLIT()                                                     \
-  do {                                                                                   \
-    fe::PlatformInfo platform_info;                                                      \
-    fe::OptionalInfo opti_compilation_info;                                              \
-    GET_PLATFORM.GetPlatformInfoWithOutSocVersion(platform_info, opti_compilation_info); \
-    if (platform_info.ai_core_spec.cube_vector_split == 1) {                             \
-      MS_LOG(INFO) << name() << "not support cube vector split.";                        \
-      return;                                                                            \
-    }                                                                                    \
+#define MS_CHECK_CUBE_VECTOR_SPLIT()                                                           \
+  do {                                                                                         \
+    fe::PlatformInfo platform_info;                                                            \
+    fe::OptionalInfo opti_compilation_info;                                                    \
+    (void)GET_PLATFORM.GetPlatformInfoWithOutSocVersion(platform_info, opti_compilation_info); \
+    if (platform_info.ai_core_spec.cube_vector_split == 1) {                                   \
+      MS_LOG(INFO) << name() << "not support cube vector split.";                              \
+      return;                                                                                  \
+    }                                                                                          \
   } while (0)
 
-#define MS_CHECK_CUBE_VECTOR_NOT_SPLIT()                                                 \
-  do {                                                                                   \
-    fe::PlatformInfo platform_info;                                                      \
-    fe::OptionalInfo opti_compilation_info;                                              \
-    GET_PLATFORM.GetPlatformInfoWithOutSocVersion(platform_info, opti_compilation_info); \
-    if (platform_info.ai_core_spec.cube_vector_split != 1) {                             \
-      MS_LOG(INFO) << name() << "just support cube vector split.";                       \
-      return nullptr;                                                                    \
-    }                                                                                    \
+#define MS_CHECK_CUBE_VECTOR_NOT_SPLIT()                                                       \
+  do {                                                                                         \
+    fe::PlatformInfo platform_info;                                                            \
+    fe::OptionalInfo opti_compilation_info;                                                    \
+    (void)GET_PLATFORM.GetPlatformInfoWithOutSocVersion(platform_info, opti_compilation_info); \
+    if (platform_info.ai_core_spec.cube_vector_split != 1) {                                   \
+      MS_LOG(INFO) << name() << "just support cube vector split.";                             \
+      return nullptr;                                                                          \
+    }                                                                                          \
   } while (0)
 
-#define MS_CHECK_CORE_CNT_32()                                                           \
-  do {                                                                                   \
-    fe::PlatformInfo platform_info;                                                      \
-    fe::OptionalInfo opti_compilation_info;                                              \
-    GET_PLATFORM.GetPlatformInfoWithOutSocVersion(platform_info, opti_compilation_info); \
-    if (platform_info.soc_info.ai_core_cnt != 32) {                                      \
-      MS_LOG(INFO) << name() << "not support (ai_core_cnt != 32).";                      \
-      return nullptr;                                                                    \
-    }                                                                                    \
+#define MS_CHECK_CORE_CNT_32()                                                                 \
+  do {                                                                                         \
+    fe::PlatformInfo platform_info;                                                            \
+    fe::OptionalInfo opti_compilation_info;                                                    \
+    (void)GET_PLATFORM.GetPlatformInfoWithOutSocVersion(platform_info, opti_compilation_info); \
+    if (platform_info.soc_info.ai_core_cnt != 32) {                                            \
+      MS_LOG(INFO) << name() << "not support (ai_core_cnt != 32).";                            \
+      return nullptr;                                                                          \
+    }                                                                                          \
   } while (0)
 
 bool PlatformInfoInitialization(const std::string &soc_version);
