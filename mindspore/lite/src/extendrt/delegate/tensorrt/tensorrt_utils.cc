@@ -24,6 +24,9 @@
 #include "src/extendrt/delegate/tensorrt/distribution/distribution_collective.h"
 
 namespace mindspore::lite {
+namespace {
+const int INPUT2 = 2;
+}
 nvinfer1::Dims ConvertCudaDims(int data, size_t size) {
   nvinfer1::Dims dims{};
   dims.nbDims = -1;
@@ -718,6 +721,86 @@ int ParseData2Vector(const mindspore::MSTensor &ms_tensor, std::vector<float> *d
     }
   }
   return RET_OK;
+}
+
+nvinfer1::ITensor *ExpandDim(TensorRTContext *ctx, nvinfer1::ITensor *input_tensor, int axis) {
+  // input has to prepocess to nchw
+  auto input_dims = input_tensor->getDimensions();
+  nvinfer1::IShuffleLayer *shuffle_layer = ctx->network()->addShuffle(*input_tensor);
+  // if expand dim not at last dim and shape is dynamic, change to expanddim at last dim and transpose
+  bool special_expand = false;
+  for (int i = 0; i < input_dims.nbDims; i++) {
+    special_expand = special_expand || input_dims.d[i] == -1;
+  }
+  special_expand = special_expand && (axis != -1 && axis != input_dims.nbDims);
+
+  if (special_expand) {
+    std::vector<int64_t> new_shape;
+    for (int i = 0; i < input_dims.nbDims; i++) {
+      new_shape.push_back(input_dims.d[i] == -1 ? 0 : input_dims.d[i]);
+    }
+    new_shape.push_back(1);
+    nvinfer1::Dims new_dims = ConvertCudaDims(new_shape);
+    if (new_dims.nbDims == -1) {
+      return nullptr;
+    }
+
+    shuffle_layer->setReshapeDimensions(new_dims);
+    // transpose
+    nvinfer1::Permutation perm{};
+    for (int i = 0; i < new_dims.nbDims; i++) {
+      if (i < axis) {
+        perm.order[i] = i;
+      } else if (i == axis) {
+        perm.order[i] = new_dims.nbDims - 1;
+      } else {
+        perm.order[i] = i - 1;
+      }
+    }
+    nvinfer1::IShuffleLayer *trans_layer = ctx->network()->addShuffle(*shuffle_layer->getOutput(0));
+    if (trans_layer == nullptr) {
+      MS_LOG(ERROR) << "add transpose layer failed for special expand dims op ";
+      return nullptr;
+    }
+    trans_layer->setFirstTranspose(perm);
+    return trans_layer->getOutput(0);
+  } else {
+    std::vector<int64_t> new_shape;
+    for (int i = 0; i < input_dims.nbDims; i++) {
+      if (axis == i) {
+        new_shape.push_back(1);
+      }
+      new_shape.push_back(input_dims.d[i] == -1 ? 0 : input_dims.d[i]);
+    }
+    if (axis == -1 || axis == input_dims.nbDims) {
+      new_shape.push_back(1);
+    }
+    nvinfer1::Dims new_dims = ConvertCudaDims(new_shape);
+    if (new_dims.nbDims == -1) {
+      return nullptr;
+    }
+    shuffle_layer->setReshapeDimensions(new_dims);
+    return shuffle_layer->getOutput(0);
+  }
+}
+
+nvinfer1::ITensor *Broadcast(TensorRTContext *ctx, nvinfer1::ITensor *input, nvinfer1::ITensor *shape) {
+  int rank = shape->getDimensions().d[0];
+
+  nvinfer1::Dims starts{rank};
+  std::fill(starts.d, starts.d + rank, 0);
+  nvinfer1::Dims strides{rank};
+  std::fill(strides.d, strides.d + rank, 1);
+
+  auto slice_layer = ctx->network()->addSlice(*input, starts, {}, strides);
+  slice_layer->setMode(nvinfer1::SliceMode::kWRAP);
+  slice_layer->setInput(INPUT2, *shape);
+
+  auto shuffler_output = slice_layer->getOutput(0);
+  if (shuffler_output == nullptr) {
+    MS_LOG(ERROR) << "add slice layer failed";
+  }
+  return shuffler_output;
 }
 
 nvinfer1::ITensor *Reshape(TensorRTContext *ctx, nvinfer1::ITensor *input, const std::vector<int64_t> &shape) {
