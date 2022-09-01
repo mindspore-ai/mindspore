@@ -2700,7 +2700,7 @@ class ConcatOffsetV1(Primitive):
         """Initialize ConcatOffsetV1"""
 
 
-class ParallelConcat(PrimitiveWithInfer):
+class ParallelConcat(Primitive):
     r"""
     Concats tensor in the first dimension.
 
@@ -2716,17 +2716,21 @@ class ParallelConcat(PrimitiveWithInfer):
 
     Inputs:
         - **values** (tuple, list) - A tuple or a list of input tensors. The data type and shape of these
-          tensors must be the same. The data type is Number except float64.
+          tensors must be the same. The supported date type is Number on CPU, the same for Ascend except
+          [float64, complex64, complex128].
 
     Outputs:
         Tensor, data type is the same as `values`.
 
     Raises:
+        TypeError: If any type of the inputs is not a Tensor.
+        TypeError: If the data type of these tensors are not the same.
+        ValueError: If any tensor.shape[0] is not 1.
         ValueError: If length of shape of `values` is less than 1.
-        ValueError: The data type and shape of these tensors are not the same.
+        ValueError: If the shape of these tensors are not the same.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> data1 = Tensor(np.array([[0, 1]]).astype(np.int32))
@@ -2741,31 +2745,6 @@ class ParallelConcat(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """Initialize ParallelConcat"""
-
-    def __infer__(self, values):
-        x_shp = values['shape']
-        x_type = values['dtype']
-
-        validator.check_int(len(x_shp), 1, Rel.GE, f'x_shp length', self.name)
-
-        args = {f"x_type[{i}]": elem for i, elem in enumerate(x_type)}
-        validator.check_tensors_dtypes_same_and_valid(args, mstype.number_type + (mstype.bool_,), self.name)
-
-        first_elem = x_shp[0]
-        for i, elem in enumerate(x_shp[1:]):
-            j = i + 1
-            validator.check_equal_int(elem[0], 1, f'x_shp[{j}][0]', self.name)
-            validator.check(f"x_shp[0] shape", first_elem, f"x_shp[{j}] shape", elem, Rel.EQ, self.name)
-
-        ret_shp = x_shp[0].copy()
-        ret_shp[0] = len(x_shp)
-        self.add_prim_attr('shape', ret_shp)
-        self.add_prim_attr('N', len(x_shp))
-
-        out = {'shape': ret_shp,
-               'dtype': x_type[0],
-               'value': None}
-        return out
 
 
 def _get_stack_shape(value, x_shape, x_type, axis, prim_name):
