@@ -21,6 +21,7 @@ import com.mindspore.config.RunnerConfig;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Collections;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
@@ -96,11 +97,10 @@ public class ModelParallelRunner {
      */
     public boolean predict(List<MSTensor> inputs, List<MSTensor> outputs) {
         rwLock.readLock().lock();
-        if (this.modelParallelRunnerPtr == 0L) {
-            rwLock.readLock().unlock();
-            throw new IllegalStateException("predict cannot be called after calling free");
-        }
         try {
+            if (this.modelParallelRunnerPtr == 0L) {
+                return false;
+            }
             if (inputs == null || outputs == null || inputs.size() == 0) {
                 return false;
             }
@@ -148,7 +148,7 @@ public class ModelParallelRunner {
         rwLock.readLock().lock();
         if (this.modelParallelRunnerPtr == 0L) {
             rwLock.readLock().unlock();
-            throw new IllegalStateException("getInputs cannot be called after calling free");
+            return Collections.emptyList();
         }
         List<Long> ret = this.getInputs(this.modelParallelRunnerPtr);
         List<MSTensor> tensors = new ArrayList<>();
@@ -169,7 +169,7 @@ public class ModelParallelRunner {
         rwLock.readLock().lock();
         if (this.modelParallelRunnerPtr == 0L) {
             rwLock.readLock().unlock();
-            throw new IllegalStateException("getOutputs cannot be called after calling free");
+            return Collections.emptyList();
         }
         List<Long> ret = this.getOutputs(this.modelParallelRunnerPtr);
         List<MSTensor> tensors = new ArrayList<>();
