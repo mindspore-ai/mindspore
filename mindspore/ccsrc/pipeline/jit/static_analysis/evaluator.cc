@@ -61,6 +61,7 @@ void EvalFailLogging(const EvaluatorPtr &evaluator, const AbstractBasePtrList &,
 }  // namespace
 
 bool CheckIfAlwaysEval(const AnfNodeConfigPtr &conf, const AbstractBasePtr &arg) {
+  MS_EXCEPTION_IF_NULL(arg);
   auto new_sequence = dyn_cast_ptr<AbstractSequence>(arg);
   if (new_sequence != nullptr && new_sequence->sequence_nodes() != nullptr && new_sequence->size() != 0) {
     static AnalysisResultCacheMgr &cache_mgr = AnalysisResultCacheMgr::GetInstance();
@@ -621,6 +622,9 @@ EvalResultPtr ShardEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList 
 
 namespace {
 AbstractBasePtr ReduceDim(int *axis, const AbstractBasePtr &orig_abs, int *axis_size) {
+  MS_EXCEPTION_IF_NULL(axis);
+  MS_EXCEPTION_IF_NULL(orig_abs);
+  MS_EXCEPTION_IF_NULL(axis_size);
   if (!orig_abs->isa<abstract::AbstractTensor>()) {
     MS_LOG(EXCEPTION) << "The orig_abs should be AbstractTensor when axis is " << *axis << ", but got a "
                       << orig_abs->ToString() << ".";
@@ -687,6 +691,7 @@ AbstractBasePtr GetLogicalViewAbs(const AbstractBasePtr &physical_view_abs, cons
 
 AbstractBasePtr ExtendDim(int *axis, const AbstractBasePtr &orig_abs, int axis_size) {
   MS_EXCEPTION_IF_NULL(orig_abs);
+  MS_EXCEPTION_IF_NULL(axis);
   AbstractBasePtr out_abs = nullptr;
   ShapeVector orig_shape;
   if (orig_abs->isa<abstract::AbstractTensor>()) {
@@ -704,7 +709,10 @@ AbstractBasePtr ExtendDim(int *axis, const AbstractBasePtr &orig_abs, int axis_s
   (void)orig_shape.insert(orig_shape.begin() + *axis, axis_size);
   BaseShapePtr new_shape = std::make_shared<abstract::Shape>(orig_shape);
   if (orig_abs->isa<abstract::AbstractTensor>()) {
-    out_abs = orig_abs->Clone()->Broaden();
+    auto tmp_abs = orig_abs->Clone();
+    MS_EXCEPTION_IF_NULL(tmp_abs);
+    out_abs = tmp_abs->Broaden();
+    MS_EXCEPTION_IF_NULL(out_abs);
     out_abs->set_shape(new_shape);
   } else if (orig_abs->isa<AbstractScalar>()) {
     out_abs = std::make_shared<abstract::AbstractTensor>(orig_abs, new_shape);
@@ -717,6 +725,7 @@ AbstractBasePtr ExtendDim(int *axis, const AbstractBasePtr &orig_abs, int axis_s
 
 AbstractBasePtr GetPhysicalViewAbs(const AbstractBasePtr &logical_view_abs, const ValuePtr &out_axes, int axis_size) {
   MS_EXCEPTION_IF_NULL(logical_view_abs);
+  MS_EXCEPTION_IF_NULL(out_axes);
   auto logical_view_abs_sequence = dyn_cast_ptr<abstract::AbstractSequence>(logical_view_abs);
   if (logical_view_abs_sequence != nullptr) {
     AbstractBasePtrList logical_view_abs_list = logical_view_abs_sequence->elements();

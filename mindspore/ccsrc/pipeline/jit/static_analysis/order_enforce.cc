@@ -203,6 +203,7 @@ class OrderEnforcer {
   }
 
   bool IsSpecialParallelPrimitive(const AnfNodePtr &node) const {
+    MS_EXCEPTION_IF_NULL(node);
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     auto prim = GetCNodePrimitiveWithoutDoSignature(cnode);
@@ -393,6 +394,7 @@ class OrderEnforcer {
   }
 
   std::string GetRefKey(const AnfNodePtr &node) {
+    MS_EXCEPTION_IF_NULL(node);
     auto abs = node->abstract();
     if (abs == nullptr) {
       if (IsPrimitiveCNode(node, prim::kPrimDepend)) {

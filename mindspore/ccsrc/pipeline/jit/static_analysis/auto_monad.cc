@@ -450,8 +450,10 @@ class SideEffectFinder {
   }
 
   void CheckAndFixSwitchCall(const CNodePtr &caller, const FuncGraphVector &branches) const {
+    MS_EXCEPTION_IF_NULL(caller);
     const auto caller_input_size = caller->inputs().size();
     for (auto &branch : branches) {
+      MS_EXCEPTION_IF_NULL(branch);
       if (caller_input_size != branch->parameters().size() + 1) {
         // Fix branch if number of parameter mismatch.
         FixSwitchBranch(caller, branch);
@@ -464,6 +466,7 @@ class SideEffectFinder {
   }
 
   void FixSwitchBranch(const CNodePtr &caller, const FuncGraphPtr &branch) const {
+    MS_EXCEPTION_IF_NULL(branch);
     for (size_t i = caller->size() - 1; i > 0; --i) {
       auto &input = caller->input(i);
       if (HasAbstractUMonad(input)) {
@@ -773,6 +776,7 @@ class SideEffectFinder {
   }
 
   EffectInfo GetEffectInfo(const ValuePtr &value) {
+    MS_EXCEPTION_IF_NULL(value);
     // FuncGraph.
     auto graph = dyn_cast<FuncGraph>(value);
     if (graph != nullptr) {
@@ -788,6 +792,7 @@ class SideEffectFinder {
   }
 
   void GetOutputValues(const CNodePtr &cnode, std::vector<ValuePtr> *values) {
+    MS_EXCEPTION_IF_NULL(cnode);
     // CNode is a func graph call.
     auto graph = GetValueNode<FuncGraphPtr>(cnode->input(0));
     if (graph != nullptr) {
@@ -827,6 +832,8 @@ class SideEffectFinder {
   }
 
   void GetOutputValues(const FuncGraphPtr &graph, std::vector<ValuePtr> *values) {
+    MS_EXCEPTION_IF_NULL(graph);
+    MS_EXCEPTION_IF_NULL(values);
     auto output = graph->output();
     // Output is a value node.
     auto value = GetValueNode(output);

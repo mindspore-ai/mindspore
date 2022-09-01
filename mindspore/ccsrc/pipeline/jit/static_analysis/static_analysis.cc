@@ -81,6 +81,7 @@ size_t StackFrameDepth() { return stack_frame_depth; }
 size_t StackFrameMaxDepth() { return stack_frame_max_depth; }
 
 EvalResultPtr PrimitiveEvalCache::Get(const PrimitivePtr &prim, const AbstractBasePtrList &args) const {
+  MS_EXCEPTION_IF_NULL(prim);
   std::lock_guard<std::mutex> guard(mutex_);
   auto cache_iter = prim_cache_.find(prim->name());
   if (cache_iter == prim_cache_.end()) {
@@ -96,6 +97,7 @@ EvalResultPtr PrimitiveEvalCache::Get(const PrimitivePtr &prim, const AbstractBa
 
 void PrimitiveEvalCache::Put(const PrimitivePtr &prim, AttrValueMap &&attrs, const AbstractBasePtrList &args,
                              const EvalResultPtr &result) {
+  MS_EXCEPTION_IF_NULL(prim);
   std::lock_guard<std::mutex> guard(mutex_);
   (void)prim_cache_[prim->name()].emplace(PrimitiveEvalCacheKey{std::move(attrs), args}, result);
 }
@@ -380,6 +382,7 @@ EvalResultPtr AnalysisEngine::EvalCNode(const CNodePtr &cnode, const AnfNodeConf
 
   std::vector<EvaluatorPtr> evaluators;
   auto build_evaluator = [this, &evaluators, &cnode](const AbstractFuncAtomPtr &poss) {
+    MS_EXCEPTION_IF_NULL(poss);
     auto resolved_atom = poss;
     if (poss->isa<AsyncAbstractFuncAtom>()) {
       const auto &async_abs_func = poss->cast<AsyncAbstractFuncAtomPtr>();
@@ -963,6 +966,8 @@ AbstractBasePtr BuildAsyncAbstractRecursively(const AbstractBasePtr &orig_abs,
 void BuildPossibleSpecs(const AbstractBasePtr &first_result,
                         const std::vector<AsyncAbstractPtr> &branch_async_abstract_list,
                         AbstractBasePtrList *out_specs) {
+  MS_EXCEPTION_IF_NULL(out_specs);
+  MS_EXCEPTION_IF_NULL(first_result);
   std::vector<AsyncAbstractPtr> pending_async_abstract_list;
   std::size_t len = branch_async_abstract_list.size();
 
