@@ -35,6 +35,9 @@ void ConvCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   std::vector<int64_t> dst_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
 
   size_t src_dim = src_shape.size();
+  if (AnfAlgo::IsShapesDynamic({src_shape, weight_shape, dst_shape})) {
+    return;
+  }
   if (src_dim != SHAPE_4D && src_dim != SHAPE_5D) {
     MS_LOG(EXCEPTION) << "Conv only supports 4D/5D input, but got " << src_dim << "D!";
   }
@@ -44,9 +47,6 @@ void ConvCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   }
   if (src_dim == SHAPE_5D && format != NCDHW) {
     MS_LOG(EXCEPTION) << kernel_name_ << " only supports 5D input with format NCDHW, but got format " << format;
-  }
-  if (AnfAlgo::IsShapesDynamic({src_shape, weight_shape, dst_shape})) {
-    return;
   }
   dnnl::memory::dims kernel_size(weight_shape.begin() + NC_LEN, weight_shape.end());
   const size_t group = LongToSize(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, GROUP));

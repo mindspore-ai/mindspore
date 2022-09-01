@@ -127,6 +127,11 @@ std::vector<KernelAttr> ConvGradFilterCpuKernelMod::GetOpSupport() {
         .AddInputAttr(kNumberTypeFloat32)
         .AddInputAttr(kNumberTypeFloat32)
         .AddInputAttr(kNumberTypeInt64)
+        .AddOutputAttr(kNumberTypeFloat32),
+      KernelAttr()
+        .AddInputAttr(kNumberTypeFloat32)
+        .AddInputAttr(kNumberTypeFloat32)
+        .AddInputAttr(kNumberTypeInt32)
         .AddOutputAttr(kNumberTypeFloat32)}},
     {kConv3DBackpropFilter,
      {KernelAttr()

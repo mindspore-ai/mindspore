@@ -41,5 +41,19 @@ MS_REG_GPU_KERNEL_TWO(Conv2DBackpropFilter,
                         .AddInputAttr(kNumberTypeInt64)
                         .AddOutputAttr(kNumberTypeFloat16),
                       ConvGradFilterBkwGpuKernelMod, half, int64_t)
+MS_REG_GPU_KERNEL_TWO(Conv2DBackpropFilter,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeFloat32),
+                      ConvGradFilterBkwGpuKernelMod, float, int64_t)
+MS_REG_GPU_KERNEL_TWO(Conv2DBackpropFilter,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat16)
+                        .AddInputAttr(kNumberTypeFloat16)
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeFloat16),
+                      ConvGradFilterBkwGpuKernelMod, half, int64_t)
 }  // namespace kernel
 }  // namespace mindspore

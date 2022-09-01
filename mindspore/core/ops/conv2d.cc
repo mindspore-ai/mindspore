@@ -181,6 +181,18 @@ abstract::ShapePtr Conv2dInferShape(const PrimitivePtr &primitive, const std::ve
   auto w_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
   auto x_shape = x_shape_map[kShape];
   auto w_shape = w_shape_map[kShape];
+
+  auto x_shape_rank = SizeToLong(x_shape.size());
+  constexpr int dynamic_rank_len = 1;
+  constexpr int dynamic_rank_value = -2;
+  ShapeVector output_shape;
+  if (x_shape_rank == dynamic_rank_len && x_shape[0] == dynamic_rank_value) {
+    std::vector<ValuePtr> pad_list_val = {MakeValue(0), MakeValue(0), MakeValue(0), MakeValue(0)};
+    primitive->set_attr("pad_list", MakeValue(pad_list_val));
+    output_shape = {dynamic_rank_value};
+    return std::make_shared<abstract::Shape>(output_shape);
+  }
+
   const int64_t shape_size = 4;
   (void)CheckAndConvertUtils::CheckInteger("x shape size", SizeToLong(x_shape.size()), kEqual, shape_size, prim_name);
   (void)CheckAndConvertUtils::CheckInteger("w shape size", SizeToLong(w_shape.size()), kEqual, shape_size, prim_name);
@@ -238,7 +250,6 @@ abstract::ShapePtr Conv2dInferShape(const PrimitivePtr &primitive, const std::ve
   std::vector<ValuePtr> pad_list_val = {MakeValue(pad_list[0]), MakeValue(pad_list[1]), MakeValue(pad_list[2]),
                                         MakeValue(pad_list[3])};
   primitive->set_attr("pad_list", MakeValue(pad_list_val));
-  ShapeVector output_shape;
 
   output_shape = (data_format == Format::NHWC) ? ShapeVector{x_shape[n_axis], output_hw[0], output_hw[1], out_channel}
                                                : ShapeVector{x_shape[n_axis], out_channel, output_hw[0], output_hw[1]};

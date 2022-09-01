@@ -94,16 +94,16 @@ def get_bprop_conv2d(self):
     )
     get_shape = P.Shape()
     get_dyn_shape = P.TensorShape()
+    cast_type = P.Cast()
 
     def bprop(x, w, out, dout):
         x_shape = get_shape(x)
         w_shape = get_shape(w)
         if is_shape_unknown(x_shape):
             x_shape = get_dyn_shape(x)
-        if is_shape_unknown(w_shape):
             w_shape = get_dyn_shape(w)
+            w_shape = cast_type(w_shape, mstype.int32)
         dx = input_grad(dout, w, x_shape)
-
         dw = filter_grad(dout, x, w_shape)
         return dx, dw
 
