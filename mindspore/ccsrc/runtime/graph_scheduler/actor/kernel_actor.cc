@@ -29,14 +29,6 @@ namespace mindspore {
 namespace runtime {
 namespace {
 bool IsSomasEnable(const SomasInfo *somas_info) {
-  // Somas is currently closed in the runtime.
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  if ((ms_context->get_param<int>(MS_CTX_MEMORY_OPTIMIZE_LEVEL) == kOptimizeO0) ||
-      (ms_context->get_param<int>(MS_CTX_MEMORY_OPTIMIZE_LEVEL) == kOptimizeO1)) {
-    return false;
-  }
-
   return ((somas_info != nullptr) && (somas_info->whole_block_size_ != 0));
 }
 }  // namespace
@@ -115,7 +107,12 @@ void KernelActor::InitOutputInfo() {
 
     // The output taken over by soma does not need to allocate memory.
     if (kernel_info_->IsTensorEnableSomas(somas_outputs, i)) {
-      MS_EXCEPTION_IF_CHECK_FAIL((somas_outputs[i].second >= output_address->GetSize()), "The somas size is wrong.");
+      // Somas outputs use the info of kernelMod, and output address use the info of device address.
+      if (somas_outputs[i].second < output_address->GetSize()) {
+        MS_LOG(INFO) << GetAID().Name() << " check somas size warning, output index:" << i
+                     << " somas aligned size:" << somas_outputs[i].second
+                     << " is smaller than address size:" << output_address->GetSize();
+      }
       UpdateRefCount(output_address.get(), true);
       output_need_somas = true;
     } else {
@@ -148,8 +145,11 @@ void KernelActor::InitWorkspaceInfo() {
 
     // The workspace taken over by soma does not need to allocate memory.
     if (kernel_info_->IsTensorEnableSomas(somas_workspace, i)) {
-      MS_EXCEPTION_IF_CHECK_FAIL((somas_workspace[i].second >= workspace_address->GetSize()),
-                                 "The somas size is wrong.");
+      if (somas_workspace[i].second < workspace_address->GetSize()) {
+        MS_LOG(INFO) << GetAID().Name() << " check somas size warning, workspace index:" << i
+                     << " somas aligned size:" << somas_workspace[i].second
+                     << " is smaller than address size:" << workspace_address->GetSize();
+      }
       UpdateRefCount(workspace_address.get(), true);
       workspace_need_somas = true;
     } else {
@@ -173,6 +173,10 @@ void KernelActor::Run(OpContext<DeviceTensor> *const context) {
     FetchWorkspaceDeviceTensor();
   }
 
+  // Set the memory address for the tensors which use the somas.
+  SetSomasMemory(context);
+
+  // Allocate the memory address for other tensors which don't use the somas.
   if (memory_alloc_list_.size() > 0) {
     SendMemoryAllocReq(context);
   } else {
@@ -301,10 +305,6 @@ void KernelActor::SendMemoryAllocReq(OpContext<DeviceTensor> *const context) {
                                                   "Invalid device context for kernel actor:" + GetAID().Name());
   }
 
-  // Set the memory address for the tensors which use the somas.
-  SetSomasMemory(context);
-
-  // Allocate the memory address for other tensors which don't use the somas.
   if (strategy_ == GraphExecutionStrategy::kPipeline) {
     if (ActorDispatcher::is_memory_allocation_sync()) {
       ActorDispatcher::SendSync(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, &memory_alloc_list_,

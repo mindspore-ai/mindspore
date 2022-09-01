@@ -16,7 +16,6 @@
 
 #include "runtime/device/kernel_info.h"
 #include <utility>
-#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace device {
@@ -118,16 +117,30 @@ bool KernelInfo::SetSomasResult(std::vector<std::pair<size_t, size_t>> &&output_
   return true;
 }
 
+size_t KernelInfo::GetTensorSomasOffset(const std::vector<std::pair<size_t, size_t>> &somas_result,
+                                        size_t tensor_index) const {
+  if (somas_result.empty()) {
+    return 0;
+  }
+  if (tensor_index >= somas_result.size()) {
+    MS_LOG(EXCEPTION) << "The tensor index:" << tensor_index << " is out of range:" << somas_result.size();
+  }
+  return somas_result[tensor_index].first;
+}
+
+size_t KernelInfo::GetTensorSomasAlignedSize(const std::vector<std::pair<size_t, size_t>> &somas_result,
+                                             size_t tensor_index) const {
+  if (somas_result.empty()) {
+    return 0;
+  }
+  if (tensor_index >= somas_result.size()) {
+    MS_LOG(EXCEPTION) << "The tensor index:" << tensor_index << " is out of range:" << somas_result.size();
+  }
+  return somas_result[tensor_index].second;
+}
+
 bool KernelInfo::IsTensorEnableSomas(const std::vector<std::pair<size_t, size_t>> &somas_result,
                                      size_t tensor_index) const {
-  // Somas is currently closed in the runtime.
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  if ((ms_context->get_param<int>(MS_CTX_MEMORY_OPTIMIZE_LEVEL) == kOptimizeO0) ||
-      (ms_context->get_param<int>(MS_CTX_MEMORY_OPTIMIZE_LEVEL) == kOptimizeO1)) {
-    return false;
-  }
-
   if (somas_result.empty()) {
     return false;
   }

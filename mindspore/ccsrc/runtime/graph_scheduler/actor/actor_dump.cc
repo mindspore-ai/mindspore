@@ -155,6 +155,14 @@ void DumpAbstractActor(const AbstractActor *actor, std::ofstream &ofs) {
       ofs << "\t\t\tdependent_actor_name:" << dependent_actor << "\n ";
     }
   }
+
+  // Dump the memory actor insert position.
+  if (actor->memory_alloc_insert_position() != nullptr) {
+    ofs << "\t\tmemory_alloc_insert_from_position:" << actor->memory_alloc_insert_position()->GetAID().Name() << "\n";
+  }
+  if (actor->memory_free_insert_position() != nullptr) {
+    ofs << "\t\tmemory_free_insert_to_position:" << actor->memory_free_insert_position()->GetAID().Name() << "\n";
+  }
 }
 
 void DumpDSActor(const DataSourceActor *actor, std::ofstream &ofs) {
@@ -219,7 +227,9 @@ void DumpKernelActor(const KernelActor *actor, std::ofstream &ofs) {
     ofs << "\t\t\toutput_index:" << i << "\tptr:" << device_tensor->GetPtr() << "\tsize:" << device_tensor->GetSize()
         << "\toriginal_ref_count:" << device_tensor->original_ref_count()
         << "\tdynamic_ref_count:" << device_tensor->dynamic_ref_count()
-        << "\tis_somas_enable:" << kernel_info->IsTensorEnableSomas(somas_outputs, i) << "\n ";
+        << "\tis_somas_enable:" << kernel_info->IsTensorEnableSomas(somas_outputs, i)
+        << "\tsomas_offset:" << kernel_info->GetTensorSomasOffset(somas_outputs, i)
+        << "\tsomas_aligned_size:" << kernel_info->GetTensorSomasAlignedSize(somas_outputs, i) << "\n ";
   }
   const auto &somas_workspace = kernel_info->somas_workspace_result();
   const auto &workspace_addresses = kernel_info->workspace_address_list();
@@ -229,7 +239,9 @@ void DumpKernelActor(const KernelActor *actor, std::ofstream &ofs) {
     ofs << "\t\t\tworkspace_index:" << i << "\tptr:" << device_tensor->GetPtr() << "\tsize:" << device_tensor->GetSize()
         << "\toriginal_ref_count:" << device_tensor->original_ref_count()
         << "\tdynamic_ref_count:" << device_tensor->dynamic_ref_count()
-        << "\tis_somas_enable:" << kernel_info->IsTensorEnableSomas(somas_workspace, i) << "\n ";
+        << "\tis_somas_enable:" << kernel_info->IsTensorEnableSomas(somas_workspace, i)
+        << "\tsomas_offset:" << kernel_info->GetTensorSomasOffset(somas_workspace, i)
+        << "\tsomas_aligned_size:" << kernel_info->GetTensorSomasAlignedSize(somas_workspace, i) << "\n ";
   }
 
   DumpAbstractActor(actor, ofs);
@@ -247,17 +259,6 @@ void DumpKernelActor(const KernelActor *actor, std::ofstream &ofs) {
     }
   }
 
-  const int32_t kInvalidPosition = -1;
-  if (actor->memory_alloc_insert_position().first != kInvalidPosition) {
-    std::string arrow_type = actor->memory_alloc_insert_position().second ? "data_arrow" : "control_arrow";
-    ofs << "\t\tmemory_alloc_insert_position:" << actor->memory_alloc_insert_position().first
-        << "\tinsert_arrow_type:" << arrow_type << "\n";
-  }
-  if (actor->memory_free_insert_position().first != kInvalidPosition) {
-    std::string arrow_type = actor->memory_free_insert_position().second ? "data_arrow" : "control_arrow";
-    ofs << "\t\tmemory_free_insert_position:" << actor->memory_free_insert_position().first
-        << "\tinsert_arrow_type:" << arrow_type << "\n";
-  }
   ofs << "\n";
 }
 

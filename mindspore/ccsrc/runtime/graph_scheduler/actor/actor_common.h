@@ -72,6 +72,7 @@ const char kStackActorNameSuffix[] = "_StackActor";
 const char kFusionActorNameSuffix[] = "_FusionActor";
 const char kMemoryAllocActorNameSuffix[] = "_MemoryAllocActor";
 const char kMemoryFreeActorNameSuffix[] = "_MemoryFreeActor";
+const char kCopyActorNameSignFromStore[] = "_device_tensor_store:";
 
 enum class KernelTransformType {
   kUnknown,

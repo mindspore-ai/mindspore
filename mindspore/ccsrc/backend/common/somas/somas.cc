@@ -103,10 +103,27 @@ void MergeBlocks(std::vector<Block> *block_list, std::stack<Block> *merged_block
   }
 }
 
+bool Somas::IsSupportSomas(const session::KernelGraph &graph) {
+  if (graph.is_dynamic_shape()) {
+    MS_LOG(WARNING) << "Somas can't allocate graph with dynamic shape now.";
+    return false;
+  }
+
+  auto &execution_order = graph.execution_order();
+  for (auto &kernel : execution_order) {
+    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel);
+    if ((kernel_name == kRpcSendOpName) || (kernel_name == kRpcRecvOpName)) {
+      MS_LOG(WARNING) << "Somas can't allocate graph with rpc op now.";
+      return false;
+    }
+  }
+
+  return true;
+}
+
 bool Somas::Assign(const session::KernelGraph &graph) {
   MS_LOG(INFO) << "Start Somas Assign for graph " << graph.graph_id();
-  if (graph.is_dynamic_shape()) {
-    MS_LOG(WARNING) << "Somas can't allocate graph with dynamic_shape now.";
+  if (!IsSupportSomas(graph)) {
     return false;
   }
   auto ret = ConfigSomas(graph);

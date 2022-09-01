@@ -119,8 +119,7 @@ void SchedulerHelper::AddDataArrow(AbstractActor *const from_actor, AbstractActo
   to_actor->input_datas_num_++;
   (void)to_actor->input_data_arrow_aids_.emplace_back(std::make_pair(from_actor->GetAID(), data_arrow.get()));
 
-  AddMemorySign(from_actor, to_actor, SizeToInt(from_actor->output_data_arrows_.size() - 1),
-                SizeToInt(to_actor->input_data_arrow_aids_.size() - 1), true);
+  AddMemorySign(from_actor, to_actor);
 
   if (from_kernel == nullptr) {
     return;
@@ -185,8 +184,7 @@ void SchedulerHelper::AddControlArrow(AbstractActor *const from_actor, AbstractA
   to_actor->input_controls_num_++;
   (void)to_actor->input_control_arrow_aids_.emplace_back(std::make_pair(from_actor->GetAID(), control_arrow.get()));
 
-  AddMemorySign(from_actor, to_actor, SizeToInt(from_actor->output_control_arrows_.size() - 1),
-                SizeToInt(to_actor->input_control_arrow_aids_.size() - 1), false);
+  AddMemorySign(from_actor, to_actor);
 }
 
 void SchedulerHelper::AddPartialArrow(ControlActor *const from_actor, ControlActor *const to_actor, size_t from_index,
@@ -473,8 +471,7 @@ void SchedulerHelper::AddArrowForFusionActor(FusionActor *fusion_actor) {
   }
 }
 
-void SchedulerHelper::AddMemorySign(AbstractActor *const from_actor, AbstractActor *const to_actor,
-                                    int32_t from_position, int32_t to_position, bool is_data_arrow) {
+void SchedulerHelper::AddMemorySign(AbstractActor *const from_actor, AbstractActor *const to_actor) {
   MS_EXCEPTION_IF_NULL(from_actor);
   MS_EXCEPTION_IF_NULL(to_actor);
   auto ms_context = MsContext::GetInstance();
@@ -486,55 +483,61 @@ void SchedulerHelper::AddMemorySign(AbstractActor *const from_actor, AbstractAct
   if (IsMemoryActor(from_actor->type()) || IsMemoryActor(to_actor->type())) {
     return;
   }
-  // Only the link of kernel actor need add the memory sign.
-  if ((from_actor->type() != KernelTransformType::kKernelActor) &&
-      (to_actor->type() != KernelTransformType::kKernelActor)) {
-    return;
-  }
 
   // Add the somas info.
-  KernelGraphPtr from_graph = nullptr;
-  KernelActor *from_kernel_actor = nullptr;
-  if (from_actor->type() == KernelTransformType::kKernelActor) {
-    from_kernel_actor = dynamic_cast<KernelActor *>(from_actor);
-    MS_EXCEPTION_IF_NULL(from_kernel_actor);
-    MS_EXCEPTION_IF_NULL(from_kernel_actor->kernel());
-    from_graph = AnfAlgo::FetchKernelGraph(from_kernel_actor->kernel());
-    if (from_graph == nullptr) {
-      MS_LOG(EXCEPTION) << "No association graph for node: " << from_kernel_actor->kernel()->fullname_with_scope();
-    }
-    AddSomasInfo(from_kernel_actor, from_graph);
-  }
-  KernelGraphPtr to_graph = nullptr;
-  KernelActor *to_kernel_actor = nullptr;
-  if (to_actor->type() == KernelTransformType::kKernelActor) {
-    to_kernel_actor = dynamic_cast<KernelActor *>(to_actor);
-    MS_EXCEPTION_IF_NULL(to_kernel_actor);
-    MS_EXCEPTION_IF_NULL(to_kernel_actor->kernel());
-    to_graph = AnfAlgo::FetchKernelGraph(to_kernel_actor->kernel());
-    if (to_graph == nullptr) {
-      MS_LOG(EXCEPTION) << "No association graph for node: " << to_kernel_actor->kernel()->fullname_with_scope();
-    }
-    AddSomasInfo(to_kernel_actor, to_graph);
-  }
+  AddSomasInfo(from_actor);
+  AddSomasInfo(to_actor);
 
+  auto from_graph = FecthKernelGraphByActor(from_actor);
+  auto to_graph = FecthKernelGraphByActor(to_actor);
   // Add the memory alloc and free sign at the boundary of the graph.
   if ((from_graph != nullptr) && (to_graph != nullptr)) {
     // The same graph no need insert the memory actor.
     if (from_graph->graph_id() == to_graph->graph_id()) {
       return;
     }
-    AddMemoryFreeSign(from_kernel_actor, from_position, from_graph, is_data_arrow);
-    AddMemoryAllocSign(to_kernel_actor, to_position, to_graph, is_data_arrow);
+    AddMemoryFreeSign(from_actor, to_actor, from_graph);
+    AddMemoryAllocSign(from_actor, to_actor, to_graph);
   } else if (from_graph != nullptr) {
-    AddMemoryFreeSign(from_kernel_actor, from_position, from_graph, is_data_arrow);
+    AddMemoryFreeSign(from_actor, to_actor, from_graph);
   } else if (to_graph != nullptr) {
-    AddMemoryAllocSign(to_kernel_actor, to_position, to_graph, is_data_arrow);
+    AddMemoryAllocSign(from_actor, to_actor, to_graph);
   }
 }
 
-void SchedulerHelper::AddMemoryAllocSign(KernelActor *const to_actor, int32_t to_position,
-                                         const KernelGraphPtr &to_graph, bool is_data_arrow) {
+KernelGraphPtr SchedulerHelper::FecthKernelGraphByActor(AbstractActor *const actor) {
+  MS_EXCEPTION_IF_NULL(actor);
+  AnfNode *from_kernel = nullptr;
+  if (actor->type() == KernelTransformType::kKernelActor) {
+    auto kernel_actor = dynamic_cast<KernelActor *>(actor);
+    MS_EXCEPTION_IF_NULL(kernel_actor);
+    from_kernel = kernel_actor->kernel().get();
+    MS_EXCEPTION_IF_NULL(from_kernel);
+  }
+
+  // Only the copy actor from device tensor store need to fetch the kernel graph, because the copy actor is not a
+  // boundary of the graph and is equivalent to the kernel actor when inserted the memory actor.
+  if ((actor->type() == KernelTransformType::kCopyActor) &&
+      (actor->GetAID().Name().find(kCopyActorNameSignFromStore) != std::string::npos)) {
+    auto copy_actor = dynamic_cast<CopyActor *>(actor);
+    MS_EXCEPTION_IF_NULL(copy_actor);
+    from_kernel = copy_actor->from_kernel_;
+  }
+
+  if (from_kernel == nullptr) {
+    return nullptr;
+  }
+  auto graph = AnfAlgo::FetchKernelGraph(from_kernel);
+  if (graph == nullptr) {
+    MS_LOG(EXCEPTION) << "No association graph for node: " << from_kernel->fullname_with_scope();
+  }
+
+  return graph;
+}
+
+void SchedulerHelper::AddMemoryAllocSign(AbstractActor *const from_actor, AbstractActor *const to_actor,
+                                         const KernelGraphPtr &to_graph) {
+  MS_EXCEPTION_IF_NULL(from_actor);
   MS_EXCEPTION_IF_NULL(to_actor);
   MS_EXCEPTION_IF_NULL(to_graph);
   // Somas is not work for this graph.
@@ -543,12 +546,13 @@ void SchedulerHelper::AddMemoryAllocSign(KernelActor *const to_actor, int32_t to
   }
 
   // Set the memory alloc info.
-  to_actor->memory_alloc_insert_position_ = std::make_pair(to_position, is_data_arrow);
+  to_actor->memory_alloc_insert_position_ = from_actor;
 }
 
-void SchedulerHelper::AddMemoryFreeSign(KernelActor *const from_actor, int32_t from_position,
-                                        const KernelGraphPtr &from_graph, bool is_data_arrow) {
+void SchedulerHelper::AddMemoryFreeSign(AbstractActor *const from_actor, AbstractActor *const to_actor,
+                                        const KernelGraphPtr &from_graph) {
   MS_EXCEPTION_IF_NULL(from_actor);
+  MS_EXCEPTION_IF_NULL(to_actor);
   MS_EXCEPTION_IF_NULL(from_graph);
   // Somas is not work for this graph.
   if (from_graph->somas_whole_block_size() == 0) {
@@ -556,18 +560,28 @@ void SchedulerHelper::AddMemoryFreeSign(KernelActor *const from_actor, int32_t f
   }
 
   // Set the memory free info.
-  from_actor->memory_free_insert_position_ = std::make_pair(from_position, is_data_arrow);
+  from_actor->memory_free_insert_position_ = to_actor;
 }
 
-void SchedulerHelper::AddSomasInfo(KernelActor *const kernel_actor, const KernelGraphPtr &graph) {
+void SchedulerHelper::AddSomasInfo(AbstractActor *const actor) {
+  MS_EXCEPTION_IF_NULL(actor);
+  // Only the kernel actor supports somas.
+  if (actor->type() != KernelTransformType::kKernelActor) {
+    return;
+  }
+  auto kernel_actor = dynamic_cast<KernelActor *>(actor);
   MS_EXCEPTION_IF_NULL(kernel_actor);
-  MS_EXCEPTION_IF_NULL(graph);
-  // Somas is not work for this graph.
-  if (graph->somas_whole_block_size() == 0) {
+  if (kernel_actor->somas_info_ != nullptr) {
     return;
   }
 
-  if (kernel_actor->somas_info_ != nullptr) {
+  MS_EXCEPTION_IF_NULL(kernel_actor->kernel());
+  auto graph = AnfAlgo::FetchKernelGraph(kernel_actor->kernel().get());
+  if (graph == nullptr) {
+    MS_LOG(EXCEPTION) << "No association graph for node: " << kernel_actor->kernel()->fullname_with_scope();
+  }
+  // Somas is not work for this graph.
+  if (graph->somas_whole_block_size() == 0) {
     return;
   }
 
