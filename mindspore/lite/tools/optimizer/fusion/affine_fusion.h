@@ -18,15 +18,15 @@
 #define MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_AFFINE_FUSION_H_
 
 #include <string>
-#include "backend/common/optimizer/optimizer.h"
+#include "tools/optimizer/common/pattern_process_pass_extends.h"
 #include "schema/inner/model_generated.h"
 
 namespace mindspore {
 namespace opt {
-class AffineFusion : public PatternProcessPass {
+class AffineFusion : public LitePatternProcessPass {
  public:
   explicit AffineFusion(bool multigraph = true, const std::string &name = "AffineFusion")
-      : PatternProcessPass(name, multigraph) {}
+      : LitePatternProcessPass(name, multigraph) {}
   ~AffineFusion() override = default;
 
  private:

@@ -28,7 +28,7 @@ class BACKEND_EXPORT NodePass : public Pass {
  public:
   explicit NodePass(const std::string &name) : Pass(name) {}
   ~NodePass() override = default;
-  bool Run(const FuncGraphPtr &func_graph) final;
+  virtual bool Run(const FuncGraphPtr &func_graph);
   virtual AnfNodePtr Run(const FuncGraphPtr &func_graph, const AnfNodePtr &node) = 0;
 };
 using NodePassPtr = std::shared_ptr<NodePass>;

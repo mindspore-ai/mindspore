@@ -247,7 +247,5 @@ bool CustomAscendKernelMod::Launch(const std::vector<AddressPtr> &inputs, const 
   UpdateOutputAddr(outputs);
   return true;
 }
-
-MS_KERNEL_FACTORY_REG(KernelMod, CustomAscend, CustomAscendKernelMod);
 }  // namespace acl
 }  // namespace mindspore::kernel

@@ -58,7 +58,7 @@ Pass *AclPassPlugin::CreateAclPass(const std::shared_ptr<ConverterPara> &param) 
   void *function = nullptr;
   auto ret = DLSoOpen(real_path_, "CreateAclPass", &handle_, &function);
   if (ret != kSuccess) {
-    MS_LOG(ERROR) << "DLSoOpen failed, so path: " << real_path_;
+    MS_LOG(ERROR) << "DLSoOpen failed, so path: " << real_path_ << ", ret: " << ret;
     return nullptr;
   }
   auto create_func = reinterpret_cast<mindspore::opt::Pass *(*)(const std::shared_ptr<ConverterPara> &)>(function);

@@ -15,16 +15,15 @@
  */
 
 #define USE_DEPRECATED_API
-#include "backend/common/optimizer/helper.h"
 #include <memory>
 #include <vector>
-#include "tools/optimizer/common/gllo_utils.h"
+#include <algorithm>
+#include "tools/optimizer/common/helper.h"
 #include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace opt {
-namespace {
-ValueNodePtr CreateValueNodeWithSexp(const BaseRef &sexp) {
+ValueNodePtr Helper::CreateValueNodeWithSexp(const BaseRef &sexp) {
   if (utils::isa<int>(sexp)) {
     return NewValueNode(utils::cast<int>(sexp));
   }
@@ -40,7 +39,7 @@ ValueNodePtr CreateValueNodeWithSexp(const BaseRef &sexp) {
   return nullptr;
 }
 
-CNodePtr CreateCNodeWithGraph(const std::vector<AnfNodePtr> &input_nodes, const BaseRef &graph) {
+CNodePtr Helper::CreateCNodeWithGraph(const std::vector<AnfNodePtr> &input_nodes, const BaseRef &graph) {
   if (utils::isa<FuncGraphPtr>(graph)) {
     return std::make_shared<CNode>(input_nodes, utils::cast<FuncGraphPtr>(graph));
   }
@@ -50,7 +49,7 @@ CNodePtr CreateCNodeWithGraph(const std::vector<AnfNodePtr> &input_nodes, const 
   return nullptr;
 }
 
-VarNodePtr CreateVarNodeWithSexp(const BaseRef &sexp, const BaseRef &graph) {
+VarNodePtr Helper::CreateVarNodeWithSexp(const BaseRef &sexp, const BaseRef &graph) {
   if (utils::isa<VarPtr>(graph)) {
     MS_LOG(DEBUG) << "make VarPtr " + graph.ToString();
     return std::make_shared<VarNode>(utils::cast<VarPtr>(sexp), nullptr);
@@ -63,8 +62,8 @@ VarNodePtr CreateVarNodeWithSexp(const BaseRef &sexp, const BaseRef &graph) {
   return nullptr;
 }
 
-AnfNodePtr HandleSexpVector(const BaseRef &sexp, const BaseRef &graph, PrimitiveVarMap *primitive_vars,
-                            bool multigraph) {
+AnfNodePtr Helper::HandleSexpVector(const BaseRef &sexp, const BaseRef &graph, PrimitiveVarMap *primitive_vars,
+                                    bool multigraph) {
   if (primitive_vars == nullptr) {
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
     return nullptr;
@@ -90,6 +89,7 @@ AnfNodePtr HandleSexpVector(const BaseRef &sexp, const BaseRef &graph, Primitive
   return CreateCNodeWithGraph(input_nodes, graph);
 }
 
+namespace {
 bool AnfEqualPrimitive(const AnfNodePtr &a_node, const AnfNodePtr &b_node) {
   auto a_value_node = a_node->cast<ValueNodePtr>();
   auto b_value_node = b_node->cast<ValueNodePtr>();
@@ -139,6 +139,7 @@ bool AnfEqualValueNode(const AnfNodePtr &a_node, const AnfNodePtr &b_node) {
   }
 }
 }  // namespace
+
 // not implement for lite, just for api compatible
 CNodePtr NewCNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &fg,
                   const std::vector<AnfNodePtr> &orig_nodes) {
@@ -152,6 +153,11 @@ CNodePtr NewCNode(const CNodePtr &cnode, const KernelGraphPtr &fg, const std::ve
 
 std::shared_ptr<std::vector<std::pair<AnfNodePtr, int>>> GetRealNodeUsedList(const FuncGraphPtr &graph,
                                                                              const AnfNodePtr &node) {
+  return Helper::GetRealNodeUsedList(graph, node);
+}
+
+std::shared_ptr<std::vector<std::pair<AnfNodePtr, int>>> Helper::GetRealNodeUsedList(const FuncGraphPtr &graph,
+                                                                                     const AnfNodePtr &node) {
   if (graph == nullptr || node == nullptr) {
     MS_LOG(ERROR) << "input parameter is nullptr.";
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
@@ -175,9 +181,8 @@ std::shared_ptr<std::vector<std::pair<AnfNodePtr, int>>> GetRealNodeUsedList(con
   return output_node_list;
 }
 
-std::shared_ptr<std::vector<std::pair<AnfNodePtr, int>>> GetRealNodeUsedListByOutputIdx(const FuncGraphPtr &graph,
-                                                                                        const AnfNodePtr &node,
-                                                                                        size_t output_index) {
+std::shared_ptr<std::vector<std::pair<AnfNodePtr, int>>> Helper::GetRealNodeUsedListByOutputIdx(
+  const FuncGraphPtr &graph, const AnfNodePtr &node, size_t output_index) {
   if (graph == nullptr || node == nullptr) {
     MS_LOG(ERROR) << "input parameter is nullptr.";
     return nullptr;
@@ -236,15 +241,12 @@ bool AnfEqual(const BaseRef &a, const BaseRef &b) {
   return a == b;
 }
 
-bool CNodeTypeEqual(const BaseRef &a, const BaseRef &b) {
-  // To matchCNode and Kernel's type
-  if (utils::isa<CNode>(a) && utils::isa<CNode>(b)) {
-    return true;
-  }
-  return a.type() == b.type();
+AnfNodePtr SexpToNode(const BaseRef &sexp, const BaseRef &graph, PrimitiveVarMap *primitive_vars, bool multigraph) {
+  return Helper::SexpToNode(sexp, graph, primitive_vars, multigraph);
 }
 
-AnfNodePtr SexpToNode(const BaseRef &sexp, const BaseRef &graph, PrimitiveVarMap *primitive_vars, bool multigraph) {
+AnfNodePtr Helper::SexpToNode(const BaseRef &sexp, const BaseRef &graph, PrimitiveVarMap *primitive_vars,
+                              bool multigraph) {
   MS_LOG(DEBUG) << "SexpToNode sexp: " + sexp.ToString() + ", graph " + graph.ToString();
   if (primitive_vars == nullptr) {
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);

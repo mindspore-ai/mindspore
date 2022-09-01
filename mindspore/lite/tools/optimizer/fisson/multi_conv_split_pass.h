@@ -22,7 +22,7 @@
 #include <string>
 #include <unordered_map>
 #include "schema/model_generated.h"
-#include "backend/common/optimizer/optimizer.h"
+#include "tools/optimizer/common/pattern_process_pass_extends.h"
 #include "tools/optimizer/fisson/fisson_util.h"
 #include "tools/optimizer/parallel/split_strategy.h"
 #include "tools/optimizer/parallel/multi_node_split.h"
@@ -31,11 +31,11 @@ using mindspore::schema::PrimitiveType;
 namespace mindspore {
 namespace opt {
 
-class MultiConvSplitPass : public PatternProcessPass {
+class MultiConvSplitPass : public LitePatternProcessPass {
  public:
   explicit MultiConvSplitPass(std::unordered_map<std::string, SplitStrategy> strategys, int32_t fmk_type = -1,
                               int32_t num = 3, bool multigraph = true)
-      : PatternProcessPass("multi_conv_split", multigraph),
+      : LitePatternProcessPass("multi_conv_split", multigraph),
         strategys_(std::move(strategys)),
         fmk_type_(fmk_type),
         num_(num) {}

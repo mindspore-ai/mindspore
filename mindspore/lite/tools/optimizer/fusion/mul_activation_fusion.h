@@ -18,13 +18,13 @@
 #define MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_MUL_ACTIVATION_FUSION_H_
 
 #include <string>
-#include "backend/common/optimizer/optimizer.h"
+#include "tools/optimizer/common/pattern_process_pass_extends.h"
 
 namespace mindspore::opt {
-class MulActivationFusion : public PatternProcessPass {
+class MulActivationFusion : public LitePatternProcessPass {
  public:
   explicit MulActivationFusion(bool multigraph = true, const std::string &name = "MulActivationFusion")
-      : PatternProcessPass(name, multigraph) {}
+      : LitePatternProcessPass(name, multigraph) {}
   ~MulActivationFusion() = default;
 
  private:

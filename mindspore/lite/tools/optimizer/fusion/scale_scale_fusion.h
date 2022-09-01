@@ -19,13 +19,13 @@
 
 #include <vector>
 #include <string>
-#include "backend/common/optimizer/optimizer.h"
+#include "tools/optimizer/common/pattern_process_pass_extends.h"
 
 namespace mindspore::opt {
-class ScaleScaleFusion : public PatternProcessPass {
+class ScaleScaleFusion : public LitePatternProcessPass {
  public:
   explicit ScaleScaleFusion(bool multigraph = true, const std::string &name = "ScaleScaleFusion")
-      : PatternProcessPass(name, multigraph) {}
+      : LitePatternProcessPass(name, multigraph) {}
   ~ScaleScaleFusion() override = default;
 
  private:

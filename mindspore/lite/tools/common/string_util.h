@@ -32,11 +32,11 @@ bool EraseQuotes(std::string *input_string);
 
 bool FindAndReplaceAll(std::string *input_str, const std::string &search, const std::string &replace);
 
-std::vector<std::string> SplitStringToVector(const std::string &raw_str, const char &delimiter);
+MS_API std::vector<std::string> SplitStringToVector(const std::string &raw_str, const char &delimiter);
 
 std::vector<std::string> SplitStringToVector(const std::string &raw_str, const std::string &delimiter);
 
-bool ConvertIntNum(const std::string &str, int *value);
+MS_API bool ConvertIntNum(const std::string &str, int *value);
 
 bool ConvertDoubleNum(const std::string &str, double *value);
 

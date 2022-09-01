@@ -18,15 +18,15 @@
 #define MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_CONV_TRANSFORM_FUSION_H_
 
 #include <string>
-#include "backend/common/optimizer/optimizer.h"
+#include "tools/optimizer/common/pattern_process_pass_extends.h"
 #include "include/registry/converter_context.h"
 
 using mindspore::converter::FmkType;
 namespace mindspore::opt {
-class ConvTransformFusion : public PatternProcessPass {
+class ConvTransformFusion : public LitePatternProcessPass {
  public:
   explicit ConvTransformFusion(bool multigraph = true, const std::string &name = "ConvTransformFusion")
-      : PatternProcessPass(name, multigraph) {}
+      : LitePatternProcessPass(name, multigraph) {}
   ~ConvTransformFusion() override = default;
 
  protected:

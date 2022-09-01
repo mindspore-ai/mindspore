@@ -26,7 +26,7 @@ namespace mindspore {
 class SingleOpInferSession : public InferSession {
  public:
   SingleOpInferSession() = default;
-  virtual ~SingleOpInferSession() = default;
+  ~SingleOpInferSession() override;
   Status Init(const std::shared_ptr<Context> &context) override;
   Status AscendInit(const std::shared_ptr<Context> &context);
   Status CompileGraph(FuncGraphPtr graph, const void *data = nullptr, size_t size = 0) override;

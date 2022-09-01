@@ -19,13 +19,13 @@
 #include <vector>
 #include <memory>
 #include <string>
-#include "backend/common/optimizer/optimizer.h"
+#include "tools/optimizer/common/pattern_process_pass_extends.h"
 #include "include/common/utils/utils.h"
 #include "include/errorcode.h"
 
 namespace mindspore {
 namespace opt {
-class TfliteLstmCellFusion : public PatternProcessPass {
+class TfliteLstmCellFusion : public LitePatternProcessPass {
  public:
   explicit TfliteLstmCellFusion(const std::string &name = "TfliteLstmCellFusion", bool multigraph = true,
                                 int input_length = 0, int var_num = 0, int cond_nodes_num = 0, int cond_cnodes_num = 0,

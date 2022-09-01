@@ -19,16 +19,16 @@
 
 #include <memory>
 #include <string>
-#include "backend/common/optimizer/optimizer.h"
+#include "tools/optimizer/common/pattern_process_pass_extends.h"
 #include "tools/converter/converter_context.h"
 #include "tools/converter/cxx_api/converter_para.h"
 
 namespace mindspore {
 namespace opt {
-class MatMulActivationFusion : public PatternProcessPass {
+class MatMulActivationFusion : public LitePatternProcessPass {
  public:
   explicit MatMulActivationFusion(const std::shared_ptr<ConverterPara> &param, bool multigraph = true)
-      : PatternProcessPass("MatMulActivationFusion", multigraph), param_(param) {}
+      : LitePatternProcessPass("MatMulActivationFusion", multigraph), param_(param) {}
   ~MatMulActivationFusion() = default;
 
  private:

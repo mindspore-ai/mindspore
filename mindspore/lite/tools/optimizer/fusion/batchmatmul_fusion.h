@@ -17,14 +17,14 @@
 #ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_BATCHMATMUL_FUSION_H_
 #define MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_BATCHMATMUL_FUSION_H_
 
-#include "backend/common/optimizer/optimizer.h"
+#include "tools/optimizer/common/pattern_process_pass_extends.h"
 #include "tools/converter/converter_context.h"
 
 namespace mindspore {
 namespace opt {
-class BatchMatMulFusion : public PatternProcessPass {
+class BatchMatMulFusion : public LitePatternProcessPass {
  public:
-  explicit BatchMatMulFusion(bool multigraph = true) : PatternProcessPass("BatchMatMulFusion", multigraph) {}
+  explicit BatchMatMulFusion(bool multigraph = true) : LitePatternProcessPass("BatchMatMulFusion", multigraph) {}
   ~BatchMatMulFusion() override = default;
 
  private:

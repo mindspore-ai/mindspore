@@ -117,37 +117,5 @@ std::vector<AnfNodePtr> MultipleOutputPatternProcessPass::GetOrigNodes() const {
   }
   return orig_nodes;
 }
-
-void GraphOptimizer::AddPassManager(const PassManagerPtr &pass_manager) {
-  if (pass_manager != nullptr) {
-    pass_managers_.push_back(pass_manager);
-  }
-}
-
-FuncGraphPtr GraphOptimizer::Optimize(const FuncGraphPtr &func_graph, bool run_only_once) {
-  MS_EXCEPTION_IF_NULL(func_graph);
-  run_only_once_ = (pass_managers_.size() == 1) ? true : run_only_once;
-  // cppcheck-suppress *
-  auto manager = Manage(func_graph, true);
-
-  bool changed = true;
-  while (changed) {
-    changed = false;
-    for (size_t i = 0; i < pass_managers_.size(); ++i) {
-      const PassManagerPtr &pm = pass_managers_[i];
-      if (pm != nullptr && pm->Run(func_graph)) {
-        changed = true;
-      }
-    }
-    if (run_only_once_) {
-      break;
-    }
-  }
-
-  std::vector<FuncGraphPtr> func_graphs;
-  func_graphs.push_back(func_graph);
-  (void)TopoSort(func_graph->get_return());
-  return func_graph;
-}
 }  // namespace opt
 }  // namespace mindspore

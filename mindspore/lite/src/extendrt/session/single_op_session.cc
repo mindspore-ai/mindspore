@@ -37,6 +37,10 @@ namespace mindspore {
 const size_t tensor_max_size = 0x1000000;
 constexpr auto kNameCustomAscend = "CustomAscend";
 
+SingleOpInferSession::~SingleOpInferSession() {
+  kernel::Factory<kernel::KernelMod>::Instance().UnRegister(kNameCustomAscend);
+}
+
 Status SingleOpInferSession::AscendInit(const std::shared_ptr<Context> &context) {
   auto device_list = context->MutableDeviceInfo();
   for (const auto &device_info : device_list) {

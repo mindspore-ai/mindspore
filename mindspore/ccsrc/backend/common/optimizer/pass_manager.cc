@@ -86,8 +86,6 @@ ShapeVector CacheManager::GetOutputShape(const AnfNodePtr &node, size_t index) {
   return result;
 }
 
-const std::vector<PassPtr> &PassManager::Passes() const { return passes_; }
-
 void PassManager::AddPass(const PassPtr &pass) {
   if (pass != nullptr) {
     passes_.push_back(pass);

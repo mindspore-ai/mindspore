@@ -20,8 +20,8 @@
 #include <string>
 #include <unordered_map>
 #include "ir/anf.h"
+#include "tools/optimizer/common/node_pass_extends.h"
 #include "tools/optimizer/common/gllo_utils.h"
-#include "backend/common/optimizer/node_pass.h"
 #include "tools/optimizer/parallel/split_strategy.h"
 #include "tools/optimizer/parallel/operator_info.h"
 
@@ -30,10 +30,10 @@
 
 namespace mindspore {
 namespace opt {
-class ParallelPass : public opt::NodePass {
+class ParallelPass : public opt::LiteNodePass {
  public:
   explicit ParallelPass(const std::unordered_map<std::string, SplitStrategy> &strategys, const int32_t fmk_type)
-      : NodePass("parallel_pass"), split_strategys_(strategys), fmk_type_(fmk_type) {}
+      : LiteNodePass("parallel_pass"), split_strategys_(strategys), fmk_type_(fmk_type) {}
   ~ParallelPass() override = default;
   AnfNodePtr Run(const FuncGraphPtr &func_graph, const AnfNodePtr &node) override;
 

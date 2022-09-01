@@ -22,7 +22,7 @@
 #include <string>
 #include <map>
 #include "schema/inner/model_generated.h"
-#include "backend/common/optimizer/optimizer.h"
+#include "tools/optimizer/common/pattern_process_pass_extends.h"
 #include "include/common/utils/utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
 
@@ -30,10 +30,10 @@ namespace mindspore {
 namespace opt {
 
 /// fuse layer_norm or instance_norm into one operator
-class NormFusion : public PatternProcessPass {
+class NormFusion : public LitePatternProcessPass {
  public:
   explicit NormFusion(const std::string &name = "NormFusion", bool multigraph = true)
-      : PatternProcessPass(name, multigraph) {
+      : LitePatternProcessPass(name, multigraph) {
     InitShapeSizeInferFuncMap();
   }
 

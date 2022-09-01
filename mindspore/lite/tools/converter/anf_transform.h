@@ -39,6 +39,8 @@ class AnfTransform {
  private:
   FuncGraphPtr TransformFuncGraph(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param);
 
+  static int RunPass(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param);
+
   static int RunFusionPass(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param);
 
   static int RunGraphPass(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param);
@@ -66,6 +68,8 @@ class AnfTransform {
   static STATUS QATTransform(const FuncGraphPtr &func_graph, const std::shared_ptr<ConverterPara> &param);
 
   static bool CheckExternalExtension(const std::shared_ptr<ConverterPara> &param);
+
+  static STATUS ProcOnlineTransform(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param);
 };
 }  // namespace lite
 }  // namespace mindspore

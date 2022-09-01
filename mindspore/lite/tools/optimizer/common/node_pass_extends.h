@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_COMMON_NODE_PASS_EXTENDS_H_
+#define MINDSPORE_LITE_TOOLS_OPTIMIZER_COMMON_NODE_PASS_EXTENDS_H_
 
-#include "ir/anf.h"
-#include "tools/optimizer/common/node_pass_extends.h"
-
-#ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_FISSON_ITER_NODE_OUTPUTS_H_
-#define MINDSPORE_LITE_TOOLS_OPTIMIZER_FISSON_ITER_NODE_OUTPUTS_H_
+#include <memory>
+#include <string>
+#include <vector>
+#include "backend/common/optimizer/node_pass.h"
 
 namespace mindspore {
 namespace opt {
-class IterNodeOutputs : public opt::LiteNodePass {
+class LiteNodePass : public NodePass {
  public:
-  IterNodeOutputs() : LiteNodePass("iter_node_outputs") {}
-  ~IterNodeOutputs() override = default;
-  AnfNodePtr Run(const FuncGraphPtr &func_graph, const AnfNodePtr &node) override;
+  explicit LiteNodePass(const std::string &name) : NodePass(name) {}
+  ~LiteNodePass() override = default;
+  bool Run(const FuncGraphPtr &func_graph) override;
+  virtual AnfNodePtr Run(const FuncGraphPtr &func_graph, const AnfNodePtr &node) = 0;
 };
 }  // namespace opt
 }  // namespace mindspore
-
-#endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_FISSON_ITER_NODE_OUTPUTS_H_
+#endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_COMMON_NODE_PASS_EXTENDS_H_

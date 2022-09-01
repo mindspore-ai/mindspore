@@ -33,6 +33,7 @@
 #include "nnacl/op_base.h"
 #include "src/common/log_util.h"
 #include "tools/converter/parser/parser_utils.h"
+#include "tools/optimizer/common/helper.h"
 #include "ops/op_utils.h"
 #include "ops/custom.h"
 
@@ -709,7 +710,7 @@ bool IsMultiOutputTensors(const FuncGraphPtr &graph, const AnfNodePtr &node) {
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
     return false;
   }
-  auto output_node_list = GetRealNodeUsedList(graph, node);
+  auto output_node_list = Helper::GetRealNodeUsedList(graph, node);
   if (output_node_list == nullptr) {
     MS_LOG(ERROR) << "output node list is nullptr";
     return false;

@@ -18,16 +18,16 @@
 
 #include <memory>
 #include <string>
-#include "backend/common/optimizer/optimizer.h"
+#include "tools/optimizer/common/pattern_process_pass_extends.h"
 #include "include/common/utils/utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
 
 namespace mindspore {
 namespace opt {
-class GLUFusion : public PatternProcessPass {
+class GLUFusion : public LitePatternProcessPass {
  public:
   explicit GLUFusion(const std::string &name = "glu_fusion", bool multigraph = true)
-      : PatternProcessPass(name, multigraph) {}
+      : LitePatternProcessPass(name, multigraph) {}
 
   ~GLUFusion() override = default;
 

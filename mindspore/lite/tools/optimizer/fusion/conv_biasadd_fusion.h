@@ -17,14 +17,14 @@
 #ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_CONV_BIASADD_FUSION_H_
 #define MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_CONV_BIASADD_FUSION_H_
 
-#include "backend/common/optimizer/optimizer.h"
+#include "tools/optimizer/common/pattern_process_pass_extends.h"
 #include "tools/converter/converter_context.h"
 
 namespace mindspore {
 namespace opt {
-class ConvBiasaddFusion : public PatternProcessPass {
+class ConvBiasaddFusion : public LitePatternProcessPass {
  public:
-  explicit ConvBiasaddFusion(bool multigraph = true) : PatternProcessPass("ConvBiasaddFusion", multigraph) {}
+  explicit ConvBiasaddFusion(bool multigraph = true) : LitePatternProcessPass("ConvBiasaddFusion", multigraph) {}
   ~ConvBiasaddFusion() override = default;
 
  private:

@@ -20,7 +20,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
-#include "backend/common/optimizer/optimizer.h"
+#include "tools/optimizer/common/pattern_process_pass_extends.h"
 #include "tools/converter/quantizer/quant_param_holder.h"
 #include "tools/optimizer/common/multiple_pattern_process_pass.h"
 #include "ops/fusion/scale_fusion.h"
@@ -28,10 +28,9 @@
 
 namespace mindspore {
 namespace opt {
-class TensorDotFusion : public PatternProcessPass {
+class TensorDotFusion : public LitePatternProcessPass {
  public:
-  explicit TensorDotFusion(bool multigraph = true) : PatternProcessPass("TensorDotFusion", multigraph) {}
-
+  explicit TensorDotFusion(bool multigraph = true) : LitePatternProcessPass("TensorDotFusion", multigraph) {}
   ~TensorDotFusion() override = default;
 
  private:

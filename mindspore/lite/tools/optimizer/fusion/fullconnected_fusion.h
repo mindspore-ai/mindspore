@@ -19,14 +19,13 @@
 
 #include <string>
 #include <unordered_map>
-#include "backend/common/optimizer/optimizer.h"
 #include "tools/optimizer/fusion/conv_transform_fusion.h"
 #include "tools/optimizer/common/multiple_pattern_process_pass.h"
 #include "schema/inner/model_generated.h"
 namespace mindspore::opt {
-class FullConnectedFusion : public PatternProcessPass {
+class FullConnectedFusion : public LitePatternProcessPass {
  public:
-  explicit FullConnectedFusion(bool multigraph = true) : PatternProcessPass("FullConnectedFusion", multigraph) {}
+  explicit FullConnectedFusion(bool multigraph = true) : LitePatternProcessPass("FullConnectedFusion", multigraph) {}
   ~FullConnectedFusion() override = default;
 
  private:

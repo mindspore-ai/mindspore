@@ -23,6 +23,7 @@
 #include "ir/value.h"
 #include "include/errorcode.h"
 #include "nnacl/op_base.h"
+#include "src/common/common.h"
 
 namespace mindspore::infer::mindir {
 static mindspore::HashMap<int, TypeId> kDefaultValueSwitchMap{
@@ -190,5 +191,35 @@ mindspore::TypeId MindirModelUtil::ProtoTypeToTypeId(int32_t proto_type) {
     return kTypeUnknown;
   }
   return it->second;
+}
+
+bool MindirModelUtil::NeedRuntimeConvert(const void *model_data, size_t data_size) {
+  bool need_runtime_convert = true;
+  mind_ir::ModelProto model_proto;
+  std::string str(static_cast<const char *>(model_data), data_size);
+  if (model_proto.ParseFromString(str)) {
+    mind_ir::GraphProto *graph_proto = model_proto.mutable_graph();
+    if (graph_proto != nullptr) {
+      for (int i = 0; i < graph_proto->attribute_size(); ++i) {
+        const mind_ir::AttributeProto &attr_proto = graph_proto->attribute(i);
+        if (attr_proto.has_name() && attr_proto.name() == lite::kIsOptimized) {
+          const int attr_type = static_cast<int>(attr_proto.type());
+          if (attr_type != mind_ir::AttributeProto_AttributeType_BOOL) {
+            MS_LOG(ERROR) << "The type of attr optimized value must be bool.";
+            return true;
+          }
+          if (static_cast<bool>(attr_proto.i())) {
+            need_runtime_convert = false;
+            MS_LOG(DEBUG) << "No need to online infer.";
+          }
+          break;
+        }
+      }
+    }
+  } else {
+    MS_LOG(WARNING) << "Not mindir model";
+    need_runtime_convert = false;
+  }
+  return need_runtime_convert;
 }
 }  // namespace mindspore::infer::mindir

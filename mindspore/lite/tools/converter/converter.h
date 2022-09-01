@@ -53,13 +53,19 @@ class ConverterImpl {
     this->model_parser_ = nullptr;
   }
   int Convert(const std::shared_ptr<ConverterPara> &param, schema::MetaGraphT **meta_graph);
-  int Convert(const std::shared_ptr<ConverterPara> &param, schema::MetaGraphT **meta_graph, const void *buf,
-              const size_t &size);
+  int Convert(const std::shared_ptr<ConverterPara> &param, schema::MetaGraphT **meta_graph, const void *buff,
+              const size_t &size, void **dst_buff, size_t *dst_size) {
+    auto graph = BuildFuncGraph(param, buff, size);
+    return FuncGraphConvert(param, graph, meta_graph, true, dst_buff, dst_size);
+  }
   int Convert(const std::shared_ptr<ConverterPara> &param, schema::MetaGraphT **meta_graph, FuncGraphPtr func_graph);
 
  private:
   FuncGraphPtr BuildFuncGraph(const std::shared_ptr<ConverterPara> &param);
   FuncGraphPtr BuildFuncGraph(const std::shared_ptr<ConverterPara> &param, const void *buf, const size_t &size);
+  int FuncGraphConvert(const std::shared_ptr<ConverterPara> &param, FuncGraphPtr graph, schema::MetaGraphT **meta_graph,
+                       bool isRuntimeConvert, void **buff, size_t *size);
+
   schema::MetaGraphT *TransferFuncGraph(const std::shared_ptr<ConverterPara> &param, FuncGraphPtr func_graph);
 
   int InitConfigParam(const std::shared_ptr<ConverterPara> &param);

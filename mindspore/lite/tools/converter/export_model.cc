@@ -26,6 +26,7 @@
 #include "include/errorcode.h"
 #include "ir/func_graph.h"
 #include "tools/lite_exporter/anf_exporter.h"
+#include "tools/optimizer/common/pass_manager_extends.h"
 #include "tools/converter/graphdef_transform.h"
 #include "tools/converter/optimizer_manager.h"
 #include "tools/converter/parser/parser_utils.h"
@@ -250,7 +251,7 @@ STATUS ExportModel(const FuncGraphPtr &graph, const std::shared_ptr<ConverterPar
   }
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   CHECK_NULL_RETURN(optimizer);
-  auto graph_pm = std::make_shared<opt::PassManager>("anf graph pass manager", true);
+  auto graph_pm = std::make_shared<opt::LitePassManager>("anf graph pass manager", true);
   CHECK_NULL_RETURN(graph_pm);
   if (param->fmk_type == converter::kFmkTypeTflite || param->fmk_type == converter::kFmkTypeTf ||
       param->fmk_type == converter::kFmkTypeOnnx) {

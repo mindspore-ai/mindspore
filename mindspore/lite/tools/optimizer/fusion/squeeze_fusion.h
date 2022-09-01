@@ -18,15 +18,15 @@
 #define MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_SQUEEZE_FUSION_H_
 
 #include <string>
-#include "backend/common/optimizer/optimizer.h"
+#include "tools/optimizer/common/pattern_process_pass_extends.h"
 #include "schema/inner/model_generated.h"
 
 namespace mindspore {
 namespace opt {
-class SqueezeFusion : public PatternProcessPass {
+class SqueezeFusion : public LitePatternProcessPass {
  public:
   explicit SqueezeFusion(bool multigraph = true, const std::string &name = "SqueezeFusion")
-      : PatternProcessPass(name, multigraph) {}
+      : LitePatternProcessPass(name, multigraph) {}
   ~SqueezeFusion() override = default;
 
  private:

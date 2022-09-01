@@ -26,6 +26,7 @@
 #include "src/common/log_adapter.h"
 #include "tools/converter/optimizer_manager.h"
 #include "tools/optimizer/common/gllo_utils.h"
+#include "tools/optimizer/common/pass_manager_extends.h"
 #include "ir/primitive.h"
 #include "tools/optimizer/fusion/affine_activation_fusion.h"
 #include "tools/optimizer/fusion/affine_fusion.h"
@@ -111,6 +112,10 @@
 
 using std::string;
 namespace mindspore::lite {
+namespace {
+constexpr auto kOriginalFmkType = "original_fmk_type";
+}  // namespace
+
 AnfTransform::AnfTransform() = default;
 
 AnfTransform::~AnfTransform() = default;
@@ -195,7 +200,7 @@ int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const std::shared
   }
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   CHECK_NULL_RETURN(optimizer);
-  auto fusion_pm = std::make_shared<opt::PassManager>("anf fusion pass manager", false);
+  auto fusion_pm = std::make_shared<opt::LitePassManager>("anf fusion pass manager", false);
   CHECK_NULL_RETURN(fusion_pm);
 
   // The training model only does the fusion of the inference part
@@ -306,7 +311,7 @@ int AnfTransform::RunParallelPass(const FuncGraphPtr &old_graph, const std::shar
       return RET_OK;
     }
     opt::Spliter::GetInstance()->RecordGraphInfo(old_graph);
-    auto parallel_pm = std::make_shared<opt::PassManager>("anf parallel pass manager", true);
+    auto parallel_pm = std::make_shared<opt::LitePassManager>("anf parallel pass manager", true);
     CHECK_NULL_RETURN(parallel_pm);
     // 2. preceding parallel pass
     parallel_pm->AddPass(std::make_shared<opt::IterNodeOutputs>());
@@ -333,7 +338,7 @@ int AnfTransform::RunParallelPass(const FuncGraphPtr &old_graph, const std::shar
 int AnfTransform::RunGraphPass(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param) {
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   CHECK_NULL_RETURN(optimizer);
-  auto graph_pm = std::make_shared<opt::PassManager>("anf graph pass manager", true);
+  auto graph_pm = std::make_shared<opt::LitePassManager>("anf graph pass manager", true);
   CHECK_NULL_RETURN(graph_pm);
   if (param->fmk_type == converter::kFmkTypeTflite || param->fmk_type == converter::kFmkTypeTf ||
       param->fmk_type == converter::kFmkTypeOnnx) {
@@ -377,7 +382,7 @@ int AnfTransform::RunConvertPass(const FuncGraphPtr &old_graph, const std::share
   }
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   CHECK_NULL_RETURN(optimizer);
-  auto convert_pm = std::make_shared<opt::PassManager>("anf graph convert pass manager", true);
+  auto convert_pm = std::make_shared<opt::LitePassManager>("anf graph convert pass manager", true);
   CHECK_NULL_RETURN(convert_pm);
   convert_pm->AddPass(std::make_shared<opt::RemoveRedundantOpPass>(param->train_model));
   convert_pm->AddPass(std::make_shared<opt::InferShapePass>(param->fmk_type, param->train_model));
@@ -393,7 +398,7 @@ int AnfTransform::RunConvertPass(const FuncGraphPtr &old_graph, const std::share
 
 int AnfTransform::RunConstFoldPass(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param) {
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
-  auto const_fold_pm = std::make_shared<opt::PassManager>("const fold fusion pass manager", false);
+  auto const_fold_pm = std::make_shared<opt::LitePassManager>("const fold fusion pass manager", false);
   CHECK_NULL_RETURN(optimizer);
   CHECK_NULL_RETURN(const_fold_pm);
   const_fold_pm->AddPass(std::make_shared<opt::InferShapePass>(param->fmk_type, param->train_model));
@@ -420,7 +425,7 @@ int RunDecreaseTransposePass(const FuncGraphPtr &old_graph, const std::shared_pt
   }
 
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
-  auto decrease_trans_pm = std::make_shared<opt::PassManager>("decrease transpose fusion pass manager", false);
+  auto decrease_trans_pm = std::make_shared<opt::LitePassManager>("decrease transpose fusion pass manager", false);
   CHECK_NULL_RETURN(optimizer);
   CHECK_NULL_RETURN(decrease_trans_pm);
   decrease_trans_pm->AddPass(std::make_shared<opt::ReshapeTransposeFusion>());
@@ -566,44 +571,53 @@ bool RunEliminateRedundantPass(const FuncGraphPtr &old_graph, const std::shared_
   return true;
 }
 
-FuncGraphPtr AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph,
-                                              const std::shared_ptr<ConverterPara> &param) {
-  MS_ASSERT(old_graph != nullptr);
-  MS_ASSERT(param != nullptr);
+STATUS AnfTransform::ProcOnlineTransform(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param) {
+  if (!RunOptimizerPass(old_graph, {"InferShapePass"})) {
+    MS_LOG(WARNING) << "Run infershape opt pass failed.";
+  }
+  auto status = DoFormatForMindIR(old_graph, param);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "Do format for mindir failed.";
+    return lite::RET_ERROR;
+  }
+  old_graph->set_attr(kOriginalFmkType, MakeValue(static_cast<int32_t>(param->fmk_type)));
+  return lite::RET_OK;
+}
 
+int AnfTransform::RunPass(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param) {
   auto status = RunConvertPass(old_graph, param);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Run convert pass failed.";
-    return nullptr;
+    return RET_ERROR;
   }
 
   if (!RunExternalPass(old_graph, registry::POSITION_BEGIN)) {
     MS_LOG(ERROR) << "Run external pass failed, place is BEGIN";
-    return nullptr;
+    return RET_ERROR;
   }
 
   status = RunConstFoldPass(old_graph, param);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Run const fold pass failed.";
-    return nullptr;
+    return RET_ERROR;
   }
 
   if (!RunEliminateRedundantPass(old_graph, param)) {
     MS_LOG(ERROR) << "Run elimination of redundant pass failed.";
-    return nullptr;
+    return RET_ERROR;
   }
 
   if (!param->no_fusion) {
     status = RunFusionPass(old_graph, param);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Run fusion pass failed.";
-      return nullptr;
+      return RET_ERROR;
     }
   }
 
   if (!RunExternalPass(old_graph, registry::POSITION_END)) {
     MS_LOG(ERROR) << "Run external pass failed, place is END";
-    return nullptr;
+    return RET_ERROR;
   }
 
   if (!RunOptimizerPass(old_graph, {"InferShapePass"})) {
@@ -616,18 +630,37 @@ FuncGraphPtr AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph,
   }
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Run transpose opt pass failed.";
-    return nullptr;
+    return RET_ERROR;
   }
 
   status = RunGraphPass(old_graph, param);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Run convert pass failed.";
-    return nullptr;
+    return RET_ERROR;
   }
 
   status = RunParallelPass(old_graph, param);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Run convert pass failed.";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+FuncGraphPtr AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph,
+                                              const std::shared_ptr<ConverterPara> &param) {
+  MS_ASSERT(old_graph != nullptr);
+  MS_ASSERT(param != nullptr);
+  if (param->no_fusion && param->export_mindir == kMindIR) {
+    if (ProcOnlineTransform(old_graph, param) != lite::RET_OK) {
+      MS_LOG(ERROR) << "Proc online transform failed.";
+      return nullptr;
+    }
+    return old_graph;
+  }
+
+  if (RunPass(old_graph, param) != RET_OK) {
+    MS_LOG(ERROR) << "Proc online transform failed.";
     return nullptr;
   }
 
@@ -636,7 +669,7 @@ FuncGraphPtr AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph,
     return nullptr;
   }
 
-  status = QATTransform(old_graph, param);
+  auto status = QATTransform(old_graph, param);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Do QATTransform failed.";
     return nullptr;
@@ -700,6 +733,11 @@ bool AnfTransform::StoreBuiltinPass(const std::shared_ptr<ConverterPara> &param)
 FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &main_graph, const std::shared_ptr<ConverterPara> &param) {
   MS_CHECK_TRUE_MSG(main_graph != nullptr, nullptr, "Input func_graph is nullptr");
   MS_CHECK_TRUE_MSG(param != nullptr, nullptr, "Input converter param is nullptr");
+  if (main_graph->has_attr(kOriginalFmkType)) {
+    auto val_ptr = main_graph->get_attr(kOriginalFmkType);
+    MS_CHECK_TRUE_MSG(val_ptr != nullptr, nullptr, "Val ptr is nullptr.");
+    param->fmk_type = static_cast<converter::FmkType>(GetValue<int32_t>(val_ptr));
+  }
   if (!StoreBuiltinPass(param)) {
     MS_LOG(ERROR) << "store pass failed.";
     return nullptr;

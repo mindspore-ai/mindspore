@@ -21,12 +21,38 @@
 #include "extendrt/cxx_api/file_utils.h"
 #include "extendrt/utils/tensor_utils.h"
 #include "mindspore/core/utils/ms_context.h"
+#include "extendrt/mindir_loader/mindir_model/mindir_model_util.h"
+#include "src/extendrt/convert/runtime_convert.h"
 
 namespace mindspore {
 Status ModelImpl::Build(const void *model_data, size_t data_size, ModelType model_type,
                         const std::shared_ptr<Context> &model_context) {
+  const void *model_buff = model_data;
+  size_t model_size = data_size;
+#ifndef _WIN32
+  if (infer::mindir::MindirModelUtil::NeedRuntimeConvert(model_data, data_size)) {
+    MS_LOG(WARNING) << "Need runtime convert";
+    std::string plugin_path;
+    auto ret = DLSoPath("libmindspore-lite.so", "libruntime_convert_plugin.so", &plugin_path);
+    if (ret != kSuccess) {
+      MS_LOG(WARNING) << "Get path of libruntime_convert_plugin.so failed. error: " << ret;
+    }
+    void *function = nullptr;
+    ret = DLSoOpen(plugin_path, "RuntimeConvert", &handle_, &function, true);
+    if (ret != kSuccess) {
+      MS_LOG(WARNING) << "DLSoOpen RuntimeConvert failed, so path: " << plugin_path;
+    }
+    auto convert =
+      reinterpret_cast<void *(*)(const char *, const size_t &, size_t *, const std::shared_ptr<Context> &)>(function);
+    if (convert != nullptr) {
+      model_buff = convert(static_cast<const char *>(model_data), data_size, &model_size, model_context);
+    }
+  } else {
+    MS_LOG(WARNING) << "Not need runtime convert";
+  }
+#endif
   graph_ = std::make_shared<Graph>();
-  auto ret = Serialization::Load(model_data, data_size, model_type, graph_.get());
+  auto ret = Serialization::Load(model_buff, model_size, model_type, graph_.get());
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "Serialization::Load model failed.";
     return ret;
@@ -47,7 +73,7 @@ Status ModelImpl::Build(const void *model_data, size_t data_size, ModelType mode
       device_type_seter.reset(new (std::nothrow) MsContext("vm", kCPUDevice));
     });
   }
-  return session_->CompileGraph(graph_->graph_data_->GetFuncGraph(), model_data, data_size);
+  return session_->CompileGraph(graph_->graph_data_->GetFuncGraph(), model_buff, model_size);
 }
 
 Status ModelImpl::Build(const std::string &model_path, ModelType model_type,

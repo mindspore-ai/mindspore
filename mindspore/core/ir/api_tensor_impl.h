@@ -33,6 +33,7 @@ class MSTensor::Impl {
   virtual const std::string &Name() const = 0;
   virtual enum DataType DataType() const = 0;
   virtual const std::vector<int64_t> &Shape() const = 0;
+  virtual void SetShape(const std::vector<int64_t> &shape) = 0;
 
   virtual std::shared_ptr<const void> Data() const = 0;
   virtual void *MutableData() = 0;

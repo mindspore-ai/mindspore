@@ -31,6 +31,7 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
         ${CMAKE_CURRENT_SOURCE_DIR}/kernel/ascend/plugin/ascend_kernel_plugin.cc)
 
     set(MSLITE_EXTEND_RUNTIME_SRC ${MSLITE_EXTEND_RUNTIME_SRC}
+        ${CMAKE_CURRENT_SOURCE_DIR}/mindir_loader/mindir_model/mindir_model_util.cc
         ${MSLITE_KERNEL_PLUGIN}
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/file_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/utils.cc
@@ -56,6 +57,7 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
         ${CMAKE_CURRENT_SOURCE_DIR}/delegate/tensorrt/distribution/distribution_base.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/session/lite_infer_session.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/delegate_graph_executor.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/convert/runtime_convert.cc
         )
     # when cpu kernel is need
     #if(NOT MSLITE_ENABLE_ACL)
@@ -189,6 +191,10 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
     if(SUPPORT_TENSORRT)
         add_definitions(-DSUPPORT_TENSORRT)
         add_subdirectory(delegate/tensorrt)
+    endif()
+
+    if(MSLITE_ENABLE_CONVERTER)
+        add_subdirectory(convert)
     endif()
 
     set(TEST_CLOUD_INFER on)

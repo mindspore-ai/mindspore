@@ -16,12 +16,13 @@
 #ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_CONV_TUPLEGETITEM_FUSION_H_
 #define MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_CONV_TUPLEGETITEM_FUSION_H_
 #include <string>
-#include "backend/common/optimizer/optimizer.h"
+#include "tools/optimizer/common/pattern_process_pass_extends.h"
+
 namespace mindspore::opt {
-class ConvTupleGetItemFusion : public PatternProcessPass {
+class ConvTupleGetItemFusion : public LitePatternProcessPass {
  public:
   explicit ConvTupleGetItemFusion(const std::string &name = "ConvTupleGetItemFusion", bool multigraph = true)
-      : PatternProcessPass(name, multigraph) {}
+      : LitePatternProcessPass(name, multigraph) {}
   ~ConvTupleGetItemFusion() override = default;
 
  private:
