@@ -1,7 +1,7 @@
 mindspore.dataset.PhotoTourDataset
 ==================================
 
-.. py:class:: mindspore.dataset.PhotoTourDataset(dataset_dir, name， usage=None， num_samples=None, num_parallel_workers=None, shuffle=None, sampler=None, num_shards=None, shard_id=None, cache=None)
+.. py:class:: mindspore.dataset.PhotoTourDataset(dataset_dir, name, usage=None, num_samples=None, num_parallel_workers=None, shuffle=None, sampler=None, num_shards=None, shard_id=None, cache=None)
 
     读取和解析PhotoTour数据集的源数据集。
 

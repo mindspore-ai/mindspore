@@ -1798,7 +1798,7 @@ class FlickrDataset(MappableDataset, VisionBaseDataset):
             (default=None, number set in the config).
         shuffle (bool, optional): Whether to perform shuffle on the dataset (default=None, expected
             order behavior shown in the table).
-        decode (bool, optional): Decode the images after reading (default=False).
+        decode (bool, optional): Decode the images after reading (default=None).
         sampler (Sampler, optional): Object used to choose samples from the
             dataset (default=None, expected order behavior shown in the table).
         num_shards (int, optional): Number of shards that the dataset will be divided
