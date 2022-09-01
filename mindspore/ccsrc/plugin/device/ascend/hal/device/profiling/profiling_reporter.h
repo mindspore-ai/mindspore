@@ -20,6 +20,7 @@
 #include <utility>
 #include <vector>
 #include <memory>
+#include <map>
 
 #include "securec/include/securec.h"
 #include "utils/log_adapter.h"
@@ -43,7 +44,7 @@ class StepPointDesc {
   StepPointDesc(string op_name, uint32_t tag) : op_name_(std::move(op_name)), tag_(tag) {}
   ~StepPointDesc() = default;
 
-  string op_name() { return op_name_; }
+  string op_name() const { return op_name_; }
   uint32_t tag() const { return tag_; }
 
  private:
@@ -63,8 +64,9 @@ class ProfilingReporter {
         task_ids_(task_ids) {}
   ~ProfilingReporter() = default;
 
-  void ReportTasks();
-  void DynamicNodeReport(const CNodePtr &node, uint32_t stream_id, uint32_t task_id, const KernelType kernel_type);
+  void ReportTasks() const;
+  void DynamicNodeReport(const CNodePtr &node, uint32_t stream_id, uint32_t task_id,
+                         const KernelType kernel_type) const;
   void ReportStepPoint(const vector<std::shared_ptr<StepPointDesc>> &points);
 
  private:
@@ -74,7 +76,7 @@ class ProfilingReporter {
   vector<CNodePtr> cnode_list_;
   vector<uint32_t> stream_ids_;
   vector<uint32_t> task_ids_;
-  map<string, int> node_name_index_map_;
+  std::map<string, int> node_name_index_map_;
   const uint32_t MSPROF_DIFFERENCE = 200;
 
   bool CheckStreamTaskValid() const;
@@ -84,14 +86,15 @@ class ProfilingReporter {
   uint32_t GetTaskId(const string &node_name);
   const CNodePtr GetCNode(const std::string &name) const;
 
-  void ReportData(uint32_t device_id, unsigned char *data, size_t data_size, const std::string &tag_name);
-  void ReportTask(const CNodePtr &node, uint32_t stream_id, uint32_t task_id, KernelType kernel_type);
-  void ReportNode(const CNodePtr &node, uint32_t stream_id, uint32_t task_id, uint32_t tensor_type);
-  void BuildProfTensorDataCommon(MsprofGeProfTensorData *tensor_info, uint32_t stream_id, uint32_t task_id);
-  void BuildTensorData(MsprofGeTensorData *tensor_data, const CNodePtr &node, size_t index, uint32_t tensor_type);
+  void ReportData(uint32_t device_id, unsigned char *data, size_t data_size, const std::string &tag_name) const;
+  void ReportTask(const CNodePtr &node, uint32_t stream_id, uint32_t task_id, KernelType kernel_type) const;
+  void ReportNode(const CNodePtr &node, uint32_t stream_id, uint32_t task_id, uint32_t tensor_type) const;
+  void BuildProfTensorDataCommon(MsprofGeProfTensorData *tensor_info, uint32_t stream_id, uint32_t task_id) const;
+  void BuildTensorData(MsprofGeTensorData *tensor_data, const CNodePtr &node, size_t index, uint32_t tensor_type) const;
 
   template <typename T>
-  void SetAlternativeValue(T *property, const size_t property_size, const string &value, const int32_t &device_id) {
+  void SetAlternativeValue(T *property, const size_t property_size, const string &value,
+                           const int32_t &device_id) const {
     MS_EXCEPTION_IF_NULL(property);
     if (value.size() < property_size) {
       property->type = static_cast<uint8_t>(MSPROF_MIX_DATA_STRING);
