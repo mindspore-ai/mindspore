@@ -40,5 +40,5 @@ mindspore.nn.BleuScore
 
         **异常：**
 
-        - **ValueError** -  输入参数的数量不等于2。
+        - **ValueError** - 输入参数的数量不等于2。
         - **ValueError** -  `candidate_corpus` 的长度与 `reference_corpus` 不同。

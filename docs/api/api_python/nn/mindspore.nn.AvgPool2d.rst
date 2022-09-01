@@ -5,7 +5,7 @@ mindspore.nn.AvgPool2d
 
     对输入的多维数据进行二维的平均池化运算。
 
-    通常，输入的shape为 :math:`(N_{in},C_{in},H_{in},W_{in})` ，AvgPool2d的输出为 :math:`(H_{in},W_{in})` 维度的区域平均值。给定 `kernel_size` 为 :math:`(kH,kW)` 和 `stride` ，公式定义如下
+    通常，输入的shape为 :math:`(N_{in},C_{in},H_{in},W_{in})` ，AvgPool2d的输出为 :math:`(H_{in},W_{in})` 维度的区域平均值。给定 `kernel_size` 为 :math:`(kH,kW)` 和 `stride` ，公式定义如下：
 
     .. math::
         \text{output}(N_i, C_j, h, w) = \frac{1}{kH * kW} \sum_{m=0}^{kH-1} \sum_{n=0}^{kW-1}
