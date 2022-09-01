@@ -111,6 +111,7 @@ class TensorRTOp {
   bool GetSupportInputBool();
 
   void SetSupportInputBool(bool support_input_bool);
+  bool IsDynamicInput(TensorRTContext *ctx, size_t k);
 
  private:
   int SetTransposeDynamicRange();
