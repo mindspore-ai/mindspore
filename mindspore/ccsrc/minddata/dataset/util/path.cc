@@ -17,9 +17,12 @@
 
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <unistd.h>
 #include <new>
 #include <sstream>
+
+#ifdef _MSC_VER
+#include <direct.h>  // for _mkdir
+#endif
 
 #include "./securec.h"
 #ifndef BUILD_LITE

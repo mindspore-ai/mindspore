@@ -21,7 +21,6 @@
 #include <libgen.h>
 #include <sys/file.h>
 #endif
-#include <unistd.h>
 #include <algorithm>
 #include <array>
 #include <chrono>
