@@ -49,7 +49,9 @@ Neural Network
     mindspore.ops.adaptive_avg_pool3d
     mindspore.ops.adaptive_max_pool1d
     mindspore.ops.adaptive_max_pool3d
+    mindspore.ops.avg_pool1d
     mindspore.ops.avg_pool2d
+    mindspore.ops.avg_pool3d
     mindspore.ops.batch_norm
     mindspore.ops.bias_add
     mindspore.ops.conv2d
