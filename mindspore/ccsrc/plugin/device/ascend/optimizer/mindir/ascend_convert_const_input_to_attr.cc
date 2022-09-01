@@ -210,7 +210,7 @@ CNodePtr AscendConvertConstInputToAttr::CreateTargetOp(const CNodePtr &origin_op
 
   auto input_names = origin_primitive->GetAttr(kAttrInputNames);
   if (input_names == nullptr) {
-    MS_LOG(WARNING) << "input_names are nullptr in cnode[" << origin_op->DebugString() << "]";
+    MS_LOG(INFO) << "input_names are nullptr in cnode[" << origin_op->DebugString() << "]";
     return nullptr;
   }
   auto input_names_vec = GetValue<std::vector<std::string>>(input_names);
@@ -261,7 +261,7 @@ bool AscendConvertConstInputToAttr::ConvertInputToAttr(const CNodePtr &origin_op
                 << "] of cnode[" + origin_op->DebugString() + "], origin value:" << value_node->ToString()
                 << ", Type:" << value_node->type_name();
   if (i >= input_names_vec.size()) {
-    MS_LOG(WARNING) << "Input index is invalid. input index: " << i << ", input name size " << input_names_vec.size();
+    MS_LOG(INFO) << "Input index is invalid. input index: " << i << ", input name size " << input_names_vec.size();
     return false;
   }
 
@@ -290,7 +290,7 @@ std::string AscendConvertConstInputToAttr::GetAttrName(const string &target_op_n
     MS_LOG(INFO) << "Attr name is empty for op " << target_op_name << ", use input name " << input_name << " instead.";
     attr_name = input_name;
   } else if (attr_name != input_name) {
-    MS_LOG(WARNING) << "Attr name not match input name: " << attr_name << " vs " << input_name;
+    MS_LOG(INFO) << "Attr name not match input name: " << attr_name << " vs " << input_name;
   }
   return attr_name;
 }
