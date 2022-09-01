@@ -1,6 +1,8 @@
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-sign-compare")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-reorder")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-switch")
+if(NOT MSVC)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-sign-compare")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-reorder")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-switch")
+endif()
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-uninitialized -Wno-deprecated-declarations \
@@ -8,7 +10,9 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
                                             -Wno-unused-comparison -Wno-constant-conversion \
                                             -Wno-unknown-warning-option -Wno-macro-redefined")
 else()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-maybe-uninitialized")
+    if(NOT MSVC)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-maybe-uninitialized")
+    endif()
 endif()
 
 if(MSVC)
@@ -17,9 +21,11 @@ if(MSVC)
 endif()
 
 # fix for GCC8.0
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-class-memaccess  -Wno-stringop-truncation")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-format")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-attributes")
+if(NOT MSVC)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-class-memaccess  -Wno-stringop-truncation")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-format")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-attributes")
+endif()
 
 ############################# Options ################################
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
@@ -62,12 +68,16 @@ include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/kernels
 
 ####################### Flags ########################################
 # compile flags
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=default")
+if(NOT MSVC)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=default")
+endif()
 
 if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-delete-abstract-non-virtual-dtor")
 else()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,-rpath,$ORIGIN:$ORIGIN/lib")
+    if(NOT MSVC)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,-rpath,$ORIGIN:$ORIGIN/lib")
+    endif()
 endif()
 
 ################## Include sub-modules ###############################
@@ -229,7 +239,9 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     else()
         target_link_libraries(_c_dataengine PRIVATE ${SECUREC_LIBRARY})
     endif()
-    target_link_options(_c_dataengine PRIVATE -Wl,--allow-multiple-definition)
+    if(NOT MSVC)
+        target_link_options(_c_dataengine PRIVATE -Wl,--allow-multiple-definition)
+    endif()
 else()
     set(ICU_LIB mindspore::icuuc mindspore::icudata mindspore::icui18n)
     if(ENABLE_PYTHON)
@@ -248,9 +260,13 @@ target_link_libraries(_c_dataengine PRIVATE mindspore_backend)
 
 add_dependencies(_c_dataengine _c_mindrecord)
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    set(MINDRECORD_LINK_OBJECT
-        ${CMAKE_BINARY_DIR}/mindspore/ccsrc/minddata/mindrecord/CMakeFiles/_c_mindrecord.dir/objects.a)
-    target_link_libraries(_c_dataengine PRIVATE _c_mindrecord ${MINDRECORD_LINK_OBJECT} mindspore::sqlite)
+    if(MSVC)
+        target_link_libraries(_c_dataengine PRIVATE _c_mindrecord mindspore::sqlite)
+    else()
+        set(MINDRECORD_LINK_OBJECT
+            ${CMAKE_BINARY_DIR}/mindspore/ccsrc/minddata/mindrecord/CMakeFiles/_c_mindrecord.dir/objects.a)
+        target_link_libraries(_c_dataengine PRIVATE _c_mindrecord ${MINDRECORD_LINK_OBJECT} mindspore::sqlite)
+    endif()
 else()
     target_link_libraries(_c_dataengine PRIVATE _c_mindrecord)
     if(ENABLE_CPU AND NOT WIN32)
