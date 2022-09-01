@@ -18,8 +18,8 @@
 
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
 #include <semaphore.h>
-#include <signal.h>  // for sig_atomic_t
 #endif
+#include <signal.h>  // for sig_atomic_t
 #include <condition_variable>
 #include <functional>
 #include <memory>
