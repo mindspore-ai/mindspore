@@ -814,7 +814,7 @@ bool GraphExecutorPy::CompileInner(const py::object &source_obj, const py::tuple
   phase_ = phase;
   auto obj_desc = GetObjDesc(source_obj);
   MS_LOG(INFO) << "Start compiling, phase: " << phase;
-  MS_LOG(DEBUG) << "source: {" << obj_desc << "}\nargs: " << py::str(const_cast<py::tuple &>(args));
+  MS_LOG(DEBUG) << "source: {" << py::str(source_obj) << "}\nargs: " << py::str(const_cast<py::tuple &>(args));
   EventMessage::PrintCompileStartMsg(phase, obj_desc);
 
   ExecutorInfoPtr executor_info = std::make_shared<ExecutorInfo>();
