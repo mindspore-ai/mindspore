@@ -166,6 +166,8 @@ using GraphExecutorPyPtr = std::shared_ptr<GraphExecutorPy>;
 
 std::string GetJitLevel();
 
+std::string GetObjDesc(const py::object &source_obj);
+bool IsPhaseLoadFromMindIR(const std::string &phase);
 void CheckArgsValid(const py::object &source_obj, const py::tuple &args);
 py::bool_ VerifyInputSignature(const py::list &input_signature, const py::tuple &inputs);
 

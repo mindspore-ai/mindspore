@@ -54,6 +54,7 @@
 #include "include/common/debug/dump_proto.h"
 #include "pipeline/jit/debug/anf_ir_utils.h"
 #include "pipeline/jit/debug/trace.h"
+#include "pipeline/jit/event_message_print.h"
 #include "include/common/debug/draw.h"
 #include "include/common/debug/common.h"
 #include "load_mindir/load_model.h"
@@ -237,7 +238,7 @@ std::string ToOrdinal(const size_t &i) {
 }
 }  // namespace
 
-void CheckArgsValid(const py::object &source_obj, const py::tuple &args) {
+std::string GetObjDesc(const py::object &source_obj) {
   std::string obj_desc;
   if (py::hasattr(source_obj, parse::PYTHON_PARSE_METHOD)) {
     auto cell_class_name = source_obj.attr("__class__").attr("__name__");
@@ -254,6 +255,11 @@ void CheckArgsValid(const py::object &source_obj, const py::tuple &args) {
       MS_EXCEPTION(TypeError) << "The source object is invalid: " << py::str(source_obj);
     }
   }
+  return obj_desc;
+}
+
+void CheckArgsValid(const py::object &source_obj, const py::tuple &args) {
+  std::string obj_desc = GetObjDesc(source_obj);
   for (size_t i = 0; i < args.size(); i++) {
     if (!CheckArgValid(args[i])) {
       MS_EXCEPTION(TypeError)
@@ -806,8 +812,10 @@ bool GraphExecutorPy::CompileInner(const py::object &source_obj, const py::tuple
 
   auto phase = py::cast<std::string>(phase_obj);
   phase_ = phase;
+  auto obj_desc = GetObjDesc(source_obj);
   MS_LOG(INFO) << "Start compiling, phase: " << phase;
-  MS_LOG(DEBUG) << "source: {" << py::str(source_obj) << "}\nargs: " << py::str(const_cast<py::tuple &>(args));
+  MS_LOG(DEBUG) << "source: {" << obj_desc << "}\nargs: " << py::str(const_cast<py::tuple &>(args));
+  EventMessage::PrintCompileStartMsg(phase, obj_desc);
 
   ExecutorInfoPtr executor_info = std::make_shared<ExecutorInfo>();
   ResourcePtr resource = std::make_shared<Resource>(source_obj);
@@ -883,6 +891,7 @@ bool GraphExecutorPy::CompileInner(const py::object &source_obj, const py::tuple
   ReclaimOptimizer();
   // Clean cache used while compile
   resource->Clean();
+  EventMessage::PrintCompileEndMsg(phase, obj_desc);
   MS_LOG(INFO) << "Finish compiling.";
   return true;
 }
