@@ -103,7 +103,28 @@ std::vector<PrimitivePtr> GkUtils::FilterExcludedOps(const std::vector<Primitive
   MS_EXCEPTION_IF_NULL(device_context);
   auto deprecated_ptr = device_context->GetDeprecatedInterface();
   MS_EXCEPTION_IF_NULL(deprecated_ptr);
-  deprecated_ptr->FilterExcludedOps(ops, &dst_ops);
+  auto major_compute_capability = deprecated_ptr->GetGPUCapabilityMajor();
+  std::unordered_map<std::string, int> limited_capacity_ops = {
+    {prim::kPrimConv2D->name(), 7}, {prim::kPrimMatMul->name(), 7}, {prim::kPrimBatchMatMul->name(), 7}};
+  std::vector<std::string> final_filter_ops;
+  for (auto op : ops) {
+    if (limited_capacity_ops.find(op->name()) != limited_capacity_ops.end() &&
+        limited_capacity_ops[op->name()] != major_compute_capability) {
+      final_filter_ops.emplace_back(op->name());
+    } else {
+      dst_ops.emplace_back(op);
+    }
+  }
+  // Give hint for excluded src_ops.
+  static bool give_hint = false;
+  if (!give_hint && final_filter_ops.size() > 0) {
+    give_hint = true;
+    for (size_t i = 0; i < final_filter_ops.size(); ++i) {
+      MS_LOG(WARNING) << "For op : " << final_filter_ops[i]
+                      << " can not be enabled in GraphKernel because the current device's computing capacity is "
+                      << major_compute_capability << ", which is != " << limited_capacity_ops[final_filter_ops[i]];
+    }
+  }
   return dst_ops;
 #else
   return ops;

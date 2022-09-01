@@ -1184,7 +1184,16 @@ void TargetInfoSetter::GetTargetInfo() {
     MS_EXCEPTION_IF_NULL(device_context);
     auto deprecated_ptr = device_context->GetDeprecatedInterface();
     MS_EXCEPTION_IF_NULL(deprecated_ptr);
-    has_info_ = deprecated_ptr->GetGPUInfo(&target_info_);
+    auto major_version = deprecated_ptr->GetGPUCapabilityMajor();
+    auto minor_version = deprecated_ptr->GetGPUCapabilityMinor();
+    auto sm_count = deprecated_ptr->GetGPUMultiProcessorCount();
+    if (major_version == -1 || minor_version == -1 || sm_count == -1) {
+      has_info_ = false;
+    } else {
+      has_info_ = true;
+      (target_info_)[kJsonKeyComputeCapability] = std::to_string(major_version) + "." + std::to_string(minor_version);
+      (target_info_)[kJsonKeySmCount] = sm_count;
+    }
     return;
   }
 #endif

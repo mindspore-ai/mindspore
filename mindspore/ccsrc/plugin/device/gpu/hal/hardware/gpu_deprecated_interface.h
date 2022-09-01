@@ -32,8 +32,9 @@ class GPUDeprecatedInterface : public DeprecatedInterface {
   GPUDeprecatedInterface() = default;
   ~GPUDeprecatedInterface() override = default;
 
-  void FilterExcludedOps(const std::vector<PrimitivePtr> &src_ops, std::vector<PrimitivePtr> *dst_ops) override;
-  bool GetGPUInfo(nlohmann::json *target_info) override;
+  int GetGPUCapabilityMajor() override;
+  int GetGPUCapabilityMinor() override;
+  int GetGPUMultiProcessorCount() override;
 };
 }  // namespace gpu
 }  // namespace device

@@ -55,8 +55,9 @@ class DeprecatedInterface {
   virtual bool CloseTsd(const std::shared_ptr<MsContext> &ms_context_ptr, bool force) { return true; }
   virtual bool IsTsdOpened(const std::shared_ptr<MsContext> &inst_context) { return true; }
   // gpu
-  virtual void FilterExcludedOps(const std::vector<PrimitivePtr> &src_ops, std::vector<PrimitivePtr> *dst_ops) {}
-  virtual bool GetGPUInfo(nlohmann::json *target_info) { return true; }
+  virtual int GetGPUCapabilityMajor() { return -1; }
+  virtual int GetGPUCapabilityMinor() { return -1; }
+  virtual int GetGPUMultiProcessorCount() { return -1; }
 };
 }  // namespace device
 }  // namespace mindspore
