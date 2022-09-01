@@ -701,8 +701,14 @@ def constexpr(fn=None, get_instance=True, name=None, reuse_result=True):
                 if not reuse_result:
                     self.add_prim_attr('forbid_reuse_result', True)
 
-            def infer_value(self, *args):
-                return fn(*args)
+            def __infer__(self, *args):
+                value_args = []
+                for item in args:
+                    if (item["dtype"] is not None and item["value"] is None):
+                        logger.warning("The \"" + self.name + "\" is a constexpr function." \
+                                                              " The input arguments must be all constant value.")
+                    value_args.append(item["value"])
+                return {'dtype': None, 'shape': None, 'value': fn(*value_args)}
 
             def __call__(self, *args, **kwargs):
                 return fn(*args)
@@ -721,3 +727,42 @@ def _run_op(obj, op_name, args):
     """Single op execution function supported by ge in PyNative mode."""
     output = real_run_op(obj, op_name, args)
     return output
+
+
+def check_expr(fn=None, get_instance=True, name=None, reuse_result=True):
+    """
+    Creates a PrimitiveWithInfer operator that can check the value at compile time.
+    Args:
+        fn (function): A `fn` use as the infer_value of the output operator. Default: None.
+        get_instance (bool): If true, return the instance of operator,
+                             otherwise return the operator class. Default: True.
+        name (str): Defines the operator name. If `name` is None, use the function name as op name. Default: None.
+        reuse_result (bool): If true, the operator will be executed once and reuse the result next time,
+                             otherwise the operator will always be executed. Default: True.
+    """
+
+    def deco(fn):
+        """Decorator for CompileOp."""
+
+        class CompileOp(PrimitiveWithInfer):
+            """
+            CompileOp is a temporary operator used to execute the constexpr function.
+            """
+
+            def __init__(self):
+                op_name = name if name else fn.__name__
+                PrimitiveWithInfer.__init__(self, op_name)
+                self.set_const_prim(True)
+                if not reuse_result:
+                    self.add_prim_attr('forbid_reuse_result', True)
+
+            def infer_value(self, *args):
+                return fn(*args)
+
+        if get_instance:
+            return CompileOp()
+        return CompileOp
+
+    if fn is not None:
+        return deco(fn)
+    return deco
