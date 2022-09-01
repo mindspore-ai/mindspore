@@ -66,7 +66,7 @@ mindspore.nn.TrainOneStepWithLossScaleCell
 
         **参数：**
 
-        - **sens** （Tensor）- 新的损失缩放系数，其shape和类型需要与原始 `scale_sense` 相同。
+        - **sens** （Tensor） - 新的损失缩放系数，其shape和类型需要与原始 `scale_sense` 相同。
 
     .. py:method:: start_overflow_check(pre_cond, compute_input)
 
