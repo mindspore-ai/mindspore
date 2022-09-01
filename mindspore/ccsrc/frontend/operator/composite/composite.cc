@@ -503,10 +503,8 @@ void GenerateFuncGraphByPosition(const FuncGraphPtr &fg, const AbstractTuplePtr 
     fg->set_output(current_element);
   } else if (pos_elements.size() > args_least_size) {
     fg->set_output(fg->NewCNodeInOrder(pos_elements));
-  } else {  // The 'pos' is empty AbstractTuple or empty AbstractList.
-    auto empty_tuple_value = std::make_shared<ValueTuple>(ValuePtrList());
-    auto empty_tuple = NewValueNode(empty_tuple_value);
-    fg->set_output(empty_tuple);
+  } else {  // The 'pos' is empty AbstractTuple.
+    MS_LOG(EXCEPTION) << "grad_position should not be empty when grad by position.";
   }
 }
 }  // namespace
@@ -848,8 +846,10 @@ FuncGraphPtr GradOperation::GenerateFuncGraph(const AbstractBasePtrList &args_sp
       << "'GradOperation' requires a forward network or function as an input, while the input is empty.";
   }
 
-  MS_EXCEPTION_IF_NULL(args_spec_list[0]);
-  AbstractFunctionPtr fn = dyn_cast<AbstractFunction>(args_spec_list[0]);
+  constexpr size_t fn_index = 0;
+  auto fn_abs = args_spec_list[fn_index];
+  MS_EXCEPTION_IF_NULL(fn_abs);
+  AbstractFunctionPtr fn = dyn_cast<AbstractFunction>(fn_abs);
   if (fn == nullptr) {
     MS_LOG(EXCEPTION) << "For 'GradOperation', the first argument must be a 'Function' or 'Cell', but got "
                       << args_spec_list[0]->ToString();
@@ -897,6 +897,15 @@ FuncGraphPtr GradOperation::GenerateFuncGraph(const AbstractBasePtrList &args_sp
     position = grad_fg->add_parameter();
   } else if (get_by_list_) {
     weights = grad_fg->add_parameter();
+    constexpr size_t weights_index = 1;
+    // Check if weights is None, throw an exception if yes.
+    if (args_spec_list.size() <= weights_index) {
+      MS_LOG(EXCEPTION) << "When 'get_by_list' is True, 'weights' needs to be set manually.";
+    }
+    auto weights_abs = args_spec_list[weights_index];
+    if (weights_abs->isa<AbstractNone>()) {
+      MS_EXCEPTION(ValueError) << "When 'get_by_list' is True, 'weights' should not be None.";
+    }
   }
 
   std::vector<AnfNodePtr> inputs;
