@@ -152,7 +152,7 @@ int ElementWiseTensorRT::AddInnerOp(TensorRTContext *ctx) {
   }
 #endif
   auto output_helper =
-    ITensorHelper{op_out_tensor, x_input.format_, x_input.same_format_, x_input.is_tensor_ && y_input.is_tensor_};
+    ITensorHelper{op_out_tensor, x_input.format_, x_input.same_format_, x_input.is_tensor_ || y_input.is_tensor_};
   ctx->RegisterTensor(output_helper, out_tensors_[0].Name());
   MS_LOG(DEBUG) << "output " << GetTensorFormat(output_helper);
   return RET_OK;
