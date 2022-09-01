@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
-"""Implementation for internal polymorphism `logical or` operations."""
+"""Implementation for internal polymorphism `bitwise or` operations."""
 from mindspore.ops.composite import base
 from mindspore.ops import functional as F
 from ...operations import _inner_ops as inner

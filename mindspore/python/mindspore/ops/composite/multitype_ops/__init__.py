@@ -38,6 +38,9 @@ from .logical_or_impl import logical_or
 from .logic_not_impl import logical_not
 from .bitwise_and_impl import bitwise_and
 from .bitwise_or_impl import bitwise_or
+from .bitwise_xor_impl import bitwise_xor
+from .left_shift_impl import left_shift
+from .right_shift_impl import right_shift
 from .uadd_impl import uadd
 from .in_impl import in_
 from .not_in_impl import not_in_
@@ -66,6 +69,9 @@ __all__ = [
     'logical_not',
     'bitwise_and',
     'bitwise_or',
+    'bitwise_xor',
+    'left_shift',
+    'right_shift',
     'in_',
     'not_in_'
 ]

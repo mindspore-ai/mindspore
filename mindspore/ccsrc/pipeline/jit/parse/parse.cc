@@ -1749,8 +1749,8 @@ AnfNodePtr Parser::HandleInterpretForAugassign(const FunctionBlockPtr &block, co
     py::cast<std::string>(ast()->CallParseModFunction(PYTHON_PARSE_GET_OPERATION_SYMBOL, op_object));
   // Check the symbol in the Augasssign expression.
   if (op_text.empty()) {
-    MS_LOG(EXCEPTION)
-      << "Invalid augasssign operator, only support `+=`, `-=`, `*=`, `/=`, `%=`, `**=`, `//=`, `<<=`, `>>=`, `^=`.";
+    MS_LOG(EXCEPTION) << "Invalid augasssign operator, only support `+=`, `-=`, `*=`, `/=`, `%=`, `**=`, `//=`, `<<=`, "
+                      << "`>>=`, `&=`, `|=`, `^=`.";
   }
 
   const auto target_text = py::cast<std::string>(ast()->GetAstNodeText(target_object));

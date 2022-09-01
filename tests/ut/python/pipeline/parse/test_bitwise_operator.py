@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """ test bitwise operator """
+import numpy as np
 import pytest
 import mindspore.nn as nn
 from mindspore import context
@@ -22,8 +23,8 @@ context.set_context(mode=context.GRAPH_MODE)
 
 def test_bitwise_operator_1():
     """
-    Feature: bitwise and operator
-    Description: test bitwise and operator
+    Feature: bitwise operator
+    Description: test bitwise and, bitwise or, bitwise xor in normal cases
     Expectation: success
     """
 
@@ -31,19 +32,23 @@ def test_bitwise_operator_1():
         def construct(self, x, y):
             res1 = x & y
             res2 = x | y
-            return (res1, res2)
+            res3 = x ^ y
+            return (res1, res2, res3)
 
-    x = 10
-    y = 11
     net = Net()
-    result = net(x, y)
-    assert result == (10, 11)
+    int64_min = -9223372036854775808
+    int64_max = 9223372036854775807
+    for _ in range(1000):
+        x = int(np.random.randint(int64_min, int64_max + 1))
+        y = int(np.random.randint(int64_min, int64_max + 1))
+        result = net(x, y)
+        assert result == (x & y, x | y, x ^ y)
 
 
 def test_bitwise_operator_2():
     """
-    Feature: bitwise and operator
-    Description: test bitwise and operator in another case
+    Feature: bitwise operator
+    Description: test bitwise and, bitwise or, bitwise xor in special case
     Expectation: success
     """
 
@@ -55,18 +60,20 @@ def test_bitwise_operator_2():
         def construct(self, x):
             res1 = x & self.const_y
             res2 = x | self.const_y
-            return (res1, res2)
+            res3 = x ^ self.const_y
+            return (res1, res2, res3)
 
     x = 9223372036854775807
     net = Net()
     result = net(x)
-    assert result == (2147483647, 9223372036854775807)
+    y = 2147483647
+    assert result == (x & y, x | y, x ^ y)
 
 
-def test_bitwise_operator_3():
+def test_bitwise_operator_augassign():
     """
-    Feature: bitwise and operator
-    Description: test bitwise and operator with negative numbers
+    Feature: bitwise operator
+    Description: test bitwise and, bitwise or, bitwise xor about augassign
     Expectation: success
     """
 
@@ -77,19 +84,25 @@ def test_bitwise_operator_3():
             self.const_y = -9223372036854775808
 
         def construct(self):
-            res1 = self.const_x & self.const_y
-            res2 = self.const_x | self.const_y
-            return (res1, res2)
+            res1 = self.const_x
+            res1 &= self.const_y
+            res2 = self.const_x
+            res2 |= self.const_y
+            res3 = self.const_x
+            res3 ^= self.const_y
+            return (res1, res2, res3)
 
     net = Net()
     result = net()
-    assert result == (-9223372036854775808, -2)
+    x = -2
+    y = -9223372036854775808
+    assert result == (x & y, x | y, x ^ y)
 
 
-def test_bitwise_operator_error_1():
+def test_bitwise_operator_error_list_input():
     """
-    Feature: bitwise and operator
-    Description: test bitwise and operator with lists
+    Feature: bitwise operator
+    Description: test bitwise operator with lists
     Expectation: throw RuntimeError
     """
 
@@ -109,10 +122,10 @@ def test_bitwise_operator_error_1():
     assert "operation does not support the type" in str(err.value)
 
 
-def test_bitwise_operator_error_2():
+def test_bitwise_operator_error_float_input():
     """
-    Feature: bitwise and operator
-    Description: test bitwise and operator with float numbers
+    Feature: bitwise operator
+    Description: test bitwise operator with float numbers
     Expectation: throw TypeError
     """
 
@@ -132,18 +145,17 @@ def test_bitwise_operator_error_2():
     assert "Unsupported input type. For BitOr, only integer types are supported, but got" in str(err.value)
 
 
-def test_bitwise_operator_error_3():
+def test_bitwise_operator_error_too_large_number():
     """
-    Feature: bitwise and operator
-    Description: test bitwise and operator with too large numbers
+    Feature: bitwise operator
+    Description: test bitwise operator with too large numbers
     Expectation: throw TypeError
     """
 
     class Net(nn.Cell):
         def construct(self, x, y):
-            res1 = x & y
-            res2 = x | y
-            return (res1, res2)
+            res = x ^ y
+            return res
 
     x = 9223372036854775807 + 1
     y = 2
