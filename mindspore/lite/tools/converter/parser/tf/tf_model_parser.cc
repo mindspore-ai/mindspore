@@ -139,7 +139,6 @@ STATUS SetFloatTensorInfo(const tensorflow::TensorProto &tensor_proto, tensor::T
     const auto addr = reinterpret_cast<const float *>(tensor_proto.tensor_content().data());
     if (::memcpy_s(tensor_data, (*tensor_info)->Size(), addr, shape_size * sizeof(float)) != EOK) {
       MS_LOG(ERROR) << "memcpy_s failed";
-      delete[] tensor_data;
       return RET_ERROR;
     }
   }
@@ -178,7 +177,6 @@ STATUS SetInt32TensorInfo(const tensorflow::TensorProto &tensor_proto, tensor::T
     const auto addr = reinterpret_cast<const int32_t *>(tensor_proto.tensor_content().data());
     if (::memcpy_s(tensor_data, (*tensor_info)->Size(), addr, shape_size * sizeof(int32_t)) != EOK) {
       MS_LOG(ERROR) << "memcpy_s failed";
-      delete[] tensor_data;
       return RET_ERROR;
     }
   }
@@ -208,7 +206,6 @@ STATUS SetInt64TensorInfo(const tensorflow::TensorProto &tensor_proto, tensor::T
     for (int i = 0; i < tensor_proto.int64_val_size(); ++i) {
       if (origin_data[i] > static_cast<int64_t>(INT32_MAX) || origin_data[i] < static_cast<int64_t>(INT32_MIN)) {
         MS_LOG(ERROR) << "int64 data " << origin_data[i] << "too big to fit into int32";
-        delete[] tensor_data;
         return RET_ERROR;
       } else {
         tensor_data[i] = static_cast<int>(origin_data[i]);
@@ -296,6 +293,7 @@ STATUS SetStringTensorInfo(const tensorflow::TensorProto &tensor_proto, tensor::
   }
   if (INT_ADD_OVERFLOW(shape_str.size(), (*tensor_data).size())) {
     MS_LOG(ERROR) << "data_size overflow.";
+    delete tensor_data;
     return RET_ERROR;
   }
   shape_vector = {static_cast<int64_t>(shape_str.size() + (*tensor_data).size())};
@@ -388,6 +386,10 @@ STATUS TFModelParser::ConvertConstVariant(const tensorflow::TensorProto &tensor_
     }
     tensor_list_data.insert(tensor_list_data.end(), single_tensor_data.begin(), single_tensor_data.end());
   }
+  if (INT_MUL_OVERFLOW_THRESHOLD(tensor_list_data.size(), sizeof(int), INT_MAX)) {
+    MS_LOG(ERROR) << "tensor_list_data's size overflow.";
+    return RET_ERROR;
+  }
   *tensor_info = CreateTensorInfo(tensor_list_data.data(), tensor_list_data.size() * sizeof(int),
                                   {static_cast<int64_t>(tensor_list_data.size())}, kObjectTypeTensorType);
   if (*tensor_info == nullptr) {
@@ -422,8 +424,8 @@ STATUS TFModelParser::SetTensorInfoFromType(const tensorflow::TensorProto &tenso
 STATUS TFModelParser::ConvertConstTensor(const tensorflow::NodeDef &node_def, const tensorflow::AttrValue &attr_value,
                                          const TypeId &type, const ParameterPtr &parameter,
                                          std::vector<int64_t> *shape_vector) {
-  MS_ASSERT(parameter != nullptr);
-  MS_ASSERT(shape_vector != nullptr);
+  MSLITE_CHECK_PTR(parameter);
+  MSLITE_CHECK_PTR(shape_vector);
   const tensorflow::TensorProto &tensor_proto = attr_value.tensor();
   const tensorflow::TensorShapeProto &tensor_shape = tensor_proto.tensor_shape();
   shape_vector->clear();
@@ -450,8 +452,8 @@ STATUS TFModelParser::ConvertConstTensor(const tensorflow::NodeDef &node_def, co
 
 STATUS TFModelParser::ConvertParameter(const tensorflow::NodeDef &node, const ParameterPtr &parameter,
                                        std::unordered_map<std::string, AnfNodePtr> *anf_node_map, bool root_graph) {
-  MS_ASSERT(anf_node_map != nullptr);
-  MS_ASSERT(parameter != nullptr);
+  MSLITE_CHECK_PTR(parameter);
+  MSLITE_CHECK_PTR(anf_node_map);
 
   tensorflow::AttrValue attr_value;
   TypeId type = kNumberTypeFloat32;
@@ -504,6 +506,8 @@ STATUS TFModelParser::ConvertGraphInputsAndConsts(const std::vector<const tensor
                                                   const FuncGraphPtr &anf_graph,
                                                   std::unordered_map<std::string, AnfNodePtr> *anf_node_map,
                                                   bool root_graph) {
+  MSLITE_CHECK_PTR(anf_graph);
+  MSLITE_CHECK_PTR(anf_node_map);
   for (auto &node : tf_graph_nodes) {
     bool have_data_depend = false;
     for (int i = 0; i < node->input_size(); ++i) {
@@ -514,7 +518,6 @@ STATUS TFModelParser::ConvertGraphInputsAndConsts(const std::vector<const tensor
       }
     }
     if (!have_data_depend) {
-      CHECK_NULL_RETURN(anf_graph);
       auto parameter = anf_graph->add_parameter();
       CHECK_NULL_RETURN(parameter);
       if (ConvertParameter(*node, parameter, anf_node_map, root_graph) != RET_OK) {
@@ -626,6 +629,10 @@ api::FuncGraphPtr TFModelParser::Parse(const converter::ConverterParameters &fla
   }
   graph->set_manager(nullptr);
   static auto root_func_manager = Manage(graph);
+  if (root_func_manager == nullptr) {
+    MS_LOG(ERROR) << "root_func_manager is nullptr.";
+    return nullptr;
+  }
   return res_graph_;
 }
 
@@ -633,6 +640,9 @@ STATUS TFModelParser::ConvertSubgraphInputs(std::map<std::string, const tensorfl
                                             std::unordered_map<std::string, AnfNodePtr> *anf_sub_node_map,
                                             const tensorflow::FunctionDef &tf_sub_fuction, const CNodePtr &cnode,
                                             const FuncGraphPtr &sub_func_graph) {
+  MSLITE_CHECK_PTR(anf_sub_node_map);
+  MSLITE_CHECK_PTR(cnode);
+  MSLITE_CHECK_PTR(sub_func_graph);
   std::vector<ParameterPtr> sub_graph_inputs;
   auto &tf_sub_signature = tf_sub_fuction.signature();
   auto &sub_graph_name = tf_sub_signature.name();
@@ -674,6 +684,7 @@ STATUS TFModelParser::ConvertSubgraphOutputs(std::map<std::string, const tensorf
                                              const std::unordered_map<std::string, AnfNodePtr> &anf_sub_node_map,
                                              const tensorflow::FunctionDef &tf_sub_fuction,
                                              const FuncGraphPtr &sub_func_graph) {
+  MSLITE_CHECK_PTR(sub_func_graph);
   auto &tf_sub_signature = tf_sub_fuction.signature();
   auto &sub_graph_name = tf_sub_signature.name();
 
@@ -721,6 +732,8 @@ STATUS TFModelParser::ConvertSubgraphOutputs(std::map<std::string, const tensorf
 
 void TFModelParser::UpdateMap(const CNodePtr &cnode, const FuncGraphPtr &sub_func_graph,
                               const std::string &sub_graph_name) {
+  CHECK_NULL_RETURN_VOID(cnode);
+  CHECK_NULL_RETURN_VOID(sub_func_graph);
   if (opt::CheckPrimitiveType(cnode, prim::kPrimWhile)) {
     if (find(while_cond_branch_name_.begin(), while_cond_branch_name_.end(), sub_graph_name) !=
         while_cond_branch_name_.end()) {
@@ -902,8 +915,9 @@ STATUS TFModelParser::ConvertInputNodes(const tensorflow::NodeDef &node_def,
 STATUS TFModelParser::ConvertOutputTensor(const tensorflow::NodeDef &op, const CNodePtr &anf_node,
                                           std::unordered_map<std::string, AnfNodePtr> *anf_node_map,
                                           const FuncGraphPtr &anf_graph, int output_size) {
-  MS_ASSERT(anf_node != nullptr);
-  MS_ASSERT(anf_graph != nullptr);
+  MSLITE_CHECK_PTR(anf_node);
+  MSLITE_CHECK_PTR(anf_node_map);
+  MSLITE_CHECK_PTR(anf_graph);
   if (IsTensorListOp(anf_node) && output_size != 1) {
     MS_LOG(ERROR) << "tensorlist output op output_size !=1";
     return RET_ERROR;
@@ -961,6 +975,7 @@ STATUS TFModelParser::ConvertOutputTensor(const tensorflow::NodeDef &op, const C
 }
 
 STATUS TFModelParser::RecordNullInput(const CNodePtr &node, const std::vector<std::string> &input_name_not_found) {
+  CHECK_NULL_RETURN(node);
   nodes_with_null_input_.emplace_back(node, input_name_not_found);
   return RET_OK;
 }
@@ -986,7 +1001,8 @@ STATUS TFModelParser::ConvertOps(const tensorflow::NodeDef &node_def,
                                  const FuncGraphPtr &func_graph_ptr,
                                  std::unordered_map<std::string, AnfNodePtr> *anf_node_map) {
   MS_ASSERT(node_def != nullptr);
-  MS_ASSERT(func_graph_ptr != nullptr);
+  MSLITE_CHECK_PTR(func_graph_ptr);
+  MSLITE_CHECK_PTR(anf_node_map);
   STATUS status = RET_OK;
   const auto &op_type = node_def.op();
   if (op_type == "Identity" || op_type == "StopGradient") {
@@ -1060,6 +1076,7 @@ STATUS TFModelParser::ConvertOps(const tensorflow::NodeDef &node_def,
 
 STATUS TFModelParser::ProcessControlFlowOp(const CNodePtr &anf_node, const string &op_type,
                                            const tensorflow::NodeDef &node_def) {
+  MSLITE_CHECK_PTR(anf_node);
   if (op_type == "StatelessWhile" || op_type == "While") {
     MS_LOG(INFO) << "find while node:" << node_def.name();
     tensorflow::AttrValue attr_value;
@@ -1108,6 +1125,7 @@ std::set<std::string> TFModelParser::GetAllNodeInputs() {
 }
 
 STATUS TFModelParser::GetGraphOutputNames(std::vector<AnfNodePtr> *output_nodes) {
+  MS_CHECK_TRUE_RET(output_nodes->empty(), RET_ERROR);
   std::set<std::string> all_node_inputs = GetAllNodeInputs();
   for (auto &node : tf_root_graph_nodes_vec_) {
     if (node->op() == "Assert") {

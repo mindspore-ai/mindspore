@@ -135,6 +135,10 @@ PrimitiveCPtr TfliteConvParser::Parse(const std::unique_ptr<tflite::OperatorT> &
 
   // calculate pad params
   const auto &dataTensor = tflite_subgraph->tensors.at(tflite_op->inputs[FIRST_INPUT]);
+  if (dataTensor == nullptr) {
+    MS_LOG(ERROR) << "dataTensor is nullptr";
+    return nullptr;
+  }
   std::vector<int64_t> params;
   int status = GetConvPaddingParam(dataTensor, padMode, prim.get(), &params);
   if (status != RET_OK && status != RET_NO_CHANGE) {
