@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_PYTORCH_PYTORCH_ACTIVATION_PARSER_H_
-#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_PYTORCH_PYTORCH_ACTIVATION_PARSER_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_PYTORCH_PYTORCH_LOGSOFTMAX_PARSER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_PYTORCH_PYTORCH_LOGSOFTMAX_PARSER_H_
 
 #include <vector>
 #include "tools/converter/parser/pytorch/pytorch_node_parser.h"
@@ -23,29 +23,13 @@
 
 namespace mindspore {
 namespace lite {
-class PytorchReluParser : public PytorchNodeParser {
+class PytorchLogSoftmaxParser : public PytorchNodeParser {
  public:
-  PytorchReluParser() : PytorchNodeParser("Relu") {}
-  ~PytorchReluParser() override = default;
-
-  PrimitiveCPtr Parse(const torch::jit::Node *torch_node, std::vector<size_t> *input_indices) override;
-};
-
-class PytorchTanhParser : public PytorchNodeParser {
- public:
-  PytorchTanhParser() : PytorchNodeParser("Tanh") {}
-  ~PytorchTanhParser() override = default;
-
-  PrimitiveCPtr Parse(const torch::jit::Node *torch_node, std::vector<size_t> *input_indices) override;
-};
-
-class PytorchSigmoidParser : public PytorchNodeParser {
- public:
-  PytorchSigmoidParser() : PytorchNodeParser("Sigmoid") {}
-  ~PytorchSigmoidParser() override = default;
+  PytorchLogSoftmaxParser() : PytorchNodeParser("log_softmax") {}
+  ~PytorchLogSoftmaxParser() override = default;
 
   PrimitiveCPtr Parse(const torch::jit::Node *torch_node, std::vector<size_t> *input_indices) override;
 };
 }  // namespace lite
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_PYTORCH_PYTORCH_ACTIVATION_PARSER_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_PYTORCH_PYTORCH_LOGSOFTMAX_PARSER_H_
