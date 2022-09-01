@@ -221,12 +221,12 @@ class ConstantPad1d(_ConstantPadNd):
     Using a given constant value to pads the last dimensions of input tensor.
 
     Args:
-        padding (union[int, tuple]): The padding size to pad the last dimension of input tensor.
+        padding (Union[int, tuple]): The padding size to pad the last dimension of input tensor.
             If is int, uses the same padding in both boundaries of input's last dimension.
             If a 2-tuple, uses (padding_0, padding_1) to pad. If the input is `x`, the size of last
             dimension of output is :math:`padding\_0 + x.shape[-1] + padding\_1`. The remaining dimensions
             of the output are consistent with those of the input.
-        value (union[int, float]): Padding value.
+        value (Union[int, float]): Padding value.
 
     Returns:
         Tensor, the tensor after padding.
@@ -299,13 +299,13 @@ class ConstantPad2d(_ConstantPadNd):
     Using a given constant value to pads the last two dimensions of input tensor.
 
     Args:
-        padding (union[int, tuple]): The padding size to pad the last two dimensions of input tensor.
+        padding (Union[int, tuple]): The padding size to pad the last two dimensions of input tensor.
             If is int, uses the same padding in boundaries of input's last two dimensions.
             If is tuple and length of padding is 4 uses (padding_0, padding_1, padding_2, padding_3) to pad.
             If the input is `x`, the size of last dimension of output is :math:`padding\_0 + x.shape[-1] + padding\_1`.
             The size of penultimate dimension of output is :math:`padding\_2 + x.shape[-2] + padding\_3`.
             The remaining dimensions of the output are consistent with those of the input.
-        value (union[int, float]): Padding value.
+        value (Union[int, float]): Padding value.
 
     Returns:
         Tensor, the tensor after padding.

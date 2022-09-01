@@ -44,7 +44,7 @@
             - **delimiter** (str，可选) - 表示用来分隔文件中每一行的分隔符。第一个元素被视为单词，默认值：""。
             - **vocab_size** (int，可选) - 表示要从 `file_path` 读取的字数，默认值：None，表示读取所有的字。
             - **special_tokens** (list，可选) - 特殊分词列表，如常用的"<pad>"、"<unk>"等。默认值：None，表示不添加特殊分词（token）。
-            - **special_first** (list，可选) - 表示是否将 `special_tokens` 中的特殊分词添加到词典的最前面。如果为True则将 `special_tokens` 添加到词典的最前，否则添加到词典的最后。默认值：True。
+            - **special_first** (bool，可选) - 表示是否将 `special_tokens` 中的特殊分词添加到词典的最前面。如果为True则将 `special_tokens` 添加到词典的最前，否则添加到词典的最后。默认值：True。
 
         返回：
             Vocab，从文件构建的Vocab对象。

@@ -439,7 +439,7 @@ class WarmUpLR(LearningRateSchedule):
     .. math::
         warmup\_learning\_rate = learning\_rate * tmp\_step / warmup\_steps
 
-    Where :
+    Where
 
     .. math::
         tmp\_step=min(current\_step, warmup\_steps)
