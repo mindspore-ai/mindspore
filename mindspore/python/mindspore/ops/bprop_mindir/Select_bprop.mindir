@@ -27,9 +27,9 @@ bprop.30:x*
 bprop.30:y*
 bprop.30:out*
 bprop.30:dout2
-bprop.30:[CNode]36:8:@8dfcb8b00d3a9a332e6abfc1c27b884df4e71cc1f75a6f721ec9fe76d35413c5Pbv
+bprop.30:[CNode]36:8:@8dfcb8b00d3a9a332e6abfc1c27b884df4e71cc1f75a6f721ec9fe76d35413c5PbH
+#S-Prim-hyper_map[zeros_like_leaf]:2!S-Prim-hyper_map[zeros_like_leaf]bv
 S-Prim-Select:5S-Prim-Select
 output_names€ŠZoutput€3
-input_names€ŠZ	condition€ŠZx€ŠZy€bH
-#S-Prim-hyper_map[zeros_like_leaf]:2!S-Prim-hyper_map[zeros_like_leaf]b&
+input_names€ŠZ	condition€ŠZx€ŠZy€b&
 S-Prim-MakeTuple:9S-Prim-MakeTupleh
