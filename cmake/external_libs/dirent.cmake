@@ -7,7 +7,7 @@ if(MSVC)
         HEAD_ONLY ./include
         RELEASE on
         URL ${REQ_URL}
-        MD5 ${MD5}
+        MD5 ${MD5})
     include_directories(${dirent_INC})
 endif()
 
