@@ -202,8 +202,8 @@ class ResNet(nn.Cell):
                                        in_channel=in_channels[3],
                                        out_channel=out_channels[3],
                                        stride=strides[3])
-        F.shard(self.layer4, in_strategy=((4, 2, 1, 1),), out_strategy=(None,),
-                parameter_plan={'self.layer4.0.conv2.weight': (2, 2, 1, 1)})
+        self.layer4_shard = F.shard(self.layer4, in_strategy=((4, 2, 1, 1),), out_strategy=(None,),
+                                    parameter_plan={'self.layer4.0.conv2.weight': (2, 2, 1, 1)})
 
         self.mean = P.ReduceMean(keep_dims=True)
         self.end_point = nn.Dense(2048, num_classes, has_bias=True,
@@ -235,7 +235,7 @@ class ResNet(nn.Cell):
         c2 = self.layer1(c1)
         c3 = self.layer2(c2)
         c4 = self.layer3(c3)
-        c5 = self.layer4(c4)
+        c5 = self.layer4_shard(c4)
 
         out = self.mean(c5, (2, 3))
         out = self.squeeze(out)

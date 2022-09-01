@@ -883,14 +883,17 @@ class Shard(Shard_):
         if not isinstance(out_strategy, tuple):
             raise TypeError(f"For 'Shard', the 'out_strategy' should be a tuple, "
                             f"but got {type(out_strategy).__name__}")
-        if not isinstance(parameter_plan, (tuple, type(None))):
-            raise TypeError(f"For 'Shard', the 'parameter_plan' should be a tuple or None, "
+        if not isinstance(parameter_plan, (dict, type(None))):
+            raise TypeError(f"For 'Shard', the 'parameter_plan' should be a dict or None, "
                             f"but got {type(parameter_plan).__name__}")
-        if isinstance(parameter_plan, tuple):
-            for k, v in parameter_plan:
+        if isinstance(parameter_plan, dict):
+            for k in parameter_plan.keys():
+                v = parameter_plan[k]
                 if not isinstance(k, str) or not isinstance(v, tuple):
                     raise TypeError(f"For 'Shard', the type of each key and value in 'parameter_plan' must be str and "
                                     f"tuple, but got {type(k).__name__} and {type(parameter_plan[v]).__name__}")
+        parameter_plan = self._parameter_plan_dict2tuple(parameter_plan)
+
         if not isinstance(device, str):
             raise TypeError(f"For 'Shard', the 'device' should be a string, "
                             f"but got {type(device).__name__}")
@@ -931,6 +934,15 @@ class Shard(Shard_):
         return self.shard_fn is not None and self.fn == fn and self.in_strategy == in_strategy and \
                self.out_strategy == out_strategy and self.parameter_plan == parameter_plan and \
                self.device == device and self.level == level
+
+    def _parameter_plan_dict2tuple(self, parameter_plan):
+        if not isinstance(parameter_plan, dict):
+            return parameter_plan
+
+        parameter_plan_tuple = ()
+        for k in parameter_plan:
+            parameter_plan_tuple += ((k, parameter_plan[k]),)
+        return parameter_plan_tuple
 
 
 class _ListAppend(ListAppend_):
