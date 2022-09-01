@@ -16,7 +16,10 @@
 
 #include "profiler/device/profiling.h"
 
+#ifndef _MSC_VER
 #include <cxxabi.h>
+#endif
+#include <chrono>
 #include <cmath>
 #include <ctime>
 #include "include/common/pybind_api/api_register.h"
@@ -45,31 +48,15 @@ bool Profiler::Register(const std::string &name, const std::shared_ptr<Profiler>
 }
 
 uint64_t Profiler::GetHostMonoTimeStamp() const {
-  struct timespec ts;
-#if defined(_WIN32) || defined(_WIN64)
-  if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0) {
-    MS_LOG(ERROR) << "Get host timestamp failed";
-    return 0;
-  }
-#else
-  if (clock_gettime(CLOCK_MONOTONIC_RAW, &ts) != 0) {
-    MS_LOG(ERROR) << "Get host timestamp failed";
-    return 0;
-  }
-#endif
-  constexpr uint64_t kNSecondInSecond = 1000000000;
-  uint64_t cur_time_stamp = ts.tv_sec * kNSecondInSecond + ts.tv_nsec;
-  return cur_time_stamp;
+  auto now = std::chrono::steady_clock::now();
+  int64_t ns = std::chrono::duration_cast<std::chrono::nanoseconds>(now.time_since_epoch()).count();
+  return static_cast<uint64_t>(ns);
 }
 
 uint64_t Profiler::GetRealTimeStamp() const {
-  struct timeval tv = {0, 0};
-  (void)gettimeofday(&tv, NULL);
-  int64_t kUSecondInSecond = 1000000;
-  int64_t ts = kUSecondInSecond * static_cast<int64_t>(tv.tv_sec);
-  ts += static_cast<int64_t>(tv.tv_usec);
-  // us timestamp
-  return (uint64_t)ts;
+  auto now = std::chrono::steady_clock::now();
+  int64_t ms = std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count();
+  return static_cast<uint64_t>(ms);
 }
 
 void Profiler::SetRunTimeData(const std::string &op_name, const float time_elapsed) {
