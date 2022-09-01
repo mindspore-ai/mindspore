@@ -16,6 +16,7 @@
 
 #include "plugin/device/cpu/kernel/population_count_cpu_kernel.h"
 #include <functional>
+#include <type_traits>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
@@ -26,29 +27,26 @@ constexpr size_t kPopulationCountInputsNum = 1;
 constexpr size_t kPopulationCountOutputsNum = 1;
 
 template <typename T>
-inline uint8_t PopCnt(const T v);
+inline uint8_t Table_PopCnt(T n) {
+#define BIT2(n) n, n + 1, n + 1, n + 2
+#define BIT4(n) BIT2(n), BIT2(n + 1), BIT2(n + 1), BIT2(n + 2)
+#define BIT6(n) BIT4(n), BIT4(n + 1), BIT4(n + 1), BIT4(n + 2)
+#define BIT8(n) BIT6(n), BIT6(n + 1), BIT6(n + 1), BIT6(n + 2)
 
-#define POPCNT(T, N)                  \
-  template <>                         \
-  uint8_t PopCnt<T>(const T v) {      \
-    return std::bitset<N>(v).count(); \
-  }
-
-POPCNT(int8_t, 8);
-POPCNT(uint8_t, 8);
-POPCNT(int16_t, 16);
-POPCNT(uint16_t, 16);
-POPCNT(int32_t, 32);
-POPCNT(uint32_t, 32);
-POPCNT(int64_t, 64);
-POPCNT(uint64_t, 64);
-
-#undef POPCNT
-
-template <typename T>
-void PopulationCount(const T *in0, uint8_t *out0, size_t start, size_t end) {
-  for (size_t index = start; index < end; index++) {
-    out0[index] = PopCnt<T>(in0[index]);
+  static const uint8_t table[256] = {BIT8(0)};
+  if (std::is_same<T, int8_t>::value || std::is_same<T, uint8_t>::value) {
+    // int8_t & uint8_t
+    return table[n & 0xFF];
+  } else if (std::is_same<T, int16_t>::value || std::is_same<T, uint16_t>::value) {
+    // int16_t & uint16_t
+    return table[n & 0xFF] + table[(n >> 8) & 0xFF];
+  } else if (std::is_same<T, int32_t>::value || std::is_same<T, uint32_t>::value) {
+    // int32_t & uint32_t
+    return table[n & 0xFF] + table[(n >> 8) & 0xFF] + table[(n >> 16) & 0xFF] + table[(n >> 24) & 0xFF];
+  } else if (std::is_same<T, int64_t>::value || std::is_same<T, uint64_t>::value) {
+    // int64_t & uint64_t
+    return table[n & 0xFF] + table[(n >> 8) & 0xFF] + table[(n >> 16) & 0xFF] + table[(n >> 24) & 0xFF] +
+           table[(n >> 32) & 0xFF] + table[(n >> 40) & 0xFF] + table[(n >> 48) & 0xFF] + table[(n >> 56) & 0xFF];
   }
 }
 }  // namespace
@@ -102,10 +100,12 @@ bool PopulationCountCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
   const T *input_0_addr = reinterpret_cast<T *>(inputs[kZero]->addr);
   uint8_t *output_0_addr = reinterpret_cast<uint8_t *>(outputs[kZero]->addr);
   size_t length = inputs[kZero]->size / sizeof(T);
-  constexpr size_t min_block_size = 1024;
-  auto block_size = std::max(min_block_size, length / GetActorMgrInnerThreadPool()->GetKernelThreadNum());
-  auto task = std::bind(PopulationCount<T>, input_0_addr, output_0_addr, std::placeholders::_1, std::placeholders::_2);
-  ParallelLaunch(task, length, block_size, this, pool_);
+  auto task = [this, input_0_addr, output_0_addr](size_t start, size_t end) {
+    for (size_t index = start; index < end; index++) {
+      output_0_addr[index] = Table_PopCnt<T>(input_0_addr[index]);
+    }
+  };
+  ParallelLaunch(task, length, 0);
   return true;
 }
 
