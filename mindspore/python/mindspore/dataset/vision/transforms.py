@@ -824,7 +824,8 @@ class CutOut(ImageTensorOperation):
     Args:
         length (int): The side length of each square patch, must be larger than 0.
         num_patches (int, optional): Number of patches to be cut out of an image, must be larger than 0. (default=1).
-        is_hwc (bool): Whether the input image is in HWC format. True - HWC format, False - CHW format. Default: True.
+        is_hwc (bool, optional): Whether the input image is in HWC format.
+            True - HWC format, False - CHW format. Default: True.
 
     Raises:
         TypeError: If `length` is not of type integer.
@@ -1474,7 +1475,8 @@ class Normalize(ImageTensorOperation):
             The mean values must be in range [0.0, 255.0].
         std (sequence): List or tuple of standard deviations for each channel, with respect to channel order.
             The standard deviation values must be in range (0.0, 255.0].
-        is_hwc (bool): Whether the input image is in HWC format. True - HWC format, False - CHW format. Default: True.
+        is_hwc (bool, optional): Whether the input image is HWC.
+            True - HWC format, False - CHW format. Default: True.
 
     Raises:
         TypeError: If `mean` is not of type sequence.
@@ -1482,7 +1484,7 @@ class Normalize(ImageTensorOperation):
         TypeError: If `is_hwc` is not of type bool.
         ValueError: If `mean` is not in range [0.0, 255.0].
         ValueError: If `std` is not in range (0.0, 255.0].
-        RuntimeError: If given tensor shape is not <H, W> or <...,H, W, C>.
+        RuntimeError: If given tensor format is not <H, W> or <...,H, W, C>.
 
     Supported Platforms:
         ``CPU``
@@ -1518,7 +1520,8 @@ class NormalizePad(ImageTensorOperation):
         std (sequence): List or tuple of standard deviations for each channel, with respect to channel order.
             The standard deviation values must be in range (0.0, 255.0].
         dtype (str, optional): Set the output data type of normalized image (default is "float32").
-        is_hwc (bool): Whether the input image is in HWC format. True - HWC format, False - CHW format. Default: True.
+        is_hwc (bool, optional): Whether the input image is HWC.
+            True - HWC format, False - CHW format. Default: True.
 
     Raises:
         TypeError: If `mean` is not of type sequence.
@@ -2254,9 +2257,9 @@ class RandomCropDecodeResize(ImageTensorOperation):
         size (Union[int, Sequence[int]]): The output size of the resized image. The size value(s) must be positive.
             If size is an integer, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, it should be (height, width).
-        scale (list, tuple, optional): Range [min, max) of respective size of the
+        scale (Union[list, tuple], optional): Range [min, max) of respective size of the
             original size to be cropped, which must be non-negative (default=(0.08, 1.0)).
-        ratio (list, tuple, optional): Range [min, max) of aspect ratio to be
+        ratio (Union[list, tuple], optional): Range [min, max) of aspect ratio to be
             cropped, which must be non-negative (default=(3. / 4., 4. / 3.)).
         interpolation (Inter, optional): Image interpolation mode for resize operator(default=Inter.BILINEAR).
             It can be any of [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC, Inter.AREA, Inter.PILCUBIC].
@@ -2796,7 +2799,7 @@ class RandomPosterize(ImageTensorOperation):
     Reduce the number of bits for each color channel to posterize the input image randomly with a given probability.
 
     Args:
-        bits (sequence or int, optional): Range of random posterize to compress image.
+        bits (Union[int, Sequence[int]], optional): Range of random posterize to compress image.
             Bits values must be in range of [1,8], and include at
             least one integer value in the given range. It must be in
             (min, max) or integer format. If min=max, then it is a single fixed
@@ -2939,11 +2942,11 @@ class RandomResizedCropWithBBox(ImageTensorOperation):
         size (Union[int, Sequence[int]]): The size of the output image. The size value(s) must be positive.
             If size is an integer, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, it should be (height, width).
-        scale (list, tuple, optional): Range (min, max) of respective size of the original
+        scale (Union[list, tuple] optional): Range (min, max) of respective size of the original
             size to be cropped, which must be non-negative (default=(0.08, 1.0)).
-        ratio (list, tuple, optional): Range (min, max) of aspect ratio to be
+        ratio (Union[list, tuple], optional): Range (min, max) of aspect ratio to be
             cropped, which must be non-negative (default=(3. / 4., 4. / 3.)).
-        interpolation (Inter mode, optional): Image interpolation mode (default=Inter.BILINEAR).
+        interpolation (Inter, optional): Image interpolation mode (default=Inter.BILINEAR).
             It can be any of [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC].
 
             - Inter.BILINEAR, means interpolation method is bilinear interpolation.
@@ -3667,7 +3670,7 @@ class Rotate(ImageTensorOperation):
     Args:
         degrees (Union[int, float]): Rotation degrees.
 
-        resample (Inter mode, optional): An optional resampling filter (default=Inter.NEAREST).
+        resample (Inter, optional): An optional resampling filter (default=Inter.NEAREST).
             It can be any of [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC].
 
             - Inter.BILINEAR, means resample method is bilinear interpolation.

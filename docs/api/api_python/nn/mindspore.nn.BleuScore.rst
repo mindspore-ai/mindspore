@@ -31,8 +31,8 @@ mindspore.nn.BleuScore
         使用输入的内容更新内部评估结果。
 
         参数： 
-            - ***inputs** (tuple) - 输入的元组，第一个输入是机器翻译语料库列表，第二个输入是引用语料库列表。
+            - ***inputs** (iterator) - 输入的元组，第一个输入是机器翻译语料库列表，第二个输入是引用语料库列表。
 
         异常：
-            - **ValueError** -  输入参数的数量不等于2。
+            - **ValueError** - 输入参数的数量不等于2。
             - **ValueError** -  `candidate_corpus` 的长度与 `reference_corpus` 不同。

@@ -910,8 +910,9 @@ class Conv2dTranspose(_Conv):
     Calculates a 2D transposed convolution, which can be regarded as Conv2d for the gradient of the input,
     also called deconvolution (although it is not an actual deconvolution).
 
-    The input is typically of shape :math:`(N, C, H, W)`, where :math:`N` is batch size, :math:`C` is a number of
-    channels, :math:`H_{in}, W_{in}` are the height and width of the feature layer respectively.
+    The input is typically of shape :math:`(N, C_{in}, H_{in}, W_{in})`,
+    where :math:`N` is batch size, :math:`C_{in}` is space dimension,
+    :math:`H_{in}, W_{in}` are the height and width of the feature layer respectively.
 
     When Conv2d and Conv2dTranspose are initialized with the same parameters, and `pad_mode` is set to 'pad',
     :math:`dilation * (kernel\_size - 1) - padding` amount of zero will be paded to the height and width
@@ -922,7 +923,7 @@ class Conv2dTranspose(_Conv):
     Args:
         in_channels (int): The channel number of the input tensor of the Conv2dTranspose layer.
         out_channels (int): The channel number of the output tensor of the Conv2dTranspose layer.
-        kernel_size (Union[int, tuple]): Specifies the height and width of the 2D convolution kernel.
+        kernel_size (Union[int, tuple[int]]): Specifies the height and width of the 2D convolution kernel.
             The data type is an integer or a tuple of two integers. An integer represents the height
             and width of the convolution kernel. A tuple of two integers represents the height
             and width of the convolution kernel respectively.
