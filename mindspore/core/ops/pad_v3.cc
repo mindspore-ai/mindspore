@@ -25,9 +25,9 @@ namespace mindspore {
 namespace ops {
 namespace {
 constexpr int64_t nTwo = 2;
+constexpr size_t kPaddingsSizeTwo = 2;
+constexpr size_t kPaddingsSizeFour = 4;
 void PaddingsSizeCheck(const PrimitivePtr &primitive, const int64_t paddings_size, const int64_t size) {
-  constexpr size_t kPaddingsSizeTwo = 2;
-  constexpr size_t kPaddingsSizeFour = 4;
   constexpr size_t kPaddingsSizeSix = 6;
   constexpr size_t nThree = 3;
   constexpr size_t nFour = 4;
@@ -36,8 +36,10 @@ void PaddingsSizeCheck(const PrimitivePtr &primitive, const int64_t paddings_siz
   auto mode = GetValue<std::string>(primitive->GetAttr("mode"));
   if (mode == kConstant) {
     if (paddings_size / nTwo > size) {
-      MS_EXCEPTION(ValueError) << "For '" << prim_name
-                               << "' constant mode, paddings length too large for input dims:" << size;
+      MS_EXCEPTION(ValueError)
+        << "For '" << prim_name
+        << "' constant mode, paddings length too large for input dims, the pad dims must be less than or equal to "
+        << size;
     }
     if (paddings_size % nTwo == 1) {
       MS_EXCEPTION(ValueError) << "For '" << prim_name << "' constant mode, paddings length must be divisible by 2";
@@ -58,13 +60,39 @@ void PaddingsSizeCheck(const PrimitivePtr &primitive, const int64_t paddings_siz
     }
   }
 }
-abstract::ShapePtr PadV3InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  constexpr size_t kEdgeMaxDims = 5;
+void ReflectModeCheck(std::string prim_name, const int64_t paddings_size, std::vector<int64_t> x_shape,
+                      std::vector<int64_t> paddings_arg, const int64_t size) {
   constexpr size_t kReflectMaxDims = 4;
-  constexpr size_t kOtherMinDims = 3;
-  constexpr size_t kPaddingsSizeFour = 4;
   constexpr size_t padding_pos_2 = 2;
   constexpr size_t padding_pos_3 = 3;
+  (void)CheckAndConvertUtils::CheckInteger("input dims for reflect mode", size, kLessEqual, kReflectMaxDims, prim_name);
+  if (paddings_size == kPaddingsSizeTwo) {
+    if (paddings_arg[0] >= x_shape[kInputIndex2] || paddings_arg[1] >= x_shape[kInputIndex2]) {
+      MS_EXCEPTION(ValueError) << "For '" << prim_name
+                               << "' reflect mode, Padding size must be less than the corresponding input dimension"
+                               << ", but got: padding (" << paddings_arg[0] << ',' << paddings_arg[1]
+                               << ") at dimension 2 of input:[" << x_shape[kInputIndex2] << "]";
+    }
+  }
+  if (paddings_size == kPaddingsSizeFour) {
+    if (paddings_arg[0] >= x_shape[kInputIndex3] || paddings_arg[1] >= x_shape[kInputIndex3]) {
+      MS_EXCEPTION(ValueError) << "For '" << prim_name
+                               << "' reflect mode, Padding size must be less than the corresponding input dimension"
+                               << ", but got: padding (" << paddings_arg[0] << ',' << paddings_arg[1]
+                               << ") at dimension 3 of input:[" << x_shape[kInputIndex3] << "]";
+    }
+    if (paddings_arg[padding_pos_2] >= x_shape[kInputIndex2] || paddings_arg[padding_pos_3] >= x_shape[kInputIndex2]) {
+      MS_EXCEPTION(ValueError) << "For '" << prim_name
+                               << "' reflect mode, Padding size must be less than the corresponding input dimension"
+                               << ", but got: padding (" << paddings_arg[padding_pos_2] << ','
+                               << paddings_arg[padding_pos_3] << ") at dimension 2 of input:[" << x_shape[kInputIndex2]
+                               << "]";
+    }
+  }
+}
+abstract::ShapePtr PadV3InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  constexpr size_t kEdgeMaxDims = 5;
+  constexpr size_t kOtherMinDims = 3;
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   auto paddings = input_args[1]->BuildValue();
@@ -85,24 +113,7 @@ abstract::ShapePtr PadV3InferShape(const PrimitivePtr &primitive, const std::vec
                                              prim_name);
   }
   if (mode == kReflect) {
-    (void)CheckAndConvertUtils::CheckInteger("input dims for reflect mode", size, kLessEqual, kReflectMaxDims,
-                                             prim_name);
-    if (paddings_arg[0] >= x_shape[kInputIndex2] || paddings_arg[1] >= x_shape[kInputIndex2]) {
-      MS_EXCEPTION(ValueError) << "For '" << prim_name
-                               << "' reflect mode, Padding size must be less than the corresponding input dimension"
-                               << ", but got: padding (" << paddings_arg[0] << ',' << paddings_arg[1]
-                               << ") at dimension 2 of input:[" << x_shape[kInputIndex2] << "]";
-    }
-    if (paddings_size == kPaddingsSizeFour) {
-      if (paddings_arg[padding_pos_2] >= x_shape[kInputIndex3] ||
-          paddings_arg[padding_pos_3] >= x_shape[kInputIndex3]) {
-        MS_EXCEPTION(ValueError) << "For '" << prim_name
-                                 << "' reflect mode, Padding size must be less than the corresponding input dimension"
-                                 << ", but got: padding (" << paddings_arg[padding_pos_2] << ','
-                                 << paddings_arg[padding_pos_3] << ") at dimension 3 of input:["
-                                 << x_shape[kInputIndex3] << "]";
-      }
-    }
+    ReflectModeCheck(prim_name, paddings_size, x_shape, paddings_arg, size);
   } else if (mode == kEdge) {
     (void)CheckAndConvertUtils::CheckInteger("input dims for edge mode", size, kLessEqual, kEdgeMaxDims, prim_name);
   }
