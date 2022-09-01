@@ -621,11 +621,12 @@ def csr_add(a, b, alpha, beta):
         beta(Tensor): Dense Tensor, its shape must be able to broadcast to b.
 
     Returns:
-        CSRTensor. a csr_tensor containing:
-        indptr: indicates the start and end point for `values` in each row.
-        indices: the column positions of all non-zero values of the input.
-        values: the non-zero values of the dense tensor.
-        shape: the shape of the csr_tensor.
+        CSRTensor, a csr_tensor containing the following parts.
+
+        - **indptr** -  indicates the start and end point for `values` in each row.
+        - **indices** - the column positions of all non-zero values of the input.
+        - **values** - the non-zero values of the dense tensor.
+        - **shape** - the shape of the csr_tensor.
 
     Supported Platforms:
         ``GPU`` ``CPU``
