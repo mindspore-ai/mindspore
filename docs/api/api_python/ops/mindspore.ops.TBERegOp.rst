@@ -75,6 +75,23 @@
         参数：
             - **input_to_attr_index** (int) - 索引。默认值：()。
 
+    .. py:method:: unknown_shape_formats(unknown_shape_formats)
+
+        动态Shape场景下算子输入/输出Tensor的数据排布。
+
+        参数：
+            - **unknown_shape_formats** (list) - 表示动态Shape场景下算子输入/输出Tensor的数据排布。默认值：()，不支持动态Shape。
+
+    .. py:method:: dynamic_rank_support(dynamic_rank_support)
+
+        定义算子是否支持 DynamicRank（动态维度）。
+
+        参数：
+            - **dynamic_rank_support** (bool) - 表示算子是否支持 DynamicRank（动态维度）。
+              True：表示支持 DynamicRank，算子支持Shape（-2），用于判断是否进行动态。
+              False：表示算子不支持DynamicRank。
+              默认值：False。
+
     .. py:method:: is_dynamic_format(is_dynamic_format=False)
 
         表示算子是否需要op_select_format函数来动态选择合适的数据格式和数据类型。

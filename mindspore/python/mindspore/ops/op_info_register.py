@@ -514,10 +514,12 @@ class TBERegOp(RegOp):
 
     def unknown_shape_formats(self, unknown_shape_formats):
         """
-        Description operator front end and tbe operator input mapping.
+        Description data arrangement of operator input / output tensor in dynamic shape scene.
 
         Args:
-            unknown_shape_formats (list): Value of unknown_shape_formats. Default: ().
+            unknown_shape_formats (list): Description data arrangement of operator input / output tensor in dynamic
+                                          shape scene.
+                                          Default: (), means dynamic shape is not supported.
         """
         RegOp._is_list(unknown_shape_formats)
         self.unknown_shape_formats_.append(unknown_shape_formats)
@@ -525,10 +527,14 @@ class TBERegOp(RegOp):
 
     def dynamic_rank_support(self, dynamic_rank_support):
         """
-        Description operator front end and tbe operator input mapping.
+        Description whether the operator supports dynamic rank (dynamic dimension).
 
         Args:
-            dynamic_rank_support (bool): Value of dynamic_rank_support. Default: false.
+            dynamic_rank_support (bool): Description whether the operator supports dynamic rank (dynamic dimension).
+                                         True: indicates that dynamic rank is supported, and the operator supports
+                                         shape (- 2), which is used to determine whether dynamic is performed.
+                                         False: indicates that the operator does not support dynamic rank.
+                                         Default: False.
         """
         self._is_bool(dynamic_rank_support)
         self.dynamic_rank_support_ = dynamic_rank_support
@@ -1183,7 +1189,7 @@ class Format:
         ChannelLast = "ChannelLast"
         Default = "DefaultFormat"
         DHWCN = "DHWCN"
-        FHD = "NC1HWC0"
+        NC1HWC0 = "NC1HWC0"
         FracNZ = "FRACTAL_NZ"
         FRACTAL_Z_3D = "FRACTAL_Z_3D"
         FracZ = "FRACTAL_Z"
@@ -1202,7 +1208,7 @@ class Format:
     ChannelLast = "ChannelLast"
     Default = "DefaultFormat"
     DHWCN = "DHWCN"
-    FHD = "NC1HWC0"
+    NC1HWC0 = "NC1HWC0"
     FracNZ = "FRACTAL_NZ"
     FRACTAL_Z_3D = "FRACTAL_Z_3D"
     FracZ = "FRACTAL_Z"
