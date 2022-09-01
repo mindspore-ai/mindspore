@@ -17,8 +17,7 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_HSWISH_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_HSWISH_CPU_KERNEL_H_
 
-#include <memory>
-#include <unordered_map>
+#include <map>
 #include <vector>
 #include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
@@ -26,17 +25,26 @@
 
 namespace mindspore {
 namespace kernel {
-class HSwishCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class HSwishCpuKernelMod : public NativeCpuKernelMod {
  public:
   HSwishCpuKernelMod() = default;
   ~HSwishCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(
+    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+    const std::vector<KernelTensorPtr> &outputs,
+    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs) override {
     return kernel_func_(this, inputs, outputs);
   }
+
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   template <typename T>

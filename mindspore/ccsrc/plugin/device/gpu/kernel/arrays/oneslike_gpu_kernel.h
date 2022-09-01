@@ -17,73 +17,44 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARRAYS_ONESLIKE_GPU_KERNEL_H_
 
 #include <vector>
+#include <map>
+#include <utility>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
-#include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops//oneslike_impl.cuh"
+
 namespace mindspore {
 namespace kernel {
-template <typename T>
-class OnesLikeGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class OnesLikeGpuKernelMod : public NativeGpuKernelMod {
  public:
-  OnesLikeGpuKernelMod() : input_size_(0), output_size_(0), is_null_input_(false) {}
+  OnesLikeGpuKernelMod() : is_null_input_(false) {}
   ~OnesLikeGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
       return true;
     }
-    T *input = GetDeviceAddress<T>(inputs, 0);
-    T *output = GetDeviceAddress<T>(outputs, 0);
-    int size = SizeToInt(input_size_ / sizeof(T));
-    MS_EXCEPTION_IF_NULL(output);
-    CalOnesLike(size, input, output, reinterpret_cast<cudaStream_t>(stream_ptr));
-    return true;
+    cuda_stream_ = stream_ptr;
+    return kernel_func_(this, inputs, outputs);
   }
 
-  bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    kernel_node_ = kernel_node;
-    if (input_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs must be 1, but got " << input_num;
-    }
-    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-    if (output_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs must be 1, but got " << output_num;
-    }
-    auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
-    if (is_null_input_) {
-      InitSizeLists();
-      return true;
-    }
-
-    input_size_ = sizeof(T) * SizeOf(input_shape);
-    output_size_ = input_size_;
-    InitSizeLists();
-    return true;
-  }
-
-  void ResetResource() noexcept override {
-    input_size_ = 0;
-    output_size_ = 0;
-    is_null_input_ = false;
-    input_size_list_.clear();
-    output_size_list_.clear();
-    workspace_size_list_.clear();
-  }
-
- protected:
-  void InitSizeLists() override {
-    input_size_list_.push_back(input_size_);
-    output_size_list_.push_back(output_size_);
-    return;
-  }
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  size_t input_size_;
-  size_t output_size_;
+  template <typename T>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  using OnesLikeFunc = std::function<bool(OnesLikeGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                                          const std::vector<kernel::AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, OnesLikeFunc>> func_list_;
+  OnesLikeFunc kernel_func_;
+
+  void *cuda_stream_{nullptr};
+  size_t output_elements_;
   bool is_null_input_;
 };
 }  // namespace kernel

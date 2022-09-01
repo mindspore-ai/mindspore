@@ -18,69 +18,42 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_HSWISH_GRAD_GPU_KERNEL_H_
 
 #include <vector>
+#include <map>
+#include <utility>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
-#include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/hswish_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
-class HSwishGradKernelMod : public DeprecatedNativeGpuKernelMod {
+class HSwishGradGpuKernelMod : public NativeGpuKernelMod {
  public:
-  HSwishGradKernelMod() { ResetResource(); }
-  ~HSwishGradKernelMod() override = default;
+  HSwishGradGpuKernelMod() = default;
+  ~HSwishGradGpuKernelMod() override = default;
+
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    if (is_null_input_) {
-      return true;
-    }
-    VARIABLE_NOT_USED(workspace);
-    T *input = GetDeviceAddress<T>(inputs, 0);
-    T *x = GetDeviceAddress<T>(inputs, 1);
-    T *output = GetDeviceAddress<T>(outputs, 0);
-    CalHSwishGrad(input_size_, input, x, output, reinterpret_cast<cudaStream_t>(stream_ptr));
-    return true;
-  }
-
-  bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    kernel_node_ = kernel_node;
-    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    if (input_num != 2) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs must be 2, but got " << input_num;
-    }
-    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-    if (output_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs must be 1, but got " << output_num;
-    }
-    auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
-    if (is_null_input_) {
-      InitSizeLists();
-      return true;
-    }
-    input_size_ = SizeOf(input_shape);
-    InitSizeLists();
-    return true;
-  }
-
-  void ResetResource() noexcept override {
-    input_size_ = 1;
-    is_null_input_ = false;
-    input_size_list_.clear();
-    output_size_list_.clear();
-    workspace_size_list_.clear();
+    return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
   }
 
  protected:
-  void InitSizeLists() override {
-    input_size_list_.push_back(input_size_ * sizeof(T));
-    input_size_list_.push_back(input_size_ * sizeof(T));
-    output_size_list_.push_back(input_size_ * sizeof(T));
-  }
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
+  template <typename T>
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
+
+  using HSwishGradLaunchFunc =
+    std::function<bool(HSwishGradGpuKernelMod *, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
+                       const std::vector<AddressPtr> &, void *)>;
+  static std::vector<std::pair<KernelAttr, HSwishGradLaunchFunc>> func_list_;
+  HSwishGradLaunchFunc kernel_func_;
+
   size_t input_size_;
   bool is_null_input_;
 };
