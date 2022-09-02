@@ -297,10 +297,6 @@ void CPUSession::RunOpImpl(const GraphInfo &graph_info, const BackendOpRunInfoPt
     MS_LOG(EXCEPTION) << "Run Op failed";
   }
   UpdateDynamicOutputShape(tensor_to_node);
-  // update output abstract of dynamic op to op_run_info
-  if (op_run_info->base_op_run_info.has_dynamic_output) {
-    UpdateOutputAbstract(kernel_graph, op_run_info);
-  }
   SetOutputFlags(*outputs);
   runtime_.RunOpClearMemory(*kernel_graph);
 }

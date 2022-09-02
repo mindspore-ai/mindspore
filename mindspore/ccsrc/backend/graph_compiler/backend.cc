@@ -143,18 +143,6 @@ std::vector<tensor::TensorPtr> GetTensorWithoutValueMask(const session::BackendO
   return tensors_without_value_node;
 }
 
-void UpdateOutputAbstract(const KernelGraphPtr &kernel_graph, const session::BackendOpRunInfoPtr &op_run_info) {
-  MS_EXCEPTION_IF_NULL(kernel_graph);
-  MS_EXCEPTION_IF_NULL(op_run_info);
-  const auto &kernels = kernel_graph->execution_order();
-  for (const auto &kernel : kernels) {
-    MS_EXCEPTION_IF_NULL(kernel);
-    if (common::AnfAlgo::GetCNodeName(kernel) == op_run_info->base_op_run_info.op_name) {
-      op_run_info->base_op_run_info.abstract = kernel->abstract();
-    }
-  }
-}
-
 device::DeviceAddressPtr CloneEmptyDeviceAddress(const device::DeviceAddressPtr &old_device_address,
                                                  const DeviceContext *device_context) {
   MS_EXCEPTION_IF_NULL(old_device_address);
@@ -730,6 +718,10 @@ void MindRTBackend::OpRunCallback(const std::shared_ptr<runtime::OpTaskContext> 
   MS_EXCEPTION_IF_NULL(ms_context);
   auto infer_flag = ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER);
   ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, context->is_pynative_infer());
+
+  // Set graph input to real abstract
+  pynative::OpCompiler::GetInstance().SetGraphInputNodeToActualAbstract(context->op_run_info(), context->graph());
+
   runtime::RunSingleOpGraph(context->graph(), GetTensorWithoutValueMask(context->op_run_info()),
                             context->device_context());
   if (!context->op_run_info()->is_infer) {
@@ -794,6 +786,7 @@ void MindRTBackend::DispatchOpTask(bool single_op_cache_hit, VectorRef *outputs,
   const auto &output_nodes = op_compiler_info->graph_output_nodes_;
 
   runtime::UpdateDeviceAddress(graph, GetTensorWithoutValueMask(op_run_info), op_compiler_info->device_context_);
+  // Create output tensor
   UpdateOutput(output_nodes, outputs);
 
   auto ms_context = MsContext::GetInstance();
@@ -842,20 +835,21 @@ void MindRTBackend::RunOpImpl(bool single_op_cache_hit, const OpCompilerInfoPtr 
                              !op_run_info->base_op_run_info.lazy_build || OpInBlackList(op_run_info) ||
                              GetExecutionMode() == kGraphMode || EnablePyNativeSyncRunning();
   if (!async_exec_disabled) {
-    MS_LOG(DEBUG) << "Async exec enabled, op:" << op_run_info->base_op_run_info.op_name;
+    MS_LOG(DEBUG) << "Async exec enabled, op: " << op_run_info->base_op_run_info.op_name;
     DispatchOpTask(single_op_cache_hit, outputs, op_compiler_info, op_run_info);
     return;
   }
 
-  MS_LOG(DEBUG) << "Async exec disabled, op:" << op_run_info->base_op_run_info.op_name;
+  MS_LOG(DEBUG) << "Async exec disabled, op: " << op_run_info->base_op_run_info.op_name;
   if (!op_executor.RunQueueEmpty()) {
     WaitTaskFinish();
   }
   if (!single_op_cache_hit) {
     CompileSingleOpGraph(graph, device_context);
   }
-  auto tensors_without_value_mask = GetTensorWithoutValueMask(op_run_info);
+  const auto &tensors_without_value_mask = GetTensorWithoutValueMask(op_run_info);
   runtime::UpdateDeviceAddress(graph, tensors_without_value_mask, device_context);
+  pynative::OpCompiler::GetInstance().SetGraphInputNodeToActualAbstract(op_run_info, graph);
   runtime::RunSingleOpGraph(graph, tensors_without_value_mask, device_context);
   if (!op_run_info->is_infer) {
     ReleaseForwardOutput(op_run_info->base_op_run_info.input_tensor);
@@ -863,9 +857,6 @@ void MindRTBackend::RunOpImpl(bool single_op_cache_hit, const OpCompilerInfoPtr 
   UpdateOutput(output_nodes, outputs);
   ClearGraphDeviceAddress(graph, device_context, op_run_info->is_gradient_out);
   ClearInputDeviceAddress(graph, device_context);
-  if (op_run_info->base_op_run_info.has_dynamic_output) {
-    UpdateOutputAbstract(graph, op_run_info);
-  }
   if (op_compiler_info->need_erase_) {
     EraseSingleOpCache(op_run_info->base_op_run_info.graph_info);
   }

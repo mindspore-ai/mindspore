@@ -19,6 +19,7 @@
 #include <utility>
 #include <vector>
 #include <memory>
+#include <string>
 #include "utils/ms_utils.h"
 #include "backend/common/session/kernel_graph.h"
 #include "backend/common/session/session_basic.h"
@@ -68,8 +69,12 @@ class BACKEND_EXPORT OpCompiler {
   // and then compile the operators in parallel to improve compilation efficiency.
   static void BatchBuild(const std::vector<KernelGraphPtr> &graphs, const DeviceContext *device_context);
 
+  // Set graph inputs abstract with actual shape in dynamic shape scenes
+  void SetGraphInputNodeToActualAbstract(const session::BackendOpRunInfoPtr &op_run_info, const KernelGraphPtr &graph);
+
   // Clear anf resources before process exit.
   void ClearAllCache();
+  void SetActualShapeForTensor(const string &op_name, const tensor::TensorPtr &tensor, const AnfNodePtr &node);
 
  private:
   OpCompiler();

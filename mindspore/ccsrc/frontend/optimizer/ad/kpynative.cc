@@ -171,11 +171,10 @@ bool ValueHasDynamicShape(const ValuePtr &value) {
   }
 }
 
-AnfNodePtr BuildOnesLikeValue(const FuncGraphPtr &tape, const ValuePtr &out, const ValuePtr &sens_value) {
-  // Build ones_like(out) as dout, shape is same with out.sens_value its id hold by pynative execute, which can be
-  // replace forward, but out is not.
-  if (ValueHasDynamicShape(out)) {
-    MS_EXCEPTION_IF_NULL(sens_value);
+AnfNodePtr MakeDynShapeSensNode(const FuncGraphPtr &tape, const ValuePtr &sens_value) {
+  MS_EXCEPTION_IF_NULL(tape);
+  MS_EXCEPTION_IF_NULL(sens_value);
+  if (sens_value->isa<tensor::Tensor>()) {
     auto value_node = NewValueNode(sens_value);
     auto value_node_abs = sens_value->ToAbstract()->Broaden();
     MS_LOG(DEBUG) << "Sens value abstract " << value_node_abs->ToString();
@@ -183,6 +182,26 @@ AnfNodePtr BuildOnesLikeValue(const FuncGraphPtr &tape, const ValuePtr &out, con
     auto ones_like_value = tape->NewCNode({NewValueNode(prim::kPrimOnesLike), value_node});
     ones_like_value->set_abstract(value_node_abs);
     return ones_like_value;
+  } else if (sens_value->isa<ValueTuple>()) {
+    std::vector<AnfNodePtr> inputs{NewValueNode(prim::kPrimMakeTuple)};
+    auto value_tuple = sens_value->cast<ValueTuplePtr>();
+    (void)std::transform(value_tuple->value().begin(), value_tuple->value().end(), std::back_inserter(inputs),
+                         [&tape](const ValuePtr &elem) { return MakeDynShapeSensNode(tape, elem); });
+    auto ones_like_value = tape->NewCNode(inputs);
+    auto value_node_abs = sens_value->ToAbstract()->Broaden();
+    MS_LOG(DEBUG) << "Tuple sens value abstract " << value_node_abs->ToString();
+    ones_like_value->set_abstract(value_node_abs);
+    return ones_like_value;
+  } else {
+    MS_LOG(EXCEPTION) << "Sens value must be a tensor or value tuple";
+  }
+}
+
+AnfNodePtr BuildOnesLikeValue(const FuncGraphPtr &tape, const ValuePtr &out, const ValuePtr &sens_value) {
+  // Build ones_like(out) as dout, shape is same with out.sens_value its id hold by pynative execute, which can be
+  // replace forward, but out is not.
+  if (ValueHasDynamicShape(out)) {
+    return MakeDynShapeSensNode(tape, sens_value);
   }
   abstract::AbstractBasePtrList args_abs{out->ToAbstract()->Broaden()};
   auto ones_like_fg = GetOnesLike(args_abs);

@@ -1978,19 +1978,6 @@ void SessionBasic::UpdateOutputs(const std::shared_ptr<KernelGraph> &kernel_grap
   }
 }
 
-void SessionBasic::UpdateOutputAbstract(const std::shared_ptr<KernelGraph> &kernel_graph,
-                                        const BackendOpRunInfoPtr &op_run_info) const {
-  MS_EXCEPTION_IF_NULL(kernel_graph);
-  MS_EXCEPTION_IF_NULL(op_run_info);
-  const auto &kernels = kernel_graph->execution_order();
-  for (const auto &kernel : kernels) {
-    MS_EXCEPTION_IF_NULL(kernel);
-    if (common::AnfAlgo::GetCNodeName(kernel) == op_run_info->base_op_run_info.op_name) {
-      op_run_info->base_op_run_info.abstract = kernel->abstract();
-    }
-  }
-}
-
 std::vector<tensor::TensorPtr> SessionBasic::GetInputNeedLockTensors(
   const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs) const {
   auto graph = GetGraph(graph_id);

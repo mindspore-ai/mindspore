@@ -293,8 +293,6 @@ class BACKEND_EXPORT SessionBasic : public std::enable_shared_from_this<SessionB
   void UpdateOutputs(const std::shared_ptr<KernelGraph> &kernel_graph, VectorRef *const outputs,
                      const std::vector<tensor::TensorPtr> &input_tensors,
                      std::map<tensor::TensorPtr, session::KernelWithIndex> *tensor_to_node) const;
-  void UpdateOutputAbstract(const std::shared_ptr<KernelGraph> &kernel_graph,
-                            const BackendOpRunInfoPtr &op_run_info) const;
 #ifndef ENABLE_SECURITY
   void Summary(KernelGraph *graph);
 #endif

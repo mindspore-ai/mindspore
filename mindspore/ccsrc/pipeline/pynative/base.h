@@ -61,8 +61,6 @@ struct FrontendOpRunInfo {
   int mix_type{0};
   PrimitivePyPtr op_prim;
   std::string op_info;
-  // Tensor id with Shape info
-  mindspore::HashMap<std::string, abstract::ShapePtr> id_with_dynamic_shape;
   // Tensor input and with its value
   std::vector<std::pair<size_t, ValuePtr>> index_with_value;
   std::vector<AbstractBasePtr> input_abs;

@@ -699,10 +699,6 @@ void GPUSession::RunOpImpl(const GraphInfo &graph_info, const BackendOpRunInfoPt
   // Fetch outputs
   std::map<tensor::TensorPtr, session::KernelWithIndex> tensor_to_node;
   UpdateOutputs(kernel_graph, outputs, *input_tensors, &tensor_to_node);
-  // update output abstract of dynamic op to op_run_info
-  if (op_run_info->base_op_run_info.has_dynamic_output) {
-    UpdateOutputAbstract(kernel_graph, op_run_info);
-  }
   RunOpClearMemory(kernel_graph.get());
   if (IsOneOfCacheBlackList(op_run_info->base_op_run_info.op_name)) {
     run_op_graphs_.erase(graph_info);
