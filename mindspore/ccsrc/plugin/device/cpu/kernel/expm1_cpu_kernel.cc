@@ -17,6 +17,7 @@
 #include "plugin/device/cpu/kernel/expm1_cpu_kernel.h"
 #include <cmath>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "mindspore/core/ops/expm1.h"
 
 namespace mindspore {
 namespace kernel {
@@ -25,16 +26,20 @@ constexpr size_t kExpm1InputsNum = 1;
 constexpr size_t kExpm1OutputsNum = 1;
 }  // namespace
 
-void Expm1CpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  input_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
+bool Expm1CpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                             const std::vector<KernelTensorPtr> &outputs) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::Expm1>(base_operator);
+  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
+  kernel_name_ = kernel_ptr->name();
+  input_dtype_ = inputs[0]->GetDtype();
   if (input_dtype_ != kNumberTypeFloat16 && input_dtype_ != kNumberTypeFloat32 && input_dtype_ != kNumberTypeFloat64 &&
       input_dtype_ != kNumberTypeComplex64 && input_dtype_ != kNumberTypeComplex128) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dtype of input should be Float16, Float32, Float64, Complex64 or Complex128, but got: "
-                      << input_dtype_;
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', the dtype of input should be Float16, Float32, Float64, Complex64 or Complex128, but got: "
+                  << input_dtype_;
+    return false;
   }
+  return true;
 }
 
 bool Expm1CpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
