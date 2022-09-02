@@ -64,3 +64,5 @@
 "mindspore/mindspore/lite/python/src/pybind_module.cc"                                                "syntaxError"
 "mindspore/mindspore/lite/src/litert/kernel/cpu/fp32/convolution_im2col_fp32.cc"                      "knownConditionTrueFalse"
 "mindspore/mindspore/lite/src/litert/kernel/cpu/fp32/convolution_im2col_fp32.cc"                      "shadowVariable"
+"mindspore/mindspore/lite/src/litert/kernel/cpu/fp32/convolution_winograd_fp32.cc"                      "knownConditionTrueFalse"
+"mindspore/mindspore/lite/src/litert/kernel/cpu/fp32/convolution_winograd_fp32.cc"                      "shadowVariable"
