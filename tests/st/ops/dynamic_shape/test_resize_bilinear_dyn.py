@@ -20,10 +20,9 @@ import mindspore.ops as ops
 from mindspore import nn
 
 
-def get_data():
-    datatype = np.float32
+def get_data(dtype):
     input_data = np.array(
-        [[[[0.1, 0.2, 0.3], [0.4, 0.5, 0.6], [0.7, 0.8, 0.9]]]]).astype(datatype)
+        [[[[0.1, 0.2, 0.3], [0.4, 0.5, 0.6], [0.7, 0.8, 0.9]]]]).astype(dtype)
     size = (9, 9)
     expected_output = np.array([[[[0.1, 0.1333, 0.1666, 0.2, 0.2333, 0.2666, 0.3, 0.3, 0.3],
                                   [0.2, 0.2333, 0.2666, 0.2998, 0.3333, 0.3667, 0.4, 0.4, 0.4],
@@ -34,7 +33,7 @@ def get_data():
                                   [0.7, 0.7334, 0.7666, 0.8, 0.833, 0.866, 0.9, 0.8994, 0.8994],
                                   [0.7, 0.7334, 0.7666, 0.8, 0.833, 0.866, 0.8994, 0.8994, 0.8994],
                                   [0.7, 0.7334, 0.7666, 0.8, 0.8325, 0.866,
-                                   0.8994, 0.8994, 0.8994]]]]).astype(datatype)
+                                   0.8994, 0.8994, 0.8994]]]]).astype(dtype)
     return input_data, size, expected_output
 
 
@@ -45,9 +44,9 @@ class NetResizeBilinear(nn.Cell):
         return ops.interpolate(inputs_dyn, None, None, size, "asymmetric", "bilinear")
 
 
-def case_input_dyn(mode, device_target):
+def case_input_dyn(mode, device_target, dtype="float32"):
     context.set_context(mode=mode, device_target=device_target)
-    input_data, size, expected = get_data()
+    input_data, size, expected = get_data(dtype)
 
     resize_nn = NetResizeBilinear()
     axis_input = 3
@@ -83,6 +82,45 @@ def test_resize_bilinear_gpu():
     case_input_dyn(context.PYNATIVE_MODE, "GPU")
 
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_resize_bilinear_cpu():
+    """
+    Feature: Test resize_bilinear on CPU.
+    Description:  The shape of input is dynamic.
+    Expectation: Assert that results are consistent with expect.
+    """
+    case_input_dyn(context.GRAPH_MODE, "CPU")
+    case_input_dyn(context.PYNATIVE_MODE, "CPU")
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_resize_bilinear_gpu_fp64():
+    """
+    Feature: Test resize_bilinear on GPU (fp64).
+    Description:  The shape of input is dynamic.
+    Expectation: Assert that results are consistent with expect.
+    """
+    case_input_dyn(context.GRAPH_MODE, "GPU", "float64")
+    case_input_dyn(context.PYNATIVE_MODE, "GPU", "float64")
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_resize_bilinear_cpu_fp64():
+    """
+    Feature: Test resize_bilinear on CPU (fp64).
+    Description:  The shape of input is dynamic.
+    Expectation: Assert that results are consistent with expect.
+    """
+    case_input_dyn(context.GRAPH_MODE, "CPU", "float64")
+    case_input_dyn(context.PYNATIVE_MODE, "CPU", "float64")
+
+
 class NetResizeBilinearSizeDyn(nn.Cell):
     def construct(self, x, y, indices_x, indices_y, axis_x, axis_y):
         unique_x_index, _ = ops.unique(indices_x)
@@ -95,7 +133,7 @@ class NetResizeBilinearSizeDyn(nn.Cell):
 
 def case_input_size_dyn(mode, device_target):
     context.set_context(mode=mode, device_target=device_target)
-    x_data, size, expected = get_data()
+    x_data, size, expected = get_data("float32")
     y = np.random.rand(*size).astype(np.float32)
     resize_nn = NetResizeBilinearSizeDyn()
     axis_x = 3
