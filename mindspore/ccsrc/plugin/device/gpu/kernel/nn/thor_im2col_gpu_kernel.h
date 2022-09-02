@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_KERNEL_GPU_NN_IM2COLGPUKERNEL_H_
-#define MINDSPORE_CCSRC_KERNEL_GPU_NN_IM2COLGPUKERNEL_H_
+#ifndef MINDSPORE_CCSRC_KERNEL_GPU_NN_THORIM2COLGPUKERNEL_H_
+#define MINDSPORE_CCSRC_KERNEL_GPU_NN_THORIM2COLGPUKERNEL_H_
 
 #include <vector>
 #include <string>
@@ -41,9 +41,9 @@ constexpr size_t kDilationSize = 4;
 constexpr size_t kHeightDilationIndex = 2;
 constexpr size_t kWidthDilationIndex = 3;
 template <typename T>
-class Im2ColFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class ThorIm2ColFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
-  Im2ColFwdGpuKernelMod()
+  ThorIm2ColFwdGpuKernelMod()
       : cudnn_handle_(nullptr),
         input_desc_(nullptr),
         output_desc_(nullptr),
@@ -61,13 +61,13 @@ class Im2ColFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
         n_(0),
         c_(0),
         is_null_input_(false),
-        kernel_name_("Im2col"),
+        kernel_name_("ThorIm2col"),
         input_size_(0),
         output_size_(0),
         padded_size_(0),
         workspace_size_(0),
         use_pad_(true) {}
-  ~Im2ColFwdGpuKernelMod() override { DestroyResource(); }
+  ~ThorIm2ColFwdGpuKernelMod() override { DestroyResource(); }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -83,11 +83,11 @@ class Im2ColFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
              reinterpret_cast<cudaStream_t>(stream_ptr));
       CHECK_CUDNN_RET_WITH_EXCEPT(
         kernel_node_, cudnnIm2Col(cudnn_handle_, padded_desc_n, padded_addr, filter_desc_, conv_desc_n, output_addr),
-        "cudnnIm2ColForward failed");
+        "cudnnThorIm2ColForward failed");
     } else {
       CHECK_CUDNN_RET_WITH_EXCEPT(
         kernel_node_, cudnnIm2Col(cudnn_handle_, input_desc_, input_addr, filter_desc_, conv_desc_n, output_addr),
-        "cudnnIm2ColForward failed");
+        "cudnnThorIm2ColForward failed");
     }
 
     return true;
@@ -116,12 +116,12 @@ class Im2ColFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     auto filter_shape = GetAttr<std::vector<int64_t>>(kernel_node, "kernel_size");
     const size_t kFilterDimSize = 2;
     if (filter_shape.size() < kFilterDimSize) {
-      MS_LOG(EXCEPTION) << "For 'Im2ColGpuKernel', the dimension of filter must be greater than or equal to 2, "
+      MS_LOG(EXCEPTION) << "For 'ThorIm2ColGpuKernel', the dimension of filter must be greater than or equal to 2, "
                         << "but got " << filter_shape.size();
     }
     const size_t kOutputDimSize = 6;
     if (output_shape.size() < kOutputDimSize) {
-      MS_LOG(EXCEPTION) << "For 'Im2ColGpuKernel', the dimension of output must be greater than or equal to 6, "
+      MS_LOG(EXCEPTION) << "For 'ThorIm2ColGpuKernel', the dimension of output must be greater than or equal to 6, "
                         << "but got " << filter_shape.size();
     }
     CheckTensorSize({in_shape, output_shape});
@@ -338,4 +338,4 @@ class Im2ColFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_KERNEL_GPU_NN_IM2COLGPUKERNEL_H_
+#endif  // MINDSPORE_CCSRC_KERNEL_GPU_NN_THORIM2COLGPUKERNEL_H_

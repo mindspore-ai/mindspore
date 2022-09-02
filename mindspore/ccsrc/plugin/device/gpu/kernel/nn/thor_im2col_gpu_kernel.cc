@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-#include "plugin/device/gpu/kernel/nn/im2col_gpu_kernel.h"
+#include "plugin/device/gpu/kernel/nn/thor_im2col_gpu_kernel.h"
 
 namespace mindspore {
 namespace kernel {
-MS_REG_GPU_KERNEL_ONE(Im2Col, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                      Im2ColFwdGpuKernelMod, float)
-MS_REG_GPU_KERNEL_ONE(Im2Col, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-                      Im2ColFwdGpuKernelMod, half)
+MS_REG_GPU_KERNEL_ONE(ThorIm2Col, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+                      ThorIm2ColFwdGpuKernelMod, float)
+MS_REG_GPU_KERNEL_ONE(ThorIm2Col, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+                      ThorIm2ColFwdGpuKernelMod, half)
 }  // namespace kernel
 }  // namespace mindspore
