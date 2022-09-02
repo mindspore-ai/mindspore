@@ -99,12 +99,19 @@ bool InferShapeForDefiniteOutputNode(const CNodePtr &cnode) {
 
 tensor::TensorPtr GetDependValueTensor(const AnfNodePtr &node, size_t i,
                                        const std::pair<AnfNodePtr, size_t> &input_node_with_index, bool skip_nop_node,
-                                       void *args) {
+                                       void *args, bool abstract_in_cache) {
   auto real_input = input_node_with_index.first;
   MS_EXCEPTION_IF_NULL(real_input);
   auto real_input_index = input_node_with_index.second;
   auto shapes = trans::GetRuntimePaddingShape(real_input, real_input_index);
-  auto host_type = common::AnfAlgo::GetOutputInferDataType(real_input, real_input_index);
+  TypeId host_type;
+  if (abstract_in_cache) {
+    // for cnode in the cache, we use device type as there is a mismatch
+    host_type = AnfAlgo::GetOutputDeviceDataType(real_input, real_input_index);
+  } else {
+    // for cnode not in the cache, valuenodes and other nodes, we use inferred type
+    host_type = common::AnfAlgo::GetOutputInferDataType(real_input, real_input_index);
+  }
   auto out_tensor = std::make_shared<tensor::Tensor>(host_type, shapes);
 
   auto output_addr = AnfAlgo::GetMutableOutputAddr(real_input, real_input_index, skip_nop_node);
@@ -188,7 +195,7 @@ void InferShape(const CNodePtr &cnode, std::map<uint32_t, tensor::TensorPtr> *de
       InferShapeForNopNode(real_input);
     }
     if (depend_list.find(i) != depend_list.end()) {
-      auto out_tensor = GetDependValueTensor(cnode, i, input_node_with_index, skip_nop_node, args);
+      auto out_tensor = GetDependValueTensor(cnode, i, input_node_with_index, skip_nop_node, args, abstract_in_cache);
       auto ret2 = depend_tensor_map->try_emplace(i, out_tensor);
       if (!ret2.second) {
         MS_LOG(EXCEPTION) << "Insert map failed.";
