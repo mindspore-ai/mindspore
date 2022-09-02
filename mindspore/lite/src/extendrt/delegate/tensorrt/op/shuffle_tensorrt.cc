@@ -320,6 +320,10 @@ int ShuffleTensorRT::AddFlattenOp(nvinfer1::IShuffleLayer *shuffle_layer) {
 }
 
 int ShuffleTensorRT::AddExpandDimsOp(nvinfer1::IShuffleLayer *shuffle_layer) {
+  if (!input(ctx_, 0).is_tensor_) {
+    shuffler_output_ = shuffler_input_;
+    return RET_OK;
+  }
   if (in_tensors_[1].DataType() != DataType::kNumberTypeInt32) {
     MS_LOG(WARNING) << op_name_ << " axis tensor data type is " << static_cast<int>(in_tensors_[1].DataType());
   }

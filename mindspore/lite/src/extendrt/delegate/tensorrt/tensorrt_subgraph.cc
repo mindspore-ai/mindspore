@@ -657,20 +657,6 @@ bool TensorRTSubGraph::ValidInputResizeDims(const nvinfer1::Dims &construct_dims
     MS_LOG(ERROR) << "invalid resize input.";
     return false;
   }
-  if (input_hw_index_ == -1) {
-    // only NHWC format support HW resize, otherwise only support batchsize resize
-    for (int d = 0; d < construct_dims.nbDims; d++) {
-      if (d != input_batchsize_index_ && construct_dims.d[d] != resize_input_shape[d]) {
-        MS_LOG(ERROR) << "only support dynamic batch size resize input.";
-        return false;
-      }
-    }
-  } else if ((input_hw_index_ == 1 && construct_dims.d[DIMENSION_3D] != resize_input_shape[DIMENSION_3D]) ||
-             (input_hw_index_ == DIMENSION_2D && construct_dims.d[1] != resize_input_shape[1])) {
-    // input may be nhwc || nchw
-    MS_LOG(ERROR) << "don't support dynamic channel resize input.";
-    return false;
-  }
   return true;
 }
 
