@@ -160,7 +160,7 @@ class Somas {
                                       const std::string &kernel_name);
   SomasParameterPtr CreateSomasParameter(const AnfNodePtr &node, size_t index, size_t param_size,
                                          const std::string &kernel_name);
-  void InitControlTensors(const session::KernelGraph &graph);
+  void InitControlTensors();
   bool CommonSpecNodeProcess(const session::KernelGraph &graph);
   SomasStreamPtr GetSomasStream(size_t stream_id) const;
 #ifndef ENABLE_SECURITY
@@ -205,7 +205,7 @@ class Somas {
   // cache
   void SaveSomasResult(const session::KernelGraph &graph);
   bool VerifySomasResult(const nlohmann::json &somas_json) const;
-  bool LoadSomasResult(const session::KernelGraph &graph, const string &filename);
+  bool LoadSomasResult(const string &filename);
   bool UpdateTensorsOffset(const std::vector<nlohmann::json> &tensors_json);
   bool CalcSomasModelHash(const session::KernelGraph &graph);
   bool LoadSomasCache(const session::KernelGraph &graph);

@@ -694,7 +694,7 @@ void MindRTBackend::SyncStream() {
   }
 }
 
-void MindRTBackend::EraseSingleOpCache(const GraphInfo &graph_info) {
+void MindRTBackend::EraseSingleOpCache(const GraphInfo &graph_info) const {
   pynative::OpCompiler::GetInstance().ClearOpCache(graph_info);
 }
 

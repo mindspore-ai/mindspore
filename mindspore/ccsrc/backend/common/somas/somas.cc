@@ -231,7 +231,7 @@ bool Somas::LoadSomasCache(const session::KernelGraph &graph) {
   if (ret) {
     std::string filename = Common::GetCompilerCachePath() + "/somas_meta/somas_graph_" +
                            std::to_string(graph.graph_id()) + "_" + hash_id_ + ".json";
-    ret = LoadSomasResult(graph, filename);
+    ret = LoadSomasResult(filename);
     if (ret) {
       MS_LOG(INFO) << "Load Somas Cache file " << filename << " Successfully.";
     }
@@ -317,7 +317,7 @@ void Somas::UpdateSomasResultToGraph(const session::KernelGraph &graph) {
   }
 }
 
-bool Somas::LoadSomasResult(const session::KernelGraph &graph, const string &filename) {
+bool Somas::LoadSomasResult(const string &filename) {
   std::ifstream somas_json_fs(filename);
   if (!somas_json_fs.is_open()) {
     MS_LOG(INFO) << "Open json file: " << filename << " error, Somas Cache Missed.";
@@ -574,7 +574,7 @@ void Somas::AddControlTensorFromExecOrder() {
   }
 }
 
-void Somas::InitControlTensors(const session::KernelGraph &graph) {
+void Somas::InitControlTensors() {
   if (depend_exec_order_) {
     AddControlTensorFromExecOrder();
   }
@@ -885,7 +885,7 @@ bool Somas::InitBasicInfoFromGraph(const session::KernelGraph &graph) {
   InitSomasStreamAndNode(graph);
   InitSomasOutputAndWorkspaceTensors(graph);
   InitSomasInputTensors(graph);
-  InitControlTensors(graph);
+  InitControlTensors();
   GraphOutputProcess(graph);
   return true;
 }

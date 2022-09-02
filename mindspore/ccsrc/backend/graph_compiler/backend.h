@@ -92,7 +92,7 @@ class BACKEND_EXPORT MindRTBackend : public MindRTBackendBase {
 
   // In PyNative mode, the size of single op cache list will be increasing, which lead to memory cost increasing,
   // so the latest single op cache should be erased when cache list size exceeds threshold value.
-  void EraseSingleOpCache(const GraphInfo &graph_info);
+  void EraseSingleOpCache(const GraphInfo &graph_info) const;
 
   // Execute OpBuildTask and OpRunTask when the OpExecutor queue is full in PyNative mode.
   void BatchBuildCallback();
