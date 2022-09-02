@@ -20,6 +20,7 @@ from ...common import dtype as mstype
 from .._grad.grad_base import bprop_getters
 from .. import operations as P
 from .. import functional as F
+from ..operations import _grad_ops as G
 from ..operations.image_ops import ResizeBicubic
 from ..operations._grad_ops import ResizeBicubicGrad
 from ..composite.multitype_ops.zeros_like_impl import zeros_like
@@ -27,6 +28,7 @@ from ..operations.image_ops import CropAndResize
 from ..operations.image_ops import CropAndResizeGradImage
 from ..operations.image_ops import CropAndResizeGradBoxes
 from ..operations.image_ops import RGBToHSV
+from ..operations.image_ops import ScaleAndTranslate
 
 
 @bprop_getters.register(ResizeBicubic)
@@ -207,4 +209,19 @@ def get_bprop_rgb_to_hsv(self):
         dhb5 = red_smallest * crcp(greens - reds)
         return function7_rgbtohsv(greens, green_biggest, dhb5, dh_db_1, dh_db_2, dh_db_3,\
                          dh_db_4, dout, dv_dr, dv_dg, dv_db, ds_dr, ds_dg, ds_db, dh_dr, dh_dg)
+    return bprop
+
+
+@bprop_getters.register(ScaleAndTranslate)
+def get_bprop_scale_and_translate(self):
+    """Grad definition for `ScaleAndTranslate` operation"""
+    scale_and_translate_grad = G.ScaleAndTranslateGrad(self.kernel_type, self.antialias)
+
+    def bprop(images, size, scale, translation, out, dout):
+        images_fp32 = F.cast(images, mstype.float32)
+        grad0_fp32 = scale_and_translate_grad(dout, images_fp32, scale, translation)
+        grad0 = F.cast(grad0_fp32, F.dtype(images))
+        result = (grad0, F.zeros_like(size), F.zeros_like(scale), F.zeros_like(translation))
+        return result
+
     return bprop

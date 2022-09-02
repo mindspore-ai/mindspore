@@ -113,6 +113,18 @@ class RsqrtGrad(Primitive):
         """Initialize RsqrtGrad"""
 
 
+class ScaleAndTranslateGrad(Primitive):
+    """Performs grad of ScaleAndTranslate operation."""
+
+    @prim_attr_register
+    def __init__(self, kernel_type="lanczos3", antialias=True):
+        """Initialize ScaleAndTranslateGrad"""
+        validator.check_value_type("kernel_type", kernel_type, [str], self.name)
+        validator.check_string(kernel_type, ["lanczos1", "lanczos3", "lanczos5", "gaussian", "box", "triangle",
+                                             "keyscubic", "mitchellcubic"], "kernel_type", self.name)
+        validator.check_value_type("antialias", antialias, [bool], self.name)
+
+
 class SoftmaxGrad(ReciprocalGrad):
     """Performs grad of Softmax operation."""
 

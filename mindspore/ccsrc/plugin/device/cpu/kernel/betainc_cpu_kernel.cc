@@ -32,7 +32,7 @@ bool BetaincCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
   kernel_name_ = base_operator->name();
   auto kernel_ptr = std::make_shared<ops::Betainc>(base_operator->GetPrim());
   if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast Eye ops failed!";
+    MS_LOG(ERROR) << "cast Betainc ops failed!";
     return false;
   }
   input0_shape_ = inputs[kIndex0]->GetShapeVector();
