@@ -107,13 +107,19 @@ class ArgMaxAndMinWithValueGpuKernelMod : public NativeGpuKernelMod {
     MS_EXCEPTION_IF_NULL(outputs[0]);
     auto output_shape = Convert2SizeTClipNeg(outputs[0]->GetShapeVector());
     int64_t dims = SizeToLong(shape.size());
-    if (axis_ < -dims || axis_ >= dims) {
-      MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the 'axis' must be in the range [-" << dims << ","
-                               << dims << "), but got " << axis_;
+
+    // If the rank is uncertain, do not update the axis.
+    ShapeVector dynamic_rank_shape = {-2};
+    if (inputs[0]->GetShapeVector() != dynamic_rank_shape) {
+      if (axis_ < -dims || axis_ >= dims) {
+        MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the 'axis' must be in the range [-" << dims << ","
+                                 << dims << "), but got " << axis_;
+      }
+      if (axis_ < 0) {
+        axis_ += dims;
+      }
     }
-    if (axis_ < 0) {
-      axis_ += dims;
-    }
+
     input_size_ = sizeof(T);
     for (auto x : shape) {
       input_size_ *= x;
