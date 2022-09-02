@@ -743,7 +743,7 @@ MS_CORE_API void common_log_init(void) {
   FLAGS_logtostderr = true;
   if (logtostderr == "0") {
     if (mindspore::GetEnv("GLOG_log_dir").empty()) {
-#ifndef BUILD_LITE_INFERENCE
+#ifndef BUILD_LITE
       MS_LOG(ERROR) << "`GLOG_log_dir` is empty, it must be set while 'logtostderr' equals to 0.";
       // Here can not throw exception and use python to catch, because the PYBIND11_MODULE is not yet been initialed.
       exit(EXIT_FAILURE);
