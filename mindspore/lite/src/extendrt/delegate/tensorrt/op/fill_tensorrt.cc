@@ -49,14 +49,21 @@ int FillTensorRT::AddInnerOp(TensorRTContext *ctx) {
     return RET_ERROR;
   }
   fill_layer->setInput(0, *input(ctx, 1).trt_tensor_);
-  auto alpha_tensor =
-    ConvertScalarToITensor(ctx, 0, in_tensors_[0].Data().get(), in_tensors_[0].DataType(), op_name_ + "_alpha");
+  nvinfer1::ITensor *alpha_tensor = nullptr;
+  if (in_tensors_[0].Data() == nullptr) {
+    alpha_tensor = input(ctx, 0).trt_tensor_;
+  } else {
+    alpha_tensor =
+      ConvertScalarToITensor(ctx, 0, in_tensors_[0].Data().get(), in_tensors_[0].DataType(), op_name_ + "_alpha");
+  }
   fill_layer->setInput(1, *alpha_tensor);
   int nbdims = input(ctx, 1).trt_tensor_->getDimensions().d[0];
-  zeros_ = std::vector<float>(nbdims, 0.f);
-  nvinfer1::Dims beta_dims{1, {nbdims}};
-  nvinfer1::Weights weights{ConvertDataType(DataType::kNumberTypeFloat32), &zeros_[0], nbdims};
-  auto beta_tensor = ctx->network()->addConstant(beta_dims, weights)->getOutput(0);
+  nvinfer1::ITensor *beta_tensor = nullptr;
+  if (in_tensors_[0].DataType() == DataType::kNumberTypeInt32) {
+    beta_tensor = ctx->ConvertTo1DTensor(std::vector<int>(nbdims, 0));
+  } else {
+    beta_tensor = ctx->ConvertTo1DTensor(std::vector<float>(nbdims, 0.f));
+  }
   fill_layer->setInput(INPUT_SIZE2, *beta_tensor);
 
   nvinfer1::ITensor *out_tensor = fill_layer->getOutput(0);
