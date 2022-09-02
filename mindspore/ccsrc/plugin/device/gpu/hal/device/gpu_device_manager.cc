@@ -100,7 +100,8 @@ bool GPUDeviceManager::CreateStream(size_t *stream_id) {
 bool GPUDeviceManager::DestroyStream(size_t stream_id) {
   std::lock_guard<std::mutex> lock_gpu_streams(stream_mutex_);
   if (stream_id >= gpu_streams_.size()) {
-    MS_LOG(EXCEPTION) << "CUDA stream not found for stream id " << stream_id;
+    MS_LOG(ERROR) << "CUDA stream not found for stream id " << stream_id;
+    return false;
   }
   if (gpu_streams_.at(stream_id) == nullptr) {
     MS_LOG(WARNING) << "CUDA stream hsa been destroyed for stream id " << stream_id;

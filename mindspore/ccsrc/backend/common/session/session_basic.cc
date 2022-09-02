@@ -1734,7 +1734,7 @@ void SessionBasic::GetOpInputTensors(const CNodePtr &cnode,
                                      const std::map<KernelWithIndex, tensor::TensorPtr> &op_output,
                                      const std::map<AnfNodePtr, size_t> &parameter_index,
                                      const std::vector<tensor::TensorPtr> &graph_inputs,
-                                     InputTensorInfo *input_tensor_info) {
+                                     InputTensorInfo *input_tensor_info) const {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(input_tensor_info);
   std::vector<size_t> const_input_attr_index = {};

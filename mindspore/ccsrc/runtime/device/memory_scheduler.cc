@@ -116,9 +116,7 @@ void *MemScheduler::Malloc(const std::shared_ptr<MemEvent> &event, void *stream)
     }
     keys[iter.second] = iter.first;
   }
-  const auto &device_ptr_list =
-    auto_mem_offload_->MallocContinuous(keys, continuous_mem_info->align_size_list_, stream, GetNoReuseKeys());
-  if (device_ptr_list.size() != keys.size()) {
+  if (!auto_mem_offload_->MallocContinuous(keys, continuous_mem_info->align_size_list_, stream, GetNoReuseKeys())) {
     MS_LOG(WARNING) << "Alloc continuous memory failed, size: " << continuous_mem_info->total_size_;
     return nullptr;
   }
@@ -151,7 +149,7 @@ bool MemScheduler::PreComputeInit(const std::shared_ptr<MemEvent> &event, void *
   }
   if (new_malloc || high_priority_mem_need_init_.count(event->key) != 0) {
     MS_LOG(DEBUG) << "Init input data from host, key: " << event->key;
-    auto_mem_offload_->SwapIn(event->key, stream);
+    (void)auto_mem_offload_->SwapIn(event->key, stream);
   }
   return true;
 }
