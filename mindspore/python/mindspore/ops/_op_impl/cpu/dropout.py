@@ -21,6 +21,7 @@ dropout_op_info = CpuRegOp("Dropout") \
     .output(1, "output1", "required") \
     .dtype_format(DataType.F16_Default, DataType.F16_Default, DataType.F16_Default) \
     .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
+    .dtype_format(DataType.F64_Default, DataType.F64_Default, DataType.F64_Default) \
     .get_op_info()
 
 

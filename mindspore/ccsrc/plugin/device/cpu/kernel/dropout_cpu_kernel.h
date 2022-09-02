@@ -19,32 +19,42 @@
 
 #include <memory>
 #include <vector>
-
+#include <map>
+#include <utility>
+#include <string>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-class DropoutCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class DropoutCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<DropoutCpuKernelMod> {
  public:
   DropoutCpuKernelMod() = default;
   ~DropoutCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+              const std::vector<AddressPtr> &outputs) {
+    return kernel_func_(this, inputs, workspace, outputs);
+  }
+  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
+
+  std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
  private:
   template <typename T>
-  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) const;
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<kernel::AddressPtr> &outputs);
 
   ShapeVector input_shape_;
-  ShapeVector output_shape_;
-  ShapeVector mask_shape_;
-  TypeId dtype_{kTypeUnknown};
   float keep_prob_{0.0};
   uint64_t tensor_size_{1};
+  std::string kernel_name_;
 };
 }  // namespace kernel
 }  // namespace mindspore
