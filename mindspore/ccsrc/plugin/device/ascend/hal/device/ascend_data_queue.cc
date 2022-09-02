@@ -261,7 +261,7 @@ DataQueueStatus AscendTdtQueue::Push(std::vector<DataQueueItem> data) {
   return DataQueueStatus::SUCCESS;
 }
 
-void AscendTdtQueue::ParseType(aclDataType acl_data_type, std::string *data_type) {
+void AscendTdtQueue::ParseType(aclDataType acl_data_type, std::string *data_type) const {
   auto type_iter = kAclTypeToString.find(acl_data_type);
   if (type_iter == kAclTypeToString.end()) {
     MS_LOG(EXCEPTION) << "Got unsupported acl datatype: " << acl_data_type;
@@ -286,7 +286,8 @@ bool AscendTdtQueue::Translate(const std::vector<DataQueueItem> &data, acltdtDat
   return true;
 }
 
-bool AscendTdtQueue::AssembleTensor2AclDataset(const std::vector<DataQueueItem> &data, acltdtDataset *acl_dataset) {
+bool AscendTdtQueue::AssembleTensor2AclDataset(const std::vector<DataQueueItem> &data,
+                                               acltdtDataset *acl_dataset) const {
   if (data.empty()) {
     acltdtDataItem *acl_data =
       acltdtCreateDataItem(acltdtTensorType::ACL_TENSOR_DATA_END_OF_SEQUENCE, nullptr, 0, ACL_BOOL, nullptr, 0);
@@ -344,7 +345,7 @@ bool AscendTdtQueue::AssembleTensor2AclDataset(const std::vector<DataQueueItem> 
   return true;
 }
 
-void AscendTdtQueue::DestroyAclDataset(acltdtDataset *acl_dataset, bool include_data_item) {
+void AscendTdtQueue::DestroyAclDataset(acltdtDataset *acl_dataset, bool include_data_item) const {
   if (include_data_item) {
     for (size_t i = 0; i < acltdtGetDatasetSize(acl_dataset); i++) {
       if (acltdtDestroyDataItem(acltdtGetDataItem(acl_dataset, i)) != ACL_SUCCESS) {
@@ -382,49 +383,49 @@ DataQueueStatus AscendHostQueue::Push(std::vector<DataQueueItem> data) {
 }
 
 bool AscendHostQueue::HostQueueInit() {
-  auto ret = rtSetDevice(device_id_);
-  if (ret != ACL_RT_SUCCESS) {
-    MS_LOG(ERROR) << "call rtSetDevice failed, ret =" << ret;
+  auto rt_ret = rtSetDevice(device_id_);
+  if (rt_ret != ACL_RT_SUCCESS) {
+    MS_LOG(ERROR) << "call rtSetDevice failed, ret = " << rt_ret;
     return false;
   }
 
-  ret = rtMemQueueInit(device_id_);
-  if (ret != ACL_RT_SUCCESS && ret != ACL_ERROR_RT_REPEATED_INIT) {
-    MS_LOG(ERROR) << "call rtMemQueueInit failed, ret =" << ret;
+  rt_ret = rtMemQueueInit(device_id_);
+  if (rt_ret != ACL_RT_SUCCESS && rt_ret != ACL_ERROR_RT_REPEATED_INIT) {
+    MS_LOG(ERROR) << "call rtMemQueueInit failed, ret = " << rt_ret;
     return false;
   }
 
   rtMemQueueAttr_t attr = {};
-  auto mem_ret = memset_s(attr.name, RT_MQ_MAX_NAME_LEN, 0, RT_MQ_MAX_NAME_LEN);
-  if (mem_ret != EOK) {
-    MS_LOG(ERROR) << "call memset_s failed, ret =" << mem_ret;
+  auto errno_ret = memset_s(attr.name, RT_MQ_MAX_NAME_LEN, 0, RT_MQ_MAX_NAME_LEN);
+  if (errno_ret != EOK) {
+    MS_LOG(ERROR) << "call memset_s failed, ret = " << errno_ret;
     return false;
   }
-  mem_ret = memcpy_s(attr.name, RT_MQ_MAX_NAME_LEN, channel_name_.c_str(), channel_name_.size() + 1);
-  if (mem_ret != EOK) {
-    MS_LOG(ERROR) << "call memcpy_s failed, ret =" << mem_ret;
+  errno_ret = memcpy_s(attr.name, RT_MQ_MAX_NAME_LEN, channel_name_.c_str(), channel_name_.size() + 1);
+  if (errno_ret != EOK) {
+    MS_LOG(ERROR) << "call memcpy_s failed, ret = " << errno_ret;
     return false;
   }
 
-  attr.depth = 128U;
+  attr.depth = rt_mem_queue_depth_;
   attr.workMode = RT_MQ_MODE_DEFAULT;
   attr.flowCtrlFlag = false;
-  attr.flowCtrlDropTime = 0U;
+  attr.flowCtrlDropTime = 0;
   attr.overWriteFlag = false;
-  ret = rtMemQueueCreate(device_id_, &attr, &queue_id_);
-  if (ret != ACL_RT_SUCCESS) {
-    MS_LOG(ERROR) << "call rtMemQueueCreate failed, ret =" << ret;
+  rt_ret = rtMemQueueCreate(device_id_, &attr, &queue_id_);
+  if (rt_ret != RT_ERROR_NONE) {
+    MS_LOG(ERROR) << "Call rtMemQueueCreate failed, ret = " << rt_ret;
     return false;
   }
 
   rtMemBuffCfg_t buff_cfg = {};
-  ret = rtMbufInit(&buff_cfg);
-  if (ret != ACL_RT_SUCCESS && ret != ACL_ERROR_RT_REPEATED_INIT) {
-    MS_LOG(ERROR) << "call rtMbufInit failed, ret =" << ret;
+  rt_ret = rtMbufInit(&buff_cfg);
+  if (rt_ret != RT_ERROR_NONE && rt_ret != ACL_ERROR_RT_REPEATED_INIT) {
+    MS_LOG(ERROR) << "Call rtMbufInit failed, ret =" << rt_ret;
     return false;
   }
-  const std::lock_guard<std::mutex> lk(queue_id_to_trans_id_map_mutex_);
-  (void)queue_id_to_trans_id_map_.emplace(queue_id_, 0UL);
+  std::lock_guard<std::mutex> lock(queue_id_to_trans_id_map_mutex_);
+  (void)queue_id_to_trans_id_map_.emplace(queue_id_, 0);
 
   return true;
 }
@@ -433,7 +434,6 @@ bool AscendHostQueue::SendDataByHostQueue(const std::vector<DataQueueItem> &data
   bool status;
   bool is_need_resend = false;
   void *buff = nullptr;
-  // Status status;
   if (!LaunchTensor2MBuff(data, &buff)) {
     return false;
   }
@@ -525,76 +525,77 @@ bool AscendHostQueue::CreateDataItemInfos(const std::vector<DataQueueItem> &data
   return true;
 }
 
-bool AscendHostQueue::SerializeDataItemInfos(std::vector<DataItemInfo> *items, void **buff) {
-  size_t cnt = items->size();
+bool AscendHostQueue::SerializeDataItemInfos(std::vector<DataItemInfo> *items, void **buff) const {
+  MS_EXCEPTION_IF_NULL(items);
+  size_t count = items->size();
   size_t total_size = 0UL;
-  for (size_t i = 0UL; i < cnt; ++i) {
-    (*items)[i].ctrl_info.cur_cnt = i;
-    (*items)[i].ctrl_info.cnt = cnt;
+  for (size_t i = 0UL; i < count; ++i) {
+    (*items)[i].item_info.cur_count = i;
+    (*items)[i].item_info.count = count;
     total_size +=
-      sizeof(DataItemInfo::ItemInfo) + (*items)[i].ctrl_info.dim_num * sizeof(int64_t) + (*items)[i].ctrl_info.data_len;
+      sizeof(DataItemInfo::ItemInfo) + (*items)[i].item_info.dim_num * sizeof(int64_t) + (*items)[i].item_info.data_len;
   }
 
-  auto rt_error = rtMbufAlloc(buff, total_size);
-  if (rt_error != ACL_RT_SUCCESS) {
-    MS_LOG(ERROR) << "call rtMbufAlloc with size[" << total_size << "] failed, ret = " << rt_error;
+  auto errno_ret = rtMbufAlloc(buff, total_size);
+  if (errno_ret != ACL_RT_SUCCESS) {
+    MS_LOG(ERROR) << "Call rtMbufAlloc with size[" << total_size << "] failed, ret = " << errno_ret;
     return false;
   }
 
   void *data = nullptr;
-  rt_error = rtMbufGetBuffAddr(*buff, &data);
-  if (rt_error != ACL_RT_SUCCESS) {
+  errno_ret = rtMbufGetBuffAddr(*buff, &data);
+  if (errno_ret != ACL_RT_SUCCESS) {
     (void)rtMbufFree(*buff);
-    MS_LOG(ERROR) << "call rtMbufGetBuffAddr with size[" << total_size << "] failed, ret = " << rt_error;
+    MS_LOG(ERROR) << "Call rtMbufGetBuffAddr with size[" << total_size << "] failed, ret = " << errno_ret;
     return false;
   }
 
   void *head_buf = nullptr;
   uint64_t head_size = 0UL;
-  rt_error = rtMbufGetPrivInfo(*buff, &head_buf, &head_size);
-  if (rt_error != ACL_RT_SUCCESS) {
+  errno_ret = rtMbufGetPrivInfo(*buff, &head_buf, &head_size);
+  if (errno_ret != ACL_RT_SUCCESS) {
     (void)rtMbufFree(*buff);
-    MS_LOG(ERROR) << "call rtMbufGetPrivInfo failed, ret =" << rt_error;
+    MS_LOG(ERROR) << "Call rtMbufGetPrivInfo failed, ret =" << errno_ret;
     return false;
   }
   if ((head_buf != nullptr) && (head_size > kMbufHeadEndOfSequencePos)) {
-    MS_LOG(DEBUG) << "host queue set end_of_sequence mbuf head.";
+    MS_LOG(DEBUG) << "Host queue set end_of_sequence mbuf head.";
   }
 
   size_t offset = 0UL;
-  for (size_t i = 0UL; i < cnt; ++i) {
-    auto mem_ret = memcpy_s(::ge::ValueToPtr(::ge::PtrToValue(data) + offset), sizeof(DataItemInfo::ItemInfo),
-                            &((*items)[i].ctrl_info), sizeof(DataItemInfo::ItemInfo));
-    if (mem_ret != EOK) {
+  for (size_t i = 0UL; i < count; ++i) {
+    errno_ret = memcpy_s(::ge::ValueToPtr(::ge::PtrToValue(data) + offset), sizeof(DataItemInfo::ItemInfo),
+                         &((*items)[i].item_info), sizeof(DataItemInfo::ItemInfo));
+    if (errno_ret != EOK) {
       (void)rtMbufFree(*buff);
-      MS_LOG(ERROR) << "call memcpy_s failed, ret =" << mem_ret;
+      MS_LOG(ERROR) << "Call memcpy_s failed, ret = " << errno_ret;
       return false;
     }
     offset += sizeof(DataItemInfo::ItemInfo);
 
-    for (size_t j = 0UL; j < (*items)[i].ctrl_info.dim_num; ++j) {
-      mem_ret = memcpy_s(::ge::ValueToPtr(::ge::PtrToValue(data) + offset), sizeof(int64_t), &((*items)[i].dims[j]),
-                         sizeof(int64_t));
-      if (mem_ret != EOK) {
+    for (size_t j = 0UL; j < (*items)[i].item_info.dim_num; ++j) {
+      errno_ret = memcpy_s(::ge::ValueToPtr(::ge::PtrToValue(data) + offset), sizeof(int64_t), &((*items)[i].dims[j]),
+                           sizeof(int64_t));
+      if (errno_ret != EOK) {
         (void)rtMbufFree(*buff);
-        MS_LOG(ERROR) << "call memcpy_s failed, ret =" << mem_ret;
+        MS_LOG(ERROR) << "Call memcpy_s failed, ret = " << errno_ret;
         return false;
       }
       offset += sizeof(int64_t);
     }
 
-    if ((*items)[i].ctrl_info.data_len == 0UL) {
+    if ((*items)[i].item_info.data_len == 0UL) {
       continue;
     }
 
-    mem_ret = memcpy_s(::ge::ValueToPtr(::ge::PtrToValue(data) + offset), (*items)[i].ctrl_info.data_len,
-                       (*items)[i].data_ptr, (*items)[i].ctrl_info.data_len);
-    if (mem_ret != EOK) {
+    errno_ret = memcpy_s(::ge::ValueToPtr(::ge::PtrToValue(data) + offset), (*items)[i].item_info.data_len,
+                         (*items)[i].data_ptr, (*items)[i].item_info.data_len);
+    if (errno_ret != EOK) {
       (void)rtMbufFree(*buff);
-      MS_LOG(ERROR) << "call memcpy_s failed, ret =" << mem_ret;
+      MS_LOG(ERROR) << "call memcpy_s failed, ret = " << errno_ret;
       return false;
     }
-    offset += (*items)[i].ctrl_info.data_len;
+    offset += (*items)[i].item_info.data_len;
   }
 
   return true;
@@ -602,21 +603,21 @@ bool AscendHostQueue::SerializeDataItemInfos(std::vector<DataItemInfo> *items, v
 
 AscendHostQueue::DataItemInfo AscendHostQueue::BuildDataItemInfo(acltdtTensorType acl_data_type, int32_t tensor_type,
                                                                  const int64_t *dims, size_t dim_size, void *data_ptr,
-                                                                 uint64_t data_len) {
+                                                                 uint64_t data_len) const {
   DataItemInfo item = {};
-  item.ctrl_info.data_type = static_cast<int32_t>(acl_data_type);
-  item.ctrl_info.tensor_type = tensor_type;
-  item.ctrl_info.dim_num = dim_size;
-  item.ctrl_info.data_len = data_len;
+  item.item_info.data_type = static_cast<int32_t>(acl_data_type);
+  item.item_info.tensor_type = tensor_type;
+  item.item_info.dim_num = dim_size;
+  item.item_info.data_len = data_len;
   item.dims = std::vector<int64_t>(dims, dims + dim_size);
   item.data_ptr = data_ptr;
   return item;
 }
 
 void AscendHostQueue::HostQueueFreeBuff(void *buff) {
-  auto rt_error = rtMbufFree(buff);
-  if (rt_error != ACL_RT_SUCCESS) {
-    MS_LOG(ERROR) << "call rtMbufFree failed, ret=" << rt_error;
+  auto rt_ret = rtMbufFree(buff);
+  if (rt_ret != RT_ERROR_NONE) {
+    MS_LOG(ERROR) << "Call rtMbufFree failed, ret = " << rt_ret;
   }
 }
 

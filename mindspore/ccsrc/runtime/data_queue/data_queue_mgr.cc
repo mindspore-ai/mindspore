@@ -230,7 +230,7 @@ std::shared_ptr<DataQueue> DataQueueMgr::GetDataQueue(const std::string &channel
   return iter->second->Queue();
 }
 
-DataQueueStatus DataQueueMgr::SetThreadDevice(const std::string &channel_name) {
+DataQueueStatus DataQueueMgr::SetThreadDevice(const std::string &channel_name) const {
   auto queue = GetDataQueue(channel_name);
   if (queue == nullptr) {
     return DataQueueStatus::QUEUE_NOT_EXIST;
