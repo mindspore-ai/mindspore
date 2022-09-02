@@ -3367,7 +3367,7 @@ class IgammaGradA(Primitive):
     Computes the gradient of igamma(a, x) wrt a.
 
     Inputs:
-        - **a** (Tensor) - The input tensor. With float32 or float 64 data type.
+        - **a** (Tensor) - The input tensor. With float32 or float64 data type.
         - **x** (Tensor) - The input tensor. With float32 data or float64 type. `x` should have
           the same dtype with `a`.
 
@@ -3381,7 +3381,7 @@ class IgammaGradA(Primitive):
         ValueError: If `a` could not be broadcast to a tensor with shape of `x`.
 
     Supported Platforms:
-        ``Ascend````CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> a = Tensor(np.array([2.0, 4.0, 6.0, 8.0]).astype(np.float32))

@@ -38,9 +38,10 @@ TypePtr IgammacInferType(const PrimitivePtr &primitive, const std::vector<Abstra
   auto x_type = input_args[kInputIndex1]->BuildType();
   const std::set<TypePtr> valid_types = {kFloat32, kFloat64};
   std::map<std::string, TypePtr> args;
-  (void)args.insert(std::make_pair("a", a_type));
-  (void)args.insert(std::make_pair("x", x_type));
-  return CheckAndConvertUtils::CheckTensorTypeSame(args, valid_types, prim_name);
+  (void)args.insert({"a", a_type});
+  (void)args.insert({"x", x_type});
+  (void)CheckAndConvertUtils::CheckTensorTypeSame(args, valid_types, prim_name);
+  return a_type;
 }
 }  // namespace
 

@@ -941,9 +941,15 @@ def get_bprop_igamma(self):
         ra, rx = broadcast_gradient_args(sa, sx)
         partial_a = igammagrada(a, x)
         partial_x = exp_(-x + (a - 1) * log_(x) - lgamma(a))
-        if ra != () or rx != ():
-            return reshape_(reduce_sum_(partial_a * dout, ra), sa), reshape_(reduce_sum_(partial_x * dout, rx), sx)
-        return reshape_(partial_a * dout, sa), reshape_(partial_x * dout, sx)
+        if ra != ():
+            r1 = reshape_(reduce_sum_(partial_a * dout, ra), sa)
+        else:
+            r1 = reshape_(partial_a * dout, sa)
+        if rx != ():
+            r2 = reshape_(reduce_sum_(partial_x * dout, rx), sx)
+        else:
+            r2 = reshape_(partial_x * dout, sx)
+        return r1, r2
 
     return bprop
 
@@ -966,10 +972,15 @@ def get_bprop_igammac(self):
         ra, rx = broadcast_gradient_args(sa, sx)
         partial_a = igammagrada(a, x)
         partial_x = exp_(-x + (a - 1) * log_(x) - lgamma(a))
-        if ra != () or rx != ():
-            return neg_(reshape_(reduce_sum_(partial_a * dout, ra), sa)), \
-                   neg_(reshape_(reduce_sum_(partial_x * dout, rx), sx))
-        return neg_(reshape_(partial_a * dout, sa)), neg_(reshape_(partial_x * dout, sx))
+        if ra != ():
+            r1 = neg_(reshape_(reduce_sum_(partial_a * dout, ra), sa))
+        else:
+            r1 = neg_(reshape_(partial_a * dout, sa))
+        if rx != ():
+            r2 = neg_(reshape_(reduce_sum_(partial_x * dout, rx), sx))
+        else:
+            r2 = neg_(reshape_(partial_x * dout, sx))
+        return r1, r2
 
     return bprop
 
