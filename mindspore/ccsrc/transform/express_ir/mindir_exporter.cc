@@ -48,6 +48,7 @@ static mindspore::HashMap<int, mind_ir::TensorProto_DataType> g_data_type_map = 
   {kNumberTypeBool, mind_ir::TensorProto_DataType_BOOL},
   {kNumberTypeInt8, mind_ir::TensorProto_DataType_INT8},
   {kNumberTypeInt16, mind_ir::TensorProto_DataType_INT16},
+  {kNumberTypeInt, mind_ir::TensorProto_DataType_INT32},
   {kNumberTypeInt32, mind_ir::TensorProto_DataType_INT32},
   {kNumberTypeInt64, mind_ir::TensorProto_DataType_INT64},
   {kNumberTypeUInt8, mind_ir::TensorProto_DataType_UINT8},
@@ -55,6 +56,7 @@ static mindspore::HashMap<int, mind_ir::TensorProto_DataType> g_data_type_map = 
   {kNumberTypeUInt32, mind_ir::TensorProto_DataType_UINT32},
   {kNumberTypeUInt64, mind_ir::TensorProto_DataType_UINT64},
   {kNumberTypeFloat16, mind_ir::TensorProto_DataType_FLOAT16},
+  {kNumberTypeFloat, mind_ir::TensorProto_DataType_FLOAT},
   {kNumberTypeFloat32, mind_ir::TensorProto_DataType_FLOAT},
   {kNumberTypeFloat64, mind_ir::TensorProto_DataType_DOUBLE},
   {kObjectTypeString, mind_ir::TensorProto_DataType_STRING},
@@ -765,8 +767,8 @@ bool IrExportBuilder::SetAbstractToNodeProto(const CNodePtr &node, mind_ir::Node
   }
   mind_ir::AttributeProto *attr_proto = node_proto->add_attribute();
   if (!SetAbstractToNodeProto(abs, attr_proto)) {
-    MS_LOG(ERROR) << "Set shape to NodeProto for " << node->DebugString() << " failed.";
-    return false;
+    MS_LOG(WARNING) << "Set shape to NodeProto for " << node->DebugString() << " failed. abs: " << abs->ToString();
+    return true;
   }
   attr_proto->set_name("shape");
   return true;
