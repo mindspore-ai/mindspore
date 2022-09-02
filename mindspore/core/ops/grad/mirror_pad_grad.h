@@ -39,6 +39,8 @@ class MIND_API MirrorPadGrad : public BaseOperator {
   explicit MirrorPadGrad(const std::string k_name) : BaseOperator(k_name) {}
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.MirrorPadGrad for the inputs.
   void Init() const {}
+  void set_mode(const std::string &mode);
+  std::string get_mode() const;
 };
 AbstractBasePtr MirrorPadGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const std::vector<AbstractBasePtr> &input_args);

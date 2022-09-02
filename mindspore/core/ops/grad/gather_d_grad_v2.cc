@@ -34,7 +34,7 @@ abstract::BaseShapePtr GatherDGradV2InferShape(const PrimitivePtr &primitive,
     MS_EXCEPTION_IF_NULL(item);
   }
 
-  return input_args[0]->BuildShape();
+  return input_args[kInputIndex0]->BuildShape();
 }
 
 TypePtr GatherDGradV2InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {

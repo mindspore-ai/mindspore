@@ -25,38 +25,33 @@
 
 namespace mindspore {
 namespace ops {
-namespace {
-abstract::ShapePtr IsNanInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  return std::make_shared<abstract::Shape>(x_shape);
-}
-
-TypePtr IsNanInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
-  (void)CheckAndConvertUtils::CheckTensorTypeValid(
-    "x", input_args[0]->BuildType(),
-    {kBool, kInt8, kInt16, kInt32, kInt64, kFloat16, kFloat32, kFloat64, kUInt8, kUInt16, kUInt32, kUInt64},
-    primitive->name());
-  return std::make_shared<TensorType>(kBool);
-}
-}  // namespace
-
 MIND_API_OPERATOR_IMPL(IsNan, BaseOperator);
-AbstractBasePtr IsNanInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                           const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  const int64_t input_num = 1;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
-  auto infertype = IsNanInferType(primitive, input_args);
-  auto infershape = IsNanInferShape(primitive, input_args);
-  return abstract::MakeAbstract(infershape, infertype);
-}
-REGISTER_PRIMITIVE_EVAL_IMPL(IsNan, prim::kPrimIsNan, IsNanInfer, nullptr, true);
+class IsNanInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    MS_EXCEPTION_IF_NULL(primitive);
+    const int64_t input_num = 1;
+    CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
+    for (const auto &item : input_args) {
+      MS_EXCEPTION_IF_NULL(item);
+    }
+    auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+    return std::make_shared<abstract::Shape>(x_shape);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    for (const auto &item : input_args) {
+      MS_EXCEPTION_IF_NULL(item);
+    }
+    (void)CheckAndConvertUtils::CheckTensorTypeValid(
+      "x", input_args[0]->BuildType(),
+      {kBool, kInt8, kInt16, kInt32, kInt64, kFloat16, kFloat32, kFloat64, kUInt8, kUInt16, kUInt32, kUInt64},
+      primitive->name());
+    return std::make_shared<TensorType>(kBool);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(IsNan, prim::kPrimIsNan, IsNanInfer, false);
 }  // namespace ops
 }  // namespace mindspore

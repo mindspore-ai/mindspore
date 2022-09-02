@@ -21,26 +21,27 @@
 
 namespace mindspore {
 namespace kernel {
-void IsInfCpuKernelMod::InitKernel(const CNodePtr &kernelNode) {
-  MS_EXCEPTION_IF_NULL(kernelNode);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernelNode);
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernelNode);
-  if (input_num != 1) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 1, but got: " << input_num;
-  }
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernelNode);
-  if (output_num != 1) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got: " << output_num;
-  }
+namespace {
+constexpr size_t kIsInfInputsNum = 1;
+constexpr size_t kIsInfOutputsNum = 1;
+}  // namespace
 
-  input_dtype_ = AnfAlgo::GetInputDeviceDataType(kernelNode, 0);
+bool IsInfCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                             const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  input_dtype_ = inputs[kIndex0]->GetDtype();
   if (dtype_map_.find(input_dtype_) == dtype_map_.end()) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of 'x' must be float, but got: " << input_dtype_;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the dtype of 'x' must be bool, int, float, or uint, but got: " << input_dtype_;
   }
+  return true;
 }
 
 bool IsInfCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                                const std::vector<kernel::AddressPtr> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kIsInfInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kIsInfOutputsNum, kernel_name_);
   if (input_dtype_ == kNumberTypeFloat16) {
     LaunchKernelFloat16(inputs, outputs);
   } else if (input_dtype_ == kNumberTypeFloat32 || input_dtype_ == kNumberTypeFloat) {

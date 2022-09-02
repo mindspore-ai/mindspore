@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 #include <map>
 #include <string>
 
-#include "ops/is_inf.h"
+#include "ops/float_status.h"
 #include "ops/op_utils.h"
 #include "abstract/param_validator.h"
 #include "utils/check_convert_utils.h"
@@ -26,8 +26,8 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_OPERATOR_IMPL(IsInf, BaseOperator);
-class IsInfInfer : public abstract::OpInferBase {
+MIND_API_OPERATOR_IMPL(FloatStatus, BaseOperator);
+class FloatStatusInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
@@ -37,8 +37,8 @@ class IsInfInfer : public abstract::OpInferBase {
     for (const auto &item : input_args) {
       MS_EXCEPTION_IF_NULL(item);
     }
-    auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-    return std::make_shared<abstract::Shape>(x_shape);
+    ShapeVector shape = {1};
+    return std::make_shared<abstract::Shape>(shape);
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
@@ -49,10 +49,10 @@ class IsInfInfer : public abstract::OpInferBase {
     CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim->name());
     (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->BuildType(), {kFloat16, kFloat32, kFloat64},
                                                      prim->name());
-    return std::make_shared<TensorType>(kBool);
+    return std::make_shared<TensorType>(kFloat32);
   }
 };
 
-REGISTER_PRIMITIVE_OP_INFER_IMPL(IsInf, prim::kPrimIsInf, IsInfInfer, false);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(FloatStatus, prim::kPrimFloatStatus, FloatStatusInfer, false);
 }  // namespace ops
 }  // namespace mindspore

@@ -27,17 +27,45 @@ namespace ops {
 namespace {
 constexpr int64_t kPaddingsSecondDim = 2;
 constexpr int64_t kMaxPaddings = 5;
+
+void verify_padding_range(const std::string &mode, int64_t out_size, std::pair<int64_t, int64_t> padding_attr,
+                          const std::string &prim_name) {
+  if (padding_attr.first < 0 || padding_attr.second < 0) {
+    MS_EXCEPTION(ValueError) << "For '" << prim_name << "', all elements of paddings must be >= 0.";
+  }
+  if (mode == "SYMMETRIC") {
+    if (padding_attr.first > out_size || padding_attr.second > out_size)
+      MS_EXCEPTION(ValueError) << "For '" << prim_name << "', paddings must be no greater than the dimension size: ["
+                               << padding_attr.first << "], [" << padding_attr.second << "] greater than [" << out_size
+                               << "]";
+  } else if (mode == "REFLECT") {
+    if (padding_attr.first >= out_size || padding_attr.second >= out_size)
+      MS_EXCEPTION(ValueError) << "For '" << prim_name << "', paddings must be no greater  than the dimension size: ["
+                               << padding_attr.first << "], [" << padding_attr.second << "] not less than [" << out_size
+                               << "]";
+  }
+}
+
 abstract::ShapePtr MirrorPadGradInferShape(const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto paddings = input_args[1]->BuildValue();
+
+  auto input_x_shape_ptr = input_args[kInputIndex0]->BuildShape();
+  MS_EXCEPTION_IF_NULL(input_x_shape_ptr);
+  if (input_x_shape_ptr->IsDynamic()) {  // if shape of x is dynamic, then passthrough the shape
+    return input_args[kInputIndex0]->BuildShape()->cast<abstract::ShapePtr>();
+  }
+
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto paddings_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  auto paddings = input_args[kInputIndex1]->BuildValue();
   MS_EXCEPTION_IF_NULL(paddings);
-  auto paddings_arg = CheckAndConvertUtils::CheckTensorIntValue("paddings", paddings, prim_name);
-  std::vector<std::pair<int64_t, int64_t>> paddings_attr;
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto paddings_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
-  auto mode = GetValue<std::string>(primitive->GetAttr("mode"));
+  // if shape of x is determined and padding value is unknown, return a all -1 shape
+  if (paddings->isa<AnyValue>() || paddings->isa<None>()) {
+    return std::make_shared<abstract::Shape>(ShapeVector(x_shape.size(), UNKNOWN_DIM));
+  }
+
   if (paddings_shape.size() != kPaddingsSecondDim) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name << "', paddings must be equal to 2 dims, but got "
                              << paddings_shape.size();
@@ -50,6 +78,9 @@ abstract::ShapePtr MirrorPadGradInferShape(const PrimitivePtr &primitive,
     MS_EXCEPTION(ValueError) << "For '" << prim_name << "', paddings.shape[0] must equal to input's rank, but got "
                              << paddings_shape[0];
   }
+
+  auto paddings_arg = CheckAndConvertUtils::CheckTensorIntValue("paddings", paddings, prim_name);
+  std::vector<std::pair<int64_t, int64_t>> paddings_attr;
   for (size_t i = 0; i < paddings_arg.size(); i = i + kPaddingsSecondDim) {
     paddings_attr.push_back(std::make_pair(paddings_arg[i], paddings_arg[i + 1]));
   }
@@ -60,31 +91,11 @@ abstract::ShapePtr MirrorPadGradInferShape(const PrimitivePtr &primitive,
                              << "', the dimension of input only supports less than or equal to 5 dims, but got " << size
                              << " dims";
   }
-  auto input_x_shape_ptr = input_args[0]->BuildShape();
-  MS_EXCEPTION_IF_NULL(input_x_shape_ptr);
-  if (input_x_shape_ptr->IsDynamic()) {
-    return input_args[0]->BuildShape()->cast<abstract::ShapePtr>();
-  }
+
+  std::string mode = GetValue<std::string>(primitive->GetAttr(kMode));
   for (int64_t i = 0; i < size; i++) {
-    if (paddings_attr[i].first < 0 || paddings_attr[i].second < 0) {
-      MS_EXCEPTION(ValueError) << "For '" << prim_name << "', all elements of paddings must be >= 0.";
-    }
     int64_t out_size = x_shape[i] - (paddings_attr[i].first + paddings_attr[i].second);
-    if (mode == "SYMMETRIC") {
-      if (paddings_attr[i].first > out_size || paddings_attr[i].second > out_size)
-        MS_EXCEPTION(ValueError) << "For '" << prim_name
-                                 << "', paddings must be no greater "
-                                    "than the dimension size: ["
-                                 << paddings_attr[i].first << "], [" << paddings_attr[i].second << "] greater than ["
-                                 << out_size << "]";
-    } else if (mode == "REFLECT") {
-      if (paddings_attr[i].first >= out_size || paddings_attr[i].second >= out_size)
-        MS_EXCEPTION(ValueError) << "For '" << prim_name
-                                 << "', paddings must be no greater "
-                                    "than the dimension size: ["
-                                 << paddings_attr[i].first << "], [" << paddings_attr[i].second << "] not less than ["
-                                 << out_size << "]";
-    }
+    verify_padding_range(mode, out_size, paddings_attr[i], prim_name);
   }
   std::vector<int64_t> out_shape;
   for (size_t i = 0; i < x_shape.size(); i++) {
@@ -105,6 +116,16 @@ TypePtr MirrorPadGradInferType(const PrimitivePtr &prim, const std::vector<Abstr
     prim->name());
 }
 }  // namespace
+
+void MirrorPadGrad::set_mode(const std::string &mode) {
+  (void)CheckAndConvertUtils::CheckString(kMode, mode, {"REFLECT", "SYMMETRIC"}, this->name());
+  (void)AddAttr(kMode, api::MakeValue(mode));
+}
+
+std::string MirrorPadGrad::get_mode() const {
+  auto value_ptr = GetAttr(kMode);
+  return GetValue<std::string>(value_ptr);
+}
 
 MIND_API_OPERATOR_IMPL(MirrorPadGrad, BaseOperator);
 AbstractBasePtr MirrorPadGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

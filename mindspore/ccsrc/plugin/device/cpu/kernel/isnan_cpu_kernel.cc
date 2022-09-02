@@ -26,14 +26,16 @@ constexpr size_t kIsNanInputsNum = 1;
 constexpr size_t kIsNanOutputsNum = 1;
 }  // namespace
 
-void IsNanCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  input_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
+bool IsNanCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                             const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  input_dtype_ = inputs[kIndex0]->GetDtype();
   if (dtype_map_.find(input_dtype_) == dtype_map_.end()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the dtype of 'x' must be bool, int, float, or uint, but got: " << input_dtype_;
   }
+  return true;
 }
 
 bool IsNanCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
