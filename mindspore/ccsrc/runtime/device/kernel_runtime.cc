@@ -1641,6 +1641,7 @@ bool KernelRuntime::LaunchKernel(const session::KernelGraph &graph, const AnfNod
   MS_EXCEPTION_IF_NULL(kernel_mod);
   KernelLaunchInfo kernel_launch_info;
   auto stream = GetKernelStream(kernel);
+  MS_EXCEPTION_IF_NULL(stream);
   bool ret = true;
   if (mem_scheduler != nullptr) {
     ret = MemSchedulerPreCompute(kernel, mem_scheduler, stream, mock, &kernel_launch_info);

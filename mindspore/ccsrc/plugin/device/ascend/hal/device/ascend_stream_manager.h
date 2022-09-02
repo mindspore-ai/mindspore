@@ -29,10 +29,7 @@ namespace device {
 namespace ascend {
 class AscendStreamMng {
  public:
-  static AscendStreamMng &GetInstance() {
-    static AscendStreamMng instance;
-    return instance;
-  }
+  static AscendStreamMng &GetInstance();
 
   void ResetResource() {
     cur_stream_num_ = 0;
@@ -64,7 +61,7 @@ class AscendStreamMng {
   rtStream_t GetStream(size_t stream_id) const;
   bool SyncStream(size_t stream_id) const;
   bool SyncStream(rtStream_t stream) const;
-  const std::vector<void *> &GetAllStreams() const { return streams_; }
+  bool SyncAllStreams() const;
 
  private:
   // Count streams and events number in task sink scenario

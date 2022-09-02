@@ -60,10 +60,8 @@ class AscendDeviceResManager : public DeviceResManager {
 
   bool DestroyStream(size_t stream_id) const override;
 
-  // Synchronize stream, device such as GPU and Ascend need stream to launch kernel asynchronously,
-  // using 'SyncStream' to block thread and wait for completing all tasks in stream.
-  // Devices that do not need stream could ignore the implementation of this function.
   bool SyncStream(size_t stream_id) const override;
+  bool SyncAllStreams() const override;
 
  private:
   friend class AscendKernelExecutor;

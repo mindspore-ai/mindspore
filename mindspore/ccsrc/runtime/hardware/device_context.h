@@ -133,11 +133,13 @@ class DeviceResManager {
   virtual bool DestroyStream(size_t stream_id) const { return true; }
 
   // Synchronize stream, device such as GPU and Ascend need stream to launch kernel asynchronously,
-  // using 'SyncStream' to block thread and wait for completing all tasks in stream.
-  // Devices that do not need stream could ignore the implementation of this function.
-  // Since the current entry for creating streams is not unified, the implementation of the 'SyncStream'
-  // interface is implemented by subclasses.
-  virtual bool SyncStream(size_t stream_id = 0) const { return true; }
+  // Using 'SyncStream' to block thread and wait for completing all tasks on specific stream.
+  // Using 'SyncAllStream' to block thread and wait for completing all tasks on all streams.
+  // Devices without stream could ignore the implementation of these function.
+  // Since the current entry for creating streams is not unified, the implementation of the 'SyncStream' and
+  // "SyncAllStreams" interfaces are implemented by subclasses.
+  virtual bool SyncStream(size_t stream_id) const { return true; }
+  virtual bool SyncAllStreams() const { return true; }
 
   // Dynamically load collective communication library.
   // Currently, four types are supported: OpenMPI and self developed framework for CPU. NCCL for GPU. HCCL for Ascend.
