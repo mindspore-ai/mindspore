@@ -18,7 +18,6 @@
 #include "hccl/hccl.h"
 #include "runtime/rt.h"
 #include "plugin/device/ascend/hal/device/distribute/mpi_collective_group.h"
-#include "utils/convert_utils_base.h"
 namespace mindspore {
 namespace device {
 namespace ascend {
@@ -75,7 +74,8 @@ int MPICollective::GetWorldRankIdFromGroup(const std::string &name, const int ra
   CHECK_RET(world_map_.count(name), 1, ("Failed to get MPI world rank from group by group name " + name));
   CHECK_RET(static_cast<int>(world_map_[name].size()) > rank_id && rank_id >= 0, 1,
             ("The rank_id " + std::to_string(rank_id) + "is not in the range of group " + name));
-  return world_map_[name][LongToUlong(rank_id)];
+  CHECK_RET(rank_id >= 0, true, "The rank_id[" + std::to_string(rank_id) + "] must be greater equal than zero.");
+  return world_map_[name][static_cast<uint64_t>(rank_id)];
 }
 
 int MPICollective::GetGroupRankIdFromWorld(const std::string &name, const int rank_id) {
