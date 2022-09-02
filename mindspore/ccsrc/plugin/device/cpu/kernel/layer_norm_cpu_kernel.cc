@@ -15,24 +15,52 @@
  */
 
 #include "plugin/device/cpu/kernel/layer_norm_cpu_kernel.h"
+#include <algorithm>
 #include "kernel/common_utils.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "include/common/thread_pool.h"
+#include "mindspore/core/ops/layer_norm.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
 constexpr size_t kLayerNormInputsNum = 3;
 constexpr size_t kLayerNormOutputsNum = 3;
+constexpr size_t kLayerNormInputXIndex = 0;
+constexpr size_t kLayerNormInputGammaIndex = 1;
+constexpr size_t kLayerNormInputBetaIndex = 2;
+constexpr size_t kLayerNormOutputYIndex = 0;
+constexpr size_t kLayerNormOutputMeanIndex = 1;
+constexpr size_t kLayerNormOutputVarIndex = 2;
 }  // namespace
+bool LayerNormCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                 const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
 
-void LayerNormCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  auto x_shape = Convert2SizeT(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0));
-  auto begin_norm_axis = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "begin_norm_axis");
-  auto begin_params_axis = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "begin_params_axis");
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "' does not support this kernel type: " << kernel_attr;
+    return false;
+  }
+  kernel_func_ = func_list_[index].second;
+  return true;
+}
+
+int LayerNormCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                  const std::vector<KernelTensorPtr> &outputs,
+                                  const std::map<uint32_t, tensor::TensorPtr> &) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::LayerNorm>(base_operator);
+  if (kernel_ptr == nullptr) {
+    MS_LOG(EXCEPTION) << "Cast ops::LayerNorm failed!";
+  }
+  if (inputs.empty()) {
+    MS_LOG(EXCEPTION) << "Invalid LayerNormCpuKernelMod input size!";
+  }
+  auto x_shape = inputs[kLayerNormInputXIndex]->GetShapeVector();
+  auto begin_norm_axis = kernel_ptr->get_begin_norm_axis();
+  auto begin_params_axis = kernel_ptr->get_begin_params_axis();
   if (begin_norm_axis < 0) {
     begin_norm_axis += SizeToLong(x_shape.size());
   }
@@ -52,6 +80,11 @@ void LayerNormCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'input_x' must be at least 1, but got "
                       << Vector2Str(x_shape);
   }
+  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != 0) {
+    return ret;
+  }
+  return ret;
 }
 
 bool LayerNormCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
@@ -59,14 +92,7 @@ bool LayerNormCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs
                                    const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kLayerNormInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kLayerNormOutputsNum, kernel_name_);
-  if (dtype_ == kNumberTypeFloat16) {
-    LaunchKernel<float16>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeFloat32 || dtype_ == kNumberTypeFloat64) {
-    LaunchKernel<float>(inputs, outputs);
-  } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dtype of 'input_x' must be float16, float32, or float64, but got " << dtype_;
-  }
+  kernel_func_(this, inputs, outputs);
   return true;
 }
 
@@ -80,12 +106,12 @@ void LayerNormCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   if (outputs[1]->size != f_size * block_num_ || outputs[2]->size != f_size * block_num_) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the product of mean and var's shape must be " << block_num_;
   }
-  auto x = reinterpret_cast<T *>(inputs[0]->addr);
-  auto gamma = reinterpret_cast<T *>(inputs[1]->addr);
-  auto beta = reinterpret_cast<T *>(inputs[2]->addr);
-  auto y = reinterpret_cast<T *>(outputs[0]->addr);
-  auto mean = reinterpret_cast<T *>(outputs[1]->addr);
-  auto var = reinterpret_cast<T *>(outputs[2]->addr);
+  auto x = reinterpret_cast<T *>(inputs[kLayerNormInputXIndex]->addr);
+  auto gamma = reinterpret_cast<T *>(inputs[kLayerNormInputGammaIndex]->addr);
+  auto beta = reinterpret_cast<T *>(inputs[kLayerNormInputBetaIndex]->addr);
+  auto y = reinterpret_cast<T *>(outputs[kLayerNormOutputYIndex]->addr);
+  auto mean = reinterpret_cast<T *>(outputs[kLayerNormOutputMeanIndex]->addr);
+  auto var = reinterpret_cast<T *>(outputs[kLayerNormOutputVarIndex]->addr);
   size_t thread_num = common::ThreadPool::GetInstance().GetSyncRunThreadNum();
   if (block_num_ < thread_num) {
     thread_num = block_num_;
@@ -123,6 +149,31 @@ void LayerNormCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
     (void)tasks.emplace_back(block);
   }
   ParallelLaunch(tasks);
+}
+
+std::vector<std::pair<KernelAttr, LayerNormCpuKernelMod::KernelFunc>> LayerNormCpuKernelMod::func_list_ = {
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddOutputAttr(kNumberTypeFloat16)
+     .AddOutputAttr(kNumberTypeFloat16)
+     .AddOutputAttr(kNumberTypeFloat16),
+   &LayerNormCpuKernelMod::LaunchKernel<float16>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddOutputAttr(kNumberTypeFloat32)
+     .AddOutputAttr(kNumberTypeFloat32)
+     .AddOutputAttr(kNumberTypeFloat32),
+   &LayerNormCpuKernelMod::LaunchKernel<float>}};
+
+std::vector<KernelAttr> LayerNormCpuKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, KernelFunc> &pair) { return pair.first; });
+  return support_list;
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, LayerNorm, LayerNormCpuKernelMod);
