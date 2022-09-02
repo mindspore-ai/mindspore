@@ -20,7 +20,6 @@
 #include <condition_variable>
 #include <memory>
 #include <mutex>
-#include <set>
 #include <string>
 #include <vector>
 #include <utility>
@@ -102,8 +101,6 @@ class TFReaderOp : public NonMappableLeafOp {
   /// File names getter
   /// @return Vector of the input file names
   std::vector<std::string> FileNames() { return dataset_files_list_; }
-
-  static std::vector<std::string> ValidateFirstRowCrc(const std::vector<std::string> &filename);
 
  private:
   // Reads a tf_file file and loads the data into multiple TensorRows.
@@ -205,8 +202,6 @@ class TFReaderOp : public NonMappableLeafOp {
   std::vector<std::string> dataset_files_list_;
   std::vector<std::string> columns_to_load_;
   std::unique_ptr<DataSchema> data_schema_;
-  static std::set<std::string> large_files_;
-
   bool equal_rows_per_shard_;
 };
 }  // namespace dataset

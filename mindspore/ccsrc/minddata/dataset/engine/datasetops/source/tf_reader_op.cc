@@ -36,52 +36,9 @@
 #include "minddata/dataset/util/wait_post.h"
 #include "proto/example.pb.h"
 #include "utils/file_utils.h"
-#include "utils/system/crc32c.h"
 
 namespace mindspore {
 namespace dataset {
-const int64_t kTFRecordFileLimit = 0x140000000;
-
-std::set<std::string> TFReaderOp::large_files_ = {};
-
-std::vector<std::string> TFReaderOp::ValidateFirstRowCrc(const std::vector<std::string> &filenames) {
-  std::vector<std::string> invalid_files;
-
-  for (const std::string &filename : filenames) {
-    auto realpath = FileUtils::GetRealPath(filename.c_str());
-    if (!realpath.has_value()) {
-      invalid_files.push_back(filename);
-      continue;
-    }
-
-    std::ifstream reader;
-    reader.open(realpath.value());
-    if (!reader) {
-      invalid_files.push_back(filename);
-      reader.close();
-      continue;
-    }
-
-    // read data
-    int64_t record_length = 0;
-    (void)reader.read(reinterpret_cast<char *>(&record_length), static_cast<std::streamsize>(sizeof(int64_t)));
-
-    // read crc from file
-    uint32_t masked_crc = 0;
-    (void)reader.read(reinterpret_cast<char *>(&masked_crc), static_cast<std::streamsize>(sizeof(uint32_t)));
-
-    // generate crc from data
-    uint32_t generated_crc =
-      system::Crc32c::GetMaskCrc32cValue(reinterpret_cast<char *>(&record_length), sizeof(int64_t));
-    // record invalid tfrecord file
-    if (masked_crc != generated_crc) {
-      invalid_files.push_back(filename);
-    }
-    reader.close();
-  }
-  return invalid_files;
-}
-
 TFReaderOp::TFReaderOp(int32_t num_workers, int32_t worker_connector_size, int64_t total_num_rows,
                        std::vector<std::string> dataset_files_list, std::unique_ptr<DataSchema> data_schema,
                        int32_t op_connector_size, std::vector<std::string> columns_to_load, bool shuffle_files,
@@ -280,19 +237,6 @@ Status TFReaderOp::LoadFile(const std::string &filename, int64_t start_offset, i
   reader.open(realpath.value());
   if (!reader) {
     RETURN_STATUS_UNEXPECTED("Invalid file, " + filename + " open failed: permission denied!");
-  }
-
-  // record large tf file and log a warning
-  if (large_files_.find(filename) == large_files_.end()) {
-    int64_t file_len = reader.seekg(0, std::ios::end).tellg();
-    if (file_len > kTFRecordFileLimit) {
-      large_files_.insert(filename);
-      MS_LOG(WARNING)
-        << "The size of following TFRecord file is larger than 5G. There may be performance problems in "
-        << "distributed scenarios. The file can be split into sub-files smaller than 5G to obtain better performance. "
-        << "Large TFRecord file: " << filename;
-    }
-    (void)reader.seekg(0, std::ios::beg);
   }
 
   int64_t rows_read = 0;

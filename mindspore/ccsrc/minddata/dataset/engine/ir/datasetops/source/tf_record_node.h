@@ -19,6 +19,7 @@
 
 #include <memory>
 #include <string>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -160,6 +161,12 @@ class TFRecordNode : public NonMappableSourceNode {
   Status AcceptAfter(IRNodePass *const p, bool *const modified) override;
 
  private:
+  /// Check and return if there exists invalid tfrecord files in the file list
+  Status ValidateTFRecordFiles(const std::vector<std::string> &filenames);
+
+  /// Record large tf file and log a warning.
+  void CheckLargeFile(const std::string &filename, std::ifstream *reader);
+
   std::vector<std::string> dataset_files_;
   std::string schema_path_;  // schema_path_ path to schema file. It is set when type of schema parameter is string
   std::shared_ptr<SchemaObj> schema_obj_;  // schema_obj_ schema object.
@@ -169,6 +176,8 @@ class TFRecordNode : public NonMappableSourceNode {
   int32_t num_shards_;
   int32_t shard_id_;
   bool shard_equal_rows_;
+
+  static std::unordered_set<std::string> large_files_;
 };
 }  // namespace dataset
 }  // namespace mindspore
