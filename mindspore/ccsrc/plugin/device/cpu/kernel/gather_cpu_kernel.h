@@ -19,6 +19,7 @@
 
 #include <utility>
 #include <vector>
+#include <map>
 #include <memory>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
@@ -26,14 +27,17 @@
 
 namespace mindspore {
 namespace kernel {
-class GatherCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class GatherCpuKernelMod : public NativeCpuKernelMod {
  public:
   GatherCpuKernelMod() = default;
   ~GatherCpuKernelMod() override = default;
 
-  void CheckParam(const CNodePtr &kernel_node);
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs,
+             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
@@ -41,6 +45,28 @@ class GatherCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   }
 
   std::vector<KernelAttr> GetOpSupport() override;
+
+  void ResetResource() noexcept {
+    input_shape_.clear();
+    indices_shape_.clear();
+    output_shape_.clear();
+    is_null_input_ = false;
+    input_size_list_.clear();
+    output_size_list_.clear();
+    workspace_size_list_.clear();
+  }
+
+  void InitSizeLists() {
+    auto input_size = std::accumulate(input_shape_.begin(), input_shape_.end(), 1, std::multiplies{});
+    auto indices_size = std::accumulate(indices_shape_.begin(), indices_shape_.end(), 1, std::multiplies{});
+    input_size_list_.push_back(LongToSize(input_size) * input_type_size_);
+    input_size_list_.push_back(LongToSize(indices_size) * indices_type_size_);
+    if (is_dynamic_shape_) {
+      input_size_list_.push_back(axis_type_size_);
+    }
+    auto output_size = std::accumulate(output_shape_.begin(), output_shape_.end(), 1, std::multiplies{});
+    output_size_list_.push_back(LongToSize(output_size) * input_type_size_);
+  }
 
  private:
   template <typename T>
@@ -55,7 +81,10 @@ class GatherCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   ShapeVector output_shape_;
   int64_t axis_{0};
   bool is_dynamic_shape_{false};
-  CNodeWeakPtr node_wpt_;
+  size_t input_type_size_ = 0;
+  size_t indices_type_size_ = 0;
+  size_t axis_type_size_ = 0;
+  bool is_null_input_ = false;
 };
 }  // namespace kernel
 }  // namespace mindspore

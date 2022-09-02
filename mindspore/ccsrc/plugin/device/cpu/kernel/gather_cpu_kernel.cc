@@ -32,41 +32,57 @@ constexpr size_t kGatherInputsNum = 2;
 constexpr size_t kGatherOutputsNum = 1;
 constexpr size_t kGatherInputParamsMaxDim = 7;
 }  // namespace
-void GatherCpuKernelMod::CheckParam(const CNodePtr &kernel_node) {
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
+bool GatherCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                              const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->name();
+  size_t input_num = inputs.size();
   if (input_num == kGatherInputsNum + 1) {
     is_dynamic_shape_ = true;
     MS_LOG(DEBUG) << " GatherCPUKernel running in Dynamic Mode.";
   } else if (input_num == kGatherInputsNum) {
+    axis_ = GetValue<int64_t>(base_operator->GetAttr("axis"));
     MS_LOG(DEBUG) << " GatherCPUKernel running in Normal Mode.";
   } else {
     MS_LOG(EXCEPTION) << "Argument number is " << input_num << ", but GatherCPUKernel needs 2.";
   }
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel type: " << kernel_attr;
+    return false;
+  }
+  kernel_func_ = func_list_[index].second;
+  input_type_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).first);
+  indices_type_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex1).first);
+  if (is_dynamic_shape_) {
+    axis_type_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex2).first);
+  }
+  return true;
 }
 
-void GatherCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  CheckParam(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  input_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  indices_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-  output_shape_ = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
+int GatherCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                               const std::vector<KernelTensorPtr> &outputs,
+                               const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  ResetResource();
+  input_shape_ = inputs[kIndexZero]->GetShapeVector();
+  indices_shape_ = inputs[kIndexOne]->GetShapeVector();
+  output_shape_ = outputs[kIndexZero]->GetShapeVector();
+  is_null_input_ = input_shape_.empty() || indices_shape_.empty() || output_shape_.empty();
+  if (is_null_input_) {
+    InitSizeLists();
+    return KRET_OK;
+  }
   if (input_shape_.size() > kGatherInputParamsMaxDim) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'input_params' should be "
                       << kGatherInputParamsMaxDim << "D or lower, but got " << input_shape_.size() << ".";
   }
-  if (!is_dynamic_shape_) {
-    axis_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
+  auto it_x = std::find_if(input_shape_.begin(), input_shape_.end(), [](int64_t sh) { return sh <= 0; });
+  auto it_y = std::find_if(indices_shape_.begin(), indices_shape_.end(), [](int64_t sh) { return sh <= 0; });
+  if (it_x != input_shape_.end() || it_y != indices_shape_.end()) {
+    return KRET_UNKNOWN_SHAPE;
   }
-
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
-  if (!is_match) {
-    MS_LOG(EXCEPTION) << "Gather does not support this kernel data type: " << kernel_attr;
-  }
-
-  kernel_func_ = func_list_[index].second;
-  node_wpt_ = kernel_node;
+  InitSizeLists();
+  return KRET_OK;
 }
 
 template <typename T>
@@ -76,19 +92,9 @@ bool GatherCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inp
   const auto *input_tensor = reinterpret_cast<int8_t *>(inputs[0]->addr);
   const auto *indices_data = reinterpret_cast<int32_t *>(inputs[1]->addr);
   auto *output_addr = reinterpret_cast<int8_t *>(outputs[0]->addr);
-  if (!node_wpt_.expired()) {
-    auto node = node_wpt_.lock();
-    if (!node) {
-      MS_LOG(EXCEPTION) << "node_wpt_ is expired.";
-    }
-    if (inputs.size() == kGatherInputsNum) {
-      axis_ = common::AnfAlgo::GetNodeAttr<int64_t>(node, AXIS);
-    } else if (inputs.size() == kGatherInputsNum + 1) {
-      axis_ = reinterpret_cast<int64_t *>(inputs[kIndex2]->addr)[0];
-    } else {
-      MS_LOG(EXCEPTION) << "Gather requires " << kGatherInputsNum << " or " << (kGatherInputsNum + 1)
-                        << " inputs, but got " << inputs.size();
-    }
+
+  if (inputs.size() == kGatherInputsNum + 1) {
+    axis_ = reinterpret_cast<int64_t *>(inputs[kIndex2]->addr)[0];
   }
 
   int dims = SizeToInt(input_shape_.size());
