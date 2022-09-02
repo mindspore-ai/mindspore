@@ -17,6 +17,7 @@ MSAdvisor AICPU model parser.
 """
 
 import os
+import stat
 import shutil
 import json
 
@@ -59,7 +60,7 @@ class MsadvisorParser:
         dir_path = validate_and_normalize_path(dir_path)
         if os.path.exists(dir_path):
             shutil.rmtree(dir_path)
-        os.makedirs(dir_path)
+        os.makedirs(dir_path, stat.S_IRWXU)
         return dir_path
 
     @staticmethod
@@ -165,9 +166,9 @@ class MsadvisorParser:
         msprof_file = MsadvisorParser.check_clear_make_dir(msprof_file)
 
         msprof_file = os.path.join(msprof_file, self._job_id)
-        msprof_file = os.path.join(msprof_file, "device_0/timeline")
+        msprof_file = os.path.join(msprof_file, "device_0", "timeline")
         msprof_file = validate_and_normalize_path(msprof_file)
-        os.makedirs(msprof_file)
+        os.makedirs(msprof_file, stat.S_IRWXU)
 
         msprof_file = os.path.join(msprof_file, "task_time_0_1_1.json")
         self._output_path = msprof_file
@@ -179,9 +180,11 @@ class MsadvisorParser:
         aicore_file = self._aicore_path
         output_file = self._output_path
 
-        with os.fdopen(os.open(output_file, os.O_WRONLY | os.O_CREAT, 0o660), "w") as output_file:
+        with os.fdopen(os.open(output_file, os.O_WRONLY | os.O_CREAT,
+                               stat.S_IRUSR | stat.S_IWUSR), "w") as output_file:
             output_file.write("[")
-            with os.fdopen(os.open(aicore_file, os.O_RDONLY, 0o660), "r") as aicore_file:
+            with os.fdopen(os.open(aicore_file, os.O_RDONLY,
+                                   stat.S_IRUSR | stat.S_IWUSR), "r") as aicore_file:
                 for tid, aicore in enumerate(aicore_file):
                     if tid == 0:
                         continue
@@ -203,8 +206,10 @@ class MsadvisorParser:
         aicpu_file = self._aicpu_path
         output_file = self._output_path
 
-        with os.fdopen(os.open(output_file, os.O_WRONLY | os.O_APPEND, 0o660), "a") as output_file:
-            with os.fdopen(os.open(aicpu_file, os.O_RDONLY, 0o660), "r") as aicpu_file:
+        with os.fdopen(os.open(output_file, os.O_WRONLY | os.O_APPEND,
+                               stat.S_IRUSR | stat.S_IWUSR), "a") as output_file:
+            with os.fdopen(os.open(aicpu_file, os.O_RDONLY,
+                                   stat.S_IRUSR | stat.S_IWUSR), "r") as aicpu_file:
                 for tid, aicpu in enumerate(aicpu_file):
                     if tid == 0:
                         continue
