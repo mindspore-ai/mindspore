@@ -137,6 +137,10 @@ class Tensor {
     this->own_data_ = own_data;
   }
 
+  void set_device_data(void *data) { device_data_ = data; }
+
+  void *device_data() const { return device_data_; }
+
   Category category() const { return this->category_; }
 
   void set_category(Category category) { this->category_ = category; }
@@ -245,6 +249,7 @@ class Tensor {
   AllocatorPtr allocator_ = nullptr;
   bool own_data_{false};
   float scale_ = 1.0f;
+  void *device_data_ = nullptr;
 };
 }  // namespace lite
 }  // namespace mindspore

@@ -77,10 +77,20 @@ std::shared_ptr<LiteTensorImpl> LiteTensorImpl::CreateTensorImplByDeepCopy(const
   return impl;
 }
 
-void LiteTensorImpl::SetDeviceData(void *data) { MS_LOG(ERROR) << "Not implement."; }
+void LiteTensorImpl::SetDeviceData(void *data) {
+  if (lite_tensor_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid tensor.";
+    return;
+  }
+  lite_tensor_->set_device_data(data);
+}
+
 void *LiteTensorImpl::GetDeviceData() {
-  MS_LOG(ERROR) << "Not implement.";
-  return nullptr;
+  if (lite_tensor_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid tensor.";
+    return nullptr;
+  }
+  return lite_tensor_->device_data();
 }
 
 #ifndef STRING_KERNEL_CLIP
