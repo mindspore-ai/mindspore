@@ -2410,7 +2410,7 @@ def trunc(input_x):
         >>> print(output)
         [ 3. 0. 0. -3.]
     """
-    return trunc_(x)
+    return trunc_(input_x)
 
 
 def ldexp(x, other):

@@ -31,7 +31,6 @@ __global__ void UpsampleNearest3DGrad(const T *dy, const size_t dim_n, const siz
                                       const size_t out_hw, const float d_scale, const float h_scale,
                                       const float w_scale, T *dx) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < out_ncdhw; pos += blockDim.x * gridDim.x) {
-    const int pos_int = pos;
     const size_t dx_n = pos / out_cdhw;
     const size_t dx_c = pos / out_dhw % dim_c;
     const size_t dx_z = pos / out_hw % out_d;
@@ -48,7 +47,6 @@ __global__ void UpsampleNearest3DGrad(const T *dy, const size_t dim_n, const siz
       for (int y = dy_y; y < dy_y_up; y++) {
         for (int x = dy_x; x < dy_x_up; x++) {
           const size_t src_idx = dx_n * in_cdhw + dx_c * in_dhw + z * in_hw + y * in_w + x;
-          const int src_idx_int = src_idx;
           grad += static_cast<float>(dy[src_idx]);
         }
       }
