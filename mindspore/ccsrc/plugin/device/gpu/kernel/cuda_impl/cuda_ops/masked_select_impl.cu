@@ -17,6 +17,10 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/masked_select_impl.cuh"
 #include <cub/cub.cuh>
 #include <algorithm>
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
+
+template <typename T>
+using Complex = mindspore::utils::Complex<T>;
 
 struct BoolToSize {
   typedef size_t index_type;
@@ -67,10 +71,9 @@ __global__ void MaskedSelectKernel(const T *input_ptr, const size_t *index_ptr, 
 
 // the i is input shape, the j is mask shape, the o is broadcast shape
 template <typename T>
-void MaskedSelect(const T *input_ptr, const bool *mask_ptr, size_t *index_ptr,
-                  const std::vector<size_t> i, const std::vector<size_t> j, const std::vector<size_t> o,
-                  T *input_broadcast_ptr, bool *mask_broadcast_ptr,
-                  T *output_ptr, cudaStream_t cuda_stream) {
+void MaskedSelect(const T *input_ptr, const bool *mask_ptr, size_t *index_ptr, const std::vector<size_t> i,
+                  const std::vector<size_t> j, const std::vector<size_t> o, T *input_broadcast_ptr,
+                  bool *mask_broadcast_ptr, T *output_ptr, cudaStream_t cuda_stream) {
   size_t broadcast_size = o[0] * o[1] * o[2] * o[3] * o[4] * o[5] * o[6];
   const T *last_input = nullptr;
   const bool *last_mask = nullptr;
@@ -86,8 +89,7 @@ void MaskedSelect(const T *input_ptr, const bool *mask_ptr, size_t *index_ptr,
 
   if (mask_broadcast_ptr != nullptr) {
     BroadcastToKernel<<<GET_BLOCKS(broadcast_size), GET_THREADS, 0, cuda_stream>>>(
-      j[0], j[1], j[2], j[3], j[4], j[5], j[6], o[0], o[1], o[2], o[3], o[4], o[5], o[6], mask_ptr,
-      mask_broadcast_ptr);
+      j[0], j[1], j[2], j[3], j[4], j[5], j[6], o[0], o[1], o[2], o[3], o[4], o[5], o[6], mask_ptr, mask_broadcast_ptr);
     last_mask = mask_broadcast_ptr;
   } else {
     last_mask = mask_ptr;
@@ -95,7 +97,7 @@ void MaskedSelect(const T *input_ptr, const bool *mask_ptr, size_t *index_ptr,
 
   // using cub to calculate prefix sum of 01 transformed sequence
   BoolToSize op;
-  cub::TransformInputIterator<size_t, BoolToSize, const bool*> iter(last_mask, op);
+  cub::TransformInputIterator<size_t, BoolToSize, const bool *> iter(last_mask, op);
   size_t temp_storage_bytes = 0;
   (void)cub::DeviceScan::InclusiveSum(nullptr, temp_storage_bytes, iter, index_ptr, broadcast_size, cuda_stream);
   void *d_temp_storage = nullptr;
@@ -178,3 +180,11 @@ template CUDA_LIB_EXPORT void MaskedSelect<bool>(const bool *input_ptr, const bo
                                                  const std::vector<size_t> mask_shape,
                                                  const std::vector<size_t> broadcast_shape, bool *input_broadcast_ptr,
                                                  bool *mask_broadcast_ptr, bool *output_ptr, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void MaskedSelect<Complex<float>>(
+  const Complex<float> *input_ptr, const bool *mask_ptr, size_t *index_ptr, const std::vector<size_t> input_shape,
+  const std::vector<size_t> mask_shape, const std::vector<size_t> broadcast_shape, Complex<float> *input_broadcast_ptr,
+  bool *mask_broadcast_ptr, Complex<float> *output_ptr, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void MaskedSelect<Complex<double>>(
+  const Complex<double> *input_ptr, const bool *mask_ptr, size_t *index_ptr, const std::vector<size_t> input_shape,
+  const std::vector<size_t> mask_shape, const std::vector<size_t> broadcast_shape, Complex<double> *input_broadcast_ptr,
+  bool *mask_broadcast_ptr, Complex<double> *output_ptr, cudaStream_t cuda_stream);
