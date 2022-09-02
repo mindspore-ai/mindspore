@@ -73,6 +73,7 @@ mindspore.Tensor
     mindspore.Tensor.sigmoid
     mindspore.Tensor.std
     mindspore.Tensor.svd
+    mindspore.Tensor.square
     mindspore.Tensor.tan
     mindspore.Tensor.tanh
     mindspore.Tensor.var
