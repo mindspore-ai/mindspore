@@ -67,6 +67,7 @@ class ConverterImpl {
                                   const lite::ConfigFileParser &config_file_parser);
   bool CheckOfflineParallelConfig(const std::string &file, ParallelSplitConfig *parallel_split_config);
   std::string GetStrFromConfigFile(const std::string &file, const std::string &target_key);
+  int ReplaceShapeWithDynamicShape(const FuncGraphPtr &graph);
 
  protected:
   converter::ModelParser *model_parser_ = nullptr;

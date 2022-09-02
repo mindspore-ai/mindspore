@@ -37,9 +37,8 @@ class LiteRTGraphExecutor : public GraphExecutor {
   bool RunGraph(const FuncGraphPtr &graph, const std::vector<tensor::Tensor> &inputs,
                 std::vector<tensor::Tensor> *outputs, const std::map<string, string> &compile_options) override;
   bool Resize(const std::vector<tensor::Tensor> &inputs, const std::vector<std::vector<int64_t>> &dims);
-  std::vector<tensor::TensorPtr> GetInputs();
+  std::vector<LiteTensorImplPtr> GetInputs();
   std::shared_ptr<lite::LiteSession> CreateLiteSession(lite::InnerContext *context);
-  std::vector<MSTensor> GetLiteSessionInputs();
   std::vector<MSTensor> GetLiteSessionOutputs();
   void ResetTensorData(std::vector<void *> old_data, const std::vector<lite::Tensor *> &tensors);
   std::vector<int32_t> TruncateShape(const std::vector<int64_t> &shape, enum TypeId type, size_t data_len,

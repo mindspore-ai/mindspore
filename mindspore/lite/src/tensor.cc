@@ -271,6 +271,9 @@ int64_t Tensor::ElementsNum() const {
   }
   int64_t num = 1;
   for (size_t i = 0; i < shape_.size(); ++i) {
+    if (shape_[i] < 0) {
+      return 0;
+    }
     CHECK_INT64_MUL_OVERFLOW(num, shape_[i]);
     num *= shape_[i];
   }

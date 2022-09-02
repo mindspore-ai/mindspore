@@ -272,6 +272,7 @@ class LiteTensorImpl : public MutableTensorImpl {
   bool own_data_ = false;
   bool from_session_ = false;
 };
+using LiteTensorImplPtr = std::shared_ptr<LiteTensorImpl>;
 }  // namespace mindspore
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_CXX_API_TENSOR_TENSOR_IMPL_H_

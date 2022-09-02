@@ -34,6 +34,7 @@
 #include "tools/converter/parser/unify_format.h"
 #include "tools/converter/parser/lstm_adjust_pass.h"
 #include "nnacl/op_base.h"
+#include "src/common/common.h"
 
 namespace mindspore::lite {
 namespace {
@@ -53,14 +54,21 @@ STATUS MindsporeImporter::Mindir2AnfAdjust(const FuncGraphPtr &func_graph,
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
     return RET_ERROR;
   }
-  auto mindir_adjust_pass = std::make_shared<MindirAdjust>();
-  MS_CHECK_TRUE_MSG(mindir_adjust_pass != nullptr, RET_NULL_PTR, "mindir_adjust_pass is nullptr.");
-  mindir_adjust_pass->SetFmkType(param->fmk_type);
-  mindir_adjust_pass->SetTrainFlag(param->train_model);
-  if (!mindir_adjust_pass->Run(func_graph)) {
-    MS_LOG(ERROR) << "MindIr adjust failed.";
-    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
-    return RET_ERROR;
+  bool is_optimized = false;
+  auto value = func_graph->get_attr(kIsOptimized);
+  if (value != nullptr) {
+    is_optimized = GetValue<bool>(value);
+  }
+  if (!is_optimized) {
+    auto mindir_adjust_pass = std::make_shared<MindirAdjust>();
+    MS_CHECK_TRUE_MSG(mindir_adjust_pass != nullptr, RET_NULL_PTR, "mindir_adjust_pass is nullptr.");
+    mindir_adjust_pass->SetFmkType(param->fmk_type);
+    mindir_adjust_pass->SetTrainFlag(param->train_model);
+    if (!mindir_adjust_pass->Run(func_graph)) {
+      MS_LOG(ERROR) << "MindIr adjust failed.";
+      ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
+      return RET_ERROR;
+    }
   }
   if (!param->train_model) {
     auto cast_op_adjust = std::make_shared<opt::CastOpAdjust>();
@@ -314,11 +322,18 @@ FuncGraphPtr MindsporeImporter::CheckAndUpdateFuncGraph(const std::shared_ptr<Co
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
-  auto unify_format = std::make_shared<UnifyFormatToNHWC>(converter::kFmkTypeMs, param->train_model);
-  MS_CHECK_TRUE_MSG(unify_format != nullptr, nullptr, "unify_format is nullptr.");
-  if (!unify_format->Run(func_graph)) {
-    MS_LOG(ERROR) << "Run insert transpose failed.";
-    return nullptr;
+  bool is_optimized = false;
+  auto value = func_graph->get_attr(kIsOptimized);
+  if (value != nullptr) {
+    is_optimized = GetValue<bool>(value);
+  }
+  if (!is_optimized) {
+    auto unify_format = std::make_shared<UnifyFormatToNHWC>(converter::kFmkTypeMs, param->train_model);
+    MS_CHECK_TRUE_MSG(unify_format != nullptr, nullptr, "unify_format is nullptr.");
+    if (!unify_format->Run(func_graph)) {
+      MS_LOG(ERROR) << "Run insert transpose failed.";
+      return nullptr;
+    }
   }
 
   return func_graph;
