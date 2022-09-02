@@ -16,7 +16,7 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_GPU_OPTIMIZER_REG_GPU_CONST_INPUT_TO_ATTR_H_
 #define MINDSPORE_CCSRC_PLUGIN_GPU_OPTIMIZER_REG_GPU_CONST_INPUT_TO_ATTR_H_
 
-#include "backend/common/optimizer/const_input_to_attr_factory.h"
+#include "backend/common/optimizer/op_adaptation_info_factory.h"
 
 namespace mindspore::opt {
 #define RER_GPU_STATIC_CONST_TO_ATTR(op_name, ...) RER_CONST_TO_ATTR_LIST(op_name, kGPUDevice, false, __VA_ARGS__)

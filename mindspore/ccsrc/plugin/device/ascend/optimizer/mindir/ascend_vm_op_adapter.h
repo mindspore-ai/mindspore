@@ -24,21 +24,20 @@
 #include "utils/hash_set.h"
 #include "ir/anf.h"
 #include "backend/common/optimizer/optimizer.h"
-#include "backend/common/optimizer/const_input_to_attr_factory.h"
+#include "backend/common/optimizer/op_adaptation_info_factory.h"
 
 namespace mindspore {
 namespace opt {
-class AscendConvertConstInputToAttr : public PatternProcessPass {
+class AscendVmOpAdapter : public PatternProcessPass {
  public:
-  explicit AscendConvertConstInputToAttr(bool multigraph = true)
-      : PatternProcessPass("ascend_convert_const_input_to_attr", multigraph) {}
-  ~AscendConvertConstInputToAttr() override = default;
+  explicit AscendVmOpAdapter(bool multigraph = true) : PatternProcessPass("ascend_vm_op_adapter", multigraph) {}
+  ~AscendVmOpAdapter() override = default;
 
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &node, const EquivPtr &) const override;
 
  private:
-  CNodePtr ConvertToTargetOp(const CNodePtr &origin_op, mindspore::opt::ConvertOpInfo *convert_op_info) const;
-  CNodePtr CreateTargetOp(const CNodePtr &origin_op, ConvertOpInfo *convert_op_info) const;
+  CNodePtr ConvertToTargetOp(const CNodePtr &origin_op, mindspore::opt::OpAdaptationInfo *op_adaptation_info) const;
+  CNodePtr CreateTargetOp(const CNodePtr &origin_op, OpAdaptationInfo *op_adaptation_info) const;
   bool ConvertInputToAttr(const CNodePtr &origin_op, const string &target_op_name,
                           const std::vector<std::string> &input_names_vec, size_t i,
                           const std::shared_ptr<AnfNode> &input_node,

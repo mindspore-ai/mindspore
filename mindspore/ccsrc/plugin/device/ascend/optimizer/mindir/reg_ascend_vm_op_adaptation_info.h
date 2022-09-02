@@ -16,7 +16,7 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_MINDIR_REG_ASCEND_CONST_INPUT_TO_ATTR_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_MINDIR_REG_ASCEND_CONST_INPUT_TO_ATTR_H_
 
-#include "backend/common/optimizer/const_input_to_attr_factory.h"
+#include "backend/common/optimizer/op_adaptation_info_factory.h"
 
 namespace mindspore::opt {
 #define RER_ASCEND_STATIC_CONST_TO_ATTR(op_name, ...) RER_CONST_TO_ATTR_LIST(op_name, kAscendDevice, false, __VA_ARGS__)
@@ -98,12 +98,11 @@ RER_ASCEND_STATIC_CONST_TO_ATTR(kUnsortedSegmentProdOpName, 2);
 RER_ASCEND_STATIC_CONST_TO_ATTR(kUnsortedSegmentSumOpName, 2);
 
 // ===============================  new reg interface  =================================================
-#define REG_ASCEND_CONST_TO_ATTR(origin_op_name, target_op_name) \
-  REG_CONST_TO_ATTR(origin_op_name, target_op_name, kAscendDevice, false)
+#define REG_ASCEND_VM_OP_ADAPTATION_INFO(origin_op_name) REG_OP_ADAPTATION_INFO(origin_op_name, kAscendDevice, true)
 
 // RTS OP
-REG_ASCEND_CONST_TO_ATTR(kTensorCopySlicesOpName, kTensorCopySlicesOpName)
-  .SetNeedCheckSupported(false)
+REG_ASCEND_VM_OP_ADAPTATION_INFO(kTensorCopySlicesOpName)
+  .SetTargetOpName(kTensorCopySlicesOpName)
   .SetInputAttrInfo(2, "begin", "listInt")
   .SetInputAttrInfo(3, "end", "listInt")
   .SetInputAttrInfo(4, "strides", "listInt");

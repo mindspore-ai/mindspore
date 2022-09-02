@@ -167,7 +167,7 @@
 #include "plugin/device/ascend/optimizer/mindir/bn_grad_unify_mindir.h"
 #include "plugin/device/ascend/optimizer/mindir/all_to_all_unify_mindir.h"
 #include "plugin/device/ascend/optimizer/mindir/neighbor_exchange_v2_unify_mindir.h"
-#include "plugin/device/ascend/optimizer/mindir/ascend_convert_const_input_to_attr.h"
+#include "plugin/device/ascend/optimizer/mindir/ascend_vm_op_adapter.h"
 #include "backend/common/pass/adjust_depend_for_parallel_optimizer_recompute_all_gather.h"
 #include "backend/common/pass/gradients_allreduce_depend_last_send.h"
 #include "backend/common/pass/optimize_gradients_allreduce_overlap.h"
@@ -685,7 +685,7 @@ void AscendUnifyMindIR(const std::shared_ptr<session::KernelGraph> &kernel_graph
   unify_mindir_pm->AddPass(std::make_shared<opt::NeighborExchangeV2UnifyMindIR>());
   unify_mindir_pm->AddPass(std::make_shared<opt::NeighborExchangeV2GradUnifyMindIR>());
   unify_mindir_pm->AddPass(std::make_shared<opt::AllToAllUnifyMindIR>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::AscendConvertConstInputToAttr>());
+  unify_mindir_pm->AddPass(std::make_shared<opt::AscendVmOpAdapter>());
 
   optimizer->AddPassManager(unify_mindir_pm);
   (void)optimizer->Optimize(kernel_graph);
