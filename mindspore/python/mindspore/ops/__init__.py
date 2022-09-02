@@ -25,7 +25,7 @@ from .primitive import Primitive, PrimitiveWithInfer, PrimitiveWithCheck, prim_a
 from .vm_impl_registry import get_vm_impl_fn, vm_impl_registry
 from .op_info_register import op_info_register, custom_info_register, AkgGpuRegOp, AkgAscendRegOp, AiCPURegOp, \
     TBERegOp, CpuRegOp, CustomRegOp, DataType
-from .primitive import constexpr, check_expr
+from .primitive import constexpr
 from . import composite, operations, functional, function
 from . import signature
 from .composite import *
@@ -40,7 +40,7 @@ __primitive__ = [
 __all__ = ["get_vm_impl_fn", "vm_impl_registry",
            "op_info_register", "custom_info_register", "AkgGpuRegOp", "AkgAscendRegOp", "AiCPURegOp", "TBERegOp",
            "CpuRegOp", "CustomRegOp", "DataType",
-           "constexpr", "check_expr"]
+           "constexpr"]
 __all__.extend(__primitive__)
 __all__.extend(composite.__all__)
 __all__.extend(operations.__all__)

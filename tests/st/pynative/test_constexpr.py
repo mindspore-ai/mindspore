@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 import pytest
-from mindspore.ops.primitive import constexpr, check_expr
+from mindspore.ops.primitive import constexpr
 from mindspore.common.api import ms_function
 
 
@@ -21,7 +21,7 @@ def _temp_func():
     return 0
 
 
-@check_expr
+@constexpr(check=False)
 def _is_need_compile(func):
     # No matter what the value of mode is, in ms_function scenario, this function always returns true.
     return func is None
