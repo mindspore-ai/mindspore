@@ -186,6 +186,7 @@ functional算子是经过初始化后的Primitive，可以直接作为函数使�
     mindspore.ops.round
     mindspore.ops.sin
     mindspore.ops.sinh
+    mindspore.ops.square
     mindspore.ops.sub
     mindspore.ops.svd
     mindspore.ops.tan
