@@ -51,7 +51,7 @@ CUDA_LIB_EXPORT void CalConstantPadGrad3d(const size_t size, const T *dy, const 
                                           cudaStream_t cuda_stream);
 
 template <typename T>
-CUDA_LIB_EXPORT void CalReflectPadGrad3d(const size_t size, const T *input, const int64_t num, const int64_t channels,
+CUDA_LIB_EXPORT void CalReflectPadGrad3d(const size_t size, T *input, const int64_t num, const int64_t channels,
                                          const int64_t old_depth, const int64_t old_height, const int64_t old_width,
                                          const int64_t padded_depth, const int64_t padded_height,
                                          const int64_t padded_width, const int64_t pad_head, const int64_t pad_top,
@@ -59,7 +59,7 @@ CUDA_LIB_EXPORT void CalReflectPadGrad3d(const size_t size, const T *input, cons
                                          cudaStream_t cuda_stream);
 
 template <typename T>
-CUDA_LIB_EXPORT void CalEdgePadGrad3d(const size_t size, const T *input, const int64_t num, const int64_t channels,
+CUDA_LIB_EXPORT void CalEdgePadGrad3d(const size_t size, T *input, const int64_t num, const int64_t channels,
                                       const int64_t old_depth, const int64_t old_height, const int64_t old_width,
                                       const int64_t padded_depth, const int64_t padded_height,
                                       const int64_t padded_width, const int64_t pad_head, const int64_t pad_top,

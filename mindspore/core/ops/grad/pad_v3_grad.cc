@@ -61,6 +61,7 @@ abstract::ShapePtr PadV3GradInferShape(const PrimitivePtr &primitive, const std:
       }
     }
   }
+  primitive->set_attr("padding_switched", MakeValue(paddings_val));
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   std::vector<int64_t> out_shape;
   if (paddings_size == kPaddingsSizeTwo) {
@@ -110,7 +111,6 @@ TypePtr PadV3GradInferType(const PrimitivePtr &prim, const std::vector<AbstractB
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(PadV3Grad, PrimitiveC, BaseOperator);
 AbstractBasePtr PadV3GradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args) {
   const int64_t kInputNum = 2;
@@ -119,6 +119,14 @@ AbstractBasePtr PadV3GradInfer(const abstract::AnalysisEnginePtr &, const Primit
   auto infer_shape = PadV3GradInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
+
+bool PadV3Grad::get_paddings_contiguous() const { return GetValue<bool>(GetAttr("paddings_contiguous")); }
+std::string PadV3Grad::get_mode() const { return GetValue<string>(GetAttr("mode")); }
+std::vector<int64_t> PadV3Grad::get_paddings() const {
+  return GetValue<std::vector<int64_t>>(GetAttr("padding_switched"));
+}
+
+MIND_API_OPERATOR_NAME_IMPL(PadV3Grad, kNamePadV3Grad, BaseOperator);
 REGISTER_PRIMITIVE_EVAL_IMPL(PadV3Grad, prim::kPrimPadV3Grad, PadV3GradInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

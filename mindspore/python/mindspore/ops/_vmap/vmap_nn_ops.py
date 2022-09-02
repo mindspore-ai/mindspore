@@ -1090,7 +1090,10 @@ def get_pad_v3_vmap_rule(prim, axis_size):
             if values_dim is not None:
                 _raise_value_error("The source axis of `values_dim` in `{}` must be None, "
                                    "but got {}.".format(prim.name, values_dim))
-        pad_dim = F.shape(paddings)[0] / pad_pair
+        if isinstance(paddings, Tensor):
+            pad_dim = F.shape(paddings)[0] / pad_pair
+        else:
+            pad_dim = len(paddings) / pad_pair
         x_ndim = F.rank(x)
         # pylint: disable=chained-comparison
         if pad_dim < x_ndim and x_ndim < input_max_dim:
