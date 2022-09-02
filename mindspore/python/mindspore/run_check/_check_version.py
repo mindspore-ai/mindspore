@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """version and config check"""
+from __future__ import absolute_import
 import os
 import platform
 import sys
@@ -325,7 +326,7 @@ class AscendEnvChecker(EnvChecker):
         try:
             import te  # pylint: disable=unused-import
         # pylint: disable=broad-except
-        except Exception:
+        except ImportError:
             if Path(self.tbe_path).is_dir():
                 if os.getenv('LD_LIBRARY_PATH'):
                     os.environ['LD_LIBRARY_PATH'] = self.tbe_path + ":" + os.environ['LD_LIBRARY_PATH']
@@ -438,7 +439,7 @@ def check_version_and_env_config():
     try:
         # check version of ascend site or cuda
         env_checker.check_version()
-        from .. import _c_expression  # pylint: disable=unused-import
+        import mindspore._c_expression as _c_expression  # pylint: disable=unused-import
         env_checker.set_env()
     except ImportError as e:
         env_checker.check_env(e)

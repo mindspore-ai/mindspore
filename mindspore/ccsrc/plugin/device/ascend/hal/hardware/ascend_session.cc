@@ -851,7 +851,7 @@ void DumpInit(const std::string &device_type, uint32_t device_id) {
     if (device_type == kAscendDevice) {
       // register callback to adx
       if (json_parser.FileFormatIsNpy()) {
-        AdxRegDumpProcessCallBack(mindspore::ascend::DumpDataCallBack);
+        (void)AdxRegDumpProcessCallBack(mindspore::ascend::DumpDataCallBack);
       }
     }
 #endif

@@ -20,9 +20,9 @@ from mindspore.ops.operations.nn_ops import GridSampler2D
 from mindspore.ops.operations.nn_ops import GridSampler3D
 from mindspore.ops.primitive import constexpr
 from mindspore.common import dtype as mstype
-from .._grad.grad_base import bprop_getters
-from .. import operations as P
-from ..composite.multitype_ops.zeros_like_impl import zeros_like
+from mindspore.ops._grad.grad_base import bprop_getters
+from mindspore.ops import operations as P
+from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
 from ..operations import _grad_ops as G
 from ..operations.nn_ops import MaxUnpool2D
 from ..operations.nn_ops import MaxUnpool3D
