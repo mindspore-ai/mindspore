@@ -19,6 +19,7 @@
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "plugin/device/cpu/hal/device/cpu_memory_manager.h"
 #include "plugin/device/cpu/optimizer/reg_cpu_const_input_to_attr.h"
+#include "plugin/device/cpu/hal/hardware/cpu_somas.h"
 #ifdef ENABLE_AKG
 #include "plugin/device/cpu/kernel/akg/akg_cpu_kernel_build.h"
 #endif
@@ -341,6 +342,19 @@ void CPUKernelExecutor::PreprocessBeforeRun(const FuncGraphPtr &graph) const {
     common::AnfAlgo::ReorderPosteriorExecList(NOT_NULL(&execution_order));
     kernel_graph->set_execution_order(execution_order);
   }
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ms_context->get_param<int>(MS_CTX_MEMORY_OPTIMIZE_LEVEL) != kOptimizeO0) {
+    auto somas = std::make_shared<CPUSomas>();
+    bool ret = somas->Assign(kernel_graph);
+    if (ret) {
+      MS_LOG(INFO) << "Somas allocate success for graph " << kernel_graph->graph_id()
+                   << " somas size: " << kernel_graph->somas_whole_block_size();
+    } else {
+      MS_LOG(WARNING) << "Somas allocate failed for graph " << kernel_graph->graph_id();
+    }
+  }
+  MS_LOG(INFO) << "Status record: end preprocess before run graph. graph id: " << kernel_graph->graph_id();
 }
 
 bool CPUKernelExecutor::LaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
