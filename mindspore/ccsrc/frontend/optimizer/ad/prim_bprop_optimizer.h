@@ -47,8 +47,10 @@ using PrimBpropCache = std::unordered_map<PrimitivePtr, PrimBpropOptGraphInfoPtr
 
 using TupleListKey = std::pair<PrimitivePtr, abstract::AbstractBasePtrList>;
 
+using PrimBpropGragFlagCache = std::unordered_map<std::vector<bool>, PrimBpropOptGraphLevel2InfoPtr>;
+
 using PrimBpropLevel2Cache =
-  std::unordered_map<abstract::AbstractBasePtrList, PrimBpropOptGraphLevel2InfoPtr, abstract::AbstractBasePtrListHasher,
+  std::unordered_map<abstract::AbstractBasePtrList, PrimBpropGragFlagCache, abstract::AbstractBasePtrListHasher,
                      abstract::AbstractBasePtrListEqual>;
 
 using PrimTupleListCache =
@@ -150,6 +152,7 @@ class PrimBpropOptimizer {
   PrimBpropOptimizer() = default;
 
   ECacheQrtRes GetOptBpfgFromCache(const PrimitivePtr &prim, const abstract::AbstractBasePtrList &abs_list,
+                                   const std::vector<bool> &need_grad_flags,
                                    PrimBpropOptGraphLevel2InfoPtr *level_2_graph_info,
                                    PrimBpropOptGraphInfoPtr *level_1_graph_info);
 
@@ -167,11 +170,6 @@ class PrimBpropOptimizer {
   PrimBpropOptGraphLevel2InfoPtr PrimBpropOptStep2(
     const FuncGraphPtr &bprop_fg, const abstract::AbstractBasePtrList &abs_list_input,
     const std::vector<bool> &need_grad_flags = std::vector<bool>()) const;
-
-  FuncGraphPtr GetBpropGrahWithNoGradInput(const PrimBpropOptGraphLevel2InfoPtr &level_2_graph_info,
-                                           const abstract::AbstractBasePtrList &abs_list,
-                                           const std::vector<bool> &need_grad_flags, const ValuePtrList &op_args,
-                                           const ValuePtr &out);
 
   void BindAbsToParameters(const FuncGraphPtr &bprop_fg, const abstract::AbstractBasePtrList &abs_list_input) const;
 
