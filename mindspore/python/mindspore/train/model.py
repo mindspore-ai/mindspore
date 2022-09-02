@@ -1051,7 +1051,7 @@ class Model:
 
         # When it's Parameter Server training and using MindRT,
         # the node id should be reset to start from 0.
-        if _is_ps_mode() and _enable_distributed_mindrt():
+        if _enable_distributed_mindrt():
             _reset_op_id_with_offset()
 
     @staticmethod
@@ -1432,7 +1432,7 @@ class Model:
 
         # When it's Parameter Server training and using MindRT,
         # the node id should be reset to start from 0.
-        if _is_ps_mode() and _enable_distributed_mindrt():
+        if _enable_distributed_mindrt():
             _reset_op_id_with_offset()
 
         return eval_result
@@ -1466,7 +1466,7 @@ class Model:
 
         # When it's Parameter Server training and using MindRT,
         # the node id should be reset to start from 0.
-        if _is_ps_mode() and _enable_distributed_mindrt():
+        if _enable_distributed_mindrt():
             _reset_op_id_with_offset()
 
         return result
