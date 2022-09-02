@@ -138,6 +138,10 @@ int ParseData2Vector(const mindspore::MSTensor &ms_tensor, std::vector<float> *d
 
 void DebugDims(const std::string &key, const nvinfer1::Dims &dims);
 
+nvinfer1::ITensor *ExpandDim(TensorRTContext *ctx, nvinfer1::ITensor *input_tensor, int axis);
+
+nvinfer1::ITensor *Broadcast(TensorRTContext *ctx, nvinfer1::ITensor *input, nvinfer1::ITensor *shape);
+
 template <typename T>
 nvinfer1::DataType GetNvinferDataType();
 
