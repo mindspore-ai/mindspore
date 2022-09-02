@@ -127,7 +127,14 @@ bool CheckAllTensor(const ValueTuplePtr &value_tuple) {
   return true;
 }
 
-bool Mutable(const py::object &obj) {
+bool Mutable(const py::object &obj, const ValuePtr &value) {
+  // If a tensor has been set const arg, it should not be mutable.
+  if (value->isa<MetaTensor>()) {
+    constexpr char const_arg_attr[] = "const_arg";
+    if (py::hasattr(obj, const_arg_attr) && py::cast<bool>(py::getattr(obj, const_arg_attr))) {
+      return false;
+    }
+  }
   constexpr char mutable_attr[] = "__ms_mutable__";
   return py::hasattr(obj, mutable_attr) && py::cast<bool>(py::getattr(obj, mutable_attr));
 }
@@ -149,7 +156,7 @@ bool GradForScalar(const ValuePtr &value) {
 }
 
 AbstractBasePtr ArgsToAbstract(const py::object &arg, const ValuePtr &value, bool enable_tuple_broaden = false) {
-  bool broaden = TensorArgMutable(arg, value) || Mutable(arg) || value->isa<MetaSparseTensor>() ||
+  bool broaden = TensorArgMutable(arg, value) || Mutable(arg, value) || value->isa<MetaSparseTensor>() ||
                  EnableTupleBroaden(value, enable_tuple_broaden) || GradForScalar(value);
 
   return abstract::FromValue(value, broaden);
