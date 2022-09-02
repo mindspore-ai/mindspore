@@ -463,7 +463,7 @@ class PriorityReplayBufferCreate(PrimitiveWithInfer):
 
         schema = []
         for shape, dtype in zip(shapes, dtypes):
-            num_element = functools.reduce(lambda x, y: x * y, shape)
+            num_element = functools.reduce(lambda x, y: x * y, shape, 1)
             schema.append(num_element * type_size_in_bytes(dtype))
         self.add_prim_attr("schema", schema)
 
@@ -536,7 +536,7 @@ class PriorityReplayBufferSample(PrimitiveWithInfer):
 
         schema = []
         for shape, dtype in zip(shapes, dtypes):
-            num_element = functools.reduce(lambda x, y: x * y, shape)
+            num_element = functools.reduce(lambda x, y: x * y, shape, 1)
             schema.append(num_element * type_size_in_bytes(dtype))
         self.add_prim_attr("schema", schema)
 
@@ -649,7 +649,7 @@ class ReservoirReplayBufferCreate(Primitive):
 
         schema = []
         for shape, dtype in zip(shapes, dtypes):
-            num_element = functools.reduce(lambda x, y: x * y, shape)
+            num_element = functools.reduce(lambda x, y: x * y, shape, 1)
             schema.append(num_element * type_size_in_bytes(dtype))
         self.add_prim_attr("schema", schema)
 
@@ -710,7 +710,7 @@ class ReservoirReplayBufferSample(Primitive):
 
         schema = []
         for shape, dtype in zip(shapes, dtypes):
-            num_element = functools.reduce(lambda x, y: x * y, shape)
+            num_element = functools.reduce(lambda x, y: x * y, shape, 1)
             schema.append(num_element * type_size_in_bytes(dtype))
         self.add_prim_attr("schema", schema)
 
