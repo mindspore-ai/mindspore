@@ -14,111 +14,45 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_LAYER_NORM_GRAD_GPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_LAYER_NORM_GRAD_GPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_NN_LAYER_NORM_GRAD_GPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_NN_LAYER_NORM_GRAD_GPU_KERNEL_H_
 
 #include <vector>
+#include <map>
+#include <utility>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/layer_norm_grad_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
-class LayerNormGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class LayerNormGradGpuKernelMod : public NativeGpuKernelMod {
  public:
-  LayerNormGradGpuKernelMod() : input_row_(1), input_col_(1), param_dim_(1), is_null_input_(false) {}
+  LayerNormGradGpuKernelMod() : input_row_(1), input_col_(1), param_dim_(1) {}
   ~LayerNormGradGpuKernelMod() override = default;
 
+  std::vector<KernelAttr> GetOpSupport() override;
+
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    if (is_null_input_) {
-      return true;
-    }
-    auto x = GetDeviceAddress<T>(inputs, 0);
-    auto dy = GetDeviceAddress<T>(inputs, 1);
-    auto var = GetDeviceAddress<T>(inputs, 2);
-    auto mean = GetDeviceAddress<T>(inputs, 3);
-    auto gamma = GetDeviceAddress<T>(inputs, 4);
-    auto dx = GetDeviceAddress<T>(outputs, 0);
-    auto dg = GetDeviceAddress<T>(outputs, 1);
-    auto db = GetDeviceAddress<T>(outputs, 2);
-
-    const T epsilon = 10e-12;
-    LayerNormGrad(input_row_, input_col_, param_dim_, epsilon, dy, x, mean, var, gamma, dx, dg, db,
-                  reinterpret_cast<cudaStream_t>(stream_ptr));
-    return true;
-  }
-  bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    kernel_node_ = kernel_node;
-    int begin_norm_axis = static_cast<int>(GetAttr<int64_t>(kernel_node, "begin_norm_axis"));
-    int begin_params_axis = static_cast<int>(GetAttr<int64_t>(kernel_node, "begin_params_axis"));
-
-    auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
-    if (is_null_input_) {
-      InitSizeLists();
-      return true;
-    }
-    if (begin_norm_axis < 0) {
-      begin_norm_axis += input_shape.size();
-    }
-
-    if (begin_params_axis < 0) {
-      begin_params_axis += input_shape.size();
-    }
-
-    if (IntToSize(begin_norm_axis) > input_shape.size()) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the value of 'begin_norm_axis' must be less than or equal "
-                        << "to the dimension of input, but got begin_norm_axis: " << IntToSize(begin_norm_axis)
-                        << ", the dimension of input: " << input_shape.size();
-    }
-    for (size_t i = 0; i < IntToSize(begin_norm_axis); i++) {
-      input_row_ *= input_shape[i];
-    }
-
-    for (size_t i = begin_norm_axis; i < input_shape.size(); i++) {
-      input_col_ *= input_shape[i];
-    }
-
-    for (size_t i = begin_params_axis; i < input_shape.size(); i++) {
-      param_dim_ *= input_shape[i];
-    }
-
-    InitSizeLists();
-    return true;
-  }
-
-  void ResetResource() noexcept override {
-    input_row_ = 1;
-    input_col_ = 1;
-    param_dim_ = 1;
-    is_null_input_ = false;
-    input_size_list_.clear();
-    output_size_list_.clear();
-    workspace_size_list_.clear();
-  }
-
- protected:
-  void InitSizeLists() override {
-    input_size_list_.push_back(input_row_ * input_col_ * sizeof(T));
-    input_size_list_.push_back(input_row_ * input_col_ * sizeof(T));
-    input_size_list_.push_back(input_row_ * sizeof(T));
-    input_size_list_.push_back(input_row_ * sizeof(T));
-    input_size_list_.push_back(param_dim_ * sizeof(T));
-
-    output_size_list_.push_back(input_row_ * input_col_ * sizeof(T));
-    output_size_list_.push_back(param_dim_ * sizeof(T));
-    output_size_list_.push_back(param_dim_ * sizeof(T));
-  }
+              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
 
  private:
-  int input_row_;
-  int input_col_;
-  int param_dim_;
-  bool is_null_input_;
+  template <typename T>
+  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  using KernelFunc =
+    std::function<void(LayerNormGradGpuKernelMod *, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &)>;
+  KernelFunc kernel_func_{};
+  static std::vector<std::pair<KernelAttr, KernelFunc>> func_list_;
+  cudaStream_t cuda_stream_{nullptr};
+
+  int input_row_{0};
+  int input_col_{0};
+  int param_dim_{0};
+  float epsilon_{1e-12};
 };
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_LAYER_NORM_GRAD_GPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_NN_LAYER_NORM_GRAD_GPU_KERNEL_H_
