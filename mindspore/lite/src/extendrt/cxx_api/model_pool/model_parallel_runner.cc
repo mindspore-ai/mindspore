@@ -34,20 +34,50 @@ extern void mindspore_log_init();
 
 RunnerConfig::RunnerConfig() : data_(std::make_shared<Data>()) {}
 
-void RunnerConfig::SetWorkersNum(int32_t workers_num) { data_->workers_num = workers_num; }
+void RunnerConfig::SetWorkersNum(int32_t workers_num) {
+  if (data_ == nullptr) {
+    MS_LOG(ERROR) << "Runner config data is nullptr.";
+    return;
+  }
+  data_->workers_num = workers_num;
+}
 
-void RunnerConfig::SetContext(const std::shared_ptr<Context> &context) { data_->context = context; }
+void RunnerConfig::SetContext(const std::shared_ptr<Context> &context) {
+  if (data_ == nullptr) {
+    MS_LOG(ERROR) << "Runner config data is nullptr.";
+    return;
+  }
+  data_->context = context;
+}
 
-int32_t RunnerConfig::GetWorkersNum() const { return data_->workers_num; }
+int32_t RunnerConfig::GetWorkersNum() const {
+  if (data_ == nullptr) {
+    MS_LOG(ERROR) << "Runner config data is nullptr.";
+    return -1;
+  }
+  return data_->workers_num;
+}
 
-std::shared_ptr<Context> RunnerConfig::GetContext() const { return data_->context; }
+std::shared_ptr<Context> RunnerConfig::GetContext() const {
+  if (data_ == nullptr) {
+    MS_LOG(ERROR) << "Runner config data is nullptr.";
+    return nullptr;
+  }
+  return data_->context;
+}
 
 void RunnerConfig::SetConfigInfo(const std::vector<char> &section,
                                  const std::map<std::vector<char>, std::vector<char>> &config) {
+  if (data_ == nullptr) {
+    MS_LOG(ERROR) << "Runner config data is nullptr.";
+    return;
+  }
   if (data_->config_info.size() > kMaxSectionNum) {
+    MS_LOG(ERROR) << "The number of added sessions exceeds the maximum[" << kMaxSectionNum << "] limit.";
     return;
   }
   if (config.size() > kMaxConfigNumPerSection) {
+    MS_LOG(ERROR) << "The number of added config exceeds the maximum[" << kMaxConfigNumPerSection << "] limit.";
     return;
   }
   data_->config_info[CharToString(section)] = MapVectorCharToString(config);
@@ -55,6 +85,11 @@ void RunnerConfig::SetConfigInfo(const std::vector<char> &section,
 }
 
 std::map<std::vector<char>, std::map<std::vector<char>, std::vector<char>>> RunnerConfig::GetConfigInfoChar() const {
+  if (data_ == nullptr) {
+    MS_LOG(ERROR) << "Runner config data is nullptr.";
+    std::map<std::vector<char>, std::map<std::vector<char>, std::vector<char>>> empty;
+    return empty;
+  }
   return MapMapStringToChar(data_->config_info);
 }
 
@@ -63,20 +98,28 @@ Status ModelParallelRunner::Init(const std::vector<char> &model_path,
 #ifdef USE_GLOG
   mindspore::mindspore_log_init();
 #endif
-
+  if (model_pool_ != nullptr && model_pool_->IsInitialized()) {
+    MS_LOG(WARNING) << "ModelParallelRunner is already initialized, not need to initialize it again";
+    return kSuccess;
+  }
+  auto new_model_pool = std::make_shared<ModelPool>();
+  if (new_model_pool == nullptr) {
+    MS_LOG(ERROR) << "new model pool failed, model pool is nullptr.";
+    return kLiteNullptr;
+  }
   if (!PlatformInstructionSetSupportCheck()) {
     return kLiteNotSupport;
   }
-  model_pool_ = std::make_shared<ModelPool>();
-  if (model_pool_ == nullptr) {
-    MS_LOG(ERROR) << "model pool is nullptr.";
-    return kLiteNullptr;
-  }
-  auto status = model_pool_->InitByPath(CharToString(model_path), runner_config);
+  auto status = new_model_pool->InitByPath(CharToString(model_path), runner_config);
   if (status != kSuccess) {
-    MS_LOG(ERROR) << "model runner init failed.";
+    MS_LOG(ERROR) << "ModelParallelRunner init failed.";
     return kLiteError;
   }
+  if (model_pool_ != nullptr && model_pool_->IsInitialized()) {
+    MS_LOG(WARNING) << "ModelParallelRunner is already initialized, not need to initialize it again";
+    return kSuccess;
+  }
+  model_pool_ = new_model_pool;
 #ifdef CAPTURE_SIGNALS
   CaptureSignal();
 #endif
@@ -88,33 +131,56 @@ Status ModelParallelRunner::Init(const void *model_data, size_t data_size,
 #ifdef USE_GLOG
   mindspore::mindspore_log_init();
 #endif
+  if (model_pool_ != nullptr && model_pool_->IsInitialized()) {
+    MS_LOG(WARNING) << "ModelParallelRunner is already initialized, not need to initialize it again";
+    return kSuccess;
+  }
+  auto new_model_pool = std::make_shared<ModelPool>();
+  if (new_model_pool == nullptr) {
+    MS_LOG(ERROR) << "new model pool failed, model pool is nullptr.";
+    return kLiteNullptr;
+  }
   if (!PlatformInstructionSetSupportCheck()) {
     return kLiteNotSupport;
   }
-  model_pool_ = std::make_shared<ModelPool>();
-  if (model_pool_ == nullptr) {
-    MS_LOG(ERROR) << "model pool is nullptr.";
-    return kLiteNullptr;
-  }
-  auto status = model_pool_->InitByBuf(static_cast<const char *>(model_data), data_size, runner_config);
+  auto status = new_model_pool->InitByBuf(static_cast<const char *>(model_data), data_size, runner_config);
   if (status != kSuccess) {
     MS_LOG(ERROR) << "model runner init failed.";
     return kLiteError;
   }
+  if (model_pool_ != nullptr && model_pool_->IsInitialized()) {
+    MS_LOG(WARNING) << "ModelParallelRunner is already initialized, not need to initialize it again";
+    return kSuccess;
+  }
+  model_pool_ = new_model_pool;
 #ifdef CAPTURE_SIGNALS
   CaptureSignal();
 #endif
   return status;
 }
 
-std::vector<MSTensor> ModelParallelRunner::GetInputs() { return model_pool_->GetInputs(); }
+std::vector<MSTensor> ModelParallelRunner::GetInputs() {
+  if (model_pool_ == nullptr) {
+    std::vector<MSTensor> empty;
+    MS_LOG(ERROR) << "Please initialize ModelParallelRunner before calling GetInput API.";
+    return empty;
+  }
+  return model_pool_->GetInputs();
+}
 
-std::vector<MSTensor> ModelParallelRunner::GetOutputs() { return model_pool_->GetOutputs(); }
+std::vector<MSTensor> ModelParallelRunner::GetOutputs() {
+  if (model_pool_ == nullptr) {
+    std::vector<MSTensor> empty;
+    MS_LOG(ERROR) << "Please initialize ModelParallelRunner before calling GetOutputs API.";
+    return empty;
+  }
+  return model_pool_->GetOutputs();
+}
 
 Status ModelParallelRunner::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
                                     const MSKernelCallBack &before, const MSKernelCallBack &after) {
-  if (outputs == nullptr) {
-    MS_LOG(ERROR) << "predict output is nullptr.";
+  if (outputs == nullptr || model_pool_ == nullptr) {
+    MS_LOG(ERROR) << "predict output is nullptr or ModelParallelRunner Not Initialize.";
     return kLiteNullptr;
   }
   auto status = model_pool_->Predict(inputs, outputs, before, after);

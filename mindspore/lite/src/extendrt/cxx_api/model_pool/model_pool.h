@@ -21,6 +21,7 @@
 #include <utility>
 #include <string>
 #include <queue>
+#include <shared_mutex>
 #include <map>
 #include <set>
 #include "src/extendrt/dynamic_mem_allocator.h"
@@ -69,6 +70,8 @@ class ModelPool {
 
   Status Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
                  const MSKernelCallBack &before = nullptr, const MSKernelCallBack &after = nullptr);
+
+  bool IsInitialized() { return is_initialized_; }
 
  private:
   ModelPoolConfig CreateBaseStrategyModelPoolConfig(const std::shared_ptr<RunnerConfig> &runner_config,
@@ -174,6 +177,8 @@ class ModelPool {
   bool can_use_all_physical_core_ = true;
   int can_use_core_num_ = -1;
   int all_core_num_ = -1;
+  std::shared_mutex model_pool_mutex_;
+  bool is_initialized_ = false;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_MODEL_POOL_MODEL_POOL_H_
