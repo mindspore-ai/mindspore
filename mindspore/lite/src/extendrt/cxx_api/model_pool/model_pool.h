@@ -132,6 +132,10 @@ class ModelPool {
 
   Strategy UpdateStrategy();
 
+  Status CanUseAllPhysicalResources(int *percentage);
+
+  int GetDefaultThreadNum(int worker_num = 0);
+
  private:
   bool use_advanced_strategy_ = false;
   bool use_gpu_ = false;
@@ -164,6 +168,12 @@ class ModelPool {
   // numa id -> core id
   std::vector<std::vector<int>> numa_physical_cores_;
   std::vector<std::vector<int>> numa_logical_cores_;
+
+  bool use_numa_bind_mode_ = false;
+  bool bind_core_available_ = true;
+  bool can_use_all_physical_core_ = true;
+  int can_use_core_num_ = -1;
+  int all_core_num_ = -1;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_MODEL_POOL_MODEL_POOL_H_
