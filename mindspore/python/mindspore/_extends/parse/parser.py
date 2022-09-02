@@ -108,7 +108,7 @@ _unsupported_internal_type = (
 )
 
 _hybrid_type = (
-    print, enumerate, zip, map, filter, abs, all, any, round, max, min, hasattr, list, tuple
+    print, enumerate, zip, map, filter, abs, all, any, round, max, min, sum, hasattr, list, tuple
 )
 
 # Unsupported python builtin type in JIT Fallback.

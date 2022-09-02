@@ -15,9 +15,8 @@
 """ test graph fallback buildin python function sum"""
 import pytest
 import numpy as np
-from mindspore import ms_function, context, Tensor
+from mindspore import ms_function, Tensor
 
-context.set_context(mode=context.GRAPH_MODE)
 
 def test_fallback_sum_with_x_list_n_default():
     """
@@ -42,20 +41,6 @@ def test_fallback_sum_with_x_tuple_n_default():
     @ms_function
     def foo():
         x = sum((1, 2, 3))
-        return x
-    out = foo()
-    assert out == 6
-
-
-def test_fallback_sum_with_x_dict_n_default():
-    """
-    Feature: JIT Fallback
-    Description: Test sum() in graph mode with input x dict and input n default.
-    Expectation: No exception.
-    """
-    @ms_function
-    def foo():
-        x = sum({1: 10, 2: 20, 3: 30})
         return x
     out = foo()
     assert out == 6
@@ -131,7 +116,7 @@ def test_fallback_sum_with_x_list_n_not_default():
     assert out == 16
 
 
-def test_fallback_sum_with_x_tensor_n_not_default():
+def test_fallback_sum_with_x_tensor_n_not_default_1():
     """
     Feature: JIT Fallback
     Description: Test sum() in graph mode with input x tensor and input n not default.
@@ -143,6 +128,21 @@ def test_fallback_sum_with_x_tensor_n_not_default():
         return x
     out = foo()
     assert out == 16
+
+
+def test_fallback_sum_with_x_tensor_n_not_default_2():
+    """
+    Feature: JIT Fallback
+    Description: Test sum() in graph mode with input x tensor and input n not default.
+    Expectation: No exception.
+    """
+    @ms_function
+    def foo():
+        x = sum(Tensor([[1, 2], [3, 4]]), [5, 6])
+        return x
+
+    out = foo()
+    assert np.allclose(out.asnumpy(), np.array([9, 12]))
 
 
 def test_fallback_sum_with_x_tuple_n_not_default():
@@ -159,21 +159,7 @@ def test_fallback_sum_with_x_tuple_n_not_default():
     assert out == 16
 
 
-def test_fallback_sum_with_x_dict_n_not_default():
-    """
-    Feature: JIT Fallback
-    Description: Test sum() in graph mode with input x dict and input n not default.
-    Expectation: No exception.
-    """
-    @ms_function
-    def foo():
-        x = sum({1: 10, 2: 20, 3: 30}, 10)
-        return x
-    out = foo()
-    assert out == 16
-
-
-def test_fallback_sum_with_x_numpy_array_n_not_default():
+def test_fallback_sum_with_x_numpy_array_n_not_default_1():
     """
     Feature: JIT Fallback
     Description: Test sum() in graph mode with input x numpy array and input n default.
@@ -187,7 +173,22 @@ def test_fallback_sum_with_x_numpy_array_n_not_default():
     assert np.allclose(out.asnumpy(), np.array([8, 8]))
 
 
-def test_fallback_sum_with_x_not_iterable():
+def test_fallback_sum_with_x_numpy_array_n_not_default_2():
+    """
+    Feature: JIT Fallback
+    Description: Test sum() in graph mode with input x numpy array and input n default.
+    Expectation: No exception.
+    """
+    @ms_function
+    def foo():
+        x = sum(np.array([[1, 1], [2, 2]]), [3, 4])
+        return Tensor(x)
+
+    out = foo()
+    assert np.allclose(out.asnumpy(), np.array([6, 7]))
+
+
+def test_fallback_sum_with_x_not_iterable_error():
     """
     Feature: JIT Fallback
     Description: Test sum() in graph mode with input x not iterable.
@@ -200,3 +201,34 @@ def test_fallback_sum_with_x_not_iterable():
     with pytest.raises(TypeError) as ex:
         foo()
     assert "object is not iterable" in str(ex.value)
+
+
+def test_fallback_sum_with_x_unsupported_operand_type_error_1():
+    """
+    Feature: JIT Fallback
+    Description: Test sum() in graph mode when input x is list of list
+    Expectation: TypeError.
+    """
+    @ms_function
+    def foo():
+        x = sum([[1, 2], [3, 4]])
+        return x
+    with pytest.raises(RuntimeError) as ex:
+        foo()
+    assert "does not support the type" in str(ex.value)
+
+
+def test_fallback_sum_with_x_unsupported_operand_type_error_2():
+    """
+    Feature: JIT Fallback
+    Description: Test max() in graph mode when input x is dict with string type key.
+    Expectation: TypeError.
+    """
+
+    @ms_function
+    def foo():
+        x = sum({'a': 1, 'b': 2, 'c': 3})
+        return x
+    with pytest.raises(RuntimeError) as ex:
+        foo()
+    assert "does not support the type" in str(ex.value)

@@ -29,7 +29,7 @@ from operator import (  # noqa
 # support system function call
 from builtins import (  # noqa
     bool, getattr, setattr, hasattr, len, iter, next, pow, range, map, zip,
-    print, enumerate, isinstance, filter, abs, all, any, round, max, min, list, tuple
+    print, enumerate, isinstance, filter, abs, all, any, round, max, min, sum, list, tuple
 )
 
 # support functools
@@ -47,7 +47,7 @@ __all__ = ['add', 'sub', 'mul', 'truediv', 'floordiv', 'mod', 'eq', 'ne', 'lt', 
            'matmul', 'getitem', 'setitem',
            'bool', 'getattr', 'setattr', 'hasattr', 'len', 'iter', 'next', 'pow', 'range', 'map', 'zip',
            'partial', 'print', 'enumerate', 'isinstance', 'filter', 'abs', 'all', 'any', 'round',
-           'exp', 'log', 'sin', 'cos', 'tan', 'max', 'min', 'list', 'tuple']
+           'exp', 'log', 'sin', 'cos', 'tan', 'max', 'min', 'sum', 'list', 'tuple']
 
 
 def MakeTuple(*elts):  # pragma: no cover
