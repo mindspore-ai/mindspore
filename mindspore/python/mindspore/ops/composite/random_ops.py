@@ -14,12 +14,12 @@
 # ============================================================================
 """Operations for random number generators."""
 from mindspore.ops.primitive import constexpr
-from .. import operations as P
-from .. import functional as F
-from .multitype_ops import _constexpr_utils as const_utils
-from ...common import dtype as mstype
-from ...common.seed import _get_graph_seed
-from ...common.api import _function_forbid_reuse
+from mindspore.ops import operations as P
+from mindspore.ops import functional as F
+from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
+from mindspore.common import dtype as mstype
+from mindspore.common.seed import _get_graph_seed
+from mindspore.common.api import _function_forbid_reuse
 
 
 @constexpr(reuse_result=False)

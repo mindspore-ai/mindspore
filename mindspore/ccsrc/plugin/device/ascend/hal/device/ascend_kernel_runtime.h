@@ -115,7 +115,7 @@ class AscendKernelRuntime : public KernelRuntime {
   static bool DeleteDumpDir(const std::string &path);
   static int DeleteDumpFile(std::string path);
   static std::string GetRealPath(const std::string &path);
-  void CreateDefaultStream(uint32_t device_id);
+  void CreateDefaultStream();
 
   rtContext_t rt_context_{nullptr};
   bool initialized_{false};

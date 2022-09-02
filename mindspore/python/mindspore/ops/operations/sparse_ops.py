@@ -18,9 +18,9 @@
 
 """Operators for sparse operators."""
 
-from ..._checkparam import Validator as validator
-from ...common import dtype as mstype
-from ..primitive import PrimitiveWithInfer, prim_attr_register, Primitive
+from mindspore._checkparam import Validator as validator
+from mindspore.common import dtype as mstype
+from mindspore.ops.primitive import PrimitiveWithInfer, prim_attr_register, Primitive
 
 
 class SparseDenseCwiseAdd(Primitive):

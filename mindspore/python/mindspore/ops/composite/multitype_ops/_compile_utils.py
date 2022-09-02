@@ -15,16 +15,16 @@
 
 """constexpr util"""
 import numpy as np
-from . import _constexpr_utils as const_utils
-from ... import functional as F
-from ... import operations as P
-from ...composite import base
-from ..._primitive_cache import _get_cache_prim
-from ...operations._inner_ops import TensorCopySlices, SliceGetItem, DynamicBroadcastTo, TopTypeof
-from ....common import dtype as mstype
-from ....common._register_for_tensor import tensor_operator_registry
-from ....common.tensor import Tensor, CSRTensor, COOTensor
-from ....common._utils import is_shape_unknown
+from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
+from mindspore.ops import functional as F
+from mindspore.ops  import operations as P
+from mindspore.ops.composite import base
+from mindspore.ops._primitive_cache import _get_cache_prim
+from mindspore.ops.operations._inner_ops import TensorCopySlices, SliceGetItem, DynamicBroadcastTo, TopTypeof
+from mindspore.common import dtype as mstype
+from mindspore.common._register_for_tensor import tensor_operator_registry
+from mindspore.common.tensor import Tensor, CSRTensor, COOTensor
+from mindspore.common._utils import is_shape_unknown
 
 slice_get_item = SliceGetItem()
 hyper_map = base.HyperMap()

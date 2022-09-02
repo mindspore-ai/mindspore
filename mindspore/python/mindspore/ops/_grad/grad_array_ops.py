@@ -18,18 +18,18 @@
 import numpy as np
 import mindspore as ms
 from mindspore.ops import composite as C
-from .. import operations as P
-from ..operations import _grad_ops as G
-from ..operations import _inner_ops as inner
-from ..operations.array_ops import Fills
-from ..composite.multitype_ops.zeros_like_impl import zeros_like
-from ..functional import broadcast_gradient_args
-from .. import functional as F
-from .grad_base import bprop_getters
-from ..primitive import constexpr
-from ...common import dtype as mstype
-from ...common.tensor import RowTensor
-from .._utils.utils import range_op, get_1d_shape, generate_shape_index, is_shape_unknown
+from mindspore.ops import operations as P
+from mindspore.ops.operations import _grad_ops as G
+from mindspore.ops.operations import _inner_ops as inner
+from mindspore.ops.operations.array_ops import Fills
+from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
+from mindspore.ops.functional import broadcast_gradient_args
+from mindspore.ops import functional as F
+from mindspore.ops._grad.grad_base import bprop_getters
+from mindspore.ops.primitive import constexpr
+from mindspore.common import dtype as mstype
+from mindspore.common.tensor import RowTensor
+from mindspore.ops._utils.utils import range_op, get_1d_shape, generate_shape_index, is_shape_unknown
 
 reduce_sum = P.ReduceSum()
 unsorted_segment_sum = P.UnsortedSegmentSum()

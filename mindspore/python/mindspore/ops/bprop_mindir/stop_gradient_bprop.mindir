@@ -1,12 +1,12 @@
 
-0.1.1	MindSpore*1.9.0:¿
+0.1.1	MindSpore*1.9.0.20220901:¿
 ¼
-bprop_stop_gradient.69:x"bprop_stop_gradient.69:[CNode]70:1"bprop_stop_gradient.69:[CNode]70:1"(REF::S-Prim-hyper_map[zeros_like_leaf]:2:.Default/S-Prim-hyper_map[zeros_like_leaf]-op46
+bprop_stop_gradient.62:x"bprop_stop_gradient.62:[CNode]63:1"bprop_stop_gradient.62:[CNode]63:1"(REF::S-Prim-hyper_map[zeros_like_leaf]:2:.Default/S-Prim-hyper_map[zeros_like_leaf]-op41
 ¤
-"bprop_stop_gradient.69:[CNode]70:1"bprop_stop_gradient.69:[CNode]71:3"bprop_stop_gradient.69:[CNode]71:3"REF::S-Prim-MakeTuple:4:Default/S-Prim-MakeTuple-op47bprop_stop_gradient.69*
-bprop_stop_gradient.69:x*
-bprop_stop_gradient.69:out*
-bprop_stop_gradient.69:dout2$
-"bprop_stop_gradient.69:[CNode]71:3:@15c8a6e42bc637ef8ef88de957c9b42bcf8f0cddad564d4af868039e48abf1eaPbH
-#S-Prim-hyper_map[zeros_like_leaf]:2!S-Prim-hyper_map[zeros_like_leaf]b&
-S-Prim-MakeTuple:4S-Prim-MakeTupleh
+"bprop_stop_gradient.62:[CNode]63:1"bprop_stop_gradient.62:[CNode]64:3"bprop_stop_gradient.62:[CNode]64:3"REF::S-Prim-MakeTuple:4:Default/S-Prim-MakeTuple-op42bprop_stop_gradient.62*
+bprop_stop_gradient.62:x*
+bprop_stop_gradient.62:out*
+bprop_stop_gradient.62:dout2$
+"bprop_stop_gradient.62:[CNode]64:3:@15c8a6e42bc637ef8ef88de957c9b42bcf8f0cddad564d4af868039e48abf1eaPb&
+S-Prim-MakeTuple:4S-Prim-MakeTuplebH
+#S-Prim-hyper_map[zeros_like_leaf]:2!S-Prim-hyper_map[zeros_like_leaf]h

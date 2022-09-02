@@ -341,7 +341,7 @@ bool TransformVectorFuncValueNode(const FuncGraphManagerPtr &manager, const Func
     return false;
   }
   std::vector<AnfNodePtr> nodes;
-  nodes.emplace_back(NewValueNode(prim::kPrimMakeTuple));
+  (void)nodes.emplace_back(NewValueNode(prim::kPrimMakeTuple));
   bool is_all_func = true;
   for (auto &elem : value_vec) {
     MS_EXCEPTION_IF_NULL(elem);

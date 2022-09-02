@@ -14,18 +14,18 @@
 # ============================================================================
 
 """bprop primitives"""
-from .._utils.utils import is_shape_unknown
-from .grad_base import bprops, bprop_getters
-from ..composite.multitype_ops._constexpr_utils import infer_out_shape
-from ..composite.multitype_ops.zeros_like_impl import zeros_like
-from ..operations._sparse_grad_ops import SparseAddGrad
-from ...common import dtype as mstype
-from .. import functional as F
-from .. import operations as P
-from ..operations import _csr_ops
-from ..operations.sparse_ops import SparseAdd, CSRSparseMatrixToDense, CSRSparseMatrixToSparseTensor, \
+from mindspore.ops._utils.utils import is_shape_unknown
+from mindspore.ops._grad.grad_base import bprops, bprop_getters
+from mindspore.ops.composite.multitype_ops._constexpr_utils import infer_out_shape
+from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
+from mindspore.ops.operations._sparse_grad_ops import SparseAddGrad
+from mindspore.common import dtype as mstype
+from mindspore.ops import functional as F
+from mindspore.ops import operations as P
+from mindspore.ops.operations import _csr_ops
+from mindspore.ops.operations.sparse_ops import SparseAdd, CSRSparseMatrixToDense, CSRSparseMatrixToSparseTensor, \
     DenseToCSRSparseMatrix
-from ..operations.sparse_ops import SparseToDenseV2
+from mindspore.ops.operations.sparse_ops import SparseToDenseV2
 
 # Unused parameters are placeholders.
 

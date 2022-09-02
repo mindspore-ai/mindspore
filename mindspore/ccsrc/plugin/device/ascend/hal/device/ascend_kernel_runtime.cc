@@ -1188,7 +1188,7 @@ void AscendKernelRuntime::SetRtDevice(uint32_t device_id) {
   (void)initialized_device_set_.insert(device_id);
 }
 
-void AscendKernelRuntime::CreateDefaultStream(uint32_t device_id) {
+void AscendKernelRuntime::CreateDefaultStream() {
   size_t compute_stream_id;
   AscendStreamMng::GetInstance().CreateStreamWithFlags(&compute_stream_id, RT_STREAM_HUGE);
   MS_LOG(INFO) << "Create ascend default stream, stream id: " << compute_stream_id;
@@ -1225,7 +1225,7 @@ bool AscendKernelRuntime::InitDevice() {
     return false;
   }
 
-  CreateDefaultStream(device_id_);
+  CreateDefaultStream();
   return true;
 }
 

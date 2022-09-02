@@ -1377,6 +1377,7 @@ AnfNodePtr FuncGraphSpecializer::BuildValueNodeForAbstractFunction(const AnfNode
   ValuePtr value = nullptr;
   if (abs->isa<PrimitiveAbstractClosure>()) {
     auto real_fn = dyn_cast_ptr<PrimitiveAbstractClosure>(abs);
+    MS_EXCEPTION_IF_NULL(real_fn);
     // For primitive, check if the attribute is the same with cnode inferred attribute, if not, clone a new one
     if (attrs != nullptr) {
       value = BuildPrimtiveValueWithAttributes(real_fn->prim(), attrs);
