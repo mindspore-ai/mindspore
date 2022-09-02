@@ -187,7 +187,7 @@ class InlinerBase : public AnfVisitor {
   }
 
   AnfNodePtr InlineForUniqueUse(const AnfNodePtr &node, const FuncGraphPtr &fg, const std::vector<AnfNodePtr> &args,
-                                const std::vector<AnfNodePtr> &inputs) {
+                                const std::vector<AnfNodePtr> &inputs) const {
     if (use_move_) {
       return InlineMove(node, fg, args, inputs);
     }

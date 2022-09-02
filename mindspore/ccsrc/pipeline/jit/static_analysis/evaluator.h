@@ -229,7 +229,7 @@ class BaseFuncGraphEvaluator : public Evaluator {
   // As evaluator can be recursively called, so use a vector to simulate a stack of flags.
   std::vector<bool> always_eval_flags_;
   AbstractBasePtr LaunchRecursiveEval(const AnalysisEnginePtr &engine, const FuncGraphPtr &fg,
-                                      const AnalysisContextPtr &context);
+                                      const AnalysisContextPtr &context) const;
   // Add functions for stack frame routine.
   AbstractBasePtr LaunchStackFrame(const AnalysisEnginePtr &engine, const FuncGraphPtr &fg,
                                    const AnalysisContextPtr &context);
