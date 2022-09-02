@@ -40,9 +40,13 @@ abstract::ShapePtr GatherNdInferShape(const PrimitivePtr &primitive, const std::
   for (size_t i = 0; i < indices_rank - 1; i++) {
     output_shape.push_back(indices_shape[i]);
   }
+  if (indices_rank - 1 >= 0 && indices_shape[indices_rank - 1] == UNKNOWN_DIM) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
+  }
   for (size_t i = LongToSize(indices_shape[indices_rank - 1]); i < input_rank; ++i) {
     output_shape.push_back(input_shape[i]);
   }
+
   return std::make_shared<abstract::Shape>(output_shape);
 }
 
