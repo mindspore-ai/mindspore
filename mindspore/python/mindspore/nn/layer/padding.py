@@ -542,7 +542,7 @@ class ZeroPad2d(_ConstantPadNd):
     Pads the last two dimensions of input tensor with zero.
 
     Args:
-        padding (union[int, tuple]): The padding size to pad the last two dimensions of input tensor.
+        padding (Union[int, tuple]): The padding size to pad the last two dimensions of input tensor.
             If is int, uses the same padding in boundaries of input's last two dimensions.
             If is tuple and length of padding is 4 uses (padding_0, padding_1, padding_2, padding_3) to pad.
             If the input is `x`, the size of last dimension of output is :math:`padding\_0 + x.shape[-1] + padding\_1`.

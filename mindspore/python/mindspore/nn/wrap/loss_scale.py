@@ -66,7 +66,7 @@ class DynamicLossScaleUpdateCell(Cell):
     when there is an overflow. And it will be increased by `loss_scale` * `scale_factor` if there is no
     overflow for a continuous `scale_window` steps.
 
-    `get_update_cell` method of :class:`mindspore.DynamicLossScaleManager` will return this class, it will be called
+    `get_update_cell` method of :class:`mindspore.amp.DynamicLossScaleManager` will return this class. It will be called
     by :class:`mindspore.nn.TrainOneStepWithLossScaleCell` during training to update loss scale.
 
     Args:
@@ -165,7 +165,7 @@ class FixedLossScaleUpdateCell(Cell):
     """
     Update cell with fixed loss scaling value.
 
-    `get_update_cell` method of :class:`mindspore.FixedLossScaleManager` will return this class, it will be called
+    `get_update_cell` method of :class:`mindspore.amp.FixedLossScaleManager` will return this class, it will be called
     by :class:`mindspore.nn.TrainOneStepWithLossScaleCell` during trainning.
 
     Args:

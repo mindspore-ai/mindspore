@@ -514,7 +514,7 @@ class FixedSparseAttention(nn.Cell):
     """
     Fixed Sparse Attention Layer.
 
-    This function contains the sparse attention primitives used in Sparse Transformers (see paper).
+    This function contains the sparse attention primitives used in Sparse Transformers (see paper)
     `Generating Long Sequences with Sparse Transformers <https://arxiv.org/abs/1904.10509>`_.
     Specifically, it includes the following:
     1. A faster implementation of normal attention (the upper triangle is not computed, and many operations are fused).

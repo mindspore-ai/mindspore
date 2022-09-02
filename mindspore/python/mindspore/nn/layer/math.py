@@ -887,9 +887,9 @@ class Moments(Cell):
     Calculate the mean and variance of the input `x` along the specified `axis`.
 
     Args:
-        axis (Union[int, tuple(int)]): Calculates the mean and variance along the specified axis.
+        axis (Union[int, tuple(int), None]): Calculates the mean and variance along the specified axis.
             When the value is None, it means to calculate the mean and variance of all values of `x`. Default: None.
-        keep_dims (bool): If True, the calculation result will retain the dimension of `axis`,
+        keep_dims (Union[bool, None]): If True, the calculation result will retain the dimension of `axis`,
             and the dimensions of the mean and variance are the same as the input. If False or None,
             the dimension of `axis` will be reduced. Default: None.
 

@@ -47,8 +47,8 @@ class LossScaleManager:
 
 class FixedLossScaleManager(LossScaleManager):
     """
-    Loss scale(Magnification factor of gradients when mix precision is used) manager with a fixed loss scale value,
-    inherits from :class:`mindspore.LossScaleManager`.
+    Loss scale (Magnification factor of gradients when mix precision is used) manager with a fixed loss scale value,
+    inherits from :class:`mindspore.amp.LossScaleManager`.
 
     Args:
         loss_scale (float): Magnification factor of gradients. Note that if `drop_overflow_update` is set to False,
@@ -99,7 +99,7 @@ class FixedLossScaleManager(LossScaleManager):
 
     def update_loss_scale(self, overflow):
         """
-        Update loss scale value. The interface at :class:`mindspore.FixedLossScaleManager` will do nothing.
+        Update loss scale value. The interface at :class:`mindspore.amp.FixedLossScaleManager` will do nothing.
 
         Args:
             overflow (bool): Whether it overflows.
@@ -124,7 +124,7 @@ class FixedLossScaleManager(LossScaleManager):
 class DynamicLossScaleManager(LossScaleManager):
     """
     Loss scale(Magnification factor of gradients when mix precision is used) manager with loss scale dynamically
-    adjusted, inherits from :class:`mindspore.LossScaleManager`.
+    adjusted, inherits from :class:`mindspore.amp.LossScaleManager`.
 
     Args:
         init_loss_scale (float): Initialize loss scale. Default: 2**24.

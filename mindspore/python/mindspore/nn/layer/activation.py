@@ -937,13 +937,13 @@ class Sigmoid(Cell):
     Sigmoid_function#/media/File:Logistic-curve.svg>`_.
 
     Inputs:
-        - **x** (Tensor) - The input of Sigmoid with data type of float16 or float32. Tensor of any dimension.
+        - **input_x** (Tensor) - The input of Sigmoid with data type of float16 or float32. Tensor of any dimension.
 
     Outputs:
-        Tensor, with the same type and shape as the `x`.
+        Tensor, with the same type and shape as the `input_x`.
 
     Raises:
-        TypeError: If dtype of `x` is neither float16 nor float32.
+        TypeError: If dtype of `input_x` is neither float16 nor float32.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

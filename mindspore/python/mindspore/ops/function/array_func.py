@@ -4039,7 +4039,7 @@ def max(x, axis=0, keep_dims=False):
     Also see: class: `mindspore.ops.ArgMaxWithValue`.
 
     Args:
-        x (Tensor) - The input tensor, can be any dimension. Set the shape of input tensor as
+        x (Tensor): The input tensor, can be any dimension. Set the shape of input tensor as
           :math:`(x_1, x_2, ..., x_N)`.
         axis (int): The dimension to reduce. Default: 0.
         keep_dims (bool): Whether to reduce dimension, if true, the output will keep same dimension with the input,
