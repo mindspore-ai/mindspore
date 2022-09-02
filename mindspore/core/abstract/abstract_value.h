@@ -711,7 +711,8 @@ class MS_CORE_API AbstractTensor : public AbstractUndetermined {
   std::string ToString() const override;
 
   std::size_t hash() const override {
-    // We have to exclude value from hash, since it may change after hash() called.
+    // We have to exclude value pointer from hash, because CSE (Common Subexpression Elimination)
+    // will use this hash to find duplicate ValueNodes that Tensor values are equal.
     auto hash_sum = hash_combine(tid(), element_->hash());
     const auto &shape = GetShapeTrack();
     if (shape != nullptr) {
