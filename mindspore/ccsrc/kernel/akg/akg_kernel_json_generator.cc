@@ -1122,10 +1122,10 @@ bool GetCpuInfo(nlohmann::json *target_info) {
   std::string feature = flags.cpu_feature;
   std::string type = flags.cpu_type;
   std::set<std::string> valid_os = {"linux", "windows"};
-  std::set<std::string> valid_arch = {"arm", "x86_64"};
   // arch: <{supported-features}, default-feature>
   std::map<std::string, std::pair<std::set<std::string>, std::string>> valid_features = {
     {"arm", {{"neon"}, "neon"}},
+    {"aarch64", {{"neon"}, "neon"}},
     {"x86_64", {{"sse", "avx", "avx512"}, "avx"}},
   };
   std::set<std::string> valid_cpu_types = {"core-avx2", "skylake-avx512", "core-avx-i", "haswell", "skylake"};
@@ -1134,12 +1134,14 @@ bool GetCpuInfo(nlohmann::json *target_info) {
     MS_LOG(WARNING) << "GraphKernelFlag: unsupported \"target_os\": " << target_os;
     target_os = "linux";
   }
-  if (valid_arch.count(arch) == 0) {
+  if (valid_features.count(arch) == 0) {
     if (!arch.empty()) {
       MS_LOG(WARNING) << "GraphKernelFlag: unsupported \"cpu_arch\": " << arch;
     }
-#if defined(ENABLE_ARM) || defined(ENABLE_ARM64)
+#if defined(__arm__)
     arch = "arm";
+#elif defined(__aarch64__)
+    arch = "aarch64";
 #else
     arch = "x86_64";
 #endif
