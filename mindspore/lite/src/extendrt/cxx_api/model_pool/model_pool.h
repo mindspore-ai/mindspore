@@ -157,6 +157,8 @@ class ModelPool {
   std::unordered_map<Strategy, std::vector<std::shared_ptr<WorkerInfo>>> all_workers_;
   // store model pool related information
   std::unordered_map<Strategy, ModelPoolInfo> model_pool_info_;
+  std::vector<char *> model_bufs_;
+  char *graph_buf_ = nullptr;
 
   // save all worker thread
   std::vector<std::thread> worker_thread_vec_;
