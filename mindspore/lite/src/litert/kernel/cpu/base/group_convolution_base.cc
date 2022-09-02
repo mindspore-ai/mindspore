@@ -57,21 +57,23 @@ int GroupConvolutionBaseCPUKernel::ReSize() {
 
 GroupConvolutionBaseCPUKernel::~GroupConvolutionBaseCPUKernel() {
   for (auto &sub_conv : group_convs_) {
-    // free sub conv input tensors / output tensors manually
-    auto sub_in_tensors = sub_conv->in_tensors();
-    auto sub_in_tensor_num = sub_in_tensors.size();
-    for (size_t i = 0; i < sub_in_tensor_num; ++i) {
-      delete sub_in_tensors[i];
-      sub_in_tensors[i] = nullptr;
+    if (sub_conv != nullptr) {
+      // free sub conv input tensors / output tensors manually
+      auto sub_in_tensors = sub_conv->in_tensors();
+      auto sub_in_tensor_num = sub_in_tensors.size();
+      for (size_t i = 0; i < sub_in_tensor_num; ++i) {
+        delete sub_in_tensors[i];
+        sub_in_tensors[i] = nullptr;
+      }
+      auto sub_out_tensors = sub_conv->out_tensors();
+      auto sub_out_tensor_num = sub_out_tensors.size();
+      for (size_t i = 0; i < sub_out_tensor_num; ++i) {
+        delete sub_out_tensors[i];
+        sub_out_tensors[i] = nullptr;
+      }
+      delete sub_conv;
+      sub_conv = nullptr;
     }
-    auto sub_out_tensors = sub_conv->out_tensors();
-    auto sub_out_tensor_num = sub_out_tensors.size();
-    for (size_t i = 0; i < sub_out_tensor_num; ++i) {
-      delete sub_out_tensors[i];
-      sub_out_tensors[i] = nullptr;
-    }
-    delete sub_conv;
-    sub_conv = nullptr;
   }
   group_convs_.clear();
   if (group_conv_creator_ != nullptr) {

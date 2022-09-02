@@ -23,6 +23,7 @@
 namespace mindspore::lite {
 int ConvolutionNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                                 const std::vector<mindspore::MSTensor> &out_tensors) {
+  CHECK_LESS_RETURN(in_tensors.size(), kInputSize1);
   if (!in_tensors[1].IsConst()) {
     MS_LOG(WARNING) << "NPU convolution does not support dynamic weight.";
     return RET_NOT_SUPPORT;
@@ -36,11 +37,14 @@ int ConvolutionNPUOp::IsSupport(const schema::Primitive *primitive, const std::v
 }
 
 int ConvolutionNPUOp::SetConvParam(const schema::Conv2DFusion *conv_prim) {
+  CHECK_NULL_RETURN(conv_prim);
   auto group = static_cast<int>(conv_prim->group());
   CHECK_NULL_RETURN(conv_prim->stride());
+  CHECK_LESS_RETURN(conv_prim->stride()->size(), DIMENSION_2D);
   auto stride_h = std::min(static_cast<int>(*(conv_prim->stride()->begin())), input_h_);
   auto stride_w = std::min(static_cast<int>(*(conv_prim->stride()->begin() + 1)), input_w_);
   CHECK_NULL_RETURN(conv_prim->dilation());
+  CHECK_LESS_RETURN(conv_prim->dilation()->size(), DIMENSION_2D);
   auto dilation_h = static_cast<int>(*(conv_prim->dilation()->begin()));
   auto dilation_w = static_cast<int>(*(conv_prim->dilation()->begin() + 1));
   conv_->set_attr_strides(ge::AttrValue::LIST_INT({stride_h, stride_w}));
@@ -56,6 +60,7 @@ int ConvolutionNPUOp::SetConvParam(const schema::Conv2DFusion *conv_prim) {
   } else {
     conv_->set_attr_pad_mode(ge::AttrValue::STR{"SPECIFIC"});
     CHECK_NULL_RETURN(conv_prim->pad_list());
+    CHECK_LESS_RETURN(conv_prim->pad_list()->size(), DIMENSION_4D);
     auto pad_u = static_cast<int>(*(conv_prim->pad_list()->begin() + PAD_UP));
     auto pad_d = static_cast<int>(*(conv_prim->pad_list()->begin() + PAD_DOWN));
     auto pad_l = static_cast<int>(*(conv_prim->pad_list()->begin() + PAD_LEFT));
@@ -79,6 +84,7 @@ int ConvolutionNPUOp::Init(const schema::Primitive *primitive, const std::vector
     return RET_ERROR;
   }
   auto in_shape = in_tensors[0].Shape();  // default format: nhwc, RunPass not called
+  CHECK_LESS_RETURN(in_shape.size(), DIMENSION_4D);
   input_h_ = in_shape[NHWC_H];
   input_w_ = in_shape[NHWC_W];
   auto ret = SetConvParam(conv_prim);
@@ -122,6 +128,7 @@ int ConvolutionNPUOp::SetNPUInputs(
     MS_CHECK_TRUE_RET(in_op != nullptr, RET_ERROR);
     conv_->SetInput(itr->first, *in_op, itr->second.second);
   } else {
+    CHECK_LESS_RETURN(npu_inputs.size(), 1);
     conv_->set_input_x(*npu_inputs[0]);
   }
   return RET_OK;

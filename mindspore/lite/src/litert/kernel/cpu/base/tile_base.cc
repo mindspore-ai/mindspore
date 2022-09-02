@@ -90,8 +90,8 @@ int TileCPUKernel::ReSize() {
 }
 
 int SimpleTile(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
-  CHECK_NULL_RETURN(cdata);
   auto kernel = reinterpret_cast<TileCPUKernel *>(cdata);
+  CHECK_NULL_RETURN(kernel);
   auto ret = kernel->SimpleTileImpl(task_id);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "SimpleTile error task_id[" << task_id << "] error_code[" << ret << "]";

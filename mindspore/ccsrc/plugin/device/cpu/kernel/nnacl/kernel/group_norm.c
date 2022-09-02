@@ -31,8 +31,12 @@ typedef struct GroupNormStru {
 
 static int groupnorm_resize(struct KernelBase *self) {
   GroupNormStru *groupnorm = (GroupNormStru *)self;
+  NNACL_CHECK_NULL_RETURN_ERR(groupnorm);
   GroupNormParameter *param = (GroupNormParameter *)groupnorm->base.param;
-
+  NNACL_CHECK_NULL_RETURN_ERR(param);
+  if (self->insize < kInputSize2 || self->outsize < 1) {
+    return NNACL_ERR;
+  }
   groupnorm_release(self);
 
   TensorC *in0 = &(self->in[0]);
@@ -51,12 +55,15 @@ static int groupnorm_resize(struct KernelBase *self) {
 
 static int groupnorm_prepare(struct KernelBase *self) {
   GroupNormStru *groupnorm = (GroupNormStru *)self;
+  NNACL_CHECK_NULL_RETURN_ERR(groupnorm);
   GroupNormParameter *param = (GroupNormParameter *)groupnorm->base.param;
+  NNACL_CHECK_NULL_RETURN_ERR(param);
 
   if ((param->num_groups_ < 0) || (param->channel_ % param->num_groups_)) {
     return NNACL_ERR;
   }
   size_t mean_var_elem_num = param->num_groups_;
+  MS_CHECK_FALSE(mean_var_elem_num == 0, NNACL_ERR);
   param->mean_ = malloc(mean_var_elem_num * sizeof(float));
   param->variance_ = malloc(mean_var_elem_num * sizeof(float));
   if (param->mean_ == NULL || param->variance_ == NULL) {
@@ -68,7 +75,9 @@ static int groupnorm_prepare(struct KernelBase *self) {
 
 static int groupnorm_release(struct KernelBase *self) {
   GroupNormStru *groupnorm = (GroupNormStru *)self;
+  NNACL_CHECK_NULL_RETURN_ERR(groupnorm);
   GroupNormParameter *param = (GroupNormParameter *)groupnorm->base.param;
+  NNACL_CHECK_NULL_RETURN_ERR(param);
 
   if (param->mean_ != NULL) {
     free(param->mean_);
@@ -89,9 +98,22 @@ static int groupnorm_do_compute(void *param, int task_id, float lhs_scale, float
 
   GroupNormStru *groupnorm_stru = (GroupNormStru *)param;
   GroupNormParameter *groupnorm_param = (GroupNormParameter *)groupnorm_stru->base.param;
-  int ret = GroupNormFp32(groupnorm_stru->base.in[0].data_, groupnorm_stru->base.in[C1NUM].data_,
-                          groupnorm_stru->base.in[C2NUM].data_, groupnorm_param->mean_, groupnorm_param->variance_,
-                          groupnorm_param, task_id, groupnorm_stru->base.out[0].data_);
+  NNACL_CHECK_NULL_RETURN_ERR(groupnorm_param);
+
+  const void *input_data = groupnorm_stru->base.in[0].data_;
+  NNACL_CHECK_NULL_RETURN_ERR(input_data);
+  const void *scale_data = groupnorm_stru->base.in[C1NUM].data_;
+  NNACL_CHECK_NULL_RETURN_ERR(scale_data);
+  const void *offset_data = groupnorm_stru->base.in[C2NUM].data_;
+  NNACL_CHECK_NULL_RETURN_ERR(offset_data);
+  void *output_data = groupnorm_stru->base.out[0].data_;
+  NNACL_CHECK_NULL_RETURN_ERR(output_data);
+
+  NNACL_CHECK_NULL_RETURN_ERR(groupnorm_param->mean_);
+  NNACL_CHECK_NULL_RETURN_ERR(groupnorm_param->variance_);
+
+  int ret = GroupNormFp32(input_data, scale_data, offset_data, groupnorm_param->mean_, groupnorm_param->variance_,
+                          groupnorm_param, task_id, output_data);
 
   return ret;
 }

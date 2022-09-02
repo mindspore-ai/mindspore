@@ -152,6 +152,7 @@ int ArithmeticSelfNPUOp::SetNPUInputs(
   }
   for (auto it : index2_multi_out_index) {
     MS_LOG(INFO) << name_ << "set input " << it.first << " from " << it.second.first << " output " << it.second.second;
+    CHECK_LESS_RETURN(npu_inputs.size(), 1);
     op_->SetInput(it.first, *it.second.first, it.second.second);
   }
   return RET_OK;

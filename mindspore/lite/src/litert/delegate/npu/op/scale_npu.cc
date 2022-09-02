@@ -30,6 +30,7 @@ int ScaleNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<
     MS_LOG(ERROR) << "Get null primitive value for op: " << name_;
     return RET_ERROR;
   }
+  CHECK_LESS_RETURN(in_tensors.size(), 1);
   auto input_dims = in_tensors.at(INPUT_INDEX).Shape().size();
   axis_ = scale_prim->axis();
   if (axis_ < 0) {

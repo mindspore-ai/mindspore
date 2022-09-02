@@ -34,6 +34,7 @@ int SliceNPUOp::Init(const schema::Primitive *primitive, const std::vector<minds
 int SliceNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
                              const std::vector<mindspore::MSTensor> &out_tensors,
                              const std::vector<ge::Operator *> &npu_inputs) {
+  CHECK_LESS_RETURN(npu_inputs.size(), SLICE_SIZE_INDEX + 1);
   slice_->set_input_x(*npu_inputs[0]);
   slice_->set_input_offsets(*npu_inputs[OFFSET_INDEX]);
   slice_->set_input_size(*npu_inputs[SLICE_SIZE_INDEX]);

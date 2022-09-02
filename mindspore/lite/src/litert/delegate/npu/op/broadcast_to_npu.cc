@@ -47,6 +47,7 @@ int BroadcastToNPUOp::Init(const schema::Primitive *primitive, const std::vector
 int BroadcastToNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
                                    const std::vector<mindspore::MSTensor> &out_tensors,
                                    const std::vector<ge::Operator *> &npu_inputs) {
+  MS_CHECK_GE(npu_inputs.size(), kInputSize1, RET_NOT_SUPPORT);
   broadcast_to_->set_input_x(*npu_inputs[0]);
   broadcast_to_->set_input_shape(*npu_inputs[1]);
   return RET_OK;

@@ -26,6 +26,7 @@ using mindspore::lite::RET_OK;
 namespace mindspore::kernel {
 int ArithmeticBaseRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto kernel = reinterpret_cast<ArithmeticBaseCPUKernel *>(cdata);
+  CHECK_NULL_RETURN(kernel);
   auto ret = kernel->DoArithmetic(task_id);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ArithmeticsRun error task_id[" << task_id << "] error_code[" << ret << "]";

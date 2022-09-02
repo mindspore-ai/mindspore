@@ -308,6 +308,7 @@ int ConvolutionBaseCPUKernel::MallocQuantParam() {
 
 int ConvolutionBaseCPUKernel::SetInputTensorQuantParam() {
   auto input_tensor = in_tensors_.at(kInputIndex);
+  CHECK_NULL_RETURN(input_tensor);
   auto in_arg_num = conv_quant_arg_->input_arg_num_;
   if (in_arg_num == kPerTensor) {
     auto input_quant_arg = input_tensor->quant_params().front();
@@ -323,6 +324,7 @@ int ConvolutionBaseCPUKernel::SetInputTensorQuantParam() {
 
 int ConvolutionBaseCPUKernel::SetFilterTensorQuantParam() {
   auto weight_tensor = in_tensors_.at(kWeightIndex);
+  CHECK_NULL_RETURN(weight_tensor);
   auto weight_arg_num = conv_quant_arg_->filter_arg_num_;
   if (weight_arg_num == kPerTensor) {
     auto weight_quant_arg = weight_tensor->quant_params().front();
@@ -340,6 +342,7 @@ int ConvolutionBaseCPUKernel::SetFilterTensorQuantParam() {
 
 int ConvolutionBaseCPUKernel::SetOutputTensorQuantParam() {
   auto output_tensor = out_tensors_.at(kOutputIndex);
+  CHECK_NULL_RETURN(output_tensor);
   auto out_arg_num = conv_quant_arg_->output_arg_num_;
   if (out_arg_num == kPerTensor) {
     auto output_quant_arg = output_tensor->quant_params().front();

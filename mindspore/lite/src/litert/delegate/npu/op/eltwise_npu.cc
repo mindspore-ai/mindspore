@@ -50,6 +50,7 @@ int EltwiseNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensor
   }
   for (int i = 0; i < npu_inputs.size(); ++i) {
     if (index2_multi_out_index.find(i) == index2_multi_out_index.end()) {
+      CHECK_LESS_RETURN(npu_inputs.size(), 1);
       eltwise_->SetInput(i, *npu_inputs[i], 0);
     }
   }

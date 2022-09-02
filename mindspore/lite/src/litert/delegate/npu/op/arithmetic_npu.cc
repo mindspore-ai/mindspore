@@ -24,6 +24,8 @@ constexpr int ARITHMETIC_INPUT_NUM = 2;
 constexpr int MAX_HW_SIZE = 1664;
 int ArithmeticNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                                const std::vector<mindspore::MSTensor> &out_tensors) {
+  CHECK_LESS_RETURN(in_tensors.size(), ARITHMETIC_INPUT_NUM);
+  CHECK_LESS_RETURN(out_tensors.size(), 1);
   auto in_shape_0 = in_tensors[0].Shape();
   auto in_shape_1 = in_tensors[1].Shape();
   auto out_shape = out_tensors[0].Shape();
@@ -254,8 +256,8 @@ int ArithmeticNPUOp::HandleAxisAndConstantInputs(std::vector<mindspore::MSTensor
       continue;
     }
     auto shape = in_tensor.Shape();
-    auto new_shape = {in_tensor.Shape().at(NHWC_N), in_tensor.Shape().at(NHWC_C), in_tensor.Shape().at(NHWC_H),
-                      in_tensor.Shape().at(NHWC_W)};
+    CHECK_LESS_RETURN(shape.size(), DIMENSION_4D);
+    auto new_shape = {shape.at(NHWC_N), shape.at(NHWC_C), shape.at(NHWC_H), shape.at(NHWC_W)};
     auto nh2nc_tensor =
       mindspore::MSTensor::CreateTensor(in_tensor.Name() + "_nh2nc", in_tensor.DataType(), new_shape, nullptr, 0);
     if (nh2nc_tensor == nullptr) {
@@ -265,6 +267,7 @@ int ArithmeticNPUOp::HandleAxisAndConstantInputs(std::vector<mindspore::MSTensor
     auto dst_data = nh2nc_tensor->MutableData();
     MS_CHECK_TRUE_RET(dst_data != nullptr, RET_ERROR);
     // transpose dst_data to nchw.
+    CHECK_NULL_RETURN(in_tensor.Data());
     PackNHWCToNCHWFp32(in_tensor.MutableData(), dst_data, shape[NHWC_N], shape[NHWC_H] * shape[NHWC_W], shape[NHWC_C]);
     nh2nc_tensor->SetFormat(NCHW);
     inputs_.at(i) = *nh2nc_tensor;

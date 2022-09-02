@@ -45,6 +45,7 @@ int BatchnormNPUOp::Init(const schema::Primitive *primitive, const std::vector<m
 int BatchnormNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
                                  const std::vector<mindspore::MSTensor> &out_tensors,
                                  const std::vector<ge::Operator *> &npu_inputs) {
+  CHECK_LESS_RETURN(npu_inputs.size(), 1);
   batchnorm_->set_input_x(*npu_inputs[0]);
   scale_ = new (std::nothrow) hiai::op::Const(name_ + "_scale");
   if (scale_ == nullptr) {

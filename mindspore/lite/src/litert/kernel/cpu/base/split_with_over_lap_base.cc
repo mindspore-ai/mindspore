@@ -114,8 +114,8 @@ int SplitWithOverlapBaseCPUKernel::Split(int task_id) {
 }
 
 int SplitWithOverlapRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
-  CHECK_NULL_RETURN(cdata);
   auto g_kernel = reinterpret_cast<SplitWithOverlapBaseCPUKernel *>(cdata);
+  CHECK_NULL_RETURN(g_kernel);
   auto ret = g_kernel->Split(task_id);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "SplitWithOverlapRun error task_id[" << task_id << "] error_code[" << ret << "]";

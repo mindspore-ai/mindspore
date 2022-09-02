@@ -24,6 +24,7 @@ using mindspore::schema::PrimitiveType_Gather;
 namespace mindspore::kernel {
 int GatherRun(void *cdata, int task_id, float, float) {
   auto gather_kernel = reinterpret_cast<const GatherBaseCPUKernel *>(cdata);
+  CHECK_NULL_RETURN(gather_kernel);
   auto error_code = gather_kernel->DoGather(task_id);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "GatherRun error task_id[" << task_id << "] error_code[" << error_code << "]";
@@ -115,7 +116,7 @@ int GatherBaseCPUKernel::Run() {
 int GatherBaseCPUKernel::InitDynamicStatus() {
   auto in_shape = in_tensors_[FIRST_INPUT]->shape();
   int in_rank = static_cast<int>(in_shape.size());
-  MS_CHECK_TRUE_MSG(axis_ < in_rank, RET_ERROR, "gather's inputs are invalid.");
+  MS_CHECK_TRUE_MSG(axis_ >= 0 && axis_ < in_rank, RET_ERROR, "gather's inputs are invalid.");
   limit_ = in_shape[axis_];
   outer_size_ = 1;
   for (int i = 0; i < axis_; ++i) {

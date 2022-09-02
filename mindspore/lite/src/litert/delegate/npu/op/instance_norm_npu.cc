@@ -48,9 +48,12 @@ int InstanceNormNPUOp::Init(const schema::Primitive *primitive, const std::vecto
 int InstanceNormNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
                                     const std::vector<mindspore::MSTensor> &out_tensors,
                                     const std::vector<ge::Operator *> &npu_inputs) {
+  CHECK_LESS_RETURN(npu_inputs.size(), 1);
   instance_norm_->set_input_x(*npu_inputs[0]);
 
+  CHECK_LESS_RETURN(in_tensors.size(), BETA_INDEX + 1);
   auto gamma_shape = in_tensors[GAMMA_INDEX].Shape();
+  CHECK_LESS_RETURN(gamma_shape.size(), 1);
   auto gamma_tensor = ConverterToNPUTensor(in_tensors[GAMMA_INDEX]);
   if (gamma_tensor == nullptr) {
     MS_LOG(ERROR) << "Get gamma_tensor failed.";
@@ -67,6 +70,7 @@ int InstanceNormNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_t
   instance_norm_->set_input_gamma(*gamma_);
 
   auto beta_shape = in_tensors[BETA_INDEX].Shape();
+  CHECK_LESS_RETURN(beta_shape.size(), 1);
   auto beta_tensor = ConverterToNPUTensor(in_tensors[BETA_INDEX]);
   if (beta_tensor == nullptr) {
     MS_LOG(ERROR) << "Get beta_tensor failed.";

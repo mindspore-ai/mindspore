@@ -23,6 +23,7 @@ constexpr int GATHER_INPUT_SIZE = 3;
 
 int GatherNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                            const std::vector<mindspore::MSTensor> &out_tensors) {
+  CHECK_LESS_RETURN(in_tensors.size(), GATHER_INPUT_SIZE);
   if (in_tensors[1].DataType() != DataType::kNumberTypeInt32) {
     MS_LOG(WARNING) << "Gather indices only support Int32";
     return RET_NOT_SUPPORT;
@@ -57,6 +58,7 @@ int GatherNPUOp::Init(const schema::Primitive *primitive, const std::vector<mind
 int GatherNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
                               const std::vector<mindspore::MSTensor> &out_tensors,
                               const std::vector<ge::Operator *> &npu_inputs) {
+  CHECK_LESS_RETURN(npu_inputs.size(), GATHER_INPUT_SIZE - 1);
   gather_->set_input_x(*npu_inputs[0]);
   gather_->set_input_indices(*npu_inputs[1]);
   return RET_OK;

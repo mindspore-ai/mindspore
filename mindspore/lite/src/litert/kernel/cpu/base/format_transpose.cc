@@ -43,9 +43,9 @@ int FormatTransposeCPUKernel::Run() {
   int channel = input->Channel();
 
   auto data_type = input->data_type();
-  int plane = height * width;
+  CHECK_NULL_RETURN(param_);
   return TransData(input_ptr, output_ptr, param_->src_format_, param_->dst_format_, (TypeIdC)data_type, batch, channel,
-                   plane);
+                   height * width);
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_FormatTranspose, LiteKernelCreator<FormatTransposeCPUKernel>)

@@ -55,7 +55,7 @@ int ConvolutionBaseNPUOp::InitWeightConst(const std::vector<mindspore::MSTensor>
   }
   auto w_shape = inputs[1].Shape();
   auto origin_weight = inputs[1].Data().get();
-  MS_ASSERT(origin_weight);
+  CHECK_NULL_RETURN(origin_weight);
 
   if (inputs[1].DataType() == DataType::kNumberTypeFloat16) {
 #ifdef ENABLE_ARM

@@ -132,8 +132,8 @@ int QuantDTypeCastCPUKernel::QuantDTypeCast(int task_id) {
 }
 
 int QuantDTypeCastRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
-  CHECK_NULL_RETURN(cdata);
   auto g_kernel = reinterpret_cast<QuantDTypeCastCPUKernel *>(cdata);
+  CHECK_NULL_RETURN(g_kernel);
   auto ret = g_kernel->QuantDTypeCast(task_id);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "QuantDTypeCastRun error task_id[" << task_id << "] error_code[" << ret << "]";
@@ -143,6 +143,8 @@ int QuantDTypeCastRun(void *cdata, int task_id, float lhs_scale, float rhs_scale
 }
 
 int QuantDTypeCastCPUKernel::Run() {
+  CHECK_NULL_RETURN(in_tensors_[0]);
+  CHECK_NULL_RETURN(out_tensors_[0]);
   if (in_tensors_[0]->data_type() == TypeId::kNumberTypeInt8 &&
       out_tensors_[0]->data_type() == TypeId::kNumberTypeFloat32) {
     int8_ptr_ = reinterpret_cast<int8_t *>(in_tensors_[0]->data());

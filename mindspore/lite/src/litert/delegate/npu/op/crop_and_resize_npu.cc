@@ -71,6 +71,7 @@ int CropAndResizeNPUOp::Init(const schema::Primitive *primitive, const std::vect
 int CropAndResizeNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
                                      const std::vector<mindspore::MSTensor> &out_tensors,
                                      const std::vector<ge::Operator *> &npu_inputs) {
+  CHECK_LESS_RETURN(npu_inputs.size(), CROP_RESIZE_INPUT_SIZE);
   crop_and_resize_->set_input_x(*npu_inputs[0]);
   crop_and_resize_->set_input_boxes(*npu_inputs[BOXES_INDEX]);
   crop_and_resize_->set_input_box_index(*npu_inputs[BOX_INDEX]);

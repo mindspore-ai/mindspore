@@ -34,6 +34,7 @@ int StridedSliceNPUOp::IsSupport(const schema::Primitive *primitive, const std::
       }
     }
   }
+  CHECK_LESS_RETURN(in_tensors.size(), 1);
   auto input_x = in_tensors.at(0);
   if (input_x.DataType() != DataType::kNumberTypeFloat32 || input_x.DataType() != DataType::kNumberTypeFloat16) {
     need_cast_ = true;
@@ -73,6 +74,7 @@ int StridedSliceNPUOp::Init(const schema::Primitive *primitive, const std::vecto
 int StridedSliceNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
                                     const std::vector<mindspore::MSTensor> &out_tensors,
                                     const std::vector<ge::Operator *> &npu_inputs) {
+  CHECK_LESS_RETURN(npu_inputs.size(), END_INDEX + 1);
   strided_slice_->set_attr_begin_mask(begins_mask_);
   strided_slice_->set_attr_ellipsis_mask(ellipsis_mask_);
   strided_slice_->set_attr_end_mask(ends_mask_);
@@ -81,11 +83,13 @@ int StridedSliceNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_t
   // StridedSliceV2 supports setting axes, but it will cause an endless loop.
   if (need_cast_) {
     in_cast_->set_input_x(*(npu_inputs[0]));
+    CHECK_LESS_RETURN(in_tensors.size(), 1);
     in_cast_->set_attr_src_dtype(ConverterToNPUDataType(static_cast<DataType>(in_tensors[0].DataType())));
     in_cast_->set_attr_dst_dtype(ge::DT_FLOAT);
     strided_slice_->set_input_x(*in_cast_);
     out_cast_->set_input_x(*strided_slice_);
     out_cast_->set_attr_src_dtype(ge::DT_FLOAT);
+    CHECK_LESS_RETURN(out_tensors.size(), 1);
     out_cast_->set_attr_dst_dtype(ConverterToNPUDataType(static_cast<DataType>(out_tensors[0].DataType())));
   } else {
     strided_slice_->set_input_x(*npu_inputs[0]);
@@ -95,8 +99,10 @@ int StridedSliceNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_t
 
   // The strides position of onnx is the 5th, and the others are the 4th.
   if (npu_inputs.size() == ONNX_INPUT_SIZE) {
+    CHECK_LESS_RETURN(npu_inputs.size(), ONNX_STRIDE_INDEX + 1);
     strided_slice_->set_input_strides(*npu_inputs[ONNX_STRIDE_INDEX]);
   } else {
+    CHECK_LESS_RETURN(npu_inputs.size(), STRIDE_INDEX + 1);
     strided_slice_->set_input_strides(*npu_inputs[STRIDE_INDEX]);
   }
   return RET_OK;

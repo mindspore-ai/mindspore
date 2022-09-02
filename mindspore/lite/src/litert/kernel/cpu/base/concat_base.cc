@@ -32,6 +32,7 @@ constexpr int kMinCostPerThread = 16384;
 }
 int ConcatBaseRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto concat_kernel = reinterpret_cast<ConcatBaseCPUKernel *>(cdata);
+  CHECK_NULL_RETURN(concat_kernel);
   auto error_code = concat_kernel->DoConcat(task_id);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "ConcatRun error task_id[" << task_id << "] error_code[" << error_code << "]";
@@ -116,7 +117,9 @@ int ConcatBaseCPUKernel::ReSize() {
   concat_param_->axis_ = concat_param_->axis_ >= 0
                            ? concat_param_->axis_
                            : static_cast<int>(in_tensors_.front()->shape().size()) + concat_param_->axis_;
-  MS_CHECK_TRUE_MSG(concat_param_->axis_ >= 0, RET_ERROR, "concat-axis is invalid.");
+  MS_CHECK_TRUE_MSG(
+    concat_param_->axis_ >= 0 && concat_param_->axis_ < static_cast<int>(in_tensors_.front()->shape().size()),
+    RET_ERROR, "concat-axis is invalid.");
   auto ret = InitDynamicStatus();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "update dynamic-status failed.";
