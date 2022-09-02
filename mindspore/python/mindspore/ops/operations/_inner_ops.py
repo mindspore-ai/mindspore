@@ -94,7 +94,7 @@ class FillV2(Primitive):
         self.add_prim_attr("max_length", 1000000)
 
 
-class ExtractImagePatches(PrimitiveWithInfer):
+class ExtractImagePatches(Primitive):
     """
     Extracts patches from images.
     The input tensor must be a 4-D tensor and the data format is NHWC.
@@ -143,42 +143,6 @@ class ExtractImagePatches(PrimitiveWithInfer):
         self.padding = validator.check_string(padding.upper(), ['VALID', 'SAME'], 'padding', self.name)
         self.add_prim_attr("padding", self.padding)
         self.is_ge = context.get_context("enable_ge")
-
-    def infer_shape(self, input_x):
-        """infer shape"""
-        if len(input_x) != 4:
-            raise ValueError("The `input_x` must be a 4-D tensor, "
-                             f"but got a {len(input_x)}-D tensor whose shape is {input_x}")
-
-        in_batch, in_depth, in_row, in_col = input_x
-        _, _, ksize_row, ksize_col = self.ksizes
-        _, _, stride_row, stride_col = self.strides
-        _, _, rate_row, rate_col = self.rates
-
-        out_batch = in_batch
-        out_depth = ksize_row * ksize_col * in_depth
-
-        if self.padding == "VALID":
-            out_row = \
-                (in_row - (ksize_row + (ksize_row - 1) * (rate_row - 1))) // stride_row + 1
-            out_col = \
-                (in_col - (ksize_col + (ksize_col - 1) * (rate_col - 1))) // stride_col + 1
-        else:
-            out_row = (in_row - 1) // stride_row + 1
-            out_col = (in_col - 1) // stride_col + 1
-
-        out_shape = [out_batch, out_depth, out_row, out_col]
-        # avoiding empty outputs
-        validator.check("out_batch", out_batch, "", 0, Rel.GT, self.name)
-        validator.check("out_depth", out_depth, "", 0, Rel.GT, self.name)
-        validator.check("out_row", out_row, "", 0, Rel.GT, self.name)
-        validator.check("out_col", out_col, "", 0, Rel.GT, self.name)
-        return out_shape
-
-    def infer_dtype(self, input_x):
-        """infer dtype"""
-        validator.check_tensor_dtype_valid("input_x", input_x, mstype.number_type, self.name)
-        return input_x
 
 
 class Range(PrimitiveWithInfer):

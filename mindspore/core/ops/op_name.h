@@ -216,6 +216,7 @@ constexpr auto kStepW = "step_w";
 constexpr auto kSteps = "steps";
 constexpr auto kStride = "stride";
 constexpr auto kStrides = "strides";
+constexpr auto kRates = "rates";
 constexpr auto kShapeType = "shape_type";
 constexpr auto kSubGraphIndex = "sub_graph_index";
 constexpr auto kSummarize = "summarize";

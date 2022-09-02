@@ -1252,14 +1252,6 @@ class MaxPoolGradWithArgmax(_PoolGrad):
         self.init_prim_io_names(inputs=['x', 'grad', 'argmax'], outputs=['output'])
         super(MaxPoolGradWithArgmax, self).__init__(kernel_size, strides, pad_mode)
 
-    def infer_shape(self, x_shape, grad_shape, argmax_shape):
-        if not grad_shape:
-            raise TypeError("The dout of MaxPoolGradWithArgmax must be a Tensor.")
-        return x_shape
-
-    def infer_dtype(self, x_dtype, grad_dtype, argmax_dtype):
-        return grad_dtype
-
 
 class MaxPool3DGradWithArgmax(Primitive):
     """Gradients of the maxpool3Dwithargmax operation."""

@@ -92,6 +92,15 @@ abstract::TupleShapePtr MaxPoolWithArgmaxInferShape(const PrimitivePtr &primitiv
   MS_EXCEPTION_IF_NULL(context);
   auto op_name = primitive->name();
   auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDim0]->BuildShape())[kShape];
+  // ToSupport Dynamic rank
+  if (IsDynamicRank(in_shape)) {
+    // The input tensor of Primitive MaxPoolWithArgmax must be a 4-D tensor and the data format is NCHW/NHWC.
+    // So DynamicRank can transfer to 4-D dynamic shape
+    std::vector<abstract::BaseShapePtr> shape_list = {
+      std::make_shared<abstract::Shape>(std::vector<int64_t>{-1, -1, -1, -1}),
+      std::make_shared<abstract::Shape>(std::vector<int64_t>{-1, -1, -1, -1})};
+    return std::make_shared<abstract::TupleShape>(shape_list);
+  }
   Format format = Format(CheckAndConvertUtils::GetAndCheckFormat(primitive->GetAttr(kFormat)));
   const int64_t x_rank = 4;
   (void)CheckAndConvertUtils::CheckInteger("x_rank", SizeToLong(in_shape.size()), kEqual, x_rank, op_name);
@@ -112,12 +121,10 @@ abstract::TupleShapePtr MaxPoolWithArgmaxInferShape(const PrimitivePtr &primitiv
   (void)CheckAndConvertUtils::CheckInteger("strides size", SizeToLong(strides.size()), kEqual, attr_size, op_name);
 
   int64_t batch = 0, in_h = 0, in_w = 0, channel = 0;
-  int64_t kernel_h = 0, kernel_w = 0;
-  int64_t stride_h = 0, stride_w = 0;
-  kernel_h = kernel_size[kDim1];
-  kernel_w = kernel_size[kDim2];
-  stride_h = strides[kDim1];
-  stride_w = strides[kDim2];
+  int64_t kernel_h = kernel_size[kDim1];
+  int64_t kernel_w = kernel_size[kDim2];
+  int64_t stride_h = strides[kDim1];
+  int64_t stride_w = strides[kDim2];
   if (format == Format::NCHW) {
     batch = in_shape[kDim0];
     channel = in_shape[kDim1];
@@ -129,8 +136,7 @@ abstract::TupleShapePtr MaxPoolWithArgmaxInferShape(const PrimitivePtr &primitiv
     in_w = in_shape[kDim2];
     channel = in_shape[kDim3];
   }
-  int64_t out_h = abstract::Shape::SHP_ANY;
-  int64_t out_w = abstract::Shape::SHP_ANY;
+  int64_t out_h = abstract::Shape::SHP_ANY, out_w = abstract::Shape::SHP_ANY;
   if (pad_mode == PadMode::VALID) {
     out_h = static_cast<int64_t>(std::ceil((in_h - (kernel_h - 1)) / static_cast<float>(stride_h)));
     out_w = static_cast<int64_t>(std::ceil((in_w - (kernel_w - 1)) / static_cast<float>(stride_w)));
@@ -156,18 +162,11 @@ abstract::TupleShapePtr MaxPoolWithArgmaxInferShape(const PrimitivePtr &primitiv
   // kernel_size -> ksize
   // pad_mode -> padding
   std::vector<int64_t> ksize = {kernel_size[kDim0], kernel_size[kDim1], kernel_size[kDim2], kernel_size[kDim3]};
-  if (format == NHWC) {
-    (void)primitive->AddAttr("ksize", MakeValue(ksize));
-    (void)primitive->AddAttr("data_format", MakeValue(kFormatNHWC));
-  } else if (format == NCHW) {
-    (void)primitive->AddAttr("ksize", MakeValue(ksize));
-    (void)primitive->AddAttr("data_format", MakeValue(kFormatNCHW));
-  }
-  if (pad_mode == PadMode::VALID) {
-    (void)primitive->AddAttr(kPadding, MakeValue(kVALID));
-  } else if (pad_mode == PadMode::SAME) {
-    (void)primitive->AddAttr(kPadding, MakeValue(kSAME));
-  }
+  auto format_attr_val = format == NHWC ? kFormatNHWC : kFormatNCHW;
+  auto pad_attr_val = pad_mode == PadMode::VALID ? MakeValue(kVALID) : MakeValue(kSAME);
+  (void)primitive->AddAttr("ksize", MakeValue(ksize));
+  (void)primitive->AddAttr("data_format", MakeValue(format_attr_val));
+  (void)primitive->AddAttr(kPadding, pad_attr_val);
   ShapeVector shape = out_shape;
   ShapeVector argmax_shape = shape;
   std::vector<abstract::BaseShapePtr> shape_list = {std::make_shared<abstract::Shape>(shape),

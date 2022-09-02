@@ -57,6 +57,10 @@
 #include "ops/grad/max_pool_grad.h"
 #include "ops/dropout.h"
 #include "ops/xdivy.h"
+#include "ops/extract_image_patches.h"
+#include "ops/grad/max_pool_grad_with_argmax.h"
+#include "ops/max_pool_with_argmax.h"
+#include "ops/mirror_pad.h"
 
 namespace mindspore {
 namespace abstract {
@@ -380,7 +384,6 @@ PrimitiveEvalImplMap &GetPrimitiveToBackendEvalImplMap() {
     {prim::kPrimMinimum, R{InferImplMinimum, nullptr, true}},
     {prim::kPrimDivNoNan, R{InferImplDivNoNan, nullptr, true}},
     {prim::kPrimLinSpace, R{InferImplLinSpace, nullptr, true}},
-
     {prim::kPrimLess, R{InferImplLess, nullptr, true}},
     {prim::kPrimPad, R{InferImplPad, nullptr, true}},
     {prim::kPrimUnsortedSegmentSum, R{InferImplUnsortedSegmentSum, nullptr, true}},
@@ -405,8 +408,7 @@ PrimitiveEvalImplMap &GetPrimitiveToBackendEvalImplMap() {
     {prim::kPrimAdamApplyOneWithDecay, R{InferImplAdamApplyOneWithDecay, nullptr, true}},
     {prim::kPrimTensorScatterUpdate, R{ops::TensorScatterArithmeticInfer, nullptr, true}},
     {prim::kPrimMaxPool, R{ops::MaxPoolInfer, nullptr, true}},
-    {prim::kPrimMaxPoolGrad, R{ops::MaxPoolGradInfer, nullptr, true}},
-  };
+    {prim::kPrimMaxPoolGrad, R{ops::MaxPoolGradInfer, nullptr, true}}};
   return prim_backend_eval_implement_map;
 }
 
