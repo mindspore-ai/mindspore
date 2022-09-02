@@ -111,6 +111,9 @@ ge::Operator OpTilingCalculateAdapter::AnfNodeToGeOperatorAdapter(
   ge::Operator op;
   return op;
 }
+
+void OpTilingCalculateAdapter::UpdateWorkspace(const ::ge::NodePtr &ge_node,
+                                               const std::vector<int64_t> &workspace_size_list) {}
 }  // namespace tiling
 }  // namespace device
 }  // namespace mindspore

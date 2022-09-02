@@ -103,27 +103,6 @@ int DynamicTbeKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   // avoid atomic_clean memory violation, we need dynamic atomic_clean op.
   AscendKernelMod::UpdateOutputSizeList();
 
-  // compute tiling of atomic_clean op.
-  device::tiling::OpTilingCalculateAdapter converter;
-  const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map = inputsOnHost;
-  ::ge::ComputeGraphPtr ge_graph = std::make_shared<::ge::ComputeGraph>("default");
-  ::ge::NodePtr ge_node = nullptr;
-  if (!atomic_clean_nodes_.empty()) {
-    atomic_compile_info_ = ParseCompileJson(atomic_clean_nodes_[0].lock());
-    ge_node = converter.AnfNodeToGeNodeAdapter(cnode, &ge_graph, depend_tensor_map, op_compile_info_);
-    MS_EXCEPTION_IF_NULL(ge_node);
-    optiling::utils::OpRunInfo atomic_op_info(-1, true, 0);
-    auto ret = optiling::OpAtomicCalculateV2(*ge_node, atomic_op_info);
-    if (ret != ::ge::GRAPH_SUCCESS) {
-      MS_LOG(EXCEPTION) << "The node: " << cnode->fullname_with_scope() << " compute atomic tiling failed!";
-    }
-    for (const auto &atomic_clean_node : atomic_clean_nodes_) {
-      auto dynamic_kernel_mod = dynamic_cast<DynamicTbeKernelMod *>(AnfAlgo::GetKernelMod(atomic_clean_node.lock()));
-      MS_EXCEPTION_IF_NULL(dynamic_kernel_mod);
-      dynamic_kernel_mod->InitAtomicOps(atomic_op_info);
-    }
-  }
-
   need_skip_execute_ = AnfAlgo::IsDynamicShapeSkipExecute(cnode);
   if (need_skip_execute_) {
     return 0;
@@ -131,11 +110,17 @@ int DynamicTbeKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
 
   GenFuncStub();
   // start compute tiling
+  device::tiling::OpTilingCalculateAdapter converter;
+  const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map = inputsOnHost;
+  ::ge::ComputeGraphPtr ge_graph = std::make_shared<::ge::ComputeGraph>("default");
   optiling::utils::OpRunInfo op_run_info_v2(-1, true, 0);
   MS_LOG(INFO) << "Start compute tiling of: " << cnode->fullname_with_scope();
-  auto ge_op = (ge_node != nullptr)
-                 ? converter.GeNodeToGeOperatorAdapter(ge_node)
-                 : converter.AnfNodeToGeOperatorAdapter(cnode, &ge_graph, depend_tensor_map, op_compile_info_);
+  if (!atomic_clean_nodes_.empty()) {
+    atomic_compile_info_ = ParseCompileJson(atomic_clean_nodes_[0].lock());
+  }
+  auto ge_node = converter.AnfNodeToGeNodeAdapter(cnode, &ge_graph, depend_tensor_map, op_compile_info_);
+  MS_EXCEPTION_IF_NULL(ge_node);
+  auto ge_op = converter.GeNodeToGeOperatorAdapter(ge_node);
   auto ret = optiling::OpParaCalculateV2(ge_op, op_run_info_v2);
   if (ret != ::ge::GRAPH_SUCCESS) {
     MS_LOG(EXCEPTION) << "The node: " << cnode->fullname_with_scope() << " compute tiling failed!";
@@ -151,6 +136,23 @@ int DynamicTbeKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   workspace_size_list_.resize(workspace_size_list.size());
   std::transform(workspace_size_list.begin(), workspace_size_list.end(), workspace_size_list_.begin(),
                  [](int64_t size) { return static_cast<size_t>(size); });
+
+  // compute tiling of atomic_clean op.
+  if (!atomic_clean_nodes_.empty()) {
+    // Update workspace size
+    converter.UpdateWorkspace(ge_node, workspace_size_list);
+
+    optiling::utils::OpRunInfo atomic_op_info(-1, true, 0);
+    ret = optiling::OpAtomicCalculateV2(*ge_node, atomic_op_info);
+    if (ret != ::ge::GRAPH_SUCCESS) {
+      MS_LOG(EXCEPTION) << "The node: " << cnode->fullname_with_scope() << " compute atomic tiling failed!";
+    }
+    for (const auto &atomic_clean_node : atomic_clean_nodes_) {
+      auto dynamic_kernel_mod = dynamic_cast<DynamicTbeKernelMod *>(AnfAlgo::GetKernelMod(atomic_clean_node.lock()));
+      MS_EXCEPTION_IF_NULL(dynamic_kernel_mod);
+      dynamic_kernel_mod->InitAtomicOps(atomic_op_info);
+    }
+  }
   return 0;
 }
 
@@ -229,24 +231,6 @@ bool DynamicTbeKernelMod::Launch(const std::vector<AddressPtr> &inputs, const st
     MS_LOG(EXCEPTION) << "The cnode is not dynamic shape:" << cnode->fullname_with_scope();
   }
 
-  if (!atomic_clean_nodes_.empty()) {
-    for (const auto &atomic_clean_node : atomic_clean_nodes_) {
-      KernelLaunchInfo kernel_launch_info;
-      auto kernel_mod = AnfAlgo::GetKernelMod(atomic_clean_node.lock());
-      MS_EXCEPTION_IF_NULL(kernel_mod);
-      device::KernelRuntime::GenLaunchArgs(*kernel_mod, atomic_clean_node.lock(), &kernel_launch_info);
-      auto atomic_inputs = kernel_launch_info.inputs_;
-      // Temporary scheme to avoid SyncStream error in dynamic-shaped  WeNet network
-      for (auto input : atomic_inputs) {
-        auto align_size = device::MemoryManager::GetCommonAlignSize(input->size);
-        auto ret = aclrtMemsetAsync(input->addr, align_size, 0, align_size, stream_ptr);
-        if (ret != RT_ERROR_NONE) {
-          MS_LOG(EXCEPTION) << "AclrtMemset failed for " << cnode->fullname_with_scope();
-        }
-      }
-    }
-  }
-
   // need skip, for reducesum empty input axis
   if (need_skip_execute_) {
     // Skip reduce if axis is a empty Tensor (shape = 0)
@@ -261,6 +245,19 @@ bool DynamicTbeKernelMod::Launch(const std::vector<AddressPtr> &inputs, const st
 
     MS_LOG(INFO) << "Execute node:" << cnode->fullname_with_scope() << " success.";
     return true;
+  }
+
+  if (!atomic_clean_nodes_.empty()) {
+    for (const auto &atomic_clean_node : atomic_clean_nodes_) {
+      KernelLaunchInfo kernel_launch_info;
+      auto kernel_mod = AnfAlgo::GetKernelMod(atomic_clean_node.lock());
+      MS_EXCEPTION_IF_NULL(kernel_mod);
+      device::KernelRuntime::GenLaunchArgs(*kernel_mod, atomic_clean_node.lock(), &kernel_launch_info);
+      auto atomic_inputs = kernel_launch_info.inputs_;
+      std::vector<AddressPtr> atomic_outputs;
+      std::vector<AddressPtr> atomic_workspace;
+      kernel_mod->Launch(atomic_inputs, atomic_workspace, atomic_outputs, stream_ptr);
+    }
   }
 
   // copy tiling to device

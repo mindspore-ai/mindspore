@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <utility>
+#include <unordered_set>
 #include "plugin/device/ascend/kernel/tbe/tiling/op_tiling_adapter.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_build.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_dynamic_shape_util.h"
@@ -259,6 +260,7 @@ void OpTilingCalculateAdapter::ConvertAtomicCompileInfo(const CNodePtr &node, ::
 
   // clean workspace
   if (has_workspace) {
+    // The WorkspaceBytes of op_desc will be updated in the Resize
     auto workspace_men_sizes = kernel_mod->GetWorkspaceSizeList();
     std::vector<int64_t> workspace_list;
     std::transform(workspace_men_sizes.begin(), workspace_men_sizes.end(), std::back_inserter(workspace_list),
@@ -453,6 +455,12 @@ void OpTilingCalculateAdapter::InitOpIoName(const CNodePtr &node) {
   auto ge_node = CreateGeNode(node, ge_graph, depend_tensor_map, op_compile_info);
   MS_EXCEPTION_IF_NULL(ge_node);
   return ::ge::OpDescUtils::CreateOperatorFromNode(ge_node);
+}
+
+void OpTilingCalculateAdapter::UpdateWorkspace(const ::ge::NodePtr &ge_node,
+                                               const std::vector<int64_t> &workspace_size_list) {
+  auto op_desc = ge_node->GetOpDesc();
+  op_desc->SetWorkspaceBytes(workspace_size_list);
 }
 }  // namespace tiling
 }  // namespace device
