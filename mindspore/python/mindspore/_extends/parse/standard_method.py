@@ -551,10 +551,10 @@ def swapaxes(x, axis1, axis2):
     new_perm = None
     if axis2 + 1 < x.ndim:
         new_perm = perm[0:axis1] + perm[axis2:axis2 + 1] + \
-            perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1] + perm[axis2 + 1:]
+                   perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1] + perm[axis2 + 1:]
     else:
         new_perm = perm[0:axis1] + perm[axis2:axis2 + 1] + \
-            perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1]
+                   perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1]
 
     return F.transpose(x, new_perm)
 
@@ -1726,9 +1726,9 @@ def repeat(x, repeats, axis=None):
         const_utils.raise_value_error('operands could not be broadcast together')
     subs = P.Split(axis, size)(x)
     repeated_subs = []
-    for sub, rep in zip(subs, repeats):
+    for sub_item, rep in zip(subs, repeats):
         if rep != 0:
-            repeated_subs.append(repeat_elements(sub, rep, axis))
+            repeated_subs.append(repeat_elements(sub_item, rep, axis))
     return P.Concat(axis)(repeated_subs)
 
 
@@ -2261,9 +2261,19 @@ def exp(x):
     return F.exp(x)
 
 
+def sqrt(x):
+    """Returns sqrt of a tensor element-wise."""
+    return F.sqrt(x)
+
+
 def square(x):
     """Returns square of a tensor element-wise."""
     return F.square(x)
+
+
+def sub(x, y):
+    """Returns sub of a tensor element-wise."""
+    return F.sub(x, y)
 
 
 def tan(x):

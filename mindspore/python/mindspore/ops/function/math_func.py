@@ -160,6 +160,7 @@ trunc_ = P.Trunc()
 sparse_segment_mean_ = SparseSegmentMean()
 xlogy_ = P.Xlogy()
 square_ = P.Square()
+sqrt_ = P.Sqrt()
 
 
 #####################################
@@ -3413,6 +3414,35 @@ def std(input_x, axis=(), unbiased=True, keep_dims=False):
     return output
 
 
+def sqrt(x):
+    """
+    Returns sqrt of a tensor element-wise.
+
+    .. math::
+
+        out_{i} = \\sqrt{x_{i}}
+
+    Args:
+        x (Tensor): The input tensor with a dtype of Number, its rank must be in [0, 7] inclusive.
+
+    Returns:
+        Tensor, has the same shape and dtype as the `x`.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([1.0, 4.0, 9.0]), mindspore.float32)
+        >>> output = ops.sqrt(x)
+        >>> print(output)
+        [1. 2. 3.]
+    """
+    return sqrt_(x)
+
+
 def square(x):
     """
     Returns square of a tensor element-wise.
@@ -5702,6 +5732,7 @@ def remainder(x, y):
     out = x - tensor_floordiv(x, y) * y
     return out
 
+
 def accumulate_n(*x):
     r"""
     Computes accumulation of all input tensors element-wise.
@@ -5814,6 +5845,7 @@ __all__ = [
     'logit',
     'logsumexp',
     'ldexp',
+    'sqrt',
     'square',
     'sin',
     'cos',

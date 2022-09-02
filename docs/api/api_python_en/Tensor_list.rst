@@ -68,7 +68,9 @@ Element-wise Methods
     mindspore.Tensor.logit
     mindspore.Tensor.pow
     mindspore.Tensor.round
+    mindspore.Tensor.sqrt
     mindspore.Tensor.std
+    mindspore.Tensor.sub
     mindspore.Tensor.svd
     mindspore.Tensor.tan
     mindspore.Tensor.tanh
