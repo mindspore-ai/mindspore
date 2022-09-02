@@ -2341,7 +2341,7 @@ def conv3d_transpose(inputs, weight, pad_mode='valid', padding=0, stride=1, dila
     return _conv_3d_transpose(inputs, weight)
 
 
-def conv2d(x, weight, kernel_size, pad_mode="valid", padding=0, stride=1, dilation=1, group=1):
+def conv2d(inputs, weight, pad_mode="valid", padding=0, stride=1, dilation=1, group=1):
     r"""
     2D convolution layer.
 
@@ -2379,13 +2379,9 @@ def conv2d(x, weight, kernel_size, pad_mode="valid", padding=0, stride=1, dilati
     http://cs231n.github.io/convolutional-networks/.
 
     Args:
-        x (Tensor): Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
+        inputs (Tensor): Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
         weight (Tensor): Set size of kernel is :math:`(\text{kernel_size[0]}, \text{kernel_size[1]})`,
             then the shape is :math:`(C_{out}, C_{in}, \text{kernel_size[0]}, \text{kernel_size[1]})`.
-        kernel_size (Union[int, tuple[int]]): The data type is int or a tuple of 2 integers. Specifies the height
-            and width of the 2D convolution window. Single int means the value is for both the height and the width of
-            the kernel. A tuple of 2 ints means the first value is for the height and the other is for the
-            width of the kernel.
         pad_mode (str): Specifies padding mode. The optional values are
             "same", "valid" and "pad". Default: "valid".
 
@@ -2412,15 +2408,15 @@ def conv2d(x, weight, kernel_size, pad_mode="valid", padding=0, stride=1, dilati
                                       be :math:`k - 1` pixels skipped for each sampling location. Its value must
                                       be greater than or equal to 1 and bounded by the height and width of the
                                       input `x`. Default: 1.
-        group (int): Splits input into groups. Default: 1.
+        group (int): Splits inputs into groups. Default: 1.
 
     Returns:
         Tensor, the value that applied 2D convolution. The shape is :math:`(N, C_{out}, H_{out}, W_{out})`.
 
     Raises:
-        TypeError: If `kernel_size`, `stride`, `padding` or `dilation` is neither an int nor a tuple.
+        TypeError: If `stride`, `padding` or `dilation` is neither an int nor a tuple.
         TypeError: If `out_channel` or `group` is not an int.
-        ValueError: If `kernel_size`, `stride` or `dilation` is less than 1.
+        ValueError: If `stride` or `dilation` is less than 1.
         ValueError: If `pad_mode` is not one of 'same', 'valid' or 'pad'.
         ValueError: If `padding` is a tuple whose length is not equal to 4.
         ValueError: If `pad_mode` it not equal to 'pad' and `padding` is not equal to (0, 0, 0, 0).
@@ -2431,14 +2427,15 @@ def conv2d(x, weight, kernel_size, pad_mode="valid", padding=0, stride=1, dilati
     Examples:
         >>> x = Tensor(np.ones([10, 32, 32, 32]), mindspore.float32)
         >>> weight = Tensor(np.ones([32, 32, 3, 3]), mindspore.float32)
-        >>> output = F.Conv2D(x, weight, kernel_size=3, out_channel=32, stride=1)
+        >>> output = ops.conv2d(x, weight)
         >>> print(output.shape)
         (10, 32, 30, 30)
     """
     weight_shape = weight.shape
     out_channel = weight_shape[0]
-    conv = _get_cache_prim(P.Conv2D)(out_channel, kernel_size, 1, pad_mode, padding, stride, 1, dilation, group, "NCHW")
-    output = conv(x, weight)
+    kernel_size = weight_shape[2:4]
+    conv = _get_cache_prim(P.Conv2D)(out_channel, kernel_size, 1, pad_mode, padding, stride, dilation, group, "NCHW")
+    output = conv(inputs, weight)
     return output
 
 
