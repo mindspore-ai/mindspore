@@ -24,49 +24,54 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr IOUInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto prim_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kGreaterEqual, 2, prim_name);
-  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
-  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 1);
-  auto x_shape_ptr = input_args[0]->BuildShape();
-  MS_EXCEPTION_IF_NULL(x_shape_ptr);
-  auto y_shape_ptr = input_args[1]->BuildShape();
-  MS_EXCEPTION_IF_NULL(y_shape_ptr);
-  auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shape_ptr);
-  auto y_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(y_shape_ptr);
-  auto x_shp = x_shape_map[kShape];
-  auto y_shp = y_shape_map[kShape];
-  if (x_shp.size() != 2 || y_shp.size() != 2) {
-    MS_EXCEPTION(ValueError)
-      << "For 'BatchMatMul', input x, y must have the same dimension size and must be 2. But got x size = "
-      << x_shp.size() << ", y size = " << y_shp.size() << ".";
-  }
-  (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(x_shp[1]), kGreaterEqual, 4, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(y_shp[1]), kGreaterEqual, 4, prim_name);
-  ShapeVector ret_shape;
-  ret_shape.push_back(y_shp[0]);
-  ret_shape.push_back(x_shp[0]);
-  return std::make_shared<abstract::Shape>(ret_shape);
-}
-
-TypePtr IOUInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
-  std::map<std::string, TypePtr> types;
-  (void)types.emplace("x", input_args[0]->BuildType());
-  (void)types.emplace("y", input_args[1]->BuildType());
-  return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
-}
+constexpr size_t kIouInputNums = 2;
+constexpr size_t kIouInputDims = 2;
+constexpr size_t kCoordinatesIndex = 1;
+constexpr size_t kCoordinatesSize = 4;
 }  // namespace
-
 MIND_API_OPERATOR_IMPL(IOU, BaseOperator);
-AbstractBasePtr IOUInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                         const std::vector<AbstractBasePtr> &input_args) {
-  auto type = IOUInferType(primitive, input_args);
-  auto shape = IOUInferShape(primitive, input_args);
-  return abstract::MakeAbstract(shape, type);
-}
-REGISTER_PRIMITIVE_EVAL_IMPL(IOU, prim::kPrimIOU, IOUInfer, nullptr, true);
+class IOUInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    MS_EXCEPTION_IF_NULL(primitive);
+    auto prim_name = primitive->name();
+    (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kGreaterEqual,
+                                             kIouInputNums, prim_name);
+    (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
+    (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex1);
+    auto x_shape_ptr = input_args[kInputIndex0]->BuildShape();
+    MS_EXCEPTION_IF_NULL(x_shape_ptr);
+    auto y_shape_ptr = input_args[kInputIndex1]->BuildShape();
+    MS_EXCEPTION_IF_NULL(y_shape_ptr);
+    auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shape_ptr);
+    auto y_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(y_shape_ptr);
+    auto x_shp = x_shape_map[kShape];
+    auto y_shp = y_shape_map[kShape];
+    if (x_shp.size() != kIouInputDims || y_shp.size() != kIouInputDims) {
+      MS_EXCEPTION(ValueError)
+        << "For 'BatchMatMul', input x, y must have the same dimension size and must be 2. But got x size = "
+        << x_shp.size() << ", y size = " << y_shp.size() << ".";
+    }
+    (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(x_shp[kCoordinatesIndex]), kEqual,
+                                             kCoordinatesSize, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(y_shp[kCoordinatesIndex]), kEqual,
+                                             kCoordinatesSize, prim_name);
+    ShapeVector ret_shape;
+    ret_shape.push_back(y_shp[0]);
+    ret_shape.push_back(x_shp[0]);
+    return std::make_shared<abstract::Shape>(ret_shape);
+  }
+
+  TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
+    const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
+    std::map<std::string, TypePtr> types;
+    (void)types.emplace("x", input_args[kInputIndex0]->BuildType());
+    (void)types.emplace("y", input_args[kInputIndex1]->BuildType());
+    return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(IOU, prim::kPrimIOU, IOUInfer, false);
 }  // namespace ops
 }  // namespace mindspore
