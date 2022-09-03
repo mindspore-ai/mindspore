@@ -23,129 +23,37 @@
 #include <string>
 #include <random>
 #include <limits>
+#include <map>
+#include <utility>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/uniform_candidate_sampler_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
-template <typename T, typename S>
-class UniformCandidateSamplerGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class UniformCandidateSamplerGpuKernelMod : public NativeGpuKernelMod {
  public:
-  UniformCandidateSamplerGpuKernelMod()
-      : num_true_(0),
-        num_sampled_(0),
-        unique_(false),
-        range_max_(0),
-        input_size_(0),
-        remove_accidental_hits_(false),
-        is_null_input_(false) {}
+  UniformCandidateSamplerGpuKernelMod() = default;
   ~UniformCandidateSamplerGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspaces,
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    if (is_null_input_) {
-      return true;
-    }
-    if (init_seed_ == 0 && cur_seed_ == 0) {
-      // Update current seed.
-      cur_seed_ = time(NULL);
-      generator_.seed(cur_seed_);
-    }
-    VARIABLE_NOT_USED(workspaces);
-    T *sampled_candidates = GetDeviceAddress<T>(outputs, 0);
-    S *true_expected_count = GetDeviceAddress<S>(outputs, 1);
-    S *sampled_expected_count = GetDeviceAddress<S>(outputs, 2);
-    if (remove_accidental_hits_) {
-      T *input = GetDeviceAddress<T>(inputs, 0);
-      array_input_ = std::vector<T>(input_size_, 0);
-      CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                                 cudaMemcpyAsync(&array_input_[0], input, input_size_ * sizeof(T),
-                                                 cudaMemcpyDeviceToHost, reinterpret_cast<cudaStream_t>(stream_ptr)),
-                                 "cudaMemcpyAsync sampled_candidates failed");
-      CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaDeviceSynchronize(), "cudaDeviceSyncFailed");
-      for (const auto item : array_input_) {
-        set_input_.insert(item);
-      }
-    }
-    int64_t counter = Sampling();
-    S prob = Probability();
-    size_t sampled_candidates_size = num_sampled_ * sizeof(T);
-    S value = ApproximateExpectedCount(prob, num_sampled_, counter);
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                               cudaMemcpyAsync(sampled_candidates, &sampled_candidates_[0], sampled_candidates_size,
-                                               cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
-                               "cudaMemcpyAsync sampled_candidates failed");
-    CalUniformCandidateSampler(static_cast<int64_t>(input_size_), num_sampled_, value, true_expected_count,
-                               sampled_expected_count, reinterpret_cast<cudaStream_t>(stream_ptr));
-    return true;
+    return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
   }
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
 
-  bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-    MS_EXCEPTION_IF_NULL(kernel_node);
-    kernel_node_ = kernel_node;
-    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    if (input_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 1, but got " << input_num;
-    }
-    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-    if (output_num != 3) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 3, but got " << output_num;
-    }
-    // getting attrs
-    num_true_ = GetAttr<int64_t>(kernel_node, "num_true");
-    num_sampled_ = GetAttr<int64_t>(kernel_node, "num_sampled");
-    unique_ = GetAttr<bool>(kernel_node, "unique");
-    range_max_ = GetAttr<int64_t>(kernel_node, "range_max");
-    remove_accidental_hits_ = GetAttr<bool>(kernel_node, "remove_accidental_hits");
-    init_seed_ = GetAttr<int64_t>(kernel_node, "seed");
-    if (init_seed_ == 0) {
-      cur_seed_ = time(NULL);
-      generator_.seed(cur_seed_);
-    } else {
-      generator_.seed(init_seed_);
-    }
-
-    auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "input");
-    if (is_null_input_) {
-      InitSizeLists();
-      return true;
-    }
-    if (input_shape.size() != 2) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input should be 2, but got "
-                        << input_shape.size();
-    }
-    input_size_ = input_shape[0] * input_shape[1];
-    if (num_sampled_ + static_cast<int64_t>(input_size_) > range_max_) {
-      remove_accidental_hits_ = false;
-    }
-    InitSizeLists();
-    return true;
-  }
-
-  void ReleaseResource() override {
-    // Reset current seed.
-    set_input_.clear();
-    if (init_seed_ == 0 && cur_seed_ != 0) {
-      cur_seed_ = 0;
-    }
-
-    if (init_seed_ != 0) {
-      generator_.seed(init_seed_);
-    }
-  }
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
  protected:
-  void InitSizeLists() override {
-    input_size_list_.push_back(input_size_ * sizeof(T));
-    output_size_list_.push_back(num_sampled_ * sizeof(T));
-    output_size_list_.push_back(input_size_ * sizeof(S));
-    output_size_list_.push_back(num_sampled_ * sizeof(S));
-  }
+  std::vector<KernelAttr> GetOpSupport() override;
+  template <typename T, typename S>
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
 
-  int64_t Sampling() {
+  template <typename T>
+  int64_t Sampling(const std::set<T> &set_input, std::vector<T> *sampled_candidates) {
     int64_t counter = 0;
     T tmp;
     int64_t picked;
@@ -157,28 +65,29 @@ class UniformCandidateSamplerGpuKernelMod : public DeprecatedNativeGpuKernelMod 
     }
     range = static_cast<T>(range_max_);
     std::uniform_int_distribution<T> distribution(0, range - 1);
-    sampled_candidates_.clear();
+    sampled_candidates->clear();
     if (unique_) {
       picked = 0;
       while (picked < num_sampled_) {
         tmp = distribution(generator_);
         counter++;
         if ((set_container.find(tmp) == set_container.end()) &&
-            ((!remove_accidental_hits_) || set_input_.find(tmp) == set_input_.end())) {
+            ((!remove_accidental_hits_) || set_input.find(tmp) == set_input.end())) {
           set_container.insert(tmp);
-          sampled_candidates_.push_back(tmp);
+          sampled_candidates->push_back(tmp);
           picked++;
         }
       }
     } else {
       for (int64_t i = 0; i < num_sampled_; i++) {
-        sampled_candidates_.push_back(distribution(generator_));
+        sampled_candidates->push_back(distribution(generator_));
       }
       counter = num_sampled_;
     }
     return counter;
   }
 
+  template <typename S>
   S Probability() {
     S range;
     if (range_max_ > static_cast<int64_t>(std::numeric_limits<S>::max())) {
@@ -189,23 +98,28 @@ class UniformCandidateSamplerGpuKernelMod : public DeprecatedNativeGpuKernelMod 
     return static_cast<S>(1.0f / range);
   }
 
+  template <typename S>
   S ApproximateExpectedCount(S p, int64_t sampled_size, int64_t counter) {
     if (sampled_size == counter) return p * sampled_size;
     return -std::expm1(counter * std::log1p(-p));
   }
 
+  using UCSGpuLaunchFunc =
+    std::function<bool(UniformCandidateSamplerGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &, void *)>;
+
  private:
-  int64_t num_true_;
-  int64_t num_sampled_;
-  bool unique_;
-  int64_t range_max_;
-  size_t input_size_;
-  bool remove_accidental_hits_;
-  bool is_null_input_;
-  std::vector<T> array_input_;
-  std::set<T> set_input_;
+  std::string kernel_name_{};
+  UCSGpuLaunchFunc kernel_func_;
+  static std::vector<std::pair<KernelAttr, UCSGpuLaunchFunc>> func_list_;
+  int64_t num_true_{0};
+  int64_t num_sampled_{0};
+  bool unique_{false};
+  int64_t range_max_{0};
+  size_t input_size_{0};
+  bool remove_accidental_hits_{false};
+  bool is_null_input_{false};
   std::default_random_engine generator_;
-  std::vector<T> sampled_candidates_;
 
   int64_t init_seed_{0};
   int64_t cur_seed_{0};
