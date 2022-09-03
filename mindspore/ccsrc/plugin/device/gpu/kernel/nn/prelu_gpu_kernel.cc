@@ -22,9 +22,9 @@ bool PReLUGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
                              const std::vector<KernelTensorPtr> &outputs) {
   constexpr size_t input_num = 2;
   constexpr size_t output_num = 1;
+  kernel_name_ = base_operator->GetPrim()->name();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
-  kernel_name_ = base_operator->GetPrim()->name();
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
