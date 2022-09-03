@@ -121,3 +121,12 @@ def get_bprop_fill_v2(self):
         return zeros_like(shape), cast_op(dvalue, dout_type)
 
     return bprop
+
+
+@bprop_getters.register(inner.ConvertToDynamic)
+def get_bprop_gpu_convert_to_dynamic_rank(self):
+    """Get backprop for ConvertToDynamic."""
+
+    def bprop(x, out, dout):
+        return (dout,)
+    return bprop
