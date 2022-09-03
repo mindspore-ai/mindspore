@@ -39,6 +39,13 @@ abstract::ShapePtr EluGradInferShape(const PrimitivePtr &primitive, const std::v
   (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
   (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 1);
   auto x = input_args[1]->BuildShape();
+
+  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x);
+  auto x_shape = shape_map[kShape];
+  if (IsDynamicRank(x_shape)) {
+    return std::make_shared<abstract::Shape>(ShapeVector{UNKNOWN_RANK});
+  }
+
   MS_EXCEPTION_IF_NULL(x);
   auto shape_element = x->cast<abstract::ShapePtr>();
   MS_EXCEPTION_IF_NULL(shape_element);

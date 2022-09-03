@@ -55,6 +55,10 @@ abstract::TupleShapePtr Dropout3DInferShape(const PrimitivePtr &primitive,
   auto input_shape_ptr = input_args[kInputIndex0]->BuildShape();
   auto input_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
   auto input_shape = input_shape_map[kShape];
+  if (IsDynamicRank(input_shape)) {
+    auto unknow_shape_p = std::make_shared<abstract::Shape>(ShapeVector{UNKNOWN_RANK});
+    return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{unknow_shape_p, unknow_shape_p});
+  }
   // Check Dropout3d input shape whether equal to 5D.
   const int64_t input_rank = 5;
   (void)CheckAndConvertUtils::CheckValue<int64_t>("rank of input ", SizeToLong(input_shape.size()), kEqual, input_rank,

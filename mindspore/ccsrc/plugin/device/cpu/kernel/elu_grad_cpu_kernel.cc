@@ -19,6 +19,7 @@
 #include <string>
 #include <thread>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "mindspore/core/ops/grad/elu_grad.h"
 
 namespace mindspore {
 namespace kernel {
@@ -27,16 +28,29 @@ constexpr size_t kEleGradInputsNum = 2;
 constexpr size_t kEleGradOutputsNum = 1;
 }  // namespace
 
-void EluGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  auto dtype_1 = AnfAlgo::GetInputDeviceDataType(kernel_node, 1);
+bool EluGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                               const std::vector<KernelTensorPtr> &outputs) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::EluGrad>(base_operator);
+  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
+  kernel_name_ = kernel_ptr->name();
+  dtype_ = inputs[0]->GetDtype();
+  auto dtype_1 = inputs[1]->GetDtype();
   if (dtype_ != dtype_1) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', 'input0' and 'input1' must have the same data type, but got the dtype of 'input0': "
-                      << dtype_ << " and the dtype of 'input1': " << dtype_1;
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', 'input0' and 'input1' must have the same data type, but got the dtype of 'input0': " << dtype_
+                  << " and the dtype of 'input1': " << dtype_1;
+    return false;
   }
+  return true;
+}
+
+int EluGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                const std::vector<KernelTensorPtr> &outputs,
+                                const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != 0) {
+    return ret;
+  }
+  return KRET_OK;
 }
 
 bool EluGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
