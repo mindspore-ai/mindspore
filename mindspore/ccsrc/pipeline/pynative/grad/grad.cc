@@ -25,6 +25,7 @@
 #include "pipeline/jit/parse/data_converter.h"
 #include "pipeline/jit/debug/trace.h"
 #include "frontend/optimizer/ad/prim_bprop_optimizer.h"
+#include "backend/common/optimizer/helper.h"
 #include "include/common/utils/convert_utils_py.h"
 #include "frontend/optimizer/ad/grad.h"
 #include "pipeline/jit/pass.h"
@@ -1448,11 +1449,11 @@ void GradExecutor::ProcessOpGradInfo(const FrontendOpRunInfoPtr &op_run_info, co
     const auto &obj_id = PyNativeAlgo::Common::GetIdByValue(v);
     cnode->set_abstract(op_run_info->base_op_run_info.abstract);
     SaveOutputNodeMap(obj_id, v, cnode);
-    DoOpGrad(op_run_info, cnode, v);
     // Dynamic shape should update to top cell
     if (PyNativeAlgo::Common::IsDynamicShape(op_run_info)) {
       top_cell()->set_dynamic_shape(true);
     }
+    DoOpGrad(op_run_info, cnode, v);
   }
   forward()->SetNodeAbsMapByValue(v, op_run_info->base_op_run_info.abstract);
   UpdateForwardTensorInfoInBpropGraph(op_run_info->op_info, v);
@@ -1495,15 +1496,41 @@ void GradExecutor::DoOpGrad(const FrontendOpRunInfoPtr &op_run_info, const CNode
   if (op_run_info->run_in_vm) {
     input_args = op_run_info->input_value;
   } else {
-    // Run in Ms, some op input tensor convert into attributes, so add them back
-    for (auto &it : op_run_info->index_with_value) {
-      input_args[it.first] = it.second;
-    }
-    // Add other tensor
-    for (size_t i = 0; i < op_run_info->input_value.size(); ++i) {
-      if (input_args[i] == nullptr) {
-        input_args[i] = op_run_info->input_value[i];
+    auto convert_tuple_and_scalar_into_tensor = [&](size_t idx, const ValuePtr &default_value) -> bool {
+      if (top_cell()->dynamic_shape() &&
+          kDynamicInputOpMap.find(op_run_info->base_op_run_info.op_name) != kDynamicInputOpMap.end()) {
+        const auto &input_vec = kDynamicInputOpMap[op_run_info->base_op_run_info.op_name];
+        bool marked = std::any_of(input_vec.begin(), input_vec.end(), [&idx](size_t i) { return idx == i; });
+        if (marked) {
+          if (default_value->isa<ValueSequence>()) {
+            MS_LOG(DEBUG) << "Ready to convert tulpe into tensor, op name:" << op_run_info->base_op_run_info.op_name
+                          << ", index:" << idx;
+            ValueSequencePtr value_seq = default_value->cast<ValueSequencePtr>();
+            ValueTuplePtr value_tuple;
+            if (value_seq->isa<ValueList>()) {
+              value_tuple = std::make_shared<ValueTuple>(value_seq->value());
+            } else {
+              value_tuple = value_seq->cast<ValueTuplePtr>();
+            }
+            auto tensor_ptr = opt::CreateTupleTensor(value_tuple);
+            input_args[idx] = tensor_ptr;
+            return true;
+          } else if (default_value->isa<Scalar>()) {
+            MS_LOG(DEBUG) << "Ready to convert scalar into tensor, op name:" << op_run_info->base_op_run_info.op_name
+                          << ", index:" << idx;
+            auto scalar_tensor = ScalarToTensor(default_value->cast<ScalarPtr>());
+            input_args[idx] = scalar_tensor;
+            return true;
+          }
+        }
       }
+      return false;
+    };
+    for (size_t i = 0; i < op_run_info->input_value.size(); ++i) {
+      if (enable_tuple_to_tensor_ && convert_tuple_and_scalar_into_tensor(i, op_run_info->input_value[i])) {
+        continue;
+      }
+      input_args[i] = op_run_info->input_value[i];
     }
   }
   if (op_run_info->base_op_run_info.has_dynamic_output) {
