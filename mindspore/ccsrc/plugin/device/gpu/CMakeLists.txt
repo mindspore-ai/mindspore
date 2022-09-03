@@ -35,6 +35,17 @@ target_link_libraries(mindspore_gpu PRIVATE mindspore::event mindspore::event_pt
 
 if(ENABLE_GPU)
     message("add gpu lib to mindspore_gpu")
+    if(WIN32)
+    target_link_libraries(mindspore_gpu PRIVATE cuda_ops
+            ${CUBLAS_LIBRARY_PATH}
+            ${CUDA_PATH}/lib/x64/curand.lib
+            ${CUDNN_LIBRARY_PATH}
+            ${CUDA_PATH}/lib/x64/cudart.lib
+            ${CUDA_PATH}/lib/x64/cuda.lib
+            ${CUDA_PATH}/lib/x64/cusolver.lib
+            ${CUDA_PATH}/lib/x64/cufft.lib
+            ${CUDA_PATH}/lib/x64/cusparse.lib)
+    else()
     target_link_libraries(mindspore_gpu PRIVATE cuda_ops
             ${CUBLAS_LIBRARY_PATH}
             ${CUDA_PATH}/lib64/libcurand.so
@@ -44,6 +55,7 @@ if(ENABLE_GPU)
             ${CUDA_PATH}/lib64/libcusolver.so
             ${CUDA_PATH}/lib64/libcufft.so
             ${CUDA_PATH}/lib64/libcusparse.so)
+    endif()
 endif()
 
 if(ENABLE_DEBUGGER)

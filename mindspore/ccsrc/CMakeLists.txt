@@ -115,10 +115,18 @@ if(ENABLE_GPU)
 
     if(DEFINED ENV{CUDNN_HOME} AND NOT $ENV{CUDNN_HOME} STREQUAL "")
         set(CUDNN_INCLUDE_DIR $ENV{CUDNN_HOME}/include)
+        if(WIN32)
+        set(CUDNN_LIBRARY_DIR $ENV{CUDNN_HOME}/lib)
+        else()
         set(CUDNN_LIBRARY_DIR $ENV{CUDNN_HOME}/lib64)
+        endif()
         find_path(CUDNN_INCLUDE_PATH cudnn.h HINTS ${CUDNN_INCLUDE_DIR} NO_DEFAULT_PATH)
         find_library(CUDNN_LIBRARY_PATH "cudnn" HINTS ${CUDNN_LIBRARY_DIR} NO_DEFAULT_PATH)
+        if(WIN32)
+        find_library(CUBLAS_LIBRARY_PATH "cublas" HINTS ${CUDA_PATH}/lib/x64)
+        else()
         find_library(CUBLAS_LIBRARY_PATH "cublas" HINTS ${CUDNN_LIBRARY_DIR})
+        endif()
         if(CUDNN_INCLUDE_PATH STREQUAL CUDNN_INCLUDE_PATH-NOTFOUND)
             message(FATAL_ERROR "Failed to find cudnn header file, please set environment variable CUDNN_HOME to \
                     cudnn installation position.")
@@ -162,7 +170,9 @@ if(ENABLE_GPU)
     ## set NVCC ARCH FLAG
     set(CUDA_NVCC_FLAGS)
     set_nvcc_flag(CUDA_NVCC_FLAGS)
+    if(NOT MSVC)
     add_definitions(-Wno-unknown-pragmas) # Avoid compilation warnings from cuda/thrust
+    endif()
     if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
         list(APPEND CUDA_NVCC_FLAGS -G)
         message("CUDA_NVCC_FLAGS" ${CUDA_NVCC_FLAGS})
@@ -203,7 +213,9 @@ if(CMAKE_SYSTEM_NAME MATCHES "Windows" AND NOT MSVC)
 endif()
 
 # Set compile flags to ensure float compute consistency.
+if(NOT MSVC)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-fast-math")
+endif()
 
 if(ENABLE_MPI)
     add_compile_definitions(ENABLE_MPI)
@@ -453,8 +465,12 @@ endif()
 if(MODE_ASCEND_ALL)
     target_link_libraries(mindspore PUBLIC -Wl,--start-group proto_input mindspore::protobuf -Wl,--end-group)
 elseif(CMAKE_SYSTEM_NAME MATCHES "Windows")
-    target_link_libraries(mindspore PUBLIC -Wl,--start-group proto_input mindspore::protobuf mindspore::sentencepiece
-                        -Wl,--end-group)
+    if(MSVC)
+        target_link_libraries(mindspore PUBLIC proto_input mindspore::protobuf mindspore::sentencepiece)
+    else()
+        target_link_libraries(mindspore PUBLIC -Wl,--start-group proto_input mindspore::protobuf
+                mindspore::sentencepiece -Wl,--end-group)
+    endif()
 elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
     target_link_libraries(mindspore PUBLIC -Wl proto_input mindspore::protobuf mindspore::sentencepiece -Wl)
 else()
@@ -495,8 +511,12 @@ endif()
 
 if(CMAKE_SYSTEM_NAME MATCHES "Windows")
     target_link_libraries(mindspore PUBLIC mindspore::pybind11_module)
-    target_link_libraries(_c_expression PRIVATE -Wl,--whole-archive mindspore -Wl,--no-whole-archive mindspore_core
-        mindspore_common mindspore_backend)
+    if(NOT MSVC)
+        target_link_libraries(_c_expression PRIVATE -Wl,--whole-archive mindspore -Wl,--no-whole-archive mindspore_core
+            mindspore_common mindspore_backend)
+    else()
+        target_link_libraries(_c_expression PRIVATE mindspore_core mindspore_common mindspore_backend mindspore)
+    endif()
 elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
     target_link_libraries(mindspore PUBLIC proto_input mindspore::protobuf mindspore::eigen mindspore::json)
     target_link_libraries(_c_expression PRIVATE -Wl,-all_load mindspore proto_input -Wl,-noall_load mindspore_core

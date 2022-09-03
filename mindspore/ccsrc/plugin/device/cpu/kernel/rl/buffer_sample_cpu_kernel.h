@@ -80,10 +80,10 @@ class BufferCPUSampleKernelMod : public DeprecatedNativeCpuKernelMod {
       for (size_t i = 0; i < IntToSize(count_addr[0]); ++i) {
         (void)indexes.emplace_back(i);
       }
-#if !defined(__APPLE__)
-      random_shuffle(indexes.begin(), indexes.end(), [&](int i) { return std::rand() % i; });
-#else
+#if defined(__APPLE__) || defined(_MSC_VER)
       std::shuffle(indexes.begin(), indexes.end(), generator_);
+#else
+      random_shuffle(indexes.begin(), indexes.end(), [&](int i) { return std::rand() % i; });
 #endif
     } else {
       std::uniform_int_distribution<> distrib(0, count_addr[0] - 1);  //  random integers in a range [a,b]

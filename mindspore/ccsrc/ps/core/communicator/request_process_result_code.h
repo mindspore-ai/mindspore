@@ -83,11 +83,11 @@ class RequestProcessResult {
 
   operator bool() const = delete;
 
-  RequestProcessResult &operator<(const LogStream &stream) noexcept __attribute__((visibility("default"))) {
+  RequestProcessResult &operator<(const LogStream &stream) noexcept {
     msg_ = stream.stream()->str();
     return *this;
   }
-  RequestProcessResult &operator=(const std::string &message) noexcept __attribute__((visibility("default"))) {
+  RequestProcessResult &operator=(const std::string &message) noexcept {
     msg_ = message;
     return *this;
   }

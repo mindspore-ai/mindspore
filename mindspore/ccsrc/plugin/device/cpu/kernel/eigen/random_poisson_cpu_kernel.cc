@@ -34,10 +34,19 @@ using KernelRunFunc = RandomPoissonCpuKernelMod::KernelRunFunc;
   }
 
 static unsigned int s_seed = static_cast<unsigned int>(time(nullptr));
+#ifndef _MSC_VER
 EIGEN_DEVICE_FUNC uint64_t get_random_seed() {
   auto rnd = rand_r(&s_seed);
   return IntToSize(rnd);
 }
+#else
+EIGEN_DEVICE_FUNC uint64_t get_random_seed() {
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::uniform_int_distribution<uint64_t> distribution(0, std::numeric_limits<uint64_t>::max());
+  return distribution(gen);
+}
+#endif
 
 static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE uint64_t PCG_XSH_RS_state(uint64_t seed) {
   seed = (seed == 0) ? get_random_seed() : seed;

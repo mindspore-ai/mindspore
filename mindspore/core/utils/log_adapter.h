@@ -27,6 +27,7 @@
 #include <thread>
 #include <functional>
 #include "utils/macros.h"
+#include "utils/os.h"
 #include "utils/overload.h"
 #include "./securec.h"
 #ifdef USE_GLOG

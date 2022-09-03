@@ -216,7 +216,7 @@ void InitHashMapData(void *data, const int64_t host_size, const int64_t cache_si
   for (int64_t i = 0; i < host_size; ++i) {
     host_range.emplace_back(static_cast<T>(i));
   }
-#if defined(__APPLE__)
+#if defined(__APPLE__) || defined(_MSC_VER)
   std::random_device rd;
   std::mt19937 rng(rd());
   std::shuffle(host_range.begin(), host_range.end(), rng);

@@ -174,6 +174,16 @@ if(ENABLE_D)
 endif()
 
 if(ENABLE_GPU)
+    if(WIN32)
+    target_link_libraries(mindspore_shared_lib PRIVATE cuda_ops
+                          ${CUBLAS_LIBRARY_PATH}
+                          ${CUDA_PATH}/lib/x64/curand.lib
+                          ${CUDNN_LIBRARY_PATH}
+                          ${CUDA_PATH}/lib/x64/cudart.lib
+                          ${CUDA_PATH}/lib/x64/cuda.lib
+                          ${CUDA_PATH}/lib/x64/cusolver.lib
+                          ${CUDA_PATH}/lib/x64/cufft.lib)
+    else()
     target_link_libraries(mindspore_shared_lib PRIVATE cuda_ops
                           ${CUBLAS_LIBRARY_PATH}
                           ${CUDA_PATH}/lib64/libcurand.so
@@ -182,6 +192,7 @@ if(ENABLE_GPU)
                           ${CUDA_PATH}/lib64/stubs/libcuda.so
                           ${CUDA_PATH}/lib64/libcusolver.so
                           ${CUDA_PATH}/lib64/libcufft.so)
+    endif()
 endif()
 
 if(CMAKE_SYSTEM_NAME MATCHES "Linux")

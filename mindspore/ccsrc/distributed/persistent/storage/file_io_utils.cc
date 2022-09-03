@@ -15,14 +15,12 @@
  */
 
 #include "distributed/persistent/storage/file_io_utils.h"
-
-#include <dirent.h>
-#include <unistd.h>
 #include <fstream>
 
 #include "mindspore/core/utils/file_utils.h"
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
+#include "utils/os.h"
 
 namespace mindspore {
 namespace distributed {
@@ -127,13 +125,16 @@ bool FileIOUtils::IsFileOrDirExist(const std::string &path) {
 }
 
 void FileIOUtils::CreateFile(const std::string &file_path, mode_t mode) {
+  (void)mode;
   if (IsFileOrDirExist(file_path)) {
     return;
   }
 
   std::ofstream output_file(file_path);
   output_file.close();
+#ifndef _MSC_VER
   ChangeFileMode(file_path, mode);
+#endif
 }
 
 void FileIOUtils::CreateDir(const std::string &dir_path, mode_t mode) {
@@ -142,7 +143,11 @@ void FileIOUtils::CreateDir(const std::string &dir_path, mode_t mode) {
   }
 
 #if defined(_WIN32) || defined(_WIN64)
+#ifndef _MSC_VER
   int ret = mkdir(dir_path.c_str());
+#else
+  int ret = _mkdir(dir_path.c_str());
+#endif
 #else
   int ret = mkdir(dir_path.c_str(), mode);
   if (ret == 0) {
@@ -173,7 +178,11 @@ void FileIOUtils::CreateDirRecursive(const std::string &dir_path, mode_t mode) {
       }
 
 #if defined(_WIN32) || defined(_WIN64)
+#ifndef _MSC_VER
       int32_t ret = mkdir(tmp_dir_path);
+#else
+      int32_t ret = _mkdir(tmp_dir_path);
+#endif
       if (ret != 0) {
         MS_LOG(EXCEPTION) << "Failed to create directory recursion: " << dir_path << ". Errno = " << errno;
       }

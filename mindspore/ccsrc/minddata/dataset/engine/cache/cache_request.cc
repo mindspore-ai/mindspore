@@ -25,6 +25,7 @@
 #include "minddata/dataset/include/dataset/constants.h"
 #include "minddata/dataset/engine/cache/cache_client.h"
 #include "minddata/dataset/engine/cache/cache_fbb.h"
+#undef BitTest
 namespace mindspore {
 namespace dataset {
 Status BaseRequest::Wait() {

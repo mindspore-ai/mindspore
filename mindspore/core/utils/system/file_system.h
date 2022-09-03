@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CORE_UTILS_SYSTEM_FILE_SYSTEM_H_
 #define MINDSPORE_CORE_UTILS_SYSTEM_FILE_SYSTEM_H_
 
-#include <sys/param.h>
 #include <cerrno>
 #include <cstdint>
 #include <cstdlib>
@@ -28,6 +27,7 @@
 #include <vector>
 #include "utils/system/base.h"
 #include "utils/log_adapter.h"
+#include "utils/os.h"
 #include "include/common/debug/common.h"
 
 namespace mindspore {

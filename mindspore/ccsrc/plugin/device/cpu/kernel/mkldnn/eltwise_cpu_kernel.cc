@@ -61,7 +61,9 @@ class EltwiseCpuKernelFunc : public CpuKernelFunc {
     auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
     auto iter = eltwise_func_map.find(kernel_name_);
     if (iter == eltwise_func_map.end()) {
-      MS_LOG(EXCEPTION) << "For 'EltWise Op', the kernel name must be in " << kernel::Map2Str(eltwise_func_map)
+      MS_LOG(EXCEPTION) << "For 'EltWise Op', the kernel name must be in "
+                        << kernel::Map2Str<std::map, std::vector<std::pair<KernelAttr, TypeComputeFunc>>>(
+                             eltwise_func_map)
                         << ", but got " << kernel_name_;
     }
     std::vector<KernelAttr> support_list;
@@ -165,8 +167,11 @@ bool EltWiseCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
     }
     auto iter = additional_kernel_attr_map_.find(kernel_name_);
     if (iter == additional_kernel_attr_map_.end()) {
-      MS_LOG(ERROR) << "For 'EltWise Op', the kernel name must be in " << kernel::Map2Str(additional_kernel_attr_map_)
-                    << ", but got " << kernel_name_;
+      MS_LOG(ERROR)
+        << "For 'EltWise Op', the kernel name must be in "
+        << kernel::Map2Str<std::map, std::vector<std::pair<KernelAttr, EltWiseCpuKernelMod::EltwiseCpuFuncCreator>>>(
+             additional_kernel_attr_map_)
+        << ", but got " << kernel_name_;
       return false;
     }
     additional_func_ = iter->second[index].second();
@@ -180,8 +185,9 @@ bool EltWiseCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
     }
     auto iter = mkl_kernel_attr_map_.find(kernel_name_);
     if (iter == mkl_kernel_attr_map_.end()) {
-      MS_LOG(ERROR) << "For 'EltWise Op', the kernel name must be in " << kernel::Map2Str(mkl_kernel_attr_map_)
-                    << ", but got " << kernel_name_;
+      MS_LOG(ERROR) << "For 'EltWise Op', the kernel name must be in "
+                    << kernel::Map2Str<std::map, std::vector<KernelAttr>>(mkl_kernel_attr_map_) << ", but got "
+                    << kernel_name_;
       return false;
     }
   }
@@ -247,8 +253,9 @@ std::vector<KernelAttr> EltWiseCpuKernelMod::GetOpSupport() {
   // only mkl_kernel_attr_map_ need to be checked since it contains all kind of ops
   auto iter = mkl_kernel_attr_map_.find(kernel_name_);
   if (iter == mkl_kernel_attr_map_.end()) {
-    MS_LOG(ERROR) << "For 'EltWise Op', the kernel name must be in " << kernel::Map2Str(mkl_kernel_attr_map_)
-                  << ", but got " << kernel_name_;
+    MS_LOG(ERROR) << "For 'EltWise Op', the kernel name must be in "
+                  << kernel::Map2Str<std::map, std::vector<KernelAttr>>(mkl_kernel_attr_map_) << ", but got "
+                  << kernel_name_;
     return std::vector<KernelAttr>{};
   }
   std::vector<KernelAttr> support_list;

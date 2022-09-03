@@ -1020,8 +1020,12 @@ bool GraphExecutorPy::Compile(const py::object &source_obj, const py::tuple &arg
     throw(std::runtime_error(ex.what()));
   } catch (...) {
     ReleaseResource(phase);
+#ifndef _MSC_VER
     std::string exName(abi::__cxa_current_exception_type()->name());
     MS_LOG(EXCEPTION) << "Error occurred when compile graph. Exception name: " << exName;
+#else
+    MS_LOG(EXCEPTION) << "Error occurred when compile graph. Exception name: ";
+#endif
   }
   return ret_value;
 }
