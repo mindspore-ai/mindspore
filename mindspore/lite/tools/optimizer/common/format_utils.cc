@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,9 +43,12 @@
 #include "ops/fusion/pad_fusion.h"
 #include "ops/fusion/pow_fusion.h"
 #include "ops/fusion/prelu_fusion.h"
+#include "ops/fusion/sub_fusion.h"
+#include "ops/fusion/scale_fusion.h"
 #include "ops/fusion/slice_fusion.h"
 #include "ops/fusion/topk_fusion.h"
 #include "ops/eltwise.h"
+#include "ops/erf.h"
 #include "ops/grad/activation_grad.h"
 #include "ops/grad/avg_pool_grad.h"
 #include "ops/grad/batch_norm_grad.h"
@@ -131,13 +134,25 @@ static const std::unordered_map<std::string, std::vector<size_t>> ToNCHWOpMap = 
   {ops::kNameSpaceToDepth, {1}}};
 
 // a certain op whose input's format is not fixed, bool value determines whether the op has axis attribute or not.
-static const std::unordered_map<std::string, bool> DynamicFormatOpList = {
-  {ops::kNameAddN, false},           {ops::kNameCrop, true},         {ops::kNameSplit, true},
-  {ops::kNameConcat, true},          {ops::kNameEltwise, false},     {ops::kNameMaximum, false},
-  {ops::kNameAddFusion, false},      {ops::kNameDivFusion, false},   {ops::kNameMulFusion, false},
-  {ops::kNamePadFusion, false},      {ops::kNamePowFusion, false},   {ops::kNameActivation, false},
-  {ops::kNameSliceFusion, true},     {ops::kNameStridedSlice, true}, {ops::kNameActivationGrad, false},
-  {ops::kNameQuantDTypeCast, false}, {ops::kNameCast, false}};
+static const std::unordered_map<std::string, bool> DynamicFormatOpList = {{ops::kNameAddN, false},
+                                                                          {ops::kNameCrop, true},
+                                                                          {ops::kNameSplit, true},
+                                                                          {ops::kNameConcat, true},
+                                                                          {ops::kNameEltwise, false},
+                                                                          {ops::kNameMaximum, false},
+                                                                          {ops::kNameAddFusion, false},
+                                                                          {ops::kNameDivFusion, false},
+                                                                          {ops::kNameMulFusion, false},
+                                                                          {ops::kNamePadFusion, false},
+                                                                          {ops::kNamePowFusion, false},
+                                                                          {ops::kNameActivation, false},
+                                                                          {ops::kNameSliceFusion, true},
+                                                                          {ops::kNameStridedSlice, true},
+                                                                          {ops::kNameActivationGrad, false},
+                                                                          {ops::kNameQuantDTypeCast, false},
+                                                                          {ops::kNameCast, false},
+                                                                          {ops::kNameSubFusion, false},
+                                                                          {ops::kNameErf, false}};
 
 const std::unordered_map<std::string, std::vector<size_t>> &GetNHWCOpMap() { return NHWCOpMap; }
 const std::unordered_map<std::string, std::vector<size_t>> &GetNCHWOpMap() { return NCHWOpMap; }
@@ -235,14 +250,7 @@ int DetermineCertainVarInputFormat(const CNodePtr &cnode, size_t index, Format *
   auto item_index = var_input_info.second;
   auto input_node_prim = GetValueNode<PrimitivePtr>((real_input_cnode->input(0)));
   MS_CHECK_TRUE_MSG(input_node_prim != nullptr, RET_ERROR, "get primitive failed");
-  auto value_ptr = input_node_prim->GetAttr(ops::kFormat);
-  if (value_ptr != nullptr) {
-    MS_CHECK_TRUE_MSG(value_ptr->isa<mindspore::Int64Imm>(), RET_ERROR, "format attr must be an int64_t val.");
-    auto value = GetValue<int64_t>(value_ptr);
-    MS_CHECK_TRUE_MSG(value >= NCHW && value <= NCW, RET_ERROR, "format val is out of enum's range.");
-    *format = static_cast<Format>(value);
-  }
-  value_ptr = input_node_prim->GetAttr(kOutputsFormat);
+  auto value_ptr = input_node_prim->GetAttr(kOutputsFormat);
   if (value_ptr != nullptr) {
     MS_CHECK_TRUE_MSG(value_ptr->isa<ValueSequeue>(), RET_ERROR, "outputs_format attr should be sequence.");
     auto formats = CastToInt(value_ptr);
@@ -250,21 +258,6 @@ int DetermineCertainVarInputFormat(const CNodePtr &cnode, size_t index, Format *
       MS_CHECK_TRUE_MSG(formats[item_index] >= NCHW && formats[item_index] <= NCW, RET_ERROR,
                         "format val is out of enum's range.");
       *format = static_cast<Format>(formats[item_index]);
-    }
-  }
-  if (CheckPrimitiveType(real_input_cnode, prim::kPrimTranspose)) {
-    std::vector<int> perm;
-    if (GetTransposePerm(real_input_cnode, &perm) != RET_OK) {
-      MS_LOG(ERROR) << "fetch transpose's perm failed.";
-      return RET_ERROR;
-    }
-    if (perm.size() != kNC2NH.size()) {
-      return RET_OK;
-    }
-    if (perm == kNH2NC && (*format == NHWC || *format == KHWC)) {
-      *format = NCHW;
-    } else if (perm == opt::kNC2NH && *format == NCHW) {
-      *format = NHWC;
     }
   }
   return RET_OK;

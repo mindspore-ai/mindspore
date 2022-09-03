@@ -33,8 +33,9 @@ namespace mindspore {
 namespace opt {
 class DecreaseTransposeAlgo : public Pass {
  public:
-  explicit DecreaseTransposeAlgo(FmkType fmk_type = FmkType::kFmkTypeMs, bool train_flag = false)
-      : Pass("DecreaseTransposeAlgo"), fmk_type_(fmk_type), train_flag_(train_flag) {}
+  explicit DecreaseTransposeAlgo(FmkType fmk_type = FmkType::kFmkTypeMs, bool train_flag = false,
+                                 bool surrounded_all_trans = true)
+      : Pass("DecreaseTransposeAlgo"), fmk_type_(fmk_type), train_flag_(train_flag), all_trans_(surrounded_all_trans) {}
   ~DecreaseTransposeAlgo() override = default;
   bool Run(const FuncGraphPtr &func_graph) override;
 
@@ -51,12 +52,15 @@ class DecreaseTransposeAlgo : public Pass {
                               std::set<CNodePtr> *visit_transposes);
   STATUS InsertPreTransNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode, TransTypePair *trans_insert_info);
   STATUS DoPreInsert(const FuncGraphPtr &func_graph, const CNodePtr &cnode, FormatTransNodeType trans_type);
+  STATUS InsertPreTransForNonTransInOut(const FuncGraphPtr &func_graph, const AnfNodeIndexSet &not_trans_in_nodes,
+                                        const AnfNodeIndexSet &not_trans_out_nodes, TransTypePair trans_info);
   int SetSubGraphInput(const CNodePtr &cnode, const FuncGraphPtr &sub_graph);
   int ResetSubGraphInput();
   int SetSubGraphOutput(const FuncGraphPtr &sub_graph);
   int ModifyCNodeFormat(const CNodePtr &cnode, FormatTransNodeType pre_trans_type);
   FmkType fmk_type_{converter::kFmkTypeMs};
   bool train_flag_{false};
+  bool all_trans_{false};
   NodeInferShape node_infer_shape_;
   TransposeStrategy transpose_strategy_;
   DeleteRedundantTranspose delete_redundant_transpose_;

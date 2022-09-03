@@ -16,13 +16,10 @@
 
 #include "src/litert/lite_session.h"
 #include <set>
-#include "src/litert/pack_weight_manager.h"
-#include "src/litert/runtime_pass.h"
-#if defined(LINUX_RUNTIME)
-#include <malloc.h>
-#endif
 #include <vector>
 #include <utility>
+#include "src/litert/pack_weight_manager.h"
+#include "src/litert/runtime_pass.h"
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
 #include "src/litert/scheduler.h"
@@ -580,9 +577,6 @@ int LiteSession::CompileGraph(Model *model) {
   }
 
   is_running_.store(false);
-#if defined(LINUX_RUNTIME)
-  (void)malloc_trim(0);
-#endif
   return RET_OK;
 }
 

@@ -187,19 +187,18 @@ bool ConnectTransposeConcat(const AnfNodePtr &node) {
     return false;
   }
   auto right_transpose_node = cnode->input(1);
+  MS_CHECK_TRUE_RET(right_transpose_node != nullptr, false);
   auto right_transpose_cnode = right_transpose_node->cast<CNodePtr>();
-  if (right_transpose_cnode == nullptr) {
-    MS_LOG(ERROR) << "cnode is null";
-    return false;
+  MS_CHECK_TRUE_RET(right_transpose_cnode != nullptr, false);
+  if (CheckPrimitiveType(right_transpose_cnode, prim::kPrimConcat)) {
+    return true;
   }
   auto front_node = right_transpose_cnode->input(1);
+  MS_CHECK_TRUE_RET(front_node != nullptr, false);
   auto front_cnode = front_node->cast<CNodePtr>();
-  if (front_cnode == nullptr) {
-    MS_LOG(ERROR) << "cnode is null";
-    return false;
-  }
+  MS_CHECK_TRUE_RET(front_cnode != nullptr, false);
   if (CheckPrimitiveType(right_transpose_cnode, prim::kPrimTranspose) &&
-      (CheckPrimitiveType(front_cnode, prim::kPrimTranspose) || CheckPrimitiveType(front_cnode, prim::kPrimConcat))) {
+      CheckPrimitiveType(front_cnode, prim::kPrimConcat)) {
     return true;
   }
   return false;
