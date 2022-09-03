@@ -51,8 +51,6 @@ class MIND_API EmbeddingLookup : public BaseOperator {
   /// \return offset.
   int64_t get_offset() const;
 };
-abstract::AbstractBasePtr EmbeddingLookupInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                               const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

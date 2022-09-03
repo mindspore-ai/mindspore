@@ -241,6 +241,8 @@ constexpr auto kMaxUnpool2DGrad = "MaxUnpool2DGrad";
 constexpr auto kMaxUnpool3D = "MaxUnpool3D";
 constexpr auto kMaxUnpool3DGrad = "MaxUnpool3DGrad";
 constexpr auto kCTCLoss = "CTCLoss";
+constexpr auto kNLLLoss = "NLLLoss";
+constexpr auto kNLLLossGrad = "NLLLossGrad";
 constexpr auto kMultiMarginLoss = "MultiMarginLoss";
 constexpr auto kMultiMarginLossGrad = "MultiMarginLossGrad";
 constexpr auto kLayerNorm = "LayerNorm";
@@ -761,6 +763,8 @@ GVAR_DEF(PrimitivePtr, kPrimMultilabelMarginLossGrad, std::make_shared<Primitive
 GVAR_DEF(PrimitivePtr, kPrimCTCLossV2, std::make_shared<Primitive>("CTCLossV2"));
 GVAR_DEF(PrimitivePtr, kPrimCTCLossV2Grad, std::make_shared<Primitive>("CTCLossV2Grad"));
 GVAR_DEF(PrimitivePtr, kPrimCTCLoss, std::make_shared<Primitive>(kCTCLoss));
+GVAR_DEF(PrimitivePtr, kPrimNLLLoss, std::make_shared<Primitive>(kNLLLoss));
+GVAR_DEF(PrimitivePtr, kPrimNLLLossGrad, std::make_shared<Primitive>(kNLLLossGrad));
 GVAR_DEF(PrimitivePtr, kPrimFullConnection, std::make_shared<Primitive>("FullConnection"));
 GVAR_DEF(PrimitivePtr, kPrimConv2DTranspose, std::make_shared<Primitive>(kConv2DTranspose));
 GVAR_DEF(PrimitivePtr, kPrimConv3DTranspose, std::make_shared<Primitive>("Conv3DTranspose"));

@@ -17,17 +17,22 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MATRIX_INVERSE_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MATRIX_INVERSE_CPU_KERNEL_H_
 #include <vector>
+#include <map>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-class MatrixInverseCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class MatrixInverseCpuKernelMod : public NativeCpuKernelMod {
  public:
   MatrixInverseCpuKernelMod() = default;
   ~MatrixInverseCpuKernelMod() override = default;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
@@ -46,6 +51,7 @@ class MatrixInverseCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   TypeId dtype_{kTypeUnknown};
   template <typename T>
   void LaunchMatrixInverse(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  ShapeVector input_shape_;
 };
 }  // namespace kernel
 }  // namespace mindspore
