@@ -2965,3 +2965,22 @@ TEST_F(MindDataTestExecute, TestRandAugmentEager) {
   Status rc = transform(image, &image);
   EXPECT_EQ(rc, Status::OK());
 }
+
+/// Feature: Perspective
+/// Description: Test executing Perspective op in eager mode
+/// Expectation: The data is processed successfully
+TEST_F(MindDataTestExecute, TestPerspective) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestPerspective.";
+  // Read images
+  auto image = ReadFileToTensor("data/dataset/apple.jpg");
+
+  // Transform params
+  auto decode = vision::Decode();
+  std::vector<std::vector<int32_t>> src = {{0, 200}, {400, 200}, {400, 0}, {0, 0}};
+  std::vector<std::vector<int32_t>> dst = {{0, 180}, {400, 180}, {400, 0}, {0, 0}};
+  auto perspective_op = vision::Perspective(src, dst, InterpolationMode::kLinear);
+
+  auto transform = Execute({decode, perspective_op});
+  Status rc = transform(image, &image);
+  EXPECT_EQ(rc, Status::OK());
+}

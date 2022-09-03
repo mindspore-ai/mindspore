@@ -1610,6 +1610,39 @@ Status Pad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output
   }
 }
 
+Status Perspective(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output,
+                   const std::vector<std::vector<int32_t>> &start_points,
+                   const std::vector<std::vector<int32_t>> &end_points, InterpolationMode interpolation) {
+  try {
+    RETURN_IF_NOT_OK(ValidateImage(input, "Perspective", {1, 2, 3, 4, 5, 6, 10, 11, 12}, {2, 3}));
+    std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
+    if (!input_cv->mat().data) {
+      RETURN_STATUS_UNEXPECTED("[Internal ERROR] Perspective: load image failed.");
+    }
+    const int kListSize = 4;
+    // Get Point
+    cv::Point2f cv_src_point[kListSize];
+    cv::Point2f cv_dst_point[kListSize];
+    for (int i = 0; i < kListSize; i++) {
+      cv_src_point[i] = cv::Point2f(start_points[i][0], start_points[i][1]);
+      cv_dst_point[i] = cv::Point2f(end_points[i][0], end_points[i][1]);
+    }
+
+    // Perspective Operation
+    std::shared_ptr<CVTensor> output_cv;
+    cv::Mat M = cv::getPerspectiveTransform(cv_src_point, cv_dst_point, cv::DECOMP_LU);
+    cv::Mat src_img = input_cv->mat();
+
+    cv::Mat dst_img;
+    cv::warpPerspective(src_img, dst_img, M, src_img.size(), GetCVInterpolationMode(interpolation));
+    RETURN_IF_NOT_OK(CVTensor::CreateFromMat(dst_img, input_cv->Rank(), &output_cv));
+    *output = std::static_pointer_cast<Tensor>(output_cv);
+    return Status::OK();
+  } catch (const cv::Exception &e) {
+    RETURN_STATUS_UNEXPECTED("Perspective: " + std::string(e.what()));
+  }
+}
+
 Status RandomLighting(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float rnd_r, float rnd_g,
                       float rnd_b) {
   try {

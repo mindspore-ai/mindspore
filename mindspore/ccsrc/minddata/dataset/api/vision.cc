@@ -47,6 +47,7 @@
 #include "minddata/dataset/kernels/ir/vision/normalize_pad_ir.h"
 #include "minddata/dataset/kernels/ir/vision/pad_ir.h"
 #include "minddata/dataset/kernels/ir/vision/pad_to_size_ir.h"
+#include "minddata/dataset/kernels/ir/vision/perspective_ir.h"
 #include "minddata/dataset/kernels/ir/vision/posterize_ir.h"
 #include "minddata/dataset/kernels/ir/vision/rand_augment_ir.h"
 #include "minddata/dataset/kernels/ir/vision/random_adjust_sharpness_ir.h"
@@ -641,6 +642,24 @@ PadToSize::PadToSize(const std::vector<int32_t> &size, const std::vector<int32_t
 
 std::shared_ptr<TensorOperation> PadToSize::Parse() {
   return std::make_shared<PadToSizeOperation>(data_->size_, data_->offset_, data_->fill_value_, data_->padding_mode_);
+}
+
+// Perspective Transform Operation.
+struct Perspective::Data {
+  Data(const std::vector<std::vector<int32_t>> &start_points, const std::vector<std::vector<int32_t>> &end_points,
+       InterpolationMode interpolation)
+      : start_points_(start_points), end_points_(end_points), interpolation_(interpolation) {}
+  std::vector<std::vector<int32_t>> start_points_;
+  std::vector<std::vector<int32_t>> end_points_;
+  InterpolationMode interpolation_;
+};
+
+Perspective::Perspective(const std::vector<std::vector<int32_t>> &start_points,
+                         const std::vector<std::vector<int32_t>> &end_points, InterpolationMode interpolation)
+    : data_(std::make_shared<Data>(start_points, end_points, interpolation)) {}
+
+std::shared_ptr<TensorOperation> Perspective::Parse() {
+  return std::make_shared<PerspectiveOperation>(data_->start_points_, data_->end_points_, data_->interpolation_);
 }
 
 // Posterize Transform Operation
