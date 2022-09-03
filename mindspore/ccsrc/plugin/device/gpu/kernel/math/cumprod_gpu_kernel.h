@@ -18,15 +18,17 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_CUMPROD_GPU_KERNEL_H_
 
 #include <vector>
+#include <map>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cumprod_impl.cuh"
+#include "mindspore/core/ops/cumprod.h"
 
 namespace mindspore {
 namespace kernel {
 constexpr int kMaxDimsSize = 3;
 template <typename T>
-class CumProdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class CumProdGpuKernelMod : public NativeGpuKernelMod {
  public:
   CumProdGpuKernelMod()
       : exclusive_(false),
@@ -50,31 +52,46 @@ class CumProdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
             reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
-  bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    kernel_node_ = kernel_node;
-    if (input_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 1, but got " << input_num;
+
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override {
+    auto kernel_ptr = std::dynamic_pointer_cast<ops::CumProd>(base_operator);
+    MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
+    kernel_name_ = kernel_ptr->name();
+    exclusive_ = kernel_ptr->GetExclusive();
+    reverse_ = kernel_ptr->GetReverse();
+    axis_ = static_cast<int32_t>(kernel_ptr->GetAxis());
+
+    if (inputs.size() != 1) {
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of inputs should be 1, but got " << inputs.size();
+      return false;
+    }
+    return true;
+  }
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override {
+    int ret = KRET_OK;
+    if ((ret = KernelMod::Resize(base_operator, inputs, outputs)) != 0) {
+      return ret;
     }
     input_size_0_ = sizeof(T);
-    auto shape_signed = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto shape_signed = inputs[kIndex0]->GetShapeVector();
     if (IsDynamic(shape_signed)) {
-      return true;
+      return KRET_OK;
     }
     shape_ = Convert2SizeTClipNeg(shape_signed);
-    is_null_input_ = CHECK_SHAPE_NULL(shape_, kernel_name, "input");
+    is_null_input_ = CHECK_SHAPE_NULL(shape_, kernel_name_, "input");
     if (is_null_input_) {
-      InitSizeLists();
-      return true;
+      workspace_size_list_.push_back(input_size_0_);
+      return KRET_OK;
     }
-    axis_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "axis"));
-    exclusive_ = GetAttr<bool>(kernel_node, "exclusive");
-    reverse_ = GetAttr<bool>(kernel_node, "reverse");
+
     int input_dim_length = SizeToInt(shape_.size());
     if (axis_ >= input_dim_length) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the value of 'axis' should be less than " << input_dim_length
-                        << ", but got " << axis_;
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', the value of 'axis' should be less than " << input_dim_length
+                    << ", but got " << axis_;
+      return KRET_RESIZE_FAILED;
     }
     while (axis_ < 0) {
       axis_ += input_dim_length;
@@ -83,15 +100,9 @@ class CumProdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       input_size_0_ *= shape_[i];
     }
     Reshape();
-    InitSizeLists();
-    return true;
-  }
-
- protected:
-  void InitSizeLists() override {
-    input_size_list_.push_back(input_size_0_);
-    output_size_list_.push_back(input_size_0_);
     workspace_size_list_.push_back(input_size_0_);
+
+    return KRET_OK;
   }
 
  private:

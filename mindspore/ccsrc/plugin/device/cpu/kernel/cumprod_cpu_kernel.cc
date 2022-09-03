@@ -17,7 +17,7 @@
 #include "plugin/device/cpu/kernel/cumprod_cpu_kernel.h"
 
 #include <thread>
-
+#include "mindspore/core/ops/cumprod.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
@@ -30,37 +30,41 @@ using complex64 = std::complex<float>;
 using complex128 = std::complex<double>;
 }  // namespace
 
-void CumProdCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  axis_ = LongToInt(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS));
-  dst_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
-  exclusive_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, EXCLUSIVE);
-  reverse_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, REVERSE);
+bool CumProdCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                               const std::vector<KernelTensorPtr> &outputs) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::CumProd>(base_operator);
+  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
+  kernel_name_ = kernel_ptr->name();
+  dtype_ = inputs[0]->GetDtype();
+  exclusive_ = kernel_ptr->GetExclusive();
+  reverse_ = kernel_ptr->GetReverse();
+  axis_ = static_cast<int32_t>(kernel_ptr->GetAxis());
+  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+    return false;
+  }
+  return true;
+}
+
+int CumProdCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                const std::vector<KernelTensorPtr> &outputs,
+                                const std::map<uint32_t, tensor::TensorPtr> &) {
+  int ret = KRET_OK;
+  if ((ret = KernelMod::Resize(base_operator, inputs, outputs)) != 0) {
+    return ret;
+  }
+  shape_ = inputs[kIndex0]->GetShapeVector();
+  dst_shape_ = outputs[kIndex0]->GetShapeVector();
   int input_dim_length = SizeToInt(shape_.size());
   if (axis_ >= input_dim_length) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << ", 'axis' should be less than the length of 'input' dimension, but got 'axis': " << axis_
-                      << " and the length of 'input' dimension: " << input_dim_length;
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << ", 'axis' should be less than the length of 'input' dimension, but got 'axis': " << axis_
+                  << " and the length of 'input' dimension: " << input_dim_length;
+    return KRET_RESIZE_FAILED;
   }
   while (axis_ < 0) {
     axis_ += input_dim_length;
   }
-}
 
-template <typename T>
-void CumProdCpuKernelMod::InitWorkspaceSize() {
-  input_size_0_ = sizeof(T);
-  for (size_t i = 0; i < shape_.size(); i++) {
-    input_size_0_ *= static_cast<size_t>(shape_[i]);
-  }
-  (void)workspace_size_list_.emplace_back(input_size_0_);
-}
-
-void CumProdCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
-  DeprecatedNativeCpuKernelMod::InitInputOutputSize(kernel_node);
   if (dtype_ == kNumberTypeFloat32) {
     InitWorkspaceSize<float_t>();
   } else if (dtype_ == kNumberTypeFloat16) {
@@ -88,50 +92,22 @@ void CumProdCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
   } else if (dtype_ == kNumberTypeComplex128) {
     InitWorkspaceSize<std::complex<double>>();
   } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << ", the dtype of input should be in (int, uint, float, double, complex) on CPU, but got "
-                      << TypeIdToType(dtype_)->ToString();
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << ", the dtype of input should be in (int, uint, float, double, complex) on CPU, but got "
+                  << TypeIdToType(dtype_)->ToString();
+    return KRET_RESIZE_FAILED;
   }
+
+  return KRET_OK;
 }
 
-bool CumProdCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                 const std::vector<kernel::AddressPtr> &workspace,
-                                 const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kCumProdInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kCumProdOutputsNum, kernel_name_);
-  Reshape();
-  if (dtype_ == kNumberTypeFloat32) {
-    LaunchKernel<float_t>(inputs, workspace, outputs);
-  } else if (dtype_ == kNumberTypeFloat16) {
-    LaunchKernel<float16>(inputs, workspace, outputs);
-  } else if (dtype_ == kNumberTypeFloat64) {
-    LaunchKernel<double>(inputs, workspace, outputs);
-  } else if (dtype_ == kNumberTypeInt32) {
-    LaunchKernel<int32_t>(inputs, workspace, outputs);
-  } else if (dtype_ == kNumberTypeInt8) {
-    LaunchKernel<int8_t>(inputs, workspace, outputs);
-  } else if (dtype_ == kNumberTypeUInt8) {
-    LaunchKernel<uint8_t>(inputs, workspace, outputs);
-  } else if (dtype_ == kNumberTypeUInt16) {
-    LaunchKernel<uint16_t>(inputs, workspace, outputs);
-  } else if (dtype_ == kNumberTypeUInt32) {
-    LaunchKernel<uint32_t>(inputs, workspace, outputs);
-  } else if (dtype_ == kNumberTypeUInt64) {
-    LaunchKernel<uint64_t>(inputs, workspace, outputs);
-  } else if (dtype_ == kNumberTypeInt16) {
-    LaunchKernel<int16_t>(inputs, workspace, outputs);
-  } else if (dtype_ == kNumberTypeInt64) {
-    LaunchKernel<int64_t>(inputs, workspace, outputs);
-  } else if (dtype_ == kNumberTypeComplex64) {
-    LaunchKernel<std::complex<float>>(inputs, workspace, outputs);
-  } else if (dtype_ == kNumberTypeComplex128) {
-    LaunchKernel<std::complex<double>>(inputs, workspace, outputs);
-  } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << ", the dtype of input should be in (int, uint, float, double, complex) on CPU, but got "
-                      << TypeIdToType(dtype_)->ToString();
+template <typename T>
+void CumProdCpuKernelMod::InitWorkspaceSize() {
+  input_size_0_ = sizeof(T);
+  for (size_t i = 0; i < shape_.size(); i++) {
+    input_size_0_ *= static_cast<size_t>(shape_[i]);
   }
-  return true;
+  (void)workspace_size_list_.emplace_back(input_size_0_);
 }
 
 void CumProdCpuKernelMod::Reshape() {
@@ -282,9 +258,12 @@ void CumProdCpuKernelMod::LaunchCumProd(const T *input, T *output, T *workspace,
 }
 
 template <typename T>
-void CumProdCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+bool CumProdCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                        const std::vector<kernel::AddressPtr> &workspace,
                                        const std::vector<kernel::AddressPtr> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kCumProdInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kCumProdOutputsNum, kernel_name_);
+  Reshape();
   const auto *input = static_cast<T *>(inputs[0]->addr);
   auto *ws = static_cast<T *>(workspace[0]->addr);
   auto output = static_cast<T *>(outputs[0]->addr);
@@ -294,24 +273,40 @@ void CumProdCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
     LaunchCumProd<T>(input, output, ws, start, end);
   };
   ParallelLaunchAutoSearch(task, lens, this, &parallel_search_info_);
+  return true;
 }
 
-std::vector<KernelAttr> CumProdCpuKernelMod::GetOpSupport() {
-  static std::vector<KernelAttr> support_list = {
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16)},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64)},
-    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64)},
-    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32)},
-    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16)},
-    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8)},
-    {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16)},
-    {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32)},
-    {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64)},
-    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64)},
-    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128)},
-    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8)}};
-  return support_list;
+using cumProdPair = std::pair<KernelAttr, CumProdCpuKernelMod::KernelRunFunc>;
+const std::vector<cumProdPair> &CumProdCpuKernelMod::GetFuncList() const {
+  static const std::vector<std::pair<KernelAttr, CumProdCpuKernelMod::KernelRunFunc>> func_list = {
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &CumProdCpuKernelMod::LaunchKernel<float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+     &CumProdCpuKernelMod::LaunchKernel<float16>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     &CumProdCpuKernelMod::LaunchKernel<double>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+     &CumProdCpuKernelMod::LaunchKernel<int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+     &CumProdCpuKernelMod::LaunchKernel<int32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
+     &CumProdCpuKernelMod::LaunchKernel<int16_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+     &CumProdCpuKernelMod::LaunchKernel<int8_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
+     &CumProdCpuKernelMod::LaunchKernel<uint64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
+     &CumProdCpuKernelMod::LaunchKernel<uint32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
+     &CumProdCpuKernelMod::LaunchKernel<uint16_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
+     &CumProdCpuKernelMod::LaunchKernel<uint8_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+     &CumProdCpuKernelMod::LaunchKernel<complex64>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+     &CumProdCpuKernelMod::LaunchKernel<complex128>},
+  };
+  return func_list;
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, CumProd, CumProdCpuKernelMod);

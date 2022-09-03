@@ -20,32 +20,39 @@
 #include <complex>
 #include <memory>
 #include <vector>
+#include <map>
+#include <utility>
 
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-class CumProdCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class CumProdCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<CumProdCpuKernelMod> {
  public:
   CumProdCpuKernelMod() = default;
   ~CumProdCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, workspace, outputs);
+  }
 
- protected:
-  std::vector<KernelAttr> GetOpSupport() override;
+  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
+
+  std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
  private:
   void Reshape();
 
   template <typename T>
   void InitWorkspaceSize();
-
-  void InitInputOutputSize(const CNodePtr &kernel_node) override;
 
   template <typename T>
   void LeftMove(const T *input, T *output, size_t dim0, size_t dim1, size_t dim2, size_t stride, size_t stride2,
@@ -68,14 +75,14 @@ class CumProdCpuKernelMod : public DeprecatedNativeCpuKernelMod {
                      size_t start, size_t end) const;
 
   template <typename T>
-  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
+                    const std::vector<kernel::AddressPtr> &outputs);
 
   template <typename T>
   void LaunchCumProd(const T *input_addr, T *output_addr, T *ws_addr, size_t start, size_t end) const;
 
   ShapeVector shape_;
-  ShapeVector dst_shape;
+  ShapeVector dst_shape_;
   size_t input_size_0_{0};
   size_t stride_{0};
   size_t stride2_{0};
