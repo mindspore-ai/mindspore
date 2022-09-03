@@ -21,23 +21,13 @@
 #include "utils/check_convert_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/src/helper.h"
+#include "ops/grad/elewise_grad_infer_shape.h"
 
 namespace mindspore {
 namespace ops {
 namespace {
 abstract::ShapePtr AtanGradInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto prim_name = primitive->name();
-  const int64_t input_num = 2;
-  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num, prim_name);
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
-  auto x = input_args[0]->BuildShape();
-  MS_EXCEPTION_IF_NULL(x);
-  auto shape_element = x->cast<abstract::ShapePtr>();
-  MS_EXCEPTION_IF_NULL(shape_element);
-  return shape_element;
+  return mindspore::ElewiseGradInferShape(primitive, input_args);
 }
 
 TypePtr AtanGradInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
