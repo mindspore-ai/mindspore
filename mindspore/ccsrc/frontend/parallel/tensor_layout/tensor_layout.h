@@ -104,7 +104,7 @@ class TensorLayout {
 
   void set_opt_shard_group(std::string name) { opt_shard_group_ = std::move(name); }
 
-  std::string opt_shard_group() { return opt_shard_group_; }
+  std::string opt_shard_group() const { return opt_shard_group_; }
 
   void set_opt_shard_mirror_group(std::string name) { opt_shard_mirror_group_ = std::move(name); }
 

@@ -23,6 +23,8 @@ from mindspore.common import dtype as mstype
 from mindspore.communication.management import get_group_size, get_rank
 from mindspore.parallel._auto_parallel_context import auto_parallel_context
 from mindspore.common.seed import get_seed
+from mindspore._c_expression import GraphExecutor_
+from ..parallel._tensor import _load_tensor_by_layout
 
 
 def _get_parallel_mode():
@@ -71,6 +73,18 @@ def _need_to_full():
     if dataset_strategy and dataset_strategy not in ("data_parallel", "full_batch"):
         return True
     return not _get_full_batch()
+
+
+def _slice_parameter(parameter, phase, layout):
+    """Slice python parameter obj according to the layout."""
+    if not parameter.sliced:
+        graph_executor = GraphExecutor_.get_instance()
+        new_param = parameter.init_data(layout, set_sliced=True)
+        parameter = new_param
+        graph_executor.updata_param_node_default_input(phase, {parameter.name: parameter})
+    else:
+        new_tensor = _load_tensor_by_layout(parameter, layout)
+        parameter.set_data(new_tensor, True)
 
 
 def _to_full_shapes(shapes, device_num):

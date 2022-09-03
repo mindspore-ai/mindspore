@@ -27,6 +27,7 @@
 #include "frontend/parallel/device_manager.h"
 #include "frontend/parallel/tensor_layout/tensor_redistribution.h"
 #include "frontend/parallel/graph_util/node_info.h"
+#include "pybind_api/ir/primitive_py.h"
 
 namespace mindspore {
 namespace parallel {

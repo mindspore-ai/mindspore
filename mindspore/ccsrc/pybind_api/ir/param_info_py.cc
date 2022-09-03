@@ -22,8 +22,10 @@ namespace py = pybind11;
 
 REGISTER_PYBIND_DEFINE(
   ParamInfo, ([](const py::module *m) {
-    (void)py::class_<ParamInfo, ParamInfoPtr>(*m, "ParamInfo")
+    (void)py::class_<ParamInfo, ParamInfoPtr>(*m, "ParamInfo", py::dynamic_attr())
       .def(py::init())
+      .def(py::init([](const ParamInfo &param_info) { return std::make_shared<ParamInfo>(param_info); }),
+           py::arg("input"))
       .def("clone", &ParamInfo::Clone)
       .def_property("name", &ParamInfo::name, &ParamInfo::set_name)
       .def_property("key", &ParamInfo::key, &ParamInfo::set_key)

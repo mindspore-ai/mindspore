@@ -342,6 +342,18 @@ class Parameter(Tensor_):
         return self._inited_param
 
     @property
+    def param_info(self):
+        """Get the param_info of the parameter."""
+        return self._param_info
+
+    @param_info.setter
+    def param_info(self, param_info_):
+        """Set thee param_info of the parameter."""
+        param_info_.obj = self
+        self._param_info = param_info_
+        Tensor_.param_info.fset(self, param_info_)
+
+    @property
     def name(self):
         """Get the name of the parameter."""
         return self.param_info.name
@@ -452,6 +464,12 @@ class Parameter(Tensor_):
         """
         x = copy(self)
         x.param_info = self.param_info.clone()
+        info = self.param_info
+        if hasattr(info, "cloned_obj"):
+            info.cloned_obj.append(x)
+        else:
+            info.cloned_obj = [x]
+        self.param_info = info
         x.is_init = False
         x.init = self.init
         x.is_param_ps = self.is_param_ps

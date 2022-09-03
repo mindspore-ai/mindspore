@@ -39,6 +39,7 @@
 #include "frontend/optimizer/ad/prim_bprop_optimizer.h"
 #include "include/common/utils/parallel_context.h"
 #include "frontend/parallel/step_parallel_utils.h"
+#include "frontend/parallel/parameter_manager.h"
 #include "frontend/parallel/graph_util/get_parallel_info.h"
 #include "frontend/parallel/auto_parallel/graph_costmodel.h"
 #include "include/common/utils/config_manager.h"
@@ -799,6 +800,15 @@ void GraphExecutorPy::InitCompileCacheInfo(const ResourcePtr &resource, const st
   double t2 = GetTime();
   MsProfile::StatTime("LoadCachedFuncGraph", t2 - t1);
 #endif
+}
+
+void GraphExecutorPy::ParallelPostProcess(const std::string &phase) {
+  // Slice Python parameter obj
+  auto layout_graph = phase + kStepParallelGraph;
+  // only Parallel graph has tensor_layout
+  auto root = GetFuncGraph(layout_graph);
+  MS_EXCEPTION_IF_NULL(root);
+  parallel::AutoParallelPostProcess(root);
 }
 
 bool GraphExecutorPy::CompileInner(const py::object &source_obj, const py::tuple &args, const py::object &phase_obj,

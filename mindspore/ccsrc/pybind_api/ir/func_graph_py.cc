@@ -27,10 +27,12 @@ py::dict UpdateFuncGraphHyperParams(const FuncGraphPtr &func_graph, const py::di
     MS_EXCEPTION_IF_NULL(param_node);
     py::str param_name = py::str(param_node->name());
     if (param_node->has_default()) {
-      const char kModelName[] = "mindspore";
-      const char kClassName[] = "Parameter";
+      const char kModelName[] = "mindspore.common.parameter";
+      const char kParamName[] = "Parameter";
+      const char kParamInfoName[] = "ParamInfo";
       const py::module &mod = py::module::import(kModelName);
-      const py::object &fn = mod.attr(kClassName);
+      const py::object &ParamInit = mod.attr(kParamName);
+      const py::object &ParamInfoInit = mod.attr(kParamInfoName);
       const auto &old_value = param_node->default_param()->cast<tensor::TensorPtr>();
       MS_EXCEPTION_IF_NULL(old_value);
       py::object new_param;
@@ -46,13 +48,12 @@ py::dict UpdateFuncGraphHyperParams(const FuncGraphPtr &func_graph, const py::di
             << TypeIdLabel(old_value->data_type()) << ", but got the update value with shape " << new_value->shape()
             << " and dtype " << TypeIdLabel(new_value->data_type()) << ".";
         }
-        new_param = fn(*new_value);
+        new_param = ParamInit(*new_value);
       } else {
-        new_param = fn(*old_value);
+        new_param = ParamInit(*old_value);
       }
-      auto new_default_param = new_param.cast<tensor::TensorPtr>();
-      new_default_param->set_param_info(old_value->param_info());
-      param_node->set_default_param(new_default_param);
+      py::setattr(new_param, "param_info", ParamInfoInit(old_value->param_info()));
+      param_node->set_default_param(new_param.cast<tensor::TensorPtr>());
       hyper_params[param_name] = new_param;
     }
   }
