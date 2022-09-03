@@ -222,6 +222,9 @@ def uniform(shape, minval, maxval, seed=None, dtype=mstype.float32):
         >>> print(result)
         (3, 2, 2)
     """
+    if not isinstance(minval, Tensor) or not isinstance(maxval, Tensor):
+        raise TypeError(f"For functional operator[uniform], the input[minval] and input[maxval] must be a Tensor.")
+
     minval_dtype = F.dtype(minval)
     maxval_dtype = F.dtype(maxval)
     const_utils.check_type_valid(dtype, [mstype.int32, mstype.float32], 'uniform')
