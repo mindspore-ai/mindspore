@@ -18,7 +18,8 @@
 #define MINDSPORE_CORE_OPS_NLLLOSS_H_
 
 #include <string>
-
+#include <vector>
+#include <memory>
 #include "ops/base_operator.h"
 #include "mindapi/base/types.h"
 
@@ -33,7 +34,7 @@ class MIND_API NLLLoss : public BaseOperator {
   NLLLoss() : BaseOperator(kNameNLLLoss) { InitIOName({"logits", "labels", "weight"}, {"loss", "total_weight"}); }
 
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.NLLLoss for the inputs.
-  void Init(const Reduction &reduction = NONE);
+  void Init(const Reduction &reduction = Reduction::NONE);
 
   /// \brief Set reduction.
   void set_reduction(const Reduction &reduction);
@@ -45,5 +46,4 @@ class MIND_API NLLLoss : public BaseOperator {
 };
 }  // namespace ops
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CORE_OPS_NLLLOSS_H_

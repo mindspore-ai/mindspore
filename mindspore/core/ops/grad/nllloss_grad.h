@@ -35,7 +35,7 @@ class MIND_API NLLLossGrad : public BaseOperator {
   }
 
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.NLLLossGrad for the inputs.
-  void Init(const Reduction &reduction = NONE);
+  void Init(const Reduction &reduction = Reduction::NONE);
 
   /// \brief Set reduction.
   void set_reduction(const Reduction &reduction);

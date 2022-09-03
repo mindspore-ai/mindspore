@@ -15,10 +15,10 @@
  */
 
 #include "plugin/device/cpu/kernel/nllloss_grad_cpu_kernel.h"
-
+#include <map>
 #include <string>
 #include <unordered_map>
-
+#include "mindspore/core/ops/grad/nllloss_grad.h"
 #include "nnacl/errorcode.h"
 
 namespace mindspore {
@@ -26,30 +26,49 @@ namespace kernel {
 namespace {
 constexpr size_t kNLLLossGradInputsNum = 5;
 constexpr size_t kNLLLossGradOutputsNum = 1;
-const std::unordered_map<std::string, ReductionType> kReductionMap = {
-  {MEAN, Reduction_Mean}, {SUM, Reduction_Sum}, {NONE, Reduction_None}};
+const std::unordered_map<Reduction, ReductionType> kReductionMap = {
+  {Reduction::MEAN, Reduction_Mean}, {Reduction::REDUCTION_SUM, Reduction_Sum}, {Reduction::NONE, Reduction_None}};
 }  // namespace
 
-void NLLLossGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  KernelAttr kernel_attr = GetKernelAttrFromNode(kernel_node);
+bool NLLLossGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                   const std::vector<KernelTensorPtr> &outputs) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::NLLLossGrad>(base_operator);
+  if (!kernel_ptr) {
+    MS_LOG(ERROR) << "cast NLLLossGrad ops failed!";
+    return false;
+  }
+  auto kernel_name = kernel_ptr->GetPrim()->name();
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+
   bool is_match = MatchKernelAttr(kernel_attr, GetOpSupport()).first;
   if (!is_match) {
-    MS_LOG(EXCEPTION) << kernel_name_ << " does not support this kernel data type: " << kernel_attr;
+    MS_LOG(EXCEPTION) << kernel_name << " does not support this kernel data type: " << kernel_attr;
   }
 
-  auto logits_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  auto reduction = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, REDUCTION);
+  auto reduction = kernel_ptr->get_reduction();
+
   auto pair = kReductionMap.find(reduction);
   if (pair == kReductionMap.end()) {
     MS_LOG(EXCEPTION) << "For " << kernel_name_
                       << ", the attr 'reduction' only support 'mean', 'sum' and 'none', but got " << reduction;
   }
 
+  nllloss_param_.reduction_type_ = pair->second;
+  return true;
+}
+
+int NLLLossGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                    const std::vector<KernelTensorPtr> &outputs,
+                                    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  int ret = 0;
+  if ((ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) != 0) {
+    return ret;
+  }
+
+  auto logits_shape = inputs[0]->GetShapeVector();
   nllloss_param_.batch_ = LongToInt(logits_shape[0]);
   nllloss_param_.class_num_ = LongToInt(logits_shape[1]);
-  nllloss_param_.reduction_type_ = pair->second;
+  return KRET_OK;
 }
 
 bool NLLLossGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,

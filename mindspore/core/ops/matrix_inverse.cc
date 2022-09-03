@@ -25,41 +25,48 @@
 
 namespace mindspore {
 namespace ops {
-namespace {
-abstract::ShapePtr MatrixInverseInferShape(const PrimitivePtr &primitive,
-                                           const std::vector<AbstractBasePtr> &input_args) {
-  auto prim_name = primitive->name();
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto x_rank = SizeToLong(x_shape.size());
-  const constexpr int64_t kNumber1 = 1;
-  const constexpr int64_t kNumber2 = 2;
-  (void)CheckAndConvertUtils::CheckInteger("x rank", x_rank, kGreaterEqual, kNumber2, prim_name);
-  CheckAndConvertUtils::Check("row size", x_shape[x_rank - kNumber1], kEqual, x_shape[x_rank - kNumber2], prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("row size", x_shape[LongToSize(x_rank - kNumber1)], kGreaterEqual, kNumber2,
-                                           prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("column size", x_shape[LongToSize(x_rank - kNumber2)], kGreaterEqual,
-                                           kNumber2, prim_name);
-  return std::make_shared<abstract::Shape>(x_shape);
-}
-
-TypePtr MatrixInverseInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  const std::set<TypePtr> valid_types = {kFloat32, kFloat64};
-  auto infer_type = input_args[0]->BuildType();
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", infer_type, valid_types, prim->name());
-  return infer_type;
-}
-}  // namespace
-
 MIND_API_OPERATOR_IMPL(MatrixInverse, BaseOperator);
-AbstractBasePtr MatrixInverseInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                   const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  const int64_t input_num = 1;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
-  auto infertype = MatrixInverseInferType(primitive, input_args);
-  auto infershape = MatrixInverseInferShape(primitive, input_args);
-  return abstract::MakeAbstract(infershape, infertype);
+
+void MatrixInverse::Init(const bool adjoint) { this->set_adjoint(adjoint); }
+
+void MatrixInverse::set_adjoint(const bool adjoint) { (void)this->AddAttr(kAdjoint, api::MakeValue(adjoint)); }
+
+bool MatrixInverse::get_adjoint() const {
+  auto value_ptr = GetAttr(kAlign);
+  return GetValue<bool>(value_ptr);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(MatrixInverse, prim::kPrimMatrixInverse, MatrixInverseInfer, nullptr, true);
+
+class MatrixInverseInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    auto prim_name = primitive->name();
+    auto x_shape_ptr = input_args[kInputIndex0]->BuildShape()->cast<abstract::ShapePtr>();
+    auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shape_ptr)[kShape];
+    auto x_rank = SizeToLong(x_shape.size());
+    const constexpr int64_t kNumber1 = 1;
+    const constexpr int64_t kNumber2 = 2;
+    if (!x_shape_ptr->IsDynamic()) {
+      (void)CheckAndConvertUtils::CheckInteger("x rank", x_rank, kGreaterEqual, kNumber2, prim_name);
+      CheckAndConvertUtils::Check("row size", x_shape[x_rank - kNumber1], kEqual, x_shape[x_rank - kNumber2],
+                                  prim_name);
+      (void)CheckAndConvertUtils::CheckInteger("row size", x_shape[LongToSize(x_rank - kNumber1)], kGreaterEqual,
+                                               kNumber2, prim_name);
+      (void)CheckAndConvertUtils::CheckInteger("column size", x_shape[LongToSize(x_rank - kNumber2)], kGreaterEqual,
+                                               kNumber2, prim_name);
+    }
+    return std::make_shared<abstract::Shape>(x_shape);
+  }
+
+  TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
+    const int64_t input_num = 1;
+    CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim->name());
+    const std::set<TypePtr> valid_types = {kFloat32, kFloat64};
+    auto infer_type = input_args[kInputIndex0]->BuildType();
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("x", infer_type, valid_types, prim->name());
+    return infer_type;
+  }
+};
+REGISTER_PRIMITIVE_OP_INFER_IMPL(MatrixInverse, prim::kPrimMatrixInverse, MatrixInverseInfer, false);
 }  // namespace ops
 }  // namespace mindspore
