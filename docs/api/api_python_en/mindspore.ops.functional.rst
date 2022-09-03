@@ -193,6 +193,7 @@ Element-by-Element Operations
     mindspore.ops.selu
     mindspore.ops.sin
     mindspore.ops.sinh
+    mindspore.ops.sqrt
     mindspore.ops.square
     mindspore.ops.sub
     mindspore.ops.svd

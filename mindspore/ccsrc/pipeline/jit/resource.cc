@@ -264,7 +264,9 @@ BuiltInTypeMap &GetMethodMap() {
        {"var", std::string("var")},                                        // P.ReduceSum
        {"std", std::string("std")},                                        // P.ReduceSum
        {"sum", std::string("sum")},                                        // P.ReduceSum
+       {"sqrt", std::string("sqrt")},                                      // P.Sqrt()
        {"square", std::string("square")},                                  // P.Square()
+       {"sub", std::string("sub")},                                        // P.Sub()
        {"exp", std::string("exp")},                                        // P.Exp()
        {"repeat", std::string("repeat")},                                  // C.repeat_elements
        {"bernoulli", prim::kPrimBernoulli},                                // P.Bernoulli()

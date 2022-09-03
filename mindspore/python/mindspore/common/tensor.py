@@ -1101,6 +1101,32 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('exp')()(self)
 
+    def sqrt(self):
+        """
+        Returns sqrt of a tensor element-wise.
+
+        .. math::
+
+            out_{i} = \\sqrt{x_{i}}
+
+        Returns:
+            Tensor, has the same shape and dtype as the `x`.
+
+        Raises:
+            TypeError: If output is not a Tensor.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> x = Tensor(np.array([1.0, 4.0, 9.0]), mindspore.float32)
+            >>> output = x.sqrt()
+            >>> print(output)
+            [1. 2. 3.]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('sqrt')(self)
+
     def square(self):
         """
         Returns square of a tensor element-wise.
@@ -1123,6 +1149,36 @@ class Tensor(Tensor_):
         """
         self._init_check()
         return tensor_operator_registry.get('square')(self)
+
+    def sub(self, y):
+        r"""
+        Refer to :func:`mindspore.ops.sub` for more detail.
+
+        Args:
+            y (Union[Tensor, number.Number, bool]): The input, when the first input is a Tensor,
+                the second input should be a number.Number or bool value, or a Tensor
+                whose data type is number or bool\_.
+                When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
+
+        Returns:
+            Tensor, the shape is the same as the one after broadcasting,
+            and the data type is the one with higher precision or higher digits among the inputs.
+
+        Raises:
+            TypeError: If `y` is not a number.Number or a bool or a Tensor.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> x = Tensor(np.array([1, 2, 3]), mindspore.int32)
+            >>> y = Tensor(np.array([4, 5, 6]), mindspore.int32)
+            >>> output = x.sub(y)
+            >>> print(output)
+            [-3 -3 -3]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('sub')(self, y)
 
     def tan(self):
         """
@@ -2333,10 +2389,10 @@ class Tensor(Tensor_):
         perm = tuple(range(0, self.ndim))
         if axis2 + 1 < self.ndim:
             new_perm = perm[0:axis1] + perm[axis2:axis2 + 1] + \
-                perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1] + perm[axis2 + 1:]
+                       perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1] + perm[axis2 + 1:]
         else:
             new_perm = perm[0:axis1] + perm[axis2:axis2 + 1] + \
-                perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1]
+                       perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1]
 
         return tensor_operator_registry.get('transpose')()(self, new_perm)
 
@@ -5060,7 +5116,6 @@ class Tensor(Tensor_):
             [1.8427168e+00 1.0000000e+00 1.5728319e-01 4.6912432e-03 2.2351742e-05]
         """
         return tensor_operator_registry.get("erfc")()(self)
-
 
     def top_k(self, k, sorted=True):
         r"""

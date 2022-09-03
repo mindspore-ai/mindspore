@@ -71,7 +71,9 @@ mindspore.Tensor
     mindspore.Tensor.pow
     mindspore.Tensor.round
     mindspore.Tensor.sigmoid
+    mindspore.Tensor.sqrt
     mindspore.Tensor.std
+    mindspore.Tensor.sub
     mindspore.Tensor.svd
     mindspore.Tensor.square
     mindspore.Tensor.tan

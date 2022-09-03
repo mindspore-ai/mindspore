@@ -145,6 +145,7 @@ from .math_func import (
     ge,
     tensor_sub,
     sub,
+    sqrt,
     square,
     tensor_mul,
     mul,
