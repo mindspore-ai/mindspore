@@ -148,6 +148,7 @@ constexpr auto kCumProdOpName = "CumProd";
 constexpr auto kCumsumOpName = "Cumsum";
 constexpr auto kCumSumOpName = "CumSum";
 constexpr auto kDenseToDenseSetOperation = "DenseToDenseSetOperation";
+constexpr auto kDenseToSparseSetOperation = "DenseToSparseSetOperation";
 constexpr auto kDepthwiseConv2dNativeBackpropFilterOpName = "DepthwiseConv2dNativeBackpropFilter";
 constexpr auto kDepthwiseConv2dNativeBackpropInputOpName = "DepthwiseConv2dNativeBackpropInput";
 constexpr auto kDepthwiseConv2dNativeOpName = "DepthwiseConv2dNative";

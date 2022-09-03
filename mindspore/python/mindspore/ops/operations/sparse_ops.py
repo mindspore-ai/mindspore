@@ -2382,3 +2382,71 @@ class SparseCountSparseOutput(Primitive):
         validator.check_value_type("binary_output", binary_output, [bool], self.name)
         validator.check_value_type("minlength", minlength, [int], self.name)
         validator.check_value_type("maxlength", maxlength, [int], self.name)
+
+
+class DenseToSparseSetOperation(Primitive):
+    """
+    Applies set operation along last dimension of `x1` and `x2`.
+    Input `x2` is a SparseTensor represented by `x2_indices`, `x2_values`, and `x2_shape`.
+    For `x2` ranked `n`, 1st `n-1` dimensions must be the same as `x1`. Dimension `n` contains values in a set,
+    duplicates are allowed but ignored.
+
+    Args:
+        set_operation (str): The type of set operation, supports four kinds of inputs, case insensitive. Default: "".
+            "a-b": Get the difference set of x1 to x2.
+            "b-a": Get the difference set of x2 to x1.
+            "intersection": Get the intersection set of x2 to x1.
+            "union": Get the union set of x2 to x1.
+        validate_indices (bool): Optional attributes for DenseToSparseSetOperation.  Default: True.
+
+    Inputs:
+        - **x1** (Tensor) - The input tensor `x1` with rank `n`. 1st `n-1` dimensions must be the same as `x2`.
+          Dimension `n` contains values in a set, duplicates are allowed but ignored. Must be one of the
+          following types: int8, int16, int32, int64, uint8, uint16.
+        - **x2_indices** (Tensor) - A 2-D Tensor, type int64, indices of a SparseTensor.
+        - **x2_values** (Tensor) - A 1-D Tensor, must have the same type as x1, values of a SparseTensor. Size
+          must be the same as `x2_indices`
+        - **x2_shape** (Tensor) - A 1-D Tensor, type int64, shape of a SparseTensor, must have the same size as
+          the second dimensions of `x2_indices`
+
+    Outputs:
+        y_indices: A Tensor of type int64.
+        y_values: A Tensor. Has the same type as x1.
+        y_shape: A Tensor of type int64 .
+
+    Raises:
+        TypeError: If any input is not Tensor.
+        TypeError:If the dtype of `x2_values` is not the same as 'x1'.
+        TypeError:If the dtype of `x2_indices` or `x2_shape` is not int64.
+        ValueError: If the group shape of `x1` or `x2` mismatch with each other.
+        ValueError: If the rank of `x1` is less than 2.
+        ValueError: If the rank of `x2_indices` is not equal 2.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> x1 = Tensor([[1 2] [3 0] [1 5]], dtype=ms.int64)
+        >>> x2_indices = Tensor([[0 1] [0 2] [1 2]], dtype=ms.int64)
+        >>> x2_values = Tensor([5 1 7],dtype=ms.int64)
+        >>> x2_shape = Tensor([3 3], dtype=ms.int64)
+        >>> dense_to_sparse_set_operation = ops.DenseToSparseSetOperation(set_operation='intersection')
+        >>> y_indices, y_values, y_shape = dense_to_sparse_set_operation(indices, values, sparse_shape)
+        >>> print(out)
+        (Tensor(shape=[2, 2], dtype=Int64, value=[[0, 0],[0, 1]]),
+         Tensor(shape=[2], dtype=Int64, value= [1, 2]),
+         Tensor(shape=[2], dtype=Int64, value= [3, 2]))
+    """
+
+    @prim_attr_register
+    def __init__(self, set_operation="", validate_indices=True):
+        """Initialize DenseToSparseSetOperation."""
+        self.init_prim_io_names(inputs=['x1', 'x2_indices', 'x2_values', 'x2_shape'],
+                                outputs=['y_indices', 'y_values', 'y_shape'])
+        self.set_operation = set_operation
+        self.validate_indices = validate_indices
+        self.add_prim_attr('set_operation', self.set_operation)
+        self.add_prim_attr('validate_indices', self.validate_indices)
+
+        validator.check_value_type("set_operation", set_operation, [str], self.name)
+        validator.check_value_type("validate_indices", validate_indices, [bool], self.name)

@@ -340,6 +340,7 @@ constexpr auto kCOOTensorGetValues = "COOTensorGetValues";
 constexpr auto kCOOTensorGetIndices = "COOTensorGetIndices";
 constexpr auto kCOOTensorGetDenseShape = "COOTensorGetDenseShape";
 constexpr auto kCOOTensorDenseMatmul = "COOTensorDenseMatmul";
+constexpr auto kDenseToSparseSetOperation = "DenseToSparseSetOperation";
 
 // Sparse ops
 constexpr auto kSparseTensorDenseMatmul = "SparseTensorDenseMatmul";
@@ -1039,6 +1040,7 @@ GVAR_DEF(PrimitivePtr, kPrimMirrorMicroStep, std::make_shared<Primitive>("_Mirro
 GVAR_DEF(PrimitivePtr, kPrimApplyProximalAdagrad, std::make_shared<Primitive>("ApplyProximalAdagrad"));
 GVAR_DEF(PrimitivePtr, kPrimStreamSend, std::make_shared<Primitive>("StreamSend"));
 GVAR_DEF(PrimitivePtr, kPrimStreamRecv, std::make_shared<Primitive>("StreamRecv"));
+GVAR_DEF(PrimitivePtr, kPrimDenseToSparseSetOperation, std::make_shared<Primitive>(kDenseToSparseSetOperation));
 
 // Quant ops
 GVAR_DEF(PrimitivePtr, kPrimBatchNormFold, std::make_shared<Primitive>("BatchNormFold"));
