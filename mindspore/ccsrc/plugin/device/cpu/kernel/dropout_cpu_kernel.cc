@@ -18,8 +18,11 @@
 
 #include <algorithm>
 #include <random>
-
+#include <map>
+#include <functional>
+#include <utility>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "mindspore/core/ops/dropout.h"
 
 namespace mindspore {
 namespace kernel {
@@ -28,44 +31,48 @@ constexpr size_t kDropoutInputsNum = 1;
 constexpr size_t kDropoutOutputsNum = 2;
 }  // namespace
 
-void DropoutCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  input_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  output_shape_ = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
-  mask_shape_ = common::AnfAlgo::GetOutputInferShape(kernel_node, 1);
-  if (AnfAlgo::IsShapesDynamic({input_shape_, output_shape_, mask_shape_})) {
-    return;
+using FuncVec = const std::vector<std::pair<KernelAttr, DropoutCpuKernelMod::KernelRunFunc>>;
+
+bool DropoutCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                               const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::Dropout>(base_operator);
+  if (!kernel_ptr) {
+    MS_LOG(ERROR) << "cast Dropout ops failed!";
+    return false;
   }
-  keep_prob_ = common::AnfAlgo::GetNodeAttr<float>(kernel_node, "keep_prob");
+  kernel_name_ = kernel_ptr->name();
+  if (inputs.size() != kDropoutInputsNum || outputs.size() != kDropoutOutputsNum) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output tensor number must be " << kDropoutInputsNum
+                  << " and " << kDropoutOutputsNum << ", but got " << inputs.size() << " and " << outputs.size();
+    return false;
+  }
+  keep_prob_ = kernel_ptr->get_keep_prob();
   if (keep_prob_ <= 0.0 || keep_prob_ > 1.0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", the 'keep_prob' must be in (0.0, 1.0], but got " << keep_prob_;
   }
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
+  input_shape_ = inputs[0]->GetShapeVector();
   for (const auto &d : input_shape_) {
     tensor_size_ *= LongToSize(d);
   }
+  return MatchKernelFunc(base_operator, inputs, outputs);
 }
 
-bool DropoutCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                                 const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kDropoutInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kDropoutOutputsNum, kernel_name_);
-  if (dtype_ == kNumberTypeFloat16) {
-    LaunchKernel<float16>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeFloat32) {
-    LaunchKernel<float>(inputs, outputs);
-  } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << ", the dtype of input 'x' must be float16 or float32 on CPU, but got "
-                      << TypeIdToType(dtype_)->ToString();
+int DropoutCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                const std::vector<KernelTensorPtr> &outputs,
+                                const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+    return ret;
   }
-  return true;
+  return static_cast<int>(KRET_OK);
 }
 
 template <typename T>
-void DropoutCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                       const std::vector<AddressPtr> &outputs) const {
+bool DropoutCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                                       const std::vector<kernel::AddressPtr> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kDropoutInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kDropoutOutputsNum, kernel_name_);
+
   const auto *input_addr = reinterpret_cast<T *>(inputs[0]->addr);
   auto *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
   auto mask_addr = reinterpret_cast<T *>(outputs[1]->addr);
@@ -77,6 +84,19 @@ void DropoutCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
     mask_addr[i] = static_cast<T>(dis(gen));
     output_addr[i] = mask_addr[i] * input_addr[i] * scale;
   }
+  return true;
+}
+
+FuncVec &DropoutCpuKernelMod::GetFuncList() const {
+  static const std::vector<std::pair<KernelAttr, DropoutCpuKernelMod::KernelRunFunc>> func_list = {
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+     &DropoutCpuKernelMod::LaunchKernel<float16>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &DropoutCpuKernelMod::LaunchKernel<float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     &DropoutCpuKernelMod::LaunchKernel<double>},
+  };
+  return func_list;
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Dropout, DropoutCpuKernelMod);
