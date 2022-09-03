@@ -16,7 +16,7 @@
 
 #include "plugin/device/cpu/kernel/hswish_cpu_kernel.h"
 #include <algorithm>
-#include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
@@ -25,23 +25,36 @@ constexpr size_t kHSwishInputsNum = 1;
 constexpr size_t kHSwishOutputsNum = 1;
 }  // namespace
 
-void HSwishCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  x_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-
-  tensor_size_ = SizeOf(x_shape_);
-
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
-  std::vector<KernelAttr> support_list;
-  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                       [](const std::pair<KernelAttr, HSwishFunc> &pair) { return pair.first; });
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, support_list);
-  if (!is_match) {
-    MS_LOG(EXCEPTION) << "HSwish does not support this kernel data type: " << kernel_attr;
+bool HSwishCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                              const std::vector<KernelTensorPtr> &outputs) {
+  MS_ERROR_IF_NULL_W_RET_VAL(base_operator, false);
+  kernel_name_ = base_operator->name();
+  if (inputs.size() != kHSwishInputsNum || outputs.size() != kHSwishOutputsNum) {
+    MS_LOG(ERROR) << kernel_name_ << ": input and output size should be " << kHSwishInputsNum << " and "
+                  << kHSwishOutputsNum << ", but get " << inputs.size() << " and " << outputs.size();
+    return false;
   }
 
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
+  }
   kernel_func_ = func_list_[index].second;
+  return true;
+}
+
+int HSwishCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                               const std::vector<KernelTensorPtr> &outputs,
+                               const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  if (ret != 0) {
+    return ret;
+  }
+  x_shape_ = inputs[0]->GetShapeVector();
+  tensor_size_ = SizeOf(x_shape_);
+  return KRET_OK;
 }
 
 template <typename T>
@@ -50,7 +63,9 @@ bool HSwishCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inp
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kHSwishInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kHSwishOutputsNum, kernel_name_);
   const auto *x = reinterpret_cast<T *>(inputs[0]->addr);
+  MS_ERROR_IF_NULL_W_RET_VAL(x, false);
   auto *y = reinterpret_cast<T *>(outputs[0]->addr);
+  MS_ERROR_IF_NULL_W_RET_VAL(y, false);
   auto zero = static_cast<T>(0);
   auto three = static_cast<T>(3);
   auto six = static_cast<T>(6);
@@ -81,6 +96,13 @@ std::vector<std::pair<KernelAttr, HSwishCpuKernelMod::HSwishFunc>> HSwishCpuKern
    &HSwishCpuKernelMod::LaunchKernel<int64_t>},
   {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
    &HSwishCpuKernelMod::LaunchKernel<float>}};
+
+std::vector<KernelAttr> HSwishCpuKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, HSwishCpuKernelMod::HSwishFunc> &pair) { return pair.first; });
+  return support_list;
+}
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, HSwish, HSwishCpuKernelMod);
 }  // namespace kernel

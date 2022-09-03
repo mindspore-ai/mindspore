@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/oneslike_impl.cuh"
 #include <cuda_runtime.h>
-#include "oneslike_impl.cuh"
 #include "include/cuda_fp16.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
+
 template <typename T>
 __global__ void OnesLike(const size_t size, const T *input, T *output) {
   int one = 1;
@@ -56,3 +58,7 @@ template CUDA_LIB_EXPORT void CalOnesLike<uint32_t>(const size_t size, const uin
                                                     cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalOnesLike<uint64_t>(const size_t size, const uint64_t *input, uint64_t *output,
                                                     cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalOnesLike<Complex<float>>(const size_t size, const Complex<float> *input,
+                                                          Complex<float> *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalOnesLike<Complex<double>>(const size_t size, const Complex<double> *input,
+                                                           Complex<double> *output, cudaStream_t cuda_stream);

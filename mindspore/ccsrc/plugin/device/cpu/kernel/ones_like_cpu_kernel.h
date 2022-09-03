@@ -28,12 +28,14 @@ namespace kernel {
 using complex64 = std::complex<float>;
 using complex128 = std::complex<double>;
 
-class OnesLikeCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class OnesLikeCpuKernelMod : public NativeCpuKernelMod {
  public:
   OnesLikeCpuKernelMod() = default;
   ~OnesLikeCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
     return kernel_func_(this, inputs, workspace, outputs);
@@ -50,9 +52,6 @@ class OnesLikeCpuKernelMod : public DeprecatedNativeCpuKernelMod {
                        const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
   static std::vector<std::pair<KernelAttr, OnesLikeFunc>> func_list_;
   OnesLikeFunc kernel_func_;
-
-  std::vector<int64_t> input_shape_;
-  std::vector<int64_t> output_shape_;
 };
 }  // namespace kernel
 }  // namespace mindspore

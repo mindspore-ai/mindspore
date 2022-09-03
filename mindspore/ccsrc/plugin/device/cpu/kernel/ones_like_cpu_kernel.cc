@@ -16,8 +16,7 @@
 
 #include "plugin/device/cpu/kernel/ones_like_cpu_kernel.h"
 #include <algorithm>
-#include <utility>
-#include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
@@ -25,18 +24,22 @@ namespace {
 constexpr size_t kOnesLikeInputsNum = 1;
 constexpr size_t kOnesLikeOutputsNum = 1;
 }  // namespace
-void OnesLikeCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  output_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
 
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
-  if (!is_match) {
-    MS_LOG(EXCEPTION) << "OnesLike does not support this kernel data type: " << kernel_attr;
+bool OnesLikeCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kOnesLikeInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOnesLikeOutputsNum, kernel_name_);
+
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto pair = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!pair.first) {
+    MS_LOG(ERROR) << "'" << kernel_name_ << "' does not support this kernel data type: " << kernel_attr;
+    return false;
   }
-  kernel_func_ = func_list_[index].second;
+  kernel_func_ = func_list_[pair.second].second;
+  return true;
 }
 
 template <typename T>
@@ -45,8 +48,8 @@ bool OnesLikeCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
                                         const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kOnesLikeInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOnesLikeOutputsNum, kernel_name_);
-  auto input_addr = static_cast<T *>(inputs[0]->addr);
-  auto output_addr = static_cast<T *>(outputs[0]->addr);
+  auto input_addr = reinterpret_cast<T *>(inputs[0]->addr);
+  auto output_addr = reinterpret_cast<T *>(outputs[0]->addr);
   size_t output_size = outputs[0]->size / sizeof(T);
   auto task = [this, output_addr, input_addr](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
@@ -76,6 +79,10 @@ std::vector<std::pair<KernelAttr, OnesLikeCpuKernelMod::OnesLikeFunc>> OnesLikeC
    &OnesLikeCpuKernelMod::LaunchKernel<uint8_t>},
   {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
    &OnesLikeCpuKernelMod::LaunchKernel<uint16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
+   &OnesLikeCpuKernelMod::LaunchKernel<uint32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
+   &OnesLikeCpuKernelMod::LaunchKernel<uint64_t>},
   {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
    &OnesLikeCpuKernelMod::LaunchKernel<bool>},
   {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
