@@ -32,6 +32,7 @@ endif()
 if(NOT PLATFORM_ARM64)
     set(KERNEL_SRC_ARM64_FILE   ${CMAKE_CURRENT_SOURCE_DIR}/fp32/convolution_im2col_arm64_fp32.cc
                                 ${CMAKE_CURRENT_SOURCE_DIR}/fp32/matmul_fp32_arm64.cc
+                                ${CMAKE_CURRENT_SOURCE_DIR}/fp32/convolution_winograd_arm64_fp32.cc
     )
     list(REMOVE_ITEM KERNEL_SRC ${KERNEL_SRC_ARM64_FILE})
 endif()
@@ -39,6 +40,7 @@ endif()
 if(NOT PLATFORM_ARM32)
     set(KERNEL_SRC_ARM32_FILE   ${CMAKE_CURRENT_SOURCE_DIR}/fp32/convolution_im2col_arm32_fp32.cc
                                 ${CMAKE_CURRENT_SOURCE_DIR}/fp32/matmul_fp32_arm32.cc
+                                ${CMAKE_CURRENT_SOURCE_DIR}/fp32/convolution_winograd_arm32_fp32.cc
     )
     list(REMOVE_ITEM KERNEL_SRC ${KERNEL_SRC_ARM32_FILE})
 endif()
@@ -46,6 +48,7 @@ endif()
 if(NOT("${X86_64_SIMD}" STREQUAL "sse" OR "${X86_64_SIMD}" STREQUAL "avx" OR "${X86_64_SIMD}" STREQUAL "avx512"))
     set(KERNEL_SRC_SSE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/fp32/convolution_im2col_sse_fp32.cc
                             ${CMAKE_CURRENT_SOURCE_DIR}/fp32/matmul_fp32_sse.cc
+                            ${CMAKE_CURRENT_SOURCE_DIR}/fp32/convolution_winograd_sse_fp32.cc
     )
     list(REMOVE_ITEM KERNEL_SRC ${KERNEL_SRC_SSE_FILE})
 endif()
@@ -54,6 +57,7 @@ if(NOT("${X86_64_SIMD}" STREQUAL "avx" OR "${X86_64_SIMD}" STREQUAL "avx512"))
     set(KERNEL_SRC_AVX_FILE ${CMAKE_CURRENT_SOURCE_DIR}/fp32/convolution_im2col_avx_fp32.cc
                             ${CMAKE_CURRENT_SOURCE_DIR}/fp32/matmul_fp32_avx.cc
                             ${CMAKE_CURRENT_SOURCE_DIR}/fp32/convolution_slidewindows_avx_fp32.cc
+                            ${CMAKE_CURRENT_SOURCE_DIR}/fp32/convolution_winograd_avx_fp32.cc
     )
     list(REMOVE_ITEM KERNEL_SRC ${KERNEL_SRC_AVX_FILE})
 endif()
