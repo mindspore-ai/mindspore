@@ -76,8 +76,8 @@ ValuePtr GetInferValueFromAbstract(const AbstractBasePtr &abs) {
 
 void PynativeInfer(const FrontendOpRunInfoPtr &op_run_info) {
   MS_EXCEPTION_IF_NULL(op_run_info);
-  MS_LOG(DEBUG) << "Op " << op_run_info->base_op_run_info.op_name << " input abs "
-                << mindspore::ToString(op_run_info->input_abs);
+  MS_LOG(DEBUG) << "Op " << op_run_info->base_op_run_info.op_name
+                << " infer input: " << mindspore::ToString(op_run_info->input_abs);
   const auto &prim = op_run_info->op_prim;
   MS_EXCEPTION_IF_NULL(prim);
   prim->BeginRecordAddAttr();
@@ -87,7 +87,7 @@ void PynativeInfer(const FrontendOpRunInfoPtr &op_run_info) {
   MS_EXCEPTION_IF_NULL(infer_res);
   prim->EndRecordAddAttr();
   op_run_info->base_op_run_info.abstract = infer_res;
-  MS_LOG(DEBUG) << "Op " << op_run_info->base_op_run_info.op_name << " infer result " << infer_res->ToString();
+  MS_LOG(DEBUG) << "Op " << op_run_info->base_op_run_info.op_name << " infer result: " << infer_res->ToString();
 }
 }  // namespace
 
@@ -106,6 +106,13 @@ void InferOperation::SetInputAbstract(const FrontendOpRunInfoPtr &op_run_info) {
     (void)op_run_info->input_abs.emplace_back(
       GetInputValueAbs(op_run_info, op_run_info->input_value[i], i, input_const_flag[i]));
   }
+  op_run_info->base_op_run_info.has_dynamic_input =
+    std::any_of(op_run_info->input_abs.begin(), op_run_info->input_abs.end(), [](const AbstractBasePtr &abs) {
+      MS_EXCEPTION_IF_NULL(abs);
+      const auto &shape = abs->BuildShape();
+      MS_EXCEPTION_IF_NULL(shape);
+      return shape->IsDynamic();
+    });
 }
 
 AbstractBasePtr InferOperation::GetInputValueAbs(const FrontendOpRunInfoPtr &op_run_info, const ValuePtr &input_value,
@@ -118,26 +125,9 @@ AbstractBasePtr InferOperation::GetInputValueAbs(const FrontendOpRunInfoPtr &op_
     return GetInputTupleValueAbstract(op_run_info, tuple_value, input_index, input_id, marked_const);
   }
   // Get non-tuple and non-list abs.
-  const auto &dynamic_shape_info = PyNativeAlgo::Common::GetPyNativeExecutor()->forward_executor()->dynamic_shape();
-  const auto &id_with_dynamic_abs = dynamic_shape_info->id_with_dynamic_abs();
-  auto iter = id_with_dynamic_abs.find(input_id);
-  if (iter != id_with_dynamic_abs.end()) {
-    MS_EXCEPTION_IF_NULL(op_run_info);
-    op_run_info->base_op_run_info.has_dynamic_input = true;
-    MS_LOG(DEBUG) << "Get abstract of input " << input_index << " value is " << iter->second->ToString() << ", id "
-                  << input_id;
-    return iter->second;
-  } else {
-    const auto &abs = GetAbstractByValue(input_value, input_index, input_id, marked_const);
-    MS_EXCEPTION_IF_NULL(abs);
-    const auto &shape = abs->BuildShape();
-    MS_EXCEPTION_IF_NULL(shape);
-    if (shape->IsDynamic()) {
-      op_run_info->base_op_run_info.has_dynamic_input = true;
-    }
-    MS_LOG(DEBUG) << "Get abstract of input " << input_index << " value is " << abs->ToString() << ", id " << input_id;
-    return abs;
-  }
+  const auto &abs = GetAbstractByValue(input_value, input_index, input_id, marked_const);
+  MS_LOG(DEBUG) << "Get abstract of input " << input_index << " is " << abs->ToString() << ", id " << input_id;
+  return abs;
 }
 
 AbstractBasePtr InferOperation::GetInputTupleValueAbstract(const FrontendOpRunInfoPtr &op_run_info,
@@ -154,17 +144,10 @@ AbstractBasePtr InferOperation::GetInputTupleValueAbstract(const FrontendOpRunIn
   MS_EXCEPTION_IF_NULL(tuple_value);
   size_t tuple_value_size = tuple_value->size();
   abstract::AbstractBasePtrList abs_list(tuple_value_size);
-  const auto &dynamic_shape_info = PyNativeAlgo::Common::GetPyNativeExecutor()->forward_executor()->dynamic_shape();
-  const auto &id_with_dynamic_abs = dynamic_shape_info->id_with_dynamic_abs();
   for (size_t i = 0; i < tuple_value_size; ++i) {
     const auto &item = tuple_value->value()[i];
     const auto &item_id = PyNativeAlgo::Common::GetIdByValue(item);
-    auto item_iter = id_with_dynamic_abs.find(item_id);
-    if (item_iter != id_with_dynamic_abs.end()) {
-      abs_list[i] = item_iter->second;
-    } else {
-      abs_list[i] = GetAbstractByValue(item, input_index, item_id, marked_const);
-    }
+    abs_list[i] = GetAbstractByValue(item, input_index, item_id, marked_const);
   }
   // Create output abstract by value type.
   AbstractBasePtr abs;
@@ -172,13 +155,6 @@ AbstractBasePtr InferOperation::GetInputTupleValueAbstract(const FrontendOpRunIn
     abs = std::make_shared<abstract::AbstractTuple>(abs_list);
   } else {
     abs = std::make_shared<abstract::AbstractList>(abs_list);
-  }
-  // Update dynamic shape info.
-  MS_EXCEPTION_IF_NULL(abs);
-  const auto &shape = abs->BuildShape();
-  MS_EXCEPTION_IF_NULL(shape);
-  if (shape->IsDynamic()) {
-    op_run_info->base_op_run_info.has_dynamic_input = true;
   }
   MS_LOG(DEBUG) << "Get abstract of tuple input " << input_index << " is " << abs->ToString() << ", id " << input_id;
   return abs;
@@ -300,7 +276,8 @@ std::vector<bool> InferOperation::CheckPrimitiveConstFlag(const FrontendOpRunInf
   return input_const_flag;
 }
 
-void InferOperation::SetNodeAbsCacheByValue(const ValuePtr &value, const abstract::AbstractBasePtr &abs) {
+void InferOperation::SetNodeAbsCacheByValue(const std::string &op_name, const ValuePtr &value,
+                                            const abstract::AbstractBasePtr &abs) {
   SetAnyValue(abs);
   node_abs_cache_[PyNativeAlgo::Common::GetIdByValue(value)] = abs;
   // If value is a `value tuple` or `value list`, cache the abstract of each element value.
@@ -312,10 +289,25 @@ void InferOperation::SetNodeAbsCacheByValue(const ValuePtr &value, const abstrac
     const auto &value_elems = seq_value->value();
     const auto &abs_elems = seq_abs->elements();
     size_t num = value_elems.size();
-    MS_EXCEPTION_IF_CHECK_FAIL(num == abs_elems.size(), "The size of value is not equal to the size of abstract.");
+    if (num != abs_elems.size()) {
+      SaveSpecifiedOutputToCache(op_name, value_elems, abs_elems);
+      MS_LOG(DEBUG) << "The size of value " << num << " is not equal to the size of abstract " << abs_elems.size();
+      return;
+    }
     for (size_t i = 0; i < num; ++i) {
       node_abs_cache_[PyNativeAlgo::Common::GetIdByValue(value_elems[i])] = abs_elems[i];
     }
+  }
+}
+
+void InferOperation::SaveSpecifiedOutputToCache(const std::string &op_name, const ValuePtrList &value_list,
+                                                const AbstractBasePtrList &abs_list) {
+  if (value_list.empty() || abs_list.empty()) {
+    return;
+  }
+  // BatchNormal forward only use first output
+  if (op_name == kBatchNorm) {
+    node_abs_cache_[PyNativeAlgo::Common::GetIdByValue(value_list[0])] = abs_list[0];
   }
 }
 
@@ -326,6 +318,7 @@ void InferOperation::SetNodeAbsCacheById(const std::string &id, const abstract::
 py::object InferOperation::CallConstantFolding(const py::args &args) {
   const auto &op_run_info = std::make_shared<FrontendOpRunInfo>();
   PyNativeAlgo::PyParser::SetPrim(op_run_info, args[0]);
+  op_run_info->base_op_run_info.op_name = op_run_info->op_prim->name();
   const auto &v = PyNativeAlgo::DataConvert::PyObjToValue(args[1]);
   op_run_info->input_abs.emplace_back(v->ToAbstract());
   PynativeInfer(op_run_info);

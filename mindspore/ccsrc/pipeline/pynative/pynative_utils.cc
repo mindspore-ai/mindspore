@@ -76,11 +76,6 @@ TypePtr Common::GetTypeFromAbstract(const abstract::AbstractBasePtr &abs) {
   return type;
 }
 
-bool Common::IsDynamicShape(const FrontendOpRunInfoPtr &op_run_info) {
-  MS_EXCEPTION_IF_NULL(op_run_info);
-  return op_run_info->base_op_run_info.has_dynamic_output || op_run_info->base_op_run_info.has_dynamic_input;
-}
-
 bool Common::ValueHasDynamicShape(const ValuePtr &value) {
   MS_EXCEPTION_IF_NULL(value);
   if (value->isa<tensor::Tensor>()) {

@@ -255,13 +255,7 @@ void MsFunction::GradMsFunctionInner(const std::string &phase, const py::object 
   const auto &grad_executor = PyNativeAlgo::Common::GetPyNativeExecutor()->grad_executor();
   FrontendOpRunInfoPtr op_run_info = std::make_shared<FrontendOpRunInfo>();
   op_run_info->base_op_run_info.op_name = phase;
-  const auto &id_with_dynamic_abs = grad_executor->dynamic_shape()->id_with_dynamic_abs();
-  auto it = id_with_dynamic_abs.find(PyNativeAlgo::PyParser::GetIdByPyObj(actual_out));
-  if (it != id_with_dynamic_abs.end()) {
-    op_run_info->base_op_run_info.abstract = it->second;
-  } else {
-    op_run_info->base_op_run_info.abstract = actual_out_v->ToAbstract();
-  }
+  op_run_info->base_op_run_info.abstract = actual_out_v->ToAbstract();
   const auto &top_cell = grad_executor->top_cell();
   top_cell->RecordGradOpInfo(op_run_info);
   MS_LOG(DEBUG) << "ms_function cnode op info: " << op_run_info->op_info;

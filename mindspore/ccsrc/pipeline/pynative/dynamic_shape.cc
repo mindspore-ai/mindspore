@@ -23,14 +23,6 @@ namespace mindspore {
 namespace pynative {
 const char kSensInfo[] = "SensInfo";
 
-ShapeVector DynamicShape::GetTensorShape(const ValuePtr &v) const {
-  MS_EXCEPTION_IF_NULL(v);
-  if (v->isa<tensor::Tensor>()) {
-    return v->cast<tensor::TensorPtr>()->shape();
-  }
-  return {};
-}
-
 abstract::ShapePtr DynamicShape::GetShapeFromAbstract(const abstract::AbstractBasePtr &abs) const {
   MS_EXCEPTION_IF_NULL(abs);
   if (abs->isa<abstract::AbstractSequence>()) {
@@ -43,7 +35,7 @@ abstract::ShapePtr DynamicShape::GetShapeFromAbstract(const abstract::AbstractBa
   return shape;
 }
 
-void DynamicShape::SaveIdWithDynamicAbstract(const ValuePtr &v, const AbstractBasePtr &abs) {
+void DynamicShape::UpdateValueBaseShape(const ValuePtr &v, const AbstractBasePtr &abs) const {
   MS_EXCEPTION_IF_NULL(v);
   MS_EXCEPTION_IF_NULL(abs);
   if (v->isa<ValueSequence>() && abs->isa<abstract::AbstractTuple>()) {
@@ -53,95 +45,45 @@ void DynamicShape::SaveIdWithDynamicAbstract(const ValuePtr &v, const AbstractBa
       MS_LOG(EXCEPTION) << "Obj tuple size " << obj_tuple->size() << ", but abstract tuple size " << abs_tuple->size();
     }
     for (size_t i = 0; i < obj_tuple->size(); ++i) {
-      SaveIdWithDynamicAbstract(obj_tuple->value()[i], abs_tuple->elements()[i]);
+      UpdateValueBaseShape(obj_tuple->value()[i], abs_tuple->elements()[i]);
     }
   } else if (v->isa<ValueSequence>() && !abs->isa<abstract::AbstractTuple>()) {
     const auto &obj_tuple = v->cast<ValueSequencePtr>();
     if (obj_tuple->size() != 1) {
       MS_LOG(EXCEPTION) << "Not match: obj " << v->ToString() << " and abs " << abs->ToString();
     }
-    // Like Unique, has two outputs, but one output is static shape, and should not be stored
-    if (abs->BuildShape()->IsDynamic()) {
-      (void)id_with_dynamic_abs_.emplace(
-        std::make_pair(PyNativeAlgo::Common::GetIdByValue(obj_tuple->value()[0]), abs));
-    }
+    SetValueBaseShape(obj_tuple->value()[0], abs);
   } else if (!v->isa<ValueSequence>() && !abs->isa<abstract::AbstractTuple>()) {
-    if (abs->BuildShape()->IsDynamic()) {
-      (void)id_with_dynamic_abs_.emplace(std::make_pair(PyNativeAlgo::Common::GetIdByValue(v), abs));
-    }
+    SetValueBaseShape(v, abs);
   } else {
     MS_LOG(EXCEPTION) << "Not match: obj " << v->ToString() << " and abs " << abs->ToString();
   }
 }
 
-void DynamicShape::UpdateValueToDynamicShape(const ValuePtr &value) const {
-  MS_EXCEPTION_IF_NULL(value);
-  if (value->isa<mindspore::tensor::Tensor>()) {
-    auto tensor_value = value->cast<tensor::TensorPtr>();
-    auto it = id_with_dynamic_abs_.find(tensor_value->id());
-    if (it != id_with_dynamic_abs_.end()) {
-      tensor_value->set_base_shape(GetShapeFromAbstract(it->second));
-    }
-  } else if (value->isa<ValueTuple>()) {
-    auto value_tuple = value->cast<ValueTuplePtr>();
-    for (const auto &v : value_tuple->value()) {
-      UpdateValueToDynamicShape(v);
-    }
-  } else {
-    MS_LOG(DEBUG) << "Out put is not a tensor";
-  }
-}
-
-void DynamicShape::UpdateInputTensorToDynamicShape(const FrontendOpRunInfoPtr &op_run_info) {
-  MS_EXCEPTION_IF_NULL(op_run_info);
-  if (!op_run_info->base_op_run_info.has_dynamic_input) {
+void DynamicShape::SetValueBaseShape(const ValuePtr &v, const AbstractBasePtr &abs) const {
+  MS_EXCEPTION_IF_NULL(abs);
+  if (!abs->BuildShape()->IsDynamic()) {
     return;
   }
-  // Set tensor dynamic base shape
-  for (auto &input_tensor : op_run_info->base_op_run_info.input_tensor) {
-    const auto it = id_with_dynamic_abs_.find(input_tensor->id());
-    if (it != id_with_dynamic_abs_.end()) {
-      input_tensor->set_base_shape(GetShapeFromAbstract(it->second));
-    }
+  MS_EXCEPTION_IF_NULL(v);
+  if (v->isa<tensor::Tensor>()) {
+    auto tensor = v->cast<tensor::TensorPtr>();
+    tensor->set_base_shape(GetShapeFromAbstract(abs));
   }
 }
 
 void DynamicShape::SaveDynShapeAbsForMsFunction(const py::args &args, const py::object &out,
-                                                const FuncGraphPtr &ms_func_graph) {
+                                                const FuncGraphPtr &ms_func_graph) const {
   MS_EXCEPTION_IF_NULL(ms_func_graph);
   auto output_node = ms_func_graph->output();
-  MS_EXCEPTION_IF_NULL(output_node);
-
-  // Update input to dynamic
-  for (size_t i = 0; i < args.size(); ++i) {
-    if (py::isinstance<tensor::Tensor>(args[i])) {
-      const auto &input_i_tensor = args[i].cast<tensor::TensorPtr>();
-      UpdateValueToDynamicShape(input_i_tensor);
-    }
+  if (!common::AnfAlgo::IsDynamicShape(output_node)) {
+    return;
   }
 
   // Update output to dynamic
   const auto &output_value = PyNativeAlgo::DataConvert::PyObjToValue(out);
-  SaveIdWithDynamicAbstract(output_value, output_node->abstract());
-  UpdateValueToDynamicShape(output_value);
-
-  // Save output by one id for abs get performance
-  if (output_node->abstract()->BuildShape()->IsDynamic()) {
-    id_with_dynamic_abs_[PyNativeAlgo::PyParser::GetIdByPyObj(out)] = output_node->abstract();
-  }
-}
-
-void DynamicShape::SaveOutputDynamicShape(const FrontendOpRunInfoPtr &op_run_info, const ValuePtr &v) {
-  MS_EXCEPTION_IF_NULL(op_run_info);
-  MS_EXCEPTION_IF_NULL(v);
-  // Do not use GetNext out abstract, top cell will change to dynamic shape by different tensor shape automaticity
-  if (op_run_info->base_op_run_info.op_name == kGetNextOpName) {
-    return;
-  }
-  // Save dynamic abs
-  if (op_run_info->base_op_run_info.has_dynamic_output) {
-    SaveIdWithDynamicAbstract(v, op_run_info->base_op_run_info.abstract);
-  }
+  MS_EXCEPTION_IF_NULL(output_node);
+  UpdateValueBaseShape(output_value, output_node->abstract());
 }
 
 void DynamicShape::SetDynamicInput(const py::object &cell, const py::args &args) {
@@ -168,51 +110,54 @@ void DynamicShape::SetFeedDynamicInputAbs(const py::object &cell, const py::args
     MS_LOG(DEBUG) << "Dynamic input size " << it->second.size() << " is not equal to real input size " << args.size();
     return;
   }
-  for (size_t i = 0; i < args.size(); i++) {
+  for (size_t i = 0; i < args.size(); ++i) {
     auto abs = it->second.at(i);
     MS_EXCEPTION_IF_NULL(abs);
-    auto shape = abs->BuildShape();
-    MS_EXCEPTION_IF_NULL(shape);
-    if (shape->IsDynamic()) {
-      const auto &arg_id = PyNativeAlgo::PyParser::GetIdByPyObj(args[i]);
-      MS_LOG(DEBUG) << "Set cur arg " << i << ", id " << arg_id << " to be dynamic shape; Arg self abs: "
-                    << PyNativeAlgo::DataConvert::PyObjToValue(args[i])->ToAbstract()->Broaden()->ToString()
-                    << ", dynamic abs: " << abs->ToString();
-      id_with_dynamic_abs_[arg_id] = abs;
-      PyNativeAlgo::Common::GetPyNativeExecutor()->forward_executor()->EraseFromNodeAbsMap(arg_id);
+    if (!SetFeedTupleDynamicInputAbs(abs, args[i], i)) {
+      break;
     }
   }
 }
 
-py::object DynamicShape::GetDynamicInput(const py::object &actual_input) const {
-  if (py::isinstance<py::tuple>(actual_input)) {
-    py::tuple tuple_actual_args = py::cast<py::tuple>(actual_input);
-    size_t args_size = tuple_actual_args.size();
-    py::tuple dyn_shape_args = py::tuple(args_size);
-    for (size_t i = 0; i < args_size; ++i) {
-      dyn_shape_args[i] = GetDynamicInput(tuple_actual_args[i]);
+bool DynamicShape::SetFeedTupleDynamicInputAbs(const abstract::AbstractBasePtr &abs, const py::object &arg, size_t i) {
+  MS_EXCEPTION_IF_NULL(abs);
+  if (abs->isa<abstract::AbstractSequence>()) {
+    auto abs_list = abs->cast<abstract::AbstractSequencePtr>();
+    if (!py::isinstance<py::tuple>(arg) && !py::isinstance<py::list>(arg)) {
+      MS_LOG(EXCEPTION) << "Arg is not tuple or list " << std::string(py::str(arg));
     }
-    return dyn_shape_args;
-  } else if (py::isinstance<py::list>(actual_input)) {
-    py::list list_actual_args = py::cast<py::list>(actual_input);
-    size_t args_size = list_actual_args.size();
-    py::list dyn_shape_args;
-    for (size_t i = 0; i < args_size; ++i) {
-      dyn_shape_args.append(GetDynamicInput(list_actual_args[i]));
+    auto args_list = py::cast<py::tuple>(arg);
+    if (args_list.size() != abs_list->elements().size()) {
+      MS_LOG(EXCEPTION) << "Dynamic abs size " << abs_list->elements().size() << " is not equal to real args size "
+                        << args_list.size();
     }
-    return dyn_shape_args;
-  } else if (py::isinstance<tensor::Tensor>(actual_input)) {
-    const auto iter = id_with_dynamic_abs_.find(PyNativeAlgo::PyParser::GetIdByPyObj(actual_input));
-    if (iter != id_with_dynamic_abs_.end()) {
-      auto tensor_ptr = py::cast<tensor::TensorPtr>(actual_input);
-      MS_EXCEPTION_IF_NULL(tensor_ptr);
-      auto dyn_tensor = std::make_shared<tensor::Tensor>(tensor_ptr->data_type(), tensor_ptr->shape_c());
-      dyn_tensor->set_base_shape(DynamicShape::GetShapeFromAbstract(iter->second));
-      auto py_dyn_tensor = ValueToPyData(dyn_tensor);
-      return py_dyn_tensor;
+    for (size_t j = 0; j < args_list.size(); ++j) {
+      if (!SetFeedTupleDynamicInputAbs(abs_list->elements()[j], args_list[j], j)) {
+        return false;
+      }
+    }
+  } else {
+    auto shape = abs->BuildShape();
+    MS_EXCEPTION_IF_NULL(shape);
+    if (shape->IsDynamic()) {
+      auto tensor = arg.cast<tensor::TensorPtr>();
+      MS_EXCEPTION_IF_NULL(tensor);
+      auto dynamic_shape = shape->cast<abstract::ShapePtr>();
+      MS_EXCEPTION_IF_NULL(dynamic_shape);
+      if (tensor->shape().size() != dynamic_shape->shape().size()) {
+        // If shape size not equal, change do dynamic rank in make new top automaticity
+        return false;
+      }
+      const auto &arg_id = PyNativeAlgo::PyParser::GetIdByPyObj(arg);
+      const auto &v = PyNativeAlgo::DataConvert::PyObjToValue(arg);
+      MS_LOG(DEBUG) << "Set arg " << i << ", id " << arg_id
+                    << " to be dynamic shape; Arg self abs: " << v->ToAbstract()->Broaden()->ToString()
+                    << ", dynamic abs: " << abs->ToString();
+      PyNativeAlgo::Common::GetPyNativeExecutor()->forward_executor()->EraseFromNodeAbsMap(arg_id);
+      UpdateValueBaseShape(v, abs);
     }
   }
-  return actual_input;
+  return true;
 }
 
 ValuePtr DynamicShape::SetSensValue(const ValuePtr &value, const TopCellInfoPtr &top_cell) const {
@@ -322,8 +267,7 @@ TopCellInfoPtr DynamicShape::ChangeTopCellToDynamicShapeBySetInputs(const TopCel
     it->second.at(i)->set_shape(top_cell->cell_self_info()->args_shape[i]);
     MS_LOG(DEBUG) << "Change cur top cell arg " << i << ", id " << arg_id
                   << ", dynamic abs: " << it->second.at(i)->ToString();
-    id_with_dynamic_abs_[arg_id] = it->second.at(i);
-    PyNativeAlgo::Common::GetPyNativeExecutor()->forward_executor()->EraseFromNodeAbsMap(arg_id);
+    PyNativeAlgo::Common::GetPyNativeExecutor()->forward_executor()->SetNodeAbsMapById(arg_id, it->second.at(i));
   }
   top_cell->ChangeTopCellInfo(new_args_shape.size());
   return top_cell;
@@ -356,36 +300,29 @@ void DynamicShape::UpdateTopCellId(const py::args &args) const {
     return;
   }
   const auto &top_cell = grad_executor->top_cell();
-  mindspore::HashMap<std::string, ShapeVector> id_with_shape;
-  ShapeVector empty_shape;
-  bool has_dynamic_id = false;
-  for (size_t i = 0; i < args.size(); i++) {
-    const auto &arg_id = PyNativeAlgo::PyParser::GetIdByPyObj(args[i]);
-    const auto item = id_with_dynamic_abs_.find(arg_id);
-    if (item != id_with_dynamic_abs_.end()) {
-      id_with_shape[arg_id] = (GetShapeFromAbstract(item->second))->shape();
-      has_dynamic_id = true;
-    } else {
-      id_with_shape[arg_id] = empty_shape;
-    }
-  }
-  if (!has_dynamic_id) {
+  const auto &args_id = top_cell->cell_self_info()->args_id;
+  size_t arg_size = args.size();
+  if (args_id.size() != arg_size) {
     return;
   }
-  // Check current top cell need change id to dynamic id
-  const auto &args_id = top_cell->cell_self_info()->args_id;
-  bool need_change = std::any_of(args_id.begin(), args_id.end(), [&id_with_shape](const std::string &id) {
-    return id_with_shape.find(id) != id_with_shape.end();
-  });
-  if (need_change) {
-    // Change args shape
-    for (size_t i = 0; i < id_with_shape.size(); ++i) {
-      const auto it = std::next(id_with_shape.begin(), i);
-      if (!it->second.empty() && top_cell->cell_self_info()->args_id[i] == it->first) {
-        top_cell->cell_self_info()->args_shape[i] = std::make_shared<abstract::Shape>(it->second);
-      }
+  bool change_to_dynamic_shape = false;
+  for (size_t i = 0; i < arg_size; i++) {
+    const auto &arg_id = PyNativeAlgo::PyParser::GetIdByPyObj(args[i]);
+    if (arg_id != args_id[i]) {
+      continue;
     }
-    top_cell->ChangeTopCellInfo(top_cell->cell_self_info()->args_id.size());
+    const auto &v = PyNativeAlgo::DataConvert::PyObjToValue(args[i]);
+    MS_EXCEPTION_IF_NULL(v);
+    const auto &abs = v->ToAbstract()->Broaden();
+    if (!abs->BuildShape()->IsDynamic()) {
+      continue;
+    }
+    change_to_dynamic_shape = true;
+    auto shape = GetShapeFromAbstract(abs)->shape();
+    top_cell->cell_self_info()->args_shape[i] = std::make_shared<abstract::Shape>(shape);
+  }
+  if (change_to_dynamic_shape) {
+    top_cell->ChangeTopCellInfo(arg_size);
   }
 }
 
@@ -397,11 +334,14 @@ TopCellInfoPtr DynamicShape::GetTopCellWithDynamicShape(const py::object &cell, 
   std::copy_if(grad_executor->top_cell_list().begin(), grad_executor->top_cell_list().end(),
                std::back_inserter(match_top_cell_list), [&cell_self_id, grad_order](const TopCellInfoPtr &elem) {
                  return elem->cell_self_info() != nullptr && elem->cell_self_info()->cell_self_id == cell_self_id &&
-                        grad_order == elem->grad_order();
+                        grad_order == elem->grad_order() && !elem->cell_self_info()->is_unknown_rank;
                });
   for (const auto &it : match_top_cell_list) {
     std::vector<ShapeVector> new_args_shape;
     FindMatchTopCell(it, args, &new_args_shape);
+    if (args.size() != new_args_shape.size()) {
+      continue;
+    }
     // Change top cell to be dynamic
     if (is_auto) {
       return ChangeTopCellToDynamicShapeByAuto(it, new_args_shape, cell, args);
@@ -409,7 +349,11 @@ TopCellInfoPtr DynamicShape::GetTopCellWithDynamicShape(const py::object &cell, 
       return ChangeTopCellToDynamicShapeBySetInputs(it, new_args_shape, cell);
     }
   }
-  UpdateTopCellId(args);
+  // Like TrainOneStep, it is top cell, but set_inputs set for Net, so need change TrainOneStep top cell to dynamic
+  // shape
+  if (!is_auto) {
+    UpdateTopCellId(args);
+  }
   return nullptr;
 }
 
@@ -432,53 +376,76 @@ py::object DynamicShape::GetDynShape(const py::args &args) const {
   std::set<TypePtr> valid_params_types = {kTensorType};
   (void)CheckAndConvertUtils::CheckSubClass("shape type", abs->BuildType(), valid_params_types, "Shape");
   // infer shape
-  const auto &base_shape_ptr = obj.cast<tensor::TensorPtr>()->base_shape_ptr();
-  if (base_shape_ptr != nullptr) {
-    auto value = MakeValue(base_shape_ptr->cast<abstract::ShapePtr>()->shape());
-    return ValueToPyData(value);
+  ShapeVector shape_out{};
+  auto tensor = obj.cast<tensor::TensorPtr>();
+  if (tensor != nullptr) {
+    if (tensor->base_shape_ptr() != nullptr) {
+      auto shape = tensor->base_shape_ptr()->cast<abstract::ShapePtr>();
+      MS_EXCEPTION_IF_NULL(shape);
+      shape_out = shape->shape();
+    } else {
+      shape_out = tensor->shape();
+    }
   }
-  const auto &arg_id = PyNativeAlgo::PyParser::GetIdByPyObj(obj);
-  auto it = id_with_dynamic_abs_.find(arg_id);
-  if (it != id_with_dynamic_abs_.end()) {
-    auto value = MakeValue(GetShapeFromAbstract(it->second)->shape());
-    return ValueToPyData(value);
+  py::tuple ret(shape_out.size());
+  for (size_t i = 0; i < shape_out.size(); ++i) {
+    ret[i] = shape_out[i];
   }
-  auto value = MakeValue(GetTensorShape(obj.cast<tensor::TensorPtr>()));
-  return ValueToPyData(value);
+  return std::move(ret);
 }
 
 void DynamicShape::FindMatchTopCell(const TopCellInfoPtr &top_cell, const py::args &args,
                                     std::vector<ShapeVector> *new_args_shape) const {
   MS_EXCEPTION_IF_NULL(top_cell);
   MS_EXCEPTION_IF_NULL(new_args_shape);
+  bool change_to_unknown_rank = false;
+  std::vector<TypePtr> cur_type_list;
+  std::vector<ShapeVector> cur_shape_list;
+  std::vector<ShapeVector> elem_shape_list;
   for (size_t i = 0; i < args.size(); ++i) {
     const auto &cur_value_abs = PyNativeAlgo::DataConvert::PyObjToValue(args[i])->ToAbstract();
     MS_EXCEPTION_IF_NULL(cur_value_abs);
-    const auto &cur_type = PyNativeAlgo::Common::GetTypeFromAbstract(cur_value_abs);
+    (void)cur_type_list.emplace_back(PyNativeAlgo::Common::GetTypeFromAbstract(cur_value_abs));
+    (void)cur_shape_list.emplace_back(GetShapeFromAbstract(cur_value_abs)->shape());
+    (void)elem_shape_list.emplace_back(top_cell->cell_self_info()->args_shape[i]->shape());
+  }
+  if (cur_shape_list == elem_shape_list) {
+    MS_LOG(DEBUG) << "All shape is same";
+    return;
+  }
+  for (size_t i = 0; i < args.size(); ++i) {
     const auto &elem_type = top_cell->cell_self_info()->args_type[i];
     // Type is not the same
-    if (cur_type->hash() != elem_type->hash()) {
-      MS_LOG(DEBUG) << "The " << i << "th args type is not the same, cur is " << cur_type->ToString()
+    if (cur_type_list[i]->hash() != elem_type->hash()) {
+      MS_LOG(DEBUG) << "The " << i << "th args type is not the same, cur is " << cur_type_list[i]->ToString()
                     << " and the elem is " << elem_type->ToString();
       return;
     }
-    // Check shape
-    const auto &cur_shape = GetShapeFromAbstract(cur_value_abs)->shape();
-    const auto elem_shape = top_cell->cell_self_info()->args_shape[i]->shape();
+    size_t cur_shape_size = cur_shape_list[i].size();
     ShapeVector new_shape;
     // Rank dynamic
-    if (cur_shape.size() != elem_shape.size()) {
-      MS_LOG(DEBUG) << "The " << i << "th args shape size is not the same, cur is " << cur_shape.size()
-                    << " and the elem is " << elem_shape.size() << ", change shape to dynamic rank";
+    if (change_to_unknown_rank || cur_shape_size != elem_shape_list.size()) {
+      MS_LOG(DEBUG) << "The " << i << "th args shape size is not the same, cur is " << cur_shape_size
+                    << " and the elem is " << elem_shape_list.size() << ", change shape to dynamic rank";
       new_shape.emplace_back(abstract::Shape::kShapeRankAny);
-      continue;
-    }
-    // Shape dynamic
-    for (size_t j = 0; j < cur_shape.size(); ++j) {
-      (void)new_shape.emplace_back(abstract::Shape::kShapeDimAny);
+      change_to_unknown_rank = true;
+    } else {
+      // Shape dynamic
+      std::fill_n(std::back_inserter(new_shape), cur_shape_size, abstract::Shape::kShapeDimAny);
     }
     (void)new_args_shape->emplace_back(new_shape);
-    MS_LOG(DEBUG) << "Cur shape " << cur_shape << ", elem shape " << elem_shape << ", new shape " << new_shape;
+    MS_LOG(DEBUG) << "Cur shape " << cur_shape_list[i] << ", elem shape " << elem_shape_list[i] << ", new shape "
+                  << new_shape;
+  }
+  // Change UNKNOWN_DIM to UNKNOWN_RANK if both exist
+  if (change_to_unknown_rank) {
+    for (auto &shape : *new_args_shape) {
+      if (shape.back() == abstract::Shape::kShapeDimAny) {
+        shape.clear();
+        (void)shape.emplace_back(abstract::Shape::kShapeRankAny);
+      }
+    }
+    top_cell->cell_self_info()->is_unknown_rank = true;
   }
 }
 }  // namespace pynative

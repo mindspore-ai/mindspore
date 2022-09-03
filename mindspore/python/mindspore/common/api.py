@@ -431,7 +431,7 @@ class _MindsporeFunctionExecutor:
     def _generate_compile_args(self, args_list):
         """Chose dynamic shape tensors or actual input tensors as compile args."""
         # Case: If the shape of input args is dynamic, get dynamic shape tensor from context and use it to compile.
-        compile_args = _pynative_executor.get_dynamic_input(args_list)
+        compile_args = args_list
         # Case: The `set_inputs()` of Cell object has been set, using these dynamic shape args as compile args.
         if isinstance(self.obj, ms.nn.Cell) and self.obj.get_inputs():
             compile_args = self.obj.get_inputs()
@@ -958,18 +958,6 @@ class _PynativeExecutor:
             None.
         """
         self._executor.set_dynamic_input(obj, *args)
-
-    def get_dynamic_input(self, *actual_args):
-        """
-        Get dynamic shape arguments according to actual input arguments.
-
-        Args:
-            actual_args(tuple): Actual input arguments of Function or Cell.
-
-        Return:
-            dynamic_shape_args(tuple): Dynamic shape arguments of Function or Cell.
-        """
-        return self._executor.get_dynamic_input(*actual_args)
 
     def is_first_cell(self):
         """

@@ -95,15 +95,7 @@ std::string GradExecutor::GetCellId(const py::object &cell, const py::args &args
 
   for (size_t i = 0; i < args.size(); i++) {
     const auto &arg_id = PyNativeAlgo::PyParser::GetIdByPyObj(args[i]);
-    // Get dynamic input, like data sink
-    const auto item = dynamic_shape()->id_with_dynamic_abs().find(arg_id);
-    if (item != dynamic_shape()->id_with_dynamic_abs().end()) {
-      MS_LOG(DEBUG) << "Input " << i << " get dynamic input";
-      fn(item->second);
-      continue;
-    }
-
-    // Find in step process
+    // Find in step process cache
     const auto &node_abs_map = forward()->NodeAbsMap();
     auto it = node_abs_map.find(arg_id);
     if (it != node_abs_map.end()) {
@@ -218,16 +210,9 @@ void GradExecutor::HandleInputArgsForTopCell(const py::args &args, bool is_bprop
     const auto &param_i_value = PyNativeAlgo::DataConvert::PyObjToValue(param_i);
     (void)input_param_values.emplace_back(param_i_value);
     const auto &param_i_id = PyNativeAlgo::PyParser::GetIdByPyObj(param_i);
-    abstract::AbstractBasePtr param_i_abs = nullptr;
-    auto item = dynamic_shape()->id_with_dynamic_abs().find(param_i_id);
-    if (item != dynamic_shape()->id_with_dynamic_abs().end()) {
-      MS_LOG(DEBUG) << "Param " << i << " is dynamic input";
-      param_i_abs = item->second;
-    } else {
-      param_i_abs = param_i_value->ToAbstract();
-      MS_EXCEPTION_IF_NULL(param_i_abs);
-      param_i_abs = param_i_abs->Broaden();
-    }
+    auto param_i_abs = param_i_value->ToAbstract();
+    MS_EXCEPTION_IF_NULL(param_i_abs);
+    param_i_abs = param_i_abs->Broaden();
     MS_EXCEPTION_IF_NULL(param_i_abs);
     new_param->set_abstract(param_i_abs);
     top_cell()->SetTupleArgsToGraphInfoMap(curr_g(), param_i_value, new_param, true);
@@ -754,13 +739,7 @@ void GradExecutor::UpdateParamAbsByArgs(const py::list &args, const FuncGraphPtr
       param_node->set_abstract(ptr->Broaden());
     } else {
       // update abstract info for input params
-      abstract::AbstractBasePtr input_abs;
-      auto it = dynamic_shape()->id_with_dynamic_abs().find(PyNativeAlgo::PyParser::GetIdByPyObj(args[index]));
-      if (it != dynamic_shape()->id_with_dynamic_abs().end()) {
-        input_abs = it->second;
-      } else {
-        input_abs = abstract::FromValue(PyNativeAlgo::DataConvert::PyObjToValue(args[index]), true);
-      }
+      auto input_abs = abstract::FromValue(PyNativeAlgo::DataConvert::PyObjToValue(args[index]), true);
       MS_EXCEPTION_IF_NULL(input_abs);
       if (param_node->abstract() != nullptr) {
         auto input_shape = input_abs->BuildShape()->ToString();
@@ -804,9 +783,8 @@ FuncGraphPtr GradExecutor::GetBpropGraph(const prim::GradOperationPtr &grad, con
   bprop_graph->debug_info()->set_name(ss.str());
   // Set sens abstract
   if (grad->sens_param()) {
-    MS_EXCEPTION_IF_NULL(top_cell()->last_output_abs());
-    const auto &sens_id = PyNativeAlgo::PyParser::GetIdByPyObj(args[arg_size - 1]);
-    dynamic_shape()->SetIdWithDynamicAbs(sens_id, top_cell()->last_output_abs());
+    const auto &sens_v = PyNativeAlgo::DataConvert::PyObjToValue(args[arg_size - 1]);
+    dynamic_shape()->UpdateValueBaseShape(sens_v, top_cell()->last_output_abs());
   }
   UpdateParamAbsByArgs(PyNativeAlgo::PyParser::FilterTensorArgs(args, grad->sens_param_), bprop_graph);
   // Dynamic shape graph need add some other pass
@@ -906,7 +884,7 @@ void GradExecutor::CheckNeedCompileGraph() {
   const auto &already_top_cell_id = new_top_cell->already_run_cell_id();
   // Update top cell by current cell op info
   if (already_run_top_cell_.find(already_top_cell_id) == already_run_top_cell_.end()) {
-    MS_LOG(DEBUG) << "Top cell " << new_top_cell->cell_id() << " has never been ran, need compile graph";
+    MS_LOG(DEBUG) << "Already cell " << already_top_cell_id << " has never been ran, need compile graph";
     already_run_top_cell_[already_top_cell_id] = new_top_cell;
     return;
   }
@@ -1451,7 +1429,6 @@ void GradExecutor::ProcessOpGradInfo(const FrontendOpRunInfoPtr &op_run_info, co
     }
     DoOpGrad(op_run_info, cnode, v);
   }
-  forward()->SetNodeAbsMapByValue(v, op_run_info->base_op_run_info.abstract);
   UpdateForwardTensorInfoInBpropGraph(op_run_info->op_info, v);
 }
 
@@ -1532,10 +1509,6 @@ void GradExecutor::DoOpGrad(const FrontendOpRunInfoPtr &op_run_info, const CNode
       input_args[i] = op_run_info->input_value[i];
     }
   }
-  if (op_run_info->base_op_run_info.has_dynamic_output) {
-    dynamic_shape()->UpdateValueToDynamicShape(op_out);
-  }
-
   if (!ad::GradPynativeOp(top_cell()->k_pynative_cell_ptr(), cnode, input_args, op_out)) {
     MS_LOG(EXCEPTION) << "Failed to run ad grad for op " << op_run_info->base_op_run_info.op_name;
   }

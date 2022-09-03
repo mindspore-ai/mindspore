@@ -34,7 +34,7 @@ class InferOperation {
   // Manage node abs cache.
   void ClearNodeAbsCache() { node_abs_cache_.clear(); }
   void EraseElemFromNodeAbsCache(const std::string &id) { (void)node_abs_cache_.erase(id); }
-  void SetNodeAbsCacheByValue(const ValuePtr &value, const abstract::AbstractBasePtr &abs);
+  void SetNodeAbsCacheByValue(const std::string &op_name, const ValuePtr &value, const abstract::AbstractBasePtr &abs);
   void SetNodeAbsCacheById(const std::string &id, const abstract::AbstractBasePtr &abs);
   const NodeAbsCache &node_abs_cache() const { return node_abs_cache_; }
   // Manage primitive output abstract cache.
@@ -57,7 +57,8 @@ class InferOperation {
   ValuePtr InferOutputAbstract(const FrontendOpRunInfoPtr &op_run_info);
   bool GetOutputAbstractByCache(const FrontendOpRunInfoPtr &op_run_info) const;
   void SaveOutputAbstractToCache(const FrontendOpRunInfoPtr &op_run_info);
-
+  void SaveSpecifiedOutputToCache(const std::string &op_name, const ValuePtrList &value_list,
+                                  const AbstractBasePtrList &abs_list);
   // Check whether primitive has constant flag or input position has been marked constant.
   std::vector<bool> CheckPrimitiveConstFlag(const FrontendOpRunInfoPtr &op_run_info);
 
