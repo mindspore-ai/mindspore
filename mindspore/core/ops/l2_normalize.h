@@ -30,7 +30,9 @@ class MIND_API L2Normalize : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(L2Normalize);
   /// \brief Constructor.
-  explicit L2Normalize(const std::string &name = kNameL2Normalize) : BaseOperator(name) {}
+  explicit L2Normalize(const std::string &name = kNameL2Normalize) : BaseOperator(name) {
+    InitIOName({"input_x"}, {"output_y"});
+  }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.L2Normalize for the inputs.
   void Init(const std::vector<int64_t> &axis, const float epsilon = 1e-4);
   /// \brief Set axis.
@@ -46,8 +48,6 @@ class MIND_API L2Normalize : public BaseOperator {
   /// \return epsilon.
   float get_epsilon() const;
 };
-abstract::AbstractBasePtr L2NormalizeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                           const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_L2_NORMALIZE_H_

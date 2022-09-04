@@ -19,28 +19,33 @@
 
 #include <vector>
 #include <memory>
+#include <map>
 
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-class L2NormalizeCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class L2NormalizeCpuKernelMod : public NativeCpuKernelMod {
  public:
   L2NormalizeCpuKernelMod() = default;
   ~L2NormalizeCpuKernelMod() override = default;
-
-  void InitKernel(const CNodePtr &kernel_node) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
     return func_obj_->RunFunc(inputs, workspace, outputs);
   }
 
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  std::shared_ptr<DeprecatedCpuKernelFunc> func_obj_;
+  std::shared_ptr<CpuKernelFunc> func_obj_;
 };
 }  // namespace kernel
 }  // namespace mindspore

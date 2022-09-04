@@ -15,11 +15,13 @@
  */
 
 #include "plugin/device/cpu/kernel/l2_normalize_cpu_kernel.h"
+#include "mindspore/core/ops/l2_normalize.h"
 
 #include <algorithm>
 #include <utility>
 #include <limits>
 #include <string>
+#include <map>
 
 namespace mindspore {
 namespace kernel {
@@ -28,12 +30,13 @@ constexpr size_t kL2NormalizeInputsNum = 1;
 constexpr size_t kL2NormalizeOutputsNum = 1;
 
 template <typename T>
-class L2NormalizeCpuFunc : public DeprecatedCpuKernelFunc {
+class L2NormalizeCpuFunc : public CpuKernelFunc {
  public:
   L2NormalizeCpuFunc() = default;
   ~L2NormalizeCpuFunc() override = default;
 
-  void InitFunc(const CNodePtr &kernel_node) override;
+  void InitFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                const std::vector<KernelTensorPtr> &outputs) override;
 
   bool RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                const std::vector<AddressPtr> &outputs) override;
@@ -44,34 +47,26 @@ class L2NormalizeCpuFunc : public DeprecatedCpuKernelFunc {
   void CalcOutput(const T *input_addr, const ShapeVector &reduce_shape, const size_t output_size, T *output_addr,
                   std::unique_ptr<T[]> const &denominator_addr);
 
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &, const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost);
+
  private:
   ShapeVector input_shape_;
   ShapeVector output_shape_;
   T epsilon_{0};
   int axis_{0};
-  void CheckParam(const CNodePtr &kernel_node);
   std::string kernel_name_;
 };
 
 template <typename T>
-void L2NormalizeCpuFunc<T>::InitFunc(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  epsilon_ = static_cast<T>(common::AnfAlgo::GetNodeAttr<float>(kernel_node, EPSILON));
-  axis_ = LongToInt(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS));
-  input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  output_shape_ = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
-
-  int dims = SizeToInt(input_shape_.size());
-  if (axis_ < -dims || axis_ >= dims) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'axis' must be in [" << -dims << ", " << dims
-                      << "), but got: " << axis_;
-  }
+void L2NormalizeCpuFunc<T>::InitFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                     const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->name();
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::L2Normalize>(base_operator);
+  MS_EXCEPTION_IF_NULL(kernel_ptr);
+  epsilon_ = static_cast<T>(kernel_ptr->get_epsilon());
   if (epsilon_ == static_cast<T>(0.0)) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the parameter of 'epsilon' can not be zero.";
-  }
-  if (axis_ < 0) {
-    axis_ += SizeToInt(input_shape_.size());
   }
 }
 
@@ -177,24 +172,58 @@ bool L2NormalizeCpuFunc<T>::RunFunc(const std::vector<kernel::AddressPtr> &input
 }
 
 template <typename T>
-std::shared_ptr<DeprecatedCpuKernelFunc> SpecializeL2NormFunc() {
+int L2NormalizeCpuFunc<T>::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                  const std::vector<KernelTensorPtr> &outputs,
+                                  const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::L2Normalize>(base_operator);
+  MS_EXCEPTION_IF_NULL(kernel_ptr);
+
+  input_shape_ = inputs[0]->GetShapeVector();
+  output_shape_ = outputs[0]->GetShapeVector();
+
+  axis_ = GetValue<int64_t>(base_operator->GetAttr("axis"));
+  int dims = SizeToInt(input_shape_.size());
+  if (axis_ < -dims || axis_ >= dims) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'axis' must be in [" << -dims << ", " << dims
+                      << "), but got: " << axis_;
+  }
+  if (axis_ < 0) {
+    axis_ += SizeToInt(input_shape_.size());
+  }
+  return KRET_OK;
+}
+
+template <typename T>
+std::shared_ptr<CpuKernelFunc> SpecializeL2NormFunc() {
   return std::make_shared<L2NormalizeCpuFunc<T>>();
 }
-using SpecializeL2NormFuncCreator = std::function<std::shared_ptr<DeprecatedCpuKernelFunc>()>;
+using SpecializeL2NormFuncCreator = std::function<std::shared_ptr<CpuKernelFunc>()>;
 static std::vector<std::pair<KernelAttr, SpecializeL2NormFuncCreator>> func_class_list = {
   {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), SpecializeL2NormFunc<float16>},
   {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), SpecializeL2NormFunc<float>}};
 }  // namespace
 
-void L2NormalizeCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+bool L2NormalizeCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                   const std::vector<KernelTensorPtr> &outputs) {
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
     MS_LOG(EXCEPTION) << "L2Norm does not support this kernel data type: " << kernel_attr;
   }
-
   func_obj_ = func_class_list[index].second();
-  func_obj_->InitFunc(kernel_node);
+  func_obj_->InitFunc(base_operator, inputs, outputs);
+  return true;
+}
+
+int L2NormalizeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                    const std::vector<KernelTensorPtr> &outputs,
+                                    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  if (ret != KRET_OK) {
+    return ret;
+  }
+
+  return func_obj_->Resize(base_operator, inputs, outputs, inputsOnHost);
 }
 
 std::vector<KernelAttr> L2NormalizeCpuKernelMod::GetOpSupport() {
