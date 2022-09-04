@@ -17,8 +17,9 @@ import numpy as np
 import pytest
 
 import mindspore.context as context
-from mindspore.common.tensor import Tensor
 from mindspore.ops import operations as P
+from mindspore import Tensor
+from mindspore.nn import Cell
 
 
 @pytest.mark.level0
@@ -117,3 +118,36 @@ def test_broadcast_dyn_invalid_init():
     x_np = np.random.rand(4, 5).astype(np.float32)
     with pytest.raises(ValueError) or pytest.raises(RuntimeError):
         P.BroadcastTo(ms_shape)(Tensor(x_np))
+
+
+class BroadcastToDynamicShapeNetMS(Cell):
+    """
+    Construct of dynamic input for BroadcastTo.
+    """
+    def __init__(self, shape):
+        super().__init__()
+        self.unique = P.Unique()
+        self.gather = P.Gather()
+        self.broadcastto = P.BroadcastTo(shape)
+
+    def construct(self, input_x, indices):
+        unique_indices, _ = self.unique(indices)
+        x = self.gather(input_x, unique_indices, 0)
+        return self.broadcastto(x)
+
+
+@pytest.mark.level2
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_broadcast_to_dynamic_shape():
+    """
+    Feature: Test dynamic shape of BroadcastTo operator
+    Description: dynamic input
+    Expectation: success.
+    """
+    shape = (2, 2, 3)
+    input_x_np = np.random.randn(4, 3).astype(np.float32)
+    input_x = Tensor(input_x_np)
+    unique_indices = Tensor(np.array([0, 1, 0, 1]))
+    broadcast_to_net = BroadcastToDynamicShapeNetMS(shape)
+    broadcast_to_net(input_x, unique_indices)
