@@ -28,8 +28,6 @@
 namespace mindspore {
 namespace ps {
 constexpr char kServerModePS[] = "PARAMETER_SERVER";
-constexpr char kServerModeFL[] = "FEDERATED_LEARNING";
-constexpr char kServerModeHybrid[] = "HYBRID_TRAINING";
 constexpr char kEnvRole[] = "MS_ROLE";
 constexpr char kEnvRoleOfPServer[] = "MS_PSERVER";
 constexpr char kEnvRoleOfServer[] = "MS_SERVER";

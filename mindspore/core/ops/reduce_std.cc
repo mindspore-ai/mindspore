@@ -35,7 +35,6 @@ abstract::TupleShapePtr ReduceStdInferShape(const PrimitivePtr &primitive,
   auto axis = GetValue<std::vector<int64_t>>(primitive->GetAttr("axis"));
   auto keep_dims = GetValue<bool>(primitive->GetAttr("keep_dims"));
   auto temp_shape = input_shape;
-  CheckAndConvertUtils::CheckInRange("axis size", axis.size(), kIncludeLeft, {0, input_rank + 1}, prim_name);
   if (axis.size() == 0) {
     for (size_t i = 0; i < input_shape.size(); i++) {
       axis.push_back(i);
@@ -45,15 +44,6 @@ abstract::TupleShapePtr ReduceStdInferShape(const PrimitivePtr &primitive,
       CheckAndConvertUtils::CheckInRange("axis value", axis[i], kIncludeLeft, {-input_rank, input_rank}, prim_name);
       if (axis[i] < 0) {
         axis[i] += input_rank;
-      }
-    }
-    for (size_t i = 0; i < axis.size(); ++i) {
-      auto temp = axis;
-      auto idx = std::find(temp.begin(), temp.end(), axis[i]);
-      (void)temp.erase(idx);
-      auto re_idx = std::find(temp.begin(), temp.end(), axis[i]);
-      if (re_idx != temp.end()) {
-        MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the elements in attribute axis must be different.";
       }
     }
   }

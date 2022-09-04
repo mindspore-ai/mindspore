@@ -299,24 +299,13 @@ void TcpServer::ListenerCallbackInner(evutil_socket_t fd, struct sockaddr *socka
   MS_EXCEPTION_IF_NULL(conn);
   SetTcpNoDelay(fd);
   server->AddConnection(fd, conn);
-  if (PSContext::instance()->server_mode() == kServerModeHybrid ||
-      PSContext::instance()->server_mode() == kServerModeFL) {
-    conn->InitConnection(
-      [fd, server](const std::shared_ptr<MessageMeta> &meta, const Protos &protos, const void *data, size_t size) {
-        OnServerReceiveMessage on_server_receive = server->GetServerReceive();
-        if (on_server_receive) {
-          on_server_receive(server->GetConnectionByFd(fd), meta, protos, data, size);
-        }
-      });
-  } else {
-    conn->InitConnection(
-      [=](const std::shared_ptr<MessageMeta> &meta, const Protos &protos, const void *data, size_t size) {
-        OnServerReceiveMessage on_server_receive = server->GetServerReceive();
-        if (on_server_receive) {
-          on_server_receive(conn, meta, protos, data, size);
-        }
-      });
-  }
+  conn->InitConnection(
+    [=](const std::shared_ptr<MessageMeta> &meta, const Protos &protos, const void *data, size_t size) {
+      OnServerReceiveMessage on_server_receive = server->GetServerReceive();
+      if (on_server_receive) {
+        on_server_receive(conn, meta, protos, data, size);
+      }
+    });
 
   bufferevent_setcb(bev, TcpServer::ReadCallback, nullptr, TcpServer::EventCallback,
                     reinterpret_cast<void *>(conn.get()));

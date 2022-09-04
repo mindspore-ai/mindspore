@@ -273,6 +273,7 @@ Reduction Functions
     mindspore.ops.norm
     mindspore.ops.prod
     mindspore.ops.argmax
+    mindspore.ops.std
 
 .. list-table::
    :widths: 50 50

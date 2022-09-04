@@ -68,12 +68,6 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
     #        )
     #endif()
 
-    set(FBS_FILES
-        ${CCSRC_DIR}/../schema/cipher.fbs
-        ${CCSRC_DIR}/../schema/fl_job.fbs
-        )
-    ms_build_flatbuffers_lite(FBS_FILES ${CCSRC_DIR}/../schema/ generated_fbs_files ${CMAKE_BINARY_DIR}/schema "")
-
     include_directories("${CCSRC_DIR}/ps/core")
     file(GLOB_RECURSE COMM_PROTO_IN RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "${CCSRC_DIR}/ps/core/protos/*.proto")
     ms_protobuf_generate(COMM_PROTO_SRCS COMM_PROTO_HDRS ${COMM_PROTO_IN})
@@ -140,7 +134,6 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
 
     add_library(mindspore-extendrt SHARED ${MSLITE_EXTEND_RUNTIME_SRC})
     add_dependencies(mindspore-extendrt fbs_inner_src)
-    add_dependencies(mindspore-extendrt generated_fbs_files)
     add_dependencies(mindspore-extendrt mindspore-lite-proto)
     add_dependencies(mindspore-extendrt mindspore-infer-anfalgo)
     add_dependencies(mindspore-extendrt mindspore-kernel-graph)

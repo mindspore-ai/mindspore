@@ -15,7 +15,6 @@
  */
 
 #include "ps/core/collective_ops_impl.h"
-#include "ps/core/local_meta_store.h"
 #include "utils/ms_context.h"
 
 namespace mindspore {
@@ -86,19 +85,16 @@ bool CollectiveOpsImpl::RunRingAllReduce(const std::string &data_name, uint32_t 
                                          const std::vector<size_t> &chunk_offset, T *output_buff) {
   MS_ERROR_IF_NULL_W_RET_VAL(server_node_, false);
   MS_ERROR_IF_NULL_W_RET_VAL(output_buff, false);
-  auto curr_iteration_num = LocalMetaStore::GetInstance().curr_iter_num();
   ps::core::CollectiveMessageMeta send_meta;
   send_meta.set_enable_flag(true);
   send_meta.set_send_rank_id(rank_id_);
   send_meta.set_recv_rank_id(send_to_rank);
-  send_meta.set_iteration(curr_iteration_num);
   send_meta.set_weight_name(data_name);
 
   ps::core::CollectiveMessageMeta recv_meta;
   recv_meta.set_enable_flag(true);
   recv_meta.set_send_rank_id(recv_from_rank);
   recv_meta.set_recv_rank_id(rank_id_);
-  recv_meta.set_iteration(curr_iteration_num);
   recv_meta.set_weight_name(data_name);
 
   // Ring ReduceScatter.
@@ -209,11 +205,9 @@ bool CollectiveOpsImpl::ReduceBroadcastAllReduce(const std::string &data_name, c
   }
   T *output_buff = reinterpret_cast<T *>(recvbuff);
   // Reduce data to rank 0 process.
-  auto curr_iteration_num = LocalMetaStore::GetInstance().curr_iter_num();
   ps::core::CollectiveMessageMeta send_meta;
   send_meta.set_enable_flag(true);
   send_meta.set_send_rank_id(rank_id_);
-  send_meta.set_iteration(curr_iteration_num);
   send_meta.set_weight_name(data_name);
   send_meta.set_chunk_index(0);
   send_meta.set_for_index(0);
@@ -221,7 +215,6 @@ bool CollectiveOpsImpl::ReduceBroadcastAllReduce(const std::string &data_name, c
   ps::core::CollectiveMessageMeta recv_meta;
   recv_meta.set_enable_flag(true);
   recv_meta.set_recv_rank_id(rank_id_);
-  recv_meta.set_iteration(curr_iteration_num);
   recv_meta.set_weight_name(data_name);
   recv_meta.set_chunk_index(0);
   recv_meta.set_for_index(0);
@@ -425,11 +418,6 @@ bool CollectiveOpsImpl::AllReduce(const std::string &data_name, void *sendbuff, 
   if (rank_size_ == 1) {
     MS_LOG(INFO) << "Rank size is 1. Do nothing.";
     return true;
-  }
-  auto cur_iteration_num = LocalMetaStore::GetInstance().curr_iter_num();
-  if (server_node_->HasIterationFailed(cur_iteration_num)) {
-    MS_LOG(WARNING) << "Detect iteration " << cur_iteration_num << " has failed";
-    return false;
   }
 
   if (count >= rank_size) {
