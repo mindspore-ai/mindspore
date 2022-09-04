@@ -69,11 +69,22 @@ elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
     -Wno-unused-private-field")
 endif()
 
+set(CORE_OBJECT_COUNT 1)
+
 set_property(SOURCE ${CORE_SRC_LIST} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_CORE)
 add_library(core_proto_obj OBJECT ${PROTO_SRCS})
-add_library(core_obj OBJECT ${CORE_SRC_LIST})
-add_dependencies(core_obj core_proto_obj)
-add_library(mindspore_core SHARED $<TARGET_OBJECTS:core_obj> $<TARGET_OBJECTS:core_proto_obj>)
+list(APPEND CORE_OBJECT_LIST $<TARGET_OBJECTS:core_proto_obj>)
+
+src_separate_compile(
+    OBJECT_NAME core_obj
+    OBJECT_SIZE CORE_OBJECT_COUNT
+    SRC_LIST ${CORE_SRC_LIST})
+foreach(number RANGE 1 ${CORE_OBJECT_COUNT})
+    list(APPEND CORE_OBJECT_LIST $<TARGET_OBJECTS:core_obj_${number}>)
+    add_dependencies(core_obj_${number} core_proto_obj)
+endforeach()
+
+add_library(mindspore_core SHARED ${CORE_OBJECT_LIST})
 target_link_libraries(mindspore_core PRIVATE mindspore::protobuf securec)
 
 if(CMAKE_SYSTEM_NAME MATCHES "Linux" AND NOT BUILD_LITE)
