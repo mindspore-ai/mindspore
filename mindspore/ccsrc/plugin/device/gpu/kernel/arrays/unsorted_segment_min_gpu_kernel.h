@@ -19,6 +19,8 @@
 
 #include <vector>
 #include <limits>
+#include <map>
+#include <string>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/unsorted_segment_min.cuh"
@@ -26,7 +28,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class UnsortedSegmentMinGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class UnsortedSegmentMinGpuKernelMod : public NativeGpuKernelMod {
  public:
   UnsortedSegmentMinGpuKernelMod() { ResetResource(); }
   ~UnsortedSegmentMinGpuKernelMod() override = default;
@@ -39,67 +41,58 @@ class UnsortedSegmentMinGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     T *input_addr = GetDeviceAddress<T>(inputs, 0);
     int *indices_addr = GetDeviceAddress<int>(inputs, 1);
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemsetAsync(output_addr, std::numeric_limits<T>::min(), outputs[0]->size,
+                                                       reinterpret_cast<cudaStream_t>(stream_ptr)),
+                                       "cudaMemSet Failed");
     CalUnsortedSegmentMin(input_addr, indices_addr, num_segments_, outer_size_, inner_size_, output_addr,
                           reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
 
-  bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    kernel_node_ = kernel_node;
-    auto input_shape_signed = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
-    auto segment_ids_shape_signed = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 1);
-    auto output_shape_signed = AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, 0);
-    if (AnfAlgo::IsShapesDynamic({input_shape_signed, segment_ids_shape_signed, output_shape_signed})) {
-      return true;
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs,
+             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override {
+    int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+    if (ret != KRET_OK) {
+      return ret;
     }
+    auto input_shape_signed = inputs[0]->GetShapeVector();
+    auto segment_ids_shapes = inputs[1]->GetShapeVector();
+    auto output_shapes = outputs[0]->GetShapeVector();
     auto input_shapes = Convert2SizeTClipNeg(input_shape_signed);
-    auto segment_ids_shapes = Convert2SizeTClipNeg(segment_ids_shape_signed);
-    auto output_shapes = Convert2SizeTClipNeg(output_shape_signed);
-    is_null_input_ = CHECK_SHAPE_NULL(input_shapes, kernel_name, "input") ||
-                     CHECK_SHAPE_NULL(segment_ids_shapes, kernel_name, "segment_ids") ||
-                     CHECK_SHAPE_NULL(output_shapes, kernel_name, "output");
-    if (is_null_input_) {
-      InitSizeLists();
-      return true;
-    }
 
-    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
+    size_t input_num = inputs.size();
     if (input_num == 3) {
       MS_LOG(INFO) << "UnsortedSegmentMin Kernel Input count is 3 - dynamic mode";
     } else {
       MS_LOG(INFO) << "UnsortedSegmentMin Kernel Input count is 2";
     }
     if (output_shapes.size() < 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of output cannot be less than 1, but got "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of output cannot be less than 1, but got "
                         << output_shapes.size();
     }
-    num_segments_ = output_shapes[0];
-    input_size_ = 1;
-    for (size_t i = 0; i < input_shapes.size(); i++) {
-      input_size_ *= static_cast<size_t>(input_shapes[i]);
-    }
+    num_segments_ = LongToSizeClipNeg(output_shapes[0]);
+    input_size_ = SizeOf(input_shape_signed);
 
-    segment_ids_size_ = 1;
-    for (size_t i = 0; i < segment_ids_shapes.size(); i++) {
-      segment_ids_size_ *= static_cast<size_t>(segment_ids_shapes[i]);
-    }
+    segment_ids_size_ = SizeOf(segment_ids_shapes);
+    output_size_ = SizeOf(output_shapes);
 
-    output_size_ = 1;
-    for (size_t i = 0; i < output_shapes.size(); i++) {
-      output_size_ *= static_cast<size_t>(output_shapes[i]);
-    }
-
-    outer_size_ = static_cast<size_t>(input_shapes[0]);
+    outer_size_ = input_shapes[0];
     inner_size_ = 1;
     for (size_t i = 1; i < input_shapes.size(); i++) {
       inner_size_ *= static_cast<size_t>(input_shapes[i]);
     }
 
-    InitSizeLists();
+    return KRET_OK;
+  }
+
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override {
+    kernel_name_ = base_operator->name();
     return true;
   }
-  void ResetResource() noexcept override {
+
+  void ResetResource() noexcept {
     num_segments_ = 1;
     inner_size_ = 1;
     outer_size_ = 1;
@@ -112,13 +105,6 @@ class UnsortedSegmentMinGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     workspace_size_list_.clear();
   }
 
- protected:
-  void InitSizeLists() override {
-    input_size_list_.push_back(input_size_ * sizeof(T));
-    input_size_list_.push_back(segment_ids_size_ * sizeof(int));
-    output_size_list_.push_back(output_size_ * sizeof(T));
-  }
-
  private:
   int64_t num_segments_;
   size_t inner_size_;
@@ -127,6 +113,8 @@ class UnsortedSegmentMinGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   size_t segment_ids_size_;
   size_t output_size_;
   bool is_null_input_;
+  std::string kernel_name_;
+  std::vector<int64_t> input_shape_;
 };
 }  // namespace kernel
 }  // namespace mindspore

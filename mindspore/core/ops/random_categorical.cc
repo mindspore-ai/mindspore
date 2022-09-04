@@ -28,6 +28,9 @@ abstract::ShapePtr RandomCategoricalInferShape(const PrimitivePtr &primitive,
                                                const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto logits_shape_ptr = input_args[kInputIndex0]->BuildShape();
+  if (IsDynamicRank(CheckAndConvertUtils::ConvertShapePtrToShapeMap(logits_shape_ptr)[kShape])) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
+  }
   auto logits_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(logits_shape_ptr);
   auto logits_shape = logits_shape_map[kShape];
   if (logits_shape_ptr->IsDynamic()) {

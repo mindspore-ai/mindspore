@@ -28,46 +28,13 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr UnsortedSegmentArithmeticInferShape(const PrimitivePtr &primitive,
-                                                       const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
+abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args,
+                              const int64_t &num_segments_value) {
   auto prim_name = primitive->name();
-  auto x_shape_ptr = input_args[kInputIndex0]->BuildShape();
-  MS_EXCEPTION_IF_NULL(x_shape_ptr);
-  auto segment_ids_shape_ptr = input_args[kInputIndex1]->BuildShape();
-  MS_EXCEPTION_IF_NULL(segment_ids_shape_ptr);
-  auto num_segments_shape_ptr = input_args[kInputIndex2]->BuildShape();
-  MS_EXCEPTION_IF_NULL(num_segments_shape_ptr);
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto ids_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
   (void)CheckAndConvertUtils::CheckInteger("input_x shape size", SizeToLong(x_shape.size()), kGreaterThan, 0,
                                            prim_name);
-
-  auto num_segments = input_args[kInputIndex2]->cast<abstract::AbstractScalarPtr>();
-  int64_t num_segments_value = 0;
-
-  if (num_segments != nullptr && num_segments->BuildValue() != kAnyValue) {
-    num_segments_value = GetValue<int64_t>(num_segments->BuildValue());
-    (void)primitive->AddAttr(kNumSegments, MakeValue(num_segments_value));
-  }
-
-  if (x_shape_ptr->IsDynamic() || segment_ids_shape_ptr->IsDynamic() || num_segments_shape_ptr->IsDynamic()) {
-    return x_shape_ptr->cast<abstract::ShapePtr>();
-  }
-
-  if (num_segments == nullptr || num_segments->BuildValue() == kAnyValue) {
-    auto value_ptr = primitive->GetAttr(kNumSegments);
-    if (value_ptr != nullptr) {
-      num_segments_value = GetValue<int64_t>(value_ptr);
-    } else {
-      return x_shape_ptr->cast<abstract::ShapePtr>();
-    }
-  }
-  if (num_segments_value <= 0) {
-    MS_EXCEPTION(ValueError) << "For '" << prim_name
-                             << "', num_segments value must be greater than 0, but got: " << num_segments_value << ".";
-  }
-
+  auto ids_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
   for (auto ids_shape_value : ids_shape) {
     if (ids_shape_value < 0) {
       MS_EXCEPTION(ValueError) << "For '" << prim_name
@@ -106,6 +73,51 @@ abstract::ShapePtr UnsortedSegmentArithmeticInferShape(const PrimitivePtr &primi
     out_shape.push_back(x_shape.at(i));
   }
   return std::make_shared<abstract::Shape>(out_shape);
+}
+
+abstract::ShapePtr UnsortedSegmentArithmeticInferShape(const PrimitivePtr &primitive,
+                                                       const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
+  auto x_shape_ptr = input_args[kInputIndex0]->BuildShape();
+  MS_EXCEPTION_IF_NULL(x_shape_ptr);
+  if (IsDynamicRank(CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shape_ptr)[kShape])) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
+  }
+  auto segment_ids_shape_ptr = input_args[kInputIndex1]->BuildShape();
+  MS_EXCEPTION_IF_NULL(segment_ids_shape_ptr);
+  if (IsDynamicRank(CheckAndConvertUtils::ConvertShapePtrToShapeMap(segment_ids_shape_ptr)[kShape])) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
+  }
+  auto num_segments_shape_ptr = input_args[kInputIndex2]->BuildShape();
+  MS_EXCEPTION_IF_NULL(num_segments_shape_ptr);
+
+  auto num_segments = input_args[kInputIndex2]->cast<abstract::AbstractScalarPtr>();
+  int64_t num_segments_value = 0;
+
+  if (num_segments != nullptr && num_segments->BuildValue() != kAnyValue) {
+    num_segments_value = GetValue<int64_t>(num_segments->BuildValue());
+    (void)primitive->AddAttr(kNumSegments, MakeValue(num_segments_value));
+  }
+
+  if (x_shape_ptr->IsDynamic() || segment_ids_shape_ptr->IsDynamic() || num_segments_shape_ptr->IsDynamic()) {
+    return x_shape_ptr->cast<abstract::ShapePtr>();
+  }
+
+  if (num_segments == nullptr || num_segments->BuildValue() == kAnyValue) {
+    auto value_ptr = primitive->GetAttr(kNumSegments);
+    if (value_ptr != nullptr) {
+      num_segments_value = GetValue<int64_t>(value_ptr);
+    } else {
+      return x_shape_ptr->cast<abstract::ShapePtr>();
+    }
+  }
+  if (num_segments_value <= 0) {
+    MS_EXCEPTION(ValueError) << "For '" << prim_name
+                             << "', num_segments value must be greater than 0, but got: " << num_segments_value << ".";
+  }
+
+  return InferShape(primitive, input_args, num_segments_value);
 }
 
 TypePtr UnsortedSegmentArithmeticInferType(const PrimitivePtr &primitive,
