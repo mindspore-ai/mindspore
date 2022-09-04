@@ -20,7 +20,7 @@ from ..._checkparam import Validator as validator
 from ..._checkparam import Rel
 from ...common import dtype as mstype
 from ...common.dtype import tensor, dtype_to_pytype
-from ..primitive import prim_attr_register, PrimitiveWithInfer
+from ..primitive import prim_attr_register, PrimitiveWithInfer, Primitive
 from .. import signature as sig
 
 
@@ -59,7 +59,7 @@ class ScalarCast(PrimitiveWithInfer):
         return out
 
 
-class Randperm(PrimitiveWithInfer):
+class Randperm(Primitive):
     """
     Generates n random samples from 0 to n-1 without repeating. If `max_length` > n,
     the last `max_length-n` elements will be filled with `pad`.
@@ -103,19 +103,6 @@ class Randperm(PrimitiveWithInfer):
         self.dtype = dtype
         self.max_length = max_length
         self.init_prim_io_names(inputs=[], outputs=['output'])
-
-    def infer_shape(self, n_shape):
-        validator.check_int(len(n_shape), 1, Rel.EQ, "rank_of_n", self.name)
-        validator.check_int(n_shape[0], 1, Rel.EQ, "length_of_n", self.name)
-        return [self.max_length]
-
-    def infer_dtype(self, n_type):
-        validator.check_type_name("n_type", n_type, mstype.int32, self.name)
-
-        valid_values = (mstype.int8, mstype.int16, mstype.int32, mstype.int64,
-                        mstype.uint8, mstype.uint16, mstype.uint32, mstype.uint64)
-        validator.check_type_name("dtype", self.dtype, valid_values, self.name)
-        return self.dtype
 
 
 class NoRepeatNGram(PrimitiveWithInfer):
