@@ -30,7 +30,7 @@ class EngineIntf;
  * @return: PROFILING_SUCCESS 0 (success)
  *          PROFILING_FAILED -1 (failed)
  */
-int RegisterEngine(const std::string& module, const EngineIntf* engine) { return 0; }
+int RegisterEngine(const std::string &module, const EngineIntf *engine) { return 0; }
 
 }  // namespace Engine
 }  // namespace Msprof
@@ -42,7 +42,7 @@ int RegisterEngine(const std::string& module, const EngineIntf* engine) { return
  * @return: NO_NULL (success)
  *        NULL (failed)
  */
-void* ProfMgrStartUp(const ProfMgrCfg* cfg) { return const_cast<void*>(reinterpret_cast<const void*>(cfg)); }
+void *ProfMgrStartUp(const ProfMgrCfg *cfg) { return const_cast<void *>(reinterpret_cast<const void *>(cfg)); }
 
 /**
  * @name  : ProfMgrStop
@@ -51,11 +51,11 @@ void* ProfMgrStartUp(const ProfMgrCfg* cfg) { return const_cast<void*>(reinterpr
  * @return: PROFILING_SUCCESS 0 (success)
  *        PROFILING_FAILED -1 (failed)
  */
-int ProfMgrStop(void* handle) { return 0; }
+int ProfMgrStop(void *handle) { return 0; }
 
 namespace Analysis::Dvvp::ProfilerSpecial {
 uint32_t MsprofilerInit() { return 0; }
-}
+}  // namespace Analysis::Dvvp::ProfilerSpecial
 
 /*
  * @name  MsprofInit
@@ -85,7 +85,8 @@ ACL_FUNC_VISIBILITY aclError aclprofFinalize() { return ACL_SUCCESS; }
 
 ACL_FUNC_VISIBILITY aclprofConfig *aclprofCreateConfig(uint32_t *deviceIdList, uint32_t deviceNums,
                                                        aclprofAicoreMetrics aicoreMetrics,
-                                                       aclprofAicoreEvents *aicoreEvents, uint64_t dataTypeConfig) {
+                                                       const aclprofAicoreEvents *aicoreEvents,
+                                                       uint64_t dataTypeConfig) {
   return nullptr;
 }
 
@@ -108,4 +109,4 @@ MSVP_PROF_API int32_t MsprofRegisterCallback(uint32_t moduleId, ProfCommandHandl
  * @param len       [IN] data size (0 on INIT/UNINIT)
  * @return enum MsprofErrorCod
  */
-MSVP_PROF_API int32_t MsprofReportData(uint32_t moduleId, uint32_t type, void* data, uint32_t len) { return 0; }
+MSVP_PROF_API int32_t MsprofReportData(uint32_t moduleId, uint32_t type, void *data, uint32_t len) { return 0; }

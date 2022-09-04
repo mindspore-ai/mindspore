@@ -188,7 +188,7 @@ class ResNet(nn.Cell):
                                        stride=strides[1])
         self.layer2.shard(in_strategy=((1, 1, 1, 1),), out_strategy=(None,),
                           parameter_plan={
-                              'self.layer2.1.conv1.weight': (2, 4, 1, 1),
+                              'self.layer2.1.conv1.weight': (1, 8, 1, 1),
                               'self.layer2.0.conv_down_sample.weight': (8, 1, 1, 1),
                           })
         self.layer3 = self._make_layer(block,
@@ -202,8 +202,8 @@ class ResNet(nn.Cell):
                                        in_channel=in_channels[3],
                                        out_channel=out_channels[3],
                                        stride=strides[3])
-        self.layer4_shard = F.shard(self.layer4, in_strategy=((4, 2, 1, 1),), out_strategy=(None,),
-                                    parameter_plan={'self.layer4.0.conv2.weight': (2, 2, 1, 1)})
+        self.layer4_shard = F.shard(self.layer4, in_strategy=((8, 1, 1, 1),), out_strategy=(None,),
+                                    parameter_plan={'self.layer4.0.conv2.weight': (8, 1, 1, 1)})
 
         self.mean = P.ReduceMean(keep_dims=True)
         self.end_point = nn.Dense(2048, num_classes, has_bias=True,
@@ -385,6 +385,6 @@ def test_train_feed(num_classes=65536):
     model = Model(net, loss_fn=loss, optimizer=opt)
     model.train(3, dataset, dataset_sink_mode=False, callbacks=parallel_callback)
     loss_value = np.array(parallel_callback.loss_list)
-    expect_out = [11.374571, 11.028273, 10.5469265]
+    expect_out = [11.259036, 11.015917, 10.599615]
     print(loss_value)
     assert np.allclose(loss_value, expect_out, 0.0001, 0.0001)
