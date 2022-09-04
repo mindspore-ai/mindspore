@@ -145,7 +145,7 @@ void ActorThreadPool::PushActorToQueue(ActorBase *actor) {
 
 int ActorThreadPool::ActorQueueInit() {
 #ifdef USE_HQUEUE
-  if (actor_queue_.Init(actor_queue_size_) != true) {
+  if (actor_queue_.Init(static_cast<int32_t>(actor_queue_size_)) != true) {
     THREAD_ERROR("init actor queue failed.");
     return THREAD_ERROR;
   }
