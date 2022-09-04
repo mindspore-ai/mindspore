@@ -59,6 +59,7 @@ bool IndexAddCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
     return false;
   }
   kernel_name_ = kernel_ptr->name();
+  axis_ = kernel_ptr->get_axis();
   if (inputs.size() != kIndexAddInputsNum || outputs.size() != kIndexAddOutputsNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output tensor number must be " << kIndexAddInputsNum
                   << " and " << kIndexAddOutputsNum << ", but got " << inputs.size() << " and " << outputs.size();
@@ -68,9 +69,6 @@ bool IndexAddCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
   if (!MatchKernelFunc(base_operator, inputs, outputs)) {
     return false;
   }
-
-  base_operator_ = base_operator;
-
   return true;
 }
 
@@ -84,7 +82,6 @@ int IndexAddCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
   x_shape_ = inputs[kIndex0]->GetShapeVector();
   y_shape_ = inputs[kIndex2]->GetShapeVector();
   indices_shape_ = inputs[kIndex1]->GetShapeVector();
-  axis_ = GetValue<int64_t>(base_operator_->GetAttr(AXIS));
   return KRET_OK;
 }
 

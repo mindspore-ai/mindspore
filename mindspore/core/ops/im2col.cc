@@ -28,6 +28,52 @@
 
 namespace mindspore {
 namespace ops {
+void Im2Col::set_ksizes(const std::vector<int64_t> &ksizes) { (void)this->AddAttr(kKsizes, api::MakeValue(ksizes)); }
+
+std::vector<int64_t> Im2Col::get_ksizes() const {
+  auto value_ptr = GetAttr(kKsizes);
+  MS_EXCEPTION_IF_NULL(value_ptr);
+  return GetValue<std::vector<int64_t>>(value_ptr);
+}
+
+void Im2Col::set_strides(const std::vector<int64_t> &strides) {
+  (void)this->AddAttr(kStrides, api::MakeValue(strides));
+}
+
+std::vector<int64_t> Im2Col::get_strides() const {
+  auto value_ptr = GetAttr(kStrides);
+  MS_EXCEPTION_IF_NULL(value_ptr);
+  return GetValue<std::vector<int64_t>>(value_ptr);
+}
+
+void Im2Col::set_dilations(const std::vector<int64_t> &dilations) {
+  (void)this->AddAttr(kDilations, api::MakeValue(dilations));
+}
+
+std::vector<int64_t> Im2Col::get_dilations() const {
+  auto value_ptr = GetAttr(kDilations);
+  MS_EXCEPTION_IF_NULL(value_ptr);
+  return GetValue<std::vector<int64_t>>(value_ptr);
+}
+
+void Im2Col::set_pad_mode(const std::string &pad_mode) { (void)this->AddAttr(kPaddingMode, api::MakeValue(pad_mode)); }
+
+std::string Im2Col::get_pad_mode() const {
+  auto value_ptr = GetAttr(kPaddingMode);
+  MS_EXCEPTION_IF_NULL(value_ptr);
+  auto mode_str = GetValue<std::string>(value_ptr);
+  std::transform(mode_str.begin(), mode_str.end(), mode_str.begin(), ::toupper);
+  return mode_str;
+}
+
+void Im2Col::set_pads(const std::vector<int64_t> &pads) { (void)this->AddAttr(kPads, api::MakeValue(pads)); }
+
+std::vector<int64_t> Im2Col::get_pads() const {
+  auto value_ptr = GetAttr(kPads);
+  MS_EXCEPTION_IF_NULL(value_ptr);
+  return GetValue<std::vector<int64_t>>(value_ptr);
+}
+
 namespace {
 abstract::ShapePtr Im2ColInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();

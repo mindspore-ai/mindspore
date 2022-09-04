@@ -37,6 +37,26 @@ class MIND_API Im2Col : public BaseOperator {
 
   /// \brief Constructor.
   Im2Col() : BaseOperator(kNameIm2Col) { InitIOName({"x"}, {"y"}); }
+
+  void set_ksizes(const std::vector<int64_t> &ksizes);
+
+  std::vector<int64_t> get_ksizes() const;
+
+  void set_strides(const std::vector<int64_t> &strides);
+
+  std::vector<int64_t> get_strides() const;
+
+  void set_dilations(const std::vector<int64_t> &dilations);
+
+  std::vector<int64_t> get_dilations() const;
+
+  void set_pad_mode(const std::string &pad_mode);
+
+  std::string get_pad_mode() const;
+
+  void set_pads(const std::vector<int64_t> &pads);
+
+  std::vector<int64_t> get_pads() const;
 };
 
 abstract::AbstractBasePtr Im2ColInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

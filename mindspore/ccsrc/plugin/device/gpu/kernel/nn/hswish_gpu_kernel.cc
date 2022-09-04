@@ -48,6 +48,7 @@ int HSwishGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
     return ret;
   }
   auto input_shape = inputs[kIndex0]->GetShapeVector();
+  is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "input");
   input_size_ = SizeOf(input_shape);
   return KRET_OK;
 }

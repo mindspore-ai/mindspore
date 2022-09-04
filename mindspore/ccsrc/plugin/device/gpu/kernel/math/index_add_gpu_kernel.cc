@@ -39,6 +39,7 @@ bool IndexAddGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
     return false;
   }
   kernel_name_ = kernel_ptr->name();
+  axis_value_ = kernel_ptr->get_axis();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kIndexAddInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kIndexAddOutputsNum, kernel_name_);
 
@@ -47,27 +48,29 @@ bool IndexAddGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
   if (!is_match) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
   }
-  t_size_ = abstract::TypeIdSize(kernel_attr.GetOutputAttr(kIndex0).first);
   kernel_func_ = func_list_[index].second;
+  t_size_ = abstract::TypeIdSize(kernel_attr.GetOutputAttr(kIndex0).first);
   return true;
 }
 
 int IndexAddGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                  const std::vector<KernelTensorPtr> &outputs,
-                                 const std::map<uint32_t, tensor::TensorPtr> &others) {
-  ResetResource();
+                                 const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  if (ret != KRET_OK) {
+    return ret;
+  }
+
   x_shape_ = inputs[kIndex0]->GetShapeVector();
   index_shape_ = inputs[kIndex1]->GetShapeVector();
   y_shape_ = inputs[kIndex2]->GetShapeVector();
-  axis_value_ = GetValue<int64_t>(base_operator->GetAttr(kAttrAxis));
-  auto it_x = std::find_if(x_shape_.begin(), x_shape_.end(), [](const int64_t sh) { return sh <= 0; });
-  auto it_y = std::find_if(y_shape_.begin(), y_shape_.end(), [](const int64_t sh) { return sh <= 0; });
-  auto it_idx = std::find_if(index_shape_.begin(), index_shape_.end(), [](const int64_t sh) { return sh <= 0; });
-  if (it_x != x_shape_.end() || it_y != y_shape_.end() || it_idx != index_shape_.end()) {
-    is_null_input_ = true;
-    InitSizeLists();
-    return 0;
+  is_null_input_ = CHECK_SHAPE_NULL(x_shape_, kernel_name_, "x") ||
+                   CHECK_SHAPE_NULL(index_shape_, kernel_name_, "index") ||
+                   CHECK_SHAPE_NULL(y_shape_, kernel_name_, "y");
+  if (is_null_input_) {
+    return KRET_OK;
   }
+
   if (!CheckParams()) {
     return KRET_RESIZE_FAILED;
   }
@@ -87,40 +90,7 @@ int IndexAddGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
   for (auto sh : x_shape_) {
     x_size_ *= LongToSize(sh);
   }
-  index_size_ = sizeof(int32_t);
-  for (auto sh : index_shape_) {
-    index_size_ *= LongToSize(sh);
-  }
-  y_size_ = t_size_;
-  for (auto sh : y_shape_) {
-    y_size_ *= LongToSize(sh);
-  }
-  output_size_ = x_size_;
-
-  InitSizeLists();
-  return 0;
-}
-
-void IndexAddGpuKernelMod::ResetResource() noexcept {
-  x_size_ = 0;
-  index_size_ = 0;
-  y_size_ = 0;
-  output_size_ = 0;
-  inner_size_ = 0;
-  outer_size_ = 0;
-  x_axis_size_ = 0;
-  y_axis_size_ = 0;
-  is_null_input_ = false;
-  input_size_list_.clear();
-  output_size_list_.clear();
-  workspace_size_list_.clear();
-}
-
-void IndexAddGpuKernelMod::InitSizeLists() {
-  input_size_list_.push_back(x_size_);
-  input_size_list_.push_back(index_size_);
-  input_size_list_.push_back(y_size_);
-  output_size_list_.push_back(output_size_);
+  return KRET_OK;
 }
 
 bool IndexAddGpuKernelMod::CheckParams() {

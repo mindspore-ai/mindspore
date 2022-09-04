@@ -16,8 +16,8 @@
 
 #include "plugin/device/cpu/kernel/im2col_cpu_kernel.h"
 #include <algorithm>
-#include <functional>
-#include <string>
+#include "mindspore/core/ops/im2col.h"
+#include "plugin/factory/ms_factory.h"
 #include "plugin/device/cpu/kernel/eigen/eigen_common_utils.h"
 
 namespace mindspore {
@@ -28,78 +28,53 @@ constexpr size_t kIm2ColOutputsNum = 1;
 constexpr int64_t kInt64Number2 = 2;
 }  // namespace
 
-void Im2ColCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
+bool Im2ColCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                              const std::vector<KernelTensorPtr> &outputs) {
+  MS_ERROR_IF_NULL_W_RET_VAL(base_operator, false);
+  kernel_name_ = base_operator->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kIm2ColInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kIm2ColOutputsNum, kernel_name_);
 
-  x_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kIndex0);
-  y_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, kIndex0);
-  y_type_ = AnfAlgo::GetOutputDeviceDataType(kernel_node, kIndex0);
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::Im2Col>(base_operator);
+  if (!kernel_ptr) {
+    MS_LOG(ERROR) << "Cast HShrink ops failed!";
+    return false;
+  }
+  ksizes_ = kernel_ptr->get_ksizes();
+  strides_ = kernel_ptr->get_strides();
+  dilations_ = kernel_ptr->get_dilations();
+  padding_mode_ = kernel_ptr->get_pad_mode();
+  pads_ = kernel_ptr->get_pads();
 
-  ksizes_ = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, kAttrKsizes);
-  strides_ = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, kAttrStrides);
-  dilations_ = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, kAttrDilations);
-  padding_mode_ = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, kAttPaddingMode);
-  pads_ = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, kAttrPads);
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
+  }
+  kernel_func_ = func_list_[index].second;
+  return true;
+}
+
+int Im2ColCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                               const std::vector<KernelTensorPtr> &outputs,
+                               const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  if (ret != KRET_OK) {
+    return ret;
+  }
+
+  x_shape_ = inputs[0]->GetShapeVector();
+  y_shape_ = outputs[0]->GetShapeVector();
+  y_type_ = outputs[0]->GetDtype();
+  return KRET_OK;
 }
 
 bool Im2ColCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                                 const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kIm2ColInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kIm2ColOutputsNum, kernel_name_);
-  bool res = false;
-  switch (y_type_) {
-    case kNumberTypeInt8: {
-      res = LaunchKernel<int8_t>(inputs, outputs);
-      break;
-    }
-    case kNumberTypeInt16: {
-      res = LaunchKernel<int16_t>(inputs, outputs);
-      break;
-    }
-    case kNumberTypeInt32: {
-      res = LaunchKernel<int32_t>(inputs, outputs);
-      break;
-    }
-    case kNumberTypeInt64: {
-      res = LaunchKernel<int64_t>(inputs, outputs);
-      break;
-    }
-    case kNumberTypeUInt8: {
-      res = LaunchKernel<uint8_t>(inputs, outputs);
-      break;
-    }
-    case kNumberTypeUInt16: {
-      res = LaunchKernel<uint16_t>(inputs, outputs);
-      break;
-    }
-    case kNumberTypeUInt32: {
-      res = LaunchKernel<uint32_t>(inputs, outputs);
-      break;
-    }
-    case kNumberTypeUInt64: {
-      res = LaunchKernel<uint64_t>(inputs, outputs);
-      break;
-    }
-    case kNumberTypeFloat16: {
-      res = LaunchKernel<float16>(inputs, outputs);
-      break;
-    }
-    case kNumberTypeFloat32: {
-      res = LaunchKernel<float>(inputs, outputs);
-      break;
-    }
-    case kNumberTypeFloat64: {
-      res = LaunchKernel<double>(inputs, outputs);
-      break;
-    }
-    default:
-      MS_LOG(EXCEPTION)
-        << "For '" << kernel_name_
-        << "', the dtype of 'x' should be one of [float16, float32, float64, uin8, int8, uint16, int16, "
-           "uint32, int32, uint64, int64], but got "
-        << TypeIdLabel(y_type_) << ".";
-  }
-  return res;
+  return kernel_func_(this, inputs, outputs);
 }
 
 template <typename T>
@@ -168,19 +143,34 @@ bool Im2ColCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inp
   return true;
 }
 
+std::vector<std::pair<KernelAttr, Im2ColCpuKernelMod::Im2ColFunc>> Im2ColCpuKernelMod::func_list_ = {
+  {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+   &Im2ColCpuKernelMod::LaunchKernel<int8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
+   &Im2ColCpuKernelMod::LaunchKernel<int16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+   &Im2ColCpuKernelMod::LaunchKernel<int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+   &Im2ColCpuKernelMod::LaunchKernel<int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
+   &Im2ColCpuKernelMod::LaunchKernel<uint8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
+   &Im2ColCpuKernelMod::LaunchKernel<uint16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
+   &Im2ColCpuKernelMod::LaunchKernel<uint32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
+   &Im2ColCpuKernelMod::LaunchKernel<uint64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+   &Im2ColCpuKernelMod::LaunchKernel<float16>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+   &Im2ColCpuKernelMod::LaunchKernel<float>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+   &Im2ColCpuKernelMod::LaunchKernel<double>}};
+
 std::vector<KernelAttr> Im2ColCpuKernelMod::GetOpSupport() {
-  static std::vector<KernelAttr> support_list = {
-    KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
-    KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
-    KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-    KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-    KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
-    KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
-    KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
-    KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
-    KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-    KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-    KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64)};
+  std::vector<KernelAttr> support_list;
+  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, Im2ColCpuKernelMod::Im2ColFunc> &pair) { return pair.first; });
   return support_list;
 }
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Im2Col, Im2ColCpuKernelMod);
