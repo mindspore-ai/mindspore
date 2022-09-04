@@ -54,7 +54,9 @@ AbstractBasePtr SignInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
   const int64_t input_num = 1;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
 
-  return abstract::MakeAbstract(SignInferShape(primitive, input_args), SignInferType(primitive, input_args));
+  auto infer_type = SignInferType(primitive, input_args);
+  auto infer_shape = SignInferShape(primitive, input_args);
+  return abstract::MakeAbstract(infer_shape, infer_type);
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(Sign, prim::kPrimSign, SignInfer, nullptr, true);
 }  // namespace ops
