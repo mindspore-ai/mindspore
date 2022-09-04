@@ -77,9 +77,6 @@ class CumProdGpuKernelMod : public NativeGpuKernelMod {
     }
     input_size_0_ = sizeof(T);
     auto shape_signed = inputs[kIndex0]->GetShapeVector();
-    if (IsDynamic(shape_signed)) {
-      return KRET_OK;
-    }
     shape_ = Convert2SizeTClipNeg(shape_signed);
     is_null_input_ = CHECK_SHAPE_NULL(shape_, kernel_name_, "input");
     if (is_null_input_) {
