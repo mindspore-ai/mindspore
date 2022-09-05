@@ -102,6 +102,8 @@ class TensorRTSubGraph : public kernel::Kernel {
 
   int MarkOutputs();
 
+  bool OutputFormatCheck(ITensorHelper output_helper, const mindspore::MSTensor &out_tensor);
+
   bool IsCached(TensorRTOp *cur_op, const mindspore::MSTensor &in_tensor);
 
   void FindCacheTensorInfo(TensorRTOp *cur_op, mindspore::MSTensor device_cache_tensor);
