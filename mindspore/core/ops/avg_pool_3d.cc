@@ -138,6 +138,10 @@ abstract::ShapePtr AvgPool3DInferShape(const PrimitivePtr &primitive, const std:
     MS_EXCEPTION_IF_NULL(item);
   }
   auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];
+  // ToSupport Dynamic rank
+  if (IsDynamicRank(in_shape)) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
+  }
   (void)CheckAndConvertUtils::CheckInteger("x_rank", SizeToLong(in_shape.size()), kEqual, k5DInputDims, op_name);
 
   std::vector<int64_t> kernel_size;
