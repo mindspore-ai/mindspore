@@ -19,8 +19,8 @@
 #include <memory>
 #include <string>
 #include <utility>
+#include <unordered_map>
 
-#include "utils/hash_map.h"
 #include "abstract/abstract_function.h"
 #include "include/common/utils/utils.h"
 #include "utils/anf_utils.h"
@@ -30,7 +30,7 @@ namespace mindspore {
 /* namespace to support opt */
 namespace opt {
 using SymbolicKeyConversionMap =
-  mindspore::HashMap<SymbolicKeyInstancePtr, int64_t, SymbolicKeyInstanceHash, SymbolicKeyInstanceEqual>;
+  std::unordered_map<SymbolicKeyInstancePtr, int64_t, SymbolicKeyInstanceHash, SymbolicKeyInstanceEqual>;
 
 namespace {
 bool IsAbstractEnvType(const abstract::AbstractBasePtr &abs) {

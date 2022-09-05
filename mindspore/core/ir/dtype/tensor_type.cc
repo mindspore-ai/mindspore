@@ -168,32 +168,17 @@ const TypePtr SparseTensorType::operator[](std::size_t dim) const {
   return elements_[dim];
 }
 
-const bool SparseTensorType::ElementsEqual(const SparseTensorType &other) const {
-  if (size() != other.size()) {
-    return false;
-  }
-  for (size_t i = 0; i < elements_.size(); ++i) {
-    if (!common::IsEqual(elements_[i], other.elements()[i])) {
-      return false;
-    }
-  }
-  return true;
-}
-
 bool SparseTensorType::operator==(const Type &other) const {
   if (!IsSameObjectType(*this, other)) {
     return false;
   }
-  return ElementsEqual(static_cast<const SparseTensorType &>(other));
+  const auto &other_type = static_cast<const SparseTensorType &>(other);
+  return TypeListEqual()(elements_, other_type.elements_);
 }
 
 size_t SparseTensorType::hash() const {
   size_t hash_value = hash_combine(static_cast<size_t>(kMetaTypeObject), static_cast<size_t>(object_type()));
-  hash_value = hash_combine(hash_value, elements_.size());
-  for (auto &e : elements_) {
-    hash_value = hash_combine(hash_value, (e == nullptr ? 0 : e->hash()));
-  }
-  return hash_value;
+  return hash_combine(hash_value, TypeListHasher()(elements_));
 }
 
 TypePtr RowTensorType::DeepCopy() const {
