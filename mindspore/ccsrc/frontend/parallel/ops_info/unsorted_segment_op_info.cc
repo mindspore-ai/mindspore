@@ -331,7 +331,7 @@ Shapes UnsortedSegmentOpInfo::InferStrategyIndividualMode(const Shapes &in_strat
                         << inputs_shape_[0].size() << ", the size of inputs_shape[1] is " << inputs_shape_[1].size();
     }
     size_t diff_len = inputs_shape_[0].size() - inputs_shape_[1].size();
-    tmp_strategy.insert(tmp_strategy.end(), diff_len, 1);
+    (void)tmp_strategy.insert(tmp_strategy.end(), diff_len, 1);
     return Shapes({tmp_strategy, in_strategy[1]});
   }
   MS_LOG(EXCEPTION) << name_ << ": The in_strategy[0] and in_strategy[1] are empty";

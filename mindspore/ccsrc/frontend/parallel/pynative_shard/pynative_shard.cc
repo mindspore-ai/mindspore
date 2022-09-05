@@ -133,7 +133,7 @@ static bool CheckDeviceNum(const std::vector<std::vector<int64_t>> &strategies, 
   return true;
 }
 
-static void SetOutputLayout(const FuncGraphPtr &func_graph, const AnfNodePtr &out_strategy, const int64_t &device_num) {
+static void SetOutputLayout(const FuncGraphPtr &func_graph, const AnfNodePtr &out_strategy) {
   auto out_strategy_tuple = out_strategy->cast<ValueNodePtr>();
   bool need_default_strategy = false;
   size_t out_strategy_size = 0;
@@ -176,8 +176,7 @@ static void SetOutputLayout(const FuncGraphPtr &func_graph, const AnfNodePtr &ou
   }
 }
 
-static Shapes GenerateDefaultStrategyForParam(const CNodePtr &cnode, const std::vector<AnfNodePtr> &parameters,
-                                              const Shapes &input_strategy) {
+static Shapes GenerateDefaultStrategyForParam(const CNodePtr &cnode, const Shapes &input_strategy) {
   auto current_inputs = cnode->inputs();
   Shapes elements;
   for (size_t i = 1; i < current_inputs.size(); ++i) {
@@ -268,7 +267,7 @@ static std::set<CNodePtr> SetInputLayout(const FuncGraphPtr &func_graph, const A
     }
   }
   for (auto &cnode : concerned_nodes) {
-    Shapes ret_strategy = GenerateDefaultStrategyForParam(cnode, parameters, input_strategy);
+    Shapes ret_strategy = GenerateDefaultStrategyForParam(cnode, input_strategy);
     // Set in_strategy
     auto strategy = ShapesToValueTuplePtr(ret_strategy);
     PrimitivePtr prim = GetValueNode<PrimitivePtr>(cnode->input(0));
@@ -437,7 +436,7 @@ static bool SetStrategyForShard(const FuncGraphPtr &root, const std::vector<AnfN
       std::set_union(input_concerned_cnode.begin(), input_concerned_cnode.end(), parameter_concerned_cnode.begin(),
                      parameter_concerned_cnode.end(), std::inserter(concerned_cnode, concerned_cnode.end()));
       CompleteConcernedCNodeStrategies(concerned_cnode);
-      SetOutputLayout(func_graph, out_strategy, device_num);  // Not in effect currently
+      SetOutputLayout(func_graph, out_strategy);  // Not in effect currently
       return true;
     }
   }
