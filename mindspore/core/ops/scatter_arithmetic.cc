@@ -18,6 +18,7 @@
 #include <map>
 #include <set>
 #include <string>
+#include "ops/scatter_add.h"
 #include "ops/scatter_update.h"
 #include "ops/scatter_min.h"
 #include "ops/scatter_max.h"
@@ -90,6 +91,8 @@ AbstractBasePtr ScatterArithmeticInfer(const abstract::AnalysisEnginePtr &, cons
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 
+MIND_API_OPERATOR_IMPL(ScatterAdd, BaseOperator);
+REGISTER_PRIMITIVE_EVAL_IMPL(ScatterAdd, prim::kPrimScatterAdd, ScatterArithmeticInfer, nullptr, true);
 MIND_API_OPERATOR_IMPL(ScatterUpdate, BaseOperator);
 REGISTER_PRIMITIVE_EVAL_IMPL(ScatterUpdate, prim::kPrimScatterUpdate, ScatterArithmeticInfer, nullptr, true);
 

@@ -4277,7 +4277,7 @@ class ScatterMin(_ScatterOpDynamic):
     """
 
 
-class ScatterAdd(_ScatterOpDynamic):
+class ScatterAdd(Primitive):
     r"""
     Updates the value of the input tensor through the addition operation.
 
@@ -4384,6 +4384,11 @@ class ScatterAdd(_ScatterOpDynamic):
         [[ 8.  8.  8.]
          [12. 12. 12.]]
     """
+    __mindspore_signature__ = (
+        sig.make_sig('x', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
+        sig.make_sig('indices', dtype=sig.sig_dtype.T1),
+        sig.make_sig('updates', dtype=sig.sig_dtype.T)
+    )
 
     @prim_attr_register
     def __init__(self, use_locking=False):
@@ -4787,7 +4792,7 @@ class ScatterDiv(_ScatterOpDynamic):
     """
 
 
-class ScatterNdAdd(_ScatterNdOp):
+class ScatterNdAdd(Primitive):
     r"""
     Applies sparse addition to individual values or slices in a tensor.
 
@@ -4834,6 +4839,18 @@ class ScatterNdAdd(_ScatterNdOp):
           [0 0 0 0]
           [0 0 0 0]]]
     """
+    __mindspore_signature__ = (
+        sig.make_sig('x', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
+        sig.make_sig('indices', dtype=sig.sig_dtype.T1),
+        sig.make_sig('updates', dtype=sig.sig_dtype.T)
+    )
+
+    @prim_attr_register
+    def __init__(self, use_locking=False):
+        """Initialize _ScatterOp"""
+        validator.check_value_type('use_locking', use_locking, [bool], self.name)
+        self.init_prim_io_names(inputs=['x', 'indices', 'updates'], outputs=['y'])
+        self.add_prim_attr('side_effect_mem', True)
 
 
 class ScatterNdSub(Primitive):
@@ -6430,7 +6447,7 @@ class TensorScatterUpdate(_TensorScatterOp):
         return self._infer_specified_value(input_x_value, indices_value, updates_value)
 
 
-class TensorScatterMax(_TensorScatterOp):
+class TensorScatterMax(Primitive):
     """
     By comparing the value at the position indicated by `indices` in `x` with the value in the `updates`,
     the value at the index will eventually be equal to the largest one to create a new tensor.
@@ -6466,7 +6483,7 @@ class TensorScatterMax(_TensorScatterOp):
         self.init_prim_io_names(inputs=['input_x', 'indices', 'updates'], outputs=['y'])
 
 
-class TensorScatterMin(_TensorScatterOp):
+class TensorScatterMin(Primitive):
     """
     By comparing the value at the position indicated by `indices` in `input_x` with the value in the `updates`,
     the value at the index will eventually be equal to the smallest one to create a new tensor.
@@ -6502,7 +6519,7 @@ class TensorScatterMin(_TensorScatterOp):
         self.init_prim_io_names(inputs=['input_x', 'indices', 'updates'], outputs=['y'])
 
 
-class TensorScatterSub(_TensorScatterOp):
+class TensorScatterSub(Primitive):
     """
     Creates a new tensor by subtracting the values from the positions in `input_x` indicated by
     `indices`, with values from `updates`. When multiple values are provided for the same
@@ -6540,7 +6557,7 @@ class TensorScatterSub(_TensorScatterOp):
         self.init_prim_io_names(inputs=['input_x', 'indices', 'updates'], outputs=['y'])
 
 
-class TensorScatterAdd(_TensorScatterOp):
+class TensorScatterAdd(Primitive):
     """
     Creates a new tensor by adding the values from the positions in `input_x` indicated by
     `indices`, with values from `updates`. When multiple values are given for the same

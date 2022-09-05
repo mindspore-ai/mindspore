@@ -25,82 +25,30 @@
 
 namespace mindspore {
 namespace kernel {
-namespace {
 constexpr size_t kScatterArithmeticInputsNum = 3;
 constexpr size_t kScatterArithmeticOutputsNum = 1;
 
-template <typename T>
-class ScatterArithmeticCpuKernelFunc : public DeprecatedCpuKernelFunc {
- public:
-  ScatterArithmeticCpuKernelFunc() = default;
-  ~ScatterArithmeticCpuKernelFunc() override = default;
-
-  void InitFunc(const CNodePtr &kernel_node) override;
-
-  bool RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-               const std::vector<AddressPtr> &outputs) override;
-
- private:
-  void InitComputeFunc();
-  void ScatterAdd(T *input, const int *indices, const T *updates) const;
-  void ScatterSub(T *input, const int *indices, const T *updates) const;
-  void ScatterMul(T *input, const int *indices, const T *updates) const;
-  void ScatterDiv(T *input, const int *indices, const T *updates) const;
-  void ScatterMax(T *input, const int *indices, const T *updates) const;
-  void ScatterMin(T *input, const int *indices, const T *updates) const;
-  void ScatterUpdate(T *input, const int *indices, const T *updates) const;
-
-  using TypeComputeFunc = std::function<void(ScatterArithmeticCpuKernelFunc *, T *, const int *, const T *)>;
-
-  TypeComputeFunc compute_func_;
-  int first_dim_size{0};
-  size_t input_size_{0};
-  size_t inner_size_{0};
-  size_t indices_size_{0};
-  const size_t INPUT_INDEX_{0};
-  const size_t INDICES_INDEX_{1};
-  const size_t UPDATES_INDEX_{2};
-  const size_t OUTPUT_INDEX_{0};
-  std::string kernel_name_;
-};
-
-template <typename T>
-void ScatterArithmeticCpuKernelFunc<T>::InitComputeFunc() {
-  static const std::map<std::string, TypeComputeFunc> scatterArithmeticFuncMap{
-    {prim::kPrimScatterAdd->name(), &ScatterArithmeticCpuKernelFunc<T>::ScatterAdd},
-    {prim::kPrimScatterSub->name(), &ScatterArithmeticCpuKernelFunc<T>::ScatterSub},
-    {prim::kPrimScatterMul->name(), &ScatterArithmeticCpuKernelFunc<T>::ScatterMul},
-    {prim::kPrimScatterDiv->name(), &ScatterArithmeticCpuKernelFunc<T>::ScatterDiv},
-    {prim::kPrimScatterMax->name(), &ScatterArithmeticCpuKernelFunc<T>::ScatterMax},
-    {prim::kPrimScatterMin->name(), &ScatterArithmeticCpuKernelFunc<T>::ScatterMin},
-    {prim::kPrimScatterUpdate->name(), &ScatterArithmeticCpuKernelFunc<T>::ScatterUpdate}};
-  if (scatterArithmeticFuncMap.find(kernel_name_) == scatterArithmeticFuncMap.end()) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the current operator does not support this operation.";
-  }
-  compute_func_ = scatterArithmeticFuncMap.at(kernel_name_);
+bool ScatterArithmeticCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                         const std::vector<KernelTensorPtr> &inputs,
+                                         const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->name();
+  return MatchKernelFunc(base_operator, inputs, outputs);
 }
 
-template <typename T>
-void ScatterArithmeticCpuKernelFunc<T>::InitFunc(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  auto indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-  if (IsDynamic(input_shape) || IsDynamic(indices_shape)) {
-    return;
+int ScatterArithmeticCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                          const std::vector<KernelTensorPtr> &inputs,
+                                          const std::vector<KernelTensorPtr> &outputs,
+                                          const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
   }
-  if (input_shape.size() < 1) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dimension of 'input_x' must be greater than or equal to 1, but got "
-                      << input_shape.size() << ".";
-  }
-  first_dim_size = LongToInt(input_shape[0]);
-  input_size_ = 1;
-  inner_size_ = 1;
+  auto input_shape = inputs[0]->GetShapeVector();
+  auto indices_shape = inputs[1]->GetShapeVector();
   if (input_shape.empty()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the shape of 'input_x' can not be empty.";
   }
 
+  first_dim_size_ = LongToInt(input_shape[0]);
   int64_t size_tmp = 1;
   for (size_t i = 1; i < input_shape.size(); i++) {
     size_tmp *= input_shape[i];
@@ -112,337 +60,72 @@ void ScatterArithmeticCpuKernelFunc<T>::InitFunc(const CNodePtr &kernel_node) {
     size_tmp *= indices_shape[i];
   }
   indices_size_ = LongToSize(size_tmp);
-  InitComputeFunc();
+  return KRET_OK;
 }
 
 template <typename T>
-bool ScatterArithmeticCpuKernelFunc<T>::RunFunc(const std::vector<kernel::AddressPtr> &inputs,
-                                                const std::vector<kernel::AddressPtr> &,
-                                                const std::vector<kernel::AddressPtr> &outputs) {
+bool ScatterArithmeticCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                                 const std::vector<kernel::AddressPtr> &,
+                                                 const std::vector<kernel::AddressPtr> &outputs) {
+  static const mindspore::HashMap<std::string, std::function<T(const T &a, const T &b)>> scatter_arithmetic_func_map{
+    {prim::kPrimScatterMul->name(), [](const T &a, const T &b) { return a * b; }},
+    {prim::kPrimScatterDiv->name(), [](const T &a, const T &b) { return a / b; }},
+    {prim::kPrimScatterAdd->name(), [](const T &a, const T &b) { return a + b; }},
+    {prim::kPrimScatterSub->name(), [](const T &a, const T &b) { return a - b; }},
+    {prim::kPrimScatterMax->name(), [](const T &a, const T &b) { return a > b ? a : b; }},
+    {prim::kPrimScatterMin->name(), [](const T &a, const T &b) { return a > b ? b : a; }},
+    {prim::kPrimScatterUpdate->name(), [](const T &a, const T &b) { return b; }},
+  };
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kScatterArithmeticInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kScatterArithmeticOutputsNum, kernel_name_);
-  auto *input = reinterpret_cast<T *>(inputs[INPUT_INDEX_]->addr);
-  auto *indices = reinterpret_cast<int *>(inputs[INDICES_INDEX_]->addr);
-  auto *updates = reinterpret_cast<T *>(inputs[UPDATES_INDEX_]->addr);
-  compute_func_(this, input, indices, updates);
+  auto *input = reinterpret_cast<T *>(inputs[0]->addr);
+  auto *indices = reinterpret_cast<int *>(inputs[1]->addr);
+  auto *updates = reinterpret_cast<T *>(inputs[2]->addr);
+  auto *output = reinterpret_cast<T *>(outputs[0]->addr);
+  auto func_iter = scatter_arithmetic_func_map.find(kernel_name_);
+  if (func_iter == scatter_arithmetic_func_map.end()) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the current operator does not support this operation.";
+    return false;
+  }
+  for (size_t i = 0; i < indices_size_; i++) {
+    auto base_index_updates = i * inner_size_;
+    auto base_index_input = indices[i] * inner_size_;
+    if (indices[i] < 0 || indices[i] >= first_dim_size_) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of indices should be in [0, " << first_dim_size_
+                        << "), but got '" << indices[i] << "' in indices.";
+    }
+    for (size_t j = 0; j < inner_size_; j++) {
+      input[base_index_input + j] = func_iter->second(input[base_index_input + j], updates[base_index_updates + j]);
+    }
+  }
+  auto bufferSize = outputs[0]->size;
+  auto ret = memcpy_s(output, bufferSize, input, input_size_ * sizeof(T));
+  if (ret != EOK) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memory copy failed. Error no: " << ret;
+  }
   return true;
 }
 
-template <typename T>
-void ScatterArithmeticCpuKernelFunc<T>::ScatterAdd(T *input, const int *indices, const T *updates) const {
-  for (size_t i = 0; i < indices_size_; i++) {
-    auto base_index_updates = i * inner_size_;
-    auto base_index_input = indices[i] * inner_size_;
-    if (indices[i] < 0 || indices[i] >= first_dim_size) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of indices should be in [0, " << first_dim_size
-                        << "), but got '" << indices[i] << "' in indices.";
-    }
-    for (size_t j = 0; j < inner_size_; j++) {
-      input[base_index_input + j] += updates[base_index_updates + j];
-    }
-  }
+#define SCATTER_ARITHMETIC_CPU_REGISTER(IN_DT0, IN_DT1, IN_DT2, OUT_DT0, T)                                          \
+  KernelAttr().AddInputAttr(IN_DT0).AddInputAttr(IN_DT1).AddInputAttr(IN_DT2).AddOutputAttr(OUT_DT0).AddOutInRef(0,  \
+                                                                                                                 0), \
+    &ScatterArithmeticCpuKernelMod::LaunchKernel<T>
+
+const ScatterArithmeticCpuKernelMod::ScatterSupportListType &ScatterArithmeticCpuKernelMod::GetFuncList() const {
+  static const ScatterArithmeticCpuKernelMod::ScatterSupportListType func_list = {
+    {SCATTER_ARITHMETIC_CPU_REGISTER(kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, int32_t)},
+    {SCATTER_ARITHMETIC_CPU_REGISTER(kNumberTypeFloat32, kNumberTypeInt32, kNumberTypeFloat32, kNumberTypeFloat32,
+                                     float)},
+    {SCATTER_ARITHMETIC_CPU_REGISTER(kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt64, int64_t)},
+  };
+  return func_list;
 }
-
-template <typename T>
-void ScatterArithmeticCpuKernelFunc<T>::ScatterSub(T *input, const int *indices, const T *updates) const {
-  for (size_t i = 0; i < indices_size_; i++) {
-    auto base_index_updates = i * inner_size_;
-    auto base_index_input = indices[i] * inner_size_;
-    if (indices[i] < 0 || indices[i] >= first_dim_size) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of indices should be in [0, " << first_dim_size
-                        << "), but got '" << indices[i] << "' in indices.";
-    }
-    for (size_t j = 0; j < inner_size_; j++) {
-      input[base_index_input + j] -= updates[base_index_updates + j];
-    }
-  }
-}
-
-template <typename T>
-void ScatterArithmeticCpuKernelFunc<T>::ScatterMul(T *input, const int *indices, const T *updates) const {
-  for (size_t i = 0; i < indices_size_; i++) {
-    auto base_index_updates = i * inner_size_;
-    auto base_index_input = indices[i] * inner_size_;
-    if (indices[i] < 0 || indices[i] >= first_dim_size) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of indices should be in [0, " << first_dim_size
-                        << "), but got '" << indices[i] << "' in indices.";
-    }
-    for (size_t j = 0; j < inner_size_; j++) {
-      input[base_index_input + j] *= updates[base_index_updates + j];
-    }
-  }
-}
-
-template <typename T>
-void ScatterArithmeticCpuKernelFunc<T>::ScatterDiv(T *input, const int *indices, const T *updates) const {
-  for (size_t i = 0; i < indices_size_; i++) {
-    if (indices[i] < 0 || indices[i] >= first_dim_size) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of indices should be in [0, " << first_dim_size
-                        << "), but got '" << indices[i] << "' in indices.";
-    }
-    for (size_t j = 0; j < inner_size_; j++) {
-      auto dividend = input[indices[i] * inner_size_ + j];
-      auto divisor = updates[i * inner_size_ + j];
-      if (std::equal_to<T>()(divisor, 0)) {
-        MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', updates must not contain 0";
-      }
-      input[indices[i] * inner_size_ + j] = dividend / divisor;
-    }
-  }
-}
-
-template <typename T>
-void ScatterArithmeticCpuKernelFunc<T>::ScatterMax(T *input, const int *indices, const T *updates) const {
-  for (size_t i = 0; i < indices_size_; i++) {
-    auto base_index_updates = i * inner_size_;
-    auto base_index_input = indices[i] * inner_size_;
-    if (indices[i] < 0 || indices[i] >= first_dim_size) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of indices should be in [0, " << first_dim_size
-                        << "), but got '" << indices[i] << "' in indices.";
-    }
-    for (size_t j = 0; j < inner_size_; j++) {
-      input[base_index_input + j] = input[base_index_input + j] > updates[base_index_updates + j]
-                                      ? input[base_index_input + j]
-                                      : updates[base_index_updates + j];
-    }
-  }
-}
-
-template <typename T>
-void ScatterArithmeticCpuKernelFunc<T>::ScatterMin(T *input, const int *indices, const T *updates) const {
-  for (size_t i = 0; i < indices_size_; i++) {
-    auto base_index_updates = i * inner_size_;
-    auto base_index_input = indices[i] * inner_size_;
-    if (indices[i] < 0 || indices[i] >= first_dim_size) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of indices should be in [0, " << first_dim_size
-                        << "), but got '" << indices[i] << "' in indices.";
-    }
-    for (size_t j = 0; j < inner_size_; j++) {
-      input[base_index_input + j] = input[base_index_input + j] < updates[base_index_updates + j]
-                                      ? input[base_index_input + j]
-                                      : updates[base_index_updates + j];
-    }
-  }
-}
-
-template <typename T>
-void ScatterArithmeticCpuKernelFunc<T>::ScatterUpdate(T *input, const int *indices, const T *updates) const {
-  for (size_t i = 0; i < indices_size_; i++) {
-    auto base_index_updates = i * inner_size_;
-    auto base_index_input = indices[i] * inner_size_;
-    if (indices[i] < 0 || indices[i] >= first_dim_size) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of indices should be in [0, " << first_dim_size
-                        << "), but got '" << indices[i] << "' in indices.";
-    }
-    for (size_t j = 0; j < inner_size_; j++) {
-      input[base_index_input + j] = updates[base_index_updates + j];
-    }
-  }
-}
-
-template <typename T>
-std::shared_ptr<DeprecatedCpuKernelFunc> SpecializeScatterArithFunc() {
-  return std::make_shared<ScatterArithmeticCpuKernelFunc<T>>();
-}
-using SpecializeScatterArithFuncCreator = std::function<std::shared_ptr<DeprecatedCpuKernelFunc>()>;
-static std::map<std::string, std::vector<std::pair<KernelAttr, SpecializeScatterArithFuncCreator>>>
-  func_class_list_map = {{kScatterAdd,
-                          {{KernelAttr()
-                              .AddInputAttr(kNumberTypeInt32)
-                              .AddInputAttr(kNumberTypeInt32)
-                              .AddInputAttr(kNumberTypeInt32)
-                              .AddOutputAttr(kNumberTypeInt32)
-                              .AddOutInRef(0, 0),
-                            SpecializeScatterArithFunc<int32_t>},
-                           {KernelAttr()
-                              .AddInputAttr(kNumberTypeFloat32)
-                              .AddInputAttr(kNumberTypeInt32)
-                              .AddInputAttr(kNumberTypeFloat32)
-                              .AddOutputAttr(kNumberTypeFloat32)
-                              .AddOutInRef(0, 0),
-                            SpecializeScatterArithFunc<float>},
-                           {KernelAttr()
-                              .AddInputAttr(kNumberTypeInt64)
-                              .AddInputAttr(kNumberTypeInt32)
-                              .AddInputAttr(kNumberTypeInt64)
-                              .AddOutputAttr(kNumberTypeInt64)
-                              .AddOutInRef(0, 0),
-                            SpecializeScatterArithFunc<int64_t>}}},
-                         {kScatterSub,
-                          {{KernelAttr()
-                              .AddInputAttr(kNumberTypeInt32)
-                              .AddInputAttr(kNumberTypeInt32)
-                              .AddInputAttr(kNumberTypeInt32)
-                              .AddOutputAttr(kNumberTypeInt32)
-                              .AddOutInRef(0, 0),
-                            SpecializeScatterArithFunc<int32_t>},
-                           {KernelAttr()
-                              .AddInputAttr(kNumberTypeFloat32)
-                              .AddInputAttr(kNumberTypeInt32)
-                              .AddInputAttr(kNumberTypeFloat32)
-                              .AddOutputAttr(kNumberTypeFloat32)
-                              .AddOutInRef(0, 0),
-                            SpecializeScatterArithFunc<float>},
-                           {KernelAttr()
-                              .AddInputAttr(kNumberTypeInt64)
-                              .AddInputAttr(kNumberTypeInt32)
-                              .AddInputAttr(kNumberTypeInt64)
-                              .AddOutputAttr(kNumberTypeInt64)
-                              .AddOutInRef(0, 0),
-                            SpecializeScatterArithFunc<int64_t>}}},
-                         {kScatterMul,
-                          {{KernelAttr()
-                              .AddInputAttr(kNumberTypeInt32)
-                              .AddInputAttr(kNumberTypeInt32)
-                              .AddInputAttr(kNumberTypeInt32)
-                              .AddOutputAttr(kNumberTypeInt32)
-                              .AddOutInRef(0, 0),
-                            SpecializeScatterArithFunc<int32_t>},
-                           {KernelAttr()
-                              .AddInputAttr(kNumberTypeFloat32)
-                              .AddInputAttr(kNumberTypeInt32)
-                              .AddInputAttr(kNumberTypeFloat32)
-                              .AddOutputAttr(kNumberTypeFloat32)
-                              .AddOutInRef(0, 0),
-                            SpecializeScatterArithFunc<float>},
-                           {KernelAttr()
-                              .AddInputAttr(kNumberTypeInt64)
-                              .AddInputAttr(kNumberTypeInt32)
-                              .AddInputAttr(kNumberTypeInt64)
-                              .AddOutputAttr(kNumberTypeInt64)
-                              .AddOutInRef(0, 0),
-                            SpecializeScatterArithFunc<int64_t>}}},
-                         {kScatterDiv,
-                          {{KernelAttr()
-                              .AddInputAttr(kNumberTypeInt32)
-                              .AddInputAttr(kNumberTypeInt32)
-                              .AddInputAttr(kNumberTypeInt32)
-                              .AddOutputAttr(kNumberTypeInt32)
-                              .AddOutInRef(0, 0),
-                            SpecializeScatterArithFunc<int32_t>},
-                           {KernelAttr()
-                              .AddInputAttr(kNumberTypeFloat32)
-                              .AddInputAttr(kNumberTypeInt32)
-                              .AddInputAttr(kNumberTypeFloat32)
-                              .AddOutputAttr(kNumberTypeFloat32)
-                              .AddOutInRef(0, 0),
-                            SpecializeScatterArithFunc<float>},
-                           {KernelAttr()
-                              .AddInputAttr(kNumberTypeInt64)
-                              .AddInputAttr(kNumberTypeInt32)
-                              .AddInputAttr(kNumberTypeInt64)
-                              .AddOutputAttr(kNumberTypeInt64)
-                              .AddOutInRef(0, 0),
-                            SpecializeScatterArithFunc<int64_t>}}},
-                         {kScatterMax,
-                          {{KernelAttr()
-                              .AddInputAttr(kNumberTypeInt32)
-                              .AddInputAttr(kNumberTypeInt32)
-                              .AddInputAttr(kNumberTypeInt32)
-                              .AddOutputAttr(kNumberTypeInt32)
-                              .AddOutInRef(0, 0),
-                            SpecializeScatterArithFunc<int32_t>},
-                           {KernelAttr()
-                              .AddInputAttr(kNumberTypeFloat32)
-                              .AddInputAttr(kNumberTypeInt32)
-                              .AddInputAttr(kNumberTypeFloat32)
-                              .AddOutputAttr(kNumberTypeFloat32)
-                              .AddOutInRef(0, 0),
-                            SpecializeScatterArithFunc<float>},
-                           {KernelAttr()
-                              .AddInputAttr(kNumberTypeInt64)
-                              .AddInputAttr(kNumberTypeInt32)
-                              .AddInputAttr(kNumberTypeInt64)
-                              .AddOutputAttr(kNumberTypeInt64)
-                              .AddOutInRef(0, 0),
-                            SpecializeScatterArithFunc<int64_t>}}},
-                         {kScatterMin,
-                          {{KernelAttr()
-                              .AddInputAttr(kNumberTypeInt32)
-                              .AddInputAttr(kNumberTypeInt32)
-                              .AddInputAttr(kNumberTypeInt32)
-                              .AddOutputAttr(kNumberTypeInt32)
-                              .AddOutInRef(0, 0),
-                            SpecializeScatterArithFunc<int32_t>},
-                           {KernelAttr()
-                              .AddInputAttr(kNumberTypeFloat32)
-                              .AddInputAttr(kNumberTypeInt32)
-                              .AddInputAttr(kNumberTypeFloat32)
-                              .AddOutputAttr(kNumberTypeFloat32)
-                              .AddOutInRef(0, 0),
-                            SpecializeScatterArithFunc<float>},
-                           {KernelAttr()
-                              .AddInputAttr(kNumberTypeInt64)
-                              .AddInputAttr(kNumberTypeInt32)
-                              .AddInputAttr(kNumberTypeInt64)
-                              .AddOutputAttr(kNumberTypeInt64)
-                              .AddOutInRef(0, 0),
-                            SpecializeScatterArithFunc<int64_t>}}},
-                         {kScatterUpdate,
-                          {{KernelAttr()
-                              .AddInputAttr(kNumberTypeInt32)
-                              .AddInputAttr(kNumberTypeInt32)
-                              .AddInputAttr(kNumberTypeInt32)
-                              .AddOutputAttr(kNumberTypeInt32)
-                              .AddOutInRef(0, 0),
-                            SpecializeScatterArithFunc<int32_t>},
-                           {KernelAttr()
-                              .AddInputAttr(kNumberTypeFloat32)
-                              .AddInputAttr(kNumberTypeInt32)
-                              .AddInputAttr(kNumberTypeFloat32)
-                              .AddOutputAttr(kNumberTypeFloat32)
-                              .AddOutInRef(0, 0),
-                            SpecializeScatterArithFunc<float>},
-                           {KernelAttr()
-                              .AddInputAttr(kNumberTypeInt64)
-                              .AddInputAttr(kNumberTypeInt32)
-                              .AddInputAttr(kNumberTypeInt64)
-                              .AddOutputAttr(kNumberTypeInt64)
-                              .AddOutInRef(0, 0),
-                            SpecializeScatterArithFunc<int64_t>}}}};
-}  // namespace
-
-void ScatterArithmeticCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  if (kernel_name_ != kernel_type_) {
-    MS_LOG(EXCEPTION) << "Need to be " << kernel_type_ << " but got kernel name as " << kernel_name_;
-  }
-
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
-  if (!is_match) {
-    MS_LOG(EXCEPTION) << "ScatterArithmetic does not support this kernel data type: " << kernel_attr;
-  }
-
-  func_obj_ = func_class_list_map[kernel_name_][index].second();
-  func_obj_->InitFunc(kernel_node);
-}
-
-std::vector<KernelAttr> ScatterArithmeticCpuKernelMod::GetOpSupport() {
-  auto iter = func_class_list_map.find(kernel_type_);
-  if (iter == func_class_list_map.end()) {
-    MS_LOG(EXCEPTION) << "ScatterArithmetic cpu does not support " << kernel_type_;
-  }
-
-  std::vector<KernelAttr> support_list;
-  (void)std::transform(iter->second.begin(), iter->second.end(), std::back_inserter(support_list),
-                       [](const std::pair<KernelAttr, SpecializeScatterArithFuncCreator> &pair) { return pair.first; });
-  return support_list;
-}
-
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ScatterAdd,
-                                 []() { return std::make_shared<ScatterArithmeticCpuKernelMod>(kScatterAdd); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ScatterSub,
-                                 []() { return std::make_shared<ScatterArithmeticCpuKernelMod>(kScatterSub); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ScatterMul,
-                                 []() { return std::make_shared<ScatterArithmeticCpuKernelMod>(kScatterMul); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ScatterDiv,
-                                 []() { return std::make_shared<ScatterArithmeticCpuKernelMod>(kScatterDiv); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ScatterMax,
-                                 []() { return std::make_shared<ScatterArithmeticCpuKernelMod>(kScatterMax); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ScatterMin,
-                                 []() { return std::make_shared<ScatterArithmeticCpuKernelMod>(kScatterMin); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ScatterUpdate,
-                                 []() { return std::make_shared<ScatterArithmeticCpuKernelMod>(kScatterUpdate); });
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, ScatterAdd, ScatterArithmeticCpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, ScatterSub, ScatterArithmeticCpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, ScatterMul, ScatterArithmeticCpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, ScatterDiv, ScatterArithmeticCpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, ScatterMax, ScatterArithmeticCpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, ScatterMin, ScatterArithmeticCpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, ScatterUpdate, ScatterArithmeticCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
