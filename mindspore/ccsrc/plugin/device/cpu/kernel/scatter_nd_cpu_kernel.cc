@@ -56,10 +56,10 @@ void Compute(ScatterNdCpuKernelMod *content, const ComputeParams<S, T> *params, 
                              "than or equal to 0, but got "
                           << index;
       }
-      if (index > static_cast<int>(content->shape[j])) {
+      if (index > static_cast<int>(content->out_shape_[j])) {
         MS_LOG(EXCEPTION) << "For '" << kKernelName
                           << "', each element in 'indices' should be smaller than the value of shape, but got " << index
-                          << " and got the value of shape " << content->shape[j];
+                          << " and got the value of shape " << content->out_shape_[j];
       }
       offset += index * out_strides->at(j) * params->unit_size_;
     }
@@ -73,45 +73,71 @@ void Compute(ScatterNdCpuKernelMod *content, const ComputeParams<S, T> *params, 
 }
 }  // namespace
 
-void ScatterNdCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  Check(kernel_node);
-  shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
-  auto indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  auto updates_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-  if (AnfAlgo::IsShapesDynamic({shape, indices_shape, updates_shape})) {
-    return;
+bool ScatterNdCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                 const std::vector<KernelTensorPtr> &outputs) {
+  constexpr size_t input_num = 2;
+  constexpr size_t output_num = 1;
+  constexpr size_t kDynamicInputNum = 3;
+  kernel_name_ = base_operator->GetPrim()->name();
+  if (inputs.size() != input_num && inputs.size() != kDynamicInputNum) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of inputs must be 2 or 3, but got " << inputs.size()
+                  << " input(s).";
+    return false;
   }
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
+  }
+  kernel_func_ = func_list_[index].second;
+  return true;
+}
+
+int ScatterNdCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                  const std::vector<KernelTensorPtr> &outputs,
+                                  const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+    return ret;
+  }
+
+  out_shape_ = outputs[kIndex0]->GetShapeVector();
+  auto indices_shape = inputs[kIndex0]->GetShapeVector();
+  auto updates_shape = inputs[kIndex1]->GetShapeVector();
   auto indices_unit_rank = indices_shape.back();
-  if (indices_unit_rank > static_cast<int64_t>(shape.size())) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the value of last dimension of 'indices' must be less than "
-                         "or equal to the dimension of 'shape', but got  the value of last "
-                         "dimension of 'indices': "
-                      << indices_unit_rank << " and the dimension of 'shape': " << shape.size();
+  if (indices_unit_rank > static_cast<int64_t>(out_shape_.size())) {
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', the value of last dimension of 'indices' must be less than "
+                     "or equal to the dimension of 'shape', but got  the value of last "
+                     "dimension of 'indices': "
+                  << indices_unit_rank << " and the dimension of 'shape': " << out_shape_.size();
+    return KRET_RESIZE_FAILED;
   }
   if (indices_shape.size() < kMinIndiceRank) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'indices' must be at least 2, but got "
-                      << indices_shape.size();
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'indices' must be at least 2, but got "
+                  << indices_shape.size();
+    return KRET_RESIZE_FAILED;
   }
-  if (updates_shape.size() != indices_shape.size() - 1 + shape.size() - indices_unit_rank) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dimension of 'update' must be equal to the "
-                         "dimension of 'indices' minus 1 plus the "
-                         "dimension of 'shape' minus the value of last "
-                         "dimension of 'indices', but got "
-                      << "the dimension of 'update': " << updates_shape.size() << ", the dimension of 'indices' "
-                      << indices_shape.size() << ", the dimension of 'shape' " << shape.size()
-                      << ", the value of last dimension of 'indices' " << indices_unit_rank;
+  if (updates_shape.size() != indices_shape.size() - 1 + out_shape_.size() - indices_unit_rank) {
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', the dimension of 'update' must be equal to the "
+                     "dimension of 'indices' minus 1 plus the "
+                     "dimension of 'shape' minus the value of last "
+                     "dimension of 'indices', but got "
+                  << "the dimension of 'update': " << updates_shape.size() << ", the dimension of 'indices' "
+                  << indices_shape.size() << ", the dimension of 'shape' " << out_shape_.size()
+                  << ", the value of last dimension of 'indices' " << indices_unit_rank;
+    return KRET_RESIZE_FAILED;
   }
   for (size_t i = 0; i < indices_shape.size() - 1; ++i) {
     if (updates_shape[i] != indices_shape[i]) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                        << "', the shape of 'updates' and 'indices' are "
-                           "different in dimension i="
-                        << i << ". The 'updates_shape[i]' is " << updates_shape[i] << " and the 'indices_shape[i]' is "
-                        << indices_shape[i];
+      MS_LOG(ERROR) << "For '" << kernel_name_
+                    << "', the shape of 'updates' and 'indices' are "
+                       "different in dimension i="
+                    << i << ". The 'updates_shape[i]' is " << updates_shape[i] << " and the 'indices_shape[i]' is "
+                    << indices_shape[i];
+      return KRET_RESIZE_FAILED;
     }
   }
   indices_unit_rank_ = SizeToInt(indices_unit_rank);
@@ -126,20 +152,11 @@ void ScatterNdCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   int out_stride = 1;
   out_strides_.push_back(out_stride);
   for (int i = indices_unit_rank_ - 2; i >= 0; i--) {
-    out_stride *= SizeToInt(shape[IntToSize(i + 1)]);
+    out_stride *= SizeToInt(out_shape_[IntToSize(i + 1)]);
     out_strides_.push_back(out_stride);
   }
   reverse(out_strides_.begin(), out_strides_.end());
-
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
-  std::vector<KernelAttr> support_list;
-  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                       [](const std::pair<KernelAttr, ScatterNdFunc> &pair) { return pair.first; });
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, support_list);
-  if (!is_match) {
-    MS_LOG(EXCEPTION) << "ScatterNd does not support this kernel data type: " << kernel_attr;
-  }
-  kernel_func_ = func_list_[index].second;
+  return KRET_OK;
 }
 
 template <typename S, typename T>
@@ -162,20 +179,6 @@ bool ScatterNdCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &
     Compute<S, T>(this, &params, idx, idx + 1);
   }
   return true;
-}
-
-void ScatterNdCpuKernelMod::Check(const CNodePtr &kernel_node) const {
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  constexpr size_t kDynamicInputNum = 3;
-  if (input_num != kScatterNdInputSize && input_num != kDynamicInputNum) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 2, but got " << input_num
-                      << " input(s).";
-  }
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-  if (output_num != kScatterNdOutputSize) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << output_num
-                      << " output(s).";
-  }
 }
 
 #define DTYPE_REGISTER_(DT1, UPDATES, SHAPE, OUTPUT, DT2, T)                                      \
