@@ -16,7 +16,6 @@
 
 #include "plugin/device/cpu/kernel/mkldnn/pooling_grad_cpu_kernel.h"
 
-#include <algorithm>
 #include <functional>
 #include <unordered_map>
 
@@ -33,21 +32,15 @@ constexpr size_t kPoolingGradWorkSpaceNum = 2;
 constexpr size_t kGradIndex = 2;
 }  // namespace
 
-void PoolingGradCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
-  DeprecatedNativeCpuKernelMod::InitInputOutputSize(kernel_node);
-  if (algorithm_ == dnnl::algorithm::pooling_max) {
-    size_t work_space = GetSize(workspace_desc_);
-    size_t dst_space =
-      std::accumulate(dst_shape_.begin(), dst_shape_.end(), size_t(1), std::multiplies<size_t>()) * sizeof(float);
-    workspace_size_list_.push_back(work_space);
-    workspace_size_list_.push_back(dst_space);
-  }
-}
-
-void PoolingGradCpuKernelMod::InitPoolingGradFields(const CNodePtr &kernel_node) {
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  PrimitivePtr prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
+bool PoolingGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                   const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  PrimitivePtr prim = base_operator->GetPrim();
   MS_EXCEPTION_IF_NULL(prim);
+  kernel_name_ = prim->name();
+  size_t input_num = kernel_name_ == kAvgPool3DGradOpName ? kAvgPooling3DGradInputsNum : kPoolingGradInputsNum;
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kPoolingGradOutputsNum, kernel_name_);
   if (prim->HasAttr(CEIL_MODE)) {
     ValuePtr ceil_mode = prim->GetAttr(CEIL_MODE);
     ceil_mode_ = (ceil_mode->isa<BoolImm>() && GetValue<bool>(ceil_mode)) ||
@@ -63,48 +56,50 @@ void PoolingGradCpuKernelMod::InitPoolingGradFields(const CNodePtr &kernel_node)
     }
   }
   grad_index_ = kernel_name_ == kAvgPool3DGradOpName ? 0 : kGradIndex;
-  dst_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, grad_index_);
+  format_ = GetValue<std::string>(prim->GetAttr(FORMAT));
+  pad_mode_ = GetValue<std::string>(prim->GetAttr(PAD_MODE));
+  kernel_include_nc_ = GetValue<std::vector<int64_t>>(prim->GetAttr(KERNEL_SIZE));
+  strides_include_nc_ = GetValue<std::vector<int64_t>>(prim->GetAttr(STRIDES));
+  return true;
 }
 
-void PoolingGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  InitPoolingGradFields(kernel_node);
-  auto src_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
-  if (IsDynamic(src_shape)) {
-    return;
+int PoolingGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                    const std::vector<KernelTensorPtr> &outputs,
+                                    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
   }
+  auto src_shape = outputs[0]->GetShapeVector();
+  dst_shape_ = inputs[grad_index_]->GetShapeVector();
   const size_t src_dim = src_shape.size();
   if (src_dim != SHAPE_4D && src_dim != SHAPE_5D) {
     MS_LOG(EXCEPTION) << "PoolingGrad only supports 4D/5D input, but got " << src_dim << "D";
   }
   src_desc_ = GetDefaultMemDesc(src_shape);
   dst_desc_ = GetDefaultMemDesc(dst_shape_);
-  const auto format = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, FORMAT);
-  if (src_dim == SHAPE_4D && format != NCHW) {
-    MS_LOG(EXCEPTION) << kernel_name_ << " only supports 4D input with NCHW format, but got format " << format;
+  if (src_dim == SHAPE_4D && format_ != NCHW) {
+    MS_LOG(EXCEPTION) << kernel_name_ << " only supports 4D input with NCHW format, but got format " << format_;
   }
-  if (src_dim == SHAPE_5D && format != NCDHW) {
-    MS_LOG(EXCEPTION) << kernel_name_ << " only supports 5D input with NCDHW format, but got format" << format;
+  if (src_dim == SHAPE_5D && format_ != NCDHW) {
+    MS_LOG(EXCEPTION) << kernel_name_ << " only supports 5D input with NCDHW format, but got format" << format_;
   }
-  const auto pad_mode = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, PAD_MODE);
-  const auto kernel_include_nc = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, KERNEL_SIZE);
-  const auto strides_include_nc = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, STRIDES);
-  if (kernel_include_nc.size() != src_dim) {
+
+  if (kernel_include_nc_.size() != src_dim) {
     MS_LOG(EXCEPTION) << kernel_name_ << " requires kernel_size must be " << src_dim << "D, but got "
-                      << kernel_include_nc.size() << "D!";
+                      << kernel_include_nc_.size() << "D!";
   }
-  if (strides_include_nc.size() != src_dim) {
+  if (strides_include_nc_.size() != src_dim) {
     MS_LOG(EXCEPTION) << kernel_name_ << " requires strides must be " << src_dim << "D, but got "
-                      << strides_include_nc.size() << "D!";
+                      << strides_include_nc_.size() << "D!";
   }
-  const dnnl::memory::dims kernel(kernel_include_nc.begin() + NC_LEN, kernel_include_nc.end());
-  const dnnl::memory::dims strides(strides_include_nc.begin() + NC_LEN, strides_include_nc.end());
+  const dnnl::memory::dims kernel(kernel_include_nc_.begin() + NC_LEN, kernel_include_nc_.end());
+  const dnnl::memory::dims strides(strides_include_nc_.begin() + NC_LEN, strides_include_nc_.end());
   const dnnl::memory::dims dilation(kernel.size(), kPoolingDilation);
   dnnl::memory::dims padding_l;
   dnnl::memory::dims padding_r;
   kernel_ = kernel;
-  PaddingInfo padding_info{pad_mode, kernel, strides, dilation, &padding_l, &padding_r, &padding_invalid_, ceil_mode_};
-  GetPadding(kernel_node, src_shape, padding_info);
+  PaddingInfo padding_info{pad_mode_, kernel, strides, dilation, &padding_l, &padding_r, &padding_invalid_, ceil_mode_};
+  GetPadding(base_operator, src_shape, padding_info);
 
   // Pooling_avg forward description
   const auto desc = CreateDesc<dnnl::pooling_forward::desc>(dnnl::prop_kind::forward_training, algorithm_, src_desc_,
@@ -125,7 +120,18 @@ void PoolingGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     primitive_forward_ = CreatePrimitive<dnnl::pooling_forward>(forward_prim_desc);
     workspace_desc_ = GetWorkspaceDesc(forward_prim_desc);
     AddArgument(DNNL_ARG_WORKSPACE, workspace_desc_);
+
+    size_t work_space = GetSize(workspace_desc_);
+    size_t dst_space =
+      std::accumulate(dst_shape_.begin(), dst_shape_.end(), size_t(1), std::multiplies<size_t>()) * sizeof(float);
+    workspace_size_list_.push_back(work_space);
+    workspace_size_list_.push_back(dst_space);
   }
+  base_operator_ = base_operator;
+  inputs_ = inputs;
+  outputs_ = outputs;
+  inputs_on_host_ = inputsOnHost;
+  return KRET_OK;
 }
 
 void PoolingGradCpuKernelMod::ReComputeDivisor(float *dst) {
@@ -255,9 +261,17 @@ void PoolingGradCpuKernelMod::ComputeMaxValueIndex(void *src, void *dst, void *w
 bool PoolingGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                      const std::vector<kernel::AddressPtr> &workspace,
                                      const std::vector<kernel::AddressPtr> &outputs) {
-  size_t input_num = kernel_name_ == kAvgPool3DGradOpName ? kAvgPooling3DGradInputsNum : kPoolingGradInputsNum;
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kPoolingGradOutputsNum, kernel_name_);
+  // From CPUKernelExecutor::LaunchKernel
+  if (!Init(base_operator_, inputs_, outputs_)) {
+    MS_LOG(ERROR) << "Re-init PoolingGradCpuKernelMod while launching failed";
+    return false;
+  }
+  auto resize_ret = Resize(base_operator_, inputs_, outputs_, inputs_on_host_);
+  if (resize_ret != KRET_OK) {
+    MS_LOG(ERROR) << "Resize PoolingGradCpuKernelMod while launching failed: " << resize_ret;
+    return false;
+  }
+
   SetArgumentHandle(DNNL_ARG_DIFF_SRC, outputs[0]->addr);
   SetArgumentHandle(DNNL_ARG_DIFF_DST, inputs[grad_index_]->addr);
 

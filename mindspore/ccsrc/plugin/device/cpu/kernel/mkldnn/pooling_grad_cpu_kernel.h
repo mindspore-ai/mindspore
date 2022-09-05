@@ -22,6 +22,7 @@
 #include <memory>
 #include <utility>
 #include <unordered_map>
+#include <map>
 
 #include "plugin/device/cpu/kernel/mkldnn/mkl_cpu_kernel.h"
 
@@ -34,13 +35,18 @@ constexpr auto kMaxPool3DGrad = "MaxPool3DGrad";
 constexpr auto kUnknown = "Unknown";
 constexpr size_t kPoolingDilation = 1;
 
-class PoolingGradCpuKernelMod : public DeprecatedMKLCpuKernelMod {
+class PoolingGradCpuKernelMod : public MKLCpuKernelMod {
  public:
   PoolingGradCpuKernelMod() = default;
   explicit PoolingGradCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}
   ~PoolingGradCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs,
+             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
@@ -84,9 +90,15 @@ class PoolingGradCpuKernelMod : public DeprecatedMKLCpuKernelMod {
   std::vector<int64_t> dst_shape_;
   std::vector<int64_t> kernel_;
   std::vector<int64_t> padding_invalid_;
+  std::string format_;
+  std::string pad_mode_;
+  std::vector<int64_t> kernel_include_nc_{};
+  std::vector<int64_t> strides_include_nc_{};
+  BaseOperatorPtr base_operator_{nullptr};
+  std::vector<KernelTensorPtr> inputs_{};
+  std::vector<KernelTensorPtr> outputs_{};
+  std::map<uint32_t, tensor::TensorPtr> inputs_on_host_{};
 
-  void InitPoolingGradFields(const CNodePtr &kernel_node);
-  void InitInputOutputSize(const CNodePtr &kernel_node) override;
   void ComputeMaxValueIndex(void *src, void *dst, void *work_array);
 #ifdef USE_MS_THREADPOOL_FOR_DNNL
   void ExecuteForwardByMSThreadPool(const std::unordered_map<int, dnnl::memory> &arguments);
