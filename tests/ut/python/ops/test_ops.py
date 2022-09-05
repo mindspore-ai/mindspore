@@ -116,6 +116,8 @@ from mindspore.ops.operations.nn_ops import GridSampler2D
 from mindspore.ops.operations.nn_ops import GridSampler3D
 from mindspore.ops.operations.nn_ops import MaxUnpool2D
 from mindspore.ops.operations.nn_ops import MaxUnpool3D
+from mindspore.ops.operations.nn_ops import InstanceNormV2
+from mindspore.ops.operations._grad_ops import InstanceNormV2Grad
 from mindspore.ops.operations.linalg_ops import Geqrf
 from mindspore.nn.loss.loss import MultiMarginLoss
 from mindspore.nn.loss.loss import MultilabelMarginLoss
@@ -2846,6 +2848,26 @@ test_case_nn_ops = [
         'block': DataFormatVecPermute(),
         'desc_const': [Tensor(np.array([1, 2, 3, 4]).astype(np.int32))],
         'desc_inputs': [],
+        'skip': ['backward']}),
+    ('InstanceNormV2', {
+        'block': InstanceNormV2(),
+        'desc_inputs': [([32, 24, 16, 12, 13], {'dtype': np.float32}),
+                        ([32, 24, 1, 1, 13], {'dtype': np.float32}),
+                        ([32, 24, 1, 1, 13], {'dtype': np.float32}),
+                        ([32, 24, 1, 1, 13], {'dtype': np.float32}),
+                        ([32, 24, 1, 1, 13], {'dtype': np.float32})],
+        'desc_bprop': [([32, 24, 16, 12, 13], {'dtype': np.float32}),
+                       Tensor(np.zeros((32, 24, 1, 1, 13), np.float32)),
+                       Tensor(np.zeros((32, 24, 1, 1, 13), np.float32))]}),
+    ('InstanceNormV2Grad', {
+        'block': InstanceNormV2Grad(),
+        'desc_inputs': [([32, 24, 16, 12, 13], {'dtype': np.float32}),
+                        ([32, 24, 16, 12, 13], {'dtype': np.float32}),
+                        ([32, 24, 1, 1, 13], {'dtype': np.float32}),
+                        ([32, 24, 1, 1, 13], {'dtype': np.float32}),
+                        ([32, 24, 1, 1, 13], {'dtype': np.float32}),
+                        ([32, 24, 1, 1, 13], {'dtype': np.float32}),
+                        ([32, 24, 1, 1, 13], {'dtype': np.float32})],
         'skip': ['backward']}),
     ('UpsampleTrilinear3D', {
         'block': UpsampleTrilinear3D(output_size=[4, 64, 48]),

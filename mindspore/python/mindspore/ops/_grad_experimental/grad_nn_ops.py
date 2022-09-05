@@ -35,6 +35,8 @@ from mindspore.ops.operations.nn_ops import FractionalMaxPool3DWithFixedKsize
 from mindspore.ops.operations._grad_ops import FractionalMaxPool3DGradWithFixedKsize
 from mindspore.ops.operations.nn_ops import FractionalAvgPool
 from mindspore.ops.operations._grad_ops import FractionalAvgPoolGrad
+from mindspore.ops.operations.nn_ops import InstanceNormV2
+from mindspore.ops.operations._grad_ops import InstanceNormV2Grad
 from mindspore.ops.operations.nn_ops import MultiMarginLoss
 from mindspore.ops.operations.nn_ops import MultilabelMarginLoss
 from mindspore.ops.operations.nn_ops import NthElement
@@ -69,6 +71,24 @@ def get_bprop_ctc_loss_v2(self):
     def bprop(log_probs, targets, input_lengths, target_lengths, out, dout):
         grad = ctc_loss_grad(dout[0], log_probs, targets, input_lengths, target_lengths, out[0], out[1])
         return grad, zeros_like(targets), zeros_like(input_lengths), zeros_like(target_lengths)
+
+    return bprop
+
+
+@bprop_getters.register(InstanceNormV2)
+def get_bprop_instance_norm_v2(self):
+    """Grad definition for `InstanceNormV2` operation."""
+    grad_ops = InstanceNormV2Grad(self.is_training, self.epsilon)
+
+    def bprop(x, gamma, beta, mean, variance, out, dout):
+        saved_mean = out[1]
+        saved_variance = out[2]
+        grad_ops_out = grad_ops(dout[0], x, gamma, mean, variance, saved_mean, saved_variance)
+        dx = grad_ops_out[0]
+        dgamma = grad_ops_out[1]
+        dbeta = grad_ops_out[2]
+        pd_res = (dx, dgamma, dbeta, zeros_like(mean), zeros_like(variance))
+        return pd_res
 
     return bprop
 

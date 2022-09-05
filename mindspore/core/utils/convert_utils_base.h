@@ -21,6 +21,7 @@
 #include <memory>
 #include <vector>
 #include <algorithm>
+#include <string>
 
 #include "utils/log_adapter.h"
 
@@ -256,6 +257,35 @@ inline std::vector<size_t> Convert2SizeTClipNeg(const std::vector<int64_t> &v) {
   auto ConvertFunc = [](int64_t v) -> size_t { return v < 0 ? 0 : static_cast<int64_t>(v); };
   (void)std::transform(v.begin(), v.end(), std::back_inserter(result), ConvertFunc);
   return result;
+}
+
+inline bool ShapeVectorIsSame(const std::vector<int64_t> &shape, const std::vector<int64_t> &check_shape) {
+  if (shape.size() != check_shape.size()) {
+    return false;
+  } else {
+    for (size_t idx = 0; idx < shape.size(); ++idx) {
+      if (shape[idx] != check_shape[idx]) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+inline std::string ShapeVectorToStr(const std::vector<int64_t> &shp) {
+  std::ostringstream buffer;
+  bool f_begin = true;
+  buffer << "(";
+  for (auto &x : shp) {
+    if (!f_begin) {
+      buffer << ", ";
+    } else {
+      f_begin = false;
+    }
+    buffer << x;
+  }
+  buffer << ")";
+  return buffer.str();
 }
 }  // namespace mindspore
 
