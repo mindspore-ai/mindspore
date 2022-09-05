@@ -258,9 +258,9 @@ kernel::LiteKernel *ConvolutionDelegateCPUKernel::CpuConvFp32NHWCKernelSelect() 
 
   int out_unit;
   if (CheckIfUseWinograd(&out_unit, conv_param)) {
-    kernel = new (std::nothrow) kernel::ConvolutionWinogradCPUKernel(
-      op_parameter_, in_tensors_, out_tensors_, static_cast<const lite::InnerContext *>(this->ms_context_), out_unit,
-      origin_weight_, origin_bias_);
+    kernel = CreateConvolutionWinogradCPUKernel(op_parameter_, in_tensors_, out_tensors_,
+                                                static_cast<const lite::InnerContext *>(this->ms_context_), out_unit,
+                                                origin_weight_, origin_bias_);
   }
 
 #ifdef ENABLE_AVX
