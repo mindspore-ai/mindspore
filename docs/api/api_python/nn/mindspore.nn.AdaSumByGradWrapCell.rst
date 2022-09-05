@@ -23,7 +23,7 @@ mindspore.nn.AdaSumByGradWrapCell
 
     **参数：**
 
-    - **optimizer** (nn.optimizer) - 必须是单输入的优化器。
+    - **optimizer** (Union[Cell]) - 用于更新权重的优化器。优化器的构造函数只允许一个输入。
 
     **输入：**
 

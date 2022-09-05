@@ -108,7 +108,7 @@
 
         **参数：**
 
-        - **predict_data** (Tensor) - 预测样本，数据可以是单个张量、张量列表或张量元组。
+        - **predict_data** (Union[Tensor, list[Tensor], tuple[Tensor]], 可选) - 预测样本，数据可以是单个张量、张量列表或张量元组。
 
         **返回：**
 
@@ -142,7 +142,7 @@
 
         **参数：**
 
-        **predict_data** (Tensor) - 预测样本，数据可以是单个张量、张量列表或张量元组。
+        - **predict_data** (Union[Tensor, list[Tensor], tuple[Tensor]], 可选) - 预测样本，数据可以是单个张量、张量列表或张量元组。
 
         **返回：**
 

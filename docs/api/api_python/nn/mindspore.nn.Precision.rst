@@ -15,7 +15,7 @@ mindspore.nn.Precision
 
     **参数：**
 
-    - **eval_type** （str）- 支持'classification'和'multilabel'。默认值：'classification'。
+    - **eval_type** (str) - 支持'classification'和'multilabel'。默认值：'classification'。
 
     .. py:method:: clear()
 

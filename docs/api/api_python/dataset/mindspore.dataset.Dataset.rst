@@ -33,12 +33,12 @@
     - **num_parallel_workers** (int, 可选) - 指定 `batch` 操作的并发进程数/线程数（由参数 `python_multiprocessing` 决定当前为多进程模式或多线程模式）。
       默认值：None，使用mindspore.dataset.config中配置的线程数。
     - **per_batch_map** (Callable[[List[numpy.ndarray], ..., List[numpy.ndarray], BatchInfo], (List[numpy.ndarray],
-      ..., List[numpy.ndarray])], optional, 可选) - 可调用对象，以(list[numpy.ndarray], list[numpy.ndarray], ..., BatchInfo)作为输入参数，
+      ..., List[numpy.ndarray])], 可选) - 可调用对象，以(list[numpy.ndarray], list[numpy.ndarray], ..., BatchInfo)作为输入参数，
       处理后返回(list[numpy.ndarray], list[numpy.ndarray],...)作为新的数据列。输入参数中每个list[numpy.ndarray]代表给定数据列中的一批numpy.ndarray，
       list[numpy.ndarray]的个数应与 `input_columns` 中传入列名的数量相匹配，在返回的(list[numpy.ndarray], list[numpy.ndarray], ...)中，
       list[numpy.ndarray]的个数应与输入相同，如果输出列数与输入列数不一致，则需要指定 `output_columns`。该可调用对象的最后一个输入参数始终是BatchInfo，
       用于获取数据集的信息，用法参考样例（2）。
-    - **input_columns** (Union[str, list[str]], 可选)：指定 `batch` 操作的输入数据列。
+    - **input_columns** (Union[str, list[str]], 可选) - 指定 `batch` 操作的输入数据列。
       如果 `per_batch_map` 不为None，列表中列名的个数应与 `per_batch_map` 中包含的列数匹配。默认值：None，不指定。
     - **output_columns** (Union[str, list[str]], 可选) - 指定 `batch` 操作的输出数据列。如果输入数据列与输入数据列的长度不相等，则必须指定此参数。
       此列表中列名的数量必须与 `per_batch_map` 方法的返回值数量相匹配。默认值：None，输出列将与输入列具有相同的名称。
