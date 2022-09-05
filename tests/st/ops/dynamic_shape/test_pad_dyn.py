@@ -27,10 +27,10 @@ from mindspore import Tensor
 class PadNet(nn.Cell):
     def __init__(self, paddings):
         super(PadNet, self).__init__()
-        self.pad = ops.Pad(paddings)
+        self.paddings = paddings
 
     def construct(self, x):
-        return self.pad(x)
+        return ops.pad(x, self.paddings)
 
 
 def run_case():

@@ -18,6 +18,10 @@ mindspore.ops.pad
             \end{aligned}
         \end{aligned}
 
+    .. note::
+
+        仅当 `input_x` 为非动态shape时，支持 `paddings` 里存在负数值。
+
     参数：
         - **input_x** (Tensor) - 输入Tensor。
         - **paddings** (tuple) - 填充大小，其shape为(N, 2)，N是输入数据的维度，填充的元素为int类型。对于 `x` 的第 `D` 个维度，paddings[D, 0]表示输入Tensor的第 `D` 维度前面要扩展（如果该值大于0）或裁剪（如果该值小于0）的大小，paddings[D, 1]表示在输入Tensor的第 `D` 个维度后面要扩展（如果该值大于0）或裁剪（如果该值小于0）的大小。
@@ -31,3 +35,4 @@ mindspore.ops.pad
         - **ValueError** - `paddings` 的shape不是 :math:`(N, 2)` 。
         - **ValueError** - `paddings` 的大小不等于2 * len(input_x)。
         - **ValueError** - 计算出来的输出Tensor的shape里存在0或负数。
+        - **ValueError** - `paddings` 里存在负数值且 `input_x` 为动态shape。
