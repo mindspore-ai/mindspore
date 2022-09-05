@@ -100,7 +100,7 @@ std::string CNode::DebugString(int recursive_level) const {
   std::ostringstream buffer;
   if (recursive_level > 0) {
     if (func_graph() != nullptr) {
-      buffer << func_graph()->ToString() << ":";
+      buffer << "@" << func_graph()->ToString() << ":";
     }
     buffer << ToString() << "{";
     bool is_first_node = true;
@@ -175,7 +175,7 @@ std::string Parameter::DebugString(int recursive_level) const {
   std::ostringstream buffer;
   if (recursive_level > 0) {
     if (func_graph() != nullptr) {
-      buffer << func_graph()->ToString() << ":";
+      buffer << "@" << func_graph()->ToString() << ":";
     }
   }
   buffer << ToString();

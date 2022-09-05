@@ -33,7 +33,7 @@ def test_use_undefined_name():
     with pytest.raises(NameError) as err:
         net(Tensor([1, 2, 3], mstype.float32))
     assert "The name 'a' is not defined" in str(err.value)
-    assert "tests/ut/python/pipeline/parse/test_use_undefined_name_or_unsupported_builtin_function.py(29)" in \
+    assert "tests/ut/python/pipeline/parse/test_use_undefined_name_or_unsupported_builtin_function.py:29" in \
            str(err.value)
     assert "ret = x + a" in str(err.value)
 
@@ -49,7 +49,7 @@ def test_insert_undefined_name():
     with pytest.raises(NameError) as err:
         net(Tensor([1, 2, 3], mstype.float32))
     assert "The name 'b' is not defined" in str(err.value)
-    assert "tests/ut/python/pipeline/parse/test_use_undefined_name_or_unsupported_builtin_function.py(44)" in \
+    assert "tests/ut/python/pipeline/parse/test_use_undefined_name_or_unsupported_builtin_function.py:44" in \
            str(err.value)
 
 
@@ -64,7 +64,7 @@ def test_insert_undefined_name_compute():
     with pytest.raises(NameError) as err:
         net(Tensor([1, 2, 3], mstype.float32))
     assert "The name 'c' is not defined" in str(err.value)
-    assert "tests/ut/python/pipeline/parse/test_use_undefined_name_or_unsupported_builtin_function.py(59)" in \
+    assert "tests/ut/python/pipeline/parse/test_use_undefined_name_or_unsupported_builtin_function.py:59" in \
            str(err.value)
     assert "c + x" in str(err.value)
 
@@ -81,7 +81,7 @@ def test_insert_undefined_name_in_if():
     with pytest.raises(NameError) as err:
         net(Tensor([1, 2, 3], mstype.float32))
     assert "The name 'i' is not defined" in str(err.value)
-    assert "tests/ut/python/pipeline/parse/test_use_undefined_name_or_unsupported_builtin_function.py(76)" in \
+    assert "tests/ut/python/pipeline/parse/test_use_undefined_name_or_unsupported_builtin_function.py:76" in \
            str(err.value)
 
 
@@ -99,7 +99,7 @@ def test_insert_undefined_name_in_while_inner_if():
     with pytest.raises(NameError) as err:
         net(Tensor([1, 2, 3], mstype.float32))
     assert "The name 'j' is not defined" in str(err.value)
-    assert "tests/ut/python/pipeline/parse/test_use_undefined_name_or_unsupported_builtin_function.py(93)" in \
+    assert "tests/ut/python/pipeline/parse/test_use_undefined_name_or_unsupported_builtin_function.py:93" in \
            str(err.value)
 
 
@@ -117,7 +117,7 @@ def test_insert_undefined_name_compute__in_while_inner_if():
     with pytest.raises(NameError) as err:
         net(Tensor([1, 2, 3], mstype.float32))
     assert "The name 'p' is not defined" in str(err.value)
-    assert "tests/ut/python/pipeline/parse/test_use_undefined_name_or_unsupported_builtin_function.py(111)" in \
+    assert "tests/ut/python/pipeline/parse/test_use_undefined_name_or_unsupported_builtin_function.py:111" in \
            str(err.value)
     assert "p + x" in str(err.value)
 
@@ -140,7 +140,7 @@ def test_insert_undefined_name_compute__in_if_in_for():
     with pytest.raises(NameError) as err:
         net(Tensor([1, 2, 3], mstype.float32))
     assert "The name 'w' is not defined" in str(err.value)
-    assert "tests/ut/python/pipeline/parse/test_use_undefined_name_or_unsupported_builtin_function.py(134)" in \
+    assert "tests/ut/python/pipeline/parse/test_use_undefined_name_or_unsupported_builtin_function.py:134" in \
            str(err.value)
     assert "w" in str(err.value)
 
@@ -162,7 +162,7 @@ def test_use_undefined_name_for_inner_if():
     with pytest.raises(NameError) as err:
         net(Tensor([1, 2, 3], mstype.float32))
     assert "The name 'y' is not defined" in str(err.value)
-    assert "tests/ut/python/pipeline/parse/test_use_undefined_name_or_unsupported_builtin_function.py(157)" in \
+    assert "tests/ut/python/pipeline/parse/test_use_undefined_name_or_unsupported_builtin_function.py:157" in \
            str(err.value)
     assert "y" in str(err.value)
 
@@ -182,7 +182,7 @@ def test_use_undefined_name_in_for():
     with pytest.raises(NameError) as err:
         net(Tensor([1, 2, 3], mstype.float32))
     assert "The name 'd' is not defined" in str(err.value)
-    assert "tests/ut/python/pipeline/parse/test_use_undefined_name_or_unsupported_builtin_function.py(178)" in \
+    assert "tests/ut/python/pipeline/parse/test_use_undefined_name_or_unsupported_builtin_function.py:178" in \
            str(err.value)
     assert "x = x + d + i" in str(err.value)
 
@@ -203,7 +203,7 @@ def test_insert_undefined_name_in_for():
     with pytest.raises(NameError) as err:
         net(Tensor([1, 2, 3], mstype.float32))
     assert "The name 'e' is not defined" in str(err.value)
-    assert "tests/ut/python/pipeline/parse/test_use_undefined_name_or_unsupported_builtin_function.py(198)" in \
+    assert "tests/ut/python/pipeline/parse/test_use_undefined_name_or_unsupported_builtin_function.py:198" in \
            str(err.value)
     assert "e" in str(err.value)
 
@@ -224,7 +224,7 @@ def test_insert_undefined_name_compute_in_for():
     with pytest.raises(NameError) as err:
         net(Tensor([1, 2, 3], mstype.float32))
     assert "The name 'f' is not defined" in str(err.value)
-    assert "tests/ut/python/pipeline/parse/test_use_undefined_name_or_unsupported_builtin_function.py(219)" in \
+    assert "tests/ut/python/pipeline/parse/test_use_undefined_name_or_unsupported_builtin_function.py:219" in \
            str(err.value)
     assert "f + i" in str(err.value)
 
@@ -240,7 +240,7 @@ def test_use_undefined_name_in_while():
     with pytest.raises(NameError) as err:
         net(Tensor([1, 2, 3], mstype.float32))
     assert "The name 'g' is not defined" in str(err.value)
-    assert "tests/ut/python/pipeline/parse/test_use_undefined_name_or_unsupported_builtin_function.py(236)" in \
+    assert "tests/ut/python/pipeline/parse/test_use_undefined_name_or_unsupported_builtin_function.py:236" in \
            str(err.value)
     assert "x = x - g" in str(err.value)
 
@@ -257,7 +257,7 @@ def test_insert_undefined_name_in_while():
     with pytest.raises(NameError) as err:
         net(Tensor([1, 2, 3], mstype.float32))
     assert "The name 'h' is not defined" in str(err.value)
-    assert "tests/ut/python/pipeline/parse/test_use_undefined_name_or_unsupported_builtin_function.py(252)" in \
+    assert "tests/ut/python/pipeline/parse/test_use_undefined_name_or_unsupported_builtin_function.py:252" in \
            str(err.value)
     assert "h" in str(err.value)
 
@@ -274,7 +274,7 @@ def test_insert_undefined_name_compute_while():
     with pytest.raises(NameError) as err:
         net(Tensor([1, 2, 3], mstype.float32))
     assert "The name 'i' is not defined" in str(err.value)
-    assert "tests/ut/python/pipeline/parse/test_use_undefined_name_or_unsupported_builtin_function.py(269)" in \
+    assert "tests/ut/python/pipeline/parse/test_use_undefined_name_or_unsupported_builtin_function.py:269" in \
            str(err.value)
     assert "x + i" in str(err.value)
 
@@ -342,7 +342,7 @@ def test_call_unsupported_builtin_function_in_while():
     with pytest.raises(NameError) as err:
         net(Tensor([1, 2, 3]), Tensor([4, 5, 6]))
     assert "The builtin function 'divmod' of python is not supported in graph mode" in str(err.value)
-    assert "tests/ut/python/pipeline/parse/test_use_undefined_name_or_unsupported_builtin_function.py(342)" in str(
+    assert "tests/ut/python/pipeline/parse/test_use_undefined_name_or_unsupported_builtin_function.py:342" in str(
         err.value)
     assert "ret = divmod(x, y)" in str(err.value)
 
@@ -365,7 +365,7 @@ def test_call_unsupported_builtin_function_in_if_in_for():
     with pytest.raises(NameError) as err:
         net(Tensor([1, 2, 3], mstype.float32))
     assert "The builtin function 'divmod' of python is not supported in graph mode" in str(err.value)
-    assert "tests/ut/python/pipeline/parse/test_use_undefined_name_or_unsupported_builtin_function.py(364)" in \
+    assert "tests/ut/python/pipeline/parse/test_use_undefined_name_or_unsupported_builtin_function.py:364" in \
            str(err.value)
     assert "x = divmod(x, i)" in str(err.value)
 

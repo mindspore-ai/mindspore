@@ -857,7 +857,10 @@ FuncGraphPtr GradOperation::GenerateFuncGraph(const AbstractBasePtrList &args_sp
 
   // Waiting for implementation.
   auto real_fn = dyn_cast<FuncGraphAbstractClosure>(fn);
-  MS_EXCEPTION_IF_NULL(real_fn);
+  if (real_fn == nullptr) {
+    MS_LOG(EXCEPTION) << "For 'GradOperation', the first argument must be a 'Function' or 'Cell', but got "
+                      << fn->ToString();
+  }
 
   FuncGraphPtr forward_graph = real_fn->func_graph();
   MS_EXCEPTION_IF_NULL(forward_graph);
