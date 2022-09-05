@@ -572,7 +572,7 @@ CNodePtr KernelAdjust::CreateStreamSwitchOp(const std::shared_ptr<session::Kerne
   return stream_switch_app;
 }
 
-CNodePtr KernelAdjust::CreateEndGraphOp(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) {
+CNodePtr KernelAdjust::CreateEndGraphOp(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) const {
   kernel::KernelBuildInfo::KernelBuildInfoBuilder selected_kernel_builder = CreateMngKernelBuilder(
     {kOpFormat_DEFAULT, kOpFormat_DEFAULT}, {TypeId::kNumberTypeInt32, TypeId::kNumberTypeInt32});
   auto abstract = std::make_shared<abstract::AbstractNone>();

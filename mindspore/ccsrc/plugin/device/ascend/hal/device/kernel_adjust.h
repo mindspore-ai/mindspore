@@ -90,7 +90,7 @@ class KernelAdjust {
   CNodePtr CreateStreamSwitchOp(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                 const std::map<std::string, mindspore::ParameterPtr> &switch_loop_input,
                                 StreamSwitchKind kind);
-  CNodePtr CreateEndGraphOp(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
+  CNodePtr CreateEndGraphOp(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) const;
   CNodePtr CreatTupleGetItemNode(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr, const CNodePtr &node,
                                  size_t output_idx) const;
   CNodePtr CreateEndOfSequenceOP(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,

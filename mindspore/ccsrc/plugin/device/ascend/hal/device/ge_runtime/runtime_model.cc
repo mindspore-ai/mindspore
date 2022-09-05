@@ -208,7 +208,7 @@ void RuntimeModel::DistributeTask() {
       }
     }
     if (task->task_name() == kEndGraph) {
-      end_graph_info_map_.emplace(task_id, stream_id);
+      (void)end_graph_info_map_.emplace(task_id, stream_id);
     }
   }
   if (task_list_.empty()) {

@@ -16,7 +16,11 @@
 
 #include "frontend/optimizer/irpass/ge/lamb_split.h"
 
-#include "pybind_api/pybind_patch.h"
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <memory>
+
 #include "pybind_api/ir/tensor_py.h"
 #include "pipeline/pynative/base.h"
 #include "pipeline/jit/static_analysis/prim.h"
@@ -123,7 +127,7 @@ AnfNodePtr CreateUpdateStateNode(const FuncGraphPtr &graph, const bool is_need_u
   return update_state_node;
 }
 
-ValueNodePtr CreateValueNode(const ValuePtr &value_ptr, TypeId output_type) {
+ValueNodePtr CreateValueNode(const ValuePtr &value_ptr) {
   MS_EXCEPTION_IF_NULL(value_ptr);
   auto new_node = std::make_shared<ValueNode>(value_ptr);
   MS_EXCEPTION_IF_NULL(new_node);
@@ -187,8 +191,8 @@ AnfNodePtr CreateSquareNode(const FuncGraphPtr &func_graph, const AnfNodePtr &in
   return square;
 }
 
-AnfNodePtr CreateReduceSumNode(const FuncGraphPtr &func_graph, const AnfNodePtr &square, const AnfNodePtr &clip_by_norm,
-                               const ShapeVector &shape_vec, const TypeId &type_id) {
+AnfNodePtr CreateReduceSumNode(const FuncGraphPtr &func_graph, const AnfNodePtr &square, const ShapeVector &shape_vec,
+                               const TypeId &type_id) {
   MS_EXCEPTION_IF_NULL(func_graph);
   auto op_obj = python_adapter::GetPyFn(kOpsFunctionName, kReduceSumOpName)();
   auto op_prim = GetPrimitiveFromPyAdapter(op_obj);
@@ -213,7 +217,7 @@ AnfNodePtr CreateReduceSumNode(const FuncGraphPtr &func_graph, const AnfNodePtr 
   }
   auto abs = std::make_shared<abstract::AbstractTensor>(TypeIdToType(type_id), reduce_sum_output_shape);
   op_prim->set_attr(kAttrKeepDims, MakeValue<bool>(false));
-  auto axis_node = CreateValueNode(MakeValue(axis), kNumberTypeInt64);
+  auto axis_node = CreateValueNode(MakeValue(axis));
   auto reduce_sum = func_graph->NewCNode(op_prim, {square, axis_node});
   MS_EXCEPTION_IF_NULL(reduce_sum);
   reduce_sum->set_abstract(abs);
@@ -229,7 +233,7 @@ AnfNodePtr CreateLayerNormNode(const FuncGraphPtr &graph, const AnfNodePtr &inpu
   auto shape_vec = common::AnfAlgo::GetOutputInferShape(input, 0);
   auto x_type_id = common::AnfAlgo::GetPrevNodeOutputInferDataType(input_node, 0);
   auto square = CreateSquareNode(graph, input_node, shape_vec, x_type_id);
-  auto reduce_sum = CreateReduceSumNode(graph, square, input_node, shape_vec, x_type_id);
+  auto reduce_sum = CreateReduceSumNode(graph, square, shape_vec, x_type_id);
   auto sqrt_obj = python_adapter::GetPyFn(kOpsFunctionName, prim::kPrimSqrt->name())();
   auto sqrt_prim = GetPrimitiveFromPyAdapter(sqrt_obj);
   auto sqrt_node = graph->NewCNode(sqrt_prim, {reduce_sum});
@@ -256,8 +260,8 @@ AnfNodePtr CreateLambApplyWeightAssignNode(const FuncGraphPtr &graph, const AnfN
   return new_node;
 }
 
-AnfNodePtr CreateLoadOp(const FuncGraphPtr &graph, const string &op_name, const AnfNodePtr &node1,
-                        const AnfNodePtr &node2, const AnfNodePtr &node3) {
+AnfNodePtr CreateLoadOp(const FuncGraphPtr &graph, const AnfNodePtr &node1, const AnfNodePtr &node2,
+                        const AnfNodePtr &node3) {
   MS_EXCEPTION_IF_NULL(graph);
   auto op_prim = NewValueNode(prim::kPrimLoad);
   auto new_node = graph->NewCNode({op_prim, node1, node2});
@@ -294,10 +298,9 @@ const AnfNodePtr ProcessLambSplit(const FuncGraphPtr &graph, const AnfNodePtr &n
     is_exist_umonad_node = true;
 
     // param is a side-effect operator parameter, need load with UMonad
-    param_node = CreateLoadOp(graph, prim::kPrimLoad->name(), ori_inputs[kParamIndex], ori_inputs[kUMonadIndex],
-                              ori_inputs[kParamIndex]);
-    global_step_node = CreateLoadOp(graph, prim::kPrimLoad->name(), ori_inputs[kGlobalStepIndex],
-                                    ori_inputs[kUMonadIndex], ori_inputs[kGlobalStepIndex]);
+    param_node = CreateLoadOp(graph, ori_inputs[kParamIndex], ori_inputs[kUMonadIndex], ori_inputs[kParamIndex]);
+    global_step_node =
+      CreateLoadOp(graph, ori_inputs[kGlobalStepIndex], ori_inputs[kUMonadIndex], ori_inputs[kGlobalStepIndex]);
 
     // For multiple load scenarios, MakeTuple needs to be executed as the input parameter of UpdateState
     std::vector<AnfNodePtr> make_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple), param_node, global_step_node};
@@ -323,9 +326,9 @@ const AnfNodePtr ProcessLambSplit(const FuncGraphPtr &graph, const AnfNodePtr &n
 
   auto value_one = std::make_shared<tensor::Tensor>(1.0, kFloat32);
   // cast delay flag to float32
-  auto weight_decay_flag = CreateValueNode(value_one, kNumberTypeFloat32);
+  auto weight_decay_flag = CreateValueNode(value_one);
 
-  auto num_one = CreateValueNode(value_one, kNumberTypeFloat32);
+  auto num_one = CreateValueNode(value_one);
   // create 1-beta1
   auto sub_beta1 = CreateNodeOfBinaryOp(graph, kSubOpName, num_one, ori_inputs[kBeta1Index], ori_inputs[kBeta1Index]);
   // create 1-beta2

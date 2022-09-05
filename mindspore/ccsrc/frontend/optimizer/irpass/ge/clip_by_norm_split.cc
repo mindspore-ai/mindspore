@@ -16,7 +16,11 @@
 
 #include "frontend/optimizer/irpass/ge/clip_by_norm_split.h"
 
-#include "pybind_api/pybind_patch.h"
+#include <string>
+#include <vector>
+#include <memory>
+#include <algorithm>
+
 #include "pybind_api/ir/tensor_py.h"
 #include "pipeline/pynative/base.h"
 #include "pipeline/jit/static_analysis/prim.h"
@@ -103,7 +107,7 @@ AnfNodePtr CreateSquareNode(const FuncGraphPtr &func_graph, const AnfNodePtr &in
   return square;
 }
 
-ValueNodePtr CreateValueNode(const ValuePtr &value_ptr, TypeId output_type) {
+ValueNodePtr CreateValueNode(const ValuePtr &value_ptr) {
   MS_EXCEPTION_IF_NULL(value_ptr);
   auto new_node = std::make_shared<ValueNode>(value_ptr);
   MS_EXCEPTION_IF_NULL(new_node);
@@ -134,7 +138,7 @@ AnfNodePtr CreateReduceSumNode(const FuncGraphPtr &func_graph, const AnfNodePtr 
       }
     }
   } else if (axis_value->isa<Int64Imm>()) {
-    axis.emplace_back(GetValue<int64_t>(axis_value));
+    (void)axis.emplace_back(GetValue<int64_t>(axis_value));
   } else {
     MS_EXCEPTION(TypeError) << "For `" << prim::kPrimClipByNorm->name()
                             << "`, the type of attribute `axis` is invalid.";
@@ -152,18 +156,18 @@ AnfNodePtr CreateReduceSumNode(const FuncGraphPtr &func_graph, const AnfNodePtr 
   }
   auto abs = std::make_shared<abstract::AbstractTensor>(TypeIdToType(type_id), reduce_sum_output_shape);
   op_prim->set_attr(kAttrKeepDims, MakeValue<bool>(true));
-  auto axis_node = CreateValueNode(MakeValue(axis), kNumberTypeInt64);
+  auto axis_node = CreateValueNode(MakeValue(axis));
   auto reduce_sum = func_graph->NewCNode(op_prim, {square, axis_node});
   MS_EXCEPTION_IF_NULL(reduce_sum);
   reduce_sum->set_abstract(abs);
   return reduce_sum;
 }
 
-AnfNodePtr CreateConstantNode(const FuncGraphPtr &func_graph, const AnfNodePtr &inp, const ShapeVector &shape_vec,
-                              const TypeId &type_id, const std::string &op_name) {
+AnfNodePtr CreateConstantNode(const FuncGraphPtr &func_graph, const ShapeVector &shape_vec, const TypeId &type_id,
+                              const std::string &op_name) {
   MS_EXCEPTION_IF_NULL(func_graph);
   auto tensor = std::make_shared<tensor::Tensor>(type_id, shape_vec);
-  auto value_node = CreateValueNode(tensor, type_id);
+  auto value_node = CreateValueNode(tensor);
   auto op_obj = python_adapter::GetPyFn(kOpsFunctionName, op_name)();
   auto op_prim = GetPrimitiveFromPyAdapter(op_obj);
   auto constant_node = func_graph->NewCNode(op_prim, {value_node});
@@ -306,12 +310,10 @@ const AnfNodePtr ProcessClipByNormSplit(const FuncGraphPtr &func_graph, const An
   // Create `op3 = cast(op2)` to float32 data type
   auto reduce_sum_cast = CreateCastNode(func_graph, reduce_sum, reduce_sum_output_shape, x_type_id, dst_type_id);
   // Create `op4 = greater(op3, zeros)` op
-  auto zeros_node =
-    CreateConstantNode(func_graph, reduce_sum_cast, reduce_sum_output_shape, dst_type_id, prim::kPrimZerosLike->name());
+  auto zeros_node = CreateConstantNode(func_graph, reduce_sum_output_shape, dst_type_id, prim::kPrimZerosLike->name());
   auto greater = CreateGreaterNode(func_graph, reduce_sum_cast, zeros_node, reduce_sum_output_shape);
   // Create `op5 = select(op4, op3, Ones)` op
-  auto ones_node =
-    CreateConstantNode(func_graph, reduce_sum_cast, reduce_sum_output_shape, dst_type_id, prim::kPrimOnesLike->name());
+  auto ones_node = CreateConstantNode(func_graph, reduce_sum_output_shape, dst_type_id, prim::kPrimOnesLike->name());
   auto safe_reduce_sum_cast =
     CreateSelectNode(func_graph, greater, reduce_sum_cast, ones_node, reduce_sum_output_shape, dst_type_id);
   // Create `op6 = sqrt(op5)` op
