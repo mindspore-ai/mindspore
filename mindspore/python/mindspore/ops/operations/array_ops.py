@@ -6842,7 +6842,7 @@ class TensorScatterElements(Primitive):
 
 
 class ExtractVolumePatches(Primitive):
-    """
+    r"""
     Extract patches from input and put them in the "depth" output dimension. 3D extension of extract_image_patches.
 
     Args:
@@ -6875,8 +6875,8 @@ class ExtractVolumePatches(Primitive):
         ValueError: If input_x's shape has zero.
         ValueError: If one of kernel_size or strides' first two numbers is not 1.
         ValueError: If padding = "VALID" and input - kernel_size is less than 0 in d, h or w dimension.
-        ValueError: If padding = "SAME" and :math:`padding_needed = ((input_x + strides - 1) / strides - 1) *
-                    strides + kernel_size - input` is less than 0 in d, h or w dimension.
+        ValueError: If padding = "SAME" and :math:`padding\_needed = ((input\_x + strides - 1) / strides - 1) *
+                    strides + kernel\_size - input` is less than 0 in d, h or w dimension.
         ValueError: If x_h is not 1 or x_w is not 1 and x_w + padding_needed - k_w - s_w is less than 0.
         ValueError: If x_d * x_h * x_w is greater than 2048.
 

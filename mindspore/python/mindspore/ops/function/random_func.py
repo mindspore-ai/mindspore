@@ -133,14 +133,14 @@ def random_categorical(logits, num_sample, seed=0, dtype=mstype.int64):
     Generates random samples from a given categorical distribution tensor.
 
     Args:
-        logits (Tensor): The input tensor. 2-D Tensor with shape :math:`(batch_size, num_classes)`.
+        logits (Tensor): The input tensor. 2-D Tensor with shape :math:`(batch\_size, num\_classes)`.
         num_sample (int):  Number of sample to be drawn. Only constant values is allowed.
         seed (int):  Random seed. Only constant values is allowed. Default: 0.
         dtype (mindspore.dtype): The type of output. Its value must be one of mindspore.int16,
             mindspore.int32 and mindspore.int64. Default: mindspore.int64.
 
     Returns:
-        Tensor, The output Tensor with shape :math:`(batch_size, num_samples)`.
+        Tensor, The output Tensor with shape :math:`(batch\_size, num\_samples)`.
 
     Raises:
         TypeError: If `dtype` is not one of the following: mindspore.int16, mindspore.int32, mindspore.int64.

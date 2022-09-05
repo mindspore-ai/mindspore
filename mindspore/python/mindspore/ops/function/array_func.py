@@ -1053,7 +1053,7 @@ def select(cond, x, y):
 
 
 def slice(input_x, begin, size):
-    """
+    r"""
     Slices a tensor in the specified shape.
 
     Slice the tensor `input_x` in shape of `size` and starting at the location specified by `begin`,
@@ -1064,7 +1064,7 @@ def slice(input_x, begin, size):
         `begin` is zero-based and `size` is one-based.
 
     If `size[i]` is -1, all remaining elements in dimension i are included in the slice.
-    This is equivalent to setting :math:`size[i] = input_x.shape(i) - begin[i]`.
+    This is equivalent to setting :math:`size[i] = input\_x.shape(i) - begin[i]`.
 
     Args:
         input_x (Tensor): The target tensor.
@@ -2999,10 +2999,10 @@ def matrix_diag_part(x, k=0, padding_value=0, align="RIGHT_LEFT"):
     Returns:
         A Tensor. Has the same type as `x`.
         Assume `x` has r dimensions :math:`[I, J, ..., L, M, N]`. Let `max_diag_len` be the maximum length among all
-        diagonals to be extracted, :math:`max_diag_len = min(M + min(k[1], 0), N + min(-k[0], 0))`
-        Let `num_diags` be the number of diagonals to extract, :math:`num_diags = k[1] - k[0] + 1`.
-        If :math:`num_diags == 1`, the output tensor is of rank r - 1 with shape :math:`[I, J, ..., L, max_diag_len]`
-        Otherwise, the output tensor has rank r with dimensions :math:`[I, J, ..., L, num_diags, max_diag_len]`
+        diagonals to be extracted, :math:`max\_diag\_len = min(M + min(k[1], 0), N + min(-k[0], 0))`
+        Let `num_diags` be the number of diagonals to extract, :math:`num\_diags = k[1] - k[0] + 1`.
+        If :math:`num\_diags == 1`, the output tensor is of rank r - 1 with shape :math:`[I, J, ..., L, max\_diag\_len]`
+        Otherwise, the output tensor has rank r with dimensions :math:`[I, J, ..., L, num\_diags, max\_diag\_len]`
 
     Raises:
         TypeError: If `x` is not Tensor.

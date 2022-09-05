@@ -4390,7 +4390,7 @@ class Tensor(Tensor_):
                 mindspore.int32 and mindspore.int64. Default: mindspore.int64.
 
         Returns:
-            Tensor, the output Tensor with shape :math:`(batch_size, num_samples)`.
+            Tensor, the output Tensor with shape :math:`(batch\_size, num\_samples)`.
 
         Raises:
             TypeError: If `dtype` is not one of the following: mindspore.int16, mindspore.int32, mindspore.int64.

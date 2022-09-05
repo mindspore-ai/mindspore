@@ -10,7 +10,7 @@ mindspore.ops.slice
     .. note::
         `begin` 的起始值为0，`size` 的起始值为1。
 
-    如果 `size[i]` 为-1，则维度i中的所有剩余元素都包含在切片中。这相当于 :math:`size[i] = input_x.shape(i) - begin[i]` 。
+    如果 `size[i]` 为-1，则维度i中的所有剩余元素都包含在切片中。这相当于 :math:`size[i] = input\_x.shape(i) - begin[i]` 。
 
     参数：
         - **input_x** (Tensor) - Slice的输入，任意维度的Tensor。
