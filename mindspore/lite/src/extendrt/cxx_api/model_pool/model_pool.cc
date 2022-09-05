@@ -751,6 +751,7 @@ ModelPoolConfig ModelPool::CreateBaseStrategyModelPoolConfig(const std::shared_p
 }
 
 std::vector<MSTensor> ModelPool::GetInputs() {
+  std::shared_lock<std::shared_mutex> l(model_pool_mutex_);
   std::vector<MSTensor> inputs;
   if (model_pool_inputs_.empty()) {
     MS_LOG(ERROR) << "model input is empty.";
@@ -774,6 +775,7 @@ std::vector<MSTensor> ModelPool::GetInputs() {
 }
 
 std::vector<MSTensor> ModelPool::GetOutputs() {
+  std::shared_lock<std::shared_mutex> l(model_pool_mutex_);
   std::vector<MSTensor> outputs;
   if (model_pool_outputs_.empty()) {
     MS_LOG(ERROR) << "model output is empty.";
@@ -1060,14 +1062,18 @@ Status ModelPool::Init(const char *model_buf, size_t size, const std::shared_ptr
 }
 
 Status ModelPool::InitByBuf(const char *model_data, size_t size, const std::shared_ptr<RunnerConfig> &runner_config) {
-  if (model_data == nullptr) {
-    MS_LOG(ERROR) << "model buffer is nullptr.";
-    return kLiteNullptr;
+  std::unique_lock<std::shared_mutex> l(model_pool_mutex_);
+  auto status = Init(model_data, size, runner_config);
+  if (status != kSuccess) {
+    MS_LOG(ERROR) << "init by buf failed.";
+    return kLiteFileError;
   }
-  return Init(model_data, size, runner_config);
+  is_initialized_ = true;
+  return kSuccess;
 }
 
 Status ModelPool::InitByPath(const std::string &model_path, const std::shared_ptr<RunnerConfig> &runner_config) {
+  std::unique_lock<std::shared_mutex> l(model_pool_mutex_);
   size_t size = 0;
   auto model_buf = lite::ReadFile(model_path.c_str(), &size);
   if (model_buf == nullptr) {
@@ -1085,6 +1091,7 @@ Status ModelPool::InitByPath(const std::string &model_path, const std::shared_pt
     delete[] model_buf;
     model_buf = nullptr;
   }
+  is_initialized_ = true;
   return kSuccess;
 }
 
@@ -1169,6 +1176,7 @@ Strategy ModelPool::UpdateStrategy() {
 
 Status ModelPool::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
                           const MSKernelCallBack &before, const MSKernelCallBack &after) {
+  std::shared_lock<std::shared_mutex> l(model_pool_mutex_);
   predict_task_mutex_.lock();
   int max_wait_worker_node_id = 0;
   int max_wait_worker_num = 0;
@@ -1211,6 +1219,8 @@ Status ModelPool::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
 }
 
 ModelPool::~ModelPool() {
+  std::unique_lock<std::shared_mutex> l(model_pool_mutex_);
+  is_initialized_ = false;
   for (auto &item : model_pool_info_) {
     auto strategy = item.first;
     if (model_pool_info_[strategy].predict_task_queue_ != nullptr) {
