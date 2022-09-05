@@ -104,6 +104,7 @@ class Somas {
 
   virtual bool InitDevSpecControlTensors(const session::KernelGraph &graph) = 0;
   virtual bool DevSpecNodeProcess(const session::KernelGraph &graph) = 0;
+  virtual void CommunicationTensorProcess(const std::vector<SomasTensorPtr> &tensors) const;
   // end
 
   // SOMAS Configuration

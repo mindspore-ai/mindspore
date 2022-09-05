@@ -217,6 +217,16 @@ void AscendSomas::NonTaskSplitProcess(const session::KernelGraph &graph) {
     }
   }
 }
+
+void AscendSomas::CommunicationTensorProcess(const std::vector<somas::SomasTensorPtr> &tensors) const {
+  // add gap for first and last input
+  if (tensors[0]->aligned_size_ != 0) {
+    tensors[0]->aligned_size_ += GetCommunicationReservedSize();
+  }
+  if (tensors[tensors.size() - 1]->aligned_size_ != 0) {
+    tensors[tensors.size() - 1]->aligned_size_ += GetCommunicationReservedSize();
+  }
+}
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

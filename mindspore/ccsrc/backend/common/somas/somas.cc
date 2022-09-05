@@ -172,6 +172,8 @@ bool Somas::Assign(const KernelGraphPtr &graph_ptr) {
 
 size_t Somas::GetCommunicationReservedSize() const { return 0; }
 
+void Somas::CommunicationTensorProcess(const std::vector<SomasTensorPtr> &tensors) const {}
+
 bool Somas::GetEnableCacheFlag(const session::KernelGraph &graph) const {
   return graph.execution_order().size() >= kCachedResultThreshold;
 }
@@ -1118,14 +1120,7 @@ void Somas::CommunicationNodeProcess() {
 
     // Contiguous input
     if ((!node->input_tensors_.empty()) && (!node->input_tensors_[0]->contiguous_)) {
-      // add gap for first and last input
-      if (node->input_tensors_[0]->aligned_size_ != 0) {
-        node->input_tensors_[0]->aligned_size_ += communication_gap_size_;
-      }
-      if (node->input_tensors_[node->input_tensors_.size() - 1]->aligned_size_ != 0) {
-        node->input_tensors_[node->input_tensors_.size() - 1]->aligned_size_ += communication_gap_size_;
-      }
-
+      CommunicationTensorProcess(node->input_tensors_);
       std::vector<size_t> inputs;
       for (const auto &input_tensor : node->input_tensors_) {
         MS_EXCEPTION_IF_NULL(input_tensor);
@@ -1142,13 +1137,7 @@ void Somas::CommunicationNodeProcess() {
 
     // Contiguous output
     if ((!node->output_tensors_.empty()) && (!node->output_tensors_[0]->contiguous_)) {
-      // add gap for first and last output
-      if (node->output_tensors_[0]->aligned_size_ != 0) {
-        node->output_tensors_[0]->aligned_size_ += communication_gap_size_;
-      }
-      if (node->output_tensors_[node->output_tensors_.size() - 1]->aligned_size_ != 0) {
-        node->output_tensors_[node->output_tensors_.size() - 1]->aligned_size_ += communication_gap_size_;
-      }
+      CommunicationTensorProcess(node->output_tensors_);
 
       std::vector<size_t> outputs;
       for (const auto &output_tensor : node->output_tensors_) {

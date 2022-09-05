@@ -19,6 +19,7 @@
 
 #include <map>
 #include <string>
+#include <vector>
 #include "backend/common/somas/somas.h"
 #include "runtime/hardware/device_type.h"
 
@@ -32,6 +33,7 @@ class GPUSomas : public somas::Somas {
   bool Initialize() override;
   string GetDeviceName() const override;
   size_t GetAlignSize(size_t original_size) const override;
+  void CommunicationTensorProcess(const std::vector<somas::SomasTensorPtr> &tensors) const override;
 
   bool GetDependExecOrderFlag(const session::KernelGraph &graph) const override;
   bool InitDevSpecControlTensors(const session::KernelGraph &graph) override;
