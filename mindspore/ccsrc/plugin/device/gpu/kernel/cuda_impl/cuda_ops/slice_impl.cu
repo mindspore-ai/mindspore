@@ -254,25 +254,26 @@ void CalSlice7DGrad(const size_t s1, const size_t s2, const size_t s3, const siz
 
 template <typename T>
 __global__ void StridedSliceKernel(const size_t b0, const size_t b1, const size_t b2, const size_t b3, const size_t b4,
-                                   const size_t b5, const size_t b6, const size_t s0, const size_t s1, const size_t s2,
-                                   const size_t s3, const size_t s4, const size_t s5, const size_t s6, const size_t i0,
-                                   const size_t i1, const size_t i2, const size_t i3, const size_t i4, const size_t i5,
-                                   const size_t i6, const size_t o0, const size_t o1, const size_t o2, const size_t o3,
-                                   const size_t o4, const size_t o5, const size_t o6, const T *input_addr,
-                                   T *output_addr) {
-  size_t output_num = o0 * o1 * o2 * o3 * o4 * o5 * o6;
+                                   const size_t b5, const size_t b6, const size_t b7, const size_t s0, const size_t s1,
+                                   const size_t s2, const size_t s3, const size_t s4, const size_t s5, const size_t s6,
+                                   const size_t s7, const size_t i0, const size_t i1, const size_t i2, const size_t i3,
+                                   const size_t i4, const size_t i5, const size_t i6, const size_t i7, const size_t o0,
+                                   const size_t o1, const size_t o2, const size_t o3, const size_t o4, const size_t o5,
+                                   const size_t o6, const size_t o7, const T *input_addr, T *output_addr) {
+  size_t output_num = o0 * o1 * o2 * o3 * o4 * o5 * o6 * o7;
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < output_num; pos += blockDim.x * gridDim.x) {
-    size_t i = pos / (o1 * o2 * o3 * o4 * o5 * o6) % o0;
-    size_t j = pos / (o2 * o3 * o4 * o5 * o6) % o1;
-    size_t k = pos / (o3 * o4 * o5 * o6) % o2;
-    size_t l = pos / (o4 * o5 * o6) % o3;
-    size_t m = pos / (o5 * o6) % o4;
-    size_t n = pos / (o6) % o5;
-    size_t o = pos % o6;
+    size_t i = pos / (o1 * o2 * o3 * o4 * o5 * o6 * o7) % o0;
+    size_t j = pos / (o2 * o3 * o4 * o5 * o6 * o7) % o1;
+    size_t k = pos / (o3 * o4 * o5 * o6 * o7) % o2;
+    size_t l = pos / (o4 * o5 * o6 * o7) % o3;
+    size_t m = pos / (o5 * o6 * o7) % o4;
+    size_t n = pos / (o6 * o7) % o5;
+    size_t o = pos / o7 % o6;
+    size_t p = pos % o7;
 
-    size_t input_idx = (i * s0 + b0) * i1 * i2 * i3 * i4 * i5 * i6 + (j * s1 + b1) * i2 * i3 * i4 * i5 * i6 +
-                       (k * s2 + b2) * i3 * i4 * i5 * i6 + (l * s3 + b3) * i4 * i5 * i6 + (m * s4 + b4) * i5 * i6 +
-                       (n * s5 + b5) * i6 + (o * s6 + b6);
+    size_t input_idx = (i * s0 + b0) * i1 * i2 * i3 * i4 * i5 * i6 * i7 + (j * s1 + b1) * i2 * i3 * i4 * i5 * i6 * i7 +
+                       (k * s2 + b2) * i3 * i4 * i5 * i6 * i7 + (l * s3 + b3) * i4 * i5 * i6 * i7 +
+                       (m * s4 + b4) * i5 * i6 * i7 + (n * s5 + b5) * i6 * i7 + (o * s6 + b6) * i7 + (p * s7 + b7);
     output_addr[pos] = input_addr[input_idx];
   }
 }
@@ -282,12 +283,13 @@ void StridedSlice(const std::vector<size_t> &input_shape, const std::vector<int6
                   const std::vector<int64_t> &strides, const std::vector<size_t> &output_shape, const T *input,
                   T *output, cudaStream_t cuda_stream) {
   size_t size = output_shape[0] * output_shape[1] * output_shape[2] * output_shape[3] * output_shape[4] *
-                output_shape[5] * output_shape[6];
+                output_shape[5] * output_shape[6] * output_shape[7];
   StridedSliceKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(
-    begin[0], begin[1], begin[2], begin[3], begin[4], begin[5], begin[6], strides[0], strides[1], strides[2],
-    strides[3], strides[4], strides[5], strides[6], input_shape[0], input_shape[1], input_shape[2], input_shape[3],
-    input_shape[4], input_shape[5], input_shape[6], output_shape[0], output_shape[1], output_shape[2], output_shape[3],
-    output_shape[4], output_shape[5], output_shape[6], input, output);
+    begin[0], begin[1], begin[2], begin[3], begin[4], begin[5], begin[6], begin[7], strides[0], strides[1], strides[2],
+    strides[3], strides[4], strides[5], strides[6], strides[7], input_shape[0], input_shape[1], input_shape[2],
+    input_shape[3], input_shape[4], input_shape[5], input_shape[6], input_shape[7], output_shape[0], output_shape[1],
+    output_shape[2], output_shape[3], output_shape[4], output_shape[5], output_shape[6], output_shape[7], input,
+    output);
 }
 
 template <typename T>
@@ -800,11 +802,11 @@ template CUDA_LIB_EXPORT void CalSlice4DGrad<Complex<float>>(const size_t s1, co
                                                              const Complex<float> *dy, Complex<float> *dx,
                                                              cudaStream_t stream);
 template CUDA_LIB_EXPORT void CalSlice4DGrad<Complex<double>>(const size_t s1, const size_t s2, const size_t s3,
-                                                             const size_t s4, const size_t l1, const size_t l2,
-                                                             const size_t l3, const size_t l4, const size_t d1,
-                                                             const size_t d2, const size_t d3, const size_t d4,
-                                                             const Complex<double> *dy, Complex<double> *dx,
-                                                             cudaStream_t stream);
+                                                              const size_t s4, const size_t l1, const size_t l2,
+                                                              const size_t l3, const size_t l4, const size_t d1,
+                                                              const size_t d2, const size_t d3, const size_t d4,
+                                                              const Complex<double> *dy, Complex<double> *dx,
+                                                              cudaStream_t stream);
 template CUDA_LIB_EXPORT void CalSlice4DGrad<double>(const size_t s1, const size_t s2, const size_t s3, const size_t s4,
                                                      const size_t l1, const size_t l2, const size_t l3, const size_t l4,
                                                      const size_t d1, const size_t d2, const size_t d3, const size_t d4,
@@ -918,7 +920,7 @@ template CUDA_LIB_EXPORT void FillDeviceArray<double>(const size_t input_size, d
 template CUDA_LIB_EXPORT void FillDeviceArray<Complex<float>>(const size_t input_size, Complex<float> *addr,
                                                               const float value, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void FillDeviceArray<Complex<double>>(const size_t input_size, Complex<double> *addr,
-                                                              const float value, cudaStream_t cuda_stream);
+                                                               const float value, cudaStream_t cuda_stream);
 
 template CUDA_LIB_EXPORT void StridedSlice(const std::vector<size_t> &input_shape, const std::vector<int64_t> &begin,
                                            const std::vector<int64_t> &strides, const std::vector<size_t> &output_shape,

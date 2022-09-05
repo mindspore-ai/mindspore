@@ -102,6 +102,18 @@ def strided_slice(nptype):
                           [[[2122.]]]]]]]).astype(nptype)
     assert np.allclose(y.asnumpy(), expect)
 
+    x = Tensor(np.arange(0, 2 * 3 * 4 * 5 * 5 * 4 * 3 * 2).reshape(2, 3, 4, 5, 5, 4, 3, 2).astype(nptype))
+    y = P.StridedSlice()(x, (1, 0, 0, 2, 2, 1, 2, 0), (2, 2, 2, 4, 4, 2, 3, 2), (1, 1, 1, 1, 2, 1, 1, 2))
+    expect = np.array([[[[[[[[7498.]]]],
+                          [[[[7618.]]]]],
+                         [[[[[8098.]]]],
+                          [[[[8218.]]]]]],
+                        [[[[[[9898.]]]],
+                          [[[[10018.]]]]],
+                         [[[[[10498.]]]],
+                          [[[[10618.]]]]]]]]).astype(nptype)
+    assert np.allclose(y.asnumpy(), expect)
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
