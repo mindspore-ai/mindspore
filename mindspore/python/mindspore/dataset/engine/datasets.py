@@ -732,12 +732,12 @@ class Dataset:
             >>>
             >>> # 2) flat_map on multi column dataset
             >>> dataset = ds.NumpySlicesDataset(([[0, 1], [2, 3]], [[0, -1], [-2, -3]]), shuffle=False)
-
+            >>>
             >>> def plus_and_minus(col1, col2):
             ...     # apply different methods on columns
             ...     data = ds.NumpySlicesDataset((col1 + 1, col2 - 1), shuffle=False)
             ...     return data
-
+            >>>
             >>> dataset = dataset.flat_map(plus_and_minus)
             >>> # ([1, 2, 3, 4], [-1, -2, -3, -4])
 

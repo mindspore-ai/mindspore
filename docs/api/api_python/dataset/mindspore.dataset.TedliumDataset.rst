@@ -72,54 +72,54 @@ mindspore.dataset.TedliumDataset
 
     TEDLIUM release1与TEDLIUM release2的结构相同，只是数据不同。
 
-      .. code-block::
+    .. code-block::
 
-          .
-          └──TEDLIUM_release1
-              └── dev
-                  ├── sph
-                      ├── AlGore_2009.sph
-                      ├── BarrySchwartz_2005G.sph
-                  ├── stm
-                      ├── AlGore_2009.stm
-                      ├── BarrySchwartz_2005G.stm
-              └── test
-                  ├── sph
-                      ├── AimeeMullins_2009P.sph
-                      ├── BillGates_2010.sph
-                  ├── stm
-                      ├── AimeeMullins_2009P.stm
-                      ├── BillGates_2010.stm
-              └── train
-                  ├── sph
-                      ├── AaronHuey_2010X.sph
-                      ├── AdamGrosser_2007.sph
-                  ├── stm
-                      ├── AaronHuey_2010X.stm
-                      ├── AdamGrosser_2007.stm
-              └── readme
-              └── TEDLIUM.150k.dic
+        .
+        └──TEDLIUM_release1
+            └── dev
+                ├── sph
+                    ├── AlGore_2009.sph
+                    ├── BarrySchwartz_2005G.sph
+                ├── stm
+                    ├── AlGore_2009.stm
+                    ├── BarrySchwartz_2005G.stm
+            └── test
+                ├── sph
+                    ├── AimeeMullins_2009P.sph
+                    ├── BillGates_2010.sph
+                ├── stm
+                    ├── AimeeMullins_2009P.stm
+                    ├── BillGates_2010.stm
+            └── train
+                ├── sph
+                    ├── AaronHuey_2010X.sph
+                    ├── AdamGrosser_2007.sph
+                ├── stm
+                    ├── AaronHuey_2010X.stm
+                    ├── AdamGrosser_2007.stm
+            └── readme
+            └── TEDLIUM.150k.dic
 
-      TEDLIUM release3目录结构稍有不同。
+    TEDLIUM release3目录结构稍有不同。
 
-      .. code-block::
+    .. code-block::
 
-          .
-          └──TEDLIUM_release-3
-              └── data
-                  ├── ctl
-                  ├── sph
-                      ├── 911Mothers_2010W.sph
-                      ├── AalaElKhani.sph
-                  ├── stm
-                      ├── 911Mothers_2010W.stm
-                      ├── AalaElKhani.stm
-              └── doc
-              └── legacy
-              └── LM
-              └── speaker-adaptation
-              └── readme
-              └── TEDLIUM.150k.dic
+        .
+        └──TEDLIUM_release-3
+            └── data
+                ├── ctl
+                ├── sph
+                    ├── 911Mothers_2010W.sph
+                    ├── AalaElKhani.sph
+                ├── stm
+                    ├── 911Mothers_2010W.stm
+                    ├── AalaElKhani.stm
+            └── doc
+            └── legacy
+            └── LM
+            └── speaker-adaptation
+            └── readme
+            └── TEDLIUM.150k.dic
 
     **引用：**
 

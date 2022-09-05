@@ -479,7 +479,7 @@ class AutoAugment(ImageTensorOperation):
 
     Examples:
         >>> from mindspore.dataset.vision import AutoAugmentPolicy, Inter
-
+        >>>
         >>> transforms_list = [vision.Decode(), vision.AutoAugment(policy=AutoAugmentPolicy.IMAGENET,
         ...                                                        interpolation=Inter.NEAREST,
         ...                                                        fill_value=0)]
