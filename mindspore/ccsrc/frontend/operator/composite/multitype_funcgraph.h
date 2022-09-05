@@ -27,7 +27,6 @@
 #include <memory>
 #include "pipeline/jit/static_analysis/static_analysis.h"
 #include "utils/misc.h"
-#include "utils/hash_map.h"
 #include "ir/dtype.h"
 #include "ir/meta_func_graph.h"
 
@@ -35,9 +34,6 @@ namespace mindspore {
 namespace prim {
 class MultitypeFuncGraph : public MetaFuncGraph {
  public:
-  template <typename T>
-  using TypeListMap = mindspore::HashMap<TypePtrList, T, TypeListHasher, TypeListEqual>;
-
   explicit MultitypeFuncGraph(const std::string &name);
   ~MultitypeFuncGraph() override = default;
   MS_DECLARE_PARENT(MultitypeFuncGraph, MetaFuncGraph)

@@ -17,6 +17,7 @@
 #include "ir/dtype/container.h"
 #include <cstdlib>
 #include <algorithm>
+#include "ir/dtype.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
 
@@ -80,24 +81,12 @@ bool List::operator==(const Type &other) const {
     return false;
   }
   const List &other_list = static_cast<const List &>(other);
-  if (elements_.size() != other_list.elements_.size()) {
-    return false;
-  }
-  for (size_t i = 0; i < elements_.size(); ++i) {
-    if (!common::IsEqual(elements_[i], other_list.elements_[i])) {
-      return false;
-    }
-  }
-  return true;
+  return TypeListEqual()(elements_, other_list.elements_);
 }
 
 size_t List::hash() const {
   size_t hash_value = hash_combine(static_cast<size_t>(kMetaTypeObject), static_cast<size_t>(object_type()));
-  hash_value = hash_combine(hash_value, elements_.size());
-  for (auto &e : elements_) {
-    hash_value = hash_combine(hash_value, (e == nullptr ? 0 : e->hash()));
-  }
-  return hash_value;
+  return hash_combine(hash_value, TypeListHasher()(elements_));
 }
 
 std::string List::DumpContent(bool is_dumptext) const {
@@ -129,24 +118,12 @@ bool Tuple::operator==(const Type &other) const {
     return false;
   }
   auto other_tuple = static_cast<const Tuple &>(other);
-  if (elements_.size() != other_tuple.elements_.size()) {
-    return false;
-  }
-  for (size_t i = 0; i < elements_.size(); ++i) {
-    if (!common::IsEqual(elements_[i], other_tuple.elements_[i])) {
-      return false;
-    }
-  }
-  return true;
+  return TypeListEqual()(elements_, other_tuple.elements_);
 }
 
 size_t Tuple::hash() const {
   size_t hash_value = hash_combine(static_cast<size_t>(kMetaTypeObject), static_cast<size_t>(object_type()));
-  hash_value = hash_combine(hash_value, elements_.size());
-  for (auto &e : elements_) {
-    hash_value = hash_combine(hash_value, (e == nullptr ? 0 : e->hash()));
-  }
-  return hash_value;
+  return hash_combine(hash_value, TypeListHasher()(elements_));
 }
 
 const TypePtr Tuple::operator[](std::size_t dim) const {

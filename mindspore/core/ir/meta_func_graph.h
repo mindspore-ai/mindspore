@@ -30,7 +30,6 @@
 #include "ir/func_graph.h"
 #include "ir/signature.h"
 #include "abstract/abstract_value.h"
-#include "utils/hash_map.h"
 
 namespace mindspore {
 // namespace to support intermediate representation definition
@@ -91,7 +90,7 @@ class MS_CORE_API MetaFuncGraph : public FuncGraphBase {
   FuncGraphPtr GenerateStubFunc(const TypePtrList &types) const;
   std::string name_;
   std::vector<Signature> signatures_;
-  mindspore::HashMap<TypePtrList, FuncGraphPtr, TypeListHasher, TypeListEqual> cache_;
+  TypeListMap<FuncGraphPtr> cache_;
 
  private:
   DebugInfoPtr debug_info_{nullptr};

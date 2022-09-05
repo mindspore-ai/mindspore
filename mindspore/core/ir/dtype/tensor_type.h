@@ -156,7 +156,6 @@ class MS_CORE_API SparseTensorType : public Object {
   std::string ToReprString() const override;
   std::string DumpText() const override;
   const TypePtrList ElementsClone() const;
-  const bool ElementsEqual(const SparseTensorType &other) const;
   TypePtr DeepCopy() const override;
 
  private:

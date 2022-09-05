@@ -89,7 +89,7 @@ class ProgramSpecializer {
   // The list to erase the DeadNode in tuple/list elements.
   std::vector<std::pair<AnfNodePtr, size_t>> dead_node_list_;
   // Map for unspecialized abstract function to specialized abstract;
-  mindspore::HashMap<AbstractFunctionPtr, AbstractBasePtr, AbstractFunctionHasher, AbstractFunctionEqual>
+  std::unordered_map<AbstractFunctionPtr, AbstractBasePtr, AbstractFunctionHasher, AbstractFunctionEqual>
     specialized_abs_map_;
 
   AbstractBasePtr SpecializeAbstractFuncRecursively(const AbstractFunctionPtr &old_abs_func);

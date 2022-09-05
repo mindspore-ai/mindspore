@@ -22,7 +22,7 @@
 #include <cstddef>
 #include <iostream>
 #include <initializer_list>
-#include <map>
+#include <unordered_map>
 #include <memory>
 #include <utility>
 #include <sstream>
@@ -35,6 +35,7 @@
 #include "base/base.h"
 #include "ir/named.h"
 #include "ir/dtype/type_id.h"
+#include "utils/ms_utils.h"
 
 namespace mindspore {
 
@@ -249,6 +250,67 @@ MS_CORE_API const mindspore::HashMap<TypeId, int> &type_priority_map();
 /// \param[in] types The TypePtrList need to show the description
 /// \return The ostream with TypePtrList description
 MS_CORE_API std::ostream &operator<<(std::ostream &os, const TypePtrList &types);
+
+/// \brief TypeHashById provides a hash function by Type id.
+struct MS_CORE_API TypeHashById {
+  std::size_t operator()(TypePtr const &type) const {
+    return type == nullptr ? 0 : static_cast<size_t>(type->type_id());
+  }
+};
+
+/// \brief TypeEqualById provides an equivalent function by Type id.
+struct MS_CORE_API TypeEqualById {
+  bool operator()(const TypePtr &t1, const TypePtr &t2) const {
+    return (t1 == t2) || (t1 != nullptr && t2 != nullptr && t1->type_id() == t2->type_id());
+  }
+};
+
+/// \brief TypeListHasher provides a hash function for the list of shared_ptr of Type.
+struct MS_CORE_API TypeListHasher {
+  std::size_t operator()(const TypePtrList &type_list) const {
+    // Hash for empty list is zero.
+    if (type_list.empty()) {
+      return 0;
+    }
+    // Hashing all elements is costly, we only calculate hash from
+    // the first element and last few elements base on some experiments.
+    // In some scenarios, this may lead high hash conflicts. Therefore,
+    // we should use this hash function in hash tables that can tolerate
+    // high hash conflicts, such as std::unordered_map.
+    constexpr size_t max_last_types = 4;
+    const size_t n_args = type_list.size();
+    // Hash from list size and the first element.
+    const auto &first_type = type_list[0];
+    std::size_t hash_sum = hash_combine(n_args, (first_type == nullptr ? 0 : first_type->hash()));
+    // Hash from last few elements.
+    const size_t start = ((n_args > max_last_types) ? (n_args - max_last_types) : 1);
+    for (size_t i = start; i < n_args; ++i) {
+      const auto &type = type_list[i];
+      hash_sum = hash_combine(hash_sum, (type == nullptr ? 0 : type->hash()));
+    }
+    return hash_sum;
+  }
+};
+
+/// \brief TypeListEqual provides an equivalent function for the list of shared_ptr of Type.
+struct MS_CORE_API TypeListEqual {
+  bool operator()(TypePtrList const &lhs, TypePtrList const &rhs) const {
+    const auto size = lhs.size();
+    if (size != rhs.size()) {
+      return false;
+    }
+    for (std::size_t i = 0; i < size; ++i) {
+      if (!common::IsEqual(lhs[i], rhs[i])) {
+        return false;
+      }
+    }
+    return true;
+  }
+};
+
+// Hash map that using TypePtrList as the key.
+template <typename T>
+using TypeListMap = std::unordered_map<TypePtrList, T, TypeListHasher, TypeListEqual>;
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_IR_DTYPE_TYPE_H_

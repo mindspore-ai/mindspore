@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <mutex>
 #include <set>
+#include <unordered_set>
 #include "abstract/abstract_value.h"
 #include "pipeline/jit/parse/resolve.h"
 #include "pipeline/jit/static_analysis/prim.h"
@@ -756,7 +757,7 @@ EvaluatorPtr AnalysisEngine::HandleNestedRecursion(const std::vector<EvaluatorPt
 
   bool has_undetermined = false;
   // Check whether sub loop has untraced undetermined evaluator.
-  mindspore::HashSet<EvaluatorArgs, EvaluatorArgsHasher, EvaluatorArgsEqual> undetermined_evals;
+  std::unordered_set<EvaluatorArgs, EvaluatorArgsHasher, EvaluatorArgsEqual> undetermined_evals;
   for (auto r_it = eval_trace_.crbegin(); r_it != latest_entry_iter; r_it++) {
     (void)undetermined_evals.insert(*r_it);
   }
