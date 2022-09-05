@@ -19,22 +19,26 @@
 
 #include <vector>
 #include <memory>
+#include <map>
 #include "plugin/device/cpu/kernel/mkldnn/mkl_cpu_kernel.h"
 
 namespace mindspore {
 namespace kernel {
-class SoftmaxCrossEntropyWithLogitsCpuKernelMod : public DeprecatedMKLCpuKernelMod {
+class SoftmaxCrossEntropyWithLogitsCpuKernelMod : public MKLCpuKernelMod {
  public:
   SoftmaxCrossEntropyWithLogitsCpuKernelMod() = default;
   ~SoftmaxCrossEntropyWithLogitsCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
  protected:
-  void InitInputOutputSize(const CNodePtr &kernel_node) override;
   std::vector<KernelAttr> GetOpSupport() override {
     static std::vector<KernelAttr> support_list = {KernelAttr()
                                                      .AddInputAttr(kNumberTypeFloat32)
