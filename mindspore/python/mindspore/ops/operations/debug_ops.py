@@ -18,10 +18,10 @@ from types import FunctionType, MethodType
 from mindspore import context
 from mindspore import log as logger
 from mindspore._c_expression import security
-from ..._checkparam import Validator as validator
-from ..._checkparam import Rel
-from ...common import dtype as mstype
-from ..primitive import prim_attr_register, Primitive, PrimitiveWithInfer
+from mindspore._checkparam import Validator as validator
+from mindspore._checkparam import Rel
+from mindspore.common import dtype as mstype
+from mindspore.ops.primitive import prim_attr_register, Primitive, PrimitiveWithInfer
 
 
 def _check_mode(class_name):

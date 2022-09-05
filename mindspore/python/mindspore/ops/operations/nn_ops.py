@@ -19,13 +19,13 @@ import math
 from functools import partial
 from mindspore import log as logger
 from mindspore._checkparam import _check_3d_int_or_tuple
-from ... import context
-from .. import signature as sig
-from ..._checkparam import Validator as validator
-from ..._checkparam import Rel
-from ...common import dtype as mstype
-from ...common._decorator import deprecated
-from ..primitive import Primitive, PrimitiveWithInfer, PrimitiveWithCheck, prim_attr_register
+from mindspore import context
+from mindspore.ops import signature as sig
+from mindspore._checkparam import Validator as validator
+from mindspore._checkparam import Rel
+from mindspore.common import dtype as mstype
+from mindspore.common._decorator import deprecated
+from mindspore.ops.primitive import Primitive, PrimitiveWithInfer, PrimitiveWithCheck, prim_attr_register
 
 
 def _check_positive_int_or_tuple(arg_name, arg_value, prim_name, allow_four=False,

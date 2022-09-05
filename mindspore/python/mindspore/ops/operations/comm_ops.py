@@ -17,13 +17,13 @@
 """
 
 from mindspore.common import Tensor
-from ..._checkparam import Validator as validator
-from ..._checkparam import Rel
-from ...communication.management import get_rank, get_group_size, GlobalComm, _get_group
-from ...communication._comm_helper import _check_mpi_envs
-from ...common import dtype as mstype
-from ..primitive import PrimitiveWithInfer, PrimitiveWithCheck, Primitive, prim_attr_register
-from ...common.api import context
+from mindspore._checkparam import Validator as validator
+from mindspore._checkparam import Rel
+from mindspore.communication.management import get_rank, get_group_size, GlobalComm, _get_group
+from mindspore.communication._comm_helper import _check_mpi_envs
+from mindspore.common import dtype as mstype
+from mindspore.ops.primitive import PrimitiveWithInfer, PrimitiveWithCheck, Primitive, prim_attr_register
+from mindspore.common.api import context
 
 
 class ReduceOp:

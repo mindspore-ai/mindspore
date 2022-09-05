@@ -1,10 +1,10 @@
 """Define the grad rules of math related operations."""
 
-from .. import functional as F
-from .._grad.grad_base import bprop_getters
-from ..composite.multitype_ops.zeros_like_impl import zeros_like
-from ..operations.sparse_ops import SparseTensorDenseAdd
-from ..operations.sparse_ops import SparseMatrixTranspose
+from mindspore.ops import functional as F
+from mindspore.ops._grad.grad_base import bprop_getters
+from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
+from mindspore.ops.operations.sparse_ops import SparseTensorDenseAdd
+from mindspore.ops.operations.sparse_ops import SparseMatrixTranspose
 
 
 @bprop_getters.register(SparseTensorDenseAdd)

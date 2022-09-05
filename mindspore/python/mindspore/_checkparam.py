@@ -601,7 +601,7 @@ class Validator:
             arg_key, arg_val = arg
             if isinstance(arg_val, type(mstype.tensor)):
                 arg_val = arg_val.element_type()
-            if not arg_val in valid_values:
+            if arg_val not in valid_values:
                 raise TypeError(f'For \'{prim_name}\', the type of \'{arg_key}\' must be in {valid_values},'
                                 f' but got {arg_val}.')
             return arg
@@ -627,7 +627,8 @@ class Validator:
                                 f" and '{arg2_name}' with type {arg2_type}.")
             return arg1
 
-        reduce(_check_types_same, map(_check_argument_type, args.items()))
+        args_map = map(_check_argument_type, args.items())
+        reduce(_check_types_same, args_map)
 
     @staticmethod
     def check_value_type(arg_name, arg_value, valid_types, prim_name=None):

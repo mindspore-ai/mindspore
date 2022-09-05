@@ -232,7 +232,7 @@ class _Context:
             target (str): "Ascend", "GPU", and "CPU".
         """
         valid_targets = ["CPU", "GPU", "Ascend", "Davinci"]
-        if not target in valid_targets:
+        if target not in valid_targets:
             raise ValueError(f"For 'context.set_context', the argument 'device_target' must be one of "
                              f"{valid_targets}, but got {target}.")
         if target == "Davinci":
