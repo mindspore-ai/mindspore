@@ -753,21 +753,20 @@ ModelPoolConfig ModelPool::CreateBaseStrategyModelPoolConfig(const std::shared_p
 std::vector<MSTensor> ModelPool::GetInputs() {
   std::shared_lock<std::shared_mutex> l(model_pool_mutex_);
   std::vector<MSTensor> inputs;
-  if (model_pool_inputs_.empty()) {
+  if (inputs_info_.empty()) {
     MS_LOG(ERROR) << "model input is empty.";
     return {};
   }
-  for (size_t i = 0; i < model_pool_inputs_.size(); i++) {
-    auto tensor = mindspore::MSTensor::CreateTensor(model_pool_inputs_.at(i).Name(),
-                                                    model_pool_inputs_.at(i).DataType(), {}, nullptr, 0);
+  for (size_t i = 0; i < inputs_info_.size(); i++) {
+    auto tensor =
+      mindspore::MSTensor::CreateTensor(inputs_info_.at(i).name, inputs_info_.at(i).data_type, {}, nullptr, 0);
     if (tensor == nullptr) {
       MS_LOG(ERROR) << "create tensor failed.";
       return {};
     }
-    tensor->SetShape(model_pool_inputs_.at(i).Shape());
-    tensor->SetFormat(model_pool_inputs_.at(i).format());
-    tensor->SetAllocator(model_pool_inputs_.at(i).allocator());
-    tensor->SetQuantParams(model_pool_inputs_.at(i).QuantParams());
+    tensor->SetShape(inputs_info_.at(i).shape);
+    tensor->SetFormat(inputs_info_.at(i).format);
+    tensor->SetQuantParams(inputs_info_.at(i).quant_param);
     inputs.push_back(*tensor);
     delete tensor;
   }
@@ -777,21 +776,20 @@ std::vector<MSTensor> ModelPool::GetInputs() {
 std::vector<MSTensor> ModelPool::GetOutputs() {
   std::shared_lock<std::shared_mutex> l(model_pool_mutex_);
   std::vector<MSTensor> outputs;
-  if (model_pool_outputs_.empty()) {
+  if (outputs_info_.empty()) {
     MS_LOG(ERROR) << "model output is empty.";
     return {};
   }
-  for (size_t i = 0; i < model_pool_outputs_.size(); i++) {
-    auto tensor = mindspore::MSTensor::CreateTensor(model_pool_outputs_.at(i).Name(),
-                                                    model_pool_outputs_.at(i).DataType(), {}, nullptr, 0);
+  for (size_t i = 0; i < outputs_info_.size(); i++) {
+    auto tensor =
+      mindspore::MSTensor::CreateTensor(outputs_info_.at(i).name, outputs_info_.at(i).data_type, {}, nullptr, 0);
     if (tensor == nullptr) {
       MS_LOG(ERROR) << "create tensor failed.";
       return {};
     }
-    tensor->SetShape(model_pool_outputs_.at(i).Shape());
-    tensor->SetFormat(model_pool_outputs_.at(i).format());
-    tensor->SetAllocator(model_pool_outputs_.at(i).allocator());
-    tensor->SetQuantParams(model_pool_outputs_.at(i).QuantParams());
+    tensor->SetShape(outputs_info_.at(i).shape);
+    tensor->SetFormat(outputs_info_.at(i).format);
+    tensor->SetQuantParams(outputs_info_.at(i).quant_param);
     outputs.push_back(*tensor);
     delete tensor;
   }
@@ -884,8 +882,26 @@ Status ModelPool::CreateWorkers(const char *graph_buf, size_t size, const ModelP
   }
   // init model pool input and output
   if (model_worker != nullptr) {
-    model_pool_inputs_ = model_worker->GetInputs();
-    model_pool_outputs_ = model_worker->GetOutputs();
+    auto inputs = model_worker->GetInputs();
+    for (auto &tensor : inputs) {
+      TensorInfo tensor_info;
+      tensor_info.name = tensor.Name();
+      tensor_info.format = tensor.format();
+      tensor_info.data_type = tensor.DataType();
+      tensor_info.shape = tensor.Shape();
+      tensor_info.quant_param = tensor.QuantParams();
+      inputs_info_.push_back(tensor_info);
+    }
+    auto output = model_worker->GetOutputs();
+    for (auto &tensor : output) {
+      TensorInfo tensor_info;
+      tensor_info.name = tensor.Name();
+      tensor_info.format = tensor.format();
+      tensor_info.data_type = tensor.DataType();
+      tensor_info.shape = tensor.Shape();
+      tensor_info.quant_param = tensor.QuantParams();
+      outputs_info_.push_back(tensor_info);
+    }
   }
   return kSuccess;
 }
