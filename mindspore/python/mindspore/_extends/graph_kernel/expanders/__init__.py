@@ -47,7 +47,6 @@ from .sigmoid_cross_entropy_with_logits import SigmoidCrossEntropyWithLogits
 from .sigmoid_cross_entropy_with_logits_grad import SigmoidCrossEntropyWithLogitsGrad
 from .sigmoid_grad import SigmoidGrad
 from .slice import Slice
-from .softmax import Softmax
 from .softmax_cross_entropy_with_logits import SoftmaxCrossEntropyWithLogits
 from .softmax_grad_ext import SoftmaxGradExt
 from .sqrt_grad import SqrtGrad

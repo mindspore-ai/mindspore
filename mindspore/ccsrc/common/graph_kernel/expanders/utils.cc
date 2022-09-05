@@ -18,11 +18,16 @@
 #include <algorithm>
 #include <string>
 #include <vector>
+#include <unordered_set>
 
 #include "common/graph_kernel/model/lite_graph.h"
 #include "common/graph_kernel/model/node.h"
 
 namespace mindspore::graphkernel::expanders {
+constexpr int OFFSET1 = 1;
+constexpr int OFFSET2 = 2;
+constexpr int OFFSET3 = 3;
+constexpr int OFFSET4 = 4;
 inner::LiteGraphPtr OpDesc::Run(const BaseInfoList &inputs, const BaseInfoList &outputs, const inner::DAttrs &attrs,
                                 const std::string &processor) {
   this->inputs_info_ = inputs;
@@ -97,5 +102,48 @@ std::vector<int64_t> GetAxisList(const ValuePtr &value) {
     result.push_back(get_int_value(value));
   }
   return result;
+}
+
+std::vector<int64_t> InferShapeFromFractalnz(const std::vector<int64_t> &fractal) {
+  std::vector<int64_t> shape;
+  size_t dims = fractal.size();
+  size_t batch = dims - OFFSET4;
+  for (size_t i = 0; i < batch; i++) {
+    shape.push_back(fractal[i]);
+  }
+  shape.push_back(fractal[dims - OFFSET3] * fractal[dims - OFFSET2]);
+  shape.push_back(fractal[dims - OFFSET4] * fractal[dims - OFFSET1]);
+  return shape;
+}
+
+std::vector<int64_t> GetReducedOriShape(const std::vector<int64_t> &shape, const std::vector<int64_t> &axis) {
+  std::vector<int64_t> reduced_ori_shape;
+  std::unordered_set<int64_t> axis_set(axis.begin(), axis.end());
+  for (size_t i = 0; i < shape.size(); i++) {
+    if (axis_set.count(SizeToLong(i)) > 0) {
+      reduced_ori_shape.push_back(1);
+    } else {
+      reduced_ori_shape.push_back(shape[i]);
+    }
+  }
+  return reduced_ori_shape;
+}
+
+std::vector<int64_t> ToFracZAxis(const std::vector<int64_t> &ori_shape, const std::vector<int64_t> &ori_axis) {
+  std::vector<int64_t> frac_z_axis = ori_axis;
+  int64_t shape_len = SizeToLong(ori_shape.size());
+  for (size_t i = 0; i < frac_z_axis.size(); i++) {
+    int64_t axis_index = (frac_z_axis[i] + shape_len) % shape_len;
+    if (axis_index == shape_len - OFFSET1) {
+      frac_z_axis[i] = axis_index - OFFSET1;
+      frac_z_axis.push_back(axis_index + OFFSET2);
+    } else if (axis_index == shape_len - OFFSET2) {
+      frac_z_axis[i] = axis_index + OFFSET1;
+      frac_z_axis.push_back(axis_index + OFFSET2);
+    } else {
+      frac_z_axis[i] = axis_index;
+    }
+  }
+  return frac_z_axis;
 }
 }  // namespace mindspore::graphkernel::expanders

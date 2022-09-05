@@ -174,7 +174,8 @@ std::vector<PrimitivePtr> GraphKernelExpanderLite::InitOpList() {
     {kCPUDevice, OpLevel_1, prim::kPrimUnsqueeze},       {kCPUDevice, OpLevel_1, prim::kPrimGather},
     {kCPUDevice, OpLevel_1, prim::kPrimShape},           {kCPUDevice, OpLevel_1, prim::kPrimConcat},
     {kCPUDevice, OpLevel_1, prim::kPrimConstantOfShape}, {kCPUDevice, OpLevel_1, prim::kPrimStridedSlice},
-    {kCPUDevice, OpLevel_1, prim::kPrimLayerNormFusion}, {kCPUDevice, OpLevel_1, prim::kPrimFusedBatchNorm}};
+    {kCPUDevice, OpLevel_1, prim::kPrimLayerNormFusion}, {kCPUDevice, OpLevel_1, prim::kPrimFusedBatchNorm},
+    {kCPUDevice, OpLevel_1, prim::kPrimSoftmax}};
   const auto &flags = GraphKernelFlags::GetInstance();
   auto conv_tuning_op_list = ConvTuningExpanderOps();
   if (DisableConvTuning()) {
