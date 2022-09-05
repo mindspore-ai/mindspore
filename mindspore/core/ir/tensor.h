@@ -99,6 +99,11 @@ class MS_CORE_API TensorData {
   /// \return True if this tensor data has sub data, otherwise false.
   virtual bool has_sub_data() const = 0;
 
+  /// \brief Get whether this tensor data is from numpy.
+  ///
+  /// \return Whether this tensor data is from numpy.
+  virtual bool is_from_numpy() const { return false; }
+
   /// \brief Whether the data are equal.
   ///
   /// \param[in] other Another TensorData.
