@@ -17,6 +17,9 @@
 #include "plugin/device/cpu/kernel/masked_select_grad_cpu_kernel.h"
 #include <algorithm>
 #include <utility>
+#include <complex>
+#include <map>
+#include <functional>
 
 namespace mindspore {
 namespace kernel {
@@ -26,26 +29,46 @@ constexpr size_t kMaskedSelectGradOutputsNum = 1;
 constexpr size_t kIndexInput = 0;
 constexpr size_t kIndexMask = 1;
 constexpr size_t kIndexGrad = 2;
+constexpr size_t kIndexOutput = 0;
+using complex64 = std::complex<float>;
+using complex128 = std::complex<double>;
 }  // namespace
 
-void MaskedSelectGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  tensor_size_ = 1;
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  input_shape_a_ = AnfAlgo::GetInputDeviceShape(kernel_node, kIndexInput);
-  input_shape_b_ = AnfAlgo::GetInputDeviceShape(kernel_node, kIndexMask);
-  grad_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kIndexGrad);
+bool MaskedSelectGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                        const std::vector<KernelTensorPtr> &inputs,
+                                        const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  input_shape_a_ = inputs[kIndexInput]->GetShapeVector();
+  input_shape_b_ = inputs[kIndexMask]->GetShapeVector();
+  grad_shape_ = inputs[kIndexGrad]->GetShapeVector();
   output_shape_ = CPUKernelUtils::GetBroadcastShape(input_shape_a_, input_shape_b_);
-  for (const uint64_t &d : output_shape_) {
-    tensor_size_ *= static_cast<uint64_t>(d);
-  }
+  tensor_size_ = 1;
+  tensor_size_ =
+    std::accumulate(output_shape_.cbegin(), output_shape_.cend(), tensor_size_, std::multiplies<int64_t>());
 
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
     MS_LOG(EXCEPTION) << "MaskedSelectGrad does not support this kernel data type: " << kernel_attr;
   }
   kernel_func_ = func_list_[index].second;
+  return true;
+}
+
+int MaskedSelectGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                         const std::vector<KernelTensorPtr> &inputs,
+                                         const std::vector<KernelTensorPtr> &outputs,
+                                         const std::map<uint32_t, tensor::TensorPtr> &) {
+  input_shape_a_ = inputs[kIndexInput]->GetShapeVector();
+  input_shape_b_ = inputs[kIndexMask]->GetShapeVector();
+  grad_shape_ = inputs[kIndexGrad]->GetShapeVector();
+  output_shape_ = CPUKernelUtils::GetBroadcastShape(input_shape_a_, input_shape_b_);
+  KernelMod::Resize(base_operator, inputs, outputs);
+  tensor_size_ = 1;
+  tensor_size_ =
+    std::accumulate(output_shape_.cbegin(), output_shape_.cend(), tensor_size_, std::multiplies<int64_t>());
+  return KRET_OK;
 }
 
 template <typename T>
@@ -53,6 +76,10 @@ bool MaskedSelectGradCpuKernelMod::LaunchKernel(const std::vector<kernel::Addres
                                                 const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMaskedSelectGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMaskedSelectGradOutputsNum, kernel_name_);
+  if (tensor_size_ < 0) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', tensor_size_[" << std::to_string(tensor_size_)
+                      << "] should not be less than zero. Output shape: " << output_shape_;
+  }
   auto mask = reinterpret_cast<bool *>(inputs[kIndexMask]->addr);
   auto grad = reinterpret_cast<T *>(inputs[kIndexGrad]->addr);
   auto dx = reinterpret_cast<T *>(outputs[kIndexInput]->addr);
@@ -73,7 +100,7 @@ bool MaskedSelectGradCpuKernelMod::LaunchKernel(const std::vector<kernel::Addres
   } else {
     BroadcastIterator iter(input_shape_a_, input_shape_b_, output_shape_);
     iter.SetPos(0);
-    for (uint64_t i = 0; i < tensor_size_; ++i) {
+    for (uint64_t i = 0; i < LongToUlong(tensor_size_); ++i) {
       if (mask[iter.GetInputPosB()]) {
         dx[iter.GetInputPosA()] += grad[j++];
       }
