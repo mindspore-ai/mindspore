@@ -2,7 +2,7 @@
 
     固定稀疏注意力层。
 
-    此接口实现了Sparse Transformer中使用的稀疏注意力原语。更多详情，请见论文（https://arxiv.org/abs/1904.10509）。
+    此接口实现了Sparse Transformer中使用的稀疏注意力原语，更多详情，请见论文（https://arxiv.org/abs/1904.10509）。
 
     具体来说，它包括以下内容：
 

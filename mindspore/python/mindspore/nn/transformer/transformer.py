@@ -624,8 +624,8 @@ class VocabEmbedding(Cell):
         The embedding lookup table from the 0-th dim of the parameter table. When the parallel_config.vocab_emb_dp is
         True and in the `AUTO_PARALLEL` mode, the embedding lookup will be trained by the data parallel way, as the
         parameters will be repeated on each device. If false, the embedding table will be sharded into n parts at
-        the 0-th dimension of the embedding table, where the n is the model parallel way determined by the
-        parallel_config (EmbeddingOpParallelConfig).
+        the 0-th dimension of the embedding table, where the n is the model parallel way determined by
+        `parallel_config.model_parallel` (EmbeddingOpParallelConfig).
 
         Note:
             When `AUTO_PARALLEL` or `SEMI_AUTO_PARALLEL` mode is enabled, this layer support only 2-d dimension inputs,

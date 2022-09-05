@@ -26,10 +26,9 @@ mindspore.amp.DynamicLossScaleManager
 
     .. py:method:: get_update_cell()
 
-        返回用于更新梯度放大系数的 `Cell` 实例，:class:`mindspore.nn.TrainOneStepWithLossScaleCell` 会调用该实例。
+        返回用于更新梯度放大系数的 :class:`mindspore.nn.Cell` 实例，:class:`mindspore.nn.TrainOneStepWithLossScaleCell` 会调用该实例。
 
         返回：
-
             :class:`mindspore.nn.DynamicLossScaleUpdateCell` 实例，用于更新梯度放大系数。
 
     .. py:method:: update_loss_scale(overflow)
@@ -37,4 +36,4 @@ mindspore.amp.DynamicLossScaleManager
         根据溢出状态更新梯度放大系数。如果发生溢出，减小梯度放大系数，否则增大梯度放大系数。
 
         参数：
-            **overflow** (bool) - 表示是否溢出。
+            - **overflow** (bool) - 表示是否溢出。

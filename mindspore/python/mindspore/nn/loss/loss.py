@@ -685,7 +685,7 @@ def _check_label_dtype(labels_dtype, cls_name):
 
 class DiceLoss(LossBase):
     r"""
-    The Dice coefficient is a set similarity loss. It is used to calculate the similarity between two samples. The
+    The Dice coefficient is a set similarity loss, which is used to calculate the similarity between two samples. The
     value of the Dice coefficient is 1 when the segmentation result is the best and is 0 when the segmentation result
     is the worst. The Dice coefficient indicates the ratio of the area between two objects to the total area.
     The function is shown as follows:

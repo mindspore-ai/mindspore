@@ -109,6 +109,7 @@ def _auto_black_list(network, black_list=None):
 def auto_mixed_precision(network, amp_level="O0"):
     """
     auto mixed precision function.
+
     Args:
         network (Cell): Definition of the network.
         amp_level (str): Supports ["O0", "O1", "O2", "O3"]. Default: "O0".

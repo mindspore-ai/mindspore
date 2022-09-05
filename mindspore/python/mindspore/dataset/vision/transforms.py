@@ -1351,7 +1351,7 @@ class LinearTransformation(PyTensorOperation):
 
 class MixUp(PyTensorOperation):
     """
-    Randomly mix up a batch of images together with its labels.
+    Randomly mix up a batch of numpy.ndarray images together with its labels.
 
     Each image will be multiplied by a random weight lambda generated from the Beta distribution and then added
     to another image multiplied by 1 - lambda. The same transformation will be applied to their labels with the
@@ -1566,7 +1566,7 @@ class Pad(ImageTensorOperation, PyTensorOperation):
 
     Args:
         padding (Union[int, Sequence[int, int], Sequence[int, int, int, int]]): The number of pixels
-        to pad each border of the image.
+            to pad each border of the image.
             If a single number is provided, it pads all borders with this value.
             If a tuple or lists of 2 values are provided, it pads the (left and top)
             with the first value and (right and bottom) with the second value.
@@ -3023,7 +3023,7 @@ class RandomResizedCropWithBBox(ImageTensorOperation):
         size (Union[int, Sequence[int]]): The size of the output image. The size value(s) must be positive.
             If size is an integer, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, it should be (height, width).
-        scale (Union[list, tuple] optional): Range (min, max) of respective size of the original
+        scale (Union[list, tuple], optional): Range (min, max) of respective size of the original
             size to be cropped, which must be non-negative (default=(0.08, 1.0)).
         ratio (Union[list, tuple], optional): Range (min, max) of aspect ratio to be
             cropped, which must be non-negative (default=(3. / 4., 4. / 3.)).
@@ -3657,7 +3657,7 @@ class ResizeWithBBox(ImageTensorOperation):
             If size is an integer, smaller edge of the image will be resized to this value with
             the same image aspect ratio.
             If size is a sequence of length 2, it should be (height, width).
-        interpolation (Inter mode, optional): Image interpolation mode (default=Inter.LINEAR).
+        interpolation (Inter, optional): Image interpolation mode (default=Inter.LINEAR).
             It can be any of [Inter.LINEAR, Inter.NEAREST, Inter.BICUBIC].
 
             - Inter.LINEAR, means interpolation method is bilinear interpolation.

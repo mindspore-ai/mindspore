@@ -15,7 +15,7 @@ mindspore.amp.LossScaleManager
 
     .. py:method:: get_update_cell()
 
-        获取用于更新梯度放大系数的Cell实例。
+        获取用于更新梯度放大系数的 :class:`mindspore.nn.Cell` 实例。
 
     .. py:method:: update_loss_scale(overflow)
 

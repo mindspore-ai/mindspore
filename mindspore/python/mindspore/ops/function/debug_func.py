@@ -25,7 +25,7 @@ def print_(*input_x):
     It can also be saved in a file by setting the parameter  `print_file_path` in `context`.
     Once set, the output will be saved in the file specified by print_file_path.
     :func:`mindspore.parse_print` can be employed to reload the data.
-    For more information, please refer to :func:`mindspore.context.set_context` and :func:`mindspore.parse_print`.
+    For more information, please refer to :func:`mindspore.set_context` and :func:`mindspore.parse_print`.
 
     Note:
         In pynative mode, please use python print function.
