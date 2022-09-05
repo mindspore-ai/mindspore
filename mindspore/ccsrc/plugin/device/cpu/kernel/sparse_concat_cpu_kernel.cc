@@ -65,7 +65,7 @@ bool SparseConcatCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, con
                                       const std::vector<AddressPtr> &outputs) {
   switch (values_dtype_) {
     case kNumberTypeInt8:
-      return LaunchFunc<uint8_t>(inputs, workspace, outputs);
+      return LaunchFunc<int8_t>(inputs, workspace, outputs);
     case kNumberTypeUInt8:
       return LaunchFunc<uint8_t>(inputs, workspace, outputs);
     case kNumberTypeInt16:
