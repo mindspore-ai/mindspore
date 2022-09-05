@@ -47,6 +47,7 @@ bool ResizeBilinearGrad::get_half_pixel_centers() const {
 namespace {
 abstract::ShapePtr ResizeBilinearGradInferShape(const PrimitivePtr &primitive,
                                                 const std::vector<abstract::AbstractBasePtr> &input_args) {
+  const int64_t kRank = 4;
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   const int64_t input_num = 2;
@@ -58,6 +59,24 @@ abstract::ShapePtr ResizeBilinearGradInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(x);
   auto shape_x = x->cast<abstract::ShapePtr>();
   MS_EXCEPTION_IF_NULL(shape_x);
+  auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x);
+  auto x_shape_val = x_shape_map[kShape];
+  if (!IsDynamicRank(x_shape_val)) {
+    int64_t x_rank = SizeToLong(x_shape_val.size());
+    if (x_rank != kRank) {
+      MS_EXCEPTION(ValueError) << "For '" << prim_name << "', x should have rank 4, but got " << x_rank << ".";
+    }
+  }
+  auto dy = input_args[kGradIndex]->BuildShape();
+  MS_EXCEPTION_IF_NULL(dy);
+  auto dy_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(dy);
+  auto dy_shape_val = dy_shape_map[kShape];
+  if (!IsDynamicRank(dy_shape_val)) {
+    int64_t dy_rank = SizeToLong(dy_shape_val.size());
+    if (dy_rank != kRank) {
+      MS_EXCEPTION(ValueError) << "For '" << prim_name << "', dy should have rank 4, but got " << dy_rank << ".";
+    }
+  }
   return shape_x;
 }
 
