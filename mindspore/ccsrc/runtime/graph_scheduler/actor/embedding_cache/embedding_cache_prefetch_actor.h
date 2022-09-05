@@ -72,7 +72,7 @@ using distributed::rpc::TCPServer;
 class EmbeddingCachePrefetchActor : public ActorBase {
  public:
   explicit EmbeddingCachePrefetchActor(device::DeviceContext *device_context)
-      : ActorBase("EmbeddingCachePrefetchActor"), device_context_(device_context) {}
+      : ActorBase("EmbeddingCachePrefetchActor"), device_context_(device_context), cpu_device_context_(nullptr) {}
 
   ~EmbeddingCachePrefetchActor() override = default;
 

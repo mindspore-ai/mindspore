@@ -1546,7 +1546,7 @@ void SessionBasic::GetForwardOpOutputRefCount(const KernelGraph *graph, const st
 }
 
 void SessionBasic::ReleaseForwardOpOutput(const std::vector<tensor::TensorPtr> &input_tensors,
-                                          std::map<std::string, size_t> *forward_op_output_tensor_id) {
+                                          std::map<std::string, size_t> *forward_op_output_tensor_id) const {
   MS_EXCEPTION_IF_NULL(forward_op_output_tensor_id);
   for (const auto &tensor : input_tensors) {
     auto it = forward_op_output_tensor_id->find(tensor->id());

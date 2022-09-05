@@ -17,21 +17,21 @@
 from mindspore._checkparam import Validator
 from mindspore._c_expression import RecoveryContext
 
-_recovery_context = None
+RECOVERY_CONTEXT = None
 
 
 def recovery_context():
     """
-    Get the global _recovery_context, if it is not created, create a new one.
+    Get the global RECOVERY_CONTEXT, if it is not created, create a new one.
 
     Returns:
-        _recovery_context, the global recovery context.
+        RECOVERY_CONTEXT, the global recovery context.
     """
 
-    global _recovery_context
-    if _recovery_context is None:
-        _recovery_context = RecoveryContext.get_instance()
-    return _recovery_context
+    global RECOVERY_CONTEXT
+    if RECOVERY_CONTEXT is None:
+        RECOVERY_CONTEXT = RecoveryContext.get_instance()
+    return RECOVERY_CONTEXT
 
 _set_recovery_context_func_map = {
     "ckpt_path": recovery_context().set_ckpt_path,
