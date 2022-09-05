@@ -124,7 +124,8 @@ bool MultinomialCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
   MS_EXCEPTION_IF_NULL(cumulative_value);
 
   int64_t num_row = 1;
-  if (input_shape_.size() == 2) {
+  size_t num_shape = 2;
+  if (input_shape_.size() == num_shape) {
     num_row = input_shape_[0];
   }
   int64_t num_col = input_shape_[input_shape_.size() - 1];
@@ -132,7 +133,7 @@ bool MultinomialCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
   for (int64_t i = 0; i < num_row; ++i) {
     // Compute the cumulative array.
     cumulative_value[i * num_col] = input_tensor[i * num_col];
-    for (int64_t j = 1; j < num_col; ++j) {
+    for (size_t j = 1; j < IntToSize(num_col); ++j) {
       size_t index = i * num_col + j;
       cumulative_value[index] = cumulative_value[index - 1] + input_tensor[index];
     }
@@ -140,7 +141,7 @@ bool MultinomialCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
     // Normalize the cumulative array.
     auto sum = cumulative_value[(i + 1) * num_col - 1];
     if (sum != static_cast<T_in>(0.0)) {
-      for (int64_t k = 0; k < num_col; ++k) {
+      for (size_t k = 0; k < IntToSize(num_col); ++k) {
         size_t index = i * num_col + k;
         cumulative_value[index] /= sum;
       }

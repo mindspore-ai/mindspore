@@ -88,7 +88,7 @@ int TCPSocketOperation::ReceiveMessage(Connection *connection, struct msghdr *re
               reinterpret_cast<char *>(recvMsg->msg_iov[i].iov_base) + received_bytes - tmpLen;
 
             recvMsg->msg_iov = &recvMsg->msg_iov[i];
-            recvMsg->msg_iovlen -= SizeToInt(i);
+            recvMsg->msg_iovlen -= i;
             break;
           }
         }
