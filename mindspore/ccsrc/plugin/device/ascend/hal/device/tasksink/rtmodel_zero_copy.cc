@@ -18,6 +18,7 @@
 
 #include <vector>
 #include <map>
+#include <set>
 #include <algorithm>
 #include "runtime/rt.h"
 #include "external/acl/acl_rt.h"
@@ -76,7 +77,7 @@ bool CheckTaskValid(const CNodePtr &node, const std::vector<void *> &args_datas)
     MS_EXCEPTION_IF_NULL(node_address);
     if (node_address->addr != args_datas[i]) {
       MS_LOG(ERROR) << "Node " << node->UniqueName() << " addr " << node_address->addr << " not equal to addr of task "
-                    << args_datas[i];
+                    << args_datas[i] << " index:" << i;
       task_valid = false;
     }
   }
@@ -96,6 +97,43 @@ bool NeedSkipZeroCopy(const CNodePtr &node) {
     return true;
   }
   return false;
+}
+
+bool EnableZeroCopyForSubgraphSink(const session::KernelGraph &graph) {
+  if (!graph.has_flag(kFlagEnableZeroCopyInGraph)) {
+    return false;
+  }
+  auto ms_ctx = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_ctx);
+  if (ms_ctx->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode &&
+      ms_ctx->get_param<bool>(MS_CTX_ENABLE_TASK_SINK) == true &&
+      ms_ctx->get_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK) == false) {
+    return true;
+  }
+  return false;
+}
+
+size_t FetchInputNumByInputNode(const AnfNodePtr &node, const KernelWithIndex &input_with_index) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(input_with_index.first);
+  auto input_num = common::AnfAlgo::GetInputTensorNum(node);
+  for (size_t i = 0; i < input_num; ++i) {
+    size_t input_index_in_graph = AnfAlgo::GetInputIndexInGraph(node, i);
+    const auto &node_with_index = common::AnfAlgo::GetPrevNodeOutput(node, input_index_in_graph, true);
+    if (node_with_index == input_with_index) {
+      return i;
+    }
+  }
+  MS_LOG(EXCEPTION) << "Invalid input node:" << input_with_index.first->DebugString()
+                    << " index:" << input_with_index.second << " for node:" << node->DebugString();
+  return 0;
+}
+
+// If the output node is output of kernel graph or the input of output ref node, the output should be replaced.
+bool IsOutputZeroCopy(const KernelWithIndex &node, const std::vector<KernelWithIndex> &graph_outputs,
+                      const std::set<KernelWithIndex> &zero_copy_ref_nodes) {
+  return ((find(graph_outputs.begin(), graph_outputs.end(), node) != graph_outputs.end()) ||
+          (zero_copy_ref_nodes.find(node) != zero_copy_ref_nodes.end()));
 }
 }  // namespace
 
@@ -129,6 +167,18 @@ void *ValueNodeZeroCopyTask::GetAddressPtr() {
   return value_node_address->GetMutablePtr();
 }
 
+void *CNodeZeroCopyTask::GetAddressPtr() {
+  auto node = anf_node_.lock();
+  MS_EXCEPTION_IF_NULL(node);
+  if (!node->isa<CNode>()) {
+    MS_LOG(EXCEPTION) << "Not a CNode " << node->DebugString();
+  }
+  auto node_device_address = AnfAlgo::GetMutableOutputAddr(node, output_index_, false);
+  MS_EXCEPTION_IF_NULL(node_device_address);
+  MS_EXCEPTION_IF_NULL(node_device_address->GetMutablePtr());
+  return node_device_address->GetMutablePtr();
+}
+
 bool ZeroCopyTask::UpdateArgs(void *stream) {
   device_ptr_ = GetAddressPtr();
   if (device_ptr_ == nullptr) {
@@ -154,7 +204,103 @@ bool ZeroCopyTask::UpdateArgs(void *stream) {
   return true;
 }
 
+bool RtModelZeroCopy::GenerateZeroCopyTaskForSubGraphSink(const session::KernelGraph &graph) {
+  std::vector<ZeroCopyTaskPtr> zero_copy_tasks;
+  auto task_lists = ge::model_runner::ModelRunner::Instance().GetTaskList(graph.graph_id());
+  std::map<std::string, TaskPtr> op_name_to_task;
+  std::transform(task_lists.begin(), task_lists.end(), std::inserter(op_name_to_task, op_name_to_task.end()),
+                 [](const TaskPtr &task) { return std::make_pair(task->task_name(), task); });
+
+  const auto &nodes = graph.execution_order();
+  const auto &output_with_indexs = common::AnfAlgo::GetAllOutputWithIndex(graph.output());
+  const auto &ref_node_map = graph.GetRefMap();
+  std::set<KernelWithIndex> zero_copy_inputs;
+  std::set<KernelWithIndex> zero_copy_outputs;
+  std::set<KernelWithIndex> zero_copy_ref_nodes;
+  for (auto iter = nodes.rbegin(); iter != nodes.rend(); ++iter) {
+    const auto &node = *iter;
+    MS_EXCEPTION_IF_NULL(node);
+    if (NeedSkipZeroCopy(node)) {
+      continue;
+    }
+
+    MS_EXCEPTION_IF_NULL(node);
+    auto op_name = node->UniqueName();
+    auto task_iter = op_name_to_task.find(op_name);
+    if (task_iter == op_name_to_task.end()) {
+      MS_LOG(EXCEPTION) << "Cannot found task of op " << op_name;
+    }
+    auto task = task_iter->second;
+    MS_EXCEPTION_IF_NULL(task);
+
+    auto input_num = common::AnfAlgo::GetInputTensorNum(node);
+    auto output_num = common::AnfAlgo::GetOutputTensorNum(node);
+    for (size_t i = 0; i < input_num; ++i) {
+      if (zero_copy_inputs.find(KernelWithIndex(node, i)) != zero_copy_inputs.end()) {
+        continue;
+      }
+
+      size_t input_index_in_graph = AnfAlgo::GetInputIndexInGraph(node, i);
+      const auto &input_with_index = common::AnfAlgo::GetPrevNodeOutput(node, input_index_in_graph, true);
+      const auto input = input_with_index.first;
+      MS_EXCEPTION_IF_NULL(input);
+      if (input->isa<Parameter>()) {
+        // 1. input parameter.
+        zero_copy_tasks.emplace_back(std::make_shared<tasksink::ParameterZeroCopyTask>(
+          input, task->Args(), i * sizeof(void *), task->task_name()));
+        zero_copy_inputs.emplace(node, i);
+      } else if (input->isa<CNode>()) {
+        // 2. input which is graph output.
+        if (find(output_with_indexs.begin(), output_with_indexs.end(), input_with_index) != output_with_indexs.end()) {
+          zero_copy_tasks.emplace_back(std::make_shared<tasksink::CNodeZeroCopyTask>(
+            input, input_with_index.second, task->Args(), i * sizeof(void *), task->task_name()));
+          zero_copy_inputs.emplace(node, i);
+        }
+      }
+    }
+
+    for (size_t i = 0; i < output_num; ++i) {
+      bool is_output_zero_copy = IsOutputZeroCopy(KernelWithIndex(node, i), output_with_indexs, zero_copy_ref_nodes);
+      if (is_output_zero_copy) {
+        // 3. Output of graph.
+        // 4. Output which is input of ref node.
+        zero_copy_tasks.emplace_back(std::make_shared<tasksink::CNodeZeroCopyTask>(
+          node, i, task->Args(), (input_num + i) * sizeof(void *), task->task_name()));
+        zero_copy_outputs.emplace(node, i);
+      }
+
+      const auto ref_iter = ref_node_map.find(KernelWithIndex(node, i));
+      if (ref_iter != ref_node_map.end() && ref_iter->second.first != nullptr) {
+        if (is_output_zero_copy && ref_iter->second.first->isa<CNode>()) {
+          // 5. Input of ref output node.
+          size_t input_index = FetchInputNumByInputNode(node, ref_iter->second);
+          zero_copy_tasks.emplace_back(
+            std::make_shared<tasksink::CNodeZeroCopyTask>(ref_iter->second.first, ref_iter->second.second, task->Args(),
+                                                          input_index * sizeof(void *), task->task_name()));
+          zero_copy_inputs.emplace(ref_iter->second.first, input_index);
+          zero_copy_ref_nodes.emplace(ref_iter->second);
+        } else if (ref_iter->second.first->isa<Parameter>()) {
+          // 6. Ref output of Parameter input.
+          zero_copy_tasks.emplace_back(std::make_shared<tasksink::ParameterZeroCopyTask>(
+            ref_iter->second.first, task->Args(), (input_num + i) * sizeof(void *), task->task_name()));
+          zero_copy_outputs.emplace(node, i);
+        }
+      }
+    }
+  }
+
+  auto iter = graph_zero_copy_tasks_.try_emplace(graph.graph_id(), zero_copy_tasks);
+  if (!iter.second) {
+    MS_LOG(ERROR) << "Generate ZeroCopyTask failed, Duplicate graph id " << graph.graph_id();
+    return false;
+  }
+  return true;
+}
+
 bool RtModelZeroCopy::GenerateZeroCopyTasks(const session::KernelGraph &graph) {
+  if (EnableZeroCopyForSubgraphSink(graph)) {
+    return GenerateZeroCopyTaskForSubGraphSink(graph);
+  }
   if (!graph.has_flag(kFlagPyNativeRunInGraph)) {
     MS_LOG(INFO) << "RtModelZeroCopy is not enabled";
     return true;
@@ -209,7 +355,7 @@ bool RtModelZeroCopy::GenerateZeroCopyTasks(const session::KernelGraph &graph) {
 }
 
 bool RtModelZeroCopy::UpdateTaskArgs(const session::KernelGraph &graph, void *stream) const {
-  if (!graph.has_flag(kFlagPyNativeRunInGraph)) {
+  if (!graph.has_flag(kFlagPyNativeRunInGraph) && !EnableZeroCopyForSubgraphSink(graph)) {
     MS_LOG(INFO) << "RtModelZeroCopy is not enabled, no need to update task args.";
     return true;
   }

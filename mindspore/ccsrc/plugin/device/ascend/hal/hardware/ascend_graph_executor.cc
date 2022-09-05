@@ -166,8 +166,9 @@ void InitMemReuseExecOrder(KernelGraph *kernel_graph) {
 
 void EnableGraphInputZeroCopy(const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
-  // Zero copy is only enabled for PyNative.
-  if (!graph->has_flag(kFlagPyNativeRunInGraph) || !graph->is_graph_run_mode()) {
+  // Zero copy is only enabled for PyNative and Subgraph sink.
+  if ((!graph->has_flag(kFlagPyNativeRunInGraph) && !graph->has_flag(kFlagEnableZeroCopyInGraph)) ||
+      !graph->is_graph_run_mode()) {
     return;
   }
   const auto &input_nodes = graph->input_nodes();
@@ -178,6 +179,30 @@ void EnableGraphInputZeroCopy(const KernelGraphPtr &graph) {
       MS_EXCEPTION_IF_NULL(input_address);
       input_address->set_is_ptr_persisted(false);
       MS_LOG(INFO) << "Enable zero copy for input " << input->DebugString();
+    }
+  }
+}
+
+void EnableGraphOutputZeroCopy(const KernelGraphPtr &graph) {
+  MS_LOG(DEBUG) << "EnableGraphOutputZeroCopy start";
+  MS_EXCEPTION_IF_NULL(graph);
+  if ((!graph->has_flag(kFlagEnableZeroCopyInGraph)) || !graph->is_graph_run_mode()) {
+    MS_LOG(DEBUG) << "EnableGraphOutputZeroCopy start return";
+    return;
+  }
+  // Zero copy is only enabled for subgraph sink.
+  auto outputs = common::AnfAlgo::GetAllOutputWithIndex(graph->output());
+  for (const auto &node_with_index : outputs) {
+    const auto &node = node_with_index.first;
+    const auto &index = node_with_index.second;
+    MS_EXCEPTION_IF_NULL(node);
+    MS_LOG(DEBUG) << "EnableGraphOutputZeroCopy check node:" << node->DebugString();
+    if (node->isa<CNode>() && AnfAlgo::OutputAddrExist(node, index)) {
+      auto device_address = AnfAlgo::GetMutableOutputAddr(node, index);
+      MS_EXCEPTION_IF_NULL(device_address);
+      device_address->set_is_ptr_persisted(false);
+      MS_LOG(DEBUG) << "Disable ptr persisted in output node:" << node->DebugString() << " index:" << index
+                    << " address:" << device_address << " for graph:" << graph->ToString();
     }
   }
 }
@@ -239,6 +264,7 @@ void AscendGraphExecutor::PreprocessBeforeRun(const KernelGraphPtr &graph) const
   LoadModel(NOT_NULL(graph));
   AssignOutputNopNodeDeviceAddress(graph, device_context_);
   EnableGraphInputZeroCopy(graph);
+  EnableGraphOutputZeroCopy(graph);
 }
 
 void AscendGraphExecutor::UpdateExecOrder(const KernelGraphPtr &graph) const {

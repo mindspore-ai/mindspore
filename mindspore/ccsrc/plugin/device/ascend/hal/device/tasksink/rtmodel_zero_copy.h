@@ -72,6 +72,19 @@ class ValueNodeZeroCopyTask : public ZeroCopyTask {
   void *GetAddressPtr() override;
 };
 
+class CNodeZeroCopyTask : public ZeroCopyTask {
+ public:
+  CNodeZeroCopyTask(const AnfNodeWeakPtr &anf_node, size_t output_index, void *args_base, size_t args_offset,
+                    const std::string &task_name)
+      : ZeroCopyTask(anf_node, args_base, args_offset, task_name) {
+    output_index_ = output_index;
+  }
+  void *GetAddressPtr() override;
+
+ private:
+  size_t output_index_;
+};
+
 // Update the device address in task without copying data.
 // Usually we assume that the address in the task is constant.
 // If the address of graph input changed, we need to copy data of graph input tensor to the address of the task.
@@ -85,6 +98,7 @@ class RtModelZeroCopy {
 
   // Generate ZeroCopyTasks after the tasks of rtModel is Distributed. (Need to get task args address)
   bool GenerateZeroCopyTasks(const session::KernelGraph &graph);
+  bool GenerateZeroCopyTaskForSubGraphSink(const session::KernelGraph &graph);
   // Copy device address ptr to task args if the ptr changed.
   bool UpdateTaskArgs(const session::KernelGraph &graph, void *stream) const;
   // Check rtModel after update task args. The process of checking is consistent with the process of generating tasks.
