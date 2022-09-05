@@ -1307,7 +1307,7 @@ def parse_print(print_file_name):
         >>> input_pra = Tensor(x)
         >>> net = PrintInputTensor()
         >>> net(input_pra)
-
+        >>>
         >>> import mindspore
         >>> data = mindspore.parse_print('./log.data')
         >>> print(data)

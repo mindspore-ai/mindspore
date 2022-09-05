@@ -8,8 +8,8 @@ mindspore.ops.csr_add
     参数：
         - **a** (CSRTensor) - 稀疏的 CSRTensor。
         - **b** (CSRTensor)  - 稀疏的 CSRTensor。
-        - **alpha** (Tensor) - 稠密张量，shape必须可以广播到`a`。
-        - **beta** (Tensor) - 稠密张量，shape必须可以广播到`b`。
+        - **alpha** (Tensor) - 稠密张量，shape必须可以广播到 `a`。
+        - **beta** (Tensor) - 稠密张量，shape必须可以广播到 `b`。
 
     返回：
         返回一个包含以下数据的CSRTensor。
