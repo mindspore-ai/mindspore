@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-#include "plugin/device/cpu/kernel/iou_cpu_kernel.h"
-
 #include <string>
 #include <algorithm>
+#include <map>
 #include <utility>
+
+#include "plugin/device/cpu/kernel/iou_cpu_kernel.h"
 
 namespace mindspore {
 namespace kernel {
@@ -28,18 +29,47 @@ constexpr size_t kIOUOutputsNum = 1;
 constexpr size_t kBoxCoordinateLen = 4;
 }  // namespace
 
-void IOUCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  auto anchor_boxes_shape = AnfAlgo::GetInputDeviceShape(kernel_node, ANCHOR_BOXES);
-  auto gt_boxes_shape = AnfAlgo::GetInputDeviceShape(kernel_node, GT_BOXES);
-  if (AnfAlgo::IsShapesDynamic({anchor_boxes_shape, gt_boxes_shape})) {
-    return;
+bool IOUCpuKernelMod::Init(const mindspore::kernel::BaseOperatorPtr &base_operator,
+                           const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs) {
+  constexpr size_t inputs_num = 2;
+  constexpr size_t outputs_num = 1;
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), inputs_num, kernel_name_);
+  CHECK_KERNEL_INPUTS_NUM(outputs.size(), outputs_num, kernel_name_);
+
+  auto mode_value_ptr = base_operator->GetAttr(kAttrMode);
+  MS_EXCEPTION_IF_NULL(mode_value_ptr);
+  auto mode = GetValue<std::string>(mode_value_ptr);
+  if (mode == "iou") {
+    mode_ = 0;
+  } else if (mode == "iof") {
+    mode_ = 1;
+  } else {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', mode only support 'iou' or 'iof'.";
   }
+
+  kernel_name_ = base_operator->GetPrim()->name();
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
+  }
+  kernel_func_ = func_list_[index].second;
+  return true;
+}
+
+int IOUCpuKernelMod::Resize(const mindspore::kernel::BaseOperatorPtr &base_operator,
+                            const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
+                            const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+    return ret;
+  }
+
+  auto anchor_boxes_shape = inputs[ANCHOR_BOXES]->GetShapeVector();
+  auto gt_boxes_shape = inputs[GT_BOXES]->GetShapeVector();
   constexpr size_t BOX_SHAPE_SIZE = 2;
   constexpr size_t BOX_SIZE_INDEX = 0;
   constexpr size_t BOX_COORDINATE_INDEX = 1;
-
   if (anchor_boxes_shape.size() != BOX_SHAPE_SIZE || anchor_boxes_shape[BOX_COORDINATE_INDEX] != kBoxCoordinateLen) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the shape of 'anchor_boxes' must be [N, 4], but got: " << Vector2Str(anchor_boxes_shape);
@@ -51,20 +81,8 @@ void IOUCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   }
   gt_boxes_size_ = static_cast<size_t>(gt_boxes_shape[BOX_SIZE_INDEX]);
   iou_size_ = anchor_boxes_size_ * gt_boxes_size_;
-  std::string iou_mode = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, "mode");
-  if (iou_mode != "iou" && iou_mode != "iof") {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'mode' must be 'iou' or 'iof', but got: " << iou_mode;
-  }
-  if (iou_mode == "iof") {
-    mode_ = IOF_MODE;
-  }
 
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
-  if (!is_match) {
-    MS_LOG(EXCEPTION) << "IOU does not support this kernel data type: " << kernel_attr;
-  }
-  kernel_func_ = func_list_[index].second;
+  return KRET_OK;
 }
 
 template <typename T>
@@ -109,7 +127,7 @@ bool IOUCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs
   return true;
 }
 
-std::vector<std::pair<KernelAttr, IOUCpuKernelMod::IOUFunc>> IOUCpuKernelMod::func_list_ = {
+std::vector<std::pair<KernelAttr, IOUCpuKernelMod::IOULaunchFunc>> IOUCpuKernelMod::func_list_ = {
   {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
    &IOUCpuKernelMod::LaunchKernel<float>},
   {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
@@ -118,7 +136,7 @@ std::vector<std::pair<KernelAttr, IOUCpuKernelMod::IOUFunc>> IOUCpuKernelMod::fu
 std::vector<KernelAttr> IOUCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
   (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                       [](const std::pair<KernelAttr, IOUFunc> &pair) { return pair.first; });
+                       [](const std::pair<KernelAttr, IOULaunchFunc> &pair) { return pair.first; });
   return support_list;
 }
 

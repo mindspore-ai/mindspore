@@ -630,6 +630,8 @@ Other Functions
      - Determine if two strings are equal.
    * - mindspore.ops.typeof
      - Get type of object.
+   * - mindspore.ops.iou
+     - Computes the intersection over union (IOU) or the intersection over foreground (IOF) for boxes.-
 
 .. msplatformautosummary::
     :toctree: ops

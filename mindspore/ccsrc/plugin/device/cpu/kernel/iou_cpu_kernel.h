@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_IOU_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_IOU_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_IOU_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_IOU_CPU_KERNEL_H_
 
 #include <vector>
+#include <map>
 #include <utility>
 
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
@@ -24,26 +25,29 @@
 
 namespace mindspore {
 namespace kernel {
-class IOUCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class IOUCpuKernelMod : public NativeCpuKernelMod {
  public:
   IOUCpuKernelMod() = default;
   ~IOUCpuKernelMod() override = default;
-  void InitKernel(const CNodePtr &kernel_node) override;
-
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs,
+             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs) override {
     return kernel_func_(this, inputs, outputs);
   }
-
   std::vector<KernelAttr> GetOpSupport() override;
+  template <typename T>
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+
+  using IOULaunchFunc =
+    std::function<bool(IOUCpuKernelMod *, const std::vector<AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
 
  private:
-  template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
-  using IOUFunc = std::function<bool(IOUCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                     const std::vector<kernel::AddressPtr> &)>;
-  static std::vector<std::pair<KernelAttr, IOUFunc>> func_list_;
-  IOUFunc kernel_func_;
+  static std::vector<std::pair<KernelAttr, IOULaunchFunc>> func_list_;
+  IOULaunchFunc kernel_func_;
   size_t anchor_boxes_size_{0};
   size_t gt_boxes_size_{0};
   size_t iou_size_{0};
@@ -55,4 +59,4 @@ class IOUCpuKernelMod : public DeprecatedNativeCpuKernelMod {
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_IOU_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_IOU_CPU_KERNEL_H_

@@ -5743,12 +5743,12 @@ def accumulate_n(*x):
     memory when inputs are ready at different time since the minimum temporary
     storage is proportional to the output size rather than the input size.
 
-    Inputs:
+    Args:
         - **x** (Union(tuple[Tensor], list[Tensor])) - The input tuple or list
           is made up of multiple tensors whose dtype is number to be added together.
           Each element of tuple or list should have the same shape.
 
-    Outputs:
+    Returns:
         Tensor, has the same shape and dtype as each entry of the `x`.
 
     Raises:
@@ -5768,6 +5768,51 @@ def accumulate_n(*x):
 
     accumulate_ = _get_cache_prim(P.AccumulateNV2)()
     return accumulate_(x)
+
+
+def iou(anchor_boxes, gt_boxes, mode='iou'):
+    r"""
+    Calculates intersection over union for boxes.
+
+    Computes the intersection over union (IOU) or the intersection over foreground (IOF) based on the ground-truth and
+    predicted regions.
+
+    .. math::
+        \text{IOU} = \frac{\text{Area of Overlap}}{\text{Area of Union}}
+
+        \text{IOF} = \frac{\text{Area of Overlap}}{\text{Area of Ground Truth}}
+
+    .. warning::
+        In Ascend, only computation of float16 data is supported. To avoid overflow, the input length
+        and width are scaled by 0.2 internally.
+
+    Args:
+        - **anchor_boxes** (Tensor) - Anchor boxes, tensor of shape (N, 4). "N" indicates the number of anchor boxes,
+          and the value "4" refers to "x0", "y0", "x1", and "y1". Data type must be float16 or float32.
+        - **gt_boxes** (Tensor) - Ground truth boxes, tensor of shape (M, 4). "M" indicates the number of ground
+          truth boxes, and the value "4" refers to "x0", "y0", "x1", and "y1". Data type must be float16 or float32.
+        - **mode** (string): The mode is used to specify the calculation method,
+          now supporting 'iou' (intersection over union) or 'iof' (intersection over foreground) mode.
+          Default: 'iou'.
+
+    Returns:
+        Tensor, the 'iou' values, tensor of shape (M, N), with the same data type as `anchor_boxes`.
+
+    Raises:
+        KeyError: When `mode` is not 'iou' or 'iof'.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> anchor_boxes = Tensor(np.random.randint(1.0, 5.0, [3, 4]), mindspore.float16)
+        >>> gt_boxes = Tensor(np.random.randint(1.0, 5.0, [3, 4]), mindspore.float16)
+        >>> mode = 'iou'
+        >>> output = ops.iou(anchor_boxes, gt_boxes, mode)
+        >>> print(output.shape)
+        (3, 3)
+    """
+    return _get_cache_prim(P.IOU)(mode)(anchor_boxes, gt_boxes)
 
 
 __all__ = [
@@ -5911,6 +5956,7 @@ __all__ = [
     'kron',
     'rot90',
     'remainder',
-    'accumulate_n'
+    'accumulate_n',
+    'iou'
 ]
 __all__.sort()
