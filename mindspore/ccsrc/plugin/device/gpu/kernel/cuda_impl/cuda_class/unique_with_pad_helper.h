@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_CLASS_UNIQUE_WITH_PAD_HELPER_H_
 #include <string>
 #include <vector>
+#include <functional>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_class/helper_base.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/unique_with_pad_impl.cuh"
 
@@ -27,9 +28,7 @@ template <typename T, typename S>
 class UniqueWithPadHelperGpuKernel : public GpuKernelHelperBase {
  public:
   explicit UniqueWithPadHelperGpuKernel(const std::string &kernel_name, const uint32_t &device_id)
-      : GpuKernelHelperBase(kernel_name, device_id) {
-    num_elements_ = 1;
-  }
+      : GpuKernelHelperBase(kernel_name, device_id) {}
   virtual ~UniqueWithPadHelperGpuKernel() = default;
   int CalMemSize(const std::vector<std::vector<int64_t>> &input_shapes,
                  const std::vector<std::vector<int64_t>> &output_shapes) override {
@@ -39,12 +38,18 @@ class UniqueWithPadHelperGpuKernel : public GpuKernelHelperBase {
     if (flag == -1) {
       return flag;
     }
-    num_elements_ = input_size_list_[0] / sizeof(T);
-    size_t workspace_size = num_elements_ * sizeof(S);
+    if (input_shapes[0].size() > 1) {
+      batch_size_ = std::accumulate(input_shapes[0].begin(), input_shapes[0].end() - 1, 1, std::multiplies<int64_t>());
+      input_size_ = static_cast<size_t>(input_shapes[0][input_shapes[0].size() - 1]);
+    } else {
+      batch_size_ = 1;
+      input_size_ = input_size_list_[0] / sizeof(T);
+    }
+    size_t workspace_size = input_size_ * sizeof(S);
     work_size_list_.emplace_back(workspace_size);
     work_size_list_.emplace_back(workspace_size);
     output_size_list_.emplace_back(input_size_list_[0]);
-    output_size_list_.emplace_back(num_elements_ * sizeof(S));
+    output_size_list_.emplace_back(input_size_list_[0] / sizeof(T) * sizeof(S));
     return 0;
   }
 
@@ -84,14 +89,20 @@ class UniqueWithPadHelperGpuKernel : public GpuKernelHelperBase {
     if (flag != 0) {
       return flag;
     }
-
-    CalUniqueWithPad(t_input_ptr, num_elements_, s_input_index, s_sorted_index, t_output_ptr, s_output_index,
-                     reinterpret_cast<cudaStream_t>(cuda_stream), t_pad_num_ptr);
+    for (size_t i = 0; i < batch_size_; i++) {
+      CalUniqueWithPad(t_input_ptr, input_size_, s_input_index, s_sorted_index, t_output_ptr, s_output_index,
+                       reinterpret_cast<cudaStream_t>(cuda_stream), t_pad_num_ptr);
+      t_input_ptr += input_size_;
+      t_pad_num_ptr++;
+      t_output_ptr += input_size_;
+      s_output_index += input_size_;
+    }
     return 0;
   }
 
  private:
-  int num_elements_;
+  size_t batch_size_ = 1;
+  size_t input_size_ = 0;
 };
 }  // namespace cukernel
 }  // namespace mindspore

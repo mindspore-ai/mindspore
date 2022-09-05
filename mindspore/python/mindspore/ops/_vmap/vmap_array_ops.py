@@ -31,7 +31,7 @@ from mindspore.ops.operations.array_ops import Fills, UniqueConsecutive, Col2Im,
 from mindspore.ops.operations.random_ops import RandomPoisson
 from mindspore.ops.primitive import Primitive
 from mindspore.ops._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, _bdim_at_front, \
-    _raise_value_error, _handle_broadcasting, get_unsupported_dynamic_vmap_rule, _broadcast_by_axis, \
+    _raise_value_error, _vmap_clone_prim, _handle_broadcasting, get_unsupported_dynamic_vmap_rule, _broadcast_by_axis, \
     get_unop_vmap_rule, _get_reduce_out_dim, _get_reduce_batch_axis, _vmap_update_prim_attr, \
     _bdim_at_any
 from mindspore.ops.composite import _VmapGeneralRule
@@ -904,7 +904,7 @@ def get_range_vmap_rule(prim, axis_size):
 
 @vmap_rules_getters.register(P.UniqueWithPad)
 def get_unique_with_pad_vmap_rule(prim, axis_size):
-    """VmapRule for `UniqueWithPad` operations."""
+    """VmapRule for `UniqueWithPad` operations.
     if isinstance(prim, str):
         prim = P.UniqueWithPad()
 
@@ -912,6 +912,25 @@ def get_unique_with_pad_vmap_rule(prim, axis_size):
 
     def vmap_rule(x_bdim, pad_num_bdim):
         return prim_vmap(x_bdim, pad_num_bdim)
+
+    return vmap_rule
+    """
+    if hasattr(prim, 'batch_rank'):
+        batch_rank = prim.batch_rank + 1
+    else:
+        batch_rank = 1
+
+    batch_prim = _vmap_clone_prim(prim)
+    batch_prim.add_prim_attr("batch_rank", batch_rank)
+
+    def vmap_rule(x_bdim, pad_num_bdim):
+        x, x_dim = x_bdim
+        pad_num, pad_num_dim = pad_num_bdim
+
+        x = _bdim_at_front(x, x_dim, axis_size)
+        pad_num = _bdim_at_front(pad_num, pad_num_dim, axis_size)
+        y, idx = batch_prim(x, pad_num)
+        return (y, 0), (idx, 0)
 
     return vmap_rule
 

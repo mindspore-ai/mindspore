@@ -63,6 +63,12 @@ const std::vector<std::pair<KernelAttr, UniqueWithPadPtrCreatorFunc>> kernel_att
 bool UniqueWithPadGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                      const std::vector<KernelTensorPtr> &outputs) {
   base_operator_ = base_operator;
+  kernel_name_ = base_operator->name();
+  auto batch_rank = base_operator->get_batch_rank();
+  if (batch_rank < 0) {
+    return false;
+  }
+  batch_rank_ = static_cast<size_t>(batch_rank);
   inputs_ = inputs;
   outputs_ = outputs;
   auto [is_match, index] = MatchKernelAttr(GetKernelAttrFromTensors(inputs, outputs), GetOpSupport());
@@ -78,6 +84,24 @@ bool UniqueWithPadGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   }
   std::vector<size_t> shape =
     std::vector<size_t>(inputs[0]->GetDeviceShapeAdaptively().begin(), inputs[0]->GetDeviceShapeAdaptively().end());
+  if (batch_rank_ > 0) {
+    if (shape.size() != static_cast<size_t>(batch_rank_ + 1)) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                        << "', the shape size of 'input' must be equal to 'batch_rank + 1', "
+                           "but got the shape of 'input': "
+                        << Vector2Str(shape) << " and 'batch_rank': " << batch_rank_;
+    }
+    std::vector<size_t> pad_shape =
+      std::vector<size_t>(inputs[1]->GetDeviceShapeAdaptively().begin(), inputs[1]->GetDeviceShapeAdaptively().end());
+    auto pad_nums = std::accumulate(pad_shape.begin(), pad_shape.end(), 1, std::multiplies<int64_t>());
+    auto batch_size = std::accumulate(shape.begin(), shape.begin() + batch_rank_, 1, std::multiplies<int64_t>());
+    if (pad_nums != static_cast<int64_t>(batch_size)) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                        << "', the elements num of input 'pad' must be equal to input 'x' batch size, "
+                           "but got the elements num of input 'pad': "
+                        << Vector2Str(pad_shape) << " and input 'x' batch size: " << batch_size;
+    }
+  }
   is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name_, "input");
   if (is_null_input_) {
     InitSizeLists();

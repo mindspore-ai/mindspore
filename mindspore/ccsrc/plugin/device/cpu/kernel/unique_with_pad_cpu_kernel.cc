@@ -26,13 +26,13 @@ bool UniqueWithPadCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &in
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kUniqueWithPadOutputsNum, kernel_name_);
   if (dtype_ == kNumberTypeInt32) {
     UniqueCpuKernelMod::LaunchKernel<int, int>(inputs, workspace, outputs);
-    PadOutput<int>(inputs, outputs, output_size_);
+    PadOutput<int>(inputs, outputs, output_sizes_);
   } else if (dtype_ == kNumberTypeInt64) {
     UniqueCpuKernelMod::LaunchKernel<int64_t, int64_t>(inputs, workspace, outputs);
-    PadOutput<int64_t>(inputs, outputs, output_size_);
+    PadOutput<int64_t>(inputs, outputs, output_sizes_);
   } else if (dtype_ == kNumberTypeFloat32 || dtype_ == kNumberTypeFloat16) {
     UniqueCpuKernelMod::LaunchKernel<float, int>(inputs, workspace, outputs);
-    PadOutput<float>(inputs, outputs, output_size_);
+    PadOutput<float>(inputs, outputs, output_sizes_);
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the dtype of input must be float16, float32, int32, or int64, but got "

@@ -23,6 +23,7 @@
 #include "abstract/param_validator.h"
 #include "abstract/utils.h"
 #include "ops/op_utils.h"
+#include "ops/op_name.h"
 #include "utils/anf_utils.h"
 #include "utils/check_convert_utils.h"
 #include "utils/shape_utils.h"
@@ -177,17 +178,33 @@ AbstractBasePtr InferImplUnique(const AnalysisEnginePtr &, const PrimitivePtr &p
 
 AbstractBasePtr InferImplUniqueWithPad(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                        const AbstractBasePtrList &args_spec_list) {
-  MS_LOG(WARNING) << "InferImplUniqueWithPad.";
   // inputs: a 1-d Tensor
   const std::string op_name = primitive->name();
   constexpr size_t kUniqueWithPadInputNum = 2;
+  constexpr size_t kPadIndex = 1;
   CheckArgsSize(op_name, args_spec_list, kUniqueWithPadInputNum);
   AbstractTensorPtr input = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
-
   auto shape = input->shape();
   MS_EXCEPTION_IF_NULL(shape);
-  if (shape->shape().size() != 1) {
-    MS_LOG(EXCEPTION) << "Rank of " << op_name << "'s input must be 1.";
+  size_t batch_rank = 0;
+  if (primitive->HasAttr(ops::kBatchRank)) {
+    auto value_ptr = primitive->GetAttr(ops::kBatchRank);
+    batch_rank = GetValue<int64_t>(value_ptr);
+  }
+  if (batch_rank != 0) {
+    (void)CheckAndConvertUtils::CheckInteger("input_shape size", shape->shape().size(), kEqual, batch_rank + 1,
+                                             op_name);
+    AbstractTensorPtr pad = CheckArg<AbstractTensor>(op_name, args_spec_list, kPadIndex);
+    auto pad_shape = pad->shape();
+    MS_EXCEPTION_IF_NULL(pad_shape);
+    auto pad_num = std::accumulate(pad_shape->shape().begin(), pad_shape->shape().end(), 1, std::multiplies<int64_t>());
+    auto input_batch =
+      std::accumulate(shape->shape().begin(), shape->shape().begin() + batch_rank, 1, std::multiplies<int64_t>());
+    (void)CheckAndConvertUtils::CheckInteger("elements num of input 'pad'", pad_num, kEqual, input_batch, op_name);
+  } else {
+    if (shape->shape().size() != 1) {
+      MS_LOG(EXCEPTION) << "Rank of " << op_name << "'s input must be 1.";
+    }
   }
 
   // Currently we choose the same data type as input for the idx.

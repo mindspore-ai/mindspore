@@ -85,6 +85,7 @@ class UniqueGpuKernelMod : public NativeGpuKernelMod {
   BaseOperatorPtr base_operator_ = nullptr;
   std::vector<KernelTensorPtr> inputs_ = {};
   std::vector<KernelTensorPtr> outputs_ = {};
+  size_t batch_rank_{0};
 };
 }  // namespace kernel
 }  // namespace mindspore
