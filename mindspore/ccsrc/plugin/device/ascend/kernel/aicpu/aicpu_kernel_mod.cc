@@ -85,10 +85,6 @@ void AicpuOpKernelMod::CreateCpuKernelInfo(const std::vector<AddressPtr> &inputs
     node_name_ = kCpuRunApi;
   }
 
-  if (node_name_ == kTopK) {
-    node_name_ = kTopKV2;
-  }
-
   if (node_name_ == kStack) {
     node_name_ = kPack;
   }
@@ -152,9 +148,6 @@ bool AicpuOpKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::
     return false;
   }
   CreateCpuKernelInfo(inputs, outputs);
-  if (node_name_ == kTopK) {
-    node_name_ = kTopKV2;
-  }
   if (node_name_ == kStack) {
     node_name_ = kPack;
   }
@@ -209,10 +202,6 @@ std::vector<TaskInfoPtr> AicpuOpKernelMod::GenTask(const std::vector<AddressPtr>
   std::vector<void *> output_data_addrs;
   (void)std::transform(std::begin(outputs), std::end(outputs), std::back_inserter(output_data_addrs),
                        [](const AddressPtr &output) -> void * { return output->addr; });
-
-  if (node_name_ == kTopK) {
-    node_name_ = kTopKV2;
-  }
 
   if (node_name_ == kStack) {
     node_name_ = kPack;
