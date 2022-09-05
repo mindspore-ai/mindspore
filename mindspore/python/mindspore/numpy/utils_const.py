@@ -36,11 +36,15 @@ _check_axis_type = constexpr(validator.check_axis_type)
 @constexpr
 def _check_shape(shape):
     """check the shape param to match the numpy style"""
-    if not isinstance(shape, (int, tuple, list, typing.Tuple, typing.List)):
-        raise TypeError(f"only int, tuple and list are allowed for shape, but got {type(shape)}")
+    if not isinstance(shape, (int, tuple, list, Tensor, typing.Tuple, typing.List)):
+        raise TypeError(f"only int, tuple, list and tensor are allowed for shape, but got {type(shape)}")
+    # convert tensor to int/list, use followed if statements to do further conversions
+    if isinstance(shape, Tensor):
+        shape = shape.asnumpy().tolist()
+        # this may return an int, don't change the next if to elif
     if isinstance(shape, int):
         shape = (shape,)
-    if isinstance(shape, (list, typing.List)):
+    elif isinstance(shape, (list, typing.List)):
         shape = tuple(shape)
     for s in shape:
         if not isinstance(s, int):
