@@ -63,9 +63,9 @@ abstract::TupleShapePtr SparseTensorToCSRSparseMatrixInferShape(const PrimitiveP
   auto x_indices_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto x_values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
-  const int64_t x_indices_rank = x_indices_shape.size();
-  const int64_t x_values_rank = x_values_shape.size();
-  const int64_t x_dense_shape_rank = x_dense_shape_shape.size();
+  const int64_t x_indices_rank = static_cast<int64_t>(x_indices_shape.size());
+  const int64_t x_values_rank = static_cast<int64_t>(x_values_shape.size());
+  const int64_t x_dense_shape_rank = static_cast<int64_t>(x_dense_shape_shape.size());
   if (x_indices_rank != kIndicesRank || x_values_rank != 1 || x_dense_shape_rank != 1) {
     MS_EXCEPTION(ValueError) << "For SparseTensorToCSRSparseMatrix, input x_indices should be a 2-D tensor"
                              << ", but got " << x_indices_shape.size() << "-D"

@@ -42,15 +42,15 @@ void SparseDenseCwiseAddCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 template <typename T>
 void SparseDenseCwiseAddCpuKernelMod::ComputeAdd(const std::vector<AddressPtr> &inputs,
                                                  const std::vector<AddressPtr> &outputs) {
-  auto indices_data = reinterpret_cast<int64_t *>(inputs[kIndex0]->addr);
-  auto sparse_shape_data = reinterpret_cast<int64_t *>(inputs[kIndex2]->addr);
+  auto indices_data = static_cast<int64_t *>(inputs[kIndex0]->addr);
+  auto sparse_shape_data = static_cast<int64_t *>(inputs[kIndex2]->addr);
   int64_t index_num = indices_shape[kIndex0];
   int64_t dimension = indices_shape[kIndex1];
-  int64_t dense_dims = dense_shape.size();
+  int64_t dense_dims = static_cast<int64_t>(dense_shape.size());
 
   for (int64_t i = 0; i < index_num; i++) {
     for (int64_t j = 0; j < dimension; j++) {
-      if (indices_data[i * dimension + j] >= sparse_shape_data[j]) {
+      if (indices_data[static_cast<size_t>(i * dimension + j)] >= sparse_shape_data[static_cast<size_t>(j)]) {
         MS_EXCEPTION(ValueError) << "For SparseDenseCwiseAdd, the indices can't"
                                  << "proceed to cross the border the interview.";
       }
@@ -58,11 +58,11 @@ void SparseDenseCwiseAddCpuKernelMod::ComputeAdd(const std::vector<AddressPtr> &
   }
 
   std::vector<int64_t> sparse_shape(dimension);
-  for (int64_t i = 0; i < dimension; i++) {
-    sparse_shape[i] = sparse_shape_data[i];
+  for (size_t i = 0; i < static_cast<size_t>(dimension); i++) {
+    sparse_shape[i] = static_cast<int64_t>(sparse_shape_data[i]);
   }
   int64_t dense_num = 1;
-  for (int64_t i = 0; i < dense_dims; i++) {
+  for (size_t i = 0; i < static_cast<size_t>(dense_dims); i++) {
     dense_num *= dense_shape[i];
   }
 
@@ -70,8 +70,9 @@ void SparseDenseCwiseAddCpuKernelMod::ComputeAdd(const std::vector<AddressPtr> &
   if (isNeedBcast) {
     SparseDenseCwiseAddNoBcastCompute<T>(inputs, outputs);
   } else if (dense_dims <= dimension) {
-    for (int i = dense_dims - 1; i >= 0; --i) {
-      if ((dense_shape[i] != 1) && (dense_shape[i] != sparse_shape[i + dimension - dense_dims])) {
+    for (int64_t i = dense_dims - 1; i >= 0; --i) {
+      if ((dense_shape[static_cast<size_t>(i)] != 1) &&
+          (dense_shape[static_cast<size_t>(i)] != sparse_shape[static_cast<size_t>(i + dimension - dense_dims)])) {
         MS_EXCEPTION(ValueError) << "For SparseDenseCwiseAdd, the shape of 'x2' can't broadcast to 'x1_shape'."
                                  << "In order to broadcast, the size of the trailing axes for 'x2' and"
                                  << "sparse in an operation must either be the same size or size of the"
@@ -89,19 +90,19 @@ void SparseDenseCwiseAddCpuKernelMod::ComputeAdd(const std::vector<AddressPtr> &
 template <typename T>
 void SparseDenseCwiseAddCpuKernelMod::SparseDenseCwiseAddNoBcastCompute(const std::vector<AddressPtr> &inputs,
                                                                         const std::vector<AddressPtr> &outputs) {
-  auto sparse_indices_data = reinterpret_cast<int64_t *>(inputs[kIndex0]->addr);
-  auto sparse_values_data = reinterpret_cast<T *>(inputs[kIndex1]->addr);
-  auto sparse_shape_data = reinterpret_cast<int64_t *>(inputs[kIndex2]->addr);
-  auto dense_data = reinterpret_cast<T *>(inputs[kIndex3]->addr);
-  auto output_data = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+  auto sparse_indices_data = static_cast<int64_t *>(inputs[kIndex0]->addr);
+  auto sparse_values_data = static_cast<T *>(inputs[kIndex1]->addr);
+  auto sparse_shape_data = static_cast<int64_t *>(inputs[kIndex2]->addr);
+  auto dense_data = static_cast<T *>(inputs[kIndex3]->addr);
+  auto output_data = static_cast<T *>(outputs[kIndex0]->addr);
   int64_t value_nums = indices_shape[kIndex0];
   int64_t dimension = indices_shape[kIndex1];
   int64_t data_num = values_shape[kIndex0];
-  int64_t dense_dims = dense_shape.size();
+  int64_t dense_dims = static_cast<int64_t>(dense_shape.size());
 
   std::vector<T> sparse_values_vec(data_num);
-  for (int64_t i = 0; i < data_num; i++) {
-    sparse_values_vec[i] = (sparse_values_data[i]);
+  for (size_t i = 0; i < static_cast<size_t>(data_num); i++) {
+    sparse_values_vec[i] = static_cast<T>((sparse_values_data[i]));
   }
   if (dimension == dense_dims) {
     for (int64_t i = 0; i < value_nums; i++) {
@@ -114,11 +115,11 @@ void SparseDenseCwiseAddCpuKernelMod::SparseDenseCwiseAddNoBcastCompute(const st
         index += c * sparse_indices_data[j + i * dimension];
       }
       index += sparse_indices_data[(i + 1) * dimension - 1];
-      output_data[i] = sparse_values_vec[i] + dense_data[index];
+      output_data[i] = static_cast<T>(sparse_values_vec[i] + dense_data[index]);
     }
   } else {
-    for (int64_t i = 0; i < value_nums; i++) {
-      output_data[i] = sparse_values_data[i] + *(dense_data);
+    for (size_t i = 0; i < static_cast<size_t>(value_nums); i++) {
+      output_data[i] = static_cast<T>(sparse_values_data[i] + *(dense_data));
     }
   }
 }
@@ -126,11 +127,11 @@ void SparseDenseCwiseAddCpuKernelMod::SparseDenseCwiseAddNoBcastCompute(const st
 template <typename T>
 void SparseDenseCwiseAddCpuKernelMod::SparseDenseCwiseAddBcastCompute(const std::vector<AddressPtr> &inputs,
                                                                       const std::vector<AddressPtr> &outputs) {
-  auto sparse_indices_data = reinterpret_cast<int64_t *>(inputs[kIndex0]->addr);
-  auto sparse_values_data = reinterpret_cast<T *>(inputs[kIndex1]->addr);
-  auto sparse_shape_data = reinterpret_cast<int64_t *>(inputs[kIndex2]->addr);
-  auto dense_data = reinterpret_cast<T *>(inputs[kIndex3]->addr);
-  auto output_data = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+  auto sparse_indices_data = static_cast<int64_t *>(inputs[kIndex0]->addr);
+  auto sparse_values_data = static_cast<T *>(inputs[kIndex1]->addr);
+  auto sparse_shape_data = static_cast<int64_t *>(inputs[kIndex2]->addr);
+  auto dense_data = static_cast<T *>(inputs[kIndex3]->addr);
+  auto output_data = static_cast<T *>(outputs[kIndex0]->addr);
   int64_t value_nums = indices_shape[kIndex0];
   int64_t dimension = indices_shape[kIndex1];
   int64_t data_num = values_shape[kIndex0];
@@ -142,37 +143,37 @@ void SparseDenseCwiseAddCpuKernelMod::SparseDenseCwiseAddBcastCompute(const std:
   }
 
   std::vector<T> sparse_values_vec(data_num);
-  for (int64_t i = 0; i < data_num; i++) {
-    sparse_values_vec[i] = (sparse_values_data[i]);
+  for (size_t i = 0; i < static_cast<size_t>(data_num); i++) {
+    sparse_values_vec[i] = static_cast<T>((sparse_values_data[i]));
   }
 
   std::vector<int64_t> sparse_shape(dimension);
-  for (int64_t i = 0; i < dimension; i++) {
-    sparse_shape[i] = sparse_shape_data[i];
+  for (size_t i = 0; i < static_cast<size_t>(dimension); i++) {
+    sparse_shape[i] = static_cast<int64_t>(sparse_shape_data[i]);
   }
   std::vector<int64_t> sparse_shape1(dimension);
-  for (int64_t j = 0; j < dimension; j++) {
-    sparse_shape1[j] = sparse_shape[j];
+  for (size_t j = 0; j < static_cast<size_t>(dimension); j++) {
+    sparse_shape1[j] = static_cast<int64_t>(sparse_shape[j]);
   }
 
   BroadcastIterator broad_base_iter_1(sparse_shape, dense_shape, sparse_shape1);
   std::vector<T> Dense(Sparse_numelements);
   broad_base_iter_1.SetPos(0);
-  for (int64_t i = 0; i < Sparse_numelements; i++) {
-    Dense[i] = dense_data[broad_base_iter_1.GetInputPosB()];
+  for (size_t i = 0; i < static_cast<size_t>(Sparse_numelements); i++) {
+    Dense[i] = static_cast<T>(dense_data[broad_base_iter_1.GetInputPosB()]);
     broad_base_iter_1.GenNextPos();
   }
-  for (int64_t i = 0; i < value_nums; i++) {
+  for (size_t i = 0; i < static_cast<size_t>(value_nums); i++) {
     int index = 0;
-    for (int64_t j = 0; j < dimension - 1; j++) {
+    for (size_t j = 0; j < static_cast<size_t>(dimension - 1); j++) {
       int c = 1;
-      for (int64_t k = j + 1; k < dimension; k++) {
-        c = c * sparse_shape_data[k];
+      for (size_t k = j + 1; k < static_cast<size_t>(dimension); k++) {
+        c = static_cast<int>(c * sparse_shape_data[k]);
       }
-      index += sparse_indices_data[j + i * dimension] * c;
+      index += static_cast<int>(sparse_indices_data[j + i * static_cast<size_t>(dimension)] * c);
     }
-    index += sparse_indices_data[(i + 1) * dimension - 1];
-    output_data[i] = sparse_values_vec[i] + Dense[index];
+    index += sparse_indices_data[(i + 1) * static_cast<size_t>(dimension) - 1];
+    output_data[i] = static_cast<T>(sparse_values_vec[i]) + static_cast<T>(Dense[static_cast<size_t>(index)]);
   }
 }
 

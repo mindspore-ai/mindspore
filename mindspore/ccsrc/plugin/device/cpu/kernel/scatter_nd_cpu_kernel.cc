@@ -56,7 +56,7 @@ void Compute(ScatterNdCpuKernelMod *content, const ComputeParams<S, T> *params, 
                              "than or equal to 0, but got "
                           << index;
       }
-      if (index > SizeToInt(content->shape[j])) {
+      if (index > static_cast<int>(content->shape[j])) {
         MS_LOG(EXCEPTION) << "For '" << kKernelName
                           << "', each element in 'indices' should be smaller than the value of shape, but got " << index
                           << " and got the value of shape " << content->shape[j];

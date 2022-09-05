@@ -37,10 +37,9 @@ static constexpr std::array<double, 8> kLanczosCoefficients = {
   12.507343278686904814458936853,     -0.13857109526572011689554707,
   9.984369578019570859563e-6,         1.50563273514931155834e-7};
 double log_lanczos_gamma_plus_one_half = std::log(kLanczosGamma + 0.5);
-constexpr double HALF = 0.5;
 constexpr double PI = 3.14159265358979323846264338327950288;
-constexpr size_t kInputsNum = 2;
-constexpr size_t kOutputsNum = 1;
+constexpr int64_t kInputsNum = 2;
+constexpr int64_t kOutputsNum = 1;
 }  // namespace
 
 void MvlgammaGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
@@ -49,7 +48,7 @@ void MvlgammaGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   output_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
   attr_p_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "p");
-  input_tensor_size_ = SizeOf(input_shape_);
+  input_tensor_size_ = static_cast<int64_t>(SizeOf(input_shape_));
 
   if (attr_p_ < 1) {
     MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", the attr 'p' has to be greater than or equal to 1.";
@@ -66,7 +65,7 @@ void MvlgammaGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
  * A'(z) = sigma(k = 1, n, kLanczosCoefficients[i] / (z + k) / (z + k))
  */
 template <typename T>
-T MvlgammaGradCpuKernelMod::Digamma(const T &input) {
+T MvlgammaGradCpuKernelMod::Digamma(const T &input) const {
   /* If the input is less than 0.5 use Euler's reflection formula:
    * digamma(x) = digamma(1 - x) - pi * cot(pi * x)
    */
@@ -76,10 +75,9 @@ T MvlgammaGradCpuKernelMod::Digamma(const T &input) {
   T num = 0;
   T denom = kBaseLanczosCoeff;
 
-  for (int i = 0, end = SizeToInt(kLanczosCoefficients.size()); i < end; ++i) {
-    T lanczos_coefficient = static_cast<T>(kLanczosCoefficients[i]);
-    num -= static_cast<T>(lanczos_coefficient / ((reflected_input + i + 1) * (reflected_input + i + 1)));
-    denom += static_cast<T>(lanczos_coefficient / (reflected_input + i + 1));
+  for (size_t i = 0, end = kLanczosCoefficients.size(); i < end; ++i) {
+    num -= static_cast<T>(kLanczosCoefficients[i] / ((reflected_input + i + 1) * (reflected_input + i + 1)));
+    denom += static_cast<T>(kLanczosCoefficients[i] / (reflected_input + i + 1));
   }
 
   /* To improve accuracy on platforms with less-precise log implementations,
@@ -102,16 +100,22 @@ T MvlgammaGradCpuKernelMod::Digamma(const T &input) {
   T reduced_input = static_cast<T>(input + std::abs(std::floor(input + 0.5)));
   T reflection = static_cast<T>(result - PI * std::cos(PI * reduced_input) / std::sin(PI * reduced_input));
   T real_result = static_cast<T>(need_to_reflect ? reflection : result);
-
+  bool is_equal = false;
+  if constexpr (std::is_same_v<T, float>) {
+    is_equal = common::IsFloatEqual(input, std::floor(input));
+  } else {
+    is_equal = common::IsDoubleEqual(input, std::floor(input));
+  }
   // Digamma has poles at negative integers and zero; return nan for those.
-  return (input < 0 && input == std::floor(input)) ? std::numeric_limits<T>::quiet_NaN() : real_result;
+  return (input < static_cast<T>(0) && is_equal) ? std::numeric_limits<T>::quiet_NaN() : real_result;
 }
 
 template <typename T>
-T MvlgammaGradCpuKernelMod::MvlgammaGradSingle(const T &y_grad, const T &x, const int64_t &p) {
+T MvlgammaGradCpuKernelMod::MvlgammaGradSingle(const T &y_grad, const T &x, const int64_t &p) const {
   T output = 0;
+  const T HALF = static_cast<T>(0.5);
   for (int64_t i = 0; i < p; i++) {
-    output += Digamma(x - HALF * i);
+    output += Digamma(x - HALF * static_cast<T>(i));
   }
   output *= y_grad;
   return output;
@@ -134,9 +138,9 @@ bool MvlgammaGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
 
-  auto input_y_grad = reinterpret_cast<T *>(inputs[0]->addr);
-  auto input_x = reinterpret_cast<T *>(inputs[1]->addr);
-  auto output_x_grad = reinterpret_cast<T *>(outputs[0]->addr);
+  auto input_y_grad = static_cast<T *>(inputs[0]->addr);
+  auto input_x = static_cast<T *>(inputs[1]->addr);
+  auto output_x_grad = static_cast<T *>(outputs[0]->addr);
 
   for (int64_t i = 0; i < input_tensor_size_; i++) {
     *(output_x_grad + i) = MvlgammaGradSingle<T>(*(input_y_grad + i), *(input_x + i), attr_p_);

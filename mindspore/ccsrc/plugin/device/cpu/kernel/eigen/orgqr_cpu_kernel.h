@@ -21,10 +21,10 @@
 #include <iostream>
 #include <map>
 #include <memory>
+#include <utility>
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <utility>
 #include <algorithm>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"

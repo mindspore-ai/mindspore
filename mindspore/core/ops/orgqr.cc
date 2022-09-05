@@ -41,16 +41,16 @@ abstract::ShapePtr OrgqrInferShape(const PrimitivePtr &primitive, const std::vec
     MS_EXCEPTION(ValueError) << "For Orgqr, the rank of x must be equal to 2 or 3"
                              << ", while got x rank " << x_shape.size() << ".";
   }
-  int64_t rank = x_shape.size();
-  if (*(x_shape.end() - 1) > *(x_shape.end() - kTwo)) {
+  int64_t rank = static_cast<int64_t>(x_shape.size());
+  if (*(x_shape.end() - 1) > *(x_shape.end() - static_cast<int64_t>(kTwo))) {
     MS_EXCEPTION(ValueError) << "For Orgqr, x.shape[-2] must be greater than or equal to x.shape[-1]"
-                             << ", while row number of x is " << x_shape[-kRowIndex] << " and column number of x is "
-                             << x_shape[-kColIndex] << ".";
+                             << ", while row number of x is " << static_cast<size_t>(x_shape[-kRowIndex])
+                             << " and column number of x is " << static_cast<size_t>(x_shape[-kColIndex]) << ".";
   }
   if (*(x_shape.end() - 1) < *(tau_shape.end() - 1)) {
     MS_EXCEPTION(ValueError) << "For Orgqr, x.shape[-1] must be greater than or equal to tau.shape[-1]"
-                             << ", while column number of x is" << x_shape[-kColIndex] << " and "
-                             << "column number of tau is " << tau_shape[-kColIndex] << ".";
+                             << ", while column number of x is" << static_cast<size_t>(x_shape[-kColIndex]) << " and "
+                             << "column number of tau is " << static_cast<size_t>(tau_shape[-kColIndex]) << ".";
   }
   if ((x_shape.size() - 1) != tau_shape.size()) {
     MS_EXCEPTION(ValueError) << "For Orgqr,  tau should have one dimension less than x"
@@ -58,10 +58,12 @@ abstract::ShapePtr OrgqrInferShape(const PrimitivePtr &primitive, const std::vec
                              << "rank of tau is " << tau_shape.size() << ".";
   }
   if (rank == kInputWithBatch) {
-    if (x_shape[rank - kBatchIndex] != tau_shape[rank - kBatchIndex]) {
+    if (x_shape[static_cast<size_t>(rank - kBatchIndex)] != tau_shape[static_cast<size_t>(rank - kBatchIndex)]) {
       MS_EXCEPTION(ValueError) << "For Orgqr, x and tau should share the same batch size"
-                               << ", while x is of batch size " << x_shape[rank - kBatchIndex] << ","
-                               << " and tau is of batch size " << tau_shape[rank - kBatchIndex] << ".";
+                               << ", while x is of batch size " << x_shape[static_cast<size_t>(rank - kBatchIndex)]
+                               << ","
+                               << " and tau is of batch size " << tau_shape[static_cast<size_t>(rank - kBatchIndex)]
+                               << ".";
     }
   }
 

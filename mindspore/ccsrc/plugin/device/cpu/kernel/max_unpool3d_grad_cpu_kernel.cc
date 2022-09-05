@@ -104,13 +104,12 @@ bool MaxUnpool3DGradCpuKernelMod::LaunchKernel(const std::vector<kernel::Address
           for (size_t i = 0; i < iheight; i++) {
             for (size_t j = 0; j < iwidth; j++) {
               ind_p_k_id = t * iwidth * iheight * num_channels + i * iwidth * num_channels + j * num_channels + k;
-              maxp = ind_p_k[ind_p_k_id];
+              maxp = static_cast<size_t>(ind_p_k[ind_p_k_id]);
               if (ind_p_k[ind_p_k_id] < 0 || maxp >= owidth * oheight * odepth) {
                 MS_LOG(EXCEPTION) << "MaxUnpool3DGrad: internal error, output_size D * H * W should "
                                      "be bigger than some indicis, now D * H * W is "
                                   << odepth * owidth * oheight << " and value of argmax is " << maxp << "."
                                   << std::endl;
-                return false;
               } else {
                 output_p_k[ind_p_k_id] = grads_p_k[maxp * num_channels + k];
               }
@@ -145,13 +144,12 @@ bool MaxUnpool3DGradCpuKernelMod::LaunchKernel(const std::vector<kernel::Address
           for (size_t i = 0; i < iheight; i++) {
             for (size_t j = 0; j < iwidth; j++) {
               ind_p_k_id = t * iheight * iwidth + i * iwidth + j;
-              maxp = ind_p_k[ind_p_k_id];
+              maxp = static_cast<size_t>(ind_p_k[ind_p_k_id]);
               if (ind_p_k[ind_p_k_id] < 0 || maxp >= owidth * oheight * odepth) {
                 MS_LOG(EXCEPTION) << "MaxUnpool3DGrad: internal error, output_size D * H * W should "
                                      "be bigger than some indicis, now D * H * W is "
                                   << odepth * owidth * oheight << " and value of argmax is " << maxp << "."
                                   << std::endl;
-                return false;
               } else {
                 output_p_k[ind_p_k_id] = grads_p_k[maxp];
               }

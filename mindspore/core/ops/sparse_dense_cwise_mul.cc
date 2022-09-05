@@ -83,8 +83,8 @@ TypePtr SparseDenseCwiseMulInferType(const PrimitivePtr &primitive, const std::v
   (void)CheckAndConvertUtils::CheckTensorTypeValid("indices", indiecs_type_ptr, type_set, prim_name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("shape", shape_type_ptr, type_set, prim_name);
   std::map<std::string, TypePtr> type_dict;
-  type_dict.emplace("values", input_args[kInputIndex1]->BuildType());
-  type_dict.emplace("shape", input_args[kInputIndex3]->BuildType());
+  (void)type_dict.emplace("values", input_args[kInputIndex1]->BuildType());
+  (void)type_dict.emplace("shape", input_args[kInputIndex3]->BuildType());
   return CheckAndConvertUtils::CheckTensorTypeSame(type_dict, common_valid_types_with_complex, prim_name);
 }
 }  // namespace

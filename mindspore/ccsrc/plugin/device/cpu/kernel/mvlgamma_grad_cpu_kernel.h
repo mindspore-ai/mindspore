@@ -39,10 +39,10 @@ class MvlgammaGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
   template <typename T>
-  T Digamma(const T &input);
+  T Digamma(const T &input) const;
 
   template <typename T>
-  T MvlgammaGradSingle(const T &y_grad, const T &x, const int64_t &p);
+  T MvlgammaGradSingle(const T &y_grad, const T &x, const int64_t &p) const;
 
   ShapeVector input_shape_;
   ShapeVector output_shape_;

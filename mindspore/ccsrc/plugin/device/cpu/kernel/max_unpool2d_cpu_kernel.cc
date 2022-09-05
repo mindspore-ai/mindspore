@@ -76,9 +76,9 @@ bool MaxUnpool2DCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
     MS_LOG(WARNING) << "MaxUnpool2D output memory size should be greater than 0, but got 0.";
     return false;
   }
-  auto *raw_input = reinterpret_cast<DATA_T *>(inputs[kInputIndex0]->addr);
+  auto *raw_input = static_cast<DATA_T *>(inputs[kInputIndex0]->addr);
   auto *raw_indices = reinterpret_cast<INDICES_T *>(inputs[kInputIndex1]->addr);
-  auto *raw_output = reinterpret_cast<DATA_T *>(outputs[kInputIndex0]->addr);
+  auto *raw_output = static_cast<DATA_T *>(outputs[kInputIndex0]->addr);
   if (data_format_ == "NHWC") {
     size_t num_batch = LongToSize(input_shape_[kInputIndex0]);
     size_t input_height = LongToSize(input_shape_[kInputIndex1]);
@@ -100,12 +100,11 @@ bool MaxUnpool2DCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
         for (size_t i = 0; i < input_height; i++) {
           for (size_t j = 0; j < input_width; j++) {
             ind_p_k_id = i * input_width * num_channels + j * num_channels + k;
-            maxp = ind_p_k[ind_p_k_id];
+            maxp = static_cast<size_t>(ind_p_k[ind_p_k_id]);
             if (ind_p_k[ind_p_k_id] < 0 || maxp >= owidth * oheight) {
               MS_LOG(EXCEPTION) << "MaxUnpool2D: internal error, output_size H * W should "
                                    "be bigger than some indicis, now H * W is "
                                 << owidth * oheight << " and value of argmax is " << maxp << "." << std::endl;
-              return false;
             } else {
               output_p_k[maxp * num_channels + k] = input_p_k[ind_p_k_id];
             }
@@ -137,12 +136,11 @@ bool MaxUnpool2DCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
         for (size_t i = 0; i < input_height; i++) {
           for (size_t j = 0; j < input_width; j++) {
             ind_p_k_id = i * input_width + j;
-            maxp = ind_p_k[ind_p_k_id];
+            maxp = static_cast<size_t>(ind_p_k[ind_p_k_id]);
             if (ind_p_k[ind_p_k_id] < 0 || maxp >= owidth * oheight) {
               MS_LOG(EXCEPTION) << "MaxUnpool2D: internal error, output_size H * W should "
                                    "be bigger than some indicis, now H * W is "
                                 << owidth * oheight << " and value of argmax is " << maxp << "." << std::endl;
-              return false;
             } else {
               output_p_k[maxp] = input_p_k[ind_p_k_id];
             }

@@ -18,11 +18,6 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SPARSE_SEGMENT_SQRT_N_GRAD_CPU_KERNEL_H_
 
 #include <functional>
-#include <numeric>
-#include <algorithm>
-#include <memory>
-#include <string>
-#include <unordered_map>
 #include <vector>
 
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
@@ -46,7 +41,7 @@ class SparseSegmentSqrtNGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  void CheckParam(const CNodePtr &kernel_node);
+  void CheckParam(const CNodePtr &kernel_node) const;
   ShapeVector x_shape_;
   ShapeVector indices_shape_;
   ShapeVector segment_ids_shape_;

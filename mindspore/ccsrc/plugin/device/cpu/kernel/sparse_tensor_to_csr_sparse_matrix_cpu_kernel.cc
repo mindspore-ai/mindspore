@@ -27,14 +27,14 @@ constexpr int64_t kOne = 1;
 constexpr int64_t kTwo = 2;
 constexpr int64_t kSparseTensorToCSRSparseMatrixInputsNum = 3;
 constexpr int64_t kSparseTensorToCSRSparseMatrixOutputsNum = 5;
-constexpr int64_t kInputIndex0 = 0;
-constexpr int64_t kInputIndex1 = 1;
-constexpr int64_t kInputIndex2 = 2;
-constexpr int64_t kOutputIndex0 = 0;
-constexpr int64_t kOutputIndex1 = 1;
-constexpr int64_t kOutputIndex2 = 2;
-constexpr int64_t kOutputIndex3 = 3;
-constexpr int64_t kOutputIndex4 = 4;
+constexpr size_t kInputIndex0 = 0;
+constexpr size_t kInputIndex1 = 1;
+constexpr size_t kInputIndex2 = 2;
+constexpr size_t kOutputIndex0 = 0;
+constexpr size_t kOutputIndex1 = 1;
+constexpr size_t kOutputIndex2 = 2;
+constexpr size_t kOutputIndex3 = 3;
+constexpr size_t kOutputIndex4 = 4;
 constexpr int64_t kInitPrevBatch = -1;
 constexpr char kKernelName[] = "SparseTensorToCSRSparseMatrix";
 
@@ -60,9 +60,9 @@ void SparseTensorToCSRSparseMatrixCpuKernelMod::InitKernel(const CNodePtr &kerne
   total_nnz_ = x_indices_shape[0];
   auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kInputIndex2);
   rank_ = input_shape[0];
-  int64_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
+  int64_t input_num = static_cast<int64_t>(common::AnfAlgo::GetInputTensorNum(kernel_node));
   CHECK_KERNEL_INPUTS_NUM(input_num, kSparseTensorToCSRSparseMatrixInputsNum, kKernelName);
-  int64_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
+  int64_t output_num = static_cast<int64_t>(common::AnfAlgo::GetOutputTensorNum(kernel_node));
   CHECK_KERNEL_OUTPUTS_NUM(output_num, kSparseTensorToCSRSparseMatrixOutputsNum, kKernelName);
   if (rank_ != kRankWithoutBatch && rank_ != kRankWithBatch) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the input x_dense_shape should "
@@ -122,10 +122,10 @@ bool SparseTensorToCSRSparseMatrixCpuKernelMod::Launch(const std::vector<kernel:
   if (!node_) {
     MS_LOG(EXCEPTION) << "node_wpt_ is expired.";
   }
-  int64_t output_nm = common::AnfAlgo::GetOutputTensorNum(node_);
+  int64_t output_nm = static_cast<int64_t>(common::AnfAlgo::GetOutputTensorNum(node_));
   std::vector<TypeId> dtypes(output_nm);
-  for (int64_t i = 0; i < output_nm; i++) {
-    dtypes[i] = AnfAlgo::GetOutputDeviceDataType(node_, i);
+  for (size_t i = 0; i < static_cast<size_t>(output_nm); i++) {
+    dtypes[i] = static_cast<TypeId>(AnfAlgo::GetOutputDeviceDataType(node_, i));
   }
   std::vector<int64_t> dense_shape_dims{rank_};
   std::vector<int64_t> batch_pointers_dims{batch_size_ + kOne};
@@ -175,22 +175,22 @@ void SparseTensorToCSRSparseMatrixCpuKernelMod::LaunchKernel(const std::vector<k
     }
   } else {
     for (int64_t i = kZero; i < total_nnz_; ++i) {
-      int64_t cur_batch = x_indices[i * rank_];
+      int64_t cur_batch = static_cast<int64_t>(x_indices[i * rank_]);
       y_row_pointers_addr[cur_batch * (num_rows_ + kOne) + x_indices[i * rank_ + kOne] + kOne] += kOne;
       y_col_indices_addr[i] = x_indices[i * rank_ + kTwo];
-      while (prev_batch < SizeToLong(cur_batch)) {
+      while (prev_batch < cur_batch) {
         y_batch_pointers_addr[prev_batch + kOne] = indiceT(i);
         ++prev_batch;
       }
     }
   }
-  while (prev_batch < SizeToLong(batch_size_)) {
+  while (prev_batch < batch_size_) {
     y_batch_pointers_addr[prev_batch + kOne] = total_nnz_;
     ++prev_batch;
   }
   for (int64_t batch_idx = 0; batch_idx < batch_size_; ++batch_idx) {
     auto *row_ptr_batch = y_row_pointers_addr + batch_idx * (num_rows_ + kOne);
-    std::partial_sum(row_ptr_batch, row_ptr_batch + num_rows_ + kOne, row_ptr_batch);
+    (void)std::partial_sum(row_ptr_batch, row_ptr_batch + num_rows_ + kOne, row_ptr_batch);
   }
 }
 std::vector<KernelAttr> SparseTensorToCSRSparseMatrixCpuKernelMod::GetOpSupport() {

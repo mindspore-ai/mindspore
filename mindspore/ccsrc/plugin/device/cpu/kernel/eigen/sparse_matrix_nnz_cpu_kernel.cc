@@ -55,7 +55,7 @@ void SparseMatrixNNZCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     MS_LOG(EXCEPTION) << "For SparseMatrixNNZ, the shape of x_dense_shape must be (2,) or (3,), but got (" << rank_x
                       << ",).";
   }
-  batch_size_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kInputIndex1)[0] - 1;
+  batch_size_ = static_cast<size_t>(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kInputIndex1)[0] - 1);
   value_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kInputIndex0);
 }
 
