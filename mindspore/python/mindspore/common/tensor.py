@@ -5388,7 +5388,7 @@ class SparseTensor(COOTensor_):
     """
 
     def __init__(self, indices, values, shape):
-        "Init COOTensor"
+        """Init COOTensor."""
         logger.warning("'SparseTensor' is deprecated from version 1.7 and will be removed in a future version. " +
                        "Please use 'COOTensor' instead.")
         if not (isinstance(indices, Tensor) and isinstance(values, Tensor) and isinstance(shape, tuple)):
@@ -5461,7 +5461,7 @@ class COOTensor(COOTensor_):
     """
 
     def __init__(self, indices=None, values=None, shape=None, coo_tensor=None):
-        "Init COOTensor"
+        """Init COOTensor"""
         self.init_finished = False
         # Directly init a COOTensor from another COOTensor
         if coo_tensor is not None:
@@ -6105,7 +6105,8 @@ def _vm_compare(*args):
 def _check_tensor_input(input_data=None, dtype=None, shape=None, init=None):
     """Check the tensor input."""
     if input_data is not None and shape is not None:
-        raise ValueError("If input_data is available, shape doesn't need to be set")
+        raise ValueError(f"When initializing a tensor with 'input_data', 'shape' should be set to None."
+                         f"But got shape: {shape}.")
 
     if init is not None and (shape is None or dtype is None):
         raise ValueError("init, dtype and shape must have values at the same time.")
