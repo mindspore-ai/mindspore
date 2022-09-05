@@ -869,7 +869,8 @@ int RunConverter(const std::shared_ptr<ConverterPara> &param, void **model_data,
     return RET_ERROR;
   }
   if (param->export_mindir == kMindIR) {
-    MS_LOG(DEBUG) << "No need to export mindir to fb";
+    MS_LOG(INFO) << "CONVERT RESULT SUCCESS:" << status;
+    std::cout << "CONVERT RESULT SUCCESS:" << status << std::endl;
     return RET_OK;
   }
   NotSupportOp::GetInstance()->PrintOps();
