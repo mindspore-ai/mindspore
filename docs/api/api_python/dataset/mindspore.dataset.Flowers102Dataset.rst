@@ -97,6 +97,8 @@ mindspore.dataset.Flowers102Dataset
 
     .. include:: mindspore.dataset.Dataset.rst
 
+    .. include:: mindspore.dataset.Dataset.c.rst
+
     .. include:: mindspore.dataset.Dataset.d.rst
 
     .. include:: mindspore.dataset.Dataset.e.rst

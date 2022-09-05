@@ -87,11 +87,11 @@ mindspore.dataset.SpeechCommandsDataset
         year={2018}
         }
 
+    .. include:: mindspore.dataset.Dataset.add_sampler.rst
+
     .. include:: mindspore.dataset.Dataset.rst
 
     .. include:: mindspore.dataset.Dataset.b.rst
-
-    .. include:: mindspore.dataset.Dataset.c.rst
 
     .. include:: mindspore.dataset.Dataset.d.rst
 
@@ -102,5 +102,7 @@ mindspore.dataset.SpeechCommandsDataset
     .. include:: mindspore.dataset.Dataset.save.rst
 
     .. include:: mindspore.dataset.Dataset.g.rst
+
+    .. include:: mindspore.dataset.Dataset.use_sampler.rst
 
     .. include:: mindspore.dataset.Dataset.zip.rst

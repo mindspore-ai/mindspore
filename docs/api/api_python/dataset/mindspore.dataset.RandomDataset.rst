@@ -17,8 +17,6 @@ mindspore.dataset.RandomDataset
         - **num_shards** (int, 可选) - 指定分布式训练时将数据集进行划分的分片数，默认值：None。指定此参数后， `num_samples` 表示每个分片的最大样本数。
         - **shard_id** (int, 可选) - 指定分布式训练时使用的分片ID号，默认值：None。只有当指定了 `num_shards` 时才能指定此参数。
 
-    .. include:: mindspore.dataset.Dataset.add_sampler.rst
-
     .. include:: mindspore.dataset.Dataset.rst
 
     .. include:: mindspore.dataset.Dataset.d.rst
@@ -30,7 +28,5 @@ mindspore.dataset.RandomDataset
     .. include:: mindspore.dataset.Dataset.save.rst
 
     .. include:: mindspore.dataset.Dataset.g.rst
-
-    .. include:: mindspore.dataset.Dataset.use_sampler.rst
 
     .. include:: mindspore.dataset.Dataset.zip.rst

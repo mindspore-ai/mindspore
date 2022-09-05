@@ -86,6 +86,8 @@ mindspore.dataset.SVHNDataset
 
     .. include:: mindspore.dataset.Dataset.rst
 
+    .. include:: mindspore.dataset.Dataset.c.rst
+
     .. include:: mindspore.dataset.Dataset.d.rst
 
     .. include:: mindspore.dataset.Dataset.e.rst
