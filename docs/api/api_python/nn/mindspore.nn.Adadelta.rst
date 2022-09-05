@@ -34,7 +34,7 @@ mindspore.nn.Adadelta
       .. include:: mindspore.nn.optim_group_gc.rst
       .. include:: mindspore.nn.optim_group_order.rst
 
-    - **learning_rate** (Union[float, Tensor, Iterable, LearningRateSchedule]) - 默认值：1.0。
+    - **learning_rate** (Union[float, int, Tensor, Iterable, LearningRateSchedule]) - 默认值：1.0。
 
       .. include:: mindspore.nn.optim_arg_dynamic_lr.rst
 

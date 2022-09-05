@@ -14,7 +14,7 @@ mindspore.nn.Conv2dTranspose
    **参数：**
 
    - **in_channels** (int) - Conv2dTranspose层输入Tensor的空间维度。
-   - **out_channels** (dict) - Conv2dTranspose层输出Tensor的空间维度。
+   - **out_channels** (int) - Conv2dTranspose层输出Tensor的空间维度。
    - **kernel_size** (Union[int, tuple[int]]) - 指定二维卷积核的高度和宽度。数据类型为整型或两个整型的tuple。一个整数表示卷积核的高度和宽度均为该值。两个整数的tuple分别表示卷积核的高度和宽度。
    - **stride** (Union[int, tuple[int]]) - 二维卷积核的移动步长。数据类型为整型或两个整型的tuple。一个整数表示在高度和宽度方向的移动步长均为该值。两个整数的tuple分别表示在高度和宽度方向的移动步长。默认值：1。
    - **pad_mode** (str) - 指定填充模式。可选值为"same"、"valid"、"pad"。默认值："same"。

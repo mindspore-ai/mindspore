@@ -28,7 +28,7 @@ mindspore.amp.FixedLossScaleManager
 
     .. py:method:: get_update_cell()
 
-        返回用于更新 `loss_scale` 值的 `Cell` 实例， :class:`mindspore.nn.TrainOneStepWithLossScaleCell` 会调用该实例。该类使用固定的梯度放大系数，因此该实例不执行任何操作。
+        返回用于更新 `loss_scale` 值的 :class:`mindspore.nn.Cell` 实例， :class:`mindspore.nn.TrainOneStepWithLossScaleCell` 会调用该实例。该类使用固定的梯度放大系数，因此该实例不执行任何操作。
 
         **返回：**
 

@@ -27,7 +27,7 @@ mindspore.nn.GELU
 
     **输入：**
 
-    - **x** （Tensor） - 用于计算GELU的Tensor。数据类型为float16或float32。shape是 :math:`(N,*)` ， :math:`*` 表示任意的附加维度数。
+    - **x** (Tensor) - 用于计算GELU的Tensor。数据类型为float16或float32。shape是 :math:`(N,*)` ， :math:`*` 表示任意的附加维度数。
 
     **输出：**
 
