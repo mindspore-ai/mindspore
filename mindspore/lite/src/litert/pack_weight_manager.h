@@ -37,6 +37,8 @@ class PackWeightManager {
   void Free(void *tensor_data);
   bool IsCopyTensor(int op_type);
   void *ReplaceFp16Data(void *origin_fp16_data, size_t size, bool *replace);
+  void FreePackWeight(std::vector<char *> model_bufs);
+  void DeleteOriginModelBufInfo(const char *model_buf);
 
  private:
   void *MallocData(size_t size);

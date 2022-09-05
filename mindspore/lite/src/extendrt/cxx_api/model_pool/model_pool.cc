@@ -840,6 +840,7 @@ Status ModelPool::CreateWorkers(const char *graph_buf, size_t size, const ModelP
     MS_CHECK_FALSE_MSG(ret != kSuccess, kLiteError, "InitWeightManagerByBuf failed.");
     auto new_model_buf = lite::PackWeightManager::GetInstance()->GetNumaModelBuf(graph_buf, numa_node_id);
     MS_CHECK_TRUE_MSG(new_model_buf != nullptr, kLiteError, "get model buf is nullptr from PackWeightManager");
+    model_bufs_.push_back(new_model_buf);
     model_worker = std::make_shared<ModelWorker>();
     if (model_worker == nullptr) {
       MS_LOG(ERROR) << "model worker is nullptr.";
@@ -923,6 +924,7 @@ Status ModelPool::CreateModelPoolWorker(const char *model_buf, size_t size, Mode
 
   status = CreateWorkers(model_buf, size, model_pool_config, strategy);
   if (status != kSuccess) {
+    lite::PackWeightManager::GetInstance()->DeleteOriginModelBufInfo(model_buf);
     MS_LOG(ERROR) << "create worker failed.";
     return kLiteError;
   }
@@ -1091,23 +1093,16 @@ Status ModelPool::InitByBuf(const char *model_data, size_t size, const std::shar
 Status ModelPool::InitByPath(const std::string &model_path, const std::shared_ptr<RunnerConfig> &runner_config) {
   std::unique_lock<std::shared_mutex> l(model_pool_mutex_);
   size_t size = 0;
-  auto model_buf = lite::ReadFile(model_path.c_str(), &size);
-  if (model_buf == nullptr) {
+  graph_buf_ = lite::ReadFile(model_path.c_str(), &size);
+  if (graph_buf_ == nullptr) {
     MS_LOG(ERROR) << "read ms model failed, model path: " << model_path;
     return kLiteNullptr;
   }
-  auto status = Init(model_buf, size, runner_config);
+  auto status = Init(graph_buf_, size, runner_config);
   if (status != kSuccess) {
     MS_LOG(ERROR) << "init failed.";
-    delete[] model_buf;
-    model_buf = nullptr;
     return kLiteError;
   }
-  if (model_buf != nullptr) {
-    delete[] model_buf;
-    model_buf = nullptr;
-  }
-  is_initialized_ = true;
   return kSuccess;
 }
 
@@ -1252,5 +1247,13 @@ ModelPool::~ModelPool() {
       th.join();
     }
   }
+  // free weight sharing related memory
+  if (graph_buf_ != nullptr) {
+    lite::PackWeightManager::GetInstance()->DeleteOriginModelBufInfo(graph_buf_);
+    delete[] graph_buf_;
+    graph_buf_ = nullptr;
+  }
+  lite::PackWeightManager::GetInstance()->FreePackWeight(model_bufs_);
+  model_bufs_.clear();
 }
 }  // namespace mindspore
