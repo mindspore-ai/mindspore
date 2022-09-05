@@ -619,6 +619,10 @@ AnfNodePtr DFunctor::MapFuncGraphToK(const AnfNodePtr &primal) {
   functor->MapObject();
   functor->MapMorphism();
 
+  if (func_graph->has_flag(FUNC_GRAPH_FLAG_NO_INLINE)) {
+    functor->k_graph_->set_flag(FUNC_GRAPH_FLAG_NO_INLINE, true);
+  }
+
   MS_LOG(DEBUG) << "Map \"" << func_graph->ToString() << "\" to \"" << functor->k_graph_->ToString() << "\"";
   return NewValueNode(functor->k_graph_);
 }

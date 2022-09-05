@@ -407,6 +407,15 @@ class TraceCombileLikeGraphs : public TraceInfo {
   TraceInfoPtr clone() override { return std::make_shared<TraceCombileLikeGraphs>(*this); }
 };
 
+class TraceGraphReusing : public TraceInfo {
+ public:
+  TraceGraphReusing() : TraceInfo(nullptr) {}
+  explicit TraceGraphReusing(const DebugInfoPtr &info) : TraceInfo(info) {}
+  ~TraceGraphReusing() override = default;
+  MS_DECLARE_TRACE_NAME_SYMBOL("CellReusing", "CR-");
+  TraceInfoPtr clone() override { return std::make_shared<TraceGraphReusing>(*this); }
+};
+
 class TraceSegmentTransform : public TraceInfo {
  public:
   explicit TraceSegmentTransform(const DebugInfoPtr &info) : TraceInfo(info) {}

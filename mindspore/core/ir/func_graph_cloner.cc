@@ -177,8 +177,10 @@ void Cloner::AddChildGraphs(const FuncGraphPtr &func_graph) {
     return;
   }
   auto &scopes = manager_->scopes(func_graph);
+  std::set<const FuncGraph *> memo;
   for (auto &graph : scopes) {
-    if (graph != func_graph) {
+    // Avoid to insert duplicate function.
+    if (graph != func_graph && memo.emplace(graph.get()).second) {
       (void)todo_.emplace_back(CloneInfo{graph, nullptr, {}});
     }
   }
@@ -189,9 +191,13 @@ void Cloner::AddTotalGraphs(const FuncGraphPtr &func_graph) {
   if (!clone_all_used_graphs_) {
     return;
   }
+  std::set<const FuncGraph *> memo;
   auto &used = func_graph->func_graphs_used();
   for (auto &fg : used) {
-    (void)todo_.emplace_back(CloneInfo{fg.first, nullptr, {}});
+    // Avoid to insert duplicate function.
+    if (memo.emplace(fg.first.get()).second) {
+      (void)todo_.emplace_back(CloneInfo{fg.first, nullptr, {}});
+    }
   }
 }
 
