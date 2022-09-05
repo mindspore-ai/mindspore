@@ -15,6 +15,7 @@
 """ test ge frontend pass `DropoutForGE` `DropoutGradForGE` """
 import numpy as np
 
+import ge_infer_env  # pylint: disable=unused-import
 from mindspore import ops, nn, context, Tensor
 from mindspore.ops.composite import GradOperation
 
@@ -44,6 +45,7 @@ class GradOfFirstInput(_Grad):
     """
     get grad of first input
     """
+
     def __init__(self, network, sens_param=True):
         super().__init__(grad=GradOperation(sens_param=sens_param), network=network)
 
