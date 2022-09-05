@@ -41,15 +41,15 @@ class LogSpaceCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  private:
   template <typename T, typename S>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
-                    const std::vector<kernel::AddressPtr> &outputs) const;
+                    const std::vector<kernel::AddressPtr> &outputs);
   using LogSpaceFunc =
     std::function<bool(LogSpaceCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
                        const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
   static std::vector<std::pair<KernelAttr, LogSpaceFunc>> func_list_;
   LogSpaceFunc kernel_func_;
 
-  size_t steps_ = 10;
-  size_t base_ = 10;
+  int64_t steps_ = 10;
+  int64_t base_ = 10;
 };
 }  // namespace kernel
 }  // namespace mindspore

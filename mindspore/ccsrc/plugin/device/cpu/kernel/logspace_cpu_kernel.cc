@@ -41,11 +41,11 @@ void LogSpaceCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   if (input_shape_size_2 > 0) {
     MS_EXCEPTION(ValueError) << "For LogSpace, input[end] must be 0-D, but got " << input_shape_size_2 << "-D.";
   }
-  steps_ = common::AnfAlgo::GetNodeAttr<size_t>(kernel_node, "steps");
+  steps_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "steps");
   if (steps_ < 0) {
     MS_EXCEPTION(ValueError) << "For LogSpace, attr[steps] must be greater than 0, but got steps: " << steps_ << ".";
   }
-  base_ = common::AnfAlgo::GetNodeAttr<size_t>(kernel_node, "base");
+  base_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "base");
   auto kernel_attr = GetKernelAttrFromNode(kernel_node);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -57,7 +57,7 @@ void LogSpaceCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 template <typename T, typename S>
 bool LogSpaceCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                         const std::vector<kernel::AddressPtr> &,
-                                        const std::vector<kernel::AddressPtr> &outputs) const {
+                                        const std::vector<kernel::AddressPtr> &outputs) {
   auto *input_start_addr = static_cast<T *>(inputs[0]->addr);
   auto *input_end_addr = static_cast<T *>(inputs[1]->addr);
   auto input_start = static_cast<double>(input_start_addr[0]);
@@ -67,7 +67,7 @@ bool LogSpaceCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
     double w = (input_end - input_start) / (steps_ - 1);
     double q = pow(base_, w);
     double input_start_value = input_start;
-    for (size_t i = 0; i < steps_; i++) {
+    for (int64_t i = 0; i < steps_; i++) {
       double item = pow(base_, input_start_value) * pow(q, i);
       *(output_addr + i) = static_cast<S>(item);
     }
@@ -75,7 +75,7 @@ bool LogSpaceCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
     double w = 1;
     double q = pow(base_, w);
     double input_start_value = input_start;
-    for (size_t i = 0; i < steps_; i++) {
+    for (int64_t i = 0; i < steps_; i++) {
       double item = pow(base_, input_start_value) * pow(q, i);
       *(output_addr + i) = static_cast<S>(item);
     }
