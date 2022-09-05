@@ -167,7 +167,6 @@ Dropout层
     mindspore.nn.BatchNorm1d
     mindspore.nn.BatchNorm2d
     mindspore.nn.BatchNorm3d
-    mindspore.nn.GlobalBatchNorm
     mindspore.nn.GroupNorm
     mindspore.nn.InstanceNorm1d
     mindspore.nn.InstanceNorm2d
@@ -364,17 +363,6 @@ Dynamic LR函数
     mindspore.nn.polynomial_decay_lr
     mindspore.nn.warmup_lr
 
-稀疏层
--------------
-
-.. mscnplatformautosummary::
-    :toctree: nn
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.nn.SparseTensorDenseMatmul
-    mindspore.nn.SparseToDense
-
 图像处理层
 -----------
 
@@ -429,17 +417,4 @@ Dynamic LR函数
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.nn.MatMul
     mindspore.nn.Moments
-    mindspore.nn.ReduceLogSumExp
-
-梯度
------
-
-.. mscnplatformautosummary::
-    :toctree: nn
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.nn.Jvp
-    mindspore.nn.Vjp
