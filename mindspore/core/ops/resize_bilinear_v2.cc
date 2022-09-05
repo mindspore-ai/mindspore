@@ -122,7 +122,7 @@ abstract::ShapePtr ResizeBilinearV2InferShape(const PrimitivePtr &primitive,
 
 TypePtr ResizeBilinearV2InferType(const PrimitivePtr &primitive,
                                   const std::vector<abstract::AbstractBasePtr> &input_args) {
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   return CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->BuildType(), valid_types, primitive->name());
 }
 }  // namespace
