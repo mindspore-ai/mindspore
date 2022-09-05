@@ -27,6 +27,19 @@ void ReplaceStr(std::string *dest, const std::string &replace, char new_char) {
   }
 }
 
+std::string GetPyExe() {
+  // get real python executable path
+  auto ms_context = MsContext::GetInstance();
+  if (ms_context == nullptr) {
+    return kEnv;
+  }
+  auto env = ms_context->get_param<std::string>(MS_CTX_PYTHON_EXE_PATH);
+  if (env.empty()) {
+    return kEnv;
+  }
+  return env;
+}
+
 bool KernelBuildClient::AkgStart(int process_num, int wait_time) {
   // Start compiling..
   auto res = SendRequest(kAkgStart);

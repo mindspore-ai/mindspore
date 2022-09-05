@@ -17,13 +17,13 @@
 
 from mindspore.common import dtype as mstype
 from mindspore.scipy.ops import SolveTriangular
+from mindspore.ops.operations.math_ops import Trace, Bernoulli, Renorm
 from mindspore import nn
 import mindspore.numpy as mnp
 import numpy as np
 from ...nn import LGamma
 from .. import functional as F
 from .. import operations as P
-from ..operations.math_ops import Trace, Bernoulli, Renorm
 from ..operations.math_ops import Real, Imag, Complex, Angle
 from ..operations.math_ops import ComplexAbs
 from ..operations.math_ops import Sinc

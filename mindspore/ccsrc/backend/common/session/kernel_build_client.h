@@ -35,18 +35,7 @@ constexpr inline static int kBufferSize = 4096;
 constexpr inline static auto kEnv = "python";
 // The TAG as prefix of real command from remote.
 constexpr inline static auto kTag = "[~]";
-static std::string GetPyExe() {
-  // get real python executable path
-  auto ms_context = MsContext::GetInstance();
-  if (ms_context == nullptr) {
-    return kEnv;
-  }
-  auto env = ms_context->get_param<std::string>(MS_CTX_PYTHON_EXE_PATH);
-  if (env.empty()) {
-    return kEnv;
-  }
-  return env;
-}
+std::string GetPyExe();
 
 class KernelBuildClient {
  public:

@@ -17,10 +17,10 @@
 import numpy as np
 from mindspore.ops.primitive import constexpr
 from mindspore.ops.operations import nn_ops as nps
+from mindspore.common import dtype as mstype
 from .grad_base import bprop_getters
 from .. import functional as F
 from .. import operations as P
-from ...common import dtype as mstype
 from ..composite.multitype_ops.zeros_like_impl import zeros_like
 from ..operations import _grad_ops as G
 from ..operations import _inner_ops as inner
