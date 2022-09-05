@@ -934,8 +934,8 @@ int BenchmarkUnifiedApi::PrintInputData() {
 void BenchmarkUnifiedApi::ModelParallelRunnerWarmUp(int index) {
   auto in = model_runner_.GetInputs();
   for (size_t i = 0; i < in.size(); i++) {
-    in[i].SetData(all_inputs_data_[index][i]);
     in[i].SetShape(resize_dims_[i]);
+    in[i].SetData(all_inputs_data_[index][i], false);
   }
   auto warm_up_start = GetTimeUs();
   std::vector<MSTensor> output;
@@ -965,8 +965,8 @@ void BenchmarkUnifiedApi::ModelParallelRunnerRun(int task_num, int parallel_idx)
     }
     auto in_data = all_inputs_data_[idx];
     for (size_t tensor_index = 0; tensor_index < in.size(); tensor_index++) {
-      in.at(tensor_index).SetData(all_inputs_data_.at(idx)[tensor_index]);
       in.at(tensor_index).SetShape(resize_dims_.at(tensor_index));
+      in.at(tensor_index).SetData(all_inputs_data_.at(idx)[tensor_index], false);
     }
     auto predict_start = GetTimeUs();
     std::vector<MSTensor> output;
@@ -1056,7 +1056,7 @@ int BenchmarkUnifiedApi::ParallelInference(std::shared_ptr<mindspore::Context> c
     for (size_t i = 0; i < ms_inputs_for_api_.size(); i++) {
       auto &tensor = ms_inputs_for_api_[i];
       tensor.SetShape(resize_dims_[i]);
-      tensor.SetData(all_inputs_data_[0][i]);
+      tensor.SetData(all_inputs_data_[0][i], false);
     }
     status = PrintInputData();
     MS_CHECK_FALSE_MSG(status != RET_OK, status, "PrintInputData error ");

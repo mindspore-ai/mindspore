@@ -44,7 +44,7 @@ class DefaultInferSession : public InferSession {
   Status CompileGraph(FuncGraphPtr graph, const void *data = nullptr, size_t size = 0) override;
   Status RunGraph() override;
   Status RunGraph(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs) override;
-  Status Resize(const std::vector<tensor::TensorPtr> &inputs, const std::vector<std::vector<int64_t>> &dims) override;
+  Status Resize(const std::vector<tensor::Tensor> &inputs, const std::vector<std::vector<int64_t>> &dims) override;
 
   std::vector<MutableTensorImplPtr> GetOutputs() override;
   std::vector<MutableTensorImplPtr> GetInputs() override;
@@ -74,7 +74,7 @@ Status DefaultInferSession::RunGraph() { return kSuccess; }
 Status DefaultInferSession::RunGraph(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs) {
   return kSuccess;
 }
-Status DefaultInferSession::Resize(const std::vector<tensor::TensorPtr> &inputs,
+Status DefaultInferSession::Resize(const std::vector<tensor::Tensor> &inputs,
                                    const std::vector<std::vector<int64_t>> &dims) {
   return kSuccess;
 }

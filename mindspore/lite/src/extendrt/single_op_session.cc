@@ -202,7 +202,7 @@ Status SingleOpInferSession::RunGraph(const std::vector<tensor::Tensor> &inputs,
   return kSuccess;
 }
 
-Status SingleOpInferSession::ResizeGraphInputs(const std::vector<tensor::TensorPtr> &inputs,
+Status SingleOpInferSession::ResizeGraphInputs(const std::vector<tensor::Tensor> &inputs,
                                                const std::vector<std::vector<int64_t>> &dims) {
   if (inputs_.size() != inputs.size()) {
     MS_LOG(ERROR) << "Graph inputs tensor size[" << inputs_.size() << " is not equal with user input tensor size["
@@ -228,7 +228,7 @@ Status SingleOpInferSession::ResizeGraphInputs(const std::vector<tensor::TensorP
       free(graph_input_addr->ptr_);
       auto new_addr = malloc(tensor_size);
       if (new_addr == nullptr) {
-        MS_LOG(ERROR) << " malloc memory of input " << i << " failed, memory size " << inputs[i]->Size();
+        MS_LOG(ERROR) << " malloc memory of input " << i << " failed, memory size " << inputs[i].Size();
         return kLiteError;
       }
       graph_input_addr->set_ptr(new_addr);
@@ -246,7 +246,7 @@ Status SingleOpInferSession::ResizeGraphInputs(const std::vector<tensor::TensorP
   return kSuccess;
 }  // namespace mindspore
 
-Status SingleOpInferSession::Resize(const std::vector<tensor::TensorPtr> &inputs,
+Status SingleOpInferSession::Resize(const std::vector<tensor::Tensor> &inputs,
                                     const std::vector<std::vector<int64_t>> &dims) {
   if (ResizeGraphInputs(inputs, dims) != kSuccess) {
     MS_LOG(EXCEPTION) << "Resize graph input error. ";

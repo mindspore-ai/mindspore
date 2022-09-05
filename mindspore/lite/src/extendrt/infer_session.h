@@ -40,8 +40,7 @@ class InferSession : public std::enable_shared_from_this<InferSession> {
   virtual Status CompileGraph(FuncGraphPtr graph, const void *data = nullptr, size_t size = 0) = 0;
   virtual Status RunGraph() = 0;
   virtual Status RunGraph(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs) = 0;
-  virtual Status Resize(const std::vector<tensor::TensorPtr> &inputs,
-                        const std::vector<std::vector<int64_t>> &dims) = 0;
+  virtual Status Resize(const std::vector<tensor::Tensor> &inputs, const std::vector<std::vector<int64_t>> &dims) = 0;
 
   virtual std::vector<MutableTensorImplPtr> GetOutputs() = 0;
   virtual std::vector<MutableTensorImplPtr> GetInputs() = 0;

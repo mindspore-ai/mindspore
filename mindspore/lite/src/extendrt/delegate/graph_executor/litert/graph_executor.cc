@@ -155,11 +155,11 @@ bool LiteRTGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<
     return false;
   }
   outputs->clear();
-  *outputs = TensorUtils::TensorPtrToTensor(TensorUtils::MSTensorToTensorPtr(res));
+  *outputs = TensorUtils::MSTensorToTensor(res);
   return true;
 }
 
-bool LiteRTGraphExecutor::Resize(const std::vector<tensor::Tensor> &inputs,
+bool LiteRTGraphExecutor::Resize(const FuncGraphPtr &, const std::vector<tensor::Tensor> &inputs,
                                  const std::vector<std::vector<int64_t>> &dims) {
   auto input_tensors = lite_session_->GetInputs();
   if (input_tensors.empty()) {
@@ -182,34 +182,38 @@ bool LiteRTGraphExecutor::Resize(const std::vector<tensor::Tensor> &inputs,
   return true;
 }
 
+std::vector<tensor::Tensor> LiteRTGraphExecutor::GetInputInfos(const FuncGraphPtr &) {
+  if (lite_session_ == nullptr) {
+    MS_LOG(ERROR) << "Session is null.";
+    return {};
+  }
+  auto inputs = lite_session_->GetInputs();
+  std::vector<tensor::Tensor> input_tensors;
+  for (size_t i = 0; i < inputs.size(); ++i) {
+    auto type_id = inputs[i]->data_type();
+    auto shape = inputs[i]->shape();
+    std::vector<int64_t> lite_shape;
+    std::transform(shape.begin(), shape.end(), std::back_inserter(lite_shape),
+                   [](int c) { return static_cast<int64_t>(c); });
+    input_tensors.push_back(tensor::Tensor(type_id, lite_shape));
+  }
+  return input_tensors;
+}
+
+std::vector<tensor::Tensor> LiteRTGraphExecutor::GetOutputInfos(const FuncGraphPtr &) {
+  auto outputs = GetLiteSessionOutputs();
+  std::vector<tensor::Tensor> output_tensors;
+  for (size_t i = 0; i < outputs.size(); ++i) {
+    auto type_id = static_cast<enum TypeId>(outputs[i].DataType());
+    output_tensors.push_back(tensor::Tensor(type_id, outputs[i].Shape()));
+  }
+  return output_tensors;
+}
+
 void LiteRTGraphExecutor::ResetTensorData(std::vector<void *> old_data, const std::vector<lite::Tensor *> &tensors) {
   for (size_t j = 0; j < old_data.size(); j++) {
     tensors.at(j)->set_data(old_data.at(j));
   }
-}
-
-std::vector<LiteTensorImplPtr> LiteRTGraphExecutor::GetInputs() {
-  std::vector<LiteTensorImplPtr> empty;
-  if (lite_session_ == nullptr) {
-    MS_LOG(ERROR) << "Session is null.";
-    return empty;
-  }
-  auto inputs = lite_session_->GetInputs();
-  if (inputs.empty()) {
-    MS_LOG(ERROR) << "The input of model is empty";
-    return empty;
-  }
-  std::vector<LiteTensorImplPtr> input_tensors;
-  input_tensors.resize(inputs.size());
-  for (size_t i = 0; i < input_tensors.size(); ++i) {
-    auto impl = std::make_shared<LiteTensorImpl>(inputs[i]);
-    if (impl == nullptr || impl->lite_tensor() == nullptr) {
-      MS_LOG(ERROR) << "Create tensor failed";
-      return empty;
-    }
-    input_tensors[i] = impl;
-  }
-  return input_tensors;
 }
 
 std::vector<MSTensor> LiteRTGraphExecutor::GetLiteSessionOutputs() {
@@ -294,7 +298,7 @@ std::shared_ptr<lite::LiteSession> LiteRTGraphExecutor::CreateLiteSession(lite::
   return session;
 }
 
-static std::shared_ptr<device::GraphExecutor> LiteRTGraphExecutorCreator(
+static std::shared_ptr<LiteGraphExecutor> LiteRTGraphExecutorCreator(
   const std::shared_ptr<mindspore::DelegateConfig> &config) {
   MS_EXCEPTION_IF_NULL(config);
   return std::make_shared<LiteRTGraphExecutor>(config->GetContext());

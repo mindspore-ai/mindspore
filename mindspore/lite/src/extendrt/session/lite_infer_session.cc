@@ -202,7 +202,7 @@ Status LiteInferSession::RunGraph(const std::vector<tensor::Tensor> &inputs, std
   *outputs = TensorUtils::MSTensorToTensor(res);
   return kSuccess;
 }
-Status LiteInferSession::Resize(const std::vector<tensor::TensorPtr> &inputs,
+Status LiteInferSession::Resize(const std::vector<tensor::Tensor> &inputs,
                                 const std::vector<std::vector<int64_t>> &dims) {
   return kSuccess;
 }

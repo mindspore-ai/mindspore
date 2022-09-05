@@ -31,7 +31,7 @@
 #include "include/api/context.h"
 #include "core/base/base.h"
 
-#include "ccsrc/runtime/hardware/device_context.h"
+#include "extendrt/session/lite_graph_executor.h"
 #include "ccsrc/backend/common/session/kernel_graph.h"
 
 namespace mindspore::lite {
@@ -42,7 +42,7 @@ struct TrtGraphContext {
   std::shared_ptr<TensorRTSubGraph> sub_graph = nullptr;
 };
 
-class TensorRTExecutor : public device::GraphExecutor {
+class TensorRTExecutor : public LiteGraphExecutor {
  public:
   TensorRTExecutor(const std::shared_ptr<mindspore::Context> &context, const std::string &cache_model_path,
                    size_t vocab_size, size_t device_cache_size, const std::map<std::string, std::string> &ms_cache);
@@ -55,6 +55,11 @@ class TensorRTExecutor : public device::GraphExecutor {
   bool CompileGraph(const FuncGraphPtr &graph, const std::map<string, string> &compile_options) override;
   bool RunGraph(const FuncGraphPtr &graph, const std::vector<tensor::Tensor> &inputs,
                 std::vector<tensor::Tensor> *outputs, const std::map<string, string> &compile_options) override;
+
+  bool Resize(const FuncGraphPtr &, const std::vector<tensor::Tensor> &inputs,
+              const std::vector<std::vector<int64_t>> &new_shapes) override;
+  std::vector<tensor::Tensor> GetInputInfos(const FuncGraphPtr &) override;
+  std::vector<tensor::Tensor> GetOutputInfos(const FuncGraphPtr &) override;
 
  private:
   Status BuildSubGraph(const KernelGraphPtr &graph);

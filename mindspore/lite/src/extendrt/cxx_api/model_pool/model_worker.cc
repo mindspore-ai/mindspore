@@ -159,13 +159,15 @@ Status ModelWorker::CopyOutputTensor(std::vector<MSTensor> model_outputs, std::v
   std::vector<MSTensor> new_outputs;
   auto output_size = user_outputs->size();
   for (size_t i = 0; i < output_size; i++) {
-    auto copy_tensor = mindspore::MSTensor::CreateTensor(user_outputs->at(i).Name(), user_outputs->at(i).DataType(),
-                                                         user_outputs->at(i).Shape(), user_outputs->at(i).MutableData(),
-                                                         user_outputs->at(i).DataSize());
+    auto &user_output = user_outputs->at(i);
+    auto copy_tensor =
+      mindspore::MSTensor::CreateTensor(user_output.Name(), user_output.DataType(), user_output.Shape(),
+                                        user_output.MutableData(), user_output.DataSize());
     if (copy_tensor == nullptr) {
       MS_LOG(ERROR) << "model thread copy output tensor failed.";
       return kLiteError;
     }
+    copy_tensor->SetDeviceData(user_output.GetDeviceData());
     new_outputs.push_back(*copy_tensor);
     delete copy_tensor;
   }

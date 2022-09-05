@@ -31,7 +31,7 @@ Status DelegateSession::RunGraph() { return kSuccess; }
 Status DelegateSession::RunGraph(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs) {
   return kSuccess;
 }
-Status DelegateSession::Resize(const std::vector<tensor::TensorPtr> &inputs,
+Status DelegateSession::Resize(const std::vector<tensor::Tensor> &inputs,
                                const std::vector<std::vector<int64_t>> &dims) {
   return kSuccess;
 }

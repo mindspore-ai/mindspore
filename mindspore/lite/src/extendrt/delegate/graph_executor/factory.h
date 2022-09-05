@@ -25,7 +25,7 @@
 #include "utils/hash_map.h"
 
 namespace mindspore {
-typedef std::shared_ptr<device::GraphExecutor> (*GraphExecutorCreator)(
+typedef std::shared_ptr<LiteGraphExecutor> (*GraphExecutorCreator)(
   const std::shared_ptr<mindspore::DelegateConfig> &config);
 class MS_API GraphExecutorRegistry {
  public:
@@ -46,9 +46,9 @@ class MS_API GraphExecutorRegistry {
     it->second[provider] = creator;
   }
 
-  std::shared_ptr<device::GraphExecutor> GetGraphExecutor(const mindspore::DeviceType &device_type,
-                                                          const std::string &provider,
-                                                          const std::shared_ptr<mindspore::DelegateConfig> &config) {
+  std::shared_ptr<LiteGraphExecutor> GetGraphExecutor(const mindspore::DeviceType &device_type,
+                                                      const std::string &provider,
+                                                      const std::shared_ptr<mindspore::DelegateConfig> &config) {
     auto it = creator_map_.find(device_type);
     if (it == creator_map_.end()) {
       return nullptr;
