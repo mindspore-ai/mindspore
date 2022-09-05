@@ -65,7 +65,7 @@ def get_kernel_meta_parent_dir():
 
 def get_ascend_compile_dirs():
     """Get several Ascend compile dirs."""
-    kernel_meta_dir = os.path.join(get_kernel_meta_parent_dir(), "kernel_meta")
+    kernel_meta_dir = os.path.join(get_kernel_meta_parent_dir(), "akg_kernel_meta")
     compile_dirs = {"kernel_meta_dir": kernel_meta_dir,
                     "akg_compile_dir": os.path.join(kernel_meta_dir, "akg"),
                     "tbe_compile_dir": os.path.join(kernel_meta_dir, "tbe"),
