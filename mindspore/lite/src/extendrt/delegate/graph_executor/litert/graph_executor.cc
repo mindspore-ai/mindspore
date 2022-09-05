@@ -84,19 +84,6 @@ bool LiteRTGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<
     MS_LOG(EXCEPTION) << "Wrong input size.";
   }
 
-  std::vector<std::vector<int>> user_shapes;
-  std::transform(inputs.begin(), inputs.end(), std::back_inserter(user_shapes), [](auto &input) {
-    auto user_shape = input.shape_c();
-    std::vector<int> shape;
-    std::transform(user_shape.begin(), user_shape.end(), std::back_inserter(shape),
-                   [](auto s) { return static_cast<int>(s); });
-    return shape;
-  });
-  auto ret = lite_session_->Resize(input_tensors, user_shapes);
-  if (ret != kSuccess) {
-    MS_LOG(ERROR) << "Run graph failed. resize input error with " << ret;
-    return false;
-  }
   std::vector<void *> old_data;
   for (size_t i = 0; i < inputs.size(); i++) {
     auto input = input_tensors.at(i);
@@ -142,7 +129,7 @@ bool LiteRTGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<
       }
     }
   }
-  ret = lite_session_->RunGraph();
+  auto ret = lite_session_->RunGraph();
   ResetTensorData(old_data, input_tensors);
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "Run graph failed.";
