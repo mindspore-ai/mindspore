@@ -75,7 +75,7 @@ int MPICollective::GetWorldRankIdFromGroup(const std::string &name, const int ra
   CHECK_RET(static_cast<int>(world_map_[name].size()) > rank_id && rank_id >= 0, 1,
             ("The rank_id " + std::to_string(rank_id) + "is not in the range of group " + name));
   CHECK_RET(rank_id >= 0, true, "The rank_id[" + std::to_string(rank_id) + "] must be greater equal than zero.");
-  return world_map_[name][static_cast<uint64_t>(rank_id)];
+  return world_map_[name][static_cast<uint32_t>(rank_id)];
 }
 
 int MPICollective::GetGroupRankIdFromWorld(const std::string &name, const int rank_id) {

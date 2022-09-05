@@ -99,7 +99,7 @@ void *AutoMemoryOffload::Get(const void *key, void *stream, const HashSet<const 
 bool AutoMemoryOffload::MallocContinuous(const std::vector<const void *> &keys, const std::vector<size_t> &size_list,
                                          void *stream, const HashSet<const void *> &pinned_memory) {
   MS_EXCEPTION_IF_NULL(mem_handler_);
-  const size_t total_size = std::accumulate(size_list.begin(), size_list.end(), 0);
+  const size_t total_size = std::accumulate(size_list.begin(), size_list.end(), static_cast<size_t>(0));
   using MallocInfo = std::pair<const std::vector<const void *> &, const std::vector<size_t> &>;
   std::function<bool(const MallocInfo &, const std::shared_ptr<MemHandler> &mem_handler,
                      HashMap<const void *, void *> *, HashMap<const void *, size_t> *)>
@@ -121,7 +121,7 @@ bool AutoMemoryOffload::MallocContinuous(const std::vector<const void *> &keys, 
     return false;
   }
   for (auto key : keys) {
-    continuous_mem_key_.insert(key);
+    (void)continuous_mem_key_.insert(key);
   }
   return true;
 }
