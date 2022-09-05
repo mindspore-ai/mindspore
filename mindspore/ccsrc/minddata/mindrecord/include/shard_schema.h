@@ -22,6 +22,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+
 #include "minddata/mindrecord/include/common/log_adapter.h"
 #include "minddata/mindrecord/include/common/shard_pybind.h"
 #include "minddata/mindrecord/include/common/shard_utils.h"

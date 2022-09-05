@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include <algorithm>
 #include "minddata/dataset/kernels/ir/vision/ascend_vision_ir.h"
 
+#include <algorithm>
+
 #include "minddata/dataset/kernels/image/dvpp/dvpp_crop_jpeg_op.h"
-#include "minddata/dataset/kernels/image/dvpp/dvpp_decode_resize_jpeg_op.h"
-#include "minddata/dataset/kernels/image/dvpp/dvpp_decode_resize_crop_jpeg_op.h"
 #include "minddata/dataset/kernels/image/dvpp/dvpp_decode_jpeg_op.h"
-#include "minddata/dataset/kernels/image/dvpp/dvpp_decode_video_op.h"
 #include "minddata/dataset/kernels/image/dvpp/dvpp_decode_png_op.h"
+#include "minddata/dataset/kernels/image/dvpp/dvpp_decode_resize_crop_jpeg_op.h"
+#include "minddata/dataset/kernels/image/dvpp/dvpp_decode_resize_jpeg_op.h"
+#include "minddata/dataset/kernels/image/dvpp/dvpp_decode_video_op.h"
 #include "minddata/dataset/kernels/image/dvpp/dvpp_normalize_op.h"
 #include "minddata/dataset/kernels/image/dvpp/dvpp_resize_jpeg_op.h"
 #include "minddata/dataset/util/path.h"

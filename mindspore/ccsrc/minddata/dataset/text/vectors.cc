@@ -51,6 +51,7 @@ Status Vectors::InferShape(const std::string &path, int32_t max_vectors, int32_t
       (*num_lines)++;
     }
   }
+  file_reader.close();
   CHECK_FAIL_RETURN_UNEXPECTED(*num_lines > 0, "Vectors: invalid file, file is empty.");
 
   if (max_vectors > 0) {
@@ -94,21 +95,27 @@ Status Vectors::Load(const std::string &path, int32_t max_vectors,
       dim++;
       vector_values.push_back(atof(vector_value.c_str()));
     }
-    CHECK_FAIL_RETURN_UNEXPECTED(dim > 1, "Vectors: token with 1-dimensional vector.");
-    CHECK_FAIL_RETURN_UNEXPECTED(dim == *vector_dim,
-                                 "Vectors: all vectors must have the same number of dimensions, but got dim " +
-                                   std::to_string(dim) + " while expecting " + std::to_string(*vector_dim));
+    if (dim <= 1) {
+      file_reader.close();
+      RETURN_STATUS_UNEXPECTED("Vectors: token with 1-dimensional vector.");
+    }
+    if (dim != *vector_dim) {
+      file_reader.close();
+      RETURN_STATUS_UNEXPECTED("Vectors: all vectors must have the same number of dimensions, but got dim " +
+                               std::to_string(dim) + " while expecting " + std::to_string(*vector_dim));
+    }
 
     auto token_index = map->find(token);
     if (token_index == map->end()) {
       (*map)[token] = vector_values;
     }
   }
+  file_reader.close();
   return Status::OK();
 }
 
 Vectors::Vectors(const std::unordered_map<std::string, std::vector<float>> &map, int32_t dim) {
-  map_ = std::move(map);
+  map_ = map;
   dim_ = dim;
 }
 

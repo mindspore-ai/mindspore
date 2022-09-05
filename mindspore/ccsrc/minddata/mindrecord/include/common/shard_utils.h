@@ -47,6 +47,7 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+
 #include "minddata/mindrecord/include/common/log_adapter.h"
 #include "minddata/mindrecord/include/shard_error.h"
 #include "nlohmann/json.hpp"
