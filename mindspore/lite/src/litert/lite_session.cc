@@ -85,13 +85,7 @@ bool ExistCustomCpuKernel() {
 
 LiteSession::LiteSession() {
 #ifdef USE_GLOG
-#if defined(_WIN32) || defined(_WIN64) || defined(__APPLE__)
-#ifdef _MSC_VER
   mindspore::mindspore_log_init();
-#endif
-#else
-  mindspore::mindspore_log_init();
-#endif
 #endif
   this->is_running_.store(false);
 }
