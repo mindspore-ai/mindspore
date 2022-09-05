@@ -26,6 +26,8 @@
 
 namespace mindspore::parse {
 static mindspore::HashSet<std::string> cell_input_args_ = {};
+static mindspore::HashSet<std::string> cell_assigned_attributes_ = {};
+static mindspore::HashSet<std::string> cell_condition_expr_attributes_ = {};
 static const std::set<std::string> ignore_judge_dynamic_cell = {
   "Cell mindspore.nn.layer.basic.Dense",
   "Cell mindspore.nn.probability.distribution.normal.Normal",
@@ -57,6 +59,32 @@ std::string DynamicParser::ParseNodeName(const std::shared_ptr<parse::ParseFunct
   return node_name;
 }
 
+bool DynamicParser::CheckAttributeInExpr(const std::shared_ptr<parse::ParseFunctionAst> &ast, const py::object &node,
+                                         const ExprType &expr_type) {
+  MS_EXCEPTION_IF_NULL(ast);
+  auto variable_type = ParseNodeName(ast, node, parse::AST_MAIN_TYPE_EXPR);
+  if (variable_type == parse::NAMED_PRIMITIVE_ATTRIBUTE) {
+    auto target_value = python_adapter::GetPyObjAttr(node, parse::NAMED_PRIMITIVE_VALUE);
+    std::string target_variabe;
+    if (py::hasattr(target_value, "id") && py::hasattr(node, "attr")) {
+      target_variabe = py::cast<std::string>(target_value.attr("id")) + py::cast<std::string>(node.attr("attr"));
+    }
+    if (expr_type == ExprType::kAssignedExpr) {
+      if (cell_condition_expr_attributes_.find(target_variabe) != cell_condition_expr_attributes_.end()) {
+        return true;
+      }
+      cell_assigned_attributes_.insert(target_variabe);
+    } else if (expr_type == ExprType::kConditionExpr) {
+      MS_LOG(DEBUG) << "target variable " << target_variabe << " kConditionExpr";
+      if (cell_assigned_attributes_.find(target_variabe) != cell_assigned_attributes_.end()) {
+        return true;
+      }
+      cell_condition_expr_attributes_.insert(target_variabe);
+    }
+  }
+  return false;
+}
+
 void DynamicParser::ParseInputArgs(const std::shared_ptr<parse::ParseFunctionAst> &ast, const py::object &fn_node) {
   MS_EXCEPTION_IF_NULL(ast);
   py::list args = ast->GetArgs(fn_node);
@@ -70,48 +98,88 @@ void DynamicParser::ParseInputArgs(const std::shared_ptr<parse::ParseFunctionAst
 bool DynamicParser::ParseIfWhileExprNode(const std::shared_ptr<parse::ParseFunctionAst> &ast, const py::object &node) {
   MS_LOG(DEBUG) << "Parse if/while expr";
   py::object test_node = python_adapter::GetPyObjAttr(node, parse::NAMED_PRIMITIVE_TEST);
-  const auto &node_name = ParseNodeName(ast, test_node, parse::AST_MAIN_TYPE_EXPR);
-  if (node_name == parse::NAMED_PRIMITIVE_COMPARE) {
-    py::object left_node = python_adapter::GetPyObjAttr(test_node, parse::NAMED_PRIMITIVE_LEFT);
-    py::list comparators_node = python_adapter::GetPyObjAttr(test_node, parse::NAMED_PRIMITIVE_COMPARATORS);
-    if (comparators_node.empty()) {
-      MS_LOG(DEBUG) << "Get comparators node failed!";
+  if (ParseConditionExper(ast, test_node)) {
+    return true;
+  }
+  return ParseBodyOrElseContext(ast, node, parse::NAMED_PRIMITIVE_BODY) ||
+         ParseBodyOrElseContext(ast, node, parse::NAMED_PRIMITIVE_ORELSE);
+}
+
+bool DynamicParser::ParseConditionExper(const std::shared_ptr<parse::ParseFunctionAst> &ast, const py::object &node) {
+  MS_LOG(DEBUG) << "Parse condition expr";
+  const auto &node_name = ParseNodeName(ast, node, parse::AST_MAIN_TYPE_EXPR);
+  if (node_name == parse::NAMED_PRIMITIVE_BOOLOP) {
+    py::object value_object = python_adapter::GetPyObjAttr(node, parse::NAMED_PRIMITIVE_VALUES);
+    py::list value_nodes = py::cast<py::list>(value_object);
+    if (value_nodes.empty()) {
+      MS_LOG(DEBUG) << "parse value_nodes none";
       return false;
     }
-    auto left = ParseNodeName(ast, left_node, parse::AST_MAIN_TYPE_EXPR);
-    auto right = ParseNodeName(ast, comparators_node[0], parse::AST_MAIN_TYPE_EXPR);
-    // while self.a > self.b and changed self.a or self.b
-    if (left == parse::NAMED_PRIMITIVE_ATTRIBUTE && right == parse::NAMED_PRIMITIVE_ATTRIBUTE) {
-      auto left_value = python_adapter::GetPyObjAttr(left_node, parse::NAMED_PRIMITIVE_VALUE);
-      std::string left_variable;
-      if (py::hasattr(left_node, "attr") && py::hasattr(left_value, "id")) {
-        left_variable = py::cast<std::string>(left_value.attr("id")) + py::cast<std::string>(left_node.attr("attr"));
+    for (size_t i = 0; i < value_nodes.size(); ++i) {
+      py::object value_node = value_nodes[i];
+      if (ParseConditionExper(ast, value_node)) {
+        return true;
       }
-      auto right_value = python_adapter::GetPyObjAttr(comparators_node[0], parse::NAMED_PRIMITIVE_VALUE);
-      std::string right_variable;
-      if (py::hasattr(comparators_node[0], "attr") && py::hasattr(right_value, "id")) {
-        right_variable =
-          py::cast<std::string>(right_value.attr("id")) + py::cast<std::string>(comparators_node[0].attr("attr"));
-      }
-      return ParseBodyContext(ast, node, {left_variable, right_variable});
     }
-    // if a[0]
-    if (left == parse::NAMED_PRIMITIVE_SUBSCRIPT) {
-      py::object value_in_subscript = python_adapter::GetPyObjAttr(left_node, parse::NAMED_PRIMITIVE_VALUE);
-      left = ParseNodeName(ast, value_in_subscript, parse::AST_MAIN_TYPE_EXPR);
-    }
-    MS_LOG(DEBUG) << "Left is " << left << " Right is " << right;
-    if (unchanged_named_primitive.find(left) == unchanged_named_primitive.end() ||
-        unchanged_named_primitive.find(right) == unchanged_named_primitive.end()) {
-      return true;
-    }
-  }
-  // if flag:
-  if (node_name == parse::NAMED_PRIMITIVE_NAME) {
-    std::string id = py::cast<std::string>(test_node.attr("id"));
+  } else if (node_name == parse::NAMED_PRIMITIVE_COMPARE && ParseCompareExpr(ast, node)) {
+    return true;
+  } else if (node_name == parse::NAMED_PRIMITIVE_SUBSCRIPT && ParseSubsciptExpr(ast, node)) {
+    return true;
+  } else if (node_name == parse::NAMED_PRIMITIVE_ATTRIBUTE &&
+             CheckAttributeInExpr(ast, node, ExprType::kConditionExpr)) {
+    return true;
+  } else if (node_name == parse::NAMED_PRIMITIVE_NAME) {  // if flag:
+    std::string id = py::cast<std::string>(node.attr("id"));
     if (cell_input_args_.find(id) != cell_input_args_.end()) {
       return true;
     }
+  }
+  return false;
+}
+
+bool DynamicParser::ParseCompareExpr(const std::shared_ptr<parse::ParseFunctionAst> &ast, const py::object &cmp_node) {
+  MS_LOG(DEBUG) << "Parse compare expr";
+  py::object left_node = python_adapter::GetPyObjAttr(cmp_node, parse::NAMED_PRIMITIVE_LEFT);
+  py::list comparators_node = python_adapter::GetPyObjAttr(cmp_node, parse::NAMED_PRIMITIVE_COMPARATORS);
+  if (comparators_node.empty() || py::isinstance<py::none>(left_node)) {
+    MS_LOG(DEBUG) << "parse cmp node failed!";
+    return false;
+  }
+
+  auto left = ParseNodeName(ast, left_node, parse::AST_MAIN_TYPE_EXPR);
+  auto right = ParseNodeName(ast, comparators_node[0], parse::AST_MAIN_TYPE_EXPR);
+  if (left == parse::NAMED_PRIMITIVE_SUBSCRIPT && ParseSubsciptExpr(ast, left_node)) {
+    return true;
+  } else if (left == parse::NAMED_PRIMITIVE_ATTRIBUTE &&
+             CheckAttributeInExpr(ast, left_node, ExprType::kConditionExpr)) {
+    return true;
+  }
+  if (right == parse::NAMED_PRIMITIVE_SUBSCRIPT && ParseSubsciptExpr(ast, comparators_node[0])) {
+    return true;
+  } else if (right == parse::NAMED_PRIMITIVE_ATTRIBUTE &&
+             CheckAttributeInExpr(ast, comparators_node[0], ExprType::kConditionExpr)) {
+    return true;
+  }
+
+  MS_LOG(DEBUG) << "Left is " << left << " Right is " << right;
+  if (unchanged_named_primitive.find(left) == unchanged_named_primitive.end() ||
+      unchanged_named_primitive.find(right) == unchanged_named_primitive.end()) {
+    return true;
+  }
+  return false;
+}
+
+bool DynamicParser::ParseSubsciptExpr(const std::shared_ptr<parse::ParseFunctionAst> &ast, const py::object &node) {
+  MS_LOG(DEBUG) << "Parse subscipt expr";
+  py::object value_in_subscript = python_adapter::GetPyObjAttr(node, parse::NAMED_PRIMITIVE_VALUE);
+  if (py::isinstance<py::none>(value_in_subscript)) {
+    MS_LOG(DEBUG) << "parse subscipt node fail";
+    return false;
+  }
+  auto value_node_name = ParseNodeName(ast, value_in_subscript, parse::AST_MAIN_TYPE_EXPR);
+  if (value_node_name == parse::NAMED_PRIMITIVE_ATTRIBUTE &&
+      CheckAttributeInExpr(ast, value_in_subscript, ExprType::kConditionExpr)) {
+    return true;
   }
   return false;
 }
@@ -141,61 +209,75 @@ bool DynamicParser::ParseAssignExprNode(const std::shared_ptr<parse::ParseFuncti
       }
     }
   }
-  return false;
-}
 
-bool DynamicParser::ParseAugAssignExprNode(const std::shared_ptr<parse::ParseFunctionAst> &, const py::object &node,
-                                           const std::vector<std::string> &compare_prim) {
-  MS_LOG(DEBUG) << "Parse augassign expr";
-  bool ret = false;
-  if (compare_prim.empty()) {
-    return ret;
-  }
-  py::object target_node = python_adapter::GetPyObjAttr(node, parse::NAMED_PRIMITIVE_TARGET);
-  if (py::isinstance<py::none>(target_node)) {
-    MS_LOG(DEBUG) << "Parse target node is none!";
-    return ret;
-  }
-  py::object value_node = python_adapter::GetPyObjAttr(target_node, parse::NAMED_PRIMITIVE_VALUE);
-  if (py::isinstance<py::none>(value_node)) {
-    MS_LOG(DEBUG) << "Parse value node is none!";
-    return ret;
-  }
-  std::string assign_prim;
-  if (py::hasattr(target_node, "attr") && py::hasattr(value_node, "id")) {
-    assign_prim = py::cast<std::string>(value_node.attr("id")) + py::cast<std::string>(target_node.attr("attr"));
-  }
-  auto iter = std::find(compare_prim.begin(), compare_prim.end(), assign_prim);
-  if (iter != compare_prim.end()) {
-    ret = true;
-  }
-  return ret;
-}
-
-bool DynamicParser::ParseForExprNode(const std::shared_ptr<parse::ParseFunctionAst> &ast, const py::object &node) {
-  MS_LOG(DEBUG) << "Parse for expr";
-  py::object body_node = python_adapter::GetPyObjAttr(node, parse::NAMED_PRIMITIVE_BODY);
-  if (py::isinstance<py::none>(body_node)) {
-    MS_LOG(DEBUG) << "Parse body of for expression is none!";
+  py::object target = python_adapter::GetPyObjAttr(node, parse::NAMED_PRIMITIVE_TARGETS);
+  py::list target_nodes = py::cast<py::list>(target);
+  if (target_nodes.empty()) {
+    MS_LOG(DEBUG) << "Parse target nodes is none!";
     return false;
   }
-  py::int_ pcount = python_adapter::CallPyObjMethod(body_node, parse::PYTHON_GET_METHOD_LEN);
-  size_t count = LongToSize(pcount);
-  MS_LOG(DEBUG) << "The for nodes count in body is " << count;
-  for (size_t i = 0; i < count; ++i) {
-    auto it = py::cast<py::list>(body_node)[i];
-    const auto &node_name = ParseNodeName(ast, it, parse::AST_MAIN_TYPE_STMT);
-    if (node_name == parse::NAMED_PRIMITIVE_ASSIGN && ParseAssignExprNode(ast, it)) {
+  for (size_t i = 0; i < target_nodes.size(); ++i) {
+    py::object target_node = target_nodes[i];
+    if (CheckAttributeInExpr(ast, target_node, ExprType::kAssignedExpr)) {
       return true;
     }
   }
   return false;
 }
 
-bool DynamicParser::ParseBodyContext(const std::shared_ptr<parse::ParseFunctionAst> &ast, const py::object &fn_node,
-                                     const std::vector<std::string> &compare_prim) {
+bool DynamicParser::ParseAugAssignExprNode(const std::shared_ptr<parse::ParseFunctionAst> &ast,
+                                           const py::object &node) {
+  MS_LOG(DEBUG) << "Parse augassign expr";
+  py::object target_node = python_adapter::GetPyObjAttr(node, parse::NAMED_PRIMITIVE_TARGET);
+  if (py::isinstance<py::none>(target_node)) {
+    MS_LOG(DEBUG) << "Parse target node is none!";
+    return false;
+  }
+  if (CheckAttributeInExpr(ast, target_node, ExprType::kAssignedExpr)) {
+    return true;
+  }
+  return false;
+}
+
+bool DynamicParser::ParseForExprNode(const std::shared_ptr<parse::ParseFunctionAst> &ast, const py::object &node) {
+  MS_LOG(DEBUG) << "Parse for expr";
+  py::object iter_node = python_adapter::GetPyObjAttr(node, parse::NAMED_PRIMITIVE_ITER);
+  if (py::isinstance<py::none>(iter_node)) {
+    MS_LOG(DEBUG) << "Parse iter node is none!";
+    return false;
+  }
+  const auto &iter_node_name = ParseNodeName(ast, iter_node, parse::AST_MAIN_TYPE_EXPR);
+  // for i in range(self.a) and for i in self.a[0] and for i in self.a
+  if (iter_node_name == parse::NAMED_PRIMITIVE_CALL) {
+    py::object func_obj = python_adapter::GetPyObjAttr(iter_node, parse::NAMED_PRIMITIVE_ARGS);
+    py::list arg_nodes = py::cast<py::list>(func_obj);
+    if (arg_nodes.empty()) {
+      MS_LOG(DEBUG) << "Parse arg_nodes is none!";
+      return false;
+    }
+    for (size_t i = 0; i < arg_nodes.size(); ++i) {
+      py::object arg_node = arg_nodes[i];
+      const auto arg_name = ParseNodeName(ast, arg_node, parse::AST_MAIN_TYPE_EXPR);
+      if (arg_name == parse::NAMED_PRIMITIVE_SUBSCRIPT && ParseSubsciptExpr(ast, arg_node)) {
+        return true;
+      } else if (arg_name == parse::NAMED_PRIMITIVE_ATTRIBUTE &&
+                 CheckAttributeInExpr(ast, arg_node, ExprType::kConditionExpr)) {
+        return true;
+      }
+    }
+  } else if (iter_node_name == parse::NAMED_PRIMITIVE_SUBSCRIPT && ParseSubsciptExpr(ast, iter_node)) {
+    return true;
+  } else if (iter_node_name == parse::NAMED_PRIMITIVE_ATTRIBUTE &&
+             CheckAttributeInExpr(ast, iter_node, ExprType::kConditionExpr)) {
+    return true;
+  }
+  return ParseBodyOrElseContext(ast, node, parse::NAMED_PRIMITIVE_BODY);
+}
+
+bool DynamicParser::ParseBodyOrElseContext(const std::shared_ptr<parse::ParseFunctionAst> &ast,
+                                           const py::object &fn_node, const std::string &body_type) {
   MS_EXCEPTION_IF_NULL(ast);
-  py::object func_obj = python_adapter::GetPyObjAttr(fn_node, parse::NAMED_PRIMITIVE_BODY);
+  py::object func_obj = python_adapter::GetPyObjAttr(fn_node, body_type);
   if (py::isinstance<py::none>(func_obj)) {
     MS_LOG(DEBUG) << "Parse body of cell is none!";
     return false;
@@ -210,7 +292,7 @@ bool DynamicParser::ParseBodyContext(const std::shared_ptr<parse::ParseFunctionA
     if (node_name == parse::NAMED_PRIMITIVE_ASSIGN) {
       ret = ParseAssignExprNode(ast, node);
     } else if (node_name == parse::NAMED_PRIMITIVE_AUGASSIGN) {
-      ret = ParseAugAssignExprNode(ast, node, compare_prim);
+      ret = ParseAugAssignExprNode(ast, node);
     } else if (node_name == parse::NAMED_PRIMITIVE_FOR) {
       ret = ParseForExprNode(ast, node);
     } else if (node_name == parse::NAMED_PRIMITIVE_IF || node_name == parse::NAMED_PRIMITIVE_WHILE) {
@@ -250,12 +332,14 @@ bool DynamicParser::IsDynamicCell(const py::object &cell) {
   // get the name of input args as the initialize of dynamic_variables
   ParseInputArgs(ast, fn_node);
   // parse body context
-  bool ret = ParseBodyContext(ast, fn_node);
+  bool ret = ParseBodyOrElseContext(ast, fn_node, parse::NAMED_PRIMITIVE_BODY);
   if (ret) {
     MS_LOG(INFO) << "Cell is dynamic, filename:" << ast->function_filename() << " line:" << ast->function_line_offset()
                  << " module:" << ast->function_module() << " function name:" << ast->function_name();
   }
   cell_input_args_.clear();
+  cell_assigned_attributes_.clear();
+  cell_condition_expr_attributes_.clear();
   return ret;
 }
 }  // namespace mindspore::parse

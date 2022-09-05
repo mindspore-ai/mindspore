@@ -27,6 +27,7 @@
 
 namespace mindspore::parse {
 
+enum class ExprType { kAssignedExpr, kConditionExpr };
 class DynamicParser {
  public:
   DynamicParser() = default;
@@ -38,15 +39,19 @@ class DynamicParser {
  private:
   static std::string GetCellInfo(const py::object &cell);
   static void ParseInputArgs(const std::shared_ptr<parse::ParseFunctionAst> &ast, const py::object &fn_node);
-  static bool ParseBodyContext(const std::shared_ptr<parse::ParseFunctionAst> &ast, const py::object &fn_node,
-                               const std::vector<std::string> &compare_prim = {});
+  static bool ParseBodyOrElseContext(const std::shared_ptr<parse::ParseFunctionAst> &ast, const py::object &fn_node,
+                                     const std::string &body_type);
+  static bool ParseConditionExper(const std::shared_ptr<parse::ParseFunctionAst> &ast, const py::object &node);
   static bool ParseIfWhileExprNode(const std::shared_ptr<parse::ParseFunctionAst> &ast, const py::object &node);
+  static bool ParseCompareExpr(const std::shared_ptr<parse::ParseFunctionAst> &ast, const py::object &cmp_node);
+  static bool ParseSubsciptExpr(const std::shared_ptr<parse::ParseFunctionAst> &ast, const py::object &node);
   static bool ParseAssignExprNode(const std::shared_ptr<parse::ParseFunctionAst> &ast, const py::object &node);
-  static bool ParseAugAssignExprNode(const std::shared_ptr<parse::ParseFunctionAst> &, const py::object &node,
-                                     const std::vector<std::string> &compare_prim = {});
+  static bool ParseAugAssignExprNode(const std::shared_ptr<parse::ParseFunctionAst> &ast, const py::object &node);
   static bool ParseForExprNode(const std::shared_ptr<parse::ParseFunctionAst> &ast, const py::object &node);
   static std::string ParseNodeName(const std::shared_ptr<parse::ParseFunctionAst> &ast, const py::object &node,
                                    parse::AstMainType type);
+  static bool CheckAttributeInExpr(const std::shared_ptr<parse::ParseFunctionAst> &ast, const py::object &node,
+                                   const ExprType &type);
 };
 }  // namespace mindspore::parse
 
