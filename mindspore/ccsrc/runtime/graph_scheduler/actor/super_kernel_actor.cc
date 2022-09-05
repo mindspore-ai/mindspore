@@ -24,6 +24,28 @@
 
 namespace mindspore {
 namespace runtime {
+namespace {
+// Fetch all the input of ref_node recursively.
+void FetchRefInputDef(const KernelWithIndex &node_with_index, std::set<KernelWithIndex> *ref_inputs,
+                      const std::map<KernelWithIndex, KernelWithIndex> &ref_node_map) {
+  MS_EXCEPTION_IF_NULL(node_with_index.first);
+  ref_inputs->emplace(node_with_index);
+  const auto &iter = ref_node_map.find(node_with_index);
+  if (iter == ref_node_map.end()) {
+    return;
+  }
+  MS_EXCEPTION_IF_NULL(iter->second.first);
+  if (!iter->second.first->isa<CNode>()) {
+    MS_LOG(WARNING) << "Ref node:" << iter->second.first->DebugString() << " index:" << iter->second.second
+                    << " is node a cnode";
+    return;
+  }
+  if (ref_inputs->find(iter->second) != ref_inputs->end()) {
+    return;
+  }
+  FetchRefInputDef(iter->second, ref_inputs, ref_node_map);
+}
+}  // namespace
 void SuperKernelActor::Init() {
   MS_EXCEPTION_IF_NULL(graph_);
   // Check device contexts number.
@@ -51,10 +73,31 @@ void SuperKernelActor::Init() {
     MS_EXCEPTION_IF_NULL(data);
     auto device_address = AnfAlgo::GetMutableOutputAddr(output_node, IntToSize(data_arrow->from_output_index_), false);
     data->data_ = device_address.get();
+    if (output_node->isa<CNode>() && (!device_address->is_ptr_persisted())) {
+      // Free the ptr in device address of output node.
+      if (device_address->GetPtr() != nullptr) {
+        device_address->set_ptr(nullptr);
+      }
+      memory_alloc_list_.emplace_back(device_address.get());
+      zero_copy_outputs_[KernelWithIndex(output_node, IntToSize(data_arrow->from_output_index_))] =
+        device_address.get();
+
+      // If the output node isa ref node, the input of it should be collected into zero copy outputs.
+      const auto &ref_node_map = graph_->GetRefMap();
+      const auto &iter = ref_node_map.find(KernelWithIndex(output_node, data_arrow->from_output_index_));
+      if (iter != ref_node_map.end()) {
+        std::set<KernelWithIndex> ref_inputs;
+        FetchRefInputDef(iter->second, &ref_inputs, ref_node_map);
+        for (const auto &ref_input : ref_inputs) {
+          zero_copy_outputs_[ref_input] = device_address.get();
+        }
+      }
+    }
   }
 
   // Check whether the parameter needs to be copied out.
   is_parameters_need_copy_.resize(graph_->input_nodes().size());
+  copy_input_device_tensors_.resize(graph_->input_nodes().size());
   for (size_t i = 0; i < graph_->input_nodes().size(); ++i) {
     const auto &input_node = graph_->input_nodes()[i];
     MS_EXCEPTION_IF_NULL(input_node);
@@ -79,6 +122,48 @@ size_t SuperKernelActor::FetchInputNodePosition(const AnfNodePtr &intput_node) {
   return iter - input_nodes.begin();
 }
 
+void SuperKernelActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *const context) {
+  MS_EXCEPTION_IF_NULL(context);
+  MS_EXCEPTION_IF_NULL(device_contexts_[0]);
+
+  const auto &data_iter = input_op_datas_.find(context->sequential_num_);
+  if (data_iter != input_op_datas_.end()) {
+    for (auto &input_data : data_iter->second) {
+      MS_EXCEPTION_IF_NULL(input_data);
+      MS_EXCEPTION_IF_NULL(input_data->data_);
+      size_t index = IntToSize(input_data->index_);
+      if (index >= input_device_tensors_.size()) {
+        std::string error_info = "Invalid input index:" + std::to_string(index) +
+                                 " total:" + std::to_string(input_device_tensors_.size()) +
+                                 " for actor:" + GetAID().Name();
+        SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+      }
+      input_device_tensors_[index] = input_data->data_;
+    }
+  }
+
+  // Check device tensor store.
+  for (auto &device_tensor_store_key : device_tensor_store_keys_) {
+    auto input_device_tensor = DeviceTensorStore::GetInstance().Fetch(device_tensor_store_key.second.get(),
+                                                                      device_contexts_[0]->GetDeviceType());
+    // Ge backend maybe nullptr.
+    if (input_device_tensor == nullptr) {
+      MS_LOG(WARNING) << "Failed get device tensor for node:" << device_tensor_store_key.second->DebugString()
+                      << " indx:" << device_tensor_store_key.first;
+      continue;
+    }
+
+    size_t index = device_tensor_store_key.first;
+    if (index >= input_device_tensors_.size()) {
+      std::string error_info = "Invalid input index:" + std::to_string(index) +
+                               " total:" + std::to_string(input_device_tensors_.size()) +
+                               " for actor:" + GetAID().Name();
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+    }
+    input_device_tensors_[index] = input_device_tensor;
+  }
+}
+
 void SuperKernelActor::Run(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(graph_);
@@ -87,12 +172,56 @@ void SuperKernelActor::Run(OpContext<DeviceTensor> *const context) {
   }
   MS_LOG(INFO) << "Super kernel actor(" << GetAID().Name()
                << ") launches graph: " << std::to_string(graph_->graph_id());
+  FetchInputDeviceTensor(context);
+  if (memory_alloc_list_.size() > 0) {
+    SendMemoryAllocReq(context);
+  } else {
+    OnMemoryAllocFinish(context);
+  }
+}
+
+void SuperKernelActor::SendMemoryAllocReq(OpContext<DeviceTensor> *const context) {
+  MS_EXCEPTION_IF_NULL(context);
+  if (ActorDispatcher::is_memory_allocation_sync()) {
+    ActorDispatcher::SendSync(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, &memory_alloc_list_,
+                              device_contexts_[0], context, GetAID());
+    OnMemoryAllocFinish(context);
+  } else {
+    ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, &memory_alloc_list_,
+                          device_contexts_[0], context, GetAID());
+  }
+}
+
+void SuperKernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
+  MS_EXCEPTION_IF_NULL(context);
   if (!CopyInputData(context)) {
     std::string error_info = "Copy the input data failed, graph id: " + std::to_string(graph_->graph_id());
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
   }
-
   try {
+    std::map<KernelWithIndex, DeviceAddress *> zero_copy_inputs;
+    std::map<KernelWithIndex, DeviceAddress *> zero_copy_outputs = zero_copy_outputs_;
+    const auto input_nodes = graph_->input_nodes();
+    for (size_t i = 0; i < input_device_tensors_.size(); ++i) {
+      if (input_device_tensors_[i] != nullptr) {
+        zero_copy_inputs[KernelWithIndex(input_nodes[i], 0)] = input_device_tensors_[i];
+      }
+    }
+
+    for (const auto &ref_pair : graph_->GetRefMap()) {
+      const auto &output_with_index = ref_pair.first;
+      const auto &input_node = ref_pair.second.first;
+      MS_EXCEPTION_IF_NULL(input_node);
+      if (input_node->isa<Parameter>()) {
+        for (size_t i = 0; i < input_nodes.size(); ++i) {
+          if (input_nodes[i] == input_node) {
+            zero_copy_outputs[output_with_index] = input_device_tensors_[i];
+          }
+        }
+      }
+    }
+    MS_LOG(DEBUG) << "Input num:" << zero_copy_inputs.size() << " output num:" << zero_copy_outputs.size();
+
     const std::vector<tensor::Tensor> inputs;
     std::vector<tensor::Tensor> outputs;
     const std::map<string, string> compile_options;
@@ -140,18 +269,18 @@ void SuperKernelActor::SendDebugReq(OpContext<DeviceTensor> *const context) {
 bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context) {
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(graph_);
-  const auto &data_iter = input_op_datas_.find(context->sequential_num_);
-  if (data_iter == input_op_datas_.end()) {
-    return true;
-  }
+  for (size_t i = 0; i < input_device_tensors_.size(); ++i) {
+    auto src_device_tensor = input_device_tensors_[i];
+    if (src_device_tensor == nullptr) {
+      continue;
+    }
 
-  auto check_and_copy_func = [this](DeviceTensor *src_device_tensor, size_t dst_index) {
     auto &input_nodes = graph_->input_nodes();
-    if (IntToSize(dst_index) >= input_nodes.size()) {
-      MS_LOG(ERROR) << "The input index:" << dst_index << "is out of range:" << input_nodes.size() << ".";
+    if (i >= input_nodes.size()) {
+      MS_LOG(ERROR) << "The input index:" << i << "is out of range:" << input_nodes.size() << ".";
       return false;
     }
-    auto dst_node = input_nodes[IntToSize(dst_index)];
+    auto dst_node = input_nodes[i];
     MS_EXCEPTION_IF_NULL(dst_node);
 
     auto dst_param = dst_node->cast<ParameterPtr>();
@@ -165,6 +294,35 @@ bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context) {
       return true;
     }
 
+    // If the input is not a persist device address, in a heterogeneous scenario, a new device address needs to
+    // be created.
+    if (!dst_device_tensor->is_ptr_persisted()) {
+      if (src_device_tensor->GetDeviceType() == dst_device_tensor->GetDeviceType()) {
+        MS_LOG(DEBUG) << "Disable copy for device tensor:" << dst_device_tensor;
+        return true;
+      }
+
+      if (copy_input_device_tensors_[i] == nullptr) {
+        copy_input_device_tensors_[i] = device_contexts_[0]->device_res_manager_->CreateDeviceAddress(
+          nullptr, dst_device_tensor->GetSize(), dst_device_tensor->format(), dst_device_tensor->type_id(),
+          dst_device_tensor->host_shape());
+        MS_LOG(DEBUG) << "Create new device tensor:" << copy_input_device_tensors_[i] << " index:" << i
+                      << " for actor:" << GetAID();
+      }
+      dst_device_tensor = copy_input_device_tensors_[i];
+      MS_EXCEPTION_IF_NULL(dst_device_tensor);
+      MS_EXCEPTION_IF_NULL(device_contexts_[0]);
+      if ((dst_device_tensor->GetPtr() == nullptr) &&
+          (!device_contexts_[0]->device_res_manager_->AllocateMemory(dst_device_tensor.get()))) {
+        MS_LOG(ERROR) << "Device(id:" << std::to_string((device_contexts_[0])->device_context_key().device_id_)
+                      << ") memory isn't enough and alloc failed, kernel name: " << GetAID()
+                      << ", alloc size: " + std::to_string(dst_device_tensor->GetSize()) << "B.";
+        return false;
+      }
+      MS_LOG(DEBUG) << "Alloc memory for device tensor:" << dst_device_tensor << " ptr:" << dst_device_tensor->GetPtr()
+                    << " index:" << i << " for actor:" << GetAID();
+    }
+
     MS_LOG(INFO) << "The input data of node:" << dst_node->DebugString()
                  << " need copy from address:" << src_device_tensor->GetPtr()
                  << ", type:" << src_device_tensor->GetDeviceType() << " to address:" << dst_device_tensor->GetPtr()
@@ -173,31 +331,9 @@ bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context) {
       MS_LOG(ERROR) << "Copy data failed.";
       return false;
     }
-    if (is_parameters_need_copy_[dst_index] && ref_node_addr_map_.count(dst_node) == 0) {
+    input_device_tensors_[i] = dst_device_tensor.get();
+    if (is_parameters_need_copy_[i] && ref_node_addr_map_.count(dst_node) == 0) {
       ref_node_addr_map_[dst_node] = src_device_tensor;
-    }
-    return true;
-  };
-
-  // Copy input data.
-  for (auto &input_data : data_iter->second) {
-    MS_EXCEPTION_IF_NULL(input_data);
-    MS_EXCEPTION_IF_NULL(input_data->data_);
-    if (!check_and_copy_func(input_data->data_, input_data->index_)) {
-      return false;
-    }
-  }
-
-  // Check device tensor store.
-  for (auto &device_tensor_store_key : device_tensor_store_keys_) {
-    auto input_device_tensor = DeviceTensorStore::GetInstance().Fetch(device_tensor_store_key.second.get(),
-                                                                      device_contexts_[0]->GetDeviceType());
-    // Ge backend maybe nullptr.
-    if (input_device_tensor == nullptr) {
-      continue;
-    }
-    if (!check_and_copy_func(input_device_tensor, device_tensor_store_key.first)) {
-      return false;
     }
   }
   return true;
@@ -227,6 +363,14 @@ void SuperKernelActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context)
     } else {
       ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &(memory_free_lists_.back()),
                             device_contexts_[0], context, GetAID());
+    }
+  }
+
+  // Free the address that is the temp store for kernel input copy.
+  for (auto &copy_input_device_tensor : copy_input_device_tensors_) {
+    if ((copy_input_device_tensor != nullptr) && (copy_input_device_tensor->GetPtr() != nullptr)) {
+      MS_EXCEPTION_IF_NULL(device_contexts_[0]);
+      device_contexts_[0]->device_res_manager_->FreeMemory(copy_input_device_tensor.get());
     }
   }
 }

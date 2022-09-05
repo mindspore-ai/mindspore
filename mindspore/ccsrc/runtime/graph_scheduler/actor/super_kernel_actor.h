@@ -41,14 +41,19 @@ class SuperKernelActor : public DebugAwareActor {
       : DebugAwareActor(name, KernelTransformType::kSuperKernelActor, recorder_aid, memory_manager_aid, debug_aid),
         graph_(graph) {
     (void)device_contexts_.emplace_back(device_context);
+    input_device_tensors_.resize(graph->input_nodes().size());
   }
   ~SuperKernelActor() override = default;
 
   size_t FetchInputNodePosition(const AnfNodePtr &intput_node);
-
+  void FetchInputDeviceTensor(OpContext<DeviceTensor> *const context);
   // The debug related operation interface.
   void SendDebugReq(OpContext<DeviceTensor> *const context) override;
 
+  // The memory related operation interface.
+  void SendMemoryAllocReq(OpContext<DeviceTensor> *const context) override;
+  // The callback after memory alloc finished.
+  void OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) override;
   // The input may come from the control actor, so need free the input memory by the dynamic ref count.
   void SendMemoryFreeReq(OpContext<DeviceTensor> *const context) override;
 
@@ -71,8 +76,17 @@ class SuperKernelActor : public DebugAwareActor {
 
   std::map<AnfNodePtr, DeviceAddress *> ref_node_addr_map_;
 
+  // The device tensors for memory alloc.
+  std::vector<DeviceTensor *> memory_alloc_list_;
   // The lists of device tensors which need free by dynamic ref count, will be cleared at the end of step.
   std::queue<std::vector<DeviceTensor *>> memory_free_lists_;
+  // The received input device type and format may be different from the formal parameter in the control flow scenarios,
+  // so it needs to be copied from the input data to real data that graph launch needs.
+  std::vector<DeviceTensorPtr> copy_input_device_tensors_;
+  // The input device tensors for launch.
+  std::vector<DeviceTensor *> input_device_tensors_;
+  // The output device tensors of graph when the zero copy is enable.
+  std::map<KernelWithIndex, DeviceAddress *> zero_copy_outputs_;
 };
 
 using SuperKernelActorPtr = std::shared_ptr<SuperKernelActor>;
