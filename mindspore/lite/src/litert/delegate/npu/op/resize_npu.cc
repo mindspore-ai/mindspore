@@ -32,7 +32,8 @@ int ResizeNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector
     MS_LOG(WARNING) << "Unsupported resize method type: " << resize_method_;
     return RET_NOT_SUPPORT;
   }
-
+  CHECK_LESS_RETURN(in_tensors.size(), 1);
+  CHECK_LESS_RETURN(out_tensors.size(), 1);
   if (in_tensors[0].Shape()[NHWC_H] > out_tensors[0].Shape()[NHWC_H] ||
       in_tensors[0].Shape()[NHWC_W] > out_tensors[0].Shape()[NHWC_W]) {
     MS_LOG(WARNING) << "Npu resize does not support reduction.";
@@ -45,8 +46,10 @@ int ResizeNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector
 
 int ResizeNPUOp::Init(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                       const std::vector<mindspore::MSTensor> &out_tensors) {
+  CHECK_LESS_RETURN(in_tensors.at(0).Shape().size(), DIMENSION_4D);
   auto org_height = static_cast<float>(in_tensors.at(0).Shape().at(NHWC_H));
   auto org_width = static_cast<float>(in_tensors.at(0).Shape().at(NHWC_W));
+  CHECK_LESS_RETURN(out_tensors.at(0).Shape().size(), DIMENSION_4D);
   auto new_height = static_cast<int>(out_tensors.at(0).Shape().at(NHWC_H));
   auto new_width = static_cast<int>(out_tensors.at(0).Shape().at(NHWC_W));
 
@@ -125,6 +128,7 @@ int ResizeNPUOp::SelectResizeOp(const mindspore::schema::Resize *prim) {
 int ResizeNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
                               const std::vector<mindspore::MSTensor> &out_tensors,
                               const std::vector<ge::Operator *> &npu_inputs) {
+  CHECK_LESS_RETURN(npu_inputs.size(), 1);
   if (resize_method_ == schema::ResizeMethod_LINEAR) {
     auto resize_bilinear = reinterpret_cast<hiai::op::ResizeBilinearV2 *>(resize_);
     resize_bilinear->set_input_x(*npu_inputs[0]);

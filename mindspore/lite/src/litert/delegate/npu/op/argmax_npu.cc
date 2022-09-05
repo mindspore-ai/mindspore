@@ -56,6 +56,7 @@ int ArgmaxNPUOp::Init(const schema::Primitive *primitive, const std::vector<mind
 int ArgmaxNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
                               const std::vector<mindspore::MSTensor> &out_tensors,
                               const std::vector<ge::Operator *> &npu_inputs) {
+  CHECK_LESS_RETURN(npu_inputs.size(), 1);
   argmax_->set_input_x(*npu_inputs[0]);
   return RET_OK;
 }

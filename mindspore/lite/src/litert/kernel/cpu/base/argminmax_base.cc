@@ -49,6 +49,7 @@ int ArgMinMaxCPUKernel::ReSize() {
     MS_LOG(ERROR) << "Invalid topk " << arg_param_->topk_;
     return RET_ERROR;
   }
+  MS_CHECK_TRUE_MSG(axis >= 0 && axis < static_cast<int>(in_shape.size()), RET_ERROR, "The axis is invalid.");
   arg_param_->topk_ = MSMIN(arg_param_->topk_, in_shape.at(axis));
   CHECK_NULL_RETURN(in_shape.data());
   ComputeStrides(in_shape.data(), arg_param_->in_strides_, in_shape.size());
@@ -62,7 +63,10 @@ int ArgMinMaxCPUKernel::ReSize() {
 
 int ArgMinMaxCPUKernel::Run() {
   auto input = in_tensors_.at(0);
+  CHECK_NULL_RETURN(input);
   auto shape = input->shape();
+  MS_CHECK_TRUE_MSG(arg_param_->axis_ >= 0 && arg_param_->axis_ < static_cast<int>(shape.size()), RET_ERROR,
+                    "The axis is invalid.");
 
   auto input_data = input->data();
   auto output_data = out_tensors_.at(0)->data();
@@ -78,7 +82,7 @@ int ArgMinMaxCPUKernel::Run() {
     }
   }
 
-  MS_ASSERT(ms_context_->allocator != nullptr);
+  CHECK_NULL_RETURN(ms_context_->allocator);
   if (arg_param_->topk_ > 1 || arg_param_->keep_dims_) {
     MS_CHECK_FALSE(INT_MUL_OVERFLOW(static_cast<int>(sizeof(ArgElement)), shape[arg_param_->axis_]), RET_ERROR);
     arg_param_->arg_elements_ =

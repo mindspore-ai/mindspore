@@ -32,6 +32,7 @@ int SoftmaxNPUOp::Init(const schema::Primitive *primitive, const std::vector<min
   }
   axis_ = static_cast<int>(*(softmax_prim->axis()->begin()));
   if (axis_ == -1) {
+    CHECK_LESS_RETURN(in_tensors.size(), 1);
     axis_ = in_tensors[0].Shape().size() + axis_;
   }
   return RET_OK;
@@ -40,6 +41,7 @@ int SoftmaxNPUOp::Init(const schema::Primitive *primitive, const std::vector<min
 int SoftmaxNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
                                const std::vector<mindspore::MSTensor> &out_tensors,
                                const std::vector<ge::Operator *> &npu_inputs) {
+  CHECK_LESS_RETURN(npu_inputs.size(), 1);
   softmax_->set_input_x(*npu_inputs[0]);
   softmax_->set_attr_axis(axis_);
   return RET_OK;

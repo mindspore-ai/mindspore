@@ -27,8 +27,8 @@ using mindspore::schema::PrimitiveType_ConstantOfShape;
 
 namespace mindspore::kernel {
 int ConstantOfShapeRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
-  CHECK_NULL_RETURN(cdata);
   auto g_kernel = reinterpret_cast<ConstantOfShapeCPUKernel *>(cdata);
+  CHECK_NULL_RETURN(g_kernel);
   auto ret = g_kernel->DoExecute(task_id);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConstantOfShapeRun error task_id[" << task_id << "] error_code[" << ret << "]";

@@ -28,16 +28,19 @@ int MaxPoolingNPUOp::IsSupport(const schema::Primitive *primitive, const std::ve
 }
 
 int MaxPoolingNPUOp::SetPoolingParam(const schema::MaxPoolFusion *pooling_prim) {
+  CHECK_NULL_RETURN(pooling_prim);
   pooling_->set_attr_mode(0);
   if (pooling_prim->global()) {
     pooling_->set_attr_global_pooling(pooling_prim->global());
   } else {
     CHECK_NULL_RETURN(pooling_prim->kernel_size());
+    CHECK_LESS_RETURN(pooling_prim->kernel_size()->size(), DIMENSION_2D);
     auto window_h = static_cast<int>(*(pooling_prim->kernel_size()->begin()));
     auto window_w = static_cast<int>(*(pooling_prim->kernel_size()->begin() + 1));
     pooling_->set_attr_window(ge::AttrValue::LIST_INT({window_h, window_w}));
   }
   CHECK_NULL_RETURN(pooling_prim->strides());
+  CHECK_LESS_RETURN(pooling_prim->strides()->size(), DIMENSION_2D);
   auto stride_h = static_cast<int>(*(pooling_prim->strides()->begin()));
   auto stride_w = static_cast<int>(*(pooling_prim->strides()->begin() + 1));
   pooling_->set_attr_stride(ge::AttrValue::LIST_INT({stride_h, stride_w}));
@@ -50,6 +53,7 @@ int MaxPoolingNPUOp::SetPoolingParam(const schema::MaxPoolFusion *pooling_prim) 
   } else {
     pooling_->set_attr_pad_mode(0);
     CHECK_NULL_RETURN(pooling_prim->pad());
+    CHECK_LESS_RETURN(pooling_prim->pad()->size(), DIMENSION_4D);
     auto pad_u = static_cast<int>(*(pooling_prim->pad()->begin() + PAD_UP));
     auto pad_d = static_cast<int>(*(pooling_prim->pad()->begin() + PAD_DOWN));
     auto pad_l = static_cast<int>(*(pooling_prim->pad()->begin() + PAD_LEFT));
@@ -98,6 +102,7 @@ int MaxPoolingNPUOp::Init(const schema::Primitive *primitive, const std::vector<
 int MaxPoolingNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
                                   const std::vector<mindspore::MSTensor> &out_tensors,
                                   const std::vector<ge::Operator *> &npu_inputs) {
+  CHECK_LESS_RETURN(npu_inputs.size(), 1);
   pooling_->set_input_x(*npu_inputs[0]);
   return RET_OK;
 }

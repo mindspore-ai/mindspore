@@ -77,6 +77,7 @@ int OneHotCPUKernel::ReSize() {
   if (axis_ < 0) {
     axis_ += indices_rank + 1;
   }
+  MS_CHECK_TRUE_MSG(axis_ >= 0 && axis_ <= static_cast<int>(indices_shape.size()), RET_ERROR, "The axis is invalid.");
 
   outer_size_ = 1;
   for (size_t i = 0; i < static_cast<size_t>(axis_); i++) {

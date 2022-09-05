@@ -34,9 +34,6 @@ namespace mindspore::kernel {
 int StridedSliceCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), kNumInputSize);
   CHECK_LESS_RETURN(out_tensors_.size(), kNumOutputSize);
-  CHECK_NULL_RETURN(in_tensors_[0]);
-  CHECK_NULL_RETURN(in_tensors_[1]);
-  CHECK_NULL_RETURN(out_tensors_[0]);
   CHECK_NULL_RETURN(param_);
   if (!InferShapeDone()) {
     return RET_OK;
@@ -70,7 +67,10 @@ void StridedSliceCPUKernel::InitFastRunParam() {
 
 int StridedSliceCPUKernel::ReSize() {
   auto input_tensor = in_tensors_.at(0);
+  CHECK_NULL_RETURN(input_tensor);
   auto begin_tensor = in_tensors_.at(1);
+  CHECK_NULL_RETURN(begin_tensor);
+  CHECK_NULL_RETURN(out_tensors_[0]);
   if (input_tensor->shape().size() > DIMENSION_8D || begin_tensor->shape().size() > DIMENSION_8D) {
     MS_LOG(ERROR) << "StridedSlice not support input rank or begin num exceeds " << DIMENSION_8D;
     return RET_ERROR;

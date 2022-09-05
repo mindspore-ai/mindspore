@@ -38,6 +38,7 @@ int SqueezeNPUOp::Init(const schema::Primitive *primitive, const std::vector<min
 int SqueezeNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
                                const std::vector<mindspore::MSTensor> &out_tensors,
                                const std::vector<ge::Operator *> &npu_inputs) {
+  CHECK_LESS_RETURN(npu_inputs.size(), 1);
   squeeze_->set_input_x(*npu_inputs[0]);
   return RET_OK;
 }

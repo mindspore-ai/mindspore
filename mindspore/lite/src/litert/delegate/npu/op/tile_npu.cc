@@ -43,8 +43,10 @@ int TileNPUOp::Init(const schema::Primitive *primitive, const std::vector<mindsp
 int TileNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
                             const std::vector<mindspore::MSTensor> &out_tensors,
                             const std::vector<ge::Operator *> &npu_inputs) {
+  CHECK_LESS_RETURN(npu_inputs.size(), 1);
   tile_->set_input_x(*npu_inputs[0]);
 
+  CHECK_LESS_RETURN(in_tensors.size(), kInputSize1);
   std::vector<int> multiples;
   if (in_tensors[1].Data() == nullptr) {
     return RET_ERROR;

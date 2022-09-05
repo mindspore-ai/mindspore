@@ -97,8 +97,7 @@ endif()
 
 if(MSLITE_ENABLE_EXPERIMENTAL_KERNEL)
     file(GLOB EXPERIMENT_SRC
-        ${LITE_DIR}/src/../experimental/src/exec_env_utils.cc
-        ${LITE_DIR}/src/../experimental/kernel/*.cc)
+        ${LITE_DIR}/src/../experimental/src/exec_env_utils.cc)
     set(LITE_SRC ${LITE_SRC} ${EXPERIMENT_SRC})
 endif()
 

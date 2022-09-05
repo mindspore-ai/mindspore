@@ -24,6 +24,8 @@ constexpr int BATCH_MATMUL_MAX_SHAPE = 1024;
 
 int MatMulNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                            const std::vector<mindspore::MSTensor> &out_tensors) {
+  CHECK_LESS_RETURN(in_tensors.size(), MATMUL_INPUT_SIZE - 1);
+
   MS_CHECK_TRUE_RET(in_tensors.size() >= MATMUL_COMMON_DIM, RET_ERROR);
   if (in_tensors.front().Shape().size() > MATMUL_COMMON_DIM || in_tensors.at(1).Shape().size() > MATMUL_COMMON_DIM) {
     // The size of each input dim should be less than 1024 in batchmatmul, whose input dim exceeds 2.
@@ -108,6 +110,7 @@ int MatMulNPUOp::Init(const schema::Primitive *primitive, const std::vector<mind
 int MatMulNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
                               const std::vector<mindspore::MSTensor> &out_tensors,
                               const std::vector<ge::Operator *> &npu_inputs) {
+  CHECK_LESS_RETURN(npu_inputs.size(), MATMUL_INPUT_SIZE - 1);
   if (use_batch_matmul_) {
     batch_matmul_->set_input_x1(*npu_inputs[0]);
     batch_matmul_->set_input_x2(*npu_inputs[1]);

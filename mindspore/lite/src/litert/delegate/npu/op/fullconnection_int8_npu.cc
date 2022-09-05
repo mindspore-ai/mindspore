@@ -72,6 +72,7 @@ int FullconnectionINT8NPUOp::Init(const schema::Primitive *primitive,
     MS_LOG(ERROR) << "New matmul operator for fullconnection op " << name_ << " failed.";
     return RET_ERROR;
   }
+  CHECK_LESS_RETURN(in_tensors.size(), FC_INPUT_SIZE - 1);
   SetFCQuantParam(fc_, in_tensors);
   return RET_OK;
 }

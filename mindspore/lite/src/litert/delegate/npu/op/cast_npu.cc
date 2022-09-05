@@ -53,6 +53,7 @@ int CastNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
                             const std::vector<mindspore::MSTensor> &out_tensors,
                             const std::vector<ge::Operator *> &npu_inputs) {
   CHECK_NULL_RETURN(cast_);
+  CHECK_LESS_RETURN(npu_inputs.size(), 1);
   cast_->set_input_x(*npu_inputs[0]);
   return RET_OK;
 }

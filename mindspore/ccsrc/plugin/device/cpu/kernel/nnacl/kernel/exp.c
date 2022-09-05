@@ -22,15 +22,21 @@
 
 int exp_resize(struct KernelBase *self) {
   ExpStru *exp = (ExpStru *)self;
+  NNACL_CHECK_NULL_RETURN_ERR(exp);
   ExpParameter *param = (ExpParameter *)exp->base.param;
-
+  NNACL_CHECK_NULL_RETURN_ERR(param);
+  if (self->insize < 1 || self->outsize < 1) {
+    return NNACL_ERR;
+  }
   param->element_num_ = GetElementNum(&(self->in[0]));
   return NNACL_OK;
 }
 
 int exp_prepare(struct KernelBase *self) {
   ExpStru *exp = (ExpStru *)self;
+  NNACL_CHECK_NULL_RETURN_ERR(exp);
   ExpParameter *param = (ExpParameter *)exp->base.param;
+  NNACL_CHECK_NULL_RETURN_ERR(param);
 
   float log_base = (param->base_ == -1) ? 1 : logf(param->base_);
   param->in_scale_ = param->scale_ * log_base;
@@ -56,9 +62,13 @@ int exp_do_compute(void *param, int task_id, float lhs_scale, float rhs_scale) {
 
   ExpStru *exp_stru = (ExpStru *)param;
   ExpParameter *exp_param = (ExpParameter *)exp_stru->base.param;
+  NNACL_CHECK_NULL_RETURN_ERR(exp_param);
 
-  int ret =
-    exp_stru->base.funcs->ExpFusion(exp_stru->base.in[0].data_, exp_stru->base.out[0].data_, exp_param, task_id);
+  const void *input_data = exp_stru->base.in[0].data_;
+  NNACL_CHECK_NULL_RETURN_ERR(input_data);
+  void *output_data = exp_stru->base.out[0].data_;
+  NNACL_CHECK_NULL_RETURN_ERR(output_data);
+  int ret = exp_stru->base.funcs->ExpFusion(input_data, output_data, exp_param, task_id);
 
   return ret;
 }
@@ -70,6 +80,7 @@ int exp_compute(struct KernelBase *self) {
 KernelBase *CreateExp(OpParameter *param, TensorC *in, size_t insize, TensorC *out, size_t outsize, int data_type,
                       FormatC format) {
   ExpStru *exp = (ExpStru *)malloc(sizeof(ExpStru));
+  NNACL_CHECK_NULL_RETURN_NULL(exp);
   exp->base.param = param;
   exp->base.in = in;
   exp->base.insize = insize;
@@ -81,7 +92,6 @@ KernelBase *CreateExp(OpParameter *param, TensorC *in, size_t insize, TensorC *o
   exp->base.release = exp_release;
   exp->base.compute = exp_compute;
   exp->base.funcs = GetCoreFuncs(data_type == kNumberTypeFloat16);
-
   return (KernelBase *)exp;
 }
 

@@ -106,10 +106,10 @@ DetectionPostProcessBaseCPUKernel::~DetectionPostProcessBaseCPUKernel() { delete
 int DetectionPostProcessBaseCPUKernel::ReSize() { return RET_OK; }
 
 int NmsMultiClassesFastCoreRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
-  CHECK_NULL_RETURN(cdata);
-  auto KernelData = reinterpret_cast<DetectionPostProcessBaseCPUKernel *>(cdata);
-  int ret = NmsMultiClassesFastCore(KernelData->num_boxes_, KernelData->num_classes_with_bg_, KernelData->input_scores_,
-                                    PartialArgSort, KernelData->params_, task_id, KernelData->thread_num_);
+  auto kernel = reinterpret_cast<DetectionPostProcessBaseCPUKernel *>(cdata);
+  CHECK_NULL_RETURN(kernel);
+  int ret = NmsMultiClassesFastCore(kernel->num_boxes_, kernel->num_classes_with_bg_, kernel->input_scores_,
+                                    PartialArgSort, kernel->params_, task_id, kernel->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "NmsMultiClassesFastCore error task_id[" << task_id << "] error_code[" << ret << "]";
     return RET_ERROR;
@@ -159,6 +159,7 @@ int DetectionPostProcessBaseCPUKernel::ParamInit() {
   CHECK_NULL_RETURN(in_tensors_.at(1));
   CHECK_LESS_RETURN(in_tensors_.at(1)->shape().size(), DIMENSION_3D);
   num_classes_with_bg_ = in_tensors_.at(1)->shape().at(2);
+  CHECK_EQUAL_RETURN(num_boxes_, 0);
   params_->decoded_boxes_ = ms_context_->allocator->Malloc(num_boxes_ * DIMENSION_4D * sizeof(float));
   if (params_->decoded_boxes_ == nullptr) {
     MS_LOG(ERROR) << "malloc params->decoded_boxes_ failed.";
@@ -185,6 +186,7 @@ int DetectionPostProcessBaseCPUKernel::ParamInit() {
   }
 
   if (params_->use_regular_nms_) {
+    CHECK_EQUAL_RETURN(num_boxes_ + params_->max_detections_, 0);
     params_->scores_ = ms_context_->allocator->Malloc((num_boxes_ + params_->max_detections_) * sizeof(float));
     if (params_->scores_ == nullptr) {
       MS_LOG(ERROR) << "malloc params->scores_ failed";

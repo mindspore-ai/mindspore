@@ -31,6 +31,7 @@ int FullconnectionNPUOp::Init(const schema::Primitive *primitive, const std::vec
     return RET_ERROR;
   }
   act_type_ = fc_prim->activation_type();
+  CHECK_LESS_RETURN(in_tensors.size(), 1);
   auto input_shape = in_tensors[0].Shape();
   reshape_ = new (std::nothrow) hiai::op::Reshape(name_ + "_reshape");
   if (reshape_ == nullptr) {
@@ -65,6 +66,7 @@ int FullconnectionNPUOp::Init(const schema::Primitive *primitive, const std::vec
 int FullconnectionNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
                                       const std::vector<mindspore::MSTensor> &out_tensors,
                                       const std::vector<ge::Operator *> &npu_inputs) {
+  CHECK_LESS_RETURN(npu_inputs.size(), 1);
   reshape_->set_input_x(*npu_inputs[0]);
   fc_->set_input_x1(*reshape_);
 
@@ -73,6 +75,7 @@ int FullconnectionNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in
     MS_LOG(ERROR) << "New weight const failed.";
     return RET_ERROR;
   }
+  CHECK_LESS_RETURN(in_tensors.size(), kInputSize1);
   auto weight_tensor = ConverterToNPUTensor(in_tensors[1]);
   weight_->set_attr_value(weight_tensor);
   fc_->set_input_x2(*weight_).set_attr_transpose_x2(true);

@@ -109,7 +109,7 @@ int PadNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
   }
   paddings_->set_attr_value(padding_tensor);
   pad_->set_input_paddings(*paddings_);
-
+  CHECK_LESS_RETURN(npu_inputs.size(), 1);
   pad_->set_input_x(*npu_inputs[0]);
   return RET_OK;
 }

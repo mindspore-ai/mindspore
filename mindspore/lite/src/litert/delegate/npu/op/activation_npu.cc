@@ -85,6 +85,7 @@ int ActivationNPUOp::SetNPUInputs(
       mul_->SetInput(1, *in_op, itr->second.second);
     }
   } else {
+    CHECK_LESS_RETURN(npu_inputs.size(), 1);
     act_->set_input_x(*npu_inputs[0]);
     if (act_type_ == schema::ActivationType_SWISH) {
       MS_ASSERT(mul_ != nullptr);

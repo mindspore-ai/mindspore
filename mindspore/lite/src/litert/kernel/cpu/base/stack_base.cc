@@ -103,8 +103,8 @@ int StackBaseCPUKernel::StackExecute(int task_id) {
 }
 
 static int StackRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
-  CHECK_NULL_RETURN(cdata);
   auto stack = reinterpret_cast<StackBaseCPUKernel *>(cdata);
+  CHECK_NULL_RETURN(stack);
   if (stack->StackExecute(task_id) != RET_OK) {
     return RET_ERROR;
   }

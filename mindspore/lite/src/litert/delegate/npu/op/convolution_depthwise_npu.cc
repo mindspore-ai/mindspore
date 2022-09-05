@@ -20,6 +20,7 @@ namespace mindspore::lite {
 int ConvolutionDepthwiseNPUOp::IsSupport(const schema::Primitive *primitive,
                                          const std::vector<mindspore::MSTensor> &in_tensors,
                                          const std::vector<mindspore::MSTensor> &out_tensors) {
+  CHECK_LESS_RETURN(in_tensors.size(), kInputSize1);
   if (!in_tensors[1].IsConst()) {
     MS_LOG(WARNING) << "NPU convolution does not support dynamic weight.";
     return RET_NOT_SUPPORT;
@@ -28,10 +29,13 @@ int ConvolutionDepthwiseNPUOp::IsSupport(const schema::Primitive *primitive,
 }
 
 int ConvolutionDepthwiseNPUOp::SetConvDwParam(const schema::Conv2DFusion *conv_prim) {
+  CHECK_NULL_RETURN(conv_prim);
   CHECK_NULL_RETURN(conv_prim->stride());
+  CHECK_LESS_RETURN(conv_prim->stride()->size(), DIMENSION_2D);
   auto stride_h = static_cast<int>(*(conv_prim->stride()->begin()));
   auto stride_w = static_cast<int>(*(conv_prim->stride()->begin() + 1));
   CHECK_NULL_RETURN(conv_prim->dilation());
+  CHECK_LESS_RETURN(conv_prim->dilation()->size(), DIMENSION_2D);
   auto dilation_h = static_cast<int>(*(conv_prim->dilation()->begin()));
   auto dilation_w = static_cast<int>(*(conv_prim->dilation()->begin() + 1));
   conv_dw_->set_attr_strides(ge::AttrValue::LIST_INT({stride_h, stride_w}));
@@ -46,6 +50,7 @@ int ConvolutionDepthwiseNPUOp::SetConvDwParam(const schema::Conv2DFusion *conv_p
   } else {
     conv_dw_->set_attr_pad_mode(ge::AttrValue::STR{"VALID"});
     CHECK_NULL_RETURN(conv_prim->pad_list());
+    CHECK_LESS_RETURN(conv_prim->pad_list()->size(), DIMENSION_4D);
     auto pad_u = static_cast<int>(*(conv_prim->pad_list()->begin() + PAD_UP));
     auto pad_d = static_cast<int>(*(conv_prim->pad_list()->begin() + PAD_DOWN));
     auto pad_l = static_cast<int>(*(conv_prim->pad_list()->begin() + PAD_LEFT));
@@ -102,6 +107,7 @@ int ConvolutionDepthwiseNPUOp::SetNPUInputs(const std::vector<mindspore::MSTenso
     }
     conv_dw_->set_input_bias(*bias_);
   }
+  CHECK_LESS_RETURN(npu_inputs.size(), 1);
   conv_dw_->set_input_x(*npu_inputs[0]);
   return RET_OK;
 }

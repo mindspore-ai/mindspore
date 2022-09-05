@@ -31,7 +31,7 @@ int SplitNPUOp::Init(const schema::Primitive *primitive, const std::vector<minds
     MS_LOG(ERROR) << "Get null primitive value for op ." << name_;
     return RET_ERROR;
   }
-
+  CHECK_LESS_RETURN(in_tensors.size(), 1);
   auto in_tensor = in_tensors.at(0);
   auto axis = static_cast<int>(split_prim->axis());
   axis_ = axis >= 0 ? axis : axis + static_cast<int>(in_tensor.Shape().size());
@@ -79,7 +79,7 @@ int SplitNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
   }
   split_dim_->set_attr_value(split_dim_tensor);
   split_->set_input_split_dim(*split_dim_);
-
+  CHECK_LESS_RETURN(npu_inputs.size(), 1);
   split_->set_input_x(*npu_inputs[0]);
   return RET_OK;
 }
