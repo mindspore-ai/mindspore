@@ -29,8 +29,10 @@ abstract::ShapePtr LogSoftmaxGradInferShape(const PrimitivePtr &primitive,
 
   auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
   auto in_shape = shape_map[kShape];
-  auto rank = SizeToLong(in_shape.size());
-  (void)CheckAndConvertUtils::CheckInRange<int64_t>("axis", axis, kIncludeLeft, {-rank, rank}, primitive->name());
+  if (!IsDynamicRank(in_shape)) {
+    auto rank = SizeToLong(in_shape.size());
+    (void)CheckAndConvertUtils::CheckInRange<int64_t>("axis", axis, kIncludeLeft, {-rank, rank}, primitive->name());
+  }
   return std::make_shared<abstract::Shape>(in_shape);
 }
 

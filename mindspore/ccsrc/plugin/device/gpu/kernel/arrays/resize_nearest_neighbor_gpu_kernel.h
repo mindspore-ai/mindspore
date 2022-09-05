@@ -24,6 +24,9 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr size_t kInputNumTwo = 2;
+constexpr size_t kSecondInputSize = 2;
+
 template <typename T>
 class ResizeNearestNeighborGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
@@ -56,9 +59,11 @@ class ResizeNearestNeighborGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     kernel_node_ = kernel_node;
-    if (input_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs must be 1, but got " << input_num;
+    if (input_num != 1 && input_num != kInputNumTwo) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs must be 1 or " << kInputNumTwo
+                        << ", but got " << input_num;
     }
+    input_num_ = input_num;
     size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs must be 1, but got " << output_num;
@@ -68,7 +73,7 @@ class ResizeNearestNeighborGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     auto output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
     is_null_input_ =
       CHECK_SHAPE_NULL(input_shape, kernel_name, "input") || CHECK_SHAPE_NULL(output_shape, kernel_name, "output");
-    if (is_null_input_) {
+    if (is_null_input_ || IsDynamicRank(input_shape)) {
       InitSizeLists();
       return true;
     }
@@ -99,6 +104,9 @@ class ResizeNearestNeighborGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  protected:
   void InitSizeLists() override {
     input_size_list_.push_back(input_size_);
+    if (input_num_ == kInputNumTwo) {
+      input_size_list_.push_back(sizeof(int32_t) * kSecondInputSize);
+    }
     output_size_list_.push_back(output_size_);
   }
   void ResetResource() override {
@@ -129,6 +137,7 @@ class ResizeNearestNeighborGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   size_t input_size_;
   size_t output_size_;
   size_t workspace_size_;
+  size_t input_num_;
 };
 }  // namespace kernel
 }  // namespace mindspore

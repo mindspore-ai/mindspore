@@ -39,8 +39,6 @@ abstract::ShapePtr ResizeNearestNeighborV2GradInferShape(const PrimitivePtr &pri
   size_t long_kdim1 = SizeToLong(kDim1);
   size_t long_kdim2 = SizeToLong(kDim2);
   size_t long_kdim4 = SizeToLong(kDim4);
-  (void)CheckAndConvertUtils::CheckInteger("dimension of grads", SizeToLong(grads_shape.size()), kEqual, long_kdim4,
-                                           prim_name);
   (void)CheckAndConvertUtils::CheckInteger("dimension of size", SizeToLong(size_shape.size()), kEqual, long_kdim1,
                                            prim_name);
 
@@ -66,18 +64,22 @@ abstract::ShapePtr ResizeNearestNeighborV2GradInferShape(const PrimitivePtr &pri
                              << ", " << kFormatNHWC << "]. But get '" << data_format << "'.";
   }
 
-  bool is_compile = IsNoneOrAnyValue(size_ptr);
   ShapeVector y_shape(long_kdim4);
-  if (is_compile) {
+  if (IsDynamicRank(grads_shape)) {
+    y_shape[dim_idx_map['N']] = abstract::Shape::SHP_ANY;
+    y_shape[dim_idx_map['C']] = abstract::Shape::SHP_ANY;
+  } else {
+    (void)CheckAndConvertUtils::CheckInteger("dimension of grads", SizeToLong(grads_shape.size()), kEqual, long_kdim4,
+                                             prim_name);
     y_shape[dim_idx_map['N']] = grads_shape[dim_idx_map['N']];
     y_shape[dim_idx_map['C']] = grads_shape[dim_idx_map['C']];
+  }
+
+  bool is_compile = IsNoneOrAnyValue(size_ptr);
+  if (is_compile) {
     y_shape[dim_idx_map['H']] = abstract::Shape::SHP_ANY;
     y_shape[dim_idx_map['W']] = abstract::Shape::SHP_ANY;
-    ShapeVector y_shape_min(y_shape);
-    y_shape_min[dim_idx_map['H']] = 0;
-    y_shape_min[dim_idx_map['W']] = 0;
-    ShapeVector y_shape_max(grads_shape);
-    return std::make_shared<abstract::Shape>(y_shape, y_shape_min, y_shape_max);
+    return std::make_shared<abstract::Shape>(y_shape);
   } else {
     MS_EXCEPTION_IF_NULL(size_ptr);
     auto size_value = CheckAndConvertUtils::CheckTensorIntValue("input size", size_ptr, prim_name);
@@ -85,8 +87,6 @@ abstract::ShapePtr ResizeNearestNeighborV2GradInferShape(const PrimitivePtr &pri
       MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the elements number of 'size' should be 2, but get "
                                << size_value.size() << " number.";
     }
-    y_shape[dim_idx_map['N']] = grads_shape[dim_idx_map['N']];
-    y_shape[dim_idx_map['C']] = grads_shape[dim_idx_map['C']];
     y_shape[dim_idx_map['H']] = size_value.front();
     y_shape[dim_idx_map['W']] = size_value.back();
   }
