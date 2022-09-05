@@ -26,7 +26,7 @@ class RootMeanSquareDistance(Metric):
     r"""
     Computes the Root Mean Square Surface Distance from `y_pred` to `y` under the default setting.
 
-    Given two sets A and B, S(A) denotes the set of surface voxels of A. The shortest distance of an
+    Given two sets A and B, S(A) denotes the set of surface voxels of A, the shortest distance of an
     arbitrary voxel v to S(A) is defined as:
 
     .. math::
@@ -48,7 +48,7 @@ class RootMeanSquareDistance(Metric):
         \right | + \left | S(B) \right |}}
 
     Args:
-        distance_metric (string):  Three measurement methods are supported:
+        distance_metric (string): Three measurement methods are supported:
                 "euclidean", "chessboard" or "taxicab". Default: "euclidean".
         symmetric (bool):  Whether to calculate the symmetric average root mean square distance between
                 y_pred and y. If False, only calculates :math:`RmsSurDis(y_{pred}, y)` surface distance,

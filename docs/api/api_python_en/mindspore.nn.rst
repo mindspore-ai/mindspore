@@ -167,7 +167,6 @@ Normalization Layer
     mindspore.nn.BatchNorm1d
     mindspore.nn.BatchNorm2d
     mindspore.nn.BatchNorm3d
-    mindspore.nn.GlobalBatchNorm
     mindspore.nn.GroupNorm
     mindspore.nn.InstanceNorm1d
     mindspore.nn.InstanceNorm2d
@@ -367,17 +366,6 @@ During the training process, the optimizer takes result[current step] as current
     mindspore.nn.polynomial_decay_lr
     mindspore.nn.warmup_lr
 
-Sparse Layer
-------------
-
-.. msplatformautosummary::
-    :toctree: nn
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.nn.SparseTensorDenseMatmul
-    mindspore.nn.SparseToDense
-
 Image Processing Layer
 ----------------------
 
@@ -432,17 +420,4 @@ Mathematical Operations
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.nn.MatMul
     mindspore.nn.Moments
-    mindspore.nn.ReduceLogSumExp
-
-Gradient
---------
-
-.. msplatformautosummary::
-    :toctree: nn
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.nn.Jvp
-    mindspore.nn.Vjp
