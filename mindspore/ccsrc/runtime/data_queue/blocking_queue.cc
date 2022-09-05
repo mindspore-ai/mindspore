@@ -46,6 +46,15 @@ DataQueueStatus BlockingQueue::Front(std::vector<DataQueueItem> *data) {
   }
   return queue_->Front(data);
 }
+DataQueueStatus BlockingQueue::FrontAsync(std::vector<DataQueueItem> *data) {
+  std::unique_lock<std::mutex> locker(mutex_);
+  bool timeout =
+    not_empty_cond_.wait_for(locker, std::chrono::seconds(kPopTimeoutSeconds), [this] { return !queue_->IsEmpty(); });
+  if (!timeout) {
+    return DataQueueStatus::TIMEOUT;
+  }
+  return queue_->FrontAsync(data);
+}
 
 DataQueueStatus BlockingQueue::Pop() {
   std::unique_lock<std::mutex> locker(mutex_);

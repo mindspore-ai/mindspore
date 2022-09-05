@@ -48,7 +48,7 @@ class DataQueue {
   virtual bool IsOpen() const { return true; }
   virtual bool IsEmpty() const { return size_ == 0; }
   virtual bool IsFull() const { return size_ == capacity_; }
-
+  virtual DataQueueStatus FrontAsync(std::vector<DataQueueItem> *data) const { return DataQueueStatus::SUCCESS; }
   virtual DataQueueStatus Push(std::vector<DataQueueItem> data) = 0;
   virtual DataQueueStatus Front(std::vector<DataQueueItem> *data) const = 0;
   virtual DataQueueStatus Pop() = 0;

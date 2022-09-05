@@ -86,10 +86,33 @@ int DatasetIteratorKernelMod::Resize(const BaseOperatorPtr &base_operator, const
                                      const std::vector<KernelTensorPtr> &outputs,
                                      const std::map<uint32_t, tensor::TensorPtr> &others) {
   if (dynamic_shape_) {
+    device::DataQueueMgr &buf_mgr = device::DataQueueMgr::GetInstance();
+    auto ret = buf_mgr.Open(queue_name_);
+    MS_EXCEPTION_IF_CHECK_FAIL(ret == device::DataQueueStatus::SUCCESS, "Open dynamic data queue failed");
+    std::vector<device::DataQueueItem> data;
     auto data_kernel = kernel_node_.lock();
-    if (!device::PopDataFromDataQueue(data_kernel)) {
-      return KernelErrorCode::KRET_RESIZE_FAILED;
+    auto kernel_info = dynamic_cast<device::KernelInfo *>(data_kernel->kernel_info());
+    (void)buf_mgr.FrontAsync(queue_name_, &data);
+    std::vector<std::shared_ptr<device::DeviceAddress>> device_tensors;
+    for (auto &device_tensor : kernel_info->output_address_list()) {
+      MS_EXCEPTION_IF_NULL(device_tensor);
+      device_tensors.push_back(device_tensor);
     }
+    MS_EXCEPTION_IF_CHECK_FAIL(data.size() == device_tensors.size(),
+                               "The number of data tensor popped from dynamic queue is not correct");
+    std::vector<ShapeVector> shapes;
+    std::vector<TypeId> types;
+    std::vector<size_t> output_size_list;
+    for (size_t i = 0; i < data.size(); ++i) {
+      device_tensors[i]->SetSize(data[i].data_len);
+      device_tensors[i]->set_from_mem_pool(true);
+      output_size_list.push_back(data[i].data_len);
+      shapes.push_back(data[i].shapes);
+      types.push_back(common::AnfAlgo::GetOutputInferDataType(data_kernel, i));
+    }
+    auto kernel_mod = kernel_info->MutableKernelMod();
+    kernel_mod->SetOutputSizeList(output_size_list);
+    common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, data_kernel.get());
   }
   return KernelErrorCode::KRET_OK;
 }
@@ -154,9 +177,6 @@ bool DatasetIteratorKernelMod::ReadDevice(std::vector<DataQueueItem> *data) {
 
 bool DatasetIteratorKernelMod::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
                                       const std::vector<AddressPtr> &outputs, void *stream) {
-  if (dynamic_shape_) {
-    return true;
-  }
   if (!is_opened_) {
     auto ret = DataQueueMgr::GetInstance().Open(queue_name_);
     if (ret != device::DataQueueStatus::SUCCESS) {

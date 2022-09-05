@@ -36,6 +36,7 @@ class BlockingQueue {
   void RegisterRelease(const std::function<void(void *, int32_t)> &func);
   DataQueueStatus Push(const std::vector<DataQueueItem> &data, unsigned int timeout_in_sec);
   DataQueueStatus Front(std::vector<DataQueueItem> *data);
+  DataQueueStatus FrontAsync(std::vector<DataQueueItem> *data);
   DataQueueStatus Pop();
   DataQueueStatus Clear();
   size_t Size() { return queue_->Size(); }
