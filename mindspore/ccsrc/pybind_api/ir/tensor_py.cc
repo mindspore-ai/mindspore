@@ -411,82 +411,79 @@ static ShapeVector GetShapeFromTuple(const py::tuple &tuple) {
   }
   return shape;
 }
-
-REGISTER_PYBIND_DEFINE(TensorGroup, ([](const py::module *m) {
-                         // Define python MetaTensor class.
-                         (void)py::class_<MetaTensor, std::shared_ptr<MetaTensor>>(*m, "MetaTensor")
-                           .def(py::init<TypePtr, const ShapeVector>(), py::arg("dtype"), py::arg("shape"))
-                           .def_property_readonly("dtype", &MetaTensor::Dtype, "Get the MetaTensor's dtype.")
-                           .def_property_readonly("shape", &MetaTensor::shape, "Get the MetaTensor's shape.")
-                           .def_property("param_info", &MetaTensor::param_info, &MetaTensor::set_param_info)
-                           .def(py::pickle(
-                             [](const MetaTensor &t) {  // __getstate__
-                               /* Return a tuple that fully encodes the state of the object */
-                               return py::make_tuple(static_cast<int>(t.data_type()), t.shape());
-                             },
-                             [](const py::tuple &t) {  // __setstate__
-                               if (t.size() != 2) {
-                                 throw std::runtime_error("Invalid state!");
-                               }
-                               /* Create a new C++ instance */
-                               MetaTensor tensor(TypeId(t[0].cast<int>()), t[1].cast<ShapeVector>());
-                               return tensor;
-                             }));
-                         // Define python Tensor class.
-                         // dtype should define before Tensor, because Tensor init depend dtype
-                         (void)py::class_<Tensor, MetaTensor, std::shared_ptr<Tensor>>(*m, "Tensor")
-                           .def(py::init([](const Tensor &tensor) { return std::make_shared<Tensor>(tensor); }),
-                                py::arg("input"))
-                           .def(py::init([](const Tensor &tensor, const TypePtr &type_ptr) {
-                                  TypeId data_type = type_ptr ? type_ptr->type_id() : kTypeUnknown;
-                                  if (data_type == kTypeUnknown || tensor.data_type() == data_type) {
-                                    return std::make_shared<Tensor>(tensor);
-                                  }
-                                  return std::make_shared<Tensor>(tensor, data_type);
-                                }),
-                                py::arg("input"), py::arg("dtype"))
-                           .def(py::init([](const TypePtr &type_ptr, const py::tuple &shape) {
-                                  auto data_type = type_ptr ? type_ptr->type_id() : TypeId::kNumberTypeFloat64;
-                                  return std::make_shared<Tensor>(data_type, GetShapeFromTuple(shape));
-                                }),
-                                py::arg("dtype"), py::arg("shape"))
-                           .def(py::init([](const TypePtr &type_ptr, const py::list &shape) {
-                                  auto data_type = type_ptr ? type_ptr->type_id() : TypeId::kNumberTypeFloat64;
-                                  return std::make_shared<Tensor>(data_type, GetShapeFromTuple(shape));
-                                }),
-                                py::arg("dtype"), py::arg("shape"))
-                           .def(py::init([](const py::array &input, const TypePtr &type_ptr) {
-                                  return TensorPy::MakeTensor(input, type_ptr);
-                                }),
-                                py::arg("input"), py::arg("dtype") = nullptr)
-                           .def(py::init([](const py::float_ input, const TypePtr &type_ptr) {
-                                  return TensorPy::MakeTensor(py::array(input), type_ptr);
-                                }),
-                                py::arg("input"), py::arg("dtype") = nullptr)
-                           .def(py::init([](const py::int_ input, const TypePtr &type_ptr) {
-                                  return TensorPy::MakeTensor(py::array(input), type_ptr);
-                                }),
-                                py::arg("input"), py::arg("dtype") = nullptr)
-                           .def(py::init([](const py::list &input, const TypePtr &type_ptr) {
-                                  return TensorPy::MakeTensor(py::array(input), type_ptr);
-                                }),
-                                py::arg("input"), py::arg("dtype") = nullptr)
-                           .def(py::init([](const py::tuple &input, const TypePtr &type_ptr) {
-                                  return TensorPy::MakeTensor(py::array(input), type_ptr);
-                                }),
-                                py::arg("input"), py::arg("dtype") = nullptr)
-                           // We only suppot array/bool_/int_/float_/list/tuple/complex pybind objects as tensor input,
-                           // and array/bool_/int_/float_/list/tuple init will be matched above, other pybind objects
-                           // input will raise error except complex data type.
-                           .def(py::init([](const py::object &input, const TypePtr &type_ptr) {
-                                  if (!PyComplex_CheckExact(input.ptr())) {
-                                    MS_LOG(EXCEPTION) << "Unsupported tensor type: " << input.get_type();
-                                  }
-                                  return TensorPy::MakeTensor(py::array(input), type_ptr);
-                                }),
-                                py::arg("input"), py::arg("dtype") = nullptr)
-                           .def_property("init_flag", &Tensor::is_init, &Tensor::set_init_flag)
-                           .def_property_readonly("_dtype", &Tensor::Dtype, R"mydelimiter(
+void RegMetaTensor(py::module *m) {
+  // Define python MetaTensor class.
+  (void)py::class_<MetaTensor, std::shared_ptr<MetaTensor>>(*m, "MetaTensor")
+    .def(py::init<TypePtr, const ShapeVector>(), py::arg("dtype"), py::arg("shape"))
+    .def_property_readonly("dtype", &MetaTensor::Dtype, "Get the MetaTensor's dtype.")
+    .def_property_readonly("shape", &MetaTensor::shape, "Get the MetaTensor's shape.")
+    .def_property("param_info", &MetaTensor::param_info, &MetaTensor::set_param_info)
+    .def(py::pickle(
+      [](const MetaTensor &t) {  // __getstate__
+        /* Return a tuple that fully encodes the state of the object */
+        return py::make_tuple(static_cast<int>(t.data_type()), t.shape());
+      },
+      [](const py::tuple &t) {  // __setstate__
+        if (t.size() != 2) {
+          throw std::runtime_error("Invalid state!");
+        }
+        /* Create a new C++ instance */
+        MetaTensor tensor(TypeId(t[0].cast<int>()), t[1].cast<ShapeVector>());
+        return tensor;
+      }));
+  // Define python Tensor class.
+  // dtype should define before Tensor, because Tensor init depend dtype
+  (void)py::class_<Tensor, MetaTensor, std::shared_ptr<Tensor>>(*m, "Tensor")
+    .def(py::init([](const Tensor &tensor) { return std::make_shared<Tensor>(tensor); }), py::arg("input"))
+    .def(py::init([](const Tensor &tensor, const TypePtr &type_ptr) {
+           TypeId data_type = type_ptr ? type_ptr->type_id() : kTypeUnknown;
+           if (data_type == kTypeUnknown || tensor.data_type() == data_type) {
+             return std::make_shared<Tensor>(tensor);
+           }
+           return std::make_shared<Tensor>(tensor, data_type);
+         }),
+         py::arg("input"), py::arg("dtype"))
+    .def(py::init([](const TypePtr &type_ptr, const py::tuple &shape) {
+           auto data_type = type_ptr ? type_ptr->type_id() : TypeId::kNumberTypeFloat64;
+           return std::make_shared<Tensor>(data_type, GetShapeFromTuple(shape));
+         }),
+         py::arg("dtype"), py::arg("shape"))
+    .def(py::init([](const TypePtr &type_ptr, const py::list &shape) {
+           auto data_type = type_ptr ? type_ptr->type_id() : TypeId::kNumberTypeFloat64;
+           return std::make_shared<Tensor>(data_type, GetShapeFromTuple(shape));
+         }),
+         py::arg("dtype"), py::arg("shape"))
+    .def(
+      py::init([](const py::array &input, const TypePtr &type_ptr) { return TensorPy::MakeTensor(input, type_ptr); }),
+      py::arg("input"), py::arg("dtype") = nullptr)
+    .def(py::init([](const py::float_ input, const TypePtr &type_ptr) {
+           return TensorPy::MakeTensor(py::array(input), type_ptr);
+         }),
+         py::arg("input"), py::arg("dtype") = nullptr)
+    .def(py::init([](const py::int_ input, const TypePtr &type_ptr) {
+           return TensorPy::MakeTensor(py::array(input), type_ptr);
+         }),
+         py::arg("input"), py::arg("dtype") = nullptr)
+    .def(py::init([](const py::list &input, const TypePtr &type_ptr) {
+           return TensorPy::MakeTensor(py::array(input), type_ptr);
+         }),
+         py::arg("input"), py::arg("dtype") = nullptr)
+    .def(py::init([](const py::tuple &input, const TypePtr &type_ptr) {
+           return TensorPy::MakeTensor(py::array(input), type_ptr);
+         }),
+         py::arg("input"), py::arg("dtype") = nullptr)
+    // We only suppot array/bool_/int_/float_/list/tuple/complex pybind objects as tensor input,
+    // and array/bool_/int_/float_/list/tuple init will be matched above, other pybind objects
+    // input will raise error except complex data type.
+    .def(py::init([](const py::object &input, const TypePtr &type_ptr) {
+           if (!PyComplex_CheckExact(input.ptr())) {
+             MS_LOG(EXCEPTION) << "Unsupported tensor type: " << input.get_type();
+           }
+           return TensorPy::MakeTensor(py::array(input), type_ptr);
+         }),
+         py::arg("input"), py::arg("dtype") = nullptr)
+    .def_property("init_flag", &Tensor::is_init, &Tensor::set_init_flag)
+    .def_property_readonly("_dtype", &Tensor::Dtype, R"mydelimiter(
                              Get the tensor's data type.
 
                              Returns:
@@ -497,7 +494,7 @@ REGISTER_PYBIND_DEFINE(TensorGroup, ([](const py::module *m) {
                                  >>> data.dtype
                                  Int32
                              )mydelimiter")
-                           .def_property_readonly("_shape", TensorPy::GetPyTupleShape, R"mydelimiter(
+    .def_property_readonly("_shape", TensorPy::GetPyTupleShape, R"mydelimiter(
                              Get the tensor's shape.
 
                              Returns:
@@ -508,7 +505,7 @@ REGISTER_PYBIND_DEFINE(TensorGroup, ([](const py::module *m) {
                                  >>> data.shape()
                                  (3, 3)
                              )mydelimiter")
-                           .def_property_readonly("_size", &Tensor::DataSize, R"mydelimiter(
+    .def_property_readonly("_size", &Tensor::DataSize, R"mydelimiter(
                              Get tensor's data size.
 
                              Returns:
@@ -519,7 +516,7 @@ REGISTER_PYBIND_DEFINE(TensorGroup, ([](const py::module *m) {
                                  >>> data.size
                                  6
                              )mydelimiter")
-                           .def_property_readonly("_itemsize", TensorPy::GetPyItemSize, R"mydelimiter(
+    .def_property_readonly("_itemsize", TensorPy::GetPyItemSize, R"mydelimiter(
                              Get the tensor's length of one element in bytes.
 
                              Returns:
@@ -530,7 +527,7 @@ REGISTER_PYBIND_DEFINE(TensorGroup, ([](const py::module *m) {
                                  >>> data.itemsize
                                  4
                              )mydelimiter")
-                           .def_property_readonly("_nbytes", TensorPy::GetPyNBytes, R"mydelimiter(
+    .def_property_readonly("_nbytes", TensorPy::GetPyNBytes, R"mydelimiter(
                              Get the tensor's total number of bytes.
 
                              Returns:
@@ -541,7 +538,7 @@ REGISTER_PYBIND_DEFINE(TensorGroup, ([](const py::module *m) {
                                  >>> data.nbytes
                                  4
                              )mydelimiter")
-                           .def_property_readonly("_strides", TensorPy::GetPyTupleStrides, R"mydelimiter(
+    .def_property_readonly("_strides", TensorPy::GetPyTupleStrides, R"mydelimiter(
                              Get the tensor's tuple of bytes to step in each dimension
                              when traversing an array.
 
@@ -553,11 +550,11 @@ REGISTER_PYBIND_DEFINE(TensorGroup, ([](const py::module *m) {
                                  >>> data.strides
                                  (4, 4)
                              )mydelimiter")
-                           .def("_flatten_tensors", Tensor::FlattenTensors, py::arg("fusion_size") = 0)
-                           .def("_is_flattened", Tensor::IsFlattened)
-                           .def("_get_flattened_tensors", Tensor::GetFlattenedTensors)
-                           .def("_get_fusion_size", Tensor::GetFusionSize)
-                           .def("from_numpy", TensorPy::MakeTensorOfNumpy, R"mydelimiter(
+    .def("_flatten_tensors", Tensor::FlattenTensors, py::arg("fusion_size") = 0)
+    .def("_is_flattened", Tensor::IsFlattened)
+    .def("_get_flattened_tensors", Tensor::GetFlattenedTensors)
+    .def("_get_fusion_size", Tensor::GetFusionSize)
+    .def("from_numpy", TensorPy::MakeTensorOfNumpy, R"mydelimiter(
                              Creates a Tensor from a numpy.ndarray without copy.
 
                              Arg:
@@ -570,7 +567,7 @@ REGISTER_PYBIND_DEFINE(TensorGroup, ([](const py::module *m) {
                                  >>> a = np.ones((2, 3))
                                  >>> t = mindspore.Tensor.from_numpy(a)
                              )mydelimiter")
-                           .def("asnumpy", TensorPy::SyncAsNumpy, R"mydelimiter(
+    .def("asnumpy", TensorPy::SyncAsNumpy, R"mydelimiter(
                              Convert tensor to numpy.ndarray.
 
                              Returns:
@@ -583,7 +580,7 @@ REGISTER_PYBIND_DEFINE(TensorGroup, ([](const py::module *m) {
                                  array([[1., 1., 1.],
                                         [1., 1., 1.]])
                              )mydelimiter")
-                           .def("_flush_from_cache", TensorPy::FlushFromCache, R"mydelimiter(
+    .def("_flush_from_cache", TensorPy::FlushFromCache, R"mydelimiter(
                              Flush Cache data to Host if tensor is cache enable.
 
                              Returns:
@@ -593,7 +590,7 @@ REGISTER_PYBIND_DEFINE(TensorGroup, ([](const py::module *m) {
                                  >>> data = mindspore.Tensor(np.ones((2, 3)))
                                  >>> data._flush_from_cache()
                              )mydelimiter")
-                           .def("is_init", &Tensor::is_init, R"mydelimiter(
+    .def("is_init", &Tensor::is_init, R"mydelimiter(
                              Get tensor init_flag.
 
                              Returns:
@@ -604,14 +601,14 @@ REGISTER_PYBIND_DEFINE(TensorGroup, ([](const py::module *m) {
                                  >>> data.is_init()
                                  False
                              )mydelimiter")
-                           .def("set_init_flag", &Tensor::set_init_flag, R"mydelimiter(
+    .def("set_init_flag", &Tensor::set_init_flag, R"mydelimiter(
                              Set tensor init_flag.
 
                              Examples:
                                  >>> data = mindspore.Tensor(np.ones((2, 3)))
                                  >>> data.set_init_flag(True)
                              )mydelimiter")
-                           .def("dim", &Tensor::DataDim, R"mydelimiter(
+    .def("dim", &Tensor::DataDim, R"mydelimiter(
                              Get tensor's data dimension.
 
                              Returns:
@@ -622,7 +619,7 @@ REGISTER_PYBIND_DEFINE(TensorGroup, ([](const py::module *m) {
                                  >>> data.dim()
                                  2
                              )mydelimiter")
-                           .def("assign_value_cpp", &Tensor::AssignValue, R"mydelimiter(
+    .def("assign_value_cpp", &Tensor::AssignValue, R"mydelimiter(
                              Assign another tensor value to this.
 
                              Arg:
@@ -635,7 +632,7 @@ REGISTER_PYBIND_DEFINE(TensorGroup, ([](const py::module *m) {
                                  >>> data.shape
                                  (2, 2)
                              )mydelimiter")
-                           .def("set_dtype", &Tensor::SetDtype, R"mydelimiter(
+    .def("set_dtype", &Tensor::SetDtype, R"mydelimiter(
                               Set the tensor's data type.
 
                               Arg:
@@ -646,23 +643,23 @@ REGISTER_PYBIND_DEFINE(TensorGroup, ([](const py::module *m) {
                                   >>> data.set_dtype(mindspore.int32)
                                   mindspore.int32
                               )mydelimiter")
-                           .def("set_cast_dtype", &Tensor::set_cast_dtype, py::arg("dtype") = nullptr)
-                           .def("data_sync", &Tensor::data_sync)
-                           .def("__str__", &Tensor::ToString)
-                           .def("__repr__", &Tensor::ToStringRepr)
-                           .def(py::pickle(
-                             [](const Tensor &t) {  // __getstate__
-                               /* Return a tuple that fully encodes the state of the object */
-                               return py::make_tuple(TensorPy::SyncAsNumpy(t));
-                             },
-                             [](const py::tuple &t) {  // __setstate__
-                               if (t.size() != 1) {
-                                 throw std::runtime_error("Invalid state!");
-                               }
-                               /* Create a new C++ instance */
-                               return TensorPy::MakeTensor(t[0].cast<py::array>());
-                             }));
-                       }));
+    .def("set_cast_dtype", &Tensor::set_cast_dtype, py::arg("dtype") = nullptr)
+    .def("data_sync", &Tensor::data_sync)
+    .def("__str__", &Tensor::ToString)
+    .def("__repr__", &Tensor::ToStringRepr)
+    .def(py::pickle(
+      [](const Tensor &t) {  // __getstate__
+        /* Return a tuple that fully encodes the state of the object */
+        return py::make_tuple(TensorPy::SyncAsNumpy(t));
+      },
+      [](const py::tuple &t) {  // __setstate__
+        if (t.size() != 1) {
+          throw std::runtime_error("Invalid state!");
+        }
+        /* Create a new C++ instance */
+        return TensorPy::MakeTensor(t[0].cast<py::array>());
+      }));
+}
 
 template <typename T>
 py::tuple GetSparseTensorShape(const T &sparse_tensor) {
@@ -676,68 +673,63 @@ py::tuple GetSparseTensorShape(const T &sparse_tensor) {
 
 py::tuple CSRTensorPy::GetPyTupleShape(const CSRTensor &csr_tensor) { return GetSparseTensorShape(csr_tensor); }
 
-REGISTER_PYBIND_DEFINE(
-  CSRTensor, ([](const py::module *m) {
-    // Define python CSRTensor class.
-    (void)py::class_<CSRTensor, std::shared_ptr<CSRTensor>>(*m, "CSRTensor")
-      .def(py::init([](const Tensor &indptr, const Tensor &indices, const Tensor &values, const py::tuple &shape) {
-             return std::make_shared<CSRTensor>(std::make_shared<Tensor>(indptr), std::make_shared<Tensor>(indices),
-                                                std::make_shared<Tensor>(values), GetShapeFromTuple(shape));
-           }),
-           py::arg("indptr"), py::arg("indices"), py::arg("values"), py::arg("shape"))
-      .def(py::init([](const CSRTensor &csr_tensor) { return std::make_shared<CSRTensor>(csr_tensor); }),
-           py::arg("input"))
-      .def_property_readonly("_shape", CSRTensorPy::GetPyTupleShape)
-      .def_property_readonly("_dtype", &CSRTensor::Dtype)
-      .def_property_readonly("_indptr", &CSRTensor::GetIndptr)
-      .def_property_readonly("_indices", &CSRTensor::GetIndices)
-      .def_property_readonly("_values", &CSRTensor::GetValues)
-      .def("__str__", &CSRTensor::ToString)
-      .def("__repr__", &CSRTensor::ToString);
-  }));
+void RegCSRTensor(py::module *m) {
+  // Define python CSRTensor class.
+  (void)py::class_<CSRTensor, std::shared_ptr<CSRTensor>>(*m, "CSRTensor")
+    .def(py::init([](const Tensor &indptr, const Tensor &indices, const Tensor &values, const py::tuple &shape) {
+           return std::make_shared<CSRTensor>(std::make_shared<Tensor>(indptr), std::make_shared<Tensor>(indices),
+                                              std::make_shared<Tensor>(values), GetShapeFromTuple(shape));
+         }),
+         py::arg("indptr"), py::arg("indices"), py::arg("values"), py::arg("shape"))
+    .def(py::init([](const CSRTensor &csr_tensor) { return std::make_shared<CSRTensor>(csr_tensor); }),
+         py::arg("input"))
+    .def_property_readonly("_shape", CSRTensorPy::GetPyTupleShape)
+    .def_property_readonly("_dtype", &CSRTensor::Dtype)
+    .def_property_readonly("_indptr", &CSRTensor::GetIndptr)
+    .def_property_readonly("_indices", &CSRTensor::GetIndices)
+    .def_property_readonly("_values", &CSRTensor::GetValues)
+    .def("__str__", &CSRTensor::ToString)
+    .def("__repr__", &CSRTensor::ToString);
+}
 
 py::tuple COOTensorPy::GetPyTupleShape(const COOTensor &coo_tensor) { return GetSparseTensorShape(coo_tensor); }
 
-REGISTER_PYBIND_DEFINE(COOTensor, ([](const py::module *m) {
-                         // Define python COOTensor class.
-                         (void)py::class_<COOTensor, std::shared_ptr<COOTensor>>(*m, "COOTensor")
-                           .def(py::init([](const Tensor &indices, const Tensor &values, const py::tuple &shape) {
-                                  return std::make_shared<COOTensor>(std::make_shared<Tensor>(indices),
-                                                                     std::make_shared<Tensor>(values),
-                                                                     GetShapeFromTuple(shape));
-                                }),
-                                py::arg("indices"), py::arg("values"), py::arg("shape"))
-                           .def(py::init(
-                                  [](const COOTensor &coo_tensor) { return std::make_shared<COOTensor>(coo_tensor); }),
-                                py::arg("input"))
-                           .def_property_readonly("_shape", COOTensorPy::GetPyTupleShape)
-                           .def_property_readonly("_dtype", &COOTensor::Dtype)
-                           .def_property_readonly("_indices", &COOTensor::GetIndices)
-                           .def_property_readonly("_values", &COOTensor::GetValues)
-                           .def("__str__", &COOTensor::ToString)
-                           .def("__repr__", &COOTensor::ToString);
-                       }));
+void RegCOOTensor(py::module *m) {
+  // Define python COOTensor class.
+  (void)py::class_<COOTensor, std::shared_ptr<COOTensor>>(*m, "COOTensor")
+    .def(py::init([](const Tensor &indices, const Tensor &values, const py::tuple &shape) {
+           return std::make_shared<COOTensor>(std::make_shared<Tensor>(indices), std::make_shared<Tensor>(values),
+                                              GetShapeFromTuple(shape));
+         }),
+         py::arg("indices"), py::arg("values"), py::arg("shape"))
+    .def(py::init([](const COOTensor &coo_tensor) { return std::make_shared<COOTensor>(coo_tensor); }),
+         py::arg("input"))
+    .def_property_readonly("_shape", COOTensorPy::GetPyTupleShape)
+    .def_property_readonly("_dtype", &COOTensor::Dtype)
+    .def_property_readonly("_indices", &COOTensor::GetIndices)
+    .def_property_readonly("_values", &COOTensor::GetValues)
+    .def("__str__", &COOTensor::ToString)
+    .def("__repr__", &COOTensor::ToString);
+}
 
 py::tuple RowTensorPy::GetPyTupleShape(const RowTensor &row_tensor) { return GetSparseTensorShape(row_tensor); }
 
-REGISTER_PYBIND_DEFINE(RowTensor, ([](const py::module *m) {
-                         // Define python RowTensor class.
-                         (void)py::class_<RowTensor, std::shared_ptr<RowTensor>>(*m, "RowTensor")
-                           .def(py::init([](const Tensor &indices, const Tensor &values, const py::tuple &shape) {
-                                  return std::make_shared<RowTensor>(std::make_shared<Tensor>(indices),
-                                                                     std::make_shared<Tensor>(values),
-                                                                     GetShapeFromTuple(shape));
-                                }),
-                                py::arg("indices"), py::arg("values"), py::arg("shape"))
-                           .def(py::init(
-                                  [](const RowTensor &row_tensor) { return std::make_shared<RowTensor>(row_tensor); }),
-                                py::arg("input"))
-                           .def_property_readonly("_shape", RowTensorPy::GetPyTupleShape)
-                           .def_property_readonly("_dtype", &RowTensor::Dtype)
-                           .def_property_readonly("_indices", &RowTensor::GetIndices)
-                           .def_property_readonly("_values", &RowTensor::GetValues)
-                           .def("__str__", &RowTensor::ToString)
-                           .def("__repr__", &RowTensor::ToString);
-                       }));
+void RegRowTensor(py::module *m) {
+  // Define python RowTensor class.
+  (void)py::class_<RowTensor, std::shared_ptr<RowTensor>>(*m, "RowTensor")
+    .def(py::init([](const Tensor &indices, const Tensor &values, const py::tuple &shape) {
+           return std::make_shared<RowTensor>(std::make_shared<Tensor>(indices), std::make_shared<Tensor>(values),
+                                              GetShapeFromTuple(shape));
+         }),
+         py::arg("indices"), py::arg("values"), py::arg("shape"))
+    .def(py::init([](const RowTensor &row_tensor) { return std::make_shared<RowTensor>(row_tensor); }),
+         py::arg("input"))
+    .def_property_readonly("_shape", RowTensorPy::GetPyTupleShape)
+    .def_property_readonly("_dtype", &RowTensor::Dtype)
+    .def_property_readonly("_indices", &RowTensor::GetIndices)
+    .def_property_readonly("_values", &RowTensor::GetValues)
+    .def("__str__", &RowTensor::ToString)
+    .def("__repr__", &RowTensor::ToString);
+}
 }  // namespace tensor
 }  // namespace mindspore

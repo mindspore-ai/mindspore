@@ -60,23 +60,22 @@ py::dict UpdateFuncGraphHyperParams(const FuncGraphPtr &func_graph, const py::di
   return hyper_params;
 }
 
-REGISTER_PYBIND_DEFINE(FuncGraph, ([](const pybind11::module *m) {
-                         // Define python "FuncGraph" class
-                         (void)py::class_<FuncGraph, FuncGraphPtr>(*m, "FuncGraph")
-                           .def(py::init())
-                           .def("str", &FuncGraph::ToString, "Get FuncGraph string representation.")
-                           .def("get_return", &FuncGraph::get_return, "Get return node of FuncGraph");
-                       }));
+void RegFuncGraph(py::module *m) {
+  // Define python "FuncGraph" class
+  (void)py::class_<FuncGraph, FuncGraphPtr>(*m, "FuncGraph")
+    .def(py::init())
+    .def("str", &FuncGraph::ToString, "Get FuncGraph string representation.")
+    .def("get_return", &FuncGraph::get_return, "Get return node of FuncGraph");
+}
 
-REGISTER_PYBIND_DEFINE(MetaFuncGraph, ([](const pybind11::module *m) {
-                         // Define python "MetaFuncGraph_" class
-                         (void)py::class_<MetaFuncGraph, std::shared_ptr<MetaFuncGraph>>(*m, "MetaFuncGraph_")
-                           .def("set_signatures", &MetaFuncGraph::set_signatures, "Set primitive inputs signature.");
-                       }));
+void RegMetaFuncGraph(py::module *m) {
+  // Define python "MetaFuncGraph_" class
+  (void)py::class_<MetaFuncGraph, std::shared_ptr<MetaFuncGraph>>(*m, "MetaFuncGraph_")
+    .def("set_signatures", &MetaFuncGraph::set_signatures, "Set primitive inputs signature.");
+}
 
-REGISTER_PYBIND_DEFINE(_c_expression, ([](pybind11::module *const m) {
-                         (void)m->def("update_func_graph_hyper_params", &UpdateFuncGraphHyperParams,
-                                      py::arg("func_graph"), py::arg("params_init"),
-                                      "Update FuncGraph hyper parameters, and return the updated parameters.");
-                       }));
+void RegUpdateFuncGraphHyperParams(py::module *m) {
+  (void)m->def("update_func_graph_hyper_params", &UpdateFuncGraphHyperParams, py::arg("func_graph"),
+               py::arg("params_init"), "Update FuncGraph hyper parameters, and return the updated parameters.");
+}
 }  // namespace mindspore

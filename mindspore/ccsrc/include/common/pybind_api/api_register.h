@@ -22,60 +22,56 @@
 #include <memory>
 #include <functional>
 #include <vector>
-
 #include "pybind11/pybind11.h"
 #include "pybind11/stl.h"
-#include "include/common/visible.h"
 
 namespace py = pybind11;
-
 namespace mindspore {
+void RegTyping(py::module *m);
+void RegCNode(py::module *m);
+void RegCell(py::module *m);
+void RegMetaFuncGraph(py::module *m);
+void RegFuncGraph(py::module *m);
+void RegUpdateFuncGraphHyperParams(py::module *m);
+void RegParamInfo(py::module *m);
+void RegPrimitive(py::module *m);
+void RegSignatureEnumRW(py::module *m);
+void RegValues(py::module *m);
+void RegMsContext(py::module *m);
+void RegSecurity(py::module *m);
 
-using PybindDefineFunc = std::function<void(py::module *)>;
+namespace initializer {
+void RegRandomNormal(py::module *m);
+}
 
-class COMMON_EXPORT PybindDefineRegister {
- public:
-  static void Register(const std::string &name, const std::string &parent_name, const PybindDefineFunc &fn) {
-    return GetSingleton().RegisterFn(name, parent_name, fn);
-  }
+namespace pynative {
+void RegPynativeExecutor(py::module *m);
+}
 
-  PybindDefineRegister(const PybindDefineRegister &) = delete;
+namespace tensor {
+void RegMetaTensor(py::module *m);
+void RegCSRTensor(py::module *m);
+void RegCOOTensor(py::module *m);
+void RegRowTensor(py::module *m);
+}  // namespace tensor
 
-  PybindDefineRegister &operator=(const PybindDefineRegister &) = delete;
+namespace opt {
+namespace python_pass {
+void RegPattern(py::module *m);
+void RegPyPassManager(py::module *m);
+}  // namespace python_pass
+}  // namespace opt
 
-  static std::map<std::string, PybindDefineFunc> &AllFuncs() { return GetSingleton().fns_; }
+#ifndef ENABLE_SECURITY
+namespace profiler {
+void RegProfilerManager(py::module *m);
+void RegProfiler(py::module *m);
+}  // namespace profiler
+#endif
 
-  static std::map<std::string, std::string> &GetInheritanceMap() { return GetSingleton().parent_name_; }
-
-  std::map<std::string, PybindDefineFunc> fns_;
-
- protected:
-  PybindDefineRegister() = default;
-
-  virtual ~PybindDefineRegister() = default;
-
-  static PybindDefineRegister &GetSingleton();
-
-  void RegisterFn(const std::string &name, const std::string &parent_name, const PybindDefineFunc &fn) {
-    parent_name_[name] = parent_name;
-    fns_[name] = fn;
-  }
-
-  std::map<std::string, std::string> parent_name_;
-};
-
-class PybindDefineRegisterer {
- public:
-  PybindDefineRegisterer(const std::string &name, const std::string &parent_name, const PybindDefineFunc &fn) noexcept {
-    PybindDefineRegister::Register(name, parent_name, fn);
-  }
-  ~PybindDefineRegisterer() = default;
-};
-
-#define REGISTER_PYBIND_DEFINE(name, define) PybindDefineRegisterer g_pybind_define_f_##name(#name, "", define)
-
-#define REGISTER_PYBIND_WITH_PARENT_NAME(name, parent_name, define) \
-  PybindDefineRegisterer g_pybind_define_f_##name(#name, #parent_name, define)
+namespace prim {
+void RegCompositeOpsGroup(py::module *m);
+}
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CCSRC_INCLUDE_COMMON_PYBIND_API_API_REGISTER_H_

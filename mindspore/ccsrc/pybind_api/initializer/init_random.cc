@@ -61,9 +61,9 @@ void TruncatedNormal(std::uint64_t seed, const py::buffer &py_buf, float a, floa
   GenerateFloatRandoms<Generator, Distribution>(seed, py_buf, a, b, mean, sigma);
 }
 
-REGISTER_PYBIND_DEFINE(init_random, ([](py::module *const m) {
-                         (void)m->def("_random_uniform", RandomUniform);
-                         (void)m->def("_random_normal", RandomNormal);
-                         (void)m->def("_truncated_normal", TruncatedNormal);
-                       }));
+void RegRandomNormal(py::module *m) {
+  (void)m->def("_random_uniform", RandomUniform);
+  (void)m->def("_random_normal", RandomNormal);
+  (void)m->def("_truncated_normal", TruncatedNormal);
+}
 }  // namespace mindspore::initializer

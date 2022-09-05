@@ -25,108 +25,106 @@
 #include "frontend/operator/composite/zip_operation.h"
 namespace mindspore {
 namespace prim {
-REGISTER_PYBIND_WITH_PARENT_NAME(
-  CompositeOpsGroup_, MetaFuncGraph, ([](const py::module *m) {
-    //  Reg HyperMap
-    (void)py::class_<HyperMapPy, MetaFuncGraph, std::shared_ptr<HyperMapPy>>(*m, "HyperMap_")
-      .def(py::init<bool, std::shared_ptr<MultitypeFuncGraph>>(), py::arg("reverse"), py::arg("ops"))
-      .def(py::init<bool>(), py::arg("reverse"));
+void RegCompositeOpsGroup(py::module *m) {
+  //  Reg HyperMap
+  (void)py::class_<HyperMapPy, MetaFuncGraph, std::shared_ptr<HyperMapPy>>(*m, "HyperMap_")
+    .def(py::init<bool, std::shared_ptr<MultitypeFuncGraph>>(), py::arg("reverse"), py::arg("ops"))
+    .def(py::init<bool>(), py::arg("reverse"));
 
-    // Reg Tail
-    (void)py::class_<Tail, MetaFuncGraph, std::shared_ptr<Tail>>(*m, "Tail_").def(py::init<std::string &>());
+  // Reg Tail
+  (void)py::class_<Tail, MetaFuncGraph, std::shared_ptr<Tail>>(*m, "Tail_").def(py::init<std::string &>());
 
-    // Reg GradOperation
-    (void)py::class_<GradOperation, MetaFuncGraph, std::shared_ptr<GradOperation>>(*m, "GradOperation_")
-      .def(py::init<std::string &>(), py::arg("fn"))
-      .def(py::init<std::string &, bool, bool, bool, bool, bool, bool>(), py::arg("fn"), py::arg("get_all"),
-           py::arg("get_by_list"), py::arg("sens_param"), py::arg("get_by_position"), py::arg("has_aux"),
-           py::arg("get_value"));
+  // Reg GradOperation
+  (void)py::class_<GradOperation, MetaFuncGraph, std::shared_ptr<GradOperation>>(*m, "GradOperation_")
+    .def(py::init<std::string &>(), py::arg("fn"))
+    .def(py::init<std::string &, bool, bool, bool, bool, bool, bool>(), py::arg("fn"), py::arg("get_all"),
+         py::arg("get_by_list"), py::arg("sens_param"), py::arg("get_by_position"), py::arg("has_aux"),
+         py::arg("get_value"));
 
-    // Reg VmapOperation
-    (void)py::class_<VmapOperation, MetaFuncGraph, std::shared_ptr<VmapOperation>>(*m, "VmapOperation_")
-      .def(py::init<const std::string &>(), py::arg("fn"));
+  // Reg VmapOperation
+  (void)py::class_<VmapOperation, MetaFuncGraph, std::shared_ptr<VmapOperation>>(*m, "VmapOperation_")
+    .def(py::init<const std::string &>(), py::arg("fn"));
 
-    // Reg VmapGeneralRulePyAdapter
-    (void)py::class_<VmapGeneralRulePyAdapter, MetaFuncGraph, std::shared_ptr<VmapGeneralRulePyAdapter>>(
-      *m, "VmapGeneralRulePyAdapter_")
-      .def(py::init<const std::string &, const PrimitivePyAdapterPtr &, int64_t>(), py::arg("fn"), py::arg("prim"),
-           py::arg("axis_size"));
+  // Reg VmapGeneralRulePyAdapter
+  (void)py::class_<VmapGeneralRulePyAdapter, MetaFuncGraph, std::shared_ptr<VmapGeneralRulePyAdapter>>(
+    *m, "VmapGeneralRulePyAdapter_")
+    .def(py::init<const std::string &, const PrimitivePyAdapterPtr &, int64_t>(), py::arg("fn"), py::arg("prim"),
+         py::arg("axis_size"));
 
-    // Reg TaylorOperation
-    (void)py::class_<TaylorOperation, MetaFuncGraph, std::shared_ptr<TaylorOperation>>(*m, "TaylorOperation_")
-      .def(py::init<const std::string &>(), py::arg("fn"));
+  // Reg TaylorOperation
+  (void)py::class_<TaylorOperation, MetaFuncGraph, std::shared_ptr<TaylorOperation>>(*m, "TaylorOperation_")
+    .def(py::init<const std::string &>(), py::arg("fn"));
 
-    // Reg TupleAdd
-    (void)py::class_<TupleAdd, MetaFuncGraph, std::shared_ptr<TupleAdd>>(*m, "TupleAdd_")
-      .def(py::init<std::string &>());
+  // Reg TupleAdd
+  (void)py::class_<TupleAdd, MetaFuncGraph, std::shared_ptr<TupleAdd>>(*m, "TupleAdd_").def(py::init<std::string &>());
 
-    // Reg TupleGetItemTensor
-    (void)py::class_<TupleGetItemTensor, MetaFuncGraph, std::shared_ptr<TupleGetItemTensor>>(*m, "TupleGetItemTensor_")
-      .def(py::init<std::string &>());
+  // Reg TupleGetItemTensor
+  (void)py::class_<TupleGetItemTensor, MetaFuncGraph, std::shared_ptr<TupleGetItemTensor>>(*m, "TupleGetItemTensor_")
+    .def(py::init<std::string &>());
 
-    // Reg ListSliceSetItem
-    (void)py::class_<ListSliceSetItem, MetaFuncGraph, std::shared_ptr<ListSliceSetItem>>(*m, "ListSliceSetItem_")
-      .def(py::init<const std::string &>());
+  // Reg ListSliceSetItem
+  (void)py::class_<ListSliceSetItem, MetaFuncGraph, std::shared_ptr<ListSliceSetItem>>(*m, "ListSliceSetItem_")
+    .def(py::init<const std::string &>());
 
-    // Reg SequenceSliceGetItem
-    (void)py::class_<SequenceSliceGetItem, MetaFuncGraph, std::shared_ptr<SequenceSliceGetItem>>(
-      *m, "SequenceSliceGetItem_")
-      .def(py::init<std::string &, std::string &, std::string &>());
+  // Reg SequenceSliceGetItem
+  (void)py::class_<SequenceSliceGetItem, MetaFuncGraph, std::shared_ptr<SequenceSliceGetItem>>(*m,
+                                                                                               "SequenceSliceGetItem_")
+    .def(py::init<std::string &, std::string &, std::string &>());
 
-    // Reg Shard
-    (void)py::class_<Shard, MetaFuncGraph, std::shared_ptr<Shard>>(*m, "Shard_")
-      .def(py::init<const std::string &>(), py::arg("fn"));
+  // Reg Shard
+  (void)py::class_<Shard, MetaFuncGraph, std::shared_ptr<Shard>>(*m, "Shard_")
+    .def(py::init<const std::string &>(), py::arg("fn"));
 
-    // Reg ListAppend
-    (void)py::class_<ListAppend, MetaFuncGraph, std::shared_ptr<ListAppend>>(*m, "ListAppend_")
-      .def(py::init<std::string &>());
+  // Reg ListAppend
+  (void)py::class_<ListAppend, MetaFuncGraph, std::shared_ptr<ListAppend>>(*m, "ListAppend_")
+    .def(py::init<std::string &>());
 
-    // Reg ListInsert
-    (void)py::class_<ListInsert, MetaFuncGraph, std::shared_ptr<ListInsert>>(*m, "ListInsert_")
-      .def(py::init<const std::string &>());
+  // Reg ListInsert
+  (void)py::class_<ListInsert, MetaFuncGraph, std::shared_ptr<ListInsert>>(*m, "ListInsert_")
+    .def(py::init<const std::string &>());
 
-    // Reg ListPop
-    (void)py::class_<ListPop, MetaFuncGraph, std::shared_ptr<ListPop>>(*m, "ListPop_")
-      .def(py::init<const std::string &>());
+  // Reg ListPop
+  (void)py::class_<ListPop, MetaFuncGraph, std::shared_ptr<ListPop>>(*m, "ListPop_")
+    .def(py::init<const std::string &>());
 
-    // Reg ListClear
-    (void)py::class_<ListClear, MetaFuncGraph, std::shared_ptr<ListClear>>(*m, "ListClear_")
-      .def(py::init<const std::string &>());
+  // Reg ListClear
+  (void)py::class_<ListClear, MetaFuncGraph, std::shared_ptr<ListClear>>(*m, "ListClear_")
+    .def(py::init<const std::string &>());
 
-    // Reg ListReverse
-    (void)py::class_<ListReverse, MetaFuncGraph, std::shared_ptr<ListReverse>>(*m, "ListReverse_")
-      .def(py::init<const std::string &>());
+  // Reg ListReverse
+  (void)py::class_<ListReverse, MetaFuncGraph, std::shared_ptr<ListReverse>>(*m, "ListReverse_")
+    .def(py::init<const std::string &>());
 
-    // Reg ListExtend
-    (void)py::class_<ListExtend, MetaFuncGraph, std::shared_ptr<ListExtend>>(*m, "ListExtend_")
-      .def(py::init<const std::string &>());
+  // Reg ListExtend
+  (void)py::class_<ListExtend, MetaFuncGraph, std::shared_ptr<ListExtend>>(*m, "ListExtend_")
+    .def(py::init<const std::string &>());
 
-    // Reg ListCount
-    (void)py::class_<ListCount, MetaFuncGraph, std::shared_ptr<ListCount>>(*m, "ListCount_")
-      .def(py::init<const std::string &>());
+  // Reg ListCount
+  (void)py::class_<ListCount, MetaFuncGraph, std::shared_ptr<ListCount>>(*m, "ListCount_")
+    .def(py::init<const std::string &>());
 
-    // Reg MapPy
-    (void)py::class_<MapPy, MetaFuncGraph, std::shared_ptr<MapPy>>(*m, "Map_")
-      .def(py::init<bool, std::shared_ptr<MultitypeFuncGraph>>(), py::arg("reverse"), py::arg("ops"))
-      .def(py::init<bool>(), py::arg("reverse"));
+  // Reg MapPy
+  (void)py::class_<MapPy, MetaFuncGraph, std::shared_ptr<MapPy>>(*m, "Map_")
+    .def(py::init<bool, std::shared_ptr<MultitypeFuncGraph>>(), py::arg("reverse"), py::arg("ops"))
+    .def(py::init<bool>(), py::arg("reverse"));
 
-    // Reg MultitypeFuncGraph
-    (void)py::class_<MultitypeFuncGraph, MetaFuncGraph, std::shared_ptr<MultitypeFuncGraph>>(*m, "MultitypeFuncGraph_")
-      .def(py::init<std::string &>())
-      .def("register_fn", &MultitypeFuncGraph::PyRegister);
+  // Reg MultitypeFuncGraph
+  (void)py::class_<MultitypeFuncGraph, MetaFuncGraph, std::shared_ptr<MultitypeFuncGraph>>(*m, "MultitypeFuncGraph_")
+    .def(py::init<std::string &>())
+    .def("register_fn", &MultitypeFuncGraph::PyRegister);
 
-    // Reg UnpackCall
-    (void)py::class_<UnpackCall, MetaFuncGraph, std::shared_ptr<UnpackCall>>(*m, "UnpackCall_")
-      .def(py::init<std::string &>());
+  // Reg UnpackCall
+  (void)py::class_<UnpackCall, MetaFuncGraph, std::shared_ptr<UnpackCall>>(*m, "UnpackCall_")
+    .def(py::init<std::string &>());
 
-    // Reg ZipOperation
-    (void)py::class_<ZipOperation, MetaFuncGraph, std::shared_ptr<ZipOperation>>(*m, "ZipOperation_")
-      .def(py::init<std::string &>());
+  // Reg ZipOperation
+  (void)py::class_<ZipOperation, MetaFuncGraph, std::shared_ptr<ZipOperation>>(*m, "ZipOperation_")
+    .def(py::init<std::string &>());
 
-    // Reg VmapGeneralPreprocess
-    (void)py::class_<VmapGeneralPreprocess, MetaFuncGraph, std::shared_ptr<VmapGeneralPreprocess>>(
-      *m, "VmapGeneralPreprocess_")
-      .def(py::init<std::string &>(), py::arg("fn"));
-  }));
+  // Reg VmapGeneralPreprocess
+  (void)py::class_<VmapGeneralPreprocess, MetaFuncGraph, std::shared_ptr<VmapGeneralPreprocess>>(
+    *m, "VmapGeneralPreprocess_")
+    .def(py::init<std::string &>(), py::arg("fn"));
+}
 }  // namespace prim
 }  // namespace mindspore
