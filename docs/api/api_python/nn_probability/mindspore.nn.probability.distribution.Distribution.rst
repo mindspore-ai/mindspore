@@ -13,6 +13,13 @@ mindspore.nn.probability.distribution.Distribution
 
     .. note:: 
         派生类必须重写 `_mean` 、 `_prob` 和 `_log_prob` 等操作。必填参数必须通过 `args` 或 `kwargs` 传入，如 `_prob` 的 `value` 。
+        `dist_spec_args` 作为可选参数可以用来制定新的分布参数。
+
+        每种分类都有自己的 `dist_spec_args`。例如正态分布的 `dist_spec_args` 为 `mean` 和 `sd`，
+        而指数分布的 `dist_spec_args` 为 `rate`。
+
+        所有方法都包含一个 `dist_spec_args` 作为可选参数。
+        传入 `dist_spec_args` 可以让该方法基于新的分布的参数值进行运算。但如此做不会改变原始分布的参数。
 
     .. py:method:: cdf(value, *args, **kwargs)
 

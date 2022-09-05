@@ -15,6 +15,11 @@ mindspore.nn.probability.distribution.TransformedDistribution
 
     .. note:: 
         用于初始化原始分布的参数不能为None。例如，由于未指定 `mean` 和 `sd` ，因此无法使用mynormal = msd.Normal(dtype=mindspore.float32)初始化TransformedDistribution。
+        `batch_shape` 为原始分布的 batch 的 shape。
+        `broadcast_shape` 为原始分布和概率映射经过广播后的 shape。
+        `is_scalar_batch` 为 True 当且仅当原始分布和概率映射的 batch 均为标量。
+        `default_parameters`、 `parameter_names` 和 `parameter_type` 由原始分布的数据类型决定。
+        衍生类可以通过调用 `reset_parameters` 后再调用 `add_parameter` 来添加参数以覆盖 `default_parameters` 和 `parameter_names` 。
 
     异常：
         - **TypeError** - bijector不是Bijector类。

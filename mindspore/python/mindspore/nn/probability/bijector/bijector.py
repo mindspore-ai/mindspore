@@ -230,6 +230,9 @@ class Bijector(Cell):
         Args:
             value (Tensor): input value.
             para (Tensor): parameter(s) of the bijector.
+
+        Returns:
+            Tensor, the value of parameters after casting.
         """
         local = self.cast_base(para, self.dtype_base(value))
         return local
@@ -318,6 +321,9 @@ class Bijector(Cell):
             name (str): The name of the function.
             *args (list): the list of positional arguments forwarded to subclasses.
             **kwargs (dict): the dictionary of keyword arguments forwarded to subclasses.
+
+        Returns:
+            Tensor, the result of the function corresponding to name.
         """
         if name == 'forward':
             return self.forward(*args, **kwargs)
