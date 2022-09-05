@@ -21,7 +21,7 @@ from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops.operations import _inner_ops as inner
-from mindspore.ops.operations.array_ops import Fills
+from mindspore.ops.operations.array_ops import Fills, NonZero
 from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
 from mindspore.ops.functional import broadcast_gradient_args
 from mindspore.ops import functional as F
@@ -1243,5 +1243,15 @@ def get_bprop_masked_select(self):
     def bprop(x, mask, out, dout):
         dx = op(x, mask, dout)
         return (dx, zeros_like(mask))
+
+    return bprop
+
+
+@bprop_getters.register(NonZero)
+def get_bprop_non_zero(self):
+    """Generate bprop for NonZero"""
+
+    def bprop(x, out, dout):
+        return (zeros_like(x),)
 
     return bprop

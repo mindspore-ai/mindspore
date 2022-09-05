@@ -20,6 +20,7 @@
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/src/helper.h"
 #include "ops/op_utils.h"
+#include "utils/shape_utils.h"
 #include "utils/check_convert_utils.h"
 #include "utils/tensor_construct_utils.h"
 
@@ -41,18 +42,20 @@ abstract::TupleShapePtr DenseToCSRSparseMatrixInferShape(const PrimitivePtr &pri
   const int64_t kBatchRank = 3;
   const int64_t rank = SizeToLong(dense_input_shape.size());
   const int64_t indices_rank = SizeToLong(indices_shape.size());
-  if (rank != kDefalutRank && rank != kBatchRank) {
-    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the input dense matrix should "
-                             << "have rank 2 or 3, but got " << rank << ".";
-  }
-  if (indices_rank != kIndicesRank) {
-    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', indices should "
-                             << "have rank 2, but got " << indices_rank << ".";
-  }
-  if (rank != indices_shape[kOne]) {
-    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', shape[1] of indices must be equal "
-                             << "to the rank of dense input, but got dense rank: " << rank << ", "
-                             << "indices.shape[1]: " << indices_shape[kOne] << ".";
+  if (!IsDynamicRank(dense_input_shape)) {
+    if (rank != kDefalutRank && rank != kBatchRank) {
+      MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the input dense matrix should "
+                               << "have rank 2 or 3, but got " << rank << ".";
+    }
+    if (indices_rank != kIndicesRank) {
+      MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', indices should "
+                               << "have rank 2, but got " << indices_rank << ".";
+    }
+    if (rank != indices_shape[kOne]) {
+      MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', shape[1] of indices must be equal "
+                               << "to the rank of dense input, but got dense rank: " << rank << ", "
+                               << "indices.shape[1]: " << indices_shape[kOne] << ".";
+    }
   }
   const int64_t batch_size = (rank == kDefalutRank) ? kOne : dense_input_shape[kZero];
   const int64_t num_rows = (rank == kDefalutRank) ? dense_input_shape[kZero] : dense_input_shape[kOne];

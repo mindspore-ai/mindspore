@@ -317,8 +317,25 @@ def get_bprop_coo2csr(self):
     return bprop
 
 
+csr_to_coo = CSRSparseMatrixToSparseTensor()
+
+
+dense_to_csr = DenseToCSRSparseMatrix()
+
+
 @bprops.register(CSRSparseMatrixToDense)
 def bprop_csr_sparse_matrix_to_dense(shape, batch, indptr, indices, values, out, dout):
     """Backpropagator for primitive `CSRSparseMatrixToDense`."""
-    index, _, _ = CSRSparseMatrixToSparseTensor()(shape, batch, indptr, indices, values)
-    return DenseToCSRSparseMatrix()(dout, index)
+    index, _, _ = csr_to_coo(shape, batch, indptr, indices, values)
+    return dense_to_csr(dout, index)
+
+
+csr_to_dense = CSRSparseMatrixToDense()
+
+
+@bprops.register(DenseToCSRSparseMatrix)
+def bprop_dense_to_csr_sparse_matrix(dense_input, indices, out, dout):
+    """Backpropagator for primitive `DenseToCSRSparseMatrix`."""
+    shape, batch_ptr, row_ptr, col_ind = out[:4]
+    dvalue = dout[4]
+    return csr_to_dense(shape, batch_ptr, row_ptr, col_ind, dvalue), zeros_like(indices)

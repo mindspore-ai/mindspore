@@ -22,72 +22,85 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "utils/tensor_construct_utils.h"
+#include "utils/shape_utils.h"
 
 namespace mindspore {
 namespace ops {
 namespace {
 abstract::ShapePtr CSRSparseMatrixToDenseInferShape(const PrimitivePtr &primitive,
                                                     const std::vector<AbstractBasePtr> &input_args) {
+  const int64_t kMinusOne = -1;
+  const int64_t kZero = 0;
+  const int64_t kOne = 1;
+  const int64_t kDefalutRank = 2;
+  const int64_t kBatchRank = 3;
   auto d_shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto b_ptrs_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
   auto r_ptrs_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
   auto c_ind_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
   auto values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->BuildShape())[kShape];
-  const int64_t kZero = 0, kOne = 1, kDefalutRank = 2, kBatchRank = 3;
   const int64_t rank = d_shape_shape[kZero];
-  if (d_shape_shape.size() != kOne || c_ind_shape.size() != kOne || values_shape.size() != kOne ||
-      r_ptrs_shape.size() != kOne || b_ptrs_shape.size() != kOne) {
+  std::vector<uint64_t> tensor_ranks{d_shape_shape.size(), c_ind_shape.size(), values_shape.size(), r_ptrs_shape.size(),
+                                     b_ptrs_shape.size()};
+  if (std::any_of(tensor_ranks.cbegin(), tensor_ranks.cend(), [](const uint64_t i) { return i != kOne; })) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', each input should be 1-D, but got "
                              << "'x_dense_shape' rank " << d_shape_shape.size() << ", 'x_batch_pointers' rank "
                              << b_ptrs_shape.size() << ", 'x_row_pointers' rank " << r_ptrs_shape.size()
                              << ", 'x_col_indices' rank " << c_ind_shape.size() << ", 'x_values' rank "
                              << values_shape.size() << ".";
   }
+  // Dynamic Rank
+  if (rank == kOne) {
+    ShapeVector dense_shape = {-2};
+    return std::make_shared<abstract::Shape>(dense_shape);
+  }
   if (rank != kDefalutRank && rank != kBatchRank) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', dense form of the input "
                              << "should have rank 2 or 3, but got " << d_shape_shape[kZero] << ".";
   }
+  // Dynamic Shape
+  if (input_args[kInputIndex0]->isa<abstract::AbstractTensor>() &&
+      (input_args[kInputIndex0]->BuildValue()->isa<AnyValue>() ||
+       input_args[kInputIndex0]->BuildValue()->isa<None>())) {
+    ShapeVector dense_shape;
+    auto shape_size = d_shape_shape[kZero];
+    dense_shape.resize(shape_size, kMinusOne);
+    return std::make_shared<abstract::Shape>(dense_shape);
+  }
+  // Static Shape
   if (values_shape[kZero] != c_ind_shape[kZero]) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', 'col_indices' and 'values' "
                              << "should have the same length.";
   }
-  if (input_args[kInputIndex0]->isa<abstract::AbstractTensor>() &&
-      !input_args[kInputIndex0]->BuildValue()->isa<AnyValue>() &&
-      !input_args[kInputIndex0]->BuildValue()->isa<None>()) {
-    ShapeVector y_shape;
-    auto d_shape_value = input_args[kInputIndex0]->cast<abstract::AbstractTensorPtr>();
-    MS_EXCEPTION_IF_NULL(d_shape_value);
-    auto d_shape_value_ptr = d_shape_value->BuildValue();
-    MS_EXCEPTION_IF_NULL(d_shape_value_ptr);
-    auto d_shape_value_ptr_tensor =
-      CheckAndConvertUtils::CheckTensorIntValue("x_dense_shape", d_shape_value_ptr, primitive->name());
-    for (int64_t i = kZero; i < rank; i++) {
-      if (static_cast<int64_t>(d_shape_value_ptr_tensor[i]) <= kZero) {
-        MS_EXCEPTION(ValueError) << "For '" << primitive->name()
-                                 << "', each element of 'x_dense_shape' must be greater than 0.";
-      }
-      y_shape.push_back(d_shape_value_ptr_tensor[static_cast<ShapeVector::size_type>(i)]);
+  auto shape_abs_ptr = input_args[kInputIndex0];
+  MS_EXCEPTION_IF_NULL(shape_abs_ptr);
+  ShapeVector y_shape;
+  auto d_shape_value = shape_abs_ptr->cast<abstract::AbstractTensorPtr>();
+  MS_EXCEPTION_IF_NULL(d_shape_value);
+  auto d_shape_value_ptr = d_shape_value->BuildValue();
+  MS_EXCEPTION_IF_NULL(d_shape_value_ptr);
+  auto d_shape_value_ptr_tensor =
+    CheckAndConvertUtils::CheckTensorIntValue("x_dense_shape", d_shape_value_ptr, primitive->name());
+  for (int64_t i = kZero; i < rank; i++) {
+    if (static_cast<int64_t>(d_shape_value_ptr_tensor[i]) <= kZero) {
+      MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+                               << "', each element of 'x_dense_shape' must be greater than 0.";
     }
-    int64_t batch_size = kOne;
-    int64_t row_num = d_shape_value_ptr_tensor[kZero];
-    if (rank == kBatchRank) {
-      batch_size = d_shape_value_ptr_tensor[kZero], row_num = d_shape_value_ptr_tensor[kOne];
-    }
-    if (b_ptrs_shape[kZero] != (batch_size + kOne) || r_ptrs_shape[kZero] != batch_size * (row_num + kOne)) {
-      MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', batch size of the input is " << batch_size
-                               << ", row numbers of the input is " << row_num << ", so shape of 'x_batch_pointers' "
-                               << "should be (" << batch_size + kOne << "), but got (" << b_ptrs_shape[kZero] << ")"
-                               << ", shape of 'x_row_pointers' should be (" << batch_size * (row_num + kOne) << "), "
-                               << "but got (" << r_ptrs_shape[kZero] << ").";
-    }
-    return std::make_shared<abstract::Shape>(y_shape);
-  } else {
-    ShapeVector dense_shape = {-2};
-    ShapeVector infer_shape_min;
-    ShapeVector infer_shape_max;
-    infer_shape_min = infer_shape_max = {1};
-    return std::make_shared<abstract::Shape>(dense_shape, infer_shape_min, infer_shape_max);
+    y_shape.push_back(d_shape_value_ptr_tensor[static_cast<ShapeVector::size_type>(i)]);
   }
+  int64_t batch_size = kOne;
+  int64_t row_num = d_shape_value_ptr_tensor[kZero];
+  if (rank == kBatchRank) {
+    batch_size = d_shape_value_ptr_tensor[kZero], row_num = d_shape_value_ptr_tensor[kOne];
+  }
+  if (b_ptrs_shape[kZero] != (batch_size + kOne) || r_ptrs_shape[kZero] != batch_size * (row_num + kOne)) {
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', batch size of the input is " << batch_size
+                             << ", row numbers of the input is " << row_num << ", so shape of 'x_batch_pointers' "
+                             << "should be (" << batch_size + kOne << "), but got (" << b_ptrs_shape[kZero] << ")"
+                             << ", shape of 'x_row_pointers' should be (" << batch_size * (row_num + kOne) << "), "
+                             << "but got (" << r_ptrs_shape[kZero] << ").";
+  }
+  return std::make_shared<abstract::Shape>(y_shape);
 }
 
 TypePtr CSRSparseMatrixToDenseInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
