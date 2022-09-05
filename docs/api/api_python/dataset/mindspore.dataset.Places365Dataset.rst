@@ -116,4 +116,6 @@ mindspore.dataset.Places365Dataset
 
     .. include:: mindspore.dataset.Dataset.g.rst
 
+    .. include:: mindspore.dataset.Dataset.use_sampler.rst
+
     .. include:: mindspore.dataset.Dataset.zip.rst
