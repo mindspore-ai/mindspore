@@ -47,9 +47,6 @@ class MIND_API CropAndResize : public BaseOperator {
   /// \return extrapolation_value.
   float get_extrapolation_value() const;
 };
-
-abstract::AbstractBasePtr CropAndResizeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                             const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

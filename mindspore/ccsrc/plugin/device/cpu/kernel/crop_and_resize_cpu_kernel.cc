@@ -16,24 +16,49 @@
 
 #include "plugin/device/cpu/kernel/crop_and_resize_cpu_kernel.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "mindspore/core/ops/crop_and_resize.h"
 
 namespace mindspore {
 namespace kernel {
-void CropAndResizeCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  if (input_num != INPUT_NUM) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', input number must be 4, but got " << input_num;
-  }
+bool CropAndResizeCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                     const std::vector<KernelTensorPtr> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), INPUT_NUM, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), OUTPUT_NUM, kernel_name_);
+  kernel_name_ = base_operator->GetPrim()->name();
 
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-  if (output_num != OUTPUT_NUM) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', output number must be 1, but got " << output_num;
-  }
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::CropAndResize>(base_operator);
+  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
 
+  // suppose use kernel_ptr->get_method(), but the definition in lite is enumeration, not std::string. So we use this
+  // for the moment to support dynamic shape.
+  std::string method = GetValue<std::string>(kernel_ptr->GetAttr("method"));
+  if (method == "bilinear") {
+    method_ = BILINEAR;
+  } else if (method == "nearest") {
+    method_ = NEAREST;
+  } else {  //  bilinear-v2
+    method_ = BILINEAR_V2;
+  }
+  extrapolation_value_ = kernel_ptr->get_extrapolation_value();
+
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
+  }
+  kernel_func_ = func_list_[index].second;
+  return true;
+}
+
+int CropAndResizeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                      const std::vector<KernelTensorPtr> &outputs,
+                                      const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+    return ret;
+  }
   //  input image
-  auto input_image_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, IMAGE);
+  auto input_image_shape = inputs[IMAGE]->GetShapeVector();
   size_t input_image_shape_len = input_image_shape.size();
   if (input_image_shape_len != IMAGE_DIM) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'image' must be " << IMAGE_DIM << "-D, but got "
@@ -44,7 +69,7 @@ void CropAndResizeCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   input_width_ = LongToInt(input_image_shape[IMAGE_WEIGHT]);
 
   //  input boxes
-  auto input_boxes_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, BOXES);
+  auto input_boxes_shape = inputs[BOXES]->GetShapeVector();
   size_t input_boxes_shape_len = input_boxes_shape.size();
   if (input_boxes_shape_len != BOX_RANK) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'boxes' must be " << BOX_RANK << ", but got "
@@ -52,7 +77,7 @@ void CropAndResizeCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   }
 
   //  input box_index
-  auto input_box_index_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, BOX_INDEX);
+  auto input_box_index_shape = inputs[BOX_INDEX]->GetShapeVector();
   size_t input_box_index_shape_len = input_box_index_shape.size();
   if (input_box_index_shape_len != 1) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'box_index' must be 1, but got "
@@ -60,7 +85,7 @@ void CropAndResizeCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   }
 
   //  input crop_size
-  auto input_crop_size_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, CROP_SIZE);
+  auto input_crop_size_shape = inputs[CROP_SIZE]->GetShapeVector();
   size_t input_crop_size_shape_len = input_crop_size_shape.size();
   if (input_crop_size_shape_len != 1) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'crop_size' must be 1, but got "
@@ -75,7 +100,7 @@ void CropAndResizeCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   constexpr size_t HEIGHT = 1;
   constexpr size_t WEIGHT = 2;
   constexpr size_t CHANNEL = 3;
-  auto output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
+  auto output_shape = outputs[kIndex0]->GetShapeVector();
   auto output_shape_len = output_shape.size();
   output_size_ = 1;
   for (size_t i = 0; i < output_shape_len; i++) {
@@ -87,18 +112,7 @@ void CropAndResizeCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   final_width_ = LongToInt(output_shape[WEIGHT]);
   channel_ = LongToInt(output_shape[CHANNEL]);
 
-  //  get op parameters
-  string method = common::AnfAlgo::GetNodeAttr<string>(kernel_node, "method");
-  if (method == "bilinear") {
-    method_ = BILINEAR;
-  } else if (method == "nearest") {
-    method_ = NEAREST;
-  } else {  //  bilinear-v2
-    method_ = BILINEAR_V2;
-  }
-  extrapolation_value_ = common::AnfAlgo::GetNodeAttr<float>(kernel_node, "extrapolation_value");
-
-  InitFunc(kernel_node);
+  return KRET_OK;
 }
 
 template <typename T>
