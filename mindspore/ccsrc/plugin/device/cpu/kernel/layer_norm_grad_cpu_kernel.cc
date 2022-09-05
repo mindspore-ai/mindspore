@@ -15,28 +15,56 @@
  */
 
 #include "plugin/device/cpu/kernel/layer_norm_grad_cpu_kernel.h"
+#include <algorithm>
 #include "kernel/common_utils.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "include/common/thread_pool.h"
+#include "mindspore/core/ops/grad/layer_norm_grad.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
 constexpr size_t kLayerNormGradInputsNum = 5;
 constexpr size_t kLayerNormGradOutputsNum = 3;
+constexpr size_t kLayerNormGradInputXIndex = 0;
+constexpr size_t kLayerNormGradInputDyIndex = 1;
+constexpr size_t kLayerNormGradInputVarIndex = 2;
+constexpr size_t kLayerNormGradInputMeanIndex = 3;
+constexpr size_t kLayerNormGradInputGammaIndex = 4;
+constexpr size_t kLayerNormGradOutputDxIndex = 0;
+constexpr size_t kLayerNormGradOutputDgIndex = 1;
+constexpr size_t kLayerNormGradOutputDbIndex = 2;
 }  // namespace
 
-void LayerNormGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  auto shape_signed = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  if (IsDynamic(shape_signed)) {
-    return;
+bool LayerNormGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                     const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "' does not support this kernel type: " << kernel_attr;
+    return false;
   }
-  auto x_shape = Convert2SizeTClipNeg(shape_signed);
-  auto begin_norm_axis = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "begin_norm_axis");
-  auto begin_params_axis = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "begin_params_axis");
+  kernel_func_ = func_list_[index].second;
+  return true;
+}
+
+int LayerNormGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                      const std::vector<KernelTensorPtr> &outputs,
+                                      const std::map<uint32_t, tensor::TensorPtr> &) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::LayerNormGrad>(base_operator);
+  if (kernel_ptr == nullptr) {
+    MS_LOG(EXCEPTION) << "Cast ops::LayerNormGrad failed!";
+  }
+  if (inputs.empty()) {
+    MS_LOG(EXCEPTION) << "Invalid input size!";
+  }
+
+  auto x_shape = inputs[kLayerNormGradInputXIndex]->GetShapeVector();
+  auto begin_norm_axis = kernel_ptr->get_begin_norm_axis();
+  auto begin_params_axis = kernel_ptr->get_begin_params_axis();
   if (begin_norm_axis < 0) {
     begin_norm_axis += SizeToLong(x_shape.size());
   }
@@ -59,6 +87,11 @@ void LayerNormGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'input_x' must be at least 1, but got "
                       << Vector2Str(x_shape);
   }
+  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != 0) {
+    return ret;
+  }
+  return ret;
 }
 
 bool LayerNormGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
@@ -66,28 +99,21 @@ bool LayerNormGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &in
                                        const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kLayerNormGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kLayerNormGradOutputsNum, kernel_name_);
-  if (dtype_ == kNumberTypeFloat16) {
-    LaunchKernel<float16>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeFloat32 || dtype_ == kNumberTypeFloat64) {
-    LaunchKernel<float>(inputs, outputs);
-  } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dtype of 'input_x' must be float16, float32, or float64, but got " << dtype_;
-  }
+  kernel_func_(this, inputs, outputs);
   return true;
 }
 
 template <typename T>
 void LayerNormGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                              const std::vector<AddressPtr> &outputs) {
-  auto *x = reinterpret_cast<T *>(inputs[0]->addr);
-  auto *dy = reinterpret_cast<T *>(inputs[1]->addr);
-  auto *var = reinterpret_cast<T *>(inputs[2]->addr);
-  auto *mean = reinterpret_cast<T *>(inputs[3]->addr);
-  auto *gamma = reinterpret_cast<T *>(inputs[4]->addr);
-  auto *dx = reinterpret_cast<T *>(outputs[0]->addr);
-  auto *dg = reinterpret_cast<T *>(outputs[1]->addr);
-  auto *db = reinterpret_cast<T *>(outputs[2]->addr);
+  auto *x = reinterpret_cast<T *>(inputs[kLayerNormGradInputXIndex]->addr);
+  auto *dy = reinterpret_cast<T *>(inputs[kLayerNormGradInputDyIndex]->addr);
+  auto *var = reinterpret_cast<T *>(inputs[kLayerNormGradInputVarIndex]->addr);
+  auto *mean = reinterpret_cast<T *>(inputs[kLayerNormGradInputMeanIndex]->addr);
+  auto *gamma = reinterpret_cast<T *>(inputs[kLayerNormGradInputGammaIndex]->addr);
+  auto *dx = reinterpret_cast<T *>(outputs[kLayerNormGradOutputDxIndex]->addr);
+  auto *dg = reinterpret_cast<T *>(outputs[kLayerNormGradOutputDgIndex]->addr);
+  auto *db = reinterpret_cast<T *>(outputs[kLayerNormGradOutputDbIndex]->addr);
   size_t thread_num = common::ThreadPool::GetInstance().GetSyncRunThreadNum();
   auto thread_num1 = param_num_ < thread_num ? param_num_ : thread_num;
   std::vector<common::Task> tasks1;
@@ -159,6 +185,34 @@ void LayerNormGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
   ParallelLaunch(tasks2);
 }
 
+std::vector<std::pair<KernelAttr, LayerNormGradCpuKernelMod::KernelFunc>> LayerNormGradCpuKernelMod::func_list_ = {
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddOutputAttr(kNumberTypeFloat16)
+     .AddOutputAttr(kNumberTypeFloat16)
+     .AddOutputAttr(kNumberTypeFloat16),
+   &LayerNormGradCpuKernelMod::LaunchKernel<float16>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddOutputAttr(kNumberTypeFloat32)
+     .AddOutputAttr(kNumberTypeFloat32)
+     .AddOutputAttr(kNumberTypeFloat32),
+   &LayerNormGradCpuKernelMod::LaunchKernel<float>}};
+
+std::vector<KernelAttr> LayerNormGradCpuKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, KernelFunc> &pair) { return pair.first; });
+  return support_list;
+}
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, LayerNormGrad, LayerNormGradCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

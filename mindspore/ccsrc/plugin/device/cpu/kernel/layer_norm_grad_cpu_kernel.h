@@ -14,32 +14,39 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_LAYER_NORM_GRAD_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_LAYER_NORM_GRAD_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_LAYER_NORM_GRAD_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_LAYER_NORM_GRAD_CPU_KERNEL_H_
 
 #include <memory>
-#include <unordered_map>
 #include <vector>
+#include <map>
+#include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-class LayerNormGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class LayerNormGradCpuKernelMod : public NativeCpuKernelMod {
  public:
   LayerNormGradCpuKernelMod() = default;
   ~LayerNormGradCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
-
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   template <typename T>
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  using KernelFunc =
+    std::function<void(LayerNormGradCpuKernelMod *, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &)>;
+  KernelFunc kernel_func_{};
+  static std::vector<std::pair<KernelAttr, KernelFunc>> func_list_;
 
-  TypeId dtype_{kTypeUnknown};
   float eps_{1e-12};
   size_t block_num_{1};
   size_t block_size_{1};
@@ -48,4 +55,4 @@ class LayerNormGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
 };
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_LAYER_NORM_GRAD_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_LAYER_NORM_GRAD_CPU_KERNEL_H_
