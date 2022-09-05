@@ -30,6 +30,8 @@ NodePtr GetActivationExpander(const inner::GraphBuilder &gb, const NodePtrList &
       return ReluExpand(gb, inputs);
     case ActivationType::SIGMOID:
       return SigmoidExpand(gb, inputs);
+    case ActivationType::GELU:
+      return GeluExpand(gb, inputs);
     case ActivationType::SWISH:
       return gb.Mul(inputs[0], SigmoidExpand(gb, inputs));
     default:
@@ -43,7 +45,7 @@ class Activation : public OpDesc {
     std::initializer_list<std::string> attrs{"activation_type"};
     (void)validators_.emplace_back(std::make_unique<CheckAttr>(attrs));
     std::set<int64_t> activation_types = {ActivationType::NO_ACTIVATION, ActivationType::RELU, ActivationType::SIGMOID,
-                                          ActivationType::SWISH};
+                                          ActivationType::GELU, ActivationType::SWISH};
     (void)validators_.emplace_back(std::make_unique<CheckActivationType>(activation_types));
   }
   ~Activation() = default;
