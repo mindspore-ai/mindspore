@@ -18,6 +18,8 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARRAYS_GATHERV2_GPU_KERNEL_H_
 
 #include <vector>
+#include <map>
+#include <utility>
 #include <algorithm>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
@@ -27,81 +29,27 @@
 
 namespace mindspore {
 namespace kernel {
-template <typename T, typename S, typename G>
-class GatherV2FwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class GatherV2FwdGpuKernelMod : public NativeGpuKernelMod {
  public:
   GatherV2FwdGpuKernelMod() { ResetResource(); }
   ~GatherV2FwdGpuKernelMod() = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    if (is_null_input_) {
-      return true;
-    }
-    VARIABLE_NOT_USED(workspace);
-    T *input_addr = GetDeviceAddress<T>(inputs, 0);
-    S *indices_addr = GetDeviceAddress<S>(inputs, 1);
-    T *output_addr = GetDeviceAddress<T>(outputs, 0);
-    if (is_dynamic_shape_) {
-      G *axis_device_address = GetDeviceAddress<G>(inputs, 2);  // only get this if in dynamic mode
-      CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                                 cudaMemcpyAsync(&axis_, axis_device_address, sizeof(G), cudaMemcpyDeviceToHost,
-                                                 reinterpret_cast<cudaStream_t>(stream_ptr)),
-                                 "cudaMemcpyAsync axis_ failed");
-      CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaDeviceSynchronize(),
-                                 "cudaDeviceSyncFailed - GatherV2 - in dynamic mode");
-      Reshape();
-    }
-    auto input_dim1 = input_shapes_[axis_];
+    return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
+  }
 
-    MS_EXCEPTION_IF_NULL(input_addr);
-    MS_EXCEPTION_IF_NULL(indices_addr);
-    GatherV2(input_addr, indices_addr, output_addr, dims_[0], dims_[1], dims_[2], LongToSize(input_dim1),
-             reinterpret_cast<cudaStream_t>(stream_ptr));
-    return true;
-  }
-  bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    kernel_node_ = kernel_node;
-    InitResource();
-    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    if (input_num == 3) {
-      is_dynamic_shape_ = true;
-      MS_LOG(INFO) << " GatherGpuV2FwdKernel running in Dynamic Mode.";
-    } else if (input_num == 2) {
-      MS_LOG(INFO) << " GatherGpuV2FwdKernel running in Normal Mode.";
-    } else {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs must be 2 or 3, but got " << input_num;
-    }
-    input_shapes_ = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
-    indices_shapes_ = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 1);
-    output_shapes_ = AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, 0);
-    is_null_input_ = CHECK_SHAPE_NULL(input_shapes_, kernel_name, "input") ||
-                     CHECK_SHAPE_NULL(indices_shapes_, kernel_name, "indices") ||
-                     CHECK_SHAPE_NULL(output_shapes_, kernel_name, "output");
-    if (is_null_input_) {
-      InitSizeLists();
-      return true;
-    }
-    if (!is_dynamic_shape_) {
-      int dims = SizeToInt(input_shapes_.size());
-      axis_ = static_cast<G>(GetAttr<int64_t>(kernel_node, "axis"));
-      if (axis_ < -dims || axis_ >= dims) {
-        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'axis' must be in the range [-" << dims << "," << dims
-                          << "), but got " << axis_;
-      }
-      Reshape();
-    }
-    InitSizeLists();
-    return true;
-  }
-  void ResetResource() noexcept override {
-    is_dynamic_shape_ = false;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+
+  void ResetResource() noexcept {
     input_shapes_.clear();
     indices_shapes_.clear();
     output_shapes_.clear();
     std::fill(dims_, dims_ + 3, 0);
-    axis_ = 0;
     is_null_input_ = false;
     input_size_list_.clear();
     output_size_list_.clear();
@@ -109,19 +57,23 @@ class GatherV2FwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   }
 
  protected:
-  void InitSizeLists() override {
-    size_t size = common::AnfAlgo::TensorSizeInByte<T>(input_shapes_);
-    input_size_list_.push_back(size);
-    size = common::AnfAlgo::TensorSizeInByte<T>(indices_shapes_);
-    input_size_list_.push_back(size);
+  std::vector<KernelAttr> GetOpSupport() override;
+  void InitSizeLists() {
+    auto input_size = std::accumulate(input_shapes_.begin(), input_shapes_.end(), 1, std::multiplies{});
+    auto indices_size = std::accumulate(indices_shapes_.begin(), indices_shapes_.end(), 1, std::multiplies{});
+    input_size_list_.push_back(LongToSize(input_size) * input_type_size_);
+    input_size_list_.push_back(LongToSize(indices_size) * indices_type_size_);
     if (is_dynamic_shape_) {
-      input_size_list_.push_back(sizeof(G));
+      input_size_list_.push_back(axis_type_size_);
     }
-    size = common::AnfAlgo::TensorSizeInByte<T>(output_shapes_);
-    output_size_list_.push_back(size);
+    auto output_size = std::accumulate(output_shapes_.begin(), output_shapes_.end(), 1, std::multiplies{});
+    output_size_list_.push_back(LongToSize(output_size) * input_type_size_);
   }
 
- private:
+  template <typename T, typename S, typename G>
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
+
   void Reshape() {
     if (axis_ < 0) {
       axis_ = axis_ + SizeToInt(input_shapes_.size());
@@ -138,19 +90,29 @@ class GatherV2FwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     for (size_t i = IntToSize(axis_) + indices_shapes_.size(); i < output_shapes_.size(); i++) {
       dim_after_indices *= output_shapes_[i];
     }
-    dims_[0] = dim_before_axis;
-    dims_[1] = dim_of_indices;
-    dims_[2] = dim_after_indices;
+    dims_[kIndex0] = dim_before_axis;
+    dims_[kIndex1] = dim_of_indices;
+    dims_[kIndex2] = dim_after_indices;
     return;
   }
-
+  cudaStream_t cuda_stream_;
   std::vector<int64_t> input_shapes_;
   std::vector<int64_t> indices_shapes_;
   std::vector<int64_t> output_shapes_;
-  int64_t dims_[3] = {};
-  G axis_;
-  bool is_dynamic_shape_;
-  bool is_null_input_;
+  int64_t dims_[kIndex3] = {};
+  int axis_ = 0;
+  bool is_dynamic_shape_ = false;
+  bool is_null_input_ = false;
+  size_t input_type_size_ = 0;
+  size_t indices_type_size_ = 0;
+  size_t axis_type_size_ = 0;
+
+ private:
+  using GatherV2Func = std::function<bool(GatherV2FwdGpuKernelMod *, const std::vector<AddressPtr> &,
+                                          const std::vector<AddressPtr> &, const std::vector<AddressPtr> &, void *)>;
+  static std::vector<std::pair<KernelAttr, GatherV2Func>> func_list_;
+  // static std::vector<std::pair<KernelAttr, GatherV2Func>> sparse_gather_func_list_;
+  GatherV2Func kernel_func_;
 };
 }  // namespace kernel
 }  // namespace mindspore
