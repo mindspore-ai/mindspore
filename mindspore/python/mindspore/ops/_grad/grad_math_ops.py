@@ -25,6 +25,7 @@ from ..operations import _grad_ops as G
 from ..composite.multitype_ops.zeros_like_impl import zeros_like
 from ..functional import broadcast_gradient_args, reduced_shape, tuple_div
 from .grad_base import bprop_getters
+from .grad_base import convert_to_tensor
 from ..primitive import constexpr
 from ..composite.multitype_ops import _constexpr_utils as const_utils
 from ..operations._inner_ops import DynamicStitch, DynamicBroadcastGradientArgs, DynamicBroadcastTo
@@ -165,7 +166,7 @@ def _dyn_reduced_shape(input_shape, axis):
     if isinstance(axis, Tensor):
         if is_shape_unknown(shape_op(axis)):
             expanded_axis = P.ExpandDims()(axis, 1)
-            update = P.OnesLike()(axis)
+            update = P.Cast()(P.OnesLike()(axis), ms.int32)
             return P.TensorScatterUpdate()(input_shape, expanded_axis, update)
         input_rank = P.Rank()(input_shape)
         real_axis = (axis + input_rank) % input_rank
@@ -187,7 +188,8 @@ def _dyn_reduced_shape(input_shape, axis):
 def _sum_grad(x, axis, dout):
     """Grad definition for `Sum` operation."""
     input_shape = shape_op(x)
-    if is_shape_unknown(input_shape):
+    is_mutable, axis = convert_to_tensor(axis)
+    if is_shape_unknown(input_shape) or is_mutable:
         input_shape = dyn_shape_op(x)
         output_shape_kept_dims = _dyn_reduced_shape(input_shape, axis)
         grad = reshape(dout, output_shape_kept_dims)

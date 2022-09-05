@@ -17,6 +17,12 @@
 
 from .._register_for_op import Registry
 from ..primitive import Primitive
+from ...common import Tensor
+from .. import operations as P
+from ...common import dtype as mstype
+
+dyn_shape = P.TensorShape()
+cast = P.Cast()
 
 
 class BpropRegistry(Registry):
@@ -75,3 +81,25 @@ def get_taylor_fprop_fn(prim):
     if out:
         return out(prim)
     return taylor_fprops.get(prim, None)
+
+
+def convert_to_tensor(data):
+    """convert mutable data to tensor"""
+    if isinstance(data, Tensor):
+        return True, data
+
+    return False, data
+
+
+def dyn_rank(tensor):
+    """get the rank of tensor"""
+    return dyn_shape(dyn_shape(tensor))[0]
+
+
+def dyn_size(tensor):
+    """get the size of tensor"""
+    shape = dyn_shape(tensor)
+    shape = cast(shape, mstype.float32)
+    size = P.ReduceProd()(shape)
+    size = cast(size, mstype.int32)
+    return size
