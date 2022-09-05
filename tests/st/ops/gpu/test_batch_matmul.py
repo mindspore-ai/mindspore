@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ from mindspore import Tensor
 from mindspore.common import dtype as mstype
 from mindspore.ops import operations as P
 from mindspore.ops.operations import _inner_ops as inner
+from mindspore.ops import functional as F
 
 
 class BatchMatMulNet(nn.Cell):
@@ -31,6 +32,7 @@ class BatchMatMulNet(nn.Cell):
 
     def construct(self, x, y):
         return self.batch_matmul(x, y)
+
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
@@ -153,7 +155,12 @@ def test_4d_transpose_ab():
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_4D_fp16():
+def test_4d_fp_16():
+    """
+    Feature: test BatchMatMul op.
+    Description: test BatchMatMul 4d input dtype float16.
+    Expectation: the result match with expected result.
+    """
     input_x = Tensor(np.arange(2 * 4 * 1 * 3).reshape(2, 4, 1, 3), mstype.float16)
     input_y = Tensor(np.arange(2 * 4 * 3 * 4).reshape(2, 4, 3, 4), mstype.float16)
 
@@ -172,9 +179,9 @@ def test_4D_fp16():
     assert (output.asnumpy() == expect).all()
 
 
-class BatchMatMul_d(nn.Cell):
+class BatchMatMulDynamic(nn.Cell):
     def __init__(self, transpose_a=False, transpose_b=False):
-        super(BatchMatMul_d, self).__init__()
+        super(BatchMatMulDynamic, self).__init__()
         self.batch_matmul = P.BatchMatMul(transpose_a, transpose_b)
         self.test_dynamic = inner.GpuConvertToDynamicShape()
 
@@ -190,7 +197,7 @@ class BatchMatMul_d(nn.Cell):
 def test_batchmatmul_dynamic():
 
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    net = BatchMatMul_d()
+    net = BatchMatMulDynamic()
 
     x1 = np.arange(8).reshape(2, 2, 2).astype(np.float32)
     y1 = np.arange(28).reshape(2, 2, 7).astype(np.float32)
@@ -205,3 +212,59 @@ def test_batchmatmul_dynamic():
     output2 = net(Tensor(x2), Tensor(y2))
     expect2 = np.matmul(x2, y2)
     assert (output2.asnumpy() == expect2).all()
+
+
+def test_bmm_forward_tensor_api(nptype):
+    """
+    Feature: test bmm forward tensor api for given input dtype.
+    Description: test inputs for given input dtype.
+    Expectation: the result match with expected result.
+    """
+    x = Tensor(np.ones(shape=[2, 4, 1, 3]).astype(nptype))
+    y = Tensor(np.ones(shape=[2, 4, 3, 4]).astype(nptype))
+    output = x.bmm(y)
+    expected = 3 * np.ones(shape=[2, 4, 1, 4]).astype(nptype)
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_bmm_forward_float32_tensor_api():
+    """
+    Feature: test bmm forward tensor api.
+    Description: test float32 inputs.
+    Expectation: the result match with expected result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    test_bmm_forward_tensor_api(np.float32)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    test_bmm_forward_tensor_api(np.float32)
+
+
+def test_bmm_forward_functional_api(nptype):
+    """
+    Feature: test bmm forward functional api for given input dtype.
+    Description: test inputs for given input dtype.
+    Expectation: the result match with expected result.
+    """
+    x = Tensor(np.ones(shape=[2, 4, 1, 3]).astype(nptype))
+    y = Tensor(np.ones(shape=[2, 4, 3, 4]).astype(nptype))
+    output = F.bmm(x, y)
+    expected = 3 * np.ones(shape=[2, 4, 1, 4]).astype(nptype)
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_bmm_forward_float32_functional_api():
+    """
+    Feature: test bmm forward functional api.
+    Description: test float32 inputs.
+    Expectation: the result match with expected result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    test_bmm_forward_functional_api(np.float32)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    test_bmm_forward_functional_api(np.float32)

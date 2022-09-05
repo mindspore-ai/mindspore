@@ -695,25 +695,25 @@ class Tensor(Tensor_):
         r"""
         Executes the outer-product of `vec1` and `vec2` and adds it to the input tensor.
 
-        If `vec1` is a vector of size :vec1:`N` and `vec2` is a vector of size :vec1:`M`, then `x` must be
-        broadcastable with a vec1rix of size :vec1:`(N, M)` and `out` will be a vec1rix of size :vec1:`(N, M)`.
+        If `vec1` is a vector of size `N` and `vec2` is a vector of size `M`, then `x` must be
+        broadcastable with a matrix of size `(N, M)` and `out` will be a matrix of size `(N, M)`.
 
         The optional values `beta` and `alpha` are the scale factors on the outer product between `vec1` and `vec2`
-        and the added vec1rix `x` respectively. If `beta` is 0, then `x` will be ignored.
+        and the added matrix `x` respectively. If `beta` is 0, then `x` will be ignored.
 
         .. math::
             output = β x + α (vec1 ⊗ vec2)
 
         Args:
-            vec1 (Tensor): The first tensor to be multiplied. The shape of the tensor is :vec1:`(N,)`.
-            vec2 (Tensor): The second tensor to be multiplied. The shape of the tensor is :vec1:`(M,)`.
+            vec1 (Tensor): The first tensor to be multiplied. The shape of the tensor is `(N,)`.
+            vec2 (Tensor): The second tensor to be multiplied. The shape of the tensor is `(M,)`.
             beta (scalar[int, float, bool], optional): Multiplier for `x` (β). The `beta` must be int or
                 float or bool, Default: 1.
             alpha (scalar[int, float, bool], optional): Multiplier for `vec1` @ `vec2` (α). The `alpha` must
                 be int or float or bool, Default: 1.
 
         Outputs:
-            Tensor, the shape of the output tensor is :vec1:`(N, M)`, has the same dtype as `x`.
+            Tensor, the shape of the output tensor is `(N, M)`, has the same dtype as `x`.
 
         Raises:
             TypeError: If `x`, `vec1`, `vec2` is not a Tensor.
@@ -5345,6 +5345,169 @@ class Tensor(Tensor_):
         self._init_check()
         validator.check_axis_in_range(axis, self.ndim)
         return tensor_operator_registry.get('median')(global_median, axis, keep_dims)(self)
+
+    def addmv(self, mat, vec, beta=1, alpha=1):
+        r"""
+        Multiplies matrix `mat` and vector `vec`. Input vector is added to the final result.
+
+        If mat is a :math:`(N, M)` tensor, vec is a 1-D tensor of size :math:`M`, then `x` must be broadcastable
+        with a 1-D tensor of size :math:`N` and `out` will be 1-D tensor of size :math:`N`.
+
+        The optional values `beta` and `alpha` are the matrix-vector product between `mat` and `vec` and the scale
+        factor for the added tensor `x` respectively. If `beta` is 0, then `x` will be ignored.
+
+        .. math::
+            output = β x + α (mat @ vec)
+
+        Args:
+            mat (Tensor): The first tensor to be multiplied. The shape of the tensor is :math:`(N, M)`.
+            vec (Tensor): The second tensor to be multiplied. The shape of the tensor is :math:`(M,)`.
+            beta (scalar[int, float, bool], optional): Multiplier for `x` (β). The `beta` must be int or
+                float or bool, Default: 1.
+            alpha (scalar[int, float, bool], optional): Multiplier for `mat` @ `vec` (α). The `alpha` must
+                be int or float or bool, Default: 1.
+
+        Returns:
+            Tensor, the shape of the output tensor is :math:`(N,)`, has the same dtype as `x`.
+
+        Raises:
+            TypeError: If `mat`, `vec`, `x` is not a Tensor.
+            TypeError: If input tensor and `x`, `mat`, 'vec' are not the same dtype.
+            ValueError: If `mat` is not a 2-D Tensor.
+                If `x`, `vec` is not a 1-D Tensor.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> x = Tensor(np.array([2., 3.]).astype(np.float32))
+            >>> mat = Tensor(np.array([[2., 5., 3.], [4., 2., 2.]]).astype(np.float32))
+            >>> vec = Tensor(np.array([3., 2., 4.]).astype(np.float32))
+            >>> output = x.addmv(mat, vec)
+            >>> print(output)
+            [30. 27.]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('addmv')(self, mat, vec, beta=1, alpha=1)
+
+    def asinh(self):
+        r"""
+        Computes inverse hyperbolic sine of the input element-wise.
+
+        .. math::
+            out_i = \sinh^{-1}(input_i)
+
+        Returns:
+            Tensor, has the same shape and type as input.
+
+        Raises:
+            TypeError: If input is not a Tensor.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> x = Tensor(np.array([-5.0, 1.5, 3.0, 100.0]), mindspore.float32)
+            >>> output = x.asinh()
+            >>> print(output)
+            [-2.3124382  1.1947632  1.8184465  5.298342 ]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('asinh')(self)
+
+    def atan(self):
+        r"""
+        Computes the trigonometric inverse tangent of the input element-wise.
+
+        .. math::
+            out_i = tan^{-1}(x_i)
+
+        Returns:
+            A Tensor, has the same type as the input.
+
+        Raises:
+            TypeError: If input is not a Tensor.
+            TypeError: If input tensor dtype is not float16 or float32.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> x = Tensor(np.array([1.0, 0.0]), mindspore.float32)
+            >>> output = x.atan()
+            >>> print(output)
+            [0.7853982 0.0]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('atan')(self)
+
+    def atanh(self):
+        r"""
+        Computes inverse hyperbolic tangent of the input element-wise.
+
+        .. math::
+            out_i = \tanh^{-1}(x_{i})
+
+        .. warning::
+            This is an experimental prototype that is subject to change and/or deletion.
+
+        Returns:
+            A Tensor, has the same type as the input.
+
+        Raises:
+            TypeError: If input is not a Tensor.
+            TypeError: If input tensor dtype is not float16 or float32.
+
+        Supported Platforms:
+            ``Ascend`` ``CPU``
+
+        Examples:
+            >>> x = Tensor(np.array([0, -0.5]), mindspore.float32)
+            >>> output = ops.atanh(x)
+            >>> print(output)
+            [ 0. -0.54930615]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('atanh')(self)
+
+    def bmm(self, mat2):
+        r"""
+        Computes matrix multiplication between two tensors by batch.
+
+        .. math::
+        \text{output}[..., :, :] = \text{matrix}(input_x[..., :, :]) * \text{matrix}(mat2[..., :, :])
+
+        The first input tensor must be not less than `3` and the second input must be not less than `2`.
+
+        Args:
+            mat2 (Tensor) - The tensor to be multiplied. The shape of the tensor is :math:`(*B, C, M)`.
+
+        Outputs:
+            Tensor, the shape of the output tensor is :math:`(*B, N, M)`.
+
+        Raises:
+            ValueError: If length of shape of `input_x` is not equal to length of shape of `mat2` or
+                        length of shape of `input_x` is less than 3.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> input_x = Tensor(np.ones(shape=[2, 4, 1, 3]), mindspore.float32)
+            >>> mat2 = Tensor(np.ones(shape=[2, 4, 3, 4]), mindspore.float32)
+            >>> output = input_x.bmm(mat2)
+            >>> print(output)
+            [[[[3. 3. 3. 3.]]
+              [[3. 3. 3. 3.]]
+              [[3. 3. 3. 3.]]
+              [[3. 3. 3. 3.]]]
+             [[[3. 3. 3. 3.]]
+              [[3. 3. 3. 3.]]
+              [[3. 3. 3. 3.]]
+              [[3. 3. 3. 3.]]]]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('bmm')(self, mat2)
 
 
 class RowTensor(RowTensor_):

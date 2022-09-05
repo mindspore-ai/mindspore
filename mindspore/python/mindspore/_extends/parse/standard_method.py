@@ -3076,3 +3076,38 @@ def addr(x, vec1, vec2, beta=1, alpha=1):
     Computes the outer-product of `vec1` and `vec2` and adds it to the vec1rix `x`.
     """
     return F.addr(x, vec1, vec2, beta=1, alpha=1)
+
+
+def addmv(x, mat, vec, beta=1, alpha=1):
+    r"""
+    Multiplies matrix `mat` and vector `vec`. The vector `x` is added to the final result.
+    """
+    return F.addmv(x, mat, vec, beta, alpha)
+
+
+def asinh(x):
+    r"""
+    Computes inverse hyperbolic sine of the input element-wise.
+    """
+    return F.asinh(x)
+
+
+def atan(x):
+    r"""
+    Computes inverse tangent of the input element-wise.
+    """
+    return F.atan(x)
+
+
+def atanh(x):
+    r"""
+    Computes inverse hyperbolic tangent of the input element-wise.
+    """
+    return F.atanh(x)
+
+
+def bmm(input_x, mat2):
+    r"""
+    Computes  matrix multiplication between two tensors by batch.
+    """
+    return F.bmm(input_x, mat2)

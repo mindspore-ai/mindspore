@@ -266,7 +266,8 @@ from .math_func import (
     kron,
     rot90,
     remainder,
-    iou
+    iou,
+    bmm
 )
 from .nn_func import (
     adaptive_avg_pool1d,

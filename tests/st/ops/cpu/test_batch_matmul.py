@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.common import dtype as mstype
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
 
 
 class BatchMatMulNet(nn.Cell):
@@ -166,3 +167,64 @@ def test_4d_transpose_ab():
                         [[5860., 6148., 6436., 6724.],
                          [6043., 6340., 6637., 6934.]]]], np.float16)
     judge_result_correct(output.asnumpy(), expect)
+
+
+def test_bmm_forward_tensor_api(nptype):
+    """
+    Feature: test bmm forward tensor api for given input dtype.
+    Description: test inputs for given input dtype.
+    Expectation: the result match with expected result.
+    """
+    x = Tensor(np.ones(shape=[2, 4, 1, 3]).astype(nptype))
+    y = Tensor(np.ones(shape=[2, 4, 3, 4]).astype(nptype))
+    output = x.bmm(y)
+    expected = 3 * np.ones(shape=[2, 4, 1, 4]).astype(nptype)
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_bmm_forward_float32_tensor_api():
+    """
+    Feature: test bmm forward tensor api.
+    Description: test float32 inputs.
+    Expectation: the result match with expected result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    test_bmm_forward_tensor_api(np.float32)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
+    test_bmm_forward_tensor_api(np.float32)
+
+
+def test_bmm_forward_functional_api(nptype):
+    """
+    Feature: test bmm forward functional api for given input dtype.
+    Description: test inputs for given input dtype.
+    Expectation: the result match with expected result.
+    """
+    x = Tensor(np.ones(shape=[2, 4, 1, 3]).astype(nptype))
+    y = Tensor(np.ones(shape=[2, 4, 3, 4]).astype(nptype))
+    output = F.bmm(x, y)
+    expected = 3 * np.ones(shape=[2, 4, 1, 4]).astype(nptype)
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_bmm_forward_float32_functional_api():
+    """
+    Feature: test bmm forward functional api.
+    Description: test float32 inputs.
+    Expectation: the result match with expected result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    test_bmm_forward_functional_api(np.float32)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
+    test_bmm_forward_functional_api(np.float32)
+
+
+if __name__ == '__main__':
+    test_bmm_forward_float32_tensor_api()
+    test_bmm_forward_float32_functional_api()

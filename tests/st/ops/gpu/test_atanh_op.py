@@ -109,3 +109,30 @@ def test_atanh_complex128():
     output_ms = P.Atanh()(Tensor(x_np))
     expect = atanh(x_np)
     assert np.allclose(output_ms.asnumpy(), expect)
+
+
+def test_atanh_forward_tensor_api(nptype):
+    """
+    Feature: test atanh forward tensor api for given input dtype.
+    Description: test inputs for given input dtype.
+    Expectation: the result match with expected result.
+    """
+    x = Tensor(np.array([0, -0.5]).astype(nptype))
+    output = x.atanh()
+    expected = np.array([0.0, -0.54930615]).astype(nptype)
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_atanh_forward_float32_tensor_api():
+    """
+    Feature: test atanh forward tensor api.
+    Description: test float32 inputs.
+    Expectation: the result match with expected result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    test_atanh_forward_tensor_api(np.float32)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    test_atanh_forward_tensor_api(np.float32)
