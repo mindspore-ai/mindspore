@@ -21,6 +21,7 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.common.api import ms_function
 from mindspore.ops import operations as P
+from mindspore import dtype as mstype
 
 
 class Net(nn.Cell):
@@ -53,6 +54,15 @@ def test_net():
                        [84., 87., 90., 93.],
                        [96., 99., 102., 105.]]]]
 
+    assert (output.asnumpy() == expect_result).all()
+
+    # Test dynamic shape of addn.
+    dyn_add = Net()
+    input_x_dyn = Tensor(shape=[1, None, 3, 4], dtype=mstype.float32)
+    input_y_dyn = Tensor(shape=[1, 3, None, 4], dtype=mstype.float32)
+    input_z_dyn = Tensor(shape=[1, 3, 3, None], dtype=mstype.float32)
+    dyn_add.set_inputs(input_x_dyn, input_y_dyn, input_z_dyn)
+    output = add(Tensor(x), Tensor(y), Tensor(z))
     assert (output.asnumpy() == expect_result).all()
 
 

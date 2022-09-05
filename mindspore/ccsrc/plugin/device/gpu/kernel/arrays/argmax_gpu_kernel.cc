@@ -45,7 +45,7 @@ bool ArgmaxGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std
 
 bool ArgmaxGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                               const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::ArgMax>(base_operator);
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::Argmax>(base_operator);
   kernel_name_ = kernel_ptr->name();
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());

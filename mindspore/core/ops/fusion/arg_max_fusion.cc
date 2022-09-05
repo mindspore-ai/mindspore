@@ -20,7 +20,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_OPERATOR_IMPL(ArgMaxFusion, ArgMax);
+MIND_API_OPERATOR_IMPL(ArgMaxFusion, Argmax);
 void ArgMaxFusion::Init(const bool keep_dims, const bool out_max_value, const int64_t top_k, const int64_t axis) {
   set_axis(axis);
   set_keep_dims(keep_dims);

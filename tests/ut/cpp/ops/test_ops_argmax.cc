@@ -32,7 +32,7 @@ class TestArgMax : public UT::Common {
 };
 
 TEST_F(TestArgMax, test_ops_argmax1) {
-  auto argmax = std::make_shared<ArgMax>();
+  auto argmax = std::make_shared<Argmax>();
   argmax->Init(2, kNumberTypeInt32);
   auto tensor_x = TensorConstructUtils::CreateOnesTensor(kNumberTypeFloat32, std::vector<int64_t>{2, 3, 4, 5});
   MS_EXCEPTION_IF_NULL(tensor_x);
@@ -60,7 +60,7 @@ TEST_F(TestArgMax, test_ops_argmax1) {
 }
 
 TEST_F(TestArgMax, test_ops_argmax2) {
-  auto argmax = std::make_shared<ArgMax>();
+  auto argmax = std::make_shared<Argmax>();
   argmax->Init(1, kNumberTypeInt32);
   auto tensor_x = TensorConstructUtils::CreateOnesTensor(kNumberTypeFloat16, std::vector<int64_t>{2, 3, 4});
   MS_EXCEPTION_IF_NULL(tensor_x);

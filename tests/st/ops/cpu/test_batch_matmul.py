@@ -58,6 +58,15 @@ def test_4d_no_transpose_vec():
                         [[5816, 5882, 5948, 6014]]]], dtype=np.float32)
     judge_result_correct(output.asnumpy(), expect)
 
+    # test dynamic_shape
+    context.set_context(save_graphs=True, save_graphs_path="./graph_ir")
+    dyn_shape_net = BatchMatMulNet()
+    input_x_dyn = Tensor(shape=[2, None, 1, 3], dtype=mstype.float32)
+    input_y_dyn = Tensor(shape=[2, None, 3, 4], dtype=mstype.float32)
+    dyn_shape_net.set_inputs(input_x_dyn, input_y_dyn)
+    output = dyn_shape_net(input_x, input_y)
+    judge_result_correct(output.asnumpy(), expect)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu

@@ -20,6 +20,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
+from mindspore import dtype as mstype
 
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 
@@ -51,6 +52,15 @@ def test_two_tensors_add():
         expect_result = (x + y).astype(dtype)
         assert output.asnumpy().dtype == expect_result.dtype
         assert np.array_equal(output.asnumpy(), expect_result)
+
+    # Test for dynamic shape of addn.
+    input_x_dyn = Tensor(shape=[2, None, 2], dtype=mstype.float32)
+    input_y_dyn = Tensor(shape=[2, 3, None], dtype=mstype.float32)
+    addn_dyn_net = Net2Inputs()
+    addn_dyn_net.set_inputs(input_x_dyn, input_y_dyn)
+    dyn_output = addn_dyn_net(Tensor(x.astype(np.float32)), Tensor(y.astype(np.float32)))
+    expect_dync_result = (x + y).astype(np.float32)
+    assert np.array_equal(dyn_output.asnumpy(), expect_dync_result)
 
 
 class Net4Inputs(nn.Cell):

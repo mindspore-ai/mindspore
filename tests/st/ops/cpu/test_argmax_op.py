@@ -29,9 +29,9 @@ context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
 
 class NetArgmax(nn.Cell):
-    def __init__(self, axis=0):
+    def __init__(self, axis=0, out_type=mstype.int32):
         super(NetArgmax, self).__init__()
-        self.argmax = ops.Argmax(axis=axis, output_type=mstype.int32)
+        self.argmax = ops.Argmax(axis=axis, output_type=out_type)
 
     def construct(self, x):
         return self.argmax(x)
@@ -62,6 +62,13 @@ def test_argmax_2d():
     Argmax_axis_1 = NetArgmax(axis=1)
     output = Argmax_axis_1(x)
     expect = np.array([1, 0, 0]).astype(np.float32)
+    assert (output.asnumpy() == expect).all()
+    # test dynamic shape of argmax.
+    dy_shape_argmax_axis_0 = NetArgmax(axis=0)
+    input_x_dyn = Tensor(shape=[3, None], dtype=mstype.float32)
+    dy_shape_argmax_axis_0.set_inputs(input_x_dyn)
+    output = dy_shape_argmax_axis_0(x)
+    expect = np.array([2, 2, 2]).astype(np.float32)
     assert (output.asnumpy() == expect).all()
 
 

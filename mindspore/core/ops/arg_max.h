@@ -29,12 +29,12 @@ namespace ops {
 constexpr auto kNameArgMax = "Argmax";
 /// \brief Returns the indices of the maximum value of a tensor across the axis.
 /// Refer to Python API @ref mindspore.ops.Argmax for more details.
-class MIND_API ArgMax : public BaseOperator {
+class MIND_API Argmax : public BaseOperator {
  public:
-  MIND_API_BASE_MEMBER(ArgMax);
+  MIND_API_BASE_MEMBER(Argmax);
   /// \brief Constructor.
-  ArgMax() : BaseOperator(kNameArgMax) { InitIOName({"x"}, {"output"}); }
-  explicit ArgMax(const std::string k_name) : BaseOperator(k_name) { InitIOName({"x"}, {"output"}); }
+  Argmax() : BaseOperator(kNameArgMax) { InitIOName({"x"}, {"output"}); }
+  explicit Argmax(const std::string k_name) : BaseOperator(k_name) { InitIOName({"x"}, {"output"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Argmax for the inputs.
   void Init(const int64_t axis = -1, const TypeId output_type = kNumberTypeInt32);
   /// \brief Set axis.

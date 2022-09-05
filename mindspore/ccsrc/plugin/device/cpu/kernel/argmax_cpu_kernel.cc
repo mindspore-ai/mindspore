@@ -23,7 +23,7 @@ namespace kernel {
 namespace {
 constexpr size_t kArgMaxInputsNum = 1;
 constexpr size_t kArgMaxOutputsNum = 1;
-constexpr char kKernelName[] = "ArgMax";
+constexpr char kKernelName[] = "Argmax";
 
 int64_t get_element_num(const std::vector<int64_t> &shape) { return SizeToLong(SizeOf(shape)); }
 
@@ -79,9 +79,9 @@ bool ArgmaxCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inp
 
 bool ArgmaxCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                               const std::vector<KernelTensorPtr> &) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::ArgMax>(base_operator);
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::Argmax>(base_operator);
   if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast ArgMax ops failed!";
+    MS_LOG(ERROR) << "cast Argmax ops failed!";
     return false;
   }
   if (inputs.size() < 1) {
