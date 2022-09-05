@@ -31,6 +31,10 @@ abstract::ShapePtr BroadcastToInferShape(const PrimitivePtr &primitive,
   auto value_ptr = primitive->GetAttr(kShape);
   auto input_x = GetValue<std::vector<int64_t>>(value_ptr);
   CheckAndConvertUtils::Check("x shape", SizeToLong(x_shape.size()), kLessEqual, SizeToLong(input_x.size()), prim_name);
+  if (x_shape[0] == -2) {
+    auto x_shape_ptr = std::make_shared<abstract::Shape>(input_x);
+    return x_shape_ptr;
+  }
   auto outer_dim_offset = input_x.size() - x_shape.size();
   bool flag = true;
   if (input_x.end() == find(input_x.begin(), input_x.end(), -1)) {
@@ -56,6 +60,9 @@ abstract::ShapePtr BroadcastToInferShape(const PrimitivePtr &primitive,
   auto x_shape_ptr = std::make_shared<abstract::Shape>(input_x);
   (void)primitive->AddAttr("shape", MakeValue(input_x));
   for (size_t i = 0; i < x_shape.size(); i++) {
+    if (x_shape[i] == -1) {
+      continue;
+    }
     if (input_x[i + outer_dim_offset] != x_shape[i] && x_shape[i] != 1) {
       MS_EXCEPTION(ValueError)
         << "For '" << prim_name
