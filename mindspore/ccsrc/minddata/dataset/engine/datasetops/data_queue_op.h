@@ -93,9 +93,9 @@ class DataQueueOp : public PipelineOp {
   Status operator()() override;
 #ifndef ENABLE_SECURITY
   // Record the pipeline profiling info
-  void ProfilingRecorder(bool is_profiling_enable, std::shared_ptr<DeviceQueueTracing> profiling_node,
+  void ProfilingRecorder(bool is_profiling_enable, const std::shared_ptr<DeviceQueueTracing> &profiling_node,
                          int64_t send_batch, int32_t tdt_cost, uint64_t *batch_start_time, uint64_t *end_time,
-                         int32_t connector_capacity, int32_t connector_size);
+                         int32_t connector_capacity, int32_t connector_size) const;
 
 #endif
   // Op name getter
@@ -105,7 +105,7 @@ class DataQueueOp : public PipelineOp {
  private:
   // Name: FilterMetadata(TensorRow *);
   // Description: Auto filter metadata column before sending to device.
-  Status FilterMetadata(TensorRow *row);
+  Status FilterMetadata(TensorRow *row) const;
 
   // Name: CheckExceptions(TensorRow);
   // Description: Check whether the TensorRow meets the condition for performing DataQueueOp
@@ -113,20 +113,20 @@ class DataQueueOp : public PipelineOp {
 
   // Name: PrintBeginInfoWhenFirstBatch(bool)
   // Description: Print info when first batch begin to send in sink_mode
-  void PrintBeginInfoWhenFirstBatch(const bool &first_push_flag);
+  void PrintBeginInfoWhenFirstBatch(const bool &first_push_flag) const;
 
   // Name: PrintEndInfoWhenFirstBatch(bool)
   // Description: Print info when first batch send successful in sink_mode
-  void PrintEndInfoWhenFirstBatch(bool *first_push_flag);
+  void PrintEndInfoWhenFirstBatch(bool *first_push_flag) const;
   Status RetryPushData(const std::vector<DataQueueItem> &data, bool profiling, uint64_t *push_time);
-  bool NoExceptionRaised();
+  bool NoExceptionRaised() const;
   Status SendDataToAscendDynamic();
 
   void WaitContinueSignal() const;
   Status SendDataToAscend();
   Status SendEpochEndToAscend(const TensorRow &curr_row, const bool &is_profiling_enable, int32_t *tdt_cost,
                               bool *is_break_loop);
-  void LimitSendingBatches(int64_t send_batch, int64_t *sending_num, std::shared_ptr<ConfigManager> cfg);
+  void LimitSendingBatches(int64_t send_batch, int64_t *sending_num, const std::shared_ptr<ConfigManager> &cfg) const;
   Status SendRowToTdt(TensorRow curr_row, bool is_profiling_enable, int32_t *tdt_cost);
   // check status that push data into device
   Status CheckPushStatus(DataQueueStatus status, bool stop_send, bool *send_finished, bool *is_break_loop);
@@ -147,7 +147,7 @@ class DataQueueOp : public PipelineOp {
   std::unique_ptr<GpuConnector> gpu_connector_;
   const uint32_t kDeviceQueGpuNumThreads = 2;
   const uint32_t kDeviceQueGpuQueueCapacity = 8;
-  const uint32_t kDeviceQueGpuThreadMemory = 1024;
+  const int32_t kDeviceQueGpuThreadMemory = 1024;
   const uint32_t kDynamicHostQueueCapacity = 2;
   uint32_t num_workers_;
   uint32_t queue_capacity_;
@@ -158,7 +158,7 @@ class DataQueueOp : public PipelineOp {
   Status DetectFirstBatch();
 
   // Detect the cost time of each batch, present alarm message if cost too long
-  void DetectPerBatchTime(const uint64_t *start_time, uint64_t *end_time);
+  void DetectPerBatchTime(const uint64_t *start_time, uint64_t *end_time) const;
 #endif
 
   std::unique_ptr<ChildIterator> child_iterator_;

@@ -53,6 +53,9 @@ std::vector<DataQueueItem> ConvertTensorRowToDataQueueItem(const TensorRow &row)
 DataQueueOp::DataQueueOp(const std::string channel_name, DeviceType device_type, int32_t device_id, bool send_epoch_end,
                          int32_t total_batch, bool create_data_info_queue)
     : PipelineOp(1),
+      ascend_keep_waiting_(true),
+      num_workers_(kDeviceQueGpuNumThreads),
+      queue_capacity_(kDeviceQueGpuQueueCapacity),
       channel_name_(channel_name),
       device_type_(device_type),
       device_id_(device_id),
@@ -63,8 +66,7 @@ DataQueueOp::DataQueueOp(const std::string channel_name, DeviceType device_type,
       create_data_info_queue_(create_data_info_queue),
       data_info_queue_ptr_(nullptr),
       first_fetch_flag_(false),
-      first_push_flag_(false),
-      ascend_keep_waiting_(true) {
+      first_push_flag_(false) {
   std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
   dynamic_shape_ = cfg->dynamic_shape();
 
@@ -72,9 +74,6 @@ DataQueueOp::DataQueueOp(const std::string channel_name, DeviceType device_type,
   // and we suggest num_workers_ * queue_capacity_ not greater than 16, because
   // one worker one circular_pool with 1G pin memory, so num_workers_ * queue_capacity_
   // must limit to avoid memory overload
-  num_workers_ = kDeviceQueGpuNumThreads;
-  queue_capacity_ = kDeviceQueGpuQueueCapacity;
-  ascend_keep_waiting_ = true;
 #ifdef WITH_BACKEND
   MS_EXCEPTION_IF_NULL(MsContext::GetInstance());
   if (MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice && !dynamic_shape_) {
@@ -102,12 +101,12 @@ void DataQueueOp::ReleaseData(void *addr, int32_t worker_id) {
   }
 }
 
-Status DataQueueOp::EoeReceived(int32_t worker_id) {
+Status DataQueueOp::EoeReceived(int32_t) {
   state_ = OpState::kDeOpIdle;
   return Status::OK();
 }
 
-Status DataQueueOp::FilterMetadata(TensorRow *row) {
+Status DataQueueOp::FilterMetadata(TensorRow *row) const {
   std::unordered_map<std::string, int32_t> current_name_id_map = child_[0]->column_name_id_map();
   TensorRow output;
   TensorRow tmp = *row;
@@ -339,7 +338,8 @@ void DataQueueOp::WaitContinueSignal() const {
   }
 }
 
-void DataQueueOp::LimitSendingBatches(int64_t send_batch, int64_t *sending_num, std::shared_ptr<ConfigManager> cfg) {
+void DataQueueOp::LimitSendingBatches(int64_t send_batch, int64_t *sending_num,
+                                      const std::shared_ptr<ConfigManager> &cfg) const {
   while (send_batch >= *sending_num) {
     *sending_num = cfg->sending_batches();
     if (*sending_num == 0) {
@@ -469,15 +469,15 @@ Status DataQueueOp::LaunchParallelCopyThread() {
   gpu_connector_ = std::make_unique<GpuConnector>(num_workers_, 1, queue_capacity_);
   receive_queues_.Init(num_workers_, queue_capacity_);
   RETURN_IF_NOT_OK(receive_queues_.Register(tree_->AllTasks()));
-  RETURN_IF_NOT_OK(
-    tree_->LaunchWorkers(num_workers_, std::bind(&DataQueueOp::WorkerEntry, this, std::placeholders::_1), "", id()));
+  RETURN_IF_NOT_OK(tree_->LaunchWorkers(static_cast<int>(num_workers_),
+                                        std::bind(&DataQueueOp::WorkerEntry, this, std::placeholders::_1), "", id()));
   RETURN_IF_NOT_OK(tree_->AllTasks()->CreateAsyncTask("Push data to GPU queue",
                                                       std::bind(&DataQueueOp::PushDataToGPU, this), nullptr, id()));
 #endif
   return Status::OK();
 }
 
-bool DataQueueOp::NoExceptionRaised() {
+bool DataQueueOp::NoExceptionRaised() const {
 #ifdef WITH_BACKEND
   return !TaskManager::FindMe()->Interrupted() && !device::DataQueueMgr::GetInstance().IsClosed();
 #else
@@ -684,9 +684,9 @@ Status DataQueueOp::SendDataToGPU() {
 
 Status DataQueueOp::MallocForGPUData(std::vector<device::DataQueueItem> *items, const TensorRow &curr_row,
                                      const int32_t &worker_id) {
-  int i = 0;
+  size_t i = 0;
   for (auto &sub_item : *items) {
-    auto rc = pool_[worker_id]->Allocate(sub_item.data_len, &sub_item.data_ptr);
+    auto rc = pool_[static_cast<size_t>(worker_id)]->Allocate(sub_item.data_len, &sub_item.data_ptr);
     if (rc.IsError() || sub_item.data_ptr == nullptr) {
       RETURN_STATUS_OOM("Memory malloc failed, check memory usage.");
     }
@@ -765,9 +765,9 @@ void DataQueueOp::Print(std::ostream &out, bool show_all) const {
 }
 
 #ifndef ENABLE_SECURITY
-void DataQueueOp::ProfilingRecorder(bool is_profiling_enable, std::shared_ptr<DeviceQueueTracing> profiling_node,
+void DataQueueOp::ProfilingRecorder(bool is_profiling_enable, const std::shared_ptr<DeviceQueueTracing> &profiling_node,
                                     int64_t send_batch, int32_t tdt_cost, uint64_t *batch_start_time,
-                                    uint64_t *end_time, int32_t connector_capacity, int32_t connector_size) {
+                                    uint64_t *end_time, int32_t connector_capacity, int32_t connector_size) const {
   // Record the pipeline profiling info
   if (is_profiling_enable) {
     *end_time = ProfilingTime::GetCurMilliSecond();
@@ -808,7 +808,7 @@ Status DataQueueOp::DetectFirstBatch() {
   return Status::OK();
 }
 
-void DataQueueOp::DetectPerBatchTime(const uint64_t *start_time, uint64_t *end_time) {
+void DataQueueOp::DetectPerBatchTime(const uint64_t *start_time, uint64_t *end_time) const {
   *end_time = ProfilingTime::GetCurMilliSecond();
   if (*end_time - *start_time > kTimeOutMilliSeconds) {
     MS_LOG(WARNING) << "Bad performance attention, it takes more than 25 seconds to fetch a batch of data from dataset "
@@ -818,13 +818,13 @@ void DataQueueOp::DetectPerBatchTime(const uint64_t *start_time, uint64_t *end_t
 }
 #endif
 
-void DataQueueOp::PrintBeginInfoWhenFirstBatch(const bool &first_push_flag) {
+void DataQueueOp::PrintBeginInfoWhenFirstBatch(const bool &first_push_flag) const {
   if (first_push_flag != true) {
     MS_LOG(INFO) << "Loading dataset and begin to push first batch into device ...";
   }
 }
 
-void DataQueueOp::PrintEndInfoWhenFirstBatch(bool *first_push_flag) {
+void DataQueueOp::PrintEndInfoWhenFirstBatch(bool *first_push_flag) const {
   if (!first_push_flag) {
     MS_LOG(WARNING) << "First batch flag: first_push_flag is nullptr";
     return;
@@ -834,6 +834,7 @@ void DataQueueOp::PrintEndInfoWhenFirstBatch(bool *first_push_flag) {
     *first_push_flag = true;
   }
 }
+
 Status DataQueueOp::RetryPushData(const std::vector<DataQueueItem> &items, const bool profiling, uint64_t *push_time) {
 #ifdef WITH_BACKEND
   bool flag_log = false;

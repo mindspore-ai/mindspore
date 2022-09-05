@@ -66,7 +66,7 @@ void AscendDeviceContext::Destroy() {
   MS_LOG(INFO) << "Enter Destroy...";
   if (!initialized_) {
     if (deprecated_interface_ != nullptr) {
-      deprecated_interface_->CloseTsd(MsContext::GetInstance(), true);
+      (void)deprecated_interface_->CloseTsd(MsContext::GetInstance(), true);
     }
     return;
   }

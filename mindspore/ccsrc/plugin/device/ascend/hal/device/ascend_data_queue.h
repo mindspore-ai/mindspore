@@ -69,9 +69,9 @@ class AscendTdtQueue : public DataQueue {
   void SetThreadDevice() override {}
 
  private:
-  void DestroyAclDataset(acltdtDataset *acl_dataset, bool include_data_item = true);
-  bool AssembleTensor2AclDataset(const std::vector<DataQueueItem> &data, acltdtDataset *acl_dataset);
-  void ParseType(aclDataType acl_data_type, std::string *data_type);
+  void DestroyAclDataset(acltdtDataset *acl_dataset, bool include_data_item = true) const;
+  bool AssembleTensor2AclDataset(const std::vector<DataQueueItem> &data, acltdtDataset *acl_dataset) const;
+  void ParseType(aclDataType acl_data_type, std::string *data_type) const;
   bool Translate(const std::vector<DataQueueItem> &data, acltdtDataset **output_acl_dataset);
 
   acltdtChannelHandle *acl_handle_;
@@ -92,13 +92,13 @@ class AscendHostQueue : public DataQueue {
     struct ItemInfo {
       int32_t version;
       int32_t data_type;
-      uint32_t cur_cnt;
-      uint32_t cnt;
+      uint32_t cur_count;
+      uint32_t count;
       int32_t tensor_type;
       uint32_t dim_num;
       char reserved[32];
       uint64_t data_len;
-    } ctrl_info;
+    } item_info;
     std::vector<int64_t> dims;
     void *data_ptr;
   };
@@ -110,15 +110,16 @@ class AscendHostQueue : public DataQueue {
   bool LaunchTensor2MBuff(const std::vector<DataQueueItem> &data, void **buff);
   bool EnqueueData(void *buff, bool *need_resend);
   bool CreateDataItemInfos(const std::vector<DataQueueItem> &data, std::vector<DataItemInfo> *items);
-  bool SerializeDataItemInfos(std::vector<DataItemInfo> *items, void **buff);
+  bool SerializeDataItemInfos(std::vector<DataItemInfo> *items, void **buff) const;
   DataItemInfo BuildDataItemInfo(acltdtTensorType acl_data_type, int32_t tensor_type, const int64_t *dims,
-                                 size_t dim_size, void *data_ptr, uint64_t data_len);
+                                 size_t dim_size, void *data_ptr, uint64_t data_len) const;
   void HostQueueFreeBuff(void *buff);
 
   uint32_t device_id_;
   std::mutex queue_id_to_trans_id_map_mutex_;
   std::map<uint32_t, uint64_t> queue_id_to_trans_id_map_;
   uint32_t queue_id_;
+  const uint32_t rt_mem_queue_depth_ = 128;
 };
 }  // namespace device
 }  // namespace mindspore
