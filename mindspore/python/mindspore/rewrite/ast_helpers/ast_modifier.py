@@ -52,6 +52,13 @@ class AstModifier(ast.NodeTransformer):
 
     @staticmethod
     def erase_func_from_class_by_name(ast_class: ast.ClassDef, func_name: str):
+        """
+        Erase ast FunctionDef from ast.ClassDef by name.
+
+        Args:
+            ast_class (ast.ClassDef): From which to search to_erase-node and erase.
+            func_name (str): Function name to be erased.
+        """
         for body in ast_class.body:
             if isinstance(body, ast.FunctionDef) and body.name == func_name:
                 ast_class.body.remove(body)
@@ -97,6 +104,21 @@ class AstModifier(ast.NodeTransformer):
     @staticmethod
     def insert_class_into_module(ast_mod: ast.Module, ast_class: ast.ClassDef, index_ast: Optional[ast.AST] = None,
                                  insert_before=True) -> ast.ClassDef:
+        """
+        Insert an ast.ClassDef into an ast.Module.
+
+        Args:
+            ast_mod (ast.Module): Where new ast.ClassDef to be inserted into.
+            ast_class (ast.ClassDef): ClassDef to be inserted.
+            index_ast ([ast.AST, optional]): An ast_node indicates a position in 'ast_mod' where new ast.ClassDef node
+                to be inserted into. Default is None which means append new ast.ClassDef into 'ast_mod'.
+            insert_before (bool): A bool indicates at before or at after of 'index_ast' where new ast.ClassDef node to
+                be inserted into. Only valid when 'index_ast' is not None. Default is True which means inserting new
+                ast.ClassDef before 'index_ast'.
+
+        Returns:
+            An instance of ast.ClassDef which has been inserted into 'ast_mod'.
+        """
         return AstModifier.insert_sub_ast(ast_mod, ast_class, index_ast, insert_before)
 
     @staticmethod

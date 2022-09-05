@@ -83,11 +83,13 @@ class StrChecker(ast.NodeVisitor):
         self._hit = False
 
     def visit_Attribute(self, node: ast.Attribute) -> Any:
+        """Visit a node of type ast.Attribute."""
         if isinstance(node.value, ast.Name) and node.value.id == self._pattern:
             self._hit = True
         return super(StrChecker, self).generic_visit(node)
 
     def visit_Name(self, node: ast.Name) -> Any:
+        """Visit a node of type ast.Name."""
         if node.id == self._pattern:
             self._hit = True
         return super(StrChecker, self).generic_visit(node)

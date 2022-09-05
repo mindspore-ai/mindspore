@@ -60,6 +60,9 @@ class TopoManager(Observable):
         return unique_results
 
     def topo_changed(self):
+        """
+        The function is executed when an Event.TopologicalChangeEvent event is received.
+        """
         self.changed(Event.TopologicalChangeEvent)
 
     def _add_consumer(self, product: ScopedValue, consumer: Node, index):

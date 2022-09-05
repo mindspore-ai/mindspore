@@ -167,6 +167,7 @@ class Node:
     @classmethod
     def create_call_pass_through_method(cls, ast_node: Optional[ast.AST], targets: [Union[ScopedValue, str]],
                                         args: [ScopedValue] = None, kwargs: {str: ScopedValue}=None, name: str = ""):
+        """Create pass through node."""
         return Node.create_call_method(ast_node, targets, PASS_THROUGH_METHOD, args, kwargs, name)
 
     @classmethod
@@ -514,9 +515,11 @@ class Node:
         self._ast_node = ast_node
 
     def get_belong_symbol_tree(self):
+        """Get the symbol tree to which node belongs."""
         return self._belong_tree
 
     def set_belong_symbol_tree(self, symbol_tree):
+        """Set the symbol tree to which node belongs."""
         self._belong_tree = symbol_tree
 
     def isolate(self):
