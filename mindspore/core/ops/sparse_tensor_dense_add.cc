@@ -33,19 +33,22 @@ abstract::ShapePtr SparseTensorDenseAddInferShape(const PrimitivePtr &prim,
   auto x1_values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
   auto x1_shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape())[kShape];
   auto x2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[3]->BuildShape())[kShape];
-  int64_t x2_shape_size = x2_shape.size();
-  const int kDimensionOne = 1;
-  const int kDimensionTwo = 2;
-  const int kDimensionFive = 5;
-  if (x1_indices_shape.size() != kDimensionTwo) {
+  size_t x1_indices_shape_size = x1_indices_shape.size();
+  size_t x1_values_shape_size = x1_values_shape.size();
+  size_t x1_shape_shape_size = x1_shape_shape.size();
+  size_t x2_shape_size = x2_shape.size();
+  const size_t kDimensionOne = 1;
+  const size_t kDimensionTwo = 2;
+  const size_t kDimensionFive = 5;
+  if (x1_indices_shape_size != kDimensionTwo) {
     MS_EXCEPTION(ValueError) << "For " << prim_name
-                             << ", the 'x1_indices' should have rank 2, but got: " << x1_indices_shape.size();
+                             << ", the 'x1_indices' should have rank 2, but got: " << x1_indices_shape_size;
   }
-  if (x1_shape_shape.size() != kDimensionOne) {
+  if (x1_shape_shape_size != kDimensionOne) {
     MS_EXCEPTION(ValueError) << "For " << prim_name
-                             << ", the 'x1_shape' should have rank 1, but got: : " << x1_shape_shape.size();
+                             << ", the 'x1_shape' should have rank 1, but got: : " << x1_shape_shape_size;
   }
-  if (x1_values_shape.size() != kDimensionOne || x1_values_shape[0] != x1_indices_shape[0]) {
+  if (x1_values_shape_size != kDimensionOne || x1_values_shape[0] != x1_indices_shape[0]) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name
                              << "', the 'x1_values' must be a 1-D tensor and the first dimension length"
                              << " must be equal to the first dimension length of 'x1_indices', but got "
@@ -57,15 +60,16 @@ abstract::ShapePtr SparseTensorDenseAddInferShape(const PrimitivePtr &prim,
                              << " length of 'x1_indices', but got " << x1_shape_shape[0] << " vs "
                              << x1_indices_shape[1] << ".";
   }
-  if (x1_shape_shape[0] != x2_shape_size) {
+  size_t x1_shape_rank = static_cast<size_t>(x1_shape_shape[0]);
+  if (x1_shape_rank != x2_shape_size) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name
                              << "',  the rank of 'x1_shape' should be equal to the rank of 'x2_shape', but got "
-                             << x1_shape_shape[0] << " vs " << x2_shape_size << ".";
+                             << x1_shape_rank << " vs " << x2_shape_size << ".";
   }
-  if (x2_shape.size() > kDimensionFive || x2_shape.size() < kDimensionOne) {
+  if (x2_shape_size > kDimensionFive || x2_shape_size < kDimensionOne) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name
                              << "',  Only tensors with ranks between 1 and 5 are currently supported. "
-                             << "Tensor rank: " << x2_shape.size() << ".";
+                             << "Tensor rank: " << x2_shape_size << ".";
   }
   ShapeVector output_shape = x2_shape;
   return std::make_shared<abstract::Shape>(output_shape);
