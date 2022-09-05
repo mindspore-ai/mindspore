@@ -5893,7 +5893,7 @@ class CSRTensor(CSRTensor_):
         if self.ndim != 2:
             raise ValueError("Currently only support 2-D CSRTensor when converting to COOTensor.")
         row_indices = tensor_operator_registry.get("csr2coo")(self.indptr, self.values.shape[0])
-        coo_indices = tensor_operator_registry.get("stack")(1)((row_indices, self.indices))
+        coo_indices = tensor_operator_registry.get("stack")((row_indices, self.indices), 1)
         return COOTensor(coo_indices, self.values, self.shape)
 
     def to_dense(self):
