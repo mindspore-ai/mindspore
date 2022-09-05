@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,54 +19,43 @@
 
 #include <cuda_runtime_api.h>
 #include <vector>
+#include <string>
+#include <memory>
+#include <algorithm>
+#include <functional>
+#include <map>
+#include <utility>
+#include "mindspore/core/ops/assign_add.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/assign_add_impl.cuh"
 namespace mindspore {
 namespace kernel {
-template <typename T>
-class AssignAddFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class AssignAddFwdGpuKernelMod : public NativeGpuKernelMod {
  public:
-  AssignAddFwdGpuKernelMod() : is_null_input_(false), input_size_(0) {}
+  AssignAddFwdGpuKernelMod() { ResetResource(); }
   ~AssignAddFwdGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
       return true;
     }
-    T *input_addr = GetDeviceAddress<T>(inputs, 0);
-    T *input_addr2 = GetDeviceAddress<T>(inputs, 1);
-    T *output_addr = GetDeviceAddress<T>(outputs, 0);
-
-    CalAssignAdd(input_size_ / sizeof(T), input_addr, input_addr2, output_addr,
-                 reinterpret_cast<cudaStream_t>(stream_ptr));
-    return true;
+    stream_ptr_ = stream_ptr;
+    return kernel_func_(this, inputs, workspace, outputs);
   }
 
-  bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    kernel_node_ = kernel_node;
-    if (input_num != 2) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 2, but got " << input_num;
-    }
-    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-    if (output_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 1, but got " << output_num;
-    }
-    auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
-    if (is_null_input_) {
-      InitSizeLists();
-      return true;
-    }
-    input_size_ = sizeof(T) * SizeOf(input_shape);
-    InitSizeLists();
-    return true;
-  }
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
 
-  void ResetResource() noexcept override {
+  int Resize(
+    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+    const std::vector<KernelTensorPtr> &outputs,
+    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
+
+  std::vector<KernelAttr> GetOpSupport() override;
+
+  void ResetResource() noexcept {
     is_null_input_ = false;
     input_size_ = 0;
     input_size_list_.clear();
@@ -75,16 +64,28 @@ class AssignAddFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   }
 
  protected:
-  void InitSizeLists() override {
+  void InitSizeLists() {
     input_size_list_.push_back(input_size_);
     input_size_list_.push_back(input_size_);
     output_size_list_.push_back(input_size_);
   }
 
  private:
-  bool is_null_input_;
+  template <typename T>
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<AddressPtr> &outputs);
+  using AssignAddFunc = std::function<bool(AssignAddFwdGpuKernelMod *, const std::vector<AddressPtr> &,
+                                           const std::vector<AddressPtr> &, const std::vector<AddressPtr> &)>;
 
-  size_t input_size_;
+ private:
+  bool is_null_input_;
+  int64_t input_size_;
+  int64_t input_elements_;
+  std::string kernel_name_{"AssignAdd"};
+  BaseOperatorPtr kernel_ptr_{nullptr};
+  AssignAddFunc kernel_func_{};
+  void *stream_ptr_{nullptr};
+  static std::vector<std::pair<KernelAttr, AssignAddFunc>> func_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore

@@ -33,10 +33,7 @@ class AssignAdd(nn.Cell):
         return res
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_assign_add():
+def assign_add(nptype):
     expect1 = np.array([[[[0, 2, 4.],
                           [6, 8, 10.],
                           [12, 14, 16.]],
@@ -55,11 +52,11 @@ def test_assign_add():
                          [[54, 57, 60],
                           [63, 66, 69],
                           [72, 75, 78]]]])
-    x1 = Tensor(np.arange(1 * 3 * 3 * 3).reshape(1, 3, 3, 3).astype(np.float32))
-    y1 = Tensor(np.arange(1 * 3 * 3 * 3).reshape(1, 3, 3, 3).astype(np.float32))
+    x1 = Tensor(np.arange(1 * 3 * 3 * 3).reshape(1, 3, 3, 3).astype(nptype))
+    y1 = Tensor(np.arange(1 * 3 * 3 * 3).reshape(1, 3, 3, 3).astype(nptype))
 
-    x2 = Tensor(np.arange(1 * 3 * 3 * 3).reshape(1, 3, 3, 3).astype(np.float32))
-    y2 = Tensor(np.arange(1 * 3 * 3 * 3).reshape(1, 3, 3, 3).astype(np.float32))
+    x2 = Tensor(np.arange(1 * 3 * 3 * 3).reshape(1, 3, 3, 3).astype(nptype))
+    y2 = Tensor(np.arange(1 * 3 * 3 * 3).reshape(1, 3, 3, 3).astype(nptype))
 
     context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
     add = AssignAdd(x1)
@@ -76,3 +73,159 @@ def test_assign_add():
     add = AssignAdd(output1)
     output2 = add(y2)
     assert (output2.asnumpy() == expect2).all()
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_assign_add_fp16():
+    """
+    Feature: assign add kernel
+    Description: test assignadd float16
+    Expectation: just test
+    """
+    assign_add(np.float16)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_assign_add_fp32():
+    """
+    Feature: assign add kernel
+    Description: test assignadd float32
+    Expectation: just test
+    """
+    assign_add(np.float32)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_assign_add_fp64():
+    """
+    Feature: assign add kernel
+    Description: test assignadd float64
+    Expectation: just test
+    """
+    assign_add(np.float64)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_assign_add_comp64():
+    """
+    Feature: assign add kernel
+    Description: test assignadd complex64
+    Expectation: just test
+    """
+    assign_add(np.complex64)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_assign_add_comp128():
+    """
+    Feature: assign add kernel
+    Description: test assignadd complex128
+    Expectation: just test
+    """
+    assign_add(np.complex128)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_assign_add_int8():
+    """
+    Feature: assign add kernel
+    Description: test assignadd int8
+    Expectation: just test
+    """
+    assign_add(np.int8)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_assign_add_uint8():
+    """
+    Feature: assign add kernel
+    Description: test assignadd uint8
+    Expectation: just test
+    """
+    assign_add(np.uint8)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_assign_add_int16():
+    """
+    Feature: assign add kernel
+    Description: test assignadd int16
+    Expectation: just test
+    """
+    assign_add(np.int16)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_assign_add_uint16():
+    """
+    Feature: assign add kernel
+    Description: test assignadd uint16
+    Expectation: just test
+    """
+    assign_add(np.uint16)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_assign_add_int32():
+    """
+    Feature: assign add kernel
+    Description: test assignadd int32
+    Expectation: just test
+    """
+    assign_add(np.int32)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_assign_add_uint32():
+    """
+    Feature: assign add kernel
+    Description: test assignadd uint32
+    Expectation: just test
+    """
+    assign_add(np.uint32)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_assign_add_int64():
+    """
+    Feature: assign add kernel
+    Description: test assignadd int64
+    Expectation: just test
+    """
+    assign_add(np.int64)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_assign_add_uint64():
+    """
+    Feature: assign add kernel
+    Description: test assignadd uint64
+    Expectation: just test
+    """
+    assign_add(np.uint64)

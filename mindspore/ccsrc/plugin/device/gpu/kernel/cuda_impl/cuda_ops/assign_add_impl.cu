@@ -15,6 +15,8 @@
  */
 
 #include "assign_add_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
+
 template <typename T>
 __global__ void AssignAdd(const size_t size, T* ref, const T* value, T* output) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < (size); pos += blockDim.x * gridDim.x) {
@@ -35,7 +37,28 @@ template CUDA_LIB_EXPORT void CalAssignAdd<float>(const size_t size, float* ref,
                                                   cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalAssignAdd<half>(const size_t size, half* ref, const half* value, half* output,
                                                  cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalAssignAdd<double>(const size_t size, double* ref, const double* value, double* output,
+                                                  cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalAssignAdd<char>(const size_t size, char* ref, const char* value, char* output,
+                                                  cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalAssignAdd<unsigned char>(const size_t size, unsigned char* ref,
+                                                          const unsigned char* value, unsigned char* output,
+                                                          cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalAssignAdd<int16_t>(const size_t size, int16_t* ref, const int16_t* value,
+                                                    int16_t* output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalAssignAdd<uint16_t>(const size_t size, uint16_t* ref, const uint16_t* value,
+                                                     uint16_t* output, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalAssignAdd<int>(const size_t size, int* ref, const int* value, int* output,
                                                 cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalAssignAdd<uint32_t>(const size_t size, uint32_t* ref, const uint32_t* value,
+                                                     uint32_t* output, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalAssignAdd<int64_t>(const size_t size, int64_t* ref, const int64_t* value,
                                                     int64_t* output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalAssignAdd<uint64_t>(const size_t size, uint64_t* ref, const uint64_t* value,
+                                                     uint64_t* output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalAssignAdd<Complex<float>>(const size_t size, Complex<float>* ref,
+                                                           const Complex<float>* value, Complex<float>* output,
+                                                           cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalAssignAdd<Complex<double>>(const size_t size, Complex<double>* ref,
+                                                            const Complex<double>* value, Complex<double>* output,
+                                                            cudaStream_t cuda_stream);
