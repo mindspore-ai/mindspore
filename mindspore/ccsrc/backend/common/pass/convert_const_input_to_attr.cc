@@ -17,7 +17,7 @@
 
 #include <algorithm>
 #include "backend/common/optimizer/const_input_to_attr.h"
-#include "backend/common/optimizer/const_input_to_attr_factory.h"
+#include "backend/common/optimizer/op_adaptation_info_factory.h"
 #include "include/common/utils/utils.h"
 #include "include/common/utils/anfalgo.h"
 
@@ -43,14 +43,14 @@ const AnfNodePtr ConvertConstInputToAttr::Process(const FuncGraphPtr &, const An
     backend = primitive_target;
   }
 
-  // Ascend const input to attr move to AscendConvertConstInputToAttr
+  // Ascend const input to attr move to AscendVmOpAdapter
   if (backend == kAscendDevice) {
     return nullptr;
   }
 
   auto is_dynamic_shape = common::AnfAlgo::IsDynamicShape(node);
   mindspore::HashSet<size_t> input_to_attr = {};
-  auto reg_info = opt::ConvertOpInfoRegister::GetInstance().GetConvertOpInfo(name, backend, is_dynamic_shape);
+  auto reg_info = opt::OpAdaptationInfoRegister::GetInstance().GetOpAdaptationInfo(name, backend, is_dynamic_shape);
   if (reg_info == nullptr) {
     return nullptr;
   } else {

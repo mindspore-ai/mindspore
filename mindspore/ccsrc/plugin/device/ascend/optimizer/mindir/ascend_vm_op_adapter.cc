@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "plugin/device/ascend/optimizer/mindir/ascend_convert_const_input_to_attr.h"
+#include "plugin/device/ascend/optimizer/mindir/ascend_vm_op_adapter.h"
 
 #include <algorithm>
 #include <memory>
@@ -23,25 +23,25 @@
 #include "include/common/utils/utils.h"
 #include "include/common/utils/anfalgo.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
-#include "plugin/device/ascend/optimizer/mindir/reg_ascend_const_input_to_attr.h"
+#include "plugin/device/ascend/optimizer/mindir/reg_ascend_vm_op_adaptation_info.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_dynamic_shape_util.h"
 
 namespace mindspore::opt {
-const AnfNodePtr AscendConvertConstInputToAttr::Process(const FuncGraphPtr &, const AnfNodePtr &node,
-                                                        const EquivPtr &) const {
+const AnfNodePtr AscendVmOpAdapter::Process(const FuncGraphPtr &, const AnfNodePtr &node, const EquivPtr &) const {
   if (node == nullptr || !AnfUtils::IsRealCNodeKernel(node)) {
     return nullptr;
   }
   auto op_name = common::AnfAlgo::GetCNodeName(node);
   auto is_dynamic = common::AnfAlgo::IsDynamicShape(node);
-  auto convert_op_info = ConvertOpInfoRegister::GetInstance().GetConvertOpInfo(op_name, kAscendDevice, is_dynamic);
-  if (convert_op_info == nullptr) {
+  auto op_adaptation_info =
+    OpAdaptationInfoRegister::GetInstance().GetOpAdaptationInfo(op_name, kAscendDevice, is_dynamic);
+  if (op_adaptation_info == nullptr) {
     return nullptr;
   }
 
   auto origin_op = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(origin_op);
-  auto ret_node = ConvertToTargetOp(origin_op, convert_op_info);
+  auto ret_node = ConvertToTargetOp(origin_op, op_adaptation_info);
   if ((ret_node != nullptr) && (ret_node != origin_op)) {
     MS_LOG(INFO) << "Replace op " << origin_op->fullname_with_scope() << " debug string:" << origin_op->DebugString()
                  << " with " << ret_node->fullname_with_scope() << " debug string:" << ret_node->DebugString()
@@ -50,11 +50,50 @@ const AnfNodePtr AscendConvertConstInputToAttr::Process(const FuncGraphPtr &, co
   return ret_node;
 }
 
-CNodePtr AscendConvertConstInputToAttr::ConvertToTargetOp(const CNodePtr &origin_op,
-                                                          ConvertOpInfo *convert_op_info) const {
+CNodePtr AscendVmOpAdapter::ConvertToTargetOp(const CNodePtr &origin_op, OpAdaptationInfo *op_adaptation_info) const {
   MS_EXCEPTION_IF_NULL(origin_op);
-  MS_EXCEPTION_IF_NULL(convert_op_info);
-  auto pre_check_func = convert_op_info->GetPreCheckFunc();
+  MS_EXCEPTION_IF_NULL(op_adaptation_info);
+  auto origin_op_name = op_adaptation_info->GetOriginOpName();
+  auto target_op_name = op_adaptation_info->GetTargetOpName();
+  auto pre_check_func = op_adaptation_info->GetPreCheckFunc();
+  auto need_tbe_check = op_adaptation_info->NeedTBECheck();
+  auto input_to_attr_map = op_adaptation_info->GetInputAttrInfoMap();
+  auto attr_name_map = op_adaptation_info->GetAttrNameInfoMap();
+  // Rename the attrs
+  if (!attr_name_map.empty()) {
+    auto origin_primitive = GetCNodePrimitive(origin_op);
+    MS_EXCEPTION_IF_NULL(origin_primitive);
+    for (auto iter : attr_name_map) {
+      if (origin_primitive->HasAttr(iter.first)) {
+        auto value = origin_primitive->GetAttr(iter.first);
+        origin_primitive->set_attr(iter.second, value);
+        origin_primitive->EraseAttr(iter.first);
+        MS_LOG(INFO) << "Rename attr " << iter.first << " to " << iter.second << " for op "
+                     << origin_op->fullname_with_scope();
+      } else {
+        MS_LOG(ERROR) << "Node " << origin_op->fullname_with_scope() << " has no attr " << iter.first;
+        return origin_op;
+      }
+    }
+  }
+
+  // No need to check or const input to attr
+  if ((!pre_check_func) && (!need_tbe_check) && (input_to_attr_map.empty())) {
+    // Rename the op type
+    if (target_op_name != origin_op_name) {
+      auto origin_primitive = GetCNodePrimitive(origin_op);
+      MS_EXCEPTION_IF_NULL(origin_primitive);
+      origin_primitive->set_name(target_op_name);
+      // reset full scope name
+      origin_op->set_fullname_with_scope("");
+      MS_LOG(INFO) << "Rename op type from " << origin_op << " to " << target_op_name << " for op "
+                   << origin_op->fullname_with_scope();
+      return origin_op;
+    } else {
+      return origin_op;
+    }
+  }
+
   // check through op custom pre-check function
   if (pre_check_func != nullptr) {
     auto ret = pre_check_func(origin_op);
@@ -67,8 +106,7 @@ CNodePtr AscendConvertConstInputToAttr::ConvertToTargetOp(const CNodePtr &origin
   // check supported if the op need
   auto graph = origin_op->func_graph();
   auto kernel_graph = graph->cast<KernelGraphPtr>();
-  auto is_need_check = convert_op_info->GetNeedCheckFlag();
-  if (is_need_check) {
+  if (need_tbe_check) {
     auto is_dynamic = common::AnfAlgo::IsDynamicShape(origin_op);
     // when cnode is a dynamic shape node, if origin op supported, use origin op
     if (is_dynamic) {
@@ -79,7 +117,7 @@ CNodePtr AscendConvertConstInputToAttr::ConvertToTargetOp(const CNodePtr &origin
       }
     }
 
-    auto target_op = CreateTargetOp(origin_op, convert_op_info);
+    auto target_op = CreateTargetOp(origin_op, op_adaptation_info);
     if (target_op == nullptr) {
       MS_LOG(DEBUG) << "Create target op failed for node " << origin_op->fullname_with_scope();
       return origin_op;
@@ -95,7 +133,7 @@ CNodePtr AscendConvertConstInputToAttr::ConvertToTargetOp(const CNodePtr &origin
     }
     return target_op;
   } else {
-    auto target_op = CreateTargetOp(origin_op, convert_op_info);
+    auto target_op = CreateTargetOp(origin_op, op_adaptation_info);
     if (target_op == nullptr) {
       MS_LOG(DEBUG) << "Create target op failed for node " << origin_op->fullname_with_scope();
       return origin_op;
@@ -192,12 +230,11 @@ ValuePtr CreateValueFromTensor(const tensor::TensorPtr &tensor) {
   return ret;
 }
 
-CNodePtr AscendConvertConstInputToAttr::CreateTargetOp(const CNodePtr &origin_op,
-                                                       ConvertOpInfo *convert_op_info) const {
+CNodePtr AscendVmOpAdapter::CreateTargetOp(const CNodePtr &origin_op, OpAdaptationInfo *op_adaptation_info) const {
   MS_EXCEPTION_IF_NULL(origin_op);
-  MS_EXCEPTION_IF_NULL(convert_op_info);
-  auto target_op_name = convert_op_info->GetTargetOpName();
-  auto input_attr_info_map = convert_op_info->GetInputAttrInfoMap();
+  MS_EXCEPTION_IF_NULL(op_adaptation_info);
+  auto target_op_name = op_adaptation_info->GetTargetOpName();
+  auto input_attr_info_map = op_adaptation_info->GetInputAttrInfoMap();
 
   auto origin_primitive = GetCNodePrimitive(origin_op);
   MS_EXCEPTION_IF_NULL(origin_primitive);
@@ -250,11 +287,11 @@ CNodePtr AscendConvertConstInputToAttr::CreateTargetOp(const CNodePtr &origin_op
   return target_op;
 }
 
-bool AscendConvertConstInputToAttr::ConvertInputToAttr(const CNodePtr &origin_op, const string &target_op_name,
-                                                       const std::vector<std::string> &input_names_vec, size_t i,
-                                                       const std::shared_ptr<AnfNode> &input_node,
-                                                       const std::map<size_t, InputAttrInfo>::iterator &iter,
-                                                       const std::shared_ptr<Primitive> &target_primitive) const {
+bool AscendVmOpAdapter::ConvertInputToAttr(const CNodePtr &origin_op, const string &target_op_name,
+                                           const std::vector<std::string> &input_names_vec, size_t i,
+                                           const std::shared_ptr<AnfNode> &input_node,
+                                           const std::map<size_t, InputAttrInfo>::iterator &iter,
+                                           const std::shared_ptr<Primitive> &target_primitive) const {
   auto value_node = input_node->cast<ValueNodePtr>();
   MS_EXCEPTION_IF_NULL(value_node);
   MS_LOG(DEBUG) << "start erase input[" << i
@@ -282,9 +319,9 @@ bool AscendConvertConstInputToAttr::ConvertInputToAttr(const CNodePtr &origin_op
   return true;
 }
 
-std::string AscendConvertConstInputToAttr::GetAttrName(const string &target_op_name,
-                                                       const std::map<size_t, InputAttrInfo>::iterator &iter,
-                                                       const string &input_name) const {
+std::string AscendVmOpAdapter::GetAttrName(const string &target_op_name,
+                                           const std::map<size_t, InputAttrInfo>::iterator &iter,
+                                           const string &input_name) const {
   auto attr_name = iter->second.GetAttrName();
   if (attr_name.empty()) {
     MS_LOG(INFO) << "Attr name is empty for op " << target_op_name << ", use input name " << input_name << " instead.";
@@ -295,9 +332,9 @@ std::string AscendConvertConstInputToAttr::GetAttrName(const string &target_op_n
   return attr_name;
 }
 
-ValuePtr AscendConvertConstInputToAttr::UpdateAttrValue(const CNodePtr &origin_op,
-                                                        const std::map<size_t, InputAttrInfo>::iterator &iter,
-                                                        const ValuePtr &value, const string &attr_name) const {
+ValuePtr AscendVmOpAdapter::UpdateAttrValue(const CNodePtr &origin_op,
+                                            const std::map<size_t, InputAttrInfo>::iterator &iter,
+                                            const ValuePtr &value, const string &attr_name) const {
   ValuePtr ret = value;
   auto attr_dtype = iter->second.GetAttrDataType();
   if (attr_dtype.empty()) {
@@ -321,8 +358,7 @@ ValuePtr AscendConvertConstInputToAttr::UpdateAttrValue(const CNodePtr &origin_o
   return ret;
 }
 
-ValuePtr AscendConvertConstInputToAttr::UpdateAttrValueByDtype(const ValuePtr &value,
-                                                               const std::string &attr_data_type) const {
+ValuePtr AscendVmOpAdapter::UpdateAttrValueByDtype(const ValuePtr &value, const std::string &attr_data_type) const {
   static std::set<std::string> kListDataType = {"listInt", "listStr", "listBool", "listFloat"};
   auto iter = kListDataType.find(attr_data_type);
   ValuePtr ret = value;

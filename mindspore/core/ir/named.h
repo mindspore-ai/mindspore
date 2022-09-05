@@ -45,6 +45,10 @@ class MS_CORE_API Named : public Value {
   ///
   /// \return The name of object.
   const std::string &name() const { return name_; }
+  /// \brief Setting name of object.
+  ///
+  /// \no return.
+  void set_name(const std::string &name) { name_ = name; }
   /// \brief Check whether two Named objects are the same.
   ///
   /// \param[in] other The other Named to be compared with.
@@ -66,8 +70,8 @@ class MS_CORE_API Named : public Value {
   /// \brief Get hash id for named.
   ///
   /// \return The restored hash id of Named.
-  std::size_t Hash() const { return hash_id_; }
-  std::size_t hash() const override { return hash_id_; }
+  std::size_t Hash() const { return std::hash<std::string>{}(name_); }
+  std::size_t hash() const override { return std::hash<std::string>{}(name_); }
   /// \brief Overloads operator << for Named.
   ///
   /// \param os The output stream.

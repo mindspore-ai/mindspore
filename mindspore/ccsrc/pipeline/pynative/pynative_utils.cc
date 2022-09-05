@@ -19,7 +19,7 @@
 #include <vector>
 #include "pipeline/pynative/pynative_cache.h"
 #include "backend/common/optimizer/helper.h"
-#include "backend/common/optimizer/const_input_to_attr_factory.h"
+#include "backend/common/optimizer/op_adaptation_info_factory.h"
 #include "pybind_api/ir/primitive_py.h"
 #include "utils/ms_context.h"
 #include "ir/cell.h"
@@ -476,12 +476,12 @@ bool DataConvert::NeedConvertConstInputToAttr(const FrontendOpRunInfoPtr &op_run
     return !input_to_attr_ptr->empty();
   }
 
-  // Ascend const input to attr move to AscendConvertConstInputToAttr
+  // Ascend const input to attr move to AscendVmOpAdapter
   if (device_target == kAscendDevice) {
     return false;
   }
 
-  auto reg_info = opt::ConvertOpInfoRegister::GetInstance().GetConvertOpInfo(
+  auto reg_info = opt::OpAdaptationInfoRegister::GetInstance().GetOpAdaptationInfo(
     op_run_info->base_op_run_info.op_name, device_target, PyNativeAlgo::Common::IsDynamicShape(op_run_info));
   if (reg_info == nullptr) {
     return false;
