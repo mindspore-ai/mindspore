@@ -109,6 +109,7 @@ Nonlinear Activation Function Layer
     mindspore.nn.ELU
     mindspore.nn.FastGelu
     mindspore.nn.GELU
+    mindspore.nn.get_activation
     mindspore.nn.Hardtanh
     mindspore.nn.HShrink
     mindspore.nn.HSigmoid
@@ -403,7 +404,6 @@ Tools
 
     mindspore.nn.ClipByNorm
     mindspore.nn.Flatten
-    mindspore.nn.get_activation
     mindspore.nn.L1Regularizer
     mindspore.nn.Norm
     mindspore.nn.OneHot

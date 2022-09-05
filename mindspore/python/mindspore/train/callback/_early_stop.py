@@ -72,7 +72,7 @@ class EarlyStopping(Callback):
         baseline (float): Baseline value for the monitor. When the monitor value shows
             improvement over the history best value and the baseline, the internal
             wait counter will be set to zero. Default: None.
-        restore_best_weights: Whether to restore model weights from
+        restore_best_weights (bool): Whether to restore model weights from
             the epoch with the best value of the monitored quantity.
             If False, the model weights obtained at the last step of
             training are used. Default: False.

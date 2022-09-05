@@ -103,7 +103,7 @@
         .. note:: 同一批次数据应放在一个张量中。
 
         参数：
-            - **predict_data** (Tensor) - 预测样本，数据可以是单个张量、张量列表或张量元组。
+            - **predict_data** (Union[Tensor, list[Tensor], tuple[Tensor]], 可选) - 预测样本，数据可以是单个张量、张量列表或张量元组。
 
         返回：
             Dict，用于加载分布式checkpoint的参数layout字典。它总是作为 `load_distributed_checkpoint()` 函数的一个入参。
@@ -132,7 +132,7 @@
         输入样本得到预测结果。
 
         参数：
-            - **predict_data** (Tensor) - 预测样本，数据可以是单个张量、张量列表或张量元组。
+            - **predict_data** (Union[Tensor, list[Tensor], tuple[Tensor]], 可选) - 预测样本，数据可以是单个张量、张量列表或张量元组。
 
         返回：
             返回预测结果，类型是Tensor或Tensor元组。

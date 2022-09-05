@@ -32,7 +32,7 @@ finally:
 
 class OcclusionSensitivity(Metric):
     """
-    Calculates the occlusion sensitivity of the model for a given image. It illustrates which parts of an image are
+    Calculates the occlusion sensitivity of the model for a given image, which illustrates which parts of an image are
     most important for a network's classification.
 
     Occlusion sensitivity refers to how the predicted probability changes with the change of the occluded

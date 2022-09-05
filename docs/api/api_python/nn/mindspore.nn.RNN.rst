@@ -5,6 +5,8 @@ mindspore.nn.RNN
 
     循环神经网络（RNN）层，其使用的激活函数为tanh或relu。
 
+    将具有 :math:`\tanh` 或 :math:`\text{ReLU}` 非线性的RNN层应用到输入。
+
     对输入序列中的每个元素，每层的计算公式如下：
 
     .. math::

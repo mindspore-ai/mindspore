@@ -27,7 +27,7 @@ class Precision(EvaluationBase):
     Calculates precision for classification and multilabel data.
 
     The precision function creates two local variables, :math:`\text{true_positive}` and
-    :math:`\text{false_positive}`, that are used to compute the precision. The calculation formula is:
+    :math:`\text{false_positive}`, which are used to compute the precision. The calculation formula is:
 
     .. math::
         \text{precision} = \frac{\text{true_positive}}{\text{true_positive} + \text{false_positive}}

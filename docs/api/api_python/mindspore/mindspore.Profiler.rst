@@ -33,7 +33,7 @@ mindspore.Profiler
 
     .. py:method:: start()
 
-        开启Profiler数据采集，可以按条件开启Profiler。
+        开启Profiler数据采集。可以按条件开启Profiler。
 
         异常：
             - **RuntimeError** - profiler已经开启。
@@ -42,7 +42,7 @@ mindspore.Profiler
 
     .. py:method:: stop()
 
-        停止Profiler，可以按条件停止Profiler。
+        停止Profiler。可以按条件停止Profiler。
 
         异常：
             - **RuntimeError** - profiler没有开启。

@@ -555,7 +555,7 @@ class Dataset:
             It is recommended that the repeat operation applied after the batch operation finished.
 
         Args:
-            batch_size (int or function): The number of rows each batch is created with. An
+            batch_size (Union[int, Callable]): The number of rows each batch is created with. An
                 int or callable object which takes exactly 1 parameter, BatchInfo.
             drop_remainder (bool, optional): Determines whether or not to drop the last block
                 whose data row number is less than batch size (default=False). If True, and if there are less
@@ -1971,10 +1971,9 @@ class TextBaseDataset(Dataset):
         Desired source dataset is a text type dataset.
 
         Build a vocab from a dataset. This would collect all the unique words in a dataset and return a vocab
-        which contains top_k most frequent words (if top_k is specified)
+        which contains top_k most frequent words (if top_k is specified).
 
         Args:
-
             columns(Union[str, list[str]]): Column names to get words from.
             freq_range(tuple[int]): A tuple of integers (min_frequency, max_frequency). Words within the frequency
                 range will be stored.
@@ -2042,7 +2041,6 @@ class TextBaseDataset(Dataset):
         Desired source dataset is a text type dataset.
 
         Args:
-
             columns(list[str]): Column names to get words from.
             vocab_size(int): Vocabulary size.
             character_coverage(float): Percentage of characters covered by the model, must be between

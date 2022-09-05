@@ -14,7 +14,7 @@ mindspore.nn.Precision
         在多标签情况下， :math:`y` 和 :math:`y_{pred}` 的元素必须为0或1。
 
     参数：
-        - **eval_type** （str）- 支持'classification'和'multilabel'。默认值：'classification'。
+        - **eval_type** (str) - 支持'classification'和'multilabel'。默认值：'classification'。
 
     .. py:method:: clear()
 

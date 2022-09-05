@@ -460,9 +460,8 @@ class CoNLL2000Dataset(SourceDataset, TextBaseDataset):
     A source dataset that reads and parses CoNLL2000 dataset.
 
     The generated dataset has three columns: :py:obj:`[word, pos_tag, chunk_tag]`.
-    The tensor of column :py:obj:`word` is of the string type.
-    The tensor of column :py:obj:`pos_tag` is of the string type.
-    The tensor of column :py:obj:`chunk_tag` is of the string type.
+    The tensors of column :py:obj:`word`, column :py:obj:`pos_tag`,
+    and column :py:obj:`chunk_tag` are of the string type.
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
