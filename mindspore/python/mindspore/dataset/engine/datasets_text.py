@@ -457,7 +457,7 @@ class CLUEDataset(SourceDataset, TextBaseDataset):
 
 class CoNLL2000Dataset(SourceDataset, TextBaseDataset):
     """
-    A source dataset that reads and parses CoNLL2000 dataset.
+    A source dataset that reads and parses CoNLL2000 chunking dataset.
 
     The generated dataset has three columns: :py:obj:`[word, pos_tag, chunk_tag]`.
     The tensor of column :py:obj:`word` is of the string type.
@@ -465,13 +465,14 @@ class CoNLL2000Dataset(SourceDataset, TextBaseDataset):
     The tensor of column :py:obj:`chunk_tag` is of the string type.
 
     Args:
-        dataset_dir (str): Path to the root directory that contains the dataset.
-        usage (str, optional): Usage of this dataset, can be 'train', 'test',  or 'all'. 'train' will read from
-            8936 train samples, 'test' will read from 2,012 test samples,
-            'all' will read from all 1,0948 samples (default=None, all samples).
-        num_samples (int, optional): Number of samples (rows) to read (default=None, reads the full dataset).
-        shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch
-            (default=Shuffle.GLOBAL). Bool type and Shuffle enum are both supported to pass in.
+        dataset_dir (str): Path to the root directory that contains the CoNLL2000 chunking dataset.
+        usage (str, optional): Usage of dataset, can be 'train', 'test',  or 'all' (default=None, read all samples).
+            For dataset, 'train' will read from 8,936 train samples,
+            'test' will read from 2,012 test samples,
+            'all' will read from all 1,0948 samples.
+        num_samples (int, optional): Number of samples (rows) to be read (default=None, read the full dataset).
+        shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
+            (default=Shuffle.GLOBAL).
             If shuffle is False, no shuffling will be performed.
             If shuffle is True, performs global shuffle.
             There are three levels of shuffling, desired shuffle enum defined by mindspore.dataset.Shuffle.
@@ -499,6 +500,38 @@ class CoNLL2000Dataset(SourceDataset, TextBaseDataset):
     Examples:
         >>> conll2000_dataset_dir = "/path/to/conll2000_dataset_dir"
         >>> dataset = ds.CoNLL2000Dataset(dataset_dir=conll2000_dataset_dir, usage='all')
+
+    About CoNLL2000 Dataset:
+
+    The CoNLL2000 chunking dataset consists of the text from sections 15-20 of the Wall Street Journal corpus.
+    Texts are chunked using IOB notation, and the chunk type has NP, VP, PP, ADJP and ADVP.
+    The dataset consist of three columns separated by spaces. The first column contains the current word,
+    the second its part-of-speech tag as derived by the Brill tagger and the third its chunk tag as derived from
+    the WSJ corpus. The dataset is mainly used for text classification, given the text, predict the chunk of the text.
+
+    You can unzip the dataset files into the following structure and read by MindSpore's API:
+
+    .. code-block::
+
+        .
+        └── conll2000_dataset_dir
+             ├── train.txt
+             ├── test.txt
+             └── readme.txt
+
+    Citation:
+
+    .. code-block::
+
+        @inproceedings{tksbuchholz2000conll,
+        author     = {Tjong Kim Sang, Erik F. and Sabine Buchholz},
+        title      = {Introduction to the CoNLL-2000 Shared Task: Chunking},
+        editor     = {Claire Cardie and Walter Daelemans and Claire Nedellec and Tjong Kim Sang, Erik},
+        booktitle  = {Proceedings of CoNLL-2000 and LLL-2000},
+        publisher  = {Lisbon, Portugal},
+        pages      = {127--132},
+        year       = {2000}
+        }
     """
 
     @check_conll2000_dataset
