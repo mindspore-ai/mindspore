@@ -424,10 +424,21 @@ class OrderEnforcer {
     return need_insert_loads;
   }
 
-  std::vector<CNodePtr> GetSpecialLoads(const std::map<std::string, std::vector<CNodePtr>> &loads_map1,
-                                        const std::map<std::string, std::vector<CNodePtr>> &loads_map2,
-                                        const std::map<std::string, std::vector<CNodePtr>> &loads_map3,
-                                        const std::set<CNodePtr> &call_lodes) const {
+  using RefLoads = std::map<std::string, std::vector<CNodePtr>>;
+
+  void AppendLoads(const RefLoads &loads_map, std::vector<CNodePtr> *need_insert_loads) {
+    for (auto &refkey_load_special : loads_map) {
+      auto &loads = refkey_load_special.second;
+      // If loads size > 1, mean has exist in refkey_loads.
+      if (loads.size() == 1) {
+        (void)need_insert_loads->emplace_back(loads[0]);
+      }
+    }
+  }
+
+  std::vector<CNodePtr> GetSpecialLoads(const RefLoads &loads_map1, const RefLoads &loads_map2,
+                                        const RefLoads &loads_map3, const RefLoads &loads_map4,
+                                        const std::set<CNodePtr> &call_nodes) {
     std::vector<CNodePtr> need_insert_loads;
     for (auto &refkey_load : loads_map1) {
       auto &loads = refkey_load.second;
@@ -436,24 +447,13 @@ class OrderEnforcer {
                              [](const CNodePtr &load) { return load; });
       }
     }
-    for (auto &refkey_load_special : loads_map2) {
-      auto &loads = refkey_load_special.second;
-      // If loads size > 1, mean has exist in refkey_loads.
-      if (loads.size() == 1) {
-        (void)need_insert_loads.emplace_back(loads[0]);
-      }
-    }
-    for (auto &refkey_load_special : loads_map3) {
-      auto &loads = refkey_load_special.second;
-      // If loads size > 1, mean has exist in refkey_loads.
-      if (loads.size() == 1) {
-        (void)need_insert_loads.emplace_back(loads[0]);
-      }
-    }
+    AppendLoads(loads_map2, &need_insert_loads);
+    AppendLoads(loads_map3, &need_insert_loads);
+    AppendLoads(loads_map4, &need_insert_loads);
     // Add call node will output is a AbstractRefTensor and ref_key is kAnyValue.
-    for (const auto &call_lode : call_lodes) {
-      if (std::find(need_insert_loads.begin(), need_insert_loads.end(), call_lode) == need_insert_loads.end()) {
-        need_insert_loads.push_back(call_lode);
+    for (const auto &call_node : call_nodes) {
+      if (std::find(need_insert_loads.begin(), need_insert_loads.end(), call_node) == need_insert_loads.end()) {
+        need_insert_loads.push_back(call_node);
       }
     }
     return need_insert_loads;
@@ -466,6 +466,43 @@ class OrderEnforcer {
                                     IsPrimitiveCNode(input->cast<CNodePtr>()->input(0), prim::kPrimSwitchLayer)));
   }
 
+  void ProcessReturnLoad(const AnfNodePtr &node, const RefLoads &refkey_loads, RefLoads *refkey_loads_return_is_load) {
+    auto return_input = node->cast<CNodePtr>()->input(1);
+    while (IsPrimitiveCNode(return_input, prim::kPrimDepend)) {
+      return_input = return_input->cast<CNodePtr>()->input(1);
+    }
+    auto check_load = [this, &refkey_loads, &refkey_loads_return_is_load](const AnfNodePtr &inp_node) {
+      auto load = inp_node->cast<CNodePtr>();
+      auto refkey = GetRefKey(load->input(1));
+      if (refkey == "") {
+        MS_LOG(INFO) << "Load without ref key:" << load->DebugString();
+        return;
+      }
+      auto iter = refkey_loads.find(refkey);
+      if (iter != refkey_loads.end()) {
+        size_t load_size = iter->second.size();
+        if (load_size > 1) {
+          return;
+        }
+      }
+      (void)(*refkey_loads_return_is_load)[refkey].emplace_back(load);
+    };
+    if (IsPrimitiveCNode(return_input, prim::kPrimMakeTuple)) {
+      const auto &make_tuple = return_input->cast<CNodePtr>();
+      const auto &make_tuple_inputs = make_tuple->inputs();
+      if (make_tuple_inputs.size() <= 1) {
+        return;
+      }
+      for (size_t i = 1; i < make_tuple_inputs.size(); ++i) {
+        if (IsPrimitiveCNode(make_tuple_inputs[i], prim::kPrimLoad)) {
+          check_load(make_tuple_inputs[i]);
+        }
+      }
+    } else if (IsPrimitiveCNode(return_input, prim::kPrimLoad)) {
+      check_load(return_input);
+    }
+  }
+
   std::vector<CNodePtr> GetNeedInsertLoads() {
     auto check_nodes = TopoSort(func_graph_->get_return());
     static const bool enable_all_load = common::GetEnv("MS_DEV_ENABLE_LOAD_INSERT_TENSORMOVE") == "1";
@@ -473,17 +510,18 @@ class OrderEnforcer {
     if (enable_all_load) {
       return GetAllLoads(check_nodes);
     }
-    std::map<std::string, std::vector<CNodePtr>> refkey_loads;
-    std::map<std::string, std::vector<CNodePtr>> refkey_loads_in_call_or_partial;
-    std::map<std::string, std::vector<CNodePtr>> refkey_loads_input_is_call_or_partial;
-    std::set<CNodePtr> ref_call_lodes;
+    RefLoads refkey_loads;
+    RefLoads refkey_loads_in_call_or_partial;
+    RefLoads refkey_loads_input_is_call_or_partial;
+    RefLoads refkey_loads_return_is_load;
+    std::set<CNodePtr> ref_call_nodes;
     for (auto &node : check_nodes) {
       // Record load refkey
       if (IsPrimitiveCNode(node, prim::kPrimLoad)) {
         auto load = node->cast<CNodePtr>();
         auto input = load->input(1);
         if (CheckLoadInput(input)) {
-          (void)ref_call_lodes.insert(load);
+          (void)ref_call_nodes.insert(load);
         }
         auto refkey = GetRefKey(input);
         if (refkey == "") {
@@ -499,6 +537,12 @@ class OrderEnforcer {
           (void)refkey_loads_input_is_call_or_partial[refkey].emplace_back(load);
         }
       }
+
+      // Check if the return node is a load.
+      if (IsPrimitiveCNode(node, prim::kPrimReturn)) {
+        ProcessReturnLoad(node, refkey_loads, &refkey_loads_return_is_load);
+      }
+
       // Find special load which is in call or partial
       if (!IsPrimitiveCNode(node, prim::kPrimCall) && !IsPrimitiveCNode(node, prim::kPrimPartial) &&
           !(node->isa<CNode>() && IsValueNode<FuncGraph>(node->cast<CNodePtr>()->input(0)))) {
@@ -522,7 +566,7 @@ class OrderEnforcer {
       }
     }
     return GetSpecialLoads(refkey_loads, refkey_loads_in_call_or_partial, refkey_loads_input_is_call_or_partial,
-                           ref_call_lodes);
+                           refkey_loads_return_is_load, ref_call_nodes);
   }
 
   void InsertTensorMoveForLoad(const CNodePtr &node) {

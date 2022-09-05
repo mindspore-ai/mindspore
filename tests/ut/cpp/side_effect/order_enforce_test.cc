@@ -100,7 +100,7 @@ TEST_F(TestSideEffectOrderEnforce, TwoLoads) {
 
   // Check tensor move indexes.
   auto tensor_move_indexes = GetInsertTensorMoveIndexes(res->func_graph());
-  std::vector<size_t> expect_indexes = {0, 1};
+  std::vector<size_t> expect_indexes = {0, 1, 2};
   ASSERT_EQ(tensor_move_indexes.size(), expect_indexes.size());
   auto result = tensor_move_indexes == expect_indexes;
   ASSERT_TRUE(result);
@@ -157,7 +157,7 @@ TEST_F(TestSideEffectOrderEnforce, CallOutAsArg) {
 
   // Check tensor move indexes.
   auto tensor_move_indexes = GetInsertTensorMoveIndexes(res->func_graph());
-  std::vector<size_t> expect_indexes = {1};
+  std::vector<size_t> expect_indexes = {0, 1};
   ASSERT_EQ(tensor_move_indexes.size(), expect_indexes.size());
   auto result = tensor_move_indexes == expect_indexes;
   ASSERT_TRUE(result);
