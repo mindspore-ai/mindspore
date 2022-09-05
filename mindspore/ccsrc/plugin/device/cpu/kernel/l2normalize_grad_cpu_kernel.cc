@@ -19,6 +19,7 @@
 #include <string>
 #include <memory>
 #include <utility>
+#include "mindspore/core/ops/grad/l2_normalize_grad.h"
 
 namespace mindspore {
 namespace kernel {
@@ -27,16 +28,19 @@ constexpr size_t kL2NormalizeGradInputsNum = 3;
 constexpr size_t kL2NormalizeGradOutputsNum = 1;
 
 template <typename T>
-class L2NormalizeGradCpuFunc : public DeprecatedCpuKernelFunc {
+class L2NormalizeGradCpuFunc : public CpuKernelFunc {
  public:
   L2NormalizeGradCpuFunc() = default;
   ~L2NormalizeGradCpuFunc() override = default;
-  void InitFunc(const CNodePtr &kernel_node) override;
+  void InitFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                const std::vector<KernelTensorPtr> &outputs) override;
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
   bool RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                const std::vector<AddressPtr> &outputs) override;
 
  private:
-  void CheckInputShape(const ShapeVector &output_shape);
+  int CheckInputShape(const ShapeVector &output_shape);
   std::vector<size_t> OneDimIndexToHighDimIndex(size_t one_dim_index);
   void HighDimIndexToOneDimIndex(size_t *one_dim_index, const std::vector<size_t> &high_dim_index);
   std::vector<T> GetVector(const std::vector<size_t> &high_dim_index, const T *x);
@@ -51,14 +55,34 @@ class L2NormalizeGradCpuFunc : public DeprecatedCpuKernelFunc {
 };
 
 template <typename T>
-void L2NormalizeGradCpuFunc<T>::InitFunc(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  for (size_t i = 0; i < kL2NormalizeGradInputsNum; i++) {
-    (void)input_shape_list_.emplace_back(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, i));
+void L2NormalizeGradCpuFunc<T>::InitFunc(const BaseOperatorPtr &base_operator,
+                                         const std::vector<KernelTensorPtr> &inputs,
+                                         const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->name();
+  auto l2_normalize_grad_ptr = std::dynamic_pointer_cast<ops::L2NormalizeGrad>(base_operator);
+  if (l2_normalize_grad_ptr == nullptr) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', cast 'L2NormalizeGrad' ops failed!";
   }
-  auto output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
-  CheckInputShape(output_shape);
+  epsilon_ = static_cast<T>(l2_normalize_grad_ptr->get_epsilon());
+  axis_ = LongToInt(l2_normalize_grad_ptr->get_axis());
+}
+
+template <typename T>
+int L2NormalizeGradCpuFunc<T>::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                      const std::vector<KernelTensorPtr> &outputs,
+                                      const std::map<uint32_t, tensor::TensorPtr> &) {
+  input_shape_list_.clear();
+  for (size_t i = 0; i < kL2NormalizeGradInputsNum; i++) {
+    (void)input_shape_list_.emplace_back(inputs[i]->GetShapeVector());
+  }
+  auto output_shape = outputs[0]->GetShapeVector();
+  auto ret = CheckInputShape(output_shape);
+  if (ret != KRET_OK) {
+    return ret;
+  }
+
+  int input_dim_length = SizeToInt(input_shape_list_[0].size());
+  axis_ = axis_ < 0 ? (axis_ + input_dim_length) : axis_;
 
   int output_dim_length = output_shape.size();
   dim_elem_num_list_.resize(output_dim_length, 1);
@@ -66,11 +90,7 @@ void L2NormalizeGradCpuFunc<T>::InitFunc(const CNodePtr &kernel_node) {
     auto idx = IntToSize(i);
     dim_elem_num_list_[idx] = LongToSize(output_shape[idx + 1]) * dim_elem_num_list_[idx + 1];
   }
-
-  int axis = LongToInt(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "axis"));
-  int input_dim_length = SizeToInt(input_shape_list_[0].size());
-  axis_ = axis < 0 ? (axis + input_dim_length) : axis;
-  epsilon_ = static_cast<T>(common::AnfAlgo::GetNodeAttr<float>(kernel_node, "epsilon"));
+  return KRET_OK;
 }
 
 template <typename T>
@@ -97,20 +117,21 @@ bool L2NormalizeGradCpuFunc<T>::RunFunc(const std::vector<AddressPtr> &inputs, c
 }
 
 template <typename T>
-void L2NormalizeGradCpuFunc<T>::CheckInputShape(const ShapeVector &output_shape) {
-  for (const auto &shape : input_shape_list_) {
-    if (output_shape != shape) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                        << "', the dimension of input must be the same as output's, but got the dimension of input: "
-                        << Vector2Str(shape) << ", and the dimension of output: " << Vector2Str(output_shape);
-    }
+int L2NormalizeGradCpuFunc<T>::CheckInputShape(const ShapeVector &output_shape) {
+  if (std::any_of(input_shape_list_.begin(), input_shape_list_.end(),
+                  [output_shape](ShapeVector item) { return output_shape != item; })) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of input must be the same as output's";
+    return KRET_RESIZE_FAILED;
   }
+
   auto input_x_shape = input_shape_list_[0];
   if (input_x_shape.size() != 0) {
     if (std::any_of(input_x_shape.begin(), input_x_shape.end(), [](int64_t i) -> bool { return i == 0; })) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the input 'x' can not be null.";
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', the input 'x' can not be null.";
+      return KRET_RESIZE_FAILED;
     }
   }
+  return KRET_OK;
 }
 
 template <typename T>
@@ -197,10 +218,10 @@ void L2NormalizeGradCpuFunc<T>::GetOutput(const std::vector<T> &input_x_vector, 
 }
 
 template <typename T>
-std::shared_ptr<DeprecatedCpuKernelFunc> SpecializeL2NormGradFunc() {
+std::shared_ptr<CpuKernelFunc> SpecializeL2NormGradFunc() {
   return std::make_shared<L2NormalizeGradCpuFunc<T>>();
 }
-using SpecializeL2NormGradFuncCreator = std::function<std::shared_ptr<DeprecatedCpuKernelFunc>()>;
+using SpecializeL2NormGradFuncCreator = std::function<std::shared_ptr<CpuKernelFunc>()>;
 std::vector<std::pair<KernelAttr, SpecializeL2NormGradFuncCreator>> func_class_list = {
   {KernelAttr()
      .AddInputAttr(kNumberTypeFloat32)
@@ -216,15 +237,27 @@ std::vector<std::pair<KernelAttr, SpecializeL2NormGradFuncCreator>> func_class_l
    SpecializeL2NormGradFunc<float16>}};
 }  // namespace
 
-void L2NormalizeGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+bool L2NormalizeGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                       const std::vector<KernelTensorPtr> &outputs) {
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
-    MS_LOG(EXCEPTION) << "L2Norm does not support this kernel data type: " << kernel_attr;
+    MS_LOG(ERROR) << "For 'Arithmetic', it does not support this kernel data type: " << kernel_attr;
+    return false;
   }
-
   func_obj_ = func_class_list[index].second();
-  func_obj_->InitFunc(kernel_node);
+  func_obj_->InitFunc(base_operator, inputs, outputs);
+  return true;
+}
+
+int L2NormalizeGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                        const std::vector<KernelTensorPtr> &inputs,
+                                        const std::vector<KernelTensorPtr> &outputs,
+                                        const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  return func_obj_->Resize(base_operator, inputs, outputs);
 }
 
 std::vector<KernelAttr> L2NormalizeGradCpuKernelMod::GetOpSupport() {

@@ -14,23 +14,28 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_L2NORMALIZE_GRAD_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_L2NORMALIZE_GRAD_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_L2NORMALIZE_GRAD_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_L2NORMALIZE_GRAD_CPU_KERNEL_H_
 
 #include <vector>
 #include <memory>
+#include <map>
 
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-class L2NormalizeGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class L2NormalizeGradCpuKernelMod : public NativeCpuKernelMod {
  public:
   L2NormalizeGradCpuKernelMod() = default;
   ~L2NormalizeGradCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
@@ -40,7 +45,7 @@ class L2NormalizeGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  std::shared_ptr<DeprecatedCpuKernelFunc> func_obj_;
+  std::shared_ptr<CpuKernelFunc> func_obj_;
 };
 }  // namespace kernel
 }  // namespace mindspore
