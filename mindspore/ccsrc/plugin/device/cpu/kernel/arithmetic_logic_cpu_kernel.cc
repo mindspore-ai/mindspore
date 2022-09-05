@@ -45,7 +45,7 @@ constexpr auto kEqual = "Equal";
 constexpr auto kNotEqual = "NotEqual";
 
 template <typename T>
-class ArithLogicCpuTypeFunc : public DeprecatedCpuKernelFunc {
+class ArithLogicCpuTypeFunc : public CpuKernelFunc {
  public:
   ArithLogicCpuTypeFunc() = default;
   ~ArithLogicCpuTypeFunc() override = default;
@@ -58,36 +58,14 @@ class ArithLogicCpuTypeFunc : public DeprecatedCpuKernelFunc {
     return true;
   }
 
-  void InitFunc(const CNodePtr &kernel_node) override {
-    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-    input_shape1_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    input_shape2_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    output_shape_ = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
-    if (output_shape_.empty()) {
-      (void)output_shape_.insert(output_shape_.begin(), 1);
-    }
-
-    output_size_ = 1;
-    for (size_t i = 0; i < output_shape_.size(); ++i) {
-      output_size_ *= LongToSize(output_shape_[i]);
-    }
-
-    size_t l = input_shape1_.size();
-    for (size_t i = 0; i < output_shape_.size() - l; ++i) {
-      (void)input_shape1_.insert(input_shape1_.begin(), 1);
-    }
-    l = input_shape2_.size();
-    for (size_t i = 0; i < output_shape_.size() - l; ++i) {
-      (void)input_shape2_.insert(input_shape2_.begin(), 1);
-    }
-    CPUKernelUtils::GetElementNumEveryDim(input_shape1_, &input_element_num1_);
-    CPUKernelUtils::GetElementNumEveryDim(input_shape2_, &input_element_num2_);
-    CPUKernelUtils::GetElementNumEveryDim(output_shape_, &output_element_num_);
-    dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-    auto dtype_1 = AnfAlgo::GetInputDeviceDataType(kernel_node, 1);
+  void InitFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                const std::vector<KernelTensorPtr> &outputs) override {
+    kernel_name_ = base_operator->name();
+    dtype_ = inputs.at(kIndex0)->GetDtype();
+    auto dtype_1 = inputs.at(kIndex1)->GetDtype();
     if (dtype_ != dtype_1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                        << "', the 'input1' and 'input2' must have the same data type, but got type of 'input1': "
+                        << "', the 'input1' and 'input2' should have the same data type, but got type of 'input1': "
                         << dtype_ << ", and the type of 'input2': " << dtype_1;
     }
     static std::unordered_map<std::string, TypeComputeFunc> arithmetic_logic_func_map;
@@ -109,6 +87,29 @@ class ArithLogicCpuTypeFunc : public DeprecatedCpuKernelFunc {
                         << kernel_name_;
     }
     compute_func_ = arithmetic_logic_func_map.at(kernel_name_);
+  }
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override {
+    input_shape1_ = inputs.at(kIndex0)->GetShapeVector();
+    input_shape2_ = inputs.at(kIndex1)->GetShapeVector();
+    output_shape_ = outputs.at(kIndex0)->GetShapeVector();
+    if (output_shape_.empty()) {
+      (void)output_shape_.insert(output_shape_.begin(), 1);
+    }
+    output_size_ = SizeOf(output_shape_);
+    size_t l = input_shape1_.size();
+    for (size_t i = 0; i < output_shape_.size() - l; ++i) {
+      (void)input_shape1_.insert(input_shape1_.begin(), 1);
+    }
+    l = input_shape2_.size();
+    for (size_t i = 0; i < output_shape_.size() - l; ++i) {
+      (void)input_shape2_.insert(input_shape2_.begin(), 1);
+    }
+    CPUKernelUtils::GetElementNumEveryDim(input_shape1_, &input_element_num1_);
+    CPUKernelUtils::GetElementNumEveryDim(input_shape2_, &input_element_num2_);
+    CPUKernelUtils::GetElementNumEveryDim(output_shape_, &output_element_num_);
+    return KRET_OK;
   }
 
  private:
@@ -140,7 +141,7 @@ class ArithLogicCpuTypeFunc : public DeprecatedCpuKernelFunc {
 };
 
 template <typename T>
-class ArithComplexLogicCpuTypeFunc : public DeprecatedCpuKernelFunc {
+class ArithComplexLogicCpuTypeFunc : public CpuKernelFunc {
  public:
   ArithComplexLogicCpuTypeFunc() = default;
   ~ArithComplexLogicCpuTypeFunc() override = default;
@@ -153,33 +154,11 @@ class ArithComplexLogicCpuTypeFunc : public DeprecatedCpuKernelFunc {
     return true;
   }
 
-  void InitFunc(const CNodePtr &kernel_node) override {
-    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-    input_shape1_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    input_shape2_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    output_shape_ = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
-    if (output_shape_.empty()) {
-      (void)output_shape_.insert(output_shape_.begin(), 1);
-    }
-
-    output_size_ = 1;
-    for (size_t i = 0; i < output_shape_.size(); ++i) {
-      output_size_ *= LongToSize(output_shape_[i]);
-    }
-
-    size_t l = input_shape1_.size();
-    for (size_t i = 0; i < output_shape_.size() - l; ++i) {
-      (void)input_shape1_.insert(input_shape1_.begin(), 1);
-    }
-    l = input_shape2_.size();
-    for (size_t i = 0; i < output_shape_.size() - l; ++i) {
-      (void)input_shape2_.insert(input_shape2_.begin(), 1);
-    }
-    CPUKernelUtils::GetElementNumEveryDim(input_shape1_, &input_element_num1_);
-    CPUKernelUtils::GetElementNumEveryDim(input_shape2_, &input_element_num2_);
-    CPUKernelUtils::GetElementNumEveryDim(output_shape_, &output_element_num_);
-    dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-    auto dtype_1 = AnfAlgo::GetInputDeviceDataType(kernel_node, 1);
+  void InitFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                const std::vector<KernelTensorPtr> &outputs) override {
+    kernel_name_ = base_operator->name();
+    dtype_ = inputs.at(kIndex0)->GetDtype();
+    auto dtype_1 = inputs.at(kIndex1)->GetDtype();
     if (dtype_ != dtype_1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
                         << "', the 'input1' and 'input2' should have the same data type, but got type of 'input1': "
@@ -193,6 +172,29 @@ class ArithComplexLogicCpuTypeFunc : public DeprecatedCpuKernelFunc {
                         << ", but got " << kernel_name_;
     }
     compute_func_ = arithmetic_logic_func_map.at(kernel_name_);
+  }
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override {
+    input_shape1_ = inputs.at(kIndex0)->GetShapeVector();
+    input_shape2_ = inputs.at(kIndex1)->GetShapeVector();
+    output_shape_ = outputs.at(kIndex0)->GetShapeVector();
+    if (output_shape_.empty()) {
+      (void)output_shape_.insert(output_shape_.begin(), 1);
+    }
+    output_size_ = SizeOf(output_shape_);
+    size_t l = input_shape1_.size();
+    for (size_t i = 0; i < output_shape_.size() - l; ++i) {
+      (void)input_shape1_.insert(input_shape1_.begin(), 1);
+    }
+    l = input_shape2_.size();
+    for (size_t i = 0; i < output_shape_.size() - l; ++i) {
+      (void)input_shape2_.insert(input_shape2_.begin(), 1);
+    }
+    CPUKernelUtils::GetElementNumEveryDim(input_shape1_, &input_element_num1_);
+    CPUKernelUtils::GetElementNumEveryDim(input_shape2_, &input_element_num2_);
+    CPUKernelUtils::GetElementNumEveryDim(output_shape_, &output_element_num_);
+    return KRET_OK;
   }
 
  private:
@@ -367,14 +369,14 @@ void ArithLogicCpuTypeFunc<T>::LessEqual(const T *input1, const T *input2, bool 
 }
 
 template <typename T>
-std::shared_ptr<DeprecatedCpuKernelFunc> SpecializeArithLogFunc() {
+std::shared_ptr<CpuKernelFunc> SpecializeArithLogFunc() {
   return std::make_shared<ArithLogicCpuTypeFunc<T>>();
 }
 template <typename T>
-std::shared_ptr<DeprecatedCpuKernelFunc> SpecializeArithLogComplexFunc() {
+std::shared_ptr<CpuKernelFunc> SpecializeArithLogComplexFunc() {
   return std::make_shared<ArithComplexLogicCpuTypeFunc<T>>();
 }
-using ArithLogicCpuFuncCreator = std::function<std::shared_ptr<DeprecatedCpuKernelFunc>()>;
+using ArithLogicCpuFuncCreator = std::function<std::shared_ptr<CpuKernelFunc>()>;
 static std::map<std::string, std::vector<std::pair<KernelAttr, ArithLogicCpuFuncCreator>>> kernel_attr_lists = {
   {kLess,
    {{KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
@@ -491,20 +493,33 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithLogicCpuFunc
      SpecializeArithLogFunc<bool>}}}};
 }  // namespace
 
-void ArithmeticLogicCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-  if (kernel_name != kernel_type_) {
-    MS_LOG(EXCEPTION) << "Need to be " << kernel_type_ << " but got kernel name as " << kernel_name;
+bool ArithmeticLogicCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                       const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->name();
+  if (kernel_name_ != kernel_type_) {
+    MS_LOG(ERROR) << "Need to be " << kernel_type_ << " but got kernel name as " << kernel_name_;
+    return false;
   }
 
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
-    MS_LOG(EXCEPTION) << "Arithmetic logic does not support this kernel data type: " << kernel_attr;
+    MS_LOG(ERROR) << "For 'Arithmetic', it does not support this kernel data type: " << kernel_attr;
+    return false;
   }
+  func_obj_ = kernel_attr_lists[kernel_name_][index].second();
+  func_obj_->InitFunc(base_operator, inputs, outputs);
+  return true;
+}
 
-  func_obj_ = kernel_attr_lists[kernel_name][index].second();
-  func_obj_->InitFunc(kernel_node);
+int ArithmeticLogicCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                        const std::vector<KernelTensorPtr> &inputs,
+                                        const std::vector<KernelTensorPtr> &outputs,
+                                        const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  return func_obj_->Resize(base_operator, inputs, outputs);
 }
 
 std::vector<KernelAttr> ArithmeticLogicCpuKernelMod::GetOpSupport() {
@@ -520,20 +535,34 @@ std::vector<KernelAttr> ArithmeticLogicCpuKernelMod::GetOpSupport() {
   return support_list;
 }
 
-void ArithmeticComplexLogicCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-  if (kernel_name != kernel_type_) {
-    MS_LOG(EXCEPTION) << "Need to be " << kernel_type_ << " but got kernel name as " << kernel_name;
+bool ArithmeticComplexLogicCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                              const std::vector<KernelTensorPtr> &inputs,
+                                              const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->name();
+  if (kernel_name_ != kernel_type_) {
+    MS_LOG(ERROR) << "Need to be " << kernel_type_ << " but got kernel name as " << kernel_name_;
+    return false;
   }
 
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
-    MS_LOG(EXCEPTION) << "Arithmetic logic does not support this kernel data type: " << kernel_attr;
+    MS_LOG(ERROR) << "For 'Arithmetic', it does not support this kernel data type: " << kernel_attr;
+    return false;
   }
+  func_obj_ = kernel_attr_lists[kernel_name_][index].second();
+  func_obj_->InitFunc(base_operator, inputs, outputs);
+  return true;
+}
 
-  func_obj_ = kernel_attr_lists[kernel_name][index].second();
-  func_obj_->InitFunc(kernel_node);
+int ArithmeticComplexLogicCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                               const std::vector<KernelTensorPtr> &inputs,
+                                               const std::vector<KernelTensorPtr> &outputs,
+                                               const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  return func_obj_->Resize(base_operator, inputs, outputs);
 }
 
 std::vector<KernelAttr> ArithmeticComplexLogicCpuKernelMod::GetOpSupport() {
