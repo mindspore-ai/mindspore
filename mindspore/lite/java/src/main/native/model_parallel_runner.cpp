@@ -15,7 +15,7 @@
  */
 
 #include <jni.h>
-#include "common/log.h"
+#include "common/log_adapter.h"
 #include "include/api/model_parallel_runner.h"
 #include "include/api/context.h"
 

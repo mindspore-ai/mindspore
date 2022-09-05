@@ -16,7 +16,7 @@
 
 #include "include/api/model.h"
 #include <jni.h>
-#include "common/log.h"
+#include "common/log_adapter.h"
 #include "include/api/serialization.h"
 
 extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_Model_buildByGraph(JNIEnv *env, jobject thiz, jlong graph_ptr,

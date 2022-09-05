@@ -15,7 +15,7 @@
  */
 
 #include <jni.h>
-#include "common/log.h"
+#include "common/log_adapter.h"
 #include "include/api/context.h"
 #include "common/jni_utils.h"
 

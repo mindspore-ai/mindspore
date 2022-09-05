@@ -22,7 +22,7 @@ import java.util.logging.Logger;
 
 
 public class MSContext {
-    private static final Logger LOGGER = Logger.getLogger(MSContext.class.toString());
+    private static Logger LOGGER = MindsporeLite.GetLogger();
     static {
         MindsporeLite.init();
     }
