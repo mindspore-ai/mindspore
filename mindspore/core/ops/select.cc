@@ -61,6 +61,9 @@ abstract::BaseShapePtr SelectInferShape(const PrimitivePtr &, const std::vector<
   auto cond_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kSelectCondIndex]->BuildShape())[kShape];
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kSelectXIndex]->BuildShape())[kShape];
   auto y_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kSelectYIndex]->BuildShape())[kShape];
+  if (IsDynamicRank(cond_shape) || IsDynamicRank(x_shape) || IsDynamicRank(y_shape)) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
+  }
   auto cond_shape_size = cond_shape.size();
   auto x_shape_size = x_shape.size();
   auto y_shape_size = y_shape.size();
