@@ -51,7 +51,7 @@ generate_simd_code(AVX 8 "\"avx\", \"avx2\"")
 generate_simd_code(AVX512 16 \"avx512f\")
 generate_simd_header_code()
 
-if(ENABLE_CPU)
+if(ENABLE_CPU AND NOT MSVC)
     set(CMAKE_C_FLAGS "-Wno-attributes ${CMAKE_C_FLAGS}")
 endif()
 

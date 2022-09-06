@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CCSRC_INCLUDE_BACKEND_DATA_QUEUE_DATA_QUEUE_H
 #define MINDSPORE_CCSRC_INCLUDE_BACKEND_DATA_QUEUE_DATA_QUEUE_H
 
-#include <unistd.h>
 #include <string>
 #include <memory>
 #include <vector>

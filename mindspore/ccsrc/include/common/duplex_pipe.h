@@ -24,6 +24,7 @@
 #include <functional>
 
 #include "utils/log_adapter.h"
+#include "utils/os.h"
 #include "include/common/visible.h"
 
 #define DP_DEBUG MS_LOG(DEBUG) << "[DuplexPipe] "

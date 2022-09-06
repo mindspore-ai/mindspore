@@ -366,7 +366,7 @@ static std::set<CNodePtr> SetParameterLayout(const FuncGraphPtr &root, const Fun
       PrimitivePtr prim = GetCNodePrimitive(cnode);
       MS_EXCEPTION_IF_NULL(prim);
       auto attrs = prim->attrs();
-      if (!attrs.contains(parallel::IN_STRATEGY)) {
+      if (attrs.count(parallel::IN_STRATEGY) == 0) {
         auto empty_strategies = GenerateEmptyStrategies(cnode);
         attrs[parallel::IN_STRATEGY] = ShapesToValueTuplePtr(empty_strategies);
       }

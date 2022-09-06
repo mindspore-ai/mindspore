@@ -20,6 +20,7 @@
 #include <memory>
 #include <map>
 #include <set>
+#include <optional>
 #include "nlohmann/json.hpp"
 #include "ir/anf.h"
 #include "ir/dtype.h"

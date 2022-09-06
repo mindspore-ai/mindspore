@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CCSRC_INCLUDE_BACKEND_DATA_QUEUE_DATA_QUEUE_MGR_H
 #define MINDSPORE_CCSRC_INCLUDE_BACKEND_DATA_QUEUE_DATA_QUEUE_MGR_H
 
-#include <unistd.h>
 #include <iostream>
 #include <functional>
 #include <map>

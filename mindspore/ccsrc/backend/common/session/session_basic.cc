@@ -1414,18 +1414,19 @@ BackendOpRunInfoPtr SessionBasic::GetSingleOpRunInfo(const CNodePtr &cnode, cons
                 [cnode](const std::pair<KernelWithIndex, std::vector<std::vector<size_t>>> &output_index) {
                   return output_index.first.first == cnode;
                 });
-  pynative::BaseOpRunInfo base_op_run_info = {.has_dynamic_input = common::AnfAlgo::IsNodeInputDynamicShape(cnode),
-                                              .has_dynamic_output = shape->IsDynamic(),
-                                              .is_mixed_precision_cast = false,
-                                              .lazy_build = !shape->IsDynamic(),
-                                              .op_name = primitive->name(),
-                                              .next_op_name = std::string(),
-                                              .graph_info = graph_info,
-                                              .device_target = GetOpRunDeviceTarget(primitive),
-                                              .next_input_index = 0,
-                                              .input_tensor = tensor_info.input_tensors,
-                                              .input_mask = tensor_info.input_tensors_mask,
-                                              .abstract = abstract};
+  pynative::BaseOpRunInfo base_op_run_info;
+  base_op_run_info.has_dynamic_input = common::AnfAlgo::IsNodeInputDynamicShape(cnode);
+  base_op_run_info.has_dynamic_output = shape->IsDynamic();
+  base_op_run_info.is_mixed_precision_cast = false;
+  base_op_run_info.lazy_build = !shape->IsDynamic();
+  base_op_run_info.op_name = primitive->name();
+  base_op_run_info.next_op_name = std::string();
+  base_op_run_info.graph_info = graph_info;
+  base_op_run_info.device_target = GetOpRunDeviceTarget(primitive);
+  base_op_run_info.next_input_index = 0;
+  base_op_run_info.input_tensor = tensor_info.input_tensors;
+  base_op_run_info.input_mask = tensor_info.input_tensors_mask;
+  base_op_run_info.abstract = abstract;
   return std::make_shared<BackendOpRunInfo>(base_op_run_info, primitive.get(), false, is_gradient_out);
 }
 

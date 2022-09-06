@@ -22,6 +22,10 @@
 #include <vector>
 #include <string>
 #include <utility>
+#include "utils/os.h"
+#ifdef CreateFile
+#undef CreateFile
+#endif
 
 namespace mindspore {
 namespace distributed {

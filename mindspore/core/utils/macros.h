@@ -38,13 +38,13 @@
 #endif
 
 #ifdef _MSC_VER
-#define NO_RETURN __declspec(noreturn)
+#define NO_RETURN
 #else
 #define NO_RETURN __attribute__((noreturn))
 #endif
 
 #ifdef _MSC_VER
-#define ALWAYS_INLINE __declspec(__forceinline)
+#define ALWAYS_INLINE
 #else
 #define ALWAYS_INLINE __attribute__((__always_inline__))
 #endif

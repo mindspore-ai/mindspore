@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 #include "plugin/device/cpu/hal/device/cpu_kernel_runtime.h"
-#include <unistd.h>
 #include <string>
 #include <vector>
 #include <memory>

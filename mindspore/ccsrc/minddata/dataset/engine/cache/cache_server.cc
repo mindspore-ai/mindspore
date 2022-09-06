@@ -28,6 +28,7 @@
 #ifdef CACHE_LOCAL_CLIENT
 #include "minddata/dataset/util/sig_handler.h"
 #endif
+#undef BitTest
 
 namespace mindspore {
 namespace dataset {
