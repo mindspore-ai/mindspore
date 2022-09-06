@@ -689,7 +689,7 @@ FunctionBlockPtr Parser::ParseLambdaFunction(const py::object &node, const Funct
   return func_block;
 }
 
-FunctionBlockPtr Parser::ParseStatements(FunctionBlockPtr block, const py::object &nodes) {
+FunctionBlockPtr Parser::ParseStatements(const FunctionBlockPtr &block, const py::object &nodes) {
   auto node_list = py::cast<py::list>(nodes);
   size_t count = py::len(node_list);
   MS_LOG(DEBUG) << "The nodes count is " << count;

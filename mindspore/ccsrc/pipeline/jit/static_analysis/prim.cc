@@ -2279,7 +2279,7 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
     return std::make_shared<AbstractDictionary>(kv);
   }
 
-  bool HasConstArgAttr(const py::object &obj) {
+  bool HasConstArgAttr(const py::object &obj) const {
     constexpr char const_arg_attr[] = "const_arg";
     return py::hasattr(obj, const_arg_attr) && py::cast<bool>(py::getattr(obj, const_arg_attr));
   }

@@ -266,7 +266,7 @@ class Parser {
   // Parse lambda function node
   FunctionBlockPtr ParseLambdaFunction(const py::object &node, const FunctionBlockPtr &block = nullptr);
   // Parse ast statements
-  FunctionBlockPtr ParseStatements(FunctionBlockPtr block, const py::object &nodes);
+  FunctionBlockPtr ParseStatements(const FunctionBlockPtr &block, const py::object &nodes);
   // Parse one ast statement node
   FunctionBlockPtr ParseStatement(const FunctionBlockPtr &block, const py::object &node);
   // Parse an ast expression node
