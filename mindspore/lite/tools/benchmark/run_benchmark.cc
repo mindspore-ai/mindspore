@@ -53,7 +53,7 @@ int RunBenchmark(int argc, const char **argv) {
   } else if (std::string(api_type) == "C") {
     benchmark = new (std::nothrow) tools::BenchmarkCApi(&flags);
   } else {
-    BENCHMARK_LOG_ERROR("Invalid MSLITE_API_TYPE, (OLD/NEW/C, default:OLD)");
+    BENCHMARK_LOG_ERROR("Invalid MSLITE_API_TYPE, (NEW/C, default:NEW)");
     return RET_ERROR;
   }
   if (benchmark == nullptr) {
