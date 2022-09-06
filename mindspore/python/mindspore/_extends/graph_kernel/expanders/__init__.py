@@ -29,7 +29,6 @@ from .fused_adam import FusedAdam
 from .fused_adam_weight_decay import FusedAdamWeightDecay
 from .fused_mul_add import FusedMulAdd
 from .gather import Gather
-from .gelu import GeLU
 from .gelu_grad import GeLUGrad
 from .gkdropout import GkDropout
 from .identity import Identity

@@ -133,6 +133,7 @@ std::vector<int64_t> GetAxisList(const ValuePtr &value);
 ShapeVector ExpandDimsInferShape(const ShapeVector &shape, const std::vector<int64_t> &axis);
 NodePtr ReluExpand(const inner::GraphBuilder &gb, const NodePtrList &inputs);
 NodePtr SigmoidExpand(const inner::GraphBuilder &gb, const NodePtrList &inputs);
+NodePtr GeluExpand(const inner::GraphBuilder &gb, const NodePtrList &inputs);
 std::vector<int64_t> InferShapeFromFractalnz(const std::vector<int64_t> &fractal);
 std::vector<int64_t> GetReducedOriShape(const std::vector<int64_t> &shape, const std::vector<int64_t> &axis);
 std::vector<int64_t> ToFracZAxis(const std::vector<int64_t> &ori_shape, const std::vector<int64_t> &ori_axis);
