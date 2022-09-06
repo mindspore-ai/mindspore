@@ -3008,7 +3008,7 @@ class ReverseV2(Primitive):
         The value range of "axis" is [-dims, dims - 1]. "dims" is the dimension length of "input_x".
 
     Args:
-        axis (Union[tuple(int), list(int)): The indices of the dimensions to reverse.
+        axis (Union[tuple(int), list(int)]): The indices of the dimensions to reverse.
 
     Inputs:
         - **input_x** (Tensor) - The target tensor. The data type is Number except float64.

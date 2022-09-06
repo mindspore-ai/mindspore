@@ -4685,7 +4685,7 @@ def norm(input_x, axis, p=2, keep_dims=False, epsilon=1e-12):
         TypeError: If `axis` is a tuple or a list, but the element of `axis` is not an int.
         TypeError: If `keep_dims` is not a bool.
         TypeError: If `epsilon` is not a float.
-        ValueError: If the element of `axis` is out of the range [-len(input.shape), len(input.shape)).
+        ValueError: If the element of `axis` is out of the range (-len(input.shape), len(input.shape)).
         ValueError: If the length of shape of `axis` is bigger than the length of shape of `input`.
 
     Supported Platforms:

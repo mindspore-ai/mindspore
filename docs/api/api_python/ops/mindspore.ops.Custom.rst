@@ -11,7 +11,7 @@ mindspore.ops.Custom
         这是一个实验性接口，后续可能删除或修改。
 
     .. note::
-        不同自定义算子的函数类型（func_type)支持的平台类型不同。每种类型支持的平台如下：
+        不同自定义算子的函数类型（func_type）支持的平台类型不同。每种类型支持的平台如下：
 
         - "hybrid": ["Ascend", "GPU", "CPU"].
         - "akg": ["Ascend", "GPU", "CPU"].

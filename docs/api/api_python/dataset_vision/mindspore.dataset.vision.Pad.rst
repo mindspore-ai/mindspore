@@ -25,7 +25,7 @@ mindspore.dataset.vision.Pad
     .. note:: 当 `padding` 输入长度为2的序列时的行为未来将从使用第一个值填充左/上边界，使用第二个值填充右/下边界，变为使用第一个值填充左/右边界，使用第二个值填充上/下边界。你也可以直接输入长度为4的序列来分别指定左、上、右和下边界的填充长度。
 
     异常：
-        - **TypeError** - 如果 `padding` 不是int或Sequence[int, int], Sequence[int, int, int, int]]类型。
+        - **TypeError** - 如果 `padding` 不是int或Sequence[int, int], Sequence[int, int, int, int]类型。
         - **TypeError** - 如果 `fill_value` 不是int或tuple[int]类型。
         - **TypeError** - 如果 `padding_mode` 不是 :class:`mindspore.dataset.vision.Border` 的类型。
         - **ValueError** - 如果 `padding` 为负数。
