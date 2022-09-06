@@ -2584,7 +2584,7 @@ void OnnxExporter::ExportPrimROIAlign(const FuncGraphPtr &, const CNodePtr &node
 
   auto roi_end_mode = GetOpAttribute<int64_t>(node, "roi_end_mode");
   auto roi_end_mode_name = node_name + "roi_end_mode_initializer";
-  AddFloatScalarInitializer(roi_end_mode_name, roi_end_mode, onnx_input_type, graph_proto);
+  AddFloatScalarInitializer(roi_end_mode_name, static_cast<float>(roi_end_mode), onnx_input_type, graph_proto);
 
   auto corrected_roi_ends_name = roi_ends_name + "_corrected";
   AddOp("Add", {roi_ends_name, roi_end_mode_name}, {corrected_roi_ends_name}, graph_proto);

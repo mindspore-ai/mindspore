@@ -19,6 +19,8 @@ import os
 import sys
 import ast
 import tempfile
+import importlib
+
 import astunparse
 
 from mindspore.nn import Cell
@@ -421,9 +423,9 @@ class SymbolTree(Observer, Observable):
         while True:
             try:
                 n = next(it)
-                yield n
             except StopIteration:
                 return None
+            yield n
 
     def get_node(self, node_name: str) -> Optional[Node]:
         """
@@ -1212,7 +1214,7 @@ class SymbolTree(Observer, Observable):
         tmp_module_path, tmp_module_file = os.path.split(tmp_file_name)
         tmp_module_name = tmp_module_file[:-3]
         sys.path.append(tmp_module_path)
-        tmp_module = __import__(tmp_module_name)
+        tmp_module = importlib.import_module(tmp_module_name)
         network_cls = getattr(tmp_module, self._opt_cls_name)
         if network_cls is None:
             raise RuntimeError("Can not find network class:", self._opt_cls_name)
