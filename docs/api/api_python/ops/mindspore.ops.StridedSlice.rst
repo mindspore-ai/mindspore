@@ -9,7 +9,7 @@
 
     给定一个 `input_x[m1, m2, ...、mn]` 。 `begin` 、 `end` 和 `strides` 是长度为n的向量。
 
-    在每个掩码字段中（`begin_mask`、`end_mask`、`ellipsis_mask`、`new_axis_mask`、`shrink_axis_mask`)，第i位将对应于第i个m。
+    在每个掩码字段中（`begin_mask`、`end_mask`、`ellipsis_mask`、`new_axis_mask`、`shrink_axis_mask`），第i位将对应于第i个m。
 
     对每个特定的mask，内部先将各mask转化为二进制表示， 然后倒序排布后进行计算。比如说对于一个5*6*7的Tensor，mask设置为3， 3转化为二进制表示为ob011， 倒序后为ob110， 
 
