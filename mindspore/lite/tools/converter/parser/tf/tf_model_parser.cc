@@ -249,14 +249,15 @@ STATUS SetBoolTensorInfo(const tensorflow::TensorProto &tensor_proto, tensor::Te
     MS_LOG(ERROR) << "new data failed";
     return RET_ERROR;
   }
-
-  if (tensor_proto.bool_val_size() == 1) {
-    int value = tensor_proto.bool_val(0);
-    for (int i = 0; i < shape_size; i++) {
-      tensor_data[i] = value;
-    }
+  if (tensor_proto.bool_val_size() != shape_size) {
+    MS_LOG(ERROR) << "shape size:[" << shape_size << "] not equal bool val size:[" << tensor_proto.bool_val_size()
+                  << "]";
+    return RET_ERROR;
   }
-
+  for (int i = 0; i < shape_size; i++) {
+    int value = tensor_proto.bool_val(i);
+    tensor_data[i] = value;
+  }
   return RET_OK;
 }
 
