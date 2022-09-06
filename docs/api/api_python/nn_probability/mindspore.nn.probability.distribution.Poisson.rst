@@ -9,7 +9,7 @@ mindspore.nn.probability.distribution.Poisson
     .. math::
         P(X = k) = \lambda^k \exp(-\lambda) / k!, k = 1, 2, ...
 
-    其中 :math:`\lambda` 为率参数（rate)。
+    其中 :math:`\lambda` 为率参数(rate)。
 
     **参数：**
 

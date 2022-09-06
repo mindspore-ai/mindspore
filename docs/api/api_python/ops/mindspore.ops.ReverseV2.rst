@@ -10,7 +10,7 @@ mindspore.ops.ReverseV2
 
     **参数：**
 
-    - **axis** (Union[tuple(int), list(int)) - 指定反转的轴。
+    - **axis** (Union[tuple(int), list(int)]) - 指定反转的轴。
 
     **输入：**
 

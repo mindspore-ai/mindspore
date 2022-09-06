@@ -26,7 +26,7 @@
     **输入：**
 
     - **hidden_states** (Tensor) - Tensor。如果use_past为False或者is_first_iteration为True，shape为[batch_size, seq_length, hidden_size]或者[batch_size * seq_length, hidden_size]。否则，shape应为[batch_size, 1, hidden_size]。
-    - **attention_mask** (Tensor) - Tensor，表示shape为[[batch_size, seq_length, seq_length]的注意力掩码。
+    - **attention_mask** (Tensor) - Tensor，表示shape为[batch_size, seq_length, seq_length]的注意力掩码。
     - **init_reset** (Tensor) - shape为[1]的bool tensor，用于清除增量预测中使用的past key参数和past value参数。仅当use_past为True时有效。默认值为True。
     - **batch_valid_length** (Tensor) - shape为[batch_size]的Int32 tensor，表示过去所计算的索引。当use_past为True时，它用于增量预测。默认值为None。
 

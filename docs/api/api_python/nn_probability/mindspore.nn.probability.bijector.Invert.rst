@@ -4,7 +4,7 @@ mindspore.nn.probability.bijector.Invert
 .. py:class:: mindspore.nn.probability.bijector.Invert(bijector, name='')
 
     逆映射Bijector（Invert Bijector）。
-    计算输入Bijector的逆映射。如果正向映射（下面的 `bijector` 输入)对应的映射函数为 :math:`Y = g(X)` ，那么对应的逆映射Bijector的映射函数为 :math:`Y = h(X) = g^{-1}(X)` 。
+    计算输入Bijector的逆映射。如果正向映射（下面的 `bijector` 输入）对应的映射函数为 :math:`Y = g(X)` ，那么对应的逆映射Bijector的映射函数为 :math:`Y = h(X) = g^{-1}(X)` 。
 
     **参数：**
 
