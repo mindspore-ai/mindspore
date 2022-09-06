@@ -36,6 +36,12 @@ abstract::TupleShapePtr UCSInferShape(const PrimitivePtr &primitive, const std::
   auto input_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_shape_ptr);
   auto input_shape = input_shape_map[kShape];
 
+  if (IsDynamicRank(input_shape)) {
+    auto unknow_shape_ptr = std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
+    return std::make_shared<abstract::TupleShape>(
+      std::vector<abstract::BaseShapePtr>{unknow_shape_ptr, unknow_shape_ptr, unknow_shape_ptr});
+  }
+
   // Check UniformCandidateSampler input shape's dimension whether equal or greater than 2.
   int64_t batch_rank = 0;
   if (primitive->HasAttr(kBatchRank)) {

@@ -37,9 +37,6 @@ class ReLUGradInfer : public abstract::OpInferBase {
     for (const auto &item : input_args) {
       MS_EXCEPTION_IF_NULL(item);
     }
-    auto dout = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
-    auto out = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 1);
-    abstract::CheckShapeSame(prim_name, out, dout);
     return input_args[0]->BuildShape();
   }
 
