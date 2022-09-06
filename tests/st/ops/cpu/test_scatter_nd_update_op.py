@@ -180,6 +180,5 @@ def test_op5(dtype):
     update = Tensor(np.array([[1], [1], [1]], dtype=dtype))
 
     scatter_nd_update = ScatterNdUpdate()
-    with pytest.raises(RuntimeError) as errinfo:
+    with pytest.raises(RuntimeError):
         scatter_nd_update(indices, update)
-    assert "Some errors occurred! The error message is as above" in str(errinfo.value)

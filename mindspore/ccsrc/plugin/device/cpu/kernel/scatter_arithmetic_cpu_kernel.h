@@ -14,46 +14,52 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SCATTER_ARITHMETIC_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SCATTER_ARITHMETIC_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_SCATTER_ARITHMETIC_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_SCATTER_ARITHMETIC_CPU_KERNEL_H_
 
 #include <vector>
 #include <string>
 #include <memory>
+#include <map>
+#include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
-
+#include "kernel/common_utils.h"
 namespace mindspore {
 namespace kernel {
-constexpr auto kScatterAdd = "ScatterAdd";
-constexpr auto kScatterSub = "ScatterSub";
-constexpr auto kScatterMul = "ScatterMul";
-constexpr auto kScatterDiv = "ScatterDiv";
-constexpr auto kScatterMax = "ScatterMax";
-constexpr auto kScatterMin = "ScatterMin";
-constexpr auto kScatterUpdate = "ScatterUpdate";
-constexpr auto kUnKnown = "UnKnown";
-class ScatterArithmeticCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class ScatterArithmeticCpuKernelMod : public NativeCpuKernelMod,
+                                      public MatchKernelHelper<ScatterArithmeticCpuKernelMod> {
  public:
   ScatterArithmeticCpuKernelMod() = default;
-
-  explicit ScatterArithmeticCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}
   ~ScatterArithmeticCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
-    return func_obj_->RunFunc(inputs, workspace, outputs);
+    return kernel_func_(this, inputs, workspace, outputs);
   }
 
-  std::vector<KernelAttr> GetOpSupport() override;
+  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
+
+  std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
  private:
-  std::shared_ptr<DeprecatedCpuKernelFunc> func_obj_;
-  std::string kernel_type_{kUnKnown};
+  template <typename T>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
+                    const std::vector<kernel::AddressPtr> &outputs);
+
+  using ScatterSupportListType = std::vector<std::pair<KernelAttr, ScatterArithmeticCpuKernelMod::KernelRunFunc>>;
+  size_t input_size_{0};
+  size_t inner_size_{0};
+  size_t indices_size_{0};
+  int first_dim_size_{0};
 };
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SCATTER_ARITHMETIC_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_SCATTER_ARITHMETIC_CPU_KERNEL_H_

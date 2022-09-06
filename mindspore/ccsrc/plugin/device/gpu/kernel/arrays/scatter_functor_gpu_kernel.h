@@ -20,96 +20,45 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <utility>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/scatter_functor_impl.cuh"
+#include "kernel/common_utils.h"
 
 namespace mindspore {
 namespace kernel {
-
-static const std::map<std::string, ScatterFunctorType> kScatterFunctorTypeMap = {
-  {"ScatterUpdate", SCATTER_FUNC_UPDATE}, {"ScatterAdd", SCATTER_FUNC_ADD}, {"ScatterSub", SCATTER_FUNC_SUB},
-  {"ScatterMax", SCATTER_FUNC_MAX},       {"ScatterMin", SCATTER_FUNC_MIN},
-};
-
-template <typename T, typename S>
-class ScatterFunctorKernelMod : public DeprecatedNativeGpuKernelMod {
+class ScatterFunctorGPUKernelMod : public NativeGpuKernelMod, public MatchKernelHelper<ScatterFunctorGPUKernelMod> {
  public:
-  ScatterFunctorKernelMod() { ResetResource(); }
-  ~ScatterFunctorKernelMod() override = default;
+  ScatterFunctorGPUKernelMod() = default;
+  ~ScatterFunctorGPUKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &, void *stream_ptr) override {
-    T *input = GetDeviceAddress<T>(inputs, 0);
-    S *indices = GetDeviceAddress<S>(inputs, 1);
-    T *updates = GetDeviceAddress<T>(inputs, 2);
-    S size_limit = static_cast<S>(first_dim_size_);
-    ScatterFunc(scatter_functor_type_, size_limit, inner_size_, indices_size_, indices, updates, input,
-                reinterpret_cast<cudaStream_t>(stream_ptr));
-    return true;
+              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    cuda_stream_ = stream_ptr;
+    return kernel_func_(this, inputs, workspace, outputs);
   }
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
 
-  bool Init(const CNodePtr &kernel_node) override {
-    std::string kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    auto iter = kScatterFunctorTypeMap.find(kernel_name);
-    if (iter == kScatterFunctorTypeMap.end()) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "Only support these scatter functors: ScatterUpdate, ScatterAdd, "
-                        << "ScatterSub, ScatterMax or ScatterMin currently, but got " << kernel_name;
-    } else {
-      scatter_functor_type_ = iter->second;
-    }
-    kernel_node_ = kernel_node;
-    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    if (input_num != 3) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs must be 3, but got " << input_num;
-    }
-    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-    if (output_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs must be 1, but got " << output_num;
-    }
-    auto input_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0));
-    if (input_shape.empty()) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the input can not be empty";
-    }
-    first_dim_size_ = input_shape[0];
-    input_size_ = 1;
-    inner_size_ = 1;
-    for (size_t i = 1; i < input_shape.size(); i++) {
-      inner_size_ *= input_shape[i];
-    }
-    input_size_ = input_shape[0] * inner_size_;
-    auto indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    indices_size_ = SizeOf(indices_shape);
-    updates_size_ = indices_size_ * inner_size_;
-    InitSizeLists();
-    return true;
-  }
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
-  void ResetResource() noexcept override {
-    input_size_ = 0;
-    inner_size_ = 0;
-    indices_size_ = 0;
-    updates_size_ = 0;
-    input_size_list_.clear();
-    output_size_list_.clear();
-    workspace_size_list_.clear();
-  }
+  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 
- protected:
-  void InitSizeLists() override {
-    input_size_list_.push_back(input_size_ * sizeof(T));
-    input_size_list_.push_back(indices_size_ * sizeof(S));
-    input_size_list_.push_back(updates_size_ * sizeof(T));
-    output_size_list_.push_back(input_size_ * sizeof(T));
-  }
+  std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
  private:
+  template <typename T, typename S>
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<AddressPtr> &outputs);
   ScatterFunctorType scatter_functor_type_;
   size_t first_dim_size_;
   size_t input_size_;
   size_t inner_size_;
   size_t indices_size_;
   size_t updates_size_;
+  void *cuda_stream_{nullptr};
 };
 }  // namespace kernel
 }  // namespace mindspore

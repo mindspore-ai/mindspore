@@ -22,68 +22,29 @@
 
 namespace mindspore {
 namespace kernel {
-namespace {
-constexpr size_t kScatterNdUpdateInputsNum = 3;
-constexpr size_t kScatterNdUpdateOutputsNum = 1;
 constexpr size_t kMinIndiceRank = 2;
-constexpr char kKernelName[] = "ScatterNdUpdate";
-
-template <typename T, typename S>
-bool Compute(const ComputeParams<T, S> *params, const size_t start, const size_t end) {
-  MS_EXCEPTION_IF_NULL(params);
-  T *x = params->x_;
-  S *indices = params->indices_;
-  T *updates = params->updates_;
-  std::vector<size_t> *out_strides = params->out_strides_;
-  MS_EXCEPTION_IF_NULL(x);
-  MS_EXCEPTION_IF_NULL(indices);
-  MS_EXCEPTION_IF_NULL(updates);
-  MS_EXCEPTION_IF_NULL(out_strides);
-
-  for (size_t i = start; i < end; ++i) {
-    size_t offset = 0;
-    std::vector<size_t> local_indices;
-    for (size_t j = 0; j < params->indices_unit_rank_; ++j) {
-      auto index = indices[i * params->indices_unit_rank_ + j];
-      (void)local_indices.emplace_back(LongToSize(index));
-      if (index < 0) {
-        MS_LOG(ERROR) << "For '" << kKernelName
-                      << "', each element in 'indices' must be greater than or equal to 0, but got " << index;
-        return false;
-      }
-      offset += LongToSize(index) * out_strides->at(j) * params->unit_size_;
-    }
-    if (offset * sizeof(T) > params->x_mem_size_) {
-      MS_LOG(ERROR) << "For '" << kKernelName
-                    << "', indices out of range for input_x. Please check the indices which is " << local_indices;
-      return false;
-    }
-    auto ret = memcpy_s(x + offset, params->x_mem_size_ - offset * sizeof(T), updates + params->unit_size_ * i,
-                        params->unit_size_ * sizeof(T));
-    if (ret != 0) {
-      MS_LOG(ERROR) << "For '" << kKernelName << "', memcpy_s error. Error no: " << ret;
-      return false;
-    }
+bool ScatterUpdateArithmeticCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                               const std::vector<KernelTensorPtr> &inputs,
+                                               const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->name();
+  if (kernel_name_ != "ScatterNdUpdate" && kernel_name_ != "TensorScatterUpdate") {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the current operator does not support this operation.";
   }
-  return true;
+  return MatchKernelFunc(base_operator, inputs, outputs);
 }
 
-#define COMPUTE_CASE(DTYPE, TYPE1, TYPE2, inputs, outputs) \
-  case (DTYPE): {                                          \
-    LaunchKernel<TYPE2, TYPE1>(inputs, outputs);           \
-    break;                                                 \
+int ScatterUpdateArithmeticCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                                const std::vector<KernelTensorPtr> &inputs,
+                                                const std::vector<KernelTensorPtr> &outputs,
+                                                const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
   }
-}  // namespace
-
-void ScatterUpdateCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  auto shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  auto indices_shape_ori = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-  auto updates_shape_ori = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
-  if (AnfAlgo::IsShapesDynamic({shape, indices_shape_ori, updates_shape_ori})) {
-    return;
-  }
+  auto shape = inputs[0]->GetShapeVector();
+  auto indices_shape_ori = inputs[1]->GetShapeVector();
+  auto updates_shape_ori = inputs[2]->GetShapeVector();
+  dtype_value_ = inputs[0]->GetDtype();
+  dtype_shape_ = inputs[1]->GetDtype();
   auto indices_shape = Convert2SizeT(indices_shape_ori);
   auto updates_shape = Convert2SizeT(updates_shape_ori);
   auto indices_unit_rank = indices_shape.back();
@@ -128,123 +89,154 @@ void ScatterUpdateCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     out_strides_.push_back(out_stride);
   }
   reverse(out_strides_.begin(), out_strides_.end());
-  dtype_value = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  dtype_shape = AnfAlgo::GetInputDeviceDataType(kernel_node, 1);
-}
-
-template <typename T>
-void ScatterUpdateCpuKernelMod::LaunchTypeChoose(const std::vector<kernel::AddressPtr> &inputs,
-                                                 const std::vector<kernel::AddressPtr> &outputs) {
-  switch (dtype_value) {
-    case kNumberTypeFloat16:
-      LaunchKernel<float16, T>(inputs, outputs);
-      break;
-    case kNumberTypeFloat32:
-      LaunchKernel<float, T>(inputs, outputs);
-      break;
-    case kNumberTypeFloat64:
-      LaunchKernel<double, T>(inputs, outputs);
-      break;
-    case kNumberTypeInt8:
-      LaunchKernel<int8_t, T>(inputs, outputs);
-      break;
-    case kNumberTypeInt16:
-      LaunchKernel<int16_t, T>(inputs, outputs);
-      break;
-    case kNumberTypeInt32:
-      LaunchKernel<int, T>(inputs, outputs);
-      break;
-    case kNumberTypeInt64:
-      LaunchKernel<int64_t, T>(inputs, outputs);
-      break;
-    case kNumberTypeUInt8:
-      LaunchKernel<uint8_t, T>(inputs, outputs);
-      break;
-    case kNumberTypeUInt16:
-      LaunchKernel<uint16_t, T>(inputs, outputs);
-      break;
-    case kNumberTypeUInt32:
-      LaunchKernel<uint32_t, T>(inputs, outputs);
-      break;
-    case kNumberTypeUInt64:
-      LaunchKernel<uint64_t, T>(inputs, outputs);
-    case kNumberTypeComplex64:
-      LaunchKernel<std::complex<float>, T>(inputs, outputs);
-      break;
-    case kNumberTypeComplex128:
-      LaunchKernel<std::complex<double>, T>(inputs, outputs);
-      break;
-    case kNumberTypeBool:
-      LaunchKernel<bool, T>(inputs, outputs);
-      break;
-    default:
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                        << "', the dtype of 'input_x' should be float16, float32, float64, int8, int16, int32, "
-                           "int64, uint8, uint16, uint32, uint64, complex64 or complex128.but got "
-                        << TypeIdLabel(dtype_value);
-  }
-}
-
-bool ScatterUpdateCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> &,
-                                       const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kScatterNdUpdateInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kScatterNdUpdateOutputsNum, kernel_name_);
-  switch (dtype_shape) {
-    case kNumberTypeInt32:
-      LaunchTypeChoose<int32_t>(inputs, outputs);
-      return true;
-    case kNumberTypeInt64:
-      LaunchTypeChoose<int64_t>(inputs, outputs);
-      return true;
-    default:
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of 'input_indices' should be int32, int64. "
-                        << TypeIdLabel(dtype_shape);
-  }
+  return KRET_OK;
 }
 
 template <typename T, typename S>
-void ScatterUpdateCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                             const std::vector<kernel::AddressPtr> &outputs) {
-  T *x = reinterpret_cast<T *>(ScatterUpdateRealData(inputs, outputs));
-  ComputeParams<T, S> params;
-  params.x_ = x;
-  params.indices_ = reinterpret_cast<S *>(inputs[1]->addr);
-  params.updates_ = reinterpret_cast<T *>(inputs[2]->addr);
-  params.x_mem_size_ = inputs[0]->size;
-  params.unit_size_ = unit_size_;
-  params.indices_unit_rank_ = indices_unit_rank_;
-  params.out_strides_ = &out_strides_;
-
-  size_t start = 0;
-  int status = 0;
-  if (!Compute<T, S>(&params, start, num_units_)) {
-    status = -1;
+bool ScatterUpdateArithmeticCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                                       const std::vector<kernel::AddressPtr> &workspace,
+                                                       const std::vector<kernel::AddressPtr> &outputs) {
+  T *x = nullptr;
+  if (kernel_name_ == "ScatterNdUpdate") {
+    x = reinterpret_cast<T *>(inputs[0]->addr);
+  } else {
+    x = reinterpret_cast<T *>(outputs[0]->addr);
+    auto ret = memcpy_s(x, outputs[0]->size, inputs[0]->addr, inputs[0]->size);
+    if (ret != 0) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memcpy_s error. Error no: " << ret;
+    }
   }
-  if (status == -1) {
-    MS_LOG(EXCEPTION) << "Some errors occurred! The error message is as above";
+  size_t start = 0;
+  S *indices = reinterpret_cast<S *>(inputs[1]->addr);
+  T *updates = reinterpret_cast<T *>(inputs[2]->addr);
+  MS_EXCEPTION_IF_NULL(x);
+  MS_EXCEPTION_IF_NULL(indices);
+  MS_EXCEPTION_IF_NULL(updates);
+  size_t x_mem_size = inputs[0]->size;
+  for (size_t i = start; i < num_units_; ++i) {
+    size_t offset = 0;
+    std::vector<size_t> local_indices;
+    for (size_t j = 0; j < indices_unit_rank_; ++j) {
+      auto index = indices[i * indices_unit_rank_ + j];
+      (void)local_indices.emplace_back(IntToSize(index));
+      if (index < 0) {
+        MS_LOG(ERROR) << "For '" << kernel_name_
+                      << "', each element in 'indices' must be greater than or equal to 0, but got " << index;
+        return false;
+      }
+      offset += IntToSize(index) * out_strides_[j] * unit_size_;
+    }
+    if (offset * sizeof(T) > x_mem_size) {
+      MS_LOG(ERROR) << "For '" << kernel_name_
+                    << "', indices out of range for input_x. Please check the indices which is " << local_indices;
+      return false;
+    }
+    auto ret = memcpy_s(x + offset, x_mem_size - offset * sizeof(T), updates + unit_size_ * i, unit_size_ * sizeof(T));
+    if (ret != 0) {
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', memcpy_s error. Error no: " << ret;
+      return false;
+    }
   }
   if (memcpy_s(outputs[0]->addr, outputs[0]->size, x, inputs[0]->size) != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it does memory copy fail.";
   }
+  return true;
 }
 
-void *ScatterNdUpdateCpuKernelMod::ScatterUpdateRealData(const std::vector<AddressPtr> &inputs,
-                                                         const std::vector<kernel::AddressPtr> &) {
-  return inputs[0]->addr;
-}
+using complex64 = std::complex<float>;
+using complex128 = std::complex<double>;
 
-void *TensorScatterUpdateCpuKernelMod::ScatterUpdateRealData(const std::vector<AddressPtr> &inputs,
-                                                             const std::vector<kernel::AddressPtr> &outputs) {
-  void *x = outputs[0]->addr;
-  auto ret = memcpy_s(x, outputs[0]->size, inputs[0]->addr, inputs[0]->size);
-  if (ret != 0) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memcpy_s error. Error no: " << ret;
+#define SCATTER_ND_UPDATE_CPU_REGISTER(IN_DT0, IN_DT1, IN_DT2, OUT_DT0, T, S)                         \
+  KernelAttr().AddInputAttr(IN_DT0).AddInputAttr(IN_DT1).AddInputAttr(IN_DT2).AddOutputAttr(OUT_DT0), \
+    &ScatterUpdateArithmeticCpuKernelMod::LaunchKernel<T, S>
+
+const ScatterUpdateArithmeticCpuKernelMod::SupportListType &ScatterUpdateArithmeticCpuKernelMod::GetFuncList() const {
+  static const ScatterUpdateArithmeticCpuKernelMod::SupportListType scatter_nd_update_func_list = {
+    {SCATTER_ND_UPDATE_CPU_REGISTER(kNumberTypeFloat16, kNumberTypeInt32, kNumberTypeFloat16, kNumberTypeFloat16,
+                                    float16, int32_t)},
+    {SCATTER_ND_UPDATE_CPU_REGISTER(kNumberTypeFloat32, kNumberTypeInt32, kNumberTypeFloat32, kNumberTypeFloat32, float,
+                                    int32_t)},
+    {SCATTER_ND_UPDATE_CPU_REGISTER(kNumberTypeFloat64, kNumberTypeInt32, kNumberTypeFloat64, kNumberTypeFloat64,
+                                    double, int32_t)},
+    {SCATTER_ND_UPDATE_CPU_REGISTER(kNumberTypeInt8, kNumberTypeInt32, kNumberTypeInt8, kNumberTypeInt8, int8_t,
+                                    int32_t)},
+    {SCATTER_ND_UPDATE_CPU_REGISTER(kNumberTypeInt16, kNumberTypeInt32, kNumberTypeInt16, kNumberTypeInt16, int16_t,
+                                    int32_t)},
+    {SCATTER_ND_UPDATE_CPU_REGISTER(kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, int32_t,
+                                    int32_t)},
+    {SCATTER_ND_UPDATE_CPU_REGISTER(kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt64, int64_t,
+                                    int32_t)},
+    {SCATTER_ND_UPDATE_CPU_REGISTER(kNumberTypeUInt8, kNumberTypeInt32, kNumberTypeUInt8, kNumberTypeUInt8, uint8_t,
+                                    int32_t)},
+    {SCATTER_ND_UPDATE_CPU_REGISTER(kNumberTypeUInt16, kNumberTypeInt32, kNumberTypeUInt16, kNumberTypeUInt16, uint16_t,
+                                    int32_t)},
+    {SCATTER_ND_UPDATE_CPU_REGISTER(kNumberTypeUInt32, kNumberTypeInt32, kNumberTypeUInt32, kNumberTypeUInt32, uint32_t,
+                                    int32_t)},
+    {SCATTER_ND_UPDATE_CPU_REGISTER(kNumberTypeUInt64, kNumberTypeInt32, kNumberTypeUInt64, kNumberTypeUInt64, uint64_t,
+                                    int32_t)},
+    {SCATTER_ND_UPDATE_CPU_REGISTER(kNumberTypeComplex64, kNumberTypeInt32, kNumberTypeComplex64, kNumberTypeComplex64,
+                                    complex64, int32_t)},
+    {SCATTER_ND_UPDATE_CPU_REGISTER(kNumberTypeComplex128, kNumberTypeInt32, kNumberTypeComplex128,
+                                    kNumberTypeComplex128, complex128, int32_t)},
+    {SCATTER_ND_UPDATE_CPU_REGISTER(kNumberTypeFloat16, kNumberTypeInt64, kNumberTypeFloat16, kNumberTypeFloat16,
+                                    float16, int64_t)},
+    {SCATTER_ND_UPDATE_CPU_REGISTER(kNumberTypeFloat32, kNumberTypeInt64, kNumberTypeFloat32, kNumberTypeFloat32, float,
+                                    int64_t)},
+    {SCATTER_ND_UPDATE_CPU_REGISTER(kNumberTypeFloat64, kNumberTypeInt64, kNumberTypeFloat64, kNumberTypeFloat64,
+                                    double, int64_t)},
+    {SCATTER_ND_UPDATE_CPU_REGISTER(kNumberTypeInt8, kNumberTypeInt64, kNumberTypeInt8, kNumberTypeInt8, int8_t,
+                                    int64_t)},
+    {SCATTER_ND_UPDATE_CPU_REGISTER(kNumberTypeInt16, kNumberTypeInt64, kNumberTypeInt16, kNumberTypeInt16, int16_t,
+                                    int64_t)},
+    {SCATTER_ND_UPDATE_CPU_REGISTER(kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt32, int32_t,
+                                    int64_t)},
+    {SCATTER_ND_UPDATE_CPU_REGISTER(kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt64, int64_t,
+                                    int64_t)},
+    {SCATTER_ND_UPDATE_CPU_REGISTER(kNumberTypeUInt8, kNumberTypeInt64, kNumberTypeUInt8, kNumberTypeUInt8, uint8_t,
+                                    int64_t)},
+    {SCATTER_ND_UPDATE_CPU_REGISTER(kNumberTypeUInt16, kNumberTypeInt64, kNumberTypeUInt16, kNumberTypeUInt16, uint16_t,
+                                    int64_t)},
+    {SCATTER_ND_UPDATE_CPU_REGISTER(kNumberTypeUInt32, kNumberTypeInt64, kNumberTypeUInt32, kNumberTypeUInt32, uint32_t,
+                                    int64_t)},
+    {SCATTER_ND_UPDATE_CPU_REGISTER(kNumberTypeUInt64, kNumberTypeInt64, kNumberTypeUInt64, kNumberTypeUInt64, uint64_t,
+                                    int64_t)},
+    {SCATTER_ND_UPDATE_CPU_REGISTER(kNumberTypeComplex64, kNumberTypeInt64, kNumberTypeComplex64, kNumberTypeComplex64,
+                                    complex64, int64_t)},
+    {SCATTER_ND_UPDATE_CPU_REGISTER(kNumberTypeComplex128, kNumberTypeInt64, kNumberTypeComplex128,
+                                    kNumberTypeComplex128, complex128, int64_t)},
+  };
+
+  static const ScatterUpdateArithmeticCpuKernelMod::SupportListType tensor_scatter_update_func_list = {
+    {SCATTER_ND_UPDATE_CPU_REGISTER(kNumberTypeFloat32, kNumberTypeInt32, kNumberTypeFloat32, kNumberTypeFloat32, float,
+                                    int32_t)},
+    {SCATTER_ND_UPDATE_CPU_REGISTER(kNumberTypeFloat64, kNumberTypeInt32, kNumberTypeFloat64, kNumberTypeFloat64,
+                                    double, int32_t)},
+    {SCATTER_ND_UPDATE_CPU_REGISTER(kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, int32_t,
+                                    int32_t)},
+    {SCATTER_ND_UPDATE_CPU_REGISTER(kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt64, int64_t,
+                                    int32_t)},
+    {SCATTER_ND_UPDATE_CPU_REGISTER(kNumberTypeBool, kNumberTypeInt32, kNumberTypeBool, kNumberTypeBool, bool,
+                                    int32_t)},
+    {SCATTER_ND_UPDATE_CPU_REGISTER(kNumberTypeFloat32, kNumberTypeInt64, kNumberTypeFloat32, kNumberTypeFloat32, float,
+                                    int64_t)},
+    {SCATTER_ND_UPDATE_CPU_REGISTER(kNumberTypeFloat64, kNumberTypeInt64, kNumberTypeFloat64, kNumberTypeFloat64,
+                                    double, int64_t)},
+    {SCATTER_ND_UPDATE_CPU_REGISTER(kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt32, int32_t,
+                                    int64_t)},
+    {SCATTER_ND_UPDATE_CPU_REGISTER(kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt64, int64_t,
+                                    int64_t)},
+    {SCATTER_ND_UPDATE_CPU_REGISTER(kNumberTypeBool, kNumberTypeInt64, kNumberTypeBool, kNumberTypeBool, bool,
+                                    int64_t)},
+  };
+
+  if (kernel_name_ == "TensorScatterUpdate") {
+    return tensor_scatter_update_func_list;
+  } else {
+    return scatter_nd_update_func_list;
   }
-  return x;
 }
 
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, ScatterNdUpdate, ScatterNdUpdateCpuKernelMod);
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, TensorScatterUpdate, TensorScatterUpdateCpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, ScatterNdUpdate, ScatterUpdateArithmeticCpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, TensorScatterUpdate, ScatterUpdateArithmeticCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
