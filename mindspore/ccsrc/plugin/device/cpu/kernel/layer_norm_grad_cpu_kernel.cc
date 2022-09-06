@@ -108,8 +108,8 @@ void LayerNormGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
                                              const std::vector<AddressPtr> &outputs) {
   auto *x = reinterpret_cast<T *>(inputs[kLayerNormGradInputXIndex]->addr);
   auto *dy = reinterpret_cast<T *>(inputs[kLayerNormGradInputDyIndex]->addr);
-  auto *var = reinterpret_cast<T *>(inputs[kLayerNormGradInputVarIndex]->addr);
-  auto *mean = reinterpret_cast<T *>(inputs[kLayerNormGradInputMeanIndex]->addr);
+  auto *var = reinterpret_cast<float *>(inputs[kLayerNormGradInputVarIndex]->addr);
+  auto *mean = reinterpret_cast<float *>(inputs[kLayerNormGradInputMeanIndex]->addr);
   auto *gamma = reinterpret_cast<T *>(inputs[kLayerNormGradInputGammaIndex]->addr);
   auto *dx = reinterpret_cast<T *>(outputs[kLayerNormGradOutputDxIndex]->addr);
   auto *dg = reinterpret_cast<T *>(outputs[kLayerNormGradOutputDgIndex]->addr);
@@ -127,15 +127,16 @@ void LayerNormGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
         continue;
       }
       size_t param_index = c * thread_num1 + start;
-      T dgamma = (T)0.0;
-      T dbeta = (T)0.0;
+      float dgamma = 0.0f;
+      float dbeta = 0.0f;
       for (size_t j = param_index; j < param_size_ * param_num_; j += param_num_) {
-        auto norm_shift = static_cast<int>(j / block_size_);
-        dgamma += dy[j] * (T)std::pow(static_cast<double>(var[norm_shift]) + eps_, -0.5) * (x[j] - mean[norm_shift]);
-        dbeta += dy[j];
+        auto norm_shift = j / block_size_;
+        dgamma += static_cast<float>(dy[j]) * std::pow(var[norm_shift] + eps_, -0.5f) *
+                  (static_cast<float>(x[j]) - mean[norm_shift]);
+        dbeta += static_cast<float>(dy[j]);
       }
-      dg[param_index] = dgamma;
-      db[param_index] = dbeta;
+      dg[param_index] = (T)dgamma;
+      db[param_index] = (T)dbeta;
     }
   };
   auto task2 = [this, &x, &dy, &var, &mean, &dx, &gamma, thread_num2](size_t start) {
@@ -144,26 +145,30 @@ void LayerNormGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
         continue;
       }
       size_t block_index = c * thread_num2 + start;
-      T sum1 = (T)0.0;
-      T sum2 = (T)0.0;
-      T sum3 = (T)0.0;
+      float sum1 = 0.0f;
+      float sum2 = 0.0f;
+      float sum3 = 0.0f;
+      auto norm_shift = block_index;
       for (size_t j = block_index * block_size_; j < (block_index + 1) * block_size_; ++j) {
         auto param_shift = j % param_num_;
-        auto norm_shift = static_cast<int>(j / block_size_);
-        auto dxm = x[j] - mean[norm_shift];
-        auto dyg = dy[j] * gamma[param_shift];
-        sum1 += (T)(-0.5) * dyg * dxm * (T)std::pow(static_cast<double>(var[norm_shift]) + eps_, -1.5);
+        auto dxm = static_cast<float>(x[j]) - mean[norm_shift];
+        auto dyg = static_cast<float>(dy[j] * gamma[param_shift]);
+        sum1 += dyg * dxm;
         sum2 += dyg;
-        sum3 += (T)(-2.0) * dxm;
+        sum3 += dxm;
       }
+      sum1 *= -0.5f * std::pow(var[norm_shift] + eps_, -1.5f);
+      sum3 *= -2.0f;
+
+      auto inv_block_size = 1.0f / block_size_;
+      auto dx3 = std::pow(var[norm_shift] + eps_, -0.5f);
+      auto dx4 = 2.0f * sum1 * inv_block_size;
+      auto dx5 = (-1.0f * dx3 * sum2 + inv_block_size * sum1 * sum3) * inv_block_size;
       for (size_t j = block_index * block_size_; j < (block_index + 1) * block_size_; ++j) {
         auto param_shift = j % param_num_;
-        auto norm_shift = static_cast<int>(j / block_size_);
-        auto var_sqrt = (T)std::pow(static_cast<double>(var[norm_shift]) + eps_, -0.5);
-        auto dx1 = dy[j] * gamma[param_shift] * var_sqrt;
-        auto dx2 = sum1 * static_cast<T>(2.0) / (static_cast<T>(block_size_)) * (x[j] - mean[norm_shift]);
-        auto dx3 = ((T)(-1.0) * var_sqrt * sum2 + ((T)1.0 / (T)block_size_) * sum1 * sum3) * ((T)1.0 / (T)block_size_);
-        dx[j] = dx1 + dx2 + dx3;
+        auto dx1 = static_cast<float>(dy[j] * gamma[param_shift]);
+        auto dx2 = static_cast<float>(x[j]) - mean[norm_shift];
+        dx[j] = static_cast<T>(dx1 * dx3 + dx2 * dx4 + dx5);
       }
     }
   };
@@ -189,8 +194,8 @@ std::vector<std::pair<KernelAttr, LayerNormGradCpuKernelMod::KernelFunc>> LayerN
   {KernelAttr()
      .AddInputAttr(kNumberTypeFloat16)
      .AddInputAttr(kNumberTypeFloat16)
-     .AddInputAttr(kNumberTypeFloat16)
-     .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeFloat32)
      .AddInputAttr(kNumberTypeFloat16)
      .AddOutputAttr(kNumberTypeFloat16)
      .AddOutputAttr(kNumberTypeFloat16)

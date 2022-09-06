@@ -110,8 +110,8 @@ void LayerNormCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   auto gamma = reinterpret_cast<T *>(inputs[kLayerNormInputGammaIndex]->addr);
   auto beta = reinterpret_cast<T *>(inputs[kLayerNormInputBetaIndex]->addr);
   auto y = reinterpret_cast<T *>(outputs[kLayerNormOutputYIndex]->addr);
-  auto mean = reinterpret_cast<T *>(outputs[kLayerNormOutputMeanIndex]->addr);
-  auto var = reinterpret_cast<T *>(outputs[kLayerNormOutputVarIndex]->addr);
+  auto mean = reinterpret_cast<float *>(outputs[kLayerNormOutputMeanIndex]->addr);
+  auto var = reinterpret_cast<float *>(outputs[kLayerNormOutputVarIndex]->addr);
   size_t thread_num = common::ThreadPool::GetInstance().GetSyncRunThreadNum();
   if (block_num_ < thread_num) {
     thread_num = block_num_;
@@ -124,18 +124,17 @@ void LayerNormCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
         continue;
       }
       size_t i = c * thread_num + start;
-      T sum = (T)0.0;
-      T square_sum = (T)0.0;
+      float sum = 0.0f;
+      float square_sum = 0.0f;
       for (size_t j = i * block_size_; j < (i + 1) * block_size_; ++j) {
-        sum += x[j];
-        square_sum += x[j] * x[j];
+        sum += static_cast<float>(x[j]);
+        square_sum += static_cast<float>(x[j] * x[j]);
       }
-      T block_mean = sum / static_cast<T>(block_size_);
-      T block_var = square_sum / static_cast<T>(block_size_) - block_mean * block_mean;
+      float block_mean = sum / block_size_;
+      float block_var = square_sum / block_size_ - block_mean * block_mean;
       for (size_t j = i * block_size_; j < (i + 1) * block_size_; ++j) {
         auto param_shift = j % param_num_;
-        y[j] = (x[j] - block_mean) / (T)std::sqrt(static_cast<double>(block_var) + eps_) * gamma[param_shift] +
-               beta[param_shift];
+        y[j] = (x[j] - (T)block_mean) / (T)std::sqrt(block_var + eps_) * gamma[param_shift] + beta[param_shift];
       }
       mean[i] = block_mean;
       var[i] = block_var;
@@ -157,8 +156,8 @@ std::vector<std::pair<KernelAttr, LayerNormCpuKernelMod::KernelFunc>> LayerNormC
      .AddInputAttr(kNumberTypeFloat16)
      .AddInputAttr(kNumberTypeFloat16)
      .AddOutputAttr(kNumberTypeFloat16)
-     .AddOutputAttr(kNumberTypeFloat16)
-     .AddOutputAttr(kNumberTypeFloat16),
+     .AddOutputAttr(kNumberTypeFloat32)
+     .AddOutputAttr(kNumberTypeFloat32),
    &LayerNormCpuKernelMod::LaunchKernel<float16>},
   {KernelAttr()
      .AddInputAttr(kNumberTypeFloat32)

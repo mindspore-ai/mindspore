@@ -107,10 +107,10 @@ void LayerNormGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   auto gamma = GetDeviceAddress<T>(inputs, kLayerNormInputGammaIndex);
   auto beta = GetDeviceAddress<T>(inputs, kLayerNormInputBetaIndex);
   auto y = GetDeviceAddress<T>(outputs, kLayerNormOutputYIndex);
-  auto mean = GetDeviceAddress<T>(outputs, kLayerNormOutputMeanIndex);
-  auto variance = GetDeviceAddress<T>(outputs, kLayerNormOutputVarIndex);
+  auto mean = GetDeviceAddress<float>(outputs, kLayerNormOutputMeanIndex);
+  auto variance = GetDeviceAddress<float>(outputs, kLayerNormOutputVarIndex);
 
-  LayerNorm(input_row_, input_col_, param_dim_, (T)epsilon_, x, gamma, beta, y, mean, variance, cuda_stream_);
+  LayerNorm(input_row_, input_col_, param_dim_, epsilon_, x, gamma, beta, y, mean, variance, cuda_stream_);
 }
 
 std::vector<std::pair<KernelAttr, LayerNormGpuKernelMod::KernelFunc>> LayerNormGpuKernelMod::func_list_ = {
@@ -119,8 +119,8 @@ std::vector<std::pair<KernelAttr, LayerNormGpuKernelMod::KernelFunc>> LayerNormG
      .AddInputAttr(kNumberTypeFloat16)
      .AddInputAttr(kNumberTypeFloat16)
      .AddOutputAttr(kNumberTypeFloat16)
-     .AddOutputAttr(kNumberTypeFloat16)
-     .AddOutputAttr(kNumberTypeFloat16),
+     .AddOutputAttr(kNumberTypeFloat32)
+     .AddOutputAttr(kNumberTypeFloat32),
    &LayerNormGpuKernelMod::LaunchKernel<half>},
   {KernelAttr()
      .AddInputAttr(kNumberTypeFloat32)

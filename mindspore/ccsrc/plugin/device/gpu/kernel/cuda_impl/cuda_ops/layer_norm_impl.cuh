@@ -21,23 +21,23 @@
 
 template <typename T>
 struct DynamicSharedMem;
-template<>
+template <>
 struct DynamicSharedMem<float> {
-    __device__ float *addr() {
-        extern __shared__ float addr_float[];
-        return addr_float;
-    }
+  __device__ float *addr() {
+    extern __shared__ float addr_float[];
+    return addr_float;
+  }
 };
-template<>
+template <>
 struct DynamicSharedMem<half> {
-    __device__ half *addr() {
-        extern __shared__ half addr_half[];
-        return addr_half;
-    }
+  __device__ half *addr() {
+    extern __shared__ half addr_half[];
+    return addr_half;
+  }
 };
 
 template <typename T>
-CUDA_LIB_EXPORT void LayerNorm(const int& outer, const int& inner, const int& param_dim, const T& epsilon, const T* x,
-                               const T* gamma, const T* beta, T* y, T* mean, T* var, cudaStream_t stream);
+CUDA_LIB_EXPORT void LayerNorm(const int outer, const int inner, const int param_dim, const float epsilon, const T *x,
+                               const T *gamma, const T *beta, T *y, float *mean, float *var, cudaStream_t stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_LAYER_NORM_IMPL_CUH_

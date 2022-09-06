@@ -19,8 +19,8 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
 template <typename T>
-CUDA_LIB_EXPORT void LayerNormGrad(const int& row_dim, const int& col_dim, const int& param_dim, const T& epsilon,
-                                   const T* dy, const T* x, const T* mean, const T* var, const T* gamma, T* dx, T* dg,
-                                   T* db, cudaStream_t stream);
+CUDA_LIB_EXPORT void LayerNormGrad(const int row_dim, const int col_dim, const int param_dim, const float epsilon,
+                                   const T *dy, const T *x, const float *mean, const float *var, const T *gamma, T *dx,
+                                   T *dg, T *db, cudaStream_t stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_LAYER_NORM_GRAD_IMPL_CUH_
