@@ -85,10 +85,29 @@ build_lite_jni_and_jar() {
         cp ./${PKG_NAME}/runtime/third_party/libjpeg-turbo/lib/*.so* ${LITE_JAVA_PATH}/java/${NATIVE_PATH_ARCH}/libs/
         cp ./${PKG_NAME}/runtime/third_party/libjpeg-turbo/lib/*.so* ${LITE_JAVA_PATH}/native/libs/${NATIVE_PATH_ARCH}/
     fi
-    # build jni so
+    # prepare
     cd ${BASEPATH}/mindspore/lite/build
     rm -rf java/jni && mkdir -pv java/jni
     cd java/jni
+    # copy glog lib and headers
+    LIB_GLOG="libmindspore_glog.so*"
+    if [[ ${MSLITE_ENABLE_RUNTIME_GLOG} == "on" || ${MSLITE_ENABLE_RUNTIME_GLOG} == "ON" || ${MSLITE_ENABLE_SERVER_INFERENCE} == "on" || ${MSLITE_ENABLE_SERVER_INFERENCE} == "ON" ]]; then
+      if [ -f "`echo ${INSTALL_PREFIX}/${PKG_NAME}/runtime/third_party/glog/${LIB_GLOG}`" ]; then
+        cp ${INSTALL_PREFIX}/${PKG_NAME}/runtime/third_party/glog/*.so* ${LITE_JAVA_PATH}/java/${NATIVE_PATH_ARCH}/libs/
+        cp ${INSTALL_PREFIX}/${PKG_NAME}/runtime/third_party/glog/*.so* ${LITE_JAVA_PATH}/native/libs/${NATIVE_PATH_ARCH}/
+      else
+        echo "no glog lib found, exit."
+        exit 1
+      fi
+      if [ -d "${BASEPATH}/output/tmp/${PKG_NAME}/runtime/include/third_party/glog" ]; then
+          rm -rf jni_include && mkdir jni_include
+          cp ${BASEPATH}/output/tmp/${PKG_NAME}/runtime/include/third_party/glog  ./jni_include -r
+      else
+          echo "no glog hesders found, exit."
+          exit 1
+      fi
+    fi
+    # build jni so
     echo "cmake ${JNI_CMAKE_ARGS} -DSUPPORT_TRAIN=${is_train} ${LITE_JAVA_PATH}/native/"
     cmake ${JNI_CMAKE_ARGS} -DSUPPORT_TRAIN=${is_train} "${LITE_JAVA_PATH}/native/"
     make -j$THREAD_NUM
@@ -101,7 +120,6 @@ build_lite_jni_and_jar() {
     cp ./libmindspore-lite-jni.so ${LITE_JAVA_PATH}/native/libs/${NATIVE_PATH_ARCH}/
     cp ./libmindspore-lite-jni.so ${INSTALL_PREFIX}/${PKG_NAME}/runtime/lib/
     cp ${BASEPATH}/output/tmp/${PKG_NAME}/runtime/lib/*.so ${LITE_JAVA_PATH}/src/main/resources/com/mindspore/lite/${RESOURCE_PATH_ARCH}/
-    LIB_GLOG="libmindspore_glog.so*"
     if [ -f "`echo ${BASEPATH}/output/tmp/${PKG_NAME}/runtime/third_party/glog/${LIB_GLOG}`" ]; then
       cp ${BASEPATH}/output/tmp/${PKG_NAME}/runtime/third_party/glog/libmindspore_glog.so* ${LITE_JAVA_PATH}/src/main/resources/com/mindspore/lite/${RESOURCE_PATH_ARCH}/libmindspore_glog.so
     fi
