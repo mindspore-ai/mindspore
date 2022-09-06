@@ -154,7 +154,7 @@ AnfNodePtr SubstituteConv2D::Run(const AnfNodePtr &node) {
 }
 
 AnfNodePtr MatmulPackB::InferValue(const AnfNodePtr &node) {
-  auto cnode = QuickCloneCNode(node);
+  auto cnode = QuickCloneCNode(node, true);
   MS_EXCEPTION_IF_NULL(cnode);
   const size_t kMatMulWeightIndex = 2;
   const size_t kMatMulWeightRank = 2;
@@ -167,20 +167,19 @@ AnfNodePtr MatmulPackB::InferValue(const AnfNodePtr &node) {
   }
   auto shape = cb->GetInputShape(cnode, kMatMulWeightIndex - 1);
   if (shape.size() != kMatMulWeightRank) {
-    MS_LOG(INFO) << "MatmulPackB only supports 2D weight, but got weight of rank " << shape.size();
-    return nullptr;
+    return node;
   }
   auto prim = GetCNodePrimitive(cnode);
-  auto weight_node = cnode->input(kConv2dWeightIndex)->cast<ValueNodePtr>();
+  auto weight_node = cnode->input(kMatMulWeightIndex)->cast<ValueNodePtr>();
   if (weight_node == nullptr) {
-    return nullptr;
+    return node;
   }
   auto tensor = weight_node->value()->cast<tensor::TensorPtr>();
   if (tensor == nullptr) {
-    return nullptr;
+    return node;
   }
   if (tensor->data().const_data() == nullptr) {
-    return nullptr;
+    return node;
   }
 
   // infer the transpose_b result
@@ -189,10 +188,9 @@ AnfNodePtr MatmulPackB::InferValue(const AnfNodePtr &node) {
     transpose_b = GetValue<bool>(prim->GetAttr("transpose_b"));
   }
   auto new_tensor = PackB(tensor, shape, transpose_b);
+  prim->set_attr("pack_b", MakeValue(true));
   if (transpose_b) {
-    auto new_prim = prim->Clone();
-    new_prim->set_attr("transpose_b", MakeValue(false));
-    cnode->set_input(0, NewValueNode(new_prim));
+    prim->set_attr("transpose_b", MakeValue(false));
   }
   auto v = NewValueNode(new_tensor);
   v->set_abstract(new_tensor->ToAbstract());

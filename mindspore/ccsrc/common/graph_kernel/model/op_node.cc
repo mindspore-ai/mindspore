@@ -50,18 +50,35 @@ std::vector<int64_t> GetListInt(const ValuePtr &attr_value) {
   return list_int;
 }
 
-AbstractBasePtr InferShapeTypeWithAbstract(const PrimitivePtr &prim, const AbstractBasePtrList &abs_list) {
+BaseShapePtr InferShapeWithAbstract(const PrimitivePtr &prim, const AbstractBasePtrList &abs_list) {
   auto &frontend_infer_func = abstract::GetPrimitiveToEvalImplMap();
   auto iter = frontend_infer_func.find(prim);
   if (iter != frontend_infer_func.end()) {
     MS_EXCEPTION_IF_CHECK_FAIL(iter->second.IsImplInferShapeAndType(), "There is no infer-abstract implement!");
-    return iter->second.InferShapeAndType(nullptr, prim, abs_list);
+    return iter->second.InferShape(prim, abs_list);
   }
   auto &backend_infer_func = abstract::GetPrimitiveToBackendEvalImplMap();
   auto iter2 = backend_infer_func.find(prim);
   if (iter2 != backend_infer_func.end()) {
     MS_EXCEPTION_IF_CHECK_FAIL(iter2->second.IsImplInferShapeAndType(), "There is no infer-abstract implement!");
-    return iter2->second.InferShapeAndType(nullptr, prim, abs_list);
+    return iter2->second.InferShape(prim, abs_list);
+  } else {
+    MS_LOG(EXCEPTION) << "The infer function of [" << prim->name() << "] is not defined.";
+  }
+}
+
+TypePtr InferTypeWithAbstract(const PrimitivePtr &prim, const AbstractBasePtrList &abs_list) {
+  auto &frontend_infer_func = abstract::GetPrimitiveToEvalImplMap();
+  auto iter = frontend_infer_func.find(prim);
+  if (iter != frontend_infer_func.end()) {
+    MS_EXCEPTION_IF_CHECK_FAIL(iter->second.IsImplInferShapeAndType(), "There is no infer-abstract implement!");
+    return iter->second.InferType(prim, abs_list);
+  }
+  auto &backend_infer_func = abstract::GetPrimitiveToBackendEvalImplMap();
+  auto iter2 = backend_infer_func.find(prim);
+  if (iter2 != backend_infer_func.end()) {
+    MS_EXCEPTION_IF_CHECK_FAIL(iter2->second.IsImplInferShapeAndType(), "There is no infer-abstract implement!");
+    return iter2->second.InferType(prim, abs_list);
   } else {
     MS_LOG(EXCEPTION) << "The infer function of [" << prim->name() << "] is not defined.";
   }
@@ -81,21 +98,6 @@ tensor::TensorPtr InferValueWithAbstract(const PrimitivePtr &prim, const Abstrac
   return nullptr;
 }
 
-NodeBase ExtractAbstract(const AbstractBasePtr &abs) {
-  NodeBase node;
-  if (abs->isa<abstract::AbstractTensor>()) {
-    auto shape_ptr = abs->BuildShape()->cast<abstract::ShapePtr>();
-    if (shape_ptr != nullptr) {
-      node.shape = shape_ptr->shape();
-    }
-    node.type = abs->cast<abstract::AbstractTensorPtr>()->element()->BuildType()->type_id();
-  } else {  // abstract::AbstractScalar
-    // leave the node.shape empty
-    node.type = abs->BuildType()->type_id();
-  }
-  return node;
-}
-
 void PrimOp::SetAbastractsFromAttrs(const PrimitivePtr &primitive, const mindspore::HashSet<size_t> &convert_input_list,
                                     AbstractBasePtrList *inputs_abstract, std::vector<std::string> input_names_vec) {
   for (size_t index = 0; index < input_names_vec.size(); ++index) {
@@ -112,7 +114,8 @@ void PrimOp::SetAbastractsFromAttrs(const PrimitivePtr &primitive, const mindspo
   }
 }
 
-NodeBaseList PrimOp::InferShapeType(const NodePtrList &inputs, const DAttrs &attrs) {
+std::pair<PrimitivePtr, AbstractBasePtrList> PrimOp::GenPrimAndAbstract(const NodePtrList &inputs,
+                                                                        const DAttrs &attrs) const {
   auto op_primc_fns = ops::OpPrimCRegister::GetInstance().GetPrimCMap();
   const auto iter = op_primc_fns.find(op_);
   if (iter == op_primc_fns.end()) {
@@ -120,23 +123,33 @@ NodeBaseList PrimOp::InferShapeType(const NodePtrList &inputs, const DAttrs &att
   }
   auto primc = iter->second();
   (void)primc->SetAttrs(attrs);
-  AbstractBasePtrList inputs_abstract;
-  (void)std::transform(inputs.begin(), inputs.end(), std::back_inserter(inputs_abstract),
+  AbstractBasePtrList abs_list;
+  (void)std::transform(inputs.begin(), inputs.end(), std::back_inserter(abs_list),
                        [](const NodePtr &node) -> AbstractBasePtr {
                          return std::make_shared<abstract::AbstractTensor>(TypeIdToType(node->type), node->shape);
                        });
-  RectifyAbstract(primc, &inputs_abstract);
-  AbstractBasePtr infer_result = InferShapeTypeWithAbstract(primc, inputs_abstract);
-  MS_EXCEPTION_IF_NULL(infer_result);
-  NodeBaseList result;
-  if (infer_result->isa<abstract::AbstractTuple>()) {
-    for (auto abs : infer_result->cast<abstract::AbstractTuplePtr>()->elements()) {
-      (void)result.emplace_back(ExtractAbstract(abs));
-    }
-  } else {
-    (void)result.emplace_back(ExtractAbstract(infer_result));
+  return std::make_pair(primc->cast<PrimitivePtr>(), abs_list);
+}
+
+std::vector<DShape> PrimOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {
+  auto [primc, abs_list] = GenPrimAndAbstract(inputs, attrs);
+  RectifyAbstract(primc, &abs_list);
+  auto baseshape = InferShapeWithAbstract(primc, abs_list);
+  MS_EXCEPTION_IF_NULL(baseshape);
+  auto shape = baseshape->cast<abstract::ShapePtr>();
+  MS_EXCEPTION_IF_NULL(shape);
+  return {shape->shape()};
+}
+
+std::vector<TypeId> PrimOp::InferType(const NodePtrList &inputs, const DAttrs &attrs) {
+  auto [primc, abs_list] = GenPrimAndAbstract(inputs, attrs);
+  RectifyAbstract(primc, &abs_list);
+  auto type = InferTypeWithAbstract(primc, abs_list);
+  MS_EXCEPTION_IF_NULL(type);
+  if (type->isa<TensorType>()) {
+    return {type->cast<TensorTypePtr>()->element()->type_id()};
   }
-  return result;
+  return {type->type_id()};
 }
 
 NodeBaseList PrimOp::Infer(const NodePtrList &inputs, const DAttrs &attrs) {
@@ -145,36 +158,12 @@ NodeBaseList PrimOp::Infer(const NodePtrList &inputs, const DAttrs &attrs) {
   auto format = InferFormat(inputs, attrs);
   auto shapes = InferShape(inputs, attrs);
   auto types = InferType(inputs, attrs);
-  // use PrimitiveC's inference function when InferShape or InferType returns empty result.
-  if (shapes.empty() || types.empty()) {
-    result = InferShapeType(inputs, attrs);
-    if (!shapes.empty()) {
-      if (shapes.size() != result.size()) {
-        MS_LOG(EXCEPTION) << "The expected shapes num is " << result.size() << " but got " << shapes.size();
-      }
-      for (size_t i = 0; i < shapes.size(); i++) {
-        result[i].shape = shapes[i];
-      }
-    }
-    if (!types.empty()) {
-      if (types.size() != result.size()) {
-        MS_LOG(EXCEPTION) << "The expected types num is " << result.size() << " but got " << types.size();
-      }
-      for (size_t i = 0; i < types.size(); i++) {
-        result[i].type = types[i];
-      }
-    }
-    for (auto &r : result) {
-      r.format = format;
-    }
-  } else {
-    if (shapes.size() != types.size()) {
-      MS_LOG(EXCEPTION) << "The num of shapes and types should be equal. (" << shapes.size() << " vs " << types.size()
-                        << ")";
-    }
-    for (size_t i = 0; i < shapes.size(); i++) {
-      (void)result.emplace_back(NodeBase{shapes[i], types[i], format});
-    }
+  if (shapes.size() != types.size()) {
+    MS_LOG(EXCEPTION) << "The num of shapes and types should be equal. (" << shapes.size() << " vs " << types.size()
+                      << ")";
+  }
+  for (size_t i = 0; i < shapes.size(); i++) {
+    (void)result.emplace_back(NodeBase{shapes[i], types[i], format});
   }
   return result;
 }
@@ -528,7 +517,7 @@ NodePtr ConstantOfShapeOp::InferValue(const NodePtrList &inputs, const DAttrs &a
   return std::make_shared<ConstTensorNode>(tensor);
 }
 
-std::vector<DShape> ConstantOfShapeOp::InferShape(const NodePtrList &, const DAttrs &attrs) {
+std::vector<DShape> ConstantOfShapeOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {
   const auto &value = attrs.find("shape")->second;
   std::vector<int64_t> res;
   if (value->isa<ValueSequence>()) {
@@ -555,7 +544,7 @@ std::vector<DShape> ConstantOfShapeOp::InferShape(const NodePtrList &, const DAt
       return {res};
     }
   }
-  return {};
+  return PrimOp::InferShape(inputs, attrs);
 }
 
 NodePtr ShapeOp::InferValue(const NodePtrList &inputs, const DAttrs &attrs) {
@@ -1131,10 +1120,53 @@ NodePtr StridedSliceOnnxOp::InferValue(const NodePtrList &inputs, const DAttrs &
   return res == nullptr ? nullptr : std::make_shared<ConstTensorNode>(res);
 }
 
-void MatMulOp::RectifyAbstract(const PrimitivePtr &primitive, AbstractBasePtrList *inputs_abstract) {
-  if (primitive->HasAttr("dst_type")) {
-    auto out_type = primitive->GetAttr("dst_type");
-    primitive->AddAttr("cast_type", out_type);
+std::vector<DShape> MatMulOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {
+  // the prim's infer shape does not supports batch dims
+  constexpr size_t kMatMulRank = 2;
+  if (inputs[0]->shape.size() > kMatMulRank || inputs[1]->shape.size() > kMatMulRank) {
+    NodePtrList new_inputs = inputs;
+    std::vector<DShape> batches(inputs.size());
+    auto cut_batches = [&new_inputs, &batches](size_t i) -> void {
+      const auto &shape_i = new_inputs[i]->shape;
+      if (shape_i.size() > kMatMulRank) {
+        DShape real_shape(shape_i.cend() - kMatMulRank, shape_i.cend());
+        new_inputs[i] = std::make_shared<inner::Node>(NodeBase{real_shape, new_inputs[i]->type, new_inputs[i]->format});
+        batches[i].assign(shape_i.cbegin(), shape_i.cend() - kMatMulRank);
+      }
+    };
+
+    cut_batches(0);
+    cut_batches(1);
+    if (batches[0].size() != batches[1].size()) {
+      MS_LOG(EXCEPTION) << "The Matmul's batch rank should be equal, but got " << batches[0].size() << " vs "
+                        << batches[1].size();
+    }
+    DShape batch;
+    for (size_t i = 0; i < batches[0].size(); i++) {
+      if (batches[0][i] != batches[1][i]) {
+        if (batches[0][i] != 1 && batches[1][i] != 1) {
+          MS_LOG(EXCEPTION) << "The Matmul's batch dim is unmatched. got " << inputs[0]->shape << " and "
+                            << inputs[1]->shape;
+        }
+      }
+      batch.push_back(std::max(batches[0][i], batches[1][i]));
+    }
+
+    auto out_shape = PrimOp::InferShape(new_inputs, attrs)[0];
+    // just reuse the `batch` vector
+    (void)batch.insert(batch.end(), out_shape.begin(), out_shape.end());
+    return {batch};
   }
+  return PrimOp::InferShape(inputs, attrs);
+}
+
+std::vector<TypeId> MatMulOp::InferType(const NodePtrList &inputs, const DAttrs &attrs) {
+  if (attrs.count("dst_type") != 0) {
+    return {attrs.find("dst_type")->second->cast<TypePtr>()->type_id()};
+  }
+  if (inputs[0]->type == TypeId::kNumberTypeInt8) {
+    return {TypeId::kNumberTypeInt32};
+  }
+  return {inputs[0]->type};
 }
 }  // namespace mindspore::graphkernel::inner

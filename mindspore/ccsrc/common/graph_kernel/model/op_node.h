@@ -19,6 +19,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <utility>
 
 #include "ops/primitive_c.h"
 #include "common/graph_kernel/model/node.h"
@@ -65,17 +66,17 @@ class PrimOp : public Node {
   virtual DFormat InferFormat(const NodePtrList &inputs, const DAttrs &) { return inputs[0]->format; }
 
   // Infer shape. returning an empty vector means using PrimitiveC's infer_shape function.
-  virtual std::vector<DShape> InferShape(const NodePtrList &, const DAttrs &) { return {}; }
+  virtual std::vector<DShape> InferShape(const NodePtrList &, const DAttrs &);
 
   // Infer type. returning an empty vector means using PrimitiveC's infer_type function.
-  virtual std::vector<TypeId> InferType(const NodePtrList &, const DAttrs &) { return {}; }
+  virtual std::vector<TypeId> InferType(const NodePtrList &, const DAttrs &);
 
   // calculate const inputs, used for InferValue
   template <typename TM>
   tensor::TensorPtr CalcByOperator(const NodePtrList &inputs, const DAttrs &);
 
-  // Infer shape and type with PrimitiveC's inference function.
-  NodeBaseList InferShapeType(const NodePtrList &inputs, const DAttrs &attrs);
+  // Gen PrimitiveC and abstract list to call PrimitiveC's inference function.
+  std::pair<PrimitivePtr, AbstractBasePtrList> GenPrimAndAbstract(const NodePtrList &inputs, const DAttrs &attrs) const;
 
   // rectify abstract before calling PrimitiveC's inference function.
   virtual void RectifyAbstract(const PrimitivePtr &, AbstractBasePtrList *) {}
@@ -206,7 +207,7 @@ class ConstantOfShapeOp : public OpaqueOp {
   NodePtr InferValue(const NodePtrList &inputs, const DAttrs &attrs) override;
 
  protected:
-  std::vector<DShape> InferShape(const NodePtrList &, const DAttrs &attrs) override;
+  std::vector<DShape> InferShape(const NodePtrList &inputs, const DAttrs &attrs) override;
   std::vector<TypeId> InferType(const NodePtrList &, const DAttrs &attrs) override {
     return {static_cast<TypeId>(GetValue<int64_t>(attrs.find("data_type")->second))};
   }
@@ -348,7 +349,8 @@ class MatMulOp : public OpaqueOp {
   ~MatMulOp() = default;
 
  protected:
-  void RectifyAbstract(const PrimitivePtr &primitive, AbstractBasePtrList *inputs_abstract) override;
+  std::vector<DShape> InferShape(const NodePtrList &inputs, const DAttrs &attrs) override;
+  std::vector<TypeId> InferType(const NodePtrList &inputs, const DAttrs &attrs) override;
 };
 }  // namespace mindspore::graphkernel::inner
 #endif
