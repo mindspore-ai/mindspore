@@ -182,10 +182,14 @@ Status ValidateMPPPath(const std::string &dict_path) {
   cppjieba::DictUnit node_info;
   for (size_t lineno = 0; std::getline(ifs, line); lineno++) {
     cppjieba::Split(line, buf, " ");
-    CHECK_FAIL_RETURN_UNEXPECTED(buf.size() == cppjieba::DICT_COLUMN_NUM,
-                                 "JiebaTokenizer: Split result illegal, line: " + line);
-    CHECK_FAIL_RETURN_UNEXPECTED(MakeNodeInfo(node_info, buf[0], std::atof(buf[1].c_str()), buf[2]),
-                                 "JiebaTokenizer: Failed to make node info.");
+    if (buf.size() != cppjieba::DICT_COLUMN_NUM) {
+      ifs.close();
+      RETURN_STATUS_UNEXPECTED("JiebaTokenizer: Split result illegal, line: " + line);
+    }
+    if (!(MakeNodeInfo(node_info, buf[0], std::atof(buf[1].c_str()), buf[2]))) {
+      ifs.close();
+      RETURN_STATUS_UNEXPECTED("JiebaTokenizer: Failed to make node info.");
+    }
     static_node_infos.push_back(node_info);
   }
   freq_sum = CalcFreqSum(static_node_infos);
@@ -217,9 +221,12 @@ Status ValidateHMMPath(const std::string &dict_path) {
   std::vector<std::string> buf;
 
   // Load startProb
-  CHECK_FAIL_RETURN_UNEXPECTED(GetLine(ifs, &line),
-                               "JiebaTokenizer: The file format of the MPSegment algorithm is incorrect, and the "
-                               "content fails to be obtained when startProb is loaded.");
+  if (!GetLine(ifs, &line)) {
+    ifs.close();
+    RETURN_STATUS_UNEXPECTED(
+      "JiebaTokenizer: The file format of the MPSegment algorithm is incorrect, and the "
+      "content fails to be obtained when startProb is loaded.");
+  }
   cppjieba::Split(line, buf, " ");
   CHECK_FAIL_RETURN_UNEXPECTED(buf.size() == kStatusSum,
                                "JiebaTokenizer: The file format of the MPSegment algorithm is incorrect, and the "
@@ -227,15 +234,21 @@ Status ValidateHMMPath(const std::string &dict_path) {
 
   // Load transProb
   for (size_t i = 0; i < kStatusSum; i++) {
-    CHECK_FAIL_RETURN_UNEXPECTED(GetLine(ifs, &line),
-                                 "JiebaTokenizer: The file format of the MPSegment algorithm is incorrect, and the "
-                                 "content fails to be obtained when transProb is loaded.");
+    if (!GetLine(ifs, &line)) {
+      ifs.close();
+      RETURN_STATUS_UNEXPECTED(
+        "JiebaTokenizer: The file format of the MPSegment algorithm is incorrect, and the "
+        "content fails to be obtained when transProb is loaded.");
+    }
     cppjieba::Split(line, buf, " ");
     CHECK_FAIL_RETURN_UNEXPECTED(buf.size() == kStatusSum,
                                  "JiebaTokenizer: The file format of the MPSegment algorithm is incorrect, and the "
                                  "content fails to be obtained when transProb is loaded.");
   }
-  CHECK_FAIL_RETURN_UNEXPECTED(GetLine(ifs, &line), "JiebaTokenizer: HMMSegment algorithm file format is incorrect.");
+  if (!GetLine(ifs, &line)) {
+    ifs.close();
+    RETURN_STATUS_UNEXPECTED("JiebaTokenizer: HMMSegment algorithm file format is incorrect.");
+  }
   ifs.close();
   return Status::OK();
 }

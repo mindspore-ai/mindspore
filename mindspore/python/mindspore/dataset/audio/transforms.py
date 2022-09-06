@@ -522,9 +522,9 @@ class ComputeDeltas(AudioTensorOperation):
         >>> import numpy as np
         >>> from mindspore.dataset.audio import BorderType
         >>>
-        >>> waveform = np.random.random([1, 400//2+1, 30])
+        >>> waveform = np.random.random([1, 400 // 2 + 1, 30])
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
-        >>> transforms = [audio.ComputeDeltas(win_length=7, pad_mode = BorderType.EDGE)]
+        >>> transforms = [audio.ComputeDeltas(win_length=7, pad_mode=BorderType.EDGE)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
     """
 

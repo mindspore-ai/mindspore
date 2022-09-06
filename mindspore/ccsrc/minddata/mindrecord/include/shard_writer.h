@@ -36,6 +36,7 @@
 #include <tuple>
 #include <utility>
 #include <vector>
+
 #include "minddata/mindrecord/include/common/log_adapter.h"
 #include "minddata/mindrecord/include/common/shard_utils.h"
 #include "minddata/mindrecord/include/shard_column.h"
