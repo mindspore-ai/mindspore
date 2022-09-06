@@ -36,6 +36,7 @@ enum DeviceType {
 };
 
 class Allocator;
+class AbstractDelegate;
 class Delegate;
 class DeviceInfoContext;
 
@@ -46,37 +47,37 @@ class MS_API Context {
   Context();
   ~Context() = default;
 
-  /// \brief Set the number of threads at runtime. Only valid for Lite.
+  /// \brief Set the number of threads at runtime.
   ///
   /// \param[in] thread_num the number of threads at runtime.
   void SetThreadNum(int32_t thread_num);
 
-  /// \brief Get the current thread number setting. Only valid for Lite.
+  /// \brief Get the current thread number setting.
   ///
   /// \return The current thread number setting.
   int32_t GetThreadNum() const;
 
-  /// \brief Set the parallel number of operators at runtime. Only valid for Lite.
+  /// \brief Set the parallel number of operators at runtime.
   ///
   /// \param[in] parallel_num the parallel number of operators at runtime.
   void SetInterOpParallelNum(int32_t parallel_num);
 
-  /// \brief Get the current operators parallel number setting. Only valid for Lite.
+  /// \brief Get the current operators parallel number setting.
   ///
   /// \return The current operators parallel number setting.
   int32_t GetInterOpParallelNum() const;
 
-  /// \brief Set the thread affinity to CPU cores. Only valid for Lite.
+  /// \brief Set the thread affinity to CPU cores.
   ///
   /// \param[in] mode: 0: no affinities, 1: big cores first, 2: little cores first
   void SetThreadAffinity(int mode);
 
-  /// \brief Get the thread affinity of CPU cores. Only valid for Lite.
+  /// \brief Get the thread affinity of CPU cores.
   ///
   /// \return Thread affinity to CPU cores. 0: no affinities, 1: big cores first, 2: little cores first
   int GetThreadAffinityMode() const;
 
-  /// \brief Set the thread lists to CPU cores. Only valid for Lite.
+  /// \brief Set the thread lists to CPU cores.
   ///
   /// \note If core_list and mode are set by SetThreadAffinity at the same time, the core_list is effective, but the
   /// mode is not effective.
@@ -84,29 +85,35 @@ class MS_API Context {
   /// \param[in] core_list: a vector of thread core lists.
   void SetThreadAffinity(const std::vector<int> &core_list);
 
-  /// \brief Get the thread lists of CPU cores. Only valid for Lite.
+  /// \brief Get the thread lists of CPU cores.
   ///
   /// \return core_list: a vector of thread core lists.
   std::vector<int32_t> GetThreadAffinityCoreList() const;
 
-  /// \brief Set the status whether to perform model inference or training in parallel. Only valid for Lite.
+  /// \brief Set the status whether to perform model inference or training in parallel.
   ///
   /// \param[in] is_parallel: true, parallel; false, not in parallel.
   void SetEnableParallel(bool is_parallel);
 
-  /// \brief Get the status whether to perform model inference or training in parallel. Only valid for Lite.
+  /// \brief Get the status whether to perform model inference or training in parallel.
   ///
   /// \return Bool value that indicates whether in parallel.
   bool GetEnableParallel() const;
 
-  /// \brief Set Delegate to access third-party AI framework. Only valid for Lite.
+  /// \brief Set Delegate to access third-party AI framework.
   ///
   /// \param[in] delegate the custom delegate.
+  void set_delegate(const std::shared_ptr<AbstractDelegate> &delegate);
+
+  // deprecated
   void SetDelegate(const std::shared_ptr<Delegate> &delegate);
 
-  /// \brief Get the delegate of the third-party AI framework. Only valid for Lite.
+  /// \brief Get the delegate of the third-party AI framework.
   ///
   /// \return Pointer to the custom delegate.
+  std::shared_ptr<AbstractDelegate> get_delegate() const;
+
+  // deprecated
   std::shared_ptr<Delegate> GetDelegate() const;
 
   /// \brief Set quant model to run as float model in multi device.

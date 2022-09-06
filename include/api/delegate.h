@@ -22,7 +22,7 @@
 #include <memory>
 #include "schema/model_generated.h"
 #include "include/api/kernel.h"
-#include "include/api/status.h"
+#include "include/api/delegate_api.h"
 
 namespace mindspore {
 typedef enum {
@@ -36,6 +36,7 @@ using KernelIter = std::vector<kernel::Kernel *>::iterator;
 template <class T>
 class MS_API DelegateModel {
  public:
+  DelegateModel() = default;
   /// \brief Constructor of MindSpore Lite DelegateModel.
   DelegateModel(std::vector<kernel::Kernel *> *kernels, const std::vector<MSTensor> &inputs,
                 const std::vector<MSTensor> &outputs, const std::map<kernel::Kernel *, const T *> &primitives,
@@ -107,14 +108,14 @@ class MS_API DelegateModel {
   SchemaVersion version_;
 };
 
-class MS_API Delegate {
+// lite delegate use kernel::Kernel as graph node.
+using LiteDelegateGraph = DelegateModel<schema::Primitive>;
+class Delegate : public IDelegate<LiteDelegateGraph, kernel::Kernel, kernel::Kernel> {
  public:
-  /// \brief Constructor of MindSpore Lite Delegate.
   Delegate() = default;
-
-  /// \brief Destructor of MindSpore Lite Delegate.
+  Delegate(const std::vector<mindspore::MSTensor> &inputs, const std::vector<mindspore::MSTensor> &outputs)
+      : IDelegate<LiteDelegateGraph, kernel::Kernel, kernel::Kernel>(inputs, outputs) {}
   virtual ~Delegate() = default;
-
   /// \brief Init delegate.
   ///
   /// \note Init will be called in Model::Build.
@@ -122,12 +123,26 @@ class MS_API Delegate {
   /// \return Status. If Status is kLiteNotSupport, the program will return to the MindSpore Lite inner inference.
   virtual Status Init() = 0;
 
-  /// \brief Build delegate graph for MindSpore Lite model.
+  std::shared_ptr<kernel::Kernel> CreateKernel(const std::shared_ptr<kernel::Kernel> &node) override {
+    // return node as kernel since they are same one.
+    return node;
+  }
+
+  bool IsDelegateNode(const std::shared_ptr<kernel::Kernel> &node) override { return false; }
+
+  /// \brief Replace the nodes in model with delegate nodes, delegate will create kernels by its delegate nodes.
+  ///
+  /// \param[in] graph The graph to be built.
+  void ReplaceNodes(const std::shared_ptr<LiteDelegateGraph> &graph) override {}
+
+  /// \brief Build delegate graph for MindSpore model.
   ///
   /// \note Build will be called in Model::Build.
   ///
   /// \param[in] model Define the delegate model to be built.
-  virtual Status Build(DelegateModel<schema::Primitive> *model) = 0;
+  ///
+  /// \note deprecated, use ReplaceNodes and CreateKernel to build delegate model.
+  virtual Status Build(LiteDelegateGraph *model) = 0;
 };
 
 class MS_API CoreMLDelegate : public Delegate {
@@ -147,7 +162,7 @@ class MS_API CoreMLDelegate : public Delegate {
   /// \note Build will be called in Model::Build.
   ///
   /// \param[in] model Define the delegate model to be built.
-  Status Build(DelegateModel<schema::Primitive> *model) override;
+  Status Build(LiteDelegateGraph *model) override;
 
  protected:
   std::shared_ptr<Delegate> impl_;

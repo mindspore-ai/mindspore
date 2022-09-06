@@ -27,6 +27,7 @@
 #include <experimental/any>
 #endif
 #include "include/api/context.h"
+#include "include/api/delegate.h"
 
 namespace mindspore {
 struct Context::Data {

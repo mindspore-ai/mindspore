@@ -38,25 +38,24 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
         ${CMAKE_CURRENT_SOURCE_DIR}/../litert/pack_weight_manager.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/dynamic_mem_allocator.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/dynamic_mem_manager.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/subgraph_kernel.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/numa_adapter.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/kernel/cpu/less_test_kernel_mod.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/kernel/cpu/transpose_kernel_mod.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/infer_session.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/single_op_session.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/session/single_op_session.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/infer_device_address.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/utils/kernel_build_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/utils/kernel_graph_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/utils/tensor_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/utils/runtime_utils.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/delegate/graph_executor/delegate.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/session/delegate_session.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/session/graph_executor_session.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/session/factory.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/delegate/factory.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/delegate/graph_executor/factory.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/delegate/plugin/tensorrt_executor_plugin.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/delegate/tensorrt/distribution/distribution_base.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/session/lite_infer_session.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/delegate_graph_executor.cc
         )
     # when cpu kernel is need
     #if(NOT MSLITE_ENABLE_ACL)

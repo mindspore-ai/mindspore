@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_EXTENDRT_GRAPH_COMPILER_H
-#define MINDSPORE_LITE_EXTENDRT_GRAPH_COMPILER_H
+#ifndef MINDSPORE_LITE_EXTENDRT_GRAPH_COMPILER_H_
+#define MINDSPORE_LITE_EXTENDRT_GRAPH_COMPILER_H_
 #include <string>
 #include <memory>
 #include <map>
@@ -34,10 +34,10 @@ struct CompileResult {
   GraphId root_;
   std::vector<GraphId> control_nodes_;
   std::vector<KernelGraphPtr> graphs_;
-  // dependency ?
 };
 struct KernelInfo {
   KernelPtr kernel_;
+  bool isSubgraphKernel;
   std::vector<int64_t> inputs_;
   std::vector<int64_t> outputs_;
 };

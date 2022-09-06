@@ -28,7 +28,7 @@ ExcutionPlan GraphCompiler::Compile(FuncGraphPtr func_graph) {
   }
 
   CompileResult result = LinkSegments();
-  return scheduler.Schedule(result);
+  return Schedule(result);
 }
 GraphId GraphCompiler::CompileSegment(const GraphSegmentPtr &segment) {
   // Generate kernel graph.

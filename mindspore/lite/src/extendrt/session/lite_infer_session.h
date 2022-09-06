@@ -27,14 +27,11 @@ namespace mindspore {
 class LiteInferSession : public InferSession {
  public:
   LiteInferSession() = default;
-  explicit LiteInferSession(const std::shared_ptr<Context> context) : context_(context) {}
+  explicit LiteInferSession(const std::shared_ptr<Context> &context) : context_(context) {}
   virtual ~LiteInferSession() = default;
-  Status Init(const std::shared_ptr<Context> context) override;
+  Status Init(const std::shared_ptr<Context> &context) override;
   Status CompileGraph(FuncGraphPtr graph, const void *data = nullptr, size_t size = 0) override;
-  Status RunGraph() override;
   Status RunGraph(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs) override;
-  Status Resize(const std::vector<tensor::Tensor> &inputs, const std::vector<std::vector<int64_t>> &dims) override;
-
   std::vector<MutableTensorImplPtr> GetOutputs() override;
   std::vector<MutableTensorImplPtr> GetInputs() override;
   std::vector<std::string> GetOutputNames() override;

@@ -85,7 +85,7 @@ class MS_API ModelParallelRunner {
   ModelParallelRunner() = default;
   ~ModelParallelRunner() = default;
 
-  /// \brief build a model parallel runner from model path so that it can run on a device. Only valid for Lite.
+  /// \brief build a model parallel runner from model path so that it can run on a device.
   ///
   /// \param[in] model_path Define the model path.
   /// \param[in] runner_config Define the config used to store options during model pool init.
@@ -93,7 +93,7 @@ class MS_API ModelParallelRunner {
   /// \return Status.
   inline Status Init(const std::string &model_path, const std::shared_ptr<RunnerConfig> &runner_config = nullptr);
 
-  /// \brief build a model parallel runner from model buffer so that it can run on a device. Only valid for Lite.
+  /// \brief build a model parallel runner from model buffer so that it can run on a device.
   ///
   /// \param[in] model_data Define the buffer read from a model file.
   /// \param[in] data_size Define bytes number of model buffer.

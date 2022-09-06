@@ -22,7 +22,6 @@
 #include <memory>
 #include <set>
 #include <map>
-#include "include/api/delegate.h"
 #include "src/extendrt/delegate/tensorrt/tensorrt_subgraph.h"
 #include "src/extendrt/delegate/parameter_cache/embedding_cache_manager.h"
 #include "include/api/kernel.h"
@@ -30,7 +29,7 @@
 #include "src/common/log_adapter.h"
 #include "include/api/context.h"
 #include "core/base/base.h"
-
+#include "extendrt/delegate/factory.h"
 #include "extendrt/session/lite_graph_executor.h"
 #include "ccsrc/backend/common/session/kernel_graph.h"
 
