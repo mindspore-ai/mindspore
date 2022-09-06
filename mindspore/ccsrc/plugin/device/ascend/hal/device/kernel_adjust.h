@@ -84,8 +84,9 @@ class KernelAdjust {
                                 const CNodePtr &npu_alloc_cnode) const;
   CNodePtr CreateNPUAllocStatus(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
   CNodePtr CreateAssignAdd(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
-                           const CNodePtr &npu_alloc_cnode, const AnfNodePtr &specify_para);
-  CNodePtr CreateAssign(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr, const AnfNodePtr &specify_para);
+                           const CNodePtr &npu_alloc_cnode, const AnfNodePtr &specify_para) const;
+  CNodePtr CreateAssign(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
+                        const AnfNodePtr &specify_para) const;
   void ReorderGetNext(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
   CNodePtr CreateStreamSwitchOp(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                 const std::map<std::string, mindspore::ParameterPtr> &switch_loop_input,
