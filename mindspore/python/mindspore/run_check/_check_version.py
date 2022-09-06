@@ -326,7 +326,7 @@ class AscendEnvChecker(EnvChecker):
         try:
             import te  # pylint: disable=unused-import
         # pylint: disable=broad-except
-        except ImportError:
+        except Exception:
             if Path(self.tbe_path).is_dir():
                 if os.getenv('LD_LIBRARY_PATH'):
                     os.environ['LD_LIBRARY_PATH'] = self.tbe_path + ":" + os.environ['LD_LIBRARY_PATH']
