@@ -45,7 +45,7 @@ class AdjustSaturation(Primitive):
         ValueError: If the dimension of the 'image' is less than 3, or the last dimension of the 'image' is not 3.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
       >>> x = Tensor([[[1.0, 2.0, 3.0],
@@ -142,7 +142,7 @@ class AdjustHue(Primitive):
         ValueError: If image have at less than 3 dimensions.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
          >>> class AdjustHue(nn.Cell):

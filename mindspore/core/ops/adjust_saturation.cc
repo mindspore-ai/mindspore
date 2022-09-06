@@ -53,7 +53,7 @@ TypePtr AdjustSaturationInferType(const PrimitivePtr &prim, const std::vector<Ab
   auto input_scale_type = input_args[1]->BuildType();
   MS_EXCEPTION_IF_NULL(input_images_type);
   MS_EXCEPTION_IF_NULL(input_scale_type);
-  const std::set<TypePtr> valid_images_types = {kFloat16, kFloat32};
+  const std::set<TypePtr> valid_images_types = {kFloat16, kFloat32, kFloat64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("image", input_images_type, valid_images_types, prim_name);
   const std::set<TypePtr> valid_scale_types = {kFloat32};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("scale", input_scale_type, valid_scale_types, prim_name);
