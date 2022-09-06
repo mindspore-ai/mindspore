@@ -628,59 +628,6 @@ def argmax(x, axis=None):
     return P.Argmax(axis)(x)
 
 
-def argmin_with_value(x, axis=0, keep_dims=False):
-    """
-    Calculates the minimum value with corresponding index, and returns indices and values.
-
-    Calculates the minimum value along with the given axis for the input tensor. It returns the minimum values and
-    indices.
-
-    Note:
-        In auto_parallel and semi_auto_parallel mode, the first output index can not be used.
-
-    .. warning::
-        - If there are multiple minimum values, the index of the first minimum value is used.
-        - The value range of "axis" is [-dims, dims - 1]. "dims" is the dimension length of "x".
-
-    Also see: class: `mindspore.ops.ArgMinWithValue`.
-
-    Args:
-        x (Tensor): The input tensor, can be any dimension. Set the shape of input tensor as
-          :math:`(x_1, x_2, ..., x_N)` . And the data type only support
-          mindspore.uint16, mindspore.uint32, mindspore.int16, mindspore.int32, mindspore.float16, mindspore.float32.
-        axis (int): The dimension to reduce. Default: 0.
-        keep_dims (bool): Whether to reduce dimension, if true the output will keep the same dimension as the input,
-                          the output will reduce dimension if false. Default: False.
-
-    Returns:
-        tuple (Tensor), tuple of 2 tensors, containing the corresponding index and the minimum value of the input
-        tensor.
-
-        - **index** (Tensor) - The index for the minimum value of the input tensor. If `keep_dims` is true, the shape of
-          output tensors is :math:`(x_1, x_2, ..., x_{axis-1}, 1, x_{axis+1}, ..., x_N)`. Otherwise, the shape is
-          :math:`(x_1, x_2, ..., x_{axis-1}, x_{axis+1}, ..., x_N)` .
-        - **values** (Tensor) - The minimum value of input tensor, with the same shape as index.
-
-    Raises:
-        TypeError: If data type `x` is not uint16, uint32, int16, int32, float16, float32.
-        TypeError: If `keep_dims` is not a bool.
-        TypeError: If `axis` is not an int.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> x = Tensor(np.array([0.0, 0.4, 0.6, 0.7, 0.1]), mindspore.float32)
-        >>> output = ops.min(x)
-        >>> print(output)
-        0 0.0
-        >>> output = ops.min(x, keep_dims=True)
-        >>> print(output)
-        [0] [0.0]
-    """
-    return F.min(x, axis, keep_dims)
-
-
 def argmin(x, axis=None):
     """
     Returns the indices of the minimum values along an axis.
@@ -717,6 +664,16 @@ def argmin(x, axis=None):
         axis = check_axis_in_range_const(axis, F.rank(x))
     # P.Argmin is currently not supported
     return P.Argmax(axis)(F.neg_tensor(x))
+
+
+def argmax_with_value(x, axis=0, keep_dims=False):
+    """Calculates the maximum value with corresponding index, and returns indices and values."""
+    return F.max(x, axis, keep_dims)
+
+
+def argmin_with_value(x, axis=0, keep_dims=False):
+    """Calculates the minimum value with corresponding index, and returns indices and values."""
+    return F.min(x, axis, keep_dims)
 
 
 def median(x, global_median, axis=0, keep_dims=False):
