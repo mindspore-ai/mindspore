@@ -69,8 +69,6 @@ void ConstructSupportDTypes(const std::vector<OpIOInfoPtr> &puts, size_t format_
 void ConstructSupportFormats(size_t put_size, const std::vector<SupportFormatItem> &support_format, size_t type_size,
                              std::vector<SupportFormatItem> *support_formats);
 
-void GenerateSupportFormatDType(const OpInfoPtr &op_info, const SupportFormat &support_format, bool is_dynamic_shape,
-                                SupportFormatDType *support_format_dtype);
 void GenerateSupportFormatDType(const CNodePtr &cnode, const SupportFormat &support_format,
                                 SupportFormatDType *support_format_dtype);
 }  // namespace mindspore::kernel

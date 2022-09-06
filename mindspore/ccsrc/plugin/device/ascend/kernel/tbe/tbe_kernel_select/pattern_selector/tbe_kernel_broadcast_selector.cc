@@ -226,7 +226,7 @@ void TbeKernelBroadcastSelector::GetBroadcastSupportFracNZ(SupportFormat *suppor
             shape[shape.size() - kLastButOneIndex] % kAlignmented16 != 0) {
           return;
         }
-        input_support_format.emplace_back(kOpFormat_FRAC_NZ);
+        (void)input_support_format.emplace_back(kOpFormat_FRAC_NZ);
       }
     }
   } else {
@@ -264,7 +264,7 @@ void TbeKernelBroadcastSelector::GetBroadcastSupportNDC1HWC0(SupportFormat *supp
   if (has_scalar_input_) {
     for (const auto &shape : input_shapes_) {
       if (IsScalarShape(shape)) {
-        input_support_format.emplace_back(kOpFormat_DEFAULT);
+        (void)input_support_format.emplace_back(kOpFormat_DEFAULT);
       } else {
         if (!Is5DShape(shape)) {
           return;
@@ -306,7 +306,7 @@ void TbeKernelBroadcastSelector::GetBroadcastSupportFracZ3D(SupportFormat *suppo
   if (has_scalar_input_) {
     for (const auto &shape : input_shapes_) {
       if (IsScalarShape(shape)) {
-        input_support_format.emplace_back(kOpFormat_DEFAULT);
+        (void)input_support_format.emplace_back(kOpFormat_DEFAULT);
       } else {
         if (!Is5DShape(shape)) {
           return;

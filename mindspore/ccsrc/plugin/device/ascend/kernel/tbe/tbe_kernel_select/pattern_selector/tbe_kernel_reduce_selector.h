@@ -40,7 +40,6 @@ class TbeKernelReduceSelector {
   void GetReduceSupportFracNZ(SupportFormat *support_format) const;
   void GetReduceAttrKeepDim();
   void FilterInvalidFormatDType(SupportFormatDType *support_format_dtype);
-  bool CheckUBSizeEnable(const std::string &input_format, const std::string &input_dtype);
   [[nodiscard]] inline bool CheckOriginInputShapeDimEqual(size_t support_dim_size) const;
   [[nodiscard]] inline bool CheckOriginInputShapeDimLess(size_t support_min_dim_size) const;
   [[nodiscard]] inline bool CheckReduceContainChanel(int64_t channel_index) const;

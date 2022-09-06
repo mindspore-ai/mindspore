@@ -71,7 +71,7 @@ void TbeKernelReduceSelector::GetReduceNodeInfo() {
   GetReduceAttrKeepDim();
   // get axis attr
   axis_ = GetReduceAttrAxis(cnode_ptr_);
-  std::transform(axis_.begin(), axis_.end(), axis_.begin(), [&](int64_t elem) {
+  (void)std::transform(axis_.begin(), axis_.end(), axis_.begin(), [&](int64_t elem) {
     if (elem < 0) {
       elem += SizeToLong(input_shape_.at(kIndex0).size());
     }
@@ -229,11 +229,6 @@ void TbeKernelReduceSelector::FilterInvalidFormatDType(SupportFormatDType *suppo
       MS_LOG(INFO) << "Input 5hd, input type fp16 ane output default not supported.";
       continue;
     }
-    // TODO(jjfeing)
-    if (input_format == kOpFormat_NC1HWC0 && !CheckUBSizeEnable(input_format, input_dtype)) {
-      MS_LOG(INFO) << "Input 5hd, total size need to greater than block size.";
-      continue;
-    }
     (void)input_dtypes_new.emplace_back(input_dtype);
     (void)input_formats_new.emplace_back(input_format);
     (void)output_dtypes_new.emplace_back(output_dtype);
@@ -243,28 +238,6 @@ void TbeKernelReduceSelector::FilterInvalidFormatDType(SupportFormatDType *suppo
   support_format_dtype->input_formats = {input_formats_new};
   support_format_dtype->output_dtypes = {output_dtypes_new};
   support_format_dtype->output_formats = {output_formats_new};
-}
-
-bool TbeKernelReduceSelector::CheckUBSizeEnable(const std::string &input_format, const std::string &input_dtype) {
-  if (axis_.empty()) {
-    return true;
-  }
-  if (keep_dims_) {
-    return true;
-  }
-  auto soc_version = device::ascend::GetSocVersion();
-  fe::PlatformInfo platform_info;
-  fe::OptionalInfo opti_compilation_info;
-  fe::PlatformInfoManager &inst = fe::PlatformInfoManager::Instance();
-  if (inst.GetPlatformInfo(soc_version, platform_info, opti_compilation_info) != 0) {
-    MS_LOG(ERROR) << "GetPlatformInfo failed.";
-    return false;
-  }
-  // TODO(jjfeing)
-  //  auto ub_size = platform_info.ai_core_spec.ub_size;
-  //  auto data_size = GetDtypeNbyte(input_dtype);
-  //  auto ori_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode_ptr_, 0);
-  return true;
 }
 
 bool TbeKernelReduceSelector::CheckOriginInputShapeDimEqual(size_t support_dim_size) const {
