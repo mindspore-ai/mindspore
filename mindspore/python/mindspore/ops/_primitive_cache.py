@@ -25,7 +25,7 @@ def _temp_func():
     return 0
 
 
-@constexpr
+@constexpr(check=False)
 def _is_need_compile(func):
     # No matter what the value of mode is, in ms_function scenario, this function always returns true.
     return func is None
