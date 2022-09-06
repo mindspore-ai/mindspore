@@ -124,6 +124,7 @@ package_data = {
         '*.pyd',
         '*.dll',
         'bin/*',
+        'lib/plugin/*',
         'lib/*.so*',
         'lib/*.a',
         'lib/*.dylib*',

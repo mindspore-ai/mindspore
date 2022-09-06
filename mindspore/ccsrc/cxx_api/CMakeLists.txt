@@ -62,13 +62,7 @@ if(ENABLE_D)
           "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/frontend/parallel/tensor_layout/array.cc"
           "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/frontend/parallel/tensor_layout/map.cc"
           "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/frontend/parallel/tensor_layout/arrangement.cc"
-          "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/frontend/parallel/tensor_layout/shape_util.cc"
-          "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/backend/common/optimizer/pattern_engine.cc"
-          "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/backend/common/optimizer/helper.cc"
-          "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/backend/common/optimizer/node_pass.cc"
-          "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/backend/common/optimizer/visit.cc"
-          "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/kernel/kernel_build_info.cc"
-          "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/runtime/device/kernel_info.cc")
+          "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/frontend/parallel/tensor_layout/shape_util.cc")
 endif()
 
 if(NOT ENABLE_TESTCASES AND NOT BUILD_LITE)
@@ -76,9 +70,15 @@ if(NOT ENABLE_TESTCASES AND NOT BUILD_LITE)
     set(MSLIB_SRC ${MSLIB_SRC} ${CMAKE_SOURCE_DIR}/mindspore/core/utils/status.cc)
 endif()
 
-if(ENABLE_D OR ENABLE_ACL)
+if((ENABLE_D OR ENABLE_ACL) AND NOT BUILD_LITE)
     list(APPEND MSLIB_SRC
-      "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/plugin/device/ascend/optimizer/enhancer/add_placeholder_for_dynamic_rnn.cc")
+      "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/plugin/device/ascend/optimizer/enhancer/add_placeholder_for_dynamic_rnn.cc"
+      "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/backend/common/optimizer/pattern_engine.cc"
+      "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/backend/common/optimizer/helper.cc"
+      "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/backend/common/optimizer/node_pass.cc"
+      "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/backend/common/optimizer/visit.cc"
+      "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/kernel/kernel_build_info.cc"
+      "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/runtime/device/kernel_info.cc")
 endif()
 
 if(ENABLE_GPU)
@@ -90,8 +90,6 @@ if(BUILD_LITE)
     file(GLOB_RECURSE ACL_REMOVE_SRC ${CMAKE_CURRENT_SOURCE_DIR}
             "model/acl/acl_vm/*.cc"
             )
-    list(REMOVE_ITEM MSLIB_SRC
-      "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/plugin/device/ascend/optimizer/enhancer/add_placeholder_for_dynamic_rnn.cc")
     list(REMOVE_ITEM MSLIB_SRC "${CMAKE_CURRENT_SOURCE_DIR}/akg_kernel_register.cc"
             "${CMAKE_CURRENT_SOURCE_DIR}/model/acl/acl_model_multi.cc"
             "${CMAKE_CURRENT_SOURCE_DIR}/model/acl/acl_model.cc"
@@ -104,7 +102,7 @@ endif()
 
 add_library(mindspore_shared_lib_obj OBJECT ${MSLIB_SRC})
 add_library(mindspore_shared_lib SHARED $<TARGET_OBJECTS:mindspore_shared_lib_obj>)
-if(BUILD_LITE)
+if(BUILD_LITE OR ENABLE_ACL)
     target_link_libraries(mindspore_shared_lib PRIVATE $<TARGET_OBJECTS:_mindspore_transform_graph_ir_obj>)
     add_dependencies(mindspore_shared_lib _mindspore_transform_graph_ir_obj)
 elseif(MODE_ASCEND_ACL)
@@ -158,10 +156,11 @@ if(ENABLE_D OR ENABLE_ACL)
     find_library(libaicore_utils libaicore_utils.so ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
     find_library(libaicpu_engine_common libaicpu_engine_common.so ${ASCEND_CANN_RUNTIME_PATH}
             ${ASCEND_TOOLKIT_RUNTIME_PATH})
+    find_library(GE_RUNNER ge_runner ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
 
     target_link_libraries(mindspore_shared_lib PRIVATE -Wl,--no-as-needed graph ${ge_compiler}
             ${acl_retr} ${acl_cblas} ${acl_dvpp} ${acl_runtime} ${libplatform} ${libcompress} ${libopskernel}
-            ${libaicore_utils} ${libaicpu_engine_common} ${acl})
+            ${libaicore_utils} ${libaicpu_engine_common} ${acl} ${GE_RUNNER})
     add_dependencies(mindspore_shared_lib_obj graph)
     add_dependencies(mindspore_shared_lib graph)
 endif()

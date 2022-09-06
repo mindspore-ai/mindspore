@@ -22,9 +22,10 @@
 
 #include "utils/hash_map.h"
 #include "common/graph_kernel/expanders/utils.h"
+#include "include/common/visible.h"
 
 namespace mindspore::graphkernel::expanders {
-class OpDescFactory {
+class COMMON_EXPORT OpDescFactory {
  public:
   static OpDescFactory &Instance() {
     static OpDescFactory instance = OpDescFactory();
@@ -46,7 +47,7 @@ class OpDescFactory {
   void Register(const std::string &op, const RegFunc &func) { creators[op] = func; }
 
  private:
-  mindspore::HashMap<std::string, RegFunc> creators;
+  inline static mindspore::HashMap<std::string, RegFunc> creators;
 };
 
 class OpDescRegister {

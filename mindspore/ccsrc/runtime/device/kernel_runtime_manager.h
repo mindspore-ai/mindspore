@@ -49,8 +49,8 @@ class BACKEND_EXPORT KernelRuntimeManager {
   ~KernelRuntimeManager() = default;
   DISABLE_COPY_AND_ASSIGN(KernelRuntimeManager);
   std::string GetDeviceKey(const std::string &device_name, uint32_t device_id) const;
-  std::map<std::string, std::shared_ptr<KernelRuntime> > runtime_map_;
-  std::map<std::string, KernelRuntimeCreator> runtime_creators_;
+  inline static std::map<std::string, std::shared_ptr<KernelRuntime> > runtime_map_;
+  inline static std::map<std::string, KernelRuntimeCreator> runtime_creators_;
   std::mutex lock_;
 };
 

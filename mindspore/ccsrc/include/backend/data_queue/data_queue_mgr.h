@@ -132,9 +132,9 @@ class BACKEND_EXPORT DataQueueMgr {
   bool dynamic_shape_{false};
   size_t default_capacity_{2};
 
-  std::map<std::string, std::shared_ptr<BlockingQueue>> name_queue_map_;
-
-  std::map<std::string, DataQueueCreator> data_queue_creator_map_ = {};  // key: device name, value: DataQueueCreator
+  inline static std::map<std::string, std::shared_ptr<BlockingQueue>> name_queue_map_;
+  // key: device name, value: DataQueueCreator
+  inline static std::map<std::string, DataQueueCreator> data_queue_creator_map_ = {};
 
   HANDLER_DEFINE(bool, DestoryTdtHandle);
 };

@@ -30,6 +30,7 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr size_t kPluginSuffix = 6;
 bool AicpuOpKernelLoad::GetBinaryFileName(const std::string &so_name, const std::string &bin_folder_path,
                                           std::string *bin_file_path) {
   MS_EXCEPTION_IF_NULL(bin_file_path);
@@ -105,7 +106,7 @@ bool AicpuOpKernelLoad::GetSoNeedLoadPath(std::string *file_path) const {
     MS_LOG(ERROR) << "Current path [" << cust_kernel_so_path << "] is invalid.";
     return false;
   }
-  auto real_cust_kernel_so_path = cust_kernel_so_path.substr(0, pos) + "/";
+  auto real_cust_kernel_so_path = cust_kernel_so_path.substr(0, pos - kPluginSuffix);
   if (real_cust_kernel_so_path.size() > PATH_MAX) {
     MS_LOG(ERROR) << "Current path [" << real_cust_kernel_so_path << "] is too long.";
     return false;
