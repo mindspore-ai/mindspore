@@ -26,13 +26,12 @@ namespace mindspore {
 namespace ops {
 // gather_d
 namespace {
-int64_t GetGatherDimValue(const AbstractBasePtr dim_ptr) {
+bool GetGatherDimValue(const AbstractBasePtr dim_ptr, int64_t *dim_v) {
   MS_EXCEPTION_IF_NULL(dim_ptr);
   auto dim_value_ptr = dim_ptr->BuildValue();
   MS_EXCEPTION_IF_NULL(dim_value_ptr);
   auto dim_type_ptr = dim_ptr->BuildType();
   MS_EXCEPTION_IF_NULL(dim_type_ptr);
-  int64_t dim_v = 0;
   bool dim_value_type_error = false;
   if (dim_value_ptr->isa<tensor::Tensor>()) {
     auto dim_tensor = dim_value_ptr->cast<tensor::TensorPtr>();
@@ -43,20 +42,26 @@ int64_t GetGatherDimValue(const AbstractBasePtr dim_ptr) {
     MS_EXCEPTION_IF_NULL(dim_type_id);
     auto element = dim_type_id->element();
     MS_EXCEPTION_IF_NULL(element);
+    if (dim_tensor->data_c() == nullptr) {
+      return false;
+    }
     if (element->type_id() == kNumberTypeInt64) {
       auto dim_data64 = reinterpret_cast<int64_t *>(dim_tensor->data_c());
       MS_EXCEPTION_IF_NULL(dim_data64);
-      dim_v = static_cast<int64_t>(*dim_data64);
+      *dim_v = static_cast<int64_t>(*dim_data64);
+      return true;
     } else if (element->type_id() == kNumberTypeInt32) {
       auto dim_data32 = reinterpret_cast<int *>(dim_tensor->data_c());
       MS_EXCEPTION_IF_NULL(dim_data32);
-      dim_v = static_cast<int64_t>(*dim_data32);
+      *dim_v = static_cast<int64_t>(*dim_data32);
+      return true;
     } else {
       dim_value_type_error = true;
     }
   } else {
     if (dim_value_ptr->isa<Int32Imm>() || dim_value_ptr->isa<Int64Imm>()) {
-      dim_v = GetValue<int64_t>(dim_value_ptr);
+      *dim_v = GetValue<int64_t>(dim_value_ptr);
+      return true;
     } else {
       dim_value_type_error = true;
     }
@@ -65,19 +70,14 @@ int64_t GetGatherDimValue(const AbstractBasePtr dim_ptr) {
   if (dim_value_type_error) {
     MS_LOG(EXCEPTION) << "For GatherD, 'dim' must be one of these types: [int32/int64].";
   }
-
-  return dim_v;
+  return false;
 }
 
 void CheckGatherShapeEqual(const std::string &prim_name, const ShapeVector &x_shape, int64_t dim_v,
                            const ShapeVector &index_shape) {
-  auto IsShapeInValid = [](const ShapeVector &shape) -> bool {
-    return std::any_of(shape.cbegin(), shape.cend(), [](int64_t s) { return s < 0; });
-  };
-  if (IsShapeInValid(x_shape) || IsShapeInValid(index_shape)) {
+  if (IsDynamic(x_shape) || IsDynamic(index_shape)) {
     return;
   }
-
   CheckAndConvertUtils::Check("x_rank", SizeToLong(x_shape.size()), kEqual, SizeToLong(index_shape.size()), prim_name);
   for (size_t i = 0; i < x_shape.size(); ++i) {
     if (SizeToLong(i) == dim_v) {
@@ -102,8 +102,15 @@ abstract::ShapePtr GatherDInferShape(const PrimitivePtr &primitive, const std::v
   MS_EXCEPTION_IF_CHECK_FAIL(input_args[kInputIndex2]->BuildShape()->isa<abstract::Shape>(), "index's shape wrong.");
   auto index_shape_element = input_args[kInputIndex2]->BuildShape()->cast<abstract::ShapePtr>();
   auto index_shape = index_shape_element->shape();
+  if (IsDynamicRank(x_shape) || IsDynamicRank(index_shape)) {
+    return std::make_shared<abstract::Shape>(index_shape);
+  }
+
   int64_t x_rank = SizeToLong(x_shape.size());
-  auto dim_v = GetGatherDimValue(input_args[kInputIndex1]);
+  int64_t dim_v = 0;
+  if (!GetGatherDimValue(input_args[kInputIndex1], &dim_v)) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
+  }
   CheckAndConvertUtils::Check("dim value", dim_v, kGreaterEqual, -x_rank, prim_name);
   CheckAndConvertUtils::Check("dim value", dim_v, kLessThan, x_rank, prim_name);
 
