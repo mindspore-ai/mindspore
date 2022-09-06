@@ -58,7 +58,7 @@ abstract::ShapePtr InplaceOpV2InferShape(const PrimitivePtr &primitive,
 
   // check indices
   (void)CheckAndConvertUtils::CheckValue<size_t>("size of indices", indices.at(0), kEqual, "v.shape[0]",
-                                                 LongToSize(v_in_shape.at(0)), primitive->name());
+                                                 v_in_shape.at(0), primitive->name());
 
   return x_shape_ptr->cast<abstract::ShapePtr>();
 }

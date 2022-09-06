@@ -96,7 +96,9 @@ TypePtr InplaceOpInferType(const PrimitivePtr &prim, const std::vector<AbstractB
 }  // namespace
 void InplaceAdd::set_indices(const std::vector<int64_t> indices) { (void)AddAttr(kIndices, api::MakeValue(indices)); }
 void InplaceSub::set_indices(const std::vector<int64_t> indices) { (void)AddAttr(kIndices, api::MakeValue(indices)); }
-void InplaceUpdate::set_indices(std::vector<int64_t> indices) { AddAttr(kIndices, api::MakeValue(indices)); }
+void InplaceUpdate::set_indices(const std::vector<int64_t> indices) {
+  (void)AddAttr(kIndices, api::MakeValue(indices));
+}
 
 std::vector<int64_t> InplaceAdd::get_indices() const {
   auto value_ptr = GetAttr(kIndices);
