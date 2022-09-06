@@ -7,7 +7,7 @@ mindspore.dataset.transforms.Slice
 
     **参数：**
 
-    - **slices** ((Union[int, list[int], slice, None, Ellipsis]) - 指定切片的信息，可以为
+    - **slices** (Union[int, list[int], slice, None, Ellipsis]) - 指定切片的信息，可以为
     
       - 1. :py:obj:`int`: 沿着第一个维度切片对索引进行切片，支持负索引。
       - 2. :py:obj:`list(int)`: 沿着第一个维度切片所有索引进行切片，支持负号索引。
