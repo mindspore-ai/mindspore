@@ -3279,7 +3279,6 @@ class StridedSlice(PrimitiveWithInfer):
 
     Extracts a strided slice of a tensor.
 
-    Given an input tensor, this operation inserts a dimension of length 1 at the dimension.
     This operation extracts a fragment of size (end-begin)/stride from the given 'input_tensor'.
     Starting from the beginning position, the fragment continues adding stride to the index until
     all dimensions are not less than the ending position.
@@ -3289,26 +3288,32 @@ class StridedSlice(PrimitiveWithInfer):
     In each mask field (`begin_mask`, `end_mask`, `ellipsis_mask`, `new_axis_mask`, `shrink_axis_mask`)
     the ith bit will correspond to the ith m.
 
+    For each mask, it will be converted to a binary representation internally, and then
+    reverse the result to start the calculation. For a 5*6*7 tensor with a given mask value of 3 which
+    can be represented as ob011. Reverse that we get ob110, which implies the first and second dim of the
+    original tensor will be effected by this mask. See examples below:
+
     If the ith bit of `begin_mask` is set, `begin[i]` is ignored and the fullest possible range in that dimension
     is used instead. `end_mask` is analogous, except with the end range.
 
-    As for a 5*6*7 tensor, `x[2:,:3,:]` is equivalent to `x[2:5,0:3,0:7]`.
+    For a 5*6*7 tensor, `x[2:,:3,:]` is equivalent to `x[2:5,0:3,0:7]`.
 
     If the ith bit of `ellipsis_mask` is set, as many unspecified dimensions as needed will be inserted between
     other dimensions. Only one non-zero bit is allowed in `ellipsis_mask`.
 
-    As for a 5*6*7*8 tensor, `x[2:,...,:6]` is equivalent to `x[2:5,:,:,0:6]`.
+    For a 5*6*7*8 tensor, `x[2:,...,:6]` is equivalent to `x[2:5,:,:,0:6]`.
     `x[2:,...]` is equivalent to `x[2:5,:,:,:]`.
 
     If the ith bit of `new_axis_mask` is set, `begin`, `end` and `strides` are ignored and a new length 1
     dimension is added at the specified position in the output tensor.
 
-    As for a 5*6*7 tensor, `x[:2, newaxis, :6]` will produce a tensor with shape :math:`(2, 1, 7)` .
+    For a 5*6*7 tensor, `x[:2, newaxis, :6]` will produce a tensor with shape :math:`(2, 1, 6, 7)` .
 
-    If the ith bit of `shrink_axis_mask` is set, ith size shrinks the dimension by 1, taking on the value
+    If the ith bit of `shrink_axis_mask` is set, dimension i will be shrunk to 0, taking on the value
     at index `begin[i]`, `end[i]` and `strides[i]` are ignored.
 
-    As for a 5*6*7 tensor, `x[:, 5, :]` will result in `shrink_axis_mask` equal to 4.
+    For a 5*6*7 tensor, `x[:, 5, :]` is equivalent to setting the `shrink_axis_mask` to 2 which results in
+    an out shape of :math:`(5, 7)`.
 
     Note:
         The stride may be negative value, which causes reverse slicing.
