@@ -64,7 +64,9 @@ int MaskedSelectGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   input_shape_b_ = inputs[kIndexMask]->GetShapeVector();
   grad_shape_ = inputs[kIndexGrad]->GetShapeVector();
   output_shape_ = CPUKernelUtils::GetBroadcastShape(input_shape_a_, input_shape_b_);
-  KernelMod::Resize(base_operator, inputs, outputs);
+  if (KernelMod::Resize(base_operator, inputs, outputs) != KRET_OK) {
+    MS_LOG(EXCEPTION) << "MaskedSelectGradCpuKernelMod resize failed.";
+  }
   tensor_size_ = 1;
   tensor_size_ =
     std::accumulate(output_shape_.cbegin(), output_shape_.cend(), tensor_size_, std::multiplies<int64_t>());

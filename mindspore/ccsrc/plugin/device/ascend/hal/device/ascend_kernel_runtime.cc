@@ -268,6 +268,7 @@ void *AscendKernelRuntime::GetModelStream(uint32_t graph_id) const {
 void *AscendKernelRuntime::GetKernelStream(const AnfNodePtr &kernel) const {
   const auto stream = AscendStreamMng::GetInstance().GetStream(AnfAlgo::GetStreamId(kernel));
   if (stream == nullptr) {
+    // Stream id may not be assigned in some scenarios, such as PyNative. Use the default stream in those cases.
     return stream_;
   }
   return stream;

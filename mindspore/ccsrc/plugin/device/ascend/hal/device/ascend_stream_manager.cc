@@ -22,7 +22,7 @@ namespace mindspore {
 namespace device {
 namespace ascend {
 AscendStreamMng &AscendStreamMng::GetInstance() {
-  static AscendStreamMng instance;
+  static AscendStreamMng instance{};
   return instance;
 }
 
@@ -159,8 +159,10 @@ bool AscendStreamMng::SyncStream(rtStream_t stream) const {
 }
 
 bool AscendStreamMng::SyncAllStreams() const {
-  for (const auto &stream : streams_) {
+  for (size_t i = 0; i < streams_.size(); ++i) {
+    const auto stream = streams_[i];
     if (stream != nullptr && !SyncStream(stream)) {
+      MS_LOG(ERROR) << "SyncStream for stream id " << i << " failed.";
       return false;
     }
   }
