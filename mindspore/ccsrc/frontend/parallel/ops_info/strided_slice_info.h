@@ -69,8 +69,8 @@ class StridedSliceInfo : public OperatorInfo {
   void ComputeEndMask();
   void ComputeEllipsisMask();
   void ComputeNewAxisMask();
-  void ComputeShrinkAxisMask();
   void AdjustShrinkAxisMask();
+  Status CheckInputStrategy(const Shape &strategy);
 };
 
 using StridedSliceInfoPtr = std::shared_ptr<StridedSliceInfo>;

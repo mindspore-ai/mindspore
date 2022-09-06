@@ -393,6 +393,21 @@ def test_stridedslice_shrink_axis_mask_no_0_parameter():
     compile_net(net, _x3, _b1)
 
 
+def test_stridedslice_shrink_axis_and_split():
+    """
+    Feature:  distribute operator stridedslice
+    Description: test stridedslice with shrink axis mask no 0 and split that dimension.
+    Expectation: runtime error
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    strategy1 = ((1, 2), (1, 2))
+    strategy2 = ((2, 4, 1),)
+    net = Net(_w1, _w2, (0, 0, 0), (256, 64, 32), (1, 1, 1), strategy1, strategy2, is_parameter=True,
+              shrink_axis_mask=1)
+    with pytest.raises(RuntimeError):
+        compile_net(net, _x3, _b1)
+
+
 def test_stridedslice_tensor():
     """
     Feature: distribute operator stridedslice in auto parallel mode.

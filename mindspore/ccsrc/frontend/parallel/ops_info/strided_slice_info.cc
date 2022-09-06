@@ -44,6 +44,8 @@ namespace parallel {
 // 6, If the ith bit of `shrink_axis_mask` is set, delete that dimension.
 //    (e.g. input shape: (A, B, C, D), begin: (0, 0), end: (m, n), strides: (1, 1), shrink_axis_mask: 2,
 //     the output shape: (m, C, D)
+//    notice: if input is [[1, 2], [3, 4]] and all fetch, but shrink_axis_mask is 1, then the output is [1, 2],
+//            so if the ith bit of 'shrink_axis_mask' is set, the dimension can not be split
 // 7, If the ith bit of `new_axis_mask` and `shrink_axis_mask` are both set, ignore the ith bit of `shrink_axis_mask`.
 // 8, The size of begin/mask/strides must be equal, but it can smaller than input's dimension.
 // 9, The mask part exceeding the begin/end/strides length is not effective.
@@ -152,25 +154,6 @@ void StridedSliceInfo::ComputeNewAxisMask() {
   }
 }
 
-// If the ith bit of `shrink_axis_mask` is set, delete that dimension.
-// So, here set begin/end/strides to make this dimension splitable
-void StridedSliceInfo::ComputeShrinkAxisMask() {
-  bool flag = false;
-  for (size_t m = 0; m < shrink_axis_mask_bitmap_.size() && m < begin_.size(); ++m) {
-    if (shrink_axis_mask_bitmap_[m]) {
-      begin_[m] = 0;
-      end_[m] = inputs_shape_[0][m];
-      strides_[m] = 1;
-      flag = true;
-    }
-  }
-
-  if (flag) {
-    MS_LOG(INFO) << name_ << ": The begin is modified to " << begin_ << ", the end is modified to " << end_
-                 << ", the strides is modified to " << strides_;
-  }
-}
-
 // If the ith bit of `new_axis_mask` and `shrink_axis_mask` are both set, ignore the ith bit of `shrink_axis_mask`.
 void StridedSliceInfo::AdjustShrinkAxisMask() {
   bool flag = false;
@@ -235,29 +218,11 @@ Status StridedSliceInfo::GetAttrs() {
   ComputeEndMask();
   ComputeEllipsisMask();
   ComputeNewAxisMask();
-  ComputeShrinkAxisMask();
+  // no need to handle shrink axis mask
   return SUCCESS;
 }
 
-Status StridedSliceInfo::CheckStrategy(const StrategyPtr &strategy) {
-  MS_EXCEPTION_IF_NULL(strategy);
-  if (CheckStrategyValue(strategy, inputs_shape_) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Invalid strategy";
-    return FAILED;
-  }
-
-  std::vector<Dimensions> stra = strategy->GetInputDim();
-  if (stra.empty()) {
-    MS_LOG(ERROR) << name_ << ": The strategy is empty";
-    return FAILED;
-  }
-
-  Dimensions strategy_value = stra[0];
-  if (strategy_value.size() < strides_.size()) {
-    MS_LOG(ERROR) << name_ << ": The size of strategy must be larger or equal to the size of strides";
-    return FAILED;
-  }
-
+Status StridedSliceInfo::CheckInputStrategy(const Shape &strategy_value) {
   // change the strategy if the new mask axis is set
   Shape strategy_in_process = Shape(strategy_value.size(), 0);
   for (size_t i = 0; i < new_axis_mask_bitmap_.size() && i < begin_.size() && i < strategy_value.size(); ++i) {
@@ -294,12 +259,44 @@ Status StridedSliceInfo::CheckStrategy(const StrategyPtr &strategy) {
       MS_LOG(ERROR) << name_
                     << ": When a dimension is not fully fetched, the dimension can not be split now, the begin is "
                     << begin_ << ", the end is " << end_ << ", the index is " << k << ", the input shape in process is "
-                    << input_shape_in_process_;
+                    << input_shape_in_process_ << ", the strategy in process is " << strategy_in_process;
+      return FAILED;
+    }
+  }
+
+  // if the ith bit of 'shrink_axis_mask' is set, the dimension can not be split
+  for (size_t l = 0; l < strategy_in_process.size() && l < shrink_axis_mask_bitmap_.size(); ++l) {
+    if (shrink_axis_mask_bitmap_[l] && strategy_in_process[l] != 1) {
+      MS_LOG(ERROR) << name_
+                    << ": When a dimension is shrunk, the dimension can not be split now, the strategy in process is "
+                    << strategy_in_process << ", the shrink axis mask bitmap is " << shrink_axis_mask_bitmap_;
       return FAILED;
     }
   }
 
   return SUCCESS;
+}
+
+Status StridedSliceInfo::CheckStrategy(const StrategyPtr &strategy) {
+  MS_EXCEPTION_IF_NULL(strategy);
+  if (CheckStrategyValue(strategy, inputs_shape_) != SUCCESS) {
+    MS_LOG(ERROR) << name_ << ": Invalid strategy";
+    return FAILED;
+  }
+
+  std::vector<Dimensions> stra = strategy->GetInputDim();
+  if (stra.empty()) {
+    MS_LOG(ERROR) << name_ << ": The strategy is empty";
+    return FAILED;
+  }
+
+  Dimensions strategy_value = stra[0];
+  if (strategy_value.size() < strides_.size()) {
+    MS_LOG(ERROR) << name_ << ": The size of strategy must be larger or equal to the size of strides";
+    return FAILED;
+  }
+
+  return CheckInputStrategy(strategy_value);
 }
 
 Status StridedSliceInfo::InferDevMatrixShape() {
