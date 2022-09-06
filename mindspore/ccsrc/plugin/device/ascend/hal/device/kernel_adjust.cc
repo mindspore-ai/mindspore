@@ -801,7 +801,7 @@ CNodePtr KernelAdjust::CreateNPUAllocStatus(const std::shared_ptr<session::Kerne
 }
 
 CNodePtr KernelAdjust::CreateAssignAdd(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
-                                       const CNodePtr &npu_alloc_cnode, const AnfNodePtr &specify_para) {
+                                       const CNodePtr &npu_alloc_cnode, const AnfNodePtr &specify_para) const {
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
   MS_EXCEPTION_IF_NULL(npu_alloc_cnode);
   MS_EXCEPTION_IF_NULL(specify_para);
@@ -834,7 +834,7 @@ CNodePtr KernelAdjust::CreateAssignAdd(const std::shared_ptr<session::KernelGrap
 }
 
 CNodePtr KernelAdjust::CreateAssign(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
-                                    const AnfNodePtr &specify_para) {
+                                    const AnfNodePtr &specify_para) const {
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
   MS_EXCEPTION_IF_NULL(specify_para);
 
