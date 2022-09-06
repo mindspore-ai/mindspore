@@ -232,7 +232,7 @@ ValuePtr InferOperation::InferOutputAbstract(const FrontendOpRunInfoPtr &op_run_
     MS_LOG(DEBUG) << "Get output by const prim.";
     op_run_info->output_get_by_infer_value = true;
     infer_value = MakeValue("");
-  } else if (!abs_cache_hit && !PyNativeAlgo::Common::IsDynamicShape(op_run_info)) {
+  } else if (!abs_cache_hit) {
     // Cache output abstract, the const infer value needs to infer every step.
     SaveOutputAbstractToCache(op_run_info);
   }
