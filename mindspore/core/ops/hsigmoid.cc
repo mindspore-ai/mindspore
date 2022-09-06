@@ -51,5 +51,6 @@ AbstractBasePtr HSigmoidInfer(const abstract::AnalysisEnginePtr &, const Primiti
   return std::make_shared<abstract::AbstractTensor>(HSigmoidInferType(primitive, input_args),
                                                     HSigmoidInferShape(primitive, input_args)->shape());
 }
+REGISTER_PRIMITIVE_EVAL_IMPL(HSigmoid, prim::kPrimHSigmoid, HSigmoidInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

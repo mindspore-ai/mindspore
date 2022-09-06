@@ -309,8 +309,6 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimBiasDropoutAdd, R{InferImplBiasDropoutAdd, nullptr, true}},
     {prim::kPrimSparseApplyProximalAdagrad, R{InferImplSparseApplyProximalAdagrad, nullptr, true}},
     {prim::kPrimSGD, R{InferImplSGD, nullptr, true}},
-    {prim::kPrimHSigmoid, R{InferImplHSigmoid, nullptr, true}},
-    {prim::kPrimHSigmoidGrad, R{InferImplHSigmoidGrad, nullptr, true}},
     // Others
     {prim::kPrimIdentity, R{InferImplIdentity, nullptr, true}},
     {prim::kPrimLoad, R{InferImplLoad, nullptr, true}},
