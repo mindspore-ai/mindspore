@@ -35,8 +35,6 @@ class MIND_API ReduceAll : public Reduce {
   /// \brief Constructor.
   ReduceAll() : Reduce(kNameReduceAll) { InitIOName({"input_x", "axis"}, {"y"}); }
 };
-abstract::AbstractBasePtr ReduceAllInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                         const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

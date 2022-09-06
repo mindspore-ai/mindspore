@@ -84,71 +84,102 @@ abstract::ShapePtr BroadCastInferShape(const std::string &op_name, const std::ve
   auto broadcast_shape = CalBroadCastShape(x_shape, y_shape, op_name);
   return std::make_shared<abstract::Shape>(broadcast_shape);
 }
-int64_t ReduceFuncCheckAxisInferImpl(const PrimitivePtr &prim, const int64_t &axis, const size_t dim) {
+void ReduceFuncCheckAxisInferImpl(const PrimitivePtr &prim, std::vector<int64_t> *axis, const size_t dim) {
+  MS_EXCEPTION_IF_NULL(axis);
   int64_t dim_ = static_cast<int64_t>(dim);
-  if (axis < -dim_ || axis >= dim_) {
-    MS_LOG(EXCEPTION) << "For '" << prim->name() << "', 'axis' must be in [" << -dim_ << ", " << dim_
-                      << "). But got 'axis' = " << axis << ".";
+  for (size_t i = 0; i < axis->size(); i++) {
+    if (axis->at(i) < -dim_ || axis->at(i) >= dim_) {
+      MS_LOG(EXCEPTION) << "For '" << prim->name() << "', 'axis' must be in [" << -dim_ << ", " << dim_
+                        << "). But got 'axis' = " << axis->at(i) << ".";
+    }
+    if (axis->at(i) >= -dim_ && axis->at(i) < 0) {
+      axis->at(i) += dim_;
+    }
   }
-  int64_t ret_axis = axis;
-  if (axis >= -dim_ && axis < 0) {
-    ret_axis += dim_;
-  }
-  return ret_axis;
 }
 
-void ReduceFuncCalShapeInferImpl(const PrimitivePtr &primitive, ShapeVector *shape, const ShapeVector &x_shape,
-                                 const ValuePtr &axis, bool keep_dims_value) {
-  MS_EXCEPTION_IF_NULL(axis);
-  MS_EXCEPTION_IF_NULL(shape);
-  if (axis->isa<ValueTuple>() || axis->isa<ValueList>()) {
-    auto axis_ptr_list =
-      axis->isa<ValueTuple>() ? axis->cast<ValueTuplePtr>()->value() : axis->cast<ValueListPtr>()->value();
-    if (axis_ptr_list.empty()) {
-      if (keep_dims_value) {
-        (void)shape->insert(shape->end(), x_shape.size(), 1);
-      }
-    } else {
-      (void)shape->insert(shape->end(), x_shape.begin(), x_shape.end());
-      ValuePtrList axis_items = axis_ptr_list;
-      ValuePtrList::iterator it;
-      if (keep_dims_value) {
-        for (it = axis_items.begin(); it != axis_items.end(); ++it) {
-          auto axis_value = ReduceFuncCheckAxisInferImpl(primitive, GetValue<int64_t>(*it), x_shape.size());
-          shape->at(LongToSize(axis_value)) = 1;
-        }
-      } else {
-        std::vector<int64_t> axis_value_list;
-        for (it = axis_items.begin(); it != axis_items.end(); ++it) {
-          auto axis_value = GetValue<int64_t>(*it);
-          auto axis_positive_value = ReduceFuncCheckAxisInferImpl(primitive, axis_value, x_shape.size());
-          axis_value_list.push_back(axis_positive_value);
-        }
-        std::sort(axis_value_list.begin(), axis_value_list.end());
-        std::vector<int64_t>::reverse_iterator it_re;
-        for (it_re = axis_value_list.rbegin(); it_re != axis_value_list.rend(); ++it_re) {
-          (void)shape->erase(shape->begin() + *it_re);
-        }
+ShapeVector ReduceFuncCalShapeInferImpl(const PrimitivePtr &primitive, const ShapeVector &x_shape,
+                                        const std::vector<int64_t> &axis, bool keep_dims_value) {
+  ShapeVector out_shape;
+  ShapeVector axis_value;
+  (void)axis_value.insert(axis_value.end(), axis.begin(), axis.end());
+  (void)out_shape.insert(out_shape.end(), x_shape.begin(), x_shape.end());
+  std::sort(axis_value.begin(), axis_value.end());
+  auto last = std::unique(axis_value.begin(), axis_value.end());
+  axis_value.erase(last, axis_value.end());
+  if (keep_dims_value) {
+    for (auto i : axis_value) {
+      out_shape.at(LongToSize(i)) = 1;
+    }
+    if (axis_value.empty()) {
+      for (size_t i = 0; i < out_shape.size(); i++) {
+        out_shape.at(i) = 1;
       }
     }
-  } else if (axis->isa<Int32Imm>() || axis->isa<Int64Imm>()) {
-    (void)shape->insert(shape->end(), x_shape.begin(), x_shape.end());
-    int64_t axis_value = GetValue<int64_t>(axis);
-    axis_value = ReduceFuncCheckAxisInferImpl(primitive, axis_value, x_shape.size());
-    if (keep_dims_value) {
-      shape->at(LongToSize(axis_value)) = 1;
+    return out_shape;
+  }
+  if (axis.size() == 0) {
+    return {};
+  }
+  std::vector<int64_t>::reverse_iterator it_re;
+  for (it_re = axis_value.rbegin(); it_re != axis_value.rend(); ++it_re) {
+    (void)out_shape.erase(out_shape.begin() + *it_re);
+  }
+  return out_shape;
+}
+
+ShapeVector ReduceFuncCalShapeAxisDyn(const ShapeVector &x_shape, const int64_t axis_shape, bool keep_dims) {
+  ShapeVector out_shape;
+  if (!keep_dims) {
+    if (SizeToLong(x_shape.size()) < axis_shape) {
+      return out_shape;
+    }
+    (void)out_shape.insert(out_shape.end(), x_shape.size() - axis_shape, -1);
+  } else {
+    (void)out_shape.insert(out_shape.end(), x_shape.size(), -1);
+  }
+  return out_shape;
+}
+
+bool CheckAndGetAxisValue(const std::vector<abstract::AbstractBasePtr> &input_args, std::vector<int64_t> *axis_value,
+                          int64_t *axis_shape_v, const PrimitivePtr &primitive) {
+  MS_EXCEPTION_IF_NULL(axis_value);
+  MS_EXCEPTION_IF_NULL(axis_shape_v);
+  bool is_dynamic = false;
+  const std::string &op_name = primitive->name();
+  if (input_args.size() == 1) {
+    auto axis_ptr = primitive->GetAttr("axis");
+    if (axis_ptr == nullptr) {
+      return is_dynamic;
+    }
+    *axis_value = CheckAndConvertUtils::CheckIntOrTupleInt(op_name, axis_ptr, "Reduce");
+    return is_dynamic;
+  }
+  auto input_value = input_args[kInputIndex1]->BuildValue();
+  if (input_args[kInputIndex1]->isa<abstract::AbstractScalar>() ||
+      input_args[kInputIndex1]->isa<abstract::AbstractTuple>() ||
+      input_args[kInputIndex1]->isa<abstract::AbstractList>()) {
+    *axis_value = CheckAndConvertUtils::CheckIntOrTupleInt(op_name, input_value, "Reduce");
+  } else if (input_args[kInputIndex1]->isa<abstract::AbstractTensor>()) {
+    (void)CheckAndConvertUtils::CheckTensorTypeValid(op_name, input_args[kInputIndex1]->BuildType(), {kInt32, kInt64},
+                                                     "Reduce");
+    if (input_value->isa<tensor::Tensor>()) {
+      *axis_value = CheckAndConvertUtils::CheckTensorIntValue(op_name, input_value, "Reduce");
     } else {
-      (void)shape->erase(shape->begin() + axis_value);
+      is_dynamic = true;
+      auto axis_shape = CheckAndConvertUtils::GetTensorInputShape("Reduce", input_args, 1);
+      if (axis_shape->shape().size() != 1) {
+        MS_EXCEPTION(ValueError) << "For 'Reduce axis', " << op_name << " must be 1-D, but got"
+                                 << axis_shape->shape().size() << "-D.";
+      }
+      *axis_shape_v = axis_shape->shape()[0];
     }
   } else {
-    MS_LOG(EXCEPTION) << "For '" << primitive->name() << "', 'axis' must be one of these types: [int/tuple/list].";
+    MS_LOG(EXCEPTION) << "For '" << op_name
+                      << "', the second input type should be tensor or scalar, but got invalid abstract type:"
+                      << input_args[kInputIndex1]->type_name() << ".";
   }
-  return;
-}
-
-bool CheckTensorShapeValid(const std::vector<abstract::AbstractBasePtr> &input_args, const uint64_t input_num_ascend) {
-  return input_args.size() == input_num_ascend && input_args[1] && input_args[1]->isa<abstract::AbstractTensor>() &&
-         input_args[1]->BuildValue() && input_args[1]->BuildValue()->isa<AnyValue>();
+  return is_dynamic;
 }
 
 abstract::ShapePtr ReduceBaseInferShape(const PrimitivePtr &primitive,
@@ -157,74 +188,31 @@ abstract::ShapePtr ReduceBaseInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(primitive);
   auto shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, 0);
   MS_EXCEPTION_IF_NULL(shape_ptr);
-  auto input_shape = shape_ptr->shape();
+  auto x_shape = shape_ptr->shape();
   auto keep_dimis_value_ptr = primitive->GetAttr(kKeepDims);
   MS_EXCEPTION_IF_NULL(keep_dimis_value_ptr);
   if (!keep_dimis_value_ptr->isa<BoolImm>()) {
     MS_LOG(EXCEPTION) << "For '" << primitive->name() << "', 'keep_dims' must be Bool.";
   }
   bool keep_dims = GetValue<bool>(keep_dimis_value_ptr);
+  std::vector<int64_t> axis_value;
+  int64_t axis_shape = 0;
+  bool axis_is_dynamic = CheckAndGetAxisValue(input_args, &axis_value, &axis_shape, primitive);
+  ReduceFuncCheckAxisInferImpl(primitive, &axis_value, x_shape.size());
+
   ShapeVector out_shape = {};
-  const uint64_t input_num_ascend = 2;
-  if (CheckTensorShapeValid(input_args, input_num_ascend)) {
-    auto axis_tensor = input_args[1]->cast<abstract::AbstractTensorPtr>();
-    MS_EXCEPTION_IF_NULL(axis_tensor);
-    auto axis_tensor_shape = axis_tensor->shape();
-    MS_EXCEPTION_IF_NULL(axis_tensor_shape);
-    auto axis_shape = axis_tensor_shape->shape();
-    if (axis_shape.size() == 1 && axis_shape[0] == -1 && !keep_dims) {
-      out_shape.push_back(-2);  // -2 : input num ascend
-    } else if (!keep_dims) {
-      for (size_t i = 0; i < input_shape.size() - axis_shape.size(); ++i) {
-        out_shape.push_back(-1);
-      }
-    } else {
-      for (size_t i = 0; i < input_shape.size(); ++i) {
-        out_shape.push_back(-1);
-      }
-    }
-    return std::make_shared<abstract::Shape>(out_shape);
-  } else {
-    ValuePtr axis_value;
-    ValuePtr axis_ptr;
-    if (input_args.size() == input_num_ascend && input_args[1]) {
-      axis_ptr = input_args[1]->BuildValue();
-    } else {
-      axis_ptr = primitive->GetAttr("axis");
-    }
-    MS_EXCEPTION_IF_NULL(axis_ptr);
-    if (axis_ptr->isa<tensor::Tensor>() && input_args[1]) {
-      auto axis_type = input_args[1]->BuildType();
-      MS_EXCEPTION_IF_NULL(axis_type);
-      auto axis_type_id = axis_type->cast<TensorTypePtr>();
-      MS_EXCEPTION_IF_NULL(axis_type_id);
-      auto axis_tensor = axis_ptr->cast<tensor::TensorPtr>();
-      MS_EXCEPTION_IF_NULL(axis_tensor);
-      size_t data_size = axis_tensor->DataSize();
-      std::vector<ValuePtr> value_list;
-      auto element = axis_type_id->element();
-      MS_EXCEPTION_IF_NULL(element);
-      if (element->type_id() == kNumberTypeInt32) {
-        auto shape_data = reinterpret_cast<int *>(axis_tensor->data_c());
-        MS_EXCEPTION_IF_NULL(shape_data);
-        for (size_t i = 0; i < data_size; i++) {
-          value_list.push_back(MakeValue(static_cast<int64_t>(*shape_data)));
-          ++shape_data;
-        }
-      } else {
-        auto shape_data2 = reinterpret_cast<int64_t *>(axis_tensor->data_c());
-        for (size_t i = 0; i < data_size; i++) {
-          value_list.push_back(MakeValue(static_cast<int64_t>(*shape_data2)));
-          ++shape_data2;
-        }
-      }
-      axis_value = std::make_shared<ValueTuple>(value_list);
-    } else {
-      axis_value = axis_ptr;
-    }
-    ReduceFuncCalShapeInferImpl(primitive, &out_shape, input_shape, axis_value, keep_dims);
+  constexpr int dynamic_rank_value = -2;
+  if (IsDynamicRank(x_shape) || (axis_shape == -1 && !keep_dims)) {
+    out_shape.push_back(dynamic_rank_value);
     return std::make_shared<abstract::Shape>(out_shape);
   }
+
+  if (axis_is_dynamic) {
+    out_shape = ReduceFuncCalShapeAxisDyn(x_shape, axis_shape, keep_dims);
+    return std::make_shared<abstract::Shape>(out_shape);
+  }
+  out_shape = ReduceFuncCalShapeInferImpl(primitive, x_shape, axis_value, keep_dims);
+  return std::make_shared<abstract::Shape>(out_shape);
 }
 
 TypePtr ReduceBaseInferType(const PrimitivePtr &prim, const std::vector<abstract::AbstractBasePtr> &input_args) {

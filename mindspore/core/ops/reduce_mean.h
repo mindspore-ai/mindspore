@@ -35,8 +35,6 @@ class MIND_API ReduceMean : public Reduce {
   /// \brief Constructor.
   ReduceMean() : Reduce(kNameReduceMean) { InitIOName({"input_x", "axis"}, {"y"}); }
 };
-abstract::AbstractBasePtr ReduceMeanInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                          const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

@@ -774,10 +774,16 @@ std::vector<int64_t> CheckAndConvertUtils::CheckIntOrTupleInt(const std::string 
   if (attr->isa<ValueTuple>() || attr->isa<ValueList>()) {
     auto attr_vec =
       attr->isa<ValueTuple>() ? attr->cast<ValueTuplePtr>()->value() : attr->cast<ValueListPtr>()->value();
+    if (!attr_vec.size()) {
+      return result;
+    }
     is_correct = std::all_of(attr_vec.begin(), attr_vec.end(), [&result](const ValuePtr &e) -> bool {
       MS_EXCEPTION_IF_NULL(e);
       if (e->isa<Int64Imm>()) {
         (void)result.emplace_back(GetValue<int64_t>(e));
+        return true;
+      } else if (e->isa<Int32Imm>()) {
+        (void)result.emplace_back(GetValue<int32_t>(e));
         return true;
       }
       return false;
@@ -786,6 +792,10 @@ std::vector<int64_t> CheckAndConvertUtils::CheckIntOrTupleInt(const std::string 
     if (attr->isa<Int64Imm>()) {
       is_correct = true;
       int64_t attr_val = attr->cast<Int64ImmPtr>()->value();
+      result.push_back(attr_val);
+    } else if (attr->isa<Int32Imm>()) {
+      is_correct = true;
+      int64_t attr_val = attr->cast<Int32ImmPtr>()->value();
       result.push_back(attr_val);
     }
   }

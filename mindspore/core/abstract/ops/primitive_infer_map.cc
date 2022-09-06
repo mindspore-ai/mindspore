@@ -35,13 +35,6 @@
 #include "ops/mod.h"
 #include "ops/sub.h"
 #include "ops/strided_slice.h"
-#include "ops/reduce_sum.h"
-#include "ops/reduce_mean.h"
-#include "ops/reduce_min.h"
-#include "ops/reduce_max.h"
-#include "ops/reduce_prod.h"
-#include "ops/reduce_all.h"
-#include "ops/reduce_any.h"
 #include "abstract/abstract_function.h"
 #include "abstract/ops/infer_functions.h"
 #include "utils/ms_context.h"
@@ -207,21 +200,24 @@ std::set<int64_t> GetValueDependArgIndices(const std::string &prim_name, size_t 
     return {1};
   }
 
+  std::set<int64_t> res = {};
+  std::set<int64_t> ori = {};
   auto iter = GetHostDependsMap().find(prim_name);
   if (iter != GetHostDependsMap().end()) {
-    std::set<int64_t> res;
-    const auto &ori = iter->second;
-    (void)std::copy_if(ori.begin(), ori.end(), std::inserter(res, res.begin()),
-                       [&](int64_t idx) { return idx < SizeToLong(input_num); });
-    return res;
+    ori = iter->second;
   }
 
   auto op_infer = GetPrimitiveInferImpl(std::make_shared<Primitive>(prim_name)).Get();
-  if (op_infer != nullptr) {
-    return op_infer->GetValueDependArgIndices();
+  if (op_infer != nullptr && ori.empty()) {
+    ori = op_infer->GetValueDependArgIndices();
   }
 
-  return {};
+  if (!ori.empty()) {
+    (void)std::copy_if(ori.begin(), ori.end(), std::inserter(res, res.begin()),
+                       [&](int64_t idx) { return idx < SizeToLong(input_num); });
+  }
+
+  return res;
 }
 
 std::set<int64_t> GetValueDependArgIndices(const CNodePtr &cnode) {
@@ -363,13 +359,6 @@ PrimitiveEvalImplMap &GetPrimitiveToBackendEvalImplMap() {
     {prim::kPrimNotEqual, R{ops::NotEqualInfer, nullptr, true}},
     {prim::kPrimLog, R{ops::LogInfer, nullptr, true}},
     {prim::kPrimReciprocal, R{ops::ReciprocalInfer, nullptr, true}},
-    {prim::kPrimReduceSum, R{ops::ReduceSumInfer, nullptr, true}},
-    {prim::kPrimReduceMean, R{ops::ReduceMeanInfer, nullptr, true}},
-    {prim::kPrimReduceProd, R{ops::ReduceProdInfer, nullptr, true}},
-    {prim::kPrimReduceAll, R{ops::ReduceAllInfer, nullptr, true}},
-    {prim::kPrimReduceAny, R{ops::ReduceAnyInfer, nullptr, true}},
-    {prim::kPrimReduceMax, R{ops::ReduceMaxInfer, nullptr, true}},
-    {prim::kPrimReduceMin, R{ops::ReduceMinInfer, nullptr, true}},
     {prim::kPrimBiasAddGrad, R{InferImplBiasAddGrad, nullptr, true}},
     {prim::kPrimReduceScatter, R{InferImplReduceScatter, nullptr, true}},
     {prim::kPrimCast, R{InferImplCast, nullptr, true}},
