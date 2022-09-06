@@ -3310,7 +3310,7 @@ class StridedSlice(PrimitiveWithInfer):
         validator.check_non_negative_int(end_mask, 'end_mask', self.name)
         validator.check_non_negative_int(ellipsis_mask, 'ellipsis_mask', self.name)
         if len(tuple(filter(lambda x: x == '1', bin(ellipsis_mask)[-1:1:-1]))) > 1:
-            raise ValueError(f"For '{self.name}', only support one ellipsis in the index, but got {end_mask}.")
+            raise ValueError(f"For '{self.name}', only support one ellipsis in the index, but got {ellipsis_mask}.")
         validator.check_non_negative_int(new_axis_mask, 'new_axis_mask', self.name)
         validator.check_non_negative_int(shrink_axis_mask, 'shrink_axis_mask', self.name)
 
