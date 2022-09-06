@@ -35,6 +35,11 @@ abstract::ShapePtr MirrorPadInferShape(const PrimitivePtr &primitive, const std:
   auto paddings_arg = CheckAndConvertUtils::CheckTensorIntValue("paddings", paddings, prim_name);
   std::vector<std::pair<int64_t, int64_t>> paddings_attr;
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  // ToSupport Dynamic rank
+  if (IsDynamicRank(x_shape)) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
+  }
+
   auto paddings_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
   auto mode = GetValue<std::string>(primitive->GetAttr("mode"));
   if (paddings_shape.size() != kPaddingsSecondDimSize) {

@@ -69,6 +69,12 @@ namespace {
 abstract::ShapePtr MaxPoolGradWithArgmaxInferShape(const PrimitivePtr &primitive,
                                                    const std::vector<AbstractBasePtr> &input_args) {
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDim0]->BuildShape())[kShape];
+  // ToSupport Dynamic rank
+  if (IsDynamicRank(x_shape)) {
+    // The input tensor of Primitive MaxPoolGradWithArgmax must be a 4-D tensor and the data format is NCHW/NHWC.
+    // So DynamicRank can transfer to 4-D dynamic shape
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{-1, -1, -1, -1});
+  }
   constexpr int64_t kXRank = 4;
   CheckAndConvertUtils::CheckInteger("x_rank", SizeToLong(x_shape.size()), kEqual, kXRank, kNameMaxPoolGradWithArgmax);
   return std::make_shared<abstract::Shape>(x_shape);
