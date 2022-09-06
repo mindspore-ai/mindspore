@@ -48,12 +48,3 @@ std::string RealPath(const char *path) {
   return res;
 }
 
-#if defined(USE_GLOG) || defined(BUILD_CORE_RUNTIME)
-extern "C" {
-extern void mindspore_log_init();
-}
-JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {
-  mindspore_log_init();
-  return JNI_VERSION_1_4;
-}
-#endif
