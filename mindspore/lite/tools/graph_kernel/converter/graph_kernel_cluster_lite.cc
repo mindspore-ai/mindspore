@@ -27,9 +27,16 @@
 namespace mindspore::graphkernel {
 std::vector<PrimitivePtr> GraphKernelClusterLite::GetClusterableOpList() {
   std::vector<OpWithLevel> clusterable_ops_with_level = {
-    {kAllTarget, OpLevel_0, prim::kPrimLog},
-    {kAllTarget, OpLevel_0, prim::kPrimRealDiv},
-    {kAllTarget, OpLevel_0, prim::kPrimRsqrt},
+    {kAllTarget, OpLevel_0, prim::kPrimAdd},          {kAllTarget, OpLevel_0, prim::kPrimMul},
+    {kAllTarget, OpLevel_0, prim::kPrimSub},          {kAllTarget, OpLevel_0, prim::kPrimRealDiv},
+    {kAllTarget, OpLevel_0, prim::kPrimLog},          {kAllTarget, OpLevel_0, prim::kPrimExp},
+    {kAllTarget, OpLevel_0, prim::kPrimPow},          {kAllTarget, OpLevel_0, prim::kPrimNeg},
+    {kAllTarget, OpLevel_0, prim::kPrimRsqrt},        {kAllTarget, OpLevel_0, prim::kPrimSqrt},
+    {kAllTarget, OpLevel_0, prim::kPrimSin},          {kAllTarget, OpLevel_0, prim::kPrimTanh},
+    {kAllTarget, OpLevel_0, prim::kPrimCos},          {kAllTarget, OpLevel_0, prim::kPrimGreater},
+    {kAllTarget, OpLevel_0, prim::kPrimGreaterEqual}, {kAllTarget, OpLevel_0, prim::kPrimLess},
+    {kAllTarget, OpLevel_0, prim::kPrimLessEqual},    {kAllTarget, OpLevel_0, prim::kPrimLogicalAnd},
+    {kAllTarget, OpLevel_0, prim::kPrimLogicalOr},    {kAllTarget, OpLevel_0, prim::kPrimLogicalNot},
   };
   const auto &flags = GraphKernelFlags::GetInstance();
   return GkUtils::GetValidOps(clusterable_ops_with_level, flags.fusion_ops_level, flags.enable_cluster_ops_only,
