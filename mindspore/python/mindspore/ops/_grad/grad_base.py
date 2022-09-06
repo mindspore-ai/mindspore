@@ -103,3 +103,11 @@ def dyn_size(tensor):
     size = P.ReduceProd()(shape)
     size = cast(size, mstype.int32)
     return size
+
+
+def create_tensor_by_element(ori_tuple, data_type=mstype.int64):
+    new_tuple = []
+    for tuple_i in ori_tuple:
+        tuple_i = P.Cast()(tuple_i, data_type)
+        new_tuple.append(tuple_i)
+    return P.Stack(axis=-1)(new_tuple)
