@@ -80,7 +80,7 @@ class LiteOpActor : public OpActor<lite::Tensor> {
   virtual int SetInputShape();
   virtual int InitInputData();
   virtual int AssignInputData();
-  void SetOutputData(OpContext<Tensor> *context);
+  void SetOutputData(const OpContext<Tensor> *context);
   virtual void AsyncOutput(OpContext<Tensor> *context);
 
   int CompileArrowThroughOutputTensors(

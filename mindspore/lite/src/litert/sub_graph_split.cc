@@ -1117,7 +1117,7 @@ void SearchSubGraph::InsertNodeBegin(uint32_t index, Subgraph *subgraph, std::ve
     node_list_.at(index) = nullptr;
     if (outputs->size() == 1) {
       last_index = index;
-      index = outputs->at(0);
+      index = static_cast<uint32_t>(outputs->at(0));
       outputs->clear();
     } else {
       subgraph->heads_.push_back(index);

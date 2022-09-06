@@ -67,7 +67,7 @@ int DetectionPostProcessBaseCPUKernel::Prepare() {
       return RET_ERROR;
     }
     MS_CHECK_FALSE(anchor_tensor->Size() == 0, RET_ERROR);
-    memcpy(params_->anchors_, anchor_tensor->data(), anchor_tensor->Size());
+    memcpy(static_cast<void *>(params_->anchors_), anchor_tensor->data(), anchor_tensor->Size());
 #ifndef OP_INT8_CLIP
   } else if (anchor_tensor->data_type() == kNumberTypeInt8) {
     CHECK_LESS_RETURN(anchor_tensor->quant_params().size(), 1);
