@@ -638,12 +638,10 @@ void GraphExecutorPy::GetWeightInfo(
     MS_EXCEPTION_IF_NULL(param);
     fakequant_min_node_name = param->name();
   }
-  const auto &quant_op_value = cnode->input(0)->cast_ptr<ValueNode>()->value();
-  MS_EXCEPTION_IF_NULL(quant_op_value);
-  if (!quant_op_value->isa<PrimitivePy>()) {
+  auto quant_op = GetValuePtr<PrimitivePy>(cnode->input(0));
+  if (quant_op == nullptr) {
     return;
   }
-  auto quant_op = quant_op_value->cast_ptr<PrimitivePy>();
   (*fake_quant_table)[weight_name] = std::make_pair(quant_op->adapter(), fakequant_min_node_name);
 }
 
