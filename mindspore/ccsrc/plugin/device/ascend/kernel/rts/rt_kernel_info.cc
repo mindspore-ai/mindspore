@@ -26,6 +26,7 @@
 namespace mindspore {
 namespace kernel {
 void RtKerDescFactory::Register(const std::string &name, RtKerDescCreater &&fun) {
+  MS_EXCEPTION_IF_NULL(fun);
   if (fmap_.find(name) == fmap_.end()) {
     (void)fmap_.emplace(name, std::move(fun));
   }

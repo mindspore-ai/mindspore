@@ -28,6 +28,7 @@ namespace mindspore {
 namespace kernel {
 bool ProfilingKernelMod::Init(const AnfNodePtr &anf_node) {
   MS_LOG(INFO) << "[profiling] init profiling kernel mod";
+  MS_EXCEPTION_IF_NULL(anf_node);
   auto primitive = common::AnfAlgo::GetCNodePrimitive(anf_node);
   anf_node_ = anf_node;
 
