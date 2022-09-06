@@ -91,6 +91,15 @@ ShapeVector KernelTensor::GetShapeVector() const {
   return shape;
 }
 
+ShapeVector KernelTensor::GetMaxShape() const {
+  auto base_shape_ptr = GetBaseShape();
+  if (base_shape_ptr == nullptr || !base_shape_ptr->isa<abstract::Shape>()) {
+    return {};
+  }
+
+  return base_shape_ptr->cast<abstract::ShapePtr>()->max_shape();
+}
+
 std::vector<TypeId> KernelTensor::GetListOrTupleDtype() const {
   if (tensor_info_.abstract_base == nullptr) {
     return {TypeId::kTypeUnknown};
@@ -175,7 +184,7 @@ void KernelTensor::SetDeviceShapeAdaptively(const std::vector<int64_t> &device_s
   tensor_info_.device_shape_adaptively = device_shape_adaptively;
 }
 
-int KernelMod::Resize(const BaseOperatorPtr & /* base_operator */, const std::vector<KernelTensorPtr> &inputs,
+int KernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                       const std::vector<KernelTensorPtr> &outputs,
                       const std::map<uint32_t, tensor::TensorPtr> & /* inputsOnHost */) {
   auto ret = KRET_OK;
@@ -185,13 +194,9 @@ int KernelMod::Resize(const BaseOperatorPtr & /* base_operator */, const std::ve
     size_t tensor_size = 0;
     size_t type_size = GetTypeByte(TypeIdToType(input->GetDtype()));
     auto shape = input->GetShapeVector();
-    // If any input shape contains -1, means input shape is dynamic.
     if (!IsValidShape(shape)) {
-      // Note: When any input shape contains -1, it cannot be returned directly here.
-      // This is because in the phase of dynamic memory reuse, it depends on the length of output_size_list_.
-      ret = KRET_UNKNOWN_SHAPE;
-      // As a placeholder, put type_size to input_size_list_.
-      tensor_size = type_size;
+      // early stop if any input shape contains -1/-2, which means input shape is dynamic
+      return KRET_UNKNOWN_SHAPE;
     } else {
       tensor_size =
         shape.empty() ? type_size : std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
@@ -205,16 +210,21 @@ int KernelMod::Resize(const BaseOperatorPtr & /* base_operator */, const std::ve
     size_t tensor_size = 0;
     size_t type_size = GetTypeByte(TypeIdToType(output->GetDtype()));
     auto shape = output->GetShapeVector();
-    // If any output shape contains -1, means output shape is dynamic.
     if (!IsValidShape(shape)) {
       // Note:
-      // 1. When any output shape contains -1, it cannot be returned directly here.
-      //    This is because in the phase of dynamic memory reuse, it depends on the length of output_size_list_.
-      // 2. If ret != KRET_OK, this means that ret is KRET_UNKNOWN_SHAPE, at this time, the KRET_UNKNOWN_SHAPE should be
-      //    returned preferentially at the end of the function.
-      ret = (ret == KRET_OK ? KRET_UNKNOWN_OUT_SHAPE : ret);
-      // As a placeholder, put type_size to output_size_list_.
-      tensor_size = type_size;
+      // If output shape is unknown, the op is a compute-depended op and max_shape should not be empty,
+      // and the output_size_list_ can be set by max_shape
+      auto max_shape = output->GetMaxShape();
+      if (max_shape.empty()) {
+        auto primitive = base_operator->GetPrim();
+        MS_ERROR_IF_NULL(primitive);
+        MS_LOG(DEBUG) << "For " << primitive->name()
+                      << ", the max_shape should not be empty when input shape is known.";
+        ret = KRET_UNKNOWN_OUT_SHAPE;
+      } else {
+        tensor_size = SizeOf(max_shape) * type_size;
+        ret = KRET_UNKNOWN_OUT_SHAPE;
+      }
     } else {
       tensor_size =
         shape.empty() ? type_size : std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
