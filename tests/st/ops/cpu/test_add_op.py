@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,36 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+
 import numpy as np
 import pytest
-
 import mindspore.context as context
-import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.ops import operations as P
-
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-
-
-class Net(nn.Cell):
-    def __init__(self):
-        super(Net, self).__init__()
-        self.add = P.Add()
-
-    def construct(self, x_, y_):
-        return self.add(x_, y_)
-
-
-x = np.ones([1, 3, 3, 4]).astype(np.float32)
-y = np.ones([1, 3, 3, 4]).astype(np.float32)
-
-
-def test_net():
-    add = Net()
-    output = add(Tensor(x), Tensor(y))
-    print(x)
-    print(y)
-    print(output.asnumpy())
 
 
 def test_add_tensor_api(nptype):
@@ -58,8 +33,7 @@ def test_add_tensor_api(nptype):
 
 
 @pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_add_float32_tensor_api():
     """
@@ -67,7 +41,11 @@ def test_add_float32_tensor_api():
     Description: test float32 inputs.
     Expectation: the result match with expected result.
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     test_add_tensor_api(np.float32)
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
     test_add_tensor_api(np.float32)
+
+
+if __name__ == '__main__':
+    test_add_float32_tensor_api()

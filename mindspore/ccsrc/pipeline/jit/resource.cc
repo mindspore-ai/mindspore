@@ -293,6 +293,9 @@ BuiltInTypeMap &GetMethodMap() {
        {"acos", std::string("acos")},                                      // acos()
        {"acosh", std::string("acosh")},                                    // acosh()
        {"sigmoid", std::string("sigmoid")},                                // P.Sigmoid()
+       {"addr", std::string("addr")},                                      // addr()
+       {"add", std::string("add")},                                        // P.Add()
+       {"asin", std::string("asin")},                                      // asin()
      }},
     {kObjectTypeRowTensorType,
      {

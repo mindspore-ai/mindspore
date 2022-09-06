@@ -50,3 +50,30 @@ def test_asin(dtype):
     print(output)
     expect = np.arcsin(np_array)
     assert np.allclose(output.asnumpy(), expect)
+
+
+def test_asin_tensor_api(nptype):
+    """
+    Feature: test asin tensor api.
+    Description: test inputs given their dtype.
+    Expectation: the result match with expected result.
+    """
+    x = Tensor(np.array([0.74, 0.04, 0.30, 0.56]).astype(nptype))
+    output = x.asin()
+    expected = np.array([0.8330704, 0.04001067, 0.30469266, 0.5943858]).astype(nptype)
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_asin_float32_tensor_api():
+    """
+    Feature: test asin tensor api.
+    Description: test float32 inputs.
+    Expectation: the result match with expected result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    test_asin_tensor_api(np.float32)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
+    test_asin_tensor_api(np.float32)

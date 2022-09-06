@@ -48,8 +48,11 @@ Element-wise Methods
     :nosignatures:
 
     mindspore.Tensor.abs
+    mindspore.Tensor.add
     mindspore.Tensor.addcdiv
     mindspore.Tensor.addcmul
+    mindspore.Tensor.addr
+    mindspore.Tensor.asin
     mindspore.Tensor.atan2
     mindspore.Tensor.bernoulli
     mindspore.Tensor.bitwise_and
