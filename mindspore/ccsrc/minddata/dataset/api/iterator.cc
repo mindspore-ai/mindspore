@@ -91,9 +91,7 @@ Status Iterator::BuildAndLaunchTree(const std::shared_ptr<Dataset> &ds, int32_t 
 
 PullIterator::PullIterator() : pull_consumer_(nullptr) {}
 
-#ifdef _MSC_VER
 PullIterator::~PullIterator() = default;
-#endif
 
 // Get the next row from the data pipeline.
 Status PullIterator::GetRows(int32_t num_rows, std::vector<MSTensorVec> *const row) {
