@@ -63,12 +63,14 @@ void PluginLoader::CloseDynamicLib(const std::string &dl_name, void *handle) {
 }
 
 std::string PluginLoader::GetDynamicLibName(const std::string &plugin_file) {
-  auto pos = plugin_file.rfind('.');
+  auto p1 = plugin_file.find_last_of('/') + 1;
+  auto target_so = plugin_file.substr(p1);
+  auto pos = target_so.rfind('.');
   if (pos == std::string::npos) {
-    MS_LOG(WARNING) << "Invalid plugin file " << plugin_file;
+    MS_LOG(WARNING) << "Invalid plugin file " << target_so;
     return "unknown_name";
   }
-  return plugin_file.substr(0, pos);
+  return target_so.substr(0, pos);
 }
 
 bool PluginLoader::GetPluginPath(std::string *file_path) {
@@ -150,7 +152,7 @@ void DeviceContextManager::LoadPlugin() {
   }
   struct dirent *entry;
   while ((entry = readdir(dir)) != nullptr) {
-    auto plugin_file = entry->d_name;
+    auto plugin_file = plugin_path_ + "/" + entry->d_name;
     plugin_loader::PluginLoader::LoadDynamicLib(plugin_file, &plugin_maps_);
   }
   (void)closedir(dir);
