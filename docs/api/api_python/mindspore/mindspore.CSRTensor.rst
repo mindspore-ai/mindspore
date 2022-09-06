@@ -52,7 +52,7 @@ mindspore.CSRTensor
         返回指定数据类型的CSRTensor。
 
         参数：
-            - **dtype** (Union[`mindspore.dtype` , `numpy.dtype` , str]) - 指定数据类型。
+            - **dtype** (Union[mindspore.dtype, numpy.dtype, str]) - 指定数据类型。
 
         返回：
             CSRTensor。

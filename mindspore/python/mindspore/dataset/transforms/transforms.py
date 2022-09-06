@@ -277,7 +277,7 @@ class Compose(CompoundOperation):
         Remove all compose operation from the given list of operations.
 
         Args:
-            operations: list of transforms
+            operations (list): list of transforms.
 
         Returns:
             list of operations without compose operations.
@@ -347,9 +347,9 @@ class Concatenate(TensorOperation):
 
     Args:
         axis (int, optional): Concatenate the tensors along given axis (Default=0).
-        prepend (numpy.array, optional): NumPy array to be prepended to the already concatenated tensors
+        prepend (numpy.ndarray, optional): NumPy array to be prepended to the already concatenated tensors
             (Default=None).
-        append (numpy.array, optional): NumPy array to be appended to the already concatenated tensors (Default=None).
+        append (numpy.ndarray, optional): NumPy array to be appended to the already concatenated tensors (Default=None).
 
     Raises:
         TypeError: If `axis` is not of type int.

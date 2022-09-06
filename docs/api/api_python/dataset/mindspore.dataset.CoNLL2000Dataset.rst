@@ -5,7 +5,7 @@ mindspore.dataset.CoNLL2000Dataset
 
     读取和解析CoNLL2000数据集的源数据集。
 
-    生成的数据集有三列 `[word, pos_tag, chunk_tag]` ，三列的数据类型均为string。
+    生成的数据集有三列 `[word, pos_tag, chunk_tag]` 。三列的数据类型均为string。
 
     参数：
         - **dataset_dir** (str) - 包含数据集文件的根目录路径。

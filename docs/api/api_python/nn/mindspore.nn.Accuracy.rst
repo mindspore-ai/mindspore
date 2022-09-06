@@ -5,7 +5,7 @@ mindspore.nn.Accuracy
 
     计算数据分类的正确率，包括二分类和多分类。
 
-    此类创建两个局部变量，预测正确的样本数和总样本数，用于计算 `y_pred` 和 `y` 的匹配率，此匹配率即为accuracy。
+    此类创建两个局部变量，预测正确的样本数和总样本数，用于计算 `y_pred` 和 `y` 的匹配率。此匹配率即为accuracy。
 
     .. math::
         \text{accuracy} =\frac{\text{true_positive} + \text{true_negative}}

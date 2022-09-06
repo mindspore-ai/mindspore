@@ -1442,7 +1442,8 @@ class Model:
         Generate output predictions for the input samples.
 
         Args:
-            predict_data (Optional[Tensor, list[Tensor], tuple[Tensor]]): The predict data, can be a single tensor,
+            predict_data (Union[Tensor, list[Tensor], tuple[Tensor]], optional):
+                The predict data, can be a single tensor,
                 a list of tensor, or a tuple of tensor.
 
         Returns:
@@ -1577,7 +1578,8 @@ class Model:
             Batch data should be put together in one tensor.
 
         Args:
-            predict_data (Optional[Tensor, list[Tensor], tuple[Tensor]]): The predict data, can be a single tensor,
+            predict_data (Union[Tensor, list[Tensor], tuple[Tensor]], optional):
+                The predict data, can be a single tensor,
                 a list of tensor, or a tuple of tensor.
 
         Returns:
