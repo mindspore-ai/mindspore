@@ -64,6 +64,38 @@ class GPUEnvChecker(EnvChecker):
     def check_env(self, e):
         raise e
 
+    def check_version(self):
+        """Check cuda version."""
+        version_match = False
+        if self._check_version():
+            version_match = True
+        if not version_match:
+            if self.v == "0":
+                logger.warning("Can not found cuda libs, please confirm that the correct "
+                               "cuda version has been installed, you can refer to the "
+                               "installation guidelines: https://www.mindspore.cn/install")
+            else:
+                logger.warning(f"MindSpore version {__version__} and cuda version {self.v} does not match, "
+                               "CUDA version [{self.version}] are supported by MindSpore officially. "
+                               "Please refer to the installation guide for version matching "
+                               "information: https://www.mindspore.cn/install.")
+        nvcc_version = self._get_nvcc_version(False)
+        if nvcc_version and (nvcc_version not in self.version):
+            logger.warning(f"MindSpore version {__version__} and nvcc(cuda bin) version {nvcc_version} "
+                           "does not match, please refer to the installation guide for version matching "
+                           "information: https://www.mindspore.cn/install")
+        cudnn_version = self._get_cudnn_version()
+        if cudnn_version and int(cudnn_version) < 760:
+            logger.warning(f"MindSpore version {__version__} and cudDNN version {cudnn_version} "
+                           "does not match, please refer to the installation guide for version matching "
+                           "information: https://www.mindspore.cn/install. The recommended version is "
+                           "CUDA10.1 with cuDNN7.6.x and CUDA11.1 with cuDNN8.0.x")
+        if cudnn_version and int(cudnn_version) < 800 and int(str(self.v).split('.')[0]) > 10:
+            logger.warning(f"CUDA version {self.v} and cuDNN version {cudnn_version} "
+                           "does not match, please refer to the installation guide for version matching "
+                           "information: https://www.mindspore.cn/install. The recommended version is "
+                           "CUDA11.1 with cuDNN8.0.x")
+
     def set_env(self):
         return
 
@@ -114,7 +146,7 @@ class GPUEnvChecker(EnvChecker):
                 if len(cudnn_version) == 2:
                     cudnn_version.append('0')
                 break
-        version_str = ''.join([n for n in cudnn_version])
+        version_str = ''.join(cudnn_version)
         return version_str[0:3]
 
     def _get_cudart_version(self):
@@ -129,38 +161,6 @@ class GPUEnvChecker(EnvChecker):
                 self.v = ls_cudart.stdout.split('/')[-1].strip('libcudart.so.').strip()
                 break
         return self.v
-
-    def check_version(self):
-        """Check cuda version."""
-        version_match = False
-        if self._check_version():
-            version_match = True
-        if not version_match:
-            if self.v == "0":
-                logger.warning("Can not found cuda libs, please confirm that the correct "
-                               "cuda version has been installed, you can refer to the "
-                               "installation guidelines: https://www.mindspore.cn/install")
-            else:
-                logger.warning(f"MindSpore version {__version__} and cuda version {self.v} does not match, "
-                               "CUDA version [{self.version}] are supported by MindSpore officially. "
-                               "Please refer to the installation guide for version matching "
-                               "information: https://www.mindspore.cn/install.")
-        nvcc_version = self._get_nvcc_version(False)
-        if nvcc_version and (nvcc_version not in self.version):
-            logger.warning(f"MindSpore version {__version__} and nvcc(cuda bin) version {nvcc_version} "
-                           "does not match, please refer to the installation guide for version matching "
-                           "information: https://www.mindspore.cn/install")
-        cudnn_version = self._get_cudnn_version()
-        if cudnn_version and int(cudnn_version) < 760:
-            logger.warning(f"MindSpore version {__version__} and cudDNN version {cudnn_version} "
-                           "does not match, please refer to the installation guide for version matching "
-                           "information: https://www.mindspore.cn/install. The recommended version is "
-                           "CUDA10.1 with cuDNN7.6.x and CUDA11.1 with cuDNN8.0.x")
-        if cudnn_version and int(cudnn_version) < 800 and int(str(self.v).split('.')[0]) > 10:
-            logger.warning(f"CUDA version {self.v} and cuDNN version {cudnn_version} "
-                           "does not match, please refer to the installation guide for version matching "
-                           "information: https://www.mindspore.cn/install. The recommended version is "
-                           "CUDA11.1 with cuDNN8.0.x")
 
     def _check_version(self):
         """Check cuda version"""
@@ -185,8 +185,8 @@ class GPUEnvChecker(EnvChecker):
                              "guidelines: https://www.mindspore.cn/install")
                 return path_list
             ldd_r = subprocess.Popen(['ldd', real_path[0]], stdout=subprocess.PIPE)
-            ldd_result = subprocess.Popen(['grep', lib_name], stdin=ldd_r.stdout, stdout=subprocess.PIPE)
-            result = ldd_result.communicate()[0].decode()
+            ldd_result = subprocess.Popen(['/bin/grep', lib_name], stdin=ldd_r.stdout, stdout=subprocess.PIPE)
+            result = ldd_result.communicate(timeout=5)[0].decode()
             for i in result.split('\n'):
                 path = i.partition("=>")[2]
                 if path.lower().find("not found") > 0:
