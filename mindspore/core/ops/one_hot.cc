@@ -24,69 +24,83 @@
 namespace mindspore {
 namespace ops {
 void OneHot::Init(const int64_t axis) { this->set_axis(axis); }
+
 void OneHot::set_axis(const int64_t axis) { (void)this->AddAttr(kAxis, api::MakeValue(axis)); }
 
 int64_t OneHot::get_axis() const { return GetValue<int64_t>(GetAttr(kAxis)); }
-namespace {
-abstract::ShapePtr OneHotInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  auto op_name = primitive->name();
-  int64_t axis = GetValue<int64_t>(primitive->GetAttr(kAxis));
-  const size_t depth_index = 1;
-  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
-  auto in_shape = shape_map[kShape];
-  CheckAndConvertUtils::CheckInRange<int64_t>("axis", axis, kIncludeBoth, {-1, SizeToLong(in_shape.size())}, op_name);
-  auto depth = input_args[depth_index]->BuildValue();
-  MS_EXCEPTION_IF_NULL(depth);
-  int64_t depth_value;
-  if (depth->isa<tensor::Tensor>()) {
-    (void)CheckAndConvertUtils::CheckTensorTypeValid("depth", input_args[1]->BuildType(), {kInt64}, op_name);
-    auto depth_data = depth->cast<tensor::TensorPtr>()->data_c();
-    MS_EXCEPTION_IF_NULL(depth_data);
-    auto data_value = reinterpret_cast<int64_t *>(depth_data);
-    depth_value = *data_value;
-  } else if (depth->isa<Int64Imm>()) {
-    depth_value = GetValue<int64_t>(depth);
-  } else {
-    MS_EXCEPTION(TypeError) << "For '" << op_name
-                            << "', 'depth' must be a tensor or number of int64, but got an invalid type.";
-  }
-
-  (void)CheckAndConvertUtils::CheckInteger("depth value", depth_value, kGreaterEqual, 0, op_name);
-  if (axis >= 0) {
-    (void)in_shape.insert(in_shape.begin() + axis, depth_value);
-  } else {
-    in_shape.push_back(depth_value);
-  }
-
-  return std::make_shared<abstract::Shape>(in_shape);
-}
-
-TypePtr OneHotInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  auto op_name = prim->name();
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("indices", input_args[kInputIndex0]->BuildType(),
-                                                   {kUInt8, kInt32, kInt64}, op_name);
-  (void)CheckAndConvertUtils::CheckTypeValid("depth", input_args[kInputIndex1]->BuildType(),
-                                             {kInt8, kInt16, kInt32, kInt64}, op_name);
-  std::map<std::string, TypePtr> args = {{"on_value", input_args[kInputIndex2]->BuildType()},
-                                         {"off_dtype", input_args[kInputIndex3]->BuildType()}};
-  return CheckAndConvertUtils::CheckTensorTypeSame(
-    args,
-    {kBool, kInt, kInt8, kInt16, kInt32, kInt64, kUInt, kUInt8, kUInt16, kUInt32, kUInt64, kFloat, kFloat16, kFloat32,
-     kFloat64, kComplex64, kComplex128},
-    op_name);
-}
-}  // namespace
 
 MIND_API_OPERATOR_IMPL(OneHot, BaseOperator);
-AbstractBasePtr OneHotInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                            const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  const int64_t input_num = 4;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
-  auto infer_type = OneHotInferType(primitive, input_args);
-  auto infer_shape = OneHotInferShape(primitive, input_args);
-  return abstract::MakeAbstract(infer_shape, infer_type);
+namespace {
+const int64_t kOneHotInputsNum = 4;
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(OneHot, prim::kPrimOneHot, OneHotInfer, nullptr, true);
+class OneHotInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    MS_EXCEPTION_IF_NULL(primitive);
+    auto prim_name = primitive->name();
+    const int64_t input_num = kOneHotInputsNum;
+    (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num,
+                                             prim_name);
+    auto op_name = primitive->name();
+    const size_t depth_index = 1;
+    auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
+    auto in_shape = shape_map[kShape];
+
+    if (IsDynamicRank(in_shape)) {
+      return input_args[0]->BuildShape();
+    }
+
+    int64_t axis = GetValue<int64_t>(primitive->GetAttr(kAxis));
+    CheckAndConvertUtils::CheckInRange<int64_t>("axis", axis, kIncludeBoth, {-1, SizeToLong(in_shape.size())}, op_name);
+    auto depth = input_args[depth_index]->BuildValue();
+    MS_EXCEPTION_IF_NULL(depth);
+    int64_t depth_value;
+    if (depth->isa<tensor::Tensor>()) {
+      auto depth_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
+      auto depth_shape = depth_shape_map[kShape];
+      if (IsDynamic(depth_shape)) {
+        return std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
+      }
+      (void)CheckAndConvertUtils::CheckTensorTypeValid("depth", input_args[1]->BuildType(), {kInt64}, op_name);
+      auto depth_data = depth->cast<tensor::TensorPtr>()->data_c();
+      MS_EXCEPTION_IF_NULL(depth_data);
+      auto data_value = reinterpret_cast<int64_t *>(depth_data);
+      depth_value = *data_value;
+    } else if (depth->isa<Int64Imm>()) {
+      depth_value = GetValue<int64_t>(depth);
+    } else {
+      MS_EXCEPTION(TypeError) << "For '" << op_name
+                              << "', 'depth' must be a tensor or number of int64, but got an invalid type.";
+    }
+
+    (void)CheckAndConvertUtils::CheckInteger("depth value", depth_value, kGreaterEqual, 0, op_name);
+    if (axis >= 0) {
+      (void)in_shape.insert(in_shape.begin() + axis, depth_value);
+    } else {
+      in_shape.push_back(depth_value);
+    }
+
+    return std::make_shared<abstract::Shape>(in_shape);
+  }
+
+  TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
+    MS_EXCEPTION_IF_NULL(prim);
+    auto op_name = prim->name();
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("indices", input_args[kInputIndex0]->BuildType(),
+                                                     {kUInt8, kInt32, kInt64}, op_name);
+    (void)CheckAndConvertUtils::CheckTypeValid("depth", input_args[kInputIndex1]->BuildType(),
+                                               {kInt8, kInt16, kInt32, kInt64}, op_name);
+    std::map<std::string, TypePtr> args = {{"on_value", input_args[kInputIndex2]->BuildType()},
+                                           {"off_dtype", input_args[kInputIndex3]->BuildType()}};
+    return CheckAndConvertUtils::CheckTensorTypeSame(
+      args,
+      {kBool, kInt, kInt8, kInt16, kInt32, kInt64, kUInt, kUInt8, kUInt16, kUInt32, kUInt64, kFloat, kFloat16, kFloat32,
+       kFloat64, kComplex64, kComplex128},
+      op_name);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(OneHot, prim::kPrimOneHot, OneHotInfer, false);
 }  // namespace ops
 }  // namespace mindspore

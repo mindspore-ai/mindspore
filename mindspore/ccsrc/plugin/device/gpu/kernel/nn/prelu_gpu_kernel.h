@@ -56,7 +56,6 @@ class PReLUGpuKernelMod : public NativeGpuKernelMod {
                                              const std::vector<AddressPtr> &, const std::vector<AddressPtr> &, void *)>;
   static std::vector<std::pair<KernelAttr, PReLULaunchFunc>> func_list_;
   PReLULaunchFunc kernel_func_;
-  bool is_null_input_{false};
   size_t input_length_{0};
   size_t weight_length_{0};
   size_t per_channel_length_{0};
