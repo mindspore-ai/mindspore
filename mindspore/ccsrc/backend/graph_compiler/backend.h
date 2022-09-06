@@ -113,7 +113,7 @@ class BACKEND_EXPORT MindRTBackend : public MindRTBackendBase {
 
   void RunGraphByActors(const ActorInfo &actor_info, const GraphCompilerInfo &graph_compiler_info,
                         const VectorRef &args, VectorRef *outputs);
-  void UpdateOutput(const std::vector<session::KernelWithIndex> &output_nodes, VectorRef *const outputs);
+  void UpdateOutput(const std::vector<session::KernelWithIndex> &output_nodes, VectorRef *const outputs) const;
 
   void ReleaseForwardOutput(const std::vector<TensorPtr> &input_tensors);
 

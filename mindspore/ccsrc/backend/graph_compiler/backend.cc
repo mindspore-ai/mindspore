@@ -919,7 +919,8 @@ void MindRTBackend::CompileSingleOpGraph(const KernelGraphPtr &graph, const Devi
   pynative::OpCompiler::BatchBuild({graph}, device_context);
 }
 
-void MindRTBackend::UpdateOutput(const std::vector<session::KernelWithIndex> &output_nodes, VectorRef *const outputs) {
+void MindRTBackend::UpdateOutput(const std::vector<session::KernelWithIndex> &output_nodes,
+                                 VectorRef *const outputs) const {
   MS_EXCEPTION_IF_NULL(outputs);
   for (auto &item_with_index : output_nodes) {
     MS_EXCEPTION_IF_NULL(item_with_index.first);

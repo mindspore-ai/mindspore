@@ -1369,7 +1369,7 @@ AnfNodePtr Parser::ParseMsTensor(const FunctionBlockPtr &block, const py::object
   return nullptr;
 }
 
-AnfNodePtr Parser::ParseNull(const FunctionBlockPtr &block, const py::object &value_body) {
+AnfNodePtr Parser::ParseNull(const FunctionBlockPtr &block, const py::object &value_body) const {
   if (py::hasattr(value_body, "id")) {
     std::string module_name = py::cast<std::string>(python_adapter::GetPyObjAttr(value_body, "id"));
     py::dict global_dict = const_cast<py::dict &>(block->global_py_params());
