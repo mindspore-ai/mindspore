@@ -34,6 +34,13 @@ class MIND_API IndexAdd : public BaseOperator {
   MIND_API_BASE_MEMBER(IndexAdd);
   /// \brief Constructor.
   IndexAdd() : BaseOperator(kNameIndexAdd) { InitIOName({"input_x", "indices", "input_y"}, {"output"}); }
+
+  /// \brief Set axis.
+  void set_axis(const int64_t axis);
+  /// \brief Get axis.
+  ///
+  /// \return axis.
+  int64_t get_axis() const;
 };
 
 abstract::AbstractBasePtr IndexAddInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

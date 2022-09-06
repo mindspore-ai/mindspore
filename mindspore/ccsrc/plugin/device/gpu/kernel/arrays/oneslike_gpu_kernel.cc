@@ -45,7 +45,7 @@ int OnesLikeGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
                                  const std::vector<KernelTensorPtr> &outputs,
                                  const std::map<uint32_t, tensor::TensorPtr> &) {
   int ret = KernelMod::Resize(base_operator, inputs, outputs);
-  if (ret != 0) {
+  if (ret != KRET_OK) {
     return ret;
   }
   auto input_shape = inputs[0]->GetShapeVector();

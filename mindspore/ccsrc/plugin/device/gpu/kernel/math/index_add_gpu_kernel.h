@@ -49,8 +49,6 @@ class IndexAddGpuKernelMod : public NativeGpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  void ResetResource() noexcept;
-  void InitSizeLists();
   bool CheckParams();
   template <typename T>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
@@ -60,6 +58,7 @@ class IndexAddGpuKernelMod : public NativeGpuKernelMod {
                                           const std::vector<AddressPtr> &, const std::vector<AddressPtr> &, void *)>;
   static std::vector<std::pair<KernelAttr, IndexAddFunc>> func_list_;
   IndexAddFunc kernel_func_;
+
   std::vector<int64_t> x_shape_;
   std::vector<int64_t> index_shape_;
   std::vector<int64_t> y_shape_;
@@ -67,9 +66,6 @@ class IndexAddGpuKernelMod : public NativeGpuKernelMod {
   int64_t axis_value_{0};
   size_t axis_{0};
   size_t x_size_{0};
-  size_t index_size_{0};
-  size_t y_size_{0};
-  size_t output_size_{0};
   size_t inner_size_{0};
   size_t outer_size_{0};
   size_t x_axis_size_{0};

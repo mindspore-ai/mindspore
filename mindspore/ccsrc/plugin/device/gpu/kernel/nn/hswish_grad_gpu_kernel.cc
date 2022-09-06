@@ -48,6 +48,8 @@ int HSwishGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
     return ret;
   }
   auto input_shape = inputs[kIndex0]->GetShapeVector();
+  is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "y_grad") ||
+                   CHECK_SHAPE_NULL(inputs[kIndex1]->GetShapeVector(), kernel_name_, "x");
   input_size_ = SizeOf(input_shape);
   return KRET_OK;
 }
