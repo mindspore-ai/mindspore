@@ -16,10 +16,10 @@
 """utils for operator"""
 
 from mindspore.common.tensor import Tensor
-from ..._checkparam import Validator as validator
-from ..._checkparam import Rel
-from ...common import dtype as mstype
-from ..primitive import constexpr
+from mindspore._checkparam import Validator as validator
+from mindspore._checkparam import Rel
+from mindspore.common import dtype as mstype
+from mindspore.ops.primitive import constexpr
 
 
 def get_broadcast_shape(x_shape, y_shape, prim_name, shape_type="", arg_name1="x", arg_name2="y"):

@@ -22,9 +22,9 @@ from mindspore.log import _LogActionOnce
 from mindspore import context, log as logger
 from mindspore.parallel._utils import _is_in_auto_parallel_mode
 from mindspore.common.parameter import Parameter
-from .._c_expression import Primitive_, real_run_op, prim_type
-from .._checkparam import Validator
-from . import signature as sig
+from mindspore._c_expression import Primitive_, real_run_op, prim_type
+from mindspore._checkparam import Validator
+from mindspore.ops import signature as sig
 
 
 class Primitive(Primitive_):
@@ -59,6 +59,27 @@ class Primitive(Primitive_):
         if hasattr(self.__class__, '__mindspore_signature__'):
             out = self._fill_signature(self.__class__.__mindspore_signature__)
             self.set_signatures(out)
+
+    def add_prim_attr(self, name, value):
+        """
+        Add primitive attribute.
+
+        Args:
+            name (str): Attribute Name.
+            value (Any): Attribute value.
+
+        Examples:
+            >>> import mindspore.ops as ops
+            >>> a = ops.Add()
+            >>> a = a.add_prim_attr("attr",1)
+            >>> out = a.attrs["attr"]
+            >>> print(out)
+            1
+        """
+        self.__dict__[name] = value
+        self.attrs[name] = value
+        self.add_attr(name, value)
+        return self
 
     def _fill_signature(self, signatures):
         """fills signature."""
@@ -95,27 +116,6 @@ class Primitive(Primitive_):
         if hasattr(self, 'instance_name'):
             cloned.set_prim_instance_name(self.instance_name)
         return cloned
-
-    def add_prim_attr(self, name, value):
-        """
-        Add primitive attribute.
-
-        Args:
-            name (str): Attribute Name.
-            value (Any): Attribute value.
-
-        Examples:
-            >>> import mindspore.ops as ops
-            >>> a = ops.Add()
-            >>> a = a.add_prim_attr("attr",1)
-            >>> out = a.attrs["attr"]
-            >>> print(out)
-            1
-        """
-        self.__dict__[name] = value
-        self.attrs[name] = value
-        self.add_attr(name, value)
-        return self
 
     def del_prim_attr(self, name):
         """
@@ -422,6 +422,13 @@ class PrimitiveWithCheck(Primitive):
         Primitive.__init__(self, name)
         self.set_prim_type(prim_type.py_infer_check)
 
+    def __check__(self, *args):
+        """Checking the input shape and the input type of ops is valid """
+        tracks = ['dtype', 'shape']
+        for track in tracks:
+            fn = getattr(self, 'check_' + track)
+            fn(*(x[track] for x in args))
+
     def _clone(self):
         """
         Deeply clones the primitive object.
@@ -458,13 +465,6 @@ class PrimitiveWithCheck(Primitive):
             None.
         """
         return None
-
-    def __check__(self, *args):
-        """Checking the input shape and the input type of ops is valid """
-        tracks = ['dtype', 'shape']
-        for track in tracks:
-            fn = getattr(self, 'check_' + track)
-            fn(*(x[track] for x in args))
 
 
 class PrimitiveWithInfer(Primitive):

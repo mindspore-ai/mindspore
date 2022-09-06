@@ -24,20 +24,20 @@ import numpy as np
 from mindspore import log as logger
 from mindspore import context
 from mindspore.common.initializer import Zero
-from .. import signature as sig
-from .._utils import get_broadcast_shape, is_shape_unknown
-from ..primitive import Primitive, PrimitiveWithInfer, PrimitiveWithCheck, prim_attr_register, _run_op
-from ..._checkparam import Rel
-from ..._checkparam import Validator as validator
-from ..._checkparam import _check_3d_int_or_tuple
-from ...common import dtype as mstype
-from ...common._decorator import deprecated
-from ...common.parameter import Parameter
-from ...common.tensor import Tensor, CSRTensor, COOTensor
-from ..._c_expression import Tensor as Tensor_
-from ..._c_expression import CSRTensor as CSRTensor_
-from ..._c_expression import COOTensor as COOTensor_
-from ..._c_expression import get_dyn_shape
+from mindspore.ops import signature as sig
+from mindspore.ops._utils import get_broadcast_shape, is_shape_unknown
+from mindspore.ops.primitive import Primitive, PrimitiveWithInfer, PrimitiveWithCheck, prim_attr_register, _run_op
+from mindspore._checkparam import Rel
+from mindspore._checkparam import Validator as validator
+from mindspore._checkparam import _check_3d_int_or_tuple
+from mindspore.common import dtype as mstype
+from mindspore.common._decorator import deprecated
+from mindspore.common.parameter import Parameter
+from mindspore.common.tensor import Tensor, CSRTensor, COOTensor
+from mindspore._c_expression import Tensor as Tensor_
+from mindspore._c_expression import CSRTensor as CSRTensor_
+from mindspore._c_expression import COOTensor as COOTensor_
+from mindspore._c_expression import get_dyn_shape
 
 
 class _ScatterOp(PrimitiveWithInfer):

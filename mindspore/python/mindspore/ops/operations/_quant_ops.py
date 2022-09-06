@@ -17,10 +17,10 @@
 from functools import partial
 
 import mindspore.context as context
-from ..._checkparam import Validator as validator
-from ..._checkparam import Rel
-from ..primitive import Primitive, PrimitiveWithInfer, prim_attr_register
-from ...common import dtype as mstype
+from mindspore._checkparam import Validator as validator
+from mindspore._checkparam import Rel
+from mindspore.ops.primitive import Primitive, PrimitiveWithInfer, prim_attr_register
+from mindspore.common import dtype as mstype
 
 if context.get_context('device_target') == "Ascend":
     import mindspore.ops._op_impl._custom_op

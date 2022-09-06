@@ -70,7 +70,7 @@ class KernelAdjust {
 #endif
   static bool NeedLoopSink();
   bool IsTaskSink() const;
-  CNodePtr CreateStreamActiveOp(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
+  CNodePtr CreateStreamActiveOp(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) const;
   CNodePtr CreateRecvApplyKernel(const std::shared_ptr<session::KernelGraph> &graph_ptr, uint32_t event_id) const;
   CNodePtr CreateSendApplyKernel(const std::shared_ptr<session::KernelGraph> &graph_ptr, uint32_t event_id) const;
 
@@ -98,7 +98,7 @@ class KernelAdjust {
                                  const CNodePtr &getnext_cnode) const;
   CNodePtr CreateStreamAssignAddnOP(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                     const std::map<std::string, mindspore::ParameterPtr> &switch_loop_input,
-                                    bool cur_loop);
+                                    bool cur_loop) const;
   kernel::KernelBuildInfo::KernelBuildInfoBuilder CreateMngKernelBuilder(const std::vector<std::string> &formats,
                                                                          const std::vector<TypeId> &type_ids) const;
 #ifndef ENABLE_SECURITY

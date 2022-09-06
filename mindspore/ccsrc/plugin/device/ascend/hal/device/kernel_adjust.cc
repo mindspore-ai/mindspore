@@ -587,7 +587,7 @@ CNodePtr KernelAdjust::CreateEndGraphOp(const std::shared_ptr<session::KernelGra
   return end_graph_node;
 }
 
-CNodePtr KernelAdjust::CreateStreamActiveOp(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) {
+CNodePtr KernelAdjust::CreateStreamActiveOp(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) const {
   kernel::KernelBuildInfo::KernelBuildInfoBuilder selected_kernel_builder = CreateMngKernelBuilder(
     {kOpFormat_DEFAULT, kOpFormat_DEFAULT}, {TypeId::kNumberTypeInt32, TypeId::kNumberTypeInt32});
   abstract::AbstractBasePtr typeNone_abstract = std::make_shared<abstract::AbstractNone>();
@@ -653,7 +653,7 @@ CNodePtr KernelAdjust::CreateEndOfSequenceOP(const std::shared_ptr<session::Kern
 
 CNodePtr KernelAdjust::CreateStreamAssignAddnOP(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                                 const std::map<std::string, mindspore::ParameterPtr> &switch_loop_input,
-                                                bool cur_loop) {
+                                                bool cur_loop) const {
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
   kernel::KernelBuildInfo::KernelBuildInfoBuilder selected_kernel_builder = CreateMngKernelBuilder(
     {kOpFormat_DEFAULT, kOpFormat_DEFAULT}, {TypeId::kNumberTypeInt32, TypeId::kNumberTypeInt32});

@@ -16,11 +16,11 @@
 """Other operators."""
 import functools
 from mindspore import log as logger
-from .. import signature as sig
-from ..._checkparam import Validator as validator, Rel
-from ...common import dtype as mstype
-from ..primitive import Primitive, PrimitiveWithCheck, PrimitiveWithInfer, prim_attr_register
-from ._pyfunc_registry import add_pyfunc
+from mindspore.ops import signature as sig
+from mindspore._checkparam import Validator as validator, Rel
+from mindspore.common import dtype as mstype
+from mindspore.ops.primitive import Primitive, PrimitiveWithCheck, PrimitiveWithInfer, prim_attr_register
+from mindspore.ops.operations._pyfunc_registry import add_pyfunc
 
 
 class Assign(Primitive):

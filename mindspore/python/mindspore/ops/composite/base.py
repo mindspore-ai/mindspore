@@ -930,12 +930,8 @@ class Shard(Shard_):
         self.level = level
         return self.shard_fn
 
-    def _is_attrs_has_been_set(self, fn, in_strategy, out_strategy, parameter_plan, device, level):
-        return self.shard_fn is not None and self.fn == fn and self.in_strategy == in_strategy and \
-               self.out_strategy == out_strategy and self.parameter_plan == parameter_plan and \
-               self.device == device and self.level == level
-
-    def _parameter_plan_dict2tuple(self, parameter_plan):
+    @staticmethod
+    def _parameter_plan_dict2tuple(parameter_plan):
         if not isinstance(parameter_plan, dict):
             return parameter_plan
 
@@ -943,6 +939,11 @@ class Shard(Shard_):
         for k in parameter_plan:
             parameter_plan_tuple += ((k, parameter_plan[k]),)
         return parameter_plan_tuple
+
+    def _is_attrs_has_been_set(self, fn, in_strategy, out_strategy, parameter_plan, device, level):
+        return self.shard_fn is not None and self.fn == fn and self.in_strategy == in_strategy and \
+               self.out_strategy == out_strategy and self.parameter_plan == parameter_plan and \
+               self.device == device and self.level == level
 
 
 class _ListAppend(ListAppend_):

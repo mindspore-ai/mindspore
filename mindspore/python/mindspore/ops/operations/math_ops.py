@@ -16,16 +16,16 @@
 """Operators for math."""
 
 import numpy as np
-from ... import context
-from .. import signature as sig
-from ..._checkparam import Validator as validator
-from ..._checkparam import Rel
-from ...common import dtype as mstype
-from ...common.tensor import Tensor
-from ...common._decorator import deprecated
-from .._utils import get_broadcast_shape
-from ..primitive import Primitive, PrimitiveWithInfer, PrimitiveWithCheck, prim_attr_register, _run_op
-from ..._c_expression import Tensor as Tensor_
+from mindspore import context
+from mindspore.ops import signature as sig
+from mindspore._checkparam import Validator as validator
+from mindspore._checkparam import Rel
+from mindspore.common import dtype as mstype
+from mindspore.common.tensor import Tensor
+from mindspore.common._decorator import deprecated
+from mindspore.ops._utils import get_broadcast_shape
+from mindspore.ops.primitive import Primitive, PrimitiveWithInfer, PrimitiveWithCheck, prim_attr_register, _run_op
+from mindspore._c_expression import Tensor as Tensor_
 
 
 def _infer_shape_reduce(x, axis, keep_dims, prim_name):
