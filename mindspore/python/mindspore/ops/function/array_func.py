@@ -480,8 +480,7 @@ def tile(input_x, multiples):
 def range(start, limit, delta):
     r"""
     Creates a sequence of numbers that begins at `start` and extends by increments of
-    `delta` up to but not including `limit`. Length of the created sequence can not
-    exceed 1000000.
+    `delta` up to but not including `limit`.
 
     The types of all 3 inputs must be the same. The type of the resulting tensor is
     the same as the type of the inputs.
@@ -496,6 +495,9 @@ def range(start, limit, delta):
 
     Returns:
         A 1-D Tensor, with the same type as the inputs.
+
+    Raises:
+        ValueError: If `start`, `limit` or `delta` is not scalar Tensor.
 
     Supported Platforms:
         ``GPU`` ``CPU``
