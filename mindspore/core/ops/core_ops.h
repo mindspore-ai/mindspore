@@ -1436,6 +1436,7 @@ GVAR_DEF(PrimitivePtr, kPrimRandomPoisson, std::make_shared<Primitive>("RandomPo
 GVAR_DEF(PrimitivePtr, kPrimRandomGamma, std::make_shared<Primitive>("RandomGamma"));
 GVAR_DEF(PrimitivePtr, kPrimRandomShuffle, std::make_shared<Primitive>("RandomShuffle"));
 GVAR_DEF(PrimitivePtr, kPrimRandomCategorical, std::make_shared<Primitive>("RandomCategorical"));
+GVAR_DEF(PrimitivePtr, kPrimRandperm, std::make_shared<Primitive>("Randperm"));
 GVAR_DEF(PrimitivePtr, kPrimUniformCandidateSampler, std::make_shared<Primitive>("UniformCandidateSampler"));
 GVAR_DEF(PrimitivePtr, kPrimMultinomial, std::make_shared<Primitive>("Multinomial"));
 
