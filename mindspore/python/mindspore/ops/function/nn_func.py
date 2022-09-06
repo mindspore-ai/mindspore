@@ -1251,6 +1251,17 @@ def _check_pad_inputs(x_shape, paddings):
             raise TypeError(f"For 'pad', each element in 'paddings' must be a list or tuple of 2 int, but got {pd}.")
     if len(x_shape) != len(paddings):
         raise ValueError(f"For 'pad', the size of paddings must be 2 * {len(x_shape)}, but got {2 * len(paddings)}")
+    x_dyn = False
+    pad_all_non_negative = True
+    for i, pd in enumerate(paddings):
+        if x_shape[i] < 0:
+            x_dyn = True
+        if pd[0] < 0 or pd[1] < 0:
+            pad_all_non_negative = False
+    if x_dyn and not pad_all_non_negative:
+        # in this case, we can not infer the slice size
+        raise ValueError(f"For 'pad', if 'input_x' is dynamic shape, 'paddings' must be non-negative value, but got "
+                         f"{paddings}")
 
 
 def pad(input_x, paddings):
@@ -1270,6 +1281,9 @@ def pad(input_x, paddings):
             \end{aligned}
         \end{aligned}
 
+    Note:
+        Negative `paddings` value is only supported when `input_x` is not dynamic shape.
+
     Args:
         input_x (Tensor): Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of additional dimensions.
         paddings (tuple): The shape of parameter `paddings` is (N, 2). N is the rank of input data. All elements of
@@ -1287,6 +1301,7 @@ def pad(input_x, paddings):
         ValueError: If shape of `paddings` is not :math:`(N, 2)`.
         ValueError: If paddings.size is not equal to 2 * len(input_x).
         ValueError: If the calculated output shape contains zero or negative dimension.
+        ValueError: If `paddings` contains negative value and `input_x` is dynamic shape.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1314,6 +1329,8 @@ def pad(input_x, paddings):
     slice_size = []
     non_negative_padding = []
     for i, pd in enumerate(paddings):
+        if x_shape[i] < 0:
+            continue
         sz = x_shape[i] + pd[0]
         if sz <= 0:
             raise ValueError(f"For 'pad', input_x_shape[{i}] + paddings[{i}, 0] is {sz}, which is <= 0 and causes "
