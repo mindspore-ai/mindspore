@@ -134,7 +134,7 @@ int SparseAddGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   CalWorkSpace();
   output_size_list_.push_back((a_row_num + b_row_num) * rank_ * indices_size_);
   output_size_list_.push_back((a_row_num + b_row_num) * values_size_);
-  output_size_list_.push_back(dense_shape_size_ * threshold_size_);
+  output_size_list_.push_back(dense_shape_size_ * indices_size_);
   return KRET_OK;
 }
 
@@ -229,7 +229,7 @@ bool SparseAddGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
     cudaMemcpyAsync(&real_output_size_, sum_count_ptr, sizeof(int64_t), cudaMemcpyDeviceToHost, cuda_stream_),
     "For SparseAdd, cudaMemcpyAsync failed.");
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(sum_shape_ptr, dense_shape_ptr, dense_shape_size_ * indices_size_,
-                                                     cudaMemcpyHostToHost, cuda_stream_),
+                                                     cudaMemcpyDeviceToDevice, cuda_stream_),
                                      "For SparseAdd, cudaMemcpyAsync failed.");
   return true;
 }
