@@ -63,6 +63,7 @@ def test_apply_adam_with_amsgrad_compile():
     _cell_graph_executor.compile(train_network, inputs, label)
     context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
     _cell_graph_executor.compile(train_network, inputs, label)
+    context.set_context(mode=context.GRAPH_MODE)
 
 
 def test_apply_adam_with_amsgrad_group1():
@@ -95,6 +96,7 @@ def test_apply_adam_with_amsgrad_group1():
     _cell_graph_executor.compile(train_network, inputs, label)
     context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
     _cell_graph_executor.compile(train_network, inputs, label)
+    context.set_context(mode=context.GRAPH_MODE)
 
 
 def test_apply_adam_with_amsgrad_group2():
@@ -125,6 +127,7 @@ def test_apply_adam_with_amsgrad_group2():
     _cell_graph_executor.compile(train_network, inputs, label)
     context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
     _cell_graph_executor.compile(train_network, inputs, label)
+    context.set_context(mode=context.GRAPH_MODE)
 
 
 class NetWithSparseGatherV2(nn.Cell):
@@ -167,3 +170,4 @@ def test_sparse_apply_adam_with_amsgrad():
     with pytest.raises(Exception):
         context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
         _cell_graph_executor.compile(train_network, indices, label)
+    context.set_context(mode=context.GRAPH_MODE)
