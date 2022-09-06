@@ -149,17 +149,6 @@ build_lite_jni_and_jar() {
       gradle_command=${LITE_JAVA_PATH}/java/gradlew
     fi
 
-    # build java fl_client
-    if [[ "X$is_train" = "Xon" ]]; then
-        ${gradle_command} clean -p ${LITE_JAVA_PATH}/java/fl_client
-        ${gradle_command} createFlatBuffers -p ${LITE_JAVA_PATH}/java/fl_client
-        ${gradle_command} build -p ${LITE_JAVA_PATH}/java/fl_client -x test
-        ${gradle_command} clearJar -p ${LITE_JAVA_PATH}/java/fl_client
-        ${gradle_command} flReleaseJarX86 --rerun-tasks -p ${LITE_JAVA_PATH}/java/fl_client
-        cp ${LITE_JAVA_PATH}/java/fl_client/build/libs/jarX86/mindspore-lite-java-flclient.jar ${INSTALL_PREFIX}/${PKG_NAME}/runtime/lib/
-        rm -rf ${LITE_JAVA_PATH}/java/fl_client/.gradle ${LITE_JAVA_PATH}/java/fl_client/src/main/java/mindspore
-    fi
-
     # build jar
     ${gradle_command} clean -p ${LITE_JAVA_PATH}/
     if [[ "${ENABLE_ASAN}" == "ON" || "${ENABLE_ASAN}" == "on" ]] ; then
@@ -631,23 +620,6 @@ build_aar() {
     # build aar
     build_lite_arm64_and_jni
     build_lite_arm32_and_jni
-
-    # build java fl_client
-    local is_train=on
-    local train_so=${LITE_JAVA_PATH}/java/app/libs/arm64-v8a/libmindspore-lite-train.so
-    if [ ! -f "$train_so" ]; then
-        echo "not exist"
-        is_train=off
-    fi
-    if [[ "X$is_train" = "Xon" ]]; then
-        ${gradle_command} clean -p ${LITE_JAVA_PATH}/java/fl_client
-        ${gradle_command} createFlatBuffers -p ${LITE_JAVA_PATH}/java/fl_client
-        ${gradle_command} build -p ${LITE_JAVA_PATH}/java/fl_client -x test
-        ${gradle_command} clearJar -p ${LITE_JAVA_PATH}/java/fl_client
-        ${gradle_command} flReleaseJarAAR --rerun-tasks -p ${LITE_JAVA_PATH}/java/fl_client
-        cp ${LITE_JAVA_PATH}/java/fl_client/build/libs/jarAAR/mindspore-lite-java-flclient.jar ${LITE_JAVA_PATH}/java/app/libs
-        rm -rf ${LITE_JAVA_PATH}/java/fl_client/.gradle ${LITE_JAVA_PATH}/java/fl_client/src/main/java/mindspore
-    fi
 
     cp ${LITE_JAVA_PATH}/build/libs/mindspore-lite-java.jar ${LITE_JAVA_PATH}/java/app/libs
     # build aar

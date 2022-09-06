@@ -28,7 +28,7 @@ from mindspore.train.serialization import save_checkpoint, load_checkpoint, load
     load, parse_print, build_searched_strategy, merge_sliced_parameter, load_distributed_checkpoint, \
     async_ckpt_thread_status, restore_group_info_list, convert_model
 from mindspore.train.callback import Callback, LossMonitor, TimeMonitor, ModelCheckpoint, SummaryCollector, \
-    CheckpointConfig, RunContext, LearningRateScheduler, SummaryLandscape, FederatedLearningManager, \
+    CheckpointConfig, RunContext, LearningRateScheduler, SummaryLandscape, \
     History, LambdaCallback, ReduceLROnPlateau, EarlyStopping
 from mindspore.train.summary import SummaryRecord
 from mindspore.train.train_thor import ConvertNetUtils, ConvertModelUtils

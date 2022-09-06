@@ -33,7 +33,7 @@ from mindspore._c_expression import Tensor as Tensor_
 from mindspore.parallel._tensor import _get_slice_index
 from mindspore.parallel._auto_parallel_context import auto_parallel_context
 from mindspore.parallel._ps_context import _is_role_worker, _is_role_pserver, _is_role_sched, _clone_hash_table, \
-    _is_fl_mode, _enable_distributed_mindrt, _is_ps_mode
+    _enable_distributed_mindrt, _is_ps_mode
 from mindspore.parallel._ps_context import _reinsert_hash_table_size
 from mindspore.parallel._ps_context import _insert_weight_init_info, _insert_accumu_init_info
 from mindspore.common.seed import _get_global_and_op_seed
@@ -263,7 +263,7 @@ class Parameter(Tensor_):
     @staticmethod
     def _not_init_data():
         is_worker_or_server = (_is_role_worker() or _is_role_pserver()) and not _enable_distributed_mindrt()
-        if not _is_fl_mode() and (is_worker_or_server or _is_role_sched() or _is_in_parallel_mode()):
+        if is_worker_or_server or _is_role_sched() or _is_in_parallel_mode():
             return True
         return False
 
@@ -282,7 +282,7 @@ class Parameter(Tensor_):
                 return (Tensor, data.asnumpy())
 
             is_worker_or_server = (_is_role_worker() or _is_role_pserver()) and not _enable_distributed_mindrt()
-            not_init_data = not _is_fl_mode() and (is_worker_or_server or _is_role_sched() or _is_in_parallel_mode())
+            not_init_data = is_worker_or_server or _is_role_sched() or _is_in_parallel_mode()
             if not_init_data:
                 # do not init data while in auto parallel.
                 return (Tensor, None, data.dtype, data.shape, data.init)
@@ -305,7 +305,7 @@ class Parameter(Tensor_):
             init_in_server (bool): Whether trainable parameter updated by parameter server is
                 initialized on server. Default: False.
         """
-        if not _is_ps_mode() or not(_is_role_worker() or _is_role_pserver() or _is_role_sched()):
+        if not _is_ps_mode() or not (_is_role_worker() or _is_role_pserver() or _is_role_sched()):
             raise RuntimeError("Must complete following two steps before calling set_param_ps: \n"
                                "1. context.set_ps_context(enable_ps=True) \n"
                                "2. export MS_ROLE environment variable \n"
@@ -720,7 +720,7 @@ class Parameter(Tensor_):
             return self
 
         if self.init_in_server and self.is_param_ps and isinstance(self.init_mode, Tensor) and \
-           self.init_mode.init is not None and (_is_role_worker() or _is_role_sched()):
+                self.init_mode.init is not None and (_is_role_worker() or _is_role_sched()):
             if self.cache_enable:
                 data = self.init_mode.init_data(*init_data_args)
             else:
@@ -743,6 +743,7 @@ class ParameterTuple(tuple):
     Note:
         It is used to store the parameters of the network into the parameter tuple collection.
     """
+
     def __new__(cls, iterable):
         """Create instance object of ParameterTuple."""
         data = tuple(iterable)

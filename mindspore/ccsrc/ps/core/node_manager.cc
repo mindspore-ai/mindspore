@@ -35,17 +35,14 @@ uint32_t NodeManager::checkIfRankIdExist(const RegisterMessage &register_message
   if (registered_nodes_info_.find(node_id) != registered_nodes_info_.end()) {
     const std::string &new_ip = register_message.ip();
     uint32_t new_port = register_message.port();
-    uint32_t new_fl_iteration_num = register_message.fl_iteration_num();
 
     rank_id = registered_nodes_info_[node_id].rank_id_;
     registered_nodes_info_[node_id].is_alive = true;
     registered_nodes_info_[node_id].ip_ = new_ip;
     registered_nodes_info_[node_id].port_ = static_cast<uint16_t>(new_port);
-    registered_nodes_info_[node_id].fl_iteration_num_ = new_fl_iteration_num;
     MS_LOG(WARNING) << "The node id: " << node_id << " is already assigned!"
                     << ", ip: " << register_message.ip() << ", port: " << register_message.port()
                     << ", rank id: " << rank_id << ", alive: " << registered_nodes_info_[node_id].is_alive
-                    << ", fl iteration num: " << new_fl_iteration_num
                     << ", the node_role:" << CommUtil::NodeRoleToString(registered_nodes_info_[node_id].node_role_);
     return rank_id;
   }
@@ -59,18 +56,16 @@ uint32_t NodeManager::checkIfRankIdExist(const RegisterMessage &register_message
     if (recovery_node_infos.find(node_id) != recovery_node_infos.end()) {
       const std::string &new_ip = register_message.ip();
       uint32_t new_port = register_message.port();
-      uint32_t new_fl_iteration_num = register_message.fl_iteration_num();
 
       rank_id = recovery_node_infos[node_id].rank_id_;
       recovery_node_infos[node_id].is_alive = true;
       recovery_node_infos[node_id].ip_ = new_ip;
       recovery_node_infos[node_id].port_ = static_cast<uint16_t>(new_port);
-      recovery_node_infos[node_id].fl_iteration_num_ = new_fl_iteration_num;
 
       registered_nodes_info_[node_id] = recovery_node_infos[node_id];
       MS_LOG(INFO) << "The node id: " << node_id << " is recovery successful!"
                    << ", ip: " << recovery_node_infos[node_id].ip_ << ", port: " << recovery_node_infos[node_id].port_
-                   << ", rank id: " << rank_id << ", fl iteration num: " << new_fl_iteration_num
+                   << ", rank id: " << rank_id
                    << ", the node_role:" << CommUtil::NodeRoleToString(recovery_node_infos[node_id].node_role_);
       return rank_id;
     }
@@ -115,7 +110,6 @@ uint32_t NodeManager::NextRankId(const RegisterMessage &register_message, const 
   }
 
   const std::string &node_id = register_message.node_id();
-  const size_t fl_iteration_num = register_message.fl_iteration_num();
   // create new rank id
   if (register_message.role() == NodeRole::SERVER) {
     const std::string &ip = register_message.ip();
@@ -142,11 +136,10 @@ uint32_t NodeManager::NextRankId(const RegisterMessage &register_message, const 
     node_info.ip_ = ip;
     node_info.port_ = port;
     node_info.is_alive = true;
-    node_info.fl_iteration_num_ = fl_iteration_num;
     registered_nodes_info_[node_id] = node_info;
     MS_LOG(INFO) << "The server node id:" << node_id << ", node ip: " << node_info.ip_ << ", node port:" << port
-                 << ", fl iteration num:" << fl_iteration_num << " assign rank id:" << rank_id << ", "
-                 << (meta_data_->server_num - next_server_rank_id_) << " servers still need to be registered.";
+                 << " assign rank id:" << rank_id << ", " << (meta_data_->server_num - next_server_rank_id_)
+                 << " servers still need to be registered.";
   } else if (register_message.role() == NodeRole::WORKER) {
     const std::string &ip = register_message.ip();
     uint32_t port = register_message.port();
@@ -172,11 +165,10 @@ uint32_t NodeManager::NextRankId(const RegisterMessage &register_message, const 
     node_info.ip_ = ip;
     node_info.port_ = port;
     node_info.is_alive = true;
-    node_info.fl_iteration_num_ = fl_iteration_num;
     registered_nodes_info_[node_id] = node_info;
     MS_LOG(INFO) << "The worker node id:" << node_id << ", node ip: " << node_info.ip_ << ", node port:" << port
-                 << ", fl iteration num:" << fl_iteration_num << " assign rank id:" << rank_id << ", "
-                 << (meta_data_->worker_num - next_worker_rank_id_) << " workers still need to be registered.";
+                 << " assign rank id:" << rank_id << ", " << (meta_data_->worker_num - next_worker_rank_id_)
+                 << " workers still need to be registered.";
   }
   return rank_id;
 }
@@ -425,18 +417,6 @@ void NodeManager::set_next_server_rank_id(const uint32_t &next_server_rank_id) {
   this->next_server_rank_id_ = next_server_rank_id;
 }
 void NodeManager::setPersistCallback(const OnPersist &onPersist) { this->onPersist_ = onPersist; }
-
-bool NodeManager::VerifyClusterNodesParam() {
-  std::unordered_set<size_t> fl_iteration_num_set;
-  for (auto it = registered_nodes_info_.begin(); it != registered_nodes_info_.end(); ++it) {
-    fl_iteration_num_set.insert(it->second.fl_iteration_num_);
-  }
-  if (fl_iteration_num_set.size() != 1) {
-    MS_LOG(ERROR) << "The server node fl iteration num is not inconsistent.";
-    return false;
-  }
-  return true;
-}
 }  // namespace core
 }  // namespace ps
 }  // namespace mindspore
