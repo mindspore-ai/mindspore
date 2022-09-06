@@ -72,8 +72,8 @@ bool ResizeAreaCPUKernelMod::Launch(const std::vector<kernel::AddressPtr> &input
   }
   out_height_ = out_size[0];
   out_width_ = out_size[1];
-  height_scale_ = static_cast<int64_t>(Scaling(in_height_, out_height_, align_corners_));
-  width_scale_ = static_cast<int64_t>(Scaling(in_width_, out_width_, align_corners_));
+  height_scale_ = Scaling(in_height_, out_height_, align_corners_);
+  width_scale_ = Scaling(in_width_, out_width_, align_corners_);
   std::vector<ResizeAreaCachedInterpolation> x_interps(out_width_);
   for (int64_t x = 0; x < out_width_; x++) {
     float transit_x0 = x * width_scale_;
