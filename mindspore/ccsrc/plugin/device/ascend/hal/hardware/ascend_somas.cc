@@ -30,6 +30,7 @@ namespace ascend {
 using TensorType = somas::TensorType;
 using LifeLongType = somas::LifeLongType;
 using mindspore::profiler::ascend::MemoryProfiling;
+constexpr size_t ALONE = 1;
 
 #ifndef ENABLE_SECURITY
 void AscendSomas::ConvertToProfilingNode(uint32_t graph_id) const {
@@ -220,6 +221,12 @@ void AscendSomas::NonTaskSplitProcess(const session::KernelGraph &graph) {
 
 void AscendSomas::CommunicationTensorProcess(const std::vector<somas::SomasTensorPtr> &tensors) const {
   // add gap for first and last input
+  if (tensors.size() != ALONE) {
+    for (auto &tensor : tensors) {
+      MS_EXCEPTION_IF_CHECK_FAIL(tensor->aligned_size_ != 0, "The size of communication tensor is zero, tensor id: " +
+                                                               std::to_string(tensor->GetId()));
+    }
+  }
   if (tensors[0]->aligned_size_ != 0) {
     tensors[0]->aligned_size_ += GetCommunicationReservedSize();
   }

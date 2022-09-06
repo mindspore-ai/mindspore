@@ -21,6 +21,8 @@
 namespace mindspore {
 namespace device {
 namespace cpu {
+constexpr size_t ALONE = 1;
+
 bool CPUSomas::Initialize() { return true; }
 
 std::string CPUSomas::GetDeviceName() const { return "CPU"; }
@@ -38,17 +40,18 @@ bool CPUSomas::InitDevSpecControlTensors(const session::KernelGraph &graph) { re
 bool CPUSomas::DevSpecNodeProcess(const session::KernelGraph &graph) { return true; }
 
 void CPUSomas::CommunicationTensorProcess(const std::vector<somas::SomasTensorPtr> &tensors) const {
-  size_t all_communication_size = 0;
-  for (auto &tensor : tensors) {
-    tensor->aligned_size_ = tensor->GetOriginalSize();
-    if (tensor->aligned_size_ != 0) {
-      MS_LOG(ERROR) << "The size of communication tensor is zero.";
+  if (tensors.size() != ALONE) {
+    size_t all_communication_size = 0;
+    for (auto &tensor : tensors) {
+      tensor->aligned_size_ = tensor->GetOriginalSize();
+      MS_EXCEPTION_IF_CHECK_FAIL(tensor->aligned_size_ != 0, "The size of communication tensor is zero, tensor id: " +
+                                                               std::to_string(tensor->GetId()));
+      all_communication_size += tensor->aligned_size_;
     }
-    all_communication_size += tensor->aligned_size_;
+    auto aligned_communication_size = GetAlignSize(all_communication_size);
+    auto need_aligned = aligned_communication_size - all_communication_size;
+    tensors[tensors.size() - 1]->aligned_size_ += need_aligned;
   }
-  auto aligned_communication_size = GetAlignSize(all_communication_size);
-  auto need_aligned = aligned_communication_size - all_communication_size;
-  tensors[tensors.size() - 1]->aligned_size_ += need_aligned;
 }
 }  // namespace cpu
 }  // namespace device
