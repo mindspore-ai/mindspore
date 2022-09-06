@@ -19,6 +19,9 @@
 
 #include <cstdint>
 #include <map>
+#include <vector>
+#include <string>
+
 namespace mindspore {
 enum Format : int64_t {
   DEFAULT_FORMAT = -1,
@@ -43,5 +46,19 @@ enum Format : int64_t {
   NDHWC = 18,
   NC8HW8 = 19
 };
+
+inline std::string FormatEnumToString(mindspore::Format format) {
+  static std::vector<std::string> names = {
+    "NCHW", "NHWC", "NHWC4", "HWKC", "HWCK",   "KCHW",          "CKHW",  "KHWC", "CHWK",
+    "HW",   "HW4",  "NC",    "NC4",  "NC4HW4", "NUM_OF_FORMAT", "NCDHW", "NWC",  "NCW",
+  };
+  if (format == mindspore::Format::DEFAULT_FORMAT) {
+    return "DefaultFormat";
+  }
+  if (format < mindspore::NCHW || format > mindspore::NCW) {
+    return "";
+  }
+  return names[format];
+}
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_MINDAPI_BASE_FORMAT_H_

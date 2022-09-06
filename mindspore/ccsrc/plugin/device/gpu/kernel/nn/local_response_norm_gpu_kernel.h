@@ -19,6 +19,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/kernel_constants.h"
@@ -29,9 +30,27 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class LocalResponseNormGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class LocalResponseNormGpuKernelMod : public NativeGpuKernelMod {
  public:
-  LocalResponseNormGpuKernelMod() { ResetResource(); }
+  LocalResponseNormGpuKernelMod() {
+    ResetResource();
+    depth_radius_ = 0;
+    bias_ = 0;
+    alpha_ = 0;
+    beta_ = 0;
+    input_size_ = 0;
+    output_size_ = 0;
+    is_null_input_ = false;
+    kernel_name_ = "LocalResponseNorm";
+    x_desc_ = nullptr;
+    y_desc_ = nullptr;
+    norm_desc_ = nullptr;
+    lrn_mode_ = CUDNN_LRN_CROSS_CHANNEL_DIM1;
+    handle_ = nullptr;
+    cudnn_data_type_ = CUDNN_DATA_FLOAT;
+    use_native_ = false;
+    num_elements_ = 0;
+  }
   ~LocalResponseNormGpuKernelMod() override { DestroyResource(); }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
@@ -56,22 +75,22 @@ class LocalResponseNormGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       T *ws_y = GetDeviceAddress<T>(workspace, 5);
       float *ws_scale = GetDeviceAddress<float>(workspace, 6);
 
-      CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                                 cudaMemcpyAsync(ws_input_shape, &input_shape_[0], shape_size, cudaMemcpyHostToDevice,
-                                                 reinterpret_cast<cudaStream_t>(stream_ptr)),
-                                 "cudaMemcpyAsync input_shape_ failed");
-      CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                                 cudaMemcpyAsync(ws_transpose_shape, &transpose_shape_[0], shape_size,
-                                                 cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
-                                 "cudaMemcpyAsync transpose_shape_ failed");
-      CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                                 cudaMemcpyAsync(ws_to_nhwc_axis, &to_nhwc_axis[0], shape_size, cudaMemcpyHostToDevice,
-                                                 reinterpret_cast<cudaStream_t>(stream_ptr)),
-                                 "cudaMemcpyAsync to_nhwc_axis failed");
-      CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                                 cudaMemcpyAsync(ws_to_nchw_axis, &to_nchw_axis[0], shape_size, cudaMemcpyHostToDevice,
-                                                 reinterpret_cast<cudaStream_t>(stream_ptr)),
-                                 "cudaMemcpyAsync to_nchw_axis failed");
+      CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+        cudaMemcpyAsync(ws_input_shape, &input_shape_[0], shape_size, cudaMemcpyHostToDevice,
+                        reinterpret_cast<cudaStream_t>(stream_ptr)),
+        "cudaMemcpyAsync input_shape_ failed");
+      CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+        cudaMemcpyAsync(ws_transpose_shape, &transpose_shape_[0], shape_size, cudaMemcpyHostToDevice,
+                        reinterpret_cast<cudaStream_t>(stream_ptr)),
+        "cudaMemcpyAsync transpose_shape_ failed");
+      CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+        cudaMemcpyAsync(ws_to_nhwc_axis, &to_nhwc_axis[0], shape_size, cudaMemcpyHostToDevice,
+                        reinterpret_cast<cudaStream_t>(stream_ptr)),
+        "cudaMemcpyAsync to_nhwc_axis failed");
+      CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+        cudaMemcpyAsync(ws_to_nchw_axis, &to_nchw_axis[0], shape_size, cudaMemcpyHostToDevice,
+                        reinterpret_cast<cudaStream_t>(stream_ptr)),
+        "cudaMemcpyAsync to_nchw_axis failed");
 
       CalNCHW2NHWCInterface(num_elements_, 4, x, &input_shape_[0], &to_nhwc_axis[0], ws_input_shape, ws_to_nhwc_axis,
                             ws_x, reinterpret_cast<cudaStream_t>(stream_ptr));
@@ -82,42 +101,52 @@ class LocalResponseNormGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       CalNHWC2NCHWInterface(num_elements_, 4, ws_y, &transpose_shape_[0], &to_nchw_axis[0], ws_transpose_shape,
                             ws_to_nchw_axis, y, reinterpret_cast<cudaStream_t>(stream_ptr));
     } else {
-      CHECK_CUDNN_RET_WITH_EXCEPT(
-        kernel_node_,
+      CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
         cudnnLRNCrossChannelForward(handle_, norm_desc_, lrn_mode_, &alpha, x_desc_, x, &beta, y_desc_, y),
         "cudnnLRNCrossChannelForward failed");
     }
     return true;
   }
 
-  bool Init(const CNodePtr &kernel_node) override {
-    kernel_node_ = kernel_node;
-    MS_EXCEPTION_IF_NULL(kernel_node);
-    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-    (void)CheckParam(kernel_node);
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) {
+    MS_EXCEPTION_IF_NULL(base_operator);
+    PrimitivePtr prim = base_operator->GetPrim();
+    MS_EXCEPTION_IF_NULL(prim);
+    kernel_name_ = prim->name();
+    if (inputs.size() != 1) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 1, but got " << inputs.size();
+    }
+    if (outputs.size() != 1) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << outputs.size();
+    }
 
-    depth_radius_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "depth_radius"));
-    bias_ = GetAttr<float>(kernel_node, "bias");
-    alpha_ = GetAttr<float>(kernel_node, "alpha");
-    beta_ = GetAttr<float>(kernel_node, "beta");
-
+    depth_radius_ = static_cast<int>(GetValue<int64_t>(prim->GetAttr("depth_radius")));
+    bias_ = GetValue<float>(prim->GetAttr("bias"));
+    alpha_ = GetValue<float>(prim->GetAttr("alpha"));
+    beta_ = GetValue<float>(prim->GetAttr("beta"));
     use_native_ = false;
     const unsigned int lrnN = 2 * depth_radius_ + 1;
-    double lrnAlpha = lrnN * alpha_;
     if (lrnN < CUDNN_LRN_MIN_N || lrnN > CUDNN_LRN_MAX_N || bias_ < CUDNN_LRN_MIN_K || beta_ < CUDNN_LRN_MIN_BETA) {
       use_native_ = true;
     }
     InitResource();
+    return true;
+  }
 
-    auto shape_signed = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-    if (IsDynamic(shape_signed)) {
-      return true;
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs,
+             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) {
+    if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+      return ret;
     }
+    ResetResource();
+    auto shape_signed = inputs[0]->GetShapeVector();
     auto input_shape = Convert2SizeTClipNeg(shape_signed);
     is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "input");
     if (is_null_input_) {
       InitSizeLists();
-      return true;
+      return KRET_OK;
     }
     if (input_shape.size() != 4) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input must be 4, but got "
@@ -135,32 +164,18 @@ class LocalResponseNormGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       transpose_shape_.push_back(input_shape_[3]);
       transpose_shape_.push_back(input_shape_[1]);
     } else {
+      const unsigned int lrnN = 2 * depth_radius_ + 1;
+      double lrnAlpha = lrnN * alpha_;
       lrn_mode_ = CUDNN_LRN_CROSS_CHANNEL_DIM1;
-      cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
+      cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs[0]->GetDtype()));
       SetCUDNNDescriptors(input_shape, lrnN, lrnAlpha);
     }
 
     InitSizeLists();
-    return true;
+    return KRET_OK;
   }
 
-  void ResetResource() noexcept override {
-    input_size_ = 0;
-    output_size_ = 0;
-    is_null_input_ = false;
-    kernel_name_ = "LocalResponseNorm";
-    x_desc_ = nullptr;
-    y_desc_ = nullptr;
-    norm_desc_ = nullptr;
-    lrn_mode_ = CUDNN_LRN_CROSS_CHANNEL_DIM1;
-    handle_ = nullptr;
-    cudnn_data_type_ = CUDNN_DATA_FLOAT;
-    depth_radius_ = 0;
-    bias_ = 0;
-    alpha_ = 0;
-    beta_ = 0;
-    use_native_ = false;
-    num_elements_ = 0;
+  void ResetResource() noexcept {
     input_shape_.clear();
     transpose_shape_.clear();
     input_size_list_.clear();
@@ -170,9 +185,9 @@ class LocalResponseNormGpuKernelMod : public DeprecatedNativeGpuKernelMod {
 
   void DestroyResource() noexcept override {
     if (!use_native_) {
-      CHECK_CUDNN_RET_WITH_ERROR(kernel_node_, cudnnDestroyTensorDescriptor(x_desc_), "Destroy x desc failed");
-      CHECK_CUDNN_RET_WITH_ERROR(kernel_node_, cudnnDestroyTensorDescriptor(y_desc_), "Destroy y desc failed");
-      CHECK_CUDNN_RET_WITH_ERROR(kernel_node_, cudnnDestroyLRNDescriptor(norm_desc_), "Destroy LRN norm desc failed");
+      CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnDestroyTensorDescriptor(x_desc_), "Destroy x desc failed");
+      CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnDestroyTensorDescriptor(y_desc_), "Destroy y desc failed");
+      CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnDestroyLRNDescriptor(norm_desc_), "Destroy LRN norm desc failed");
     }
   }
 
@@ -180,13 +195,13 @@ class LocalResponseNormGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   void InitResource() override {
     if (!use_native_) {
       handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCudnnHandle();
-      CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnCreateTensorDescriptor(&x_desc_), "Create x desc failed");
-      CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnCreateTensorDescriptor(&y_desc_), "Create y desc failed");
-      CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnCreateLRNDescriptor(&norm_desc_), "Create LRN norm desc failed");
+      CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreateTensorDescriptor(&x_desc_), "Create x desc failed");
+      CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreateTensorDescriptor(&y_desc_), "Create y desc failed");
+      CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreateLRNDescriptor(&norm_desc_), "Create LRN norm desc failed");
     }
   }
 
-  void InitSizeLists() override {
+  void InitSizeLists() {
     if (!is_null_input_) {
       if (use_native_) {
         input_size_ = num_elements_ * sizeof(T);
@@ -200,10 +215,10 @@ class LocalResponseNormGpuKernelMod : public DeprecatedNativeGpuKernelMod {
         workspace_size_list_.push_back(input_size_);
         workspace_size_list_.push_back(num_elements_ * sizeof(float));
       } else {
-        CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnGetTensorSizeInBytes(x_desc_, &input_size_),
-                                    "Get input x size failed");
-        CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnGetTensorSizeInBytes(y_desc_, &output_size_),
-                                    "Get output y size failed");
+        CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnGetTensorSizeInBytes(x_desc_, &input_size_),
+                                            "Get input x size failed");
+        CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnGetTensorSizeInBytes(y_desc_, &output_size_),
+                                            "Get output y size failed");
       }
     }
     input_size_list_.push_back(input_size_);
@@ -211,17 +226,6 @@ class LocalResponseNormGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   }
 
  private:
-  void CheckParam(const CNodePtr &kernel_node) {
-    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    if (input_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 1, but got " << input_num;
-    }
-    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-    if (output_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << output_num;
-    }
-  }
-
   void SetCUDNNDescriptors(const std::vector<size_t> &shape, int lrnN, double lrnAlpha) {
     cudnnTensorFormat_t cudnn_format;
     int batch, channel, height, width;
@@ -230,16 +234,16 @@ class LocalResponseNormGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     height = SizeToInt(shape[2]);
     width = SizeToInt(shape[3]);
     cudnn_format = CUDNN_TENSOR_NCHW;
-    CHECK_CUDNN_RET_WITH_EXCEPT(
-      kernel_node_, cudnnSetTensor4dDescriptor(x_desc_, cudnn_format, cudnn_data_type_, batch, channel, height, width),
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
+      cudnnSetTensor4dDescriptor(x_desc_, cudnn_format, cudnn_data_type_, batch, channel, height, width),
       "Set x desc failed");
 
-    CHECK_CUDNN_RET_WITH_EXCEPT(
-      kernel_node_, cudnnSetTensor4dDescriptor(y_desc_, cudnn_format, cudnn_data_type_, batch, channel, height, width),
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
+      cudnnSetTensor4dDescriptor(y_desc_, cudnn_format, cudnn_data_type_, batch, channel, height, width),
       "Set y desc failed");
 
-    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnSetLRNDescriptor(norm_desc_, lrnN, lrnAlpha, beta_, bias_),
-                                "cudnnSetLRNDescriptor failed");
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnSetLRNDescriptor(norm_desc_, lrnN, lrnAlpha, beta_, bias_),
+                                        "cudnnSetLRNDescriptor failed");
   }
 
   size_t input_size_;

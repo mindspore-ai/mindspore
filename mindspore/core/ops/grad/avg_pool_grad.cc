@@ -52,6 +52,6 @@ AbstractBasePtr AvgPoolGradInfer(const abstract::AnalysisEnginePtr &, const Prim
   return abstract::MakeAbstract(shapes, types);
 }
 
-REGISTER_PRIMITIVE_C(kNameAvgPoolGrad, AvgPoolGrad);
+REGISTER_PRIMITIVE_EVAL_IMPL(AvgPoolGrad, prim::kPrimAvgPoolGrad, AvgPoolGradInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

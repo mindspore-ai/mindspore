@@ -56,14 +56,18 @@ abstract::ShapePtr SmoothL1LossInferShape(const PrimitivePtr &primitive,
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
   auto prediction = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
   auto target = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex1);
+  auto prediction_shape = prediction->shape();
+  MS_EXCEPTION_IF_NULL(prediction_shape);
+  auto target_shape = target->shape();
+  MS_EXCEPTION_IF_NULL(target_shape);
+  if (IsDynamicRank(prediction_shape->shape()) || IsDynamicRank(target_shape->shape())) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
+  }
   abstract::CheckShapeSame(prim_name, prediction, target);
-  auto x = input_args[kInputIndex0]->BuildShape();
-  MS_EXCEPTION_IF_NULL(x);
-  auto shape_element = x->cast<abstract::ShapePtr>();
-  MS_EXCEPTION_IF_NULL(shape_element);
-  std::string reduction = GetValue<std::string>(primitive->GetAttr(kReduction));
+
+  auto reduction = GetValue<std::string>(primitive->GetAttr(kReduction));
   if (reduction == kNone) {
-    return shape_element;
+    return prediction_shape;
   } else {
     ShapeVector shape_out{1};
     return std::make_shared<abstract::Shape>(shape_out);
