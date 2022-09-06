@@ -47,8 +47,14 @@ if(ENABLE_AKG AND ${CMAKE_SYSTEM_NAME} MATCHES "Linux" AND ENABLE_CPU)
     )
 endif()
 
-set_property(SOURCE ${CPU_SRC_LIST} ${AKG_CPU_SRC_LIST}
+set(CPU_SRC_LIST ${CPU_SRC_LIST} ${AKG_CPU_SRC_LIST})
+set_property(SOURCE ${CPU_SRC_LIST}
         PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_KERNEL)
 if(ENABLE_CPU)
-    add_library(_mindspore_plugin_device_cpu_kernel_obj OBJECT ${CPU_SRC_LIST} ${AKG_CPU_SRC_LIST})
+    set(CPU_OBJECT_COUNT 1)
+    src_separate_compile(
+        OBJECT_NAME _mindspore_plugin_device_cpu_kernel_obj
+        OBJECT_SIZE CPU_OBJECT_COUNT
+        SRC_LIST ${CPU_SRC_LIST})
+    set(CPU_KERNEL_OBJECT_COUNT "${CPU_OBJECT_COUNT}" PARENT_SCOPE)
 endif()

@@ -389,7 +389,6 @@ set(BACKEND_SUB_COMP
         plugin/device/cpu/hal/device
         plugin/device/cpu/hal/hardware
         plugin/device/cpu/hal/profiler
-        plugin/device/cpu/kernel
         plugin/device/cpu/optimizer
         )
 
@@ -401,6 +400,18 @@ foreach(_comp ${BACKEND_SUB_COMP})
         add_dependencies(_mindspore_${sub}_obj proto_input)
         if(CMAKE_SYSTEM_NAME MATCHES "Windows")
             target_compile_definitions(_mindspore_${sub}_obj PRIVATE BACKEND_DLL)
+        endif()
+    endif()
+endforeach()
+
+set(CPU_KERNEL_OBJECT_COUNT 0)
+add_subdirectory(plugin/device/cpu/kernel)
+foreach(number RANGE 1 ${CPU_KERNEL_OBJECT_COUNT})
+    if(TARGET _mindspore_plugin_device_cpu_kernel_obj_${number})
+        list(APPEND BACKEND_SUB_OBJECTS_SRC $<TARGET_OBJECTS:_mindspore_plugin_device_cpu_kernel_obj_${number}>)
+        add_dependencies(_mindspore_plugin_device_cpu_kernel_obj_${number} proto_input)
+        if(CMAKE_SYSTEM_NAME MATCHES "Windows")
+            target_compile_definitions(_mindspore_plugin_device_cpu_kernel_obj_${number} PRIVATE BACKEND_DLL)
         endif()
     endif()
 endforeach()
