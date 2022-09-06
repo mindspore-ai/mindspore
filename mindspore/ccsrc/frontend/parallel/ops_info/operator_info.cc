@@ -122,7 +122,7 @@ Status OperatorInfo::CheckOutputStrategy(const StrategyPtr &out_strategy) {
   return SUCCESS;
 }
 
-Status OperatorInfo::CheckStrategyBase(const Shapes &stra, const Shapes &inputs_shape) {
+Status OperatorInfo::CheckStrategyByVector(const Shapes &stra, const Shapes &inputs_shape) {
   size_t strategy_size = stra.size();
   size_t inputs_shape_size = inputs_shape.size();
   if (strategy_size != inputs_shape_size) {
@@ -180,7 +180,7 @@ Status OperatorInfo::CheckStrategyValue(const StrategyPtr &strategy, const Shape
   }
 
   Strategies stra = strategy->GetInputDim();
-  return CheckStrategyBase(stra, inputs_shape);
+  return CheckStrategyByVector(stra, inputs_shape);
 }
 
 void OperatorInfo::ResetQueueMember() {
@@ -2113,7 +2113,7 @@ float OperatorInfo::GetFloatAttr(const std::string &attr_name) {
 
 // in_strategy: ((A, B, C, D), ()), return: ((A, B, C, D), (A, B, C, D))
 // in_strategy: ((), (A, B, C, D)), return: ((A, B, C, D), (A, B, C, D))
-Shapes OperatorInfo::InferStrategySameMode(const Shapes &in_strategy) {
+Shapes OperatorInfo::InferStrategySameMode(const Shapes &in_strategy) const {
   Shape value;
   for (auto &ele : in_strategy) {
     if (!ele.empty()) {

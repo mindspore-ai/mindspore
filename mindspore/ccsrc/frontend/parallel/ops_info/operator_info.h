@@ -237,10 +237,10 @@ class OperatorInfo {
   virtual Status CheckOutputStrategy(const StrategyPtr &out_strategy);
   virtual Shapes InferStrategyIndividualMode(const Shapes &in_strategy);
   Shapes GenerateFullStrategyBase(const Shapes &in_strategy);
-  Shapes InferStrategySameMode(const Shapes &in_strategy);
+  Shapes InferStrategySameMode(const Shapes &in_strategy) const;
   Shapes InferStrategyBroadcastMode(const Shapes &in_strategy);
   Shapes InferStrategyIndependentMode(const Shapes &in_strategy);
-  Status CheckStrategyBase(const Shapes &strategy, const Shapes &inputs_shape);
+  Status CheckStrategyByVector(const Shapes &strategy, const Shapes &inputs_shape);
   Status CheckStrategyValue(const StrategyPtr &strategy, const Shapes &inputs_shape);
   void SetRepeatedCalcDevMatrix();
   void ResetTensorMapIfRepeatedCalc();

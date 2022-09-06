@@ -1011,14 +1011,14 @@ bool IsPynativeParallel() {
   return (execution_mode == kPynativeMode) && (parallel_mode == kSemiAutoParallel || parallel_mode == kAutoParallel);
 }
 
-// compile graph order:
-// 1, ParallelParameterContextInitShape/Ckpt/Restore
-// 2, PynativeShard: find 'shard' node and set 'pynative_shard' flag for root graph
-// 3, PipelineSplit: insert virtual dataset
-// 4, StepAutoParallel
-// 5, StepParallel
-// if IsPynativeParallel() is true, it maybe has some graphs that we no care, so need to check 'pynative_shard' flag
 bool IsAutoParallelCareGraph(const FuncGraphPtr &func_graph) {
+  // compile graph order:
+  // 1, ParallelParameterContextInitShape/Ckpt/Restore
+  // 2, PynativeShard: find 'shard' node and set 'pynative_shard' flag for root graph
+  // 3, PipelineSplit: insert virtual dataset
+  // 4, StepAutoParallel
+  // 5, StepParallel
+  // if IsPynativeParallel() is true, it maybe has some graphs that we no care, so need to check 'pynative_shard' flag
   MS_EXCEPTION_IF_NULL(func_graph);
   if (func_graph->has_flag(kSkipAutoParallelCompile)) {
     return false;

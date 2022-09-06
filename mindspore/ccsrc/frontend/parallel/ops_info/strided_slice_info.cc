@@ -84,7 +84,7 @@ void StridedSliceInfo::ComputeBeginMask() {
     }
   }
 
-  if (begin_mask_) {
+  if (begin_mask_ != 0) {
     MS_LOG(INFO) << name_ << ": The begin is modified to " << begin_;
   }
 }
@@ -98,7 +98,7 @@ void StridedSliceInfo::ComputeEndMask() {
     }
   }
 
-  if (end_mask_) {
+  if (end_mask_ != 0) {
     MS_LOG(INFO) << name_ << ": The end is modified to " << end_;
   }
 }
@@ -145,7 +145,7 @@ void StridedSliceInfo::ComputeNewAxisMask() {
   (void)input_shape_in_process_.insert(input_shape_in_process_.end(), inputs_shape_[0].begin() + count,
                                        inputs_shape_[0].end());
 
-  if (new_axis_mask_) {
+  if (new_axis_mask_ != 0) {
     MS_LOG(INFO) << name_ << ": The begin is modified to " << begin_ << ", the end is modified to " << end_
                  << ", the strides is modified to " << strides_ << ", the input shape in process is "
                  << input_shape_in_process_;
