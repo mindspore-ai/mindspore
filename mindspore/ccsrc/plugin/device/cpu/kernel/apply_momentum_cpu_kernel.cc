@@ -24,9 +24,22 @@ namespace {
 constexpr size_t kApplyMomentumInputsNum = 5;
 }  // namespace
 
-void ApplyMomentumCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+bool ApplyMomentumCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                     const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  auto prim = base_operator->GetPrim();
+  MS_EXCEPTION_IF_NULL(prim);
+  kernel_name_ = base_operator->name();
+  return true;
+}
+
+int ApplyMomentumCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                      const std::vector<KernelTensorPtr> &outputs,
+                                      const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  return static_cast<int>(KRET_OK);
 }
 
 bool ApplyMomentumCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,

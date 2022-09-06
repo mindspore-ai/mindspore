@@ -34,6 +34,9 @@ abstract::ShapePtr ApplyGradientDescentInferShape(const PrimitivePtr &primitive,
                                                   const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
   auto var_shape = input_args[kInputIndex0]->BuildShape();
+  if (IsDynamicRank(CheckAndConvertUtils::ConvertShapePtrToShapeMap(var_shape)[kShape])) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
+  }
   auto alpha_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
   auto delta_shape = input_args[kInputIndex2]->BuildShape();
   // var and delta must have the same shape when is not dynamic

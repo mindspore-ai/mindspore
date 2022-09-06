@@ -53,6 +53,9 @@ abstract::ShapePtr DepthToSpaceInferShape(const PrimitivePtr &primitive,
 
   auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
   auto x_shape = shape_map[kShape];
+  if (IsDynamicRank(x_shape)) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
+  }
   auto data_format_ptr = primitive->GetAttr("format");
   int64_t format = CheckAndConvertUtils::GetAndCheckFormat(primitive->GetAttr("format"));
   primitive->AddAttr("data_format", data_format_ptr);

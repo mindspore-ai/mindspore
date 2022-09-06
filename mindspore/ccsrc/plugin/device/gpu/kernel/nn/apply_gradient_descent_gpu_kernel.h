@@ -19,16 +19,19 @@
 
 #include <vector>
 #include <string>
+#include <algorithm>
+#include <utility>
+#include <map>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/apply_gradient_descent_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
-class ApplyGradientDescentKernelMod : public DeprecatedNativeGpuKernelMod {
+constexpr size_t INPUT_NUM = 3;
+class ApplyGradientDescentKernelMod : public NativeGpuKernelMod {
  public:
-  ApplyGradientDescentKernelMod() { ResetResource(); }
+  ApplyGradientDescentKernelMod() = default;
   ~ApplyGradientDescentKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
@@ -37,57 +40,59 @@ class ApplyGradientDescentKernelMod : public DeprecatedNativeGpuKernelMod {
       return true;
     }
     VARIABLE_NOT_USED(workspace);
-    T *var = GetDeviceAddress<T>(inputs, 0);
-    T *alpha = GetDeviceAddress<T>(inputs, 1);
-    T *delta = GetDeviceAddress<T>(inputs, 2);
-    T *output = GetDeviceAddress<T>(outputs, 0);
-    CalApplyGradientDescent(input_size_, var, alpha, delta, output, reinterpret_cast<cudaStream_t>(stream_ptr));
+    launch_func_(this, inputs, outputs, stream_ptr);
     return true;
   }
 
-  bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-    kernel_node_ = kernel_node;
-    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    if (input_num != 3) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 3, but got " << input_num;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override {
+    MS_EXCEPTION_IF_NULL(base_operator);
+    kernel_name_ = base_operator->name();
+    if (inputs.size() != INPUT_NUM) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 3, but got " << inputs.size();
     }
-    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-    if (output_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << output_num;
+    if (outputs.size() != 1) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << outputs.size();
     }
-    auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+
+    auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+    auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+    if (!is_match) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it does not support this kernel type: " << kernel_attr;
+    }
+    launch_func_ = func_list_[index].second;
+    return true;
+  }
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override {
+    if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+      return ret;
+    }
+    auto input_shape = inputs[kIndex0]->GetShapeVector();
     is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "var");
     if (is_null_input_ || IsDynamic(input_shape)) {
-      InitSizeLists();
       return true;
     }
     input_size_ = SizeOf(input_shape);
-    InitSizeLists();
-    return true;
+    return static_cast<int>(KRET_OK);
   }
 
-  void ResetResource() noexcept override {
-    input_size_ = 1;
-    is_null_input_ = false;
-    input_size_list_.clear();
-    output_size_list_.clear();
-    workspace_size_list_.clear();
-    kernel_name_ = "ApplyGradientDescent";
-  }
-
- protected:
-  void InitSizeLists() override {
-    input_size_list_.push_back(input_size_ * sizeof(T));
-    input_size_list_.push_back(sizeof(T));
-    input_size_list_.push_back(input_size_ * sizeof(T));
-    output_size_list_.push_back(input_size_ * sizeof(T));
-  }
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  size_t input_size_;
-  bool is_null_input_;
+  size_t input_size_{1};
+  bool is_null_input_ = {false};
   std::string kernel_name_;
+
+  template <typename T>
+  void LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs,
+                    void *stream_ptr);
+  using LaunchFunc = std::function<void(ApplyGradientDescentKernelMod *, const std::vector<kernel::AddressPtr> &,
+                                        const std::vector<kernel::AddressPtr> &, void *stream_ptr)>;
+  LaunchFunc launch_func_;
+
+  static std::vector<std::pair<KernelAttr, LaunchFunc>> func_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore
