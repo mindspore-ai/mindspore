@@ -28,27 +28,6 @@ namespace mindspore {
 using runtime::DeviceAddressUtils;
 namespace pynative {
 namespace {
-void SetGraphInputNodeActualAbstract(const session::BackendOpRunInfoPtr &op_run_info, const KernelGraphPtr &graph) {
-  MS_EXCEPTION_IF_NULL(graph);
-  if (!op_run_info->base_op_run_info.has_dynamic_output && !op_run_info->base_op_run_info.has_dynamic_input) {
-    return;
-  }
-  const auto &tensor_mask = op_run_info->base_op_run_info.input_mask;
-  const auto &input_tensors = op_run_info->base_op_run_info.input_tensor;
-  auto &graph_inputs = graph->inputs();
-  for (size_t i = 0, j = 0; i < op_run_info->base_op_run_info.input_tensor.size() && j < graph_inputs.size(); ++i) {
-    if (tensor_mask[i] == kValueNodeTensorMask) {
-      continue;
-    }
-    if (input_tensors[i]->base_shape_ptr() != nullptr) {
-      const auto &shape_of_tensor = input_tensors[i]->shape();
-      auto actual_abstract = std::make_shared<abstract::AbstractTensor>(input_tensors[i]->Dtype(), shape_of_tensor);
-      graph_inputs[j]->set_user_data(kActualAbstract, actual_abstract);
-    }
-    ++j;
-  }
-}
-
 void UpdateRefInfoBeforeCreateKernel(const session::BackendOpRunInfoPtr &op_run_info, const KernelGraphPtr &graph) {
   // Building Graph and Create Kernel is async, under pynative mode.Ref info is bind with kernel.
   // So need to get ref info to generate output addr, before create kernel.
@@ -89,7 +68,6 @@ OpCompilerInfoPtr OpCompiler::Compile(const session::BackendOpRunInfoPtr &op_run
   if (iter != op_compiler_infos_.end() && op_executor.BuildQueueEmpty()) {
     const auto &op_compiler_info = iter->second;
     MS_EXCEPTION_IF_NULL(op_compiler_info);
-    SetGraphInputNodeActualAbstract(op_run_info, op_compiler_info->graph_);
     *single_op_cache_hit = true;
     return iter->second;
   }
@@ -116,9 +94,6 @@ OpCompilerInfoPtr OpCompiler::Compile(const session::BackendOpRunInfoPtr &op_run
   device_context->kernel_executor_->OptimizeGraph(graph);
 
   UpdateRefInfoBeforeCreateKernel(op_run_info, graph);
-
-  // Set dynamic shape actual abstract
-  SetGraphInputNodeActualAbstract(op_run_info, graph);
 
   // Create device address for all anf nodes of graph.
   CreateDeviceAddressWithoutWorkspace(graph, device_context, op_run_info->is_gradient_out);
@@ -152,6 +127,38 @@ void OpCompiler::BatchBuild(const std::vector<KernelGraphPtr> &graphs, const Dev
     DeviceAddressUtils::CreateKernelWorkspaceDeviceAddress(device_context, graph);
     // Need to execute after PreprocessBeforeRunSingleOpGraph
     runtime::OpRuntimeInfo::CacheGraphOpRuntimeInfo(graph);
+  }
+}
+
+void OpCompiler::SetActualShapeForTensor(const string &op_name, const tensor::TensorPtr &tensor,
+                                         const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(tensor);
+  MS_LOG(DEBUG) << "Set op " << op_name << " input tensor " << tensor->id() << " real abstract ";
+  const auto &actual_abs = std::make_shared<abstract::AbstractTensor>(tensor->Dtype(), tensor->shape());
+  node->set_abstract(actual_abs);
+  // Just used for roll back. For not have dynamic op, but have dynamic cnode info
+  node->set_user_data(kActualAbstract, actual_abs);
+}
+
+void OpCompiler::SetGraphInputNodeToActualAbstract(const session::BackendOpRunInfoPtr &op_run_info,
+                                                   const KernelGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  if (!op_run_info->base_op_run_info.has_dynamic_output && !op_run_info->base_op_run_info.has_dynamic_input) {
+    return;
+  }
+  const auto &tensor_mask = op_run_info->base_op_run_info.input_mask;
+  const auto &input_tensors = op_run_info->base_op_run_info.input_tensor;
+  auto &graph_inputs = graph->inputs();
+  size_t graph_input_size = graph_inputs.size();
+  // For graph inputs, which exclude value nodes
+  for (size_t i = 0, j = 0; i < op_run_info->base_op_run_info.input_tensor.size() && j < graph_input_size; ++i) {
+    if (tensor_mask[i] == kValueNodeTensorMask) {
+      continue;
+    }
+    if (input_tensors[i]->base_shape_ptr() != nullptr) {
+      SetActualShapeForTensor(op_run_info->base_op_run_info.op_name, input_tensors[i], graph_inputs[j]);
+    }
+    ++j;
   }
 }
 

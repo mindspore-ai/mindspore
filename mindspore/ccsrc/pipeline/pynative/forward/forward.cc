@@ -315,7 +315,7 @@ ValuePtr ForwardExecutor::RunOpInVM(const FrontendOpRunInfoPtr &op_run_info) con
       }
     }
     auto result_v = std::make_shared<ValueTuple>(result);
-    dynamic_shape()->SaveOutputDynamicShape(op_run_info, op_run_info->base_op_run_info.abstract, result_v);
+    dynamic_shape()->SaveOutputDynamicShape(op_run_info, result_v);
     MS_LOG(DEBUG) << "RunOpInVM end";
     return result_v;
   }
@@ -330,7 +330,7 @@ ValuePtr ForwardExecutor::RunOpInVM(const FrontendOpRunInfoPtr &op_run_info) con
     MS_LOG(EXCEPTION) << "VM op " << op_run_info->base_op_run_info.op_name << " run failed!";
   }
   ValuePtr result_v = PyNativeAlgo::DataConvert::PyObjToValue(result);
-  dynamic_shape()->SaveOutputDynamicShape(op_run_info, op_run_info->base_op_run_info.abstract, result_v);
+  dynamic_shape()->SaveOutputDynamicShape(op_run_info, result_v);
   MS_LOG(DEBUG) << "RunOpInVM end";
   if (result_v->isa<ValueSequence>()) {
     return result_v;
@@ -369,7 +369,7 @@ void ForwardExecutor::ProcessBeforeNewGraph(const py::object &cell, const py::ar
   if (py::isinstance<Cell>(cell)) {
     PushForwardCell(cell);
   }
-  dynamic_shape()->SetFeedDynamicInputAbs(cell, args);
+  dynamic_shape()->SetFeedDynamicInputAbs(cell, args, false);
 }
 
 void ForwardExecutor::ProcessBeforeEndGraph(const py::object &cell, const py::args &args) {
@@ -459,7 +459,7 @@ ValuePtr ForwardExecutor::RunOpInMs(const FrontendOpRunInfoPtr &op_run_info) {
     cur_session->RunOp(backend_op_run_info, &outputs);
   }
   const auto &result_v = PyNativeAlgo::DataConvert::VectorRefToValue(outputs);
-  dynamic_shape()->SaveOutputDynamicShape(op_run_info, op_run_info->base_op_run_info.abstract, result_v);
+  dynamic_shape()->SaveOutputDynamicShape(op_run_info, result_v);
   ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, false);
   MS_LOG(DEBUG) << "RunOpInMs end";
   return result_v;

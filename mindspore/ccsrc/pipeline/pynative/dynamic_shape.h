@@ -37,17 +37,14 @@ class DynamicShape {
   DynamicShape() = default;
   ~DynamicShape() = default;
   void SetDynamicInput(const py::object &cell, const py::args &args);
-  void SetFeedDynamicInputAbs(const py::object &cell, const py::args &args);
+  void SetFeedDynamicInputAbs(const py::object &cell, const py::args &args, bool is_auto);
   py::object GetDynamicInput(const py::object &actual_input) const;
   ValuePtr GetSensValueForDynamicShapeOutput(const TopCellInfoPtr &top_cell, const ValuePtr &v,
                                              const AnfNodePtr &node) const;
-  void SaveIdWithDynamicShape(const FrontendOpRunInfoPtr &op_run_info, const std::string &id, const ValuePtr &v,
-                              const abstract::AbstractBasePtr &dynamic_abs) const;
   void UpdateValueToDynamicShape(const ValuePtr &value) const;
   void UpdateInputTensorToDynamicShape(const FrontendOpRunInfoPtr &op_run_info);
   void SaveDynShapeAbsForMsFunction(const py::args &args, const py::object &out, const FuncGraphPtr &ms_func_graph);
-  void SaveOutputDynamicShape(const FrontendOpRunInfoPtr &op_run_info, const AbstractBasePtr &real_abs,
-                              const ValuePtr &v);
+  void SaveOutputDynamicShape(const FrontendOpRunInfoPtr &op_run_info, const ValuePtr &v);
   void UpdateSensValueForDynamicShapeOutput(const TopCellInfoPtr &top_cell, const ValuePtr &v) const;
   TopCellInfoPtr GetTopCellWithDynamicShape(const py::object &cell, const py::args &args, bool is_auto);
   void CheckPreviousTopCellCanBeDynamicShape(const py::object &cell, const py::args &args);

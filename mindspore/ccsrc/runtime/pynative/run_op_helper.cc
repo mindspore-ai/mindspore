@@ -419,28 +419,18 @@ void CopyDataToDevice(const KernelGraphPtr &graph, const std::vector<tensor::Ten
   CopyParameterDataToDevice(graph->input_nodes(), input_tensors, device_context);
 }
 
-// Change input node dynamic shape abstract to actual shape abstract
-void ChangeInputDynamicAbsToActualAbs(const CNodePtr &cnode) {
-  MS_EXCEPTION_IF_NULL(cnode);
-  auto input_size = common::AnfAlgo::GetInputTensorNum(cnode);
-  for (size_t i = 0; i < input_size; ++i) {
-    auto input_node_with_index = common::AnfAlgo::GetPrevNodeOutput(cnode, i);
-    auto real_input = input_node_with_index.first;
-    if (real_input->has_user_data(kActualAbstract)) {
-      const auto &actual_abs = real_input->user_data<abstract::AbstractTensor>(kActualAbstract);
-      real_input->set_abstract(actual_abs);
-    }
-  }
-}
-
-void UpdateDynamicShape(const CNodePtr &kernel) {
+void InferNodeRealShape(const CNodePtr &kernel) {
   MS_EXCEPTION_IF_NULL(kernel);
-  auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
-  MS_EXCEPTION_IF_NULL(kernel_mod);
   if (session::AnfRuntimeAlgorithm::GetKernelType(kernel) == KernelType::AKG_KERNEL) {
     MS_LOG(EXCEPTION) << "Akg kernel do not support dynamic shape: " << kernel->fullname_with_scope();
   }
   opt::dynamic_shape::InferOp(kernel);
+}
+
+void ResizeNodeInput(const CNodePtr &kernel) {
+  MS_EXCEPTION_IF_NULL(kernel);
+  auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
+  MS_EXCEPTION_IF_NULL(kernel_mod);
   auto args = kernel::GetArgsFromCNode(kernel);
   if (kernel_mod->GetKernelModType() == kernel::KernelModType::NativeGpuKernelMod ||
       kernel_mod->GetKernelModType() == kernel::KernelModType::NativeCpuKernelMod) {
@@ -478,8 +468,8 @@ void LaunchKernels(const KernelGraphPtr &graph, const device::DeviceContext *dev
     auto inputs = CreateKernelInputAddress(runtime_info);
 
     if (is_dynamic_shape) {
-      ChangeInputDynamicAbsToActualAbs(node);
-      UpdateDynamicShape(node);
+      InferNodeRealShape(node);
+      ResizeNodeInput(node);
     }
 
     auto workspaces = CreateKernelWorkspaceAddress(runtime_info, device_context, node, is_dynamic_shape);

@@ -122,7 +122,6 @@ AbstractBasePtr InferOperation::GetInputValueAbs(const FrontendOpRunInfoPtr &op_
   if (iter != id_with_dynamic_abs.end()) {
     MS_EXCEPTION_IF_NULL(op_run_info);
     op_run_info->base_op_run_info.has_dynamic_input = true;
-    dynamic_shape_info->SaveIdWithDynamicShape(op_run_info, input_id, input_value, iter->second);
     MS_LOG(DEBUG) << "Get abstract of input " << input_index << " value is " << iter->second->ToString() << ", id "
                   << input_id;
     return iter->second;
@@ -178,7 +177,6 @@ AbstractBasePtr InferOperation::GetInputTupleValueAbstract(const FrontendOpRunIn
   MS_EXCEPTION_IF_NULL(shape);
   if (shape->IsDynamic()) {
     op_run_info->base_op_run_info.has_dynamic_input = true;
-    dynamic_shape_info->SaveIdWithDynamicShape(op_run_info, input_id, tuple_value, abs);
   }
   MS_LOG(DEBUG) << "Get abstract of tuple input " << input_index << " is " << abs->ToString() << ", id " << input_id;
   return abs;
