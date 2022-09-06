@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CCSRC_DISTRIBUTED_PERSISTENT_STORAGE_FILE_IO_UTILS_H_
 #define MINDSPORE_CCSRC_DISTRIBUTED_PERSISTENT_STORAGE_FILE_IO_UTILS_H_
 
-#include <sys/types.h>
 #include <sys/stat.h>
 #include <vector>
 #include <string>

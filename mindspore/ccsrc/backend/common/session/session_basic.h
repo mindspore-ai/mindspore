@@ -197,7 +197,7 @@ class BACKEND_EXPORT SessionBasic : public std::enable_shared_from_this<SessionB
   void GetForwardOpOutputRefCount(const KernelGraph *graph, const std::vector<tensor::TensorPtr> &inputs,
                                   std::map<std::string, size_t> *forward_op_output_tensor_id) const;
   void ReleaseForwardOpOutput(const std::vector<tensor::TensorPtr> &input_tensors,
-                              std::map<std::string, size_t> *forward_op_output_tensor_id);
+                              std::map<std::string, size_t> *forward_op_output_tensor_id) const;
   void HandleOpInputs(const std::set<KernelWithIndex> &input_kernel, std::map<KernelWithIndex, size_t> *ref_count,
                       std::map<KernelWithIndex, tensor::TensorPtr> *op_output_map) const;
 
