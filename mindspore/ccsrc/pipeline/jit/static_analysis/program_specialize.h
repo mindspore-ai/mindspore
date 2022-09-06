@@ -73,7 +73,17 @@ class ProgramSpecializer {
 
   std::vector<std::pair<AbstractSequencePtr, AnfNodePtr>> &sequence_abstract_list() { return sequence_abstract_list_; }
   std::vector<std::pair<AnfNodePtr, size_t>> &dead_node_list() { return dead_node_list_; }
-  DeferSpecializeNodesMap &defer_specialize_nodes() { return defer_specialize_nodes_; }
+  const DeferSpecializeNodesMap &defer_specialize_nodes() const { return defer_specialize_nodes_; }
+
+  void AddDeferSpecializeNode(const AnalysisContextPtr &context, const CNodePtr &cnode,
+                              FuncGraphSpecializer *specializer) {
+    (void)defer_specialize_nodes_[context].emplace_back(std::make_pair(specializer, cnode));
+  }
+
+  template <typename Iter>
+  void RemoveDeferSpecializeNode(Iter &&iter) {
+    defer_specialize_nodes_.erase(std::forward<Iter>(iter));
+  }
 
  private:
   std::shared_ptr<AnalysisEngine> engine_;

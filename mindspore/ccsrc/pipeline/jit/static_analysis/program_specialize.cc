@@ -1228,7 +1228,7 @@ bool FuncGraphSpecializer::RecordDeferredCNode(const CNodePtr &cnode, const Anal
     MS_LOG(DEBUG) << "Add deferred specialize cnode: " << cnode->DebugString()
                   << ", parent context:" << parent_context->ToString();
     specializer_->EraseSeen(cnode);
-    (void)specializer_->defer_specialize_nodes()[parent_context].emplace_back(std::make_pair(this, cnode));
+    specializer_->AddDeferSpecializeNode(parent_context, cnode, this);
     return true;
   }
   return false;
@@ -1246,7 +1246,7 @@ void FuncGraphSpecializer::ProcessDeferredCNode() {
     func_sepcializer->ProcessCNode(deferred_node);
   }
   // Erase the current context which was parent context of deferred nodes.
-  (void)specializer_->defer_specialize_nodes().erase(context_);
+  (void)specializer_->RemoveDeferSpecializeNode(parent_context_it);
 }
 
 namespace {

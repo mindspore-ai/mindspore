@@ -465,7 +465,9 @@ AnfNodePtr ResolveCellWithAttr(const FuncGraphManagerPtr &manager, const py::obj
   py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
   py::object namespace_obj = python_adapter::CallPyModFn(mod, PYTHON_MOD_GET_MEMBER_NAMESPACE_SYMBOL, obj);
   auto new_namespace = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_CLASS_MEMBER, namespace_obj);
-  const std::string &attr_as_string = GetValuePtr<StringImm>(attr)->value();
+  auto attr_string = GetValuePtr<StringImm>(attr);
+  MS_EXCEPTION_IF_NULL(attr_string);
+  const std::string &attr_as_string = attr_string->value();
   auto new_symbol = std::make_shared<Symbol>(attr_as_string);
   MS_LOG(DEBUG) << "name_space: " << new_namespace->ToString() << ", symbol: " << new_symbol->ToString();
 
