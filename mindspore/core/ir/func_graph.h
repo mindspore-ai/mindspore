@@ -93,10 +93,10 @@ const char FUNC_GRAPH_FLAG_FORCE_INLINE[] = "force_inline";
 const char FUNC_GRAPH_FLAG_DUMP[] = "dump";
 const char FUNC_GRAPH_FLAG_DYNAMIC_SHAPE[] = "dynamic_shape";
 
-const char kFuncGraphFlagUndetermined[] = "Undeterminate";
-const char kFuncGraphFlagBackPropEntry[] = "BackPropEntry";
-const char kFuncGraphFlagReAutoMonad[] = "ReAutoMonad";
-const char kFuncGraphFlagRecursive[] = "Recursive";
+const char kFuncGraphFlagUndetermined[] = "undeterminate";
+const char kFuncGraphFlagBackPropEntry[] = "back_prop_entry";
+const char kFuncGraphFlagReAutoMonad[] = "re_auto_monad";
+const char kFuncGraphFlagRecursive[] = "recursive";
 
 class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
  public:

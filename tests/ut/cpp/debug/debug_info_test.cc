@@ -37,7 +37,7 @@ TEST_F(TestDebugInfo, test_make_location) {
   LocationPtr loc1 = std::make_shared<Location>("/home/workspace/a.py", 0, 4, 1, 8);
   std::string s = loc1->ToString(kSourceLineTipDiscard);
 
-  std::string expect_str("In file /home/workspace/a.py(0)\n");
+  std::string expect_str("In file /home/workspace/a.py:0\n");
   ASSERT_TRUE(s == expect_str);
 }
 

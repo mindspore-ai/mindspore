@@ -64,7 +64,7 @@ std::string HighLightLine(const std::string &line, int col_begin, int col_end, S
 // print the file name, line no and column no, and part of the content
 std::string Location::ToString(SourceLineTip tip) const {
   std::stringstream debug_info_ss;
-  debug_info_ss << "In file " << file_name_ << "(" << line_ << ")" << std::endl;
+  debug_info_ss << "In file " << file_name_ << ":" << line_ << std::endl;
   if (line_ <= 0) {
     return debug_info_ss.str();
   }

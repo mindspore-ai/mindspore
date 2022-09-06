@@ -49,7 +49,7 @@ def test_ms_function():
     context.set_context(save_graphs=True, save_graphs_path="ir_dump_path")
     input1 = np.random.randn(5, 5)
     add(Tensor(input1, ms.float32))
-    result = find_files("./ir_dump_path/*validate*.ir", "test_debug_info.py(46)/        return x + 1/")
+    result = find_files("./ir_dump_path/*validate*.ir", "test_debug_info.py:46/        return x + 1/")
     assert result == '2'
     remove_path("./ir_dump_path/")
     context.set_context(save_graphs=False)
@@ -68,7 +68,7 @@ def test_cell_ms_function():
     input1 = np.random.randn(5, 5)
     net = Net()
     net(Tensor(input1, ms.float32))
-    result = find_files("./ir_dump_path/*validate*.ir", "test_debug_info.py(64)/            return x/")
+    result = find_files("./ir_dump_path/*validate*.ir", "test_debug_info.py:64/            return x/")
     assert result == '1'
     remove_path("./ir_dump_path/")
     context.set_context(save_graphs=False)
