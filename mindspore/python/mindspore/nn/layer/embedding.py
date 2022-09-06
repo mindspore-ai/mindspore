@@ -157,7 +157,10 @@ def _make_axis_range(start, end):
 
 class EmbeddingLookup(Cell):
     r"""
-    Returns a slice of the input tensor based on the specified indices.
+    EmbeddingLookup layer.
+    Same function as the embedding layer, mainly used for heterogeneous parallel scenarios
+    where large-scale embedding layers exist
+    when automatic parallelism or semi-automatic parallelism is present.
 
     Note:
         When 'target' is set to 'CPU', this module will use

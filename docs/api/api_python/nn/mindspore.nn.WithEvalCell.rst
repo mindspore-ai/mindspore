@@ -3,7 +3,8 @@ mindspore.nn.WithEvalCell
 
 .. py:class:: mindspore.nn.WithEvalCell(network, loss_fn, add_cast_fp32=False)
 
-    封装前向网络和损失函数，返回用于计算评估指标的损失函数值、前向输出和标签。
+    封装前向网络和损失函数。
+    返回用于计算评估指标的损失函数值、前向输出和标签。
 
     参数：
         - **network** (Cell) - 前向网络。

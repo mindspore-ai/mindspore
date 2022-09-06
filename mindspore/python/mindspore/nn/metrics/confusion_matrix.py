@@ -80,7 +80,7 @@ class ConfusionMatrix(Metric):
         Update state with y_pred and y.
 
         Args:
-            inputs(tuple): Input `y_pred` and `y`. `y_pred` and `y` are a `Tensor`,  list or numpy.ndarray.
+            inputs(tuple): Input `y_pred` and `y`. `y_pred` and `y` are a `Tensor`, list or numpy.ndarray.
                     `y_pred` is the predicted value, `y` is the true value.
                     The shape of `y_pred` is :math:`(N, C, ...)` or :math:`(N, ...)`.
                     The shape of `y` is :math:`(N, ...)`.

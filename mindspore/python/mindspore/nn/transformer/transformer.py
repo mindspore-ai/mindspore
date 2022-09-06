@@ -2260,17 +2260,17 @@ class TransformerEncoder(Cell):
             layernorm_compute_type(dtype.Number): The computation type of the layernorm.
                 Should be mstype.float32 or mstype.float16. Default mstype.float32.
             softmax_compute_type(dtype.Number): The computation type of the softmax in the attention.
-                Should be mstype.float32 or mstype.float16. Default mstype.float32.
+                Should be mstype.float32 or mstype.float16. Default: mstype.float32.
             param_init_type(dtype.Number): The parameter initialization type of the module.
-                Should be mstype.float32 or mstype.float16. Default mstype.float32.
+                Should be mstype.float32 or mstype.float16. Default: mstype.float32.
             lambda_func(function): A function can determine the fusion index,
-            pipeline stages and recompute attribute. If the
+                pipeline stages and recompute attribute. If the
                 user wants to determine the pipeline stage and gradient aggregation fusion, the user can pass a
                 function that accepts `network`, `layer_id`, `offset`, `parallel_config`, `layers`. The `network(Cell)`
                 represents the transformer block, `layer_id(int)` means the layer index for the current module, counts
                 from zero, `offset(int)` means the layer_index needs an offset, if there are other modules in the net.
                 The default setting for the pipeline is: `(layer_id + offset) // (layers / pipeline_stage)`.
-                Default None.
+                Default: None.
             offset(int): The initial layer index for the `encoder`. Used for setting the fusion id and stage id, to not
                 overlap with the encoder layer. Default 0.
             use_past(bool): Use the past state to compute, used for incremental prediction. For example, if we have two
@@ -2279,7 +2279,7 @@ class TransformerEncoder(Cell):
                 In the first step, set the is_first_iteration to be True by
                 `model.add_flags_recursive(is_first_iteration=True)`, and pass the full inputs. Then, set the
                 is_first_iteration to be False by `model.add_flags_recursive(is_first_iteration=False)`. At this moment,
-                pass the single step's input tensor, and loop it. Default False.
+                pass the single step's input tensor, and loop it. Default: False.
             moe_config(MoEConfig): The configuration of MoE (Mixture of Expert). Default is an instance of MoEConfig
                 with default values. Please see `MoEConfig`.
             parallel_config(TransformerOpParallelConfig): The parallel configure. Default `default_transformer_config`,

@@ -52,7 +52,7 @@ mindspore.nn.AdamWeightDecay
 
           .. include:: mindspore.nn.optim_group_order.rst
 
-        - **learning_rate** (Union[float, Tensor, Iterable, LearningRateSchedule]) - 默认值：1e-3。
+        - **learning_rate** (Union[float, int, Tensor, Iterable, LearningRateSchedule]) - 默认值：1e-3。
 
           .. include:: mindspore.nn.optim_arg_dynamic_lr.rst
 
