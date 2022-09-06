@@ -202,13 +202,14 @@ inline std::vector<int64_t> CheckTuple(const std::string &prim_name, const std::
   return result;
 }
 
-inline void CheckShape(const std::string &op, const ShapeVector &shape) {
+inline bool CheckShape(const std::string &op, const ShapeVector &shape) {
   for (size_t i = 0; i < shape.size(); ++i) {
+    // should be positive integer or -1, if -2 return false
     if ((shape[i] < 0) && (shape[i] != abstract::Shape::SHP_ANY)) {
-      MS_EXCEPTION(ValueError) << "For '" << op << "',  shape element [" << i
-                               << "] must be positive integer or -1, but got: " << shape[i] << ".";
+      return false;
     }
   }
+  return true;
 }
 }  // namespace
 
@@ -229,17 +230,20 @@ class Conv3DTransposeInfer : public abstract::OpInferBase {
     auto w_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
     auto x_shape = x_shape_map[kShape];
     auto w_shape = w_shape_map[kShape];
-    if (x_shape.size() == 1 && x_shape[0] == UNKNOWN_RANK) {
-      ShapeVector output_shape{UNKNOWN_RANK};
-      return std::make_shared<abstract::Shape>(output_shape);
+    if (IsDynamicRank(x_shape) || IsDynamicRank(w_shape)) {
+      return std::make_shared<abstract::Shape>(ShapeVector{UNKNOWN_RANK});
     }
     const int64_t shape_size = 5;
     (void)CheckAndConvertUtils::CheckInteger("x shape size", SizeToLong(x_shape.size()), kEqual, shape_size, prim_name);
     (void)CheckAndConvertUtils::CheckInteger("w shape size", SizeToLong(w_shape.size()), kEqual, shape_size, prim_name);
     (void)CheckAndConvertUtils::CheckInteger("filter's batch, input x's channel", w_shape[0], kEqual, x_shape[1],
                                              prim_name);
-    CheckShape(prim_name + " x_shape", x_shape);
-    CheckShape(prim_name + " w_shape", w_shape);
+    if (!CheckShape(prim_name + " x_shape", x_shape)) {
+      return std::make_shared<abstract::Shape>(ShapeVector{UNKNOWN_RANK});
+    }
+    if (!CheckShape(prim_name + " w_shape", w_shape)) {
+      return std::make_shared<abstract::Shape>(ShapeVector{UNKNOWN_RANK});
+    }
 
     std::vector<int64_t> kernel_size = CheckTuple(prim_name, kKernelSize, primitive->GetAttr(kKernelSize));
     std::vector<int64_t> stride = CheckTuple(prim_name, kStrides, primitive->GetAttr(kStrides));
@@ -259,7 +263,9 @@ class Conv3DTransposeInfer : public abstract::OpInferBase {
     primitive->set_attr(kOutputPadding, MakeValue(output_padding));
     ShapeVector output_shape{x_shape[0], w_shape[1] * group, d_out, h_out, w_out};
     primitive->set_attr(kInput_size, MakeValue(output_shape));
-    CheckShape(prim_name + " output_shape", output_shape);
+    if (!CheckShape(prim_name + " output_shape", output_shape)) {
+      return std::make_shared<abstract::Shape>(ShapeVector{UNKNOWN_RANK});
+    }
 
     return std::make_shared<abstract::Shape>(output_shape);
   }
@@ -380,6 +386,7 @@ class Conv3DTransposeInfer : public abstract::OpInferBase {
   }
 };
 
+MIND_API_OPERATOR_IMPL(Conv3DTranspose, BaseOperator);
 REGISTER_PRIMITIVE_OP_INFER_IMPL(Conv3DTranspose, prim::kPrimConv3DTranspose, Conv3DTransposeInfer, false);
 }  // namespace ops
 }  // namespace mindspore

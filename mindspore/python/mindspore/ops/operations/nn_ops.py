@@ -1428,9 +1428,9 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
             pad_top, pad_bottom, pad_left, pad_right = self.padding
 
             h_out = 1 + (x_shape[2] + pad_top + pad_bottom - kernel_size_h - (kernel_size_h - 1) * (dilation_h - 1)) \
-                / stride_h
+                    / stride_h
             w_out = 1 + (x_shape[3] + pad_left + pad_right - kernel_size_w - (kernel_size_w - 1) * (dilation_w - 1)) \
-                / stride_w
+                    / stride_w
             h_out = math.floor(h_out)
             w_out = math.floor(w_out)
 
@@ -3720,6 +3720,7 @@ class UpsampleTrilinear3D(Primitive):
             [2.5  2.75 3.25 3.5 ]
             [3.   3.25 3.75 4.  ]]]]]
     """
+
     @prim_attr_register
     def __init__(self, output_size=None, scales=None, align_corners=False):
         """Initialize UpsampleTrilinear3D."""
@@ -3739,7 +3740,6 @@ class UpsampleTrilinear3D(Primitive):
         self.add_prim_attr('output_size', self.output_size)
         self.add_prim_attr('scales', self.scales)
         self.add_prim_attr('align_corners', self.align_corners)
-
 
 
 class OneHot(Primitive):
@@ -7763,7 +7763,7 @@ class AvgPool3D(Primitive):
         self.format = validator.check_string(data_format, ['NCDHW'], 'format', self.name)
 
 
-class Conv3D(PrimitiveWithInfer):
+class Conv3D(Primitive):
     r"""
     3D convolution layer.
 
@@ -7911,90 +7911,6 @@ class Conv3D(PrimitiveWithInfer):
         self.group = validator.check_equal_int(group, 1, 'group', self.name)
         self.add_prim_attr('groups', self.group)
         self.add_prim_attr('offset_x', 0)
-
-    def infer_shape(self, x_shape, w_shape, b_shape=None):
-        validator.check_equal_int(len(w_shape), 5, "weight rank", self.name)
-        validator.check_equal_int(len(x_shape), 5, "x rank", self.name)
-        if b_shape is not None:
-            raise ValueError(f"For '{self.name}', the 'bias' currently only support None.")
-        validator.check(f"x_shape[1] // group", x_shape[1] // self.group, "w_shape[1]", w_shape[1], Rel.EQ, self.name)
-        validator.check('out_channel', self.out_channel, 'w_shape[0]', w_shape[0], Rel.EQ, self.name)
-        validator.check('kernel_size', self.kernel_size, 'w_shape[1:4]', tuple(w_shape[2:]), Rel.EQ, self.name)
-
-        kernel_size_d = w_shape[2]
-        kernel_size_h = w_shape[3]
-        kernel_size_w = w_shape[4]
-
-        stride_d = self.stride[2]
-        stride_h = self.stride[3]
-        stride_w = self.stride[4]
-
-        dilation_d = self.dilation[2]
-        dilation_h = self.dilation[3]
-        dilation_w = self.dilation[4]
-
-        if self.pad_mode == "valid":
-            d_out = math.ceil((x_shape[2] - dilation_d * (kernel_size_d - 1)) / stride_d)
-            h_out = math.ceil((x_shape[3] - dilation_h * (kernel_size_h - 1)) / stride_h)
-            w_out = math.ceil((x_shape[4] - dilation_w * (kernel_size_w - 1)) / stride_w)
-            pad_head, pad_tail, pad_top, pad_bottom, pad_left, pad_right = 0, 0, 0, 0, 0, 0
-
-        elif self.pad_mode == "same":
-            d_out = math.ceil(x_shape[2] / stride_d)
-            h_out = math.ceil(x_shape[3] / stride_h)
-            w_out = math.ceil(x_shape[4] / stride_w)
-
-            pad_needed_d = max(0, (d_out - 1) * stride_d + dilation_d * (kernel_size_d - 1) + 1 - x_shape[2])
-            pad_head = math.floor(pad_needed_d / 2)
-            pad_tail = pad_needed_d - pad_head
-
-            pad_needed_h = max(0, (h_out - 1) * stride_h + dilation_h * (kernel_size_h - 1) + 1 - x_shape[3])
-            pad_top = math.floor(pad_needed_h / 2)
-            pad_bottom = pad_needed_h - pad_top
-
-            pad_needed_w = max(0, (w_out - 1) * stride_w + dilation_w * (kernel_size_w - 1) + 1 - x_shape[4])
-            pad_left = math.floor(pad_needed_w / 2)
-            pad_right = pad_needed_w - pad_left
-
-        elif self.pad_mode == 'pad':
-            pad_head, pad_tail, pad_top, pad_bottom, pad_left, pad_right = self.padding
-            d_out = 1 + (x_shape[2] + pad_head + pad_tail - kernel_size_d - (kernel_size_d - 1)
-                         * (dilation_d - 1)) / stride_d
-            h_out = 1 + (x_shape[3] + pad_top + pad_bottom - kernel_size_h - (kernel_size_h - 1)
-                         * (dilation_h - 1)) / stride_h
-            w_out = 1 + (x_shape[4] + pad_left + pad_right - kernel_size_w - (kernel_size_w - 1)
-                         * (dilation_w - 1)) / stride_w
-            d_out = math.floor(d_out)
-            h_out = math.floor(h_out)
-            w_out = math.floor(w_out)
-
-        self.pad_list = [pad_head, pad_tail, pad_top, pad_bottom, pad_left, pad_right]
-        filter_d = (self.kernel_size[0] - 1) * dilation_d + 1
-        filter_h = (self.kernel_size[1] - 1) * dilation_h + 1
-        filter_w = (self.kernel_size[2] - 1) * dilation_w + 1
-        validator.check_int_range(self.pad_list[0], 0, filter_d, Rel.INC_LEFT,
-                                  'pad_d belonging [0, filter_d)', self.name)
-        validator.check_int_range(self.pad_list[1], 0, filter_d, Rel.INC_LEFT,
-                                  'pad_d belonging [0, filter_d)', self.name)
-        validator.check_int_range(self.pad_list[2], 0, filter_h, Rel.INC_LEFT,
-                                  'pad_h belonging [0, filter_h)', self.name)
-        validator.check_int_range(self.pad_list[3], 0, filter_h, Rel.INC_LEFT,
-                                  'pad_h belonging [0, filter_h)', self.name)
-        validator.check_int_range(self.pad_list[4], 0, filter_w, Rel.INC_LEFT,
-                                  'pad_w belonging [0, filter_w)', self.name)
-        validator.check_int_range(self.pad_list[5], 0, filter_w, Rel.INC_LEFT,
-                                  'pad_w belonging [0, filter_w)', self.name)
-        self.add_prim_attr('pad_list', (pad_head, pad_tail, pad_top, pad_bottom, pad_left, pad_right))
-        out_channel = self.out_channel
-        out_shape = [x_shape[0], out_channel, d_out, h_out, w_out]
-        _check_shape('output', out_shape, self.name)
-        return out_shape
-
-    def infer_dtype(self, x_dtype, w_dtype, b_dtype=None):
-        args = {'x': x_dtype, 'w': w_dtype}
-        valid_dtypes = [mstype.float16, mstype.float32]
-        validator.check_tensors_dtypes_same_and_valid(args, valid_dtypes, self.name)
-        return x_dtype
 
 
 class Conv3DBackpropInput(PrimitiveWithInfer):
