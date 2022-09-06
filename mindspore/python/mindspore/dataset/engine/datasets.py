@@ -1648,6 +1648,8 @@ class Dataset:
         if self.dataset_size is None:
             runtime_getter = self.__init_size_getter()
             self.dataset_size = runtime_getter[0].GetDatasetSize(False)
+            if self.dataset_size == 0:
+                logger.warning("Got 0 sample from dataset pipeline, check if drop all data or load dataset fail.")
 
         return self.dataset_size
 

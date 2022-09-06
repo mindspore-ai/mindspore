@@ -578,6 +578,8 @@ def check_tfrecorddataset(method):
         dataset_files = param_dict.get('dataset_files')
         if not isinstance(dataset_files, (str, list)):
             raise TypeError("dataset_files should be type str or a list of strings.")
+        if not dataset_files:
+            raise ValueError("Input dataset_files can not be empty, but got '" + str(dataset_files) + "'.")
 
         validate_dataset_param_value(nreq_param_int, param_dict, int)
         validate_dataset_param_value(nreq_param_list, param_dict, list)
@@ -1623,6 +1625,8 @@ def check_cluedataset(method):
 
         dataset_files = param_dict.get('dataset_files')
         type_check(dataset_files, (str, list), "dataset files")
+        if not dataset_files:
+            raise ValueError("Input dataset_files can not be empty, but got '" + str(dataset_files) + "'.")
 
         # check task
         task_param = param_dict.get('task')
@@ -1657,6 +1661,8 @@ def check_csvdataset(method):
         # check dataset_files; required argument
         dataset_files = param_dict.get('dataset_files')
         type_check(dataset_files, (str, list), "dataset files")
+        if not dataset_files:
+            raise ValueError("Input dataset_files can not be empty, but got '" + str(dataset_files) + "'.")
 
         # check field_delim
         field_delim = param_dict.get('field_delim')
@@ -1741,6 +1747,9 @@ def check_textfiledataset(method):
 
         dataset_files = param_dict.get('dataset_files')
         type_check(dataset_files, (str, list), "dataset files")
+        if not dataset_files:
+            raise ValueError("Input dataset_files can not be empty, but got '" + str(dataset_files) + "'.")
+
         validate_dataset_param_value(nreq_param_int, param_dict, int)
         check_sampler_shuffle_shard_options(param_dict)
 

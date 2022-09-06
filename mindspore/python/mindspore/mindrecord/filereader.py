@@ -44,6 +44,17 @@ class FileReader:
 
     Raises:
         ParamValueError: If `file_name`, `num_consumer` or `columns` is invalid.
+
+    Examples:
+        >>> from mindspore.mindrecord import FileReader
+        >>>
+        >>> mindrecord_file = "/path/to/mindrecord/file"
+        >>> reader = FileReader(file_name=mindrecord_file)
+        >>>
+        >>> # create iterator for mindrecord and get saved data
+        >>> for _, item in enumerate(reader.get_next()):
+        ...     print("item: ", item)
+        >>> reader.close()
     """
 
     @check_parameter
