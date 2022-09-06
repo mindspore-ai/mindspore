@@ -595,7 +595,8 @@ ScopePtr Parser::GetScopeForParseFunction() {
 
 FunctionBlockPtr Parser::ParseDefFunction(const py::object &node, const FunctionBlockPtr &block) {
   const std::string cell_construct = "construct";
-  const std::string cell_scope_name_split = "-";
+  const std::string cell_scope_name_split_reserve = "-";
+  const std::string cell_scope_name_split_no_reserve = "/";
   ScopePtr scope = GetScopeForParseFunction();
   // The node created in the parsefunction context, will inherit the scope created using scope_guard
   ScopeGuard scope_guard(scope);
@@ -612,11 +613,16 @@ FunctionBlockPtr Parser::ParseDefFunction(const py::object &node, const Function
   MS_LOG(DEBUG) << "The function name is " << function_name;
   // Replace the construct function name with the cell name
   if (function_name == cell_construct) {
-    auto find = scope->name().rfind(cell_scope_name_split);
+    auto find = scope->name().rfind(cell_scope_name_split_reserve);
     if (find != std::string::npos) {
       function_name = scope->name().substr(find + 1);
     } else {
-      function_name = scope->name();
+      find = scope->name().rfind(cell_scope_name_split_no_reserve);
+      if (find != std::string::npos) {
+        function_name = scope->name().substr(find + 1);
+      } else {
+        function_name = scope->name();
+      }
     }
     MS_LOG(DEBUG) << scope->name() << " func name:" << function_name;
   }
