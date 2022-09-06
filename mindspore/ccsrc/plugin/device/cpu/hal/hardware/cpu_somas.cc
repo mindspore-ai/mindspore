@@ -36,6 +36,20 @@ bool CPUSomas::GetDependExecOrderFlag(const session::KernelGraph &graph) const {
 bool CPUSomas::InitDevSpecControlTensors(const session::KernelGraph &graph) { return true; }
 
 bool CPUSomas::DevSpecNodeProcess(const session::KernelGraph &graph) { return true; }
+
+void CPUSomas::CommunicationTensorProcess(const std::vector<somas::SomasTensorPtr> &tensors) const {
+  size_t all_communication_size = 0;
+  for (auto &tensor : tensors) {
+    tensor->aligned_size_ = tensor->GetOriginalSize();
+    if (tensor->aligned_size_ != 0) {
+      MS_LOG(ERROR) << "The size of communication tensor is zero.";
+    }
+    all_communication_size += tensor->aligned_size_;
+  }
+  auto aligned_communication_size = GetAlignSize(all_communication_size);
+  auto need_aligned = aligned_communication_size - all_communication_size;
+  tensors[tensors.size() - 1]->aligned_size_ += need_aligned;
+}
 }  // namespace cpu
 }  // namespace device
 }  // namespace mindspore

@@ -39,6 +39,7 @@ class AscendSomas : public somas::Somas {
   bool Initialize() override;
   string GetDeviceName() const override;
   size_t GetCommunicationReservedSize() const override;
+  void CommunicationTensorProcess(const std::vector<somas::SomasTensorPtr> &tensors) const override;
   size_t GetAlignSize(size_t original_size) const override;
 
   bool GetDependExecOrderFlag(const session::KernelGraph &graph) const override;
