@@ -706,8 +706,9 @@ class BaseTimelineGenerator:
         """Load data according to the parsed profiling files."""
         # Write timeline to file.
         logger.info('Writing timeline file...')
-        self.write_timeline_to_json_by_limitation(size_limit)
+        timeline_meta = self.write_timeline_to_json_by_limitation(size_limit)
         logger.info('Finished file writing!')
+        return timeline_meta
 
     def write_timeline_to_json_by_limitation(self, size_limit):
         """Write timeline to json by limitation."""
@@ -733,6 +734,7 @@ class BaseTimelineGenerator:
                 label_name_json = label_name_json.lstrip('[')
                 json_file.write(label_name_json)
                 os.chmod(display_file_path, stat.S_IREAD | stat.S_IWRITE)
+            return self._timeline_meta
         except (IOError, OSError) as err:
             logger.critical('Error occurred when write timeline display file: %s', err)
             raise ProfilerIOException()

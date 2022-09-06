@@ -104,6 +104,8 @@ class BACKEND_EXPORT Profiler {
  protected:
   void SetRunTimeData(const std::string &op_name, const float time_elapsed);
   void SetRunTimeData(const std::string &op_name, const uint64_t start, const float duration);
+  void FindOneStepFpStartOp(uint32_t vector_size);
+  void FindOneStepIterEndOp(uint32_t vector_size);
   uint64_t GetHostMonoTimeStamp() const;
   // Get timestamp in us
   uint64_t GetRealTimeStamp() const;
@@ -111,8 +113,9 @@ class BACKEND_EXPORT Profiler {
   virtual void ClearInst() = 0;
   std::pair<double, double> single_op_launch_start_time_end_time_;
   bool enable_flag_ = false;
-  bool has_find = false;
-  uint32_t iter_end_op_index = 0;
+  bool has_find_ = false;
+  bool is_parallel_strategy = false;
+  bool init_flag_ = false;
   std::string profile_data_path_;
   std::unordered_map<std::string, OpInfo> op_info_map_;
   OneStepStartEndInfo step_start_end_info_;
@@ -120,9 +123,11 @@ class BACKEND_EXPORT Profiler {
   std::vector<std::string> step_start_end_info_vector_;
   std::shared_mutex op_map_mutex_;
   std::mutex record_mutex_;
-  bool init_flag_ = false;
   std::string profiling_options_;
-  bool is_parallel_strategy = false;
+  uint32_t iter_end_op_index_ = 0;
+  uint32_t fp_start_op_index_ = 1;
+  uint32_t constom_vector_size_ = 0;
+  std::string op_type_ = "GetNext";
 
  private:
   inline static std::map<std::string, std::shared_ptr<Profiler>> instance_map_ = {};

@@ -39,6 +39,9 @@ void GetNextProfiling::Init() {
 }
 
 void GetNextProfiling::SaveProfilingData() {
+  if (queue_size_.empty()) {
+    return;
+  }
   std::ofstream handle(file_name_, std::ios::trunc);
   if (!handle.is_open()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', open get-next profiling file failed.";

@@ -140,6 +140,7 @@ class Profiler:
         self._gpu_profiler = None
         self._md_profiler = None
         self._profiler_manager = None
+        self._timeline_meta = []
         self._init_time = None
         self._ascend_job_id = ''
         self._job_id_env = None
@@ -814,7 +815,8 @@ class Profiler:
         finally:
             pass
         if self._dynamic_status:
-            raise RuntimeError('Profiler does not support dynamic shape network on GPU platform currently.')
+            parser = GpuFrameWorkParser(self._output_path, self._dev_id)
+            parser.analyse_dynamic_shape_data(self._timeline_meta)
         logger.warning(
             '\nThe GPU supports only the training mode or inference mode, '
             'it does not support train and infer at the same time.'
@@ -950,7 +952,7 @@ class Profiler:
             timeline_generator = GpuTimelineGenerator(self._output_path, self._dev_id, self._rank_size,
                                                       context.get_context("mode"))
             timeline_generator.init_timeline(reduce_op_type)
-            timeline_generator.write_timeline(size_limit)
+            self._timeline_meta = timeline_generator.write_timeline(size_limit)
             timeline_generator.write_timeline_summary()
             return timeline_generator
         except (ProfilerIOException, ProfilerFileNotFoundException, RuntimeError) as err:
