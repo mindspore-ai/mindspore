@@ -16,6 +16,7 @@
 
 #include "transform/graph_ir/op_declare/rnn_declare.h"
 #include <string>
+#include <vector>
 
 namespace mindspore::transform {
 // BasicLSTMCell
@@ -139,4 +140,29 @@ ATTR_MAP(DynamicGRUV2Grad) = {{"direction", ATTR_DESC(direction, AnyTraits<std::
 OUTPUT_MAP(DynamicGRUV2Grad) = {{0, OUTPUT_DESC(dw_input)},  {1, OUTPUT_DESC(dw_hidden)}, {2, OUTPUT_DESC(db_input)},
                                 {3, OUTPUT_DESC(db_hidden)}, {4, OUTPUT_DESC(dx)},        {5, OUTPUT_DESC(dh_prev)}};
 REG_ADPT_DESC(DynamicGRUV2Grad, kNameDynamicGRUV2Grad, ADPT_DESC(DynamicGRUV2Grad))
+
+// CommonLSTM
+INPUT_MAP(CommonLSTM) = {{1, INPUT_DESC(x)},
+                         {2, INPUT_DESC(w)},
+                         {3, INPUT_DESC(r)},
+                         {4, INPUT_DESC(b)},
+                         {5, INPUT_DESC(sequence_lens)},
+                         {6, INPUT_DESC(initial_h)},
+                         {7, INPUT_DESC(initial_c)},
+                         {8, INPUT_DESC(p)}};
+ATTR_MAP(CommonLSTM) = {
+  {"activation_alpha", ATTR_DESC(activation_alpha, AnyTraits<std::vector<float>>())},
+  {"activation_beta", ATTR_DESC(activation_beta, AnyTraits<std::vector<float>>())},
+  {"activations", ATTR_DESC(activations, AnyTraits<std::vector<std::string>>())},
+  {"clip", ATTR_DESC(clip, AnyTraits<float>())},
+  {"direction", ATTR_DESC(direction, AnyTraits<std::string>())},
+  {"hidden_size", ATTR_DESC(hidden_size, AnyTraits<int64_t>())},
+  {"input_forget", ATTR_DESC(input_forget, AnyTraits<int64_t>())},
+};
+OUTPUT_MAP(CommonLSTM) = {
+  {0, OUTPUT_DESC(y)},
+  {1, OUTPUT_DESC(y_h)},
+  {2, OUTPUT_DESC(y_c)},
+};
+REG_ADPT_DESC(CommonLSTM, "CommonLSTM", ADPT_DESC(CommonLSTM))
 }  // namespace mindspore::transform

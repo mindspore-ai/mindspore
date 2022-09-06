@@ -1521,6 +1521,34 @@ class NonZeroWithValueShape(Primitive):
         self.init_prim_io_names(inputs=['value', 'index', 'count'], outputs=['out_value', 'out_index'])
 
 
+class DecodeImage(PrimitiveWithInfer):
+    """
+    Returns image data that parse from string Tensor.
+
+    Inputs:
+        - **x** (Tensor), a Tensor of type string. 0-D. The jPEG, GIF, PNG, BMP-encoded image.
+
+    Outputs:
+         A Tensor of type uint8, uint16, float.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+    """
+    @prim_attr_register
+    def __init__(self, channels=0, dtype=mstype.uint8, expand_animations=False, _op_max_shape="8192,8192,3",
+                 _op_max_size=[8000000]):
+        self.init_prim_io_names(inputs=["contents"], outputs=["image"])
+        self.res_type = dtype
+
+    def infer_shape(self, x):
+        return (-1, -1, 3)
+
+    def infer_dtype(self, x):
+        return self.res_type
+
+
 class SliceGetItem(Primitive):
     """
         using SliceGetItem to get slice's attribute of 'start' 'stop' 'step'
@@ -1725,6 +1753,33 @@ class ParallelResizeBilinear(PrimitiveWithInfer):
         return {'shape': output_shape,
                 'dtype': x_dtype,
                 'value': None}
+
+
+class PartitionedCall(PrimitiveWithInfer):
+    """
+    Pass the input tensors to the subgraph and return the output tensors.
+
+    Inputs:
+        - **inputs** (Tuple), the input tensors, which will be passed to subgraph.
+
+    Outputs:
+        - outputs(Tuple), the output tensor returned by subgraph.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+    """
+    @prim_attr_register
+    def __init__(self, graph, executor_type=""):
+        self.add_prim_attr("executor_type", executor_type)
+        self.graph = graph
+
+    def infer_shape(self, *inputs):
+        return NotImplementedError
+
+    def infer_dtype(self, *inputs):
+        return NotImplementedError
 
 
 class CellBackwardHook(PrimitiveWithInfer):

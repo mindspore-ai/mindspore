@@ -15,6 +15,7 @@
  */
 
 #include "transform/graph_ir/op_declare/functional_ops_declare.h"
+#include <string>
 
 namespace mindspore::transform {
 // Case
@@ -31,4 +32,16 @@ ATTR_MAP(While) = {{"parallel_iterations", ATTR_DESC(parallel_iterations, AnyTra
 DYN_OUTPUT_MAP(While) = {{0, DYN_OUTPUT_DESC(output)}};
 SUBGRAPH_MAP(While) = {{0, SUBGRAPH_DESC(cond)}, {1, SUBGRAPH_DESC(body)}};
 REG_ADPT_DESC(While, kNameWhile, ADPT_DESC(While));
+
+// PartitionedCall
+INPUT_MAP(PartitionedCall) = EMPTY_INPUT_MAP;
+DYN_INPUT_MAP(PartitionedCall) = {{1, DYN_INPUT_DESC(args)}};
+ATTR_MAP(PartitionedCall) = {
+  {"config", ATTR_DESC(config, AnyTraits<std::string>())},
+  {"config_proto", ATTR_DESC(config_proto, AnyTraits<std::string>())},
+  {"executor_type", ATTR_DESC(executor_type, AnyTraits<std::string>())},
+};
+DYN_OUTPUT_MAP(PartitionedCall) = {{0, DYN_OUTPUT_DESC(output)}};
+SUBGRAPH_MAP(PartitionedCall) = {{0, SUBGRAPH_DESC(f)}};
+REG_ADPT_DESC(PartitionedCall, kNamePartitionedCall, ADPT_DESC(PartitionedCall))
 }  // namespace mindspore::transform

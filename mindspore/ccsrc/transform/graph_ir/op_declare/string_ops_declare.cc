@@ -16,11 +16,20 @@
 
 #include "transform/graph_ir/op_declare/string_ops_declare.h"
 #include <vector>
-#include <string>
 
 namespace mindspore::transform {
+INPUT_MAP(StringUpper) = {{1, INPUT_DESC(input)}};
+ATTR_MAP(StringUpper) = {{"encoding", ATTR_DESC(encoding, AnyTraits<std::string>())}};
+OUTPUT_MAP(StringUpper) = {{0, OUTPUT_DESC(output)}};
+REG_ADPT_DESC(StringUpper, kNameStringUpper, ADPT_DESC(StringUpper))
+
 INPUT_MAP(StringLength) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(StringLength) = {{"unit", ATTR_DESC(unit, AnyTraits<std::string>())}};
 OUTPUT_MAP(StringLength) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(StringLength, kNameStringLength, ADPT_DESC(StringLength))
+
+INPUT_MAP(DecodeBase64) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(DecodeBase64) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(DecodeBase64) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(DecodeBase64, kNameDecodeBase64, ADPT_DESC(DecodeBase64))
 }  // namespace mindspore::transform

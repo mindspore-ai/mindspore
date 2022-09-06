@@ -17,11 +17,19 @@
 #ifndef MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_STRING_OPS_DECLARE_H_
 #define MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_STRING_OPS_DECLARE_H_
 
+#include <string>
+#include <unordered_map>
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
 #include "ops/string_ops.h"
 
 namespace mindspore::transform {
+DECLARE_OP_ADAPTER(StringUpper)
+DECLARE_OP_USE_OUTPUT(StringUpper)
+
 DECLARE_OP_ADAPTER(StringLength)
 DECLARE_OP_USE_OUTPUT(StringLength)
+
+DECLARE_OP_ADAPTER(DecodeBase64)
+DECLARE_OP_USE_OUTPUT(DecodeBase64)
 }  // namespace mindspore::transform
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_STRING_OPS_DECLARE_H_

@@ -189,6 +189,13 @@ GeTensor ConvertAnyUtil(const ValuePtr &value, const AnyTraits<AnyValue>) {
     auto v = GetValue<int32_t>(value);
     desc.SetRealDimCnt(0);
     return GeTensor(desc, reinterpret_cast<uint8_t *>(&v), sizeof(int32_t));
+  } else if (value->isa<UInt32Imm>()) {
+    // convert scalar UInt to GeTensor
+    MS_LOG(INFO) << "Convert scalar to tensor with data type = UInt32";
+    GeTensorDesc desc(GeShape(), ::ge::FORMAT_NCHW, ::ge::DT_UINT32);
+    auto v = GetValue<uint32_t>(value);
+    desc.SetRealDimCnt(0);
+    return GeTensor(desc, reinterpret_cast<uint8_t *>(&v), sizeof(uint32_t));
   } else if (value->isa<Int64Imm>()) {
     // convert scalar Int64 to GeTensor
     MS_LOG(INFO) << "convert scalar to tensor with data type = Int64";

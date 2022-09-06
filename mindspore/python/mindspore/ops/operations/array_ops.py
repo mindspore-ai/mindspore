@@ -900,6 +900,13 @@ class TensorShape(Primitive):
         self.init_prim_io_names(inputs=['input_x'], outputs=['output'])
 
 
+class Unsqueeze(PrimitiveWithCheck):
+    @prim_attr_register
+    def __init__(self, axis):
+        self.init_prim_io_names(inputs=['x'], outputs=['y'])
+        self.axis = axis
+
+
 class DynamicShape(Primitive):
     """
     Same as operator TensorShape. DynamicShape will be deprecated in the future.
@@ -911,7 +918,7 @@ class DynamicShape(Primitive):
 
     @deprecated("1.7", "TensorShape", True)
     @prim_attr_register
-    def __init__(self):
+    def __init__(self, dtype=9):
         """init Shape"""
         self.init_prim_io_names(inputs=['tensor'], outputs=['output'])
         self.add_prim_attr('is_dynamic_shape', True)

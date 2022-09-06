@@ -85,6 +85,12 @@ ATTR_MAP(MirrorPadGrad) = {{"mode", ATTR_DESC(mode, AnyTraits<std::string>())}};
 OUTPUT_MAP(MirrorPadGrad) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(MirrorPadGrad, kNameMirrorPadGrad, ADPT_DESC(MirrorPadGrad))
 
+// Expand
+INPUT_MAP(Expand) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(shape)}};
+ATTR_MAP(Expand) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(Expand) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Expand, "Expand", ADPT_DESC(Expand))
+
 // ExpandDims
 INPUT_MAP(ExpandDims) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(axis)}};
 ATTR_MAP(ExpandDims) = EMPTY_ATTR_MAP;

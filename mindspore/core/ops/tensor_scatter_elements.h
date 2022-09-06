@@ -25,14 +25,14 @@
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameScatterElements = "TensorScatterElements";
+constexpr auto kNameTensorScatterElements = "TensorScatterElements";
 /// \brief Updates tensor values by using input indices and value.
 /// Refer to Python API @ref mindspore.ops.TensorScatterElements for more details.
 class MIND_API TensorScatterElements : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(TensorScatterElements);
   /// \brief Constructor.
-  TensorScatterElements() : BaseOperator(kNameScatterElements) {
+  TensorScatterElements() : BaseOperator(kNameTensorScatterElements) {
     InitIOName({"input_x", "indices", "update"}, {"output"});
   }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.TensorScatterElements for the inputs.

@@ -96,6 +96,7 @@ ATTR_MAP(MatMulV2) = {{"transpose_a", ATTR_DESC(transpose_x1, AnyTraits<bool>())
                       {"transpose_b", ATTR_DESC(transpose_x2, AnyTraits<bool>())}};
 OUTPUT_MAP(MatMulV2) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(MatMulV2, prim::kPrimMatMul->name(), ADPT_DESC(MatMulV2))
+REG_ADPT_DESC(MatMulV2Duplicate, prim::kPrimMatMulV2->name(), ADPT_DESC(MatMulV2))
 
 // MatrixDiag
 INPUT_MAP(MatrixDiag) = {{1, INPUT_DESC(x)}};
@@ -145,7 +146,8 @@ REG_ADPT_DESC(L2Loss, kNameL2Loss, ADPT_DESC(L2Loss))
 INPUT_MAP(ScatterElements) = {{1, INPUT_DESC(data)}, {2, INPUT_DESC(indices)}, {3, INPUT_DESC(updates)}};
 ATTR_MAP(ScatterElements) = {{"axis", ATTR_DESC(axis, AnyTraits<int64_t>())}};
 OUTPUT_MAP(ScatterElements) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(ScatterElements, kNameTensorScatterElements, ADPT_DESC(ScatterElements))
+REG_ADPT_DESC(TensorScatterElements, kNameTensorScatterElements, ADPT_DESC(ScatterElements))
+REG_ADPT_DESC(ScatterElements, kNameScatterElements, ADPT_DESC(ScatterElements))
 
 // FullyConnection
 INPUT_MAP(FullyConnection) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(w)}, {3, INPUT_DESC(b)}, {4, INPUT_DESC(offset_w)}};
