@@ -10,7 +10,7 @@ mindspore.dataset.IWSLT2017Dataset
     参数：
         - **dataset_dir** (str) - 包含数据集文件的根目录路径。
         - **usage** (str, 可选) - 指定数据集的子集，可取值为'train'，'valid'，'test'或'all'。默认值：None，读取全部样本。
-        - **language_pair** (sequence, 可选) - 包含源语和目标语的语言列表，支持的语言对有（'en'，'nl'）、（'en'，'de'）、（'en'，'it'）、（'en'，'ro'）、（'nl'，'en'，'de'）、（'nl'，'it'）、（'nl'，'ro'）、（'de'，'en'）、（'de'，'nl'）、（'de'，'it'，'it'，'en'）、（'it'，'nl'）、（'it'，'de'）、（'it'，'ro'）、（'ro'，'en'）、（'ro'，'nl'）、（'ro'，'de'）、（'ro'，'it'），默认值：('de'，'en'）。
+        - **language_pair** (sequence, 可选) - 包含源语和目标语的语言列表，支持的语言对有（'en'，'nl'）、（'en'，'de'）、（'en'，'it'）、（'en'，'ro'）、（'nl'，'en'，'de'）、（'nl'，'it'）、（'nl'，'ro'）、（'de'，'en'）、（'de'，'nl'）、（'de'，'it'，'it'，'en'）、（'it'，'nl'）、（'it'，'de'）、（'it'，'ro'）、（'ro'，'en'）、（'ro'，'nl'）、（'ro'，'de'）、（'ro'，'it'），默认值：（'de'，'en'）。
         - **num_samples** (int, 可选) - 指定从数据集中读取的样本数。
         - **shuffle** (Union[bool, Shuffle], 可选) - 每个epoch中数据混洗的模式，支持传入bool类型与枚举类型进行指定，默认值：mindspore.dataset.Shuffle.GLOBAL。
           如果 `shuffle` 为False，则不混洗，如果 `shuffle` 为True，等同于将 `shuffle` 设置为mindspore.dataset.Shuffle.GLOBAL。

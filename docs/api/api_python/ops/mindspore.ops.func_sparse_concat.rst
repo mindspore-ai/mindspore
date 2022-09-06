@@ -9,7 +9,7 @@ mindspore.ops.sparse_concat
         实验特性接口，目前只支持CPU。
 
     参数：
-        - **sp_input** (Union[list(COOTensor), tuple(COOTensor)) - 输入的需要concat合并的稀疏张量。
+        - **sp_input** (Union[list(COOTensor), tuple(COOTensor)]) - 输入的需要concat合并的稀疏张量。
         - **concat_dim** (标量) - 指定需要合并的轴序号, 它的取值必须是在[-rank, rank)之内，
             其中rank为sp_input中COOTensor的shape的维度值。缺省值为0。
 

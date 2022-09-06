@@ -344,7 +344,7 @@ class FeedForward(Cell):
         and the second linear is sharded on the output dimension. The overview process can be:
 
         .. math::
-            Dropout((xW_1+b_1)W_2 + b_2))
+            Dropout((xW_1+b_1)W_2 + b_2)
 
         where the :math:`W_1, W_2, b_1` and :math:`b_2` are trainable parameters.
 
@@ -2814,7 +2814,7 @@ class Transformer(Cell):
               of the projected key and value vector in self attention with shape ((batch_size, num_heads, size_per_head,
               tgt_seq_length), (batch_size, num_heads, tgt_seq_length, size_per_head)), and the
               projected key and value vector in cross attention with shape
-              (batch_size, num_heads, size_per_head, src_seq_length),
+              ((batch_size, num_heads, size_per_head, src_seq_length),
               (batch_size, num_heads, src_seq_length, size_per_head)). If the decoder is not set, the
               returned value will be None.
             - **accum_loss** (Tensor) - A Tensor indicates an auxiliary loss to minimize the mean square of the data

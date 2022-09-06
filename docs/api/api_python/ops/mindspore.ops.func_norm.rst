@@ -26,5 +26,5 @@ mindspore.ops.norm
         - **TypeError** - `axis` 是tuple或者list但其元素不是int。
         - **TypeError** - `keep_dims` 不是bool。
         - **TypeError** - `epsilon` 不是float。
-        - **ValueError** - `axis` 的元素超出范围 `[-len(input_x.shape, len(input_x.shape)]` ，其中 `input_x` 指当前Tensor 。
+        - **ValueError** - `axis` 的元素超出范围 `(-len(input_x.shape), len(input_x.shape))` ，其中 `input_x` 指当前Tensor 。
         - **ValueError** - `axis` 的维度rank大于当前Tensor的维度rank。
