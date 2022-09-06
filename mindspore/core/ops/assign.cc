@@ -62,7 +62,7 @@ abstract::ShapePtr AssignInferShape(const PrimitivePtr &prim, const std::vector<
 TypePtr AssignInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
-  auto check_types = common_valid_types;
+  auto check_types = common_valid_types_with_complex;
   (void)check_types.emplace(kBool);
   auto value_type = input_args[1]->BuildType();
   auto variable_type = input_args[0]->BuildType();

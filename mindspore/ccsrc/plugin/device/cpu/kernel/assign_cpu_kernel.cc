@@ -16,66 +16,155 @@
 
 #include "plugin/device/cpu/kernel/assign_cpu_kernel.h"
 
-#include <string>
-#include <map>
+#include <complex>
 
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
-#include "include/common/thread_pool.h"
+#include "plugin/device/cpu/kernel/cpu_kernel.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
 constexpr size_t kAssignInputsNum = 2;
 constexpr size_t kAssignOutputsNum = 1;
-
-const std::map<TypeId, size_t> input_x_dtype_size_map = {
-  {kNumberTypeBool, sizeof(bool)},       {kNumberTypeInt8, sizeof(int8_t)},     {kNumberTypeInt16, sizeof(int16_t)},
-  {kNumberTypeInt32, sizeof(int32_t)},   {kNumberTypeInt64, sizeof(int64_t)},   {kNumberTypeUInt8, sizeof(uint8_t)},
-  {kNumberTypeUInt16, sizeof(uint16_t)}, {kNumberTypeUInt32, sizeof(uint32_t)}, {kNumberTypeUInt64, sizeof(uint64_t)},
-  {kNumberTypeFloat16, sizeof(float16)}, {kNumberTypeFloat32, sizeof(float)},   {kNumberTypeFloat64, sizeof(double)}};
+const std::map<TypeId, size_t> input_x_dtype_size_map = {{kNumberTypeBool, sizeof(bool)},
+                                                         {kNumberTypeInt8, sizeof(int8_t)},
+                                                         {kNumberTypeInt16, sizeof(int16_t)},
+                                                         {kNumberTypeInt32, sizeof(int32_t)},
+                                                         {kNumberTypeInt64, sizeof(int64_t)},
+                                                         {kNumberTypeUInt8, sizeof(uint8_t)},
+                                                         {kNumberTypeUInt16, sizeof(uint16_t)},
+                                                         {kNumberTypeUInt32, sizeof(uint32_t)},
+                                                         {kNumberTypeUInt64, sizeof(uint64_t)},
+                                                         {kNumberTypeFloat16, sizeof(float16)},
+                                                         {kNumberTypeFloat32, sizeof(float)},
+                                                         {kNumberTypeFloat64, sizeof(double)},
+                                                         {kNumberTypeComplex64, sizeof(std::complex<float>)},
+                                                         {kNumberTypeComplex128, sizeof(std::complex<double>)}};
 }  // namespace
 
-void AssignCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  auto input_x_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  auto input_y_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-  if (AnfAlgo::IsShapesDynamic({input_x_shape, input_y_shape})) {
-    return;
+bool AssignCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                              const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->name();
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto pair = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!pair.first) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "',  does not support " << kernel_attr;
+    return false;
   }
+
+  input_x_dtype_ = inputs[0]->GetDtype();
+  return true;
+}
+
+int AssignCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                               const std::vector<KernelTensorPtr> &outputs,
+                               const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  if (ret != 0) {
+    return ret;
+  }
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kAssignInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kAssignOutputsNum, kernel_name_);
+  std::vector<int64_t> input_x_shape = inputs[kIndex0]->GetShapeVector();
+  std::vector<int64_t> input_y_shape = inputs[kIndex1]->GetShapeVector();
   if (input_x_shape.size() != input_y_shape.size()) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the 'x' and 'y' must have the same dimension, but got the dimension of 'x': "
-                      << input_x_shape.size() << " and the dimension of 'y': " << input_y_shape.size();
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', the 'x' and 'y' must have the same dimension, but got the dimension of 'x': "
+                  << input_x_shape.size() << " and the dimension of 'y': " << input_y_shape.size();
   }
   for (size_t i = 0; i < input_x_shape.size(); ++i) {
     if (input_x_shape[i] != input_y_shape[i]) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                        << "', the 'x' and 'y' must have the same shape, but got the shape of 'x': "
-                        << Vector2Str(input_x_shape) << " and the shape of 'y': " << Vector2Str(input_y_shape);
+      MS_LOG(ERROR) << "For '" << kernel_name_
+                    << "', the 'x' and 'y' must have the same shape, but got the shape of 'x': "
+                    << Vector2Str(input_x_shape) << " and the shape of 'y': " << Vector2Str(input_y_shape);
     }
     batch_size_ *= LongToSize(input_x_shape[i]);
   }
-  input_x_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   auto type_len = input_x_dtype_size_map.find(input_x_dtype_);
   if (type_len == input_x_dtype_size_map.end()) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dtype of 'input_x' must be bool, int, uint, or float, but got " << input_x_dtype_;
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', the dtype of 'input_x' must be bool, int, uint, float, complex, but got " << input_x_dtype_;
   }
   input_x_dtype_size_ = type_len->second;
+
+  return KRET_OK;
 }
 
-bool AssignCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                const std::vector<AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kAssignInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kAssignOutputsNum, kernel_name_);
-  static std::string kernel_name = kernel_name_;
+bool AssignCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
+                                const std::vector<kernel::AddressPtr> &outputs) {
+  bool ret = true;
+  switch (input_x_dtype_) {
+    case (kNumberTypeBool): {
+      ret = LaunchKernel<bool>(inputs, outputs);
+      break;
+    }
+    case (kNumberTypeInt8): {
+      ret = LaunchKernel<int8_t>(inputs, outputs);
+      break;
+    }
+    case (kNumberTypeInt16): {
+      ret = LaunchKernel<int16_t>(inputs, outputs);
+      break;
+    }
+    case (kNumberTypeInt32): {
+      ret = LaunchKernel<int32_t>(inputs, outputs);
+      break;
+    }
+    case (kNumberTypeInt64): {
+      ret = LaunchKernel<int64_t>(inputs, outputs);
+      break;
+    }
+    case (kNumberTypeUInt8): {
+      ret = LaunchKernel<uint8_t>(inputs, outputs);
+      break;
+    }
+    case (kNumberTypeUInt16): {
+      ret = LaunchKernel<uint16_t>(inputs, outputs);
+      break;
+    }
+    case (kNumberTypeUInt32): {
+      ret = LaunchKernel<uint32_t>(inputs, outputs);
+      break;
+    }
+    case (kNumberTypeUInt64): {
+      ret = LaunchKernel<uint64_t>(inputs, outputs);
+      break;
+    }
+    case (kNumberTypeFloat16): {
+      ret = LaunchKernel<float16>(inputs, outputs);
+      break;
+    }
+    case (kNumberTypeFloat32): {
+      ret = LaunchKernel<float>(inputs, outputs);
+      break;
+    }
+    case (kNumberTypeFloat64): {
+      ret = LaunchKernel<double>(inputs, outputs);
+      break;
+    }
+    case (kNumberTypeComplex64): {
+      ret = LaunchKernel<std::complex<float>>(inputs, outputs);
+      break;
+    }
+    case (kNumberTypeComplex128): {
+      ret = LaunchKernel<std::complex<double>>(inputs, outputs);
+      break;
+    }
+    default:
+      ret = false;
+      MS_LOG(ERROR) << "For 'Assign', unsupported input data type: " << TypeIdToString(input_x_dtype_);
+  }
+  return ret;
+}
+
+template <typename T>
+bool AssignCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
   auto max_size = inputs[0]->size;
   size_t total_size = input_x_dtype_size_ * batch_size_;
   if (total_size > max_size) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', memcpy size must be less than or equal to max size, but got memcpy size: " << total_size
-                      << ", and max size: " << max_size;
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', memcpy size must be less than or equal to max size, but got memcpy size: " << total_size
+                  << ", and max size: " << max_size;
   }
 
   auto input0_addr = reinterpret_cast<int8_t *>(inputs[0]->addr);
@@ -89,11 +178,11 @@ bool AssignCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std
     size_t max_length = total_size - start;
     int ret = memcpy_s(input0, max_length, input1, length);
     if (ret != 0) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', memcpy_s error. Error no " << ret;
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', memcpy_s error. Error no " << ret;
     }
     ret = memcpy_s(output, max_length, input1, length);
     if (ret != 0) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', memcpy_s error. Error no " << ret;
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', memcpy_s error. Error no " << ret;
     }
   };
   ParallelLaunchAutoSearch(task, total_size, this, &parallel_search_info_);
@@ -101,7 +190,7 @@ bool AssignCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std
 }
 
 std::vector<KernelAttr> AssignCpuKernelMod::GetOpSupport() {
-  static std::vector<KernelAttr> kernel_attr_list = {
+  static std::vector<KernelAttr> support_list = {
     KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
     KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
     KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
@@ -113,11 +202,19 @@ std::vector<KernelAttr> AssignCpuKernelMod::GetOpSupport() {
     KernelAttr().AddInputAttr(kNumberTypeUInt64).AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
     KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
     KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-    KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64)};
+    KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+    KernelAttr()
+      .AddInputAttr(kNumberTypeComplex64)
+      .AddInputAttr(kNumberTypeComplex64)
+      .AddOutputAttr(kNumberTypeComplex64),
+    KernelAttr()
+      .AddInputAttr(kNumberTypeComplex128)
+      .AddInputAttr(kNumberTypeComplex128)
+      .AddOutputAttr(kNumberTypeComplex128),
+  };
 
-  return kernel_attr_list;
+  return support_list;
 }
-
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Assign, AssignCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
