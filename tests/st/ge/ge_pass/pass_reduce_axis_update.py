@@ -12,15 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import os
 import numpy as np
-import pytest
 
-os.environ['MS_ENABLE_GE'] = '1'
-os.environ['MS_GE_TRAIN'] = '0'
-
-import mindspore  # pylint: disable=wrong-import-position
-from mindspore import context, nn, Tensor, ops  # pylint: disable=wrong-import-position
+import ge_infer_env  # pylint: disable=unused-import
+import mindspore
+from mindspore import context, nn, Tensor, ops
 
 
 class MinNet(nn.Cell):
@@ -124,10 +120,6 @@ class ReduceSumReshapeNet(nn.Cell):
         return self.reduce_sum(x) + self.reshape(y, ())
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
 def test_reduce_num():
     """
     Feature: GE Optimization
@@ -158,10 +150,6 @@ def test_reduce_num():
     assert np.allclose(ProdNet()(x_prod).asnumpy(), 7776.0)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
 def test_reduce_bool():
     """
     Feature: GE Optimization
@@ -175,10 +163,6 @@ def test_reduce_bool():
     assert AnyNet()(x).asnumpy()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
 def test_reduce_axis_not_empty():
     """
     Feature: GE Optimization
@@ -215,3 +199,9 @@ def test_reduce_axis_not_empty():
     out = MeanNet3()(x, -1)
     assert out.shape == expect.shape
     assert np.allclose(out.asnumpy(), expect)
+
+
+if __name__ == "__main__":
+    test_reduce_num()
+    test_reduce_bool()
+    test_reduce_axis_not_empty()

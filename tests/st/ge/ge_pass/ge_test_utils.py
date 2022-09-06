@@ -1,4 +1,3 @@
-#!/bin/bash
 # Copyright 2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,19 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-set -e
-BASE_PATH=$(cd "$(dirname $0)"; pwd)
-rm -rf ${BASE_PATH}/ge_tensor_array_pass
-mkdir ${BASE_PATH}/ge_tensor_array_pass
-source ${BASE_PATH}/env.sh
-cd ${BASE_PATH}/ge_tensor_array_pass
-python ../run_ge_tensor_array_pass.py > log.log 2>&1 &
-process_pid=`echo $!`
-wait ${process_pid}
-status=`echo $?`
-if [ "${status}" != "0" ]; then
-    echo "[ERROR] test ge_tensor_array_pass failed. status: ${status}"
-    exit 1
-else
-    echo "[INFO] test ge_tensor_array_pass success."
-fi
+import os
+import sys
+
+
+def run_testcase(case_name):
+    log_file = case_name + '.log'
+    ret = os.system(f'{sys.executable} {case_name}.py &> {log_file}')
+    os.system(f'grep -E "CRITICAL|ERROR|Error" {log_file} -C 3')
+    os.system(f'rm {log_file} -rf')
+    assert ret == 0

@@ -1,4 +1,3 @@
-#!/bin/bash
 # Copyright 2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,19 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-set -e
-BASE_PATH=$(cd "$(dirname $0)"; pwd)
-rm -rf ${BASE_PATH}/ge_dropout_pass
-mkdir ${BASE_PATH}/ge_dropout_pass
-source ${BASE_PATH}/env.sh
-cd ${BASE_PATH}/ge_dropout_pass
-python ../run_ge_dropout_pass.py > log.log 2>&1 &
-process_pid=`echo $!`
-wait ${process_pid}
-status=`echo $?`
-if [ "${status}" != "0" ]; then
-    echo "[ERROR] test ge_dropout_pass failed. status: ${status}"
-    exit 1
-else
-    echo "[INFO] test ge_dropout_pass success."
-fi
+""" test ge frontend pass `DropoutForGE` `DropoutGradForGE` """
+import os
+
+os.environ['MS_ENABLE_GE'] = '1'
+os.environ['MS_GE_TRAIN'] = '0'
