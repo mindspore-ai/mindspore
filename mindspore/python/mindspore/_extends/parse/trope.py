@@ -29,7 +29,7 @@ from operator import (  # noqa
 # support system function call
 from builtins import (  # noqa
     bool, getattr, setattr, hasattr, len, iter, next, pow, range, map, zip,
-    print, enumerate, isinstance, filter, abs, all, any, round, max, min, sum, list, tuple
+    print, enumerate, isinstance, filter, abs, round, max, min, sum, list, tuple
 )
 
 # support functools
@@ -46,7 +46,7 @@ __all__ = ['add', 'sub', 'mul', 'truediv', 'floordiv', 'mod', 'eq', 'ne', 'lt', 
            'not_', 'and_', 'or_', 'xor', 'lshift', 'rshift', 'invert', 'is_', 'is_not', 'contains',
            'matmul', 'getitem', 'setitem',
            'bool', 'getattr', 'setattr', 'hasattr', 'len', 'iter', 'next', 'pow', 'range', 'map', 'zip',
-           'partial', 'print', 'enumerate', 'isinstance', 'filter', 'abs', 'all', 'any', 'round',
+           'partial', 'print', 'enumerate', 'isinstance', 'filter', 'abs', 'round',
            'exp', 'log', 'sin', 'cos', 'tan', 'max', 'min', 'sum', 'list', 'tuple']
 
 

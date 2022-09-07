@@ -14,7 +14,7 @@
 # ============================================================================
 """ test graph fallback """
 import numpy as np
-from mindspore import ms_function, context
+from mindspore import ms_function, context, Tensor
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -87,6 +87,23 @@ def test_fallback_all_list_string():
     assert (not x) and y
 
 
+def test_fallback_all_dict():
+    """
+    Feature: JIT Fallback
+    Description: Test all(dict) in graph mode
+    Expectation: No exception
+    """
+
+    @ms_function
+    def foo():
+        x = {"": 1, "2": 2}
+        y = {"1": 1, "2": 2}
+        return all(x), all(y)
+
+    x, y = foo()
+    assert (not x) and y
+
+
 def test_fallback_all_numpy():
     """
     Feature: JIT Fallback
@@ -98,6 +115,23 @@ def test_fallback_all_numpy():
     def foo():
         x = np.array([0, 1, 2, 3])
         y = np.array([1, 1])
+        return all(x), all(y)
+
+    x, y = foo()
+    assert (not x) and y
+
+
+def test_fallback_all_tensor_constant():
+    """
+    Feature: JIT Fallback
+    Description: Test all(Tensor) with a constant tensor in graph mode
+    Expectation: No exception
+    """
+
+    @ms_function
+    def foo():
+        x = Tensor(np.array([0, 1, 2, 3]))
+        y = Tensor(np.array([1, 1]))
         return all(x), all(y)
 
     x, y = foo()
@@ -172,6 +206,23 @@ def test_fallback_any_list_string():
     assert (not x) and y
 
 
+def test_fallback_any_dict():
+    """
+    Feature: JIT Fallback
+    Description: Test any(dict) in graph mode
+    Expectation: No exception
+    """
+
+    @ms_function
+    def foo():
+        x = {"": 1}
+        y = {"1": 1, "2": 2}
+        return any(x), any(y)
+
+    x, y = foo()
+    assert (not x) and y
+
+
 def test_fallback_any_numpy():
     """
     Feature: JIT Fallback
@@ -183,6 +234,23 @@ def test_fallback_any_numpy():
     def foo():
         x = np.array([0, 0, 0])
         y = np.array([1, 0])
+        return any(x), any(y)
+
+    x, y = foo()
+    assert (not x) and y
+
+
+def test_fallback_any_tensor_constant():
+    """
+    Feature: JIT Fallback
+    Description: Test any(Tensor) with a constant tensor in graph mode
+    Expectation: No exception
+    """
+
+    @ms_function
+    def foo():
+        x = Tensor(np.array([0, 0, 0]))
+        y = Tensor(np.array([1, 0]))
         return any(x), any(y)
 
     x, y = foo()

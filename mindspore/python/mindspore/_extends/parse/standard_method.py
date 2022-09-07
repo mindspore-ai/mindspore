@@ -1825,26 +1825,6 @@ def ms_abs(x):
     return constant_abs(x)
 
 
-def ms_all(x):
-    """Implementation of `all`."""
-    if isinstance(x, Tensor):
-        return all_(x.astype(mstype.bool_))
-    for element in x:
-        if not element:
-            return False
-    return True
-
-
-def ms_any(x):
-    """Implementation of `any`."""
-    if isinstance(x, Tensor):
-        return any_(x.astype(mstype.bool_))
-    for element in x:
-        if element:
-            return True
-    return False
-
-
 @constexpr
 def constant_round(*data):
     """Returns the rounded value of the constant."""
