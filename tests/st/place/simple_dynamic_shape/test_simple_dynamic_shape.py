@@ -50,8 +50,8 @@ def run():
 
     print("================= Start testing =================", flush=True)
     ds_eval = get_dataset()
-    acc = model.eval(ds_eval, dataset_sink_mode=False, callbacks=[TimeMonitor()])
-    acc = model.eval(ds_eval, dataset_sink_mode=False, callbacks=[TimeMonitor()])
+    for _ in range(5):
+        acc = model.eval(ds_eval, dataset_sink_mode=False, callbacks=[TimeMonitor()])
     print("Accuracy is:", acc)
 
 run()

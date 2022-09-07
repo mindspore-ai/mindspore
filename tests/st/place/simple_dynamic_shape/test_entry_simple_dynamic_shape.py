@@ -26,7 +26,7 @@ def test_simple_dynamic_shape():
     Expectation: success.
     """
     return_code = os.system(
-        "bash shell_run_test.sh GPU 1 1 127.0.0.1 8082"
+        "bash shell_run_test.sh GPU 1 1 1 1 127.0.0.1 8082 true"
     )
     if return_code != 0:
         os.system(f"echo '\n**************** Worker Log ****************'")

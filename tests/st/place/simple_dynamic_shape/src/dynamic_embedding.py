@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
+import os
 import numpy as np
 import mindspore
 import mindspore.dataset as ds
@@ -27,6 +28,11 @@ VOCAB_SIZE = 320000
 EMBEDDING_SIZE = 10
 BATCH_SIZE = 32
 MINI_BATCH_NUM = 20
+
+if "embedding_size" in os.environ:
+    EMBEDDING_SIZE = int(os.environ["embedding_size"])
+if "batch_size" in os.environ:
+    BATCH_SIZE = int(os.environ["batch_size"])
 
 
 def create_dataset():
