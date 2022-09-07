@@ -206,12 +206,13 @@ class SSIM(Cell):
     r"""
     Returns SSIM index between two images.
 
-    Its implementation is based on Wang, Z., Bovik, A. C., Sheikh, H. R., & Simoncelli, E. P. (2004). `Image quality
-    assessment: from error visibility to structural similarity <https://ieeexplore.ieee.org/document/1284395>`_.
-    IEEE transactions on image processing.
+    Its implementation is based on Wang, Z., Bovik, A. C., Sheikh, H. R., & Simoncelli, E. P. (2004) `Image quality
+    assessment: from error visibility to structural similarity <https://ieeexplore.ieee.org/document/1284395>`_ .
 
     SSIM is a measure of the similarity of two pictures.
-    Like PSNR, SSIM is often used as an evaluation of image quality. SSIM is a number between 0 and 1.The larger it is,
+    Like PSNR,
+    SSIM is often used as an evaluation of image quality.
+    SSIM is a number between 0 and 1, and the larger it is,
     the smaller the gap between the output image and the undistorted image, that is, the better the image quality.
     When the two images are exactly the same, SSIM=1.
 

@@ -165,7 +165,7 @@ class FixedLossScaleUpdateCell(Cell):
     """
     Update cell with fixed loss scaling value.
 
-    `get_update_cell` method of :class:`mindspore.amp.FixedLossScaleManager` will return this class, it will be called
+    `get_update_cell` method of :class:`mindspore.amp.FixedLossScaleManager` will return this class. It will be called
     by :class:`mindspore.nn.TrainOneStepWithLossScaleCell` during trainning.
 
     Args:

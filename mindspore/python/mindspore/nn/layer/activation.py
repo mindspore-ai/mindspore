@@ -165,7 +165,7 @@ class Softmin(Cell):
 
 class Softmax(Cell):
     r"""
-    Softmax activation function. It is a two-category function :class:`mindspore.nn.Sigmoid` in the promotion of
+    Softmax activation function, which is a two-category function :class:`mindspore.nn.Sigmoid` in the promotion of
     multi-classification, the purpose is to show the results of multi-classification in the form of probability.
 
     Calculate the value of the exponential function for the elements of the input Tensor on the `axis`, and then
