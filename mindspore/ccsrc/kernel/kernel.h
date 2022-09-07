@@ -208,6 +208,9 @@ class KernelTensor {
   void SetFormat(mindspore::Format format) { tensor_info_.format = format; }
   void SetShapeVector(const ShapeVector &shape);
 
+  // max shape is only used in compute-depended ops
+  ShapeVector GetMaxShape() const;
+
   abstract::BaseShapePtr GetBaseShape() const;
   // If the shape need to be List or Tuple, `SetBaseShape` should be called.
   void SetBaseShape(const abstract::BaseShapePtr &base_shape);
