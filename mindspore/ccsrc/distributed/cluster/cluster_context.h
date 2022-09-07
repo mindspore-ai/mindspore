@@ -98,6 +98,9 @@ class BACKEND_EXPORT ClusterContext {
   void InitSchedulerIp();
   void InitSchedulerPort();
 
+  // Use inline static instance pointer in case there are multiple static variables.
+  inline static std::shared_ptr<ClusterContext> cluster_instance_{nullptr};
+
   // The flag that whether this cluster context instance is already initialized.
   std::atomic_bool inited_;
 
