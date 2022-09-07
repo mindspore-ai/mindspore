@@ -260,9 +260,3 @@ def test_split_dynamic_shape():
 
     assert (outputs[0].asnumpy() == dyn_outputs[0].asnumpy()).all()
     assert (outputs[1].asnumpy() == dyn_outputs[1].asnumpy()).all()
-
-
-if __name__ == '__main__':
-    test_out1_axis0()
-    test_out2_axis2()
-    test_out2_axis1neg()

@@ -61,7 +61,3 @@ def test_slice_vmap():
     output = stridedslice_vmap(x)
     expect = np.ones((16, 1, 2, 3))
     assert np.allclose(output.asnumpy(), expect)
-
-
-if __name__ == '__main__':
-    test_slice()

@@ -239,8 +239,3 @@ def test_reduce_prod():
     assert (output[2].asnumpy() == expect_prod_2).all()
     assert (output[3].asnumpy() == expect_prod_3).all()
     assert (output[4].asnumpy() == expect_prod_4).all()
-
-
-
-test_reduce()
-test_reduce_logic()

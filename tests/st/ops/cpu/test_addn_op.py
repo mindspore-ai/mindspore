@@ -83,8 +83,3 @@ def test_four_tensors_add():
         expect_result = (x + y + m + n).astype(dtype)
         assert output.asnumpy().dtype == expect_result.dtype
         assert np.array_equal(output.asnumpy(), expect_result)
-
-
-if __name__ == '__main__':
-    test_two_tensors_add()
-    test_four_tensors_add()
