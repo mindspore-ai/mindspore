@@ -6060,12 +6060,12 @@ class SparseApplyAdagradV2(Primitive):
         ...
         >>> net = Net()
         >>> grad = Tensor(np.array([[0.7]]).astype(np.float32))
-        >>> indices = Tensor(np.ones([1]), mindspore.int32)
+        >>> indices = Tensor(np.array([0]), mindspore.int32)
         >>> output = net(grad, indices)
         >>> print(output)
         (Tensor(shape=[1, 1], dtype=Float32, value=
-        [[ 2.00000003e-01]]), Tensor(shape=[1, 1], dtype=Float32, value=
-        [[ 1.00000001e-01]]))
+        [[ 1.99999988e-01]]), Tensor(shape=[1, 1], dtype=Float32, value=
+        [[ 5.89999974e-01]]))
     """
 
     __mindspore_signature__ = (

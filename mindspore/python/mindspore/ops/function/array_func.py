@@ -31,6 +31,7 @@ from ..operations.array_ops import (
     ScatterNdMax,
     ScatterNdMul,
     IndexFill,
+    AffineGrid,
 )
 from ..operations.nn_ops import AdaptiveMaxPool2D
 from ..operations.array_ops import TensorScatterElements
@@ -3236,7 +3237,7 @@ def affine_grid(theta, output_size, align_corners=False):
         [ 0.25        0.4       ]
         [ 0.78333336  0.06666666]]]]
     """
-    affine_grid_op = P.AffineGrid(align_corners)
+    affine_grid_op = AffineGrid(align_corners)
     return affine_grid_op(theta, output_size)
 
 
