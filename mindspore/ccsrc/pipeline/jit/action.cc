@@ -568,7 +568,120 @@ void CheckIsolatedSideEffectNode(const FuncGraphPtr &func_graph) {
   }
   MS_LOG(INFO) << "Set isolated side-effect node flag for " << func_graph->ToString();
 }
+
+// Get all the trainable parameters of the reusable cell.
+void GetTrainableParameters(const FuncGraphPtr &fg, std::vector<AnfNodePtr> *parameters) {
+  MS_EXCEPTION_IF_NULL(parameters);
+  if (fg->manager() == nullptr) {
+    MS_LOG(INFO) << fg->ToString() << " manager is null. This Cell init should not be assigned cell_attr_register.";
+    return;
+  }
+  auto used_fgs = fg->func_graphs_used_total();
+  std::set<const AnfNode *> memo;
+  for (auto &g : used_fgs) {
+    for (auto &item : g->paramter_obj_nodes()) {
+      MS_LOG(DEBUG) << fg->ToString() << " has_default: " << item->cast<ParameterPtr>()->has_default()
+                    << " parameter: " << item->cast<ParameterPtr>()->ToString();
+      if (item->cast<ParameterPtr>()->has_default() && memo.emplace(item.get()).second) {
+        parameters->push_back(item);
+      }
+    }
+  }
+  MS_LOG(DEBUG) << fg->ToString() << ", parameters: " << parameters->size();
+}
+
+FuncGraphPtr GenerateReusingGraph(const FuncGraphPtr &fg) {
+  std::vector<AnfNodePtr> parameters;
+  MS_LOG(DEBUG) << fg->ToString();
+  GetTrainableParameters(fg, &parameters);
+  if (parameters.empty()) {
+    MS_LOG(DEBUG) << "Finish handling the reusable graph: " << fg->ToString()
+                  << ", parameter size: " << parameters.size();
+    return nullptr;
+  }
+  FuncGraphVector func_graphs = {fg};
+  Cloner cloner(func_graphs, false, false, true, std::make_shared<TraceCopy>(), std::make_shared<TraceGraphReusing>());
+  cloner.Run();
+  auto cloned_fg_iter = cloner.cloned_func_graphs().find(fg);
+  if (cloned_fg_iter == cloner.cloned_func_graphs().end()) {
+    MS_LOG(EXCEPTION) << "Clone func graph failed! " << fg->ToString();
+  }
+  auto reusing_graph = cloned_fg_iter->second;
+
+  // Make the reusable graph to be the no_inline status.
+  reusing_graph->set_flag(FUNC_GRAPH_FLAG_NO_INLINE, true);
+
+  // Make the all trainable parameters of the reusable cell to be the
+  // parameters of the reusable graph.
+  auto &cloned_nodes = cloner.cloned_nodes();
+  auto manager = fg->manager();
+  for (auto &fv : parameters) {
+    TraceGuard guard(std::make_shared<TraceGraphReusing>(fv->debug_info()));
+    auto param = reusing_graph->add_parameter();
+    auto &node_users = manager->node_users()[fv];
+    for (auto &n : node_users) {
+      auto iter = cloned_nodes.find(n.first);
+      if (iter == cloned_nodes.end()) {
+        continue;
+      }
+      auto repl_n = iter->second->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(repl_n);
+      repl_n->set_input(IntToSize(n.second), param);
+    }
+  }
+  MS_LOG(DEBUG) << "The reusable graph parameter size: " << reusing_graph->parameters().size();
+  return reusing_graph;
+}
+
+void ReplaceWithReusingGraph(const FuncGraphPtr &reusing_graph, const FuncGraphPtr &origin_graph) {
+  std::vector<AnfNodePtr> fvs;
+  MS_LOG(DEBUG) << origin_graph->ToString();
+  GetTrainableParameters(origin_graph, &fvs);
+  std::vector<AnfNodePtr> new_node_inputs;
+  new_node_inputs.push_back(NewValueNode(reusing_graph));
+  for (auto &p : origin_graph->parameters()) {
+    AnfNodePtr para_after_cast = parse::GetMixedPrecisionCastHelp(origin_graph, p);
+    new_node_inputs.push_back(para_after_cast);
+  }
+  (void)new_node_inputs.insert(new_node_inputs.cend(), fvs.cbegin(), fvs.cend());
+  AnfNodePtr out = origin_graph->NewCNodeBefore(origin_graph->get_return(), new_node_inputs);
+  origin_graph->set_output(out);
+  MS_LOG(DEBUG) << "The original graph's new out: " << out->DebugString();
+  origin_graph->erase_flag(FUNC_GRAPH_FLAG_NO_INLINE);
+}
 }  // namespace
+
+// Make the reusable cell to be the reusable function graph.
+bool GraphReusingAction(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  constexpr size_t graph_reusing_count = 2;
+  const auto &obj_map = parse::data_converter::GetObjGraphs();
+  for (const auto &[cell_key, graphs] : obj_map) {
+    MS_LOG(DEBUG) << "Start to handle the reusable graph: " << cell_key << ", size: " << graphs.size();
+    // Only make the reusable cell that is used more than graph_reusing_count to be reusable.
+    if (graphs.size() < graph_reusing_count) {
+      continue;
+    }
+    const auto &fg = graphs[0];
+    // fg->paramter_obj_nodes().empty() have been handled by combine like.
+    if (!fg->paramter_obj_nodes().empty()) {
+      MS_LOG(DEBUG) << "Finish handling the reusable graph: " << cell_key;
+      continue;
+    }
+    auto reusing_graph = GenerateReusingGraph(fg);
+    if (reusing_graph == nullptr) {
+      MS_LOG(DEBUG) << "Finish handling the reusable graph: " << cell_key;
+      continue;
+    }
+    // Let the original cell graph call the reusable graph.
+    (void)std::for_each(graphs.begin(), graphs.end(), [&reusing_graph](const auto &origin_graph) {
+      ReplaceWithReusingGraph(reusing_graph, origin_graph);
+    });
+
+    MS_LOG(DEBUG) << "Finish handling the reusable graph: " << cell_key;
+  }
+  return true;
+}
 
 bool SymbolResolveAction(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
@@ -1383,6 +1496,12 @@ static std::vector<ActionItem> CommonPipeline() {
     (void)actions.emplace_back(std::make_pair("combine_like_graphs", CombineLikeGraphs));
   }
 
+  // Make the reusable cell to be the reusable function graph
+  static bool enable_graph_reusing = (common::GetEnv("MS_DEV_GRAPH_REUSE") == "1");
+  if (enable_graph_reusing) {
+    (void)actions.emplace_back(std::make_pair("graph_reusing", GraphReusingAction));
+  }
+
   (void)actions.emplace_back(std::make_pair("meta_unpack_prepare", MetaUnpackPrepareAction));
   // Evaluate type and shape, and specialize.
   (void)actions.emplace_back(std::make_pair("abstract_specialize", AbstractSpecializeAction));
@@ -1438,7 +1557,6 @@ std::vector<ActionItem> VmPipeline(const ResourcePtr &resource) {
 
     // Eliminate the virtual mirror node
     (void)actions.emplace_back(std::make_pair("eliminate_ad_related_special_op_node", EliminateAdRelatedSpecialOpNode));
-
     (void)actions.emplace_back(std::make_pair("validate", ValidateAction));
   }
 
