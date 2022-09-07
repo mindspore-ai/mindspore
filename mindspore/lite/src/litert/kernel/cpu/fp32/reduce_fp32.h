@@ -37,6 +37,7 @@ struct ReduceKernelList {
   Reducer float_func_;
   IntReducer int_func_;
   BoolReducer bool_func_;
+  Reducer float_last_axis_func_;
 };
 
 class ReduceCPUKernel : public ReduceBaseCPUKernel {
@@ -50,6 +51,7 @@ class ReduceCPUKernel : public ReduceBaseCPUKernel {
     src_data_ = nullptr;
     dst_data_ = nullptr;
     reducer_ = nullptr;
+    float_last_axis_func_ = nullptr;
     int_reducer_ = nullptr;
   }
 
@@ -67,6 +69,7 @@ class ReduceCPUKernel : public ReduceBaseCPUKernel {
 
   ReduceParameter *reduce_param_;
   Reducer reducer_ = nullptr;
+  Reducer float_last_axis_func_ = nullptr;
   BoolReducer bool_reducer_ = nullptr;
   IntReducer int_reducer_ = nullptr;
   std::vector<void *> data_buffers_;

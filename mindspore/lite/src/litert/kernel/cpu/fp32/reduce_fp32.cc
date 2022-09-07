@@ -64,8 +64,13 @@ int ReduceCPUKernel::CallReduceUnit(int task_id) {
       MS_LOG(ERROR) << "function reducer_ is null.";
       return RET_NULL_PTR;
     }
-    reducer_(outer_size_, inner_size_, axis_size_, static_cast<const float *>(src_data_),
-             static_cast<float *>(dst_data_), task_id, op_parameter_->thread_num_);
+    if (inner_size_ == 1 && float_last_axis_func_ != nullptr) {
+      float_last_axis_func_(outer_size_, inner_size_, axis_size_, static_cast<const float *>(src_data_),
+                            static_cast<float *>(dst_data_), task_id, op_parameter_->thread_num_);
+    } else {
+      reducer_(outer_size_, inner_size_, axis_size_, static_cast<const float *>(src_data_),
+               static_cast<float *>(dst_data_), task_id, op_parameter_->thread_num_);
+    }
   } else if (data_type_ == kNumberTypeBool) {
     if (bool_reducer_ == nullptr) {
       MS_LOG(ERROR) << "function bool_reducer_ is null.";
@@ -213,21 +218,22 @@ void ReduceCPUKernel::FreeTmpBuffer() {
 }
 
 void ReduceCPUKernel::InitialKernelList() {
-  ReduceKernelList func_list[] = {{ReduceMode_ReduceSum, ReduceSum, IntReduceSum, nullptr},
-                                  {ReduceMode_ReduceMean, ReduceMean, IntReduceMean, nullptr},
-                                  {ReduceMode_ReduceMax, ReduceMax, IntReduceMax, nullptr},
-                                  {ReduceMode_ReduceMin, ReduceMin, IntReduceMin, nullptr},
-                                  {ReduceMode_ReduceProd, ReduceProd, IntReduceProd, nullptr},
-                                  {ReduceMode_ReduceSumSquare, ReduceSum, IntReduceSum, nullptr},
-                                  {ReduceMode_ReduceASum, ReduceSum, IntReduceSum, nullptr},
-                                  {ReduceMode_ReduceAll, nullptr, nullptr, ReduceAll},
-                                  {ReduceMode_ReduceL2, ReduceL2Norm, nullptr, nullptr}};
+  ReduceKernelList func_list[] = {{ReduceMode_ReduceSum, ReduceSum, IntReduceSum, nullptr, ReduceSumByLastAxis},
+                                  {ReduceMode_ReduceMean, ReduceMean, IntReduceMean, nullptr, nullptr},
+                                  {ReduceMode_ReduceMax, ReduceMax, IntReduceMax, nullptr, ReduceMaxByLastAxis},
+                                  {ReduceMode_ReduceMin, ReduceMin, IntReduceMin, nullptr, nullptr},
+                                  {ReduceMode_ReduceProd, ReduceProd, IntReduceProd, nullptr, nullptr},
+                                  {ReduceMode_ReduceSumSquare, ReduceSum, IntReduceSum, nullptr, nullptr},
+                                  {ReduceMode_ReduceASum, ReduceSum, IntReduceSum, nullptr, nullptr},
+                                  {ReduceMode_ReduceAll, nullptr, nullptr, ReduceAll, nullptr},
+                                  {ReduceMode_ReduceL2, ReduceL2Norm, nullptr, nullptr, nullptr}};
   size_t list_len = sizeof(func_list) / sizeof(ReduceKernelList);
   for (size_t i = 0; i < list_len; ++i) {
     if (mode_ == func_list[i].type_) {
       reducer_ = func_list[i].float_func_;
       int_reducer_ = func_list[i].int_func_;
       bool_reducer_ = func_list[i].bool_func_;
+      float_last_axis_func_ = func_list[i].float_last_axis_func_;
       break;
     }
   }

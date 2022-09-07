@@ -57,6 +57,27 @@
 #define ReduceSumPostDeal outer_dst[k] = tmp;
 RegReduceOp(ReduceSum, float);
 
+int ReduceSumByLastAxis(int outer_size, int inner_size, int axis_size, const float *src_data, float *dst_data, int tid,
+                        int thread_num) {
+  MS_CHECK_TRUE_RET(src_data != NULL && dst_data != NULL, NNACL_NULL_PTR);
+  MS_CHECK_TRUE_RET(thread_num > 0, NNACL_PARAM_INVALID);
+  MS_CHECK_TRUE_RET(axis_size > 0, NNACL_ERR);
+
+  for (int j = tid; j < outer_size; j += thread_num) {
+    const float *src_tmp = src_data + j * axis_size;
+
+    float tmp = src_tmp[0];
+    int i = 1;
+
+    SIMD_RUN_NO_SCALAR(ReduceSumByLastAxis, i, src_tmp, &tmp, axis_size);
+    for (; i < axis_size; i++) {
+      tmp += src_tmp[i];
+    }
+    dst_data[j] = tmp;
+  }
+  return NNACL_OK;
+}
+
 // ReduceMean
 #define ReduceMeanPreDeal float tmp = 0;
 #define ReduceMeanMidCalc tmp += inner_src[i * inner_size];
@@ -74,6 +95,27 @@ RegReduceOp(ReduceMin, float);
 #define ReduceMaxMidCalc tmp = fmaxf(tmp, inner_src[i * inner_size]);
 #define ReduceMaxPostDeal outer_dst[k] = tmp;
 RegReduceOp(ReduceMax, float);
+
+int ReduceMaxByLastAxis(int outer_size, int inner_size, int axis_size, const float *src_data, float *dst_data, int tid,
+                        int thread_num) {
+  MS_CHECK_TRUE_RET(src_data != NULL && dst_data != NULL, NNACL_NULL_PTR);
+  MS_CHECK_TRUE_RET(thread_num > 0, NNACL_PARAM_INVALID);
+  MS_CHECK_TRUE_RET(axis_size > 0, NNACL_ERR);
+
+  for (int j = tid; j < outer_size; j += thread_num) {
+    const float *src_tmp = src_data + j * axis_size;
+
+    float tmp = src_tmp[0];
+    int i = 1;
+
+    SIMD_RUN_NO_SCALAR(ReduceMaxByLastAxis, i, src_tmp, &tmp, axis_size);
+    for (; i < axis_size; i++) {
+      tmp = fmaxf(tmp, src_tmp[i]);
+    }
+    dst_data[j] = tmp;
+  }
+  return NNACL_OK;
+}
 
 // ReduceProd
 #define ReduceProdPreDeal float tmp = 1.0f;
