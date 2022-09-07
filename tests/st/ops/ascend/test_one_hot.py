@@ -151,7 +151,7 @@ def test_ascend_graph_mode():
 def test_ascend_pynative_mode():
     """
     Feature: test one_hot static shape on Ascend in pynative mode
-    Description: test interface pynative mode
+    Description: test interface
     Expectation: result match numpy result
     """
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
