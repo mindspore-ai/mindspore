@@ -35,6 +35,7 @@
 #include "tools/converter/quantizer/quant_param_holder.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/optimizer/format/to_format_base.h"
+#include "tools/optimizer/common/pass_manager_extends.h"
 #include "nnacl/op_base.h"
 #include "ops/op_utils.h"
 #include "src/common/common.h"
@@ -89,7 +90,7 @@ int CommonAnfAdjust(const FuncGraphPtr &func_graph) {
   {
     auto asylic_optimizer = std::make_shared<opt::GraphOptimizer>();
     MS_CHECK_TRUE_MSG(asylic_optimizer != nullptr, RET_NULL_PTR, "asylic_optimizer is nullptr.");
-    auto asylic_pm = std::make_shared<opt::PassManager>("asylic pass manager", false);
+    auto asylic_pm = std::make_shared<opt::LitePassManager>("asylic pass manager", false);
     MS_CHECK_TRUE_MSG(asylic_pm != nullptr, RET_NULL_PTR, "asylic_pm is nullptr.");
 
     // fuse tf1.x bidirection_gru into GRU, must be placed here because graph is cyclic

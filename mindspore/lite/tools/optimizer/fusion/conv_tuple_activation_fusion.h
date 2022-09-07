@@ -18,14 +18,14 @@
 #define MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_CONV_TUPLE_ACTIVATION_FUSION_H_
 
 #include <string>
-#include "backend/common/optimizer/optimizer.h"
+#include "tools/optimizer/common/pattern_process_pass_extends.h"
 
 namespace mindspore {
 namespace opt {
-class ConvTupleActivationFusion : public PatternProcessPass {
+class ConvTupleActivationFusion : public LitePatternProcessPass {
  public:
   explicit ConvTupleActivationFusion(bool multigraph = true, const std::string &name = "ConvTupleActivationFusion")
-      : PatternProcessPass(name, multigraph) {}
+      : LitePatternProcessPass(name, multigraph) {}
   ~ConvTupleActivationFusion() override = default;
 
  private:

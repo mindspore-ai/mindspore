@@ -19,14 +19,14 @@
 
 #include <string>
 #include "schema/inner/model_generated.h"
-#include "backend/common/optimizer/optimizer.h"
+#include "tools/optimizer/common/pattern_process_pass_extends.h"
 
 namespace mindspore {
 namespace opt {
-class AffineActivationFusion : public PatternProcessPass {
+class AffineActivationFusion : public LitePatternProcessPass {
  public:
   explicit AffineActivationFusion(bool multigraph = true, const std::string &name = "AffineActivationFusion")
-      : PatternProcessPass(name, multigraph) {}
+      : LitePatternProcessPass(name, multigraph) {}
   ~AffineActivationFusion() override = default;
 
  private:

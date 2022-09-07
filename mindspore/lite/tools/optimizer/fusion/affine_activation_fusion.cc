@@ -34,6 +34,7 @@ const BaseRef AffineActivationFusion::DefinePattern() const {
 
 const AnfNodePtr AffineActivationFusion::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                                  const EquivPtr &equiv) const {
+  constexpr size_t kAnfPrimitiveIndex = 0;
   if (func_graph == nullptr || node == nullptr || equiv == nullptr) {
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
     return nullptr;

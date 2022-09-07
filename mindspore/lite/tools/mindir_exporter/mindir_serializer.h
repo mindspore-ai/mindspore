@@ -31,7 +31,7 @@
 namespace mindspore::lite {
 class MindIRSerializer {
  public:
-  MindIRSerializer() = default;
+  explicit MindIRSerializer(bool isRuntimeConvert) : isRuntimeConvert_(isRuntimeConvert) {}
   virtual ~MindIRSerializer() {
     if (data_fs_ != nullptr) {
       data_fs_->close();
@@ -40,6 +40,7 @@ class MindIRSerializer {
     }
   }
   int Save(const std::shared_ptr<ConverterPara> &param, const FuncGraphPtr &func_graph);
+  int GetBuffAndSize(void **buff, size_t *size);
 
  private:
   int ParserPath(const std::string &output_path);
@@ -59,6 +60,8 @@ class MindIRSerializer {
   int RemoveQuantParameterHolder(FuncGraphPtr func_graph);
 
  private:
+  bool isRuntimeConvert_ = false;
+  bool is_fusion_ = true;
   std::string model_name_;
   std::string save_path_;
   std::string save_model_path_;
@@ -72,6 +75,7 @@ class MindIRSerializer {
   std::shared_ptr<system::FileSystem> fs_{};
 };
 // export func_graph
-int MindIRSerialize(const std::shared_ptr<ConverterPara> &param, const FuncGraphPtr &func_graph);
+int MindIRSerialize(const std::shared_ptr<ConverterPara> &param, const FuncGraphPtr &func_graph, bool isRuntimeConvert,
+                    void **buff, size_t *size);
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_TOOLS_MINDIR_EXPORTER_MINDIR_SERIALIZER_H_

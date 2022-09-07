@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_BATCHNORM_TO_SCALE_FUSION_H_
 
 #include <vector>
-#include "backend/common/optimizer/optimizer.h"
+#include "tools/optimizer/common/pattern_process_pass_extends.h"
 
 namespace mindspore::opt {
 class BatchNormToScaleFusion : public Pass {

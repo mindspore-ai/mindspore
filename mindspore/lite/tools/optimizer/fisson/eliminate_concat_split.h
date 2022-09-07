@@ -17,14 +17,15 @@
 #ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_FISSON_ELIMINATE_CONCAT_SPLIT_H_
 #define MINDSPORE_LITE_TOOLS_OPTIMIZER_FISSON_ELIMINATE_CONCAT_SPLIT_H_
 
-#include "backend/common/optimizer/optimizer.h"
+#include "tools/optimizer/common/pattern_process_pass_extends.h"
 #include "tools/optimizer/fisson/fisson_util.h"
 
 namespace mindspore {
 namespace opt {
-class EliminateConcatSplit : public PatternProcessPass {
+class EliminateConcatSplit : public LitePatternProcessPass {
  public:
-  explicit EliminateConcatSplit(bool multigraph = true) : PatternProcessPass("eliminate_concat_split", multigraph) {}
+  explicit EliminateConcatSplit(bool multigraph = true)
+      : LitePatternProcessPass("eliminate_concat_split", multigraph) {}
   ~EliminateConcatSplit() override = default;
 
  private:

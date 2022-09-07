@@ -15,16 +15,16 @@
  */
 
 #include "ir/anf.h"
-#include "mindspore/ccsrc/backend/common/optimizer/node_pass.h"
+#include "tools/optimizer/common/node_pass_extends.h"
 
 #ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_FISSON_NODE_OUT_SHAPES_H_
 #define MINDSPORE_LITE_TOOLS_OPTIMIZER_FISSON_NODE_OUT_SHAPES_H_
 
 namespace mindspore {
 namespace opt {
-class NodeOutShapes : public opt::NodePass {
+class NodeOutShapes : public opt::LiteNodePass {
  public:
-  NodeOutShapes() : NodePass("node_out_shapes") {}
+  NodeOutShapes() : LiteNodePass("node_out_shapes") {}
   ~NodeOutShapes() override = default;
   AnfNodePtr Run(const FuncGraphPtr &func_graph, const AnfNodePtr &node) override;
 };

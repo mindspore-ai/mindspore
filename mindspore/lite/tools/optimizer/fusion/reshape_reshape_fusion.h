@@ -19,15 +19,15 @@
 
 #include <string>
 #include <memory>
-#include "backend/common/optimizer/optimizer.h"
+#include "tools/optimizer/common/pattern_process_pass_extends.h"
 #include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace opt {
-class ReshapeReshapeFusion : public PatternProcessPass {
+class ReshapeReshapeFusion : public LitePatternProcessPass {
  public:
   explicit ReshapeReshapeFusion(bool multigraph = true, const std::string &name = "ReshapeReshapeFusion")
-      : PatternProcessPass(name, multigraph) {}
+      : LitePatternProcessPass(name, multigraph) {}
   ~ReshapeReshapeFusion() override = default;
 
  private:

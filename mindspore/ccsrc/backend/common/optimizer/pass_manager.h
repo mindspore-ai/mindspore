@@ -48,7 +48,7 @@ class BACKEND_EXPORT PassManager {
       : name_(name), passes_{}, run_only_once_(run_only_once), cache_manager_(std::make_shared<CacheManager>()) {}
   virtual ~PassManager() = default;
   // Get all the passes added by AddPass
-  const std::vector<PassPtr> &Passes() const;
+  const std::vector<PassPtr> &Passes() const { return passes_; }
   // Add graph pass, the pass object will be freed when pass manager freed.
   virtual void AddPass(const PassPtr &pass);
   // Run passes added in pass manager on the input graph

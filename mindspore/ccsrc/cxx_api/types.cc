@@ -82,6 +82,7 @@ class TensorDefaultImpl : public MSTensor::Impl {
   const std::string &Name() const override { return name_; }
   enum DataType DataType() const override { return type_; }
   const std::vector<int64_t> &Shape() const override { return shape_; }
+  void SetShape(const std::vector<int64_t> &shape) override { shape_ = shape; }
 
   std::shared_ptr<const void> Data() const override {
     return std::shared_ptr<const void>(buffer_.Data(), [](const void *) {});
@@ -115,6 +116,7 @@ class TensorReferenceImpl : public MSTensor::Impl {
   const std::string &Name() const override { return name_; }
   enum DataType DataType() const override { return type_; }
   const std::vector<int64_t> &Shape() const override { return shape_; }
+  void SetShape(const std::vector<int64_t> &shape) override { shape_ = shape; }
 
   std::shared_ptr<const void> Data() const override {
     return std::shared_ptr<const void>(data_, [](const void *) {});

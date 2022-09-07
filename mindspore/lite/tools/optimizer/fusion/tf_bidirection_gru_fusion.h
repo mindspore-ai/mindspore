@@ -21,7 +21,7 @@
 #include "tools/optimizer/fusion/tflite_lstm_cell_fusion.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "schema/inner/model_generated.h"
-#include "backend/common/optimizer/optimizer.h"
+#include "tools/optimizer/common/pattern_process_pass_extends.h"
 #include "include/common/utils/utils.h"
 #include "include/errorcode.h"
 
@@ -29,11 +29,11 @@ namespace mindspore {
 namespace opt {
 constexpr size_t kWhileUniqInputsLength = 6;
 // fuse tf 2.x bidirection_gru into MSLITE GRU
-class TfBidirectionGruFusion : public PatternProcessPass {
+class TfBidirectionGruFusion : public LitePatternProcessPass {
  public:
   explicit TfBidirectionGruFusion(int num_fw_vars = kWhileUniqInputsLength, int num_bw_vars = kWhileUniqInputsLength,
                                   const std::string &name = "TfBidirectionGruFusion", bool multi_graph = true)
-      : PatternProcessPass(name, multi_graph), num_fw_vars_(num_fw_vars), num_bw_vars_(num_bw_vars) {}
+      : LitePatternProcessPass(name, multi_graph), num_fw_vars_(num_fw_vars), num_bw_vars_(num_bw_vars) {}
 
   ~TfBidirectionGruFusion() override = default;
 

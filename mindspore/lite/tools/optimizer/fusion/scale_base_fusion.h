@@ -20,14 +20,14 @@
 #include <vector>
 #include <string>
 #include <unordered_map>
-#include "backend/common/optimizer/optimizer.h"
+#include "tools/optimizer/common/pattern_process_pass_extends.h"
 #include "ops/fusion/scale_fusion.h"
 #include "tools/optimizer/common/gllo_utils.h"
 
 namespace mindspore::opt {
-class ScaleBaseFusion : public PatternProcessPass {
+class ScaleBaseFusion : public LitePatternProcessPass {
  public:
-  explicit ScaleBaseFusion(std::string name, bool multigraph = true) : PatternProcessPass(name, multigraph) {}
+  explicit ScaleBaseFusion(std::string name, bool multigraph = true) : LitePatternProcessPass(name, multigraph) {}
   ~ScaleBaseFusion() override = default;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 

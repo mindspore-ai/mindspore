@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "backend/common/optimizer/pass_manager.h"
+#include "tools/optimizer/common/pass_manager_extends.h"
 #ifndef _MSC_VER
 #include <sys/time.h>
 #endif
@@ -27,8 +27,6 @@ namespace opt {
 constexpr size_t kMaxRepassTimes = 12;
 constexpr uint64_t kUSecondInSecond = 1000000;
 
-const std::vector<PassPtr> &PassManager::Passes() const { return passes_; }
-
 void PassManager::AddPass(const PassPtr &pass) {
   if (pass != nullptr) {
     passes_.push_back(pass);
@@ -36,6 +34,35 @@ void PassManager::AddPass(const PassPtr &pass) {
 }
 
 bool PassManager::RunPass(const FuncGraphPtr &func_graph, size_t pass_id, const PassPtr &pass) const {
+  MS_LOG(ERROR) << "stub func";
+  return false;
+}
+
+std::string PassManager::GetPassFullname(size_t pass_id, const PassPtr &pass) const {
+  return std::string("hwopt_") + name() + "_" + std::to_string(pass_id) + "_" + pass->name();
+}
+
+void PassManager::DumpPassIR(const FuncGraphPtr &func_graph, const std::string &pass_fullname) const {
+  MS_LOG(ERROR) << "stub func";
+}
+
+bool PassManager::Run(const FuncGraphPtr &func_graph, const std::vector<PassPtr> &passes) const {
+  MS_LOG(ERROR) << "stub func";
+  return false;
+}
+
+bool PassManager::Run(const FuncGraphPtr &func_graph) const {
+  MS_LOG(ERROR) << "stub func";
+  return false;
+}
+
+void LitePassManager::AddPass(const PassPtr &pass) {
+  if (pass != nullptr) {
+    passes_.push_back(pass);
+  }
+}
+
+bool LitePassManager::RunPass(const FuncGraphPtr &func_graph, size_t pass_id, const PassPtr &pass) const {
   bool changed = false;
 #if defined(_WIN32) || defined(_WIN64)
   auto start_time = std::chrono::steady_clock::now();
@@ -61,14 +88,11 @@ bool PassManager::RunPass(const FuncGraphPtr &func_graph, size_t pass_id, const 
   return changed;
 }
 
-std::string PassManager::GetPassFullname(size_t pass_id, const PassPtr &pass) const {
+std::string LitePassManager::GetPassFullname(size_t pass_id, const PassPtr &pass) const {
   return "hwopt_" + name() + "_" + std::to_string(pass_id) + "_" + pass->name();
 }
 
-// not implement for lite, just for api compatible
-void PassManager::DumpPassIR(const FuncGraphPtr &func_graph, const std::string &pass_fullname) const {}
-
-bool PassManager::Run(const FuncGraphPtr &func_graph, const std::vector<PassPtr> &passes) const {
+bool LitePassManager::Run(const FuncGraphPtr &func_graph, const std::vector<PassPtr> &passes) const {
   if (func_graph == nullptr) {
     return false;
   }
@@ -85,7 +109,7 @@ bool PassManager::Run(const FuncGraphPtr &func_graph, const std::vector<PassPtr>
   return changed;
 }
 
-bool PassManager::Run(const FuncGraphPtr &func_graph) const {
+bool LitePassManager::Run(const FuncGraphPtr &func_graph) const {
   if (func_graph == nullptr) {
     return false;
   }

@@ -18,14 +18,14 @@
 #define MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_SCALE_ACTIVATION_FUSION_H_
 
 #include <string>
-#include "backend/common/optimizer/optimizer.h"
+#include "tools/optimizer/common/pattern_process_pass_extends.h"
 
 namespace mindspore {
 namespace opt {
-class ScaleActivationFusion : public PatternProcessPass {
+class ScaleActivationFusion : public LitePatternProcessPass {
  public:
   explicit ScaleActivationFusion(bool multigraph = true, const std::string &name = "ScaleActivationFusion")
-      : PatternProcessPass(name, multigraph) {}
+      : LitePatternProcessPass(name, multigraph) {}
   ~ScaleActivationFusion() override = default;
 
  private:

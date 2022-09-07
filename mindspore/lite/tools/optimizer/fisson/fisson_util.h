@@ -22,7 +22,6 @@
 #include <unordered_map>
 #include <memory>
 #include "schema/inner/model_generated.h"
-#include "mindspore/ccsrc/include/common/utils/utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "mindspore/lite/include/context.h"
 #include "mindspore/lite/include/lite_types.h"

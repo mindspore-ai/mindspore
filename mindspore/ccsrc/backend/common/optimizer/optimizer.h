@@ -29,6 +29,7 @@
 #include "ir/graph_utils.h"
 #include "utils/ms_utils.h"
 #include "backend/common/optimizer/helper.h"
+#include "backend/common/optimizer/graph_optimizer.h"
 #include "include/backend/visible.h"
 
 namespace mindspore {
@@ -76,20 +77,6 @@ class MultipleOutputPatternProcessPass : public PatternProcessPass {
   PatternEngine child_pattern_engine_;
   PrimitiveVarMapPtr child_primitive_vars_;
   EquivPtr child_equiv_;
-};
-
-class BACKEND_EXPORT GraphOptimizer {
- public:
-  explicit GraphOptimizer(const std::string &name = "graph_optimizer") : name_(name) {}
-  virtual ~GraphOptimizer() = default;
-
-  void AddPassManager(const PassManagerPtr &pass_manager);
-  FuncGraphPtr Optimize(const FuncGraphPtr &func_graph, bool run_only_once = true);
-
- private:
-  const std::string name_ = "graph_optimizer";
-  std::vector<PassManagerPtr> pass_managers_{};
-  bool run_only_once_ = true;
 };
 }  // namespace opt
 }  // namespace mindspore

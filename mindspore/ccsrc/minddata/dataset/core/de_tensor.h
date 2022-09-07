@@ -44,6 +44,7 @@ class DETensor : public mindspore::MSTensor::Impl {
   size_t DataSize() const override;
 
   const std::vector<int64_t> &Shape() const override;
+  void SetShape(const std::vector<int64_t> &shape) override { shape_ = shape; };
 
   int64_t ElementNum() const;
 

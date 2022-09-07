@@ -24,12 +24,14 @@
 #include "backend/common/optimizer/node_pass.h"
 #include "backend/common/optimizer/pattern_engine.h"
 #include "backend/common/optimizer/helper.h"
+#include "tools/optimizer/common/node_pass_extends.h"
 
 namespace mindspore {
 namespace opt {
-class MultiplePatternProcessPass : public NodePass {
+class MultiplePatternProcessPass : public LiteNodePass {
  public:
-  explicit MultiplePatternProcessPass(const std::string &name = "", bool multigraph = true);
+  explicit MultiplePatternProcessPass(const std::string &name = "", bool multigraph = true)
+      : LiteNodePass(name), multigraph_(multigraph), pattern_engine_(PatternEngine(std::make_shared<Visitor>())) {}
   ~MultiplePatternProcessPass() override = default;
   virtual AnfNodePtr Process(const std::string &, const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const = 0;
   virtual std::unordered_map<std::string, VectorRef> DefinePatterns() const = 0;

@@ -26,6 +26,7 @@
 #include "tools/common/tensor_util.h"
 #include "include/common/utils/utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
+#include "tools/optimizer/common/helper.h"
 #include "securec/include/securec.h"
 #include "nnacl/op_base.h"
 
@@ -169,7 +170,7 @@ bool TfliteLstmCellFusion::Init() const {
 TfliteLstmCellFusion::TfliteLstmCellFusion(const std::string &name, bool multigraph, int input_length, int var_num,
                                            int cond_nodes_num, int cond_cnodes_num, int body_nodes_num,
                                            int body_cnodes_num)
-    : PatternProcessPass(name, multigraph) {
+    : LitePatternProcessPass(name, multigraph) {
   /*
    * input vars for lstm while node
    * 0:cond_ 1:body_ 2:time_ 3:limit1_ 4:output_ 5:cell_ 6:hidden_ 7:limit2_ 8:input_
@@ -207,7 +208,7 @@ AnfNodePtr TfliteLstmCellFusion::GetCondGraphPattern(const PrimitiveVarMapPtr &p
   VectorRef return_ref = VectorRef({is_return, logicaland_ref});
   VarPtr fg = std::make_shared<Var>("RootG");
   MS_CHECK_TRUE_RET(fg != nullptr, nullptr);
-  auto pattern = SexpToNode(return_ref, fg, primitive_vars.get(), true);
+  auto pattern = Helper::SexpToNode(return_ref, fg, primitive_vars.get(), true);
   return pattern;
 }
 
@@ -278,7 +279,7 @@ AnfNodePtr TfliteLstmCellFusion::GetBodyGraphPattern(const PrimitiveVarMapPtr &p
 
   VarPtr fg = std::make_shared<Var>("RootG");
   MS_CHECK_TRUE_RET(fg != nullptr, nullptr);
-  auto pattern = SexpToNode(return_node, fg, primitive_vars.get(), true);
+  auto pattern = Helper::SexpToNode(return_node, fg, primitive_vars.get(), true);
   return pattern;
 }
 

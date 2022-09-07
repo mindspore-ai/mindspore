@@ -19,14 +19,14 @@
 
 #include <string>
 #include "schema/inner/model_generated.h"
-#include "backend/common/optimizer/optimizer.h"
+#include "tools/optimizer/common/pattern_process_pass_extends.h"
 
 namespace mindspore {
 namespace opt {
-class AddTensorArray : public PatternProcessPass {
+class AddTensorArray : public LitePatternProcessPass {
  public:
   explicit AddTensorArray(bool multigraph = true, const std::string &name = "add_tensor_array")
-      : PatternProcessPass(name, multigraph) {}
+      : LitePatternProcessPass(name, multigraph) {}
   ~AddTensorArray() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;

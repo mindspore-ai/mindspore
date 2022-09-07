@@ -17,14 +17,14 @@
 #ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_SIGMOID_MUL_FUSION_H_
 #define MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_SIGMOID_MUL_FUSION_H_
 
-#include "backend/common/optimizer/optimizer.h"
+#include "tools/optimizer/common/pattern_process_pass_extends.h"
 #include "tools/converter/converter_context.h"
 
 namespace mindspore {
 namespace opt {
-class SigmoidMulFusion : public PatternProcessPass {
+class SigmoidMulFusion : public LitePatternProcessPass {
  public:
-  explicit SigmoidMulFusion(bool multigraph = true) : PatternProcessPass("SigmoidMulFusion", multigraph) {}
+  explicit SigmoidMulFusion(bool multigraph = true) : LitePatternProcessPass("SigmoidMulFusion", multigraph) {}
   ~SigmoidMulFusion() override = default;
 
  private:

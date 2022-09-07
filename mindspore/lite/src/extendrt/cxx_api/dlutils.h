@@ -68,13 +68,15 @@ inline Status DLSoPath(const std::string &benchmark_so, const std::string &targe
   return kSuccess;
 }
 
-inline Status DLSoOpen(const std::string &dl_path, const std::string &func_name, void **handle, void **function) {
+inline Status DLSoOpen(const std::string &dl_path, const std::string &func_name, void **handle, void **function,
+                       bool runtime_convert = false) {
   // do dlopen and export functions from c_dataengine
   if (handle == nullptr) {
     MS_LOG(WARNING) << "Input parameter handle cannot be nullptr";
     return Status(kMEFailed, "Input parameter handle cannot be nullptr");
   }
-  *handle = dlopen(dl_path.c_str(), RTLD_LAZY | RTLD_LOCAL);
+  int mode = runtime_convert ? RTLD_GLOBAL : RTLD_LOCAL;
+  *handle = dlopen(dl_path.c_str(), RTLD_LAZY | mode);
 
   auto get_dl_error = []() -> std::string {
     auto error = dlerror();

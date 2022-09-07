@@ -27,6 +27,7 @@
 #include "ops/op_utils.h"
 #include "include/errorcode.h"
 #include "tools/optimizer/common/gllo_utils.h"
+#include "tools/optimizer/common/helper.h"
 #include "backend/common/optimizer/helper.h"
 #include "src/common/log_adapter.h"
 #include "nnacl/op_base.h"
@@ -1514,7 +1515,7 @@ bool SlicePreposePass::Run(const FuncGraphPtr &graph) {
       if (output_tensor_num > 1) {
         continue;
       }
-      auto output_node_list = GetRealNodeUsedList(graph, utils::cast<AnfNodePtr>(preceed_node));
+      auto output_node_list = Helper::GetRealNodeUsedList(graph, utils::cast<AnfNodePtr>(preceed_node));
       if (output_node_list->size() > 1) {  // referenced by multi nodes
         if (SiblingsAreSameSlice(output_node_list) && MergeParallelSlice(graph, output_node_list)) {
           this_time_changed = true;

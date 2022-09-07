@@ -127,47 +127,11 @@ FuncGraphPtr ConverterImpl::BuildFuncGraph(const std::shared_ptr<ConverterPara> 
   return func_graph;
 }
 
-int ConverterImpl::Convert(const std::shared_ptr<ConverterPara> &param, schema::MetaGraphT **meta_graph,
-                           const void *buf, const size_t &size) {
-  if (param == nullptr || buf == nullptr) {
-    MS_LOG(ERROR) << "Input param is nullptr";
-    return RET_ERROR;
-  }
-  auto graph = BuildFuncGraph(param, buf, size);
-  if (graph == nullptr) {
-    MS_LOG(ERROR) << "Parser/Import model return nullptr";
-    return RET_ERROR;
-  }
-  MS_CHECK_TRUE_MSG(funcgraph_transform_ != nullptr, RET_ERROR, "funcgraph_transform init failed.");
-  // funcgraph_transform
-  graph = funcgraph_transform_->Transform(graph, param);
-  MS_CHECK_TRUE_MSG(graph != nullptr, RET_ERROR, "Transform anf graph return nullptr.");
-  // export protobuf
-  if (param->export_mindir == kMindIR) {
-    auto status = UpdateFuncGraphInputAndOutputNames(graph);
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "Update input and output names of funcgraph failed.";
-      return RET_ERROR;
-    }
-    status = MindIRSerialize(param, graph);
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "Export to mindir proto failed";
-      return RET_ERROR;
-    } else {
-      MS_LOG(DEBUG) << "Export to mindir success";
-      return RET_OK;
-    }
-  }
-  *meta_graph = TransferFuncGraph(param, graph);
-  return RET_OK;
-}
-
 int ConverterImpl::Convert(const std::shared_ptr<ConverterPara> &param, schema::MetaGraphT **meta_graph) {
   if (param == nullptr) {
     MS_LOG(ERROR) << "Input param is nullptr";
     return RET_ERROR;
   }
-
   param->aclModelOptionCfgParam.om_file_path = param->output_file;
   if (!param->config_file.empty() || !param->config_param.empty()) {
     auto ret = InitConfigParam(param);
@@ -176,7 +140,6 @@ int ConverterImpl::Convert(const std::shared_ptr<ConverterPara> &param, schema::
       return RET_ERROR;
     }
   }
-
   // load plugin
   static std::vector<std::shared_ptr<DynamicLibraryLoader>> dl_loaders;
   if (!param->plugins_path.empty()) {
@@ -191,20 +154,19 @@ int ConverterImpl::Convert(const std::shared_ptr<ConverterPara> &param, schema::
       dl_loaders.emplace_back(dl_loader);
     }
   }
-
   auto graph = BuildFuncGraph(param);
-  if (graph == nullptr) {
-    MS_LOG(ERROR) << "Parser/Import model return nullptr";
-    return RET_ERROR;
-  }
+  return FuncGraphConvert(param, graph, meta_graph, false, nullptr, nullptr);
+}
 
-  MS_CHECK_TRUE_MSG(funcgraph_transform_ != nullptr, RET_ERROR, "funcgraph_transform init failed");
-  // funcgraph transform
-  graph = funcgraph_transform_->Transform(graph, param);
-  if (graph == nullptr) {
-    MS_LOG(ERROR) << "Transform anf graph return nullptr";
+int ConverterImpl::FuncGraphConvert(const std::shared_ptr<ConverterPara> &param, FuncGraphPtr graph,
+                                    schema::MetaGraphT **meta_graph, bool isRuntimeConvert, void **buff, size_t *size) {
+  if (param == nullptr || graph == nullptr) {
+    MS_LOG(ERROR) << "Input param or graph is nullptr";
     return RET_ERROR;
   }
+  MS_CHECK_TRUE_MSG(funcgraph_transform_ != nullptr, RET_ERROR, "funcgraph_transform init failed");
+  graph = funcgraph_transform_->Transform(graph, param);
+  MS_CHECK_TRUE_MSG(graph != nullptr, RET_ERROR, "Transform anf graph return nullptr.");
 
   // export protobuf
   if (param->export_mindir == kMindIR) {
@@ -218,16 +180,15 @@ int ConverterImpl::Convert(const std::shared_ptr<ConverterPara> &param, schema::
       MS_LOG(ERROR) << "Update input and output names of funcgraph failed.";
       return RET_ERROR;
     }
-    status = MindIRSerialize(param, graph);
+    status = MindIRSerialize(param, graph, isRuntimeConvert, buff, size);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Export to mindir failed";
       return RET_ERROR;
-    } else {
-      MS_LOG(DEBUG) << "Export to mindir success";
-      return RET_OK;
     }
+  } else {  // fb
+    *meta_graph = TransferFuncGraph(param, graph);
   }
-  *meta_graph = TransferFuncGraph(param, graph);
+  MS_LOG(DEBUG) << "FuncGraph convert success";
   return RET_OK;
 }
 

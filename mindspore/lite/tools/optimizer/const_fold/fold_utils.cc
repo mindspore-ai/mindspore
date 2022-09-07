@@ -34,6 +34,7 @@
 #include "src/common/ops/anf_utils.h"
 #include "src/litert/infer_manager.h"
 #include "tools/optimizer/graph/lite_tensor_extractor.h"
+#include "tools/optimizer/common/helper.h"
 
 using mindspore::lite::KernelRegistry;
 using mindspore::lite::Tensor;
@@ -117,7 +118,7 @@ lite::STATUS ReplaceCNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
   MS_CHECK_TRUE_RET(manager != nullptr, lite::RET_NULL_PTR);
   if (output_tensors.size() != 1) {
     for (size_t k = 0; k < output_tensors.size(); k++) {
-      auto used_node_list = GetRealNodeUsedListByOutputIdx(func_graph, cnode, k);
+      auto used_node_list = Helper::GetRealNodeUsedListByOutputIdx(func_graph, cnode, k);
       if (used_node_list->empty()) {
         MS_LOG(DEBUG) << "this output don't be used by other node.";
         continue;

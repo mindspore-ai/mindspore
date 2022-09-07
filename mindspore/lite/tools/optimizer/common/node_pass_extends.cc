@@ -15,7 +15,7 @@
  */
 
 #define USE_DEPRECATED_API
-#include "backend/common/optimizer/node_pass.h"
+#include "tools/optimizer/common/node_pass_extends.h"
 #include <unordered_set>
 #include <deque>
 #include <algorithm>
@@ -27,6 +27,11 @@
 namespace mindspore {
 namespace opt {
 bool NodePass::Run(const FuncGraphPtr &func_graph) {
+  MS_LOG(ERROR) << "stub func";
+  return false;
+}
+
+bool LiteNodePass::Run(const FuncGraphPtr &func_graph) {
   if (func_graph == nullptr) {
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
     return false;

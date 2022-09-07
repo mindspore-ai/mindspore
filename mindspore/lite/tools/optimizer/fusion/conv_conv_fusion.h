@@ -19,13 +19,13 @@
 
 #include <string>
 #include "schema/inner/model_generated.h"
-#include "backend/common/optimizer/optimizer.h"
+#include "tools/optimizer/common/pattern_process_pass_extends.h"
 
 namespace mindspore {
 namespace opt {
-class ConvConvFusion : public PatternProcessPass {
+class ConvConvFusion : public LitePatternProcessPass {
  public:
-  explicit ConvConvFusion(bool multigraph = true) : PatternProcessPass("ConvConvFusion", multigraph) {}
+  explicit ConvConvFusion(bool multigraph = true) : LitePatternProcessPass("ConvConvFusion", multigraph) {}
   ~ConvConvFusion() override = default;
 
  private:

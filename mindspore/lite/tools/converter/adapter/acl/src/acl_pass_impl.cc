@@ -35,6 +35,7 @@
 #include "plugin/device/cpu/kernel/nnacl/op_base.h"
 #include "src/common/log_util.h"
 #include "tools/optimizer/common/gllo_utils.h"
+#include "tools/optimizer/graph/specify_graph_input_format.h"
 
 namespace mindspore {
 namespace opt {
@@ -57,9 +58,21 @@ constexpr size_t kDependInputNum = 3;
 constexpr size_t kDependFirstInputIdx = 1;
 constexpr size_t kTupleGetItemFirstInputIdx = 1;
 
-STATUS PreProcForMindIr(const FuncGraphPtr &func_graph) { return lite::RET_OK; }
+STATUS PreProcForMindIr(const FuncGraphPtr &func_graph, bool offline) { return lite::RET_OK; }
 
-STATUS PreProcForTF(const FuncGraphPtr &func_graph) {
+STATUS PreProcForTF(const FuncGraphPtr &func_graph, bool offline) {
+  if (!offline) {
+    auto format_pass = std::make_shared<opt::SpecifyGraphInputFormat>(Format::NCHW, Format::NHWC);
+    MS_CHECK_TRUE_MSG(format_pass != nullptr, lite::RET_ERROR, "Make shared specify graph input format failed.");
+    if (!format_pass->Run(func_graph)) {
+      MS_LOG(ERROR) << "Run specify graph input format pass failed.";
+      return lite::RET_ERROR;
+    }
+    if (!lite::RunOptimizerPass(func_graph, {kToNHWCFormatPass, kDelRedundantTranspose})) {
+      MS_LOG(ERROR) << "To nhwc format failed.";
+      return lite::RET_ERROR;
+    }
+  }
   if (!lite::RunOptimizerPass(func_graph, {kInferShapePass})) {
     MS_LOG(ERROR) << "Infer shape pass failed.";
     return lite::RET_ERROR;
@@ -85,7 +98,14 @@ STATUS PreProcForTF(const FuncGraphPtr &func_graph) {
   return lite::RET_OK;
 }
 
-STATUS PreProcForCaffe(const FuncGraphPtr &func_graph) {
+STATUS PreProcForCaffe(const FuncGraphPtr &func_graph, bool offline) {
+  if (!offline) {
+    if (!lite::RunOptimizerPass(func_graph, {kDelRedundantTranspose})) {
+      MS_LOG(ERROR) << "Del redundant transpose failed.";
+      return lite::RET_ERROR;
+    }
+    return lite::RET_OK;
+  }
   if (!lite::RunOptimizerPass(func_graph, {kInferShapePass, kToNCHWFormatPass, kDelRedundantTranspose})) {
     MS_LOG(ERROR) << "To nchw format failed.";
     return lite::RET_ERROR;
@@ -93,7 +113,14 @@ STATUS PreProcForCaffe(const FuncGraphPtr &func_graph) {
   return lite::RET_OK;
 }
 
-STATUS PreProcForOnnx(const FuncGraphPtr &func_graph) {
+STATUS PreProcForOnnx(const FuncGraphPtr &func_graph, bool offline) {
+  if (!offline) {
+    if (!lite::RunOptimizerPass(func_graph, {kDelRedundantTranspose})) {
+      MS_LOG(ERROR) << "Del redundant transpose failed.";
+      return lite::RET_ERROR;
+    }
+    return lite::RET_OK;
+  }
   if (!lite::RunOptimizerPass(func_graph, {kInferShapePass, kToNCHWFormatPass, kDelRedundantTranspose})) {
     MS_LOG(ERROR) << "To nchw format failed.";
     return lite::RET_ERROR;
@@ -138,14 +165,14 @@ STATUS AclPassImpl::PreProcGraph(const FuncGraphPtr &func_graph) {
     MS_LOG(ERROR) << "Common pass failed.";
     return lite::RET_ERROR;
   }
-  std::map<converter::FmkType, std::function<STATUS(const FuncGraphPtr &)>> fmk_proc_func = {
+  static std::map<converter::FmkType, std::function<STATUS(const FuncGraphPtr &, bool)>> fmk_proc_func = {
     {converter::kFmkTypeMs, PreProcForMindIr},   {converter::kFmkTypeTf, PreProcForTF},
     {converter::kFmkTypeCaffe, PreProcForCaffe}, {converter::kFmkTypeOnnx, PreProcForOnnx},
     {converter::kFmkTypeTflite, PreProcForTF},
   };
   if (fmk_proc_func.find(fmk_type_) != fmk_proc_func.end()) {
     auto func = fmk_proc_func.at(fmk_type_);
-    if (func(func_graph) != lite::RET_OK) {
+    if (func(func_graph, user_options_cfg_.offline) != lite::RET_OK) {
       MS_LOG(ERROR) << "Pre proc failed, fmk " << fmk_type_;
       return lite::RET_ERROR;
     }
@@ -164,10 +191,6 @@ STATUS AclPassImpl::PostProcGraph(const FuncGraphPtr &func_graph) {
   auto manager = func_graph->manager();
   MS_CHECK_TRUE_MSG(manager != nullptr, lite::RET_ERROR, "Manager is nullptr.");
   manager->Reset();
-  if (!user_options_cfg_.offline) {
-    MS_LOG(DEBUG) << "Online model infer no need to change to nhwc format.";
-    return lite::RET_OK;
-  }
   if (fmk_type_ == converter::kFmkTypeTf) {
     MS_LOG(DEBUG) << "Tf no need to change to nhwc format.";
     return lite::RET_OK;

@@ -134,7 +134,7 @@ int MindIRSerializer::Save(const std::shared_ptr<ConverterPara> &param, const Fu
     MS_LOG(ERROR) << "error occur when check condition of saving together.";
     return ret;
   }
-
+  is_fusion_ = !param->no_fusion;
   if (save_together_) {
     ret = SaveMindIRTogether();
   } else {
@@ -383,12 +383,15 @@ int MindIRSerializer::IfSaveTogether(bool *save_together) {
 }
 
 int MindIRSerializer::SaveProtoToFile(mind_ir::ModelProto *model_proto, const std::string &output_file) {
+  if (isRuntimeConvert_) {
+    return RET_OK;
+  }
   mind_ir::GraphProto *graph_proto = model_proto->mutable_graph();
   mind_ir::AttributeProto *attr_proto = graph_proto->add_attribute();
   if (attr_proto != nullptr) {
     attr_proto->set_name(kIsOptimized);
     attr_proto->set_type(mind_ir::AttributeProto_AttributeType_BOOL);
-    attr_proto->set_i(1);
+    attr_proto->set_i(is_fusion_);
   }
 
   auto realpath = Common::CreatePrefixPath(output_file, true);
@@ -414,8 +417,32 @@ int MindIRSerializer::SaveProtoToFile(mind_ir::ModelProto *model_proto, const st
   return RET_OK;
 }
 
-int MindIRSerialize(const std::shared_ptr<ConverterPara> &param, const FuncGraphPtr &func_graph) {
-  mindspore::lite::MindIRSerializer serializer;
-  return serializer.Save(param, func_graph);
+int MindIRSerializer::GetBuffAndSize(void **buff, size_t *size) {
+  if (buff == nullptr || size == nullptr) {
+    MS_LOG(ERROR) << "param is nullptr";
+    return RET_ERROR;
+  }
+  *size = model_proto_.ByteSize();
+  *buff = malloc(*size);
+  if (*buff == nullptr) {
+    MS_LOG(ERROR) << "Malloc fail";
+    return RET_ERROR;
+  }
+  model_proto_.SerializeToArray(*buff, *size);
+  return RET_OK;
+}
+
+int MindIRSerialize(const std::shared_ptr<ConverterPara> &param, const FuncGraphPtr &func_graph, bool isRuntimeConvert,
+                    void **buff, size_t *size) {
+  mindspore::lite::MindIRSerializer serializer(isRuntimeConvert);
+  auto ret = serializer.Save(param, func_graph);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "MindIR serialize fail";
+    return ret;
+  }
+  if (isRuntimeConvert) {
+    return serializer.GetBuffAndSize(buff, size);
+  }
+  return RET_OK;
 }
 }  // namespace mindspore::lite

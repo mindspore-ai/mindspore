@@ -23,6 +23,7 @@
 #include "include/common/utils/utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/optimizer/fusion/tflite_lstm_cell_fusion.h"
+#include "tools/optimizer/common/helper.h"
 #include "nnacl/op_base.h"
 
 namespace mindspore {
@@ -179,7 +180,7 @@ AnfNodePtr TfLstmCellFusion::GetBodyGraphPattern(const PrimitiveVarMapPtr &primi
 
   VarPtr is_fg = std::make_shared<Var>("RootG");
   MS_CHECK_TRUE_RET(is_fg != nullptr, nullptr);
-  auto pattern = SexpToNode(return_node, is_fg, primitive_vars.get(), true);
+  auto pattern = Helper::SexpToNode(return_node, is_fg, primitive_vars.get(), true);
   return pattern;
 }
 

@@ -47,6 +47,13 @@ class Factory {
     (void)kernel_mod_creators_.emplace(name, creator);
   }
 
+  void UnRegister(const std::string &name) {
+    auto iter = kernel_mod_creators_.find(name);
+    if (iter != kernel_mod_creators_.end()) {
+      kernel_mod_creators_.erase(iter);
+    }
+  }
+
   std::shared_ptr<C> Create(const std::string &name) const {
     typename std::map<std::string, CreatorFunc>::const_iterator iter = kernel_mod_creators_.find(name);
     if (iter != kernel_mod_creators_.cend()) {
