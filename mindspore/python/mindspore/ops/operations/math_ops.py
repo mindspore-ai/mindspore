@@ -479,7 +479,7 @@ class AssignSub(Primitive):
         self.add_prim_attr('side_effect_mem', True)
 
 
-class _Reduce(PrimitiveWithInfer):
+class _Reduce(PrimitiveWithCheck):
     """
     Definition of base class of reduction class operators.
 
@@ -504,46 +504,10 @@ class _Reduce(PrimitiveWithInfer):
         output = _run_op(self, self.name, args)
         return output
 
-    @staticmethod
-    def _infer_shape_with_axis_shape(input_x, axis_shape, keep_dims):
-        """ compute the shape, min/max shape of output with axis shape when axis value is None """
-        input_shp = input_x['shape']
-        if axis_shape == -1 and not keep_dims:
-            out_shape = np.array([-2]).tolist()
-        elif not keep_dims:
-            out_shape = -1 * np.ones_like(input_shp[:-axis_shape])
-            out_shape = out_shape.tolist()
-        else:
-            out_shape = -1 * np.ones_like(input_shp)
-            out_shape = out_shape.tolist()
-        return out_shape
-
-    def do_infer(self, input_x, axis, valid_dtype=mstype.number_type):
-        """ return meta infos of input parameters """
-        axis_v = axis['value']
-        input_shp = input_x['shape']
-        args = {'input_x': input_x['dtype']}
-        validator.check_tensors_dtypes_same_and_valid(args, valid_dtype, self.name)
-        if not isinstance(axis['dtype'], mstype.tensor_type) and axis_v is None:
-            raise ValueError(f"For '{self.name}', the 'axis' cannot be None, but got {axis}.")
-        # when the rank of input_x is dynamic, the rank of output is also dynamic
-        if -2 in input_shp:
-            out_shape = np.array([-2]).tolist()
-        # when axis value is none, the output shape is computed by axis shape
-        elif axis_v is None:
-            axis_shape_list = axis['shape']
-            if len(axis_shape_list) != 1:
-                axis_type = axis['dtype']
-                raise TypeError(f"For \'{self.name}\', the axis type of {axis_type}\'s shape length should be 1,"
-                                f"but got \'{len(axis_shape_list)}\'")
-            validator.check_int(len(axis_shape_list), 1, Rel.EQ, 'the shape of axis', self.name)
-            axis_shape = axis_shape_list[0]
-            out_shape = _Reduce._infer_shape_with_axis_shape(input_x, axis_shape, self.keep_dims)
-        else:
-            out_shape = _infer_shape_reduce(input_shp, axis_v, self.keep_dims, self.name)
-
+    def infer_value(self, input_x, axis):
+        """ return reduce op value"""
         value = None
-        if input_x['value'] is not None:
+        if input_x is not None and axis is not None:
             prim_map = {
                 'ReduceSum': np.sum,
                 'ReduceMax': np.max,
@@ -554,22 +518,17 @@ class _Reduce(PrimitiveWithInfer):
             np_reduce_func = prim_map.get(self.name, None)
 
             if np_reduce_func is not None:
-                value = input_x['value'].asnumpy()
-                if isinstance(axis_v, int):
+                value = input_x.asnumpy()
+                if isinstance(axis, int):
                     pass
-                elif axis_v:
-                    axis_v = tuple(set(axis_v))
+                elif axis:
+                    axis = tuple(set(axis))
                 else:
-                    axis_v = tuple(range(len(input_x['shape'])))
-                value = np_reduce_func(value, axis_v, keepdims=self.keep_dims)
+                    axis = tuple(range(len(value.shape)))
+                value = np_reduce_func(value, axis, keepdims=self.keep_dims)
                 value = np.array(value)
                 value = Tensor(value)
-        return {'shape': out_shape,
-                'dtype': input_x['dtype'],
-                'value': value}
-
-    def __infer__(self, input_x, axis):
-        return self.do_infer(input_x, axis)
+        return value
 
 
 class ReduceMean(_Reduce):
@@ -737,9 +696,6 @@ class ReduceSum(_Reduce):
         super(ReduceSum, self).__init__(keep_dims)
         self.__setattr_flag__ = True
 
-    def __infer__(self, input_x, axis):
-        return self.do_infer(input_x, axis, mstype.number_type + (mstype.bool_,))
-
 
 class ReduceAll(_Reduce):
     """
@@ -795,9 +751,6 @@ class ReduceAll(_Reduce):
         [ True]]
     """
 
-    def __infer__(self, input_x, axis):
-        return self.do_infer(input_x, axis, (mstype.bool_,))
-
 
 class ReduceAny(_Reduce):
     """
@@ -852,9 +805,6 @@ class ReduceAny(_Reduce):
         [[True]
         [ True]]
     """
-
-    def __infer__(self, input_x, axis):
-        return self.do_infer(input_x, axis, (mstype.bool_,))
 
 
 class ReduceMax(_Reduce):
@@ -939,9 +889,6 @@ class ReduceMax(_Reduce):
         """Initialize ReduceMax."""
         super(ReduceMax, self).__init__(keep_dims)
         self.__setattr_flag__ = True
-
-    def __infer__(self, input_x, axis):
-        return self.do_infer(input_x, axis, mstype.number_type + (mstype.bool_,))
 
 
 class ReduceMin(_Reduce):

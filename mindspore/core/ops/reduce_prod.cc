@@ -20,6 +20,7 @@
 #include <set>
 #include <vector>
 #include "ops/op_utils.h"
+#include "abstract/ops/op_infer.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/src/helper.h"
@@ -27,18 +28,23 @@
 namespace mindspore {
 namespace ops {
 MIND_API_OPERATOR_IMPL(ReduceProd, Reduce);
+class ReduceProdInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    const int64_t input_num = 1;
+    MS_EXCEPTION_IF_NULL(primitive);
+    CheckAndConvertUtils::CheckInteger("input size", SizeToLong(input_args.size()), kGreaterEqual, input_num,
+                                       primitive->name());
+    return ReduceBaseInferShape(primitive, input_args, kNameReduceProd);
+  }
 
-AbstractBasePtr ReduceProdInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                const std::vector<AbstractBasePtr> &input_args) {
-  const int64_t input_num = 1;
-  MS_EXCEPTION_IF_NULL(primitive);
-  (void)CheckAndConvertUtils::CheckInteger("input size", SizeToLong(input_args.size()), kGreaterEqual, input_num,
-                                           primitive->name());
-  return abstract::MakeAbstract(ReduceBaseInferShape(primitive, input_args, kNameReduceProd),
-                                ReduceBaseInferType(primitive, input_args));
-}
+  TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
+    return ReduceBaseInferType(prim, input_args);
+  }
 
-REGISTER_PRIMITIVE_C(kNameReduceProd, ReduceProd);
-REGISTER_HOST_DEPENDS(kNameReduceProd, {1});
+  std::set<int64_t> GetValueDependArgIndices() const override { return {1}; }
+};
+REGISTER_PRIMITIVE_OP_INFER_IMPL(ReduceProd, prim::kPrimReduceProd, ReduceProdInfer, false);
 }  // namespace ops
 }  // namespace mindspore
