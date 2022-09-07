@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARRAYS_STRIDED_SLICE_GRAD_GPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARRAYS_STRIDED_SLICE_GRAD_GPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_ARRAYS_STRIDED_SLICE_GRAD_GPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_ARRAYS_STRIDED_SLICE_GRAD_GPU_KERNEL_H_
 
 #include <vector>
 #include <bitset>
 #include <algorithm>
+#include <map>
+#include <utility>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/arrays/strided_slice_gpu_common.h"
@@ -28,76 +30,25 @@
 namespace mindspore {
 namespace kernel {
 constexpr int DynamicInputNum = 5;
-template <typename T, typename S = int64_t>
-class StridedSliceGradGpuKernelMod : public DeprecatedNativeGpuKernelMod, public StridedSliceGpuCommon {
+constexpr auto kStridedSliceMaxDims = 8;
+class StridedSliceGradGpuKernelMod : public NativeGpuKernelMod, public StridedSliceGpuCommon {
  public:
   StridedSliceGradGpuKernelMod() = default;
   ~StridedSliceGradGpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    T *dy = GetDeviceAddress<T>(inputs, 0);
-    T *dx = GetDeviceAddress<T>(outputs, 0);
-
-    FillDeviceArray(outputs[0]->size / sizeof(T), dx, 0.f, reinterpret_cast<cudaStream_t>(stream_ptr));
-    if (null_output_) {
-      return true;
-    }
-
-    StridedSliceGrad(output_shape_, begin_, strides_, input_shape_, dy, dx, reinterpret_cast<cudaStream_t>(stream_ptr));
-    return true;
+    cuda_stream_ = stream_ptr;
+    return kernel_func_(this, inputs, outputs);
   }
-  bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    kernel_node_ = kernel_node;
-    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    if (input_num == DynamicInputNum) {
-      is_dynamic_attr_ = true;
-    }
-    if (is_dynamic_attr_) {
-      GetDynamicAttrIntValue(kernel_node, kShapexIndex_, &shapex_, kernel::GetKernelDepends(kernel_node));
-      GetDynamicAttrIntValue(kernel_node, kBeginIndex_, &begin_, kernel::GetKernelDepends(kernel_node));
-      GetDynamicAttrIntValue(kernel_node, kEndIndex_, &end_, kernel::GetKernelDepends(kernel_node));
-      GetDynamicAttrIntValue(kernel_node, kStrideIndex_, &strides_, kernel::GetKernelDepends(kernel_node));
-    } else {
-      shapex_ = GetAttr<std::vector<int64_t>>(kernel_node, "shapex");
-    }
-    for (auto x : shapex_) {
-      input_shape_.push_back(static_cast<size_t>(x));
-    }
-    if (input_shape_.size() > MAX_DIMS) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of input cannot be greater than " << MAX_DIMS
-                        << ", but got " << input_shape_.size();
-    }
-
-    CollectInfo(kernel_node, is_dynamic_attr_);
-    InitSizeLists();
-    return true;
-  }
-  void ResetResource() noexcept override {
-    ResetSizeLists();
-    begin_.clear();
-    end_.clear();
-    strides_.clear();
-    input_shape_.clear();
-    output_shape_.clear();
-    is_dynamic_attr_ = false;
-  }
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs,
+             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override;
+  std::vector<KernelAttr> GetOpSupport();
 
  protected:
-  void InitSizeLists() override {
-    size_t size = sizeof(T);
-    for (size_t i = 0; i < MAX_DIMS; i++) {
-      size *= output_shape_[i];
-    }
-    input_size_list_.push_back(size);
-
-    size_t size1 = sizeof(T);
-    for (size_t i = 0; i < MAX_DIMS; i++) {
-      size1 *= input_shape_[i];
-    }
-    output_size_list_.push_back(size1);
-  }
   bool is_null_input_{false};
   bool is_dynamic_attr_{false};
   bool get_dynamic_attr_value_{false};
@@ -106,8 +57,29 @@ class StridedSliceGradGpuKernelMod : public DeprecatedNativeGpuKernelMod, public
   static constexpr size_t kEndIndex_{3};
   static constexpr size_t kStrideIndex_{4};
   std::vector<int64_t> shapex_;
+
+ private:
+  using StridedSliceGradLaunchFunc = std::function<bool(
+    StridedSliceGradGpuKernelMod *, const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+  template <typename T, typename S = int64_t>
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  void FillEmptyDims(std::vector<int64_t> *begin, std::vector<int64_t> *end, std::vector<int64_t> *stride,
+                     ShapeVector *input_shape);
+  void ComputeBeginMask(std::vector<int64_t> *begin, const std::vector<int64_t> &stride, const ShapeVector &input_shape,
+                        const ops::PrimitiveCPtr &prim);
+  void ComputeEndMask(std::vector<int64_t> *end, const std::vector<int64_t> &stride, const ShapeVector &input_shape,
+                      const ops::PrimitiveCPtr &prim);
+  void ComputeEllipsisMask(std::vector<int64_t> *begin, std::vector<int64_t> *end, std::vector<int64_t> *stride,
+                           const ShapeVector &input_shape, const ops::PrimitiveCPtr &prim);
+  void ComputNewAxisMask(std::vector<int64_t> *begin, std::vector<int64_t> *end, std::vector<int64_t> *stride,
+                         const ShapeVector &input_shape, const ops::PrimitiveCPtr &prim);
+  void ComputeShrinkAxisMask(const std::vector<int64_t> &begin, std::vector<int64_t> *end, std::vector<int64_t> *stride,
+                             const ops::PrimitiveCPtr &prim);
+  void *cuda_stream_{nullptr};
+  StridedSliceGradLaunchFunc kernel_func_;
+  static std::vector<std::pair<KernelAttr, StridedSliceGradLaunchFunc>> func_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARRAYS_STRIDED_SLICE_GRAD_GPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_ARRAYS_STRIDED_SLICE_GRAD_GPU_KERNEL_H_

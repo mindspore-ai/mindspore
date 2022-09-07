@@ -46,58 +46,8 @@ abstract::ShapePtr StridedSliceGradInferShape(const PrimitivePtr &primitive,
   auto prim_name = primitive->name();
   auto shapex = input_args[shape_index];
   CheckSliceType(shapex, "shapex", prim_name);
-  auto shape_value = shapex->BuildValue();
-  MS_EXCEPTION_IF_NULL(shape_value);
-
-  ShapeVector out_shape;
-
-  if (shapex->isa<abstract::AbstractTuple>()) {
-    out_shape = CheckAndConvertUtils::CheckTupleInt("input[shapex]", shape_value, prim_name);
-    return std::make_shared<abstract::Shape>(out_shape);
-  }
-
-  if (!shapex->isa<abstract::AbstractTensor>()) {
-    MS_EXCEPTION(TypeError) << "For 'StridedSliceGrad', 'shapex' must be tuple or Tensor.";
-  }
-
-  if (shape_value->isa<tensor::Tensor>()) {
-    out_shape = CheckAndConvertUtils::CheckTensorIntValue("shapex", shape_value, prim_name);
-    return std::make_shared<abstract::Shape>(out_shape);
-  }
-
-  // shape_value is AnyValue
-  auto shapex_shape = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, shape_index);
-  if (shapex_shape->shape().size() != 1) {
-    MS_EXCEPTION(ValueError) << "For 'StridedSliceGrad', 'shapex' must be 1-D, but got: "
-                             << shapex_shape->shape().size() << "-D.";
-  }
-  auto shapex_len = LongToSize(shapex_shape->shape()[0]);
-  auto abstract_tensor = shapex->cast<abstract::AbstractTensorPtr>();
-  auto shape_min_value = abstract_tensor->get_min_value();
-  auto shape_max_value = abstract_tensor->get_max_value();
-  if (shape_min_value == nullptr || shape_max_value == nullptr) {
-    for (size_t i = 0; i < shapex_len; i++) {
-      out_shape.push_back(abstract::Shape::SHP_ANY);
-    }
-    return std::make_shared<abstract::Shape>(out_shape);
-  }
-
-  auto shape_max = GetValue<std::vector<int64_t>>(shape_max_value);
-  auto shape_min = GetValue<std::vector<int64_t>>(shape_min_value);
-  if (shape_max.size() != shapex_len || shape_min.size() != shapex_len) {
-    MS_LOG(EXCEPTION)
-      << "For '" << prim_name
-      << "', 'shapex' min value size and max value size must match with 'shapex' size. But got min value size: "
-      << shape_min.size() << ",  max value size: " << shape_max.size() << ", 'shapex' size: " << shapex_len << ".";
-  }
-  for (size_t i = 0; i < shapex_len; i++) {
-    if (shape_min[i] == shape_max[i]) {
-      out_shape.push_back(shape_min[i]);
-    } else {
-      out_shape.push_back(abstract::Shape::SHP_ANY);
-    }
-  }
-  return std::make_shared<abstract::Shape>(out_shape, shape_min, shape_max);
+  auto out_shape = GetShapeValue(primitive, shapex);
+  return std::make_shared<abstract::Shape>(out_shape);
 }
 
 TypePtr StridedSliceGradInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
