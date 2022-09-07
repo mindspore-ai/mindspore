@@ -29,8 +29,8 @@ from mindspore.ops.operations.comm_ops import (AllGather, _MiniStepAllGather, _H
                                                ReduceScatter, _HostReduceScatter, _VirtualDiv, _VirtualAdd, _AllSwap,
                                                _VirtualAssignAdd, _VirtualAccuGrad, _MirrorMicroStepOperator,
                                                _MicroStepAllGather)
-from .grad_base import bprop_getters
-from ..operations import _grad_ops as G
+from mindspore.ops._grad.grad_base import bprop_getters
+from mindspore.ops.operations import _grad_ops as G
 
 
 @bprop_getters.register(AllReduce)
