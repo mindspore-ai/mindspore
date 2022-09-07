@@ -19,90 +19,49 @@
 
 #include <vector>
 #include <string>
+#include <map>
+#include <utility>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/select_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
-class SelectGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+constexpr const size_t kSelectInputNum = 3;
+constexpr const size_t kSelectOutputNum = 1;
+constexpr const size_t kSelectOutputSizeInit = 1;
+class SelectGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelper<SelectGpuKernelMod> {
  public:
-  SelectGpuKernelMod() : input_size_(0), output_size_(0), is_null_input_(false), kernel_name_("Select") {}
+  SelectGpuKernelMod() : is_null_input_(false) {}
   ~SelectGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+              const std::vector<AddressPtr> &outputs, void *cuda_stream) override {
     if (is_null_input_) {
       return true;
     }
-    bool *input_cond = GetDeviceAddress<bool>(inputs, 0);
-    T *input_x = GetDeviceAddress<T>(inputs, 1);
-    T *input_y = GetDeviceAddress<T>(inputs, 2);
-    T *output = GetDeviceAddress<T>(outputs, 0);
-    CalSelect(output_size_ / sizeof(T), input_cond, input_x, input_y, output,
-              reinterpret_cast<cudaStream_t>(stream_ptr));
-    return true;
+    cuda_stream_ = cuda_stream;
+    return kernel_func_(this, inputs, workspace, outputs);
   }
 
-  bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-    kernel_node_ = kernel_node;
-    (void)CheckParam(kernel_node);
-    auto shape_signed = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    if (IsDynamic(shape_signed)) {
-      return true;
-    }
-    auto shape = Convert2SizeTClipNeg(shape_signed);
-    is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name_, "input");
-    if (is_null_input_) {
-      InitSizeLists();
-      return true;
-    }
-    input_size_ = sizeof(bool);
-    output_size_ = sizeof(T);
-    for (size_t x : shape) {
-      input_size_ = input_size_ * x;
-      output_size_ = output_size_ * x;
-    }
-    InitSizeLists();
-    return true;
-  }
+  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 
-  void ResetResource() noexcept override {
-    input_size_ = 0;
-    output_size_ = 0;
-    is_null_input_ = false;
-    kernel_name_ = "Select";
-    input_size_list_.clear();
-    output_size_list_.clear();
-    workspace_size_list_.clear();
-  }
-
- protected:
-  void InitSizeLists() override {
-    input_size_list_.push_back(input_size_);
-    input_size_list_.push_back(output_size_);
-    input_size_list_.push_back(output_size_);
-    output_size_list_.push_back(output_size_);
-  }
+  std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
  private:
-  void CheckParam(const CNodePtr &kernel_node) {
-    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    if (input_num != 3) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 3, but got " << input_num;
-    }
-    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-    if (output_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << output_num;
-    }
-  }
+  template <typename T>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
+                    const std::vector<kernel::AddressPtr> &outputs);
 
-  size_t input_size_;
-  size_t output_size_;
   bool is_null_input_;
-  std::string kernel_name_;
+  void *cuda_stream_{nullptr};
+  size_t output_size_;
 };
 }  // namespace kernel
 }  // namespace mindspore
