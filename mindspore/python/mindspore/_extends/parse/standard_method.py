@@ -2072,6 +2072,28 @@ def ms_min(*data):
     return min_(*data)
 
 
+def ms_sum(*data):
+    """Implementation of `sum`."""
+    len_data = len(data)
+    if len_data <= 0 or len_data > 2:
+        const_utils.raise_type_error("sum() requires 1 or 2 arguments.")
+    x = data[0]
+    if not isinstance(x, Tensor) and not hasattr(x, "__ms_iter__"):
+        data_type = F.typeof(x)
+        const_utils.raise_type_error(str(data_type) + " object is not iterable.")
+    if isinstance(x, dict):
+        x = x.keys()
+    result = 0
+    if len_data == 2:
+        result = data[1]
+    if isinstance(x, Tensor):
+        result += x.sum(0)
+    else:
+        for element in x:
+            result += element
+    return result
+
+
 @constexpr
 def python_len(data):
     """Return the result of python built-in len function"""
