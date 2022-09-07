@@ -69,6 +69,9 @@ abstract::ShapePtr ApplyMomentumInferShape(const PrimitivePtr &primitive,
   }
   // Infer shape
   auto v_shape = input_args[0]->BuildShape();
+  if (IsDynamicRank(CheckAndConvertUtils::ConvertShapePtrToShapeMap(v_shape)[kShape])) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
+  }
   auto shape_element = v_shape->cast<abstract::ShapePtr>();
   MS_EXCEPTION_IF_NULL(shape_element);
   return shape_element;

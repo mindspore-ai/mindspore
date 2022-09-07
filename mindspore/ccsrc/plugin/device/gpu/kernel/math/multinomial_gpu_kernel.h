@@ -23,6 +23,10 @@
 #include <string>
 #include <map>
 #include <random>
+#include <functional>
+#include <algorithm>
+#include <utility>
+#include "mindspore/core/ops/multinomial.h"
 #include "plugin/device/gpu/hal/device/gpu_memory_allocator.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
@@ -31,122 +35,40 @@
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
-class MultinomialGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class MultinomialGpuKernelMod : public NativeGpuKernelMod {
  public:
-  MultinomialGpuKernelMod()
-      : input_size_0_(0),
-        output_size_(0),
-        distributions_(0),
-        categories_{0},
-        seed_(0),
-        seed2_(0),
-        is_null_input_(false),
-        rand_state_init_(false),
-        rand_state_(nullptr) {}
+  MultinomialGpuKernelMod() { ResetResource(); }
   ~MultinomialGpuKernelMod() override = default;
 
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    if (is_null_input_) {
-      return true;
-    }
-    int *output_addr = GetDeviceAddress<int>(outputs, 0);
-    T *probs_addr = GetDeviceAddress<T>(inputs, 0);
-    int64_t *num_sample_addr = GetDeviceAddress<int64_t>(inputs, 1);
-    if (distributions_ == 0) {
-      MS_LOG(ERROR) << "For '" << kernel_name_ << "', divide by zero. the distributions_ is 0.";
-      return false;
-    }
+              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
 
-    auto stream = reinterpret_cast<cudaStream_t>(stream_ptr);
-    if (!rand_state_init_) {
-      int rng_seed = 0;
-      std::random_device rd;
-      if (seed2_ != 0) {
-        rng_seed = seed2_;
-      } else if (seed_ != 0) {
-        rng_seed = seed_;
-      } else {
-        rng_seed = static_cast<int>(rd());
-      }
-      InitRandState(rng_seed, distributions_, rand_state_, stream);
-      rand_state_init_ = true;
-    }
-
-    Multinomial(distributions_, categories_, probs_addr, rand_state_, num_sample_addr, output_addr, stream);
-    return true;
-  }
-
-  bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    kernel_node_ = kernel_node;
-    if (input_num != 2) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 2, but got " << input_num;
-    }
-    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-    if (output_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_num;
-    }
-    auto input_shape_signed = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto output_shape_signed = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
-    if (AnfAlgo::IsShapesDynamic({input_shape_signed, output_shape_signed})) {
-      return true;
-    }
-    auto input_shape_0 = Convert2SizeTClipNeg(input_shape_signed);
-    auto output_shape = Convert2SizeTClipNeg(output_shape_signed);
-    is_null_input_ =
-      CHECK_SHAPE_NULL(input_shape_0, kernel_name_, "input") || CHECK_SHAPE_NULL(output_shape, kernel_name_, "output");
-    if (is_null_input_) {
-      InitSizeLists();
-      return true;
-    }
-    if (input_shape_0.size() == 1) {
-      distributions_ = 1;
-      categories_ = input_shape_0[0];
-    } else {
-      distributions_ = input_shape_0[0];
-      categories_ = input_shape_0[1];
-    }
-    input_size_0_ = sizeof(T);
-    for (size_t i = 0; i < input_shape_0.size(); i++) {
-      input_size_0_ *= input_shape_0[i];
-    }
-
-    output_size_ = sizeof(int);
-    for (size_t i = 0; i < output_shape.size(); i++) {
-      output_size_ *= output_shape[i];
-    }
-
-    auto prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
-    MS_EXCEPTION_IF_NULL(prim);
-    seed_ = static_cast<int>(GetValue<int64_t>(prim->GetAttr("seed")));
-    seed2_ = static_cast<int>(GetValue<int64_t>(prim->GetAttr("seed2")));
-    auto &allocator = device::gpu::GPUMemoryAllocator::GetInstance();
-    rand_state_ = static_cast<curandState *>(allocator.AllocTensorMem(sizeof(curandState) * distributions_));
-
-    InitSizeLists();
-    return true;
-  }
-
- protected:
-  void InitSizeLists() override {
-    input_size_list_.push_back(input_size_0_);
-    input_size_list_.push_back(sizeof(int64_t));
-    output_size_list_.push_back(output_size_);
-  }
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  size_t input_size_0_;
-  size_t output_size_;
-  size_t distributions_;
-  size_t categories_;
-  int seed_;
-  int seed2_;
-  bool is_null_input_;
-  bool rand_state_init_;
-  curandState *rand_state_;
+  size_t distributions_{0};
+  size_t categories_{0};
+  int seed_{0};
+  int seed2_{0};
+  bool rand_state_init_{false};
+  curandState *rand_state_{nullptr};
+
+  void ResetResource() noexcept;
+
+  template <typename T>
+  void LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs,
+                    void *stream_ptr);
+  using LaunchFunc = std::function<void(MultinomialGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                                        const std::vector<kernel::AddressPtr> &, void *stream_ptr)>;
+  LaunchFunc launch_func_;
+
+  static std::vector<std::pair<KernelAttr, LaunchFunc>> func_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore

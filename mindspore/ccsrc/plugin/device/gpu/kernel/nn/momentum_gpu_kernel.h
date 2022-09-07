@@ -18,91 +18,68 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_MOMENTUM_GPU_KERNEL_H_
 
 #include <vector>
+#include <map>
+#include <utility>
+#include <algorithm>
+#include "mindspore/core/ops/apply_momentum.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/momentum_impl.cuh"
 namespace mindspore {
 namespace kernel {
 constexpr size_t INPUT_NUM = 5;
-template <typename T, typename S, typename G>
-class MomentumGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class MomentumGpuKernelMod : public NativeGpuKernelMod {
  public:
-  MomentumGpuKernelMod()
-      : use_nesterov_(false),
-        is_null_input_(false),
-        variable_size_(0),
-        accumulation_size_(0),
-        learning_rate_size_(0),
-        gradient_size_(0),
-        momentum_size_(0) {}
+  MomentumGpuKernelMod() = default;
   ~MomentumGpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
               void *stream_ptr) override {
-    if (is_null_input_) {
-      return true;
-    }
-    T *variable = GetDeviceAddress<T>(inputs, 0);
-    T *accumulation = GetDeviceAddress<T>(inputs, 1);
-    S *learning_rate = GetDeviceAddress<S>(inputs, 2);
-    G *gradient = GetDeviceAddress<G>(inputs, 3);
-    S *momentum = GetDeviceAddress<S>(inputs, 4);
-    MomentumUpdateVariable(inputs[0]->size / sizeof(T), variable, accumulation, learning_rate, gradient, momentum,
-                           use_nesterov_, reinterpret_cast<cudaStream_t>(stream_ptr));
+    launch_func_(this, inputs, stream_ptr);
     return true;
   }
-  bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    kernel_node_ = kernel_node;
-    if (input_num != INPUT_NUM) {
+
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) {
+    MS_EXCEPTION_IF_NULL(base_operator);
+    kernel_name_ = base_operator->name();
+    if (inputs.size() != INPUT_NUM) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be " << INPUT_NUM << ", but got "
-                        << input_num;
+                        << inputs.size();
     }
-    use_nesterov_ = GetAttr<bool>(kernel_node, "use_nesterov");
+    auto kernel_ptr = std::dynamic_pointer_cast<ops::ApplyMomentum>(base_operator);
+    MS_EXCEPTION_IF_NULL(kernel_ptr);
+    use_nesterov_ = kernel_ptr->get_use_nesterov();
 
-    variable_size_ = sizeof(T);
-    accumulation_size_ = sizeof(T);
-    learning_rate_size_ = sizeof(S);
-    gradient_size_ = sizeof(G);
-    momentum_size_ = sizeof(S);
-
-    auto variable_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto accumulation_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    auto gradient_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
-    is_null_input_ = CHECK_SHAPE_NULL(variable_shape, kernel_name, "variable") ||
-                     CHECK_SHAPE_NULL(accumulation_shape, kernel_name, "accumulation") ||
-                     CHECK_SHAPE_NULL(gradient_shape, kernel_name, "gradient");
-    if (is_null_input_) {
-      InitSizeLists();
-      return true;
+    auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+    auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+    if (!is_match) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it does not support this kernel type: " << kernel_attr;
     }
-    variable_size_ *= SizeOf(variable_shape);
-    accumulation_size_ *= SizeOf(accumulation_shape);
-    gradient_size_ *= SizeOf(gradient_shape);
-
-    InitSizeLists();
+    launch_func_ = func_list_[index].second;
     return true;
   }
 
- protected:
-  void InitSizeLists() override {
-    input_size_list_.push_back(variable_size_);
-    input_size_list_.push_back(accumulation_size_);
-    input_size_list_.push_back(learning_rate_size_);
-    input_size_list_.push_back(gradient_size_);
-    input_size_list_.push_back(momentum_size_);
-    output_size_list_.push_back(variable_size_);
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override {
+    if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+      return ret;
+    }
+    return static_cast<int>(KRET_OK);
   }
+
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  bool use_nesterov_;
-  bool is_null_input_;
-  size_t variable_size_;
-  size_t accumulation_size_;
-  size_t learning_rate_size_;
-  size_t gradient_size_;
-  size_t momentum_size_;
+  bool use_nesterov_{false};
+
+  template <typename T, typename S, typename G>
+  void LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, void *stream_ptr);
+  using LaunchFunc =
+    std::function<void(MomentumGpuKernelMod *, const std::vector<kernel::AddressPtr> &, void *stream_ptr)>;
+  LaunchFunc launch_func_;
+
+  static std::vector<std::pair<KernelAttr, LaunchFunc>> func_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore

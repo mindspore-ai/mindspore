@@ -36,6 +36,9 @@ abstract::ShapePtr MultinomialInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  if (IsDynamicRank(x_shape)) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
+  }
   const int64_t x_rank_max = 2;
   const int64_t x_rank_min = 1;
   auto context_ptr = MsContext::GetInstance();

@@ -28,20 +28,33 @@ constexpr size_t kDepthToSpaceOutputsNum = 1;
 constexpr size_t kDepthToSpaceInputDimension = 4;
 }  // namespace
 
-void DepthToSpaceCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  output_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
-  block_size_ = LongToSize(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "block_size"));
+bool DepthToSpaceCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                    const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::DepthToSpace>(base_operator);
+  MS_EXCEPTION_IF_NULL(kernel_ptr);
+  block_size_ = LongToSize(kernel_ptr->get_block_size());
 
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
-    MS_LOG(EXCEPTION) << "DepthToSpace does not support this kernel data type: " << kernel_attr;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it does not support this kernel type: " << kernel_attr;
+    return false;
   }
-
   kernel_func_ = func_list_[index].second;
+  return true;
+}
+
+int DepthToSpaceCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                     const std::vector<KernelTensorPtr> &outputs,
+                                     const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  input_shape_ = inputs[0]->GetShapeVector();
+  output_shape_ = outputs[0]->GetShapeVector();
+  return static_cast<int>(KRET_OK);
 }
 
 template <typename T>
