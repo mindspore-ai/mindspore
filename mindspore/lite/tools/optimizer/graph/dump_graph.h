@@ -40,6 +40,7 @@ class DumpGraph : public registry::PassBase, public Pass {
   bool Execute(const api::FuncGraphPtr &func_graph) override {
     MS_CHECK_TRUE_MSG(func_graph != nullptr, false, "funcGraph is a nullptr.");
     auto impl = func_graph->impl();
+    MS_CHECK_TRUE_MSG(impl != nullptr, false, "func_graph impl is a nullptr.");
     auto graph = std::dynamic_pointer_cast<FuncGraph>(impl);
     MS_CHECK_TRUE_MSG(graph != nullptr, false, "Graph is a nullptr.");
     return Run(graph);

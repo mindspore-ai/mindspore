@@ -357,6 +357,7 @@ int ControlFlowPass::CreateWhileBodyPartialNode(const FuncGraphPtr &cond_fg, con
   // insert call node
   std::vector<AnfNodePtr> call_node_inputs{cond_partial_cnode};
   auto cond_call_cnode = body_fg->NewCNode(call_node_inputs);
+  MS_CHECK_TRUE_MSG(cond_call_cnode != nullptr, RET_FAILED, "new cnode is nullptr");
   cond_call_cnode->set_fullname_with_scope("call_" + cond_partial_cnode->fullname_with_scope());
   body_fg->set_output(cond_call_cnode);
 
