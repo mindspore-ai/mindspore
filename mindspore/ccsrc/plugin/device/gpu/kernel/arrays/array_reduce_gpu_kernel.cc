@@ -59,6 +59,120 @@ MS_REG_GPU_KERNEL_ONE(ReduceProd, KernelAttr().AddInputAttr(kNumberTypeFloat64).
 
 // dynamic
 MS_REG_GPU_KERNEL_TWO(
+  ReduceMax,
+  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
+  ArrayReduceGpuKernelMod, double, int64_t)
+MS_REG_GPU_KERNEL_TWO(
+  ReduceMax,
+  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
+  ArrayReduceGpuKernelMod, float, int64_t)
+MS_REG_GPU_KERNEL_TWO(
+  ReduceMax,
+  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
+  ArrayReduceGpuKernelMod, half, int64_t)
+MS_REG_GPU_KERNEL_TWO(
+  ReduceMax,
+  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
+  ArrayReduceGpuKernelMod, double, int32_t)
+MS_REG_GPU_KERNEL_TWO(
+  ReduceMax,
+  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
+  ArrayReduceGpuKernelMod, float, int32_t)
+MS_REG_GPU_KERNEL_TWO(
+  ReduceMax,
+  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat16),
+  ArrayReduceGpuKernelMod, half, int32_t)
+MS_REG_GPU_KERNEL_TWO(
+  ReduceMean,
+  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
+  ArrayReduceGpuKernelMod, double, int64_t)
+MS_REG_GPU_KERNEL_TWO(
+  ReduceMean,
+  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
+  ArrayReduceGpuKernelMod, float, int64_t)
+MS_REG_GPU_KERNEL_TWO(
+  ReduceMean,
+  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
+  ArrayReduceGpuKernelMod, half, int64_t)
+MS_REG_GPU_KERNEL_TWO(
+  ReduceMean,
+  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
+  ArrayReduceGpuKernelMod, double, int32_t)
+MS_REG_GPU_KERNEL_TWO(
+  ReduceMean,
+  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
+  ArrayReduceGpuKernelMod, float, int32_t)
+MS_REG_GPU_KERNEL_TWO(
+  ReduceMean,
+  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat16),
+  ArrayReduceGpuKernelMod, half, int32_t)
+MS_REG_GPU_KERNEL_TWO(
+  ReduceMin,
+  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
+  ArrayReduceGpuKernelMod, double, int64_t)
+MS_REG_GPU_KERNEL_TWO(
+  ReduceMin,
+  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
+  ArrayReduceGpuKernelMod, float, int64_t)
+MS_REG_GPU_KERNEL_TWO(
+  ReduceMin,
+  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
+  ArrayReduceGpuKernelMod, half, int64_t)
+MS_REG_GPU_KERNEL_TWO(
+  ReduceMin,
+  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
+  ArrayReduceGpuKernelMod, double, int32_t)
+MS_REG_GPU_KERNEL_TWO(
+  ReduceMin,
+  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
+  ArrayReduceGpuKernelMod, float, int32_t)
+MS_REG_GPU_KERNEL_TWO(
+  ReduceMin,
+  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat16),
+  ArrayReduceGpuKernelMod, half, int32_t)
+MS_REG_GPU_KERNEL_TWO(
+  ReduceAll, KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
+  ArrayReduceGpuKernelMod, bool, int64_t)
+MS_REG_GPU_KERNEL_TWO(
+  ReduceAll, KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
+  ArrayReduceGpuKernelMod, bool, int32_t)
+MS_REG_GPU_KERNEL_TWO(
+  ReduceAny, KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
+  ArrayReduceGpuKernelMod, bool, int64_t)
+MS_REG_GPU_KERNEL_TWO(
+  ReduceAny, KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
+  ArrayReduceGpuKernelMod, bool, int32_t)
+MS_REG_GPU_KERNEL_TWO(
+  ReduceProd, KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt8),
+  ArrayReduceGpuKernelMod, int8_t, int64_t)
+MS_REG_GPU_KERNEL_TWO(
+  ReduceProd,
+  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
+  ArrayReduceGpuKernelMod, double, int64_t)
+MS_REG_GPU_KERNEL_TWO(
+  ReduceProd,
+  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
+  ArrayReduceGpuKernelMod, float, int64_t)
+MS_REG_GPU_KERNEL_TWO(
+  ReduceProd,
+  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
+  ArrayReduceGpuKernelMod, half, int64_t)
+MS_REG_GPU_KERNEL_TWO(
+  ReduceProd, KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt8),
+  ArrayReduceGpuKernelMod, int8_t, int32_t)
+MS_REG_GPU_KERNEL_TWO(
+  ReduceProd,
+  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
+  ArrayReduceGpuKernelMod, double, int32_t)
+MS_REG_GPU_KERNEL_TWO(
+  ReduceProd,
+  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
+  ArrayReduceGpuKernelMod, float, int32_t)
+MS_REG_GPU_KERNEL_TWO(
+  ReduceProd,
+  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat16),
+  ArrayReduceGpuKernelMod, half, int32_t)
+MS_REG_GPU_KERNEL_TWO(
   ReduceSum,
   KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
   ArrayReduceGpuKernelMod, double, int64_t)
