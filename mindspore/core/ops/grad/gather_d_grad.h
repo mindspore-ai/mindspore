@@ -31,8 +31,6 @@ class MIND_API GatherDGrad : public BaseOperator {
   int64_t get_dim() const;
   std::vector<int64_t> get_shape() const;
 };
-abstract::AbstractBasePtr GatherDGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                           const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

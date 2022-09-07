@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ISFINITE_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ISFINITE_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_ISFINITE_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_ISFINITE_CPU_KERNEL_H_
 
 #include <vector>
 #include <map>
@@ -24,12 +24,13 @@
 
 namespace mindspore {
 namespace kernel {
-class IsFiniteCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class IsFiniteCpuKernelMod : public NativeCpuKernelMod {
  public:
   IsFiniteCpuKernelMod() = default;
   ~IsFiniteCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernelNode) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
@@ -53,4 +54,4 @@ class IsFiniteCpuKernelMod : public DeprecatedNativeCpuKernelMod {
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ISFINITE_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_ISFINITE_CPU_KERNEL_H_

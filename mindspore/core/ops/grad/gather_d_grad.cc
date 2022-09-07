@@ -23,40 +23,42 @@
 
 namespace mindspore {
 namespace ops {
-namespace {
-abstract::ShapePtr GatherDGradInferShape(const PrimitivePtr &primitive,
-                                         const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto prim_name = primitive->name();
+MIND_API_OPERATOR_IMPL(GatherDGrad, BaseOperator);
+class GatherDGradInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    MS_EXCEPTION_IF_NULL(primitive);
+    auto prim_name = primitive->name();
 
-  const size_t gather_d_grad_input_num = 2;
-  MS_EXCEPTION_IF_CHECK_FAIL(input_args.size() == gather_d_grad_input_num,
-                             "GatherDGrad's input size should be 2 but got " + std::to_string(input_args.size()));
-  for (auto item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
+    const size_t gather_d_grad_input_num = 2;
+    MS_EXCEPTION_IF_CHECK_FAIL(input_args.size() == gather_d_grad_input_num,
+                               "GatherDGrad's input size should be 2 but got " + std::to_string(input_args.size()));
+    for (auto item : input_args) {
+      MS_EXCEPTION_IF_NULL(item);
+    }
+
+    auto shape_attr = primitive->GetAttr(kShape);
+    auto shape = CheckAndConvertUtils::CheckIntOrTupleInt("shape", shape_attr, prim_name);
+    return std::make_shared<abstract::Shape>(shape);
   }
 
-  auto shape_attr = primitive->GetAttr(kShape);
-  auto shape = CheckAndConvertUtils::CheckIntOrTupleInt("shape", shape_attr, prim_name);
-  return std::make_shared<abstract::Shape>(shape);
-}
-
-TypePtr GatherDGradInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(prim);
-  auto prim_name = prim->name();
-  const size_t gather_d_grad_input_num = 2;
-  MS_EXCEPTION_IF_CHECK_FAIL(input_args.size() == gather_d_grad_input_num,
-                             "GatherDGrad's input size should be 2 but got " + std::to_string(input_args.size()));
-  for (auto item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
+  TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
+    MS_EXCEPTION_IF_NULL(prim);
+    auto prim_name = prim->name();
+    const size_t gather_d_grad_input_num = 2;
+    MS_EXCEPTION_IF_CHECK_FAIL(input_args.size() == gather_d_grad_input_num,
+                               "GatherDGrad's input size should be 2 but got " + std::to_string(input_args.size()));
+    for (auto item : input_args) {
+      MS_EXCEPTION_IF_NULL(item);
+    }
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("index", input_args[kInputIndex0]->BuildType(), {kInt32, kInt64},
+                                                     prim_name);
+    auto out_type = CheckAndConvertUtils::CheckTensorTypeValid("grad", input_args[kInputIndex1]->BuildType(),
+                                                               {kTensorType}, prim_name);
+    return out_type;
   }
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("index", input_args[kInputIndex0]->BuildType(), {kInt32, kInt64},
-                                                   prim_name);
-  auto out_type =
-    CheckAndConvertUtils::CheckTensorTypeValid("grad", input_args[kInputIndex1]->BuildType(), {kTensorType}, prim_name);
-  return out_type;
-}
-}  // namespace
+};
 
 void GatherDGrad::Init(int64_t dim, const std::vector<int64_t> &shape) {
   this->set_dim(dim);
@@ -77,14 +79,6 @@ std::vector<int64_t> GatherDGrad::get_shape() const {
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
 
-AbstractBasePtr GatherDGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                 const std::vector<AbstractBasePtr> &input_args) {
-  auto infer_type = GatherDGradInferType(primitive, input_args);
-  auto infer_shape = GatherDGradInferShape(primitive, input_args);
-  return abstract::MakeAbstract(infer_shape, infer_type);
-}
-
-MIND_API_OPERATOR_IMPL(GatherDGrad, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(GatherDGrad, prim::kPrimGatherDGrad, GatherDGradInfer, nullptr, true);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(GatherDGrad, prim::kPrimGatherDGrad, GatherDGradInfer, false);
 }  // namespace ops
 }  // namespace mindspore

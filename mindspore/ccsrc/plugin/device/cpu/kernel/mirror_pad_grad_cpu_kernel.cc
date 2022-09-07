@@ -30,12 +30,15 @@ constexpr size_t kMirrorPadGradOutputsNum = 1;
 constexpr size_t kPadMaxSupportDim = 5;
 }  // namespace
 
-void MirrorPadGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  std::string mode = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, "mode");
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  pad_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 1);
+bool MirrorPadGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                     const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  auto prim = base_operator->GetPrim();
+  MS_EXCEPTION_IF_NULL(prim);
+  std::string mode = GetValue<std::string>(prim->GetAttr("mode"));
+  dtype_ = inputs[0]->GetDtype();
+  pad_dtype_ = inputs[1]->GetDtype();
   if (mode == "REFLECT") {
     mode_ = 1;
   } else if (mode == "SYMMETRIC") {
@@ -44,23 +47,30 @@ void MirrorPadGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'mode' should be 'REFLECT' or 'SYMMETRIC', but got "
                       << mode;
   }
+  return true;
+}
 
-  ShapeVector input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  dims_ = input_shape.size();
-
-  for (int64_t i = 0; i < dims_; ++i) {
-    input_size_ *= input_shape[i];
-    input_shape_.push_back(input_shape[i]);
+int MirrorPadGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                      const std::vector<KernelTensorPtr> &outputs,
+                                      const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  if (ret != 0) {
+    return ret;
+  }
+  input_shape_ = inputs.at(kIndex0)->GetShapeVector();
+  dims_ = int64_t(input_shape_.size());
+  for (auto x : input_shape_) {
+    input_size_ *= x;
   }
 
-  auto padding_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+  ShapeVector padding_shape = inputs.at(kIndex1)->GetShapeVector();
   num_paddings_ = padding_shape[0];
 
-  ShapeVector output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
-  for (auto x : output_shape) {
+  output_shape_ = outputs.at(kIndex0)->GetShapeVector();
+  for (auto x : output_shape_) {
     output_size_ *= x;
-    output_shape_.push_back(x);
   }
+  return ret;
 }
 
 template <typename T>

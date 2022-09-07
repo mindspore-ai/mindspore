@@ -17,6 +17,8 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_FLOAT_STATUS_GPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_FLOAT_STATUS_GPU_KERNEL_H_
 
+#include <utility>
+#include <algorithm>
 #include <memory>
 #include <vector>
 #include <map>
@@ -28,101 +30,45 @@
 
 namespace mindspore {
 namespace kernel {
-enum Optype { OP_STATUS = 0, OP_INF, OP_NAN, OP_FINITE, OP_INVALID = 255 };
-static const std::map<std::string, Optype> kOpTypeMap = {
-  {"FloatStatus", OP_STATUS}, {"IsInf", OP_INF}, {"IsNan", OP_NAN}, {"IsFinite", OP_FINITE}};
-template <typename T>
-class FloatStatusGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class FloatStatusGpuKernelMod : public NativeGpuKernelMod {
  public:
-  FloatStatusGpuKernelMod() : kernel_name_(OP_INVALID), input_size_(0), output_size_(0), is_null_input_(false) {}
+  explicit FloatStatusGpuKernelMod(const std::string &kernel_name) { kernel_name_ = kernel_name; }
   ~FloatStatusGpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    if (is_null_input_) {
-      return true;
-    }
-    T *input = GetDeviceAddress<T>(inputs, 0);
+              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
 
-    switch (kernel_name_) {
-      case OP_STATUS: {
-        float *output = GetDeviceAddress<float>(outputs, 0);
-        FillDeviceArray(outputs[0]->size / sizeof(float), output, 0.0f, reinterpret_cast<cudaStream_t>(stream_ptr));
-        CalFloatStatus(input_size_ / sizeof(T), input, output, reinterpret_cast<cudaStream_t>(stream_ptr));
-        break;
-      }
-      case OP_INF: {
-        bool *output = GetDeviceAddress<bool>(outputs, 0);
-        CalIsInf(input_size_ / sizeof(T), input, output, reinterpret_cast<cudaStream_t>(stream_ptr));
-        break;
-      }
-      case OP_NAN: {
-        bool *output = GetDeviceAddress<bool>(outputs, 0);
-        CalIsNan(input_size_ / sizeof(T), input, output, reinterpret_cast<cudaStream_t>(stream_ptr));
-        break;
-      }
-      case OP_FINITE: {
-        bool *output = GetDeviceAddress<bool>(outputs, 0);
-        CalIsFinite(input_size_ / sizeof(T), input, output, reinterpret_cast<cudaStream_t>(stream_ptr));
-        break;
-      }
-      default: {
-        MS_LOG(EXCEPTION) << "FloatStatus type " << kernel_name_ << " is not supported.";
-      }
-    }
-    return true;
-  }
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
 
-  bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    kernel_node_ = kernel_node;
-    (void)CheckParam(kernel_node);
-    auto shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name, "input");
-    if (is_null_input_) {
-      InitSizeLists();
-      return true;
-    }
-    input_size_ = sizeof(T) * SizeOf(shape);
-    auto iter = kOpTypeMap.find(kernel_name);
-    if (iter == kOpTypeMap.end()) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << ", only support these types: FloatStatus, IsInf, IsNan, IsFinite "
-                        << "currently, but got " << kernel_name;
-    }
-    kernel_name_ = iter->second;
-
-    if (kernel_name_ == OP_STATUS) {
-      output_size_ = sizeof(float);
-    } else {
-      output_size_ = input_size_ / sizeof(T) * sizeof(bool);
-    }
-    InitSizeLists();
-    return true;
-  }
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs,
+             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override;
 
  protected:
-  void InitSizeLists() override {
-    input_size_list_.push_back(input_size_);
-    output_size_list_.push_back(output_size_);
-  }
+  std::vector<KernelAttr> GetOpSupport() override;
+
+  template <typename T>
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
  private:
-  void CheckParam(const CNodePtr &kernel_node) {
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    if (input_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 1, but got " << input_num;
-    }
-    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-    if (output_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 1, but got " << output_num;
-    }
-  }
+  using FloatStatusOpFunc = std::function<bool(FloatStatusGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                                               const std::vector<kernel::AddressPtr> &)>;
+  static std::map<std::string, std::vector<std::pair<KernelAttr, FloatStatusGpuKernelMod::FloatStatusOpFunc>>>
+    kernel_attr_map_;
+  FloatStatusOpFunc kernel_func_;
 
-  Optype kernel_name_;
-  size_t input_size_;
-  size_t output_size_;
-  bool is_null_input_;
+  enum Optype { OP_STATUS = 0, OP_INF, OP_NAN, OP_FINITE, OP_INVALID = 255 };
+  Optype kernel_type_{OP_INVALID};
+  std::string kernel_name_;
+  size_t input_size_{0};
+  size_t output_size_{0};
+  size_t type_id_size_{0};
+  bool is_null_input_{false};
+  void *cuda_stream_{nullptr};
+
+  const std::map<std::string, Optype> kOpTypeMap = {
+    {"FloatStatus", OP_STATUS}, {"IsInf", OP_INF}, {"IsNan", OP_NAN}, {"IsFinite", OP_FINITE}};
 };
 }  // namespace kernel
 }  // namespace mindspore

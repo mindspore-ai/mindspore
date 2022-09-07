@@ -4088,7 +4088,7 @@ class IsFinite(Primitive):
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
 
 
-class FloatStatus(PrimitiveWithInfer):
+class FloatStatus(Primitive):
     """
     Determines if the elements contain Not a Number(NaN), infinite or negative infinite. 0 for normal, 1 for overflow.
 
@@ -4117,13 +4117,6 @@ class FloatStatus(PrimitiveWithInfer):
     def __init__(self):
         """Initialize FloatStatus"""
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
-
-    def infer_shape(self, x_shape):
-        return [1]
-
-    def infer_dtype(self, x_dtype):
-        validator.check_tensor_dtype_valid('x', x_dtype, [mstype.float32, mstype.float16, mstype.float64], self.name)
-        return mstype.float32
 
 
 class NPUAllocFloatStatus(PrimitiveWithInfer):

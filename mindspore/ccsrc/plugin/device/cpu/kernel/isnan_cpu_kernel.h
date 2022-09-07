@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ISNAN_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ISNAN_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_ISNAN_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_ISNAN_CPU_KERNEL_H_
 
 #include <vector>
 #include <map>
@@ -24,14 +24,15 @@
 
 namespace mindspore {
 namespace kernel {
-class IsNanCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class IsNanCpuKernelMod : public NativeCpuKernelMod {
  public:
   IsNanCpuKernelMod() = default;
   ~IsNanCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernelNode) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override {
@@ -70,4 +71,4 @@ class IsNanCpuKernelMod : public DeprecatedNativeCpuKernelMod {
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ISNAN_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_ISNAN_CPU_KERNEL_H_

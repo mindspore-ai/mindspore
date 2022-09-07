@@ -29,11 +29,8 @@ class MIND_API IsNan : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(IsNan);
   IsNan() : BaseOperator(kNameIsNan) { InitIOName({"x"}, {"y"}); }
+  void Init() const {}
 };
-
-abstract::AbstractBasePtr IsNanInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const std::vector<abstract::AbstractBasePtr> &input_args);
-using PrimIsNanPtr = std::shared_ptr<IsNan>;
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_IS_NAN_H_
