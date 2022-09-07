@@ -229,6 +229,10 @@ class Conv3DTransposeInfer : public abstract::OpInferBase {
     auto w_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
     auto x_shape = x_shape_map[kShape];
     auto w_shape = w_shape_map[kShape];
+    if (x_shape.size() == 1 && x_shape[0] == UNKNOWN_RANK) {
+      ShapeVector output_shape{UNKNOWN_RANK};
+      return std::make_shared<abstract::Shape>(output_shape);
+    }
     const int64_t shape_size = 5;
     (void)CheckAndConvertUtils::CheckInteger("x shape size", SizeToLong(x_shape.size()), kEqual, shape_size, prim_name);
     (void)CheckAndConvertUtils::CheckInteger("w shape size", SizeToLong(w_shape.size()), kEqual, shape_size, prim_name);
