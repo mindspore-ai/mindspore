@@ -784,7 +784,7 @@ def test_dense_to_csr():
     Expectation: Success.
     """
     dense_tensor = Tensor([[0, 1, 2, 0], [0, 0, 0, 0], [1, 0, 0, 0]], dtype=mstype.float32)
-
+    grad_op = ops.GradOperation(get_all=True, sens_param=True)
     def test_to_csr(dense_tensor):
         return dense_tensor.to_csr()
 
@@ -798,6 +798,9 @@ def test_dense_to_csr():
     assert isinstance(csr_tensor_graph, CSRTensor)
     compare_csr(csr_tensor, expect)
     compare_csr(csr_tensor_graph, expect)
+
+    dense_tensor_grad = grad_op(test_to_csr)(dense_tensor, expect)
+    assert (dense_tensor_grad[0].asnumpy() == np.array([[0, 1, 2, 0], [0, 0, 0, 0], [1, 0, 0, 0]])).all()
 
 
 @pytest.mark.level0
