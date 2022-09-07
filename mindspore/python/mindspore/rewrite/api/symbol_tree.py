@@ -241,6 +241,12 @@ class SymbolTree:
         """
         self._symbol_tree.dump()
 
+    def print_node_tabulate(self):
+        """
+        Print node information of graph.
+        """
+        self._symbol_tree.print_node_tabulate()
+
     def get_code(self) -> str:
         """
         Get source code of modified network.

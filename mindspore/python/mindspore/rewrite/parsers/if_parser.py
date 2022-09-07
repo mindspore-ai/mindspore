@@ -49,8 +49,9 @@ class IfParser(Parser):
         test_value = True
         try:
             test_value = eval(test_code)
-        except Exception:
-            raise NotImplementedError("Only support ast.If whose test can be eval, got:", test_code)
+        except NameError:
+            stree.try_append_python_node(node, node)
+            return
 
         bodies = node.body if test_value else node.orelse
         for body in bodies:
