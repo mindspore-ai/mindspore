@@ -93,7 +93,7 @@ class AdjustContrastv2(Primitive):
         ValueError: If the dimension of the 'images' is less than 3, or the last dimension of the 'images' is not 3.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
     >>> images = Tensor([[[1.0, 2.0, 3.0],

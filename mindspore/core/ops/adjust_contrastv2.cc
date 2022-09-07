@@ -33,6 +33,14 @@ abstract::ShapePtr AdjustContrastv2InferShape(const PrimitivePtr &primitive,
   auto input_images_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto input_contrast_factor_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+  auto input_images_shape_ptr = input_args[0]->BuildShape();
+  auto input_contrast_factor_shape_ptr = input_args[1]->BuildShape();
+  if (input_images_shape_ptr->IsDynamic() || input_contrast_factor_shape_ptr->IsDynamic()) {
+    return std::make_shared<abstract::Shape>(input_images_shape);
+  }
+  if (IsDynamicRank(input_images_shape) || IsDynamicRank(input_contrast_factor_shape)) {
+    return std::make_shared<abstract::Shape>(input_images_shape);
+  }
   const int64_t min_images_dim = 3;
   const int64_t contrast_factor_dim = 0;
   (void)CheckAndConvertUtils::CheckInteger("dimension of AdjustContrastv2 input images",
