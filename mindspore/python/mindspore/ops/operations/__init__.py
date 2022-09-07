@@ -69,7 +69,7 @@ from .math_ops import (Abs, ACos, Asin, Asinh, AddN, AccumulateNV2, AssignAdd, A
                        NPUAllocFloatStatus, NPUClearFloatStatus, LinSpace, Einsum, Renorm,
                        NPUGetFloatStatus, Pow, RealDiv, IsNan, IsInf, IsFinite, FloatStatus,
                        Reciprocal, CumSum, HistogramFixedWidth, SquaredDifference, Xdivy, Xlogy,
-                       Sin, Sqrt, Rsqrt, BesselI0, BesselI1, BesselI0e, BesselI1e, TruncateDiv, TruncateMod, Addcdiv,
+                       Sin, Sqrt, Rsqrt, BesselI0e, BesselI1e, TruncateDiv, TruncateMod, Addcdiv,
                        Addcmul, Square, Sub, TensorAdd, Add, Sign, Round, SquareSumAll, Atan, Atanh, Cosh, Sinh, Eps,
                        Tan, MatrixInverse, IndexAdd, Erfinv, Conj, Real, Imag, Complex, Trunc, IsClose, LuSolve,
                        CholeskyInverse)
@@ -461,8 +461,6 @@ __all__ = [
     "BitwiseAnd",
     "BitwiseOr",
     "BitwiseXor",
-    "BesselI0",
-    "BesselI1",
     "BesselI0e",
     "BesselI1e",
     "Atan",

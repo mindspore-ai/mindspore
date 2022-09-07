@@ -34,6 +34,8 @@ from mindspore._checkparam import check_is_number
 from mindspore._checkparam import Rel
 from mindspore.ops.operations.math_ops import (
     Bernoulli,
+    BesselI0,
+    BesselI1,
     BesselJ0,
     BesselJ1,
     BesselK0,
@@ -131,13 +133,13 @@ erf_ = P.Erf()
 erfc_ = P.Erfc()
 bessel_j1_ = BesselJ1()
 bessel_j0_ = BesselJ0()
-bessel_i0_ = P.BesselI0()
+bessel_i0_ = BesselI0()
 bessel_i0e_ = P.BesselI0e()
 bessel_k0_ = BesselK0()
 bessel_k0e_ = BesselK0e()
 bessel_y0_ = BesselY0()
 bessel_y1_ = BesselY1()
-bessel_i1_ = P.BesselI1()
+bessel_i1_ = BesselI1()
 bessel_i1e_ = P.BesselI1e()
 bessel_k1_ = BesselK1()
 bessel_k1e_ = BesselK1e()

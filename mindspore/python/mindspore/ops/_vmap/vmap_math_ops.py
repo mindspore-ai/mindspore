@@ -29,8 +29,8 @@ from mindspore.ops.composite import _VmapGeneralRule
 from mindspore.ops._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, get_assign_vmap_rule, \
     get_unop_vmap_rule, _raise_value_error, _bdim_at_front, _broadcast_by_axis, _handle_broadcasting, \
     _vmap_clone_prim, _bdim_at_any, _get_reduce_batch_axis, _get_reduce_out_dim
-from mindspore.ops.operations.math_ops import Bernoulli, BesselJ0, BesselJ1, BesselK0, BesselK0e, BesselY0, \
-    BesselY1, BesselK1, BesselK1e, Median
+from mindspore.ops.operations.math_ops import Bernoulli, BesselI0, BesselI1, BesselJ0, BesselJ1, \
+    BesselK0, BesselK0e, BesselY0, BesselY1, BesselK1, BesselK1e, Median
 
 
 @constexpr
@@ -816,13 +816,13 @@ get_unop_vmap_rule = vmap_rules_getters.register(P.IsInf)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.IsFinite)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(BesselJ0)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(BesselJ1)(get_unop_vmap_rule)
-get_unop_vmap_rule = vmap_rules_getters.register(P.BesselI0)(get_unop_vmap_rule)
+get_unop_vmap_rule = vmap_rules_getters.register(BesselI0)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.BesselI0e)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(BesselK0)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(BesselK0e)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(BesselY0)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(BesselY1)(get_unop_vmap_rule)
-get_unop_vmap_rule = vmap_rules_getters.register(P.BesselI1)(get_unop_vmap_rule)
+get_unop_vmap_rule = vmap_rules_getters.register(BesselI1)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.BesselI1e)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(BesselK1)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(BesselK1e)(get_unop_vmap_rule)
