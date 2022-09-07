@@ -62,3 +62,15 @@ def test_reduce_axis_update():
     Expectation: success
     """
     utils.run_testcase('pass_reduce_axis_update')
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_convert_attr_to_input():
+    """
+    Description: test convert attr to input
+    Expectation: success
+    """
+    utils.run_testcase('pass_convert_attr_to_input')
