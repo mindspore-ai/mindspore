@@ -24,34 +24,6 @@
 
 namespace mindspore {
 namespace runtime {
-namespace {
-// Check if the parameter is used by the real kernel, not just load node.
-bool IsInputNodeUsedByRealKernel(const AnfNodePtr &input_node, const AnfNodePtr &node,
-                                 std::set<AnfNodePtr> *checked_nodes) {
-  MS_EXCEPTION_IF_NULL(input_node);
-  MS_EXCEPTION_IF_NULL(node);
-  MS_EXCEPTION_IF_NULL(checked_nodes);
-  if (!node->isa<CNode>() || common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimLoad) ||
-      checked_nodes->find(node) != checked_nodes->end()) {
-    return false;
-  }
-  checked_nodes->emplace(node);
-
-  const auto &cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  for (const auto &input : cnode->inputs()) {
-    MS_EXCEPTION_IF_NULL(input);
-    if (input == input_node) {
-      return true;
-    }
-    if (IsInputNodeUsedByRealKernel(input_node, input, checked_nodes)) {
-      return true;
-    }
-  }
-  return false;
-}
-}  // namespace
-
 void SuperKernelActor::Init() {
   MS_EXCEPTION_IF_NULL(graph_);
   // Check device contexts number.
@@ -88,15 +60,6 @@ void SuperKernelActor::Init() {
     MS_EXCEPTION_IF_NULL(input_node);
     if (!common::AnfAlgo::HasAbstractRef(input_node)) {
       is_parameters_need_copy_[i] = false;
-      continue;
-    }
-
-    std::set<AnfNodePtr> checked_nodes;
-    if (!IsInputNodeUsedByRealKernel(input_node, graph_->output(), &checked_nodes)) {
-      is_parameters_need_copy_[i] = false;
-      MS_LOG(INFO) << "Input node:" << input_node->DebugString()
-                   << " has ref, but not used by a real kernel, not need to copy in graph:" << graph_->ToString()
-                   << " for actor:" << GetAID();
       continue;
     }
     // If the parameter has ref attribute and is directly used by the kernel in the graph, it needs to be copied.
