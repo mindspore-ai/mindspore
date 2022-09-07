@@ -228,8 +228,8 @@ GeTensor ConvertAnyUtil(const ValuePtr &value, const AnyTraits<AnyValue>) {
     (void)str_tensor.SetData(v);
     return str_tensor;
   } else {
-    MS_LOG(WARNING) << "Unsupported value type: " << value->type_name()
-                    << " to convert to tensor. Value: " << value->ToString();
+    MS_LOG(INFO) << "Unsupported value type: " << value->type_name()
+                 << " to convert to tensor. Value: " << value->ToString();
   }
   return GeTensor();
 }

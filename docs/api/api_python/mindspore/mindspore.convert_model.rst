@@ -1,5 +1,5 @@
-mindspore.conver_model
-======================
+mindspore.convert_model
+=======================
 
 .. py:function:: mindspore.convert_model(mindir_file, convert_file, file_format)
 
