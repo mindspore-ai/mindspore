@@ -406,6 +406,29 @@ int TensorRTSubGraph::BuildTensorRTGraph() {
   return RET_OK;
 }
 
+bool TensorRTSubGraph::OutputFormatCheck(ITensorHelper output_helper, const mindspore::MSTensor &out_tensor) {
+  auto out_shape = out_tensor.Shape();
+  auto out_dims = output_helper.trt_tensor_->getDimensions();
+  if (out_dims.nbDims != DIMENSION_4D) {
+    return false;
+  }
+  if (output_helper.format_ == Format::NHWC) {
+    return false;
+  }
+  if (out_shape.empty()) {
+    return false;
+  }
+  for (int i = 0; i < out_dims.nbDims; i++) {
+    if (out_shape[i] == -1) {
+      return false;
+    }
+  }
+  if (SameDims(out_dims, out_shape)) {
+    return false;
+  }
+  return true;
+}
+
 int TensorRTSubGraph::MarkOutputs() {
   // Mark NetWork Output Tensor.
   for (const auto &out_tensor : outputs_) {
@@ -415,9 +438,7 @@ int TensorRTSubGraph::MarkOutputs() {
           MS_LOG(INFO) << "markOutput for: " << out_tensor.Name();
           auto output_helper = out_op->output(ctx_, index);
           nvinfer1::ITensor *out_trt_tensor = output_helper.trt_tensor_;
-          if (output_helper.trt_tensor_->getDimensions().nbDims == DIMENSION_4D &&
-              output_helper.format_ == Format::NCHW &&
-              !SameDims(output_helper.trt_tensor_->getDimensions(), out_tensor.Shape())) {
+          if (OutputFormatCheck(output_helper, out_tensor)) {
             // transpose subgraph output from nchw to nhwc
             nvinfer1::IShuffleLayer *transpose_layer_out = NCHW2NHWC(ctx_, *output_helper.trt_tensor_);
             if (transpose_layer_out == nullptr) {
@@ -584,10 +605,6 @@ size_t TensorRTSubGraph::MaxVolumnProfileIndex() const {
 }
 
 int TensorRTSubGraph::ReSize() {
-  if (input_batchsize_index_ == -1) {
-    MS_LOG(ERROR) << "current network don't support resize.";
-    return RET_ERROR;
-  }
   profile_index_ = SelectProfile();
   if (this->trt_context_->setOptimizationProfile(profile_index_)) {
     MS_LOG(INFO) << "setOptimizationProfile: " << profile_index_;
