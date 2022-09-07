@@ -1456,7 +1456,8 @@ class AscendAutoMonadConverter {
   }
 
   // Make a StackInit node.
-  CNodePtr StackInit(const KernelGraphPtr &kg) {
+  CNodePtr StackInit(const KernelGraphPtr &kg) const {
+    MS_EXCEPTION_IF_NULL(kg);
     auto monad = AnfAlgo::MakeMonadValueNode(kg);
     auto stack_init = NewPrimitive(prim::kPrimStackInit);
     auto cnode = kg->NewCNode({stack_init, monad});
@@ -1466,7 +1467,8 @@ class AscendAutoMonadConverter {
   }
 
   // Make a StackDestroy node.
-  CNodePtr StackDestroy(const KernelGraphPtr &kg) {
+  CNodePtr StackDestroy(const KernelGraphPtr &kg) const {
+    MS_EXCEPTION_IF_NULL(kg);
     auto monad = AnfAlgo::MakeMonadValueNode(kg);
     auto stack_destroy = NewPrimitive(prim::kPrimStackDestroy);
     auto cnode = kg->NewCNode({stack_destroy, monad});
