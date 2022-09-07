@@ -1598,8 +1598,11 @@ class HuberLoss(LossBase):
 
 
 @constexpr
-def _check_nll_loss_shape(logits_shape, label_shape, prim_name=None):
+def _check_nll_loss_inputs(logits_shape, label_shape, logits_dtype, label_dtype, prim_name=None):
     """Internal function, used to check whether the shape of logits and labels meets the requirements."""
+    validator.check_type_name('logits', logits_dtype, [mstype.float16, mstype.float32], prim_name)
+    validator.check_type_name('labels', label_dtype, [mstype.int32], prim_name)
+
     logits_shape_new = (logits_shape[0], *logits_shape[2:])
     msg_prefix = f'For \'{prim_name}\', the' if prim_name else "The"
     if logits_shape_new != label_shape:
@@ -1684,7 +1687,7 @@ class NLLLoss(LossBase):
     def construct(self, logits, labels):
         _check_is_tensor('logits', logits, self.cls_name)
         _check_is_tensor('labels', labels, self.cls_name)
-        _check_nll_loss_shape(logits.shape, labels.shape, self.cls_name)
+        _check_nll_loss_inputs(logits.shape, labels.shape, logits.dtype, labels.dtype, self.cls_name)
         return F.nll_loss(logits, labels, self.weight, self.ignore_index, self.reduction)
 
 
