@@ -39,7 +39,7 @@ class SGD(Optimizer):
     r"""
     Implements stochastic gradient descent. Momentum is optional.
 
-    Introduction to SGD can be found at https://en.wikipedia.org/wiki/Stochastic_gradient_descent.
+    Introduction to SGD can be found at `SGD <https://en.wikipedia.org/wiki/Stochastic_gradient_dencent>`_ .
     Nesterov momentum is based on the formula from paper `On the importance of initialization and
     momentum in deep learning <http://proceedings.mlr.press/v28/sutskever13.html>`_.
 
@@ -56,7 +56,7 @@ class SGD(Optimizer):
     .. math::
             p_{t+1} = p_{t} - lr \ast v_{t+1}
 
-    To be noticed, for the first step, :math:`v_{t+1} = gradient`
+    To be noticed, for the first step, :math:`v_{t+1} = gradient`.
 
     Here : where p, v and u denote the parameters, accum, and momentum respectively.
 

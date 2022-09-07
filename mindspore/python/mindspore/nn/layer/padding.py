@@ -351,7 +351,7 @@ class ConstantPad3d(_ConstantPadNd):
     Using a given constant value to pads the last three dimensions of input tensor.
 
     Args:
-        padding (union[int, tuple]): The padding size to pad the last three dimensions of input tensor.
+        padding (Union[int, tuple]): The padding size to pad the last three dimensions of input tensor.
             If is int, uses the same padding in boundaries of input's last three dimensions.
             If is tuple and length of padding is 6 uses
             (padding_0, padding_1, padding_2, padding_3, padding_4, padding_5) to pad. If the input is `x`,
@@ -359,7 +359,7 @@ class ConstantPad3d(_ConstantPadNd):
             The size of penultimate dimension of output is :math:`padding\_2 + x.shape[-2] + padding\_3`.
             The size of 3rd to last dimension of output is :math:`padding\_4 + x.shape[-3] + padding\_5`.
             The remaining dimensions of the output are consistent with those of the input.
-        value (union[int, float]): Padding value.
+        value (Union[int, float]): Padding value.
 
     Returns:
         Tensor, the tensor after padding.

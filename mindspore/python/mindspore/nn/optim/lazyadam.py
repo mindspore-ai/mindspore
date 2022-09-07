@@ -209,9 +209,10 @@ class LazyAdam(Optimizer):
     Note:
         The sparse strategy is applied while the SparseGatherV2 operator is used for forward network. If the sparse
         strategy wants to be executed on the host, set the target to the CPU.
-        Please note, the sparse behavior is not equivalent to the original Adam algorithm, as only the current
-        indices parames will be updated.
-        The sparse feature is under continuous development.
+        Please note, the optimizer only updates the current index position of the network parameters
+        when the gradient is sparse.
+        The sparse behavior is not equivalent to the original Adam algorithm.
+        If you want to execute a sparse policy, target needs to be set to CPU.
 
         If parameters are not grouped, the `weight_decay` in optimizer will be applied on the network parameters without
         'beta' or 'gamma' in their names. Users can group parameters to change the strategy of decaying weight. When

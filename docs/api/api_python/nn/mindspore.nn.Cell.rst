@@ -461,7 +461,7 @@
 
     .. py:method:: set_inputs(*inputs)
 
-        设置编译计算图所需的输入，输入需与数据一致。若使用Model接口，请确保所有传入Model的网络和损失函数都配置了set_inputs。
+        设置编译计算图所需的输入。输入数量需与数据集数量一致。若使用Model接口，请确保所有传入Model的网络和损失函数都配置了set_inputs。
         输入可以为动态或静态的Tensor。
 
         参数：

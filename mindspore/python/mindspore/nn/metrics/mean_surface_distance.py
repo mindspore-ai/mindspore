@@ -27,7 +27,7 @@ class MeanSurfaceDistance(Metric):
     Computes the Average Surface Distance from `y_pred` to `y` under the default setting. It measures how much,
     on average, the surface varies between the segmentation and the GT (ground truth).
 
-    Given two sets A and B, S(A) denotes the set of surface voxels of A. The shortest distance of an arbitrary voxel v
+    Given two sets A and B, S(A) denotes the set of surface voxels of A, the shortest distance of an arbitrary voxel v
     to S(A) is defined as:
 
     .. math::

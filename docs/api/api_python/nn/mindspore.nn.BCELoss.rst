@@ -13,7 +13,7 @@ mindspore.nn.BCELoss
         L = \{l_1,\dots,l_N\}^\top, \quad
         l_n = - w_n \left[ y_n \cdot \log x_n + (1 - y_n) \cdot \log (1 - x_n) \right]
 
-    其中N是批次大小，公式如下：
+    其中N是批次大小。公式如下：
 
     .. math::
         \ell(x, y) = \begin{cases}

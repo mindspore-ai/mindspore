@@ -565,7 +565,7 @@ class Dataset:
                 (default=None).
             per_batch_map (Callable[[List[numpy.ndarray], ..., List[numpy.ndarray], BatchInfo], (List[numpy.ndarray],\
                 ..., List[numpy.ndarray])], optional): Per batch map callable (default=None). A callable
-                which takes (list[numpy.ndarray], list[numpy.ndarray], ..., BatchInfo) as input parameters. Each
+                which takes (List[numpy.ndarray], ..., List[numpy.ndarray], BatchInfo) as input parameters. Each
                 list[numpy.ndarray] represents a batch of numpy.ndarray on a given column. The number of lists should
                 match with the number of entries in input_columns. The last parameter of the callable should always be
                 a BatchInfo object. Per_batch_map should return (list[numpy.ndarray], list[numpy.ndarray], ...). The
@@ -768,18 +768,13 @@ class Dataset:
         """
         Apply each operation in operations to this dataset.
 
-        The order of operations is determined by the position of each operation in the operations parameter.
-        operations[0] will be applied first, then operations[1], then operations[2], etc.
-
-        Each operation will be passed one or more columns from the dataset as input, and zero or
+        Each operation will be passed one or more columns from the dataset as input, and one or
         more columns will be outputted. The first operation will be passed the columns specified
         in input_columns as input. If there is more than one operator in operations, the outputted
         columns of the previous operation are used as the input columns for the next operation.
-        The columns outputted by the very last operation will be assigned names specified by
-        output_columns.
 
-        Only the columns specified in column_order will be propagated to the child node. These
-        columns will be in the same order as specified in column_order.
+        The columns outputted by the very last operation will be assigned names specified by
+        `output_columns`, and if not specified, the column name of output column is same as that of `input_columns`.
 
         Args:
             operations (Union[list[TensorOperation], list[functions]]): List of operations to be
@@ -794,7 +789,7 @@ class Dataset:
                 len(output_columns). The size of this list must match the number of output
                 columns of the last operation. (default=None, output columns will have the same
                 name as the input columns, i.e., the columns will be replaced).
-            column_order (list[str], optional): Specifies the list of all the columns you need in the whole
+            column_order (Union[str, list[str]], optional): Specifies the list of all the columns you need in the whole
                 dataset (default=None). The parameter is required when len(input_column) != len(output_column).
                 Caution: the list here is not just the columns specified in parameter input_columns and output_columns.
             num_parallel_workers (int, optional): Number of threads used to process the dataset in
@@ -1180,7 +1175,7 @@ class Dataset:
             The column name, and rank and type of the column data must be the same in the input datasets.
 
         Args:
-            datasets (Union[list, class Dataset]): A list of datasets or a single class Dataset
+            datasets (Union[list, Dataset]): A list of datasets or a single class Dataset
                 to be concatenated together with this dataset.
 
         Returns:

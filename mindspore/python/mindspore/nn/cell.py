@@ -892,6 +892,9 @@ class Cell(Cell_):
         Args:
             inputs (tuple): Inputs of the Cell object.
 
+        Note:
+            This is an experimental interface that is subject to change or deletion.
+
         Examples:
             >>> import numpy as np
             >>> import mindspore as ms
@@ -909,9 +912,6 @@ class Cell(Cell_):
             >>> net.set_inputs(input_dyn)
             >>> input1 = Tensor(np.random.random([3, 10]), dtype=ms.float32)
             >>> output = net(input1)
-
-        NOTE:
-            This is an experimental interface that is subject to change or deletion.
         """
         if self.grad_ops_label:
             logger.warning(f'For Cell, set_inputs must be set before the gradient function of the network is '

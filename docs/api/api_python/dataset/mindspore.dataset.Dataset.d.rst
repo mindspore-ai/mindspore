@@ -20,7 +20,7 @@
 
 .. py:method:: create_dict_iterator(num_epochs=-1, output_numpy=False)
 
-    基于数据集对象创建迭代器，输出的数据为字典类型。
+    基于数据集对象创建迭代器。输出的数据为字典类型。
 
     参数：
         - **num_epochs** (int, 可选) - 迭代器可以迭代的最大次数。默认值：-1，迭代器可以迭代无限次。

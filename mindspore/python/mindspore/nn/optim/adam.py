@@ -369,7 +369,7 @@ class Adam(Optimizer):
 
         If parameters are not grouped, the `weight_decay` in optimizer will be applied on the network parameters without
         'beta' or 'gamma' in their names. Users can group parameters to change the strategy of decaying weight. When
-        parameters are grouped, each group can set `weight_decay`, if not, the `weight_decay` in optimizer will be
+        parameters are grouped, each group can set `weight_decay`. If not, the `weight_decay` in optimizer will be
         applied.
 
     Args:

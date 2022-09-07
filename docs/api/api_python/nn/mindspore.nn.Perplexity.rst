@@ -11,7 +11,7 @@ mindspore.nn.Perplexity
     其中 :math:`w` 代表语料库中的单词.
 
     参数：
-        - **ignore_label** (int) - 计数时要忽略的无效标签的索引。如果设置为None，它将包括所有条目。默认值：None。
+        - **ignore_label** (Union[int, None]) - 计数时要忽略的无效标签的索引。如果设置为None，它将包括所有条目。默认值：None。
 
     .. py:method:: clear()
 

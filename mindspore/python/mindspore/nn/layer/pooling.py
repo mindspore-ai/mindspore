@@ -321,7 +321,7 @@ class AvgPool1d(_PoolNd):
 
     Typically the input is of shape :math:`(N_{in}, C_{in}, L_{in})`, AvgPool1d outputs
     regional average in the :math:`(L_{in})`-dimension. Given kernel size
-    :math:`ks = l_{ker}` and stride :math:`s = s_0`, the operation is as follows.
+    :math:`ks = l_{ker}` and stride :math:`s = s_0`, the operation is as follows:
 
     .. math::
         \text{output}(N_i, C_j, l) = \frac{1}{l_{ker}} \sum_{n=0}^{l_{ker}-1}
