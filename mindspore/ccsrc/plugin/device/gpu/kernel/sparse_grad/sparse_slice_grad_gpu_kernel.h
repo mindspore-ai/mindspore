@@ -64,6 +64,7 @@ class SparseSliceGradGpuKernelMod : public NativeGpuKernelMod {
   SparseSliceGradLaunchFunc kernel_func_;
   size_t input_nnz_{1};
   size_t output_nnz_{1};
+  size_t num_grad_val_{1};
   size_t num_dim_{1};
 };
 }  // namespace kernel

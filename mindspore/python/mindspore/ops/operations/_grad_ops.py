@@ -3671,10 +3671,12 @@ class SparseSliceGrad(Primitive):
         - **backprop_val_grad** (Tensor) - A 1D Tensor.
           The shape should be :math:`(n,)`.
         - **indices** (Tensor) - A 2D Tensor of type int64. The indices of the SparseTensor.
-          Support int64, each element value should be a non-negative int number. The shape is :math:`(n, 2)`.
+          Support int64, each element value should be a non-negative int number. This tensor should be sorted.
+          The shape is :math:`(n, 2)`.
         - **start** (Tensor) - A 1D Tensor of type int64, represents the start of the indices.
         - **new_indices** (Tensor) - A 2D Tensor of type int64. The indices of the SparseTensor.
-          Support int64, each element value should be a non-negative int number. The shape is :math:`(n, 2)`.
+          Support int64, each element value should be a non-negative int number. This tensor should be sorted.
+          The shape is :math:`(n, 2)`.
 
     Outputs:
         - *y_grad_val: A Tensor. Has the same type as "backprop_val_grad".
@@ -3684,9 +3686,11 @@ class SparseSliceGrad(Primitive):
         ValueError: If `indices`, `new_indices` are not 2-D tensor.
         ValueError: If `backprop_val_grad`, `start` is not a 1-D tensor.
         ValueError: If the number of `backprop_val_grad` is not corresponding to the number of `new_indices`.
+        RunTimeError: If the `backprop_val_grad` is not all backpropagated, because `indices` or `new_indices`
+        is not sorted.
 
     Supported Platforms:
-
+        ``GPU``
     Examples:
         >>> backprop_val_grad = Tensor([4, 2, 3])
         >>> indices = Tensor([[0, 0], [0, 2], [1, 2], [1, 3], [2, 3], [2, 4]], dtype=ms.int64)
