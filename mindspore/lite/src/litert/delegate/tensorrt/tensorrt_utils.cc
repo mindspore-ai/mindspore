@@ -24,6 +24,9 @@
 #include "src/litert/delegate/tensorrt/distribution/distribution_collective.h"
 
 namespace mindspore::lite {
+namespace {
+const int INPUT2 = 2;
+}
 nvinfer1::Dims ConvertCudaDims(int data, size_t size) {
   nvinfer1::Dims dims{};
   dims.nbDims = -1;
@@ -176,7 +179,6 @@ nvinfer1::ITensor *ConvertConstantTensor(TensorRTContext *ctx, const mindspore::
   }
   ctx->RegisterLayer(constant_tensor, ms_tensor.Name() + "_" + op_name);
   auto tensor_ptr = constant_tensor->getOutput(0);
-  // ctx->RegisterTensor(tensor_ptr, ms_tensor.Name());
   return tensor_ptr;
 }
 
@@ -201,7 +203,6 @@ nvinfer1::ITensor *ConvertScalarToITensor(TensorRTContext *ctx, size_t shape_siz
                                           const DataType data_type, const std::string &op_name) {
   const void *value = ms_tensor.Data().get();
   auto tensor_ptr = ConvertScalarToITensor(ctx, shape_size, value, data_type, op_name);
-  // ctx->RegisterTensor(tensor_ptr, ms_tensor.Name());
   return tensor_ptr;
 }
 
@@ -220,9 +221,9 @@ std::experimental::optional<ActivationParams> TryConvertActivationType(schema::A
     {schema::ActivationType_RELU6, ActivationParams{nvinfer1::ActivationType::kCLIP, true, 0, true, 6}},
     {schema::ActivationType_RELU1, ActivationParams{nvinfer1::ActivationType::kCLIP, true, 0, true, 1}},
     {schema::ActivationType_HARD_TANH, ActivationParams{nvinfer1::ActivationType::kCLIP, true, -1, true, 1}},
-    {schema::ActivationType_SWISH, ActivationParams{nvinfer1::ActivationType::kSIGMOID, false, 0, false, 0}},
     // using plugin
-    {schema::ActivationType_GELU, ActivationParams{nvinfer1::ActivationType::kTHRESHOLDED_RELU, false, 0, false, 0}}};
+    {schema::ActivationType_GELU, ActivationParams{nvinfer1::ActivationType::kTHRESHOLDED_RELU, false, 0, false, 0}},
+    {schema::ActivationType_SWISH, ActivationParams{nvinfer1::ActivationType::kSIGMOID, false, 0, false, 0}}};
   return action_map.find(activation_type) != action_map.end()
            ? std::experimental::optional<ActivationParams>(action_map[activation_type])
            : std::experimental::nullopt;
@@ -287,7 +288,6 @@ nvinfer1::ITensor *ConvertTensorWithExpandDims(TensorRTContext *ctx, const minds
   }
   ctx->RegisterLayer(constant_tensor, ms_tensor.Name() + "_" + op_name);
   auto tensor_ptr = constant_tensor->getOutput(0);
-  // ctx->RegisterTensor(tensor_ptr, ms_tensor.Name());
   return tensor_ptr;
 }
 
@@ -576,7 +576,7 @@ void PackNHWCToNCHWFp16(const void *src, void *dst, size_t batches, size_t plane
     }
   }
 }
-std::string GetTensorFormat(nvinfer1::ITensor *trt_tensor, mindspore::Format format, bool is_same) {
+std::string GetTensorFormat(nvinfer1::ITensor *trt_tensor, mindspore::Format format, bool is_same, bool is_tensor) {
   nvinfer1::Dims dims = trt_tensor->getDimensions();
   std::string is_same_string = is_same ? " is same with ms tensor " : " is different from ms tensor ";
   std::string out_string = "tensor " + std::string(trt_tensor->getName()) + ": format (NHWC:1, NCHW:0) is " +
@@ -590,11 +590,17 @@ std::string GetTensorFormat(nvinfer1::ITensor *trt_tensor, mindspore::Format for
   }
   dim_string += "]";
   out_string += dim_string;
+  out_string += " is_tensor(0/1): " + std::to_string(is_tensor);
   return out_string;
 }
 
+std::string GetTensorFormat(nvinfer1::ITensor *trt_tensor, mindspore::Format format, bool is_same) {
+  return GetTensorFormat(trt_tensor, format, is_same, true);
+}
+
 std::string GetTensorFormat(ITensorHelper tensor_helper) {
-  return GetTensorFormat(tensor_helper.trt_tensor_, tensor_helper.format_, tensor_helper.same_format_);
+  return GetTensorFormat(tensor_helper.trt_tensor_, tensor_helper.format_, tensor_helper.same_format_,
+                         tensor_helper.is_tensor_);
 }
 
 std::string GetTensorFormat(nvinfer1::ITensor *trt_tensor) { return GetTensorFormat(trt_tensor, Format::NHWC, true); }
@@ -717,6 +723,88 @@ int ParseData2Vector(const mindspore::MSTensor &ms_tensor, std::vector<float> *d
   return RET_OK;
 }
 
+nvinfer1::ITensor *ExpandDim(TensorRTContext *ctx, nvinfer1::ITensor *input_tensor, int axis) {
+  // input has to prepocess to nchw
+  auto input_dims = input_tensor->getDimensions();
+  nvinfer1::IShuffleLayer *shuffle_layer = ctx->network()->addShuffle(*input_tensor);
+  // if expand dim not at last dim and shape is dynamic, change to expanddim at last dim and transpose
+  bool special_expand = false;
+  for (int i = 0; i < input_dims.nbDims; i++) {
+    special_expand = special_expand || input_dims.d[i] == -1;
+  }
+  special_expand = special_expand && (axis != -1 && axis != input_dims.nbDims);
+
+  if (special_expand) {
+    std::vector<int64_t> new_shape;
+    for (int i = 0; i < input_dims.nbDims; i++) {
+      new_shape.push_back(input_dims.d[i] == -1 ? 0 : input_dims.d[i]);
+    }
+    new_shape.push_back(1);
+    nvinfer1::Dims new_dims = ConvertCudaDims(new_shape);
+    if (new_dims.nbDims == -1) {
+      return nullptr;
+    }
+
+    shuffle_layer->setReshapeDimensions(new_dims);
+    // transpose
+    nvinfer1::Permutation perm{};
+    for (int i = 0; i < new_dims.nbDims; i++) {
+      if (i < axis) {
+        perm.order[i] = i;
+      } else if (i == axis) {
+        perm.order[i] = new_dims.nbDims - 1;
+      } else {
+        perm.order[i] = i - 1;
+      }
+    }
+    nvinfer1::IShuffleLayer *trans_layer = ctx->network()->addShuffle(*shuffle_layer->getOutput(0));
+    if (trans_layer == nullptr) {
+      MS_LOG(ERROR) << "add transpose layer failed for special expand dims op ";
+      return nullptr;
+    }
+    trans_layer->setFirstTranspose(perm);
+    return trans_layer->getOutput(0);
+  } else {
+    std::vector<int64_t> new_shape;
+    for (int i = 0; i < input_dims.nbDims; i++) {
+      if (axis == i) {
+        new_shape.push_back(1);
+      }
+      new_shape.push_back(input_dims.d[i] == -1 ? 0 : input_dims.d[i]);
+    }
+    if (axis == -1 || axis == input_dims.nbDims) {
+      new_shape.push_back(1);
+    }
+    nvinfer1::Dims new_dims = ConvertCudaDims(new_shape);
+    if (new_dims.nbDims == -1) {
+      return nullptr;
+    }
+    shuffle_layer->setReshapeDimensions(new_dims);
+    return shuffle_layer->getOutput(0);
+  }
+}
+
+nvinfer1::ITensor *Broadcast(TensorRTContext *ctx, nvinfer1::ITensor *input, nvinfer1::ITensor *shape) {
+  int rank = shape->getDimensions().d[0];
+
+  nvinfer1::Dims starts{rank};
+  std::fill(starts.d, starts.d + rank, 0);
+  nvinfer1::Dims strides{rank};
+  std::fill(strides.d, strides.d + rank, 1);
+
+  auto slice_layer = ctx->network()->addSlice(*input, starts, {}, strides);
+#if TRT_VERSION_GE(7, 2)
+  slice_layer->setMode(nvinfer1::SliceMode::kWRAP);
+#endif
+  slice_layer->setInput(INPUT2, *shape);
+
+  auto shuffler_output = slice_layer->getOutput(0);
+  if (shuffler_output == nullptr) {
+    MS_LOG(ERROR) << "add slice layer failed";
+  }
+  return shuffler_output;
+}
+
 nvinfer1::ITensor *Reshape(TensorRTContext *ctx, nvinfer1::ITensor *input, const std::vector<int64_t> &shape) {
   return Reshape(ctx, input, ConvertCudaDims(shape));
 }
@@ -731,10 +819,23 @@ nvinfer1::ITensor *Reshape(TensorRTContext *ctx, nvinfer1::ITensor *input, const
   return reshape_layer->getOutput(0);
 }
 
-void DebugDims(const nvinfer1::Dims &dims) {
-  MS_LOG(DEBUG) << "nbdim : " << dims.nbDims;
+void DebugDims(const std::string &key, const nvinfer1::Dims &dims) {
+  MS_LOG(DEBUG) << key << ":" << dims.nbDims;
   for (int i = 0; i != dims.nbDims; ++i) {
     MS_LOG(DEBUG) << dims.d[i];
   }
 }
+
+template <>
+nvinfer1::DataType GetNvinferDataType<float>() {
+  return nvinfer1::DataType::kFLOAT;
+}
+
+template <>
+nvinfer1::DataType GetNvinferDataType<int>() {
+  return nvinfer1::DataType::kINT32;
+}
+
+template nvinfer1::DataType GetNvinferDataType<float>();
+template nvinfer1::DataType GetNvinferDataType<int>();
 }  // namespace mindspore::lite

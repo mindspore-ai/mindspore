@@ -43,7 +43,7 @@ class StrideSliceTensorRTUtil final : public SliceTensorRTUtil {
   }
   std::tuple<nvinfer1::Dims, nvinfer1::Dims, nvinfer1::Dims> GetSliceParams(
     const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-    const std::vector<mindspore::MSTensor> &out_tensors) override {
+    const std::vector<mindspore::MSTensor> &out_tensors, const ITensorHelper &helper) override {
     const mindspore::MSTensor &begin = in_tensors.at(BEGINS_INDEX);
     const mindspore::MSTensor &stride = in_tensors.back();
     const mindspore::MSTensor &end = in_tensors.at(ENDS_INDEX);
@@ -53,17 +53,12 @@ class StrideSliceTensorRTUtil final : public SliceTensorRTUtil {
     nvinfer1::Dims stride_dims;
 
     size_t axis_index = in_tensors.size() == HAS_AXIS ? AXIS_INDEX : -1;
-    auto out_shape = out_tensors.front().Shape();
-    if (static_cast<size_t>(begin.ElementNum()) == in_tensors.at(0).Shape().size()) {
+    if (static_cast<size_t>(begin.ElementNum()) == helper.trt_tensor_->getDimensions().nbDims) {
       start_dims = lite::ConvertCudaDims(begin.Data().get(), begin.ElementNum());
-      if (shrink_axis_ == 0) {
-        size_dims = lite::ConvertCudaDims(out_shape);
-      } else {
-        size_dims.nbDims = start_dims.nbDims;
-        auto end_dims = lite::ConvertCudaDims(end.Data().get(), end.ElementNum());
-        for (int i = 0; i < size_dims.nbDims; i++) {
-          size_dims.d[i] = end_dims.d[i] - start_dims.d[i];
-        }
+      size_dims.nbDims = start_dims.nbDims;
+      auto end_dims = lite::ConvertCudaDims(end.Data().get(), end.ElementNum());
+      for (int i = 0; i < size_dims.nbDims; i++) {
+        size_dims.d[i] = end_dims.d[i] - start_dims.d[i];
       }
       stride_dims = lite::ConvertCudaDims(stride.Data().get(), stride.ElementNum());
     } else {
@@ -73,23 +68,48 @@ class StrideSliceTensorRTUtil final : public SliceTensorRTUtil {
       }
       int axis_value = *(static_cast<const int *>(in_tensors.at(axis_index).Data().get()));
       int start_value = *(static_cast<const int *>(begin.Data().get()));
-      start_dims.nbDims = in_tensors.at(0).Shape().size();
-      for (int i = 0; i < start_dims.nbDims; i++) {
-        start_dims.d[i] = (i == axis_value) ? start_value : 0;
-      }
-
-      size_dims = lite::ConvertCudaDims(out_shape);
+      int end_value = *(static_cast<const int *>(end.Data().get()));
       int stride_value = *(static_cast<const int *>(stride.Data().get()));
+      auto input_dims = helper.trt_tensor_->getDimensions();
+      start_dims.nbDims = input_dims.nbDims;
+      size_dims.nbDims = input_dims.nbDims;
       stride_dims = nvinfer1::Dims{size_dims.nbDims, {}};
-      std::fill(stride_dims.d, stride_dims.d + stride_dims.nbDims, stride_value);
+      std::fill(start_dims.d, start_dims.d + start_dims.nbDims, 0);
+      std::fill(stride_dims.d, stride_dims.d + stride_dims.nbDims, 1);
+      if (start_value < 0) {
+        start_value = input_dims.d[axis_value] + start_value;
+      }
+      for (int i = 0; i < start_dims.nbDims; i++) {
+        if (i == axis_value) {
+          start_dims.d[i] = start_value;
+          stride_dims.d[i] = stride_value;
+          if (end_value >= 0) {
+            size_dims.d[i] = std::min(end_value, input_dims.d[i]) - start_dims.d[i];
+          } else if (end_value >= -input_dims.d[i]) {
+            size_dims.d[i] = end_value + input_dims.d[i] - start_dims.d[i];
+          } else {
+            size_dims.d[i] = input_dims.d[i];
+          }
+          // MS_LOG(WARNING) << start_dims.d[i] << " " << size_dims.d[i] << " " << stride_dims.d[i];
+        } else {
+          size_dims.d[i] = helper.trt_tensor_->getDimensions().d[i];
+        }
+      }
     }
     return std::make_tuple(start_dims, size_dims, stride_dims);
   }
   nvinfer1::ITensor *PostProcess(TensorRTContext *ctx, nvinfer1::ITensor *input,
                                  const std::vector<mindspore::MSTensor> &in_tensors,
-                                 const std::vector<mindspore::MSTensor> &out_tensors) {
+                                 const std::vector<mindspore::MSTensor> &out_tensors) override {
     if (shrink_axis_ != 0) {
-      return Reshape(ctx, input, out_tensors.at(0).Shape());
+      auto shape = ConvertMSShape(input->getDimensions());
+      for (int i = shape.size() - 1; i >= 0; --i) {
+        int mask = 1 << i;
+        if ((shrink_axis_ & mask) != 0) {
+          shape.erase(shape.begin() + i);
+        }
+      }
+      return shape.empty() ? nullptr : Reshape(ctx, input, shape);
     }
     return input;
   }
@@ -117,13 +137,17 @@ class SliceFusionTensorRTUtil final : public SliceTensorRTUtil {
   }
   std::tuple<nvinfer1::Dims, nvinfer1::Dims, nvinfer1::Dims> GetSliceParams(
     const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-    const std::vector<mindspore::MSTensor> &out_tensors) override {
-    const auto &input = in_tensors.at(0);
+    const std::vector<mindspore::MSTensor> &out_tensors, const ITensorHelper &helper) override {
     const auto &begin = in_tensors.at(1);
     const auto &size = in_tensors.at(SIZE_INDEX);
 
     auto start_dims = lite::ConvertCudaDims(begin.Data().get(), begin.ElementNum());
     auto size_dims = lite::ConvertCudaDims(size.Data().get(), size.ElementNum());
+    for (int i = 0; i != size_dims.nbDims; ++i) {
+      if (size_dims.d[i] == -1) {
+        size_dims.d[i] = helper.trt_tensor_->getDimensions().d[i];
+      }
+    }
     auto stride_dims = lite::ConvertCudaDims(1, begin.ElementNum());
 
     return std::make_tuple(start_dims, size_dims, stride_dims);
@@ -150,40 +174,33 @@ class CropTensorRTUtil final : public SliceTensorRTUtil {
       return false;
     }
     axis_ = static_cast<int>(crop_primitive->axis());
-    auto offsets_ptr = crop_primitive->offsets();
-    if (offsets_ptr == nullptr) {
-      MS_LOG(ERROR) << "Crop Op do not have offset attr";
-      return false;
-    }
-    if (axis_ < 0) {
-      axis_ += in_tensors.at(0).Shape().size();
-    }
-    if (axis_ < 0 || axis_ + offsets_ptr->size() != in_tensors.at(0).Shape().size()) {
-      MS_LOG(ERROR) << "axis and offsets not match input tensor shape, axis is " << crop_primitive->axis()
-                    << " , offsets size is " << offsets_ptr->size() << " , input size is "
-                    << in_tensors.at(0).Shape().size();
-      return false;
-    }
-    if (in_tensors.at(0).Shape().size() != in_tensors.at(1).Shape().size()) {
-      MS_LOG(ERROR) << "input tensor 0 and 1 size not equal,"
-                    << " input 0 size is " << in_tensors.at(0).Shape().size() << " , input tensor 1 size is "
-                    << in_tensors.at(1).Shape().size();
-      return false;
-    }
     return true;
   }
   std::tuple<nvinfer1::Dims, nvinfer1::Dims, nvinfer1::Dims> GetSliceParams(
     const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-    const std::vector<mindspore::MSTensor> &out_tensors) override {
+    const std::vector<mindspore::MSTensor> &out_tensors, const ITensorHelper &helper) override {
     auto crop_primitive = primitive->value_as_Crop();
     auto offsets_ptr = crop_primitive->offsets();
+    if (offsets_ptr == nullptr) {
+      MS_LOG(ERROR) << "Crop Op do not have offset attr";
+      return {};
+    }
+    if (axis_ < 0) {
+      axis_ += helper.trt_tensor_->getDimensions().nbDims;
+    }
+    if (axis_ < 0 || axis_ + offsets_ptr->size() != helper.trt_tensor_->getDimensions().nbDims) {
+      MS_LOG(ERROR) << "axis and offsets not match input tensor shape, axis is " << crop_primitive->axis()
+                    << " , offsets size is " << offsets_ptr->size() << " , input size is "
+                    << helper.trt_tensor_->getDimensions().nbDims;
+      return {};
+    }
 
-    std::vector<int> begin(in_tensors.at(0).Shape().size(), 0);
+    std::vector<int> begin(helper.trt_tensor_->getDimensions().nbDims, 0);
     for (size_t i = 0; i != offsets_ptr->size(); ++i) {
       begin[axis_ + i] = offsets_ptr->Get(i);
     }
 
-    std::vector<int> size(in_tensors.at(0).Shape().size());
+    std::vector<int> size(helper.trt_tensor_->getDimensions().nbDims);
     for (size_t i = 0; i != size.size(); ++i) {
       size[i] = in_tensors.at(1).Shape().at(i);
     }
@@ -250,7 +267,8 @@ int SliceTensorRT::AddInnerOp(TensorRTContext *ctx) {
   nvinfer1::Dims start_dims;
   nvinfer1::Dims size_dims;
   nvinfer1::Dims stride_dims;
-  std::tie(start_dims, size_dims, stride_dims) = util_->GetSliceParams(op_primitive_, in_tensors_, out_tensors_);
+  std::tie(start_dims, size_dims, stride_dims) =
+    util_->GetSliceParams(op_primitive_, in_tensors_, out_tensors_, slice_input);
   if (start_dims.nbDims == -1 || size_dims.nbDims == -1 || stride_dims.nbDims == -1) {
     MS_LOG(ERROR) << "ConvertCudaDims failed for " << op_name_;
     return RET_ERROR;
@@ -265,12 +283,15 @@ int SliceTensorRT::AddInnerOp(TensorRTContext *ctx) {
   this->layer_ = slice_layer;
   slice_layer->setName(op_name_.c_str());
   nvinfer1::ITensor *out_tensor = slice_layer->getOutput(0);
-  out_tensor = util_->PostProcess(ctx, out_tensor, in_tensors_, out_tensors_);
-  if (out_tensor == nullptr) {
-    MS_LOG(ERROR) << "output tensor create failed";
-    return RET_ERROR;
+  auto post_tensor = util_->PostProcess(ctx, out_tensor, in_tensors_, out_tensors_);
+  bool rank_0 = false;
+  if (post_tensor == nullptr) {
+    rank_0 = true;
+    post_tensor = out_tensor;
   }
-  ctx->RegisterTensor(ITensorHelper{out_tensor, slice_input.format_, slice_input.same_format_}, out_tensors_[0].Name());
+  auto helper = ITensorHelper{post_tensor, slice_input.format_, slice_input.same_format_, !rank_0};
+  ctx->RegisterTensor(helper, out_tensors_[0].Name());
+  MS_LOG(DEBUG) << "slice output : " << GetTensorFormat(helper);
   return RET_OK;
 }
 REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_StridedSlice, SliceTensorRT)

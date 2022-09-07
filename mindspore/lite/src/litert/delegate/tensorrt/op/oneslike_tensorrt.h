@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,23 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_LITERT_DELEGATE_TENSORRT_OP_REDUCE_TENSORRT_H_
-#define MINDSPORE_LITE_SRC_LITERT_DELEGATE_TENSORRT_OP_REDUCE_TENSORRT_H_
 
+#ifndef MINDSPORE_LITE_SRC_LITERT_DELEGATE_TENSORRT_OP_ONESLIKE_TENSORRT_H_
+#define MINDSPORE_LITE_SRC_LITERT_DELEGATE_TENSORRT_OP_ONESLIKE_TENSORRT_H_
 #include <string>
 #include <vector>
-#include <map>
 #include "src/litert/delegate/tensorrt/op/tensorrt_op.h"
 
 namespace mindspore::lite {
-class ReduceTensorRT : public TensorRTOp {
+class OneslikeTensorRT : public TensorRTOp {
  public:
-  ReduceTensorRT(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                 const std::vector<mindspore::MSTensor> &out_tensors, const std::string &name,
-                 const schema::QuantType &quant_type)
+  OneslikeTensorRT(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                   const std::vector<mindspore::MSTensor> &out_tensors, const std::string &name,
+                   const schema::QuantType &quant_type)
       : TensorRTOp(primitive, in_tensors, out_tensors, name, quant_type) {}
 
-  ~ReduceTensorRT() override = default;
+  ~OneslikeTensorRT() override = default;
 
   int AddInnerOp(TensorRTContext *ctx) override;
 
@@ -37,8 +36,7 @@ class ReduceTensorRT : public TensorRTOp {
                 const std::vector<mindspore::MSTensor> &out_tensors) override;
 
  private:
-  uint32_t GetAxis(TensorRTContext *ctx);
-  Format out_format_;
+  int RunAsTrtOps(TensorRTContext *ctx);
 };
 }  // namespace mindspore::lite
-#endif  // MINDSPORE_LITE_SRC_LITERT_DELEGATE_TENSORRT_OP_REDUCE_TENSORRT_H_
+#endif  // MINDSPORE_LITE_SRC_LITERT_DELEGATE_TENSORRT_OP_ONESLIKE_TENSORRT_H_

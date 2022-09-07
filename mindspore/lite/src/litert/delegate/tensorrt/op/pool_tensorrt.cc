@@ -34,10 +34,6 @@ int PoolTensorRT::IsSupport(const mindspore::schema::Primitive *primitive,
     MS_LOG(ERROR) << "Unsupported output tensor size, size is " << out_tensors.size();
     return RET_ERROR;
   }
-  if (in_tensors[0].format() != Format::NHWC && in_tensors[0].format() != Format::NCHW) {
-    MS_LOG(ERROR) << "Unsupported input tensor format of " << in_tensors[0].format();
-    return RET_ERROR;
-  }
   return RET_OK;
 }
 
@@ -47,7 +43,7 @@ int PoolTensorRT::AddInnerOp(TensorRTContext *ctx) {
     return RET_ERROR;
   }
   MS_LOG(DEBUG) << "before transpose " << GetTensorFormat(input(ctx, 0));
-  int ret = ParseParams();
+  int ret = ParseParams(ctx);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ParseParams failed for : " << op_name_;
     return RET_ERROR;
@@ -66,28 +62,40 @@ int PoolTensorRT::AddInnerOp(TensorRTContext *ctx) {
     pool_input = transpose_layer_in->getOutput(0);
   }
 
-  // pooling layer
-  nvinfer1::Dims windowSize = lite::ConvertCudaDims(kernel_size_);
-  if (windowSize.nbDims == -1) {
-    MS_LOG(ERROR) << "ConvertCudaDims failed for " << op_name_;
-    return RET_ERROR;
+  // global version pooling
+  if (kernel_size_.empty()) {
+    int reduce_axes = ((1 << pool_input->getDimensions().nbDims) - 1) & ~0b11;
+    auto *layer = ctx->network()->addReduce(*pool_input, nvinfer1::ReduceOperation::kAVG, reduce_axes, true);
+    if (layer == nullptr) {
+      MS_LOG(ERROR) << "addReduce for pool failed";
+      return RET_ERROR;
+    }
+    layer->setName(op_name_.c_str());
+    this->layer_ = layer;
+  } else {
+    // pooling layer
+    nvinfer1::Dims windowSize = lite::ConvertCudaDims(kernel_size_);
+    if (windowSize.nbDims == -1) {
+      MS_LOG(ERROR) << "ConvertCudaDims failed for " << op_name_;
+      return RET_ERROR;
+    }
+    nvinfer1::IPoolingLayer *pooling_layer = ctx->network()->addPoolingNd(*pool_input, pooling_type_, windowSize);
+    if (pooling_layer == nullptr) {
+      MS_LOG(ERROR) << "addPoolingNd failed for TensorRT.";
+      return RET_ERROR;
+    }
+    AddParams(pooling_layer);
+    pooling_layer->setName(op_name_.c_str());
+    this->layer_ = pooling_layer;
   }
-  nvinfer1::IPoolingLayer *pooling_layer = ctx->network()->addPoolingNd(*pool_input, pooling_type_, windowSize);
-  if (pooling_layer == nullptr) {
-    MS_LOG(ERROR) << "addPoolingNd failed for TensorRT.";
-    return RET_ERROR;
-  }
-  AddParams(pooling_layer);
-  pooling_layer->setName(op_name_.c_str());
-  this->layer_ = pooling_layer;
 
   // add activation
   nvinfer1::ILayer *activation_layer = nullptr;
   if (activation_type_ == schema::ActivationType::ActivationType_NO_ACTIVATION) {
-    activation_layer = pooling_layer;
+    activation_layer = this->layer_;
   } else {
     activation_layer =
-      ActivationTensorRT::AddActivation(ctx, activation_type_, 0, 0, 0, pooling_layer->getOutput(0), device_id_);
+      ActivationTensorRT::AddActivation(ctx, activation_type_, 0, 0, 0, this->layer_->getOutput(0), device_id_);
     if (activation_layer == nullptr) {
       MS_LOG(ERROR) << "addActivation for pool failed";
       return RET_ERROR;
@@ -101,13 +109,7 @@ int PoolTensorRT::AddInnerOp(TensorRTContext *ctx) {
   return RET_OK;
 }
 
-int PoolTensorRT::ParseParams() {
-  int in_h = in_tensors_[0].Shape()[kNHWC_H];
-  int in_w = in_tensors_[0].Shape()[kNHWC_W];
-  int out_h = out_tensors_[0].Shape()[kNHWC_H];
-  int out_w = out_tensors_[0].Shape()[kNHWC_W];
-  int kernel_h;
-  int kernel_w;
+int PoolTensorRT::ParseParams(TensorRTContext *ctx) {
   switch (type_) {
     case (schema::PrimitiveType_AvgPoolFusion): {
       const schema::AvgPoolFusion *pool_primitive = this->GetPrimitive()->value_as_AvgPoolFusion();
@@ -123,14 +125,9 @@ int PoolTensorRT::ParseParams() {
         return RET_ERROR;
       }
       stride_ = std::vector<int64_t>(stride->begin(), stride->end());
-      kernel_h = in_h - (out_h - 1) * stride_[0];
-      kernel_w = in_w - (out_w - 1) * stride_[1];
       auto kernel_size = pool_primitive->kernel_size();
       if (kernel_size == nullptr) {
-        kernel_size_.push_back(kernel_h);
-        kernel_size_.push_back(kernel_w);
-        MS_LOG(WARNING) << op_name_ << "don't has kernel size, calculate kernel size on ms tensor, kernel_h is "
-                        << kernel_h << ", kernel_w is " << kernel_w;
+        MS_LOG(WARNING) << op_name_ << "don't has kernel size";
       } else {
         kernel_size_ = std::vector<int64_t>(kernel_size->begin(), kernel_size->end());
       }
@@ -169,8 +166,6 @@ int PoolTensorRT::ParseParams() {
         return RET_ERROR;
       }
       stride_ = std::vector<int64_t>(stride->begin(), stride->end());
-      kernel_h = in_h - (out_h - 1) * stride_[0];
-      kernel_w = in_w - (out_w - 1) * stride_[1];
       auto padding = pool_primitive->pad();
       if (padding == nullptr) {
         MS_LOG(INFO) << "get padding is null, set to default 0: " << op_name_;
@@ -187,12 +182,6 @@ int PoolTensorRT::ParseParams() {
       MS_LOG(ERROR) << "unsupported primitive type of " << type_ << " for node: " << op_name_;
       return RET_ERROR;
     }
-  }
-  // some model kernel size is large than hw, correct it
-  if (kernel_size_[0] > in_h || kernel_size_[1] > in_w) {
-    MS_LOG(WARNING) << op_name_ << " kernel size is larger than input size";
-    kernel_size_[0] = kernel_size_[0] > kernel_h ? kernel_h : kernel_size_[0];
-    kernel_size_[1] = kernel_size_[1] > kernel_w ? kernel_w : kernel_size_[1];
   }
   return RET_OK;
 }

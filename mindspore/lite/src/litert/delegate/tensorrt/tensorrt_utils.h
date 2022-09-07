@@ -111,6 +111,7 @@ int ConvertAxisFromNHWC2NCHW(int nhwc_axis);
 void PackNHWCToNCHWFp16(const void *src, void *dst, size_t batch, size_t plane, size_t channel, size_t task_id,
                         size_t thread_count);
 
+std::string GetTensorFormat(nvinfer1::ITensor *trt_tensor, mindspore::Format format, bool is_same, bool is_tensor);
 std::string GetTensorFormat(nvinfer1::ITensor *trt_tensor, mindspore::Format format, bool is_same);
 
 std::string GetTensorFormat(ITensorHelper tensor_helper);
@@ -135,7 +136,14 @@ nvinfer1::ITensor *Reshape(TensorRTContext *ctx, nvinfer1::ITensor *input, const
 
 int ParseData2Vector(const mindspore::MSTensor &ms_tensor, std::vector<float> *dst);
 
-void DebugDims(const nvinfer1::Dims &dims);
+void DebugDims(const std::string &key, const nvinfer1::Dims &dims);
+
+nvinfer1::ITensor *ExpandDim(TensorRTContext *ctx, nvinfer1::ITensor *input_tensor, int axis);
+
+nvinfer1::ITensor *Broadcast(TensorRTContext *ctx, nvinfer1::ITensor *input, nvinfer1::ITensor *shape);
+
+template <typename T>
+nvinfer1::DataType GetNvinferDataType();
 
 template <typename T1, typename T2>
 bool SameDims(const std::vector<T1> &shape1, const std::vector<T2> &shape2) {
@@ -160,7 +168,7 @@ nvinfer1::Dims ConvertCudaDims(const std::vector<T> &shape) {
       dims.d[i] = static_cast<int>(shape[i]);
     }
   } else {
-    MS_LOG(WARNING) << "ms shape is invalid! shape size: " << shape.empty();
+    MS_LOG(WARNING) << "ms shape is invalid or empty.";
   }
   return dims;
 }

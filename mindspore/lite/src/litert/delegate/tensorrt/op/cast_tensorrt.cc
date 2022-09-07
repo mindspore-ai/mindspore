@@ -69,8 +69,9 @@ int CastTensorRT::AddInnerOp(TensorRTContext *ctx) {
 #endif
   cast_layer->setName(op_name_.c_str());
   nvinfer1::ITensor *cast_out = cast_layer->getOutput(0);
-  ctx->RegisterTensor(ITensorHelper{cast_out, input(ctx, 0).format_, input(ctx, 0).same_format_},
-                      out_tensors_[0].Name());
+  ctx->RegisterTensor(
+    ITensorHelper{cast_out, input(ctx, 0).format_, input(ctx, 0).same_format_, input(ctx, 0).is_tensor_},
+    out_tensors_[0].Name());
   this->layer_ = cast_layer;
   return RET_OK;
 }

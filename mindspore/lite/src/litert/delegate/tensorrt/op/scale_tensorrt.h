@@ -37,7 +37,7 @@ class ScaleTensorRT : public TensorRTOp {
                 const std::vector<mindspore::MSTensor> &out_tensors) override;
 
  private:
-  nvinfer1::ScaleMode GetScaleMode(int64_t axis);
+  nvinfer1::ScaleMode GetScaleMode(nvinfer1::ITensor *, int64_t axis);
 
   nvinfer1::ITensor *PreProcessInputTensor(TensorRTContext *ctx);
 

@@ -47,7 +47,7 @@ class MatMulTensorRT : public TensorRTOp {
 
   nvinfer1::ITensor *AddBias(TensorRTContext *ctx, nvinfer1::ITensor *input_tensor);
 
-  bool RunFullConnect();
+  bool RunFullConnect(TensorRTContext *ctx);
 
   bool transpose_a_{false};
   bool transpose_b_{false};
