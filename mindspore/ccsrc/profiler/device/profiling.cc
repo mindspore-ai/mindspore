@@ -22,7 +22,6 @@
 #include <chrono>
 #include <cmath>
 #include <ctime>
-#include "include/common/pybind_api/api_register.h"
 #include "utils/log_adapter.h"
 #include "include/common/utils/utils.h"
 #include "utils/ms_context.h"
@@ -212,24 +211,5 @@ std::string ProfilerManager::GetProfilingOptions() const {
 
   return "";
 }
-
-REGISTER_PYBIND_DEFINE(ProfilerManager_, ([](const py::module *m) {
-                         (void)py::class_<ProfilerManager, std::shared_ptr<ProfilerManager>>(*m, "ProfilerManager")
-                           .def_static("get_instance", &ProfilerManager::GetInstance, "ProfilerManager get_instance.")
-                           .def("dynamic_status", &ProfilerManager::GetNetDynamicShapeStatus, "dynamic_status");
-                       }));
-
-REGISTER_PYBIND_DEFINE(Profiler_, ([](const py::module *m) {
-                         (void)py::class_<Profiler, std::shared_ptr<Profiler>>(*m, "Profiler")
-                           .def_static("get_instance", &Profiler::GetInstance, py::arg("device_name"),
-                                       "Profiler get_instance.")
-                           .def("init", &Profiler::Init, py::arg("profiling_path"), py::arg("device_id") = py::int_(0),
-                                py::arg("profiling_options") = py::str(""), "init")
-                           .def("start", &Profiler::Start, "start")
-                           .def("stop", &Profiler::Stop, "stop")
-                           .def("finalize", &Profiler::Finalize, "finalize")
-                           .def("step_profiling_enable", &Profiler::StepProfilingEnable, py::arg("enable_flag"),
-                                "enable or disable step profiling");
-                       }));
 }  // namespace profiler
 }  // namespace mindspore

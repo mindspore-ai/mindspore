@@ -30,35 +30,35 @@ static ValuePtr PyArgToValue(const py::object &arg) {
   return parse::data_converter::PyDataToValue(arg);
 }
 // Bind SignatureEnumRW as a python class.
-REGISTER_PYBIND_DEFINE(SignatureEnumRW, ([](const py::module *m) {
-                         (void)py::class_<Signature>(*m, "Signature")
-                           .def(py::init([](const std::string name, SignatureEnumRW rw, SignatureEnumKind kind,
-                                            const py::object arg_default, SignatureEnumDType dtype) {
-                             auto default_value = PyArgToValue(arg_default);
-                             return Signature(name, rw, kind, default_value, dtype);
-                           }));
-                         (void)py::enum_<SignatureEnumRW>(*m, "signature_rw", py::arithmetic())
-                           .value("RW_READ", SignatureEnumRW::kRWRead)
-                           .value("RW_WRITE", SignatureEnumRW::kRWWrite)
-                           .value("RW_REF", SignatureEnumRW::kRWRef)
-                           .value("RW_EMPTY_DEFAULT_VALUE", SignatureEnumRW::kRWEmptyDefaultValue);
-                         (void)py::enum_<SignatureEnumKind>(*m, "signature_kind", py::arithmetic())
-                           .value("KIND_POSITIONAL_KEYWORD", SignatureEnumKind::kKindPositionalKeyword)
-                           .value("KIND_VAR_POSITIONAL", SignatureEnumKind::kKindVarPositional)
-                           .value("KIND_KEYWORD_ONLY", SignatureEnumKind::kKindKeywordOnly)
-                           .value("KIND_VAR_KEYWARD", SignatureEnumKind::kKindVarKeyword)
-                           .value("KIND_EMPTY_DEFAULT_VALUE", SignatureEnumKind::kKindEmptyDefaultValue);
-                         (void)py::enum_<SignatureEnumDType>(*m, "signature_dtype", py::arithmetic())
-                           .value("T", SignatureEnumDType::kDType)
-                           .value("T1", SignatureEnumDType::kDType1)
-                           .value("T2", SignatureEnumDType::kDType2)
-                           .value("T3", SignatureEnumDType::kDType3)
-                           .value("T4", SignatureEnumDType::kDType4)
-                           .value("T5", SignatureEnumDType::kDType5)
-                           .value("T6", SignatureEnumDType::kDType6)
-                           .value("T7", SignatureEnumDType::kDType7)
-                           .value("T8", SignatureEnumDType::kDType8)
-                           .value("T9", SignatureEnumDType::kDType9)
-                           .value("T_EMPTY_DEFAULT_VALUE", SignatureEnumDType::kDTypeEmptyDefaultValue);
-                       }));
+void RegSignatureEnumRW(py::module *m) {
+  (void)py::class_<Signature>(*m, "Signature")
+    .def(py::init([](const std::string &name, SignatureEnumRW rw, SignatureEnumKind kind, const py::object arg_default,
+                     SignatureEnumDType dtype) {
+      auto default_value = PyArgToValue(arg_default);
+      return Signature(name, rw, kind, default_value, dtype);
+    }));
+  (void)py::enum_<SignatureEnumRW>(*m, "signature_rw", py::arithmetic())
+    .value("RW_READ", SignatureEnumRW::kRWRead)
+    .value("RW_WRITE", SignatureEnumRW::kRWWrite)
+    .value("RW_REF", SignatureEnumRW::kRWRef)
+    .value("RW_EMPTY_DEFAULT_VALUE", SignatureEnumRW::kRWEmptyDefaultValue);
+  (void)py::enum_<SignatureEnumKind>(*m, "signature_kind", py::arithmetic())
+    .value("KIND_POSITIONAL_KEYWORD", SignatureEnumKind::kKindPositionalKeyword)
+    .value("KIND_VAR_POSITIONAL", SignatureEnumKind::kKindVarPositional)
+    .value("KIND_KEYWORD_ONLY", SignatureEnumKind::kKindKeywordOnly)
+    .value("KIND_VAR_KEYWARD", SignatureEnumKind::kKindVarKeyword)
+    .value("KIND_EMPTY_DEFAULT_VALUE", SignatureEnumKind::kKindEmptyDefaultValue);
+  (void)py::enum_<SignatureEnumDType>(*m, "signature_dtype", py::arithmetic())
+    .value("T", SignatureEnumDType::kDType)
+    .value("T1", SignatureEnumDType::kDType1)
+    .value("T2", SignatureEnumDType::kDType2)
+    .value("T3", SignatureEnumDType::kDType3)
+    .value("T4", SignatureEnumDType::kDType4)
+    .value("T5", SignatureEnumDType::kDType5)
+    .value("T6", SignatureEnumDType::kDType6)
+    .value("T7", SignatureEnumDType::kDType7)
+    .value("T8", SignatureEnumDType::kDType8)
+    .value("T9", SignatureEnumDType::kDType9)
+    .value("T_EMPTY_DEFAULT_VALUE", SignatureEnumDType::kDTypeEmptyDefaultValue);
+}
 }  // namespace mindspore

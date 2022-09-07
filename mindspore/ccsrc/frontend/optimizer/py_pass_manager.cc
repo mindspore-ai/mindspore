@@ -95,17 +95,16 @@ void PyPassManager::ClearRes() {
   phase_to_group_.clear();
 }
 
-REGISTER_PYBIND_DEFINE(
-  PyPassManager_, ([](const py::module *m) {
-    (void)py::enum_<Phase>(*m, "phase", py::arithmetic()).value("pre_ad", Phase::PREAD).value("opt", Phase::OPT);
-    (void)py::class_<PyPassManager, std::shared_ptr<PyPassManager>>(*m, "PyPassManager_")
-      .def(py::init([]() { return PyPassManager::GetInstance(); }))
-      .def("register", &PyPassManager::Register, "Register python pass")
-      .def("unregister", &PyPassManager::Unregister, "Unregister Python Pass")
-      .def("gen_new_parameter", &PyPassManager::GenNewParameter, "Generate new parameter")
-      .def("set_renorm", &PyPassManager::SetRenorm, "Set whether or not to do renorm after modified graph")
-      .def("set_reopt", &PyPassManager::SetReOpt, "Set whether or not to do optimization after modified graph");
-  }));
+void RegPyPassManager(py::module *m) {
+  (void)py::enum_<Phase>(*m, "phase", py::arithmetic()).value("pre_ad", Phase::PREAD).value("opt", Phase::OPT);
+  (void)py::class_<PyPassManager, std::shared_ptr<PyPassManager>>(*m, "PyPassManager_")
+    .def(py::init([]() { return PyPassManager::GetInstance(); }))
+    .def("register", &PyPassManager::Register, "Register python pass")
+    .def("unregister", &PyPassManager::Unregister, "Unregister Python Pass")
+    .def("gen_new_parameter", &PyPassManager::GenNewParameter, "Generate new parameter")
+    .def("set_renorm", &PyPassManager::SetRenorm, "Set whether or not to do renorm after modified graph")
+    .def("set_reopt", &PyPassManager::SetReOpt, "Set whether or not to do optimization after modified graph");
+}
 }  // namespace python_pass
 }  // namespace opt
 }  // namespace mindspore

@@ -148,23 +148,21 @@ void MatchResult::merge(const MatchResultPtr &other_result) {
   }
 }
 
-REGISTER_PYBIND_DEFINE(
-  Pattern, ([](const py::module *m) {
-    (void)py::class_<Pattern, std::shared_ptr<Pattern>>(*m, "Pattern").def(py::init<>());
-    (void)py::class_<OneOf, std::shared_ptr<OneOf>, Pattern>(*m, "OneOf_").def(py::init<vector<PatternPtr>>());
-    (void)py::class_<Prim, std::shared_ptr<Prim>, Pattern>(*m, "Prim_", py::dynamic_attr())
-      .def(py::init<vector<py::object>, string>());
-    (void)py::class_<Call, std::shared_ptr<Call>, Pattern>(*m, "Call_")
-      .def(py::init<PatternPtr, vector<PatternPtr>>())
-      .def(py::init<py::object, vector<PatternPtr>>());
-    (void)py::class_<NoneOf, std::shared_ptr<NoneOf>, Pattern>(*m, "NoneOf_").def(py::init<vector<PatternPtr>>());
-    (void)py::class_<Any, std::shared_ptr<Any>, Pattern>(*m, "Any").def(py::init<>());
-    (void)py::class_<NewTensor, std::shared_ptr<NewTensor>, Pattern>(*m, "NewTensor_")
-      .def(py::init<tensor::TensorPtr>());
-    (void)py::class_<NewParameter, std::shared_ptr<NewParameter>, Pattern>(*m, "NewParameter_")
-      .def(py::init<string, tensor::TensorPtr, bool, bool>());
-    (void)py::class_<Imm, std::shared_ptr<Imm>, Pattern>(*m, "Imm").def(py::init<int64_t>());
-  }));
+void RegPattern(py::module *m) {
+  (void)py::class_<Pattern, std::shared_ptr<Pattern>>(*m, "Pattern").def(py::init<>());
+  (void)py::class_<OneOf, std::shared_ptr<OneOf>, Pattern>(*m, "OneOf_").def(py::init<vector<PatternPtr>>());
+  (void)py::class_<Prim, std::shared_ptr<Prim>, Pattern>(*m, "Prim_", py::dynamic_attr())
+    .def(py::init<vector<py::object>, string>());
+  (void)py::class_<Call, std::shared_ptr<Call>, Pattern>(*m, "Call_")
+    .def(py::init<PatternPtr, vector<PatternPtr>>())
+    .def(py::init<py::object, vector<PatternPtr>>());
+  (void)py::class_<NoneOf, std::shared_ptr<NoneOf>, Pattern>(*m, "NoneOf_").def(py::init<vector<PatternPtr>>());
+  (void)py::class_<Any, std::shared_ptr<Any>, Pattern>(*m, "Any").def(py::init<>());
+  (void)py::class_<NewTensor, std::shared_ptr<NewTensor>, Pattern>(*m, "NewTensor_").def(py::init<tensor::TensorPtr>());
+  (void)py::class_<NewParameter, std::shared_ptr<NewParameter>, Pattern>(*m, "NewParameter_")
+    .def(py::init<string, tensor::TensorPtr, bool, bool>());
+  (void)py::class_<Imm, std::shared_ptr<Imm>, Pattern>(*m, "Imm").def(py::init<int64_t>());
+}
 }  // namespace python_pass
 }  // namespace opt
 }  // namespace mindspore

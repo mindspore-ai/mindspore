@@ -255,32 +255,31 @@ void PyNativeExecutor::SetLazyBuild(bool enable) const { forward_executor()->set
 
 bool PyNativeExecutor::IsFirstCell() const { return forward_executor()->IsFirstCell(); }
 
-REGISTER_PYBIND_DEFINE(PynativeExecutor_, ([](const py::module *m) {
-                         (void)py::class_<PyNativeExecutor, std::shared_ptr<PyNativeExecutor>>(*m, "PynativeExecutor_")
-                           .def_static("get_instance", &PyNativeExecutor::GetInstance, "PyNativeExecutor get_instance.")
-                           .def("is_first_cell", &PyNativeExecutor::IsFirstCell, "check if the first cell.")
-                           .def("new_graph", &PyNativeExecutor::NewGraph, "pynative new a graph.")
-                           .def("end_graph", &PyNativeExecutor::EndGraph, "pynative end a graph.")
-                           .def("check_run", &PyNativeExecutor::CheckAlreadyRun, "pynative check graph run before.")
-                           .def("grad_ms_function", &PyNativeExecutor::GradMsFunction, "pynative grad for ms_function.")
-                           .def("grad_net", &PyNativeExecutor::GradNet, "pynative grad graph.")
-                           .def("clear_cell", &PyNativeExecutor::ClearCell, "pynative clear status.")
-                           .def("clear_res", &PyNativeExecutor::ClearRes, "pynative clear exception res.")
-                           .def("clear_grad", &PyNativeExecutor::ClearGrad, "pynative clear grad status.")
-                           .def("sync", &PyNativeExecutor::Sync, "pynative sync stream.")
-                           .def("set_lazy_build", &PyNativeExecutor::SetLazyBuild, "pynative build kernel async")
-                           .def("__call__", &PyNativeExecutor::Run, "pynative executor run grad graph.")
-                           .def("set_graph_phase", &PyNativeExecutor::set_graph_phase, "pynative set graph phase")
-                           .def("grad_flag", &PyNativeExecutor::grad_flag, "pynative grad flag")
-                           .def("set_hook_changed", &PyNativeExecutor::SetHookChanged, "set pynative hook changed")
-                           .def("set_grad_flag", &PyNativeExecutor::set_grad_flag, py::arg("flag") = py::bool_(false),
-                                "Executor set grad flag.")
-                           .def("set_dynamic_input", &PyNativeExecutor::SetDynamicInput, "set dynamic input")
-                           .def("get_dynamic_input", &PyNativeExecutor::GetDynamicInput, "get dynamic input")
-                           .def("set_py_exe_path", &PyNativeExecutor::set_py_exe_path,
-                                py::arg("py_exe_path") = py::str(""), "set python executable path.")
-                           .def("set_kernel_build_server_dir", &PyNativeExecutor::set_kernel_build_server_dir,
-                                py::arg("kernel_build_server_dir") = py::str(""),
-                                "set kernel build server directory path.");
-                       }));
+void RegPynativeExecutor(py::module *m) {
+  (void)py::class_<PyNativeExecutor, std::shared_ptr<PyNativeExecutor>>(*m, "PynativeExecutor_")
+    .def_static("get_instance", &PyNativeExecutor::GetInstance, "PyNativeExecutor get_instance.")
+    .def("is_first_cell", &PyNativeExecutor::IsFirstCell, "check if the first cell.")
+    .def("new_graph", &PyNativeExecutor::NewGraph, "pynative new a graph.")
+    .def("end_graph", &PyNativeExecutor::EndGraph, "pynative end a graph.")
+    .def("check_run", &PyNativeExecutor::CheckAlreadyRun, "pynative check graph run before.")
+    .def("grad_ms_function", &PyNativeExecutor::GradMsFunction, "pynative grad for ms_function.")
+    .def("grad_net", &PyNativeExecutor::GradNet, "pynative grad graph.")
+    .def("clear_cell", &PyNativeExecutor::ClearCell, "pynative clear status.")
+    .def("clear_res", &PyNativeExecutor::ClearRes, "pynative clear exception res.")
+    .def("clear_grad", &PyNativeExecutor::ClearGrad, "pynative clear grad status.")
+    .def("sync", &PyNativeExecutor::Sync, "pynative sync stream.")
+    .def("set_lazy_build", &PyNativeExecutor::SetLazyBuild, "pynative build kernel async")
+    .def("__call__", &PyNativeExecutor::Run, "pynative executor run grad graph.")
+    .def("set_graph_phase", &PyNativeExecutor::set_graph_phase, "pynative set graph phase")
+    .def("grad_flag", &PyNativeExecutor::grad_flag, "pynative grad flag")
+    .def("set_hook_changed", &PyNativeExecutor::SetHookChanged, "set pynative hook changed")
+    .def("set_grad_flag", &PyNativeExecutor::set_grad_flag, py::arg("flag") = py::bool_(false),
+         "Executor set grad flag.")
+    .def("set_dynamic_input", &PyNativeExecutor::SetDynamicInput, "set dynamic input")
+    .def("get_dynamic_input", &PyNativeExecutor::GetDynamicInput, "get dynamic input")
+    .def("set_py_exe_path", &PyNativeExecutor::set_py_exe_path, py::arg("py_exe_path") = py::str(""),
+         "set python executable path.")
+    .def("set_kernel_build_server_dir", &PyNativeExecutor::set_kernel_build_server_dir,
+         py::arg("kernel_build_server_dir") = py::str(""), "set kernel build server directory path.");
+}
 }  // namespace mindspore::pynative

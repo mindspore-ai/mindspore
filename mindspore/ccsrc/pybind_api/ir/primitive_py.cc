@@ -673,28 +673,26 @@ void PrimitivePyAdapter::set_attached_primitive(const PrimitivePyPtr &prim) {
   attached_primitive_ = prim;
 }
 
-REGISTER_PYBIND_DEFINE(
-  Primitive_, ([](const py::module *m) {
-    (void)py::enum_<PrimType>(*m, "prim_type", py::arithmetic())
-      .value("unknown", PrimType::kPrimTypeUnknown)
-      .value("builtin", PrimType::kPrimTypeBuiltIn)
-      .value("py_infer_shape", PrimType::kPrimTypePyInfer)
-      .value("user_custom", PrimType::kPrimTypeUserCustom)
-      .value("py_infer_check", PrimType::kPrimTypePyCheck);
-    (void)py::class_<PrimitivePyAdapter, std::shared_ptr<PrimitivePyAdapter>>(*m, "Primitive_")
-      .def_readonly(PYTHON_PRIMITIVE_FLAG, &PrimitivePyAdapter::parse_info_)
-      .def(py::init<py::str &>())
-      .def("add_attr", &PrimitivePyAdapter::AddPyAttr, "add primitive attr")
-      .def("del_attr", &PrimitivePyAdapter::DelPyAttr, "del primitive attr")
-      .def("get_attr_dict", &PrimitivePyAdapter::GetAttrDict, "get primitive attr")
-      .def("set_prim_type", &PrimitivePyAdapter::set_prim_type, "Set primitive type.")
-      .def("set_const_prim", &PrimitivePyAdapter::set_const_prim, "Set primitive is const.")
-      .def("set_const_input_indexes", &PrimitivePyAdapter::set_const_input_indexes,
-           "Set primitive const input indexes.")
-      .def("set_signatures", &PrimitivePyAdapter::set_signatures, "Set primitive inputs signature.")
-      .def("add_backward_hook_fn", &PrimitivePyAdapter::AddBackwardHookFn, "Add primitive backward hook function.")
-      .def("remove_backward_hook_fn", &PrimitivePyAdapter::RemoveBackwardHookFn,
-           "Remove primitive backward hook function.")
-      .def("set_instance_name", &PrimitivePyAdapter::set_instance_name, "Set primitive instance name.");
-  }));
+void RegPrimitive(py::module *m) {
+  (void)py::enum_<PrimType>(*m, "prim_type", py::arithmetic())
+    .value("unknown", PrimType::kPrimTypeUnknown)
+    .value("builtin", PrimType::kPrimTypeBuiltIn)
+    .value("py_infer_shape", PrimType::kPrimTypePyInfer)
+    .value("user_custom", PrimType::kPrimTypeUserCustom)
+    .value("py_infer_check", PrimType::kPrimTypePyCheck);
+  (void)py::class_<PrimitivePyAdapter, std::shared_ptr<PrimitivePyAdapter>>(*m, "Primitive_")
+    .def_readonly(PYTHON_PRIMITIVE_FLAG, &PrimitivePyAdapter::parse_info_)
+    .def(py::init<py::str &>())
+    .def("add_attr", &PrimitivePyAdapter::AddPyAttr, "add primitive attr")
+    .def("del_attr", &PrimitivePyAdapter::DelPyAttr, "del primitive attr")
+    .def("get_attr_dict", &PrimitivePyAdapter::GetAttrDict, "get primitive attr")
+    .def("set_prim_type", &PrimitivePyAdapter::set_prim_type, "Set primitive type.")
+    .def("set_const_prim", &PrimitivePyAdapter::set_const_prim, "Set primitive is const.")
+    .def("set_const_input_indexes", &PrimitivePyAdapter::set_const_input_indexes, "Set primitive const input indexes.")
+    .def("set_signatures", &PrimitivePyAdapter::set_signatures, "Set primitive inputs signature.")
+    .def("add_backward_hook_fn", &PrimitivePyAdapter::AddBackwardHookFn, "Add primitive backward hook function.")
+    .def("remove_backward_hook_fn", &PrimitivePyAdapter::RemoveBackwardHookFn,
+         "Remove primitive backward hook function.")
+    .def("set_instance_name", &PrimitivePyAdapter::set_instance_name, "Set primitive instance name.");
+}
 }  // namespace mindspore

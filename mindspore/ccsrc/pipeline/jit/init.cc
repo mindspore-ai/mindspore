@@ -43,6 +43,10 @@
 
 #include "pybind_api/gil_scoped_long_running.h"
 
+#ifndef ENABLE_SECURITY
+#include "profiler/device/profiling.h"
+#endif
+
 namespace py = pybind11;
 
 using GraphExecutorPy = mindspore::pipeline::GraphExecutorPy;
@@ -60,6 +64,64 @@ using PSContext = mindspore::ps::PSContext;
 using CollectiveManager = mindspore::distributed::collective::CollectiveManager;
 using RecoveryContext = mindspore::distributed::recovery::RecoveryContext;
 
+#ifndef ENABLE_SECURITY
+namespace mindspore {
+namespace profiler {
+void RegProfiler(py::module *m) {
+  (void)py::class_<Profiler, std::shared_ptr<Profiler>>(*m, "Profiler")
+    .def_static("get_instance", &Profiler::GetInstance, py::arg("device_name"), "Profiler get_instance.")
+    .def("init", &Profiler::Init, py::arg("profiling_path"), py::arg("device_id") = py::int_(0),
+         py::arg("profiling_options") = py::str(""), "init")
+    .def("start", &Profiler::Start, "start")
+    .def("stop", &Profiler::Stop, "stop")
+    .def("finalize", &Profiler::Finalize, "finalize")
+    .def("step_profiling_enable", &Profiler::StepProfilingEnable, py::arg("enable_flag"),
+         "enable or disable step profiling");
+}
+void RegProfilerManager(py::module *m) {
+  (void)py::class_<ProfilerManager, std::shared_ptr<ProfilerManager>>(*m, "ProfilerManager")
+    .def_static("get_instance", &ProfilerManager::GetInstance, "ProfilerManager get_instance.")
+    .def("dynamic_status", &ProfilerManager::GetNetDynamicShapeStatus, "dynamic_status");
+}
+}  // namespace profiler
+}  // namespace mindspore
+#endif  // ENABLE_SECURITY
+
+namespace mindspore {
+void RegModule(py::module *m) {
+  RegTyping(m);
+  RegCNode(m);
+  RegCell(m);
+  RegMetaFuncGraph(m);
+  RegFuncGraph(m);
+  RegUpdateFuncGraphHyperParams(m);
+  RegParamInfo(m);
+  RegPrimitive(m);
+  RegSignatureEnumRW(m);
+  mindspore::tensor::RegMetaTensor(m);
+  mindspore::tensor::RegCSRTensor(m);
+  mindspore::tensor::RegCOOTensor(m);
+  mindspore::tensor::RegRowTensor(m);
+  RegValues(m);
+  mindspore::initializer::RegRandomNormal(m);
+  RegMsContext(m);
+  RegSecurity(m);
+  mindspore::pynative::RegPynativeExecutor(m);
+  mindspore::opt::python_pass::RegPattern(m);
+  mindspore::opt::python_pass::RegPyPassManager(m);
+  mindspore::prim::RegCompositeOpsGroup(m);
+#ifndef ENABLE_SECURITY
+  mindspore::profiler::RegProfilerManager(m);
+  mindspore::profiler::RegProfiler(m);
+#endif
+}
+
+void RegModuleHelper(py::module *m) {
+  static std::once_flag onlyCalledOnce;
+  std::call_once(onlyCalledOnce, RegModule, m);
+}
+}  // namespace mindspore
+
 // Interface with python
 PYBIND11_MODULE(_c_expression, m) {
   // The OMP_NUM_THREADS has no effect when set in backend, so set it here in advance.
@@ -67,37 +129,7 @@ PYBIND11_MODULE(_c_expression, m) {
 
   m.doc() = "MindSpore c plugin";
 
-  auto fns = mindspore::PybindDefineRegister::AllFuncs();
-  auto inheritance_map = mindspore::PybindDefineRegister::GetInheritanceMap();
-  std::set<std::string> has_inited = {""};
-
-  auto get_inherit_stack = [&inheritance_map](const string &class_name) -> std::vector<std::string> {
-    std::vector<string> parent_names;
-    for (auto parent_name = inheritance_map.find(class_name); parent_name != inheritance_map.end();
-         parent_name = inheritance_map.find(parent_name->second)) {
-      (void)parent_names.emplace_back(parent_name->second);
-    }
-    return parent_names;
-  };
-
-  for (const auto &item : fns) {
-    if (has_inited.find(item.first) != has_inited.end()) {
-      continue;
-    }
-    auto parent_names = get_inherit_stack(item.first);
-    // Init parent class
-    (void)std::for_each(parent_names.rbegin(), parent_names.rend(),
-                        [&fns, &has_inited, &m](const std::string &parent_name) {
-                          if (has_inited.find(parent_name) == has_inited.end()) {
-                            fns[parent_name](&m);
-                            (void)has_inited.emplace(parent_name);
-                          }
-                        });
-    // Init current class
-    item.second(&m);
-    (void)has_inited.emplace(item.first);
-  }
-
+  mindspore::RegModuleHelper(&m);
   mindspore::ScopedLongRunning::SetHook(std::make_unique<mindspore::GilScopedLongRunningHook>());
 
   // Class Pipeline interface

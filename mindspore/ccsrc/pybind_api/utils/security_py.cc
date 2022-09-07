@@ -28,8 +28,8 @@ bool EnableSecurity() {
 }
 
 // Define python wrapper to judge security enable.
-REGISTER_PYBIND_DEFINE(security, ([](py::module *const m) {
-                         auto m_sub = m->def_submodule("security", "submodule for security");
-                         (void)m_sub.def("enable_security", &EnableSecurity, "enable security");
-                       }));
+void RegSecurity(py::module *m) {
+  auto m_sub = m->def_submodule("security", "submodule for security");
+  (void)m_sub.def("enable_security", &EnableSecurity, "enable security");
+}
 }  // namespace mindspore
