@@ -45,6 +45,10 @@ AbstractBasePtr IdentityNInfer(const abstract::AnalysisEnginePtr &, const Primit
   auto x = input_args[kInputIndex0]->cast<abstract::AbstractSequencePtr>();
   abstract::AbstractBasePtrList x_seq = x->elements();
   size_t in_size = x_seq.size();
+  if (in_size < 1) {
+    MS_EXCEPTION(ValueError) << "For [" << op_name
+                             << "] input list of length should be equal or greater than 1 but get " << in_size << " .";
+  }
   for (size_t idx = 0; idx < in_size; ++idx) {
     auto name = "input x[" + std::to_string(idx) + "]";
     (void)CheckAndConvertUtils::CheckTensorTypeValid(name, x_seq[idx]->BuildType(), identityn_valid_types, op_name);
