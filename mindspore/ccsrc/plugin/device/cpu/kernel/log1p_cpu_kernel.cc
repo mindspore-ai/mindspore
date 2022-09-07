@@ -25,16 +25,22 @@ constexpr size_t kLog1pInputsNum = 1;
 constexpr size_t kLog1pOutputsNum = 1;
 }  // namespace
 
-void Log1pCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  input_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
+bool Log1pCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                             const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  PrimitivePtr prim = base_operator->GetPrim();
+  MS_EXCEPTION_IF_NULL(prim);
+  kernel_name_ = prim->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kLog1pInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kLog1pOutputsNum, kernel_name_);
+  input_dtype_ = inputs[0]->GetDtype();
   if (input_dtype_ != kNumberTypeFloat16 && input_dtype_ != kNumberTypeFloat32 && input_dtype_ != kNumberTypeFloat64 &&
       input_dtype_ != kNumberTypeComplex64 && input_dtype_ != kNumberTypeComplex128) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the dtype of input should be Float16, Float32, Float64, Complex64 or Complex128, but got: "
                       << input_dtype_;
   }
+  return true;
 }
 
 bool Log1pCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,

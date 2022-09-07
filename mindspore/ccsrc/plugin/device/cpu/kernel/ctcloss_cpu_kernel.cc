@@ -15,6 +15,7 @@
  */
 
 #include "plugin/device/cpu/kernel/ctcloss_cpu_kernel.h"
+#include <map>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
@@ -70,16 +71,33 @@ void MatrixFromVector(uint32_t row, uint32_t col, std::vector<std::vector<T>> *a
 }
 }  // namespace
 
-void CTCLossCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  probs_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  indices_dims_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-  labels_dims_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
-  if (AnfAlgo::IsShapesDynamic({probs_shape_, indices_dims_, labels_dims_})) {
-    return;
+bool CTCLossCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                               const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kCTCLossInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kCTCLossOutputsNum, kernel_name_);
+
+  MS_EXCEPTION_IF_NULL(base_operator);
+  PrimitivePtr prim = base_operator->GetPrim();
+  MS_EXCEPTION_IF_NULL(prim);
+  kernel_name_ = prim->name();
+
+  preprocess_collapse_repeated_ = GetValue<bool>(prim->GetAttr(PCR));
+  ctc_merge_repeated_ = GetValue<bool>(prim->GetAttr(CTR));
+  ignore_longer_outputs_than_inputs_ = GetValue<bool>(prim->GetAttr(ILOTI));
+  return true;
+}
+
+int CTCLossCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                const std::vector<KernelTensorPtr> &outputs,
+                                const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
   }
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
+  probs_shape_ = inputs[0]->GetShapeVector();
+  indices_dims_ = inputs[1]->GetShapeVector();
+  labels_dims_ = inputs[2]->GetShapeVector();
+  dtype_ = inputs[0]->GetDtype();
 
   if (probs_shape_.size() != 3) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'probs' must be 3-D, but got " << probs_shape_.size()
@@ -94,13 +112,11 @@ void CTCLossCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
                       << indices_dims_.size() << "-D.";
   }
 
-  preprocess_collapse_repeated_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, PCR);
-  ctc_merge_repeated_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, CTR);
-  ignore_longer_outputs_than_inputs_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, ILOTI);
   max_time_ = LongToSize(probs_shape_[0]);
   batch_size_ = LongToSize(probs_shape_[1]);
   num_class_ = LongToSize(probs_shape_[2]);
   blank_index_ = num_class_ - 1;
+  return KRET_OK;
 }
 
 bool CTCLossCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,

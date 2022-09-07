@@ -21,6 +21,7 @@
 #include <vector>
 #include <string>
 #include <limits>
+#include <map>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/hal/device/gpu_memory_allocator.h"
@@ -48,9 +49,11 @@ constexpr size_t kWsIdxForMaxLabelLen = 7;
 constexpr size_t kProbDimsIdxForMaxTime = 0;
 constexpr size_t kProbDimsIdxForBatch = 1;
 constexpr size_t kProbDimsIdxForNumClass = 2;
+constexpr size_t kCTCLossInputsNum = 4;
+constexpr size_t kCTCLossOutputsNum = 2;
 
 template <typename T>
-class CtcLossGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class CtcLossGpuKernelMod : public NativeGpuKernelMod {
  public:
   CtcLossGpuKernelMod()
       : label_indice_size_(0),
@@ -96,18 +99,38 @@ class CtcLossGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     LaunchSecondHalf(inputs, workspace, outputs, stream_ptr);
     return true;
   }
-  bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-    kernel_node_ = kernel_node;
+
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override {
+    MS_EXCEPTION_IF_NULL(base_operator);
+    CHECK_KERNEL_INPUTS_NUM(inputs.size(), kCTCLossInputsNum, kernel_name_);
+    CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kCTCLossOutputsNum, kernel_name_);
+
+    MS_EXCEPTION_IF_NULL(base_operator);
+    PrimitivePtr prim = base_operator->GetPrim();
+    MS_EXCEPTION_IF_NULL(prim);
+    kernel_name_ = prim->name();
+
+    preprocess_collapse_repeated_ = GetValue<bool>(prim->GetAttr("preprocess_collapse_repeated"));
+    ctc_merge_repeated_ = GetValue<bool>(prim->GetAttr("ctc_merge_repeated"));
+    ignore_longer_outputs_than_inputs_ = GetValue<bool>(prim->GetAttr("ignore_longer_outputs_than_inputs"));
     InitResource();
-    auto shape_signed = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kPrevOutput0th);
-    auto probs_shape = Convert2SizeTClipNeg(shape_signed);
-    auto indice_dims = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kPrevOutput1st);
-    auto labels_dims = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kPrevOutput2nd);
-    auto sequence_length_dims = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kPrevOutput3rd);
-    if (AnfAlgo::IsShapesDynamic({shape_signed, indice_dims, labels_dims, sequence_length_dims})) {
-      return true;
+    return true;
+  }
+
+  int Resize(
+    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+    const std::vector<KernelTensorPtr> &outputs,
+    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override {
+    if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+      return ret;
     }
+    ResetResource();
+    auto shape_signed = inputs[kPrevOutput0th]->GetShapeVector();
+    auto probs_shape = Convert2SizeTClipNeg(shape_signed);
+    auto indice_dims = inputs[kPrevOutput1st]->GetShapeVector();
+    auto labels_dims = inputs[kPrevOutput2nd]->GetShapeVector();
+    auto sequence_length_dims = inputs[kPrevOutput3rd]->GetShapeVector();
     is_null_input_ = CHECK_SHAPE_NULL(probs_shape, kernel_name_, "x") ||
                      CHECK_SHAPE_NULL(indice_dims, kernel_name_, "labels_indices") ||
                      CHECK_SHAPE_NULL(labels_dims, kernel_name_, "labels_values") ||
@@ -137,14 +160,11 @@ class CtcLossGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     label_indice_size_ *= SizeOf(indice_dims);
 
     sequence_lengths_size_ = LongToSizeClipNeg(sequence_length_dims[0]) * sizeof(int);
-    preprocess_collapse_repeated_ = GetAttr<bool>(kernel_node, "preprocess_collapse_repeated");
-    ctc_merge_repeated_ = GetAttr<bool>(kernel_node, "ctc_merge_repeated");
-    ignore_longer_outputs_than_inputs_ = GetAttr<bool>(kernel_node, "ignore_longer_outputs_than_inputs");
     InitSizeLists();
-    return true;
+    return KRET_OK;
   }
 
-  void ResetResource() noexcept override {
+  void ResetResource() noexcept {
     input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
@@ -214,10 +234,10 @@ class CtcLossGpuKernelMod : public DeprecatedNativeGpuKernelMod {
                        const std::vector<AddressPtr> &outputs, void *stream_ptr) {
     cudaStream_t stream = reinterpret_cast<cudaStream_t>(stream_ptr);
     CalculateMaxSequence(sequence_length, max_labels_length, batch, stream);
-    CHECK_CUDA_RET_WITH_EXCEPT(
-      kernel_node_, cudaMemcpyAsync(&max_sequence, max_labels_length, sizeof(int), cudaMemcpyDeviceToHost, stream),
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+      cudaMemcpyAsync(&max_sequence, max_labels_length, sizeof(int), cudaMemcpyDeviceToHost, stream),
       "cudaMemcpyAsync failed.");
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaStreamSynchronize(stream), "cudaStreamSynchronize failed.");
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(stream), "cudaStreamSynchronize failed.");
     if (max_time < max_sequence) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the x[0] must be equal to or greater than max_sequence, "
                         << "but got x[0]: " << max_time << ", max_sequence: " << max_sequence;
@@ -227,10 +247,10 @@ class CtcLossGpuKernelMod : public DeprecatedNativeGpuKernelMod {
 
     CalculatePreLength(label_squence_length, precum_labels_length, cum_labels_length, max_labels_length, label_indices,
                        batch, label_size_ / sizeof(int), stream);
-    CHECK_CUDA_RET_WITH_EXCEPT(
-      kernel_node_, cudaMemcpyAsync(&batch_label, max_labels_length, sizeof(int), cudaMemcpyDeviceToHost, stream),
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+      cudaMemcpyAsync(&batch_label, max_labels_length, sizeof(int), cudaMemcpyDeviceToHost, stream),
       "cudaMemcpyAsync failed.");
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaStreamSynchronize(stream), "cudaStreamSynchronize failed.");
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(stream), "cudaStreamSynchronize failed.");
     if (batch != batch_label + 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the batch size of input must be equal to "
                         << (batch_label + 1) << ", but got " << batch;
@@ -241,11 +261,10 @@ class CtcLossGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       GenLabelValuePCR(label_value_sp, label_value_pcr, label_squence_length, cum_labels_length, max_labels_length,
                        batch, stream);
     }
-    CHECK_CUDA_RET_WITH_EXCEPT(
-      kernel_node_,
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
       cudaMemcpyAsync(&max_labels_length_host, max_labels_length, sizeof(int), cudaMemcpyDeviceToHost, stream),
       "cudaMemcpyAsync failed.");
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaStreamSynchronize(stream), "cudaStreamSynchronize failed.");
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(stream), "cudaStreamSynchronize failed.");
   }
 
   void LaunchSecondHalf(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
@@ -277,11 +296,11 @@ class CtcLossGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     CTCLoss(log_alpha_b, log_beta_b, softmax_probs, label_value_with_blank, batch, SOffSet, max_time, numclass,
             sequence_length, label_squence_length, cum_labels_length, costs, grads, prob_num,
             ignore_longer_outputs_than_inputs_, stream);
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaStreamSynchronize(stream), "cudaStreamSynchronize failed.");
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(stream), "cudaStreamSynchronize failed.");
     FreeMem(label_value_with_blank, log_alpha_b, log_beta_b);
   }
 
-  void InitSizeLists() override {
+  void InitSizeLists() {
     input_size_list_.push_back(probs_dims_[kProbDimsIdxForMaxTime] * probs_dims_[kProbDimsIdxForBatch] *
                                probs_dims_[kProbDimsIdxForNumClass] * sizeof(T));
     input_size_list_.push_back(label_indice_size_);
@@ -303,47 +322,44 @@ class CtcLossGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   }
   void MemsetForWS(int *label_value_pcr, int *cum_labels_length, int *label_squence_length, T *costs, T *grads,
                    cudaStream_t stream) {
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaMemsetAsync(label_value_pcr, static_cast<int>(0), label_size_, stream),
-                               "cudaMemSet failed in CtcLossGpuKernelMod::Launch.");
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                               cudaMemsetAsync(cum_labels_length, static_cast<int>(0), sequence_lengths_size_, stream),
-                               "cudaMemSet failed in CtcLossGpuKernelMod::Launch.");
-    CHECK_CUDA_RET_WITH_EXCEPT(
-      kernel_node_, cudaMemsetAsync(label_squence_length, static_cast<int>(0), sequence_lengths_size_, stream),
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemsetAsync(label_value_pcr, static_cast<int>(0), label_size_, stream),
+                                       "cudaMemSet failed in CtcLossGpuKernelMod::Launch.");
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+      cudaMemsetAsync(cum_labels_length, static_cast<int>(0), sequence_lengths_size_, stream),
       "cudaMemSet failed in CtcLossGpuKernelMod::Launch.");
-    CHECK_CUDA_RET_WITH_EXCEPT(
-      kernel_node_, cudaMemsetAsync(costs, static_cast<T>(0), probs_dims_[kProbDimsIdxForBatch] * sizeof(T), stream),
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+      cudaMemsetAsync(label_squence_length, static_cast<int>(0), sequence_lengths_size_, stream),
       "cudaMemSet failed in CtcLossGpuKernelMod::Launch.");
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                               cudaMemsetAsync(grads, static_cast<T>(0),
-                                               probs_dims_[kProbDimsIdxForMaxTime] * probs_dims_[kProbDimsIdxForBatch] *
-                                                 probs_dims_[kProbDimsIdxForNumClass] * sizeof(T),
-                                               stream),
-                               "cudaMemSet failed in CtcLossGpuKernelMod::Launch.");
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+      cudaMemsetAsync(costs, static_cast<T>(0), probs_dims_[kProbDimsIdxForBatch] * sizeof(T), stream),
+      "cudaMemSet failed in CtcLossGpuKernelMod::Launch.");
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+      cudaMemsetAsync(grads, static_cast<T>(0),
+                      probs_dims_[kProbDimsIdxForMaxTime] * probs_dims_[kProbDimsIdxForBatch] *
+                        probs_dims_[kProbDimsIdxForNumClass] * sizeof(T),
+                      stream),
+      "cudaMemSet failed in CtcLossGpuKernelMod::Launch.");
   }
   void MemManageForCus(T **log_alpha_b, T **log_beta_b, int **label_value_with_blank, int *cum_labels_length,
                        int log_prob_size, int batch, cudaStream_t stream) {
     int total_labels_size_host = 0;
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                               cudaMalloc(reinterpret_cast<void **>(log_alpha_b), sizeof(T) * log_prob_size),
-                               "cudaMalloc failed.");
-    CHECK_CUDA_RET_WITH_EXCEPT(
-      kernel_node_, cudaMalloc(reinterpret_cast<void **>(log_beta_b), sizeof(T) * log_prob_size), "cudaMalloc failed.");
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                               cudaMemcpyAsync(&total_labels_size_host, cum_labels_length + batch - 1, sizeof(int),
-                                               cudaMemcpyDeviceToHost, stream),
-                               "cudaMemcpyAsync failed.");
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaStreamSynchronize(stream), "cudaStreamSynchronize failed.");
-    CHECK_CUDA_RET_WITH_EXCEPT(
-      kernel_node_,
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMalloc(reinterpret_cast<void **>(log_alpha_b), sizeof(T) * log_prob_size),
+                                       "cudaMalloc failed.");
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMalloc(reinterpret_cast<void **>(log_beta_b), sizeof(T) * log_prob_size),
+                                       "cudaMalloc failed.");
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(&total_labels_size_host, cum_labels_length + batch - 1,
+                                                       sizeof(int), cudaMemcpyDeviceToHost, stream),
+                                       "cudaMemcpyAsync failed.");
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(stream), "cudaStreamSynchronize failed.");
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
       cudaMalloc(reinterpret_cast<void **>(label_value_with_blank), sizeof(int) * (2 * total_labels_size_host + batch)),
       "cudaMalloc failed.");
   }
 
   void FreeMem(int *label_value_with_blank, T *log_alpha_b, T *log_beta_b) {
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaFree(label_value_with_blank), "cudaFree failed.");
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaFree(log_alpha_b), "cudaFree failed.");
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaFree(log_beta_b), "cudaFree failed.");
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaFree(label_value_with_blank), "cudaFree failed.");
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaFree(log_alpha_b), "cudaFree failed.");
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaFree(log_beta_b), "cudaFree failed.");
   }
 
   size_t probs_dims_[3] = {0};

@@ -27,12 +27,13 @@ using complex128 = std::complex<double>;
 
 namespace mindspore {
 namespace kernel {
-class Log1pCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class Log1pCpuKernelMod : public NativeCpuKernelMod {
  public:
   Log1pCpuKernelMod() = default;
   ~Log1pCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernelNode) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
