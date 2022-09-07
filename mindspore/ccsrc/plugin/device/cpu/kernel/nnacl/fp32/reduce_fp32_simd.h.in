@@ -38,6 +38,15 @@ static inline int64_t ReduceSum@SIMD_INSTRUCTION@(int64_t index, const float *ou
   return index;
 }
 
+static inline int64_t ReduceSumByLastAxis@SIMD_INSTRUCTION@(int64_t index, const float *src, float* tmp_sum, int axis_size) {
+  SIMD_F32 tmp = SIMD_MOV_F32(0);
+  for (int block_max_size = axis_size - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+    tmp = SIMD_ADD_F32(tmp, SIMD_LD_F32(src + index));
+  }
+  *tmp_sum += SIMD_GET_SUM_F32(tmp);
+  return index;
+}
+
 static inline int64_t ReduceMean@SIMD_INSTRUCTION@(int64_t index, const float *outer_src, float *outer_dst, int inner_size,
   int axis_size) {
   for (int block_max_size = inner_size - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
@@ -74,6 +83,15 @@ static inline int64_t ReduceMax@SIMD_INSTRUCTION@(int64_t index, const float *ou
     }
     SIMD_ST_F32(outer_dst + index, tmp);
   }
+  return index;
+}
+
+static inline int64_t ReduceMaxByLastAxis@SIMD_INSTRUCTION@(int64_t index, const float *src, float* tmp_max, int axis_size) {
+  SIMD_F32 tmp = SIMD_MOV_F32(*tmp_max);
+  for (int block_max_size = axis_size - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+    tmp = SIMD_MAX_F32(tmp, SIMD_LD_F32(src + index));
+  }
+  *tmp_max = SIMD_GET_MAX_F32(tmp);
   return index;
 }
 
