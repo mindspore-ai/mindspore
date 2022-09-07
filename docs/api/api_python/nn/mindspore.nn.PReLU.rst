@@ -5,6 +5,8 @@ mindspore.nn.PReLU
 
     PReLU激活层（PReLU Activation Operator）。
 
+    逐元素应用PReLU function。
+
     公式定义为：
 
     .. math::

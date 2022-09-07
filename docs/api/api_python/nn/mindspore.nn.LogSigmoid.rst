@@ -5,7 +5,7 @@ mindspore.nn.LogSigmoid
 
     Log Sigmoid激活函数。
 
-    按元素计算Log Sigmoid激活函数。
+    按元素计算Log Sigmoid激活函数。输入是任意格式的Tensor。
 
     Log Sigmoid定义为：
 

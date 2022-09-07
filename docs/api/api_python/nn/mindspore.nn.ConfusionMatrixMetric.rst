@@ -42,10 +42,10 @@ mindspore.nn.ConfusionMatrixMetric
 
         - **inputs** (tuple) - `y_pred` 和 `y` 。 `y_pred` 和 `y` 是 `Tensor` 、列表或数组。
 
-          - **y_pred** (ndarray)：待计算的输入数据。格式必须为one-hot，且第一个维度是batch。
+          - **y_pred** (ndarray) - 待计算的输入数据。格式必须为one-hot，且第一个维度是batch。
             `y_pred` 的shape是 :math:`(N, C, ...)` 或 :math:`(N, ...)` 。
             至于分类任务， `y_pred` 的shape应为[BN]，其中N大于1。对于分割任务，shape应为[BNHW]或[BNHWD]。
-          - **y** (ndarray)：计算度量值的真实值。格式必须为one-hot，且第一个维度是batch。`y` 的shape是 :math:`(N, C, ...)` 。
+          - **y** (ndarray) - 计算度量值的真实值。格式必须为one-hot，且第一个维度是batch。`y` 的shape是 :math:`(N, C, ...)` 。
 
         **异常：**
 
