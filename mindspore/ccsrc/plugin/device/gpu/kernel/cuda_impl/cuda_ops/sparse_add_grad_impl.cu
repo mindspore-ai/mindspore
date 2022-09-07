@@ -31,10 +31,10 @@ __global__ void SparseAddGrad(const S *dout, const T *x1_indices, size_t x1_size
         auto oi = i * dim;
         if (out_indices[oi] == x_idx && out_indices[oi + 1] == y_idx) {
           val = dout[i];
+          dx1[x1_idx] = val;
+          x1_idx += 1;
         }
       }
-      dx1[x1_idx] = val;
-      x1_idx += stride;
     }
     size_t x2_idx = threadId;
     while (x2_idx < x2_size) {
@@ -46,10 +46,10 @@ __global__ void SparseAddGrad(const S *dout, const T *x1_indices, size_t x1_size
         auto oi = i * dim;
         if (out_indices[oi] == x_idx && out_indices[oi + 1] == y_idx) {
           val = dout[i];
+          dx2[x2_idx] = val;
+          x2_idx += 1;
         }
       }
-      dx2[x2_idx] = val;
-      x2_idx += stride;
     }
   return;
 }
