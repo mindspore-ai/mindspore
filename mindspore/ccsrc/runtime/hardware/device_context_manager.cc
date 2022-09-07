@@ -43,7 +43,7 @@ void PluginLoader::LoadDynamicLib(const std::string &plugin_file, std::map<std::
   err_msg = GetDlErrorMsg();
 #endif
   if (handle == nullptr) {
-    MS_LOG(DEBUG) << "Load dynamic lib: " << so_name << " failed. " << err_msg;
+    MS_LOG(INFO) << "Load dynamic lib: " << so_name << " failed. " << err_msg;
     return;
   }
   (*all_handles)[so_name] = handle;
@@ -57,7 +57,7 @@ void PluginLoader::CloseDynamicLib(const std::string &dl_name, void *handle) {
 
 #else
   if (dlclose(handle) != 0) {
-    MS_LOG(EXCEPTION) << "Closing dynamic lib: " << dl_name << "failed, error message: " << GetDlErrorMsg();
+    MS_LOG(ERROR) << "Closing dynamic lib: " << dl_name << "failed, error message: " << GetDlErrorMsg();
   }
 #endif
 }
