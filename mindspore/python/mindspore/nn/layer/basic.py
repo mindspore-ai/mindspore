@@ -185,7 +185,7 @@ class Dropout(Cell):
 class Dropout2d(Cell):
     r"""
     During training, randomly zeroes some channels of the input tensor with probability `p`
-    from a Bernoulli distribution(For a 4-dimensional tensor with a shape of :math:`NCHW`,
+    from a Bernoulli distribution (For a 4-dimensional tensor with a shape of :math:`NCHW`,
     the channel feature map refers to a 2-dimensional feature map with the shape of :math:`HW`).
 
     For example, the :math:`j\_th` channel of the :math:`i\_th` sample in the batched input is a to-be-processed
@@ -235,7 +235,7 @@ class Dropout2d(Cell):
 class Dropout3d(Cell):
     r"""
     During training, randomly zeroes some channels of the input tensor
-    with probability `p` from a Bernoulli distribution(For a 5-dimensional tensor with
+    with probability `p` from a Bernoulli distribution (For a 5-dimensional tensor with
     a shape of :math:`NCDHW`, the channel feature map refers to a 3-dimensional feature
     map with a shape of :math:`DHW`).
 
@@ -1461,8 +1461,8 @@ class MatrixSetDiag(Cell):
     Modifies the batched diagonal part of a batched tensor.
 
     Assume `x` has :math:`k+1` dimensions :math:`[I, J, K, ..., M, N]` and `diagonal` has :math:`k`
-    dimensions :math:`[I, J, K, ..., min(M, N)]`. Then the output is a tensor of rank :math:`k+1` with dimensions
-    :math:`[I, J, K, ..., M, N]` where:
+    dimensions :math:`[I, J, K, ..., min(M, N)]`, the output is a tensor of rank :math:`k+1` with dimensions
+    :math:`[I, J, K, ..., M, N]`, where:
 
     .. math::
         output[i, j, k, ..., m, n] = diagnoal[i, j, k, ..., n]\ for\ m == n

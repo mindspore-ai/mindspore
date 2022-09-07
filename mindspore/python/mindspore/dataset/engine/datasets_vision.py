@@ -1256,10 +1256,10 @@ class DIV2KDataset(MappableDataset, VisionBaseDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        usage (str): Acceptable usages include 'train', 'valid' or 'all' (default= 'train').
-        downgrade (str): Acceptable downgrades include 'bicubic', 'unknown', 'mild', 'difficult' or
+        usage (str, optional): Acceptable usages include 'train', 'valid' or 'all' (default= 'train').
+        downgrade (str, optional): Acceptable downgrades include 'bicubic', 'unknown', 'mild', 'difficult' or
             'wild' (default= 'bicubic').
-        scale (int): Acceptable scales include 2, 3, 4 or 8 (default=2).
+        scale (str, optional): Acceptable scales include 2, 3, 4 or 8 (default=2).
             When `downgrade` is 'bicubic', scale can be 2, 3, 4, 8.
             When `downgrade` is 'unknown', scale can only be 2, 3, 4.
             When `downgrade` is 'mild', 'difficult' or 'wild', scale can only be 4.

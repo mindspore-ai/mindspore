@@ -666,7 +666,7 @@ class GRU(_RNNBase):
 
     Apply GRU layer to the input.
 
-    There are two gates in a GRU model; one is update gate and the other is reset gate.
+    There are two gates in a GRU model. One is update gate and the other is reset gate.
     Denote two consecutive time nodes as :math:`t-1` and :math:`t`.
     Given an input :math:`x_t` at time :math:`t`, a hidden state :math:`h_{t-1}`, the update and reset gate at
     time :math:`t` is computed using a gating mechanism. Update gate :math:`z_t` is designed to protect the cell

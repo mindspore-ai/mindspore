@@ -144,7 +144,7 @@ class Conv2d(_Conv):
 
     where :math:`ccor` is the `cross-correlation <https://en.wikipedia.org/wiki/Cross-correlation>`_,
     :math:`C_{in}` is the channel number of the input, :math:`out_{j}` corresponds to the jth channel of
-    the output and :math:`j` is in the range of :math:`[0，C_{out}-1]`. :math:`\text{weight}(C_{\text{out}_j}, k)`
+    the output and :math:`j` is in the range of :math:`[0, C_{out}-1]`. :math:`\text{weight}(C_{\text{out}_j}, k)`
     is a convolution kernel slice with shape :math:`(\text{kernel_size[0]}, \text{kernel_size[1]})`,
     where :math:`\text{kernel_size[0]}` and :math:`\text{kernel_size[1]}` are the height and width of the convolution
     kernel respectively. :math:`\text{bias}` is the bias parameter and :math:`\text{X}` is the input tensor.
@@ -736,7 +736,7 @@ class Conv3dTranspose(_Conv):
             If `padding` is a tuple of six integers, then the head, tail, top, bottom, left, and right padding
             is equal to `padding[0]`, `padding[1]`, `padding[2]`, `padding[3]`, `padding[4]` and `padding[5]`
             respectively. The value should be greater than or equal to 0. Default: 0.
-        dilation (Union(int, tuple[int])): Dilation size of 3D convolution kernel.
+        dilation (Union[int, tuple[int]]): Dilation size of 3D convolution kernel.
             The data type is an integer or a tuple of three integers. If :math:`k > 1`, the kernel is sampled
             every `k` elements. The value of `k` on the depth, height and width directions is in range of
             [1, D], [1, H] and [1, W] respectively. Default: 1.

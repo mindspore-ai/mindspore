@@ -218,11 +218,13 @@ class ConfusionMatrixMetric(Metric):
         Update state with predictions and targets.
 
         Args:
-            inputs: Input `y_pred` and `y`. `y_pred` and `y` are a `Tensor`, list or numpy.ndarray.
-                `y_pred`: The batch data shape is :math:`(N, C, ...)` or :math:`(N, ...)`, representing onehot format
-                or category index format respectively. As for classification tasks, y_pred should have the shape [BN]
-                where N is larger than 1. As for segmentation tasks, the shape should be [BNHW] or [BNHWD].
-                `y`: It must be one-hot format. The batch data shape is :math:`(N, C, ...)`.
+            inputs (tuple): Input `y_pred` and `y`. `y_pred` and `y` are a `Tensor`, list or numpy.ndarray.
+
+                - y_pred (ndarray): The batch data shape is :math:`(N, C, ...)`
+                  or :math:`(N, ...)`, representing onehot format
+                  or category index format respectively. As for classification tasks, y_pred should have the shape [BN]
+                  where N is larger than 1. As for segmentation tasks, the shape should be [BNHW] or [BNHWD].
+                - y (ndarray): It must be one-hot format. The batch data shape is :math:`(N, C, ...)`.
 
         Raises:
             ValueError: If the number of the inputs is not 2.

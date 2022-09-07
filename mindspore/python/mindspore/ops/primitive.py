@@ -666,6 +666,8 @@ def constexpr(fn=None, get_instance=True, name=None, reuse_result=True, check=Tr
         name (str): Defines the operator name. If `name` is None, use the function name as op name. Default: None.
         reuse_result (bool): If true, the operator will be executed once and reuse the result next time,
                              otherwise the operator will always be executed. Default: True.
+        check (bool): If ture, the parameters will be checked
+            and the warning message will raised if the parameter is not const value. Default: True.
 
     Examples:
         >>> from mindspore.ops import constexpr

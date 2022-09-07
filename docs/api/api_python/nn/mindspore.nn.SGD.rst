@@ -34,7 +34,7 @@ mindspore.nn.SGD
           .. include:: mindspore.nn.optim_group_param.rst
           .. include:: mindspore.nn.optim_group_lr.rst
 
-          - **weight_decay** : 目前不支持通过参数分组使用不同的weight_decay。
+          - **weight_decay** - 目前不支持通过参数分组使用不同的weight_decay。
 
           .. include:: mindspore.nn.optim_group_gc.rst
           .. include:: mindspore.nn.optim_group_order.rst
