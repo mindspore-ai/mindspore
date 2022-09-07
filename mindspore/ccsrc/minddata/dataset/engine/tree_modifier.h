@@ -140,7 +140,7 @@ class TreeModifier {
   /// \param op_id Operator ID
   /// \param change_request Pointer to the change request
   /// \return Status return Status code
-  Status AddChangeRequest(int32_t op_id, ChangeRequestPtr change_request) {
+  Status AddChangeRequest(int32_t op_id, const ChangeRequestPtr &change_request) {
     num_requests_++;
     RETURN_IF_NOT_OK(callbacks[op_id]->PushChangeRequest(change_request));
     return Status::OK();

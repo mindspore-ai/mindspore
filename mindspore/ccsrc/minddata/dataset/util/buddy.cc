@@ -52,7 +52,7 @@ Status BuddySpace::Init() {
   } catch (const std::bad_alloc &e) {
     RETURN_STATUS_OOM("Out of memory.");
   }
-  (void)memset_s(mem_.get(), offset_3, 0, offset_3);
+  CHECK_FAIL_RETURN_UNEXPECTED(memset_s(mem_.get(), offset_3, 0, offset_3) == EOK, "Failed to init memory to zero.");
   auto ptr = mem_.get();
   hint_ = reinterpret_cast<rel_addr_t *>(ptr);
   count_ = reinterpret_cast<int *>((reinterpret_cast<char *>(ptr) + offset_1));
@@ -80,7 +80,10 @@ addr_t BuddySpace::AllocNoLock(const uint64_t sz, BSpaceDescriptor *desc) noexce
   uint32_t reqSize = SizeToBlock(sz);
   rel_addr_t rel_addr = AllocBuddySeg(reqSize);
   if (rel_addr != static_cast<rel_addr_t>(NOSPACE)) {
-    (void)memset_s(desc, sizeof(BSpaceDescriptor), 0, sizeof(BSpaceDescriptor));
+    if (memset_s(desc, sizeof(BSpaceDescriptor), 0, sizeof(BSpaceDescriptor)) != EOK) {
+      MS_LOG(ERROR) << "Failed to init memory to zero.";
+      return NOSPACE;
+    }
     desc->sig = static_cast<int>(0xDEADBEEF);
     desc->addr = rel_addr;
     desc->req_size = reqSize;

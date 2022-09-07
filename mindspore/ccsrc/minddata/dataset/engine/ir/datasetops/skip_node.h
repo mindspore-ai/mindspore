@@ -30,7 +30,7 @@ class SkipNode : public DatasetNode {
   explicit SkipNode(int32_t count);
 
   /// \brief Constructor
-  explicit SkipNode(std::shared_ptr<DatasetNode> child, int32_t count);
+  explicit SkipNode(const std::shared_ptr<DatasetNode> &child, int32_t count);
 
   /// \brief Destructor
   ~SkipNode() override = default;

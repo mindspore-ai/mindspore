@@ -57,7 +57,7 @@ class TreeAdapter {
 
   // This function performs syntax checking, semantics checking, optimizes, and then builds
   // the Execution tree.
-  Status Compile(std::shared_ptr<DatasetNode> input_ir, int32_t num_epochs = -1, int64_t step = 0);
+  Status Compile(const std::shared_ptr<DatasetNode> &input_ir, int32_t num_epochs = -1, int64_t step = 0);
 
   // Return the root node of the IR after cloned from the parsed IR tree
   std::shared_ptr<DatasetNode> RootIRNode() const { return root_ir_; }
@@ -91,7 +91,7 @@ class TreeAdapter {
   nlohmann::json GetOffloadJson();
 #ifndef ENABLE_SECURITY
   /// \brief Setter for Profiling Manager
-  Status SetProfilingManagerPtr(std::shared_ptr<ProfilingManager> profiling_manager,
+  Status SetProfilingManagerPtr(const std::shared_ptr<ProfilingManager> &profiling_manager,
                                 std::shared_ptr<Tracing> tracing_node = nullptr) {
     profiling_manager_ = profiling_manager;
     if (tracing_node != nullptr) {
