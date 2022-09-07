@@ -261,7 +261,7 @@ static std::set<CNodePtr> SetInputLayout(const FuncGraphPtr &func_graph, const A
         auto nodes = manager->node_users()[tuple_getitem_node.first];
         for (auto &node : nodes) {
           CNodePtr param_cnode = node.first->cast<CNodePtr>();
-          concerned_nodes.insert(param_cnode);
+          (void)concerned_nodes.insert(param_cnode);
         }
       }
     }

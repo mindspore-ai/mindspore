@@ -15,7 +15,6 @@
  */
 #ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_SHARD_ELIMINATE_H_
 #define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_SHARD_ELIMINATE_H_
-#include <vector>
 #include <memory>
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/irpass.h"
