@@ -2641,14 +2641,14 @@ class PdistGrad(Primitive):
 
     Raises:
         TypeError: If one of `y_grad`, `x` and `y` is not a Tensor.
-        TypeError: If dtype of `y_grad`, `x` and `y` are not all float16 or float32.
+        TypeError: If dtype of `y_grad`, `x` and `y` are not all float16, float32 or float64.
         TypeError: If `p` is not a float.
         ValueError: If `p` is a negative float.
         ValueError: If shape of `y_grad` is not same as `y`.
         ValueError: If dimension of `x` is not 2.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``CPU`` ``GPU``
     """
 
     @prim_attr_register
