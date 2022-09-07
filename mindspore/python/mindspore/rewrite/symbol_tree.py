@@ -86,6 +86,7 @@ class FieldFinder(AstFinder):
         self._field_name = ""
 
     def visit_Attribute(self, node: ast.Attribute) -> Any:
+        """Visit a node of type ast.Attribute."""
         value = node.value
         if not isinstance(value, ast.Name):
             return super(FieldFinder, self).generic_visit(node)
@@ -117,6 +118,7 @@ class IfFixer(ast.NodeTransformer):
     """
 
     def visit_If(self, node: ast.If) -> Any:
+        """Visit a node of type ast.If."""
         if not node.body and node.orelse:
             node.body.append(ast.Pass())
         return super().generic_visit(node)
@@ -274,6 +276,7 @@ class SymbolTree(Observer, Observable):
                 allow_class_name.append(sub_stree._class_ast.name)
 
     def finish_build(self):
+        """Add Event.TopologicalChangeEvent event when build is finished."""
         self.add_event(Event.TopologicalChangeEvent)
 
     def get_ori_cls_name(self) -> str:
@@ -397,9 +400,11 @@ class SymbolTree(Observer, Observable):
         return self._origin_network
 
     def get_global_vars(self):
+        """Get global variables."""
         return self._global_vars
 
     def add_global_vars(self, key: str, value):
+        """Add global variables."""
         if self._global_vars.get(key) is not None:
             logger.info(f"The key '{key}' is duplicated")
             return
