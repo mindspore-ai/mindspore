@@ -37,8 +37,10 @@ abstract::AbstractBasePtr TensorShapeInfer(const abstract::AnalysisEnginePtr &, 
   auto shape = input->shape()->shape();
 
   ShapeVector tensor_shp({static_cast<int64_t>(shape.size())});
-  bool has_dyn_shape = std::any_of(shape.begin(), shape.end(), [](int64_t dim) { return dim < 0; });
-  if (has_dyn_shape) {
+  if (IsDynamic(shape)) {
+    if (IsDynamicRank(shape)) {
+      return abstract::MakeAbstract(std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_DIM}), kInt64);
+    }
     auto elem = std::make_shared<abstract::AbstractScalar>(std::make_shared<AnyValue>(), std::make_shared<Int>(64));
     auto abs_tensor = std::make_shared<abstract::AbstractTensor>(elem, std::make_shared<abstract::Shape>(tensor_shp));
     auto shape_value = MakeValue(shape);
