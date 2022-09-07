@@ -1,7 +1,7 @@
 mindspore.ops.conv2d
 ====================
 
-.. py:function:: mindspore.ops.conv2d(inputs, weight, mode=1, pad_mode="valid", padding=0, stride=1, dilation=1, group=1)
+.. py:function:: mindspore.ops.conv2d(inputs, weight, pad_mode="valid", padding=0, stride=1, dilation=1, group=1)
 
     二维卷积层。
 
@@ -20,7 +20,6 @@ mindspore.ops.conv2d
     参数：
         - **inputs** (Tensor) - shape为 :math:`(N, C_{in}, H_{in}, W_{in})` 的Tensor。
         - **weight** (Tensor) - 设置卷积核的大小为 :math:`(\text{kernel_size[0]}, \text{kernel_size[1]})` ，则shape为 :math:`(C_{out}, C_{in}, \text{kernel_size[0]}, \text{kernel_size[1]})` 。
-        - **mode** (int) - 指定不同的卷积模式。此值目前未被使用。默认值：1。
         - **pad_mode** (str) - 指定填充模式。取值为"same"，"valid"，或"pad"。默认值："valid"。
 
           - **same**: 输出的高度和宽度分别与输入整除 `stride` 后的值相同。填充将被均匀地添加到高和宽的两侧，剩余填充量将被添加到维度末端。若设置该模式，`padding` 的值必须为0。
