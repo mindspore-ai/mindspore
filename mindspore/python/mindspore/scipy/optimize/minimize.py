@@ -68,21 +68,23 @@ def minimize(func, x0, args=(), *, method, tol=None, options=None):
 
     Args:
       func (Callable): the objective function to be minimized, :math:`fun(x, *args) -> float`,
-        where `x` is a 1-D array with shape :math:`(n,)` and `args` is a tuple
-        of the fixed parameters needed to completely specify the function.
-        `fun` must support differentiation.
+          where `x` is a 1-D array with shape :math:`(n,)` and `args` is a tuple
+          of the fixed parameters needed to completely specify the function.
+          `fun` must support differentiation.
       x0 (Tensor): initial guess. Array of real elements of size :math:`(n,)`, where `n` is
-        the number of independent variables.
+          the number of independent variables.
       args (Tuple): extra arguments passed to the objective function. Default: ().
       method (str): solver type. Currently only `"BFGS" or "LBFGS"` is supported.
       tol (float, optional): tolerance for termination. For detailed control, use solver-specific
-        options. Default: None.
+          options. Default: None.
       options (Mapping[str, Any], optional): a dictionary of solver options. All methods accept the following
-        generic options, Default: None.
-        - history_size (int): size of buffer used to help to update inv hessian, Default: 20
-          only used with method="LBFGS"
-        - maxiter (int): Maximum number of iterations to perform. Depending on the
-          method each iteration may use several function evaluations.
+          generic options, Default: None.
+
+          - history_size (int): size of buffer used to help to update inv hessian, only used with method="LBFGS".
+            Default: 20.
+
+          - maxiter (int): Maximum number of iterations to perform. Depending on the
+            method each iteration may use several function evaluations.
 
     Returns:
         OptimizeResults, object holding optimization results.

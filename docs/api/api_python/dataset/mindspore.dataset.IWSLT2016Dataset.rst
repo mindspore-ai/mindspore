@@ -1,7 +1,7 @@
 mindspore.dataset.IWSLT2016Dataset
 ==================================
 
-.. py:class:: mindspore.dataset.IWSLT2016Dataset(dataset_dir, usage=None, language_pair=None, valid_set=None, test_set=None, num_samples=None, shuffle=None, num_shards=None, shard_id=None, num_parallel_workers=None, cache=None)
+.. py:class:: mindspore.dataset.IWSLT2016Dataset(dataset_dir, usage=None, language_pair=None, valid_set=None, test_set=None, num_samples=None, shuffle=Shuffle.GLOBAL, num_shards=None, shard_id=None, num_parallel_workers=None, cache=None)
 
     读取和解析IWSLT2016数据集的源数据集。
 
