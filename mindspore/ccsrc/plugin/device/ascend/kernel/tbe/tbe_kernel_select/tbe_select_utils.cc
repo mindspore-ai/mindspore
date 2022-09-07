@@ -193,15 +193,17 @@ void ConstructSupportFormats(size_t put_size, const std::vector<SupportFormatIte
   }
 }
 
-void GenerateSupportFormatDType(const OpInfoPtr &op_info, const SupportFormat &support_format, bool is_dynamic_shape,
+void GenerateSupportFormatDType(const CNodePtr &cnode, const SupportFormat &support_format,
                                 SupportFormatDType *support_format_dtype) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  MS_EXCEPTION_IF_NULL(support_format_dtype);
+  auto op_info = tbe::TbeDynamicShapeUtil::FindOp(cnode);
   MS_EXCEPTION_IF_NULL(op_info);
   if (op_info->inputs_ptr().size() != support_format.input_format.at(0).size()) {
     MS_LOG(INFO) << "Op name: " << op_info->op_name() << " has optional input, but in the graph, this input not exist."
                  << "op info input num: " << op_info->inputs_ptr().size()
                  << "graph node input num: " << support_format.input_format.at(0).size();
   }
-  // TODO(jjfeing) usr format as dynamic format
   auto type_size = op_info->outputs_ptr().at(0)->dtypes().size();
   auto format_size = support_format.input_format.size();
   auto input_size = op_info->inputs_ptr().size();
@@ -215,14 +217,5 @@ void GenerateSupportFormatDType(const OpInfoPtr &op_info, const SupportFormat &s
       support_format_dtype->output_dtypes.at(0).size() != support_format_dtype->output_formats.at(0).size()) {
     MS_LOG(ERROR) << "GenerateSupportFormatDType failed.";
   }
-}
-
-void GenerateSupportFormatDType(const CNodePtr &cnode, const SupportFormat &support_format,
-                                SupportFormatDType *support_format_dtype) {
-  MS_EXCEPTION_IF_NULL(cnode);
-  MS_EXCEPTION_IF_NULL(support_format_dtype);
-  auto is_dynamic_shape = common::AnfAlgo::IsDynamicShape(cnode);
-  auto op_info = tbe::TbeDynamicShapeUtil::FindOp(cnode);
-  GenerateSupportFormatDType(op_info, support_format, is_dynamic_shape, support_format_dtype);
 }
 }  // namespace mindspore::kernel

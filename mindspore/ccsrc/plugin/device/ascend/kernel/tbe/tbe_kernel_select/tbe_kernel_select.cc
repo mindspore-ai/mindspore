@@ -746,25 +746,25 @@ void TbeKernelSelect::PrintSupportedFormatDtype(const SupportFormatDType &suppor
   MS_LOG(DEBUG) << "==============input dtype=============";
   for (auto input : support_format_dtype.input_dtypes) {
     std::stringstream ss;
-    copy(input.begin(), input.end(), std::ostream_iterator<std::string>(ss, ","));
+    (void)copy(input.begin(), input.end(), std::ostream_iterator<std::string>(ss, ","));
     MS_LOG(DEBUG) << "[ " << ss.str() << " ]";
   }
   MS_LOG(DEBUG) << "==============input format=============";
   for (auto input : support_format_dtype.input_formats) {
     std::stringstream ss;
-    copy(input.begin(), input.end(), std::ostream_iterator<std::string>(ss, ","));
+    (void)copy(input.begin(), input.end(), std::ostream_iterator<std::string>(ss, ","));
     MS_LOG(DEBUG) << "[ " << ss.str() << " ]";
   }
   MS_LOG(DEBUG) << "==============output dtype=============";
   for (auto input : support_format_dtype.output_dtypes) {
     std::stringstream ss;
-    copy(input.begin(), input.end(), std::ostream_iterator<std::string>(ss, ","));
+    (void)copy(input.begin(), input.end(), std::ostream_iterator<std::string>(ss, ","));
     MS_LOG(DEBUG) << "[ " << ss.str() << " ]";
   }
   MS_LOG(DEBUG) << "==============output format=============";
   for (auto input : support_format_dtype.output_formats) {
     std::stringstream ss;
-    copy(input.begin(), input.end(), std::ostream_iterator<std::string>(ss, ","));
+    (void)copy(input.begin(), input.end(), std::ostream_iterator<std::string>(ss, ","));
     MS_LOG(DEBUG) << "[ " << ss.str() << " ]";
   }
 }
@@ -824,8 +824,6 @@ void TbeKernelSelect::GenerateKernelBuildInfo(const SupportFormatDType &support_
   for (size_t support_index = 0; support_index < select_support_num; ++support_index) {
     KernelBuildInfoItem input_kernel_build_info;
     KernelBuildInfoItem output_kernel_build_info;
-    //    size_t io_index = 0;
-    //    size_t real_put_index = 0;
     for (size_t io_index = 0, real_put_index = 0; real_put_index < real_input_num && io_index < op_info_input_num;) {
       auto op_io_info = op_info_->inputs_ptr().at(io_index);
       auto support_dtype = support_format_dtype.input_dtypes.at(io_index).at(support_index);

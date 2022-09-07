@@ -27,11 +27,9 @@ void TbeKernelCommonSelector::GetSupportedFormatDType(SupportFormatDType *suppor
   auto op_info = tbe::TbeDynamicShapeUtil::FindOp(cnode_ptr_);
   MS_EXCEPTION_IF_NULL(op_info);
   auto is_dynamic_shape = common::AnfAlgo::IsDynamicShape(cnode_ptr_);
-  // TODO(jjfeing) usr format as dynamic format
   for (const auto &input : op_info->inputs_ptr()) {
     (void)support_format_dtype->input_dtypes.emplace_back(input->dtypes());
     if (is_dynamic_shape) {
-      // TODO(jjfeing) (void)support_format_dtype->input_formats.emplace_back(input->unknown_shape_formats());
       (void)support_format_dtype->input_formats.emplace_back(input->formats());
     } else {
       (void)support_format_dtype->input_formats.emplace_back(input->formats());
@@ -40,7 +38,6 @@ void TbeKernelCommonSelector::GetSupportedFormatDType(SupportFormatDType *suppor
   for (const auto &output : op_info->outputs_ptr()) {
     (void)support_format_dtype->output_dtypes.emplace_back(output->dtypes());
     if (is_dynamic_shape) {
-      // TODO(jjfeing) (void)support_format_dtype->output_formats.emplace_back(output->unknown_shape_formats());
       (void)support_format_dtype->output_formats.emplace_back(output->formats());
     } else {
       (void)support_format_dtype->output_formats.emplace_back(output->formats());
