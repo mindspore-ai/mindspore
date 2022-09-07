@@ -38,6 +38,9 @@ void AscendDeprecatedInterface::DumpProfileParallelStrategy(const FuncGraphPtr &
 bool AscendDeprecatedInterface::OpenTsd(const std::shared_ptr<MsContext> &) { return true; }
 bool AscendDeprecatedInterface::CloseTsd(const std::shared_ptr<MsContext> &, bool) { return true; }
 bool AscendDeprecatedInterface::IsTsdOpened(const std::shared_ptr<MsContext> &) { return true; }
+void AscendDeprecatedInterface::AclOptimizer(const FuncGraphPtr &graph) {}
+bool AscendDeprecatedInterface::CheckIsAscend910Soc() { return true; }
+void AscendDeprecatedInterface::AclLoadModel(Buffer *om_data) {}
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

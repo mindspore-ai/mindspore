@@ -16,16 +16,15 @@
 #include "cxx_api/model/ms/ms_model.h"
 #include <memory>
 #include <set>
+#include <utility>
 #include "include/api/context.h"
 #include "utils/ms_context.h"
 #include "cxx_api/factory.h"
-#if ENABLE_D
-#include "cxx_api/acl_utils.h"
-#endif
+#include "runtime/hardware/device_context_manager.h"
 
 namespace mindspore {
 // mindspore-serving check current package for version check with ModelImpl factory.
-API_FACTORY_REG(ModelImpl, MsModel);
+API_MODEL_REG(kMS, MsModel);
 
 static std::string GenerateShapeKey(const std::vector<std::vector<int64_t>> &dims) {
   std::string shape_key;
@@ -170,19 +169,24 @@ uint32_t MsModel::GetDeviceID() const {
 }
 
 bool MsModel::CheckDeviceSupport(enum DeviceType device_type) {
-#if ENABLE_D
-  // for Ascend, only support kAscend or kAscend910
-  if (device_type != kAscend && device_type != kAscend910) {
-    return false;
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto device_target = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  if (device_target == kAscendDevice) {
+    if (device_type != kAscend && device_type != kAscend910) {
+      return false;
+    }
+    const auto &device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
+      {device_target, ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
+    MS_EXCEPTION_IF_NULL(device_context);
+    auto deprecated_ptr = device_context->GetDeprecatedInterface();
+    MS_EXCEPTION_IF_NULL(deprecated_ptr);
+    return deprecated_ptr->CheckIsAscend910Soc();
   }
-  return IsAscend910Soc();
-#else
-  // otherwise, only support GPU
   if (device_type != kGPU) {
     return false;
   }
   return true;
-#endif
 }
 
 bool MsModel::CheckModelSupport(mindspore::ModelType model_type) {

@@ -23,6 +23,7 @@
 #include "ir/func_graph.h"
 #include "pybind11/pytypes.h"
 #include "utils/ms_context.h"
+#include "include/api/types.h"
 #include "nlohmann/json.hpp"
 
 namespace mindspore {
@@ -54,6 +55,9 @@ class DeprecatedInterface {
   virtual bool OpenTsd(const std::shared_ptr<MsContext> &ms_context_ptr) { return true; }
   virtual bool CloseTsd(const std::shared_ptr<MsContext> &ms_context_ptr, bool force) { return true; }
   virtual bool IsTsdOpened(const std::shared_ptr<MsContext> &inst_context) { return true; }
+  virtual void AclOptimizer(const FuncGraphPtr &graph) {}
+  virtual bool CheckIsAscend910Soc() { return true; }
+  virtual void AclLoadModel(Buffer *om_data) {}
   // gpu
   virtual int GetGPUCapabilityMajor() { return -1; }
   virtual int GetGPUCapabilityMinor() { return -1; }

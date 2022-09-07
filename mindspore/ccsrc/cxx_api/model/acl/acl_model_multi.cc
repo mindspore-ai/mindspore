@@ -29,7 +29,7 @@
 #include "cxx_api/model/acl/acl_vm/acl_vm.h"
 
 namespace mindspore {
-API_FACTORY_REG(ModelImpl, AclModelMulti);
+API_MODEL_REG(Ascend310, AclModelMulti);
 
 namespace {
 std::map<DataType, size_t> kDtypeMap = {

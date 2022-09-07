@@ -1,5 +1,7 @@
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_BINARY_DIR})
+include_directories(${CMAKE_SOURCE_DIR})
+include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset)
 
 set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/nnae/latest/lib64)
 set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/ascend-toolkit/latest/lib64)
@@ -9,6 +11,21 @@ set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/nnae/latest/opp/op_impl
 set(MINDSPORE_RPATH
         ${MINDSPORE_RPATH}:/usr/local/Ascend/ascend-toolkit/latest/opp/op_impl/built-in/ai_core/tbe/op_tiling)
 set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/latest/opp/op_impl/built-in/ai_core/tbe/op_tiling)
+
+### cxx api need file ###
+if(ENABLE_ACL)
+    include_directories(${CMAKE_SOURCE_DIR}/graphengine/ge)
+    include_directories(${CMAKE_BINARY_DIR}/proto/ge)
+    file(GLOB_RECURSE API_INFER_D
+            "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/cxx_api/graph/ascend/*.cc"
+            "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/cxx_api/model/acl/*.cc"
+            "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/cxx_api/model/model_converter_utils/*.cc"
+            "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/cxx_api/graph/acl/*.cc"
+            "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/cxx_api/model/ms/*.cc"
+            )
+    add_library(mindspore_axx_api_d_obj OBJECT ${API_INFER_D})
+    list(APPEND ASCEND_SUB_OBJECTS_SRC $<TARGET_OBJECTS:mindspore_axx_api_d_obj>)
+endif()
 
 ########### mindspore_ascend.so #####
 set(ASCEND_SUB_COMP
@@ -33,6 +50,7 @@ endforeach()
 list(APPEND ASCEND_SUB_OBJECTS_SRC $<TARGET_OBJECTS:_mindspore_transform_graph_ir_obj>)
 add_library(mindspore_ascend SHARED ${ASCEND_SUB_OBJECTS_SRC})
 target_link_libraries(mindspore_ascend PRIVATE mindspore_backend mindspore_core mindspore_common)
+target_link_libraries(mindspore_ascend PRIVATE mindspore_shared_lib)
 target_link_libraries(mindspore_ascend PRIVATE proto_input mindspore::protobuf)
 target_link_libraries(mindspore_ascend PRIVATE securec d_collective)
 target_link_libraries(mindspore_ascend PRIVATE mindspore::dnnl mindspore::mkldnn mindspore::ssl

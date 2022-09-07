@@ -18,6 +18,7 @@
 #include "include/api/context.h"
 #include "cxx_api/factory.h"
 #include "cxx_api/akg_kernel_register.h"
+#include "cxx_api/utils.h"
 #include "cxx_api/acl_utils.h"
 #include "utils/log_adapter.h"
 #include "mindspore/core/base/base_ref_utils.h"
@@ -25,14 +26,12 @@
 #include "backend/common/session/executor_manager.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "runtime/dev.h"
-#include "frontend/parallel/strategy_checkpoint/parallel_strategy_checkpoint.h"
 #include "include/common/utils/python_adapter.h"
 #include "runtime/hardware/device_context_manager.h"
 
 namespace mindspore {
+API_GRAPH_REG(kAscendDevice, AscendGraphImpl);
 namespace {
-API_FACTORY_REG(GraphCell::GraphImpl, AscendGraphImpl);
-
 constexpr auto kHcclEnable = "MS_ENABLE_HCCL";
 constexpr auto kHcclGroupFile = "PARA_GROUP_FILE";
 
@@ -57,23 +56,6 @@ void InitHccl() {
       MS_LOG(EXCEPTION) << "Runtime init failed.";
     }
   }
-}
-
-bool CreateGroupsByCkptFile(const std::string &file) {
-  parallel::GroupInfoMap group_info_map;
-  if (parallel::StrategyCheckpoint::GetInstance().LoadGroupInfo(file, &group_info_map) != parallel::SUCCESS) {
-    return false;
-  }
-
-  for (const auto &[group_name, rank_ids] : group_info_map) {
-    if (!CommManager::GetInstance().CreateGroupSync(group_name, rank_ids)) {
-      MS_LOG(ERROR) << "Create group " << group_name << " rank ids " << rank_ids << " failed.";
-      return false;
-    }
-  }
-
-  MS_LOG(INFO) << "Create groups by checkpoint file success";
-  return true;
 }
 }  // namespace
 AscendGraphImpl::AscendGraphImpl()

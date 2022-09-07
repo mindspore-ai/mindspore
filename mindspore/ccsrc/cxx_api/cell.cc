@@ -29,7 +29,7 @@ GraphCell::GraphCell(Graph &&graph) : graph_(std::make_shared<Graph>(graph)) { M
 
 void GraphCell::SetContext(const std::shared_ptr<Context> &context) {
   if (executor_ == nullptr) {
-    executor_ = Factory<GraphCell::GraphImpl>::Instance().Create(g_device_target);
+    executor_ = GraphImplFactory::Instance().Create(g_device_target);
     if (executor_ == nullptr) {
       MS_LOG(ERROR) << "Create graph impl for device target " << g_device_target << " failed.";
       return;
@@ -41,7 +41,7 @@ void GraphCell::SetContext(const std::shared_ptr<Context> &context) {
 
 Status GraphCell::Run(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) {
   if (executor_ == nullptr) {
-    executor_ = Factory<GraphCell::GraphImpl>::Instance().Create(g_device_target);
+    executor_ = GraphImplFactory::Instance().Create(g_device_target);
     if (executor_ == nullptr) {
       MS_LOG(ERROR) << "Create graph impl for device target " << g_device_target << " failed.";
       return kMEFailed;
@@ -53,7 +53,7 @@ Status GraphCell::Run(const std::vector<MSTensor> &inputs, std::vector<MSTensor>
 
 Status GraphCell::Load(uint32_t device_id) {
   if (executor_ == nullptr) {
-    executor_ = Factory<GraphCell::GraphImpl>::Instance().Create(g_device_target);
+    executor_ = GraphImplFactory::Instance().Create(g_device_target);
     if (executor_ == nullptr) {
       MS_LOG(ERROR) << "Create graph impl for device target " << g_device_target << " failed.";
       return kMEFailed;
@@ -65,7 +65,7 @@ Status GraphCell::Load(uint32_t device_id) {
 
 std::vector<MSTensor> GraphCell::GetInputs() {
   if (executor_ == nullptr) {
-    executor_ = Factory<GraphCell::GraphImpl>::Instance().Create(g_device_target);
+    executor_ = GraphImplFactory::Instance().Create(g_device_target);
     if (executor_ == nullptr) {
       MS_LOG(ERROR) << "Create graph impl for device target " << g_device_target << " failed.";
       return {};
@@ -77,7 +77,7 @@ std::vector<MSTensor> GraphCell::GetInputs() {
 
 std::vector<MSTensor> GraphCell::GetOutputs() {
   if (executor_ == nullptr) {
-    executor_ = Factory<GraphCell::GraphImpl>::Instance().Create(g_device_target);
+    executor_ = GraphImplFactory::Instance().Create(g_device_target);
     if (executor_ == nullptr) {
       MS_LOG(ERROR) << "Create graph impl for device target " << g_device_target << " failed.";
       return {};

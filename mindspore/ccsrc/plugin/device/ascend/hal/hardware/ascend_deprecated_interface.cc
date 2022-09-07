@@ -24,13 +24,17 @@
 #include "transform/graph_ir/op_adapter_map.h"
 #include "plugin/device/ascend/hal/device/tensorprint_utils.h"
 #include "acl/acl_tdt.h"
+#include "acl/acl_base.h"
 #include "runtime/dev.h"
 #include "runtime/config.h"
 #include "toolchain/plog.h"
+#include "framework/common/helper/model_helper.h"
 #include "common/util/error_manager/error_manager.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "plugin/device/ascend/hal/device/distribute/ascend_collective.h"
 #include "plugin/device/ascend/hal/profiler/parallel_strategy_profiling.h"
+#include "plugin/device/ascend/optimizer/enhancer/add_placeholder_for_dynamic_rnn.h"
+#include "cxx_api/graph/acl/acl_env_guard.h"
 
 using mindspore::abstract::AbstractScalar;
 using mindspore::abstract::AbstractTensor;
@@ -336,6 +340,40 @@ bool AscendDeprecatedInterface::IsTsdOpened(const std::shared_ptr<MsContext> &ms
     MS_LOG(EXCEPTION) << "nullptr";
   }
   return ms_context_ptr->get_param<uint32_t>(MS_CTX_TSD_REF) > 0;
+}
+
+void AscendDeprecatedInterface::AclOptimizer(const FuncGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  auto optimizer = std::make_shared<opt::GraphOptimizer>();
+  auto pm = std::make_shared<opt::PassManager>("310_multi_graph_pm");
+  pm->AddPass(std::make_shared<opt::InsertPlaceholderForDynamicRNN>());
+  optimizer->AddPassManager(pm);
+  (void)optimizer->Optimize(graph);
+}
+
+bool AscendDeprecatedInterface::CheckIsAscend910Soc() {
+  const char *soc_name_c = aclrtGetSocName();
+  if (soc_name_c == nullptr) {
+    return false;
+  }
+  std::string soc_name(soc_name_c);
+  if (soc_name.find("910") == std::string::npos) {
+    return false;
+  }
+  return true;
+}
+
+void AscendDeprecatedInterface::AclLoadModel(Buffer *om_data) {
+  // check om
+  MS_EXCEPTION_IF_NULL(om_data);
+  ::ge::ModelHelper helper;
+  ::ge::ModelData model_data;
+  model_data.model_data = om_data->MutableData();
+  model_data.model_len = om_data->DataSize();
+  ::ge::Status ret = helper.LoadRootModel(model_data);
+  if (ret != ::ge::SUCCESS) {
+    MS_LOG(EXCEPTION) << "Invalid input data cannot parse to om.";
+  }
 }
 }  // namespace ascend
 }  // namespace device

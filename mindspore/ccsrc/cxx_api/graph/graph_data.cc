@@ -15,7 +15,9 @@
  */
 #include "cxx_api/graph/graph_data.h"
 #include "utils/log_adapter.h"
-#ifdef ENABLE_ACL
+#include "utils/ms_context.h"
+#include "runtime/hardware/device_context_manager.h"
+#ifdef MODE_ASCEND_ACL
 #include "framework/common/helper/model_helper.h"
 #endif
 
@@ -35,7 +37,7 @@ Graph::GraphData::GraphData(const Buffer &om_data, enum ModelType model_type)
     MS_LOG(EXCEPTION) << "Invalid ModelType " << model_type_;
   }
 
-#ifdef ENABLE_ACL
+#ifdef MODE_ASCEND_ACL
   // check om
   ge::ModelHelper helper;
   ge::ModelData model_data;
@@ -47,7 +49,19 @@ Graph::GraphData::GraphData(const Buffer &om_data, enum ModelType model_type)
   }
 
 #else
-  MS_LOG(EXCEPTION) << "Unsupported ModelType OM.";
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto device_target = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  if (device_target == kAscendDevice) {
+    const auto &device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
+      {device_target, ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
+    MS_EXCEPTION_IF_NULL(device_context);
+    auto deprecated_ptr = device_context->GetDeprecatedInterface();
+    MS_EXCEPTION_IF_NULL(deprecated_ptr);
+    deprecated_ptr->AclLoadModel(&om_data_);
+  } else {
+    MS_LOG(EXCEPTION) << "Unsupported ModelType OM.";
+  }
 #endif
 }
 

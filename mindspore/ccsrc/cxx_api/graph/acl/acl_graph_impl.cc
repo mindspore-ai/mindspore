@@ -21,7 +21,7 @@
 #include "cxx_api/acl_utils.h"
 
 namespace mindspore {
-API_FACTORY_REG(GraphCell::GraphImpl, AclGraphImpl);
+API_GRAPH_REG(Ascend310, AclGraphImpl);
 
 AclGraphImpl::AclGraphImpl()
     : init_flag_(false),
