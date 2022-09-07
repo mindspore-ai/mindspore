@@ -22,5 +22,6 @@ void FFT3D(int Nfft, T *input_tensor, Complex<T> *output_tensor, const cufftHand
   return;
 }
 
-template void FFT3D<float>(int Nfft, float *input_tensor, Complex<float> *output_tensor,
-                           const cufftHandle &FFT_plan_r2c, cudaStream_t stream);
+template CUDA_LIB_EXPORT
+void FFT3D<float>(int Nfft, float *input_tensor, Complex<float> *output_tensor,
+                  const cufftHandle &FFT_plan_r2c, cudaStream_t stream);

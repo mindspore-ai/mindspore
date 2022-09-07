@@ -24,5 +24,6 @@ void PMEBatchedFFT2D(Complex<T> *input_tensor, Complex<T> *output_tensor,
   return;
 }
 
-template void PMEBatchedFFT2D<float>(Complex<float> *input_tensor, Complex<float> *output_tensor,
-                           const cufftHandle &FFT_plan_c2c, int direction, cudaStream_t stream);
+template CUDA_LIB_EXPORT
+void PMEBatchedFFT2D<float>(Complex<float> *input_tensor, Complex<float> *output_tensor,
+                            const cufftHandle &FFT_plan_c2c, int direction, cudaStream_t stream);

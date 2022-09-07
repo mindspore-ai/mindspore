@@ -23,5 +23,6 @@ void PMEIRFFT2D(int Nfft, Complex<T> *input_tensor, T *output_tensor, const cuff
   return;
 }
 
-template void PMEIRFFT2D<float>(int Nfft, Complex<float> *input_tensor, float *output_tensor,
-                           const cufftHandle &FFT_plan_c2r, cudaStream_t stream);
+template CUDA_LIB_EXPORT
+void PMEIRFFT2D<float>(int Nfft, Complex<float> *input_tensor, float *output_tensor,
+                       const cufftHandle &FFT_plan_c2r, cudaStream_t stream);
