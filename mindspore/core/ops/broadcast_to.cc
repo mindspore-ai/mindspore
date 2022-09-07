@@ -31,7 +31,7 @@ abstract::ShapePtr BroadcastToInferShape(const PrimitivePtr &primitive,
   auto value_ptr = primitive->GetAttr(kShape);
   auto input_x = GetValue<std::vector<int64_t>>(value_ptr);
   CheckAndConvertUtils::Check("x shape", SizeToLong(x_shape.size()), kLessEqual, SizeToLong(input_x.size()), prim_name);
-  if (x_shape[0] == -2) {
+  if (!x_shape.empty() && x_shape[0] == -2) {
     auto x_shape_ptr = std::make_shared<abstract::Shape>(input_x);
     return x_shape_ptr;
   }
