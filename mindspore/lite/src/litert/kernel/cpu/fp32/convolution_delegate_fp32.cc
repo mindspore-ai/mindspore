@@ -217,10 +217,12 @@ bool ConvolutionDelegateCPUKernel::CheckAvxUseSWConv(const ConvParameter *conv_p
       return true;
     }
   } else {
-    if (conv_param->input_channel_ / op_parameter_->thread_num_ <= C64NUM &&
-        conv_param->input_h_ >= conv_param->thread_num_ &&
-        (conv_param->kernel_h_ < C7NUM || conv_param->input_h_ / conv_param->kernel_h_ >= C4NUM) &&
-        (conv_param->kernel_w_ < C7NUM || conv_param->input_w_ / conv_param->kernel_w_ >= C4NUM)) {
+    if (conv_param->kernel_h_ == 1 && conv_param->kernel_w_ > C128NUM) {  // conv1d kernel
+      return false;
+    } else if (conv_param->input_channel_ / op_parameter_->thread_num_ <= C16NUM &&
+               conv_param->input_h_ >= conv_param->thread_num_ &&
+               (conv_param->kernel_h_ < C7NUM || conv_param->input_h_ / conv_param->kernel_h_ >= C4NUM) &&
+               (conv_param->kernel_w_ < C7NUM || conv_param->input_w_ / conv_param->kernel_w_ >= C4NUM)) {
       return true;
     }
   }

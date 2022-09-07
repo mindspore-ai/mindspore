@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+// clang-format off
 #ifndef MINDSPORE_NNACL_FP32_REDUCE_FP32_@SIMD_INSTRUCTION@_H_
 #define MINDSPORE_NNACL_FP32_REDUCE_FP32_@SIMD_INSTRUCTION@_H_
 
@@ -165,6 +166,19 @@ static inline int64_t IntReduceMax@SIMD_INSTRUCTION@(int64_t index, const int *o
     SIMD_ST_EPI32(outer_dst + index, tmp);
   }
   return index;
+}
+
+static inline int64_t  ReduceSumDim2Axis0@SIMD_INSTRUCTION@(int64_t index, size_t col_size, size_t col_len, size_t row_len, const float *src_data, float *dst_data) {
+  for (int block_max_size = col_size - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+    SIMD_F32 tmp = SIMD_MOV_F32(0);
+    const float *inner_src = src_data + index;
+    float *inner_dst = dst_data + index;
+    for (size_t i = 0; i < row_len; ++i) {
+      tmp = SIMD_ADD_F32(tmp, SIMD_LD_F32(inner_src + i * col_len));
+    }
+    SIMD_ST_F32(inner_dst, tmp);
+  }
+  return NNACL_OK;
 }
 
 @SIMD_INSTRUCTION_END@
