@@ -717,7 +717,7 @@ class DATASET_API PadToSize final : public TensorTransform {
 };
 
 /// \brief Perform perspective transform on the image.
-class MS_API Perspective final : public TensorTransform {
+class DATASET_API Perspective final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] start_points List containing four lists of two integers corresponding to four
@@ -790,7 +790,7 @@ class DATASET_API Posterize final : public TensorTransform {
 };
 
 /// \brief Apply RandAugment data augmentation method.
-class MS_API RandAugment final : public TensorTransform {
+class DATASET_API RandAugment final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] num_ops Number of augmentation transformations to apply sequentially. Default: 2.
