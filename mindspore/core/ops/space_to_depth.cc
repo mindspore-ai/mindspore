@@ -53,29 +53,39 @@ abstract::ShapePtr SpaceToDepthInferShape(const PrimitivePtr &primitive,
   auto prim_name = primitive->name();
   auto shapeMap = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
   auto x_shape = shapeMap[kShape];
-  const int64_t x_rank = 4;
-  (void)CheckAndConvertUtils::CheckInteger("x rank", SizeToLong(x_shape.size()), kEqual, x_rank, prim_name);
   auto block_size = GetValue<int64_t>(primitive->GetAttr("block_size"));
   const int64_t c_of_nchw = 1;
   const int64_t h_of_nchw = 2;
   const int64_t w_of_nchw = 3;
   const int64_t min_block_size = 2;
   auto data_format_ptr = primitive->GetAttr("format");
+  if (input_args.size() != 1) {
+    MS_EXCEPTION(ValueError) << "For SpaceToDepth, the input number must be 1, but got " << input_args.size();
+  }
   primitive->AddAttr("data_format", data_format_ptr);
   if (block_size < min_block_size) {
     MS_EXCEPTION(ValueError) << "For SpaceToDepth, block_size must greater than 2, but got the block_size is "
                              << block_size;
   }
-  (void)CheckAndConvertUtils::CheckInteger("block_size", block_size % c_of_nchw, kEqual, 0, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("x_shape[2] % block_size", x_shape[h_of_nchw] % block_size, kEqual, 0,
-                                           prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("x_shape[3] % block_size", x_shape[w_of_nchw] % block_size, kEqual, 0,
-                                           prim_name);
+  if (IsDynamicRank(x_shape)) {
+    return std::make_shared<abstract::Shape>(x_shape);
+  }
+  const int64_t x_rank = 4;
+  (void)CheckAndConvertUtils::CheckInteger("x rank", SizeToLong(x_shape.size()), kEqual, x_rank, prim_name);
   auto out_shape = x_shape;
-  out_shape[c_of_nchw] *= block_size * block_size;
-  out_shape[h_of_nchw] /= block_size;
-  out_shape[w_of_nchw] /= block_size;
-
+  if (out_shape[c_of_nchw] != abstract::Shape::SHP_ANY) {
+    out_shape[c_of_nchw] *= block_size * block_size;
+  }
+  if (out_shape[h_of_nchw] != abstract::Shape::SHP_ANY) {
+    (void)CheckAndConvertUtils::CheckInteger("x_shape[2] % block_size", x_shape[h_of_nchw] % block_size, kEqual, 0,
+                                             prim_name);
+    out_shape[h_of_nchw] /= block_size;
+  }
+  if (out_shape[w_of_nchw] != abstract::Shape::SHP_ANY) {
+    (void)CheckAndConvertUtils::CheckInteger("x_shape[3] % block_size", x_shape[w_of_nchw] % block_size, kEqual, 0,
+                                             prim_name);
+    out_shape[w_of_nchw] /= block_size;
+  }
   return std::make_shared<abstract::Shape>(out_shape);
 }
 

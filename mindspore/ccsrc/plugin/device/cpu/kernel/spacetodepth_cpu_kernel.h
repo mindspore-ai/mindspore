@@ -20,16 +20,23 @@
 #include <string>
 #include <vector>
 #include <utility>
+#include <map>
+#include "mindspore/core/ops/space_to_depth.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 namespace mindspore {
 namespace kernel {
-class SpaceToDepthCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class SpaceToDepthCpuKernelMod : public NativeCpuKernelMod {
  public:
   SpaceToDepthCpuKernelMod() = default;
   ~SpaceToDepthCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
     return kernel_func_(this, inputs, workspace, outputs);
@@ -46,7 +53,6 @@ class SpaceToDepthCpuKernelMod : public DeprecatedNativeCpuKernelMod {
                        const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
   static std::vector<std::pair<KernelAttr, SpaceToDepthFunc>> func_list_;
   SpaceToDepthFunc kernel_func_;
-
   size_t block_size_{0};
   std::vector<int64_t> input_shape_;
   std::vector<int64_t> output_shape_;

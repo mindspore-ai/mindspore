@@ -18,126 +18,46 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_SPACETODEPTH_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_SPACETODEPTH_KERNEL_H_
 
+#include <utility>
 #include <vector>
+#include <map>
+#include "mindspore/core/ops/space_to_depth.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/spacetodepth_impl.cuh"
-
 namespace mindspore {
 namespace kernel {
-template <typename T>
-class SpaceToDepthFwdKernelMod : public DeprecatedNativeGpuKernelMod {
+class SpaceToDepthGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelper<SpaceToDepthGpuKernelMod> {
  public:
-  SpaceToDepthFwdKernelMod() { ResetResource(); }
-  ~SpaceToDepthFwdKernelMod() = default;
+  SpaceToDepthGpuKernelMod() = default;
+  ~SpaceToDepthGpuKernelMod() override = default;
+
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs,
+             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    if (is_null_input_) {
-      return true;
-    }
-    // get device buffer ptr
-    T *input = GetDeviceAddress<T>(inputs, 0);
-    T *output = GetDeviceAddress<T>(outputs, 0);
-
-    // get input size
-    size_t size = input_size_ / sizeof(T);
-
-    // call cuda kernel
-    CalSpaceToDepth(size, input, in_, ic_, ih_, iw_, on_, oc_, oh_, ow_, block_size_, output,
-                    reinterpret_cast<cudaStream_t>(stream_ptr));
-    return true;
+    stream_ptr_ = stream_ptr;
+    return kernel_func_(this, inputs, workspace, outputs);
   }
 
-  bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    kernel_node_ = kernel_node;
-    block_size_ = static_cast<int64_t>(GetAttr<int64_t>(kernel_node, "block_size"));
-    if (block_size_ < 2) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the 'block_size' cannot be less than 2, but got "
-                        << block_size_;
-    }
-    // check input num and output num
-    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    if (input_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs must be 1, but got " << input_num;
-    }
+  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 
-    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-    if (output_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs must be 2, but got " << output_num;
-    }
-    // check input_shape
-    auto input_shape_signed = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
-    if (IsDynamic(input_shape_signed)) {
-      return true;
-    }
-    auto input_shape = Convert2SizeTClipNeg(input_shape_signed);
-    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
-    if (is_null_input_) {
-      InitSizeLists();
-      return true;
-    }
-    shape_size_ = input_shape.size();
-    if (shape_size_ != SPACETODEPTH_BUFFER_DIMENSION) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of input cannot be equal to "
-                        << SPACETODEPTH_BUFFER_DIMENSION << ", but got " << shape_size_;
-    }
-    // get input and out put information
-    input_size_ = 1;
-    for (size_t i = 0; i < shape_size_; i++) {
-      input_size_ *= static_cast<size_t>(input_shape[i]);
-    }
-    input_size_ *= sizeof(T);
-    output_size_ = input_size_;
-
-    in_ = static_cast<size_t>(input_shape[0]);
-    ic_ = static_cast<size_t>(input_shape[1]);
-    ih_ = static_cast<size_t>(input_shape[2]);
-    iw_ = static_cast<size_t>(input_shape[3]);
-
-    on_ = in_;
-    oc_ = ic_ * block_size_ * block_size_;
-    oh_ = ih_ / block_size_;
-    ow_ = iw_ / block_size_;
-    // Private members Initialize
-    InitSizeLists();
-    return true;
-  }
-
-  void ResetResource() noexcept override {
-    shape_size_ = 0;
-    input_size_ = 0;
-    output_size_ = 0;
-    block_size_ = 0;
-    is_null_input_ = false;
-    in_ = 0;
-    ic_ = 0;
-    ih_ = 0;
-    iw_ = 0;
-    on_ = 0;
-    oc_ = 0;
-    oh_ = 0;
-    ow_ = 0;
-
-    input_size_list_.clear();
-    output_size_list_.clear();
-    workspace_size_list_.clear();
-  }
-
- protected:
-  void InitSizeLists() override {
-    input_size_list_.push_back(input_size_);
-    output_size_list_.push_back(output_size_);
-    return;
-  }
+  std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
  private:
+  template <typename T>
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<AddressPtr> &outputs);
+  void *stream_ptr_{nullptr};
   size_t shape_size_;
   size_t input_size_;
   size_t output_size_;
-  size_t block_size_;
-  bool is_null_input_;
+  int64_t block_size_;
   size_t in_;
   size_t ic_;
   size_t ih_;
@@ -149,4 +69,4 @@ class SpaceToDepthFwdKernelMod : public DeprecatedNativeGpuKernelMod {
 };
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_SPACETODEPTH_KERNEL__H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_SPACETODEPTH_KERNEL_H_

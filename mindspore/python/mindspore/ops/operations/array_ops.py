@@ -5276,7 +5276,7 @@ class DepthToSpace(Primitive):
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
 
 
-class SpaceToBatch(PrimitiveWithInfer):
+class SpaceToBatch(Primitive):
     r"""
     SpaceToBatch is deprecated. Please use :class:`mindspore.ops.SpaceToBatchND` instead.
     Divides spatial dimensions into blocks and combines the block size with the original batch.
@@ -5343,25 +5343,6 @@ class SpaceToBatch(PrimitiveWithInfer):
             validator.check_non_negative_int(elem, 'paddings element', self.name)
             validator.check_value_type('paddings element', elem, [int], self.name)
         self.paddings = paddings
-
-    def infer_dtype(self, x_dtype):
-        validator.check_tensor_dtype_valid('input_x', x_dtype, mstype.number_type, self.name)
-        return x_dtype
-
-    def infer_shape(self, x_shape):
-        validator.check_equal_int(len(x_shape), 4, 'rank of input_x', self.name)
-        out_shape = copy.deepcopy(x_shape)
-        for i in range(2):
-            padded = out_shape[i + 2] + self.paddings[i][0] + self.paddings[i][1]
-            if padded % self.block_size != 0:
-                msg_ndim = "2nd" if i + 2 == 2 else "3rd"
-                raise ValueError(f"For '{self.name}', the shape of the output tensor must be "
-                                 f"divisible by 'block_size', but got the {msg_ndim} dimension of output: {padded} and "
-                                 f"'block_size': {self.block_size}. Please check the official homepage "
-                                 f"for more information about the output tensor.")
-            out_shape[i + 2] = padded // self.block_size
-        out_shape[0] *= self.block_size * self.block_size
-        return out_shape
 
 
 class BatchToSpace(PrimitiveWithInfer):

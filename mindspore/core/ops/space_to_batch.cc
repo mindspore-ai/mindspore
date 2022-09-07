@@ -55,8 +55,67 @@ void SpaceToBatch::Init(const std::vector<int64_t> block_size, const std::vector
   this->set_paddings(paddings);
   this->set_block_size(block_size);
 }
+class SpaceToBatchInfer : public abstract::OpInferBase {
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    MS_EXCEPTION_IF_NULL(primitive);
+    auto prim_name = primitive->name();
+    auto shapeMap = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
+    auto x_shape = shapeMap[kShape];
+    if (IsDynamicRank(x_shape)) {
+      return std::make_shared<abstract::Shape>(x_shape);
+    }
+
+    const int64_t rank_num = 4;
+    const size_t DIM_0 = 0;
+    const size_t DIM_1 = 1;
+    const size_t DIM_2 = 2;
+    const size_t DIM_3 = 3;
+    (void)CheckAndConvertUtils::CheckInteger("x rank", SizeToLong(x_shape.size()), kEqual, rank_num, prim_name);
+
+    auto out_shape = x_shape;
+    auto block_size = GetValue<int64_t>(primitive->GetAttr("block_size"));
+    auto paddings = GetValue<std::vector<std::vector<int64_t>>>(primitive->GetAttr("paddings"));
+
+    if (out_shape[DIM_0] != abstract::Shape::SHP_ANY) {
+      out_shape[DIM_0] *= block_size * block_size;
+    }
+
+    if (out_shape[DIM_2] != abstract::Shape::SHP_ANY) {
+      auto padded_0 = out_shape[DIM_2] + paddings[DIM_0][DIM_0] + paddings[DIM_0][DIM_1];
+      if (padded_0 % block_size != 0) {
+        MS_EXCEPTION(ValueError) << "For SpaceToBatch, the x_shape[2] plus paddings must be divisible by "
+                                    "'block_size', but got padded value: "
+                                 << padded_0 << ", and block_size: " << block_size;
+      }
+      out_shape[DIM_2] = padded_0 / block_size;
+    }
+
+    if (out_shape[DIM_3] != abstract::Shape::SHP_ANY) {
+      auto padded_1 = out_shape[DIM_3] + paddings[DIM_1][DIM_0] + paddings[DIM_1][DIM_1];
+      if (padded_1 % block_size != 0) {
+        MS_EXCEPTION(ValueError) << "For SpaceToBatch, the x_shape[3] plus paddings must be divisible by "
+                                    "'block_size', but got padded value: "
+                                 << padded_1 << ", and block_size: " << block_size;
+      }
+      out_shape[DIM_3] = padded_1 / block_size;
+    }
+
+    return std::make_shared<abstract::Shape>(out_shape);
+  }
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    MS_EXCEPTION_IF_NULL(primitive);
+    auto prim_name = primitive->name();
+    auto input_type = input_args[0]->BuildType();
+    MS_EXCEPTION_IF_NULL(input_type);
+    const std::set<TypePtr> number_type = {kInt8,   kInt16,   kInt32,   kInt64,   kUInt8,     kUInt16,   kUInt32,
+                                           kUInt64, kFloat16, kFloat32, kFloat64, kComplex64, kComplex64};
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_type, number_type, prim_name);
+    return input_type;
+  }
+};
 
 MIND_API_OPERATOR_IMPL(SpaceToBatch, BaseOperator);
-REGISTER_PRIMITIVE_C(kNameSpaceToBatch, SpaceToBatch);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(SpaceToBatch, prim::kPrimSpaceToBatch, SpaceToBatchInfer, false);
 }  // namespace ops
 }  // namespace mindspore
