@@ -1338,8 +1338,7 @@ py::object GraphExecutorPy::Run(const py::tuple &args, const py::object &phase_o
   return ret;
 }  // namespace pipeline
 
-FuncGraphPtr GraphExecutorPy::BuildGraph(const py::dict &init_params, const std::string &phase,
-                                         const py::object &broadcast_params) const {
+FuncGraphPtr GraphExecutorPy::BuildGraph(const py::dict &init_params, const std::string &phase) const {
   MS_LOG(INFO) << "Start build df graph, phase = " << phase;
   if (info_.count(phase) == 0) {
     MS_LOG(EXCEPTION) << "No phase in executor: " << GetPhasePrefix(phase);

@@ -1073,7 +1073,7 @@ class _CellGraphExecutor:
         return not enable_ge or (enable_debug_runtime and exe_mode)
 
     def _build_data_graph(self, obj, phase):
-        self._graph_executor.build_data_graph(obj.parameters_dict(), phase, obj.parameters_broadcast_dict())
+        self._graph_executor.build_data_graph(obj.parameters_dict(), phase)
 
     def _set_compile_cache_dep_files(self, phase):
         # If enable compile cache, get the dependency files list

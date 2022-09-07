@@ -98,8 +98,7 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
   compile::VmEvalFuncPtr GetVmEvalFunc(const std::string &phase);
   bool HasCompiled(const std::string &phase) const;
 
-  FuncGraphPtr BuildGraph(const py::dict &init_params, const std::string &phase,
-                          const py::object &broadcast_params = {}) const;
+  FuncGraphPtr BuildGraph(const py::dict &init_params, const std::string &phase) const;
   void ExportGraph(const std::string &file_name, const std::string &phase, const py::object encrypt = py::none(),
                    char *key = nullptr);
 
