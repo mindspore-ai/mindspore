@@ -309,7 +309,7 @@ int WeightQuantizer::MarkGraphWeightQuantType(const FuncGraphPtr &func_graph) {
 
 bool WeightQuantizer::CheckWeightQuantExist(const CNodePtr &cnode) {
   auto quant_param_holder = GetCNodeQuantHolder(cnode);
-  MS_CHECK_TRUE_RET(quant_param_holder == nullptr, false);
+  MS_CHECK_TRUE_RET(quant_param_holder != nullptr, false);
   for (size_t index = 1; index < cnode->size(); index++) {
     auto input_node = cnode->input(index);
     if (IsGraphInput(input_node)) {

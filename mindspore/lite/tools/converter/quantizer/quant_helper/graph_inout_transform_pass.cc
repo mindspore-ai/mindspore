@@ -62,6 +62,9 @@ int GraphInoutTransformPass::DoGraphInputDTypeTransform() {
         continue;
       }
       TypeId input_node_dtype = TypeId::kTypeUnknown;
+      if (CheckControlFlowType(input_node)) {
+        continue;
+      }
       if (opt::GetDataTypeFromAnfNode(input_node, &input_node_dtype) != RET_OK) {
         MS_LOG(ERROR) << "GetDataTypeFromAnfNode failed, input node name: " << input_node->fullname_with_scope();
         return RET_ERROR;

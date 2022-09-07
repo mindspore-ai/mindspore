@@ -65,6 +65,8 @@ class AnfTransform {
 
   static STATUS QATTransform(const FuncGraphPtr &func_graph, const std::shared_ptr<ConverterPara> &param);
 
+  static STATUS DoSingleGraphQATTransform(const FuncGraphPtr &func_graph, const std::shared_ptr<ConverterPara> &param);
+
   static bool CheckExternalExtension(const std::shared_ptr<ConverterPara> &param);
 };
 }  // namespace lite

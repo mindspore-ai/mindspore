@@ -36,6 +36,7 @@
 #include "ops/op_utils.h"
 #include "src/common/utils.h"
 #include "src/litert/cxx_api/tensor/tensor_impl.h"
+#include "ir/anf.h"
 
 using std::string;
 using std::vector;
@@ -49,13 +50,14 @@ constexpr int kSingleDirBiasTensorSize = 4;
 constexpr int kLstmBiasShapeSize = 2;
 constexpr int kLstmBiasIndex = 3;
 constexpr size_t kGatherAxisIndex = 3;
+constexpr size_t kAnfPrimitiveIndex = 0;
 }  // namespace
 
 QuantParamHolderPtr GetCNodeQuantHolder(const CNodePtr &cnode) {
   MS_CHECK_TRUE_RET(cnode != nullptr, nullptr);
   auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
   if (primitive == nullptr) {
-    MS_LOG(ERROR) << "primitive is nullptr";
+    MS_LOG(INFO) << "primitive is nullptr";
     return nullptr;
   }
   return GetCNodeQuantHolder(primitive);
@@ -83,10 +85,9 @@ QuantParamHolderPtr GetCNodeQuantHolder(const PrimitivePtr &primitive) {
 int GetQuantType(const CNodePtr &cnode, schema::QuantType *quant_type) {
   CHECK_NULL_RETURN(cnode);
   auto quant_param_holder = GetCNodeQuantHolder(cnode);
-  CHECK_NULL_RETURN(quant_param_holder);
   if (quant_param_holder == nullptr) {
-    MS_LOG(ERROR) << "quant_param_holder is nullptr";
-    return RET_ERROR;
+    *quant_type = schema::QuantType_QUANT_NONE;
+    return RET_OK;
   }
   *quant_type = quant_param_holder->quant_type();
   return RET_OK;
@@ -586,5 +587,33 @@ int GetBucketAllIndex(const std::vector<int> &dims, int preferred_dim,
     buckets_data_index->push_back(bucket_index);
   }
   return RET_OK;
+}
+
+bool CheckControlFlowType(const AnfNodePtr &node) {
+  if (node == nullptr) {
+    return false;
+  }
+  std::map<std::string, PrimitivePtr> control_flow_ops = {{"PartialFusion", prim::kPrimPartialFusion},
+                                                          {"Switch", prim::kPrimSwitch},
+                                                          {"switch_layer", prim::kPrimSwitchLayer},
+                                                          {"call", prim::kPrimCall}};
+
+  if (node->isa<mindspore::CNode>()) {
+    auto cnode = node->cast<CNodePtr>();
+    // control flow call
+    if (!IsValueNode<mindspore::Primitive>(cnode->input(kAnfPrimitiveIndex))) {
+      return true;
+    }
+    auto prim = GetValuePtr<mindspore::Primitive>(cnode->input(kAnfPrimitiveIndex));
+    if (control_flow_ops.find(prim->name()) != control_flow_ops.end()) {
+      return true;
+    }
+  } else if (node->isa<ValueNode>()) {
+    auto prim = GetValuePtr<mindspore::Primitive>(node);
+    if (control_flow_ops.find(prim->name()) != control_flow_ops.end()) {
+      return true;
+    }
+  }
+  return false;
 }
 }  // namespace mindspore::lite::quant
