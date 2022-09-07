@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,6 +68,14 @@ bool HasSideEffect(const CNodePtr &cnode) {
   return false;
 }
 
+bool IsSpecialNode(const CNodePtr &cnode) {
+  auto first_input = cnode->input(0);
+  return IsPrimitiveCNode(first_input, prim::kPrimJ) || IsPrimitiveCNode(first_input, prim::kPrimVmap) ||
+         IsPrimitiveCNode(first_input, prim::kPrimTaylor) || IsPrimitiveCNode(first_input, prim::kPrimShard) ||
+         IsValueNode<FuncGraph>(first_input) || cnode->IsApply(prim::kPrimCall) || cnode->IsApply(prim::kPrimPartial) ||
+         cnode->IsApply(prim::kPrimSwitch) || cnode->IsApply(prim::kPrimSwitchLayer);
+}
+
 LoadGraphMap GenerateLoadGroups(const FuncGraphPtr &fg, std::vector<AnfNodePtr> *toposet,
                                 std::vector<AnfNodePtr> *need_replace_loads, ParamUserMap *param_users,
                                 std::vector<size_t> *special_op_indexes) {
@@ -119,10 +127,7 @@ LoadGraphMap GenerateLoadGroups(const FuncGraphPtr &fg, std::vector<AnfNodePtr> 
       continue;
     }
     // Record special cnode.
-    bool is_special_op = IsValueNode<FuncGraph>(cnode->input(0)) || cnode->IsApply(prim::kPrimCall) ||
-                         cnode->IsApply(prim::kPrimPartial) || cnode->IsApply(prim::kPrimSwitch) ||
-                         cnode->IsApply(prim::kPrimSwitchLayer);
-    if (is_special_op) {
+    if (IsSpecialNode(cnode)) {
       (void)special_op_indexes->emplace_back(i);
       continue;
     }
@@ -301,10 +306,32 @@ AnfNodePtr GetFirstMonad(const FuncGraphPtr &fg) {
   return monad;
 }
 
+bool CheckExistSpecialNode(const AnfNodePtr &update_state, const AnfNodePtr &first_monad) {
+  if (!update_state->isa<CNode>()) {
+    return false;
+  }
+  auto update_state_cnode = update_state->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(update_state_cnode);
+  constexpr size_t monad_input_index = 1;
+  constexpr size_t attach_input_index = 2;
+  auto monad = update_state_cnode->input(monad_input_index);
+  auto attach_node = update_state_cnode->input(attach_input_index);
+  MS_EXCEPTION_IF_NULL(attach_node);
+  auto attach_cnode = attach_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(attach_cnode);
+  if (IsSpecialNode(attach_cnode)) {
+    return true;
+  }
+  if (monad == first_monad) {
+    return false;
+  }
+  return CheckExistSpecialNode(monad, first_monad);
+}
+
 // Replace UpdateStates with U for first load.
 // Covert:
 // u1 = UpdateState(u, c)
-// p1 = Load(para1, u1)  // first load for para1
+// p1 = Load(para1, u1)  // first load for para1, and there are not special node before u1
 // To:
 // u1 = UpdateState(u, c)
 // p1 = Load(para1, u')  // u' is first monad in graph or new monad
@@ -326,6 +353,11 @@ bool ReplaceUpdateStateForLoad(const FuncGraphPtr &fg, const std::vector<AnfNode
     auto &node_users = mgr->node_users()[update_state];
     constexpr size_t kUserSize = 2;
     if (!IsPrimitiveCNode(update_state, prim::kPrimUpdateState) || node_users.size() == kUserSize) {
+      continue;
+    }
+    // Check whether there is special node before the current load node in the execution sequence.
+    // If exist special node(the node may modify the load parameter), should not replace update_state for the load node.
+    if (CheckExistSpecialNode(update_state, monad)) {
       continue;
     }
     mgr->SetEdge(load_node, second_input_index, monad);

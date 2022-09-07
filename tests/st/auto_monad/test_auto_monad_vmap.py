@@ -1,0 +1,58 @@
+# Copyright 2022 Huawei Technologies Co., Ltd
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+import pytest
+import mindspore.nn as nn
+from mindspore import context, Tensor, Parameter, ms_function
+import mindspore.ops.operations as P
+import mindspore.common.dtype as mstype
+from mindspore.ops import functional as F
+
+
+context.set_context(mode=context.GRAPH_MODE)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_monad_vmap():
+    """
+    Feature: Auto monad feature:auto monad eliminate.
+    Description: If exist special node, should not replace update_state for the load node.
+    Expectation: No exception.
+    """
+    class AssignNet(nn.Cell):
+        def __init__(self):
+            super(AssignNet, self).__init__()
+            self.assign = P.Assign()
+            self.value = Tensor([3, 4], mstype.int32)
+
+        def construct(self, x):
+            return self.assign(x, self.value)
+
+    vampfunc = F.vmap(AssignNet())
+
+
+    @ms_function
+    def test_monad(a):
+        c = Tensor([[1, 2], [3, 4], [5, 6]], mstype.int32)
+        out = vampfunc(a)
+        c = a + c
+        out2 = P.AssignAdd()(a, c)
+        return out, out2
+
+    a = Parameter(Tensor([[1, 2], [3, 4], [5, 6]], mstype.int32), name='param_a')
+    out = test_monad(a)
+    assert (out[0].asnumpy() == [[3, 4], [3, 4], [3, 4]]).all()
+    assert (out[1].asnumpy() == [[7, 10], [9, 12], [11, 14]]).all()
