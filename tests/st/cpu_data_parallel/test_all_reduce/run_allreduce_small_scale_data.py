@@ -26,6 +26,7 @@ from mindspore.communication.management import init, get_group_size
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 context.set_ps_context(enable_ssl=False)
 init()
+context.set_auto_parallel_context(parallel_mode="data_parallel", gradients_mean=True, device_num=get_group_size())
 
 
 class Net(nn.Cell):

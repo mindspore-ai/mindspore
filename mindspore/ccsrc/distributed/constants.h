@@ -49,7 +49,19 @@ const std::vector<std::string> kEmbeddingCacheOps = {kLookupEmbeddingCache, kUpd
 constexpr char kFinalizeMuxRecvActor[] = "FINALIZE_MUX_RECV_ACTOR";
 
 // The distributed execution mode enum.
-enum class DistExecutionMode { kPSMode = 0, kEmbeddingCacheMode, kInvalidMode };
+// For each execution mode, different graph optimization, splitting strategy, device location, etc are applied. For
+// details please refer to class DistributedExecutionMode and its subclasses.
+
+// kGeneralMode: Simply split a training graph into multiple devices without other extra features.
+
+// kParallelMode: MindSpore's existing auto-parallel feature along with distributed graph splitting feature are
+// combined. This is much more complicated than other mode. It is always applied in MoE scenarios.
+
+// kPSMode: Applied when running Parameter Server training.
+
+// kEmbeddingCacheMode: Applied when embedding cache is enabled. Normally used for training models with large embedding
+// layer.
+enum class DistExecutionMode { kGeneralMode = 0, kParallelMode, kPSMode, kEmbeddingCacheMode, kInvalidMode };
 
 // The operator's label in distributed execution.
 constexpr char kOpLabelRankId[] = "rank_id";

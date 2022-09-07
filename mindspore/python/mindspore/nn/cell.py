@@ -2159,6 +2159,15 @@ class Cell(Cell_):
                 params.append(param)
         return params
 
+    def place(self, role, rank_id):
+        """
+        Set the label for all operators in this cell.
+        This label tells MindSpore compiler on which process this cell should be launched.
+        """
+        all_ops = self._get_prims_recursively()
+        for op in all_ops:
+            op.place(role, rank_id)
+
     def _check_compile_dynamic_shape(self, *inputs):
         """
         Check if graph has been compiled with dynamic shape.
