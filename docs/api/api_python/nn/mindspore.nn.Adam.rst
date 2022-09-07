@@ -59,7 +59,7 @@ mindspore.nn.Adam
       .. include:: mindspore.nn.optim_group_gc.rst
       .. include:: mindspore.nn.optim_group_order.rst
 
-    - **learning_rate** (Union[float, Tensor, iterable, LearningRateSchedule]): 默认值：1e-3。
+    - **learning_rate** (Union[float, Tensor, iterable, LearningRateSchedule]) - 默认值：1e-3。
 
       .. include:: mindspore.nn.optim_arg_dynamic_lr.rst
 

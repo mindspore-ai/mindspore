@@ -5,6 +5,8 @@ mindspore.nn.AvgPool1d
 
     对输入的多维数据进行一维平面上的平均池化运算。
 
+    在一个输入Tensor上应用1D average pooling，可被视为组成一个1D输入平面。
+
     通常，输入的shape为 :math:`(N_{in}, C_{in}, L_{in})` ，AvgPool1d在 :math:`(L_{in})` 维度上输出区域平均值。
     给定 `kernel_size` 为 :math:`k` 和 `stride` ，公式定义如下：
 

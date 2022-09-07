@@ -12,7 +12,7 @@ mindspore.nn.Optimizer
 
     **参数：**
 
-    - **learning_rate** (Union[float, int, Tensor, Iterable, LearningRateSchedule]) -
+    - **learning_rate** (Union[float, int, Tensor, Iterable, LearningRateSchedule]) - 
 
       .. include:: mindspore.nn.optim_arg_dynamic_lr.rst
 

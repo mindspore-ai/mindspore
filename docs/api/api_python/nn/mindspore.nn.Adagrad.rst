@@ -58,7 +58,11 @@ mindspore.nn.Adagrad
 
     .. include:: mindspore.nn.optim_arg_loss_scale.rst
 
-    - **weight_decay** (Union[float, int]) - 要乘以权重的权重衰减值，必须大于等于0.0。默认值：0.0。
+    - **weight_decay** (Union[float, int, Cell]) - 要乘以权重的权重衰减值，必须大于等于0.0。默认值：0.0。
+
+      - float：固定的权量衰减值。必须等于或大于0。
+      - int：固定的权量衰减值。必须等于或大于0。它将会被转换为float类型。
+      - Cell：权重衰减此时是动态的。在训练期间，优化器调用该Cell的实例，以获取当前阶段所要使用的权重衰减值。
 
     **输入：**
 

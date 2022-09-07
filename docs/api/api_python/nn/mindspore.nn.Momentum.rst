@@ -27,7 +27,7 @@ mindspore.nn.Momentum
 
     **参数：**
 
-    - **params** (Union[list[Parameter], list[dict]]): 必须是 `Parameter` 组成的列表或字典组成的列表。当列表元素是字典时，字典的键可以是"params"、"lr"、"weight_decay"、"grad_centralization"和"order_params"：
+    - **params** (Union[list[Parameter], list[dict]]) - 必须是 `Parameter` 组成的列表或字典组成的列表。当列表元素是字典时，字典的键可以是"params"、"lr"、"weight_decay"、"grad_centralization"和"order_params"：
 
       .. include:: mindspore.nn.optim_group_param.rst
       .. include:: mindspore.nn.optim_group_lr.rst
@@ -35,7 +35,7 @@ mindspore.nn.Momentum
       .. include:: mindspore.nn.optim_group_gc.rst
       .. include:: mindspore.nn.optim_group_order.rst
 
-    - **learning_rate** (Union[float, int, Tensor, Iterable, LearningRateSchedule]):
+    - **learning_rate** (Union[float, int, Tensor, Iterable, LearningRateSchedule]) - 
 
       .. include:: mindspore.nn.optim_arg_dynamic_lr.rst
 
