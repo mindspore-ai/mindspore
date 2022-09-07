@@ -34,7 +34,6 @@ bool KLDivLossCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   auto kernel_ptr = std::dynamic_pointer_cast<ops::KLDivLoss>(base_operator);
   if (!kernel_ptr) {
     MS_LOG(EXCEPTION) << "cast KLDivLoss ops failed!";
-    return false;
   }
   kernel_name_ = kernel_ptr->name();
   reductionMode_ = kernel_ptr->get_reduction();

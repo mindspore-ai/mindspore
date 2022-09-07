@@ -75,6 +75,10 @@ class Adagrad(Optimizer):
             &\hline \\
        \end{aligned}
 
+    :math:`state\_sum` stands for the accumulated squared sum of the gradients :math:`accum`.
+    :math:`g` stands for `grads`, :math:`\lambda` stands for `weight_decay`.
+    :math:`\gamma` stands for `learning_rate`, :math:`w` stands for `params`.
+
     Note:
         If parameters are not grouped, the `weight_decay` in optimizer will be applied on the network parameters without
         'beta' or 'gamma' in their names. Users can group parameters to change the strategy of decaying weight. When
