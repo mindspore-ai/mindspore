@@ -210,7 +210,7 @@ def find_net_layertype_recur(net, layertype_map):
             if subcell.gamma.requires_grad:
                 layertype_map.append(BatchNorm)
         elif isinstance(subcell, (nn.Conv2d, nn.Dense, nn.Embedding, nn.Conv2dTranspose, nn.Conv1d, nn.Conv1dTranspose,
-                                  nn.BatchNorm1d, nn.GroupNorm, nn.GlobalBatchNorm)):
+                                  nn.BatchNorm1d, nn.GroupNorm)):
             if isinstance(subcell, (nn.Dense, nn.Conv2d)):
                 get_layer_type_for_dense_and_conv(subcell, prefix, layertype_map)
             else:
