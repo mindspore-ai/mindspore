@@ -112,7 +112,7 @@ AbstractBasePtr LayerNormInfer(const abstract::AnalysisEnginePtr &, const Primit
   }
 
   std::vector<BaseShapePtr> shapes_list = {input_x->BuildShape()};
-  std::vector<TypePtr> types_list = {input_x->BuildType(), input_x->BuildType(), input_x->BuildType()};
+  std::vector<TypePtr> types_list = {input_x->BuildType(), kFloat32, kFloat32};
   auto mean_var_shape = CalLayerNormMeanAndVarShape(begin_norm_axis, input_shape->shape());
   (void)shapes_list.emplace_back(std::make_shared<abstract::Shape>(mean_var_shape));
   (void)shapes_list.emplace_back(std::make_shared<abstract::Shape>(mean_var_shape));

@@ -106,22 +106,22 @@ void LayerNormGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
                                              const std::vector<AddressPtr> &outputs) {
   auto x = GetDeviceAddress<T>(inputs, kLayerNormGradInputXIndex);
   auto dy = GetDeviceAddress<T>(inputs, kLayerNormGradInputDyIndex);
-  auto var = GetDeviceAddress<T>(inputs, kLayerNormGradInputVarIndex);
-  auto mean = GetDeviceAddress<T>(inputs, kLayerNormGradInputMeanIndex);
+  auto var = GetDeviceAddress<float>(inputs, kLayerNormGradInputVarIndex);
+  auto mean = GetDeviceAddress<float>(inputs, kLayerNormGradInputMeanIndex);
   auto gamma = GetDeviceAddress<T>(inputs, kLayerNormGradInputGammaIndex);
   auto dx = GetDeviceAddress<T>(outputs, kLayerNormGradOutputDxIndex);
   auto dg = GetDeviceAddress<T>(outputs, kLayerNormGradOutputDgIndex);
   auto db = GetDeviceAddress<T>(outputs, kLayerNormGradOutputDbIndex);
 
-  LayerNormGrad(input_row_, input_col_, param_dim_, (T)epsilon_, dy, x, mean, var, gamma, dx, dg, db, cuda_stream_);
+  LayerNormGrad(input_row_, input_col_, param_dim_, epsilon_, dy, x, mean, var, gamma, dx, dg, db, cuda_stream_);
 }
 
 std::vector<std::pair<KernelAttr, LayerNormGradGpuKernelMod::KernelFunc>> LayerNormGradGpuKernelMod::func_list_ = {
   {KernelAttr()
      .AddInputAttr(kNumberTypeFloat16)
      .AddInputAttr(kNumberTypeFloat16)
-     .AddInputAttr(kNumberTypeFloat16)
-     .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeFloat32)
      .AddInputAttr(kNumberTypeFloat16)
      .AddOutputAttr(kNumberTypeFloat16)
      .AddOutputAttr(kNumberTypeFloat16)
