@@ -47,7 +47,7 @@ class Monitor {
 
  private:
   // private constructor
-  Monitor(ProfilingManager *profiling_manager, std::shared_ptr<ConfigManager> cfg);
+  Monitor(ProfilingManager *profiling_manager, const std::shared_ptr<ConfigManager> &cfg);
 
   ProfilingManager *profiling_manager_;
   int64_t sampling_interval_;

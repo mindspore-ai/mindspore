@@ -123,6 +123,7 @@ void ConnectorSize::Clear() {
 
 Status ConnectorSize::GetOpConnectorSize(int32_t op_id, uint64_t start_time, uint64_t end_time,
                                          std::vector<int32_t> *result) {
+  RETURN_UNEXPECTED_IF_NULL(result);
   MS_LOG(DEBUG) << "Op_id: " << op_id << " start_ts: " << start_time << " end_ts: " << end_time;
   CHECK_FAIL_RETURN_UNEXPECTED(start_time < end_time,
                                "Expected start_time < end_time. Got start_ts: " + std::to_string(start_time) +

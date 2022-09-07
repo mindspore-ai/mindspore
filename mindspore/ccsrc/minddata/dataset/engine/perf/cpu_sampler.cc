@@ -18,13 +18,13 @@
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
 #include <sys/syscall.h>
 #endif
+#include <algorithm>
 #include <cmath>
 #include <cstdio>
-#include <algorithm>
-#include <utility>
-#include <fstream>
 #include <memory>
+#include <fstream>
 #include <string>
+#include <utility>
 
 #include "minddata/dataset/api/python/pybind_conversion.h"
 #include "minddata/dataset/core/config_manager.h"
@@ -104,6 +104,7 @@ Status SystemInfo::ParseRunningProcess(const std::string &str) {
 }
 
 Status SystemInfo::SampleAndGetCurrPrevStat(SystemStat *current_stat, SystemStat *previous_stat) {
+  RETURN_UNEXPECTED_IF_NULL(previous_stat);
   std::ifstream file("/proc/stat");
   if (!file.is_open()) {
     MS_LOG(INFO) << "Failed to open /proc/stat file.";
@@ -112,16 +113,32 @@ Status SystemInfo::SampleAndGetCurrPrevStat(SystemStat *current_stat, SystemStat
   *previous_stat = prev_sys_stat_;
   bool first_line = true;
   std::string line;
+  Status s;
   while (getline(file, line)) {
     if (first_line) {
       first_line = false;
       RETURN_IF_NOT_OK(ParseCpuInfo(line));
+      s = ParseCpuInfo(line);
+      if (s.IsError()) {
+        file.close();
+        return s;
+      }
     }
     if (line.find("ctxt") != std::string::npos) {
       RETURN_IF_NOT_OK(ParseCtxt(line));
+      s = ParseCtxt(line);
+      if (s.IsError()) {
+        file.close();
+        return s;
+      }
     }
     if (line.find("procs_running") != std::string::npos) {
       RETURN_IF_NOT_OK(ParseRunningProcess(line));
+      s = ParseRunningProcess(line);
+      if (s.IsError()) {
+        file.close();
+        return s;
+      }
     }
   }
   // after the loop above, prev_sys_stat_ has the current value
@@ -182,6 +199,7 @@ Status SystemInfo::SampleSystemMemInfo() {
 }
 
 Status SystemInfo::GetUserCpuUtil(uint64_t start_index, uint64_t end_index, std::vector<uint8_t> *result) const {
+  RETURN_UNEXPECTED_IF_NULL(result);
   MS_LOG(DEBUG) << "start_index: " << start_index << " end_index: " << end_index
                 << " sys_cpu_util_.size: " << sys_cpu_util_.size();
   CHECK_FAIL_RETURN_UNEXPECTED(start_index <= end_index,
@@ -197,6 +215,7 @@ Status SystemInfo::GetUserCpuUtil(uint64_t start_index, uint64_t end_index, std:
 }
 
 Status SystemInfo::GetSysCpuUtil(uint64_t start_index, uint64_t end_index, std::vector<uint8_t> *result) const {
+  RETURN_UNEXPECTED_IF_NULL(result);
   MS_LOG(DEBUG) << "start_index: " << start_index << " end_index: " << end_index
                 << "sys_cpu_util_.size: " << sys_cpu_util_.size();
   CHECK_FAIL_RETURN_UNEXPECTED(start_index <= end_index,
@@ -386,6 +405,7 @@ void MDOperatorCpuInfo::CalculateOperatorUtilization() {
 
 Status MDOperatorCpuInfo::GetUserCpuUtil(uint64_t start_index, uint64_t end_index,
                                          std::vector<uint16_t> *result) const {
+  RETURN_UNEXPECTED_IF_NULL(result);
   MS_LOG(DEBUG) << "start_index: " << start_index << " end_index: " << end_index
                 << " op_cpu_util_.size: " << op_cpu_util_.size();
   CHECK_FAIL_RETURN_UNEXPECTED(start_index <= end_index,
@@ -404,6 +424,7 @@ Status MDOperatorCpuInfo::GetUserCpuUtil(uint64_t start_index, uint64_t end_inde
 }
 
 Status MDOperatorCpuInfo::GetSysCpuUtil(uint64_t start_index, uint64_t end_index, std::vector<uint16_t> *result) const {
+  RETURN_UNEXPECTED_IF_NULL(result);
   MS_LOG(DEBUG) << "start_index: " << start_index << " end_index: " << end_index
                 << " op_cpu_util_.size: " << op_cpu_util_.size();
   CHECK_FAIL_RETURN_UNEXPECTED(start_index <= end_index,
@@ -676,6 +697,7 @@ MemoryInfo ProcessInfo::GetLatestMemoryInfo() const {
 
 Status ProcessInfo::GetMemoryInfo(ProcessMemoryMetric metric, uint64_t start_index, uint64_t end_index,
                                   std::vector<float> *result) const {
+  RETURN_UNEXPECTED_IF_NULL(result);
   MS_LOG(DEBUG) << "start_index: " << start_index << " end_index: " << end_index
                 << "process_memory_info_.size: " << process_memory_info_.size();
   CHECK_FAIL_RETURN_UNEXPECTED(start_index <= end_index,
@@ -714,6 +736,7 @@ bool ProcessInfo::IsParent() { return !(child_processes_.empty()); }
 
 Status SystemInfo::GetSystemMemInfo(SystemMemoryMetric metric, uint64_t start_index, uint64_t end_index,
                                     std::vector<float> *result) const {
+  RETURN_UNEXPECTED_IF_NULL(result);
   MS_LOG(DEBUG) << "start_index: " << start_index << " end_index: " << end_index
                 << "system_memory_info_.size: " << system_memory_info_.size();
   CHECK_FAIL_RETURN_UNEXPECTED(start_index <= end_index,

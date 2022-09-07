@@ -14,26 +14,27 @@
  * limitations under the License.
  */
 #include "minddata/dataset/engine/perf/profiling.h"
+
 #include <sys/stat.h>
+
+#include <algorithm>
 #include <cstdlib>
 #include <fstream>
-#include <algorithm>
-#include "utils/ms_utils.h"
-#include "minddata/dataset/util/path.h"
-#include "minddata/dataset/core/config_manager.h"
-#include "minddata/dataset/core/global_context.h"
-#include "minddata/dataset/engine/perf/monitor.h"
+
+#include "minddata/dataset/engine/execution_tree.h"
 #include "minddata/dataset/engine/perf/connector_size.h"
 #include "minddata/dataset/engine/perf/cpu_sampler.h"
-#include "minddata/dataset/engine/execution_tree.h"
+#include "minddata/dataset/engine/perf/monitor.h"
 #include "minddata/dataset/engine/tree_adapter.h"
 #include "minddata/dataset/util/log_adapter.h"
+#include "minddata/dataset/util/path.h"
 #ifdef WITH_BACKEND
 #include "utils/ms_context.h"
 #endif
+#include "utils/ms_utils.h"
+
 namespace mindspore {
 namespace dataset {
-
 constexpr int32_t PUSH_TIME_OFFSET = 0;
 constexpr int32_t BATCH_TIME_OFFSET = 1;
 constexpr int32_t PIPELINE_TIME_OFFSET = 2;
@@ -116,6 +117,8 @@ void Tracing::Record(const int32_t type, const int32_t extra_info, const int32_t
 }
 
 Status Tracing::TimeIntervalForStepRange(int32_t start_step, int32_t end_step, uint64_t *start_ts, uint64_t *end_ts) {
+  RETURN_UNEXPECTED_IF_NULL(start_ts);
+  RETURN_UNEXPECTED_IF_NULL(end_ts);
   std::lock_guard<std::mutex> guard(lock_);
   MS_LOG(DEBUG) << "start_step: " << start_step << " end_step: " << end_step;
   CHECK_FAIL_RETURN_UNEXPECTED(start_step > 0,
@@ -133,6 +136,8 @@ Status Tracing::TimeIntervalForStepRange(int32_t start_step, int32_t end_step, u
 }
 
 Status Tracing::StepIntervalForTimeRange(uint64_t start_ts, uint64_t end_ts, int32_t *start_step, int32_t *end_step) {
+  RETURN_UNEXPECTED_IF_NULL(start_step);
+  RETURN_UNEXPECTED_IF_NULL(end_step);
   CHECK_FAIL_RETURN_UNEXPECTED(start_ts < end_ts, "Expected start_ts < end_ts. Got start_ts: " +
                                                     std::to_string(start_ts) + " end_ts: " + std::to_string(end_ts));
   std::lock_guard<std::mutex> guard(lock_);
@@ -155,6 +160,7 @@ Status Tracing::StepIntervalForTimeRange(uint64_t start_ts, uint64_t end_ts, int
 
 Status Tracing::GetRecordEntryFieldValue(int32_t start_step, int32_t end_step, int32_t record_offset,
                                          const std::string &field, std::vector<int32_t> *result) {
+  RETURN_UNEXPECTED_IF_NULL(result);
   std::lock_guard<std::mutex> guard(lock_);
   const constexpr int32_t RECORDS_PER_STEP = 4;
   auto total_steps = records_.size() / RECORDS_PER_STEP;
@@ -205,6 +211,7 @@ Status Tracing::GetConnectorCapacity(int32_t start_step, int32_t end_step, std::
 }
 
 Status Tracing::GetEmptyQueueFrequency(int32_t start_step, int32_t end_step, float_t *empty_queue_freq) {
+  RETURN_UNEXPECTED_IF_NULL(empty_queue_freq);
   std::vector<int32_t> sizes;
   RETURN_IF_NOT_OK(GetConnectorSize(start_step, end_step, &sizes));
   int32_t total = end_step - start_step + 1;
@@ -237,6 +244,7 @@ bool ProfilingManager::IsProfilingEnable(const ExecutionTree *tree) const {
 }
 
 Status ProfilingManager::RegisterTree(const TreeAdapter *tree_adapter) {
+  RETURN_UNEXPECTED_IF_NULL(tree_adapter);
   CHECK_FAIL_RETURN_UNEXPECTED(tree_ == nullptr, "Another tree is already registered.");
   CHECK_FAIL_RETURN_UNEXPECTED((autotuning_ || profiling_) == true,
                                "MD Profiler is disabled. Cannot register the tree.");
@@ -476,6 +484,8 @@ Status ProfilingManager::GetSystemMemoryInfoByTime(SystemMemoryMetric metric, ui
 #endif
 
 Status ProfilingManager::EpochToTimeInterval(int32_t epoch_num, uint64_t *start_ts, uint64_t *end_ts) {
+  RETURN_UNEXPECTED_IF_NULL(start_ts);
+  RETURN_UNEXPECTED_IF_NULL(end_ts);
   if (epoch_num <= 0 || epoch_num >= static_cast<int32_t>(epoch_end_ts_.size())) {
     std::string err = "Epoch: " + std::to_string(epoch_num) + " is invalid.";
     MS_LOG(INFO) << err;
@@ -487,6 +497,8 @@ Status ProfilingManager::EpochToTimeInterval(int32_t epoch_num, uint64_t *start_
 }
 
 Status ProfilingManager::EpochToStepInterval(int32_t epoch_num, uint32_t *start_step, uint32_t *end_step) {
+  RETURN_UNEXPECTED_IF_NULL(start_step);
+  RETURN_UNEXPECTED_IF_NULL(end_step);
   if (epoch_num <= 0 || epoch_num >= static_cast<int32_t>(epoch_end_step_.size())) {
     std::string err = "Epoch: " + std::to_string(epoch_num) + " is invalid.";
     return {StatusCode::kMDUnexpectedError, err};

@@ -621,4 +621,4 @@ class ProfilingTime {
 };
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_PERF_PROFILING_H_"
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_PERF_PROFILING_H_
