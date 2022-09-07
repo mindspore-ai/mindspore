@@ -18,6 +18,7 @@
 import mindspore.common.dtype as mstype
 from mindspore.ops import operations as P
 from mindspore.ops.primitive import constexpr
+from mindspore.ops.operations import array_ops as A
 
 from ..operations.array_ops import (
     UniqueConsecutive,
@@ -4388,6 +4389,48 @@ def top_k(input_x, k, sorted=True):
     return top_k_(input_x, k)
 
 
+def expand(input_x, size):
+    r"""
+    Returns a new view of the self tensor with singleton dimensions expanded to a larger size.
+
+    Note:
+        Passing -1 as the `size` for a dimension means not changing the size of that dimension.
+        Tensor can be also expanded to a larger number of dimensions, and the new ones will be appended at the front.
+        For the new dimensions, the `size` cannot be set to -1.
+
+    Args:
+        input_x (Tensor): The shape of tensor is (x_1, x_2, ..., x_R).
+        size (Tensor): The new shape of `input_x`.
+
+    Returns:
+        y (Tensor) - Tensor after expansion.
+
+    Raises:
+        TypeError: If any input is not Tensor.
+        TypeError: If the type of `size` is not one of the following dtype: int16, int32, int64.
+        ValueError: If `size` is not a 1-D tensor.
+        ValueError: If the size of `size` is less than the size of `input_x.shape`.
+        ValueError: If the expanded `size` is not equal to the existing shape of `input_x` at a dimension
+            that is not 1.
+        ValueError: If the expanded `size` < 0 and it is in a leading, non-existing dimension.
+        ValueError: If the number of elements of output is more than 1000000.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> input_x = Tensor(np.array([[1], [2], [3]]), mindspore.float32)
+        >>> size = Tensor(np.array([3,4]), mindspore.int32)
+        >>> y = ops.expand(input_x, size)
+        >>> print(y)
+        [[1. 1. 1. 1.]
+         [2. 2. 2. 2.]
+         [3. 3. 3. 3.]]
+    """
+    expand_op = _get_cache_prim(A.Expand)()
+    return expand_op(input_x, size)
+
+
 __all__ = [
     'unique',
     'unique_with_pad',
@@ -4477,5 +4520,6 @@ __all__ = [
     'unsorted_segment_sum',
     'population_count',
     'top_k',
+    'expand'
 ]
 __all__.sort()

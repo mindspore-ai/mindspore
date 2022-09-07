@@ -6037,6 +6037,95 @@ def trapz(y, x=None, dx=1.0, dim=-1):
     return trapezoid_tensor(y, x, dim)
 
 
+def cholesky(input_x, upper=False):
+    r"""
+    Computes the Cholesky decomposition of a symmetric positive-definite matrix :math:`A`
+    or for batches of symmetric positive-definite matrices.
+
+    If `upper` is `True`, the returned matrix :math:`U` is upper-triangular, and the decomposition has the form:
+
+    .. math::
+        A = U^TU
+
+    If `upper` is `False`, the returned matrix :math:`L` is lower-triangular, and the decomposition has the form:
+
+    .. math::
+        A = LL^T
+
+    Args:
+        input_x (Tensor): Tensor of shape :math:`(*, N, N)`, where :math:`*` is zero or more batch dimensions
+            consisting of symmetric positive-definite matrices, with float32 or float64 data type.
+        upper (bool): Flag that indicates whether to return a upper or lower triangular matrix.
+            Default: False.
+
+    Returns:
+        Tensor, has the same shape and data type as `input_x`.
+
+    Raises:
+        TypeError: If `upper` is not a bool.
+        TypeError: If dtype of `input_x` is not one of: float64, float32.
+        TypeError: If `input_x` is not a Tensor.
+        ValueError: If `input_x` is not batch square.
+        ValueError: If `input_x` is not symmetric positive definite.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> input_x = Tensor(np.array([[1.0, 1.0], [1.0, 2.0]]), mindspore.float32)
+        >>> output = ops.cholesky(input_x, upper=False)
+        >>> print(output)
+        [[1. 0.]
+         [1. 1.]]
+    """
+    cholesky_op = _get_cache_prim(P.Cholesky)(upper=upper)
+    return cholesky_op(input_x)
+
+
+def cholesky_inverse(input_x, upper=False):
+    r"""
+    Returns the inverse of the positive definite matrix using cholesky matrix factorization.
+
+    If `upper` is `False`, :math:`U` is a lower triangular such that the output tensor is
+
+    .. math::
+                        inv = (UU^{T})^{-1}
+
+    If `upper` is `True`, :math:`U` is an upper triangular such that the output tensor is
+
+    .. math::
+                        inv = (U^{T}U)^{-1}
+
+    Note:
+        The input must be either an upper triangular matrix or a lower triangular matrix.
+
+    Args:
+        input_x (Tensor): The input tensor. Types: float32, float64.
+        upper(bool): Whether to return a lower or upper triangular matrix. Default: False.
+
+    Returns:
+        Tensor, has the same shape and dtype as `input_x`.
+
+    Raises:
+        TypeError: If `input_x` is not a Tensor.
+        TypeError: If dtype of `input_x` is not one of: float32, float64.
+        ValueError: If the dimension of `input_x` is not equal to 2.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> input_x = Tensor(np.array([[2,0,0], [4,1,0], [-1,1,2]]), mindspore.float32)
+        >>> output = ops.cholesky_inverse(input_x)
+        >>> print(output)
+        [[ 5.8125 -2.625   0.625 ]
+         [-2.625   1.25   -0.25  ]
+         [ 0.625  -0.25    0.25  ]]
+    """
+    cholesky_inv_op = _get_cache_prim(P.CholeskyInverse)(upper=upper)
+    return cholesky_inv_op(input_x)
+
+
 __all__ = [
     'addn',
     'absolute',
@@ -6181,6 +6270,8 @@ __all__ = [
     'accumulate_n',
     'iou',
     'bmm',
-    'trapz'
+    'trapz',
+    'cholesky',
+    'cholesky_inverse'
 ]
 __all__.sort()

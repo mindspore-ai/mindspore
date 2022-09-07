@@ -138,6 +138,8 @@ Mathematical Functions
     :template: classtemplate.rst
 
     mindspore.ops.bmm
+    mindspore.ops.cholesky
+    mindspore.ops.cholesky_inverse
 
 Element-by-Element Operations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -405,6 +407,7 @@ Array Operation
     mindspore.ops.concat
     mindspore.ops.diag
     mindspore.ops.dyn_shape
+    mindspore.ops.expand
     mindspore.ops.expand_dims
     mindspore.ops.gather
     mindspore.ops.gather_d
@@ -572,6 +575,28 @@ Debugging Functions
 
     mindspore.ops.print_
 
+Image Functions
+---------------
+
+.. msplatformautosummary::
+    :toctree: ops
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.ops.bounding_box_decode
+    mindspore.ops.bounding_box_encode
+    mindspore.ops.check_valid
+
+Spectral Functions
+------------------
+
+.. msplatformautosummary::
+    :toctree: ops
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.ops.blackman_window
+
 Other Functions
 ---------------
 .. list-table::
@@ -644,6 +669,8 @@ Other Functions
      - Determine if two strings are equal.
    * - mindspore.ops.typeof
      - Get type of object.
+   * - mindspore.ops.iou
+     - Computes the intersection over union (IOU) or the intersection over foreground (IOF) for boxes.
 
 .. msplatformautosummary::
     :toctree: ops

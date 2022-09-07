@@ -17,6 +17,7 @@ import torch
 import pytest
 import mindspore.context as context
 import mindspore.nn as nn
+from mindspore.ops import functional as F
 import mindspore.ops.operations.other_ops as P
 from mindspore import Tensor
 from mindspore.common import dtype as mstype
@@ -97,3 +98,32 @@ def test_blackman_window_pynative_int64_false_float64():
     Expectation: the result match to torch
     """
     blackman_window_pynative(periodic=False, dtype="float64", loss=1.0e-5)
+
+
+def test_blackman_window_functional():
+    """
+    Feature: test blackman_window functional API.
+    Description: test case for blackman_window functional API.
+    Expectation: the result match with expected result.
+    """
+    window_length = Tensor(10, mstype.int32)
+    output = F.blackman_window(window_length, periodic=True, dtype=mstype.float32)
+    expected = np.array([-2.9802322e-08, 4.0212840e-02, 2.0077014e-01, 5.0978714e-01,
+                         8.4922993e-01, 1.0000000e+00, 8.4922981e-01, 5.0978690e-01,
+                         2.0077008e-01, 4.0212870e-02]).astype(np.float32)
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_blackman_window_functional_modes():
+    """
+    Feature: test blackman_window functional API in PyNative and Graph modes.
+    Description: test case for blackman_window functional API.
+    Expectation: the result match with expected result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    test_blackman_window_functional()
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    test_blackman_window_functional()
