@@ -684,7 +684,7 @@ def test_getattr_numpy_array():
 
     with pytest.raises(TypeError) as err:
         foo()
-    assert "Do not support to get attribute from interpreted object." in str(err.value)
+    assert "Do not support to get attribute" in str(err.value)
 
 
 def test_getattr_numpy_array_2():
@@ -701,4 +701,4 @@ def test_getattr_numpy_array_2():
 
     with pytest.raises(TypeError) as err:
         foo()
-    assert "For 'getattr', the third input 'default' can not be interpreted object." in str(err.value)
+    assert "For 'getattr', the third input 'default' can not" in str(err.value)

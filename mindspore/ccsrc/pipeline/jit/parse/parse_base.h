@@ -99,6 +99,7 @@ const char PYTHON_PARSE_CHECK_IS_CONSTANT_VALUE[] = "is_constant_value";
 const char PYTHON_PARSE_EXPAND_EXPR_STATEMENT[] = "expand_expr_statement";
 const char PYTHON_PARSE_GENERATE_SCOPE[] = "generate_scope";
 const char PYTHON_PARSE_GET_SCOPE_NAME[] = "get_scope_name";
+const char PYTHON_PARSE_GET_TYPE[] = "get_type";
 const char PYTHON_PARSE_ANALYZE_SUPER[] = "analyze_super";
 
 const char PYTHON_PARSE_CLASS_SLICE[] = "create_slice_obj";
