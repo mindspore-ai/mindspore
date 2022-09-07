@@ -15,11 +15,13 @@
  */
 
 #include <set>
+
 #include "ops/embedding_lookup.h"
+#include "mindapi/ir/type.h"
 #include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
-#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -35,6 +37,68 @@ bool EmbeddingLookup::get_setattr_flag() const {
   return GetValue<bool>(value_ptr);
 }
 
-REGISTER_PRIMITIVE_C(kNameEmbeddingLookup, EmbeddingLookup);
+void EmbeddingLookup::set_offset(const int64_t offset) { (void)this->AddAttr(kAxis, api::MakeValue(offset)); }
+
+int64_t EmbeddingLookup::get_offset() const {
+  auto value_ptr = this->GetAttr("offset");
+  return GetValue<int64_t>(value_ptr);
+}
+
+namespace {
+abstract::ShapePtr EmbeddingLookupInferShape(const PrimitivePtr &primitive,
+                                             const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  const std::string &op_name = primitive->name();
+  auto params_shape_ptr = CheckAndConvertUtils::GetTensorInputShape(op_name, input_args, 0);
+  MS_EXCEPTION_IF_NULL(params_shape_ptr);
+  auto params_shape = params_shape_ptr->shape();
+  constexpr int64_t kEmbeddingLookupInputParamsMaxDim = 2;
+  CheckAndConvertUtils::CheckInRange<int64_t>("dimension of params", params_shape.size(), kIncludeBoth,
+                                              {1, kEmbeddingLookupInputParamsMaxDim}, op_name);
+  auto indices_shape_ptr = CheckAndConvertUtils::GetTensorInputShape(op_name, input_args, 1);
+  MS_EXCEPTION_IF_NULL(indices_shape_ptr);
+  auto indices_shape = indices_shape_ptr->shape();
+  CheckAndConvertUtils::CheckValue<int64_t>("dimension of indices ", indices_shape.size(), kGreaterThan, 0, op_name);
+  ShapeVector out_shape = indices_shape;
+  if (params_shape.size() != 1) {
+    out_shape.push_back(params_shape.back());
+  }
+  return std::make_shared<abstract::Shape>(out_shape);
+}
+
+TypePtr EmbeddingLookupInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  const std::string &op_name = primitive->name();
+  constexpr int64_t input_num_dynamic = 3;
+  constexpr int64_t input_num = 2;
+  CheckAndConvertUtils::CheckInRange<int64_t>("input number", SizeToLong(input_args.size()), kIncludeBoth,
+                                              {input_num, input_num_dynamic}, op_name);
+  std::set<TypePtr> valid_params_types = {kTensorType};
+  (void)CheckAndConvertUtils::CheckSubClass("params", input_args[kInputIndex0]->BuildType(), valid_params_types,
+                                            op_name);
+  std::set<TypePtr> int_types = {kInt32, kInt64};
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("indices", input_args[kInputIndex1]->BuildType(), int_types,
+                                                   op_name);
+  if (SizeToLong(input_args.size()) == input_num_dynamic) {
+    std::set<TypePtr> int_type = {kInt64};
+    (void)CheckAndConvertUtils::CheckTypeValid("offset", input_args[kInputIndex2]->BuildType(), int_type, op_name);
+  }
+
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, 0, op_name);
+  abstract::AbstractTensorPtr params =
+    CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 0);
+  return params->BuildType();
+}
+}  // namespace
+
+AbstractBasePtr EmbeddingLookupInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                     const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto infer_type = EmbeddingLookupInferType(primitive, input_args);
+  auto infer_shape = EmbeddingLookupInferShape(primitive, input_args);
+  return abstract::MakeAbstract(infer_shape, infer_type);
+}
+
+REGISTER_PRIMITIVE_EVAL_IMPL(EmbeddingLookup, prim::kPrimEmbeddingLookup, EmbeddingLookupInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

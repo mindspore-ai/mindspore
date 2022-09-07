@@ -15,27 +15,43 @@
  */
 
 #include "plugin/device/cpu/kernel/embedding_look_up_cpu_kernel.h"
-#include <thread>
-#include <string>
-#include "plugin/device/cpu/hal/device/cpu_device_address.h"
-#include "ir/primitive.h"
-#include "include/common/thread_pool.h"
+#include "mindspore/core/ops/embedding_lookup.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kBlockSize = 10000;
 constexpr size_t kEmbeddingLookupInputsNum = 2;
-constexpr size_t kEmbeddingLookupOutputsNum = 1;
-constexpr size_t kEmbeddingLookupInputParamsMaxDim = 2;
+constexpr size_t kEmbeddingLookupDynamicShapeInputsNum = 3;
+constexpr size_t kEmbeddingLookUpInputParamsMaxDim = 2;
+using KernelRunFunc = EmbeddingLookUpCpuKernelMod::KernelRunFunc;
 
-template <typename T>
-void LookUpTableTask(const float *input_addr, const T *indices_addr, float *output_addr, size_t indices_lens,
-                     size_t outer_dim_size, T offset, size_t first_dim_size, std::string kernel_name_) {
-  auto type_size = sizeof(float);
+#define ADD_KERNEL(input_params_dtype, input_indices_dtype, output_dtype, input_params_type, input_indices_type) \
+  {                                                                                                              \
+    KernelAttr()                                                                                                 \
+      .AddInputAttr(kNumberType##input_params_dtype)                                                             \
+      .AddInputAttr(kNumberType##input_indices_dtype)                                                            \
+      .AddOutputAttr(kNumberType##output_dtype),                                                                 \
+      &EmbeddingLookUpCpuKernelMod::LaunchKernel<input_params_type, input_indices_type>                          \
+  }
+
+#define ADD_KERNEL_DYNAMIC(input_params_dtype, input_indices_dtype, output_dtype, input_params_type, \
+                           input_indices_type)                                                       \
+  {                                                                                                  \
+    KernelAttr()                                                                                     \
+      .AddInputAttr(kNumberType##input_params_dtype)                                                 \
+      .AddInputAttr(kNumberType##input_indices_dtype)                                                \
+      .AddInputAttr(kNumberTypeInt64)                                                                \
+      .AddOutputAttr(kNumberType##output_dtype),                                                     \
+      &EmbeddingLookUpCpuKernelMod::LaunchKernel<input_params_type, input_indices_type>              \
+  }
+
+template <typename T, typename S>
+void LookUpTableTask(const T *input_addr, const S *indices_addr, T *output_addr, size_t indices_lens,
+                     size_t outer_dim_size, int64_t offset, size_t first_dim_size, std::string kernel_name_) {
+  auto type_size = sizeof(T);
   size_t lens = outer_dim_size * type_size;
   for (size_t i = 0; i < indices_lens; ++i) {
-    T index = indices_addr[i] - offset;
+    S index = indices_addr[i] - static_cast<S>(offset);
     if (index >= 0 && index < SizeToInt(first_dim_size)) {
       size_t pos = static_cast<size_t>(index) * outer_dim_size;
       auto ret = memcpy_s(output_addr, (indices_lens - i) * lens, input_addr + pos, lens);
@@ -53,76 +69,125 @@ void LookUpTableTask(const float *input_addr, const T *indices_addr, float *outp
 }
 }  // namespace
 
-void EmbeddingLookUpCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  node_wpt_ = kernel_node;
-  auto input_shape = Convert2SizeT(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0));
-  if (input_shape.empty() || input_shape.size() > kEmbeddingLookupInputParamsMaxDim) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input must be 1-"
-                      << kEmbeddingLookupInputParamsMaxDim << "D, but got " << input_shape.size() << "D.";
-  }
-  first_dim_size_ = input_shape[0];
-  outer_dim_size_ = 1;
-  for (size_t i = 1; i < input_shape.size(); ++i) {
-    outer_dim_size_ *= input_shape[i];
-  }
+const std::vector<std::pair<KernelAttr, KernelRunFunc>> &EmbeddingLookUpCpuKernelMod::GetFuncList() const {
+  static const std::vector<std::pair<KernelAttr, KernelRunFunc>> func_list = {
+    ADD_KERNEL(Bool, Int32, Bool, bool, int32_t),
+    ADD_KERNEL(Int8, Int32, Int8, int8_t, int32_t),
+    ADD_KERNEL(Int16, Int32, Int16, int16_t, int32_t),
+    ADD_KERNEL(Int32, Int32, Int32, int32_t, int32_t),
+    ADD_KERNEL(Int64, Int32, Int64, int64_t, int32_t),
+    ADD_KERNEL(UInt8, Int32, UInt8, uint8_t, int32_t),
+    ADD_KERNEL(UInt16, Int32, UInt16, uint16_t, int32_t),
+    ADD_KERNEL(UInt32, Int32, UInt32, uint32_t, int32_t),
+    ADD_KERNEL(UInt64, Int32, UInt64, uint64_t, int32_t),
+    ADD_KERNEL(Float16, Int32, Float16, float16, int32_t),
+    ADD_KERNEL(Float32, Int32, Float32, float, int32_t),
+    ADD_KERNEL(Float64, Int32, Float64, double, int32_t),
 
-  auto indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-  indices_lens_ = SizeOf(indices_shape);
+    ADD_KERNEL(Bool, Int64, Bool, bool, int64_t),
+    ADD_KERNEL(Int8, Int64, Int8, int8_t, int64_t),
+    ADD_KERNEL(Int16, Int64, Int16, int16_t, int64_t),
+    ADD_KERNEL(Int32, Int64, Int32, int32_t, int64_t),
+    ADD_KERNEL(Int64, Int64, Int64, int64_t, int64_t),
+    ADD_KERNEL(UInt8, Int64, UInt8, uint8_t, int64_t),
+    ADD_KERNEL(UInt16, Int64, UInt16, uint16_t, int64_t),
+    ADD_KERNEL(UInt32, Int64, UInt32, uint32_t, int64_t),
+    ADD_KERNEL(UInt64, Int64, UInt64, uint64_t, int64_t),
+    ADD_KERNEL(Float16, Int64, Float16, float16, int64_t),
+    ADD_KERNEL(Float32, Int64, Float32, float, int64_t),
+    ADD_KERNEL(Float64, Int64, Float64, double, int64_t),
 
-  indices_data_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 1);
-  if (common::AnfAlgo::HasNodeAttr(kAttrOffset, kernel_node)) {
-    offset_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, kAttrOffset);
-  }
+    ADD_KERNEL_DYNAMIC(Bool, Int32, Bool, bool, int32_t),
+    ADD_KERNEL_DYNAMIC(Int8, Int32, Int8, int8_t, int32_t),
+    ADD_KERNEL_DYNAMIC(Int16, Int32, Int16, int16_t, int32_t),
+    ADD_KERNEL_DYNAMIC(Int32, Int32, Int32, int32_t, int32_t),
+    ADD_KERNEL_DYNAMIC(Int64, Int32, Int64, int64_t, int32_t),
+    ADD_KERNEL_DYNAMIC(UInt8, Int32, UInt8, uint8_t, int32_t),
+    ADD_KERNEL_DYNAMIC(UInt16, Int32, UInt16, uint16_t, int32_t),
+    ADD_KERNEL_DYNAMIC(UInt32, Int32, UInt32, uint32_t, int32_t),
+    ADD_KERNEL_DYNAMIC(UInt64, Int32, UInt64, uint64_t, int32_t),
+    ADD_KERNEL_DYNAMIC(Float16, Int32, Float16, float16, int32_t),
+    ADD_KERNEL_DYNAMIC(Float32, Int32, Float32, float, int32_t),
+    ADD_KERNEL_DYNAMIC(Float64, Int32, Float64, double, int32_t),
+
+    ADD_KERNEL_DYNAMIC(Bool, Int64, Bool, bool, int64_t),
+    ADD_KERNEL_DYNAMIC(Int8, Int64, Int8, int8_t, int64_t),
+    ADD_KERNEL_DYNAMIC(Int16, Int64, Int16, int16_t, int64_t),
+    ADD_KERNEL_DYNAMIC(Int32, Int64, Int32, int32_t, int64_t),
+    ADD_KERNEL_DYNAMIC(Int64, Int64, Int64, int64_t, int64_t),
+    ADD_KERNEL_DYNAMIC(UInt8, Int64, UInt8, uint8_t, int64_t),
+    ADD_KERNEL_DYNAMIC(UInt16, Int64, UInt16, uint16_t, int64_t),
+    ADD_KERNEL_DYNAMIC(UInt32, Int64, UInt32, uint32_t, int64_t),
+    ADD_KERNEL_DYNAMIC(UInt64, Int64, UInt64, uint64_t, int64_t),
+    ADD_KERNEL_DYNAMIC(Float16, Int64, Float16, float16, int64_t),
+    ADD_KERNEL_DYNAMIC(Float32, Int64, Float32, float, int64_t),
+    ADD_KERNEL_DYNAMIC(Float64, Int64, Float64, double, int64_t)};
+  return func_list;
 }
 
-template <typename T>
-void EmbeddingLookUpCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                               const std::vector<kernel::AddressPtr> &outputs) {
-  if (!node_wpt_.expired()) {
-    auto node = node_wpt_.lock();
-    if (!node) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', node_wpt_(kernel_node) is expired. Error no: " << node;
-    }
-    auto input_shape = Convert2SizeT(common::AnfAlgo::GetPrevNodeOutputInferShape(node, 0));
-    if (input_shape.empty()) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                        << "', the dimension of input must be at least 1D, but got empty input.";
-    }
-    first_dim_size_ = input_shape[0];
-    outer_dim_size_ = 1;
-    for (size_t i = 1; i < input_shape.size(); ++i) {
-      outer_dim_size_ *= input_shape[i];
-    }
-
-    indices_lens_ = 1;
-    auto indices_shape = Convert2SizeT(common::AnfAlgo::GetPrevNodeOutputInferShape(node, 1));
-    for (const auto &shape : indices_shape) {
-      indices_lens_ *= shape;
-    }
+bool EmbeddingLookUpCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                       const std::vector<KernelTensorPtr> &outputs) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::EmbeddingLookup>(base_operator);
+  if (!kernel_ptr) {
+    MS_LOG(ERROR) << "For primitive[EmbeddingLookup], cast op from BaseOperator to EmbeddingLookup failed.";
+    return false;
   }
-  const auto *input_addr = reinterpret_cast<float *>(inputs[0]->addr);
-  const auto *indices_addr = reinterpret_cast<T *>(inputs[1]->addr);
-  auto *output_addr = reinterpret_cast<float *>(outputs[0]->addr);
+  kernel_name_ = kernel_ptr->name();
+  return MatchKernelFunc(base_operator, inputs, outputs);
+}
+
+int EmbeddingLookUpCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                        const std::vector<KernelTensorPtr> &inputs,
+                                        const std::vector<KernelTensorPtr> &outputs,
+                                        const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+
+  if ((inputs.size() != kEmbeddingLookupInputsNum && inputs.size() != kEmbeddingLookupDynamicShapeInputsNum) ||
+      outputs.size() != 1) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output size must be " << kEmbeddingLookupInputsNum
+                  << " and " << 1 << ", but got " << inputs.size() << " and " << outputs.size();
+  }
+
+  std::vector<int64_t> input_params_shape = inputs[kIndex0]->GetShapeVector();
+  if (input_params_shape.empty() || input_params_shape.size() > kEmbeddingLookUpInputParamsMaxDim) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input must be 1-"
+                      << kEmbeddingLookUpInputParamsMaxDim << "D, but got " << input_params_shape.size() << "D.";
+  }
+  first_dim_size_ = input_params_shape[0];
+  outer_dim_size_ = 1;
+  for (size_t i = 1; i < input_params_shape.size(); ++i) {
+    outer_dim_size_ *= input_params_shape[i];
+  }
+  input_params_dtype_ = inputs[kIndex0]->GetDtype();
+
+  std::vector<int64_t> input_indices_shape = inputs[kIndex1]->GetShapeVector();
+  input_indices_lens_ = SizeOf(input_indices_shape);
+  input_indices_dtype_ = inputs[kIndex1]->GetDtype();
+  if (inputs.size() == kEmbeddingLookupInputsNum) {
+    offset_ = GetValue<int64_t>(base_operator->GetAttr(kAttrOffset));
+  }
+  return KRET_OK;
+}
+
+template <typename T, typename S>
+bool EmbeddingLookUpCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                                               const std::vector<AddressPtr> &outputs) {
+  T *input_params_addr = reinterpret_cast<T *>(inputs[0]->addr);
+  S *input_indices_addr = reinterpret_cast<S *>(inputs[1]->addr);
+  T *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
+  if (inputs.size() == kEmbeddingLookupDynamicShapeInputsNum) {
+    int64_t *input_offset_addr = reinterpret_cast<int64_t *>(inputs[2]->addr);
+    memcpy(&offset_, input_offset_addr, sizeof(int64_t));
+  }
   auto task = [&](size_t start, size_t end) {
     size_t task_proc_lens = end - start;
-    LookUpTableTask<T>(input_addr, indices_addr + start, output_addr + start * outer_dim_size_, task_proc_lens,
-                       outer_dim_size_, static_cast<T>(offset_), first_dim_size_, kernel_name_);
+    LookUpTableTask<T, S>(input_params_addr, input_indices_addr + start, output_addr + start * outer_dim_size_,
+                          task_proc_lens, outer_dim_size_, offset_, first_dim_size_, kernel_name_);
   };
-  ParallelLaunchAutoSearch(task, indices_lens_, this, &parallel_search_info_);
-}
 
-bool EmbeddingLookUpCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                         const std::vector<kernel::AddressPtr> &,
-                                         const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kEmbeddingLookupInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kEmbeddingLookupOutputsNum, kernel_name_);
-  if (indices_data_type_ == kNumberTypeInt32) {
-    LaunchKernel<int>(inputs, outputs);
-  } else {
-    LaunchKernel<int64_t>(inputs, outputs);
-  }
+  ParallelLaunchAutoSearch(task, input_indices_lens_, this, &parallel_search_info_);
   return true;
 }
 
