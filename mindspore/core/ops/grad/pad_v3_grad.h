@@ -35,6 +35,9 @@ class MIND_API PadV3Grad : public BaseOperator {
   /// \brief Constructor.
   PadV3Grad() : BaseOperator(kNamePadV3Grad) { InitIOName({"x", "paddings"}, {"y"}); }
   explicit PadV3Grad(const std::string k_name) : BaseOperator(k_name) {}
+  std::string get_mode() const;
+  bool get_paddings_contiguous() const;
+  std::vector<int64_t> get_paddings() const;
 };
 abstract::AbstractBasePtr PadV3GradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                          const std::vector<abstract::AbstractBasePtr> &input_args);
