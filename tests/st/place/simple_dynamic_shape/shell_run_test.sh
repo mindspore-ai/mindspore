@@ -18,20 +18,28 @@ execute_path=$(pwd)
 self_path=$(dirname $0)
 DEVICE_TARGET=$1
 export MS_WORKER_NUM=$2
-export MS_SERVER_NUM=$3
-export MS_SCHED_HOST=$4
-export MS_SCHED_PORT=$5
+LOCAL_WORKER_NUM=$3
+export MS_SERVER_NUM=$4
+LOCAL_SERVER_NUM=$5
+export MS_SCHED_HOST=$6
+export MS_SCHED_PORT=$7
+LOCAL_SCHED=$8
 
-export MS_ROLE=MS_SCHED
-rm -rf ${execute_path}/sched/
-mkdir ${execute_path}/sched/
-cd ${execute_path}/sched/ || exit
-python ${self_path}/../test_simple_dynamic_shape.py --device_target=$DEVICE_TARGET > sched.log 2>&1 &
-sched_pid=`echo $!`
+export embedding_size=100
+export batch_size=320000
+
+if [ "${LOCAL_SCHED}" == "true" ]; then
+  export MS_ROLE=MS_SCHED
+  rm -rf ${execute_path}/sched/
+  mkdir ${execute_path}/sched/
+  cd ${execute_path}/sched/ || exit
+  python ${self_path}/../test_simple_dynamic_shape.py --device_target=$DEVICE_TARGET > sched.log 2>&1 &
+  sched_pid=`echo $!`
+fi
 
 export MS_ROLE=MS_PSERVER
 server_pids=()
-for((i=0;i<$MS_SERVER_NUM;i++));
+for((i=0;i<$LOCAL_SERVER_NUM;i++));
 do
   rm -rf ${execute_path}/server_$i/
   mkdir ${execute_path}/server_$i/
@@ -42,7 +50,7 @@ done
 
 export MS_ROLE=MS_WORKER
 worker_pids=()
-for((i=0;i<$MS_WORKER_NUM;i++));
+for((i=0;i<$LOCAL_WORKER_NUM;i++));
 do
   rm -rf ${execute_path}/worker_$i/
   mkdir ${execute_path}/worker_$i/
@@ -51,29 +59,32 @@ do
   worker_pids[${i}]=`echo $!`
 done
 
-for((i=0; i<${MS_WORKER_NUM}; i++)); do
+for((i=0; i<${LOCAL_WORKER_NUM}; i++)); do
     wait ${worker_pids[i]}
     status=`echo $?`
     if [ "${status}" != "0" ]; then
-        echo "[ERROR] test_full_ps_lenet failed. Failed to wait worker_{$i}, status: ${status}"
+        echo "[ERROR] test_simple_dynamic_shape failed. Failed to wait worker_{$i}, status: ${status}"
         exit 1
     fi
 done
 
-for((i=0; i<${MS_SERVER_NUM}; i++)); do
+for((i=0; i<${LOCAL_SERVER_NUM}; i++)); do
     wait ${server_pids[i]}
     status=`echo $?`
     if [ "${status}" != "0" ]; then
-        echo "[ERROR] test_full_ps_lenet failed. Failed to wait server_{$i}, status: ${status}"
+        echo "[ERROR] test_simple_dynamic_shape failed. Failed to wait server_{$i}, status: ${status}"
         exit 1
     fi
 done
 
-wait ${sched_pid}
-status=`echo $?`
-if [ "${status}" != "0" ]; then
-  echo "[ERROR] test_full_ps_lenet failed. Failed to wait scheduler, status: ${status}"
-  exit 1
+
+if [ "${LOCAL_SCHED}" == "true" ]; then
+  wait ${sched_pid}
+  status=`echo $?`
+  if [ "${status}" != "0" ]; then
+    echo "[ERROR] test_simple_dynamic_shape failed. Failed to wait scheduler, status: ${status}"
+    exit 1
+  fi
 fi
 
 exit 0
