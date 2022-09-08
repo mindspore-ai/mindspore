@@ -33,20 +33,10 @@
 
 namespace mindspore::graphkernel::inner {
 std::vector<int64_t> GetListInt(const ValuePtr &attr_value) {
-  bool is_int64 = true;
-  auto get_int_value = [&is_int64](const ValuePtr &value) -> int64_t {
-    if (value->isa<Int64Imm>()) {
-      return GetValue<int64_t>(value);
-    }
-    is_int64 = false;
-    return static_cast<int64_t>(GetValue<int>(value));
-  };
   std::vector<int64_t> list_int;
   const auto &vals = attr_value->cast<ValueSequencePtr>()->value();
-  (void)std::transform(vals.begin(), vals.end(), std::back_inserter(list_int), get_int_value);
-  if (!is_int64) {
-    MS_LOG(WARNING) << "Vector type should be 'int64_t' but got 'int'";
-  }
+  (void)std::transform(vals.begin(), vals.end(), std::back_inserter(list_int),
+                       [](const ValuePtr &v) { return AnfUtils::GetIntValue(v); });
   return list_int;
 }
 
@@ -476,8 +466,12 @@ std::vector<TypeId> ArgReduceOp::InferType(const NodePtrList &, const DAttrs &at
 }
 
 DFormat TransposeOp::InferFormat(const NodePtrList &inputs, const DAttrs &attrs) {
+  if (attrs.count(kAttrDstFormat) != 0) {
+    return GetValue<std::string>(attrs.find(kAttrDstFormat)->second);
+  }
   // only support NCHW/NHWC now
-  if (inputs[0]->shape.size() != 4) {
+  constexpr size_t kRank4 = 4;
+  if (inputs[0]->shape.size() != kRank4) {
     return kOpFormat_DEFAULT;
   }
   CHECK_ATTR(attrs, "perm");
@@ -874,10 +868,10 @@ NodePtr ConcatOp::InferValue(const NodePtrList &inputs, const DAttrs &attrs) {
 }
 
 std::vector<DShape> LayoutTransformOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {
-  CHECK_ATTR(attrs, "src_format");
-  CHECK_ATTR(attrs, "dst_format");
-  auto src_format = GetValue<std::string>(attrs.find("src_format")->second);
-  auto dst_format = GetValue<std::string>(attrs.find("dst_format")->second);
+  CHECK_ATTR(attrs, kAttrSrcFormat);
+  CHECK_ATTR(attrs, kAttrDstFormat);
+  auto src_format = GetValue<std::string>(attrs.find(kAttrSrcFormat)->second);
+  auto dst_format = GetValue<std::string>(attrs.find(kAttrDstFormat)->second);
   std::vector<int64_t> data_shape = inputs[0]->shape;
   if (src_format == kOpFormat_NHWC) {
     auto n = data_shape[0];

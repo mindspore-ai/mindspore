@@ -21,6 +21,7 @@
 #include <map>
 #include <utility>
 #include <string>
+#include <tuple>
 #include "mindspore/core/ops/core_ops.h"
 #include "ir/graph_utils.h"
 #include "utils/anf_utils.h"
@@ -220,24 +221,34 @@ bool TransformOpCreator::IsTransOp(const NodePtr &node) const {
 class TransposeHandle : public TransformOp {
  public:
   using TransformOp::TransformOp;
-  NodePtr GenTransformOp(TransOpType trans_type) override {
-    static std::map<std::pair<std::string, std::string>, std::vector<int64_t>> perm_map = {
-      {{kOpFormat_DEFAULT, kOpFormat_NHWC}, {0, 2, 3, 1}},
-      {{kOpFormat_NCHW, kOpFormat_NHWC}, {0, 2, 3, 1}},
-      {{kOpFormat_NHWC, kOpFormat_NCHW}, {0, 3, 1, 2}},
-      {{kOpFormat_NHWC, kOpFormat_DEFAULT}, {0, 3, 1, 2}},
+  NodePtr GenTransformOp(const NodePtr &input_node, TransOpType trans_type) override {
+    static std::map<std::tuple<size_t, std::string, std::string>, std::vector<int64_t>> perm_map = {
+      // rank 3
+      {{3, kOpFormat_NCHW, kOpFormat_NHWC}, {1, 2, 0}},
+      {{3, kOpFormat_NHWC, kOpFormat_NCHW}, {2, 0, 1}},
+      // rank 4
+      {{4, kOpFormat_DEFAULT, kOpFormat_NHWC}, {0, 2, 3, 1}},
+      {{4, kOpFormat_NCHW, kOpFormat_NHWC}, {0, 2, 3, 1}},
+      {{4, kOpFormat_NHWC, kOpFormat_NCHW}, {0, 3, 1, 2}},
+      {{4, kOpFormat_NHWC, kOpFormat_DEFAULT}, {0, 3, 1, 2}},
     };
     std::vector<int64_t> perm;
+    std::string dst_format;
+    auto rank = input_node->shape.size();
     if (trans_type == TransOpType::kTransAB) {
-      perm = perm_map[{format_a_, format_b_}];
+      perm = perm_map[{rank, format_a_, format_b_}];
+      dst_format = format_b_;
     } else {
-      perm = perm_map[{format_b_, format_a_}];
+      perm = perm_map[{rank, format_b_, format_a_}];
+      dst_format = format_a_;
     }
     if (perm.empty()) {
-      MS_LOG(EXCEPTION) << "unsupported format: " << format_a_ << " to " << format_b_;
+      MS_LOG(INFO) << "unsupported format: " << format_a_ << " to " << format_b_ << " of rank " << rank;
+      return nullptr;
     }
     auto op = inner::OpRegistry::Instance().NewOp(op_);
     op->SetAttr("perm", MakeValue(perm));
+    op->SetAttr(kAttrDstFormat, MakeValue(dst_format));
     return op;
   }
 };
@@ -245,14 +256,14 @@ class TransposeHandle : public TransformOp {
 class LayoutTransformHandle : public TransformOp {
  public:
   using TransformOp::TransformOp;
-  NodePtr GenTransformOp(TransOpType trans_type) override {
+  NodePtr GenTransformOp(const NodePtr &, TransOpType trans_type) override {
     auto op = inner::OpRegistry::Instance().NewOp(op_);
     if (trans_type == TransOpType::kTransAB) {
-      op->SetAttr("src_format", MakeValue(format_a_));
-      op->SetAttr("dst_format", MakeValue(format_b_));
+      op->SetAttr(kAttrSrcFormat, MakeValue(format_a_));
+      op->SetAttr(kAttrDstFormat, MakeValue(format_b_));
     } else {
-      op->SetAttr("src_format", MakeValue(format_b_));
-      op->SetAttr("dst_format", MakeValue(format_a_));
+      op->SetAttr(kAttrSrcFormat, MakeValue(format_b_));
+      op->SetAttr(kAttrDstFormat, MakeValue(format_a_));
     }
     return op;
   }
@@ -277,20 +288,23 @@ bool IsFlexibleOp(const NodePtr &node) {
 constexpr int kOutputIndex = -1;
 class Mutator {
  public:
+  enum class ResultStatus { kChanged, kUnchanged, kRollback };
   Mutator(const NodePtr &node, const TransformOpPtr &handle) : op_handle_(handle), basenode_(node), ori_node_(1) {}
   ~Mutator() = default;
 
-  bool Run(std::set<NodePtr> *changed_nodes) {
+  ResultStatus Run(std::set<NodePtr> *changed_nodes) {
     VisitNode(basenode_);
     if (flexible_ops_.empty() && trans_ops_.size() <= 1) {
-      return false;
+      return ResultStatus::kUnchanged;
     }
     // remove transform ops in litegraph
     RemoveTransOp();
     GenFormatGraph();
-    RebuildLiteGraph(changed_nodes);
+    if (!RebuildLiteGraph(changed_nodes)) {
+      return ResultStatus::kRollback;
+    }
     changed_nodes->insert(flexible_ops_.begin(), flexible_ops_.end());
-    return true;
+    return ResultStatus::kChanged;
   }
 
  private:
@@ -363,17 +377,21 @@ class Mutator {
     }
   }
 
-  NodePtr NewTransOp(const NodePtr &input, TransOpType trans_type, std::set<NodePtr> *changed_nodes) {
+  std::pair<bool, NodePtr> NewTransOp(const NodePtr &input, TransOpType trans_type, std::set<NodePtr> *changed_nodes) {
+    NodePtr trans_op = nullptr;
     // a trick, if the node's size of 1, it's not need to insert transform op.
     if (input->tensor_size() <= 1) {
-      return nullptr;
+      return std::make_pair(true, trans_op);
     }
-    auto trans_op = op_handle_->GenTransformOp(trans_type);
+    trans_op = op_handle_->GenTransformOp(input, trans_type);
+    if (trans_op == nullptr) {
+      return std::make_pair(false, trans_op);
+    }
     (void)changed_nodes->insert(trans_op);
-    return trans_op;
+    return std::make_pair(true, trans_op);
   }
 
-  void RebuildLiteGraph(std::set<NodePtr> *changed_nodes) {
+  bool RebuildLiteGraph(std::set<NodePtr> *changed_nodes) {
     MinCut min_cut(graph_vertex_, graph_edges_);
     min_cut.Run();
     for (auto [node_id, trans_type] : min_cut.GetOneNodeOps()) {
@@ -382,7 +400,10 @@ class Mutator {
                           << " index:" << ori_node_[node_id].second;
       }
       auto input_node = ori_node_[node_id].first;
-      auto trans_op = NewTransOp(input_node, trans_type, changed_nodes);
+      auto [result, trans_op] = NewTransOp(input_node, trans_type, changed_nodes);
+      if (!result) {
+        return false;
+      }
       if (trans_op == nullptr) {
         continue;
       }
@@ -400,14 +421,18 @@ class Mutator {
       }
       auto node_from = ori_node_[node_id_from].first;
       auto node_to = ori_node_[node_id_to].first;
-      auto &trans_op = trans_op_cache[node_id_from];
-      if (trans_op == nullptr) {
-        trans_op = NewTransOp(node_from, trans_type, changed_nodes);
+      if (trans_op_cache.count(node_id_from) == 0) {
+        auto [result, trans_op] = NewTransOp(node_from, trans_type, changed_nodes);
+        if (!result) {
+          return false;
+        }
         if (trans_op == nullptr) {
           continue;
         }
+        trans_op_cache[node_id_from] = trans_op;
         trans_op->SetInputs({node_from});
       }
+      auto trans_op = trans_op_cache[node_id_from];
       if (ori_node_[node_id_to].second >= 0) {
         node_to->SetInput(IntToSize(ori_node_[node_id_to].second), trans_op);
       } else {
@@ -418,6 +443,7 @@ class Mutator {
         }
       }
     }
+    return true;
   }
 
   size_t GetId(const NodeWithIndex &node_with_index) {
@@ -454,7 +480,11 @@ bool TransformOpOptimizer::Process(const LiteGraphPtr &litegraph, const Transfor
   for (auto &op : ops) {
     if (check_is_trans_op(op) && !op->inputs().empty() && op->input(0)->format != op->format) {
       auto mutator = Mutator(op, creator.CreateHandle(op));
-      changed = mutator.Run(&nodes_may_change) || changed;
+      auto ret = mutator.Run(&nodes_may_change);
+      if (ret == Mutator::ResultStatus::kRollback) {
+        return false;
+      }
+      changed = changed || (ret == Mutator::ResultStatus::kChanged);
     }
   }
   if (!changed) {

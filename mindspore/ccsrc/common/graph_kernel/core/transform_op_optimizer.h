@@ -37,7 +37,7 @@ class TransformOp {
   // check the node is TransAB or TransBA
   virtual bool IsTransformOp(const NodePtr &node);
   // gen a new transform op of the trans_type
-  virtual NodePtr GenTransformOp(TransOpType trans_type) = 0;
+  virtual NodePtr GenTransformOp(const NodePtr &input_node, TransOpType trans_type) = 0;
   // check the input format is kFormatA or kFormatB
   virtual FormatType GetFormatType(const std::string &fmt);
 
