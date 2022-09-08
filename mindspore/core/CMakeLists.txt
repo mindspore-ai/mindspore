@@ -83,6 +83,7 @@ foreach(number RANGE 1 ${CORE_OBJECT_COUNT})
     list(APPEND CORE_OBJECT_LIST $<TARGET_OBJECTS:core_obj_${number}>)
     add_dependencies(core_obj_${number} core_proto_obj)
 endforeach()
+set(CORE_OBJECT_COUNT "${CORE_OBJECT_COUNT}" PARENT_SCOPE)
 
 add_library(mindspore_core SHARED ${CORE_OBJECT_LIST})
 target_link_libraries(mindspore_core PRIVATE mindspore::protobuf securec)
