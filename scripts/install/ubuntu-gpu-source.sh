@@ -26,7 +26,7 @@
 #
 # Augments:
 #   - PYTHON_VERSION: python version to install. [3.7(default), 3.8, 3.9]
-#   - CUDA_VERSION: CUDA version to install. [10.1, 11.1(default)]
+#   - CUDA_VERSION: CUDA version to install. [10.1, 11.1 11.6(default)]
 #   - OPENMPI: whether to install optional package Open MPI for distributed training. [on, off(default)]
 #   - LLVM: whether to install optional dependency LLVM for graph kernel fusion. [on, off(default)]
 #
@@ -37,7 +37,7 @@
 set -e
 
 PYTHON_VERSION=${PYTHON_VERSION:-3.7}
-CUDA_VERSION=${CUDA_VERSION:-11.1}
+CUDA_VERSION=${CUDA_VERSION:-11.6}
 OPENMPI=${OPENMPI:-off}
 LLVM=${LLVM:-off}
 release_info=$(lsb_release -a | grep Release)
@@ -58,6 +58,7 @@ fi
 declare -A minimum_driver_version_map=()
 minimum_driver_version_map["10.1"]="418.39"
 minimum_driver_version_map["11.1"]="450.80.02"
+minimum_driver_version_map["11.6"]="510.39.01"
 driver_version=$(nvidia-smi --query-gpu=driver_version --format=csv,noheader --id=0)
 if [[ $driver_version < ${minimum_driver_version_map[$CUDA_VERSION]} ]]; then
     echo "CUDA $CUDA_VERSION minimum required driver version is ${minimum_driver_version_map[$CUDA_VERSION]}, \
@@ -126,6 +127,7 @@ echo "installing CUDA and cuDNN"
 declare -A cuda_url_map=()
 cuda_url_map["10.1"]=https://developer.download.nvidia.cn/compute/cuda/10.1/Prod/local_installers/cuda_10.1.243_418.87.00_linux.run
 cuda_url_map["11.1"]=https://developer.download.nvidia.cn/compute/cuda/11.1.1/local_installers/cuda_11.1.1_455.32.00_linux.run
+cuda_url_map["11.6"]=https://developer.download.nvidia.cn/compute/cuda/11.6.0/local_installers/cuda_11.6.0_510.39.01_linux.run
 cuda_url=${cuda_url_map[$CUDA_VERSION]}
 wget $cuda_url
 sudo sh ${cuda_url##*/} --silent --toolkit
@@ -137,6 +139,7 @@ sudo apt-get update
 declare -A cudnn_name_map=()
 cudnn_name_map["10.1"]="libcudnn7=7.6.5.32-1+cuda10.1 libcudnn7-dev=7.6.5.32-1+cuda10.1"
 cudnn_name_map["11.1"]="libcudnn8=8.0.5.39-1+cuda11.1 libcudnn8-dev=8.0.5.39-1+cuda11.1"
+cudnn_name_map["11.6"]="libcudnn8=8.5.0.96-1+cuda11.6 libcudnn8-dev=8.5.0.96-1+cuda11.6"
 sudo apt-get install --no-install-recommends ${cudnn_name_map[$CUDA_VERSION]} -y
 
 # add cuda to path

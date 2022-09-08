@@ -26,7 +26,7 @@
 # Augments:
 #   - PYTHON_VERSION: python version to install. [3.7(default), 3.8, 3.9]
 #   - MINDSPORE_VERSION: mindspore version to install, >=1.6.0
-#   - CUDA_VERSION: CUDA version to install. [10.1, 11.1(default)]
+#   - CUDA_VERSION: CUDA version to install. [10.1, 11.1 11.6(default)]
 #   - OPENMPI: whether to install optional package Open MPI for distributed training. [on, off(default)]
 #
 # Usage:
@@ -64,7 +64,7 @@ if [[ "$PYTHON_VERSION" == "3.8" && ${MINDSPORE_VERSION:0:3} == "1.6" ]]; then
     exit 1
 fi
 
-available_cuda_version=(10.1 11.1)
+available_cuda_version=(10.1 11.1 11.6)
 if [[ " ${available_cuda_version[*]} " != *" $CUDA_VERSION "* ]]; then
     echo "CUDA_VERSION is '$CUDA_VERSION', but available versions are [${available_cuda_version[*]}]."
     exit 1
@@ -144,6 +144,7 @@ cd /tmp
 declare -A cuda_url_map=()
 cuda_url_map["10.1"]=https://developer.download.nvidia.cn/compute/cuda/10.1/Prod/local_installers/cuda_10.1.243_418.87.00_linux.run
 cuda_url_map["11.1"]=https://developer.download.nvidia.cn/compute/cuda/11.1.1/local_installers/cuda_11.1.1_455.32.00_linux.run
+cuda_url_map["11.6"]=https://developer.download.nvidia.cn/compute/cuda/11.6.0/local_installers/cuda_11.6.0_510.39.01_linux.run
 cuda_url=${cuda_url_map[$CUDA_VERSION]}
 wget $cuda_url
 sudo sh ${cuda_url##*/} --silent --toolkit
@@ -155,6 +156,7 @@ sudo apt-get update
 declare -A cudnn_name_map=()
 cudnn_name_map["10.1"]="libcudnn7=7.6.5.32-1+cuda10.1 libcudnn7-dev=7.6.5.32-1+cuda10.1"
 cudnn_name_map["11.1"]="libcudnn8=8.0.5.39-1+cuda11.1 libcudnn8-dev=8.0.5.39-1+cuda11.1"
+cudnn_name_map["11.6"]="libcudnn8=8.5.0.96-1+cuda11.6 libcudnn8-dev=8.5.0.96-1+cuda11.6"
 sudo apt-get install --no-install-recommends ${cudnn_name_map[$CUDA_VERSION]} -y
 
 # add cuda to path
@@ -171,6 +173,7 @@ env_name=mindspore_py3${PYTHON_VERSION##*.}
 declare -A cudnn_version_map=()
 cudnn_version_map["10.1"]="7.6.5"
 cudnn_version_map["11.1"]="8.1.0"
+cudnn_version_map["11.6"]="8.5.0"
 conda create -n $env_name python=${PYTHON_VERSION} -c conda-forge -y
 conda activate $env_name
 install_name="mindspore-gpu"

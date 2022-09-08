@@ -89,12 +89,12 @@ class GPUEnvChecker(EnvChecker):
             logger.warning(f"MindSpore version {__version__} and cudDNN version {cudnn_version} "
                            "does not match, please refer to the installation guide for version matching "
                            "information: https://www.mindspore.cn/install. The recommended version is "
-                           "CUDA10.1 with cuDNN7.6.x and CUDA11.1 with cuDNN8.0.x")
+                           "CUDA10.1 with cuDNN7.6.x, CUDA11.1 with cuDNN8.0.x and CUDA11.6 with cuDNN8.5.x.")
         if cudnn_version and int(cudnn_version) < 800 and int(str(self.v).split('.')[0]) > 10:
             logger.warning(f"CUDA version {self.v} and cuDNN version {cudnn_version} "
                            "does not match, please refer to the installation guide for version matching "
                            "information: https://www.mindspore.cn/install. The recommended version is "
-                           "CUDA11.1 with cuDNN8.0.x")
+                           "CUDA11.1 with cuDNN8.0.x or CUDA11.6 with cuDNN8.5.x.")
 
     def set_env(self):
         return
