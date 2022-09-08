@@ -32,18 +32,34 @@ void CheckShape(ShapeVector *shape) {
 }
 }  // namespace
 
-void MaximumGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  x_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  y_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-  dout_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
-  dx_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
-  dy_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 1);
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
+bool MaximumGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                   const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->name();
+  if (inputs.size() != kMaximumGradInputsNum || outputs.size() != kMaximumGradOutputsNum) {
+    MS_LOG(ERROR) << kernel_name_ << ": input and output size should be " << kMaximumGradInputsNum << " and "
+                  << kMaximumGradOutputsNum << ", but get " << inputs.size() << " and " << outputs.size();
+    return false;
+  }
+  dtype_ = inputs[kIndex0]->GetDtype();
+  return true;
+}
+
+int MaximumGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                    const std::vector<KernelTensorPtr> &outputs,
+                                    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+    return ret;
+  }
+
+  x_shape_ = inputs[kIndex0]->GetShapeVector();
+  y_shape_ = inputs[kIndex1]->GetShapeVector();
+  dout_shape = inputs[kIndex2]->GetShapeVector();
+  dx_shape = outputs[kIndex0]->GetShapeVector();
+  dy_shape = outputs[kIndex1]->GetShapeVector();
   CheckShape(&x_shape_);
   CheckShape(&y_shape_);
   CheckShape(&dout_shape);
+  return KRET_OK;
 }
 
 bool MaximumGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
