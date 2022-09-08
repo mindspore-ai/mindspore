@@ -39,6 +39,7 @@ from mindspore import context
 from mindspore.common.api import _MindsporeFunctionExecutor, _convert_python_data
 from mindspore.common import dtype as mstype
 from mindspore.common.parameter import Parameter
+from mindspore.common import mutable
 from .namespace import Namespace, CellNamespace, ClosureNamespace, ClassMemberNamespace, ClassAttrNamespace
 from .resources import parse_object_map, ops_symbol_map, convert_object_map, convert_class_to_function_map, trope_ns
 from .resources import SYMBOL_UNDEFINE, NO_IMPLEMENT
@@ -115,6 +116,10 @@ _hybrid_type = (
 _fallback_unsupported_python_builtin_type = (
     compile, eval, exec, input, open, delattr, setattr, super, staticmethod, classmethod, __import__,
     memoryview, property,
+)
+
+_unsupported_convert_data_type = (
+    mutable,
 )
 
 
@@ -817,6 +822,16 @@ class Parser:
                 return True
         return False
 
+    @staticmethod
+    def is_unsupported_convert_data_type(value):
+        """Check whether the value don't support to be converted in C++."""
+        return value in _unsupported_convert_data_type
+
+    def get_convert_object_for_unsupported_type(self, value):
+        """Get the convert object for value which don't support to be converted in C++."""
+        if not self.is_unsupported_convert_data_type(value):
+            return value
+        return convert_object_map.get(value)
 
     def parse(self):
         """Parse the function or method."""

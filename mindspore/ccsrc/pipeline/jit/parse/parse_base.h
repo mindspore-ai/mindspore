@@ -101,6 +101,7 @@ const char PYTHON_PARSE_GENERATE_SCOPE[] = "generate_scope";
 const char PYTHON_PARSE_GET_SCOPE_NAME[] = "get_scope_name";
 const char PYTHON_PARSE_GET_TYPE[] = "get_type";
 const char PYTHON_PARSE_ANALYZE_SUPER[] = "analyze_super";
+const char PYTHON_PARSE_GET_CONVERT_OBJECT_FOR_UNSUPPORTED_TYPE[] = "get_convert_object_for_unsupported_type";
 
 const char PYTHON_PARSE_CLASS_SLICE[] = "create_slice_obj";
 const char PYTHON_PARSE_CLASS_ELLIPSIS[] = "create_ellipsis_obj";

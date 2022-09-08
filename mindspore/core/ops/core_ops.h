@@ -385,6 +385,7 @@ constexpr auto kEnvironGet = "EnvironGet";
 constexpr auto kEnvironAdd = "EnvironAdd";
 constexpr auto kPopulationCount = "PopulationCount";
 constexpr auto kEnvironDestroyAll = "EnvironDestroyAll";
+constexpr auto kMutable = "mutable";
 constexpr auto kSetSize = "SetSize";
 constexpr auto kStandardLaplace = "StandardLaplace";
 
@@ -1288,6 +1289,7 @@ GVAR_DEF(PrimitivePtr, kPrimIOU, std::make_shared<Primitive>("IOU"));
 GVAR_DEF(PrimitivePtr, kPrimReformat, std::make_shared<Primitive>("Reformat"));
 GVAR_DEF(PrimitivePtr, kPrimLoad, std::make_shared<Primitive>(kLoad));
 GVAR_DEF(PrimitivePtr, kPrimUpdateState, std::make_shared<Primitive>(kUpdateState));
+GVAR_DEF(PrimitivePtr, kPrimMutable, std::make_shared<Primitive>(kMutable));
 GVAR_DEF(PrimitivePtr, kPrimPartial, std::make_shared<Primitive>("Partial", kSideEffectPropagate));
 GVAR_DEF(PrimitivePtr, kPrimIdentity, std::make_shared<Primitive>(kidentity, kSideEffectPropagate));
 GVAR_DEF(PrimitivePtr, kPrimHookBackward, std::make_shared<Primitive>("HookBackward"));

@@ -157,6 +157,7 @@ convert_object_map = {
     T.make_slice:   F.make_slice,
     T.range:        F.make_range,
     T.while_cond:   M.while_cond,
+    T.mutable:      Primitive('mutable'),
 
     # lib function
     math.floor:     NO_IMPLEMENT,

@@ -238,6 +238,11 @@ bool HasConstArgAttr(const py::object &obj) {
   return py::hasattr(obj, const_arg_attr) && py::cast<bool>(py::getattr(obj, const_arg_attr));
 }
 
+bool HasMutableAttr(const py::object &obj) {
+  constexpr char mutable_attr[] = "__ms_mutable__";
+  return py::hasattr(obj, mutable_attr) && py::cast<bool>(py::getattr(obj, mutable_attr));
+}
+
 AnfNodePtr ConvertObjectToNode(const AnfNodePtr &origin_node, const py::object &obj, const FuncGraphPtr &func_graph) {
   // When the cell is set recomputed, it should not use old scope from cache.
   MS_EXCEPTION_IF_NULL(origin_node);
@@ -262,6 +267,9 @@ AnfNodePtr ConvertObjectToNode(const AnfNodePtr &origin_node, const py::object &
       MS_LOG(WARNING) << "The tensor " << convert_result->ToString()
                       << " which is not used for network input argument should not be set const.";
     }
+  }
+  if (HasMutableAttr(obj)) {
+    output = func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimMutable), output});
   }
   return output;
 }
