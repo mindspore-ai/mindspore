@@ -24,25 +24,7 @@
 #include "nnacl/conv_parameter.h"
 #include "nnacl/fp32/matmul_fp32.h"
 #include "src/litert/kernel/cpu/fp32/matmul_fp32_base.h"
-#if defined(ENABLE_AVX512)
-#include "src/litert/kernel/cpu/fp32/matmul_fp32_avx512.h"
-#endif
-
-#if defined(ENABLE_AVX)
-#include "src/litert/kernel/cpu/fp32/matmul_fp32_avx.h"
-#endif
-
-#if defined(ENABLE_SSE)
-#include "src/litert/kernel/cpu/fp32/matmul_fp32_sse.h"
-#endif
-
-#if defined(ENABLE_ARM32)
-#include "src/litert/kernel/cpu/fp32/matmul_fp32_arm32.h"
-#endif
-
-#if defined(ENABLE_ARM64)
-#include "src/litert/kernel/cpu/fp32/matmul_fp32_arm64.h"
-#endif
+#include "src/litert/kernel/cpu/fp32/matmul_fp32.h"
 
 namespace mindspore::kernel {
 class ConvolutionSW1x1CPUKernel : public LiteKernel {
@@ -51,39 +33,7 @@ class ConvolutionSW1x1CPUKernel : public LiteKernel {
                             const std::vector<lite::Tensor *> &outputs, const mindspore::lite::InnerContext *ctx,
                             float *origin_weight, float *origin_bias)
       : LiteKernel(parameter, inputs, outputs, ctx), origin_weight_(origin_weight), origin_bias_(origin_bias) {
-#if defined(ENABLE_AVX512)
-    if (matmul_base_ == nullptr) {
-      AVX512_HARDWARE_SELF_AWARENESS_BEGIN
-      matmul_base_ = new (std::nothrow) MatmulFp32AVX512CPUKernel(parameter, inputs, outputs, ctx);
-      AVX512_HARDWARE_SELF_AWARENESS_END
-    }
-#endif
-
-#if defined(ENABLE_AVX)
-    if (matmul_base_ == nullptr) {
-      matmul_base_ = new (std::nothrow) MatmulFp32AVXCPUKernel(parameter, inputs, outputs, ctx);
-    }
-#endif
-
-#if defined(ENABLE_SSE)
-    if (matmul_base_ == nullptr) {
-      matmul_base_ = new (std::nothrow) MatmulFp32SSECPUKernel(parameter, inputs, outputs, ctx);
-    }
-#endif
-
-#if defined(ENABLE_ARM64)
-    if (matmul_base_ == nullptr) {
-      matmul_base_ = new (std::nothrow) MatmulFp32ARM64CPUKernel(parameter, inputs, outputs, ctx);
-    }
-#elif defined(ENABLE_ARM32)
-    if (matmul_base_ == nullptr) {
-      matmul_base_ = new (std::nothrow) MatmulFp32ARM32CPUKernel(parameter, inputs, outputs, ctx);
-    }
-#endif
-
-    if (matmul_base_ == nullptr) {
-      matmul_base_ = new (std::nothrow) MatmulFp32BaseCPUKernel(parameter, inputs, outputs, ctx);
-    }
+    matmul_base_ = CreateMatmulFp32CPUKernel(parameter, inputs, outputs, ctx);
   }
   ~ConvolutionSW1x1CPUKernel() {
     if (matmul_base_ != nullptr) {

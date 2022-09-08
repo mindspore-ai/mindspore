@@ -19,64 +19,18 @@
 
 #include <vector>
 #include "nnacl/matmul_parameter.h"
-#include "nnacl/intrinsics/ms_simd_cpu_info.h"
-#if defined(ENABLE_AVX512)
-#include "src/litert/kernel/cpu/fp32/matmul_fp32_avx512.h"
-#endif
-
-#if defined(ENABLE_AVX)
-#include "src/litert/kernel/cpu/fp32/matmul_fp32_avx.h"
-#endif
-
-#if defined(ENABLE_SSE)
-#include "src/litert/kernel/cpu/fp32/matmul_fp32_sse.h"
-#endif
-
-#if defined(ENABLE_ARM32)
-#include "src/litert/kernel/cpu/fp32/matmul_fp32_arm32.h"
-#endif
-
-#if defined(ENABLE_ARM64)
-#include "src/litert/kernel/cpu/fp32/matmul_fp32_arm64.h"
-#endif
-
 #include "src/litert/kernel/cpu/fp32/matmul_fp32_base.h"
 
 namespace mindspore::kernel {
+MatmulFp32BaseCPUKernel *CreateMatmulFp32CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                                                   const std::vector<lite::Tensor *> &outputs,
+                                                   const lite::InnerContext *ctx);
 class MatmulCPUKernel : public LiteKernel {
  public:
   explicit MatmulCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                            const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
       : LiteKernel(parameter, inputs, outputs, ctx) {
-#if defined(ENABLE_AVX512)
-    if (matmul_base_ == nullptr) {
-      AVX512_HARDWARE_SELF_AWARENESS_BEGIN
-      matmul_base_ = new (std::nothrow) MatmulFp32AVX512CPUKernel(parameter, inputs, outputs, ctx);
-      AVX512_HARDWARE_SELF_AWARENESS_END
-    }
-#endif
-
-#if defined(ENABLE_AVX)
-    if (matmul_base_ == nullptr) {
-      matmul_base_ = new (std::nothrow) MatmulFp32AVXCPUKernel(parameter, inputs, outputs, ctx);
-    }
-#endif
-
-#if defined(ENABLE_SSE)
-    if (matmul_base_ == nullptr) {
-      matmul_base_ = new (std::nothrow) MatmulFp32SSECPUKernel(parameter, inputs, outputs, ctx);
-    }
-#endif
-
-#if defined(ENABLE_ARM64)
-    matmul_base_ = new (std::nothrow) MatmulFp32ARM64CPUKernel(parameter, inputs, outputs, ctx);
-#elif defined(ENABLE_ARM32)
-    matmul_base_ = new (std::nothrow) MatmulFp32ARM32CPUKernel(parameter, inputs, outputs, ctx);
-#endif
-
-    if (matmul_base_ == nullptr) {
-      matmul_base_ = new (std::nothrow) MatmulFp32BaseCPUKernel(parameter, inputs, outputs, ctx);
-    }
+    matmul_base_ = CreateMatmulFp32CPUKernel(parameter, inputs, outputs, ctx);
   }
   ~MatmulCPUKernel() {
     if (matmul_base_ != nullptr) {
