@@ -16,18 +16,17 @@
 
 #include "src/litert/delegate/npu/op/strided_slice_npu.h"
 #include "src/litert/delegate/npu/npu_converter_utils.h"
+#include "src/litert/delegate/delegate_utils.h"
 
 namespace mindspore::lite {
 int StridedSliceNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                                  const std::vector<mindspore::MSTensor> &out_tensors) {
   // Only onnx StridedSlice has 5 in_tensors, of which the 4th input is axes and the 5th input is strides.
   if (in_tensors.size() == ONNX_INPUT_SIZE) {
-    vector<int> axes;
     size_t size = in_tensors[STRIDE_INDEX].Shape()[0];
-    axes.resize(size);
     MS_ASSERT(in_tensors[STRIDE_INDEX].Data());
-    memcpy(axes.data(), in_tensors[STRIDE_INDEX].Data().get(), sizeof(int) * size);
-    for (int i = 0; i < axes.size(); ++i) {
+    auto axes = reinterpret_cast<const int *>(in_tensors[STRIDE_INDEX].Data().get());
+    for (int i = 0; i < size; ++i) {
       if (i != axes[i]) {
         MS_LOG(WARNING) << "Does not support setting axis, so the axis must be continuous.";
         return RET_NOT_SUPPORT;
@@ -124,23 +123,23 @@ int StridedSliceNPUOp::HandleAxisAndConstantInputs(std::vector<mindspore::MSTens
   auto begin_tensor = inputs_.at(BEGIN_INDEX);
   int *begin = reinterpret_cast<int *>(begin_tensor.MutableData());
   MS_ASSERT(begin);
-  AssistDataNHWC2NCHW(begin, 1);
+  AssistDataNHWC2NCHW<int>(begin, 1);
   auto end_tensor = inputs_.at(END_INDEX);
   int *end = reinterpret_cast<int *>(end_tensor.MutableData());
   MS_ASSERT(end);
-  AssistDataNHWC2NCHW(end, 1);
+  AssistDataNHWC2NCHW<int>(end, 1);
   auto stride_tensor = inputs_.at(STRIDE_INDEX);
   if (inputs_.size() == ONNX_INPUT_SIZE) {
     stride_tensor = inputs_.at(ONNX_STRIDE_INDEX);
   }
   int *stride = reinterpret_cast<int *>(stride_tensor.MutableData());
   MS_ASSERT(stride);
-  AssistDataNHWC2NCHW(stride, 1);
-  begins_mask_ = MaskDataNHWC2NCHW(begins_mask_);
-  ends_mask_ = MaskDataNHWC2NCHW(ends_mask_);
-  ellipsis_mask_ = MaskDataNHWC2NCHW(ellipsis_mask_);
-  shrink_axis_mask_ = MaskDataNHWC2NCHW(shrink_axis_mask_);
-  new_axis_mask_ = MaskDataNHWC2NCHW(new_axis_mask_);
+  AssistDataNHWC2NCHW<int>(stride, 1);
+  begins_mask_ = MaskDataNHWC2NCHWBinary(begins_mask_);
+  ends_mask_ = MaskDataNHWC2NCHWBinary(ends_mask_);
+  ellipsis_mask_ = MaskDataNHWC2NCHWBinary(ellipsis_mask_);
+  shrink_axis_mask_ = MaskDataNHWC2NCHWBinary(shrink_axis_mask_);
+  new_axis_mask_ = MaskDataNHWC2NCHWBinary(new_axis_mask_);
   return RET_OK;
 }
 

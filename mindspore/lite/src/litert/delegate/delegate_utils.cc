@@ -55,6 +55,29 @@ void PackNCHWToNHWCFp32(const void *src, void *dst, int batch, int plane, int ch
   return PackNHWCToNCHWFp32(src, dst, batch, channel, plane);
 }
 
+int MaskDataNHWC2NCHWBinary(int mask) {
+  int mask_vec[COMM_SHAPE_SIZE];
+  for (int i = 0; i < COMM_SHAPE_SIZE; ++i) {
+    mask_vec[i] = (uint32_t)(mask) & (1 << i);
+  }
+  AssistDataNHWC2NCHW<int>(mask_vec, 1);
+  int ret = 0;
+  for (int i = 0; i < COMM_SHAPE_SIZE; ++i) {
+    if (mask_vec[i]) {
+      ret += 1 << i;
+    }
+  }
+  return ret;
+}
+
+void BinaryMaskData2Bool(int src_mask, bool *dst_mask, size_t mask_size) {
+  MS_ASSERT(dst_mask != nullptr);
+  for (size_t i = 0; i < mask_size; ++i) {
+    int mask_raw = (uint32_t)(src_mask) & (1 << i);
+    dst_mask[i] = static_cast<bool>(mask_raw);
+  }
+}
+
 bool IsSubGraphInputTensor(const std::vector<mindspore::MSTensor> &inputs, mindspore::MSTensor input) {
   return std::find(inputs.begin(), inputs.end(), input) != inputs.end();
 }

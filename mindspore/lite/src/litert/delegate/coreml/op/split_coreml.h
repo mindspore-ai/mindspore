@@ -13,26 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_COREML_OP_ACTIVATION_COREML_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_COREML_OP_ACTIVATION_COREML_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_COREML_OP_SPLIT_COREML_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_COREML_OP_SPLIT_COREML_H_
 
 #include <vector>
 #include <string>
 #include "src/litert/delegate/coreml/op/coreml_op.h"
 namespace mindspore::lite {
-class ActivationCoreMLOp : public CoreMLOp {
+class SplitCoreMLOp : public CoreMLOp {
  public:
-  ActivationCoreMLOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                     const std::vector<mindspore::MSTensor> &out_tensors, std::string name)
+  SplitCoreMLOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                const std::vector<mindspore::MSTensor> &out_tensors, std::string name)
       : CoreMLOp(primitive, in_tensors, out_tensors, name) {}
 
-  int IsSupport() override;
+  int InitParams() override;
 
   int BuildLayer() override;
 
+  int HandleAxis() override;
+
  private:
-  const schema::Activation *act_prim_ = nullptr;
-  schema::ActivationType act_type_ = schema::ActivationType_NO_ACTIVATION;
+  const schema::Split *split_prim_;
+  int axis_;
+  int split_num_;
+  std::vector<int> split_sizes_{};
 };
 }  // namespace mindspore::lite
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_COREML_OP_ACTIVATION_COREML_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_COREML_OP_SPLIT_COREML_H_

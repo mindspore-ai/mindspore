@@ -37,22 +37,9 @@ class ArithmeticCoreMLOp : public CoreMLOp {
  protected:
   void SetMLOpInOut() override;
 
-  template <typename T>
-  void SetNormalConst(T *arithmetic_param) {
-    const void *org_data = nullptr;
-    if (in_tensors_[0].IsConst()) {
-      org_data = in_tensors_[0].Data().get();
-    } else if (in_tensors_[1].IsConst()) {
-      org_data = in_tensors_[1].Data().get();
-    }
-    if (org_data != nullptr) {
-      auto const_data = reinterpret_cast<const float *>(org_data);
-      arithmetic_param->set_alpha(const_data[0]);
-    }
-  }
-
  protected:
   bool use_normal_ = false;
+  float const_value_ = 0;
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_COREML_OP_ARITHMETIC_COREML_H_

@@ -5,7 +5,7 @@ include_directories(${CMAKE_BINARY_DIR}/proto)
 
 file(GLOB_RECURSE COREML_RUNTIME_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/*.mm
-        ${CMAKE_CURRENT_SOURCE_DIR}/*.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/coreml_graph.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/op/*.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/pass/*.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../delegate_utils.cc

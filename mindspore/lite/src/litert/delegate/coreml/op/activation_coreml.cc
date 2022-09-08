@@ -17,12 +17,12 @@
 #include "src/litert/delegate/coreml/op/activation_coreml.h"
 namespace mindspore::lite {
 int ActivationCoreMLOp::IsSupport() {
-  auto act_prim = op_primitive_->value_as_Activation();
-  if (act_prim == nullptr) {
+  act_prim_ = op_primitive_->value_as_Activation();
+  if (act_prim_ == nullptr) {
     MS_LOG(ERROR) << "Get null primitive value for op ." << name_;
     return RET_ERROR;
   }
-  act_type_ = act_prim->activation_type();
+  act_type_ = act_prim_->activation_type();
   if (act_type_ != schema::ActivationType_RELU && act_type_ != schema::ActivationType_RELU6 &&
       act_type_ != schema::ActivationType_SIGMOID && act_type_ != schema::ActivationType_TANH &&
       act_type_ != schema::ActivationType_HSIGMOID && act_type_ != schema::ActivationType_LEAKY_RELU &&
@@ -50,6 +50,9 @@ int ActivationCoreMLOp::BuildLayer() {
       break;
     case schema::ActivationType_SIGMOID:
       op_->mutable_activation()->mutable_sigmoid();
+      break;
+    case schema::ActivationType_LEAKY_RELU:
+      op_->mutable_activation()->mutable_leakyrelu()->set_alpha(act_prim_->alpha());
       break;
     default:
       MS_LOG(ERROR) << "Unsupported activation type.";

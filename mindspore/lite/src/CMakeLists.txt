@@ -44,11 +44,15 @@ if(APPLE OR PLATFORM_ARM32 OR PLATFORM_ARM64)
     endif()
     if("${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND APPLE)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fstrict-aliasing -ffunction-sections \
-        -fdata-sections -ffast-math -fno-rtti -fno-exceptions -Wno-shorten-64-to-32 \
+        -fdata-sections -ffast-math -fno-rtti -Wno-shorten-64-to-32 \
         -fno-aligned-allocation -DTARGET_OS_OSX")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fstrict-aliasing -ffunction-sections \
-        -fdata-sections -ffast-math -fno-rtti -fno-exceptions -Wno-shorten-64-to-32 \
+        -fdata-sections -ffast-math -fno-rtti -Wno-shorten-64-to-32 \
         -fno-aligned-allocation -DTARGET_OS_OSX")
+        if(NOT MSLITE_ENABLE_COREML)
+            set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-exceptions")
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-exceptions")
+        endif()
     endif()
 elseif(NOT MSVC)
     if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
@@ -423,18 +427,12 @@ if(APPLE)
                 ${MINDSPORE_LITE_PUB_HDRS_IR_HDRS}
                 )
     else()
-        file(GLOB MINDSPORE_LITE_PUB_HDRS_SCHEMA_HDRS
-                ${CMAKE_BINARY_DIR}/schema/model_generated.h
-                ${CMAKE_BINARY_DIR}/schema/ops_generated.h
-                ${CMAKE_BINARY_DIR}/schema/ops_types_generated.h
-                )
         file(GLOB_RECURSE MINDSPORE_LITE_PUB_HDRS_FBS_HDRS LIST_DIRECTORIES true ${flatbuffers_INC}/flatbuffers/*)
         add_library(mindspore-lite_static STATIC
                 ${LITE_SRC}
                 ${MINDSPORE_LITE_PUB_HDRS}
                 ${MINDSPORE_LITE_PUB_HDRS_MINDAPI_HDRS}
                 ${MINDSPORE_LITE_PUB_HDRS_IR_HDRS}
-                ${MINDSPORE_LITE_PUB_HDRS_SCHEMA_HDRS}
                 ${MINDSPORE_LITE_PUB_HDRS_FBS_HDRS}
                 )
         add_subdirectory(litert/delegate/coreml)
@@ -622,9 +620,6 @@ if(DEFINED ARCHS)
         SET_SOURCE_FILES_PROPERTIES(${HDR} PROPERTIES MACOSX_PACKAGE_LOCATION Headers/include/mindapi/base/)
     ENDFOREACH()
     if(MSLITE_ENABLE_COREML)
-        FOREACH(HDR ${MINDSPORE_LITE_PUB_HDRS_SCHEMA_HDRS})
-            SET_SOURCE_FILES_PROPERTIES(${HDR} PROPERTIES MACOSX_PACKAGE_LOCATION Headers/include/schema/)
-        ENDFOREACH()
         FOREACH(HDR ${MINDSPORE_LITE_PUB_HDRS_FBS_HDRS})
             SET_SOURCE_FILES_PROPERTIES(
                     ${HDR} PROPERTIES MACOSX_PACKAGE_LOCATION Headers/include/third_party/flatbuffers/)
