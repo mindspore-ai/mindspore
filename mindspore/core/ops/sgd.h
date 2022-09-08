@@ -30,7 +30,9 @@ class MIND_API SGD : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SGD);
   /// \brief Constructor.
-  SGD() : BaseOperator(kNameSGD) {}
+  SGD() : BaseOperator(kNameSGD) {
+    InitIOName({"parameters", "gradient", "learning_rate", "accum", "momentum", "stat"}, {"output"});
+  }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.SGD for the inputs.
   void Init(const float dampening = 0.0, const float weight_decay = 0.0, const bool nesterov = false);
   /// \brief Set dampening.

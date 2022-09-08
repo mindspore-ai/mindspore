@@ -19,32 +19,36 @@
 
 #include <vector>
 #include <utility>
+#include <map>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-class SGDCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class SGDCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<SGDCpuKernelMod> {
  public:
   SGDCpuKernelMod() = default;
   ~SGDCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
-
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
-    return kernel_func_(this, inputs, outputs);
+    return kernel_func_(this, inputs, workspace, outputs);
   }
 
-  std::vector<KernelAttr> GetOpSupport() override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+
+  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
+
+  std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
-  using SGDFunc = std::function<bool(SGDCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                     const std::vector<kernel::AddressPtr> &)>;
-  static std::vector<std::pair<KernelAttr, SGDFunc>> func_list_;
-  SGDFunc kernel_func_;
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
+                    const std::vector<kernel::AddressPtr> &outputs);
 
   float dampening_{0.0};
   float weight_decay_{0.0};
