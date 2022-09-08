@@ -28,7 +28,8 @@ namespace {
 abstract::ShapePtr PSROIPoolingInferShape(const PrimitivePtr &primitive,
                                           const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-
+  const int x_shape_size = 4;
+  const int rois_shape_size = 3;
   auto prim_name = primitive->name();
   (void)CheckAndConvertUtils::CheckInteger("input numbers", int64_t(input_args.size()), kGreaterEqual, 2, prim_name);
   for (const auto &item : input_args) {
@@ -36,9 +37,9 @@ abstract::ShapePtr PSROIPoolingInferShape(const PrimitivePtr &primitive,
   }
 
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  if (x_shape.size() != 4) {
-    MS_LOG(EXCEPTION) << "For '" << primitive->name()
-                      << "', input x shape must be 4d(NCHW), but got: " << x_shape.size();
+  if (x_shape.size() != x_shape_size) {
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+                             << "', input x shape must be 4d(NCHW), but got: " << x_shape.size();
   }
 
   auto group_size_ptr = primitive->GetAttr("group_size");
@@ -47,25 +48,18 @@ abstract::ShapePtr PSROIPoolingInferShape(const PrimitivePtr &primitive,
 
   // The value of group_size must be less than 128
   if (group_size <= 0 || group_size >= 128) {
-    MS_LOG(EXCEPTION) << "For '" << primitive->name()
-                      << "', 'group_size' should be in the range (0, 128), but got: " << group_size;
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+                             << "', 'group_size' should be in the range (0, 128), but got: " << group_size;
   }
 
   auto output_dim_ptr = primitive->GetAttr("output_dim");
   MS_EXCEPTION_IF_NULL(output_dim_ptr);
   auto output_dim = GetValue<int64_t>(output_dim_ptr);
 
-  // the first dimension of the input data should be equal group_size * group_size * output_dim
-  if (x_shape[1] / (group_size * group_size) != output_dim) {
-    MS_LOG(EXCEPTION) << "For '" << primitive->name() << "', the second dimension(" << x_shape[1]
-                      << ") of the input x is illegal, it is not equal to group_size(" << group_size
-                      << ") * group_size(" << group_size << ") * output_dim(" << output_dim << ").";
-  }
-
   auto rois_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
-  if (rois_shape.size() < 3) {
-    MS_LOG(EXCEPTION) << "For '" << primitive->name()
-                      << "', the dimension of 'rois' should be equal 3, but got: " << rois_shape.size();
+  if (rois_shape.size() != rois_shape_size) {
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+                             << "', the dimension of 'rois' should be 3 , but got: " << rois_shape.size();
   }
 
   std::vector<int64_t> ret_shape({rois_shape[0] * rois_shape[2], output_dim, group_size, group_size});
@@ -74,6 +68,19 @@ abstract::ShapePtr PSROIPoolingInferShape(const PrimitivePtr &primitive,
 }
 
 TypePtr PSROIPoolingInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->BuildType(), {kFloat64, kFloat32, kFloat16},
+                                                   prim->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("rois", input_args[1]->BuildType(), {kFloat64, kFloat32, kFloat16},
+                                                   prim->name());
+
+  auto input_type = input_args[0]->BuildType();
+  auto rois_type = input_args[1]->BuildType();
+  if (input_type->ToString() != rois_type->ToString()) {
+    MS_EXCEPTION(TypeError) << "For '" << prim->name()
+                            << "', input[features] is expected to have the same type with input[rois], but got type ("
+                            << input_type << ", " << rois_type << ").";
+  }
+
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
