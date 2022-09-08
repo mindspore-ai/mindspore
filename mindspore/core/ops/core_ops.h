@@ -383,6 +383,7 @@ constexpr auto kEnvironAdd = "EnvironAdd";
 constexpr auto kPopulationCount = "PopulationCount";
 constexpr auto kEnvironDestroyAll = "EnvironDestroyAll";
 constexpr auto kSetSize = "SetSize";
+constexpr auto kStandardLaplace = "StandardLaplace";
 
 GVAR_DEF(PrimitivePtr, kPrimExtractGlimpse, std::make_shared<Primitive>(kExtractGlimpse));
 //

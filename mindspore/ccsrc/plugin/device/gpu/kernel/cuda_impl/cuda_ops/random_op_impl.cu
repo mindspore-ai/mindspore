@@ -77,6 +77,18 @@ __global__ void RandomPoissonKernel(int seed, curandState *globalState, R *rate,
 }
 
 template <typename T>
+__global__ void StandardLaplaceKernel(int seed, curandState *globalState, T *output, size_t count, T min_num) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    curand_init(seed, i, 0, &globalState[i]);
+    T temp = (T)(curand_uniform(&globalState[i]) * 2 - 1);
+    T temp2 = temp < 0 ? temp + min_num : temp - min_num;
+    T sign = std::copysignf(1.0, temp2);
+    output[i] = -sign * std::log(1.0 - std::abs(temp2));
+  }
+  return;
+}
+
+template <typename T>
 void StandardNormal(int seed, int seed2, curandState *globalState, T *output, size_t count, cudaStream_t cuda_stream) {
   int RNG_seed = 0;
   std::random_device rd;
@@ -158,6 +170,23 @@ void RandomPoisson(int seed, int seed2, curandState *globalState, R *rate, int64
   return;
 }
 
+template <typename T>
+void StandardLaplace(int seed, int seed2, curandState *globalState, T *output, size_t count, cudaStream_t cuda_stream) {
+  int RNG_seed = 0;
+  std::random_device rd;
+  if (seed2 != 0) {
+    RNG_seed = seed2;
+  } else if (seed != 0) {
+    RNG_seed = seed;
+  } else {
+    RNG_seed = static_cast<int>(rd());
+  }
+  T min_num = std::nextafter(0, 1);
+  StandardLaplaceKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(RNG_seed, globalState, output, count,
+                                                                            min_num);
+  return;
+}
+
 template CUDA_LIB_EXPORT void StandardNormal<float>(int seed, int seed2, curandState *globalState,
                                                     float *output, size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void StandardNormal<int>(int seed, int seed2, curandState *globalState,
@@ -183,6 +212,9 @@ template CUDA_LIB_EXPORT void TruncatedNormal<double>(int seed, int seed2,  cura
                                                                       rate_type *rate, int64_t rate_size, \
                                                                       output_type *output, size_t count, \
                                                                       cudaStream_t cuda_stream);
+
+template CUDA_LIB_EXPORT void StandardLaplace<float>(int seed, int seed2, curandState *globalState,
+                                                    float *output, size_t count, cudaStream_t cuda_stream);
 
 ADD_RANDOM_POISSON(half, half)
 ADD_RANDOM_POISSON(half, float)

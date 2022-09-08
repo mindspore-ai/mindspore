@@ -17,6 +17,7 @@
 #include <string>
 #include <memory>
 #include <set>
+#include <condition_variable>
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "mindapi/src/helper.h"
@@ -61,7 +62,9 @@ abstract::ShapePtr StandardLaplaceInferShape(const PrimitivePtr &primitive,
     } else {
       constexpr int dynamic_rank_value = -2;
       ShapeVector shape = {dynamic_rank_value};
-      return std::make_shared<abstract::Shape>(shape);
+      ShapeVector min_shape = {0};
+      ShapeVector max_shape = {abstract::Shape::SHP_ANY};
+      return std::make_shared<abstract::Shape>(shape, min_shape, max_shape);
     }
   } else {
     MS_EXCEPTION(TypeError) << "For '" << prim_name

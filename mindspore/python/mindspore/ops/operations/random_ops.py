@@ -172,7 +172,7 @@ class StandardNormal(PrimitiveWithInfer):
         return out
 
 
-class StandardLaplace(PrimitiveWithInfer):
+class StandardLaplace(Primitive):
     r"""
     Generates random numbers according to the Laplace random number distribution (mean=0, lambda=1).
     It is defined as:
@@ -198,7 +198,7 @@ class StandardLaplace(PrimitiveWithInfer):
         ValueError: If shape is a tuple containing non-positive items.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> shape = (4, 16)
