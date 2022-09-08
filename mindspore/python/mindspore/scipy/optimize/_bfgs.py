@@ -64,11 +64,12 @@ class _BFGSResults(NamedTuple):
 class MinimizeBfgs(nn.Cell):
     """minimize bfgs"""
 
-    def __init__(self, func):
+    def __init__(self, func, jac):
         """Initialize MinimizeBfgs."""
         super(MinimizeBfgs, self).__init__()
         self.func = func
-        self.line_search = LineSearch(func)
+        self.jac = jac
+        self.line_search = LineSearch(func, jac)
 
     def construct(self, x0, maxiter=None, norm=mnp.inf, gtol=1e-5, line_search_maxiter=10):
         # Constant tensors which avoid loop unrolling
@@ -82,7 +83,7 @@ class MinimizeBfgs(nn.Cell):
         d = x0.shape[0]
         identity = mnp.eye(d, dtype=x0.dtype)
         f_0 = self.func(x0)
-        g_0 = grad(self.func)(x0)
+        g_0 = self.jac(x0)
 
         state = {
             "converged": _norm(g_0, ord_=mnp.inf) < gtol,
@@ -162,7 +163,7 @@ class MinimizeBfgs(nn.Cell):
         return state
 
 
-def minimize_bfgs(func, x0, maxiter=None, norm=mnp.inf, gtol=1e-5, line_search_maxiter=10):
+def minimize_bfgs(func, x0, jac=None, maxiter=None, norm=mnp.inf, gtol=1e-5, line_search_maxiter=10):
     """Minimize a function using BFGS.
 
     Implements the BFGS algorithm from
@@ -173,6 +174,11 @@ def minimize_bfgs(func, x0, maxiter=None, norm=mnp.inf, gtol=1e-5, line_search_m
         fun (Callable): function of the form f(x) where x is a flat Tensor and returns a real
             scalar. The function should be composed of operations with vjp defined.
         x0 (Tensor): initial guess.
+        jac (Callable, optional): method for computing the gradient vector.
+        if it is None, the gradient will be estimated with gradient of ``func``.
+        if it is a callable, it should be a function that returns the gradient vector:
+          jac(x, *args) -> array_like, shape (n,)
+          where x is an array with shape (n,) and args is a tuple with the fixed parameters.
         maxiter (int, optional): maximum number of iterations.
         norm (float): order of norm for convergence check. Default inf.
         gtol (float): terminates minimization when |grad|_norm < g_tol.
@@ -184,10 +190,13 @@ def minimize_bfgs(func, x0, maxiter=None, norm=mnp.inf, gtol=1e-5, line_search_m
     Supported Platforms:
         ``CPU`` ``GPU``
     """
+    if jac is None:
+        jac = grad(func)
+
     if maxiter is None:
         maxiter = mnp.size(x0) * 200
 
-    state = MinimizeBfgs(func)(x0, maxiter, norm, gtol)
+    state = MinimizeBfgs(func, jac)(x0, maxiter, norm, gtol, line_search_maxiter)
     # If running in graph mode, the state is a tuple.
     if isinstance(state, tuple):
         state = _BFGSResults(converged=_to_scalar(state[0]),
