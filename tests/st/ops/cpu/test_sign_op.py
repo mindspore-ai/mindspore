@@ -78,8 +78,3 @@ def test_sign_float64():
 
     print(outputs)
     assert np.allclose(outputs.asnumpy(), [[1., 0., -1.]])
-
-
-if __name__ == '__main__':
-    test_sign_float32()
-    test_sign_int32()

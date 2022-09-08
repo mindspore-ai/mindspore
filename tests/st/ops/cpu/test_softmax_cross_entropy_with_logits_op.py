@@ -48,5 +48,3 @@ def test_softmax_cross_entropy_with_logits():
     error0 = 1.0e-6
     diff0 = output.asnumpy() - expect_loss
     assert np.all(abs(diff0) < error0)
-
-test_softmax_cross_entropy_with_logits()

@@ -168,12 +168,3 @@ def test_strided_slice_grad_float32_type():
     output = slice_op(dy)
     expected_output = np.array([[[0, 0, 0], [0, 0, 0]], [[3, 3, 3], [0, 0, 0]], [[0, 0, 0], [0, 0, 0]]])
     assert (output.asnumpy() == expected_output).all()
-
-
-if __name__ == '__main__':
-    test_slice_grad()
-    test_slice_grad2()
-    test_slice_grad3()
-    test_slice_grad_8d()
-    test_strided_slice_grad_bool_type()
-    test_strided_slice_grad_float32_type()

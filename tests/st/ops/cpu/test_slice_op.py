@@ -252,15 +252,3 @@ def test_slice_vmap():
     Expectation: success
     """
     vmap_1_batch()
-
-
-if __name__ == '__main__':
-    test_slice()
-    test_slice2()
-    test_slice3()
-    test_slice4()
-    test_slice5()
-    test_slice6()
-    test_strided_slice_bool_type()
-    test_slice_functional()
-    test_slice_vmap()

@@ -145,9 +145,6 @@ def test_transpose():
     assert (output[3].asnumpy() == expect3).all()
 
 
-test_transpose()
-
-
 class Transpose_int64(nn.Cell):
     def __init__(self):
         super(Transpose_int64, self).__init__()
@@ -387,6 +384,3 @@ def test_transpose_uint8():
     assert (output[1].asnumpy() == expect1).all()
     assert (output[2].asnumpy() == expect2).all()
     assert (output[3].asnumpy() == expect3).all()
-
-
-test_transpose_uint8()
