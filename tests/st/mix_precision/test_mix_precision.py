@@ -179,3 +179,48 @@ def test_sit_auto_mix_precision_model_o2():
     model_pynative.train(1, dataset2, dataset_sink_mode=False)
     out_pynative = model_pynative.predict(Tensor(input_data))
     allclose_nparray(out_graph.asnumpy(), out_pynative.asnumpy(), 0.001, 0.001)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@security_off_wrap
+def test_sit_auto_mix_precision_model_o1():
+    """
+    Feature: Test the O1 level auto mixed precision
+    Description: input O1 level to Model interface
+    Expectation: success.
+    """
+    input_data = np.random.randn(32, 3, 224, 224).astype(np.float32)
+    dataset1 = FakeData(size=32,
+                        batch_size=32,
+                        image_size=(3, 224, 224),
+                        num_classes=10,
+                        fakedata_mode=FakeDataInitMode.OnesInit)
+    dataset2 = FakeData(size=32,
+                        batch_size=32,
+                        image_size=(3, 224, 224),
+                        num_classes=10,
+                        fakedata_mode=FakeDataInitMode.OnesInit)
+    # graph mode
+    context.set_context(mode=context.GRAPH_MODE)
+    context.set_context(save_graphs=True, save_graphs_path='./test_amp_o1')
+    net = Net(3, 10)
+    opt = nn.Momentum(params=net.trainable_params(), learning_rate=0.001, momentum=0.0009)
+    loss = nn.SoftmaxCrossEntropyWithLogits(sparse=False)
+    model = Model(net, loss, opt, amp_level="O1")
+    model.train(1, dataset1, dataset_sink_mode=False)
+    clean_all_ir_files('./test_amp_o1/')
+    out_graph = model.predict(Tensor(input_data))
+
+    # pynative mode
+    context.set_context(mode=context.PYNATIVE_MODE)
+    net_pynative = Net(3, 10)
+    opt_pynative = nn.Momentum(params=net_pynative.trainable_params(), learning_rate=0.001, momentum=0.0009)
+    loss_pynative = nn.SoftmaxCrossEntropyWithLogits(sparse=False)
+    model_pynative = Model(net_pynative, loss_pynative, opt_pynative, amp_level="O1")
+    model_pynative.train(1, dataset2, dataset_sink_mode=False)
+    out_pynative = model_pynative.predict(Tensor(input_data))
+    allclose_nparray(out_graph.asnumpy(), out_pynative.asnumpy(), 0.001, 0.001)
