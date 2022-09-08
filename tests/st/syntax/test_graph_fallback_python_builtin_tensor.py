@@ -43,11 +43,7 @@ def test_fallback_abs_tensor():
     assert np.all(net(Tensor([-1, 2])).asnumpy() == np.array([2, 4]))
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@pytest.mark.skip(reason='Not support yet')
 def test_fallback_all_tensor():
     """
     Feature: JIT Fallback
@@ -66,34 +62,26 @@ def test_fallback_all_tensor():
     assert (not out1) and out2
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_fallback_all_tensor_constant():
+@pytest.mark.skip(reason='Not support yet')
+def test_fallback_all_list_hybrid():
     """
     Feature: JIT Fallback
-    Description: Test all(Tensor) with a constant tensor in graph mode
+    Description: Test all(List) in graph mode
     Expectation: No exception
     """
 
-    class Net(nn.Cell):
-        def construct(self):
-            x = Tensor(np.array([0, 1, 2, 3]))
-            y = Tensor(np.array([1, 1]))
-            return all(x), all(y)
+    @ms_function
+    def foo(a, b):
+        x = [a, np.array([1]), Tensor(1)]
+        y = [a, np.array([0]), Tensor(1)]
+        z = [b, np.array([1]), Tensor(1)]
+        return all(x), all(y), all(z)
 
-    net = Net()
-    out1, out2 = net()
-    assert (not out1) and out2
+    x, y, z = foo(Tensor([1]), Tensor([0]))
+    assert x and (not y) and (not z)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@pytest.mark.skip(reason='Not support yet')
 def test_fallback_any_tensor():
     """
     Feature: JIT Fallback
@@ -112,27 +100,23 @@ def test_fallback_any_tensor():
     assert (not out1) and out2
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_fallback_any_tensor_constant():
+@pytest.mark.skip(reason='Not support yet')
+def test_fallback_any_list_hybrid():
     """
     Feature: JIT Fallback
-    Description: Test any(Tensor) with a constant tensor in graph mode
+    Description: Test any(List) in graph mode
     Expectation: No exception
     """
 
-    class Net(nn.Cell):
-        def construct(self):
-            x = Tensor(np.array([0, 0]))
-            y = Tensor(np.array([1, 0]))
-            return any(x), any(y)
+    @ms_function
+    def foo(a, b):
+        x = [a, np.array([1]), Tensor(1)]
+        y = [a, np.array([0]), Tensor(1)]
+        z = [b, np.array([1]), Tensor(1)]
+        return any(x), any(y), any(z)
 
-    net = Net()
-    out1, out2 = net()
-    assert (not out1) and out2
+    x, y, z = foo(Tensor([1]), Tensor([0]))
+    assert x and y and z
 
 
 @pytest.mark.level0

@@ -132,8 +132,6 @@ convert_object_map = {
 
     # system function
     T.abs:          M.ms_abs,
-    T.all:          M.ms_all,
-    T.any:          M.ms_any,
     T.round:        M.ms_round,
     T.len:          M.ms_len,
     T.bool_:        M.bool_,
