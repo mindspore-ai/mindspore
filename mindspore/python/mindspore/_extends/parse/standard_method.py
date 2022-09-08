@@ -20,6 +20,7 @@ from __future__ import absolute_import
 from mindspore import Tensor, CSRTensor, COOTensor, RowTensor, ms_class
 from mindspore import dtype as mstype
 from mindspore._c_expression import Tensor as Tensor_
+from mindspore.ops.function.sparse_func import sparse_add
 
 from ..._checkparam import Validator as validator
 from ...ops import functional as F
@@ -34,7 +35,6 @@ from ...ops.operations.math_ops import Median
 from ...ops.operations._inner_ops import Format
 from ...ops.operations import _csr_ops
 from ...ops.primitive import constexpr
-from ...ops.function.sparse_func import sparse_add
 from ...common import dtype as mstype
 
 __all__ = ['MultitypeFuncGraph', 'env_get', 'hyper_add', 'zeros_like', 'ones_like']

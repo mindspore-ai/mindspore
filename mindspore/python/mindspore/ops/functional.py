@@ -28,6 +28,7 @@ from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
 from mindspore.ops import _constants
 from mindspore.ops.function import *
+from mindspore.ops.function.sparse_func import sparse_add
 from mindspore.ops.primitive import constexpr, Primitive
 from . import operations as P
 from .operations import _grad_ops
@@ -37,7 +38,6 @@ from .operations import linalg_ops
 from .operations.math_ops import Median
 from .operations.array_ops import UniqueConsecutive
 from .operations.nn_ops import AdaptiveMaxPool2D
-from .function.sparse_func import sparse_add
 from .composite import _Vmap, Shard
 
 typeof = Primitive('typeof')
