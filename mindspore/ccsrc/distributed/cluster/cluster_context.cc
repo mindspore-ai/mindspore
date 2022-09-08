@@ -54,12 +54,11 @@ ClusterContext::~ClusterContext() {
 }
 
 std::shared_ptr<ClusterContext> ClusterContext::instance() {
-  static std::shared_ptr<ClusterContext> cluster_instance = nullptr;
-  if (cluster_instance == nullptr) {
-    cluster_instance.reset(new (std::nothrow) ClusterContext());
-    MS_EXCEPTION_IF_NULL(cluster_instance);
+  if (cluster_instance_ == nullptr) {
+    cluster_instance_.reset(new (std::nothrow) ClusterContext());
+    MS_EXCEPTION_IF_NULL(cluster_instance_);
   }
-  return cluster_instance;
+  return cluster_instance_;
 }
 
 bool ClusterContext::Initialize() {
