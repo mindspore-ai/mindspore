@@ -18,6 +18,7 @@
 #include <string>
 #include <complex>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "mindspore/core/ops/one_hot.h"
 
 namespace mindspore {
 namespace kernel {
@@ -61,13 +62,36 @@ constexpr size_t kOneHotOutputsNum = 1;
   }
 }  // namespace
 
-void OneHotCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  input_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  output_dtype_ = AnfAlgo::GetOutputDeviceDataType(kernel_node, 0);
-  auto output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
-  int64_t axis = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
+bool OneHotCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                              const std::vector<KernelTensorPtr> &outputs) {
+  constexpr size_t input_num = 3;
+  constexpr size_t output_num = 1;
+  kernel_name_ = base_operator->GetPrim()->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
+
+  input_dtype_ = inputs[kIndex0]->GetDtype();
+  output_dtype_ = outputs[kIndex0]->GetDtype();
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto is_match = MatchKernelAttr(kernel_attr, GetOpSupport()).first;
+  if (!is_match) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
+  }
+  return true;
+}
+
+int OneHotCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                               const std::vector<KernelTensorPtr> &outputs,
+                               const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+    return ret;
+  }
+
+  auto output_shape = outputs[kIndex0]->GetShapeVector();
+  auto one_hot_ptr = std::dynamic_pointer_cast<ops::OneHot>(base_operator);
+  MS_EXCEPTION_IF_NULL(one_hot_ptr);
+  int64_t axis = one_hot_ptr->get_axis();
   if (axis != -1 && LongToSize(axis) >= output_shape.size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the 'axis' must be -1, or an int which is less than the dimension of output, but got "
@@ -83,6 +107,7 @@ void OneHotCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   for (size_t i = axis_ + 1; i < output_shape.size(); ++i) {
     stride_ *= LongToSize(output_shape[i]);
   }
+  return KRET_OK;
 }
 
 bool OneHotCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
@@ -94,8 +119,9 @@ bool OneHotCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, c
     INPUT_COMPUTE_CASE(kNumberTypeInt32, int32_t, output_dtype_, inputs, outputs);
     INPUT_COMPUTE_CASE(kNumberTypeInt64, int64_t, output_dtype_, inputs, outputs);
     default:
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of input 'x' "
-                        << TypeIdToType(input_dtype_)->ToString() << " not support.";
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dtype of input 'x' " << TypeIdToType(input_dtype_)->ToString()
+                    << " not support.";
+      return false;
   }
   return true;
 }

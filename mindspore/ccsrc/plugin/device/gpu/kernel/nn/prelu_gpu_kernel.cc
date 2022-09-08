@@ -43,8 +43,6 @@ int PReLUGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
   }
   auto input_shape = LongVecToSizeVec(inputs[kIndex0]->GetShapeVector());
   auto weight_shape = LongVecToSizeVec(inputs[kIndex1]->GetShapeVector());
-  is_null_input_ =
-    CHECK_SHAPE_NULL(input_shape, kernel_name_, "x") || CHECK_SHAPE_NULL(weight_shape, kernel_name_, "weight");
   input_length_ = std::accumulate(input_shape.begin(), input_shape.end(), size_t(1), std::multiplies<>());
   per_channel_length_ =
     input_shape.size() <= 1 ? input_length_ : input_length_ / (input_shape[kIndex0] * input_shape[kIndex1]);
@@ -55,9 +53,6 @@ int PReLUGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
 template <typename T>
 bool PReLUGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                      const std::vector<AddressPtr> &outputs, void *stream_ptr) {
-  if (is_null_input_) {
-    return true;
-  }
   auto input = GetDeviceAddress<T>(inputs, 0);
   auto weight = GetDeviceAddress<T>(inputs, 1);
   auto output = GetDeviceAddress<T>(outputs, 0);
