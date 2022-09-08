@@ -1267,7 +1267,7 @@ class RandomCrop(ImageTensorOperation):
             If size is an integer, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, an image of size (height, width) will be cropped.
         padding (Union[int, Sequence[int]], optional): The number of pixels to pad each border of the image.
-            The padding value(s) must be non-nagetive (default=None).
+            The padding value(s) must be non-negative (default=None).
             If padding is not None, pad image first with padding values.
             If a single number is provided, pad all borders with this value.
             If a tuple or lists of 2 values are provided, pad the (left and top)
@@ -1338,7 +1338,7 @@ class RandomCrop(ImageTensorOperation):
         self.padding = padding
         self.pad_if_needed = pad_if_needed
         self.fill_value = fill_value
-        self.padding_mode = padding_mode.value
+        self.padding_mode = padding_mode
 
     def parse(self):
         border_type = DE_C_BORDER_TYPE.get(self.padding_mode)
@@ -1437,7 +1437,7 @@ class RandomCropWithBBox(ImageTensorOperation):
             If size is an integer, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, an image of size (height, width) will be cropped.
         padding (Union[int, Sequence[int]], optional): The number of pixels to pad the image
-            The padding value(s) must be non-nagetive (default=None).
+            The padding value(s) must be non-negative (default=None).
             If padding is not None, first pad image with padding values.
             If a single number is provided, pad all borders with this value.
             If a tuple or lists of 2 values are provided, pad the (left and top)
@@ -1507,7 +1507,7 @@ class RandomCropWithBBox(ImageTensorOperation):
         self.padding = padding
         self.pad_if_needed = pad_if_needed
         self.fill_value = fill_value
-        self.padding_mode = padding_mode.value
+        self.padding_mode = padding_mode
 
     def parse(self):
         border_type = DE_C_BORDER_TYPE.get(self.padding_mode)

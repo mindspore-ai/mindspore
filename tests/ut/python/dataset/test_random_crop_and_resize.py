@@ -515,7 +515,7 @@ def test_random_crop_and_resize_eager_error_02():
         random_crop_and_resize_op = vision.RandomResizedCrop(size=(100, 200), scale=[1.0, 2.0],
                                                              interpolation=Inter.ANTIALIAS)
         _ = random_crop_and_resize_op(img)
-    assert "Current Interpolation is not supported with NumPy input." in str(error_info.value)
+    assert "img should be PIL image. Got <class 'numpy.ndarray'>." in str(error_info.value)
 
 
 if __name__ == "__main__":

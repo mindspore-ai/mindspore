@@ -22,6 +22,7 @@ import pytest
 import mindspore.dataset as ds
 import mindspore.dataset.transforms as transforms
 import mindspore.dataset.vision as vision
+from mindspore.dataset.vision import Border, Inter
 
 MNIST_DATA_DIR = "../data/dataset/testMnistData"
 DATA_DIR = "../data/dataset/testPK/data"
@@ -38,10 +39,23 @@ def data_pipeline_same(file1, file2):
         return pipeline1 == pipeline2
 
 
+def validate_jsonfile(filepath):
+    try:
+        file_exist = os.path.exists(filepath)
+        with open(filepath, 'r') as jfile:
+            loaded_json = json.load(jfile)
+    except IOError:
+        return False
+    return file_exist and isinstance(loaded_json, dict)
+
+
 @pytest.mark.forked
 class TestAutotuneSaveLoad:
-    # Note: Use pytest fixture tmp_path to create files within this temporary directory,
-    # which is automatically created for each test and deleted at the end of the test.
+    """
+    Test AutoTune Save and Load Configuration Support
+    Note: Use pytest fixture tmp_path to create files within this temporary directory,
+          which is automatically created for each test and deleted at the end of the test.
+    """
 
     @staticmethod
     def setup_method():
@@ -53,6 +67,11 @@ class TestAutotuneSaveLoad:
 
     @staticmethod
     def test_autotune_file_overwrite_warn(tmp_path, capfd):
+        """
+        Feature: Autotuning
+        Description: Test overwriting autofile config file produces a warning message
+        Expectation: Pipeline runs successfully and warning message is produced
+        """
         original_autotune = ds.config.get_enable_autotune()
         config_path = tmp_path / f"test_autotune_generator_atfinal_{os.environ['RANK_ID']}.json"
         config_path.touch()
@@ -102,6 +121,7 @@ class TestAutotuneSaveLoad:
 
         file = tmp_path / ("test_autotune_generator_atfinal_" + os.environ['RANK_ID'] + ".json")
         assert file.exists()
+        validate_jsonfile(file)
 
     @staticmethod
     def test_autotune_save_overwrite_generator(tmp_path):
@@ -175,6 +195,111 @@ class TestAutotuneSaveLoad:
             num += 1
         assert num == 10
 
+        ds.config.set_seed(original_seed)
+
+    @staticmethod
+    def test_autotune_imagefolder_pipeline_enum_parms(tmp_path):
+        """
+        Feature: Autotuning
+        Description: Test save final config with ImageFolder pipeline
+            that contains op with enumerated types (e.g. Border, Inter).
+        Expectation: Pipeline runs successfully
+        """
+        original_autotune = ds.config.get_enable_autotune()
+        ds.config.set_enable_autotune(True, str(tmp_path / "test_autotune_imagefolder_pipeline_atfinal"))
+        original_seed = ds.config.get_seed()
+        ds.config.set_seed(1)
+
+        data1 = ds.ImageFolderDataset(DATA_DIR, shuffle=False, decode=False, num_samples=5)
+
+        # The following map op uses Python implementation of ops
+        data1 = data1.map(operations=[vision.Decode(True),
+                                      vision.Resize((250, 300), interpolation=Inter.LINEAR),
+                                      vision.RandomRotation((90, 90), expand=True, resample=Inter.BILINEAR,
+                                                            center=(50, 50), fill_value=(0, 1, 2))
+                                      ],
+                          input_columns=["image"])
+
+        ds.serialize(data1, str(tmp_path / "test_autotune_imagefolder_pipeline_serialized.json"))
+
+        for _ in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
+            pass
+
+        ds.config.set_enable_autotune(original_autotune)
+
+        # Confirm final AutoTune config file pipeline is identical to the serialized file pipeline.
+        file1 = tmp_path / ("test_autotune_imagefolder_pipeline_atfinal_" + os.environ['RANK_ID'] + ".json")
+        file2 = tmp_path / "test_autotune_imagefolder_pipeline_serialized.json"
+        assert data_pipeline_same(file1, file2)
+
+        desdata1 = ds.deserialize(json_filepath=str(file1))
+        desdata2 = ds.deserialize(json_filepath=str(file2))
+
+        num = 0
+        for newdata1, newdata2 in zip(desdata1.create_dict_iterator(num_epochs=1, output_numpy=True),
+                                      desdata2.create_dict_iterator(num_epochs=1, output_numpy=True)):
+            np.testing.assert_array_equal(newdata1['image'], newdata2['image'])
+            np.testing.assert_array_equal(newdata1['label'], newdata2['label'])
+            num += 1
+        assert num == 5
+
+        ds.config.set_seed(original_seed)
+
+    @staticmethod
+    def test_autotune_pipeline_pyfunc(tmp_path):
+        """
+        Feature: Autotuning
+        Description: Test Autotune with save final config enabled for pipeline with user-defined Python function.
+        Expectation: Pipeline runs successfully. Autotune save final config not created for pipelines with UDFs.
+        """
+        original_autotune = ds.config.get_enable_autotune()
+        atfinal_filename = str(tmp_path / "test_autotune_pyfunc_pipeline_atfinal")
+        ds.config.set_enable_autotune(True, atfinal_filename)
+        original_seed = ds.config.get_seed()
+        ds.config.set_seed(55)
+
+        data1 = ds.ImageFolderDataset(DATA_DIR, shuffle=False, decode=False, num_samples=5)
+
+        # The following map op uses a user-defined Python function
+        data1 = data1.map(operations=[vision.Decode(True),
+                                      vision.RandomHorizontalFlip(1.0),
+                                      lambda x: x],
+                          input_columns=["image"])
+
+        num = 0
+        for _ in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
+            num += 1
+        assert num == 5
+
+        # Confirm that autotune final config file does not exist
+        # Note: Since AutoTune manager task fails when trying to serialize unsupported Python UDF in dataset pipeline,
+        #       the AutoTune manager is terminated (and not restarted)
+        assert not os.path.exists(atfinal_filename)
+
+        ds.config.set_enable_autotune(False)
+
+        # Pipeline#2
+        atfinal_filename2 = str(tmp_path / "test_autotune_pyfunc_pipeline_atfinal2")
+        ds.config.set_enable_autotune(True, atfinal_filename2)
+
+        # Execute similar pipeline without user-defined Python function
+        data2 = ds.ImageFolderDataset(DATA_DIR, shuffle=False, decode=False, num_samples=6)
+
+        data2 = data2.map(operations=[vision.Decode(True),
+                                      vision.RandomVerticalFlip(1.0)],
+                          input_columns=["image"])
+
+        num = 0
+        for _ in data2.create_dict_iterator(num_epochs=1, output_numpy=True):
+            num += 1
+        assert num == 6
+
+        # Confirm that autotune final config file does NOT exist
+        # Note: AutoTune manager task has not been restarted and hence not autotune config file is saved for this valid
+        # pipeline.
+        assert not os.path.exists(atfinal_filename2)
+
+        ds.config.set_enable_autotune(original_autotune)
         ds.config.set_seed(original_seed)
 
     @staticmethod
@@ -263,6 +388,75 @@ class TestAutotuneSaveLoad:
         # Confirm the serialized files for the 2 different pipelines are different
         file1 = tmp_path / "test_autotune_save_overwrite_mnist_serialized1.json"
         file2 = tmp_path / "test_autotune_save_overwrite_mnist_serialized2.json"
+        assert not data_pipeline_same(file1, file2)
+
+        ds.config.set_seed(original_seed)
+        ds.config.set_enable_autotune(original_autotune)
+
+    @staticmethod
+    def test_autotune_save_overwrite_imagefolder_enum_parms(tmp_path):
+        """
+        Feature: Autotuning
+        Description: Test set_enable_autotune and existing json_filepath is overwritten with dataset pipeline
+            that contains op with enumerated types (e.g. Border, Inter).
+        Expectation: set_enable_autotune() executes successfully with file-exist warning produced.
+            Execution of 2nd pipeline overwrites AutoTune configuration file of 1st pipeline.
+        """
+        original_seed = ds.config.get_seed()
+        ds.config.set_seed(1)
+        at_final_json_filename = "test_autotune_save_overwrite_imagefolder_atfinal"
+
+        # Pipeline#1
+        original_autotune = ds.config.get_enable_autotune()
+        ds.config.set_enable_autotune(True, str(tmp_path / at_final_json_filename))
+
+        data1 = ds.ImageFolderDataset(DATA_DIR, shuffle=False, decode=False, num_samples=5)
+
+        # The following map op uses Python implementation of ops
+        data1 = data1.map(operations=[vision.Decode(True),
+                                      vision.Resize((250, 300), interpolation=Inter.LINEAR),
+                                      vision.RandomCrop(size=250, padding=[100, 100, 100, 100],
+                                                        padding_mode=Border.EDGE, fill_value=(0, 124, 255)),
+                                      vision.RandomAffine(degrees=15, translate=(-0.1, 0.1, 0, 0), scale=(0.9, 1.1),
+                                                          resample=Inter.NEAREST)
+                                      ],
+                          input_columns=["image"])
+
+        ds.serialize(data1, str(tmp_path / "test_autotune_save_overwrite_imagefolder_serialized1.json"))
+
+        for _ in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
+            pass
+
+        ds.config.set_enable_autotune(False)
+
+        # Pipeline#2
+        ds.config.set_enable_autotune(True, str(tmp_path / at_final_json_filename))
+
+        data1 = ds.ImageFolderDataset(DATA_DIR, shuffle=False, decode=False, num_samples=5)
+
+        # The following map op uses Python implementation of ops
+        data1 = data1.map(operations=[vision.Decode(True),
+                                      vision.RandomRotation((90, 90), expand=True, resample=Inter.BILINEAR,
+                                                            center=(50, 50), fill_value=(0, 124, 255)),
+                                      vision.RandomPerspective(0.3, 1.0, Inter.LINEAR)
+                                      ],
+                          input_columns=["image"])
+
+        ds.serialize(data1, str(tmp_path / "test_autotune_save_overwrite_imagefolder_serialized2.json"))
+
+        for _ in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
+            pass
+
+        ds.config.set_enable_autotune(False)
+
+        # Confirm 2nd serialized file is identical to final AutoTune config file.
+        file1 = tmp_path / ("test_autotune_save_overwrite_imagefolder_atfinal_" + os.environ['RANK_ID'] + ".json")
+        file2 = tmp_path / "test_autotune_save_overwrite_imagefolder_serialized2.json"
+        assert data_pipeline_same(file1, file2)
+
+        # Confirm the serialized files for the 2 different pipelines are different
+        file1 = tmp_path / "test_autotune_save_overwrite_imagefolder_serialized1.json"
+        file2 = tmp_path / "test_autotune_save_overwrite_imagefolder_serialized2.json"
         assert not data_pipeline_same(file1, file2)
 
         ds.config.set_seed(original_seed)
