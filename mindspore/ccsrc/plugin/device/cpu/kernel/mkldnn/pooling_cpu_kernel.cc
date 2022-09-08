@@ -54,11 +54,11 @@ void PoolingCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   InitPoolingFields(kernel_node);
   auto src_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   const size_t src_dim = src_shape.size();
-  if (src_dim != SHAPE_4D && src_dim != SHAPE_5D) {
-    MS_LOG(EXCEPTION) << "Pooling only supports 4D/5D input, but got " << src_dim << "D!";
-  }
   if (AnfAlgo::IsShapesDynamic({src_shape, dst_shape_})) {
     return;
+  }
+  if (src_dim != SHAPE_4D && src_dim != SHAPE_5D) {
+    MS_LOG(EXCEPTION) << "Pooling only supports 4D/5D input, but got " << src_dim << "D!";
   }
   const dnnl::memory::desc src_desc = GetDefaultMemDesc(src_shape);
   const dnnl::memory::desc dst_desc = GetDefaultMemDesc(dst_shape_);
