@@ -7968,3 +7968,42 @@ class TopK(Primitive):
         self.add_prim_attr("sorted", self.sorted)
         self.init_prim_io_names(inputs=['input', 'k'],
                                 outputs=['values', 'indices'])
+
+
+class Bincount(Primitive):
+    """
+    Counts the number of occurrences of each value in an integer array.
+
+    Inputs:
+        - **array** (Tensor) - A Tensor of type int32.
+        - **size** (Tensor) - A non-negative Tensor of type int32.
+        - **weights** (Tensor) - A Tensor with the same shape as array, or a length-0 Tensor, in which case it acts as
+          all weights equal to 1. Must be one of the following types: int32, int64, float32, float64.
+
+    Outputs:
+        A Tensor. Has the same type as weights.
+
+    Raises:
+        TypeError: If dtype of array is not int32.
+        TypeError: If dtype of size is not int32.
+        ValueError: If size is negative.
+        ValueError: If weights are empty.
+        ValueError: If size of weights and arr are different.
+        TypeError: If dtype of weights is not in int32,int64,float32,float64
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Example:
+        >>> array = Tensor(np.array([1, 2, 2, 3, 3, 3, 4, 4, 4, 4]), mindspore.int32)
+        >>> size = Tensor(5, mindspore.int32)
+        >>> weights = Tensor(np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1]), mindspore.float32)
+        >>> bincount = P.Bincount()
+        >>> bins = bincount(array, size, weights)
+        >>> print(bins)
+        [0. 1. 2. 3. 4.]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize Bincount"""
