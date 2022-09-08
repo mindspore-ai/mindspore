@@ -31,6 +31,7 @@
 #include "plugin/device/ascend/kernel/rts/rt_kernel_build.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_utils.h"
 #include "plugin/device/ascend/kernel/ascend_kernel_mod.h"
+#include "plugin/device/ascend/kernel/acl/acl_kernel_build.h"
 
 namespace mindspore {
 namespace device {
@@ -61,6 +62,10 @@ static kernel::KernelModPtr SerialCompileImpl(const AnfNodePtr &anf_node) {
     }
     case KernelType::BISHENG_KERNEL: {
       kernel_mod_ptr = kernel::BiShengOpBuild(anf_node);
+      break;
+    }
+    case KernelType::ACL_KERNEL: {
+      kernel_mod_ptr = kernel::AclOpBuild(anf_node);
       break;
     }
     default: {

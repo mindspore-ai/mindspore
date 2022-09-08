@@ -47,8 +47,16 @@ void SetPadList(const PrimitivePtr &primitive, const std::vector<int64_t> &dout_
   MS_EXCEPTION_IF_NULL(attr_pad_list_prt);
   int64_t pad_mode;
   CheckAndConvertUtils::GetPadModEnumValue(primitive->GetAttr(kPadMode), &pad_mode, true);
+
   ShapeVector pad_list = {0, 0, 0, 0};
-  if (!attr_pad_list_prt->isa<None>()) {
+  auto is_valid_pad_attr = [&attr_pad_list_prt]() -> bool {
+    if (attr_pad_list_prt->isa<None>()) {
+      return false;
+    }
+    auto attr_pad_list = GetValue<ShapeVector>(attr_pad_list_prt);
+    return std::all_of(attr_pad_list.begin(), attr_pad_list.end(), [](int64_t val) { return val >= 0; });
+  };
+  if (is_valid_pad_attr()) {
     pad_list = GetValue<ShapeVector>(attr_pad_list_prt);
   } else if (pad_mode == SAME) {
     auto stride_h = stride[2];
