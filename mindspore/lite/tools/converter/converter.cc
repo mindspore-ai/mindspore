@@ -683,11 +683,6 @@ int CheckTrainModel(const std::shared_ptr<ConverterPara> &param) {
 }
 
 int CheckValueParam(const std::shared_ptr<ConverterPara> &param) {
-  if (param == nullptr) {
-    MS_LOG(ERROR) << "INPUT MISSING: param is nullptr.";
-    return RET_INPUT_PARAM_INVALID;
-  }
-
   auto ret = CheckFmkType(param);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Check value of fmk_type failed.";
@@ -747,14 +742,17 @@ int CheckValueParam(const std::shared_ptr<ConverterPara> &param) {
 
 int RunConverter(const std::shared_ptr<ConverterPara> &param, void **model_data, size_t *data_size, bool not_save) {
   mindspore::common_log_init();
-
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "INPUT MISSING: param is nullptr.";
+    return RET_INPUT_PARAM_INVALID;
+  }
+  param->aclModelOptionCfgParam.offline = !not_save;
   int status = CheckValueParam(param);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Converter input parameters check valid failed";
     return status;
   }
 
-  param->aclModelOptionCfgParam.offline = !not_save;
   ConverterImpl converter_impl;
   auto meta_graph = converter_impl.Convert(param);
   NotSupportOp::GetInstance()->PrintOps();

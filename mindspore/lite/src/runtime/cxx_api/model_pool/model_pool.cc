@@ -419,10 +419,7 @@ Status ModelPool::CheckThreadNum(const std::shared_ptr<RunnerConfig> &runner_con
 
 std::shared_ptr<Context> ModelPool::GetUserDefineContext(const std::shared_ptr<RunnerConfig> &runner_config) {
   auto context = runner_config->GetContext();
-  if (context == nullptr) {
-    MS_LOG(ERROR) << "user set config context nullptr.";
-    return nullptr;
-  }
+  MS_CHECK_TRUE_MSG(context != nullptr, nullptr, "user set config context nullptr.");
   auto status = CheckThreadNum(runner_config);
   if (status != kSuccess) {
     MS_LOG(ERROR) << "user set thread num failed.";
@@ -440,8 +437,8 @@ std::shared_ptr<Context> ModelPool::GetUserDefineContext(const std::shared_ptr<R
   }
   for (size_t i = 0; i < device_list.size(); i++) {
     auto device = device_list[i];
-    if (device->GetDeviceType() != kCPU && device->GetDeviceType() != kGPU) {
-      MS_LOG(ERROR) << "model pool only support cpu or gpu type.";
+    if (device->GetDeviceType() != kCPU && device->GetDeviceType() != kGPU && device->GetDeviceType() != kAscend) {
+      MS_LOG(ERROR) << "model pool only support cpu or gpu or ascend type.";
       return nullptr;
     }
     if (device->GetDeviceType() == kGPU && device_list.size() == kNumDeviceInfo) {
@@ -461,6 +458,11 @@ std::shared_ptr<Context> ModelPool::GetUserDefineContext(const std::shared_ptr<R
         MS_LOG(ERROR) << "model pool not support enable fp16.";
         return nullptr;
       }
+    } else if (device->GetDeviceType() == kAscend) {
+      if (context->GetInterOpParallelNum() == 0) {
+        context->SetInterOpParallelNum(1);  // do not use InterOpParallel
+      }
+      return context;
     } else {
       MS_LOG(ERROR) << "context is invalid; If you want run in GPU, you must set gpu device first, and then set cpu "
                        "device";
