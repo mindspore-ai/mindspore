@@ -98,3 +98,51 @@ def test_lin_shape_4():
     result_ms = net(start, stop).asnumpy()
     result_np = np.linspace(start_np, stop_np, num_np)
     assert np.allclose(result_ms, result_np)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_lin_space_dynamic_shape_1():
+    """
+    Feature: ALL To ALL
+    Description: test cases for LinSpace Net
+    Expectation: the result match to numpy
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+    start_np = -25.3
+    stop_np = -147
+    num_np = 36
+    start = Tensor(start_np, dtype=mstype.float32)
+    stop = Tensor(stop_np, dtype=mstype.float32)
+
+    place_holder = Tensor(shape=[None], dtype=mstype.float32)
+    dynamic_net = LinSpaceNet(num_np)
+    dynamic_net.set_inputs(place_holder, place_holder)
+    result_ms = dynamic_net(start, stop).asnumpy()
+    result_np = np.linspace(start_np, stop_np, num_np)
+    assert np.allclose(result_ms, result_np)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_lin_space_dynamic_shape_2():
+    """
+    Feature: ALL To ALL
+    Description: test cases for LinSpace Net
+    Expectation: the result match to numpy
+    """
+    context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
+    start_np = -25.3
+    stop_np = -147
+    num_np = 36
+    start = Tensor(start_np, dtype=mstype.float32)
+    stop = Tensor(stop_np, dtype=mstype.float32)
+
+    place_holder = Tensor(shape=[None], dtype=mstype.float32)
+    dynamic_net = LinSpaceNet(num_np)
+    dynamic_net.set_inputs(place_holder, place_holder)
+    result_ms = dynamic_net(start, stop).asnumpy()
+    result_np = np.linspace(start_np, stop_np, num_np)
+    assert np.allclose(result_ms, result_np)

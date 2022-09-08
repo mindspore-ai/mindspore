@@ -18,8 +18,12 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_LINSPACE_GPU_KERNEL_H_
 
 #include <vector>
+#include <algorithm>
 #include <memory>
 #include <iostream>
+#include <map>
+#include <utility>
+#include <functional>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/linspace.cuh"
@@ -27,62 +31,29 @@
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
-class LinSpaceGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class LinSpaceGpuKernelMod : public NativeGpuKernelMod {
  public:
-  LinSpaceGpuKernelMod() { ResetResource(); }
-  ~LinSpaceGpuKernelMod() = default;
+  LinSpaceGpuKernelMod() {}
+  ~LinSpaceGpuKernelMod() override = default;
+
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
       return true;
     }
-    VARIABLE_NOT_USED(workspace);
-    T *start_addr = GetDeviceAddress<T>(inputs, 0);
-    T *stop_addr = GetDeviceAddress<T>(inputs, 1);
-    T *output_addr = GetDeviceAddress<T>(outputs, 0);
-    calLinSpace(start_addr, stop_addr, value_count_, output_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
-    return true;
+    MS_EXCEPTION_IF_NULL(kernel_func_);
+    return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
   }
 
-  bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    kernel_node_ = kernel_node;
-    if (input_num != 3) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 3, but got " << input_num;
-    }
-    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-    if (output_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 1, but got " << output_num;
-    }
-    auto input_1 = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
-    auto input_2 = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 1);
-    auto value_count = AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, 0);
-    is_null_input_ = CHECK_SHAPE_NULL(input_1, kernel_name, "start") ||
-                     CHECK_SHAPE_NULL(input_2, kernel_name, "stop") ||
-                     CHECK_SHAPE_NULL(value_count, kernel_name, "output");
-    if (is_null_input_) {
-      InitSizeLists();
-      return true;
-    }
-    // error checking input data
-    if ((input_1.size() != 0) || (input_2.size() != 0)) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', both start and end should be 0-D Tensors, but got dimension "
-                        << "of start: " << input_1.size() << " and dimension of end: " << input_2.size();
-    }
+  std::vector<KernelAttr> GetOpSupport() override;
 
-    if (value_count.size() != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of output should be 1, but got "
-                        << value_count.size();
-    }
-    value_count_ = LongToSizeClipNeg(value_count[0]);
-    InitSizeLists();
-    return true;
-  }
-
-  void ResetResource() noexcept override {
+  void ResetResource() noexcept {
     value_count_ = 0;
     is_null_input_ = false;
     input_size_list_.clear();
@@ -90,14 +61,14 @@ class LinSpaceGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     workspace_size_list_.clear();
   }
 
- protected:
-  void InitSizeLists() override {
-    input_size_list_.push_back(sizeof(T));  // Scalar tensor
-    input_size_list_.push_back(sizeof(T));  // Scalar tensor
-    output_size_list_.push_back(value_count_ * sizeof(T));
-  }
-
  private:
+  template <typename T>
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  using LinSpaceFunc = std::function<bool(LinSpaceGpuKernelMod *, const std::vector<AddressPtr> &,
+                                          const std::vector<AddressPtr> &, const std::vector<AddressPtr> &, void *)>;
+  static std::vector<std::pair<KernelAttr, LinSpaceFunc>> func_list_;
+  LinSpaceFunc kernel_func_;
   size_t value_count_ = 0;
   bool is_null_input_;
 };
