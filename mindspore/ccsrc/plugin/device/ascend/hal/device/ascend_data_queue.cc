@@ -68,11 +68,12 @@ void CheckRtRetWithError(rtError_t error, const std::string &msg) {
   }
 }
 
-void ReportErrorMessage() {
+std::string GetErrorMessage() {
   const std::string &error_message = ErrorManager::GetInstance().GetErrorMessage();
   if (!error_message.empty() && error_message.find(kUnknownErrorString) == std::string::npos) {
-    MS_LOG(ERROR) << "Ascend error occurred, error message:\n" << error_message;
+    return error_message;
   }
+  return "";
 }
 }  // namespace
 
@@ -201,7 +202,9 @@ AscendTdtQueue::AscendTdtQueue(const std::string &channel_name) : DataQueue(chan
     if (acl_handle_ == nullptr) {
       MS_LOG(ERROR) << "Create channel for sending data failed, please check DEVICE ID setting, DEVICE ID that passed "
                        "into dataset(from context) and training process should be the same.";
-      ReportErrorMessage();
+      if (auto error_message = GetErrorMessage(); !error_message.empty()) {
+        MS_LOG(ERROR) << "Ascend error occurred, error message:\n" << error_message;
+      }
     }
     tdt_handle::AddHandle(&acl_handle_, nullptr);
   }
@@ -211,7 +214,9 @@ AscendTdtQueue::~AscendTdtQueue() {
   if (acl_handle_ != nullptr) {
     if (acltdtDestroyChannel(acl_handle_) != ACL_SUCCESS) {
       MS_LOG(ERROR) << "Failed to destroy channel for tdt queue.";
-      ReportErrorMessage();
+      if (auto error_message = GetErrorMessage(); !error_message.empty()) {
+        MS_LOG(ERROR) << "Ascend error occurred, error message:\n" << error_message;
+      }
     } else {
       tdt_handle::DelHandle(&acl_handle_);
       acl_handle_ = nullptr;
@@ -253,7 +258,9 @@ DataQueueStatus AscendTdtQueue::Push(std::vector<DataQueueItem> data) {
                       << "transmission channel on the device side. So we force the data transmission channel to stop.";
       return DataQueueStatus::SUCCESS;
     }
-    ReportErrorMessage();
+    if (auto error_message = GetErrorMessage(); !error_message.empty()) {
+      MS_LOG(ERROR) << "Ascend error occurred, error message:\n" << error_message;
+    }
     MS_LOG(ERROR) << "Tdt Send data failed.";
     return DataQueueStatus::INTERNAL_ERROR;
   }

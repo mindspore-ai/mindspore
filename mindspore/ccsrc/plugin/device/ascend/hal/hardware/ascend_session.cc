@@ -1508,18 +1508,20 @@ std::shared_ptr<device::Bucket> AscendSession::CreateBucket(uint32_t bucket_id, 
   return bucket;
 }
 
-void AscendSession::ReportWarningMessage() {
+std::string AscendSession::GetWarningMessage() {
   const string &warning_message = ErrorManager::GetInstance().GetWarningMessage();
   if (!warning_message.empty()) {
-    MS_LOG(WARNING) << "Ascend warning message:\n" << warning_message;
+    return warning_message;
   }
+  return "";
 }
 
-void AscendSession::ReportErrorMessage() {
+std::string AscendSession::GetErrorMessage() {
   const string &error_message = ErrorManager::GetInstance().GetErrorMessage();
   if (!error_message.empty() && error_message.find(kUnknowErrorString) == string::npos) {
-    MS_LOG(ERROR) << "Ascend error occurred, error message:\n" << error_message;
+    return error_message;
   }
+  return "";
 }
 
 void AscendSession::SetThreadContext() { ErrorManager::GetInstance().GenWorkStreamIdDefault(); }

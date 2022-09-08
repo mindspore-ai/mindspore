@@ -30,20 +30,22 @@ namespace ascend {
 constexpr auto kUnknowErrorString = "Unknown error occurred";
 constexpr auto kSOC_VERSION = "SOC_VERSION";
 
-void ReportErrorMessage() {
+std::string GetErrorMessage() {
   const string &error_message = ErrorManager::GetInstance().GetErrorMessage();
   if (!error_message.empty() && error_message.find(kUnknowErrorString) == string::npos) {
-    MS_LOG(ERROR) << "Ascend error occurred, error message:\n" << error_message;
+    return error_message;
   }
+  return "";
 }
 
 void SetErrorManagerContext() { ErrorManager::GetInstance().GenWorkStreamIdDefault(); }
 
-void ReportWarningMessage() {
+std::string GetWarningMessage() {
   const string &warning_message = ErrorManager::GetInstance().GetWarningMessage();
   if (!warning_message.empty()) {
-    MS_LOG(WARNING) << "Ascend warning message:\n" << warning_message;
+    return warning_message;
   }
+  return "";
 }
 
 bool IsGraphMode() {

@@ -25,8 +25,8 @@
 namespace mindspore {
 namespace device {
 namespace ascend {
-void ReportErrorMessage();
-void ReportWarningMessage();
+std::string GetErrorMessage();
+std::string GetWarningMessage();
 void SetErrorManagerContext();
 
 bool IsGraphMode();

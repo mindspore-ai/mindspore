@@ -211,11 +211,11 @@ bool AscendGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<
   device::KernelAdjust::GetInstance().LoadDeviceLoopCtrlParameters(kernel_graph);
   auto ret = ExecuteGraph(kernel_graph);
   if (!ret) {
-    MS_LOG(ERROR) << "run task error!";
-    ReportErrorMessage();
-    return ret;
+    MS_LOG(EXCEPTION) << "Run task error!#dmsg#Ascend Error Message:#dmsg#" << GetErrorMessage();
   }
-  ReportWarningMessage();
+  if (auto warning_message = GetWarningMessage(); !warning_message.empty()) {
+    MS_LOG(WARNING) << "Ascend warning message:\n" << warning_message;
+  }
   PROF_END(launch_graph);
   MS_LOG(INFO) << "Status record: end launch graph. graph id: " << kernel_graph->graph_id();
   return ret;
