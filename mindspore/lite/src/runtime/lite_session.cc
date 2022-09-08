@@ -763,7 +763,7 @@ int LiteSession::CreateTensorRTDelegate() {
   std::map<std::string, std::string> ms_cache;
   std::map<std::string, std::string> input_ranges;
   if (config_info_ != nullptr) {
-    auto input_ranges_iter = config_info_->find(kInputRangs);
+    auto input_ranges_iter = config_info_->find(kGPUContext);
     if (input_ranges_iter != config_info_->end()) {
       input_ranges = input_ranges_iter->second;
     }

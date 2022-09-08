@@ -111,7 +111,7 @@ int SplitTensorRT::AddInnerOp(TensorRTContext *ctx) {
   for (int i = 0; i != output_num_; ++i) {
     nvinfer1::Dims start_dims = lite::ConvertCudaDims(0, input_nbdims);
     start_dims.d[axis_] = axis_dim_index;
-    nvinfer1::Dims size_dims;
+    nvinfer1::Dims size_dims{-1};
     nvinfer1::ITensor *size_tensor = nullptr;
     if (!IsDynamicInput(ctx, 0)) {
       size_dims = split_input.trt_tensor_->getDimensions();
