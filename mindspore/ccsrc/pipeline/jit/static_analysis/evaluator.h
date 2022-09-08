@@ -480,6 +480,8 @@ class VmapEvaluator : public Evaluator {
 
 void BroadenArgs(const AbstractBasePtrList &args_abs_list, AbstractBasePtrList *broaded_args);
 
+AbstractBasePtrList EvaluateArguments(const ConfigPtrList &args_conf_list);
+
 bool CheckIfAlwaysEval(const AnfNodeConfigPtr &conf, const AbstractBasePtr &arg);
 }  // namespace abstract
 }  // namespace mindspore
