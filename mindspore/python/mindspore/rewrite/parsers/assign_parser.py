@@ -22,15 +22,16 @@ from mindspore._extends.parse.namespace import CellNamespace
 from mindspore.nn import Cell
 from mindspore.ops import operations as P
 from mindspore.ops import Primitive
-from ..symbol_tree import SymbolTree
-from ..node import Node, TreeNode
-from ..parser import Parser
-from ..parser_register import reg_parser
-from ..api.scoped_value import ScopedValue, ValueType
-from ..symbol_tree_builder import SymbolTreeBuilder
-from ..ast_helpers import AstReplacer, AstModifier
-from ..common.event import Event
-from ..namespace import is_subtree
+from mindspore.rewrite.parser_register import ParserRegister
+from mindspore.rewrite.namespace import is_subtree, is_functional, get_functional
+from mindspore.rewrite.symbol_tree import SymbolTree
+from mindspore.rewrite.node import Node, TreeNode
+from mindspore.rewrite.parser import Parser
+from mindspore.rewrite.parser_register import reg_parser
+from mindspore.rewrite.api.scoped_value import ScopedValue, ValueType
+from mindspore.rewrite.symbol_tree_builder import SymbolTreeBuilder
+from mindspore.rewrite.ast_helpers import AstReplacer, AstModifier
+from mindspore.rewrite.common.event import Event
 
 
 class AssignParser(Parser):
@@ -145,10 +146,9 @@ class AssignParser(Parser):
         if isinstance(func, ast.Name):
             return ""
         if isinstance(func, ast.Attribute):
-            value = func.value
-            if not isinstance(value, ast.Name):
-                raise RuntimeError("FuncValue is should be Name:", ast.dump(func))
-            return value.id
+            parser = ParserRegister.instance().get_parser(type(func))
+            value = parser.process(None, func)
+            return value.rsplit(".", 1)[0]
         if isinstance(func, ast.Call):
             return AssignParser._get_func_scope(func)
         raise RuntimeError("FuncValue should be Name or a Attribute or a Call:", ast.dump(func))
@@ -324,6 +324,12 @@ class AssignParser(Parser):
 
         _, op = AssignParser._find_op_and_type(func_scope, func_name, stree)
         if op is None:
+            if is_functional(func_name):
+                parser = ParserRegister.instance().get_parser(type(ast_node.func))
+                func_name = parser.process(stree, ast_node.func)
+                func = get_functional(func_name.split(".")[-1])
+                node = stree.create_call_function(father_ast_node, func_name, func, targets, call_args, call_kwargs)
+                return node
             raise RuntimeError("Operator instance undefined: '", astunparse.unparse(ast_node.func), "' of '",
                                astunparse.unparse(ast_node), "'")
         if isinstance(op, Primitive):
