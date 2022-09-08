@@ -68,7 +68,7 @@ class ProgramSpecializer {
   const AnalysisContextPtr &top_context() const { return top_context_; }
   void PutSpecializedAbstract(const CNodePtr &cnode, const AnfNodePtr &func, const AbstractFunctionPtr &old_abs_func,
                               const AbstractFunctionPtr &new_abs_func);
-  AbstractBasePtr GetSpecializedAbstract(const AbstractFunctionPtr &old_abs_func);
+  AbstractFunctionPtr GetSpecializedAbstract(const AbstractFunctionPtr &old_abs_func);
   void SpecializeCNodeInput0FuncGraph();
 
   std::vector<std::pair<AbstractSequencePtr, AnfNodePtr>> &sequence_abstract_list() { return sequence_abstract_list_; }
@@ -85,6 +85,26 @@ class ProgramSpecializer {
     defer_specialize_nodes_.erase(std::forward<Iter>(iter));
   }
 
+  void PutSpecializedFuncGraphToAbstract(const FuncGraphPtr &before_specialized_fg,
+                                         const AbstractFunctionPtr &specialized_abs) {
+    auto iter = func_graph_to_abstract_map_.find(before_specialized_fg);
+    if (iter != func_graph_to_abstract_map_.end()) {
+      iter->second.first = false;
+      return;
+    }
+    func_graph_to_abstract_map_.emplace(before_specialized_fg, std::make_pair(true, specialized_abs));
+  }
+
+  AbstractFunctionPtr GetUniqueFuncGraphAbstract(const FuncGraphPtr &before_specialized_fg) {
+    auto iter = func_graph_to_abstract_map_.find(before_specialized_fg);
+    if (iter != func_graph_to_abstract_map_.end()) {
+      if (iter->second.first) {
+        return iter->second.second;
+      }
+    }
+    return nullptr;
+  }
+
  private:
   std::shared_ptr<AnalysisEngine> engine_;
   mindspore::HashSet<AnfNodePtr> seen_;
@@ -98,11 +118,15 @@ class ProgramSpecializer {
   std::vector<std::pair<AbstractSequencePtr, AnfNodePtr>> sequence_abstract_list_;
   // The list to erase the DeadNode in tuple/list elements.
   std::vector<std::pair<AnfNodePtr, size_t>> dead_node_list_;
-  // Map for unspecialized abstract function to specialized abstract;
-  std::unordered_map<AbstractFunctionPtr, AbstractBasePtr, AbstractFunctionHasher, AbstractFunctionEqual>
+  // Map for unspecialized abstract function to specialized abstract; bool flag is used to indicate if it's unique.
+  std::unordered_map<AbstractFunctionPtr, std::pair<bool, AbstractFunctionPtr>, AbstractFunctionHasher,
+                     AbstractFunctionEqual>
     specialized_abs_map_;
+  // Map from unspecialized func_graph to <bool, specialized abstract>, bool flag is used to indicate if it's unique.
+  // This is the remedial action to find the specialized abstract function for func_graph if the abstract is unique.
+  mindspore::HashMap<FuncGraphPtr, std::pair<bool, AbstractFunctionPtr>> func_graph_to_abstract_map_;
 
-  AbstractBasePtr SpecializeAbstractFuncRecursively(const AbstractFunctionPtr &old_abs_func);
+  AbstractFunctionPtr SpecializeAbstractFuncRecursively(const AbstractFunctionPtr &old_abs_func);
 };
 
 class FuncGraphSpecializer : public std::enable_shared_from_this<FuncGraphSpecializer> {

@@ -109,3 +109,92 @@ def test_poly_delay_specialize():
     x = Tensor([1], dtype.int32)
     y = Tensor([1, 2], dtype.int32)
     poly_node_network(x, y)
+
+
+def test_renormalization_cannot_find_specialized_abstract():
+    """
+    Feature: control flow
+    Description: after renormalization, funcgraph with different args in different abstracts are broadened
+                 to use the same funcgraph, so all these abstracts have to map the same abstract, then
+                 the backend can find that specialized func_graph.
+    Expectation: No exception.
+    """
+    def foo(x, y):
+        for e in range(2):
+            x = e * y
+            if x >= 2:
+                break
+
+        if y >= x:
+            x = x * y
+
+        return x + y
+
+    x = np.array([5], np.int32)
+    y = np.array([3], np.int32)
+    grad_foo = F.grad(foo, grad_position=(0, 1))
+    output = grad_foo(Tensor(x), Tensor(y))
+    assert output[0].asnumpy() == np.array([0], np.int32)
+    assert output[1].asnumpy() == np.array([7], np.int32)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_renormalization_cannot_find_specialized_abstract_2():
+    """
+    Feature: control flow
+    Description: after renormalization, funcgraph with different args in different abstracts are broadened
+                 to use the same funcgraph, so all these abstracts have to map the same abstract, then
+                 the backend can find that specialized func_graph.
+    Expectation: No exception.
+    """
+    def foo(x, y):
+        for e in range(2):
+            x = e * y
+            if x >= 2:
+                break
+
+        if y >= 4:
+            x = x * y
+        elif y >= x:
+            x = x * y
+
+        return x + y
+
+    x = np.array([5], np.int32)
+    y = np.array([3], np.int32)
+    grad_foo = F.grad(foo, grad_position=(0, 1))
+    output = grad_foo(Tensor(x), Tensor(y))
+    assert output[0].asnumpy() == np.array([0], np.int32)
+    assert output[1].asnumpy() == np.array([7], np.int32)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_renormalization_cannot_find_specialized_abstract_2nd_grad():
+    """
+    Feature: control flow
+    Description: after renormalization, funcgraph with different args in different abstracts are broadened
+                 to use the same funcgraph, so all these abstracts have to map the same abstract, then
+                 the backend can find that specialized func_graph.
+    Expectation: No exception.
+    """
+    def foo(x):
+        out = x
+        for e in range(2):
+            x = e * out
+            if x >= 2:
+                break
+
+        if out >= x:
+            out = x * out
+
+        return x + out
+
+    x = np.array([5], np.int32)
+    grad_foo = F.grad(foo, grad_position=(0,))
+    grad_foo_2nd = F.grad(grad_foo, grad_position=(0,))
+    output = grad_foo_2nd(Tensor(x))
+    assert output[0].asnumpy() == np.array([2], np.int32)
