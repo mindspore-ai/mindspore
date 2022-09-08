@@ -45,6 +45,7 @@ class PackWeightManager {
   void FreeData(void *tensor_data);
   PackWeightManager() = default;
   bool is_parallel_ = false;
+  std::vector<char *> all_model_buf_;
 #ifdef SHARING_MODEL_WEIGHT
   std::shared_ptr<PackWeight> pack_weight_ = nullptr;
 #endif

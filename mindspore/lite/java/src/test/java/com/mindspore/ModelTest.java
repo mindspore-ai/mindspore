@@ -290,4 +290,25 @@ public class ModelTest {
         context.init();
         context.free();
     }
+    
+    @Test
+    public void testModelParallelRunnerFailed(){
+        String enableServerInference = System.getenv("MSLITE_ENABLE_SERVER_INFERENCE");
+        if(enableServerInference != null &&("ON".equals(enableServerInference) || "on".equals(enableServerInference) || "True".equals(enableServerInference))){
+            String modelFile = "../test/ut/src/runtime/kernel/arm/test_data/nets/lenet_train.ms";
+            RunnerConfig runnerConfig = new RunnerConfig();
+            MSContext context = new MSContext();
+            context.init(4,0);
+            context.addDeviceInfo(DeviceType.DT_CPU,false,0);
+            context.setInterOpParallelNum(-1);
+            boolean isSuccess = runnerConfig.init(context);
+            assertTrue(isSuccess);
+            ModelParallelRunner modelParallelRunner = new ModelParallelRunner();
+            isSuccess = modelParallelRunner.init(modelFile,runnerConfig);
+            modelParallelRunner.free();
+            assertFalse(isSuccess);
+        }else{
+            return;
+        }
+    }
 }
