@@ -17,15 +17,15 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/sparse_slice_grad_impl.cuh"
 #include <algorithm>
 #include "plugin/device/cpu/kernel/nnacl/op_base.h"
-
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/util.cuh"
 
 template <typename DataType, typename IndexType>
 __global__ void SparseSliceGradKernel(const DataType *x_ptr, const IndexType *indices_ptr,
                                       const IndexType *start_ptr, const IndexType *new_indices_ptr,
-                                      DataType *y_ptr, size_t input_nnz_, size_t output_nnz_,
-                                      size_t num_dims_) {
-  for (size_t input_nz = blockIdx.x * blockDim.x + threadIdx.x; input_nz <= input_nnz_;
-       input_nz += blockDim.x * gridDim.x) {
+                                      DataType *y_ptr, size_t *num_propagated_, size_t input_nnz_,
+                                      size_t output_nnz_, size_t num_dims_) {
+  size_t input_nz = blockIdx.x * blockDim.x + threadIdx.x;
+  if (input_nz < input_nnz_) {
     auto first = new_indices_ptr;
     auto orig = first;
     IndexType step = 0;
@@ -72,6 +72,7 @@ __global__ void SparseSliceGradKernel(const DataType *x_ptr, const IndexType *in
       }
       if (is_equal) {
         y_ptr[input_nz] = x_ptr[output_nz];
+        MsAtomicAdd(num_propagated_, size_t(1));
       } else {
         y_ptr[input_nz] = DataType(0);
       }
@@ -83,65 +84,65 @@ __global__ void SparseSliceGradKernel(const DataType *x_ptr, const IndexType *in
 
 template <typename DataType, typename IndexType>
 CUDA_LIB_EXPORT void SparseSliceGrad(const DataType *x_ptr, const IndexType *indices_ptr, const IndexType *start_ptr,
-                                     const IndexType *new_indices_ptr, DataType *y_ptr, size_t input_nnz_,
-                                     size_t output_nnz_, size_t num_dim_, uint32_t device_id,
+                                     const IndexType *new_indices_ptr, DataType *y_ptr, size_t *num_propagated_,
+                                     size_t input_nnz_, size_t output_nnz_, size_t num_dim_, uint32_t device_id,
                                      cudaStream_t cuda_stream) {
   int threads_per_block = CUDA_THREADS(device_id);
   unsigned int grid_num = UP_DIV(input_nnz_ + 1, threads_per_block);
   SparseSliceGradKernel<<<grid_num, threads_per_block, 0, cuda_stream>>>(
-    x_ptr, indices_ptr, start_ptr, new_indices_ptr, y_ptr, input_nnz_, output_nnz_, num_dim_);
+    x_ptr, indices_ptr, start_ptr, new_indices_ptr, y_ptr, num_propagated_, input_nnz_, output_nnz_, num_dim_);
 }
 
 template CUDA_LIB_EXPORT void SparseSliceGrad<int8_t, int64_t>(const int8_t *x_ptr, const int64_t *indices_ptr,
                                                                const int64_t *start_ptr, const int64_t *new_indices_ptr,
-                                                               int8_t *y_ptr, size_t input_nnz_, size_t output_nnz_,
-                                                               size_t num_dim_, uint32_t device_id,
-                                                               cudaStream_t cuda_stream);
+                                                               int8_t *y_ptr, size_t *num_propagated_,
+                                                               size_t input_nnz_, size_t output_nnz_, size_t num_dim_,
+                                                               uint32_t device_id, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void SparseSliceGrad<int16_t, int64_t>(const int16_t *x_ptr, const int64_t *indices_ptr,
                                                                 const int64_t *start_ptr,
                                                                 const int64_t *new_indices_ptr,
-                                                                int16_t *y_ptr, size_t input_nnz_, size_t output_nnz_,
-                                                                size_t num_dim_, uint32_t device_id,
-                                                                cudaStream_t cuda_stream);
+                                                                int16_t *y_ptr, size_t *num_propagated_,
+                                                                size_t input_nnz_, size_t output_nnz_, size_t num_dim_,
+                                                                uint32_t device_id, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void SparseSliceGrad<int32_t, int64_t>(const int32_t *x_ptr, const int64_t *indices_ptr,
                                                                 const int64_t *start_ptr,
-                                                                const int64_t *new_indices_ptr,
-                                                                int32_t *y_ptr, size_t input_nnz_, size_t output_nnz_,
-                                                                size_t num_dim_, uint32_t device_id,
+                                                                const int64_t *new_indices_ptr, int32_t *y_ptr,
+                                                                size_t *num_propagated_, size_t input_nnz_,
+                                                                size_t output_nnz_, size_t num_dim_, uint32_t device_id,
                                                                 cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void SparseSliceGrad<int64_t, int64_t>(const int64_t *x_ptr, const int64_t *indices_ptr,
                                                                const int64_t *start_ptr,
-                                                               const int64_t *new_indices_ptr,
-                                                               int64_t *y_ptr, size_t input_nnz_, size_t output_nnz_,
-                                                               size_t num_dim_, uint32_t device_id,
+                                                               const int64_t *new_indices_ptr, int64_t *y_ptr,
+                                                               size_t *num_propagated_, size_t input_nnz_,
+                                                               size_t output_nnz_, size_t num_dim_, uint32_t device_id,
                                                                cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void SparseSliceGrad<uint8_t, int64_t>(const uint8_t *x_ptr, const int64_t *indices_ptr,
                                                                 const int64_t *start_ptr,
-                                                                const int64_t *new_indices_ptr,
-                                                                uint8_t *y_ptr, size_t input_nnz_, size_t output_nnz_,
-                                                                size_t num_dim_, uint32_t device_id,
-                                                                cudaStream_t cuda_stream);
+                                                                const int64_t *new_indices_ptr, uint8_t *y_ptr,
+                                                                size_t *num_propagated_, size_t input_nnz_,
+                                                                size_t output_nnz_, size_t num_dim_,
+                                                                uint32_t device_id, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void SparseSliceGrad<uint16_t, int64_t>(const uint16_t *x_ptr, const int64_t *indices_ptr,
                                                                  const int64_t *start_ptr,
-                                                                 const int64_t *new_indices_ptr,
-                                                                 uint16_t *y_ptr, size_t input_nnz_, size_t output_nnz_,
-                                                                 size_t num_dim_, uint32_t device_id,
-                                                                 cudaStream_t cuda_stream);
+                                                                 const int64_t *new_indices_ptr, uint16_t *y_ptr,
+                                                                 size_t *num_propagated_, size_t input_nnz_,
+                                                                 size_t output_nnz_, size_t num_dim_,
+                                                                 uint32_t device_id, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void SparseSliceGrad<half, int64_t>(const half *x_ptr, const int64_t *indices_ptr,
                                                              const int64_t *start_ptr,
                                                              const int64_t *new_indices_ptr,
-                                                             half *y_ptr, size_t input_nnz_, size_t output_nnz_,
-                                                             size_t num_dim_, uint32_t device_id,
+                                                             half *y_ptr, size_t *num_propagated_, size_t input_nnz_,
+                                                             size_t output_nnz_, size_t num_dim_, uint32_t device_id,
                                                              cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void SparseSliceGrad<float, int64_t>(const float *x_ptr, const int64_t *indices_ptr,
                                                               const int64_t *start_ptr,
                                                               const int64_t *new_indices_ptr,
-                                                              float *y_ptr, size_t input_nnz_, size_t output_nnz_,
-                                                              size_t num_dim_, uint32_t device_id,
+                                                              float *y_ptr, size_t *num_propagated_, size_t input_nnz_,
+                                                              size_t output_nnz_, size_t num_dim_, uint32_t device_id,
                                                               cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void SparseSliceGrad<double, int64_t>(const double *x_ptr, const int64_t *indices_ptr,
                                                                const int64_t *start_ptr,
-                                                               const int64_t *new_indices_ptr,
-                                                               double *y_ptr, size_t input_nnz_, size_t output_nnz_,
-                                                               size_t num_dim_, uint32_t device_id,
+                                                               const int64_t *new_indices_ptr, double *y_ptr,
+                                                               size_t *num_propagated_, size_t input_nnz_,
+                                                               size_t output_nnz_, size_t num_dim_, uint32_t device_id,
                                                                cudaStream_t cuda_stream);

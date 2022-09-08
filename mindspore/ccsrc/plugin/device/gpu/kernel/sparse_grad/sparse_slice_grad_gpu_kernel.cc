@@ -46,6 +46,7 @@ int SparseSliceGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 
   auto x_shape = inputs.at(kIndex0)->GetShapeVector();
   auto x_size = std::accumulate(x_shape.begin(), x_shape.end(), 1, std::multiplies<size_t>());
+  num_grad_val_ = x_size;
   size_t unit_size_ = abstract::TypeIdSize(inputs.at(kIndex0)->GetDtype());
   input_size_list_.push_back(x_size * unit_size_);
 
@@ -73,6 +74,9 @@ int SparseSliceGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   unit_size_ = abstract::TypeIdSize(outputs.at(kIndex0)->GetDtype());
   output_size_list_.clear();
   output_size_list_.push_back(input_nnz * unit_size_);
+
+  workspace_size_list_.clear();
+  workspace_size_list_.push_back(sizeof(size_t));
   return ret;
 }
 
@@ -87,16 +91,33 @@ bool SparseSliceGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
   auto start_ptr = GetDeviceAddress<IndexType>(inputs, kIndex2);
   auto new_indices_ptr = GetDeviceAddress<IndexType>(inputs, kIndex3);
   auto y_ptr = GetDeviceAddress<DataType>(outputs, kIndex0);
-
+  auto num_propagated_ptr = GetDeviceAddress<size_t>(workspace, kIndex0);
   bool is_nullptr = (x_ptr == nullptr) || (indices_ptr == nullptr) || (start_ptr == nullptr) ||
-                    (new_indices_ptr == nullptr) || (y_ptr == nullptr);
+                    (new_indices_ptr == nullptr) || (y_ptr == nullptr) || (num_propagated_ptr == nullptr);
   if (is_nullptr) {
     return false;
   }
 
-  SparseSliceGrad(x_ptr, indices_ptr, start_ptr, new_indices_ptr, y_ptr, input_nnz_, output_nnz_, num_dim_, device_id_,
-                  cuda_stream);
-  return true;
+  size_t num_propagated_ = 0;
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+    cudaMemcpyAsync(num_propagated_ptr, &num_propagated_, sizeof(size_t), cudaMemcpyHostToDevice, cuda_stream),
+    "cudaMemcpyHostToDevice for 'SparseSliceGrad' num_propagated_ failed");
+
+  SparseSliceGrad(x_ptr, indices_ptr, start_ptr, new_indices_ptr, y_ptr, num_propagated_ptr, input_nnz_, output_nnz_,
+                  num_dim_, device_id_, cuda_stream);
+
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+    cudaMemcpyAsync(&num_propagated_, num_propagated_ptr, sizeof(size_t), cudaMemcpyDeviceToHost, cuda_stream),
+    "cudaMemcpyDeviceToHost for 'SparseSliceGrad' num_propagated_ failed");
+
+  if (num_propagated_ == num_grad_val_) {
+    return true;
+  } else {
+    MS_LOG(ERROR) << kernel_name_ << " Elements of backprop_val_grad are not all propagated. "
+                  << "Num elements:" << num_grad_val_ << ", used: " << num_propagated_
+                  << ". Indices or new_indices should be sorted.";
+    return false;
+  }
 }
 
 std::vector<std::pair<KernelAttr, SparseSliceGradGpuKernelMod::SparseSliceGradLaunchFunc>>

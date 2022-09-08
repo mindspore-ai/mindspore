@@ -22,8 +22,8 @@
 template <typename DataType, typename IndexType>
 
 CUDA_LIB_EXPORT void SparseSliceGrad(const DataType *x_ptr, const IndexType *indices_ptr, const IndexType *start_ptr,
-                                     const IndexType *new_indices_ptr, DataType *y_ptr, size_t input_nnz_,
-                                     size_t output_nnz_, size_t num_dim_, uint32_t device_id,
+                                     const IndexType *new_indices_ptr, DataType *y_ptr, size_t *num_propagated_,
+                                     size_t input_nnz_, size_t output_nnz_, size_t num_dim_, uint32_t device_id,
                                      cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_SPARSE_SLICE_GRAD_IMPL_CUH_
