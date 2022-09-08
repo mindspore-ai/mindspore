@@ -64,18 +64,18 @@ class CommonFunc():
         self.np_net = np_net
 
         self.input_np = input_np
-        self.input_np_bp = input_np
+        self.input_np_t = Tensor(input_np)
         self.out_np = np.array(1).astype(input_np.dtype)
 
     def forward_cmp(self):
-        out_ms = self.ms_net(Tensor(self.input_np))
+        out_ms = self.ms_net(self.input_np_t)
         self.out_np = self.np_net(self.input_np)
         assert np.all(out_ms.asnumpy() == self.out_np)
 
     def grad_impl(self):
         grad_net = GradOfFirstInput(self.ms_net)
         grad_net.set_train()
-        grad_net(Tensor(self.input_np_bp), Tensor(self.out_np))
+        grad_net(self.input_np_t, Tensor(self.out_np))
 
 
 @pytest.mark.level0

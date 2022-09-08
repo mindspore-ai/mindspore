@@ -180,7 +180,7 @@ void GradExecutor::ClearCellRes(const std::string &cell_id) {
   for (auto it = top_cell_list_.begin(); it != top_cell_list_.end();) {
     MS_EXCEPTION_IF_NULL(*it);
     const auto &top_cell_id = (*it)->cell_id();
-    const auto &already_run_cell_id = (*it)->already_run_cell_id();
+    auto already_run_cell_id = (*it)->already_run_cell_id();
     if (IsCellObjIdEq(cell_id, top_cell_id)) {
       MS_LOG(DEBUG) << "Clear top cell resource. Top cell id " << top_cell_id;
       (*it)->Clear();
@@ -285,7 +285,7 @@ void GradExecutor::NewGraphInner(const py::object *ret, const py::object &cell, 
     auto top_it = already_run_top_cell_.find(already_run_cell_id);
     if (top_it != already_run_top_cell_.end()) {
       // Top cell forward run.
-      const auto &pre_top_cell = top_it->second;
+      auto pre_top_cell = top_it->second;
       MS_EXCEPTION_IF_NULL(pre_top_cell);
       MS_LOG(DEBUG) << "Pre top cell, hook_changed " << pre_top_cell->hook_changed() << ", is_dynamic_structure "
                     << pre_top_cell->is_dynamic_structure();
@@ -348,26 +348,28 @@ void GradExecutor::MakeNewTopGraph(const string &cell_id, const py::object &cell
     MS_LOG(WARNING) << "Too many top cell has been built, please check if the cell " << cell.cast<CellPtr>()->ToString()
                     << " is repeatedly defined in each step/epoch, or the net input shape changes frequently.";
   }
-  // Create top cell
+  // Find matched dynamic shape top cell
   auto fg = std::make_shared<FuncGraph>();
   auto df_builder = std::make_shared<FuncGraph>();
   auto resource = std::make_shared<pipeline::Resource>();
-  const auto &already_run_cell_id = GetAlreadyRunCellId(cell_id);
-  auto top_cell =
-    std::make_shared<TopCellInfo>(is_topest, grad_order_, resource, fg, df_builder, cell_id, already_run_cell_id);
+  auto top_cell = dynamic_shape()->GetTopCellWithDynamicShape(cell, args, true);
+  if (top_cell == nullptr) {
+    const auto &already_run_cell_id = GetAlreadyRunCellId(cell_id);
+    top_cell =
+      std::make_shared<TopCellInfo>(is_topest, grad_order_, cell_id, already_run_cell_id, resource, fg, df_builder);
+    top_cell->SetCellSelfInfoForTopCell(cell, args);
+    (void)top_cell_list_.emplace_back(top_cell);
+  } else {
+    auto new_top_cell = std::make_shared<TopCellInfo>(*top_cell, resource, fg, df_builder);
+    top_cell->Clear();
+    EraseTopCellFromTopCellList(top_cell);
+    top_cell = new_top_cell;
+    MS_LOG(INFO) << "The shape change of the network input tensor is detected, "
+                    "and the dynamic shape process is triggered. The bprop graph needs to be recompiled, "
+                    "which may take some time";
+  }
   top_cell->set_forward_already_run(true);
   top_cell->set_input_args_id(input_args_id);
-  TopCellInfoPtr top_cell_with_dynamic_shape = dynamic_shape()->GetTopCellWithDynamicShape(cell, args, true);
-  if (top_cell_with_dynamic_shape != nullptr) {
-    top_cell->set_cell_id(top_cell_with_dynamic_shape->cell_id());
-    top_cell->set_already_run_cell_id(top_cell_with_dynamic_shape->already_run_cell_id());
-    top_cell->set_cell_self_info(top_cell_with_dynamic_shape->cell_self_info());
-    EraseTopCellFromTopCellList(top_cell_with_dynamic_shape);
-    MS_LOG(DEBUG) << "Pre top cell and current top cell merged to one top cell with dynamic shape";
-  } else {
-    top_cell->SetCellSelfInfoForTopCell(cell, args);
-  }
-  (void)top_cell_list_.emplace_back(top_cell);
   PushHighOrderGraphStack(top_cell);
   set_top_cell(top_cell);
   MS_LOG(DEBUG) << "New top graph, fg ptr " << fg.get() << " resource ptr " << resource.get();
@@ -377,17 +379,16 @@ void GradExecutor::SetForwardLastNodeInfo(const ValuePtr &v, const std::string &
   MS_EXCEPTION_IF_NULL(v);
   auto output_node = GetObjNode(v, obj_id);
   MS_EXCEPTION_IF_NULL(output_node);
-  if (top_cell()->dynamic_shape()) {
-    abstract::AbstractBasePtr last_node_abs = nullptr;
-    if (output_node->abstract() == nullptr) {
-      last_node_abs = v->ToAbstract()->Broaden();
-    } else {
-      last_node_abs = output_node->abstract();
-    }
-    MS_EXCEPTION_IF_NULL(last_node_abs);
-    // Set last output abstract and will be used for sens
-    top_cell()->set_last_output_abs(last_node_abs);
+  abstract::AbstractBasePtr last_node_abs = nullptr;
+  if (output_node->abstract() == nullptr) {
+    last_node_abs = v->ToAbstract()->Broaden();
+    output_node->set_abstract(last_node_abs);
+  } else {
+    last_node_abs = output_node->abstract();
   }
+  MS_EXCEPTION_IF_NULL(last_node_abs);
+  // Set last output abstract and will be used for sens
+  top_cell()->set_last_output_abs(last_node_abs);
   // Set last node and sens for build adjoint
   const auto &sens_value = dynamic_shape()->GetSensValueForDynamicShapeOutput(top_cell(), v, output_node);
   auto k_pynative_cell_ptr = top_cell()->k_pynative_cell_ptr();
@@ -805,15 +806,11 @@ FuncGraphPtr GradExecutor::GetBpropGraph(const prim::GradOperationPtr &grad, con
   ss << "grad{" << arg_size << "}";
   bprop_graph->set_flag(FUNC_GRAPH_FLAG_CORE, true);
   bprop_graph->debug_info()->set_name(ss.str());
-  // Get the parameters items and add the value to args_spec
-  if (top_cell()->dynamic_shape() && grad->sens_param()) {
+  // Set sens abstract
+  if (grad->sens_param()) {
     MS_EXCEPTION_IF_NULL(top_cell()->last_output_abs());
-    auto shape = top_cell()->last_output_abs()->BuildShape();
-    MS_EXCEPTION_IF_NULL(shape);
-    if (shape->IsDynamic()) {
-      const auto &sens_id = PyNativeAlgo::PyParser::GetIdByPyObj(args[arg_size - 1]);
-      dynamic_shape()->SetIdWithDynamicAbs(sens_id, top_cell()->last_output_abs());
-    }
+    const auto &sens_id = PyNativeAlgo::PyParser::GetIdByPyObj(args[arg_size - 1]);
+    dynamic_shape()->SetIdWithDynamicAbs(sens_id, top_cell()->last_output_abs());
   }
   UpdateParamAbsByArgs(PyNativeAlgo::PyParser::FilterTensorArgs(args, grad->sens_param_), bprop_graph);
   // Dynamic shape graph need add some other pass

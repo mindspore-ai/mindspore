@@ -181,6 +181,30 @@ def stop_gradient(x):
     return x
 
 
+def TensorShape(x):
+    """Implement `TensorShape`."""
+    return Tensor(F.shape(x))
+
+
+def DynamicBroadcastGradientArgs(x, y):
+    """Implement `DynamicBroadcastGradientArgs`."""
+    return -1, -1
+
+
+def StridedSlice(x, begin, end, stride):
+    """Implement `StridedSlice`."""
+    if isinstance(x, Tensor):
+        x = x.asnumpy()
+        ret = x
+        for i in range(len(x)):
+            ret[i:] = x[begin[i], end[i], stride[i]]
+        return Tensor(ret)
+    ret = x
+    for i in range(len(x)):
+        ret[i:] = x[begin[i], end[i], stride[i]]
+    return ret
+
+
 hyper_map = C.HyperMap()
 
 

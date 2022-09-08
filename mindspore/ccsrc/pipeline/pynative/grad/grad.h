@@ -109,6 +109,7 @@ class GradExecutor {
   CNodePtr ConstructForwardGraph(const FrontendOpRunInfoPtr &op_run_info) const;
   py::object CheckAlreadyRun(const prim::GradOperationPtr &grad, const py::object &cell,
                              const py::object &grad_position, const py::args &args);
+  std::string GetAlreadyRunCellId(const std::string &cell_id) const;
   void ProcessOpGradInfo(const FrontendOpRunInfoPtr &op_run_info, const ValuePtr &v) const;
   AnfNodePtr GetInput(const ValuePtr &v) const;
   void ClearGrad(const py::object &cell, const py::args &args);
@@ -159,7 +160,6 @@ class GradExecutor {
   void SetForwardLastNodeInfo(const ValuePtr &v, const std::string &obj_id) const;
   void DoGradForCustomBprop(const py::object &cell, const py::args &args, const ValuePtr &out,
                             const std::string &out_id);
-  std::string GetAlreadyRunCellId(const std::string &cell_id) const;
   std::string GetGradCellId(bool has_sens, const py::object &cell, const py::args &args) const;
   void GradNetInner(const py::object *ret, const prim::GradOperationPtr &grad, const py::object &cell,
                     const py::object &weights, const py::object &grad_position, const py::args &args);

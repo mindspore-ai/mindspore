@@ -36,8 +36,8 @@ void TopCellInfo::SetCellSelfInfoForTopCell(const py::object &cell, const py::ar
     (void)args_shape.emplace_back(shape_ptr);
     (void)args_type.emplace_back(abs->BuildType());
   }
-  set_cell_self_info(
-    std::make_shared<CellSelfInfo>(PyNativeAlgo::PyParser::GetIdByPyObj(cell), args_id, args_shape, args_type));
+  cell_self_info_ =
+    std::make_shared<CellSelfInfo>(PyNativeAlgo::PyParser::GetIdByPyObj(cell), args_id, args_shape, args_type);
 }
 
 bool TopCellInfo::IsSubCell(const std::string &cell_id) const {
@@ -108,21 +108,31 @@ void TopCellInfo::ClearDeviceMemory() const {
 
 void TopCellInfo::Clear() {
   MS_LOG(DEBUG) << "Clear top cell info. Cell id " << cell_id_;
-  op_num_ = 0;
   is_dynamic_structure_ = false;
+  is_real_dynamic_structure_ = false;
   vm_compiled_ = false;
+  hook_changed_ = false;
   ms_function_flag_ = false;
   is_init_kpynative_ = false;
-  need_compile_graph_ = false;
   forward_already_run_ = false;
+  need_compile_graph_ = false;
+  op_num_ = 0;
+  grad_order_ = 0;
+  fg_ = nullptr;
+  df_builder_ = nullptr;
+  k_pynative_cell_ptr_ = nullptr;
+  k_pynative_cell_ptr_ = nullptr;
+  last_output_abs_ = nullptr;
+  cell_self_info_ = nullptr;
+  cell_id_.clear();
+  already_run_cell_id_.clear();
   input_args_id_.clear();
   all_op_info_.clear();
-  resource_ = nullptr;
-  df_builder_ = nullptr;
-  fg_ = nullptr;
-  k_pynative_cell_ptr_ = nullptr;
+  grad_operation_.clear();
   graph_info_map_.clear();
   sub_cell_list_.clear();
+  sub_cell_hook_changed_.clear();
+  cell_backward_hook_op_.clear();
   op_info_with_tensor_id_.clear();
   tensor_id_with_tensor_object_.clear();
   op_info_with_ms_func_forward_tensors_.clear();
@@ -257,24 +267,16 @@ void TopCellInfo::SetTupleItemArgsToGraphInfoMap(const FuncGraphPtr &g, const Va
   }
 }
 
-std::string TopCellInfo::GetAlreadyRunCellId(const std::string &cell_id) const {
-  std::string already_run_cell_id(cell_id);
-  size_t grad_order = PyNativeAlgo::Common::GetPyNativeExecutor()->grad_executor()->grad_order();
-  already_run_cell_id += std::to_string(grad_order == 0 ? 1 : grad_order);
-  already_run_cell_id += "_" + grad_operation_;
-  MS_LOG(DEBUG) << "Get already run top cell id " << already_run_cell_id;
-  return already_run_cell_id;
-}
-
 void TopCellInfo::ChangeTopCellInfo(size_t args_size) {
+  dynamic_shape_ = true;
   std::string new_cell_id = this->cell_self_info()->cell_self_id;
   for (size_t i = 0; i < args_size; ++i) {
     new_cell_id += "_" + this->cell_self_info()->args_shape[i]->ToString();
-    new_cell_id += this->cell_self_info()->args_type[i]->ToString();
+    new_cell_id += cell_self_info_->args_type[i]->ToString();
   }
-  MS_LOG(DEBUG) << "Change top cell " << this->cell_id() << " to be dynamic " << new_cell_id;
-  set_cell_id(new_cell_id);
-  set_already_run_cell_id(GetAlreadyRunCellId(new_cell_id));
+  MS_LOG(DEBUG) << "Change pre top cell " << cell_id_ << " to be dynamic " << new_cell_id;
+  cell_id_ = new_cell_id;
+  already_run_cell_id_ = PyNativeAlgo::Common::GetPyNativeExecutor()->grad_executor()->GetAlreadyRunCellId(new_cell_id);
 }
 }  // namespace pynative
 }  // namespace mindspore

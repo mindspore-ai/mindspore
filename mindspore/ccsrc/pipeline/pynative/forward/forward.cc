@@ -369,7 +369,7 @@ void ForwardExecutor::ProcessBeforeNewGraph(const py::object &cell, const py::ar
   if (py::isinstance<Cell>(cell)) {
     PushForwardCell(cell);
   }
-  dynamic_shape()->SetFeedDynamicInputAbs(cell, args, false);
+  dynamic_shape()->SetFeedDynamicInputAbs(cell, args);
 }
 
 void ForwardExecutor::ProcessBeforeEndGraph(const py::object &cell, const py::args &args) {
