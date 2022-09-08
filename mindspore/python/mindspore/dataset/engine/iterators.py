@@ -15,6 +15,7 @@
 """Built-in iterators.
 """
 from abc import abstractmethod
+import json
 import os
 import signal
 import weakref
@@ -84,12 +85,12 @@ class Iterator:
         self.__index = 0
 
         self.offload_model = None
-        offload_model = offload.GetOffloadModel(consumer, self.__ori_dataset.get_col_names())
+        json_offload = json.loads(consumer.GetOffload())
 
-        # See if GetOffloadModel identified any operations set to be offloaded.
-        if offload_model.transform_list != []:
+        # See if GetOffload identified any operations set to be offloaded.
+        if json_offload is not None:
             offload.check_concat_zip_dataset(self.__ori_dataset)
-            self.offload_model = offload_model
+            self.offload_model = offload.GetOffloadModel(consumer, self.__ori_dataset.get_col_names())
 
         ITERATORS_LIST.append(weakref.ref(self))
         _unset_iterator_cleanup()
