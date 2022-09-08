@@ -98,7 +98,7 @@ RER_ASCEND_STATIC_CONST_TO_ATTR(kUnsortedSegmentProdOpName, 2);
 RER_ASCEND_STATIC_CONST_TO_ATTR(kUnsortedSegmentSumOpName, 2);
 
 // ===============================  new reg interface  =================================================
-#define REG_ASCEND_VM_OP_ADAPTATION_INFO(origin_op_name) REG_OP_ADAPTATION_INFO(origin_op_name, kAscendDevice, true)
+#define REG_ASCEND_VM_OP_ADAPTATION_INFO(origin_op_name) REG_OP_ADAPTATION_INFO(origin_op_name, kAscendDevice, false)
 
 // RTS OP
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kTensorCopySlicesOpName)
