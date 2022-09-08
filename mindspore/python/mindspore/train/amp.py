@@ -281,8 +281,8 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', boost_leve
         keep_batchnorm_fp32 (bool): Keep Batchnorm run in `float32` when the network is set to cast to `float16` . If
             set, the `level` setting will take no effect on this property.
         loss_scale_manager (Union[None, LossScaleManager]): If not None, must be subclass of
-            :class:`mindspore.LossScaleManager` for scaling the loss. If set, the `level` setting will take no effect
-            on this property.
+            :class:`mindspore.amp.LossScaleManager` for scaling the loss. If set, the `level` setting will
+            take no effect on this property.
 
     Raises:
         ValueError: If device is CPU, property `loss_scale_manager` is not `None` or `FixedLossScaleManager`

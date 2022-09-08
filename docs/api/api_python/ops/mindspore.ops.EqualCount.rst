@@ -16,4 +16,4 @@ mindspore.ops.EqualCount
 
     异常：
         - **TypeError** - 如果 `x` 或 `y` 不是Tensor。
-        - **ValueError** - 如果 `x` 与`y` 的shape不相等。
+        - **ValueError** - 如果 `x` 与 `y` 的shape不相等。

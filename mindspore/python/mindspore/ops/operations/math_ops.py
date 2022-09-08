@@ -2055,7 +2055,7 @@ class Rsqrt(Primitive):
 
     Inputs:
         - **x** (Tensor) - The input of Rsqrt. Its rank must be in [0, 7] inclusive and
-            each element must be a non-negative number.
+          each element must be a non-negative number.
 
     Outputs:
         Tensor, has the same type and shape as `x`.
@@ -2091,7 +2091,6 @@ class Sqrt(Primitive):
     .. math::
 
         out_{i} =  \sqrt{x_{i}}
-
 
     Inputs:
         - **x** (Tensor) - The input tensor with a dtype of Number, its rank must be in [0, 7] inclusive.

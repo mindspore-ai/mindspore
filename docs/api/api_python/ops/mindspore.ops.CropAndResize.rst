@@ -24,3 +24,4 @@ mindspore.ops.CropAndResize
     异常：
         - **TypeError** - 如果 `method` 不是str。
         - **TypeError** - 如果 `extrapolation_value` 不是float，且取值不是"bilinear"、"nearest"或"bilinear_v2"。
+        - **ValueError** - 如果 `method` 不是'bilinear'、 'nearest'或者'bilinear_v2'。

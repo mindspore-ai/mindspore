@@ -29,7 +29,7 @@ class LossScaleManager:
     `get_update_cell` is used to get the instance of :class:`mindspore.nn.Cell` that is used to update the loss scale,
     the instance will be called during the training. Currently, the `get_update_cell` is mostly used.
 
-    For example, :class:`mindspore.FixedLossScaleManager` and :class:`mindspore.DynamicLossScaleManager`.
+    For example, :class:`mindspore.amp.FixedLossScaleManager` and :class:`mindspore.amp.DynamicLossScaleManager`.
     """
     def get_loss_scale(self):
         """Get the value of loss scale, which is the amplification factor of the gradients."""

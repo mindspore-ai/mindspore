@@ -24,7 +24,7 @@
           - auto: 为不同处理器设置专家推荐的混合精度等级，如在GPU上设为"O2"，在Ascend上设为"O3"。该设置方式可能在部分场景下不适用，建议用户根据具体的网络模型自定义设置 `amp_level` 。
 
           在GPU上建议使用"O2"，在Ascend上建议使用"O3"。
-          通过 `kwargs` 设置 `keep_batchnorm_fp32` ，可修改BatchNorm的精度策略， `keep_batchnorm_fp32` 必须为bool类型；通过 `kwargs` 设置 `loss_scale_manager` 可修改损失缩放策略，`loss_scale_manager` 必须为 :class:`mindspore.LossScaleManager` 的子类，
+          通过 `kwargs` 设置 `keep_batchnorm_fp32` ，可修改BatchNorm的精度策略， `keep_batchnorm_fp32` 必须为bool类型；通过 `kwargs` 设置 `loss_scale_manager` 可修改损失缩放策略，`loss_scale_manager` 必须为 :class:`mindspore.amp.LossScaleManager` 的子类，
           关于 `amp_level` 详见 `mindpore.build_train_network` 。
 
         - **boost_level** (str) - `mindspore.boost` 的可选参数，为boost模式训练等级。支持["O0", "O1", "O2"]. 默认值："O0"。

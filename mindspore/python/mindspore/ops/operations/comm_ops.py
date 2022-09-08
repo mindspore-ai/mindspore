@@ -686,7 +686,7 @@ class NeighborExchange(Primitive):
     Supported Platforms:
         ``Ascend``
 
-    Example:
+    Examples:
         >>> # This example should be run with 2 devices. Refer to the tutorial > Distributed Training on mindspore.cn
         >>> import os
         >>> import mindspore as ms
@@ -762,7 +762,7 @@ class AlltoAll(PrimitiveWithInfer):
     Supported Platforms:
         ``Ascend``
 
-    Example:
+    Examples:
         >>> # This example should be run with 8 devices. Refer to the tutorial > Distributed Training on mindspore.cn
         >>> import os
         >>> import mindspore as ms

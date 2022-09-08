@@ -6895,7 +6895,7 @@ class ExtractVolumePatches(Primitive):
     Supported Platforms:
         ``Ascend`` ``CPU``
 
-    Example:
+    Examples:
         >>> kernel_size = (1, 1, 2, 2, 2)
         >>> strides = (1, 1, 1, 1, 1)
         >>> padding = "VALID"

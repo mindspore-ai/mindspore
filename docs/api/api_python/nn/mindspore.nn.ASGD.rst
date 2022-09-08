@@ -17,7 +17,7 @@ mindspore.nn.ASGD
             \mu_{t} = \frac{1}{\max(1, t - t0)}
         \end{gather*}
     
-    :math:`\lambda` 代表衰减项， :math:`\mu` 和 :math:`\eta` 被跟踪以更新 :math:`ax` 和 :math:`w` ， :math:`t0` 代表开始平均的点， :math:`\α` 代表 :math:`\eta` 更新的系数， :math:`ax` 表示平均参数值， :math:`t` 表示当前步数（step），:math:`g` 表示 `gradients` ， :math:`w` 表示`params` 。
+    :math:`\lambda` 代表衰减项， :math:`\mu` 和 :math:`\eta` 被跟踪以更新 :math:`ax` 和 :math:`w` ， :math:`t0` 代表开始平均的点， :math:`\α` 代表 :math:`\eta` 更新的系数， :math:`ax` 表示平均参数值， :math:`t` 表示当前步数（step），:math:`g` 表示 `gradients` ， :math:`w` 表示 `params` 。
 
     .. note::
         如果参数未分组，则优化器中的 `weight_decay` 将应用于名称中没有"beta"或"gamma"的参数。用户可以对参数进行分组，以更改权重衰减策略。当参数分组时，每个组都可以设置 `weight_decay` ，如果没有，将应用优化器中的 `weight_decay` 。
@@ -40,7 +40,7 @@ mindspore.nn.ASGD
         - **t0** (float) - 开始平均的点。默认值：1e6。
         - **weight_decay** (Union[float, int, Cell]) - 权重衰减（L2 penalty）。默认值：0.0。
 
-        .. include:: mindspore.nn.optim_arg_dynamic_wd.rst
+          .. include:: mindspore.nn.optim_arg_dynamic_wd.rst
 
     输入：
         - **gradients** (tuple[Tensor]) - `params` 的梯度，shape与 `params` 相同。

@@ -145,7 +145,7 @@ class Momentum(Optimizer):
         loss_scale (float): A floating point value for the loss scale. It must be greater than 0.0. In general, use the
             default value. Only when `FixedLossScaleManager` is used for training and the `drop_overflow_update` in
             `FixedLossScaleManager` is set to False, then this value needs to be the same as the `loss_scale` in
-            `FixedLossScaleManager`. Refer to class :class:`mindspore.FixedLossScaleManager` for more details.
+            `FixedLossScaleManager`. Refer to class :class:`mindspore.amp.FixedLossScaleManager` for more details.
             Default: 1.0.
         use_nesterov (bool): Enable Nesterov momentum. Default: False.
 

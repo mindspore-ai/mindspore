@@ -113,7 +113,7 @@ class Adadelta(Optimizer):
         loss_scale (float): Value for the loss scale. It must be greater than 0.0. In general, use the default value.
             Only when `FixedLossScaleManager` is used for training and the `drop_overflow_update` in
             `FixedLossScaleManager` is set to False, then this value needs to be the same as the `loss_scale` in
-            `FixedLossScaleManager`. Refer to class :class:`mindspore.FixedLossScaleManager` for more details.
+            `FixedLossScaleManager`. Refer to class :class:`mindspore.amp.FixedLossScaleManager` for more details.
             Default: 1.0.
         weight_decay (Union[float, int, Cell]): Weight decay (L2 penalty). Default: 0.0.
 

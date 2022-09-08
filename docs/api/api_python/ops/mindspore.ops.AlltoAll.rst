@@ -1,7 +1,7 @@
 mindspore.ops.AlltoAll
 ======================
 
-.. py:class:: mindspore.ops.AlltoAll(split_count, split_dim, concat_dim, group='hccl_world_group')
+.. py:class:: mindspore.ops.AlltoAll(split_count, split_dim, concat_dim, group=GlobalComm.WORLD_COMM_GROUP)
 
     AlltoAll是一个集合通信函数。
 
