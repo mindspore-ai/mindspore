@@ -171,6 +171,8 @@ BACKEND_EXPORT tensor::TensorPtr CreateTupleTensor(const ValueTuplePtr &value_tu
 
 AnfNodePtr CreateTensorMoveOp(const FuncGraphPtr &graph, const AnfNodePtr &node);
 
+std::vector<AnfNodePtr> InsertRefTensorMoveForGraphOutput(const FuncGraphPtr &graph);
+
 std::vector<AnfNodePtr> InsertTensorMoveForGraphOutput(const FuncGraphPtr &graph, const AnfNodePtr &node);
 
 bool IsAllNopNode(const session::KernelGraph *const graph);

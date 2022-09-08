@@ -310,12 +310,16 @@ std::vector<AnfNodePtr> AnfAlgo::GetAllOutput(const AnfNodePtr &node, const std:
 }
 
 std::vector<KernelWithIndex> AnfAlgo::GetAllOutputIndexByReturnTypes(const AnfNodePtr &node,
-                                                                     const std::vector<PrimitivePtr> &return_types) {
+                                                                     const std::vector<PrimitivePtr> &return_types,
+                                                                     bool need_make_tuple) {
   std::vector<KernelWithIndex> ret;
   auto return_prim_type = return_types;
   // if visited make_tuple should return back
   return_prim_type.push_back(prim::kPrimMakeTuple);
   auto item_with_index = AnfAlgo::VisitKernelWithReturnType(node, 0, false, return_prim_type);
+  if (need_make_tuple) {
+    ret.push_back(item_with_index);
+  }
   if (AnfAlgo::CheckPrimitiveType(item_with_index.first, prim::kPrimMakeTuple)) {
     MS_EXCEPTION_IF_NULL(item_with_index.first);
     auto make_tuple = item_with_index.first->cast<CNodePtr>();

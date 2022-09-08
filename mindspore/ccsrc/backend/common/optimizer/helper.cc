@@ -297,6 +297,67 @@ AnfNodePtr CreateTensorMoveOp(const FuncGraphPtr &graph, const AnfNodePtr &node)
   return new_node;
 }
 
+std::vector<AnfNodePtr> InsertRefTensorMoveForGraphOutput(const FuncGraphPtr &graph) {
+  auto kernel_graph = std::dynamic_pointer_cast<session::KernelGraph>(graph);
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  std::vector<AnfNodePtr> ret;
+  auto outputs = common::AnfAlgo::GetAllOutputWithIndex(graph->output());
+  for (const auto &out_pair : outputs) {
+    if (kernel_graph->IsInRefOutputMap(out_pair)) {
+      auto manager = graph->manager();
+      MS_EXCEPTION_IF_NULL(manager);
+      auto &node_users = manager->node_users();
+      auto iter = node_users.find(out_pair.first);
+      if (iter == node_users.end()) {
+        return ret;
+      }
+      bool find = false;
+      for (auto &item : iter->second) {
+        MS_EXCEPTION_IF_NULL(item.first);
+        auto next_node = item.first->cast<CNodePtr>();
+        auto graph_outputs_pair =
+          common::AnfAlgo::GetAllOutputIndexByReturnTypes(graph->output(), {prim::kPrimTupleGetItem}, true);
+        for (auto output_pair : graph_outputs_pair) {
+          while (AnfUtils::IsRealCNodeKernel(output_pair.first)) {
+            auto output_kernel = output_pair.first;
+            MS_EXCEPTION_IF_NULL(output_kernel);
+            auto cnode = output_kernel->cast<CNodePtr>();
+            // nop node
+            if (common::AnfAlgo::IsNopNode(cnode)) {
+              output_pair = common::AnfAlgo::VisitKernelWithReturnType(cnode->input(kNopNodeRealInputIndex), 0, true);
+              continue;
+            }
+            break;
+          }
+          if (next_node == output_pair.first->cast<CNodePtr>()) {
+            find = true;
+            break;
+          }
+        }
+        if (!find) {
+          continue;
+        }
+        if (common::AnfAlgo::CheckPrimitiveType(next_node, prim::kPrimMakeTuple)) {
+          auto input = common::AnfAlgo::GetInputNode(next_node, item.second - 1);
+          auto tensor_move = CreateTensorMoveOp(graph, input);
+          auto kernel_info = std::make_shared<device::KernelInfo>();
+          tensor_move->set_kernel_info(kernel_info);
+          ret.emplace_back(tensor_move);
+          manager->SetEdge(next_node, SizeToInt(item.second), tensor_move);
+        } else {
+          // tuple get item
+          auto tensor_move = CreateTensorMoveOp(graph, next_node);
+          auto kernel_info = std::make_shared<device::KernelInfo>();
+          tensor_move->set_kernel_info(kernel_info);
+          ret.emplace_back(tensor_move);
+          (void)manager->Replace(next_node, tensor_move);
+        }
+      }
+    }
+  }
+  return ret;
+}
+
 std::vector<AnfNodePtr> InsertTensorMoveForGraphOutput(const FuncGraphPtr &graph, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
