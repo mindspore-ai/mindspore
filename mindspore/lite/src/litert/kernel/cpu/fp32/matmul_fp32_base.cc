@@ -99,7 +99,10 @@ int MatmulFp32BaseCPUKernel::ParallelRunByBatch(int task_id) const {
   return RET_OK;
 }
 
-int MatmulFp32BaseCPUKernel::ParallelRunByRow(int task_id) const { return RET_ERROR; }
+int MatmulFp32BaseCPUKernel::ParallelRunByRow(int task_id) const {
+  (void)task_id;
+  return RET_ERROR;
+}
 
 int MatmulFp32BaseCPUKernel::ParallelRunByOC(int task_id) const {
   int start_oc = split_points_[task_id];
@@ -447,25 +450,26 @@ int MatmulFp32BaseCPUKernel::MatmulPrepare() {
 
 int MatmulFp32BaseCPUKernel::Conv1x1Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_LESS_RETURN(out_tensors_.size(), C1NUM);
 
-  if (params_->a_const_ || InferShapeDone()) {
+  if (InferShapeDone() || params_->a_const_) {
     auto input = in_tensors_.at(0);
     params_->row_ = in_tensors_.at(0)->Batch() * input->Height() * input->Width();
     params_->deep_ = input->Channel();
   }
 
-  if (params_->b_const_ || InferShapeDone()) {
+  if (InferShapeDone() || params_->b_const_) {
     auto weight = in_tensors_.at(1);
     params_->col_ = weight->Batch();
     params_->deep_ = weight->Channel();
   }
 
+  a_batch_ = 1;
+  b_batch_ = 1;
   params_->batch = 1;
   a_offset_.resize(params_->batch, 0);
   b_offset_.resize(params_->batch, 0);
-  a_batch_ = 1;
-  b_batch_ = 1;
+
   params_->a_transpose_ = false;
   params_->b_transpose_ = true;
 
@@ -511,14 +515,14 @@ int MatmulFp32BaseCPUKernel::InitBroadcastParams(const std::vector<int> &a_shape
   if (a_shape.size() < kNCHWDimNumber) {
     size_t add_nums = kNCHWDimNumber - a_shape.size();
     for (size_t i = 0; i < add_nums; ++i) {
-      a_shape.insert(a_shape.begin(), 1);
+      (void)a_shape.insert(a_shape.begin(), 1);
     }
   }
   std::vector<int> b_shape = b_shape_const;
   if (b_shape.size() < kNCHWDimNumber) {
     size_t add_nums = kNCHWDimNumber - b_shape.size();
     for (size_t i = 0; i < add_nums; ++i) {
-      b_shape.insert(b_shape.begin(), 1);
+      (void)b_shape.insert(b_shape.begin(), 1);
     }
   }
 
