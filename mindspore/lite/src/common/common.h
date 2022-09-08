@@ -68,8 +68,11 @@ static const char *const kMSCacheSerializePath = "serialize_path";
 // weight path
 static const char *const kWeight = "weight";
 static const char *const kWeightPath = "weight_path";
-// input rangs
-static const char *const kInputRangs = "input_ranges";
+// gpu context
+static const char *const kGPUContext = "gpu_context";
+static const char *const kInputShape = "input_shape";
+static const char *const kDynamicDims = "dynamic_dims";
+static const char *const kOptimizeDims = "opt_dims";
 }  // namespace lite
 }  // namespace mindspore
 

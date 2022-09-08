@@ -21,6 +21,7 @@
 #include <unordered_set>
 #include <memory>
 #include <map>
+#include <optional>
 #include "include/api/delegate.h"
 #include "src/extendrt/delegate/tensorrt/tensorrt_subgraph.h"
 #include "src/extendrt/delegate/parameter_cache/embedding_cache_manager.h"
@@ -42,6 +43,13 @@ class TensorRTDelegate : public Delegate {
   Status Build(DelegateModel<schema::Primitive> *model) override;
 
  private:
+  int ParseOptimizationProfile();
+  bool ParseOptDims(const std::string &opt_dims_str,
+                    const std::unordered_map<std::string, nvinfer1::Dims> &name2input_shape);
+  bool ParseDynamicDims(const std::string &dynamic_dims_str,
+                        const std::unordered_map<std::string, nvinfer1::Dims> &name2input_shape);
+  std::experimental::optional<std::unordered_map<std::string, nvinfer1::Dims>> ParseInputShape(
+    const std::string &input_shapes_str);
   Status BuildSubGraph(DelegateModel<schema::Primitive> *model);
 
   TensorRTOp *FindTensorRTOp(kernel::Kernel *kernel, const schema::Primitive *primitive);
@@ -61,9 +69,11 @@ class TensorRTDelegate : public Delegate {
   std::shared_ptr<cache::EmbeddingCacheManager> cache_mgr_{nullptr};
   std::string serialize_path_;
   cudaStream_t stream_{nullptr};
-  std::vector<std::vector<nvinfer1::Dims>> min_dims_;
-  std::vector<std::vector<nvinfer1::Dims>> opt_dims_;
-  std::vector<std::vector<nvinfer1::Dims>> max_dims_;
+  std::unordered_map<std::string, std::vector<nvinfer1::Dims>> min_dims_;
+  std::unordered_map<std::string, std::vector<nvinfer1::Dims>> opt_dims_;
+  std::unordered_map<std::string, std::vector<nvinfer1::Dims>> max_dims_;
+  std::vector<std::string> input_tensor_names_;
+  std::map<std::string, std::string> input_ranges_;
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_TENSORRT_DELEGATE_

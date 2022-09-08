@@ -20,10 +20,6 @@
 namespace mindspore::lite {
 int ReduceTensorRT::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                               const std::vector<mindspore::MSTensor> &out_tensors) {
-  if (!IsShapeKnown()) {
-    MS_LOG(ERROR) << "Unsupported input tensor unknown shape: " << op_name_;
-    return RET_ERROR;
-  }
   if (in_tensors.size() != INPUT_SIZE2) {
     MS_LOG(ERROR) << "Unsupported input tensor size, size is " << in_tensors.size();
   }
@@ -47,7 +43,8 @@ int ReduceTensorRT::AddInnerOp(TensorRTContext *ctx) {
   out_format_ = input(ctx, 0).format_;
   nvinfer1::ITensor *reduce_input = input(ctx, 0).trt_tensor_;
   MS_LOG(DEBUG) << "origin input " << GetTensorFormat(input(ctx, 0));
-  if (input(ctx, 0).trt_tensor_->getDimensions().nbDims == DIMENSION_4D &&
+  if (input(ctx, 0).trt_tensor_->getDimensions().nbDims == DIMENSION_4D && !input(ctx, 0).same_format_ &&
+      !in_tensors_[0].Shape().empty() &&
       !SameDims(input(ctx, 0).trt_tensor_->getDimensions(), in_tensors_[0].Shape())) {
     if (input(ctx, 0).format_ == Format::NCHW) {
       // NCHW->NHWC
@@ -87,7 +84,7 @@ int ReduceTensorRT::AddInnerOp(TensorRTContext *ctx) {
     CHECK_NULL_RETURN(reduce_input);
   }
 
-  uint32_t reduceAxis = GetAxis();
+  uint32_t reduceAxis = GetAxis(ctx);
   auto reduce_operation_opt = TryConvertTRTReduceMode(reduce_op->mode());
   if (!reduce_operation_opt) {
     MS_LOG(WARNING) << "invalid reduce for TensorRT, need check: " << static_cast<int>(reduce_op->mode());
@@ -114,7 +111,7 @@ int ReduceTensorRT::AddInnerOp(TensorRTContext *ctx) {
   return RET_OK;
 }
 
-uint32_t ReduceTensorRT::GetAxis() {
+uint32_t ReduceTensorRT::GetAxis(TensorRTContext *ctx) {
   // axis
   uint32_t reduceAxis = 0;
   mindspore::MSTensor axis_tensor = this->in_tensors_[1];
@@ -128,7 +125,7 @@ uint32_t ReduceTensorRT::GetAxis() {
   int *axis_data = reinterpret_cast<int *>(axis_tensor.MutableData());
   CHECK_NULL_RETURN(axis_data);
   for (int i = 0; i < axis_tensor.ElementNum(); i++) {
-    int format_axis_data = (*axis_data == -1) ? in_tensors_[0].Shape().size() - 1 : *axis_data;
+    int format_axis_data = (*axis_data == -1) ? input(ctx, 0).trt_tensor_->getDimensions().nbDims - 1 : *axis_data;
     MS_LOG(DEBUG) << op_name_ << " reduceAxis at index : " << *axis_data;
     reduceAxis |= 1u << format_axis_data;
     axis_data++;

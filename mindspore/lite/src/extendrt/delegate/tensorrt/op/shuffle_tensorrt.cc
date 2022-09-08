@@ -342,7 +342,7 @@ int ShuffleTensorRT::AddExpandDimsOp(nvinfer1::IShuffleLayer *shuffle_layer) {
 }
 
 int ShuffleTensorRT::AddBroadcastToOp(nvinfer1::IShuffleLayer *shuffle_layer) {
-  if (ReadyInputsNumber(ctx_) == INPUT_SIZE2) {
+  if (in_tensors_[1].Data() == nullptr) {
     auto input_shape_tensor = input(ctx_, 1).trt_tensor_;
     shuffler_output_ = Broadcast(ctx_, shuffler_input_, input_shape_tensor);
   } else {

@@ -37,7 +37,7 @@ class ReduceTensorRT : public TensorRTOp {
                 const std::vector<mindspore::MSTensor> &out_tensors) override;
 
  private:
-  uint32_t GetAxis();
+  uint32_t GetAxis(TensorRTContext *ctx);
   Format out_format_;
 };
 }  // namespace mindspore::lite
