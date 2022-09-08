@@ -28,10 +28,10 @@ class TransposeInt8CPUKernel : public TransposeBaseCPUKernel {
   ~TransposeInt8CPUKernel() = default;
 
   int ReSize() override;
+  int DoTransposeMultiThread(int task_id) override;
 
  private:
   int DoTransposeSingleThread() override;
-  int DoTransposeMultiThread(int task_id) override;
 };
 }  // namespace mindspore::kernel
 

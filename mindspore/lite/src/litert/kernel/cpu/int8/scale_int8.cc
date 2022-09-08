@@ -102,7 +102,7 @@ int ScaleInt8CPUKernel::InitParameter() {
   auto input0_shape = in_tensors_[FIRST_INPUT]->shape();
   auto input1_shape = in_tensors_[SECOND_INPUT]->shape();
   if (scale_param_->axis_ < 0) {
-    scale_param_->axis_ += input0_shape.size();
+    scale_param_->axis_ += static_cast<int>(input0_shape.size());
   }
   if (input1_shape.empty()) {
     MS_LOG(ERROR) << "Scale tensor shape is incorrect.";

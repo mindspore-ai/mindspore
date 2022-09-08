@@ -35,7 +35,7 @@ int ConcatFp16Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 }
 
 int ConcatFp16CPUKernel::EnsureFp16InputsAndOutput() {
-  inputs_.clear();
+  inputs_ptr_.clear();
   for (size_t i = 0; i < in_tensors_.size(); ++i) {
     if (!is_with_data_[i]) {
       continue;
@@ -43,7 +43,7 @@ int ConcatFp16CPUKernel::EnsureFp16InputsAndOutput() {
     auto input = in_tensors_[i]->data();
     MS_CHECK_TRUE_MSG(input != nullptr, RET_ERROR, "input-data is a nullptr.");
     if (in_tensors_[i]->data_type() == kNumberTypeFloat16) {
-      inputs_.push_back(static_cast<const uint8_t *>(input));
+      inputs_ptr_.push_back(static_cast<const uint8_t *>(input));
       continue;
     }
     if (in_tensors_[i]->data_type() == kNumberTypeFloat32 || in_tensors_[i]->data_type() == kNumberTypeFloat) {
@@ -53,7 +53,7 @@ int ConcatFp16CPUKernel::EnsureFp16InputsAndOutput() {
         MS_LOG(ERROR) << "malloc failed";
         return RET_ERROR;
       }
-      inputs_.push_back(tmp);
+      inputs_ptr_.push_back(tmp);
       tmp_buffers_.push_back(tmp);
       Float32ToFloat16(static_cast<float *>(input), reinterpret_cast<float16_t *>(tmp), in_tensors_[i]->ElementsNum());
     } else {
