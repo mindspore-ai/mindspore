@@ -78,7 +78,7 @@ std::vector<int64_t> CheckAttrTupleAndNCDimensions(const PrimitivePtr &primitive
 void DeformableOffsetsPadFunction(std::vector<int64_t> *output_hw, const std::vector<int64_t> &kernel_size,
                                   const std::vector<int64_t> &strides, const std::vector<int64_t> &dilations,
                                   const std::vector<int64_t> &pads, int64_t x_h, int64_t x_w, uint64_t h_axis,
-                                  uint64_t w_axis, bool is_min_shape = false) {
+                                  uint64_t w_axis) {
   int64_t out_h = -1;
   int64_t out_w = -1;
   constexpr size_t top_index = 0;
@@ -86,22 +86,14 @@ void DeformableOffsetsPadFunction(std::vector<int64_t> *output_hw, const std::ve
   constexpr size_t left_index = 2;
   constexpr size_t right_index = 3;
   if (x_h != abstract::Shape::SHP_ANY) {
-    out_h =
-      static_cast<int64_t>(std::floor(1.0 + LongToDouble(x_h + pads[top_index] + pads[bottom_index] - kernel_size[0] -
-                                                         (kernel_size[0] - 1) * (dilations[h_axis] - 1)) /
-                                              LongToDouble(strides[h_axis])));
-    if (is_min_shape && out_h < 1) {
-      out_h = 1L;
-    }
+    out_h = static_cast<int64_t>(std::floor(1 + ((x_h * 1.0) + pads[top_index] + pads[bottom_index] - kernel_size[0] -
+                                                 static_cast<float>((kernel_size[0] - 1) * (dilations[h_axis] - 1))) /
+                                                  strides[h_axis]));
   }
   if (x_w != abstract::Shape::SHP_ANY) {
-    out_w =
-      static_cast<int64_t>(std::floor(1.0 + LongToDouble(x_w + pads[left_index] + pads[right_index] - kernel_size[1] -
-                                                         (kernel_size[1] - 1) * (dilations[w_axis] - 1)) /
-                                              LongToDouble(strides[w_axis])));
-    if (is_min_shape && out_w < 1) {
-      out_w = 1L;
-    }
+    out_w = static_cast<int64_t>(std::floor(1 + ((x_w * 1.0) + pads[left_index] + pads[right_index] - kernel_size[1] -
+                                                 static_cast<float>((kernel_size[1] - 1) * (dilations[w_axis] - 1))) /
+                                                  strides[w_axis]));
   }
   output_hw->push_back(out_h);
   output_hw->push_back(out_w);
@@ -109,7 +101,10 @@ void DeformableOffsetsPadFunction(std::vector<int64_t> *output_hw, const std::ve
 
 void CheckOutputHeightAndWight(const std::string &prim_name, const std::vector<int64_t> &output_hw,
                                const std::vector<int64_t> &offset_shape) {
-  if (output_hw[kIndex0] != offset_shape[kIndex2] || output_hw[kIndex1] != offset_shape[kIndex3]) {
+  if ((output_hw[kIndex0] != abstract::Shape::SHP_ANY && offset_shape[kIndex2] != abstract::Shape::SHP_ANY &&
+       output_hw[kIndex0] != offset_shape[kIndex2]) ||
+      (output_hw[kIndex1] != abstract::Shape::SHP_ANY && offset_shape[kIndex3] != abstract::Shape::SHP_ANY &&
+       output_hw[kIndex1] != offset_shape[kIndex3])) {
     MS_EXCEPTION(ValueError)
       << "For '" << prim_name
       << ", the H and W dims of offsets input should be equal to the computed H and W dims of the "
@@ -131,12 +126,13 @@ abstract::ShapePtr DeformableOffsetsInferShape(const PrimitivePtr &primitive,
   auto offsets_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
   auto x_shape = x_shape_map[kShape];
   auto offsets_shape = offsets_shape_map[kShape];
+  if (IsDynamicRank(x_shape) || IsDynamicRank(offsets_shape)) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
+  }
   constexpr int64_t shape_size = 4;
   (void)CheckAndConvertUtils::CheckInteger("x shape size", SizeToLong(x_shape.size()), kEqual, shape_size, prim_name);
   (void)CheckAndConvertUtils::CheckInteger("offsets shape size", SizeToLong(offsets_shape.size()), kEqual, shape_size,
                                            prim_name);
-  abstract::CheckShapeAnyAndPositive(prim_name + " x_shape", x_shape);
-  abstract::CheckShapeAnyAndPositive(prim_name + " offsets_shape", offsets_shape);
 
   constexpr uint64_t n_axis = 0;
   constexpr uint64_t c_axis = 1;
@@ -177,11 +173,10 @@ abstract::ShapePtr DeformableOffsetsInferShape(const PrimitivePtr &primitive,
   std::vector<int64_t> output_hw;
   DeformableOffsetsPadFunction(&output_hw, kernel_size, strides, dilations, pads, x_shape[h_axis], x_shape[w_axis],
                                h_axis, w_axis);
-
   CheckOutputHeightAndWight(prim_name, output_hw, offsets_shape);
-  ShapeVector output_shape = {x_shape[n_axis], x_shape[c_axis], output_hw[0] * kernel_size[0],
-                              output_hw[1] * kernel_size[1]};
-  abstract::CheckShapeAnyAndPositive(prim_name + " output_shape", output_shape);
+
+  ShapeVector output_shape{x_shape[n_axis], x_shape[c_axis], output_hw[0] * kernel_size[0],
+                           output_hw[1] * kernel_size[1]};
   return std::make_shared<abstract::Shape>(output_shape);
 }
 

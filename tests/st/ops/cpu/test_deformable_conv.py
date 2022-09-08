@@ -359,3 +359,34 @@ def test_vmap():
 
     out2 = manually_batched(x, offsets)
     assert np.allclose(out1.asnumpy(), out2.asnumpy())
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_deformable_conv2d_dynamic_shape():
+    """"
+    Feature: deformable_conv2d function.
+    Description: Test case for dynamic shape support of deformable_conv2d.
+    Expectation: The results are as expected.
+    """
+    kh, kw = 1, 1
+    # x shape [1, 1, 1, 2]
+    x = np.array([[[[-0.41675785, -0.05626683]]]]).astype(np.float32)
+    x = Tensor(x, mstype.float32)
+    # weight shape [1, 1, 1, 1]
+    weight = np.array([[[[-2.1361961]]]]).astype(np.float32)
+    weight = Tensor(weight, mstype.float32)
+    # offsets shape [1, 3, 1, 2]
+    offsets = np.array([[[[1.6402708, -1.7934356]],
+                         [[-0.84174734, 0.5028814]],
+                         [[-1.2452881, -1.0579522]]]]).astype(np.float32)
+    offsets = Tensor(offsets, mstype.float32)
+    offsets_dynamic = Tensor(shape=[None, None, None, None], dtype=mstype.float32)
+    x_dynamic = Tensor(shape=[None, None, None, None], dtype=mstype.float32)
+    net = Net()
+    net.set_inputs(x_dynamic, weight, offsets_dynamic, kh, kw)
+    out = net(x, weight, offsets, kh, kw)
+    # expected output: [1, 1, 1, 2]
+    expected = np.array([[[[-0.00852099, -0.09671781]]]]).astype(np.float32)
+    assert np.allclose(out.asnumpy(), expected)
