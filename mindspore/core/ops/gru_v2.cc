@@ -32,6 +32,9 @@ namespace mindspore {
 namespace ops {
 namespace {
 constexpr size_t kGRUV2InputMinDim = 1;
+constexpr size_t kGRUV2InputSize = 3;
+constexpr size_t kGRUV2HSize = 3;
+constexpr size_t kGRUV2SeqLenSize = 1;
 constexpr int64_t kGRUV2InputNum = 4;
 
 std::unordered_map<std::string, int64_t> GetAttrMap(const PrimitivePtr &primitive) {
@@ -70,29 +73,29 @@ abstract::TupleShapePtr GRUV2InferShape(const PrimitivePtr &primitive, const std
   auto x_shape = x_shape_map[kShape];
   auto h_shape = h_shape_map[kShape];
   auto seq_lengths_shape = seq_lengths_shape_map[kShape];
-  (void)CheckAndConvertUtils::CheckInteger("input dims", SizeToLong(x_shape.size()), kEqual, 3, op_name);
-  (void)CheckAndConvertUtils::CheckInteger("h dims", SizeToLong(h_shape.size()), kEqual, 3, op_name);
-  (void)CheckAndConvertUtils::CheckInteger("seq_lengths dims", SizeToLong(seq_lengths_shape.size()), kEqual, 1,
-                                           op_name);
+  (void)CheckAndConvertUtils::CheckInteger("input dims", SizeToLong(x_shape.size()), kEqual, kGRUV2InputSize, op_name);
+  (void)CheckAndConvertUtils::CheckInteger("h dims", SizeToLong(h_shape.size()), kEqual, kGRUV2HSize, op_name);
+  (void)CheckAndConvertUtils::CheckInteger("seq_lengths dims", SizeToLong(seq_lengths_shape.size()), kEqual,
+                                           kGRUV2SeqLenSize, op_name);
   auto max_seq_lengths = x_shape[0];
   auto batch_size = x_shape[1];
   auto input_size = attr_map["input_size"];
   auto hidden_size = attr_map["hidden_size"];
   auto real_num_layers = attr_map["real_num_layers"];
   auto real_hidden_size = attr_map["real_hidden_size"];
-  if (h_shape[1] != batch_size || seq_lengths_shape[0] != batch_size) {
+  if (h_shape[kInputIndex1] != batch_size || seq_lengths_shape[kInputIndex0] != batch_size) {
     MS_LOG(EXCEPTION) << "For dynamic rnn, the batch_size should be the same between input, h, and seq_lengths.";
   }
 
-  if (x_shape[2] != input_size) {
+  if (x_shape[kInputIndex2] != input_size) {
     MS_LOG(EXCEPTION) << "For dynamic rnn, the input_shape[2] should equal to input_size.";
   }
 
-  if (h_shape[0] != real_num_layers) {
+  if (h_shape[kInputIndex0] != real_num_layers) {
     MS_LOG(EXCEPTION) << "For dynamic rnn, the h_shape[0] should equal to num_directions * num_layers.";
   }
 
-  if (h_shape[2] != hidden_size) {
+  if (h_shape[kInputIndex2] != hidden_size) {
     MS_LOG(EXCEPTION) << "For dynamic rnn, the h_shape[2] should equal to hidden_size.";
   }
   ShapeVector reserve_shape = {1, 1};

@@ -180,8 +180,8 @@ size_t LabelMicroInterleavedIndexPipelineStage(const std::vector<CNodePtr> &all_
     if (!cnode->HasPrimalAttr(parallel::PIPELINE_END) || !cnode->HasPrimalAttr(parallel::MICRO)) {
       continue;
     }
-    size_t pipeline_end = (size_t)GetValue<int64_t>(cnode->GetPrimalAttr(parallel::PIPELINE_END));
-    size_t micro = (size_t)GetValue<int64_t>(cnode->GetPrimalAttr(parallel::MICRO));
+    size_t pipeline_end = LongToSize(GetValue<int64_t>(cnode->GetPrimalAttr(parallel::PIPELINE_END)));
+    size_t micro = LongToSize(GetValue<int64_t>(cnode->GetPrimalAttr(parallel::MICRO)));
     if (pipeline_end != micro) {
       continue;
     }
@@ -301,7 +301,7 @@ void InsertInterleavedNodesDepend(const FuncGraphManagerPtr &manager,
                                   const interleaved_node_pair_vector &micro_interleaved_node_list) {
   for (size_t i = 0; i < micro_interleaved_node_list.size() - 1; ++i) {
     auto comm_node_list = micro_interleaved_node_list[i].second;
-    auto next_comm_node_list = micro_interleaved_node_list[i].second;
+    auto next_comm_node_list = micro_interleaved_node_list[i + 1].second;
     auto comm_node_a = comm_node_list[0];
     auto comm_node_b = comm_node_list[1];
     auto next_comm_node_a = next_comm_node_list[0];

@@ -16,6 +16,7 @@
 
 #include "backend/common/pass/optimize_gradients_allreduce_overlap.h"
 #include <algorithm>
+#include <vector>
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/parallel_context.h"
 
@@ -43,10 +44,10 @@ bool CheckFusionIdMatch(mindspore::HashMap<std::string, std::vector<CNodePtr>> f
                         mindspore::HashMap<std::string, std::vector<CNodePtr>> fusion_grads_node_list_map) {
   std::vector<std::string> fusion_id_allreduce;
   std::vector<std::string> fusion_id_grads;
-  std::transform(fusion_allreduce_list_map.begin(), fusion_allreduce_list_map.end(),
-                 std::back_inserter(fusion_id_allreduce), [](auto pair) { return pair.first; });
-  std::transform(fusion_grads_node_list_map.begin(), fusion_grads_node_list_map.end(),
-                 std::back_inserter(fusion_id_grads), [](auto pair) { return pair.first; });
+  (void)std::transform(fusion_allreduce_list_map.begin(), fusion_allreduce_list_map.end(),
+                       std::back_inserter(fusion_id_allreduce), [](auto pair) { return pair.first; });
+  (void)std::transform(fusion_grads_node_list_map.begin(), fusion_grads_node_list_map.end(),
+                       std::back_inserter(fusion_id_grads), [](auto pair) { return pair.first; });
   std::sort(fusion_id_allreduce.begin(), fusion_id_allreduce.end());
   std::sort(fusion_id_grads.begin(), fusion_id_grads.end());
   MS_LOG(INFO) << "fusion_id_allreduce: " << fusion_id_allreduce << ", fusion_id_grads: " << fusion_id_grads;
@@ -312,7 +313,7 @@ void RemoveFirstDependNode(const std::vector<AnfNodePtr> &node_list) {
     }
     auto input_cnode = common::AnfAlgo::GetInputNode(cnode, 0);
     auto manager = node->func_graph()->manager();
-    manager->Replace(cnode, input_cnode);
+    (void)manager->Replace(cnode, input_cnode);
   }
 }
 
