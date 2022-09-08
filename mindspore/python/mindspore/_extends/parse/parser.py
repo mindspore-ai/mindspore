@@ -269,6 +269,11 @@ def get_scope_name(obj):
     return None
 
 
+def get_type(obj):
+    """Returns the type string of input object"""
+    return type(obj)
+
+
 def get_object_key(obj):
     """Return the function key: module + name."""
     obj_key = ""

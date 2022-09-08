@@ -1697,7 +1697,10 @@ EvalResultPtr StaticGetter(const AnalysisEnginePtr &engine, const AbstractBasePt
   if (data_args->isa<abstract::AbstractScalar>()) {
     ValuePtr data_value = data_args->BuildValue();
     if (data_value->isa<parse::InterpretedObject>()) {
-      MS_EXCEPTION(TypeError) << "Do not support to get attribute from interpreted object.";
+      auto obj = ValueToPyData(data_value);
+      auto type_str = python_adapter::CallPyFn(parse::PYTHON_MOD_PARSE_MODULE, parse::PYTHON_PARSE_GET_TYPE, obj);
+      MS_EXCEPTION(TypeError) << "Do not support to get attribute from " << py::str(type_str) << " object "
+                              << py::str(obj);
     }
   }
 
@@ -1708,7 +1711,10 @@ EvalResultPtr StaticGetter(const AnalysisEnginePtr &engine, const AbstractBasePt
     if (default_args->isa<abstract::AbstractScalar>()) {
       ValuePtr default_value = default_args->BuildValue();
       if (default_value->isa<parse::InterpretedObject>()) {
-        MS_EXCEPTION(TypeError) << "For 'getattr', the third input 'default' can not be interpreted object.";
+        auto obj = ValueToPyData(default_value);
+        auto type_str = python_adapter::CallPyFn(parse::PYTHON_MOD_PARSE_MODULE, parse::PYTHON_PARSE_GET_TYPE, obj);
+        MS_EXCEPTION(TypeError) << "For 'getattr', the third input 'default' can not be " << py::str(type_str)
+                                << " object " << py::str(obj);
       }
     }
   }
