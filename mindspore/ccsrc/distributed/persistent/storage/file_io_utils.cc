@@ -17,6 +17,9 @@
 #include "distributed/persistent/storage/file_io_utils.h"
 #include <fstream>
 
+#ifdef _MSC_VER
+#include <direct.h>  // for _mkdir on windows
+#endif
 #include "mindspore/core/utils/file_utils.h"
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"

@@ -17,7 +17,9 @@
 #include <string>
 #include <memory>
 #include "kernel/kernel.h"
+#ifndef _MSC_VER
 #include "plugin/device/gpu/kernel/akg/akg_gpu_kernel_build.h"
+#endif
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "kernel/common_utils.h"
 #include "frontend/operator/ops.h"
@@ -123,9 +125,10 @@ void CreateGPUKernel(const std::vector<CNodePtr> &kernels) {
       }
     }
   }
-
+#ifndef _MSC_VER
   kernel::AkgGpuKernelBuilder akg_gpu_kernel_builder;
   (void)akg_gpu_kernel_builder.AkgKernelParallelBuild(akg_nodes);
+#endif
 }
 }  // namespace gpu
 }  // namespace device

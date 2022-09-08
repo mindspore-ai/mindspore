@@ -65,11 +65,15 @@ void CollectiveInitializer::InitCollective() {
 }
 
 void CollectiveInitializer::FinalizeCollective() {
+#ifndef _WIN32
   if (CollectiveInitializer::instance().collective_handle_ != nullptr) {
     if (dlclose(CollectiveInitializer::instance().collective_handle_) != 0) {
       MS_LOG(EXCEPTION) << "Closing libgpu_collective.so handle failed.";
     }
   }
+#else
+  MS_LOG(EXCEPTION) << "windows not support MPI.";
+#endif
 }
 
 uint32_t CollectiveInitializer::GetRankID(const std::string &group_name) {

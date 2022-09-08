@@ -91,6 +91,10 @@
 #include "ps/ps_context.h"
 #endif
 
+#ifndef ENABLE_SECURITY
+#include "debug/data_dump/dump_json_parser.h"
+#endif
+
 namespace mindspore {
 namespace session {
 namespace gpu {

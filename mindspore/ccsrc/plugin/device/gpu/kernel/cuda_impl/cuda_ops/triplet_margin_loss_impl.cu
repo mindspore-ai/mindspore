@@ -140,10 +140,10 @@ __global__ void PairwiseDistance(const half *anchor, const half *positive, const
       size_t input_offset = x * bound * inner_size + i * inner_size + y;
       float base = abs(__half2float(pair_tensor[mode / 2][input_offset]) -
                        __half2float(pair_tensor[(mode+3) / 2][input_offset]) + eps);
-      float tem = pow(base, p);
+      float tem = pow(base, static_cast<float>(p));
       res += tem;
     }
-    tem_output[pos] = pow(res, 1.0 / p);
+    tem_output[pos] = pow(res, static_cast<float>(1.0 / p));
   }
   return;
 }

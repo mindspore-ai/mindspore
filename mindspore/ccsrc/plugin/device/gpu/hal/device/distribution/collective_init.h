@@ -60,7 +60,7 @@ class BACKEND_EXPORT CollectiveInitializer {
 
   bool use_mpi_;
   bool collective_inited_;
-  void *collective_handle_;
+  void *collective_handle_{nullptr};
 };
 }  // namespace gpu
 }  // namespace device

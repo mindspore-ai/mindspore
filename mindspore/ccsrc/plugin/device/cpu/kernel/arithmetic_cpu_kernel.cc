@@ -1136,7 +1136,9 @@ bool ArithmeticCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const st
   kernel_name_ = base_operator->name();
   auto iter = kernel_attr_list.find(kernel_name_);
   if (iter == kernel_attr_list.end()) {
-    MS_LOG(ERROR) << "For 'Arithmetic', the kernel name must be in " << kernel::Map2Str(kernel_attr_list)
+    MS_LOG(ERROR) << "For 'Arithmetic', the kernel name must be in "
+                  << kernel::Map2Str<std::map, std::vector<std::pair<KernelAttr, ArithmeticCpuFuncCreator>>>(
+                       kernel_attr_list)
                   << ", but got " << kernel_name_;
     return false;
   }

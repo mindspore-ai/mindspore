@@ -45,8 +45,8 @@ __global__ void DiagKernel(const DataType *input_ptr, DataType *output_ptr, size
 }
 
 template <typename DataType>
-CUDA_LIB_EXPORT void CalDiag(const DataType *input_ptr, DataType *output_ptr, size_t input_size, size_t output_size,
-                             cudaStream_t cuda_stream) {
+void CalDiag(const DataType *input_ptr, DataType *output_ptr, size_t input_size, size_t output_size,
+             cudaStream_t cuda_stream) {
   DiagKernel<<<GET_BLOCKS(output_size), GET_THREADS, 0, cuda_stream>>>(input_ptr, output_ptr, input_size, output_size);
 }
 

@@ -31,7 +31,9 @@
 #include "runtime/device/kernel_runtime_manager.h"
 #include "plugin/device/gpu/hal/device/distribution/collective_init.h"
 #include "plugin/device/gpu/hal/device/gpu_launch_mul.h"
+#ifndef _WIN32
 #include "plugin/device/gpu/kernel/nccl/nccl_gpu_kernel.h"
+#endif
 #include "plugin/device/gpu/hal/device/gpu_common.h"
 #include "runtime/hardware/device_context_manager.h"
 

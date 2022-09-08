@@ -15,6 +15,11 @@
  */
 
 #include "mvlgamma_impl.cuh"
+#ifdef _WIN32
+// for M_PI
+#define _USE_MATH_DEFINES
+#include <math.h>
+#endif
 
 template <typename T>
 __global__ void Valid(bool *valid, const size_t size, const T *input, const int p) {

@@ -228,10 +228,10 @@ inline int Log2Ceil64(uint64_t n) {
 }
 
 template <typename DataType, typename IndexType>
-CUDA_LIB_EXPORT void CalSegmentCombination(DataType *inp_ptr, DataType *out_ptr, IndexType *seg_id_ptr,
-                                           size_t *seg_pos_ptr, size_t op, const size_t inner_size,
-                                           const size_t outer_size, const size_t outer_class, uint32_t device_id,
-                                           cudaStream_t cuda_stream) {
+void CalSegmentCombination(DataType *inp_ptr, DataType *out_ptr, IndexType *seg_id_ptr,
+                           size_t *seg_pos_ptr, size_t op, const size_t inner_size,
+                           const size_t outer_size, const size_t outer_class, uint32_t device_id,
+                           cudaStream_t cuda_stream) {
   // Get start position of each segment and set to segment_pos_ptr.
   // The last element of segment_pos_ptr must equal to indices_size.
   const unsigned int segment_size = outer_size + 1;

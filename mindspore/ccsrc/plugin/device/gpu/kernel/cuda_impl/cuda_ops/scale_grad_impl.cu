@@ -28,7 +28,7 @@ __global__ void ScaleGrad(const int nums, const T *x0, const S &x1, T *y) {
 }
 
 template <typename T, typename S>
-CUDA_LIB_EXPORT void ScaleGradKernel(const int &nums, const T *x0, const S &x1, T *y, cudaStream_t stream) {
+void ScaleGradKernel(const int &nums, const T *x0, const S &x1, T *y, cudaStream_t stream) {
   ScaleGrad<<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
   return;
 }
