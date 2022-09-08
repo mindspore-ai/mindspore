@@ -19,18 +19,23 @@
 
 #include <vector>
 #include <memory>
+#include <map>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 #include "nnacl/base/slice_base.h"
 
 namespace mindspore {
 namespace kernel {
-class SliceCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class SliceCpuKernelMod : public NativeCpuKernelMod {
  public:
   SliceCpuKernelMod() = default;
   ~SliceCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
@@ -74,6 +79,10 @@ class SliceCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   size_t origin_dim_size_{0};
   int data_size_{4};
   SliceParameter slice_param_;
+  size_t output_num_{1};
+  std::vector<int64_t> input_shape_;
+  std::vector<int64_t> begin_shape_;
+  std::vector<int64_t> size_shape_;
 };
 }  // namespace kernel
 }  // namespace mindspore
