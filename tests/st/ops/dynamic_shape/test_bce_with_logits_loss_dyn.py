@@ -15,7 +15,6 @@
 
 import math
 import numpy as np
-import pytest
 
 import mindspore.context as context
 import mindspore.nn as nn
@@ -37,10 +36,6 @@ class NetDyn(nn.Cell):
         return self.loss(predict, target, weight, pos_weight)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_bce_mean_dyn_ascend():
     """
     Feature: Test dynamic shape of BCEWithLogitsLoss op that the reduction is mean on ascend.
