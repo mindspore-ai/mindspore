@@ -35,7 +35,7 @@ void ResizeNearestNeighborV2CpuKernelMod::InitKernel(const CNodePtr &kernel_node
   x_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kIndex0);
   y_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, kIndex0);
   auto size_shape = AnfAlgo::GetInputDeviceShape(kernel_node, kIndex1);
-  if (x_shape_.size() != kShape4dDims) {
+  if (x_shape_.size() != kShape4dDims && !IsDynamicRank(x_shape_)) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the dimension of 'x' should be " << kShape4dDims
                              << ", but got " << x_shape_.size();
   }

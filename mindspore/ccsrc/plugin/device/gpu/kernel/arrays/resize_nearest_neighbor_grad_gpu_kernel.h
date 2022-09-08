@@ -28,7 +28,7 @@ namespace kernel {
 constexpr size_t kInputNumOne = 1;
 constexpr size_t kInputNumTwo = 2;
 constexpr size_t kSecondInputSize = 2;
-template <typename T>
+template <typename T, typename S = int64_t>
 class ResizeNearestNeighborGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   ResizeNearestNeighborGradGpuKernelMod()
@@ -114,8 +114,8 @@ class ResizeNearestNeighborGradGpuKernelMod : public DeprecatedNativeGpuKernelMo
   void InitSizeLists() override {
     input_size_list_.push_back(input_size_);
     if (input_num_ == kInputNumTwo) {
-      // 2 int64_t shape num
-      input_size_list_.push_back(sizeof(int64_t) * kSecondInputSize);
+      // 2 int shape num
+      input_size_list_.push_back(sizeof(S) * kSecondInputSize);
     }
     output_size_list_.push_back(output_size_);
   }
