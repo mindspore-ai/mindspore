@@ -20,8 +20,12 @@
 namespace mindspore {
 namespace session {
 SessionFactory &SessionFactory::Get() {
-  static SessionFactory instance{};
-  return instance;
+  std::call_once(instance_flag_, []() {
+    if (instance_ == nullptr) {
+      instance_ = std::make_shared<SessionFactory>();
+    }
+  });
+  return *instance_;
 }
 
 void SessionFactory::Register(const std::string &device_name, SessionCreator &&session_creator) {

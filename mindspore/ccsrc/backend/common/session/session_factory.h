@@ -21,6 +21,7 @@
 #include <memory>
 #include <string>
 #include <utility>
+#include <mutex>
 #include "utils/ms_utils.h"
 #include "backend/common/session/session_basic.h"
 #include "include/backend/visible.h"
@@ -30,15 +31,18 @@ namespace session {
 using SessionCreator = std::function<std::shared_ptr<SessionBasic>()>;
 class BACKEND_EXPORT SessionFactory {
  public:
+  SessionFactory() = default;
+  ~SessionFactory() = default;
+
   static SessionFactory &Get();
   void Register(const std::string &device_name, SessionCreator &&session_creator);
   std::shared_ptr<SessionBasic> Create(const std::string &device_name);
 
  private:
-  SessionFactory() = default;
-  ~SessionFactory() = default;
   DISABLE_COPY_AND_ASSIGN(SessionFactory)
   std::map<std::string, SessionCreator> session_creators_;
+  inline static std::shared_ptr<SessionFactory> instance_;
+  inline static std::once_flag instance_flag_;
 };
 
 class SessionRegistrar {
