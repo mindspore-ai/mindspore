@@ -60,7 +60,7 @@ class ParallelWorker : public Worker {
   void WaitUntilActive() override;
 
  private:
-  void Run();
+  void ParallelRun();
   bool RunQueueActorTask();
   ParallelThreadPool *parallel_pool_{nullptr};
 };

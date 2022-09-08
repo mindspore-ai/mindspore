@@ -23,9 +23,9 @@
 namespace mindspore {
 constexpr int kActorParallelThreshold = 5;
 
-void ParallelWorker::CreateThread() { thread_ = std::thread(&ParallelWorker::Run, this); }
+void ParallelWorker::CreateThread() { thread_ = std::thread(&ParallelWorker::ParallelRun, this); }
 
-void ParallelWorker::Run() {
+void ParallelWorker::ParallelRun() {
   if (!core_list_.empty()) {
     SetAffinity();
   }

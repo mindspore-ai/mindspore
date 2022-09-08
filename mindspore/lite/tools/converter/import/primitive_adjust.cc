@@ -660,7 +660,7 @@ bool PrimitiveAdjust::Run(const FuncGraphPtr &func_graphs) {
         cnode->set_input(0, new_value_node);
         continue;
       }
-      adjusted_value_node.insert(value_node);
+      (void)adjusted_value_node.insert(value_node);
       auto name = prim->name();
       auto adjust_func = PrimitiveAdjustRegistry::GetInstance()->GetPrimitiveCreator(name);
       if (adjust_func == nullptr) {
