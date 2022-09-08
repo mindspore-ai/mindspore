@@ -23,10 +23,12 @@ namespace dataset {
 
 Monitor::Monitor(ProfilingManager *profiling_manager) : Monitor(profiling_manager, GlobalContext::config_manager()) {}
 
-Monitor::Monitor(ProfilingManager *profiling_manager, std::shared_ptr<ConfigManager> cfg)
-    : profiling_manager_(profiling_manager),
-      sampling_interval_(cfg->monitor_sampling_interval()),
-      tree_(profiling_manager_->tree_) {}
+Monitor::Monitor(ProfilingManager *profiling_manager, const std::shared_ptr<ConfigManager> &cfg)
+    : profiling_manager_(profiling_manager), sampling_interval_(cfg->monitor_sampling_interval()) {
+  if (profiling_manager_ != nullptr) {
+    tree_ = profiling_manager_->tree_;
+  }
+}
 
 Monitor::~Monitor() {
   // just set the pointer to nullptr, it's not be released here

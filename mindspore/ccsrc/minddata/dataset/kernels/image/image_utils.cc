@@ -99,6 +99,7 @@ Status GetConvertShape(ConvertMode convert_mode, const std::shared_ptr<CVTensor>
 }
 
 Status ImageNumChannels(const std::shared_ptr<Tensor> &image, dsize_t *channels) {
+  RETURN_UNEXPECTED_IF_NULL(channels);
   if (image->Rank() < kMinImageRank) {
     RETURN_STATUS_UNEXPECTED(
       "GetImageNumChannels: invalid parameter, image should have at least two dimensions, but got: " +

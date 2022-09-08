@@ -465,30 +465,29 @@ class CoNLL2000Dataset(SourceDataset, TextBaseDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the CoNLL2000 chunking dataset.
-        usage (str, optional): Usage of dataset, can be 'train', 'test',  or 'all' (default=None, read all samples).
+        usage (str, optional): Usage of dataset, can be 'train', 'test', or 'all'.
             For dataset, 'train' will read from 8,936 train samples,
             'test' will read from 2,012 test samples,
-            'all' will read from all 1,0948 samples.
-        num_samples (int, optional): Number of samples (rows) to be read (default=None, read the full dataset).
-        shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
-            (default=Shuffle.GLOBAL).
+            'all' will read from all 1,0948 samples. Default: None, read all samples.
+        num_samples (int, optional): Number of samples (rows) to be read. Default: None, read the full dataset.
+        shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
+            Default: mindspore.dataset.Shuffle.GLOBAL.
             If shuffle is False, no shuffling will be performed.
             If shuffle is True, performs global shuffle.
             There are three levels of shuffling, desired shuffle enum defined by mindspore.dataset.Shuffle.
 
             - Shuffle.GLOBAL: Shuffle both the files and samples, same as setting shuffle to True.
-
             - Shuffle.FILES: Shuffle files only.
 
-        num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
-            When this argument is specified, `num_samples` reflects the max sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards` (default=None). This
-            argument can only be specified when `num_shards` is also specified.
-        num_parallel_workers (int, optional): Number of workers to read the data
-            (default=None, number set in the config).
+        num_shards (int, optional): Number of shards that the dataset will be divided into.
+            When this argument is specified, `num_samples` reflects the max sample number of per shard. Default: None.
+        shard_id (int, optional): The shard ID within `num_shards`. This
+            argument can only be specified when `num_shards` is also specified. Default: None.
+        num_parallel_workers (int, optional): Number of workers to read the data.
+            Default: None, number set in the config.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_
-            (default=None, which means no cache is used).
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_.
+            Default: None, which means no cache is used.
 
     Raises:
         RuntimeError: If `dataset_dir` does not contain data files.
@@ -505,8 +504,8 @@ class CoNLL2000Dataset(SourceDataset, TextBaseDataset):
     The CoNLL2000 chunking dataset consists of the text from sections 15-20 of the Wall Street Journal corpus.
     Texts are chunked using IOB notation, and the chunk type has NP, VP, PP, ADJP and ADVP.
     The dataset consist of three columns separated by spaces. The first column contains the current word,
-    the second its part-of-speech tag as derived by the Brill tagger and the third its chunk tag as derived from
-    the WSJ corpus. The dataset is mainly used for text classification, given the text, predict the chunk of the text.
+    the second is part-of-speech tag as derived by the Brill tagger and the third is chunk tag as derived from
+    the WSJ corpus. Text chunking consists of dividing a text in syntactically correlated parts of words.
 
     You can unzip the dataset files into the following structure and read by MindSpore's API:
 

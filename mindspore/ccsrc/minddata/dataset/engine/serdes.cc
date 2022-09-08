@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <fstream>
-#include <stack>
-#include <iomanip>
 #include "minddata/dataset/engine/serdes.h"
 
-#include "minddata/dataset/core/pybind_support.h"
-#include "utils/file_utils.h"
+#include <fstream>
+#include <iomanip>
+#include <stack>
+
 #include "include/common/utils/utils.h"
+#include "minddata/dataset/core/pybind_support.h"
 #ifndef BUILD_LITE
 #include "mindspore/core/utils/file_utils.h"
 #else
@@ -29,7 +29,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 std::map<std::string, Status (*)(nlohmann::json json_obj, std::shared_ptr<TensorOperation> *operation)>
   Serdes::func_ptr_ = Serdes::InitializeFuncPtr();
 
@@ -471,8 +470,10 @@ extern "C" {
 // which is incompatible with C
 void ParseMindIRPreprocess_C(const std::vector<std::string> &dataset_json,
                              std::vector<std::shared_ptr<mindspore::dataset::Execute>> *data_graph, Status *s) {
-  Status ret = Serdes::ParseMindIRPreprocess(dataset_json, data_graph);
-  *s = Status(ret);
+  if (s != nullptr) {
+    Status ret = Serdes::ParseMindIRPreprocess(dataset_json, data_graph);
+    *s = Status(ret);
+  }
 }
 }
 
