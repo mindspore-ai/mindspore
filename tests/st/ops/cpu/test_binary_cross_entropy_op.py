@@ -21,6 +21,7 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
 
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
@@ -28,10 +29,10 @@ context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 class Net(nn.Cell):
     def __init__(self, reduction="none"):
         super(Net, self).__init__()
-        self.BinaryCrossEntropy = P.BinaryCrossEntropy(reduction)
+        self.bce = P.BinaryCrossEntropy(reduction)
 
     def construct(self, x, y, weight=None):
-        return self.BinaryCrossEntropy(x, y, weight)
+        return self.bce(x, y, weight)
 
 
 @pytest.mark.level0
@@ -157,3 +158,32 @@ def test_binary_cross_entropy_loss_grad():
                   -1.19787852e-04, 2.48514321e-02, -1.66696273e-02, -2.71965731e-02]
 
     assert np.allclose(dx[0].asnumpy(), dx1_expect)
+
+
+def test_binary_cross_entropy_forward_functional(nptype):
+    """
+    Feature: test binary_cross_entropy forward for given input dtype.
+    Description: test inputs for given input dtype.
+    Expectation: the result match with expected result.
+    """
+    logits = Tensor(np.array([0.2, 0.7, 0.1]).astype(nptype))
+    labels = Tensor(np.array([0., 1., 0.]).astype(nptype))
+    weight = Tensor(np.array([1, 2, 2]).astype(nptype))
+    output = F.binary_cross_entropy(logits, labels, weight)
+    expected = Tensor(np.array([0.38240486]).astype(nptype))
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_binary_cross_entropy_forward_float32_functional():
+    """
+    Feature: test binary_cross_entropy forward.
+    Description: test float32 inputs.
+    Expectation: the result match with expected result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    test_binary_cross_entropy_forward_functional(np.float32)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
+    test_binary_cross_entropy_forward_functional(np.float32)

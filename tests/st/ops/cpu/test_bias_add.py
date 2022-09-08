@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops.functional import vmap
+from mindspore.ops import functional as F
 
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 
@@ -139,7 +140,6 @@ def test_net2():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-
 def test_biasadd_vmap():
     """
     Feature: biasadd vmap test on cpu.
@@ -165,5 +165,35 @@ def test_biasadd_vmap():
                              [17, 18]]]]).astype(np.float16)
     assert np.allclose(output.asnumpy(), expect_out)
 
+
+def test_bias_add_forward_functional(nptype):
+    """
+    Feature: test bias_add forward for given input dtype.
+    Description: test inputs for given input dtype.
+    Expectation: the result match with expected result.
+    """
+    input_x = Tensor(np.arange(6).reshape((2, 3)).astype(nptype))
+    bias = Tensor(np.arange(3).reshape((3)).astype(nptype))
+    output = F.bias_add(input_x, bias)
+    expected = np.array([[0., 2., 4.], [3., 5., 7.]]).astype(nptype)
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_bias_add_forward_float32_functional():
+    """
+    Feature: test bias_add forward.
+    Description: test float32 inputs.
+    Expectation: the result match with expected result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    test_bias_add_forward_functional(np.float32)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
+    test_bias_add_forward_functional(np.float32)
+
+
 if __name__ == '__main__':
     test_biasadd_vmap()
+    test_bias_add_forward_float32_functional()

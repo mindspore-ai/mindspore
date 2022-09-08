@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,11 +21,12 @@ from mindspore.common.tensor import Tensor
 from mindspore.nn import BatchNorm2d
 from mindspore.nn import Cell
 from mindspore.ops import composite as C
+from mindspore.ops import functional as F
 
 
-class Batchnorm_Net(Cell):
+class BatchNormNet(Cell):
     def __init__(self, c, weight, bias, moving_mean, moving_var_init):
-        super(Batchnorm_Net, self).__init__()
+        super(BatchNormNet, self).__init__()
         self.bn = BatchNorm2d(c, eps=0.00001, momentum=0.1, beta_init=bias, gamma_init=weight,
                               moving_mean_init=moving_mean, moving_var_init=moving_var_init)
 
@@ -69,7 +70,7 @@ def test_train_forward():
     error = np.ones(shape=[1, 2, 4, 4]) * 1.0e-4
 
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    bn_net = Batchnorm_Net(2, Tensor(weight), Tensor(bias), Tensor(moving_mean), Tensor(moving_var_init))
+    bn_net = BatchNormNet(2, Tensor(weight), Tensor(bias), Tensor(moving_mean), Tensor(moving_var_init))
     bn_net.set_train()
     output = bn_net(Tensor(x))
     diff = output.asnumpy() - expect_output
@@ -77,7 +78,7 @@ def test_train_forward():
     assert np.all(-diff < error)
 
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    bn_net = Batchnorm_Net(2, Tensor(weight), Tensor(bias), Tensor(moving_mean), Tensor(moving_var_init))
+    bn_net = BatchNormNet(2, Tensor(weight), Tensor(bias), Tensor(moving_mean), Tensor(moving_var_init))
     bn_net.set_train(False)
     output = bn_net(Tensor(x))
 
@@ -109,10 +110,45 @@ def test_train_backward():
     error = np.ones(shape=[1, 2, 4, 4]) * 1.0e-6
 
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    bn_net = Batchnorm_Net(2, weight, bias, moving_mean, moving_var_init)
+    bn_net = BatchNormNet(2, weight, bias, moving_mean, moving_var_init)
     bn_net.set_train()
     bn_grad = Grad(bn_net)
     output = bn_grad(Tensor(x), Tensor(grad))
     diff = output[0].asnumpy() - expect_output
     assert np.all(diff < error)
     assert np.all(-diff < error)
+
+
+def test_batch_norm_forward_functional(nptype):
+    """
+    Feature: test batch_norm forward for given input dtype.
+    Description: test inputs for given input dtype.
+    Expectation: the result match with expected result.
+    """
+    input_x = Tensor(np.ones([2, 2]).astype(nptype))
+    running_mean = Tensor(np.ones([2]).astype(nptype))
+    running_var = Tensor(np.ones([2]).astype(nptype))
+    weight = Tensor(np.ones([2]).astype(nptype))
+    bias = Tensor(np.ones([2]).astype(nptype))
+    output = F.batch_norm(input_x, running_mean, running_var, weight, bias)
+    expected = np.array([[1., 1.], [1., 1.]]).astype(nptype)
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_batch_norm_forward_float32_functional():
+    """
+    Feature: test batch_norm forward.
+    Description: test float32 inputs.
+    Expectation: the result match with expected result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    test_batch_norm_forward_functional(np.float32)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
+    test_batch_norm_forward_functional(np.float32)
+
+
+if __name__ == '__main__':
+    test_batch_norm_forward_float32_functional()

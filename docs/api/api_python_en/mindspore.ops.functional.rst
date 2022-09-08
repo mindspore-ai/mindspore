@@ -50,6 +50,8 @@ Neural Network
     mindspore.ops.adaptive_max_pool1d
     mindspore.ops.adaptive_max_pool3d
     mindspore.ops.avg_pool2d
+    mindspore.ops.batch_norm
+    mindspore.ops.bias_add
     mindspore.ops.conv2d
     mindspore.ops.ctc_greedy_decoder
     mindspore.ops.deformable_conv2d
@@ -76,6 +78,7 @@ Loss Functions
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.ops.binary_cross_entropy
     mindspore.ops.binary_cross_entropy_with_logits
     mindspore.ops.cross_entropy
     mindspore.ops.nll_loss
