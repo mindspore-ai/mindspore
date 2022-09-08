@@ -43,11 +43,13 @@ class ConvolutionWinogradBaseCPUKernel : public ConvolutionBaseCPUKernel {
   virtual int ConfigInputOutput();
   int WinogradFilterTransform(const float *weight_data, float *matrix_g, const float *matrix_gt, int oc_block);
 
+ protected:
+  int UpdateThreadNumProcess(int32_t kernel_type, int64_t per_unit_load_num, int64_t per_unit_store_num,
+                             int64_t unit_num) override;
+
  private:
   int MallocWeightBiasData() override;
   void PackWeight() override;
-  int UpdateThreadNumProcess(int32_t kernel_type, int64_t per_unit_load_num, int64_t per_unit_store_num,
-                             int64_t unit_num) override;
   void FreeTmpBuffer() {
     if (trans_input_ != nullptr) {
       ctx_->allocator->Free(trans_input_);

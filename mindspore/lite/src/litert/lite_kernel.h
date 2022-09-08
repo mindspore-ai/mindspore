@@ -70,10 +70,6 @@ class LiteKernel : public Abstractkernel {
   // called after Run
   virtual int PostProcess() { return FreeInWorkTensor(); }
 
-  virtual int UpdateThreadNumProcess(int32_t kernel_type, int64_t per_unit_load_num, int64_t per_unit_store_num,
-                                     int64_t unit_num);
-  int UpdateThreadNumPass(int32_t kernel_type, int64_t per_unit_load_num, int64_t per_unit_store_num, int64_t unit_num);
-
   virtual bool CheckInputsValid() const { return true; }
 
   virtual bool CheckParamsValid() const { return true; }
@@ -192,6 +188,11 @@ class LiteKernel : public Abstractkernel {
   }
   const lite::Context *context() const { return this->ms_context_; }
   bool ws_allocated_ = false;
+
+ protected:
+  virtual int UpdateThreadNumProcess(int32_t kernel_type, int64_t per_unit_load_num, int64_t per_unit_store_num,
+                                     int64_t unit_num);
+  int UpdateThreadNumPass(int32_t kernel_type, int64_t per_unit_load_num, int64_t per_unit_store_num, int64_t unit_num);
 
  protected:
   OpParameter *op_parameter_ = nullptr;

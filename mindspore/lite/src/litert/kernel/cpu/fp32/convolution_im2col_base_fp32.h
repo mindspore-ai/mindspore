@@ -59,8 +59,6 @@ class ConvolutionIm2ColBaseCPUKernel : public ConvolutionBaseCPUKernel {
       output_need_align_ = false;
     }
   }
-
- private:
   int UpdateThreadNumProcess(int32_t kernel_type, int64_t per_unit_load_num, int64_t per_unit_store_num,
                              int64_t unit_num) override;
 

@@ -79,6 +79,10 @@ int UpdateThreadNum(int32_t kernel_type, int64_t per_unit_load_num, int64_t per_
 #else
 inline int UpdateThreadNum(int32_t kernel_type, int64_t per_unit_load_num, int64_t per_unit_store_num, int64_t unit_num,
                            int thread_num) {
+  (void)kernel_type;
+  (void)per_unit_load_num;
+  (void)per_unit_store_num;
+  (void)unit_num;
   return thread_num;
 }
 #endif

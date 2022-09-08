@@ -96,9 +96,9 @@ class OpenGLRuntime {
 
   std::map<GLuint, std::pair<GLsizeiptr, GLenum>> m_ssbo_pool_;
   std::map<GLuint, std::pair<std::vector<int>, std::vector<GLenum>>> m_texture_pool_;
-  EGLContext m_context_;
-  EGLDisplay m_display_;
-  EGLSurface m_surface_;
+  EGLContext m_context_ = nullptr;
+  EGLDisplay m_display_ = nullptr;
+  EGLSurface m_surface_ = nullptr;
 };
 }  // namespace OpenGL
 }  // namespace mindspore
