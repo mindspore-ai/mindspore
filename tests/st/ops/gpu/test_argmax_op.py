@@ -69,6 +69,13 @@ def test_argmax_2d():
     output = Argmax_axis_1(x)
     expect = np.array([1, 0, 0, 0]).astype(np.int32)
     assert (output.asnumpy() == expect).all()
+    # test dynamic shape of argmax.
+    dy_shape_argmax_axis_0 = NetArgmax(axis=0)
+    input_x_dyn = Tensor(shape=[3, None], dtype=mstype.float32)
+    dy_shape_argmax_axis_0.set_inputs(input_x_dyn)
+    output = dy_shape_argmax_axis_0(x)
+    expect = np.array([2, 2, 2]).astype(np.float32)
+    assert (output.asnumpy() == expect).all()
 
 
 @pytest.mark.level0

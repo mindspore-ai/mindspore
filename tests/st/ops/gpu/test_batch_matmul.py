@@ -53,6 +53,14 @@ def test_4d():
                [[5816, 5882, 5948, 6014]]]]
     assert (output.asnumpy() == expect).all()
 
+    # test dynamic_shape
+    dyn_shape_net = BatchMatMulNet()
+    input_x_dyn = Tensor(shape=[2, None, 1, 3], dtype=mstype.float32)
+    input_y_dyn = Tensor(shape=[2, None, 3, 4], dtype=mstype.float32)
+    dyn_shape_net.set_inputs(input_x_dyn, input_y_dyn)
+    output = dyn_shape_net(input_x, input_y)
+    assert (output.asnumpy() == expect).all()
+
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
