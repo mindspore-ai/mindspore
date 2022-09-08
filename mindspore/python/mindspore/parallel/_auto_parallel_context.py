@@ -126,6 +126,54 @@ class _AutoParallelContext:
             else:
                 raise KeyError("comm fusion type must be allreduce, allgather or reducescatter, but got {}".format(key))
 
+    def get_comm_fusion(self):
+        """Get comm fusion config."""
+        self.check_context_handle()
+        mode = self._context_handle.get_fusion_mode()
+        if mode in (_ParallelFusionConfig.AUTO, _ParallelFusionConfig.SIZE):
+            config = self.fusion_threshold_mb()
+        if mode == _ParallelFusionConfig.INDEX:
+            config = self.get_all_reduce_fusion_split_indices()
+        return {_ParallelFusionConfig.ALLREDUCE: {_ParallelFusionConfig.MODE: mode,
+                                                  _ParallelFusionConfig.FUSION_CONFIG: config}}
+
+    def _set_allgather_comm_fusion(self, comm_fusion, comm_type="allgather"):
+        """
+        Set allgather and reducescatter fusion method for auto parallel.
+
+        Args:
+            comm_fusion (dict): A dict contains the methods and values for setting the fusion method. Currently it
+                                  supports four fusion methods: `auto` and `size`.
+            comm_type (str): The name of the communication operator, `allgather` or `reducescatter`.
+
+        Raises:
+            KeyError: When key of comm_fusion is not 'mode' or 'config'.
+            KeyError: When `mode` is not 'auto', 'size'.
+        """
+        self.check_context_handle()
+        if comm_type == "allgather" and not self.get_enable_all_gather_fusion():
+            return
+        if comm_type == "reducescatter" and not self.get_enable_reduce_scatter_fusion():
+            return
+        if not isinstance(comm_fusion, dict):
+            raise TypeError("For 'comm_fusion', {} config must be dict, but got the type : {}.".format(
+                comm_type, type(comm_fusion)))
+        if _ParallelFusionConfig.MODE not in comm_fusion:
+            raise KeyError("For 'comm_fusion', the key 'mode' should be contained.")
+        if _ParallelFusionConfig.FUSION_CONFIG not in comm_fusion:
+            raise KeyError("For 'comm_fusion', the key 'config' should be contained.")
+        check_mode = [_ParallelFusionConfig.AUTO, _ParallelFusionConfig.SIZE]
+        if comm_fusion[_ParallelFusionConfig.MODE] in check_mode:
+            self._context_handle.set_fusion_mode(comm_fusion[_ParallelFusionConfig.MODE])
+        else:
+            raise KeyError("fusion method mode must be auto or size, but got {}".format(
+                comm_fusion[_ParallelFusionConfig.MODE]))
+
+        fusion_threshold = 64
+        if comm_fusion[_ParallelFusionConfig.MODE] != _ParallelFusionConfig.AUTO:
+            fusion_threshold = comm_fusion[_ParallelFusionConfig.FUSION_CONFIG]
+        self.set_fusion_threshold_mb(fusion_threshold, comm_type)
+
     def _set_allreduce_comm_fusion(self, comm_fusion):
         """
         Set fusion method for auto parallel.
@@ -160,54 +208,6 @@ class _AutoParallelContext:
             self.set_fusion_threshold_mb(comm_fusion[_ParallelFusionConfig.FUSION_CONFIG])
         if comm_fusion[_ParallelFusionConfig.MODE] == _ParallelFusionConfig.INDEX:
             self.set_all_reduce_fusion_split_indices(comm_fusion[_ParallelFusionConfig.FUSION_CONFIG])
-
-    def _set_allgather_comm_fusion(self, comm_fusion, comm_type="allgather"):
-        """
-        Set allgather and reducescatter fusion method for auto parallel.
-
-        Args:
-            comm_fusion (dict): A dict contains the methods and values for setting the fusion method. Currently it
-                                  supports four fusion methods: `auto` and `size`.
-            comm_type (str): The name of the communication operator, `allgather` or `reducescatter`.
-
-        Raises:
-            KeyError: When key of comm_fusion is not 'mode' or 'config'.
-            KeyError: When `mode` is not 'auto', 'size'.
-        """
-        self.check_context_handle()
-        if comm_type == "allgather" and not self.get_enable_all_gather_fusion():
-            return
-        if comm_type == "reducescatter" and not self.get_enable_reduce_scatter_fusion():
-            return
-        if not isinstance(comm_fusion, dict):
-            raise TypeError("For 'comm_fusion', {} config must be dict, but got the type : {}.".format(
-                comm_type, type(comm_fusion)))
-        if _ParallelFusionConfig.MODE not in comm_fusion:
-            raise KeyError("For 'comm_fusion', the key 'mode' should be contained.")
-        if _ParallelFusionConfig.FUSION_CONFIG not in comm_fusion:
-            raise KeyError("For 'comm_fusion', the key 'config' should be contained.")
-        check_mode = [_ParallelFusionConfig.AUTO, _ParallelFusionConfig.SIZE]
-        if comm_fusion[_ParallelFusionConfig.MODE] in check_mode:
-            self._context_handle.set_fusion_mode(comm_fusion[_ParallelFusionConfig.MODE])
-        else:
-            raise KeyError("fusion method mode must be auto or size, but got {}".format(
-                comm_fusion[_ParallelFusionConfig.MODE]))
-
-        fusion_threshold = 64 if comm_fusion[_ParallelFusionConfig.MODE] == _ParallelFusionConfig.AUTO else \
-                                 comm_fusion[_ParallelFusionConfig.FUSION_CONFIG]
-        self.set_fusion_threshold_mb(fusion_threshold, comm_type)
-
-    def get_comm_fusion(self):
-        """Get comm fusion config."""
-        self.check_context_handle()
-        mode = self._context_handle.get_fusion_mode()
-        if mode in (_ParallelFusionConfig.AUTO, _ParallelFusionConfig.SIZE):
-            config = self.fusion_threshold_mb()
-        if mode == _ParallelFusionConfig.INDEX:
-            config = self.get_all_reduce_fusion_split_indices()
-        return {_ParallelFusionConfig.ALLREDUCE: {_ParallelFusionConfig.MODE: mode,
-                                                  _ParallelFusionConfig.FUSION_CONFIG: config}}
-
 
     def set_fusion_threshold_mb(self, fusion_threshold=64, comm_type="allreduce"):
         """
