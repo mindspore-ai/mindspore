@@ -27,7 +27,7 @@ namespace mindspore {
 namespace system {
 #if defined(SYSTEM_ENV_POSIX)
 // Implement the Posix file system
-WriteFilePtr PosixFileSystem::CreateWriteFile(const string &file_name) {
+WriteFilePtr PosixFileSystem::CreateWriteFile(const string &file_name, const char *mode) {
   if (file_name.empty()) {
     MS_LOG(ERROR) << "Create write file failed because the file name is null.";
     return nullptr;
@@ -37,7 +37,7 @@ WriteFilePtr PosixFileSystem::CreateWriteFile(const string &file_name) {
     MS_LOG(ERROR) << "Create write file(" << file_name << ") failed.";
     return nullptr;
   }
-  bool result = fp->Open();
+  bool result = fp->Open(mode);
   if (!result) {
     MS_LOG(ERROR) << "Open the write file(" << file_name << ") failed.";
     return nullptr;
@@ -102,8 +102,10 @@ bool PosixFileSystem::DeleteDir(const string &dir_name) {
 #endif
 
 #if defined(SYSTEM_ENV_WINDOWS)
+
 // Implement the Windows file system
-WriteFilePtr WinFileSystem::CreateWriteFile(const string &file_name) {
+
+WriteFilePtr WinFileSystem::CreateWriteFile(const string &file_name, const char *mode) {
   if (file_name.empty()) {
     MS_LOG(ERROR) << "Create write file failed because the file name is null.";
     return nullptr;
@@ -113,7 +115,7 @@ WriteFilePtr WinFileSystem::CreateWriteFile(const string &file_name) {
     MS_LOG(ERROR) << "Create write file(" << file_name << ") failed.";
     return nullptr;
   }
-  bool result = fp->Open();
+  bool result = fp->Open(mode);
   if (!result) {
     MS_LOG(ERROR) << "Open the write file(" << file_name << ") failed.";
     return nullptr;
@@ -173,7 +175,7 @@ bool WinFileSystem::DeleteFile(const string &file_name) {
   return true;
 }
 
-bool WinWriteFile::Open() {
+bool WinWriteFile::Open(const char *mode) {
   if (file_ != nullptr) {
     MS_LOG(WARNING) << "The File(" << file_name_ << ") already open.";
     return true;
@@ -182,15 +184,14 @@ bool WinWriteFile::Open() {
   if (file_name_.c_str() == nullptr) {
     MS_LOG(EXCEPTION) << "The file path is null.";
   }
-  char path[PATH_MAX] = {0x00};
-  if (file_name_.size() >= PATH_MAX || _fullpath(path, file_name_.c_str(), PATH_MAX) == nullptr) {
-    MS_LOG(EXCEPTION) << "Convert to real path fail, file name is " << file_name_ << ".";
+  if (file_name_.size() >= PATH_MAX) {
+    MS_LOG(EXCEPTION) << "The file name is too long, file name is " << file_name_ << ".";
   }
 
   // open the file
-  file_ = fopen(path, "w+");
+  file_ = fopen(file_name_.c_str(), mode);
   if (file_ == nullptr) {
-    MS_LOG(ERROR) << "File(" << path << ") IO ERROR." << ErrnoToString(errno);
+    MS_LOG(ERROR) << "File(" << file_name_ << ") IO ERROR." << ErrnoToString(errno);
     return false;
   }
   return true;
@@ -205,6 +206,14 @@ bool WinWriteFile::Write(const std::string &data) {
   }
   return true;
 }
+
+bool WinWriteFile::PWrite(const void *buf, size_t nbytes, size_t offset) { MS_LOG(EXCEPTION) << "Not Implement"; }
+
+bool WinWriteFile::PRead(void *buf, size_t nbytes, size_t offset) { MS_LOG(EXCEPTION) << "Not Implement"; }
+
+bool WinWriteFile::Trunc(size_t length) { MS_LOG(EXCEPTION) << "Not Implement"; }
+
+size_t WinWriteFile::Size() { MS_LOG(EXCEPTION) << "Not Implement"; }
 
 bool WinWriteFile::Close() {
   if (file_ == nullptr) {

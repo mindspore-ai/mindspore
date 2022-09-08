@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,9 @@ class StorageBase {
   StorageBase() = default;
   virtual ~StorageBase() = default;
 
+  virtual void Initialize() {}
+
+  virtual void Finalize() {}
   // Write input tensor to storage medium or memory buffer.
   // The parameter dirty_info indicates that the part of the Tensor that needs to be rewritten to storage,
   // for example, some rows of embedding table need to be rewritten to storage, the dirty_info should contain these row
@@ -52,11 +55,17 @@ class StorageBase {
   // The parameter dirty_info indicates that the part of the Tensor that needs to be rewritten to storage.
   virtual void Write(const std::vector<InputData> &input, const DirtyInfo &dirty_info) {}
 
+  // Write data of ids to block files.
+  virtual void Write(const void *input, const std::vector<int> &ids) {}
+
   // Read data from the storage medium or memory buffer and merge them into contiguous memory.
   virtual void Read(const OutputData &output) {}
 
   // Read data from the storage medium or memory buffer and merge them into contiguous memory for multiple tensors.
   virtual void Read(const std::vector<OutputData> &outputs) {}
+
+  // Read ids from block files.
+  virtual void Read(const std::vector<int> &ids, void *output, std::vector<int> *missing) {}
 };
 }  // namespace storage
 }  // namespace distributed
