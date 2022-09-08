@@ -15,14 +15,17 @@
  */
 
 #include "ops/batch_to_space.h"
+#include <set>
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
+#include "utils/shape_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
 MIND_API_OPERATOR_IMPL(BatchToSpace, BaseOperator);
+
 void BatchToSpace::Init(const std::vector<int64_t> &block_size, const std::vector<std::vector<int64_t>> &crops) {
   this->set_block_size(block_size);
   this->set_crops(crops);
@@ -46,6 +49,66 @@ std::vector<std::vector<int64_t>> BatchToSpace::get_crops() const {
   return GetValue<std::vector<std::vector<int64_t>>>(value_ptr);
 }
 
-REGISTER_PRIMITIVE_C(kNameBatchToSpace, BatchToSpace);
+class BatchToSpaceInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    MS_EXCEPTION_IF_NULL(primitive);
+    auto prim_name = primitive->name();
+    const int64_t input_num = 1;
+    CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
+    auto x = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
+    auto x_shape = x->BuildShape();
+    MS_EXCEPTION_IF_NULL(x_shape);
+    auto shape_element = x_shape->cast<abstract::ShapePtr>();
+    MS_EXCEPTION_IF_NULL(shape_element);
+    auto input_shape = shape_element->shape();
+    const size_t input_rank = 4;
+    if (input_shape.size() != input_rank) {
+      MS_EXCEPTION(ValueError) << "Rank of input should be 4, got " << shape_element->shape().size();
+    }
+    if (mindspore::IsDynamicRank(shape_element->shape())) {
+      return std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
+    }
+    auto block_size = GetValue<int64_t>(primitive->GetAttr(kBlockSize));
+    auto crops = GetValue<std::vector<std::vector<int64_t>>>(primitive->GetAttr(kCrops));
+    const size_t height_dim_index = 2;
+    ShapeVector output_shape(input_rank);
+    for (size_t i = 0; i < height_dim_index; i++) {
+      output_shape[i] = input_shape[i];
+    }
+    for (size_t i = height_dim_index; i < input_rank; i++) {
+      auto x_block_prod = input_shape[i] * block_size;
+      auto crop_sum = crops[i - height_dim_index][0] + crops[i - height_dim_index][1];
+      if (x_block_prod < crop_sum) {
+        MS_EXCEPTION(ValueError) << "x block shape prod should be greater or equal to crops sum, got x_block_prod: "
+                                 << x_block_prod << ", crop_sum: " << crop_sum;
+      }
+      output_shape[i] = x_block_prod - crop_sum;
+    }
+    auto block_size_prod = block_size * block_size;
+    if (output_shape[0] % block_size_prod != 0) {
+      MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the shape of output with index 0 must be divided exactly "
+                               << "by block_size_prod, but got the shape of output: " << output_shape << " and "
+                               << "block_size_prod: " << block_size_prod << ".";
+    }
+    output_shape[0] = output_shape[0] / block_size_prod;
+    return std::make_shared<abstract::Shape>(output_shape);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    MS_EXCEPTION_IF_NULL(primitive);
+    auto prim_name = primitive->name();
+    const int64_t input_num = 1;
+    CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
+    const std::set<TypePtr> valid_types = {kInt8,   kInt16,   kInt32,   kInt64,   kUInt8,     kUInt16,    kUInt32,
+                                           kUInt64, kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
+    auto x_type = input_args[kInputIndex0]->BuildType();
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim_name);
+    return input_args[kInputIndex0]->BuildType();
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(BatchToSpace, prim::kPrimBatchToSpace, BatchToSpaceInfer, false);
 }  // namespace ops
 }  // namespace mindspore
