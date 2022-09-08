@@ -14,6 +14,8 @@
 # ============================================================================
 
 """custom ops"""
+from mindspore.ops._op_impl._custom_op.dsd_impl import dsd_matmul
+from mindspore.ops._op_impl._custom_op.dsd_back_impl import dsdbpropimpl
 from .batchnorm_fold import _batchnorm_fold_tbe
 from .batchnorm_fold2 import _batchnorm_fold2_tbe
 from .batchnorm_fold2_grad import _batchnorm_fold2_grad_tbe
@@ -45,5 +47,3 @@ from .minmax_update_perchannel import _minmax_update_perchannel_tbe
 from .minmax_update_perlayer import _minmax_update_perlayer_tbe
 from .matmul_dds_impl import matmul_dds
 from .matmul_dds_grad_impl import matmul_dds_grad
-from .dsd_impl import dsd_matmul
-from .dsd_back_impl import dsdbpropimpl

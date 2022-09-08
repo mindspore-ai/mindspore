@@ -89,6 +89,7 @@ class _Softmax(Cell):
         return softmax_result, one_hot_label
 
     def bprop(self, logits, label, out, dout):
+        """just return the loss of the dout. Note this should be used together with _NLLLoss"""
         d_logits = F.cast(dout[0], F.dtype(logits))
         return d_logits, F.zeros_like(label)
 
@@ -145,6 +146,7 @@ class _NLLLoss(Cell):
         return loss_reduce
 
     def bprop(self, softmax_result, one_hot_label, out, dout):
+        """A simplified function. Note this should be used together with _Softmax"""
         logits = softmax_result - one_hot_label
         logits = logits * P.ExpandDims()(dout, -1) * self.repeat_loss
 

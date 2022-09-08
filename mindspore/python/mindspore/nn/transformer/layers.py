@@ -476,18 +476,18 @@ class _Linear(Cell):
 
     def shard(self, strategy_matmul, strategy_bias=None, strategy_activation=None):
         r"""
-         Set the shard for the linear. the strategy size should be equal to the inputs.
+        Set the shard for the linear. the strategy size should be equal to the inputs.
 
-         Note:
+        Note:
             It is valid only in semi auto parallel or auto parallel mode.
             In other parallel modes, strategies set here will be ignored.
 
-         Args:
-             strategy_matmul (tuple): The strategy for the matmul. Should be the same shape as the inputs.
-             strategy_bias (tuple): The strategy for the bias_add. Should be the same shape as the inputs.
-             strategy_activation (tuple): The strategy for the strategy_activation. Should be the same shape as
-                the inputs.
-         """
+        Args:
+            strategy_matmul (tuple): The strategy for the matmul. Should be the same shape as the inputs.
+            strategy_bias (tuple): The strategy for the bias_add. Should be the same shape as the inputs.
+            strategy_activation (tuple): The strategy for the strategy_activation. Should be the same shape as
+            the inputs.
+        """
         self.matmul.shard(strategy_matmul)
         if self.has_bias:
             self.bias_add.shard(strategy_bias)
@@ -651,26 +651,36 @@ class FixedSparseAttention(nn.Cell):
         self.div = P.RealDiv().shard(((mp, dp, 1, 1), ()))
         self.slice1 = P.StridedSlice().shard(((dp, 1, 1),))
 
-    def _transpose_inputs(self, q, k, v):
-        """
-        do reshape and transpose to inputs
-        """
-        q = self.transpose(
-            self.reshape(
-                q,
-                (-1, 16, self.num_heads * self.size_per_head // 16, 16)),
-            (2, 0, 1, 3))
-        k = self.transpose(
-            self.reshape(
-                k, (-1, 16, self.num_heads * self.size_per_head // 16, 16)),
-            (2, 0, 1, 3))
-        v = self.transpose(
-            self.reshape(
-                v,
-                (-1, 16, self.num_heads * self.size_per_head // 16, 16)),
-            (0, 2, 3, 1))
+    def construct(self, q, k, v, attention_mask):
+        _check_shape_equal(F.shape(q), "q", self.cls_name,
+                           [self.batch_size, self.seq_length, self.hidden_size])
+        _check_input_dtype(F.dtype(q), "q", [mstype.float16], self.cls_name)
+        _check_shape_equal(F.shape(k), "k", self.cls_name,
+                           [self.batch_size, self.seq_length, self.hidden_size])
+        _check_input_dtype(F.dtype(k), "k", [mstype.float16], self.cls_name)
+        _check_shape_equal(F.shape(v), "v", self.cls_name,
+                           [self.batch_size, self.seq_length, self.hidden_size])
+        _check_input_dtype(F.dtype(v), "v", [mstype.float16], self.cls_name)
+        _check_shape_equal(F.shape(attention_mask), "attention_mask", self.cls_name,
+                           [self.batch_size, self.seq_length, self.seq_length])
+        _check_input_dtype(F.dtype(attention_mask), "attention_mask", [mstype.float32, mstype.float16], self.cls_name)
 
-        return q, k, v
+        q, k, v = self._transpose_inputs(q, k, v)
+        local_mask, global_mask = self._generate_attention_mask(attention_mask)
+        q = self.div(q, F.cast(self.scale_factor, F.dtype(q)))
+        k = self.div(k, F.cast(self.scale_factor, F.dtype(k)))
+        local_prob, global_prob = self.matmul_dds(q, k, local_mask, global_mask)
+        attention = self.matmul_dsd(local_prob, global_prob, v)
+        attention_merge = self.transpose3(attention, (0, 1, 3, 4, 2, 5))
+        attention_merge = F.reshape(
+            attention_merge,
+            (-1, self.num_heads, self.seq_length, self.size_per_head))
+        attention_merge = self.transpose4(attention_merge, (0, 2, 1, 3))
+        attention_merge = F.reshape(
+            attention_merge,
+            (-1, self.seq_length, self.size_per_head * self.num_heads))
+
+        return attention_merge
 
     def _generate_attention_mask(self, attention_mask):
         """
@@ -707,33 +717,23 @@ class FixedSparseAttention(nn.Cell):
 
         return local_mask, global_mask
 
-    def construct(self, q, k, v, attention_mask):
-        _check_shape_equal(F.shape(q), "q", self.cls_name,
-                           [self.batch_size, self.seq_length, self.hidden_size])
-        _check_input_dtype(F.dtype(q), "q", [mstype.float16], self.cls_name)
-        _check_shape_equal(F.shape(k), "k", self.cls_name,
-                           [self.batch_size, self.seq_length, self.hidden_size])
-        _check_input_dtype(F.dtype(k), "k", [mstype.float16], self.cls_name)
-        _check_shape_equal(F.shape(v), "v", self.cls_name,
-                           [self.batch_size, self.seq_length, self.hidden_size])
-        _check_input_dtype(F.dtype(v), "v", [mstype.float16], self.cls_name)
-        _check_shape_equal(F.shape(attention_mask), "attention_mask", self.cls_name,
-                           [self.batch_size, self.seq_length, self.seq_length])
-        _check_input_dtype(F.dtype(attention_mask), "attention_mask", [mstype.float32, mstype.float16], self.cls_name)
+    def _transpose_inputs(self, q, k, v):
+        """
+        do reshape and transpose to inputs
+        """
+        q = self.transpose(
+            self.reshape(
+                q,
+                (-1, 16, self.num_heads * self.size_per_head // 16, 16)),
+            (2, 0, 1, 3))
+        k = self.transpose(
+            self.reshape(
+                k, (-1, 16, self.num_heads * self.size_per_head // 16, 16)),
+            (2, 0, 1, 3))
+        v = self.transpose(
+            self.reshape(
+                v,
+                (-1, 16, self.num_heads * self.size_per_head // 16, 16)),
+            (0, 2, 3, 1))
 
-        q, k, v = self._transpose_inputs(q, k, v)
-        local_mask, global_mask = self._generate_attention_mask(attention_mask)
-        q = self.div(q, F.cast(self.scale_factor, F.dtype(q)))
-        k = self.div(k, F.cast(self.scale_factor, F.dtype(k)))
-        local_prob, global_prob = self.matmul_dds(q, k, local_mask, global_mask)
-        attention = self.matmul_dsd(local_prob, global_prob, v)
-        attention_merge = self.transpose3(attention, (0, 1, 3, 4, 2, 5))
-        attention_merge = F.reshape(
-            attention_merge,
-            (-1, self.num_heads, self.seq_length, self.size_per_head))
-        attention_merge = self.transpose4(attention_merge, (0, 2, 1, 3))
-        attention_merge = F.reshape(
-            attention_merge,
-            (-1, self.seq_length, self.size_per_head * self.num_heads))
-
-        return attention_merge
+        return q, k, v

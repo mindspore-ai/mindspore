@@ -16,6 +16,7 @@
 Note:
     Transformer Networks. This is interface that is subject to change or deletion.
 """
+from __future__ import absolute_import
 from mindspore.nn.transformer.transformer import AttentionMask, VocabEmbedding, MultiHeadAttention, FeedForward, \
     TransformerEncoder, TransformerDecoder, TransformerEncoderLayer, TransformerDecoderLayer, Transformer, \
     TransformerOpParallelConfig, \

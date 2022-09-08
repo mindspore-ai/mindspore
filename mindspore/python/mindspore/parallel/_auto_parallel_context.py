@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Context of auto parallel"""
+from __future__ import absolute_import
 import os
 import threading
 from mindspore import context
