@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,17 +18,10 @@
 #define MINDSPORE_LITE_SRC_COMMON_COMMON_H_
 
 #include <string>
+#include "mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
-#ifndef MS_UNLIKELY
-#ifdef _MSC_VER
-#define MS_UNLIKELY(x) x
-#else
-#define MS_UNLIKELY(x) __builtin_expect(!!(x), 0)
-#endif
-#endif
-
 enum NCHW_SHAPE { NCHW_N = 0, NCHW_C = 1, NCHW_H = 2, NCHW_W = 3 };
 enum NHWC_SHAPE { NHWC_N = 0, NHWC_H = 1, NHWC_W = 2, NHWC_C = 3 };
 enum HWCK_SHAPE { HWCK_H = 0, HWCK_W = 1, HWCK_C = 2, HWCK_K = 3 };
