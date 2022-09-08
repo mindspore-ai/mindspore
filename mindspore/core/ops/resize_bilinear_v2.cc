@@ -91,8 +91,10 @@ abstract::ShapePtr ResizeBilinearV2InferShape(const PrimitivePtr &primitive,
   auto x_shape = x_shape_ptr->shape();
   const int64_t shape_size = 4;
   const int64_t size_size = 2;
-  (void)CheckAndConvertUtils::CheckInteger("the dimension of input_x", SizeToLong(x_shape.size()), kEqual, shape_size,
-                                           prim_name);
+  if (!IsDynamicRank(x_shape)) {
+    (void)CheckAndConvertUtils::CheckInteger("the dimension of input_x", SizeToLong(x_shape.size()), kEqual, shape_size,
+                                             prim_name);
+  }
   std::vector<int64_t> size_value;
   std::vector<int64_t> min_size;
   std::vector<int64_t> max_size;

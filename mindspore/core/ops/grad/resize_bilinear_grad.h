@@ -27,6 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameResizeBilinearGrad = "ResizeBilinearGrad";
+constexpr auto kGradIndex = 0;
 constexpr auto kOriginalImageIndex = 1;
 /// \brief Resizes an image to a certain size using the bilinear interpolation.
 /// Refer to Python API @ref mindspore.ops.ResizeBilinearGrad for more details.

@@ -27,9 +27,6 @@ namespace kernel {
 namespace {
 constexpr size_t kInputsNum = 2;
 constexpr size_t kOutputsNum = 1;
-constexpr size_t kDyShapeSize = 4;
-constexpr size_t kxShapeSize = 4;
-constexpr size_t kDxShapeSize = 4;
 constexpr size_t kDyIndexForN = 0;
 constexpr size_t kDyIndexForC = 1;
 constexpr size_t kDyIndexForH = 2;
@@ -71,7 +68,6 @@ int ResizeBilinearGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
     return ret;
   }
   auto dy_shape = inputs[kIndex0]->GetShapeVector();
-  auto x_shape = inputs[kIndex1]->GetShapeVector();
   auto dx_shape = outputs[kIndex0]->GetShapeVector();
   auto input_element_num = std::accumulate(dy_shape.begin(), dy_shape.end(), size_t(1), std::multiplies<size_t>());
   is_null_input_ = (input_element_num == 0);
@@ -86,18 +82,6 @@ int ResizeBilinearGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   MS_EXCEPTION_IF_NULL(half_pixel_centers);
   half_pixel_centers_ = GetValue<bool>(half_pixel_centers);
 
-  if (dy_shape.size() != kDyShapeSize) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of dy must be equal to 4, but got "
-                      << dy_shape.size();
-  }
-  if (x_shape.size() != kxShapeSize) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of x must be equal to 4, but got "
-                      << x_shape.size();
-  }
-  if (dx_shape.size() != kDxShapeSize) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of dx must be equal to 4, but got "
-                      << dx_shape.size();
-  }
   n_ = LongToInt(dy_shape[kDyIndexForN]);
   c_ = LongToInt(dy_shape[kDyIndexForC]);
   dy_h_ = LongToInt(dy_shape[kDyIndexForH]);
