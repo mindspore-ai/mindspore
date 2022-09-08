@@ -2949,16 +2949,13 @@ def bias_add(input_x, bias):
 
     Args:
         input_x (Tensor): The input tensor. The shape can be 2-5 dimensions.
-            The data type should be float16 or float32.
-        bias (Tensor): The bias tensor, with shape :math:`(C)`. C must be the same as channel dimension C of
-            `input_x`. The data type should be float16 or float32.
+        bias (Tensor): The bias tensor, with shape :math:`(C)`. C must be the same as channel dimension C of `input_x`.
 
     Returns:
         Tensor, with the same shape and data type as `input_x`.
 
     Raises:
         TypeError: If `input_x` or `bias` is not a Tensor.
-        TypeError: If dtype of `input_x` or `bias` is neither float16 nor float32.
         TypeError: If dtype of `input_x` or `bias` is inconsistent.
         TypeError: If dimension of `input_x` is not in the range [2, 5].
 
