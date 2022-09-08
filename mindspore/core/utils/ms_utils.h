@@ -121,6 +121,11 @@ static inline bool UseMPI() {
   return false;
 }
 
+static inline bool UseDynamicCluster() {
+  // If environment variable 'MS_ROLE' is set, we consider this process is participating in cluster building.
+  return !common::GetEnv("MS_ROLE").empty();
+}
+
 template <typename T>
 bool IsEqual(const T *a, const T *b) {
   if (a == b) {
