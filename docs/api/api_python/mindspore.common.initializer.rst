@@ -66,7 +66,7 @@ mindspore.common.initializer
 
     :math:`gain` 是一个可选的缩放因子。如果:math:`fan\_mode` 是'fan_in'，是权重Tensor中输入单元的数量。如果:math:`fan\_mode` 是'fan_out'，则是权重Tensor中输出单元的数量。
 
-    有关HeUniform算法，详情可参考 `<https://arxiv.org/abs/1502.01852>`_ 。
+    有关HeUniform算法，详情可参考 https://arxiv.org/abs/1502.01852。
 
     参数：
         - **negative_slope** (int, float, bool) - 本层激活函数的负数区间斜率（仅适用于非线性激活函数'leaky_relu'），默认值为0。
