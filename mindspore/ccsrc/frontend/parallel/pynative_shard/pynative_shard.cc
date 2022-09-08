@@ -172,7 +172,7 @@ static void SetOutputLayout(const FuncGraphPtr &func_graph, const AnfNodePtr &ou
     auto attrs_temp = prim->attrs();
     ValueTuplePtr strategy = std::make_shared<ValueTuple>(elements);
     attrs_temp[parallel::OUT_STRATEGY] = strategy;
-    prim->SetAttrs(attrs_temp);
+    (void)prim->SetAttrs(attrs_temp);
   }
 }
 
@@ -276,7 +276,7 @@ static std::set<CNodePtr> SetInputLayout(const FuncGraphPtr &func_graph, const A
     attrs_temp[parallel::IN_STRATEGY] = strategy;
     PrimitivePyPtr prim_py = dyn_cast<PrimitivePy>(prim);
     PrimitivePtr new_prim = std::make_shared<PrimitivePy>(*prim_py);
-    new_prim->SetAttrs(attrs_temp);
+    (void)new_prim->SetAttrs(attrs_temp);
     ValuePtr new_prim_value = MakeValue(new_prim);
     ValueNodePtr new_prim_value_node = NewValueNode(new_prim_value);
     AnfNodePtr new_prim_anf_node = new_prim_value_node->cast<AnfNodePtr>();
@@ -323,7 +323,7 @@ AnfNodePtr SearchParamByName(const std::vector<AnfNodePtr> &parameter_list, std:
 }
 
 static std::set<CNodePtr> SetParameterLayout(const FuncGraphPtr &root, const FuncGraphPtr &func_graph,
-                                             const AnfNodePtr &parameter_plan, const int64_t &device_num) {
+                                             const AnfNodePtr &parameter_plan) {
   auto parameter_plan_vnode = parameter_plan->cast<ValueNodePtr>();
   MS_EXCEPTION_IF_NULL(parameter_plan_vnode);
   if (parameter_plan_vnode->value()->isa<None>()) {
@@ -347,8 +347,8 @@ static std::set<CNodePtr> SetParameterLayout(const FuncGraphPtr &root, const Fun
     }
     AnfNodeIndexSet users = manager->node_users()[parameter];
     std::queue<std::pair<AnfNodePtr, int>> to_solve_list;
-    std::for_each(users.begin(), users.end(),
-                  [&to_solve_list](const std::pair<AnfNodePtr, int> &user) { to_solve_list.push(user); });
+    (void)std::for_each(users.begin(), users.end(),
+                        [&to_solve_list](const std::pair<AnfNodePtr, int> &user) { to_solve_list.push(user); });
 
     while (!to_solve_list.empty()) {
       auto user = to_solve_list.front();
@@ -357,8 +357,8 @@ static std::set<CNodePtr> SetParameterLayout(const FuncGraphPtr &root, const Fun
       // If the cnode is not a splittable operator, apply strategy to the next cnode
       if (!IsSplittableOperator(GetPrimName(cnode))) {
         auto tmp_users = manager->node_users()[cnode];
-        std::for_each(tmp_users.begin(), tmp_users.end(),
-                      [&to_solve_list](const std::pair<AnfNodePtr, int> &user) { to_solve_list.push(user); });
+        (void)std::for_each(tmp_users.begin(), tmp_users.end(),
+                            [&to_solve_list](const std::pair<AnfNodePtr, int> &user) { to_solve_list.push(user); });
         continue;
       }
 
@@ -383,12 +383,12 @@ static std::set<CNodePtr> SetParameterLayout(const FuncGraphPtr &root, const Fun
       PrimitivePyPtr prim_py = dyn_cast<PrimitivePy>(prim);
       MS_EXCEPTION_IF_NULL(prim_py);
       PrimitivePtr new_prim = std::make_shared<PrimitivePy>(*prim_py);
-      new_prim->SetAttrs(attrs);
+      (void)new_prim->SetAttrs(attrs);
       ValueNodePtr new_prim_value_node = NewValueNode(MakeValue(new_prim));
       AnfNodePtr new_prim_anf_node = new_prim_value_node->cast<AnfNodePtr>();
       MS_EXCEPTION_IF_NULL(new_prim_anf_node);
       cnode->set_input(0, new_prim_anf_node);
-      concerned_cnode.insert(cnode);
+      (void)concerned_cnode.insert(cnode);
       MS_LOG(INFO) << "The layout of \"" << param_name << "\" has been set to the " << user.second << "th of "
                    << cnode->fullname_with_scope() << "'s in_strategy. Current strategies is " << current_strategies;
     }
@@ -404,7 +404,7 @@ void CompleteConcernedCNodeStrategies(std::set<CNodePtr> concerned_cnode) {
     Shapes current_strategies = ValueTuplePtrToShapes(attrs[parallel::IN_STRATEGY]->cast<ValueTuplePtr>());
     Shapes full_strategies = GenerateFullStrategy(current_strategies, cnode);
     attrs[parallel::IN_STRATEGY] = ShapesToValueTuplePtr(full_strategies);
-    prim->SetAttrs(attrs);
+    (void)prim->SetAttrs(attrs);
     MS_LOG(INFO) << cnode->fullname_with_scope() << ": Completion strategies success. " << current_strategies << " -> "
                  << full_strategies << "(origin_strategies -> completion_strategies)";
   }
@@ -432,9 +432,10 @@ static bool SetStrategyForShard(const FuncGraphPtr &root, const std::vector<AnfN
       }
       std::set<CNodePtr> concerned_cnode;
       auto input_concerned_cnode = SetInputLayout(func_graph, in_strategy, device_num);
-      auto parameter_concerned_cnode = SetParameterLayout(root, func_graph, parameter_plan, device_num);
-      std::set_union(input_concerned_cnode.begin(), input_concerned_cnode.end(), parameter_concerned_cnode.begin(),
-                     parameter_concerned_cnode.end(), std::inserter(concerned_cnode, concerned_cnode.end()));
+      auto parameter_concerned_cnode = SetParameterLayout(root, func_graph, parameter_plan);
+      (void)std::set_union(input_concerned_cnode.begin(), input_concerned_cnode.end(),
+                           parameter_concerned_cnode.begin(), parameter_concerned_cnode.end(),
+                           std::inserter(concerned_cnode, concerned_cnode.end()));
       CompleteConcernedCNodeStrategies(concerned_cnode);
       SetOutputLayout(func_graph, out_strategy);  // Not in effect currently
       return true;
