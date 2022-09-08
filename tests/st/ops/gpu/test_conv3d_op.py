@@ -110,6 +110,9 @@ class MSGradNet(nn.Cell):
         return output
 
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
 def test_conv3d_grad():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     dtype = np.float32
