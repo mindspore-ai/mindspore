@@ -20,39 +20,52 @@
 #include <vector>
 #include <memory>
 #include <string>
+#include <map>
+#include <functional>
+#include <utility>
+
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
+#include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "plugin/factory/ms_factory.h"
+#include "include/common/thread_pool.h"
 
 namespace mindspore {
 namespace kernel {
-class BACKEND_EXPORT EmbeddingLookUpCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class EmbeddingLookUpCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<EmbeddingLookUpCpuKernelMod> {
  public:
-  EmbeddingLookUpCpuKernelMod() {}
-  ~EmbeddingLookUpCpuKernelMod() override {}
+  EmbeddingLookUpCpuKernelMod() = default;
+  ~EmbeddingLookUpCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(
+    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+    const std::vector<KernelTensorPtr> &outputs,
+    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
-
-  std::vector<KernelAttr> GetOpSupport() override {
-    static const std::vector<KernelAttr> support_list = {
-      KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
-      KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-      KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32)};
-    return support_list;
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, workspace, outputs);
   }
 
- protected:
-  template <typename T>
-  void LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 
-  int64_t offset_{0};
-  size_t indices_lens_{1};
+  std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
+
+ protected:
+  template <typename T, typename S>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
+                    const std::vector<kernel::AddressPtr> &outputs);
+
+  std::string kernel_name_;
+
+  int64_t offset_;
+  size_t input_indices_lens_{1};
   size_t first_dim_size_{1};
   size_t outer_dim_size_{1};
-  TypeId indices_data_type_{kNumberTypeInt32};
-  CNodeWeakPtr node_wpt_;
+  TypeId input_indices_dtype_{kNumberTypeInt32};
+  TypeId input_params_dtype_{kTypeUnknown};
 };
 }  // namespace kernel
 }  // namespace mindspore

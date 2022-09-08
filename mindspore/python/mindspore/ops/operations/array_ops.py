@@ -5949,7 +5949,7 @@ class Sort(Primitive):
         self.init_prim_io_names(inputs=['x'], outputs=['y1', 'y2'])
 
 
-class EmbeddingLookup(PrimitiveWithCheck):
+class EmbeddingLookup(Primitive):
     """
     Returns a slice of input tensor based on the specified indices.
 
@@ -5992,22 +5992,10 @@ class EmbeddingLookup(PrimitiveWithCheck):
     def __init__(self):
         """Initialize EmbeddingLookup."""
         self.__setattr_flag__ = True
-        self.init_prim_io_names(inputs=['params', 'indices', 'offset'],
-                                outputs=['output'])
+        # self.init_prim_io_names(inputs=['params', 'indices', 'offset'],
+        #                         outputs=['output'])
         self.add_prim_attr('bprop_return_sparse', True)
 
-    def __check__(self, params, indices, offset):
-        validator.check_subclass("params", params['dtype'], mstype.tensor, self.name)
-        validator.check_tensor_dtype_valid("indices", indices['dtype'], mstype.int_type, self.name)
-        validator.check_subclass("offset", offset['dtype'], mstype.int_, self.name)
-        indices_shp = indices['shape']
-        if not indices_shp:
-            raise ValueError(f"For '{self.name}', the dimension of 'input_indices' should not "
-                             f"be zero, but got {len(indices_shp)}.")
-        params_shp = params['shape']
-        if len(params_shp) > 2:
-            raise ValueError(f"For '{self.name}', the dimension of 'input_params' must <= 2, "
-                             f"but got {len(params_shp)}.")
 
 
 class GatherD(Primitive):

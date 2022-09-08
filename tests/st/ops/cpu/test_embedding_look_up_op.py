@@ -24,24 +24,25 @@ context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
 
 class Net(nn.Cell):
-    def __init__(self, offset):
+    def __init__(self):
         super(Net, self).__init__()
         self.embedding = P.EmbeddingLookup().add_prim_attr("primitive_target", "CPU")
-        self.offset = offset
 
-    def construct(self, param, index):
-        return self.embedding(param, index, self.offset)
+    def construct(self, param, index, offset):
+        return self.embedding(param, index, offset)
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_embedding_look_up0():
-    params = Tensor(np.array([[8, 9], [10, 11], [12, 13], [14, 15]]), mstype.float32)
+    params = Tensor(
+        np.array([[8, 9], [10, 11], [12, 13], [14, 15]]), mstype.float32)
     indices = Tensor(np.array([5, 2, 8, 5]), mstype.int32)
     offset = 4
-    embedding = Net(offset)
-    out = embedding(params, indices)
+    embedding = Net()
+    out = embedding(params, indices, offset)
+    print(out)
     expect = np.array([[10, 11], [0, 0], [0, 0], [10, 11]]).astype(np.float32)
     assert (out.asnumpy() == expect).all()
 
@@ -53,8 +54,8 @@ def test_embedding_look_up1():
     params = Tensor(np.array([[8, 9], [10, 11]]), mstype.float32)
     indices = Tensor(np.array([2, 2, 1, 0]), mstype.int32)
     offset = 0
-    embedding = Net(offset)
-    out = embedding(params, indices)
+    embedding = Net()
+    out = embedding(params, indices, offset)
     expect = np.array([[0, 0], [0, 0], [10, 11], [8, 9]]).astype(np.float32)
     assert (out.asnumpy() == expect).all()
 
@@ -63,12 +64,14 @@ def test_embedding_look_up1():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_embedding_look_up2():
-    params = Tensor(np.array([[8, 9], [10, 11], [12, 13], [14, 15]]), mstype.float32)
+    params = Tensor(
+        np.array([[8, 9], [10, 11], [12, 13], [14, 15]]), mstype.float32)
     indices = Tensor(np.array([[5, 2], [8, 5]]), mstype.int32)
     offset = 4
-    embedding = Net(offset)
-    out = embedding(params, indices)
-    expect = np.array([[[10, 11], [0, 0]], [[0, 0], [10, 11]]]).astype(np.float32)
+    embedding = Net()
+    out = embedding(params, indices, offset)
+    expect = np.array(
+        [[[10, 11], [0, 0]], [[0, 0], [10, 11]]]).astype(np.float32)
     assert (out.asnumpy() == expect).all()
 
 
@@ -76,10 +79,12 @@ def test_embedding_look_up2():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_embedding_look_up3():
-    params = Tensor(np.array([[8, 9], [10, 11], [12, 13], [14, 15]]), mstype.float32)
+    params = Tensor(
+        np.array([[8, 9], [10, 11], [12, 13], [14, 15]]), mstype.float32)
     indices = Tensor(np.array([[[5], [2]], [[8], [5]]]), mstype.int32)
     offset = 4
-    embedding = Net(offset)
-    out = embedding(params, indices)
-    expect = np.array([[[[10, 11]], [[0, 0]]], [[[0, 0]], [[10, 11]]]]).astype(np.float32)
+    embedding = Net()
+    out = embedding(params, indices, offset)
+    expect = np.array(
+        [[[[10, 11]], [[0, 0]]], [[[0, 0]], [[10, 11]]]]).astype(np.float32)
     assert (out.asnumpy() == expect).all()

@@ -20,6 +20,7 @@
 #include <vector>
 #include <string>
 #include <memory>
+
 #include "ops/base_operator.h"
 #include "mindapi/base/types.h"
 
@@ -34,13 +35,21 @@ class MIND_API EmbeddingLookup : public BaseOperator {
   /// \brief Constructor.
   EmbeddingLookup() : BaseOperator(kNameEmbeddingLookup) { InitIOName({"params", "indices", "offset"}, {"output"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.EmbeddingLookup for the inputs.
+  explicit EmbeddingLookup(const std::string k_name) : BaseOperator(k_name) {
+    InitIOName({"params", "indices", "offset"}, {"output"});
+  }
   void Init(const bool setattr_flag = true);
   /// \brief Set setattr_flag.
   void set_setattr_flag(const bool setattr_flag);
+  /// \brief Set offset.
+  void set_offset(const int64_t offset);
   /// \brief Get setattr_flag.
   ///
   /// \return setattr_flag.
   bool get_setattr_flag() const;
+  ///
+  /// \return offset.
+  int64_t get_offset() const;
 };
 abstract::AbstractBasePtr EmbeddingLookupInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                const std::vector<abstract::AbstractBasePtr> &input_args);
