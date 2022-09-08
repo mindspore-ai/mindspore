@@ -24,18 +24,23 @@
 #include "extendrt/infer_session.h"
 #include "runtime/hardware/device_context.h"
 #include "extendrt/utils/kernel_graph_utils.h"
+#include "extendrt/session/lite_graph_executor.h"
 namespace mindspore {
 // TODO(zhaizhiqiang): use GraphSinkDelegateSession instead of GraphSinkSession in future.
 // class GraphSinkDelegateSession
 class GraphSinkSession : public InferSession {
  public:
   GraphSinkSession() = default;
-  explicit GraphSinkSession(const std::shared_ptr<device::GraphExecutor> &executor) : graph_executor_(executor) {}
+  explicit GraphSinkSession(std::shared_ptr<device::GraphExecutor> graph_executor) {
+    graph_executor_ = std::dynamic_pointer_cast<mindspore::LiteGraphExecutor>(graph_executor);
+  }
   virtual ~GraphSinkSession() = default;
 
   Status Init(const std::shared_ptr<Context> &context) override;
   Status CompileGraph(FuncGraphPtr graph, const void *data = nullptr, size_t size = 0) override;
   Status RunGraph(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs) override;
+  Status Resize(const std::vector<tensor::Tensor> &inputs, const std::vector<std::vector<int64_t>> &dims) override;
+
   std::vector<MutableTensorImplPtr> GetOutputs() override;
   std::vector<MutableTensorImplPtr> GetInputs() override;
   std::vector<std::string> GetOutputNames() override;
@@ -44,14 +49,18 @@ class GraphSinkSession : public InferSession {
   MutableTensorImplPtr GetInputByTensorName(const std::string &name) override;
 
  private:
-  std::shared_ptr<device::GraphExecutor> graph_executor_;
-  std::map<string, string> options_;
+  std::shared_ptr<mindspore::LiteGraphExecutor> graph_executor_;
+  std::map<std::string, std::string> options_;
+  bool is_use_kernel_graph_ = true;
   KernelGraphUtilsPtr kernel_graph_utils_;
   KernelGraphPtr kernel_graph_;
-  std::vector<tensor::TensorPtr> inputs_;
+  FuncGraphPtr func_graph_;
+  std::vector<MutableTensorImplPtr> inputs_;
   std::vector<std::string> input_names_;
-  std::vector<tensor::TensorPtr> outputs_;
+  std::vector<MutableTensorImplPtr> outputs_;
   std::vector<std::string> output_names_;
+
+  Status InitGraphInputsOutputs();
 };
 }  // namespace mindspore
 
