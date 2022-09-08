@@ -87,13 +87,13 @@ int ArithmeticInt8CPUKernel::Prepare() {
   auto *input0_tensor = in_tensors_.at(0);
   auto in0_quant_args = input0_tensor->quant_params();
   CHECK_LESS_RETURN(in0_quant_args.size(), 1);
-  quant_args_.in0_args_.scale_ = in0_quant_args.front().scale;
+  quant_args_.in0_args_.scale_ = static_cast<float>(in0_quant_args.front().scale);
   quant_args_.in0_args_.zp_ = in0_quant_args.front().zeroPoint;
 
   auto *input1_tensor = in_tensors_.at(1);
   auto in1_quant_args = input1_tensor->quant_params();
   CHECK_LESS_RETURN(in1_quant_args.size(), 1);
-  quant_args_.in1_args_.scale_ = in1_quant_args.front().scale;
+  quant_args_.in1_args_.scale_ = static_cast<float>(in1_quant_args.front().scale);
   quant_args_.in1_args_.zp_ = in1_quant_args.front().zeroPoint;
 
   auto *out_tensor = out_tensors_.at(kOutputIndex);
@@ -123,8 +123,8 @@ int ArithmeticInt8CPUKernel::DoArithmetic(int thread_id) {
   int error_code;
   if (param->broadcasting_ && arithmetic_run_ != nullptr) {
     MS_ASSERT(op_parameter_->thread_num_ != 0);
-    int stride = UP_DIV(element_num, op_parameter_->thread_num_);
-    int count = MSMIN(stride, element_num - stride * thread_id);
+    auto stride = UP_DIV(element_num, op_parameter_->thread_num_);
+    auto count = MSMIN(stride, element_num - stride * thread_id);
     if (count <= 0) {
       return RET_OK;
     }

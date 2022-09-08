@@ -246,7 +246,7 @@ void LiteOpActor::MarkArrowAsCompiled(const AID *actor_name, size_t to_index,
     std::set<size_t> tmp{to_index};
     receiver_index_set->insert(std::pair<AID, std::set<size_t>>(*actor_name, tmp));
   } else {
-    receiver_index_set->at(*actor_name).insert(to_index);
+    (void)receiver_index_set->at(*actor_name).insert(to_index);
   }
 }
 

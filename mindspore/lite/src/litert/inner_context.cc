@@ -351,7 +351,7 @@ std::unordered_map<void *, std::set<void *>> InnerContext::GetAllLinkInfo() cons
 void InnerContext::SetLinkInfo(void *pre, void *suc) {
   auto iter = link_info_.find(pre);
   if (iter != link_info_.end()) {
-    iter->second.insert(suc);
+    (void)iter->second.insert(suc);
     return;
   }
   std::set<void *> suc_set{suc};
@@ -367,7 +367,7 @@ void InnerContext::ReplaceLinkInfoReceiverWithNewOne(void *new_receiver, void *o
     auto &receivers = info.second;
     auto iter = receivers.find(old_receiver);
     if (iter != receivers.end()) {
-      receivers.erase(iter);
+      (void)receivers.erase(iter);
       receivers.insert(new_receiver);
     }
   }
