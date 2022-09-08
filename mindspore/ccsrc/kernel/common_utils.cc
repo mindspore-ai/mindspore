@@ -1016,7 +1016,7 @@ size_t UnitSizeInBytes(const mindspore::TypeId &t) {
       break;
     case kNumberTypeInt4:
     default:
-      MS_LOG(EXCEPTION) << "Invalid types " << t;
+      MS_LOG(EXCEPTION) << "Invalid types for UnitSizeInBytes : " << TypeIdToString(t);
   }
 
   return bytes;
