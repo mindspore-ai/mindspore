@@ -294,7 +294,7 @@ int MatmulFp32BaseCPUKernel::PackBiasMatrix() {
     }
   } else {
     (void)memcpy(matrix_c_.pack_ptr, bias_src, bias_num * static_cast<int>(sizeof(float)));
-    memset(matrix_c_.pack_ptr + bias_num, 0, (matrix_c_.pack_size - bias_num) * sizeof(float));
+    (void)memset(matrix_c_.pack_ptr + bias_num, 0, (matrix_c_.pack_size - bias_num) * sizeof(float));
   }
   if (matrix_c_.has_origin) {
     ms_context_->allocator->Free(matrix_c_.origin_ptr);

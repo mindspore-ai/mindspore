@@ -65,7 +65,8 @@ const AnfNodePtr AddConcatActivationFusion::Process(const FuncGraphPtr &func_gra
   auto right_add_prim = ops::GetOperator<ops::AddFusion>(right_add_cnode->input(0));
   MS_CHECK_TRUE_RET(right_add_prim != nullptr, nullptr);
   if (right_add_prim->GetAttr(ops::kActivationType) == nullptr) {
-    right_add_prim->AddAttr(ops::kActivationType, api::MakeValue<int64_t>(ActivationType::NO_ACTIVATION));
+    right_add_prim->AddAttr(ops::kActivationType,
+                            api::MakeValue<int64_t>(static_cast<int64_t>(ActivationType::NO_ACTIVATION)));
   }
   if (right_add_prim->get_activation_type() != ActivationType::NO_ACTIVATION) {
     MS_LOG(INFO) << "right add node has activation";
@@ -81,7 +82,8 @@ const AnfNodePtr AddConcatActivationFusion::Process(const FuncGraphPtr &func_gra
   auto left_add_prim = ops::GetOperator<ops::AddFusion>(left_add_cnode->input(0));
   MS_CHECK_TRUE_RET(left_add_prim != nullptr, nullptr);
   if (left_add_prim->GetAttr(ops::kActivationType) == nullptr) {
-    left_add_prim->AddAttr(ops::kActivationType, api::MakeValue<int64_t>(ActivationType::NO_ACTIVATION));
+    left_add_prim->AddAttr(ops::kActivationType,
+                           api::MakeValue<int64_t>(static_cast<int64_t>(ActivationType::NO_ACTIVATION)));
   }
   if (left_add_prim->get_activation_type() != ActivationType::NO_ACTIVATION) {
     MS_LOG(INFO) << "left add node has activation";

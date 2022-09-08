@@ -38,7 +38,7 @@ PrimitiveCPtr TFPadParser::Parse(const tensorflow::NodeDef &tf_op,
   if (tf_op.op() == "Pad") {
     prim->set_padding_mode(mindspore::PaddingMode::CONSTANT);
     prim->set_constant_value(0.0f);
-    prim_c->AddAttr(ops::kOriginalOpName, MakeValue("Pad"));
+    (void)prim_c->AddAttr(ops::kOriginalOpName, MakeValue("Pad"));
   } else if (tf_op.op() == "PadV2") {
     prim->set_padding_mode(mindspore::PaddingMode::CONSTANT);
     if (tf_op.input_size() < kInputSizeThree) {
@@ -61,7 +61,7 @@ PrimitiveCPtr TFPadParser::Parse(const tensorflow::NodeDef &tf_op,
       return nullptr;
     }
     prim->set_constant_value(tensor_proto.float_val(0));
-    prim_c->AddAttr(ops::kOriginalOpName, MakeValue("PadV2"));
+    (void)prim_c->AddAttr(ops::kOriginalOpName, MakeValue("PadV2"));
   } else if (tf_op.op() == "MirrorPad") {
     tensorflow::AttrValue attr_value;
     if (!TensorFlowUtils::FindAttrValue(tf_op, "mode", &attr_value)) {
@@ -77,7 +77,7 @@ PrimitiveCPtr TFPadParser::Parse(const tensorflow::NodeDef &tf_op,
       MS_LOG(ERROR) << "padding mode:" << attr_value.s() << " don't support";
       return nullptr;
     }
-    prim_c->AddAttr(ops::kOriginalOpName, MakeValue("MirrorPad"));
+    (void)prim_c->AddAttr(ops::kOriginalOpName, MakeValue("MirrorPad"));
   }
 
   *output_size = 1;

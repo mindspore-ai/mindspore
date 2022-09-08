@@ -78,7 +78,7 @@ const AnfNodePtr MatMulActivationFusion::Process(const FuncGraphPtr &func_graph,
   if (type != mindspore::RELU && type != RELU6) {
     return nullptr;
   }
-  matmul_prim->AddAttr(ops::kActivationType, api::MakeValue<int64_t>(type));
+  (void)matmul_prim->AddAttr(ops::kActivationType, api::MakeValue<int64_t>(static_cast<int64_t>(type)));
   auto manage = Manage(func_graph);
   if (manage == nullptr) {
     MS_LOG(ERROR) << "manage is nullptr.";

@@ -123,11 +123,13 @@ bool Conv1DInOutAdjust::Run(const FuncGraphPtr &func_graph) {
     std::vector<int64_t> axis;
     switch (Format(GetValue<int64_t>(conv2d_prim->GetAttr(ops::kOriginalFormat)))) {
       case mindspore::Format::NWC:
-        (void)conv2d_prim->AddAttr(mindspore::ops::kOriginalFormat, api::MakeValue<int64_t>(mindspore::NHWC));
+        (void)conv2d_prim->AddAttr(mindspore::ops::kOriginalFormat,
+                                   api::MakeValue<int64_t>(static_cast<int64_t>(mindspore::NHWC)));
         axis = {1};
         break;
       case mindspore::Format::NCW:
-        (void)conv2d_prim->AddAttr(mindspore::ops::kOriginalFormat, api::MakeValue<int64_t>(mindspore::NCHW));
+        (void)conv2d_prim->AddAttr(mindspore::ops::kOriginalFormat,
+                                   api::MakeValue<int64_t>(static_cast<int64_t>(mindspore::NCHW)));
         axis = {2};
         break;
       default:

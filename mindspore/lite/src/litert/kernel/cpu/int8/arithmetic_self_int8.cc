@@ -33,13 +33,13 @@ int ArithmeticSelfInt8CPUKernel::Prepare() {
   CHECK_NULL_RETURN(input_tensor);
   auto in_quant_args = input_tensor->quant_params();
   CHECK_LESS_RETURN(in_quant_args.size(), 1);
-  para_->quant_arg_.in_args_.scale_ = in_quant_args.front().scale;
+  para_->quant_arg_.in_args_.scale_ = static_cast<float>(in_quant_args.front().scale);
   para_->quant_arg_.in_args_.zp_ = in_quant_args.front().zeroPoint * (-1);
 
   auto *out_tensor = out_tensors_.at(kOutputIndex);
   auto out_quant_args = out_tensor->quant_params();
   CHECK_LESS_RETURN(out_quant_args.size(), 1);
-  para_->quant_arg_.out_args_.scale_ = out_quant_args.front().scale;
+  para_->quant_arg_.out_args_.scale_ = static_cast<float>(out_quant_args.front().scale);
   para_->quant_arg_.out_args_.zp_ = out_quant_args.front().zeroPoint;
 
   para_->quant_arg_.output_activation_max_ = std::numeric_limits<int8_t>::max();

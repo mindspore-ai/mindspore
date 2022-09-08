@@ -37,7 +37,7 @@ PrimitiveCPtr TfliteGatherParser::Parse(const std::unique_ptr<tflite::OperatorT>
   }
   auto axis_value = MakeValue(static_cast<int32_t>(tflite_attr->axis));
   MS_CHECK_TRUE_RET(axis_value != nullptr, nullptr);
-  prim_c->AddAttr("axis", axis_value);
+  (void)prim_c->AddAttr("axis", axis_value);
 
   return prim->GetPrim();
 }

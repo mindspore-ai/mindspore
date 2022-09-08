@@ -37,7 +37,7 @@ PrimitiveCPtr OnnxCastParser::Parse(const onnx::GraphProto &onnx_graph, const on
       }
       auto prim_c = prim->GetPrim();
       MS_CHECK_TRUE_RET(prim_c != nullptr, nullptr);
-      prim_c->AddAttr("to", MakeValue(static_cast<int32_t>(dst_type)));
+      (void)prim_c->AddAttr("to", MakeValue(static_cast<int32_t>(dst_type)));
     }
   }
 

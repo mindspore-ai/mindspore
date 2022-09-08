@@ -54,7 +54,7 @@ PrimitiveCPtr TfliteQuantizeParser::Parse(const std::unique_ptr<tflite::Operator
     auto dstT = GetTfliteDataType(out_tensor->type);
     auto dst_value = MakeValue(static_cast<int32_t>(dstT));
     MS_CHECK_TRUE_RET(dst_value != nullptr, nullptr);
-    prim_c->AddAttr("to", dst_value);
+    (void)prim_c->AddAttr("to", dst_value);
     return prim->GetPrim();
   }
 }

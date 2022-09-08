@@ -36,7 +36,7 @@ PrimitiveCPtr CaffePermuteParser::Parse(const caffe::LayerParameter &proto, cons
   }
   auto value_ptr = MakeValue(perm);
   MS_CHECK_TRUE_RET(value_ptr != nullptr, nullptr);
-  prim_c->AddAttr("perm", value_ptr);
+  (void)prim_c->AddAttr("perm", value_ptr);
 
   return prim->GetPrim();
 }

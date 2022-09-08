@@ -67,7 +67,7 @@ PrimitiveCPtr TfliteResizeParser::Parse(const std::unique_ptr<tflite::OperatorT>
     if (tfliteAttr->half_pixel_centers) {
       prim->set_coordinate_transform_mode(mindspore::CoordinateTransformMode::HALF_PIXEL);
       prim->set_cubic_coeff(-0.5f);
-      prim->AddAttr("half_pixel_centers", api::MakeValue(true));
+      (void)prim->AddAttr("half_pixel_centers", api::MakeValue(true));
     }
     prim->set_method(mindspore::ResizeMethod::NEAREST);
     prim->set_nearest_mode(mindspore::NearestMode::NORMAL);

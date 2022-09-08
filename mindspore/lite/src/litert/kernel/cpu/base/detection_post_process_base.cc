@@ -78,8 +78,8 @@ int DetectionPostProcessBaseCPUKernel::Prepare() {
       MS_LOG(ERROR) << "Malloc anchor failed";
       return RET_ERROR;
     }
-    DoDequantizeInt8ToFp32(anchor_int8, anchor_fp32, quant_param.scale, quant_param.zeroPoint,
-                           anchor_tensor->ElementsNum());
+    (void)DoDequantizeInt8ToFp32(anchor_int8, anchor_fp32, quant_param.scale, quant_param.zeroPoint,
+                                 anchor_tensor->ElementsNum());
     params_->anchors_ = anchor_fp32;
   } else if (anchor_tensor->data_type() == kNumberTypeUInt8) {
     CHECK_LESS_RETURN(anchor_tensor->quant_params().size(), 1);
@@ -90,8 +90,8 @@ int DetectionPostProcessBaseCPUKernel::Prepare() {
       MS_LOG(ERROR) << "Malloc anchor failed";
       return RET_ERROR;
     }
-    DoDequantizeUInt8ToFp32(anchor_uint8, anchor_fp32, quant_param.scale, quant_param.zeroPoint,
-                            anchor_tensor->ElementsNum());
+    (void)DoDequantizeUInt8ToFp32(anchor_uint8, anchor_fp32, quant_param.scale, quant_param.zeroPoint,
+                                  anchor_tensor->ElementsNum());
     params_->anchors_ = anchor_fp32;
 #endif
   } else {

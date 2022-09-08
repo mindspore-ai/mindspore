@@ -39,7 +39,7 @@ PrimitiveCPtr OnnxTransposeParser::Parse(const onnx::GraphProto &onnx_graph, con
   }
   auto perm_value = MakeValue(perm);
   MS_CHECK_TRUE_MSG(perm_value != nullptr, nullptr, "MakeValue failed");
-  prim_c->AddAttr("perm", perm_value);
+  (void)prim_c->AddAttr("perm", perm_value);
   return prim->GetPrim();
 }
 

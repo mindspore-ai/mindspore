@@ -37,7 +37,7 @@ PrimitiveCPtr TFDeconvParser::Parse(const tensorflow::NodeDef &tf_op,
   prim->set_group(1);
   prim->set_pad({0, 0, 0, 0});
   auto format = TensorFlowUtils::ParseNodeFormat(tf_op);
-  prim->AddAttr(mindspore::ops::kOriginalFormat, api::MakeValue<int64_t>(format));
+  (void)prim->AddAttr(mindspore::ops::kOriginalFormat, api::MakeValue<int64_t>(format));
   prim->set_output_paddings({0, 0});
 
   std::vector<int64_t> dilations(2);
@@ -70,8 +70,8 @@ PrimitiveCPtr TFDeconvParser::Parse(const tensorflow::NodeDef &tf_op,
 
   bool is_original_pad_mode = false;
   prim->set_pad_mode(ParsePadMode(tf_op, &is_original_pad_mode));
-  prim->AddAttr(ops::kIsOriginalPadMode, api::MakeValue<bool>(is_original_pad_mode));
-  prim->AddAttr(ops::kOriginalOpName, api::MakeValue("Conv2DBackpropInput"));
+  (void)prim->AddAttr(ops::kIsOriginalPadMode, api::MakeValue<bool>(is_original_pad_mode));
+  (void)prim->AddAttr(ops::kOriginalOpName, api::MakeValue("Conv2DBackpropInput"));
 
   *output_size = 1;
   auto target_device = ConverterInnerContext::GetInstance()->GetTargetDevice();

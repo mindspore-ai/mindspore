@@ -47,7 +47,7 @@ PrimitiveCPtr CaffeTileParser::Parse(const caffe::LayerParameter &proto, const c
   }
   auto value_ptr = MakeValue(multiples);
   MS_CHECK_TRUE_RET(value_ptr != nullptr, nullptr);
-  prim_c->AddAttr("multiples", value_ptr);
+  (void)prim_c->AddAttr("multiples", value_ptr);
 
   return prim->GetPrim();
 }

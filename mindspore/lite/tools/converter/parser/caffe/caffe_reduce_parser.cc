@@ -56,7 +56,7 @@ PrimitiveCPtr CaffeReduceParser::Parse(const caffe::LayerParameter &proto, const
   }
   auto value_ptr = MakeValue(axes);
   MS_CHECK_TRUE_RET(value_ptr != nullptr, nullptr);
-  prim_c->AddAttr("axes", value_ptr);
+  (void)prim_c->AddAttr("axes", value_ptr);
 
   return prim->GetPrim();
 }

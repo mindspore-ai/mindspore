@@ -99,7 +99,12 @@ int LayerNormInt8CPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), min_layernorm_input);
   CHECK_LESS_RETURN(out_tensors_.size(), min_layernorm_output);
   CHECK_NULL_RETURN(param_);
-  SetQuantArgs();
+
+  auto ret = SetQuantArgs();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Set QuantArgs failed.";
+    return ret;
+  }
 
   if (!InferShapeDone()) {
     return RET_OK;

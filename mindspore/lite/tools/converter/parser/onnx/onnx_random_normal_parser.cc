@@ -29,12 +29,12 @@ PrimitiveCPtr OnnxRandomNormalParser::Parse(const onnx::GraphProto &onnx_graph, 
     if (onnx_node_attr.name() == "dtype") {
       auto onnx_dtype = static_cast<onnx::TensorProto_DataType>(onnx_node_attr.i());
       auto data_type = OnnxNodeParser::GetDataTypeFromOnnx(onnx_dtype);
-      prim->AddAttr(ops::kDataType, api::MakeValue(static_cast<int>(data_type)));
+      (void)prim->AddAttr(ops::kDataType, api::MakeValue(static_cast<int>(data_type)));
     } else if (onnx_node_attr.name() == "shape") {
       std::vector<int64_t> shape;
       std::transform(onnx_node_attr.ints().begin(), onnx_node_attr.ints().end(), std::back_inserter(shape),
                      [](int ele) { return static_cast<int64_t>(ele); });
-      prim->AddAttr(ops::kShape, api::MakeValue(shape));
+      (void)prim->AddAttr(ops::kShape, api::MakeValue(shape));
     } else if (onnx_node_attr.name() == "seed") {
       prim->set_seed(static_cast<float>(onnx_node_attr.f()));
     } else if (onnx_node_attr.name() == "mean") {

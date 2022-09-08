@@ -50,7 +50,7 @@ PrimitiveCPtr TFConcatParser::Parse(const tensorflow::NodeDef &tf_op,
       return nullptr;
     }
   }
-  prim_c->AddAttr(ops::kOriginalOpName, MakeValue("ConcatV2"));
+  (void)prim_c->AddAttr(ops::kOriginalOpName, MakeValue("ConcatV2"));
   return prim->GetPrim();
 }
 

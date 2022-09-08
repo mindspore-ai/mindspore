@@ -577,7 +577,7 @@ int MoveAttrBatchNorm(const CNodePtr &cnode) {
   MS_CHECK_TRUE_MSG(dst_prim != nullptr, RET_NULL_PTR, "dst_prim is nullptr.");
   auto dst_prim_c = dst_prim->GetPrim();
   MS_CHECK_TRUE_MSG(dst_prim_c != nullptr, RET_NULL_PTR, "dst_prim_c is nullptr.");
-  dst_prim_c->SetAttrs(src_prim->attrs());
+  (void)dst_prim_c->SetAttrs(src_prim->attrs());
   bool is_training = GetValue<bool>(src_prim->GetAttr(ops::kIsTraining));
   dst_prim->set_mode(static_cast<int64_t>(is_training));
   value_node->set_value(dst_prim_c);
@@ -594,7 +594,7 @@ int MoveAttrMapBatchNormGrad(const CNodePtr &cnode) {
   MS_CHECK_TRUE_MSG(dst_prim != nullptr, RET_NULL_PTR, "dst_prim is nullptr.");
   auto dst_prim_c = dst_prim->GetPrim();
   MS_CHECK_TRUE_MSG(dst_prim_c != nullptr, RET_NULL_PTR, "dst_prim_c is nullptr.");
-  dst_prim_c->SetAttrs(src_prim->attrs());
+  (void)dst_prim_c->SetAttrs(src_prim->attrs());
   auto is_training_attr = src_prim->GetAttr(ops::kIsTraining);
   if (is_training_attr == nullptr) {
     MS_LOG(INFO) << "no \"is_training\" attr found in BatchNormGrad, will set it to true by default.";

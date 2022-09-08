@@ -30,7 +30,7 @@ PrimitiveCPtr CaffeConvolutionParser::Parse(const caffe::LayerParameter &proto, 
   prim->set_pad_mode(mindspore::PadMode::PAD);
   auto value_ptr = MakeValue<int64_t>(mindspore::Format::NCHW);
   MS_CHECK_TRUE_RET(value_ptr != nullptr, nullptr);
-  prim_c->AddAttr(mindspore::ops::kOriginalFormat, value_ptr);
+  (void)prim_c->AddAttr(mindspore::ops::kOriginalFormat, value_ptr);
   prim->set_activation_type(mindspore::NO_ACTIVATION);
 
   const caffe::ConvolutionParameter &convParam = proto.convolution_param();
@@ -85,7 +85,7 @@ PrimitiveCPtr CaffeConvolutionParser::Parse(const caffe::LayerParameter &proto, 
   if (group != 1 && group == channel_out) {
     auto bool_ptr = MakeValue<bool>(true);
     MS_CHECK_TRUE_RET(bool_ptr != nullptr, nullptr);
-    prim_c->AddAttr(ops::kIsDepthWise, bool_ptr);
+    (void)prim_c->AddAttr(ops::kIsDepthWise, bool_ptr);
   }
 
   return prim->GetPrim();

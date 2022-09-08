@@ -36,7 +36,7 @@ PrimitiveCPtr TFConvParser::Parse(const tensorflow::NodeDef &tf_op,
   prim->set_group(1);
 
   auto format = TensorFlowUtils::ParseNodeFormat(tf_op);
-  prim_c->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(format));
+  (void)prim_c->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(format));
 
   std::vector<int64_t> dilations(2);
   if (ParseDilations(tf_op, format, &dilations) != RET_OK) {
@@ -77,7 +77,7 @@ PrimitiveCPtr TFConvParser::Parse(const tensorflow::NodeDef &tf_op,
     }
     prim->set_pad_list(explicit_paddings);
   }
-  prim_c->AddAttr(ops::kIsOriginalPadMode, MakeValue<bool>(is_original_pad_mode));
+  (void)prim_c->AddAttr(ops::kIsOriginalPadMode, MakeValue<bool>(is_original_pad_mode));
 
   *output_size = 1;
   if (AddOpInput(tf_op, 0, inputs) != RET_OK || AddOpInput(tf_op, 1, inputs) != RET_OK) {
@@ -85,7 +85,7 @@ PrimitiveCPtr TFConvParser::Parse(const tensorflow::NodeDef &tf_op,
     return nullptr;
   }
   if (tf_op.op() == "DepthwiseConv2dNative") {
-    prim_c->AddAttr(ops::kIsDepthWise, MakeValue<bool>(true));
+    (void)prim_c->AddAttr(ops::kIsDepthWise, MakeValue<bool>(true));
     if (prim->GetAttr(ops::kInChannel) != nullptr) {
       prim->set_group(prim->get_in_channel());
       prim->set_out_channel(prim->get_in_channel());

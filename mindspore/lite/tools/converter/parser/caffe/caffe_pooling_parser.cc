@@ -136,7 +136,7 @@ PrimitiveCPtr CaffePoolingParser::Parse(const caffe::LayerParameter &proto, cons
     MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
     auto prim_c = prim->GetPrim();
     MS_CHECK_TRUE_RET(prim_c != nullptr, nullptr);
-    prim_c->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(mindspore::Format::NCHW));
+    (void)prim_c->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(mindspore::Format::NCHW));
     prim->set_pad_mode(mindspore::PadMode::PAD);
     prim->set_kernel_size(windows);
     prim->set_strides(strides);
@@ -144,14 +144,14 @@ PrimitiveCPtr CaffePoolingParser::Parse(const caffe::LayerParameter &proto, cons
     prim->set_round_mode(roundMode);
     prim->set_global(poolingParam.global_pooling());
     int fmk_type = converter::FmkType::kFmkTypeCaffe;
-    prim_c->AddAttr(ops::kFmkType, MakeValue(fmk_type));
+    (void)prim_c->AddAttr(ops::kFmkType, MakeValue(fmk_type));
     return prim->GetPrim();
   } else if (poolingParam.pool() == caffe::PoolingParameter::AVE) {
     auto prim = std::make_unique<ops::AvgPoolFusion>();
     MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
     auto prim_c = prim->GetPrim();
     MS_CHECK_TRUE_RET(prim_c != nullptr, nullptr);
-    prim_c->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(mindspore::Format::NCHW));
+    (void)prim_c->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(mindspore::Format::NCHW));
     prim->set_pad_mode(mindspore::PadMode::PAD);
     prim->set_kernel_size(windows);
     prim->set_strides(strides);
@@ -159,7 +159,7 @@ PrimitiveCPtr CaffePoolingParser::Parse(const caffe::LayerParameter &proto, cons
     prim->set_round_mode(roundMode);
     prim->set_global(poolingParam.global_pooling());
     int fmk_type = converter::kFmkTypeCaffe;
-    prim_c->AddAttr(ops::kFmkType, MakeValue(fmk_type));
+    (void)prim_c->AddAttr(ops::kFmkType, MakeValue(fmk_type));
     return prim->GetPrim();
   } else {
     MS_LOG(ERROR) << "poolingParam.pool() is not MAX or AVE";

@@ -617,7 +617,7 @@ int SubGraph::ApplySubGraph() {
   subgraph_nodes.insert(call_cnode);
   if (this->Reset(subgraph_nodes) != RET_OK) {
     MS_LOG(ERROR) << "Reset failed";
-    return false;
+    return RET_ERROR;
   }
   // create subgraph partial // add partial to main subgraph
   ret = this->CreatePartialInBelongAnf();

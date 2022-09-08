@@ -98,7 +98,7 @@ int PowerInt8CPUKernel::Run() {
     return RET_ERROR;
   }
   MSLITE_CHECK_PTR(param_);
-  param_->quant_arg_.exp_args_.scale_ = exp_quant_args.front().scale;
+  param_->quant_arg_.exp_args_.scale_ = static_cast<float>(exp_quant_args.front().scale);
   param_->quant_arg_.exp_args_.zp_ = exp_quant_args.front().zeroPoint;
   param_->broadcast_ = in_tensors_[0]->shape() == in_tensors_[1]->shape() ? false : true;
   exp_ptr_ = reinterpret_cast<int8_t *>(exp_tensor->MutableData());

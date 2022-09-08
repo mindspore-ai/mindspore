@@ -282,13 +282,13 @@ std::string Converter::GetDevice() {
 
 Status Converter::Convert() {
   if (data_ != nullptr) {
-    auto ret = lite::RunConverter(data_, nullptr, nullptr, false);
+    Status ret = Status(static_cast<StatusCode>(lite::RunConverter(data_, nullptr, nullptr, false)));
     data_->decrypt_key.clear();  // clear key
     data_->encrypt_key.clear();  // clear key
     if (ret != kSuccess) {
       MS_LOG(ERROR) << "Convert model failed, ret=" << ret;
     }
-    return Status(static_cast<StatusCode>(ret));
+    return ret;
   } else {
     return kLiteError;
   }
@@ -297,7 +297,7 @@ Status Converter::Convert() {
 void *Converter::Convert(size_t *data_size) {
   void *model_data = nullptr;
   if (data_ != nullptr) {
-    auto ret = lite::RunConverter(data_, &model_data, data_size, true);
+    Status ret = Status(static_cast<StatusCode>(lite::RunConverter(data_, &model_data, data_size, true)));
     data_->decrypt_key.clear();  // clear key
     data_->encrypt_key.clear();  // clear key
     if (ret != kSuccess) {

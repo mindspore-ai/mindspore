@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#define USE_DEPRECATED_API
 #include "tools/optimizer/parallel/operator_info_register.h"
 #include <utility>
 namespace mindspore {
