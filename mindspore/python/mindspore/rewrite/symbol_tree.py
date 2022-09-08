@@ -880,6 +880,17 @@ class SymbolTree(Observer, Observable):
         new_arg = targets[out_idx]
         self.set_node_arg(real_dst_node, arg_idx, new_arg)
 
+    def print_node_tabulate(self):
+        try:
+            from tabulate import tabulate
+        except ImportError:
+            print("`print_tabular` relies on the library `tabulate`, "
+                  "which could not be found on this machine. Run `pip "
+                  "install tabulate` to install the library.")
+        node_specs = [[n.get_node_type(), n.get_name(), n.get_targets(), n.get_args(), n.get_kwargs()]
+                      for n in self.nodes()]
+        print(tabulate(node_specs, headers=['node type', 'name', 'target', 'args', 'kwargs']))
+
     def dump(self):
         """Dump graph."""
         dump_st = SymbolTreeDumper(self)
@@ -959,6 +970,8 @@ class SymbolTree(Observer, Observable):
         for i in range(len(self._module_ast.body) - 1, -1, -1):
             body = self._module_ast.body[i]
             if not isinstance(body, (ast.Import, ast.ImportFrom)):
+                continue
+            if isinstance(body, ast.Import):
                 continue
             if isinstance(body, ast.ImportFrom) and body.module == "cell":
                 self._module_ast.body.remove(body)
