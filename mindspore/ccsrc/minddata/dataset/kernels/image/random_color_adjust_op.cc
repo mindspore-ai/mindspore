@@ -40,6 +40,7 @@ RandomColorAdjustOp::RandomColorAdjustOp(float s_bright_factor, float e_bright_f
 
 Status RandomColorAdjustOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
+  RETURN_IF_NOT_OK(ValidateImage(input, "RandomColorAdjust", {}, {3}, {3}));
 
   // randomly select an augmentation to apply to the input image until all the transformations run
   std::vector<std::string> params_vector = {"brightness", "contrast", "saturation", "hue"};

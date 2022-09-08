@@ -556,6 +556,8 @@ def to_bytes(array, encoding='utf8'):
         numpy.ndarray, NumPy array of `bytes`.
 
     Examples:
+        >>> import numpy as np
+        >>>
         >>> data = np.array([["1", "2", "3"]], dtype=np.str_)
         >>> dataset = ds.NumpySlicesDataset(data, column_names=["text"])
         >>> for item in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
@@ -580,6 +582,8 @@ def to_str(array, encoding='utf8'):
         numpy.ndarray, NumPy array of `str`.
 
     Examples:
+        >>> import numpy as np
+        >>>
         >>> data = np.array([["1", "2", "3"]], dtype=np.bytes_)
         >>> dataset = ds.NumpySlicesDataset(data, column_names=["text"])
         >>> for item in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
