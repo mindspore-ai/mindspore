@@ -44,7 +44,7 @@ OpParameter *PopulateTensorArrayParameter(const void *prim) {
   param->identical_element_shapes_ = identical_element_shapes;
   std::vector<int> primitive_element_shape(value->element_shape()->begin(), value->element_shape()->end());
   param->element_shape_size_ = static_cast<int>(primitive_element_shape.size());
-  auto size = sizeof(int) * param->element_shape_size_;
+  auto size = sizeof(int) * static_cast<size_t>(param->element_shape_size_);
   MS_CHECK_LE(size, MAX_SHAPE_SIZE, nullptr);
   memset(param->element_shape_, 0, size);
   memcpy(param->element_shape_, primitive_element_shape.data(), size);

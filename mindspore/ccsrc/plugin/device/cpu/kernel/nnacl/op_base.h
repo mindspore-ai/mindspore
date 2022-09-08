@@ -59,6 +59,14 @@
 
 #define FP16_DATA_TYPE_LEN 2
 
+#ifndef MS_UNLIKELY
+#ifdef _MSC_VER
+#define MS_UNLIKELY(x) (x)
+#else
+#define MS_UNLIKELY(x) __builtin_expect(!!(x), 0)
+#endif
+#endif
+
 #define MSMIN(x, y) ((x) < (y) ? (x) : (y))
 #define MSMAX(x, y) ((x) > (y) ? (x) : (y))
 #define MSCEIL(x) (int)((x) + (((x) - (int)(x)) > 0 ? 1 : 0))
