@@ -22,6 +22,7 @@ set_property(SOURCE ${CUDA_OPS_SRC_LIST} PROPERTY COMPILE_DEFINITIONS SUBMODULE_
 if(MSVC)
     add_compile_definitions(BUILDING_CUDA_OPS_DLL)
     set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -DBUILDING_CUDA_OPS_DLL")
+    set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -D_DISABLE_EXTENDED_ALIGNED_STORAGE")
 endif()
 if(ENABLE_GPU)
     add_library(cuda_common_obj OBJECT cuda_ops/cuda_common.cc  cuda_ops/cuda_device_info.cc)
