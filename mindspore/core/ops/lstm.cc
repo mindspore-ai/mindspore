@@ -32,19 +32,28 @@ AbstractBasePtr LstmInfer(const PrimitivePtr &primitive, const std::vector<Abstr
     MS_EXCEPTION_IF_NULL(item);
   }
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num, prim_name);
+
+  // infer type
+  auto infer_type0 = input_args[kInputIndex0]->BuildType()->cast<TensorTypePtr>()->element();
   auto x_input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto h_input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
   auto c_input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+  auto weight_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
+  if (IsDynamicRank(x_input_shape) || IsDynamicRank(h_input_shape) || IsDynamicRank(c_input_shape) ||
+      IsDynamicRank(weight_shape)) {
+    auto output = std::make_shared<abstract::AbstractTensor>(infer_type0, std::vector<int64_t>{UNKNOWN_RANK});
+    AbstractBasePtrList outputs = {output, output, output, output, output};
+    return std::make_shared<abstract::AbstractTuple>(outputs);
+  }
 
   int64_t input_x_size = GetValue<int64_t>(primitive->GetAttr(kInput_size));
   const int64_t shape_size = 3;
   (void)CheckAndConvertUtils::CheckInteger("x_shape.size()", SizeToLong(x_input_shape.size()), kEqual, shape_size,
                                            prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("x_shape[2]", x_input_shape[2], kEqual, input_x_size, prim_name);
-
   (void)CheckAndConvertUtils::CheckInteger("h_shape.size()", SizeToLong(h_input_shape.size()), kEqual, shape_size,
                                            prim_name);
-  CheckAndConvertUtils::Check("h_shape", h_input_shape, kEqual, c_input_shape, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("c_shape.size()", SizeToLong(c_input_shape.size()), kEqual, shape_size,
+                                           prim_name);
 
   int64_t num_layers = GetValue<int64_t>(primitive->GetAttr(kNumLayers));
   bool bidirectional = GetValue<bool>(primitive->GetAttr(kBidirectional));
@@ -53,10 +62,22 @@ AbstractBasePtr LstmInfer(const PrimitivePtr &primitive, const std::vector<Abstr
     num_directions = 2;
   }
   int64_t hidden_size = GetValue<int64_t>(primitive->GetAttr(kHidden_size));
-  (void)CheckAndConvertUtils::CheckInteger("h_shape[0]", h_input_shape[0], kEqual, num_layers * num_directions,
-                                           prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("h_shape[1]", h_input_shape[1], kEqual, x_input_shape[1], prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("h_shape[2]", h_input_shape[2], kEqual, hidden_size, prim_name);
+
+  bool x_is_dynamic = IsDynamic(x_input_shape);
+  bool h_is_dynamic = IsDynamic(h_input_shape);
+  bool c_is_dynamic = IsDynamic(c_input_shape);
+  if (!x_is_dynamic) {
+    (void)CheckAndConvertUtils::CheckInteger("x_shape[2]", x_input_shape[2], kEqual, input_x_size, prim_name);
+  }
+  if (!h_is_dynamic && !c_is_dynamic) {
+    (void)CheckAndConvertUtils::Check("h_shape", h_input_shape, kEqual, c_input_shape, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("h_shape[0]", h_input_shape[0], kEqual, num_layers * num_directions,
+                                             prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("h_shape[2]", h_input_shape[2], kEqual, hidden_size, prim_name);
+  }
+  if (!x_is_dynamic && !h_is_dynamic) {
+    (void)CheckAndConvertUtils::CheckInteger("h_shape[1]", h_input_shape[1], kEqual, x_input_shape[1], prim_name);
+  }
 
   std::vector<int64_t> y_shape = {x_input_shape[0], x_input_shape[1], hidden_size * num_directions};
   std::vector<int64_t> h_shape = {h_input_shape};
@@ -64,8 +85,6 @@ AbstractBasePtr LstmInfer(const PrimitivePtr &primitive, const std::vector<Abstr
   std::vector<int64_t> reverse_shape = {1, 1};
   std::vector<int64_t> state_shape = {1, 1};
 
-  // infer type
-  auto infer_type0 = input_args[kInputIndex0]->BuildType()->cast<TensorTypePtr>()->element();
   auto output0 = std::make_shared<abstract::AbstractTensor>(infer_type0, y_shape);
   auto output1 = std::make_shared<abstract::AbstractTensor>(infer_type0, h_shape);
   auto output2 = std::make_shared<abstract::AbstractTensor>(infer_type0, c_shape);

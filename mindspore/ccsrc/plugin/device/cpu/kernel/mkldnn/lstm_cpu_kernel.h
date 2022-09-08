@@ -19,21 +19,28 @@
 
 #include <vector>
 #include <memory>
+#include <map>
 #include "plugin/device/cpu/kernel/mkldnn/mkl_cpu_kernel.h"
 
 namespace mindspore {
 namespace kernel {
-class LstmCpuKernelMod : public DeprecatedMKLCpuKernelMod {
+class LstmCpuKernelMod : public MKLCpuKernelMod {
  public:
   LstmCpuKernelMod() = default;
   ~LstmCpuKernelMod() override = default;
-  void InitKernel(const CNodePtr &kernel_node) override;
+
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(
+    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+    const std::vector<KernelTensorPtr> &outputs,
+    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
  protected:
-  void InitInputOutputSize(const CNodePtr &kernel_node) override;
   std::vector<KernelAttr> GetOpSupport() override {
     static std::vector<KernelAttr> support_list = {KernelAttr()
                                                      .AddInputAttr(kNumberTypeFloat32)
@@ -49,7 +56,7 @@ class LstmCpuKernelMod : public DeprecatedMKLCpuKernelMod {
   }
 
  private:
-  void CheckParam(const CNodePtr &kernel_node);
+  void InitOutputSize(const std::vector<KernelTensorPtr> &outputs);
 
   int weight_size_{0};
   int weight_h_size_{0};
@@ -61,7 +68,7 @@ class LstmCpuKernelMod : public DeprecatedMKLCpuKernelMod {
   int num_directions_{0};
   bool bidirectional_{false};
   bool has_bias_{false};
-  bool is_training{false};
+  bool is_training_{false};
   size_t reserve_size_{0};
 
   dnnl::memory::dims weights_dims_;

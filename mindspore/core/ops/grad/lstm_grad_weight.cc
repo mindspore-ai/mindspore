@@ -90,7 +90,55 @@ void LSTMGradWeight::Init(const int64_t input_size, const int64_t hidden_size, c
   this->set_zoneout_hidden(zoneout_hidden);
 }
 
+namespace {
+abstract::ShapePtr LstmGradWeightInferShape(const PrimitivePtr &primitive,
+                                            const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  int64_t input_size = GetValue<int64_t>(primitive->GetAttr(kInput_size));
+  int64_t hidden_size = GetValue<int64_t>(primitive->GetAttr(kHidden_size));
+  int64_t num_layers = GetValue<int64_t>(primitive->GetAttr(kNumLayers));
+  bool has_bias = GetValue<bool>(primitive->GetAttr(kHasBias));
+  bool bidirectional = GetValue<bool>(primitive->GetAttr(kBidirectional));
+  int64_t bidirection_num = 2;
+  int64_t num_directions = bidirectional ? bidirection_num : 1;
+
+  int64_t weight_size = 0;
+  int64_t gate_size = 4 * hidden_size;
+  int64_t bias_broad_size = 2;
+  for (int64_t layer = 0; layer < num_layers; layer++) {
+    for (int64_t i = 0; i < num_directions; i++) {
+      int64_t input_layer_size = layer == 0 ? input_size : hidden_size * num_directions;
+      weight_size += gate_size * input_layer_size;
+      weight_size += gate_size * hidden_size;
+      if (has_bias) {
+        weight_size += bias_broad_size * gate_size;
+      }
+    }
+  }
+  std::vector<int64_t> out_shape = {weight_size, 1, 1};
+  return std::make_shared<abstract::Shape>(out_shape);
+}
+
+TypePtr LstmGradWeightInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(prim);
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
+  auto x_dtype = input_args[0]->BuildType();
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_dtype, valid_types, prim->name());
+  return x_dtype;
+}
+}  // namespace
+
+AbstractBasePtr LstmGradWeightInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  const int64_t kInputsNum = 5;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputsNum, primitive->name());
+  auto infer_type = LstmGradWeightInferType(primitive, input_args);
+  auto infer_shape = LstmGradWeightInferShape(primitive, input_args);
+  return abstract::MakeAbstract(infer_shape, infer_type);
+}
+
 MIND_API_OPERATOR_IMPL(LSTMGradWeight, BaseOperator);
-REGISTER_PRIMITIVE_C(kNameLSTMGradWeight, LSTMGradWeight);
+REGISTER_PRIMITIVE_EVAL_IMPL(LSTMGradWeight, prim::kPrimLstmGradWeight, LstmGradWeightInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

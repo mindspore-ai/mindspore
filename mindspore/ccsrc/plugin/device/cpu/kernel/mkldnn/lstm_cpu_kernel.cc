@@ -17,6 +17,7 @@
 #include "plugin/device/cpu/kernel/mkldnn/lstm_cpu_kernel.h"
 #include <string>
 #include "utils/ms_utils.h"
+#include "mindspore/core/ops/lstm.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 namespace mindspore {
 namespace kernel {
@@ -34,26 +35,83 @@ using dim = dnnl::memory::dims;
 using dt = dnnl::memory::data_type;
 }  // namespace
 
-void LstmCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
-  DeprecatedNativeCpuKernelMod::InitInputOutputSize(kernel_node);
+void LstmCpuKernelMod::InitOutputSize(const std::vector<KernelTensorPtr> &outputs) {
   output_size_list_[kOutputWorkSpaceIndex] = reserve_size_;
-  auto output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-  auto output_type = common::AnfAlgo::GetOutputInferDataType(kernel_node, 0);
-  auto output_types = std::vector<TypeId>(output_num, output_type);
-  std::vector<ShapeVector> output_shapes;
-  for (size_t output_index = 0; output_index < output_num; ++output_index) {
-    auto shape = common::AnfAlgo::GetOutputInferShape(kernel_node, output_index);
-    (void)output_shapes.emplace_back(shape);
-  }
   size_t len = reserve_size_ / IntToSize(kGateNum);
-  output_shapes[kOutputWorkSpaceIndex] = {SizeToLong(len), 1};
-  common::AnfAlgo::SetOutputInferTypeAndShape(output_types, output_shapes, kernel_node.get());
+  outputs[kOutputWorkSpaceIndex]->SetShapeVector({SizeToLong(len), 1});
 }
 
-void LstmCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  CheckParam(kernel_node);
+bool LstmCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                            const std::vector<KernelTensorPtr> &outputs) {
+  MS_ERROR_IF_NULL_W_RET_VAL(base_operator, false);
+  kernel_name_ = base_operator->name();
+  if (inputs.size() != kLstmInputsNum || outputs.size() != kLstmOutputsNum) {
+    MS_LOG(ERROR) << kernel_name_ << ": input and output size should be " << kLstmInputsNum << " and "
+                  << kLstmOutputsNum << ", but get " << inputs.size() << " and " << outputs.size();
+    return false;
+  }
+
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::LSTM>(base_operator);
+  if (!kernel_ptr) {
+    MS_LOG(ERROR) << "Cast LSTM ops failed!";
+    return false;
+  }
+  bidirectional_ = kernel_ptr->get_bidirectional();
+  input_size_ = kernel_ptr->get_input_size();
+  hidden_size_ = kernel_ptr->get_hidden_size();
+  num_layers_ = kernel_ptr->get_num_layers();
+  has_bias_ = kernel_ptr->get_has_bias();
+
+  constexpr int kBidirectional = 2;
+  num_directions_ = 1;
+  if (bidirectional_) {
+    num_directions_ = kBidirectional;
+  }
+  const int gate_size = kGateNum * hidden_size_;
+  if (num_layers_ <= 0) {
+    MS_LOG(EXCEPTION) << "Layers must be greater than zero!";
+  }
+  if (num_layers_ > kMaxLSTMLayer) {
+    MS_LOG(EXCEPTION) << "Layers must be lower than 100!";
+  }
+  for (int i = 0; i < num_layers_; ++i) {
+    weight_size_ += gate_size * (i == 0 ? input_size_ : hidden_size_ * num_directions_);
+    weight_h_size_ += gate_size * hidden_size_;
+  }
+  weight_size_ = weight_size_ * num_directions_;
+  weight_h_size_ = weight_h_size_ * num_directions_;
+
+  weights_dims_ = {num_layers_, num_directions_, input_size_, kGateNum, hidden_size_};
+  weights_h_dims_ = {num_layers_, num_directions_, hidden_size_, kGateNum, hidden_size_};
+  bias_dims_ = {num_layers_, num_directions_, kGateNum, hidden_size_};
+
+  if (base_operator->HasAttr(kAttrIsTraining)) {
+    is_training_ = GetValue<bool>(base_operator->GetAttr(kAttrIsTraining));
+  } else {
+    is_training_ = true;
+  }
+  return true;
+}
+
+int LstmCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                             const std::vector<KernelTensorPtr> &outputs,
+                             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+    return ret;
+  }
+  auto src_shape = inputs[kIndex0]->GetShapeVector();
+  auto src_h_shape = inputs[kIndex1]->GetShapeVector();
+  auto src_c_shape = inputs[kIndex2]->GetShapeVector();
+  if (src_shape.size() != 3 || src_h_shape.size() != 3 || src_c_shape.size() != 3) {
+    MS_LOG(EXCEPTION) << "Lstm only support 3-D input!";
+  }
+  batch_size_ = src_shape[1];
+  seq_len_ = src_shape[0];
+
+  if (num_directions_ * num_layers_ != src_h_shape[0]) {
+    MS_LOG(EXCEPTION) << "Error iteration shape!";
+  }
+
   auto eng = engine_;
   dnnl::rnn_direction direction = dnnl::rnn_direction::unidirectional;
   if (bidirectional_) {
@@ -62,9 +120,6 @@ void LstmCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   dim src_dims = {seq_len_, batch_size_, input_size_};
   dim src_h_dims = {num_layers_, num_directions_, batch_size_, hidden_size_};
   dim src_c_dims = {num_layers_, num_directions_, batch_size_, hidden_size_};
-  weights_dims_ = {num_layers_, num_directions_, input_size_, kGateNum, hidden_size_};
-  weights_h_dims_ = {num_layers_, num_directions_, hidden_size_, kGateNum, hidden_size_};
-  bias_dims_ = {num_layers_, num_directions_, kGateNum, hidden_size_};
   dim dst_dims = {seq_len_, batch_size_, static_cast<int64_t>(hidden_size_) * num_directions_};
   dim dst_h_dims = {num_layers_, num_directions_, batch_size_, hidden_size_};
   dim dst_c_dims = {num_layers_, num_directions_, batch_size_, hidden_size_};
@@ -75,13 +130,9 @@ void LstmCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   dnnl::memory::desc dst_desc = formatted_md(dst_dims, tag::tnc);
   dnnl::memory::desc dst_h_desc = formatted_md(dst_h_dims, tag::ldnc);
   dnnl::memory::desc dst_c_desc = formatted_md(dst_c_dims, tag::ldnc);
-  if (kernel_node->HasAttr(kAttrIsTraining)) {
-    is_training = GetValue<bool>(kernel_node->GetAttr(kAttrIsTraining));
-  } else {
-    is_training = true;
-  }
+
   auto prop_kind = dnnl::prop_kind::forward_training;
-  if (!is_training) {
+  if (!is_training_) {
     prop_kind = dnnl::prop_kind::forward_inference;
   }
   auto weights_desc = formatted_md(weights_dims_, tag::any);
@@ -91,7 +142,7 @@ void LstmCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
                                               weights_h_desc, bias_desc, dst_desc, dst_h_desc, dst_c_desc);
   prim_desc_ = CreateDesc<dnnl::lstm_forward::primitive_desc>(*desc, eng);
   primitive_ = CreatePrimitive<dnnl::lstm_forward>(prim_desc_);
-  if (is_training) {
+  if (is_training_) {
     auto wksp_desc = GetWorkspaceDesc(prim_desc_);
     reserve_size_ = GetSize(wksp_desc);
     AddArgument(DNNL_ARG_WORKSPACE, wksp_desc);
@@ -118,46 +169,9 @@ void LstmCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   weights_memory_ = CreateDesc<dnnl::memory>(weights_layer, eng);
   weights_h_memory_ = CreateDesc<dnnl::memory>(weights_iter, eng);
   bias_memory_ = CreateDesc<dnnl::memory>(bias_desc_, eng);
-}
 
-void LstmCpuKernelMod::CheckParam(const CNodePtr &kernel_node) {
-  constexpr int kBidirectional = 2;
-  auto src_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  auto src_h_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-  auto src_c_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 2);
-  if (AnfAlgo::IsShapesDynamic({src_shape, src_h_shape, src_c_shape})) {
-    return;
-  }
-  bidirectional_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "bidirectional");
-  input_size_ = LongToInt(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "input_size"));
-  hidden_size_ = LongToInt(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "hidden_size"));
-  num_layers_ = LongToInt(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "num_layers"));
-  has_bias_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "has_bias");
-  batch_size_ = src_shape[1];
-  seq_len_ = src_shape[0];
-  num_directions_ = 1;
-  if (bidirectional_) {
-    num_directions_ = kBidirectional;
-  }
-  const int gate_size = kGateNum * hidden_size_;
-  if (num_layers_ <= 0) {
-    MS_LOG(EXCEPTION) << "Layers must be greater than zero!";
-  }
-  if (num_layers_ > kMaxLSTMLayer) {
-    MS_LOG(EXCEPTION) << "Layers must be lower than 100!";
-  }
-  for (int i = 0; i < num_layers_; ++i) {
-    weight_size_ += gate_size * (i == 0 ? input_size_ : hidden_size_ * num_directions_);
-    weight_h_size_ += gate_size * hidden_size_;
-  }
-  weight_size_ = weight_size_ * num_directions_;
-  weight_h_size_ = weight_h_size_ * num_directions_;
-  if (num_directions_ * num_layers_ != src_h_shape[0]) {
-    MS_LOG(EXCEPTION) << "Error iteration shape!";
-  }
-  if (src_shape.size() != 3 || src_h_shape.size() != 3 || src_c_shape.size() != 3) {
-    MS_LOG(EXCEPTION) << "Lstm only support 3-D input!";
-  }
+  InitOutputSize(outputs);
+  return KRET_OK;
 }
 
 bool LstmCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
@@ -185,7 +199,7 @@ bool LstmCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, con
   SetArgumentHandle(DNNL_ARG_DST_LAYER, outputs[0]->addr);
   SetArgumentHandle(DNNL_ARG_DST_ITER, outputs[1]->addr);
   SetArgumentHandle(DNNL_ARG_DST_ITER_C, outputs[2]->addr);
-  if (is_training) {
+  if (is_training_) {
     SetArgumentHandle(DNNL_ARG_WORKSPACE, outputs[3]->addr);
   }
   ExecutePrimitive();
