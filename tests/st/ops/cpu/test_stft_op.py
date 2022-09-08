@@ -17,10 +17,6 @@ import numpy as np
 import pytest
 from mindspore import Tensor
 from mindspore.ops import functional as F
-from mindspore.ops.operations import math_ops
-from mindspore.ops.functional import vmap
-from mindspore.common.api import ms_function
-from mindspore.common.api import _pynative_executor
 
 
 def np_all_close_with_loss(out, expect):
@@ -104,40 +100,3 @@ def test_stft_diff_type(input_data_type, win_data_type):
                         [0, 0, 0],
                         [0, 0, 0]]]).astype(np.complex128)
     assert np.allclose(out_ms.asnumpy(), expect)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-@pytest.mark.parametrize("data_type", [np.float, np.double])
-def test_stft_vmap(data_type):
-    """
-    Feature: STFT cpu kernel
-    Description: test the rightness of STFT cpu kernel vmap feature.
-    Expectation: Success.
-    """
-
-    def stft_fun(x, win):
-        """stft func"""
-        return math_ops.STFT(64, 16, 64, False, False, True)(x, win)
-
-    x_np = np.random.randn(20, 5, 100).astype(data_type)
-    win_np = np.random.randn(20, 64).astype(data_type)
-    x = Tensor(x_np)
-    win = Tensor(win_np)
-
-    output_vmap = vmap(stft_fun, in_axes=(0, 0))(x, win)
-    _pynative_executor.sync()
-
-    @ms_function
-    def manually_batched(xs, wins):
-        """manually_batched"""
-        output = []
-        for i in range(xs.shape[0]):
-            output.append(stft_fun(xs[i], wins[i]))
-        return F.stack(output)
-
-    output_manually = manually_batched(x, win)
-    _pynative_executor.sync()
-
-    assert np_all_close_with_loss(output_vmap.asnumpy(), output_manually.asnumpy())
