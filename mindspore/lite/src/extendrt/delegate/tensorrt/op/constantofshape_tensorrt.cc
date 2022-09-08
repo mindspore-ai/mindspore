@@ -54,7 +54,6 @@ int ConstantOfShapeTensorRT::AddInnerOp(TensorRTContext *ctx) {
   nvinfer1::Dims unsqueeze{rank};
   std::fill(unsqueeze.d, unsqueeze.d + rank, 1);
   unsqueeze_layer->setReshapeDimensions(unsqueeze);
-  unsqueeze_layer->setZeroIsPlaceholder(false);
   value_tensor = unsqueeze_layer->getOutput(0);
   CHECK_NULL_RETURN(value_tensor);
 

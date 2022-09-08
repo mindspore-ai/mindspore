@@ -793,7 +793,9 @@ nvinfer1::ITensor *Broadcast(TensorRTContext *ctx, nvinfer1::ITensor *input, nvi
   std::fill(strides.d, strides.d + rank, 1);
 
   auto slice_layer = ctx->network()->addSlice(*input, starts, {}, strides);
+#if TRT_VERSION_GE(7, 2)
   slice_layer->setMode(nvinfer1::SliceMode::kWRAP);
+#endif
   slice_layer->setInput(INPUT2, *shape);
 
   auto shuffler_output = slice_layer->getOutput(0);
