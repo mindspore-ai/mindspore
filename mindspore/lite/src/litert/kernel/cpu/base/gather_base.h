@@ -35,13 +35,13 @@ class GatherBaseCPUKernel : public LiteKernel {
   int DoGather(int task_id) const;
 
  protected:
+  int UpdateThreadNumProcess(int32_t kernel_type, int64_t per_unit_load_num, int64_t per_unit_store_num,
+                             int64_t unit_num) override;
   virtual int AssignIndicesData(bool isIndicesInt32) = 0;
   int *indices_data_{nullptr};
 
  private:
   int InitDynamicStatus();
-  int UpdateThreadNumProcess(int32_t kernel_type, int64_t per_unit_load_num, int64_t per_unit_store_num,
-                             int64_t unit_num) override;
   int ChooseThreadCuttingStrategy();
   struct BlockBoundaryInfo {
     int64_t begin_batch;
