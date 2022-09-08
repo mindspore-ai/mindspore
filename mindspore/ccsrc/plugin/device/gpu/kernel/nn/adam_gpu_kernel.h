@@ -14,19 +14,20 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_ADAM_GPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_ADAM_GPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_NN_ADAM_GPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_NN_ADAM_GPU_KERNEL_H_
 
 #include <vector>
 #include <string>
+#include <map>
+#include <utility>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/adam_impl.cuh"
 namespace mindspore {
 namespace kernel {
 constexpr size_t INPUT_NUM = 10;
-template <typename T>
-class AdamGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class AdamGpuKernelMod : public NativeGpuKernelMod {
  public:
   AdamGpuKernelMod()
       : variable_size_(0),
@@ -44,85 +45,27 @@ class AdamGpuKernelMod : public DeprecatedNativeGpuKernelMod {
 
   ~AdamGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-              void *stream_ptr) override {
-    if (is_null_input_) {
-      return true;
-    }
-    T *variable = GetDeviceAddress<T>(inputs, 0);
-    T *m = GetDeviceAddress<T>(inputs, 1);
-    T *v = GetDeviceAddress<T>(inputs, 2);
-    T *beta1_power = GetDeviceAddress<T>(inputs, 3);
-    T *beta2_power = GetDeviceAddress<T>(inputs, 4);
-    T *learning_rate = GetDeviceAddress<T>(inputs, 5);
-    T *beta1 = GetDeviceAddress<T>(inputs, 6);
-    T *beta2 = GetDeviceAddress<T>(inputs, 7);
-    T *epsilon = GetDeviceAddress<T>(inputs, 8);
-    T *gradient = GetDeviceAddress<T>(inputs, 9);
-    ApplyAdam(inputs[0]->size / sizeof(T), gradient, beta1_power, beta2_power, learning_rate, beta1, beta2, epsilon,
-              variable, m, v, reinterpret_cast<cudaStream_t>(stream_ptr));
-    return true;
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
   }
 
-  bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    kernel_node_ = kernel_node;
-    if (input_num != INPUT_NUM) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be " << INPUT_NUM << ", but got "
-                        << input_num;
-    }
-
-    variable_size_ = sizeof(T);
-    m_size_ = sizeof(T);
-    v_size_ = sizeof(T);
-    beta1_power_size_ = sizeof(T);
-    beta2_power_size_ = sizeof(T);
-    learning_rate_size_ = sizeof(T);
-    beta1_size_ = sizeof(T);
-    beta2_size_ = sizeof(T);
-    epsilon_size_ = sizeof(T);
-    gradient_size_ = sizeof(T);
-
-    auto variable_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto m_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    auto v_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
-    auto gradient_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 9);
-    is_null_input_ = CHECK_SHAPE_NULL(variable_shape, kernel_name_, "var") ||
-                     CHECK_SHAPE_NULL(m_shape, kernel_name_, "m") || CHECK_SHAPE_NULL(v_shape, kernel_name_, "v") ||
-                     CHECK_SHAPE_NULL(gradient_shape, kernel_name_, "gradient");
-    if (is_null_input_ || AnfAlgo::IsShapesDynamic({variable_shape, m_shape, v_shape, gradient_shape})) {
-      InitSizeLists();
-      return true;
-    }
-
-    variable_size_ *= SizeOf(variable_shape);
-    m_size_ *= SizeOf(m_shape);
-    v_size_ *= SizeOf(v_shape);
-    gradient_size_ *= SizeOf(gradient_shape);
-
-    InitSizeLists();
-    return true;
-  }
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
 
  protected:
-  void InitSizeLists() override {
-    input_size_list_.push_back(variable_size_);
-    input_size_list_.push_back(m_size_);
-    input_size_list_.push_back(v_size_);
-    input_size_list_.push_back(beta1_power_size_);
-    input_size_list_.push_back(beta2_power_size_);
-    input_size_list_.push_back(learning_rate_size_);
-    input_size_list_.push_back(beta1_size_);
-    input_size_list_.push_back(beta2_size_);
-    input_size_list_.push_back(epsilon_size_);
-    input_size_list_.push_back(gradient_size_);
-    output_size_list_.push_back(0);
-    output_size_list_.push_back(0);
-    output_size_list_.push_back(0);
-  }
+  std::vector<KernelAttr> GetOpSupport() override;
+  template <typename T>
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
+
+  using AdamLaunchFunc =
+    std::function<bool(AdamGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &, void *)>;
 
  private:
+  AdamLaunchFunc kernel_func_;
+  static std::vector<std::pair<KernelAttr, AdamLaunchFunc>> func_list_;
   size_t variable_size_;
   size_t m_size_;
   size_t v_size_;
@@ -139,4 +82,4 @@ class AdamGpuKernelMod : public DeprecatedNativeGpuKernelMod {
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_ADAM_GPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_NN_ADAM_GPU_KERNEL_H_

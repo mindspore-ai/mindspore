@@ -13,12 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ZEROSLIKE_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ZEROSLIKE_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_ZEROS_LIKE_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_ZEROS_LIKE_CPU_KERNEL_H_
 
 #include <complex>
 #include <vector>
 #include <utility>
+#include <map>
+#include <string>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
@@ -27,17 +29,18 @@ namespace kernel {
 using complex64 = std::complex<float>;
 using complex128 = std::complex<double>;
 
-class ZerosLikeCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class ZerosLikeCpuKernelMod : public NativeCpuKernelMod {
  public:
   ZerosLikeCpuKernelMod() = default;
   ~ZerosLikeCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
     return kernel_func_(this, inputs, workspace, outputs);
   }
-
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
@@ -49,11 +52,11 @@ class ZerosLikeCpuKernelMod : public DeprecatedNativeCpuKernelMod {
                        const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
   static std::vector<std::pair<KernelAttr, ZerosLikeFunc>> func_list_;
   ZerosLikeFunc kernel_func_;
-
-  std::vector<int64_t> input_shape_;
-  std::vector<int64_t> output_shape_;
+  std::string kernel_name_{};
+  ShapeVector input_shape_;
+  ShapeVector output_shape_;
 };
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ZEROSLIKE_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_ZEROS_LIKE_CPU_KERNEL_H_

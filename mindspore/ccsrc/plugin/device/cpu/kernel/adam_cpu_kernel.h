@@ -14,38 +14,53 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ADAM_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ADAM_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_ADAM_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_ADAM_CPU_KERNEL_H_
 
 #include <vector>
-
+#include <map>
+#include <utility>
+#include <string>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-class AdamCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class AdamCpuKernelMod : public NativeCpuKernelMod {
  public:
   AdamCpuKernelMod() = default;
   ~AdamCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
 
-  std::vector<KernelAttr> GetOpSupport() override {
-    std::vector<KernelAttr> support_list = {KernelAttr().AddSkipCheckAttr(true).AddOutInRef(0, 0)};
-    return support_list;
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, workspace, outputs);
   }
 
+  std::vector<KernelAttr> GetOpSupport() override;
+
  private:
+  template <typename T>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
+                    const std::vector<kernel::AddressPtr> &outputs);
+
+  using AdamFunc =
+    std::function<bool(AdamCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+
+  static std::vector<std::pair<KernelAttr, AdamFunc>> func_list_;
+  AdamFunc kernel_func_;
+
   template <typename T>
   void LaunchAdam(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
   void LaunchAdamNnacl(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
   bool use_nesterov_{false};
   TypeId dtype_{kTypeUnknown};
+  std::string kernel_name_{};
 };
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ADAM_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_ADAM_CPU_KERNEL_H_

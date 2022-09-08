@@ -34,9 +34,6 @@ class MIND_API ApplyAdagrad : public BaseOperator {
   ApplyAdagrad() : BaseOperator(kNameApplyAdagrad) { InitIOName({"var", "accum", "lr", "grad"}, {"var", "accum"}); }
 };
 
-abstract::AbstractBasePtr ApplyAdagradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                            const std::vector<abstract::AbstractBasePtr> &input_args);
-
 using kPrimApplyAdagradPtr = std::shared_ptr<ApplyAdagrad>;
 }  // namespace ops
 }  // namespace mindspore

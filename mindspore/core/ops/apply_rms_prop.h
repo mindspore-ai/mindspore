@@ -37,8 +37,6 @@ class MIND_API ApplyRMSProp : public BaseOperator {
                {"var", "mean_square", "moment"});
   }
 };
-abstract::AbstractBasePtr ApplyRMSPropInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                            const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimApplyRMSPropPtr = std::shared_ptr<ApplyRMSProp>;
 }  // namespace ops
 }  // namespace mindspore

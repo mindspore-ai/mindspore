@@ -35,8 +35,6 @@ class MIND_API ApplyFtrl : public BaseOperator {
     InitIOName({"var", "accum", "linear", "grad", "lr", "l1", "l2", "lr_power"}, {"var"});
   }
 };
-abstract::AbstractBasePtr ApplyFtrlInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                         const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimApplyFtrlPtr = std::shared_ptr<ApplyFtrl>;
 }  // namespace ops
 }  // namespace mindspore

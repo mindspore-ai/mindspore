@@ -27,32 +27,32 @@
 
 namespace mindspore {
 namespace ops {
-namespace {
-abstract::ShapePtr ZerosLikeInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  auto op_name = primitive->name();
-  return CheckAndConvertUtils::GetTensorInputShape(op_name, input_args, 0);
-}
-
-TypePtr ZerosLikeInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  auto op_name = primitive->name();
-  MS_EXCEPTION_IF_NULL(input_args[0]);
-  auto infer_type = input_args[0]->BuildType();
-  auto valid_type = common_valid_types_with_complex_and_bool;
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", infer_type, valid_type, op_name);
-  return infer_type;
-}
-}  // namespace
-
 MIND_API_OPERATOR_IMPL(ZerosLike, BaseOperator);
-AbstractBasePtr ZerosLikeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                               const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  const int64_t kInputNum = 1;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, primitive->name());
-  auto infer_type = ZerosLikeInferType(primitive, input_args);
-  auto infer_shape = ZerosLikeInferShape(primitive, input_args);
-  return abstract::MakeAbstract(infer_shape, infer_type);
-}
-REGISTER_PRIMITIVE_EVAL_IMPL(ZerosLike, prim::kPrimZerosLike, ZerosLikeInfer, nullptr, true);
+class ZerosLikeInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    auto op_name = primitive->name();
+    auto input_shape_ptr = input_args[kInputIndex0]->BuildShape();
+    auto input_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_shape_ptr);
+    auto input_shape = input_shape_map[kShape];
+    if (IsDynamicRank(input_shape)) {
+      return std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
+    }
+    if (input_shape_ptr->IsDynamic()) {
+      return input_shape_ptr->cast<abstract::ShapePtr>();
+    }
+    return CheckAndConvertUtils::GetTensorInputShape(op_name, input_args, 0);
+  }
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    auto op_name = primitive->name();
+    MS_EXCEPTION_IF_NULL(input_args[0]);
+    auto infer_type = input_args[0]->BuildType();
+    auto valid_type = common_valid_types_with_complex_and_bool;
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("x", infer_type, valid_type, op_name);
+    return infer_type;
+  }
+};
+REGISTER_PRIMITIVE_OP_INFER_IMPL(ZerosLike, prim::kPrimZerosLike, ZerosLikeInfer, false);
 }  // namespace ops
 }  // namespace mindspore
