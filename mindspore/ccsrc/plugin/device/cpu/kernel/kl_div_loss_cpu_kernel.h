@@ -66,7 +66,7 @@ class KLDivLossCpuKernelMod : public NativeCpuKernelMod {
   static std::vector<std::pair<KernelAttr, KLDivLossFunc>> func_list_;
   KLDivLossFunc kernel_func_;
   std::string reductionMode_;
-  int64_t batch_size_;
+  int64_t batch_size_{0};
   size_t input_x_shape_size_{1};
   size_t input_target_shape_size_{1};
 };

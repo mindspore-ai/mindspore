@@ -103,7 +103,7 @@ bool SvdCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const 
 
   if (compute_uv_) {
     task = [&](int64_t start, int64_t end) {
-      for (int64_t start = 0; start < end; ++start) {
+      for (; start < end; ++start) {
         Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, RowMajor>> matrix(
           input_a + start * num_of_rows_ * num_of_cols_, num_of_rows_, num_of_cols_);
         Eigen::BDCSVD<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, RowMajor>> svd(
@@ -123,7 +123,7 @@ bool SvdCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const 
     };
   } else {
     task = [&](int64_t start, int64_t end) {
-      for (int64_t start = 0; start < end; ++start) {
+      for (; start < end; ++start) {
         Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, RowMajor>> matrix(
           input_a + start * num_of_rows_ * num_of_cols_, num_of_rows_, num_of_cols_);
         Eigen::BDCSVD<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, RowMajor>> svd(
