@@ -245,22 +245,9 @@ int ReduceSumDim2Axis0(size_t col_size, size_t col_len, size_t row_len, const fl
   if (src_data == NULL || dst_data == NULL) {
     return NNACL_NULL_PTR;
   }
-#ifdef ENABLE_AVX
-  size_t block_mod = col_size % C8NUM;
-  size_t block_c8 = col_size - block_mod;
-#endif
+
   size_t k = 0;
-#ifdef ENABLE_AVX
-  for (; k < block_c8; k += C8NUM) {
-    MS_FLOAT32X8 tmp = {0, 0, 0, 0, 0, 0, 0, 0};
-    const float *inner_src = src_data + k;
-    float *inner_dst = dst_data + k;
-    for (size_t i = 0; i < row_len; ++i) {
-      tmp = MS_ADD256_F32(tmp, MS_LD256_F32(inner_src + i * col_len));
-    }
-    MS_ST256_F32(inner_dst, tmp);
-  }
-#endif
+  SIMD_RUN_NO_SCALAR(ReduceSumDim2Axis0, k, col_size, col_len, row_len, src_data, dst_data);
   for (; k < col_size; k++) {
     const float *inner_src = src_data + k;
     float *inner_dst = dst_data + k;
