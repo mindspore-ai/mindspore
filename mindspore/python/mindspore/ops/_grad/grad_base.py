@@ -20,6 +20,7 @@ from ..primitive import Primitive
 from ...common import Tensor
 from .. import operations as P
 from ...common import dtype as mstype
+from ..operations._inner_ops import DynamicBroadcastTo
 
 dyn_shape = P.TensorShape()
 cast = P.Cast()
@@ -106,8 +107,31 @@ def dyn_size(tensor):
 
 
 def create_tensor_by_element(ori_tuple, data_type=mstype.int64):
-    new_tuple = []
-    for tuple_i in ori_tuple:
-        tuple_i = P.Cast()(tuple_i, data_type)
-        new_tuple.append(tuple_i)
-    return P.Stack(axis=-1)(new_tuple)
+    """create tensor by element"""
+    if isinstance(ori_tuple, (tuple, list)):
+        new_tuple = []
+        for tuple_i in ori_tuple:
+            tuple_i = P.Cast()(tuple_i, data_type)
+            new_tuple.append(tuple_i)
+        return P.Stack(axis=-1)(new_tuple)
+    return ori_tuple
+
+
+def dyn_invert_premutation(prem):
+    """get the invert premutation of tensor"""
+    indices = P.ExpandDims()(prem, -1)
+    end = dyn_size(prem)
+    updates = P.Range()(P.Cast()(0, end.dtype), end, P.Cast()(1, end.dtype))
+    output = P.ZerosLike()(updates)
+    return P.TensorScatterUpdate()(output, indices, updates)
+
+
+def dyn_fill(value_type, shape, value):
+    """create a Tensor of the specified shape of tensor and fill it with the specified value."""
+    value_tensor = P.Cast()(value, value_type)
+    return DynamicBroadcastTo()(value_tensor, shape)
+
+
+def dyn_ones(shape, value_type):
+    """creates a tensor filled with value ones."""
+    return dyn_fill(value_type, shape, 1)
