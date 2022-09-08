@@ -2185,6 +2185,11 @@ class Cell(Cell_):
             i_dynamic_shape_inputs = self._dynamic_shape_inputs[tensor_index]
             i_inputs = inputs[tensor_index]
             if isinstance(i_dynamic_shape_inputs, Tensor):
+                if not isinstance(i_inputs, Tensor):
+                    raise TypeError(
+                        f"When using 'set_inputs', the type of network inputs and set_inputs must be the same. But "
+                        f"got {type(i_inputs)} and {type(i_dynamic_shape_inputs)}."
+                    )
                 if i_dynamic_shape_inputs.dtype is not i_inputs.dtype:
                     raise TypeError(
                         f"For 'set_inputs', the DataType of Tensor must be {i_inputs.dtype}, but got "
