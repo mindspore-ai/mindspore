@@ -63,6 +63,13 @@ Status Model::Build(const std::vector<char> &, ModelType, const std::shared_ptr<
   return kMCFailed;
 }
 
+Status Model::Build(const void *model_data, size_t data_size, ModelType model_type,
+                    const std::shared_ptr<Context> &model_context, const Key &dec_key,
+                    const std::vector<char> &dec_mode, const std::vector<char> &cropto_lib_path) {
+  MS_LOG(ERROR) << "Unsupported Feature.";
+  return kMCFailed;
+}
+
 Status Model::Resize(const std::vector<MSTensor> &inputs, const std::vector<std::vector<int64_t>> &dims) {
   if (impl_ == nullptr) {
     MS_LOG(ERROR) << "Failed because this model has not been built.";

@@ -165,7 +165,9 @@ void RandomGenUniform(const int size, curandState *globalState, const int up_bou
   SrandUniformInt<<<(size + 255) / 256, 256, 0, stream>>>(size, globalState, up_bound, indexes);
 }
 
-template void RandomGenUniform<unsigned int>(const int size, curandState *globalState, const int up_bound,
-                                             unsigned int *indexes, cudaStream_t stream);
-template void RandomGenUniform<size_t>(const int size, curandState *globalState, const int up_bound, size_t *indexes,
-                                       cudaStream_t stream);
+template CUDA_LIB_EXPORT
+void RandomGenUniform<unsigned int>(const int size, curandState *globalState, const int up_bound,
+                                    unsigned int *indexes, cudaStream_t stream);
+template CUDA_LIB_EXPORT
+void RandomGenUniform<size_t>(const int size, curandState *globalState, const int up_bound, size_t *indexes,
+                              cudaStream_t stream);

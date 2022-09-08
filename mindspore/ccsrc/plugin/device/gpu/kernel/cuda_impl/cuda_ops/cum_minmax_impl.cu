@@ -26,7 +26,6 @@
 #include "plugin/device/cpu/kernel/nnacl/op_base.h"
 
 namespace {
-using uint = unsigned int;
 
 template <typename DataType>
 DataType NumericMax() {
@@ -98,6 +97,7 @@ struct BlockPrefixCallbackFunctor {
   }
 };
 
+#ifndef _WIN32
 template <typename BlockScanFunctor, typename ValueType, typename IndexType, uint BlockDim>
 __global__ void LargeBlockScanKernel(BlockScanFunctor functor, const ValueType *input_ptr, ValueType *value_ptr,
                                      IndexType *index_ptr, uint axis_size, uint inner_size, uint axis_inner_size,
@@ -127,6 +127,7 @@ __global__ void LargeBlockScanKernel(BlockScanFunctor functor, const ValueType *
     }
   }
 }
+#endif
 
 template <typename BlockScanFunctor, typename ValueType, typename IndexType, uint BlockDimX, uint BlockDimY>
 __global__ void ScanInnerMostDimKernel(BlockScanFunctor functor, const ValueType *input_ptr, ValueType *value_ptr,
@@ -233,7 +234,7 @@ void KernelHelper(BinaryFunctor functor, ValueType init, const ValueType *input_
   uint max_grid_size = GetMaxGridDimY(device_id);
   typedef BlockScanFunctor<BinaryFunctor, thrust::tuple<ValueType, IndexType>> BlockScanFunctor;
   BlockScanFunctor scan_op{functor};
-#if defined(CUB_VERSION) && (CUB_VERSION > 100800)
+#if defined(CUB_VERSION) && (CUB_VERSION > 100800) && !defined(_WIN32)
   // Special case where only one dimension that needs to compute, so using cub library is the most efficient way.
   if (outer_size == 1 && inner_size == 1) {
     // Using thrust::zip_iterator to make an iterator for (ValueType, IndexType).

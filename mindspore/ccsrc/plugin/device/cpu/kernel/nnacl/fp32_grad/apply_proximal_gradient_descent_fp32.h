@@ -23,15 +23,7 @@
 extern "C" {
 #endif
 void ApplyProximalGradientDescentOpt(float *var, float alpha, float l1, float l2, float *delta, int64_t input_elements);
-float SignFp32(const float x) {
-  if (x > 0.0) {
-    return 1.0;
-  }
-  if (x < 0.0) {
-    return -1.0;
-  }
-  return 0.0;
-}
+float SignFp32(const float x);
 
 #ifdef __cplusplus
 }

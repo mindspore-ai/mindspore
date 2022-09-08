@@ -32,3 +32,13 @@ void ApplyProximalGradientDescentOpt(float *var, float alpha, float l1, float l2
     }
   }
 }
+
+float SignFp32(const float x) {
+  if (x > 0.0) {
+    return 1.0;
+  }
+  if (x < 0.0) {
+    return -1.0;
+  }
+  return 0.0;
+}

@@ -39,9 +39,9 @@ __global__ void DiscountedReturnKernel(const int timestep, const int num_env, co
 }
 
 template <typename T>
-CUDA_LIB_EXPORT void DiscountedReturn(const int &timestep, const int &num_env, const int &num_element,
-                                      const float &gamma, const T *reward, const bool *done, const T *last_value,
-                                      T *discouted_return, cudaStream_t stream) {
+void DiscountedReturn(const int &timestep, const int &num_env, const int &num_element,
+                      const float &gamma, const T *reward, const bool *done, const T *last_value,
+                      T *discouted_return, cudaStream_t stream) {
   // Every block process M element, 256 is a common tile size.
   const int element_per_step = num_env * num_element;
   const int element_per_block = std::min(256, element_per_step);

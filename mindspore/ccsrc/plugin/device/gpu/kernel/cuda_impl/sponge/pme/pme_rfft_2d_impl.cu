@@ -23,5 +23,6 @@ void PMERFFT2D(int Nfft, T *input_tensor, Complex<T> *output_tensor,
   return;
 }
 
-template void PMERFFT2D<float>(int Nfft, float *input_tensor, Complex<float> *output_tensor,
-                           const cufftHandle &FFT_plan_r2c, cudaStream_t stream);
+template CUDA_LIB_EXPORT
+void PMERFFT2D<float>(int Nfft, float *input_tensor, Complex<float> *output_tensor,
+                      const cufftHandle &FFT_plan_r2c, cudaStream_t stream);

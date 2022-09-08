@@ -116,7 +116,7 @@ class ProfilingOp {
   std::string op_name_;
 };
 
-class MS_CORE_API GPUProfiler : public Profiler {
+class BACKEND_EXPORT GPUProfiler : public Profiler {
  public:
   static std::shared_ptr<GPUProfiler> GetInstance();
 
