@@ -54,6 +54,8 @@ def get_bprop_crop_and_resize(self):
     gradboxes = CropAndResizeGradBoxes(method=self.method)
     method_ = self.method
     def bprop(x, boxes, box_index, crop_size, out, dout):
+        if method_ != "bilinear":
+            return (zeros_like(x), zeros_like(boxes), zeros_like(box_index), zeros_like(crop_size))
         image_type = x.dtype
         if image_type not in allowed_types:
             x = F.cast(x, mstype.float32)
