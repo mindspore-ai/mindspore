@@ -32,8 +32,6 @@ using mindspore::profiler::ascend::MemoryProfiling;
 namespace mindspore {
 namespace device {
 namespace ascend {
-using KernelGraph = mindspore::session::KernelGraph;
-
 namespace {
 CNodePtr GetNextLabelSet(const std::vector<CNodePtr> &kernel_nodes, uint32_t index) {
   size_t node_sizes = kernel_nodes.size();

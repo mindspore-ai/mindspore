@@ -72,9 +72,9 @@ RegisterHelper::RegisterHelper(const string &name, const string &device_name, bo
   va_end(var_ptr);
   op_adaptation_info_ = std::make_shared<OpAdaptationInfo>(name, device_name, is_dynamic_shape);
   MS_EXCEPTION_IF_NULL(op_adaptation_info_);
-  op_adaptation_info_->SetTargetOpName(name);
+  (void)op_adaptation_info_->SetTargetOpName(name);
   for (auto &index : input_to_attr) {
-    op_adaptation_info_->SetInputAttrInfo(index);
+    (void)op_adaptation_info_->SetInputAttrInfo(index);
   }
   opt::OpAdaptationInfoRegister::GetInstance().RegOpAdaptationInfo(op_adaptation_info_.get());
 }
@@ -83,5 +83,16 @@ RegisterHelper::RegisterHelper(const OpAdaptationInfo &op_adaptation_info) {
   op_adaptation_info_ = std::make_shared<OpAdaptationInfo>(op_adaptation_info);
   MS_EXCEPTION_IF_NULL(op_adaptation_info_);
   opt::OpAdaptationInfoRegister::GetInstance().RegOpAdaptationInfo(op_adaptation_info_.get());
+}
+OpAdaptationInfo &OpAdaptationInfo::operator=(const OpAdaptationInfo &op_adaptation_info) {
+  origin_op_name_ = op_adaptation_info.origin_op_name_;
+  target_op_name_ = op_adaptation_info.target_op_name_;
+  pre_check_func_ = op_adaptation_info.pre_check_func_;
+  need_tbe_check_supported_ = op_adaptation_info.need_tbe_check_supported_;
+  input_attr_map_ = op_adaptation_info.input_attr_map_;
+  attr_name_map_ = op_adaptation_info.attr_name_map_;
+  device_name_ = op_adaptation_info.device_name_;
+  flag_ = op_adaptation_info.flag_;
+  return *this;
 }
 }  // namespace mindspore::opt

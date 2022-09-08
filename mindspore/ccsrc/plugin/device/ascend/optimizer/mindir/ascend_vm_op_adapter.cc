@@ -117,7 +117,7 @@ CNodePtr AscendVmOpAdapter::ConvertToTargetOp(const CNodePtr &origin_op, OpAdapt
       }
     }
 
-    auto target_op = CreateTargetOp(origin_op, op_adaptation_info);
+    auto target_op = CreateTargetOp(origin_op, *op_adaptation_info);
     if (target_op == nullptr) {
       MS_LOG(DEBUG) << "Create target op failed for node " << origin_op->fullname_with_scope();
       return origin_op;
@@ -133,7 +133,7 @@ CNodePtr AscendVmOpAdapter::ConvertToTargetOp(const CNodePtr &origin_op, OpAdapt
     }
     return target_op;
   } else {
-    auto target_op = CreateTargetOp(origin_op, op_adaptation_info);
+    auto target_op = CreateTargetOp(origin_op, *op_adaptation_info);
     if (target_op == nullptr) {
       MS_LOG(DEBUG) << "Create target op failed for node " << origin_op->fullname_with_scope();
       return origin_op;
@@ -230,17 +230,17 @@ ValuePtr CreateValueFromTensor(const tensor::TensorPtr &tensor) {
   return ret;
 }
 
-CNodePtr AscendVmOpAdapter::CreateTargetOp(const CNodePtr &origin_op, OpAdaptationInfo *op_adaptation_info) const {
+CNodePtr AscendVmOpAdapter::CreateTargetOp(const CNodePtr &origin_op,
+                                           const OpAdaptationInfo &op_adaptation_info) const {
   MS_EXCEPTION_IF_NULL(origin_op);
-  MS_EXCEPTION_IF_NULL(op_adaptation_info);
-  auto target_op_name = op_adaptation_info->GetTargetOpName();
-  auto input_attr_info_map = op_adaptation_info->GetInputAttrInfoMap();
+  auto target_op_name = op_adaptation_info.GetTargetOpName();
+  auto input_attr_info_map = op_adaptation_info.GetInputAttrInfoMap();
 
   auto origin_primitive = GetCNodePrimitive(origin_op);
   MS_EXCEPTION_IF_NULL(origin_primitive);
   auto target_primitive = std::make_shared<Primitive>(target_op_name);
   MS_EXCEPTION_IF_NULL(target_primitive);
-  target_primitive->SetAttrs(origin_primitive->attrs());
+  (void)target_primitive->SetAttrs(origin_primitive->attrs());
   std::vector<AnfNodePtr> target_inputs;
   auto inputs = origin_op->inputs();
   target_inputs.push_back(inputs[0]);
@@ -338,7 +338,6 @@ ValuePtr AscendVmOpAdapter::UpdateAttrValue(const CNodePtr &origin_op,
   ValuePtr ret = value;
   auto attr_dtype = iter->second.GetAttrDataType();
   if (attr_dtype.empty()) {
-    // TODO(laiyongqiang): exception, it means attr info is wrong when refactory done.
     auto op_name = common::AnfAlgo::GetCNodeName(origin_op);
     auto op_info_ptr = kernel::tbe::TbeDynamicShapeUtil::FindOp(op_name, origin_op);
     if (op_info_ptr) {
