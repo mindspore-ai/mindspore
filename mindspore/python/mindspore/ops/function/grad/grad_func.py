@@ -223,13 +223,13 @@ def value_and_grad(fn, grad_position=0, weights=None, has_aux=False):
         ...     def construct(self, x, y, z):
         ...         return x * y * z
         >>> x = Tensor([1, 2], mindspore.float32)
-        >>> y = Tensor([-2, 3]), mindspore.float32)
-        >>> z = Tensor([0, 3]), mindspore.float32)
+        >>> y = Tensor([-2, 3], mindspore.float32)
+        >>> z = Tensor([0, 3], mindspore.float32)
         >>> net = Net()
         >>> grad_fn = value_and_grad(net, grad_position=1)
         >>> output, inputs_gradient = grad_fn(x, y, z)
         >>> print(output)
-        [ -0. 18.]
+        [-0. 18.]
         >>> print(inputs_gradient)
         [0. 6.]
         >>>
