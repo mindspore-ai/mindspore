@@ -48,8 +48,9 @@ bool MultinomialGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
 int MultinomialGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                     const std::vector<KernelTensorPtr> &outputs,
                                     const std::map<uint32_t, tensor::TensorPtr> &) {
-  ResetResource();
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+  workspace_size_list_.clear();
+  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
     return ret;
   }
   auto input_shape_0 = Convert2SizeTClipNeg(inputs[0]->GetShapeVector());
@@ -63,13 +64,7 @@ int MultinomialGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   size_t elem_num = std::accumulate(input_shape_0.begin(), input_shape_0.end(), 1, std::multiplies<size_t>());
 
   workspace_size_list_.emplace_back(elem_num * sizeof(float));
-  return static_cast<int>(KRET_OK);
-}
-
-void MultinomialGpuKernelMod::ResetResource() noexcept {
-  input_size_list_.clear();
-  output_size_list_.clear();
-  workspace_size_list_.clear();
+  return ret;
 }
 
 bool MultinomialGpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,

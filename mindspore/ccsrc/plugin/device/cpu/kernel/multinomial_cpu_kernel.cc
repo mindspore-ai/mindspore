@@ -73,7 +73,7 @@ int MultinomialCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
                                     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
   ResetResource();
   int ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs);
-  if (ret != 0) {
+  if (ret != KRET_OK) {
     return ret;
   }
 

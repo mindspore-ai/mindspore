@@ -62,10 +62,7 @@ class MomentumGpuKernelMod : public NativeGpuKernelMod {
 
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override {
-    if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
-      return ret;
-    }
-    return static_cast<int>(KRET_OK);
+    return KernelMod::Resize(base_operator, inputs, outputs);
   }
 
   std::vector<KernelAttr> GetOpSupport() override;

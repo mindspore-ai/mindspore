@@ -185,6 +185,17 @@ std::vector<
      &ReverseSequenceCpuKernelMod::LaunchKernel<float, int32_t>, &ReverseSequenceCpuKernelMod::ResizeKernel<float>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
      &ReverseSequenceCpuKernelMod::LaunchKernel<double, int32_t>, &ReverseSequenceCpuKernelMod::ResizeKernel<double>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeComplex64),
+     &ReverseSequenceCpuKernelMod::LaunchKernel<complex64, int32_t>,
+     &ReverseSequenceCpuKernelMod::ResizeKernel<complex64>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeComplex128)
+       .AddInputAttr(kNumberTypeInt32)
+       .AddOutputAttr(kNumberTypeComplex128),
+     &ReverseSequenceCpuKernelMod::LaunchKernel<complex128, int32_t>,
+     &ReverseSequenceCpuKernelMod::ResizeKernel<complex128>},
+    {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
+     &ReverseSequenceCpuKernelMod::LaunchKernel<bool, int32_t>, &ReverseSequenceCpuKernelMod::ResizeKernel<bool>},
     {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt8),
      &ReverseSequenceCpuKernelMod::LaunchKernel<int8_t, int64_t>, &ReverseSequenceCpuKernelMod::ResizeKernel<int8_t>},
     {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt16),
@@ -207,7 +218,18 @@ std::vector<
     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
      &ReverseSequenceCpuKernelMod::LaunchKernel<float, int64_t>, &ReverseSequenceCpuKernelMod::ResizeKernel<float>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
-     &ReverseSequenceCpuKernelMod::LaunchKernel<double, int64_t>, &ReverseSequenceCpuKernelMod::ResizeKernel<double>}};
+     &ReverseSequenceCpuKernelMod::LaunchKernel<double, int64_t>, &ReverseSequenceCpuKernelMod::ResizeKernel<double>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex64),
+     &ReverseSequenceCpuKernelMod::LaunchKernel<complex64, int64_t>,
+     &ReverseSequenceCpuKernelMod::ResizeKernel<complex64>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeComplex128)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeComplex128),
+     &ReverseSequenceCpuKernelMod::LaunchKernel<complex128, int64_t>,
+     &ReverseSequenceCpuKernelMod::ResizeKernel<complex128>},
+    {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
+     &ReverseSequenceCpuKernelMod::LaunchKernel<bool, int64_t>, &ReverseSequenceCpuKernelMod::ResizeKernel<bool>}};
 
 std::vector<KernelAttr> ReverseSequenceCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;

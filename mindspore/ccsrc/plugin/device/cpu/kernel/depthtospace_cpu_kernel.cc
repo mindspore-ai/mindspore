@@ -49,7 +49,8 @@ bool DepthToSpaceCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
 int DepthToSpaceCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                      const std::vector<KernelTensorPtr> &outputs,
                                      const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
     return ret;
   }
   input_shape_ = inputs[0]->GetShapeVector();

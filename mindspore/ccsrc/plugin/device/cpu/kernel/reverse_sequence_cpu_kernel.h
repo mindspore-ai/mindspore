@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_REVERSE_SEQUENCE_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_REVERSE_SEQUENCE_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_REVERSE_SEQUENCE_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_REVERSE_SEQUENCE_CPU_KERNEL_H_
 
 #include <vector>
 #include <map>
@@ -24,11 +24,14 @@
 #include <utility>
 #include <string>
 #include <tuple>
+#include <complex>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
+using complex64 = std::complex<float>;
+using complex128 = std::complex<double>;
 constexpr auto kUnknown = "Unknown";
 
 class ReverseSequenceCpuKernelMod : public NativeCpuKernelMod {
@@ -84,4 +87,4 @@ class ReverseSequenceCpuKernelMod : public NativeCpuKernelMod {
 };
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_REVERSE_SEQUENCE_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_REVERSE_SEQUENCE_CPU_KERNEL_H_
