@@ -37,7 +37,6 @@ class ConvActivationFusion : public LitePatternProcessPass {
 
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 
- private:
   const std::shared_ptr<ConverterPara> param_;
 };
 }  // namespace opt

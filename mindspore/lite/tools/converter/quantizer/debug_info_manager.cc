@@ -335,7 +335,8 @@ int DebugInfoManager::AddOriginInfo(const mindspore::MSCallBackParam &call_back_
 
 int DebugInfoManager::AddComparedInfo(const mindspore::MSCallBackParam &call_back_param,
                                       const std::vector<mindspore::lite::Tensor *> &inputs, OpParameter *op_parameter,
-                                      bool is_input, size_t tensor_index, mindspore::lite::Tensor *compared_tensor,
+                                      bool is_input, size_t tensor_index,
+                                      const mindspore::lite::Tensor *compared_tensor,
                                       const quant::DebugMode &debug_mode) {
   CHECK_NULL_RETURN(op_parameter);
   CHECK_NULL_RETURN(compared_tensor);
@@ -422,7 +423,7 @@ int DebugInfoManager::GetDataFromTensorMap(const mindspore::schema::Tensor &sche
 }
 
 int DebugInfoManager::GetConstTensor(const std::map<std::string, mindspore::schema::Tensor *> &input_tensor_map,
-                                     mindspore::lite::Tensor *tensor, mindspore::lite::Tensor *new_tensor) {
+                                     const mindspore::lite::Tensor *tensor, mindspore::lite::Tensor *new_tensor) {
   CHECK_NULL_RETURN(tensor);
   CHECK_NULL_RETURN(new_tensor);
   auto iter = input_tensor_map.find(tensor->tensor_name());
@@ -434,7 +435,7 @@ int DebugInfoManager::GetConstTensor(const std::map<std::string, mindspore::sche
   new_tensor->set_shape(tensor->shape());
   new_tensor->set_quant_params(ConvertTensorsQuantParam(iter->second));
   new_tensor->set_tensor_name(tensor->tensor_name());
-  new_tensor->set_category(static_cast<mindspore::lite::Tensor *>(tensor)->category());
+  new_tensor->set_category(tensor->category());
   new_tensor->set_format(tensor->format());
   auto ret = GetDataFromTensorMap(*iter->second, new_tensor);
   if (ret != RET_OK) {
@@ -554,7 +555,11 @@ MSKernelCallBack DebugInfoManager::GetAfterCallBack(const std::map<std::string, 
           continue;
         }
         MS_LOG(INFO) << "Get output " << tensor.Name() << " statistics info.";
-        AddOriginInfo(call_param, false, i, static_cast<mindspore::lite::Tensor *>(lite_tensor), debug_mode);
+        auto ret = AddOriginInfo(call_param, false, i, static_cast<mindspore::lite::Tensor *>(lite_tensor), debug_mode);
+        if (ret != RET_OK) {
+          MS_LOG(ERROR) << tensor.Name() << " add origin info failed.";
+          return false;
+        }
       }
       return true;
     };
@@ -577,8 +582,12 @@ MSKernelCallBack DebugInfoManager::GetAfterCallBack(const std::map<std::string, 
           MS_LOG(ERROR) << tensor.Name() << " op_parameters find node name " << call_param.node_name << " failed.";
           return false;
         }
-        AddComparedInfo(call_param, lite_inputs, op_parameters.at(call_param.node_name), false, i, lite_tensor,
-                        debug_mode);
+        auto ret = AddComparedInfo(call_param, lite_inputs, op_parameters.at(call_param.node_name), false, i,
+                                   lite_tensor, debug_mode);
+        if (ret != RET_OK) {
+          MS_LOG(ERROR) << tensor.Name() << " add compared info failed.";
+          return false;
+        }
       }
       return true;
     };
@@ -672,7 +681,7 @@ int DebugInfoManager::GetClipAndCos(const quant::DebugMode &debug_mode) {
   return RET_OK;
 }
 
-int DebugInfoManager::GetOutputInfo() {
+void DebugInfoManager::GetOutputInfo() {
   std::vector<QuantDebugInfo> output_info;
   for (auto iter = compared_info_.begin(); iter != compared_info_.end(); ++iter) {
     // subgraph isolation by appending "_duplicate" to output tensor
@@ -684,7 +693,6 @@ int DebugInfoManager::GetOutputInfo() {
     }
   }
   output_infos_.push_back(output_info);
-  return RET_OK;
 }
 
 int DebugInfoManager::SaveOutputInfo(const std::string &file_path) {
@@ -806,7 +814,7 @@ int DebugInfoManager::CompareOriginWithQuant(const std::shared_ptr<mindspore::Mo
   }
   auto data_preprocess = param->dataPreProcessParam;
   // When the calibration data set does not exist, use 1 round of random numbers for comparison
-  size_t rounds = data_preprocess.calibrate_size > 0 ? data_preprocess.calibrate_size : 1;
+  size_t rounds = static_cast<size_t>(data_preprocess.calibrate_size > 0 ? data_preprocess.calibrate_size : 1);
   for (size_t round = 0; round < rounds; round++) {
     ret = StatisticsDataPerRound(origin, quant, op_parameters, param, origin_input_tensor_map, quant_input_tensor_map,
                                  round);

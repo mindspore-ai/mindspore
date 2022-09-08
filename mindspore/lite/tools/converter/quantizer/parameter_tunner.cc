@@ -117,7 +117,6 @@ int ParameterOptimizer::WeightQuantModelInference(const FuncGraphPtr &func_graph
   CHECK_NULL_RETURN(best_compress_ratio);
   CHECK_NULL_RETURN(found_valid_scale);
   CHECK_NULL_RETURN(s_param);
-  auto origin_out_tensor = origin_model->GetOutputs();
   const float threshold = 0.995f;
   *best_compress_ratio = 0.0f;
   *found_valid_scale = false;

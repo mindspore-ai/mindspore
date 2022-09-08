@@ -20,6 +20,8 @@
 #include <vector>
 #include <utility>
 #include <set>
+#include <cfloat>
+#include <cmath>
 #include "tools/common/statistic_utils.h"
 
 namespace mindspore::lite::quant {
@@ -58,10 +60,10 @@ void DataDistribution::UpdateInterval() {
 
 int DataDistribution::UpdateHistogram(const std::vector<float> &data) {
   for (auto value : data) {
-    if (IsEqual(value, 0)) {
+    if (fabs(value) <= DBL_EPSILON) {
       continue;
     }
-    if (IsEqual(this->interval_, 0)) {
+    if (fabs(this->interval_) <= DBL_EPSILON) {
       MS_LOG(ERROR) << "divisor 'interval' cannot be 0.";
       return RET_ERROR;
     }
@@ -113,7 +115,7 @@ void DataDistribution::HandleBinForKL(int quant_bint_nums, int bin_index, std::v
     float left_scale = 0.0f;
     if (left_upper > start) {
       left_scale = left_upper - start;
-      if (!IsEqual(this->histogram_[left_upper - 1], 0)) {
+      if (fabs(this->histogram_[left_upper - 1]) > DBL_EPSILON) {
         count += left_scale;
       }
     }
@@ -121,7 +123,7 @@ void DataDistribution::HandleBinForKL(int quant_bint_nums, int bin_index, std::v
     double right_scale = 0.0f;
     if (right_lower < end) {
       right_scale = end - right_lower;
-      if (!IsEqual(this->histogram_[right_lower], 0)) {
+      if (fabs(this->histogram_[right_lower]) > DBL_EPSILON) {
         count += right_scale;
       }
     }
@@ -131,18 +133,18 @@ void DataDistribution::HandleBinForKL(int quant_bint_nums, int bin_index, std::v
         count += 1;
       }
     });
-    if (IsEqual(count, 0)) {
+    if (fabs(count) <= DBL_EPSILON) {
       continue;
     }
     const float average_num = quantized_histogram->at(i) / count;
-    if (left_upper > start && !IsEqual(this->histogram_[left_upper - 1], 0)) {
+    if (left_upper > start && fabs(this->histogram_[left_upper - 1]) > DBL_EPSILON) {
       expanded_histogram->at(left_upper - 1) += average_num * left_scale;
     }
-    if (right_lower < end && !IsEqual(this->histogram_[right_lower], 0)) {
+    if (right_lower < end && fabs(this->histogram_[right_lower]) > DBL_EPSILON) {
       expanded_histogram->at(right_lower) += average_num * right_scale;
     }
     for (int k = left_upper; k < right_lower; ++k) {
-      if (!IsEqual(this->histogram_[k], 0)) {
+      if (fabs(this->histogram_[k]) > DBL_EPSILON) {
         expanded_histogram->at(k) += average_num;
       }
     }

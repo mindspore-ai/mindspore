@@ -70,7 +70,7 @@ int ConcatQuantParamPropogator::PropogateQuantParams(mindspore::schema::MetaGrap
       }
     }
 
-    MS_CHECK_FALSE_MSG(node.outputIndex.empty(), false, "outputIndex is empty.");
+    MS_CHECK_FALSE_MSG(node.outputIndex.empty(), RET_ERROR, "Output index is empty.");
     MS_CHECK_TRUE_RET(graph->allTensors.size() > node.outputIndex.front(), RET_ERROR);
     auto &out_tensor = graph->allTensors.at(node.outputIndex.front());
     MS_CHECK_TRUE_RET(out_tensor != nullptr, RET_NULL_PTR);

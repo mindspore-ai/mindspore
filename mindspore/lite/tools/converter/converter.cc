@@ -19,6 +19,7 @@
 #include <memory>
 #include <vector>
 #include <set>
+#include <tuple>
 #include <algorithm>
 #include "src/common/log_adapter.h"
 #include "tools/common/meta_graph_serializer.h"
@@ -421,7 +422,11 @@ int ConverterImpl::InitExtendedIntegrationInfo(const std::shared_ptr<ConverterPa
   if (!extended_info.fusion_blacklists.empty()) {
     std::vector<std::string> fusions = SplitStringToVector(extended_info.fusion_blacklists, ",");
     for (const auto &fusion : fusions) {
-      param->fusion_blacklists.insert(fusion);
+      bool inserted = false;
+      std::tie(std::ignore, inserted) = param->fusion_blacklists.insert(fusion);
+      if (inserted) {
+        MS_LOG(DEBUG) << "Value was inserted successfully.";
+      }
     }
   }
   return RET_OK;
