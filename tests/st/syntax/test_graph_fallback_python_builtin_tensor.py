@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """test python built-in functions in graph mode"""
-import operator
 import pytest
 import numpy as np
 from mindspore import Tensor, context, nn, ms_function
@@ -162,66 +161,6 @@ def test_fallback_round_tensor_constant():
     out = net()
     expect = Tensor(np.array([0.0, 5.0, 10.0]))
     np.testing.assert_almost_equal(out.asnumpy(), expect.asnumpy())
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_builtin_function_max_min_with_tensor():
-    """
-    Feature: Support the type of the input of built-in function max is tensor.
-    Description: Support the type of the input of built-in function max is tensor.
-    Expectation: No exception.
-    """
-    @ms_function
-    def foo(x, y):
-        return max(x, y), min(x, y)
-
-    max_out, min_out = foo(Tensor([1]), Tensor([2]))
-    assert operator.eq(max_out, 2)
-    assert operator.eq(min_out, 1)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_builtin_function_max_min_with_multiple_tensor():
-    """
-    Feature: Support the type of the input of built-in function max is tensor.
-    Description: Support the type of the input of built-in function max is tensor.
-    Expectation: No exception.
-    """
-    @ms_function
-    def foo(x, y, z):
-        return max(x, y, z), min(x, y, z)
-
-    max_out, min_out = foo(Tensor([1]), Tensor([2]), Tensor([3]))
-    assert operator.eq(max_out, 3)
-    assert operator.eq(min_out, 1)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_builtin_function_max_min_with_tensor_list():
-    """
-    Feature: Support the type of the input of built-in function min is tensor.
-    Description: Support the type of the input of built-in function min is tensor.
-    Expectation: No exception.
-    """
-    @ms_function
-    def foo(x):
-        return min(x), max(x)
-
-    min_out, max_out = foo(Tensor([1, 2, 3, 4, 5], dtype=mstype.float32))
-    assert operator.eq(min_out, 1)
-    assert operator.eq(max_out, 5)
 
 
 @pytest.mark.level0

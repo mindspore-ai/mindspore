@@ -1986,31 +1986,70 @@ def tuple_func(*data):
 
 def max_tensor(*data):
     """Get the max of tensor inputs."""
+    if len(data) == 1:
+        data = data[0]
     max_tensor_data = data[0]
     for input_data in data:
         max_tensor_data = P.Maximum()(max_tensor_data, input_data)
     return max_tensor_data
 
 
-def ms_max(*data):
-    """Implementation of `max`."""
+def get_max_min_data_len(*data):
+    """Get the real length of data."""
     len_data = 0
-    if isinstance(data, (dict, list, str, tuple)):
+    if isinstance(data, tuple) and len(data) == 1 and isinstance(data[0], (dict, list, tuple)):
+        data = data[0]
+        if isinstance(data, dict):
+            data = iter(data)
+    if isinstance(data, (dict, list, tuple)):
         len_data = len(data)
     else:
-        const_utils.raise_type_error("max() does not support the data type.")
+        const_utils.raise_type_error("max() or min() does not support the data type.")
+    return len_data
+
+
+def get_tensor_num(data):
+    """Get the number of tensor in data."""
+    tensor_num = 0
+    for input_data in data:
+        if isinstance(input_data, Tensor):
+            tensor_num = tensor_num + 1
+    return tensor_num
+
+
+def exist_tensor(data):
+    """Check if tensor exist in sequence."""
+    for input_data in data:
+        if isinstance(input_data, Tensor):
+            return True
+        if isinstance(input_data, (list, tuple)):
+            if exist_tensor(input_data):
+                return True
+    return False
+
+
+def ms_max(*data):
+    """Implementation of `max`."""
+    len_data = get_max_min_data_len(data)
     if len_data <= 0:
         const_utils.raise_type_error("max() requires 1 argument at least.")
     elif len_data == 1:
         x = data[0]
         if isinstance(x, Tensor):
             return x.max()
+        # Deal with Tensor in tuple or list
+        if isinstance(x, (list, tuple)):
+            tensor_num = get_tensor_num(x)
+            if tensor_num == len(x):
+                return max_tensor(x)
+            if tensor_num != 0:
+                const_utils.raise_type_error("max() cannot contain both tensor and non-tensor type.")
+            if exist_tensor(x):
+                const_utils.raise_type_error("max() cannot support tensor in list or tuple nested now.")
         return max_(x)
     elif len_data >= 2:
-        tensor_num = 0
-        for input_data in data:
-            if isinstance(input_data, Tensor):
-                tensor_num = tensor_num + 1
+        tensor_num = get_tensor_num(data)
+        # All inputs is Tensor
         if tensor_num == len_data:
             return max_tensor(*data)
         if tensor_num != 0:
@@ -2020,31 +2059,53 @@ def ms_max(*data):
 
 def min_tensor(*data):
     """Get the min of tensor inputs."""
+    if len(data) == 1:
+        data = data[0]
     min_tensor_data = data[0]
     for input_data in data:
         min_tensor_data = P.Minimum()(min_tensor_data, input_data)
     return min_tensor_data
 
 
+def min_list_tuple(seq1, seq2):
+    """Get the min of two sequence."""
+    if len(seq1) == 0:
+        return seq1
+    if len(seq2) == 0:
+        return seq2
+    min_len = min(len(seq1), len(seq2))
+    for i in min_len:
+        if seq1[i] == seq2[i]:
+            continue
+        iter_min = ms_min([seq1[i], seq2[i]])
+        if iter_min == seq1[i]:
+            return seq1
+        return seq2
+    return seq1
+
+
 def ms_min(*data):
     """Implementation of `min`."""
-    len_data = 0
-    if isinstance(data, (dict, list, str, tuple)):
-        len_data = len(data)
-    else:
-        const_utils.raise_type_error("min() does not support the data type.")
+    len_data = get_max_min_data_len(data)
     if len_data <= 0:
         const_utils.raise_type_error("min() requires 1 argument at least.")
     elif len_data == 1:
         x = data[0]
         if isinstance(x, Tensor):
             return x.min()
+        # Deal with Tensor in tuple or list
+        if isinstance(x, (list, tuple)):
+            tensor_num = get_tensor_num(x)
+            if tensor_num == len(x):
+                return min_tensor(x)
+            if tensor_num != 0:
+                const_utils.raise_type_error("min() cannot contain both tensor and non-tensor type.")
+            if exist_tensor(x):
+                const_utils.raise_type_error("min() cannot support tensor in list or tuple nested now.")
         return min_(x)
     elif len_data >= 2:
-        tensor_num = 0
-        for input_data in data:
-            if isinstance(input_data, Tensor):
-                tensor_num = tensor_num + 1
+        tensor_num = get_tensor_num(data)
+        # All inputs is Tensor
         if tensor_num == len_data:
             return min_tensor(*data)
         if tensor_num != 0:

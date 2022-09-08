@@ -14,6 +14,7 @@
 # ============================================================================
 """ test graph fallback buildin python function max and min"""
 import operator
+import pytest
 import numpy as np
 from mindspore import ms_function, context, Tensor
 
@@ -175,3 +176,51 @@ def test_builtin_function_max_min_with_tuple():
     out_max, out_min = foo()
     assert out_max == ('a', 2)
     assert out_min == ('A', 1)
+
+
+def test_fallback_max_with_one_input_numpy_array_multidimensional():
+    """
+    Feature: JIT Fallback
+    Description: Test max() in graph mode with one input numpy array.
+    Expectation: No exception.
+    """
+    @ms_function
+    def foo():
+        x = max(np.array([[1, 2, 3], [1, 2, 3]]))
+        return Tensor(x)
+    with pytest.raises(ValueError, match="The truth value of an array with more than one element is ambiguous."):
+        out = foo()
+        assert out == 3
+
+
+def test_builtin_function_max_min_with_multiple_strings():
+    """
+    Feature: Support the type of the input of built-in function min is string.
+    Description: Support the type of the input of built-in function min is string.
+    Expectation: No exception.
+    """
+    @ms_function
+    def foo():
+        return max("1, 2, 3, 4", "2, 1, 0"), min("1, 2, 3, 4", "2, 1, 0")
+
+    out_max, out_min = foo()
+    assert out_max == '2, 1, 0'
+    assert out_min == '1, 2, 3, 4'
+
+
+def test_fallback_max_min_with_multiple_num():
+    """
+    Feature: JIT Fallback
+    Description: Test max() in graph mode with multiple numbers.
+    Expectation: No exception.
+    """
+    @ms_function
+    def foo():
+        x1 = max(1, 4, 0, 10)
+        x2 = max(3.0, 4.9, 4.8)
+        x3 = max(x1, x2)
+        return x1, x2, x3
+    out = foo()
+    assert out[0] == 10
+    assert abs(out[1] - 4.9) <= 0.0000001
+    assert out[2] == 10
