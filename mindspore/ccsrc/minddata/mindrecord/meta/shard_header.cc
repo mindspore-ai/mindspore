@@ -120,7 +120,8 @@ Status ShardHeader::ValidateHeader(const std::string &path, std::shared_ptr<json
   auto &io_read_content = fin.read(reinterpret_cast<char *>(&header_content[0]), header_size);
   if (!io_read_content.good() || io_read_content.fail() || io_read_content.bad()) {
     fin.close();
-    RETURN_STATUS_UNEXPECTED_MR("[Internal ERROR] Failed to read file, file path: " + path);
+    RETURN_STATUS_UNEXPECTED_MR("Invalid file, failed to read header content of file: " + path +
+                                ", please check correction of MindRecord File");
   }
 
   fin.close();
@@ -129,8 +130,8 @@ Status ShardHeader::ValidateHeader(const std::string &path, std::shared_ptr<json
   try {
     json_header = json::parse(raw_header_content);
   } catch (json::parse_error &e) {
-    RETURN_STATUS_UNEXPECTED_MR(
-      "[Internal ERROR] Failed to parse the metadata in JSON format in the mindrecord files: " + std::string(e.what()));
+    RETURN_STATUS_UNEXPECTED_MR("Invalid file, failed to parse header content of file: " + path +
+                                ", please check correction of MindRecord File");
   }
   *header_ptr = std::make_shared<json>(json_header);
   return Status::OK();

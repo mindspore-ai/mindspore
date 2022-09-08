@@ -302,7 +302,7 @@ def test_udpos_dataset_exceptions():
 
     with pytest.raises(ValueError) as error_info:
         _ = ds.TextFileDataset("")
-    assert "The following patterns did not match any files" in str(error_info.value)
+    assert "Input dataset_files can not be empty" in str(error_info.value)
 
     def exception_func(item):
         raise Exception("Error occur!")

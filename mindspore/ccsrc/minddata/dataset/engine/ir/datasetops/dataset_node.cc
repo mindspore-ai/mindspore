@@ -96,7 +96,7 @@ Status ValidateDatasetDirParam(const std::string &dataset_name, std::string data
 Status ValidateDatasetFilesParam(const std::string &dataset_name, const std::vector<std::string> &dataset_files,
                                  const std::string &file_name) {
   if (dataset_files.empty()) {
-    std::string err_msg = dataset_name + ": dataset_files is not specified.";
+    std::string err_msg = dataset_name + ": dataset files list is empty, check input dataset_files.";
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
