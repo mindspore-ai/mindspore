@@ -19,15 +19,19 @@
 
 def is_shape_unknown(shape):
     """Check whether the shape is unknown."""
+    flag = False
     for i in shape:
-        if i < 0:
-            return True
-    return False
+        if i < -2:
+            raise ValueError(f"'shape' should not have values less than -2 but got ({shape}).")
+        if i == -1:
+            flag = True
+    return is_dim_unknown(shape) or flag
 
 
 def is_dim_unknown(shape):
     """Check whether the dim is unknown."""
-    for i in shape:
-        if i == -2:
-            return True
+    if len(shape) == 1 and shape[0] == -2:
+        return True
+    if -2 in shape:
+        raise ValueError(f"'shape' should have only one -2 or no -2 at all but got ({shape}).")
     return False

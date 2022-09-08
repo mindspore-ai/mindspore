@@ -19,6 +19,7 @@
 
 #include <algorithm>
 #include "mindapi/base/shape_vector.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore {
 constexpr size_t kDynamicRankLen = 1;
@@ -37,12 +38,22 @@ inline size_t SizeOf(const ShapeVector &shape) {
   return static_cast<size_t>(data_size);
 }
 
-inline bool IsDynamic(const ShapeVector &shape) {
-  return std::any_of(shape.begin(), shape.end(), [](ShapeValueDType s) { return s < 0; });
+inline bool IsDynamicRank(const ShapeVector &shape) {
+  if ((shape.size() == kDynamicRankLen) && (shape[0] == UNKNOWN_RANK)) {
+    return true;
+  }
+  if (std::any_of(shape.begin(), shape.end(), [](ShapeValueDType s) { return s == UNKNOWN_RANK; })) {
+    MS_LOG(EXCEPTION) << "Shape should have only one -2 or no -2 at all but got (" << shape << ").";
+  }
+  return false;
 }
 
-inline bool IsDynamicRank(const ShapeVector &shape) {
-  return ((shape.size() == kDynamicRankLen) && (shape[0] == UNKNOWN_RANK));
+inline bool IsDynamic(const ShapeVector &shape) {
+  if (std::any_of(shape.begin(), shape.end(), [](ShapeValueDType s) { return s < UNKNOWN_RANK; })) {
+    MS_LOG(EXCEPTION) << "Shape should not have values less than -2 but got (" << shape << ").";
+  }
+  return (IsDynamicRank(shape) ||
+          std::any_of(shape.begin(), shape.end(), [](ShapeValueDType s) { return s == UNKNOWN_DIM; }));
 }
 }  // namespace mindspore
 
