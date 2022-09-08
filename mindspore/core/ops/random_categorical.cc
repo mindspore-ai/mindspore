@@ -75,6 +75,9 @@ void AddNumSample(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
     auto num_sample_value_ptr = num_sample_ptr->BuildValue();
     MS_EXCEPTION_IF_NULL(num_sample_value_ptr);
     auto num_sample_tensor = num_sample_value_ptr->cast<tensor::TensorPtr>();
+    if (num_sample_tensor == nullptr) {
+      return;
+    }
     MS_EXCEPTION_IF_ZERO("num_sample_tensor->ElementsNum()", num_sample_tensor->ElementsNum());
     if (num_sample_tensor->data_type() == kNumberTypeInt64) {
       num_sample = static_cast<int64_t *>(num_sample_tensor->data_c())[0];
@@ -119,6 +122,9 @@ void AddSeed(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input
     auto seed_value_ptr = seed_ptr->BuildValue();
     MS_EXCEPTION_IF_NULL(seed_value_ptr);
     auto seed_tensor = seed_value_ptr->cast<tensor::TensorPtr>();
+    if (seed_tensor == nullptr) {
+      return;
+    }
     MS_EXCEPTION_IF_ZERO("seed_tensor->ElementsNum()", seed_tensor->ElementsNum());
     if (seed_tensor->data_type() == kNumberTypeInt64) {
       seed = static_cast<int64_t *>(seed_tensor->data_c())[0];

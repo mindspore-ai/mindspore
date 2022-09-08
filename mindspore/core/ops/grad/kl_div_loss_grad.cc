@@ -30,10 +30,29 @@ std::string KLDivLossGrad::get_reduction() const { return GetValue<std::string>(
 abstract::ShapePtr KLDivLossGradInferShape(const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
+  auto grad_shape = input_args[kInputIndex0]->BuildShape();
   auto x_shape = input_args[kInputIndex1]->BuildShape();
   auto target_shape = input_args[kInputIndex2]->BuildShape();
   auto x_shape_ptr = x_shape->cast<abstract::ShapePtr>();
   auto target_shape_ptr = target_shape->cast<abstract::ShapePtr>();
+
+  // Dynamic Rank
+  auto shape_0 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(grad_shape)[kShape];
+  auto shape_1 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shape)[kShape];
+  auto shape_2 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(target_shape)[kShape];
+  if (IsDynamicRank(shape_0) || IsDynamicRank(shape_1) || IsDynamicRank(shape_2)) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
+  }
+
+  // Dynamic Shape
+  if (grad_shape->IsDynamic() || x_shape->IsDynamic() || target_shape->IsDynamic()) {
+    ShapeVector shape_out;
+    for (size_t i = 0; i < shape_1.size(); ++i) {
+      shape_out.push_back(abstract::Shape::SHP_ANY);
+    }
+    return std::make_shared<abstract::Shape>(shape_out);
+  }
+
   if (!x_shape_ptr->IsDynamic() && !target_shape_ptr->IsDynamic()) {
     if (*x_shape != *target_shape) {
       MS_EXCEPTION(ValueError)
