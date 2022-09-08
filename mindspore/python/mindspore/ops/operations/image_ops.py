@@ -1020,25 +1020,21 @@ class ScaleAndTranslate(Primitive):
         ValueError: If the shape of `translation`  is not (2,).
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> op = P.ScaleAndTranslate()
+        >>> op = ScaleAndTranslate()
         >>> image = Tensor(np.array([[[[9.0], [5.0], [2.0], [1.0]],
         ...                           [[6.0], [1.0], [9.0], [7.0]]]]), mindspore.float32)
-        >>> size = Tensor(np.array([2, 4]).astype(np.int32))
-        >>> scale = Tensor(np.array([3, 4]).astype(np.float32))
-        >>> translation = Tensor(np.array([0.4, 0.5]).astype(np.float32))
+        >>> size = Tensor(np.array([2, 2]).astype(np.int32))
+        >>> scale = Tensor(np.array([1, 1]).astype(np.float32))
+        >>> translation = Tensor(np.array([1, 1]).astype(np.float32))
         >>> output = op(image, size, scale, translation)
         >>> print(output)
-        [[[[10.359701]
-           [10.081222]
-           [ 9.824163]
-           [ 9.439745]]
-          [[ 9.972004]
-           [ 9.657038]
-           [ 9.304725]
-           [ 8.781468]]]]
+        [[[[0.]
+           [0.]]
+          [[0.]
+           [9.]]]]
     """
 
     @prim_attr_register
