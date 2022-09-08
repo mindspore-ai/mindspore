@@ -1356,7 +1356,7 @@ class MinimumGradGrad(Primitive):
                                 outputs=['sopd_x1', 'sopd_x2', 'sopd_grads'])
 
 
-class L2NormalizeGrad(PrimitiveWithInfer):
+class L2NormalizeGrad(Primitive):
     r"""
     Gradients of L2 normalize.
 
@@ -1382,16 +1382,6 @@ class L2NormalizeGrad(PrimitiveWithInfer):
         self.init_attrs['axis'] = axis
         if len(axis) != 1:
             raise TypeError("The length of axis must be 1, later will support multiple axis!")
-
-    def infer_shape(self, input_x, out, dout):
-        validator.check('input_x shape', input_x, 'out shape', out, Rel.EQ, self.name)
-        validator.check('input_x shape', input_x, 'dout shape', dout, Rel.EQ, self.name)
-        return input_x
-
-    def infer_dtype(self, input_x, out, dout):
-        args = {'input_x': input_x, 'out': out, 'dout': dout}
-        validator.check_tensors_dtypes_same_and_valid(args, mstype.number_type, self.name)
-        return input_x
 
 
 class LayerNormGrad(Primitive):
