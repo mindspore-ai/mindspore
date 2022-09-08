@@ -14,15 +14,51 @@
  * limitations under the License.
  */
 
-#include <string>
-#include <memory>
 #include "ops/div.h"
+#include <string>
+#include <algorithm>
+#include <vector>
+#include <map>
 #include "ops/op_utils.h"
+#include "abstract/param_validator.h"
+#include "utils/check_convert_utils.h"
+#include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
 MIND_API_OPERATOR_IMPL(Div, BaseOperator);
-REGISTER_PRIMITIVE_C(kNameDiv, Div);
+class DivInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    MS_EXCEPTION_IF_NULL(primitive);
+    auto prim_name = primitive->name();
+    const int64_t input_num = 2;
+    (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num,
+                                             prim_name);
+    for (const auto &item : input_args) {
+      MS_EXCEPTION_IF_NULL(item);
+    }
+    return BroadCastInferShape(prim_name, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
+    MS_EXCEPTION_IF_NULL(prim);
+    for (const auto &item : input_args) {
+      MS_EXCEPTION_IF_NULL(item);
+    }
+    auto op_name = prim->name();
+    const int64_t input_num = 2;
+    (void)CheckAndConvertUtils::CheckInteger("infer", SizeToLong(input_args.size()), kGreaterEqual, input_num, op_name);
+    std::map<std::string, TypePtr> types;
+    (void)types.emplace("x", input_args[0]->BuildType());
+    (void)types.emplace("y", input_args[1]->BuildType());
+    (void)CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types_with_complex, prim->name());
+    return input_args[0]->BuildType();
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(Div, prim::kPrimDiv, DivInfer, false);
 }  // namespace ops
 }  // namespace mindspore
