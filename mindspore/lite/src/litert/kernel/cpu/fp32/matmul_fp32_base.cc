@@ -146,7 +146,7 @@ int MatmulFp32BaseCPUKernel::BackupConstMatrix(MatrixInfo *matrix_info, int inde
   MS_CHECK_TRUE_MSG(matrix_info->origin_ptr != nullptr, RET_ERROR, "matrix is invalid.");
   auto src_ptr = in_tensors_[index]->data();
   MS_CHECK_TRUE_MSG(src_ptr != nullptr, RET_ERROR, "matrix is invalid.");
-  memcpy(matrix_info->origin_ptr, src_ptr, element_num * sizeof(float));
+  (void)memcpy(matrix_info->origin_ptr, src_ptr, element_num * sizeof(float));
   matrix_info->has_origin = true;
   return RET_OK;
 }
@@ -294,7 +294,7 @@ int MatmulFp32BaseCPUKernel::PackBiasMatrix() {
     }
   } else {
     (void)memcpy(matrix_c_.pack_ptr, bias_src, bias_num * static_cast<int>(sizeof(float)));
-    memset(matrix_c_.pack_ptr + bias_num, 0, (matrix_c_.pack_size - bias_num) * sizeof(float));
+    (void)memset(matrix_c_.pack_ptr + bias_num, 0, (matrix_c_.pack_size - bias_num) * sizeof(float));
   }
   if (matrix_c_.has_origin) {
     ms_context_->allocator->Free(matrix_c_.origin_ptr);

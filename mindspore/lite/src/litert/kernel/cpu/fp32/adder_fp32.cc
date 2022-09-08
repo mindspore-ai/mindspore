@@ -100,7 +100,8 @@ int AdderCPUKernel::InitWeightBias() {
     CHECK_NULL_RETURN(in_tensors_.at(kBiasIndex));
     auto ori_bias = reinterpret_cast<float *>(in_tensors_.at(kBiasIndex)->MutableData());
     CHECK_NULL_RETURN(ori_bias);
-    MS_CHECK_TRUE_MSG(in_tensors_.at(kBiasIndex)->Size() == out_channel * sizeof(float), RET_ERROR, "bias is invalid.");
+    MS_CHECK_TRUE_MSG(in_tensors_.at(kBiasIndex)->Size() == static_cast<size_t>(out_channel) * sizeof(float), RET_ERROR,
+                      "bias is invalid.");
     memcpy(bias_data_, ori_bias, out_channel * sizeof(float));
   } else {
     MS_ASSERT(in_tensors_.size() == kInputSize1);

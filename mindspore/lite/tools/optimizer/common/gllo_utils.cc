@@ -69,7 +69,7 @@ int DeduceDimConvertion(schema::Format src_format, schema::Format dst_format, st
 
 template <typename T>
 void TransposeData(const ShapeVector &origin_shape, const ShapeVector &cur_shape, const std::vector<int> &perm,
-                   T *const weight_data, std::vector<T> *buf) {
+                   const T *const weight_data, std::vector<T> *buf) {
   MS_ASSERT(weight_data != nullptr && buf != nullptr);
   MS_ASSERT(origin_shape.size() == cur_shape.size() && cur_shape.size() == perm.size());
   int count = 1;

@@ -72,12 +72,12 @@ int ReshapeBaseCPUKernel::Run() {
       if (task_id == (thread_num_ - 1)) {
         copy_size = size - task_id * block_size;
       }
-      memcpy(out_start, in_start, copy_size);
+      (void)memcpy(out_start, in_start, copy_size);
       return RET_OK;
     };
     if (in_data != out_data) {
       if (thread_num_ == 1) {
-        memcpy(out_data, in_data, size);
+        (void)memcpy(out_data, in_data, size);
         return RET_OK;
       }
       return lite::ParallelLaunch(this->ms_context_, Copy, nullptr, thread_num_);

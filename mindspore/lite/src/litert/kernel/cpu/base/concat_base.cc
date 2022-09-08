@@ -48,8 +48,8 @@ int ConcatBaseCPUKernel::DoConcat(int task_id) {
   int64_t start_row = start / inner_sizes_.back();
   int64_t end_row = end / inner_sizes_.back();
   std::vector<const uint8_t *> src;
-  for (size_t i = 0; i < inputs_.size(); ++i) {
-    src.push_back(inputs_[i] + start_row * inner_sizes_[i]);
+  for (size_t i = 0; i < inputs_ptr_.size(); ++i) {
+    src.push_back(inputs_ptr_[i] + start_row * inner_sizes_[i]);
   }
   uint8_t *out = output_ + start;
   int input_index = block_boundary_infos_[task_id].begin_input;
@@ -79,14 +79,14 @@ int ConcatBaseCPUKernel::DoConcat(int task_id) {
   src[input_index] += inner_sizes_[input_index];
   out += size;
   ++input_index;
-  for (; input_index < static_cast<int>(inputs_.size()); ++input_index) {
+  for (; input_index < static_cast<int>(inputs_ptr_.size()); ++input_index) {
     memcpy(out, src[input_index], inner_sizes_[input_index]);
     src[input_index] += inner_sizes_[input_index];
     out += inner_sizes_[input_index];
   }
   ++start_row;
   for (; start_row < end_row; ++start_row) {
-    for (input_index = 0; input_index < static_cast<int>(inputs_.size()); ++input_index) {
+    for (input_index = 0; input_index < static_cast<int>(inputs_ptr_.size()); ++input_index) {
       memcpy(out, src[input_index], inner_sizes_[input_index]);
       src[input_index] += inner_sizes_[input_index];
       out += inner_sizes_[input_index];
@@ -226,12 +226,12 @@ int ConcatBaseCPUKernel::Run() {
   if (outer_size_ == 0 || inner_sizes_.back() == 0) {
     return RET_OK;
   }
-  inputs_.clear();
+  inputs_ptr_.clear();
   for (size_t i = 0; i < in_tensors_.size(); ++i) {
     if (!is_with_data_[i]) {
       continue;
     }
-    inputs_.push_back(static_cast<const uint8_t *>(in_tensors_[i]->data()));
+    inputs_ptr_.push_back(static_cast<const uint8_t *>(in_tensors_[i]->data()));
   }
   output_ = static_cast<uint8_t *>(out_tensors_.front()->data());
   MS_CHECK_TRUE_MSG(output_ != nullptr, RET_ERROR, "output data is a nullptr.");

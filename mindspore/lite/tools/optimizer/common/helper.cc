@@ -131,8 +131,8 @@ bool AnfEqualValueNode(const AnfNodePtr &a_node, const AnfNodePtr &b_node) {
   }
 
   if (utils::isa<ops::PrimitiveC>(a_value_ptr) && utils::isa<ops::PrimitiveC>(b_value_ptr)) {
-    auto a_obj = (ops::PrimitiveC *)(a_value_ptr.get());
-    auto b_obj = (ops::PrimitiveC *)(b_value_ptr.get());
+    auto a_obj = static_cast<ops::PrimitiveC *>(a_value_ptr.get());
+    auto b_obj = static_cast<ops::PrimitiveC *>(b_value_ptr.get());
     return (*a_obj) == (*b_obj);
   } else {
     return (*a_value_ptr) == (*b_value_ptr);

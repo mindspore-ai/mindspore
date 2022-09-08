@@ -130,8 +130,8 @@ class Tensor {
   //       course, you can call FreeData before calling set_data to ensure the data can be freed by current tensor.
   void set_data(void *data, bool own_data = true) {
     if (allocator_ != nullptr && this->data_ != data) {
-      allocator_->IncRefCount(data, 1);
-      allocator_->DecRefCount(this->data_, 1);
+      (void)allocator_->IncRefCount(data, 1);
+      (void)allocator_->DecRefCount(this->data_, 1);
     }
     this->data_ = data;
     this->own_data_ = own_data;

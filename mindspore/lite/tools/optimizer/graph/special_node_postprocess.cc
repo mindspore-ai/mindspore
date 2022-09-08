@@ -142,7 +142,7 @@ int SpecialNodePostProcess::HandleInstanceNorm(const FuncGraphPtr &func_graph, c
   MS_CHECK_TRUE_RET(pre_transpose != nullptr, lite::RET_ERROR);
   auto pre_trans_prim = GetValueNode<PrimitivePtr>(pre_transpose->input(0));
   MS_CHECK_TRUE_RET(pre_trans_prim != nullptr, lite::RET_ERROR);
-  pre_trans_prim->AddAttr(ops::kFormat, MakeValue<int64_t>(mindspore::NHWC));
+  (void)pre_trans_prim->AddAttr(ops::kFormat, MakeValue<int64_t>(mindspore::NHWC));
   auto abstract = GetCNodeInputAbstract(cnode, 1);
   if (abstract != nullptr) {
     auto shape = GenerateNewShape(abstract);
@@ -155,8 +155,8 @@ int SpecialNodePostProcess::HandleInstanceNorm(const FuncGraphPtr &func_graph, c
   MS_CHECK_TRUE_RET(post_transpose != nullptr, lite::RET_ERROR);
   auto post_trans_prim = GetValueNode<PrimitivePtr>(post_transpose->input(0));
   MS_CHECK_TRUE_RET(post_trans_prim != nullptr, lite::RET_ERROR);
-  post_trans_prim->AddAttr(ops::kFormat, MakeValue<int64_t>(mindspore::NCHW));
-  prim->AddAttr(ops::kFormat, MakeValue<int64_t>(mindspore::NCHW));
+  (void)post_trans_prim->AddAttr(ops::kFormat, MakeValue<int64_t>(mindspore::NCHW));
+  (void)prim->AddAttr(ops::kFormat, MakeValue<int64_t>(mindspore::NCHW));
   abstract = cnode->abstract();
   if (abstract != nullptr) {
     post_transpose->set_abstract(abstract->Clone());
