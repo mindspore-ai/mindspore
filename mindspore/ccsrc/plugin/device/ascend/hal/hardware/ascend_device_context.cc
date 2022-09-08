@@ -27,8 +27,6 @@
 namespace mindspore {
 namespace device {
 namespace ascend {
-using KernelGraph = mindspore::session::KernelGraph;
-
 void AscendDeviceContext::Initialize() {
   MS_LOG(INFO) << "Start Initialize...";
   if (initialized_) {

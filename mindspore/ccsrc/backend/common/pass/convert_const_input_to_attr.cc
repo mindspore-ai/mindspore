@@ -55,7 +55,7 @@ const AnfNodePtr ConvertConstInputToAttr::Process(const FuncGraphPtr &, const An
     return nullptr;
   } else {
     for (auto &iter : reg_info->GetInputAttrInfoMap()) {
-      input_to_attr.insert(iter.second.GetInputIndex());
+      (void)input_to_attr.insert(iter.second.GetInputIndex());
     }
     if (input_to_attr.empty()) {
       return nullptr;

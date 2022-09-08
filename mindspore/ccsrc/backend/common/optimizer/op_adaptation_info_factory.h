@@ -47,7 +47,7 @@ class InputAttrInfo {
 
 class OpAdaptationInfo {
  public:
-  explicit OpAdaptationInfo(const std::string &origin_op_name, const std::string &device_name, bool flag)
+  OpAdaptationInfo(const std::string &origin_op_name, const std::string &device_name, bool flag)
       : origin_op_name_(origin_op_name), target_op_name_(origin_op_name), device_name_(device_name), flag_(flag) {}
 
   explicit OpAdaptationInfo(const OpAdaptationInfo &op_adaptation_info)
@@ -60,14 +60,15 @@ class OpAdaptationInfo {
         device_name_(op_adaptation_info.device_name_),
         flag_(op_adaptation_info.flag_) {}
 
+  OpAdaptationInfo &operator=(const OpAdaptationInfo &op_adaptation_info);
   virtual ~OpAdaptationInfo() = default;
 
-  OpAdaptationInfo &SetTargetOpName(std::string target_op_name) {
+  OpAdaptationInfo &SetTargetOpName(const std::string &target_op_name) {
     target_op_name_ = target_op_name;
     return *this;
   }
 
-  OpAdaptationInfo &SetPreCheckFunc(std::function<bool(CNodePtr)> pre_check_func) {
+  OpAdaptationInfo &SetPreCheckFunc(const std::function<bool(CNodePtr)> &pre_check_func) {
     pre_check_func_ = pre_check_func;
     return *this;
   }
@@ -77,18 +78,19 @@ class OpAdaptationInfo {
     return *this;
   }
 
-  OpAdaptationInfo &SetInputAttrInfo(size_t input_index, std::string attr_name = "", std::string attr_data_type = "") {
+  OpAdaptationInfo &SetInputAttrInfo(size_t input_index, const std::string &attr_name = "",
+                                     const std::string &attr_data_type = "") {
     auto find = input_attr_map_.find(input_index);
     if (find != input_attr_map_.end()) {
       MS_LOG(ERROR) << "This input index (" << input_index << ")"
                     << " has been registered.";
       return *this;
     }
-    input_attr_map_.insert(std::make_pair(input_index, InputAttrInfo(input_index, attr_name, attr_data_type)));
+    (void)input_attr_map_.insert(std::make_pair(input_index, InputAttrInfo(input_index, attr_name, attr_data_type)));
     return *this;
   }
 
-  OpAdaptationInfo &SetAttrNameInfo(std::string origin_attr_name, std::string target_attr_name) {
+  OpAdaptationInfo &SetAttrNameInfo(const std::string &origin_attr_name, const std::string &target_attr_name) {
     if (origin_attr_name.empty() || target_attr_name.empty()) {
       MS_LOG(ERROR) << "Attr name is empty, origin attr name: " << origin_attr_name
                     << ", target attr name:" << target_attr_name << ", origin op name:" << origin_op_name_;

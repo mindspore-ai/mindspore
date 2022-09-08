@@ -37,7 +37,7 @@ class AscendVmOpAdapter : public PatternProcessPass {
 
  private:
   CNodePtr ConvertToTargetOp(const CNodePtr &origin_op, mindspore::opt::OpAdaptationInfo *op_adaptation_info) const;
-  CNodePtr CreateTargetOp(const CNodePtr &origin_op, OpAdaptationInfo *op_adaptation_info) const;
+  CNodePtr CreateTargetOp(const CNodePtr &origin_op, const OpAdaptationInfo &op_adaptation_info) const;
   bool ConvertInputToAttr(const CNodePtr &origin_op, const string &target_op_name,
                           const std::vector<std::string> &input_names_vec, size_t i,
                           const std::shared_ptr<AnfNode> &input_node,

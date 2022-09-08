@@ -487,7 +487,7 @@ bool DataConvert::NeedConvertConstInputToAttr(const FrontendOpRunInfoPtr &op_run
     return false;
   } else {
     for (auto &iter : reg_info->GetInputAttrInfoMap()) {
-      input_to_attr_ptr->insert(iter.second.GetInputIndex());
+      (void)input_to_attr_ptr->insert(iter.second.GetInputIndex());
     }
   }
   return !input_to_attr_ptr->empty();
