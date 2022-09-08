@@ -20,14 +20,17 @@
 #include <vector>
 #include <memory>
 #include <random>
+#include <map>
+#include <string>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/random_categorical.cuh"
+#include "mindspore/core/ops/random_categorical.h"
 
 namespace mindspore {
 namespace kernel {
 template <typename T, typename G, typename S>
-class RandomCategoricalGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class RandomCategoricalGpuKernelMod : public NativeGpuKernelMod {
  public:
   RandomCategoricalGpuKernelMod() : is_null_input_(false), batch_size_(0), num_classes_(0), num_samples_(0), seed_(0) {}
   ~RandomCategoricalGpuKernelMod() override = default;
@@ -46,12 +49,11 @@ class RandomCategoricalGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       host_cdf[i] = GetDeviceAddress<double>(workspaces, i);
     }
     double **dev_cdf = GetDeviceAddress<double *>(workspaces, batch_size_);
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                               cudaMemcpyAsync(dev_cdf,  // NOLINT
-                                               host_cdf.get(), sizeof(double *) * batch_size_, cudaMemcpyHostToDevice,
-                                               reinterpret_cast<cudaStream_t>(stream_ptr)),
-                               "Random_categorica cudaMemcpyAsync dev_cdf failed");
-
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+      cudaMemcpyAsync(dev_cdf,  // NOLINT
+                      host_cdf.get(), sizeof(double *) * batch_size_, cudaMemcpyHostToDevice,
+                      reinterpret_cast<cudaStream_t>(stream_ptr)),
+      "Random_categorica cudaMemcpyAsync dev_cdf failed");
     std::unique_ptr<double *[]> host_rand;
     host_rand = std::make_unique<double *[]>(batch_size_);
     for (size_t i = 0; i < batch_size_; i++) {
@@ -68,17 +70,17 @@ class RandomCategoricalGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       for (size_t j = 0; j < num_samples_; j++) {
         host_1d_rand[j] = dist(rng);
       }
-      CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                                 cudaMemcpyAsync(host_rand[i],  // NOLINT
-                                                 host_1d_rand.get(), sizeof(double) * num_samples_,
-                                                 cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
-                                 "Random_categorica cudaMemcpyAsync host_1d_rand failed");
+      CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+        cudaMemcpyAsync(host_rand[i],  // NOLINT
+                        host_1d_rand.get(), sizeof(double) * num_samples_, cudaMemcpyHostToDevice,
+                        reinterpret_cast<cudaStream_t>(stream_ptr)),
+        "Random_categorica cudaMemcpyAsync host_1d_rand failed");
     }
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                               cudaMemcpyAsync(dev_rand,  // NOLINT
-                                               host_rand.get(), sizeof(double *) * batch_size_, cudaMemcpyHostToDevice,
-                                               reinterpret_cast<cudaStream_t>(stream_ptr)),
-                               "Random_categorica cudaMemcpyAsync dev_rand failed");
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+      cudaMemcpyAsync(dev_rand,  // NOLINT
+                      host_rand.get(), sizeof(double *) * batch_size_, cudaMemcpyHostToDevice,
+                      reinterpret_cast<cudaStream_t>(stream_ptr)),
+      "Random_categorica cudaMemcpyAsync dev_rand failed");
 
     GetCdfKernel(logits_addr, dev_cdf, batch_size_, num_classes_, reinterpret_cast<cudaStream_t>(stream_ptr));
     RandomCategoricalKernel(num_samples_, dev_rand, dev_cdf, batch_size_, num_classes_, output_addr,
@@ -87,47 +89,51 @@ class RandomCategoricalGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     return true;
   }
 
-  bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    MS_EXCEPTION_IF_NULL(kernel_node);
-    kernel_node_ = kernel_node;
-    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs,
+             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override {
+    int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+    if (ret != KRET_OK) {
+      return ret;
+    }
+    auto kernel_ptr = std::dynamic_pointer_cast<ops::RandomCategorical>(base_operator);
+    MS_EXCEPTION_IF_NULL(kernel_ptr);
+
+    size_t input_num = inputs.size();
     if (input_num != 3) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 3, but got " << input_num;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 3, but got " << input_num;
     }
-    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
+    size_t output_num = outputs.size();
     if (output_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 1, but got " << output_num;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_num;
     }
-    auto logits_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_SHAPE_NULL(logits_shape, kernel_name, "logits");
-    if (is_null_input_) {
-      InitSizeLists();
-      return true;
-    }
+    num_samples_ = kernel_ptr->get_num_sample();
+    seed_ = kernel_ptr->get_seed();
+
+    auto logits_shape = inputs[0]->GetShapeVector();
     if (logits_shape.size() != 2) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of logits should be 2, but got "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of logits should be 2, but got "
                         << logits_shape.size();
     }
     batch_size_ = LongToSizeClipNeg(logits_shape[0]);
     num_classes_ = LongToSizeClipNeg(logits_shape[1]);
-
-    num_samples_ = LongToSize(GetAttr<int64_t>(kernel_node, "num_samples"));
-    seed_ = GetAttr<int64_t>(kernel_node, "seed");
-
     InitSizeLists();
+    return ret;
+  }
+
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override {
+    kernel_name_ = base_operator->name();
+    if (kernel_name_ != prim::kPrimRandomCategorical->name()) {
+      MS_LOG(ERROR) << "For 'RandomCategorical', the kernel name must be 'RandomCategorical', but got " << kernel_name_;
+      return false;
+    }
     return true;
   }
 
  protected:
   void InitResource() override {}
-  void InitSizeLists() override {
-    // init memory
-    input_size_list_.push_back(sizeof(T) * batch_size_ * num_classes_);
-    input_size_list_.push_back(sizeof(G));
-    input_size_list_.push_back(sizeof(G));
-    output_size_list_.push_back(sizeof(S) * batch_size_ * num_samples_);
-
+  void InitSizeLists() {
     for (size_t i = 0; i < batch_size_; i++) {
       workspace_size_list_.push_back(sizeof(double) * num_classes_);
     }
@@ -145,6 +151,7 @@ class RandomCategoricalGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   size_t num_classes_;
   size_t num_samples_;
   int64_t seed_;
+  std::string kernel_name_;
 };
 }  // namespace kernel
 }  // namespace mindspore
