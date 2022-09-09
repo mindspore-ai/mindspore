@@ -50,6 +50,10 @@ bool LayerNormGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
 int LayerNormGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                   const std::vector<KernelTensorPtr> &outputs,
                                   const std::map<uint32_t, tensor::TensorPtr> &) {
+  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != 0) {
+    return ret;
+  }
   auto kernel_ptr = std::dynamic_pointer_cast<ops::LayerNorm>(base_operator);
   if (kernel_ptr == nullptr) {
     MS_LOG(EXCEPTION) << "Cast ops::LayerNorm failed!";
@@ -60,7 +64,6 @@ int LayerNormGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   auto begin_norm_axis = kernel_ptr->get_begin_norm_axis();
   auto begin_params_axis = kernel_ptr->get_begin_params_axis();
   auto input_shape = inputs[kLayerNormInputXIndex]->GetShapeVector();
-
   if (begin_norm_axis < 0) {
     begin_norm_axis += input_shape.size();
   }
@@ -74,6 +77,9 @@ int LayerNormGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
                       << "to the dimension of input_x, but got begin_norm_axis: " << IntToSize(begin_norm_axis)
                       << ", the dimension of input_x: " << input_shape.size();
   }
+  input_row_ = 1;
+  input_col_ = 1;
+  param_dim_ = 1;
   for (size_t i = 0; i < IntToSize(begin_norm_axis); i++) {
     input_row_ *= input_shape[i];
   }
@@ -84,11 +90,6 @@ int LayerNormGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
 
   for (size_t i = begin_params_axis; i < input_shape.size(); i++) {
     param_dim_ *= input_shape[i];
-  }
-
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
-  if (ret != 0) {
-    return ret;
   }
   return ret;
 }

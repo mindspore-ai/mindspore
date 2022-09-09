@@ -51,6 +51,10 @@ bool LayerNormCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
 int LayerNormCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                   const std::vector<KernelTensorPtr> &outputs,
                                   const std::map<uint32_t, tensor::TensorPtr> &) {
+  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != 0) {
+    return ret;
+  }
   auto kernel_ptr = std::dynamic_pointer_cast<ops::LayerNorm>(base_operator);
   if (kernel_ptr == nullptr) {
     MS_LOG(EXCEPTION) << "Cast ops::LayerNorm failed!";
@@ -67,6 +71,9 @@ int LayerNormCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   if (begin_params_axis < 0) {
     begin_params_axis += SizeToLong(x_shape.size());
   }
+  block_num_ = 1;
+  block_size_ = 1;
+  param_num_ = 1;
   for (size_t i = 0; i < LongToSize(begin_norm_axis); i++) {
     block_num_ *= x_shape[i];
   }
@@ -79,10 +86,6 @@ int LayerNormCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   if (block_num_ == 0 || block_size_ == 0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'input_x' must be at least 1, but got "
                       << Vector2Str(x_shape);
-  }
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
-  if (ret != 0) {
-    return ret;
   }
   return ret;
 }
