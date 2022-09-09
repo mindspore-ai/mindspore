@@ -34,6 +34,9 @@
 #include "src/litert/delegate/coreml/op/shape_coreml.h"
 #include "src/litert/delegate/coreml/op/softmax_coreml.h"
 #include "src/litert/delegate/coreml/op/flatten_coreml.h"
+#include "src/litert/delegate/coreml/op/arithmetic_self_coreml.h"
+#include "src/litert/delegate/coreml/op/split_coreml.h"
+#include "src/litert/delegate/coreml/op/strided_slice_coreml.h"
 #include "src/litert/delegate/coreml/coreml_graph.h"
 #include "src/litert/delegate/delegate_utils.h"
 #include "src/litert/delegate/coreml/pass/coreml_format_trans_pass.h"
@@ -118,6 +121,9 @@ Status CoreMLDelegateImpl::Init() {
     {schema::PrimitiveType_MatMulFusion, GetCoreMLOp<MatMulCoreMLOp>},
     {schema::PrimitiveType_Softmax, GetCoreMLOp<SoftmaxCoreMLOp>},
     {schema::PrimitiveType_Flatten, GetCoreMLOp<FlattenCoreMLOp>},
+    {schema::PrimitiveType_ExpFusion, GetCoreMLOp<ArithmeticSelfCoreMLOp>},
+    {schema::PrimitiveType_Sqrt, GetCoreMLOp<ArithmeticSelfCoreMLOp>},
+    {schema::PrimitiveType_Split, GetCoreMLOp<SplitCoreMLOp>},
   };
   return mindspore::kSuccess;
 }

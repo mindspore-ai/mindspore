@@ -91,10 +91,6 @@ int ConverterToNPUActivationMode(schema::ActivationType type);
 
 int TransFormAxis(int axis);
 
-void AssistDataNHWC2NCHW(int *data, size_t unit_size);
-
-int MaskDataNHWC2NCHW(int mask);
-
 template <typename T>
 hiai::op::Const *GetNPUConst(const uint8_t *const_data, const std::vector<int64_t> &shape, const ge::DataType data_type,
                              std::string name = "const", bool is_expand_4d = false) {

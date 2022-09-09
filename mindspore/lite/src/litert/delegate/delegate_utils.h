@@ -19,6 +19,7 @@
 #include "include/api/delegate.h"
 #include "src/common/log_adapter.h"
 #include "include/errorcode.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore::lite {
 bool IsSubGraphInputTensor(const std::vector<mindspore::MSTensor> &inputs, mindspore::MSTensor input);
@@ -26,6 +27,24 @@ bool IsSubGraphInputTensor(const std::vector<mindspore::MSTensor> &inputs, minds
 void PackNHWCToNCHWFp32(const void *src, void *dst, int batches, int plane, int channel);
 
 void PackNCHWToNHWCFp32(const void *src, void *dst, int batch, int plane, int channel);
+
+int MaskDataNHWC2NCHWBinary(int mask);
+
+void BinaryMaskData2Bool(int src_mask, bool *dst_mask, size_t mask_size);
+
+template <typename T>
+void AssistDataNHWC2NCHW(void *raw_data, size_t unit_size) {
+  MS_ASSERT(raw_data != nullptr);
+  auto data = reinterpret_cast<T *>(raw_data);
+  for (size_t i = 0; i < unit_size; ++i) {
+    int org_c = data[kNHWC_C * unit_size + i];
+    // n h w c
+    // n c h w
+    data[kNCHW_W * unit_size + i] = data[kNHWC_W * unit_size + i];
+    data[kNCHW_H * unit_size + i] = data[kNHWC_H * unit_size + i];
+    data[kNCHW_C * unit_size + i] = org_c;
+  }
+}
 
 template <typename T>
 std::vector<mindspore::MSTensor> GetGraphInTensors(std::vector<T *> ops, std::vector<size_t> *input_index) {

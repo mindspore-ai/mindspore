@@ -22,6 +22,10 @@ int ArithmeticCoreMLOp::IsSupport() {
   auto input_b = in_tensors_.at(1);
   if ((input_a.IsConst() && input_a.ElementNum() == 1) || (input_b.IsConst() && input_b.ElementNum() == 1)) {
     use_normal_ = true;
+    int const_idx = input_a.IsConst() ? 0 : 1;
+    auto org_data = in_tensors_[const_idx].MutableData();
+    CHECK_NULL_RETURN(org_data);
+    const_value_ = reinterpret_cast<float *>(org_data)[0];
   }
   return RET_OK;
 }
@@ -48,12 +52,17 @@ int ArithmeticCoreMLOp::BuildNormalArithmetic() {
   switch (type_) {
     case schema::PrimitiveType_AddFusion: {
       auto add_param = op_->mutable_add();
-      SetNormalConst<CoreML::Specification::AddLayerParams>(add_param);
+      add_param->set_alpha(const_value_);
+      break;
+    }
+    case schema::PrimitiveType_SubFusion: {
+      auto add_param = op_->mutable_add();
+      add_param->set_alpha(-const_value_);
       break;
     }
     case schema::PrimitiveType_MulFusion: {
       auto mul_param = op_->mutable_multiply();
-      SetNormalConst<CoreML::Specification::MultiplyLayerParams>(mul_param);
+      mul_param->set_alpha(const_value_);
       break;
     }
     default:
@@ -68,6 +77,9 @@ int ArithmeticCoreMLOp::BuildBroadcastableArithmetic() {
   switch (type_) {
     case schema::PrimitiveType_AddFusion:
       (void)op_->mutable_addbroadcastable();
+      break;
+    case schema::PrimitiveType_SubFusion:
+      (void)op_->mutable_subtractbroadcastable();
       break;
     case schema::PrimitiveType_MulFusion:
       (void)op_->mutable_multiplybroadcastable();
@@ -92,7 +104,7 @@ void ArithmeticCoreMLOp::SetMLOpInOut() {
   MS_ASSERT(op_ != nullptr);
   for (const auto &in_tensor : in_tensors_) {
     if (in_tensor.IsConst() && !use_normal_) {
-      // const op has not input
+      // note that const op has not input
       const_ops_[in_tensor.Name()]->add_output(in_tensor.Name());
     }
     if (!(in_tensor.IsConst() && use_normal_)) {

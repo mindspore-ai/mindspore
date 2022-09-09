@@ -439,11 +439,18 @@ build_lite() {
         if [ "$(uname)" == "Darwin" ]; then
           mkdir -p ${BASEPATH}/output
           cp -r ${BASEPATH}/mindspore/lite/build/src/Release-*/mindspore-lite.framework ${BASEPATH}/output/mindspore-lite.framework
-          cd ${BASEPATH}/output
+          # schema files are copied in shell script since they will not generated until xcodebuild is executed.
+          local schema_path=${BASEPATH}/output/mindspore-lite.framework/Headers/include/schema
+          mkdir -p ${schema_path}
+          cp ${BASEPATH}/mindspore/lite/build/schema/model_generated.h ${schema_path}
+          cp ${BASEPATH}/mindspore/lite/build/schema/ops_generated.h ${schema_path}
+          cp ${BASEPATH}/mindspore/lite/build/schema/ops_types_generated.h ${schema_path}
           local protobuf_arm_lib=${BASEPATH}/mindspore/lite/build/_deps/protobuf_arm-src/_build/libprotobuf-lite.a
           if [ -e "$protobuf_arm_lib" ]; then
-            cp $protobuf_arm_lib ${BASEPATH}/output/mindspore-lite.framework/
+            mkdir -p ${BASEPATH}/output/mindspore-lite.framework/third_party/protobuf
+            cp $protobuf_arm_lib ${BASEPATH}/output/mindspore-lite.framework/third_party/protobuf/
           fi
+          cd ${BASEPATH}/output
           tar -zcvf ${pkg_name}.tar.gz mindspore-lite.framework/
           sha256sum ${pkg_name}.tar.gz > ${pkg_name}.tar.gz.sha256
           rm -r mindspore-lite.framework
