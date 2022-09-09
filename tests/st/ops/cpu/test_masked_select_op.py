@@ -22,11 +22,27 @@ from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 
+
 def maskedselect():
     x = np.array([1, 2, 3, 4]).astype(np.int32)
     mask = np.array([[[0], [1], [0], [1]], [[0], [1], [0], [1]]]).astype(np.bool)
     net = P.MaskedSelect()
     return net(Tensor(x), Tensor(mask))
+
+
+def maskedselect_dynamic_shape():
+    x = np.array([1, 2, 3, 4, 1, 2, 3, 4]).astype(np.int32)
+    mask = np.array([[[0], [1], [0], [1]], [[0], [1], [0], [1]]]).astype(np.bool)
+    net = P.MaskedSelect()
+    unique = P.Unique()
+    unique_out, _ = unique(Tensor(x))
+    return net(unique_out, Tensor(mask))
+
+
+def maskedselect_for_type(x, mask):
+    net = P.MaskedSelect()
+    return net(Tensor(x), Tensor(mask))
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
@@ -35,6 +51,72 @@ def test_maskedselect():
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     y = maskedselect()
     expect = [1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4]
+    assert (y.asnumpy() == expect).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_maskedselect_dynamic_shape():
+    """
+    Feature: test MaskedSelect dynamic shape on CPU
+    Description: the shape of input is dynamic
+    Expectation: the result match with expect
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    y = maskedselect_dynamic_shape()
+    expect = [1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4]
+    assert (y.asnumpy() == expect).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_maskedselect_bool_type():
+    """
+    Feature: test MaskedSelect bool type on CPU
+    Description: the type of input is bool
+    Expectation: the result match with expect
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    x = np.array([0, 0, 1, 1]).astype(np.bool)
+    mask = np.array([1, 0, 1, 0]).astype(np.bool)
+    y = maskedselect_for_type(x, mask)
+    expect = [False, True]
+    assert (y.asnumpy() == expect).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_maskedselect_complex64_type():
+    """
+    Feature: test MaskedSelect complex64 type on CPU
+    Description: the type of input is complex64
+    Expectation: the result match with expect
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    x = np.array([1+2j, 2+3j, 3+4j, 4+5j]).astype(np.complex64)
+    mask = np.array([1, 0, 1, 0]).astype(np.bool)
+    y = maskedselect_for_type(x, mask)
+    expect = np.array([1+2j, 3+4j]).astype(np.complex64)
+    assert (y.asnumpy() == expect).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_maskedselect_complex128_type():
+    """
+    Feature: test MaskedSelect complex128 type on CPU.
+    Description: the type of input is complex128
+    Expectation: the result match with expect
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    x = np.array([1+2j, 2+3j, 3+4j, 4+5j]).astype(np.complex128)
+    mask = np.array([1, 0, 1, 0]).astype(np.bool)
+    y = maskedselect_for_type(x, mask)
+    expect = np.array([1+2j, 3+4j]).astype(np.complex128)
     assert (y.asnumpy() == expect).all()
 
 
@@ -48,6 +130,7 @@ class Grad(nn.Cell):
         gout = self.grad(self.network)(x, mask, grad)
         return gout
 
+
 class Net(nn.Cell):
     def __init__(self):
         super(Net, self).__init__()
@@ -55,6 +138,7 @@ class Net(nn.Cell):
 
     def construct(self, x, mask):
         return self.op(x, mask)
+
 
 def masked_select_grad():
     x = np.array([1, 2, 3, 4]).astype(np.int32)

@@ -22,6 +22,7 @@
 #include "mindspore/core/abstract/utils.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/masked_select_impl.cuh"
 #include "kernel/common_utils.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 
 namespace mindspore {
 namespace kernel {
@@ -232,7 +233,11 @@ std::vector<std::pair<KernelAttr, MaskedSelectGpuKernelMod::MaskedSelectFunc>> M
   {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeUInt64),
    &MaskedSelectGpuKernelMod::LaunchKernel<uint64_t>},
   {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-   &MaskedSelectGpuKernelMod::LaunchKernel<bool>}};
+   &MaskedSelectGpuKernelMod::LaunchKernel<bool>},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeComplex64),
+   &MaskedSelectGpuKernelMod::LaunchKernel<mindspore::utils::Complex<float>>},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeComplex128),
+   &MaskedSelectGpuKernelMod::LaunchKernel<mindspore::utils::Complex<double>>}};
 
 std::vector<KernelAttr> MaskedSelectGpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
