@@ -62,7 +62,7 @@ if(CMAKE_SYSTEM_NAME MATCHES "Windows")
   if(NOT MSVC)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-attributes -DHAVE_SNPRINTF")
   endif()
-  add_compile_definitions(BUILDING_DLL)
+  add_compile_definitions(BUILDING_CORE_DLL)
 elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} \
     -Wno-overloaded-virtual -Wno-user-defined-warnings -Winconsistent-missing-override -Wno-delete-non-virtual-dtor \

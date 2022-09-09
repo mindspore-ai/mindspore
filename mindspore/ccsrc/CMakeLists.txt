@@ -324,6 +324,10 @@ set(SUB_COMP
         pybind_api
 )
 
+if(WIN32)
+add_compile_definitions(BUILDING_ME_DLL)
+endif()
+
 foreach(_comp ${SUB_COMP})
     add_subdirectory(${_comp})
     string(REPLACE "/" "_" sub ${_comp})

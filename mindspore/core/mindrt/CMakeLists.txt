@@ -12,7 +12,7 @@ file(GLOB MINDRT_SRC
     )
 
 if(CMAKE_SYSTEM_NAME MATCHES "Windows")
-    add_compile_definitions(BUILDING_DLL)
+    add_compile_definitions(BUILDING_CORE_DLL)
 endif()
 
 add_library(mindrt_mid OBJECT ${MINDRT_SRC})

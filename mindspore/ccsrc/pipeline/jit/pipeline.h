@@ -35,7 +35,7 @@
 #include "backend/graph_compiler/transform.h"
 #include "pipeline/jit/base.h"
 #include "frontend/parallel/strategy.h"
-#include "include/api/visible.h"
+#include "include/common/visible.h"
 
 namespace mindspore {
 extern const char kMsConvert[];
@@ -182,7 +182,7 @@ uint32_t GetHcclRankId();
 uint32_t GetHcclRankSize();
 void InitPipeline();
 void FinalizeBackend();
-void MS_API ClearResAtexit();
+void ME_EXPORT ClearResAtexit();
 void CloseTsd(bool force = false);
 void MemoryRecycle();
 
@@ -190,9 +190,9 @@ FuncGraphPtr LoadMindIR(const std::string &file_name, const char *dec_key, const
                         const std::string &dec_mode, const py::object decrypt = py::none());
 
 // init and exec dataset sub graph
-bool MS_API InitExecDataset(const std::string &queue_name, int64_t iter_num, int64_t batch_size,
-                            const std::vector<TypePtr> &types, const std::vector<std::vector<int64_t>> &shapes,
-                            const std::vector<int64_t> &input_indexes, const std::string &phase, bool need_run);
+bool ME_EXPORT InitExecDataset(const std::string &queue_name, int64_t iter_num, int64_t batch_size,
+                               const std::vector<TypePtr> &types, const std::vector<std::vector<int64_t>> &shapes,
+                               const std::vector<int64_t> &input_indexes, const std::string &phase, bool need_run);
 
 // Build and run dataset subgraph for ms backend
 bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batch_size,
