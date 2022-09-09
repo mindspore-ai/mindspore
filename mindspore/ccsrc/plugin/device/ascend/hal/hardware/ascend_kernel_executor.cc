@@ -453,6 +453,9 @@ bool AscendKernelExecutor::LaunchAtomicClean(const CNodePtr &node, const std::ve
   if (iter == node_atomics_persistent_cache_.end()) {
     return true;
   }
+  if (AnfAlgo::IsDynamicShapeSkipExecute(node)) {
+    return true;
+  }
   MS_LOG(DEBUG) << "Launch atomic clean for kernel " << node->fullname_with_scope();
   auto atomic_node = iter->second.at(0);
   vector<AddressPtr> atomic_inputs;
