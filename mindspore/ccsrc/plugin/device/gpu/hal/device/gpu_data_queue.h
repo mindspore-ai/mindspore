@@ -78,6 +78,33 @@ class BACKEND_EXPORT GpuQueue : public DataQueue {
   uint32_t device_id_;
   bool ds_detected_{false};
 };
+
+class BACKEND_EXPORT GpuDataQueue : public DataQueue {
+ public:
+  GpuDataQueue(const std::string &channel_name, size_t capacity, const std::vector<size_t> &shape);
+  ~GpuDataQueue() override;
+
+  DataQueueStatus Push(std::vector<DataQueueItem> data) override;
+  DataQueueStatus Front(std::vector<DataQueueItem> *data) const override;
+  DataQueueStatus Pop() override;
+  DataQueueStatus FrontAsync(std::vector<DataQueueItem> *data) const override;
+  void SetThreadDevice() override;
+
+ private:
+  struct NodeInfo {
+    std::unique_ptr<cudaEvent_t> event_;
+    std::vector<DataQueueItem> data_;
+    void *device_addr_{nullptr};
+    size_t data_len_{0};
+  };
+
+  std::vector<size_t> shape_;
+  size_t len_;
+  cudaStream_t stream_;
+  std::unique_ptr<NodeInfo[]> node_info_;
+  uint32_t device_id_;
+  bool ds_detected_{false};
+};
 }  // namespace device
 }  // namespace mindspore
 

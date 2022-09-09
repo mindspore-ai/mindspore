@@ -30,8 +30,12 @@ namespace py = pybind11;
 namespace mindspore {
 namespace device {
 DataQueueMgr &DataQueueMgr::GetInstance() noexcept {
-  static DataQueueMgr instance;
-  return instance;
+  std::call_once(instance_flag_, []() {
+    if (instance_ == nullptr) {
+      instance_ = std::make_shared<DataQueueMgr>();
+    }
+  });
+  return *instance_;
 }
 
 void DataQueueMgr::RegisterDataQueueCreator(const std::string &device_name, DataQueueCreator &&creator) {
@@ -137,6 +141,14 @@ DataQueueStatus DataQueueMgr::Front(const std::string &channel_name, std::vector
     return DataQueueStatus::QUEUE_NOT_EXIST;
   }
   return iter->second->Front(data);
+}
+DataQueueStatus DataQueueMgr::FrontAsync(const std::string &channel_name, std::vector<DataQueueItem> *data) {
+  auto iter = name_queue_map_.find(channel_name);
+  if (iter == name_queue_map_.end()) {
+    MS_LOG(ERROR) << "Queue not exist " << channel_name;
+    return DataQueueStatus::QUEUE_NOT_EXIST;
+  }
+  return iter->second->FrontAsync(data);
 }
 
 DataQueueStatus DataQueueMgr::Pop(const std::string &channel_name) {

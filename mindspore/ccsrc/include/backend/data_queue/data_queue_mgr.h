@@ -91,6 +91,7 @@ class BACKEND_EXPORT DataQueueMgr {
                        unsigned int timeout_in_sec);
   DataQueueStatus Front(const std::string &channel_name, std::vector<DataQueueItem> *data);
   DataQueueStatus Pop(const std::string &channel_name);
+  DataQueueStatus FrontAsync(const std::string &channel_name, std::vector<DataQueueItem> *data);
   void Free(const std::string &channel_name);
   DataQueueStatus Clear(const std::string &channel_name);
   void Release();
@@ -132,11 +133,14 @@ class BACKEND_EXPORT DataQueueMgr {
   bool dynamic_shape_{false};
   size_t default_capacity_{2};
 
-  inline static std::map<std::string, std::shared_ptr<BlockingQueue>> name_queue_map_;
+  std::map<std::string, std::shared_ptr<BlockingQueue>> name_queue_map_;
   // key: device name, value: DataQueueCreator
-  inline static std::map<std::string, DataQueueCreator> data_queue_creator_map_ = {};
+  std::map<std::string, DataQueueCreator> data_queue_creator_map_ = {};
 
   HANDLER_DEFINE(bool, DestoryTdtHandle);
+
+  inline static std::shared_ptr<DataQueueMgr> instance_;
+  inline static std::once_flag instance_flag_;
 };
 #ifndef BUILD_LITE
 bool PopDataFromDataQueue(const AnfNodePtr &data_kernel);
