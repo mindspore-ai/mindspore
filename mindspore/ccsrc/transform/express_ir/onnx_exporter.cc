@@ -286,7 +286,7 @@ void AddInt64Tensor1DInitializer(const std::string &name, const std::vector<int6
   onnx::TensorProto *initializer = graph_proto->add_initializer();
   initializer->set_name(name);
   initializer->set_data_type(onnx::TensorProto_DataType_INT64);
-  initializer->add_dims(values.size());
+  initializer->add_dims(static_cast<int64_t>(values.size()));
   for (auto value : values) {
     initializer->add_int64_data(value);
   }
@@ -296,7 +296,7 @@ void AddFloatTensor1DInitializer(const std::string &name, const std::vector<floa
                                  onnx::TensorProto_DataType type, onnx::GraphProto *graph_proto) {
   onnx::TensorProto *initializer = graph_proto->add_initializer();
   initializer->set_name(name);
-  initializer->add_dims(values.size());
+  initializer->add_dims(static_cast<int64_t>(values.size()));
   if (type == onnx::TensorProto_DataType_FLOAT16) {
     for (auto value : values) {
       uint32_t fp16 = fp16::Fp32ToFp16(value);
@@ -666,7 +666,7 @@ std::vector<size_t> TraceLoopToControlMap(const FuncGraphPtr &control_subgraph) 
   auto loop_partial_node = GetNodeInput<CNode>(switch_node, kTwoNum);
   const auto &control_params = control_subgraph->parameters();
   int64_t auxiliary_inputs_num = 2;
-  for (size_t i = static_cast<unsigned int>(auxiliary_inputs_num); i < loop_partial_node->inputs().size(); ++i) {
+  for (size_t i = static_cast<size_t>(auxiliary_inputs_num); i < loop_partial_node->inputs().size(); ++i) {
     auto loop_param = GetNodeInput<Parameter>(loop_partial_node, i);
     auto control_param_pos =
       std::find(control_params.begin(), control_params.end(), loop_param) - control_params.begin();
@@ -684,7 +684,7 @@ std::vector<size_t> TraceAfterToLoopMap(const FuncGraphPtr &control_subgraph) {
   auto after_partial_node = GetNodeInput<CNode>(switch_node, kThreeNum);
   const auto &loop_params = loop_partial_node->inputs();
   int64_t auxiliary_inputs_num = 2;
-  for (size_t i = static_cast<unsigned int>(auxiliary_inputs_num); i < after_partial_node->inputs().size(); ++i) {
+  for (size_t i = static_cast<size_t>(auxiliary_inputs_num); i < after_partial_node->inputs().size(); ++i) {
     auto after_param = GetNodeInput<Parameter>(after_partial_node, i);
     auto after_param_pos = std::find(loop_params.begin(), loop_params.end(), after_param) - loop_params.begin();
     result.push_back(after_param_pos - auxiliary_inputs_num);
@@ -765,7 +765,7 @@ LoopParts MatchGraph(const CNodePtr &start_node) {
     if (!ignored_loop_params_mask.at(loop_i)) {
       auto output_i = loop_i;
       for (size_t i = 0; i < loop_i; ++i) {
-        output_i -= static_cast<int>(ignored_loop_params_mask.at(i));
+        output_i -= static_cast<size_t>(ignored_loop_params_mask.at(i));
       }
       result.after_param_to_output_indices.push_back(std::make_pair(after_i, output_i));
     }
@@ -1720,7 +1720,7 @@ void OnnxExporter::ExportPrimStridedSlice(const FuncGraphPtr &, const CNodePtr &
     axes_attr->set_type(onnx::AttributeProto_AttributeType_INTS);
     for (size_t i = 0; i < x_shape.size(); ++i) {
       if ((shrink_axis_mask & (1 << i)) != 0) {
-        axes_attr->add_ints(i);
+        axes_attr->add_ints(static_cast<int64_t>(i));
       }
     }
   }
@@ -3071,8 +3071,8 @@ void OnnxExporter::ExportPrimTensorCopySlices(const FuncGraphPtr &, const CNodeP
 
   std::vector<int64_t> end_inclusive;
   (void)std::transform(end.begin(), end.end(), std::back_inserter(end_inclusive), [](auto x) { return x - 1; });
-  (void)std::transform(x_shape.begin() + end.size(), x_shape.end(), std::back_inserter(end_inclusive),
-                       [](auto x) { return x - 1; });
+  (void)std::transform(x_shape.begin() + static_cast<int64_t>(end.size()), x_shape.end(),
+                       std::back_inserter(end_inclusive), [](auto x) { return x - 1; });
   int64_t flat_end_index = RavelIndex(end_inclusive, x_shape) + 1;
 
   int64_t x_size = std::accumulate(x_shape.begin(), x_shape.end(), 1, std::multiplies<int64_t>());
@@ -3587,7 +3587,7 @@ void OnnxExporter::ExportOutput(const FuncGraphPtr &, const AnfNodePtr &return_a
 
       onnx::ValueInfoProto *output_proto = graph_proto->add_output();
       output_proto->set_name(output_name);
-      SetValueInfoType(arg, output_proto, i);
+      SetValueInfoType(arg, output_proto, static_cast<int64_t>(i));
     }
   } else if (arg->Type()->isa<Tuple>()) {
     auto arg_name = GetNodeInputName(arg, node_map_ptr, graph_proto);
@@ -3597,7 +3597,7 @@ void OnnxExporter::ExportOutput(const FuncGraphPtr &, const AnfNodePtr &return_a
       auto output_name = MakeOutputName(arg_name, i);
       onnx::ValueInfoProto *output_proto = graph_proto->add_output();
       output_proto->set_name(output_name);
-      SetValueInfoType(arg, output_proto, i);
+      SetValueInfoType(arg, output_proto, static_cast<int64_t>(i));
     }
   } else if (arg->Type()->isa<TensorType>()) {
     auto arg_name = GetNodeInputName(arg, node_map_ptr, graph_proto);
