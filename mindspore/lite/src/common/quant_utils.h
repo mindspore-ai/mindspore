@@ -63,8 +63,6 @@ inline int QuantMin(int bits, bool is_unsigned = false, bool is_narrow = true) {
   }
 }
 
-inline bool IsEqual(double x, double y) { return (std::fabs(x - y) <= std::numeric_limits<double>::epsilon()); }
-
 int CalQuantizationParams(schema::QuantParamT *quant_param, double real_min, double real_max, int num_bits,
                           int quant_min, int quant_max, bool symmetric, bool narrow_range = false);
 

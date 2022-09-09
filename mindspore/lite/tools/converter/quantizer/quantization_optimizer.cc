@@ -118,7 +118,7 @@ lite::LiteModel *ParseLiteModel(const FuncGraphPtr &func_graph, const std::share
   auto offset = schema::MetaGraph::Pack(builder, meta_graph);
   builder.Finish(offset);
   schema::FinishMetaGraphBuffer(builder, offset);
-  int size = builder.GetSize();
+  size_t size = builder.GetSize();
   auto content = reinterpret_cast<const char *>(builder.GetBufferPointer());
   if (content == nullptr) {
     MS_LOG(ERROR) << "GetBufferPointer nullptr";

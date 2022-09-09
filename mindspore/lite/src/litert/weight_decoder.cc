@@ -221,7 +221,7 @@ STATUS WeightDecoder::SparseDecompress(const SchemaTensorWrapper &src_tensor, Te
   size_t unique_value_cnt = 0;
   for (size_t i = 0; i < bit_num; i++) {
     bool bit = bit_vec[index++];
-    unique_value_cnt |= bit << static_cast<size_t>((bit_num - i - 1));
+    unique_value_cnt |= bit << (bit_num - i - 1);
   }
   if (unique_value_cnt == 0) {
     unique_value_cnt = 1u << bit_num;

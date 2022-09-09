@@ -100,7 +100,7 @@ class DebugInfoManager {
 
   int AddComparedInfo(const mindspore::MSCallBackParam &call_back_param,
                       const std::vector<mindspore::lite::Tensor *> &inputs, OpParameter *op_parameter, bool is_input,
-                      size_t tensor_index, mindspore::lite::Tensor *compared_tensor,
+                      size_t tensor_index, const mindspore::lite::Tensor *compared_tensor,
                       const quant::DebugMode &debug_mode);
 
   void PrintAllDebugInfo();
@@ -145,7 +145,7 @@ class DebugInfoManager {
                                     const quant::DebugMode &debug_mode);
 
   int GetConstTensor(const std::map<std::string, mindspore::schema::Tensor *> &input_tensor_map,
-                     mindspore::lite::Tensor *tensor, mindspore::lite::Tensor *new_tensor);
+                     const mindspore::lite::Tensor *tensor, mindspore::lite::Tensor *new_tensor);
 
   void FreeBuffer();
 
@@ -155,7 +155,7 @@ class DebugInfoManager {
 
   int GetClipAndCos(const quant::DebugMode &debug_mode);
 
-  int GetOutputInfo();
+  void GetOutputInfo();
 
   int SaveOutputInfo(const std::string &file_path);
 

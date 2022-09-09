@@ -45,9 +45,9 @@ int FSEEncoder::FSECreateStatesForEncoding(uint32_t *frequency, int frequency_co
   CHECK_NULL_RETURN(delta_state);
   CHECK_NULL_RETURN(symbol_table);
   CHECK_NULL_RETURN(coding_table);
-  const size_t tablesize = 1 << static_cast<size_t>(table_log);
-  size_t tablemask = tablesize - 1;
-  size_t step = ((tablesize >> 1) + (tablesize >> kFseTableExtendSize) + kFseTableExtendSize);
+  const size_t table_size = 1u << static_cast<size_t>(table_log);
+  size_t tablemask = table_size - 1;
+  size_t step = ((table_size >> 1) + (table_size >> kFseTableExtendSize) + kFseTableExtendSize);
   size_t pos = 0;
   // Separate the same symbols, coding will be better if the same characters are distributed evenly across the table.
   for (int sym = 0; sym < frequency_count; sym++) {
@@ -67,9 +67,9 @@ int FSEEncoder::FSECreateStatesForEncoding(uint32_t *frequency, int frequency_co
     cfreqs[i] = cfreqs[i - 1] + frequency[i - 1];
   }
   cfreqs[frequency_count + 1] = cfreqs[frequency_count] + 1;
-  for (size_t i = 0; i < tablesize; i++) {
+  for (size_t i = 0; i < table_size; i++) {
     uint16_t sym = symbol_table[i];
-    coding_table[cfreqs[sym]] = tablesize + i;
+    coding_table[cfreqs[sym]] = table_size + i;
     cfreqs[sym] += 1;
   }
 

@@ -24,7 +24,7 @@
 
 namespace mindspore::lite::quant {
 namespace {
-constexpr int kTableExtend = 3;
+constexpr size_t kTableExtend = 3;
 constexpr int kAlignOffset = 7;
 }  // namespace
 int FSEDecoder::FSECreateStatesForDecoding(const uint32_t *symbol_frequency, int symbol_frequency_count, int table_log,
@@ -33,9 +33,9 @@ int FSEDecoder::FSECreateStatesForDecoding(const uint32_t *symbol_frequency, int
   CHECK_NULL_RETURN(new_state);
   CHECK_NULL_RETURN(bit_count);
   CHECK_NULL_RETURN(symbol_table);
-  const size_t table_size = 1 << table_log;
+  const size_t table_size = 1 << static_cast<size_t>(table_log);
   const size_t table_mask = table_size - 1;
-  int step = ((table_size >> 1) + (table_size >> kTableExtend) + kTableExtend);
+  size_t step = ((table_size >> 1) + (table_size >> kTableExtend) + kTableExtend);
   size_t pos = 0;
   for (int sym = 0; sym < symbol_frequency_count; sym++) {
     for (uint32_t i = 0; i < symbol_frequency[sym]; i++) {
