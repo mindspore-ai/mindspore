@@ -1325,8 +1325,15 @@ def get_gatherd_grad_v2_vmap_rule(prim, axis_size):
         grad = _bdim_at_any(grad, grad_dim, batch_dim, axis_size)
 
         # Adjust dim-attr if needed
-        if dim >= batch_dim:
-            _vmap_update_prim_attr(prim, 'dim', dim + 1)
+        x_rank = F.rank(x) - 1
+        pdim = dim
+        if pdim < 0:
+            pdim += x_rank
+        if pdim < 0 or pdim >= x_rank:
+            _raise_value_error(
+                "The `dim` in `GatherDGradV2` must be in range [{}, {}], but got {}.".format(-x_rank, x_rank - 1, dim))
+        if pdim >= batch_dim:
+            _vmap_update_prim_attr(prim, 'dim', pdim + 1)
 
         out = prim(x, index, grad)
         return (out, batch_dim)
