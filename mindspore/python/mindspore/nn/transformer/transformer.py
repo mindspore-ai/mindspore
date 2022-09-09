@@ -2518,7 +2518,7 @@ class TransformerDecoder(Cell):
                 'relu6', 'tanh', 'gelu', 'fast_gelu', 'elu', 'sigmoid', 'prelu', 'leakyrelu', 'hswish',
                 'hsigmoid', 'logsigmoid' and so on. Default: gelu.
             lambda_func(function): A function can determine the fusion index,
-            pipeline stages and recompute attribute. If the
+                pipeline stages and recompute attribute. If the
                 user wants to determine the pipeline stage and gradient aggregation fusion, the user can pass a
                 function that accepts `network`, `layer_id`, `offset`, `parallel_config`, `layers`. The `network(Cell)`
                 represents the transformer block, `layer_id(int)` means the layer index for the current module, counts

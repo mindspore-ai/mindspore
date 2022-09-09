@@ -125,7 +125,7 @@ class Optimizer(Cell):
             type of `loss_scale` input is int, it will be converted to float. In general, use the default value. Only
             when `FixedLossScaleManager` is used for training and the `drop_overflow_update` in
             `FixedLossScaleManager` is set to False, this value needs to be the same as the `loss_scale` in
-            `FixedLossScaleManager`. Refer to class :class:`mindspore.FixedLossScaleManager` for more details.
+            `FixedLossScaleManager`. Refer to class :class:`mindspore.amp.FixedLossScaleManager` for more details.
             Default: 1.0.
 
     Raises:

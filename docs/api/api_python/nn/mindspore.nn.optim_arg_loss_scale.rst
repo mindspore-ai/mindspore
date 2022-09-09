@@ -1,1 +1,1 @@
-- **loss_scale** (float) - 梯度缩放系数，必须大于0。如果 `loss_scale` 是整数，它将被转换为浮点数。通常使用默认值，仅当训练时使用了 `FixedLossScaleManager`，且 `FixedLossScaleManager` 的 `drop_overflow_update` 属性配置为False时，此值需要与 `FixedLossScaleManager` 中的 `loss_scale` 相同。有关更多详细信息，请参阅 :class:`mindspore.FixedLossScaleManager`。默认值：1.0。
+- **loss_scale** (float) - 梯度缩放系数，必须大于0。如果 `loss_scale` 是整数，它将被转换为浮点数。通常使用默认值，仅当训练时使用了 `FixedLossScaleManager`，且 `FixedLossScaleManager` 的 `drop_overflow_update` 属性配置为False时，此值需要与 `FixedLossScaleManager` 中的 `loss_scale` 相同。有关更多详细信息，请参阅 :class:`mindspore.amp.FixedLossScaleManager`。默认值：1.0。

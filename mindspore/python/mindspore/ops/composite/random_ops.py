@@ -349,7 +349,7 @@ def multinomial(inputs, num_sample, replacement=True, seed=None):
         seed (int, optional): Seed is used as entropy source for the random number engines to generate
           pseudo-random numbers, must be non-negative. Default: None.
 
-    Outputs:
+    Returns:
         Tensor, has the same rows with input. The number of sampled indices of each row is `num_samples`.
         The dtype is float32.
 

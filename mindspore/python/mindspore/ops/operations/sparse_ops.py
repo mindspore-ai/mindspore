@@ -623,7 +623,7 @@ class SparseTensorDenseMatmul(Primitive):
           Support int32, int64, each element value should be a non-negative int number. The shape is :math:`(n, 2)`.
         - **values** (Tensor) - A 1-D Tensor, represents the value corresponding to the position in the `indices`.
           Support float16, float32, float64, int32, int64, complex64, complex128. The shape should be :math:`(n,)`.
-        - **sparse_shape** (tuple(int)) or (Tensor) - A positive int tuple or tensor which specifies the shape of
+        - **sparse_shape** (tuple(int) or (Tensor)) - A positive int tuple or tensor which specifies the shape of
           sparse tensor, and only constant value is allowed when sparse_shape is a tensor, should have 2 elements,
           represent sparse tensor shape is :math:`(N, C)`.
         - **dense** (Tensor) - A 2-D Tensor, the dtype is same as `values`.

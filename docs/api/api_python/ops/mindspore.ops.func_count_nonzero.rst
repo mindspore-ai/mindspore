@@ -1,7 +1,7 @@
 mindspore.ops.count_nonzero
 ============================
 
-.. py:function:: mindspore.ops.count_nonzero(x, axis=(), keep_dims=False, dtype=mindspore.int32)
+.. py:function:: mindspore.ops.count_nonzero(x, axis=(), keep_dims=False, dtype=mstype.int32)
 
     计算输入Tensor指定轴上的非零元素的数量。
 

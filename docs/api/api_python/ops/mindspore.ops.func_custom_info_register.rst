@@ -1,7 +1,7 @@
 mindspore.ops.custom_info_register
 ==================================
 
-.. py:class:: mindspore.ops.custom_info_register(*reg_info)
+.. py:function:: mindspore.ops.custom_info_register(*reg_info)
 
     装饰器，用于将注册信息绑定到： :class:`mindspore.ops.Custom` 的 `func` 参数。
 
