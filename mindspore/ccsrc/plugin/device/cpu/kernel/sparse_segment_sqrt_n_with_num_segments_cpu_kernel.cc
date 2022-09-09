@@ -124,11 +124,11 @@ void SparseSegmentSqrtNWithNumSegmentsCpuKernelMod::LaunchKernel(const std::vect
   }
   if (segment_ids_addr[m - 1] >= num_segments_addr[kIndex0]) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_
-                             << "', num_segments must bigger than the last number of segment_ids.";
+                             << "', num_segments must be bigger than the largest id of segment_ids.";
   }
   for (size_t i = 0; i < m; i++) {
     if (indices_addr[i] >= x_shape_0) {
-      MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', indices out of range of x's first shape.";
+      MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', indices is out of range of x's first dimension.";
     }
   }
 

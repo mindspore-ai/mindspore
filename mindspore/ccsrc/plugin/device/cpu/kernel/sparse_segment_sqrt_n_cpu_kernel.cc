@@ -135,7 +135,7 @@ void SparseSegmentSqrtNCpuKernelMod::LaunchKernel(const std::vector<kernel::Addr
   }
   for (size_t i = 0; i < m; i++) {
     if (indices_addr[i] >= x_shape_0) {
-      MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', indices out of range of x's first shape.";
+      MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', indices is out of range of x's first dimension.";
     }
   }
 

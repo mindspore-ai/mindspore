@@ -70,7 +70,6 @@ void SparseSegmentMeanGradCpuKernelMod::LaunchKernel(const std::vector<kernel::A
   size_t m = std::accumulate(segment_ids_shape_.begin(), segment_ids_shape_.end(), kMultiply, std::multiplies<int>());
   size_t num_elements = std::accumulate(y_shape_.begin(), y_shape_.end(), kMultiply, std::multiplies<int>());
   int32_t k = *reinterpret_cast<int32_t *>(inputs[kIndex3]->addr);
-  auto x_shape_0 = static_cast<int32_t>(x_shape_[kIndex0]);
   auto x_addr = reinterpret_cast<T *>(inputs[kIndex0]->addr);
   auto indices_addr = reinterpret_cast<int32_t *>(inputs[kIndex1]->addr);
   auto segment_ids_addr = reinterpret_cast<int32_t *>(inputs[kIndex2]->addr);
@@ -85,8 +84,8 @@ void SparseSegmentMeanGradCpuKernelMod::LaunchKernel(const std::vector<kernel::A
     }
   }
   for (size_t i = 0; i < m; i++) {
-    if (indices_addr[i] >= x_shape_0) {
-      MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', indices is out of range of x's first dimension.";
+    if (indices_addr[i] >= k) {
+      MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', indices is out of range of output_dim0.";
     }
     if (segment_ids_addr[i] >= k) {
       MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', segment_ids is out of range of output_dim0.";
