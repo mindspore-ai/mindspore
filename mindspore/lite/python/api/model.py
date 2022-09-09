@@ -498,7 +498,7 @@ class ModelParallelRunner:
             check_isinstance("runner_config", runner_config, RunnerConfig)
             ret = self._model.init(self.model_path_, runner_config._runner_config)
         else:
-            ret = self._model.init(self.model_path_)
+            ret = self._model.init(self.model_path_, None)
         if not ret.IsOk():
             raise RuntimeError(f"ModelParallelRunner's init failed! Error is {ret.ToString()}")
 
