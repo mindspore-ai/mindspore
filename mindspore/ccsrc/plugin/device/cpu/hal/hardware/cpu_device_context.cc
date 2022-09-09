@@ -39,6 +39,7 @@
 #include "backend/common/pass/replace_node_by_proxy.h"
 #include "backend/common/pass/erase_visit_attr.h"
 #include "backend/common/pass/insert_tensor_move_for_communication.h"
+#include "backend/common/pass/insert_tensor_move_for_ref.h"
 #include "common/graph_kernel/adapter/graph_kernel_optimization.h"
 #include "common/graph_kernel/adapter/expander.h"
 #include "common/graph_kernel/value_graph_binder.h"
@@ -176,6 +177,7 @@ void CPUKernelExecutor::OptimizeGraphImpl(const KernelGraphPtr &graph) const {
   pm->AddPass(std::make_shared<opt::InsertCastCPU>("insert_cast"));
   pm->AddPass(std::make_shared<opt::EraseVisitAttr>());
   pm->AddPass(std::make_shared<opt::InsertTensorMoveForCommunication>());
+  pm->AddPass(std::make_shared<opt::InsertTensorMoveForGraphOutputRefNode>());
   optimizer->AddPassManager(pm);
   (void)optimizer->Optimize(graph);
   graph->SetExecOrderByDefault();
