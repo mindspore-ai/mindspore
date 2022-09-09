@@ -99,6 +99,7 @@ constexpr auto kKLDivLoss = "KLDivLoss";
 constexpr auto kKLDivLossGrad = "KLDivLossGrad";
 constexpr auto kSampleDistortedBoundingBoxV2 = "SampleDistortedBoundingBoxV2";
 constexpr auto kSparseToDenseV2 = "SparseToDenseV2";
+constexpr auto kSparseSoftmaxCrossEntropyWithLogitsV2 = "SparseSoftmaxCrossEntropyWithLogitsV2";
 constexpr auto kPriorityReplayBufferCreate = "PriorityReplayBufferCreate";
 constexpr auto kPriorityReplayBufferPush = "PriorityReplayBufferPush";
 constexpr auto kPriorityReplayBufferSample = "PriorityReplayBufferSample";
@@ -175,6 +176,7 @@ const std::map<std::string, std::string> kOpNameToAicpuOpNameMap{
   {kCumSum, "Cumsum"},
   {kCumProd, "Cumprod"},
   {kSampleDistortedBoundingBoxV2, "SampleDistortedBoundingBoxExt2"},
+  {kSparseSoftmaxCrossEntropyWithLogitsV2, "SparseSoftmaxCrossEntropyWithLogits"},
   {kSparseToDenseV2, "SparseToDense"},
   {kAvgPoolV1, "AvgPool"},
   {kNonZero, "Where"},

@@ -2783,6 +2783,53 @@ class SparseSoftmaxCrossEntropyWithLogits(PrimitiveWithInfer):
         return logits_type
 
 
+class SparseSoftmaxCrossEntropyWithLogitsV2(Primitive):
+    r"""
+    Computes the softmax cross-entropy value between logits and sparse encoding labels.
+
+    Sets input logits as `X`, input label as `Y`, output as `loss`. Then,
+
+    .. math::
+        \begin{array}{ll} \\
+            p_{ij} = softmax(X_{ij}) = \frac{\exp(x_i)}{\sum_{j = 0}^{N-1}\exp(x_j)} \\
+            loss_{ij} = \begin{cases} -ln(p_{ij}), &j = y_i \cr 0, & j \neq y_i \end{cases}
+        \end{array}
+
+    Inputs:
+        - **logits** (Tensor) - Input logits, with shape :math:`(N, C)`. Data type must be float16 or float32.
+        - **labels** (Tensor) - Ground truth labels, with shape :math:`(N)`.
+          Data type must be int32 or int64.
+
+    Outputs:
+        - **loss** (Tensor) - With the same shape as `labels`, the same type as `logits`.
+        - **backprop** (Tensor) - With the same shape and same type as `logits`.
+
+    Raises:
+        TypeError: If dtype of `logits` is neither float16 nor float32.
+        TypeError: If dtype of `labels` is neither int32 nor int64.
+        ValueError: If logits.shape is not [batch x classes] or labels.shape is not [batch].
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> logits = Tensor([[2, 3, 1, 4, 5], [2, 1, 2, 4, 3]], mindspore.float32)
+        >>> labels = Tensor([0, 1], mindspore.int32)
+        >>> sparse_softmax_cross = ops.SparseSoftmaxCrossEntropyWithLogitsV2()
+        >>> loss, backprop = sparse_softmax_cross(logits, labels)
+        >>> print(loss)
+        [3.4519143 3.523744 ]
+        >>> print(backprop)
+        [[-0.96831506  0.08612854  0.01165623  0.23412165  0.6364086 ]
+         [ 0.08015893 -0.9705112   0.08015893  0.5922988   0.21789455]]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize SparseSoftmaxCrossEntropyWithLogitsV2."""
+        self.init_prim_io_names(inputs=['features', 'labels'], outputs=['loss', 'backprop'])
+
+
 class ApplyMomentum(Primitive):
     r"""
     Optimizer that implements the Momentum algorithm.

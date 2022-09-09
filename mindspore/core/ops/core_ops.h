@@ -812,6 +812,8 @@ GVAR_DEF(PrimitivePtr, kPrimSigmoidCrossEntropyWithLogitsGrad,
          std::make_shared<Primitive>("SigmoidCrossEntropyWithLogitsGrad"));
 GVAR_DEF(PrimitivePtr, kPrimSparseSoftmaxCrossEntropyWithLogits,
          std::make_shared<Primitive>("SparseSoftmaxCrossEntropyWithLogits"));
+GVAR_DEF(PrimitivePtr, kPrimSparseSoftmaxCrossEntropyWithLogitsV2,
+         std::make_shared<Primitive>("SparseSoftmaxCrossEntropyWithLogitsV2"));
 GVAR_DEF(PrimitivePtr, kPrimMomentum, std::make_shared<Primitive>("Momentum"));
 GVAR_DEF(PrimitivePtr, kPrimApplyMomentum, std::make_shared<Primitive>("ApplyMomentum"));
 GVAR_DEF(PrimitivePtr, kPrimApplyFtrl, std::make_shared<Primitive>("ApplyFtrl"));
