@@ -15,9 +15,10 @@
  */
 
 #include <vector>
-#include <map>
+#include <unordered_map>
 #include <memory>
 #include <string>
+#include "tools/graph_kernel/common/utils.h"
 #include "schema/model_generated.h"
 #include "src/tensor.h"
 #include "src/common/utils.h"
@@ -26,46 +27,10 @@
 #include "nnacl/custom_parameter.h"
 
 namespace mindspore::graphkernel {
-namespace {
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-
-std::vector<std::string> SplitString(const std::string &raw_str, char delimiter) {
-  std::vector<std::string> res;
-  std::string::size_type last_pos = 0;
-  auto cur_pos = raw_str.find(delimiter);
-  while (cur_pos != std::string::npos) {
-    (void)res.emplace_back(raw_str.substr(last_pos, cur_pos - last_pos));
-    cur_pos++;
-    last_pos = cur_pos;
-    cur_pos = raw_str.find(delimiter, cur_pos);
-  }
-  if (last_pos < raw_str.size()) {
-    (void)res.emplace_back(raw_str.substr(last_pos, raw_str.size() - last_pos + 1));
-  }
-  return res;
-}
-
-int GetCustomShape(const std::string &attr, std::vector<std::vector<int>> *shapes) {
-  auto split_shape_str = SplitString(attr, ',');
-  for (size_t i = 0; i < split_shape_str.size(); i++) {
-    size_t dim = std::stoul(split_shape_str[i]);
-    if (i + dim >= split_shape_str.size()) {
-      MS_LOG(ERROR) << "Shape string is invalid. The shape dim is " << dim << ", but only "
-                    << split_shape_str.size() - i << " values follow.";
-      return RET_ERROR;
-    }
-    std::vector<int> shape;
-    for (size_t j = i + 1; j <= i + dim; j++) {
-      shape.push_back(std::stoi(split_shape_str[j]));
-    }
-    i += dim;
-    shapes->push_back(shape);
-  }
-  return RET_OK;
-}
-
-int SetOutputsShape(TensorC **outputs, size_t outputs_size, const std::string &outputs_shape_str) {
+namespace {
+int SetOutputsShape(TensorC **outputs, size_t outputs_size, const std::string &outputs_shape_str, int batch) {
   std::vector<std::vector<int>> shapes;
   if (GetCustomShape(outputs_shape_str, &shapes) != RET_OK) {
     return RET_ERROR;
@@ -76,11 +41,11 @@ int SetOutputsShape(TensorC **outputs, size_t outputs_size, const std::string &o
   }
   for (size_t i = 0; i < outputs_size; i++) {
     if (shapes[i].size() > MAX_SHAPE_SIZE) {
-      MS_LOG(ERROR) << "The output shape size " << shapes.size() << " is greater than max size " << MAX_SHAPE_SIZE;
+      MS_LOG(ERROR) << "The output shape size " << shapes[i].size() << " is greater than max size " << MAX_SHAPE_SIZE;
       return RET_ERROR;
     }
     for (size_t j = 0; j < shapes[i].size(); j++) {
-      outputs[i]->shape_[j] = shapes[i][j];
+      outputs[i]->shape_[j] = j == 0 ? shapes[i][j] * batch : shapes[i][j];
     }
     outputs[i]->shape_size_ = shapes[i].size();
   }
@@ -111,31 +76,56 @@ int SetOutputsType(TensorC **outputs, size_t outputs_size, const std::string &ou
   return RET_OK;
 }
 }  // namespace
-
 int InferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                OpParameter *parameter) {
   // in PopulateCustomParameter, the primitive is store in attr_data[0]
   auto param = reinterpret_cast<CustomParameter *>(parameter)->attr_data[0];
   auto prim = reinterpret_cast<schema::Primitive *>(param)->value_as_Custom();
+  std::unordered_map<std::string, std::string> attr_map;
   for (size_t i = 0; i < prim->attr()->size(); i++) {
     auto attr = prim->attr()->Get(i);
-    if (attr->name()->str() == "outputs_shape") {
-      std::string data(reinterpret_cast<const char *>(attr->data()->Data()), attr->data()->size());
-      if (SetOutputsShape(outputs, outputs_size, data) != RET_OK) {
-        return RET_ERROR;
-      }
+    std::string data;
+    if (attr->name()->str() == "inputs_shape") {
+      data = std::string(reinterpret_cast<const char *>(attr->data()->Data()), attr->data()->size());
+    } else if (attr->name()->str() == "outputs_shape") {
+      data = std::string(reinterpret_cast<const char *>(attr->data()->Data()), attr->data()->size());
     } else if (attr->name()->str() == "outputs_format") {
-      std::string data(reinterpret_cast<const char *>(attr->data()->Data()), attr->data()->size());
-      if (SetOutputsFormat(outputs, outputs_size, data) != RET_OK) {
-        return RET_ERROR;
-      }
+      data = std::string(reinterpret_cast<const char *>(attr->data()->Data()), attr->data()->size());
     } else if (attr->name()->str() == "outputs_type") {
-      std::string data(reinterpret_cast<const char *>(attr->data()->Data()), attr->data()->size());
-      if (SetOutputsType(outputs, outputs_size, data) != RET_OK) {
-        return RET_ERROR;
-      }
+      data = std::string(reinterpret_cast<const char *>(attr->data()->Data()), attr->data()->size());
+    } else if (attr->name()->str() == "dynamic_input_index") {
+      data = std::string(reinterpret_cast<const char *>(attr->data()->Data()), attr->data()->size());
+    } else {
+      continue;
+    }
+    (void)attr_map.emplace(attr->name()->str(), data);
+  }
+  int batch = 1;
+
+  if (attr_map.count("inputs_shape") != 0 && attr_map.count("dynamic_input_index") != 0) {
+    std::vector<std::vector<int>> shapes;
+    if (GetCustomShape(attr_map["inputs_shape"], &shapes) != RET_OK) {
+      return RET_ERROR;
+    }
+    std::vector<size_t> index;
+    GetCustomIndex(attr_map["dynamic_input_index"], &index);
+    if (CalculateDynamicBatchSize(inputs, inputs_size, shapes, index, &batch) != RET_OK) {
+      return RET_ERROR;
     }
   }
+  if (attr_map.count("outputs_shape") == 0 ||
+      SetOutputsShape(outputs, outputs_size, attr_map["outputs_shape"], batch) != RET_OK) {
+    return RET_ERROR;
+  }
+  if (attr_map.count("outputs_format") == 0 ||
+      SetOutputsFormat(outputs, outputs_size, attr_map["outputs_format"]) != RET_OK) {
+    return RET_ERROR;
+  }
+  if (attr_map.count("outputs_type") == 0 ||
+      SetOutputsType(outputs, outputs_size, attr_map["outputs_type"]) != RET_OK) {
+    return RET_ERROR;
+  }
+
   return RET_OK;
 }
 }  // namespace mindspore::graphkernel

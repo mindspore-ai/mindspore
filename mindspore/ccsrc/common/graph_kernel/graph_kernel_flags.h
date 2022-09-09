@@ -98,6 +98,11 @@ class GraphKernelFlags {
   bool enable_auto_tensor_inplace{false};
 
   /**
+   * Enable dynamic batch size for akg kernels, default is false.
+   */
+  bool enable_dynamic_batch{false};
+
+  /**
    * Enable low precision in data transferring between graph kernel and computing in graph kernel
    * in graph kernel.
    * Experimental feature, enabled by the enable_low_precision flag
