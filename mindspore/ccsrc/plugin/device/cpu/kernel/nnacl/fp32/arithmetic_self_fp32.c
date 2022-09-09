@@ -52,7 +52,7 @@ int ElementCos(const float *input, float *output, const int element_size) {
 // log:
 int ElementLog(const float *input, float *output, const int element_size) {
   for (int i = 0; i < element_size; i++) {
-    if (input[i] < 0) {
+    if (MS_UNLIKELY(input[i] < 0)) {
       return NNACL_ERRCODE_LOG_NEGATIVE_OR_ZERO;
     }
     output[i] = logf(input[i]);
@@ -63,7 +63,7 @@ int ElementLog(const float *input, float *output, const int element_size) {
 // log1p:
 int ElementLog1p(const float *input, float *output, const int element_size) {
   for (int i = 0; i < element_size; i++) {
-    if (input[i] < -1.0f) {
+    if (MS_UNLIKELY(input[i] < -1.0f)) {
       return NNACL_ERRCODE_LOG_NEGATIVE_OR_ZERO;
     }
     output[i] = log1p(input[i]);
@@ -86,7 +86,7 @@ int ElementSqrt(const float *input, float *output, const int element_size) {
 
   SIMD_RUN_NO_SCALAR(ElementSqrt, i, input, output, element_size);
   for (; i < element_size; i++) {
-    if (input[i] < 0) {
+    if (MS_UNLIKELY(input[i] < 0)) {
       return NNACL_ERRCODE_SQRT_NEGATIVE;
     }
     output[i] = sqrtf(input[i]);
@@ -99,7 +99,7 @@ int ElementRsqrt(const float *input, float *output, const int element_size) {
 
   SIMD_RUN_NO_SCALAR(ElementRsqrt, i, input, output, element_size);
   for (; i < element_size; i++) {
-    if (input[i] < 0) {
+    if (MS_UNLIKELY(input[i] < 0)) {
       return NNACL_ERRCODE_RSQRT_NEGATIVE;
     }
     output[i] = 1.f / sqrtf(input[i]);
