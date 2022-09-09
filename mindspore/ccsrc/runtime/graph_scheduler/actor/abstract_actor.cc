@@ -29,7 +29,8 @@ void AbstractActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<
   (void)input_op_datas_[sequential_num].emplace_back(input_data);
 
   auto is_run = CheckRunningCondition(context);
-  MS_LOG(DEBUG) << "Actor(" << GetAID().Name() << ") receive the input op data and check running condition:" << is_run;
+  MS_LOG(DEBUG) << "Actor(" << GetAID().Name() << ") receive the input op data and check running condition:" << is_run
+                << ", sequential num:" << sequential_num;
   if (is_run) {
     Run(context);
   }
@@ -42,7 +43,8 @@ void AbstractActor::RunOpControl(AID *const input_control, OpContext<DeviceTenso
 
   auto is_run = CheckRunningCondition(context);
   MS_LOG(DEBUG) << "Actor(" << GetAID().Name()
-                << ") receive the input op control and check running condition:" << is_run;
+                << ") receive the input op control and check running condition:" << is_run
+                << ", sequential num:" << sequential_num;
   if (is_run) {
     Run(context);
   }
@@ -50,8 +52,10 @@ void AbstractActor::RunOpControl(AID *const input_control, OpContext<DeviceTenso
 
 void AbstractActor::RunBatchOpData(std::vector<OpData<DeviceTensor> *> *const batch_input_data,
                                    OpContext<DeviceTensor> *const context) {
+  MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(batch_input_data);
-  MS_LOG(DEBUG) << "Actor(" << GetAID().Name() << ") receive the batch input op data.";
+  MS_LOG(DEBUG) << "Actor(" << GetAID().Name()
+                << ") receive the batch input op data, sequential num:" << context->sequential_num_;
   for (auto &input_data : *batch_input_data) {
     RunOpData(input_data, context);
   }
@@ -96,7 +100,7 @@ void AbstractActor::EraseInput(const OpContext<DeviceTensor> *context) {
     if (ret == 0) {
       std::string error_info = "Erase input data failed: " + GetAID().Name();
       // The sequential num may be invalid, can't set the promise value of context.
-      MS_LOG(ERROR) << error_info << ", sequential_num: " << context->sequential_num_;
+      MS_LOG(WARNING) << error_info << ", sequential_num: " << context->sequential_num_;
       return;
     }
   }
@@ -106,7 +110,7 @@ void AbstractActor::EraseInput(const OpContext<DeviceTensor> *context) {
     if (ret == 0) {
       std::string error_info = "Erase input controls failed: " + GetAID().Name();
       // The sequential num may be invalid, can't set the promise value of context.
-      MS_LOG(ERROR) << error_info << ", sequential_num: " << context->sequential_num_;
+      MS_LOG(WARNING) << error_info << ", sequential_num: " << context->sequential_num_;
       return;
     }
   }
