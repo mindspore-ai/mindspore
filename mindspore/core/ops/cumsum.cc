@@ -60,6 +60,9 @@ abstract::ShapePtr CumSumInferShape(const PrimitivePtr &primitive, const std::ve
   if (x_shape_ptr->IsDynamic()) {
     return x_shape_ptr->cast<abstract::ShapePtr>();
   }
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shape_ptr)[kShape];
+  auto rank = SizeToLong(x_shape.size());
+  (void)CheckAndConvertUtils::CheckInteger("rank of 'x'", rank, kGreaterThan, 0, prim_name);
 
   int64_t axis;
   if (input_args[kInputIndex1]->isa<abstract::AbstractTensor>()) {
@@ -67,9 +70,13 @@ abstract::ShapePtr CumSumInferShape(const PrimitivePtr &primitive, const std::ve
     MS_EXCEPTION_IF_NULL(axis_ptr);
     auto axis_value_ptr = axis_ptr->BuildValue();
     MS_EXCEPTION_IF_NULL(axis_value_ptr);
-    auto axis_tensor = axis_value_ptr->cast<tensor::TensorPtr>();
-    MS_EXCEPTION_IF_NULL(axis_tensor);
-    axis = *static_cast<int64_t *>(axis_tensor->data_c());
+    if (axis_value_ptr->isa<tensor::Tensor>()) {
+      auto axis_tensor = axis_value_ptr->cast<tensor::TensorPtr>();
+      MS_EXCEPTION_IF_NULL(axis_tensor);
+      axis = *static_cast<int64_t *>(axis_tensor->data_c());
+    } else {
+      return std::make_shared<abstract::Shape>(x_shape);
+    }
   } else if (input_args[kInputIndex1]->isa<abstract::AbstractScalar>()) {
     auto axis_ptr = input_args[kInputIndex1]->cast<abstract::AbstractScalarPtr>();
     MS_EXCEPTION_IF_NULL(axis_ptr);
@@ -79,9 +86,6 @@ abstract::ShapePtr CumSumInferShape(const PrimitivePtr &primitive, const std::ve
                       << "', the second input type should be tensor or scalar, but got invalid abstract type:"
                       << input_args[kInputIndex1]->type_name() << ".";
   }
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shape_ptr)[kShape];
-  auto rank = SizeToLong(x_shape.size());
-  (void)CheckAndConvertUtils::CheckInteger("rank of 'x'", rank, kGreaterThan, 0, prim_name);
   CheckAndConvertUtils::CheckInRange<int64_t>("axis", axis, kIncludeBoth, {-rank, rank - 1}, prim_name);
   return std::make_shared<abstract::Shape>(x_shape);
 }
