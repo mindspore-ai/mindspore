@@ -1689,8 +1689,6 @@ def bitwise_and(x, y):
 
     Raises:
         TypeError: If `x` or `y` is not a Tensor.
-        RuntimeError: If the data type of `x` and `y` conversion of Parameter is required
-                      when data type conversion of Parameter is not supported.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1727,8 +1725,6 @@ def bitwise_or(x, y):
 
     Raises:
         TypeError: If `x` or `y` is not a Tensor.
-        RuntimeError: If the data type of `x`, `y` conversion of Parameter is required
-                      when data type conversion of Parameter is not supported.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1765,8 +1761,6 @@ def bitwise_xor(x, y):
 
     Raises:
         TypeError: If `x` or `y` is not a Tensor.
-        RuntimeError: If the data type of `x`, `y` conversion of Parameter is required
-                      when data type conversion of Parameter is not supported.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
