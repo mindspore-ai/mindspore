@@ -573,6 +573,7 @@ constexpr auto kAttrCompileInfo = "compile_info";
 constexpr auto kAttrFusionType = "fusion_type";
 constexpr auto kAttrStride = "stride";
 constexpr auto kAttrStrides = "strides";
+constexpr auto kAttrShapex = "shapex";
 constexpr auto kAttrKernelSize = "kernel_size";
 constexpr auto kAttrDilation = "dilation";
 constexpr auto kAttrPadMode = "pad_mode";
