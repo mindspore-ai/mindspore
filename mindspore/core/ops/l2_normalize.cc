@@ -40,6 +40,59 @@ float L2Normalize::get_epsilon() const {
   return GetValue<float>(value_ptr);
 }
 
-REGISTER_PRIMITIVE_C(kNameL2Normalize, L2Normalize);
+class L2NormalizeInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    MS_EXCEPTION_IF_NULL(primitive);
+    auto prim_name = primitive->name();
+    auto input_shape_ptr = input_args[kInputIndex0]->BuildShape();
+    if (IsDynamicRank(CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_shape_ptr)[kShape])) {
+      return std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
+    }
+    auto input_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_shape_ptr);
+    auto input_shape = input_shape_map[kShape];
+
+    const int64_t kL2NormalizeInputsNum = 1;
+    const int64_t input_num = kL2NormalizeInputsNum;
+    (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num,
+                                             prim_name);
+    for (const auto &item : input_args) {
+      MS_EXCEPTION_IF_NULL(item);
+    }
+
+    auto input_rank = SizeToLong(input_shape.size());
+    if (input_rank == 0) {
+      MS_EXCEPTION(TypeError) << "For '" << prim_name << "', input shape size must be > 0.";
+    }
+    // failed to get vector<int64_t> axis from infer
+    int axis = GetValue<std::vector<int64_t>>(primitive->GetAttr("axis"))[0];
+    CheckAndConvertUtils::CheckInRange("axis value", axis, kIncludeLeft, {-input_rank, input_rank}, prim_name);
+
+    auto output_shape = input_shape;
+    return std::make_shared<abstract::Shape>(output_shape);
+  }
+
+  TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
+    auto prim_name = prim->name();
+    const int64_t kL2NormalizeInputsNum = 1;
+    const int64_t input_num = kL2NormalizeInputsNum;
+    (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num,
+                                             prim_name);
+
+    const std::set<TypePtr> valid_types = {kFloat32, kFloat16};
+    MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
+    auto type = input_args[kInputIndex0]->BuildType();
+    MS_EXCEPTION_IF_NULL(type);
+    if (!type->isa<TensorType>()) {
+      MS_EXCEPTION(TypeError) << "For '" << prim_name << "', input must be a Tensor, but got: " << type->ToString()
+                              << ".";
+    }
+    (void)CheckAndConvertUtils::CheckTypeValid("input_x", type, valid_types, prim_name);
+    return type;
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(L2Normalize, prim::kPrimL2Normalize, L2NormalizeInfer, false);
 }  // namespace ops
 }  // namespace mindspore

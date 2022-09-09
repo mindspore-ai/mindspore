@@ -3515,7 +3515,7 @@ class LayerNorm(Primitive):
         validator.check_value_type('epsilon', epsilon, [float], self.name)
 
 
-class L2Normalize(PrimitiveWithInfer):
+class L2Normalize(Primitive):
     r"""
     L2 Normalization Operator.
 
@@ -3568,17 +3568,6 @@ class L2Normalize(PrimitiveWithInfer):
             raise TypeError(f"For '{self.name}', the length of 'axis' must be 1, but got {len(axis)}, "
                             f"later will support multiple axis!")
         self.axis = axis
-
-    def infer_shape(self, input_x):
-        dim = len(input_x)
-        if dim == 0:
-            raise ValueError(f"For '{self.name}', the dimension of 'x' must be greater than 0, but got {dim}")
-        validator.check_int_range(self.axis[0], -dim, dim, Rel.INC_LEFT, 'axis value', self.name)
-        return input_x
-
-    def infer_dtype(self, input_x):
-        validator.check_tensor_dtype_valid("input_x", input_x, [mstype.float16, mstype.float32], self.name)
-        return input_x
 
 
 class DropoutGenMask(Primitive):
