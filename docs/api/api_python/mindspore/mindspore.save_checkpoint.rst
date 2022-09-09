@@ -12,7 +12,7 @@ mindspore.save_checkpoint
         - **async_save** (bool) - 是否异步执行保存checkpoint文件。默认值：False。
         - **append_dict** (dict) - 需要保存的其他信息。dict的键必须为str类型，dict的值类型必须是int、float、bool、string、Parameter或Tensor类型。默认值：None。
         - **enc_key** (Union[None, bytes]) - 用于加密的字节类型密钥。如果值为None，那么不需要加密。默认值：None。
-        - **enc_mode** (str) - 该参数在 `enc_key` 不为None时有效，指定加密模式，目前仅支持"AES-GCM"和"AES-CBC"。 默认值："AES-GCM"。
+        - **enc_mode** (str) - 该参数在 `enc_key` 不为None时有效，指定加密模式，目前仅支持"AES-GCM"和"AES-CBC"。默认值："AES-GCM"。
 
     异常：
         - **TypeError** - 如果参数 `save_obj` 类型不为nn.Cell或者list，且如果参数 `integrated_save` 及 `async_save` 非bool类型。如果参数 `ckpt_file_name` 不是字符串类型。

@@ -24,7 +24,7 @@ mindspore.ops.SparseApplyProximalAdagrad
         - **lr** (Union[Number, Tensor]) - 学习率，必须为float或为Tensor，其数据类型为float16或float32。
         - **l1** (Union[Number, Tensor]) - l1正则化，必须为float或为Tensor，其数据类型为float16或float32。
         - **l2** (Union[Number, Tensor]) - l2正则化，必须为float或为Tensor，其数据类型为float16或float32。
-        - **grad** (Tensor) - 梯度， 数据类型与 `var` 相同。如果 `var` 的shape大于1，那么 :math:`grad.shape[1:] = var.shape[1:]` 。
+        - **grad** (Tensor) - 梯度，数据类型与 `var` 相同。如果 `var` 的shape大于1，那么 :math:`grad.shape[1:] = var.shape[1:]` 。
         - **indices** (Tensor) - `var` 和 `accum` 第一维度中的索引。如果 `indices` 中存在重复项，则无意义。数据类型必须是int32、int64和 :math:`indices.shape[0] = grad.shape[0]` 。
 
     输出：

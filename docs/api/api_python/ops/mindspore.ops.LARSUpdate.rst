@@ -14,7 +14,7 @@ mindspore.ops.LARSUpdate
 
     输入：
         - **weight** (Tensor) - 权重Tensor，shape: :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。
-        - **gradient** (Tensor) - `weight` 的梯度， 与 `weight` 的shape和数据类型相同。
+        - **gradient** (Tensor) - `weight` 的梯度，与 `weight` 的shape和数据类型相同。
         - **norm_weight** (Tensor) - 标量Tensor，权重的平方和。
         - **norm_gradient** (Tensor) - 标量Tensor，梯度的平方和。
         - **weight_decay** (Union[Number, Tensor]) - 衰减率。必须为标量Tensor或Number。

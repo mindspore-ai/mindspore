@@ -5,7 +5,7 @@ mindspore.nn.BatchNorm3d
 
     对输入的五维数据进行批归一化(Batch Normalization Layer)。
 
-    在五维输入（带有附加通道维度的mini-batch 三维输入）上应用批归一化，避免内部协变量偏移。 归一化在卷积网络中得到了广泛的应用。
+    在五维输入（带有附加通道维度的mini-batch 三维输入）上应用批归一化，避免内部协变量偏移。归一化在卷积网络中得到了广泛的应用。
 
     .. math::
         y = \frac{x - \mathrm{E}[x]}{\sqrt{\mathrm{Var}[x] + \epsilon}} * \gamma + \beta

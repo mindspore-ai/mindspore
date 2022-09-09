@@ -7,7 +7,7 @@ mindspore.ops.AlltoAll
 
     AlltoAll将输入数据在特定的维度切分成特定的块数（blocks），并按顺序发送给其他rank。一般有两个阶段：
 
-    - 分发阶段：在每个进程上， 操作数沿着 `split_dim` 拆分为 `split_count` 个块（blocks），且分发到指定的rank上，例如，第i块被发送到第i个rank上。
+    - 分发阶段：在每个进程上，操作数沿着 `split_dim` 拆分为 `split_count` 个块（blocks），且分发到指定的rank上，例如，第i块被发送到第i个rank上。
     - 聚合阶段：每个rank沿着 `concat_dimension` 拼接接收到的数据。
 
     .. note::

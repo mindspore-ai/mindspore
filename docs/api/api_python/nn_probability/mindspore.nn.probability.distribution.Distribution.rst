@@ -62,7 +62,7 @@ mindspore.nn.probability.distribution.Distribution
             - **kwargs** (dict) - 关键字参数字典，具体需要的参数根据子类的实现确定。
 
         .. note::
-            Distribution b的 `dist_spec_args` 必须通过 `args` 或 `kwargs` 传递给函数。 传入Distribution a的 `dist_spec_args` 是可选的。
+            Distribution b的 `dist_spec_args` 必须通过 `args` 或 `kwargs` 传递给函数。传入Distribution a的 `dist_spec_args` 是可选的。
 
         返回：
             Tensor，交叉熵的值。
@@ -112,7 +112,7 @@ mindspore.nn.probability.distribution.Distribution
             - **kwargs** (dict) - 关键字参数字典，具体需要的参数根据子类的实现确定。
 
         .. note::
-            Distribution b的 `dist_spec_args` 必须通过 `args` 或 `kwargs` 传递给函数。 传入Distribution a的 `dist_spec_args` 是可选的。
+            Distribution b的 `dist_spec_args` 必须通过 `args` 或 `kwargs` 传递给函数。传入Distribution a的 `dist_spec_args` 是可选的。
 
         返回：
             Tensor，KL散度。

@@ -10,7 +10,7 @@ mindspore.nn.CELU
     .. math::
         \text{CELU}(x) = \max(0,x) + \min(0, \alpha * (\exp(x/\alpha) - 1))
 
-    其返回值为 :math:`\max(0,x)+\min(0,\Alpha*(\exp(x/\Alpha)-1)` 。
+    其返回值为 :math:`\max(0,x)+\min(0,\Alpha*(\exp(x/\Alpha)-1))` 。
 
     更多详情，请查看： `CELU <https://arxiv.org/abs/1704.07483>`_ 。
 

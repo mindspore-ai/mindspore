@@ -34,7 +34,7 @@ mindspore.dataset
 
 - 加载数据集（Dataset）：用户可以方便地使用 `*Dataset` 类来加载已支持的数据集，或者通过 `UDF Loader` +
   `GeneratorDataset` 实现Python层自定义数据集的加载，同时加载类方法可以使用多种Sampler、数据分片、数据shuffle等功能；
-- 数据集操作（filter/ skip）： 用户通过数据集对象方法 `.shuffle` / `.filter` / `.skip` / `.split` /
+- 数据集操作（filter/ skip）：用户通过数据集对象方法 `.shuffle` / `.filter` / `.skip` / `.split` /
   `.take` / … 来实现数据集的进一步混洗、过滤、跳过、最多获取条数等操作；
 - 数据集样本增强操作（map）：用户可以将数据增强算子
   （`vision类 <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.dataset.vision.html>`_，

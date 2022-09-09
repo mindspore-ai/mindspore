@@ -6,7 +6,7 @@ mindspore.nn.ReflectionPad1d
     根据 `padding` 对输入 `x` 进行填充。
 
     参数：
-        - **padding** (union[int, tuple]) - 填充大小， 如果输入为int， 则对所有边界进行相同大小的填充； 如果是tuple，则为(pad_left, pad_right)。
+        - **padding** (union[int, tuple]) - 填充大小，如果输入为int，则对所有边界进行相同大小的填充；如果是tuple，则为(pad_left, pad_right)。
 
     输入：
         - **x** (Tensor) - 输入Tensor, 2D或3D。shape为 :math:`(C, W_{in})` 或 :math:`(N, C, W_{in})` 。

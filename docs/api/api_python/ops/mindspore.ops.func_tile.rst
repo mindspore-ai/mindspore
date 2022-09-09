@@ -18,8 +18,8 @@ mindspore.ops.tile
     返回：
         Tensor，具有与 `input_x` 相同的数据类型。假设 `multiples` 的长度为 `d` ，`input_x` 的维度为 `input_x.dim` ，`input_x` 的shape为 :math:`(x_1, x_2, ..., x_S)` 。
 
-        - 如果 `input_x.dim = d` ， 将其相应位置的shape相乘，输出的shape为 :math:`(x_1*y_1, x_2*y_2, ..., x_S*y_S)` 。
-        - 如果 `input_x.dim < d` ， 在 `input_x` 的shape的前面填充1，直到它们的长度一致。例如将 `input_x` 的shape设置为 :math:`(1, ..., x_1, ..., x_R, x_S)` ，然后可以将其相应位置的shape相乘，输出的shape为 :math:`(1*y_1, ..., x_R*y_R, x_S*y_S)` 。
+        - 如果 `input_x.dim = d` ，将其相应位置的shape相乘，输出的shape为 :math:`(x_1*y_1, x_2*y_2, ..., x_S*y_S)` 。
+        - 如果 `input_x.dim < d` ，在 `input_x` 的shape的前面填充1，直到它们的长度一致。例如将 `input_x` 的shape设置为 :math:`(1, ..., x_1, ..., x_R, x_S)` ，然后可以将其相应位置的shape相乘，输出的shape为 :math:`(1*y_1, ..., x_R*y_R, x_S*y_S)` 。
 
     异常：
         - **TypeError** - `multiples` 不是tuple或者其元素并非全部是int。

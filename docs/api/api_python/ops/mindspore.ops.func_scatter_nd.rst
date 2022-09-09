@@ -7,9 +7,9 @@ mindspore.ops.scatter_nd
 
     使用给定的 `shape` 创建一个空Tensor，并将 `updates` 的值通过索引（ `indices` ）来设置空Tensor的值。空Tensor的秩为 :math:`P` ， `indices` 的秩为 :math:`Q` 。
 
-    `shape` 为 :math:`(s_0, s_1, ..., s_{P-1})` ， 其中 :math:`P \ge 1` 。
+    `shape` 为 :math:`(s_0, s_1, ..., s_{P-1})` ，其中 :math:`P \ge 1` 。
 
-    `indices` 的shape为 :math:`(i_0, i_1, ..., i_{Q-2}, N)` ， 其中 :math:`Q \ge 2` 且 :math:`N \le P` 。
+    `indices` 的shape为 :math:`(i_0, i_1, ..., i_{Q-2}, N)` ，其中 :math:`Q \ge 2` 且 :math:`N \le P` 。
 
     `indices` 的最后一个维度（长度为 :math:`N` ）表示沿着空Tensor的第 :math:`N` 个维度进行切片。
 

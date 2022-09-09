@@ -8,7 +8,7 @@ mindspore.ops.matrix_set_diag
     其中 `max_diag_len` 指的是对角线的最长长度。
     `diagonal` 的维度 :math:`shape[-2]` 必须等于对角线个数 `num_diags` :math:`k[1] - k[0] + 1`， `diagonal` 的维度 :math:`shape[-1]` 必须
     等于最长对角线值 `max_diag_len`  :math:`min(x.shape[-2] + min(k[1], 0), x.shape[-1] + min(-k[0], 0))` 。
-    设 `x` 具有 `r + 1` 维 :math:`[I, J, ..., L, M, N]` 。 当 `k` 是整数或 :math:`k[0] == k[1]` 时，对角线 `diagonal` 具有形状
+    设 `x` 具有 `r + 1` 维 :math:`[I, J, ..., L, M, N]` 。当 `k` 是整数或 :math:`k[0] == k[1]` 时，对角线 `diagonal` 具有形状
     为 :math:`[I, J, ..., L, max\_diag\_len]` 。否则，它具有形状为 :math:`[I, J, ... L, num\_diags, max\_diag\_len]` 。
 
     参数：

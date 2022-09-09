@@ -6,7 +6,7 @@ mindspore.nn.MultiClassDiceLoss
     对于多标签问题，可以将标签通过one-hot编码转换为多个二分类标签。每个通道可以看做是一个二分类问题，所以损失可以通过先计算每个类别的二分类的 :class:`mindspore.nn.DiceLoss` 损失，再计算各二分类损失的平均值得到。
 
     参数：
-        - **weights** (Union[Tensor, None]) - Shape为 :math:`(num\_classes, dim)` 的Tensor。权重shape[0]应等于标签shape[1]。 默认值：None。
+        - **weights** (Union[Tensor, None]) - Shape为 :math:`(num\_classes, dim)` 的Tensor。权重shape[0]应等于标签shape[1]。默认值：None。
         - **ignore_indiex** (Union[int, None]) - 指定需要忽略的类别序号，如果为None，计算所有类别的Dice Loss值。默认值：None。
         - **activation** (Union[str, Cell]) - 应用于全连接层输出的激活函数，如'ReLU'。取值范围：['softmax', 'logsoftmax', 'relu', 'relu6', 'tanh', 'Sigmoid']。默认值：'softmax'。
 

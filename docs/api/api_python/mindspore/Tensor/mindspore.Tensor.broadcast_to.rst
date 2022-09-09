@@ -11,7 +11,7 @@ mindspore.Tensor.broadcast_to
         - **shape** (tuple) - 要广播的目标形状。可以由用户指定，或在要广播的维度上指定-1，它将被该位置的输入张量形状替换。
 
     返回：
-        Tensor， 形状为用户指定的 `shape`，类型和 `self` 相同。
+        Tensor，形状为用户指定的 `shape`，类型和 `self` 相同。
 
     异常：
         - **TypeError** - 如果输入的 `shape` 参数不是tuple类型。
