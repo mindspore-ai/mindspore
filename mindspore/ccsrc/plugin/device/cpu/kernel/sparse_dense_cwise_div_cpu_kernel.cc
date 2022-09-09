@@ -34,11 +34,11 @@ const double epslon = 1e-6;
 
 void SparseDenseCwiseDivCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  indices_shape = AnfAlgo::GetInputDeviceShape(kernel_node, kIndex0);
-  values_shape = AnfAlgo::GetInputDeviceShape(kernel_node, kIndex1);
-  shape_shape = AnfAlgo::GetInputDeviceShape(kernel_node, kIndex2);
-  dense_shape = AnfAlgo::GetInputDeviceShape(kernel_node, kIndex3);
-  data_type = AnfAlgo::GetInputDeviceDataType(kernel_node, kIndex3);
+  indices_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kIndex0);
+  values_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kIndex1);
+  shape_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kIndex2);
+  dense_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kIndex3);
+  data_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kIndex3);
 }
 
 template <typename T>
@@ -46,15 +46,14 @@ void SparseDenseCwiseDivCpuKernelMod::ComputeDiv(const std::vector<AddressPtr> &
                                                  const std::vector<AddressPtr> &outputs) {
   auto indices_data = static_cast<int64_t *>(inputs[kIndex0]->addr);
   auto sparse_shape_data = static_cast<int64_t *>(inputs[kIndex2]->addr);
-  int64_t index_num = indices_shape[kIndex0];
-  int64_t dimension = indices_shape[kIndex1];
-  int64_t dense_dims = static_cast<int64_t>(dense_shape.size());
+  int64_t index_num = indices_shape_[kIndex0];
+  int64_t dimension = indices_shape_[kIndex1];
+  int64_t dense_dims = static_cast<int64_t>(dense_shape_.size());
 
   for (size_t i = 0; i < static_cast<size_t>(index_num); i++) {
     for (size_t j = 0; j < static_cast<size_t>(dimension); j++) {
       if (indices_data[i * static_cast<size_t>(dimension) + j] >= sparse_shape_data[j]) {
-        MS_EXCEPTION(ValueError) << "For SparseDenseCwiseDiv, the indices can't"
-                                 << "proceed to cross the border the interview.";
+        MS_EXCEPTION(ValueError) << "For SparseDenseCwiseDiv, the indices cannot go out of bounds.";
       }
     }
   }
@@ -65,27 +64,27 @@ void SparseDenseCwiseDivCpuKernelMod::ComputeDiv(const std::vector<AddressPtr> &
   }
   int64_t dense_num = 1;
   for (size_t i = 0; i < static_cast<size_t>(dense_dims); i++) {
-    dense_num *= static_cast<int64_t>(dense_shape[i]);
+    dense_num *= static_cast<int64_t>(dense_shape_[i]);
   }
 
-  bool isNeedBcast = (dense_shape == sparse_shape || dense_num == 1);
+  bool isNeedBcast = (dense_shape_ == sparse_shape || dense_num == 1);
   if (isNeedBcast) {
     SparseDenseCwiseDivNoBcastCompute<T>(inputs, outputs);
   } else if (dense_dims <= dimension) {
     for (int64_t i = dense_dims - 1; i >= 0; --i) {
-      if ((dense_shape[static_cast<size_t>(i)] != 1) &&
-          (dense_shape[static_cast<size_t>(i)] != sparse_shape[static_cast<size_t>(i + dimension - dense_dims)])) {
-        MS_EXCEPTION(ValueError) << "For SparseDenseCwiseDiv, the shape of 'x2' can't broadcast to 'x1_shape'."
-                                 << "In order to broadcast, the size of the trailing axes for 'x2' and"
-                                 << "sparse in an operation must either be the same size or size of the"
-                                 << "trailing axes for 'x2' must be one";
+      if ((dense_shape_[static_cast<size_t>(i)] != 1) &&
+          (dense_shape_[static_cast<size_t>(i)] != sparse_shape[static_cast<size_t>(i + dimension - dense_dims)])) {
+        MS_EXCEPTION(ValueError) << "For SparseDenseCwiseDiv, the shape of 'x2' can't broadcast to 'x1_shape'. "
+                                 << "In order to broadcast, the size of the trailing axes for 'x2' and "
+                                 << "sparse in an operation must either be the same size or size of the "
+                                 << "trailing axes for 'x2' must be one.";
       }
     }
     SparseDenseCwiseDivBcastCompute<T>(inputs, outputs);
   } else {
-    MS_EXCEPTION(ValueError) << "For SparseDenseCwiseDiv, dims of 'x2' should be smaller or equal to Number of"
-                             << "elements of 'x1_shape'. Because broadcast direction can only be from dense to sparse."
-                             << "but got dims of dense:" << dense_dims << "dims of sparse:" << dimension << ".";
+    MS_EXCEPTION(ValueError) << "For SparseDenseCwiseDiv, dims of 'x2' should be smaller or equal to Number of "
+                             << "elements of 'x1_shape'. Because broadcast direction can only be from dense to sparse. "
+                             << "But got dims of dense:" << dense_dims << "dims of sparse:" << dimension << ".";
   }
 }
 
@@ -97,10 +96,10 @@ void SparseDenseCwiseDivCpuKernelMod::SparseDenseCwiseDivNoBcastCompute(const st
   auto sparse_shape_data = static_cast<int64_t *>(inputs[kIndex2]->addr);
   auto dense_data = static_cast<T *>(inputs[kIndex3]->addr);
   auto output_data = static_cast<T *>(outputs[kIndex0]->addr);
-  int64_t value_nums = indices_shape[kIndex0];
-  int64_t dimension = indices_shape[kIndex1];
-  int64_t data_num = values_shape[kIndex0];
-  int64_t dense_dims = static_cast<int64_t>(dense_shape.size());
+  int64_t value_nums = indices_shape_[kIndex0];
+  int64_t dimension = indices_shape_[kIndex1];
+  int64_t data_num = values_shape_[kIndex0];
+  int64_t dense_dims = static_cast<int64_t>(dense_shape_.size());
   int index_tem = 0;
 
   std::vector<T> sparse_values_vec(data_num);
@@ -143,10 +142,10 @@ void SparseDenseCwiseDivCpuKernelMod::SparseDenseCwiseDivBcastCompute(const std:
   auto sparse_shape_data = static_cast<int64_t *>(inputs[kIndex2]->addr);
   auto dense_data = static_cast<T *>(inputs[kIndex3]->addr);
   auto output_data = static_cast<T *>(outputs[kIndex0]->addr);
-  int64_t value_nums = indices_shape[kIndex0];
-  int64_t dimension = indices_shape[kIndex1];
-  int64_t data_num = values_shape[kIndex0];
-  int64_t dims = shape_shape[kIndex0];
+  int64_t value_nums = indices_shape_[kIndex0];
+  int64_t dimension = indices_shape_[kIndex1];
+  int64_t data_num = values_shape_[kIndex0];
+  int64_t dims = shape_shape_[kIndex0];
   int64_t Sparse_numelements = 1;
   for (size_t i = 0; i < static_cast<size_t>(dims); i++) {
     Sparse_numelements *= sparse_shape_data[i];
@@ -166,7 +165,7 @@ void SparseDenseCwiseDivCpuKernelMod::SparseDenseCwiseDivBcastCompute(const std:
     sparse_shape1[j] = static_cast<int64_t>(sparse_shape[j]);
   }
 
-  BroadcastIterator broad_base_iter_1(sparse_shape, dense_shape, sparse_shape1);
+  BroadcastIterator broad_base_iter_1(sparse_shape, dense_shape_, sparse_shape1);
   std::vector<T> Dense(Sparse_numelements);
   broad_base_iter_1.SetPos(0);
   for (size_t i = 0; i < static_cast<size_t>(Sparse_numelements); i++) {
@@ -194,25 +193,25 @@ void SparseDenseCwiseDivCpuKernelMod::SparseDenseCwiseDivBcastCompute(const std:
 bool SparseDenseCwiseDivCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
                                              const std::vector<kernel::AddressPtr> &,
                                              const std::vector<AddressPtr> &outputs) {
-  if (data_type == kNumberTypeInt8) {
+  if (data_type_ == kNumberTypeInt8) {
     ComputeDiv<int8_t>(inputs, outputs);
-  } else if (data_type == kNumberTypeInt16) {
+  } else if (data_type_ == kNumberTypeInt16) {
     ComputeDiv<int16_t>(inputs, outputs);
-  } else if (data_type == kNumberTypeInt32) {
+  } else if (data_type_ == kNumberTypeInt32) {
     ComputeDiv<int32_t>(inputs, outputs);
-  } else if (data_type == kNumberTypeInt64) {
+  } else if (data_type_ == kNumberTypeInt64) {
     ComputeDiv<int64_t>(inputs, outputs);
-  } else if (data_type == kNumberTypeUInt8) {
+  } else if (data_type_ == kNumberTypeUInt8) {
     ComputeDiv<uint8_t>(inputs, outputs);
-  } else if (data_type == kNumberTypeUInt16) {
+  } else if (data_type_ == kNumberTypeUInt16) {
     ComputeDiv<uint16_t>(inputs, outputs);
-  } else if (data_type == kNumberTypeUInt32) {
+  } else if (data_type_ == kNumberTypeUInt32) {
     ComputeDiv<uint32_t>(inputs, outputs);
-  } else if (data_type == kNumberTypeUInt64) {
+  } else if (data_type_ == kNumberTypeUInt64) {
     ComputeDiv<uint64_t>(inputs, outputs);
-  } else if (data_type == kNumberTypeFloat32) {
+  } else if (data_type_ == kNumberTypeFloat32) {
     ComputeDiv<float>(inputs, outputs);
-  } else if (data_type == kNumberTypeFloat64) {
+  } else if (data_type_ == kNumberTypeFloat64) {
     ComputeDiv<double>(inputs, outputs);
   }
   return true;

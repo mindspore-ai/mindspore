@@ -13,9 +13,6 @@
 # limitations under the License.
 
 """aicpu ops"""
-from .sparse_dense_cwise_add import _sparse_dense_cwise_add_aicpu
-from .sparse_dense_cwise_div import _sparse_dense_cwise_div_aicpu
-from .sparse_dense_cwise_mul import _sparse_dense_cwise_mul_aicpu
 from .unique import _unique_aicpu
 from .matrix_solve import _matrix_solve_aicpu
 from .betainc import _betainc_aicpu

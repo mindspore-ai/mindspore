@@ -25,6 +25,9 @@ from mindspore.ops.operations.sparse_ops import SparseSegmentSumWithNumSegments
 from mindspore.ops.operations.sparse_ops import SparseSegmentSqrtN
 from mindspore.ops.operations.sparse_ops import SparseSegmentSqrtNWithNumSegments
 from mindspore.ops.operations.sparse_ops import SparseSegmentMeanWithNumSegments
+from mindspore.ops.operations.sparse_ops import SparseDenseCwiseMul
+from mindspore.ops.operations.sparse_ops import SparseDenseCwiseDiv
+from mindspore.ops.operations.sparse_ops import SparseTensorDenseAdd
 from mindspore.common import dtype as mstype
 from mindspore import Tensor
 from mindspore.ops.primitive import constexpr
@@ -37,6 +40,72 @@ from mindspore.ops._utils.utils import is_shape_unknown
 
 # Unused parameters are placeholders.
 dyn_shape_op = P.TensorShape()
+
+
+@bprop_getters.register(SparseDenseCwiseMul)
+def get_bprop_sparse_dense_cwise_mul(self):
+    """Grad definition for 'SparseDenseCwiseMul' operation"""
+
+    slice_op = P.Slice()
+    ones = P.Ones()
+    shape = P.Shape()
+    cast = P.Cast()
+    gather_nd = P.GatherNd()
+    size_op = P.Size()
+    to_array = P.TupleToArray()
+    sparse_tensor_dense_add = SparseTensorDenseAdd()
+
+    def bprop(x1_indices, x1_values, x1_shape, x2, out, dout):
+        x2_shape = cast(to_array(shape(x2)), mstype.int64)
+        augmented_x2_shape = P.Concat(0)((ones(size_op(x1_shape) - size_op(x2_shape), mstype.int64), x2_shape))
+        scaling = x1_shape // augmented_x2_shape
+        scaled_indices = x1_indices // scaling
+        scaled_indices = cast(slice_op(scaled_indices, [0, size_op(x1_shape) - size_op(x2_shape)], [-1, -1]),
+                              mstype.int64)
+        dense_vals = gather_nd(x2, scaled_indices)
+        dx1 = dout * dense_vals
+        dx2_val = dout * x1_values
+        dx2 = sparse_tensor_dense_add(scaled_indices, dx2_val, x2_shape, zeros_like(x2))
+        d_all = (zeros_like(x1_indices), dx1, zeros_like(x1_shape), dx2)
+        return d_all
+
+    return bprop
+
+
+@bprop_getters.register(SparseDenseCwiseDiv)
+def get_bprop_sparse_dense_cwise_div(self):
+    """Grad definition for 'SparseDenseCwiseDiv' operation"""
+
+    slice_op = P.Slice()
+    ones = P.Ones()
+    shape = P.Shape()
+    cast = P.Cast()
+    gather_nd = P.GatherNd()
+    size_op = P.Size()
+    to_array = P.TupleToArray()
+    sparse_tensor_dense_add = SparseTensorDenseAdd()
+
+    def bprop(x1_indices, x1_values, x1_shape, x2, out, dout):
+
+        x2_shape = cast(to_array(shape(x2)), mstype.int64)
+        augmented_x2_shape = P.Concat(0)((ones(size_op(x1_shape) - size_op(x2_shape), mstype.int64), x2_shape))
+        scaling = x1_shape // augmented_x2_shape
+        scaled_indices = x1_indices // scaling
+        scaled_indices = cast(slice_op(scaled_indices, [0, size_op(x1_shape) - size_op(x2_shape)],
+                                       [-1, -1]), mstype.int64)
+        dense_vals = gather_nd(x2, scaled_indices)
+        dx1 = dout / dense_vals
+        dense_vals_2 = dense_vals * dense_vals
+        w = x1_values / dense_vals_2
+        w = (-1) * w
+        dx2_val = dout * w
+        dx2 = sparse_tensor_dense_add(scaled_indices, dx2_val, x2_shape,
+                                      zeros_like(x2))
+        d_all = (zeros_like(x1_indices), dx1, zeros_like(x1_shape), dx2)
+        return d_all
+
+    return bprop
+
 
 
 @constexpr
@@ -222,4 +291,5 @@ def get_bprop_sparse_reorder(self):
         inverted_permutation = F.sort(output[1].astype(mstype.float32))[1]
         axis = 0
         return None, gather_op(dout[1], inverted_permutation, axis), None
+
     return bprop
