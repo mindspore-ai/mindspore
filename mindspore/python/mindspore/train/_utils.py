@@ -29,8 +29,7 @@ from mindspore.train.mind_ir_pb2 import ModelProto as mindir_model
 from mindspore.train.checkpoint_pb2 import Checkpoint
 from mindspore.train.node_strategy_pb2 import ParallelStrategyMap as ckpt_strategy
 from mindspore.train.lineage_pb2 import DatasetGraph, TrainLineage, EvaluationLineage, UserDefinedInfo
-
-MAX_PATH_LENGTH = 1024
+from mindspore.parallel._parallel_serialization import _make_dir
 
 
 def _convert_type(types):
@@ -80,40 +79,7 @@ def _exec_datagraph(exec_dataset, dataset_size, phase='dataset', create_data_inf
 
 def _make_directory(path, arg_name='path'):
     """Make directory."""
-    if not isinstance(path, str):
-        logger.critical("The %s is invalid, the type should be string.", arg_name)
-        raise TypeError("The {} is invalid, the type should be string.".format(arg_name))
-    if path.strip() == "":
-        logger.critical("The %s is invalid, it should be non-blank.", arg_name)
-        raise ValueError("The {} is invalid, it should be non-blank.".format(arg_name))
-
-    path = os.path.realpath(path)
-
-    if len(path) > MAX_PATH_LENGTH:
-        logger.critical("The %s length is too long, it should be limited in %s.", arg_name, MAX_PATH_LENGTH)
-        raise ValueError("The {} length is too long, it should be limited in {}.".format(arg_name, MAX_PATH_LENGTH))
-
-    logger.debug("The abs path is %r", path)
-
-    if os.path.exists(path):
-        if not os.path.isdir(path):
-            logger.critical("The path(%r) is a file path, it should be a directory path.", path)
-            raise NotADirectoryError("The path({}) is a file path, it should be a directory path.".format(path))
-        real_path = path
-    else:
-        logger.debug("The directory(%s) doesn't exist, will create it", path)
-        try:
-            permissions = os.R_OK | os.W_OK | os.X_OK
-            os.umask(permissions << 3 | permissions)
-            mode = permissions << 6
-            os.makedirs(path, mode=mode, exist_ok=True)
-            real_path = path
-        except PermissionError as e:
-            logger.critical("No write permission on the directory(%r), error = %r", path, e)
-            raise TypeError("No write permission on the directory.") from e
-        finally:
-            pass
-    return real_path
+    return _make_dir(path, arg_name)
 
 
 def _construct_tensor_list(types, shapes, batch_expand_num=1):
