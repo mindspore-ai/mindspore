@@ -40,7 +40,7 @@ bool PackWeightManager::IsCopyTensor(int op_type) {
 }
 
 STATUS PackWeightManager::InitPackWeightByBuf(const char *model_buf, size_t model_size) {
-  if (is_parallel_ && find(all_model_buf_.begin(), all_model_buf_.end(), model_buf) != all_model_buf_.end()) {
+  if (is_parallel_) {
     return RET_OK;
   }
 #ifdef SHARING_MODEL_WEIGHT
@@ -74,14 +74,9 @@ STATUS PackWeightManager::InitPackWeight(const char *model_buf, size_t model_siz
 
 char *PackWeightManager::GetNumaModelBuf(const char *model_buf, int numa_id) {
 #ifdef SHARING_MODEL_WEIGHT
-  auto ret = pack_weight_->GetNumaModelBuf(model_buf, numa_id);
-  all_model_buf_.push_back(ret);
-  return ret;
-#else
-  auto ret_origin = const_cast<char *>(model_buf);
-  all_model_buf_.push_back(ret_origin);
-  return nullptr;
+  return pack_weight_->GetNumaModelBuf(model_buf, numa_id);
 #endif
+  return nullptr;
 }
 
 STATUS PackWeightManager::StoreOriginTensorData(Model *model, std::vector<Tensor *> *all_tensors) {
