@@ -36,8 +36,6 @@ class MIND_API Div : public BaseOperator {
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Div for the inputs.
   void Init() const {}
 };
-abstract::AbstractBasePtr DivInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                   const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 
