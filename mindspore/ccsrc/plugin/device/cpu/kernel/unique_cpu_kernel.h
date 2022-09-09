@@ -22,6 +22,8 @@
 #include <thread>
 #include <unordered_map>
 #include <vector>
+#include <map>
+#include <functional>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 #include "include/common/thread_pool.h"
@@ -100,12 +102,66 @@ size_t BucketId(DataType input, size_t bucket_num) {
   return data % bucket_num;
 }
 
-class UniqueCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class UniqueCpuKernelMod : public NativeCpuKernelMod {
  public:
   UniqueCpuKernelMod() = default;
   ~UniqueCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override {
+    kernel_name_ = base_operator->name();
+    dtype_ = inputs[0]->GetDtype();
+    outputs_ = outputs;
+    auto batch_rank = base_operator->get_batch_rank();
+    if (batch_rank < 0) {
+      return false;
+    }
+    batch_rank_ = static_cast<size_t>(batch_rank);
+    return true;
+  }
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs,
+             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override {
+    auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+    if (ret != KRET_UNKNOWN_OUT_SHAPE && ret != KRET_OK) {
+      MS_LOG(ERROR) << kernel_name_ << " Resize failed.";
+      return ret;
+    }
+    outputs_ = outputs;
+    is_need_retrieve_output_shape_ = true;
+    if (inputs.size() < 1) {
+      MS_LOG(EXCEPTION) << kernel_name_ << " requires not less than 1 inputs, but got " << inputs.size() << ".";
+    }
+    auto input_shape = inputs[0]->GetShapeVector();
+    if (batch_rank_ == 0) {
+      if (input_shape.size() != 1) {
+        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input must be 1D, but got "
+                          << input_shape.size() << "D";
+      }
+      batch_size_ = 1;
+      input_size_ = static_cast<size_t>(input_shape[0]);
+    } else {
+      if (input_shape.size() != static_cast<size_t>(batch_rank_ + 1)) {
+        MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                          << "', the shape size of 'input' must be equal to 'batch_rank + 1', "
+                             "but got the shape of 'input': "
+                          << Vector2Str(input_shape) << " and 'batch_rank': " << batch_rank_;
+      }
+      batch_size_ =
+        std::accumulate(input_shape.begin(), input_shape.begin() + batch_rank_, 1, std::multiplies<int64_t>());
+      input_size_ = static_cast<size_t>(input_shape[batch_rank_]);
+    }
+    if (base_operator->HasAttr(SORTED)) {
+      auto value_ptr = base_operator->GetAttr(SORTED);
+      sorted_ = GetValue<bool>(value_ptr);
+    }
+    workspace_size_list_.clear();
+    (void)workspace_size_list_.emplace_back(input_size_ * sizeof(int64_t));
+    (void)workspace_size_list_.emplace_back(input_size_ * sizeof(int64_t));
+    (void)workspace_size_list_.emplace_back(input_size_ * sizeof(int64_t));
+    return ret;
+  }
+
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
@@ -117,16 +173,28 @@ class UniqueCpuKernelMod : public DeprecatedNativeCpuKernelMod {
     return support_list;
   }
 
+  void SyncData() override {
+    ShapeVector out_shape;
+    if (output_sizes_.empty()) {
+      (void)out_shape.emplace_back(SizeToLong(0));
+    } else {
+      (void)out_shape.emplace_back(SizeToLong(output_sizes_[0]));
+    }
+    outputs_[0]->SetShapeVector(out_shape);
+  }
+  std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
+
  protected:
-  void InitInputOutputSize(const CNodePtr &kernel_node) override;
   template <typename DataType, typename IndexType>
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs);
   size_t input_size_{0};
   TypeId dtype_{kTypeUnknown};
-  size_t output_size_{0};
+  size_t batch_size_{1};
+  size_t batch_rank_{0};
+  std::vector<size_t> output_sizes_;
   bool sorted_{false};
-  CNodeWeakPtr node_wpt_;
+  std::vector<KernelTensorPtr> outputs_{};
 
   template <typename DataType, typename IndexType>
   static void CalculateEachBucketSize(const std::shared_ptr<UniqueParam<DataType, IndexType>> &params,

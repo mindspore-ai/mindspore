@@ -15,6 +15,7 @@
  */
 
 #include "plugin/device/cpu/kernel/unique_cpu_kernel.h"
+#include <functional>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
@@ -25,30 +26,6 @@ constexpr size_t kWorkSpaceNum = 3;
 constexpr size_t kOutputNum = 2;
 constexpr size_t kWorkSpaceIndex = 2;
 }  // namespace
-
-void UniqueCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  node_wpt_ = kernel_node;
-  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  if (input_shape.size() != 1) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input must be 1D, but got "
-                      << input_shape.size() << "D";
-  }
-  input_size_ = static_cast<size_t>(input_shape[0]);
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  if (common::AnfAlgo::HasNodeAttr(SORTED, kernel_node)) {
-    sorted_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, SORTED);
-  }
-  is_need_retrieve_output_shape_ = true;
-}
-
-void UniqueCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
-  DeprecatedNativeCpuKernelMod::InitInputOutputSize(kernel_node);
-  (void)workspace_size_list_.emplace_back(input_size_ * sizeof(int64_t));
-  (void)workspace_size_list_.emplace_back(input_size_ * sizeof(int64_t));
-  (void)workspace_size_list_.emplace_back(input_size_ * sizeof(int64_t));
-}
 
 bool UniqueCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                 const std::vector<kernel::AddressPtr> &workspace,
@@ -64,22 +41,6 @@ bool UniqueCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
                       << "', the dtype of input must be float16, float32, int32, or int64, but got "
                       << TypeIdToType(dtype_)->ToString();
   }
-
-  if (!node_wpt_.expired()) {
-    auto node_ = node_wpt_.lock();
-    if (!node_) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', node_wpt_(kernel_node) is expired. Error no: " << node_;
-    }
-    ShapeVector out_shape;
-    (void)out_shape.emplace_back(SizeToLong(output_size_));
-    size_t output_num = common::AnfAlgo::GetOutputTensorNum(node_);
-    std::vector<TypeId> dtypes(output_num);
-    for (size_t i = 0; i < output_num; i++) {
-      dtypes[i] = AnfAlgo::GetOutputDeviceDataType(node_, i);
-    }
-    common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, {out_shape, common::AnfAlgo::GetOutputInferShape(node_, 1)},
-                                                node_.get());
-  }
   return true;
 }
 
@@ -87,6 +48,7 @@ template <typename DataType, typename IndexType>
 void UniqueCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                       const std::vector<AddressPtr> &outputs) {
   if (input_size_ == 0) {
+    MS_LOG(WARNING) << "For '" << kernel_name_ << "', the input size is 0.";
     return;
   }
   if (inputs.size() < 1) {
@@ -112,18 +74,25 @@ void UniqueCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
   params->output_size_ = 0;
 
   params->thread_num_ = common::ThreadPool::GetInstance().GetSyncRunThreadNum();
-  if (sorted_) {
-    params->need_sort_ = true;
-    if (input_size_ < kBucketSortThreshold) {
-      Unique(params);
+  output_sizes_.clear();
+  for (size_t i = 0; i < batch_size_; i++) {
+    if (sorted_) {
+      params->need_sort_ = true;
+      if (input_size_ < kBucketSortThreshold) {
+        Unique(params);
+      } else {
+        BucketUnique(params);
+      }
     } else {
-      BucketUnique(params);
+      params->need_sort_ = false;
+      Unique(params);
     }
-  } else {
-    params->need_sort_ = false;
-    Unique(params);
+    output_sizes_.push_back(static_cast<size_t>(params->output_size_));
+    params->output_size_ = 0;
+    params->input_ += input_size_;
+    params->output_ += input_size_;
+    params->inverse_idx_ += input_size_;
   }
-  output_size_ = static_cast<size_t>(params->output_size_);
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Unique, UniqueCpuKernelMod);

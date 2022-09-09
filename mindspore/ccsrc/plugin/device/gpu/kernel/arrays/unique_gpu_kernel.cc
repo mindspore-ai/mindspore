@@ -47,6 +47,11 @@ const std::vector<std::pair<KernelAttr, UniquePtrCreatorFunc>> kernel_attr = {
 bool UniqueGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                               const std::vector<KernelTensorPtr> &outputs) {
   base_operator_ = base_operator;
+  auto batch_rank = base_operator->get_batch_rank();
+  if (batch_rank < 0) {
+    return false;
+  }
+  batch_rank_ = static_cast<size_t>(batch_rank);
   inputs_ = inputs;
   outputs_ = outputs;
   auto [is_match, index] = MatchKernelAttr(GetKernelAttrFromTensors(inputs, outputs), GetOpSupport());

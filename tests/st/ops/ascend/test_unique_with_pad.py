@@ -67,10 +67,6 @@ def test_unique_with_pad_dynamic_shape():
     assert (output[1].asnumpy() == expect_idx_result).all()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_unique_with_pad_vmap():
     """
     Feature: uniquewithpad vmap test in ascend.
