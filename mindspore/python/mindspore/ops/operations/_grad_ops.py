@@ -1408,7 +1408,7 @@ class LayerNormGrad(Primitive):
         raise NotImplementedError
 
 
-class LayerNormGradGrad(PrimitiveWithInfer):
+class LayerNormGradGrad(Primitive):
     """
     Gets the gradient of LayerNormGrad operation.
 
@@ -1416,8 +1416,30 @@ class LayerNormGradGrad(PrimitiveWithInfer):
         begin_norm_axis (int): The begin axis for the input to apply layernorm. Default: 1.
         begin_params_axis (int): The begin axis for the parameter input to apply layernorm. Default: 1.
 
+    Inputs:
+        - **x** (Tensor) - The input tensor to be normalized, float32 or float16.
+        - **dy** (Tensor) - The gradient of LayerNorm's output y, float32 or float16.
+        - **variance** (Tensor) - The variance of x, float32 or float16.
+        - **mean** (Tensor) - The mean of x, float32 or float16.
+        - **gamma** (Tensor) - The original value of weight gamma initialized in LayerNorm, float32 or float16.
+          Default: 'ones'.
+        - **d_dx** (Tensor) - The gradient of dx, where dx is the gradient of LayerNorm's input x, float32 or float16.
+        - **d_dg** (Tensor) - The gradient of dg, where dg is the gradient of LayerNorm's weight gamma,
+          float32 or float16.
+        - **d_db** (Tensor) - The gradient of db, where db is the gradient of LayerNorm's weight beta,
+          float32 or float16.
+
     Returns:
-        tuple[int], tuple of 3 values (the gradients of layernormgrad input, dy, gamma).
+        Tuple[Tensor], tuple of 3 Tensors (the gradients of layernormgrad x, dy, gamma).
+
+    Raises:
+        TypeError: If the 8 inputs don't have the same dtype.
+        ValueError: If x, dy, d_dx don't have the same shape.
+        ValueError: If variance, mean don't have the same shape.
+        ValueError: If gamma, d_dg, d_db don't have the same shape.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU`` ``GPU``
     """
 
     @prim_attr_register
@@ -1425,15 +1447,6 @@ class LayerNormGradGrad(PrimitiveWithInfer):
         """init"""
         self.begin_norm_axis = validator.check_value_type('begin_norm_axis', begin_norm_axis, [int], self.name)
         self.begin_params_axis = validator.check_value_type('begin_params_axis', begin_params_axis, [int], self.name)
-
-    def __call__(self, x, dy, variance, mean, gamma, grad_dx, grad_dg, grad_db):
-        raise NotImplementedError
-
-    def infer_shape(self, x, dy, variance, mean, gamma, grad_dx, grad_dg, grad_db):
-        return x, dy, gamma
-
-    def infer_dtype(self, x, dy, variance, mean, gamma, grad_dx, grad_dg, grad_db):
-        return x, dy, gamma
 
 
 class LogSoftmaxGrad(Primitive):
