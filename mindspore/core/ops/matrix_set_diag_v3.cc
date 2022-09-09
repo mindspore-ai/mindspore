@@ -46,6 +46,19 @@ void TrueValueCalAndCheck(const std::vector<AbstractBasePtr> &input_args, int64_
   }
 }
 
+abstract::ShapePtr MakeShape(const ShapeVector &x_shape) {
+  auto rank = SizeToLong(x_shape.size());
+  ShapeVector out_shape;
+  ShapeVector infer_shape_min;
+  ShapeVector infer_shape_max;
+  (void)infer_shape_max.insert(infer_shape_max.end(), x_shape.begin(), x_shape.end());
+  for (int64_t i = 0; i < rank; i++) {
+    out_shape.push_back(-1);
+    infer_shape_min.push_back(0);
+  }
+  return std::make_shared<abstract::Shape>(out_shape, infer_shape_min, infer_shape_max);
+}
+
 abstract::ShapePtr MatrixSetDiagV3InferShape(const PrimitivePtr &primitive,
                                              const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
@@ -56,6 +69,9 @@ abstract::ShapePtr MatrixSetDiagV3InferShape(const PrimitivePtr &primitive,
   CheckAndConvertUtils::CheckInRange<int64_t>("k rank", k_rank, kIncludeBoth, {0, kNumber1}, prim_name);
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto rank = SizeToLong(x_shape.size());
+  if (IsDynamicRank(x_shape)) {
+    return std::make_shared<abstract::Shape>(ShapeVector{UNKNOWN_RANK});
+  }
   (void)CheckAndConvertUtils::CheckInteger("x rank", rank, kGreaterEqual, kNumber2, prim_name);
   auto diagonal_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
   auto diagonal_rank = SizeToLong(diagonal_shape.size());
@@ -132,15 +148,7 @@ abstract::ShapePtr MatrixSetDiagV3InferShape(const PrimitivePtr &primitive,
     }
     return std::make_shared<abstract::Shape>(x_shape);
   }
-  ShapeVector out_shape;
-  ShapeVector infer_shape_min;
-  ShapeVector infer_shape_max;
-  (void)infer_shape_max.insert(infer_shape_max.end(), x_shape.begin(), x_shape.end());
-  for (int64_t i = 0; i < rank; i++) {
-    out_shape.push_back(-1);
-    infer_shape_min.push_back(0);
-  }
-  return std::make_shared<abstract::Shape>(out_shape, infer_shape_min, infer_shape_max);
+  return MakeShape(x_shape);
 }
 
 TypePtr MatrixSetDiagV3InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
