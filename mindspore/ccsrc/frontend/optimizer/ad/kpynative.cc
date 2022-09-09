@@ -417,7 +417,7 @@ FuncGraphPtr KPynativeCellImpl::Finish(const AnfNodePtrList &weights, const std:
   }
   // Return the gradient;
   if (grad_attr.get_by_position && grad_position.empty()) {
-    MS_LOG(EXCEPTION) << "grad_position in F.grad is empty when grad by position!";
+    MS_LOG(EXCEPTION) << "grad_position should not be empty when grad by position!";
   }
   SetOutput(weights, grad_position, grad_attr.grad_all_inputs, grad_attr.grad_weights, grad_attr.get_by_position);
   // Replace Parameter of primal funcgraph  with parameter of tape_;

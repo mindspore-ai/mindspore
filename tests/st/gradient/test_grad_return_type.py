@@ -741,14 +741,19 @@ def test_grad_operation_single_input_and_none_param():
             return 3 * x
 
     x = Tensor([10], mstype.int32)
+    b = Tensor([3], mstype.int32)
 
     context.set_context(mode=context.GRAPH_MODE)
-    with pytest.raises(ValueError):
-        GradOperationNetWrtParameterNone(Net(), get_all=True, get_by_list=True)(x)
+    out_graph = GradOperationNetWrtParameterNone(Net(), get_all=True, get_by_list=True)(x)
+    assert len(out_graph) == 2 and len(out_graph[0]) == 1
+    assert np.all(out_graph[0][0].asnumpy() == b.asnumpy())
+    assert out_graph[1] == ()
 
     context.set_context(mode=context.PYNATIVE_MODE)
-    with pytest.raises(ValueError):
-        GradOperationNetWrtParameterNone(Net(), get_all=True, get_by_list=True)(x)
+    out_pynative = GradOperationNetWrtParameterNone(Net(), get_all=True, get_by_list=True)(x)
+    assert len(out_pynative) == 2 and len(out_pynative[0]) == 1
+    assert np.all(out_pynative[0][0].asnumpy() == b.asnumpy())
+    assert out_pynative[1] == ()
 
 
 def test_grad_operation_multiple_inputs_and_none_param():
@@ -763,14 +768,22 @@ def test_grad_operation_multiple_inputs_and_none_param():
 
     x = Tensor([10], mstype.int32)
     y = Tensor([20], mstype.int32)
+    b = Tensor([3], mstype.int32)
+    t = Tensor([1], mstype.int32)
 
     context.set_context(mode=context.GRAPH_MODE)
-    with pytest.raises(ValueError):
-        GradOperationNetWrtParameterNone(Net(), get_all=True, get_by_list=True)(x, y)
+    out_graph = GradOperationNetWrtParameterNone(Net(), get_all=True, get_by_list=True)(x, y)
+    assert len(out_graph) == 2 and len(out_graph[0]) == 2
+    assert np.all(out_graph[0][0].asnumpy() == b.asnumpy())
+    assert np.all(out_graph[0][1].asnumpy() == t.asnumpy())
+    assert out_graph[1] == ()
 
     context.set_context(mode=context.PYNATIVE_MODE)
-    with pytest.raises(ValueError):
-        GradOperationNetWrtParameterNone(Net(), get_all=True, get_by_list=True)(x, y)
+    out_pynative = GradOperationNetWrtParameterNone(Net(), get_all=True, get_by_list=True)(x, y)
+    assert len(out_pynative) == 2 and len(out_pynative[0]) == 2
+    assert np.all(out_pynative[0][0].asnumpy() == b.asnumpy())
+    assert np.all(out_pynative[0][1].asnumpy() == t.asnumpy())
+    assert out_pynative[1] == ()
 
 
 def test_grad_operation_no_input_and_none_param():
@@ -784,12 +797,16 @@ def test_grad_operation_no_input_and_none_param():
             return 3
 
     context.set_context(mode=context.GRAPH_MODE)
-    with pytest.raises(ValueError):
-        GradOperationNetWrtParameterNone(Net(), get_all=True, get_by_list=True)()
+    out_graph = GradOperationNetWrtParameterNone(Net(), get_all=True, get_by_list=True)()
+    assert len(out_graph) == 2
+    assert out_graph[0] == ()
+    assert out_graph[1] == ()
 
     context.set_context(mode=context.PYNATIVE_MODE)
-    with pytest.raises(ValueError):
-        GradOperationNetWrtParameterNone(Net(), get_all=True, get_by_list=True)()
+    out_pynative = GradOperationNetWrtParameterNone(Net(), get_all=True, get_by_list=True)()
+    assert len(out_pynative) == 2
+    assert out_pynative[0] == ()
+    assert out_pynative[1] == ()
 
 
 def test_grad_int_position():
