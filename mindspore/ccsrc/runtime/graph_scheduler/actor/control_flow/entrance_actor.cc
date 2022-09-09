@@ -56,6 +56,7 @@ void EntranceActor::RunOpRealParameterWithBranchID(const OpRealParameterWithBran
 
 void EntranceActor::ClearDataOnStepEnd(AID *const input_control, OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
+  MS_EXCEPTION_IF_NULL(input_control);
   MS_LOG(DEBUG) << "Actor(" << GetAID().Name()
                 << ") receive the message of clearing data from:" << input_control->Name() << ".";
 

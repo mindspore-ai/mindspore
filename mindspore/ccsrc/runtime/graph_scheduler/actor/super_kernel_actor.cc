@@ -82,7 +82,9 @@ size_t SuperKernelActor::FetchInputNodePosition(const AnfNodePtr &intput_node) {
 void SuperKernelActor::Run(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(graph_);
-  MS_EXCEPTION_IF_NULL(device_contexts_[0]);
+  if (device_contexts_.empty() || device_contexts_[0] == nullptr) {
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "Invalid device context for super kernel actor:" + GetAID().Name());
+  }
   MS_LOG(INFO) << "Super kernel actor(" << GetAID().Name()
                << ") launches graph: " << std::to_string(graph_->graph_id());
   if (!CopyInputData(context)) {
@@ -94,6 +96,7 @@ void SuperKernelActor::Run(OpContext<DeviceTensor> *const context) {
     const std::vector<tensor::Tensor> inputs;
     std::vector<tensor::Tensor> outputs;
     const std::map<string, string> compile_options;
+    MS_EXCEPTION_IF_NULL(device_contexts_[0]->graph_executor_);
     auto ret = device_contexts_[0]->graph_executor_->RunGraph(graph_, inputs, &outputs, compile_options);
     if (!ret) {
       std::string error_info = "Launch graph failed, graph id: " + std::to_string(graph_->graph_id());
@@ -152,6 +155,7 @@ bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context) {
     MS_EXCEPTION_IF_NULL(dst_node);
 
     auto dst_param = dst_node->cast<ParameterPtr>();
+    MS_EXCEPTION_IF_NULL(dst_param);
     if (!dst_param->IsUsedByRealKernelInGraph(graph_->graph_id())) {
       return true;
     }

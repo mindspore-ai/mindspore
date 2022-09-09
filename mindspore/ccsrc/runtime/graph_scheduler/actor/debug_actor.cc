@@ -50,6 +50,7 @@ void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchInfo *launch_in
     return;
   }
   const auto &cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
   MS_LOG(DEBUG) << "kernel by kernel debug for node: " << cnode->fullname_with_scope() << ".";
   if (device_context->GetDeviceType() == device::DeviceType::kCPU) {
 #ifndef ENABLE_SECURITY
@@ -157,7 +158,13 @@ void DebugActor::DebugOnStepBegin(const std::vector<KernelGraphPtr> &graphs,
 #ifndef ENABLE_SECURITY
   if (DumpJsonParser::GetInstance().e2e_dump_enabled()) {
     DumpJsonParser::GetInstance().ClearGraph();
+    if (graphs.size() != device_contexts.size()) {
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*op_context), "Graph num:" + std::to_string(graphs.size()) +
+                                                         " is not equal to device context size:" +
+                                                         std::to_string(device_contexts.size()) + " for debug actor.");
+    }
     for (size_t i = 0; i < graphs.size(); ++i) {
+      MS_EXCEPTION_IF_NULL(graphs[i]);
       MS_EXCEPTION_IF_NULL(device_contexts[i]);
       if (device_contexts[i]->GetDeviceType() == device::DeviceType::kCPU) {
         if (graphs[i]->is_dynamic_shape()) {

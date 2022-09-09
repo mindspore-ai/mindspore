@@ -115,6 +115,9 @@ void DeviceQueueDataSourceActor::SendMemoryAllocReq(OpContext<DeviceTensor> *con
 
 void DeviceQueueDataSourceActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context) {
   auto &device_tensors = buffers_.front();
+  if (device_contexts_.empty()) {
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "Empty device contexts in device data source actor.");
+  }
   if (ActorDispatcher::is_memory_free_sync()) {
     ActorDispatcher::SendSync(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &device_tensors,
                               device_contexts_[0], context, GetAID());
@@ -181,7 +184,7 @@ void DeviceQueueDataSourceActor::SendDebugReq(OpContext<DeviceTensor> *const con
 }
 
 void DeviceQueueDataSourceActor::SendRecorderInfo(OpContext<DeviceTensor> *const context) const {
-  if (recorder_aid_ != nullptr) {
+  if (recorder_aid_ != nullptr && (!device_contexts_.empty())) {
     MS_EXCEPTION_IF_NULL(data_kernel_);
     ActorDispatcher::Send(*recorder_aid_, &RecorderActor::RecordInfo, data_kernel_->fullname_with_scope(),
                           &launch_info_, device_contexts_[0], context);
@@ -202,6 +205,9 @@ void HostQueueDataSourceActor::FillDataBuffer() {
 }
 
 void HostQueueDataSourceActor::SendMemoryAllocReq(OpContext<DeviceTensor> *const context) {
+  if (device_contexts_.empty()) {
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "Empty device contexts in device data source actor.");
+  }
   auto &device_tensors = buffers_.back();
   if (ActorDispatcher::is_memory_allocation_sync()) {
     if (IsSameDeviceType()) {
@@ -224,6 +230,9 @@ void HostQueueDataSourceActor::SendMemoryAllocReq(OpContext<DeviceTensor> *const
 }
 
 void HostQueueDataSourceActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context) {
+  if (device_contexts_.empty()) {
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "Empty device contexts in device data source actor.");
+  }
   auto &device_tensors = buffers_.front();
   if (ActorDispatcher::is_memory_free_sync()) {
     if (IsSameDeviceType()) {

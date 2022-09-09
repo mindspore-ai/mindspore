@@ -398,6 +398,7 @@ void DumpControlActor(const ControlActor *actor, std::ofstream &ofs) {
     ofs << "\t\tlocal partial num:" << local_partials.size() << "\n ";
     for (const auto &local_partial : local_partials) {
       // Skip the dead node partial.
+      MS_EXCEPTION_IF_NULL(local_partial.second);
       if (local_partial.second->func_graph_ == nullptr) {
         continue;
       }
@@ -459,6 +460,7 @@ void DumpGatherActor(const GatherActor *actor, std::ofstream &ofs) {
   if (output_data_with_branch_id_arrows.size() > 0) {
     ofs << "\t\toutput_data_with_branch_id_arrows:" << output_data_with_branch_id_arrows.size() << "\n ";
     for (const auto &output_data_with_branch_id_arrow : output_data_with_branch_id_arrows) {
+      MS_EXCEPTION_IF_NULL(output_data_with_branch_id_arrow.first);
       ofs << "\t\t\tbranch funcgraph:" << output_data_with_branch_id_arrow.first->ToString() << "\n";
       for (const auto &arrow : output_data_with_branch_id_arrow.second) {
         ofs << "\t\t\t\tto actor:" << arrow << "\n";

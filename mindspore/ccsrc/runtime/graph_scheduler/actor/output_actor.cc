@@ -197,6 +197,7 @@ TensorPtr OutputActor::CreateOutputTensor(const AnfNodePtr &output_node, size_t 
   auto type_id = common::AnfAlgo::GetOutputInferDataType(output_node, output_index);
   auto shape = common::AnfAlgo::GetOutputInferShape(output_node, output_index);
   auto tensor = std::make_shared<tensor::Tensor>(type_id, shape);
+  MS_EXCEPTION_IF_NULL(tensor);
   tensor->set_padding_type(AnfAlgo::GetOutputReshapeType(output_node, output_index));
 
   if (output_position >= device_contexts_.size()) {

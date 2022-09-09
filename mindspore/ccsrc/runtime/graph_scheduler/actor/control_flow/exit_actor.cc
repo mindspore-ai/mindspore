@@ -136,10 +136,14 @@ void ExitActor::IncreaseDynamicRefCounts(OpContext<DeviceTensor> *const context)
       IncreaseDynamicRefCount(output_partial);
     }
   }
-
+  if (input_device_tensors_.size() != device_contexts_.size()) {
+    MS_LOG(ERROR) << "Input device tensor size:" << input_device_tensors_.size()
+                  << " is not equal to context size:" << device_contexts_.size() << " for actor:" << GetAID();
+  }
   // The input device tensor may not have users and needs to free the memory.
   for (size_t i = 0; i < input_device_tensors_.size(); ++i) {
-    if ((input_device_tensors_[i] != nullptr) && (input_device_tensors_[i]->dynamic_ref_count() == 0)) {
+    if ((input_device_tensors_[i] != nullptr) && (input_device_tensors_[i]->dynamic_ref_count() == 0) &&
+        (device_contexts_[i] != nullptr)) {
       MS_LOG(WARNING) << GetAID().Name() << " input index:" << i << " has no user and free the memory.";
       device_contexts_[i]->device_res_manager_->FreeMemory(input_device_tensors_[i]);
     }
@@ -152,9 +156,11 @@ void ExitActor::CopyDeviceAddress(OpContext<DeviceTensor> *const context) {
   if (node_ != nullptr) {
     return;
   }
-  if (input_device_tensors_.size() != is_need_copy_device_tensors_.size()) {
+  if (input_device_tensors_.size() != is_need_copy_device_tensors_.size() ||
+      input_device_tensors_.size() != device_contexts_.size()) {
     std::string error_info = "Invalid input device tensor size:" + std::to_string(input_device_tensors_.size()) +
-                             " need:" + std::to_string(is_need_copy_device_tensors_.size()) +
+                             " need tensor size:" + std::to_string(is_need_copy_device_tensors_.size()) +
+                             " need context size:" + std::to_string(device_contexts_.size()) +
                              " for actor:" + GetAID().Name();
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
   }
