@@ -272,6 +272,7 @@ class CropAndResize(Primitive):
 
     Note:
         In case that the output shape depends on crop_size, the crop_size must be constant.
+        For now, the backward of the operator only support bilinear method, for other methods, will return 0.
 
     Args:
         method (str): An optional string that specifies the sampling method for resizing.
