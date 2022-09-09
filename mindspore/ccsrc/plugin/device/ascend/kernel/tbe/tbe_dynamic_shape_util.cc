@@ -49,6 +49,7 @@ void ChangeDynamicAbsToActualAbs(const CNodePtr &cnode) {
   }
   AbstractBasePtrList args_spec_list;
   auto primitive = GetValueNode<PrimitivePtr>(inputs[0]);
+  MS_EXCEPTION_IF_NULL(primitive);
   // Get actual abs
   for (size_t i = 0; i < input_size; ++i) {
     auto input_node_with_index = common::AnfAlgo::GetPrevNodeOutput(cnode, i);

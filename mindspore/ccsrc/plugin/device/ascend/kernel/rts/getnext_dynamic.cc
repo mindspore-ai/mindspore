@@ -43,6 +43,7 @@ bool GetNextDynamic::Launch(const std::vector<AddressPtr> &, const std::vector<A
 }
 
 bool GetNextDynamic::Init(const mindspore::AnfNodePtr &anf_node) {
+  MS_EXCEPTION_IF_NULL(anf_node);
   anf_node_ = anf_node;
   auto output_num = common::AnfAlgo::GetOutputTensorNum(anf_node);
   std::vector<size_t> size_list;

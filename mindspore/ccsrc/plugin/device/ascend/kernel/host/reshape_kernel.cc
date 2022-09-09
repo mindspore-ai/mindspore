@@ -33,6 +33,7 @@ constexpr size_t kInputNum = 2;
 
 std::vector<int64_t> GetInputValue(const CNodePtr &cnode, size_t index) {
   auto address_x = AnfAlgo::GetPrevNodeMutableOutputAddr(cnode, index);
+  MS_EXCEPTION_IF_NULL(address_x);
   auto shape_x = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, index);
   if (shape_x.size() != 1) {
     MS_LOG(EXCEPTION) << "Input" << index << " must be [1-D], but got " << shape_x.size() << "-D."
