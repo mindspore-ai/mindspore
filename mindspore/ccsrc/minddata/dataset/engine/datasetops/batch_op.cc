@@ -210,19 +210,28 @@ Status BatchOp::ConvertRowsToTensor(const std::unique_ptr<TensorQTable> *src, st
     dsize_t j = 0;
     for (auto row : **src) {
       std::shared_ptr<Tensor> old_tensor = row.at(col);  // row j, column i
-      if (old_tensor->shape() == first_shape) {          // check the newly popped rows have the same dim as the first
+      // check the newly popped rows have the same dim and type as the first
+      if (old_tensor->shape() == first_shape && old_tensor->type() == first_type) {
         if (new_shape.NumOfElements() != 0) {
           RETURN_IF_NOT_OK(new_tensor->InsertTensor({j++}, old_tensor));
         }
         // Don't do anything if the tensor has no data
-      } else {
+      } else if (old_tensor->shape() != first_shape) {  // newly popped rows have different dim
         std::stringstream shape1, shape2;
         first_shape.Print(shape1);
         old_tensor->shape().Print(shape2);
         RETURN_STATUS_UNEXPECTED(
-          "Inconsistent batch shapes, batch operation expect same shape for each data row, "
+          "Inconsistent batch shapes, batch operation expects same shape for each data row, "
           "but got inconsistent shape in column " +
           std::to_string(col) + ", expected shape for this column is:" + shape1.str() + ", got shape:" + shape2.str());
+      } else {  // newly popped rows have different type
+        std::string type1, type2;
+        type1 = first_type.ToString();
+        type2 = old_tensor->type().ToString();
+        RETURN_STATUS_UNEXPECTED(
+          "Inconsistent batch type, batch operation expects same type for each data row, "
+          "but got inconsistent type in column " +
+          std::to_string(col) + ", expected type for this column is:" + type1 + ", got type:" + type2);
       }
     }
   } else {  // handle string column differently
