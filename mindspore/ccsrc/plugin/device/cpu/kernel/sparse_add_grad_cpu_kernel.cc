@@ -171,6 +171,14 @@ const std::vector<std::pair<KernelAttr, SparseAddGradCpuKernelMod::KernelRunFunc
        .AddOutputAttr(kNumberTypeFloat32)
        .AddOutputAttr(kNumberTypeFloat32),
      &SparseAddGradCpuKernelMod::LaunchKernel<float, int32_t>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeFloat32)
+       .AddOutputAttr(kNumberTypeFloat32),
+     &SparseAddGradCpuKernelMod::LaunchKernel<float, int64_t>},
   };
   return func_list;
 }
