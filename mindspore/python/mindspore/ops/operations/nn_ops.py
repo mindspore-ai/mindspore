@@ -340,38 +340,38 @@ class AdaptiveMaxPool2D(Primitive):
 
     Examples:
         >>> # case 1: output_size=(None, 2)
-        >>> input_x = Tensor(np.array([[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
-        ...                            [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
-        ...                            [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]]), mindspore.float32)
+        >>> input_x = Tensor(np.array([[[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
+        ...                             [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
+        ...                             [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]]]), mindspore.float32)
         >>> adaptive_max_pool_2d = ops.AdaptiveMaxPool2D((None, 2))
         >>> output = adaptive_max_pool_2d(input_x)
         >>> print(output)
-        [[[2. 3.]
-          [5. 6.]
-          [8. 9.]]
-         [[2. 3.]
-          [5. 6.]
-          [8. 9.]]
-         [[2. 3.]
-          [5. 6.]
-          [8. 9.]]]
+        [[[[2. 3.]
+           [5. 6.]
+           [8. 9.]]
+          [[2. 3.]
+           [5. 6.]
+           [8. 9.]]
+          [[2. 3.]
+           [5. 6.]
+           [8. 9.]]]]
         >>> # case 2: output_size=2
         >>> adaptive_max_pool_2d = ops.AdaptiveMaxPool2D(2)
         >>> output = adaptive_max_pool_2d(input_x)
         >>> print(output)
-        [[[5. 6.]
-          [8. 9.]]
-         [[5. 6.]
-          [8. 9.]]
-         [[5. 6.]
-          [8. 9.]]]
+        [[[[5. 6.]
+           [8. 9.]]
+          [[5. 6.]
+           [8. 9.]]
+          [[5. 6.]
+           [8. 9.]]]]
         >>> # case 3: output_size=(1, 2)
         >>> adaptive_max_pool_2d = ops.AdaptiveMaxPool2D((1, 2))
         >>> output = adaptive_max_pool_2d(input_x)
         >>> print(output)
-        [[[8. 9.]]
-         [[8. 9.]]
-         [[8. 9.]]]
+        [[[[8. 9.]]
+          [[8. 9.]]
+          [[8. 9.]]]]
     """
 
     @prim_attr_register
