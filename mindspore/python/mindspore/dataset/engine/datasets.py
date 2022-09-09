@@ -682,7 +682,7 @@ class Dataset:
         3. Get the next row (if any) from the parent node and put it in the shuffle buffer.
         4. Repeat steps 2 and 3 until there are no more rows left in the shuffle buffer.
 
-        A random seed can be provided to be used on the first epoch. In every subsequent
+        A random seed can be provided to be used on the first epoch via `dataset.config.set_seed`. In every subsequent
         epoch, the seed is changed to a new one, randomly generated value.
 
         Args:
@@ -1063,10 +1063,6 @@ class Dataset:
     def split(self, sizes, randomize=True):
         """
         Split the dataset into smaller, non-overlapping datasets.
-
-        This is a general purpose split function which can be called from any operator in the pipeline.
-        There is another, optimized split function, which will be called automatically if ds.split is
-        called where ds is a MappableDataset.
 
         Args:
             sizes (Union[list[int], list[float]]): If a list of integers [s1, s2, …, sn] is

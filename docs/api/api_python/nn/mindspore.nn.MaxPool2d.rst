@@ -5,6 +5,8 @@ mindspore.nn.MaxPool2d
 
     对输入的多维数据进行二维的最大池化运算。
 
+    在一个输入Tensor上应用2D max pooling，可被视为组成一个2D平面。
+
     通常，输入的形状为 :math:`(N_{in}, C_{in}, H_{in}, W_{in})` ，MaxPool2d输出 :math:`(H_{in}, W_{in})` 维度区域最大值。给定 `kernel_size` 为 :math:`(kH,kW)` 和 `stride` ，公式如下。
 
     .. math::
