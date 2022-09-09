@@ -357,6 +357,9 @@ void GPUKernelExecutor::FuseOperators(const KernelGraphPtr &graph) const {
 namespace {
 void RunOpOptimize(const KernelGraphPtr &kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
+  if (kernel_graph->is_dynamic_shape()) {
+    return;
+  }
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
   pm->AddPass(std::make_shared<opt::BCEWithLogitsLossFusion>());

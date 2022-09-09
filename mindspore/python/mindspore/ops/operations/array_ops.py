@@ -25,7 +25,8 @@ from mindspore import log as logger
 from mindspore import context
 from mindspore.common.initializer import Zero
 from mindspore.ops import signature as sig
-from mindspore.ops._utils import get_broadcast_shape, is_shape_unknown
+from mindspore.ops._utils import get_broadcast_shape
+from mindspore.common._utils import is_shape_unknown, is_dim_unknown
 from mindspore.ops.primitive import Primitive, PrimitiveWithInfer, PrimitiveWithCheck, prim_attr_register, _run_op
 from mindspore._checkparam import Rel
 from mindspore._checkparam import Validator as validator
@@ -3551,6 +3552,8 @@ class StridedSlice(PrimitiveWithInfer):
     def _compute_dynamic_slicing_shape(self, x, begin_v, end_v, strides_v, slice_len):
         """Computes the shape of the slicing for dynamic shape, mask is currently not supported."""
         x_shape = x['shape']
+        if is_dim_unknown(x_shape):
+            return [-2]
         x_rank = len(x_shape)
         new_axis_pos = bin(self.new_axis_mask)[-1:1:-1]
         shrink_axis_pos = bin(self.shrink_axis_mask)[-1:1:-1]
