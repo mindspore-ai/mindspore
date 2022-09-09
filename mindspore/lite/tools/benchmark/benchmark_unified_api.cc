@@ -1238,9 +1238,9 @@ int BenchmarkUnifiedApi::RunBenchmark() {
 int BenchmarkUnifiedApi::InitTimeProfilingCallbackParameter() {
   if (flags_->inter_op_parallel_num_ > 1) {
     // before callback
-    ms_before_call_back_ = [&](const std::vector<mindspore::MSTensor> &before_inputs,
-                               const std::vector<mindspore::MSTensor> &before_outputs,
-                               const MSCallBackParam &call_param) {
+    ms_before_call_back_ = [&, this](const std::vector<mindspore::MSTensor> &before_inputs,
+                                     const std::vector<mindspore::MSTensor> &before_outputs,
+                                     const MSCallBackParam &call_param) {
       if (before_inputs.empty()) {
         MS_LOG(INFO) << "The num of beforeInputs is empty";
       }
@@ -1262,9 +1262,9 @@ int BenchmarkUnifiedApi::InitTimeProfilingCallbackParameter() {
     };
 
     // after callback
-    ms_after_call_back_ = [&](const std::vector<mindspore::MSTensor> &after_inputs,
-                              const std::vector<mindspore::MSTensor> &after_outputs,
-                              const MSCallBackParam &call_param) {
+    ms_after_call_back_ = [&, this](const std::vector<mindspore::MSTensor> &after_inputs,
+                                    const std::vector<mindspore::MSTensor> &after_outputs,
+                                    const MSCallBackParam &call_param) {
       uint64_t opEnd = GetTimeUs();
 
       if (after_inputs.empty()) {
@@ -1289,9 +1289,9 @@ int BenchmarkUnifiedApi::InitTimeProfilingCallbackParameter() {
     };
   } else {
     // before callback
-    ms_before_call_back_ = [&](const std::vector<mindspore::MSTensor> &before_inputs,
-                               const std::vector<mindspore::MSTensor> &before_outputs,
-                               const MSCallBackParam &call_param) {
+    ms_before_call_back_ = [&, this](const std::vector<mindspore::MSTensor> &before_inputs,
+                                     const std::vector<mindspore::MSTensor> &before_outputs,
+                                     const MSCallBackParam &call_param) {
       if (before_inputs.empty()) {
         MS_LOG(INFO) << "The num of beforeInputs is empty";
       }
@@ -1311,9 +1311,9 @@ int BenchmarkUnifiedApi::InitTimeProfilingCallbackParameter() {
     };
 
     // after callback
-    ms_after_call_back_ = [&](const std::vector<mindspore::MSTensor> &after_inputs,
-                              const std::vector<mindspore::MSTensor> &after_outputs,
-                              const MSCallBackParam &call_param) {
+    ms_after_call_back_ = [&, this](const std::vector<mindspore::MSTensor> &after_inputs,
+                                    const std::vector<mindspore::MSTensor> &after_outputs,
+                                    const MSCallBackParam &call_param) {
       uint64_t opEnd = GetTimeUs();
 
       if (after_inputs.empty()) {

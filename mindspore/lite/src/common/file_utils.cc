@@ -181,7 +181,7 @@ char *ReadFile(const char *file, size_t *size) {
   }
 
   ifs->seekg(0, std::ios::beg);
-  ifs->read(buf, *size);
+  (void)ifs->read(buf, static_cast<std::streamsize>(*size));
   ifs->close();
   delete ifs;
   return buf;
