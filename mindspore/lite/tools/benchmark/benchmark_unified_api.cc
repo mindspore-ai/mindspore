@@ -554,11 +554,12 @@ int BenchmarkUnifiedApi::CompareOutput() {
     } else {
       if (flags_->enable_gl_texture_) {
         auto *gltexture_id = reinterpret_cast<GLuint *>(tensor.MutableData());
-        float *hostptr = reinterpret_cast<float *>(gl_runtime_.CopyDeviceTextureToHost(*gltexture_id));
-        if (hostptr == nullptr) {
+        auto tmp = gl_runtime_.CopyDeviceTextureToHost(*gltexture_id);
+        if (tmp == nullptr) {
           MS_LOG(ERROR) << "CopyDeviceTextureToHost failed";
           return RET_ERROR;
         }
+        float *hostptr = reinterpret_cast<float *>(tmp);
 
         auto tensor_shape = tensor.Shape();
         auto data_len =
@@ -1155,8 +1156,8 @@ int BenchmarkUnifiedApi::RunBenchmark() {
 
   auto status = InitMSContext(context);
   if (status != RET_OK) {
-    MS_LOG(ERROR) << "InitMSContext failed while running ", model_name.c_str();
-    std::cout << "InitMSContext failed while running ", model_name.c_str();
+    MS_LOG(ERROR) << "InitMSContext failed while running " << model_name.c_str();
+    std::cout << "InitMSContext failed while running " << model_name.c_str();
     return RET_ERROR;
   }
 

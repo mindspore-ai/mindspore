@@ -631,7 +631,7 @@ Status ModelImpl::BindGLTexture2DMemory(const std::map<std::string, unsigned int
     return kLiteError;
   }
   auto status = session_->BindGLTexture2DMemory(inputGLTexture, outputGLTexture);
-  if (status != kSuccess) {
+  if (status != RET_OK) {
     MS_LOG(ERROR) << "Bing OpenGL Texture to OpenCl Memory failed";
     return kLiteError;
   }
