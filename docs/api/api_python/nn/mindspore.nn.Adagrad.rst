@@ -50,7 +50,7 @@ mindspore.nn.Adagrad
       .. include:: mindspore.nn.optim_group_order.rst
 
     - **accum** (float) - 累加器 :math:`h` 的初始值，必须大于等于零。默认值：0.1。
-    - **learning_rate** (Union[float, Tensor, Iterable, LearningRateSchedule]) - 默认值：0.001。
+    - **learning_rate** (Union[float, int, Tensor, Iterable, LearningRateSchedule]) - 默认值：0.001。
 
       .. include:: mindspore.nn.optim_arg_dynamic_lr.rst
 
