@@ -20,6 +20,7 @@ from mindspore.ops.primitive import constexpr
 from mindspore.ops import operations as P
 from mindspore.ops.operations import nn_ops as NN_OPS
 from mindspore.ops.operations import image_ops as IMG
+from mindspore.ops._utils import is_shape_unknown
 import mindspore.common.dtype as mstype
 from .math_func import logsumexp
 from ...common.tensor import Tensor
@@ -1249,16 +1250,15 @@ def _check_pad_inputs(x_shape, paddings):
         if not isinstance(pd, (list, tuple)) or len(pd) != 2 or not isinstance(pd[0], int) or \
                 not isinstance(pd[1], int):
             raise TypeError(f"For 'pad', each element in 'paddings' must be a list or tuple of 2 int, but got {pd}.")
-    if len(x_shape) != len(paddings):
+    x_shape_unknown = is_shape_unknown(x_shape)
+    if not x_shape_unknown and len(x_shape) != len(paddings):
         raise ValueError(f"For 'pad', the size of paddings must be 2 * {len(x_shape)}, but got {2 * len(paddings)}")
-    x_dyn = False
+
     pad_all_non_negative = True
-    for i, pd in enumerate(paddings):
-        if x_shape[i] < 0:
-            x_dyn = True
+    for _, pd in enumerate(paddings):
         if pd[0] < 0 or pd[1] < 0:
             pad_all_non_negative = False
-    if x_dyn and not pad_all_non_negative:
+    if x_shape_unknown and not pad_all_non_negative:
         # in this case, we can not infer the slice size
         raise ValueError(f"For 'pad', if 'input_x' is dynamic shape, 'paddings' must be non-negative value, but got "
                          f"{paddings}")
@@ -1323,14 +1323,18 @@ def pad(input_x, paddings):
         raise TypeError(f"For 'pad', the type of 'paddings' must be tuple, but got {type(paddings)}.")
     x_shape = input_x.shape
     _check_pad_inputs(x_shape, paddings)
+    x_shape_unknown = is_shape_unknown(x_shape)
+    # input_x is dynamic shape
+    if x_shape_unknown:
+        _pad = _get_cache_prim(P.Pad)(paddings)
+        return _pad(input_x)
+    # input_x is static shape
     pad_all_non_negative = True
     pad_all_non_positive = True
     slice_begin = []
     slice_size = []
     non_negative_padding = []
     for i, pd in enumerate(paddings):
-        if x_shape[i] < 0:
-            continue
         sz = x_shape[i] + pd[0]
         if sz <= 0:
             raise ValueError(f"For 'pad', input_x_shape[{i}] + paddings[{i}, 0] is {sz}, which is <= 0 and causes "
