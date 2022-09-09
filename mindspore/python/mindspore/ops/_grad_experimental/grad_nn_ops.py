@@ -16,6 +16,7 @@
 
 """Define the grad rules of neural network related operations."""
 from mindspore import Tensor
+from mindspore.ops import matmul
 from mindspore.ops.operations.nn_ops import GridSampler2D
 from mindspore.ops.operations.nn_ops import GridSampler3D
 from mindspore.ops.primitive import constexpr
@@ -28,6 +29,7 @@ from ..operations.nn_ops import MaxUnpool2D
 from ..operations.nn_ops import MaxUnpool3D
 from ..operations.nn_ops import Dilation2D
 from ..operations.nn_ops import FractionalMaxPool
+from ..operations.nn_ops import SparseSoftmaxCrossEntropyWithLogitsV2
 from ..operations._grad_ops import FractionalMaxPoolGrad
 from ..operations.nn_ops import FractionalMaxPool3DWithFixedKsize
 from ..operations._grad_ops import FractionalMaxPool3DGradWithFixedKsize
@@ -336,6 +338,27 @@ def get_bprop_max_pool_v1_grad(self):
     def bprop(x, out, dout):
         dx = maxpool_grad_v1(x, out, dout)
         return (dx,)
+    return bprop
+
+
+@bprop_getters.register(SparseSoftmaxCrossEntropyWithLogitsV2)
+def get_bprop_sparse_softmax_cross_entropy_with_logits_v2(self):
+    """Grad definition for `SparseSoftmaxCrossEntropyWithLogitsV2` operation."""
+    mul = P.Mul()
+    squeeze = P.Squeeze(axis=1)
+    softmax_op = P.Softmax()
+    expand_dims = P.ExpandDims()
+
+    def bprop(logits, labels, out, dout):
+        grad_loss = dout[0]
+        softmax_grad = out[1]
+        grad_loss = expand_dims(grad_loss, -1)
+        grad = mul(grad_loss, softmax_grad)
+        if dout[1] is not None:
+            softmax = softmax_op(logits)
+            grad += ((dout[1] - squeeze(matmul(expand_dims(dout[1], 1), expand_dims(softmax, 2)))) * softmax)
+        return grad, zeros_like(labels)
+
     return bprop
 
 

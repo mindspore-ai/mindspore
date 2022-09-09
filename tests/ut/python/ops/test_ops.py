@@ -109,6 +109,7 @@ from mindspore.nn.loss.loss import MultilabelMarginLoss
 from mindspore.nn.loss.loss import TripletMarginLoss
 from mindspore.ops.operations.array_ops import Mvlgamma
 from mindspore.ops.operations.other_ops import BartlettWindow
+from mindspore.ops.operations.nn_ops import SparseSoftmaxCrossEntropyWithLogitsV2
 from mindspore.ops.operations.nn_ops import NthElement
 from mindspore.ops.operations.nn_ops import SparseApplyAdagradDA
 from mindspore.ops.operations.nn_ops import PSROIPooling
@@ -2800,6 +2801,10 @@ test_case_nn_ops = [
         'block': P.SigmoidCrossEntropyWithLogits(),
         'desc_inputs': [[128, 10], [128, 10]],
         'desc_bprop': [[128, 10]]}),
+    ('SparseSoftmaxCrossEntropyWithLogitsV2', {
+        'block': SparseSoftmaxCrossEntropyWithLogitsV2(),
+        'desc_inputs': [Tensor(np.array([[2, 3, 1], [2, 1, 2]]).astype(np.float32)),
+                        Tensor(np.array([0, 1]).astype(np.int32))]}),
     ('Pad', {
         'block': P.Pad(((1, 2), (2, 3))),
         'desc_inputs': [[7, 7]],
