@@ -157,6 +157,9 @@ class PatternNode:
     def get_inputs(self):
         """
         Getter of inputs.
+
+        Returns:
+            A list of `PatternNode`, the inputs of current node.
         """
 
         return self._inputs
@@ -249,6 +252,9 @@ class PatternEngine:
     def pattern(self) -> PatternNode:
         """
         Getter of pattern.
+
+        Returns:
+            A instance of `PatternNode`, used to indicate the type that the current pattern needs to match.
         """
 
         return self._pattern
