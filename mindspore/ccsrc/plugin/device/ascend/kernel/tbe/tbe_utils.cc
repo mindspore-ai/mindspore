@@ -203,7 +203,7 @@ void TbeUtils::LoadCache() {
     }
     auto akg_config_path = GetCompilerCachePath();
     auto akg_path = akg_config_path + kAkgKernelMeta;
-    if (!bin_map->ReadIndex(akg_path)) {
+    if (access(akg_path.c_str(), F_OK) != -1 && !bin_map->ReadIndex(akg_path)) {
       MS_LOG(INFO) << "Akg Cache initialize failed[" << akg_path << "]";
     }
     has_load = true;

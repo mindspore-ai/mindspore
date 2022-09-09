@@ -51,7 +51,7 @@ def _get_cache_path():
     """
     cache_path = os.getenv('MS_COMPILER_CACHE_PATH')
     if cache_path is None:
-        cache_path = "./kernel_meta/"
+        cache_path = "./akg_kernel_meta/"
     elif cache_path[-1] != "/":
         cache_path = cache_path + "/"
 

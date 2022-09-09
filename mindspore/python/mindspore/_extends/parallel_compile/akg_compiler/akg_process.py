@@ -96,8 +96,8 @@ def _compile_akg_task_ascend(json_strs, attrs):
 
         print_compile_log(compile_log)
         # Select best compile result
-        res = select_best([os.path.join(akg_compile_dir, "kernel_meta"), os.path.join(tbe_compile_dir, "kernel_meta")],
-                          kernel_meta_dir, op_name)
+        res = select_best([os.path.join(akg_compile_dir, "akg_kernel_meta"), os.path.join(
+            tbe_compile_dir, "kernel_meta")], kernel_meta_dir, op_name)
         if not res:
             if log_level == "ERROR":
                 raise ValueError("Compile error, json str: {}! build attrs: {}".format(json_str, attrs))

@@ -62,7 +62,7 @@ bool GraphKernelSplitterWithTuning::StartTuning(const std::string &dir_path) con
 }
 
 void SignTunedGraphs(const FuncGraphPtr &func_graph) {
-  auto kernel_meta = FileUtils::GetRealPath("./kernel_meta/");
+  auto kernel_meta = FileUtils::GetRealPath("./akg_kernel_meta/");
   if (!kernel_meta.has_value()) {
     return;
   }

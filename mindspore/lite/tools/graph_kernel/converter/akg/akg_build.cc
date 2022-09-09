@@ -211,7 +211,7 @@ bool AkgKernelBuilder::CompileJsonsInAnfnodes(const AnfNodePtrList &node_list) {
   std::map<AnfNodePtr, std::string> node_info_map;
   std::set<std::string> uniq_info_names;
   auto dir_path =
-    SaveNodesInfo(node_list, "./kernel_meta", AkgKernelBuilder::json_option(), &node_info_map, &uniq_info_names);
+    SaveNodesInfo(node_list, "./akg_kernel_meta", AkgKernelBuilder::json_option(), &node_info_map, &uniq_info_names);
   if (dir_path.empty()) {
     return false;
   }
