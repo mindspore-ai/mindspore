@@ -23,7 +23,13 @@
 namespace mindspore {
 namespace device {
 namespace gpu {
+#ifndef _MSC_VER
 pthread_rwlock_t GPUdeviceInfo::rwlock_;
+#else
+std::mutex GPUdeviceInfo::instanceLock;
+#endif
+
+#ifndef _MSC_VER
 std::shared_ptr<GPUdeviceInfo> GPUdeviceInfo::GetInstance(uint32_t device_id) {
   static std::unordered_map<uint32_t, std::shared_ptr<GPUdeviceInfo>> instances;
   // read lock
@@ -44,6 +50,22 @@ std::shared_ptr<GPUdeviceInfo> GPUdeviceInfo::GetInstance(uint32_t device_id) {
   }
   return gpu_device_info;
 }
+#else
+std::shared_ptr<GPUdeviceInfo> GPUdeviceInfo::GetInstance(uint32_t device_id) {
+  static std::unordered_map<uint32_t, std::shared_ptr<GPUdeviceInfo>> instances;
+  std::shared_ptr<GPUdeviceInfo> gpu_device_info{nullptr};
+  std::lock_guard<std::mutex> lk(instanceLock);
+  auto iter = instances.find(device_id);
+  if (iter != instances.end()) {
+    gpu_device_info = iter->second;
+  }
+  if (gpu_device_info == nullptr) {
+    gpu_device_info = std::make_shared<GPUdeviceInfo>(device_id);
+    instances.emplace(device_id, gpu_device_info);
+  }
+  return gpu_device_info;
+}
+#endif
 
 GPUdeviceInfo::GPUdeviceInfo(const uint32_t device_id) {
   cudaDeviceProp prop;
@@ -59,9 +81,15 @@ GPUdeviceInfo::GPUdeviceInfo(const uint32_t device_id) {
   max_grid_size_.x = prop.maxGridSize[x_index];
   max_grid_size_.y = prop.maxGridSize[y_index];
   max_grid_size_.z = prop.maxGridSize[z_index];
+#ifndef _MSC_VER
   pthread_rwlock_init(&rwlock_, nullptr);
+#endif
 }
-GPUdeviceInfo::~GPUdeviceInfo() { pthread_rwlock_destroy(&rwlock_); }
+GPUdeviceInfo::~GPUdeviceInfo() {
+#ifndef _MSC_VER
+  pthread_rwlock_destroy(&rwlock_);
+#endif
+}
 }  // namespace gpu
 }  // namespace device
 }  // namespace mindspore

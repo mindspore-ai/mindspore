@@ -17,13 +17,13 @@
 #include <cuda_runtime.h>
 #include "include/cuda_fp16.h"
 
-__device__ __forceinline__ bool isfinite(half x) {
-  return std::isfinite(static_cast<float>(x));
+__device__ __forceinline__ bool Isfinite(half x) {
+  return isfinite(static_cast<float>(x));
 }
 
 template <typename T>
-__device__ __forceinline__ bool isfinite(T x) {
-  return std::isfinite(x);
+__device__ __forceinline__ bool Isfinite(T x) {
+  return isfinite(x);
 }
 
 template <typename T>
@@ -36,7 +36,7 @@ __global__ void InTopK(const T *predictions, const int32_t *targets, bool *outpu
     if (!is_invalid) {
       T predicted_value = predictions[gt_id * class_id_count + target_index];
       T top_k_smallest_value = top_k_output[gt_id * k + k - 1];
-      is_invalid = is_invalid || !isfinite(predicted_value);
+      is_invalid = is_invalid || !Isfinite(predicted_value);
       output[gt_id] = is_invalid ? false : predicted_value >= top_k_smallest_value;
     } else {
       output[gt_id] = false;

@@ -239,23 +239,23 @@ __global__ void GridSampler2DGradKernel(const size_t size, T *grad_addr, T *inpu
 }
 
 template <typename T>
-CUDA_LIB_EXPORT void GridSampler2DGrad(const size_t size, const size_t dinput_size,
-                                       const size_t dgrid_size, T *grad_addr, T *input_addr,
-                                       T *grid_addr, T *dinput_addr, T *dgrid_addr,
-                                       const std::vector<size_t> &grad_shape,
-                                       const std::vector<size_t> &input_shape,
-                                       const std::vector<size_t> &grid_shape,
-                                       const std::vector<size_t> &dinput_shape,
-                                       const std::vector<size_t> &dgrid_shape,
-                                       const std::vector<size_t> &grad_stride,
-                                       const std::vector<size_t> &input_stride,
-                                       const std::vector<size_t> &grid_stride,
-                                       const std::vector<size_t> &dinput_stride,
-                                       const std::vector<size_t> &dgrid_stride,
-                                       const GridSamplerInterpolationMode interpolation_mode,
-                                       const GridSamplerPaddingMode padding_mode,
-                                       const bool align_corners,
-                                       cudaStream_t cuda_stream) {
+void GridSampler2DGrad(const size_t size, const size_t dinput_size,
+                       const size_t dgrid_size, T *grad_addr, T *input_addr,
+                       T *grid_addr, T *dinput_addr, T *dgrid_addr,
+                       const std::vector<size_t> &grad_shape,
+                       const std::vector<size_t> &input_shape,
+                       const std::vector<size_t> &grid_shape,
+                       const std::vector<size_t> &dinput_shape,
+                       const std::vector<size_t> &dgrid_shape,
+                       const std::vector<size_t> &grad_stride,
+                       const std::vector<size_t> &input_stride,
+                       const std::vector<size_t> &grid_stride,
+                       const std::vector<size_t> &dinput_stride,
+                       const std::vector<size_t> &dgrid_stride,
+                       const GridSamplerInterpolationMode interpolation_mode,
+                       const GridSamplerPaddingMode padding_mode,
+                       const bool align_corners,
+                       cudaStream_t cuda_stream) {
   GridSamplerGradInitKernel<<<GET_BLOCKS(dinput_size), GET_THREADS_MAXSIZE(dinput_size), 0, cuda_stream>>>(
     dinput_size, dinput_addr);
   GridSamplerGradInitKernel<<<GET_BLOCKS(dgrid_size), GET_THREADS_MAXSIZE(dgrid_size), 0, cuda_stream>>>(
@@ -523,23 +523,23 @@ __global__ void GridSampler3DGradKernel(const size_t size, T *grad_addr, T *inpu
 }
 
 template <typename T>
-CUDA_LIB_EXPORT void GridSampler3DGrad(const size_t size, const size_t dinput_size,
-                                       const size_t dgrid_size, T *grad_addr, T *input_addr,
-                                       T *grid_addr, T *dinput_addr, T *dgrid_addr,
-                                       const std::vector<size_t> &grad_shape,
-                                       const std::vector<size_t> &input_shape,
-                                       const std::vector<size_t> &grid_shape,
-                                       const std::vector<size_t> &dinput_shape,
-                                       const std::vector<size_t> &dgrid_shape,
-                                       const std::vector<size_t> &grad_stride,
-                                       const std::vector<size_t> &input_stride,
-                                       const std::vector<size_t> &grid_stride,
-                                       const std::vector<size_t> &dinput_stride,
-                                       const std::vector<size_t> &dgrid_stride,
-                                       const GridSamplerInterpolationMode interpolation_mode,
-                                       const GridSamplerPaddingMode padding_mode,
-                                       const bool align_corners,
-                                       cudaStream_t cuda_stream) {
+void GridSampler3DGrad(const size_t size, const size_t dinput_size,
+                       const size_t dgrid_size, T *grad_addr, T *input_addr,
+                       T *grid_addr, T *dinput_addr, T *dgrid_addr,
+                       const std::vector<size_t> &grad_shape,
+                       const std::vector<size_t> &input_shape,
+                       const std::vector<size_t> &grid_shape,
+                       const std::vector<size_t> &dinput_shape,
+                       const std::vector<size_t> &dgrid_shape,
+                       const std::vector<size_t> &grad_stride,
+                       const std::vector<size_t> &input_stride,
+                       const std::vector<size_t> &grid_stride,
+                       const std::vector<size_t> &dinput_stride,
+                       const std::vector<size_t> &dgrid_stride,
+                       const GridSamplerInterpolationMode interpolation_mode,
+                       const GridSamplerPaddingMode padding_mode,
+                       const bool align_corners,
+                       cudaStream_t cuda_stream) {
   GridSamplerGradInitKernel<<<GET_BLOCKS(dinput_size), GET_THREADS_MAXSIZE(dinput_size), 0, cuda_stream>>>(
     dinput_size, dinput_addr);
   GridSamplerGradInitKernel<<<GET_BLOCKS(dgrid_size), GET_THREADS_MAXSIZE(dgrid_size), 0, cuda_stream>>>(

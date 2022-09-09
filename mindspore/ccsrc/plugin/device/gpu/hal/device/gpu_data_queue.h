@@ -18,7 +18,6 @@
 #define MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_DATA_QUEUE_H_
 
 #include <cuda_runtime_api.h>
-#include <unistd.h>
 #include <memory>
 #include <vector>
 #include <functional>

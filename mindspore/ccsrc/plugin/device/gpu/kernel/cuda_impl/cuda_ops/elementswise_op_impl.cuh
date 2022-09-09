@@ -26,7 +26,6 @@ namespace elementwise {
 // the maximum number of registers that can be used by each thread is 255.
 // So, kThreadsPerBlock = 64 * 1024 / 255 = 256.
 // Refer from https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#compute-capabilities
-typedef unsigned int uint;
 constexpr uint kThreadsPerBlock = 256;
 // An empirical parameter
 constexpr uint kWaves = 32;
@@ -184,13 +183,19 @@ cudaError_t LaunchKernel(Factory factory, uint nums, OUT *out, const IN *...in, 
     return err;
   }
   uint num_blocks = GetBestBlocks(vec_nums, config);
-  auto func =
-    tail_nums > 0 ? DoApply<vec_size, true, Factory, OUT, IN...> : DoApply<vec_size, false, Factory, OUT, IN...>;
   dim3 block{kThreadsPerBlock};
   dim3 grid{uint(num_blocks)};
-  func<<<grid, block, 0, stream>>>(factory, vec_nums, reinterpret_cast<AlignVec<OUT, vec_size> *>(out),
-                                   (reinterpret_cast<const AlignVec<IN, vec_size> *>(in))..., tail_nums,
-                                   out + tail_offset, (in + tail_offset)...);
+  if (tail_nums > 0) {
+    auto func = DoApply<vec_size, true, Factory, OUT, IN...>;
+    func<<<grid, block, 0, stream>>>(factory, vec_nums, reinterpret_cast<AlignVec<OUT, vec_size> *>(out),
+                                    (reinterpret_cast<const AlignVec<IN, vec_size> *>(in))..., tail_nums,
+                                    out + tail_offset, (in + tail_offset)...);
+  } else {
+    auto func = DoApply<vec_size, false, Factory, OUT, IN...>;
+    func<<<grid, block, 0, stream>>>(factory, vec_nums, reinterpret_cast<AlignVec<OUT, vec_size> *>(out),
+                                    (reinterpret_cast<const AlignVec<IN, vec_size> *>(in))..., tail_nums,
+                                    out + tail_offset, (in + tail_offset)...);
+  }
   return cudaPeekAtLastError();
 }
 

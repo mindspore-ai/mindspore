@@ -82,10 +82,10 @@ __global__ void CalNormValFun3(const T *input, size_t inner_size, size_t axis_si
   }
 }
 
-template <>
-CUDA_LIB_EXPORT void CalRenorm<half>(const half *input, size_t input_elements, size_t inner_size, size_t axis_size,
-                                     int p, float *norm_value, half *output, const uint32_t &device_id,
-                                     cudaStream_t cuda_stream, float max_norm) {
+template <typename T>
+void CalRenorm(const T *input, size_t input_elements, size_t inner_size, size_t axis_size,
+               int p, float *norm_value, T *output, const uint32_t &device_id,
+               cudaStream_t cuda_stream, float max_norm) {
   CalNormValFun1<<<CUDA_BLOCKS(device_id, input_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     input, input_elements, inner_size, axis_size, p, norm_value);
   CalNormValFun2<<<CUDA_BLOCKS(device_id, axis_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(norm_value, p,
@@ -94,50 +94,27 @@ CUDA_LIB_EXPORT void CalRenorm<half>(const half *input, size_t input_elements, s
     input, inner_size, axis_size, input_elements, output, norm_value);
 }
 
-template <>
-CUDA_LIB_EXPORT void CalRenorm<float>(const float *input, size_t input_elements, size_t inner_size, size_t axis_size,
-                                      int p, float *norm_value, float *output, const uint32_t &device_id,
-                                      cudaStream_t cuda_stream, float max_norm) {
-  CalNormValFun1<<<CUDA_BLOCKS(device_id, input_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(
-    input, input_elements, inner_size, axis_size, p, norm_value);
-  CalNormValFun2<<<CUDA_BLOCKS(device_id, axis_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(norm_value, p,
-                                                                                                 axis_size, max_norm);
-  CalNormValFun3<<<CUDA_BLOCKS(device_id, input_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(
-    input, inner_size, axis_size, input_elements, output, norm_value);
-}
+template CUDA_LIB_EXPORT
+void CalRenorm<half>(const half *input, size_t input_elements, size_t inner_size, size_t axis_size,
+                     int p, float *norm_value, half *output, const uint32_t &device_id,
+                     cudaStream_t cuda_stream, float max_norm);
 
-template <>
-CUDA_LIB_EXPORT void CalRenorm<double>(const double *input, size_t input_elements, size_t inner_size, size_t axis_size,
-                                       int p, float *norm_value, double *output, const uint32_t &device_id,
-                                       cudaStream_t cuda_stream, float max_norm) {
-  CalNormValFun1<<<CUDA_BLOCKS(device_id, input_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(
-    input, input_elements, inner_size, axis_size, p, norm_value);
-  CalNormValFun2<<<CUDA_BLOCKS(device_id, axis_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(norm_value, p,
-                                                                                                 axis_size, max_norm);
-  CalNormValFun3<<<CUDA_BLOCKS(device_id, input_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(
-    input, inner_size, axis_size, input_elements, output, norm_value);
-}
+template CUDA_LIB_EXPORT
+void CalRenorm<float>(const float *input, size_t input_elements, size_t inner_size, size_t axis_size,
+                      int p, float *norm_value, float *output, const uint32_t &device_id,
+                      cudaStream_t cuda_stream, float max_norm);
 
-template <>
-CUDA_LIB_EXPORT void CalRenorm<Complex<float>>(const Complex<float> *input, size_t input_elements, size_t inner_size,
-                                               size_t axis_size, int p, float *norm_value, Complex<float> *output,
-                                               const uint32_t &device_id, cudaStream_t cuda_stream, float max_norm) {
-  CalNormValFun1<<<CUDA_BLOCKS(device_id, input_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(
-    input, input_elements, inner_size, axis_size, p, norm_value);
-  CalNormValFun2<<<CUDA_BLOCKS(device_id, axis_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(norm_value, p,
-                                                                                                 axis_size, max_norm);
-  CalNormValFun3<<<CUDA_BLOCKS(device_id, input_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(
-    input, inner_size, axis_size, input_elements, output, norm_value);
-}
+template CUDA_LIB_EXPORT
+void CalRenorm<double>(const double *input, size_t input_elements, size_t inner_size, size_t axis_size,
+                       int p, float *norm_value, double *output, const uint32_t &device_id,
+                       cudaStream_t cuda_stream, float max_norm);
 
-template <>
-CUDA_LIB_EXPORT void CalRenorm<Complex<double>>(const Complex<double> *input, size_t input_elements, size_t inner_size,
-                                                size_t axis_size, int p, float *norm_value, Complex<double> *output,
-                                                const uint32_t &device_id, cudaStream_t cuda_stream, float max_norm) {
-  CalNormValFun1<<<CUDA_BLOCKS(device_id, input_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(
-    input, input_elements, inner_size, axis_size, p, norm_value);
-  CalNormValFun2<<<CUDA_BLOCKS(device_id, axis_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(norm_value, p,
-                                                                                                 axis_size, max_norm);
-  CalNormValFun3<<<CUDA_BLOCKS(device_id, input_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(
-    input, inner_size, axis_size, input_elements, output, norm_value);
-}
+template CUDA_LIB_EXPORT
+void CalRenorm<Complex<float>>(const Complex<float> *input, size_t input_elements, size_t inner_size,
+                               size_t axis_size, int p, float *norm_value, Complex<float> *output,
+                               const uint32_t &device_id, cudaStream_t cuda_stream, float max_norm);
+
+template CUDA_LIB_EXPORT
+void CalRenorm<Complex<double>>(const Complex<double> *input, size_t input_elements, size_t inner_size,
+                                size_t axis_size, int p, float *norm_value, Complex<double> *output,
+                                const uint32_t &device_id, cudaStream_t cuda_stream, float max_norm);

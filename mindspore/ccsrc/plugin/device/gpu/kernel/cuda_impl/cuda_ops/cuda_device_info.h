@@ -22,12 +22,38 @@
 #include <algorithm>
 #include <cusolverDn.h>
 #include <memory>
+#include <mutex>
+#ifdef _MSC_VER
+#include <cassert>
+#endif
 
+#ifdef _MSC_VER
+#ifdef BUILDING_CUDA_OPS_DLL
+#define CUDA_LIB_EXPORT __declspec(dllexport)
+#else
+#define CUDA_LIB_EXPORT __declspec(dllimport)
+#endif
+#else
 #define CUDA_LIB_EXPORT __attribute__((visibility("default")))
+#endif  // _MSC_VER
+
+#ifdef _WIN32
+#ifndef uint
+#define uint unsigned int
+#endif
+#endif
+
+#ifndef _MSC_VER
 #define CUDA_KERNEL_ASSERT(cond)                                                       \
   if (!(cond)) {                                                                       \
     __assert_fail(#cond, __FILE__, static_cast<unsigned int>(__LINE__), __FUNCTION__); \
   }
+#else
+#define CUDA_KERNEL_ASSERT(cond) \
+  if (!(cond)) {                 \
+    assert(0);                   \
+  }
+#endif
 namespace mindspore {
 namespace device {
 namespace gpu {
@@ -61,7 +87,11 @@ class GPUdeviceInfo {
   size_t max_share_memory_;
   bool check_sm_{true};
   dim3 max_grid_size_;
+#ifndef _MSC_VER
   static pthread_rwlock_t rwlock_;
+#else
+  static std::mutex instanceLock;
+#endif
 };
 
 #define CUDA_BLOCKS(device_id, total_threads) \

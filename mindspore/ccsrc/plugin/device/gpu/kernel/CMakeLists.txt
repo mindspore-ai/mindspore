@@ -14,6 +14,9 @@ if(ENABLE_GPU)
 
     if(WIN32)
         list(REMOVE_ITEM GPU_SRC_LIST "nccl/nccl_gpu_kernel.cc")
+        list(REMOVE_ITEM GPU_SRC_LIST "rl/mux_base_gpu_kernel.cc")
+        list(REMOVE_ITEM GPU_SRC_LIST "rl/mux_send_gpu_kernel.cc")
+        list(REMOVE_ITEM GPU_SRC_LIST "rl/mux_recv_gpu_kernel.cc")
     endif()
 
     if(ENABLE_MPI)

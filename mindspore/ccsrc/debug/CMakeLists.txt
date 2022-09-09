@@ -33,6 +33,10 @@ if(ENABLE_DEBUGGER)
         "${CMAKE_CURRENT_SOURCE_DIR}/data_dump/tensor_stat_dump.cc"
         "${CMAKE_CURRENT_SOURCE_DIR}/utils.cc"
         )
+else()
+    list(APPEND _DEBUG_SRC_LIST
+        "${CMAKE_CURRENT_SOURCE_DIR}/debugger/proto_exporter_stub.cc"
+        )
 endif()
 
 if(NOT ENABLE_SECURITY)

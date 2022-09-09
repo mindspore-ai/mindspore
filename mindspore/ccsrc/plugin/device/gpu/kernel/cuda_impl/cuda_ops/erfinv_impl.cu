@@ -21,9 +21,6 @@ constexpr uint elements_per_thread = 4;
 constexpr uint threads_per_block = 256;
 constexpr uint elements_per_block = elements_per_thread * threads_per_block;
 
-typedef unsigned int uint;
-
-
 template <typename T>
 struct VectorizedTrait {  // Only use of raw pointer with no offset.
   static const uint VecSize = 4;

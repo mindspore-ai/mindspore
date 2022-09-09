@@ -286,9 +286,9 @@ __global__ void MultiMarginLossReduceKernel(int dim, T *output) {
 
 // namespace str
 template <typename T>
-CUDA_LIB_EXPORT void MultiMarginLoss(int64_t p, float margin, int64_t reduction, int nframe, int dim, const T *input,
-                                     const int64_t *target, const T *weight, T *output, const uint32_t &device_id,
-                                     cudaStream_t cuda_stream) {
+void MultiMarginLoss(int64_t p, float margin, int64_t reduction, int nframe, int dim, const T *input,
+                     const int64_t *target, const T *weight, T *output, const uint32_t &device_id,
+                     cudaStream_t cuda_stream) {
   dim3 blocks(nframe);
   dim3 threads(MULTIMARGIN_THREADS);
   bool sizeAverage = false;
@@ -311,9 +311,9 @@ CUDA_LIB_EXPORT void MultiMarginLoss(int64_t p, float margin, int64_t reduction,
 
 // namespace str
 template <>
-CUDA_LIB_EXPORT void MultiMarginLoss(int64_t p, float margin, int64_t reduction, int nframe, int dim, const half *input,
-                                     const int64_t *target, const half *weight, half *output, const uint32_t &device_id,
-                                     cudaStream_t cuda_stream) {
+void MultiMarginLoss(int64_t p, float margin, int64_t reduction, int nframe, int dim, const half *input,
+                     const int64_t *target, const half *weight, half *output, const uint32_t &device_id,
+                     cudaStream_t cuda_stream) {
   dim3 blocks(nframe);
   dim3 threads(128);
   bool sizeAverage = false;
@@ -342,3 +342,7 @@ template CUDA_LIB_EXPORT void MultiMarginLoss<double>(int64_t p, float margin, i
                                                       const double *input, const int64_t *target, const double *weight,
                                                       double *output, const uint32_t &device_id,
                                                       cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void MultiMarginLoss<half>(int64_t p, float margin, int64_t reduction, int nframe, int dim,
+                                                    const half *input, const int64_t *target, const half *weight,
+                                                    half *output, const uint32_t &device_id,
+                                                    cudaStream_t cuda_stream);

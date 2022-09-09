@@ -159,7 +159,11 @@ bool Path::IsDirectory() {
 Status Path::CreateDirectory(bool is_common_dir) {
   if (!Exists()) {
 #if defined(_WIN32) || defined(_WIN64)
+#ifndef _MSC_VER
     int rc = mkdir(common::SafeCStr(path_));
+#else
+    int rc = _mkdir(common::SafeCStr(path_));
+#endif
 #else
     int rc = mkdir(common::SafeCStr(path_), S_IRUSR | S_IWUSR | S_IXUSR);
     if (rc == 0 && is_common_dir) {
@@ -219,7 +223,11 @@ Status Path::CreateCommonDirectories() { return CreateDirectories(true); }
 Status Path::Remove() {
   if (Exists()) {
     if (IsDirectory()) {
+#ifndef _MSC_VER
       errno_t err = rmdir(common::SafeCStr(path_));
+#else
+      errno_t err = _rmdir(common::SafeCStr(path_));
+#endif
       if (err == -1) {
         std::ostringstream oss;
         oss << "Unable to delete directory " << path_ << ". Errno = " << errno;
@@ -305,7 +313,11 @@ Status Path::CloseFile(int fd) const {
 }
 
 Status Path::TruncateFile(int fd) const {
+#ifdef _MSC_VER
+  int rc = _chsize(fd, 0);
+#else
   int rc = ftruncate(fd, 0);
+#endif
   if (rc == 0) {
     return Status::OK();
   } else {

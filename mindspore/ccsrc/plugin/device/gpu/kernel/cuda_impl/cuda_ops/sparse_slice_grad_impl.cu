@@ -83,10 +83,10 @@ __global__ void SparseSliceGradKernel(const DataType *x_ptr, const IndexType *in
 }
 
 template <typename DataType, typename IndexType>
-CUDA_LIB_EXPORT void SparseSliceGrad(const DataType *x_ptr, const IndexType *indices_ptr, const IndexType *start_ptr,
-                                     const IndexType *new_indices_ptr, DataType *y_ptr, size_t *num_propagated_,
-                                     size_t input_nnz_, size_t output_nnz_, size_t num_dim_, uint32_t device_id,
-                                     cudaStream_t cuda_stream) {
+void SparseSliceGrad(const DataType *x_ptr, const IndexType *indices_ptr, const IndexType *start_ptr,
+                     const IndexType *new_indices_ptr, DataType *y_ptr, size_t *num_propagated_,
+                     size_t input_nnz_, size_t output_nnz_, size_t num_dim_, uint32_t device_id,
+                     cudaStream_t cuda_stream) {
   int threads_per_block = CUDA_THREADS(device_id);
   unsigned int grid_num = UP_DIV(input_nnz_ + 1, threads_per_block);
   SparseSliceGradKernel<<<grid_num, threads_per_block, 0, cuda_stream>>>(

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_PROTO_EXPORTER_STUB_H
-#define MINDSPORE_PROTO_EXPORTER_STUB_H
-
-#include <string>
-#include "utils/symbolic.h"
-#include "backend/common/session/kernel_graph.h"
-
+#include "debug/debugger/proto_exporter_stub.h"
+#include "utils/log_adapter.h"
 namespace mindspore {
-enum LocDebugDumpMode { kDebugOff = 0, kDebugTopStack = 1, kDebugWholeStack = 2 };
 void DumpIRProtoWithSrcInfo(const FuncGraphPtr &func_graph, const std::string &suffix, const std::string &target_dir,
-                            LocDebugDumpMode dump_location = kDebugWholeStack);
-void DumpConstantInfo(const KernelGraphPtr &graph, const std::string &target_dir);
+                            LocDebugDumpMode dump_location) {
+  MS_LOG(ERROR) << "Not support DumpIRProtoWithSrcInfo ";
+  return;
+}
+
+void DumpConstantInfo(const KernelGraphPtr &graph, const std::string &target_dir) {
+  MS_LOG(ERROR) << "Not support DumpConstantInfo ";
+  return;
+}
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_DEBUG_DEBUGGER_MINDSPORE_PROTO_EXPORTER_STUB_H_

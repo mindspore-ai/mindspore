@@ -17,7 +17,11 @@
 #ifndef MINDSPORE_CCSRC_KERNEL_GPU_CUSTOM_CUSTOM_AOT_GPU_KERNEL_H
 #define MINDSPORE_CCSRC_KERNEL_GPU_CUSTOM_CUSTOM_AOT_GPU_KERNEL_H
 
+#ifdef _MSC_VER
+#include <windows.h>
+#else
 #include <dlfcn.h>
+#endif
 #include <vector>
 #include <string>
 #include <algorithm>
@@ -35,7 +39,11 @@ class CustomAOTGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   CustomAOTGpuKernelMod() : num_input_(0), num_output_(0), handle_(nullptr), aot_func_(nullptr) {}
   ~CustomAOTGpuKernelMod() override {
     if (handle_ != nullptr) {
+#ifdef _MSC_VER
+      FreeLibrary(handle_);
+#else
       dlclose(handle_);
+#endif
     }
 
     attrs_.DestructKernelData();
@@ -55,12 +63,26 @@ class CustomAOTGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       params.push_back(GetDeviceAddress<void>(workspace, i));
     }
     if (!handle_) {
+#ifdef _MSC_VER
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "' on GPU, dlopen file '" << file_path_
+                    << "' should be successful, but error occurs! ";
+#else
       MS_LOG(ERROR) << "For '" << kernel_name_ << "' on GPU, dlopen file '" << file_path_
                     << "' should be successful, but error occurs! Error message is: " << dlerror();
+#endif
       return false;
     }
 
     if (!aot_func_) {
+#ifdef _MSC_VER
+      aot_func_ =
+        reinterpret_cast<std::add_pointer<int(int, void **, int *, int64_t **, const char **, void *, void *)>::type>(
+          GetProcAddress(handle_, func_name_.c_str()));
+      if (aot_func_ == nullptr) {
+        MS_LOG(ERROR) << "For '" << kernel_name_ << "' on GPU, error occurs when fetching function '" << func_name_;
+        return false;
+      }
+#else
       aot_func_ =
         reinterpret_cast<std::add_pointer<int(int, void **, int *, int64_t **, const char **, void *, void *)>::type>(
           dlsym(handle_, func_name_.c_str()));
@@ -69,6 +91,7 @@ class CustomAOTGpuKernelMod : public DeprecatedNativeGpuKernelMod {
                       << "'. Error info: " << error_info;
         return false;
       }
+#endif
     }
 
     int nparam = SizeToInt(params.size());
@@ -152,16 +175,29 @@ class CustomAOTGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     attrs_.SetKernelNode(kernel_node);
 
     if (!handle_) {
+#ifdef _MSC_VER
+      handle_ = LoadLibrary(file_path_.c_str());
+      if (!handle_) {
+        MS_LOG(ERROR) << "For '" << kernel_name_ << "' on GPU, dlopen file '" << file_path_
+                      << "' should be successful, but error occurs! ";
+        return false;
+      }
+#else
       handle_ = dlopen(file_path_.c_str(), RTLD_LAZY | RTLD_LOCAL);
       if (!handle_) {
         MS_LOG(ERROR) << "For '" << kernel_name_ << "' on GPU, dlopen file '" << file_path_
                       << "' should be successful, but error occurs! Error message is: " << dlerror();
         return false;
       }
+#endif
     }
-
+#ifdef _MSC_VER
+    init_func_ = reinterpret_cast<std::add_pointer<int(int *, int64_t **, const char **, AotExtra *)>::type>(
+      GetProcAddress(handle_, (func_name_ + "Init").c_str()));
+#else
     init_func_ = reinterpret_cast<std::add_pointer<int(int *, int64_t **, const char **, AotExtra *)>::type>(
       dlsym(handle_, (func_name_ + "Init").c_str()));
+#endif
     if (init_func_ != nullptr) {
       // Init func exist in the custom aot file
       // Call this init func to set custom op attrs
@@ -212,7 +248,11 @@ class CustomAOTGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   size_t num_output_;
   std::string file_path_;
   std::string func_name_;
-  void *handle_;
+#ifdef _MSC_VER
+  HMODULE handle_{nullptr};
+#else
+  void *handle_{nullptr};
+#endif
   int (*init_func_)(int *, int64_t **, const char **, AotExtra *);
   int (*aot_func_)(int, void **, int *, int64_t **, const char **, void *, void *);
 

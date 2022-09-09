@@ -27,12 +27,9 @@
 namespace mindspore {
 namespace profiler {
 namespace gpu {
-inline void *LoadLib(const char *name) {
 #ifndef _MSC_VER
+inline void *LoadLib(const char *name) {
   auto handle = dlopen(name, RTLD_LAZY | RTLD_LOCAL);
-#else
-  auto handle = LoadLibrary(name);
-#endif
   if (handle == nullptr) {
     MS_LOG(EXCEPTION) << "Load lib " << name << " Please check whether configured the path of CUPTI to LD_LIBRARY_PATH";
   }
@@ -40,26 +37,41 @@ inline void *LoadLib(const char *name) {
 }
 
 inline void *GetCUPTIHandle() {
-#ifndef _MSC_VER
   static void *handle = LoadLib("libcupti.so");
-#else
-  static void *handle = LoadLib("cupti.dll");
-#endif
   return handle;
 }
 
 inline void *GetCUPTIFunc(const char *name) {
   static void *handle = GetCUPTIHandle();
-#ifndef _MSC_VER
   void *func = dlsym(handle, name);
-#else
-  void *func = reinterpret_cast<void *>(GetProcAddress(handle, name));
-#endif
   if (func == nullptr) {
     MS_LOG(EXCEPTION) << "Load func " << name << " failed, make sure you have implied it!";
   }
   return func;
 }
+#else
+inline HMODULE LoadLib(const char *name) {
+  auto handle = LoadLibrary(name);
+  if (handle == nullptr) {
+    MS_LOG(EXCEPTION) << "Load lib " << name << " Please check whether configured the path of CUPTI to LD_LIBRARY_PATH";
+  }
+  return handle;
+}
+
+inline HMODULE GetCUPTIHandle() {
+  static HMODULE handle = LoadLib("cupti.dll");
+  return handle;
+}
+
+inline void *GetCUPTIFunc(const char *name) {
+  static HMODULE handle = GetCUPTIHandle();
+  void *func = reinterpret_cast<void *>(GetProcAddress(handle, name));
+  if (func == nullptr) {
+    MS_LOG(EXCEPTION) << "Load func " << name << " failed, make sure you have implied it!";
+  }
+  return func;
+}
+#endif
 
 using CuptiSubscribeFunc = CUptiResult (*)(CUpti_SubscriberHandle *subscriber, CUpti_CallbackFunc callback,
                                            void *userdata);
