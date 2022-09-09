@@ -164,11 +164,14 @@ void ConvolutionTensorRT::SetAttributes(const schema::Conv2DFusion *conv_op, nvi
       auto padding_val = std::vector<int64_t>(padding->begin(), padding->end());
       if (padding_val[0] != padding_val[1] || padding_val[DIMENSION_2D] != padding_val[DIMENSION_3D]) {
         MS_LOG(WARNING) << op_name_ << " has different up and down padding value";
+        nvinfer1::Dims2 pre_dims(padding_val[0], padding_val[1]);
+        conv_layer->setPrePadding(pre_dims);
+        nvinfer1::Dims2 post_dims(padding_val[DIMENSION_2D], padding_val[DIMENSION_3D]);
+        conv_layer->setPostPadding(post_dims);
+      } else {
+        nvinfer1::Dims2 dims(padding_val[0], padding_val[DIMENSION_2D]);
+        conv_layer->setPaddingNd(dims);
       }
-      nvinfer1::Dims2 pre_dims(padding_val[0], padding_val[DIMENSION_2D]);
-      nvinfer1::Dims2 post_dims(padding_val[1], padding_val[DIMENSION_3D]);
-      conv_layer->setPrePadding(pre_dims);
-      conv_layer->setPostPadding(post_dims);
     } else if (padding == nullptr || padding->size() == 0) {
       nvinfer1::Dims2 dims;
       conv_layer->setPaddingNd(dims);

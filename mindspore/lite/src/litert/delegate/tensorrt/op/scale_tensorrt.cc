@@ -44,24 +44,24 @@ int ScaleTensorRT::IsSupport(const schema::Primitive *primitive, const std::vect
 
 int ScaleTensorRT::AddInnerOp(TensorRTContext *ctx) {
   CHECK_NULL_RETURN(ctx);
+  out_format_ = input(ctx, 0).format_;
+  out_same_format_ = input(ctx, 0).same_format_;
+
   auto scale_op = op_primitive_->value_as_ScaleFusion();
   CHECK_NULL_RETURN(scale_op);
-
   schema::ActivationType activation_type = scale_op->activation_type();
   // mode of scale
   axis_ = scale_op->axis();
-  axis_ = axis_ < 0 ? static_cast<int64_t>(in_tensors_[0].Shape().size() + axis_) : axis_;
-  out_format_ = input(ctx, 0).format_;
-  out_same_format_ = input(ctx, 0).same_format_;
-  mode_ = GetScaleMode(axis_);
-  MS_LOG(DEBUG) << "before transpose " << GetTensorFormat(input(ctx, 0));
+  int input_nbdims = input(ctx, 0).trt_tensor_->getDimensions().nbDims;
+  axis_ = axis_ < 0 ? static_cast<int64_t>(input_nbdims + axis_) : axis_;
 
+  mode_ = GetScaleMode(input(ctx, 0).trt_tensor_, axis_);
+  MS_LOG(DEBUG) << "before transpose " << GetTensorFormat(input(ctx, 0));
   nvinfer1::ITensor *scale_in_tensor = PreProcessInputTensor(ctx);
   if (scale_in_tensor == nullptr) {
     MS_LOG(ERROR) << "PreProcessInputTensor failed: " << op_name_;
     return RET_ERROR;
   }
-
   MS_LOG(DEBUG) << "after transpose " << GetTensorFormat(scale_in_tensor, out_format_, out_same_format_);
 
   nvinfer1::ITensor *op_out_tensor{nullptr};
@@ -122,9 +122,9 @@ nvinfer1::ITensor *ScaleTensorRT::PreProcessInputTensor(TensorRTContext *ctx) {
   return scale_in_tensor;
 }
 
-nvinfer1::ScaleMode ScaleTensorRT::GetScaleMode(int64_t axis) {
+nvinfer1::ScaleMode ScaleTensorRT::GetScaleMode(nvinfer1::ITensor *input, int64_t axis) {
   nvinfer1::ScaleMode mode = nvinfer1::ScaleMode::kUNIFORM;
-  auto input_data_shape = in_tensors_[0].Shape();
+  auto input_data_shape = ConvertMSShape(input->getDimensions());
   auto input_weight_shape = in_tensors_[1].Shape();
   int total = std::accumulate(input_data_shape.begin(), input_data_shape.end(), 1, std::multiplies<int>());
   if (input_weight_shape.size() == 0 || (input_weight_shape.size() == 1 && input_weight_shape[0] == 1)) {
@@ -187,7 +187,8 @@ nvinfer1::ITensor *ScaleTensorRT::RunAs4DimsScale(TensorRTContext *ctx, nvinfer1
 }
 
 nvinfer1::ITensor *ScaleTensorRT::RunAsMutiDimsScale(TensorRTContext *ctx, nvinfer1::ITensor *scale_in_tensor) {
-  auto scale_tensor = ConvertConstantTensorWithDims(ctx, in_tensors_[1], in_tensors_[0].Shape(), op_name_);
+  auto expect_shape = ConvertMSShape(scale_in_tensor->getDimensions());
+  auto scale_tensor = ConvertConstantTensorWithDims(ctx, in_tensors_[1], expect_shape, op_name_);
   if (scale_tensor == nullptr) {
     MS_LOG(ERROR) << "ConvertConstantTensorWithDims failed for " << op_name_;
     return nullptr;
@@ -203,7 +204,7 @@ nvinfer1::ITensor *ScaleTensorRT::RunAsMutiDimsScale(TensorRTContext *ctx, nvinf
   nvinfer1::ITensor *out_tensor = mul_layer->getOutput(0);
   // add shift
   if (in_tensors_.size() >= INPUT_SIZE3) {
-    auto shift_tensor = ConvertConstantTensorWithDims(ctx, in_tensors_[SHIFT_INDEX], in_tensors_[0].Shape(), op_name_);
+    auto shift_tensor = ConvertConstantTensorWithDims(ctx, in_tensors_[SHIFT_INDEX], expect_shape, op_name_);
     if (shift_tensor == nullptr) {
       MS_LOG(ERROR) << "ConvertConstantTensorWithDims failed for " << op_name_;
       return nullptr;

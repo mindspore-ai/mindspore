@@ -38,7 +38,14 @@ int ConcateTensorRT::IsSupport(const schema::Primitive *primitive, const std::ve
     return RET_ERROR;
   }
 
-  int input_nbDims = in_tensors_[0].Shape().size();
+  return RET_OK;
+}
+int ConcateTensorRT::CheckParams(TensorRTContext *ctx) {
+  if (ctx == nullptr || ctx->network() == nullptr) {
+    MS_LOG(ERROR) << "context or network is invalid";
+    return RET_ERROR;
+  }
+  int input_nbDims = input(ctx, 0).trt_tensor_->getDimensions().nbDims;
   if (axis_ == -1) {
     axis_ = input_nbDims - 1;
   }
@@ -46,17 +53,18 @@ int ConcateTensorRT::IsSupport(const schema::Primitive *primitive, const std::ve
     MS_LOG(ERROR) << "concate_op valid axis : " << axis_ << " , input dims : " << input_nbDims;
     return RET_ERROR;
   }
-  return RET_OK;
-}
-int ConcateTensorRT::AddInnerOp(TensorRTContext *ctx) {
-  if (ctx == nullptr || ctx->network() == nullptr) {
-    MS_LOG(ERROR) << "context or network is invalid";
-    return RET_ERROR;
-  }
 
-  if (in_tensors_.size() != in_tensors_.size()) {
+  if (in_tensors_.size() != ReadyInputsNumber(ctx)) {
     MS_LOG(ERROR) << "concate_op in tensor is invalid, trt tensor has " << in_tensors_.size()
                   << ", but origin ms tensor has " << in_tensors_.size();
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+int ConcateTensorRT::AddInnerOp(TensorRTContext *ctx) {
+  if (CheckParams(ctx) != RET_OK) {
+    MS_LOG(ERROR) << "Check input tensors failed: " << op_name_;
     return RET_ERROR;
   }
 
@@ -65,6 +73,14 @@ int ConcateTensorRT::AddInnerOp(TensorRTContext *ctx) {
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "PreProcessInputs failed for " << op_name_;
     return ret;
+  }
+
+  bool has_rank_0 = false;
+  for (size_t i = 0; i != in_tensors_.size(); ++i) {
+    if (!input(ctx, i).is_tensor_) {
+      has_rank_0 = true;
+      break;
+    }
   }
 
   if (!same_format_) {
@@ -77,7 +93,7 @@ int ConcateTensorRT::AddInnerOp(TensorRTContext *ctx) {
     }
   }
 
-  if (type_ == schema::PrimitiveType_Stack) {
+  if (type_ == schema::PrimitiveType_Stack && !has_rank_0) {
     for (size_t i = 0; i != in_tensors_.size(); ++i) {
       auto shuffle_layer = ctx->network()->addShuffle(*trt_input_tensors[i]);
       if (shuffle_layer == nullptr) {
@@ -117,7 +133,9 @@ int ConcateTensorRT::PreProcessInputs(TensorRTContext *ctx, nvinfer1::ITensor *t
 
   for (size_t i = 0; i < in_tensors_.size(); i++) {
     if (input(ctx, i).trt_tensor_->getDimensions().nbDims != input_nbDims) {
-      MS_LOG(ERROR) << "dims of inputs is invalid for " << op_name_;
+      MS_LOG(ERROR) << "dims of inputs is invalid for " << in_tensors_[i].Name()
+                    << " input dim size : " << input(ctx, i).trt_tensor_->getDimensions().nbDims
+                    << " ms input dims size : " << input_nbDims;
       return RET_ERROR;
     }
     // keep origin format if all input format are the same
@@ -141,7 +159,8 @@ int ConcateTensorRT::PreProcessInputs(TensorRTContext *ctx, nvinfer1::ITensor *t
         trt_input_tensors[i] = transpose_layer->getOutput(0);
         this->transpose_layer_ = transpose_layer;
         same_format_ = true;
-        MS_LOG(DEBUG) << "concate input " << GetTensorFormat(trt_input_tensors[i], Format::NHWC, true);
+        MS_LOG(DEBUG) << "concate input "
+                      << GetTensorFormat(trt_input_tensors[i], Format::NHWC, true, input(ctx, i).is_tensor_);
       }
     }
   } else {

@@ -59,13 +59,6 @@ int ElementWiseTensorRT::IsSupport(const schema::Primitive *primitive,
     return RET_ERROR;
   }
 
-  // if constant tensor is scalar, it needs to know another input tensor's shape to broadcast
-  if ((in_tensors[0].Shape().size() > 0 && in_tensors[0].Shape()[0] == -1 && in_tensors[1].Shape().size() == 0) ||
-      (in_tensors[1].Shape().size() > 0 && in_tensors[1].Shape()[0] == -1 && in_tensors[0].Shape().size() == 0)) {
-    MS_LOG(ERROR) << "invalid all input tensor shape unknown for: " << op_name_;
-    return RET_ERROR;
-  }
-
   bool is_not_bool_arith = NOT_BOOL_PRIM2NV_ELEM_OP.find(type_) != NOT_BOOL_PRIM2NV_ELEM_OP.end();
   if (is_not_bool_arith) {
     if (std::any_of(in_tensors.begin(), in_tensors.end(),
@@ -158,7 +151,8 @@ int ElementWiseTensorRT::AddInnerOp(TensorRTContext *ctx) {
     MS_LOG(INFO) << "bool result cast to int32" << op_name_;
   }
 #endif
-  auto output_helper = ITensorHelper{op_out_tensor, x_input.format_, x_input.same_format_};
+  auto output_helper =
+    ITensorHelper{op_out_tensor, x_input.format_, x_input.same_format_, x_input.is_tensor_ || y_input.is_tensor_};
   ctx->RegisterTensor(output_helper, out_tensors_[0].Name());
   MS_LOG(DEBUG) << "output " << GetTensorFormat(output_helper);
   return RET_OK;
@@ -268,35 +262,15 @@ nvinfer1::ITensor *ElementWiseTensorRT::AddActivation(TensorRTContext *ctx, nvin
 
 int ElementWiseTensorRT::AddConstTensor(TensorRTContext *ctx) {
   int const_tensor_index = (in_tensors_[0].Data() != nullptr && in_tensors_[0].IsConst()) ? 0 : 1;
-  nvinfer1::ITensor *constant_input = ConvertConstantTensorWithDims(
-    ctx, in_tensors_[const_tensor_index], in_tensors_[1 - const_tensor_index].Shape(), op_name_);
+  auto expect_shape = ConvertMSShape(input(ctx, 1 - const_tensor_index).trt_tensor_->getDimensions());
+  nvinfer1::ITensor *constant_input =
+    ConvertConstantTensorWithDims(ctx, in_tensors_[const_tensor_index], expect_shape, op_name_);
   CHECK_NULL_RETURN(constant_input);
   auto const_helper = ITensorHelper{constant_input, input(ctx, 1 - const_tensor_index).format_, true};
   ctx->RegisterTensor(const_helper, in_tensors_[const_tensor_index].Name());
   return RET_OK;
 }
 
-bool ElementWiseTensorRT::SameTensor(nvinfer1::ITensor *trt_tensor, mindspore::MSTensor *ms_tensor) {
-  if (SameDims(trt_tensor->getDimensions(), ms_tensor->Shape())) {
-    return true;
-  }
-  if (ms_tensor->Shape().size() == DIMENSION_4D) {
-    // nhwc nchw
-    auto nchw_shape = NHWC2NCHW(ms_tensor->Shape());
-    if (SameDims(trt_tensor->getDimensions(), nchw_shape)) {
-      return true;
-    }
-  }
-  auto str_name = strstr(trt_tensor->getName(), ms_tensor->Name().c_str());
-  if (str_name != nullptr) {
-    return true;
-  }
-  str_name = strstr(ms_tensor->Name().c_str(), trt_tensor->getName());
-  if (str_name != nullptr) {
-    return true;
-  }
-  return false;
-}
 REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_SubFusion, ElementWiseTensorRT)
 REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_DivFusion, ElementWiseTensorRT)
 REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_RealDiv, ElementWiseTensorRT)

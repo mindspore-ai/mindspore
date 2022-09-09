@@ -18,13 +18,14 @@
 #include <vector>
 #include <numeric>
 #include <functional>
+#include "src/litert/delegate/tensorrt/tensorrt_utils.h"
 
 namespace mindspore::lite {
 int ShuffleTensorRT::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                                const std::vector<mindspore::MSTensor> &out_tensors) {
   if (!IsShapeKnown()) {
     MS_LOG(ERROR) << "Unsupported input tensor unknown shape: " << op_name_;
-    return RET_ERROR;
+    // return RET_ERROR;
   }
   switch (type_) {
     case schema::PrimitiveType_Flatten:
@@ -61,20 +62,23 @@ int ShuffleTensorRT::IsSupport(const schema::Primitive *primitive, const std::ve
         return RET_ERROR;
       }
       dynamic_shape_params_.support_hw_dynamic_ = false;
-      if (in_tensors[0].Shape()[0] != out_tensors[0].Shape()[0]) {
-        dynamic_shape_params_.support_dynamic_ = false;
-      }
       break;
     }
     case schema::PrimitiveType_Transpose:
-    case schema::PrimitiveType_ExpandDims:
-    case schema::PrimitiveType_BroadcastTo: {
+    case schema::PrimitiveType_ExpandDims: {
       if (in_tensors.size() != INPUT_SIZE2) {
         MS_LOG(ERROR) << "PrimitiveType_Transpose Unsupported in_tensors size: " << in_tensors.size();
         return RET_ERROR;
       }
       if (in_tensors[1].Data() == nullptr) {
         MS_LOG(ERROR) << "Unsupported shape tensor of " << schema::EnumNamePrimitiveType(type_);
+        return RET_ERROR;
+      }
+      break;
+    }
+    case schema::PrimitiveType_BroadcastTo: {
+      if (in_tensors.size() != INPUT_SIZE2) {
+        MS_LOG(ERROR) << "PrimitiveType_Transpose Unsupported in_tensors size: " << in_tensors.size();
         return RET_ERROR;
       }
       break;
@@ -198,8 +202,12 @@ int ShuffleTensorRT::AddSqueezeOp(nvinfer1::IShuffleLayer *shuffle_layer) {
   auto squeeze_shape = shuffler_input_->getDimensions();
   std::vector<int64_t> new_shape(squeeze_shape.d, squeeze_shape.d + squeeze_shape.nbDims);
   if (param_axis_ == nullptr) {
-    MS_LOG(WARNING) << op_name_ << " has null axis, output shape is totally depends on ms tensor.";
-    new_shape = out_tensors_[0].Shape();
+    MS_LOG(WARNING) << op_name_ << " has null axis.";
+    for (int i = new_shape.size() - 1; i >= 0; i--) {
+      if (new_shape[i] == 1) {
+        new_shape.erase(new_shape.begin() + i);
+      }
+    }
   } else {
     for (int i = param_axis_->size() - 1; i >= 0; i--) {
       if (new_shape[param_axis_->Get(i)] != 1) {
@@ -237,15 +245,17 @@ int ShuffleTensorRT::AddUnsqueezeOp(nvinfer1::IShuffleLayer *shuffle_layer) {
     MS_LOG(WARNING) << op_name_ << " has unsqueeze axis size: " << param_axis_->size();
   }
   nvinfer1::ITensor *expand_input = shuffler_input_;
-  for (size_t i = 0; i < param_axis_->size(); i++) {
-    expand_input = ExpandDim(shuffle_layer, expand_input, param_axis_->Get(i));
+  if (input(ctx_, 0).is_tensor_ == true) {
+    for (size_t i = 0; i < param_axis_->size(); i++) {
+      expand_input = ExpandDim(ctx_, expand_input, param_axis_->Get(i));
+    }
   }
   shuffler_output_ = expand_input;
   return shuffler_output_ == nullptr ? RET_ERROR : RET_OK;
 }
 
 int ShuffleTensorRT::AddTransposeOp(nvinfer1::IShuffleLayer *shuffle_layer) {
-  if (in_tensors_[0].Shape().size() != in_tensors_[1].ElementNum()) {
+  if (shuffler_input_->getDimensions().nbDims != in_tensors_[1].ElementNum()) {
     MS_LOG(WARNING) << "transpose perm is invalid for input, ignore " << op_name_;
     shuffler_output_ = shuffler_input_;
     return RET_OK;
@@ -286,8 +296,12 @@ int ShuffleTensorRT::AddReshapeOp(nvinfer1::IShuffleLayer *shuffle_layer) {
   mindspore::MSTensor &shape_tensor = in_tensors_[1];
   if (shape_tensor.Data() != nullptr) {
     // static shuffle layer
-    shuffle_layer->setReshapeDimensions(
-      InferReshapeDims(shuffler_input_->getDimensions(), in_tensors_[0].Shape(), out_tensors_[0].Shape()));
+    nvinfer1::Dims reshape_dims{shape_tensor.ElementNum()};
+    const int *shape_ptr = reinterpret_cast<const int *>(shape_tensor.Data().get());
+    for (int i = 0; i != shape_tensor.ElementNum(); ++i) {
+      reshape_dims.d[i] = *(shape_ptr + i);
+    }
+    shuffle_layer->setReshapeDimensions(reshape_dims);
   } else {
     if (in_tensors_.size() != INPUT_SIZE2) {
       MS_LOG(ERROR) << "invalid shape tensor for reshape " << op_name_;
@@ -301,11 +315,10 @@ int ShuffleTensorRT::AddReshapeOp(nvinfer1::IShuffleLayer *shuffle_layer) {
 
 int ShuffleTensorRT::AddFlattenOp(nvinfer1::IShuffleLayer *shuffle_layer) {
   nvinfer1::Dims flatten_dims;
-  const std::vector<int64_t> &input_shape = in_tensors_[0].Shape();
+  nvinfer1::Dims dims = input(ctx_, 0).trt_tensor_->getDimensions();
   flatten_dims.nbDims = DIMENSION_2D;
-  flatten_dims.d[0] =
-    input(ctx_, 0).trt_tensor_->getDimensions().d[0] == -1 ? 0 : input(ctx_, 0).trt_tensor_->getDimensions().d[0];
-  flatten_dims.d[1] = std::accumulate(input_shape.begin() + 1, input_shape.end(), 1, std::multiplies<int>());
+  flatten_dims.d[0] = dims.d[0] == -1 ? 0 : dims.d[0];
+  flatten_dims.d[1] = std::accumulate(dims.d + 1, dims.d + dims.nbDims, 1, std::multiplies<int32_t>());
   if (flatten_dims.d[1] <= 0) {
     MS_LOG(ERROR) << op_name_ << "infer shape failed";
   }
@@ -315,117 +328,53 @@ int ShuffleTensorRT::AddFlattenOp(nvinfer1::IShuffleLayer *shuffle_layer) {
 }
 
 int ShuffleTensorRT::AddExpandDimsOp(nvinfer1::IShuffleLayer *shuffle_layer) {
+  if (!input(ctx_, 0).is_tensor_) {
+    shuffler_output_ = shuffler_input_;
+    return RET_OK;
+  }
   if (in_tensors_[1].DataType() != DataType::kNumberTypeInt32) {
     MS_LOG(WARNING) << op_name_ << " axis tensor data type is " << static_cast<int>(in_tensors_[1].DataType());
   }
   auto axis_data = static_cast<const int *>(in_tensors_[1].Data().get());
   int axis = axis_data[0];
-  shuffler_output_ = ExpandDim(shuffle_layer, shuffler_input_, axis);
+  shuffler_output_ = ExpandDim(ctx_, shuffler_input_, axis);
   return shuffler_output_ == nullptr ? RET_ERROR : RET_OK;
 }
 
 int ShuffleTensorRT::AddBroadcastToOp(nvinfer1::IShuffleLayer *shuffle_layer) {
-  if (out_tensors_[0].ElementNum() != in_tensors_[0].ElementNum() &&
-      out_tensors_[0].Shape().size() == in_tensors_[0].Shape().size()) {
-    MS_LOG(WARNING) << "broadcast element cnt changes, ignore broadcast for " << op_name_;
-    shuffle_layer->setReshapeDimensions(shuffler_input_->getDimensions());
-  } else if (out_tensors_[0].ElementNum() == in_tensors_[0].ElementNum()) {
-    nvinfer1::Dims new_dims = ConvertCudaDims(out_tensors_[0].Shape());
-    if (new_dims.nbDims == -1) {
-      MS_LOG(ERROR) << "ConvertCudaDims failed for " << op_name_;
-      return RET_ERROR;
-    }
-    new_dims.d[0] = shuffler_input_->getDimensions().d[0];
-    shuffle_layer->setReshapeDimensions(new_dims);
+  if (in_tensors_[1].Data() == nullptr) {
+    auto input_shape_tensor = input(ctx_, 1).trt_tensor_;
+    shuffler_output_ = Broadcast(ctx_, shuffler_input_, input_shape_tensor);
   } else {
-    MS_LOG(ERROR) << "broadcast needs check for " << op_name_;
+    std::vector<int> input_shape;
+    const int *shape_ptr = reinterpret_cast<const int *>(in_tensors_[1].Data().get());
+    for (int i = 0; i != in_tensors_[1].ElementNum(); ++i) {
+      input_shape.push_back(*(shape_ptr + i));
+    }
+
+    nvinfer1::Dims in_tensor_dims = shuffler_input_->getDimensions();
+    auto input_shape_tensor = ctx_->ConvertTo1DTensor(input_shape);
+
+    while (in_tensor_dims.nbDims < input_shape.size()) {
+      shuffler_input_ = ExpandDim(ctx_, shuffler_input_, 0);
+      if (shuffler_input_->getDimensions().nbDims == -1) {
+        MS_LOG(ERROR) << "ConvertCudaDims failed for " << op_name_;
+        return RET_ERROR;
+      }
+      shuffle_layer->setReshapeDimensions(shuffler_input_->getDimensions());
+      shuffler_input_ = shuffle_layer->getOutput(0);
+      in_tensor_dims = shuffler_input_->getDimensions();
+    }
+
+    auto size_tensor = ctx_->network()->addShape(*shuffler_input_)->getOutput(0);
+    size_tensor = ctx_->network()
+                    ->addElementWise(*input_shape_tensor, *size_tensor, nvinfer1::ElementWiseOperation::kMAX)
+                    ->getOutput(0);
+    shuffler_output_ = Broadcast(ctx_, shuffler_input_, size_tensor);
   }
-  shuffler_output_ = shuffle_layer->getOutput(0);
   return shuffler_output_ == nullptr ? RET_ERROR : RET_OK;
 }
 
-nvinfer1::ITensor *ShuffleTensorRT::ExpandDim(nvinfer1::IShuffleLayer *shuffle_layer, nvinfer1::ITensor *input_tensor,
-                                              int axis) {
-  auto input_dims = input_tensor->getDimensions();
-  // if expand dim not at last dim and shape is dynamic, change to expanddim at last dim and transpose
-  bool special_expand = false;
-  for (int i = 0; i < input_dims.nbDims; i++) {
-    special_expand = special_expand || input_dims.d[i] == -1;
-  }
-  special_expand = special_expand && (axis != -1 && axis != input_dims.nbDims - 1);
-
-  if (special_expand) {
-    std::vector<int64_t> new_shape;
-    for (int i = 0; i < input_dims.nbDims; i++) {
-      new_shape.push_back(input_dims.d[i] == -1 ? 0 : input_dims.d[i]);
-    }
-    new_shape.push_back(1);
-    nvinfer1::Dims new_dims = ConvertCudaDims(new_shape);
-    if (new_dims.nbDims == -1) {
-      MS_LOG(ERROR) << "ConvertCudaDims failed for " << op_name_;
-      return nullptr;
-    }
-    shuffle_layer->setReshapeDimensions(new_dims);
-    // transpose
-    nvinfer1::Permutation perm{};
-    for (int i = 0; i < new_dims.nbDims; i++) {
-      if (i < axis) {
-        perm.order[i] = i;
-      } else if (i == axis) {
-        perm.order[i] = new_dims.nbDims - 1;
-      } else {
-        perm.order[i] = i - 1;
-      }
-    }
-    nvinfer1::IShuffleLayer *trans_layer = ctx_->network()->addShuffle(*shuffle_layer->getOutput(0));
-    if (trans_layer == nullptr) {
-      MS_LOG(ERROR) << "add transpose layer failed for special expand dims op " << op_name_;
-      return nullptr;
-    }
-    trans_layer->setFirstTranspose(perm);
-    return trans_layer->getOutput(0);
-  } else {
-    std::vector<int64_t> new_shape;
-    for (int i = 0; i < input_dims.nbDims; i++) {
-      if (axis == i) {
-        new_shape.push_back(1);
-      }
-      new_shape.push_back(input_dims.d[i] == -1 ? 0 : input_dims.d[i]);
-    }
-    if (axis == -1 || axis == input_dims.nbDims) {
-      new_shape.push_back(1);
-    }
-    nvinfer1::Dims new_dims = ConvertCudaDims(new_shape);
-    if (new_dims.nbDims == -1) {
-      MS_LOG(ERROR) << "ConvertCudaDims failed for " << op_name_;
-      return nullptr;
-    }
-    shuffle_layer->setReshapeDimensions(new_dims);
-    return shuffle_layer->getOutput(0);
-  }
-}
-
-nvinfer1::Dims ShuffleTensorRT::InferReshapeDims(const nvinfer1::Dims &input_dims,
-                                                 const std::vector<int64_t> &ms_input_shape,
-                                                 const std::vector<int64_t> &ms_output_shape) {
-  // tensorrt support infer shape of 0 and -1
-  nvinfer1::Dims reshape_dims = ConvertCudaDims(ms_output_shape);
-  if (reshape_dims.nbDims == -1) {
-    MS_LOG(ERROR) << "ConvertCudaDims failed for " << op_name_;
-    return reshape_dims;
-  }
-  for (int i = 0; i < reshape_dims.nbDims; i++) {
-    if (input_dims.d[i] == -1) {
-      if (ms_input_shape[i] == ms_output_shape[i]) {
-        reshape_dims.d[i] = 0;
-      } else {
-        reshape_dims.d[i] = -1;
-      }
-    }
-    MS_LOG(DEBUG) << "reshape infer_index " << i << " value: " << reshape_dims.d[i];
-  }
-  return reshape_dims;
-}
 REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Unsqueeze, ShuffleTensorRT)
 REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Squeeze, ShuffleTensorRT)
 REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Reshape, ShuffleTensorRT)

@@ -57,7 +57,7 @@ int MatMulTensorRT::AddInnerOp(TensorRTContext *ctx) {
     activation_ = primitive->activation_type();
   }
   nvinfer1::ITensor *out_tensor = nullptr;
-  if (RunFullConnect()) {
+  if (RunFullConnect(ctx)) {
     MS_LOG(DEBUG) << "use fully connected instead of matmul for " << op_name_;
     out_tensor = AddAsFullConnect(ctx);
   } else {
@@ -128,7 +128,7 @@ nvinfer1::ITensor *MatMulTensorRT::ProcessWeightTensor(TensorRTContext *ctx) {
   int weight_index = in_tensors_[1].Data() != nullptr ? 1 : 0;
   if (in_tensors_[weight_index].Shape().size() <
       static_cast<size_t>(input(ctx, 0).trt_tensor_->getDimensions().nbDims)) {
-    std::vector<int64_t> expect_shape(in_tensors_[1 - weight_index].Shape().size(), 1);
+    std::vector<int64_t> expect_shape(input(ctx, 1 - weight_index).trt_tensor_->getDimensions().nbDims, 1);
     auto origin_shape = in_tensors_[weight_index].Shape();
     for (int i = 0; i < origin_shape.size(); i++) {
       expect_shape[expect_shape.size() - 1 - i] = origin_shape[origin_shape.size() - 1 - i];
@@ -218,10 +218,13 @@ nvinfer1::ITensor *MatMulTensorRT::AddAsFullConnect(TensorRTContext *ctx) {
   this->layer_ = fc_layer;
   fc_layer->setName((op_name_ + "_fullyconnected").c_str());
   nvinfer1::ITensor *out_tensor = fc_layer->getOutput(0);
-  if (out_tensor->getDimensions().nbDims != out_tensors_[0].Shape().size()) {
-    std::vector<int64_t> out_dims(out_tensors_[0].Shape());
-    out_dims[0] = out_tensor->getDimensions().d[0];
-    out_tensor = Reshape(ctx, out_tensor, out_dims);
+  int origin_input_dims = input(ctx, 0).trt_tensor_->getDimensions().nbDims;
+  if (out_tensor->getDimensions().nbDims != origin_input_dims) {
+    std::vector<int64_t> squeeze_dim;
+    for (int i = 0; i != origin_input_dims; ++i) {
+      squeeze_dim.push_back(out_tensor->getDimensions().d[i]);
+    }
+    out_tensor = Reshape(ctx, out_tensor, squeeze_dim);
   }
   return out_tensor;
 }
@@ -230,8 +233,8 @@ nvinfer1::ITensor *MatMulTensorRT::AddBias(TensorRTContext *ctx, nvinfer1::ITens
   if (in_tensors_.size() == kBiasIndex + 1) {
     nvinfer1::ITensor *bias = nullptr;
     if (in_tensors_[kBiasIndex].Shape().size() < static_cast<size_t>(out_tensor->getDimensions().nbDims)) {
-      std::vector<int64_t> expect_dims(out_tensors_[0].Shape());
-      expect_dims[0] = out_tensor->getDimensions().d[0];
+      std::vector<int64_t> expect_dims(input_tensor->getDimensions().nbDims, 1);
+      expect_dims[expect_dims.size() - 1] = in_tensors_[kBiasIndex].Shape().back();
       bias = ConvertTensorWithExpandDims(ctx, in_tensors_[kBiasIndex], expect_dims, op_name_);
     } else if (in_tensors_[kBiasIndex].Shape().size() == static_cast<size_t>(out_tensor->getDimensions().nbDims)) {
       bias = ConvertConstantTensor(ctx, in_tensors_[kBiasIndex], op_name_);
@@ -255,10 +258,11 @@ nvinfer1::ITensor *MatMulTensorRT::AddBias(TensorRTContext *ctx, nvinfer1::ITens
   return out_tensor;
 }
 
-bool MatMulTensorRT::RunFullConnect() {
+bool MatMulTensorRT::RunFullConnect(TensorRTContext *ctx) {
   if (in_tensors_.size() == INPUT_SIZE3 && in_tensors_[1].Data() != nullptr &&
       in_tensors_[kBiasIndex].Data() != nullptr && !transpose_a_ && in_tensors_[1].Shape().size() == DIMENSION_2D &&
-      (in_tensors_[0].Shape().size() == DIMENSION_2D || in_tensors_[0].Shape().size() == DIMENSION_4D)) {
+      (input(ctx, 0).trt_tensor_->getDimensions().nbDims == DIMENSION_2D ||
+       input(ctx, 0).trt_tensor_->getDimensions().nbDims == DIMENSION_4D)) {
     return true;
   }
   return false;

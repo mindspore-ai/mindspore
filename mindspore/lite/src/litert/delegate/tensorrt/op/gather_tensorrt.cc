@@ -82,22 +82,25 @@ int GatherTensorRT::AddInnerOp(TensorRTContext *ctx) {
   this->layer_ = gather_layer;
   gather_layer->setName(op_name_.c_str());
   nvinfer1::ITensor *op_output = gather_layer->getOutput(0);
+  auto old_shape = ConvertMSShape(op_output->getDimensions());
   // keep shape
-  if (in_tensors_[1].Shape().empty()) {
+  if (in_tensors_[1].Shape().empty() && old_shape.size() > 1) {
     auto squeeze = ctx->network()->addShuffle(*op_output);
     if (squeeze == nullptr) {
       MS_LOG(ERROR) << "add output squeeze failed for " << op_name_;
       return RET_ERROR;
     }
     squeeze->setName((op_name_ + "_squeeze_out").c_str());
-    auto old_shape = ConvertMSShape(op_output->getDimensions());
     old_shape.erase(old_shape.begin() + axis_);
     squeeze->setReshapeDimensions(ConvertCudaDims(old_shape));
     op_output = squeeze->getOutput(0);
   }
 
-  ctx->RegisterTensor(ITensorHelper{op_output, gather_input.format_, gather_input.same_format_},
-                      out_tensors_[0].Name());
+  auto out_helper = ITensorHelper{op_output, gather_input.format_, gather_input.same_format_};
+  if (old_shape.size() == 1) {
+    out_helper.is_tensor_ = false;
+  }
+  ctx->RegisterTensor(out_helper, out_tensors_[0].Name());
   return RET_OK;
 }
 REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Gather, GatherTensorRT)

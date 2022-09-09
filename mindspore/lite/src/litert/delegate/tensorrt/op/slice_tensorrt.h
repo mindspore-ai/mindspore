@@ -30,7 +30,7 @@ class SliceTensorRTUtil {
                          const std::vector<mindspore::MSTensor> &out_tensors) = 0;
   virtual std::tuple<nvinfer1::Dims, nvinfer1::Dims, nvinfer1::Dims> GetSliceParams(
     const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-    const std::vector<mindspore::MSTensor> &out_tensors) = 0;
+    const std::vector<mindspore::MSTensor> &out_tensors, const ITensorHelper &helper) = 0;
   virtual nvinfer1::ITensor *PostProcess(TensorRTContext *ctx, nvinfer1::ITensor *input,
                                          const std::vector<mindspore::MSTensor> &in_tensors,
                                          const std::vector<mindspore::MSTensor> &out_tensors) {

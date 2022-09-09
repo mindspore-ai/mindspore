@@ -13,14 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_TENSORRT_TENSORRT_SUBGRAPH_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_TENSORRT_TENSORRT_SUBGRAPH_H_
+#ifndef MINDSPORE_LITE_SRC_LITERT_DELEGATE_TENSORRT_TENSORRT_SUBGRAPH_H_
+#define MINDSPORE_LITE_SRC_LITERT_DELEGATE_TENSORRT_TENSORRT_SUBGRAPH_H_
 #include <utility>
 #include <set>
 #include <map>
 #include <string>
 #include <vector>
 #include <memory>
+#include <unordered_map>
 #include "include/api/kernel.h"
 #include "src/litert/delegate/tensorrt/tensorrt_runtime.h"
 #include "src/litert/delegate/tensorrt/tensorrt_utils.h"
@@ -42,18 +43,23 @@ class TensorRTSubGraph : public kernel::Kernel {
   TensorRTSubGraph(std::vector<TensorRTOp *> ops, const std::vector<mindspore::MSTensor> &inputs,
                    const std::vector<mindspore::MSTensor> &outputs, const mindspore::Context *ctx,
                    std::shared_ptr<GPUDeviceInfo> device_info, TensorRTRuntime *runtime, bool support_resize,
-                   bool support_hw_resize)
+                   bool support_hw_resize, const std::unordered_map<std::string, std::vector<nvinfer1::Dims>> &min_dims,
+                   const std::unordered_map<std::string, std::vector<nvinfer1::Dims>> &opt_dims,
+                   const std::unordered_map<std::string, std::vector<nvinfer1::Dims>> &max_dims)
       : kernel::Kernel(inputs, outputs, nullptr, ctx),
         all_ops_(std::move(ops)),
         device_info_(device_info),
-        runtime_(runtime) {
+        runtime_(runtime),
+        min_dims_(min_dims),
+        opt_dims_(opt_dims),
+        max_dims_(max_dims) {
     trt_specific_weight_nodes_ = {
       schema::PrimitiveType_Conv2DFusion,   schema::PrimitiveType_ReduceFusion, schema::PrimitiveType_Transpose,
       schema::PrimitiveType_Gather,         schema::PrimitiveType_Reshape,      schema::PrimitiveType_MatMulFusion,
       schema::PrimitiveType_ScaleFusion,    schema::PrimitiveType_StridedSlice, schema::PrimitiveType_PadFusion,
       schema::PrimitiveType_FullConnection, schema::PrimitiveType_Cast,         schema::PrimitiveType_ExpandDims,
       schema::PrimitiveType_Resize,         schema::PrimitiveType_LSTM,         schema::PrimitiveType_LayerNormFusion,
-      schema::PrimitiveType_TopKFusion,     schema::PrimitiveType_TileFusion,
+      schema::PrimitiveType_TopKFusion,     schema::PrimitiveType_TileFusion,   schema::PrimitiveType_BroadcastTo,
     };
     if (!support_resize) {
       input_batchsize_index_ = -1;
@@ -81,6 +87,8 @@ class TensorRTSubGraph : public kernel::Kernel {
   void SetSerializePath(const std::string &path) { serialize_file_path_ = std::move(path); }
 
  private:
+  int GetInputIndexByName(const std::string &name);
+
   int BuildEngine();
 
   int SetDeviceConfig(cudaStream_t stream);
@@ -89,11 +97,13 @@ class TensorRTSubGraph : public kernel::Kernel {
 
   bool SupportFP16();
 
-  nvinfer1::ITensor *SetTensorRTNetworkInput(const mindspore::MSTensor &in_tensor);
+  nvinfer1::ITensor *SetTensorRTNetworkInput(const mindspore::MSTensor &in_tensor, size_t index);
 
   ITensorHelper FindTensorRTInputs(TensorRTOp *cur_op, const mindspore::MSTensor &in_tensor);
 
   int MarkOutputs();
+
+  bool OutputFormatCheck(ITensorHelper output_helper, const mindspore::MSTensor &out_tensor);
 
   bool IsCached(TensorRTOp *cur_op, const mindspore::MSTensor &in_tensor);
 
@@ -104,9 +114,14 @@ class TensorRTSubGraph : public kernel::Kernel {
   int HandleCacheTensor(TensorRTOp *cur_op, const mindspore::MSTensor &in_tensor);
 
   nvinfer1::Dims ParseInputDimsProfile(const mindspore::MSTensor &in_tensor);
+  nvinfer1::Dims SetInputDimsProfile(const mindspore::MSTensor &in_tensor);
   int ParseInputsProfile();
 
+  size_t MaxVolumnProfileIndex() const;
+  int SelectProfile() const;
+
   bool ValidInputResizeDims(const nvinfer1::Dims &construct_dims, const std::vector<int64_t> &resize_input_shape);
+  bool IsValidProfileDims() const;
 
   std::vector<TensorRTOp *> all_ops_{};
   // subgraph input nodes.
@@ -133,7 +148,7 @@ class TensorRTSubGraph : public kernel::Kernel {
   nvinfer1::IBuilderConfig *config_{nullptr};
   nvinfer1::ICudaEngine *engine_{nullptr};
   nvinfer1::IExecutionContext *trt_context_{nullptr};
-  nvinfer1::IOptimizationProfile *profile_{nullptr};
+  std::vector<nvinfer1::IOptimizationProfile *> profiles_{};
 
   TensorRTContext *ctx_;
 
@@ -141,6 +156,7 @@ class TensorRTSubGraph : public kernel::Kernel {
   int input_batchsize_index_{0};
   int output_batchsize_index_{0};
   int input_hw_index_{0};
+  bool using_input_ranges_{false};
 
   std::map<std::string, std::vector<mindspore::MSTensor>> model_input_to_cache_tensors_;
 
@@ -150,6 +166,11 @@ class TensorRTSubGraph : public kernel::Kernel {
 
   std::string serialize_file_path_;
   cudaStream_t stream_{nullptr};
+
+  std::unordered_map<std::string, std::vector<nvinfer1::Dims>> min_dims_;
+  std::unordered_map<std::string, std::vector<nvinfer1::Dims>> opt_dims_;
+  std::unordered_map<std::string, std::vector<nvinfer1::Dims>> max_dims_;
+  size_t profile_index_{0};
 };
 }  // namespace mindspore::lite
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_TENSORRT_TENSORRT_SUBGRAPH_H_
+#endif  // MINDSPORE_LITE_SRC_LITERT_DELEGATE_TENSORRT_TENSORRT_SUBGRAPH_H_

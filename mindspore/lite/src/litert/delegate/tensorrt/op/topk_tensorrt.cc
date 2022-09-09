@@ -17,6 +17,18 @@
 #include "src/litert/delegate/tensorrt/op/topk_tensorrt.h"
 
 namespace mindspore::lite {
+namespace {
+nvinfer1::ITensor *TopkReshape(TensorRTContext *ctx, nvinfer1::ITensor *input, int axis) {
+  auto squeeze = ctx->network()->addShuffle(*input);
+  if (squeeze == nullptr) {
+    return nullptr;
+  }
+  auto old_shape = ConvertMSShape(input->getDimensions());
+  old_shape.erase(old_shape.begin() + axis);
+  squeeze->setReshapeDimensions(ConvertCudaDims(old_shape));
+  return squeeze->getOutput(0);
+}
+}  // namespace
 int TopKTensorRT::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                             const std::vector<mindspore::MSTensor> &out_tensors) {
   if (!IsShapeKnown()) {
@@ -30,6 +42,10 @@ int TopKTensorRT::IsSupport(const schema::Primitive *primitive, const std::vecto
   if (out_tensors.size() != 1 && in_tensors.size() != INPUT_SIZE2) {
     MS_LOG(ERROR) << "Unsupported output tensor size, size is " << out_tensors.size();
     return RET_ERROR;
+  }
+  if (primitive->value_type() != schema::PrimitiveType_TopKFusion) {
+    // need reshape
+    dynamic_shape_params_.support_hw_dynamic_ = false;
   }
   return RET_OK;
 }
@@ -63,15 +79,17 @@ int TopKTensorRT::AddInnerOp(TensorRTContext *ctx) {
   nvinfer1::ITensor *index_out_tensor = topk_layer->getOutput(1);
   // output 0 is data value, output 1 is index
 
-  if (value_out_tensor->getDimensions().nbDims != out_tensors_[0].Shape().size()) {
-    nvinfer1::Dims out_dims = ConvertCudaDims(out_tensors_[0].Shape());
-    out_dims.d[0] = value_out_tensor->getDimensions().d[0];
-    value_out_tensor = Reshape(ctx, value_out_tensor, out_dims);
-    CHECK_NULL_RETURN(value_out_tensor);
-    value_out_tensor->setName((op_name_ + "_value_output").c_str());
-    index_out_tensor = Reshape(ctx, index_out_tensor, out_dims);
-    CHECK_NULL_RETURN(index_out_tensor);
-    index_out_tensor->setName((op_name_ + "_index_output").c_str());
+  if (top_k_ == 1 && type_ != schema::PrimitiveType_TopKFusion) {
+    value_out_tensor = TopkReshape(ctx, value_out_tensor, axis_value_);
+    if (value_out_tensor == nullptr) {
+      MS_LOG(ERROR) << "add output squeeze failed!";
+      return RET_ERROR;
+    }
+    index_out_tensor = TopkReshape(ctx, index_out_tensor, axis_value_);
+    if (index_out_tensor == nullptr) {
+      MS_LOG(ERROR) << "add output squeeze failed!";
+      return RET_ERROR;
+    }
   }
   if (out_tensors_.size() == INPUT_SIZE2) {
     ctx->RegisterTensor(ITensorHelper{value_out_tensor, topk_input.format_, true}, out_tensors_[0].Name());
@@ -82,13 +100,14 @@ int TopKTensorRT::AddInnerOp(TensorRTContext *ctx) {
 }
 
 int TopKTensorRT::ParseParams(TensorRTContext *ctx) {
+  int input_nbDims = input(ctx, 0).trt_tensor_->getDimensions().nbDims;
   switch (type_) {
     case schema::PrimitiveType_ArgMaxFusion: {
       topk_op_ = nvinfer1::TopKOperation::kMAX;
       auto max_prim = op_primitive_->value_as_ArgMaxFusion();
       CHECK_NULL_RETURN(max_prim);
       axis_value_ = max_prim->axis();
-      axis_value_ = axis_value_ > 0 ? axis_value_ : in_tensors_[0].Shape().size() + axis_value_;
+      axis_value_ = axis_value_ > 0 ? axis_value_ : input_nbDims + axis_value_;
       top_k_ = max_prim->top_k();
       break;
     }
@@ -97,7 +116,7 @@ int TopKTensorRT::ParseParams(TensorRTContext *ctx) {
       auto mim_prim = op_primitive_->value_as_ArgMinFusion();
       CHECK_NULL_RETURN(mim_prim);
       axis_value_ = mim_prim->axis();
-      axis_value_ = axis_value_ > 0 ? axis_value_ : in_tensors_[0].Shape().size() + axis_value_;
+      axis_value_ = axis_value_ > 0 ? axis_value_ : input_nbDims + axis_value_;
       top_k_ = mim_prim->top_k();
       break;
     }
@@ -106,7 +125,7 @@ int TopKTensorRT::ParseParams(TensorRTContext *ctx) {
       CHECK_NULL_RETURN(topk_prim);
       topk_op_ = topk_prim->largest() == 1 ? nvinfer1::TopKOperation::kMAX : nvinfer1::TopKOperation::kMIN;
       axis_value_ = topk_prim->axis();
-      axis_value_ = axis_value_ > 0 ? axis_value_ : in_tensors_[0].Shape().size() + axis_value_;
+      axis_value_ = axis_value_ > 0 ? axis_value_ : input_nbDims + axis_value_;
       if (in_tensors_.size() < INPUT_SIZE2) {
         MS_LOG(ERROR) << "invalid input size " << in_tensors_.size() << "for " << op_name_;
         return RET_ERROR;
@@ -125,7 +144,7 @@ int TopKTensorRT::ParseParams(TensorRTContext *ctx) {
     }
   }
   // Currently reduceAxes must specify exactly one dimension, and it must be one of the last four dimensions.
-  if (axis_value_ != in_tensors_[0].Shape().size() - 1) {
+  if (axis_value_ != input_nbDims - 1) {
     MS_LOG(ERROR) << op_name_ << " has unsupported axis : " << axis_value_;
     return RET_ERROR;
   }
@@ -133,25 +152,11 @@ int TopKTensorRT::ParseParams(TensorRTContext *ctx) {
 }
 int TopKTensorRT::PreprocessInputs(TensorRTContext *ctx, ITensorHelper *topk_input) {
   auto input_dim = input(ctx, 0).trt_tensor_->getDimensions();
-  int ret = RET_ERROR;
+  int ret = RET_OK;
   if (input_dim.nbDims == DIMENSION_4D) {
     ret = PreprocessInputs2SameDim(ctx, input(ctx, 0), topk_input);
-  } else if (input_dim.nbDims < DIMENSION_4D) {
-    // only support 4d
-    nvinfer1::Dims4 expect_dim;
-    for (int i = 0; i < DIMENSION_4D; i++) {
-      if (i < input_dim.nbDims) {
-        expect_dim.d[DIMENSION_4D - 1 - i] = input_dim.d[input_dim.nbDims - 1 - i];
-      } else {
-        expect_dim.d[DIMENSION_4D - 1 - i] = 1;
-      }
-    }
-    topk_input->trt_tensor_ = Reshape(ctx, input(ctx, 0).trt_tensor_, expect_dim);
-    CHECK_NULL_RETURN(topk_input->trt_tensor_);
-    axis_value_ += (DIMENSION_4D - input_dim.nbDims);
-    return RET_OK;
   } else {
-    MS_LOG(ERROR) << op_name_ << " has invalid input dims: " << input_dim.nbDims;
+    *topk_input = input(ctx, 0);
   }
   return ret;
 }

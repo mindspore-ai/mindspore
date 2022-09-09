@@ -15,12 +15,16 @@
  */
 
 #include "src/litert/delegate/tensorrt/tensorrt_context.h"
+#include "src/litert/delegate/tensorrt/tensorrt_utils.h"
 
 namespace mindspore::lite {
 TensorRTContext::~TensorRTContext() {
   if (network_ != nullptr) {
     network_->destroy();
     network_ = nullptr;
+  }
+  for (auto ptr : owner_memorys_) {
+    free(ptr);
   }
 }
 
@@ -69,7 +73,34 @@ ITensorHelper TensorRTContext::MsName2Tensor(const std::string &ms_name) {
   if (ms_name2trt_tensor_.find(ms_name) != ms_name2trt_tensor_.end()) {
     return ms_name2trt_tensor_[ms_name];
   }
-  MS_LOG(ERROR) << "Get Tensorrt tensor by ms_tensor: " << ms_name << " fail!";
+  MS_LOG(WARNING) << "Get Tensorrt tensor by ms_tensor: " << ms_name << " fail!";
   return {};
 }
+
+template <typename T>
+nvinfer1::ITensor *TensorRTContext::ConvertTo1DTensor(T value) {
+  return ConvertTo1DTensor(std::vector<T>{value});
+}
+
+template <typename T>
+nvinfer1::ITensor *TensorRTContext::ConvertTo1DTensor(const std::vector<T> &values) {
+  void *ptr = malloc(values.size() * sizeof(T));
+  const T *begin = &values[0];
+  memcpy(ptr, reinterpret_cast<const void *>(begin), values.size() * sizeof(T));
+  owner_memorys_.push_back(ptr);
+
+  nvinfer1::Weights weights{GetNvinferDataType<T>(), ptr, values.size()};
+  nvinfer1::Dims dims{1, {values.size()}};
+  nvinfer1::IConstantLayer *constant_tensor = network()->addConstant(dims, weights);
+  if (constant_tensor == nullptr) {
+    MS_LOG(ERROR) << "create constant_tensor failed.";
+    return nullptr;
+  }
+  return constant_tensor->getOutput(0);
+}
+
+template nvinfer1::ITensor *TensorRTContext::ConvertTo1DTensor(int value);
+template nvinfer1::ITensor *TensorRTContext::ConvertTo1DTensor(float value);
+template nvinfer1::ITensor *TensorRTContext::ConvertTo1DTensor(const std::vector<int> &values);
+template nvinfer1::ITensor *TensorRTContext::ConvertTo1DTensor(const std::vector<float> &values);
 }  // namespace mindspore::lite

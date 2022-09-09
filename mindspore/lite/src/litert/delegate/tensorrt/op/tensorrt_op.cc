@@ -80,6 +80,11 @@ bool TensorRTOp::IsShapeKnown() {
   return true;
 }
 
+bool TensorRTOp::IsDynamicInput(TensorRTContext *ctx, size_t k) {
+  nvinfer1::Dims dims = input(ctx, k).trt_tensor_->getDimensions();
+  return std::any_of(dims.d, dims.d + dims.nbDims, [](int d) { return d == -1; });
+}
+
 int TensorRTOp::Prepare(void **network_tensor_bindings, nvinfer1::ICudaEngine *engine) {
   if (op_binding_tensor_.size() != 0) {
     MS_LOG(ERROR) << "need special op Prepare for " << op_name_;

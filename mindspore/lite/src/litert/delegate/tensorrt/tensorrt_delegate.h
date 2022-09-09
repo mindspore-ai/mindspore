@@ -13,13 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_TENSORRT_TENSORRT_DELEGATE_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_TENSORRT_TENSORRT_DELEGATE_H_
+#ifndef MINDSPORE_LITE_SRC_LITERT_DELEGATE_TENSORRT_TENSORRT_DELEGATE_H_
+#define MINDSPORE_LITE_SRC_LITERT_DELEGATE_TENSORRT_TENSORRT_DELEGATE_H_
 #include <string>
 #include <vector>
 #include <unordered_map>
 #include <unordered_set>
 #include <memory>
+#include <map>
+#include <optional>
 #include "include/api/delegate.h"
 #include "src/litert/delegate/tensorrt/tensorrt_subgraph.h"
 #include "src/litert/delegate/parameter_cache/embedding_cache_manager.h"
@@ -32,13 +34,8 @@ namespace mindspore::lite {
 class TensorRTDelegate : public Delegate {
  public:
   explicit TensorRTDelegate(mindspore::Context *context, const std::string &cache_model_path, size_t vocab_size,
-                            size_t device_cache_size, const std::string &serialize_path)
-      : context_(context),
-        cache_model_path_(cache_model_path),
-        vocab_size_(vocab_size),
-        device_cache_size_(device_cache_size),
-        serialize_path_(serialize_path) {}
-
+                            size_t device_cache_size, const std::string &serialize_path,
+                            const std::map<std::string, std::string> &input_ranges);
   ~TensorRTDelegate() override;
 
   Status Init() override;
@@ -46,6 +43,13 @@ class TensorRTDelegate : public Delegate {
   Status Build(DelegateModel<schema::Primitive> *model) override;
 
  private:
+  int ParseOptimizationProfile();
+  bool ParseOptDims(const std::string &opt_dims_str,
+                    const std::unordered_map<std::string, nvinfer1::Dims> &name2input_shape);
+  bool ParseDynamicDims(const std::string &dynamic_dims_str,
+                        const std::unordered_map<std::string, nvinfer1::Dims> &name2input_shape);
+  std::experimental::optional<std::unordered_map<std::string, nvinfer1::Dims>> ParseInputShape(
+    const std::string &input_shapes_str);
   Status BuildSubGraph(DelegateModel<schema::Primitive> *model);
 
   TensorRTOp *FindTensorRTOp(kernel::Kernel *kernel, const schema::Primitive *primitive);
@@ -63,8 +67,13 @@ class TensorRTDelegate : public Delegate {
   size_t vocab_size_{0};
   size_t device_cache_size_{0};
   std::shared_ptr<cache::EmbeddingCacheManager> cache_mgr_{nullptr};
-  const std::string serialize_path_;
+  std::string serialize_path_;
   cudaStream_t stream_{nullptr};
+  std::unordered_map<std::string, std::vector<nvinfer1::Dims>> min_dims_;
+  std::unordered_map<std::string, std::vector<nvinfer1::Dims>> opt_dims_;
+  std::unordered_map<std::string, std::vector<nvinfer1::Dims>> max_dims_;
+  std::vector<std::string> input_tensor_names_;
+  std::map<std::string, std::string> input_ranges_;
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_TENSORRT_DELEGATE_
