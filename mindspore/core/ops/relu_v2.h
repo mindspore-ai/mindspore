@@ -19,9 +19,9 @@
 #include <vector>
 #include <string>
 #include <memory>
-
 #include "ops/base_operator.h"
 #include "mindapi/base/types.h"
+#include "mindspore/core/ops/core_ops.h"
 
 namespace mindspore {
 namespace ops {
@@ -38,8 +38,6 @@ class MIND_API ReLUV2 : public BaseOperator {
   /// \brief Init.
   void Init() const {}
 };
-abstract::AbstractBasePtr ReLUV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                      const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 
