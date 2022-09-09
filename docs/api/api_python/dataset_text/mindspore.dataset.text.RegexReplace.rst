@@ -12,7 +12,7 @@ mindspore.dataset.text.RegexReplace
     参数：
         - **pattern** (str) -  正则表达式的模式。
         - **replace** (str) - 替换匹配元素的字符串。
-        - **replace_all** (bool, 可选) - 如果为False，只替换第一个匹配的元素； 如果为True，则替换所有匹配的元素。默认值：True。
+        - **replace_all** (bool, 可选) - 如果为False，只替换第一个匹配的元素；如果为True，则替换所有匹配的元素。默认值：True。
 
     异常：
         - **TypeError** - 参数 `pattern` 的类型不是str。

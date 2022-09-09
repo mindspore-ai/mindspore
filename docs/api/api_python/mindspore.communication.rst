@@ -11,7 +11,7 @@ mindspore.communication
 
 .. py:class:: mindspore.communication.GlobalComm
 
-    GlobalComm 是一个储存通信信息的全局类。 成员包含：BACKEND、WORLD_COMM_GROUP。
+    GlobalComm 是一个储存通信信息的全局类。成员包含：BACKEND、WORLD_COMM_GROUP。
 
     - BACKEND：使用的通信库，HCCL或者NCCL。
     - WORLD_COMM_GROUP：全局通信域。

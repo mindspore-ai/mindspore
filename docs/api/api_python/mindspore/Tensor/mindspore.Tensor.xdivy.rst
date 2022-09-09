@@ -12,7 +12,7 @@ mindspore.Tensor.xdivy
     `x` 和 `y` 的输入遵循隐式类型转换规则使数据类型一致。y必须是一个Tensor或Scalar，当y是Tensor时，x和y的数据类型不能同时是bool类型，它们的shape可以广播。当y是Scalar时，只能是一个常量。
 
     参数：
-        - **y** (Union[Tensor, number.Number, bool]) - 当第一个输入x为Tensor的时候， 第二个输入y可以是Number类型、bool类型或者数据类型为float16、float32、float64、complex64、complex128、bool的Tensor。
+        - **y** (Union[Tensor, number.Number, bool]) - 当第一个输入x为Tensor的时候，第二个输入y可以是Number类型、bool类型或者数据类型为float16、float32、float64、complex64、complex128、bool的Tensor。
 
     返回：
         Tensor，shape与广播后的shape相同，数据类型为两个输入中精度较高或数数值较高的类型。

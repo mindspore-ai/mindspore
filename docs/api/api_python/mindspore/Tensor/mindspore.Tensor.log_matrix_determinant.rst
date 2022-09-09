@@ -8,9 +8,9 @@ mindspore.Tensor.log_matrix_determinant
     `x` 指的当前 Tensor。
 
     返回：
-        Tensor，行列式的绝对值的对数的符号， 形状为 `x_shape[:-2]` ，数据类型与 `x` 相同。
+        Tensor，行列式的绝对值的对数的符号，形状为 `x_shape[:-2]` ，数据类型与 `x` 相同。
 
-    Tensor，行列式的绝对值的对数， 形状为 `x_shape[:-2]` ，数据类型与 `x` 相同。
+    Tensor，行列式的绝对值的对数，形状为 `x_shape[:-2]` ，数据类型与 `x` 相同。
 
     异常：
         - **TypeError** -  `x` 不为 Tensor。

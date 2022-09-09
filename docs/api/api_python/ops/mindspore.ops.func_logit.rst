@@ -19,7 +19,7 @@ mindspore.ops.logit
 
     参数：
         - **x** (Tensor) - 张量输入。
-        - **eps** (float) - epsilon值。输入的数值界限被定义[eps, 1-eps]。 默认值：None。
+        - **eps** (float) - epsilon值。输入的数值界限被定义[eps, 1-eps]。默认值：None。
 
     返回：
         Tensor，具有与 `x` 相同的shape。

@@ -7,7 +7,7 @@ mindspore.ops.CTCLoss
 
     该接口的底层调用了第三方baidu-research::warp-ctc的实现。CTC算法是在 `Connectionist Temporal Classification: Labeling Unsegmented Sequence Data with Recurrent Neural Networks <http://www.cs.toronto.edu/~graves/icml_2006.pdf>`_ 中提出的。 
 
-    CTCLoss计算连续时间序列和目标序列之间的损失。 CTCLoss对输入到目标的概率求和，产生一个损失值，该值相对于每个输入节点是可微的。 假设输入与目标的对齐是“多对一”的，这样目标序列的长度必须小于或等于输入的长度。 
+    CTCLoss计算连续时间序列和目标序列之间的损失。 CTCLoss对输入到目标的概率求和，产生一个损失值，该值相对于每个输入节点是可微的。假设输入与目标的对齐是“多对一”的，这样目标序列的长度必须小于或等于输入的长度。 
 
     参数：
         - **preprocess_collapse_repeated** (bool) - 如果为True，在CTC计算之前将折叠重复标签。默认值：False。

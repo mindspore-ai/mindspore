@@ -213,7 +213,7 @@
             在调用 `init_parameters_data` 后，`trainable_params()` 或其他相似的接口可能返回不同的参数对象，不要保存这些结果。
 
         参数：
-            - **auto_parallel_mode** (bool) - 是否在自动并行模式下执行。 默认值：False。
+            - **auto_parallel_mode** (bool) - 是否在自动并行模式下执行。默认值：False。
 
         返回：
             Dict[Parameter, Parameter]，返回一个原始参数和替换参数的字典。
@@ -291,7 +291,7 @@
         获取这个Cell的参数广播字典。
 
         参数：
-            - **recurse** (bool) - 是否包含子Cell的参数。 默认值：True。
+            - **recurse** (bool) - 是否包含子Cell的参数。默认值：True。
 
         返回：
             OrderedDict，返回参数广播字典。
@@ -477,7 +477,7 @@
         参数：
             - **jit_config** (JitConfig) - Cell的Jit配置信息。目前支持下面两个配置项。
   
-              - **jit_level** (str) - 用于设置优化图的'level'参数。 取值范围['O0'、'O1'、'O2']。默认值：'O1'。
+              - **jit_level** (str) - 用于设置优化图的'level'参数。取值范围['O0'、'O1'、'O2']。默认值：'O1'。
 
                 - O0：基本优化。
                 - O1：手动优化。

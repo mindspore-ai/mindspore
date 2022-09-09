@@ -20,7 +20,7 @@ mindspore.ops.vmap
         - **fn** (Union[Cell, Function]) - 待沿参数轴映射的函数，该函数至少拥有一个输入参数并且返回值为一个或多个Tensor或Tensor支持的数据类型。
         - **in_axes** (Union[int, list, tuple]) - 指定输入参数映射的轴索引。如果 `in_axes` 是一个整数，则 `fn` 的所有输入参数都将根据此轴索引进行映射。
           如果 `in_axes` 是一个tuple或list，仅支持由整数或None组成，则其长度应与 `fn` 的输入参数的个数一致，分别表示相应位置参数的映射轴索引。
-          请注意，每个参数对应的整数轴索引的取值范围必须在 :math:`[-ndim, ndim)` 中，其中 `ndim` 是参数的维度。None表示不沿任何轴映射。并且 `in_axes` 中必须至少有一个位置参数的映射轴索引不为None。 所有参数的映射轴索引对应的size（ `axis_size` ）必须相等。默认值：0。
+          请注意，每个参数对应的整数轴索引的取值范围必须在 :math:`[-ndim, ndim)` 中，其中 `ndim` 是参数的维度。None表示不沿任何轴映射。并且 `in_axes` 中必须至少有一个位置参数的映射轴索引不为None。所有参数的映射轴索引对应的size（ `axis_size` ）必须相等。默认值：0。
         - **out_axes** (Union[int, list, tuple]) - 指定映射轴呈现在输出中的索引位置。如果 `out_axes` 是一个整数，则 `fn` 的所有输出都根据此axis指定。
           如果 `out_axes` 是一个tuple或list，仅支持由整数或None组成，其长度应与 `fn` 的输出个数相等。
           请注意，每个输出对应的整数轴索引的取值范围必须在 :math:`[-ndim, ndim)` 中，其中 `ndim` 是 `vmap` 映射后的函数的输出的维度。

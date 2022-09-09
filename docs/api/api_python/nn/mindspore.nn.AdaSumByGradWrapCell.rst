@@ -29,6 +29,6 @@ mindspore.nn.AdaSumByGradWrapCell
 
     异常：
         - **RuntimeError** - `parallel_mode` 使用了 `stand_alone` 模式， AdaSum仅支持在分布式场景下使用。
-        - **RuntimeError** - 同时使用了优化器并行， 暂时不支持在优化器并行场景下使用AdaSum。
-        - **RuntimeError** - 同时使用了流水线并行， 暂时不支持在流水线并行场景下使用AdaSum。
+        - **RuntimeError** - 同时使用了优化器并行，暂时不支持在优化器并行场景下使用AdaSum。
+        - **RuntimeError** - 同时使用了流水线并行，暂时不支持在流水线并行场景下使用AdaSum。
         - **RuntimeError** - `device_num` 不是2的幂，或者小于16。

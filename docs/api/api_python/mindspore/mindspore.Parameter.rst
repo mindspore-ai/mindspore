@@ -32,7 +32,7 @@
         克隆参数。
 
         参数：
-            - **init** (Union[Tensor, str, numbers.Number]) - 初始化参数的形状和数据类型。如果 `init` 是 `Tensor` 或 `numbers.Number` ，则克隆一个具有相同数值、形状和数据类型的新参数。 如果 `init` 是 `str` ，则 `init` 将继承 `Initializer` 模块中对应的同名的类。例如，如果 `init` 是'same'，则克隆一个具有相同数据、形状和数据类型的新参数。默认值：'same'。
+            - **init** (Union[Tensor, str, numbers.Number]) - 初始化参数的形状和数据类型。如果 `init` 是 `Tensor` 或 `numbers.Number` ，则克隆一个具有相同数值、形状和数据类型的新参数。如果 `init` 是 `str` ，则 `init` 将继承 `Initializer` 模块中对应的同名的类。例如，如果 `init` 是'same'，则克隆一个具有相同数据、形状和数据类型的新参数。默认值：'same'。
 
         返回：
             Parameter，返回克隆的新参数。

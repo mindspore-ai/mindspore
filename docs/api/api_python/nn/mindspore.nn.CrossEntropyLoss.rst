@@ -52,7 +52,7 @@ mindspore.nn.CrossEntropyLoss
         - **weight** (Tensor) - 指定各类别的权重。若值不为None，则shape为 (C,)。数据类型仅支持float32或float16。默认值：None。
         - **ignore_index** (int) - 指定target中需要忽略的值(一般为填充值)，使其不对梯度产生影响。默认值：-100。
         - **reduction** (str) - 指定应用于输出结果的计算方式，比如'none'、'mean'、'sum'。默认值：'mean'。
-        - **label_smoothing** (float) - 标签平滑值，用于计算Loss时防止模型过拟合的正则化手段。取值范围为[0.0, 1.0]。 默认值：0.0。
+        - **label_smoothing** (float) - 标签平滑值，用于计算Loss时防止模型过拟合的正则化手段。取值范围为[0.0, 1.0]。默认值：0.0。
 
     输入：
         - **logits** (Tensor) - 输入预测值，shape为 :math:`(C,)` 、 :math:`(N, C)` 或 :math:`(N, C, d_1, d_2, ..., d_K)` (针对高维数据)。输入值需为对数概率。数据类型仅支持float32或float16。

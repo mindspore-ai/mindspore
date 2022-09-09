@@ -29,4 +29,4 @@ mindspore.ops.ScatterMax
         - **TypeError** - `indices` 不是int32或者int64。
         - **ValueError** - `updates` 的shape不等于 `indices.shape + x.shape[1:]` 。
         - **RuntimeError** - 当 `input_x` 和 `updates` 类型不一致，需要进行类型转换时，如果 `updates` 不支持转成参数 `input_x` 需要的数据类型，就会报错。
-        - **RuntimeError** - 在Ascend平台上， 输入的 `input_x` ， `indices` 和 `updates` 的数据维度大于8维。
+        - **RuntimeError** - 在Ascend平台上，输入的 `input_x` ， `indices` 和 `updates` 的数据维度大于8维。

@@ -34,7 +34,7 @@ mindspore.ops.smooth_l1_loss
         - **logits** (Tensor) - shape： :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。数据类型为float16或float32， CPU和GPU后端还支持float64。
         - **labels** (Tensor) - shape： :math:`(N, *)` ，与 `logits` 的shape和数据类型相同。
         - **beta** (float) - 控制损失函数在L1Loss和L2Loss间变换的阈值。默认值：1.0。
-        - **reduction** (str) - 缩减输出的方法。默认值：'none'。 其他选项：'mean'和'sum'。
+        - **reduction** (str) - 缩减输出的方法。默认值：'none'。其他选项：'mean'和'sum'。
 
     返回：
         Tensor。如果 `reduction` 为'none'，则输出为Tensor且与 `logits` 的shape相同。否则shape为 `(1,)`。

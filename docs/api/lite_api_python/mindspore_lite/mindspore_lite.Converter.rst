@@ -81,7 +81,7 @@ mindspore_lite.Converter
 
               - "common_quant_param"：公共量化参数部分。量化的配置参数之一。
               - "mixed_bit_weight_quant_param"：混合位权重量化参数部分。量化的配置参数之一。
-              - "full_quant_param"： 全量化参数部分。量化的配置参数之一。
+              - "full_quant_param"：全量化参数部分。量化的配置参数之一。
               - "data_preprocess_param"：数据预处理参数部分。量化的配置参数之一。
               - "registry"：扩展配置参数部分。扩展的配置参数之一。
 

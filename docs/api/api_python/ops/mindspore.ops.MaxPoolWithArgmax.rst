@@ -5,7 +5,7 @@ mindspore.ops.MaxPoolWithArgmax
 
     对输入Tensor执行最大池化运算，并返回最大值和索引。
 
-    通常，输入的shape为 :math:`(N_{in}, C_{in}, H_{in}, W_{in})` ，MaxPool在 :math:`(H_{in}, W_{in})` 维度输出区域最大值。 给定 `kernel_size` 为 :math:`(kH, kW)` 和 `stride` ，运算如下：
+    通常，输入的shape为 :math:`(N_{in}, C_{in}, H_{in}, W_{in})` ，MaxPool在 :math:`(H_{in}, W_{in})` 维度输出区域最大值。给定 `kernel_size` 为 :math:`(kH, kW)` 和 `stride` ，运算如下：
 
     .. math::
         \text{output}(N_i, C_j, h, w) = \max_{m=0, \ldots, kH-1} \max_{n=0, \ldots, kW-1}\\
