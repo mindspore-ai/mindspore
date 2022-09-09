@@ -620,6 +620,10 @@ class Dataset:
             >>> # Assume that the original coulmn order is ["image", "label"] and change to ["label", "image"].
             >>> dataset = dataset.batch(32, column_order=["label", "image"])
         """
+        if pad_info is not None:
+            logger.warning("The parameter pad_info will be deprecated in the future. "
+                           "Please use '.map(operations=transforms.PadEnd(...), ...)' operation instead.")
+
         return BatchDataset(self, batch_size, drop_remainder, num_parallel_workers, per_batch_map, input_columns,
                             output_columns, column_order, pad_info, python_multiprocessing, max_rowsize)
 
@@ -904,6 +908,10 @@ class Dataset:
                 "Input 'operations' of 'map' includes network computing operators like in mindspore.nn, mindspore.ops, "
                 "mindspore.numpy module and etc, which do not support multi-thread compiling, recommend to replace it "
                 "with python implemented operator like numpy etc. Here decrease 'num_parallel_workers' into 1.")
+
+        if column_order is not None:
+            logger.warning("The parameter column_order will be deprecated in the future. "
+                           "Please use '.project' operation instead.")
 
         return MapDataset(self, operations, input_columns, output_columns, column_order, num_parallel_workers,
                           python_multiprocessing, cache, callbacks, max_rowsize, offload)
