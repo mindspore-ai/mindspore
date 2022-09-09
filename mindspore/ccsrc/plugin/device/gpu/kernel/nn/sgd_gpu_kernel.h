@@ -18,14 +18,18 @@
 #define MINDSPORE_CCSRC_KERNEL_GPU_NN_SGD_KERNEL_H_
 
 #include <vector>
+#include <memory>
+#include <map>
+#include <string>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/sgd_impl.cuh"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
+#include "ops/sgd.h"
 
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class SGDGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class SGDGpuKernelMod : public NativeGpuKernelMod {
  public:
   SGDGpuKernelMod() : size_(1), dampening_(0.0), weight_decay_(0.0), nesterov_(false), is_null_input_(false) {}
   ~SGDGpuKernelMod() override = default;
@@ -45,34 +49,63 @@ class SGDGpuKernelMod : public DeprecatedNativeGpuKernelMod {
 
     SGD(size_, dampening_, weight_decay_, nesterov_, lr, momentum, grad, param, accum, stat,
         reinterpret_cast<cudaStream_t>(stream));
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                               cudaMemcpyAsync(output_param, param, sizeof(T) * size_, cudaMemcpyDeviceToDevice,
-                                               reinterpret_cast<cudaStream_t>(stream)),
-                               "SGD cudaMemcpyAsync params to outputs failed");
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(output_param, param, sizeof(T) * size_, cudaMemcpyDeviceToDevice,
+                                                       reinterpret_cast<cudaStream_t>(stream)),
+                                       kernel_name_ + " SGD cudaMemcpyAsync params to outputs failed");
     return true;
   }
-  bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    kernel_node_ = kernel_node;
-    dampening_ = GetAttr<float>(kernel_node, "dampening");
-    weight_decay_ = GetAttr<float>(kernel_node, "weight_decay");
-    nesterov_ = GetAttr<bool>(kernel_node, "nesterov");
 
-    auto input_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetOutputInferShape(kernel_node, 0));
-    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "parameters");
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override {
+    kernel_name_ = base_operator->name();
+    if (inputs.empty() || outputs.empty()) {
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
+      return false;
+    }
+    constexpr size_t kSGDInputsNum = 6;
+    if (inputs.size() != kSGDInputsNum) {
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', input size must be " << kSGDInputsNum << ", but got "
+                    << inputs.size();
+      return false;
+    }
+    constexpr size_t kSGDOutputsNum = 1;
+    if (outputs.size() != kSGDOutputsNum) {
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', output size must be " << kSGDOutputsNum << ", but got "
+                    << outputs.size();
+      return false;
+    }
+    auto sgd_op = std::make_shared<ops::SGD>(base_operator->GetPrim());
+
+    dampening_ = sgd_op->get_dampening();
+    weight_decay_ = sgd_op->get_weight_decay();
+    nesterov_ = sgd_op->get_nesterov();
+    return true;
+  }
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override {
+    int ret = KernelMod::Resize(base_operator, inputs, outputs);
+    if (ret != 0) {
+      return ret;
+    }
+    auto input_shape = Convert2SizeTClipNeg(inputs[0]->GetShapeVector());
+    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "parameters");
     if (is_null_input_) {
       InitSizeLists();
-      return true;
+      return KRET_OK;
     }
     for (auto &dim : input_shape) {
       size_ *= dim;
     }
     InitSizeLists();
-    return true;
+    return KRET_OK;
   }
 
  protected:
-  void InitSizeLists() override {
+  void InitSizeLists() {
+    input_size_list_.clear();
+    output_size_list_.clear();
+
     size_t input_size = size_ * sizeof(T);
     input_size_list_.push_back(input_size);  // parameter
     input_size_list_.push_back(input_size);  // gradient
@@ -89,6 +122,7 @@ class SGDGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   float weight_decay_;
   bool nesterov_;
   bool is_null_input_;
+  std::string kernel_name_;
 };
 }  // namespace kernel
 }  // namespace mindspore

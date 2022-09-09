@@ -18,6 +18,9 @@
 #include <algorithm>
 #include <vector>
 #include <utility>
+#include <memory>
+#include <map>
+#include "ops/sgd.h"
 
 namespace mindspore {
 namespace kernel {
@@ -30,24 +33,94 @@ constexpr size_t kIndexLr = 2;
 constexpr size_t kIndexAccum = 3;
 constexpr size_t kIndexMomentum = 4;
 constexpr size_t kIndexStat = 5;
-}  // namespace
-void SGDCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  dampening_ = common::AnfAlgo::GetNodeAttr<float>(kernel_node, "dampening");
-  weight_decay_ = common::AnfAlgo::GetNodeAttr<float>(kernel_node, "weight_decay");
-  nesterov_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "nesterov");
 
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
-  if (!is_match) {
-    MS_LOG(EXCEPTION) << "SGD does not support this kernel data type: " << kernel_attr;
+using KernelRunFunc = SGDCpuKernelMod::KernelRunFunc;
+}  // namespace
+
+bool SGDCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                           const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->name();
+  if (inputs.empty() || outputs.empty()) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
+    return false;
   }
-  kernel_func_ = func_list_[index].second;
+  if (inputs.size() != kSGDInputsNum) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', input size must be " << kSGDInputsNum << ", but got "
+                  << inputs.size();
+    return false;
+  }
+  if (outputs.size() != kSGDOutputsNum) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', output size must be " << kSGDOutputsNum << ", but got "
+                  << outputs.size();
+    return false;
+  }
+  auto sgd_op = std::make_shared<ops::SGD>(base_operator->GetPrim());
+
+  dampening_ = sgd_op->get_dampening();
+  weight_decay_ = sgd_op->get_weight_decay();
+  nesterov_ = sgd_op->get_nesterov();
+
+  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+    return false;
+  }
+  return true;
+}
+
+int SGDCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                            const std::vector<KernelTensorPtr> &outputs,
+                            const std::map<uint32_t, tensor::TensorPtr> &) {
+  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
+    return ret;
+  }
+  // "parameters", "gradient", "learning_rate", "accum", "momentum", "stat"
+  std::vector<int64_t> parm_shape = inputs[kIndexParm]->GetShapeVector();
+  std::vector<int64_t> grad_shape = inputs[kIndexGrad]->GetShapeVector();
+  std::vector<int64_t> accum_shape = inputs[kIndexAccum]->GetShapeVector();
+  std::vector<int64_t> stat_shape = inputs[kIndexStat]->GetShapeVector();
+
+  std::vector<int64_t> momentum_shape = inputs[kIndexMomentum]->GetShapeVector();
+  std::vector<int64_t> lr_shape = inputs[kIndexLr]->GetShapeVector();
+
+  if (!IsSameShape(parm_shape, grad_shape)) {
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', the shape of 'parameters' must be the gradient as the shape of 'gradient',"
+                  << " but got the shape of 'parameters': " << Vector2Str(parm_shape)
+                  << " and the shape of 'gradient': " << Vector2Str(grad_shape);
+    return KRET_RESIZE_FAILED;
+  }
+  if (!IsSameShape(parm_shape, accum_shape)) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the shape of 'parameters' must be the same as the shape of 'accum',"
+                  << " but got the shape of 'parameters': " << Vector2Str(parm_shape)
+                  << " and the shape of 'accum': " << Vector2Str(accum_shape);
+    return KRET_RESIZE_FAILED;
+  }
+  if (!IsSameShape(parm_shape, stat_shape)) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the shape of 'parameters' must be the same as the shape of 'stat',"
+                  << " but got the shape of 'parameters': " << Vector2Str(parm_shape)
+                  << " and the shape of 'stat': " << Vector2Str(stat_shape);
+    return KRET_RESIZE_FAILED;
+  }
+  auto is_scalar_shape = [](const std::vector<int64_t> &shape) {
+    return shape.empty() || (shape.size() == 1 && shape[0] == 1);
+  };
+  if (!is_scalar_shape(lr_shape)) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the 'learning rate' should be a scalar. but got shape "
+                  << Vector2Str(lr_shape);
+    return KRET_RESIZE_FAILED;
+  }
+  if (!is_scalar_shape(momentum_shape)) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the 'momentum' should be a scalar. but got shape "
+                  << Vector2Str(momentum_shape);
+    return KRET_RESIZE_FAILED;
+  }
+  return KRET_OK;
 }
 
 template <typename T>
-bool SGDCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
+bool SGDCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                   const std::vector<kernel::AddressPtr> &,
+                                   const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSGDInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSGDOutputsNum, kernel_name_);
   auto param = reinterpret_cast<T *>(inputs[kIndexParm]->addr);
@@ -88,31 +161,27 @@ bool SGDCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const 
   return true;
 }
 
-std::vector<std::pair<KernelAttr, SGDCpuKernelMod::SGDFunc>> SGDCpuKernelMod::func_list_ = {
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeFloat32)
-     .AddInputAttr(kNumberTypeFloat32)
-     .AddInputAttr(kNumberTypeFloat32)
-     .AddInputAttr(kNumberTypeFloat32)
-     .AddInputAttr(kNumberTypeFloat32)
-     .AddInputAttr(kNumberTypeFloat32)
-     .AddOutputAttr(kNumberTypeFloat32),
-   &SGDCpuKernelMod::LaunchKernel<float>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeFloat16)
-     .AddInputAttr(kNumberTypeFloat16)
-     .AddInputAttr(kNumberTypeFloat16)
-     .AddInputAttr(kNumberTypeFloat16)
-     .AddInputAttr(kNumberTypeFloat16)
-     .AddInputAttr(kNumberTypeFloat16)
-     .AddOutputAttr(kNumberTypeFloat16),
-   &SGDCpuKernelMod::LaunchKernel<float16>}};
-
-std::vector<KernelAttr> SGDCpuKernelMod::GetOpSupport() {
-  std::vector<KernelAttr> support_list;
-  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                       [](const std::pair<KernelAttr, SGDFunc> &pair) { return pair.first; });
-  return support_list;
+const std::vector<std::pair<KernelAttr, KernelRunFunc>> &SGDCpuKernelMod::GetFuncList() const {
+  static const std::vector<std::pair<KernelAttr, KernelRunFunc>> func_list = {
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddOutputAttr(kNumberTypeFloat32),
+     &SGDCpuKernelMod::LaunchKernel<float>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddOutputAttr(kNumberTypeFloat16),
+     &SGDCpuKernelMod::LaunchKernel<float16>}};
+  return func_list;
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, SGD, SGDCpuKernelMod);
