@@ -48,8 +48,6 @@ class MIND_API Adam : public BaseOperator {
   /// \return use_nesterov.
   bool get_use_nesterov() const;
 };
-abstract::AbstractBasePtr AdamInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimAdamPtr = std::shared_ptr<Adam>;
 }  // namespace ops
 }  // namespace mindspore

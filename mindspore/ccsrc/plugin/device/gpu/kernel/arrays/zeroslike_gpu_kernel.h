@@ -14,82 +14,53 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARRAYS_ZEROSLIKE_GPU_KERNEL_H
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARRAYS_ZEROSLIKE_GPU_KERNEL_H
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_ZEROSLIKE_GPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_ZEROSLIKE_GPU_KERNEL_H_
 
 #include <vector>
+#include <map>
+#include <utility>
+#include <string>
 
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
-class ZerosLikeGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class ZerosLikeGpuKernelMod : public NativeGpuKernelMod {
  public:
-  ZerosLikeGpuKernelMod() { ResetResource(); }
+  ZerosLikeGpuKernelMod() = default;
   ~ZerosLikeGpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    if (is_null_input_) {
-      return true;
-    }
-    T *output_device_address = GetDeviceAddress<T>(outputs, 0);
-
-    CHECK_CUDA_RET_WITH_EXCEPT(
-      kernel_node_,
-      // have to use a float literal instead of an int literal because of ambiguous half() overload.
-      cudaMemsetAsync(output_device_address, static_cast<T>(0.0), input_size_ * sizeof(T),
-                      reinterpret_cast<cudaStream_t>(stream_ptr)),
-      "cudaMemset failed");
-
-    return true;
+    return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
   }
 
-  bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    kernel_node_ = kernel_node;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
 
-    auto shape_signed = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
-    if (IsDynamic(shape_signed)) {
-      return true;
-    }
-    auto input_shape = Convert2SizeTClipNeg(shape_signed);
-    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
-    if (is_null_input_) {
-      InitSizeLists();
-      return true;
-    }
-    for (size_t i = 0; i < input_shape.size(); i++) {
-      input_size_ *= static_cast<size_t>(input_shape[i]);
-    }
-
-    InitSizeLists();
-
-    return true;
-  }
-
-  void ResetResource() noexcept override {
-    input_size_ = 1;
-    is_null_input_ = false;
-    input_size_list_.clear();
-    output_size_list_.clear();
-    workspace_size_list_.clear();
-  }
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
  protected:
-  void InitSizeLists() override {
-    // allocate space for input even though we don't need to do anything with the input
-    input_size_list_.push_back(input_size_ * sizeof(T));
-    output_size_list_.push_back(input_size_ * sizeof(T));
-  }
+  std::vector<KernelAttr> GetOpSupport() override;
+  template <typename T>
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
+
+  using ZerosLikeLaunchFunc =
+    std::function<bool(ZerosLikeGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &, void *)>;
 
  private:
+  std::string kernel_name_{};
+  ZerosLikeLaunchFunc kernel_func_;
+  static std::vector<std::pair<KernelAttr, ZerosLikeLaunchFunc>> func_list_;
   size_t input_size_;
   bool is_null_input_;
 };
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARRAYS_ZEROSLIKE_GPU_KERNEL_H
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_ZEROSLIKE_GPU_KERNEL_H_

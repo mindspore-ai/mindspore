@@ -27,28 +27,6 @@ constexpr size_t kSizeFloat32 = 4;
 constexpr size_t kApplyAdagradInputsNum = 4;
 constexpr size_t kApplyAdagradOutputsNum = 2;
 }  // namespace
-
-void ApplyAdagradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  update_slots_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "update_slots");
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-}
-
-bool ApplyAdagradCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                      const std::vector<AddressPtr> &outputs) {
-  CheckParam(inputs, outputs);
-  if (dtype_ == kNumberTypeFloat16) {
-    LaunchKernel<float16>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeFloat32) {
-    LaunchKernel<float>(inputs, outputs);
-  } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of 'var' must be Float16 or Float32, but got "
-                      << TypeIdToType(dtype_)->ToString();
-  }
-  return true;
-}
-
 void ApplyAdagradCpuKernelMod::CheckParam(const std::vector<AddressPtr> &inputs,
                                           const std::vector<AddressPtr> &outputs) const {
   // inputs: var, accum, lr, gradient
@@ -73,9 +51,24 @@ void ApplyAdagradCpuKernelMod::CheckParam(const std::vector<AddressPtr> &inputs,
   }
 }
 
+bool ApplyAdagradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                    const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->GetPrim()->name();
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
+  }
+  kernel_func_ = func_list_[index].second;
+  return true;
+}
+
 template <typename T>
-void ApplyAdagradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                            const std::vector<AddressPtr> &outputs) {
+bool ApplyAdagradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                            const std::vector<kernel::AddressPtr> &workspace,
+                                            const std::vector<kernel::AddressPtr> &outputs) {
+  CheckParam(inputs, outputs);
   auto *var = reinterpret_cast<T *>(inputs[0]->addr);
   auto *accum = reinterpret_cast<T *>(inputs[1]->addr);
   const auto *lr = reinterpret_cast<T *>(inputs[2]->addr);
@@ -99,6 +92,7 @@ void ApplyAdagradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
   if (ret != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', launch kernel error: memcpy failed. Error no: " << ret;
   }
+  return true;
 }
 
 template <typename T>
@@ -117,22 +111,23 @@ void ApplyAdagradCpuKernelMod::LaunchApplyAdagrad(T *var, T *accum, const T *lr,
   }
 }
 
+std::vector<std::pair<KernelAttr, ApplyAdagradCpuKernelMod::ApplyAdagradFunc>> ApplyAdagradCpuKernelMod::func_list_ = {
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddOutputAttr(kNumberTypeFloat32)
+     .AddOutputAttr(kNumberTypeFloat32),
+   &ApplyAdagradCpuKernelMod::LaunchKernel<float>},
+};
+
 std::vector<KernelAttr> ApplyAdagradCpuKernelMod::GetOpSupport() {
-  static std::vector<KernelAttr> kernel_attr_list = {KernelAttr()
-                                                       .AddInputAttr(kNumberTypeFloat32)
-                                                       .AddInputAttr(kNumberTypeFloat32)
-                                                       .AddInputAttr(kNumberTypeFloat32)
-                                                       .AddInputAttr(kNumberTypeFloat32)
-                                                       .AddOutputAttr(kNumberTypeFloat32)
-                                                       .AddOutputAttr(kNumberTypeFloat32),
-                                                     KernelAttr()
-                                                       .AddInputAttr(kNumberTypeFloat16)
-                                                       .AddInputAttr(kNumberTypeFloat16)
-                                                       .AddInputAttr(kNumberTypeFloat16)
-                                                       .AddInputAttr(kNumberTypeFloat16)
-                                                       .AddOutputAttr(kNumberTypeFloat16)
-                                                       .AddOutputAttr(kNumberTypeFloat16)};
-  return kernel_attr_list;
+  std::vector<KernelAttr> support_list;
+  (void)std::transform(
+    func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+    [](const std::pair<KernelAttr, ApplyAdagradCpuKernelMod::ApplyAdagradFunc> &pair) { return pair.first; });
+  return support_list;
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, ApplyAdagrad, ApplyAdagradCpuKernelMod);
