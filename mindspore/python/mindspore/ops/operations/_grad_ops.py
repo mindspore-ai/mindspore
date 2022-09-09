@@ -14,7 +14,6 @@
 # ============================================================================
 
 """Operators for gradients."""
-import math
 from mindspore._checkparam import _check_3d_int_or_tuple
 
 from mindspore.ops.operations.nn_ops import _check_positive_int_or_tuple
@@ -259,7 +258,7 @@ class ConcatOffset(PrimitiveWithInfer):
         return out
 
 
-class Conv3DBackpropFilter(PrimitiveWithInfer):
+class Conv3DBackpropFilter(Primitive):
     """
     Computes the gradients of convolution 3D with respect to the filter.
 
@@ -344,57 +343,6 @@ class Conv3DBackpropFilter(PrimitiveWithInfer):
         self.add_prim_attr('groups', self.group)
         self.format = validator.check_string(data_format, ['NCDHW'], 'format', self.name)
         self.add_prim_attr('data_format', self.format)
-
-    def __infer__(self, x, doutput, w_size):
-        w_size_v = w_size['value']
-        validator.check_value_type('w_size', w_size_v, [tuple], self.name)
-        for i, dim_len in enumerate(w_size_v):
-            validator.check_value_type("w_size[%d]" % i, dim_len, [int], self.name)
-        args = {"x": x['dtype'], "doutput": doutput['dtype']}
-        valid_dtypes = [mstype.float16, mstype.float32]
-        validator.check_tensors_dtypes_same_and_valid(args, valid_dtypes, self.name)
-
-        validator.check("filter's batch", w_size_v[0], "dout's channel", doutput['shape'][1], Rel.EQ, self.name)
-        validator.check("filter's channel * group", w_size_v[1] * self.group, "input_size's channel", \
-                        x['shape'][1], Rel.EQ, self.name)
-        validator.check("input_size's batch", x['shape'][0], "dout's batch", doutput['shape'][0], Rel.EQ, self.name)
-
-        # infer shape
-        x_shape = x['shape']
-        dout_shape = doutput['shape']
-        kernel_d = self.kernel_size[0]
-        kernel_h = self.kernel_size[1]
-        kernel_w = self.kernel_size[2]
-        stride_d = self.stride[2]
-        stride_h = self.stride[3]
-        stride_w = self.stride[4]
-        dilation_d = self.dilation[2]
-        dilation_h = self.dilation[3]
-        dilation_w = self.dilation[4]
-        # The pad_mode is valid by default. If pad_mode is not valid or same, then pad.
-        if self.pad_mode == "valid":
-            self.pad_list = (0, 0, 0, 0, 0, 0)
-        if self.pad_mode == "same":
-            pad_needed_d = max(0, (dout_shape[2] - 1) * stride_d + dilation_d * (kernel_d - 1) + 1 - x_shape[2])
-            pad_head = math.floor(pad_needed_d / 2)
-            pad_tail = pad_needed_d - pad_head
-
-            pad_needed_h = max(0, (dout_shape[3] - 1) * stride_h + dilation_h * (kernel_h - 1) + 1 - x_shape[3])
-            pad_top = math.floor(pad_needed_h / 2)
-            pad_bottom = pad_needed_h - pad_top
-
-            pad_needed_w = max(0, (dout_shape[4] - 1) * stride_w + dilation_w * (kernel_w - 1) + 1 - x_shape[4])
-            pad_left = math.floor(pad_needed_w / 2)
-            pad_right = pad_needed_w - pad_left
-            self.pad_list = (pad_head, pad_tail, pad_top, pad_bottom, pad_left, pad_right)
-
-        self.add_prim_attr('pad_list', self.pad_list)
-        out = {
-            'value': None,
-            'shape': w_size_v,
-            'dtype': mstype.float32,
-        }
-        return out
 
 
 class Conv2DBackpropFilter(Primitive):
