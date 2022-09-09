@@ -142,7 +142,7 @@ device::DeviceAddressPtr HandleAddressForHeterogeneous(const tensor::TensorPtr &
     MS_LOG(INFO) << "Forward output " << tensor->ToString() << " device address is null";
     device_address = CreateValueNodeAddress(value_node, device_context);
     if (!CopyTensorData(tensor, device_address, value_node, device_context)) {
-      MS_LOG(EXCEPTION) << "Sync tensor data failed";
+      MS_LOG(EXCEPTION) << "CopyTensorData failed, value_node " << value_node->DebugString();
     }
   }
   MS_EXCEPTION_IF_NULL(device_address);
@@ -150,7 +150,9 @@ device::DeviceAddressPtr HandleAddressForHeterogeneous(const tensor::TensorPtr &
     tensor->data_sync();
     auto new_device_address = CreateValueNodeAddress(value_node, device_context);
     MS_EXCEPTION_IF_NULL(new_device_address);
-    CopyTensorData(tensor, new_device_address, value_node, device_context);
+    if (!CopyTensorData(tensor, new_device_address, value_node, device_context)) {
+      MS_LOG(EXCEPTION) << "CopyTensorData failed, value_node " << value_node->DebugString();
+    }
     return new_device_address;
   }
   return device_address;
@@ -363,5 +365,72 @@ bool GraphAdapter::PyNativeEnableTaskSink(const FuncGraphPtr &func_graph) {
   });
 
   return !IsAutoParallel() && !is_cut_graph && !func_graph->has_flag(kFlagIsDynamicStructure);
+}
+
+void UpdateValueNodeAbstractFromTensor(const ValueNodePtr &value_node, const tensor::TensorPtr &tensor) {
+  MS_EXCEPTION_IF_NULL(value_node);
+  MS_EXCEPTION_IF_NULL(tensor);
+  auto real_shape = tensor->shape();
+  auto old_abs = value_node->abstract();
+  auto old_abs_tensor = dyn_cast<abstract::AbstractTensor>(old_abs);
+  MS_EXCEPTION_IF_NULL(old_abs_tensor);
+  auto new_abs = std::make_shared<abstract::AbstractTensor>(old_abs_tensor->element(),
+                                                            std::make_shared<abstract::Shape>(real_shape));
+  value_node->set_abstract(new_abs);
+  MS_LOG(INFO) << "Change bprop ValueNode abstract from " << old_abs->ToString() << " to " << new_abs->ToString();
+}
+
+void GraphAdapter::UpdateDynamicValueNodeAbstract(const KernelGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  if (!graph->is_dynamic_shape()) {
+    return;
+  }
+  MS_LOG(INFO) << "Update dynamic shape value node for graph " << graph->graph_id();
+  auto value_nodes = graph->graph_value_nodes();
+  for (auto &value_node : value_nodes) {
+    MS_EXCEPTION_IF_NULL(value_node);
+    const auto &value = value_node->value();
+    MS_EXCEPTION_IF_NULL(value);
+    if (value->isa<tensor::Tensor>()) {
+      auto tensor = value->cast<tensor::TensorPtr>();
+      MS_EXCEPTION_IF_NULL(tensor);
+      if (tensor->is_forward_output()) {
+        UpdateValueNodeAbstractFromTensor(value_node, tensor);
+      }
+    }
+  }
+}
+
+void GraphAdapter::SensTensorToDevice(const KernelGraphPtr &graph, const device::DeviceContext *device_context) {
+  MS_EXCEPTION_IF_NULL(graph);
+  if (!graph->is_dynamic_shape()) {
+    return;
+  }
+  auto value_nodes = graph->graph_value_nodes();
+  for (const auto &value_node : value_nodes) {
+    MS_EXCEPTION_IF_NULL(value_node);
+    auto value = value_node->value();
+    MS_EXCEPTION_IF_NULL(value);
+    std::vector<tensor::TensorPtr> tensors;
+    TensorValueToTensor(value, &tensors);
+    for (const auto &tensor : tensors) {
+      MS_EXCEPTION_IF_NULL(tensor);
+      if (!tensor->has_user_data(kTensorUserDataIsSensTensor)) {
+        continue;
+      }
+      const auto &device_address = tensor->device_address();
+      if (device_address == nullptr) {
+        UpdateValueNodeAbstractFromTensor(value_node, tensor);
+        auto node_address = CreateValueNodeAddress(value_node, device_context);
+        MS_EXCEPTION_IF_NULL(node_address);
+        tensor->set_device_address(node_address);
+        AnfAlgo::SetOutputAddr(node_address, 0, value_node.get());
+        MS_LOG(DEBUG) << "Start to copy sens tensor to device";
+        if (!CopyTensorData(tensor, node_address, value_node, device_context)) {
+          MS_LOG(EXCEPTION) << "ValueNode host to device copy failed";
+        }
+      }
+    }
+  }
 }
 }  // namespace mindspore::pynative
