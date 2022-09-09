@@ -77,33 +77,49 @@ std::vector<std::string> DefaultInferSession::GetInputNames() { return std::vect
 MutableTensorImplPtr DefaultInferSession::GetOutputByTensorName(const std::string &tensorName) { return nullptr; }
 MutableTensorImplPtr DefaultInferSession::GetInputByTensorName(const std::string &name) { return nullptr; }
 std::shared_ptr<InferSession> InferSession::CreateSession(const std::shared_ptr<Context> &context) {
-  HandleGPUContext(context);
+  HandleContext(context);
   auto session_type = SelectSession(context);
   MS_LOG(DEBUG) << "Session type " << static_cast<int64_t>(session_type);
   return SessionRegistry::GetInstance().GetSession(session_type, context);
 }
 
-void InferSession::HandleGPUContext(const std::shared_ptr<Context> &context) {
+void InferSession::HandleContext(const std::shared_ptr<Context> &context) {
   if (!context) {
     return;
   }
   constexpr auto default_gpu_provider = "tensorrt";
+  constexpr auto default_cpu_provider = "litert";
   auto device_infos = context->MutableDeviceInfo();
   for (auto &device_info : device_infos) {
-    if (!device_info || device_info->GetDeviceType() != kGPU) {
+    if (!device_info) {
       continue;
     }
-    auto gpu_device = device_info->Cast<GPUDeviceInfo>();
-    if (!gpu_device) {
-      continue;
-    }
-    auto provider = gpu_device->GetProvider();
-    if (provider.empty() || provider == default_gpu_provider) {
-      if (!lite::TensorRTExecutorPlugin::GetInstance().Register()) {
-        MS_LOG_WARNING << "Failed to register TensorRT plugin";
-        return;
+    if (device_info->GetDeviceType() == kGPU) {
+      auto gpu_device = device_info->Cast<GPUDeviceInfo>();
+      if (!gpu_device) {
+        continue;
       }
-      gpu_device->SetProvider(default_gpu_provider);
+      auto provider = gpu_device->GetProvider();
+      if (provider.empty() || provider == default_gpu_provider) {
+        if (!lite::TensorRTExecutorPlugin::GetInstance().Register()) {
+          MS_LOG_WARNING << "Failed to register TensorRT plugin";
+          return;
+        }
+        gpu_device->SetProvider(default_gpu_provider);
+      }
+      continue;
+    }
+
+    if (device_info->GetDeviceType() == kCPU) {
+      auto cpu_device = device_info->Cast<CPUDeviceInfo>();
+      if (!cpu_device) {
+        continue;
+      }
+      auto provider = cpu_device->GetProvider();
+      if (provider.empty()) {
+        cpu_device->SetProvider(default_cpu_provider);
+      }
+      continue;
     }
   }
 }
@@ -117,7 +133,7 @@ SessionType InferSession::SelectSession(const std::shared_ptr<Context> &context)
         return kSingleOpSession;
       }
       // if (device_context->GetDeviceType() == kGPU && is_use_tensorrt_delegate) {
-      if (device_context->GetDeviceType() == kGPU) {
+      if (device_context->GetDeviceType() == kGPU || device_context->GetDeviceType() == kCPU) {
         return kDelegateSession;
       }
     }

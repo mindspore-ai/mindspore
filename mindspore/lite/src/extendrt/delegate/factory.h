@@ -49,12 +49,6 @@ class MS_API DelegateRegistry {
 
   std::shared_ptr<GraphExecutor> GetDelegate(const mindspore::DeviceType &device_type, const std::string &provider,
                                              const std::shared_ptr<Context> &ctx) {
-    // first find graph executor delegate
-    auto graph_executor_delegate = DelegateRegistry::GetInstance().GetDelegate(device_type, provider, ctx);
-    if (graph_executor_delegate != nullptr) {
-      return graph_executor_delegate;
-    }
-
     //  find common delegate
     auto it = creator_map_.find(device_type);
     if (it == creator_map_.end()) {
