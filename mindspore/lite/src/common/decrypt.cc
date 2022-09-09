@@ -257,6 +257,10 @@ std::unique_ptr<Byte[]> Decrypt(const std::string &lib_path, size_t *decrypt_len
   std::vector<char> int_buf(sizeof(int32_t));
 
   auto decrypt_data = std::make_unique<Byte[]>(data_size);
+  if (decrypt_data == nullptr) {
+    MS_LOG(ERROR) << "decrypt_data is nullptr.";
+    return nullptr;
+  }
   int32_t decrypt_block_len;
 
   size_t offset = 0;

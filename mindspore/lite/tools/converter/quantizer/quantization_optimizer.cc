@@ -133,13 +133,17 @@ int DoQuantDebug(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterP
   auto quant_model = std::make_shared<mindspore::Model>();
   CHECK_NULL_RETURN(quant_model);
   size_t size = 0;
-  auto ret = BuildModelByFuncGraph(quant_model, old_graph, param, &size);
-  if (ret != kSuccess) {
+  auto status = BuildModelByFuncGraph(quant_model, old_graph, param, &size);
+  if (status != kSuccess) {
     MS_LOG(ERROR) << "Build model failed";
     return RET_ERROR;
   }
   std::map<std::string, OpParameter *> op_parameters;
-  FetchOpParameterFromFuncGraph(old_graph, &op_parameters);
+  auto ret = FetchOpParameterFromFuncGraph(old_graph, &op_parameters);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Fetch op parameter from funcgraph failed";
+    return ret;
+  }
   DebugInfoManager manager;
 
   auto quant_lite_model = ParseLiteModel(old_graph, param);
@@ -151,8 +155,8 @@ int DoQuantDebug(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterP
     MS_LOG(ERROR) << "Origin lite model nullptr.";
     return RET_ERROR;
   }
-  auto status = manager.CompareOriginWithQuant(origin_model, quant_model, op_parameters, param, *origin_lite_model,
-                                               *quant_lite_model);
+  ret = manager.CompareOriginWithQuant(origin_model, quant_model, op_parameters, param, *origin_lite_model,
+                                       *quant_lite_model);
   auto free_buffer = [&] {
     for (auto parameter : op_parameters) {
       if (parameter.second != nullptr) {
@@ -162,10 +166,10 @@ int DoQuantDebug(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterP
     }
     op_parameters.clear();
   };
-  if (status != RET_OK) {
+  if (ret != RET_OK) {
     MS_LOG(ERROR) << "Compare origin with quant failed.";
     free_buffer();
-    return status;
+    return ret;
   }
   free_buffer();
   return RET_OK;

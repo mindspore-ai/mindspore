@@ -40,7 +40,7 @@ class CLEPattern : public opt::MultiplePatternProcessPass {
   AnfNodePtr Process(const std::string &, const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
   std::unordered_map<std::string, VectorRef> DefinePatterns() const override;
 
-  std::vector<CombinationLayer> GetCombinationLayer() { return combination_layer_; }
+  std::vector<CombinationLayer> GetCombinationLayer() const { return combination_layer_; }
 
  private:
   VectorRef DefineConvWithConvPattern() const;

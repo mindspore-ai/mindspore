@@ -158,7 +158,7 @@ class TensorCompressor {
     auto tensor_info = weight->default_param()->cast<tensor::TensorPtr>();
     CHECK_NULL_RETURN(tensor_info);
     auto quant_data = static_cast<T *>(tensor_info->data().data());
-    auto elem_cnt = tensor_info->DataSize();
+    int elem_cnt = tensor_info->DataSize();
     auto channel_cnt = quant_params.size();
     if (channel_cnt == 0) {
       MS_LOG(ERROR) << "quant_params is empty.";
@@ -188,13 +188,13 @@ class TensorCompressor {
     }
     // nz values indexing && get coor
     std::vector<size_t> coors(nz_cnt);
-    size_t coors_index = 0;
-    size_t prev_index = -1;
-    for (size_t di = 0; di < elem_cnt; di++) {
+    int coors_index = 0;
+    int prev_index = -1;
+    for (int di = 0; di < elem_cnt; di++) {
       auto cur_channel = di / elem_perchannel;
       auto zp = quant_params[cur_channel].zeroPoint;
       auto nz_value = quant_data[di];
-      if (nz_value != zp || (di - prev_index) >= static_cast<size_t>((1 << coor_best_bit))) {
+      if (nz_value != zp || static_cast<size_t>(di - prev_index) >= (1u << coor_best_bit)) {
         MS_ASSERT(coors_index < nz_cnt);
         coors[coors_index++] = di - prev_index - 1;
         prev_index = di;

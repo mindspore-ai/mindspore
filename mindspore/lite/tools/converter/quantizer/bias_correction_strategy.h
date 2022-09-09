@@ -110,7 +110,7 @@ class BiasCorrectionStrategy {
   int CalculatePerChannelMeans(const T *tensor_data, size_t elem_count, std::vector<int64_t> shapes,
                                std::vector<float> *per_channel_mean) const {
     CHECK_NULL_RETURN(tensor_data);
-    MS_CHECK_GT(elem_count, 0, RET_ERROR);
+    MS_CHECK_TRUE_RET(elem_count != 0, RET_PARAM_INVALID);
     // suppose the activation format: NHWC
     MS_CHECK_TRUE_RET(!shapes.empty(), RET_ERROR);
     auto channels = shapes[shapes.size() - 1];
@@ -127,7 +127,7 @@ class BiasCorrectionStrategy {
         }
         sum += tensor_data[index];
       }
-      MS_CHECK_GT(bucket_size, 0, RET_ERROR);
+      MS_CHECK_TRUE_RET(bucket_size != 0, RET_PARAM_INVALID);
       sum = sum / bucket_size;
       MS_CHECK_GT(static_cast<int>(per_channel_mean->size()), i, RET_ERROR);
       per_channel_mean->at(i) = sum;

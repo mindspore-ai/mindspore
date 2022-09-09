@@ -34,7 +34,7 @@ class MatMulDynamicSdotInt8Kernel : public MatmulDynamicBaseInt8CPUKernel {
   int MatMulDynamicArm64SdotPre(int task_id);
   int MatMulDynamicArm64SdotImpl(int task_id);
 
- private:
+ protected:
   void InitParameter() override;
 
  private:

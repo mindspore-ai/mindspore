@@ -428,10 +428,9 @@ int GetDeConvPreferredDim(const PrimitivePtr &primitive, const std::vector<int> 
   if (prim->get_in_channel() == prim->get_group() && prim->get_out_channel() == prim->get_group()) {
     // DepthWise-DeConv (CO\CI) KH KW 1
     return 0;
-  } else {
-    // DeConv:CI KH KW CO
-    return dims.size() - 1;
   }
+  // DeConv:CI KH KW CO
+  return dims.size() - 1;
 }
 
 int GetGatherPreferredDim(const CNodePtr &cnode) {
@@ -546,9 +545,9 @@ bool CheckNodeInSet(const CNodePtr &cnode, const std::set<PrimitivePtr> &support
   return false;
 }
 
-int DeQuantData(const mindspore::MSTensor *tensor, std::vector<double> *dequant_data, int preferred_dim) {
+int DeQuantData(const mindspore::MSTensor *tensor, std::vector<double> *dequant_data) {
   return DeQuantData(reinterpret_cast<const int8_t *>(tensor->Data().get()), tensor->ElementNum(),
-                     tensor->QuantParams(), dequant_data, preferred_dim);
+                     tensor->QuantParams(), dequant_data);
 }
 
 int GetElementNumFromShape(const std::vector<int> &dims, int *total_size) {
@@ -562,7 +561,8 @@ int GetElementNumFromShape(const std::vector<int> &dims, int *total_size) {
 }
 
 int GetBucketAllIndex(const std::vector<int> &dims, int preferred_dim,
-                      std::vector<std::vector<int>> *buckets_data_index) {
+                      std::vector<std::vector<size_t>> *buckets_data_index) {
+  CHECK_NULL_RETURN(buckets_data_index);
   int outer = 1;
   for (int i = 0; i < preferred_dim; i++) {
     outer *= dims[i];
@@ -577,7 +577,7 @@ int GetBucketAllIndex(const std::vector<int> &dims, int preferred_dim,
   }
   for (int i = 0; i < bucket_count; i++) {
     auto index = i * inner;
-    std::vector<int> bucket_index(inner * outer);
+    std::vector<size_t> bucket_index(inner * outer);
     for (int j = 0; j < outer; j++) {
       for (int k = 0; k < inner; k++) {
         bucket_index[j * inner + k] = index + k;

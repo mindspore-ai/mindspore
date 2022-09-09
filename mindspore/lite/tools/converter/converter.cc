@@ -315,7 +315,7 @@ int PreInference(const schema::MetaGraphT &meta_graph, bool train_model) {
     return RET_ERROR;
   }
   for (auto &tensor : model.GetInputs()) {
-    if (tensor.Shape().empty() || tensor.DataSize() <= 0 ||
+    if (tensor.Shape().empty() || tensor.DataSize() == 0 ||
         std::find(tensor.Shape().begin(), tensor.Shape().end(), -1) != tensor.Shape().end()) {
       MS_LOG(WARNING) << tensor.Name() << " is dynamic shape and will not be pre-infer.";
       return RET_OK;

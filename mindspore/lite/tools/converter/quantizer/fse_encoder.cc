@@ -113,6 +113,7 @@ int FSEEncoder::Compress(const ParameterPtr &weight, const std::vector<schema::Q
   ret = NormalizeFrequency(&fse_quant, &table_log);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Normalize frequency failed.";
+    free(fse_quant.symbol_table);
     return ret;
   }
   FSEBitStream bs;
