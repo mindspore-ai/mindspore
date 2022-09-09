@@ -21,7 +21,7 @@
 #include <string>
 #include <algorithm>
 #include <utility>
-
+#include <map>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
@@ -41,18 +41,25 @@ constexpr size_t BOX_INDEX = 2;
 constexpr size_t CROP_SIZE = 3;
 constexpr size_t IMAGE_HEIGHT = 1;
 constexpr size_t IMAGE_WEIGHT = 2;
-class CropAndResizeCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class CropAndResizeCpuKernelMod : public NativeCpuKernelMod {
  public:
   CropAndResizeCpuKernelMod() = default;
   ~CropAndResizeCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(
+    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+    const std::vector<KernelTensorPtr> &outputs,
+    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs) override {
     return kernel_func_(this, inputs, outputs);
   }
 
+ protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
