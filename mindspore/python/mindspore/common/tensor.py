@@ -285,6 +285,21 @@ class Tensor(Tensor_):
     def __add__(self, other):
         return tensor_operator_registry.get('__add__')(self, other)
 
+    def __and__(self, other):
+        if isinstance(other, (int, bool, float, Tensor)):
+            return tensor_operator_registry.get('bitwise_and')(self, other)
+        raise TypeError("Unsupported operand type(s) for &: 'Tensor' and '{}'".format(type(other)))
+
+    def __xor__(self, other):
+        if isinstance(other, (int, bool, float, Tensor)):
+            return tensor_operator_registry.get('bitwise_xor')(self, other)
+        raise TypeError("Unsupported operand type(s) for ^: 'Tensor' and '{}'".format(type(other)))
+
+    def __or__(self, other):
+        if isinstance(other, (int, bool, float, Tensor)):
+            return tensor_operator_registry.get('bitwise_or')(self, other)
+        raise TypeError("Unsupported operand type(s) for |: 'Tensor' and '{}'".format(type(other)))
+
     def __radd__(self, other):
         return self.__add__(other)
 
