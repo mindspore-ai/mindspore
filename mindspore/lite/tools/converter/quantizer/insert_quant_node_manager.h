@@ -57,12 +57,12 @@ class InsertQuantNodeManager {
 
   int InsertDynamicQuantWithIndex(const FuncGraphPtr &graph, const CNodePtr &cnode, size_t index);
 
-  int SetCastNodeAbstrac(const CNodePtr &cnode, const AnfNodePtr &input_node, const CNodePtr &cast_cnode);
+  int SetCastNodeAbstract(const CNodePtr &cnode, const AnfNodePtr &input_node, const CNodePtr &cast_cnode);
 
-  int InserForwardQuantCastNode(const FuncGraphPtr &graph, const CNodePtr &cnode, TypeId cast_dtype, size_t index);
+  int InsertForwardQuantCastNode(const FuncGraphPtr &graph, const CNodePtr &cnode, TypeId cast_dtype, size_t index);
 
-  int InserBackwardDeQuantCastNode(const FuncGraphPtr &graph, const CNodePtr &cnode, TypeId cast_dtype, size_t index,
-                                   const AnfNodePtr &output_node);
+  int InsertBackwardDeQuantCastNode(const FuncGraphPtr &graph, const CNodePtr &cnode, TypeId cast_dtype, size_t index,
+                                    const AnfNodePtr &output_node);
   int InserQuantCastNode(const FuncGraphPtr &graph, const CNodePtr &cnode, InsertDirection insert_direction,
                          TypeId cast_dtype, CastNodeType cast_node_type, size_t index, const AnfNodePtr &output_node);
 

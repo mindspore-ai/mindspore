@@ -215,7 +215,7 @@ int TransformUint8Pass::DoNodeDTypeTrans(const CNodePtr &cnode) {
 }
 
 bool TransformUint8Pass::CheckNeedDTypeTrans(const CNodePtr &cnode) {
-  if (opt::IsSpecialType(cnode)) {
+  if (opt::IsSpecialType(cnode) || CheckControlFlowType(cnode)) {
     return false;
   }
   // If CastNode(kDeQuant) as graph input node, or CastNode(kQuant) as graph output node, do nothing.
@@ -233,7 +233,7 @@ bool TransformUint8Pass::CheckNeedDTypeTrans(const CNodePtr &cnode) {
 
   TypeId cnode_dtype = kTypeUnknown;
   if (opt::GetDataTypeFromAnfNode(cnode, &cnode_dtype) != RET_OK) {
-    MS_LOG(WARNING) << "Get data type failed, cnode name: " << cnode->fullname_with_scope();
+    MS_LOG(INFO) << "Get data type failed, cnode name: " << cnode->fullname_with_scope();
     return false;
   }
   bool is_fp32_output =

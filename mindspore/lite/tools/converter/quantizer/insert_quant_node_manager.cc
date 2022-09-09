@@ -31,8 +31,8 @@ namespace {
 constexpr size_t kMinSize3 = 3;
 constexpr size_t kPrimitiveCOffset = 1;
 }  // namespace
-int InsertQuantNodeManager::SetCastNodeAbstrac(const CNodePtr &cnode, const AnfNodePtr &input_node,
-                                               const CNodePtr &cast_cnode) {
+int InsertQuantNodeManager::SetCastNodeAbstract(const CNodePtr &cnode, const AnfNodePtr &input_node,
+                                                const CNodePtr &cast_cnode) {
   CHECK_NULL_RETURN(cnode);
   CHECK_NULL_RETURN(input_node);
   CHECK_NULL_RETURN(cast_cnode);
@@ -297,7 +297,7 @@ int InsertQuantNodeManager::InsertFP32DtypeCastNode(const FuncGraphPtr &graph) {
   for (auto &cnode : cnodes) {
     schema::QuantType curr_quant_type;
     if (GetQuantType(cnode, &curr_quant_type) != RET_OK) {
-      MS_LOG(INFO) << "Get quant type failed, cnode name: " << cnode->fullname_with_scope();
+      MS_LOG(ERROR) << "Get quant type failed, cnode name: " << cnode->fullname_with_scope();
       continue;
     }
     if (curr_quant_type != schema::QuantType_QUANT_ALL) {
@@ -327,16 +327,16 @@ int InsertQuantNodeManager::InserQuantCastNode(const FuncGraphPtr &graph, const 
                                                CastNodeType cast_node_type, size_t index,
                                                const AnfNodePtr &output_node) {
   if (insert_direction == FORWARD && cast_node_type == kQuant) {
-    return InserForwardQuantCastNode(graph, cnode, cast_dtype, index);
+    return InsertForwardQuantCastNode(graph, cnode, cast_dtype, index);
   } else if (insert_direction == BACKWARD && cast_node_type == kDeQuant) {
-    return InserBackwardDeQuantCastNode(graph, cnode, cast_dtype, index, output_node);
+    return InsertBackwardDeQuantCastNode(graph, cnode, cast_dtype, index, output_node);
   }
-  MS_LOG(ERROR) << "Invalie insert direction: " << insert_direction;
+  MS_LOG(ERROR) << "Invalid insert direction: " << insert_direction;
   return RET_NOT_SUPPORT;
 }
 
-int InsertQuantNodeManager::InserForwardQuantCastNode(const FuncGraphPtr &graph, const CNodePtr &cnode,
-                                                      TypeId cast_dtype, size_t index) {
+int InsertQuantNodeManager::InsertForwardQuantCastNode(const FuncGraphPtr &graph, const CNodePtr &cnode,
+                                                       TypeId cast_dtype, size_t index) {
   if (cast_dtype != kNumberTypeUInt8 && cast_dtype != kNumberTypeFloat32) {
     MS_LOG(ERROR) << "Invalid cast dtype: " << cast_dtype;
     return RET_NOT_SUPPORT;
@@ -379,8 +379,8 @@ int InsertQuantNodeManager::InserForwardQuantCastNode(const FuncGraphPtr &graph,
   MS_CHECK_TRUE_MSG(quant_cast_cnode != nullptr, RET_NULL_PTR, "quant_cast_cnode is nullptr.");
   quant_cast_cnode->set_fullname_with_scope(cnode->fullname_with_scope() + "_dtype_cast_" + std::to_string(index) +
                                             "_pre");
-  if (SetCastNodeAbstrac(cnode, input_node, quant_cast_cnode) != RET_OK) {
-    MS_LOG(ERROR) << "SetCastNodeAbstrac failed.";
+  if (SetCastNodeAbstract(cnode, input_node, quant_cast_cnode) != RET_OK) {
+    MS_LOG(ERROR) << "SetCastNodeAbstract failed.";
     return RET_ERROR;
   }
   if (quant::UpdateDataType(quant_cast_cnode, dst_dtype) != RET_OK) {
@@ -388,14 +388,14 @@ int InsertQuantNodeManager::InserForwardQuantCastNode(const FuncGraphPtr &graph,
     return RET_ERROR;
   }
   cnode->set_input(index, quant_cast_cnode);
-  MS_LOG(INFO) << "InserForwardQuantCastNode cnode name: " << cnode->fullname_with_scope() << " src dtype:" << src_dtype
-               << " dst_type: " << dst_dtype;
+  MS_LOG(INFO) << "InsertForwardQuantCastNode cnode name: " << cnode->fullname_with_scope()
+               << " src dtype:" << src_dtype << " dst_type: " << dst_dtype;
   return RET_OK;
 }
 
-int InsertQuantNodeManager::InserBackwardDeQuantCastNode(const FuncGraphPtr &graph, const CNodePtr &cnode,
-                                                         TypeId cast_dtype, size_t index,
-                                                         const AnfNodePtr &output_node) {
+int InsertQuantNodeManager::InsertBackwardDeQuantCastNode(const FuncGraphPtr &graph, const CNodePtr &cnode,
+                                                          TypeId cast_dtype, size_t index,
+                                                          const AnfNodePtr &output_node) {
   if (cast_dtype != kNumberTypeUInt8 && cast_dtype != kNumberTypeFloat32) {
     MS_LOG(ERROR) << "Invalid cast dtype: " << cast_dtype;
     return RET_NOT_SUPPORT;
@@ -442,8 +442,8 @@ int InsertQuantNodeManager::InserBackwardDeQuantCastNode(const FuncGraphPtr &gra
   MS_CHECK_TRUE_MSG(quant_cast_cnode != nullptr, RET_NULL_PTR, "quant_cast_cnode is nullptr.");
   quant_cast_cnode->set_fullname_with_scope(cnode->fullname_with_scope() + "_dtype_cast_" + std::to_string(index) +
                                             "_post");
-  if (SetCastNodeAbstrac(cnode, output_node, quant_cast_cnode) != RET_OK) {
-    MS_LOG(ERROR) << "SetCastNodeAbstrac failed.";
+  if (SetCastNodeAbstract(cnode, output_node, quant_cast_cnode) != RET_OK) {
+    MS_LOG(ERROR) << "SetCastNodeAbstract failed.";
     return RET_ERROR;
   }
   if (quant::UpdateDataType(quant_cast_cnode, dst_dtype) != RET_OK) {
@@ -451,7 +451,7 @@ int InsertQuantNodeManager::InserBackwardDeQuantCastNode(const FuncGraphPtr &gra
     return RET_ERROR;
   }
   manager->SetEdge(output_node, index, quant_cast_cnode);
-  MS_LOG(INFO) << "InserBackwardDeQuantCastNode cnode name: " << cnode->fullname_with_scope()
+  MS_LOG(INFO) << "InsertBackwardDeQuantCastNode cnode name: " << cnode->fullname_with_scope()
                << " src dtype:" << src_dtype << " dst_type: " << dst_dtype;
   return RET_OK;
 }
@@ -468,7 +468,7 @@ int InsertQuantNodeManager::InsertForwardCastNode(const FuncGraphPtr &graph, con
     }
     schema::QuantType input_quant_type;
     if (GetQuantType(cnode, &input_quant_type) != RET_OK) {
-      MS_LOG(WARNING) << "Get quant type failed, input node name: " << input_node->fullname_with_scope();
+      MS_LOG(ERROR) << "Get quant type failed, input node name: " << input_node->fullname_with_scope();
       return RET_ERROR;
     }
     schema::QuantType pre_quant_type = schema::QuantType_QUANT_NONE;

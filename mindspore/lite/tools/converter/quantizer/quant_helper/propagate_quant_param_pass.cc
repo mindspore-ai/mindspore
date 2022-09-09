@@ -279,22 +279,8 @@ int PropagateQuantParamPass::FindNodeDepends(const std::list<CNodePtr> &nodes,
 }
 
 int PropagateQuantParamPass::Propagate() {
-  std::set<FuncGraphPtr> all_func_graphs{};
-  quant::GetFuncGraphs(func_graph_, &all_func_graphs);
-  // Support for multi-subgraph models
-  for (auto &item : all_func_graphs) {
-    auto status = DoSingleGraphPropagate(item);
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "Do Quantize failed.";
-      return status;
-    }
-  }
-  return RET_OK;
-}
-
-int PropagateQuantParamPass::DoSingleGraphPropagate(const FuncGraphPtr &fun_graph) {
-  CHECK_NULL_RETURN(fun_graph);
-  auto nodes = fun_graph->GetOrderedCnodes();
+  CHECK_NULL_RETURN(func_graph_);
+  auto nodes = func_graph_->GetOrderedCnodes();
 
   for (const auto &cnode : nodes) {
     auto ret = PropagateSelf(cnode, true);

@@ -442,7 +442,8 @@ bool AnfTransform::CheckExternalExtension(const std::shared_ptr<ConverterPara> &
   return (!param->plugins_path.empty() && param->commonQuantParam.quant_type != schema::QuantType_QUANT_NONE);
 }
 
-STATUS AnfTransform::QATTransform(const FuncGraphPtr &func_graph, const std::shared_ptr<ConverterPara> &param) {
+STATUS AnfTransform::DoSingleGraphQATTransform(const FuncGraphPtr &func_graph,
+                                               const std::shared_ptr<ConverterPara> &param) {
   if (param->fullQuantParam.target_device == quant::TargetDevice::DSP &&
       param->commonQuantParam.quant_type != schema::QuantType_QUANT_ALL) {
     auto remove_quant_param_pass = quant::RemoveQuantParam(func_graph);
@@ -497,6 +498,20 @@ STATUS AnfTransform::QATTransform(const FuncGraphPtr &func_graph, const std::sha
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Add QuantCast error";
     return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+STATUS AnfTransform::QATTransform(const FuncGraphPtr &func_graph, const std::shared_ptr<ConverterPara> &param) {
+  std::set<FuncGraphPtr> all_func_graphs{};
+  quant::GetFuncGraphs(func_graph, &all_func_graphs);
+  // Support for multi-subgraph models
+  for (auto &item : all_func_graphs) {
+    auto status = DoSingleGraphQATTransform(item, param);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "Do QATTransform failed.";
+      return status;
+    }
   }
   return RET_OK;
 }
