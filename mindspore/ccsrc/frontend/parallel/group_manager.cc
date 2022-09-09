@@ -25,6 +25,7 @@
 #endif
 #include "frontend/parallel/device_manager.h"
 #include "include/common/utils/comm_manager.h"
+#include "include/common/utils/parallel_context.h"
 #include "utils/ms_context.h"
 
 namespace mindspore {
@@ -54,8 +55,12 @@ bool Group::IsInThisGroup(int64_t device_rank) {
 // Get the position of the device in the group
 Status Group::GetIndex(size_t *index) {
   size_t pos = 0;
-  CheckGlobalDeviceManager();
-  int64_t rank = g_device_manager->global_rank();
+  auto rank = ParallelContext::GetInstance()->global_rank();
+  if (!ParallelContext::GetInstance()->do_transform()) {
+    CheckGlobalDeviceManager();
+    MS_EXCEPTION_IF_NULL(g_device_manager);
+    rank = g_device_manager->global_rank();
+  }
   for (auto &device : devices_) {
     if (device.rank() == rank) {
       *index = pos;

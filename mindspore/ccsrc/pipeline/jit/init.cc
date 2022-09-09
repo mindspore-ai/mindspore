@@ -40,6 +40,7 @@
 #include "distributed/init.h"
 #include "distributed/recovery/recovery_context.h"
 #include "distributed/collective/collective_manager.h"
+#include "frontend/parallel/tensor_layout/tensor_transform.h"
 
 #include "pybind_api/gil_scoped_long_running.h"
 
@@ -59,6 +60,7 @@ using EventWriter = mindspore::summary::EventWriter;
 using OpLib = mindspore::kernel::OpLib;
 using ParallelContext = mindspore::parallel::ParallelContext;
 using CostModelContext = mindspore::parallel::CostModelContext;
+using TensorTransform = mindspore::parallel::TensorTransform;
 using mindspore::MsCtxParam;
 using PSContext = mindspore::ps::PSContext;
 using CollectiveManager = mindspore::distributed::collective::CollectiveManager;
@@ -206,6 +208,10 @@ PYBIND11_MODULE(_c_expression, m) {
     .def_static("get_instance", &mindspore::MpiConfig::GetInstance, "Get mpi config instance.")
     .def("get_enable_mpi", &mindspore::MpiConfig::enable_mpi, "Get whether enable mpi.")
     .def("set_enable_mpi", &mindspore::MpiConfig::set_enable_mpi, "Set whether to enable mpi.");
+
+  (void)py::class_<TensorTransform, std::shared_ptr<TensorTransform>>(m, "TensorTransform")
+    .def_static("get_instance", &TensorTransform::GetInstance, "Get tensor_transform instance.")
+    .def("transform_tensor_sharding", &TensorTransform::TransformOperators, "Transform the tensor sharding.");
 
   (void)py::class_<ParallelContext, std::shared_ptr<ParallelContext>>(m, "AutoParallelContext")
     .def_static("get_instance", &ParallelContext::GetInstance, "Get auto parallel context instance.")

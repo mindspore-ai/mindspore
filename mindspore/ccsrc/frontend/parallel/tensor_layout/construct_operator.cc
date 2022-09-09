@@ -19,6 +19,7 @@
 #include <functional>
 #include <numeric>
 #include <algorithm>
+#include "include/common/utils/parallel_context.h"
 
 namespace mindspore {
 namespace parallel {
@@ -155,7 +156,13 @@ Status ConstructOperator::AllGatherOP(int64_t dev_dim) {
   std::string group_name = group_list[0].name();
   ValuePtr attr_value = MakeValue(group_name);
   Attr attr = std::make_pair(GROUP, attr_value);
-  OperatorAttrs attrs = {attr};
+  auto group_devices = group_list[0].GetDevicesList();
+  std::vector<int64_t> group_ranks;
+  std::transform(group_devices.begin(), group_devices.end(), std::back_inserter(group_ranks),
+                 [](Device dev) { return dev.rank(); });
+  ValuePtr attr_ranks_value = MakeValue(group_ranks);
+  Attr attr_ranks = std::make_pair(GROUP_RANKS, attr_ranks_value);
+  OperatorAttrs attrs = {attr, attr_ranks};
   OperatorParams params;
   OperatorArgs args = std::make_pair(attrs, params);
   op_ = std::make_pair(ALL_GATHER, args);
@@ -248,9 +255,12 @@ Status ConstructOperator::AlltoAllOP(const Args &args) {
 
 Status ConstructOperator::CreateGroupByDim(size_t axis, std::vector<Group> *group) {
   MS_EXCEPTION_IF_NULL(group);
-  CheckGlobalDeviceManager();
-  MS_EXCEPTION_IF_NULL(g_device_manager);
-  int64_t rank = g_device_manager->global_rank();
+  auto rank = ParallelContext::GetInstance()->global_rank();
+  if (!ParallelContext::GetInstance()->do_transform()) {
+    CheckGlobalDeviceManager();
+    MS_EXCEPTION_IF_NULL(g_device_manager);
+    rank = g_device_manager->global_rank();
+  }
   DeviceMatrix dev_matrix(rank, dev_list_, dev_matrix_shape_);
   RankList group_devices;
   if (dev_matrix.GetDevicesAlongDim(SizeToUlong(axis), &group_devices) != SUCCESS) {
@@ -261,7 +271,16 @@ Status ConstructOperator::CreateGroupByDim(size_t axis, std::vector<Group> *grou
     MS_LOG(INFO) << "the group is empty";
     return SUCCESS;
   }
-  if (is_cost_model_) {
+  if (is_cost_model_ || ParallelContext::GetInstance()->do_transform()) {
+    Group g;
+    std::vector<Device> dev_list;
+    (void)std::transform(group_devices.begin(), group_devices.end(), std::back_inserter(dev_list),
+                         [](auto &rank_id) { return Device(rank_id); });
+    g.Init("fake_group", dev_list);
+    group->push_back(g);
+    if (ParallelContext::GetInstance()->do_transform()) {
+      return SUCCESS;
+    }
     return g_device_manager->CheckDeviceList(group_devices);
   }
   Group g;

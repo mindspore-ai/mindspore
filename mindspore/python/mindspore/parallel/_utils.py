@@ -275,6 +275,9 @@ def _get_python_op(op_name, op_path, instance_name, arglist):
     module = __import__(op_path, fromlist=["None"])
     cls = getattr(module, op_name)
     if op_path != "mindspore.ops.functional":
+        # The AllGather attrs contains group_name and group_ranks, pop group_ranks.
+        if op_name == "AllGather" and len(arglist) == 2:
+            arglist.pop()
         op = cls(*arglist)
     else:
         op = cls
@@ -332,7 +335,10 @@ def _remove_repeated_slices(tensor_layout):
 
 
 def _infer_rank_list(train_map, predict_map=None):
-    """infer checkpoint slices to be loaded"""
+    """
+    infer checkpoint slices to be loaded.
+    map value format: [dev_mat, tensor_map, param_split_shape, field_size, opt_shard_stride, opt_shard_size]
+    """
     ret = {}
     if _get_pipeline_stages() > 1:
         local_rank = int(_get_global_rank() % (_get_device_num() / _get_pipeline_stages()))
