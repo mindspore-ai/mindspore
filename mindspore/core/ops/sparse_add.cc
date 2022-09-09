@@ -31,8 +31,8 @@ using mindspore::abstract::AbstractTensor;
 using mindspore::abstract::AbstractTuple;
 namespace {
 inline void CheckSparseAddShape(const size_t sparse_shape_size, const size_t expected_dim, const std::string &arg_name,
-                                const std::string &op_name) {
-  if (sparse_shape_size != expected_dim) {
+                                const std::string &op_name, bool is_dyn_rank) {
+  if (!is_dyn_rank && sparse_shape_size != expected_dim) {
     MS_EXCEPTION(mindspore::ValueError) << "For " << op_name << ", " << arg_name << " must be a " << expected_dim
                                         << "-dimensional tensor, but got a " << sparse_shape_size
                                         << "-dimensional tensor.";
@@ -97,21 +97,28 @@ AbstractBasePtr SparseAddInfer(const abstract::AnalysisEnginePtr &, const Primit
   // 2-D indices
   auto a_indices_shape = a_indices->shape()->shape();
   auto b_indices_shape = b_indices->shape()->shape();
-  CheckSparseAddShape(a_indices_shape.size(), kIndicesShape, "x1_indices", op_name);
-  CheckSparseAddShape(b_indices_shape.size(), kIndicesShape, "x2_indices", op_name);
+  auto a_indices_shape_dyn_rank = IsDynamicRank(a_indices_shape);
+  auto b_indices_shape_dyn_rank = IsDynamicRank(b_indices_shape);
+  CheckSparseAddShape(a_indices_shape.size(), kIndicesShape, "x1_indices", op_name, a_indices_shape_dyn_rank);
+  CheckSparseAddShape(b_indices_shape.size(), kIndicesShape, "x2_indices", op_name, b_indices_shape_dyn_rank);
   // 1-D values
   auto a_values_shape = a_values->shape()->shape();
   auto b_values_shape = b_values->shape()->shape();
-  CheckSparseAddShape(a_values_shape.size(), 1, "x1_values", op_name);
-  CheckSparseAddShape(b_values_shape.size(), 1, "x2_values", op_name);
+  auto a_values_shape_dyn_rank = IsDynamicRank(a_values_shape);
+  auto b_values_shape_dyn_rank = IsDynamicRank(b_values_shape);
+  CheckSparseAddShape(a_values_shape.size(), 1, "x1_values", op_name, a_values_shape_dyn_rank);
+  CheckSparseAddShape(b_values_shape.size(), 1, "x2_values", op_name, b_values_shape_dyn_rank);
   // 1-D shape
   auto a_shape_shape = a_shape->shape()->shape();
   auto b_shape_shape = b_shape->shape()->shape();
-  CheckSparseAddShape(a_shape_shape.size(), 1, "x1_shape", op_name);
-  CheckSparseAddShape(b_shape_shape.size(), 1, "x2_shape", op_name);
+  auto a_shape_shape_dyn_rank = IsDynamicRank(a_shape_shape);
+  auto b_shape_shape_dyn_rank = IsDynamicRank(b_shape_shape);
+  CheckSparseAddShape(a_shape_shape.size(), 1, "x1_shape", op_name, a_shape_shape_dyn_rank);
+  CheckSparseAddShape(b_shape_shape.size(), 1, "x2_shape", op_name, b_shape_shape_dyn_rank);
   // 0-D shape
   auto thresh_shape = thresh->shape()->shape();
-  CheckSparseAddShape(thresh_shape.size(), 0, "thresh", op_name);
+  auto thresh_shape_dyn_rank = IsDynamicRank(thresh_shape);
+  CheckSparseAddShape(thresh_shape.size(), 0, "thresh", op_name, thresh_shape_dyn_rank);
 
   // Check dtype
   // a_indices and b_indices should be int64
@@ -138,10 +145,10 @@ AbstractBasePtr SparseAddInfer(const abstract::AnalysisEnginePtr &, const Primit
   (void)CheckAndConvertUtils::CheckTensorTypeValid("thresh", thresh->BuildType(), thresh_valid_types, op_name);
 
   // Check same nnz
-  if (a_indices_shape[0] >= 0 && a_values_shape[0] >= 0) {
+  if (!a_indices_shape_dyn_rank && !a_values_shape_dyn_rank && a_indices_shape[0] >= 0 && a_values_shape[0] >= 0) {
     CheckSparseAddNNZ(a_indices_shape[0], a_values_shape[0], "x1_indices", "x1_values", op_name);
   }
-  if (b_indices_shape[0] >= 0 && b_values_shape[0] >= 0) {
+  if (!b_indices_shape_dyn_rank && !b_values_shape_dyn_rank && b_indices_shape[0] >= 0 && b_values_shape[0] >= 0) {
     CheckSparseAddNNZ(b_indices_shape[0], b_values_shape[0], "x2_indices", "x2_values", op_name);
   }
   // Check same type
@@ -157,20 +164,13 @@ AbstractBasePtr SparseAddInfer(const abstract::AnalysisEnginePtr &, const Primit
     CheckSparseAddSameDtype(a_value_type, thresh_type, "x1_values", "thresh", op_name);
   }
 
-  int64_t max_indices_shape_ = a_indices_shape[0] + b_indices_shape[0];
-  int64_t min_indices_shape_ = std::max(a_indices_shape[0], b_indices_shape[0]);
   ShapeVector out_indices_shape{-1, 2};
   ShapeVector out_value_shape{-1};
-  ShapeVector min_value_shape{min_indices_shape_};
-  ShapeVector max_value_shape{max_indices_shape_};
-  ShapeVector min_indices_shape{min_indices_shape_, 2};
-  ShapeVector max_indices_shape{max_indices_shape_, 2};
 
-  auto out_indices = std::make_shared<AbstractTensor>(
-    a_indices->element()->BuildType(),
-    std::make_shared<mindspore::abstract::Shape>(out_indices_shape, min_indices_shape, max_indices_shape));
-  auto out_values = std::make_shared<AbstractTensor>(
-    a_value_type, std::make_shared<mindspore::abstract::Shape>(out_value_shape, min_value_shape, max_value_shape));
+  auto out_indices = std::make_shared<AbstractTensor>(a_indices->element()->BuildType(),
+                                                      std::make_shared<mindspore::abstract::Shape>(out_indices_shape));
+  auto out_values =
+    std::make_shared<AbstractTensor>(a_value_type, std::make_shared<mindspore::abstract::Shape>(out_value_shape));
   auto out_shape =
     std::make_shared<AbstractTensor>(a_shape_type, std::make_shared<mindspore::abstract::Shape>(a_shape_shape));
 
