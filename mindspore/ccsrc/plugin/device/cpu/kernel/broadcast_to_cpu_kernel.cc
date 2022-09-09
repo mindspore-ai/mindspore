@@ -62,6 +62,12 @@ std::map<std::string, std::vector<std::pair<KernelAttr, BroadcastToCpuKernelMod:
       {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
        &BroadcastToCpuKernelMod::LaunchKernel<int>},
       {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
+       &BroadcastToCpuKernelMod::LaunchKernel<bool>},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
+       &BroadcastToCpuKernelMod::LaunchKernel<float>},
+      {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
+       &BroadcastToCpuKernelMod::LaunchKernel<int>},
+      {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
        &BroadcastToCpuKernelMod::LaunchKernel<bool>}}}};
 
 void BroadcastToCpuKernelMod::InitTaskFunc(const CNodePtr &kernel_node) {
