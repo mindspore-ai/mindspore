@@ -429,6 +429,10 @@ void TensorValueToVector(const ValuePtr &value, VectorRef *outputs) {
         auto tensor = element->cast<tensor::TensorPtr>();
         MS_EXCEPTION_IF_NULL(tensor);
         outputs->emplace_back(tensor);
+      } else if (element->isa<Scalar>()) {
+        auto scalar = element->cast<ScalarPtr>();
+        MS_EXCEPTION_IF_NULL(scalar);
+        outputs->emplace_back(ScalarToTensor(scalar));
       } else if (element->isa<ValueTuple>()) {
         VectorRef tuple;
         TensorValueToVector(element, &tuple);
@@ -439,6 +443,10 @@ void TensorValueToVector(const ValuePtr &value, VectorRef *outputs) {
     auto tensor = value->cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(tensor);
     outputs->emplace_back(tensor);
+  } else if (value->isa<Scalar>()) {
+    auto scalar = value->cast<ScalarPtr>();
+    MS_EXCEPTION_IF_NULL(scalar);
+    outputs->emplace_back(ScalarToTensor(scalar));
   }
 }
 
