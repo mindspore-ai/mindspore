@@ -22,14 +22,14 @@ function android_release_package()
     device=$2
     pkg_name="mindspore-lite-${version}-android-${arch}"
 
-    rm -rf ${pkg_name}
+    [ -n "${pkg_name}" ] && rm -rf ${pkg_name}
     tar -xzf ${input_path}/android_${arch}/${device}/${pkg_name}.tar.gz
     # Copy java runtime to Android package
     cp ${input_path}/aar/mindspore-lite-*.aar ${pkg_name}
 
     mkdir -p ${output_path}/release/android/${device}/
     tar -czf ${output_path}/release/android/${device}/${pkg_name}.tar.gz ${pkg_name}
-    rm -rf ${pkg_name}
+    [ -n "${pkg_name}" ] && rm -rf ${pkg_name}
     cd ${output_path}/release/android/${device}/
     sha256sum ${pkg_name}.tar.gz > ${pkg_name}.tar.gz.sha256
 }
@@ -90,7 +90,7 @@ echo "Usage: bash lite_release_package.sh input_path output_path"
 
 input_path=$1
 output_path=$2
-version=`ls ${input_path}/android_aarch64/npu/mindspore-lite-*-*.tar.gz | awk -F'/' '{print $NF}' | cut -d"-" -f3`
+version=$(ls ${input_path}/android_aarch64/npu/mindspore-lite-*-*.tar.gz | awk -F'/' '{print $NF}' | cut -d"-" -f3)
 
 android_release_package aarch32 npu
 android_release_package aarch32 cpu

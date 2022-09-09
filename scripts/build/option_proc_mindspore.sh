@@ -39,12 +39,12 @@ build_option_proc_s()
 {
   check_on_off $OPTARG s
   if [[ "X$OPTARG" == "Xon" ]]; then
-    if [[ $USER_ENABLE_DUMP_IR == true ]]; then
+    if [[ "$USER_ENABLE_DUMP_IR" == true ]]; then
       echo "enable security, the dump ir is not available"
       usage
       exit 1
     fi
-    if [[ $USER_ENABLE_DEBUGGER == true ]]; then
+    if [[ "$USER_ENABLE_DEBUGGER" == true ]]; then
       echo "enable security, the debugger is not available"
       usage
       exit 1
