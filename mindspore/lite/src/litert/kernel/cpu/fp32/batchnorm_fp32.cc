@@ -105,8 +105,8 @@ int BatchnormCPUKernel::InitConstTensor() {
     FreeMeanAndVariance();
     return RET_ERROR;
   }
-  memcpy(mean_, in_tensor_mean_data, in_tensors_.at(kMeanInput)->Size());
-  memcpy(variance_, in_tensor_var_data, in_tensors_.at(kVarInput)->Size());
+  (void)memcpy(mean_, in_tensor_mean_data, in_tensors_.at(kMeanInput)->Size());
+  (void)memcpy(variance_, in_tensor_var_data, in_tensors_.at(kVarInput)->Size());
   return RET_OK;
 }
 

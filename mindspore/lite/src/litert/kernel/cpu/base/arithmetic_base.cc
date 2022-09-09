@@ -106,11 +106,11 @@ int ArithmeticBaseCPUKernel::ResetStatus() {
   for (size_t i = 0; i < dim_num - shape0.size(); ++i) {
     a_matric_.shape.push_back(1);
   }
-  a_matric_.shape.insert(a_matric_.shape.end(), shape0.begin(), shape0.end());
+  (void)a_matric_.shape.insert(a_matric_.shape.end(), shape0.begin(), shape0.end());
   for (size_t i = 0; i < dim_num - shape1.size(); ++i) {
     b_matric_.shape.push_back(1);
   }
-  b_matric_.shape.insert(b_matric_.shape.end(), shape1.begin(), shape1.end());
+  (void)b_matric_.shape.insert(b_matric_.shape.end(), shape1.begin(), shape1.end());
   auto ret = OptimizeShape();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Optimize shape failed.";
@@ -132,11 +132,11 @@ int ArithmeticBaseCPUKernel::OptimizeShape() {
   for (size_t i = 0; i < dim_num - shape0.size(); ++i) {
     shape_0.push_back(1);
   }
-  shape_0.insert(shape_0.end(), shape0.begin(), shape0.end());
+  (void)shape_0.insert(shape_0.end(), shape0.begin(), shape0.end());
   for (size_t i = 0; i < dim_num - shape1.size(); ++i) {
     shape_1.push_back(1);
   }
-  shape_1.insert(shape_1.end(), shape1.begin(), shape1.end());
+  (void)shape_1.insert(shape_1.end(), shape1.begin(), shape1.end());
   std::vector<int64_t> shape0_temp;
   std::vector<int64_t> shape1_temp;
   for (size_t i = 0; i < dim_num;) {  // horizontal comparison, merge the part of continuous 1.

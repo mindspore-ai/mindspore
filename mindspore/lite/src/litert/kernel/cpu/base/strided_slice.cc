@@ -270,12 +270,12 @@ int StridedSliceCPUKernel::SoftCopyInputToOutput() {
       if (task_id == (thread_num_ - 1)) {
         copy_size = size - task_id * block_size;
       }
-      memcpy(out_start, in_start, copy_size);
+      (void)memcpy(out_start, in_start, copy_size);
       return RET_OK;
     };
     if (input_data != output_data) {
       if (thread_num_ == 1) {
-        memcpy(output_data, input_data, size);
+        (void)memcpy(output_data, input_data, size);
         return RET_OK;
       }
       return lite::ParallelLaunch(this->ms_context_, Copy, nullptr, thread_num_);
