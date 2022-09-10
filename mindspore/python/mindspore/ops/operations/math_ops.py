@@ -6803,6 +6803,52 @@ class FFTWithSize(Primitive):
         validator.check_value_type('signal_sizes', signal_sizes, [tuple, list], self.name)
 
 
+class Polar(Primitive):
+    r"""
+    Returns a complex tensor whose elements are Cartesian coordinates corresponding to the polar
+    coordinates with absolute value and angle.
+
+    .. math::
+
+        y_{i} =  abs_{i} * cos(angle_{i}) + abs_{i} * sin(angle_{i}) * j
+
+    Inputs:
+        - **abs** (Tensor) - The shape of tensor is
+          :math:`(N,*)` where :math:`N` means the batchsize of the input tensor,
+          math:`*` means, any number of additional dimensions.
+          Must be one of the following types: float32, float64.
+
+        - **angle** (Tensor) - The shape of tensor is
+          the same as the input tensor abs.
+          Must be the same type as the input tensor abs.
+
+    Outputs:
+        Tensor, has the same shape and data type as `abs`.
+
+    Raises:
+        TypeError: If neither `abs` nor `angle` is a Tensor.
+        TypeError: If the dtype of input is not one of: float32, float64.
+        TypeError: If the dtypes of two inputs are not the same.
+        ValueError: If `abs`'s shape is not the same as `angle`.
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
+        >>> polar = ops.Polar()
+        >>> x1 = Tensor(np.array([1, 2]), mindspore.float64)
+        >>> x2 = Tensor(np.array([3, 4]), mindspore.float64)
+        >>> output = polar(x1, x2)
+        >>> print(output)
+        [-0.9899925 +0.14112001j -1.30728724-1.51360499j]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize Polar"""
+        self.init_prim_io_names(inputs=['abs', 'angle'], outputs=['y'])
+
+
 class NextAfter(Primitive):
     """
     Returns the next representable value after the given first number in the direction of given second number.

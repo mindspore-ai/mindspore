@@ -27,6 +27,7 @@ from mindspore.ops import operations as P
 from mindspore.ops.operations.math_ops import Trace, Bernoulli, Renorm
 from mindspore import nn, ops, Tensor
 from mindspore.ops.operations.math_ops import Real, Imag, Complex, Angle
+from mindspore.ops.operations.math_ops import Polar
 from mindspore.ops.operations.math_ops import ComplexAbs
 from mindspore.ops.operations.math_ops import Sinc
 from mindspore.ops.operations import _grad_ops as G
@@ -781,6 +782,28 @@ def get_bprop_angle(self):
         zero = zeros_like(dout)
         complex_dout = complex_op(dout, zero)
         return (neg_op(complex_dout * z),)
+
+    return bprop
+
+
+@bprop_getters.register(Polar)
+def get_bprop_polar(self):
+    """Grad definition for `Polar` operation."""
+    complex_op = Complex()
+    conj = P.Conj()
+    real = P.Real()
+    sig = P.Sign()
+    ones = P.Ones()
+    zeros = P.Zeros()
+    def bprop(input1, angle, out, dout):
+        grad_conj = conj(dout)
+        zero = zeros(dout.shape, input1.dtype)
+        one = ones(dout.shape, input1.dtype)
+        i = complex_op(zero, one)
+        grad_abs = real(grad_conj * sig(out))
+        result_mul_1_j = out * i
+        grad_angle = real(grad_conj * result_mul_1_j)
+        return (grad_abs, grad_angle)
 
     return bprop
 
