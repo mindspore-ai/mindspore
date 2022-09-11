@@ -154,7 +154,7 @@ class DataTypeTransfer {
 /**
  * Trans host shape to device shape according to node's format
  * */
-class DeviceShapeTransfer {
+class BACKEND_EXPORT DeviceShapeTransfer {
  public:
   DeviceShapeTransfer() = default;
   ~DeviceShapeTransfer() = default;
@@ -261,7 +261,7 @@ class FormatTransfer {
 /**
  * Range trans function
  * */
-class ShapeRangeTransfer {
+class BACKEND_EXPORT ShapeRangeTransfer {
  public:
   ShapeRangeTransfer() = default;
   ~ShapeRangeTransfer() = default;
@@ -293,12 +293,12 @@ static const std::set<std::string> kFormatWithTransFunc = {
 /**
  * Interface of datatype trans
  * */
-bool TransDataType(const TypeIdArgs &args, void *result);
+BACKEND_EXPORT bool TransDataType(const TypeIdArgs &args, void *result);
 
 /**
  * Interface of data format trans from host to device
  * */
-bool TransFormat(const FormatArgs &args, void *result, const AnfNodePtr &node, size_t index);
+BACKEND_EXPORT bool TransFormat(const FormatArgs &args, void *result, const AnfNodePtr &node, size_t index);
 
 /**
  * Interface of data format trans from host to device
@@ -308,17 +308,18 @@ BACKEND_EXPORT bool TransFormatFromDeviceToHost(const FormatArgs &args, void *re
 /**
  * Interface of data format trans from device to host
  * */
-bool TransFormatFromDeviceToHost(const FormatArgs &args, void *result, const AnfNodePtr &node, size_t index);
+BACKEND_EXPORT bool TransFormatFromDeviceToHost(const FormatArgs &args, void *result, const AnfNodePtr &node,
+                                                size_t index);
 
 /**
  * 4D reshape type trans, trans reshape_type from string to int
  * */
-void StringToAxisVector4D(const std::string &reshape_type_str, std::vector<Axis> *reshape_type_vec);
+BACKEND_EXPORT void StringToAxisVector4D(const std::string &reshape_type_str, std::vector<Axis> *reshape_type_vec);
 
 /**
  * 5D reshape type trans, trans reshape_type from string to int
  * */
-void StringToAxisVector5D(const std::string &reshape_type_str, std::vector<Axis5D> *reshape_type_vec);
+BACKEND_EXPORT void StringToAxisVector5D(const std::string &reshape_type_str, std::vector<Axis5D> *reshape_type_vec);
 
 /**
  * Get shape after padding
@@ -328,7 +329,7 @@ BACKEND_EXPORT ShapeVector GetRuntimePaddingShape(const AnfNodePtr &node, size_t
 /**
  *  If need padding
  * */
-bool IsNeedPadding(const std::string &format, size_t shape_size);
+BACKEND_EXPORT bool IsNeedPadding(const std::string &format, size_t shape_size);
 
 /**
  * Padding shape to 5D by default mode

@@ -19,6 +19,7 @@
 
 #include <string>
 #include <map>
+#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace device {
@@ -34,8 +35,8 @@ static const std::map<std::string, DeviceType> device_name_to_type_map = {{"Unkn
                                                                           {"CPU", DeviceType::kCPU},
                                                                           {"GPU", DeviceType::kGPU}};
 
-std::string GetDeviceNameByType(const DeviceType &type);
-DeviceType GetDeviceTypeByName(const std::string &name);
+BACKEND_EXPORT std::string GetDeviceNameByType(const DeviceType &type);
+BACKEND_EXPORT DeviceType GetDeviceTypeByName(const std::string &name);
 }  // namespace device
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_RUNTIME_HARDWARE_DEVICE_TYPE_H_

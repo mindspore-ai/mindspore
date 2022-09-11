@@ -24,12 +24,13 @@
 #include "kernel/kernel_build_info.h"
 #include "kernel/kernel.h"
 #include "runtime/device/device_address.h"
+#include "include/backend/visible.h"
 
 namespace mindspore {
 const uint32_t kInvalidGraphId = UINT32_MAX;
 const uint32_t kInvalidDistincLabel = UINT32_MAX;
 namespace device {
-class KernelInfo : public KernelInfoDevice {
+class BACKEND_EXPORT KernelInfo : public KernelInfoDevice {
  public:
   KernelInfo() {
     kernel_mod_ = nullptr;
@@ -43,7 +44,7 @@ class KernelInfo : public KernelInfoDevice {
   }
   virtual ~KernelInfo() = default;
 
-  bool has_build_info() const override { return select_kernel_build_info() != nullptr; }
+  bool has_build_info() const override { return select_kernel_build_info_ != nullptr; }
   const kernel::KernelBuildInfo *select_kernel_build_info() const;
   kernel::KernelBuildInfoPtr GetMutableSelectKernelBuildInfo() const;
   void set_select_kernel_build_info(const kernel::KernelBuildInfoPtr &select_kernel_build_info) {

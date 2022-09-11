@@ -28,7 +28,7 @@
 
 namespace mindspore {
 namespace opt {
-class GradientsAllReduceDependLastSend : public Pass {
+class BACKEND_EXPORT GradientsAllReduceDependLastSend : public Pass {
  public:
   GradientsAllReduceDependLastSend() : Pass("adjust_depend_for_parallel_optimizer_recompute_all_gather") {}
   ~GradientsAllReduceDependLastSend() override = default;

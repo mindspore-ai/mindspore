@@ -53,7 +53,7 @@ class MemHandler {
   std::map<void *, std::shared_ptr<std::vector<uint8_t>>> host_mem_block_map_;
 };
 
-class AutoMemoryOffload {
+class BACKEND_EXPORT AutoMemoryOffload {
  public:
   explicit AutoMemoryOffload(std::shared_ptr<MemHandler> mem_handler) : mem_handler_(std::move(mem_handler)) {}
   ~AutoMemoryOffload() = default;

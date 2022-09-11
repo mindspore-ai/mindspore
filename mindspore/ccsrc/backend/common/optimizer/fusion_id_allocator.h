@@ -18,10 +18,11 @@
 
 #include <memory>
 #include "base/base.h"
+#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace opt {
-class FusionIdAllocator {
+class BACKEND_EXPORT FusionIdAllocator {
  public:
   FusionIdAllocator();
   virtual ~FusionIdAllocator();

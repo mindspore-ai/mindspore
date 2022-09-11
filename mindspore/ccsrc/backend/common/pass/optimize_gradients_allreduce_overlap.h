@@ -27,7 +27,7 @@
 
 namespace mindspore {
 namespace opt {
-class OptimizeGradientsAllReduceOverlap : public Pass {
+class BACKEND_EXPORT OptimizeGradientsAllReduceOverlap : public Pass {
  public:
   OptimizeGradientsAllReduceOverlap() : Pass("optimize_gradients_allreduce_overlap") {}
   ~OptimizeGradientsAllReduceOverlap() override = default;

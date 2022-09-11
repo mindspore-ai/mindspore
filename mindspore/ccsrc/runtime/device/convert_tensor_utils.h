@@ -20,13 +20,14 @@
 #include <iostream>
 #include <vector>
 #include "ir/tensor.h"
+#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace device {
-void HalfToFloat(void *dst, const void *src, size_t elem_num);
-void FloatToHalf(void *dst, const void *src, size_t elem_num);
-void DoubleToFloat(void *dst, const void *src, size_t elem_num);
-void FloatToDouble(void *dst, const void *src, size_t elem_num);
+BACKEND_EXPORT void HalfToFloat(void *dst, const void *src, size_t elem_num);
+BACKEND_EXPORT void FloatToHalf(void *dst, const void *src, size_t elem_num);
+BACKEND_EXPORT void DoubleToFloat(void *dst, const void *src, size_t elem_num);
+BACKEND_EXPORT void FloatToDouble(void *dst, const void *src, size_t elem_num);
 void ShortToInt(void *dst, const void *src, size_t elem_num);
 void IntToShort(void *dst, const void *src, size_t elem_num);
 void LongToInt(void *dst, const void *src, size_t elem_num);

@@ -50,7 +50,7 @@ struct dump_data_t {
   std::shared_ptr<tensor::Tensor> trans_buf{nullptr};
 };
 
-class E2eDump {
+class BACKEND_EXPORT E2eDump {
  public:
   E2eDump() = default;
   ~E2eDump() = default;

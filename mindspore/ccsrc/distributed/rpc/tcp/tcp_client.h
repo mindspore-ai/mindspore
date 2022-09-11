@@ -24,11 +24,12 @@
 
 #include "distributed/rpc/tcp/tcp_comm.h"
 #include "utils/ms_utils.h"
+#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace distributed {
 namespace rpc {
-class TCPClient {
+class BACKEND_EXPORT TCPClient {
  public:
   explicit TCPClient(bool enable_ssl = false) : enable_ssl_(enable_ssl) {}
   ~TCPClient() = default;

@@ -22,7 +22,7 @@
 #include "backend/common/session/kernel_graph.h"
 
 namespace mindspore::device {
-class LaunchKernel {
+class BACKEND_EXPORT LaunchKernel {
  public:
   explicit LaunchKernel(void *stream) : stream_(stream), kernel_mod_(nullptr) {}
   virtual ~LaunchKernel() = default;

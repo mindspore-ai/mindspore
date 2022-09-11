@@ -130,7 +130,7 @@ class BACKEND_EXPORT Profiler {
   std::string op_type_ = "GetNext";
 
  private:
-  inline static std::map<std::string, std::shared_ptr<Profiler>> instance_map_ = {};
+  static std::map<std::string, std::shared_ptr<Profiler>> &GetInstanceMap();
 };
 }  // namespace profiler
 }  // namespace mindspore

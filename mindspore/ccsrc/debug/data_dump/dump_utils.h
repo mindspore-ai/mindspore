@@ -43,10 +43,11 @@ const DeviceTensorPtr GetParameterInfo(const AnfNodePtr &node, NotNull<ShapeVect
 
 void DumpMemToFile(const std::string &file_path, const device::DeviceAddress &addr, const ShapeVector &int_shapes,
                    const TypeId &type, bool trans_flag = false);
-std::string GetOpNameWithoutScope(const std::string &fullname_with_scope, const std::string &separator = "--");
+BACKEND_EXPORT std::string GetOpNameWithoutScope(const std::string &fullname_with_scope,
+                                                 const std::string &separator = "--");
 
 // dump target string into file
-void DumpToFile(const std::string &file_name, const std::string &dump_str);
+BACKEND_EXPORT void DumpToFile(const std::string &file_name, const std::string &dump_str);
 }  // namespace mindspore
 
 #endif  // MINDSPORE_MINDSPORE_CCSRC_DEBUG_DATA_DUMP_DUMP_UTILS_H_

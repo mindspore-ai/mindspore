@@ -55,7 +55,7 @@ enum LifeLongType {
   kLifeLongGraphEnd     // life time is from tensor start to graph end
 };
 
-class SomasTensor {
+class BACKEND_EXPORT SomasTensor {
  public:
   size_t aligned_size_{0};
   LifeLongType lifelong_value_;

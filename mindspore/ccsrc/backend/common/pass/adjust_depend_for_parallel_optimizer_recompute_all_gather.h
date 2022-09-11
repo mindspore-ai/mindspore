@@ -28,7 +28,7 @@
 
 namespace mindspore {
 namespace opt {
-class AdjustDependForParallelOptimizerRecomputeAllGather : public Pass {
+class BACKEND_EXPORT AdjustDependForParallelOptimizerRecomputeAllGather : public Pass {
  public:
   AdjustDependForParallelOptimizerRecomputeAllGather()
       : Pass("adjust_depend_for_parallel_optimizer_recompute_all_gather") {}

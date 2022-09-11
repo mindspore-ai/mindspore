@@ -22,6 +22,7 @@
 #include <string>
 #include <vector>
 #include <utility>
+#include "include/backend/visible.h"
 
 namespace mindspore::graphkernel {
 constexpr unsigned int OptLevel_0 = 0;  // Disabled
@@ -36,7 +37,7 @@ constexpr unsigned int OpLevel_2 = 2;
 constexpr unsigned int OpLevel_MAX = 3;
 constexpr unsigned int default_cpu_refer_tread_num = 8;
 
-class GraphKernelFlags {
+class BACKEND_EXPORT GraphKernelFlags {
  public:
   static const GraphKernelFlags &GetInstance();
 

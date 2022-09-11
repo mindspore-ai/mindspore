@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace opt {
-class OptimizeDependence : public PatternProcessPass {
+class BACKEND_EXPORT OptimizeDependence : public PatternProcessPass {
  public:
   explicit OptimizeDependence(bool multigraph = true) : PatternProcessPass("optimize_dependence", multigraph) {}
   ~OptimizeDependence() override = default;

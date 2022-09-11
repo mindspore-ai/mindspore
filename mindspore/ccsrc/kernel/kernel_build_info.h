@@ -27,7 +27,7 @@
 
 namespace mindspore {
 namespace kernel {
-class KernelBuildInfo {
+class BACKEND_EXPORT KernelBuildInfo {
  public:
   class KernelBuildInfoBuilder;
 
