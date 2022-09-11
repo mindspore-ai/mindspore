@@ -15,7 +15,10 @@
  */
 
 #include "plugin/device/cpu/kernel/unpack_cpu_kernel.h"
+#include <map>
 #include <tuple>
+#include "ops/unstack.h"
+#include "utils/ms_utils.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
@@ -27,21 +30,50 @@ constexpr size_t kUnpackWorkspaceMinNum = 1;
 constexpr size_t kMaxDataSize = 2147483648;  // 2GB
 }  // namespace
 
-void UnpackCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  int64_t axis_tmp = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
-  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  if (axis_tmp < 0) {
-    axis_tmp += SizeToLong(input_shape.size());
+bool UnpackCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                              const std::vector<KernelTensorPtr> &outputs) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::Unstack>(base_operator);
+  if (kernel_ptr == nullptr) {
+    MS_LOG(ERROR) << "cast unstack ops failed!";
+    return false;
   }
-  output_num_ = LongToSize(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "num"));
-  unstack_param_.num_ = SizeToInt(output_num_);
-  unstack_param_.axis_ = LongToInt(axis_tmp);
+  kernel_name_ = kernel_ptr->name();
+  unstack_param_.axis_ = kernel_ptr->get_axis();
   unstack_param_.pre_dims_ = 1;
   unstack_param_.axis_dim_ = 1;
   unstack_param_.after_dims_ = 1;
   input_size_ = 1;
+
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  std::vector<KernelAttr> support_list;
+  (void)std::transform(
+    func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+    [](const std::tuple<KernelAttr, UnstackFunc, InitIOFunc> &tuple_item) { return std::get<0>(tuple_item); });
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, support_list);
+  if (!is_match) {
+    MS_LOG(ERROR) << "Unstack does not support this kernel data type: " << kernel_attr;
+    return false;
+  }
+  kernel_func_ = std::get<1>(func_list_[index]);
+  const size_t kTwoIdx = 2;
+  init_io_func_ = std::get<kTwoIdx>(func_list_[index]);
+  return true;
+}
+
+int UnpackCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                               const std::vector<KernelTensorPtr> &outputs,
+                               const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  if (ret != 0) {
+    return ret;
+  }
+  auto input_shape = inputs[0]->GetShapeVector();
+  if (unstack_param_.axis_ < 0) {
+    unstack_param_.axis_ += input_shape.size();
+  }
+  output_num_ = input_shape[unstack_param_.axis_];
+  unstack_param_.num_ = SizeToInt(output_num_);
 
   for (size_t i = 0; i < input_shape.size(); i++) {
     if (i < IntToSize(unstack_param_.axis_)) {
@@ -53,20 +85,12 @@ void UnpackCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     }
     input_size_ *= LongToSize(input_shape[i]);
   }
-
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
-  if (!is_match) {
-    MS_LOG(EXCEPTION) << "Unstack does not support this kernel data type: " << kernel_attr;
-  }
-  kernel_func_ = std::get<1>(func_list_[index]);
-  const size_t kTwoIdx = 2;
-  init_io_func_ = std::get<kTwoIdx>(func_list_[index]);
+  init_io_func_(this);
+  return KRET_OK;
 }
 
 template <typename T>
-void UnpackCpuKernelMod::InitIOSize(const CNodePtr &kernel_node) {
-  DeprecatedNativeCpuKernelMod::InitInputOutputSize(kernel_node);
+void UnpackCpuKernelMod::InitIOSize() {
   (void)workspace_size_list_.emplace_back(sizeof(T *) * output_num_);
 }
 
@@ -102,7 +126,7 @@ bool UnpackCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   return true;
 }
 
-std::vector<std::tuple<KernelAttr, UnpackCpuKernelMod::UnstackFunc, UnpackCpuKernelMod::InitFunc>>
+std::vector<std::tuple<KernelAttr, UnpackCpuKernelMod::UnstackFunc, UnpackCpuKernelMod::InitIOFunc>>
   UnpackCpuKernelMod::func_list_ = {
     {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
      &UnpackCpuKernelMod::LaunchKernel<int8_t>, &UnpackCpuKernelMod::InitIOSize<int8_t>},
@@ -132,14 +156,6 @@ std::vector<std::tuple<KernelAttr, UnpackCpuKernelMod::UnstackFunc, UnpackCpuKer
      &UnpackCpuKernelMod::LaunchKernel<float>, &UnpackCpuKernelMod::InitIOSize<float>},
     {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
      &UnpackCpuKernelMod::LaunchKernel<double>, &UnpackCpuKernelMod::InitIOSize<double>}};
-
-std::vector<KernelAttr> UnpackCpuKernelMod::GetOpSupport() {
-  std::vector<KernelAttr> support_list;
-  (void)std::transform(
-    func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-    [](const std::tuple<KernelAttr, UnstackFunc, InitFunc> &tuple_item) { return std::get<0>(tuple_item); });
-  return support_list;
-}
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Unstack, UnpackCpuKernelMod);
 }  // namespace kernel
