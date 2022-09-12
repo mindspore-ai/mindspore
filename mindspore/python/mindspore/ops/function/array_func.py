@@ -498,7 +498,12 @@ def range(start, limit, delta):
         A 1-D Tensor, with the same type as the inputs.
 
     Raises:
-        ValueError: If `start`, `limit` or `delta` is not scalar Tensor.
+        TypeError: If `start`, `limit` or `delta` is not scalar Tensor.
+        TypeError: If datatype of `start`, `limit` or `delta` is not same.
+        TypeError: If datatype of `start`, `limit` or `delta` is not supported.
+        ValueError: If `delta` = 0.
+        ValueError: If `start` >= `limit` when `delta` > 0.
+        ValueError: If `start` <= `limit` when `delta` < 0.
 
     Supported Platforms:
         ``GPU`` ``CPU``
