@@ -30,33 +30,51 @@ constexpr size_t kSpaceToDepthOutputsNum = 1;
 constexpr size_t kSpaceToDepthInputShapeSize = 4;
 constexpr size_t kSpaceToDepthMinBlockSize = 2;
 }  // namespace
-void SpaceToDepthCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-
-  input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  output_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
-  block_size_ = LongToSize(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "block_size"));
-  if (input_shape_.size() != kSpaceToDepthInputShapeSize) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input tensor must be 4-D, but got "
-                      << input_shape_.size() << "-D";
-  }
+bool SpaceToDepthCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                    const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->name();
+  auto node_pointer = std::dynamic_pointer_cast<ops::SpaceToDepth>(base_operator);
+  block_size_ = node_pointer->get_block_size();
   if (block_size_ < kSpaceToDepthMinBlockSize) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'block_size' must be greater than or equal to "
                       << kSpaceToDepthMinBlockSize << ", but got " << block_size_;
   }
-
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
-    MS_LOG(EXCEPTION) << "SpaceToDepth does not support this kernel data type: " << kernel_attr;
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
   }
   kernel_func_ = func_list_[index].second;
+  return true;
 }
+int SpaceToDepthCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                     const std::vector<KernelTensorPtr> &outputs,
+                                     const std::map<uint32_t, tensor::TensorPtr> &) {
+  size_t input_num = inputs.size();
+  if (input_num != 1) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 1, but got " << input_num;
+  }
 
+  size_t output_num = outputs.size();
+  if (output_num != 1) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << output_num;
+  }
+  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
+    return ret;
+  }
+  input_shape_ = inputs[0]->GetShapeVector();
+  if (input_shape_.size() != kSpaceToDepthInputShapeSize) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input tensor must be 4-D, but got "
+                      << input_shape_.size() << "-D";
+  }
+  output_shape_ = outputs[0]->GetShapeVector();
+  return KRET_OK;
+}
 template <typename T>
 bool SpaceToDepthCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                            const std::vector<kernel::AddressPtr> &,
+                                            const std::vector<kernel::AddressPtr> &workspace,
                                             const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSpaceToDepthInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSpaceToDepthOutputsNum, kernel_name_);
@@ -132,7 +150,6 @@ std::vector<KernelAttr> SpaceToDepthCpuKernelMod::GetOpSupport() {
                        [](const std::pair<KernelAttr, SpaceToDepthFunc> &pair) { return pair.first; });
   return support_list;
 }
-
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, SpaceToDepth, SpaceToDepthCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

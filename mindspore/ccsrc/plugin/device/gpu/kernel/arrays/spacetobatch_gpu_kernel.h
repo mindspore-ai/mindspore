@@ -19,6 +19,9 @@
 
 #include <vector>
 #include <string>
+#include <map>
+#include <utility>
+#include "mindspore/core/ops/space_to_batch.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/spacetobatch_impl.cuh"
@@ -29,135 +32,48 @@ constexpr size_t SHAPE_SIZE = 4;
 constexpr size_t PADDING_SHAPE_0 = 2;
 constexpr size_t PADDING_SHAPE_1 = 2;
 
-template <typename T>
-class SpaceToBatchGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class SpaceToBatchGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelper<SpaceToBatchGpuKernelMod> {
  public:
-  SpaceToBatchGpuKernelMod() { ResetResource(); }
-  ~SpaceToBatchGpuKernelMod() = default;
+  SpaceToBatchGpuKernelMod() = default;
+  ~SpaceToBatchGpuKernelMod() override = default;
+
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs,
+             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    T *input = GetDeviceAddress<T>(inputs, 0);
-    T *output = GetDeviceAddress<T>(outputs, 0);
-
-    size_t size = input_size_ / sizeof(T);
-
-    CalSpaceToBatch<T>(size, input, in_, ih_, iw_, ic_, on_, oh_, ow_, oc_, LongToSize(paddings_[0][0]),
-                       LongToSize(paddings_[0][1]), LongToSize(paddings_[1][0]), LongToSize(paddings_[1][1]),
-                       block_size_, output, device_id_, reinterpret_cast<cudaStream_t>(stream_ptr));
-    return true;
+    stream_ptr_ = stream_ptr;
+    return kernel_func_(this, inputs, workspace, outputs);
   }
 
-  bool Init(const CNodePtr &kernel_node) override {
-    device_id_ = MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-    kernel_node_ = kernel_node;
-    (void)CheckParam(kernel_node);
-    input_size_ = sizeof(T) * SizeOf(input_shape_);
-    in_ = LongToSizeClipNeg(input_shape_[0]);
-    ic_ = LongToSizeClipNeg(input_shape_[1]);
-    ih_ = LongToSizeClipNeg(input_shape_[2]);
-    iw_ = LongToSizeClipNeg(input_shape_[3]);
+  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 
-    on_ = in_ * block_size_ * block_size_;
-    oc_ = ic_;
-    oh_ = (ih_ + LongToSize(paddings_[0][0] + paddings_[0][1])) / block_size_;
-    ow_ = (iw_ + LongToSize(paddings_[1][0] + paddings_[1][1])) / block_size_;
-    output_size_ = on_ * oc_ * oh_ * ow_ * sizeof(T);
-    InitSizeLists();
-    return true;
-  }
-  void ResetResource() noexcept override {
-    in_ = 0;
-    ic_ = 0;
-    ih_ = 0;
-    iw_ = 0;
-    on_ = 0;
-    oc_ = 0;
-    oh_ = 0;
-    ow_ = 0;
-    kernel_name_ = "SpaceToBatch";
-    input_size_list_.clear();
-    output_size_list_.clear();
-    paddings_.clear();
-    input_shape_.clear();
-  }
-
- protected:
-  void InitSizeLists() override {
-    input_size_list_.push_back(input_size_);
-    output_size_list_.push_back(output_size_);
-  }
+  std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
  private:
-  bool CheckParam(const CNodePtr &kernel_node) {
-    block_size_ = static_cast<int64_t>(GetAttr<int64_t>(kernel_node, "block_size"));
-    if (block_size_ < 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'block_size' cannot be less than 1, but got "
-                        << block_size_;
-    }
-    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    if (input_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 1, but got " << input_num;
-    }
-    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-    if (output_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << output_num;
-    }
-
-    // check input_shape
-    input_shape_ = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
-    if (input_shape_.size() != SHAPE_SIZE) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input cannot be equal to " << SHAPE_SIZE
-                        << ", but got " << input_shape_.size();
-    }
-    // check paddings_
-    paddings_ = GetAttr<std::vector<std::vector<int64_t>>>(kernel_node, "paddings");
-    if (paddings_.size() != PADDING_SHAPE_0) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the size of 'paddings' cannot be equal to " << PADDING_SHAPE_0
-                        << ", but got " << paddings_.size();
-    }
-    if (paddings_[0].size() != PADDING_SHAPE_1 || paddings_[1].size() != PADDING_SHAPE_1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the size of 'paddings' cannot be equal to " << PADDING_SHAPE_0
-                        << ", but got " << paddings_.size();
-    } else {
-      for (size_t idx_i = 0; idx_i < PADDING_SHAPE_0; ++idx_i) {
-        for (size_t idx_j = 0; idx_j < PADDING_SHAPE_1; ++idx_j) {
-          if (paddings_[idx_i][idx_j] < 0) {
-            MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the element of 'paddings' cannot be less than 0, "
-                              << "but got paddings[" << idx_i << "][ " << idx_j << "]: " << paddings_[idx_i][idx_j];
-          }
-        }
-        auto tmp_shape = input_shape_[idx_i + PADDING_SHAPE_1] + paddings_[idx_i][0] + paddings_[idx_i][1];
-        if ((tmp_shape % block_size_) != 0) {
-          MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                            << "', padded shape must be divisible by block_size, , but got padded shape: " << tmp_shape
-                            << ", block_size: " << block_size_;
-        }
-        if ((tmp_shape / block_size_) == 0) {
-          MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', padded shape cannot be less than block_size"
-                            << ", but got padded shape: " << tmp_shape << ", block_size: " << block_size_;
-        }
-      }
-    }
-    return true;
-  }
-
+  template <typename T>
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<AddressPtr> &outputs);
+  void *stream_ptr_{nullptr};
   std::string kernel_name_;
-
   std::vector<std::vector<int64_t>> paddings_;
-  std::vector<int64_t> input_shape_;
-  size_t block_size_;
-  size_t input_size_;
-  size_t output_size_;
-  size_t in_;
-  size_t ic_;
-  size_t ih_;
-  size_t iw_;
-  size_t on_;
-  size_t oc_;
-  size_t oh_;
-  size_t ow_;
+  std::vector<size_t> input_shape_;
+  int64_t block_size_{0};
+  size_t input_size_{0};
+  size_t output_size_{0};
+  size_t in_{0};
+  size_t ic_{0};
+  size_t ih_{0};
+  size_t iw_{0};
+  size_t on_{0};
+  size_t oc_{0};
+  size_t oh_{0};
+  size_t ow_{0};
+  size_t unit_size_{0};
 };
 }  // namespace kernel
 }  // namespace mindspore

@@ -28,42 +28,59 @@ namespace {
 abstract::ShapePtr PSROIPoolingInferShape(const PrimitivePtr &primitive,
                                           const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  const int x_shape_size = 4;
-  const int rois_shape_size = 3;
   auto prim_name = primitive->name();
   (void)CheckAndConvertUtils::CheckInteger("input numbers", int64_t(input_args.size()), kGreaterEqual, 2, prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
 
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  if (x_shape.size() != x_shape_size) {
-    MS_EXCEPTION(ValueError) << "For '" << primitive->name()
-                             << "', input x shape must be 4d(NCHW), but got: " << x_shape.size();
-  }
-
   auto group_size_ptr = primitive->GetAttr("group_size");
   MS_EXCEPTION_IF_NULL(group_size_ptr);
   auto group_size = GetValue<int64_t>(group_size_ptr);
-
+  constexpr int64_t max_group_size = 128;
   // The value of group_size must be less than 128
-  if (group_size <= 0 || group_size >= 128) {
-    MS_EXCEPTION(ValueError) << "For '" << primitive->name()
-                             << "', 'group_size' should be in the range (0, 128), but got: " << group_size;
+  if (group_size <= 0 || group_size >= max_group_size) {
+    MS_LOG(EXCEPTION) << "For '" << primitive->name()
+                      << "', 'group_size' should be in the range (0, 128), but got: " << group_size;
   }
 
   auto output_dim_ptr = primitive->GetAttr("output_dim");
   MS_EXCEPTION_IF_NULL(output_dim_ptr);
   auto output_dim = GetValue<int64_t>(output_dim_ptr);
 
-  auto rois_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
-  if (rois_shape.size() != rois_shape_size) {
-    MS_EXCEPTION(ValueError) << "For '" << primitive->name()
-                             << "', the dimension of 'rois' should be 3 , but got: " << rois_shape.size();
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  constexpr size_t x_out_shape_dim = 4;
+  if (!IsDynamicRank(x_shape)) {
+    if (x_shape.size() != x_out_shape_dim) {
+      MS_LOG(EXCEPTION) << "For '" << primitive->name()
+                        << "', input x shape must be 4d(NCHW), but got: " << x_shape.size();
+    }
+    if (x_shape[1] != abstract::Shape::SHP_ANY) {
+      // the first dimension of the input data should be equal group_size * group_size * output_dim
+      if (x_shape[1] / (group_size * group_size) != output_dim) {
+        MS_LOG(EXCEPTION) << "For '" << primitive->name() << "', the second dimension(" << x_shape[1]
+                          << ") of the input x is illegal, it is not equal to group_size(" << group_size
+                          << ") * group_size(" << group_size << ") * output_dim(" << output_dim << ").";
+      }
+    }
   }
-
-  std::vector<int64_t> ret_shape({rois_shape[0] * rois_shape[2], output_dim, group_size, group_size});
-
+  auto rois_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+  std::vector<int64_t> ret_shape(x_out_shape_dim);
+  if (IsDynamicRank(rois_shape)) {
+    ret_shape = {-1, output_dim, group_size, group_size};
+  } else {
+    constexpr size_t rois_shape_dim = 3;
+    constexpr size_t dim2 = 2;
+    if (rois_shape.size() < rois_shape_dim) {
+      MS_LOG(EXCEPTION) << "For '" << primitive->name()
+                        << "', the dimension of 'rois' should be equal 3, but got: " << rois_shape.size();
+    }
+    if (rois_shape[0] == abstract::Shape::SHP_ANY || rois_shape[dim2] == abstract::Shape::SHP_ANY) {
+      ret_shape = {-1, output_dim, group_size, group_size};
+    } else {
+      ret_shape = {rois_shape[0] * rois_shape[dim2], output_dim, group_size, group_size};
+    }
+  }
   return std::make_shared<abstract::Shape>(ret_shape);
 }
 
