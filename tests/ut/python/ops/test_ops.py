@@ -2786,8 +2786,10 @@ test_case_nn_ops = [
         'desc_inputs': [[3, 1, 2], Tensor(np.array([0, 1]).astype(np.int32))],
         'desc_bprop': [[2, 1, 2]]}),
     ('Range', {
-        'block': inner.Range(1.0, 5.0),
-        'desc_inputs': [Tensor(np.ones([10]).astype(np.float32))],
+        'block': P.Range(),
+        'desc_inputs': [Tensor(0.0, mstype.float32),
+                        Tensor(10.0, mstype.float32),
+                        Tensor(1.0, mstype.float32)],
         'desc_bprop': [[10]]}),
     ('RangeV2', {
         'block': RangeV2(),

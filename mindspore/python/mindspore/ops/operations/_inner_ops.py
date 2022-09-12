@@ -145,68 +145,6 @@ class ExtractImagePatches(Primitive):
         self.is_ge = context.get_context("enable_ge")
 
 
-class Range(PrimitiveWithInfer):
-    r"""
-    Creates a sequence of numbers.
-    Set `input_x` as :math:`x_i` for each element, `output` as follows:
-
-    .. math::
-        \text{output}(x_i) = x_i * \text{delta} + \text{start}
-
-    Args:
-        start (float): If `limit` is `None`, the value acts as limit in the range and first entry
-            defaults to `0`. Otherwise, it acts as first entry in the range.
-        limit (float): Acts as upper limit of sequence. If `None`, defaults to the value of `start`
-            while set the first entry of the range to `0`. It can not be equal to `start`. Default: None.
-        delta (float): Increment of the range. It can not be equal to zero. Default: 1.0.
-
-    Inputs:
-        - **input_x** (Tensor) - The assistant data. A `1-D` tensor of type float32 or int32.
-
-    Outputs:
-        Tensor, has the same shape and dtype as `input_x`.
-
-    Examples:
-        >>> range_op = ops.Range(1.0, 8.0, 2.0)
-        >>> x = Tensor(np.array([1, 2, 3, 2]), mindspore.int32)
-        >>> output = range_op(x)
-        >>> print(output)
-        [3, 5, 7, 5]
-    """
-
-    @prim_attr_register
-    def __init__(self, start, limit=None, delta=1.0):
-        self.init_prim_io_names(inputs=['x'], outputs=['y'])
-        self.delta = validator.check_value_type("delta", delta, [float], self.name)
-        validator.check_value_type("start", start, [float], self.name)
-        if limit is None:
-            self.start = 0.0
-            self.limit = start
-            self.add_prim_attr("start", self.start)
-            self.add_prim_attr("limit", self.limit)
-        else:
-            validator.check_value_type("limit", limit, [float], self.name)
-        validator.check('start', self.start, 'limit', self.limit, Rel.NE, self.name)
-        if self.delta == 0.0:
-            raise ValueError("The input of `delta` can not be equal to zero.")
-        if self.delta > 0.0 and self.start > self.limit:
-            raise ValueError(f"Limit must be greater than start when delta:{self.delta} is more than zero, "
-                             f"but got start:{self.start}, limit:{self.limit}")
-        if self.delta < 0.0 and self.start < self.limit:
-            raise ValueError(f"Start must be greater than limit when delta:{self.delta} is less than zero, "
-                             f"but got start:{self.start}, limit:{self.limit}")
-
-    def infer_shape(self, x_shape):
-        return x_shape
-
-    def infer_dtype(self, x_dtype):
-        validator.check_tensor_dtype_valid('x', x_dtype, [mstype.float32, mstype.int32], self.name)
-        return x_dtype
-
-    def infer_value(self, x_value):
-        return Tensor(np.arange(self.start, self.limit, self.delta), dtype=x_value.dtype)
-
-
 class Quant(PrimitiveWithInfer):
     r"""
     Returns the quantized value of input_x.

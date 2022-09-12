@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import math
 import numpy as np
 
 import mindspore as ms
@@ -20,7 +19,6 @@ from mindspore.common import dtype as mstype
 from mindspore import context, Tensor, Parameter
 from mindspore.nn import Cell, Momentum
 from mindspore.ops import operations as P
-from mindspore.ops.operations import _inner_ops as inner
 from mindspore.train import Model
 from tests.dataset_mock import MindData
 
@@ -50,23 +48,17 @@ class Net(Cell):
     def __init__(self, weight, start, limit, delta, strategy1=None, strategy2=None, strategy3=None):
         super().__init__()
         self.mul = P.Mul().shard(strategy1)
-        if isinstance(start, float):
-            self.type = mstype.float32
-        else:
-            self.type = mstype.int32
-            limit = float(limit)
-            start = float(start)
-            delta = float(delta)
+        self.limit = Tensor(limit, mstype.float32)
+        self.start = Tensor(start, mstype.float32)
+        self.delta = Tensor(delta, mstype.float32)
 
-        length_input = math.ceil((limit - start) / delta)
-        self.input_tensor = Tensor(list(range(int(length_input))), self.type)
-        self.range = inner.Range(start, limit, delta)
+        self.range = P.Range()
         self.range.shard(strategy2)
         self.mul2 = P.Mul().shard(strategy3)
         self.weight = Parameter(weight, "w")
 
     def construct(self, x, b):
-        r_out = self.range(self.input_tensor)
+        r_out = self.range(self.start, self.limit, self.delta)
         out = self.mul(x, self.weight)
         out = self.mul2(out, r_out)
         return out
