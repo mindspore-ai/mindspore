@@ -659,6 +659,7 @@ constexpr auto kAttrCellJitConfigDict = "_jit_config_dict";
 constexpr auto kAttrBinaryOutput = "binary_output";
 constexpr auto kAttrMinLength = "minlength";
 constexpr auto kAttrMaxLength = "maxlength";
+constexpr auto kAttrIouThreshold = "iou_threshold";
 
 // FuncGraph Flags
 constexpr auto kFlagsIsCutGraph = "is_cut_graph";
