@@ -8,6 +8,9 @@ mindspore_add_pkg(fast_transformers
         URL ${REQ_URL}
         MD5 ${MD5}
         LIBS ${ft_libs}
-        LIB_PATH output/lib
+        LIB_PATH lib
         PATCHES ${MINDSPORE_PROJECT_DIR}/third_party/patch/fast_transformer/001-fast_transformer.patch
         CMAKE_OPTION -DCMAKE_BUILD_TYPE=Release -DEXAMPLES=off)
+include_directories(${fast_transformers_INC})
+
+add_library(mindspore::fast_transformers ALIAS fast_transformers::transformer-shared)

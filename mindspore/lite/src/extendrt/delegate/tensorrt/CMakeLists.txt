@@ -97,4 +97,4 @@ target_link_libraries(
 add_subdirectory(cuda_impl)
 
 target_link_libraries(tensorrt_plugin cuda_kernel_mid gpu_distribution_collective)
-target_link_libraries(tensorrt_plugin mindspore-extendrt mindspore_core)
+target_link_libraries(tensorrt_plugin mindspore-extendrt mindspore_core mindspore::fast_transformers)

@@ -247,6 +247,9 @@ int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const std::shared
                                     std::make_shared<opt::TensorDotFusion>(),
                                     std::make_shared<opt::MatMulActivationFusion>(param),
                                     std::make_shared<opt::MulActivationFusion>()};
+#ifdef ENABLE_CLOUD_FUSION_INFERENCE
+  fusions.push_back(std::make_shared<opt::MultiHeadAttentionFusion>());
+#endif
   for (size_t index = 0; index < fusions.size(); index++) {
     auto pass_ptr = fusions.at(index);
     auto pass_name = pass_ptr->name();

@@ -86,7 +86,7 @@ TensorRTSubGraph::~TensorRTSubGraph() {
   }
 }
 
-int TensorRTSubGraph::Init(cudaStream_t stream) {
+int TensorRTSubGraph::Init(cudaStream_t stream, cublasHandle_t cublas_handle, cublasLtHandle_t cublaslt_handle) {
   auto ret = GetGraphInOutOps(inputs_, outputs_, &in_ops_, &out_ops_, all_ops_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Get TensorRT subgraph input and output ops failed.";
@@ -107,7 +107,7 @@ int TensorRTSubGraph::Init(cudaStream_t stream) {
     MS_LOG(ERROR) << "New TensorRTContext failed.";
     return RET_OK;
   }
-  if (SetDeviceConfig(stream) != RET_OK) {
+  if (SetDeviceConfig(stream, cublas_handle, cublaslt_handle) != RET_OK) {
     MS_LOG(WARNING) << "set tensorrt config failed.";
   }
   serializer_ = std::make_shared<TensorRTSerializer>(serialize_file_path_);
@@ -151,7 +151,8 @@ int TensorRTSubGraph::BuildEngine() {
   return RET_OK;
 }
 
-int TensorRTSubGraph::SetDeviceConfig(cudaStream_t stream) {
+int TensorRTSubGraph::SetDeviceConfig(cudaStream_t stream, cublasHandle_t cublas_handle,
+                                      cublasLtHandle_t cublaslt_handle) {
   if (config_ == nullptr) {
     this->config_ = runtime_->GetBuilder()->createBuilderConfig();
     if (this->config_ == nullptr) {
@@ -176,9 +177,10 @@ int TensorRTSubGraph::SetDeviceConfig(cudaStream_t stream) {
   } else {
     MS_LOG(INFO) << "inputs no quant params or platform not support int8.";
   }
-  runtime_->SetCudaStream(stream);
+  runtime_->SetCudaStream(stream, cublas_handle, cublaslt_handle);
   config_->setProfileStream(stream);
   stream_ = stream;
+
   MS_LOG(INFO) << GetRankID() << " tensorrt subgraph stream: " << stream_;
 
   // config setMaxWorkspaceSize to 2047 MB for max limit

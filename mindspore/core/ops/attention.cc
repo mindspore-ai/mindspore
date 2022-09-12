@@ -17,9 +17,39 @@
 
 #include "ops/attention.h"
 #include "ops/primitive_c.h"
+#include "ops/op_utils.h"
 #include "mindapi/src/helper.h"
 
 namespace mindspore::ops {
 MIND_API_OPERATOR_IMPL(Attention, BaseOperator);
+
+void Attention::set_head_num(int64_t head_num) { (void)this->AddAttr(kAttentionNumHeads, api::MakeValue(head_num)); }
+
+void Attention::set_head_size(int64_t head_size) {
+  (void)this->AddAttr(kAttentionSizePerHead, api::MakeValue(head_size));
+}
+
+void Attention::set_cross(bool cross) { (void)this->AddAttr(kCross, api::MakeValue(cross)); }
+
+int64_t Attention::get_head_num() const {
+  auto value_ptr = this->GetAttr(kAttentionNumHeads);
+  return GetValue<int64_t>(value_ptr);
+}
+
+int64_t Attention::get_head_size() const {
+  auto value_ptr = this->GetAttr(kAttentionSizePerHead);
+  return GetValue<int64_t>(value_ptr);
+}
+
+bool Attention::get_cross() const {
+  auto value_ptr = this->GetAttr(kCross);
+  return GetValue<bool>(value_ptr);
+}
+
+void Attention::Init(int64_t head_num, int64_t head_size, bool cross) {
+  this->set_head_num(head_num);
+  this->set_head_size(head_size);
+  this->set_cross(cross);
+}
 REGISTER_PRIMITIVE_C(kNameAttention, Attention);
 }  // namespace mindspore::ops

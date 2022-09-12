@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_CUDA_IMPL_CUBLAS_UTILS_H_
 #define MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_CUDA_IMPL_CUBLAS_UTILS_H_
 
+#include <cublasLt.h>
 #include <cublas_v2.h>
 #include "src/extendrt/delegate/tensorrt/cuda_impl/cuda_helper.h"
 #include "src/common/log_util.h"
@@ -58,5 +59,13 @@ void CublasMM1Batch(const void *a_addr, const void *b_addr, void *c_addr, const 
 // data_types: type_a, type_b, type_c, compute type
 void CublasMMBatched(void **a_addrs, void **b_addrs, void **c_addrs, const int *params,
                      const cublasOperation_t *operations, const cudaDataType *data_types, cublasHandle_t cublas_handle);
+
+void CublasGemmWrapper(const void *a_addr, const void *b_addr, void *c_addr, const int *params, const int *lds,
+                       const cublasOperation_t *operations, const cudaDataType *data_types, void *alpha, void *beta,
+                       cublasHandle_t cublas_handle);
+void CublasGemmStridedBatchedWrapper(const void *a_addr, const void *b_addr, void *c_addr, const int *params,
+                                     const int *lds, const cublasOperation_t *operations, const int *strides,
+                                     const cudaDataType *data_types, void *alpha, void *beta, int batch,
+                                     cublasHandle_t cublas_handle);
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_CUDA_IMPL_CUBLAS_UTILS_H_

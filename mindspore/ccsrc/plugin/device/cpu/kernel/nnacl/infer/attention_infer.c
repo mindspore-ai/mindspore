@@ -16,6 +16,7 @@
 
 #include "nnacl/infer/attention_infer.h"
 #include "nnacl/infer/infer_register.h"
+#include "nnacl/attention_parameter.h"
 
 int AttentionInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                         OpParameter *parameter) {
@@ -23,27 +24,44 @@ int AttentionInferShape(const TensorC *const *inputs, size_t inputs_size, Tensor
   if (check_ret != NNACL_OK) {
     return check_ret;
   }
-  const TensorC *q_input = inputs[0];
-  TensorC *output = outputs[0];
-  SetDataTypeFormat(output, q_input);
+  AttentionParameter *param = (AttentionParameter *)parameter;
+  const TensorC *q_input = inputs[FIRST_INPUT];
+  const TensorC *k_input = inputs[SECOND_INPUT];
+  TensorC *output0 = outputs[FIRST_INPUT];
+  SetDataTypeFormat(output0, q_input);
   if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
-  const TensorC *q_weight = inputs[3];
-  if (q_input->shape_size_ != 2 && q_input->shape_size_ != 3) {
+  const TensorC *q_weight = inputs[FOURTH_INPUT];
+  if (q_input->shape_size_ != C2NUM && q_input->shape_size_ != C3NUM) {
     return NNACL_ERR;
   }
-  if (q_weight->shape_size_ != 2) {
+  if (q_weight->shape_size_ != C2NUM) {
     return NNACL_ERR;
   }
   int batch = (q_input->shape_size_ == 2) ? 1 : q_input->shape_[0];
   int f_seq = (q_input->shape_size_ == 2) ? q_input->shape_[0] : q_input->shape_[1];
-  int d_model = q_weight->shape_[1];
-
-  output->shape_[0] = batch;
-  output->shape_[1] = f_seq;
-  output->shape_[2] = d_model;
-  output->shape_size_ = 3;
+  int t_seq_len = k_input->shape_[1];
+  output0->shape_[FIRST_INPUT] = batch;
+  output0->shape_[SECOND_INPUT] = f_seq;
+  output0->shape_[THIRD_INPUT] = param->head_num_ * param->head_size_;
+  output0->shape_size_ = C3NUM;
+  if (outputs_size >= C3NUM) {
+    TensorC *output1 = outputs[SECOND_INPUT];
+    SetDataTypeFormat(output1, q_input);
+    output1->shape_[FIRST_INPUT] = batch;
+    output1->shape_[SECOND_INPUT] = param->head_num_;
+    output1->shape_[THIRD_INPUT] = param->head_size_;
+    output1->shape_[FOURTH_INPUT] = t_seq_len;
+    output1->shape_size_ = C4NUM;
+    TensorC *output2 = outputs[THIRD_INPUT];
+    SetDataTypeFormat(output2, q_input);
+    output2->shape_[FIRST_INPUT] = batch;
+    output2->shape_[SECOND_INPUT] = param->head_num_;
+    output2->shape_[THIRD_INPUT] = t_seq_len;
+    output2->shape_[FOURTH_INPUT] = param->head_size_;
+    output2->shape_size_ = C4NUM;
+  }
   return NNACL_OK;
 }
 

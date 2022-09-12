@@ -19,6 +19,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <vector>
 #include "tools/optimizer/common/multiple_pattern_process_pass.h"
 #include "include/common/utils/utils.h"
 #include "include/errorcode.h"
@@ -48,10 +49,24 @@ class MultiHeadAttentionFusion : public MultiplePatternProcessPass {
   // define patterns
   VectorRef DefineMPWithMaskPattern(bool cross = false, bool mask = true) const;
   VectorRef DefineMPWithMaskPatternPA(bool cross = false) const;
+  VectorRef DefineMPWithMaskPatternT5(bool cross = false) const;
+  VectorRef DefineEmbedding(const BaseRef &input, const BaseRef &weight, const BaseRef &bias, const BaseRef &axis,
+                            const BaseRef &transpose_var, bool test_div = false, bool transpose = true) const;
 
   // create masked-multi-head-attention
   CNodePtr CreateMaskedMultiHeadAttentionNode(const FuncGraphPtr &func_graph, const EquivPtr &equiv,
                                               const std::string &base_name, bool cross = false, bool mask = true) const;
+  // check pattern
+  bool CheckPattern(const EquivPtr &equiv, int *head_num, int *head_size) const;
+  CNodePtr CreateOutputGetItem(const FuncGraphPtr &func_graph, const CNodePtr &node, const int item_index) const;
+  lite::STATUS SetAbstractTuple(const CNodePtr &cnode, const int output_num) const;
+  lite::STATUS AdjustOtherGetItems(const FuncGraphPtr &func_graph, const CNodePtr &attention, int index,
+                                   const AnfNodePtr &node) const;
+  lite::STATUS RemoveRedundantInput(const FuncGraphPtr &func_graph, const std::vector<AnfNodePtr> &redundant) const;
+  std::shared_ptr<ops::Attention> CreatePrim() const;
+  CNodePtr MakeGetTuple(const FuncGraphPtr &func_graph, const CNodePtr &new_node, const AnfNodePtr &knode,
+                        const AnfNodePtr &vnode) const;
+  std::shared_ptr<ops::Attention> CreatePrim(const EquivPtr &equiv, bool cross) const;
 
  protected:
   const std::string kMPAWithMaskPatternName = "MPAWithMaskPattern";
@@ -60,6 +75,8 @@ class MultiHeadAttentionFusion : public MultiplePatternProcessPass {
   const std::string kMPAXWithMaskPatternNamePA = "MPAXWithMaskPatternPA";
   const std::string kMPAPatternName = "MPAPattern";
   const std::string kMPAXPatternName = "MPAXPattern";
+  const std::string kMPAWithMaskPatternNameT5 = "MPAWithMaskPatternT5";
+  const std::string kMPAXWithMaskPatternNameT5 = "MPAXWithMaskPatternT5";
 
   mutable VarPtr input_q_{nullptr};
   mutable VarPtr input_k_{nullptr};
@@ -78,6 +95,10 @@ class MultiHeadAttentionFusion : public MultiplePatternProcessPass {
 
   mutable VarPtr reshape_k_{nullptr};
   mutable VarPtr reshape_v_{nullptr};
+
+  mutable VarPtr reshape_axis_{nullptr};
+  mutable VarPtr v_transpose_{nullptr};
+  mutable VarPtr k_transpose_{nullptr};
 };
 
 }  // namespace opt

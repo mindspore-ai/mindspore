@@ -41,7 +41,6 @@ OpParameter *PopulateCommonParameter(const void *prim) {
 REG_POPULATE(PrimitiveType_AddN, PopulateCommonParameter, SCHEMA_CUR)
 REG_POPULATE(PrimitiveType_ZerosLike, PopulateCommonParameter, SCHEMA_CUR)
 REG_POPULATE(PrimitiveType_Depend, PopulateCommonParameter, SCHEMA_CUR)
-REG_POPULATE(PrimitiveType_Attention, PopulateCommonParameter, SCHEMA_CUR)
 REG_POPULATE(PrimitiveType_SwitchLayer, PopulateCommonParameter, SCHEMA_CUR)
 REG_POPULATE(PrimitiveType_Log1p, PopulateCommonParameter, SCHEMA_CUR)
 }  // namespace lite

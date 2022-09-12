@@ -37,7 +37,16 @@ class MIND_API Attention : public BaseOperator {
       {"output"});
   }
   /// \brief Initialize Attention op.
-  void Init() const {}
+  /// \param[in] head_num Define head number.
+  /// \param[in] head_size Define size per head.
+  /// \param[in] cross Define is cross attention. Default false.
+  void Init(int64_t head_num, int64_t head_size, bool cross = false);
+  void set_head_num(int64_t head_num);
+  void set_head_size(int64_t head_size);
+  void set_cross(bool cross);
+  int64_t get_head_num() const;
+  int64_t get_head_size() const;
+  bool get_cross() const;
 };
 }  // namespace ops
 }  // namespace mindspore

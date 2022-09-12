@@ -45,6 +45,7 @@ void CublasMM1Batch(const void *a_addr, const void *b_addr, void *c_addr, const 
   CUBLAS_CHECK_VOID(cublasGemmEx(cublas_handle, trans_b, trans_a, n, m, k, &alpha, b_addr, type_b, ldb, a_addr, type_a,
                                  lda, &beta, c_addr, type_c, ldc, compute_type, CUBLAS_GEMM_DEFAULT_TENSOR_OP));
 }
+
 void CublasMMBatched(void **a_addrs, void **b_addrs, void **c_addrs, const int *params,
                      const cublasOperation_t *operations, const cudaDataType *data_types,
                      cublasHandle_t cublas_handle) {
@@ -66,5 +67,50 @@ void CublasMMBatched(void **a_addrs, void **b_addrs, void **c_addrs, const int *
   CUBLAS_CHECK_VOID(cublasGemmBatchedEx(cublas_handle, trans_b, trans_a, n, m, k, &alpha, b_addrs, type_b, ldb, a_addrs,
                                         type_a, lda, &beta, c_addrs, type_c, ldc, batch, compute_type,
                                         CUBLAS_GEMM_DEFAULT_TENSOR_OP));
+}
+
+void CublasGemmWrapper(const void *a_addr, const void *b_addr, void *c_addr, const int *params, const int *lds,
+                       const cublasOperation_t *operations, const cudaDataType *data_types, void *alpha, void *beta,
+                       cublasHandle_t cublas_handle) {
+  const int m = params[0];
+  const int n = params[1];
+  const int k = params[2];
+  cublasOperation_t trans_a = operations[0];
+  cublasOperation_t trans_b = operations[1];
+  const int lda = lds[0];
+  const int ldb = lds[1];
+  const int ldc = lds[2];
+  cudaDataType type_a = data_types[0];
+  cudaDataType type_b = data_types[1];
+  cudaDataType type_c = data_types[2];
+  cublasComputeType_t compute_type = CUBLAS_COMPUTE_32F_FAST_TF32;
+
+  CUBLAS_CHECK_VOID(cublasGemmEx(cublas_handle, trans_a, trans_b, m, n, k, alpha, a_addr, type_a, lda, b_addr, type_b,
+                                 ldb, beta, c_addr, type_c, ldc, compute_type, CUBLAS_GEMM_DEFAULT));
+}
+
+void CublasGemmStridedBatchedWrapper(const void *a_addr, const void *b_addr, void *c_addr, const int *params,
+                                     const int *lds, const cublasOperation_t *operations, const int *strides,
+                                     const cudaDataType *data_types, void *alpha, void *beta, int batch,
+                                     cublasHandle_t cublas_handle) {
+  const int m = params[0];
+  const int n = params[1];
+  const int k = params[2];
+  cublasOperation_t trans_a = operations[0];
+  cublasOperation_t trans_b = operations[1];
+  const int lda = lds[0];
+  const int ldb = lds[1];
+  const int ldc = lds[2];
+  cudaDataType type_a = data_types[0];
+  cudaDataType type_b = data_types[1];
+  cudaDataType type_c = data_types[2];
+  cublasComputeType_t compute_type = CUBLAS_COMPUTE_32F_FAST_TF32;
+  const int stride_a = strides[0];
+  const int stride_b = strides[1];
+  const int stride_c = strides[2];
+
+  CUBLAS_CHECK_VOID(cublasGemmStridedBatchedEx(cublas_handle, trans_a, trans_b, m, n, k, alpha, a_addr, type_a, lda,
+                                               stride_a, b_addr, type_b, ldb, stride_b, beta, c_addr, type_c, ldc,
+                                               stride_c, batch, compute_type, CUBLAS_GEMM_DEFAULT));
 }
 }  // namespace mindspore::lite
