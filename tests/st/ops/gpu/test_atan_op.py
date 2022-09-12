@@ -22,23 +22,72 @@ from mindspore.ops import operations as P
 context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
 np.random.seed(1)
 
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_atan_fp32():
+    """
+    Feature: ALL To ALL
+    Description: test cases for Atan float32
+    Expectation: the result match to numpy
+    """
     x_np = np.random.rand(4, 2).astype(np.float32) * 10
     output_ms = P.Atan()(Tensor(x_np))
     output_np = np.arctan(x_np)
     assert np.allclose(output_ms.asnumpy(), output_np, 1e-4, 1e-4)
 
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_atan_fp16():
+    """
+    Feature: ALL To ALL
+    Description: test cases for Atan float16
+    Expectation: the result match to numpy
+    """
     x_np = np.random.rand(4, 2).astype(np.float16) * 10
     output_ms = P.Atan()(Tensor(x_np))
     output_np = np.arctan(x_np.astype(np.float32)).astype(np.float16)
     assert np.allclose(output_ms.asnumpy(), output_np, 1e-3, 1e-3)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('dtype', [np.float16, np.float32, np.float64])
+def test_atan_float(dtype):
+    """
+    Feature: ALL To ALL
+    Description: test cases for Atan
+    Expectation: the result match to numpy
+    """
+    np_array = np.array([-1, -0.5, 0, 0.5, 1], dtype=dtype)
+    input_x = Tensor(np_array)
+    output = P.Atan()(input_x)
+    print(output)
+    expect = np.arctan(np_array)
+    assert np.allclose(output.asnumpy(), expect)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('dtype', [np.complex64, np.complex128])
+def test_atan_complex(dtype):
+    """
+    Feature: ALL To ALL
+    Description: test cases for Atan
+    Expectation: the result match to numpy
+    """
+    np_array = np.array([-1, -0.5, 0, 0.5, 1], dtype=dtype)
+    np_array = np_array + 0.5j * np_array
+    input_x = Tensor(np_array)
+    output = P.Atan()(input_x)
+    print(output)
+    expect = np.arctan(np_array)
+    assert np.allclose(output.asnumpy(), expect)
 
 
 def test_atan_forward_tensor_api(nptype):

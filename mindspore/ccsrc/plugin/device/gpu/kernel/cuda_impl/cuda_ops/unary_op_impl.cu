@@ -535,6 +535,13 @@ __global__ void AtanKernel(const double *input, double *output, const size_t cou
   return;
 }
 template <typename T>
+__global__ void AtanKernel(const Complex<T> *input, Complex<T> *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    output[i] = atan(input[i]);
+  }
+  return;
+}
+template <typename T>
 __global__ void TanhKernel(const Complex<T> *input, Complex<T> *output, const size_t count) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
     output[i] = tanh(input[i]);
@@ -1003,6 +1010,11 @@ void ACos(const Complex<T> *input, Complex<T> *output, const size_t count, cudaS
 }
 template <typename T>
 void Atan(const T *input, T *output, const size_t count, cudaStream_t cuda_stream) {
+  AtanKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
+  return;
+}
+template <typename T>
+void Atan(const Complex<T> *input, Complex<T> *output, const size_t count, cudaStream_t cuda_stream) {
   AtanKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
   return;
 }
@@ -1835,6 +1847,8 @@ template CUDA_LIB_EXPORT void Sign<Complex<float>>(const Complex<float> *input, 
                                                   const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Cosh<Complex<float>>(const Complex<float> *input, Complex<float> *output,
                                                    const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Atan<Complex<float>>(const Complex<float> *input, Complex<float> *output,
+                                                    const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Atanh<Complex<float>>(const Complex<float> *input, Complex<float> *output,
                                                     const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Reciprocal<Complex<float>>(const Complex<float> *input, Complex<float> *output,
@@ -1877,6 +1891,8 @@ template CUDA_LIB_EXPORT void Asinh<Complex<double>>(const Complex<double> *inpu
                                                      const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Tan<Complex<double>>(const Complex<double> *input, Complex<double> *output,
                                                    const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Atan<Complex<double>>(const Complex<double> *input, Complex<double> *output,
+                                                    const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Rsqrt<Complex<double>>(const Complex<double> *input, Complex<double> *output,
                                                      const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Sign<Complex<double>>(const Complex<double> *input, Complex<double> *output,

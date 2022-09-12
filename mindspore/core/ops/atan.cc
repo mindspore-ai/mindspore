@@ -48,7 +48,7 @@ TypePtr AtanInferType(const PrimitivePtr &primitive, const std::vector<AbstractB
   auto prim_name = primitive->name();
   MS_EXCEPTION_IF_NULL(input_args[0]);
   auto x_type = input_args[0]->BuildType();
-  const std::set valid_types = {kFloat16, kFloat32, kFloat64};
+  const std::set valid_types = {kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x", x_type, valid_types, prim_name);
   return x_type;
 }

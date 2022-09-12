@@ -20,7 +20,6 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import context
 from mindspore.ops import operations as P
-
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
 
@@ -77,6 +76,45 @@ def test_atan_forward_float32_tensor_api():
     test_atan_forward_tensor_api(np.float32)
     context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
     test_atan_forward_tensor_api(np.float32)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('dtype', [np.float16, np.float32, np.float64])
+def test_atan_float(dtype):
+    """
+    Feature: ALL To ALL
+    Description: test cases for Atan
+    Expectation: the result match to numpy
+    """
+    np_array = np.array([-1, -0.5, 0, 0.5, 1], dtype=dtype)
+    input_x = Tensor(np_array)
+    net = NetAtan()
+    output = net(input_x)
+    print(output)
+    expect = np.arctan(np_array)
+    assert np.allclose(output.asnumpy(), expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('dtype', [np.complex64, np.complex128])
+def test_atan_complex(dtype):
+    """
+    Feature: ALL To ALL
+    Description: test cases for Atan
+    Expectation: the result match to numpy
+    """
+    np_array = np.array([-1, -0.5, 0, 0.5, 1], dtype=dtype)
+    np_array = np_array + 0.5j * np_array
+    input_x = Tensor(np_array)
+    net = NetAtan()
+    output = net(input_x)
+    print(output)
+    expect = np.arctan(np_array)
+    assert np.allclose(output.asnumpy(), expect)
 
 
 if __name__ == '__main__':

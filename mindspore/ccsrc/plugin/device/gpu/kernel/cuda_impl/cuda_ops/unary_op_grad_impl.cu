@@ -189,6 +189,27 @@ __global__ void AtanGradKernel(const T *input, const T *dout, T *output, const s
   return;
 }
 
+template <>
+__global__ void AtanGradKernel(const double *input, const double *dout, double *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    double one = 1;
+    double divisor = one + input[i] * input[i];
+    output[i] = dout[i] / divisor;
+  }
+  return;
+}
+
+template <typename T>
+__global__ void AtanGradKernel(const Complex<T> *input, const Complex<T> *dout, Complex<T> *output,
+                               const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    Complex<T> one = Complex<T>(1);
+    Complex<T> divisor = one + input[i] * input[i];
+    output[i] = dout[i] / conj(divisor);
+  }
+  return;
+}
+
 template <typename T>
 __global__ void TanhGradKernel(const T *__restrict__ input, const T *dout, T *output, const size_t count) {
   const T one = static_cast<T>(1);
@@ -342,6 +363,13 @@ void ACosGrad(const Complex<T> *input, const Complex<T> *dout, Complex<T> *outpu
 
 template <typename T>
 void AtanGrad(const T *input, const T *dout, T *output, const size_t count, cudaStream_t cuda_stream) {
+  AtanGradKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, dout, output, count);
+  return;
+}
+
+template <typename T>
+void AtanGrad(const Complex<T> *input, const Complex<T> *dout, Complex<T> *output, const size_t count,
+              cudaStream_t cuda_stream) {
   AtanGradKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, dout, output, count);
   return;
 }
@@ -629,6 +657,13 @@ template CUDA_LIB_EXPORT void InvGrad<Complex<float>>(const Complex<float> *inpu
 template CUDA_LIB_EXPORT void RsqrtGrad<Complex<float>>(const Complex<float> *input, const Complex<float> *dout,
                                                       Complex<float> *output, const size_t count,
                                                       cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void AtanGrad<Complex<float>>(const Complex<float> *input, const Complex<float> *dout,
+                                                        Complex<float> *output, const size_t count,
+                                                        cudaStream_t cuda_stream);
+
+template CUDA_LIB_EXPORT void AtanGrad<Complex<double>>(const Complex<double> *input, const Complex<double> *dout,
+                                                        Complex<double> *output, const size_t count,
+                                                        cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void RsqrtGrad<Complex<double>>(const Complex<double> *input, const Complex<double> *dout,
                                                               Complex<double> *output, const size_t count,
                                                               cudaStream_t cuda_stream);

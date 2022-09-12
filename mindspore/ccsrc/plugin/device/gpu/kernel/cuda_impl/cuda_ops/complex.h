@@ -395,6 +395,19 @@ HOST_DEVICE inline Complex<T> asinh(const Complex<T> &z) {
 }
 
 template <typename T>
+HOST_DEVICE inline Complex<T> atan(const Complex<T> &z) {
+  Complex<T> result;
+#if defined(__CUDACC__)
+  auto thrust_result = thrust::atan(thrust::complex<T>(z));
+  result.real(thrust_result.real());
+  result.imag(thrust_result.imag());
+#else
+  result(std::tan(std::complex<T>(z)));
+#endif
+  return result;
+}
+
+template <typename T>
 HOST_DEVICE inline Complex<T> atanh(const Complex<T> &z) {
   Complex<T> result;
 #if defined(__CUDACC__)

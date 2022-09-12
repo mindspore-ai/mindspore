@@ -1914,6 +1914,7 @@ def atan2(x, y):
     Args:
         x (Tensor): The input tensor.
             :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+            The data type should be one of the following types: float16, float32, float64
         y (Tensor): The input tensor. It has the same shape with `x`.
 
     Returns:
