@@ -21,8 +21,7 @@
 
 namespace mindspore {
 namespace lite {
-PrimitiveCPtr PytorchPowParser::Parse(const torch::jit::Node *torch_node,
-                                                          std::vector<size_t> *input_indices) {
+PrimitiveCPtr PytorchPowParser::Parse(const torch::jit::Node *torch_node, std::vector<size_t> *input_indices) {
   MS_ASSERT(torch_node != nullptr && input_indices != nullptr);
   auto prim = std::make_unique<ops::PowFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
