@@ -233,6 +233,18 @@ def config_get_set_num_parallel_workers(num_parallel_workers_new):
     return num_parallel_workers_original
 
 
+def config_get_set_enable_shared_mem(enable_shared_mem_new):
+    """
+    Get and return the original configuration enable_shared_mem value.
+    Set the new configuration enable_shared_mem value.
+    """
+    enable_shared_mem_original = ds.config.get_enable_shared_mem()
+    ds.config.set_enable_shared_mem(enable_shared_mem_new)
+    logger.info("enable_shared_mem: original = {}  new = {} ".format(enable_shared_mem_original,
+                                                                     enable_shared_mem_new))
+    return enable_shared_mem_original
+
+
 def diff_mse(in1, in2):
     mse = (np.square(in1.astype(float) / 255 - in2.astype(float) / 255)).mean()
     return mse * 100

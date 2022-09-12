@@ -23,7 +23,7 @@ import mindspore.dataset as ds
 import mindspore.dataset.text as text
 from mindspore.dataset.transforms import transforms
 import mindspore.dataset.vision as vision
-from util import config_get_set_seed, config_get_set_num_parallel_workers
+from util import config_get_set_seed, config_get_set_num_parallel_workers, config_get_set_enable_shared_mem
 
 DATA_DIR = "../data/dataset/testPK/data"
 
@@ -267,8 +267,8 @@ def test_python_map_mp_repeatability(set_seed_to=1605, set_num_parallel_workers_
     data_dir = "../data/dataset/testImageNetData/train/"
     original_seed = config_get_set_seed(set_seed_to)
     original_num_parallel_workers = config_get_set_num_parallel_workers(set_num_parallel_workers_to)
-    # Disable shared memory
-    ds.config.set_enable_shared_mem(False)
+    # Reduce memory required by disabling the shared memory optimization
+    original_enable_shared_mem = config_get_set_enable_shared_mem(False)
 
     # First dataset
     data1 = ds.ImageFolderDataset(dataset_dir=data_dir, shuffle=False, num_samples=1)
@@ -294,6 +294,7 @@ def test_python_map_mp_repeatability(set_seed_to=1605, set_num_parallel_workers_
     # Restore config setting
     ds.config.set_seed(original_seed)
     ds.config.set_num_parallel_workers(original_num_parallel_workers)
+    ds.config.set_enable_shared_mem(original_enable_shared_mem)
 
 
 def test_python_map_mp_seed_repeatability(set_seed_to=1337, set_num_parallel_workers_to=4, num_repeat=5):
@@ -309,8 +310,8 @@ def test_python_map_mp_seed_repeatability(set_seed_to=1337, set_num_parallel_wor
 
     original_seed = config_get_set_seed(set_seed_to)
     original_num_parallel_workers = config_get_set_num_parallel_workers(set_num_parallel_workers_to)
-    # Disable shared memory
-    ds.config.set_enable_shared_mem(False)
+    # Reduce memory required by disabling the shared memory optimization
+    original_enable_shared_mem = config_get_set_enable_shared_mem(False)
 
     expected_result_np_array = {i: [] for i in range(set_seed_to, set_seed_to + set_num_parallel_workers_to)}
     data1 = ds.GeneratorDataset(generator_md, ["data"])
@@ -345,6 +346,7 @@ def test_python_map_mp_seed_repeatability(set_seed_to=1337, set_num_parallel_wor
     # Restore config setting
     ds.config.set_seed(original_seed)
     ds.config.set_num_parallel_workers(original_num_parallel_workers)
+    ds.config.set_enable_shared_mem(original_enable_shared_mem)
 
 
 if __name__ == '__main__':

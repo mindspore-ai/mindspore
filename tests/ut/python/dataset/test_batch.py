@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 import numpy as np
+import pytest
 
 import mindspore.dataset as ds
 from mindspore import log as logger
@@ -554,6 +555,56 @@ def test_batch_exception_15():
     assert "batch_size is not within the required interval of [1, 2147483647]" in err_msg
 
 
+def test_batch_exception_16():
+    """
+    Feature: Batch op
+    Description: Test Batch op with mismatched batch type
+    Expectation: Error is raised as expected
+    """
+    def gen(num):
+        for i in range(num):
+            if i % 2 == 0:
+                yield (np.array([i]), np.array([i + (1 + i) * 0.01]))
+            else:
+                yield (np.array([(i + 1) * 0.01 + i]), np.array([i]))
+
+    def swap_col(col1, col2, batch_info):
+        return ([np.copy(a) for a in col2], [np.copy(b) for b in col1])
+
+    logger.info("test_batch_exception_16")
+
+    batch_size = 4
+    input_columns = ["num1", "num2"]
+    data1 = ds.GeneratorDataset((lambda: gen(20)), input_columns)
+    with pytest.raises(RuntimeError) as raise_info:
+        result = data1.batch(batch_size=batch_size, per_batch_map=swap_col, column_order=input_columns)
+        for _ in result.create_dict_iterator(num_epochs=1, output_numpy=True):
+            pass
+    assert "Inconsistent batch type, batch operation expects same type for each data row" in str(raise_info.value)
+
+
+def test_batch_exception_17():
+    """
+    Feature: Batch op
+    Description: Test Batch op with mismatched batch size
+    Expectation: Error is raised as expected
+    """
+    def gen(num):
+        for i in range(1, num + 1):
+            yield np.array([i] * i)
+
+    logger.info("test_batch_exception_17")
+
+    batch_size = 4
+    input_columns = ["num1"]
+    data1 = ds.GeneratorDataset((lambda: gen(20)), input_columns)
+    with pytest.raises(RuntimeError) as raise_info:
+        result = data1.batch(batch_size=batch_size)
+        for _ in result.create_dict_iterator(num_epochs=1, output_numpy=True):
+            pass
+    assert "Inconsistent batch shapes, batch operation expects same shape for each data row" in str(raise_info.value)
+
+
 def test_no_input_columns_01():
     """
     Feature: Batch op
@@ -640,6 +691,8 @@ if __name__ == '__main__':
     test_batch_exception_13()
     test_batch_exception_14()
     test_batch_exception_15()
+    test_batch_exception_16()
+    test_batch_exception_17()
     test_no_input_columns_01()
     test_no_input_columns_02()
     logger.info('\n')
