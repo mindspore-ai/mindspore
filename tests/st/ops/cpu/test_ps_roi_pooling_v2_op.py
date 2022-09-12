@@ -116,7 +116,7 @@ def _ps_roi_pooling_case(data_type, mode, x_size_adjust=None, dynamic_shape=Fals
         atol=ALL_CLOSE_CRITERION, rtol=ALL_CLOSE_CRITERION)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_ps_roi_pooling_dynamic_shape():
