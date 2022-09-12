@@ -14,30 +14,29 @@
  * limitations under the License.
  */
 
-#include "tools/converter/parser/pytorch/pytorch_reshape_parser.h"
+#include "tools/converter/parser/pytorch/pytorch_pow_parser.h"
 #include <memory>
-#include "ops/reshape.h"
+#include "ops/fusion/pow_fusion.h"
 #include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
-PrimitiveCPtr PytorchReshapeParser::Parse(const torch::jit::Node *torch_node, std::vector<size_t> *input_indices) {
+PrimitiveCPtr PytorchPowParser::Parse(const torch::jit::Node *torch_node,
+                                                          std::vector<size_t> *input_indices) {
   MS_ASSERT(torch_node != nullptr && input_indices != nullptr);
-  auto prim = std::make_unique<ops::Reshape>();
+  auto prim = std::make_unique<ops::PowFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
-  auto prim_c = prim->GetPrim();
-  MS_CHECK_TRUE_RET(prim_c != nullptr, nullptr);
 
   input_indices->push_back(0);
 
   if (torch_node->inputs().size() > SECOND_INPUT) {
-    std::vector<int32_t> shape;
-    shape = PytorchNodeParser::GetValueFromConstNode<std::vector<int32_t>>(torch_node->input(SECOND_INPUT));
-    prim_c->AddAttr("shape", MakeValue(shape));
+    auto exponent = PytorchNodeParser::GetValueFromConstNode<float>(torch_node->input(SECOND_INPUT));
+    prim->set_scale(exponent);
   }
 
   return prim->GetPrim();
 }
-PytorchNodeRegistrar g_pytorchReshapeParser("reshape", new PytorchReshapeParser());
+
+PytorchNodeRegistrar g_pytorchPowParser("pow", new PytorchPowParser());
 }  // namespace lite
 }  // namespace mindspore

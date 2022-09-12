@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_PYTORCH_PYTORCH_ELEMENT_PARSER_H_
-#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_PYTORCH_PYTORCH_ELEMENT_PARSER_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_PYTORCH_PYTORCH_POW_PARSER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_PYTORCH_PYTORCH_POW_PARSER_H_
 
 #include <vector>
 #include "tools/converter/parser/pytorch/pytorch_node_parser.h"
@@ -23,14 +23,13 @@
 
 namespace mindspore {
 namespace lite {
-template <typename OPTy>
-class PytorchElementOpParser : public PytorchNodeParser {
+class PytorchPowParser : public PytorchNodeParser {
  public:
-  PytorchElementOpParser() : PytorchNodeParser("ElementWiseOp") {}
-  ~PytorchElementOpParser() override = default;
+  PytorchPowParser() : PytorchNodeParser("POW") {}
+  ~PytorchPowParser() override = default;
 
   PrimitiveCPtr Parse(const torch::jit::Node *torch_node, std::vector<size_t> *input_indices) override;
 };
 }  // namespace lite
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_PYTORCH_PYTORCH_ELEMENT_PARSER_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_PYTORCH_PYTORCH_POW_PARSER_H_

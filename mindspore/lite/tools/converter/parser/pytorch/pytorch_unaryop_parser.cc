@@ -31,7 +31,6 @@
 #include "ops/round.h"
 #include "ops/tan.h"
 #include "ops/sqrt.h"
-#include "ops/fusion/pow_fusion.h"
 #include "ops/minimum.h"
 #include "ops/maximum.h"
 #include "ops/eltwise.h"
@@ -51,23 +50,6 @@ PrimitiveCPtr PytorchUnaryOpParser<OPTy>::Parse(const torch::jit::Node *torch_no
   return prim->GetPrim();
 }
 
-template <>
-PrimitiveCPtr PytorchUnaryOpParser<ops::PowFusion>::Parse(const torch::jit::Node *torch_node,
-                                                          std::vector<size_t> *input_indices) {
-  MS_ASSERT(torch_node != nullptr && input_indices != nullptr);
-  auto prim = std::make_unique<ops::PowFusion>();
-  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
-
-  input_indices->push_back(0);
-
-  if (torch_node->inputs().size() > SECOND_INPUT) {
-    auto exponent = PytorchNodeParser::GetValueFromConstNode<float>(torch_node->input(SECOND_INPUT));
-    prim->set_scale(exponent);
-  }
-
-  return prim->GetPrim();
-}
-
 PytorchNodeRegistrar g_pytorchTileParser("tile", new PytorchUnaryOpParser<ops::TileFusion>());
 PytorchNodeRegistrar g_pytorchIdentityParser("Identity", new PytorchUnaryOpParser<ops::Identity>());
 PytorchNodeRegistrar g_pytorchErfParser("erf", new PytorchUnaryOpParser<ops::Erf>());
@@ -84,7 +66,6 @@ PytorchNodeRegistrar g_pytorchRoundParser("round", new PytorchUnaryOpParser<ops:
 PytorchNodeRegistrar g_pytorchSqrtParser("sqrt", new PytorchUnaryOpParser<ops::Sqrt>());
 PytorchNodeRegistrar g_pytorchTanParser("tan", new PytorchUnaryOpParser<ops::Tan>());
 PytorchNodeRegistrar g_pytorchSinParser("sin", new PytorchUnaryOpParser<ops::Sin>());
-PytorchNodeRegistrar g_pytorchPowParser("pow", new PytorchUnaryOpParser<ops::PowFusion>());
 PytorchNodeRegistrar g_pytorchMinParser("min", new PytorchUnaryOpParser<ops::Minimum>());
 PytorchNodeRegistrar g_pytorchMaxParser("max", new PytorchUnaryOpParser<ops::Maximum>());
 PytorchNodeRegistrar g_pytorchReciprocalParser("reciprocal", new PytorchUnaryOpParser<ops::Reciprocal>());
