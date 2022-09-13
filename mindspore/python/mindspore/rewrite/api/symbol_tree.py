@@ -47,7 +47,7 @@ class SymbolTree:
             network (Cell): `network` used to create `SymbolTree`.
 
         Returns:
-            Symboltree: A `Symboltree` created based on `network`.
+            Symboltree, a `Symboltree` created based on `network`.
 
         Raises:
             TypeError: If `network` is not a `Cell` instance.
@@ -98,7 +98,7 @@ class SymbolTree:
         Get input nodes of current `SymbolTree`.
 
         Returns:
-            [Node]: The node list of the current `Symboltree`.
+            [Node], the node list of the current `Symboltree`.
         """
         return [Node(node_impl) for node_impl in self._symbol_tree.get_inputs()]
 
