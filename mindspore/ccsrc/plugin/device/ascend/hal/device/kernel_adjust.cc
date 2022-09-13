@@ -55,7 +55,7 @@ namespace device {
 #ifndef ENABLE_SECURITY
 using device::ascend::ProfilingUtils;
 #endif
-void KernelAdjust::ReorderGetNext(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) {
+void KernelAdjust::ReorderGetNext(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) const {
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
   const std::vector<CNodePtr> &origin_cnode_list = kernel_graph_ptr->execution_order();
   std::vector<CNodePtr> getnext_list;
@@ -131,7 +131,7 @@ bool KernelAdjust::ExistIndependent(const std::shared_ptr<session::KernelGraph> 
 
 void KernelAdjust::InsertIndepentParallel(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                           const std::map<std::string, mindspore::ParameterPtr> &switch_loop_input,
-                                          std::vector<CNodePtr> *exec_order) {
+                                          std::vector<CNodePtr> *exec_order) const {
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
   MS_EXCEPTION_IF_NULL(exec_order);
   device::ascend::AscendStreamMng &resource_manager = device::ascend::AscendStreamMng::GetInstance();
@@ -149,7 +149,7 @@ void KernelAdjust::InsertIndepentParallel(const std::shared_ptr<session::KernelG
 void KernelAdjust::InsertFpBpLoopStreamSwitch(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                               const std::map<std::string, mindspore::ParameterPtr> &switch_loop_input,
                                               std::vector<CNodePtr> *exec_order, uint32_t *fpbp_stream_id,
-                                              uint32_t *fpbp_switch_stream_id) {
+                                              uint32_t *fpbp_switch_stream_id) const {
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
   MS_EXCEPTION_IF_NULL(exec_order);
   MS_EXCEPTION_IF_NULL(fpbp_stream_id);
@@ -181,7 +181,7 @@ bool KernelAdjust::ExistInitDataSetQueue(const std::shared_ptr<session::KernelGr
   });
 }
 
-void KernelAdjust::InsertEndGraphTaskSink(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) {
+void KernelAdjust::InsertEndGraphTaskSink(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) const {
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
   if (IsTaskSink()) {
     auto exec_order = kernel_graph_ptr->execution_order();
@@ -197,7 +197,7 @@ void KernelAdjust::InsertEndGraphTaskSink(const std::shared_ptr<session::KernelG
 }
 
 void KernelAdjust::InsertEndGraph(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
-                                  std::vector<CNodePtr> *exec_order, uint32_t stream_id) {
+                                  std::vector<CNodePtr> *exec_order, uint32_t stream_id) const {
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
   MS_EXCEPTION_IF_NULL(exec_order);
   CNodePtr end_graph_op = CreateEndGraphOp(kernel_graph_ptr);
@@ -209,7 +209,7 @@ void KernelAdjust::InsertEndGraph(const std::shared_ptr<session::KernelGraph> &k
 
 void KernelAdjust::CopyMemcpyList(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                   const std::vector<CNodePtr> &orders, size_t order_index,
-                                  std::vector<CNodePtr> *memcpy_list, std::vector<CNodePtr> *other_list) {
+                                  std::vector<CNodePtr> *memcpy_list, std::vector<CNodePtr> *other_list) const {
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
   MS_EXCEPTION_IF_NULL(memcpy_list);
   MS_EXCEPTION_IF_NULL(other_list);
@@ -243,7 +243,7 @@ void KernelAdjust::InsertEosDoneRecv(const std::shared_ptr<session::KernelGraph>
 
 void KernelAdjust::InsertGetNextLoopStreamActive(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                                  std::vector<CNodePtr> *exec_order,
-                                                 const std::vector<uint32_t> &getnext_active_streams) {
+                                                 const std::vector<uint32_t> &getnext_active_streams) const {
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
   MS_EXCEPTION_IF_NULL(exec_order);
   CNodePtr getnext_active_app = CreateStreamActiveOp(kernel_graph_ptr);
@@ -268,7 +268,7 @@ void KernelAdjust::InsertFpBpStartRecv(const std::shared_ptr<session::KernelGrap
 void KernelAdjust::InsertNextLoopAssignAdd(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                            std::vector<CNodePtr> *exec_order,
                                            const std::map<std::string, mindspore::ParameterPtr> &switch_loop_input,
-                                           uint32_t fpbp_stream_id) {
+                                           uint32_t fpbp_stream_id) const {
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
   MS_EXCEPTION_IF_NULL(exec_order);
   CNodePtr assign_add_one = CreateStreamAssignAddnOP(kernel_graph_ptr, switch_loop_input, false);
@@ -278,9 +278,9 @@ void KernelAdjust::InsertNextLoopAssignAdd(const std::shared_ptr<session::Kernel
   MS_LOG(INFO) << "FpBp loop insert next loop AssignAdd " << assign_add_one->fullname_with_scope();
 }
 
-void KernelAdjust::InsertCurrentLoopAssignAdd(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
-                                              std::vector<CNodePtr> *exec_order,
-                                              const std::map<std::string, mindspore::ParameterPtr> &switch_loop_input) {
+void KernelAdjust::InsertCurrentLoopAssignAdd(
+  const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr, std::vector<CNodePtr> *exec_order,
+  const std::map<std::string, mindspore::ParameterPtr> &switch_loop_input) const {
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
   MS_EXCEPTION_IF_NULL(exec_order);
   CNodePtr cur_assign_add = CreateStreamAssignAddnOP(kernel_graph_ptr, switch_loop_input, true);
@@ -292,7 +292,7 @@ void KernelAdjust::InsertCurrentLoopAssignAdd(const std::shared_ptr<session::Ker
 
 void KernelAdjust::InsertFpBpAndEosLoopStreamActive(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                                     std::vector<CNodePtr> *exec_order,
-                                                    const std::vector<uint32_t> &fpbp_active_streams) {
+                                                    const std::vector<uint32_t> &fpbp_active_streams) const {
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
   MS_EXCEPTION_IF_NULL(exec_order);
   CNodePtr fpbp_active_app = CreateStreamActiveOp(kernel_graph_ptr);
@@ -306,7 +306,7 @@ void KernelAdjust::InsertFpBpAndEosLoopStreamActive(const std::shared_ptr<sessio
 void KernelAdjust::InsertGetNextLoopStreamSwitch(
   const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr, std::vector<CNodePtr> *exec_order,
   uint32_t *getnext_switch_stream_id, uint32_t *getnext_stream_id,
-  const std::map<std::string, mindspore::ParameterPtr> &switch_loop_input) {
+  const std::map<std::string, mindspore::ParameterPtr> &switch_loop_input) const {
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
   MS_EXCEPTION_IF_NULL(exec_order);
   MS_EXCEPTION_IF_NULL(getnext_switch_stream_id);
@@ -326,7 +326,8 @@ void KernelAdjust::InsertGetNextLoopStreamSwitch(
 }
 
 void KernelAdjust::SetBeforeGetNextStreamID(std::vector<CNodePtr> *exec_order, const std::vector<CNodePtr> &orders,
-                                            size_t *order_index, CNodePtr getnext_cnode, uint32_t getnext_stream_id) {
+                                            size_t *order_index, CNodePtr getnext_cnode,
+                                            uint32_t getnext_stream_id) const {
   MS_EXCEPTION_IF_NULL(exec_order);
   MS_EXCEPTION_IF_NULL(order_index);
   for (; *order_index < orders.size(); (*order_index)++) {
@@ -371,7 +372,7 @@ void KernelAdjust::InsertGetNextLoopEosStartSend(const std::shared_ptr<session::
 void KernelAdjust::InsertEosStreamSwitch(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                          const std::map<std::string, mindspore::ParameterPtr> &switch_loop_input,
                                          std::vector<CNodePtr> *exec_order, uint32_t *eos_switch_stream_id,
-                                         uint32_t *eos_stream_id) {
+                                         uint32_t *eos_stream_id) const {
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
   MS_EXCEPTION_IF_NULL(exec_order);
   MS_EXCEPTION_IF_NULL(eos_switch_stream_id);
@@ -428,7 +429,7 @@ void KernelAdjust::InsertEosDoneSend(const std::shared_ptr<session::KernelGraph>
   MS_LOG(INFO) << "EoS loop insert EoS done Send " << eos_done_send->fullname_with_scope();
 }
 
-void KernelAdjust::ProcessLoopSink(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) {
+void KernelAdjust::ProcessLoopSink(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) const {
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
   device::ascend::AscendStreamMng &resource_manager = device::ascend::AscendStreamMng::GetInstance();
   resource_manager.ResetResource();
@@ -539,7 +540,7 @@ kernel::KernelBuildInfo::KernelBuildInfoBuilder KernelAdjust::CreateMngKernelBui
 
 CNodePtr KernelAdjust::CreateStreamSwitchOp(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                             const std::map<std::string, mindspore::ParameterPtr> &switch_loop_input,
-                                            StreamSwitchKind kind) {
+                                            StreamSwitchKind kind) const {
   kernel::KernelBuildInfo::KernelBuildInfoBuilder selected_kernel_builder = CreateMngKernelBuilder(
     {kOpFormat_DEFAULT, kOpFormat_DEFAULT}, {TypeId::kNumberTypeInt32, TypeId::kNumberTypeInt32});
   auto typeNone_abstract = std::make_shared<abstract::AbstractNone>();
@@ -779,7 +780,7 @@ CNodePtr KernelAdjust::CreateNPUClearStatus(const std::shared_ptr<session::Kerne
   return npu_clear_cnode;
 }
 
-CNodePtr KernelAdjust::CreateNPUAllocStatus(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) {
+CNodePtr KernelAdjust::CreateNPUAllocStatus(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) const {
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
   // create npu_alloc_cnode
   auto npu_alloc_primitive = std::make_shared<Primitive>(kNPUAllocFloatStatusOpName);
@@ -883,7 +884,7 @@ CNodePtr KernelAdjust::CreateAssign(const std::shared_ptr<session::KernelGraph> 
   return assign_cnode;
 }
 
-void KernelAdjust::InsertOverflowCheckOperations(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) {
+void KernelAdjust::InsertOverflowCheckOperations(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) const {
   MS_LOG(INFO) << "Start Insert Overflow Check Operations.";
 
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
@@ -936,7 +937,7 @@ void KernelAdjust::InsertOverflowCheckOperations(const std::shared_ptr<session::
 }
 
 void KernelAdjust::InsertGradientOverflowCheckOperations(
-  const AnfNodePtr &specify_para, const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) {
+  const AnfNodePtr &specify_para, const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) const {
   MS_LOG(INFO) << "Start Insert Gradient Overflow Check Operations.";
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
 
@@ -994,7 +995,7 @@ void KernelAdjust::InsertGradientOverflowCheckOperations(
 }
 
 void KernelAdjust::InsertDynamicLossScaleCheckOperations(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
-                                                         std::vector<AnfNodePtr> *dynamic_loss_scale_param_list) {
+                                                         std::vector<AnfNodePtr> *dynamic_loss_scale_param_list) const {
   MS_LOG(INFO) << "Start Insert Dynamic Loss Scale Operations.";
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
   auto execution_order = kernel_graph_ptr->execution_order();
@@ -1145,7 +1146,7 @@ void KernelAdjust::InsertDeviceLoopCtrl(const std::shared_ptr<session::KernelGra
 }
 
 void KernelAdjust::AssignLoopCtrlTensorMem(const session::KernelGraph &kernel_graph, KernelRuntime *runtime_instance,
-                                           const string name) {
+                                           const string name) const {
   MS_EXCEPTION_IF_NULL(runtime_instance);
   auto device_loop_control_params = kernel_graph.device_loop_control_params();
   if (device_loop_control_params.count(name) == 0) {
@@ -1190,7 +1191,7 @@ void KernelAdjust::AssignLoopCtrlTensorMem(const session::KernelGraph &kernel_gr
   }
 }
 
-void KernelAdjust::AssignLoopCtrlMemory(const session::KernelGraph &kernel_graph_ptr) {
+void KernelAdjust::AssignLoopCtrlMemory(const session::KernelGraph &kernel_graph_ptr) const {
   auto device_loop_control_tensors = kernel_graph_ptr.device_loop_control_tensors();
   if (device_loop_control_tensors.empty()) {
     return;
@@ -1209,7 +1210,7 @@ void KernelAdjust::AssignLoopCtrlMemory(const session::KernelGraph &kernel_graph
 }
 
 void KernelAdjust::SetDeviceLoopCtrlTensor(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
-                                           const std::string name, int32_t value) {
+                                           const std::string name, int32_t value) const {
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
   auto device_loop_control_tensors = kernel_graph_ptr->device_loop_control_tensors();
   if (device_loop_control_tensors.count(name) == 0) {
@@ -1230,7 +1231,7 @@ void KernelAdjust::SetDeviceLoopCtrlTensor(const std::shared_ptr<session::Kernel
   }
 }
 
-void KernelAdjust::LoadDeviceLoopCtrlParameters(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) {
+void KernelAdjust::LoadDeviceLoopCtrlParameters(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) const {
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
   auto device_loop_control_tensors = kernel_graph_ptr->device_loop_control_tensors();
   if (device_loop_control_tensors.empty()) {
