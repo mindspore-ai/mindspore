@@ -34,6 +34,7 @@ constexpr int kDefaultWorkerNumPerPhysicalCpu = 2;
 constexpr int kDefaultThreadsNum = 8;
 constexpr int kInvalidNumaId = -1;
 constexpr int kNumDefaultInterOpParallel = 4;
+constexpr int kCoreNumTimes = 5;
 
 std::vector<int> ParseCpusetFile(int *percentage) {
   std::vector<int> cpu_core = {};
@@ -389,12 +390,11 @@ Status ModelPool::CheckThreadNum(const std::shared_ptr<RunnerConfig> &runner_con
   }
 
   int core_num = static_cast<int>(std::max<size_t>(1, std::thread::hardware_concurrency()));
-  int core_num_times = 5;
-  int Threshold_thread_num = core_num_times * core_num;
-  if (thread_num > Threshold_thread_num) {
-    MS_LOG(WARNING) << "Thread num: " << thread_num << " is more than 5 times core num: " << Threshold_thread_num
+  int threshold_thread_num = kCoreNumTimes * core_num;
+  if (thread_num > threshold_thread_num) {
+    MS_LOG(WARNING) << "Thread num: " << thread_num << " is more than 5 times core num: " << threshold_thread_num
                     << ", change it to 5 times core num. Please check whether Thread num is reasonable.";
-    thread_num = Threshold_thread_num;
+    context->SetThreadNum(threshold_thread_num);
   }
 
   if (thread_num == 0) {
@@ -517,11 +517,12 @@ Status ModelPool::SetWorkersNum(const std::shared_ptr<RunnerConfig> &runner_conf
       MS_LOG(ERROR) << "SetDefaultOptimalModelNum failed.";
       return kLiteError;
     }
-  } else if (runner_config != nullptr && runner_config->GetWorkersNum() > 0) {
+  } else if (runner_config != nullptr && runner_config->GetWorkersNum() > 0 &&
+             runner_config->GetWorkersNum() <= can_use_core_num_ * kCoreNumTimes) {
     // User defined number of models
     workers_num_ = runner_config->GetWorkersNum();
   } else {
-    MS_LOG(ERROR) << "user set worker num " << runner_config->GetWorkersNum() << " < 0";
+    MS_LOG(ERROR) << "user set worker num: " << runner_config->GetWorkersNum() << "is invalid";
     return kLiteError;
   }
   if (workers_num_ == 0) {
