@@ -541,14 +541,16 @@ class Dataset:
                                           element_length_function, pad_info, pad_to_bucket_boundary, drop_remainder)
 
     @check_batch
-    def batch(self, batch_size, drop_remainder=False, num_parallel_workers=None, per_batch_map=None,
-              input_columns=None, output_columns=None, column_order=None, pad_info=None,
-              python_multiprocessing=False, max_rowsize=16):
+    def batch(self, batch_size, drop_remainder=False, num_parallel_workers=None, **kwargs):
         """
         Combine batch_size number of consecutive rows into batches.
 
         For any column, all the elements within that column must have the same shape.
         If a per_batch_map callable is provided, it will be applied to the batches of tensors.
+
+        Refer to the following figure for the execution process:
+
+        .. image:: batch_en.png
 
         Note:
             The order of using repeat and batch reflects the number of batches and per_batch_map.
@@ -563,31 +565,41 @@ class Dataset:
                 be dropped and not propagated to the child node.
             num_parallel_workers (int, optional): Number of workers(threads) to process the dataset in parallel
                 (default=None).
-            per_batch_map (Callable[[List[numpy.ndarray], ..., List[numpy.ndarray], BatchInfo], (List[numpy.ndarray],\
-                ..., List[numpy.ndarray])], optional): Per batch map callable (default=None). A callable
-                which takes (List[numpy.ndarray], ..., List[numpy.ndarray], BatchInfo) as input parameters. Each
-                list[numpy.ndarray] represents a batch of numpy.ndarray on a given column. The number of lists should
-                match with the number of entries in input_columns. The last parameter of the callable should always be
-                a BatchInfo object. Per_batch_map should return (list[numpy.ndarray], list[numpy.ndarray], ...). The
-                length of each list in output should be the same as the input. output_columns is required if the number
-                of output lists is different from input.
-            input_columns (Union[str, list[str]], optional): List of names of the input columns. The size of the list
-                should match with signature of per_batch_map callable (default=None).
-            output_columns (Union[str, list[str]], optional): List of names assigned to the columns
-                outputted by the last operation. This parameter is mandatory if len(input_columns) !=
-                len(output_columns). The size of this list must match the number of output
-                columns of the last operation. (default=None, output columns will have the same
-                name as the input columns, i.e., the columns will be replaced).
-            column_order (Union[str, list[str]], optional): Specifies the list of all the columns you need in the whole
-                dataset (default=None). The parameter is required when len(input_column) != len(output_column).
-                Caution: the list here is not just the columns specified in parameter input_columns and output_columns.
-            pad_info (dict, optional): Whether to perform padding on selected columns. pad_info={"col1":([224,224],0)}
-                would pad column with name "col1" to a tensor of size [224,224] and fill the missing with 0
-                (default=None).
-            python_multiprocessing (bool, optional): Parallelize Python function per_batch_map with multi-processing.
-                This option could be beneficial if the function is computational heavy (default=False).
-            max_rowsize(int, optional): Maximum size of row in MB that is used for shared memory allocation to copy
-               data between processes. This is only used if python_multiprocessing is set to True (default=16).
+            **kwargs:
+
+                - per_batch_map (Callable[[List[numpy.ndarray], ..., List[numpy.ndarray], BatchInfo], \
+                  (List[numpy.ndarray], ..., List[numpy.ndarray])], optional): Per batch map callable (default=None).
+                  A callable which takes (List[numpy.ndarray], ..., List[numpy.ndarray], BatchInfo) as input parameters.
+                  Each list[numpy.ndarray] represents a batch of numpy.ndarray on a given column. The number of lists
+                  should match with the number of entries in input_columns. The last parameter of the callable should
+                  always be a BatchInfo object. Per_batch_map should return
+                  (list[numpy.ndarray], list[numpy.ndarray], ...). The length of each list in output should be the same
+                  as the input. output_columns is required if the number of output lists is different from input.
+
+                - input_columns (Union[str, list[str]], optional): List of names of the input columns. The size of
+                  the list should match with signature of per_batch_map callable (default=None).
+
+                - output_columns (Union[str, list[str]], optional): List of names assigned to the columns
+                  outputted by the last operation. This parameter is mandatory if len(input_columns) !=
+                  len(output_columns). The size of this list must match the number of output
+                  columns of the last operation. (default=None, output columns will have the same
+                  name as the input columns, i.e., the columns will be replaced).
+
+                - column_order (Union[str, list[str]], optional): Specifies the list of all the columns you need in
+                  the whole dataset (default=None). The parameter is required when len(input_column) !=
+                  len(output_column). Caution: the list here is not just the columns specified in parameter
+                  input_columns and output_columns.
+
+                - pad_info (dict, optional): Whether to perform padding on selected columns.
+                  pad_info={"col1":([224,224],0)} would pad column with name "col1" to a tensor of size [224,224] and
+                  fill the missing with 0 (default=None).
+
+                - python_multiprocessing (bool, optional): Parallelize Python function per_batch_map with
+                  multi-processing. This option could be beneficial if the function is computational heavy
+                  (default=False).
+
+                - max_rowsize(int, optional): Maximum size of row in MB that is used for shared memory allocation to
+                  copy data between processes. This is only used if python_multiprocessing is set to True (default=16).
 
         Returns:
             BatchDataset, dataset batched.
@@ -620,12 +632,17 @@ class Dataset:
             >>> # Assume that the original coulmn order is ["image", "label"] and change to ["label", "image"].
             >>> dataset = dataset.batch(32, column_order=["label", "image"])
         """
+        column_order = kwargs.get("column_order", None)
+        if column_order is not None:
+            logger.warning("The parameter column_order will be deprecated in the future. "
+                           "Please use '.project(...)' operation instead.")
+
+        pad_info = kwargs.get("pad_info", None)
         if pad_info is not None:
             logger.warning("The parameter pad_info will be deprecated in the future. "
                            "Please use '.map(operations=transforms.PadEnd(...), ...)' operation instead.")
 
-        return BatchDataset(self, batch_size, drop_remainder, num_parallel_workers, per_batch_map, input_columns,
-                            output_columns, column_order, pad_info, python_multiprocessing, max_rowsize)
+        return BatchDataset(self, batch_size, drop_remainder, num_parallel_workers, **kwargs)
 
     @check_sync_wait
     def sync_wait(self, condition_name, num_batch=1, callback=None):
