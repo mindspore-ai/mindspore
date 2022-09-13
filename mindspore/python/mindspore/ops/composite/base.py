@@ -372,8 +372,6 @@ class GradOperation(GradOperation_):
                 dynamic_shape_inputs = fn.get_inputs()
                 fn.grad_ops_label = True
             if self.get_by_list:
-                if weights is None:
-                    raise ValueError(f"When 'get_by_list' is True, 'weights' should not be None.")
                 @ms_function(input_signature=dynamic_shape_inputs)
                 def after_grad(*args):
                     return grad_(fn, weights)(*args)
@@ -393,8 +391,6 @@ class GradOperation(GradOperation_):
             grad_.pynative_ = True
             # after_grad of this branch can't use @ms_function, just directly call grad_
             if self.get_by_list:
-                if weights is None:
-                    raise ValueError(f"When 'get_by_list' is True, 'weights' should not be None.")
                 def after_grad(*args, **kwargs):
                     return grad_(fn, weights)(*args, **kwargs)
             else:

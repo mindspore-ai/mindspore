@@ -723,7 +723,8 @@ GradOperation::GradOperation(const std::string &name, bool get_all, bool get_by_
 }
 
 FuncGraphPtr GradOperation::GetGrad(const AnfNodePtr &j, const AnfNodePtr &weights, const AnfNodePtr &position,
-                                    const std::vector<AnfNodePtr> &forward_graph_params, bool enable_tuple_grad) const {
+                                    const std::vector<AnfNodePtr> &forward_graph_params, bool enable_tuple_grad,
+                                    bool is_weights_none) const {
   FuncGraphPtr k_child = std::make_shared<FuncGraph>();
   k_child->set_flag(FUNC_GRAPH_FLAG_CORE, true);
   k_child->set_flag(FUNC_GRAPH_FLAG_K_GRAPH, true);
@@ -744,14 +745,14 @@ FuncGraphPtr GradOperation::GetGrad(const AnfNodePtr &j, const AnfNodePtr &weigh
   auto f_app = k_child->NewCNodeInOrder({tuple_get_item, k_app, NewValueNode(static_cast<int64_t>(0))});
   auto bprop = k_child->NewCNodeInOrder({tuple_get_item, k_app, NewValueNode(static_cast<int64_t>(1))});
 
-  GradByParameter(k_child, f_app, bprop, weights, position_node, enable_tuple_grad);
+  GradByParameter(k_child, f_app, bprop, weights, position_node, enable_tuple_grad, is_weights_none);
   return k_child;
 }
 
 // Do grad by the parameter of GradOperation.
 void GradOperation::GradByParameter(const FuncGraphPtr &k_child, const AnfNodePtr &f_app, const AnfNodePtr &bprop,
-                                    const AnfNodePtr &weights, const AnfNodePtr &position,
-                                    bool enable_tuple_grad) const {
+                                    const AnfNodePtr &weights, const AnfNodePtr &position, bool enable_tuple_grad,
+                                    bool is_weights_none) const {
   MS_EXCEPTION_IF_NULL(k_child);
 
   AnfNodePtr bprop_arg = nullptr;
@@ -761,18 +762,21 @@ void GradOperation::GradByParameter(const FuncGraphPtr &k_child, const AnfNodePt
     auto ones_like = prim::GetPythonOps("ones_like");
     bprop_arg = k_child->NewCNodeInOrder({NewValueNode(ones_like), f_app});
   }
-
   AnfNodePtr b_app = k_child->NewCNodeInOrder({bprop, bprop_arg});
 
   CNodePtr fv_bprop = nullptr;
   if (get_by_list_) {
-    // python code: grads = hyper_map(F.partial(env_get, env), weights)
-    AnfNodePtr env =
-      k_child->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), b_app, NewValueNode(static_cast<int64_t>(0))});
-    AnfNodePtr partial_env_get =
-      k_child->NewCNodeInOrder({NewValueNode(prim::kPrimPartial), NewValueNode(prim::GetPythonOps("env_get")), env});
-    MetaFuncGraphPtr hyper_map = std::make_shared<HyperMap>();
-    fv_bprop = k_child->NewCNodeInOrder({NewValueNode(hyper_map), partial_env_get, weights});
+    if (is_weights_none) {
+      fv_bprop = k_child->NewCNodeInOrder({NewValueNode(prim::kPrimMakeTuple)});
+    } else {
+      // python code: grads = hyper_map(F.partial(env_get, env), weights)
+      AnfNodePtr env =
+        k_child->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), b_app, NewValueNode(static_cast<int64_t>(0))});
+      AnfNodePtr partial_env_get =
+        k_child->NewCNodeInOrder({NewValueNode(prim::kPrimPartial), NewValueNode(prim::GetPythonOps("env_get")), env});
+      MetaFuncGraphPtr hyper_map = std::make_shared<HyperMap>();
+      fv_bprop = k_child->NewCNodeInOrder({NewValueNode(hyper_map), partial_env_get, weights});
+    }
   }
 
   CNodePtr inputs_bprop = nullptr;
@@ -890,6 +894,7 @@ FuncGraphPtr GradOperation::GenerateFuncGraph(const AbstractBasePtrList &args_sp
   grad_fg->debug_info()->set_name(ss.str());
   ParameterPtr param_graph = grad_fg->add_parameter();
 
+  bool is_weights_none = false;
   AnfNodePtr weights = nullptr;
   AnfNodePtr position = nullptr;
   if (get_by_position_) {
@@ -897,14 +902,14 @@ FuncGraphPtr GradOperation::GenerateFuncGraph(const AbstractBasePtrList &args_sp
     position = grad_fg->add_parameter();
   } else if (get_by_list_) {
     weights = grad_fg->add_parameter();
+    // Check if weights is None.
     constexpr size_t weights_index = 1;
-    // Check if weights is None, throw an exception if yes.
-    if (args_spec_list.size() <= weights_index) {
-      MS_LOG(EXCEPTION) << "When 'get_by_list' is True, 'weights' needs to be set manually.";
-    }
-    auto weights_abs = args_spec_list[weights_index];
-    if (weights_abs->isa<AbstractNone>()) {
-      MS_EXCEPTION(ValueError) << "When 'get_by_list' is True, 'weights' should not be None.";
+    if (args_spec_list.size() > weights_index) {
+      auto weights_abs = args_spec_list[weights_index];
+      MS_EXCEPTION_IF_NULL(weights_abs);
+      if (weights_abs->isa<AbstractNone>()) {
+        is_weights_none = true;
+      }
     }
   }
 
@@ -916,8 +921,8 @@ FuncGraphPtr GradOperation::GenerateFuncGraph(const AbstractBasePtrList &args_sp
   FuncGraphPtr k_child = nullptr;
   {
     TraceGuard guard(std::make_shared<TraceGradOperation>(forward_graph->debug_info()));
-    k_child =
-      GetGrad(j, weights, position, forward_graph->parameters(), forward_graph->has_flag("enable_tuple_grad_first"));
+    k_child = GetGrad(j, weights, position, forward_graph->parameters(),
+                      forward_graph->has_flag("enable_tuple_grad_first"), is_weights_none);
   }
   grad_fg->set_output(NewValueNode(k_child));
 
