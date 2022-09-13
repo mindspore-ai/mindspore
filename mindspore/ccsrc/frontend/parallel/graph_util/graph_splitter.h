@@ -380,6 +380,15 @@ class GeneralMode : public DistributedExecutionMode {
   ~GeneralMode() = default;
 };
 
+// The mode applied when AutoParallel feature is enabled.
+class ParallelMode : public DistributedExecutionMode {
+ public:
+  explicit ParallelMode(const FuncGraphPtr &func_graph, NodeLabels *node_labels, uint32_t rank_id,
+                        const std::string &role)
+      : DistributedExecutionMode(func_graph, node_labels, rank_id, role) {}
+  ~ParallelMode() = default;
+};
+
 // The class is used as an action in pipeline. It will process the graph and split the nodes to each process in the
 // cluster.
 class GraphSplitter {

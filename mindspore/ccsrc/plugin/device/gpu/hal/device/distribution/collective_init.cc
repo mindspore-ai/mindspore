@@ -58,7 +58,8 @@ void CollectiveInitializer::InitCollective() {
 #endif
   } else {
     if (!distributed::Initialize()) {
-      MS_LOG(EXCEPTION) << "Failed to initialize distributed execution for NCCL.";
+      MS_LOG(EXCEPTION) << "Failed to initialize distributed execution for NCCL. Maybe the MindSpore cluster is not "
+                           "successfully built. Please check schuduler and other nodes' log.";
     }
   }
   CollectiveInitializer::instance().collective_inited_ = true;
