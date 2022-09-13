@@ -360,6 +360,14 @@ TensorRTExecutor::~TensorRTExecutor() {
   if (stream_ != nullptr) {
     cudaStreamDestroy(stream_);
   }
+  if (cublas_handle_ != nullptr) {
+    cublasDestroy(cublas_handle_);
+    cublas_handle_ = nullptr;
+  }
+  if (cublaslt_handle_ != nullptr) {
+    cublasLtDestroy(cublaslt_handle_);
+    cublaslt_handle_ = nullptr;
+  }
 }
 bool IsHardwareSupport() {
   int driver_version = 0;
@@ -415,6 +423,19 @@ Status TensorRTExecutor::Init() {
     MS_LOG(ERROR) << "Cuda create stream failed";
     return mindspore::kLiteError;
   }
+
+  auto cublas_ret = cublasCreate(&cublas_handle_);
+  if (cublas_ret != CUBLAS_STATUS_SUCCESS) {
+    MS_LOG(ERROR) << "Cuda create cublas handle failed";
+    return mindspore::kLiteError;
+  }
+
+  auto cublaslt_ret = cublasLtCreate(&cublaslt_handle_);
+  if (cublaslt_ret != CUBLAS_STATUS_SUCCESS) {
+    MS_LOG(ERROR) << "Cuda create cublaslt handle failed";
+    return mindspore::kLiteError;
+  }
+
   return mindspore::kSuccess;
 }
 
@@ -569,7 +590,7 @@ std::shared_ptr<TensorRTSubGraph> TensorRTExecutor::CreateTensorRTGraph(const st
   FindPreNextOps<TensorRTOp>(ops);
 
   // 2. Init TensorRT SubGraph.
-  auto ret = tensorrt_graph->Init(stream_);
+  auto ret = tensorrt_graph->Init(stream_, cublas_handle_, cublaslt_handle_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "TensorRTGraph init failed.";
     return nullptr;

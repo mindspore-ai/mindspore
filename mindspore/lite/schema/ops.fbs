@@ -390,6 +390,9 @@ table Concat {
 }
 
 table Attention {
+    head_num: long;
+    head_size: long;
+    cross: bool;
 }
 
 table Conv2DBackpropFilterFusion {

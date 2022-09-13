@@ -18,6 +18,7 @@
 #include <NvInfer.h>
 #include "include/errorcode.h"
 #include "src/extendrt/delegate/tensorrt/tensorrt_allocator.h"
+#include "src/extendrt/delegate/tensorrt/cuda_impl/cublas_utils.h"
 #include "src/common/log_adapter.h"
 #define MAX_BATCH_SIZE 64
 
@@ -55,7 +56,11 @@ class TensorRTRuntime {
 
   void SetBatchSize(int batch_size) { batch_size_ = batch_size; }
 
-  void SetCudaStream(cudaStream_t stream) { allocator_->SetCudaStream(stream); }
+  void SetCudaStream(cudaStream_t stream, cublasHandle_t cublas_handle, cublasLtHandle_t cublaslt_handle) {
+    allocator_->SetCudaStream(stream);
+    cublas_handle_ = cublas_handle;
+    cublaslt_handle_ = cublaslt_handle;
+  }
 
   RuntimePrecisionMode GetRuntimePrecisionMode() { return runtime_percision_mode_; }
 
@@ -68,6 +73,8 @@ class TensorRTRuntime {
   void SetDeviceID(uint32_t device_id) { device_id_ = device_id; }
 
   uint32_t GetDeviceID() { return device_id_; }
+  cublasHandle_t GetCublasHandle() { return cublas_handle_; }
+  cublasLtHandle_t GetCublasLtHandle() { return cublaslt_handle_; }
 
  private:
   bool is_init_ = false;
@@ -77,6 +84,8 @@ class TensorRTRuntime {
   int batch_size_{0};
   uint32_t device_id_{0};
   RuntimePrecisionMode runtime_percision_mode_{RuntimePrecisionMode::RuntimePrecisionMode_FP32};
+  cublasHandle_t cublas_handle_{nullptr};
+  cublasLtHandle_t cublaslt_handle_{nullptr};
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_TENSORRT_RUNTIME_H_

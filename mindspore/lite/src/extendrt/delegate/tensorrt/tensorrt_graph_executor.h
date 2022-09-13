@@ -83,6 +83,9 @@ class TensorRTExecutor : public LiteGraphExecutor {
   size_t device_cache_size_{0};
   std::string serialize_path_;
   cudaStream_t stream_{nullptr};
+  cublasHandle_t cublas_handle_{nullptr};
+  cublasLtHandle_t cublaslt_handle_{nullptr};
+
   std::vector<kernel::Kernel> kernel_list_;
 
   std::vector<TrtGraphContext> tensorrt_graph_list_;

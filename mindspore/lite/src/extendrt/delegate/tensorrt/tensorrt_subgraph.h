@@ -54,7 +54,7 @@ class TensorRTSubGraph {
 
   int BuildTensorRTGraph();
 
-  int Init(cudaStream_t stream);
+  int Init(cudaStream_t stream, cublasHandle_t cublas_handle, cublasLtHandle_t cublaslt_handle);
 
   void SetSerializePath(const std::string &path) { serialize_file_path_ = std::move(path); }
 
@@ -65,7 +65,7 @@ class TensorRTSubGraph {
  private:
   int BuildEngine();
 
-  int SetDeviceConfig(cudaStream_t stream);
+  int SetDeviceConfig(cudaStream_t stream, cublasHandle_t cublas_handle, cublasLtHandle_t cublaslt_handle);
 
   bool IsInt8Mode();
 

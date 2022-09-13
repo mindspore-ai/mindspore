@@ -34,6 +34,10 @@ if(MSLITE_DEPS_OPENCV)
     include(${TOP_DIR}/cmake/external_libs/opencv.cmake)
 endif()
 
+if(MSLITE_DEPS_FAST_TRANSFORMERS)
+    include(${TOP_DIR}/cmake/external_libs/fast_transformers.cmake)
+endif()
+
 if(MSLITE_DEPS_MKLDNN)
     if(CMAKE_SYSTEM_NAME MATCHES "Linux")
         set(USE_MS_THREADPOOL_FOR_DNNL ON)

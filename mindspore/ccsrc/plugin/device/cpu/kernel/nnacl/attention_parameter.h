@@ -18,6 +18,13 @@
 
 #include "nnacl/op_base.h"
 
+typedef struct AttentionParameter {
+  OpParameter op_parameter_;
+  int head_num_;
+  int head_size_;
+  bool cross_;
+} AttentionParameter;
+
 typedef struct RelativePositionAttentionParameter {
   // Primitive parameter
   OpParameter op_parameter_;

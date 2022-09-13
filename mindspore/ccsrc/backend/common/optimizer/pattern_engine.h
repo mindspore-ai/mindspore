@@ -109,6 +109,7 @@ class VarHasher {
 class CondVar : public Var {
  public:
   explicit CondVar(const ConditionFunc &cond) : cond_fn_(cond) {}
+  explicit CondVar(const ConditionFunc &cond, std::string tag) : Var(tag), cond_fn_(cond) {}
   ~CondVar() override = default;
   MS_DECLARE_PARENT(CondVar, Var);
   bool matches(const BaseRef &value) override {

@@ -852,6 +852,8 @@ else()
         if(MSLITE_GPU_BACKEND STREQUAL tensorrt)
             install(FILES ${TOP_DIR}/mindspore/lite/build/src/extendrt/delegate/tensorrt/libtensorrt_plugin.so
                 DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+            install(FILES ${fast_transformers_LIBPATH}/libtransformer-shared.so DESTINATION ${RUNTIME_LIB_DIR}
+                COMPONENT ${RUNTIME_COMPONENT_NAME})
         endif()
     else()
         install(FILES ${TOP_DIR}/mindspore/lite/build/src/${MINDSPORE_LITE_LIB_NAME}.so DESTINATION ${RUNTIME_LIB_DIR}
