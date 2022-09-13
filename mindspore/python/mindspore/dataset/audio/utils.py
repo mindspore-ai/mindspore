@@ -31,9 +31,12 @@ class BorderType(str, Enum):
     - BorderType.CONSTANT: means it fills the border with constant values.
     - BorderType.EDGE: means it pads with the last value on the edge.
     - BorderType.REFLECT: means it reflects the values on the edge omitting the last value of edge.
+      For example, padding [1,2,3,4] with 2 elements on both sides will result in [3,2,1,2,3,4,3,2].
     - BorderType.SYMMETRIC: means it reflects the values on the edge repeating the last value of edge.
+      For example, padding [1,2,3,4] with 2 elements on both sides will result in [2,1,1,2,3,4,4,3].
 
-    Note: This class derived from class str to support json serializable.
+    Note:
+        This class derived from class str to support json serializable.
     """
     CONSTANT: str = "constant"
     EDGE: str = "edge"
@@ -111,8 +114,12 @@ class MelType(str, Enum):
 
     Possible enumeration values are: MelType.HTK, MelType.SLANEY.
 
-    - MelType.NONE: scale the input data with htk.
-    - MelType.ORTHO: scale the input data with slaney.
+    - MelType.HTK: scale the input data with htk implementation, refer to "Slaney, M. Auditory Toolbox:
+      A MATLAB Toolbox for Auditory Modeling Work. Technical Report, version 2,
+      Interval Research Corporation, 1998".
+    - MelType.SLANEY: scale the input data with slaney implementation, refer to "Young, S., Evermann, G.,
+      Gales, M., Hain, T., Kershaw, D., Liu, X., Moore, G., Odell, J., Ollason, D.,
+      Povey, D., Valtchev, V., & Woodland, P. The HTK book, version 3.4. Cambridge University, March 2009".
     """
     HTK: str = "htk"
     SLANEY: str = "slaney"
