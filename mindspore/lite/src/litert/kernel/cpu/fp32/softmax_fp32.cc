@@ -16,7 +16,7 @@
 
 #include "src/litert/kernel/cpu/fp32/softmax_fp32.h"
 #include <cstring>
-#include <vector>
+#include "nnacl/errorcode.h"
 #include "nnacl/fp32/softmax_fp32.h"
 #include "schema/model_generated.h"
 #include "src/litert/kernel_registry.h"
@@ -98,7 +98,11 @@ int SoftmaxCPUKernel::DoSoftmaxLastAxis(int task_id) {
   int offset = begin * channel;
   auto input_ptr = reinterpret_cast<float *>(in_tensors_.at(kInputIndex)->MutableData());
   auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->MutableData());
-  SoftmaxLastAxis(input_ptr + offset, output_ptr + offset, end - begin, channel);
+  int ret = SoftmaxLastAxis(input_ptr + offset, output_ptr + offset, end - begin, channel);
+  if (ret != NNACL_OK) {
+    MS_LOG(ERROR) << "do SoftmaxLastAxis failed. " << this->name();
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 

@@ -52,7 +52,7 @@ CreateTrainSessionProto *CreateTrainSessionCallbackHolder(CreateTrainSessionProt
   return proto_;
 }
 
-ExpressionLoader CreateExpressionLoader(ExpressionLoader loader) {
+ExpressionLoader CreateExpressionLoader(const ExpressionLoader &loader) {
   static ExpressionLoader loader_ = nullptr;
   if (loader != nullptr) {
     loader_ = loader;

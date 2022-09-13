@@ -52,8 +52,8 @@ class LstmCPUKernel : public LiteKernel {
   void LstmBackwardLoop(float *buffer[]);
   void LstmUnidirectional(float *output, const float *weight_h, const float *state_bias, float *hidden_state,
                           float *cell_state, float *intermediate_states, float *buffer[], bool is_backward);
-  void RecordStates(float *hidden_state, float *cell_state, float *input_gate, float *output_gate, float *forget_gate,
-                    float *cell_gate, float *intermediate_states, int step);
+  void RecordStates(const float *hidden_state, float *cell_state, float *input_gate, const float *output_gate,
+                    float *forget_gate, const float *cell_gate, float *intermediate_states, int step);
   const float *weight_loop_;
   const float *bias_loop_;
   float *gate_loop_ = nullptr;

@@ -469,10 +469,15 @@ void LstmCPUKernel::LstmUnidirectional(float *output, const float *weight_h, con
   }
 }
 
-void LstmCPUKernel::RecordStates(float *hidden_state, float *cell_state, float *input_gate, float *output_gate,
-                                 float *forget_gate, float *cell_gate, float *intermediate_states, int step) {
+void LstmCPUKernel::RecordStates(const float *hidden_state, float *cell_state, float *input_gate,
+                                 const float *output_gate, float *forget_gate, const float *cell_gate,
+                                 float *intermediate_states, int step) {
   float *states = intermediate_states;
   auto state_size = lstm_param_->batch_ * lstm_param_->hidden_size_;
+  if (state_size < 0) {
+    MS_LOG(ERROR) << "state size should be greater than or equal to zero.";
+    return;
+  }
   auto stride = step * lstm_param_->output_step_;
   auto seq_stride = lstm_param_->seq_len_ * lstm_param_->output_step_;
   memcpy(states + stride, hidden_state, state_size * sizeof(float));

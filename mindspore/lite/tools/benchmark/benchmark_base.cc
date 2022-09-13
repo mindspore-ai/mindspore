@@ -145,7 +145,7 @@ int BenchmarkBase::ReadCalibData() {
   std::string tensor_name;
 
   while (!in_file.eof()) {
-    getline(in_file, line);
+    (void)getline(in_file, line);
     std::stringstream string_line1(line);
     size_t dim = 0;
     string_line1 >> tensor_name >> dim;
@@ -170,7 +170,7 @@ int BenchmarkBase::ReadCalibData() {
 int BenchmarkBase::ReadTensorData(std::ifstream &in_file_stream, const std::string &tensor_name,
                                   const std::vector<size_t> &dims) {
   std::string line;
-  getline(in_file_stream, line);
+  (void)getline(in_file_stream, line);
   std::stringstream line_stream(line);
   if (this->benchmark_data_.find(tensor_name) != this->benchmark_data_.end()) {
     return RET_OK;

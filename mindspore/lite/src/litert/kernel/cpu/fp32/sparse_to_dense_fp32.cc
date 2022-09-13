@@ -21,7 +21,6 @@
 #ifdef ENABLE_FP16
 #include "nnacl/fp16/sparse_to_dense_fp16.h"
 #endif
-#include "schema/model_generated.h"
 #include "schema/ops_generated.h"
 #include "src/litert/kernel_registry.h"
 
@@ -144,7 +143,8 @@ int SparseToDenseCPUKernel::GenerateIndices() {
   int *sparse_indices = static_cast<int *>(input0->data());
   CHECK_NULL_RETURN(sparse_indices);
 
-  size_t index_dim = input0->shape().size();
+  auto input0_shape = input0->shape();
+  size_t index_dim = input0_shape.size();
   switch (index_dim) {
     case 0:
     case 1: {
@@ -156,7 +156,7 @@ int SparseToDenseCPUKernel::GenerateIndices() {
       break;
     }
     case 2: {
-      int real_dims = input0->shape().at(1);
+      int real_dims = input0_shape.at(1);
       MS_CHECK_TRUE_MSG(real_dims <= DIMENSION_4D, RET_ERROR, "shape invalid.");
       for (int i = 0; i < param_->index_num; i++) {
         for (int j = 0; j < DIMENSION_4D; j++) {

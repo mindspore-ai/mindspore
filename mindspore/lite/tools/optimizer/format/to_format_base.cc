@@ -156,7 +156,10 @@ STATUS ToFormatBase::InsertPostTransNode(const FuncGraphPtr &func_graph, const C
           return lite::RET_ERROR;
         } else {
           tuple_get_item = opt::GenTupleGetItemNode(func_graph, cnode, 0);
-          manager_->Replace(cnode, tuple_get_item, post_node);
+          if (!manager_->Replace(cnode, tuple_get_item, post_node)) {
+            MS_LOG(ERROR) << "replace node failed.";
+            return lite::RET_ERROR;
+          }
           post_node = tuple_get_item;
         }
       }

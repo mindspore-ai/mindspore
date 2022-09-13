@@ -44,7 +44,10 @@ int BatchnormCPUKernel::Prepare() {
 
 int BatchnormCPUKernel::ReSize() {
   FreeMeanAndVariance();
-  FillParam();
+  if (FillParam() != RET_OK) {
+    MS_LOG(ERROR) << "fill param failed. " << this->name();
+    return RET_ERROR;
+  }
   return InitConstTensor();
 }
 
@@ -162,12 +165,10 @@ int BatchnormCPUKernel::RestoreDefaultMomentum() {
 
 int BatchnormCPUKernel::SetupVirtualBatch(int virtual_batch_multiplier, int param) {
   if ((virtual_batch_multiplier > 0)) {
-    int momentum = (param < 0.0f) ? (this->get_momentum() / virtual_batch_multiplier) : param;
+    float momentum = (param < 0.0f) ? (this->get_momentum() / virtual_batch_multiplier) : param;
     return this->set_momentum(momentum);
-  } else {
-    return this->RestoreDefaultMomentum();
   }
-  return RET_OK;
+  return this->RestoreDefaultMomentum();
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_BatchNorm, LiteKernelCreator<BatchnormCPUKernel>)

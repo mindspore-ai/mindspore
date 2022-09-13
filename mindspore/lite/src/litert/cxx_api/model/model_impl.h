@@ -50,7 +50,7 @@ typedef std::shared_ptr<lite::LiteSession>(CreateTrainSessionProto)(std::shared_
 CreateTrainSessionProto *CreateTrainSessionCallbackHolder(CreateTrainSessionProto *proto = nullptr);
 
 using ExpressionLoader = std::function<Status(const char *, Graph *)>;
-ExpressionLoader CreateExpressionLoader(ExpressionLoader loader = nullptr);
+ExpressionLoader CreateExpressionLoader(const ExpressionLoader &loader = nullptr);
 
 namespace session {
 class Metrics;

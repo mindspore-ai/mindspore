@@ -139,9 +139,9 @@ class Scheduler {
   int InitDelegateKernels(std::vector<kernel::KernelExec *> *dst_kernels) { return RET_OK; }
 #endif
 
-  bool GetEnableGLTexture() { return context_->GetDeviceInfo(DT_GPU).gpu_device_info_.enable_gl_texture_; }
-  void *GetGLContext() { return context_->GetDeviceInfo(DT_GPU).gpu_device_info_.gl_context_; }
-  void *GetGLDisplay() { return context_->GetDeviceInfo(DT_GPU).gpu_device_info_.gl_display_; }
+  bool GetEnableGLTexture() const { return context_->GetDeviceInfo(DT_GPU).gpu_device_info_.enable_gl_texture_; }
+  void *GetGLContext() const { return context_->GetDeviceInfo(DT_GPU).gpu_device_info_.gl_context_; }
+  void *GetGLDisplay() const { return context_->GetDeviceInfo(DT_GPU).gpu_device_info_.gl_display_; }
 
  protected:
   InnerContext *context_ = nullptr;

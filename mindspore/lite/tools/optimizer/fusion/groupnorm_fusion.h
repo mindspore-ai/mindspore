@@ -42,8 +42,8 @@ class GroupNormFusion : public LitePatternProcessPass {
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
   bool CheckPattern(const FuncGraphPtr &func_graph, const EquivPtr &equiv, int *num_groups, float *epsilon,
                     bool *affine) const;
-  CNodePtr CreateGroupNormNode(const FuncGraphPtr &func_graph, const EquivPtr &equiv, int num_groups, float epsilon,
-                               bool affine) const;
+  CNodePtr CreateGroupNormNode(const FuncGraphPtr &func_graph, const EquivPtr &equiv, int num_groups,
+                               float epsilon) const;
   const BaseRef DefinePattern() const override;
 
  protected:

@@ -38,7 +38,7 @@ void FreeTensorListC(TensorListC *tensorlist_c, std::shared_ptr<Allocator> alloc
 int TensorList2TensorListC(TensorList *src, TensorListC *dst, std::shared_ptr<Allocator> allocator = nullptr);
 int TensorListC2TensorList(const TensorListC *src, TensorList *dst);
 int GenerateInTensorC(const std::vector<lite::Tensor *> &inputs, std::vector<TensorC *> *in_tensor_c,
-                      std::shared_ptr<Allocator> allocator = nullptr);
+                      const std::shared_ptr<Allocator> &allocator = nullptr);
 int GenerateOutTensorC(const OpParameter *const parameter, const std::vector<lite::Tensor *> &outputs,
                        std::vector<TensorC *> *out_tensor_c, std::shared_ptr<Allocator> allocator = nullptr);
 int CheckTensorsInvalid(const std::vector<Tensor *> &tensors);
