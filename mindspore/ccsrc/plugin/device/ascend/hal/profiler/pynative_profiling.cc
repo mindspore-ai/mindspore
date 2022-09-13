@@ -78,7 +78,10 @@ void PynativeProfiler::WriteStartTime() {
 
 void PynativeProfiler::SaveProfileData() { WriteOpDetail(profile_data_path_); }
 
-void PynativeProfiler::ClearInst() { pynative_op_info_.clear(); }
+void PynativeProfiler::ClearInst() {
+  pynative_op_info_.clear();
+  thread_op_info_map_.clear();
+}
 
 void PynativeProfiler::OpDataProducerEnd() {}
 

@@ -78,6 +78,8 @@ class ProfilingReporter {
   vector<uint32_t> task_ids_;
   std::map<string, int> node_name_index_map_;
   const uint32_t MSPROF_DIFFERENCE = 200;
+  const uint32_t MSPROF_GE_TASK_TYPE_PROFILING = 26;
+  const std::string PROFILING_OP_NAME = "Profiling";
 
   bool CheckStreamTaskValid() const;
   static uint32_t GetBlockDim(const CNodePtr &node);
