@@ -172,7 +172,7 @@ class BACKEND_EXPORT SessionBasic : public KernelGraphMgr, public std::enable_sh
   void ProcessNodeRetFunc(const CNodePtr &cnode, KernelGraph *graph, const std::vector<AnfNodePtr> &real_inputs);
 
   void GetParameterIndex(const KernelGraph *graph, const std::vector<tensor::TensorPtr> &inputs,
-                         std::map<AnfNodePtr, size_t> *parameter_index);
+                         std::map<AnfNodePtr, size_t> *parameter_index) const;
   void CreateOutputPlaceholder(const KernelGraphPtr &kernel_graph, const std::vector<tensor::TensorPtr> &input_tensors,
                                VectorRef *const outputs,
                                std::map<KernelWithIndex, std::vector<std::vector<size_t>>> *output_indexes) const;
