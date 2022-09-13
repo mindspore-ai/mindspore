@@ -32,9 +32,11 @@ target_link_libraries(mindspore_gpu PRIVATE mindspore_core mindspore_common prot
 target_link_libraries(mindspore_gpu PRIVATE securec)
 set_target_properties(mindspore_gpu PROPERTIES INSTALL_RPATH ${MINDSPORE_RPATH})
 target_link_libraries(mindspore_gpu PRIVATE mindspore::dnnl mindspore::mkldnn nnacl)
+if(NOT WIN32)
 target_link_libraries(mindspore_gpu PRIVATE mindspore::ssl mindspore::crypto)
 target_link_libraries(mindspore_gpu PRIVATE mindspore::event mindspore::event_pthreads
         mindspore::event_openssl -Wl,--no-as-needed mindspore::event_core ps_cache)
+endif()
 
 if(ENABLE_GPU)
     message("add gpu lib to mindspore_gpu")
