@@ -138,8 +138,8 @@ void LayerNormGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
                   (static_cast<float>(x[j]) - mean[norm_shift]);
         dbeta += static_cast<float>(dy[j]);
       }
-      dg[param_index] = (T)dgamma;
-      db[param_index] = (T)dbeta;
+      dg[param_index] = static_cast<T>(dgamma);
+      db[param_index] = static_cast<T>(dbeta);
     }
   };
   auto task2 = [this, &x, &dy, &var, &mean, &dx, &gamma, thread_num2](size_t start) {
