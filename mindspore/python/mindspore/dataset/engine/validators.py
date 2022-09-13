@@ -1047,7 +1047,7 @@ def check_source_function(source):
             elif '__next__' in source_attr:
                 var = var + ins.getclosurevars(source.__class__.__next__)
                 source_doc = source_doc + ins.getsource(source.__class__.__next__)
-        except TypeError:
+        except (TypeError, OSError):
             # case: like input is LambdaType or GeneratorType, it will go to else branch, and unable to run normally
             pass
     return str(var) + source_doc
