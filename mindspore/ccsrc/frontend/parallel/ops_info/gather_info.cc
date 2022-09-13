@@ -172,9 +172,10 @@ Status GatherInfo::GetAttrs() {
   return SUCCESS;
 }
 
-// parameter's dim >= 1, indices' dim == 1 or 2, axis == 0
-// parameter's strategy: [a, b, ..., c], indices' strategy: [a] or [1, a]
-// output's strategy: [a, b, ..., c] or [1, a, b, ..., c]
+// constraint: the field dimension of indices is the last dimension
+// parameter's dim >= 1, indices' dim >= 1, axis == 0
+// parameter's strategy: [a, b, ..., c], indices' strategy: [1, ..., 1, a]
+// output's strategy: [1, ..., 1, a, b, ..., c]
 // dev_matrix: [a, b, ..., c]
 // can not support repeated calculation
 Status GatherInfo::CheckManualSplit(const Strategies &strategy) {
@@ -185,8 +186,8 @@ Status GatherInfo::CheckManualSplit(const Strategies &strategy) {
   Dimensions param_strategy = strategy[0];
   Dimensions indices_strategy = strategy[1];
 
-  if (indices_strategy.size() > 2) {
-    MS_LOG(ERROR) << name_ << ": The size of indices strategy must be 1 or 2, but got " << indices_strategy.size();
+  if (indices_strategy.size() < 1) {
+    MS_LOG(ERROR) << name_ << ": The size of indices strategy must be positive, but got " << indices_strategy.size();
     return FAILED;
   }
 
@@ -205,7 +206,7 @@ Status GatherInfo::CheckManualSplit(const Strategies &strategy) {
 
   if (indices_strategy[indices_split_dim] != SizeToLong(param_split_shapes_.size())) {
     MS_LOG(ERROR) << name_ << ": The indices_strategy[-1] " << indices_strategy[indices_split_dim]
-                  << "must be equal to manual split size " << param_split_shapes_.size();
+                  << " must be equal to manual split size " << param_split_shapes_.size();
     return FAILED;
   }
 
