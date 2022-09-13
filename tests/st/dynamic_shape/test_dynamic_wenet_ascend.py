@@ -585,7 +585,7 @@ class CustomDense(nn.Dense):
             x_dyn_shape = self.dyn_shape(x)
             x_dyn_shape = self.cast(x_dyn_shape, mstype.float32)
             if len(x_dyn_shape) != 2:
-                new_shape = x_dyn_shape[1:]
+                new_shape = x_dyn_shape.copy()[1:]
                 new_shape[0] = x_dyn_shape[0:1] * x_dyn_shape[1:2]
                 new_shape = self.cast(new_shape, mstype.int64)
                 x = self.reshape(x, new_shape)
@@ -1731,10 +1731,11 @@ def create_dataset(batch_size=32, label_len=30, mel_bins=80):
         mask_len = int(seq_len // 4) - 1
         xs_pad = np.random.randn(batch_size, seq_len, mel_bins).astype(np.float32)
         xs_masks = np.random.randint(0, 2, (batch_size, 1, mask_len)).astype(np.float32)
-        ys_pad = np.random.randint(0, 10, (batch_size, label_len))
-        ys_in_pad = np.random.randint(0, 10, (batch_size, label_len + 1))
-        ys_out_pad = np.random.randint(0, 10, (batch_size, label_len + 1))
-        ys_lengths = np.random.randint(int(seq_len // upper_limit), int(seq_len // lower_limit), (batch_size,))
+        ys_pad = np.random.randint(0, 10, (batch_size, label_len)).astype(np.int32)
+        ys_in_pad = np.random.randint(0, 10, (batch_size, label_len + 1)).astype(np.int32)
+        ys_out_pad = np.random.randint(0, 10, (batch_size, label_len + 1)).astype(np.int32)
+        ys_lengths = \
+            np.random.randint(int(seq_len // upper_limit), int(seq_len // lower_limit), (batch_size,)).astype(np.int32)
         ys_masks = np.random.randint(0, 2, (batch_size, 1, label_len + 1)).astype(np.float32)
         ys_sub_masks = np.random.randint(0, 2, (batch_size, label_len + 1, label_len + 1)).astype(np.float32)
         data_list.append((xs_pad, xs_masks, ys_pad, ys_in_pad, ys_out_pad, ys_lengths, ys_masks, ys_sub_masks))
@@ -1746,26 +1747,11 @@ def create_dataset(batch_size=32, label_len=30, mel_bins=80):
     return ds
 
 
-@pytest.mark.skip(reason="fail on run package upgrade")
-def test_train():
-    """
-    Feature: Test the simplified dynamic shape WeNet-ASR network with small data.
-    Description:  The sequence length of inputs is dynamic.
-    Expectation: Assert that the training loss of fixed data is consistent with the expected loss.
-    """
-    # set random seed
-    set_seed(0)
-
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-
-    logging.info("Initializing training dataset.")
-
+def get_train_loss(train_dataset, run_mode):
+    context.set_context(mode=run_mode, device_target="Ascend")
     bs = BATCH_SIZE
     ll = LABLE_LEN
     mb = MEL_BINS
-
-    train_dataset = create_dataset(bs, ll, mb)
-
     steps_size = train_dataset.get_dataset_size()
     logging.warning("Training dataset has %d steps in each epoch.", steps_size)
 
@@ -1789,7 +1775,6 @@ def test_train():
     )
 
     callback = TimeMonitor(steps_size)
-
     xs_pad = Tensor(shape=[bs, None, mb], dtype=mindspore.float32)
     xs_masks = Tensor(shape=[bs, 1, None], dtype=mindspore.float32)
     ys_pad = Tensor(shape=[bs, ll], dtype=mindspore.int32, init=One())
@@ -1812,7 +1797,26 @@ def test_train():
         callbacks=callback,
         dataset_sink_mode=True
     )
+    return callback.loss
 
-    train_loss = callback.loss
-    expect_loss = 114.664
-    assert np.allclose(train_loss, expect_loss, 0.001, 0.001)
+
+@pytest.mark.skip(reason="fail on run package upgrade")
+def test_train():
+    """
+    Feature: Test the simplified dynamic shape WeNet-ASR network with small data.
+    Description:  The sequence length of inputs is dynamic.
+    Expectation: Assert that the training loss of fixed data is consistent with the expected loss.
+    """
+    # Set random seed
+    logging.info("Initializing training dataset.")
+    bs = BATCH_SIZE
+    ll = LABLE_LEN
+    mb = MEL_BINS
+    set_seed(0)
+    train_dataset = create_dataset(bs, ll, mb)
+    expect_graph_loss = get_train_loss(train_dataset, context.GRAPH_MODE)
+    assert np.allclose(expect_graph_loss, 114.664, 0.001, 0.001)
+    set_seed(0)
+    train_dataset = create_dataset(bs, ll, mb)
+    expect_pynative_loss = get_train_loss(train_dataset, context.PYNATIVE_MODE)
+    assert np.allclose(expect_pynative_loss, 114.917, 0.001, 0.001)
