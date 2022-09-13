@@ -354,8 +354,9 @@ abstract::ShapePtr StridedSliceInferShape(const PrimitivePtr &primitive,
   const size_t x_index = 0;
   auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[x_index]->BuildShape());
   auto x_shape = shape_map[kShape];
-  bool x_is_dyn =
-    std::any_of(x_shape.begin(), x_shape.end(), [](int64_t value) { return value == abstract::Shape::SHP_ANY; });
+  if (IsDynamicRank(x_shape)) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
+  }
 
   ShapeVector begin_v;
   ShapeVector end_v;
@@ -376,7 +377,7 @@ abstract::ShapePtr StridedSliceInferShape(const PrimitivePtr &primitive,
                              << ", 'strides': " << stride_len << ".";
   }
   bool slice_dynamic = false;
-  if (begin_dynamic || end_dynamic || stride_dynamic || x_is_dyn) {
+  if (begin_dynamic || end_dynamic || stride_dynamic || IsDynamic(x_shape)) {
     slice_dynamic = true;
   }
   if (!slice_dynamic) {
