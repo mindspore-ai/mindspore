@@ -185,7 +185,7 @@ void RpcNodeScheduler::Schedule(const ActorSet *actor_set) const {
   }
 }
 
-void RpcNodeScheduler::SetOpcontext(const RpcActorSetPtr &rpc_actors, OpContext<DeviceTensor> *const op_context) const {
+void RpcNodeScheduler::SetOpcontext(const RpcActorSetPtr &rpc_actors, OpContext<DeviceTensor> *const op_context) {
   MS_EXCEPTION_IF_NULL(op_context);
   MS_EXCEPTION_IF_NULL(rpc_actors);
 
@@ -197,6 +197,10 @@ void RpcNodeScheduler::SetOpcontext(const RpcActorSetPtr &rpc_actors, OpContext<
     MS_EXCEPTION_IF_NULL(send_actor);
     send_actor->SetOpcontext(op_context);
   }
+
+  // Set op_context and rpc actor set for later usage.
+  op_context_ = op_context;
+  rpc_actors_ = rpc_actors;
 }
 
 void RpcNodeScheduler::ResetOpcontext(const RpcActorSetPtr &rpc_actors) const {
@@ -210,6 +214,19 @@ void RpcNodeScheduler::ResetOpcontext(const RpcActorSetPtr &rpc_actors) const {
     MS_EXCEPTION_IF_NULL(send_actor);
     send_actor->ResetOpcontext();
   }
+}
+
+void RpcNodeScheduler::Abort() {
+  MS_LOG(INFO) << "Start aborting rpc actors.";
+  MS_EXCEPTION_IF_NULL(rpc_actors_);
+  for (const auto &recv_actor : rpc_actors_->recv_actors_) {
+    MS_EXCEPTION_IF_NULL(recv_actor);
+    ActorDispatcher::Send(recv_actor->GetAID(), &RecvActor::StopRpcAtException);
+  }
+
+  // Set op_context success to exit output actor.
+  SET_OPCONTEXT_SUCCESS_RET(*op_context_);
+  MS_LOG(INFO) << "End aborting rpc actors.";
 }
 
 void RpcNodeScheduler::UpdateRpcActorRefCounts(RpcActorSetPtr rpc_actor_set) const {

@@ -25,6 +25,13 @@
 
 namespace mindspore {
 namespace distributed {
+// The detailed reason of failing to run 'mindspore.communication.init()' with ClusterContext.
+constexpr char kDetailedFailureReason[] =
+  "Maybe you are trying to call 'mindspore.communication.init()' without using 'mpirun', which will make MindSpore "
+  "load several environment variables and check their validation. Please use 'mpirun' to launch this process to fix "
+  "this issue, or refer to this link if you want to run distributed training without using 'mpirun': "
+  "https://www.mindspore.cn/docs/programming_guide/zh-CN/r1.6/distributed_training_gpu.html#openmpi.";
+
 constexpr char kEnvServerNum[] = "MS_SERVER_NUM";
 constexpr char kEnvWorkerNum[] = "MS_WORKER_NUM";
 constexpr char kEnvSchedulerHost[] = "MS_SCHED_HOST";

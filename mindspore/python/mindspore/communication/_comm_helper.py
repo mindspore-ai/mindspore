@@ -16,10 +16,11 @@
 
 import os
 from mindspore import context
-from mindspore.parallel._ps_context import _is_role_pserver, _is_role_sched, _is_ps_mode, _get_ps_context
+from mindspore.parallel._ps_context import _is_role_worker, _is_role_pserver, _is_role_sched, _is_ps_mode,\
+                                           _get_ps_context
 from mindspore import log as logger
 from mindspore.communication._hccl_management import load_lib as hccl_load_lib
-from mindspore._c_expression import get_rank_id, get_rank_size, CollectiveManager
+from mindspore._c_expression import get_rank_id, get_rank_size, CollectiveManager, set_cluster_exit_with_exception
 
 _HCCL_AVAILABLE = False
 _HCCL_TEST_AVAILABLE = False
@@ -194,6 +195,13 @@ def _check_bypass_rank_id_and_size():
     if not _use_old_ps() and _is_ps_mode() and _get_ps_context("worker_num") == 1 and device_target == "Ascend":
         return True
     return False
+
+
+def _set_elegant_exit_handle():
+    if _is_role_worker() or _is_role_pserver() or _is_role_sched():
+        import sys
+        from sys import excepthook
+        sys.excepthook = lambda *args: (set_cluster_exit_with_exception(), excepthook(*args))
 
 
 def check_parameter_available(func):

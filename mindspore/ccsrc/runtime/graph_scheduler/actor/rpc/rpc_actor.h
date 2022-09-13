@@ -60,7 +60,8 @@ class RpcActor : public KernelActor {
       : KernelActor(name, kernel, device_context, memory_manager_aid, debug_aid, recorder_aid, strategy,
                     modifiable_ref_input_indexes, modifiable_ref_output_indexes, type),
         op_context_(nullptr),
-        input_inter_process_num_(0) {}
+        input_inter_process_num_(0),
+        is_exception_thrown_(false) {}
   ~RpcActor() override = default;
 
   // Normally, an actor's op_context is passed by its input actor, but rpc actors could be triggered by inter-process
@@ -83,6 +84,12 @@ class RpcActor : public KernelActor {
   // Set some info which will be used for rpc routing.
   virtual void SetRouteInfo(uint32_t peer_rank, const std::string &peer_role, const std::string &src_node_name,
                             const std::string &dst_node_name) {}
+
+  /**
+   * @description: Stop rpc communication to avoid dead lock after exception is thrown.
+   * @return {void}
+   */
+  virtual void StopRpcAtException() {}
 
  protected:
   /**
@@ -119,6 +126,9 @@ class RpcActor : public KernelActor {
   std::vector<AID> inter_process_output_arrows_;
 
   ActorRouteTableProxyPtr actor_route_table_proxy_;
+
+  // The flag of whether any exception is thrown.
+  bool is_exception_thrown_;
 
  private:
   friend class GraphScheduler;

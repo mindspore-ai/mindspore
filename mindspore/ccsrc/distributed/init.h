@@ -40,6 +40,10 @@ bool FinalizeCluster();
 // Initialize and finalize collective communication for distributed execution.
 bool InitializeCollective();
 bool FinalizeCollective();
+
+// Set and get whether this process in cluster exits with exception.
+BACKEND_EXPORT void set_cluster_exit_with_exception();
+BACKEND_EXPORT bool cluster_exit_with_exception();
 }  // namespace distributed
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_DISTRIBUTED_INIT_H_

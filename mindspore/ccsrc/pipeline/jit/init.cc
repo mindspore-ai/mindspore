@@ -206,6 +206,8 @@ PYBIND11_MODULE(_c_expression, m) {
               py::arg("decrypt") = py::none(), "Load model as Graph.");
 
   (void)m.def("init_cluster", &mindspore::distributed::Initialize, "Init Cluster");
+  (void)m.def("set_cluster_exit_with_exception", &mindspore::distributed::set_cluster_exit_with_exception,
+              "Set this process exits with exception.");
   (void)m.def("get_dyn_shape", &mindspore::pynative::GetDynShape, "Get Dynamic Shape of Tensor");
   (void)m.def("call_constant_folding", &mindspore::pynative::CallConstantFolding, "Call Constant Folding Primitive");
 
@@ -419,8 +421,10 @@ PYBIND11_MODULE(_c_expression, m) {
     (void)iterators.attr("_cleanup")();
     MS_LOG(INFO) << "End release dataset handles.";
 #endif
-    // Finalize MindSpore cluster when this process exits.
-    mindspore::pipeline::FinalizeCluster();
+    if (!mindspore::distributed::cluster_exit_with_exception()) {
+      // Finalize MindSpore cluster only when this process exits without any exception.
+      mindspore::pipeline::FinalizeCluster();
+    }
 
     // only in case that c++ calling python interface, ClearResAtexit should be called.
     if (mindspore::python_adapter::IsPythonEnv()) {

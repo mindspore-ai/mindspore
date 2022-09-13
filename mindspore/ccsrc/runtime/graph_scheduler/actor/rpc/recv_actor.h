@@ -59,6 +59,8 @@ class RecvActor : public RpcActor {
   // Start recv actor server and register this server address to actor route table in scheduler by proxy.
   bool StartServer();
 
+  void StopRpcAtException() override;
+
  protected:
   // Besides the checking method in base class AbstractActor, condition of inter-process arrows should be checked for
   // recv actor.

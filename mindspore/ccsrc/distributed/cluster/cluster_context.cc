@@ -35,6 +35,7 @@ namespace cluster {
 ClusterContext::ClusterContext()
     : inited_(false),
       finalized_(true),
+      cluster_exit_with_exception_(false),
       node_num_each_role_({}),
       scheduler_host_(kLocalHost),
       scheduler_port_(kDefaultSchedPort),
@@ -136,6 +137,10 @@ uint32_t ClusterContext::node_num() const {
 bool ClusterContext::initialized() const { return inited_; }
 
 const ActorRouteTableProxyPtr &ClusterContext::actor_route_table_proxy() const { return actor_route_table_proxy_; }
+
+void ClusterContext::set_cluster_exit_with_exception() { cluster_exit_with_exception_ = true; }
+
+bool ClusterContext::cluster_exit_with_exception() const { return cluster_exit_with_exception_; }
 
 void ClusterContext::InitClusterConfig() {
   InitNodeRole();

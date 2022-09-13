@@ -17,7 +17,9 @@
 #include "distributed/init.h"
 #include <vector>
 #include <string>
+#include <memory>
 #include "distributed/recovery/recovery_context.h"
+#include "runtime/graph_scheduler/graph_scheduler.h"
 
 namespace mindspore {
 namespace distributed {
@@ -27,15 +29,13 @@ bool Initialize() {
   // If this process participates in the cluster building, we need to initialize cluster context.
   if (common::UseDynamicCluster()) {
     if (!InitializeCluster()) {
-      MS_LOG(ERROR) << "Failed to initialize distributed training.";
-      return false;
+      MS_LOG(EXCEPTION) << "Failed to initialize distributed training.";
     }
   }
 
   // Initialize the collective manager regardless of whether the cluster is initialized or not.
   if (!InitializeCollective()) {
-    MS_LOG(ERROR) << "Failed to initialize collective communication.";
-    return false;
+    MS_LOG(EXCEPTION) << "Failed to initialize collective communication.";
   }
   return true;
 }
@@ -68,6 +68,8 @@ bool InitializeCluster() {
     if (!collective::CollectiveManager::instance()->Finalize()) {
       MS_LOG(EXCEPTION) << "Failed to finalize the collective communication lib.";
     }
+    // Abort graph scheduler to avoid hang in rpc communication.
+    runtime::GraphScheduler::GetInstance().rpc_node_scheduler()->Abort();
   });
   node->set_abnormal_callback(callback);
 
@@ -110,5 +112,9 @@ bool InitializeCollective() {
 }
 
 bool FinalizeCollective() { return collective::CollectiveManager::instance()->Finalize(); }
+
+void set_cluster_exit_with_exception() { cluster::ClusterContext::instance()->set_cluster_exit_with_exception(); }
+
+bool cluster_exit_with_exception() { return cluster::ClusterContext::instance()->cluster_exit_with_exception(); }
 }  // namespace distributed
 }  // namespace mindspore

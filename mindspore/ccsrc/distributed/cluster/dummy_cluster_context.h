@@ -43,6 +43,8 @@ class BACKEND_EXPORT ClusterContext {
   std::string node_role() const;
   uint32_t node_num(const std::string &node_role);
   bool initialized() const;
+  void set_cluster_exit_with_exception();
+  bool cluster_exit_with_exception() const;
 
  private:
   ClusterContext() = default;
