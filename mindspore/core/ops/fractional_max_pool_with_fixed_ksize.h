@@ -38,19 +38,35 @@ class MIND_API FractionalMaxPoolWithFixedKsize : public BaseOperator {
   FractionalMaxPoolWithFixedKsize() : BaseOperator(kNameFractionalMaxPoolWithFixedKsize) {
     InitIOName({"input_x", "random_samples"}, {"y", "argmax"});
   }
-  void Init(const std::vector<int64_t> &ksize, const std::vector<int64_t> &output_shape,
-            const std::string &data_format);
-  void set_ksize(const std::vector<int64_t> &ksize);
-  void set_output_shape(const std::vector<int64_t> &output_shape);
-  void set_data_format(const std::string &data_format);
+  void InputCheck(const PrimitivePtr &primitive, const std::vector<int64_t> &x_shape,
+                  const std::vector<int64_t> &random_samples_shape);
+  void Init(const std::vector<int64_t> ksize, const std::vector<int64_t> output_shape, const std::string data_format);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.FractionalMaxPoolWithFixedKsize for the
+  /// inputs.
+  void set_ksize(const std::vector<int64_t> ksize);
+  /// \brief Set ksize.
+  void set_output_shape(const std::vector<int64_t> output_shape);
+  /// \brief Set output shape.
+  void set_data_format(const std::string data_format);
+  /// \brief Set data format.
   std::vector<int64_t> get_ksize() const;
+  /// \brief Method to get ksize attributes.
+  ///
+  /// \return ksize attributes.
   std::vector<int64_t> get_output_shape() const;
+  /// \brief Method to get output shape attributes.
+  ///
+  /// \return output shape attributes.
   std::string get_data_format() const;
+  /// \brief Method to get data format attributes.
+  ///
+  /// \return data format attributes.
 };
 
 abstract::AbstractBasePtr FractionalMaxPoolWithFixedKsizeInfer(
   const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
   const std::vector<abstract::AbstractBasePtr> &input_args);
+// using PrimFractionalMaxPoolWithFixedKsizePtr = std::shared_ptr<FractionalMaxPoolWithFixedKsize>;
 }  // namespace ops
 }  // namespace mindspore
 
