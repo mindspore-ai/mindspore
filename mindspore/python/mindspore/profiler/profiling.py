@@ -33,7 +33,8 @@ from mindspore.profiler.parser.aicpu_data_parser import DataPreProcessParser
 from mindspore.profiler.parser.framework_parser import FrameworkParser, GpuFrameWorkParser, DynamicFrameWorkParser
 from mindspore.profiler.parser.hwts_log_parser import HWTSLogParser
 from mindspore.profiler.parser.integrator import Integrator, DeviceTarget
-from mindspore.profiler.parser.integrator import GpuTimelineGenerator, CpuTimelineGenerator, AscendTimelineGenerator
+from mindspore.profiler.parser.cpu_gpu_timeline_generator import GpuTimelineGenerator, CpuTimelineGenerator
+from mindspore.profiler.parser.ascend_timeline_generator import AscendTimelineGenerator
 from mindspore.profiler.parser.memory_usage_parser import MemoryUsageParser
 from mindspore.profiler.parser.minddata_parser import MinddataParser
 from mindspore.profiler.parser.minddata_analyzer import MinddataProfilingAnalyzer
