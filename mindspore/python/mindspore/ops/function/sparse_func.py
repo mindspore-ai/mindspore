@@ -15,8 +15,7 @@
 
 """Defines sparse operators with functional form."""
 
-from ..primitive import constexpr, Primitive
-from ..operations.sparse_ops import (
+from mindspore.ops.operations.sparse_ops import (
     DenseToCSRSparseMatrix,
     CSRSparseMatrixToSparseTensor,
     SparseConcat,
@@ -25,6 +24,7 @@ from ..operations.sparse_ops import (
     SparseMatrixSoftmax,
     CSRSparseMatrixToDense
 )
+from ..primitive import constexpr, Primitive
 from ..operations.array_ops import GatherNd, Coalesce
 from ..operations import _csr_ops
 from ...common import CSRTensor, COOTensor, Tensor
