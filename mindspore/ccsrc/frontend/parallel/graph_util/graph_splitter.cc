@@ -341,6 +341,7 @@ distributed::DistExecutionMode GenerateStrategy() {
   enable_embedding_cache = ps::PSContext::instance()->cache_enable();
 #endif
   std::string parallel_mode = parallel::ParallelContext::GetInstance()->parallel_mode();
+  MS_LOG(INFO) << "Current parallel mode is " << parallel_mode;
   bool using_parallel = (parallel_mode != parallel::kStandalone) ? true : false;
   // The conditions' priority is: EmbeddingCache > Parameter Server > General.
   if (enable_embedding_cache) {
@@ -352,6 +353,7 @@ distributed::DistExecutionMode GenerateStrategy() {
   } else {
     strategy = distributed::DistExecutionMode::kGeneralMode;
   }
+  MS_LOG(INFO) << "Generated distributed strategy is " << strategy;
   return strategy;
 }
 
@@ -1074,18 +1076,24 @@ void GraphSplitter::Run() {
   DyeGraph();
   // If all nodes are all on this process, no need to split the graph. So return.
   if (!NeedSplitGraph()) {
-    MS_LOG(INFO) << "No need to build and split distributed graph.";
+    MS_LOG(INFO) << "All nodes are on this precoess so there's no need to build and split distributed graph.";
     return;
   }
 
   // Step 2: Create exec_mode_ according to the current execution mode.
   CreateExecutionMode();
 
+  // If this is general mode but no label is set, do not split graph to avoid unexpected optimizing out.
+  if (mode_ == distributed::DistExecutionMode::kGeneralMode && !GraphHasLabel(func_graph_)) {
+    MS_LOG(INFO) << "This graph has no label on it in general mode. So no need to split.";
+    return;
+  }
+
   // Step 3: Prebuild the distributed graph before it gets split.
   exec_mode_->PreBuildDistributedGraph();
 
   if (!NeedSplitGraph()) {
-    MS_LOG(INFO) << "No need to build and split distributed graph.";
+    MS_LOG(INFO) << "All nodes are on this precoess so there's no need to build and split distributed graph.";
     return;
   }
 
@@ -1150,6 +1158,8 @@ void GraphSplitter::CreateExecutionMode() {
     exec_mode_ = std::make_unique<ParameterServerMode>(func_graph_, &node_labels_, rank_id_, role_);
   } else if (mode_ == distributed::DistExecutionMode::kEmbeddingCacheMode) {
     exec_mode_ = std::make_unique<EmbeddingCacheMode>(func_graph_, &node_labels_, rank_id_, role_);
+  } else if (mode_ == distributed::DistExecutionMode::kParallelMode) {
+    exec_mode_ = std::make_unique<ParallelMode>(func_graph_, &node_labels_, rank_id_, role_);
   } else if (mode_ == distributed::DistExecutionMode::kGeneralMode) {
     exec_mode_ = std::make_unique<GeneralMode>(func_graph_, &node_labels_, rank_id_, role_);
   }
