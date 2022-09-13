@@ -60,7 +60,7 @@ abstract::ShapePtr SparseSegmentSqrtNWithNumSegmentsInferShape(const PrimitivePt
   }
   if (!input_args[kInputIndex3]->BuildValue()->isa<AnyValue>() &&
       !input_args[kInputIndex3]->BuildValue()->isa<None>()) {
-    if (num_segments_shape.size() == kInputIndex1) {
+    if (!IsDynamic(num_segments_shape) && num_segments_shape.size() == kInputIndex1) {
       if (num_segments_shape[kInputIndex0] != kInputIndex1) {
         MS_EXCEPTION(ValueError) << "For " << prim_name << ", the num element of num_segments should be 1, but got ["
                                  << num_segments_shape[kInputIndex0] << "].";
