@@ -127,3 +127,24 @@ def test_dynamic_maxpool3d_with_argmax():
     output, argmax = dy_net(inputs, indices)
     assert output.shape == (4, 4, 1, 2, 1)
     assert argmax.shape == (4, 4, 1, 2, 1)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_maxpool3d_with_argmax_dynamic_shape():
+    """
+    Feature: MaxPool3DWithArgmax dynamic test.
+    Description: test MaxPool3DWithArgmax with dynamic shape.
+    Expectation: success.
+    """
+
+    attributes = {'ksize': 3, 'strides': 1, 'pads': 0, 'dilation': 1,
+                  'ceil_mode': False, 'data_format': 'NCDHW', 'argmax_type': mstype.int64}
+    x = Tensor(np.random.randn(5, 4, 3, 4, 3).astype(np.float32))
+    x_dyn = Tensor(shape=[None for _ in x.shape], dtype=mstype.float32)
+    net = MaxPool3DWithArgmaxNet(**attributes)
+    net.set_inputs(x_dyn)
+    output, argmax = net(x)
+    assert output.shape == (5, 4, 1, 2, 1)
+    assert argmax.shape == (5, 4, 1, 2, 1)
