@@ -56,12 +56,10 @@ ExecutionTree::~ExecutionTree() {
   if (numa_enable_) {
     handle_ = nullptr;
   }
-#if defined(ENABLE_TDTQUE)
   DataQueueOp *op = dynamic_cast<DataQueueOp *>(root_.get());
   if (op != nullptr) {
     op->StopWaiting();
   }
-#endif
 #endif
   (void)tg_->ServiceStop();
 }

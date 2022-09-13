@@ -335,12 +335,15 @@ Status ToDevice::GetDataInfo(std::vector<DataType> *const types, std::vector<Ten
 }
 
 Status ToDevice::Terminate() {
-#ifdef ENABLE_TDTQUE
-  std::shared_ptr<DatasetOp> root = std::shared_ptr<DatasetOp>(tree_adapter_->GetRoot());
-  CHECK_FAIL_RETURN_UNEXPECTED(root != nullptr, "Root is a nullptr.");
-  DataQueueOp *op = dynamic_cast<DataQueueOp *>(root.get());
-  CHECK_FAIL_RETURN_UNEXPECTED(op != nullptr, "StopSend only supported by DataQueueOp");
-  op->StopWaiting();
+#ifdef WITH_BACKEND
+  RETURN_UNEXPECTED_IF_NULL(MsContext::GetInstance());
+  if (MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice) {
+    std::shared_ptr<DatasetOp> root = std::shared_ptr<DatasetOp>(tree_adapter_->GetRoot());
+    CHECK_FAIL_RETURN_UNEXPECTED(root != nullptr, "Root is a nullptr.");
+    DataQueueOp *op = dynamic_cast<DataQueueOp *>(root.get());
+    CHECK_FAIL_RETURN_UNEXPECTED(op != nullptr, "StopSend only supported by DataQueueOp");
+    op->StopWaiting();
+  }
 #endif
   return TreeConsumer::Terminate();
 }

@@ -37,6 +37,8 @@ std::string GetSocVersion();
 // Some NOP nodes have be hide in execution order, it doesn't have output device address, this function creates
 // output device address for these nodes, and the output device address is the same with input device address.
 void AssignOutputNopNodeDeviceAddress(const KernelGraphPtr &graph, const device::DeviceContext *device_context);
+
+std::string GetErrorMsg(uint32_t rt_error_code);
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

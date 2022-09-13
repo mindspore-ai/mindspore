@@ -151,7 +151,7 @@ Status Decode(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
 
 Status DecodeCv(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output);
 
-bool IsNonEmptyJPEG(const std::shared_ptr<Tensor> &input);
+DATASET_API bool IsNonEmptyJPEG(const std::shared_ptr<Tensor> &input);
 
 bool IsNonEmptyPNG(const std::shared_ptr<Tensor> &input);
 

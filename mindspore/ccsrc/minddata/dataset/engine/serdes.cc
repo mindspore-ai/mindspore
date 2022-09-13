@@ -26,6 +26,7 @@
 #else
 #include "mindspore/lite/src/common/file_utils.h"
 #endif
+#include "minddata/dataset/kernels/image/dvpp/acl_adapter.h"
 
 namespace mindspore {
 namespace dataset {
@@ -299,12 +300,14 @@ Serdes::InitializeFuncPtr() {
   ops_ptr[vision::kCutMixBatchOperation] = &(vision::CutMixBatchOperation::from_json);
   ops_ptr[vision::kCutOutOperation] = &(vision::CutOutOperation::from_json);
   ops_ptr[vision::kDecodeOperation] = &(vision::DecodeOperation::from_json);
-#ifdef ENABLE_ACL
-  ops_ptr[vision::kDvppCropJpegOperation] = &(vision::DvppCropJpegOperation::from_json);
-  ops_ptr[vision::kDvppDecodeResizeOperation] = &(vision::DvppDecodeResizeOperation::from_json);
-  ops_ptr[vision::kDvppDecodeResizeCropOperation] = &(vision::DvppDecodeResizeCropOperation::from_json);
-  ops_ptr[vision::kDvppNormalizeOperation] = &(vision::DvppNormalizeOperation::from_json);
-  ops_ptr[vision::kDvppResizeJpegOperation] = &(vision::DvppResizeJpegOperation::from_json);
+#if defined(WITH_BACKEND) || defined(ENABLE_ACL)
+  if (AclAdapter::GetInstance().HasAclPlugin()) {
+    ops_ptr[vision::kDvppCropJpegOperation] = &(vision::DvppCropJpegOperation::from_json);
+    ops_ptr[vision::kDvppDecodeResizeOperation] = &(vision::DvppDecodeResizeOperation::from_json);
+    ops_ptr[vision::kDvppDecodeResizeCropOperation] = &(vision::DvppDecodeResizeCropOperation::from_json);
+    ops_ptr[vision::kDvppNormalizeOperation] = &(vision::DvppNormalizeOperation::from_json);
+    ops_ptr[vision::kDvppResizeJpegOperation] = &(vision::DvppResizeJpegOperation::from_json);
+  }
 #endif
   ops_ptr[vision::kEqualizeOperation] = &(vision::EqualizeOperation::from_json);
   ops_ptr[vision::kGaussianBlurOperation] = &(vision::GaussianBlurOperation::from_json);

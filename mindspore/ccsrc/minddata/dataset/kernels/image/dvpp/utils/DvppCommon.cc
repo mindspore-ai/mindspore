@@ -354,7 +354,7 @@ APP_ERROR DvppCommon::SetDvppPicDescData(const DvppDataInfo &dataInfo, acldvppPi
     MS_LOG(ERROR) << "Failed to set size for dvpp picture description, ret = " << ret << ".";
     return ret;
   }
-  ret = acldvppSetPicDescFormat(&picDesc, dataInfo.format);
+  ret = acldvppSetPicDescFormat(&picDesc, static_cast<enum acldvppPixelFormat>(dataInfo.format));
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to set format for dvpp picture description, ret = " << ret << ".";
     return ret;
@@ -610,8 +610,8 @@ APP_ERROR DvppCommon::CombineResizeProcess(DvppDataInfo &input, const DvppDataIn
     return ret;
   }
   // Get widthStride and heightStride for input and output image according to the format
-  ret =
-    GetVpcInputStrideSize(input.widthStride, input.heightStride, input.format, input.widthStride, input.heightStride);
+  ret = GetVpcInputStrideSize(input.widthStride, input.heightStride, static_cast<enum acldvppPixelFormat>(input.format),
+                              input.widthStride, input.heightStride);
   if (ret != APP_ERR_OK) {
     return ret;
   }
@@ -620,13 +620,14 @@ APP_ERROR DvppCommon::CombineResizeProcess(DvppDataInfo &input, const DvppDataIn
   resizedImage_->width = output.width;
   resizedImage_->height = output.height;
   resizedImage_->format = output.format;
-  ret = GetVpcOutputStrideSize(output.width, output.height, output.format, resizedImage_->widthStride,
-                               resizedImage_->heightStride);
+  ret = GetVpcOutputStrideSize(output.width, output.height, static_cast<enum acldvppPixelFormat>(output.format),
+                               resizedImage_->widthStride, resizedImage_->heightStride);
   if (ret != APP_ERR_OK) {
     return ret;
   }
   // Get output buffer size for resize output
-  ret = GetVpcDataSize(output.width, output.height, output.format, resizedImage_->dataSize);
+  ret = GetVpcDataSize(output.width, output.height, static_cast<enum acldvppPixelFormat>(output.format),
+                       resizedImage_->dataSize);
   if (ret != APP_ERR_OK) {
     return ret;
   }
@@ -783,7 +784,8 @@ APP_ERROR DvppCommon::CombineCropProcess(DvppCropInputInfo &input, const DvppDat
   }
 
   // Get widthStride and heightStride for input and output image according to the format
-  APP_ERROR ret = GetVpcInputStrideSize(input.dataInfo.width, input.dataInfo.height, input.dataInfo.format,
+  APP_ERROR ret = GetVpcInputStrideSize(input.dataInfo.width, input.dataInfo.height,
+                                        static_cast<enum acldvppPixelFormat>(input.dataInfo.format),
                                         input.dataInfo.widthStride, input.dataInfo.heightStride);
   if (ret != APP_ERR_OK) {
     return ret;
@@ -797,13 +799,14 @@ APP_ERROR DvppCommon::CombineCropProcess(DvppCropInputInfo &input, const DvppDat
   cropImage_->width = output.width;
   cropImage_->height = output.height;
   cropImage_->format = output.format;
-  ret = GetVpcOutputStrideSize(output.width, output.height, output.format, cropImage_->widthStride,
-                               cropImage_->heightStride);
+  ret = GetVpcOutputStrideSize(output.width, output.height, static_cast<enum acldvppPixelFormat>(output.format),
+                               cropImage_->widthStride, cropImage_->heightStride);
   if (ret != APP_ERR_OK) {
     return ret;
   }
   // Get output buffer size for resize output
-  ret = GetVpcDataSize(output.width, output.height, output.format, cropImage_->dataSize);
+  ret = GetVpcDataSize(output.width, output.height, static_cast<enum acldvppPixelFormat>(output.format),
+                       cropImage_->dataSize);
   if (ret != APP_ERR_OK) {
     return ret;
   }
@@ -1646,7 +1649,7 @@ APP_ERROR DvppCommon::JpegEncode(const DvppDataInfo &input, DvppDataInfo &output
 APP_ERROR DvppCommon::GetJpegEncodeStrideSize(const std::shared_ptr<DvppDataInfo> &inputImage) {
   uint32_t inputWidth = inputImage->width;
   uint32_t inputHeight = inputImage->height;
-  acldvppPixelFormat format = inputImage->format;
+  acldvppPixelFormat format = static_cast<enum acldvppPixelFormat>(inputImage->format);
   uint32_t widthStride;
   uint32_t heightStride;
   uint32_t encodedBufferSize;

@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace dataset {
 class Tensor;
-class DeviceTensor : public Tensor {
+class DATASET_API DeviceTensor : public Tensor {
  public:
   DeviceTensor(const TensorShape &shape, const DataType &type);
 
@@ -63,9 +63,7 @@ class DeviceTensor : public Tensor {
   Status SetYuvStrideShape_(const uint32_t &width, const uint32_t &widthStride, const uint32_t &height,
                             const uint32_t &heightStride);
 
-#ifdef ENABLE_ACL
   Status DataPop_(std::shared_ptr<Tensor> *host_tensor);
-#endif
 
   std::vector<uint32_t> YUV_shape_;  // YUV_shape_ = {width, widthStride, height, heightStride}
 

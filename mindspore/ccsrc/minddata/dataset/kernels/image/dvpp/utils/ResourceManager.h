@@ -27,35 +27,9 @@
 #include "mindspore/ccsrc/cxx_api/graph/acl/acl_env_guard.h"
 #include "minddata/dataset/kernels/image/dvpp/utils/CommonDataType.h"
 #include "minddata/dataset/kernels/image/dvpp/utils/ErrorCode.h"
+#include "minddata/dataset/kernels/image/dvpp/utils/resouce_info.h"
 #include "minddata/dataset/util/log_adapter.h"
-
-enum ModelLoadMethod {
-  LOAD_FROM_FILE = 0,       // Loading from file, memory of model and weights are managed by ACL
-  LOAD_FROM_MEM,            // Loading from memory, memory of model and weights are managed by ACL
-  LOAD_FROM_FILE_WITH_MEM,  // Loading from file, memory of model and weight are managed by user
-  LOAD_FROM_MEM_WITH_MEM    // Loading from memory, memory of model and weight are managed by user
-};
-
-struct ModelInfo {
-  std::string modelName;
-  std::string modelPath;               // Path of om model file
-  size_t modelFileSize;                // Size of om model file
-  std::shared_ptr<void> modelFilePtr;  // Smart pointer of model file data
-  uint32_t modelWidth;                 // Input width of model
-  uint32_t modelHeight;                // Input height of model
-  ModelLoadMethod method;              // Loading method of model
-};
-
-// Device resource info, such as model infos, etc
-struct DeviceResInfo {
-  std::vector<ModelInfo> modelInfos;
-};
-
-struct ResourceInfo {
-  std::set<int> deviceIds;
-  std::string singleOpFolderPath;
-  std::unordered_map<int, DeviceResInfo> deviceResInfos;  // map <deviceId, deviceResourceInfo>
-};
+#include "acl/acl.h"
 
 APP_ERROR ExistFile(const std::string &filePath);
 

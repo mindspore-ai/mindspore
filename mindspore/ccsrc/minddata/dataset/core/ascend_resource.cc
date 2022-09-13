@@ -17,28 +17,30 @@
 #include "include/api/types.h"
 #include "minddata/dataset/core/ascend_resource.h"
 #include "minddata/dataset/core/type_id.h"
+#include "minddata/dataset/kernels/image/dvpp/acl_adapter.h"
+#include "minddata/dataset/kernels/image/dvpp/utils/CommonDataType.h"
+#include "minddata/dataset/kernels/image/dvpp/utils/ErrorCode.h"
 #include "minddata/dataset/kernels/image/image_utils.h"
 
 namespace mindspore {
 namespace dataset {
-
 Status AscendResource::InitResource(uint32_t device_id) {
   ResourceInfo resource;
   resource.deviceIds.insert(device_id);
-  ascend_resource_ = ResourceManager::GetInstance();
-  APP_ERROR ret = ascend_resource_->InitResource(resource);
+  APP_ERROR ret = AclAdapter::GetInstance().InitResource(&resource);
   if (ret != APP_ERR_OK) {
-    ascend_resource_->Release();
+    AclAdapter::GetInstance().Release();
     std::string err_msg = "Error in Init D-chip:" + std::to_string(ret);
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
   int cur_device_id = *(resource.deviceIds.begin());
-  aclrtContext context = ascend_resource_->GetContext(cur_device_id);
-  processor_ = std::make_shared<MDAclProcess>(context, false);
-  ret = processor_->InitResource();
+  void *context = AclAdapter::GetInstance().GetContext(cur_device_id);
+  processor_ = std::shared_ptr<void>(AclAdapter::GetInstance().CreateAclProcess(context, false, nullptr, nullptr),
+                                     [](void *ptr) { AclAdapter::GetInstance().DestroyAclProcess(ptr); });
+  ret = AclAdapter::GetInstance().InitAclProcess(processor_.get());
   if (ret != APP_ERR_OK) {
-    ascend_resource_->Release();
+    AclAdapter::GetInstance().Release();
     std::string err_msg = "Error in Init resource:" + std::to_string(ret);
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_UNEXPECTED(err_msg);
@@ -48,7 +50,7 @@ Status AscendResource::InitResource(uint32_t device_id) {
 }
 
 Status AscendResource::FinalizeResource() {
-  processor_->Release();
+  AclAdapter::GetInstance().ReleaseAclProcess(processor_.get());
   return Status::OK();
 }
 
@@ -64,9 +66,9 @@ Status AscendResource::Sink(const mindspore::MSTensor &host_input, std::shared_p
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
 
-  APP_ERROR ret = processor_->H2D_Sink(de_input, *device_input);
+  APP_ERROR ret = AclAdapter::GetInstance().H2D_Sink(processor_.get(), de_input, device_input);
   if (ret != APP_ERR_OK) {
-    ascend_resource_->Release();
+    AclAdapter::GetInstance().Release();
     std::string err_msg = "Error in data sink process:" + std::to_string(ret);
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_UNEXPECTED(err_msg);
@@ -76,9 +78,9 @@ Status AscendResource::Sink(const mindspore::MSTensor &host_input, std::shared_p
 }
 
 Status AscendResource::Pop(const std::shared_ptr<DeviceTensor> &device_output, std::shared_ptr<Tensor> *host_output) {
-  APP_ERROR ret = processor_->D2H_Pop(device_output, *host_output);
+  APP_ERROR ret = AclAdapter::GetInstance().D2H_Pop(processor_.get(), device_output, host_output);
   if (ret != APP_ERR_OK) {
-    ascend_resource_->Release();
+    AclAdapter::GetInstance().Release();
     std::string err_msg = "Error in data pop processing:" + std::to_string(ret);
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_UNEXPECTED(err_msg);
@@ -87,9 +89,9 @@ Status AscendResource::Pop(const std::shared_ptr<DeviceTensor> &device_output, s
 }
 
 Status AscendResource::DeviceDataRelease() {
-  APP_ERROR ret = processor_->device_memory_release();
+  APP_ERROR ret = AclAdapter::GetInstance().DeviceMemoryRelease(processor_.get());
   if (ret != APP_ERR_OK) {
-    ascend_resource_->Release();
+    AclAdapter::GetInstance().Release();
     std::string err_msg = "Error in device data release:" + std::to_string(ret);
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_UNEXPECTED(err_msg);
@@ -99,9 +101,9 @@ Status AscendResource::DeviceDataRelease() {
 
 std::shared_ptr<void> AscendResource::GetInstance() { return processor_; }
 
-void *AscendResource::GetContext() { return processor_->GetContext(); }
+void *AscendResource::GetContext() { return AclAdapter::GetInstance().GetContextFromAclProcess(processor_.get()); }
 
-void *AscendResource::GetStream() { return processor_->GetStream(); }
+void *AscendResource::GetStream() { return AclAdapter::GetInstance().GetStreamFromAclProcess(processor_.get()); }
 
 }  // namespace dataset
 }  // namespace mindspore

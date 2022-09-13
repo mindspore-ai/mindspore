@@ -18,20 +18,11 @@
 
 #include "CommonDataType.h"
 #include "ErrorCode.h"
+#include "resouce_info.h"
+#include "acl/ops/acl_dvpp.h"
 
 const int MODULUS_NUM_2 = 2;
 const uint32_t ODD_NUM_1 = 1;
-
-struct Rect {
-  /* left location of the rectangle */
-  uint32_t x;
-  /* top location of the rectangle */
-  uint32_t y;
-  /* with of the rectangle */
-  uint32_t width;
-  /* height of the rectangle */
-  uint32_t height;
-};
 
 struct DvppBaseData {
   uint32_t dataSize;  // Size of data in byte

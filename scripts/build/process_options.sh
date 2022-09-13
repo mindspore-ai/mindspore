@@ -67,7 +67,7 @@ process_options()
         export ENABLE_MAKE_CLEAN="$OPTARG"
         echo "enable make clean" ;;
       e)
-        export DEVICE=$OPTARG ;;
+        export DEVICE=$DEVICE:$OPTARG ;;
       M)
         check_on_off $OPTARG M
         export ENABLE_MPI="$OPTARG" ;;

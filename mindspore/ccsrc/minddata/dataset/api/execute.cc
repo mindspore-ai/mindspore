@@ -26,11 +26,9 @@
 #include "minddata/dataset/kernels/ir/tensor_operation.h"
 #include "minddata/dataset/kernels/tensor_op.h"
 #include "minddata/dataset/util/log_adapter.h"
-#ifdef ENABLE_ACL
 #include "minddata/dataset/core/ascend_resource.h"
 #include "minddata/dataset/kernels/image/dvpp/utils/CommonDataType.h"
 #include "minddata/dataset/kernels/ir/vision/ascend_vision_ir.h"
-#endif
 
 namespace mindspore {
 namespace dataset {
@@ -39,7 +37,7 @@ using json = nlohmann::json;
 struct Execute::ExtraInfo {
   std::multimap<std::string, std::vector<uint32_t>> aipp_cfg_;
   bool init_with_shared_ptr_ = true;  // Initial execute object with shared_ptr as default
-#ifdef ENABLE_ACL
+#if defined(WITH_BACKEND) || defined(ENABLE_ACL)
   std::multimap<std::string, std::string> op2para_map_ = {{vision::kDvppCropJpegOperation, "size"},
                                                           {vision::kDvppDecodeResizeOperation, "size"},
                                                           {vision::kDvppDecodeResizeCropOperation, "crop_size"},
@@ -51,8 +49,8 @@ struct Execute::ExtraInfo {
 };
 
 Status Execute::InitResource(MapTargetDevice device_type, uint32_t device_id) {
-#ifdef ENABLE_ACL
   if (device_type_ == MapTargetDevice::kAscend310) {
+#if defined(WITH_BACKEND) || defined(ENABLE_ACL)
     device_resource_ = std::make_shared<AscendResource>();
     Status rc = device_resource_->InitResource(device_id);
     if (!rc.IsOk()) {
@@ -61,8 +59,8 @@ Status Execute::InitResource(MapTargetDevice device_type, uint32_t device_id) {
       MS_LOG(ERROR) << err_msg;
       RETURN_STATUS_UNEXPECTED(err_msg);
     }
-  }
 #endif
+  }
   return Status::OK();
 }
 
@@ -154,7 +152,6 @@ Execute::Execute(const std::vector<TensorTransform *> &ops, MapTargetDevice devi
 }
 
 Execute::~Execute() {
-#ifdef ENABLE_ACL
   if (device_type_ == MapTargetDevice::kAscend310) {
     if (device_resource_) {
       auto rc = device_resource_->FinalizeResource();
@@ -165,7 +162,6 @@ Execute::~Execute() {
       MS_LOG(ERROR) << "Device resource is nullptr which is illegal under case Ascend310";
     }
   }
-#endif
 }
 
 Status Execute::BuildTransforms() {
@@ -240,7 +236,7 @@ Status Execute::operator()(const mindspore::MSTensor &input, mindspore::MSTensor
     *output = mindspore::MSTensor(std::make_shared<DETensor>(de_tensor));
   } else if (device_type_ ==
              MapTargetDevice::kAscend310) {  // Ascend310 case, where we must set Ascend resource on each operators
-#ifdef ENABLE_ACL
+#if defined(WITH_BACKEND) || defined(ENABLE_ACL)
     CHECK_FAIL_RETURN_UNEXPECTED(device_resource_, "Device resource is nullptr which is illegal under case Ascend310.");
     // Sink data from host into device
     std::shared_ptr<mindspore::dataset::DeviceTensor> device_input;
@@ -318,7 +314,6 @@ Status Execute::operator()(const std::vector<MSTensor> &input_tensor_list, std::
     CHECK_FAIL_RETURN_UNEXPECTED(!output_tensor_list->empty(), "Output Tensor is not valid.");
   } else if (device_type_ ==
              MapTargetDevice::kAscend310) {  // Ascend310 case, where we must set Ascend resource on each operators
-#ifdef ENABLE_ACL
     CHECK_FAIL_RETURN_UNEXPECTED(device_resource_, "Device resource is nullptr which is illegal under case Ascend310.");
     for (auto &input_tensor : input_tensor_list) {
       // Sink each data from host into device
@@ -346,7 +341,6 @@ Status Execute::operator()(const std::vector<MSTensor> &input_tensor_list, std::
       RETURN_IF_NOT_OK(device_resource_->DeviceDataRelease());
     }
     CHECK_FAIL_RETURN_UNEXPECTED(!output_tensor_list->empty(), "Output Tensor vector is empty.");
-#endif
   } else {
     std::string err_msg = "Your input device is not supported. (Option: CPU or Ascend310)";
     MS_LOG(ERROR) << err_msg;
@@ -449,10 +443,8 @@ std::vector<uint32_t> AippSizeFilter(const std::vector<uint32_t> &resize_para, c
     }
   }
 
-#ifdef ENABLE_ACL
   aipp_size[0] = DVPP_ALIGN_UP(aipp_size[0], VPC_HEIGHT_ALIGN);  // H
   aipp_size[1] = DVPP_ALIGN_UP(aipp_size[1], VPC_WIDTH_ALIGN);   // W
-#endif
   return aipp_size;
 }
 
@@ -540,7 +532,7 @@ std::string Execute::AippCfgGenerator() {
     MS_LOG(ERROR) << "info_ is null";
     return "";
   }
-#ifdef ENABLE_ACL
+#if defined(WITH_BACKEND) || defined(ENABLE_ACL)
   if (info_->init_with_shared_ptr_) {
     auto rc = ParseTransforms();
     RETURN_SECOND_IF_ERROR(rc, "");

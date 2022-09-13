@@ -398,7 +398,7 @@ APP_ERROR MDAclProcess::JPEG_R(const DvppDataInfo &ImageInfo) {
   return APP_ERR_OK;
 }
 
-APP_ERROR MDAclProcess::JPEG_R(std::string &last_step) {
+APP_ERROR MDAclProcess::JPEG_R(const std::string &last_step) {
   RunTimeUtil time_util;
   time_util.Start();
   // deal with image
@@ -446,7 +446,7 @@ APP_ERROR MDAclProcess::JPEG_R_(const DvppDataInfo &ImageInfo) {
   return APP_ERR_OK;
 }
 
-APP_ERROR MDAclProcess::JPEG_R_(std::string &last_step) {
+APP_ERROR MDAclProcess::JPEG_R_(const std::string &last_step) {
   std::shared_ptr<DvppDataInfo> input_image;
   if (last_step == "Decode") {
     input_image = dvppCommon_->GetDecodedImage();
@@ -516,7 +516,7 @@ APP_ERROR MDAclProcess::JPEG_C(const DvppDataInfo &ImageInfo) {
   return APP_ERR_OK;
 }
 
-APP_ERROR MDAclProcess::JPEG_C(std::string &last_step) {
+APP_ERROR MDAclProcess::JPEG_C(const std::string &last_step) {
   RunTimeUtil time_util;
   time_util.Start();
   // deal with image
@@ -572,7 +572,7 @@ APP_ERROR MDAclProcess::JPEG_C_(const DvppDataInfo &ImageInfo) {
   return APP_ERR_OK;
 }
 
-APP_ERROR MDAclProcess::JPEG_C_(std::string &last_step) {
+APP_ERROR MDAclProcess::JPEG_C_(const std::string &last_step) {
   std::shared_ptr<DvppDataInfo> input_image;
   if (last_step == "Resize") {
     input_image = dvppCommon_->GetResizedImage();

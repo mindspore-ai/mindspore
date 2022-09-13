@@ -21,13 +21,11 @@
 #include <string>
 #include <vector>
 
-#include "acl/acl.h"
 #include "minddata/dataset/core/data_type.h"
 #include "minddata/dataset/core/device_resource.h"
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/kernels/image/dvpp/utils/ErrorCode.h"
-#include "minddata/dataset/kernels/image/dvpp/utils/MDAclProcess.h"
-#include "minddata/dataset/kernels/image/dvpp/utils/ResourceManager.h"
+#include "minddata/dataset/kernels/image/dvpp/acl_adapter.h"
 #include "minddata/dataset/kernels/tensor_op.h"
 #include "minddata/dataset/util/log_adapter.h"
 #include "minddata/dataset/util/status.h"
@@ -56,7 +54,7 @@ class DvppDecodeResizeJpegOp : public TensorOp {
   int32_t resized_height_;
   int32_t resized_width_;
 
-  std::shared_ptr<MDAclProcess> processor_;
+  std::shared_ptr<void> processor_;
 };
 }  // namespace dataset
 }  // namespace mindspore

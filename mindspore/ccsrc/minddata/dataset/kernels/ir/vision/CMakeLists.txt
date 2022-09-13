@@ -73,12 +73,7 @@ set(DATASET_KERNELS_IR_VISION_SRC_FILES
         trivial_augment_wide_ir.cc
         uniform_aug_ir.cc
         vertical_flip_ir.cc
+        ascend_vision_ir.cc
         )
-
-if(ENABLE_ACL)
-    set(DATASET_KERNELS_IR_VISION_SRC_FILES
-            ${DATASET_KERNELS_IR_VISION_SRC_FILES}
-            ascend_vision_ir.cc)
-endif()
 
 add_library(kernels-ir-vision OBJECT ${DATASET_KERNELS_IR_VISION_SRC_FILES})

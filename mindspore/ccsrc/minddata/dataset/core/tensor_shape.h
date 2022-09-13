@@ -50,7 +50,7 @@ namespace dataset {
 //              <2,?,?,?> (all dims but the 0th dim are unknown)
 
 /// \brief  TensorShape supports any dim > 0 and < 2^31-1
-class TensorShape {
+class DATASET_API TensorShape {
  public:
   static constexpr dsize_t kDimUnknown = -1;  // constant for an unknown dimension
 

@@ -22,7 +22,6 @@
 #include "minddata/dataset/core/data_type.h"
 #include "minddata/dataset/kernels/image/dvpp/dvpp_decode_resize_crop_jpeg_op.h"
 #include "minddata/dataset/kernels/image/dvpp/utils/CommonDataType.h"
-#include "minddata/dataset/kernels/image/dvpp/utils/MDAclProcess.h"
 #include "minddata/dataset/kernels/image/image_utils.h"
 
 namespace mindspore {
@@ -32,14 +31,14 @@ Status DvppDecodeResizeCropJpegOp::Compute(const std::shared_ptr<DeviceTensor> &
   IO_CHECK(input, output);
   try {
     CHECK_FAIL_RETURN_UNEXPECTED(input->GetDeviceBuffer() != nullptr, "The input image buffer on device is empty");
-    APP_ERROR ret = processor_->JPEG_DRC();
+    APP_ERROR ret = AclAdapter::GetInstance().JPEG_DRC(processor_.get());
     if (ret != APP_ERR_OK) {
-      ret = processor_->Release();
+      ret = AclAdapter::GetInstance().ReleaseAclProcess(processor_.get());
       CHECK_FAIL_RETURN_UNEXPECTED(ret == APP_ERR_OK, "Release memory failed.");
       std::string error = "Error in dvpp processing:" + std::to_string(ret);
       RETURN_STATUS_UNEXPECTED(error);
     }
-    std::shared_ptr<DvppDataInfo> CropOut(processor_->Get_Croped_DeviceData());
+    DvppDataInfo *CropOut = AclAdapter::GetInstance().GetCropedDeviceData(processor_.get());
 
     const TensorShape dvpp_shape({1, 1, 1});
     const DataType dvpp_data_type(DataType::DE_UINT8);
@@ -71,35 +70,37 @@ Status DvppDecodeResizeCropJpegOp::Compute(const std::shared_ptr<Tensor> &input,
     imageInfo.data = static_cast<void *>(buffer);
     ResourceInfo resource;
     resource.deviceIds.insert(0);
-    std::shared_ptr<ResourceManager> instance = ResourceManager::GetInstance();
-    APP_ERROR ret = instance->InitResource(resource);
+    APP_ERROR ret = AclAdapter::GetInstance().InitResource(&resource);
     if (ret != APP_ERR_OK) {
-      instance->Release();
+      AclAdapter::GetInstance().Release();
       std::string error = "Error in Init D-chip:" + std::to_string(ret);
       RETURN_STATUS_UNEXPECTED(error);
     }
     int deviceId = *(resource.deviceIds.begin());
-    aclrtContext context = instance->GetContext(deviceId);
+    void *context = AclAdapter::GetInstance().GetContext(deviceId);
     // Second part end where we initialize the resource of D chip and set up all configures
-    MDAclProcess processor(resized_width_, resized_height_, crop_width_, crop_height_, context, true);
-    ret = processor.InitResource();
+    std::shared_ptr<void> processor(
+      AclAdapter::GetInstance().CreateAclProcessWithResize(resized_width_, resized_height_, crop_width_, crop_height_,
+                                                           context, true, nullptr, nullptr),
+      [](void *ptr) { AclAdapter::GetInstance().DestroyAclProcess(ptr); });
+    ret = AclAdapter::GetInstance().InitAclProcess(processor.get());
+
     if (ret != APP_ERR_OK) {
-      instance->Release();
+      AclAdapter::GetInstance().Release();
       std::string error = "Error in Init resource:" + std::to_string(ret);
       RETURN_STATUS_UNEXPECTED(error);
     }
 
-    ret = processor.JPEG_DRC(imageInfo);
+    ret = AclAdapter::GetInstance().JPEG_DRC_WITH_DATA(processor.get(), imageInfo);
     if (ret != APP_ERR_OK) {
-      instance->Release();
+      AclAdapter::GetInstance().Release();
       std::string error = "Error in dvpp processing:" + std::to_string(ret);
       RETURN_STATUS_UNEXPECTED(error);
     }
 
     // Third part end where we execute the core function of dvpp
-    auto data = std::static_pointer_cast<unsigned char>(processor.Get_Memory_Data());
-    unsigned char *ret_ptr = data.get();
-    std::shared_ptr<DvppDataInfo> CropOut(processor.Get_Croped_DeviceData());
+    unsigned char *ret_ptr = static_cast<unsigned char *>(AclAdapter::GetInstance().GetMemoryData(processor.get()));
+    DvppDataInfo *CropOut = AclAdapter::GetInstance().GetCropedDeviceData(processor.get());
     uint32_t dvpp_length = CropOut->dataSize;
     const TensorShape dvpp_shape({dvpp_length, 1, 1});
     const DataType dvpp_data_type(DataType::DE_UINT8);
@@ -108,9 +109,9 @@ Status DvppDecodeResizeCropJpegOp::Compute(const std::shared_ptr<Tensor> &input,
       std::string error = "[ERROR] Fail to get the Output result from memory!";
       RETURN_STATUS_UNEXPECTED(error);
     }
-    ret = processor.device_memory_release();
+    ret = AclAdapter::GetInstance().DeviceMemoryRelease(processor.get());
     CHECK_FAIL_RETURN_UNEXPECTED(ret == APP_ERR_OK, "Release device memory failed.");
-    ret = processor.Release();
+    ret = AclAdapter::GetInstance().ReleaseAclProcess(processor.get());
     CHECK_FAIL_RETURN_UNEXPECTED(ret == APP_ERR_OK, "Release host memory failed.");
     // Last part end where we transform the processed data into a tensor which can be applied in later units.
   } catch (const std::exception &e) {
@@ -138,13 +139,13 @@ Status DvppDecodeResizeCropJpegOp::OutputShape(const std::vector<TensorShape> &i
 }
 
 Status DvppDecodeResizeCropJpegOp::SetAscendResource(const std::shared_ptr<DeviceResource> &resource) {
-  processor_ = std::static_pointer_cast<MDAclProcess>(resource->GetInstance());
+  processor_ = resource->GetInstance();
   if (!processor_) {
     RETURN_STATUS_UNEXPECTED("Resource initialize fail, please check your env");
   }
-  APP_ERROR ret = processor_->SetResizeParas(resized_width_, resized_height_);
+  APP_ERROR ret = AclAdapter::GetInstance().SetResizeParas(processor_.get(), resized_width_, resized_height_);
   CHECK_FAIL_RETURN_UNEXPECTED(ret == APP_ERR_OK, "SetResizeParas failed.");
-  ret = processor_->SetCropParas(crop_width_, crop_height_);
+  ret = AclAdapter::GetInstance().SetCropParas(processor_.get(), crop_width_, crop_height_);
   CHECK_FAIL_RETURN_UNEXPECTED(ret == APP_ERR_OK, "SetCropParas failed.");
   return Status::OK();
 }

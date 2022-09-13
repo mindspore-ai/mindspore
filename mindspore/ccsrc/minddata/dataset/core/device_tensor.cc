@@ -16,9 +16,7 @@
 
 #include "minddata/dataset/core/global_context.h"
 #include "minddata/dataset/core/device_tensor.h"
-#ifdef ENABLE_ACL
-#include "minddata/dataset/kernels/image/dvpp/utils/MDAclProcess.h"
-#endif
+#include "minddata/dataset/kernels/image/dvpp/acl_adapter.h"
 #include "minddata/dataset/util/status.h"
 
 namespace mindspore {
@@ -93,13 +91,14 @@ Status DeviceTensor::CreateFromDeviceMemory(const TensorShape &shape, const Data
 }
 
 const unsigned char *DeviceTensor::GetHostBuffer() {
-#ifdef ENABLE_ACL
-  Status rc = DataPop_(&host_data_tensor_);
-  if (!rc.IsOk()) {
-    MS_LOG(ERROR) << "Pop device data onto host fail, a nullptr will be returned";
-    return nullptr;
+  if (AclAdapter::GetInstance().HasAclPlugin()) {
+    Status rc = DataPop_(&host_data_tensor_);
+    if (!rc.IsOk()) {
+      MS_LOG(ERROR) << "Pop device data onto host fail, a nullptr will be returned";
+      return nullptr;
+    }
   }
-#endif
+
   if (!host_data_tensor_) {
     return nullptr;
   }
@@ -136,21 +135,20 @@ Status DeviceTensor::SetSize_(const uint32_t &new_size) {
   return Status::OK();
 }
 
-#ifdef ENABLE_ACL
 Status DeviceTensor::DataPop_(std::shared_ptr<Tensor> *host_tensor) {
   CHECK_FAIL_RETURN_UNEXPECTED(host_tensor != nullptr, "host tensor pointer is NULL.");
   void *resHostBuf = nullptr;
-  APP_ERROR ret = aclrtMallocHost(&resHostBuf, this->DeviceDataSize());
+  APP_ERROR ret = AclAdapter::GetInstance().MallocHost(&resHostBuf, this->DeviceDataSize());
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to allocate memory from host ret = " << ret;
     return Status(StatusCode::kMDNoSpace);
   }
 
-  std::shared_ptr<void> outBuf(resHostBuf, aclrtFreeHost);
+  std::shared_ptr<void> outBuf(resHostBuf, [](void *ptr) { AclAdapter::GetInstance().FreeHost(ptr); });
   auto processedInfo_ = outBuf;
   // Memcpy the output data from device to host
-  ret = aclrtMemcpy(outBuf.get(), this->DeviceDataSize(), this->GetDeviceBuffer(), this->DeviceDataSize(),
-                    ACL_MEMCPY_DEVICE_TO_HOST);
+  ret = AclAdapter::GetInstance().Memcpy(outBuf.get(), this->DeviceDataSize(), this->GetDeviceBuffer(),
+                                         this->DeviceDataSize(), 2);  // 2 means ACL_MEMCPY_DEVICE_TO_HOST
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to copy memory from device to host, ret = " << ret;
     return Status(StatusCode::kMDOutOfMemory);
@@ -182,6 +180,5 @@ Status DeviceTensor::DataPop_(std::shared_ptr<Tensor> *host_tensor) {
   MS_LOG(INFO) << "Successfully pop DeviceTensor data onto host";
   return Status::OK();
 }
-#endif
 }  // namespace dataset
 }  // namespace mindspore

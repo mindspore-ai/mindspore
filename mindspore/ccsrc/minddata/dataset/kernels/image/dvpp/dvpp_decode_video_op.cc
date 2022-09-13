@@ -23,7 +23,7 @@
 #include "minddata/dataset/core/data_type.h"
 #include "minddata/dataset/core/device_tensor.h"
 #include "minddata/dataset/kernels/image/dvpp/dvpp_decode_video_op.h"
-#include "minddata/dataset/kernels/image/dvpp/dvpp_video.h"
+#include "minddata/dataset/kernels/image/dvpp/acl_adapter.h"
 #include "minddata/dataset/util/path.h"
 
 namespace mindspore {
@@ -43,34 +43,35 @@ Status DvppDecodeVideoOp::Compute(const std::shared_ptr<Tensor> &input, std::sha
 
     ResourceInfo resource;
     resource.deviceIds.insert(0);
-    std::shared_ptr<ResourceManager> instance = ResourceManager::GetInstance();
-    APP_ERROR ret = instance->InitResource(resource);
+    APP_ERROR ret = AclAdapter::GetInstance().InitResource(&resource);
     if (ret != APP_ERR_OK) {
-      instance->Release();
+      AclAdapter::GetInstance().Release();
       std::string error = "DvppDecodeVideo: Error in Init D-chip: " + std::to_string(ret);
       RETURN_STATUS_UNEXPECTED(error);
     }
     int deviceId = *(resource.deviceIds.begin());
-    aclrtContext context = instance->GetContext(deviceId);
+    void *context = AclAdapter::GetInstance().GetContext(deviceId);
     // initialize the resource of D-chip and set up all configures
 
-    auto dvpp_video = std::make_shared<DvppVideo>(context, buffer, data_size, width_, height_, (uint32_t)en_type_,
-                                                  (uint32_t)format_, output_);
-    AclLiteError res = dvpp_video->Init();
+    auto dvpp_video = AclAdapter::GetInstance().CreateDvppVideo(context, buffer, data_size, width_, height_,
+                                                                static_cast<uint32_t>(en_type_),
+                                                                static_cast<uint32_t>(format_), output_);
+    AclLiteError res = AclAdapter::GetInstance().InitDvppVideo(dvpp_video);
     if (res != ACLLITE_OK) {
-      instance->Release();
+      (void)AclAdapter::GetInstance().CloseDvppVideo(dvpp_video);
+      AclAdapter::GetInstance().Release();
       std::string error = "DvppDecodeVideo: Failed to initialize DvppVideo:" + std::to_string(res);
       RETURN_STATUS_UNEXPECTED(error);
     }
 
-    res = dvpp_video->DumpFrame();
+    res = AclAdapter::GetInstance().DvppVideoDumpFrame(dvpp_video);
     if (res != ACLLITE_OK) {
-      dvpp_video->Close();
-      instance->Release();
+      (void)AclAdapter::GetInstance().CloseDvppVideo(dvpp_video);
+      AclAdapter::GetInstance().Release();
       std::string error = "DvppDecodeVideo: Error in DumpFrame:" + std::to_string(res);
       RETURN_STATUS_UNEXPECTED(error);
     }
-    dvpp_video->Close();
+    (void)AclAdapter::GetInstance().CloseDvppVideo(dvpp_video);
   } catch (const std::exception &e) {
     std::string error = "[ERROR] Error in DvppDecodeVideoOp:" + std::string(e.what());
     RETURN_STATUS_UNEXPECTED(error);
