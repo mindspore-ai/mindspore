@@ -103,7 +103,9 @@ int SparseAddGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   auto dense_shape = inputs.at(kSparseAddIndex2)->GetShapeVector();
   auto b_indices_shape = inputs.at(kSparseAddIndex3)->GetShapeVector();
   auto b_values_shape = inputs.at(kSparseAddIndex4)->GetShapeVector();
-  rank_ = a_indices_shape.at(1);
+  if (a_indices_shape.size() >= kDim2 && a_indices_shape.at(1) >= 0) {
+    rank_ = LongToSize(a_indices_shape.at(1));
+  }
   (void)std::transform(a_indices_shape.begin(), a_indices_shape.end(), std::back_inserter(a_indices_shape_),
                        [](int64_t x) { return x < 0 ? 0 : LongToSize(x); });
   (void)std::transform(a_values_shape.begin(), a_values_shape.end(), std::back_inserter(a_values_shape_),
@@ -114,7 +116,6 @@ int SparseAddGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
                        [](int64_t x) { return x < 0 ? 0 : LongToSize(x); });
   (void)std::transform(b_values_shape.begin(), b_values_shape.end(), std::back_inserter(b_values_shape_),
                        [](int64_t x) { return x < 0 ? 0 : LongToSize(x); });
-  // rank_ = input_shape_.size();
   a_indices_size_ = std::accumulate(a_indices_shape_.begin(), a_indices_shape_.end(), 1, std::multiplies{});
   a_values_size_ = std::accumulate(a_values_shape_.begin(), a_values_shape_.end(), 1, std::multiplies{});
   dense_shape_size_ = std::accumulate(dense_shape_.begin(), dense_shape_.end(), 1, std::multiplies{});

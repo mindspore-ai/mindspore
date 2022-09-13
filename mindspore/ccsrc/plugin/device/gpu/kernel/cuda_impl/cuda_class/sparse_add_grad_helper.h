@@ -152,8 +152,6 @@ class SparseAddGradHelperGpuKernel : public GpuKernelHelperBase {
   int CheckKernelParam() override {
     size_t dim = input_shapes_.at(0).size();
     if (dim != 1) {
-      MS_LOG(ERROR) << "For '" << kernel_name_ << "', the " << 0 << "(st/nd/rd/th) input dim should be 1,"
-                    << " but got " << dim;
       return -1;
     }
 
@@ -161,8 +159,6 @@ class SparseAddGradHelperGpuKernel : public GpuKernelHelperBase {
     for (size_t i = 1; i < size; i++) {
       size_t dim = input_shapes_.at(i).size();
       if (dim != kSparseAddGradIndicesDim) {
-        MS_LOG(ERROR) << "For '" << kernel_name_ << "', the " << i << "(st/nd/rd/th) input dim should be 2,"
-                      << " but got " << dim;
         return -1;
       }
     }
