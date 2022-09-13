@@ -2857,6 +2857,8 @@ __all__ = [
     'dropout',
     'conv3d_transpose',
     'conv2d',
-    'sigmoid'
+    'sigmoid',
+    'relu',
+    'relu6',
 ]
 __all__.sort()
