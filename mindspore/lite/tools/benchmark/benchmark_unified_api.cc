@@ -1131,7 +1131,11 @@ int BenchmarkUnifiedApi::RunBenchmark() {
   auto start_prepare_time = GetTimeUs();
 
   if (flags_->enable_gl_texture_) {
-    gl_runtime_.Init();
+    if (!gl_runtime_.Init()) {
+      MS_LOG(ERROR) << "opengl runtime init failed ";
+      std::cerr << "opengl runtime init failed ";
+      return RET_ERROR;
+    }
   }
 
   // Load graph
