@@ -28,10 +28,10 @@ constexpr size_t kTableExtend = 3;
 constexpr size_t kAlignOffset = 7;
 }  // namespace
 int FSEDecoder::FSECreateStatesForDecoding(const uint32_t *symbol_frequency, int symbol_frequency_count,
-                                           size_t table_log, uint16_t *new_state, uint8_t *bit_count,
+                                           size_t table_log, uint16_t *new_state_baseline, uint8_t *bit_count,
                                            uint16_t *symbol_table) {
   CHECK_NULL_RETURN(symbol_frequency);
-  CHECK_NULL_RETURN(new_state);
+  CHECK_NULL_RETURN(new_state_baseline);
   CHECK_NULL_RETURN(bit_count);
   CHECK_NULL_RETURN(symbol_table);
   const size_t table_size = 1u << table_log;
@@ -60,7 +60,7 @@ int FSEDecoder::FSECreateStatesForDecoding(const uint32_t *symbol_frequency, int
     frequency[sym] += 1;
     MS_CHECK_GE(table_log, FSEBitStream::CountBits(x), RET_ERROR);
     bit_count[i] = static_cast<uint8_t>(table_log - FSEBitStream::CountBits(x));
-    new_state[i] = (x << bit_count[i]) - table_size;
+    new_state_baselne[i] = (x << bit_count[i]) - table_size;
   }
   return RET_OK;
 }
@@ -93,7 +93,7 @@ int FSEDecoder::DeCompress(const SchemaTensorWrapper &src_tensor, Tensor *dst_te
     return RET_ERROR;
   }
   // 16bit for table_log
-  int table_log = *(reinterpret_cast<uint16_t *>(&data8[i]));
+  size_t table_log = *(reinterpret_cast<uint16_t *>(&data8[i]));
   i += sizeof(uint16_t);
   if (i > total_size) {
     MS_LOG(ERROR) << "index over total size"

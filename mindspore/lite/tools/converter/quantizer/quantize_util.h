@@ -78,7 +78,9 @@ int UpdateDataType(const AnfNodePtr &cnode, TypeId new_data_type);
 
 ValueNodePtr NewQuantCastPrimitive(int src_type, int dst_type,
                                    const std::vector<schema::QuantParamT> &input_quant_params,
-                                   const std::vector<schema::QuantParamT> &output_quant_params);
+                                   const std::vector<schema::QuantParamT> &output_quant_params, int axis = 0,
+                                   bool set_quant_flag = true);
+
 bool IsGraphInDTypeCast(const CNodePtr &cnode);
 
 bool IsGraphOutDTypeCast(const FuncGraphPtr &func_graph, const CNodePtr &cnode);

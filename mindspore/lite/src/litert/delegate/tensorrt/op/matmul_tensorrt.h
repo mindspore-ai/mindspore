@@ -49,6 +49,8 @@ class MatMulTensorRT : public TensorRTOp {
 
   bool RunFullConnect(TensorRTContext *ctx);
 
+  bool HasConst() const override;
+
   bool transpose_a_{false};
   bool transpose_b_{false};
   Format out_format_{Format::NHWC};

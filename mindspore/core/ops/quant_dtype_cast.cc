@@ -30,6 +30,9 @@ int64_t QuantDTypeCast::get_src_t() const {
 }
 void QuantDTypeCast::set_dst_t(const int64_t dst_t) { (void)AddAttr(kDstT, api::MakeValue(dst_t)); }
 int64_t QuantDTypeCast::get_dst_t() const { return GetValue<int64_t>(GetAttr(kDstT)); }
+void QuantDTypeCast::set_axis(const int64_t axis) { (void)AddAttr(kAxis, api::MakeValue(axis)); }
+int64_t QuantDTypeCast::get_axis() const { return GetValue<int64_t>(GetAttr(kAxis)); }
+
 void QuantDTypeCast::Init(const int64_t src_t, const int64_t dst_t) {
   this->set_src_t(src_t);
   this->set_dst_t(dst_t);

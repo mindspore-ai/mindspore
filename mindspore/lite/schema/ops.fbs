@@ -885,6 +885,7 @@ table Rsqrt {
 table QuantDTypeCast {
     src_t: long;
     dst_t: long;
+    axis: long = 0;
 }
 
 table ScaleFusion {

@@ -23,6 +23,7 @@ typedef struct QuantDTypeCastParameter {
   OpParameter op_parameter_;
   int32_t srcT;
   int32_t dstT;
+  int32_t axis;
 } QuantDTypeCastParameter;
 
 #ifdef __cplusplus

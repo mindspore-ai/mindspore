@@ -107,7 +107,7 @@ AnfNodePtr CloneParameterAndValueNode(const CNodePtr &cnode, size_t index, const
     shape_vec = ShapeVector{static_cast<int64_t>(data_info.data_.size() / sizeof(int))};
   }
   std::shared_ptr<tensor::Tensor> tensor_info;
-  if (static_cast<TensorCompressionType>(data_info.compress_type_) == kNoCompression) {
+  if (static_cast<TensorCompressionType>(data_info.compress_type_) == TensorCompressionType::kNoCompression) {
     tensor_info = std::make_shared<tensor::Tensor>(static_cast<TypeId>(data_info.data_type_), shape_vec);
   } else {
     tensor_info =

@@ -61,6 +61,16 @@ class MIND_API QuantDTypeCast : public BaseOperator {
   ///
   /// \return the data type of output.
   int64_t get_dst_t() const;
+
+  /// \brief Method to set axis attribute.
+  ///
+  /// \param[in] axis Define per-channel prefer dim.
+  void set_axis(const int64_t axis);
+
+  /// \brief Method to get axis attribute.
+  ///
+  /// \return the per-channel prefer dim.
+  int64_t get_axis() const;
 };
 abstract::AbstractBasePtr QuantDTypeCastInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                               const std::vector<abstract::AbstractBasePtr> &input_args);

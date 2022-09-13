@@ -53,6 +53,16 @@ struct LiteQuantParam {
   double max{255.0};
 };
 
+enum CompressType {
+  kNoCompression = 0,
+  kIndexing = 1,
+  kSparse = 2,
+  kFSE = 3,
+  kBitPacking = 4,
+  kFSEInt = 5,
+  kFSEInfer = 6
+};
+
 class Tensor {
  public:
   Tensor() = default;
@@ -219,6 +229,12 @@ class Tensor {
 
   void set_scale(float scale) { this->scale_ = scale; }
 
+  CompressType get_compress_type() const { return this->compress_type_; }
+
+  void set_compress_type(CompressType compression_type) { this->compress_type_ = compression_type; }
+
+  void set_compressed_size(size_t compressed_size) { this->compressed_size_ = compressed_size; }
+
   bool IsScale() const { return (std::fabs(this->scale_ - 1.0f) > 1.0e-05); }
 
  private:
@@ -250,6 +266,8 @@ class Tensor {
   bool own_data_{false};
   float scale_ = 1.0f;
   void *device_data_ = nullptr;
+  CompressType compress_type_ = kNoCompression;
+  size_t compressed_size_ = 0;
 };
 }  // namespace lite
 }  // namespace mindspore

@@ -76,7 +76,7 @@ class TensorRTOp {
 
   const schema::Primitive *GetPrimitive();
 
-  bool HasConst() const;
+  virtual bool HasConst() const;
 
   int ReadyInputsNumber(TensorRTContext *ctx) const;
 

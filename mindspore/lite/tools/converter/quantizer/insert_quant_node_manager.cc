@@ -457,4 +457,42 @@ int InsertQuantNodeManager::InsertBackwardCastNode(const FuncGraphPtr &graph, co
   }  // node_users
   return RET_OK;
 }
+int InsertQuantNodeManager::InsertWeightQuantNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
+                                                  size_t input_index, TypeId src_dtype, TypeId dst_dtype, int axis) {
+  auto primitive = GetValueNode<std::shared_ptr<mindspore::Primitive>>(cnode->input(kPrimIndex));
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "primitive_c is nullptr: " << cnode->fullname_with_scope();
+    return RET_ERROR;
+  }
+  auto input_node = cnode->input(input_index);
+  if (!input_node->isa<mindspore::Parameter>()) {
+    MS_LOG(ERROR) << cnode->fullname_with_scope() << " input " << input_index << " is not parameter node.";
+    return RET_ERROR;
+  }
+
+  auto curr_primitive_quant_param_holder = GetCNodeQuantHolder(primitive);
+  std::vector<schema::QuantParamT> input_quant_params;
+  if (curr_primitive_quant_param_holder->get_input_quant_params().size() >= input_index) {
+    input_quant_params = curr_primitive_quant_param_holder->get_input_quant_params().at(input_index - kPrimOffset);
+  }
+
+  ValueNodePtr new_primitive = NewQuantCastPrimitive(src_dtype, dst_dtype, input_quant_params, {}, axis, false);
+  std::vector<AnfNodePtr> op_inputs = {new_primitive, input_node};
+  auto quant_cast_cnode = func_graph->NewCNode(op_inputs);
+  CHECK_NULL_RETURN(quant_cast_cnode);
+  quant_cast_cnode->set_fullname_with_scope(cnode->fullname_with_scope() + "_quant_cast_" +
+                                            std::to_string(input_index));
+  auto manager = func_graph->manager();
+  CHECK_NULL_RETURN(manager);
+  auto ret = manager->Replace(input_node, quant_cast_cnode);
+  if (!ret) {
+    MS_LOG(ERROR) << "Replace QuantDtypeCast failed.";
+    return RET_ERROR;
+  }
+  curr_primitive_quant_param_holder->ClearQuantParams();
+  MS_LOG(INFO) << "InsertCastNode cnode name: " << quant_cast_cnode->fullname_with_scope()
+               << " src_dtype: " << src_dtype << " dst_dtype: " << dst_dtype;
+
+  return RET_OK;
+}
 }  // namespace mindspore::lite::quant
