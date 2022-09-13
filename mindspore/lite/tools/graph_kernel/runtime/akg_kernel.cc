@@ -20,8 +20,10 @@
 #include <utility>
 #include <numeric>
 #include <functional>
+#include "tools/graph_kernel/common/utils.h"
 #include "src/tensor.h"
 #include "src/common/utils.h"
+#include "src/common/tensor_util.h"
 #include "src/litert/kernel_registry.h"
 #include "schema/model_generated.h"
 
@@ -62,14 +64,21 @@ class AkgCallBack {
 };
 }  // namespace
 
-void AkgKernel::ExtractKernelName() {
+void AkgKernel::ExtractKernelAttr() {
   auto prim = static_cast<schema::Primitive *>(params_)->value_as_Custom();
   for (size_t i = 0; i < prim->attr()->size(); i++) {
     auto attr = prim->attr()->Get(i);
     if (attr->name()->str() == "kernel_name") {
-      auto data = attr->data();
-      kernel_name_ = std::string(reinterpret_cast<const char *>(data->Data()), data->size());
-      break;
+      kernel_name_ = std::string(reinterpret_cast<const char *>(attr->data()->Data()), attr->data()->size());
+    } else if (attr->name()->str() == "inputs_shape") {
+      std::string inputs_shape_str(reinterpret_cast<const char *>(attr->data()->Data()), attr->data()->size());
+      (void)graphkernel::GetCustomShape(inputs_shape_str, &origin_inputs_shape_);
+    } else if (attr->name()->str() == "dynamic_input_index") {
+      dynamic_batch_size_ = 1;
+      std::string dynamic_input_index_str(reinterpret_cast<const char *>(attr->data()->Data()), attr->data()->size());
+      graphkernel::GetCustomIndex(dynamic_input_index_str, &dynamic_input_index_);
+    } else {
+      continue;
     }
   }
 }
@@ -145,7 +154,10 @@ int AkgKernel::Run() {
   }
   nthread_ = op_parameter_->thread_num_;
   std::vector<void *> runtimeargs;
-  runtimeargs.reserve(in_tensors_.size() + out_tensors_.size() + 1);
+  // callbackfunc and dynamic batch size
+  const size_t extra_arg_num_with_batch = 2;
+  runtimeargs.reserve(in_tensors_.size() + out_tensors_.size() + extra_arg_num_with_batch);
+
   static AkgCallBack akg_callback;
   akg_callback.extend_data = static_cast<void *>(this);
   (void)runtimeargs.emplace_back(static_cast<void *>(&akg_callback));
@@ -158,9 +170,34 @@ int AkgKernel::Run() {
   }
   (void)std::transform(std::begin(out_tensors_), std::end(out_tensors_), std::back_inserter(runtimeargs),
                        [](lite::Tensor *output) { return output->MutableData(); });
+  if (dynamic_batch_size_ != 0) {
+    (void)runtimeargs.emplace_back(static_cast<void *>(&dynamic_batch_size_));
+  }
   using AkgCpuKernelFunction = void (*)(void *);
   reinterpret_cast<AkgCpuKernelFunction>(kernel_func_)(static_cast<void *>(runtimeargs.data()));
   return RET_OK;
+}
+
+int AkgKernel::ReSize() {
+  if (in_tensors_.empty() || dynamic_batch_size_ == 0) {
+    return mindspore::lite::RET_OK;
+  }
+  std::vector<TensorC> input_tensorc(in_tensors_.size());
+  for (size_t i = 0; i < in_tensors_.size(); i++) {
+    int ret = lite::Tensor2TensorC(in_tensors_[i], &input_tensorc[i]);
+    if (ret != mindspore::lite::RET_OK) {
+      MS_LOG(ERROR) << "Convert Tensor to TensorC failed.";
+      return mindspore::lite::RET_ERROR;
+    }
+  }
+  std::vector<const TensorC *> input_tensorc_pointer;
+  (void)std::transform(input_tensorc.begin(), input_tensorc.end(), std::back_inserter(input_tensorc_pointer),
+                       [](const TensorC &t) { return &t; });
+  if (graphkernel::CalculateDynamicBatchSize(&input_tensorc_pointer[0], in_tensors_.size(), origin_inputs_shape_,
+                                             dynamic_input_index_, &dynamic_batch_size_) != RET_OK) {
+    return mindspore::lite::RET_ERROR;
+  }
+  return mindspore::lite::RET_OK;
 }
 
 REG_KERNEL(kCPU, kNumberTypeBool, PrimType_Inner_GraphKernel, LiteKernelCreator<AkgKernel>)

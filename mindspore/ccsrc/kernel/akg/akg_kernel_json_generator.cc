@@ -842,11 +842,14 @@ bool AkgKernelJsonGenerator::CollectFusedJson(const std::vector<AnfNodePtr> &anf
   }
   (*kernel_json)[kJsonKeyProcess] = GetProcessorByTarget();
   (*kernel_json)[kJsonKeyVersion] = kCurrentInfoVersion;
+  auto fg = anf_nodes[0]->func_graph();
+  MS_EXCEPTION_IF_NULL(fg);
+  if (fg->has_attr("dynamic_input_index")) {
+    (*kernel_json)[kJsonKeyDynamicInputIndex] = GetValue<std::string>(fg->get_attr("dynamic_input_index"));
+  }
 
   // gen hash id with the above info.
   size_t hash_id = GenHashId(kernel_json->dump());
-  auto fg = anf_nodes[0]->func_graph();
-  MS_EXCEPTION_IF_NULL(fg);
   GenKernelName(fg, hash_id, kernel_json);
   if (dump_option_.gen_kernel_name_only) {
     return true;

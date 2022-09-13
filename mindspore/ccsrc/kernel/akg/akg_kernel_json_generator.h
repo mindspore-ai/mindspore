@@ -72,6 +72,7 @@ constexpr auto kJsonKeyCpuArch = "arch";
 constexpr auto kJsonKeyCpuFeature = "feature";
 constexpr auto kJsonKeyCpuType = "cpu";
 constexpr auto kJsonKeyNodeName = "node_name";
+constexpr auto kJsonKeyDynamicInputIndex = "dynamic_input_index";
 
 // dump option
 struct DumpOption {

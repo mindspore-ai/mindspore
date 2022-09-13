@@ -22,6 +22,7 @@
 #include <string>
 #include <vector>
 #include "common/graph_kernel/core/graph_kernel_callback.h"
+#include "common/graph_kernel/graph_kernel_flags.h"
 #include "tools/graph_kernel/converter/akg/akg_build.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"
@@ -47,6 +48,74 @@ void BuildAKGKernel(const std::vector<AnfNodePtr> &node_list) {
     MS_LOG(EXCEPTION) << "Graph kernel compile fail";
   }
 }
+
+std::string GetCNodeDynamicInputIndex(const CNodePtr &cnode) {
+  std::string dynamic_input_index;
+  auto cb = Callback::Instance();
+  for (size_t i = 1; i < cnode->inputs().size(); i++) {
+    if (cnode->input(i)->isa<CNode>() || cnode->input(i)->isa<Parameter>()) {
+      auto input_shape = cb->GetInputShape(cnode, i - 1);
+      if (input_shape.size() <= 0 || input_shape[0] != 1) {
+        MS_LOG(EXCEPTION) << "Dynamic inputs' batch size should be 1";
+      }
+      dynamic_input_index += std::to_string(i - 1) + ",";
+    }
+  }
+  return dynamic_input_index;
+}
+
+std::string GetCNodeInputShapeStr(const CNodePtr &cnode) {
+  std::string input_shape_str;
+  auto cb = Callback::Instance();
+  for (size_t i = 1; i < cnode->inputs().size(); i++) {
+    auto input_shape = cb->GetInputShape(cnode, i - 1);
+    input_shape_str += std::to_string(input_shape.size()) + ",";
+    for (auto &v : input_shape) {
+      input_shape_str += std::to_string(v) + ",";
+    }
+  }
+  return input_shape_str;
+}
+
+std::string GetCNodeOutputShapeStr(const CNodePtr &cnode) {
+  std::string output_shape_str;
+  auto output_num = AnfUtils::GetOutputTensorNum(cnode);
+  auto cb = Callback::Instance();
+  for (size_t i = 0; i < output_num; i++) {
+    auto output_shape = cb->GetOutputShape(cnode, i);
+    output_shape_str += std::to_string(output_shape.size()) + ",";
+    for (auto &v : output_shape) {
+      output_shape_str += std::to_string(v) + ",";
+    }
+  }
+  return output_shape_str;
+}
+
+std::string GetCNodeOutputTypeStr(const CNodePtr &cnode) {
+  std::string output_type_str;
+  auto output_num = AnfUtils::GetOutputTensorNum(cnode);
+  auto cb = Callback::Instance();
+  for (size_t i = 0; i < output_num; i++) {
+    auto output_type = cb->GetOutputType(cnode, i);
+    output_type_str += std::to_string(static_cast<int>(output_type)) + ",";
+  }
+  return output_type_str;
+}
+
+std::string GetCNodeOutputFormatStr(const CNodePtr &cnode) {
+  std::string output_format_str;
+  auto output_num = AnfUtils::GetOutputTensorNum(cnode);
+  auto cb = Callback::Instance();
+  for (size_t i = 0; i < output_num; i++) {
+    auto output_format = cb->GetOutputFormat(cnode, i);
+    if (output_format == kOpFormat_NHWC) {
+      output_format_str += "1,";
+    } else {  // default, NCHW
+      output_format_str += "0,";
+    }
+  }
+  return output_format_str;
+}
 }  // namespace
 
 AnfNodePtr KernelBuilder::CreateCustomOp(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
@@ -61,26 +130,15 @@ AnfNodePtr KernelBuilder::CreateCustomOp(const FuncGraphPtr &func_graph, const C
   auto kernel_name = GetValue<std::string>(fg->get_attr("kernel_name"));
   std::vector<uint8_t> kernel_name_str(kernel_name.begin(), kernel_name.end());
   custom_attrs["kernel_name"] = kernel_name_str;
-  std::string output_shape_str;
-  std::string output_format_str;
-  std::string output_type_str;
-  auto output_num = AnfUtils::GetOutputTensorNum(cnode);
-  auto cb = Callback::Instance();
-  for (size_t i = 0; i < output_num; i++) {
-    auto output_shape = cb->GetOutputShape(cnode, i);
-    output_shape_str += std::to_string(output_shape.size()) + ",";
-    for (auto &v : output_shape) {
-      output_shape_str += std::to_string(v) + ",";
-    }
-    auto output_format = cb->GetOutputFormat(cnode, i);
-    if (output_format == kOpFormat_NHWC) {
-      output_format_str += "1,";
-    } else {  // default, NCHW
-      output_format_str += "0,";
-    }
-    auto output_type = cb->GetOutputType(cnode, i);
-    output_type_str += std::to_string(static_cast<int>(output_type)) + ",";
+  if (GraphKernelFlags::GetInstance().enable_dynamic_batch && fg->has_attr("dynamic_input_index")) {
+    std::string dynamic_input_index = GetValue<std::string>(fg->get_attr("dynamic_input_index"));
+    custom_attrs["dynamic_input_index"] = std::vector<uint8_t>(dynamic_input_index.begin(), dynamic_input_index.end());
   }
+  std::string input_shape_str = GetCNodeInputShapeStr(cnode);
+  std::string output_shape_str = GetCNodeOutputShapeStr(cnode);
+  std::string output_format_str = GetCNodeOutputFormatStr(cnode);
+  std::string output_type_str = GetCNodeOutputTypeStr(cnode);
+  custom_attrs["inputs_shape"] = std::vector<uint8_t>(input_shape_str.begin(), input_shape_str.end());
   custom_attrs["outputs_shape"] = std::vector<uint8_t>(output_shape_str.begin(), output_shape_str.end());
   custom_attrs["outputs_format"] = std::vector<uint8_t>(output_format_str.begin(), output_format_str.end());
   custom_attrs["outputs_type"] = std::vector<uint8_t>(output_type_str.begin(), output_type_str.end());
@@ -95,8 +153,24 @@ AnfNodePtr KernelBuilder::CreateCustomOp(const FuncGraphPtr &func_graph, const C
 
 bool KernelBuilder::Run(const FuncGraphPtr &func_graph) {
   auto node_list = TopoSort(func_graph->get_return());
-  BuildAKGKernel(node_list);
   bool changed = false;
+  if (GraphKernelFlags::GetInstance().enable_dynamic_batch) {
+    for (auto &node : node_list) {
+      if (!AnfUtils::IsGraphKernel(node)) {
+        continue;
+      }
+      auto cnode = node->cast<CNodePtr>();
+      auto gk_fg = GetCNodeFuncGraph(cnode);
+      MS_EXCEPTION_IF_NULL(gk_fg);
+      std::string dynamic_input_index = GetCNodeDynamicInputIndex(cnode);
+      if (!dynamic_input_index.empty()) {
+        gk_fg->set_attr("dynamic_input_index", MakeValue(dynamic_input_index));
+        changed = true;
+      }
+    }
+  }
+
+  BuildAKGKernel(node_list);
   auto manager = Manage(func_graph, true);
   MS_EXCEPTION_IF_NULL(manager);
   for (auto &node : node_list) {
