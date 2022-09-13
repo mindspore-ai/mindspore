@@ -120,10 +120,117 @@ constexpr auto kUniqueConsecutive = "UniqueConsecutive";
 constexpr auto kRandomShuffle = "RandomShuffle";
 constexpr auto kHSigmoid = "HSigmoid";
 constexpr auto kHSigmoidGrad = "HSigmoidGrad";
+constexpr auto kIsInf = "IsInf";
+constexpr auto kIsNan = "IsNan";
+constexpr auto kLogMatrixDeterminant = "LogMatrixDeterminant";
+constexpr auto kSegmentMean = "SegmentMean";
+constexpr auto kSegmentSum = "SegmentSum";
+constexpr auto kCross = "Cross";
+constexpr auto kGridSampler2D = "GridSampler2D";
+constexpr auto kGridSampler2DGrad = "GridSampler2DGrad";
+constexpr auto kGridSampler3D = "GridSampler3D";
+constexpr auto kGridSampler3DGrad = "GridSampler3DGrad";
+constexpr auto kScatterNdMax = "ScatterNdMax";
+constexpr auto kScatterNdMin = "ScatterNdMin";
+constexpr auto kTril = "Tril";
+constexpr auto kSub = "Sub";
+constexpr auto kMul = "Mul";
+constexpr auto kDiv = "Div";
+constexpr auto kNeg = "Neg";
+constexpr auto kNotEqual = "NotEqual";
+constexpr auto kConj = "Conj";
+constexpr auto kConjugateTranspose = "ConjugateTranspose";
+constexpr auto kCheckNumerics = "CheckNumerics";
+constexpr auto kLog1p = "Log1p";
+constexpr auto kRsqrt = "Rsqrt";
+constexpr auto kSquare = "Square";
+constexpr auto kSparseSegmentMeanGrad = "SparseSegmentMeanGrad";
+constexpr auto kACos = "ACos";
+constexpr auto kAcosh = "Acosh";
+constexpr auto kAsin = "Asin";
+constexpr auto kAsinh = "Asinh";
+constexpr auto kAtanh = "Atanh";
+constexpr auto kCosh = "Cosh";
+constexpr auto kTan = "Tan";
+constexpr auto kTanhGrad = "TanhGrad";
+constexpr auto kRound = "Round";
+constexpr auto kRightShift = "RightShift";
+constexpr auto kFloorDiv = "FloorDiv";
+constexpr auto kAddcdiv = "Addcdiv";
+constexpr auto kAddcmul = "Addcmul";
+constexpr auto kTriu = "Triu";
+constexpr auto kExpand = "Expand";
+constexpr auto kMatrixDiagPartV3 = "MatrixDiagPartV3";
+constexpr auto kMatrixDiagV3 = "MatrixDiagV3";
+constexpr auto kBetainc = "Betainc";
+constexpr auto kCompareAndBitpack = "CompareAndBitpack";
+constexpr auto kZeta = "Zeta";
+constexpr auto kSquaredDifference = "SquaredDifference";
+constexpr auto kZerosLike = "ZerosLike";
+constexpr auto kEqual = "Equal";
+constexpr auto kOnesLike = "OnesLike";
+constexpr auto kSign = "Sign";
 
-const std::set<std::string> kCpuKernelOps{
-  kIdentity,       kMaskedSelect,       kMaskedSelectGrad,      kDynamicStitch,     kSearchSorted,
-  kResizeBilinear, kResizeBilinearGrad, kTensorScatterElements, kUniqueConsecutive, kLinSpace};
+const std::set<std::string> kCpuKernelOps{kIdentity,
+                                          kMaskedSelect,
+                                          kMaskedSelectGrad,
+                                          kDynamicStitch,
+                                          kSearchSorted,
+                                          kResizeBilinear,
+                                          kResizeBilinearGrad,
+                                          kTensorScatterElements,
+                                          kUniqueConsecutive,
+                                          kLinSpace,
+                                          kIsInf,
+                                          kIsNan,
+                                          kLogMatrixDeterminant,
+                                          kCross,
+                                          kGridSampler2D,
+                                          kGridSampler2DGrad,
+                                          kGridSampler3D,
+                                          kGridSampler3DGrad,
+                                          kScatterNdMax,
+                                          kScatterNdMin,
+                                          kTril,
+                                          kSub,
+                                          kMul,
+                                          kDiv,
+                                          kNeg,
+                                          kNonZero,
+                                          kNotEqual,
+                                          kConj,
+                                          kConjugateTranspose,
+                                          kCheckNumerics,
+                                          kCumSum,
+                                          kLog1p,
+                                          kRsqrt,
+                                          kSquare,
+                                          kSparseSegmentMeanGrad,
+                                          kACos,
+                                          kAcosh,
+                                          kAsin,
+                                          kAsinh,
+                                          kAtanh,
+                                          kCosh,
+                                          kTan,
+                                          kTanhGrad,
+                                          kRound,
+                                          kRightShift,
+                                          kFloorDiv,
+                                          kAddcdiv,
+                                          kAddcmul,
+                                          kTriu,
+                                          kExpand,
+                                          kMatrixDiagPartV3,
+                                          kMatrixDiagV3,
+                                          kBetainc,
+                                          kCompareAndBitpack,
+                                          kZeta,
+                                          kSquaredDifference,
+                                          kZerosLike,
+                                          kEqual,
+                                          kOnesLike,
+                                          kSign};
 const std::set<std::string> kCacheKernelOps{kUpdateCache, kCacheSwapTable,      kSubAndFilter, kPadAndShift, kDropout3D,
                                             kDropout2D,   kNonMaxSuppressionV3, kGetNext,      kInitData,    kPrint};
 const std::set<std::string> kCpuKernelBaseOps{kRandomChoiceWithMask,
@@ -182,6 +289,7 @@ const std::map<std::string, std::string> kOpNameToAicpuOpNameMap{
   {kNonZero, "Where"},
   {kAvgPoolGradV1, "AvgPoolGrad"},
   {kTensorScatterElements, "ScatterElements"},
+  {kACos, "Acos"},
   {kHSigmoid, "HardSigmoid"},
   {kHSigmoidGrad, "HardSigmoidGrad"}};
 struct AicpuParamHead {
