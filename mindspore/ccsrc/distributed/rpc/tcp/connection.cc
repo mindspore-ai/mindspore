@@ -645,7 +645,7 @@ void *Connection::GetMessageBaseRealData(const MessageBase *msg) const {
   return nullptr;
 }
 
-size_t Connection::GetMessageBaseRealDataSize(MessageBase *msg) const {
+size_t Connection::GetMessageBaseRealDataSize(const MessageBase *msg) const {
   MS_ERROR_IF_NULL_W_RET_VAL(msg, 0);
   // The 'size' attribute is preferred.
   if (msg->data != nullptr) {
