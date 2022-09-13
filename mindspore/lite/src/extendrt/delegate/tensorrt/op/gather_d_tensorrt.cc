@@ -49,12 +49,12 @@ int GatherDTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::
 
 int GatherDTensorRT::AddInnerOp(TensorRTContext *ctx) {
   nvinfer1::ITensor *inputTensors[] = {input(ctx, 0).trt_tensor_, input(ctx, 2).trt_tensor_};
-  auto dim_tensor = static_cast<const int *>(in_tensors_[1].Data());
-  if (dim_tensor == nullptr) {
-    MS_LOG(ERROR) << op_name_ << " gatherd dim_tensor is null!";
+  auto dim_vec = ConvertTensorAsIntVector(in_tensors_[1]);
+  if (dim_vec.size() != 1) {
+    MS_LOG(ERROR) << "Failed to get dim input, dim count " << dim_vec.size() << ", node: " << op_name_;
     return RET_ERROR;
   }
-  size_t dim = static_cast<size_t>(dim_tensor[0]);
+  size_t dim = dim_vec[0];
 
   auto plugin = std::make_shared<GatherDPlugin>(op_name_, dim, device_id_);
   nvinfer1::IPluginV2Layer *gatherd_layer = ctx->network()->addPluginV2(inputTensors, INPUT_SIZE2, *plugin);

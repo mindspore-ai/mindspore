@@ -23,6 +23,7 @@
 #include "extendrt/utils/kernel_graph_utils.h"
 
 namespace mindspore {
+/// \brief Single Op Session implementation, used in Ascend Device Context.
 class SingleOpInferSession : public InferSession {
  public:
   SingleOpInferSession() = default;
@@ -30,7 +31,10 @@ class SingleOpInferSession : public InferSession {
   Status Init(const std::shared_ptr<Context> &context) override;
   Status AscendInit(const std::shared_ptr<Context> &context);
   Status CompileGraph(FuncGraphPtr graph, const void *data = nullptr, size_t size = 0) override;
+  Status RunGraph(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs,
+                  const MSKernelCallBack &before, const MSKernelCallBack &after) override;
   Status RunGraph(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs) override;
+  Status Resize(const std::vector<tensor::Tensor> &inputs, const std::vector<std::vector<int64_t>> &dims) override;
   std::vector<MutableTensorImplPtr> GetOutputs() override;
   std::vector<MutableTensorImplPtr> GetInputs() override;
   std::vector<std::string> GetOutputNames() override;

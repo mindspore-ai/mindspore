@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,13 +20,14 @@
 namespace mindspore::lite {
 int SoftMaxTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
                                const std::vector<TensorInfo> &out_tensors) {
-  if (!IsShapeKnown()) {
-    MS_LOG(ERROR) << "Unsupported input tensor unknown shape: " << op_name_;
-    return RET_ERROR;
+  auto softmax_op = AsOps<ops::Softmax>();
+  if (softmax_op != nullptr) {
+    auto axis = softmax_op->get_axis();
+    axis_val_ = std::vector<int64_t>(axis.begin(), axis.end());
   }
-  softmax_op_ = AsOps<ops::Softmax>();
-  if (softmax_op_ == nullptr) {
-    MS_LOG(ERROR) << "convert failed";
+
+  if (axis_val_.size() != 1) {
+    MS_LOG(ERROR) << "axis needs check";
     return RET_ERROR;
   }
 
@@ -69,18 +70,9 @@ nvinfer1::ISoftMaxLayer *SoftMaxTensorRT::AddSoftMaxOp(TensorRTContext *ctx) {
     MS_LOG(ERROR) << "add softmax op failed for TensorRT.";
     return nullptr;
   }
-  auto axis = softmax_op_->get_axis();
-  if (axis.size() != 1) {
-    MS_LOG(ERROR) << "axis needs check";
-    return nullptr;
-  }
-  auto axis_val = std::vector<int64_t>(axis.begin(), axis.end());
-  if (axis_val[0] >= input(ctx, 0).trt_tensor_->getDimensions().nbDims) {
-    MS_LOG(ERROR) << "axis is larger than input tensor dims.";
-    return nullptr;
-  }
-  int64_t axis_format_value = (axis_val[0] == -1) ? input(ctx, 0).trt_tensor_->getDimensions().nbDims - 1 : axis_val[0];
 
+  int64_t axis_format_value =
+    (axis_val_[0] == -1) ? input(ctx, 0).trt_tensor_->getDimensions().nbDims - 1 : axis_val_[0];
   uint32_t axis_bit = 1 << axis_format_value;
   MS_LOG(DEBUG) << op_name_ << " axis_value is " << axis_format_value << ", set axis to " << axis_bit;
   current_layer_->setAxes(axis_bit);

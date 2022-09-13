@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include <cstring>
 #include "src/extendrt/delegate/tensorrt/op/tensorrt_plugin.h"
+#include <cstring>
 
 namespace mindspore::lite {
 void SerializeValue(void **buffer, const void *value, size_t cpy_size) {

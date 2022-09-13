@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include "src/extendrt/delegate/tensorrt/op/activation_opt_plugin.h"
 #include <cuda_runtime.h>
 #include <numeric>
 #include <memory>
@@ -23,7 +24,6 @@
 #include <algorithm>
 #include "src/extendrt/delegate/tensorrt/tensorrt_utils.h"
 #include "NvInferRuntimeCommon.h"
-#include "src/extendrt/delegate/tensorrt/op/activation_opt_plugin.h"
 #include "src/extendrt/delegate/tensorrt/cuda_impl/activation.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/swish_impl.cuh"
 

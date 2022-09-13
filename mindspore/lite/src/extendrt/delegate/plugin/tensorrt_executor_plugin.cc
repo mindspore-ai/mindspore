@@ -28,9 +28,9 @@ constexpr auto kFunCreateTRTPluginImp = "CreateTensorRTPluginImpl";
 TensorRTExecutorPlugin::TensorRTExecutorPlugin() = default;
 TensorRTExecutorPlugin::~TensorRTExecutorPlugin() {
 #if !defined(_WIN32)
-  MS_LOG(DEBUG) << "~AscendKernelPlugin() begin.";
+  MS_LOG(DEBUG) << "~TensorRTExecutorPlugin() begin.";
   DLSoClose(handle_);
-  MS_LOG(DEBUG) << "~AscendKernelPlugin() end.";
+  MS_LOG(DEBUG) << "~TensorRTExecutorPlugin() end.";
 #endif
 }
 
@@ -45,7 +45,7 @@ bool TensorRTExecutorPlugin::Register() {
     return true;
   }
   std::string plugin_path;
-  auto ret = DLSoPath("libmindspore-lite.so", kTensorRtPluginSoName, &plugin_path);
+  auto ret = DLSoPath({"libmindspore-lite.so", "_c_lite"}, kTensorRtPluginSoName, &plugin_path);
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "Get real path of " << kTensorRtPluginSoName << " failed.";
     return false;

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ class ScaleTensorRT : public TensorRTOp {
 
   Format out_format_;
 
-  bool out_same_format_{false};
+  bool out_same_format_{true};
 
   nvinfer1::ScaleMode mode_;
 

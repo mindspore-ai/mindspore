@@ -14,6 +14,15 @@ set(CCSRC_SRC
         ${CCSRC_DIR}/backend/common/optimizer/graph_optimizer.cc
         )
 
+if(NOT WIN32)
+    set(CCSRC_SRC ${CCSRC_SRC}
+        ${CCSRC_DIR}/utils/anfalgo.cc
+        ${CCSRC_DIR}/utils/convert_utils.cc
+        ${CCSRC_DIR}/utils/utils.cc
+        ${CCSRC_DIR}/utils/parallel_context.cc
+        )
+endif()
+
 if(MSLITE_ENABLE_GRAPH_KERNEL)
     add_compile_definitions(MSLITE_ENABLE_GRAPH_KERNEL)
     file(GLOB_RECURSE GRAPH_KERNEL_SRC
@@ -60,6 +69,7 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/parser/tf_bidirection_gru_cf_fusion.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/parser/unused_node_remove_pass.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/parser/conv1d_inout_adjust.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/parser/conv2d_transpose_input_adjust.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/parser/inputs_adjust.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/parser/unify_format.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/adapter/acl/plugin/acl_pass_plugin.cc
@@ -158,7 +168,23 @@ set(LITE_SRC ${API_SRC}
         ${LITE_DIR}/src/extendrt/mock/lite_runtime/populate/base_operator_populate_register.cc
         ${SRC_DIR}/control_flow/control_flow_scheduler.cc
         ${SRC_DIR}/control_flow/control_subgraph_creator.cc
+        ${SRC_DIR}/litert/kernel/ascend/plugin/ascend_kernel_plugin.cc
         )
+
+if(NOT ANDROID_NDK_TOOLCHAIN_INCLUDED)
+    set(LITE_SRC
+            ${LITE_SRC}
+            ${SRC_DIR}/litert/kernel/ascend/plugin/ascend_kernel_plugin.cc
+            )
+endif()
+
+if(MSLITE_ENABLE_MODEL_PRE_INFERENCE)
+    set(LITE_SRC
+            ${LITE_SRC}
+            ${SRC_DIR}/common/thread_utils.cc
+            ${SRC_DIR}/common/random_data_generator.cc
+            )
+endif()
 
 set(MODEL_LOADER_FRAMEWORK_SRC
         ${MODEL_LOADER_FRAMEWORK_SRC}
@@ -227,10 +253,6 @@ if(MSLITE_ENABLE_CONTROLFLOW)
             ${SRC_DIR}/control_flow/kernel/*.cc
             )
     set(LITE_SRC ${LITE_SRC} ${CONTROL_FLOW_KERNEL_SRC})
-endif()
-
-if(NOT MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
-    set(LITE_SRC ${LITE_SRC} ${CMAKE_CURRENT_SOURCE_DIR}/adapter/acl/acl_pass.cc)
 endif()
 
 if(MSLITE_ENABLE_MINDRT)
@@ -378,11 +400,6 @@ target_link_libraries(mindspore_converter
         ccsrc_debug_common_mid_
         mindir_proto_mid
         _mindspore_transform_express_ir_obj)
-
-if(MSLITE_ENABLE_ACL AND NOT MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
-    target_link_libraries(mindspore_converter
-            lite_acl_mid)
-endif()
 
 if(NOT MSVC)
     target_link_libraries(mindspore_converter pthread)

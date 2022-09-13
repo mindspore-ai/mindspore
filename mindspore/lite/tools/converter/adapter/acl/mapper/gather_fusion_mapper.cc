@@ -45,6 +45,9 @@ STATUS GatherMapper::Mapper(const CNodePtr &cnode) {
   auto data = acl::GetIntParameterData(axis_param);
   int64_t axis = data.empty() ? 0 : static_cast<int64_t>(data.front());
   ValueNodePtr value_node = NewValueNode<int64_t>(axis);
+  std::vector<int64_t> shape_vec_shape = {};
+  auto abstract = std::make_shared<abstract::AbstractTensor>(kInt64, shape_vec_shape);
+  value_node->set_abstract(abstract);
   MS_CHECK_TRUE_MSG(value_node != nullptr, lite::RET_ERROR, "New value node failed.");
   cnode->set_input(kNameGatherInputNum - 1, value_node);
   return lite::RET_OK;

@@ -294,7 +294,8 @@ std::vector<tensor::TensorPtr> LiteInferSession::ConvertToTensors(
   return tensors;
 }
 
-static std::shared_ptr<InferSession> LiteInferSessionCreator(const std::shared_ptr<Context> &ctx) {
+static std::shared_ptr<InferSession> LiteInferSessionCreator(const std::shared_ptr<Context> &ctx,
+                                                             const ConfigInfos &config_infos) {
   auto session = std::make_shared<LiteInferSession>();
   session->Init(ctx);
   return session;

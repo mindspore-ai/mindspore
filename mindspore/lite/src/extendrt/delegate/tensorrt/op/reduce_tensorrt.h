@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ class ReduceTensorRT : public TensorRTOp {
                 const std::vector<TensorInfo> &out_tensors) override;
 
  private:
-  uint32_t GetAxis();
+  uint32_t GetAxis(TensorRTContext *ctx);
   Format out_format_;
 };
 }  // namespace mindspore::lite

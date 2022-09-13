@@ -19,7 +19,6 @@
 #include <nccl.h>
 #include "include/errorcode.h"
 #include "NvInfer.h"
-#include "schema/ops_types_generated.h"
 #include "mindapi/base/types.h"
 
 using mindspore::lite::RET_ERROR;

@@ -23,7 +23,8 @@ namespace mindspore::transform {
 INPUT_MAP(ClipByValue) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(clip_value_min)}, {3, INPUT_DESC(clip_value_max)}};
 ATTR_MAP(ClipByValue) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(ClipByValue) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(ClipByValue, "Clip", ADPT_DESC(ClipByValue))
+REG_ADPT_DESC(Clip, "Clip", ADPT_DESC(ClipByValue))
+REG_ADPT_DESC(ClipByValue, "ClipByValue", ADPT_DESC(ClipByValue))
 
 // Assign
 INPUT_MAP(Assign) = {{1, INPUT_DESC(ref)}, {2, INPUT_DESC(value)}};

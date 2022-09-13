@@ -189,7 +189,7 @@ std::shared_ptr<AbstractDelegate> Context::get_delegate() const {
 }
 
 // deprecated
-void Context::SetDelegate(const std::shared_ptr<Delegate> &delegate) { MS_LOG(ERROR) << "Invalid delegate."; }
+void Context::SetDelegate(const std::shared_ptr<Delegate> &delegate) { return; }
 
 // deprecated
 std::shared_ptr<Delegate> Context::GetDelegate() const { return nullptr; }

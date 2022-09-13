@@ -33,6 +33,8 @@ static const std::vector<PrimitivePtr> ms_infer_cut_list = {prim::kPrimReturn,  
                                                             prim::kPrimBpropCut, prim::kPrimSwitchLayer};
 static bool is_infer_single_op = true;
 static bool is_use_lite_session = false;
+
+/// \brief Default Infer Session Implementation, using kernelmod, not implemented now.
 class DefaultInferSession : public InferSession {
  public:
   explicit DefaultInferSession(const std::shared_ptr<Context> &context) {}
@@ -40,6 +42,8 @@ class DefaultInferSession : public InferSession {
   Status Init(const std::shared_ptr<Context> &context) override;
   Status CompileGraph(FuncGraphPtr graph, const void *data = nullptr, size_t size = 0) override;
   Status RunGraph(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs) override;
+  Status RunGraph(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs,
+                  const MSKernelCallBack &before, const MSKernelCallBack &after) override;
   std::vector<MutableTensorImplPtr> GetOutputs() override;
   std::vector<MutableTensorImplPtr> GetInputs() override;
   std::vector<std::string> GetOutputNames() override;
@@ -64,6 +68,11 @@ Status DefaultInferSession::CompileGraph(FuncGraphPtr graph, const void *data, s
   return kSuccess;
 }
 
+Status DefaultInferSession::RunGraph(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs,
+                                     const MSKernelCallBack &before, const MSKernelCallBack &after) {
+  return kSuccess;
+}
+
 Status DefaultInferSession::RunGraph(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs) {
   return kSuccess;
 }
@@ -73,11 +82,13 @@ std::vector<std::string> DefaultInferSession::GetOutputNames() { return std::vec
 std::vector<std::string> DefaultInferSession::GetInputNames() { return std::vector<std::string>(); }
 MutableTensorImplPtr DefaultInferSession::GetOutputByTensorName(const std::string &tensorName) { return nullptr; }
 MutableTensorImplPtr DefaultInferSession::GetInputByTensorName(const std::string &name) { return nullptr; }
-std::shared_ptr<InferSession> InferSession::CreateSession(const std::shared_ptr<Context> &context) {
+
+std::shared_ptr<InferSession> InferSession::CreateSession(const std::shared_ptr<Context> &context,
+                                                          const ConfigInfos &config_info) {
   HandleContext(context);
   auto session_type = SelectSession(context);
   MS_LOG(DEBUG) << "Session type " << static_cast<int64_t>(session_type);
-  return SessionRegistry::GetInstance().GetSession(session_type, context);
+  return SessionRegistry::GetInstance().GetSession(session_type, context, config_info);
 }
 
 void InferSession::HandleContext(const std::shared_ptr<Context> &context) {
@@ -106,7 +117,12 @@ void InferSession::HandleContext(const std::shared_ptr<Context> &context) {
       }
       continue;
     }
-
+    if (device_info->GetDeviceType() == kAscend) {
+      auto ascend_device = device_info->Cast<AscendDeviceInfo>();
+      if (!ascend_device) {
+        continue;
+      }
+    }
     if (device_info->GetDeviceType() == kCPU) {
       auto cpu_device = device_info->Cast<CPUDeviceInfo>();
       if (!cpu_device) {
@@ -127,6 +143,9 @@ SessionType InferSession::SelectSession(const std::shared_ptr<Context> &context)
     for (auto device_context : device_contexts) {
       MS_EXCEPTION_IF_NULL(device_context);
       if (device_context->GetDeviceType() == kAscend) {
+        if (device_context->GetProvider() == "ge") {
+          return kDelegateSession;
+        }
         return kSingleOpSession;
       }
       if (device_context->GetDeviceType() == kGPU || device_context->GetDeviceType() == kCPU) {
@@ -144,7 +163,8 @@ SessionType InferSession::SelectSession(const std::shared_ptr<Context> &context)
   return kDefaultSession;
 }
 
-static std::shared_ptr<InferSession> DefaultSessionCreator(const std::shared_ptr<Context> &ctx) {
+static std::shared_ptr<InferSession> DefaultSessionCreator(const std::shared_ptr<Context> &ctx,
+                                                           const ConfigInfos &config_infos) {
   auto session = std::make_shared<DefaultInferSession>(ctx);
   session->Init(ctx);
   return session;

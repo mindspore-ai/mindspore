@@ -193,7 +193,17 @@ mindspore::TypeId MindirModelUtil::ProtoTypeToTypeId(int32_t proto_type) {
   return it->second;
 }
 
-bool MindirModelUtil::NeedRuntimeConvert(const void *model_data, size_t data_size) {
+bool MindirModelUtil::NeedRuntimeConvert(const void *model_data, size_t data_size,
+                                         const std::shared_ptr<mindspore::Context> &context) {
+  auto device_list = context->MutableDeviceInfo();
+  for (const auto &device_info : device_list) {
+    if (device_info == nullptr) {
+      continue;
+    }
+    if (device_info->GetDeviceType() == DeviceType::kAscend && device_info->GetProvider() == "ge") {
+      return false;
+    }
+  }
   bool need_runtime_convert = true;
   mind_ir::ModelProto model_proto;
   std::string str(static_cast<const char *>(model_data), data_size);

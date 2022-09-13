@@ -6,6 +6,8 @@ endif()
 set(API_SRC "")
 set(LITE_SRC "")
 
+add_compile_definitions(ENABLE_LITE_HELPER)
+
 set(MOCK_SRC
         ${MOCK_SRC}
         ${LITE_DIR}/src/extendrt/mock/lite_runtime/converters.cc
@@ -24,6 +26,7 @@ set(LITE_SRC
         ${LITE_DIR}/src/common/log.cc
         ${LITE_DIR}/src/common/prim_util.cc
         ${LITE_DIR}/src/common/tensor_util.cc
+        ${LITE_DIR}/src/common/config_infos.cc
         ${LITE_DIR}/src/litert/allocator.cc
         ${LITE_DIR}/src/litert/inner_allocator.cc
         ${LITE_DIR}/src/litert/runtime_allocator.cc
@@ -77,6 +80,17 @@ set(LITE_SRC
         ${MINDIR_KERNEL_SRC}
         )
 
+set(INFER_HELPER_SRC
+        ${INFER_HELPER_SRC}
+        ${LITE_DIR}/src/common/helper/external_tensor/file_helper.cc
+        ${LITE_DIR}/src/common/helper/external_tensor/memory_helper.cc
+        )
+
+set(LITE_SRC
+        ${LITE_SRC}
+        ${INFER_HELPER_SRC}
+        )
+
 if(MSLITE_ENABLE_MODEL_ENCRYPTION)
     set(LITE_SRC
             ${LITE_SRC}
@@ -88,9 +102,9 @@ endif()
 if(MSLITE_ENABLE_BFC_MEMORY)
     set(LITE_SRC
         ${LITE_SRC}
-        ${LITE_DIR}/src/litert/dynamic_mem_allocator.cc
-        ${LITE_DIR}/src/litert/dynamic_mem_manager.cc
-        ${LITE_DIR}/src/litert/numa_adapter.cc
+        ${LITE_DIR}/src/extendrt/dynamic_mem_allocator.cc
+        ${LITE_DIR}/src/extendrt/dynamic_mem_manager.cc
+        ${LITE_DIR}/src/extendrt/numa_adapter.cc
         )
 endif()
 
@@ -302,7 +316,6 @@ endif()
 set(MSLITE_GE_LITERT_SRC
     ${MSLITE_GE_LITERT_SRC}
     ${LITE_DIR}/src/extendrt/delegate/graph_executor/litert/graph_executor.cc
-    # ${LITE_DIR}/src/extendrt/delegate/graph_executor/litert/converters.cc
     )
 
 set(LITE_SRC ${LITE_SRC} ${MSLITE_GE_LITERT_SRC})

@@ -53,17 +53,13 @@ int GatherNDTensorRT::AddInnerOp(TensorRTContext *ctx) {
     MS_LOG(ERROR) << "addGather failed for TensorRT.";
     return RET_ERROR;
   }
-  auto nbElementWiseDims = gather_nd_input.trt_tensor_->getDimensions().d[0];
-  if (nbElementWiseDims == -1) {
-    nbElementWiseDims = 0;
-  }
   nvinfer1::IGatherLayer *gather_layer =
     ctx->network()->addGatherV2(*gather_nd_input.trt_tensor_, *indices_tensor.trt_tensor_, nvinfer1::GatherMode::kND);
   if (gather_layer == nullptr) {
     MS_LOG(ERROR) << "addGatherND failed for TensorRT.";
     return RET_ERROR;
   }
-  gather_layer->setNbElementWiseDims(nbElementWiseDims);
+  gather_layer->setNbElementWiseDims(0);
   this->layer_ = gather_layer;
   gather_layer->setName(op_name_.c_str());
   nvinfer1::ITensor *op_output = gather_layer->getOutput(0);

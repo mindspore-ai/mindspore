@@ -20,4 +20,39 @@ DelegateRegistry &DelegateRegistry::GetInstance() {
   static DelegateRegistry instance;
   return instance;
 }
+
+void DelegateRegistry::RegDelegate(const mindspore::DeviceType &device_type, const std::string &provider,
+                                   DelegateCreator creator) {
+  auto it = creator_map_.find(device_type);
+  if (it == creator_map_.end()) {
+    HashMap<std::string, DelegateCreator> map;
+    map[provider] = creator;
+    creator_map_[device_type] = map;
+    return;
+  }
+  it->second[provider] = creator;
+}
+
+void DelegateRegistry::UnRegDelegate(const mindspore::DeviceType &device_type, const std::string &provider) {
+  auto it = creator_map_.find(device_type);
+  if (it != creator_map_.end()) {
+    creator_map_.erase(it);
+  }
+}
+
+std::shared_ptr<GraphExecutor> DelegateRegistry::GetDelegate(const mindspore::DeviceType &device_type,
+                                                             const std::string &provider,
+                                                             const std::shared_ptr<Context> &ctx,
+                                                             const ConfigInfos &config_infos) {
+  //  find common delegate
+  auto it = creator_map_.find(device_type);
+  if (it == creator_map_.end()) {
+    return nullptr;
+  }
+  auto creator_it = it->second.find(provider);
+  if (creator_it == it->second.end()) {
+    return nullptr;
+  }
+  return creator_it->second(ctx, config_infos);
+}
 }  // namespace mindspore

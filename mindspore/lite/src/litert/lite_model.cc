@@ -17,6 +17,7 @@
 #include "src/litert/lite_model.h"
 #include <sys/stat.h>
 #include <iostream>
+#include <sstream>
 #include <functional>
 #include <vector>
 #include <algorithm>
@@ -394,7 +395,12 @@ int InitModelBuffer(LiteModel *model, const char *model_buf, size_t size, bool t
 }
 }  // namespace
 
+#ifdef ENABLE_LITE_HELPER
+int LiteModel::ConstructModel(const char *model_buf, size_t size, bool take_buf,
+                              mindspore::infer::helper::InferHelpers *infer_helpers) {
+#else
 int LiteModel::ConstructModel(const char *model_buf, size_t size, bool take_buf) {
+#endif
   auto ret = InitModelBuffer(this, model_buf, size, take_buf);
   if (ret != RET_OK) {
     return ret;
@@ -424,7 +430,11 @@ int LiteModel::ConstructModel(const char *model_buf, size_t size, bool take_buf)
     }
     return RET_ERROR;
   }
+#ifdef ENABLE_LITE_HELPER
+  if (!PrepareInnerTensors(infer_helpers)) {
+#else
   if (!PrepareInnerTensors()) {
+#endif
     MS_LOG(ERROR) << "PrepareInnerTensors failed.";
     if (take_buf) {
       this->buf = nullptr;
@@ -435,7 +445,11 @@ int LiteModel::ConstructModel(const char *model_buf, size_t size, bool take_buf)
   return RET_OK;
 }
 
+#ifdef ENABLE_LITE_HELPER
+bool LiteModel::PrepareInnerTensors(mindspore::infer::helper::InferHelpers *infer_helpers) {
+#else
 bool LiteModel::PrepareInnerTensors() {
+#endif
   if (!this->inner_all_tensors_.empty()) {
     MS_LOG(ERROR) << "Already prepared tensors";
     return false;
@@ -448,7 +462,12 @@ bool LiteModel::PrepareInnerTensors() {
       MS_LOG(ERROR) << "Create SchemaTensorWrapper return nullptr";
       return false;
     }
+#ifdef ENABLE_LITE_HELPER
+    if (!tensor_wrapper->Init(*(graph_.all_tensors_.at(i)), static_cast<SCHEMA_VERSION>(schema_version_), dir,
+                              infer_helpers)) {
+#else
     if (!tensor_wrapper->Init(*(graph_.all_tensors_.at(i)), static_cast<SCHEMA_VERSION>(schema_version_), dir)) {
+#endif
       delete tensor_wrapper;
       return false;
     }
@@ -505,8 +524,13 @@ bool LiteModel::CheckQuantAllInit(
 
 Model *ImportFromPath(const char *model_path) { return LiteImportFromPath(model_path); }
 
+#ifdef ENABLE_LITE_HELPER
+Model *ImportFromBuffer(const char *model_buf, size_t size, bool take_buf, mindspore::ModelType model_type,
+                        const std::string &path, mindspore::infer::helper::InferHelpers *infer_helpers) {
+#else
 Model *ImportFromBuffer(const char *model_buf, size_t size, bool take_buf, mindspore::ModelType model_type,
                         const std::string &path) {
+#endif
   auto model_loader = mindspore::infer::ModelLoaderRegistry::GetInstance()->GetModelLoader(model_type);
   if (model_loader != nullptr) {
     MS_LOG(INFO) << "import model from model loader";
@@ -522,7 +546,11 @@ Model *ImportFromBuffer(const char *model_buf, size_t size, bool take_buf, minds
     MS_LOG(ERROR) << "new model fail!";
     return nullptr;
   }
+#ifdef ENABLE_LITE_HELPER
+  auto status = model->ConstructModel(model_buf, size, take_buf, infer_helpers);
+#else
   auto status = model->ConstructModel(model_buf, size, take_buf);
+#endif
   if (status != RET_OK) {
     MS_LOG(ERROR) << "construct model failed.";
     delete model;
@@ -583,5 +611,72 @@ int Model::Export(Model *model, const char *filename) {
 #else
   return chmod(filename, S_IRUSR);
 #endif
+}
+
+std::string ModelDebugString(Model *model) {
+  if (model == nullptr) {
+    return "";
+  }
+  std::ostringstream oss;
+  std::string deli = "\n";
+  oss << "{" << deli;
+  oss << "model_type: " << model->model_type_ << deli;
+
+  // debug graph
+  oss << "graph: {" << deli;
+  oss << "name: " << model->graph_.name_ << deli;
+  oss << "version: " << model->graph_.version_;
+
+  // input indices
+  oss << "input_indices: [" << deli;
+  for (auto i : model->graph_.input_indices_) {
+    oss << i << ", " << deli;
+  }
+  oss << "]" << deli;
+
+  // output indices
+  oss << "output_indices: [" << deli;
+  for (auto i : model->graph_.output_indices_) {
+    oss << i << ", " << deli;
+  }
+  oss << "]" << deli;
+
+  // all tensors
+  oss << "all_tensors: [" << deli;
+  for (auto tensor : model->graph_.all_tensors_) {
+    oss << "{" << tensor->name() << "}";
+  }
+  oss << "]" << deli;
+
+  // all nodes
+  oss << "all_nodes: [" << deli;
+  for (auto node : model->graph_.all_nodes_) {
+    oss << "{" << deli;
+    oss << "name: " << node->name_ << deli;
+    oss << "op_type: " << node->op_type_ << deli;
+    oss << "node_type: " << node->node_type_ << deli;
+    oss << "input: [";
+    for (auto i : node->input_indices_) {
+      oss << i << ", ";
+    }
+    oss << "]" << deli;
+    oss << "output: [";
+    for (auto i : node->output_indices_) {
+      oss << i << ", ";
+    }
+    oss << "]" << deli;
+
+    // // primitive
+    // auto *primitive = reinterpret_cast<schema
+
+    oss << "}" << deli;
+  }
+  oss << "]" << deli;
+
+  oss << "}" << deli;
+  oss << "}" << deli;
+
+  // dump
+  return oss.str();
 }
 }  // namespace mindspore::lite

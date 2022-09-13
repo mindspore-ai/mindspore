@@ -29,12 +29,14 @@ class RemoveRedundantOpPass : public Pass {
   explicit RemoveRedundantOpPass(bool is_train_model)
       : Pass("remove_redundant_op_pass"), is_train_model_(is_train_model) {}
   ~RemoveRedundantOpPass() override = default;
+  int RemoveUmonad(const FuncGraphPtr &graph, const FuncGraphManagerPtr &manager);
   int ReplaceOp(const AnfNodePtr &anf_node, const FuncGraphManagerPtr &manager);
   int ReplaceUpdateStateOp(const FuncGraphPtr &func_graph, const AnfNodePtr &anf_node);
   int ReplaceTupleGetItem(const AnfNodePtr &anf_node, const FuncGraphManagerPtr &manager);
   int RemoveDropoutOp(const AnfNodePtr &anf_node, const FuncGraphManagerPtr &manager);
   int RemoveInvalidPadOp(const AnfNodePtr &anf_node, const FuncGraphManagerPtr &manager);
   int RemoveInvalidTransposeOp(const AnfNodePtr &anf_node, const FuncGraphManagerPtr &manager);
+  int FlattenMakeTuple(const FuncGraphPtr &graph, const FuncGraphManagerPtr &manager);
   bool Run(const FuncGraphPtr &graph) override;
 
  private:

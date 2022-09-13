@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,6 +87,11 @@ int TensorRTOp::ReadyInputsNumber(TensorRTContext *ctx) const {
 
 bool TensorRTOp::IsShapeKnown() { return true; }
 
+bool TensorRTOp::IsDynamicInput(TensorRTContext *ctx, size_t k) {
+  nvinfer1::Dims dims = input(ctx, k).trt_tensor_->getDimensions();
+  return std::any_of(dims.d, dims.d + dims.nbDims, [](int d) { return d == -1; });
+}
+
 int TensorRTOp::Prepare(void **network_tensor_bindings, nvinfer1::ICudaEngine *engine) {
   if (op_binding_tensor_.size() != 0) {
     MS_LOG(ERROR) << "need special op Prepare for " << op_name_;
@@ -121,4 +126,30 @@ int TensorRTOp::SetTransposeDynamicRange() {
 bool TensorRTOp::GetSupportInputBool() { return this->support_input_bool_; }
 
 void TensorRTOp::SetSupportInputBool(bool support_input_bool) { this->support_input_bool_ = support_input_bool; }
+
+void TensorRTOp::PrintTrtInputs(TensorRTContext *ctx) {
+  MS_LOG(DEBUG) << "Op " << op_name_ << " type: " << type_;
+  for (size_t i = 0; i < in_tensors_.size(); i++) {
+    if (in_tensors_[i].IsConst()) {
+      MS_LOG(DEBUG) << "-input " << i << "  " << in_tensors_[i].Shape() << " " << in_tensors_[i].DataType();
+    } else {
+      auto tensor = input(ctx, i);
+      if (tensor.trt_tensor_) {
+        MS_LOG(DEBUG) << "-input " << i << "  " << CudaDimsAsString(tensor.trt_tensor_->getDimensions()) << " "
+                      << in_tensors_[i].DataType();
+      }
+    }
+  }
+}
+
+void TensorRTOp::PrintTrtOutputs(TensorRTContext *ctx) {
+  MS_LOG(DEBUG) << "Op " << op_name_ << " type: " << type_;
+  for (size_t i = 0; i < out_tensors_.size(); i++) {
+    auto tensor = output(ctx, i);
+    if (tensor.trt_tensor_) {
+      MS_LOG(DEBUG) << "-output " << i << "  " << CudaDimsAsString(tensor.trt_tensor_->getDimensions()) << " "
+                    << out_tensors_[i].DataType();
+    }
+  }
+}
 }  // namespace mindspore::lite

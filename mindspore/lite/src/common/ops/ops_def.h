@@ -111,12 +111,23 @@
 #ifdef GEN_SCHEMA_DEF
 #define OP_ATTR_WITH_VALUE(key, type, value) \
   op_def.append("    ").append(#key).append(": ").append(#type).append(" = ").append(#value).append(";\n");
+#define NEW_OP_ATTR_WITH_VALUE(key, type, value) \
+  op_def.append("    ").append(#key).append(": ").append(#type).append(";\n");
 #define OP_ATTR_ENUM_WITH_VALUE(key, type, value) \
   op_def.append("    ").append(#key).append(": ").append(#type).append(" = ").append(#value).append(";\n");
 #elif PRIMITIVE_WRITEABLE
 #define OP_ATTR_WITH_VALUE(key, type, value) \
   if (op->GetAttr(#key) != nullptr) {        \
     schema_op->key = op->get_##key();        \
+  } else {                                   \
+    schema_op->key = value;                  \
+  }
+
+#define NEW_OP_ATTR_WITH_VALUE(key, type, value) \
+  if (op->GetAttr(#key) != nullptr) {            \
+    schema_op->key = op->get_##key();            \
+  } else {                                       \
+    schema_op->key = value;                      \
   }
 
 #define OP_ATTR_ENUM_WITH_VALUE(key, type, value)                \
@@ -125,6 +136,7 @@
   }
 #else
 #define OP_ATTR_WITH_VALUE(key, type, value)
+#define NEW_OP_ATTR_WITH_VALUE(key, type, value)
 #define OP_ATTR_ENUM_WITH_VALUE(key, type, value)
 #endif
 

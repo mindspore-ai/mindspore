@@ -61,7 +61,7 @@ int SparseToDenseCPUKernel::Prepare() {
 }
 
 int SparseToDenseCPUKernel::ReSize() {
-  if (in_tensors_.at(THIRD_INPUT)->data_type() != kNumberTypeFloat16 ||
+  if (in_tensors_.at(THIRD_INPUT)->data_type() != kNumberTypeFloat16 &&
       in_tensors_.at(THIRD_INPUT)->data_type() != kNumberTypeFloat32) {
     MS_LOG(ERROR) << in_tensors_.at(THIRD_INPUT)->tensor_name() << " data type "
                   << in_tensors_.at(THIRD_INPUT)->data_type() << " is not support.";

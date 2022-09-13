@@ -21,6 +21,7 @@
 #include <functional>
 #include "include/api/kernel.h"
 #include "src/common/utils.h"
+#include "src/extendrt/utils/tensor_default_impl.h"
 
 namespace mindspore::lite {
 class TensorInfoImpl {
@@ -29,46 +30,24 @@ class TensorInfoImpl {
   TensorInfoImpl(const std::string &name, mindspore::DataType type, const std::vector<int64_t> &shape,
                  mindspore::Format format, const void *data, size_t data_len,
                  const mindspore::tensor::TensorPtr &tensor_val)
-      : name_(name),
-        dType_(type),
-        shape_(shape),
-        format_(format),
-        data_(data),
-        data_len_(data_len),
-        tensor_val_(tensor_val) {
-    is_const_ = (data_ != nullptr);
-    if (data_ == nullptr || data_len_ == 0) {
-      auto ele_num = ElementNum();
-      auto type_size = item_size();
-      temp_data_.resize(ele_num * type_size);
-      data_ = temp_data_.data();
-      data_len_ = temp_data_.size();
-    }
-  }
-  void SetShape(const std::vector<int64_t> &shape) {
-    shape_ = shape;
-    auto new_elem_num = ElementNum();
-    auto type_size = item_size();
-    auto data_size = new_elem_num * type_size;
-    if (data_size != temp_data_.size() && data_ == temp_data_.data()) {
-      temp_data_.resize(data_size);
-      data_ = temp_data_.data();
-      data_len_ = data_size;
-    }
+      : tensor_impl_(name, type, shape), tensor_val_(tensor_val) {
+    tensor_impl_.SetFormat(format);
+    auto is_const = (data != nullptr);
+    tensor_impl_.SetIsConst(is_const);
+    SetData(data, data_len);
   }
 
-  int64_t ElementNum() const { return std::accumulate(shape_.begin(), shape_.end(), 1, std::multiplies<int64_t>()); }
-
-  size_t item_size() const { return DataTypeSize(static_cast<enum TypeId>(dType_)); }
-
-  std::string name_;
-  mindspore::DataType dType_ = mindspore::DataType::kTypeUnknown;
-  std::vector<int64_t> shape_;
-  mindspore::Format format_ = DEFAULT_FORMAT;
-  const void *data_ = nullptr;
-  size_t data_len_ = 0;
-  bool is_const_ = false;
-  std::vector<uint8_t> temp_data_;
+  size_t item_size() const { return DataTypeSize(static_cast<enum TypeId>(tensor_impl_.DataType())); }
+  void SetData(const void *data, size_t data_len) {
+    if (data != nullptr && data_len != 0) {
+      if (tensor_impl_.DataSize() != data_len) {
+        MS_LOG_WARNING << "Tensor expect data size " << tensor_impl_.DataSize() << " != data len " << data_len
+                       << ", shape: " << tensor_impl_.Shape() << ", dtype: " << tensor_impl_.DataType();
+      }
+      tensor_impl_.SetData(const_cast<void *>(data), false);
+    }
+  }
+  TensorDefaultImpl tensor_impl_;
   mindspore::tensor::TensorPtr tensor_val_ = nullptr;
 };
 
@@ -82,21 +61,21 @@ std::string TensorInfo::Name() const {
   if (impl_ == nullptr) {
     return "";
   }
-  return impl_->name_;
+  return impl_->tensor_impl_.Name();
 }
 
 mindspore::DataType TensorInfo::DataType() const {
   if (impl_ == nullptr) {
     return mindspore::DataType::kTypeUnknown;
   }
-  return impl_->dType_;
+  return impl_->tensor_impl_.DataType();
 }
 
 mindspore::Format TensorInfo::format() const {
   if (impl_ == nullptr) {
     return DEFAULT_FORMAT;
   }
-  return impl_->format_;
+  return impl_->tensor_impl_.Format();
 }
 
 const std::vector<int64_t> &TensorInfo::Shape() const {
@@ -104,21 +83,21 @@ const std::vector<int64_t> &TensorInfo::Shape() const {
   if (impl_ == nullptr) {
     return empty_shape;
   }
-  return impl_->shape_;
+  return impl_->tensor_impl_.Shape();
 }
 
 const void *TensorInfo::Data() const {
   if (impl_ == nullptr) {
     return nullptr;
   }
-  return impl_->data_;
+  return impl_->tensor_impl_.Data().get();
 }
 
 void *TensorInfo::MutableData() {
   if (impl_ == nullptr) {
     return nullptr;
   }
-  return const_cast<void *>(impl_->data_);
+  return const_cast<void *>(impl_->tensor_impl_.MutableData());
 }
 
 size_t TensorInfo::DataSize() const {
@@ -132,7 +111,7 @@ bool TensorInfo::IsConst() const {
   if (impl_ == nullptr) {
     return 0;
   }
-  return impl_->is_const_ && impl_->data_ != nullptr;
+  return impl_->tensor_impl_.IsConst();
 }
 
 size_t TensorInfo::item_size() const {
@@ -146,22 +125,21 @@ void TensorInfo::SetShape(const std::vector<int64_t> &shape) {
   if (impl_ == nullptr) {
     return;
   }
-  impl_->SetShape(shape);
+  impl_->tensor_impl_.SetShape(shape);
 }
 
 void TensorInfo::SetData(const void *data, size_t data_len) {
   if (impl_ == nullptr) {
     return;
   }
-  impl_->data_ = data;
-  impl_->data_len_ = data_len;
+  impl_->SetData(data, data_len);
 }
 
 int64_t TensorInfo::ElementNum() const {
   if (impl_ == nullptr) {
     return 0;
   }
-  return impl_->ElementNum();
+  return impl_->tensor_impl_.ElementNum();
 }
 
 TensorInfo &TensorInfo::operator=(const TensorInfo &other) {

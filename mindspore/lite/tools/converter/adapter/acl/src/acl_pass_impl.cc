@@ -29,6 +29,7 @@
 #include "include/registry/pass_registry.h"
 #include "ops/custom.h"
 #include "ops/op_utils.h"
+#include "ops/transpose.h"
 #include "ops/tuple_get_item.h"
 #include "mindspore/core/ops/core_ops.h"
 #include "cxx_api/model/acl/model_converter.h"
@@ -61,21 +62,11 @@ constexpr size_t kTupleGetItemFirstInputIdx = 1;
 STATUS PreProcForMindIr(const FuncGraphPtr &func_graph, bool offline) { return lite::RET_OK; }
 
 STATUS PreProcForTF(const FuncGraphPtr &func_graph, bool offline) {
-  if (!offline) {
-    auto format_pass = std::make_shared<opt::SpecifyGraphInputFormat>(Format::NCHW, Format::NHWC);
-    MS_CHECK_TRUE_MSG(format_pass != nullptr, lite::RET_ERROR, "Make shared specify graph input format failed.");
-    if (!format_pass->Run(func_graph)) {
-      MS_LOG(ERROR) << "Run specify graph input format pass failed.";
+  if (offline) {
+    if (!lite::RunOptimizerPass(func_graph, {kInferShapePass})) {
+      MS_LOG(ERROR) << "Infer shape pass failed.";
       return lite::RET_ERROR;
     }
-    if (!lite::RunOptimizerPass(func_graph, {kToNHWCFormatPass, kDelRedundantTranspose})) {
-      MS_LOG(ERROR) << "To nhwc format failed.";
-      return lite::RET_ERROR;
-    }
-  }
-  if (!lite::RunOptimizerPass(func_graph, {kInferShapePass})) {
-    MS_LOG(ERROR) << "Infer shape pass failed.";
-    return lite::RET_ERROR;
   }
   auto node_list = TopoSort(func_graph->get_return());
   for (auto &node : node_list) {
@@ -99,14 +90,13 @@ STATUS PreProcForTF(const FuncGraphPtr &func_graph, bool offline) {
 }
 
 STATUS PreProcForCaffe(const FuncGraphPtr &func_graph, bool offline) {
-  if (!offline) {
-    if (!lite::RunOptimizerPass(func_graph, {kDelRedundantTranspose})) {
-      MS_LOG(ERROR) << "Del redundant transpose failed.";
+  if (offline) {
+    if (!lite::RunOptimizerPass(func_graph, {kInferShapePass})) {
+      MS_LOG(ERROR) << "Infer shape pass failed.";
       return lite::RET_ERROR;
     }
-    return lite::RET_OK;
   }
-  if (!lite::RunOptimizerPass(func_graph, {kInferShapePass, kToNCHWFormatPass, kDelRedundantTranspose})) {
+  if (!lite::RunOptimizerPass(func_graph, {kToNCHWFormatPass, "DecreaseTransposeAlgo"})) {
     MS_LOG(ERROR) << "To nchw format failed.";
     return lite::RET_ERROR;
   }
@@ -114,14 +104,13 @@ STATUS PreProcForCaffe(const FuncGraphPtr &func_graph, bool offline) {
 }
 
 STATUS PreProcForOnnx(const FuncGraphPtr &func_graph, bool offline) {
-  if (!offline) {
-    if (!lite::RunOptimizerPass(func_graph, {kDelRedundantTranspose})) {
-      MS_LOG(ERROR) << "Del redundant transpose failed.";
+  if (offline) {
+    if (!lite::RunOptimizerPass(func_graph, {kInferShapePass})) {
+      MS_LOG(ERROR) << "Infer shape pass failed.";
       return lite::RET_ERROR;
     }
-    return lite::RET_OK;
   }
-  if (!lite::RunOptimizerPass(func_graph, {kInferShapePass, kToNCHWFormatPass, kDelRedundantTranspose})) {
+  if (!lite::RunOptimizerPass(func_graph, {kToNCHWFormatPass, "DecreaseTransposeAlgo"})) {
     MS_LOG(ERROR) << "To nchw format failed.";
     return lite::RET_ERROR;
   }
@@ -146,7 +135,7 @@ STATUS AclPassImpl::CommonPass(const FuncGraphPtr &func_graph) {
     return lite::RET_ERROR;
   }
   if (IsDynamicInput()) {
-    MS_LOG(INFO) << "Dynamic input no need to run const fold pass.";
+    MS_LOG(INFO) << "Dynamic input or online infer no need to run const fold pass.";
     return lite::RET_OK;
   }
   if (fmk_type_ == converter::kFmkTypeMs) {
@@ -250,9 +239,46 @@ STATUS AclPassImpl::RunPrimitiveMapper(const FuncGraphPtr &func_graph) {
   return lite::RET_OK;
 }
 
+STATUS AclPassImpl::MapperForOrgMindIR(const FuncGraphPtr &func_graph) {
+  MS_LOG(INFO) << "Deparser graph for MindIR model start.";
+  MS_CHECK_TRUE_MSG(func_graph != nullptr, lite::RET_ERROR, "func_graph is nullptr.");
+  std::set<FuncGraphPtr> all_func_graphs = {};
+  lite::GetAllFuncGraph(func_graph, &all_func_graphs);
+
+  std::set<std::string> mindir_mapper = {ops::kNameTranspose};
+  for (auto graph : all_func_graphs) {
+    auto node_list = TopoSort(graph->get_return());
+    for (auto &node : node_list) {
+      if (!utils::isa<CNodePtr>(node)) {
+        continue;
+      }
+      auto cnode = node->cast<CNodePtr>();
+      MS_CHECK_TRUE_MSG(cnode != nullptr, lite::RET_ERROR, "cnode is nullptr.");
+      auto prim = GetCNodePrimitive(cnode);
+      CHECK_NULL_RETURN(prim);
+      std::string name = AdjustCnodeName(prim);
+      if (!mindir_mapper.count(name)) {
+        continue;
+      }
+      auto mapper = lite::PrimitiveMapperRegister::GetInstance().GetPrimitiveMapper(name);
+      if (mapper == nullptr) {
+        MS_LOG(DEBUG) << "Name: " << name << " not need to mapper.";
+        continue;
+      }
+      MS_LOG(INFO) << "Deparser cnode: " << name;
+      auto status = mapper->Mapper(cnode);
+      if (status != lite::RET_OK) {
+        MS_LOG(ERROR) << "Deparser primitive failed.";
+        return lite::RET_ERROR;
+      }
+    }
+  }
+  return lite::RET_OK;
+}
+
 STATUS AclPassImpl::DeparseGraph(const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &manager) {
   if (fmk_type_ == converter::kFmkTypeMs) {
-    MS_LOG(INFO) << "MindIr no need to mapper graph";
+    MapperForOrgMindIR(func_graph);
     return lite::RET_OK;
   }
   if (RunPrimitiveMapper(func_graph) != lite::RET_OK) {
@@ -347,20 +373,22 @@ STATUS AclPassImpl::SetAclModelOptions(const FuncGraphPtr &func_graph) {
   options_ = std::make_shared<AclModelOptions>(model_context);
   CHECK_NULL_RETURN(options_);
   auto inputs = func_graph->get_inputs();
-  std::vector<std::string> input_names;
-  for (auto node : inputs) {
-    CHECK_NULL_RETURN(node);
-    auto para = node->cast<ParameterPtr>();
-    CHECK_NULL_RETURN(para);
-    std::string name = para->name();
-    for (auto pos = name.find(':'); pos != std::string::npos; pos = name.find(':')) {
-      name = name.substr(0, pos) + "_" + name.substr(pos + 1);
-      MS_LOG(INFO) << "Input name: " << name;
+  if (user_options_cfg_.input_shape.empty()) {
+    std::vector<std::string> input_names;
+    for (auto node : inputs) {
+      CHECK_NULL_RETURN(node);
+      auto para = node->cast<ParameterPtr>();
+      CHECK_NULL_RETURN(para);
+      std::string name = para->name();
+      for (auto pos = name.find(':'); pos != std::string::npos; pos = name.find(':')) {
+        name = name.substr(0, pos) + "_" + name.substr(pos + 1);
+        MS_LOG(INFO) << "Input name: " << name;
+      }
+      para->set_name(name);
+      input_names.push_back(name);
     }
-    para->set_name(name);
-    input_names.push_back(name);
+    options_->RenameInput(input_names);
   }
-  options_->RenameInput(input_names);
   options_->SetOmFilePath(user_options_cfg_.om_file_path);
   MS_LOG(INFO) << "Set acl model options success.";
   return lite::RET_OK;

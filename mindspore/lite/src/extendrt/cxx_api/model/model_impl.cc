@@ -23,89 +23,136 @@
 #include "mindspore/core/utils/ms_context.h"
 #include "extendrt/mindir_loader/mindir_model/mindir_model_util.h"
 #include "src/extendrt/convert/runtime_convert.h"
+#include "src/common/config_file.h"
+#include "src/extendrt/utils/serialization.h"
+#include "mindapi/ir/func_graph.h"
+#include "mindapi/base/base.h"
 
 namespace mindspore {
-Status ModelImpl::build_by_buffer_impl(const void *model_data, size_t data_size, ModelType model_type,
-                                       const std::shared_ptr<Context> &model_context) {
-  const void *model_buff = model_data;
-  size_t model_size = data_size;
+namespace {
+const char *const kExecutionPlan = "execution_plan";
+const char *const kConfigModelFileSection = "model_file";
+const char *const kConfigMindIRPathKey = "mindir_path";
+constexpr size_t kMaxSectionNum = 100;
+constexpr size_t kMaxConfigNumPerSection = 1000;
+}  // namespace
+void ModelImpl::SetMsContext() {
+  if (MsContext::GetInstance() == nullptr) {
+    MS_LOG(INFO) << "MsContext::GetInstance() is nullptr.";
+    MsContext::device_type_seter([](std::shared_ptr<MsContext> &device_type_seter) {
+      auto back_policy_env = std::getenv("MSLITE_ENABLE_HELPER");
+      if (back_policy_env != nullptr) {
+        device_type_seter.reset(new (std::nothrow) MsContext("ge", kAscendDevice));
+      } else {
+        device_type_seter.reset(new (std::nothrow) MsContext("vm", kCPUDevice));
+      }
+    });
+  }
+}
+
+ConverterPlugin::~ConverterPlugin() {
 #ifndef _WIN32
-  if (infer::mindir::MindirModelUtil::NeedRuntimeConvert(model_data, data_size)) {
-    MS_LOG(WARNING) << "Need runtime convert";
+  if (handle_ != nullptr) {
+    (void)dlclose(handle_);
+    handle_ = nullptr;
+  }
+#endif
+}
+
+ConverterPlugin &ConverterPlugin::Instance() {
+  static ConverterPlugin instance;
+  return instance;
+}
+
+ConverterFunc ConverterPlugin::GetConverterFunc() {
+#ifndef _WIN32
+  if (converter_func_ == nullptr) {
     std::string plugin_path;
-    auto ret = DLSoPath("libmindspore-lite.so", "libruntime_convert_plugin.so", &plugin_path);
+    auto ret = DLSoPath({"libmindspore-lite.so", "_c_lite"}, "libruntime_convert_plugin.so", &plugin_path);
     if (ret != kSuccess) {
-      MS_LOG(WARNING) << "Get path of libruntime_convert_plugin.so failed. error: " << ret;
+      MS_LOG(ERROR) << "Get path of libruntime_convert_plugin.so failed. error: " << ret;
+      return nullptr;
     }
     void *function = nullptr;
     ret = DLSoOpen(plugin_path, "RuntimeConvert", &handle_, &function, true);
     if (ret != kSuccess) {
       MS_LOG(WARNING) << "DLSoOpen RuntimeConvert failed, so path: " << plugin_path;
+      return nullptr;
     }
-    auto convert =
-      reinterpret_cast<void *(*)(const char *, const size_t &, size_t *, const std::shared_ptr<Context> &)>(function);
-    if (convert != nullptr) {
-      model_buff = convert(static_cast<const char *>(model_data), data_size, &model_size, model_context);
-    }
-  } else {
-    MS_LOG(WARNING) << "Not need runtime convert";
+    converter_func_ = reinterpret_cast<ConverterFunc>(function);
   }
 #endif
-  graph_ = std::make_shared<Graph>();
-  auto ret = Serialization::Load(model_buff, model_size, model_type, graph_.get());
-  if (ret != kSuccess) {
-    MS_LOG(ERROR) << "Serialization::Load model failed.";
-    return ret;
+  return converter_func_;
+}
+
+Status ModelImpl::BuildByBufferImpl(const void *model_data, size_t data_size, ModelType model_type,
+                                    const std::shared_ptr<Context> &model_context, const std::string &model_path) {
+  const void *model_buff = model_data;
+  size_t model_size = data_size;
+  auto mindir_path = GetConfig(kConfigModelFileSection, kConfigMindIRPathKey);
+  if (mindir_path == "") {
+    // user does not set mindir_path, convert from model_path
+    mindir_path = model_path.substr(0, model_path.rfind("/"));
   }
-  session_ = InferSession::CreateSession(model_context);
+  SetMsContext();
+  session_ = InferSession::CreateSession(model_context, config_info_);
   if (session_ == nullptr) {
     MS_LOG(ERROR) << "Create session failed.";
     return kLiteNullptr;
   }
-  ret = session_->Init(model_context);
+  auto ret = session_->Init(model_context);
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "Init session failed.";
     return ret;
   }
-  if (MsContext::GetInstance() == nullptr) {
-    MS_LOG(INFO) << "MsContext::GetInstance() is nullptr.";
-    MsContext::device_type_seter([](std::shared_ptr<MsContext> &device_type_seter) {
-      device_type_seter.reset(new (std::nothrow) MsContext("vm", kCPUDevice));
-    });
+  if (infer::mindir::MindirModelUtil::NeedRuntimeConvert(model_data, data_size, model_context)) {
+    return CompileGraphOnline(model_data, data_size, model_context);
   }
-  return session_->CompileGraph(graph_->graph_data_->GetFuncGraph(), model_buff, model_size);
+  graph_ = std::make_shared<Graph>();
+  ret = mindspore::infer::Serialization::Load(model_buff, model_size, model_type, graph_.get(), Key{}, kDecModeAesGcm,
+                                              mindir_path);
+  if (ret != kSuccess) {
+    MS_LOG(ERROR) << "Serialization::Load model failed.";
+    return ret;
+  }
+  return session_->CompileGraph(graph_->graph_data_->GetFuncGraph());
 }
 
 Status ModelImpl::Build(const void *model_data, size_t data_size, ModelType model_type,
                         const std::shared_ptr<Context> &model_context) {
-  return build_by_buffer_impl(model_data, data_size, model_type, model_context);
+  return BuildByBufferImpl(model_data, data_size, model_type, model_context);
 }
 
 Status ModelImpl::Build(const std::string &model_path, ModelType model_type,
                         const std::shared_ptr<Context> &model_context) {
-  graph_ = std::make_shared<Graph>();
-  auto ret = Serialization::Load(model_path, model_type, graph_.get());
-  if (ret != kSuccess) {
-    MS_LOG(ERROR) << "Serialization::Load model failed.";
-    return ret;
-  }
-  session_ = InferSession::CreateSession(model_context);
-  if (session_ == nullptr) {
-    MS_LOG(ERROR) << "Create session failed.";
+  if (model_path.empty()) {
+    MS_LOG(ERROR) << "Model path cannot be empty";
     return kLiteNullptr;
   }
-  ret = session_->Init(model_context);
-  if (ret != kSuccess) {
-    MS_LOG(ERROR) << "Init session failed.";
-    return ret;
+  auto buffer = ReadFile(model_path);
+  if (buffer.DataSize() == 0) {
+    MS_LOG(ERROR) << "Failed to read buffer from model file: " << model_path;
+    return kLiteNullptr;
   }
-  if (MsContext::GetInstance() == nullptr) {
-    MS_LOG(INFO) << "MsContext::GetInstance() is nullptr.";
-    MsContext::device_type_seter([](std::shared_ptr<MsContext> &device_type_seter) {
-      device_type_seter.reset(new (std::nothrow) MsContext("vm", kCPUDevice));
-    });
+  return BuildByBufferImpl(buffer.Data(), buffer.DataSize(), model_type, model_context, model_path);
+}
+
+Status ModelImpl::CompileGraphOnline(const void *model_data, size_t data_size,
+                                     const std::shared_ptr<Context> &model_context) {
+  MS_LOG(INFO) << "Need runtime convert";
+  auto convert = ConverterPlugin::Instance().GetConverterFunc();
+  if (convert == nullptr) {
+    MS_LOG(ERROR) << "convert is nullptr";
+    return kLiteNullptr;
   }
-  return session_->CompileGraph(graph_->graph_data_->GetFuncGraph());
+  auto api_graph = convert(static_cast<const char *>(model_data), data_size, model_context, config_info_);
+  if (api_graph == nullptr) {
+    MS_LOG(ERROR) << "Failed to converter graph";
+    return kLiteNullptr;
+  }
+  auto impl = api_graph->impl();
+  auto inner_graph = std::dynamic_pointer_cast<FuncGraph>(impl);
+  return session_->CompileGraph(inner_graph);
 }
 
 Status ModelImpl::Resize(const std::vector<MSTensor> &inputs, const std::vector<std::vector<int64_t>> &dims) {
@@ -195,7 +242,8 @@ MSTensor ModelImpl::GetOutputByTensorName(const std::string &name) {
   return MSTensor(tensor_impl);
 }
 
-Status ModelImpl::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) {
+Status ModelImpl::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
+                          const MSKernelCallBack &before, const MSKernelCallBack &after) {
   MS_EXCEPTION_IF_NULL(session_);
   MS_EXCEPTION_IF_NULL(outputs);
   std::vector<mindspore::tensor::Tensor> graph_inputs = TensorUtils::MSTensorToTensor(inputs);
@@ -205,7 +253,7 @@ Status ModelImpl::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
     graph_outputs = TensorUtils::MSTensorToTensor(*outputs);
     org_graph_outputs = graph_outputs;
   }
-  auto ret = session_->RunGraph(graph_inputs, &graph_outputs);
+  auto ret = session_->RunGraph(graph_inputs, &graph_outputs, before, after);
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "ModelImpl::Predict RunGraph failed with " << ret;
     return ret;
@@ -244,19 +292,22 @@ Status ModelImpl::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
   return kSuccess;
 }
 
+Status ModelImpl::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) {
+  return Predict(inputs, outputs, nullptr, nullptr);
+}
+
 Status ModelImpl::Predict() {
   auto inputs = GetInputs();
   auto outputs = GetOutputs();
   return Predict(inputs, &outputs);
 }
-
 bool ModelImpl::HasPreprocess() { return graph_->graph_data_->GetPreprocess().empty() ? false : true; }
 
 Status ModelImpl::Preprocess(const std::vector<std::vector<MSTensor>> &inputs, std::vector<MSTensor> *outputs) {
 #if !defined(_WIN32) && !defined(_WIN64)
   // Config preprocessor, temporary way to let mindspore.so depends on _c_dataengine
   std::string dataengine_so_path;
-  Status dlret = DLSoPath("libmindspore.so", "_c_dataengine", &dataengine_so_path);
+  Status dlret = DLSoPath({"libmindspore.so"}, "_c_dataengine", &dataengine_so_path);
   CHECK_FAIL_AND_RELEASE(dlret, nullptr, "Parse dataengine_so failed: " + dlret.GetErrDescription());
 
   // Run preprocess
@@ -337,5 +388,46 @@ Status ModelImpl::PredictWithPreprocess(const std::vector<std::vector<MSTensor>>
   MS_LOG(ERROR) << "Predict with data preprocess is not supported on Windows yet.";
   return Status(kMEFailed, "Predict with data preprocess is not supported on Windows yet.");
 #endif
+}
+
+Status ModelImpl::LoadConfig(const std::string &config_path) {
+  ConfigInfos all_config_info;
+  int ret = lite::GetAllSectionInfoFromConfigFile(config_path, &all_config_info);
+  if (ret != kSuccess) {
+    MS_LOG(ERROR) << "GetAllSectionInfoFromConfigFile fail!ret: " << ret;
+    return kLiteFileError;
+  }
+  config_info_ = all_config_info;
+  return kSuccess;
+}
+
+Status ModelImpl::UpdateConfig(const std::string &section, const std::pair<std::string, std::string> &config) {
+  auto iter = config_info_.find(section);
+  if (iter == config_info_.end()) {
+    if (config_info_.size() >= kMaxSectionNum) {
+      MS_LOG(ERROR) << "config too many sections!";
+      return kLiteError;
+    }
+    config_info_[section][config.first] = config.second;
+    return kSuccess;
+  }
+  if (iter->second.size() >= kMaxConfigNumPerSection) {
+    MS_LOG(ERROR) << "config too many items!";
+    return kLiteError;
+  }
+  iter->second[config.first] = config.second;
+  return kSuccess;
+}
+
+std::string ModelImpl::GetConfig(const std::string &section, const std::string &key) {
+  auto iter = config_info_.find(section);
+  if (iter == config_info_.end()) {
+    return "";
+  }
+  auto elem_iter = iter->second.find(key);
+  if (elem_iter == iter->second.end()) {
+    return "";
+  }
+  return elem_iter->second;
 }
 }  // namespace mindspore

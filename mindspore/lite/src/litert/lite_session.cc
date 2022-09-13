@@ -51,6 +51,9 @@
 #endif
 #include "src/litert/runtime_convert.h"
 #include "extendrt/mindir_loader/model_loader.h"
+#ifndef __ANDROID__
+#include "kernel/ascend/plugin/ascend_kernel_plugin.h"
+#endif
 
 using AbstractBaseModel = mindspore::infer::AbstractBaseModel;
 
@@ -747,6 +750,18 @@ int LiteSession::ContextInit(InnerContext *context) {
   return RET_OK;
 }
 
+int LiteSession::AscendInit(InnerContext *context) {
+#ifndef __ANDROID__
+  if (!context->IsDeviceTypeEnabled(DT_ASCEND)) {
+    MS_LOG(INFO) << "There is no Ascend device type.";
+    return RET_OK;
+  }
+  return mindspore::AscendKernelPlugin::GetInstance().Register();
+#else
+  return RET_OK;
+#endif
+}
+
 int LiteSession::CreateTensorRTDelegate() {
 #if GPU_TENSORRT
   std::string cache_model_path;
@@ -866,6 +881,12 @@ int LiteSession::Init(InnerContext *context) {
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init Context failed";
     is_running_.store(false);
+    return ret;
+  }
+
+  ret = AscendInit(context);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Open Ascend kernel plugin failed";
     return ret;
   }
 
@@ -1625,8 +1646,14 @@ std::string lite::LiteSession::ParseWeightPath() {
   return weight_path;
 }
 
+#ifdef ENABLE_LITE_HELPER
+int lite::LiteSession::LoadModelAndCompileByBuf(const char *model_buf, mindspore::ModelType model_type,
+                                                const size_t &buf_size,
+                                                mindspore::infer::helper::InferHelpers *infer_helpers) {
+#else
 int lite::LiteSession::LoadModelAndCompileByBuf(const char *model_buf, mindspore::ModelType model_type,
                                                 const size_t &buf_size) {
+#endif
   size_t lite_buf_size = 0;
   char *lite_buf = nullptr;
   auto buf_model_type = LoadModelByBuff(model_buf, buf_size, &lite_buf, &lite_buf_size, model_type);
@@ -1635,13 +1662,19 @@ int lite::LiteSession::LoadModelAndCompileByBuf(const char *model_buf, mindspore
     return RET_ERROR;
   }
   auto weight_path = ParseWeightPath();
+#ifdef ENABLE_LITE_HELPER
+  auto *model = lite::ImportFromBuffer(lite_buf, lite_buf_size, true, model_type, weight_path, infer_helpers);
+#else
   auto *model = lite::ImportFromBuffer(lite_buf, lite_buf_size, true, model_type, weight_path);
+#endif
   if (model == nullptr) {
     MS_LOG(ERROR) << "Import model failed";
     return RET_ERROR;
   }
   auto status = lite::PackWeightManager::GetInstance()->InitPackWeightByBuf(model_buf, buf_size);
   MS_CHECK_FALSE_MSG(status != RET_OK, RET_ERROR, "InitPackWeightByBuf failed.");
+
+  (reinterpret_cast<lite::LiteModel *>(model))->set_keep_model_buf(keep_model_buf_);
   auto ret = CompileGraph(model);
   model->buf = nullptr;
   if (ret != lite::RET_OK) {

@@ -19,11 +19,13 @@
 #include <vector>
 #include "tools/converter/adapter/acl/common/utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
+#include "tools/converter/adapter/acl/mapper/tbe_op_def.h"
 #include "ir/graph_utils.h"
 #include "include/errorcode.h"
 #include "include/registry/converter_context.h"
 #include "ops/op_utils.h"
 #include "ops/fusion/avg_pool_fusion.h"
+#include "ops/fusion/max_pool_fusion.h"
 #include "plugin/device/cpu/kernel/nnacl/op_base.h"
 #include "src/common/log_util.h"
 
@@ -110,29 +112,44 @@ void PrimitiveMapper::AdjustCaffePoolAttr(const std::string &src_prim_name, cons
   dst_prim->AddAttr(ops::kMode, MakeValue(mode));
 
   auto run_mode_val = dst_prim->GetAttr(ops::kRoundMode);
+  if (run_mode_val == nullptr) {
+    MS_LOG(INFO) << "There is no attr run mode";
+    return;
+  }
   auto run_mode = GetValue<int64_t>(run_mode_val);
   int64_t run_mode_ge = run_mode == RoundMode::FLOOR ? 1 : 0;
   dst_prim->set_attr(ops::kRoundMode, MakeValue(run_mode_ge));
 }
 
-void PrimitiveMapper::AdjustOnnxPoolAttr(const PrimitivePtr &dst_prim) const {
+void PrimitiveMapper::AdjustOnnxPoolAttr(const std::string &src_prim_name, const PrimitivePtr &dst_prim) const {
+  auto pad_mode_val = dst_prim->GetAttr(ops::kPadMode);
   static std::map<int64_t, std::string> kPadModToStrMap = {
     {PadMode::PAD, "CALCULATED"},
     {PadMode::SAME, "SAME"},
     {PadMode::VALID, "VALID"},
   };
-  auto pad_mode_val = dst_prim->GetAttr(ops::kPadMode);
-  auto pad_mode = GetValue<int64_t>(pad_mode_val);
-  std::string padding_mode = "CALCULATED";
-  if (kPadModToStrMap.find(pad_mode) != kPadModToStrMap.end()) {
-    padding_mode = kPadModToStrMap[pad_mode];
+  if (pad_mode_val) {
+    auto pad_mode = GetValue<int64_t>(pad_mode_val);
+    std::string padding_mode = "CALCULATED";
+    if (kPadModToStrMap.find(pad_mode) != kPadModToStrMap.end()) {
+      padding_mode = kPadModToStrMap[pad_mode];
+    }
+    if (src_prim_name == ops::kNameMaxPool && padding_mode == "CALCULATED") {
+      padding_mode = "VALID";
+    }
+    std::string pad_mode_name = src_prim_name == acl::kNameMaxPoolV3 ? kNamePaddingMode : ops::kPadMode;
+    dst_prim->AddAttr(pad_mode_name, MakeValue(padding_mode));
+  } else {
+    MS_LOG(INFO) << "There is no attr pad mode";
   }
-  dst_prim->AddAttr(kNamePaddingMode, MakeValue(padding_mode));
-
   auto run_mode_val = dst_prim->GetAttr(ops::kRoundMode);
-  int64_t run_mode = GetValue<int64_t>(run_mode_val);
-  bool ceil_mode = run_mode == RoundMode::CEIL;
-  dst_prim->AddAttr(kNameCeilMode, MakeValue(ceil_mode));
+  if (run_mode_val) {
+    int64_t run_mode = GetValue<int64_t>(run_mode_val);
+    bool ceil_mode = run_mode == RoundMode::CEIL;
+    dst_prim->AddAttr(kNameCeilMode, MakeValue(ceil_mode));
+  } else {
+    MS_LOG(INFO) << "There is no attr run mode";
+  }
 }
 
 STATUS PrimitiveMapper::AdjustPoolAttr(int fmk_type, const std::string &src_prim_name,
@@ -141,7 +158,7 @@ STATUS PrimitiveMapper::AdjustPoolAttr(int fmk_type, const std::string &src_prim
     AdjustCaffePoolAttr(src_prim_name, dst_prim);
     return lite::RET_OK;
   } else if (fmk_type == converter::kFmkTypeOnnx) {
-    AdjustOnnxPoolAttr(dst_prim);
+    AdjustOnnxPoolAttr(src_prim_name, dst_prim);
   }
   // adjust common attr
   MS_CHECK_TRUE_MSG(dst_prim != nullptr, lite::RET_ERROR, "dst_prim is nullptr.");

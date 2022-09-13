@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,14 +40,14 @@ int ConcateTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::
 
   return RET_OK;
 }
-int ConcateTensorRT::AddInnerOp(TensorRTContext *ctx) {
+int ConcateTensorRT::CheckParams(TensorRTContext *ctx) {
   if (ctx == nullptr || ctx->network() == nullptr) {
     MS_LOG(ERROR) << "context or network is invalid";
     return RET_ERROR;
   }
   int input_nbDims = input(ctx, 0).trt_tensor_->getDimensions().nbDims;
   if (axis_ == -1) {
-    axis_ = input_nbDims - 1;
+    axis_ = input_nbDims - (type_ == ops::kNameConcat);
   }
   if (axis_ < 0 || axis_ > input_nbDims || (axis_ == input_nbDims && type_ != ops::kNameStack)) {
     MS_LOG(ERROR) << "concate_op valid axis : " << axis_ << " , input dims : " << input_nbDims;
@@ -59,6 +59,14 @@ int ConcateTensorRT::AddInnerOp(TensorRTContext *ctx) {
                   << ", but origin ms tensor has " << in_tensors_.size();
     return RET_ERROR;
   }
+  return RET_OK;
+}
+
+int ConcateTensorRT::AddInnerOp(TensorRTContext *ctx) {
+  if (CheckParams(ctx) != RET_OK) {
+    MS_LOG(ERROR) << "Check input tensors failed: " << op_name_;
+    return RET_ERROR;
+  }
 
   nvinfer1::ITensor *trt_input_tensors[in_tensors_.size()];
   int ret = PreProcessInputs(ctx, trt_input_tensors);
@@ -67,8 +75,15 @@ int ConcateTensorRT::AddInnerOp(TensorRTContext *ctx) {
     return ret;
   }
 
-  if (type_ == ops::kNameStack) {
-    for (size_t i = 0; i != in_tensors_.size(); ++i) {
+  bool has_rank_0 = false;
+  for (size_t i = 0; i < in_tensors_.size(); ++i) {
+    if (!input(ctx, i).is_tensor) {
+      has_rank_0 = true;
+      break;
+    }
+  }
+  if (type_ == ops::kNameStack && !has_rank_0) {
+    for (size_t i = 0; i < in_tensors_.size(); ++i) {
       auto shuffle_layer = ctx->network()->addShuffle(*trt_input_tensors[i]);
       if (shuffle_layer == nullptr) {
         MS_LOG(ERROR) << "addShuffle failed for TensorRT.";
@@ -95,7 +110,7 @@ int ConcateTensorRT::AddInnerOp(TensorRTContext *ctx) {
   }
   concate_layer->setName(op_name_.c_str());
   auto concat_output = concate_layer->getOutput(0);
-  ctx->RegisterTensor(ITensorHelper{concat_output, out_format_, true}, out_tensors_[0].Name());
+  ctx->RegisterTensor(ITensorHelper{concat_output, NCHW, true}, out_tensors_[0].Name());
   this->layer_ = concate_layer;
   return RET_OK;
 }

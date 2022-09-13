@@ -25,7 +25,12 @@
 #include "runtime/hardware/device_context.h"
 #include "extendrt/utils/kernel_graph_utils.h"
 #include "extendrt/session/lite_graph_executor.h"
+#ifdef ENABLE_HELPER
+#include "extendrt/delegate/ascend_ge/ge_device_context.h"
+#include "extendrt/delegate/ascend_ge/ge_utils.h"
+#endif
 namespace mindspore {
+/// \brief Delegate Session implementation, use delegate api for inference.
 // TODO(zhaizhiqiang): use GraphSinkDelegateSession instead of GraphSinkSession in future.
 // class GraphSinkDelegateSession
 class GraphSinkSession : public InferSession {
@@ -34,10 +39,12 @@ class GraphSinkSession : public InferSession {
   explicit GraphSinkSession(std::shared_ptr<device::GraphExecutor> graph_executor) {
     graph_executor_ = std::dynamic_pointer_cast<mindspore::LiteGraphExecutor>(graph_executor);
   }
-  virtual ~GraphSinkSession() = default;
+  ~GraphSinkSession() override;
 
   Status Init(const std::shared_ptr<Context> &context) override;
   Status CompileGraph(FuncGraphPtr graph, const void *data = nullptr, size_t size = 0) override;
+  Status RunGraph(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs,
+                  const MSKernelCallBack &before, const MSKernelCallBack &after) override;
   Status RunGraph(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs) override;
   Status Resize(const std::vector<tensor::Tensor> &inputs, const std::vector<std::vector<int64_t>> &dims) override;
 
@@ -49,17 +56,22 @@ class GraphSinkSession : public InferSession {
   MutableTensorImplPtr GetInputByTensorName(const std::string &name) override;
 
  private:
+  Status GeDeviceContextInit();
+
   std::shared_ptr<mindspore::LiteGraphExecutor> graph_executor_;
   std::map<std::string, std::string> options_;
   bool is_use_kernel_graph_ = true;
   KernelGraphUtilsPtr kernel_graph_utils_;
+  std::shared_ptr<Context> context_;
   KernelGraphPtr kernel_graph_;
   FuncGraphPtr func_graph_;
   std::vector<MutableTensorImplPtr> inputs_;
   std::vector<std::string> input_names_;
   std::vector<MutableTensorImplPtr> outputs_;
   std::vector<std::string> output_names_;
-
+#ifdef ENABLE_HELPER
+  std::shared_ptr<GeDeviceContext> ge_context_ = nullptr;
+#endif
   Status InitGraphInputsOutputs();
 };
 }  // namespace mindspore

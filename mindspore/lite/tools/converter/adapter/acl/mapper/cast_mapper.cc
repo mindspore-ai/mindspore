@@ -46,6 +46,9 @@ STATUS CastMapper::Mapper(const CNodePtr &cnode) {
   TypePtr type_ptr = TypeIdToType(TypeId(dst_type));
   MS_CHECK_TRUE_MSG(type_ptr != nullptr, lite::RET_ERROR, "New type ptr failed.");
   ValueNodePtr value_node = NewValueNode(type_ptr);
+  std::vector<int64_t> shape_vec_shape = {};
+  auto abstract = std::make_shared<abstract::AbstractTensor>(kInt64, shape_vec_shape);
+  value_node->set_abstract(abstract);
   MS_CHECK_TRUE_MSG(value_node != nullptr, lite::RET_ERROR, "New value node failed.");
   cnode->set_input(kNameCastInputNum - 1, value_node);
   return lite::RET_OK;

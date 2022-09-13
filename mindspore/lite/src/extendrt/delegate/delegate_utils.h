@@ -16,6 +16,8 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_DELEGATE_UTILS_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_DELEGATE_UTILS_H_
 #include <vector>
+#include <map>
+#include <set>
 #include "src/common/log_adapter.h"
 #include "include/errorcode.h"
 #include "core/base/base.h"
@@ -137,11 +139,34 @@ std::vector<T *> FindNextOps(T *cur_op, std::vector<T *> all_ops) {
 
 template <typename T>
 void FindPreNextOps(std::vector<T *> all_ops) {
+  std::map<TensorInfo, std::set<T *>> in_tensor_op;
+  std::map<TensorInfo, std::set<T *>> out_tensor_op;
   for (auto op : all_ops) {
-    auto in_ops = FindPreOps(op, all_ops);
-    op->set_in_ops(in_ops);
-    auto out_ops = FindNextOps(op, all_ops);
-    op->set_out_ops(out_ops);
+    for (auto in_tensor : op->inputs()) {
+      in_tensor_op[in_tensor].insert(op);
+    }
+    for (auto out_tensor : op->outputs()) {
+      out_tensor_op[out_tensor].insert(op);
+    }
+  }
+  for (auto op : all_ops) {
+    std::set<T *> in_ops_set;
+    for (auto in_tensor : op->inputs()) {
+      auto in_ops = out_tensor_op[in_tensor];
+      in_ops_set.insert(in_ops.begin(), in_ops.end());
+    }
+    std::vector<T *> in_ops_vec;
+    in_ops_vec.assign(in_ops_set.begin(), in_ops_set.end());
+    op->set_in_ops(in_ops_vec);
+
+    std::set<T *> out_ops_set;
+    for (auto out_tensor : op->outputs()) {
+      auto out_ops = in_tensor_op[out_tensor];
+      out_ops_set.insert(out_ops.begin(), out_ops.end());
+    }
+    std::vector<T *> out_ops_vec;
+    out_ops_vec.assign(out_ops_set.begin(), out_ops_set.end());
+    op->set_out_ops(out_ops_vec);
   }
 }
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,6 +97,7 @@ int LSTMTensorRT::PreProcess(TensorRTContext *ctx) {
     MS_LOG(ERROR) << "create transpose_in_layer failed for " << op_name_;
     return RET_ERROR;
   }
+  this->layer_ = transpose_in_layer;
   nvinfer1::Permutation transpose_perm{{1, 0, INPUT_SIZE_INDEX}};
   transpose_in_layer->setFirstTranspose(transpose_perm);
   transpose_in_layer->setName((op_name_ + "transpose_in").c_str());
@@ -281,6 +282,7 @@ nvinfer1::ITensor *LSTMTensorRT::ConcateAll(TensorRTContext *ctx, std::vector<nv
     return nullptr;
   }
   concat->setAxis(axis);
+  this->layer_ = concat;
   return concat->getOutput(0);
 }
 
@@ -470,7 +472,7 @@ nvinfer1::ITensor *LSTMTensorRT::AddLSTMOneLoop(TensorRTContext *ctx, const Lstm
 
 int LSTMTensorRT::Prepare(void **network_tensor_bindings, nvinfer1::ICudaEngine *engine) {
   if (op_binding_tensor_.size() == 0) {
-    MS_LOG(DEBUG) << "unsing serialized engine, add input tensor for " << op_name_;
+    MS_LOG(DEBUG) << "using serialized engine, add input tensor for " << op_name_;
     TensorInfo &hidden_in_init = in_tensors_[HIDDEN_IN_TENSOR_INIT];
     TensorInfo &cell_in_init = in_tensors_[CELL_IN_TENSOR_INIT];
 

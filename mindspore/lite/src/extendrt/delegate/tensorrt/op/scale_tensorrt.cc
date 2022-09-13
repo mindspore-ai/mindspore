@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
+#include "src/extendrt/delegate/tensorrt/op/scale_tensorrt.h"
 #include <numeric>
 #include <functional>
-#include "src/extendrt/delegate/tensorrt/op/scale_tensorrt.h"
 #include "src/extendrt/delegate/tensorrt/op/activation_tensorrt.h"
 #include "src/extendrt/delegate/tensorrt/tensorrt_utils.h"
 #include "ops/fusion/scale_fusion.h"
@@ -57,6 +57,10 @@ int ScaleTensorRT::AddInnerOp(TensorRTContext *ctx) {
   // mode of scale
   axis_ = scale_op->get_axis();
   int input_nbdims = input(ctx, 0).trt_tensor_->getDimensions().nbDims;
+  if (input_nbdims < 0 || (axis_ < 0 && input_nbdims + axis_ < 0)) {
+    MS_LOG(ERROR) << "Not support axis " << axis_ << " or input dims " << input_nbdims << " for op " << op_name_;
+    return RET_ERROR;
+  }
   axis_ = axis_ < 0 ? static_cast<int64_t>(input_nbdims + axis_) : axis_;
 
   mode_ = GetScaleMode(input(ctx, 0).trt_tensor_, axis_);
@@ -78,7 +82,8 @@ int ScaleTensorRT::AddInnerOp(TensorRTContext *ctx) {
 
   // add activation
   if (activation_type != ActivationType::NO_ACTIVATION) {
-    auto activation_layer = ActivationTensorRT::AddActivation(ctx, activation_type, 0, 0, 0, op_out_tensor, device_id_);
+    auto activation_layer =
+      ActivationTensorRT::AddActivation(ctx, activation_type, 0, 0, 0, op_out_tensor, op_name_, device_id_);
     CHECK_NULL_RETURN(activation_layer);
     activation_layer->setName((op_name_ + "_activation").c_str());
     op_out_tensor = activation_layer->getOutput(0);

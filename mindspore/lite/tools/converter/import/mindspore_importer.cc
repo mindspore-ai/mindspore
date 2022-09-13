@@ -158,7 +158,7 @@ STATUS MindsporeImporter::TraceOutput(const AnfNodePtr &node) {
       out_name = out_name + "_" + std::to_string(output_idx);
     }
     MS_LOG(INFO) << "Graph out name: " << out_name;
-    output_tensor_name_.emplace_back(out_name);
+    (void)output_tensor_name_.emplace_back(out_name);
   }
   return RET_OK;
 }
@@ -200,6 +200,12 @@ void MindsporeImporter::RemoveUnusedGraphInput(const FuncGraphPtr &func_graph) {
   MS_ASSERT(func_graph != nullptr);
   // drop unused input_parameter and disconnect edge
   auto graph_inputs = func_graph->get_inputs();
+  std::vector<AnfNodePtr> graph_outputs;
+#if !defined(_WIN32) && !defined(_WIN64)
+  auto graph_outputs_index = opt::GetNodeInputs(func_graph->get_return());
+  std::transform(graph_outputs_index.begin(), graph_outputs_index.end(), std::back_inserter(graph_outputs),
+                 [](const auto &item) { return item.first; });
+#endif
   auto manager = Manage(func_graph);
   MS_ASSERT(manager != nullptr);
   auto nodes_users = manager->node_users();
@@ -225,6 +231,9 @@ void MindsporeImporter::RemoveUnusedGraphInput(const FuncGraphPtr &func_graph) {
         q.push(node_user_cnode);
       }
     }
+    if (std::find(graph_outputs.begin(), graph_outputs.end(), input) != graph_outputs.end()) {
+      found_used = true;
+    }
     if (!found_used) {
       if (nodes_users.find(input) != nodes_users.end()) {
         RemovePostEdgeOfParameter(input);
@@ -240,6 +249,7 @@ void MindsporeImporter::RemoveUnusedGraphInput(const FuncGraphPtr &func_graph) {
 FuncGraphPtr MindsporeImporter::ImportMindIR(const std::shared_ptr<ConverterPara> &param, const void *buff,
                                              const size_t &size) {
   MindIRLoader mindir_loader;
+  mindir_loader.SetIsLite(true);
   auto func_graph = mindir_loader.LoadMindIR(buff, size);
   return CheckAndUpdateFuncGraph(param, func_graph);
 }
@@ -313,10 +323,10 @@ FuncGraphPtr MindsporeImporter::CheckAndUpdateFuncGraph(const std::shared_ptr<Co
     return nullptr;
   }
   ConverterInnerContext::GetInstance()->SetGraphOutputTensorNames(output_tensor_name_);
-#ifdef ENABLE_LITE_ACL
-  MS_LOG(INFO) << "There is no need to adjust and pass graph when in Ascend.";
-  return func_graph;
-#endif
+  if (param->device.find("Ascend") != std::string::npos) {
+    MS_LOG(INFO) << "There is no need to adjust and pass graph when in Ascend.";
+    return func_graph;
+  }
   if ((status = Mindir2AnfAdjust(func_graph, param)) != RET_OK) {
     MS_LOG(ERROR) << "Mindir2AnfAdjust failed.";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
@@ -327,8 +337,9 @@ FuncGraphPtr MindsporeImporter::CheckAndUpdateFuncGraph(const std::shared_ptr<Co
   if (value != nullptr) {
     is_optimized = GetValue<bool>(value);
   }
-  if (!is_optimized) {
-    auto unify_format = std::make_shared<UnifyFormatToNHWC>(converter::kFmkTypeMs, param->train_model);
+  if (!is_optimized && !param->is_runtime_converter) {
+    auto unify_format =
+      std::make_shared<UnifyFormatToNHWC>(converter::kFmkTypeMs, param->train_model, param->export_mindir);
     MS_CHECK_TRUE_MSG(unify_format != nullptr, nullptr, "unify_format is nullptr.");
     if (!unify_format->Run(func_graph)) {
       MS_LOG(ERROR) << "Run insert transpose failed.";

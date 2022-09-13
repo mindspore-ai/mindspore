@@ -419,6 +419,10 @@ if(PLATFORM_ARM64)
         if(MSLITE_ENABLE_ACL)
             install(FILES ${TOP_DIR}/mindspore/lite/build/src/extendrt/kernel/ascend/libascend_kernel_plugin.so
                     DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+            if(MSLITE_ENABLE_HELPER)
+                install(FILES ${TOP_DIR}/mindspore/lite/build/src/extendrt/delegate/ascend_ge/libascend_ge_plugin.so
+                        DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+            endif()
         endif()
         if(MSLITE_GPU_BACKEND STREQUAL tensorrt)
             install(FILES ${TOP_DIR}/mindspore/lite/build/src/extendrt/delegate/tensorrt/libtensorrt_plugin.so
@@ -429,6 +433,10 @@ if(PLATFORM_ARM64)
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${TOP_DIR}/mindspore/lite/build/src/${MINDSPORE_LITE_LIB_NAME}.a DESTINATION ${RUNTIME_LIB_DIR}
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
+        if(MSLITE_ENABLE_ACL)
+            install(FILES ${TOP_DIR}/mindspore/lite/build/src/litert/kernel/ascend/libascend_kernel_plugin.so
+                    DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+        endif()
     endif()
     if(ENABLE_MODEL_OBF)
         install(FILES ${TOP_DIR}/mindspore/lite/tools/obfuscator/lib/android-aarch64/libmsdeobfuscator-lite.so
@@ -543,10 +551,8 @@ if(PLATFORM_ARM64)
                     install(TARGETS mindspore_core DESTINATION ${CONVERTER_ROOT_DIR}/lib
                             COMPONENT ${RUNTIME_COMPONENT_NAME})
                 endif()
-                if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
-                    install(FILES ${LITE_ACL_DIR}/libascend_pass_plugin.so DESTINATION ${CONVERTER_ROOT_DIR}/lib
-                            COMPONENT ${RUNTIME_COMPONENT_NAME})
-                endif()
+                install(FILES ${LITE_ACL_DIR}/libascend_pass_plugin.so DESTINATION ${CONVERTER_ROOT_DIR}/lib
+                        COMPONENT ${RUNTIME_COMPONENT_NAME})
             endif()
 
             if(MSLITE_ENABLE_DPICO_ATC_ADAPTER)
@@ -658,6 +664,10 @@ elseif(PLATFORM_ARM32)
         if(MSLITE_ENABLE_ACL)
             install(FILES ${TOP_DIR}/mindspore/lite/build/src/extendrt/kernel/ascend/libascend_kernel_plugin.so
                     DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+            if(MSLITE_ENABLE_HELPER)
+                install(FILES ${TOP_DIR}/mindspore/lite/build/src/extendrt/delegate/ascend_ge/libascend_ge_plugin.so
+                        DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+            endif()
         endif()
         if(MSLITE_GPU_BACKEND STREQUAL tensorrt)
             install(FILES ${TOP_DIR}/mindspore/lite/build/src/extendrt/delegate/tensorrt/libtensorrt_plugin.so
@@ -668,6 +678,10 @@ elseif(PLATFORM_ARM32)
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${TOP_DIR}/mindspore/lite/build/src/${MINDSPORE_LITE_LIB_NAME}.a DESTINATION ${RUNTIME_LIB_DIR}
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
+        if(MSLITE_ENABLE_ACL)
+            install(FILES ${TOP_DIR}/mindspore/lite/build/src/litert/kernel/ascend/libascend_kernel_plugin.so
+                    DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+        endif()
     endif()
     if(ENABLE_MODEL_OBF)
         install(FILES ${TOP_DIR}/mindspore/lite/tools/obfuscator/lib/android-aarch32/libmsdeobfuscator-lite.so
@@ -739,7 +753,7 @@ elseif(WIN32)
                 ${opencv_LIBPATH}/../bin/libopencv_imgproc*
                 )
         install(FILES ${OPENCV_LIB_LIST} DESTINATION ${CONVERTER_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
-        if(NOT MSVC)
+        if(NOT MSVC AND NOT MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
             __install_micro_wrapper()
             __install_micro_codegen()
         endif()
@@ -848,6 +862,10 @@ else()
         if(MSLITE_ENABLE_ACL)
             install(FILES ${TOP_DIR}/mindspore/lite/build/src/extendrt/kernel/ascend/libascend_kernel_plugin.so
                     DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+            if(MSLITE_ENABLE_HELPER)
+                install(FILES ${TOP_DIR}/mindspore/lite/build/src/extendrt/delegate/ascend_ge/libascend_ge_plugin.so
+                        DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+            endif()
         endif()
         if(MSLITE_GPU_BACKEND STREQUAL tensorrt)
             install(FILES ${TOP_DIR}/mindspore/lite/build/src/extendrt/delegate/tensorrt/libtensorrt_plugin.so
@@ -860,6 +878,10 @@ else()
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${TOP_DIR}/mindspore/lite/build/src/${MINDSPORE_LITE_LIB_NAME}.a DESTINATION ${RUNTIME_LIB_DIR}
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
+        if(MSLITE_ENABLE_ACL)
+            install(FILES ${TOP_DIR}/mindspore/lite/build/src/litert/kernel/ascend/libascend_kernel_plugin.so
+                    DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+        endif()
     endif()
     if(ENABLE_MODEL_OBF)
         install(FILES ${TOP_DIR}/mindspore/lite/tools/obfuscator/bin/linux-x64/msobfuscator
@@ -937,10 +959,8 @@ else()
                         RENAME libmindspore_glog.so.0 COMPONENT ${RUNTIME_COMPONENT_NAME})
                 install(TARGETS mindspore_core DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
             endif()
-            if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
-                install(FILES ${LITE_ACL_DIR}/libascend_pass_plugin.so DESTINATION ${CONVERTER_ROOT_DIR}/lib
-                        COMPONENT ${RUNTIME_COMPONENT_NAME})
-            endif()
+            install(FILES ${LITE_ACL_DIR}/libascend_pass_plugin.so DESTINATION ${CONVERTER_ROOT_DIR}/lib
+                    COMPONENT ${RUNTIME_COMPONENT_NAME})
         endif()
 
         if(MSLITE_ENABLE_DPICO_ATC_ADAPTER)
@@ -972,8 +992,10 @@ else()
                     DESTINATION ${RUNTIME_LIB_DIR} RENAME libopencv_imgproc.so.4.5
                     COMPONENT ${RUNTIME_COMPONENT_NAME})
         endif()
-        __install_micro_wrapper()
-        __install_micro_codegen()
+        if(NOT MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
+            __install_micro_wrapper()
+            __install_micro_codegen()
+        endif()
     endif()
     if(MSLITE_ENABLE_TOOLS)
         if(NOT MSLITE_COMPILE_TWICE)
@@ -984,16 +1006,18 @@ else()
             install(TARGETS ${BENCHMARK_TRAIN_NAME} RUNTIME DESTINATION ${BENCHMARK_TRAIN_ROOT_DIR} COMPONENT
                     ${RUNTIME_COMPONENT_NAME})
         endif()
-        install(TARGETS cropper RUNTIME DESTINATION ${CROPPER_ROOT_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
-        install(FILES ${TOP_DIR}/mindspore/lite/build/tools/cropper/cropper_mapping_cpu.cfg
+        if(NOT MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
+            install(TARGETS cropper RUNTIME DESTINATION ${CROPPER_ROOT_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+            install(FILES ${TOP_DIR}/mindspore/lite/build/tools/cropper/cropper_mapping_cpu.cfg
                 DESTINATION ${CROPPER_ROOT_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
-        install(FILES ${TOP_DIR}/mindspore/lite/build/tools/cropper/cropper_mapping_gpu.cfg
+            install(FILES ${TOP_DIR}/mindspore/lite/build/tools/cropper/cropper_mapping_gpu.cfg
                 DESTINATION ${CROPPER_ROOT_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
-        install(FILES ${TOP_DIR}/mindspore/lite/build/tools/cropper/cropper_mapping_npu.cfg
+            install(FILES ${TOP_DIR}/mindspore/lite/build/tools/cropper/cropper_mapping_npu.cfg
                 DESTINATION ${CROPPER_ROOT_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
-        if(SUPPORT_TRAIN)
-            install(FILES ${TOP_DIR}/mindspore/lite/build/tools/cropper/cropper_mapping_cpu_train.cfg
+            if(SUPPORT_TRAIN)
+                install(FILES ${TOP_DIR}/mindspore/lite/build/tools/cropper/cropper_mapping_cpu_train.cfg
                     DESTINATION ${CROPPER_ROOT_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+            endif()
         endif()
     endif()
     if(MSLITE_ENABLE_KERNEL_EXECUTOR)

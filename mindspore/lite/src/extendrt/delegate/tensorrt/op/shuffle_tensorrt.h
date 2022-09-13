@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,9 +42,6 @@ class ShuffleTensorRT : public TensorRTOp {
   int AddFlattenOp(nvinfer1::IShuffleLayer *shuffle_layer);
   int AddExpandDimsOp(nvinfer1::IShuffleLayer *shuffle_layer);
   int AddBroadcastToOp(nvinfer1::IShuffleLayer *shuffle_layer);
-  nvinfer1::ITensor *ExpandDim(nvinfer1::IShuffleLayer *shuffle_layer, nvinfer1::ITensor *input_tensor, int axis);
-  nvinfer1::Dims InferReshapeDims(const nvinfer1::Dims &input_dims, const std::vector<int64_t> &ms_input_shape,
-                                  const std::vector<int64_t> &ms_output_shape);
 
   Format out_format_ = Format::NCHW;
   nvinfer1::ITensor *shuffler_input_{nullptr};

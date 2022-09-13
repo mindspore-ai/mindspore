@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,8 +36,9 @@ class PadTensorRT : public TensorRTOp {
                 const std::vector<TensorInfo> &outputs) override;
 
  private:
-  const int index_NHWC_ = 4;
   float constant_value_ = 0.0f;
+  PaddingMode padding_mode_ = PaddingMode::CONSTANT;
+  int AddInnerOpOld(TensorRTContext *ctx);
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_OP_PAD_TENSORRT_H_

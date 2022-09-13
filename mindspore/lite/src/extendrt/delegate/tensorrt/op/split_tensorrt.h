@@ -35,10 +35,11 @@ class SplitTensorRT : public TensorRTOp {
                 const std::vector<TensorInfo> &out_tensors) override;
 
  private:
+  nvinfer1::ITensor *GetDynamicSliceSize(TensorRTContext *ctx, nvinfer1::ITensor *input, size_t i);
   int ParseParams(const ITensorHelper &helper);
   int64_t axis_;
-  int64_t output_num_;
-  std::vector<int64_t> size_splits_;
+  int output_num_;
+  std::vector<int> size_splits_;
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_OP_SPLIT_TENSORRT_H_

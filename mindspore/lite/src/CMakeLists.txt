@@ -142,6 +142,22 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/control_flow/control_subgraph_creator.cc
         )
 
+if(NOT ANDROID_NDK_TOOLCHAIN_INCLUDED)
+    set(LITE_SRC
+            ${LITE_SRC}
+            ${CMAKE_CURRENT_SOURCE_DIR}/common/dynamic_library_loader.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/litert/kernel/ascend/plugin/ascend_kernel_plugin.cc
+            )
+endif()
+
+if(MSLITE_ENABLE_MODEL_PRE_INFERENCE)
+    set(LITE_SRC
+            ${LITE_SRC}
+            ${CMAKE_CURRENT_SOURCE_DIR}/common/thread_utils.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/common/random_data_generator.cc
+            )
+endif()
+
 set(MODEL_LOADER_FRAMEWORK_SRC
         ${MODEL_LOADER_FRAMEWORK_SRC}
         ${CMAKE_CURRENT_SOURCE_DIR}/extendrt/mindir_loader/model_loader.cc
@@ -150,15 +166,12 @@ set(MODEL_LOADER_FRAMEWORK_SRC
 set(LITE_SRC
         ${LITE_SRC}
         ${MODEL_LOADER_FRAMEWORK_SRC}
-        # ${MINDIR_MODEL_SRC}
-        # ${MINDIR_KERNEL_SRC}
         )
 
 if(MSLITE_ENABLE_MODEL_ENCRYPTION)
     set(LITE_SRC
             ${LITE_SRC}
             ${CMAKE_CURRENT_SOURCE_DIR}/common/decrypt.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/common/dynamic_library_loader.cc
             )
 endif()
 
@@ -574,12 +587,6 @@ if(MSLITE_ENABLE_RUNTIME_CONVERT)
             ccsrc_debug_common_mid_ mindir_proto_mid _mindspore_transform_express_ir_obj)
     target_link_libraries(mindspore-lite_static
             ccsrc_debug_common_mid_ mindir_proto_mid _mindspore_transform_express_ir_obj)
-    if(MSLITE_ENABLE_ACL)
-        target_link_libraries(mindspore-lite lite_acl_mid
-                mindspore_shared_lib)
-        target_link_libraries(mindspore-lite_static lite_acl_mid
-                mindspore_shared_lib)
-    endif()
 endif()
 
 if(SUPPORT_CUDA AND NOT MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
@@ -635,11 +642,6 @@ endif()
 if(ENABLE_MODEL_OBF)
     target_link_libraries(mindspore-lite ${OBF_LIB_DIR}/libmsdeobfuscator-lite.so)
     target_link_libraries(mindspore-lite_static ${OBF_LIB_DIR}/libmsdeobfuscator-lite.so)
-endif()
-
-if(MSLITE_ENABLE_ACL AND (NOT MSLITE_ENABLE_CLOUD_FUSION_INFERENCE))
-    target_link_libraries(mindspore-lite ascend_kernel_mid)
-    target_link_libraries(mindspore-lite_static ascend_kernel_mid)
 endif()
 
 add_subdirectory(extendrt)

@@ -17,9 +17,11 @@
 #ifndef MINDSPORE_LITE_SRC_EXTENDRT_MINDIR_LOADER_MINDIR_MODEL_MINDIR_MODEL_UTIL_H_
 #define MINDSPORE_LITE_SRC_EXTENDRT_MINDIR_LOADER_MINDIR_MODEL_MINDIR_MODEL_UTIL_H_
 
+#include <memory>
 #include "ir/anf.h"
 #include "mindapi/base/type_id.h"
 #include "proto/mind_ir.pb.h"
+#include "include/api/context.h"
 
 namespace mindspore::infer::mindir {
 class MindirModelUtil {
@@ -33,7 +35,8 @@ class MindirModelUtil {
   static mindspore::ValuePtr MakeValueFromScalarAttribute(const mind_ir::AttributeProto &attr_proto);
 
   static mindspore::TypeId ProtoTypeToTypeId(int32_t proto_type);
-  static bool NeedRuntimeConvert(const void *model_data, size_t data_size);
+  static bool NeedRuntimeConvert(const void *model_data, size_t data_size,
+                                 const std::shared_ptr<mindspore::Context> &context);
 };
 }  // namespace mindspore::infer::mindir
 

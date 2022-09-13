@@ -481,34 +481,20 @@ int RemoveIfDepend(const CNodePtr &cnode) {
   return RET_OK;
 }
 
-int TraceRealInputOfMakeTuple(const CNodePtr &cnode, std::vector<AnfNodePtr> *inputs, bool *has_make_tuple) {
+int GetFlattenInputsIfMakeTuple(const CNodePtr &cnode, std::vector<AnfNodePtr> *inputs, bool *has_make_tuple) {
   MS_CHECK_TRUE_MSG(cnode != nullptr, RET_NULL_PTR, "Cnode is nullptr.");
   MS_CHECK_TRUE_MSG(inputs != nullptr, RET_NULL_PTR, "Inputs is nullptr.");
   MS_CHECK_TRUE_MSG(has_make_tuple != nullptr, RET_NULL_PTR, "Has make tuple is nullptr.");
   for (size_t i = 1; i < cnode->inputs().size(); ++i) {
     AnfNodePtr input_node = cnode->input(i);
     MS_CHECK_TRUE_MSG(input_node != nullptr, RET_NULL_PTR, "Input_node is nullptr");
-    if (!input_node->isa<CNode>()) {
-      inputs->emplace_back(cnode->input(i));
-      continue;
-    }
     auto input_cnode = utils::cast<CNodePtr>(input_node);
-    MS_CHECK_TRUE_MSG(input_cnode != nullptr, RET_NULL_PTR, "input_cnode is nullptr");
-    if (opt::CheckPrimitiveType(input_cnode, prim::kPrimMakeTuple) ||
-        opt::CheckPrimitiveType(input_cnode, opt::kPrimMakeTupleV2)) {
+    if (input_cnode && (opt::CheckPrimitiveType(input_cnode, prim::kPrimMakeTuple) ||
+                        opt::CheckPrimitiveType(input_cnode, opt::kPrimMakeTupleV2))) {
       *has_make_tuple = true;
-      for (size_t j = 1; j < input_cnode->inputs().size(); ++j) {
-        auto make_tuple_input = utils::cast<CNodePtr>(input_cnode->input(j));
-        MS_CHECK_TRUE_MSG(make_tuple_input != nullptr, RET_NULL_PTR, "Make tuple input is invalid.");
-        if (opt::CheckPrimitiveType(make_tuple_input, prim::kPrimMakeTuple) ||
-            opt::CheckPrimitiveType(make_tuple_input, opt::kPrimMakeTupleV2)) {
-          TraceRealInputOfMakeTuple(make_tuple_input, inputs, has_make_tuple);
-        } else {
-          inputs->emplace_back(input_cnode->input(j));
-        }
-      }
+      GetFlattenInputsIfMakeTuple(input_cnode, inputs, has_make_tuple);
     } else {
-      inputs->emplace_back(cnode->input(i));
+      inputs->emplace_back(input_node);
     }
   }
   return RET_OK;
@@ -521,7 +507,7 @@ int RemoveIfMakeTuple(const CNodePtr &cnode) {
   inputs.clear();
 
   inputs.emplace_back(cnode->input(0));
-  if (TraceRealInputOfMakeTuple(cnode, &inputs, &has_make_tuple) != RET_OK) {
+  if (GetFlattenInputsIfMakeTuple(cnode, &inputs, &has_make_tuple) != RET_OK) {
     MS_LOG(ERROR) << "Trace real input of make tuple failed, name: " << cnode->fullname_with_scope();
     return RET_ERROR;
   }

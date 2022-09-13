@@ -20,27 +20,63 @@
 #include <map>
 #include <algorithm>
 
+#include "extendrt/delegate/graph_executor/litert/graph_executor.h"
 #include "tools/converter/converter.h"
 #include "src/litert/lite_model.h"
-#include "schema/inner/model_generated.h"
+#include "src/litert/cpu_info.h"
 #include "include/errorcode.h"
 #include "flatbuffers/flatbuffers.h"
-
-#include "extendrt/delegate/graph_executor/litert/converters.h"
-#include "extendrt/delegate/graph_executor/litert/graph_executor.h"
+#include "extendrt/mock/lite_runtime/converters.h"
 #include "extendrt/delegate/factory.h"
 
 #include "tools/common/meta_graph_serializer.h"
 #include "extendrt/utils/tensor_utils.h"
 #include "backend/common/session/kernel_graph.h"
+#include "src/common/helper/external_tensor/memory_helper.h"
+#include "src/litert/kernel_exec.h"
 
 namespace mindspore {
 namespace {
+// leave 200MB for the model struct to make sure the model will not large than 2GB
+const size_t kOnlineExtractDataSize = 1800 * 1024 * 1024;
 const int64_t kBufferSize = 1024;
+
+Status LiteTensorToMSTensor(lite::Tensor *srcTensor, MSTensor *dstTensor, bool fromSession) {
+  auto impl = std::make_shared<LiteTensorImpl>(srcTensor);
+  if (impl == nullptr || impl->lite_tensor() == nullptr) {
+    MS_LOG(ERROR) << "Create tensor failed.";
+    return kLiteError;
+  }
+  impl->set_from_session(fromSession);
+  auto tensor = MSTensor(impl);
+  if (tensor == nullptr) {
+    MS_LOG(ERROR) << "Create tensor failed.";
+    return kLiteError;
+  }
+  *dstTensor = tensor;
+  return kSuccess;
 }
+
+std::vector<MSTensor> LiteTensorsToMSTensors(const std::vector<mindspore::lite::Tensor *> &srcTensors,
+                                             bool fromSession) {
+  std::vector<MSTensor> dstTensors;
+  dstTensors.reserve(srcTensors.size());
+  for (auto inTensor : srcTensors) {
+    MSTensor tensor;
+    auto status = LiteTensorToMSTensor(inTensor, &tensor, fromSession);
+    if (status != kSuccess) {
+      return {};
+    }
+    dstTensors.emplace_back(tensor);
+  }
+  return dstTensors;
+}
+}  // namespace
 const char litert_provider[] = "litert";
 
-LiteRTGraphExecutor::LiteRTGraphExecutor(const std::shared_ptr<mindspore::Context> &context) : context_(context) {
+LiteRTGraphExecutor::LiteRTGraphExecutor(const std::shared_ptr<mindspore::Context> &context,
+                                         const ConfigInfos &config_infos)
+    : context_(context), config_infos_(config_infos) {
   lite_session_ = CreateLiteSession(ContextUtils::Convert(context_.get()));
 }
 
@@ -50,22 +86,43 @@ bool LiteRTGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map
     MS_LOG(WARNING) << "LiteRTGraphExecutor not support kernel garph, please pass func graph instead";
     return false;
   }
+
+  if (!PlatformInstructionSetSupportCheck()) {
+    MS_LOG(ERROR) << "The platform exist don't support's instruction.";
+    return false;
+  }
+
   auto converter = std::make_shared<mindspore::lite::ConverterImpl>();
   auto param = std::make_shared<ConverterPara>();
   param->fmk_type = converter::kFmkTypeMs;
+  param->export_mindir = kMindIR;
   auto mutable_graph = std::const_pointer_cast<FuncGraph>(graph);
   schema::MetaGraphT *meta_graph_t = nullptr;
   converter->Convert(param, &meta_graph_t, mutable_graph);
+  if (this->IsNeedExtractTensorData(meta_graph_t)) {
+    if (!this->ExtractTensorData(meta_graph_t)) {
+      MS_LOG(ERROR) << "Compile Large Graph failed, extract tensor data error.";
+      return false;
+    }
+  }
+
   flatbuffers::FlatBufferBuilder builder(kBufferSize);
   size_t data_size;
   auto buffer = lite::MetaGraphSerializer::GetMetaGraphPackedBuff(&builder, *meta_graph_t, &data_size);
-  auto buf = malloc(data_size);
-  memcpy(buf, buffer, data_size);
-  int ret = lite_session_->LoadModelAndCompileByBuf(reinterpret_cast<char *>(buf), kMindIR_Lite, data_size);
+  if (lite_model_buf_ != nullptr) {
+    free(lite_model_buf_);
+    lite_model_buf_ = nullptr;
+  }
+  lite_model_buf_ = malloc(data_size);
+  memcpy(lite_model_buf_, buffer, data_size);
+  int ret = lite_session_->LoadModelAndCompileByBuf(reinterpret_cast<char *>(lite_model_buf_), kMindIR_Lite, data_size,
+                                                    helpers_.get());
   if (ret != lite::RET_OK) {
     MS_LOG(ERROR) << "Load model by meta graph failed";
+    delete meta_graph_t;
     return false;
   }
+  delete meta_graph_t;
   return true;
 }
 
@@ -107,7 +164,7 @@ bool LiteRTGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<
         MS_LOG(EXCEPTION) << "Input dims of tensor " << user_input.id() << " is invalid.";
       }
       input->set_shape(shape);
-      input->set_data(user_input.data_c());
+      input->set_data(user_input.data_c(), false);
 #else
       MS_LOG(ERROR) << unsupport_string_tensor_log;
       return kLiteError;
@@ -125,12 +182,32 @@ bool LiteRTGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<
           input->set_shape(truncate_shape);
 #endif
         }
-        input->set_data(user_input.data_c());
+        input->set_data(user_input.data_c(), false);
       }
     }
   }
-  auto ret = lite_session_->RunGraph();
-  ResetTensorData(old_data, input_tensors);
+  lite::KernelCallBack before_call_back = nullptr;
+  lite::KernelCallBack after_call_back = nullptr;
+  if (before_ != nullptr) {
+    before_call_back = [&](const std::vector<mindspore::lite::Tensor *> &before_inputs,
+                           const std::vector<mindspore::lite::Tensor *> &before_outputs,
+                           const MSCallBackParam &call_param) {
+      std::vector<MSTensor> inputs = LiteTensorsToMSTensors(before_inputs, true);
+      std::vector<MSTensor> outputs = LiteTensorsToMSTensors(before_outputs, true);
+      return before_(inputs, outputs, call_param);
+    };
+  }
+
+  if (after_ != nullptr) {
+    after_call_back = [&](const std::vector<mindspore::lite::Tensor *> &before_inputs,
+                          const std::vector<mindspore::lite::Tensor *> &before_outputs,
+                          const MSCallBackParam &call_param) {
+      std::vector<MSTensor> inputs = LiteTensorsToMSTensors(before_inputs, true);
+      std::vector<MSTensor> outputs = LiteTensorsToMSTensors(before_outputs, true);
+      return after_(inputs, outputs, call_param);
+    };
+  }
+  auto ret = lite_session_->RunGraph(before_call_back, after_call_back);
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "Run graph failed.";
     return false;
@@ -277,6 +354,7 @@ std::shared_ptr<lite::LiteSession> LiteRTGraphExecutor::CreateLiteSession(lite::
     return nullptr;
   }
 
+  session->SetKeepModelBuf(true);
   auto ret = session->Init(context);
   if (ret != mindspore::lite::RET_OK) {
     MS_LOG(ERROR) << "init session failed";
@@ -285,8 +363,71 @@ std::shared_ptr<lite::LiteSession> LiteRTGraphExecutor::CreateLiteSession(lite::
   return session;
 }
 
-static std::shared_ptr<device::GraphExecutor> LiteRTGraphExecutorCreator(const std::shared_ptr<Context> &ctx) {
-  return std::make_shared<LiteRTGraphExecutor>(ctx);
+bool LiteRTGraphExecutor::ExtractTensorData(mindspore::schema::MetaGraphT *meta_graph_t) {
+  MS_EXCEPTION_IF_NULL(meta_graph_t);
+  helpers_ = std::make_shared<mindspore::infer::helper::InferHelpers>();
+  if (helpers_ == nullptr) {
+    MS_LOG(ERROR) << "Create InferHelpers failed.";
+    return false;
+  }
+  auto tensor_helper = new (std::nothrow) mindspore::infer::helper::MemoryExternalTensorHelper();
+  if (tensor_helper == nullptr) {
+    MS_LOG(ERROR) << "Create Memory External TensorHelper failed.";
+    return false;
+  }
+  int64_t cur_offset = 0;
+  size_t size = 0;
+  uint8_t *data = nullptr;
+  for (const auto &tensor : meta_graph_t->allTensors) {
+    if (tensor->nodeType == mindspore::lite::NodeType_CNode) {
+      continue;
+    }
+    if (tensor->dataType == kObjectTypeTensorType) {  // not support control-flow now
+      continue;
+    }
+    auto *external_data_t = new (std::nothrow) schema::ExternalDataT;
+    if (external_data_t == nullptr) {
+      MS_LOG(ERROR) << "Create ExternalDataT failed";
+      return false;
+    }
+    data = tensor->data.data();
+    size = tensor->data.size();
+    external_data_t->location = "MEM: " + tensor->name;
+    external_data_t->offset = cur_offset;
+    external_data_t->length = static_cast<int64_t>(size);
+    if (data != nullptr && size > 0) {
+      std::stringstream oss;
+      oss << std::hash<char>()(data[0]);
+      external_data_t->checkSum = oss.str();
+      cur_offset += static_cast<int64_t>(size);
+      flatbuffers::FlatBufferBuilder builder(kBufferSize);
+      auto offset = mindspore::schema::ExternalData::Pack(builder, external_data_t);
+      builder.Finish(offset);
+      auto external_data = flatbuffers::GetRoot<mindspore::schema::ExternalData>(builder.GetBufferPointer());
+      tensor_helper->SetExternalTensorData(external_data, static_cast<void *>(data));
+    }
+    tensor->data.clear();
+    tensor->externalData.emplace_back(external_data_t);
+  }
+  helpers_->SetExternalTensorHelper(tensor_helper);
+  return true;
+}
+
+bool LiteRTGraphExecutor::IsNeedExtractTensorData(mindspore::schema::MetaGraphT *meta_graph_t) {
+  MS_EXCEPTION_IF_NULL(meta_graph_t);
+  size_t size = 0;
+  for (auto &tensor : meta_graph_t->allTensors) {
+    size += tensor->data.size();
+  }
+  if (size >= kOnlineExtractDataSize) {
+    return true;
+  }
+  return false;
+}
+
+static std::shared_ptr<device::GraphExecutor> LiteRTGraphExecutorCreator(const std::shared_ptr<Context> &ctx,
+                                                                         const ConfigInfos &config_infos) {
+  return std::make_shared<LiteRTGraphExecutor>(ctx, config_infos);
 }
 
 REG_DELEGATE(kCPU, litert_provider, LiteRTGraphExecutorCreator);
