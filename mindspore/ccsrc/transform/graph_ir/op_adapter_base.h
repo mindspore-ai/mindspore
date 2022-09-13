@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -135,6 +135,7 @@ class BaseOpAdapter {
     return setAttr(op, attrKey, MakeValue(attrValue));
   }
   virtual OutHandler getOutput(const OperatorPtr &op, int index) = 0;
+  virtual std::vector<OutHandler> getOutputs(const OperatorPtr &op) = 0;
   virtual void updateOutputDesc(const OperatorPtr &op, const abstract::BaseShapePtr &shp, const TypePtr &type,
                                 const AnfNodePtr &node) = 0;
   virtual const mindspore::HashMap<int, InputDesc> &getInputMap() = 0;
@@ -143,6 +144,8 @@ class BaseOpAdapter {
   virtual const mindspore::HashMap<int, OutputDesc> &getOutputMap() = 0;
   virtual const mindspore::HashMap<int, SubGraphDesc> &getSubgraphMap() = 0;
   virtual const mindspore::HashMap<int, DynSubGraphDesc> &getDynSubgraphMap() = 0;
+  virtual bool IsDynInputOp(uint64_t index) = 0;
+  virtual bool IsDyOutputOp(uint64_t index) = 0;
   void AddAttrToDrawGraph(const std::string &attr_str) { attrs_vec_.push_back(attr_str); }
   const std::vector<std::string> &GetAttrsFromDrawGraph() const { return attrs_vec_; }
   void clearAttrVect() { attrs_vec_.clear(); }

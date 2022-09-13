@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -135,4 +135,22 @@ INPUT_MAP(Unsqueeze) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(Unsqueeze) = {{"axis", ATTR_DESC(axes, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())}};
 OUTPUT_MAP(Unsqueeze) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Unsqueeze, kNameUnsqueeze, ADPT_DESC(Unsqueeze))
+
+// Identity
+INPUT_MAP(Identity) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(Identity) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(Identity) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(IdentityLoad, kNameLoad, ADPT_DESC(Identity))
+REG_ADPT_DESC(IdentityTupleGetItem, kNameTupleGetItem, ADPT_DESC(Identity))
+
+// IdentityN
+INPUT_MAP(IdentityN) = EMPTY_INPUT_MAP;
+DYN_INPUT_MAP(IdentityN) = {{1, DYN_INPUT_DESC(x)}};
+ATTR_MAP(IdentityN) = EMPTY_ATTR_MAP;
+DYN_OUTPUT_MAP(IdentityN) = {{0, DYN_OUTPUT_DESC(y)}};
+REG_ADPT_DESC(IdentityNMakeTuple, kNameMakeTuple, ADPT_DESC(IdentityN))
+REG_ADPT_DESC(IdentityNDepend, kNameDepend, ADPT_DESC(IdentityN))
+REG_ADPT_DESC(IdentityNReturn, kNameReturn, ADPT_DESC(IdentityN))
+
+// IdentityN
 }  // namespace mindspore::transform
