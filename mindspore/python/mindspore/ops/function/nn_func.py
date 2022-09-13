@@ -2728,9 +2728,9 @@ def bias_add(input_x, bias):
     consistent with the shape of the input Tensor.
 
     Args:
-        input_x (Tensor) - The input tensor. The shape can be 2-5 dimensions.
+        input_x (Tensor): The input tensor. The shape can be 2-5 dimensions.
             The data type should be float16 or float32.
-        bias (Tensor) - The bias tensor, with shape :math:`(C)`. C must be the same as channel dimension C of
+        bias (Tensor): The bias tensor, with shape :math:`(C)`. C must be the same as channel dimension C of
             `input_x`. The data type should be float16 or float32.
 
     Returns:
@@ -2782,10 +2782,10 @@ def binary_cross_entropy(logits, labels, weight, reduction='mean'):
         - The value of "y" must be "0" or "1".
 
     Args:
-        logits (Tensor) - The input Tensor. The data type must be float16 or float32,
+        logits (Tensor): The input Tensor. The data type must be float16 or float32,
             The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
-        labels (Tensor) - The label Tensor which has the same shape and data type as `logits`.
-        weight (Tensor, optional) - A rescaling weight applied to the loss of each batch element.
+        labels (Tensor): The label Tensor which has the same shape and data type as `logits`.
+        weight (Tensor, optional): A rescaling weight applied to the loss of each batch element.
             And it must have the same shape and data type as `logits`. Default: None.
         reduction (str): Specifies the reduction to be applied to the output.
             Its value must be one of 'none', 'mean' or 'sum'. Default: 'mean'.
