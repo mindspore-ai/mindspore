@@ -23,6 +23,7 @@
 #include <map>
 #include <set>
 #include "utils/hash_map.h"
+#include "backend/common/session/kernel_graph_mgr.h"
 #include "backend/common/session/session_context.h"
 #include "backend/common/session/kernel_graph.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
@@ -49,8 +50,6 @@ class GraphCompiler;
 }  // namespace mindspore
 
 namespace mindspore {
-using GraphId = uint32_t;
-using GraphInfo = std::string;
 const char kSessionBasic[] = "SessionBasic";
 
 namespace session {
@@ -94,8 +93,9 @@ struct GraphOutputInfo {
 
 class Executor;
 
-class BACKEND_EXPORT SessionBasic : public std::enable_shared_from_this<SessionBasic> {
+class BACKEND_EXPORT SessionBasic : public KernelGraphMgr, public std::enable_shared_from_this<SessionBasic> {
  public:
+  using KernelGraphMgr::ConstructKernelGraph;
   SessionBasic() : context_(nullptr), summary_callback_(nullptr), device_id_(0) {
 #if defined(ENABLE_DEBUGGER) && !defined(_WIN32) && !defined(_WIN64)
     debugger_ = nullptr;
@@ -121,21 +121,12 @@ class BACKEND_EXPORT SessionBasic : public std::enable_shared_from_this<SessionB
 
   bool CreateCNodeOfKernelGraph(const AnfNodePtr &node, KernelGraph *graph);
 
-  std::shared_ptr<KernelGraph> ConstructKernelGraph(const AnfNodePtrList &lst, const AnfNodePtrList &outputs,
-                                                    DeviceType device_target = DeviceType::kUnknown,
-                                                    bool common_opt = true);
   std::shared_ptr<KernelGraph> ConstructKernelGraph(const FuncGraphPtr &func_graph,
                                                     std::vector<KernelGraphPtr> *all_out_graph,
                                                     DeviceType device_target);
 
-  void SetInputNodeUsage(const KernelGraphPtr &graph, const FuncGraphManagerPtr &manager) const;
-
-  CNodePtr CreateNewCNode(const CNodePtr &cnode, KernelGraph *graph,
-                          mindspore::HashMap<AnfNodePtr, AnfNodePtr> *other_graph_cnode);
   CNodePtr CreateNewCNode(const CNodePtr &cnode, KernelGraph *graph);
 
-  // get graph id in child graphs by ME front anf node pointer
-  virtual GraphId GetGraphIdByNode(const AnfNodePtr &) const;
   virtual GraphId GetFinalRunGraph() const { return kInvalidGraphId; }
   bool IsGetNextGraph(const std::shared_ptr<KernelGraph> &kernel_graph, std::string *channel_name) const;
   virtual bool CheckModelInputs(uint32_t graph_id, const std::vector<tensor::TensorPtr> &inputs,
@@ -148,9 +139,6 @@ class BACKEND_EXPORT SessionBasic : public std::enable_shared_from_this<SessionB
                            std::vector<std::string> *output_names) const;
   std::vector<tensor::TensorPtr> GetInputNeedLockTensors(const GraphId &graph_id,
                                                          const std::vector<tensor::TensorPtr> &inputs) const;
-  // Get graph by graph id, if not exist return null ptr
-  KernelGraphPtr GetGraph(GraphId graph_id) const;
-  void ClearGraph();
   // create a single run op graph
   std::shared_ptr<KernelGraph> ConstructSingleOpGraph(const BackendOpRunInfoPtr &op_run_info,
                                                       const std::vector<tensor::TensorPtr> &input_tensors,
@@ -179,15 +167,10 @@ class BACKEND_EXPORT SessionBasic : public std::enable_shared_from_this<SessionB
   std::vector<AnfNodePtr> CreateValueNode(const CNodePtr &cnode, KernelGraph *graph);
   void CreateCNodeInputs(const CNodePtr &cnode, KernelGraph *graph, std::vector<AnfNodePtr> *cnode_inputs);
   std::vector<AnfNodePtr> CreateCallSwitchInputs(const CNodePtr &cnode, KernelGraph *graph) const;
-  void GetCNodeInfo(const CNodePtr &cnode, std::vector<AnfNodePtr> *cnode_inputs) const;
-  void GetNewCNodeInputs(const CNodePtr &cnode, KernelGraph *graph, std::vector<AnfNodePtr> *cnode_inputs,
-                         mindspore::HashMap<AnfNodePtr, AnfNodePtr> *other_graph_cnode);
+
   std::vector<AnfNodePtr> CreateCallSwitchLayerInputs(const CNodePtr &cnode, KernelGraph *graph);
   void ProcessNodeRetFunc(const CNodePtr &cnode, KernelGraph *graph, const std::vector<AnfNodePtr> &real_inputs);
-  void HandleInternalOutput(const AnfNodePtr &input_front_node, const AnfNodePtr &backend_node,
-                            const FuncGraphManagerPtr &front_func_graph_manager,
-                            const std::shared_ptr<KernelGraph> &backend_graph);
-  std::string AddPartialParametersMap(const AnfNodePtr &partial_node);
+
   void GetParameterIndex(const KernelGraph *graph, const std::vector<tensor::TensorPtr> &inputs,
                          std::map<AnfNodePtr, size_t> *parameter_index);
   void CreateOutputPlaceholder(const KernelGraphPtr &kernel_graph, const std::vector<tensor::TensorPtr> &input_tensors,
@@ -226,7 +209,6 @@ class BACKEND_EXPORT SessionBasic : public std::enable_shared_from_this<SessionB
   virtual void UpdateOutputTensors(const VectorRef *outputs,
                                    const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node,
                                    std::map<DeviceAddressPtr, DeviceAddressPtr> *);
-  virtual void UnifyMindIR(const KernelGraphPtr &graph);
   virtual void FinalOptimize(const KernelGraphPtr &graph) const;
   virtual GraphId CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) { return 0; }
   virtual GraphId CompileGraphImpl(NotNull<FuncGraphPtr>) { return kInvalidGraphId; }
@@ -298,7 +280,6 @@ class BACKEND_EXPORT SessionBasic : public std::enable_shared_from_this<SessionB
 #endif
   // create graph output for RunOp
   void CreateOutputNode(const CNodePtr &cnode, const std::shared_ptr<KernelGraph> &graph) const;
-  CNodePtr ConstructOutput(const AnfNodePtrList &outputs, const std::shared_ptr<KernelGraph> &graph);
   // Generate graph info for a single op graph
   void GetSingleOpGraphInfo(const CNodePtr &kernel, const InputTensorInfo &tensor_info, GraphInfo *graph_info) const;
 
@@ -320,15 +301,10 @@ class BACKEND_EXPORT SessionBasic : public std::enable_shared_from_this<SessionB
                                             const std::vector<tensor::TensorPtr> &graph_inputs,
                                             InputTensorInfo *input_tensor_info, size_t input_index) const;
 
-  // create a new kernel graph and update the graph sum
-  KernelGraphPtr NewKernelGraph();
-  AnfNodePtr CreateParameterFromTuple(const AnfNodePtr &node, KernelGraph *graph) const;
-  virtual ParameterPtr CreateNewParameterFromParameter(const AnfNodePtr &anf, KernelGraph *graph);
   ValueNodePtr CreateValueNodeKernelGraph(const AnfNodePtr &anf, KernelGraph *graph);
   ParameterPtr CreateNewParameter(const AnfNodePtr &anf, KernelGraph *graph) const;
-  AnfNodePtr CreateNewParameterFromCNode(const AnfNodePtr &anf, KernelGraph *graph);
   void AddParameterToGraphInputs(const std::vector<AnfNodePtr> &parameters, KernelGraph *graph) const;
-  void InitInternalOutputParameter(const AnfNodePtr &out_node, const AnfNodePtr &parameter) const;
+
   AnfNodePtr FindPullNode(const AnfNodePtr &push_node, const std::vector<AnfNodePtr> &node_list) const;
   virtual std::shared_ptr<device::Bucket> CreateBucket(uint32_t bucket_id, uint32_t bucket_size) { return nullptr; }
   void InitAllBucket(const KernelGraphPtr &graph, const device::DeviceContext *device_context = nullptr);
@@ -345,15 +321,10 @@ class BACKEND_EXPORT SessionBasic : public std::enable_shared_from_this<SessionB
   std::map<uint32_t, uint32_t> free_bucket_id_map_;
   // Bucket for the entire actor_set.
   HashMap<std::string, std::shared_ptr<device::Bucket>> actor_set_to_bucket_;
-  mindspore::HashMap<GraphId, std::shared_ptr<KernelGraph>> graphs_;
   mindspore::HashMap<GraphInfo, std::shared_ptr<KernelGraph>> run_op_graphs_;
   mindspore::HashMap<FuncGraph *, KernelGraphPtr> front_backend_graph_map_;
-  mindspore::HashMap<AnfNodePtr, AnfNodePtr> partial_parameters_map_;
-  mindspore::HashMap<AnfNodePtr, std::string> partial_target_map_;
-  mindspore::HashMap<AnfNodePtr, ParameterPtr> default_param_map_;
   std::shared_ptr<Context> context_;
   CallBackFunc summary_callback_;
-  static GraphId graph_sum_;
   uint32_t device_id_;
   // rank id of physical device
   uint32_t rank_id_{0};

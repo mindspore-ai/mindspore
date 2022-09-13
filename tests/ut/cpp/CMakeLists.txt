@@ -198,6 +198,7 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/hardware/ascend_session.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/hardware/ascend_auto_monad.cc"
         "../../../mindspore/ccsrc/backend/common/session/kernel_graph.cc"
+        "../../../mindspore/ccsrc/backend/common/session/kernel_graph_mgr.cc"
         "../../../mindspore/ccsrc/backend/common/session/session_basic.cc"
         "../../../mindspore/ccsrc/backend/common/session/executor.cc"
         "../../../mindspore/ccsrc/backend/common/session/executor_manager.cc"
