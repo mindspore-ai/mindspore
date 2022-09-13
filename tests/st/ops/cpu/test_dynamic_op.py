@@ -49,8 +49,8 @@ def test_tile_multiple_tensor_cpu():
     """
     if sys.platform != 'linux':
         return
-    multiples_1 = Tensor(np.array([2, 1]), mstype.int64)
-    multiples_2 = Tensor(np.array([4, 1]), mstype.int64)
+    multiples_1 = (2, 1)
+    multiples_2 = (4, 1)
     x = Tensor(np.array([[1, 2, 3, 4]]), mstype.float32)
     tile_net = TileNet()
     expect_1 = np.array([[1., 2., 3., 4.],
