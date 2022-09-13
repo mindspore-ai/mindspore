@@ -71,8 +71,10 @@ abstract::ShapePtr TraceGradInferShape(const PrimitivePtr &primitive, const std:
   } else {
     auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
     auto x_shape = shape_map[kShape];
-    // TraceGrad x_shape must be 2
-    (void)CheckAndConvertUtils::CheckInteger("x shape size", x_shape[0], kEqual, 2, primitive->name());
+    if (!IsDynamic(x_shape)) {
+      // TraceGrad x_shape must be 2
+      (void)CheckAndConvertUtils::CheckInteger("x shape size", x_shape[0], kEqual, 2, primitive->name());
+    }
     auto infer_shape_max = shape_map[kMaxShape];
     std::vector<int64_t> out_shape = {abstract::Shape::SHP_ANY};
     std::vector<int64_t> infer_shape_min = {0};
