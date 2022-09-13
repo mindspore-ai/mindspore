@@ -30,7 +30,10 @@ struct Nothing {};
 
 class FlagParser {
  public:
-  FlagParser() { AddFlag(&FlagParser::help, helpStr, "print usage message", ""); }
+  FlagParser() {
+    AddFlag(&FlagParser::help, helpStr, "print usage message", "");
+    AddFlag(&FlagParser::version, versionStr, "print version", "");
+  }
 
   virtual ~FlagParser() = default;
 
@@ -59,6 +62,7 @@ class FlagParser {
   template <typename Flags, typename T>
   void AddFlag(Option<T> Flags::*t, const std::string &flagName, const std::string &helpInfo);
   bool help{};
+  bool version{};
 
  protected:
   template <typename Flags>
@@ -69,6 +73,7 @@ class FlagParser {
   std::string binName;
   Option<std::string> usageMsg;
   std::string helpStr = "help";
+  std::string versionStr = "version";
 
  private:
   struct FlagInfo {

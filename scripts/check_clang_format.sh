@@ -101,7 +101,7 @@ set +e
 
 # check format of files modified in the latest commit
 while read line; do
-  if [ ! -e ${line} ]; then
+  if [ ! -e "${line}" ]; then
     continue
   fi
   BASE_NAME=$(basename "${line}")
