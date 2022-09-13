@@ -38,10 +38,12 @@ class MIND_API MirrorPad : public BaseOperator {
   MirrorPad() : BaseOperator(kNameMirrorPad) { InitIOName({"x", "paddings"}, {"y"}); }
   explicit MirrorPad(const std::string k_name) : BaseOperator(k_name) {}
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.MirrorPad for the inputs.
-  void Init() const {}
+  void Init(const std::string &mode) { set_mode(mode); }
+  /// \brief Set mode.
+  void set_mode(const std::string &mode);
+  /// \brief get mode.
+  std::string get_mode() const;
 };
-AbstractBasePtr MirrorPadInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                               const std::vector<AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

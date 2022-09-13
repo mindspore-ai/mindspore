@@ -80,7 +80,7 @@ class Net(nn.Cell):
 @pytest.mark.env_onecard
 def test_mirror_pad_backprop():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    test_arr_in = [[[[1, 2, 3], [4, 5, 6], [7, 8, 9]]]] # size -> 3*3
+    test_arr_in = [[[[1, 2, 3], [4, 5, 6], [7, 8, 9]]]]  # size -> 3*3
     test_arr_in = Tensor(test_arr_in, dtype=mindspore.float32)
     dy = (np.ones((1, 1, 4, 5)) * 0.1).astype(np.float32)
     expected_dx = np.array([[[[0.2, 0.2, 0.1],
@@ -194,3 +194,42 @@ def test_mirror_pad_grad_dynamic_shape():
     net.set_inputs(test_arr_in_dyn, dy_dyn)
     dx = net(test_arr_in, Tensor(dy))
     assert dx[0].asnumpy().shape == expected_shape
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_mirror_pad_dynamic():
+    """
+    Feature: test dynamic shape of mirror_pad
+    Description: test dynamic shape of mirror_pad
+    Expectation: same to none dynamic
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+
+    test1_arr_in = [[[[1, 2, 3], [4, 5, 6], [7, 8, 9]]]]
+    test_1_paddings = ((0, 0), (0, 0), (1, 1), (2, 2))
+    test1_arr_exp = [[[[6, 5, 4, 5, 6, 5, 4], [3, 2, 1, 2, 3, 2, 1], [6, 5, 4, 5, 6, 5, 4],
+                       [9, 8, 7, 8, 9, 8, 7], [6, 5, 4, 5, 6, 5, 4]]]]
+
+    test2_arr_in = [[[[1, 2, 3], [4, 5, 6], [7, 8, 9]]]]
+    test_2_paddings = ((0, 0), (0, 0), (1, 1), (2, 2))
+    test2_arr_exp = [[[[2, 1, 1, 2, 3, 3, 2], [2, 1, 1, 2, 3, 3, 2], [5, 4, 4, 5, 6, 6, 5],
+                       [8, 7, 7, 8, 9, 9, 8], [8, 7, 7, 8, 9, 9, 8]]]]
+
+    reflect_op = nn.Pad(mode='REFLECT', paddings=test_1_paddings)
+    symm_op = nn.Pad(mode='SYMMETRIC', paddings=test_2_paddings)
+
+    x_test_1 = Tensor(np.array(test1_arr_in), dtype=mindspore.float32)
+    x_test_2 = Tensor(np.array(test2_arr_in), dtype=mindspore.float32)
+    in_dyn = Tensor(shape=[1, 1, 3, None], dtype=mindspore.float32)
+    reflect_op.set_inputs(in_dyn)
+    symm_op.set_inputs(in_dyn)
+    y_test_1 = reflect_op(x_test_1).asnumpy()
+    y_test_2 = symm_op(x_test_2).asnumpy()
+
+    print(np.array(test1_arr_in))
+    print(y_test_1)
+
+    np.testing.assert_equal(np.array(test1_arr_exp), y_test_1)
+    np.testing.assert_equal(np.array(test2_arr_exp), y_test_2)

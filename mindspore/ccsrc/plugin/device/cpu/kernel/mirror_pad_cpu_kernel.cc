@@ -16,6 +16,7 @@
 
 #include "plugin/device/cpu/kernel/mirror_pad_cpu_kernel.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "ops/mirror_pad.h"
 
 namespace mindspore {
 namespace kernel {
@@ -23,44 +24,9 @@ namespace {
 // preset size of paddings
 constexpr int MAX_PADDINGS = 5;
 constexpr int PADDING_SIZE = 2;
-
-// define constants for kernel indexing use
-constexpr size_t kMirrorPadInputsNum = 2;
-constexpr size_t kMirrorPadOutputsNum = 1;
 constexpr size_t kTwo = 2;
+constexpr size_t kInputNum = 2;
 }  // namespace
-
-void MirrorPadCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  std::string mode = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, "mode");
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  pad_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 1);
-  if (mode == "REFLECT") {
-    mode_ = 1;
-  } else if (mode == "SYMMETRIC") {
-    mode_ = 0;
-  } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'mode' must be 'REFLECT' or 'SYMMETRIC', but got " << mode;
-  }
-
-  ShapeVector input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  dims_ = int64_t(input_shape.size());
-
-  for (int64_t i = 0; i < dims_; ++i) {
-    input_shape_.push_back(input_shape[i]);
-    input_elements_ *= input_shape_[i];
-  }
-
-  auto padding_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-  num_paddings_ = padding_shape[0];
-
-  auto output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
-  for (int64_t i = 0; i < dims_; ++i) {
-    output_shape_.push_back(output_shape[i]);
-    output_elements_ *= output_shape_[i];
-  }
-}
 
 template <typename T>
 void extract_paddings(const T *paddings_arg, int64_t padd_dim, int64_t *extracted_paddings) {
@@ -70,60 +36,68 @@ void extract_paddings(const T *paddings_arg, int64_t padd_dim, int64_t *extracte
   }
 }
 
-template <typename T>
-void MirrorPadCpuKernelMod::paddings_type(const std::vector<AddressPtr> &inputs,
-                                          const std::vector<AddressPtr> &outputs) const {
-  if (pad_dtype_ == kNumberTypeInt32) {
-    LaunchKernel<T, int32_t>(inputs, outputs);
-  } else if (pad_dtype_ == kNumberTypeInt64) {
-    LaunchKernel<T, int64_t>(inputs, outputs);
-  } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of 'paddings' should be int32 or int64, but got "
-                      << TypeIdLabel(pad_dtype_);
+bool MirrorPadCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                 const std::vector<KernelTensorPtr> &outputs) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::MirrorPad>(base_operator);
+  if (kernel_ptr == nullptr) {
+    MS_LOG(EXCEPTION) << "cast ExtractVolumePatches ops failed!";
   }
-}
-
-bool MirrorPadCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                   const std::vector<kernel::AddressPtr> &,
-                                   const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMirrorPadInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMirrorPadOutputsNum, kernel_name_);
-  if (dtype_ == kNumberTypeFloat16) {
-    paddings_type<float16>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeFloat32) {
-    paddings_type<float>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeFloat64) {
-    paddings_type<double>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeInt8) {
-    paddings_type<int8_t>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeInt16) {
-    paddings_type<int16_t>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeInt32) {
-    paddings_type<int32_t>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeInt64) {
-    paddings_type<int64_t>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeUInt8) {
-    paddings_type<uint8_t>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeUInt16) {
-    paddings_type<uint16_t>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeBool) {
-    paddings_type<bool>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeComplex64) {
-    paddings_type<std::complex<float>>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeComplex128) {
-    paddings_type<std::complex<double>>(inputs, outputs);
+  kernel_name_ = kernel_ptr->name();
+  size_t input_num = inputs.size();
+  if (input_num != kInputNum) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 2, but got " << input_num;
+  }
+  size_t output_num = outputs.size();
+  if (output_num != 1) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << output_num;
+  }
+  std::string mode = kernel_ptr->get_mode();
+  if (mode == "REFLECT") {
+    mode_ = 1;
+  } else if (mode == "SYMMETRIC") {
+    mode_ = 0;
   } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dtype of 'input_x' should be float16, float32, float64, or int8, int16, int32, int64, "
-                         "uint8, uint16, bool, complex64, complex128, but got "
-                      << TypeIdLabel(dtype_);
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'mode' must be 'REFLECT' or 'SYMMETRIC', but got " << mode;
+  }
+  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+    return false;
   }
   return true;
 }
 
+int MirrorPadCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                  const std::vector<KernelTensorPtr> &outputs,
+                                  const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  if (ret != 0) {
+    return ret;
+  }
+  ShapeVector input_shape = inputs[0]->GetShapeVector();
+  dims_ = int64_t(input_shape.size());
+
+  input_shape_.clear();
+  input_elements_ = 1;
+  for (int64_t i = 0; i < dims_; ++i) {
+    input_shape_.push_back(input_shape[i]);
+    input_elements_ *= input_shape_[i];
+  }
+  auto padding_shape = inputs[1]->GetShapeVector();
+  num_paddings_ = padding_shape[0];
+
+  auto output_shape = outputs[0]->GetShapeVector();
+  output_shape_.clear();
+  output_elements_ = 1;
+  for (int64_t i = 0; i < dims_; ++i) {
+    output_shape_.push_back(output_shape[i]);
+    output_elements_ *= output_shape_[i];
+  }
+  return static_cast<int>(KRET_OK);
+}
+
 template <typename T1, typename T2>
-void MirrorPadCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &outputs) const {
+bool MirrorPadCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                         const std::vector<kernel::AddressPtr> &workspace,
+                                         const std::vector<kernel::AddressPtr> &outputs) const {
   auto inputs_addr = reinterpret_cast<T1 *>(inputs[0]->addr);
   auto *paddings_arg = reinterpret_cast<T2 *>(inputs[1]->addr);
   auto outputs_addr = reinterpret_cast<T1 *>(outputs[0]->addr);
@@ -147,7 +121,7 @@ void MirrorPadCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
     std::reverse(outputs_addr, outputs_addr + paddings[0]);
     std::reverse(outputs_addr + paddings[0] + input_elements_,
                  outputs_addr + paddings[0] + input_elements_ + paddings[1]);
-    return;
+    return true;
   }
   // solve other situations
   std::vector<int64_t> output_strides_(dims_, 0);
@@ -208,6 +182,68 @@ void MirrorPadCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
     std::copy(tmp_pos.begin(), tmp_pos.end(), output_pos.begin());
     tmp_pos.clear();
   }
+  return true;
+}
+
+using KernelRunFunc = MirrorPadCpuKernelMod::KernelRunFunc;
+const std::vector<std::pair<KernelAttr, KernelRunFunc>> &MirrorPadCpuKernelMod::GetFuncList() const {
+  static const std::vector<std::pair<KernelAttr, KernelRunFunc>> func_list = {
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
+     &MirrorPadCpuKernelMod::LaunchKernel<float16, int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
+     &MirrorPadCpuKernelMod::LaunchKernel<float, int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
+     &MirrorPadCpuKernelMod::LaunchKernel<double, int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt8),
+     &MirrorPadCpuKernelMod::LaunchKernel<int8_t, int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt16),
+     &MirrorPadCpuKernelMod::LaunchKernel<int16_t, int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
+     &MirrorPadCpuKernelMod::LaunchKernel<int32_t, int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+     &MirrorPadCpuKernelMod::LaunchKernel<int64_t, int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt8),
+     &MirrorPadCpuKernelMod::LaunchKernel<uint8_t, int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt16),
+     &MirrorPadCpuKernelMod::LaunchKernel<uint16_t, int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex64),
+     &MirrorPadCpuKernelMod::LaunchKernel<std::complex<float>, int64_t>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeComplex128)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeComplex128),
+     &MirrorPadCpuKernelMod::LaunchKernel<std::complex<double>, int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
+     &MirrorPadCpuKernelMod::LaunchKernel<bool, int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat16),
+     &MirrorPadCpuKernelMod::LaunchKernel<float16, int32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
+     &MirrorPadCpuKernelMod::LaunchKernel<float, int32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
+     &MirrorPadCpuKernelMod::LaunchKernel<double, int32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt8),
+     &MirrorPadCpuKernelMod::LaunchKernel<int8_t, int32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt16),
+     &MirrorPadCpuKernelMod::LaunchKernel<int16_t, int32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+     &MirrorPadCpuKernelMod::LaunchKernel<int32_t, int32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt64),
+     &MirrorPadCpuKernelMod::LaunchKernel<int64_t, int32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt8),
+     &MirrorPadCpuKernelMod::LaunchKernel<uint8_t, int32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt16),
+     &MirrorPadCpuKernelMod::LaunchKernel<uint16_t, int32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeComplex64),
+     &MirrorPadCpuKernelMod::LaunchKernel<std::complex<float>, int32_t>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeComplex128)
+       .AddInputAttr(kNumberTypeInt32)
+       .AddOutputAttr(kNumberTypeComplex128),
+     &MirrorPadCpuKernelMod::LaunchKernel<std::complex<double>, int32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
+     &MirrorPadCpuKernelMod::LaunchKernel<bool, int32_t>},
+  };
+  return func_list;
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, MirrorPad, MirrorPadCpuKernelMod);
