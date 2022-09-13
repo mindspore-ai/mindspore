@@ -255,6 +255,10 @@ void PyNativeExecutor::SetLazyBuild(bool enable) const { forward_executor()->set
 
 bool PyNativeExecutor::IsFirstCell() const { return forward_executor()->IsFirstCell(); }
 
+void PyNativeExecutor::SetMsFunctionCompileStatus(bool is_compiling) {
+  forward_executor()->set_is_ms_function_compiling(is_compiling);
+}
+
 void RegPynativeExecutor(py::module *m) {
   (void)py::class_<PyNativeExecutor, std::shared_ptr<PyNativeExecutor>>(*m, "PynativeExecutor_")
     .def_static("get_instance", &PyNativeExecutor::GetInstance, "PyNativeExecutor get_instance.")
@@ -280,6 +284,8 @@ void RegPynativeExecutor(py::module *m) {
     .def("set_py_exe_path", &PyNativeExecutor::set_py_exe_path, py::arg("py_exe_path") = py::str(""),
          "set python executable path.")
     .def("set_kernel_build_server_dir", &PyNativeExecutor::set_kernel_build_server_dir,
-         py::arg("kernel_build_server_dir") = py::str(""), "set kernel build server directory path.");
+         py::arg("kernel_build_server_dir") = py::str(""), "set kernel build server directory path.")
+    .def("set_ms_function_compile_status", &PyNativeExecutor::SetMsFunctionCompileStatus,
+         "set ms_funciton compile status.");
 }
 }  // namespace mindspore::pynative

@@ -188,7 +188,9 @@ ValuePtr ForwardExecutor::RunOpForward(const FrontendOpRunInfoPtr &op_run_info) 
     out_value = GetOutput(op_run_info);
   }
   // 4. Do op grad and record op info
-  grad()->ProcessOpGradInfo(op_run_info, out_value);
+  if (!is_ms_function_compiling_) {
+    grad()->ProcessOpGradInfo(op_run_info, out_value);
+  }
   return out_value;
 }
 

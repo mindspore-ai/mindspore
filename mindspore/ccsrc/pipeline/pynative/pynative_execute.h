@@ -87,6 +87,7 @@ class PyNativeExecutor : public std::enable_shared_from_this<PyNativeExecutor> {
   void Sync() const;
   void SetLazyBuild(bool enable) const;
   bool IsFirstCell() const;
+  void SetMsFunctionCompileStatus(bool is_compiling);
 
  private:
   PyNativeExecutor() = default;
