@@ -582,10 +582,10 @@ class SparseTensorDenseAdd(Primitive):
     Raises:
         TypeError: If the dtype of `x1_indices` and 'x1_shape' is neither int32 nor int64.
         ValueError: If `x1_shape`, shape of `x1_indices`, shape of `x1_values` and shape
-        of 'x2' don't meet the parameter description.
+                    of 'x2' don't meet the parameter description.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> from mindspore import Tensor
