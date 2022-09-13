@@ -18,7 +18,7 @@ import mindspore as ms
 from mindspore import context, Tensor, Parameter
 from mindspore.nn import Cell
 import mindspore.nn as nn
-from mindspore.ops import operations as P, functional as F
+from mindspore.ops import operations as P
 from mindspore.common.initializer import initializer
 import mindspore.common.dtype as mstype
 from mindspore.common.api import _cell_graph_executor
@@ -65,6 +65,7 @@ class LayerNorm(nn.Cell):
         self.square = P.Square()
         self.reshape = P.Reshape()
         self.shape = P.Shape()
+        self.sqrt = P.Sqrt()
 
     def construct(self, x):
         x_origin_shape = self.shape(x)
@@ -74,7 +75,7 @@ class LayerNorm(nn.Cell):
         x = self.reshape(x, x_target_shape)
         mean = self.mean(x, -1)
         variance = self.mean(self.square(self.sub(x, mean)))
-        output = self.div(self.sub(x, mean), F.sqrt(self.add(variance, self.eps)))
+        output = self.div(self.sub(x, mean), self.sqrt(self.add(variance, self.eps)))
         rescaled_output = self.add(self.mul(output, self.gamma), self.beta)
         output_shape = self.shape(rescaled_output) + (1,)
         rescaled_output = self.reshape(rescaled_output, output_shape)

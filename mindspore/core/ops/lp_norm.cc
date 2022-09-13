@@ -34,6 +34,9 @@ abstract::ShapePtr LpNormInferShape(const PrimitivePtr &primitive, const std::ve
     MS_EXCEPTION_IF_NULL(item);
   }
   auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  if (IsDynamicRank(input_shape)) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
+  }
   auto output_shape = input_shape;
   auto input_rank = SizeToLong(input_shape.size());
   auto axis = GetValue<std::vector<int64_t>>(primitive->GetAttr("axis"));
@@ -44,13 +47,18 @@ abstract::ShapePtr LpNormInferShape(const PrimitivePtr &primitive, const std::ve
   } else {
     CheckAndConvertUtils::CheckInRange("axis size", axis.size(), kIncludeNeither, {0, input_rank + 1}, prim_name);
   }
-  if (axis.size() > 1) {
-    for (size_t i = 0; i < axis.size(); ++i) {
-      CheckAndConvertUtils::CheckInRange("axis value", axis[i], kIncludeLeft, {-input_rank, input_rank}, prim_name);
-      if (axis[i] < 0) {
-        axis[i] += input_rank;
-      }
+  for (int64_t &axi : axis) {
+    CheckAndConvertUtils::CheckInRange("axis value", axi, kIncludeLeft, {-input_rank, input_rank}, prim_name);
+    if (axi < 0) {
+      axi += input_rank;
     }
+  }
+  bool invalid_axis = std::any_of(axis.begin(), axis.end(), [&input_rank](int64_t axis) { return axis >= input_rank; });
+  if (invalid_axis) {
+    MS_EXCEPTION(ValueError) << "For " << prim_name << ", the value of axis is out of range (-" << input_rank << ", "
+                             << input_rank << ").";
+  }
+  if (axis.size() > 1) {
     constexpr int64_t place_holder = INT64_MAX;
     for (size_t i = 0; i < axis.size(); ++i) {
       auto temp = axis;
@@ -77,9 +85,6 @@ abstract::ShapePtr LpNormInferShape(const PrimitivePtr &primitive, const std::ve
       }
     }
   } else {
-    if (axis[0] < 0) {
-      axis[0] += input_rank;
-    }
     if (!keep_dims) {
       (void)output_shape.erase(output_shape.begin() + axis[0]);
     } else {
