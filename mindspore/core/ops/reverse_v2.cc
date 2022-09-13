@@ -34,6 +34,12 @@ abstract::ShapePtr ReverseV2InferShape(const PrimitivePtr &primitive, const std:
   int64_t x_dims = x_shape.size();
   (void)primitive->AddAttr("axis", MakeValue(input_axis));
   const int64_t input_max_dim = 8;
+
+  auto input_x_shape_ptr = input_args[kInputIndex0]->BuildShape();
+  MS_EXCEPTION_IF_NULL(input_x_shape_ptr);
+  if (IsDynamicRank(x_shape)) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
+  }
   if (x_dims > input_max_dim) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the dimension of input should less than 9"
                              << ", but got " << x_dims;

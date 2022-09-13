@@ -165,8 +165,8 @@ bool CheckConv2dShape(const std::string &prim_name, const std::vector<AbstractBa
     int64_t input_height = x_shape[h_axis];
     int64_t input_width = x_shape[w_axis];
     if (pad_mode == PadMode::PAD) {
-      input_height += padding[left_padding] + padding[right_padding];
-      input_width += padding[top_padding] + padding[bottom_padding];
+      input_width += padding[left_padding] + padding[right_padding];
+      input_height += padding[top_padding] + padding[bottom_padding];
     }
     if (input_height < w_shape[h_axis] || input_width < w_shape[w_axis]) {
       return false;
