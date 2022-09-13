@@ -18,19 +18,17 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_KL_DIV_GPU_KERNEL_H
 
 #include <vector>
-#include <string>
+#include <map>
+#include <utility>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/loss_with_reduction_impl.cuh"
-#include "kernel/common_utils.h"
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
-class KLDivLossGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class KLDivLossGpuKernelMod : public NativeGpuKernelMod {
  public:
-  KLDivLossGpuKernelMod()
-      : input_size_(1), reduction_(ReductionMode::kMean), is_null_input_(false), workspace_size_(0) {}
+  KLDivLossGpuKernelMod() {}
   ~KLDivLossGpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
@@ -38,51 +36,33 @@ class KLDivLossGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     if (is_null_input_) {
       return true;
     }
-    T *input_x = GetDeviceAddress<T>(inputs, 0);
-    T *input_y = GetDeviceAddress<T>(inputs, 1);
-    T *loss = GetDeviceAddress<T>(outputs, 0);
-    T *tmp_loss = GetDeviceAddress<T>(workspace, 0);
-    KLDivLoss(input_size_, reduction_, input_x, input_y, loss, tmp_loss, reinterpret_cast<cudaStream_t>(stream_ptr));
-    return true;
+    return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
   }
 
-  bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    kernel_node_ = kernel_node;
-    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "logits");
-    if (is_null_input_ || IsDynamic(input_shape)) {
-      InitSizeLists();
-      return true;
-    }
-    input_size_ *= SizeOf(input_shape);
-    string reduction = GetAttr<string>(kernel_node, "reduction");
-    reduction_ = kReductionModeMap[reduction];
-    workspace_size_ = sizeof(T);
-    if (reduction_ == ReductionMode::kNone) {
-      workspace_size_ *= input_size_;
-    }
-    InitSizeLists();
-    return true;
-  }
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
 
- protected:
-  void InitSizeLists() override {
-    input_size_list_.push_back(input_size_ * sizeof(T));
-    input_size_list_.push_back(input_size_ * sizeof(T));
-    if (reduction_ == ReductionMode::kNone) {
-      output_size_list_.push_back(input_size_ * sizeof(T));
-    } else {
-      output_size_list_.push_back(sizeof(T));
-    }
-    workspace_size_list_.push_back(workspace_size_);
-  }
+  int Resize(
+    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+    const std::vector<KernelTensorPtr> &outputs,
+    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
+
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  size_t input_size_;
-  ReductionMode reduction_;
-  bool is_null_input_;
-  size_t workspace_size_;
+  template <typename T>
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  using KLDivLossFunc =
+    std::function<bool(KLDivLossGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &, void *)>;
+  static std::vector<std::pair<KernelAttr, KLDivLossGpuKernelMod::KLDivLossFunc>> func_list_;
+  KLDivLossFunc kernel_func_;
+
+  size_t input_size_{1};
+  bool is_null_input_{false};
+  ReductionMode reduction_{ReductionMode::kMean};
+  size_t type_size_{1};
 };
 }  // namespace kernel
 }  // namespace mindspore
