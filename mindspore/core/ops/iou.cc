@@ -15,8 +15,10 @@
  */
 
 #include "ops/iou.h"
+
 #include <algorithm>
 #include <set>
+
 #include "utils/check_convert_utils.h"
 #include "ops/op_utils.h"
 #include "mindapi/src/helper.h"
@@ -24,10 +26,10 @@
 namespace mindspore {
 namespace ops {
 namespace {
-constexpr size_t kIouInputNums = 2;
+constexpr int64_t kIouInputNums = 2;
 constexpr size_t kIouInputDims = 2;
 constexpr size_t kCoordinatesIndex = 1;
-constexpr size_t kCoordinatesSize = 4;
+constexpr int64_t kCoordinatesSize = 4;
 }  // namespace
 MIND_API_OPERATOR_IMPL(IOU, BaseOperator);
 class IOUInfer : public abstract::OpInferBase {
@@ -53,10 +55,10 @@ class IOUInfer : public abstract::OpInferBase {
         << "For 'BatchMatMul', input x, y must have the same dimension size and must be 2. But got x size = "
         << x_shp.size() << ", y size = " << y_shp.size() << ".";
     }
-    (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(x_shp[kCoordinatesIndex]), kEqual,
-                                             kCoordinatesSize, prim_name);
-    (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(y_shp[kCoordinatesIndex]), kEqual,
-                                             kCoordinatesSize, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("input numbers", x_shp[kCoordinatesIndex], kEqual, kCoordinatesSize,
+                                             prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("input numbers", y_shp[kCoordinatesIndex], kEqual, kCoordinatesSize,
+                                             prim_name);
     ShapeVector ret_shape;
     ret_shape.push_back(y_shp[0]);
     ret_shape.push_back(x_shp[0]);
