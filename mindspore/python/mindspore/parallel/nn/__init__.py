@@ -26,6 +26,7 @@ NOTE:
     # Current
     from mindspore.nn.transformer import Transformer
 """
+from __future__ import absolute_import
 from mindspore import log
 from mindspore.nn.transformer import AttentionMask, VocabEmbedding, MultiHeadAttention, FeedForward, \
     TransformerEncoder, TransformerDecoder, TransformerEncoderLayer, TransformerDecoderLayer, Transformer, \

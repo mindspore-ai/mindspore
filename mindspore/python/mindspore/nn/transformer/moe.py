@@ -52,7 +52,7 @@ class MoEConfig:
             expert_group_size (int): The number of tokens in each data parallel group. Default: None. This parameter is
                 effective only when in AUTO_PARALLEL mode, and NOT SHARDING_PROPAGATION.
         Supported Platforms:
-            ``Ascend``
+            ``Ascend`` ``GPU``
 
         Examples:
             >>> from mindspore.nn.transformer import MoEConfig
@@ -164,7 +164,7 @@ class MoE(Cell):
             self.dp_group = parallel_config.data_parallel
             self.dp = parallel_config.data_parallel
             self.ep = parallel_config.expert_parallel
-            from .transformer import FeedForward
+            from mindspore.nn.transformer import FeedForward
 
             self.ffn = FeedForward(hidden_size=hidden_size,
                                    ffn_hidden_size=ffn_hidden_size,
@@ -313,50 +313,30 @@ class Router(Cell):
                  training=True,
                  parallel_config=None):
         super(Router, self).__init__()
-        if _get_parallel_mode() in (ParallelMode.AUTO_PARALLEL,) and _is_sharding_propagation():
-            dp = parallel_config.data_parallel
-            self.d_model = d_model
-            self.expert_dim = moe_config.expert_num
-            self.capacity_factor = moe_config.capacity_factor
-            self.num_experts_chosen = moe_config.num_experts_chosen
-            self.training = training
-            self.routing_policy = routing_policy
-            self.noisy_policy = None  # candidate: ["jitter", "rsample", "None"]
-            self.noisy_epsilon = 1e-2
-            self.noise = Tensor(np.random.uniform(1 - self.noisy_epsilon, 1 + self.noisy_epsilon, (d_model,)))
+        dp = parallel_config.data_parallel
+        self.d_model = d_model
+        self.expert_dim = moe_config.expert_num
+        self.capacity_factor = moe_config.capacity_factor
+        self.num_experts_chosen = moe_config.num_experts_chosen
+        self.training = training
+        self.routing_policy = routing_policy
+        self.noisy_policy = None  # candidate: ["jitter", "rsample", "None"]
+        self.noisy_epsilon = 1e-2
+        self.noise = Tensor(np.random.uniform(1 - self.noisy_epsilon, 1 + self.noisy_epsilon, (d_model,)))
 
-            self.dense = Dense(in_channels=self.d_model, out_channels=self.expert_dim, has_bias=False)
-            self.dense.matmul.shard(((dp, 1), (1, 1)))
-            self.mul = P.Mul()
-            self.cast = P.Cast()
+        self.dense = Dense(in_channels=self.d_model, out_channels=self.expert_dim, has_bias=False)
+        self.dense.matmul.shard(((dp, 1), (1, 1)))
+        self.mul = P.Mul()
+        self.cast = P.Cast()
 
-            if self.routing_policy is None:
-                self.router = TopkRouter(d_model=d_model, moe_config=moe_config, training=training,
-                                         parallel_config=parallel_config)
-            else:
-                self.router = routing_policy
+        if self.routing_policy is None:
+            self.router = TopkRouter(d_model=d_model, moe_config=moe_config, training=training,
+                                     parallel_config=parallel_config)
         else:
-            dp = parallel_config.data_parallel
-            self.d_model = d_model
-            self.expert_dim = moe_config.expert_num
-            self.capacity_factor = moe_config.capacity_factor
-            self.num_experts_chosen = moe_config.num_experts_chosen
-            self.training = training
-            self.routing_policy = routing_policy
-            self.noisy_policy = None  # candidate: ["jitter", "rsample", "None"]
-            self.noisy_epsilon = 1e-2
-            self.noise = Tensor(np.random.uniform(1 - self.noisy_epsilon, 1 + self.noisy_epsilon, (d_model,)))
+            self.router = routing_policy
 
-            self.dense = Dense(in_channels=self.d_model, out_channels=self.expert_dim, has_bias=False)
-            self.dense.matmul.shard(((dp, 1), (1, 1)))
-            self.mul = P.Mul().shard(((dp, 1, 1), (dp,)))
-            self.cast = P.Cast()
-
-            if self.routing_policy is None:
-                self.router = TopkRouter(d_model=d_model, moe_config=moe_config, training=training,
-                                         parallel_config=parallel_config)
-            else:
-                self.router = routing_policy
+        if not (_get_parallel_mode() in (ParallelMode.AUTO_PARALLEL,) and _is_sharding_propagation()):
+            self.mul.shard(((dp, 1, 1), (dp,)))
 
     def construct(self, input_tensor):
         input_tensor = self.cast(input_tensor, mstype.float32)
@@ -497,40 +477,6 @@ class TopkRouter(Cell):
             self.add_scala = P.Add().shard(((), ()))
             self.init_loss = Tensor(0.0, mstype.float32)
 
-    def _auxiliary_loss(self, expert_mask, router_prob):
-        """
-        Computing the load balance loss.
-        """
-        # density_1's shape: (dp_group, self.expert_dim)
-        density_1 = self.reduce_mean(expert_mask, 1)
-        # density_1_proxy's shape: (dp_group, self.expert_dim)
-        density_1_proxy = self.reduce_mean2(router_prob, 1)
-        loss = self.mul(density_1, density_1_proxy)
-        loss = self.reduce_mean3(loss)
-        loss = self.mul3(self.mul2(loss, self.expert_dim), self.expert_dim)
-        return loss
-
-    def _maskout_overflowed_tokens(self, expert_mask, expert_capacity, expert_gate, last_num, expert_chosen_index):
-        """
-        Keeping only the tokens that fit within expert_capacity.
-        """
-        cumsum = self.cumsum(expert_mask, 1)
-        if expert_chosen_index > 0:
-            cumsum = self.add(cumsum, last_num)
-        # position_in_expert's shape: (dp_group, tokens_per_group, self.expert_dim)
-        position_in_expert = self.mul4(cumsum, expert_mask)
-        less_result = self.less(position_in_expert, expert_capacity)
-        # expert_mask's shape: (dp_group, tokens_per_group, self.expert_dim)
-        expert_mask = self.mul5(less_result, expert_mask)
-        # expert_mask_flat's shape: (dp_group, tokens_per_group)
-        expert_mask_flat = self.reduce_sum(expert_mask, -1)
-
-        # Mask out the experts that have overflowed the expert_capacity.
-        # expert_gate's shape: (dp_group, tokens_per_group)
-        expert_gate = self.mul6(expert_gate, expert_mask_flat)
-        output = (expert_mask, expert_gate, expert_mask_flat, position_in_expert)
-        return output
-
     def construct(self, router_logits):
         router_logits_shape = self.shape(router_logits)
         router_logits = self.reshape(router_logits, (-1, router_logits_shape[-1]))
@@ -586,3 +532,37 @@ class TopkRouter(Cell):
         # bad performance
         dispatch_tensor = self.not_equal(accum_combine_tensor, 0.0)
         return dispatch_tensor, accum_combine_tensor, loss
+
+    def _auxiliary_loss(self, expert_mask, router_prob):
+        """
+        Computing the load balance loss.
+        """
+        # density_1's shape: (dp_group, self.expert_dim)
+        density_1 = self.reduce_mean(expert_mask, 1)
+        # density_1_proxy's shape: (dp_group, self.expert_dim)
+        density_1_proxy = self.reduce_mean2(router_prob, 1)
+        loss = self.mul(density_1, density_1_proxy)
+        loss = self.reduce_mean3(loss)
+        loss = self.mul3(self.mul2(loss, self.expert_dim), self.expert_dim)
+        return loss
+
+    def _maskout_overflowed_tokens(self, expert_mask, expert_capacity, expert_gate, last_num, expert_chosen_index):
+        """
+        Keeping only the tokens that fit within expert_capacity.
+        """
+        cumsum = self.cumsum(expert_mask, 1)
+        if expert_chosen_index > 0:
+            cumsum = self.add(cumsum, last_num)
+        # position_in_expert's shape: (dp_group, tokens_per_group, self.expert_dim)
+        position_in_expert = self.mul4(cumsum, expert_mask)
+        less_result = self.less(position_in_expert, expert_capacity)
+        # expert_mask's shape: (dp_group, tokens_per_group, self.expert_dim)
+        expert_mask = self.mul5(less_result, expert_mask)
+        # expert_mask_flat's shape: (dp_group, tokens_per_group)
+        expert_mask_flat = self.reduce_sum(expert_mask, -1)
+
+        # Mask out the experts that have overflowed the expert_capacity.
+        # expert_gate's shape: (dp_group, tokens_per_group)
+        expert_gate = self.mul6(expert_gate, expert_mask_flat)
+        output = (expert_mask, expert_gate, expert_mask_flat, position_in_expert)
+        return output

@@ -1610,7 +1610,7 @@ class TransformerEncoderLayer(Cell):
                 self.reducesum = P.ReduceSum().shard(((1, 1, 1, 1),))
                 self.not_equal = P.NotEqual().shard(((1, 1, 1, 1), ()))
                 self.slice = P.StridedSlice().shard(((1, 1, 1, 1),))
-                size_per_head = int(hidden_size / num_heads)
+                size_per_head = hidden_size // num_heads
                 self.key_shape = (batch_size, num_heads, size_per_head, seq_length)
                 self.value_shape = (batch_size, num_heads, seq_length, size_per_head)
                 # parameters saving key and value states
@@ -1851,6 +1851,9 @@ class TransformerDecoderLayer(Cell):
                  moe_config=default_moe_config,
                  parallel_config=default_dpmp_config):
         super(TransformerDecoderLayer, self).__init__()
+        _check_moe_config(moe_config, parallel_config)
+        self.use_moe = (moe_config.expert_num > 1)
+        config_to_attention = parallel_config.dpmp if self.use_moe else parallel_config
         if _get_parallel_mode() in (ParallelMode.AUTO_PARALLEL,) and _is_sharding_propagation():
             _check_config(parallel_config)
             if num_heads % parallel_config.model_parallel != 0:
@@ -1869,8 +1872,6 @@ class TransformerDecoderLayer(Cell):
                                  "divisibled by 'parallel_config.model_parallel', but got the ffn_hidden_size is {} "
                                  "and parallel_config.model_parallel is {}."
                                  .format(ffn_hidden_size, parallel_config.model_parallel))
-            _check_moe_config(moe_config, parallel_config)
-            self.use_moe = (moe_config.expert_num > 1)
             if use_past:
                 raise ValueError(f"The {self.cls_name} does not support use_past=True.")
             self.batch_size = batch_size
@@ -1894,8 +1895,7 @@ class TransformerDecoderLayer(Cell):
                                                 use_past=use_past,
                                                 softmax_compute_type=softmax_compute_type,
                                                 param_init_type=param_init_type,
-                                                parallel_config=parallel_config.dpmp if self.use_moe
-                                                else parallel_config)
+                                                parallel_config=config_to_attention)
 
             # Cross attention with the output of encoder as memory tensor
             self.cross_attention = MultiHeadAttention(hidden_size=hidden_size,
@@ -1908,8 +1908,7 @@ class TransformerDecoderLayer(Cell):
                                                       softmax_compute_type=softmax_compute_type,
                                                       use_past=use_past,
                                                       param_init_type=param_init_type,
-                                                      parallel_config=parallel_config.dpmp
-                                                      if self.use_moe else parallel_config)
+                                                      parallel_config=config_to_attention)
             self.cross_attention_layernorm = _LayerNorm((hidden_size,)).to_float(
                 layernorm_compute_type)
 
@@ -1967,8 +1966,6 @@ class TransformerDecoderLayer(Cell):
                                  "divisibled by 'parallel_config.model_parallel', but got the ffn_hidden_size is {} "
                                  "and parallel_config.model_parallel is {}."
                                  .format(ffn_hidden_size, parallel_config.model_parallel))
-            _check_moe_config(moe_config, parallel_config)
-            self.use_moe = (moe_config.expert_num > 1)
             if use_past:
                 raise ValueError(f"The {self.cls_name} does not support use_past=True.")
             self.batch_size = batch_size
@@ -1994,8 +1991,7 @@ class TransformerDecoderLayer(Cell):
                                                 use_past=use_past,
                                                 softmax_compute_type=softmax_compute_type,
                                                 param_init_type=param_init_type,
-                                                parallel_config=parallel_config.dpmp if self.use_moe
-                                                else parallel_config)
+                                                parallel_config=config_to_attention)
 
             # Cross attention with the output of encoder as memory tensor
             self.cross_attention = MultiHeadAttention(hidden_size=hidden_size,
@@ -2008,8 +2004,7 @@ class TransformerDecoderLayer(Cell):
                                                       softmax_compute_type=softmax_compute_type,
                                                       use_past=use_past,
                                                       param_init_type=param_init_type,
-                                                      parallel_config=parallel_config.dpmp
-                                                      if self.use_moe else parallel_config)
+                                                      parallel_config=config_to_attention)
             self.cross_attention_layernorm = _LayerNorm((hidden_size,)).to_float(
                 layernorm_compute_type)
             self.cross_attention_layernorm.shard(((parallel_config.data_parallel, 1),))
@@ -2041,7 +2036,7 @@ class TransformerDecoderLayer(Cell):
                 self.reducesum = P.ReduceSum().shard(((1, 1, 1, 1),))
                 self.not_equal = P.NotEqual().shard(((1, 1, 1, 1), ()))
                 self.slice = P.StridedSlice().shard(((1, 1, 1, 1),))
-                size_per_head = int(hidden_size / num_heads)
+                size_per_head = hidden_size // num_heads
                 self.key_shape = (batch_size, num_heads, size_per_head, tgt_seq_length)
                 self.value_shape = (batch_size, num_heads, tgt_seq_length, size_per_head)
                 # parameters saving key and value states
@@ -2217,14 +2212,14 @@ def _get_lambda_func(total_layer=None):
         if layers < parallel_config.pipeline_stage:
             raise ValueError(f"layers {layers} must be larger than pipeline stage {parallel_config.pipeline_stage}")
 
-        pp_dis = max(int(layers / parallel_config.pipeline_stage), 1)
+        pp_dis = max(layers // parallel_config.pipeline_stage, 1)
         # the pipeline stage must be in [0, parallel_config.pipeline_stage - 1]
         pp_id = min((layer_id + offset) // pp_dis, parallel_config.pipeline_stage - 1)
         network.pipeline_stage = pp_id
 
         # Used for optimizer's fusion tag
-        dis = max(int(layers / parallel_config.gradient_aggregation_group), 1)
-        network.set_comm_fusion(int((layer_id + offset) / dis) + 1)
+        dis = max(layers // parallel_config.gradient_aggregation_group, 1)
+        network.set_comm_fusion((layer_id + offset) // dis + 1)
         # Used for enabling recomputation of the block
         if isinstance(parallel_config.recompute, bool):
             if parallel_config.recompute:
@@ -2397,10 +2392,11 @@ class TransformerEncoder(Cell):
                  moe_config=default_moe_config,
                  parallel_config=default_transformer_config):
         super(TransformerEncoder, self).__init__()
+        _check_config(parallel_config)
+        _check_moe_config(moe_config, parallel_config)
+        self.use_moe = (moe_config.expert_num > 1)
+        config_to_layer = parallel_config.moe_parallel_config if self.use_moe else parallel_config.dp_mp_config
         if _get_parallel_mode() in (ParallelMode.AUTO_PARALLEL,) and _is_sharding_propagation():
-            _check_config(parallel_config)
-            _check_moe_config(moe_config, parallel_config)
-            self.use_moe = (moe_config.expert_num > 1)
             self.add = P.Add()
             self.aux_loss = Tensor(0.0, mstype.float32)
             self.num_layers = num_layers
@@ -2420,8 +2416,7 @@ class TransformerEncoder(Cell):
                                                 param_init_type=param_init_type,
                                                 use_past=use_past,
                                                 moe_config=moe_config,
-                                                parallel_config=parallel_config.moe_parallel_config if self.use_moe
-                                                else parallel_config.dp_mp_config)
+                                                parallel_config=config_to_layer)
                 # If the user doesn't pass the fusion function, use the default one
                 if not lambda_func:
                     lambda_func = _get_lambda_func()
@@ -2430,9 +2425,6 @@ class TransformerEncoder(Cell):
                             offset=offset, parallel_config=parallel_config)
                 self.blocks.append(block)
         elif _get_parallel_mode() not in (ParallelMode.AUTO_PARALLEL,):
-            _check_config(parallel_config)
-            _check_moe_config(moe_config, parallel_config)
-            self.use_moe = (moe_config.expert_num > 1)
             self.add = P.Add().shard(((), ()))
             self.aux_loss = Tensor(0.0, mstype.float32)
             logger.warning("For parallel mode, sharding propagation is recommended, you can use it by setting "
@@ -2456,8 +2448,7 @@ class TransformerEncoder(Cell):
                                                 param_init_type=param_init_type,
                                                 use_past=use_past,
                                                 moe_config=moe_config,
-                                                parallel_config=parallel_config.moe_parallel_config if self.use_moe
-                                                else parallel_config.dp_mp_config)
+                                                parallel_config=config_to_layer)
                 # If the user doesn't pass the fusion function, use the default one
                 if not lambda_func:
                     lambda_func = _get_lambda_func()
@@ -2632,15 +2623,16 @@ class TransformerDecoder(Cell):
                  moe_config=default_moe_config,
                  parallel_config=default_transformer_config):
         super(TransformerDecoder, self).__init__()
+        _check_moe_config(moe_config, parallel_config)
+        _check_config(parallel_config)
+        self.use_moe = (moe_config.expert_num > 1)
+        config_to_layer = parallel_config.moe_parallel_config if self.use_moe else parallel_config.dp_mp_config
         if _get_parallel_mode() in (ParallelMode.AUTO_PARALLEL,) and _is_sharding_propagation():
-            _check_config(parallel_config)
-
             self.add = P.Add()
             self.aux_loss = Tensor(0.0, mstype.float32)
             self.num_layers = num_layers
             self.blocks = nn.CellList()
-            _check_moe_config(moe_config, parallel_config)
-            self.use_moe = (moe_config.expert_num > 1)
+
             for i in range(num_layers):
                 block = TransformerDecoderLayer(hidden_size=hidden_size,
                                                 batch_size=batch_size,
@@ -2657,8 +2649,7 @@ class TransformerDecoder(Cell):
                                                 param_init_type=param_init_type,
                                                 post_layernorm_residual=post_layernorm_residual,
                                                 moe_config=moe_config,
-                                                parallel_config=parallel_config.moe_parallel_config if self.use_moe
-                                                else parallel_config.dp_mp_config)
+                                                parallel_config=config_to_layer)
                 # If the user doesn't pass the fusion function, use the default one
                 if not lambda_func:
                     lambda_func = _get_lambda_func()
@@ -2668,8 +2659,6 @@ class TransformerDecoder(Cell):
 
                 self.blocks.append(block)
         elif _get_parallel_mode() not in (ParallelMode.AUTO_PARALLEL,):
-            _check_config(parallel_config)
-
             self.add = P.Add().shard(((), ()))
             self.aux_loss = Tensor(0.0, mstype.float32)
             logger.warning("For parallel mode, sharding propagation is recommended, you can use it by setting "
@@ -2678,8 +2667,6 @@ class TransformerDecoder(Cell):
                            "'set_algo_parameters(elementwise_op_strategy_follow=False, fully_use_devices=False)'")
             self.num_layers = num_layers
             self.blocks = nn.CellList()
-            _check_moe_config(moe_config, parallel_config)
-            self.use_moe = (moe_config.expert_num > 1)
             for i in range(num_layers):
                 block = TransformerDecoderLayer(hidden_size=hidden_size,
                                                 batch_size=batch_size,
@@ -2696,8 +2683,7 @@ class TransformerDecoder(Cell):
                                                 param_init_type=param_init_type,
                                                 post_layernorm_residual=post_layernorm_residual,
                                                 moe_config=moe_config,
-                                                parallel_config=parallel_config.moe_parallel_config if self.use_moe
-                                                else parallel_config.dp_mp_config)
+                                                parallel_config=config_to_layer)
                 # If the user doesn't pass the fusion function, use the default one
                 if not lambda_func:
                     lambda_func = _get_lambda_func()

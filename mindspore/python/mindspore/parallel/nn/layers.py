@@ -16,6 +16,7 @@
 The basic layer of the Transformer Networks. This is an experimental interface that is subject to
 change or deletion.
 """
+from __future__ import absolute_import
 from mindspore.nn.transformer.layers import FixedSparseAttention
 
 __all__ = ["FixedSparseAttention"]
