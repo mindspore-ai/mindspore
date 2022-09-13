@@ -127,7 +127,14 @@ Distance Functions
     mindspore.ops.cdist
 
 Mathematical Functions
-----------------------
+^^^^^^^^^^^^^^^^^^^^^^
+
+.. msplatformautosummary::
+    :toctree: ops
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.ops.bmm
 
 Element-by-Element Operations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

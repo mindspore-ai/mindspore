@@ -1,4 +1,4 @@
-# Copyright 2020-2022 Huawei Technologies Co., Ltd
+# Copyright 2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,54 +15,34 @@
 
 import numpy as np
 import pytest
-
 import mindspore.context as context
 from mindspore import Tensor
-from mindspore.ops import operations as P
-context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-np.random.seed(1)
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_atan_fp32():
-    x_np = np.random.rand(4, 2).astype(np.float32) * 10
-    output_ms = P.Atan()(Tensor(x_np))
-    output_np = np.arctan(x_np)
-    assert np.allclose(output_ms.asnumpy(), output_np, 1e-4, 1e-4)
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_atan_fp16():
-    x_np = np.random.rand(4, 2).astype(np.float16) * 10
-    output_ms = P.Atan()(Tensor(x_np))
-    output_np = np.arctan(x_np.astype(np.float32)).astype(np.float16)
-    assert np.allclose(output_ms.asnumpy(), output_np, 1e-3, 1e-3)
 
 
-def test_atan_forward_tensor_api(nptype):
+def test_addmv_forward_tensor_api(nptype):
     """
-    Feature: test atan forward tensor api for given input dtype.
+    Feature: test addmv forward tensor api for given input dtype.
     Description: test inputs for given input dtype.
     Expectation: the result match with expected result.
     """
-    x = Tensor(np.array([1.0, 0.0]).astype(nptype))
-    output = x.atan()
-    expected = np.array([0.7853982, 0.0]).astype(nptype)
+    x = Tensor(np.array([2., 3.]).astype(nptype))
+    mat = Tensor(np.array([[2., 5., 3.], [4., 2., 2.]]).astype(nptype))
+    vec = Tensor(np.array([3., 2., 4.]).astype(nptype))
+    output = x.addmv(mat, vec)
+    expected = np.array([30., 27.]).astype(nptype)
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_atan_forward_float32_tensor_api():
+def test_addmv_forward_float32_tensor_api():
     """
-    Feature: test atan forward tensor api.
+    Feature: test addmv forward tensor api.
     Description: test float32 inputs.
     Expectation: the result match with expected result.
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    test_atan_forward_tensor_api(np.float32)
+    test_addmv_forward_tensor_api(np.float32)
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-    test_atan_forward_tensor_api(np.float32)
+    test_addmv_forward_tensor_api(np.float32)

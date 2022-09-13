@@ -5179,6 +5179,53 @@ def matmul(x1, x2):
     return reshape_op(res, shape_out)
 
 
+def bmm(input_x, mat2):
+    """
+    Computes matrix multiplication between two tensors by batch.
+
+    .. math::
+
+        \text{output}[..., :, :] = \text{matrix}(input_x[..., :, :]) * \text{matrix}(mat2[..., :, :])
+
+    The first input tensor must be not less than `3` and the second input must be not less than `2`.
+
+    Args:
+        input_x (Tensor) - The first tensor to be multiplied. The shape of the tensor is :math:`(*B, N, C)`,
+            where :math:`*B` represents the batch size which can be multidimensional, :math:`N` and :math:`C` are the
+            size of the last two dimensions.
+        mat2 (Tensor) - The second tensor to be multiplied. The shape of the tensor is :math:`(*B, C, M)`.
+
+    Outputs:
+        Tensor, the shape of the output tensor is :math:`(*B, N, M)`.
+
+    Raises:
+        ValueError: If length of shape of `input_x` is not equal to length of shape of `y` or
+                    length of shape of `input_x` is less than 3.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> input_x = Tensor(np.ones(shape=[2, 4, 1, 3]), mindspore.float32)
+        >>> mat2 = Tensor(np.ones(shape=[2, 4, 3, 4]), mindspore.float32)
+        >>> output = ops.bmm(input_x, mat2)
+        >>> print(output)
+        [[[[3. 3. 3. 3.]]
+          [[3. 3. 3. 3.]]
+          [[3. 3. 3. 3.]]
+          [[3. 3. 3. 3.]]]
+         [[[3. 3. 3. 3.]]
+          [[3. 3. 3. 3.]]
+          [[3. 3. 3. 3.]]
+          [[3. 3. 3. 3.]]]]
+    """
+    if not (isinstance(input_x, Tensor) and isinstance(mat2, Tensor)):
+        raise TypeError("For bmm op, inputs input_x and mat2 must be all tensors.")
+
+    bmm_op = _get_cache_prim(P.BatchMatMul)()
+    return bmm_op(input_x, mat2)
+
+
 def baddbmm(x, batch1, batch2, beta=1, alpha=1):
     r"""
     Performs a batch matrix-matrix product of matrices in batch1 and batch2. input is added to the final result.
@@ -5959,6 +6006,7 @@ __all__ = [
     'rot90',
     'remainder',
     'accumulate_n',
-    'iou'
+    'iou',
+    'bmm'
 ]
 __all__.sort()

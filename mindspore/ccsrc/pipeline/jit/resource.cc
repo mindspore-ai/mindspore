@@ -297,6 +297,11 @@ BuiltInTypeMap &GetMethodMap() {
        {"addr", std::string("addr")},                                      // addr()
        {"add", std::string("add")},                                        // P.Add()
        {"asin", std::string("asin")},                                      // asin()
+       {"addmv", std::string("addmv")},                                    // addmv()
+       {"asinh", std::string("asinh")},                                    // asinh()
+       {"atan", std::string("atan")},                                      // atan()
+       {"atanh", std::string("atanh")},                                    // atanh()
+       {"bmm", std::string("bmm")},                                        // bmm()
      }},
     {kObjectTypeRowTensorType,
      {

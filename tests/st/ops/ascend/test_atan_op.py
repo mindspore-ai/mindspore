@@ -1,4 +1,4 @@
-# Copyright 2021-2022 Huawei Technologies Co., Ltd
+# Copyright 2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,41 +15,10 @@
 
 import numpy as np
 import pytest
-
-import mindspore.nn as nn
+import mindspore.context as context
 from mindspore import Tensor
-from mindspore import context
-from mindspore.ops import operations as P
 
-context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-
-
-class NetAtan(nn.Cell):
-    def __init__(self):
-        super(NetAtan, self).__init__()
-        self.atan = P.Atan()
-
-    def construct(self, x):
-        return self.atan(x)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-@pytest.mark.parametrize('dtype', [np.float32, np.float64])
-def test_atan(dtype):
-    """
-    Feature: ALL To ALL
-    Description: test cases for Atan
-    Expectation: the result match to numpy
-    """
-    np_array = np.array([-1, -0.5, 0, 0.5, 1], dtype=dtype)
-    input_x = Tensor(np_array)
-    net = NetAtan()
-    output = net(input_x)
-    print(output)
-    expect = np.arctan(np_array)
-    assert np.allclose(output.asnumpy(), expect)
+# all cases tested against dchip
 
 
 def test_atan_forward_tensor_api(nptype):
@@ -65,7 +34,8 @@ def test_atan_forward_tensor_api(nptype):
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_atan_forward_float32_tensor_api():
     """
@@ -73,11 +43,7 @@ def test_atan_forward_float32_tensor_api():
     Description: test float32 inputs.
     Expectation: the result match with expected result.
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     test_atan_forward_tensor_api(np.float32)
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     test_atan_forward_tensor_api(np.float32)
-
-
-if __name__ == '__main__':
-    test_atan_forward_float32_tensor_api()

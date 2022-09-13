@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -39,3 +39,30 @@ def test_asinh_fp16():
     output_ms = P.Asinh()(Tensor(x_np))
     output_np = np.arcsinh(x_np.astype(np.float32)).astype(np.float16)
     assert np.allclose(output_ms.asnumpy(), output_np, 1e-3, 1e-3)
+
+
+def test_asinh_forward_tensor_api(nptype):
+    """
+    Feature: test asinh forward tensor api for given input dtype.
+    Description: test inputs for given input dtype.
+    Expectation: the result match with expected result.
+    """
+    x = Tensor(np.array([-5.0, 1.5, 3.0, 100.0]).astype(nptype))
+    output = x.asinh()
+    expected = np.array([-2.3124382, 1.1947632, 1.8184465, 5.298342]).astype(nptype)
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_asinh_forward_float32_tensor_api():
+    """
+    Feature: test asinh forward tensor api.
+    Description: test float32 inputs.
+    Expectation: the result match with expected result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    test_asinh_forward_tensor_api(np.float32)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    test_asinh_forward_tensor_api(np.float32)
