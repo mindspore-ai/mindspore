@@ -53,8 +53,10 @@ abstract::ShapePtr SparseSegmentMeanWithNumSegmentsInferShape(const PrimitivePtr
   if (num_segments_shape.size() > kRankOne) {
     MS_EXCEPTION(ValueError) << "For " << prim_name << ", rank of num_segments should be 0 or 1.";
   }
-  if (num_segments_shape.size() == kRankOne && num_segments_shape[kShapeZero] != kDimOne) {
-    MS_EXCEPTION(ValueError) << "For " << prim_name << ", the num element of num_segments should be 1.";
+  if (!IsDynamic(num_segments_shape)) {
+    if (num_segments_shape.size() == kRankOne && num_segments_shape[kShapeZero] != kDimOne) {
+      MS_EXCEPTION(ValueError) << "For " << prim_name << ", the num element of num_segments should be 1.";
+    }
   }
   if (!input_args[kInputIndex3]->BuildValue()->isa<AnyValue>() &&
       !input_args[kInputIndex3]->BuildValue()->isa<None>()) {
