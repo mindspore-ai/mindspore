@@ -19,6 +19,7 @@ import mindspore.nn as nn
 from mindspore import context, Tensor, Parameter
 from mindspore.ops import GradOperation, grad
 from mindspore.common import dtype as mstype
+from mindspore.ops import composite as C
 
 
 class GradOperationNet(nn.Cell):
@@ -1404,3 +1405,43 @@ def test_grad_empty_position_and_no_param():
     with pytest.raises(RuntimeError):
         net2 = Net()
         grad(net2, grad_position=(), weights=net2.trainable_params())(x, y)
+
+
+def test_grad_operation_hypermap_control_flow():
+    """
+    Features: ops.grad.
+    Description: Test ops.GradOperation with control flow.
+    Expectation: No exception.
+    """
+    ctrl = C.MultitypeFuncGraph("ctrl")
+    @ctrl.register("Tensor", "Tuple")
+    def _if(x, y):
+        if x > 0:
+            return y[0]
+        return y[1]
+
+    class Net(nn.Cell):
+        def __init__(self, mtfg):
+            super().__init__()
+            self.hyper_map = C.HyperMap(mtfg)
+
+        def construct(self, x, y, z):
+            return self.hyper_map((x, y), ((z, x), (y, z)))
+
+    x = Tensor(2, mstype.int32)
+    y = Tensor(-3, mstype.int32)
+    z = Tensor(0, mstype.int32)
+
+    context.set_context(mode=context.GRAPH_MODE)
+    out_graph = GradOperationNet(Net(ctrl), get_all=True)(x, y, z)
+    assert len(out_graph) == 3
+    assert np.all(out_graph[0].asnumpy() == z.asnumpy())
+    assert np.all(out_graph[1].asnumpy() == z.asnumpy())
+    assert np.all(out_graph[2].asnumpy() == x.asnumpy())
+
+    context.set_context(mode=context.PYNATIVE_MODE)
+    out_pynative = GradOperationNet(Net(ctrl), get_all=True)(x, y, z)
+    assert len(out_pynative) == 3
+    assert np.all(out_pynative[0].asnumpy() == z.asnumpy())
+    assert np.all(out_pynative[1].asnumpy() == z.asnumpy())
+    assert np.all(out_pynative[2].asnumpy() == x.asnumpy())
