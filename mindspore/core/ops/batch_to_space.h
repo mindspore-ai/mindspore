@@ -47,9 +47,6 @@ class MIND_API BatchToSpace : public BaseOperator {
   /// \return crops.
   std::vector<std::vector<int64_t>> get_crops() const;
 };
-
-abstract::AbstractBasePtr BatchToSpaceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                            const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 
