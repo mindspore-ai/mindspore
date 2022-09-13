@@ -56,6 +56,7 @@ int SquaredDifferenceOpGpuKernelMod::Resize(const BaseOperatorPtr &base_operator
   lhs_shape_.resize(MAX_DIMS, 1);
   rhs_shape_.resize(MAX_DIMS, 1);
   output_shape_.resize(MAX_DIMS, 1);
+  output_num_ = 1;
   for (size_t i = 0; i < output_shape.size(); i++) {
     if (need_broadcast_) {
       output_shape_[i] = output_shape[i];
