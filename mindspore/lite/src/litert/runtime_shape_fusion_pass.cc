@@ -112,6 +112,10 @@ int ShapeFusionPass::FusePostNodes(LiteGraph::Node *node, size_t subgraph_index)
       MS_CHECK_TRUE_RET(used_nodes_.find(original_output) != used_nodes_.end(), RET_ERROR);
       if (used_nodes_[original_output].empty()) {
         auto remove_itr = std::find(node->output_indices_.begin(), node->output_indices_.end(), original_output);
+        if (remove_itr == node->output_indices_.end()) {
+          MS_LOG(ERROR) << "can not find original output";
+          return RET_ERROR;
+        }
         node->output_indices_.erase(remove_itr);
         node->input_indices_.erase(node->input_indices_.begin() + (remove_itr - node->output_indices_.begin()) + 1);
       }
