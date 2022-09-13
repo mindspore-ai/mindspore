@@ -23,8 +23,10 @@
 namespace mindspore {
 namespace kernel {
 namespace {
+#ifndef _MSC_VER
 using complex64 = __complex__ float;
 using complex128 = __complex__ double;
+#endif
 constexpr size_t kSpaceToDepthInputsNum = 1;
 constexpr size_t kSpaceToDepthOutputsNum = 1;
 constexpr size_t kSpaceToDepthInputShapeSize = 4;
@@ -137,12 +139,14 @@ std::vector<std::pair<KernelAttr, SpaceToDepthCpuKernelMod::SpaceToDepthFunc>> S
    &SpaceToDepthCpuKernelMod::LaunchKernel<uint16_t>},
   {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
    &SpaceToDepthCpuKernelMod::LaunchKernel<uint32_t>},
-  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
-   &SpaceToDepthCpuKernelMod::LaunchKernel<uint64_t>},
+#ifndef _MSC_VER
   {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
    &SpaceToDepthCpuKernelMod::LaunchKernel<complex64>},
   {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
-   &SpaceToDepthCpuKernelMod::LaunchKernel<complex128>}};
+   &SpaceToDepthCpuKernelMod::LaunchKernel<complex128>},
+#endif
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
+   &SpaceToDepthCpuKernelMod::LaunchKernel<uint64_t>}};
 
 std::vector<KernelAttr> SpaceToDepthCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
