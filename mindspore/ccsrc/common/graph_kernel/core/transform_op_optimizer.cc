@@ -473,7 +473,7 @@ class Mutator {
 
 bool TransformOpOptimizer::Process(const LiteGraphPtr &litegraph, const TransformOpCreator &creator) const {
   auto &ops = litegraph->ops();
-  bool changed = true;
+  bool changed = false;
   auto check_is_trans_op = [&creator](const NodePtr &node) { return creator.IsTransOp(node); };
   auto ori_trans_op_num = std::count_if(ops.begin(), ops.end(), check_is_trans_op);
   std::set<NodePtr> nodes_may_change;

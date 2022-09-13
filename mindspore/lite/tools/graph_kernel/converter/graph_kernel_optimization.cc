@@ -33,7 +33,6 @@
 #include "tools/graph_kernel/converter/format_recognition.h"
 #include "tools/graph_kernel/converter/graph_kernel_cluster_lite.h"
 #include "tools/graph_kernel/converter/graph_kernel_expander_lite.h"
-#include "tools/graph_kernel/converter/insert_abstract.h"
 #include "tools/graph_kernel/converter/graph_kernel_splitter_lite.h"
 #include "tools/graph_kernel/converter/parameter_to_tensor.h"
 #include "tools/graph_kernel/converter/eliminate_maketuple_getitem.h"
@@ -48,9 +47,10 @@ constexpr size_t kStageBuildKernel = 4;
 
 GkPassManagerPtr GraphKernelOptimizer::PreProcess() const {
   auto pm = std::make_shared<GraphKernelPassManagerLite>(kStagePreProcess, "preprocess");
-  // Some ops may lose abstract in converter
-  pm->Add(std::make_shared<InsertAbstract>(), OptLevel_1);
+  // Recognize the formats for all CNodes
   pm->Add(std::make_shared<FormatRecognition>(), OptLevel_1);
+
+  // Convert the const parameters to const tensors
   pm->Add(std::make_shared<ParameterToTensor>(), OptLevel_1);
   return pm;
 }
