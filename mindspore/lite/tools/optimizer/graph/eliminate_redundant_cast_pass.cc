@@ -50,7 +50,7 @@ bool EliminateRedundantCastPass::Run(const FuncGraphPtr &func_graph) {
     return true;
   }
   auto manager = func_graph->manager();
-  MS_ASSERT(manager != nullptr);
+  MS_CHECK_TRUE_RET(manager != nullptr, false);
   auto node_list = TopoSort(func_graph->get_return());
   int status = RET_OK;
   for (auto &node : node_list) {

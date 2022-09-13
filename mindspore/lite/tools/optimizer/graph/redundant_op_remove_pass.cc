@@ -106,12 +106,11 @@ int ProcessDependencyWithTwoNodes(const FuncGraphPtr &func_graph, const CNodePtr
   tr.SetEdge(post_node, iter->second, NewValueNode(std::make_shared<UMonad>()));
   tr.Commit();
   auto depend_prim = std::make_shared<ops::Depend>();
-  MS_ASSERT(depend_prim != nullptr);
+  MS_CHECK_TRUE_MSG(depend_prim != nullptr, lite::RET_ERROR, "New Depend ops Failed");
   auto depend_prim_c = depend_prim->GetPrim();
-  MS_ASSERT(depend_prim_c != nullptr);
+  MS_CHECK_TRUE_MSG(depend_prim_c != nullptr, lite::RET_ERROR, "GetPrim Failed");
   auto depend_node = func_graph->NewCNode(depend_prim_c, {post_node, pre_node});
-  MS_CHECK_TRUE_MSG(depend_prim != nullptr, lite::RET_NULL_PTR, "NewCNode Failed");
-  MS_CHECK_TRUE_MSG(depend_node != nullptr, lite::RET_NULL_PTR, "NewCNode Failed");
+  MS_CHECK_TRUE_MSG(depend_node != nullptr, lite::RET_ERROR, "NewCNode Failed");
   depend_node->set_fullname_with_scope(cnode->fullname_with_scope());
   manager->Replace(cnode, depend_node);
   return lite::RET_OK;
@@ -126,12 +125,12 @@ int ProcessInputHaveDependency(const FuncGraphPtr &func_graph, const CNodePtr &c
     return lite::RET_OK;
   }
   auto make_tuple_node = std::make_shared<ops::MakeTuple>();
-  MS_CHECK_TRUE_MSG(make_tuple_node != nullptr, lite::RET_NULL_PTR, "make_tuple_node Failed");
+  MS_CHECK_TRUE_MSG(make_tuple_node != nullptr, lite::RET_ERROR, "make tuple node Failed");
   auto make_tuple_prim_c = make_tuple_node->GetPrim();
-  MS_CHECK_TRUE_MSG(make_tuple_prim_c != nullptr, lite::RET_NULL_PTR, "make_tuple_prim_c Failed");
+  MS_CHECK_TRUE_MSG(make_tuple_prim_c != nullptr, lite::RET_ERROR, "make tuple prim c Failed");
   auto make_tuple_prim = NewValueNode(make_tuple_prim_c);
+  MS_CHECK_TRUE_MSG(make_tuple_prim != nullptr, lite::RET_ERROR, "NewCNode Failed");
   auto manager = func_graph->manager();
-  MS_CHECK_TRUE_MSG(make_tuple_prim != nullptr, lite::RET_NULL_PTR, "NewCNode Failed");
   MS_ASSERT(manager != nullptr);
   if (CheckPrimitiveType(cnode->input(0), prim::kPrimTranspose)) {
     manager->Replace(cnode->input(0)->cast<CNodePtr>()->input(0), make_tuple_prim);
@@ -327,7 +326,7 @@ int RemoveRedundantOpPass::RemoveInvalidPadOp(const AnfNodePtr &anf_node, const 
     }
   } else {
     auto pad_prim = api::MakeShared<mindspore::ops::PadFusion>(primitive);
-    MS_ASSERT(pad_prim != nullptr);
+    MS_CHECK_TRUE_RET(pad_prim != nullptr, lite::RET_ERROR);
     MS_CHECK_TRUE_RET(pad_prim->GetAttr(ops::kPaddings) != nullptr, lite::RET_ERROR);
     auto pad_data = pad_prim->get_paddings();
     for (size_t i = 0; i < pad_data.size(); i++) {

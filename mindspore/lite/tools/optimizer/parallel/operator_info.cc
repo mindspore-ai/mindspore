@@ -122,7 +122,15 @@ int OperatorInfo::CreateMultipleOutputsOfAnfNode(const AnfNodePtr &node, size_t 
     MS_CHECK_TRUE_RET(abstract_scalar != nullptr, lite::RET_ERROR);
     idx->set_abstract(abstract_scalar);
     auto tuple_node = std::make_shared<ops::TupleGetItem>();
+    if (tuple_node == nullptr) {
+      MS_LOG(ERROR) << name_ << " : Failed to create tuple node.";
+      return lite::RET_ERROR;
+    }
     auto tuple_prim_c = tuple_node->GetPrim();
+    if (tuple_prim_c == nullptr) {
+      MS_LOG(ERROR) << name_ << " : Failed to create tuple node primitive.";
+      return lite::RET_ERROR;
+    }
     auto tuple_getitem = func_graph_->NewCNode({NewValueNode(tuple_prim_c), node, idx});
     if (tuple_getitem == nullptr) {
       MS_LOG(ERROR) << name_ << " : Failed to create output nodes.";

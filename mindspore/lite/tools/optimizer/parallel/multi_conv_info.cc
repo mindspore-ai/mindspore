@@ -170,6 +170,7 @@ AnfNodePtr MultiConvSplit::MultiConvNHSplit(const AnfNodePtr &node) {
   }
   // Create concate node
   auto concat_node = CreateOutputsOfConcat(func_graph_, node, split_outputs, split_info_, conv_cnode_name);
+  MS_CHECK_TRUE_RET(concat_node != nullptr, nullptr);
   split_outputs.clear();
   return concat_node;
 }
