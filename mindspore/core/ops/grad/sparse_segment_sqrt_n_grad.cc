@@ -35,14 +35,22 @@ abstract::ShapePtr SparseSegmentSqrtNGradInferShape(const PrimitivePtr &prim,
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
   auto output_dim0_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
+  (void)CheckAndConvertUtils::CheckInteger("indices_shape", SizeToLong(indices_shape.size()), kEqual, kInputIndex1,
+                                           prim->name());
+  (void)CheckAndConvertUtils::CheckInteger("segment_ids_shape", SizeToLong(segment_ids_shape.size()), kEqual,
+                                           kInputIndex1, prim->name());
   if (x_shape.size() < kInputIndex1) {
-    MS_EXCEPTION(ValueError) << "For '" << prim_name << "', tensor x's rank is less than 1.";
+    MS_EXCEPTION(ValueError) << "For '" << prim_name << "', "
+                             << "tensor x's rank must be greater than 1, but got [" << x_shape.size() << "].";
   }
   if (output_dim0_shape.size() != kInputIndex0) {
-    MS_EXCEPTION(ValueError) << "For '" << prim_name << "', tensor outputdim0 should be a scalar.";
+    MS_EXCEPTION(ValueError) << "For '" << prim_name << "', tensor output_dim0 should be a scalar, "
+                             << "but got [" << output_dim0_shape.size() << "].";
   }
   if (indices_shape[kInputIndex0] != segment_ids_shape[kInputIndex0]) {
-    MS_EXCEPTION(ValueError) << "For '" << prim_name << "', tensor indices & segment_ids's ranks mismatch.";
+    MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the rank of indices and segment_ids must be the same, "
+                             << "but got indices [" << indices_shape[kInputIndex0] << "] "
+                             << "and segment_ids [" << segment_ids_shape[kInputIndex0] << "].";
   }
   if (!input_args[kInputIndex3]->BuildValue()->isa<AnyValue>() &&
       !input_args[kInputIndex3]->BuildValue()->isa<None>()) {
@@ -54,7 +62,8 @@ abstract::ShapePtr SparseSegmentSqrtNGradInferShape(const PrimitivePtr &prim,
       CheckAndConvertUtils::CheckTensorIntValue("output_dim0", output_dim0_value_ptr, prim_name);
     size_t dim_zero = static_cast<size_t>(output_dim0_value_ptr_tensor[kInputIndex0]);
     if (dim_zero <= kInputIndex0) {
-      MS_EXCEPTION(ValueError) << "Input output_dim0 must > 0!";
+      MS_EXCEPTION(ValueError) << "For '" << prim_name << "' , tensor output_dim0 must > 0, "
+                               << "but got [" << dim_zero << "].";
     } else {
       ShapeVector y_shape = x_shape;
       y_shape[kInputIndex0] = static_cast<int64_t>(dim_zero);
@@ -62,7 +71,9 @@ abstract::ShapePtr SparseSegmentSqrtNGradInferShape(const PrimitivePtr &prim,
     }
   } else {
     std::vector<int64_t> output_shape = {-2};
-    return std::make_shared<abstract::Shape>(output_shape);
+    std::vector<int64_t> min_shape = {1};
+    std::vector<int64_t> max_shape = {1};
+    return std::make_shared<abstract::Shape>(output_shape, min_shape, max_shape);
   }
 }
 
@@ -72,12 +83,14 @@ TypePtr SparseSegmentSqrtNGradInferType(const PrimitivePtr &prim, const std::vec
   auto indices_type = input_args[kInputIndex1]->BuildType();
   auto segment_ids_type = input_args[kInputIndex2]->BuildType();
   auto output_dim0_type = input_args[kInputIndex3]->BuildType();
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, {kFloat16, kFloat32, kFloat64}, prim->name());
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
+  const std::set<TypePtr> common_valid_types = {kInt32, kInt64};
+  CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim->name());
   std::map<std::string, TypePtr> types;
   (void)types.emplace("indices", indices_type);
   (void)types.emplace("segment_ids", segment_ids_type);
   (void)types.emplace("output_dim0", output_dim0_type);
-  (void)CheckAndConvertUtils::CheckTensorTypeSame(types, {kInt32}, prim->name());
+  CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, prim->name());
   return input_args[kInputIndex0]->BuildType();
 }
 }  // namespace

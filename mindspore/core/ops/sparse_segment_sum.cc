@@ -14,27 +14,16 @@
  * limitations under the License.
  */
 
-#include <set>
-#include <map>
-#include <string>
-#include <vector>
-#include <memory>
-#include <algorithm>
-#include <iostream>
-
-#include "ops/sparse_segment_sqrt_n.h"
-#include "abstract/dshape.h"
-#include "ops/op_utils.h"
-#include "utils/check_convert_utils.h"
-#include "utils/tensor_construct_utils.h"
+#include "ops/sparse_segment_sum.h"
 #include "abstract/ops/primitive_infer_map.h"
+#include "ops/op_utils.h"
 #include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr SparseSegmentSqrtNInferShape(const PrimitivePtr &prim,
-                                                const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr SparseSegmentSumInferShape(const PrimitivePtr &prim,
+                                              const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
@@ -77,14 +66,15 @@ abstract::ShapePtr SparseSegmentSqrtNInferShape(const PrimitivePtr &prim,
   }
 }
 
-TypePtr SparseSegmentSqrtNInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr SparseSegmentSumInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
+  auto prim_name = prim->name();
   auto x_type = input_args[kInputIndex0]->BuildType();
   auto indices_type = input_args[kInputIndex1]->BuildType();
   auto segment_ids_type = input_args[kInputIndex2]->BuildType();
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
+  const std::set<TypePtr> valid_types = {kInt8, kInt16, kInt32, kInt64, kUInt8, kUInt16, kFloat16, kFloat32, kFloat64};
   const std::set<TypePtr> common_valid_types = {kInt32, kInt64};
-  CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim->name());
+  CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim_name);
   std::map<std::string, TypePtr> types;
   (void)types.emplace("indices", indices_type);
   (void)types.emplace("segment_ids", segment_ids_type);
@@ -93,18 +83,18 @@ TypePtr SparseSegmentSqrtNInferType(const PrimitivePtr &prim, const std::vector<
 }
 }  // namespace
 
-MIND_API_OPERATOR_IMPL(SparseSegmentSqrtN, BaseOperator);
-AbstractBasePtr SparseSegmentSqrtNInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &prim,
-                                        const std::vector<AbstractBasePtr> &input_args) {
+MIND_API_OPERATOR_IMPL(SparseSegmentSum, BaseOperator);
+AbstractBasePtr SparseSegmentSumInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &prim,
+                                      const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
   const int64_t input_num = kInputIndex3;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
-  auto types = SparseSegmentSqrtNInferType(prim, input_args);
-  auto shapes = SparseSegmentSqrtNInferShape(prim, input_args);
+  auto types = SparseSegmentSumInferType(prim, input_args);
+  auto shapes = SparseSegmentSumInferShape(prim, input_args);
   return abstract::MakeAbstract(shapes, types);
 }
-REGISTER_HOST_DEPENDS(kNameSparseSegmentSqrtN, {2});
-REGISTER_PRIMITIVE_EVAL_IMPL(SparseSegmentSqrtN, prim::kPrimSparseSegmentSqrtN, SparseSegmentSqrtNInfer, nullptr, true);
+REGISTER_HOST_DEPENDS(kNameSparseSegmentSum, {2});
+REGISTER_PRIMITIVE_EVAL_IMPL(SparseSegmentSum, prim::kPrimSparseSegmentSum, SparseSegmentSumInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

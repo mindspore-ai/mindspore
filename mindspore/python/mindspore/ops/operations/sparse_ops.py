@@ -18,9 +18,10 @@
 
 """Operators for sparse operators."""
 
-from mindspore._checkparam import Validator as validator
-from mindspore.common import dtype as mstype
-from mindspore.ops.primitive import PrimitiveWithInfer, prim_attr_register, Primitive
+from ..._checkparam import Validator as validator
+from ...common import dtype as mstype
+from .. import signature as sig
+from ..primitive import PrimitiveWithInfer, prim_attr_register, Primitive
 
 
 class SparseDenseCwiseAdd(Primitive):
@@ -1122,6 +1123,115 @@ class SparseConcat(Primitive):
         validator.check_value_type("concat_dim", concat_dim, [int], self.name)
 
 
+class SparseSegmentSum(Primitive):
+    """
+    Computes the sum along sparse segments of a tensor.
+
+    Inputs:
+        - **x** (Tensor) - A tensor.
+        - **indices** (Tensor) - Indices is a 1-D tensor. Must be one of the following types: int32, int64.
+          Has same rank as segment_ids. The shape should be :math:`(N,)`.
+        - **segment_ids** (Tensor) - Segment_ids is a 1-D tensor. Must be one of the following types: int32, int64.
+          Values should be sorted and can be repeated. The shape should be :math:`(N,)`.
+
+    Outputs:
+        A Tensor. Has the same type as `x` .
+        Has same shape as `x`, except for dimension 0 which is the number of segments.
+
+    Raises:
+        TypeError: If `x` or `indices` or `segment_ids` is not a tensor.
+        TypeError: If the dtype of `indices` and `segment_ids` is not int32 or int64.
+        ValueError: If dimension size of `x` less than 1.
+        ValueError: If any of `indices` and `segment_ids` is not a 1-D tensor.
+        ValueError: If shape[0] of `indices` is not corresponding to shape[0] of `segment_ids`.
+        ValueError: If indices in `segment_ids` are not contiguous or do not start from 0.
+        ValueError: If `segment_ids` is not sorted.
+        ValueError: If `indices` is out of range of x's first shape.
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
+        >>> x = Tensor([[0, 1, 2], [1, 2, 3], [3, 6, 7]], dtype=ms.float32)
+        >>> indices = Tensor([0, 1, 2], dtype=ms.int32)
+        >>> segment_ids = Tensor([0, 1, 1], dtype=ms.int32)
+        >>> sparse_segment_sum = ops.SparseSegmentSum()
+        >>> out = sparse_segment_sum(x, indices, segment_ids)
+        >>> print(out)
+        [[ 0. 1. 2.]
+         [ 4. 8. 10.]]
+    """
+    __mindspore_signature__ = (
+        sig.make_sig('x', dtype=sig.sig_dtype.T1),
+        sig.make_sig('indices', dtype=sig.sig_dtype.T),
+        sig.make_sig('segment_ids', dtype=sig.sig_dtype.T)
+    )
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize SparseSegmentSum"""
+        self.init_prim_io_names(inputs=['x', 'indices', 'segment_ids'], outputs=['y'])
+        self.add_prim_attr("cust_aicpu", self.name)
+
+
+class SparseSegmentSumWithNumSegments(Primitive):
+    """
+    Computes the sum along sparse segments of a tensor, but it is allowed to miss id in segment_ids.
+
+    Inputs:
+        - **x** (Tensor) - A Tensor.
+        - **indices** (Tensor) - Indices is a 1-D tensor. Must be one of the following types: int32, int64.
+          Has same rank as segment_ids. The shape should be :math:`(N,)`.
+        - **segment_ids** (Tensor) - Segment_ids is a 1-D tensor. Must be one of the following types: int32, int64.
+          Values should be sorted and can be repeated. The shape should be :math:`(N,)`.
+        - **num_segments** (Tensor) - Num_segments should equal the number of distinct segment_ids.
+
+    Outputs:
+        A Tensor. Has the same type as `x` .
+        Has same shape as `x`, except for dimension 0 which is the value of `num_segments`.
+
+    Raises:
+        TypeError: If `x` or `indices` or `segment_ids` or `num_segments` is not a tensor.
+        TypeError: If the dtype of `indices` and `segment_ids` and `num_segments` is not int32 or int64.
+        ValueError: If dimension size of `x` less than 1.
+        ValueError: If any of `indices` and `segment_ids` is not a 1-D tensor.
+        ValueError: If rank of `num_segments` is bigger than 1.
+        ValueError: If numelements of `num_segments` is not 1.
+        ValueError: If shape[0] of `indices` is not corresponding to shape[0] of `segment_ids`.
+        ValueError: If `segment_ids` is not sorted.
+        ValueError: If the last number of `segment_ids` is bigger than or equal to `num_segments`.
+        ValueError: If `indices` is out of range of x's first shape.
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
+        >>> x = Tensor([[0, 1, 0, 0], [0, 1, 1, 0], [1, 0, 1, 0]], dtype=ms.float16)
+        >>> indices = Tensor([0, 2, 1], dtype=ms.int32)
+        >>> segment_ids = Tensor([0, 0, 2], dtype=ms.int32)
+        >>> num_segments = Tensor([4], dtype=ms.int32)
+        >>> sparse_segment_sum_with_num_segments = ops.SparseSegmentSumWithNumSegments()
+        >>> output = sparse_segment_sum_with_num_segments(x, indices, segment_ids, num_segments)
+        >>> print(output)
+        [[1. 1. 1. 0.]
+         [0. 0. 0. 0.]
+         [0. 1. 1. 0.]
+         [0. 0. 0. 0.]]
+    """
+    __mindspore_signature__ = (
+        sig.make_sig('x', dtype=sig.sig_dtype.T1),
+        sig.make_sig('indices', dtype=sig.sig_dtype.T),
+        sig.make_sig('segment_ids', dtype=sig.sig_dtype.T),
+        sig.make_sig('num_segemnts', dtype=sig.sig_dtype.T)
+    )
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize SparseSegmentSumWithNumSegments"""
+        self.init_prim_io_names(inputs=['x', 'indices', 'segment_ids', 'num_segments'], outputs=['y'])
+        self.add_prim_attr("cust_aicpu", self.name)
+
+
 class SparseSegmentSqrtN(Primitive):
     """
     Computes the sum along sparse segments of a tensor divided by the sqrt of N.
@@ -1151,7 +1261,7 @@ class SparseSegmentSqrtN(Primitive):
         ValueError: If `indices` is out of range of x's first dimension.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[1,2,3,4],[5,6,7,8],[9,10,11,12]]).astype(np.float32))
@@ -1164,6 +1274,11 @@ class SparseSegmentSqrtN(Primitive):
         [ 5.  6.  7.  8.]
         [ 9. 10. 11. 12.]]
     """
+    __mindspore_signature__ = (
+        sig.make_sig('x', dtype=sig.sig_dtype.T1),
+        sig.make_sig('indices', dtype=sig.sig_dtype.T),
+        sig.make_sig('segment_ids', dtype=sig.sig_dtype.T)
+    )
 
     @prim_attr_register
     def __init__(self):
@@ -1208,7 +1323,7 @@ class SparseSegmentSqrtNWithNumSegments(Primitive):
         ValueError: If `indices` is out of range of x's first dimension.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor([[0, 1, 0, 0], [0, 1, 1, 0], [1, 0, 1, 0]], dtype=ms.float16)
