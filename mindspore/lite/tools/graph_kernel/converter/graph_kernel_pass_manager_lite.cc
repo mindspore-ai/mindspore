@@ -24,6 +24,7 @@
 #include "ir/graph_utils.h"
 #include "src/common/file_utils.h"
 #include "utils/file_utils.h"
+#include "src/common/utils.h"
 
 namespace mindspore::graphkernel {
 namespace dumpir {
@@ -466,5 +467,17 @@ void GraphKernelPassManagerLite::DumpPassIR(const FuncGraphPtr &func_graph, cons
     std::string filename = "verbose_ir_files/" + pass_fullname + ".ir";
     dumpir::DumpIR(filename, func_graph, true);
   }
+}
+
+// transplant this function from pass_manager_extends.cc because the implement was moved to PassManagerLite.
+bool GraphKernelPassManagerLite::RunPass(const FuncGraphPtr &func_graph, size_t pass_id, const PassPtr &pass) const {
+  bool changed = false;
+  auto begin_time = lite::GetTimeUs();
+  if (pass->Run(func_graph)) {
+    changed = true;
+  }
+  auto end_time = lite::GetTimeUs();
+  MS_LOG(INFO) << "Run pass " << GetPassFullname(pass_id, pass) << " in " << (end_time - begin_time) << " us.";
+  return changed;
 }
 }  // namespace mindspore::graphkernel

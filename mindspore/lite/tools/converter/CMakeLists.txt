@@ -25,8 +25,6 @@ if(MSLITE_ENABLE_GRAPH_KERNEL)
             ${CCSRC_DIR}/common/graph_kernel/split_model/*.cc
             ${CCSRC_DIR}/common/graph_kernel/graph_kernel_flags.cc
             ${CCSRC_DIR}/kernel/akg/akg_kernel_json_generator.cc
-            ${CCSRC_DIR}/backend/common/pass/getitem_tuple.cc
-            ${CCSRC_DIR}/backend/common/optimizer/optimizer.cc
             )
     set(CCSRC_SRC
             ${CCSRC_SRC}

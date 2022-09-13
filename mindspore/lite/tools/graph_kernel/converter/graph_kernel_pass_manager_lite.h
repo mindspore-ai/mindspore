@@ -23,6 +23,7 @@
 #include "common/graph_kernel/core/graph_kernel_pass_manager.h"
 
 namespace mindspore::graphkernel {
+using opt::PassPtr;
 class GraphKernelPassManagerLite : public GraphKernelPassManager {
  public:
   using GraphKernelPassManager::GraphKernelPassManager;
@@ -30,6 +31,7 @@ class GraphKernelPassManagerLite : public GraphKernelPassManager {
 
  protected:
   void DumpPassIR(const FuncGraphPtr &func_graph, const std::string &pass_fullname) const override;
+  bool RunPass(const FuncGraphPtr &func_graph, size_t pass_id, const PassPtr &pass) const override;
 
   bool dump_ir_{false};
 };
