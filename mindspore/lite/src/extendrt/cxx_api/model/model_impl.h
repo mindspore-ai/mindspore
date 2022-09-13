@@ -61,6 +61,10 @@ class ModelImpl {
   MSTensor GetOutputByTensorName(const std::string &name);
 
  private:
+  Status build_by_buffer_impl(const void *model_data, size_t data_size, ModelType model_type,
+                              const std::shared_ptr<Context> &model_context);
+
+ private:
   friend class Model;
   friend class Serialization;
   std::shared_ptr<Graph> graph_ = nullptr;

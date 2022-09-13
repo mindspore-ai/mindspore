@@ -25,8 +25,8 @@
 #include "src/extendrt/convert/runtime_convert.h"
 
 namespace mindspore {
-Status ModelImpl::Build(const void *model_data, size_t data_size, ModelType model_type,
-                        const std::shared_ptr<Context> &model_context) {
+Status ModelImpl::build_by_buffer_impl(const void *model_data, size_t data_size, ModelType model_type,
+                                       const std::shared_ptr<Context> &model_context) {
   const void *model_buff = model_data;
   size_t model_size = data_size;
 #ifndef _WIN32
@@ -74,6 +74,11 @@ Status ModelImpl::Build(const void *model_data, size_t data_size, ModelType mode
     });
   }
   return session_->CompileGraph(graph_->graph_data_->GetFuncGraph(), model_buff, model_size);
+}
+
+Status ModelImpl::Build(const void *model_data, size_t data_size, ModelType model_type,
+                        const std::shared_ptr<Context> &model_context) {
+  return build_by_buffer_impl(model_data, data_size, model_type, model_context);
 }
 
 Status ModelImpl::Build(const std::string &model_path, ModelType model_type,
