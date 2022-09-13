@@ -106,6 +106,7 @@ Reduction方法
     mindspore.Tensor.amin
     mindspore.Tensor.argmax
     mindspore.Tensor.argmin
+    mindspore.Tensor.argmax_with_value
     mindspore.Tensor.argmin_with_value
     mindspore.Tensor.max
     mindspore.Tensor.mean
