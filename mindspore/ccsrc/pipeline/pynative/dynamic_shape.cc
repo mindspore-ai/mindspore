@@ -236,6 +236,8 @@ ValuePtr DynamicShape::SetSensValue(const ValuePtr &value, const TopCellInfoPtr 
     // Sens tensor has the same shape and dtype with output tensor
     auto sens_tensor = std::make_shared<tensor::Tensor>(tensor_value->data_type(), tensor_value->shape());
     sens_tensor->set_base_shape(tensor_value->base_shape_ptr());
+    sens_tensor->set_is_forward_output(true);
+    sens_tensor->set_user_data(kTensorUserDataIsSensTensor, MakeValue(true));
     MS_LOG(DEBUG) << "Make new tensor for sens id " << sens_tensor->id() << ", abstract "
                   << sens_tensor->ToAbstract()->ToString();
     top_cell->SetTensorIdWithTensorObject(sens_tensor->id(), sens_tensor);

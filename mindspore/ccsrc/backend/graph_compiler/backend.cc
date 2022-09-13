@@ -530,6 +530,7 @@ void MindRTBackend::RunGraphByActors(const ActorInfo &actor_info, const GraphCom
       // Clear front outputs after the outputs is cached.
       graph->set_front_outputs({});
       AnfAlgo::UpdateGraphValidRefPair(graph);
+      pynative::GraphAdapter::SensTensorToDevice(graph, device_contexts[i]);
     }
 
     ParseControlNodes(graph_compiler_info);
@@ -553,6 +554,7 @@ void MindRTBackend::RunGraphByActors(const ActorInfo &actor_info, const GraphCom
   if (root_graph_->has_flag(kFlagIsPynativeBpropGraph)) {
     for (size_t i = 0; i < graphs.size(); ++i) {
       pynative::GraphAdapter::UpdateForwardOutputInBpropGraph(graphs[i], device_contexts[i]);
+      pynative::GraphAdapter::UpdateDynamicValueNodeAbstract(graphs[i]);
     }
   }
 
@@ -648,18 +650,13 @@ void MindRTBackend::RunGraphByCondition(const ActorInfo &actor_info, const Graph
     // Python API will be called in cut_graph, so we cannot release gil here.
     RunGraphBySingleOp(graph_compiler_info, args, outputs);
   } else {
-    bool is_dynamic_shape = std::any_of(graph_compiler_info.graphs_.begin(), graph_compiler_info.graphs_.end(),
-                                        [](const KernelGraphPtr &graph) { return graph->is_dynamic_shape(); });
-
     auto parallel_context = parallel::ParallelContext::GetInstance();
     MS_EXCEPTION_IF_NULL(parallel_context);
     auto parallel_mode = parallel_context->parallel_mode();
     bool is_parallel = parallel_mode == parallel::kSemiAutoParallel || parallel_mode == parallel::kAutoParallel;
 
     MS_EXCEPTION_IF_NULL(root_graph_);
-    if (root_graph_->has_flag(kFlagIsDynamicStructure) ||
-        // `ms_function + dynamic_shape` is already supported, so there is no need to execute RunGraphBySingleOp.
-        (is_dynamic_shape && root_graph_->has_flag(kFlagIsPynativeBpropGraph)) || is_parallel) {
+    if (root_graph_->has_flag(kFlagIsDynamicStructure) || is_parallel) {
       RunGraphBySingleOp(graph_compiler_info, args, outputs);
     } else {
       RunGraphByActors(actor_info, graph_compiler_info, args, outputs);

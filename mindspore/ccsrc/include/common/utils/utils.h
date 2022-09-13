@@ -686,6 +686,7 @@ constexpr auto kValueTargetSwitch = "target_switch";
 constexpr auto kValueTargetOther = "target_other";
 constexpr auto kValueTrue = "true";
 constexpr auto kTensorValueIsType = "tensor_value_is_type";
+constexpr auto kTensorUserDataIsSensTensor = "is_sens_tensor";
 
 // env key
 constexpr auto kGraphOpRun = "GRAPH_OP_RUN";

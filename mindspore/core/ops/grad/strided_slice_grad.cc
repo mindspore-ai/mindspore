@@ -28,24 +28,10 @@
 namespace mindspore {
 namespace ops {
 namespace {
-void CheckSliceType(const AbstractBasePtr &input_arg, const std::string &arg_name, const std::string &prim_name) {
-  if (input_arg->isa<abstract::AbstractTuple>()) {
-    auto temp_value = input_arg->BuildValue();
-    (void)CheckAndConvertUtils::CheckTupleInt(arg_name, temp_value, prim_name);
-    return;
-  } else if (input_arg->isa<abstract::AbstractTensor>()) {
-    (void)CheckAndConvertUtils::CheckTensorTypeValid(arg_name, input_arg->BuildType(), {kInt64}, prim_name);
-    return;
-  }
-  MS_EXCEPTION(TypeError) << "For 'StridedSlice',  'begin', 'end' and 'stride' must be a tuple or Tensor.";
-}
-
 abstract::ShapePtr StridedSliceGradInferShape(const PrimitivePtr &primitive,
                                               const std::vector<AbstractBasePtr> &input_args) {
   const size_t shape_index = 1;
-  auto prim_name = primitive->name();
   auto shapex = input_args[shape_index];
-  CheckSliceType(shapex, "shapex", prim_name);
   auto out_shape = GetShapeValue(primitive, shapex);
   return std::make_shared<abstract::Shape>(out_shape);
 }
@@ -54,17 +40,11 @@ TypePtr StridedSliceGradInferType(const PrimitivePtr &primitive, const std::vect
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   const size_t dy_index = 0;
-  const size_t begin_index = 2;
-  const size_t end_index = 3;
-  const size_t stride_index = 4;
   auto valid_types = common_valid_types;
   (void)valid_types.insert(kComplex128);
   (void)valid_types.insert(kComplex64);
   (void)valid_types.insert(kBool);
 
-  CheckSliceType(input_args[begin_index], "begin", prim_name);
-  CheckSliceType(input_args[end_index], "end", prim_name);
-  CheckSliceType(input_args[stride_index], "stride", prim_name);
   auto dy_type = input_args[dy_index]->BuildType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("dy", dy_type, valid_types, prim_name);
   return dy_type;

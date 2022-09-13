@@ -35,6 +35,8 @@ class GraphAdapter {
                                          const std::vector<device::DeviceContext *> &device_contexts);
   static bool PyNativeEnableTaskSink(const FuncGraphPtr &func_graph);
   static bool IsAutoParallel();
+  static void UpdateDynamicValueNodeAbstract(const KernelGraphPtr &graph);
+  static void SensTensorToDevice(const KernelGraphPtr &graph, const device::DeviceContext *device_context);
 };
 }  // namespace mindspore::pynative
 #endif  // MINDSPORE_MINDSPORE_CCSRC_RUNTIME_PYNATIVE_GRAPH_ADAPTER_H_
