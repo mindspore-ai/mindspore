@@ -24,6 +24,8 @@ from mindspore import log as logger
 
 set_seed(1)
 
+# pylint: disable=no-value-for-parameter
+
 
 def create_np_dataset(size):
     """
@@ -69,18 +71,22 @@ class MyCallback(Callback):
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_dataset_reset_sink():
+@pytest.mark.parametrize("fast_recovery", (False, True))
+def test_dataset_reset_sink(fast_recovery):
     """
     Feature: Dataset recovery
     Description: Test Dataset recovery when GPU (and sink mode) is used.
     Expectation: Training completes successfully
     """
+    original_fast_recovery = ds.config.get_fast_recovery()
+    ds.config.set_fast_recovery(fast_recovery)
     data = create_np_dataset(10)
     model = create_model()
     num_epochs = 3
     reset_point = 2  # 2nd epoch
     cb = MyCallback(dataset_size=data.get_dataset_size(), reset_point=reset_point)
     model.train(num_epochs, data, callbacks=[cb])
+    ds.config.set_fast_recovery(original_fast_recovery)
 
 
 if __name__ == '__main__':

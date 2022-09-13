@@ -22,7 +22,7 @@ import mindspore.dataset as ds
 import mindspore.dataset.vision as vision
 from util_minddataset import add_and_remove_cv_file
 
-np.random.seed(0)
+# pylint: disable=no-value-for-parameter
 
 
 def create_np_dataset(size):
@@ -65,6 +65,19 @@ def create_imagenet_dataset(size):
     batch_size = 2
     data = ds.ImageFolderDataset(data_dir, num_samples=size * batch_size, shuffle=False)
     data = data.batch(batch_size)
+    data = data.project(["image"])
+    return data
+
+
+def create_random_imagenet_dataset(repeat_size, sampler=None, num_parallel_workers=1, to_pil=False):
+    shuffle = True if sampler is None else None
+    data_dir = "../data/dataset/testImageNetData2/train"
+    data = ds.ImageFolderDataset(
+        data_dir, shuffle=shuffle, sampler=sampler)
+    data = data.repeat(repeat_size)
+    crop_op1 = vision.RandomCrop(4)
+    data = data.map(operations=[vision.Decode(to_pil=to_pil), crop_op1], input_columns=[
+        "image"], num_parallel_workers=num_parallel_workers, python_multiprocessing=True)
     data = data.project(["image"])
     return data
 
@@ -223,6 +236,124 @@ def test_reset_np_error():
         run_reset_error(data, num_epochs=num_epochs, failure_point=failure_point)
 
 
+@pytest.mark.parametrize("num_parallel_workers", (1, 4))
+@pytest.mark.parametrize("sampler", (ds.RandomSampler(), None))
+def test_repeatable_reset_imagenet(sampler, num_parallel_workers, to_pil=False):
+    """
+    Feature: Dataset recovery
+    Description: Simple test of data pipeline with fast_recovery set to False
+    Expectation: Same dataset after reset
+    """
+    num_epochs = 4
+    original_seed = ds.config.get_seed()
+    original_fast_recovery = ds.config.get_fast_recovery()
+    ds.config.set_seed(100)
+    ds.config.set_fast_recovery(False)
+
+    expected = []
+    data = create_random_imagenet_dataset(
+        repeat_size=1, sampler=sampler, to_pil=to_pil, num_parallel_workers=num_parallel_workers)
+    expected_itr = data.create_tuple_iterator(
+        num_epochs=num_epochs, output_numpy=True)
+
+    # successful run (to collect correct output)
+    for _ in range(num_epochs):
+        for d in expected_itr:
+            expected.append(d)
+    del expected_itr
+    import mindspore.log as logger
+    dataset_size = data.get_dataset_size()
+    logger.error(dataset_size)
+    # try different failure points
+    for failure_point in range(1, dataset_size * num_epochs, 2):
+        expected2 = []
+        expected2_itr = data.create_tuple_iterator(
+            num_epochs=num_epochs, output_numpy=True)
+        ds.engine.datasets._set_training_dataset(expected2_itr)  # pylint: disable=W0212
+        failure = False
+
+        for epoch in range(num_epochs):
+            for step, d in enumerate(expected2_itr):
+                expected2.append(d)
+                if epoch * dataset_size + step + 1 == failure_point:
+                    failure = True
+                    break
+            if failure:
+                ds.engine.datasets._reset_training_dataset(failure_point)  # pylint: disable=W0212
+                failure = False
+                for d in expected2_itr:
+                    expected2.append(d)
+        del expected2_itr
+
+        # verify count and values of failover with original run
+        assert len(expected) == len(expected2)
+        for a, b in zip(expected, expected2):
+            assert np.array_equal(a[0], b[0])
+
+    ds.config.set_seed(original_seed)
+    ds.config.set_fast_recovery(original_fast_recovery)
+
+
+@pytest.mark.parametrize("num_parallel_workers", (1, 4))
+def test_repeatable_reset_distributed(num_parallel_workers):
+    """
+    Feature: Dataset recovery
+    Description: Simple test of data pipeline with fast_recovery set to False for a distributed sampler
+    Expectation: Same dataset after reset
+    """
+    num_shards = 4
+    num_epochs = 3
+    original_seed = ds.config.get_seed()
+    original_fast_recovery = ds.config.get_fast_recovery()
+    ds.config.set_seed(100)
+    ds.config.set_fast_recovery(False)
+
+    for i in range(num_shards):
+        expected = []
+        distributed_sampler = ds.DistributedSampler(
+            num_shards=num_shards, shard_id=i)
+        data = create_random_imagenet_dataset(
+            repeat_size=4, sampler=distributed_sampler, num_parallel_workers=num_parallel_workers)
+        iter_counter = 0
+
+        # successful run (to collect correct output)
+        expected_itr = data.create_tuple_iterator(
+            num_epochs=num_epochs, output_numpy=True)
+        for _ in range(num_epochs):
+            for d in expected_itr:
+                expected.append(d)
+                iter_counter += 1
+        assert iter_counter == data.get_dataset_size() * num_epochs
+        del expected_itr
+
+        # try different failure points
+        for failure_point in range(1, data.get_dataset_size() * num_epochs, 3):
+            expected2 = []
+            expected2_itr = data.create_tuple_iterator(
+                num_epochs=num_epochs, output_numpy=True)
+            ds.engine.datasets._set_training_dataset(expected2_itr)  # pylint: disable=W0212
+            failure = False
+            for epoch in range(num_epochs):
+                for step, d in enumerate(expected2_itr):
+                    expected2.append(d)
+                    if epoch * data.get_dataset_size() + step + 1 == failure_point:
+                        failure = True
+                        break
+                if failure:
+                    ds.engine.datasets._reset_training_dataset(failure_point)  # pylint: disable=W0212
+                    failure = False
+                    for d in expected2_itr:
+                        expected2.append(d)
+
+            # verify count and values of failover with original run
+            assert len(expected) == len(expected2)
+            for a, b in zip(expected, expected2):
+                assert np.array_equal(a, b)
+
+    ds.config.set_seed(original_seed)
+    ds.config.set_fast_recovery(original_fast_recovery)
+
+
 if __name__ == "__main__":
     test_reset_np()
     test_reset_cifar1()
@@ -230,3 +361,5 @@ if __name__ == "__main__":
     test_reset_imagenet()
     test_reset_mindrecord(add_and_remove_cv_file)
     test_reset_np_error()
+    test_repeatable_reset_imagenet()
+    test_repeatable_reset_distributed()

@@ -44,8 +44,8 @@ Status SkipNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) 
   auto op = std::make_shared<SkipOp>(skip_count_);
   op->SetTotalRepeats(GetTotalRepeats());
   op->SetNumRepeatsPerEpoch(GetNumRepeatsPerEpoch());
-  if (first_epoch_only_) {
-    op->SetFirstEpochOnly(true);
+  if (once_only_) {
+    op->SetOnceOnly(true);
   }
   node_ops->push_back(op);
   return Status::OK();

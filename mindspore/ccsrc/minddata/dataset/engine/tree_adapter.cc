@@ -62,7 +62,9 @@ Status TreeAdapter::PrePass(std::shared_ptr<DatasetNode> ir) {
   (void)actions.emplace_back(std::make_unique<CacheValidationPass>());
   if (usage_ == kDeReset) {
     (void)actions.emplace_back(std::make_unique<AddSkipPass>());
-    (void)actions.emplace_back(std::make_unique<SkipPushdownPass>());
+    if (GlobalContext::config_manager()->fast_recovery()) {
+      (void)actions.emplace_back(std::make_unique<SkipPushdownPass>());
+    }
   }
   (void)actions.emplace_back(std::make_unique<NodeRemovalPass>());
   (void)actions.emplace_back(std::make_unique<EpochCtrlPass>());

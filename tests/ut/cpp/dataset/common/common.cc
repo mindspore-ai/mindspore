@@ -187,5 +187,22 @@ MSTensorVec Predicate2(MSTensorVec in) {
 
   return RowToVec(output);
 }
+
+MSTensorVec Predicate3(MSTensorVec in) {
+  // Return true if label is non-negative (don't filter!)
+  uint64_t input_value;
+  TensorRow input = VecToRow(in);
+  (void)input.at(0)->GetItemAt(&input_value, {0});
+  bool result = (input_value >= 0);
+
+  // Convert from boolean to TensorRow
+  TensorRow output;
+  std::shared_ptr<Tensor> out;
+  (void)Tensor::CreateEmpty(TensorShape({}), DataType(mindspore::dataset::DataType::Type::DE_BOOL), &out);
+  (void)out->SetItemAt({}, result);
+  output.push_back(out);
+
+  return RowToVec(output);
+}
 }  // namespace dataset
 }  // namespace mindspore

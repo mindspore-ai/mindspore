@@ -283,6 +283,16 @@ class ConfigManager {
   // @return - Flag to indicate whether the dataset is dynamic-shape
   bool dynamic_shape() const { return dynamic_shape_; }
 
+  // setter function
+  // @notes User must also set the seed to be able to get same augmentations
+  // @notes Fast recovery can cause slightly different random augmentations than original run (default=true)
+  // @param fast_recovery - Set whether MD pipeline recovers fast in failover reset
+  void set_fast_recovery(const bool fast_recovery) { fast_recovery_ = fast_recovery; }
+
+  // getter function
+  // @return - Flag to indicate whether md pipeline recovers fast in failover reset
+  bool fast_recovery() const { return fast_recovery_; }
+
  private:
   // Private helper function that takes a nlohmann json format and populates the settings
   // @param j - The json nlohmann json info
@@ -317,6 +327,7 @@ class ConfigManager {
   uint32_t multiprocessing_timeout_interval_;  // Multiprocessing timeout interval in seconds
   std::string autotune_json_filepath_;         // Filepath name of the final AutoTune Configuration JSON file
   bool dynamic_shape_{false};
+  bool fast_recovery_{true};  // Used for failover scenario to recover quickly or produce same augmentations
 };
 }  // namespace dataset
 }  // namespace mindspore
