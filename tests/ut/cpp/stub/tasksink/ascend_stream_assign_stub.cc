@@ -36,19 +36,19 @@ uint32_t AscendStreamAssign::GetHcomTaskNum(const CNodePtr &) { return 200; }
 }  // namespace ascend
 
 void KernelAdjust::InsertDeviceLoopCtrl(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) const { return; }
-void KernelAdjust::AssignLoopCtrlMemory(const session::KernelGraph &kernel_graph_ptr) { return; }
-void KernelAdjust::LoadDeviceLoopCtrlParameters(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) {
+void KernelAdjust::AssignLoopCtrlMemory(const session::KernelGraph &kernel_graph_ptr) const { return; }
+void KernelAdjust::LoadDeviceLoopCtrlParameters(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) const {
   return;
 }
 
 bool KernelAdjust::NeedLoopSink() { return true; }
 
-void KernelAdjust::ProcessLoopSink(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) { return; }
+void KernelAdjust::ProcessLoopSink(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) const { return; }
 
 #ifndef ENABLE_SECURITY
 void KernelAdjust::Profiling(NotNull<session::KernelGraph *> kernel_graph_ptr) { return; }
 #endif
-void KernelAdjust::InsertOverflowCheckOperations(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) {
+void KernelAdjust::InsertOverflowCheckOperations(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) const {
   return;
 }
 }  // namespace device

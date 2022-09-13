@@ -60,11 +60,11 @@ class KernelAdjust {
   }
   // device loop control
   void InsertDeviceLoopCtrl(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) const;
-  void AssignLoopCtrlMemory(const session::KernelGraph &kernel_graph_ptr);
-  void LoadDeviceLoopCtrlParameters(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
+  void AssignLoopCtrlMemory(const session::KernelGraph &kernel_graph_ptr) const;
+  void LoadDeviceLoopCtrlParameters(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) const;
 
-  void InsertOverflowCheckOperations(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
-  void ProcessLoopSink(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
+  void InsertOverflowCheckOperations(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) const;
+  void ProcessLoopSink(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) const;
 #ifndef ENABLE_SECURITY
   void Profiling(NotNull<session::KernelGraph *> kernel_graph_ptr);
 #endif
@@ -82,15 +82,15 @@ class KernelAdjust {
                                    const CNodePtr &npu_alloc_cnode) const;
   CNodePtr CreateNPUClearStatus(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                 const CNodePtr &npu_alloc_cnode) const;
-  CNodePtr CreateNPUAllocStatus(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
+  CNodePtr CreateNPUAllocStatus(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) const;
   CNodePtr CreateAssignAdd(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                            const CNodePtr &npu_alloc_cnode, const AnfNodePtr &specify_para) const;
   CNodePtr CreateAssign(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                         const AnfNodePtr &specify_para) const;
-  void ReorderGetNext(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
+  void ReorderGetNext(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) const;
   CNodePtr CreateStreamSwitchOp(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                 const std::map<std::string, mindspore::ParameterPtr> &switch_loop_input,
-                                StreamSwitchKind kind);
+                                StreamSwitchKind kind) const;
   CNodePtr CreateEndGraphOp(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) const;
   CNodePtr CreatTupleGetItemNode(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr, const CNodePtr &node,
                                  size_t output_idx) const;
@@ -111,9 +111,9 @@ class KernelAdjust {
   void InsertGetNextLoopStreamSwitch(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                      std::vector<CNodePtr> *exec_order, uint32_t *getnext_switch_stream_id,
                                      uint32_t *getnext_stream_id,
-                                     const std::map<std::string, mindspore::ParameterPtr> &switch_loop_input);
+                                     const std::map<std::string, mindspore::ParameterPtr> &switch_loop_input) const;
   void SetBeforeGetNextStreamID(std::vector<CNodePtr> *exec_order, const std::vector<CNodePtr> &orders,
-                                size_t *order_index, CNodePtr getnext_cnode, uint32_t getnext_stream_id);
+                                size_t *order_index, CNodePtr getnext_cnode, uint32_t getnext_stream_id) const;
   void InsertGetNextLoopFpBpStartSend(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                       std::vector<CNodePtr> *exec_order, uint32_t *fpbp_start_event_id,
                                       uint32_t getnext_stream_id) const;
@@ -123,7 +123,7 @@ class KernelAdjust {
   void InsertEosStreamSwitch(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                              const std::map<std::string, mindspore::ParameterPtr> &switch_loop_input,
                              std::vector<CNodePtr> *exec_order, uint32_t *eos_switch_stream_id,
-                             uint32_t *eos_stream_id);
+                             uint32_t *eos_stream_id) const;
   void InsertGetNextLoopEosStartRecv(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                      std::vector<CNodePtr> *exec_order, uint32_t eos_start_event_id,
                                      uint32_t eos_stream_id) const;
@@ -133,43 +133,43 @@ class KernelAdjust {
                          std::vector<CNodePtr> *exec_order, uint32_t *eos_done_event_id, uint32_t eos_stream_id) const;
   void InsertIndepentParallel(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                               const std::map<std::string, mindspore::ParameterPtr> &switch_loop_input,
-                              std::vector<CNodePtr> *exec_order);
+                              std::vector<CNodePtr> *exec_order) const;
   void InsertFpBpLoopStreamSwitch(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                   const std::map<std::string, mindspore::ParameterPtr> &switch_loop_input,
                                   std::vector<CNodePtr> *exec_order, uint32_t *fpbp_stream_id,
-                                  uint32_t *fpbp_switch_stream_id);
-  void InsertEndGraphTaskSink(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
+                                  uint32_t *fpbp_switch_stream_id) const;
+  void InsertEndGraphTaskSink(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) const;
   void InsertEndGraph(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr, std::vector<CNodePtr> *exec_order,
-                      uint32_t stream_id);
+                      uint32_t stream_id) const;
   void InsertFpBpStartRecv(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                            std::vector<CNodePtr> *exec_order, uint32_t fpbp_start_event_id,
                            uint32_t fpbp_stream_id) const;
   void InsertNextLoopAssignAdd(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                std::vector<CNodePtr> *exec_order,
                                const std::map<std::string, mindspore::ParameterPtr> &switch_loop_input,
-                               uint32_t fpbp_stream_id);
+                               uint32_t fpbp_stream_id) const;
   void CopyMemcpyList(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                       const std::vector<CNodePtr> &orders, size_t order_index, std::vector<CNodePtr> *memcpy_list,
-                      std::vector<CNodePtr> *other_list);
+                      std::vector<CNodePtr> *other_list) const;
   void InsertEosDoneRecv(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                          std::vector<CNodePtr> *exec_order, uint32_t eos_done_event_id, uint32_t fpbp_stream_id) const;
   void InsertGetNextLoopStreamActive(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                      std::vector<CNodePtr> *exec_order,
-                                     const std::vector<uint32_t> &getnext_active_streams);
+                                     const std::vector<uint32_t> &getnext_active_streams) const;
   void InsertCurrentLoopAssignAdd(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                   std::vector<CNodePtr> *exec_order,
-                                  const std::map<std::string, mindspore::ParameterPtr> &switch_loop_input);
+                                  const std::map<std::string, mindspore::ParameterPtr> &switch_loop_input) const;
   void InsertFpBpAndEosLoopStreamActive(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                         std::vector<CNodePtr> *exec_order,
-                                        const std::vector<uint32_t> &fpbp_active_streams);
+                                        const std::vector<uint32_t> &fpbp_active_streams) const;
   void SetDeviceLoopCtrlTensor(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr, const string name,
-                               int32_t value);
+                               int32_t value) const;
   void AssignLoopCtrlTensorMem(const session::KernelGraph &kernel_graph, KernelRuntime *runtime_instance,
-                               const string name);
+                               const string name) const;
   void InsertGradientOverflowCheckOperations(const AnfNodePtr &specify_para,
-                                             const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
+                                             const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) const;
   void InsertDynamicLossScaleCheckOperations(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
-                                             std::vector<AnfNodePtr> *dynamic_loss_scale_param_list);
+                                             std::vector<AnfNodePtr> *dynamic_loss_scale_param_list) const;
   std::shared_ptr<Tensor> CreateTensor(int32_t initial_value) const;
   std::shared_ptr<Parameter> CreateParameter(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                              const string parameter_name) const;
