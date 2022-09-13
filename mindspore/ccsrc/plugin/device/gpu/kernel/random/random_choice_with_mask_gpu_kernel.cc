@@ -53,6 +53,7 @@ int RandomChoiceWithMaskGpuKernelMod::Resize(const BaseOperatorPtr &base_operato
   }
   auto input_shape = inputs[kIndex0]->GetShapeVector();
   input_shape_size_ = input_shape.size();
+  input_shape_5D_.clear();
   // convert size_t to int
   for (auto i = 0; i < input_shape_size_; i++) {
     input_shape_5D_.push_back(input_shape[i]);

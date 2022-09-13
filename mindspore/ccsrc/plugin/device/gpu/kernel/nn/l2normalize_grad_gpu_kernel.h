@@ -172,6 +172,7 @@ class L2NormalizeGradGpuKernelMod : public NativeGpuKernelMod {
   std::vector<ShapeVector> input_shape_list_{};
   size_t workspace_size_{0};
   float epsilon_{0.0};
+  int axis_origin_{0};
   int axis_{0};
   std::vector<size_t> lhs_shape_{};
   std::vector<size_t> rhs_shape_{};

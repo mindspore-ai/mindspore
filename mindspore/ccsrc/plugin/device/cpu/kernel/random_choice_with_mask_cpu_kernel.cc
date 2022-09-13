@@ -91,9 +91,9 @@ bool RandomChoiceWithMaskCpuKernelMod::Init(const BaseOperatorPtr &base_operator
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
 
   auto random_choice_with_mask_ptr = std::dynamic_pointer_cast<ops::RandomChoiceWithMask>(base_operator);
-  seed = random_choice_with_mask_ptr->get_seed();
-  seed2 = random_choice_with_mask_ptr->get_seed2();
-  count = random_choice_with_mask_ptr->get_count();
+  seed_ = random_choice_with_mask_ptr->get_seed();
+  seed2_ = random_choice_with_mask_ptr->get_seed2();
+  count_ = random_choice_with_mask_ptr->get_count();
   return true;
 }
 
@@ -105,17 +105,19 @@ int RandomChoiceWithMaskCpuKernelMod::Resize(const BaseOperatorPtr &base_operato
     return ret;
   }
   auto x_shape = inputs[kIndex0]->GetShapeVector();
+  dims_.clear();
   for (size_t i = 0; i < x_shape.size(); i++) {
-    (void)dims.emplace_back(LongToInt(x_shape[i]));
+    (void)dims_.emplace_back(LongToInt(x_shape[i]));
   }
-  input_dim_size = SizeToInt(dims.size());
-  GetInputTotalCount(dims, &input_total_count, input_dim_size);
-  int temp_output_length = count > 0 ? count : input_total_count;
+  input_dim_size_ = SizeToInt(dims_.size());
+  input_total_count_ = 1;
+  GetInputTotalCount(dims_, &input_total_count_, input_dim_size_);
+  int temp_output_length = count_ > 0 ? count_ : input_total_count_;
 
-  workspace_size_list_.push_back(IntToSize(input_total_count) * sizeof(int));
+  workspace_size_list_.push_back(IntToSize(input_total_count_) * sizeof(int));
   workspace_size_list_.push_back(IntToSize(temp_output_length) * sizeof(int));
   workspace_size_list_.push_back(IntToSize(temp_output_length) * sizeof(int));
-  workspace_size_list_.push_back(IntToSize(temp_output_length) * IntToSize(input_dim_size) * sizeof(int));
+  workspace_size_list_.push_back(IntToSize(temp_output_length) * IntToSize(input_dim_size_) * sizeof(int));
   return KRET_OK;
 }
 
@@ -130,9 +132,9 @@ bool RandomChoiceWithMaskCpuKernelMod::Launch(const std::vector<kernel::AddressP
   auto *output_coordinate = reinterpret_cast<int32_t *>(outputs[0]->addr);
   auto *mask = reinterpret_cast<bool *>(outputs[1]->addr);
 
-  size_t seedc = seed2 != 0 ? seed2 : (seed != 0 ? seed : generator_());
+  size_t seedc = seed2_ != 0 ? seed2_ : (seed_ != 0 ? seed_ : generator_());
   int32_t non_zero_num = 0;
-  for (int32_t i = 0; i < input_total_count; i++) {
+  for (int32_t i = 0; i < input_total_count_; i++) {
     if (input[i] != 0) {
       input_dim[non_zero_num] = i;
       non_zero_num++;
@@ -142,7 +144,7 @@ bool RandomChoiceWithMaskCpuKernelMod::Launch(const std::vector<kernel::AddressP
   bool padding_flag = false;
   int32_t output_length = 0;
   int32_t output_non_zero_length = 0;
-  GetOutputLength(&padding_flag, &output_length, &output_non_zero_length, count, non_zero_num);
+  GetOutputLength(&padding_flag, &output_length, &output_non_zero_length, count_, non_zero_num);
   (void)memset_s(mask_dim, IntToSize(output_length), 0X00, IntToSize(output_length));
   (void)memset_s(tmp_output, IntToSize(output_length), 0X00, IntToSize(output_length));
 
@@ -164,15 +166,15 @@ bool RandomChoiceWithMaskCpuKernelMod::Launch(const std::vector<kernel::AddressP
     }
   }
 
-  if (output_length * input_dim_size >= INT_MAX || output_length * input_dim_size < 0) {
+  if (output_length * input_dim_size_ >= INT_MAX || output_length * input_dim_size_ < 0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', output size exceed INT_MAX.";
   }
 
-  int32_t copy_output_length = output_length * input_dim_size;
+  int32_t copy_output_length = output_length * input_dim_size_;
   (void)memset_s(output, IntToSize(copy_output_length), 0X00, IntToSize(copy_output_length));
-  ParseOutputCoordinate(dims, output_length, input_dim_size, input_total_count, tmp_output, output);
+  ParseOutputCoordinate(dims_, output_length, input_dim_size_, input_total_count_, tmp_output, output);
 
-  int32_t actual_output_length = count * SizeToInt(dims.size());
+  int32_t actual_output_length = count_ * SizeToInt(dims_.size());
   copy_output_length = std::min(actual_output_length, copy_output_length);
   if (INT_MAX / static_cast<int>(sizeof(int32_t)) < copy_output_length) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', output length is out of range.";
@@ -183,7 +185,7 @@ bool RandomChoiceWithMaskCpuKernelMod::Launch(const std::vector<kernel::AddressP
   if (ret != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memcpy_s failed. Error no: " << ret;
   }
-  UpdateOutput(dims, non_zero_num, count, output_length, mask_dim, output_coordinate, mask);
+  UpdateOutput(dims_, non_zero_num, count_, output_length, mask_dim, output_coordinate, mask);
   return true;
 }
 
