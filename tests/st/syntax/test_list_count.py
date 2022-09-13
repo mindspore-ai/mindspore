@@ -224,12 +224,38 @@ def test_list_count_10():
     """
     @ms_function
     def list_net_10(aa, bb):
-        x = ['a', {'Michael': 1, 'Bob': 'bb', '2': [1, '2']}, aa, aa+bb, bb]
+        x = ['a', {'Michael': 1, 'Bob': 'bb', '2': [1, '2']}, aa, bb]
         res = x.count(aa + bb)
         return Tensor(res)
 
     aa = Tensor(20)
     bb = Tensor(10)
-    with pytest.raises(RuntimeError):
+    with pytest.raises(TypeError) as error_info:
         out = list_net_10(aa, bb)
         print(out)
+    assert "The list count not support variable scene now. The count data is Tensor type." in str(error_info)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_list_count_11():
+    """
+    Feature: list count.
+    Description: support list count.
+    Expectation: No exception.
+    """
+    @ms_function
+    def list_net_11(aa, bb):
+        x = [30, {'Michael': 1, 'Bob': 'bb', '2': [1, '2']}, aa + bb, bb]
+        res = x.count(30)
+        return Tensor(res)
+
+    aa = Tensor(20)
+    bb = Tensor(10)
+    with pytest.raises(TypeError) as error_info:
+        out = list_net_11(aa, bb)
+        print(out)
+    assert "The list count not support variable scene now. Tensor type data exists in the list." in str(error_info)

@@ -27,10 +27,11 @@ namespace mindspore {
 // namespace to support composite operators definition
 namespace prim {
 FuncGraphPtr ListAppend::GenerateFuncGraph(const abstract::AbstractBasePtrList &args_list) {
-  abstract::CheckArgsSize("ListAppend", args_list, 2);
+  constexpr size_t list_append_size_expect = 2;
+  abstract::CheckArgsSize("ListAppend", args_list, list_append_size_expect);
 
-  AbstractBasePtr arg0 = args_list[0];
-  abstract::AbstractListPtr arg0_list = dyn_cast<abstract::AbstractList>(arg0);
+  AbstractBasePtr obj_arg = args_list[0];
+  abstract::AbstractListPtr arg0_list = dyn_cast<abstract::AbstractList>(obj_arg);
   MS_EXCEPTION_IF_NULL(arg0_list);
 
   FuncGraphPtr ret = std::make_shared<FuncGraph>();
@@ -54,10 +55,10 @@ FuncGraphPtr ListAppend::GenerateFuncGraph(const abstract::AbstractBasePtrList &
 FuncGraphPtr ListInsert::GenerateFuncGraph(const abstract::AbstractBasePtrList &args_list) {
   const size_t list_insert_args_size = 3;
   abstract::CheckArgsSize("ListInsert", args_list, list_insert_args_size);
-  AbstractBasePtr arg0 = args_list[0];
-  AbstractBasePtr arg1 = args_list[1];
+  AbstractBasePtr index_arg = args_list[0];
+  AbstractBasePtr obj_arg = args_list[1];
 
-  abstract::AbstractListPtr arg0_list = dyn_cast<abstract::AbstractList>(arg0);
+  abstract::AbstractListPtr arg0_list = dyn_cast<abstract::AbstractList>(index_arg);
   MS_EXCEPTION_IF_NULL(arg0_list);
   size_t list_len = arg0_list->size();
   int64_t len = SizeToLong(list_len);
@@ -66,11 +67,17 @@ FuncGraphPtr ListInsert::GenerateFuncGraph(const abstract::AbstractBasePtrList &
   ret->debug_info()->set_name("insert");
   AnfNodePtr arg0_node = ret->add_parameter();
   (void)ret->add_parameter();
-  AnfNodePtr arg2_node = ret->add_parameter();
+  AnfNodePtr insert_obj_node = ret->add_parameter();
 
   std::vector<AnfNodePtr> elems;
   elems.push_back(NewValueNode(prim::kPrimMakeList));
-  int64_t index_value = GetValue<int64_t>(arg1->BuildValue());
+  auto obj_arg_value = obj_arg->BuildValue();
+  MS_EXCEPTION_IF_NULL(obj_arg_value);
+  if (!utils::isa<int64_t>(obj_arg_value)) {
+    MS_EXCEPTION(TypeError) << "Integer argument expected, but got " << obj_arg_value->type_name()
+                            << " type value: " << obj_arg_value->ToString();
+  }
+  int64_t index_value = GetValue<int64_t>(obj_arg_value);
   int64_t insert_position = 0;
   if (index_value >= len) {
     insert_position = len;
@@ -83,7 +90,7 @@ FuncGraphPtr ListInsert::GenerateFuncGraph(const abstract::AbstractBasePtrList &
     auto value = ret->NewCNode({NewValueNode(prim::kPrimListGetItem), arg0_node, NewValueNode(i)});
     elems.push_back(value);
   }
-  elems.push_back(arg2_node);
+  elems.push_back(insert_obj_node);
   for (int64_t i = insert_position; i < len; ++i) {
     auto value = ret->NewCNode({NewValueNode(prim::kPrimListGetItem), arg0_node, NewValueNode(i)});
     elems.push_back(value);
@@ -109,7 +116,12 @@ FuncGraphPtr ListPop::GenerateFuncGraph(const abstract::AbstractBasePtrList &arg
 
   std::vector<AnfNodePtr> elems;
   elems.push_back(NewValueNode(prim::kPrimMakeList));
-  int64_t index_value = GetValue<int64_t>(pop_index->BuildValue());
+  auto pop_index_value = pop_index->BuildValue();
+  if (!utils::isa<int64_t>(pop_index_value)) {
+    MS_EXCEPTION(TypeError) << "Integer argument expected, but got " << pop_index_value->type_name()
+                            << " type value: " << pop_index_value->ToString();
+  }
+  int64_t index_value = GetValue<int64_t>(pop_index_value);
   if (index_value >= len || index_value < -1 * len) {
     MS_EXCEPTION(IndexError) << "The pop index out of range.";
   }
@@ -225,13 +237,17 @@ bool ListCount::ComparesTwoValues(const ValuePtr &count_value, const ValuePtr &l
   MS_EXCEPTION_IF_NULL(count_value);
   MS_EXCEPTION_IF_NULL(list_value);
 
+  if (count_value->isa<AnyValue>()) {
+    MS_EXCEPTION(TypeError) << "The list count not support variable scene now. The count data is Tensor type.";
+  }
+  if (list_value->isa<AnyValue>()) {
+    MS_EXCEPTION(TypeError) << "The list count not support variable scene now. Tensor type data exists in the list.";
+  }
+
   if (!count_value->IsSameTypeId(list_value->tid())) {
     return false;
   }
-
-  if (count_value->isa<AnyValue>() || list_value->isa<AnyValue>()) {
-    MS_EXCEPTION(NotSupportError) << "The list count not support " << count_value->type_name() << " type now.";
-  } else if (count_value->isa<tensor::Tensor>()) {
+  if (count_value->isa<tensor::Tensor>()) {
     auto list_tensor_value = list_value->cast_ptr<tensor::Tensor>();
     MS_EXCEPTION_IF_NULL(list_tensor_value);
     return count_value->cast_ptr<tensor::Tensor>()->ValueEqual(*list_tensor_value);

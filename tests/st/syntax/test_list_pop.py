@@ -213,3 +213,25 @@ def test_list_pop_9():
     res_x, res_y = list_pop(input_x, 2)
     assert res_x == (Tensor([1]), Tensor([2]))
     assert res_y == Tensor([3])
+
+
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_list_pop_type_error():
+    """
+    Feature: list pop.
+    Description: support list pop.
+    Expectation: No exception.
+    """
+    @ms_function
+    def list_pop():
+        x = [1, 2, 3]
+        x.pop(1.0)
+        return x
+
+    with pytest.raises(TypeError) as error_info:
+        res = list_pop()
+        print("res:", res)
+    assert "Integer argument expected, but got FP32Imm type value: 1.000000" in str(error_info)
