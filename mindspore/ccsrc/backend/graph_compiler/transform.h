@@ -37,9 +37,6 @@
 // mindspore namespace is the top level namespace of MindSpore project.
 // Other namespace should be a sub namespace of mindspore namespace in the ME project.
 namespace mindspore {
-extern const char kMsVm[];
-extern const char kGeVm[];
-
 // compile namespace
 // A sub namespace in ME to support compile related definition.
 namespace compile {

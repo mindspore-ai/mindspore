@@ -26,9 +26,9 @@
 #include "include/backend/visible.h"
 
 namespace mindspore {
-BACKEND_EXPORT extern const char kMsVm[];
-BACKEND_EXPORT extern const char kGeVm[];
-BACKEND_EXPORT extern const char kMsConvert[];
+constexpr char kMsConvert[] = "ms";
+constexpr char kMsVm[] = "vm";
+constexpr char kGeVm[] = "ge";
 
 namespace compile {
 class GraphPartition {
