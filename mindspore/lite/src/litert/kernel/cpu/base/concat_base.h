@@ -42,7 +42,7 @@ class ConcatBaseCPUKernel : public LiteKernel {
   int64_t outer_size_{0};
   uint8_t *output_{nullptr};
   std::vector<bool> is_with_data_;
-  std::vector<const uint8_t *> inputs_;
+  std::vector<const uint8_t *> inputs_ptr_;
   std::vector<int64_t> block_splits_;
   std::vector<int64_t> inner_sizes_;  // byte-inner-size (including axis) of each input and the last one is output's.
 

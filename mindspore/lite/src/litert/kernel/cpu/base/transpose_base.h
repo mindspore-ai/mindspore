@@ -36,7 +36,6 @@ class TransposeBaseCPUKernel : public LiteKernel {
   virtual int DoTransposeMultiThread(int task_id) = 0;
 
  protected:
-  virtual int DoTransposeSingleThread() = 0;
   // only true when perm is [1, 0] or [0, 2, 1]
   bool opt_run_{true};
 
@@ -56,6 +55,7 @@ class TransposeBaseCPUKernel : public LiteKernel {
   TransposeParameter *param_{nullptr};
 
  private:
+  virtual int DoTransposeSingleThread() = 0;
   int CopyInputToOutput();
   int ResetStatus();
   // to simplify transpose, we consider two steps. Firstly, delete the dimension where the value is 1. Secondly, fuse

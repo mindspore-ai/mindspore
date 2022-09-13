@@ -38,7 +38,7 @@ constexpr int kReciprocalSecondIndex = -2;
 int CommonInferShape(const CNodePtr &cnode, const std::vector<ShapeVector> &in_shapes,
                      std::vector<ShapeVector> *out_shapes) {
   out_shapes->clear();
-  out_shapes->insert(out_shapes->begin(), in_shapes.begin(), in_shapes.end());
+  (void)out_shapes->insert(out_shapes->begin(), in_shapes.begin(), in_shapes.end());
   return lite::RET_OK;
 }
 
@@ -71,7 +71,7 @@ int ExpandDimsInferShape(const CNodePtr &cnode, const std::vector<ShapeVector> &
   }
   MS_CHECK_TRUE_MSG(axis >= 0 && axis <= first_shape_size, lite::RET_ERROR, "Expanddims's second-input is invalid.");
   out_shapes->clear();
-  first_shape.insert(first_shape.begin() + axis, 1);
+  (void)first_shape.insert(first_shape.begin() + axis, 1);
   out_shapes->push_back(first_shape);
   return lite::RET_OK;
 }
@@ -117,7 +117,7 @@ int GatherInferShape(const CNodePtr &cnode, const std::vector<ShapeVector> &in_s
   for (int i = 0; i < axis; ++i) {
     out_shape.push_back(first_shape[i]);
   }
-  out_shape.insert(out_shape.end(), second_shape.begin(), second_shape.end());
+  (void)out_shape.insert(out_shape.end(), second_shape.begin(), second_shape.end());
   for (int i = axis + 1; i < first_shape_size; ++i) {
     out_shape.push_back(first_shape[i]);
   }
@@ -140,12 +140,12 @@ int MulInferShape(const CNodePtr &cnode, const std::vector<ShapeVector> &in_shap
   for (size_t i = 0; i < (out_shape_size - first_shape.size()); ++i) {
     first_shape_expand.push_back(1);
   }
-  first_shape_expand.insert(first_shape_expand.end(), first_shape.begin(), first_shape.end());
+  (void)first_shape_expand.insert(first_shape_expand.end(), first_shape.begin(), first_shape.end());
   ShapeVector second_shape_expand;
   for (size_t i = 0; i < (out_shape_size - second_shape.size()); ++i) {
     second_shape_expand.push_back(1);
   }
-  second_shape_expand.insert(second_shape_expand.end(), second_shape.begin(), second_shape.end());
+  (void)second_shape_expand.insert(second_shape_expand.end(), second_shape.begin(), second_shape.end());
   ShapeVector out_shape;
   for (size_t i = 0; i < out_shape_size; ++i) {
     if (first_shape_expand[i] == second_shape_expand[i]) {
@@ -173,7 +173,7 @@ int ReshapeInferShape(const CNodePtr &cnode, const std::vector<ShapeVector> &in_
   MS_ASSERT(cnode != nullptr);
   out_shapes->clear();
   if (cnode->size() < kInputSizeTwo) {
-    out_shapes->emplace_back();
+    (void)out_shapes->emplace_back();
     return lite::RET_OK;
   }
   if (in_shapes.size() < kInputSizeTwo) {
@@ -190,7 +190,7 @@ int ReshapeInferShape(const CNodePtr &cnode, const std::vector<ShapeVector> &in_
   MS_CHECK_TRUE_MSG(ret == lite::RET_OK, lite::RET_ERROR, "Reshape fetch second-input's data failed.");
   MS_CHECK_TRUE_MSG(data_info.shape_.size() <= 1, lite::RET_ERROR, "Reshape second-input should be <= 1D.");
   if (data_info.data_ptr_ == nullptr || (data_info.shape_.size() == 1 && data_info.shape_.front() == 0)) {
-    out_shapes->emplace_back();
+    (void)out_shapes->emplace_back();
   }
   auto element_num = std::accumulate(data_info.shape_.begin(), data_info.shape_.end(), 1L, std::multiplies<int64_t>());
   ShapeVector out_shape;
@@ -223,7 +223,7 @@ int SplitInferShape(const CNodePtr &cnode, const std::vector<ShapeVector> &in_sh
                        ? std::vector<int64_t>{}
                        : GetValue<std::vector<int64_t>>(prim->GetAttr(ops::kSizeSplits));
   out_num = (out_num == 0 ? static_cast<int64_t>(size_splits.size()) : out_num);
-  if (out_num == 0) {
+  if (out_num <= 0) {
     return lite::RET_NOT_SUPPORT;
   }
   auto axis = prim->GetAttr(ops::kAxis) == nullptr ? 0 : GetValue<int64_t>(prim->GetAttr(ops::kAxis));
@@ -236,7 +236,7 @@ int SplitInferShape(const CNodePtr &cnode, const std::vector<ShapeVector> &in_sh
     MS_CHECK_TRUE_MSG(in_shape[axis] > 0 && in_shape[axis] % out_num == 0, lite::RET_ERROR,
                       "Split's dim doesn't match split-axis.");
     out_shape[axis] = in_shape[axis] / out_num;
-    out_shapes->insert(out_shapes->end(), out_num, out_shape);
+    (void)out_shapes->insert(out_shapes->end(), out_num, out_shape);
   } else {
     for (auto v : size_splits) {
       out_shape[axis] = v;
@@ -427,7 +427,7 @@ int MulReduceFusion::ProcessOp(const FuncGraphPtr &func_graph, const CNodePtr &c
     return lite::RET_OK;
   }
   if (reduce_mode_ == ReduceMode::Reduce_Mean) {
-    auto ret = ProcessGather(func_graph);
+    auto ret = ProcessGather();
     if (ret == lite::RET_NOT_SUPPORT) {
       return lite::RET_OK;
     }
@@ -449,7 +449,7 @@ int MulReduceFusion::ProcessOp(const FuncGraphPtr &func_graph, const CNodePtr &c
   return lite::RET_OK;
 }
 
-int MulReduceFusion::ProcessGather(const FuncGraphPtr &func_graph) {
+int MulReduceFusion::ProcessGather() {
   MS_ASSERT(gather_.size() > C1NUM);
   auto gather_table = gather_->input(1);
   if (gather_table == nullptr || utils::isa<CNode>(gather_table)) {
@@ -490,7 +490,7 @@ int MulReduceFusion::PostProcess(const FuncGraphPtr &func_graph) {
       }
       auto cnode = node->cast<CNodePtr>();
       if (CheckPrimitiveType(cnode, prim::kPrimConcat)) {
-        concat_ops.insert(cnode);
+        (void)concat_ops.insert(cnode);
       }
     }
   }
@@ -512,12 +512,12 @@ int MulReduceFusion::PostProcessSqueezeWithConcat(const FuncGraphPtr &func_graph
   }
   auto manager = func_graph->manager();
   MS_ASSERT(manager != nullptr);
-  for (size_t i = 1; i < cnode->size(); ++i) {
+  for (int i = 1; i < static_cast<int>(cnode->size()); ++i) {
     manager->SetEdge(cnode, i, cnode->input(i)->cast<CNodePtr>()->input(1));
   }
   auto concat_prim = GetCNodePrimitive(cnode);
   MS_ASSERT(concat_prim != nullptr);
-  concat_prim->AddAttr(ops::kAxis, MakeValue<int64_t>(concat_axis_));
+  (void)concat_prim->AddAttr(ops::kAxis, MakeValue<int64_t>(concat_axis_));
   auto &node_users = manager->node_users();
   auto &concat_users = node_users[cnode];
   CNodePtr post_squeeze{nullptr};
@@ -610,7 +610,7 @@ bool MulReduceFusion::CheckBasicCond(const FuncGraphPtr &func_graph, const CNode
   if (mode_attr == nullptr) {
     return false;
   }
-  reduce_mode_ = GetValue<int64_t>(mode_attr);
+  reduce_mode_ = static_cast<int>(GetValue<int64_t>(mode_attr));
   if (reduce_mode_ != ReduceMode::Reduce_Sum && reduce_mode_ != ReduceMode::Reduce_Mean) {
     return false;
   }
@@ -671,7 +671,7 @@ bool MulReduceFusion::CheckAxisCond(const CNodePtr &cnode) {
   if (data_info.data_type_ == kNumberTypeInt || data_info.data_type_ == kNumberTypeInt32) {
     axis_ = *(static_cast<int *>(data_info.data_ptr_));
   } else if (data_info.data_type_ == kNumberTypeInt64) {
-    axis_ = *(static_cast<int64_t *>(data_info.data_ptr_));
+    axis_ = static_cast<int>(*(static_cast<int64_t *>(data_info.data_ptr_)));
   } else {
     return false;
   }
@@ -708,7 +708,7 @@ bool MulReduceFusion::CheckShapeCond(const CNodePtr &cnode) {
         (mul_in0_shape[mul_in0_shape.size() - C2NUM] != 1 && mul_in1_shape[mul_in1_shape.size() - C2NUM] != 1)) {
       return false;
     }
-    exchange_ = mul_in1_shape[mul_in1_shape.size() - C2NUM] == 1 ? false : true;
+    exchange_ = mul_in1_shape[mul_in1_shape.size() - C2NUM] != 1;
     transpose_a_ = false;
     transpose_b_ = true;
     MS_ASSERT(mul_in0_shape.back() != 0);
@@ -720,7 +720,7 @@ bool MulReduceFusion::CheckShapeCond(const CNodePtr &cnode) {
         (mul_in0_shape.back() != 1 && mul_in1_shape.back() != 1)) {
       return false;
     }
-    exchange_ = mul_in0_shape.back() == 1 ? false : true;
+    exchange_ = mul_in0_shape.back() != 1;
     transpose_a_ = true;
     transpose_b_ = false;
     MS_ASSERT(mul_in0_shape[mul_in0_shape.size() - C2NUM] != 0);
@@ -759,7 +759,7 @@ bool MulReduceFusion::CheckGatherOp(const FuncGraphPtr &func_graph, const CNodeP
     return false;
   }
   if (IsMultiOutputTensors(func_graph, gather_)) {
-    return lite::RET_OK;
+    return false;
   }
   return true;
 }
@@ -791,7 +791,9 @@ bool MulReduceFusion::CheckConcatOp(const FuncGraphPtr &func_graph, const CNodeP
   }
   auto concat_prim = GetCNodePrimitive(cnode);
   MS_CHECK_TRUE_RET(concat_prim != nullptr, false);
-  concat_axis_ = concat_prim->GetAttr(ops::kAxis) == nullptr ? 0 : GetValue<int64_t>(concat_prim->GetAttr(ops::kAxis));
+  concat_axis_ = concat_prim->GetAttr(ops::kAxis) == nullptr
+                   ? 0
+                   : static_cast<int>(GetValue<int64_t>(concat_prim->GetAttr(ops::kAxis)));
   axis = axis < 0 ? axis + out_dims + 1 : axis;
   MS_CHECK_TRUE_RET(axis >= 0 && axis <= out_dims, false);
   concat_axis_ = concat_axis_ < 0 ? concat_axis_ + out_dims : concat_axis_;

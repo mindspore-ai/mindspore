@@ -122,9 +122,9 @@ STATUS GetDataTypeAndShape(const ParameterPtr &param_node, TypeId *data_type, Sh
   return RET_OK;
 }
 
-int FetchFromTensorValue(const ValueNodePtr &value_node, const PrimitivePtr &primitive, converter::FmkType fmk_type,
-                         bool train_flag, DataInfo *data_info, bool copy_data) {
-  MS_ASSERT(value_node != nullptr && primitive != nullptr && data_info != nullptr);
+int FetchFromTensorValue(const ValueNodePtr &value_node, converter::FmkType fmk_type, bool train_flag,
+                         DataInfo *data_info, bool copy_data) {
+  MS_ASSERT(value_node != nullptr && data_info != nullptr);
   auto valueAbstract = value_node->abstract();
   MS_CHECK_TRUE_MSG(valueAbstract != nullptr, RET_ERROR, "valueAbstract is nullptr");
   auto abstract_tensor = valueAbstract->cast<abstract::AbstractTensorPtr>();
@@ -163,8 +163,8 @@ int FetchFromTensorValue(const ValueNodePtr &value_node, const PrimitivePtr &pri
   return RET_OK;
 }
 
-int FetchFromInt32OrInt64ImmValue(const ValueNodePtr &value_node, const PrimitivePtr &primitive, DataInfo *data_info) {
-  MS_ASSERT(value_node != nullptr && primitive != nullptr && data_info != nullptr);
+int FetchFromInt32OrInt64ImmValue(const ValueNodePtr &value_node, DataInfo *data_info) {
+  MS_ASSERT(value_node != nullptr && data_info != nullptr);
   // data of int64 is converted to int32 here.
   data_info->data_type_ = kNumberTypeInt32;
   data_info->shape_ = {1};
@@ -179,8 +179,8 @@ int FetchFromInt32OrInt64ImmValue(const ValueNodePtr &value_node, const Primitiv
   return RET_OK;
 }
 
-int FetchFromBoolImmValue(const ValueNodePtr &value_node, const PrimitivePtr &primitive, DataInfo *data_info) {
-  MS_ASSERT(value_node != nullptr && primitive != nullptr && data_info != nullptr);
+int FetchFromBoolImmValue(const ValueNodePtr &value_node, DataInfo *data_info) {
+  MS_ASSERT(value_node != nullptr && data_info != nullptr);
   data_info->data_type_ = kNumberTypeBool;
   data_info->shape_ = {1};
   data_info->data_.resize(sizeof(bool));
@@ -196,8 +196,8 @@ int FetchFromBoolImmValue(const ValueNodePtr &value_node, const PrimitivePtr &pr
   return RET_OK;
 }
 
-int FetchFromNumberValue(const ValueNodePtr &value_node, const PrimitivePtr &primitive, DataInfo *data_info) {
-  MS_ASSERT(value_node != nullptr && primitive != nullptr && data_info != nullptr);
+int FetchFromNumberValue(const ValueNodePtr &value_node, DataInfo *data_info) {
+  MS_ASSERT(value_node != nullptr && data_info != nullptr);
   data_info->data_type_ = kNumberTypeInt32;
   data_info->shape_ = {1};
   data_info->data_.resize(sizeof(int));
@@ -214,8 +214,8 @@ int FetchFromNumberValue(const ValueNodePtr &value_node, const PrimitivePtr &pri
   return RET_OK;
 }
 
-int FetchFromSequenceValue(const ValueNodePtr &value_node, const PrimitivePtr &primitive, DataInfo *data_info) {
-  MS_ASSERT(value_node != nullptr && primitive != nullptr && data_info != nullptr);
+int FetchFromSequenceValue(const ValueNodePtr &value_node, DataInfo *data_info) {
+  MS_ASSERT(value_node != nullptr && data_info != nullptr);
   auto value = value_node->value();
   MS_CHECK_TRUE_MSG(value != nullptr, RET_ERROR, "value is nullptr");
   std::vector<int32_t> shape;
@@ -343,18 +343,18 @@ int FetchDataFromValueNode(const CNodePtr &cnode, size_t index, converter::FmkTy
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
   MS_CHECK_TRUE_MSG(prim != nullptr, RET_ERROR, "prim is nullptr");
   if (value->isa<tensor::Tensor>()) {
-    ret = FetchFromTensorValue(value_node, prim, fmk_type, train_flag, data_info, copy_data);
+    ret = FetchFromTensorValue(value_node, fmk_type, train_flag, data_info, copy_data);
     if (index == kNumWeightIndex && prim->GetAttr(mindspore::ops::kFormat) != nullptr) {
       data_info->format_ = GetValue<int64_t>(prim->GetAttr(mindspore::ops::kFormat));
     }
   } else if (value->isa<mindspore::Int32Imm>() || value->isa<mindspore::Int64Imm>()) {
-    ret = FetchFromInt32OrInt64ImmValue(value_node, prim, data_info);
+    ret = FetchFromInt32OrInt64ImmValue(value_node, data_info);
   } else if (value->isa<mindspore::BoolImm>()) {
-    ret = FetchFromBoolImmValue(value_node, prim, data_info);
+    ret = FetchFromBoolImmValue(value_node, data_info);
   } else if (value->isa<mindspore::ValueSequence>()) {
-    ret = FetchFromSequenceValue(value_node, prim, data_info);
+    ret = FetchFromSequenceValue(value_node, data_info);
   } else if (value->isa<Number>()) {
-    ret = FetchFromNumberValue(value_node, prim, data_info);
+    ret = FetchFromNumberValue(value_node, data_info);
   } else if (value->isa<FuncGraph>()) {
     MS_LOG(INFO) << "op name:" << value_node->fullname_with_scope() << " input is func_graph";
     return RET_NO_CHANGE;

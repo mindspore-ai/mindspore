@@ -237,7 +237,8 @@ kernel::LiteKernel *AffineFp32CPUKernel::FullMatmulKernelCreate() {
   int context_max = affine_parameter_->context_[affine_parameter_->context_size_ - 1];
   std::vector<int> splice_output_shape = {1, input_shape.at(1) - (context_max - context_min), out_dim};
 
-  full_input_ = new lite::Tensor(kNumberTypeFloat32, splice_output_shape);
+  full_input_ = new (std::nothrow) lite::Tensor(kNumberTypeFloat32, splice_output_shape);
+  MS_CHECK_TRUE_MSG(full_input_ != nullptr, nullptr, "Create a new-tensor failed.");
 
   if (in_tensors_.size() < kAffineMinInputNum) {
     MS_LOG(ERROR) << "wrong affine input size";
@@ -286,11 +287,13 @@ kernel::LiteKernel *AffineFp32CPUKernel::IncrementMatmulKernelCreate() {
     return nullptr;
   }
 
-  increment_input_ = new lite::Tensor(kNumberTypeFloat32, {1, 1, affine_splice_output_col});
+  increment_input_ = new (std::nothrow) lite::Tensor(kNumberTypeFloat32, {1, 1, affine_splice_output_col});
+  MS_CHECK_TRUE_MSG(increment_input_ != nullptr, nullptr, "Create a new-tensor failed.");
 
   // matmul_output == 1 * matmul_col
   int matmul_col = out_tensors_.front()->shape().back();
-  increment_output_ = new lite::Tensor(kNumberTypeFloat32, {1, 1, matmul_col});
+  increment_output_ = new (std::nothrow) lite::Tensor(kNumberTypeFloat32, {1, 1, matmul_col});
+  MS_CHECK_TRUE_MSG(increment_output_ != nullptr, nullptr, "Create a new-tensor failed.");
   increment_output_->MallocData();
 
   if (in_tensors_.size() < kAffineMinInputNum) {

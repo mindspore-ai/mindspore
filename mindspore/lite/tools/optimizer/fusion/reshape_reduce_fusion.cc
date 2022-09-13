@@ -87,7 +87,7 @@ bool ReshapeReduceFusion::CheckCanFusion(const FuncGraphPtr &func_graph, const C
     return false;
   }
   if (!keep_dim_) {
-    shape_.erase(shape_.begin() + axis_);
+    (void)shape_.erase(shape_.begin() + axis_);
   }
   return true;
 }

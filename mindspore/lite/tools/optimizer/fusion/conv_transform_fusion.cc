@@ -61,14 +61,14 @@ int64_t GetOutChannels(const CNodePtr &conv_node) {
 }
 
 void GenerateNewWeightConv2D(float *dst_weight, const float *conv_weight, const float *scale_weight,
-                             int weight_shape_size, int kernel_num) {
+                             size_t weight_shape_size, int kernel_num) {
   MS_ASSERT(dst_weight != nullptr && conv_weight != nullptr && scale_weight != nullptr);
   if (kernel_num <= 0) {
     return;
   }
-  auto kernel_size = weight_shape_size / kernel_num;
-  for (int i = 0; i < kernel_num; i++) {
-    for (int j = 0; j < kernel_size; j++) {
+  auto kernel_size = weight_shape_size / static_cast<size_t>(kernel_num);
+  for (size_t i = 0; i < static_cast<size_t>(kernel_num); ++i) {
+    for (size_t j = 0; j < kernel_size; j++) {
       dst_weight[i * kernel_size + j] = conv_weight[i * kernel_size + j] * scale_weight[i];
     }
   }

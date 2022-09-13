@@ -136,7 +136,7 @@ class MS_API IKernel {
   std::vector<mindspore::MSTensor> outputs_;
   const Primitive *primitive_ = nullptr;
   std::map<std::string, std::string> attrs_;
-  const std::map<std::string, std::map<std::string, std::string>> *config_;
+  const std::map<std::string, std::map<std::string, std::string>> *config_ = nullptr;
 };
 }  // namespace kernel
 }  // namespace mindspore
