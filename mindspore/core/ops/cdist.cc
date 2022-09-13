@@ -40,6 +40,9 @@ abstract::ShapePtr CdistInferShape(const PrimitivePtr &primitive, const std::vec
   auto y_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
   auto x_size = x_shape.size();
   auto y_size = y_shape.size();
+  if (IsDynamicRank(x_shape) || IsDynamicRank(y_shape)) {
+    return std::make_shared<abstract::Shape>(ShapeVector{UNKNOWN_RANK});
+  }
   if (x_size != y_size) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name()
                              << "', rank of input_x and input_y must be equal, but got rank of input_x: " << x_size
@@ -55,6 +58,9 @@ abstract::ShapePtr CdistInferShape(const PrimitivePtr &primitive, const std::vec
 
   if (x_size > kCdistInputDimsMin) {
     for (size_t i = 0; i < x_size - kCdistInputDimsMin; i++) {
+      if (x_shape[i] == -1 || y_shape[i] == -1) {
+        continue;
+      }
       if (x_shape[i] != y_shape[i]) {
         MS_EXCEPTION(ValueError) << "For '" << primitive->name()
                                  << "', the batch shape of 'x' must be the same as the shape of 'y', "
