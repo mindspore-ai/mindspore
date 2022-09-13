@@ -4767,7 +4767,7 @@ class BesselI0(Primitive):
         TypeError: If `x` is not a Tensor of float16, float32 or float64.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> bessel_i0 = ops.BesselI0()
@@ -4798,7 +4798,7 @@ class BesselI1(Primitive):
         TypeError: If `x` is not a Tensor of float16, float32 or float64.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> bessel_i1 = ops.BesselI1()
@@ -4837,7 +4837,7 @@ class BesselI0e(Primitive):
         TypeError: If dtype of `x` is not float16, float32 or float64.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> bessel_i0e = ops.BesselI0e()
@@ -4877,7 +4877,7 @@ class BesselI1e(Primitive):
         TypeError: If dtype of `x` is not float16, float32 or float64.
 
     Supported Platforms:
-        ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> bessel_i1e = ops.BesselI1e()
@@ -4909,7 +4909,7 @@ class BesselK0(Primitive):
         TypeError: If `x` is not a Tensor of float16, float32, float64.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> bessel_k0 = ops.BesselK0()
@@ -4940,7 +4940,7 @@ class BesselK1(Primitive):
         TypeError: If `x` is not a Tensor of float16, float32, float64.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> bessel_k1 = ops.BesselK1()
@@ -4971,7 +4971,7 @@ class BesselK0e(Primitive):
         TypeError: If `x` is not a Tensor of float16, float32, float64.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> bessel_k0e = ops.BesselK0e()
@@ -5002,7 +5002,7 @@ class BesselK1e(Primitive):
         TypeError: If `x` is not a Tensor of float16, float32, float64.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> bessel_k1e = ops.BesselK1e()
@@ -5033,7 +5033,7 @@ class BesselJ0(Primitive):
         TypeError: If `x` is not a Tensor of float16, float32 or float64.
 
     Supported Platforms:
-        ``CPU`` ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> bessel_j0 = ops.BesselJ0()
@@ -5065,7 +5065,7 @@ class BesselJ1(Primitive):
         TypeError: If `x` is not a Tensor of float16, float32 or float64.
 
     Supported Platforms:
-        ``CPU`` ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> bessel_j1 = ops.BesselJ1()
@@ -5097,7 +5097,7 @@ class BesselY0(Primitive):
         TypeError: If `x` is not a Tensor of float16, float32, float64.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> bessel_y0 = ops.BesselY0()
@@ -5129,7 +5129,7 @@ class BesselY1(Primitive):
         TypeError: If `x` is not a Tensor of float16, float32, float64.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> bessel_y1 = ops.BesselY1()
