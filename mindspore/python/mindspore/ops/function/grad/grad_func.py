@@ -143,7 +143,7 @@ def grad(fn, grad_position=0, weights=None, has_aux=False):
         >>> weights = net.trainable_params()
         >>> # Case 1: gradient with respect to inputs.
         >>> # Aux value does not contribute to the gradient.
-        >>> grad_fn = grad(forward, grad_position=0, weights=None, has_aux=True)
+        >>> grad_fn = grad(forward, grad_position=(0, 1), weights=None, has_aux=True)
         >>> inputs_gradient, (aux_logits,) = grad_fn(inputs, labels)
         >>> print(len(inputs_gradient))
         2
