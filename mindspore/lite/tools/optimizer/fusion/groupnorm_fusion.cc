@@ -17,6 +17,7 @@
 #define USE_DEPRECATED_API
 #include "tools/optimizer/fusion/groupnorm_fusion.h"
 #include <algorithm>
+#include <vector>
 #include <memory>
 #include "ops/fusion/groupnorm_fusion.h"
 #include "include/common/utils/utils.h"
@@ -137,7 +138,6 @@ bool GroupNormFusion::CheckPattern(const FuncGraphPtr &func_graph, const EquivPt
   MS_ASSERT(epsilon != nullptr);
   MS_ASSERT(affine != nullptr);
 
-  auto input_node_dbg = utils::cast<AnfNodePtr>((*equiv)[input_]);
   // beta
   auto beta_node = utils::cast<AnfNodePtr>((*equiv)[beta_]);
   MS_ASSERT(beta_node != nullptr);
@@ -149,8 +149,8 @@ bool GroupNormFusion::CheckPattern(const FuncGraphPtr &func_graph, const EquivPt
   auto beta_tensor = beta_param->cast<tensor::TensorPtr>();
   MS_CHECK_TRUE_RET(beta_tensor != nullptr, false);
   std::vector<int> beta_shape;
-  std::transform(beta_tensor->shape().begin(), beta_tensor->shape().end(), std::back_inserter(beta_shape),
-                 [](int64_t val) { return static_cast<int>(val); });
+  (void)std::transform(beta_tensor->shape().begin(), beta_tensor->shape().end(), std::back_inserter(beta_shape),
+                       [](int64_t val) { return static_cast<int>(val); });
   // gamma
   auto gamma_node = utils::cast<AnfNodePtr>((*equiv)[gamma_]);
   MS_ASSERT(gamma_node != nullptr);
@@ -162,8 +162,8 @@ bool GroupNormFusion::CheckPattern(const FuncGraphPtr &func_graph, const EquivPt
   auto gamma_tensor = gamma_param->cast<tensor::TensorPtr>();
   MS_CHECK_TRUE_RET(gamma_tensor != nullptr, false);
   std::vector<int> gamma_shape;
-  std::transform(gamma_tensor->shape().begin(), gamma_tensor->shape().end(), std::back_inserter(gamma_shape),
-                 [](int64_t val) { return static_cast<int>(val); });
+  (void)std::transform(gamma_tensor->shape().begin(), gamma_tensor->shape().end(), std::back_inserter(gamma_shape),
+                       [](int64_t val) { return static_cast<int>(val); });
   // epsilon
   auto epsilon_node = utils::cast<AnfNodePtr>((*equiv)[epsilon_]);
   MS_ASSERT(epsilon_node != nullptr);
@@ -202,7 +202,6 @@ bool GroupNormFusion::CheckPattern(const FuncGraphPtr &func_graph, const EquivPt
   if (!utils::isa<CNodePtr>(input_node)) {
     return false;
   }
-  auto input_cnode = input_node->cast<CNodePtr>();
   if (mean1_axes != sum1_axes) {
     return false;
   }
@@ -229,7 +228,7 @@ bool GroupNormFusion::CheckPattern(const FuncGraphPtr &func_graph, const EquivPt
 }
 
 CNodePtr GroupNormFusion::CreateGroupNormNode(const FuncGraphPtr &func_graph, const EquivPtr &equiv, int num_groups,
-                                              float epsilon, bool affine) const {
+                                              float epsilon) const {
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(equiv != nullptr);
   PrimitiveCPtr primitive_c = nullptr;
@@ -276,7 +275,7 @@ const AnfNodePtr GroupNormFusion::Process(const FuncGraphPtr &func_graph, const 
   if (!CheckPattern(func_graph, equiv, &num_groups, &epsilon, &affine)) {
     return nullptr;
   }
-  auto norm_cnode = CreateGroupNormNode(func_graph, equiv, num_groups, epsilon, affine);
+  auto norm_cnode = CreateGroupNormNode(func_graph, equiv, num_groups, epsilon);
   if (norm_cnode == nullptr) {
     MS_LOG(DEBUG) << "create norm cnode failed";
     return nullptr;

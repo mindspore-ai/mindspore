@@ -142,7 +142,7 @@ Status Serialization::Load(const std::vector<char> &file, ModelType model_type, 
       delete[] model_buf;
       return kLiteError;
     }
-    loader(model_buf, graph);
+    (void)loader(model_buf, graph);
     delete[] model_buf;
     return kSuccess;
   }

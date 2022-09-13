@@ -1038,7 +1038,7 @@ void Scheduler::ResetByExecutionPlan(std::string node_name, TypeId *data_type) {
 int Scheduler::FindCpuKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                              OpParameter *op_parameter, const kernel::KernelKey &desc, TypeId kernel_data_type,
                              kernel::KernelExec **kernel) {
-  MS_ASSERT(op_parameter != nullptr);
+  MS_CHECK_TRUE_MSG(op_parameter != nullptr, RET_ERROR, "op parameter is nullptr.");
   auto op_type = op_parameter->type_;
   if (!KernelRegistry::GetInstance()->SupportKernel(desc)) {
     return RET_NOT_SUPPORT;

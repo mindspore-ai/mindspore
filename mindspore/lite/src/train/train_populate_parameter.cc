@@ -525,7 +525,7 @@ OpParameter *PopulateLstmGradParameter(const void *prim) {
   param->zoneout_cell_ = value->zoneout_cell();
   param->zoneout_hidden_ = value->zoneout_hidden();
   param->input_size_ = value->input_size();
-  param->has_bias_ = value->has_bias();
+  param->has_bias_ = static_cast<int>(value->has_bias());
   param->hidden_size_ = value->hidden_size();
 
   return reinterpret_cast<OpParameter *>(param);
@@ -552,7 +552,7 @@ OpParameter *PopulateLstmGradDataParameter(const void *prim) {
   param->zoneout_cell_ = value->zoneout_cell();
   param->zoneout_hidden_ = value->zoneout_hidden();
   param->input_size_ = value->input_size();
-  param->has_bias_ = value->has_bias();
+  param->has_bias_ = static_cast<int>(value->has_bias());
   param->hidden_size_ = value->hidden_size();
   return reinterpret_cast<OpParameter *>(param);
 }
@@ -579,7 +579,7 @@ OpParameter *PopulateLstmGradWeightParameter(const void *prim) {
   param->bidirectional_ = value->bidirectional();
   param->zoneout_cell_ = value->zoneout_cell();
   param->zoneout_hidden_ = value->zoneout_hidden();
-  param->has_bias_ = value->has_bias();
+  param->has_bias_ = static_cast<int>(value->has_bias());
   return reinterpret_cast<OpParameter *>(param);
 }
 

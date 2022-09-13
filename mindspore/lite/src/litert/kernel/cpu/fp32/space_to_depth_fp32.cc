@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 #include "src/litert/kernel/cpu/fp32/space_to_depth_fp32.h"
-#include <limits>
-#include <vector>
+#include "nnacl/errorcode.h"
 #include "schema/model_generated.h"
 #include "src/litert/kernel_registry.h"
 #include "nnacl/base/space_to_depth_base.h"
@@ -65,8 +64,13 @@ int SpaceToDepthCPUKernel::SpaceToDepth(int task_id) {
   auto output_data = output->data();
   CHECK_NULL_RETURN(input_data);
   CHECK_NULL_RETURN(output_data);
-  return SpaceToDepthForNHWC(input_data, output_data, in_shape.data(), out_shape.data(), in_shape.size(), param_,
-                             task_id);
+  auto ret =
+    SpaceToDepthForNHWC(input_data, output_data, in_shape.data(), out_shape.data(), in_shape.size(), param_, task_id);
+  if (ret != NNACL_OK) {
+    MS_LOG(ERROR) << "do SpaceToDepthForNHWC failed. " << this->name();
+    return RET_ERROR;
+  }
+  return RET_OK;
 }
 
 int SpaceToDepthRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
