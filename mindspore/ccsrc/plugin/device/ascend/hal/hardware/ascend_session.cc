@@ -1508,7 +1508,7 @@ std::shared_ptr<device::Bucket> AscendSession::CreateBucket(uint32_t bucket_id, 
   return bucket;
 }
 
-std::string AscendSession::GetWarningMessage() {
+std::string AscendSession::GetWarningMessage() const {
   const string &warning_message = ErrorManager::GetInstance().GetWarningMessage();
   if (!warning_message.empty()) {
     return warning_message;
@@ -1516,7 +1516,7 @@ std::string AscendSession::GetWarningMessage() {
   return "";
 }
 
-std::string AscendSession::GetErrorMessage() {
+std::string AscendSession::GetErrorMessage() const {
   const string &error_message = ErrorManager::GetInstance().GetErrorMessage();
   if (!error_message.empty() && error_message.find(kUnknowErrorString) == string::npos) {
     return error_message;
