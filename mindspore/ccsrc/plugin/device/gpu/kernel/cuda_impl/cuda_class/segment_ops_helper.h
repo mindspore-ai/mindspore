@@ -52,8 +52,9 @@ class SegmentOpsHelperGpuKernel : public GpuKernelHelperBase {
     ResetResource();
     auto iter = kSegmentOpsOpTypeMap.find(kernel_name_);
     if (iter == kSegmentOpsOpTypeMap.end()) {
-      MS_LOG(ERROR) << "For 'SegmentOps', only support these types: " << kernel::Map2Str(kSegmentOpsOpTypeMap)
-                    << " currently, but got " << kernel_name_;
+      MS_LOG(ERROR) << "For 'SegmentOps', only support these types: "
+                    << kernel::Map2Str<std::map, SegmentOpsOptype>(kSegmentOpsOpTypeMap) << " currently, but got "
+                    << kernel_name_;
       return -1;
     }
     Segment_ops_op_type_ = iter->second;

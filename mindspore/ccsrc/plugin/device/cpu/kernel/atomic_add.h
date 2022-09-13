@@ -19,6 +19,7 @@
 
 namespace mindspore {
 namespace kernel {
+#ifndef _MSC_VER
 template <typename T, typename U>
 void AtomicAddTask(T *const address, const T val) {
   auto *address_as_ull = reinterpret_cast<U *>(address);
@@ -33,6 +34,12 @@ void AtomicAddTask(T *const address, const T val) {
     old = __sync_val_compare_and_swap(address_as_ull, assumed, *desired_u);
   } while (assumed != old);
 }
+#else
+template <typename T, typename U>
+void AtomicAddTask(T *const address, const T val) {
+  *address = (*address) + val;
+}
+#endif
 
 template <typename T>
 void AtomicAdd(T *const address, const T val) {

@@ -93,7 +93,8 @@ __global__ void PDist_Grad_Lt_Two(const size_t y_size, const T *y_grad, const T 
     if (dist_k == 0.0 || (diff == 0.0 && p < 1)) {
       res = 0;
     } else {
-      res = (sign(diff) * std::pow(std::abs(diff), p - 1) * (grad_k) / std::pow(dist_k, p - 1));
+      res = (sign(diff) * std::pow(std::abs(diff), static_cast<T>(p - 1)) * (grad_k) /
+            std::pow(dist_k, static_cast<T>(p - 1)));
     }
     *buff1 = res;
     *buff2 = -res;
@@ -164,7 +165,7 @@ __global__ void PDist_Grad_P(const size_t y_size, const T *y_grad, const T *x, c
     T res = 0;
     const T diff = (*x_i - *x_j);
     if (dist_k != (0.0)) {
-      res = diff * std::pow(std::abs(diff), p - 2) * grad_k / std::pow(dist_k, p - 1);
+      res = diff * std::pow(std::abs(diff), static_cast<T>(p - 2)) * grad_k / std::pow(dist_k, static_cast<T>(p - 1));
     }
     *buff1 = res;
     *buff2 = -res;

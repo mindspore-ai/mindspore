@@ -187,7 +187,7 @@ __global__ void PairwiseDistance(const Complex<S> *anchor, const Complex<S> *pos
       S tem = pow(base, static_cast<S>(p));
       res += tem;
     }
-    tem_output[pos] = pow(res, 1.0 / p);
+    tem_output[pos] = pow(res, static_cast<S>(1.0 / p));
   }
   return;
 }

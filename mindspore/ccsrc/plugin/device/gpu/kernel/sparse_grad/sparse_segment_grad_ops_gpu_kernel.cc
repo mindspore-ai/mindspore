@@ -225,7 +225,8 @@ std::map<std::string, std::vector<std::pair<KernelAttr, SparseSegmentGradOpsGpuK
 std::vector<KernelAttr> SparseSegmentGradOpsGpuKernelMod::GetOpSupport() {
   auto iter = kernel_attr_map_.find(kernel_type_);
   if (iter == kernel_attr_map_.end()) {
-    MS_LOG(ERROR) << "For 'SparseSegmentGradOpsOp', only support these types: " << kernel::Map2Str(kernel_attr_map_)
+    MS_LOG(ERROR) << "For 'SparseSegmentGradOpsOp', only support these types: "
+                  << kernel::Map2Str<std::map, std::vector<std::pair<KernelAttr, SSGLaunchFunc>>>(kernel_attr_map_)
                   << " currently, but got " << kernel_name_;
   }
   std::vector<KernelAttr> support_list;
