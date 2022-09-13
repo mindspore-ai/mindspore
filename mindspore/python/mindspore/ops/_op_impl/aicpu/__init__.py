@@ -48,7 +48,6 @@ from .is_finite import _is_finite_aicpu
 from .is_inf import _is_inf_aicpu
 from .is_nan import _is_nan_aicpu
 from .reshape import _reshape_aicpu
-from .fill_v2 import _fill_v2_aicpu
 from .flatten import _flatten_aicpu
 from .cosh import _cosh_aicpu
 from .sign import _sign_aicpu
@@ -68,7 +67,6 @@ from .log_uniform_candidate_sampler import _log_uniform_candidate_sampler_aicpu
 from .compute_accidental_hits import _compute_accidental_hits_aicpu
 from .ctcloss import _ctcloss_aicpu
 from .reverse_sequence import _reverse_sequence_aicpu
-from .matrix_determinant import _matrix_determinant_aicpu
 from .log_matrix_determinant import _log_matrix_determinant_aicpu
 from .crop_and_resize import _crop_and_resize_aicpu
 from .acosh import _acosh_aicpu
@@ -78,7 +76,6 @@ from .tanh_grad import _tanh_grad_aicpu
 from .cast import _cast_aicpu
 from .mirror_pad import _mirror_pad_aicpu
 from .mirror_pad_grad import _mirror_pad_grad_aicpu
-from .select import _select_aicpu
 from .masked_select import _masked_select_aicpu
 from .masked_select_grad import _masked_select_grad_aicpu
 from .mul import _mul_aicpu
@@ -146,12 +143,9 @@ from .right_shift import _right_shift_aicpu
 from .tril import _tril_aicpu
 from .linspace import _lin_space_aicpu
 from .triu import _triu_aicpu
-from .transpose import _transpose_aicpu
 from .zeta import _zeta_aicpu
 from .grid_sampler_2d import _grid_sampler_2d_aicpu
 from .grid_sampler_2d_grad import _grid_sampler_2d_grad_aicpu
-from .segment_mean import _segment_mean_aicpu
-from .segment_sum import _segment_sum_aicpu
 from .sparse_segment_mean_grad import _sparse_segment_mean_grad_aicpu
 from .scatter_nd_max import _scatter_nd_max_aicpu
 from .conj import _conj_aicpu
@@ -162,7 +156,6 @@ from .unique_consecutive import _unique_consecutive_aicpu
 from .sparse_tensor_to_csr_sparse_matrix import _sparse_tensor_to_csr_sparse_matrix_aicpu
 from .csr_sparse_matrix_to_sparse_tensor import _csr_sparse_matrix_to_sparse_tensor_aicpu
 from .linear_sum_assignment import _linear_sum_assignment_aicpu
-from .sparse_to_dense_v2 import _sparse_to_dense_v2_aicpu
 from .random_shuffle import _random_shuffle_aicpu
 from .reservoir_replay_buffer import _rrb_create_op_cpu
 from .reservoir_replay_buffer import _rrb_push_op_cpu
