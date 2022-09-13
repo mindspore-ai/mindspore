@@ -33,6 +33,19 @@ class BatchMatMulNet(nn.Cell):
         return self.batch_matmul(x, y)
 
 
+class BatchMatMulDynamicRank(nn.Cell):
+    def __init__(self, transpose_a=False, transpose_b=False):
+        super(BatchMatMulDynamicRank, self).__init__()
+        self.op = P.BatchMatMul(transpose_a, transpose_b)
+        self.reduce_sum = P.ReduceSum(keep_dims=False)
+
+    def construct(self, x, y, dyn_reduce_axis):
+        x = self.reduce_sum(x, dyn_reduce_axis)
+        y = self.reduce_sum(y, dyn_reduce_axis)
+        res = self.op(x, y)
+        return res
+
+
 def judge_result_correct(result, expect):
     assert result.dtype == expect.dtype
     assert result.shape == expect.shape
@@ -43,8 +56,10 @@ def judge_result_correct(result, expect):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_4d_no_transpose_vec():
-    input_x = Tensor(np.arange(2 * 4 * 1 * 3).reshape((2, 4, 1, 3)), mstype.float32)
-    input_y = Tensor(np.arange(2 * 4 * 3 * 4).reshape((2, 4, 3, 4)), mstype.float32)
+    x = np.arange(2 * 4 * 1 * 3).reshape((2, 4, 1, 3)).astype(np.float32)
+    y = np.arange(2 * 4 * 3 * 4).reshape((2, 4, 3, 4)).astype(np.float32)
+    input_x = Tensor(x, mstype.float32)
+    input_y = Tensor(y, mstype.float32)
 
     context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
     net = BatchMatMulNet()
@@ -60,12 +75,23 @@ def test_4d_no_transpose_vec():
     judge_result_correct(output.asnumpy(), expect)
 
     # test dynamic_shape
-    context.set_context(save_graphs=True, save_graphs_path="./graph_ir")
     dyn_shape_net = BatchMatMulNet()
     input_x_dyn = Tensor(shape=[2, None, 1, 3], dtype=mstype.float32)
     input_y_dyn = Tensor(shape=[2, None, 3, 4], dtype=mstype.float32)
     dyn_shape_net.set_inputs(input_x_dyn, input_y_dyn)
     output = dyn_shape_net(input_x, input_y)
+    judge_result_correct(output.asnumpy(), expect)
+
+    # test dynamic_rank
+    dyn_rank_net = BatchMatMulDynamicRank()
+    input_x_dyn = Tensor(shape=[2, None, 1, 3, 1], dtype=mstype.float32)
+    input_y_dyn = Tensor(shape=[2, None, 3, 4, 1], dtype=mstype.float32)
+    dyn_reduce_axis = Tensor(shape=[None], dtype=mstype.int64)
+    dyn_rank_net.set_inputs(input_x_dyn, input_y_dyn, dyn_reduce_axis)
+
+    reduce_axis = np.array([-1], dtype=np.int64)
+    output = dyn_rank_net(Tensor(np.expand_dims(x, -1)),
+                          Tensor(np.expand_dims(y, -1)), Tensor(reduce_axis))
     judge_result_correct(output.asnumpy(), expect)
 
 
