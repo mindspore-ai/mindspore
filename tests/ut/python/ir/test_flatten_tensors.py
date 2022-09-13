@@ -303,5 +303,6 @@ def test_init_data_after_flatten_weights():
     data.fill(2)
     assert np.allclose(data, 2)
     net.para2.init_data()
+    data = Tensor_.asnumpy(net.para2)
     assert np.allclose(data, 1)
     context.set_auto_parallel_context(parallel_mode="stand_alone")

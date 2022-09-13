@@ -1258,7 +1258,7 @@ void FuncGraphSpecializer::ProcessDeferredCNode() {
     func_sepcializer->ProcessCNode(deferred_node);
   }
   // Erase the current context which was parent context of deferred nodes.
-  (void)specializer_->RemoveDeferSpecializeNode(parent_context_it);
+  specializer_->RemoveDeferSpecializeNode(parent_context_it);
 }
 
 namespace {
