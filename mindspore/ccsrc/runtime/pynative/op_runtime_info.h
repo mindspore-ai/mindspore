@@ -25,7 +25,7 @@
 #include "backend/common/session/kernel_graph.h"
 
 namespace mindspore::runtime {
-class OpRuntimeInfo {
+class BACKEND_EXPORT OpRuntimeInfo {
  public:
   OpRuntimeInfo(std::vector<std::string> output_format, std::vector<TypeId> output_type,
                 std::vector<size_t> output_tensor_size, device::KernelInfo *kernel_info,

@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace session {
-class SingleKernelGraph {
+class BACKEND_EXPORT SingleKernelGraph {
  public:
   SingleKernelGraph() = default;
   ~SingleKernelGraph() = default;

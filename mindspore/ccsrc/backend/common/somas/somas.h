@@ -72,7 +72,7 @@ struct Block {
 void MergeBlocks(std::vector<Block> *block_list, std::stack<Block> *merged_blocks);
 
 enum class UnReuseType { kUnReuseAll, kUnReuseInput, kUnReuseOutput, kUnReuseWorkspace };
-class Somas {
+class BACKEND_EXPORT Somas {
  public:
   // Constructors/Destructors
   Somas() = default;

@@ -50,7 +50,7 @@ class GraphKernelOptimizer {
   bool is_cpu{false};
 };
 
-void GraphKernelOptimize(const KernelGraphPtr &kernel_graph);
-bool GraphKernelSupported(const std::vector<AnfNodePtr> &nodes);
+BACKEND_EXPORT void GraphKernelOptimize(const KernelGraphPtr &kernel_graph);
+BACKEND_EXPORT bool GraphKernelSupported(const std::vector<AnfNodePtr> &nodes);
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_ADAPTER_GRAPH_KERNEL_OPTIMIZATION_H_

@@ -29,7 +29,7 @@
 
 namespace mindspore {
 namespace device {
-class TensorsQueue {
+class BACKEND_EXPORT TensorsQueue {
  public:
   // Base TensorsQueue. Constructed by name, dtype, size, elements_num and shapes.
   TensorsQueue(const string &name, const TypePtr &dtype, const int64_t size, const int64_t elements_num,

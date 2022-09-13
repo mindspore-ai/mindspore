@@ -105,7 +105,7 @@ using OpInfoMap = std::unordered_map<std::string, OpInfo>;
 using OpTypeInfos = std::unordered_map<std::string, OpType>;  // <op_full_name, Optype>
 using OpDetailInfos = std::vector<OpDetailInfo>;
 
-class DataSaver {
+class BACKEND_EXPORT DataSaver {
  public:
   DataSaver() = default;
 

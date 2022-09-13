@@ -22,7 +22,7 @@
 #include "backend/common/session/kernel_graph.h"
 
 namespace mindspore::device {
-class LaunchMul {
+class BACKEND_EXPORT LaunchMul {
  public:
   LaunchMul(TypeId dtype, size_t total_size)
       : dtype_(dtype),

@@ -89,7 +89,7 @@ class DeviceContext {
 };
 using DeviceContextPtr = std::shared_ptr<DeviceContext>;
 
-class DeviceResManager {
+class BACKEND_EXPORT DeviceResManager {
  public:
   DeviceResManager() : collective_comm_lib_(nullptr), device_context_(nullptr) {}
   virtual ~DeviceResManager() = default;

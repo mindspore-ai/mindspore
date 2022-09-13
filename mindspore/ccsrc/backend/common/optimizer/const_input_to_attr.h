@@ -69,7 +69,7 @@ struct ConstInputToAttrInfoReceiver {
   }
 };
 
-CNodePtr ConstInputToAttr(const CNodePtr &cnode, const mindspore::HashSet<size_t> &input_attrs);
+BACKEND_EXPORT CNodePtr ConstInputToAttr(const CNodePtr &cnode, const mindspore::HashSet<size_t> &input_attrs);
 }  // namespace opt
 
 #define REG_CONST_INPUT_TO_ATTR(op_name) REG_CONST_INPUT_TO_ATTR_UNIQ_HELPER(__COUNTER__, op_name)

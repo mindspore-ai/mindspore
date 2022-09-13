@@ -33,6 +33,7 @@
 
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
+#include "include/backend/visible.h"
 #include "backend/common/optimizer/visit.h"
 #include "base/base.h"
 #include "utils/log_adapter.h"
@@ -48,7 +49,7 @@ const int kInvalidVarIndex = -2;
 using ConditionFunc = std::function<bool(const BaseRef &)>;
 
 // Base wildcard variable which could match any anf node.
-class Var : public Base {
+class BACKEND_EXPORT Var : public Base {
   friend class VarHasher;
 
  public:
@@ -128,7 +129,7 @@ using Seq = VectorRef;
 using SeqPtr = std::shared_ptr<Seq>;
 
 // Sequence Var which could match multiple consecutive input nodes of a CNode.
-class SeqVar : public Var {
+class BACKEND_EXPORT SeqVar : public Var {
  public:
   SeqVar() { subvar_ = std::make_shared<Var>(); }
   ~SeqVar() override = default;

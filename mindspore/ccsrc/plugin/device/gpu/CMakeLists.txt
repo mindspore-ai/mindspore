@@ -27,7 +27,6 @@ if(ENABLE_GPU)
 endif()
 
 add_library(mindspore_gpu SHARED ${GPU_SUB_OBJECTS_SRC})
-target_link_libraries(mindspore_gpu PUBLIC mindspore_backend_common)
 target_link_libraries(mindspore_gpu PRIVATE mindspore_core mindspore_common proto_input mindspore::protobuf)
 target_link_libraries(mindspore_gpu PRIVATE securec)
 set_target_properties(mindspore_gpu PROPERTIES INSTALL_RPATH ${MINDSPORE_RPATH})

@@ -128,24 +128,25 @@ enum ConvBn1Output {
 };
 
 // check whether node depends on either of nodes or not
-bool IsDepend(const FuncGraph &graph, const AnfNodePtr &node, const std::vector<AnfNodePtr> &nodes);
-bool IsDepend(const FuncGraph &graph, const AnfNodePtr &node, const std::vector<AnfNodePtr> &nodes,
-              mindspore::HashSet<AnfNodePtr> *visited_nodes);
+BACKEND_EXPORT bool IsDepend(const FuncGraph &graph, const AnfNodePtr &node, const std::vector<AnfNodePtr> &nodes);
+BACKEND_EXPORT bool IsDepend(const FuncGraph &graph, const AnfNodePtr &node, const std::vector<AnfNodePtr> &nodes,
+                             mindspore::HashSet<AnfNodePtr> *visited_nodes);
 
-bool UnVisited(const BaseRef &n);
+BACKEND_EXPORT bool UnVisited(const BaseRef &n);
 
-bool Visited(const BaseRef &n);
+BACKEND_EXPORT bool Visited(const BaseRef &n);
 
 // Create new cnode with dump flag and trace info maintained
-CNodePtr NewCNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &fg,
-                  const std::vector<AnfNodePtr> &orig_nodes);
+BACKEND_EXPORT CNodePtr NewCNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &fg,
+                                 const std::vector<AnfNodePtr> &orig_nodes);
 
-CNodePtr NewCNode(const CNodePtr &cnode, const KernelGraphPtr &fg, const std::vector<AnfNodePtr> &orig_nodes);
+BACKEND_EXPORT CNodePtr NewCNode(const CNodePtr &cnode, const KernelGraphPtr &fg,
+                                 const std::vector<AnfNodePtr> &orig_nodes);
 
 // check if the input node is CNode, then check it's input_size, return CNodePtr if check success.
-CNodePtr CheckAnfNodeIfCNodeAndInputSize(const AnfNodePtr &node, size_t input_size);
+BACKEND_EXPORT CNodePtr CheckAnfNodeIfCNodeAndInputSize(const AnfNodePtr &node, size_t input_size);
 
-void CheckCNodeInputSize(const CNodePtr &cnode, size_t input_tensor_size);
+BACKEND_EXPORT void CheckCNodeInputSize(const CNodePtr &cnode, size_t input_tensor_size);
 
 bool HasSymmetricalKernelInfo(const AnfNodePtr &node_x, const AnfNodePtr &node_y);
 
@@ -161,46 +162,48 @@ void CreateOutputsOfFusedBn3(const FuncGraphPtr &graph, const AnfNodePtr &data_i
                              const std::vector<AnfNodePtr> &fused_bn2_outputs, const CNodePtr &bn_node,
                              std::vector<AnfNodePtr> *fused_bn3_outputs);
 
-void CreateMultipleOutputsOfAnfNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, size_t output_num,
-                                    std::vector<AnfNodePtr> *outputs);
+BACKEND_EXPORT void CreateMultipleOutputsOfAnfNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+                                                   size_t output_num, std::vector<AnfNodePtr> *outputs);
 
 tensor::TensorPtr CreateTensorWithValueTuple(const ValueTuplePtr &value_tuple_ptr, const TypePtr &type_ptr,
                                              size_t data_length);
 
 BACKEND_EXPORT tensor::TensorPtr CreateTupleTensor(const ValueTuplePtr &value_tuple);
 
-AnfNodePtr CreateTensorMoveOp(const FuncGraphPtr &graph, const AnfNodePtr &node);
+BACKEND_EXPORT AnfNodePtr CreateTensorMoveOp(const FuncGraphPtr &graph, const AnfNodePtr &node);
 
-std::vector<AnfNodePtr> InsertRefTensorMoveForGraphOutput(const FuncGraphPtr &graph);
+BACKEND_EXPORT std::vector<AnfNodePtr> InsertRefTensorMoveForGraphOutput(const FuncGraphPtr &graph);
 
-std::vector<AnfNodePtr> InsertTensorMoveForGraphOutput(const FuncGraphPtr &graph, const AnfNodePtr &node);
+BACKEND_EXPORT std::vector<AnfNodePtr> InsertTensorMoveForGraphOutput(const FuncGraphPtr &graph,
+                                                                      const AnfNodePtr &node);
 
 bool IsAllNopNode(const session::KernelGraph *const graph);
 
-void HideNopNode(session::KernelGraph *const graph);
+BACKEND_EXPORT void HideNopNode(session::KernelGraph *const graph);
 
-void RemoveNopNode(session::KernelGraph *const graph);
+BACKEND_EXPORT void RemoveNopNode(session::KernelGraph *const graph);
 
-CNodePtr CreatTupleGetItemNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, size_t output_idx);
+BACKEND_EXPORT CNodePtr CreatTupleGetItemNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+                                              size_t output_idx);
 
-ValueNodePtr CreateShapeValueNode(const FuncGraphPtr &func_graph, const std::vector<int64_t> &shape,
-                                  bool to_tensor = false);
+BACKEND_EXPORT ValueNodePtr CreateShapeValueNode(const FuncGraphPtr &func_graph, const std::vector<int64_t> &shape,
+                                                 bool to_tensor = false);
 
-CNodePtr AddCastNode(const FuncGraphPtr &func_graph, const TypeId dst_type, const CNodePtr &node, const bool is_input);
+BACKEND_EXPORT CNodePtr AddCastNode(const FuncGraphPtr &func_graph, const TypeId dst_type, const CNodePtr &node,
+                                    const bool is_input);
 
-AnfNodePtr CreateNodeBase(const FuncGraphPtr &graph, const std::vector<AnfNodePtr> &new_node_inputs,
-                          const AnfNodePtr &node);
+BACKEND_EXPORT AnfNodePtr CreateNodeBase(const FuncGraphPtr &graph, const std::vector<AnfNodePtr> &new_node_inputs,
+                                         const AnfNodePtr &node);
 
-bool IsUsedByOthers(const FuncGraphPtr &graph, const AnfNodePtr &node);
+BACKEND_EXPORT bool IsUsedByOthers(const FuncGraphPtr &graph, const AnfNodePtr &node);
 
-std::shared_ptr<std::vector<std::pair<AnfNodePtr, int>>> GetRealNodeUsedList(const FuncGraphPtr &graph,
-                                                                             const AnfNodePtr &node);
+BACKEND_EXPORT std::shared_ptr<std::vector<std::pair<AnfNodePtr, int>>> GetRealNodeUsedList(const FuncGraphPtr &graph,
+                                                                                            const AnfNodePtr &node);
 
 size_t GetRealNodeNum(const FuncGraphPtr &graph, const AnfNodePtr &node);
 
-std::shared_ptr<std::vector<std::pair<AnfNodePtr, int>>> GetRealNodeUsedListByOutputIdx(const FuncGraphPtr &graph,
-                                                                                        const AnfNodePtr &node,
-                                                                                        size_t output_index);
+BACKEND_EXPORT std::shared_ptr<std::vector<std::pair<AnfNodePtr, int>>> GetRealNodeUsedListByOutputIdx(
+  const FuncGraphPtr &graph, const AnfNodePtr &node, size_t output_index);
 bool IsNotRealUsedByOthers(const FuncGraphPtr &graph, const AnfNodePtr &node);
 
 bool AnfEqual(const BaseRef &a, const BaseRef &b);
@@ -211,43 +214,46 @@ AnfNodePtr SexpToNode(const BaseRef &sexp, const BaseRef &graph, PrimitiveVarMap
                       bool multigraph = false);
 
 // Check var_node in two equivs is the same node
-bool IsSameNode(const EquivPtr &equiv1, const EquivPtr &equiv2, const VarPtr &var_node);
+BACKEND_EXPORT bool IsSameNode(const EquivPtr &equiv1, const EquivPtr &equiv2, const VarPtr &var_node);
 
 // Get anf_node from equiv by var_node
-AnfNodePtr GetAnfNodeByVar(const EquivPtr &equiv, const VarPtr &var_node);
+BACKEND_EXPORT AnfNodePtr GetAnfNodeByVar(const EquivPtr &equiv, const VarPtr &var_node);
 
 // Get tuple getitem's index
 int64_t GetGetitemIndex(const AnfNodePtr &getitem);
 
 // Compare tuple getitem's index, return bool[n1's index < n2's index]
-bool CompareTupleGetitem(const AnfNodePtr &n1, const AnfNodePtr &n2);
+BACKEND_EXPORT bool CompareTupleGetitem(const AnfNodePtr &n1, const AnfNodePtr &n2);
 
 // Get attr which is bool from cnode
-bool GetBoolAttr(const AnfNodePtr &node, const std::string &attr_name);
+BACKEND_EXPORT bool GetBoolAttr(const AnfNodePtr &node, const std::string &attr_name);
 
 // Check node's data type is in supported data type set
-bool CheckSupportDataType(const AnfNodePtr &node, const std::set<TypeId> &supported_data_type_set);
+BACKEND_EXPORT bool CheckSupportDataType(const AnfNodePtr &node, const std::set<TypeId> &supported_data_type_set);
 
 // Create a new value node of func graph, not kernel graph
 ValueNodePtr MakeValueNode(const ValueNodePtr &value_node);
 
 // Transfer depend or updatestate to the new node
-void TransferDependOrUpdateState(const CNodePtr &old_node, const FuncGraphPtr &graph, const CNodePtr &new_node);
+BACKEND_EXPORT void TransferDependOrUpdateState(const CNodePtr &old_node, const FuncGraphPtr &graph,
+                                                const CNodePtr &new_node);
 
 // Infer the shape and write to out abstract.
 void CppInferShape(const PrimitivePtr &prim, const AbstractBasePtrList &args_spec_list, const AbstractBasePtr &out_abs);
 
 // Infer the shape and type.
-AbstractBasePtr CppInferShapeAndType(const PrimitivePtr &prim, const AbstractBasePtrList &args_spec_list);
+BACKEND_EXPORT AbstractBasePtr CppInferShapeAndType(const PrimitivePtr &prim,
+                                                    const AbstractBasePtrList &args_spec_list);
 
 // Generate kernel build info for created kernel
-kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(const std::vector<AnfNodePtr> &node_list);
+BACKEND_EXPORT kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(const std::vector<AnfNodePtr> &node_list);
 
 // Get used number of node's each output
-std::vector<int64_t> GetNodeOutputUsedNum(const session::KernelGraph &kernel_graph, const AnfNodePtr &node);
+BACKEND_EXPORT std::vector<int64_t> GetNodeOutputUsedNum(const session::KernelGraph &kernel_graph,
+                                                         const AnfNodePtr &node);
 
 // Get total used number of node's output
-int64_t GetNodeOutputTotalUsedNum(const session::KernelGraph &kernel_graph, const AnfNodePtr &node);
+BACKEND_EXPORT int64_t GetNodeOutputTotalUsedNum(const session::KernelGraph &kernel_graph, const AnfNodePtr &node);
 
 // Get custom operator attr input indexes
 BACKEND_EXPORT void GetCustomOpAttrIndex(const PrimitivePtr &primitive, mindspore::HashSet<size_t> *indexes);

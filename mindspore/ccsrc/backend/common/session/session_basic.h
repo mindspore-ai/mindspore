@@ -339,6 +339,6 @@ using NamedSummaryOutputs = std::map<std::string, std::pair<AnfNodePtr, int>>;
 }  // namespace session
 BACKEND_EXPORT void DumpGraphExeOrder(const std::string &file_name, const std::string &target_dir,
                                       const std::vector<CNodePtr> &execution_order);
-uint32_t GetRankId();
+BACKEND_EXPORT uint32_t GetRankId();
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_SESSION_SESSION_BASIC_H

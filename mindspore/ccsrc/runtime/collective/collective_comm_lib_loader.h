@@ -21,10 +21,11 @@
 #include <memory>
 #include "utils/dlopen_macro.h"
 #include "runtime/collective/collective_communication_lib.h"
+#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace device {
-class CollectiveCommLibLoader {
+class BACKEND_EXPORT CollectiveCommLibLoader {
  public:
   explicit CollectiveCommLibLoader(const std::string &comm_lib_name)
       : collective_comm_lib_ptr_(nullptr), comm_lib_name_(comm_lib_name) {}

@@ -16,12 +16,13 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_COMMON_SUBEXPRESSION_ELIMINATION_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_COMMON_SUBEXPRESSION_ELIMINATION_H_
 #include <string>
+#include "include/backend/visible.h"
 #include "backend/common/optimizer/pass.h"
 #include "include/common/utils/cse.h"
 
 namespace mindspore {
 namespace opt {
-class CommonSubexpressionElimination : public Pass {
+class BACKEND_EXPORT CommonSubexpressionElimination : public Pass {
  public:
   explicit CommonSubexpressionElimination(const std::string &name = "cse") : Pass(name) {}
   ~CommonSubexpressionElimination() override = default;

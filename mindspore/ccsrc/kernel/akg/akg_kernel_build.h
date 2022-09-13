@@ -33,7 +33,7 @@ namespace kernel {
 using graphkernel::AkgKernelJsonGenerator;
 using JsonNodePair = std::pair<AkgKernelJsonGenerator, AnfNodePtr>;
 
-class AkgKernelBuilder {
+class BACKEND_EXPORT AkgKernelBuilder {
  public:
   AkgKernelBuilder() = default;
   virtual ~AkgKernelBuilder() = default;

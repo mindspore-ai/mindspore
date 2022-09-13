@@ -23,6 +23,7 @@
 #include <mutex>
 
 #include "utils/ms_utils.h"
+#include "include/backend/visible.h"
 
 namespace mindspore {
 class Debugger;
@@ -49,7 +50,7 @@ class CsvWriter {
   std::string file_path_str_ = "";
 };
 
-class TensorStatDump {
+class BACKEND_EXPORT TensorStatDump {
  public:
   static bool OpenStatisticsFile(const std::string &dump_path);
 

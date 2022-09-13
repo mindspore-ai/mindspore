@@ -19,10 +19,10 @@
 #include "backend/common/session/kernel_graph.h"
 namespace mindspore {
 namespace opt {
-void BackendCommonOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph);
-void CommonFinalOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph);
-void CommonUnifyMindIR(const std::shared_ptr<session::KernelGraph> &kernel_graph);
-void AddDynamicShapeAttrPass(const std::shared_ptr<session::KernelGraph> &kernel_graph);
+BACKEND_EXPORT void BackendCommonOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph);
+BACKEND_EXPORT void CommonFinalOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph);
+BACKEND_EXPORT void CommonUnifyMindIR(const std::shared_ptr<session::KernelGraph> &kernel_graph);
+BACKEND_EXPORT void AddDynamicShapeAttrPass(const std::shared_ptr<session::KernelGraph> &kernel_graph);
 void EliminateIllegalDataTypePass(const std::shared_ptr<session::KernelGraph> &kernel_graph);
 void DynamicShapeConvertPass(const std::shared_ptr<session::KernelGraph> &kernel_graph);
 }  // namespace opt

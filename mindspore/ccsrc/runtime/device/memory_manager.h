@@ -32,7 +32,7 @@ constexpr uint64_t kMemAlignSize = 512;
 constexpr uint64_t kTwiceMemAlignSize = kMemAlignSize << 1;
 using SomasAllocatorPtr = mindspore::device::CommonSomasAllocatorPtr;
 
-class MemoryManager {
+class BACKEND_EXPORT MemoryManager {
  public:
   MemoryManager() = default;
   virtual ~MemoryManager() = default;

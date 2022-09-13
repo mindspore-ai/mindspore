@@ -18,14 +18,14 @@
 #include <string>
 #include <vector>
 #include <set>
-
+#include "include/backend/visible.h"
 #include "backend/common/optimizer/pass.h"
 #include "ir/func_graph.h"
 #include "ir/anf.h"
 
 namespace mindspore {
 namespace opt {
-class DropoutGenMaskFusion : public Pass {
+class BACKEND_EXPORT DropoutGenMaskFusion : public Pass {
  public:
   DropoutGenMaskFusion() : Pass("DropoutGenMask") {}
   ~DropoutGenMaskFusion() override = default;

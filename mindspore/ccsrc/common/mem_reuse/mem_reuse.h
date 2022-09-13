@@ -37,7 +37,7 @@ using KernelRefs = std::map<KernelKey, KernelRefCountPtrList>;
 
 using KernelGraph = mindspore::session::KernelGraph;
 
-class MemReuseUtil {
+class BACKEND_EXPORT MemReuseUtil {
  public:
   KernelRefCountPtrList total_refs_list_;
   KernelRefCountPtrList total_wk_ref_list_;

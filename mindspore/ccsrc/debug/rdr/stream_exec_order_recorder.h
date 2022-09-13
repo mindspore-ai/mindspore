@@ -99,7 +99,8 @@ class StreamExecOrderRecorder : public BaseRecorder {
 };
 using StreamExecOrderRecorderPtr = std::shared_ptr<StreamExecOrderRecorder>;
 namespace RDR {
-bool RecordStreamExecOrder(const SubModuleId module, const std::string &name, const std::vector<CNodePtr> &exec_order);
+BACKEND_EXPORT bool RecordStreamExecOrder(const SubModuleId module, const std::string &name,
+                                          const std::vector<CNodePtr> &exec_order);
 }  // namespace RDR
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_DEBUG_RDR_STREAM_EXEC_ORDER_RECORDER_H_

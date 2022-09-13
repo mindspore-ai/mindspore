@@ -20,7 +20,7 @@
 
 namespace mindspore {
 namespace opt {
-class GetitemTuple : public PatternProcessPass {
+class BACKEND_EXPORT GetitemTuple : public PatternProcessPass {
  public:
   explicit GetitemTuple(bool multigraph = true) : PatternProcessPass("getitem_tuple", multigraph) {}
   ~GetitemTuple() override = default;

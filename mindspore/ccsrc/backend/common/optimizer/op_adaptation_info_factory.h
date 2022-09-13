@@ -45,7 +45,7 @@ class InputAttrInfo {
   std::string attr_data_type_;
 };
 
-class OpAdaptationInfo {
+class BACKEND_EXPORT OpAdaptationInfo {
  public:
   OpAdaptationInfo(const std::string &origin_op_name, const std::string &device_name, bool flag)
       : origin_op_name_(origin_op_name), target_op_name_(origin_op_name), device_name_(device_name), flag_(flag) {}
@@ -144,7 +144,7 @@ class BACKEND_EXPORT OpAdaptationInfoRegister {
   inline static std::map<std::string, OpAdaptationInfo *> op_info_map_;
 };
 
-class RegisterHelper {
+class BACKEND_EXPORT RegisterHelper {
  public:
   RegisterHelper(const std::string &name, const std::string &device_name, bool is_dynamic_shape, int len, ...);
   RegisterHelper(const OpAdaptationInfo &op_adaptation_info);

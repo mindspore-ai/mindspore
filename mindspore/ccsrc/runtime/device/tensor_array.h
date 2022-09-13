@@ -28,7 +28,7 @@
 
 namespace mindspore {
 namespace device {
-class TensorArray {
+class BACKEND_EXPORT TensorArray {
  public:
   // Base TensorArray. Constructed by name, dtype and shapes.
   TensorArray(const string &name, const TypePtr &dtype, const ShapeVector &shapes)
