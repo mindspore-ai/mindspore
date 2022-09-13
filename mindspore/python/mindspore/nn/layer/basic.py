@@ -107,7 +107,7 @@ class Dropout(Cell):
     Randomly set some elements of the input tensor to zero with probability :math:`1 - keep\_prob` during training
     using samples from a Bernoulli distribution.
 
-    The outputs are scaled by a factor of :math:`\frac{1}{keep\_prob}`    during training so
+    The outputs are scaled by a factor of :math:`\frac{1}{keep\_prob}` during training so
     that the output layer remains at a similar scale. During inference, this
     layer returns the same tensor as the `x`.
 

@@ -34,7 +34,7 @@ mindspore.nn.Rprop
           .. include:: mindspore.nn.optim_group_gc.rst
           .. include:: mindspore.nn.optim_group_order.rst
 
-        - **learning_rate** (Union[float, int, Tensor, Iterable, LearningRateSchedule]) -
+        - **learning_rate** (Union[float, int, Tensor, Iterable, LearningRateSchedule]) - 
 
           .. include:: mindspore.nn.optim_arg_dynamic_lr.rst
 

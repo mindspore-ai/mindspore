@@ -35,7 +35,7 @@ mindspore.nn.Adagrad
             &\hline \\
        \end{array}
 
-    :math:`state\_sum` 表示梯度平方的累积和 :math:`accum` ，:math:`g` 表示 `grads` ，:math:`\lambda` 代表 `weight_decay`  。
+    :math:`state\_sum` 表示梯度平方的累积和 :math:`accum` 。:math:`g` 表示 `grads` ，:math:`\lambda` 代表 `weight_decay`  。
     :math:`\gamma` 代表 `learning_rate`，:math:`w` 代表 `params` 。
 
     .. note::
@@ -51,7 +51,7 @@ mindspore.nn.Adagrad
           .. include:: mindspore.nn.optim_group_order.rst
 
         - **accum** (float) - 累加器 :math:`h` 的初始值，必须大于等于零。默认值：0.1。
-        - **learning_rate** (Union[float, Tensor, Iterable, LearningRateSchedule]) - 默认值：0.001。
+        - **learning_rate** (Union[float, int, Tensor, Iterable, LearningRateSchedule]) - 默认值：0.001。
 
           .. include:: mindspore.nn.optim_arg_dynamic_lr.rst
 

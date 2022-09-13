@@ -160,11 +160,13 @@ class BuiltinSampler:
 
     def get_num_samples(self):
         """
-        All samplers can contain a numeric num_samples value (or it can be set to None).
-        A child sampler can exist or be None.
-        If a child sampler exists, then the child sampler count can be a numeric value or None.
-        These conditions impact the resultant sampler count that is used.
-        The following table shows the possible results from calling this function.
+        Get num_samples value of the current sampler instance.
+        This parameter can be optionally passed in when defining the Sampler (default is None).
+        This method will return the num_samples value.
+        If the current sampler has child samplers,
+        it will continue to access the child samplers and process the obtained value according to certain rules.
+
+        The following table shows the various possible combinations, and the final results returned.
 
         .. list-table::
            :widths: 25 25 25 25

@@ -1,6 +1,7 @@
 .. py:method:: build_sentencepiece_vocab(columns, vocab_size, character_coverage, model_type, params)
 
     迭代源数据集对象获取数据并构建SentencePiece词汇表。
+    源数据集要求的是文本类数据集。
 
     参数：
         - **columns** (list[str]) - 指定 `build_sentencepiece_vocab` 操作的输入列，会从该列获取数据构造词汇表。
@@ -17,8 +18,9 @@
 .. py:method:: build_vocab(columns, freq_range, top_k, special_tokens, special_first)
 
     迭代源数据集对象获取数据并构建词汇表。
+    源数据集要求的是文本类数据集。
 
-    收集数据集中所有的不重复单词，并返回 `top_k` 个最常见的单词组成的词汇表（如果指定了 `top_k` ）。
+    收集数据集中所有的不重复单词。返回 `top_k` 个最常见的单词组成的词汇表（如果指定了 `top_k` ）。
 
     参数：
         - **columns** (Union[str, list[str]]) - 指定 `build_vocab` 操作的输入列，会从该列获取数据构造词汇表。

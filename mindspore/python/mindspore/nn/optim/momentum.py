@@ -66,7 +66,7 @@ class Momentum(Optimizer):
     Implements the Momentum algorithm.
 
     Refer to the paper `On the importance of initialization and momentum in deep
-    learning <https://dl.acm.org/doi/10.5555/3042817.3043064>`_  for more details.
+    learning <https://dl.acm.org/doi/10.5555/3042817.3043064>`_ for more details.
 
     .. math::
             v_{t+1} = v_{t} \ast u + grad
