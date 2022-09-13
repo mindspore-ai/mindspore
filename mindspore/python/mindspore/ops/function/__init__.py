@@ -267,7 +267,8 @@ from .math_func import (
     rot90,
     remainder,
     iou,
-    bmm
+    bmm,
+    trapz
 )
 from .nn_func import (
     adaptive_avg_pool1d,
