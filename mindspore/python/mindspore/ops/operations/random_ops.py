@@ -640,7 +640,7 @@ class UniformReal(StandardNormal):
     """
 
 
-class RandomChoiceWithMask(PrimitiveWithInfer):
+class RandomChoiceWithMask(Primitive):
     """
     Generates a random sample as index tensor with a mask tensor from a given tensor.
 
@@ -692,15 +692,6 @@ class RandomChoiceWithMask(PrimitiveWithInfer):
         Validator.check_value_type('seed', seed, [int], self.name)
         Validator.check_value_type('seed2', seed2, [int], self.name)
         self.add_prim_attr("side_effect_hidden", True)
-
-    def infer_shape(self, x_shape):
-        Validator.check_int(len(x_shape), 1, Rel.GE, "input_x rank", self.name)
-        Validator.check_int(len(x_shape), 5, Rel.LE, "input_x rank", self.name)
-        return [self.count, len(x_shape)], [self.count]
-
-    def infer_dtype(self, x_dtype):
-        Validator.check_tensor_dtype_valid('x', x_dtype, [mstype.bool_], self.name)
-        return mstype.int32, mstype.bool_
 
 
 class RandomCategorical(PrimitiveWithInfer):

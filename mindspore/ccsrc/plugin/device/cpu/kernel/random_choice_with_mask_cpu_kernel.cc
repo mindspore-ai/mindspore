@@ -16,7 +16,7 @@
 
 #include "plugin/device/cpu/kernel/random_choice_with_mask_cpu_kernel.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
-#define MAX_DIMENSION 5
+#include "mindspore/core/ops/random_choice_with_mask.h"
 
 namespace mindspore {
 namespace kernel {
@@ -81,51 +81,34 @@ void UpdateOutput(const std::vector<int32_t> &dims_, const int32_t &non_zero_num
   }
 }
 
-void RandomChoiceWithMaskCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  if (input_num != INPUT_NUM) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of inputs must be 1, but got " << input_num
-                  << "input(s).";
-  }
+bool RandomChoiceWithMaskCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                            const std::vector<KernelTensorPtr> &inputs,
+                                            const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->GetPrim()->name();
+  constexpr size_t input_num = 1;
+  constexpr size_t output_num = 2;
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
 
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-  if (output_num != OUTPUT_NUM) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of outputs must be 2, but got " << output_num
-                  << "output(s).";
-  }
-
-  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  input_shape_size = input_shape.size();
-  if (input_shape_size < 1 || input_shape_size > MAX_DIMENSION) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'input_x ' must be in range [1-D, 5-D], but got "
-                  << input_shape_size << "-D.";
-  }
-
-  seed = static_cast<size_t>(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "seed"));
-  seed2 = static_cast<size_t>(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "seed2"));
-  count = static_cast<int>(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "count"));
-
-  MS_LOG(INFO) << "This op attr count is " << count;
-
-  for (size_t i = 0; i < input_num; i++) {
-    auto input_i_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, i);
-    for (size_t j = 0; j < input_i_shape.size(); j++) {
-      (void)dims.emplace_back(input_i_shape[j]);
-    }
-  }
-  input_dim_size = SizeToInt(dims.size());
-  if (input_dim_size < 1 || input_dim_size > MAX_INPUT_DIMS) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dimension of 'input_x' must be in range [1-D, 5-D], but got " << input_dim_size
-                      << "-D.";
-  }
+  auto random_choice_with_mask_ptr = std::dynamic_pointer_cast<ops::RandomChoiceWithMask>(base_operator);
+  seed = random_choice_with_mask_ptr->get_seed();
+  seed2 = random_choice_with_mask_ptr->get_seed2();
+  count = random_choice_with_mask_ptr->get_count();
+  return true;
 }
 
-void RandomChoiceWithMaskCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
-  DeprecatedNativeCpuKernelMod::InitInputOutputSize(kernel_node);
-
+int RandomChoiceWithMaskCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                             const std::vector<KernelTensorPtr> &inputs,
+                                             const std::vector<KernelTensorPtr> &outputs,
+                                             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+    return ret;
+  }
+  auto x_shape = inputs[kIndex0]->GetShapeVector();
+  for (size_t i = 0; i < x_shape.size(); i++) {
+    (void)dims.emplace_back(LongToInt(x_shape[i]));
+  }
+  input_dim_size = SizeToInt(dims.size());
   GetInputTotalCount(dims, &input_total_count, input_dim_size);
   int temp_output_length = count > 0 ? count : input_total_count;
 
@@ -133,6 +116,7 @@ void RandomChoiceWithMaskCpuKernelMod::InitInputOutputSize(const CNodePtr &kerne
   workspace_size_list_.push_back(IntToSize(temp_output_length) * sizeof(int));
   workspace_size_list_.push_back(IntToSize(temp_output_length) * sizeof(int));
   workspace_size_list_.push_back(IntToSize(temp_output_length) * IntToSize(input_dim_size) * sizeof(int));
+  return KRET_OK;
 }
 
 bool RandomChoiceWithMaskCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,

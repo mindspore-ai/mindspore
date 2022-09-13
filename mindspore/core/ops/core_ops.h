@@ -1456,6 +1456,7 @@ GVAR_DEF(PrimitivePtr, kPrimRandomCategorical, std::make_shared<Primitive>("Rand
 GVAR_DEF(PrimitivePtr, kPrimRandperm, std::make_shared<Primitive>("Randperm"));
 GVAR_DEF(PrimitivePtr, kPrimUniformCandidateSampler, std::make_shared<Primitive>("UniformCandidateSampler"));
 GVAR_DEF(PrimitivePtr, kPrimMultinomial, std::make_shared<Primitive>("Multinomial"));
+GVAR_DEF(PrimitivePtr, kPrimRandomChoiceWithMask, std::make_shared<Primitive>("RandomChoiceWithMask"));
 
 // RL Ops
 GVAR_DEF(PrimitivePtr, kPrimTensorArrayStack, std::make_shared<Primitive>("TensorArrayStack"));
