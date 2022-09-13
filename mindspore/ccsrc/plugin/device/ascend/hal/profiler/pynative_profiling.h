@@ -16,7 +16,6 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_HAL_PROFILER_PYNATIVE_PROFILING_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_HAL_PROFILER_PYNATIVE_PROFILING_H_
 
-#include <cstdio>
 #include <map>
 #include <string>
 #include <unordered_map>
@@ -35,9 +34,9 @@ struct PynativeOpInfo {
   std::string op_name;
   int thread_index;
   // the unit is ms
-  double_t start_timestamp = 0l;
+  double_t start_timestamp = 0.0;
   // the unit is ms
-  double_t duration = 0l;
+  double_t duration = 0.0;
   void *stream{nullptr};
   std::shared_ptr<DeviceEvent> start;
   std::shared_ptr<DeviceEvent> end;
@@ -52,25 +51,27 @@ class MS_CORE_API PynativeProfiler : public Profiler {
   void Finalize() override {}
   void Start() override {}
   void Stop() override;
-  void OpDataProducerBegin(AscendKernelRuntime *runtime_instance_, void *stream, std::thread::id thread_id,
+  void OpDataProducerBegin(AscendKernelRuntime *runtime_instance_, void *stream, const std::thread::id thread_id,
                            const std::string &op_name, bool is_dynamic_shape);
   void OpDataProducerEnd() override;
-  void OpDataProducerEnd(std::thread::id thread_id, bool is_dynamic_shape);
+  void OpDataProducerEnd(const std::thread::id thread_id, bool is_dynamic_shape);
   void StepProfilingEnable(const bool enable_flag) override;
+
+ protected:
+  void SaveProfileData() override;
+  void ClearInst() override;
 
  private:
   void WriteOpDetail(const std::string &out_path_dir);
   void WriteStartTime();
-  void SaveProfileData() override;
-  void ClearInst() override;
-  int NewThreadIndex();
+  int NewThreadIndex() const;
 
-  std::int32_t rank_id_;
+  std::int32_t rank_id_ = 0;
   std::vector<PynativeOpInfo> pynative_op_info_;
-  bool enable_flag_ = false;
   const uint64_t kUSecondInSecond = 1000000;
+  const int64_t milli_second_ratio = 1000;
   std::map<std::thread::id, PynativeOpInfo> thread_op_info_map_;
-  std::shared_mutex op_map_mutex_;
+  std::shared_mutex pynatiave_op_map_mutex_;
 };
 }  // namespace ascend
 }  // namespace profiler

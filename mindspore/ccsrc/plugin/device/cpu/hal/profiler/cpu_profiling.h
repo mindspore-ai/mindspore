@@ -17,12 +17,10 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_HAL_PROFILER_CPU_PROFILING_H
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_HAL_PROFILER_CPU_PROFILING_H
 #include <algorithm>
-#include <cstdio>
 #include <map>
 #include <memory>
 #include <string>
 #include <unordered_map>
-#include <utility>
 #include <vector>
 #include <optional>
 #include "profiler/device/profiling.h"

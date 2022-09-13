@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_HAL_PROFILER_CPU_DATA_SAVER_H
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_HAL_PROFILER_CPU_DATA_SAVER_H
 #include <iostream>
-#include <algorithm>
 #include <unordered_map>
 #include <vector>
 #include <string>

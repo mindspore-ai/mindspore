@@ -36,9 +36,9 @@ class ParallelStrategy {
   void SaveParallelStrategyToFile();
 
  private:
-  irpb::ProfilingParallel GetProfilingParallel(const FuncGraphPtr &func_graph);
-  bool IsProfilingParallelStrategyEnabled();
-  bool StringToInt(std::string *str, int32_t *value);
+  irpb::ProfilingParallel GetProfilingParallel();
+  bool IsProfilingParallelStrategyEnabled() const;
+  bool StringToInt(const std::string *str, int32_t *value) const;
 
   static std::shared_ptr<ParallelStrategy> parallel_strategy_inst_;
   bool has_save_parallel_strategy = false;

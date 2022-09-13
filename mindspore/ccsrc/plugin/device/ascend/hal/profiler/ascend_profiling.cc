@@ -115,7 +115,7 @@ uint64_t AscendProfiler::GetOptionsMask() const {
     options_json = nlohmann::json::parse(profiling_options_);
   } catch (const std::exception &err) {
     MS_LOG(ERROR) << "Failed to parse profiling options.";
-    return ACL_AICORE_NONE;
+    return static_cast<uint64_t>(ACL_AICORE_NONE);
   }
 
   if (options_json["task_trace"] == "on") {
@@ -222,7 +222,7 @@ void AscendProfiler::GetNodeTaskIdStreamId(const CNodePtr &kernel, uint32_t grap
   if (task_id <= last_tid[t_id] && stream_id == last_streamid[t_id]) {
     MS_LOG(INFO) << "No task id is allocated to the node <" << kernel->fullname_with_scope() << ">.";
   } else {
-    if (task_id >= max_op_taskid_limit_ && (uint32_t)kernel_type == aicpu_kernel_type_) {
+    if (task_id >= max_op_taskid_limit_ && static_cast<uint32_t>(kernel_type) == aicpu_kernel_type_) {
       aicpu_task_id = task_id % max_op_taskid_limit_;
       reporter.DynamicNodeReport(kernel, stream_id, aicpu_task_id, kernel_type);
     } else {

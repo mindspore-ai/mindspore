@@ -42,7 +42,7 @@ std::shared_ptr<ParallelStrategy> &ParallelStrategy::GetInstance() {
   return parallel_strategy_inst_;
 }
 
-bool ParallelStrategy::IsProfilingParallelStrategyEnabled() {
+bool ParallelStrategy::IsProfilingParallelStrategyEnabled() const {
   auto ascend_profiler = Profiler::GetInstance(kAscendDevice);
   MS_EXCEPTION_IF_NULL(ascend_profiler);
   if (!ascend_profiler->IsInitialized() || !ascend_profiler->GetParallelStrategyEnableFlag()) {
@@ -68,7 +68,7 @@ bool ParallelStrategy::IsProfilingParallelStrategyEnabled() {
   return false;
 }
 
-bool ParallelStrategy::StringToInt(std::string *str, int32_t *value) {
+bool ParallelStrategy::StringToInt(const std::string *str, int32_t *value) const {
   try {
     *value = stoi(*str);
   } catch (std::invalid_argument &) {
@@ -78,7 +78,7 @@ bool ParallelStrategy::StringToInt(std::string *str, int32_t *value) {
   return true;
 }
 
-irpb::ProfilingParallel ParallelStrategy::GetProfilingParallel(const FuncGraphPtr &func_graph) {
+irpb::ProfilingParallel ParallelStrategy::GetProfilingParallel() {
   irpb::ProfilingParallel profiling_parallel;
 
   // set parallel model
@@ -127,7 +127,7 @@ irpb::ProfilingParallel ParallelStrategy::GetProfilingParallel(const FuncGraphPt
     if (!ret) {
       MS_LOG(EXCEPTION) << "The given RANK_ID is an invalid digit string.";
     }
-    config->set_rank_id(rank_id_int);
+    config->set_rank_id(static_cast<uint32_t>(rank_id_int));
   }
 
   has_got_parallel_strategy_data = true;
@@ -141,7 +141,7 @@ void ParallelStrategy::DumpProfileParallelStrategy(const FuncGraphPtr &func_grap
 
   MS_LOG(INFO) << "Start to DumpProfileParallelStrategy.";
 
-  cache_profiling_parallel_pb = GetProfilingParallel(func_graph);
+  cache_profiling_parallel_pb = GetProfilingParallel();
   graph_proto_str = GetFuncGraphProtoJsonString(func_graph);
 
   auto ascend_profiler = Profiler::GetInstance(kAscendDevice);
