@@ -638,30 +638,7 @@ class RandomChoiceWithMask(Primitive):
     """
     Generates a random sample as index tensor with a mask tensor from a given tensor.
 
-    The input must be a tensor of rank not less than 1. If its rank is greater than or equal to 2,
-    the first dimension specifies the number of samples.
-    The index tensor and the mask tensor have the fixed shapes. The index tensor denotes the index of the nonzero
-    sample, while the mask tensor denotes which elements in the index tensor are valid.
-
-    Args:
-        count (int): Number of items expected to get and the number must be greater than 0. Default: 256.
-        seed (int): Random seed. Default: 0.
-        seed2 (int): Random seed2. Default: 0.
-
-    Inputs:
-        - **input_x** (Tensor[bool]) - The input tensor.
-          The input tensor rank must be greater than or equal to 1 and less than or equal to 5.
-
-    Outputs:
-        Two tensors, the first one is the index tensor and the other one is the mask tensor.
-
-        - **index** (Tensor) - The output shape is 2-D.
-        - **mask** (Tensor) - The output shape is 1-D.
-
-    Raises:
-        TypeError: If `count` is not an int.
-        TypeError: If neither `seed` nor `seed2` is an int.
-        TypeError: If `input_x` is not a Tensor.
+    Refer to :func:'mindspore.ops.choice_with_mask' for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
