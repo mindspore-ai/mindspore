@@ -18,6 +18,7 @@
 #include "frontend/operator/composite/composite.h"
 #include "include/common/pybind_api/api_register.h"
 #include "frontend/operator/composite/list_operation.h"
+#include "frontend/operator/composite/dict_operation.h"
 #include "frontend/operator/composite/map.h"
 #include "frontend/operator/composite/unpack_call.h"
 #include "frontend/operator/composite/vmap.h"
@@ -101,6 +102,22 @@ void RegCompositeOpsGroup(const py::module *m) {
 
   // Reg ListCount
   (void)py::class_<ListCount, MetaFuncGraph, std::shared_ptr<ListCount>>(*m, "ListCount_")
+    .def(py::init<const std::string &>());
+
+  // Reg DictClear
+  (void)py::class_<DictClear, MetaFuncGraph, std::shared_ptr<DictClear>>(*m, "DictClear_")
+    .def(py::init<const std::string &>());
+
+  // Reg DictHasKey
+  (void)py::class_<DictHasKey, MetaFuncGraph, std::shared_ptr<DictHasKey>>(*m, "DictHasKey_")
+    .def(py::init<const std::string &>());
+
+  // Reg DictUpdate
+  (void)py::class_<DictUpdate, MetaFuncGraph, std::shared_ptr<DictUpdate>>(*m, "DictUpdate_")
+    .def(py::init<const std::string &>());
+
+  // Reg DictFromKeys
+  (void)py::class_<DictFromKeys, MetaFuncGraph, std::shared_ptr<DictFromKeys>>(*m, "DictFromKeys_")
     .def(py::init<const std::string &>());
 
   // Reg MapPy

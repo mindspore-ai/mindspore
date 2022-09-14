@@ -30,6 +30,8 @@ from ...ops import functional as F
 from ...ops import operations as P
 from ...ops.composite import tail, core, MultitypeFuncGraph, env_get, hyper_add, \
     zeros_like, ones_like, repeat_elements
+from ...ops.composite.base import _append, _insert, _pop, _list_clear, _reverse, \
+    _count, _extend, _dict_clear, _haskey, _update, _fromkeys
 from ...ops.composite.multitype_ops import _constexpr_utils as const_utils
 from ...ops.composite.multitype_ops import _compile_utils as compile_utils
 from ...ops.operations.math_ops import Median
@@ -2823,7 +2825,29 @@ def list_count(self_, value):
 
 def dict_get(self_, key_index, default_value=None):
     """Get value by key from dict"""
-    return F.dict_getitem(self_, key_index, default_value)
+    if not _haskey(self_, key_index):
+        return default_value
+    return F.dict_getitem(self_, key_index)
+
+
+def dict_clear(self_):
+    """Clear the dict"""
+    return _dict_clear(self_)
+
+
+def dict_haskey(self_, key_index):
+    """Check if key is in dict"""
+    return _haskey(self_, key_index)
+
+
+def dict_update(self_, dict_obj):
+    """Update the dict"""
+    return _update(self_, dict_obj)
+
+
+def dict_fromkeys(self_, seq, value=None):
+    """Check if key is in dict"""
+    return _fromkeys(self_, seq, value)
 
 
 #################
