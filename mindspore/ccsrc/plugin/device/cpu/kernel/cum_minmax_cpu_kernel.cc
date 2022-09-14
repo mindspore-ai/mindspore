@@ -34,7 +34,52 @@ inline bool IsNan(T x) {
   return std::isnan(x);
 }
 
-inline bool IsNan(float16 x) { return isnan(x); }
+template <>
+inline bool IsNan<float16>(float16 x) {
+  return isnan(x);
+}
+
+#ifdef _MSC_VER
+template <>
+inline bool IsNan<int8_t>(int8_t x) {
+  return isnan(static_cast<double>(x));
+}
+
+template <>
+inline bool IsNan<uint8_t>(uint8_t x) {
+  return isnan(static_cast<double>(x));
+}
+
+template <>
+inline bool IsNan<int16_t>(int16_t x) {
+  return isnan(static_cast<double>(x));
+}
+
+template <>
+inline bool IsNan<uint16_t>(uint16_t x) {
+  return isnan(static_cast<double>(x));
+}
+
+template <>
+inline bool IsNan<int32_t>(int32_t x) {
+  return isnan(static_cast<double>(x));
+}
+
+template <>
+inline bool IsNan<uint32_t>(uint32_t x) {
+  return isnan(static_cast<double>(x));
+}
+
+template <>
+inline bool IsNan<int64_t>(int64_t x) {
+  return isnan(static_cast<double>(x));
+}
+
+template <>
+inline bool IsNan<uint64_t>(uint64_t x) {
+  return isnan(static_cast<double>(x));
+}
+#endif
 
 template <typename T, typename S, typename BinaryOp>
 inline void CumMinMax(const T *input_ptr, T *value_ptr, S *index_ptr, BinaryOp op, size_t axis_inner_size,

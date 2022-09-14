@@ -42,7 +42,8 @@ abstract::ShapePtr CSRSparseMatrixToDenseInferShape(const PrimitivePtr &primitiv
   const int64_t rank = d_shape_shape[kZero];
   std::vector<uint64_t> tensor_ranks{d_shape_shape.size(), c_ind_shape.size(), values_shape.size(), r_ptrs_shape.size(),
                                      b_ptrs_shape.size()};
-  if (std::any_of(tensor_ranks.cbegin(), tensor_ranks.cend(), [](const uint64_t i) { return i != kOne; })) {
+  if (std::any_of(tensor_ranks.cbegin(), tensor_ranks.cend(),
+                  [&kOne](const uint64_t i) { return i != static_cast<uint64_t>(kOne); })) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', each input should be 1-D, but got "
                              << "'x_dense_shape' rank " << d_shape_shape.size() << ", 'x_batch_pointers' rank "
                              << b_ptrs_shape.size() << ", 'x_row_pointers' rank " << r_ptrs_shape.size()

@@ -52,6 +52,7 @@ DataType InferType(const AnyPtrList &list) {
 
 template <typename T>
 T InnerScalarAdd(T x, T y) {
+#ifndef _MSC_VER
   if constexpr (std::is_integral<T>::value && std::is_signed<T>::value) {
     T res;
     if (__builtin_add_overflow(x, y, &res)) {
@@ -60,11 +61,13 @@ T InnerScalarAdd(T x, T y) {
     }
     return res;
   }
+#endif
   return x + y;
 }
 
 template <typename T>
 T InnerScalarSub(T x, T y) {
+#ifndef _MSC_VER
   if constexpr (std::is_integral<T>::value && std::is_signed<T>::value) {
     T res;
     if (__builtin_sub_overflow(x, y, &res)) {
@@ -73,11 +76,13 @@ T InnerScalarSub(T x, T y) {
     }
     return res;
   }
+#endif
   return x - y;
 }
 
 template <typename T>
 T InnerScalarMul(T x, T y) {
+#ifndef _MSC_VER
   if constexpr (std::is_integral<T>::value && std::is_signed<T>::value) {
     T res;
     if (__builtin_mul_overflow(x, y, &res)) {
@@ -86,6 +91,7 @@ T InnerScalarMul(T x, T y) {
     }
     return res;
   }
+#endif
   return x * y;
 }
 
