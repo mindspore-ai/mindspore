@@ -134,7 +134,7 @@ class ConvertNetUtils:
             elif isinstance(subcell, (nn.DenseThor, nn.Conv2dThor, nn.EmbeddingThor, nn.EmbeddingLookupThor)):
                 continue
             elif isinstance(subcell, (nn.Conv2dTranspose, nn.Conv1d, nn.Conv1dTranspose, nn.BatchNorm1d, nn.GroupNorm,
-                                      nn.GlobalBatchNorm, nn.LayerNorm, nn.BatchNorm2d, nn.MaxPool2d)):
+                                      nn.LayerNorm, nn.BatchNorm2d, nn.MaxPool2d)):
                 continue
             elif isinstance(subcell, (nn.Embedding, nn.Dense, nn.Conv2d, nn.EmbeddingLookup)):
                 prefix = subcell.param_prefix
