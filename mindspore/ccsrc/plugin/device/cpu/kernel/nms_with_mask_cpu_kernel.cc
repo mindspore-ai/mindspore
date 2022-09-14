@@ -15,19 +15,22 @@
  */
 
 #include "plugin/device/cpu/kernel/nms_with_mask_cpu_kernel.h"
-#include <tuple>
+#include <algorithm>
+#include <limits>
+#include <map>
+#include <utility>
+#include <vector>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
-const size_t kIndexDataBuff = 0;
-const size_t kIndexIndexBuff = 1;
-const size_t kIndexRowMask = 2;
-const size_t kIndexOutput = 0;
-const size_t kIndexSelIdx = 1;
-const size_t kIndexSelBoxes = 2;
-}  // namespace
+constexpr size_t kIndexDataBuff = 0;
+constexpr size_t kIndexIndexBuff = 1;
+constexpr size_t kIndexRowMask = 2;
+constexpr size_t kIndexOutput = 0;
+constexpr size_t kIndexSelIdx = 1;
+constexpr size_t kIndexSelBoxes = 2;
 
 uint32_t NmsRoundUpPower2(int v) {
   constexpr uint32_t ONE = 1, TWO = 2, FOUR = 4, EIGHT = 8, SIXTEEN = 16;
@@ -47,6 +50,42 @@ void Swap(T *lhs, T *rhs) {
   T tmp = lhs[0];
   lhs[0] = rhs[0];
   rhs[0] = tmp;
+}
+}  // namespace
+
+bool NMSWithMaskCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                   const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  if (inputs.size() != INPUT_NUM) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of inputs must be 1, but got " << inputs.size()
+                  << "input(s).";
+  }
+  if (outputs.size() != OUTPUT_NUM) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of outputs must be 3, but got " << outputs.size()
+                  << "output(s).";
+  }
+  iou_value_ = GetValue<float>(base_operator->GetAttr(kAttrIouThreshold));
+  if (auto ret = MatchKernelFunc(base_operator, inputs, outputs); !ret) {
+    return ret;
+  }
+  return true;
+}
+
+int NMSWithMaskCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                    const std::vector<KernelTensorPtr> &outputs,
+                                    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+    return ret;
+  }
+  auto in_shape = inputs[kIndex0]->GetShapeVector();
+  num_input_ = LongToInt(in_shape[0]);  //  Get N values in  [N, 5] data.
+  ceil_power_2_ = static_cast<size_t>(NmsRoundUpPower2(num_input_));
+
+  workspace_size_list_.push_back(ceil_power_2_ * abstract::TypeIdSize(inputs[kIndex0]->GetDtype()));  //  data buff
+  workspace_size_list_.push_back(ceil_power_2_ * sizeof(int));                                        //  index buff
+  workspace_size_list_.push_back(IntToSize(num_input_ * num_input_) * sizeof(bool));                  //  mask list
+  return KRET_OK;
 }
 
 // Sorting function based on BitonicSort from TopK kernel
@@ -203,44 +242,6 @@ void NMSWithMaskCpuKernelMod::ReducePass(const int num, bool *sel_boxes, const b
   }
 }
 
-void NMSWithMaskCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  iou_value_ = common::AnfAlgo::GetNodeAttr<float>(kernel_node, "iou_threshold");
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  if (input_num != INPUT_NUM) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of inputs must be 1, but got " << input_num
-                  << "input(s).";
-  }
-
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-  if (output_num != OUTPUT_NUM) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of outputs must be 3, but got " << output_num
-                  << "output(s).";
-  }
-
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
-  if (!is_match) {
-    MS_LOG(EXCEPTION) << "NMSWithMask does not support this kernel data type: " << kernel_attr;
-  }
-  kernel_func_ = std::get<1>(func_list_[index]);
-  const size_t kTwoIdx = 2;
-  Init_func_ = std::get<kTwoIdx>(func_list_[index]);
-}
-
-template <typename T>
-void NMSWithMaskCpuKernelMod::InitIOSize(const CNodePtr &kernel_node) {
-  DeprecatedNativeCpuKernelMod::InitInputOutputSize(kernel_node);
-  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  num_input_ = LongToInt(input_shape[0]);  //  Get N values in  [N, 5] data.
-  ceil_power_2 = static_cast<size_t>(NmsRoundUpPower2(num_input_));
-
-  workspace_size_list_.push_back(ceil_power_2 * sizeof(T));                           //  data buff
-  workspace_size_list_.push_back(ceil_power_2 * sizeof(int));                         //  index buff
-  workspace_size_list_.push_back(IntToSize(num_input_ * num_input_) * sizeof(bool));  //  mask list
-}
-
 template <typename T>
 bool NMSWithMaskCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                            const std::vector<kernel::AddressPtr> &workspace,
@@ -253,7 +254,7 @@ bool NMSWithMaskCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
   auto sel_idx = reinterpret_cast<int *>(outputs[kIndexSelIdx]->addr);
   auto sel_boxes = reinterpret_cast<bool *>(outputs[kIndexSelBoxes]->addr);
 
-  NmsBitonicSortByKeyKernel<T>(num_input_, ceil_power_2, input, data_buff, index_buff, box_size_);
+  NmsBitonicSortByKeyKernel<T>(num_input_, ceil_power_2_, input, data_buff, index_buff, box_size_);
   size_t total_val = IntToSize(num_input_ * num_input_);
   MaskInit(total_val, row_mask);
   PopulateOutput<T>(input, output, index_buff, num_input_, box_size_, false);
@@ -263,29 +264,22 @@ bool NMSWithMaskCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
   return true;
 }
 
-std::vector<
-  std::tuple<KernelAttr, NMSWithMaskCpuKernelMod::NMSWithMaskLFunc, NMSWithMaskCpuKernelMod::NMSWithMaskIFunc>>
-  NMSWithMaskCpuKernelMod::func_list_ = {
+const std::vector<std::pair<KernelAttr, NMSWithMaskCpuKernelMod::KernelRunFunc>> &NMSWithMaskCpuKernelMod::GetFuncList()
+  const {
+  static const std::vector<std::pair<KernelAttr, NMSWithMaskCpuKernelMod::KernelRunFunc>> func_list = {
     {KernelAttr()
        .AddInputAttr(kNumberTypeFloat32)
        .AddOutputAttr(kNumberTypeFloat32)
        .AddOutputAttr(kNumberTypeInt32)
        .AddOutputAttr(kNumberTypeBool),
-     &NMSWithMaskCpuKernelMod::LaunchKernel<float>, &NMSWithMaskCpuKernelMod::InitIOSize<float>},
+     &NMSWithMaskCpuKernelMod::LaunchKernel<float>},
     {KernelAttr()
        .AddInputAttr(kNumberTypeFloat16)
        .AddOutputAttr(kNumberTypeFloat16)
        .AddOutputAttr(kNumberTypeInt32)
        .AddOutputAttr(kNumberTypeBool),
-     &NMSWithMaskCpuKernelMod::LaunchKernel<float16>, &NMSWithMaskCpuKernelMod::InitIOSize<float16>}};
-
-std::vector<KernelAttr> NMSWithMaskCpuKernelMod::GetOpSupport() {
-  std::vector<KernelAttr> support_list;
-  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                       [](const std::tuple<KernelAttr, NMSWithMaskLFunc, NMSWithMaskIFunc> &tuple_item) {
-                         return std::get<0>(tuple_item);
-                       });
-  return support_list;
+     &NMSWithMaskCpuKernelMod::LaunchKernel<float16>}};
+  return func_list;
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, NMSWithMask, NMSWithMaskCpuKernelMod);
