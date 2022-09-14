@@ -62,6 +62,3 @@ mindspore.nn.ProximalAdagrad
         - **TypeError** - `weight_decay` 不是float或int。
         - **ValueError** - `loss_scale` 小于或等于0。
         - **ValueError** - `accum`、`l1`、`l2` 或 `weight_decay` 小于0。
-
-
-    .. include:: mindspore.nn.optim_target_unique_for_sparse.rst

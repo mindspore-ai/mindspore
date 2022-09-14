@@ -10,6 +10,13 @@
     :exclude-members: infer_value, infer_shape, infer_dtype, construct
     :members:
 
+{% elif fullname in ["mindspore.nn.Adam","mindspore.nn.AdamWeightDecay","mindspore.nn.FTRL","mindspore.nn.LazyAdam","mindspore.nn.ProximalAdagrad"] %}
+{{ fullname | underline }}
+
+.. autoclass:: {{ name }}
+    :exclude-members: infer_value, infer_shape, infer_dtype, target
+    :members:
+
 {% elif fullname=="mindspore.Tensor" %}
 {{ fullname | underline }}
 

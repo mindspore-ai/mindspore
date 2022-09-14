@@ -5190,10 +5190,10 @@ def bmm(input_x, mat2):
     The first input tensor must be not less than `3` and the second input must be not less than `2`.
 
     Args:
-        input_x (Tensor) - The first tensor to be multiplied. The shape of the tensor is :math:`(*B, N, C)`,
+        input_x (Tensor): The first tensor to be multiplied. The shape of the tensor is :math:`(*B, N, C)`,
             where :math:`*B` represents the batch size which can be multidimensional, :math:`N` and :math:`C` are the
             size of the last two dimensions.
-        mat2 (Tensor) - The second tensor to be multiplied. The shape of the tensor is :math:`(*B, C, M)`.
+        mat2 (Tensor): The second tensor to be multiplied. The shape of the tensor is :math:`(*B, C, M)`.
 
     Outputs:
         Tensor, the shape of the output tensor is :math:`(*B, N, M)`.

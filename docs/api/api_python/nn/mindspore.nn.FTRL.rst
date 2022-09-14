@@ -69,6 +69,3 @@ mindspore.nn.FTRL
         - **ValueError** - `lr_power` 大于0。
         - **ValueError** - `loss_scale` 小于等于0。
         - **ValueError** - `initial_accum`、`l1` 或 `l2` 小于0。
-
-
-    .. include:: mindspore.nn.optim_target_unique_for_sparse.rst
