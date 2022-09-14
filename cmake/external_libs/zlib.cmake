@@ -11,7 +11,9 @@ mindspore_add_pkg(zlib
         LIBS z
         URL ${REQ_URL}
         MD5 ${MD5}
-        CMAKE_OPTION -DCMAKE_BUILD_TYPE:STRING=Release)
+        CMAKE_OPTION -DCMAKE_BUILD_TYPE:STRING=Release
+        PATCHES ${CMAKE_SOURCE_DIR}/third_party/patch/zlib/CVE-2018-25032.patch
+        PATCHES ${CMAKE_SOURCE_DIR}/third_party/patch/zlib/CVE-2022-37434.patch)
 
 include_directories(${zlib_INC})
 add_library(mindspore::z ALIAS zlib::z)
