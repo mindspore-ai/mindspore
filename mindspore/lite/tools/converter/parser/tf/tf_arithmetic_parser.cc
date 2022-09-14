@@ -104,7 +104,7 @@ PrimitiveCPtr TFDivParser::Parse(const tensorflow::NodeDef &tf_op,
     return nullptr;
   }
   std::string original_name = tf_op.op();
-  prim_c->AddAttr(ops::kOriginalOpName, MakeValue(original_name));
+  (void)prim_c->AddAttr(ops::kOriginalOpName, MakeValue(original_name));
   return prim->GetPrim();
 }
 

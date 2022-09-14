@@ -32,7 +32,7 @@ PrimitiveCPtr TFResizeParser::Parse(const tensorflow::NodeDef &tf_op,
   auto prim_c = prim->GetPrim();
   MS_CHECK_TRUE_RET(prim_c != nullptr, nullptr);
   tensorflow::AttrValue attr_value;
-  prim_c->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(mindspore::Format::NHWC));
+  (void)prim_c->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(mindspore::Format::NHWC));
   prim->set_cubic_coeff(-0.75f);
   if (!TensorFlowUtils::FindAttrValue(tf_op, "align_corners", &attr_value)) {
     MS_LOG(ERROR) << "The align_corners attr should be specified";
@@ -40,11 +40,11 @@ PrimitiveCPtr TFResizeParser::Parse(const tensorflow::NodeDef &tf_op,
   }
   if (attr_value.b()) {
     prim->set_coordinate_transform_mode(mindspore::CoordinateTransformMode::ALIGN_CORNERS);
-    prim_c->AddAttr("align_corners", MakeValue(true));
+    (void)prim_c->AddAttr("align_corners", MakeValue(true));
   } else if (TensorFlowUtils::FindAttrValue(tf_op, "half_pixel_centers", &attr_value) && attr_value.b()) {
     prim->set_coordinate_transform_mode(mindspore::CoordinateTransformMode::HALF_PIXEL);
     prim->set_cubic_coeff(-0.5f);
-    prim_c->AddAttr("half_pixel_centers", MakeValue(true));
+    (void)prim_c->AddAttr("half_pixel_centers", MakeValue(true));
   } else {
     prim->set_coordinate_transform_mode(mindspore::CoordinateTransformMode::ASYMMETRIC);
   }

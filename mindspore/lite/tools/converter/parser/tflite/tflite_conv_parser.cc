@@ -224,7 +224,7 @@ PrimitiveCPtr TfliteDepthwiseConv2DParser::Parse(const std::unique_ptr<tflite::O
   MS_CHECK_TRUE_RET(value_ptr != nullptr, nullptr);
   auto prim_c = prim->GetPrim();
   MS_CHECK_TRUE_RET(prim_c != nullptr, nullptr);
-  prim_c->AddAttr(ops::kIsDepthWise, value_ptr);
+  (void)prim_c->AddAttr(ops::kIsDepthWise, value_ptr);
 
   return prim->GetPrim();
 }

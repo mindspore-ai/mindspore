@@ -36,7 +36,7 @@ PrimitiveCPtr OnnxReduceParser::Parse(const onnx::GraphProto &onnx_graph, const 
       for (int i = 0; i < size; ++i) {
         axes.push_back(onnx_node_attr.ints(i));
       }
-      prim_c->AddAttr("axes", MakeValue(axes));
+      (void)prim_c->AddAttr("axes", MakeValue(axes));
     } else if (attribute_name == "keepdims") {
       prim->set_keep_dims(static_cast<bool>(onnx_node_attr.i()));
     }

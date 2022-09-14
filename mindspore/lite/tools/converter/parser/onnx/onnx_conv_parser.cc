@@ -134,7 +134,7 @@ PrimitiveCPtr OnnxConvParser::Parse(const onnx::GraphProto &onnx_graph, const on
     MS_LOG(ERROR) << "Parse onnx attribute failed.";
     return nullptr;
   }
-  prim_c->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(format));
+  (void)prim_c->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(format));
   prim->set_pad_mode(pad_mode);
   prim->set_group(group);
 
@@ -143,7 +143,7 @@ PrimitiveCPtr OnnxConvParser::Parse(const onnx::GraphProto &onnx_graph, const on
     return nullptr;
   }
   if (conv1d) {
-    prim_c->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(NCW));
+    (void)prim_c->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(NCW));
   }
   prim->set_dilation({1, 1});
   if (!dilation.empty()) {
@@ -176,7 +176,7 @@ PrimitiveCPtr OnnxConvParser::Parse(const onnx::GraphProto &onnx_graph, const on
   }
 
   if (group == channel_in && channel_in == channel_out) {
-    prim_c->AddAttr(ops::kIsDepthWise, MakeValue<bool>(true));
+    (void)prim_c->AddAttr(ops::kIsDepthWise, MakeValue<bool>(true));
   }
 
   return prim->GetPrim();

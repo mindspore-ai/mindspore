@@ -39,7 +39,7 @@ int Unsqueezeint8CPUKernel::Prepare() {
 
   auto out_quant_args = input_tensor->quant_params();
   MS_CHECK_TRUE_RET(!quant_params.empty(), RET_ERROR);
-  param_->quant_arg.out_quant_args_.scale_ = out_quant_args.front().scale;
+  param_->quant_arg.out_quant_args_.scale_ = static_cast<float>(out_quant_args.front().scale);
   param_->quant_arg.out_quant_args_.zp_ = out_quant_args.front().zeroPoint;
   param_->thread_count_ = thread_count_;
   if (!InferShapeDone()) {

@@ -37,7 +37,7 @@ PrimitiveCPtr CaffeInnerProductParser::Parse(const caffe::LayerParameter &proto,
   int64_t num_output = static_cast<int64_t>(innerProductParam.num_output());
   auto value_ptr = MakeValue(num_output);
   MS_CHECK_TRUE_RET(value_ptr != nullptr, nullptr);
-  prim_c->AddAttr(ops::kNumOutput, value_ptr);
+  (void)prim_c->AddAttr(ops::kNumOutput, value_ptr);
 
   if (innerProductParam.axis() == 1) {
     prim->set_axis(1);

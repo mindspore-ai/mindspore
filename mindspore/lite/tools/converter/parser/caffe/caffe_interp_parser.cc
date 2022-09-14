@@ -50,7 +50,7 @@ PrimitiveCPtr CaffeInterpParser::Parse(const caffe::LayerParameter &proto, const
   }
 
   if (interp_param.has_zoom_factor()) {
-    prim_c->AddAttr("zoom_factor", MakeValue(interp_param.zoom_factor()));
+    (void)prim_c->AddAttr("zoom_factor", MakeValue(interp_param.zoom_factor()));
   }
   return prim->GetPrim();
 }

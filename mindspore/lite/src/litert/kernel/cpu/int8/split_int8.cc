@@ -43,14 +43,14 @@ int SplitInt8CPUKernel::Prepare() {
 
   auto in_quant_args = in_tensor->quant_params();
   CHECK_LESS_RETURN(in_quant_args.size(), 1);
-  param->quant_arg_.in_args_.scale_ = in_quant_args.front().scale;
+  param->quant_arg_.in_args_.scale_ = static_cast<float>(in_quant_args.front().scale);
   param->quant_arg_.in_args_.zp_ = in_quant_args.front().zeroPoint;
   MS_CHECK_TRUE_RET(static_cast<size_t>(param->num_split_) == this->out_tensors_.size(), RET_ERROR);
   for (int i = 0; i < param->num_split_; i++) {
     auto *out_tensor = out_tensors_.at(i);
     auto out_quant_args = out_tensor->quant_params();
     CHECK_LESS_RETURN(out_quant_args.size(), 1);
-    param->quant_arg_.out_args_[i].scale_ = out_quant_args.front().scale;
+    param->quant_arg_.out_args_[i].scale_ = static_cast<float>(out_quant_args.front().scale);
     param->quant_arg_.out_args_[i].zp_ = out_quant_args.front().zeroPoint;
   }
 

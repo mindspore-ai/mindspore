@@ -32,7 +32,7 @@ PrimitiveCPtr OnnxTopkParser::Parse(const onnx::GraphProto &onnx_graph, const on
     if (attribute_name == "k") {
       auto k_value = MakeValue(static_cast<int32_t>(onnx_node_attr.i()));
       MS_CHECK_TRUE_MSG(k_value != nullptr, nullptr, "CreateValueNode failed");
-      prim_c->AddAttr("k", k_value);
+      (void)prim_c->AddAttr("k", k_value);
     } else if (attribute_name == "axis") {
       prim->set_axis(static_cast<int64_t>(onnx_node_attr.i()));
     } else if (attribute_name == "largest") {

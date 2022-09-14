@@ -36,7 +36,7 @@ PrimitiveCPtr OnnxReshapeParser::Parse(const onnx::GraphProto &onnx_graph, const
         for (int i = 0; i < onnx_node_attr.ints_size(); ++i) {
           shape.push_back(static_cast<int>(onnx_node_attr.ints(i)));
         }
-        prim_c->AddAttr("shape", MakeValue(shape));
+        (void)prim_c->AddAttr("shape", MakeValue(shape));
       }
     }
   }

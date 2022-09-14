@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#define USE_DEPRECATED_API
 #include "tools/converter/quantizer/huffman_encode.h"
 #include "src/litert/tensor_category.h"
 #include "tools/converter/quantizer/quantize_util.h"

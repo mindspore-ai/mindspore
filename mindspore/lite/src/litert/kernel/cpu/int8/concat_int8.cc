@@ -49,7 +49,7 @@ int ConcatInt8CPUKernel::Prepare() {
     auto *input_tensor = in_tensors_.at(i);
     auto in_quant_args = input_tensor->quant_params();
     MS_CHECK_TRUE_RET(!in_quant_args.empty(), RET_ERROR);
-    concat_param_->quant_arg_.in_args_[i].scale_ = in_quant_args.front().scale;
+    concat_param_->quant_arg_.in_args_[i].scale_ = static_cast<float>(in_quant_args.front().scale);
     concat_param_->quant_arg_.in_args_[i].zp_ = in_quant_args.front().zeroPoint;
   }
 

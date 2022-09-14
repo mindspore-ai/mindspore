@@ -38,7 +38,7 @@ PrimitiveCPtr TFCastParser::Parse(const tensorflow::NodeDef &tf_op,
   if (dst_type == kNumberTypeInt64) {
     dst_type = kNumberTypeInt32;
   }
-  prim_c->AddAttr("to", MakeValue(static_cast<int32_t>(dst_type)));
+  (void)prim_c->AddAttr("to", MakeValue(static_cast<int32_t>(dst_type)));
 
   *output_size = 1;
   if (AddOpInput(tf_op, 0, inputs) != RET_OK) {

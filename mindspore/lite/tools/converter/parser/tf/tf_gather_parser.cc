@@ -72,7 +72,7 @@ PrimitiveCPtr TFGatherParser::Parse(const tensorflow::NodeDef &tf_op,
   if (batchDims != 0 && !axis_is_set) {
     axis = batchDims;
   }
-  prim_c->AddAttr("axis", MakeValue(axis));
+  (void)prim_c->AddAttr("axis", MakeValue(axis));
 
   *output_size = 1;
   if (AddOpInput(tf_op, 0, inputs) != RET_OK || AddOpInput(tf_op, 1, inputs) != RET_OK) {

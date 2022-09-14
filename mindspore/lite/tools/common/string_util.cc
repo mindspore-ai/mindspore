@@ -27,9 +27,9 @@ bool EraseBlankSpaceAndLineBreak(std::string *input_string) {
     MS_LOG(ERROR) << "input_string is nullptr";
     return false;
   }
-  input_string->erase(std::remove(input_string->begin(), input_string->end(), ' '), input_string->end());
-  input_string->erase(std::remove(input_string->begin(), input_string->end(), '\r'), input_string->end());
-  input_string->erase(std::remove(input_string->begin(), input_string->end(), '\n'), input_string->end());
+  (void)input_string->erase(std::remove(input_string->begin(), input_string->end(), ' '), input_string->end());
+  (void)input_string->erase(std::remove(input_string->begin(), input_string->end(), '\r'), input_string->end());
+  (void)input_string->erase(std::remove(input_string->begin(), input_string->end(), '\n'), input_string->end());
   return true;
 }
 
@@ -42,7 +42,7 @@ bool EraseQuotes(std::string *input_string) {
     std::string::size_type pos = 0;
     pos = input_string->find('\"', pos);
     while (pos != std::string::npos) {
-      input_string->erase(pos, 1);
+      (void)input_string->erase(pos, 1);
       pos = input_string->find('\"', pos);
     }
   }

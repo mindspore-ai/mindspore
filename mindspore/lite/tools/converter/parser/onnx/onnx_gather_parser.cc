@@ -33,7 +33,7 @@ PrimitiveCPtr OnnxGatherParser::Parse(const onnx::GraphProto &onnx_graph, const 
       axis = static_cast<int32_t>(onnx_node_attr.i());
     }
   }
-  prim_c->AddAttr("axis", MakeValue(axis));
+  (void)prim_c->AddAttr("axis", MakeValue(axis));
 
   return prim->GetPrim();
 }

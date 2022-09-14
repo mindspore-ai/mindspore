@@ -207,7 +207,7 @@ api::SharedPtr<ops::Conv2DFusion> CopyConvPrim(const api::SharedPtr<ops::Conv2DF
   auto is_depth_value = ori_conv_prim->GetAttr(ops::kIsDepthWise);
   if (is_depth_value != nullptr) {
     bool is_depth_wise = GetValue<bool>(is_depth_value);
-    new_prim_c->AddAttr(ops::kIsDepthWise, MakeValue<bool>(is_depth_wise));
+    (void)new_prim_c->AddAttr(ops::kIsDepthWise, MakeValue<bool>(is_depth_wise));
   }
   return new_prim;
 }

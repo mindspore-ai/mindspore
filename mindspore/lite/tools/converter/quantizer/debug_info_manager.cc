@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-#define USE_DEPRECATED_API
-
 #include <fstream>
 #include <map>
 #include "tools/converter/quantizer/debug_info_manager.h"

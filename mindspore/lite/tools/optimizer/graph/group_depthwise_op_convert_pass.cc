@@ -105,7 +105,7 @@ bool GroupDepthwiseOpConvertPass::Run(const FuncGraphPtr &graph) {
 
       status = TransFilterFormat(weight_value, weight_src_format, weight_dst_format);
       if (status == RET_OK) {
-        conv2d_fusion->AddAttr(ops::kFormat, api::MakeValue<int64_t>(weight_dst_format));
+        (void)conv2d_fusion->AddAttr(ops::kFormat, api::MakeValue<int64_t>(weight_dst_format));
       } else {
         MS_LOG(ERROR) << "TransFilter " << EnumNameFormat(schema::EnumValuesFormat()[weight_dst_format]) << "To"
                       << EnumNameFormat(weight_dst_format) << " failed, node : " << node->fullname_with_scope();

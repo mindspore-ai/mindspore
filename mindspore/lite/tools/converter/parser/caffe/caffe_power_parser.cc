@@ -45,7 +45,7 @@ PrimitiveCPtr CaffePowerParser::Parse(const caffe::LayerParameter &proto, const 
   }
   auto value_ptr = MakeValue(power);
   MS_CHECK_TRUE_RET(value_ptr != nullptr, nullptr);
-  prim_c->AddAttr("power", value_ptr);
+  (void)prim_c->AddAttr("power", value_ptr);
   prim->set_scale(scale);
   prim->set_shift(shift);
 

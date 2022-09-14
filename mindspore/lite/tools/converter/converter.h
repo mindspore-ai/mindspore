@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_LITE_TOOLS_CONVERTER_CONVERTER_H_
 #define MINDSPORE_LITE_TOOLS_CONVERTER_CONVERTER_H_
 
-#define USE_DEPRECATED_API
 #include <memory>
 #include <string>
 #include "include/converter.h"

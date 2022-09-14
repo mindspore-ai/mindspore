@@ -38,7 +38,7 @@ PrimitiveCPtr TfliteReshapeParser::Parse(const std::unique_ptr<tflite::OperatorT
     }
     auto value_ptr = MakeValue(shape);
     MS_CHECK_TRUE_RET(value_ptr != nullptr, nullptr);
-    prim_c->AddAttr("shape", value_ptr);
+    (void)prim_c->AddAttr("shape", value_ptr);
   }
 
   return prim->GetPrim();

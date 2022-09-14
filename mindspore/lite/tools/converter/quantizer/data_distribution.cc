@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#define USE_DEPRECATED_API
 #include "tools/converter/quantizer/data_distribution.h"
 #include <algorithm>
 #include <vector>

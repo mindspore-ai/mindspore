@@ -374,7 +374,7 @@ class KernelExec {
 
   void SetOpenGLTextureEnable(bool enable) { enable_gl_texture_ = enable; }
 
-  bool GetOpenGLTextureEnable() { return enable_gl_texture_; }
+  bool GetOpenGLTextureEnable() const { return enable_gl_texture_; }
 
  protected:
   std::shared_ptr<Kernel> kernel_ = nullptr;

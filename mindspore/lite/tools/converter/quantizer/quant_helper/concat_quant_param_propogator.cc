@@ -13,8 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#define USE_DEPRECATED_API
 #include "tools/converter/quantizer/quant_helper/concat_quant_param_propogator.h"
 #include <cfloat>
 #include <memory>

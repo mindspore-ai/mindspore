@@ -56,7 +56,7 @@ int SqueezeInt8CPUKernel::Prepare() {
   auto in_quant_args = in_tensors_.front()->quant_params();
   MS_CHECK_TRUE_MSG(!in_quant_args.empty(), RET_ERROR, "Input quant_params cannot be empty.");
 
-  quant_squeeze_param_->in_quant_args_->scale_ = in_quant_args.front().scale;
+  quant_squeeze_param_->in_quant_args_->scale_ = static_cast<float>(in_quant_args.front().scale);
   quant_squeeze_param_->in_quant_args_->zp_ = in_quant_args.front().zeroPoint;
 
   auto out_quant_params = out_tensors_.front()->quant_params();

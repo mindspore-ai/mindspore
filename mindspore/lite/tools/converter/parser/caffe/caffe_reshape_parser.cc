@@ -38,7 +38,7 @@ PrimitiveCPtr CaffeReshapeParser::Parse(const caffe::LayerParameter &proto, cons
   }
   auto value_ptr = MakeValue(shape);
   MS_CHECK_TRUE_RET(value_ptr != nullptr, nullptr);
-  prim_c->AddAttr("shape", value_ptr);
+  (void)prim_c->AddAttr("shape", value_ptr);
 
   return prim->GetPrim();
 }

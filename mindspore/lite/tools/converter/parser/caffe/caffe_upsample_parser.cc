@@ -38,9 +38,9 @@ PrimitiveCPtr CaffeUpsampleParser::Parse(const caffe::LayerParameter &proto, con
       return nullptr;
     }
     std::vector<float> scales = {1, scale, scale, 1};
-    prim_c->AddAttr("scale", MakeValue(scales));
+    (void)prim_c->AddAttr("scale", MakeValue(scales));
   }
-  prim_c->AddAttr(ops::kOriginalOpName, MakeValue("Upsample"));
+  (void)prim_c->AddAttr(ops::kOriginalOpName, MakeValue("Upsample"));
   return prim->GetPrim();
 }
 

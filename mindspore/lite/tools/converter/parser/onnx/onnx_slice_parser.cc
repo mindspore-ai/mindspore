@@ -90,10 +90,10 @@ PrimitiveCPtr OnnxSliceParser::Parse(const onnx::GraphProto &onnx_graph, const o
     steps.assign(starts.size(), 1);
   }
 
-  prim_c->AddAttr("starts", MakeValue(starts));
-  prim_c->AddAttr("axes", MakeValue(axes));
-  prim_c->AddAttr("ends", MakeValue(ends));
-  prim_c->AddAttr("steps", MakeValue(steps));
+  (void)prim_c->AddAttr("starts", MakeValue(starts));
+  (void)prim_c->AddAttr("axes", MakeValue(axes));
+  (void)prim_c->AddAttr("ends", MakeValue(ends));
+  (void)prim_c->AddAttr("steps", MakeValue(steps));
   return prim->GetPrim();
 }
 

@@ -30,7 +30,7 @@ PrimitiveCPtr OnnxResizeParser::Parse(const onnx::GraphProto &onnx_graph, const 
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   auto prim_c = prim->GetPrim();
   MS_CHECK_TRUE_RET(prim_c != nullptr, nullptr);
-  prim_c->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(mindspore::Format::NCHW));
+  (void)prim_c->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(mindspore::Format::NCHW));
   prim->set_nearest_mode(mindspore::NearestMode::ROUND_HALF_DOWN);
 
   for (const auto &onnx_node_attr : onnx_node.attribute()) {

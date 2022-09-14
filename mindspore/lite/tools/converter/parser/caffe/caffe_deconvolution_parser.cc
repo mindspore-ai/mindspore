@@ -31,7 +31,7 @@ PrimitiveCPtr CaffeDeconvolutionParser::Parse(const caffe::LayerParameter &proto
   prim->set_pad({0, 0, 0, 0});
   auto value_ptr = MakeValue<int64_t>(mindspore::Format::NCHW);
   MS_CHECK_TRUE_RET(value_ptr != nullptr, nullptr);
-  prim_c->AddAttr(mindspore::ops::kOriginalFormat, value_ptr);
+  (void)prim_c->AddAttr(mindspore::ops::kOriginalFormat, value_ptr);
   prim->set_pad_mode(mindspore::PadMode::PAD);
   prim->set_output_paddings({0, 0});
 
@@ -88,13 +88,13 @@ PrimitiveCPtr CaffeDeconvolutionParser::Parse(const caffe::LayerParameter &proto
   if (group != 1) {
     auto bool_ptr = MakeValue<bool>(true);
     MS_CHECK_TRUE_RET(bool_ptr != nullptr, nullptr);
-    prim_c->AddAttr(ops::kIsDepthWise, bool_ptr);
+    (void)prim_c->AddAttr(ops::kIsDepthWise, bool_ptr);
   }
 
   int fmk_type = converter::FmkType::kFmkTypeCaffe;
   auto fmk_type_ptr = MakeValue(fmk_type);
   MS_CHECK_TRUE_RET(fmk_type_ptr != nullptr, nullptr);
-  prim_c->AddAttr(ops::kFmkType, fmk_type_ptr);
+  (void)prim_c->AddAttr(ops::kFmkType, fmk_type_ptr);
   return prim->GetPrim();
 }
 

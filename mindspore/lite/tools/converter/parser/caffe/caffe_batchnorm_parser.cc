@@ -34,7 +34,7 @@ PrimitiveCPtr CaffeBatchNormParser::Parse(const caffe::LayerParameter &proto, co
   prim->set_is_training(false);
   auto value_ptr = MakeValue<int64_t>(mindspore::Format::NCHW);
   MS_CHECK_TRUE_RET(value_ptr != nullptr, nullptr);
-  prim_c->AddAttr(mindspore::ops::kOriginalFormat, value_ptr);
+  (void)prim_c->AddAttr(mindspore::ops::kOriginalFormat, value_ptr);
 
   const caffe::BatchNormParameter &batchNormParam = proto.batch_norm_param();
   if (proto.bottom_size() != 1) {
@@ -54,9 +54,9 @@ PrimitiveCPtr CaffeBatchNormParser::Parse(const caffe::LayerParameter &proto, co
   }
   prim->set_epsilon(epsilon);
 
-  prim_c->AddAttr(ops::kUseGlobalStats, MakeValue(true));
+  (void)prim_c->AddAttr(ops::kUseGlobalStats, MakeValue(true));
   int fmk_type = converter::FmkType::kFmkTypeCaffe;
-  prim_c->AddAttr(ops::kFmkType, MakeValue(fmk_type));
+  (void)prim_c->AddAttr(ops::kFmkType, MakeValue(fmk_type));
   return prim->GetPrim();
 }
 

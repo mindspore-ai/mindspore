@@ -128,7 +128,7 @@ std::shared_ptr<ops::MatMulFusion> BuildMatMulPrim(const CNodePtr &stack_cnode) 
   rmatmul_quant_params.pop_back();
   auto quant_params_holder = std::make_shared<lite::QuantParamHolder>(rmatmul_quant_params, output_quant_params);
   MS_CHECK_TRUE_RET(quant_params_holder != nullptr, nullptr);
-  matmul_prim_c->AddAttr("quant_params", quant_params_holder);
+  (void)matmul_prim_c->AddAttr("quant_params", quant_params_holder);
   return matmul_cvalue;
 }
 

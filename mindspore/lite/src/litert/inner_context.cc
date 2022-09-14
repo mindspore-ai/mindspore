@@ -37,6 +37,7 @@ namespace mindspore::lite {
 namespace {
 const constexpr int kMaxLiteContextDeviceNums = 2;
 const constexpr int kMaxInnerContextDeviceNums = 3;
+const constexpr int kNumCoreNumTimes = 5;
 }  // namespace
 
 void InnerContext::InitDeviceFp16() {
@@ -207,8 +208,7 @@ int InnerContext::IsValid() {
     return RET_NOT_SUPPORT;
   }
   int core_num = static_cast<int>(std::max<size_t>(1, std::thread::hardware_concurrency()));
-  int core_num_times = 5;
-  int Threshold_thread_num = core_num_times * core_num;
+  int Threshold_thread_num = kNumCoreNumTimes * core_num;
   if (thread_num_ > Threshold_thread_num) {
     MS_LOG(WARNING) << "Thread num: " << thread_num_ << " is more than 5 times core num: " << Threshold_thread_num
                     << ", change it to 5 times core num. Please check whether Thread num is reasonable.";

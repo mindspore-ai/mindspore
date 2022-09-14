@@ -29,7 +29,7 @@ PrimitiveCPtr OnnxAvgPoolParser::Parse(const onnx::GraphProto &onnx_graph, const
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   auto prim_c = prim->GetPrim();
   MS_CHECK_TRUE_RET(prim_c != nullptr, nullptr);
-  prim_c->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(mindspore::Format::NCHW));
+  (void)prim_c->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(mindspore::Format::NCHW));
   prim->set_pad_mode(mindspore::PadMode::PAD);
   mindspore::RoundMode round_mode = mindspore::RoundMode::FLOOR;
   std::vector<int64_t> kernels;
@@ -96,7 +96,7 @@ PrimitiveCPtr OnnxAvgPoolParser::Parse(const onnx::GraphProto &onnx_graph, const
   }
 
   int fmk_type = converter::FmkType::kFmkTypeOnnx;
-  prim_c->AddAttr(ops::kFmkType, MakeValue(fmk_type));
+  (void)prim_c->AddAttr(ops::kFmkType, MakeValue(fmk_type));
   return prim->GetPrim();
 }
 
@@ -105,7 +105,7 @@ PrimitiveCPtr OnnxMaxPoolParser::Parse(const onnx::GraphProto &onnx_graph, const
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   auto prim_c = prim->GetPrim();
   MS_CHECK_TRUE_RET(prim_c != nullptr, nullptr);
-  prim_c->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(mindspore::Format::NCHW));
+  (void)prim_c->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(mindspore::Format::NCHW));
   mindspore::RoundMode round_mode = mindspore::RoundMode::FLOOR;
   std::vector<int64_t> kernels;
   std::vector<int64_t> strides;
@@ -170,7 +170,7 @@ PrimitiveCPtr OnnxMaxPoolParser::Parse(const onnx::GraphProto &onnx_graph, const
   prim->set_global(onnx_node.op_type() == "GlobalMaxPool");
 
   int fmk_type = converter::FmkType::kFmkTypeOnnx;
-  prim_c->AddAttr(ops::kFmkType, MakeValue(fmk_type));
+  (void)prim_c->AddAttr(ops::kFmkType, MakeValue(fmk_type));
   return prim->GetPrim();
 }
 

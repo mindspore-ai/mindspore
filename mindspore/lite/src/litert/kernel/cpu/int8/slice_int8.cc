@@ -38,12 +38,12 @@ int SliceInt8CPUKernel::Prepare() {
 
   auto in_quant_args = input->quant_params();
   MS_CHECK_TRUE_MSG(!in_quant_args.empty(), RET_ERROR, "Input quant param cannot be empty.");
-  param_->quant_arg_.in_args_.scale_ = in_quant_args.front().scale;
+  param_->quant_arg_.in_args_.scale_ = static_cast<float>(in_quant_args.front().scale);
   param_->quant_arg_.in_args_.zp_ = in_quant_args.front().zeroPoint;
 
   auto out_quant_args = output->quant_params();
   MS_CHECK_TRUE_MSG(!out_quant_args.empty(), RET_ERROR, "Output quant param cannot be empty.");
-  param_->quant_arg_.out_args_.scale_ = out_quant_args.front().scale;
+  param_->quant_arg_.out_args_.scale_ = static_cast<float>(out_quant_args.front().scale);
   param_->quant_arg_.out_args_.zp_ = out_quant_args.front().zeroPoint;
 
   QuantizeRoundParameterWithDoublePrecision(param_->quant_arg_.in_args_.scale_ / param_->quant_arg_.out_args_.scale_,
