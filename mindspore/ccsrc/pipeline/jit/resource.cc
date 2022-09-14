@@ -315,6 +315,14 @@ BuiltInTypeMap &GetMethodMap() {
        {"atanh", std::string("atanh")},                                    // atanh()
        {"bmm", std::string("bmm")},                                        // bmm()
        {"value", std::string("value_")},                                   // P.Load(param, U)
+       {"to", std::string("to")},                                          // to()
+       {"bool", std::string("to_bool")},                                   // bool()
+       {"float", std::string("to_float")},                                 // float()
+       {"half", std::string("to_half")},                                   // half()
+       {"int", std::string("to_int")},                                     // int()
+       {"long", std::string("to_long")},                                   // long()
+       {"cholesky", std::string("cholesky")},                              // cholesky()
+       {"cholesky_inverse", std::string("cholesky_inverse")},              // cholesky_inverse()
      }},
     {kObjectTypeRowTensorType,
      {

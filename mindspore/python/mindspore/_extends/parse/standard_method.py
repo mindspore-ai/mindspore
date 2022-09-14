@@ -3125,7 +3125,7 @@ def atanh(x):
 
 def bmm(input_x, mat2):
     r"""
-    Computes  matrix multiplication between two tensors by batch.
+    Computes matrix multiplication between two tensors by batch.
     """
     return F.bmm(input_x, mat2)
 
@@ -3135,3 +3135,59 @@ def value_(x):
     Get the value of Parameter or Tensor x. If x is Parameter, will change the type from RefTensor to Tensor.
     """
     return P.Load()(x, monad.U)
+
+
+def to(input_x, dtype):
+    r"""
+    Performs tensor dtype conversion.
+    """
+    return P.Cast()(input_x, dtype)
+
+
+def to_bool(input_x):
+    r"""
+    Converts input tensor dtype to bool.
+    """
+    return P.Cast()(input_x, mstype.bool_)
+
+
+def to_float(input_x):
+    r"""
+    Converts input tensor dtype to float32.
+    """
+    return P.Cast()(input_x, mstype.float32)
+
+
+def to_half(input_x):
+    r"""
+    Converts input tensor dtype to float16.
+    """
+    return P.Cast()(input_x, mstype.float16)
+
+
+def to_int(input_x):
+    r"""
+    Converts input tensor dtype to int32.
+    """
+    return P.Cast()(input_x, mstype.int32)
+
+
+def to_long(input_x):
+    r"""
+    Converts input tensor dtype to int64.
+    """
+    return P.Cast()(input_x, mstype.int64)
+
+
+def cholesky(input_x, upper=False):
+    r"""
+    Computes the Cholesky decomposition of a symmetric positive-definite matrix
+    """
+    return F.cholesky(input_x, upper=upper)
+
+
+def cholesky_inverse(input_x, upper=False):
+    r"""
+    Computes the inverse of the positive definite matrix using cholesky matrix factorization.
+    """
+    return F.cholesky_inverse(input_x, upper=upper)

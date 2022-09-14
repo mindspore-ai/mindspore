@@ -76,6 +76,8 @@ Element-wise Methods
     mindspore.Tensor.bitwise_or
     mindspore.Tensor.bitwise_xor
     mindspore.Tensor.ceil
+    mindspore.Tensor.cholesky
+    mindspore.Tensor.cholesky_inverse
     mindspore.Tensor.cosh
     mindspore.Tensor.erf
     mindspore.Tensor.erfc
@@ -242,7 +244,13 @@ Type Conversion
 
     mindspore.Tensor.asnumpy
     mindspore.Tensor.astype
+    mindspore.Tensor.bool
+    mindspore.Tensor.float
     mindspore.Tensor.from_numpy
+    mindspore.Tensor.half
+    mindspore.Tensor.int
+    mindspore.Tensor.long
+    mindspore.Tensor.to
     mindspore.Tensor.to_coo
     mindspore.Tensor.to_csr
 
