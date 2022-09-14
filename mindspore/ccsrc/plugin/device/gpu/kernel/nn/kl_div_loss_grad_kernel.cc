@@ -56,7 +56,7 @@ int KLDivLossGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
   } else {
     input_size_list_[0] = type_id_size_;
   }
-  return true;
+  return KRET_OK;
 }
 
 template <typename T>
