@@ -16,6 +16,7 @@
 
 #include "plugin/device/gpu/kernel/nn/layer_norm_grad_gpu_kernel.h"
 #include <algorithm>
+#include <numeric>
 #include "mindspore/core/ops/grad/layer_norm_grad.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/layer_norm_grad_impl.cuh"
 
@@ -58,7 +59,7 @@ int LayerNormGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
   }
   auto kernel_ptr = std::dynamic_pointer_cast<ops::LayerNormGrad>(base_operator);
   if (kernel_ptr == nullptr) {
-    MS_LOG(EXCEPTION) << "Cast ops::LayerNorm failed!";
+    MS_LOG(EXCEPTION) << "Cast ops::LayerNormGrad failed!";
   }
   if (inputs.empty()) {
     MS_LOG(EXCEPTION) << "Invalid LayerNormGradGpuKernelMod input size!";
@@ -74,25 +75,19 @@ int LayerNormGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
     begin_params_axis += input_shape.size();
   }
 
-  if (IntToSize(begin_norm_axis) > input_shape.size()) {
+  if (LongToSize(begin_norm_axis) > input_shape.size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'begin_norm_axis' must be less than or equal "
-                      << "to the dimension of input, but got begin_norm_axis: " << IntToSize(begin_norm_axis)
+                      << "to the dimension of input, but got begin_norm_axis: " << LongToSize(begin_norm_axis)
                       << ", the dimension of input: " << input_shape.size();
   }
-  input_row_ = 1;
-  input_col_ = 1;
-  param_dim_ = 1;
-  for (size_t i = 0; i < IntToSize(begin_norm_axis); i++) {
-    input_row_ *= input_shape[i];
-  }
 
-  for (size_t i = begin_norm_axis; i < input_shape.size(); i++) {
-    input_col_ *= input_shape[i];
-  }
+  input_row_ =
+    std::accumulate(input_shape.begin(), input_shape.begin() + LongToSize(begin_norm_axis), 1, std::multiplies<int>());
+  input_col_ =
+    std::accumulate(input_shape.begin() + LongToSize(begin_norm_axis), input_shape.end(), 1, std::multiplies<int>());
+  param_dim_ =
+    std::accumulate(input_shape.begin() + LongToSize(begin_params_axis), input_shape.end(), 1, std::multiplies<int>());
 
-  for (size_t i = begin_params_axis; i < input_shape.size(); i++) {
-    param_dim_ *= input_shape[i];
-  }
   return ret;
 }
 
