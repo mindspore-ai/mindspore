@@ -14,20 +14,25 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SOFTMAX_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SOFTMAX_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_MKLDNN_SOFTMAX_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_MKLDNN_SOFTMAX_CPU_KERNEL_H_
 
 #include <vector>
+#include <map>
 #include "plugin/device/cpu/kernel/mkldnn/mkl_cpu_kernel.h"
 
 namespace mindspore {
 namespace kernel {
-class SoftmaxCpuKernelMod : public DeprecatedMKLCpuKernelMod {
+class SoftmaxCpuKernelMod : public MKLCpuKernelMod {
  public:
   SoftmaxCpuKernelMod() = default;
   ~SoftmaxCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
@@ -37,8 +42,11 @@ class SoftmaxCpuKernelMod : public DeprecatedMKLCpuKernelMod {
       KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)};
     return support_list;
   }
+
+ private:
+  std::vector<int> axis_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SOFTMAX_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_MKLDNN_SOFTMAX_CPU_KERNEL_H_
