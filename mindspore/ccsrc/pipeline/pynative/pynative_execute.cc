@@ -151,11 +151,6 @@ std::string GetPyObjId(const py::handle &obj) {
 std::string GetId(const py::handle &obj) {
   if (py::isinstance<tensor::Tensor>(obj)) {
     auto tensor_ptr = py::cast<tensor::TensorPtr>(obj);
-    if (tensor_ptr->is_parameter()) {
-      const auto &param_info = tensor_ptr->param_info();
-      MS_EXCEPTION_IF_NULL(param_info);
-      return param_info->name();
-    }
     return tensor_ptr->id();
   } else if (py::isinstance<Cell>(obj)) {
     return obj.cast<CellPtr>()->id();
