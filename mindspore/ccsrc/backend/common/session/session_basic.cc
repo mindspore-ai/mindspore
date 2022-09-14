@@ -970,7 +970,7 @@ BackendOpRunInfoPtr SessionBasic::GetSingleOpRunInfo(const CNodePtr &cnode, cons
 }
 
 void SessionBasic::GetParameterIndex(const KernelGraph *graph, const std::vector<tensor::TensorPtr> &inputs,
-                                     std::map<AnfNodePtr, size_t> *parameter_index) {
+                                     std::map<AnfNodePtr, size_t> *parameter_index) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(parameter_index);
   size_t index = 0;
