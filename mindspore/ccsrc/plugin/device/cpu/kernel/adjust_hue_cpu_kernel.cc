@@ -91,7 +91,7 @@ static void rgb_to_hv_range(float r, float g, float b, float *h, float *v_min, f
     return;
   }
   auto ratio = (v_mid - *v_min) / (*v_max - *v_min);
-  bool increase = static_cast<bool>((h_category & 0x1) == 0);
+  bool increase = h_category % 2 == 0;
   *h = h_category + (increase ? ratio : (1 - ratio));
 }
 
@@ -100,7 +100,7 @@ template <typename T>
 static void hv_range_to_rgb(float h, float v_min, float v_max, T *r, T *g, T *b) {
   int h_category = static_cast<int>(h);
   float ratio = h - h_category;
-  bool increase = static_cast<bool>((h_category & 0x1) == 0);
+  bool increase = h_category % 2 == 0;
   if (!increase) {
     ratio = 1 - ratio;
   }

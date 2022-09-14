@@ -73,7 +73,7 @@ void ElementRealDiv(const T *input1, const T *input2, T *out, size_t size, size_
       }
       continue;
     }
-    out[i] = static_cast<T>(dividend) / static_cast<T>(divisor);
+    out[i] = static_cast<T>(dividend / divisor);
   }
 }
 
@@ -91,7 +91,7 @@ void ElementRealDivComplex(const T *input1, const T *input2, T *out, size_t size
       out[i] = std::numeric_limits<T>::quiet_NaN();
       continue;
     }
-    out[i] = static_cast<T>(dividend) / static_cast<T>(divisor);
+    out[i] = static_cast<T>(dividend / divisor);
   }
 }
 
@@ -409,7 +409,7 @@ void ArithmeticCpuTypeFunc<T>::RealDiv(const T *input1, const T *input2, T *out)
         }
         continue;
       }
-      out[i] = static_cast<T>(dividend) / static_cast<T>(divisor);
+      out[i] = static_cast<T>(dividend / divisor);
     }
   };
   ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
@@ -452,7 +452,7 @@ void ArithmeticCpuTypeFunc<T>::RealDivComplex(const T *input1, const T *input2, 
         out[i] = std::numeric_limits<T>::quiet_NaN();
         continue;
       }
-      out[i] = static_cast<T>(dividend) / static_cast<T>(divisor);
+      out[i] = static_cast<T>(dividend / divisor);
     }
   };
   ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
@@ -481,7 +481,7 @@ void ArithmeticCpuTypeFunc<T>::Div(const T *input1, const T *input2, T *out) {
         }
         continue;
       }
-      out[i] = static_cast<T>(dividend) / static_cast<T>(divisor);
+      out[i] = static_cast<T>(dividend / divisor);
     }
   };
   ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
@@ -505,7 +505,7 @@ void ArithmeticCpuTypeFunc<T>::DivComplex(const T *input1, const T *input2, T *o
         }
         continue;
       }
-      out[i] = static_cast<T>(dividend) / static_cast<T>(divisor);
+      out[i] = static_cast<T>(dividend / divisor);
     }
   };
   ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
@@ -539,7 +539,7 @@ void ArithmeticCpuTypeFunc<T>::DivNoNan(const T *input1, const T *input2, T *out
           continue;
         }
       }
-      out[i] = static_cast<T>(dividend) / static_cast<T>(divisor);
+      out[i] = static_cast<T>(dividend / divisor);
     }
   };
   ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
