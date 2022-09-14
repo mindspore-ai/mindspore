@@ -25,7 +25,6 @@
 #include <functional>
 #include <iomanip>
 #include "proto/ps.pb.h"
-#include "proto/fl.pb.h"
 #include "ir/anf.h"
 #include "include/common/utils/utils.h"
 #include "ir/dtype/type_id.h"

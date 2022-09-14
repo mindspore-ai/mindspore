@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include "ps/core/follower_scaler.h"
 #include "ps/core/abstract_node.h"
 #include "ps/core/abstract_ps_node.h"
 #include "ps/core/node.h"
@@ -27,8 +26,6 @@ namespace mindspore {
 namespace ps {
 void PsDataPrefetch::CreateDataChannel(const std::string &channel_name, size_t step_num) {}
 namespace core {
-FollowerScaler::~FollowerScaler() {}
-
 bool AbstractPSNode::InitClientToScheduler() { return true; }
 void AbstractPSNode::RegisterInitCollectCommResphandler() {}
 void AbstractPSNode::RegisterRecoveryRespHandler() {}

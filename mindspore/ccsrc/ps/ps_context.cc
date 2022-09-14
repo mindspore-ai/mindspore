@@ -83,12 +83,7 @@ void PSContext::SetPSEnable(bool enabled) {
   }
 }
 
-bool PSContext::is_ps_mode() const {
-  if ((server_mode_ == kServerModeFL || server_mode_ == kServerModeHybrid) && ps_enabled_) {
-    return true;
-  }
-  return ps_enabled_;
-}
+bool PSContext::is_ps_mode() const { return ps_enabled_; }
 
 void PSContext::Reset() {
   ps_enabled_ = false;
@@ -103,9 +98,6 @@ void PSContext::Reset() {
 }
 
 std::string PSContext::ms_role() const {
-  if ((server_mode_ == kServerModeFL || server_mode_ == kServerModeHybrid) && ps_enabled_) {
-    return role_;
-  }
   if (is_worker_) {
     return kEnvRoleOfWorker;
   } else if (is_pserver_) {
@@ -118,9 +110,6 @@ std::string PSContext::ms_role() const {
 }
 
 bool PSContext::is_worker() const {
-  if ((server_mode_ == kServerModeFL || server_mode_ == kServerModeHybrid) && ps_enabled_) {
-    return role_ == kEnvRoleOfWorker;
-  }
   if (distributed::cluster::ClusterContext::instance()->initialized()) {
     return role_ == kEnvRoleOfWorker;
   }
@@ -128,9 +117,6 @@ bool PSContext::is_worker() const {
 }
 
 bool PSContext::is_server() const {
-  if ((server_mode_ == kServerModeFL || server_mode_ == kServerModeHybrid) && ps_enabled_) {
-    return role_ == kEnvRoleOfServer;
-  }
   if (distributed::cluster::ClusterContext::instance()->initialized()) {
     return role_ == kEnvRoleOfServer || role_ == kEnvRoleOfPServer;
   }
@@ -138,9 +124,6 @@ bool PSContext::is_server() const {
 }
 
 bool PSContext::is_scheduler() const {
-  if ((server_mode_ == kServerModeFL || server_mode_ == kServerModeHybrid) && ps_enabled_) {
-    return role_ == kEnvRoleOfScheduler;
-  }
   if (distributed::cluster::ClusterContext::instance()->initialized()) {
     return role_ == kEnvRoleOfScheduler;
   }
@@ -206,9 +189,8 @@ bool PSContext::cache_enable() const {
 void PSContext::set_rank_id(uint32_t) const { return; }
 
 void PSContext::set_server_mode(const std::string &server_mode) {
-  if (server_mode != kServerModePS && server_mode != kServerModeFL && server_mode != kServerModeHybrid) {
-    MS_LOG(EXCEPTION) << server_mode << " is invalid. Server mode must be " << kServerModePS << " or " << kServerModeFL
-                      << " or " << kServerModeHybrid;
+  if (server_mode != kServerModePS) {
+    MS_LOG(EXCEPTION) << server_mode << " is invalid. Server mode must be " << kServerModePS;
     return;
   }
   MS_LOG(INFO) << "Server mode: " << server_mode << " is used for Server and Worker. Scheduler will ignore it.";
@@ -227,14 +209,7 @@ void PSContext::set_ms_role(const std::string &role) {
   role_ = role;
 }
 
-void PSContext::set_worker_num(uint32_t worker_num) {
-  // Hybrid training mode only supports one worker for now.
-  if (server_mode_ == kServerModeHybrid && worker_num != 1) {
-    MS_LOG(EXCEPTION) << "The worker number should be set to 1 in hybrid training mode.";
-    return;
-  }
-  worker_num_ = worker_num;
-}
+void PSContext::set_worker_num(uint32_t worker_num) { worker_num_ = worker_num; }
 uint32_t PSContext::worker_num() const { return worker_num_; }
 
 void PSContext::set_server_num(uint32_t server_num) { server_num_ = server_num; }

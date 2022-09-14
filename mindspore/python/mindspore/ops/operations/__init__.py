@@ -98,9 +98,7 @@ from .nn_ops import (LSTM, SGD, Adam, AdamWeightDecay, FusedSparseAdam, FusedSpa
                      ApplyAdamWithAmsgrad)
 from .other_ops import (Assign, IOU, BartlettWindow, BlackmanWindow, BoundingBoxDecode, BoundingBoxEncode,
                         ConfusionMatrix, UpdateState, Load,
-                        CheckValid, Partial, Depend, identity, CheckBprop, Push, Pull, PullWeight, PushWeight,
-                        PushMetrics, StartFLJob, UpdateModel, GetModel, PyFunc, ExchangeKeys, GetKeys,
-                        _DynamicLossScale)
+                        CheckValid, Partial, Depend, identity, CheckBprop, Push, Pull, PyFunc, _DynamicLossScale)
 from .random_ops import (RandomChoiceWithMask, StandardNormal, Gamma, RandomGamma, Poisson, UniformInt, UniformReal,
                          RandomCategorical, StandardLaplace, Multinomial, UniformCandidateSampler,
                          LogUniformCandidateSampler)
@@ -481,8 +479,6 @@ __all__ = [
     "ParallelConcat",
     "Push",
     "Pull",
-    "PullWeight",
-    "PushWeight",
     "ReLUV2",
     "SparseToDense",
     "SparseTensorDenseMatmul",

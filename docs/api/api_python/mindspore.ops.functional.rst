@@ -268,6 +268,7 @@ Reduction函数
     mindspore.ops.min
     mindspore.ops.norm
     mindspore.ops.prod
+    mindspore.ops.std
 
 .. list-table::
    :widths: 50 50

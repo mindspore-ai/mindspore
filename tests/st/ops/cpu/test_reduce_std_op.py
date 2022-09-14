@@ -60,8 +60,8 @@ def test_reduce_std_op(axis, keep_dims, dtype):
 
     expect_std0 = np.std(tensor_x.asnumpy(), axis=axis, keepdims=keep_dims, dtype=dtype)
     expect_mean0 = np.mean(tensor_x.asnumpy(), axis=axis, keepdims=keep_dims, dtype=dtype)
-    assert (output[0].asnumpy() == expect_std0).all()
-    assert (output[1].asnumpy() == expect_mean0).all()
+    np.allclose(output[0].asnumpy(), expect_std0, 0.0001, 0.0001)
+    np.allclose(output[1].asnumpy(), expect_mean0, 0.0001, 0.0001)
 
 
 class ReduceStdDynamicShapeNet(nn.Cell):
