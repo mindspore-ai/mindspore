@@ -549,12 +549,13 @@ Status ModelPool::SetWorkersNum(const std::shared_ptr<RunnerConfig> &runner_conf
       MS_LOG(ERROR) << "SetDefaultOptimalModelNum failed.";
       return kLiteError;
     }
-  } else if (runner_config != nullptr && runner_config->GetWorkersNum() > 0) {
+  } else if (runner_config != nullptr && runner_config->GetWorkersNum() > 0 &&
+             runner_config->GetWorkersNum() <= can_use_core_num_ * kNumCoreNumTimes) {
     // User defined number of models
     model_pool_info_[strategy].workers_num_ = runner_config->GetWorkersNum();
     model_pool_info_[strategy].all_workers_num_ = model_pool_info_[strategy].workers_num_;
   } else {
-    MS_LOG(ERROR) << "user set worker num " << runner_config->GetWorkersNum() << " < 0";
+    MS_LOG(ERROR) << "user set worker num: " << runner_config->GetWorkersNum() << "is invalid";
     return kLiteError;
   }
   return kSuccess;
