@@ -57,7 +57,7 @@ class RpcNodeScheduler {
    * @param {RpcActorSetPtr} rpc_actor_set: The rpc actors set.
    * @return {void}
    */
-  void UpdateRpcActorRefCounts(RpcActorSetPtr rpc_actor_set);
+  void UpdateRpcActorRefCounts(RpcActorSetPtr rpc_actor_set) const;
 
   // Create new route table proxy.
   ActorRouteTableProxyPtr CreateRouteTableProxy() const;

@@ -866,7 +866,7 @@ FusedInterProcessOpPairMap ParameterServerMode::FilterNotServerOptimizerEdges(
       FusedInterProcessOpPair fused_op_pair = std::make_tuple(std::get<0>(node_pair), std::get<1>(node_pair), 0,
                                                               std::get<2>(node_pair), std::get<3>(node_pair));
       std::vector<FusedInterProcessOpPair> pair_list = {fused_op_pair};
-      results.insert(std::make_pair(edge_with_index, pair_list));
+      (void)results.insert(std::make_pair(edge_with_index, pair_list));
     }
   }
   return results;
@@ -962,7 +962,7 @@ std::vector<FusedInterProcessOpPair> ParameterServerMode::FuseCommEdges(
         return node_name1 == node_name2;
       });
     if (reused_send_node != rpc_send_nodes.end()) {
-      size_t index = std::distance(rpc_send_nodes.begin(), reused_send_node);
+      size_t index = static_cast<size_t>(std::distance(rpc_send_nodes.begin(), reused_send_node));
       indices_map[i] = index;
     } else {
       (void)rpc_send_nodes.emplace_back(std::get<0>(op_pair));

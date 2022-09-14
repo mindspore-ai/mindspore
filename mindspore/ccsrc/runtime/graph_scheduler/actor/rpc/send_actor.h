@@ -70,10 +70,10 @@ class SendActor : public RpcActor {
   /**
    * @description: Find the memory list needs to be freed after the data is sent to remote. This should be called by
    * FreeMessage.
-   * @param {void} *data: Raw pointer data needs to be freed.
+   * @param {const void} *data: Raw pointer data needs to be freed.
    * @return {std::vector<DeviceTensor *>}: The memory list needs to be freed.
    */
-  std::vector<DeviceTensor *> FindDeviceTensorNeedsFree(void *data);
+  std::vector<DeviceTensor *> FindDeviceTensorNeedsFree(const void *data) const;
 
   // Serialize dynamic shape data. The format is shown below:
   // |--------22 bytes------|---4 bytes--|PB data size bytes| data size bytes |
