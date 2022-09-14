@@ -576,6 +576,7 @@ int FetchOpParameterFromFuncGraph(const FuncGraphPtr &func_graph, std::map<std::
       MS_LOG(ERROR) << cnode->fullname_with_scope() << " FetchOpParameterFromNode failed. ";
       return ret;
     }
+    CHECK_NULL_RETURN(parameter);
     parameter->thread_num_ = 1;
     op_parameters->emplace(std::pair<std::string, OpParameter *>(cnode->fullname_with_scope(), parameter));
   }

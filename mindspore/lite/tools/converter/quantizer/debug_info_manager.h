@@ -110,7 +110,7 @@ class DebugInfoManager {
   int SetOriginStaticInfo(QuantDebugInfo *quant_debug_info, const mindspore::lite::Tensor &tensor,
                           const quant::DebugMode &debug_mode);
 
-  int SetQuantStaticInfo(const std::vector<mindspore::lite::Tensor *> &inputs, OpParameter *op_parameter,
+  int SetQuantStaticInfo(const std::vector<mindspore::lite::Tensor *> &inputs, const OpParameter *op_parameter,
                          int tensor_index, QuantDebugInfo *quant_debug_info, const mindspore::lite::Tensor &tensor,
                          const quant::DebugMode &debug_mode);
 
@@ -199,7 +199,7 @@ class DebugInfoManager {
  private:
   // the key is {node_name, tensor_index}
   std::map<PrimaryKey, QuantDebugInfo> origin_info_;
-  // Use vector to preserve ordert, There may be more nodes, such as QuantCast, bias etc.
+  // Use vector to preserve ordered, There may be more nodes, such as QuantCast, bias etc.
   std::vector<QuantDebugInfo> compared_info_;
   std::vector<QuantParamExtend> quant_params_;
   std::vector<std::vector<QuantDebugInfo>> output_infos_;

@@ -61,7 +61,7 @@ int CLEStrategy::CalcDataRange(const float *data, size_t element_cnt, const std:
                                std::vector<float> *ranges) {
   CHECK_NULL_RETURN(data);
   CHECK_NULL_RETURN(ranges);
-  std::vector<std::vector<int>> buckets_data_index;
+  std::vector<std::vector<size_t>> buckets_data_index;
   auto ret = GetBucketAllIndex(dims, preferred_dim, &buckets_data_index);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Get bucket all index failed.";
@@ -75,6 +75,7 @@ int CLEStrategy::CalcDataRange(const float *data, size_t element_cnt, const std:
     float range = 0;
     for (size_t j = 0; j < bucket.size(); ++j) {
       auto index = bucket[j];
+      MS_CHECK_LT(index, element_cnt, RET_ERROR);
       range = std::max(range, std::abs(data[index]));
     }
     ranges->at(i) = range;

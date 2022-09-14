@@ -575,7 +575,6 @@ int FullQuantQuantizer::InitDeviceConfig(const FuncGraphPtr &func_graph) {
     default:
       MS_LOG(ERROR) << " Unsupported device " << param_->fullQuantParam.target_device;
       return RET_ERROR;
-      break;
   }
   InitQMinMax();
   calibrator_ =

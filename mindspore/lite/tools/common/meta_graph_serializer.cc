@@ -276,7 +276,7 @@ bool MetaGraphSerializer::SerializeModel(const void *content, size_t size, const
     if (encrypt_content == nullptr || encrypt_len == 0) {
       MS_LOG(ERROR) << "Encrypt failed.";
       model_fs_->close();
-      return RET_ERROR;
+      return false;
     }
     model_fs_->write(reinterpret_cast<const char *>(encrypt_content.get()), encrypt_len);
   } else {
@@ -284,7 +284,7 @@ bool MetaGraphSerializer::SerializeModel(const void *content, size_t size, const
   }
   if (model_fs_->bad()) {
     MS_LOG(ERROR) << "Write model file failed: " << save_model_path_;
-    return RET_ERROR;
+    return false;
   }
 #ifndef _MSC_VER
   chmod(save_model_path_.c_str(), S_IRUSR);

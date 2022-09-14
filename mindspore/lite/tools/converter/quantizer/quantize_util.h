@@ -68,7 +68,7 @@ int GetPreferredDim(const CNodePtr &cnode, int input_index, const std::vector<in
 
 std::vector<int> ConvertShapeVectorToInt32(const ShapeVector &dims);
 
-int DeQuantData(const mindspore::MSTensor *tensor, std::vector<double> *dequant_data, int preferred_dim = 0);
+int DeQuantData(const mindspore::MSTensor *tensor, std::vector<double> *dequant_data);
 
 int GetQuantType(const CNodePtr &cnode, schema::QuantType *quant_type);
 
@@ -87,7 +87,7 @@ int GetCastNodeType(const FuncGraphPtr &func_graph, const CNodePtr &cnode, CastN
 
 template <typename T>
 int DeQuantData(const int8_t *tensor_data, int64_t elements_num, std::vector<mindspore::QuantParam> quant_params,
-                std::vector<T> *dequant_data, int preferred_dim = 0) {
+                std::vector<T> *dequant_data) {
   if (quant_params.size() != 1) {
     MS_LOG(ERROR) << "unexpected quant_params size: " << quant_params.size() << " only support per-layer now.";
     return RET_ERROR;
@@ -117,7 +117,7 @@ bool CheckNodeInSet(const CNodePtr &cnode, const std::set<PrimitivePtr> &support
 int GetElementNumFromShape(const std::vector<int> &dims, int *total_size);
 
 int GetBucketAllIndex(const std::vector<int> &dims, int preferred_dim,
-                      std::vector<std::vector<int>> *buckets_data_index);
+                      std::vector<std::vector<size_t>> *buckets_data_index);
 bool CheckControlFlowType(const AnfNodePtr &node);
 }  // namespace mindspore::lite::quant
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANTIZE_UTIL_H_

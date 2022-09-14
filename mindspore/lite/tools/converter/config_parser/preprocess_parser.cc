@@ -129,7 +129,6 @@ int PreprocessParser::ParseCalibratePath(const std::string &str, std::map<std::s
       }
       (*value)[name] = string_split.at(string_split.size() - 1);
     } else {
-      auto name_str = string_split_quotation.at(0);
       auto name = string_split.at(0);
       for (size_t i = 1; i < string_split.size() - 1; ++i) {
         name += ":" + string_split.at(i);

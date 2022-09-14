@@ -61,7 +61,7 @@ bool QuantStrategy::CanTensorQuantized(const CNodePtr &cnode, const AnfNodePtr &
   auto ret = GetElementNumFromShape(ConvertShapeVectorToInt32(weight_shape), &total_shape_size);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Get element num from shape failed.";
-    return ret;
+    return false;
   }
   if (total_shape_size < 0 || static_cast<size_t>(total_shape_size) <= min_quant_weight_size_) {
     MS_LOG(INFO) << "shape_size " << total_shape_size << " less min_quant_weight_size_ " << min_quant_weight_size_;

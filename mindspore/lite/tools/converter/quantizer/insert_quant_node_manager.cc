@@ -227,11 +227,17 @@ int InsertQuantNodeManager::NewDynamicQuantNode(const FuncGraphPtr &graph, const
   }
   auto input = cnode->input(kInputIndex + kPrimitiveCOffset);
   if (input->isa<mindspore::CNode>() || IsGraphInput(input)) {
-    InsertDynamicQuantWithIndex(graph, cnode, kInputIndex + kPrimitiveCOffset);
+    auto ret = InsertDynamicQuantWithIndex(graph, cnode, kInputIndex + kPrimitiveCOffset);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Insert dynamic quant with index failed.";
+    }
   }
   auto weight = cnode->input(kWeightIndex + kPrimitiveCOffset);
   if (weight->isa<mindspore::CNode>() || IsGraphInput(weight)) {
-    InsertDynamicQuantWithIndex(graph, cnode, kWeightIndex + kPrimitiveCOffset);
+    auto ret = InsertDynamicQuantWithIndex(graph, cnode, kWeightIndex + kPrimitiveCOffset);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Insert dynamic quant with index failed.";
+    }
   }
   return RET_OK;
 }
