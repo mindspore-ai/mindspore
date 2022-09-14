@@ -76,9 +76,9 @@ DataQueueOp::DataQueueOp(const std::string channel_name, DeviceType device_type,
   // must limit to avoid memory overload
 #ifdef WITH_BACKEND
   MS_EXCEPTION_IF_NULL(MsContext::GetInstance());
-  if (MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice && !dynamic_shape_) {
-    ascend_data_queue_ =
-      device::DataQueueMgr::GetInstance().CreateDataQueue(kAscendDevice, channel_name, dynamic_shape_);
+  if (MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice) {
+    (void)device::DataQueueMgr::GetInstance().Create(channel_name, {}, 0);
+    ascend_data_queue_ = device::DataQueueMgr::GetInstance().GetDataQueue(channel_name)->Queue();
   }
 #endif
 #ifdef ENABLE_DUMP_IR
@@ -168,12 +168,8 @@ Status DataQueueOp::operator()() {
         }
       }
     }
+    RETURN_IF_NOT_OK(SendDataToAscend());
 
-    if (dynamic_shape_) {
-      RETURN_IF_NOT_OK(SendDataToAscendDynamic());
-    } else {
-      RETURN_IF_NOT_OK(SendDataToAscend());
-    }
 #endif
   } else if (device_type_ == DeviceType::GPU) {
 #ifdef WITH_BACKEND
@@ -624,7 +620,6 @@ Status DataQueueOp::WorkerEntry(int32_t worker_id) {
 
 Status DataQueueOp::SendDataToGPU() {
 #ifdef WITH_BACKEND
-  RETURN_IF_NOT_OK(CreateDynamicDataQueue());
   RETURN_IF_NOT_OK(LaunchParallelCopyThread());
   MS_LOG(INFO) << "Device queue, sending data to GPU.";
 #ifndef ENABLE_SECURITY

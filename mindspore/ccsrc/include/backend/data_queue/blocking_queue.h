@@ -27,18 +27,20 @@
 #include "include/backend/data_queue/data_queue.h"
 namespace mindspore {
 namespace device {
-class BlockingQueue {
+class BACKEND_EXPORT BlockingQueue {
  public:
   BlockingQueue() : queue_(nullptr) {}
   ~BlockingQueue() = default;
 
   DataQueueStatus Create(const std::shared_ptr<DataQueue> &data_queue);
   void RegisterRelease(const std::function<void(void *, int32_t)> &func);
-  DataQueueStatus Push(const std::vector<DataQueueItem> &data, unsigned int timeout_in_sec);
+  DataQueueStatus Push(const std::vector<DataQueueItem> &data, unsigned int timeout = 0);
   DataQueueStatus Front(std::vector<DataQueueItem> *data);
   DataQueueStatus FrontAsync(std::vector<DataQueueItem> *data);
   DataQueueStatus Pop();
   DataQueueStatus Clear();
+  void Close();
+  bool IsOpen();
   size_t Size() { return queue_->Size(); }
   size_t Capacity() { return queue_->Capacity(); }
   const std::shared_ptr<DataQueue> &Queue() const { return queue_; }

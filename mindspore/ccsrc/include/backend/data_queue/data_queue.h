@@ -45,16 +45,15 @@ class BACKEND_EXPORT DataQueue {
   virtual ~DataQueue() = default;
 
   virtual void RegisterRelease(const std::function<void(void *, int32_t)> &func) { host_release_ = func; }
-
-  virtual bool IsOpen() const { return true; }
+  virtual bool IsOpen() const { return !closed_; }
+  virtual void Close() { closed_ = true; }
   virtual bool IsEmpty() const { return size_ == 0; }
   virtual bool IsFull() const { return size_ == capacity_; }
   virtual DataQueueStatus FrontAsync(std::vector<DataQueueItem> *data) const { return DataQueueStatus::SUCCESS; }
   virtual DataQueueStatus Push(std::vector<DataQueueItem> data) = 0;
   virtual DataQueueStatus Front(std::vector<DataQueueItem> *data) const = 0;
   virtual DataQueueStatus Pop() = 0;
-  virtual void SetThreadDevice() = 0;
-
+  virtual void SetThreadDevice() {}
   virtual size_t Size() { return size_; }
   virtual size_t Capacity() { return capacity_; }
 
@@ -64,7 +63,7 @@ class BACKEND_EXPORT DataQueue {
   size_t tail_;
   size_t size_;
   size_t capacity_;
-
+  bool closed_{false};
   std::function<void(void *, int32_t)> host_release_;
   DeviceContext *device_context_;
 

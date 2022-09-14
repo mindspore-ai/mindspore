@@ -884,9 +884,6 @@ std::tuple<KernelSelectStatus, std::string, ExceptionType> SelectKernelInfoWithM
     SetTensorDeviceInfo(kernel_node);
     select_status = kStatusAllMatched;
   }
-  if (IsPrimitiveCNode(kernel_node, prim::kPrimGetNext) && !common::AnfAlgo::IsDynamicShape(kernel_node)) {
-    select_status = kNoMatched;
-  }
   // If node can't find valid ai_core kernel info, re-find in ai_cpu kernel info
   if (select_status == kNoMatched) {
     GatherInputAndOutputInferType(aicore_in_out_info, kernel_node);

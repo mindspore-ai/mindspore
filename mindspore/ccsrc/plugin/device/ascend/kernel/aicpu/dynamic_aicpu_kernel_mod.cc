@@ -31,6 +31,8 @@
 #include "include/common/utils/utils.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
+#include "include/backend/data_queue/data_queue_mgr.h"
+#include "plugin/device/ascend/hal/device/ascend_data_queue.h"
 
 namespace mindspore {
 namespace kernel {
@@ -62,10 +64,16 @@ int DynamicAicpuOpKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   if (!common::AnfAlgo::IsDynamicShape(cnode)) {
     MS_LOG(EXCEPTION) << "The node is not dynamic shape: " << cnode->fullname_with_scope();
   }
-
-  // update output size after InferShape.
-  AscendKernelMod::UpdateOutputSizeList();
-
+  if (common::AnfAlgo::GetCNodeName(cnode) == kGetNextOpName) {
+    auto wingman_queue = device::GetTdtWingManQueue(cnode);
+    std::vector<device::DataQueueItem> data;
+    RetryPeakItemFromDataQueue(cnode, wingman_queue, &data);
+    (void)wingman_queue->Pop();
+    UpdateGetNextWithDataQueueItems(cnode, data);
+  } else {
+    // update output size after InferShape.
+    AscendKernelMod::UpdateOutputSizeList();
+  }
   MS_LOG(INFO) << "UpdateExtInfo of " << cnode->fullname_with_scope() << " start";
   auto input_num = common::AnfAlgo::GetInputTensorNum(cnode);
   auto output_num = common::AnfAlgo::GetOutputTensorNum(cnode);
