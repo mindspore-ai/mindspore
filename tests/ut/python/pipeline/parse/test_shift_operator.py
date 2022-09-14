@@ -149,35 +149,3 @@ def test_shift_operator_error_negative_shift_count():
     with pytest.raises(ValueError) as err:
         net(x, y)
     assert "shift count must be a non-negative integer" in str(err.value)
-
-
-def test_shift_operator_error_overflow():
-    """
-    Feature: shift operator
-    Description: test shift operator when result overflows
-    Expectation: throw RuntimeError
-    """
-
-    class Net(nn.Cell):
-        def construct(self, x, y):
-            res = x << y
-            return res
-    net = Net()
-
-    x = -1
-    y = 63
-    result = net(x, y)
-    assert result == (x << y)
-
-    x = 1
-    y = 63
-    with pytest.raises(RuntimeError) as err:
-        net(x, y)
-    assert "int64 integer overflow" in str(err.value)
-
-
-    x = -3
-    y = 62
-    with pytest.raises(RuntimeError) as err:
-        net(x, y)
-    assert "int64 integer overflow" in str(err.value)
