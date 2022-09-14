@@ -371,9 +371,10 @@ void CastOperation::DoSignatureCast(const FrontendOpRunInfoPtr &op_run_info,
     }
 
     if (IsValueTypeInvalid(v)) {
+      std::string type_str = v->type() == nullptr ? "None, value is \"" + v->ToString() + "\"" : v->type()->ToString();
       MS_EXCEPTION(TypeError) << "For '" << op_run_info->op_prim->name() << "', the " << (i + 1) << "th input "
                               << signature[i].name << " can not be implicitly converted. "
-                              << "Its type is " << v->ToString() << ". Only support Tensor or Scalar.";
+                              << "Its type is " << type_str << ". Only support Tensor or Scalar.";
     }
     MS_LOG(DEBUG) << "Implicit cast for " << op_run_info->base_op_run_info.op_name << " " << i
                   << "th input, and to type " << TypeIdToType(it->second)->ToString();
