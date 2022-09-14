@@ -154,6 +154,7 @@
 "mindspore/tests/st/ops/ascend/test_aicpu_ops/test_strided_slice.py"                                    "redefined-builtin"
 "mindspore/tests/st/ops/ascend/test_aicpu_ops/test_strided_slice_grad.py"                               "redefined-outer-name"
 "mindspore/tests/st/pynative/parser/test_parser_construct.py"                                           "bad-super-call"
+"mindspore/tests/st/gradient/test_grad_return_type.py"                                                  "unused-variable"
 "mindspore/tests/ut/python/optimizer/test_auto_grad.py"                                                 "broad-except"
 "mindspore/tests/st/fallback/control_flow/test_fallback_100_if_after_if.py"                             "unused-variable"
 "mindspore/tests/st/numpy_native/test_array_ops.py"                                                     "useless-super-delegation"
