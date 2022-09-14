@@ -11,8 +11,8 @@ mindspore.ops.NoRepeatNGram
         - **ngram_size** (int) - 指定n-gram的长度，必须大于0。默认值：1。
 
     输入：
-        - **state_seq** (Tensor) - n-gram词序列。是一个三维Tensor，其shape为： :math:`(batch_size, beam_width, m)` 。
-        - **log_probs** (Tensor) - n-gram词序列对应出现的概率，是一个三维Tensor，其shape为： :math:`(batch_size, beam_width, vocab_size)` 。当n-gram重复时，log_probs的值将被负FLOAT_MAX替换。
+        - **state_seq** (Tensor) - n-gram词序列。是一个三维Tensor，其shape为： :math:`(batch\_size, beam\_width, m)` 。
+        - **log_probs** (Tensor) - n-gram词序列对应出现的概率，是一个三维Tensor，其shape为： :math:`(batch\_size, beam\_width, vocab\_size)` 。当n-gram重复时，log_probs的值将被负FLOAT_MAX替换。
 
     输出：
         - **log_probs** (Tensor) - 数据类型和shape与输入 `log_probs` 相同。

@@ -26,7 +26,7 @@ mindspore.nn.probability.dpn.VAE
 
         参数：
             - **generate_nums** (int) - 要生成的样本数。
-            - **shape** (tuple) - 样本的 shape，它必须是 :math:`(generate_nums, C, H, W)` 或 :math:`(-1, C, H, W)`。
+            - **shape** (tuple) - 样本的 shape，它必须是 :math:`(generate\_nums, C, H, W)` 或 :math:`(-1, C, H, W)`。
 
         返回：
             Tensor，生成的样本。

@@ -11,7 +11,7 @@ mindspore.Tensor.random_categorical
         - **dtype** (mindspore.dtype): 输出的类型。它的值必须是 mindspore.int16、mindspore.int32 和 mindspore.int64 之一。默认值：mindspore.int64。
 
     返回：
-        Tensor，Shape为 :math:`(batch_size, num_samples)` 的输出Tensor。
+        Tensor，Shape为 :math:`(batch\_size, num\_samples)` 的输出Tensor。
 
     异常：
         - **TypeError** - 如果 `dtype` 不是以下之一：mindspore.int16、mindspore.int32、mindspore.int64。
