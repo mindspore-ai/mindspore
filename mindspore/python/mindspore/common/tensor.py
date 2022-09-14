@@ -5525,7 +5525,7 @@ class Tensor(Tensor_):
         The first input tensor must be not less than `3` and the second input must be not less than `2`.
 
         Args:
-            mat2 (Tensor) - The tensor to be multiplied. The shape of the tensor is :math:`(*B, C, M)`.
+            mat2 (Tensor): The tensor to be multiplied. The shape of the tensor is :math:`(*B, C, M)`.
 
         Outputs:
             Tensor, the shape of the output tensor is :math:`(*B, N, M)`.

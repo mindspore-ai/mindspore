@@ -77,5 +77,3 @@ mindspore.nn.AdamWeightDecay
         - **ValueError** - `eps` 小于等于0。
         - **ValueError** - `beta1` 、 `beta2` 不在（0.0,1.0）范围内。
         - **ValueError** - `weight_decay` 小于0。
-
-    .. include:: mindspore.nn.optim_target_unique_for_sparse.rst
