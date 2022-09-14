@@ -143,7 +143,7 @@ Status PullIterator::BuildAndLaunchTree(const std::shared_ptr<Dataset> &ds, int3
     pull_consumer_ = std::make_unique<PullBasedIteratorConsumer>();
   }
   CHECK_FAIL_RETURN_UNEXPECTED(pull_consumer_ != nullptr, "pull_consumer_ is nullptr");
-  RETURN_IF_NOT_OK(pull_consumer_->Init(std::move(ds->IRNode())));
+  RETURN_IF_NOT_OK(pull_consumer_->Init(ds->IRNode()));
   return Status::OK();
 }
 

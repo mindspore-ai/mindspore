@@ -79,7 +79,7 @@ class ParallelOp : public DatasetOp {
 
   int32_t NumWorkers() const override { return num_workers_; }
 
-  Status WaitForWorkers() {
+  Status WaitForWorkers() override {
     // reset num_paused workers to 0
     num_workers_paused_ = 0;
     for (int32_t wkr_id = 0; wkr_id < num_workers_; wkr_id++) {

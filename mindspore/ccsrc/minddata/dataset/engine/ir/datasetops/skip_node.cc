@@ -30,7 +30,9 @@ namespace dataset {
 // Constructor for SkipNode
 SkipNode::SkipNode(int32_t count) : skip_count_(count) {}
 
-SkipNode::SkipNode(std::shared_ptr<DatasetNode> child, int32_t count) : skip_count_(count) { this->AddChild(child); }
+SkipNode::SkipNode(const std::shared_ptr<DatasetNode> &child, int32_t count) : skip_count_(count) {
+  this->AddChild(child);
+}
 
 std::shared_ptr<DatasetNode> SkipNode::Copy() {
   auto node = std::make_shared<SkipNode>(nullptr, skip_count_);

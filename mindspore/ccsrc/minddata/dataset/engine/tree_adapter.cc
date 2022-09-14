@@ -186,7 +186,7 @@ Status TreeAdapter::Build(std::shared_ptr<DatasetNode> root_ir) {
   return Status::OK();
 }
 
-Status TreeAdapter::Compile(std::shared_ptr<DatasetNode> input_ir, int32_t num_epochs, int64_t step) {
+Status TreeAdapter::Compile(const std::shared_ptr<DatasetNode> &input_ir, int32_t num_epochs, int64_t step) {
   RETURN_UNEXPECTED_IF_NULL(input_ir);
   input_ir_ = input_ir;
   tree_state_ = kCompileStateIRGraphBuilt;

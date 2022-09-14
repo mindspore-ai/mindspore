@@ -28,7 +28,7 @@ Status DeMalloc(std::size_t s, void **p, bool init_to_zero = false) {
   } else {
     *p = q;
     if (init_to_zero) {
-      (void)memset_s(q, s, 0, s);
+      CHECK_FAIL_RETURN_UNEXPECTED(memset_s(q, s, 0, s) == EOK, "Failed to init memory to zero.");
     }
     return Status::OK();
   }
