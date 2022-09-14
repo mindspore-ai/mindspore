@@ -28,8 +28,8 @@
         - **drop_remainder** (bool, 可选) - 当最后一个批处理数据包含的数据条目小于 `batch_size` 时，是否将该批处理丢弃，不传递给下一个操作。默认值：False，不丢弃。
         - **num_parallel_workers** (int, 可选) - 指定 `batch` 操作的并发进程数/线程数（由参数 `python_multiprocessing` 决定当前为多进程模式或多线程模式）。
           默认值：None，使用mindspore.dataset.config中配置的线程数。
-        - **per_batch_map** (Callable[[List[numpy.ndarray], ..., List[numpy.ndarray], BatchInfo], (List[numpy.ndarray],
-          ..., List[numpy.ndarray])], 可选) - 可调用对象，以(list[numpy.ndarray], ..., list[numpy.ndarray], BatchInfo)作为输入参数，
+        - **per_batch_map** (Callable[[List[numpy.ndarray], ..., List[numpy.ndarray], BatchInfo], (List[numpy.ndarray],..., List[numpy.ndarray])], 可选) - 可调用对象，
+          以(list[numpy.ndarray], ..., list[numpy.ndarray], BatchInfo)作为输入参数，
           处理后返回(list[numpy.ndarray], list[numpy.ndarray],...)作为新的数据列。输入参数中每个list[numpy.ndarray]代表给定数据列中的一批numpy.ndarray，
           list[numpy.ndarray]的个数应与 `input_columns` 中传入列名的数量相匹配，在返回的(list[numpy.ndarray], list[numpy.ndarray], ...)中，
           list[numpy.ndarray]的个数应与输入相同，如果输出列数与输入列数不一致，则需要指定 `output_columns`。该可调用对象的最后一个输入参数始终是BatchInfo，
