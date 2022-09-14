@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include <algorithm>
+#include "mindspore/core/ops/adam.h"
 #include "plugin/device/cpu/kernel/adam_cpu_kernel.h"
 #include "plugin/device/cpu/kernel/nnacl/errorcode.h"
 #include "plugin/device/cpu/kernel/nnacl/fp32/adam_fp32.h"
@@ -110,6 +111,8 @@ bool AdamCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vec
   kernel_name_ = base_operator->GetPrim()->name();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kAdamInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kAdamOutputsNum, kernel_name_);
+  auto kernel_ptr_ = std::dynamic_pointer_cast<ops::Adam>(base_operator);
+  use_nesterov_ = kernel_ptr_->get_use_nesterov();
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
