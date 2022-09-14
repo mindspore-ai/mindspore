@@ -191,3 +191,25 @@ def test_list_insert_pop_append_1():
     assert np.all(res_x == np.array((2, Tensor([1]), 9, 10, 5)))
     assert res_y == Tensor([5])
     assert res_z == 3
+
+
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_list_insert_type_error():
+    """
+    Feature: list insert.
+    Description: support list insert.
+    Expectation: No exception.
+    """
+    @ms_function
+    def list_insert():
+        x = [1, 2, 3]
+        x.insert(1.0, 9)
+        return x
+
+    with pytest.raises(TypeError) as error_info:
+        res = list_insert()
+        print("res:", res)
+    assert "Integer argument expected, but got FP32Imm type value: 1.000000" in str(error_info)
