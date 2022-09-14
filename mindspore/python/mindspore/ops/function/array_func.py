@@ -1396,15 +1396,15 @@ def scatter_mul(input_x, indices, updates):
             The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
         indices (Tensor): The index to do min operation whose data type must be mindspore.int32.
         updates (Tensor): The tensor doing the min operation with `input_x`,
-            the data type is same as `input_x`, the shape is `indices.shape + x.shape[1:]`.
+            the data type is same as `input_x`, the shape is `indices.shape + input_x.shape[1:]`.
 
     Returns:
         Tensor, the updated `input_x`, has the same shape and type as `input_x`.
 
     Raises:
         TypeError: If `use_locking` is not a bool.
-        TypeError: If `indices` is not an int32.
-        ValueError: If the shape of `updates` is not equal to `indices.shape + x.shape[1:]`.
+        TypeError: If `indices` is not an int32 or int64.
+        ValueError: If the shape of `updates` is not equal to `indices.shape + input_x.shape[1:]`.
         RuntimeError: If the data type of `input_x` and `updates` conversion of Parameter
                       is required when data type conversion of Parameter is not supported.
 
