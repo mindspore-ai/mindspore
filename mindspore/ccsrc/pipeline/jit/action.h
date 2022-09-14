@@ -26,8 +26,6 @@
 #include "backend/graph_compiler/backend.h"
 
 namespace mindspore {
-extern const char kMsConvert[];
-
 namespace pipeline {
 using ActionItem = std::pair<std::string, std::function<bool(ResourcePtr)>>;
 

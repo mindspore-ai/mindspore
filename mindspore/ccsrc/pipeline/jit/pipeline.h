@@ -38,9 +38,6 @@
 #include "include/api/visible.h"
 
 namespace mindspore {
-extern const char kMsConvert[];
-extern const char kMsVm[];
-
 // namespace to support pipeline structures definition
 namespace pipeline {
 

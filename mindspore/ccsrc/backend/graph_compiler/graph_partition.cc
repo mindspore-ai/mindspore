@@ -29,9 +29,6 @@
 #include "ps/ps_context.h"
 #include "utils/anf_utils.h"
 namespace mindspore {
-const char kMsConvert[] = "ms";
-const char kMsVm[] = "vm";
-const char kGeVm[] = "ge";
 namespace compile {
 namespace {
 std::string GetOtherTarget(const std::vector<AnfNodePtr> &nodes) {
