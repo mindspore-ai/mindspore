@@ -34,7 +34,7 @@ class MelScaleOperation : public TensorOperation {
   MelScaleOperation(int32_t n_mels, int32_t sample_rate, float f_min, float f_max, int32_t n_stft, NormType norm,
                     MelType mel_type);
 
-  ~MelScaleOperation();
+  ~MelScaleOperation() override;
 
   std::shared_ptr<TensorOp> Build() override;
 
