@@ -30,7 +30,6 @@
 #include "src/litert/inner_context.h"
 #include "src/tensor.h"
 #include "include/errorcode.h"
-#include "schema/model_generated.h"
 #include "include/context.h"
 #include "include/api/kernel.h"
 #include "src/litert/cxx_api/tensor/tensor_impl.h"

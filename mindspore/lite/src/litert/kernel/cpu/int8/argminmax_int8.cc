@@ -43,7 +43,7 @@ int ArgMinMaxInt8CPUKernel::Prepare() {
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   auto param = reinterpret_cast<ArgMinMaxParameter *>(op_parameter_);
   CHECK_NULL_RETURN(param);
-  param->data_type_ = kNumberTypeInt8;
+  param->data_type_ = static_cast<int32_t>(kNumberTypeInt8);
   in_quant_arg_ = reinterpret_cast<QuantArg *>(malloc(sizeof(QuantArg)));
   if (in_quant_arg_ == nullptr) {
     MS_LOG(ERROR) << "Malloc QuantArg for argmin or argmax int8 op failed!";

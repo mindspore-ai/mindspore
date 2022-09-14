@@ -34,8 +34,8 @@ Future<std::list<int>> MindrtAsyncRun(const std::vector<OpDataPtr<T>> &input_dat
                                       const std::shared_ptr<ActorMgr> &actor_mgr) {
   std::list<Future<int>> futures;
   auto promises = *(context->results_);
-  std::transform(promises.begin(), promises.end(), std::back_inserter(futures),
-                 [](const Promise<int> &promise) { return promise.GetFuture(); });
+  (void)std::transform(promises.begin(), promises.end(), std::back_inserter(futures),
+                       [](const Promise<int> &promise) { return promise.GetFuture(); });
   Future<std::list<int>> collect = mindspore::Collect<int>(futures);
 
   for (auto data : input_data) {
@@ -160,7 +160,7 @@ std::unordered_map<void *, std::set<std::pair<AID, size_t>>> MindrtExecutor::Bui
       auto pair = std::make_pair(op_actor->GetAID(), i);
       auto iter = receivers_map.find(key);
       if (iter != receivers_map.end()) {
-        iter->second.emplace(pair);
+        (void)iter->second.emplace(pair);
       } else {
         std::set<std::pair<AID, size_t>> tmp_set{pair};
         receivers_map[input_tensors[i]] = tmp_set;
