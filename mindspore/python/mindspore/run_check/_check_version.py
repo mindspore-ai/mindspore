@@ -184,7 +184,7 @@ class GPUEnvChecker(EnvChecker):
                              "version has been installed, you can refer to the installation "
                              "guidelines: https://www.mindspore.cn/install")
                 return path_list
-            ldd_r = subprocess.Popen(['ldd', real_path[0]], stdout=subprocess.PIPE)
+            ldd_r = subprocess.Popen(['ldd', real_path[0]], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             ldd_result = subprocess.Popen(['/bin/grep', lib_name], stdin=ldd_r.stdout, stdout=subprocess.PIPE)
             result = ldd_result.communicate(timeout=5)[0].decode()
             for i in result.split('\n'):
