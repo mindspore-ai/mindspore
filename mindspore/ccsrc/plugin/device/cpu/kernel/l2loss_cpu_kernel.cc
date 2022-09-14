@@ -45,8 +45,7 @@ bool L2LossCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
 int L2LossCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                const std::vector<KernelTensorPtr> &outputs,
                                const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = 0;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) != 0) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
     return ret;
   }
   input_shape_ = inputs[kIndex0]->GetShapeVector();

@@ -16,6 +16,7 @@
 import math
 import pytest
 import numpy as np
+import mindspore
 from mindspore import context
 from mindspore import nn
 from mindspore import Tensor
@@ -194,3 +195,46 @@ def test_sit_lstm_grad_input_3_32_32_is_32_hs_16():
     assert np.allclose(x_grad, x_grad_pynative, 0.001, 0.001)
     assert np.allclose(h_grad, h_grad_pynative, 0.001, 0.001)
     assert np.allclose(c_grad, c_grad_pynative, 0.001, 0.001)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_lstm_cpu_dynamic_shape():
+    """
+    Feature: test LSTM op in cpu.
+    Description: test the ops in dynamic shape.
+    Expectation: expect correct shape result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    input_s = 32
+    hidden_s = 16
+    has_bias = True
+    bidirectional = False
+    num_layers = 1
+    num_directions = 1
+
+    fact = LSTMWeightBias(num_layers, has_bias, input_s, num_directions, hidden_s, bidirectional)
+    w_ih_list, w_hh_list, b_ih_list, b_hh_list = fact.get_weight_bias()
+    net = LSTM(input_s=input_s, hidden_s=16, num_layers=num_layers, has_bias=has_bias, batch_first=False,
+               bidirectional=bidirectional, dropout=0.0)
+    net.lstm.w_ih_list = w_ih_list
+    net.lstm.w_hh_list = w_hh_list
+    net.lstm.b_ih_list = b_ih_list
+    net.lstm.b_hh_list = b_hh_list
+
+    h0_dyn = Tensor(shape=[None, 32, 16], dtype=mindspore.float32)
+    c0_dyn = Tensor(shape=[num_layers * 1, None, 16], dtype=mindspore.float32)
+    input_dyn = Tensor(shape=[3, 32, None], dtype=mindspore.float32)
+    net.set_inputs(input_dyn, h0_dyn, c0_dyn)
+
+    h0 = Tensor(np.random.randn(num_layers * 1, 32, 16).astype(np.float32))
+    c0 = Tensor(np.random.randn(num_layers * 1, 32, 16).astype(np.float32))
+    input_ms = Tensor(np.random.randn(3, 32, 32).astype(np.float32))
+    out, (hy, cy) = net(input_ms, h0, c0)
+    out_shape = (3, 32, 16)
+    assert out.asnumpy().shape == out_shape
+    hy_shape = (1, 32, 16)
+    assert hy.asnumpy().shape == hy_shape
+    cy_shape = (1, 32, 16)
+    assert cy.asnumpy().shape == cy_shape

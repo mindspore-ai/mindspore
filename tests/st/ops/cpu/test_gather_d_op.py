@@ -16,12 +16,14 @@
 import numpy as np
 import pytest
 
+import mindspore
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
 
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+
 
 class NetGatherD(nn.Cell):
     def __init__(self, dim=1):
@@ -75,7 +77,6 @@ def test_gatherd_fp16():
     assert np.all(np.abs(output.asnumpy() - expect) < error)
 
 
-
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -115,3 +116,25 @@ def test_gatherd_bool():
             for k in range(index.shape[2]):
                 expect[i, j, k] = x[i, j, index[i, j, k]]
     assert np.all(output.asnumpy() == expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_gatherd_cpu_dynamic_shape():
+    """
+    Feature: test GatherD op in cpu.
+    Description: test the ops in dynamic shape.
+    Expectation: expect correct shape result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+    dim = -1
+    gatherd = NetGatherD(dim)
+    x_dyn = Tensor(shape=[None, 5, 5], dtype=mindspore.float32)
+    index_dyn = Tensor(shape=[5, 5, None], dtype=mindspore.int32)
+    gatherd.set_inputs(x_dyn, index_dyn)
+    x = np.random.randn(5, 5, 5)
+    y = np.random.randn(5, 5, 8)
+    output = gatherd(Tensor(x, mindspore.float32), Tensor(y, mindspore.int32))
+    expect_shape = (5, 5, 8)
+    assert output.asnumpy().shape == expect_shape

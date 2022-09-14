@@ -287,6 +287,27 @@ def test_floor_div():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
+def test_floor_div_cpu_dynamic_shape():
+    """
+    Feature: test FloorDiv op in cpu.
+    Description: test the ops in dynamic shape.
+    Expectation: expect correct shape result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+    net = FloorDivNet()
+    x_dyn = Tensor(shape=[None, 32], dtype=mindspore.float32)
+    y_dyn = Tensor(shape=[16, None], dtype=mindspore.float32)
+    net.set_inputs(x_dyn, y_dyn)
+    x = np.random.randn(16, 32)
+    y = np.random.randn(16, 32)
+    output = net(Tensor(x, mindspore.float32), Tensor(y, mindspore.float32))
+    expect_shape = (16, 32)
+    assert output.asnumpy().shape == expect_shape
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 def test_mod():
     """
     Feature: ALL To ALL
@@ -386,6 +407,27 @@ def test_mod():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
+def test_mod_cpu_dynamic_shape():
+    """
+    Feature: test Mod op in cpu.
+    Description: test the ops in dynamic shape.
+    Expectation: expect correct shape result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+    net = ModNet()
+    x_dyn = Tensor(shape=[None, 32], dtype=mindspore.float32)
+    y_dyn = Tensor(shape=[16, None], dtype=mindspore.float32)
+    net.set_inputs(x_dyn, y_dyn)
+    x = np.random.randn(16, 32)
+    y = np.random.randn(16, 32)
+    output = net(Tensor(x, mindspore.float32), Tensor(y, mindspore.float32))
+    expect_shape = (16, 32)
+    assert output.asnumpy().shape == expect_shape
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 def test_floor_mod():
     """
     Feature: ALL To ALL
@@ -480,6 +522,27 @@ def test_floor_mod():
     expect7 = np.mod(x7_np, y7_np).astype(np.int64)
     assert np.all(output7.asnumpy() == expect7)
     assert output6.shape == expect6.shape
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_floor_mod_cpu_dynamic_shape():
+    """
+    Feature: test FloorMod op in cpu.
+    Description: test the ops in dynamic shape.
+    Expectation: expect correct shape result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+    net = FloorModNet()
+    x_dyn = Tensor(shape=[None, 32], dtype=mindspore.float32)
+    y_dyn = Tensor(shape=[16, None], dtype=mindspore.float32)
+    net.set_inputs(x_dyn, y_dyn)
+    x = np.random.randn(16, 32)
+    y = np.random.randn(16, 32)
+    output = net(Tensor(x, mindspore.float32), Tensor(y, mindspore.float32))
+    expect_shape = (16, 32)
+    assert output.asnumpy().shape == expect_shape
 
 
 @pytest.mark.level0

@@ -51,7 +51,6 @@ class L2LossGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelper<L
   template <typename T>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs);
-  void ResetResource() noexcept;
   void *cuda_stream_{nullptr};
   size_t input_size_;
   bool is_null_input_;

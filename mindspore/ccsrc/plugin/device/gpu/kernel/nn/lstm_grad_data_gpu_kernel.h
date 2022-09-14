@@ -163,17 +163,17 @@ class LstmGradDataGpuKernelMod : public NativeGpuKernelMod {
   void DestroyTensorDescGrp() {
     if (dy_desc_ != nullptr) {
       for (size_t i = 0; i < IntToSize(seq_len_); ++i) {
-        CHECK_CUDNN_RET_WITH_ERROR_NOTRACE(cudnnDestroyTensorDescriptor(dy_desc_[i]), "destroy dy_desc_ failed");
+        CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnDestroyTensorDescriptor(dy_desc_[i]), "destroy dy_desc_ failed");
       }
     }
     if (y_desc_ != nullptr) {
       for (size_t i = 0; i < IntToSize(seq_len_); ++i) {
-        CHECK_CUDNN_RET_WITH_ERROR_NOTRACE(cudnnDestroyTensorDescriptor(y_desc_[i]), "destroy y_desc failed");
+        CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnDestroyTensorDescriptor(y_desc_[i]), "destroy y_desc failed");
       }
     }
     if (dx_desc_ != nullptr) {
       for (size_t i = 0; i < IntToSize(seq_len_); ++i) {
-        CHECK_CUDNN_RET_WITH_ERROR_NOTRACE(cudnnDestroyTensorDescriptor(dx_desc_[i]), "destroy dx_desc_ failed");
+        CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnDestroyTensorDescriptor(dx_desc_[i]), "destroy dx_desc_ failed");
       }
     }
   }

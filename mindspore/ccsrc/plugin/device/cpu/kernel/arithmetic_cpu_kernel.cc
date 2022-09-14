@@ -124,8 +124,11 @@ class ArithmeticCpuTypeFunc : public CpuKernelFunc {
         (void)input_shape2_.insert(input_shape2_.begin(), 1);
       }
     }
+    input_element_num1_.clear();
     CPUKernelUtils::GetElementNumEveryDim(input_shape1_, &input_element_num1_);
+    input_element_num2_.clear();
     CPUKernelUtils::GetElementNumEveryDim(input_shape2_, &input_element_num2_);
+    output_element_num_.clear();
     CPUKernelUtils::GetElementNumEveryDim(output_shape_, &output_element_num_);
     return KRET_OK;
   }

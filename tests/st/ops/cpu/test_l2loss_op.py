@@ -32,6 +32,7 @@ class L2LossNet(nn.Cell):
     def construct(self, x):
         return self.l2_loss(x)
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -43,6 +44,7 @@ def test_l2loss_pynative_fp32_2x2():
     output = P.L2Loss()(x)
     diff = output.asnumpy() - expect
     assert np.all(diff < error)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
@@ -56,6 +58,7 @@ def test_l2loss_pynative_fp16_2x2():
     diff = output.asnumpy() - expect
     assert np.all(diff < error)
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -68,6 +71,7 @@ def test_l2loss_pynative_fp32_1x4():
     diff = output.asnumpy() - expect
     assert np.all(diff < error)
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -79,6 +83,7 @@ def test_l2loss_pynative_fp16_1x4():
     output = P.L2Loss()(x)
     diff = output.asnumpy() - expect
     assert np.all(diff < error)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
@@ -93,6 +98,7 @@ def test_l2loss_graph_fp32_1x4():
     diff = output.asnumpy() - expect
     assert np.all(diff < error)
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -106,6 +112,7 @@ def test_l2loss_graph_fp16_1x4():
     diff = output.asnumpy() - expect
     assert np.all(diff < error)
 
+
 class GradNet(nn.Cell):
     def __init__(self, net):
         super(GradNet, self).__init__()
@@ -115,6 +122,7 @@ class GradNet(nn.Cell):
     def construct(self, x):
         gradient_function = self.grad_op(self.net)
         return gradient_function(x)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
@@ -129,6 +137,7 @@ def test_l2loss_grad_fp32():
     diff = output.asnumpy() - expect
     assert np.all(diff < error)
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -141,3 +150,22 @@ def test_l2loss_grad_fp16():
     expect = x
     diff = output.asnumpy() - expect
     assert np.all(diff < error)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_l2loss_cpu_dynamic_shape():
+    """
+    Feature: test L2Loss op in cpu.
+    Description: test the ops in dynamic shape.
+    Expectation: expect correct shape result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    net = L2LossNet()
+    x_dyn = Tensor(shape=[None, 3], dtype=ms.float32)
+    net.set_inputs(x_dyn)
+    x = np.random.randn(3, 3)
+    output = net(Tensor(x, ms.float32))
+    expect_shape = ()
+    assert output.asnumpy().shape == expect_shape

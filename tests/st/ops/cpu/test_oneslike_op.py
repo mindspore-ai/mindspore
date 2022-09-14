@@ -16,6 +16,7 @@
 import numpy as np
 import pytest
 
+import mindspore
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -62,3 +63,22 @@ def test_OnesLike(dtype):
     error1 = np.ones(shape=expect1.shape) * 1.0e-5
     assert np.all(diff1 < error1)
     assert output1.shape == expect1.shape
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_oneslike_cpu_dynamic_shape():
+    """
+    Feature: test OnesLike op in cpu.
+    Description: test the ops in dynamic shape.
+    Expectation: expect correct shape result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    net = NetOnesLike()
+    x_dyn = Tensor(shape=[None, 3], dtype=mindspore.float32)
+    net.set_inputs(x_dyn)
+    x = np.random.randn(3, 3)
+    output = net(Tensor(x, mindspore.float32))
+    expect_shape = (3, 3)
+    assert output.asnumpy().shape == expect_shape
