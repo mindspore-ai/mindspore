@@ -363,6 +363,11 @@ class _Context:
         if op_timeout <= 0:
             raise ValueError("The num of op exe timeout must bigger than 0.")
         self.set_param(ms_ctx_param.op_timeout, op_timeout)
+    def set_inter_op_parallel_num(self, inter_op_parallel_num):
+        """Check and set inter_op_parallel_num."""
+        if inter_op_parallel_num < 0:
+            raise ValueError("The num of parallel thread must bigger than or equal to 0.")
+        self.set_param(ms_ctx_param.inter_op_parallel_num, inter_op_parallel_num)
 
     setters = {
         'mode': set_mode,
@@ -377,6 +382,7 @@ class _Context:
         'mempool_block_size': set_mempool_block_size,
         'print_file_path': set_print_file_path,
         'env_config_path': set_env_config_path,
+        'inter_op_parallel_num': set_inter_op_parallel_num,
         'runtime_num_threads': set_runtime_num_threads,
         'memory_optimize_level': set_memory_optimize_level,
         'op_timeout': set_op_timeout
@@ -679,7 +685,7 @@ def _check_target_specific_cfgs(device, arg_key):
 @args_type_check(mode=int, precompile_only=bool, device_target=str, device_id=int, save_graphs=bool,
                  save_graphs_path=str, enable_dump=bool, auto_tune_mode=str,
                  save_dump_path=str, enable_reduce_precision=bool, variable_memory_max_size=str,
-                 enable_auto_mixed_precision=bool,
+                 enable_auto_mixed_precision=bool, inter_op_parallel_num=int,
                  enable_graph_kernel=bool, reserve_class_name_in_scope=bool, check_bprop=bool,
                  max_device_memory=str, print_file_path=str, max_call_depth=int, env_config_path=str,
                  graph_kernel_flags=str, save_compile_cache=bool, runtime_num_threads=int, load_compile_cache=bool,
@@ -749,6 +755,8 @@ def set_context(**kwargs):
     |                         |  grad_for_scalar             |  CPU/GPU/Ascend            |
     |                         +------------------------------+----------------------------+
     |                         |  enable_compile_cache        |  CPU/GPU/Ascend            |
+    |                         +------------------------------+----------------------------+
+    |                         |  inter_op_parallel_num       |  CPU/GPU/Ascend            |
     |                         +------------------------------+----------------------------+
     |                         |  runtime_num_threads         |  CPU/GPU/Ascend            |
     |                         +------------------------------+----------------------------+
@@ -888,7 +896,9 @@ def set_context(**kwargs):
             If the specified directory does not exist, the system will automatically create the directory.
             The cache will be saved to the directory of `compile_cache_path/rank_${rank_id}/`. The `rank_id` is
             the ID of the current device in the cluster.
-        runtime_num_threads(int): The thread pool number of cpu kernel and actor used in runtime,
+        inter_op_parallel_num(int): The thread number of op parallel at the same time. Default value is 0,
+            which means use the default num.
+        runtime_num_threads(int): The thread pool number of cpu kernel used in runtime,
             which must bigger than 0. Default value is 30, if you run many processes at
             the same time, you should set the value smaller to avoid thread contention.
         disable_format_transform (bool): Whether to disable the automatic format transform function from NCHW to NHWC.
@@ -925,6 +935,7 @@ def set_context(**kwargs):
         >>> ms.set_context(enable_compile_cache=True, compile_cache_path="./cache.ms")
         >>> ms.set_context(pynative_synchronize=True)
         >>> ms.set_context(runtime_num_threads=10)
+        >>> ms.set_context(inter_op_parallel_num=4)
         >>> ms.set_context(disable_format_transform=True)
     """
     ctx = _context()
