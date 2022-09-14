@@ -59,7 +59,9 @@
 #include "backend/common/pass/optimize_updatestate.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "common/graph_kernel/adapter/expander.h"
+#ifdef ENABLE_AKG
 #include "common/graph_kernel/value_graph_binder.h"
+#endif
 
 namespace mindspore {
 namespace device {

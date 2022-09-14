@@ -49,6 +49,7 @@ set(INSTALL_PY_DIR ".")
 set(INSTALL_BASE_DIR ".")
 set(INSTALL_BIN_DIR "bin")
 set(INSTALL_CFG_DIR "config")
+set(INSTALL_PLUGIN_DIR "${INSTALL_LIB_DIR}/plugin")
 
 set(INSTALL_LIB_DIR ".")
 set(onednn_LIBPATH ${onednn_LIBPATH}/../bin/)
@@ -186,6 +187,11 @@ if(ENABLE_GPU)
   install(
     TARGETS cuda_ops
     DESTINATION ${INSTALL_LIB_DIR}
+    COMPONENT mindspore
+  )
+  install(
+    TARGETS mindspore_gpu
+    DESTINATION ${INSTALL_PLUGIN_DIR}
     COMPONENT mindspore
   )
 endif()

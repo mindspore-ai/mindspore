@@ -35,7 +35,7 @@ using GetRankIDByGroupFunc = int (*)(const std::string &);
 using GetGroupSizeFunc = int (*)(const std::string &);
 using DestroyGroupFunc = bool (*)(const std::string &);
 
-class BACKEND_EXPORT CollectiveInitializer {
+class GPU_EXPORT CollectiveInitializer {
  public:
   CollectiveInitializer(CollectiveInitializer const &) = delete;
   CollectiveInitializer &operator=(const CollectiveInitializer &) = delete;

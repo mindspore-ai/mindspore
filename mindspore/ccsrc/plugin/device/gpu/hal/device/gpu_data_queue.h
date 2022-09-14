@@ -28,7 +28,7 @@
 
 namespace mindspore {
 namespace device {
-class BACKEND_EXPORT GpuDataQueueDynamic : public DataQueue {
+class GPU_EXPORT GpuDataQueueDynamic : public DataQueue {
  public:
   explicit GpuDataQueueDynamic(const std::string &channel_name, const size_t capacity);
   ~GpuDataQueueDynamic() override = default;
@@ -52,7 +52,7 @@ class BACKEND_EXPORT GpuDataQueueDynamic : public DataQueue {
   uint32_t device_id_;
 };
 
-class BACKEND_EXPORT GpuQueue : public DataQueue {
+class GPU_EXPORT GpuQueue : public DataQueue {
  public:
   GpuQueue(const std::string &channel_name, size_t capacity, const std::vector<size_t> &shape);
   ~GpuQueue() override;
@@ -79,7 +79,7 @@ class BACKEND_EXPORT GpuQueue : public DataQueue {
   bool ds_detected_{false};
 };
 
-class BACKEND_EXPORT GpuDataQueue : public DataQueue {
+class GPU_EXPORT GpuDataQueue : public DataQueue {
  public:
   GpuDataQueue(const std::string &channel_name, size_t capacity, const std::vector<size_t> &shape);
   ~GpuDataQueue() override;
