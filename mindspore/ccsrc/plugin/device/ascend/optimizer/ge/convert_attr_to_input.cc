@@ -29,8 +29,8 @@ namespace opt {
 namespace {
 // old version node name | new version node name | attr_name
 static const std::map<std::string, std::pair<std::string, string>> kNeedTransMap = {
-  {prim::kPrimResizeNearestNeighbor->name(), {prim::kPrimResizeNearestNeighborV2->name(), "size"}},
-  {prim::kPrimResizeNearestNeighborGrad->name(), {prim::kPrimResizeNearestNeighborV2Grad->name(), ""}}};
+  {kResizeNearestNeighborOpName, {kResizeNearestNeighborV2OpName, "size"}},
+  {kResizeNearestNeighborGradOpName, {kResizeNearestNeighborV2GradOpName, ""}}};
 
 bool NeedConvert(const BaseRef &ref) {
   if (utils::isa<AnfNodePtr>(ref)) {
@@ -76,7 +76,7 @@ const AnfNodePtr ConvertAttrToInput::Process(const FuncGraphPtr &graph, const An
   // Create new primitive and inherit the origin attributes.
   auto new_prim = std::make_shared<Primitive>(new_prim_name);
   MS_EXCEPTION_IF_NULL(new_prim);
-  new_prim->SetAttrs(origin_attrs);
+  (void)new_prim->SetAttrs(origin_attrs);
 
   if (origin_attrs.count(attr_name) == 0) {
     MS_LOG(DEBUG) << "Origin primitive: " << origin_prim->name() << "has no attr : " << attr_name
