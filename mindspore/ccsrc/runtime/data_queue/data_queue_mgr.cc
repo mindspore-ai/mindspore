@@ -55,9 +55,8 @@ std::shared_ptr<DataQueue> DataQueueMgr::CreateDataQueue(const std::string &devi
 
 DataQueueStatus DataQueueMgr::Create(const std::string &channel_name, const std::vector<size_t> &shape,
                                      const size_t capacity) {
-  MS_LOG(INFO) << "Static GPU queue: " << channel_name << " created";
+  MS_LOG(INFO) << "Data queue: " << channel_name << " created";
   if (name_queue_map_.find(channel_name) != name_queue_map_.end()) {
-    MS_LOG(ERROR) << "Queue already exist: " << channel_name;
     return DataQueueStatus::QUEUE_EXIST;
   }
 
@@ -75,8 +74,6 @@ DataQueueStatus DataQueueMgr::Create(const std::string &channel_name, const std:
     init_ = true;
     return DataQueueStatus::SUCCESS;
   }
-
-  MS_LOG(ERROR) << "Static data queue only support GPU target.";
   return DataQueueStatus::INTERNAL_ERROR;
 }
 
@@ -94,7 +91,6 @@ DataQueueStatus DataQueueMgr::Open(const std::string &channel_name, const std::f
 
 DataQueueStatus DataQueueMgr::CreateDynamicBufQueue(const std::string &channel_name, const size_t &capacity) {
   if (name_queue_map_.find(channel_name) != name_queue_map_.end()) {
-    MS_LOG(ERROR) << "Queue already exist: " << channel_name;
     return DataQueueStatus::QUEUE_EXIST;
   }
   MS_EXCEPTION_IF_NULL(MsContext::GetInstance());
@@ -232,46 +228,28 @@ size_t DataQueueMgr::Capacity(const std::string &channel_name) {
   return name_queue_map_.at(channel_name)->Capacity();
 }
 
-std::shared_ptr<DataQueue> DataQueueMgr::GetDataQueue(const std::string &channel_name) const {
+std::shared_ptr<BlockingQueue> DataQueueMgr::GetDataQueue(const std::string &channel_name) const {
   auto iter = name_queue_map_.find(channel_name);
   if (iter == name_queue_map_.end()) {
     MS_LOG(ERROR) << "Queue not exist " << channel_name;
     return nullptr;
   }
   MS_EXCEPTION_IF_NULL(iter->second);
-  return iter->second->Queue();
+  return iter->second;
 }
 
 DataQueueStatus DataQueueMgr::SetThreadDevice(const std::string &channel_name) const {
   auto queue = GetDataQueue(channel_name);
-  if (queue == nullptr) {
+  if (queue == nullptr || queue->Queue() == nullptr) {
     return DataQueueStatus::QUEUE_NOT_EXIST;
   }
-  queue->SetThreadDevice();
+  queue->Queue()->SetThreadDevice();
   return DataQueueStatus::SUCCESS;
 }
 
 #ifndef BUILD_LITE
-bool PopDataFromDataQueue(const AnfNodePtr &data_kernel) {
-  auto queue_name = common::AnfAlgo::GetNodeAttr<std::string>(data_kernel, "shared_name");
-  device::DataQueueMgr &buf_mgr = device::DataQueueMgr::GetInstance();
-  auto ret = buf_mgr.Open(queue_name);
-  MS_EXCEPTION_IF_CHECK_FAIL(ret == device::DataQueueStatus::SUCCESS, "Open dynamic data queue failed");
-  std::vector<device::DataQueueItem> data;
+void UpdateGetNextWithDataQueueItems(const AnfNodePtr &data_kernel, const std::vector<device::DataQueueItem> &data) {
   auto kernel_info = dynamic_cast<device::KernelInfo *>(data_kernel->kernel_info());
-  auto front_ret = DataQueueStatus::TIMEOUT;
-  int trys = MAX_POP_TIMES;
-  while (front_ret == DataQueueStatus::TIMEOUT && trys > 0) {
-    front_ret = buf_mgr.Front(queue_name, &data);
-    trys--;
-  }
-  if (front_ret != DataQueueStatus::SUCCESS) {
-    if (front_ret == DataQueueStatus::TIMEOUT) {
-      MS_LOG(ERROR) << "Getnext gets peek data time out, that most likely caused by data processing being too slow";
-    }
-    MS_LOG(EXCEPTION) << "Getnext gets peek data from data queue failed: " << front_ret;
-  }
-  (void)buf_mgr.Pop(queue_name);
   std::vector<std::shared_ptr<device::DeviceAddress>> device_tensors;
   for (auto &device_tensor : kernel_info->output_address_list()) {
     MS_EXCEPTION_IF_NULL(device_tensor);
@@ -283,19 +261,44 @@ bool PopDataFromDataQueue(const AnfNodePtr &data_kernel) {
   std::vector<TypeId> types;
   std::vector<size_t> output_size_list;
   for (size_t i = 0; i < data.size(); ++i) {
-    device_tensors[i]->set_ptr(data[i].device_addr);
     device_tensors[i]->SetSize(data[i].data_len);
     device_tensors[i]->set_from_mem_pool(true);
     output_size_list.push_back(data[i].data_len);
-    (void)kernel_info->SetOutputAddr(device_tensors[i], i);
     shapes.push_back(data[i].shapes);
     types.push_back(common::AnfAlgo::GetOutputInferDataType(data_kernel, i));
   }
   auto kernel_mod = kernel_info->MutableKernelMod();
   kernel_mod->SetOutputSizeList(output_size_list);
   common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, data_kernel.get());
-  return true;
 }
+
+void RetryPeakItemFromDataQueue(const AnfNodePtr &data_kernel, const std::shared_ptr<BlockingQueue> &data_queue,
+                                std::vector<device::DataQueueItem> *data) {
+  auto front_ret = DataQueueStatus::TIMEOUT;
+  int trys = MAX_POP_TIMES;
+  while (front_ret == DataQueueStatus::TIMEOUT && trys > 0) {
+    front_ret = data_queue->FrontAsync(data);
+    trys--;
+  }
+  if (front_ret != DataQueueStatus::SUCCESS) {
+    if (front_ret == DataQueueStatus::TIMEOUT) {
+      MS_LOG(ERROR) << "Getnext gets peek data time out, that most likely caused by data processing being too slow";
+    }
+    MS_LOG(EXCEPTION) << "Getnext gets peek data from data queue failed: " << front_ret;
+  }
+}
+
+void UpdateGetNextNode(const AnfNodePtr &data_kernel) {
+  auto queue_name = common::AnfAlgo::GetNodeAttr<std::string>(data_kernel, "shared_name");
+  device::DataQueueMgr &buf_mgr = device::DataQueueMgr::GetInstance();
+  auto ret = buf_mgr.Open(queue_name);
+  MS_EXCEPTION_IF_CHECK_FAIL(ret == device::DataQueueStatus::SUCCESS, "Open dynamic data queue failed");
+  auto data_queue = buf_mgr.GetDataQueue(queue_name);
+  std::vector<device::DataQueueItem> data;
+  RetryPeakItemFromDataQueue(data_kernel, data_queue, &data);
+  UpdateGetNextWithDataQueueItems(data_kernel, data);
+}
+
 #endif
 }  // namespace device
 }  // namespace mindspore

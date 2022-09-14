@@ -46,6 +46,7 @@ DataQueueStatus BlockingQueue::Front(std::vector<DataQueueItem> *data) {
   }
   return queue_->Front(data);
 }
+
 DataQueueStatus BlockingQueue::FrontAsync(std::vector<DataQueueItem> *data) {
   std::unique_lock<std::mutex> locker(mutex_);
   bool timeout =
@@ -70,6 +71,16 @@ DataQueueStatus BlockingQueue::Pop() {
 DataQueueStatus BlockingQueue::Create(const std::shared_ptr<DataQueue> &data_queue) {
   this->queue_ = data_queue;
   return DataQueueStatus::SUCCESS;
+}
+
+void BlockingQueue::Close() {
+  std::unique_lock<std::mutex> locker(mutex_);
+  queue_->Close();
+}
+
+bool BlockingQueue::IsOpen() {
+  std::unique_lock<std::mutex> locker(mutex_);
+  return queue_->IsOpen();
 }
 
 DataQueueStatus BlockingQueue::Clear() {

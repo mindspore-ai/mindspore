@@ -25,6 +25,7 @@
 #include "runtime/rt.h"
 #include "include/common/utils/convert_utils.h"
 #include "plugin/device/ascend/kernel/aicpu/aicpu_util.h"
+#include "plugin/device/ascend/hal/device/ascend_data_queue.h"
 #include "utils/ms_context.h"
 #include "runtime/device/kernel_runtime.h"
 
@@ -33,6 +34,12 @@ using AicpuTaskInfoPtr = std::shared_ptr<mindspore::ge::model_runner::AicpuTaskI
 namespace mindspore {
 namespace kernel {
 AicpuOpKernelMod::AicpuOpKernelMod() {}
+
+AicpuOpKernelMod::AicpuOpKernelMod(const AnfNodePtr &anf_node_ptr) : AscendKernelMod(anf_node_ptr) {
+  if (common::AnfAlgo::GetCNodeName(anf_node_ptr) == kGetNextOpName && !common::AnfAlgo::IsDynamicShape(anf_node_ptr)) {
+    device::CloseTdtWingManQueue(anf_node_ptr);
+  }
+}
 
 AicpuOpKernelMod::~AicpuOpKernelMod() {
   args_.clear();

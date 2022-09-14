@@ -200,6 +200,12 @@ AscendTdtQueue::AscendTdtQueue(const std::string &channel_name) : DataQueue(chan
     }
     tdt_handle::AddHandle(&acl_handle_, nullptr);
   }
+  wingman_queue_ = std::make_shared<BlockingQueue>();
+  std::shared_ptr<DataQueue> data_queue = std::make_shared<WingmanQueue>(channel_name);
+  auto rt = wingman_queue_->Create(data_queue);
+  if (rt != DataQueueStatus::SUCCESS) {
+    MS_LOG(EXCEPTION) << "Wingman queue: " << channel_name << "create failed: " << rt;
+  }
 }
 
 AscendTdtQueue::~AscendTdtQueue() {
@@ -249,7 +255,9 @@ DataQueueStatus AscendTdtQueue::Push(std::vector<DataQueueItem> data) {
     }
     MS_LOG(EXCEPTION) << "Tdt Send data failed." << ascend::GetErrorMessage(true);
   }
-
+  if (wingman_queue_->IsOpen() && !data.empty()) {
+    wingman_queue_->Push(data);
+  }
   return DataQueueStatus::SUCCESS;
 }
 
@@ -610,6 +618,49 @@ void AscendHostQueue::HostQueueFreeBuff(void *buff) {
   auto rt_ret = rtMbufFree(buff);
   if (rt_ret != RT_ERROR_NONE) {
     MS_LOG(ERROR) << "Call rtMbufFree failed, ret = " << rt_ret;
+  }
+}
+
+DataQueueStatus WingmanQueue::Push(const std::vector<DataQueueItem> data) {
+  queue_.emplace(data);
+  return DataQueueStatus::SUCCESS;
+}
+
+DataQueueStatus WingmanQueue::Pop() {
+  queue_.pop();
+  return DataQueueStatus::SUCCESS;
+}
+
+DataQueueStatus WingmanQueue::Front(std::vector<DataQueueItem> *data) const {
+  *data = queue_.front();
+  return DataQueueStatus::SUCCESS;
+}
+
+DataQueueStatus WingmanQueue::FrontAsync(std::vector<DataQueueItem> *data) const { return this->Front(data); }
+
+void WingmanQueue::Close() {
+  queue_ = {};
+  closed_ = true;
+}
+
+std::shared_ptr<BlockingQueue> GetTdtWingManQueue(const std::shared_ptr<AnfNode> &node) {
+  if (common::AnfAlgo::GetCNodeName(node) != kGetNextOpName) return nullptr;
+  auto queue_name = common::AnfAlgo::GetNodeAttr<std::string>(node, "shared_name");
+  auto data_queue = DataQueueMgr::GetInstance().GetDataQueue(queue_name);
+  if (data_queue) {
+    auto tdt_queue = dynamic_cast<device::AscendTdtQueue *>(data_queue->Queue().get());
+    if (tdt_queue) {
+      return tdt_queue->GetWingMan();
+    }
+  }
+  return nullptr;
+}
+
+void CloseTdtWingManQueue(const std::shared_ptr<AnfNode> &node) {
+  if (common::AnfAlgo::GetCNodeName(node) != kGetNextOpName) return;
+  auto wingman = GetTdtWingManQueue(node);
+  if (wingman && wingman->IsOpen()) {
+    wingman->Close();
   }
 }
 

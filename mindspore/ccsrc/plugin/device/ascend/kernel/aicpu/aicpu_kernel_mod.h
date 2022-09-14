@@ -25,7 +25,7 @@ namespace kernel {
 class AicpuOpKernelMod : public AscendKernelMod {
  public:
   AicpuOpKernelMod();
-  explicit AicpuOpKernelMod(const AnfNodePtr &anf_node_ptr) : AscendKernelMod(anf_node_ptr) {}
+  explicit AicpuOpKernelMod(const AnfNodePtr &anf_node_ptr);
 
   ~AicpuOpKernelMod() override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,

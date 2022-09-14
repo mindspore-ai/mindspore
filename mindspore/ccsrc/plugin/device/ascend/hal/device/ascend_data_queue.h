@@ -23,8 +23,10 @@
 #include <string>
 #include <map>
 #include <functional>
+#include <queue>
 #include "runtime/hardware/device_context_manager.h"
 #include "include/backend/data_queue/data_queue.h"
+#include "include/backend/data_queue/blocking_queue.h"
 #include "include/backend/visible.h"
 #include "runtime/rt.h"
 #include "acl/acl_tdt.h"
@@ -39,7 +41,6 @@ class BACKEND_EXPORT AscendDataQueueDynamic : public DataQueue {
   DataQueueStatus Push(std::vector<DataQueueItem> data) override;
   DataQueueStatus Front(std::vector<DataQueueItem> *data) const override;
   DataQueueStatus Pop() override;
-  void SetThreadDevice() override {}
 
  private:
   struct NodeInfo {
@@ -56,17 +57,33 @@ void DelHandle(acltdtChannelHandle **handle);
 bool IsClosed();
 }  // namespace tdt_handle
 
+class WingmanQueue : public DataQueue {
+ public:
+  explicit WingmanQueue(const std::string &channel_name) : DataQueue(channel_name, 0) {}
+  ~WingmanQueue() override = default;
+  void Close() override;
+  DataQueueStatus Push(std::vector<DataQueueItem> data) override;
+  DataQueueStatus Front(std::vector<DataQueueItem> *data) const override;
+  DataQueueStatus FrontAsync(std::vector<DataQueueItem> *data) const override;
+  DataQueueStatus Pop() override;
+  bool IsEmpty() const override { return queue_.empty(); }
+  bool IsFull() const override { return false; }
+  size_t Size() override { return queue_.size(); }
+
+ private:
+  std::queue<std::vector<DataQueueItem>> queue_;
+};
+
 class AscendTdtQueue : public DataQueue {
  public:
   explicit AscendTdtQueue(const std::string &channel_name);
   ~AscendTdtQueue() override;
 
   bool IsOpen() const override;
-
   DataQueueStatus Push(std::vector<DataQueueItem> data) override;
   DataQueueStatus Front(std::vector<DataQueueItem> *data) const override { return DataQueueStatus::SUCCESS; }
   DataQueueStatus Pop() override { return DataQueueStatus::SUCCESS; }
-  void SetThreadDevice() override {}
+  std::shared_ptr<BlockingQueue> GetWingMan() { return wingman_queue_; }
 
  private:
   void DestroyAclDataset(acltdtDataset *acl_dataset, bool include_data_item = true) const;
@@ -74,6 +91,7 @@ class AscendTdtQueue : public DataQueue {
   void ParseType(aclDataType acl_data_type, std::string *data_type) const;
   bool Translate(const std::vector<DataQueueItem> &data, acltdtDataset **output_acl_dataset);
 
+  std::shared_ptr<BlockingQueue> wingman_queue_;
   acltdtChannelHandle *acl_handle_;
   uint32_t device_id_;
 };
@@ -86,7 +104,6 @@ class AscendHostQueue : public DataQueue {
   DataQueueStatus Push(std::vector<DataQueueItem> data) override;
   DataQueueStatus Front(std::vector<DataQueueItem> *data) const override { return DataQueueStatus::SUCCESS; }
   DataQueueStatus Pop() override { return DataQueueStatus::SUCCESS; }
-  void SetThreadDevice() override {}
 
   struct DataItemInfo {
     struct ItemInfo {
@@ -121,6 +138,9 @@ class AscendHostQueue : public DataQueue {
   uint32_t queue_id_;
   const uint32_t rt_mem_queue_depth_ = 128;
 };
+
+std::shared_ptr<BlockingQueue> GetTdtWingManQueue(const std::shared_ptr<AnfNode> &node);
+void CloseTdtWingManQueue(const std::shared_ptr<AnfNode> &node);
 }  // namespace device
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_BLOCKING_QUEUE_H_
