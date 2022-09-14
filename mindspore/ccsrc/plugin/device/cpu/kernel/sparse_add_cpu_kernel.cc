@@ -121,8 +121,8 @@ bool SparseAddCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &
   auto sum_values = static_cast<S *>(outputs[kSumValuesIdx]->addr);
   auto sum_shape = static_cast<T *>(outputs[kSumShapeIdx]->addr);
 
-  const int64_t a_indices_num = SizeToLong(inputs[kAIndicesIdx]->size) / ((sizeof(T)) * 2);
-  const int64_t b_indices_num = SizeToLong(inputs[kBIndicesIdx]->size) / ((sizeof(T)) * 2);
+  const int64_t a_indices_num = SizeToLong(inputs[kAIndicesIdx]->size) / SizeToLong((sizeof(T)) * 2);
+  const int64_t b_indices_num = SizeToLong(inputs[kBIndicesIdx]->size) / SizeToLong((sizeof(T)) * 2);
 
   // Use double pointer to calculate the sum of two inputs
   T i = 0, j = 0;
