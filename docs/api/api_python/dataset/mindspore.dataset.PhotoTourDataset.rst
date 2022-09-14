@@ -114,6 +114,8 @@ mindspore.dataset.PhotoTourDataset
 
     .. include:: mindspore.dataset.Dataset.rst
 
+    .. include:: mindspore.dataset.Dataset.add_sampler.rst
+
     .. include:: mindspore.dataset.Dataset.d.rst
 
     .. include:: mindspore.dataset.Dataset.e.rst
@@ -123,5 +125,7 @@ mindspore.dataset.PhotoTourDataset
     .. include:: mindspore.dataset.Dataset.save.rst
 
     .. include:: mindspore.dataset.Dataset.g.rst
+
+    .. include:: mindspore.dataset.Dataset.use_sampler.rst
 
     .. include:: mindspore.dataset.Dataset.zip.rst

@@ -3,10 +3,10 @@ mindspore.dataset.TedliumDataset
 
 .. py:class:: mindspore.dataset.TedliumDataset(dataset_dir, release, usage=None, extensions=None, num_samples=None, num_parallel_workers=None, shuffle=None, sampler=None, num_shards=None, shard_id=None, cache=None)
 
-    读取和解析Tedlium数据集的源数据集，生成的数据集的列取决于源SPH文件和相应的STM文件。
+    读取和解析Tedlium数据集的源数据集。生成的数据集的列取决于源SPH文件和相应的STM文件。
 
     生成的数据集有六列 `[waveform, sample_rate, transcript, talk_id, speaker_id, identifier]` 。
-    列 `waveform` 的数据类型为float32，列 `sample_rate` 的数据类型为int32，列 `transcript` 的数据类型为string，列 `talk_id` 的数据类型为string，列 `speaker_id` 的数据类型为string，列 `identifier` 的数据类型为string。
+    列 `waveform` 的数据类型为float32，列 `sample_rate` 的数据类型为int32，列 `transcript`、列 `talk_id`、列 `speaker_id` 和列 `identifier` 的数据类型为string。
 
     参数：
         - **dataset_dir** (str) - 包含数据集文件的根目录路径。

@@ -39,10 +39,8 @@ class AGNewsDataset(SourceDataset, TextBaseDataset):
     """
     A source dataset that reads and parses AG News datasets.
 
-    The generated dataset has three columns: :py:obj:`[index, title, description]`.
-    The tensor of column :py:obj:`index` is of the string type.
-    The tensor of column :py:obj:`title` is of the string type.
-    The tensor of column :py:obj:`description` is of the string type.
+    The generated dataset has three columns: :py:obj:`[index, title, description]`,
+    and the data type of three columns is string type.
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
@@ -127,10 +125,8 @@ class AmazonReviewDataset(SourceDataset, TextBaseDataset):
     """
     A source dataset that reads and parses Amazon Review Polarity and Amazon Review Full datasets.
 
-    The generated dataset has three columns: :py:obj:`[label, title, content]`.
-    The tensor of column :py:obj:`label` is of the string type.
-    The tensor of column :py:obj:`title` is of the string type.
-    The tensor of column :py:obj:`content` is of the string type.
+    The generated dataset has three columns: :py:obj:`[label, title, content]`,
+    and the data type of three columns is string.
 
     Args:
         dataset_dir (str): Path to the root directory that contains the Amazon Review Polarity dataset
@@ -549,10 +545,8 @@ class DBpediaDataset(SourceDataset, TextBaseDataset):
     """
     A source dataset that reads and parses the DBpedia dataset.
 
-    The generated dataset has three columns :py:obj:`[class, title, content]`.
-    The tensor of column :py:obj:`class` is of the string type.
-    The tensor of column :py:obj:`title` is of the string type.
-    The tensor of column :py:obj:`content` is of the string type.
+    The generated dataset has three columns :py:obj:`[class, title, content]`,
+    and the data type of three columns is string.
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
@@ -1283,10 +1277,8 @@ class SogouNewsDataset(SourceDataset, TextBaseDataset):
     r"""
     A source dataset that reads and parses Sogou News dataset.
 
-    The generated dataset has three columns: :py:obj:`[index, title, content]`.
-    The tensor of column :py:obj:`index` is of the string type.
-    The tensor of column :py:obj:`title` is of the string type.
-    The tensor of column :py:obj:`content` is of the string type.
+    The generated dataset has three columns: :py:obj:`[index, title, content]`,
+    and the data type of three columns is string.
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
@@ -1538,10 +1530,8 @@ class UDPOSDataset(SourceDataset, TextBaseDataset):
     """
     A source dataset that reads and parses UDPOS dataset.
 
-    The generated dataset has three columns: :py:obj:`[word, universal, stanford]`.
-    The tensor of column :py:obj:`word` is of the string type.
-    The tensor of column :py:obj:`universal` is of the string type.
-    The tensor of column :py:obj:`stanford` is of the string type.
+    The generated dataset has three columns: :py:obj:`[word, universal, stanford]`,
+    and the data type of three columns is string.
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
@@ -1597,8 +1587,8 @@ class WikiTextDataset(SourceDataset, TextBaseDataset):
     """
     A source dataset that reads and parses WikiText2 and WikiText103 datasets.
 
-    The generated dataset has one column :py:obj:`[text]`.
-    The tensor of column :py:obj:`text` is of the string type.
+    The generated dataset has one column :py:obj:`[text]`, and
+    the tensor of column :py:obj:`text` is of the string type.
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
@@ -1676,11 +1666,7 @@ class YahooAnswersDataset(SourceDataset, TextBaseDataset):
     """
     A source dataset that reads and parses the YahooAnswers dataset.
 
-    The generated dataset has three columns :py:obj:`[class, title, content, answer]`.
-    The tensor of column :py:obj:`class` is of the string type.
-    The tensor of column :py:obj:`title` is of the string type.
-    The tensor of column :py:obj:`content` is of the string type.
-    The tensor of column :py:obj:`answer` is of the string type.
+    The generated dataset has four columns :py:obj:`[class, title, content, answer]`, whose data type is string.
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
@@ -1774,9 +1760,7 @@ class YelpReviewDataset(SourceDataset, TextBaseDataset):
     """
     A source dataset that reads and parses Yelp Review Polarity and Yelp Review Full dataset.
 
-    The generated dataset has two columns: :py:obj:`[label, text]`.
-    The tensor of column :py:obj:`label` is of the string type.
-    The tensor of column :py:obj:`text` is of the string type.
+    The generated dataset has two columns: :py:obj:`[label, text]`, and the data type of two columns is string.
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.

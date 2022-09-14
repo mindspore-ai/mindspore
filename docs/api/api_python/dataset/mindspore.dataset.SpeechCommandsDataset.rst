@@ -6,7 +6,7 @@ mindspore.dataset.SpeechCommandsDataset
     读取和解析SpeechCommands数据集的源数据集。
 
     生成的数据集有五列 `[waveform, sample_rate, label, speaker_id, utterance_number]` 。
-    列 `waveform` 的数据类型为float32，列 `sample_rate` 的数据类型为int32，列 `label` 的数据类型为string，列 `speaker_id` 的数据类型为string，列 `utterance_number` 的数据类型为int32。
+    列 `waveform` 的数据类型为float32。列 `sample_rate` 的数据类型为int32。列 `label` 的数据类型为string。列 `speaker_id` 的数据类型为string。列 `utterance_number` 的数据类型为int32。
 
     参数：
         - **dataset_dir** (str) - 包含数据集文件的根目录路径。

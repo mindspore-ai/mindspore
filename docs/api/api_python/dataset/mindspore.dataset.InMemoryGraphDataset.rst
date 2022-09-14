@@ -5,7 +5,7 @@
 
     用于将图数据加载到内存中的Dataset基类。
 
-    建议通过继承这个基类来实现自定义Dataset，并重写相应的方法，如 `process` 、 `save` 和 `load` ，可参考 `ArgoverseDataset` 源码。自定义Dataset的初始化过程如下，首先检查在给定的 `data_dir` 中是否已经有处理好的数据，如果是则调用 `load` 方法直接加载它，否则将调用 `process` 方法创建图，并调用 `save` 方法将图保存到 `save_dir`。
+    建议通过继承这个基类来实现自定义Dataset，并重写相应的方法，如 `process` 、 `save` 和 `load` ，可参考 `ArgoverseDataset` 源码。自定义Dataset的初始化过程如下，首先检查在给定的 `data_dir` 中是否已经有处理好的数据。如果是则调用 `load` 方法直接加载它，否则将调用 `process` 方法创建图，并调用 `save` 方法将图保存到 `save_dir`。
 
     可以访问所创建dataset中的图并使用，例如 `graphs = my_dataset.graphs`，也可以迭代dataset对象如 `my_dataset.create_tuple_iterator()` 来获取数据（这时需要实现 `__getitem__` 和 `__len__`）方法，具体请参考以下示例。注意：内部逻辑指定了 `__new__` 阶段会重新初始化 `__init__` ，如果自定义图实现了 `__new__` 方法，该方法将失效。
 

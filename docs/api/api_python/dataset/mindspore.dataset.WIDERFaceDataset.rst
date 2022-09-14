@@ -5,7 +5,7 @@ mindspore.dataset.WIDERFaceDataset
 
     读取和解析WIDERFace数据集的源数据集。
 
-    当 `usage` 为"train"、"valid"或"all"时，生成的数据集有八列 `["image", "bbox", "blur", "expression", "illumination", "occlusion", "pose", "invalid"]` ，其中 `image` 列的数据类型为uint8，其他列均为uint32。
+    当 `usage` 为"train"、"valid"或"all"时，生成的数据集有八列 `["image", "bbox", "blur", "expression", "illumination", "occlusion", "pose", "invalid"]` 。其中 `image` 列的数据类型为uint8，其他列均为uint32。
     当 `usage` 为"test"时，生成的数据集只有一列 `["image"]` ，数据类型为uint8。
 
     参数：
