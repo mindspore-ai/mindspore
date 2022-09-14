@@ -34,11 +34,25 @@ class Net(nn.Cell):
         return self.add((x, y, z))
 
 
+class DynRankNet(nn.Cell):
+    def __init__(self):
+        super(DynRankNet, self).__init__()
+        self.op = P.AddN()
+        self.reduce_sum = P.ReduceSum(keep_dims=False)
+
+    def construct(self, x, y, z, dyn_reduce_axis):
+        x = self.reduce_sum(x, dyn_reduce_axis)
+        y = self.reduce_sum(y, dyn_reduce_axis)
+        z = self.reduce_sum(z, dyn_reduce_axis)
+        res = self.op((x, y, z))
+        return res
+
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_net():
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     x = np.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4).astype(np.float32)
     y = np.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4).astype(np.float32)
     z = np.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4).astype(np.float32)
@@ -63,6 +77,19 @@ def test_net():
     input_z_dyn = Tensor(shape=[1, 3, 3, None], dtype=mstype.float32)
     dyn_add.set_inputs(input_x_dyn, input_y_dyn, input_z_dyn)
     output = add(Tensor(x), Tensor(y), Tensor(z))
+    assert (output.asnumpy() == expect_result).all()
+
+    # test dynamic_rank
+    dyn_rank_net = DynRankNet()
+    input_x_dyn = Tensor(shape=[1, None, 3, 4, 1], dtype=mstype.float32)
+    input_y_dyn = Tensor(shape=[1, 3, None, 4, 1], dtype=mstype.float32)
+    input_z_dyn = Tensor(shape=[1, 3, 3, None, 1], dtype=mstype.float32)
+    dyn_reduce_axis = Tensor(shape=[None], dtype=mstype.int64)
+    dyn_rank_net.set_inputs(input_x_dyn, input_y_dyn, input_z_dyn, dyn_reduce_axis)
+
+    reduce_axis = np.array([-1], dtype=np.int64)
+    output = dyn_rank_net(Tensor(np.expand_dims(x, -1)), Tensor(np.expand_dims(y, -1)), Tensor(np.expand_dims(z, -1)),
+                          Tensor(reduce_axis))
     assert (output.asnumpy() == expect_result).all()
 
 

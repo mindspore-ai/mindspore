@@ -37,13 +37,25 @@ class NetArgmax(nn.Cell):
         return self.argmax(x)
 
 
+class DynRankNet(nn.Cell):
+    def __init__(self, axis=0, out_type=mstype.int32):
+        super(DynRankNet, self).__init__()
+        self.op = ops.Argmax(axis=axis, output_type=out_type)
+        self.reduce_sum = ops.ReduceSum(keep_dims=False)
+
+    def construct(self, x, dyn_reduce_axis):
+        x = self.reduce_sum(x, dyn_reduce_axis)
+        res = self.op(x)
+        return res
+
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_argmax_1d():
     x = Tensor(np.array([1., 20., 5.]).astype(np.float32))
-    Argmax = NetArgmax(axis=0)
-    output = Argmax(x)
+    argmax = NetArgmax(axis=0)
+    output = argmax(x)
     expect = np.array([1]).astype(np.float32)
     assert (output.asnumpy() == expect).all()
 
@@ -52,23 +64,33 @@ def test_argmax_1d():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_argmax_2d():
-    x = Tensor(np.array([[1., 20., 5.],
-                         [67., 8., 9.],
-                         [130., 24., 15.]]).astype(np.float32))
-    Argmax_axis_0 = NetArgmax(axis=0)
-    output = Argmax_axis_0(x)
+    x = np.array([[1., 20., 5.],
+                  [67., 8., 9.],
+                  [130., 24., 15.]]).astype(np.float32)
+    tensor_x = Tensor(x)
+    argmax_axis_0 = NetArgmax(axis=0)
+    output = argmax_axis_0(tensor_x)
     expect = np.array([2, 2, 2]).astype(np.float32)
     assert (output.asnumpy() == expect).all()
-    Argmax_axis_1 = NetArgmax(axis=1)
-    output = Argmax_axis_1(x)
+    argmax_axis_1 = NetArgmax(axis=1)
+    output = argmax_axis_1(tensor_x)
     expect = np.array([1, 0, 0]).astype(np.float32)
     assert (output.asnumpy() == expect).all()
     # test dynamic shape of argmax.
     dy_shape_argmax_axis_0 = NetArgmax(axis=0)
     input_x_dyn = Tensor(shape=[3, None], dtype=mstype.float32)
     dy_shape_argmax_axis_0.set_inputs(input_x_dyn)
-    output = dy_shape_argmax_axis_0(x)
+    output = dy_shape_argmax_axis_0(tensor_x)
     expect = np.array([2, 2, 2]).astype(np.float32)
+    assert (output.asnumpy() == expect).all()
+    # test dynamic_rank
+    dyn_rank_net = DynRankNet()
+    input_x_dyn = Tensor(shape=[3, None, 1], dtype=mstype.float32)
+    dyn_reduce_axis = Tensor(shape=[None], dtype=mstype.int64)
+    dyn_rank_net.set_inputs(input_x_dyn, dyn_reduce_axis)
+
+    reduce_axis = Tensor(np.array([-1], dtype=np.int64))
+    output = dyn_rank_net(Tensor(np.expand_dims(x, -1)), reduce_axis)
     assert (output.asnumpy() == expect).all()
 
 
@@ -82,8 +104,8 @@ def test_argmax_high_dims():
         x = x.reshape(shape)
 
         rnd_axis = random.randint(-dim + 1, dim - 1)
-        Argmax = NetArgmax(axis=rnd_axis)
-        ms_output = Argmax(Tensor(x))
+        argmax = NetArgmax(axis=rnd_axis)
+        ms_output = argmax(Tensor(x))
         np_output = np.argmax(x, axis=rnd_axis)
         assert (ms_output.asnumpy() == np_output).all()
 
