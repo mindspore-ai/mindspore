@@ -72,12 +72,12 @@ int EqualPlugin::enqueue(const nvinfer1::PluginTensorDesc *inputDesc, const nvin
     const int *input1 = static_cast<const int *>(inputs[0]);
     const int *input2 = static_cast<const int *>(inputs[1]);
     int *output = static_cast<int *>(outputs[0]);
-    Equal(input1, input2, output, element_cnt, stream);
+    Equal(IntToSize(element_cnt), input1, input2, output, stream, device_id_);
   } else if (inputDesc->type == nvinfer1::DataType::kFLOAT) {
     const float *input1 = static_cast<const float *>(inputs[0]);
     const float *input2 = static_cast<const float *>(inputs[1]);
     float *output = static_cast<float *>(outputs[0]);
-    Equal(input1, input2, output, element_cnt, stream);
+    Equal(IntToSize(element_cnt), input1, input2, output, stream, device_id_);
   } else {
     MS_LOG(ERROR) << "unsupported equal data type";
   }

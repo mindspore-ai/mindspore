@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "hash_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/hash_impl.cuh"
 
 template <typename T>
 __global__ void HashSwapOut(const T *hash_table, T *swap_out_value, const int *swap_out_index, const int index_size,
@@ -42,24 +42,24 @@ __global__ void HashSwapIn(T *hash_table, const T *swap_in_value, const int *swa
 
 template <typename T>
 void DoHashSwapOut(const T *hash_table, T *swap_out_value, const int *swap_out_index, const int index_size,
-                   const int hash_dim, cudaStream_t cuda_stream) {
-  HashSwapOut<<<GET_BLOCKS(index_size), GET_THREADS, 0, cuda_stream>>>(hash_table, swap_out_value, swap_out_index,
-                                                                       index_size, hash_dim);
+                   const int hash_dim, cudaStream_t cuda_stream, const uint32_t device_id) {
+  HashSwapOut<<<CUDA_BLOCKS(index_size, device_id), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+    hash_table, swap_out_value, swap_out_index, index_size, hash_dim);
   return;
 }
 
 template <typename T>
 void DoHashSwapIn(T *hash_table, const T *swap_in_value, const int *swap_in_index, const int index_size,
-                  const int hash_dim, cudaStream_t cuda_stream) {
-  HashSwapIn<<<GET_BLOCKS(index_size), GET_THREADS, 0, cuda_stream>>>(hash_table, swap_in_value, swap_in_index,
-                                                                      index_size, hash_dim);
+                  const int hash_dim, cudaStream_t cuda_stream, const uint32_t device_id) {
+  HashSwapIn<<<CUDA_BLOCKS(index_size, device_id), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+    hash_table, swap_in_value, swap_in_index, index_size, hash_dim);
   return;
 }
 
 template CUDA_LIB_EXPORT void DoHashSwapOut<float>(const float *hash_table, float *swap_out_value,
                                                    const int *swap_out_index, const int index_size, const int hash_dim,
-                                                   cudaStream_t cuda_stream);
+                                                   cudaStream_t cuda_stream, const uint32_t device_id);
 
 template CUDA_LIB_EXPORT void DoHashSwapIn<float>(float *hash_table, const float *swap_in_value,
                                                   const int *swap_in_index, const int index_size, const int hash_dim,
-                                                  cudaStream_t cuda_stream);
+                                                  cudaStream_t cuda_stream, const uint32_t device_id);

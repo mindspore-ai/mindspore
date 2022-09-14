@@ -24,8 +24,9 @@
 #include "src/litert/delegate/tensorrt/tensorrt_utils.h"
 #include "NvInferRuntimeCommon.h"
 #include "src/litert/delegate/tensorrt/op/activation_opt_plugin.h"
-#include "src/litert/delegate/tensorrt/cuda_impl/activation.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/swish_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/sigmoid_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/gelu_impl.cuh"
 
 namespace mindspore::lite {
 REGISTER_TENSORRT_PLUGIN(ActivationOptPluginCreater);
@@ -80,18 +81,18 @@ int ActivationOptPlugin::RunCudaActivation(const nvinfer1::PluginTensorDesc *inp
                                            void *const *outputs, cudaStream_t stream) {
   switch (activation_type_) {
     case (schema::ActivationType::ActivationType_SIGMOID): {
-      Sigmoid(static_cast<const float *>(inputs[0]), static_cast<float *>(outputs[0]), GetDimsVolume(inputDesc[0].dims),
-              stream);
+      Sigmoid(GetDimsVolume(inputDesc[0].dims), static_cast<const float *>(inputs[0]), static_cast<float *>(outputs[0]),
+              stream, device_id_);
       break;
     }
     case (schema::ActivationType::ActivationType_GELU): {
-      Gelu(static_cast<const float *>(inputs[0]), static_cast<float *>(outputs[0]), GetDimsVolume(inputDesc[0].dims),
-           stream);
+      Gelu(GetDimsVolume(inputDesc[0].dims), static_cast<const float *>(inputs[0]), static_cast<float *>(outputs[0]),
+           stream, device_id_);
       break;
     }
     case (schema::ActivationType::ActivationType_SWISH): {
-      CalSwish(GetDimsVolume(inputDesc[0].dims), static_cast<const float *>(inputs[0]),
-               static_cast<float *>(outputs[0]), stream, device_id_);
+      Swish(GetDimsVolume(inputDesc[0].dims), static_cast<const float *>(inputs[0]), static_cast<float *>(outputs[0]),
+            stream, device_id_);
       break;
     }
     default: {

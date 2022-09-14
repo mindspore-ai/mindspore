@@ -19,7 +19,7 @@
 #include <vector>
 #include "src/litert/delegate/tensorrt/op/tensorrt_op.h"
 #include "src/litert/delegate/tensorrt/op/tensorrt_plugin.h"
-#include "src/litert/delegate/tensorrt/cuda_impl/equal.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/equal_impl.cuh"
 
 namespace mindspore::lite {
 constexpr char *EQUAL_PLUGIN_NAME{"EqualPlugin"};

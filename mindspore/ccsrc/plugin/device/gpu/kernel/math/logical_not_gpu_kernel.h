@@ -21,7 +21,7 @@
 #include <vector>
 #include <algorithm>
 #include <functional>
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/logical_not_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/logical_impl.cuh"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "include/common/utils/convert_utils.h"
@@ -41,7 +41,7 @@ class LogicalNotGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     }
     auto input_addr = GetDeviceAddress<T>(inputs, 0);
     auto output_addr = GetDeviceAddress<bool>(outputs, 0);
-    LogicalNotImpl(input_num_, input_addr, output_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
+    LogicalNot(input_num_, input_addr, output_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
 

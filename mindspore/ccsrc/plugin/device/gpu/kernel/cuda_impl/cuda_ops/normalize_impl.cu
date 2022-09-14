@@ -14,11 +14,30 @@
  * limitations under the License.
  */
 
-#include "src/litert/delegate/tensorrt/cuda_impl/normalize.cuh"
-#include <stdio.h>
-#include <math.h>
-#include "src/litert/delegate/tensorrt/cuda_impl/cuda_helper.h"
-#include "src/litert/delegate/tensorrt/cuda_impl/utils.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/normalize_impl.cuh"
+
+#define FINAL_MASK 0xffffffff
+
+template <typename T>
+__device__ T warpedReduceSum(T val) {
+#pragma unroll
+  for (int mask = 16; mask > 0; mask >>= 1) {
+    val += __shfl_xor_sync(FINAL_MASK, val, mask, 32);
+  }
+  return val;
+}
+
+template <typename T>
+__device__ T blockReduceSum(T val) {
+  static __shared__ T shared[32];
+  int warped = threadIdx.x & 0x1f;
+  val = warpedReduceSum<T>(val);
+  if (warped == 0) shared[threadIdx.x >> 5] = val;
+  __syncthreads();
+  val = (threadIdx.x < (blockDim.x / 32.f)) ? shared[warped] : static_cast<T>(0.0);
+  val = warpedReduceSum<T>(val);
+  return val;
+}
 
 template <typename T>
 __global__ void NormalizeKernel(const T *input, const T *gamma, const T *beta, T *output, size_t n, float epsilion,
@@ -85,14 +104,15 @@ __global__ void NormalizeKernel(const T *input, const T *gamma, const T *beta, T
 
 template <typename T>
 void Normalize(const T *input, const T *gamma, const T *beta, T *output, size_t dim_at_axis, float epsilion,
-               int element_cnt, cudaStream_t stream) {
-  int thread_num = GET_THREADS_CAL(dim_at_axis);
-  int block_num = GET_BLOCKS_CAL(element_cnt, thread_num);
+               int element_cnt, cudaStream_t stream, const uint32_t device_id) {
+  int threads_num = CUDA_THREADS_MAXSIZE(device_id, ((dim_at_axis - 1) / 32 + 1) * 32);
+  int blocks_num = CUDA_BLOCKS_CAL(device_id, element_cnt, threads_num);
   int dim_before_axis = element_cnt / dim_at_axis;
-  NormalizeKernel<<<block_num, thread_num, 0, stream>>>(input, gamma, beta, output, dim_at_axis, epsilion,
-                                                        dim_before_axis);
+  NormalizeKernel<<<blocks_num, threads_num, 0, stream>>>(input, gamma, beta, output, dim_at_axis, epsilion,
+                                                          dim_before_axis);
   return;
 }
 
-template void Normalize(const float *input, const float *gamma, const float *beta, float *output, size_t dim_at_axis,
-                        float epsilion, int element_cnt, cudaStream_t stream);
+template CUDA_LIB_EXPORT void Normalize(const float *input, const float *gamma, const float *beta, float *output,
+                                        size_t dim_at_axis, float epsilion, int element_cnt, cudaStream_t stream,
+                                        const uint32_t device_id);

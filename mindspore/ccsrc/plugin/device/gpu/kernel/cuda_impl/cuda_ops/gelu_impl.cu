@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,20 +18,20 @@
 #include "include/cuda_fp16.h"
 
 template <typename T>
-__global__ void GeluKernel(size_t size, T *input_addr, T *output_addr) {
+__global__ void GeluKernel(size_t size, const T *input_addr, T *output_addr) {
   // formula:
   // gelu(x) = 0.5 * x * (1.0 + tanh(y))
   // tanh(y) = 2 / (1 + exp(-2y)) - 1)
   // y = sqrt(2/pi) * (x + 0.044715 * x^3)
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size; pos += blockDim.x * gridDim.x) {
-    float x = input_addr[pos];
+    float x = static_cast<float>(input_addr[pos]);
     float tanh_res = tanh(0.7978845608 * (x + 0.044715 * x * x * x));
     output_addr[pos] = 0.5 * x * (1.0 + tanh_res);
   }
 }
 
 template <>
-__global__ void GeluKernel(size_t size, half *input_addr, half *output_addr) {
+__global__ void GeluKernel(size_t size, const half *input_addr, half *output_addr) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size; pos += blockDim.x * gridDim.x) {
     half x = input_addr[pos];
     float tanh_res = tanh(__half2float(half(0.7978845608) * (x + half(0.044715) * x * x * x)));
@@ -40,7 +40,7 @@ __global__ void GeluKernel(size_t size, half *input_addr, half *output_addr) {
 }
 
 template <>
-__global__ void GeluKernel(size_t size, half2 *input_addr, half2 *output_addr) {
+__global__ void GeluKernel(size_t size, const half2 *input_addr, half2 *output_addr) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size; pos += blockDim.x * gridDim.x) {
     half2 x = input_addr[pos];
     float2 tanh_param = __half22float2(half2(0.7978845608, 0.7978845608) * (x + half2(0.044715, 0.044715) * x * x * x));
@@ -52,17 +52,18 @@ __global__ void GeluKernel(size_t size, half2 *input_addr, half2 *output_addr) {
 }
 
 template <typename T>
-void Gelu(size_t size, T *input_addr, T *output_addr, cudaStream_t cuda_stream) {
-  GeluKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, input_addr, output_addr);
+void Gelu(size_t size, const T *input_addr, T *output_addr, cudaStream_t cuda_stream, const uint32_t device_id) {
+  GeluKernel<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, input_addr, output_addr);
 }
 
 template <>
-void Gelu(size_t size, half *input_addr, half *output_addr, cudaStream_t cuda_stream) {
+void Gelu(size_t size, const half *input_addr, half *output_addr, cudaStream_t cuda_stream, const uint32_t device_id) {
   if (size % 2 == 0) {
-    GeluKernel<half2><<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(
-      size / 2, reinterpret_cast<half2 *>(input_addr), reinterpret_cast<half2 *>(output_addr));
+    GeluKernel<half2><<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+      size / 2, reinterpret_cast<const half2 *>(input_addr), reinterpret_cast<half2 *>(output_addr));
   } else {
-    GeluKernel<half><<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, input_addr, output_addr);
+    GeluKernel<half>
+      <<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, input_addr, output_addr);
   }
 }
 
@@ -112,25 +113,32 @@ __global__ void GeluGradKernel(size_t size, half *dy_addr, half *x_addr, half *d
 }
 
 template <typename T>
-void GeluGradKernel(size_t size, T *dy_addr, T *x_addr, T *dx_addr, cudaStream_t cuda_stream) {
-  GeluGradKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, dy_addr, x_addr, dx_addr);
+void GeluGradKernel(size_t size, T *dy_addr, T *x_addr, T *dx_addr, cudaStream_t cuda_stream,
+                    const uint32_t device_id) {
+  GeluGradKernel<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, dy_addr, x_addr,
+                                                                                            dx_addr);
 }
 
 template <>
-void GeluGradKernel(size_t size, half *dy_addr, half *x_addr, half *dx_addr, cudaStream_t cuda_stream) {
+void GeluGradKernel(size_t size, half *dy_addr, half *x_addr, half *dx_addr, cudaStream_t cuda_stream,
+                    const uint32_t device_id) {
   if (size % 2 == 0) {
-    GeluGradKernel<half2><<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(
+    GeluGradKernel<half2><<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
       size / 2, reinterpret_cast<half2 *>(dy_addr), reinterpret_cast<half2 *>(x_addr),
       reinterpret_cast<half2 *>(dx_addr));
   } else {
-    GeluGradKernel<half><<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, dy_addr, x_addr, dx_addr);
+    GeluGradKernel<half>
+      <<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, dy_addr, x_addr, dx_addr);
   }
 }
 
-template CUDA_LIB_EXPORT void Gelu(size_t size, double *input_addr, double *output_addr, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void Gelu(size_t size, float *input_addr, float *output_addr, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void Gelu(size_t size, half *input_addr, half *output_addr, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Gelu(size_t size, const double *input_addr, double *output_addr, cudaStream_t cuda_stream,
+                                   uint32_t device_id);
+template CUDA_LIB_EXPORT void Gelu(size_t size, const float *input_addr, float *output_addr, cudaStream_t cuda_stream,
+                                   const uint32_t device_id);
+template CUDA_LIB_EXPORT void Gelu(size_t size, const half *input_addr, half *output_addr, cudaStream_t cuda_stream,
+                                   const uint32_t device_id);
 template CUDA_LIB_EXPORT void GeluGradKernel(size_t size, float *dy_addr, float *x_addr, float *dx_addr,
-                                             cudaStream_t cuda_stream);
+                                             cudaStream_t cuda_stream, const uint32_t device_id);
 template CUDA_LIB_EXPORT void GeluGradKernel(size_t size, half *dy_addr, half *x_addr, half *dx_addr,
-                                             cudaStream_t cuda_stream);
+                                             cudaStream_t cuda_stream, const uint32_t device_id);

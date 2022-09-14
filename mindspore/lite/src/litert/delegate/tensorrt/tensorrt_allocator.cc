@@ -19,7 +19,7 @@
 #include <mutex>
 #include "src/common/log_adapter.h"
 #include "src/litert/delegate/tensorrt/tensorrt_utils.h"
-#include "src/litert/delegate/tensorrt/cuda_impl/cast.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cast_impl.cuh"
 
 namespace mindspore::lite {
 void *TensorRTAllocator::MallocDeviceMem(const mindspore::MSTensor &host_tensor, size_t size) {
@@ -97,7 +97,7 @@ int TensorRTAllocator::SyncMemInHostAndDevice(mindspore::MSTensor host_tensor, c
       return RET_ERROR;
     }
     Cast<int32_t, bool>(host_tensor.DataSize(), static_cast<int32_t *>(device_ptr), static_cast<bool *>(device_ptr),
-                        stream_);
+                        stream_, device_id_);
   }
 #endif
   return SyncMemInHostAndDevice(host_tensor.MutableData(), device_tensor_name, host_tensor.DataSize(), is_host2device,

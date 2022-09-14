@@ -42,7 +42,7 @@ class CastGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     if (input_addr == nullptr && output_addr == nullptr) {
       return true;
     } else if (input_addr != nullptr && output_addr != nullptr) {
-      Cast(input_size_, input_addr, output_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
+      Cast(input_size_, input_addr, output_addr, reinterpret_cast<cudaStream_t>(stream_ptr), GET_CTX_DEVICE_ID);
     } else {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
                         << "', the input and output device addresses must be both null or both not null";

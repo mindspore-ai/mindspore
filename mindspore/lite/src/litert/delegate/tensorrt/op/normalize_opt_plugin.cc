@@ -19,9 +19,8 @@
 #include <numeric>
 #include <memory>
 #include <functional>
-#include "src/litert/delegate/tensorrt/cuda_impl/cuda_helper.h"
 #include "NvInferRuntimeCommon.h"
-#include "src/litert/delegate/tensorrt/cuda_impl/normalize.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/normalize_impl.cuh"
 
 namespace mindspore::lite {
 REGISTER_TENSORRT_PLUGIN(NormalizeOptPluginCreater);
@@ -41,7 +40,7 @@ int NormalizeOptPlugin::enqueue(const nvinfer1::PluginTensorDesc *inputDesc,
   auto input_dims = inputDesc[0].dims;
   size_t dim_at_axis = input_dims.d[axis_];
   int element_cnt = std::accumulate(input_dims.d, input_dims.d + input_dims.nbDims, 1, std::multiplies<int64_t>());
-  Normalize(input, gamma, beta, output, dim_at_axis, epsilion_, element_cnt, stream);
+  Normalize(input, gamma, beta, output, dim_at_axis, epsilion_, element_cnt, stream, device_id_);
 }
 
 nvinfer1::IPluginV2DynamicExt *NormalizeOptPlugin::clone() const noexcept {

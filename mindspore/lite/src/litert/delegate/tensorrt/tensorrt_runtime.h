@@ -65,7 +65,12 @@ class TensorRTRuntime {
 
   TensorRTAllocator *GetAllocator() { return this->allocator_; }
 
-  void SetDeviceID(uint32_t device_id) { device_id_ = device_id; }
+  void SetDeviceID(uint32_t device_id) {
+    device_id_ = device_id;
+    if (allocator_ != nullptr) {
+      allocator_->SetDeviceID(device_id);
+    }
+  }
 
   uint32_t GetDeviceID() { return device_id_; }
 

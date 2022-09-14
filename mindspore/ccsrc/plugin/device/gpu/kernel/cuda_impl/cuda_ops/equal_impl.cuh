@@ -14,11 +14,14 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_CDUA_IMPL_NORMALIZE_H_
-#define MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_CDUA_IMPL_NORMALIZE_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_EQUAL_IMPL_CUH_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_EQUAL_IMPL_CUH_
+
+#include <cuda_runtime.h>
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
 template <typename T>
-void Normalize(const T *input, const T *gamma, const T *beta, T *output, size_t dim_at_axis, float epsilion,
-               int element_cnt, cudaStream_t stream);
+CUDA_LIB_EXPORT void Equal(const size_t input_size, const T *input1, const T *input2, T *output, cudaStream_t stream,
+                           const uint32_t device_id);
 
-#endif  // MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_CDUA_IMPL_NORMALIZE_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_EQUAL_IMPL_CUH_

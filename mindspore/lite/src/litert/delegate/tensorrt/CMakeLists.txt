@@ -83,11 +83,19 @@ target_link_libraries(
 
 # cuda
 find_package(CUDA)
+add_compile_definitions(ENABLE_GPU)
 file(GLOB_RECURSE CUDA_KERNEL_SRC
     ${CMAKE_CURRENT_SOURCE_DIR}/cuda_impl/*.cu
     ${CCSRC_DIR}/plugin/device/gpu/kernel/cuda_impl/cuda_ops/gather.cu
     ${CCSRC_DIR}/plugin/device/gpu/kernel/cuda_impl/cuda_ops/swish_impl.cu
+    ${CCSRC_DIR}/plugin/device/gpu/kernel/cuda_impl/cuda_ops/gelu_impl.cu
+    ${CCSRC_DIR}/plugin/device/gpu/kernel/cuda_impl/cuda_ops/sigmoid_impl.cu
     ${CCSRC_DIR}/plugin/device/gpu/kernel/cuda_impl/cuda_ops/cumsum_impl.cu
+    ${CCSRC_DIR}/plugin/device/gpu/kernel/cuda_impl/cuda_ops/equal_impl.cu
+    ${CCSRC_DIR}/plugin/device/gpu/kernel/cuda_impl/cuda_ops/hash_impl.cu
+    ${CCSRC_DIR}/plugin/device/gpu/kernel/cuda_impl/cuda_ops/logical_impl.cu
+    ${CCSRC_DIR}/plugin/device/gpu/kernel/cuda_impl/cuda_ops/normalize_impl.cu
+    ${CCSRC_DIR}/plugin/device/gpu/kernel/cuda_impl/cuda_ops/cast_impl.cu
     ${CCSRC_DIR}/plugin/device/gpu/kernel/cuda_impl/cuda_ops/resize_bilinear_impl.cu
     ${CCSRC_DIR}/plugin/device/gpu/kernel/cuda_impl/cuda_ops/batchtospace_impl.cu
     ${CCSRC_DIR}/plugin/device/gpu/kernel/cuda_impl/cuda_ops/spacetobatch_impl.cu

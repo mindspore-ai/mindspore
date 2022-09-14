@@ -127,7 +127,8 @@ bool InTopKGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
     float *casted_float32_input = GetDeviceAddress<float>(workspace, kIndex2);
     float *top_k_output_device_float32 = GetDeviceAddress<float>(workspace, kIndex3);
 
-    Cast(input_size_, predictions_device, casted_float32_input, reinterpret_cast<cudaStream_t>(stream_ptr));
+    Cast(input_size_, predictions_device, casted_float32_input, reinterpret_cast<cudaStream_t>(stream_ptr),
+         GET_CTX_DEVICE_ID);
 
     FastTopK(outer_size_, inner_size_, casted_float32_input, static_cast<int32_t>(k_), top_k_output_device_float32,
              top_k_indices_device, top_k_init, reinterpret_cast<cudaStream_t>(stream_ptr));
