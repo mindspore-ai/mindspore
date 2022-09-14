@@ -231,6 +231,7 @@ int ConcatBaseCPUKernel::Run() {
     if (!is_with_data_[i]) {
       continue;
     }
+    MS_CHECK_TRUE_MSG(in_tensors_[i]->data() != nullptr, RET_ERROR, "input tensor data is nullptr.");
     inputs_ptr_.push_back(static_cast<const uint8_t *>(in_tensors_[i]->data()));
   }
   output_ = static_cast<uint8_t *>(out_tensors_.front()->data());
