@@ -184,3 +184,40 @@ def test_asnumpy_ownership():
     t = t.init_data()
     t = t.asnumpy()
     assert np.allclose(t, 0)
+
+    t = ms.Tensor.from_numpy(np.zeros([41100, 16], dtype=np.float32))
+    t = t.asnumpy()
+    assert np.allclose(t, 0)
+
+    t = ms.Tensor(np.zeros([41100, 16], dtype=np.float32))
+    t = t.asnumpy()
+    assert np.allclose(t, 0)
+
+
+def test_assign_value_after_asnumpy():
+    """
+    Feature: Tensor asnumpy() method.
+    Description: Call assign_value() after asnumpy().
+    Expectation: Numpy array returned from asnumpy() work as expected.
+    """
+    t = ms.Tensor(np.zeros([41100, 16]), ms.float32)
+    n = t.asnumpy()
+    c = n.copy()
+    t.assign_value(ms.Tensor(np.array([6, 6, 6, 6, 6]), ms.float32))
+    assert np.allclose(n, c)
+    assert np.allclose(t.asnumpy(), np.array([6, 6, 6, 6, 6], np.float32))
+
+    t = ms.Tensor.from_numpy(np.zeros([41100, 16], np.float32))
+    n = t.asnumpy()
+    c = n.copy()
+    t.assign_value(ms.Tensor(np.array([6, 6, 6, 6, 6]), ms.float32))
+    assert np.allclose(n, c)
+    assert np.allclose(t.asnumpy(), np.array([6, 6, 6, 6, 6], np.float32))
+
+    t = init.initializer("normal", [41100, 16], dtype=ms.float32)
+    t = t.init_data()
+    n = t.asnumpy()
+    c = n.copy()
+    t.assign_value(ms.Tensor(np.array([6, 6, 6, 6, 6]), ms.float32))
+    assert np.allclose(n, c)
+    assert np.allclose(t.asnumpy(), np.array([6, 6, 6, 6, 6], np.float32))

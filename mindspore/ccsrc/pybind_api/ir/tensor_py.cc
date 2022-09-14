@@ -195,8 +195,8 @@ class TensorDataNumpy : public TensorData {
     return py::str(py_array());
   }
 
-  /// py::array object.
-  py::array py_array(const py::handle &owner = py::handle()) const {
+  /// py::array object. by default, use py::str() as the dummy owner to prevent data copy.
+  py::array py_array(const py::handle &owner = py::str()) const {
     return py::array(py::dtype(buffer_), buffer_.shape, buffer_.strides, buffer_.ptr, owner);
   }
 
@@ -391,15 +391,18 @@ py::array TensorPy::SyncAsNumpy(const Tensor &tensor) {
 }
 
 py::array TensorPy::AsNumpy(const Tensor &tensor) {
-  py::object self = py::cast(&tensor);
+  // Use TensorData as the owner to prevent use-after-free problem.
+  // We can NOT use Tensor as the owner since its TensorData may change
+  // by other operations such as AssignValue().
+  py::object owner = py::cast(tensor.data_ptr());
   auto data_numpy = dynamic_cast<const TensorDataNumpy *>(&tensor.data());
   if (data_numpy != nullptr) {
     // Return internal numpy array if tensor data is implemented base on it.
-    return data_numpy->py_array(self);
+    return data_numpy->py_array(owner);
   }
   // Otherwise, create numpy array by buffer protocol.
   auto info = GetPyBufferInfo(tensor);
-  return py::array(py::dtype(info), info.shape, info.strides, info.ptr, self);
+  return py::array(py::dtype(info), info.shape, info.strides, info.ptr, owner);
 }
 
 static ShapeVector GetShapeFromTuple(const py::tuple &tuple) {
@@ -431,6 +434,8 @@ void RegMetaTensor(py::module *m) {
         MetaTensor tensor(TypeId(t[0].cast<int>()), t[1].cast<ShapeVector>());
         return tensor;
       }));
+  // Define TensorData as a python class so that ownership of tensor data can be managed.
+  (void)py::class_<TensorData, TensorDataPtr>(*m, "_TensorData");
   // Define python Tensor class.
   // dtype should define before Tensor, because Tensor init depend dtype
   (void)py::class_<Tensor, MetaTensor, std::shared_ptr<Tensor>>(*m, "Tensor")
