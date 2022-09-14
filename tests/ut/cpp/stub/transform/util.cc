@@ -29,6 +29,14 @@
 #include "transform/graph_ir/op_adapter_util.h"
 #include "graph/operator.h"
 
+namespace ge {
+void Operator::InputRegister(char const *, char const *) {}
+void Operator::OutputRegister(char const *, char const *) {}
+void Operator::OptionalInputRegister(char const *, char const *) {}
+void Operator::DynamicInputRegister(char const *, unsigned int, char const *, bool) {}
+void Operator::DynamicOutputRegister(char const *, unsigned int, char const *, bool) {}
+}  // namespace ge
+
 namespace mindspore {
 namespace transform {
 namespace {
