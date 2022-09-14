@@ -113,6 +113,15 @@ std::string TbeUtils::GetOpDebugPath() {
   return debug_path;
 }
 
+std::string TbeUtils::GetKernelMetaTempDir() {
+  static std::string debug_path;
+  if (!debug_path.empty()) {
+    return debug_path;
+  }
+  debug_path = Common::GetKernelMetaTempDir();
+  return debug_path;
+}
+
 std::string GetOpDebugLevel() {
   static const std::set<size_t> value_ranges = {OP_DEBUG_LEVEL_0, OP_DEBUG_LEVEL_1, OP_DEBUG_LEVEL_2, OP_DEBUG_LEVEL_3,
                                                 OP_DEBUG_LEVEL_4};
@@ -151,6 +160,7 @@ nlohmann::json TbeUtils::GenSocInfo() {
   soc_info_json["socVersion"] = device::ascend::GetSocVersion();
   soc_info_json["offlineTune"] = CheckOfflineTune();
   soc_info_json["op_debug_dir"] = GetOpDebugPath();
+  soc_info_json["kernel_meta_temp_dir"] = GetKernelMetaTempDir();
   soc_info_json["op_debug_level"] = GetOpDebugLevel();
   soc_info_json["autoTilingMode"] = context_ptr->get_param<std::string>(MS_CTX_TUNE_MODE);
   soc_info_json["deviceId"] = std::to_string(context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID));
