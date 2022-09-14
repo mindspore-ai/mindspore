@@ -51,6 +51,7 @@ from .array_func import (
     stack,
     unstack,
     tensor_slice,
+    strided_slice,
     slice,
     scalar_to_array,
     scalar_to_tensor,

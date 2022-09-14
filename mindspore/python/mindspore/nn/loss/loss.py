@@ -2079,3 +2079,69 @@ class CrossEntropyLoss(LossBase):
         if logits.ndim == labels.ndim and self.ignore_index > 0:
             _cross_entropy_ignore_index_warning(self.cls_name)
         return F.cross_entropy(logits, labels, self.weight, self.ignore_index, self.reduction, self.label_smoothing)
+
+
+class KLDivLoss(LossBase):
+    r"""
+    Computes the Kullback-Leibler divergence between the logits and the labels.
+
+    The updating formulas of KLDivLoss algorithm are as follows,
+
+    .. math::
+        L = \{l_1,\dots,l_N\}^\top, \quad
+        l_n = target_n \cdot (\log target_n - x_n)
+
+    Then,
+
+    .. math::
+        \ell(x, target) = \begin{cases}
+        L, & \text{if reduction} = \text{'none';}\\
+        \operatorname{mean}(L), & \text{if reduction} = \text{'mean';}\\
+        \operatorname{batchmean}(L), & \text{if reduction} = \text{'batchmean';}\\
+        \operatorname{sum}(L),  & \text{if reduction} = \text{'sum'.}
+        \end{cases}
+
+    where :math:`x` represents `logits`.
+    :math:`target` represents `labels`.
+    :math:`\ell(x, target)` represents `output`.
+
+    Note:
+        Currently it does not support float64 input on `Ascend`.
+        It behaves the same as the mathematical definition only when `reduction` is set to `batchmean`.
+
+    Args:
+        reduction (str): Specifies the reduction to be applied to the output.
+            Its value must be one of 'none', 'mean', 'batchmean' or 'sum'. Default: 'mean'.
+
+    Inputs:
+        - **logits** (Tensor) - The input Tensor. The data type must be float16, float32 or float64.
+        - **labels** (Tensor) - The label Tensor which has the same shape and data type as `logits`.
+
+    Returns:
+        Tensor or Scalar, if `reduction` is 'none', then output is a tensor and has the same shape as `logits`.
+        Otherwise, it is a scalar.
+
+    Raises:
+        TypeError: If `reduction` is not a str.
+        TypeError: If neither `logits` nor `labels` is a Tensor.
+        TypeError: If dtype of `logits` or `labels` is not float32.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> logits = Tensor(np.array([0.2, 0.7, 0.1]), mindspore.float32)
+        >>> labels = Tensor(np.array([0., 1., 0.]), mindspore.float32)
+        >>> loss = nn.KLDivLoss(reduction='mean')
+        >>> output = loss(logits, labels)
+        >>> print(output)
+        -0.23333333
+    """
+    def __init__(self, reduction='mean'):
+        super().__init__()
+        self.reduction = reduction
+
+    def construct(self, logits, labels):
+        _check_is_tensor('logits', logits, self.cls_name)
+        _check_is_tensor('labels', labels, self.cls_name)
+        return F.kl_div(logits, labels, self.reduction)

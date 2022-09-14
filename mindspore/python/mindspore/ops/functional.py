@@ -52,7 +52,6 @@ isinstance_ = P.IsInstance()
 
 merge = P.Merge()
 geswitch = P.GeSwitch()
-strided_slice = P.StridedSlice()
 check_bprop = P.CheckBprop()
 sqrt = P.Sqrt()
 reduce_sum = P.ReduceSum()
