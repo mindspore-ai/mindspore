@@ -49,7 +49,7 @@ class InTopKGpuKernelMod : public NativeGpuKernelMod {
   void InitSizeLists();
 
  private:
-  template <typename T>
+  template <typename T, typename S>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs, void *cuda_stream);
   using InTopKFunc = std::function<bool(InTopKGpuKernelMod *, const std::vector<kernel::AddressPtr> &,

@@ -26,12 +26,12 @@ __device__ __forceinline__ bool Isfinite(T x) {
   return isfinite(x);
 }
 
-template <typename T>
-__global__ void InTopK(const T *predictions, const int32_t *targets, bool *output, const T *top_k_output,
-                       size_t batch_size, size_t class_id_count, int64_t k) {
+template <typename T, typename S>
+__global__ void InTopK(const T *predictions, const S *targets, bool *output, const T *top_k_output, size_t batch_size,
+                       size_t class_id_count, int64_t k) {
   size_t gt_id = blockIdx.x * blockDim.x + threadIdx.x;
   for (; gt_id < batch_size; gt_id += blockDim.x * gridDim.x) {
-    int32_t target_index = targets[gt_id];
+    S target_index = targets[gt_id];
     bool is_invalid = (static_cast<size_t>(target_index) >= class_id_count);
     if (!is_invalid) {
       T predicted_value = predictions[gt_id * class_id_count + target_index];
@@ -44,17 +44,25 @@ __global__ void InTopK(const T *predictions, const int32_t *targets, bool *outpu
   }
 }
 
-template <typename T>
-void CalInTopK(const T *predictions, const int32_t *targets, bool *output, const T *top_k_output, size_t batch_size,
+template <typename T, typename S>
+void CalInTopK(const T *predictions, const S *targets, bool *output, const T *top_k_output, size_t batch_size,
                size_t class_id_count, int64_t k, cudaStream_t cuda_stream) {
   InTopK<<<GET_BLOCKS(class_id_count), GET_THREADS, 0, cuda_stream>>>(predictions, targets, output, top_k_output,
                                                                       batch_size, class_id_count, k);
 }
 
-template CUDA_LIB_EXPORT void CalInTopK<half>(const half *predictions, const int32_t *targets, bool *output,
-                                              const half *top_k_output, size_t batch_size, size_t class_id_count,
-                                              int64_t k, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalInTopK<half, int32_t>(const half *predictions, const int32_t *targets, bool *output,
+                                                       const half *top_k_output, size_t batch_size,
+                                                       size_t class_id_count, int64_t k, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalInTopK<float>(const float *predictions, const int32_t *targets, bool *output,
-                                               const float *top_k_output, size_t batch_size, size_t class_id_count,
-                                               int64_t k, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalInTopK<float, int32_t>(const float *predictions, const int32_t *targets, bool *output,
+                                                        const float *top_k_output, size_t batch_size,
+                                                        size_t class_id_count, int64_t k, cudaStream_t cuda_stream);
+
+template CUDA_LIB_EXPORT void CalInTopK<half, int64_t>(const half *predictions, const int64_t *targets, bool *output,
+                                                       const half *top_k_output, size_t batch_size,
+                                                       size_t class_id_count, int64_t k, cudaStream_t cuda_stream);
+
+template CUDA_LIB_EXPORT void CalInTopK<float, int64_t>(const float *predictions, const int64_t *targets, bool *output,
+                                                        const float *top_k_output, size_t batch_size,
+                                                        size_t class_id_count, int64_t k, cudaStream_t cuda_stream);
