@@ -5796,6 +5796,7 @@ class COOTensor(COOTensor_):
             validator.check_coo_tensor_input(indices, values, shape)
             validator.check_coo_tensor_shape(indices.shape, values.shape, shape)
             validator.check_coo_tensor_dtype(indices.dtype)
+            indices = tensor_operator_registry.get('stop_gradient')(indices)
             COOTensor_.__init__(self, indices, values, shape)
         self.init_finished = True
 
@@ -6106,6 +6107,8 @@ class CSRTensor(CSRTensor_):
             validator.check_csr_tensor_input(indptr, indices, values, shape)
             validator.check_csr_tensor_shape(indptr.shape, indices.shape, values.shape, shape)
             validator.check_csr_tensor_dtype(indptr.dtype, indices.dtype)
+            indptr = tensor_operator_registry.get('stop_gradient')(indptr)
+            indices = tensor_operator_registry.get('stop_gradient')(indices)
             CSRTensor_.__init__(self, indptr, indices, values, shape)
         self.init_finished = True
 
