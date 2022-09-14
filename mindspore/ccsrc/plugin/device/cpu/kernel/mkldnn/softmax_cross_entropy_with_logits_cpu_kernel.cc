@@ -29,26 +29,26 @@ constexpr size_t kSoftmaxCrossEntropyWithLogitsOutputsNum = 2;
 constexpr size_t kSoftmaxCrossEntropyWithLogitsWorkspaceSize = 1;
 }  // namespace
 
-void SoftmaxCrossEntropyWithLogitsCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
-  DeprecatedNativeCpuKernelMod::InitInputOutputSize(kernel_node);
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  size_t type_size = sizeof(float);
-  auto shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  size_t tensor_size = std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
-  (void)workspace_size_list_.emplace_back(tensor_size);
+bool SoftmaxCrossEntropyWithLogitsCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                                     const std::vector<KernelTensorPtr> &inputs,
+                                                     const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->name();
+  return true;
 }
 
-void SoftmaxCrossEntropyWithLogitsCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  auto shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  if (AnfAlgo::IsShapesDynamic({shape})) {
-    return;
+int SoftmaxCrossEntropyWithLogitsCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                                      const std::vector<KernelTensorPtr> &inputs,
+                                                      const std::vector<KernelTensorPtr> &outputs,
+                                                      const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
   }
+  auto shape = inputs.at(0)->GetShapeVector();
   dnnl::memory::dims mem_dims;
   (void)mem_dims.insert(mem_dims.end(), shape.begin(), shape.end());
   if (mem_dims.size() != 2) {
-    MS_LOG(EXCEPTION) << "SoftmaxCrossEntropyWithLogits kernel dims invalid " << mem_dims.size();
+    MS_LOG(ERROR) << "SoftmaxCrossEntropyWithLogits kernel dims invalid " << mem_dims.size();
+    return KRET_RESIZE_FAILED;
   }
   batch_size_ = static_cast<size_t>(shape[0]);
   class_num_ = static_cast<size_t>(shape[1]);
@@ -63,6 +63,12 @@ void SoftmaxCrossEntropyWithLogitsCpuKernelMod::InitKernel(const CNodePtr &kerne
 
   AddArgument(DNNL_ARG_SRC, mem_desc);
   AddArgument(DNNL_ARG_DST, mem_desc);
+
+  workspace_size_list_.clear();
+  size_t type_size = sizeof(float);
+  size_t tensor_size = std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
+  (void)workspace_size_list_.emplace_back(tensor_size);
+  return KRET_OK;
 }
 
 void SoftmaxCrossEntropyWithLogitsCpuKernelMod::ForwardPostExecute(const float *logits, const float *labels,
