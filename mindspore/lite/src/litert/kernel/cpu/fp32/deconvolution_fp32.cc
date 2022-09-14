@@ -34,12 +34,23 @@ DeConvolutionCPUKernel::~DeConvolutionCPUKernel() {
 }
 
 int DeConvolutionCPUKernel::ReSize() {
-  CHECK_LESS_RETURN(in_tensors_.size(), 1);
+  CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   CHECK_NULL_RETURN(conv_param_);
   CHECK_NULL_RETURN(matmul_param_);
 
-  auto ret = ConvolutionBaseCPUKernel::Prepare();
+  auto ret = ConvolutionBaseCPUKernel::CheckDeconvResizeValid();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Resize is invalid.";
+    return ret;
+  }
+
+  auto weight_tensor = in_tensors_.at(kWeightIndex);
+  CHECK_NULL_RETURN(weight_tensor);
+  CHECK_NOT_EQUAL_RETURN(conv_param_->kernel_h_, weight_tensor->Height());
+  CHECK_NOT_EQUAL_RETURN(conv_param_->kernel_w_, weight_tensor->Width());
+
+  ret = ConvolutionBaseCPUKernel::Prepare();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvolutionBaseCPUKernel init error!";
     return ret;
