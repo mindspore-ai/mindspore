@@ -30,8 +30,10 @@ abstract::ShapePtr TraceInferShape(const PrimitivePtr &primitive, const std::vec
   MS_EXCEPTION_IF_NULL(primitive);
   auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
   auto x_shape = x_shape_map[kShape];
-  // Trace input dim must be 2
-  (void)CheckAndConvertUtils::CheckInteger("x shape size", SizeToLong(x_shape.size()), kEqual, 2, primitive->name());
+  if (!IsDynamicRank(x_shape)) {
+    // Trace input dim must be 2
+    (void)CheckAndConvertUtils::CheckInteger("x shape size", SizeToLong(x_shape.size()), kEqual, 2, primitive->name());
+  }
   std::vector<int64_t> output_shape;
   return std::make_shared<abstract::Shape>(output_shape);
 }

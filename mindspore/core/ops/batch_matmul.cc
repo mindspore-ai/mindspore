@@ -71,12 +71,15 @@ abstract::ShapePtr BatchMatmulInferShape(const PrimitivePtr &primitive,
   auto context = MsContext::GetInstance();
   constexpr size_t x_dim_limit = 3;
   constexpr size_t y_dim_limit = 2;
-  if (x_shp.size() < x_dim_limit || y_shp.size() < y_dim_limit) {
-    MS_EXCEPTION(ValueError)
-      << "For '" << prim_name
-      << "', input 'x' must be greater or equal to 3, input 'y' must be greater or equal to 2. But got 'x': "
-      << x_shp.size() << ", 'y': " << y_shp.size() << ".";
+  if ((!IsDynamic(x_shp)) && (!IsDynamic(y_shp))) {
+    if (x_shp.size() < x_dim_limit || y_shp.size() < y_dim_limit) {
+      MS_EXCEPTION(ValueError)
+        << "For '" << prim_name
+        << "', input 'x' must be greater or equal to 3, input 'y' must be greater or equal to 2. But got 'x': "
+        << x_shp.size() << ", 'y': " << y_shp.size() << ".";
+    }
   }
+
   constexpr size_t offset = 2;
   std::vector<int> x_last(x_shp.end() - offset, x_shp.end());
   std::vector<int> y_last(y_shp.end() - offset, y_shp.end());
