@@ -52,6 +52,9 @@ ATTR_MAP(Shape) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Shape) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Shape, kNameShape, ADPT_DESC(Shape))
 
+// TensorShape
+REG_ADPT_DESC(TensorShape, kNameTensorShape, ADPT_DESC(Shape))
+
 // GetShape
 INPUT_MAP(GetShape) = EMPTY_INPUT_MAP;
 DYN_INPUT_MAP(GetShape) = {{1, DYN_INPUT_DESC(x)}};

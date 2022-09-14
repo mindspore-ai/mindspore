@@ -276,6 +276,18 @@ void UpdateOutputNodeShape(const std::vector<KernelWithIndex> &outputs, const st
     }
   }
 }
+
+void SetDynamicShapeAttr(const KernelGraphPtr &kernel_graph) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  auto nodes = TopoSort(kernel_graph->output());
+  for (auto &node : nodes) {
+    if (common::AnfAlgo::IsDynamicShape(node)) {
+      MS_LOG(INFO) << "Set Dynamic Shape Attr to Node : " << node->fullname_with_scope();
+      kernel_graph->SetGraphDynamicAttr(true);
+      return;
+    }
+  }
+}
 }  // namespace
 
 void GeGraphExecutor::AllocInputHostMemory(const KernelGraphPtr &kernel_graph) const {
@@ -341,6 +353,7 @@ bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map<str
   ReorderInputsAsFrontGraph(kg, origin_graph);
   opt::GeOptimization(origin_graph);
   (void)BuildDFGraph(origin_graph, GetParams(origin_graph), false);
+  SetDynamicShapeAttr(kg);
   AllocInputHostMemory(kg);
   AllocOutputHostMemory(kg);
   kg->set_run_mode(RunMode::kGraphMode);
