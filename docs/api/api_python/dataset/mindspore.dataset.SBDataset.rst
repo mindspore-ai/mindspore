@@ -7,7 +7,7 @@ mindspore.dataset.SBDataset
 
     根据给定的 `task` 配置，生成数据集具有不同的输出列：
 
-    - `task` = 'Boundaries'，有两个输出列： `image` 列的数据类型为uint8。 `label` 列包含1个的数据类型为uint8的图像。
+    - `task` = 'Boundaries'，有两个输出列： `image` 列的数据类型为uint8，`label` 列包含1个的数据类型为uint8的图像。
     - `task` = 'Segmentation'，有两个输出列： `image` 列的数据类型为uint8。 `label` 列包含20个的数据类型为uint8的图像。
 
     参数：

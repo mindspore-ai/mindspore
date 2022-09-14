@@ -842,10 +842,11 @@ class CityscapesDataset(MappableDataset, VisionBaseDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        usage (str): Acceptable usages include 'train', 'test', 'val' or 'all' if quality_mode is 'fine'
+        usage (str, optional): Acceptable usages include 'train', 'test', 'val' or 'all' if quality_mode is 'fine'
             otherwise 'train', 'train_extra', 'val' or 'all' (default= 'train').
-        quality_mode (str): Acceptable quality_modes include 'fine' or 'coarse' (default= 'fine').
-        task (str): Acceptable tasks include 'instance', 'semantic', 'polygon' or 'color' (default= 'instance').
+        quality_mode (str, optional): Acceptable quality_modes include 'fine' or 'coarse' (default= 'fine').
+        task (str, optional): Acceptable tasks include 'instance',
+            'semantic', 'polygon' or 'color' (default= 'instance').
         num_samples (int, optional): The number of images to be included in the dataset.
             (default=None, all images).
         num_parallel_workers (int, optional): Number of workers to read the data
@@ -2035,8 +2036,8 @@ class Flowers102Dataset(GeneratorDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        task (str): Specify the 'Classification' or 'Segmentation' task (default='Classification').
-        usage (str): Specify the 'train', 'valid', 'test' part or 'all' parts of dataset
+        task (str, optional): Specify the 'Classification' or 'Segmentation' task (default='Classification').
+        usage (str, optional): Specify the 'train', 'valid', 'test' part or 'all' parts of dataset
             (default='all', will read all samples).
         num_samples (int, optional): The number of samples to be included in the dataset (default=None, all images).
         num_parallel_workers (int, optional): Number of subprocesses used to fetch the dataset in parallel (default=1).
@@ -4744,16 +4745,9 @@ class WIDERFaceDataset(MappableDataset, VisionBaseDataset):
     A source dataset that reads and parses WIDERFace dataset.
 
     When usage is "train", "valid" or "all", the generated dataset has eight columns ["image", "bbox", "blur",
-    "expression", "illumination", "occlusion", "pose", "invalid"]. When usage is "test", it only has one column
-    ["image"].
-    The tensor of column :py:obj:`image` is a vector of the uint8 type.
-    The tensor of column :py:obj:`bbox` is a scalar of the uint32 type.
-    The tensor of column :py:obj:`blur` is a scalar of the uint32 type.
-    The tensor of column :py:obj:`expression` is a scalar of the uint32 type.
-    The tensor of column :py:obj:`illumination` is a scalar of the uint32 type.
-    The tensor of column :py:obj:`occlusion` is a scalar of the uint32 type.
-    The tensor of column :py:obj:`pose` is a scalar of the uint32 type.
-    The tensor of column :py:obj:`invalid` is a scalar of the uint32 type.
+    "expression", "illumination", "occlusion", "pose", "invalid"]. The data type of the `image` column is uint8,
+    and all other columns are uint32. When usage is "test", it only has one column
+    ["image"], with uint8 data type.
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.

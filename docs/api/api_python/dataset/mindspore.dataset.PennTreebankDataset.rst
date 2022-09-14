@@ -5,7 +5,7 @@ mindspore.dataset.PennTreebankDataset
 
     读取和解析PennTreebank数据集的源数据集。
 
-    生成的数据集有一列 `[text]` ，数据类型为string。
+    生成的数据集有一列 `[text]` 。数据类型为string。
 
     参数：
         - **dataset_dir** (str) - 包含数据集文件的根目录路径。

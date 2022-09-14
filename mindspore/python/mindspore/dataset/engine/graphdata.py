@@ -365,7 +365,7 @@ class GraphData:
         next-hop sampling. A maximum of 6-hop are allowed.
 
         The sampling result is tiled into a list in the format of [input node, 1-hop sampling result,
-        2-hop sampling result ...]
+        2-hop sampling result ...].
 
         Args:
             node_list (Union[list, numpy.ndarray]): The given list of nodes.
@@ -862,7 +862,7 @@ class Graph(GraphData):
         next-hop sampling. A maximum of 6-hop are allowed.
 
         The sampling result is tiled into a list in the format of [input node, 1-hop sampling result,
-        2-hop sampling result ...]
+        2-hop sampling result ...].
 
         Args:
             node_list (Union[list, numpy.ndarray]): The given list of nodes.

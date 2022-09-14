@@ -329,7 +329,6 @@ class FileWriter:
         the MindRecord file can store. If the size of header is larger than \
         the default size (16MB), users need to call the API to set a proper size.
 
-
         Args:
             header_size (int): Size of header, between 16*1024(16KB) and
                 128*1024*1024(128MB).

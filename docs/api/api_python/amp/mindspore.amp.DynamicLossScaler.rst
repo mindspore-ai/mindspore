@@ -29,9 +29,15 @@ mindspore.amp.DynamicLossScaler
         参数：
             - **inputs** (Union(Tensor, tuple(Tensor))) - 损失值或梯度。
 
+        返回：
+            Union(Tensor, tuple(Tensor))，缩放的值。
+
     .. py:method:: unscale(inputs)
 
         对inputs进行unscale，`inputs /= scale_value`。
 
         参数：
             - **inputs** (Union(Tensor, tuple(Tensor))) - 损失值或梯度。
+
+        返回：
+            Union(Tensor, tuple(Tensor))，未缩放的值。

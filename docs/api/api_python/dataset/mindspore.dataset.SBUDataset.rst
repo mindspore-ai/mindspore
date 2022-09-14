@@ -5,7 +5,7 @@ mindspore.dataset.SBUDataset
 
     读取和解析SBU数据集的源文件构建数据集。
 
-    生成的数据集有两列：`[image, caption]`。`image` 列的数据类型为uint8，`caption` 列的数据类型为string。
+    生成的数据集有两列：`[image, caption]`。`image` 列的数据类型为uint8。`caption` 列的数据类型为string。
 
     参数：
         - **dataset_dir** (str) - 包含数据集文件的根目录的路径。
@@ -57,7 +57,9 @@ mindspore.dataset.SBUDataset
 
     **关于SBU数据集：**
 
-    SBU数据集是一个带字幕的大型照片集，它包含一百万张带有视觉相关标注的图像。
+    SBU数据集是一个带字幕的大型照片集。它包含一百万张带有视觉相关标注的图像。
+
+    你需要使用官方的download.m手动下载图片，将'urls{i}(24, end)'替换为'urls{i}(24:1:end)'，并将目录保持如下。
 
     .. code-block::
 

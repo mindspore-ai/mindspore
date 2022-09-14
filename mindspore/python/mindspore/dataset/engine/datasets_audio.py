@@ -723,12 +723,8 @@ class TedliumDataset(MappableDataset, AudioBaseDataset):
     The generated dataset has six columns :py:obj:`[waveform, sample_rate, transcript, talk_id, speaker_id,
     identifier]`.
 
-    The tensor of column :py:obj:`waveform` is of the float32 type.
-    The tensor of column :py:obj:`sample_rate` is a scalar of the int32 type.
-    The tensor of column :py:obj:`transcript` is a scalar of the string type.
-    The tensor of column :py:obj:`talk_id` is a scalar of the string type.
-    The tensor of column :py:obj:`speaker_id` is a scalar of the string type.
-    The tensor of column :py:obj:`identifier` is a scalar of the string type.
+    The data type of column `waveform` is float32, the data type of column `sample_rate` is int32,
+    and the data type of columns `transcript`, `talk_id`, `speaker_id` and `identifier` is string.
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.

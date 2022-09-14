@@ -54,7 +54,7 @@ mindspore.dataset.Graph
 
     .. py:method:: get_all_neighbors(node_list, neighbor_type, output_format=OutputFormat.NORMAL)
 
-        获取 `node_list` 所有节点的相邻节点，以 `neighbor_type` 类型返回。格式的定义参见以下示例：1表示两个节点之间连接，0表示不连接。
+        获取 `node_list` 所有节点的相邻节点，以 `neighbor_type` 类型返回。格式的定义参见以下示例。1表示两个节点之间连接，0表示不连接。
 
         .. list-table:: 邻接矩阵
             :widths: 20 20 20 20 20
@@ -253,7 +253,7 @@ mindspore.dataset.Graph
 
     .. py:method:: get_sampled_neighbors(node_list, neighbor_nums, neighbor_types, strategy=SamplingStrategy.RANDOM)
 
-        获取已采样相邻节点信息。此API支持多跳相邻节点采样。即将上一次采样结果作为下一跳采样的输入，最多允许6跳。采样结果平铺成列表，格式为[input node, 1-hop sampling result, 2-hop samling result ...]
+        获取已采样相邻节点信息。此API支持多跳相邻节点采样。即将上一次采样结果作为下一跳采样的输入。最多允许6跳。采样结果平铺成列表，格式为[input node, 1-hop sampling result, 2-hop samling result ...]。
 
         参数：
             - **node_list** (Union[list, numpy.ndarray]) - 包含节点的列表。

@@ -587,7 +587,7 @@ class Dataset:
             python_multiprocessing (bool, optional): Parallelize Python function per_batch_map with multi-processing.
                 This option could be beneficial if the function is computational heavy (default=False).
             max_rowsize(int, optional): Maximum size of row in MB that is used for shared memory allocation to copy
-               data between processes.  This is only used if python_multiprocessing is set to True (default=16).
+               data between processes. This is only used if python_multiprocessing is set to True (default=16).
 
         Returns:
             BatchDataset, dataset batched.

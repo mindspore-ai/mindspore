@@ -6,7 +6,7 @@
     加载argoverse数据集并进行图（Graph）初始化。
 
     Argoverse数据集是自动驾驶领域的公共数据集，当前实现的 `ArgoverseDataset` 主要用于加载argoverse数据集中运动预测（Motion Forecasting）场景的数据集，具体信息可访问官网了解：
-    https://www.argoverse.org/av1.html#download-link
+    https://www.argoverse.org/av1.html#download-link。
 
     参数：
         - **data_dir** (str) - 加载数据集的目录，这里包含原始格式的数据，并将在 `process` 方法中被加载。

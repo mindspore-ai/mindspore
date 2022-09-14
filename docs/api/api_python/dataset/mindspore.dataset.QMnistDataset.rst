@@ -5,7 +5,7 @@ mindspore.dataset.QMnistDataset
 
     读取和解析QMNIST数据集的源文件构建数据集。
 
-    生成的数据集有两列: `[image, label]`。 `image` 列的数据类型为uint8， `label` 列的数据类型为uint32。
+    生成的数据集有两列: `[image, label]`。 `image` 列的数据类型为uint8。 `label` 列的数据类型为uint32。
 
     参数：
         - **dataset_dir** (str) - 包含数据集文件的根目录路径。

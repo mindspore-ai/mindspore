@@ -6,7 +6,7 @@ mindspore.dataset.YesNoDataset
     读取和解析YesNo数据集的源数据集。
 
     生成的数据集有三列 `[waveform, sample_rate, labels]` 。
-    列 `waveform` 的数据类型为float32，列 `sample_rate` 的数据类型为int32，列 `labels` 的数据类型为int32。
+    列 `waveform` 的数据类型为float32。列 `sample_rate` 的数据类型为int32。列 `labels` 的数据类型为int32。
 
     参数：
         - **dataset_dir** (str) - 包含数据集文件的根目录路径。
