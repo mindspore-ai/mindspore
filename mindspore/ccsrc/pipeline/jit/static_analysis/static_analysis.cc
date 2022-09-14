@@ -18,9 +18,11 @@
 
 #include "pipeline/jit/static_analysis/static_analysis.h"
 #include <algorithm>
+#include <memory>
 #include <mutex>
 #include <set>
 #include <unordered_set>
+#include <utility>
 #include "abstract/abstract_value.h"
 #include "pipeline/jit/parse/resolve.h"
 #include "pipeline/jit/static_analysis/prim.h"
@@ -153,8 +155,8 @@ AnalysisResult AnalysisEngine::Run(const FuncGraphPtr &func_graph, const Abstrac
 
 AnalysisContextPtr AnalysisEngine::Run(const FuncGraphPtr &func_graph, const AnalysisContextPtr &context,
                                        const ConfigPtrList &args_conf_list) {
-  std::shared_ptr<FuncGraphEvaluator> eval = std::make_shared<FuncGraphEvaluator>(func_graph, context);
-  (void)eval->Run(shared_from_this(), args_conf_list, nullptr);
+  auto evaluator = std::make_shared<FuncGraphEvaluator>(func_graph, context);
+  (void)evaluator->Run(shared_from_this(), args_conf_list, nullptr);
   return root_context_;
 }
 
@@ -282,14 +284,15 @@ AbstractBasePtr AnalysisEngine::GetCNodeOperatorAbstract(const CNodePtr &cnode, 
   if (inputs.empty()) {
     MS_LOG(EXCEPTION) << "CNode->inputs() is empty, CNode: " << cnode->DebugString();
   }
-  AnfNodePtr func_node = inputs[0];
+  auto &func_node = inputs[0];
   MS_EXCEPTION_IF_NULL(func_node);
   MS_LOG(DEBUG) << "Current CNode function: " << func_node->DebugString();
   AnfNodeConfigPtr func_conf = MakeConfig(func_node, context, func_graph);
   MS_EXCEPTION_IF_NULL(func_conf);
   // Keep it in a local variable, otherwise smart pointer will free it.
   auto possible_func_eval_result = func_conf->ObtainEvalResult();
-  AbstractBasePtr possible_func = possible_func_eval_result->abstract();
+  MS_EXCEPTION_IF_NULL(possible_func_eval_result);
+  auto &possible_func = possible_func_eval_result->abstract();
   if (possible_func == nullptr) {
     MS_LOG(EXCEPTION) << "No abstract, func_conf: " << func_conf->ToString();
   }
@@ -366,38 +369,42 @@ EvalResultPtr AnalysisEngine::EvalCNode(const CNodePtr &cnode, const AnfNodeConf
     MS_EXCEPTION(ValueError) << "This may be not defined, or it can't be a operator. Please check code.";
   }
 
+  // Make arguments config list.
   bool contains_isolated_side_effect = false;
-  ConfigPtrList args_conf_list;
   auto &inputs = cnode->inputs();
-  // Ignore the first node which is function name
-  for (std::size_t i = 1; i < inputs.size(); i++) {
+  const auto inputs_size = inputs.size();
+  ConfigPtrList args_conf_list;
+  args_conf_list.reserve(inputs_size - 1);
+  // Ignore the first node which is function name.
+  for (std::size_t i = 1; i < inputs_size; ++i) {
     const AnfNodePtr &node = inputs[i];
-    args_conf_list.push_back(MakeConfig(node, conf->context(), conf->func_graph()));
+    (void)args_conf_list.emplace_back(MakeConfig(node, conf->context(), conf->func_graph()));
     if (check_isolated_side_effect()) {
-      auto input_cnode = dyn_cast<CNode>(node);
+      auto input_cnode = dyn_cast_ptr<CNode>(node);
       if (input_cnode != nullptr) {
         contains_isolated_side_effect |= input_cnode->has_isolated_side_effect_node();
       }
     }
   }
 
+  // Find evaluators.
   std::vector<EvaluatorPtr> evaluators;
-  auto build_evaluator = [this, &evaluators, &cnode](const AbstractFuncAtomPtr &poss) {
+  func->Visit([this, &evaluators, &cnode](const AbstractFuncAtomPtr &poss) {
     MS_EXCEPTION_IF_NULL(poss);
     auto resolved_atom = poss;
-    if (poss->isa<AsyncAbstractFuncAtom>()) {
-      const auto &async_abs_func = poss->cast<AsyncAbstractFuncAtomPtr>();
-      const auto &resolved_func = async_abs_func->GetUnique();
-      resolved_atom = resolved_func->cast<AbstractFuncAtomPtr>();
+    auto async_abs_func = poss->cast_ptr<AsyncAbstractFuncAtom>();
+    if (async_abs_func != nullptr) {
+      auto resolved_func = async_abs_func->GetUnique();
+      resolved_atom = dyn_cast<AbstractFuncAtom>(resolved_func);
       MS_EXCEPTION_IF_NULL(resolved_atom);
       MS_LOG(DEBUG) << "Resolved AsyncAbstractFuncAtom is: " << resolved_atom->ToString();
     }
     auto evaluator = this->GetEvaluatorFor(resolved_atom);
     evaluator->set_bound_node(cnode);
-    evaluators.push_back(evaluator);
-  };
-  func->Visit(build_evaluator);
+    (void)evaluators.emplace_back(std::move(evaluator));
+  });
 
+  // Run evaluators.
   auto eval_result = ExecuteEvaluators(evaluators, conf, args_conf_list);
   // Check if func graph contains isolated side-effect, and sync.
   if (check_isolated_side_effect()) {
@@ -533,154 +540,128 @@ EvaluatorPtr GetPrimEvaluator(const PrimitivePtr &prim, const AnalysisEnginePtr 
 
 EvaluatorPtr AnalysisEngine::_GetEvaluatorFor(const std::shared_ptr<PrimitiveAbstractClosure> &func) {
   MS_EXCEPTION_IF_NULL(func);
-  auto inf_pair = evaluators_.find(func);
-  if (inf_pair != evaluators_.end()) {
-    return inf_pair->second;
+  const auto &primitive = func->prim();
+  if (func->tracking_id() == 0) {
+    // Create primitive evaluator if tracking_id == 0.
+    auto [iter, is_new] = evaluators_.emplace(func, nullptr);
+    if (is_new) {
+      iter->second = GetPrimEvaluator(primitive, shared_from_this());
+      if (iter->second == nullptr) {
+        MS_LOG(EXCEPTION) << "The evaluator of the primitive is not defined (" << primitive->name() << ").";
+      }
+    }
+    return iter->second;
   }
-  auto primitive = func->prim();
-  auto evaluator = GetPrimEvaluator(primitive, shared_from_this());
-  if (evaluator == nullptr) {
-    MS_LOG(EXCEPTION) << "The evaluator of the primitive is not defined (" << primitive->name() << ").";
+  // Use TrackedEvaluator if tracking_id != 0.
+  auto iter = evaluators_.find(func);
+  if (iter != evaluators_.end()) {
+    return iter->second;
   }
-  evaluators_[func] = evaluator;
-  return evaluator;
+  auto prim_without_tracking_id = std::make_shared<PrimitiveAbstractClosure>(primitive, 0);
+  EvaluatorPtr prim_evaluator = _GetEvaluatorFor(prim_without_tracking_id);
+  auto tracked_evaluator = std::make_shared<TrackedEvaluator>(prim_evaluator);
+  auto result = evaluators_.emplace(func, std::move(tracked_evaluator));
+  return result.first->second;
 }
 
 EvaluatorPtr AnalysisEngine::_GetEvaluatorFor(const std::shared_ptr<FuncGraphAbstractClosure> &func) {
   MS_EXCEPTION_IF_NULL(func);
-  auto inf_pair = evaluators_.find(func);
-  if (inf_pair != evaluators_.end()) {
-    return inf_pair->second;
+  auto [iter, is_new] = evaluators_.emplace(func, nullptr);
+  if (is_new) {
+    iter->second = std::make_shared<FuncGraphEvaluator>(func->func_graph(), func->context());
   }
-  std::shared_ptr<FuncGraphEvaluator> func_graph_evaluator =
-    std::make_shared<FuncGraphEvaluator>(func->func_graph(), func->context());
-  evaluators_[func] = func_graph_evaluator;
-  return func_graph_evaluator;
+  return iter->second;
 }
 
 EvaluatorPtr AnalysisEngine::_GetEvaluatorFor(const std::shared_ptr<MetaFuncGraphAbstractClosure> &func) {
   MS_EXCEPTION_IF_NULL(func);
-  auto inf_pair = evaluators_.find(func);
-  if (inf_pair != evaluators_.end()) {
-    return inf_pair->second;
+  auto [iter, is_new] = evaluators_.emplace(func, nullptr);
+  if (is_new) {
+    iter->second = std::make_shared<MetaFuncGraphEvaluator>(func->meta_func_graph(), func->GetScope());
   }
-
-  std::shared_ptr<MetaFuncGraphEvaluator> evaluator =
-    std::make_shared<MetaFuncGraphEvaluator>(func->meta_func_graph(), func->GetScope());
-  evaluators_[func] = evaluator;
-  return evaluator;
+  return iter->second;
 }
 
 EvaluatorPtr AnalysisEngine::_GetEvaluatorFor(const std::shared_ptr<JTransformedAbstractClosure> &func) {
   MS_EXCEPTION_IF_NULL(func);
-  AbstractFunctionPtr primal_func = func->fn();
-  EvaluatorPtr primal_evaluator = GetEvaluatorFor(primal_func);
-  auto jevaluator = std::make_shared<JEvaluator>(primal_evaluator, primal_func);
-  return jevaluator;
+  const auto &primal_func = func->fn();
+  auto primal_evaluator = GetEvaluatorFor(primal_func);
+  return std::make_shared<JEvaluator>(primal_evaluator, primal_func);
 }
 
 EvaluatorPtr AnalysisEngine::_GetEvaluatorFor(const std::shared_ptr<VmapTransformedAbstractClosure> &func) {
   MS_EXCEPTION_IF_NULL(func);
-  AbstractFunctionPtr primal_func = func->fn();
-  ValuePtr in_axes = func->in_axes();
-  ValuePtr out_axes = func->out_axes();
-  EvaluatorPtr primal_evaluator = GetEvaluatorFor(primal_func);
-  auto vmap_evaluator = std::make_shared<VmapEvaluator>(primal_evaluator, primal_func, in_axes, out_axes);
-  return vmap_evaluator;
+  const auto &primal_func = func->fn();
+  const auto &in_axes = func->in_axes();
+  const auto &out_axes = func->out_axes();
+  auto primal_evaluator = GetEvaluatorFor(primal_func);
+  return std::make_shared<VmapEvaluator>(primal_evaluator, primal_func, in_axes, out_axes);
 }
 
 EvaluatorPtr AnalysisEngine::_GetEvaluatorFor(const std::shared_ptr<TaylorTransformedAbstractClosure> &func) {
   MS_EXCEPTION_IF_NULL(func);
-  AbstractFunctionPtr primal_func = func->fn();
-  EvaluatorPtr primal_evaluator = GetEvaluatorFor(primal_func);
-  auto taylorevaluator = std::make_shared<TaylorEvaluator>(primal_evaluator, primal_func);
-  return taylorevaluator;
+  const auto &primal_func = func->fn();
+  auto primal_evaluator = GetEvaluatorFor(primal_func);
+  return std::make_shared<TaylorEvaluator>(primal_evaluator, primal_func);
 }
 
 EvaluatorPtr AnalysisEngine::_GetEvaluatorFor(const std::shared_ptr<ShardTransformedAbstractClosure> &func) {
   MS_EXCEPTION_IF_NULL(func);
-  AbstractFunctionPtr primal_func = func->fn();
-  EvaluatorPtr primal_evaluator = GetEvaluatorFor(primal_func);
-  auto shard_evaluator = std::make_shared<ShardEvaluator>(primal_evaluator, primal_func);
-  return shard_evaluator;
+  const auto &primal_func = func->fn();
+  auto primal_evaluator = GetEvaluatorFor(primal_func);
+  return std::make_shared<ShardEvaluator>(primal_evaluator, primal_func);
 }
 
 EvaluatorPtr AnalysisEngine::_GetEvaluatorFor(const std::shared_ptr<VirtualAbstractClosure> &func) {
   MS_EXCEPTION_IF_NULL(func);
-  std::shared_ptr<VirtualEvaluator> virtual_evaluator =
-    std::make_shared<VirtualEvaluator>(func->args_spec_list(), func->output());
-  return virtual_evaluator;
+  return std::make_shared<VirtualEvaluator>(func->args_spec_list(), func->output());
 }
 
 EvaluatorPtr AnalysisEngine::_GetEvaluatorFor(const std::shared_ptr<PartialAbstractClosure> &func) {
   MS_EXCEPTION_IF_NULL(func);
-  AbstractFunctionPtr primal_func = func->fn();
-  EvaluatorPtr primal_evaluator = GetEvaluatorFor(primal_func);
+  auto primal_func = func->fn();
   auto part_pair = std::make_pair(primal_func, func->args());
-  auto itr = constructors_app_.find(part_pair);
-  if (itr != constructors_app_.end()) {
-    return itr->second;
+  auto iter = constructors_app_.find(part_pair);
+  if (iter != constructors_app_.end()) {
+    return iter->second;
   }
-  std::shared_ptr<PartialAppEvaluator> partial_evaluator =
-    std::make_shared<PartialAppEvaluator>(primal_evaluator, func->args());
-  constructors_app_[part_pair] = partial_evaluator;
-  return partial_evaluator;
-}
-
-EvaluatorPtr AnalysisEngine::_GetEvaluatorFor(const std::shared_ptr<TypedPrimitiveAbstractClosure> &) {
-  MS_LOG(EXCEPTION) << "Should not be called ";
-}
-
-// Forward to specific subclass of FunctionWrapper.
-EvaluatorPtr AnalysisEngine::_GetEvaluatorFor(const AbstractFunctionPtr &func) {
-  MS_EXCEPTION_IF_NULL(func);
-  if (func->isa<PrimitiveAbstractClosure>()) {
-    return _GetEvaluatorFor(func->cast<std::shared_ptr<PrimitiveAbstractClosure>>());
-  } else if (func->isa<FuncGraphAbstractClosure>()) {
-    return _GetEvaluatorFor(func->cast<std::shared_ptr<FuncGraphAbstractClosure>>());
-  } else if (func->isa<MetaFuncGraphAbstractClosure>()) {
-    return _GetEvaluatorFor(func->cast<std::shared_ptr<MetaFuncGraphAbstractClosure>>());
-  } else if (func->isa<JTransformedAbstractClosure>()) {
-    return _GetEvaluatorFor(func->cast<std::shared_ptr<JTransformedAbstractClosure>>());
-  } else if (func->isa<VmapTransformedAbstractClosure>()) {
-    return _GetEvaluatorFor(func->cast<std::shared_ptr<VmapTransformedAbstractClosure>>());
-  } else if (func->isa<TaylorTransformedAbstractClosure>()) {
-    return _GetEvaluatorFor(func->cast<std::shared_ptr<TaylorTransformedAbstractClosure>>());
-  } else if (func->isa<ShardTransformedAbstractClosure>()) {
-    return _GetEvaluatorFor(func->cast<std::shared_ptr<ShardTransformedAbstractClosure>>());
-  } else if (func->isa<VirtualAbstractClosure>()) {
-    return _GetEvaluatorFor(func->cast<std::shared_ptr<VirtualAbstractClosure>>());
-  } else if (func->isa<PartialAbstractClosure>()) {
-    return _GetEvaluatorFor(func->cast<std::shared_ptr<PartialAbstractClosure>>());
-  } else if (func->isa<TypedPrimitiveAbstractClosure>()) {
-    return _GetEvaluatorFor(func->cast<std::shared_ptr<TypedPrimitiveAbstractClosure>>());
-  } else if (func->isa<AbstractFuncAtom>()) {
-    MS_LOG(EXCEPTION) << "Cannot GetEvaluator from AbstractFuncAtom";
-  } else if (func->isa<AbstractFuncUnion>()) {
-    MS_LOG(EXCEPTION) << "Cannot GetEvaluator from AbstractFuncUnion";
-  } else {
-    MS_LOG(EXCEPTION) << "Cannot GetEvaluator from AbstractFunction";
-  }
+  auto primal_evaluator = GetEvaluatorFor(primal_func);
+  auto partial_evaluator = std::make_shared<PartialAppEvaluator>(primal_evaluator, func->args());
+  auto result = constructors_app_.emplace(std::move(part_pair), std::move(partial_evaluator));
+  return result.first->second;
 }
 
 EvaluatorPtr AnalysisEngine::GetEvaluatorFor(const AbstractFunctionPtr &func) {
   MS_EXCEPTION_IF_NULL(func);
-  MS_LOG(DEBUG) << "The func value: " << func->ToString() << " tracking_id: " << func->tracking_id();
-  if (func->tracking_id() == 0 || func->isa<MetaFuncGraphAbstractClosure>() || func->isa<FuncGraphAbstractClosure>()) {
-    EvaluatorPtr evaluator = _GetEvaluatorFor(func);
-    return evaluator;
+  MS_LOG(DEBUG) << "GetEvaluatorFor: " << func->ToString() << " tracking_id: " << func->tracking_id();
+  if (func->isa<PrimitiveAbstractClosure>()) {
+    return _GetEvaluatorFor(std::static_pointer_cast<PrimitiveAbstractClosure>(func));
   }
-  auto inf_pair = evaluators_.find(func);
-  if (inf_pair != evaluators_.end()) {
-    return inf_pair->second;
+  if (func->isa<FuncGraphAbstractClosure>()) {
+    return _GetEvaluatorFor(std::static_pointer_cast<FuncGraphAbstractClosure>(func));
   }
-
-  AbstractFunctionPtr func_generic = func->CopyWithoutTrackingId();
-  EvaluatorPtr eval = _GetEvaluatorFor(func_generic);
-  auto tracked_eval = std::make_shared<TrackedEvaluator>(eval);
-  evaluators_[func] = tracked_eval;
-
-  return tracked_eval;
+  if (func->isa<MetaFuncGraphAbstractClosure>()) {
+    return _GetEvaluatorFor(std::static_pointer_cast<MetaFuncGraphAbstractClosure>(func));
+  }
+  if (func->isa<JTransformedAbstractClosure>()) {
+    return _GetEvaluatorFor(std::static_pointer_cast<JTransformedAbstractClosure>(func));
+  }
+  if (func->isa<VmapTransformedAbstractClosure>()) {
+    return _GetEvaluatorFor(std::static_pointer_cast<VmapTransformedAbstractClosure>(func));
+  }
+  if (func->isa<TaylorTransformedAbstractClosure>()) {
+    return _GetEvaluatorFor(std::static_pointer_cast<TaylorTransformedAbstractClosure>(func));
+  }
+  if (func->isa<ShardTransformedAbstractClosure>()) {
+    return _GetEvaluatorFor(std::static_pointer_cast<ShardTransformedAbstractClosure>(func));
+  }
+  if (func->isa<VirtualAbstractClosure>()) {
+    return _GetEvaluatorFor(std::static_pointer_cast<VirtualAbstractClosure>(func));
+  }
+  if (func->isa<PartialAbstractClosure>()) {
+    return _GetEvaluatorFor(std::static_pointer_cast<PartialAbstractClosure>(func));
+  }
+  MS_LOG(EXCEPTION) << "Cannot GetEvaluator from " << func->type_name();
 }
 
 EvalResultPtr AnalysisEngine::ForwardConfig(const AnfNodeConfigPtr &orig_conf, const AnfNodeConfigPtr new_conf) {
@@ -711,16 +692,15 @@ EvalResultPtr AnalysisEngine::ForwardConfig(const AnfNodeConfigPtr &orig_conf, c
 EvalResultPtr AnalysisEngine::ExecuteEvaluators(const std::vector<EvaluatorPtr> &evaluators,
                                                 const AnfNodeConfigPtr &out_conf, const ConfigPtrList &args_conf_list) {
   if (evaluators.size() == 1) {
-    EvaluatorPtr eval = evaluators[0];
+    auto &eval = evaluators[0];
     MS_EXCEPTION_IF_NULL(eval);
     return eval->Run(shared_from_this(), args_conf_list, out_conf);
   }
-  static bool enable_singleThread = (common::GetEnv("MS_DEV_SINGLE_EVAL") == "1");
-  if (enable_singleThread) {
+  static const bool enable_single_thread = (common::GetEnv("MS_DEV_SINGLE_EVAL") == "1");
+  if (enable_single_thread) {
     return ExecuteMultipleEvaluators(evaluators, out_conf, args_conf_list);
-  } else {
-    return ExecuteMultipleEvaluatorsMultiThread(evaluators, out_conf, args_conf_list);
   }
+  return ExecuteMultipleEvaluatorsMultiThread(evaluators, out_conf, args_conf_list);
 }
 
 void AnalysisEngine::SetUndeterminedFlag(const FuncGraphPtr &possible_parent_fg) const {
@@ -1092,12 +1072,7 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluators(const std::vector<Evalua
   }
   multi_poss_[evaluators[0]] = evaluators[1];
   multi_poss_[evaluators[1]] = evaluators[0];
-  AbstractBasePtrList args_spec_list;
-  (void)std::transform(args_conf_list.begin(), args_conf_list.end(), std::back_inserter(args_spec_list),
-                       [](const ConfigPtr &conf) -> AbstractBasePtr {
-                         MS_EXCEPTION_IF_NULL(conf);
-                         return conf->ObtainEvalResult()->abstract();
-                       });
+  AbstractBasePtrList args_spec_list = EvaluateArguments(args_conf_list);
   MS_EXCEPTION_IF_NULL(out_conf);
   MS_EXCEPTION_IF_NULL(out_conf->node());
   auto possible_parent_fg = out_conf->node()->func_graph();
@@ -1178,6 +1153,10 @@ AbstractBasePtr ToAbstract(const ValuePtr &value, const AnalysisContextPtr &cont
   if (conf != nullptr) {
     anf_node = conf->node();
   }
+  if (value->isa<Primitive>()) {
+    auto prim = value->cast<PrimitivePtr>();
+    return MakeAbstractClosure(prim, anf_node);
+  }
   if (value->isa<FuncGraph>()) {
     auto func_graph = value->cast<FuncGraphPtr>();
     return MakeAbstractClosure(func_graph, context, anf_node);
@@ -1185,10 +1164,6 @@ AbstractBasePtr ToAbstract(const ValuePtr &value, const AnalysisContextPtr &cont
   if (value->isa<MetaFuncGraph>()) {
     auto meta_func_graph = value->cast<MetaFuncGraphPtr>();
     return MakeAbstractClosure(meta_func_graph, anf_node);
-  }
-  if (value->isa<Primitive>()) {
-    auto prim = value->cast<PrimitivePtr>();
-    return MakeAbstractClosure(prim, anf_node);
   }
   static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") != "0");
   if (enable_eliminate_unused_element && value->isa<ValueSequence>()) {

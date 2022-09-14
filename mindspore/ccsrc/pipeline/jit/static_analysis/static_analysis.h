@@ -88,7 +88,7 @@ using ConfigPtr = std::shared_ptr<Config>;
 using ConfigPtrList = std::vector<ConfigPtr>;
 
 // Config to a certain node in a certain context.
-class AnfNodeConfig : public Config {
+class AnfNodeConfig final : public Config {
  public:
   AnfNodeConfig(const AnalysisEnginePtr &engine, const AnfNodePtr &node, const AnalysisContextPtr &context,
                 const FuncGraphPtr &func_graph)
@@ -186,7 +186,7 @@ struct AnfNodeConfigEqual {
   }
 };
 
-class VirtualConfig : public Config {
+class VirtualConfig final : public Config {
  public:
   explicit VirtualConfig(const AbstractBasePtr &abstract) : Config(), abstract_(abstract) {}
 
@@ -316,17 +316,6 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
                               const FuncGraphPtr &func_graph) {
     return std::make_shared<AnfNodeConfig>(shared_from_this(), node, context, func_graph);
   }
-  // Overloaded function.
-  EvaluatorPtr _GetEvaluatorFor(const std::shared_ptr<PrimitiveAbstractClosure> &func);
-  EvaluatorPtr _GetEvaluatorFor(const std::shared_ptr<PartialAbstractClosure> &func);
-  EvaluatorPtr _GetEvaluatorFor(const std::shared_ptr<FuncGraphAbstractClosure> &func);
-  EvaluatorPtr _GetEvaluatorFor(const std::shared_ptr<MetaFuncGraphAbstractClosure> &func);
-  EvaluatorPtr _GetEvaluatorFor(const std::shared_ptr<VirtualAbstractClosure> &func);
-  EvaluatorPtr _GetEvaluatorFor(const std::shared_ptr<TypedPrimitiveAbstractClosure> &);
-  EvaluatorPtr _GetEvaluatorFor(const std::shared_ptr<JTransformedAbstractClosure> &func);
-  EvaluatorPtr _GetEvaluatorFor(const std::shared_ptr<TaylorTransformedAbstractClosure> &func);
-  EvaluatorPtr _GetEvaluatorFor(const std::shared_ptr<ShardTransformedAbstractClosure> &func);
-  EvaluatorPtr _GetEvaluatorFor(const std::shared_ptr<VmapTransformedAbstractClosure> &func);
 
   FuncGraphManagerPtr func_graph_manager() { return func_graph_manager_; }
   const AnfNodeConfigMap &anfnode_config_map() const { return anfnode_config_map_; }
@@ -351,6 +340,17 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
   }
 
  private:
+  // Overloaded function.
+  EvaluatorPtr _GetEvaluatorFor(const std::shared_ptr<PrimitiveAbstractClosure> &func);
+  EvaluatorPtr _GetEvaluatorFor(const std::shared_ptr<PartialAbstractClosure> &func);
+  EvaluatorPtr _GetEvaluatorFor(const std::shared_ptr<FuncGraphAbstractClosure> &func);
+  EvaluatorPtr _GetEvaluatorFor(const std::shared_ptr<MetaFuncGraphAbstractClosure> &func);
+  EvaluatorPtr _GetEvaluatorFor(const std::shared_ptr<VirtualAbstractClosure> &func);
+  EvaluatorPtr _GetEvaluatorFor(const std::shared_ptr<JTransformedAbstractClosure> &func);
+  EvaluatorPtr _GetEvaluatorFor(const std::shared_ptr<TaylorTransformedAbstractClosure> &func);
+  EvaluatorPtr _GetEvaluatorFor(const std::shared_ptr<ShardTransformedAbstractClosure> &func);
+  EvaluatorPtr _GetEvaluatorFor(const std::shared_ptr<VmapTransformedAbstractClosure> &func);
+
   void SetUndeterminedFlag(const FuncGraphPtr &possible_parent_fg) const;
   EvaluatorPtr HandleNestedRecursion(const std::vector<EvaluatorPtr> &evaluators, const EvaluatorPtr &eval,
                                      const AbstractBasePtrList &args_spec_list, const EvalTraceRevIter &it,
@@ -374,7 +374,6 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
   AnalysisContextPtr Run(const FuncGraphPtr &func_graph, const AnalysisContextPtr &context,
                          const ConfigPtrList &args_conf_list);
   EvalResultPtr Eval(const AnfNodeConfigPtr &conf);
-  EvaluatorPtr _GetEvaluatorFor(const AbstractFunctionPtr &fn);
   EvalResultPtr ExecuteEvaluators(const std::vector<EvaluatorPtr> &evaluators, const AnfNodeConfigPtr &out_conf,
                                   const ConfigPtrList &args_conf_list);
   EvalResultPtr ExecuteMultipleEvaluators(const std::vector<EvaluatorPtr> &evaluators, const AnfNodeConfigPtr &out_conf,

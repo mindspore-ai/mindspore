@@ -82,7 +82,7 @@ class ProgramSpecializer {
 
   template <typename Iter>
   void RemoveDeferSpecializeNode(Iter &&iter) {
-    defer_specialize_nodes_.erase(std::forward<Iter>(iter));
+    (void)defer_specialize_nodes_.erase(std::forward<Iter>(iter));
   }
 
   void PutSpecializedFuncGraphToAbstract(const FuncGraphPtr &before_specialized_fg,
