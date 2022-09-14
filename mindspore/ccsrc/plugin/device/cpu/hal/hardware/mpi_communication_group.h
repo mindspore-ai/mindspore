@@ -40,6 +40,8 @@ class MPICommunicationGroup : public CommunicationGroup {
   // The OpenMPI groups should be created from the world group.
   bool Initialize(const MPI_Group &world_group);
 
+  const MPI_Comm &mpi_communicator() const { return group_communicator_; }
+
  private:
   MPI_Group group_;
   MPI_Comm group_communicator_;
