@@ -72,12 +72,6 @@ if(NOT CMAKE_SYSTEM_NAME MATCHES "Windows")
 
     ## packages used in GPU mode only
     if(ENABLE_GPU)
-        find_library(gmp_LIB gmp)
-        find_library(gmpxx_LIB gmpxx)
-        find_file(gmp_HEADER gmp.h)
-        if(NOT gmp_LIB OR NOT gmpxx_LIB OR NOT gmp_HEADER)
-            message(FATAL_ERROR "Required package gmp not found, please install gmp and try building MindSpore again.")
-        endif()
         find_required_program(automake)
         find_required_program(autoconf)
         find_required_program(libtoolize)
