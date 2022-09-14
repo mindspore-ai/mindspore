@@ -263,7 +263,7 @@ struct Connection {
    * @param {MessageBase} *msg: The MessageBase object.
    * @return {size_t}: The size of the real data.
    */
-  size_t GetMessageBaseRealDataSize(MessageBase *msg) const;
+  size_t GetMessageBaseRealDataSize(const MessageBase *msg) const;
 
   std::string advertise_addr_;
 };
