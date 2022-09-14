@@ -425,7 +425,6 @@ endif()
 
 set_property(SOURCE ${BACKEND_SUB_OBJECTS_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_ME)
 add_library(mindspore_backend SHARED ${BACKEND_SUB_OBJECTS_SRC})
-add_library(mindspore_backend_common STATIC ${BACKEND_SUB_OBJECTS_SRC})
 
 if(MODE_ASCEND_ACL)
     add_library(mindspore_backend_static STATIC ${BACKEND_SUB_OBJECTS_SRC})

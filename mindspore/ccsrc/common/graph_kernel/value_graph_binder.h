@@ -17,10 +17,11 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_VALUE_GRAPH_BINDER_H_
 #include <memory>
 #include "ir/func_graph.h"
+#include "include/backend/visible.h"
 #include "backend/common/optimizer/pass.h"
 
 namespace mindspore::graphkernel {
-class BindValueToGraph : public opt::Pass {
+class BACKEND_EXPORT BindValueToGraph : public opt::Pass {
  public:
   BindValueToGraph() : Pass("bind_value_to_graph") {}
   ~BindValueToGraph() override = default;

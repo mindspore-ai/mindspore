@@ -27,16 +27,16 @@
 
 namespace mindspore {
 namespace kernel {
-class OpLib {
+class BACKEND_EXPORT OpLib {
  public:
   OpLib() = default;
   virtual ~OpLib() = default;
-  BACKEND_EXPORT static bool RegOp(const std::string &json_string, const std::string &impl_path);
+  static bool RegOp(const std::string &json_string, const std::string &impl_path);
   static std::shared_ptr<OpInfo> FindOp(const std::string &op_name, OpImplyType imply_type,
                                         bool is_dynamic_shape = false);
 
  protected:
-  BACKEND_EXPORT inline static std::multimap<std::string, std::shared_ptr<OpInfo>> op_info_;
+  inline static std::multimap<std::string, std::shared_ptr<OpInfo>> op_info_;
 
  private:
   static bool RegOpFromLocalInfo();

@@ -59,7 +59,7 @@ class BACKEND_EXPORT PatternProcessPass : public NodePass {
   EquivPtr equiv_;
 };
 
-class MultipleOutputPatternProcessPass : public PatternProcessPass {
+class BACKEND_EXPORT MultipleOutputPatternProcessPass : public PatternProcessPass {
  public:
   explicit MultipleOutputPatternProcessPass(const std::string &name = "", bool multigraph = true)
       : PatternProcessPass(name, multigraph),

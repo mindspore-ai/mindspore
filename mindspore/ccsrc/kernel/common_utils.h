@@ -60,7 +60,7 @@ struct KernelMetaInfo {
 };
 using KernelMetaPtr = std::shared_ptr<KernelMetaInfo>;
 
-class KernelMeta {
+class BACKEND_EXPORT KernelMeta {
  public:
   KernelMeta() = default;
   void Initialize();
@@ -128,38 +128,39 @@ class MatrixInfo {
 };
 using MatrixInfoPtr = std::shared_ptr<MatrixInfo>;
 
-std::pair<MatrixDiag::Alignment, MatrixDiag::Alignment> GetAlignments(const std::string &alignment);
+BACKEND_EXPORT std::pair<MatrixDiag::Alignment, MatrixDiag::Alignment> GetAlignments(const std::string &alignment);
 int CalDiagOffset(int diag_index, int max_diag_len, int inner_rows, int inner_cols,
                   const std::pair<MatrixDiag::Alignment, MatrixDiag::Alignment> &alignment);
-std::string GetCompilerCachePath();
+BACKEND_EXPORT std::string GetCompilerCachePath();
 bool CheckCache(const std::string &kernel_name);
 KernelPackPtr SearchCache(const std::string &kernel_name, const std::string &processor);
 KernelPackPtr InsertCache(const std::string &kernel_name, const std::string &processor);
 TypeId DtypeToTypeId(const std::string &dtypes);
 std::string Dtype2ShortType(const std::string &dtype);
-size_t GetDtypeNbyte(const std::string &dtype);
-bool GetShapeSize(const ShapeVector &shape, const TypePtr &type_ptr, int64_t *size_i);
-bool ParseMetadata(const CNodePtr &kernel_node, const std::shared_ptr<const OpInfo> &op_info_ptr, Processor processor,
-                   std::vector<std::shared_ptr<KernelBuildInfo>> *const kernel_info_list);
-void SaveJsonInfo(const std::string &json_name, const std::string &info, const std::string &base_path);
+BACKEND_EXPORT size_t GetDtypeNbyte(const std::string &dtype);
+BACKEND_EXPORT bool GetShapeSize(const ShapeVector &shape, const TypePtr &type_ptr, int64_t *size_i);
+BACKEND_EXPORT bool ParseMetadata(const CNodePtr &kernel_node, const std::shared_ptr<const OpInfo> &op_info_ptr,
+                                  Processor processor,
+                                  std::vector<std::shared_ptr<KernelBuildInfo>> *const kernel_info_list);
+BACKEND_EXPORT void SaveJsonInfo(const std::string &json_name, const std::string &info, const std::string &base_path);
 std::string GetProcessor(const AnfNodePtr &anf_node);
 Processor GetProcessor(const string &processor);
-bool IsSameShape(const ShapeVector &shape_a, const ShapeVector &shape_b);
-bool CheckShapesSame(const ShapeArray &shape_array);
-std::vector<std::pair<AnfNodePtr, size_t>> GetOutputIndex(const std::vector<AnfNodePtr> &node_list,
-                                                          const std::vector<AnfNodePtr> &input_list,
-                                                          const std::vector<AnfNodePtr> &output_list);
-void GetValidKernelNodes(const FuncGraphPtr &func_graph, std::vector<AnfNodePtr> *node_list);
-void GetValidKernelNodes(const FuncGraphPtr &func_graph, std::vector<AnfNodePtr> *node_list,
-                         std::vector<AnfNodePtr> *input_list, std::vector<AnfNodePtr> *output_list);
+BACKEND_EXPORT bool IsSameShape(const ShapeVector &shape_a, const ShapeVector &shape_b);
+BACKEND_EXPORT bool CheckShapesSame(const ShapeArray &shape_array);
+BACKEND_EXPORT std::vector<std::pair<AnfNodePtr, size_t>> GetOutputIndex(const std::vector<AnfNodePtr> &node_list,
+                                                                         const std::vector<AnfNodePtr> &input_list,
+                                                                         const std::vector<AnfNodePtr> &output_list);
+BACKEND_EXPORT void GetValidKernelNodes(const FuncGraphPtr &func_graph, std::vector<AnfNodePtr> *node_list);
+BACKEND_EXPORT void GetValidKernelNodes(const FuncGraphPtr &func_graph, std::vector<AnfNodePtr> *node_list,
+                                        std::vector<AnfNodePtr> *input_list, std::vector<AnfNodePtr> *output_list);
 void GetFuncGraphOutputNodes(const FuncGraphPtr &func_graph, std::vector<AnfNodePtr> *output_list);
 void GetGraphRealOutput(const FuncGraphPtr &func_graph, std::vector<std::pair<AnfNodePtr, size_t>> *node_list);
-bool IsWeightBoundary(const AnfNodePtr &node);
-std::vector<int64_t> GetReduceAttrAxis(const CNodePtr &cnode);
+BACKEND_EXPORT bool IsWeightBoundary(const AnfNodePtr &node);
+BACKEND_EXPORT std::vector<int64_t> GetReduceAttrAxis(const CNodePtr &cnode);
 std::string GetProcessorStr(const AnfNodePtr &anf_node);
 Processor GetProcessorFromContext();
 std::string GetStrProcessorFromContext();
-float Scaling(size_t in_size, size_t out_size, bool align_corners);
+BACKEND_EXPORT float Scaling(size_t in_size, size_t out_size, bool align_corners);
 inline float Scaler(const size_t x, const float scale, bool half_pixel_centers) {
   if (half_pixel_centers) {
     /**
@@ -178,13 +179,14 @@ inline float Scaler(const size_t x, const float scale, bool half_pixel_centers) 
   }
 }
 float ScaleGrid(const int x, const float scale);
-FusionType GetFusionTypeByName(const std::string &name);
-std::string GetFusionNameByType(const kernel::FusionType &type);
-std::vector<bool> Dec2Bin(const int64_t &mask);
-void FillEmptyDims(const CNodePtr &kernel_node, std::vector<int64_t> *begin, std::vector<int64_t> *end,
-                   std::vector<int64_t> *stride, ShapeVector *input_shape);
-void ParseStrideSliceMasks(const CNodePtr &kernel_node, std::vector<int64_t> *begin, std::vector<int64_t> *end,
-                           std::vector<int64_t> *stride, const ShapeVector &input_shape);
+BACKEND_EXPORT FusionType GetFusionTypeByName(const std::string &name);
+BACKEND_EXPORT std::string GetFusionNameByType(const kernel::FusionType &type);
+BACKEND_EXPORT std::vector<bool> Dec2Bin(const int64_t &mask);
+BACKEND_EXPORT void FillEmptyDims(const CNodePtr &kernel_node, std::vector<int64_t> *begin, std::vector<int64_t> *end,
+                                  std::vector<int64_t> *stride, ShapeVector *input_shape);
+BACKEND_EXPORT void ParseStrideSliceMasks(const CNodePtr &kernel_node, std::vector<int64_t> *begin,
+                                          std::vector<int64_t> *end, std::vector<int64_t> *stride,
+                                          const ShapeVector &input_shape);
 struct CachedInterpolation {
   size_t lower;
   size_t upper;
@@ -325,16 +327,16 @@ inline T ComputeLerp(T top_left, T top_right, T bottom_left, T bottom_right, T x
   return top + (bottom - top) * y_lerp;
 }
 
-void CheckSliceValid(const std::vector<int64_t> &start, const std::vector<int64_t> &stop,
-                     const std::vector<int64_t> &step, const std::vector<int64_t> &input_shape);
-size_t CalOffset(const std::vector<int64_t> &start, const std::vector<int64_t> &stop,
-                 const std::vector<int64_t> &dim_offset);
-std::vector<int64_t> CalDimOffset(const std::vector<int64_t> &input_shape);
-size_t GetCopySize(const std::vector<int64_t> &dim_offset, const std::vector<int64_t> &start,
-                   const std::vector<int64_t> &stop);
-size_t UnitSizeInBytes(const mindspore::TypeId &t);
+BACKEND_EXPORT void CheckSliceValid(const std::vector<int64_t> &start, const std::vector<int64_t> &stop,
+                                    const std::vector<int64_t> &step, const std::vector<int64_t> &input_shape);
+BACKEND_EXPORT size_t CalOffset(const std::vector<int64_t> &start, const std::vector<int64_t> &stop,
+                                const std::vector<int64_t> &dim_offset);
+BACKEND_EXPORT std::vector<int64_t> CalDimOffset(const std::vector<int64_t> &input_shape);
+BACKEND_EXPORT size_t GetCopySize(const std::vector<int64_t> &dim_offset, const std::vector<int64_t> &start,
+                                  const std::vector<int64_t> &stop);
+BACKEND_EXPORT size_t UnitSizeInBytes(const mindspore::TypeId &t);
 
-class KernelAttr {
+class BACKEND_EXPORT KernelAttr {
  public:
   using DataType = std::pair<TypeId, std::string>;
   KernelAttr() = default;
@@ -373,11 +375,12 @@ class KernelAttr {
   // The reference for all outputs and inputs of the same index.
   bool all_out_in_ref_{false};
 };
-std::ostream &operator<<(std::ostream &os, KernelAttr kernel_attr);
+BACKEND_EXPORT std::ostream &operator<<(std::ostream &os, KernelAttr kernel_attr);
 
-std::pair<bool, size_t> MatchKernelAttr(const KernelAttr &kernel_attr, const std::vector<KernelAttr> &kernel_attr_list);
-KernelAttr GetKernelAttrFromBuildInfo(const KernelBuildInfoPtr &build_info);
-KernelAttr GetKernelAttrFromNode(const AnfNodePtr &kernel_node);
+BACKEND_EXPORT std::pair<bool, size_t> MatchKernelAttr(const KernelAttr &kernel_attr,
+                                                       const std::vector<KernelAttr> &kernel_attr_list);
+BACKEND_EXPORT KernelAttr GetKernelAttrFromBuildInfo(const KernelBuildInfoPtr &build_info);
+BACKEND_EXPORT KernelAttr GetKernelAttrFromNode(const AnfNodePtr &kernel_node);
 
 struct KernelArgs {
   BaseOperatorPtr op;
@@ -387,18 +390,18 @@ struct KernelArgs {
   // cppcheck-suppress unusedStructMember
   constexpr static char key[] = "KernelArgs";
 };
-KernelArgs AbstractArgsFromCNode(const CNodePtr &cnode);
+BACKEND_EXPORT KernelArgs AbstractArgsFromCNode(const CNodePtr &cnode);
 
-KernelAttr GetKernelAttrFromTensors(const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs);
+BACKEND_EXPORT KernelAttr GetKernelAttrFromTensors(const std::vector<KernelTensorPtr> &inputs,
+                                                   const std::vector<KernelTensorPtr> &outputs);
 
 void SetCpuRefMapToKernelInfo(const CNodePtr &apply_kernel, const std::vector<KernelAttr> &apply_kernel_attrs);
 Format GetFormatFromStrToEnum(const std::string &format_str);
-std::string GetFormatFromEnumToStr(Format format);
-void UpdateNodeShape(const CNodePtr &cnode);
+BACKEND_EXPORT std::string GetFormatFromEnumToStr(Format format);
+BACKEND_EXPORT void UpdateNodeShape(const CNodePtr &cnode);
 // Synchronize the output and input reference map between two kernel attrs.
 void SyncOutInRef(const KernelAttr &from_kernel_attr, KernelAttr *to_kernel_attr);
-std::shared_ptr<KernelArgs> GetArgsFromCNode(const CNodePtr &cnode);
+BACKEND_EXPORT std::shared_ptr<KernelArgs> GetArgsFromCNode(const CNodePtr &cnode);
 void SetArgsToCNode(const CNodePtr &cnode, const KernelArgs &args);
 inline std::map<uint32_t, tensor::TensorPtr> GetKernelDepends(const CNodePtr &cnode) {
   auto args = GetArgsFromCNode(cnode);
@@ -443,12 +446,12 @@ class MatchKernelHelper {
 };
 
 namespace broadcast_utils {
-bool AlignedBroadCastShape(size_t align_rank, std::vector<size_t> *broadcast, std::vector<size_t> *lhs,
-                           std::vector<size_t> *rhs);
+BACKEND_EXPORT bool AlignedBroadCastShape(size_t align_rank, std::vector<size_t> *broadcast, std::vector<size_t> *lhs,
+                                          std::vector<size_t> *rhs);
 }  // namespace broadcast_utils
 
 namespace math {
-void SinCosf(float x, float *sinv, float *cosv);
+BACKEND_EXPORT void SinCosf(float x, float *sinv, float *cosv);
 }
 
 #define CHECK_KERNEL_INPUTS_NUM(actual_inputs_num, expect_inputs_num, kernel_name)                     \

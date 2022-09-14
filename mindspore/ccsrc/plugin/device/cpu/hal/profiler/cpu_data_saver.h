@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace profiler {
 namespace cpu {
-class CpuDataSaver : public DataSaver {
+class BACKEND_EXPORT CpuDataSaver : public DataSaver {
  public:
   static std::shared_ptr<CpuDataSaver> &GetInstance();
 

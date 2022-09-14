@@ -49,7 +49,7 @@ namespace mindspore {
 class Debugger;
 #endif
 namespace device {
-class KernelRuntime {
+class BACKEND_EXPORT KernelRuntime {
  public:
   KernelRuntime() = default;
   virtual ~KernelRuntime();

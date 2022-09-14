@@ -318,6 +318,7 @@ add_library(ccsrc_src_mid OBJECT ${CCSRC_SRC})
 add_dependencies(ccsrc_src_mid fbs_src fbs_inner_src)
 target_compile_definitions(ccsrc_src_mid PRIVATE BACKEND_DLL)
 target_compile_definitions(converter_src_mid PRIVATE BACKEND_DLL)
+target_compile_definitions(quantizer_mid PRIVATE BACKEND_DLL)
 
 add_dependencies(mindspore_converter nnacl_mid)
 

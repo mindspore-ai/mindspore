@@ -24,6 +24,7 @@
 #include <mutex>
 
 #include "include/common/duplex_pipe.h"
+#include "include/backend/visible.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_context.h"
 
@@ -37,7 +38,7 @@ constexpr inline static auto kEnv = "python";
 constexpr inline static auto kTag = "[~]";
 std::string GetPyExe();
 
-class KernelBuildClient {
+class BACKEND_EXPORT KernelBuildClient {
  public:
   // Send Finish request to server
   constexpr inline static auto kFinish = "FINISH";
@@ -191,7 +192,7 @@ static std::string GetScriptFilePath(const std::string &cmd_env, const std::stri
   return result;
 }
 
-class AscendKernelBuildClient : public KernelBuildClient {
+class BACKEND_EXPORT AscendKernelBuildClient : public KernelBuildClient {
  public:
   // Server configure
   constexpr inline static auto kGetPathScript =
@@ -237,7 +238,7 @@ class AscendKernelBuildClient : public KernelBuildClient {
   AscendKernelBuildClient() { Open(); }
 };
 
-class AkgKernelBuildClient : public KernelBuildClient {
+class BACKEND_EXPORT AkgKernelBuildClient : public KernelBuildClient {
  public:
   // Server configure
   constexpr inline static auto kGetPathScript =

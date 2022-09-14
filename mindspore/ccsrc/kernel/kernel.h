@@ -31,6 +31,7 @@
 #include "utils/log_adapter.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "include/api/format.h"
+#include "include/backend/visible.h"
 
 #ifdef _MSC_VER
 #undef OPAQUE
@@ -132,7 +133,7 @@ struct KernelJsonInfo {
   KernelJsonInfo() : block_dim(0), op_para_size(0) {}
 };
 
-class KernelPack {
+class BACKEND_EXPORT KernelPack {
  public:
   KernelPack() : json_(nullptr), kernel_(nullptr) {}
   KernelPack(const KernelPack &) = default;
@@ -188,7 +189,7 @@ struct TensorInfo {
 using TensorInfoPtr = std::shared_ptr<TensorInfo>;
 using BaseOperatorPtr = std::shared_ptr<ops::BaseOperator>;
 
-class KernelTensor {
+class BACKEND_EXPORT KernelTensor {
  public:
   KernelTensor() = default;
   ~KernelTensor() = default;
@@ -243,7 +244,7 @@ enum class KernelModType {
 
 enum KernelErrorCode : int { KRET_OK = 0, KRET_RESIZE_FAILED = 1, KRET_UNKNOWN_SHAPE = 2, KRET_UNKNOWN_OUT_SHAPE = 3 };
 
-class KernelMod {
+class BACKEND_EXPORT KernelMod {
  public:
   KernelMod() {}
   virtual ~KernelMod() = default;
@@ -371,10 +372,9 @@ inline std::vector<int64_t> GetTensorIntValue(const tensor::TensorPtr input_tens
   return tensor_value;
 }
 
-std::optional<std::vector<int64_t>> GetDynamicAttrIntValue(const std::vector<KernelTensorPtr> &inputs,
-                                                           const size_t input_index,
-                                                           const std::map<uint32_t, tensor::TensorPtr> &depends,
-                                                           const std::string &kernel_name);
+BACKEND_EXPORT std::optional<std::vector<int64_t>> GetDynamicAttrIntValue(
+  const std::vector<KernelTensorPtr> &inputs, const size_t input_index,
+  const std::map<uint32_t, tensor::TensorPtr> &depends, const std::string &kernel_name);
 
 inline bool GetDynamicAttrIntValue(const std::vector<KernelTensorPtr> &inputs, const size_t input_index,
                                    const std::map<uint32_t, tensor::TensorPtr> &depends, const std::string &kernel_name,

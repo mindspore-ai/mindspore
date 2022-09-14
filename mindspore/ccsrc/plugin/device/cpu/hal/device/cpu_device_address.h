@@ -18,13 +18,14 @@
 
 #include <string>
 #include <vector>
+#include "include/backend/visible.h"
 #include "runtime/device/device_address.h"
 #include "utils/shape_utils.h"
 
 namespace mindspore {
 namespace device {
 namespace cpu {
-class CPUDeviceAddress : public DeviceAddress {
+class BACKEND_EXPORT CPUDeviceAddress : public DeviceAddress {
  public:
   CPUDeviceAddress(void *ptr, size_t size) : DeviceAddress(ptr, size) {}
 

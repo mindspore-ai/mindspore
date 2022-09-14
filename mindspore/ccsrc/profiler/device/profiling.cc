@@ -28,8 +28,13 @@
 
 namespace mindspore {
 namespace profiler {
+std::map<std::string, std::shared_ptr<Profiler>> &Profiler::GetInstanceMap() {
+  static std::map<std::string, std::shared_ptr<Profiler>> instance_map = {};
+  return instance_map;
+}
+
 std::shared_ptr<Profiler> Profiler::GetInstance(const std::string &name) noexcept {
-  if (auto iter = instance_map_.find(name); iter != instance_map_.end()) {
+  if (auto iter = GetInstanceMap().find(name); iter != GetInstanceMap().end()) {
     return iter->second;
   }
 
@@ -37,10 +42,10 @@ std::shared_ptr<Profiler> Profiler::GetInstance(const std::string &name) noexcep
 }
 
 bool Profiler::Register(const std::string &name, const std::shared_ptr<Profiler> &instance) {
-  if (instance_map_.find(name) != instance_map_.end()) {
+  if (GetInstanceMap().find(name) != GetInstanceMap().end()) {
     MS_LOG(WARNING) << name << " has been registered.";
   } else {
-    (void)instance_map_.emplace(name, instance);
+    (void)GetInstanceMap().emplace(name, instance);
   }
 
   return true;

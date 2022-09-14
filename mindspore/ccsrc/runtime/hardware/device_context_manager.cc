@@ -83,6 +83,11 @@ bool PluginLoader::GetPluginPath(std::string *file_path) {
     return false;
   }
   cur_so_path = dl_info.dli_fname;
+  // load itself for rdynamic
+  auto test_handle = dlopen(cur_so_path.c_str(), RTLD_LAZY | RTLD_GLOBAL);
+  if (test_handle == nullptr) {
+    MS_LOG(INFO) << "load " << cur_so_path << " failed, ret = " << GetDlErrorMsg();
+  }
 #else
   HMODULE hModule = nullptr;
   if (GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT | GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS,

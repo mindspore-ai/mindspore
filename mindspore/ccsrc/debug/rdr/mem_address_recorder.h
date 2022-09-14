@@ -22,6 +22,7 @@
 #include <mutex>
 
 #include "include/common/debug/rdr/base_recorder.h"
+#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace kernel {
@@ -52,10 +53,10 @@ class MemAddressRecorder : public BaseRecorder {
 using MemAddressRecorderPtr = std::shared_ptr<MemAddressRecorder>;
 
 namespace RDR {
-bool RecordMemAddressInfo(const SubModuleId module, const std::string &name);
-bool UpdateMemAddress(const SubModuleId module, const std::string &name, const std::string &op_name,
-                      const kernel::KernelLaunchInfo &mem_info);
-void ClearMemAddressInfo();
+BACKEND_EXPORT bool RecordMemAddressInfo(const SubModuleId module, const std::string &name);
+BACKEND_EXPORT bool UpdateMemAddress(const SubModuleId module, const std::string &name, const std::string &op_name,
+                                     const kernel::KernelLaunchInfo &mem_info);
+BACKEND_EXPORT void ClearMemAddressInfo();
 }  // namespace RDR
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_DEBUG_RDR_MEM_ADDRESS_RECORDER_H_

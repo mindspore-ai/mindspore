@@ -26,6 +26,7 @@
 #include <mutex>
 #include <string>
 #include "utils/ms_utils.h"
+#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace device {
@@ -145,7 +146,7 @@ struct MemStatusManager {
 using MemStatusManagerPtr = std::shared_ptr<MemStatusManager>;
 
 // The main class of dynamic memory pool.
-class DynamicMemPoolBestFit {
+class BACKEND_EXPORT DynamicMemPoolBestFit {
  public:
   DynamicMemPoolBestFit()
       : persistent_mem_(std::make_shared<MemStatusManager>()), common_mem_(std::make_shared<MemStatusManager>()) {}

@@ -24,7 +24,7 @@
 namespace mindspore {
 namespace device {
 namespace cpu {
-class CPUMemoryPool : public DynamicMemPoolBestFit {
+class BACKEND_EXPORT CPUMemoryPool : public DynamicMemPoolBestFit {
  public:
   ~CPUMemoryPool() override = default;
 

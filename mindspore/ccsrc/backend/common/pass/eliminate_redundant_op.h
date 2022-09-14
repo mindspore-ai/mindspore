@@ -31,7 +31,7 @@ using ConditionFunc = std::function<bool(const CNodePtr &node1, const CNodePtr &
 using RedundantOpPair = std::pair<std::string, ConditionFunc>;
 using KernelWithIndex = std::pair<CNodePtr, size_t>;
 
-class EliminateRedundantOp : public PatternProcessPass {
+class BACKEND_EXPORT EliminateRedundantOp : public PatternProcessPass {
  public:
   explicit EliminateRedundantOp(bool multigraph = true) : PatternProcessPass("eliminate_redundant_op", multigraph) {
     Init();

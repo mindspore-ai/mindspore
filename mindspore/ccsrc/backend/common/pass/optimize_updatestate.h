@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace opt {
-class OptimizeUpdateState : public PatternProcessPass {
+class BACKEND_EXPORT OptimizeUpdateState : public PatternProcessPass {
  public:
   explicit OptimizeUpdateState(bool multigraph = true) : PatternProcessPass("optimize_updatestate", multigraph) {}
   ~OptimizeUpdateState() override = default;

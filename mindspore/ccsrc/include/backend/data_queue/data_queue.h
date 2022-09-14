@@ -21,6 +21,7 @@
 #include <memory>
 #include <vector>
 #include <functional>
+#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace device {
@@ -38,7 +39,7 @@ struct DataQueueItem {
   // add tensor type when tdt need more types than data and end-of-sequence
 };
 
-class DataQueue {
+class BACKEND_EXPORT DataQueue {
  public:
   explicit DataQueue(const std::string &channel_name, const size_t capacity);
   virtual ~DataQueue() = default;

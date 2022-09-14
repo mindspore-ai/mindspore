@@ -143,7 +143,7 @@ class BACKEND_EXPORT DataQueueMgr {
   inline static std::once_flag instance_flag_;
 };
 #ifndef BUILD_LITE
-bool PopDataFromDataQueue(const AnfNodePtr &data_kernel);
+BACKEND_EXPORT bool PopDataFromDataQueue(const AnfNodePtr &data_kernel);
 #endif
 #define REGISTER_DATA_QUEUE_CREATOR(device_name, creator)                         \
   struct device_name##DataQueueCreatorClass {                                     \

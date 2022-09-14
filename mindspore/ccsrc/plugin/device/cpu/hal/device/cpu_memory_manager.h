@@ -29,7 +29,7 @@
 namespace mindspore {
 namespace device {
 namespace cpu {
-class CPUMemoryManager : public MemoryManager {
+class BACKEND_EXPORT CPUMemoryManager : public MemoryManager {
  public:
   CPUMemoryManager() = default;
   virtual ~CPUMemoryManager();

@@ -60,13 +60,13 @@ class BACKEND_EXPORT DeviceContextManager {
   void LoadPlugin();
 
   std::map<std::string, void *> plugin_maps_;
-  inline static bool load_init_;
-  inline static std::string plugin_path_;
+  bool load_init_;
+  std::string plugin_path_;
 
   // The string converted from DeviceContextKey -> DeviceContextPtr.
-  inline static std::map<std::string, DeviceContextPtr> device_contexts_;
+  std::map<std::string, DeviceContextPtr> device_contexts_;
   // The name of device -> DeviceContextCreator.
-  inline static std::map<std::string, DeviceContextCreator> device_context_creators_;
+  std::map<std::string, DeviceContextCreator> device_context_creators_;
 };
 
 class DeviceContextRegister {

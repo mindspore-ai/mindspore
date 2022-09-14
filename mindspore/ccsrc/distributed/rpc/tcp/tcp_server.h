@@ -22,11 +22,12 @@
 
 #include "distributed/rpc/tcp/tcp_comm.h"
 #include "utils/ms_utils.h"
+#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace distributed {
 namespace rpc {
-class TCPServer {
+class BACKEND_EXPORT TCPServer {
  public:
   explicit TCPServer(bool enable_ssl = false) : enable_ssl_(enable_ssl) {}
   ~TCPServer() = default;

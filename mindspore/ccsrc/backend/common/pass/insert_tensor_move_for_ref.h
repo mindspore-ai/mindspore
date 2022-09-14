@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace opt {
 // When RefNode's output is a GraphOutput, need insert a TensorMove
-class InsertTensorMoveForGraphOutputRefNode : public Pass {
+class BACKEND_EXPORT InsertTensorMoveForGraphOutputRefNode : public Pass {
  public:
   InsertTensorMoveForGraphOutputRefNode() : Pass("insert_tensor_move_for_graphoutput_ref_node") {}
   ~InsertTensorMoveForGraphOutputRefNode() override = default;
