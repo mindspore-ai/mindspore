@@ -34,6 +34,19 @@ class Net2Inputs(nn.Cell):
         return self.addn((x, y))
 
 
+class Net2InputsDynRank(nn.Cell):
+    def __init__(self):
+        super(Net2InputsDynRank, self).__init__()
+        self.op = P.AddN()
+        self.reduce_sum = P.ReduceSum(keep_dims=False)
+
+    def construct(self, x, y, dyn_reduce_axis):
+        x = self.reduce_sum(x, dyn_reduce_axis)
+        y = self.reduce_sum(y, dyn_reduce_axis)
+        res = self.op((x, y))
+        return res
+
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -61,6 +74,18 @@ def test_two_tensors_add():
     dyn_output = addn_dyn_net(Tensor(x.astype(np.float32)), Tensor(y.astype(np.float32)))
     expect_dync_result = (x + y).astype(np.float32)
     assert np.array_equal(dyn_output.asnumpy(), expect_dync_result)
+
+    # test dynamic_rank
+    dyn_rank_net = Net2InputsDynRank()
+    input_x_dyn = Tensor(shape=[2, None, 2, 1], dtype=mstype.float32)
+    input_y_dyn = Tensor(shape=[2, 3, None, 1], dtype=mstype.float32)
+    dyn_reduce_axis = Tensor(shape=[None], dtype=mstype.int64)
+    dyn_rank_net.set_inputs(input_x_dyn, input_y_dyn, dyn_reduce_axis)
+
+    reduce_axis = np.array([-1], dtype=np.int64)
+    output = dyn_rank_net(Tensor(np.expand_dims(x, -1), mstype.float32),
+                          Tensor(np.expand_dims(y, -1), mstype.float32), Tensor(reduce_axis))
+    assert np.array_equal(output.asnumpy(), expect_dync_result)
 
 
 class Net4Inputs(nn.Cell):

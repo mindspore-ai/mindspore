@@ -63,11 +63,25 @@ void BatchMatMulMakeShape(ShapeVector *output, const ShapeVector xshp, const Sha
 abstract::ShapePtr BatchMatmulInferShape(const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
+  auto constexpr kBatchMatmulInputNum = 2;
+  (void)CheckAndConvertUtils::CheckInteger("input num", SizeToLong(input_args.size()), kEqual, kBatchMatmulInputNum,
+                                           primitive->name());
   auto prim_name = primitive->name();
   auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
   auto y_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
+  if (x_shape_map.empty()) {
+    MS_LOG(EXCEPTION) << "For '" << prim_name
+                      << "', input 'x' must be a Tensor type, but got:" << input_args[0]->ToString();
+  }
+  if (y_shape_map.empty()) {
+    MS_LOG(EXCEPTION) << "For '" << prim_name
+                      << "', input 'y' must be a Tensor type, but got:" << input_args[1]->ToString();
+  }
   auto x_shp = x_shape_map[kShape];
   auto y_shp = y_shape_map[kShape];
+  if (IsDynamicRank(x_shp) || IsDynamicRank(y_shp)) {
+    return std::make_shared<abstract::Shape>(ShapeVector({UNKNOWN_RANK}));
+  }
   auto context = MsContext::GetInstance();
   constexpr size_t x_dim_limit = 3;
   constexpr size_t y_dim_limit = 2;

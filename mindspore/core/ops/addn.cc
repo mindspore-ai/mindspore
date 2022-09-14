@@ -67,7 +67,7 @@ abstract::ShapePtr AddNInferShape(const PrimitivePtr &primitive, const std::vect
   auto elements = input_args[0]->isa<abstract::AbstractTuple>()
                     ? input_args[0]->cast<abstract::AbstractTuplePtr>()->elements()
                     : input_args[0]->cast<abstract::AbstractListPtr>()->elements();
-  (void)CheckAndConvertUtils::CheckInteger("concat element num", SizeToLong(elements.size()), kGreaterEqual, 1,
+  (void)CheckAndConvertUtils::CheckInteger("input num", SizeToLong(elements.size()), kGreaterEqual, 1,
                                            primitive->name());
   (void)primitive->AddAttr("N", MakeValue(SizeToLong(elements.size())));
   (void)primitive->AddAttr("n", MakeValue(SizeToLong(elements.size())));
@@ -126,11 +126,13 @@ AbstractBasePtr AddNInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
                           const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  if (!input_args[0]->isa<abstract::AbstractTuple>() && !input_args[0]->isa<abstract::AbstractList>()) {
-    MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the input data type must be list or tuple of tensors.";
-  }
   const int64_t kInputNum = 1;
   CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
+  if (!input_args[0]->isa<abstract::AbstractTuple>() && !input_args[0]->isa<abstract::AbstractList>()) {
+    MS_EXCEPTION(TypeError) << "For '" << prim_name
+                            << "', the input data type must be list or tuple of tensors.But got:"
+                            << input_args[0]->ToString();
+  }
   auto infer_type = AddNInferType(primitive, input_args);
   auto infer_shape = AddNInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
