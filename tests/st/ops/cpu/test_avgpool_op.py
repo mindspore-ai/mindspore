@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 import mindspore.ops.operations as P
 from mindspore.ops import composite as C
+from mindspore.ops import functional as F
 
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
@@ -304,3 +305,90 @@ def test_avgpool3d_4():
                                [79.62501, 112.125, 113.625, 81.625],
                                [125.6875, 176.9375, 179.1875, 128.6875]]]]]).astype(np.float32)
     assert np.allclose(actual_grad[0].asnumpy(), expect_grad)
+
+
+def test_avg_pool1d_forward_functional(nptype):
+    """
+    Feature: test avg_pool1d forward for given input dtype.
+    Description: test inputs for given input dtype.
+    Expectation: the result match with expected result.
+    """
+    input_x = Tensor(np.ones((2, 3, 6)).astype(nptype))
+    output = F.avg_pool1d(input_x, kernel_size=6, stride=1)
+    expected = np.ones((2, 3, 1)).astype(nptype)
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_avg_pool1d_forward_float32_functional():
+    """
+    Feature: test avg_pool1d forward.
+    Description: test float32 inputs.
+    Expectation: the result match with expected result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    test_avg_pool1d_forward_functional(np.float32)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
+    test_avg_pool1d_forward_functional(np.float32)
+
+
+def test_avg_pool2d_forward_functional(nptype):
+    """
+    Feature: test avg_pool2d forward for given input dtype.
+    Description: test inputs for given input dtype.
+    Expectation: the result match with expected result.
+    """
+    input_x = Tensor(np.ones((2, 3, 4, 6)).astype(nptype))
+    output = F.avg_pool2d(input_x, kernel_size=3, stride=1)
+    expected = np.ones((2, 3, 2, 4)).astype(nptype)
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_avg_pool2d_forward_float32_functional():
+    """
+    Feature: test avg_pool2d forward.
+    Description: test float32 inputs.
+    Expectation: the result match with expected result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    test_avg_pool2d_forward_functional(np.float32)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
+    test_avg_pool2d_forward_functional(np.float32)
+
+
+def test_avg_pool3d_forward_functional(nptype):
+    """
+    Feature: test avg_pool3d forward for given input dtype.
+    Description: test inputs for given input dtype.
+    Expectation: the result match with expected result.
+    """
+    input_x = Tensor(np.ones((2, 3, 6, 3, 6)).astype(nptype))
+    output = F.avg_pool3d(input_x, kernel_size=3, stride=1)
+    expected = np.ones((2, 3, 4, 1, 4)).astype(nptype)
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_avg_pool3d_forward_float32_functional():
+    """
+    Feature: test avg_pool3d forward.
+    Description: test float32 inputs.
+    Expectation: the result match with expected result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    test_avg_pool3d_forward_functional(np.float32)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
+    test_avg_pool3d_forward_functional(np.float32)
+
+
+if __name__ == '__main__':
+    test_avg_pool1d_forward_float32_functional()
+    test_avg_pool2d_forward_float32_functional()
+    test_avg_pool3d_forward_float32_functional()

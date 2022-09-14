@@ -199,7 +199,97 @@ def adaptive_avg_pool3d(input_x, output_size):
     return adaptive_avg_pool3d_(input_x)
 
 
-def avg_pool2d(x, kernel_size=1, strides=1, pad_mode='valid', data_format='NCHW'):
+def avg_pool1d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, count_include_pad=True):
+    r"""
+    1D average pooling for temporal data.
+
+    Applies a 1D average pooling over an input Tensor which can be regarded as a composition of 1D input planes.
+
+    Typically the input is of shape :math:`(N_{in}, C_{in}, L_{in})`, avg_pool1d outputs regional average in the
+    :math:`(L_{in})`-dimension. Given kernel size :math:`ks = l_{ker}` and `stride` :math:`s = s_0`, the
+    operation is as follows.
+
+    .. math::
+        \text{output}(N_i, C_j, l) = \frac{1}{l_{ker}} \sum_{n=0}^{l_{ker}-1}
+        \text{input}(N_i, C_j, s_0 \times l + n)
+
+    .. warning::
+        `kernel_size` is in the range `[1, 255]`. `stride` is in the range `[1, 63]`.
+
+    Args:
+        input_x (Tensor): Tensor of shape :math:`(N, C_{in}, L_{in})`.
+        kernel_size (int): The size of kernel window used to take the average value, Default: 1.
+        stride (int): The distance of kernel moving, an int number that represents the width of movement is `stride`,
+            Default: 1.
+        padding (Union(int, tuple[int])): The pad value to be filled. If `padding` is an integer, the paddings of left
+            and right are the same, equal to pad. If `padding` is a tuple of `2` integers, the padding of left and right
+            equal to `padding[0]` and `padding[1]` correspondingly. Default: 0.
+        ceil_mode: If True, apply ceil instead of floor to compute the output shape. Default: False.
+        count_include_pad: If True, include the zero-padding in the averaging calculation. Default: True.
+
+    Outputs:
+        Tensor of shape :math:`(N, C_{out}, L_{out})`.
+
+    Raises:
+        TypeError: If `input_x` is not an Tensor.
+        TypeError: If `kernel_size` or `stride` is not an int.
+        TypeError: If `ceil_mode` or `count_include_pad` is not a bool.
+        ValueError: If length of shape of `input_x` is not equal to `3`.
+        ValueError: If `kernel_size` or `stride` is less than `1`.
+        ValueError: If `padding` is not int nor a tuple whose length is equal to `2`.
+        ValueError: If value(s) of `padding` is less than `0`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> input_x = Tensor(np.random.randint(0, 10, [1, 3, 6]), mindspore.float32)
+        >>> output = ops.avg_pool1d(input_x, kernel_size=6, stride=1)
+        >>> print(output.shape)
+        (1, 3, 1)
+    """
+    if not isinstance(input_x, (Tensor, Tensor_)):
+        raise TypeError("For avg_pool1d, the input input_x must be tensor")
+
+    if len(input_x.shape) != 3:
+        raise ValueError("For avg_pool1d, input must have 3 dim, but got {}.".format(len(input_x.shape)))
+
+    validator.check_value_type('kernel_size', kernel_size, [int], 'avg_pool1d')
+    validator.check_value_type('stride', stride, [int], 'avg_pool1d')
+    validator.check_value_type('ceil_mode', ceil_mode, bool, 'avg_pool1d')
+    validator.check_value_type('count_include_pad', count_include_pad, bool, 'avg_pool1d')
+    validator.check_int(kernel_size, 1, Rel.GE, "kernel_size", 'avg_pool1d')
+    validator.check_int(stride, 1, Rel.GE, "stride", 'avg_pool1d')
+
+    if isinstance(padding, int):
+        validator.check_non_negative_int(padding, 'padding', 'avg_pool1d')
+        padding = (0, 0, 0, 0, padding, padding)
+    elif isinstance(padding, tuple):
+        if len(padding) != 2:
+            raise ValueError("For avg_pool1d, padding should be int or tuple of length 2.")
+        for item in padding:
+            validator.check_non_negative_int(item, 'padding', 'avg_pool1d')
+        padding = (0, 0, 0, 0, padding[0], padding[1])
+    else:
+        raise TypeError("For avg_pool1d, padding should be int or tuple of length 2.")
+
+    expand_op = _get_cache_prim(P.ExpandDims)()
+    squeeze_op = _get_cache_prim(P.Squeeze)((2, 3))
+    avg_pool_op = _get_cache_prim(P.AvgPool3D)(kernel_size=(1, 1, kernel_size),
+                                               strides=(1, 1, stride),
+                                               pad_mode='pad',
+                                               pad=padding,
+                                               ceil_mode=ceil_mode,
+                                               count_include_pad=count_include_pad)
+    input_x = expand_op(input_x, 2)
+    input_x = expand_op(input_x, 2)
+    input_x = avg_pool_op(input_x)
+    input_x = squeeze_op(input_x)
+    return input_x
+
+
+def avg_pool2d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, count_include_pad=True,
+               divisor_override=0):
     r"""
     Average pooling operation.
 
@@ -210,50 +300,48 @@ def avg_pool2d(x, kernel_size=1, strides=1, pad_mode='valid', data_format='NCHW'
 
     .. math::
         \text{output}(N_i, C_j, h, w) = \frac{1}{k_{h} * k_{w}} \sum_{m=0}^{k_{h}-1} \sum_{n=0}^{k_{w}-1}
-        \text{input}(N_i, C_j, strides[0] \times h + m, strides[1] \times w + n)
+        \text{input}(N_i, C_j, stride[0] \times h + m, stride[1] \times w + n)
 
     .. warning::
-        - Global pooling is supported.
-        - For Ascend, the height of `kernel_size` and the weight of `kernel_size` are positive integers
-          within the range [1, 255]. ksize_h * ksize_w < 256.
-        - For Ascend, due to instruction restrictions, the values of 'strides_h' and 'strides_w' are
-          positive integers within the range [1, 63].
+        `kernel_size` is in the range `[1, 255]`. `stride` is in the range `[1, 63]`.
 
     Args:
-        x (Tensor): Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
-        kernel_size (Union[int, tuple[int]]): The size of kernel used to take the average value.
-            It is an int number that represents height and width of the kernel, or a tuple
-            of two int numbers that represent height and width respectively. Default: 1.
-        strides (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
-            the height and width of movement are both strides, or a tuple of two int numbers that
-            represent height and width of movement respectively. Default: 1.
-        pad_mode (str): The optional value for pad mode, is 'same' or 'valid'.
-            Default: 'valid'.
-
-            - same: The height and width of the output are the same as the input divided by 'strides'
-              and rounded up.
-
-            - valid: Returns the output of the valid calculation without filling. Redundant pixels that
-              do not satisfy the calculation will be discarded.
-        data_format (str): The format of input and output data. It should be 'NHWC' or 'NCHW'.
-            Default: 'NCHW'.
+        input_x (Tensor): Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
+        kernel_size (Union[int, tuple[int]]): The size of kernel used to take the average value. It is an int number
+            that represents height and width of the kernel, or a tuple of two int numbers that represent height and
+            width respectively. Default: 1.
+        stride (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents the height and
+            width of movement are both strides, or a tuple of two int numbers that represent height and width of
+            movement respectively. Default: 1.
+        padding (Union(int, tuple[int])): The pad value to be filled. Default: 0. If `padding` is an integer, the
+            paddings of top, bottom, left and right are the same, equal to pad. If `padding` is a tuple of `4` integers,
+            the padding of top, bottom, left and right equal to `padding[0]`, `padding[1]`, `padding[2]` and
+            `padding[3]` correspondingly. Default: 0.
+        ceil_mode: If True, apply ceil instead of floor to compute the output shape. Default: False.
+        count_include_pad: If True, include the zero-padding in the averaging calculation. Default: True.
+        divisor_override (int): If specified, it will be used as divisor in the averaging calculation, otherwise
+            `kernel_size` will be used. Default: 0.
 
     Returns:
         Tensor, with shape :math:`(N, C_{out}, H_{out}, W_{out})`.
 
     Raises:
-        TypeError: If `kernel_size` or `strides` is neither int nor tuple.
-        ValueError: If `kernel_size` or `strides` is less than 1.
-        ValueError: If `pad_mode` is neither 'valid' nor 'same' with not case sensitive.
-        ValueError: If `data_format` is neither 'NCHW' nor 'NHWC'.
-        ValueError: If length of shape of `x` is not equal to 4.
+        TypeError: If `input_x` is not an Tensor.
+        TypeError: If `kernel_size` or `stride` is neither int nor tuple.
+        TypeError: If `ceil_mode` or `count_include_pad` is not a bool.
+        TypeError: If `divisor_override` is not an int.
+        ValueError: If length of shape of `input_x` is not equal to `4`.
+        ValueError: If `kernel_size` or `stride` is less than 1.
+        ValueError: If `kernel_size` or `stride` is a tuple whose length is not equal to `2`.
+        ValueError: If `padding` is not int nor a tuple whose length is equal to `4`.
+        ValueError: If value(s) of `padding` is less than `0`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4), mindspore.float32)
-        >>> output = ops.avg_pool2d(x, kernel_size=2, strides=1, pad_mode='VALID')
+        >>> output = ops.avg_pool2d(x, kernel_size=2, stride=1)
         >>> print(output)
         [[[[ 2.5   3.5   4.5]
            [ 6.5   7.5   8.5]]
@@ -262,8 +350,150 @@ def avg_pool2d(x, kernel_size=1, strides=1, pad_mode='valid', data_format='NCHW'
           [[26.5  27.5  28.5]
            [30.5  31.5  32.5]]]]
     """
-    _avg_pool = _get_cache_prim(P.AvgPool)(kernel_size, strides, pad_mode, data_format)
-    return _avg_pool(x)
+    if not isinstance(input_x, (Tensor, Tensor_)):
+        raise TypeError("For avg_pool2d, the input input_x must be tensor")
+
+    if len(input_x.shape) != 4:
+        raise ValueError("For avg_pool2d, input must have 4 dim, but got {}.".format(len(input_x.shape)))
+
+    if isinstance(kernel_size, int):
+        validator.check_int(kernel_size, 1, Rel.GE, "kernel_size", 'avg_pool2d')
+        kernel_size = (1, kernel_size, kernel_size)
+    elif isinstance(kernel_size, tuple):
+        if len(kernel_size) != 2:
+            raise ValueError("For avg_pool2d, kernel_size should be int or tuple of length 2.")
+        for item in kernel_size:
+            validator.check_int(item, 1, Rel.GE, "kernel_size", 'avg_pool2d')
+        kernel_size = (1, kernel_size[0], kernel_size[1])
+    else:
+        raise TypeError("For avg_pool2d, kernel_size should be int or tuple of length 2.")
+
+    if isinstance(stride, int):
+        validator.check_int(stride, 1, Rel.GE, "stride", 'avg_pool2d')
+        stride = (1, stride, stride)
+    elif isinstance(stride, tuple):
+        if len(stride) != 2:
+            raise ValueError("For avg_pool2d, stride should be int or tuple of length 2.")
+        for item in stride:
+            validator.check_int(item, 1, Rel.GE, "stride", 'avg_pool2d')
+        stride = (1, stride[0], stride[1])
+    else:
+        raise TypeError("For avg_pool2d, stride should be int or tuple of length 2.")
+
+    if isinstance(padding, int):
+        validator.check_non_negative_int(padding, 'padding', 'avg_pool2d')
+        padding = (0, 0, padding, padding, padding, padding)
+    elif isinstance(padding, tuple):
+        if len(padding) != 4:
+            raise ValueError("For avg_pool2d, padding should be int or tuple of length 4.")
+        for item in padding:
+            validator.check_non_negative_int(item, 'padding', 'avg_pool2d')
+        padding = (0, 0, padding[0], padding[1], padding[2], padding[3])
+    else:
+        raise TypeError("For avg_pool2d, padding should be int or tuple of length 4.")
+
+    validator.check_value_type('ceil_mode', ceil_mode, bool, 'avg_pool2d')
+    validator.check_value_type('count_include_pad', count_include_pad, bool, 'avg_pool2d')
+    validator.check_non_negative_int(divisor_override, 'divisor_override', 'avg_pool2d')
+
+    expand_op = _get_cache_prim(P.ExpandDims)()
+    squeeze_op = _get_cache_prim(P.Squeeze)(2)
+    avg_pool_op = _get_cache_prim(P.AvgPool3D)(kernel_size=kernel_size,
+                                               strides=stride,
+                                               pad_mode='pad',
+                                               pad=padding,
+                                               ceil_mode=ceil_mode,
+                                               count_include_pad=count_include_pad,
+                                               divisor_override=divisor_override)
+    input_x = expand_op(input_x, 2)
+    input_x = avg_pool_op(input_x)
+    input_x = squeeze_op(input_x)
+    return input_x
+
+
+def avg_pool3d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, count_include_pad=True,
+               divisor_override=0):
+    r"""
+    3D Average pooling operation.
+
+    Applies a 3D average pooling over an input Tensor which can be regarded as a composition of 3D input planes.
+    Typically the input is of shape :math:`(N, C, D_{in}, H_{in}, W_{in})`, avg_pool3d outputs regional average in the
+    :math:`(D_{in}, H_{in}, W_{in})`-dimension. Given kernel size :math:`ks = (d_{ker}, h_{ker}, w_{ker})` and stride
+    :math:`s = (s_0, s_1, s_2)`, the operation is as follows.
+
+    .. warning::
+        `kernel_size` is in the range `[1, 255]`. `stride` is in the range `[1, 63]`.
+
+    .. math::
+        \text{output}(N_i, C_j, d, h, w) =
+        \frac{1}{d_{ker} * h_{ker} * w_{ker}} \sum_{l=0}^{d_{ker}-1} \sum_{m=0}^{h_{ker}-1} \sum_{n=0}^{w_{ker}-1}
+        \text{input}(N_i, C_j, s_0 \times d + l, s_1 \times h + m, s_2 \times w + n)
+
+    Args:
+        input_x (Tensor): Tensor of shape :math:`(N, C, D_{in}, H_{in}, W_{in})`. Currently support float16 and
+            float32 data type.
+        kernel_size (Union[int, tuple[int]]): The size of kernel used to take the average value, is an int number
+            that represents depth, height and width are both `kernel_size`, or a tuple of three int numbers that
+            represent depth, height and width respectively. Default: 1.
+        stride (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents the depth,
+            height and width of movement are both stride, or a tuple of three int numbers that represent depth, height
+            and width of movement respectively. Default: 1.
+        padding (Union(int, tuple[int])): The pad value to be filled. If `padding` is an integer, the addings of head,
+            tail, top, bottom, left and right are the same, equal to pad. If `padding` is a tuple of six integers, the
+            padding of head, tail, top, bottom, left and right equal to padding[0], padding[1], padding[2],
+            padding[3], padding[4] and padding[5] correspondingly. Default: 0
+        ceil_mode (bool): If True, ceil instead of floor to compute the output shape. Default: False.
+        count_include_pad (bool): If True, averaging calculation will include the zero-padding. Default: True.
+        divisor_override (int): If specified, it will be used as divisor in the averaging calculation, otherwise
+            `kernel_size` will be used. Default: 0.
+
+    Outputs:
+        Tensor, with shape :math:`(N, C, D_{out}, H_{out}, W_{out})`. Has the same data type with `input_x`.
+
+    Raises:
+        TypeError: If `input_x` is not an Tensor.
+        TypeError: If `kernel_size`, `stride` or `padding` is neither an int not a tuple.
+        TypeError: If `ceil_mode` or `count_include_pad` is not a bool.
+        TypeError: If `divisor_override` is not an int.
+        ValueError: If length of shape of `input_x` is not equal to `5`.
+        ValueError: If numbers in `kernel_size` or `stride` are not positive.
+        ValueError: If `kernel_size` or `stride` is a tuple whose length is not equal to `3`.
+        ValueError: If `padding` is a tuple whose length is not equal to `6`.
+        ValueError: If element of `padding` is less than `0`.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> input_x = Tensor(np.arange(1 * 2 * 2 * 2 * 3).reshape((1, 2, 2, 2, 3)), mindspore.float16)
+        >>> output = ops.avg_pool3d(input_x, kernel_size=2, stride=1)
+        >>> print(output)
+        [[[[[ 5.  6.]]]
+          [[[17. 18.]]]]]
+    """
+    if not isinstance(input_x, (Tensor, Tensor_)):
+        raise TypeError("For avg_pool3d, the input input_x must be tensor")
+
+    if len(input_x.shape) != 5:
+        raise ValueError("For avg_pool3d, input must have 5 dim, but got {}.".format(len(input_x.shape)))
+
+    if isinstance(padding, int):
+        validator.check_non_negative_int(padding, 'padding', 'avg_pool3d')
+    elif isinstance(padding, tuple):
+        if len(padding) != 6:
+            raise ValueError("For avg_pool3d, padding should be int or tuple of length 6.")
+        for item in padding:
+            validator.check_non_negative_int(item, 'padding', 'avg_pool3d')
+    else:
+        raise TypeError("For avg_pool3d, padding should be int or tuple of length 6.")
+    avg_pool_op = _get_cache_prim(P.AvgPool3D)(kernel_size=kernel_size,
+                                               strides=stride,
+                                               pad_mode='pad',
+                                               pad=padding,
+                                               ceil_mode=ceil_mode,
+                                               count_include_pad=count_include_pad,
+                                               divisor_override=divisor_override)
+    return avg_pool_op(input_x)
 
 
 def adaptive_max_pool3d(x, output_size, return_indices=False):
@@ -2821,7 +3051,9 @@ __all__ = [
     'adaptive_avg_pool3d',
     'adaptive_max_pool1d',
     'adaptive_max_pool3d',
+    'avg_pool1d',
     'avg_pool2d',
+    'avg_pool3d',
     'batch_norm',
     'bias_add',
     'binary_cross_entropy',
