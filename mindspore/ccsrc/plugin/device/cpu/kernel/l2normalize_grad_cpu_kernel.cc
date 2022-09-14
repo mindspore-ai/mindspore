@@ -49,6 +49,7 @@ class L2NormalizeGradCpuFunc : public CpuKernelFunc {
                  const std::vector<T> &dout_vector, const std::vector<size_t> &high_dim_index, T *output);
   std::vector<ShapeVector> input_shape_list_;
   std::vector<size_t> dim_elem_num_list_;
+  int axis_origin_{0};
   int axis_{0};
   T epsilon_{0};
   std::string kernel_name_;
@@ -64,7 +65,7 @@ void L2NormalizeGradCpuFunc<T>::InitFunc(const BaseOperatorPtr &base_operator,
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', cast 'L2NormalizeGrad' ops failed!";
   }
   epsilon_ = static_cast<T>(l2_normalize_grad_ptr->get_epsilon());
-  axis_ = LongToInt(l2_normalize_grad_ptr->get_axis());
+  axis_origin_ = LongToInt(l2_normalize_grad_ptr->get_axis());
 }
 
 template <typename T>
@@ -82,7 +83,7 @@ int L2NormalizeGradCpuFunc<T>::Resize(const BaseOperatorPtr &base_operator, cons
   }
 
   int input_dim_length = SizeToInt(input_shape_list_[0].size());
-  axis_ = axis_ < 0 ? (axis_ + input_dim_length) : axis_;
+  axis_ = axis_origin_ < 0 ? (axis_origin_ + input_dim_length) : axis_origin_;
 
   int output_dim_length = output_shape.size();
   dim_elem_num_list_.resize(output_dim_length, 1);

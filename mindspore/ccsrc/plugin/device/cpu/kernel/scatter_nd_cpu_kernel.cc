@@ -141,14 +141,17 @@ int ScatterNdCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
     }
   }
   indices_unit_rank_ = SizeToInt(indices_unit_rank);
+  unit_size_ = 1;
   for (size_t i = indices_shape.size() - 1; i < updates_shape.size(); ++i) {
     unit_size_ *= SizeToInt(updates_shape[i]);
   }
 
+  num_units_ = 1;
   num_units_ *= updates_shape[indices_shape.size() - 2];
   for (int i = SizeToInt(indices_shape.size()) - 3; i >= 0; i--) {
     num_units_ *= updates_shape[IntToSize(i)];
   }
+  out_strides_.clear();
   int out_stride = 1;
   out_strides_.push_back(out_stride);
   for (int i = indices_unit_rank_ - 2; i >= 0; i--) {
