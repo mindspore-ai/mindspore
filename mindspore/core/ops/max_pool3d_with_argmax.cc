@@ -147,6 +147,14 @@ abstract::TupleShapePtr MaxPool3DWithArgmaxInferShape(const PrimitivePtr &prim,
   const size_t kInputShapeSize = 5;
   const size_t kAttrsSize = 3;
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  if (IsDynamicRank(x_shape)) {
+    std::vector<abstract::BaseShapePtr> shape_list = {
+      std::make_shared<abstract::Shape>(
+        std::vector<int64_t>{UNKNOWN_DIM, UNKNOWN_DIM, UNKNOWN_DIM, UNKNOWN_DIM, UNKNOWN_DIM}),
+      std::make_shared<abstract::Shape>(
+        std::vector<int64_t>{UNKNOWN_DIM, UNKNOWN_DIM, UNKNOWN_DIM, UNKNOWN_DIM, UNKNOWN_DIM})};
+    return std::make_shared<abstract::TupleShape>(shape_list);
+  }
   (void)CheckAndConvertUtils::CheckInteger("input x rank", SizeToLong(x_shape.size()), kEqual, kInputShapeSize,
                                            prim->name());
   auto ksize = GetValue<std::vector<int64_t>>(prim->GetAttr("ksize"));
@@ -159,6 +167,14 @@ abstract::TupleShapePtr MaxPool3DWithArgmaxInferShape(const PrimitivePtr &prim,
   auto dilation = GetValue<std::vector<int64_t>>(prim->GetAttr("dilation"));
   (void)CheckAndConvertUtils::CheckInteger("dilation rank", SizeToLong(dilation.size()), kEqual, kAttrsSize,
                                            prim->name());
+  if (IsDynamic(x_shape)) {
+    std::vector<abstract::BaseShapePtr> shape_list = {
+      std::make_shared<abstract::Shape>(
+        std::vector<int64_t>{x_shape[0], x_shape[1], UNKNOWN_DIM, UNKNOWN_DIM, UNKNOWN_DIM}),
+      std::make_shared<abstract::Shape>(
+        std::vector<int64_t>{x_shape[0], x_shape[1], UNKNOWN_DIM, UNKNOWN_DIM, UNKNOWN_DIM})};
+    return std::make_shared<abstract::TupleShape>(shape_list);
+  }
   auto D_in = x_shape[kIndex2];
   auto H_in = x_shape[kIndex3];
   auto W_in = x_shape[kIndex4];
