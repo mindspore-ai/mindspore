@@ -126,3 +126,21 @@ def test_dict_get_7():
         return Tensor(the_value)
     out = dict_net_7()
     assert (out.asnumpy() == (3, 4)).all()
+
+
+def test_dict_get_8():
+    """
+    Feature: dict get.
+    Description: support dict get set default value.
+    Expectation: No exception.
+    """
+    @ms_function
+    def dict_net_8(x, y, z):
+        dict_x = {"1": x, "2": y}
+        default_value = dict_x.get("3", z)
+        return default_value
+    input_x = Tensor(1)
+    input_y = Tensor(2)
+    input_z = Tensor(3)
+    out = dict_net_8(input_x, input_y, input_z)
+    assert out == 3
