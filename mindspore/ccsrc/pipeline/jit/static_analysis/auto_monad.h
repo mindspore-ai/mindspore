@@ -19,12 +19,12 @@
 
 #include "ir/anf.h"
 #include "ir/func_graph.h"
-#include "include/api/visible.h"
+#include "include/common/visible.h"
 
 namespace mindspore::pipeline {
 
 // Run auto-monad, handle side-effects, called from frontend pipeline.
-bool MS_API AutoMonad(const FuncGraphPtr &func_graph);
+bool ME_EXPORT AutoMonad(const FuncGraphPtr &func_graph);
 
 // Run auto-monad after grad or Renormalize, handle side-effects, called from frontend opt pass.
 bool ReAutoMonad(const FuncGraphPtr &func_graph);

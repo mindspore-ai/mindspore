@@ -22,7 +22,7 @@
 #define MINDSPORE_CORE_UTILS_MACORS_H_
 
 #if (defined(_WIN32) || defined(__WIN32__) || defined(WIN32) || defined(__CYGWIN__))
-#ifdef BUILDING_DLL
+#ifdef BUILDING_CORE_DLL
 #define MS_CORE_API __declspec(dllexport)
 #define MS_EXPORT __declspec(dllexport)
 #define GVAR_DEF(type, name, value) MS_CORE_API inline const type name = value;

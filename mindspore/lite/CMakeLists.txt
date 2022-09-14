@@ -700,6 +700,7 @@ endif()
 
 if(WIN32)
     add_compile_definitions(BUILDING_DLL)
+    add_compile_definitions(BUILDING_CORE_DLL)
 endif()
 
 include_directories(${CORE_DIR}/mindrt/include)

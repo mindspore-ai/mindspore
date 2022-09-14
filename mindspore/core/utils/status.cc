@@ -16,6 +16,10 @@
  * limitations under the License.
  */
 
+#ifndef BUILDING_DLL
+#define BUILDING_DLL
+#endif
+
 #include "include/api/status.h"
 #ifndef ENABLE_ANDROID
 #include <thread>

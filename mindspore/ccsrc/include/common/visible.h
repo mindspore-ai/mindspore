@@ -30,4 +30,15 @@
 #define COMMON_EXPORT __attribute__((visibility("default")))
 #define COMMON_LOCAL __attribute__((visibility("hidden")))
 #endif
+
+#if (defined(_WIN32) || defined(__WIN32__) || defined(WIN32) || defined(__CYGWIN__))
+#ifdef BUILDING_ME_DLL
+#define ME_EXPORT __declspec(dllexport)
+#else
+#define ME_EXPORT __declspec(dllimport)
+#endif
+#else
+#define ME_EXPORT __attribute__((visibility("default")))
+#endif
+
 #endif  // MINDSPORE_CCSRC_INCLUDE_COMMON_VISIBLE_H_
