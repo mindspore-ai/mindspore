@@ -27,11 +27,13 @@ constexpr auto kNopNodeRealInputIndex = 1;
 bool InsertTensorMoveForGraphOutputRefNode::Run(const FuncGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
 
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  if (context_ptr->get_param<int>(MS_CTX_MEMORY_OPTIMIZE_LEVEL) == kOptimizeO0) {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto task_sink = ms_context->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
+  auto opt_level = ms_context->get_param<int>(MS_CTX_MEMORY_OPTIMIZE_LEVEL);
+  if (!task_sink && (opt_level == kOptimizeO0)) {
     // not use somas
-    return true;
+    return false;
   }
 
   // Need to insert TensorMove if the output of RefOp is GraphOutput
