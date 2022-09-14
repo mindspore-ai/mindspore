@@ -50,6 +50,7 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
         ${CMAKE_CURRENT_SOURCE_DIR}/utils/kernel_graph_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/utils/tensor_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/utils/runtime_utils.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/utils/serialization.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/session/delegate_session.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/session/factory.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/delegate/factory.cc
