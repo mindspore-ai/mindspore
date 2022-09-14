@@ -36,9 +36,6 @@ class ApplyGradientDescentKernelMod : public NativeGpuKernelMod {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    if (is_null_input_) {
-      return true;
-    }
     VARIABLE_NOT_USED(workspace);
     launch_func_(this, inputs, outputs, stream_ptr);
     return true;
@@ -66,23 +63,19 @@ class ApplyGradientDescentKernelMod : public NativeGpuKernelMod {
 
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override {
-    if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    int ret = KernelMod::Resize(base_operator, inputs, outputs);
+    if (ret != KRET_OK) {
       return ret;
     }
     auto input_shape = inputs[kIndex0]->GetShapeVector();
-    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "var");
-    if (is_null_input_ || IsDynamic(input_shape)) {
-      return true;
-    }
     input_size_ = SizeOf(input_shape);
-    return static_cast<int>(KRET_OK);
+    return ret;
   }
 
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   size_t input_size_{1};
-  bool is_null_input_ = {false};
   std::string kernel_name_;
 
   template <typename T>

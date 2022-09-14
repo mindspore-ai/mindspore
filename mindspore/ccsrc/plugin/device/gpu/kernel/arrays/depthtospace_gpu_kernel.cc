@@ -75,7 +75,8 @@ bool DepthToSpaceFwdKernelMod::Init(const BaseOperatorPtr &base_operator, const 
 int DepthToSpaceFwdKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                      const std::vector<KernelTensorPtr> &outputs,
                                      const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
     return ret;
   }
   std::vector<std::vector<int64_t>> input_shapes;
@@ -89,7 +90,7 @@ int DepthToSpaceFwdKernelMod::Resize(const BaseOperatorPtr &base_operator, const
   }
   input_size_list_ = helper_ptr_->GetInputSizeList();
   output_size_list_ = helper_ptr_->GetOutputSizeList();
-  return 0;
+  return ret;
 }
 
 std::vector<KernelAttr> DepthToSpaceFwdKernelMod::GetOpSupport() {
