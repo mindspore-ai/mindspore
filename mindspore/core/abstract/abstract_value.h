@@ -187,11 +187,12 @@ class MS_CORE_API AbstractBase : public Base {
   /// \param[in] a An abstract.
   ///
   /// \return A std::ostream.
+#ifndef _MSC_VER
   friend std::ostream &operator<<(std::ostream &os, const std::shared_ptr<AbstractBase> &a) {
     os << a->ToString();
     return os;
   }
-
+#endif
   /// \brief Broaden abstract with constraints.
   ///
   /// \return A pointer to the broadened abstract.
