@@ -42,6 +42,8 @@ int ZerosLikeGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
     return ret;
   }
+  input_size_ = 1;
+  is_null_input_ = false;
   auto shape_signed = inputs[kIndex0]->GetShapeVector();
   auto input_shape = LongVecToSizeVec(shape_signed);
   for (size_t i = 0; i < input_shape.size(); i++) {
