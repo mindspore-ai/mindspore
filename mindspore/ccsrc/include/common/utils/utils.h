@@ -327,6 +327,7 @@ constexpr auto kReshapeOpName = "Reshape";
 constexpr auto kResizeAreaOpName = "ResizeArea";
 constexpr auto kResizeBicubicOpName = "ResizeBicubic";
 constexpr auto kResizeBilinearV2OpName = "kResizeBilinearV2";
+constexpr auto kResizeNearestNeighborOpName = "ResizeNearestNeighbor";
 constexpr auto kResizeNearestNeighborGradOpName = "ResizeNearestNeighborGrad";
 constexpr auto kResizeNearestNeighborV2GradOpName = "ResizeNearestNeighborV2Grad";
 constexpr auto kResizeNearestNeighborV2OpName = "ResizeNearestNeighborV2";
