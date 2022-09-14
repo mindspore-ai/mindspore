@@ -126,30 +126,10 @@ struct MaximumFunc {
   __device__ __host__ __forceinline__ T operator()(const T &lhs, const T &rhs) { return lhs > rhs ? lhs : rhs; }
 };
 
-#ifndef _WIN32
 template <typename T>
 struct PowerFunc {
   __device__ __host__ __forceinline__ T operator()(const T &lhs, const T &rhs) { return pow(lhs, rhs); }
 };
-
-#else
-template <typename T>
-struct PowerFunc {
-  __device__ __host__ __forceinline__ T operator()(const T &lhs, const T &rhs) {
-    return static_cast<T>(pow(static_cast<double>(lhs), static_cast<double>(rhs)));
-  }
-};
-
-template <>
-struct PowerFunc<float> {
-  __device__ __host__ __forceinline__ float operator()(const float &lhs, const float &rhs) { return pow(lhs, rhs); }
-};
-
-template <>
-struct PowerFunc<double> {
-  __device__ __host__ __forceinline__ double operator()(const double &lhs, const double &rhs) { return pow(lhs, rhs); }
-};
-#endif
 
 template <>
 struct PowerFunc<half> {
@@ -479,7 +459,7 @@ struct XDivyFunc<half2> {
 
 
 // XLogy check if lhs is less than epsilon, XLogy support half, float, double
-template <typename T, typename IsInteger = void>
+template <typename T>
 struct XLogyFunc {
   // default T is float
   __device__ __host__ __forceinline__ T operator()(const T &lhs, const T &rhs) {
@@ -494,26 +474,6 @@ struct XLogyFunc {
     return res;
   }
 };
-#ifdef _WIN32
-template <typename T>
-struct XLogyFunc<T, typename std::enable_if<std::is_integral<T>::value>::type> {
-  __device__ __host__ __forceinline__ T operator()(const T &lhs, const T &rhs) {
-    double tmpLhs = static_cast<double>(lhs);
-    double tmpRhs = static_cast<double>(rhs);
-    return tmpLhs < kFloatEplison && tmpLhs > -kFloatEplison ? 0.0 : (tmpLhs * log(tmpRhs));
-  }
-};
-
-template <>
-struct XLogyFunc<bool> {
-  __device__ __host__ __forceinline__ bool operator()(const bool &lhs, const bool &rhs) {
-    if (!lhs || !rhs) {
-      return false;
-    }
-    return true;
-  }
-};
-#endif
 
 template <>
 struct XLogyFunc<Complex<float>> {
@@ -1802,6 +1762,12 @@ template CUDA_LIB_EXPORT void BroadcastTo(const size_t &i0, const size_t &i1, co
                                           const size_t &o0, const size_t &o1, const size_t &o2, const size_t &o3,
                                           const size_t &o4, const size_t &o5, const size_t &o6, const size_t &o7,
                                           const half *input_addr, half *output_addr, cudaStream_t stream);
+
+template CUDA_LIB_EXPORT void BroadcastTo(const size_t &i0, const size_t &i1, const size_t &i2, const size_t &i3,
+                                          const size_t &i4, const size_t &i5, const size_t &i6, const size_t &i7,
+                                          const size_t &o0, const size_t &o1, const size_t &o2, const size_t &o3,
+                                          const size_t &o4, const size_t &o5, const size_t &o6, const size_t &o7,
+                                          const int8_t *input_addr, int8_t *output_addr, cudaStream_t stream);
 template CUDA_LIB_EXPORT void BroadcastTo(const size_t &i0, const size_t &i1, const size_t &i2, const size_t &i3,
                                           const size_t &i4, const size_t &i5, const size_t &i6, const size_t &i7,
                                           const size_t &o0, const size_t &o1, const size_t &o2, const size_t &o3,
@@ -1817,8 +1783,41 @@ template CUDA_LIB_EXPORT void BroadcastTo(const size_t &i0, const size_t &i1, co
                                           const size_t &o0, const size_t &o1, const size_t &o2, const size_t &o3,
                                           const size_t &o4, const size_t &o5, const size_t &o6, const size_t &o7,
                                           const int64_t *input_addr, int64_t *output_addr, cudaStream_t stream);
+
+template CUDA_LIB_EXPORT void BroadcastTo(const size_t &i0, const size_t &i1, const size_t &i2, const size_t &i3,
+                                          const size_t &i4, const size_t &i5, const size_t &i6, const size_t &i7,
+                                          const size_t &o0, const size_t &o1, const size_t &o2, const size_t &o3,
+                                          const size_t &o4, const size_t &o5, const size_t &o6, const size_t &o7,
+                                          const uint8_t *input_addr, uint8_t *output_addr, cudaStream_t stream);
+template CUDA_LIB_EXPORT void BroadcastTo(const size_t &i0, const size_t &i1, const size_t &i2, const size_t &i3,
+                                          const size_t &i4, const size_t &i5, const size_t &i6, const size_t &i7,
+                                          const size_t &o0, const size_t &o1, const size_t &o2, const size_t &o3,
+                                          const size_t &o4, const size_t &o5, const size_t &o6, const size_t &o7,
+                                          const uint16_t *input_addr, uint16_t *output_addr, cudaStream_t stream);
+template CUDA_LIB_EXPORT void BroadcastTo(const size_t &i0, const size_t &i1, const size_t &i2, const size_t &i3,
+                                          const size_t &i4, const size_t &i5, const size_t &i6, const size_t &i7,
+                                          const size_t &o0, const size_t &o1, const size_t &o2, const size_t &o3,
+                                          const size_t &o4, const size_t &o5, const size_t &o6, const size_t &o7,
+                                          const uint32_t *input_addr, uint32_t *output_addr, cudaStream_t stream);
+template CUDA_LIB_EXPORT void BroadcastTo(const size_t &i0, const size_t &i1, const size_t &i2, const size_t &i3,
+                                          const size_t &i4, const size_t &i5, const size_t &i6, const size_t &i7,
+                                          const size_t &o0, const size_t &o1, const size_t &o2, const size_t &o3,
+                                          const size_t &o4, const size_t &o5, const size_t &o6, const size_t &o7,
+                                          const uint64_t *input_addr, uint64_t *output_addr, cudaStream_t stream);
 template CUDA_LIB_EXPORT void BroadcastTo(const size_t &i0, const size_t &i1, const size_t &i2, const size_t &i3,
                                           const size_t &i4, const size_t &i5, const size_t &i6, const size_t &i7,
                                           const size_t &o0, const size_t &o1, const size_t &o2, const size_t &o3,
                                           const size_t &o4, const size_t &o5, const size_t &o6, const size_t &o7,
                                           const bool *input_addr, bool *output_addr, cudaStream_t stream);
+template CUDA_LIB_EXPORT void BroadcastTo(const size_t &i0, const size_t &i1, const size_t &i2, const size_t &i3,
+                                          const size_t &i4, const size_t &i5, const size_t &i6, const size_t &i7,
+                                          const size_t &o0, const size_t &o1, const size_t &o2, const size_t &o3,
+                                          const size_t &o4, const size_t &o5, const size_t &o6, const size_t &o7,
+                                          const Complex<float> *input_addr, Complex<float> *output_addr,
+                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT void BroadcastTo(const size_t &i0, const size_t &i1, const size_t &i2, const size_t &i3,
+                                          const size_t &i4, const size_t &i5, const size_t &i6, const size_t &i7,
+                                          const size_t &o0, const size_t &o1, const size_t &o2, const size_t &o3,
+                                          const size_t &o4, const size_t &o5, const size_t &o6, const size_t &o7,
+                                          const Complex<double> *input_addr, Complex<double> *output_addr,
+                                          cudaStream_t stream);

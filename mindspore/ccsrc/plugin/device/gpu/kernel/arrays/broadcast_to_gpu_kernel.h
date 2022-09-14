@@ -14,11 +14,15 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_BROADCAST_TO_GPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_BROADCAST_TO_GPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_BROADCAST_TO_GPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_BROADCAST_TO_GPU_KERNEL_H_
 
 #include <vector>
 #include <string>
+#include <functional>
+#include <utility>
+#include <algorithm>
+#include <map>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/broadcast_impl.cuh"
@@ -26,93 +30,44 @@
 namespace mindspore {
 namespace kernel {
 constexpr size_t SHAPE_SIZE = 8;
-template <typename T>
-class BroadcastToGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class BroadcastToGpuKernelMod : public NativeGpuKernelMod {
  public:
   BroadcastToGpuKernelMod() : kernel_name_("BroadcastTo") {}
   ~BroadcastToGpuKernelMod() = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    if (is_null_input_) {
-      return true;
-    }
-    T *input_addr = GetDeviceAddress<T>(inputs, 0);
-    T *output_addr = GetDeviceAddress<T>(outputs, 0);
-
-    BroadcastTo(input_shape_[0], input_shape_[1], input_shape_[2], input_shape_[3], input_shape_[4], input_shape_[5],
-                input_shape_[6], input_shape_[7], output_shape_[0], output_shape_[1], output_shape_[2],
-                output_shape_[3], output_shape_[4], output_shape_[5], output_shape_[6], output_shape_[7], input_addr,
-                output_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
-    return true;
-  }
-  bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-    auto input_shapes = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-    auto output_shapes = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
-    kernel_node_ = kernel_node;
-    if (AnfAlgo::IsShapesDynamic({input_shapes, output_shapes})) {
-      return true;
-    }
-
-    is_null_input_ =
-      CHECK_SHAPE_NULL(input_shapes, kernel_name_, "input") || CHECK_SHAPE_NULL(output_shapes, kernel_name_, "output");
-    if (is_null_input_) {
-      InitSizeLists();
-      return true;
-    }
-    if (input_shapes.size() > SHAPE_SIZE || output_shapes.size() > SHAPE_SIZE) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input and output cannot be greater than "
-                        << SHAPE_SIZE << ", but got the dimension of input: " << input_shapes.size()
-                        << ", the dimension of output: " << output_shapes.size();
-    }
-
-    if (output_shapes.size() < input_shapes.size()) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                        << "', the dimension of output cannot be less than the dimension of input "
-                        << ", but got the dimension of input: " << input_shapes.size()
-                        << ", the dimension of output: " << output_shapes.size();
-    }
-
-    size_t offset = output_shapes.size() - input_shapes.size();
-    for (size_t i = 0; i < input_shapes.size(); i++) {
-      input_shape_[i + offset] = LongToSizeClipNeg(input_shapes[i]);
-    }
-
-    for (size_t j = 0; j < output_shapes.size(); j++) {
-      output_shape_[j] = LongToSizeClipNeg(output_shapes[j]);
-    }
-
-    InitSizeLists();
-    return true;
+    return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
   }
 
-  void ResetResource() noexcept override {
-    ResetSizeLists();
-    for (size_t i = 0; i < SHAPE_SIZE; ++i) {
-      input_shape_[i] = 1;
-      output_shape_[i] = 1;
-    }
-    is_null_input_ = false;
-  }
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
  protected:
-  void InitSizeLists() override {
-    input_size_list_.clear();
-    output_size_list_.clear();
-    input_size_list_.push_back(input_shape_[0] * input_shape_[1] * input_shape_[2] * input_shape_[3] * input_shape_[4] *
-                               input_shape_[5] * input_shape_[6] * input_shape_[7] * sizeof(T));
-    output_size_list_.push_back(output_shape_[0] * output_shape_[1] * output_shape_[2] * output_shape_[3] *
-                                output_shape_[4] * output_shape_[5] * output_shape_[6] * output_shape_[7] * sizeof(T));
-  }
+  std::vector<KernelAttr> GetOpSupport() override;
+  template <typename T>
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  using BroadcastToLaunchFunc =
+    std::function<bool(BroadcastToGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &, void *)>;
 
  private:
-  size_t input_shape_[SHAPE_SIZE] = {1, 1, 1, 1, 1, 1, 1, 1};
-  size_t output_shape_[SHAPE_SIZE] = {1, 1, 1, 1, 1, 1, 1, 1};
+  std::string kernel_name_{};
+  BroadcastToLaunchFunc kernel_func_;
+  void ResetResource() noexcept;
+  static std::vector<std::pair<KernelAttr, BroadcastToLaunchFunc>> func_list_;
+  size_t input_size_;
+  size_t output_size_;
+  size_t input_type_size_;  // sizeof(T)
+  std::vector<size_t> input_shape_ = {1, 1, 1, 1, 1, 1, 1, 1};
+  std::vector<size_t> output_shape_ = {1, 1, 1, 1, 1, 1, 1, 1};
   bool is_null_input_ = false;
-  std::string kernel_name_;
 };
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_BROADCAST_TO_GPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_BROADCAST_TO_GPU_KERNEL_H_

@@ -9,6 +9,7 @@
 "mindspore/mindspore/ccsrc/plugin/device/ascend/hal/device/profiling/profiling_callback_register.cc"      "runtime/references"
 "mindspore/mindspore/ccsrc/plugin/device/ascend/hal/device/profiling/profiling_manager.h"                 "runtime/references"
 "mindspore/mindspore/ccsrc/plugin/device/ascend/hal/device/profiling/profiling_reporter.h"                 "runtime/references"
+"mindspore/mindspore/ccsrc/plugin/device/gpu/kernel/arrays/broadcast_to_gpu_kernel.cc"                     "whitespace/braces"
 "mindspore/mindspore/core/mindrt/src/actor/actormgr.h"                                             "runtime/references"
 "mindspore/mindspore/core/mindrt/src/actor/actorpolicyinterface.h"                                 "runtime/references"
 "mindspore/mindspore/core/mindrt/src/actor/actorthread.h"                                          "runtime/references"
