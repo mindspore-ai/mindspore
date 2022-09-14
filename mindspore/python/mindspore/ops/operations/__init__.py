@@ -101,7 +101,7 @@ from .other_ops import (Assign, IOU, BartlettWindow, BlackmanWindow, BoundingBox
                         CheckValid, Partial, Depend, identity, CheckBprop, Push, Pull, PyFunc, _DynamicLossScale)
 from .random_ops import (RandomChoiceWithMask, StandardNormal, Gamma, RandomGamma, Poisson, UniformInt, UniformReal,
                          RandomCategorical, StandardLaplace, Multinomial, UniformCandidateSampler,
-                         LogUniformCandidateSampler)
+                         LogUniformCandidateSampler, TruncatedNormal)
 from .rl_ops import (BufferAppend, BufferGetItem, BufferSample)
 from .sparse_ops import (SparseToDense, SparseTensorDenseMatmul, SparseTensorDenseAdd)
 from .sponge_ops import (BondForce, BondEnergy, BondAtomEnergy, BondForceWithAtomEnergy, BondForceWithAtomVirial,
@@ -269,6 +269,7 @@ __all__ = [
     'RandomChoiceWithMask',
     'StandardNormal',
     'Multinomial',
+    'TruncatedNormal',
     'Gamma',
     'RandomGamma',
     'Mvlgamma',
