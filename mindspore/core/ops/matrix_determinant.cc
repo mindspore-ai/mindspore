@@ -30,6 +30,9 @@ abstract::ShapePtr MatrixDeterminantInferShape(const PrimitivePtr &primitive,
                                                const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  if (IsDynamicRank(x_shape)) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
+  }
   auto x_rank = SizeToLong(x_shape.size());
   constexpr int64_t number1 = 1;
   constexpr int64_t number2 = 2;
