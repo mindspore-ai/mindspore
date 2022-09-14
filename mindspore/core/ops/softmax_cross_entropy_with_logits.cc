@@ -37,14 +37,14 @@ class SoftmaxCrossEntropyWithLogitsInfer : public abstract::OpInferBase {
     auto logits_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(logits_shape)[kShape];
     auto label_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(label_shape)[kShape];
     const int64_t input_rank = 2;
-    if (!IsDynamicRank(logits_map)) {
-      (void)CheckAndConvertUtils::CheckInteger("dimension of logits", SizeToLong(logits_map.size()), kEqual, input_rank,
-                                               prim_name);
+    if (IsDynamicRank(logits_map) || IsDynamicRank(label_map)) {
+      auto ds_shape_ptr = std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
+      return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{ds_shape_ptr, ds_shape_ptr});
     }
-    if (!IsDynamicRank(label_map)) {
-      (void)CheckAndConvertUtils::CheckInteger("dimension of labels", SizeToLong(label_map.size()), kEqual, input_rank,
-                                               prim_name);
-    }
+    (void)CheckAndConvertUtils::CheckInteger("dimension of logits", SizeToLong(logits_map.size()), kEqual, input_rank,
+                                             prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("dimension of labels", SizeToLong(label_map.size()), kEqual, input_rank,
+                                             prim_name);
     auto logits_shape_ptr = logits_shape->cast<abstract::ShapePtr>();
     auto label_shape_ptr = label_shape->cast<abstract::ShapePtr>();
     // logits and label must have the same shape when is not dynamic

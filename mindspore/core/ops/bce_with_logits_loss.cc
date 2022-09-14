@@ -40,6 +40,10 @@ abstract::ShapePtr BCEWithLogitsLossInferShape(const PrimitivePtr &primitive,
   auto logits_shape = logits_shape_map[kShape];
   auto label_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape());
   auto label_shape = label_shape_map[kShape];
+  if (IsDynamicRank(logits_shape) || IsDynamicRank(label_shape)) {
+    auto ds_shape = std::vector<int64_t>{UNKNOWN_RANK};
+    return std::make_shared<abstract::Shape>(ds_shape);
+  }
   if (!ObscureShapeEqual(logits_shape, label_shape) && !(IsDynamicRank(logits_shape) || IsDynamicRank(label_shape))) {
     MS_EXCEPTION(ValueError) << "For '" << op_name << "', the two input 'logits' and 'label' shape are not equal.";
   }
