@@ -16,6 +16,7 @@
 
 #include "plugin/device/cpu/kernel/tile_cpu_kernel.h"
 #include <algorithm>
+#include <map>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
@@ -24,6 +25,8 @@ namespace {
 constexpr size_t kTileInputsNum = 1;
 constexpr size_t kTileDynamicInputsNum = 2;
 constexpr size_t kTileOutputsNum = 1;
+constexpr size_t kIndex0 = 0;
+constexpr size_t kIndex1 = 1;
 }  // namespace
 
 void TileCpuKernelMod::TileMultipleCompute() {
@@ -78,25 +81,23 @@ void TileCpuKernelMod::TileMultipleCompute() {
   }
 }
 
-void TileCpuKernelMod::TileTensorParamrInit(const CNodePtr &kernel_node) {
-  x_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  y_shape_ = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
+bool TileCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                            const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  auto prim = base_operator->GetPrim();
+  MS_EXCEPTION_IF_NULL(prim);
+  kernel_name_ = base_operator->name();
+  input_num = inputs.size();
+  dtype_ = inputs[kIndex0]->GetDtype();
   multiples_.clear();
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   if (input_num == kTileInputsNum) {
-    std::vector<int64_t> multiples_me = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "multiples");
+    std::vector<int64_t> multiples_me = GetValue<std::vector<int64_t>>(prim->GetAttr("multiples"));
     (void)std::transform(multiples_me.begin(), multiples_me.end(), std::back_inserter(multiples_),
                          [](const int64_t &value) { return static_cast<int>(value); });
-    TileMultipleCompute();
   }
-}
-
-void TileCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  TileTensorParamrInit(kernel_node);
-  cnode_ptr_ = kernel_node;
+  if (input_num == kTileDynamicInputsNum) {
+    multiple_shape = inputs[kIndex1]->GetShapeVector();
+  }
 
   launch_map_[kNumberTypeInt8] = &TileCpuKernelMod::LaunchKernel<int8_t>;
   launch_map_[kNumberTypeInt16] = &TileCpuKernelMod::LaunchKernel<int16_t>;
@@ -115,7 +116,20 @@ void TileCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of input must be bool, int, float or uint, but got "
                       << TypeIdToType(dtype_)->ToString();
+    return false;
   }
+  return true;
+}
+
+int TileCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                             const std::vector<KernelTensorPtr> &outputs,
+                             const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  x_shape_ = inputs[kIndex0]->GetShapeVector();
+  y_shape_ = outputs[kIndex0]->GetShapeVector();
+  return KRET_OK;
 }
 
 bool TileCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
@@ -133,12 +147,11 @@ template <typename T>
 void TileCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
   auto x_addr = reinterpret_cast<T *>(inputs[0]->addr);
   auto y_addr = reinterpret_cast<T *>(outputs[0]->addr);
-  auto cnode = cnode_ptr_.lock();
-  MS_EXCEPTION_IF_NULL(cnode);
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(cnode);
+  if (input_num == kTileInputsNum) {
+    TileMultipleCompute();
+  }
   if (input_num == kTileDynamicInputsNum) {
     auto multiples_addr = reinterpret_cast<int32_t *>(inputs[1]->addr);
-    auto multiple_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 1);
     int64_t multiple_nums = 1;
     for (size_t i = 0; i < multiple_shape.size(); ++i) {
       multiple_nums *= multiple_shape[i];

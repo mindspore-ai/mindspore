@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_TILE_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_TILE_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_TILE_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_TILE_CPU_KERNEL_H_
 
+#include <map>
 #include <memory>
 #include <unordered_map>
 #include <vector>
@@ -26,12 +27,16 @@
 
 namespace mindspore {
 namespace kernel {
-class TileCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class TileCpuKernelMod : public NativeCpuKernelMod {
  public:
   TileCpuKernelMod() = default;
   ~TileCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
@@ -55,14 +60,15 @@ class TileCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  private:
   template <typename T>
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
-
-  void TileTensorParamrInit(const CNodePtr &kernel_node);
-
   void TileMultipleCompute(void);
 
   ShapeVector x_shape_;
   ShapeVector y_shape_;
+  ShapeVector multiple_shape;
+  size_t input_num;
+  size_t output_num;
   std::vector<int> multiples_;
+  std::vector<int64_t> multiples_me;
   TypeId dtype_{kTypeUnknown};
   using TypeKernel = std::function<void(TileCpuKernelMod *, const std::vector<AddressPtr> &inputs,
                                         const std::vector<AddressPtr> &outputs)>;
@@ -74,4 +80,4 @@ class TileCpuKernelMod : public DeprecatedNativeCpuKernelMod {
 };
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_TILE_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_TILE_CPU_KERNEL_H_
