@@ -114,9 +114,6 @@ class RecvActor : public RpcActor {
   // |--------22 bytes------|---4 bytes--|PB data size bytes| data size bytes |
   // |RPC_DYNAMIC_SHAPE_DATA|PB data size|      PB data     | real data       |
   // Return dynamic shape data length.
-  size_t ParseDynamicShapeData(const std::string &dynamic_shape_data, AbstractBasePtrList *args_spec_list,
-                               size_t count);
-
   size_t ParseDynamicShapeData(const RpcDataPtr &dynamic_shape_data, size_t data_size,
                                AbstractBasePtrList *args_spec_list, size_t count);
 
