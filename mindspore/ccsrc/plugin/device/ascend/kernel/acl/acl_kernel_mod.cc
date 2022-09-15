@@ -85,7 +85,10 @@ bool AclKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vect
     op_desc_ptr->AddTensorAttr(attr.first, value, node_name_);
   }
 
-  aclopSetCompileFlag(aclCompileFlag::ACL_OP_COMPILE_FUZZ);
+  if (aclopSetCompileFlag(aclCompileFlag::ACL_OP_COMPILE_FUZZ)) {
+    MS_LOG(ERROR) << "Acl set compile mode failed! op_name is " << node_name_;
+    return false;
+  }
 
   MS_LOG(INFO) << "Start aclopCompileAndExecute of node: " << cnode->fullname_with_scope();
   bool ret =
