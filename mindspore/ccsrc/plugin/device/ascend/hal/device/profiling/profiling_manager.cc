@@ -26,6 +26,7 @@
 #include "include/common/utils/convert_utils.h"
 #include "runtime/base.h"
 #include <nlohmann/json.hpp>
+#include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "plugin/device/ascend/hal/device/profiling/profiling_utils.h"
 #include "plugin/device/ascend/hal/profiler/ascend_profiling.h"
 
@@ -39,8 +40,6 @@ constexpr Status PROF_FAILED = 0xFFFFFFFF;
 namespace mindspore {
 namespace device {
 namespace ascend {
-constexpr auto kUnknownErrorString = "Unknown error occurred";
-
 ProfilingManager &ProfilingManager::GetInstance() {
   static ProfilingManager inst{};
   return inst;
@@ -145,23 +144,12 @@ rtError_t CtrlCallbackHandle(uint32_t rt_type, void *data, uint32_t /* len */) {
   return RT_ERROR_NONE;
 }
 
-std::string ProfilingManager::GetErrorMessage() const {
-  const std::string &error_message = ErrorManager::GetInstance().GetErrorMessage();
-  if (!error_message.empty() && error_message.find(kUnknownErrorString) == std::string::npos) {
-    return error_message;
-  }
-  return "";
-}
-
 Status ProfilingManager::CallMsprofReport(const NotNull<ReporterData *> reporter_data) const {
   int32_t ret = MsprofReportData(static_cast<int32_t>(MsprofReporterModuleId::MSPROF_MODULE_FRAMEWORK),
                                  static_cast<int32_t>(MsprofReporterCallbackType::MSPROF_REPORTER_REPORT),
                                  static_cast<void *>(reporter_data.get()), sizeof(ReporterData));
 
   if (ret != UintToInt(PROF_SUCCESS)) {
-    if (auto error_message = GetErrorMessage(); !error_message.empty()) {
-      MS_LOG(ERROR) << "Ascend error occurred, error message:\n" << error_message;
-    }
     return PROF_FAILED;
   }
   return PROF_SUCCESS;
@@ -244,7 +232,7 @@ void ProfilingManager::QueryHashId(const int32_t &device_id, const std::string &
                                        &hash_data, sizeof(MsprofHashData));
   if (ret != UintToInt(PROF_SUCCESS)) {
     MS_LOG(EXCEPTION) << "[Profiling] Query hash id of long string failed, src string is " << src_str.c_str()
-                      << ", ret is " << ret << ".#dmsg#Ascend Error Message:#dmsg#" << GetErrorMessage();
+                      << ", ret is " << ret << "." << GetErrorMessage(true);
   }
 
   *hash_id = hash_data.hashId;

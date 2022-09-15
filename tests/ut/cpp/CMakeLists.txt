@@ -166,7 +166,7 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/hardware/ascend_device_res_manager.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/hardware/ascend_kernel_executor.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/hardware/ascend_graph_executor.cc"
-        "../../../mindspore/ccsrc/plugin/device/ascend/hal/hardware/ascend_utils.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/hal/common/ascend_utils.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/hardware/ascend_somas.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/hardware/ascend_graph_optimization.cc"
         "../../../mindspore/ccsrc/plugin/device/cpu/hal/hardware/ms_collective_topo.cc"

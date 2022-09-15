@@ -16,7 +16,7 @@
 
 #include "plugin/device/ascend/hal/hardware/ascend_device_context.h"
 #include <memory>
-#include "plugin/device/ascend/hal/hardware/ascend_utils.h"
+#include "plugin/device/ascend/hal/common/ascend_utils.h"
 #ifdef ENABLE_DEBUGGER
 #include "debug/tensor_load.h"
 #include "debug/debugger/proto_exporter.h"
