@@ -85,7 +85,9 @@ OpParameter *PopulateDeconvParameter(const void *prim) {
       free(param);
       return nullptr;
     }
+    CHECK_LESS_RETURN_RET(INT32_MAX, *(kernel_size->begin()), nullptr, param);
     param->kernel_h_ = static_cast<int>(*(kernel_size->begin()));
+    CHECK_LESS_RETURN_RET(INT32_MAX, *(kernel_size->begin() + 1), nullptr, param);
     param->kernel_w_ = static_cast<int>(*(kernel_size->begin() + 1));
   }
   param->output_padding_h_ = 0;
@@ -96,7 +98,9 @@ OpParameter *PopulateDeconvParameter(const void *prim) {
       free(param);
       return nullptr;
     }
+    CHECK_LESS_RETURN_RET(INT32_MAX, *(output_paddings->begin()), nullptr, param);
     param->output_padding_h_ = static_cast<int>(*(output_paddings->begin()));
+    CHECK_LESS_RETURN_RET(INT32_MAX, *(output_paddings->begin() + 1), nullptr, param);
     param->output_padding_w_ = static_cast<int>(*(output_paddings->begin() + 1));
   }
   if (param->output_padding_h_ < 0 || param->output_padding_w_ < 0) {
@@ -116,8 +120,11 @@ OpParameter *PopulateDeconvParameter(const void *prim) {
     return nullptr;
   }
 
+  CHECK_LESS_RETURN_RET(INT32_MAX, value->group(), nullptr, param);
   param->group_ = static_cast<int>(value->group());
+  CHECK_LESS_RETURN_RET(INT32_MAX, *(stride->begin()), nullptr, param);
   param->stride_h_ = static_cast<int>(*(stride->begin()));
+  CHECK_LESS_RETURN_RET(INT32_MAX, *(stride->begin() + 1), nullptr, param);
   param->stride_w_ = static_cast<int>(*(stride->begin() + 1));
 
   if (pad_list == nullptr || pad_list->size() < kMinShapeSizeFour) {
@@ -126,14 +133,25 @@ OpParameter *PopulateDeconvParameter(const void *prim) {
     param->pad_l_ = 0;
     param->pad_r_ = 0;
   } else {
+    CHECK_LESS_RETURN_RET(INT32_MAX, *(pad_list->begin()), nullptr, param);
     param->pad_u_ = static_cast<int>(*(pad_list->begin()));
+    CHECK_LESS_RETURN_RET(INT32_MAX, *(pad_list->begin() + 1), nullptr, param);
     param->pad_d_ = static_cast<int>(*(pad_list->begin() + 1));
+    CHECK_LESS_RETURN_RET(INT32_MAX, *(pad_list->begin() + kOffsetTwo), nullptr, param);
     param->pad_l_ = static_cast<int>(*(pad_list->begin() + kOffsetTwo));
+    CHECK_LESS_RETURN_RET(INT32_MAX, *(pad_list->begin() + kOffsetThree), nullptr, param);
     param->pad_r_ = static_cast<int>(*(pad_list->begin() + kOffsetThree));
   }
+  CHECK_LESS_RETURN_RET(INT32_MAX, *(dilation->begin()), nullptr, param);
   param->dilation_h_ = static_cast<int>(*(dilation->begin()));
+
+  CHECK_LESS_RETURN_RET(INT32_MAX, *(dilation->begin() + 1), nullptr, param);
   param->dilation_w_ = static_cast<int>(*(dilation->begin() + 1));
+
+  CHECK_LESS_RETURN_RET(INT32_MAX, value->in_channel(), nullptr, param);
   param->input_channel_ = static_cast<int>(value->in_channel());
+
+  CHECK_LESS_RETURN_RET(INT32_MAX, value->out_channel(), nullptr, param);
   param->output_channel_ = static_cast<int>(value->out_channel());
 
   auto act_type = value->activation_type();
