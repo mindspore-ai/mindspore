@@ -1226,6 +1226,7 @@ GVAR_DEF(PrimitivePtr, kPrimCholeskySolve, std::make_shared<Primitive>("Cholesky
 GVAR_DEF(PrimitivePtr, kPrimKLDivLossGrad, std::make_shared<Primitive>("KLDivLossGrad"));
 GVAR_DEF(PrimitivePtr, kPrimFFTWithSize, std::make_shared<Primitive>(kFFTWithSize));
 GVAR_DEF(PrimitivePtr, kPrimOrgqr, std::make_shared<Primitive>("Orgqr"));
+GVAR_DEF(PrimitivePtr, kPrimEig, std::make_shared<Primitive>("Eig"));
 
 // linalg
 GVAR_DEF(PrimitivePtr, kPrimGeqrf, std::make_shared<Primitive>("Geqrf"));

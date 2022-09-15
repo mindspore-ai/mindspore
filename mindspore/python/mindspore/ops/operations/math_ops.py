@@ -6857,3 +6857,48 @@ class Orgqr(Primitive):
     def __init__(self):
         """Initialize Orgqr"""
         self.init_prim_io_names(inputs=['x', 'tau'], outputs=['y'])
+
+
+class Eig(Primitive):
+    """
+    Computes the eigenvalues and eigenvectors of a square matrix(batch square matrices).
+
+    Args:
+        compute_v (bool): If `True`, compute both eigenvalues and eigenvectors;
+            If `False`, just eigenvalues will be computed. Default: False.
+    Inputs:
+        - **x** (Tensor) - Square matrices of shape :math:`(*, N, N)`,
+          with float32, float64, complex64 or complex128 data type.
+
+    Outputs:
+        - **eigen_values** (Tensor) - Shape :math:`(*, N)`. Each inner most vector represents eigenvalues of
+          the corresponding matrix. The eigenvalues may not have an order.
+        - **eigen_vectors** (Tensor) - If `compute_v` is `False`, it’s an empty tensor. Otherwise, this tensor
+          has shape :math:`(*, N, N)`, whose columns represent normalized (unit length) eigenvectors of corresponding
+          eigenvalues.
+
+    Raises:
+        TypeError: If `compute_v` is not a bool.
+        TypeError: If dtype of `x` is not one of: float64, float32, complex64 or complex128.
+        TypeError: If `x` is not a Tensor.
+        ValueError: If `x` is not a square(batch squares).
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> input_x = Tensor(np.array([[1.0, 0.0], [0.0, 2.0]]), mindspore.float32)
+        >>> eig = ops.Eig(compute_v=True)
+        >>> u, v = eig(input_x)
+        >>> print(u)
+        [1.+0.j 2.+0.j]
+        >>> print(v)
+        [[1.+0.j 0.+0.j]
+         [0.+0.j 1.+0.j]]
+    """
+
+    @prim_attr_register
+    def __init__(self, compute_v=False):
+        """Initialize Eig"""
+        self.init_prim_io_names(inputs=['x'], outputs=['eigen_values', 'eigen_vectors'])
+        validator.check_value_type('compute_v', compute_v, [bool], self.name)
