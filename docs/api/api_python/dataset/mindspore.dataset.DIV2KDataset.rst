@@ -72,6 +72,8 @@ mindspore.dataset.DIV2KDataset
 
     您可以解压缩原始DIV2K数据集文件到如下目录结构，并通过MindSpore的API进行读取。
 
+    以训练数据集作为例子。
+
     .. code-block::
 
         .
