@@ -2281,28 +2281,7 @@ class ReduceStd(Primitive):
     Returns the standard-deviation and mean of each row of the input tensor in the dimension `axis`.
     If `axis` is a list of dimensions, reduce over all of them.
 
-    Args:
-        keep_dims (bool): Whether the output tensor has dim retained or not.
-                          If true, keep these reduced dimensions and the length is 1.
-                          If false, don't keep these dimensions.
-        unbiased (bool):  Whether to use Bessel’s correction.
-                          If true, will use the Bessel correction unbiased estimation.
-                          If false, will through the biased estimation to calculate the standard deviation.
-        axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Default: (), reduce all dimensions.
-                                                  Only constant value is allowed.
-                                                  Must be in the range [-rank(`input_x`), rank(`input_x`)).
-
-    Inputs:
-        - **input_x** (Tensor[Number]) - The input tensor. The dtype of the tensor to be reduced is number.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-
-    Outputs:
-        A tuple (output_std, output_mean) containing the standard deviation and mean.
-
-    Raises:
-        TypeError: If `keep_dims` is not a bool.
-        TypeError: If `input_x` is not a Tensor.
-        ValueError: If `axis` is not one of the following: int, tuple or list.
+    Refer to :func:`mindspore.ops.std` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``CPU``

@@ -573,7 +573,7 @@ class SparseTensorDenseAdd(Primitive):
           The shape should be :math:`(n,)`.
         - **x1_shape** (tuple(int)) - A positive int tuple which specifies the shape of sparse tensor,
           should have 2 elements, represent sparse tensor shape is :math:`(N, C)`.
-        -**x2** (Tensor)- A dense Tensor, the dtype is same as `values`.
+        - **x2** (Tensor) - A dense Tensor, the dtype is same as `values`.
 
     Returns:
         Tensor, add result of sparse tensor and dense tensor. The dtype is same as `values`,
