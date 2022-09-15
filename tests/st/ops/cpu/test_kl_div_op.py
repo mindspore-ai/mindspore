@@ -211,3 +211,24 @@ def test_mode_batchmean_and_dtype_with_dynamic_input(mode, dtype):
     loss = net(Tensor(prediction), Tensor(target))
     expect = np.array([0.52491106]).astype(dtype)
     assert np.allclose(loss.asnumpy(), expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
+@pytest.mark.parametrize("dtype", [np.float16, np.float32, np.float64])
+def test_mode_batchmean_with_nn_interface(mode, dtype):
+    """
+    Feature: test batchmean mode with nn interface.
+    Description: test batchmean mode with nn interface.
+    Expectation: success.
+    """
+    context.set_context(mode=mode)
+    np.random.seed(42)
+    prediction = mindspore.Tensor(np.log(np.array([[0.3, 0.7], [0.5, 0.5]])).astype(dtype))
+    target = mindspore.Tensor(np.array([[-1, 1], [1, -1]]).astype(dtype))
+    net = nn.KLDivLoss("batchmean")
+    loss = net(Tensor(prediction), Tensor(target))
+    expect = np.array([0.52491106]).astype(dtype)
+    assert np.allclose(loss.asnumpy(), expect)

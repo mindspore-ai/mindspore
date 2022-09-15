@@ -1060,6 +1060,108 @@ def select(cond, x, y):
     return tensor_select_(cond, input_x, input_y)
 
 
+def strided_slice(input_x, begin, end, strides):
+    r"""
+    Extracts a strided slice of a tensor.
+
+    This operation extracts a fragment of size (end-begin)/stride from the given 'input_tensor'.
+    Starting from the beginning position, the fragment continues adding stride to the index until
+    all dimensions are not less than the ending position.
+
+    Note:
+        The stride may be negative value, which causes reverse slicing.
+        The shape of `begin`, `end` and `strides` must be the same.
+        `begin` and `end` are zero-indexed. The element of `strides` must be non-zero.
+
+    Args:
+        input_x (Tensor): The input Tensor.
+        begin (tuple[int]): A tuple which represents the location where to start. Only
+          constant value is allowed.
+        end (tuple[int]): A tuple or which represents the maximum location where to end.
+          Only constant value is allowed.
+        strides (tuple[int]): - A tuple which represents the stride is continuously added
+          before reaching the maximum location. Only constant value is allowed.
+
+    Returns:
+        Tensor, The output is explained by following example.
+
+        In the 0th dimension, begin is 1, end is 2, and strides is 1,
+        because :math:`1+1=2\geq2`, the interval is :math:`[1,2)`.
+        Thus, return the element with :math:`index = 1` in 0th dimension, i.e., [[3, 3, 3], [4, 4, 4]].
+
+        In the 1st dimension, similarly, the interval is :math:`[0,1)`.
+        Based on the return value of the 0th dimension, return the element with :math:`index = 0`,
+        i.e., [3, 3, 3].
+
+        In the 2nd dimension, similarly, the interval is :math:`[0,3)`.
+        Based on the return value of the 1st dimension, return the element with :math:`index = 0,1,2`,
+        i.e., [3, 3, 3].
+
+        Finally, the output is [3, 3, 3].
+
+    Raises:
+        TypeError: If `begin`, `end` or `strides` is not a tuple.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> input_x = Tensor([[[1, 1, 1], [2, 2, 2]], [[3, 3, 3], [4, 4, 4]],
+        ...                   [[5, 5, 5], [6, 6, 6]]], mindspore.float32)
+        >>> output = ops.strided_slice(input_x, (1, 0, 2), (3, 1, 3), (1, 1, 1))
+        >>> # Take this " output = strided_slice(input_x, (1, 0, 2), (3, 1, 3), (1, 1, 1)) " as an example,
+        >>> # start = [1, 0, 2] , end = [3, 1, 3], stride = [1, 1, 1], Find a segment of (start, end),
+        >>> # note that end is an open interval
+        >>> # To facilitate understanding, this operator can be divided into three steps:
+        >>> # Step 1: Calculation of the first dimension:
+        >>> # start = 1, end = 3, stride = 1, So can take 1st, 2nd rows, and then gets the final output at this time.
+        >>> # output_1th =
+        >>> # [
+        >>> #     [
+        >>> #         [3,3,3]
+        >>> #         [4,4,4]
+        >>> #     ]
+        >>> #     [
+        >>> #         [5,5,5]
+        >>> #         [6,6,6]
+        >>> #     ]
+        >>> # ]
+        >>> # Step 2: Calculation of the second dimension
+        >>> # 2nd dimension, start = 0, end = 1, stride = 1. So only 0th rows can be taken, and the output at this time.
+        >>> # output_2nd =
+        >>> # [
+        >>> #     [
+        >>> #         [3,3,3]
+        >>> #     ]
+        >>> #     [
+        >>> #         [5,5,5]
+        >>> #     ]
+        >>> # ]
+        >>> # Step 3: Calculation of the third dimension
+        >>> # 3nd dimension,start = 2, end = 3, stride = 1, So can take 2th cols,
+        >>> # and you get the final output at this time.
+        >>> # output_3ed =
+        >>> # [
+        >>> #     [
+        >>> #         [3]
+        >>> #     ]
+        >>> #     [
+        >>> #         [5]
+        >>> #     ]
+        >>> # ]
+        >>> # The final output after finishing is:
+        >>> print(output)
+        [[[3.]]
+         [[5.]]]
+        >>> # another example like :
+        >>> output = strided_slice(input_x, (1, 0, 0), (2, 1, 3), (1, 1, 1))
+        >>> print(output)
+        [[[3. 3. 3.]]]
+    """
+    strided_slice_ = _get_cache_prim(P.StridedSlice)()
+    return strided_slice_(input_x, begin, end, strides)
+
+
 def slice(input_x, begin, size):
     r"""
     Slices a tensor in the specified shape.
@@ -4311,6 +4413,7 @@ __all__ = [
     'reshape_',
     'flatten',
     'tensor_slice',
+    'strided_slice',
     'slice',
     'concat',
     'stack',

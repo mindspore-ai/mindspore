@@ -19,6 +19,7 @@ import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
+from mindspore import ops
 from mindspore.ops import operations as P
 from mindspore.ops.functional import vmap
 
@@ -61,3 +62,19 @@ def test_slice_vmap():
     output = stridedslice_vmap(x)
     expect = np.ones((16, 1, 2, 3))
     assert np.allclose(output.asnumpy(), expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_slice_functional():
+    """
+    Feature: Test strided_slice functional interface.
+    Description: Test strided_slice functional interface.
+    Expectation: success.
+    """
+    x = Tensor(np.array([[[1., 1., 1.], [2, 2, 2]], [[3, 3, 3], [4, 4, 4]], [[5, 5, 5], [6, 7, 8]]]).astype(np.float32))
+    output = ops.strided_slice(x, (2, 0, 0), (3, 2, 3), (1, 1, 1))
+    expect = [[[5., 5., 5.],
+               [6., 7., 8.]]]
+    assert (output.asnumpy() == expect).all()
