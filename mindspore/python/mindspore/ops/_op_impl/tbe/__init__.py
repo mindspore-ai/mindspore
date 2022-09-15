@@ -215,7 +215,6 @@ from .npu_clear_float_status import _npu_clear_float_status_tbe
 from .npu_get_float_status import _npu_get_float_status_tbe
 from .npu_alloc_float_status import _npu_alloc_float_status_tbe
 from .one_hot import _one_hot_tbe
-from .one_hot_ds import _one_hot_ds_tbe
 from .equal import _equal_tbe
 from .equal_ds import _equal_ds_tbe
 from .lerp import _lerp_tbe
