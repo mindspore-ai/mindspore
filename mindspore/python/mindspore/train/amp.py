@@ -80,14 +80,17 @@ class _OutputTo16(nn.Cell):
 
 
 class _OutputTo32(nn.Cell):
-    "Wrap cell for amp. Cast network output back to float32"
+    "Wrap loss for amp. Cast network output back to float32"
 
-    def __init__(self, op):
+    def __init__(self, backbone):
         super(_OutputTo32, self).__init__(auto_prefix=False)
-        self._op = op
+        self._backbone = backbone
+        if backbone.jit_config_dict:
+            self._jit_config_dict = backbone.jit_config_dict
 
-    def construct(self, x):
-        return F.cast(self._op(x), mstype.float32)
+    def construct(self, *inputs):
+        out = self._backbone(*inputs)
+        return F.mixed_precision_cast(mstype.float32, out)
 
 
 def _insert_cast_operator(stree):
@@ -224,6 +227,8 @@ def auto_mixed_precision(network, amp_level="O0"):
     Raises:
         ValueError: If amp level is not supported.
     """
+    if not isinstance(network, nn.Cell):
+        raise TypeError("The network type should be Cell.")
     if amp_level == "O0":
         pass
     elif amp_level == "O1":
@@ -234,6 +239,8 @@ def auto_mixed_precision(network, amp_level="O0"):
         network.to_float(mstype.float16)
     else:
         raise ValueError("The amp level {} is not supported".format(amp_level))
+    if amp_level in ("O2", "O3"):
+        network = _OutputTo32(network)
     return network
 
 
@@ -317,7 +324,7 @@ def _check_level(level, boost_level):
     return level, enable_boost
 
 
-def _add_loss_network(network, loss_fn):
+def _add_loss_network(network, loss_fn, cast_model_type):
     """Add loss network."""
 
     class WithLossCell(nn.Cell):
@@ -336,7 +343,10 @@ def _add_loss_network(network, loss_fn):
             return self._loss_fn(F.mixed_precision_cast(mstype.float32, out), label)
 
     validator.check_value_type('loss_fn', loss_fn, nn.Cell)
-    network = WithLossCell(network, loss_fn)
+    if cast_model_type == mstype.float16:
+        network = WithLossCell(network, loss_fn)
+    else:
+        network = nn.WithLossCell(network, loss_fn)
     return network
 
 
@@ -401,10 +411,10 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', boost_leve
     elif not config["keep_batchnorm_fp32"] and level == "O2":
         network.to_float(mstype.float16)
     else:
-        auto_mixed_precision(network, level)
+        network = auto_mixed_precision(network, level)
 
     if loss_fn:
-        network = _add_loss_network(network, loss_fn)
+        network = _add_loss_network(network, loss_fn, config["cast_model_type"])
 
     loss_scale = 1.0
     if config["loss_scale_manager"] is not None:
