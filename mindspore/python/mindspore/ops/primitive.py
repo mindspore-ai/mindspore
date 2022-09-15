@@ -388,6 +388,11 @@ class Primitive(Primitive_):
         """
         Set the label for this primitive.
         This label tells MindSpore compiler on which process this operator should be launched.
+        Each process's identical id consists of inputs 'role' and 'rank_id'.
+
+        Args:
+            role (string): The role of the process on which this operator will be launched.
+            rank_id (string): The rank id of the process on which this operator will be launched.
         """
         self.add_prim_attr("ms_role", role)
         self.add_prim_attr("rank_id", rank_id)
