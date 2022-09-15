@@ -110,7 +110,7 @@ class BACKEND_EXPORT E2eDump {
   static void DumpSingleParameterNode(const AnfNodePtr &anf_node, const std::string &dump_path, bool trans_flag,
                                       const Debugger *debugger);
 
-  BACKEND_EXPORT inline static unsigned int starting_graph_id = INT32_MAX;
+  inline static unsigned int starting_graph_id = INT32_MAX;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_MINDSPORE_CCSRC_DEBUG_DATA_DUMP_E_2_E_DUMP_UTIL_H_

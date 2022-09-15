@@ -95,7 +95,7 @@ class FormatTransformChecker {
   bool format_transform_{true};
 };
 
-class BACKEND_EXPORT GPUGraphKernelInfo : public GraphKernelInfo {
+class GPU_EXPORT GPUGraphKernelInfo : public GraphKernelInfo {
  public:
   GPUGraphKernelInfo() = default;
   virtual ~GPUGraphKernelInfo() = default;

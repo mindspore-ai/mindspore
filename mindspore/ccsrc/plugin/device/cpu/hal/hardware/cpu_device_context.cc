@@ -42,7 +42,9 @@
 #include "backend/common/pass/insert_tensor_move_for_ref.h"
 #include "common/graph_kernel/adapter/graph_kernel_optimization.h"
 #include "common/graph_kernel/adapter/expander.h"
+#ifdef ENABLE_AKG
 #include "common/graph_kernel/value_graph_binder.h"
+#endif
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "plugin/device/cpu/hal/profiler/cpu_profiling.h"
