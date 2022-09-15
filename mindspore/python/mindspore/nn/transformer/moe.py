@@ -16,6 +16,7 @@
 Note: Mixture of Expert (MoE) structure. This is an experimental interface that is subject to change or deletion.
 """
 from __future__ import absolute_import
+from __future__ import division
 
 import math
 import numpy as np
@@ -154,6 +155,7 @@ class MoE(Cell):
                  moe_config=default_moe_config,
                  parallel_config=default_moeparallel_config):
         super(MoE, self).__init__()
+        from .transformer import FeedForward
         if _get_parallel_mode() in (ParallelMode.AUTO_PARALLEL,) and _is_sharding_propagation():
             self.hidden_size = hidden_size
             self.expert_dim = moe_config.expert_num
@@ -164,7 +166,6 @@ class MoE(Cell):
             self.dp_group = parallel_config.data_parallel
             self.dp = parallel_config.data_parallel
             self.ep = parallel_config.expert_parallel
-            from mindspore.nn.transformer import FeedForward
 
             self.ffn = FeedForward(hidden_size=hidden_size,
                                    ffn_hidden_size=ffn_hidden_size,
@@ -195,7 +196,6 @@ class MoE(Cell):
             self.dp_group = parallel_config.data_parallel
             self.dp = parallel_config.data_parallel
             self.ep = parallel_config.expert_parallel
-            from .transformer import FeedForward
 
             self.ffn = FeedForward(hidden_size=hidden_size,
                                    ffn_hidden_size=ffn_hidden_size,

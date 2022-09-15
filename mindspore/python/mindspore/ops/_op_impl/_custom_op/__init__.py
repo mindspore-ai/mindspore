@@ -14,6 +14,7 @@
 # ============================================================================
 
 """custom ops"""
+from __future__ import absolute_import
 from mindspore.ops._op_impl._custom_op.dsd_impl import dsd_matmul
 from mindspore.ops._op_impl._custom_op.dsd_back_impl import dsdbpropimpl
 from .batchnorm_fold import _batchnorm_fold_tbe

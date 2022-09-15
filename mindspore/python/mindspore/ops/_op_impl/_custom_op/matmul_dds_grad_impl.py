@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """matmul dds impl"""
+from __future__ import absolute_import
 from te import tik
 from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 

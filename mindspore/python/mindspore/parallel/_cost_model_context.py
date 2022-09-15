@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Context of cost_model in auto_parallel"""
+from __future__ import absolute_import
 import threading
 from mindspore._c_expression import CostModelContext
 from mindspore._checkparam import args_type_check
@@ -29,15 +30,15 @@ class _CostModelContext:
     _instance = None
     _instance_lock = threading.Lock()
 
-    def __init__(self):
-        self._context_handle = CostModelContext.get_instance()
-
     def __new__(cls):
         if cls._instance is None:
             cls._instance_lock.acquire()
             cls._instance = object.__new__(cls)
             cls._instance_lock.release()
         return cls._instance
+
+    def __init__(self):
+        self._context_handle = CostModelContext.get_instance()
 
     def set_device_memory_capacity(self, dev_mem_cap):
         """
@@ -485,20 +486,20 @@ class _CostModelContext:
         self._context_handle.reset_cost_model()
 
 
-_cost_model_context = None
+_COST_MODEL_CONTEXT = None
 
 
 def cost_model_context():
     """
-    Get the global _cost_model_context. If it is not created, create a new one.
+    Get the global _COST_MODEL_CONTEXT. If it is not created, create a new one.
 
     Returns:
         The global cost_model context.
     """
-    global _cost_model_context
-    if _cost_model_context is None:
-        _cost_model_context = _CostModelContext()
-    return _cost_model_context
+    global _COST_MODEL_CONTEXT
+    if _COST_MODEL_CONTEXT is None:
+        _COST_MODEL_CONTEXT = _CostModelContext()
+    return _COST_MODEL_CONTEXT
 
 
 set_cost_model_context_func_map = {
