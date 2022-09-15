@@ -50,7 +50,7 @@ size_t GetSize(const std::vector<int64_t> &shape) {
   return result;
 }
 
-template <typename T, typename S>
+template <typename T, typename S, typename G>
 class EmbeddingLookupHelperGpuKernel : public GpuKernelHelperBase {
  public:
   explicit EmbeddingLookupHelperGpuKernel(const std::string &kernel_name, const uint32_t &device_id)
@@ -88,7 +88,7 @@ class EmbeddingLookupHelperGpuKernel : public GpuKernelHelperBase {
     input_size_list_.push_back(GetSize<S>(input_indices_shape_));
     if (input_shapes.size() == kEmbeddingLookupDynamicShapeInputsNum) {
       is_dynamic_shape_ = true;
-      input_size_list_.push_back(sizeof(int64_t));
+      input_size_list_.push_back(sizeof(G));
     }
 
     output_size_list_.push_back(GetSize<T>(output_shape_));
@@ -118,20 +118,24 @@ class EmbeddingLookupHelperGpuKernel : public GpuKernelHelperBase {
       return flag;
     }
     if (is_dynamic_shape_) {
-      int64_t *input_offset_addr = nullptr;
-      flag = GetDeviceAddress<int64_t>(input_ptrs, kIndex2, kernel_name_, &input_offset_addr);
+      G *input_offset_addr = nullptr;
+      flag = GetDeviceAddress<G>(input_ptrs, kIndex2, kernel_name_, &input_offset_addr);
       if (flag != 0) {
         return flag;
       }
-      CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
-        cudaMemcpyAsync(&offset_, input_offset_addr, sizeof(int64_t), cudaMemcpyDeviceToHost,
-                        reinterpret_cast<cudaStream_t>(cuda_stream)),
-        "cudaMemcpyAsync offset_ failed");
+      CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemcpyAsync(&offset_, input_offset_addr, sizeof(G), cudaMemcpyDeviceToHost,
+                                                        reinterpret_cast<cudaStream_t>(cuda_stream)),
+                                        "cudaMemcpyAsync offset_ failed");
     }
     CalEmbeddingLookup(input_params_addr, input_indices_addr, output_addr, dims_[kIndex0], dims_[kIndex1],
                        dims_[kIndex2], input_dim1_, static_cast<int64_t>(offset_),
                        reinterpret_cast<cudaStream_t>(cuda_stream));
     return 0;
+  }
+
+  void SetKernelParam(const GpuKernelAttrBasePtr &kernel_attr) override {
+    attr_ptr_ = std::dynamic_pointer_cast<EmbeddingLookupAttr>(kernel_attr);
+    offset_ = attr_ptr_->offset;
   }
 
   void ResetResource() override {
@@ -155,8 +159,9 @@ class EmbeddingLookupHelperGpuKernel : public GpuKernelHelperBase {
   int64_t input_dim1_;
   bool is_null_input_;
   size_t dims_[kIndex3] = {};
-  int64_t offset_ = 0;
+  G offset_ = 0;
   bool is_dynamic_shape_;
+  std::shared_ptr<EmbeddingLookupAttr> attr_ptr_;
 };
 }  // namespace cukernel
 }  // namespace mindspore

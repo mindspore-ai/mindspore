@@ -31,7 +31,7 @@ using KernelRunFunc = EmbeddingLookUpCpuKernelMod::KernelRunFunc;
       .AddInputAttr(kNumberType##input_params_dtype)                                                             \
       .AddInputAttr(kNumberType##input_indices_dtype)                                                            \
       .AddOutputAttr(kNumberType##output_dtype),                                                                 \
-      &EmbeddingLookUpCpuKernelMod::LaunchKernel<input_params_type, input_indices_type>                          \
+      &EmbeddingLookUpCpuKernelMod::LaunchKernel<input_params_type, input_indices_type, int64_t>                 \
   }
 
 #define ADD_KERNEL_DYNAMIC(input_params_dtype, input_indices_dtype, output_dtype, input_params_type, \
@@ -42,7 +42,18 @@ using KernelRunFunc = EmbeddingLookUpCpuKernelMod::KernelRunFunc;
       .AddInputAttr(kNumberType##input_indices_dtype)                                                \
       .AddInputAttr(kNumberTypeInt64)                                                                \
       .AddOutputAttr(kNumberType##output_dtype),                                                     \
-      &EmbeddingLookUpCpuKernelMod::LaunchKernel<input_params_type, input_indices_type>              \
+      &EmbeddingLookUpCpuKernelMod::LaunchKernel<input_params_type, input_indices_type, int64_t>     \
+  }
+
+#define ADD_KERNEL_DYNAMIC_INT32(input_params_dtype, input_indices_dtype, output_dtype, input_params_type, \
+                                 input_indices_type)                                                       \
+  {                                                                                                        \
+    KernelAttr()                                                                                           \
+      .AddInputAttr(kNumberType##input_params_dtype)                                                       \
+      .AddInputAttr(kNumberType##input_indices_dtype)                                                      \
+      .AddInputAttr(kNumberTypeInt32)                                                                      \
+      .AddOutputAttr(kNumberType##output_dtype),                                                           \
+      &EmbeddingLookUpCpuKernelMod::LaunchKernel<input_params_type, input_indices_type, int32_t>           \
   }
 
 template <typename T, typename S>
@@ -121,7 +132,11 @@ const std::vector<std::pair<KernelAttr, KernelRunFunc>> &EmbeddingLookUpCpuKerne
     ADD_KERNEL_DYNAMIC(UInt64, Int64, UInt64, uint64_t, int64_t),
     ADD_KERNEL_DYNAMIC(Float16, Int64, Float16, float16, int64_t),
     ADD_KERNEL_DYNAMIC(Float32, Int64, Float32, float, int64_t),
-    ADD_KERNEL_DYNAMIC(Float64, Int64, Float64, double, int64_t)};
+    ADD_KERNEL_DYNAMIC(Float64, Int64, Float64, double, int64_t),
+
+    ADD_KERNEL_DYNAMIC_INT32(Int32, Int32, Int32, int32_t, int32_t),
+    ADD_KERNEL_DYNAMIC_INT32(Float32, Int32, Float32, float, int32_t)};
+
   return func_list;
 }
 
@@ -171,15 +186,15 @@ int EmbeddingLookUpCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   return KRET_OK;
 }
 
-template <typename T, typename S>
+template <typename T, typename S, typename G>
 bool EmbeddingLookUpCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                                const std::vector<AddressPtr> &outputs) {
   T *input_params_addr = reinterpret_cast<T *>(inputs[0]->addr);
   S *input_indices_addr = reinterpret_cast<S *>(inputs[1]->addr);
   T *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
   if (inputs.size() == kEmbeddingLookupDynamicShapeInputsNum) {
-    int64_t *input_offset_addr = reinterpret_cast<int64_t *>(inputs[2]->addr);
-    memcpy(&offset_, input_offset_addr, sizeof(int64_t));
+    G *input_offset_addr = reinterpret_cast<G *>(inputs[2]->addr);
+    memcpy(&offset_, input_offset_addr, sizeof(G));
   }
   auto task = [&](size_t start, size_t end) {
     size_t task_proc_lens = end - start;
