@@ -14,7 +14,6 @@
 # ============================================================================
 
 """constexpr util"""
-import numpy as np
 from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
 from mindspore.ops import functional as F
 from mindspore.ops  import operations as P
@@ -1048,7 +1047,8 @@ def tensor_setitem_by_number_with_tensor(data, index, value):
     """Assigns the tensor by number with tensor value."""
     data_shape = F.shape(data)
     if is_shape_unknown(data_shape):
-        index = Tensor(np.array([index]), mstype.int32)
+        index = check_range(index, F.dyn_shape(data)[0])
+        index = F.expand_dims(index, -1)
         return _tensor_setitem_by_int_tensor_with_tensor(data, index, value)
 
     index = const_utils.int_to_index(index, data_shape)

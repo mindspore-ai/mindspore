@@ -37,6 +37,7 @@ abstract::ShapePtr GatherInferShape(const PrimitivePtr &primitive, const std::ve
   abstract::AbstractTensorPtr params =
     CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 0);
   int64_t axis_val = 0;
+  bool is_axis_dyn = false;
   // 3rd input is a Tensor when Gather is a dynamic shape operator
   if (SizeToLong(input_args.size()) == input_num) {
     auto axis_attr = primitive->GetAttr("axis");
@@ -47,9 +48,13 @@ abstract::ShapePtr GatherInferShape(const PrimitivePtr &primitive, const std::ve
     MS_EXCEPTION_IF_NULL(axis);
     auto axis_value_ptr = axis->BuildValue();
     MS_EXCEPTION_IF_NULL(axis_value_ptr);
-    auto axis_tensor = axis_value_ptr->cast<tensor::TensorPtr>();
-    MS_EXCEPTION_IF_NULL(axis_tensor);
-    axis_val = *static_cast<int64_t *>(axis_tensor->data_c());
+    if (axis_value_ptr->isa<tensor::Tensor>()) {
+      auto axis_tensor = axis_value_ptr->cast<tensor::TensorPtr>();
+      MS_EXCEPTION_IF_NULL(axis_tensor);
+      axis_val = *static_cast<int64_t *>(axis_tensor->data_c());
+    } else {
+      is_axis_dyn = true;
+    }
   } else if (input_args[kInputIndex2]->isa<abstract::AbstractScalar>()) {
     auto axis = input_args[kInputIndex2]->cast<abstract::AbstractScalarPtr>();
     axis_val = GetValue<int64_t>(axis->BuildValue());
@@ -60,6 +65,13 @@ abstract::ShapePtr GatherInferShape(const PrimitivePtr &primitive, const std::ve
   }
   auto params_shp = params->shape()->shape();
   auto indices_shp = indices->shape()->shape();
+  ShapeVector out_shape = {};
+  constexpr int dynamic_rank_value = -2;
+  if (IsDynamicRank(params_shp) || IsDynamicRank(indices_shp) || is_axis_dyn) {
+    out_shape.push_back(dynamic_rank_value);
+    return std::make_shared<abstract::Shape>(out_shape);
+  }
+
   auto params_rank = static_cast<int64_t>(params_shp.size());
   CheckAndConvertUtils::CheckInRange<int64_t>("axis", axis_val, kIncludeLeft, {-params_rank, params_rank}, op_name);
   // check axis_val within interval: [0, params_rank)
@@ -77,7 +89,7 @@ abstract::ShapePtr GatherInferShape(const PrimitivePtr &primitive, const std::ve
     (void)copy(params_vec.begin() + axis_val + 1, params_vec.end(), std::back_inserter(out_vec));
     return out_vec;
   };
-  ShapeVector out_shape = calc_shape(indices_shp, params_shp);
+  out_shape = calc_shape(indices_shp, params_shp);
   return std::make_shared<abstract::Shape>(out_shape);
 }
 
