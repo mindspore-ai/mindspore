@@ -340,6 +340,7 @@ T InnerBitLeftShift(T x, T y) {
   if (y < 0) {
     MS_EXCEPTION(ValueError) << "For shift operator, shift count must be a non-negative integer.";
   }
+#ifndef _MSC_VER
   if (x == 0) {
     return x;
   }
@@ -356,6 +357,7 @@ T InnerBitLeftShift(T x, T y) {
   } else if (static_cast<T>(__builtin_clzll(static_cast<uint64_t>(x))) <= y) {
     MS_EXCEPTION(RuntimeError) << "Arithmetic left shift causes int64 integer overflow.";
   }
+#endif
   return x << y;
 }
 
