@@ -91,8 +91,9 @@ abstract::ShapePtr AddNInferShape(const PrimitivePtr &primitive, const std::vect
     }
     // Join input[i] with input[0]
     if (!AddNDynShapeJoin(&output_shape, &shape_vec)) {
-      MS_LOG(EXCEPTION) << "For '" << primitive->name() << "', input[" << i << "]:" << shape->ToString()
-                        << " is not compatible with input0:" << shape_0->ToString();
+      MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', input shape must be same, but got shape of input["
+                               << i << "]: " << shape->ToString() << ", shape of input[0]: " << shape_0->ToString()
+                               << ".";
     }
   }
   return std::make_shared<abstract::Shape>(output_shape);
