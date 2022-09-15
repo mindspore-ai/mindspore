@@ -58,8 +58,8 @@ def test_priority_replay_buffer_ops():
     if sys.platform == 'darwin':
         return
 
-    capacity = 200
-    batch_size = 32
+    capacity = 50
+    batch_size = 16
     state_shape, state_dtype = (17,), mindspore.float32
     action_shape, action_dtype = (6,), mindspore.int32
     shapes = (state_shape, action_shape)
@@ -71,6 +71,58 @@ def test_priority_replay_buffer_ops():
         state = Tensor(np.ones(state_shape) * i, state_dtype)
         action = Tensor(np.ones(action_shape) * i, action_dtype)
         prb.push(state, action)
+
+    # Sample a batch of transitions, the indices should be consist with transition.
+    indices, weights, states, actions = prb.sample(1.)
+    assert np.all(indices.asnumpy() < 100)
+    assert np.all(indices.asnumpy() >= 50)
+    states_expect = np.broadcast_to(indices.asnumpy().reshape(-1, 1), states.shape)
+    actions_expect = np.broadcast_to(indices.asnumpy().reshape(-1, 1), actions.shape)
+    assert np.allclose(states.asnumpy(), states_expect)
+    assert np.allclose(actions.asnumpy(), actions_expect)
+
+    # Minimize the priority, these transition will not be sampled next time.
+    priorities = Tensor(np.ones(weights.shape) * 1e-7, mindspore.float32)
+    prb.update_priorities(indices, priorities)
+
+    indices_new, _, states_new, actions_new = prb.sample(1.)
+    assert np.all(indices_new.asnumpy() < 100)
+    assert np.all(indices.asnumpy() >= 50)
+    assert np.all(indices.asnumpy() != indices_new.asnumpy())
+    states_expect = np.broadcast_to(indices_new.asnumpy().reshape(-1, 1), states.shape)
+    actions_expect = np.broadcast_to(indices_new.asnumpy().reshape(-1, 1), actions.shape)
+    assert np.allclose(states_new.asnumpy(), states_expect)
+    assert np.allclose(actions_new.asnumpy(), actions_expect)
+
+    prb.destroy()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu
+@pytest.mark.env_onecard
+def test_priority_replay_buffer_with_priority_ops():
+    """
+    Feature: PriorityReplayBuffer used in Reinforcement Learning.
+    Description: test cases PriorityReplayBuffer.
+    Expectation: push, sample, update operators result correct.
+    """
+    if sys.platform == 'darwin':
+        return
+
+    capacity = 100
+    batch_size = 32
+    state_shape, state_dtype = (17,), mindspore.float32
+    action_shape, action_dtype = (6,), mindspore.int32
+    shapes = (state_shape, action_shape)
+    dtypes = (state_dtype, action_dtype)
+    prb = PriorityReplayBuffer(capacity, 1., batch_size, shapes, dtypes, seed0=0, seed1=42)
+
+    # Push 100 timestep transitions to priority replay buffer.
+    for i in range(100):
+        state = Tensor(np.ones(state_shape) * i, state_dtype)
+        action = Tensor(np.ones(action_shape) * i, action_dtype)
+        priority = Tensor(i / 100, mindspore.float32)
+        prb.push(state, action, priority)
 
     # Sample a batch of transitions, the indices should be consist with transition.
     indices, weights, states, actions = prb.sample(1.)

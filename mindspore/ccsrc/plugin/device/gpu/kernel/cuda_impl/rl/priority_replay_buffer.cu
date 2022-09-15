@@ -108,14 +108,24 @@ __forceinline__ __device__ size_t GetPrefixSumIdx(T *tree, size_t capacity, floa
 }
 
 template <typename T>
-__global__ void SumTreeSampleKernel(T *tree, curandState *state, size_t capacity, size_t round_start, float *beta,
-                                    size_t batch_size, size_t *indices, float *weights) {
+__global__ void SumTreeSampleKernel(T *tree, curandState *state, size_t capacity, float *beta, size_t batch_size,
+                                    size_t *indices, float *weights) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < batch_size; i += gridDim.x * blockDim.x) {
     size_t segment_len = tree[kRootIdx].sum / batch_size;
     float prefix_sum = (curand_uniform(&state[i]) + i) * segment_len;
     size_t idx = GetPrefixSumIdx(tree, capacity, prefix_sum);
-    indices[i] = idx + round_start;
+    indices[i] = idx;
     weights[i] = powf((tree[idx + capacity].sum / tree[kRootIdx].min), -beta[0]);
+  }
+}
+
+__global__ void SumTreeGetGlobalIdxKernel(size_t batch_size, size_t *indices, size_t total_num, size_t capacity) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < batch_size; i += gridDim.x * blockDim.x) {
+    size_t idx = indices[i] + (total_num - total_num % capacity);
+    if (idx > total_num) {
+      idx -= capacity;
+    }
+    indices[i] = idx;
   }
 }
 
@@ -130,7 +140,7 @@ __global__ void SumTreeUpdateKernel(T *tree, size_t capacity, size_t last_idx, f
     float priority = powf(priorities[i], alpha);
     MsAtomicMax(max_priority, priority);
 
-    idx += capacity;
+    idx += -last_idx + capacity;
     SumTreeInsert(tree, idx, priority);
   }
 }
@@ -154,12 +164,17 @@ void SumTreePush(T *tree, const float &alpha, const size_t &idx, const size_t &c
 
 // Sample a batch item. Return indices and correction weights.
 template <typename T>
-void SumTreeSample(T *tree, curandState *state, const size_t &capacity, const size_t &round_start, float *beta,
-                   const size_t &batch_size, size_t *indices, float *weights, cudaStream_t stream) {
+void SumTreeSample(T *tree, curandState *state, const size_t &capacity, float *beta, const size_t &batch_size,
+                   size_t *indices, float *weights, cudaStream_t stream) {
   size_t block = std::min(batch_size, kMaxThreadPerBlock);
   size_t grid = (batch_size + block - 1) / block;
-  SumTreeSampleKernel<<<grid, block, 0, stream>>>(tree, state, capacity, round_start, beta, batch_size, indices,
-                                                  weights);
+  SumTreeSampleKernel<<<grid, block, 0, stream>>>(tree, state, capacity, beta, batch_size, indices, weights);
+}
+
+void SumTreeGetGlobalIdx(size_t batch_size, size_t *indices, size_t total_num, size_t capacity, cudaStream_t stream) {
+  size_t block = std::min(batch_size, kMaxThreadPerBlock);
+  size_t grid = (batch_size + block - 1) / block;
+  SumTreeGetGlobalIdxKernel<<<grid, block, 0, stream>>>(batch_size, indices, total_num, capacity);
 }
 
 // Update item priority.
@@ -178,9 +193,8 @@ template CUDA_LIB_EXPORT void SumTreePush<SumMinTree>(SumMinTree *tree, const fl
                                                       const size_t &capacity, float *priority, float *max_priority,
                                                       cudaStream_t stream);
 template CUDA_LIB_EXPORT void SumTreeSample<SumMinTree>(SumMinTree *tree, curandState *state, const size_t &capacity,
-                                                        const size_t &round_start, float *beta,
-                                                        const size_t &batch_size, size_t *indices, float *weights,
-                                                        cudaStream_t stream);
+                                                        float *beta, const size_t &batch_size, size_t *indices,
+                                                        float *weights, cudaStream_t stream);
 template CUDA_LIB_EXPORT void SumTreeUpdate<SumMinTree>(SumMinTree *tree, const size_t &capacity,
                                                         const size_t &last_idx, const float &alpha, float *max_priority,
                                                         size_t *indices, float *priorities, const size_t &batch_size,
