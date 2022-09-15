@@ -1,0 +1,66 @@
+/**
+ * Copyright 2022 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+#include "ops/matrix_power.h"
+
+#include "abstract/ops/primitive_infer_map.h"
+#include "ops/op_utils.h"
+#include "utils/tensor_construct_utils.h"
+#include "abstract/dshape.h"
+#include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
+
+namespace mindspore {
+namespace ops {
+namespace {
+TypePtr MatrixPowerInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
+  auto x_type = input_args[0]->BuildType();
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim->name());
+  return x_type;
+}
+
+abstract::ShapePtr MatrixPowerInferShape(const PrimitivePtr &primitive,
+                                         const std::vector<AbstractBasePtr> &input_args) {
+  auto prim_name = primitive->name();
+  const constexpr int64_t x_shape_size = 3;
+  const constexpr int64_t x_shape_two = 2;
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  if (x_shape.size() != x_shape_size) {
+    MS_EXCEPTION(ValueError) << "For MatrixPower, x should be a 3-D tensor"
+                             << ", but got x is a " << x_shape.size() << "-D tensor.";
+  }
+  if (x_shape[1] != x_shape[x_shape_two]) {
+    MS_EXCEPTION(ValueError) << "For " << prim_name << ", sizes of dim[1] and dim[2] of x should be the same"
+                             << ", but size of dim[1] of got x is " << x_shape[1] << ", size of dim[2] of got x is "
+                             << x_shape[x_shape_two] << ".";
+  }
+  return std::make_shared<abstract::Shape>(x_shape);
+}
+}  // namespace
+
+MIND_API_OPERATOR_IMPL(MatrixPower, BaseOperator);
+AbstractBasePtr MatrixPowerInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                 const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  const int64_t input_num = 1;
+  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
+  auto infer_type = MatrixPowerInferType(primitive, input_args);
+  auto infer_shape = MatrixPowerInferShape(primitive, input_args);
+  return abstract::MakeAbstract(infer_shape, infer_type);
+}
+REGISTER_PRIMITIVE_EVAL_IMPL(MatrixPower, prim::kPrimMatrixPower, MatrixPowerInfer, nullptr, true);
+}  // namespace ops
+}  // namespace mindspore

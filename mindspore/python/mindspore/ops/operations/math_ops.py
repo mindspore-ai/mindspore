@@ -5318,6 +5318,50 @@ class MatrixInverse(Primitive):
         validator.check_value_type('adjoint', adjoint, [bool], self.name)
 
 
+class MatrixPower(Primitive):
+    """
+    Computes the n-th power of a batch of square matrices.
+    If n = 0, it returns a batch of identity matrices. If n is negative, it
+    returns the inverse of each matrix (if invertible) raised to the power of abs(n).
+
+    Args:
+        n (int) : The exponent, a required int.
+
+    Inputs:
+        - **x** (Tensor) - A 3-D Tensor. Supported data types are float16 and float32.
+          The shape is :math:`(b, m, m)`, represents b m-D square matrices.
+
+    Outputs:
+        - **y** (Tensor) - A 3-D Tensor. Data type and shape are the same as `x`'s.
+
+    Raises:
+        TypeError: If the data type of `n` is not int.
+        TypeError: If the data type of `x` is neither float32 nor float16.
+        TypeError: If x is not a Tensor.
+        ValueError: If `x` is not a 3-D tensor.
+        ValueError: If sizes of dim[1] and dim[2] of `x` are not the same.
+        ValueError: If n is negative but got input x has singular matrices.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> x = Tensor([[[0, 1], [-1, 0]], [[1, 0], [0, -1]]], dtype=ms.float32)
+        >>> matrix_power = ops.MatrixPower(n=2)
+        >>> y = matrix_power(x)
+        >>> print(y)
+        [[[-1.  0.]
+          [-0. -1.]]
+         [[ 1.  0.]
+          [ 0.  1.]]]
+    """
+
+    @prim_attr_register
+    def __init__(self, n):
+        super().__init__(name="MatrixPower")
+        self.n = validator.check_value_type("n", n, [int], self.name)
+
+
 class MatrixDeterminant(Primitive):
     """
     Computes the determinant of one or more square matrices.

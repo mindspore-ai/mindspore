@@ -44,6 +44,7 @@ from mindspore.ops.operations.math_ops import Trace
 from mindspore.ops.operations.math_ops import Cholesky
 from mindspore.ops.operations.math_ops import LuUnpack
 from mindspore.ops.operations.math_ops import MatrixExp
+from mindspore.ops.operations.math_ops import MatrixPower
 from mindspore.ops.operations.math_ops import MatrixSolve
 from mindspore.ops.operations.math_ops import CholeskySolve
 from mindspore.ops.operations.math_ops import NextAfter
@@ -2360,6 +2361,10 @@ test_case_math_ops = [
         'block': P.MatrixInverse(),
         'desc_inputs': [Tensor(np.array([[[-1, -2], [-3, -4]], [[5, 6], [7, 8]]]).astype(np.float32))],
         'desc_bprop': [Tensor(np.array([[[-1, -2], [-3, -4]], [[5, 6], [7, 8]]]).astype(np.float32))]}),
+    ('MatrixPower', {
+        'block': MatrixPower(n=2),
+        'desc_inputs': [Tensor(np.array([[[0, 1], [1, 0]]]).astype(np.float32))],
+        'desc_bprop': [Tensor(np.array([[[0, 1], [1, 0]]]).astype(np.float32))]}),
     ('MatrixSolve', {
         'block': MatrixSolve(),
         'desc_inputs': [Tensor(np.array([[[1., 4.], [2., 7.]], [[1., 4.], [2., 7.]]]).astype(np.float32)),
