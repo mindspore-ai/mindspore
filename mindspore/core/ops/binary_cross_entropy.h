@@ -42,8 +42,6 @@ class MIND_API BinaryCrossEntropy : public BaseOperator {
   /// \return reduction.
   Reduction get_reduction() const;
 };
-
-using kPrimBinaryCrossEntropyPtr = std::shared_ptr<BinaryCrossEntropy>;
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_BINARY_CROSS_ENTROPY_H_

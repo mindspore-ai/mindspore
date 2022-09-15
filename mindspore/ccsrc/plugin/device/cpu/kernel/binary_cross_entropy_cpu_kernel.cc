@@ -15,6 +15,8 @@
  */
 
 #include "plugin/device/cpu/kernel/binary_cross_entropy_cpu_kernel.h"
+#include <map>
+#include "mindspore/core/ops/binary_cross_entropy.h"
 
 namespace mindspore {
 namespace kernel {
@@ -106,31 +108,44 @@ bool BinaryCrossEntropyCpuKernelMod::Launch(const std::vector<AddressPtr> &input
   return true;
 }
 
-void BinaryCrossEntropyCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  weight_defined_ = (input_num == kBceInputsNumWithWeight);
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  if (AnfAlgo::IsShapesDynamic({input_shape})) {
-    return;
+bool BinaryCrossEntropyCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                          const std::vector<KernelTensorPtr> &inputs,
+                                          const std::vector<KernelTensorPtr> &outputs) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::BinaryCrossEntropy>(base_operator);
+  if (kernel_ptr == nullptr) {
+    MS_LOG(ERROR) << "cast BinaryCrossEntropy ops failed!";
+    return false;
   }
+  kernel_name_ = kernel_ptr->name();
+  size_t input_num = inputs.size();
+  weight_defined_ = (input_num == kBceInputsNumWithWeight);
+  dtype_ = inputs[kIndex0]->GetDtype();
+
+  const auto reduction = kernel_ptr->get_reduction();
+  if (reduction == Reduction::NONE) {
+    reduction_ = kNone;
+  } else if (reduction == Reduction::MEAN) {
+    reduction_ = kMean;
+  } else {
+    reduction_ = kSum;
+  }
+  return true;
+}
+
+int BinaryCrossEntropyCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                           const std::vector<KernelTensorPtr> &inputs,
+                                           const std::vector<KernelTensorPtr> &outputs,
+                                           const std::map<uint32_t, tensor::TensorPtr> &) {
+  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != 0) {
+    return ret;
+  }
+  auto input_shape = inputs[kIndex0]->GetShapeVector();
+  input_size_ = 1;
   for (size_t i = 0; i < input_shape.size(); i++) {
     input_size_ *= LongToSize(input_shape[i]);
   }
-
-  const std::string reduction = common::AnfAlgo::GetNodeAttr<string>(kernel_node, REDUCTION);
-  if (reduction == NONE) {
-    reduction_ = kNone;
-  } else if (reduction == MEAN) {
-    reduction_ = kMean;
-  } else if (reduction == SUM) {
-    reduction_ = kSum;
-  } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'reduction' must be 'none', 'mean', or 'sum', but got "
-                      << reduction;
-  }
+  return KRET_OK;
 }
 
 std::vector<KernelAttr> BinaryCrossEntropyCpuKernelMod::GetOpSupport() {
