@@ -482,6 +482,7 @@ __all__ = [
     "Pull",
     "ReLUV2",
     "SparseToDense",
+    "SparseTensorDenseAdd",
     "SparseTensorDenseMatmul",
     "SparseApplyAdadelta",
     "MatrixInverse",
