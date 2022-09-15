@@ -73,7 +73,7 @@
         需要转换为属性的输入的索引。
 
         参数：
-            - **input_to_attr_index** (int) - 索引。默认值：()。
+            - **input_to_attr_index** (list) - 索引。默认值：()。
 
     .. py:method:: unknown_shape_formats(unknown_shape_formats)
 
