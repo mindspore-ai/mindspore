@@ -74,7 +74,6 @@ class TensorScatterMaxFission : public TensorScatterFission {
       : TensorScatterFission(multigraph, name) {}
   ~TensorScatterMaxFission() override = default;
   const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
 
  protected:
   ValueNodePtr GetScatterNdPrimNode() const override;
@@ -86,7 +85,6 @@ class TensorScatterMinFission : public TensorScatterFission {
       : TensorScatterFission(multigraph, name) {}
   ~TensorScatterMinFission() override = default;
   const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
 
  protected:
   ValueNodePtr GetScatterNdPrimNode() const override;

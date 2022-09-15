@@ -107,21 +107,5 @@ const BaseRef TensorScatterMinFission::DefinePattern() const {
   VarPtr updates = std::make_shared<Var>();
   return VectorRef({prim::kPrimTensorScatterMin, input, indices, updates});
 }
-
-const AnfNodePtr TensorScatterMinFission::Process(const FuncGraphPtr &graph, const AnfNodePtr &node,
-                                                  const EquivPtr &) const {
-  auto scatter_nd_node = TensorScatterFission::Process(graph, node, nullptr);
-  MS_EXCEPTION_IF_NULL(scatter_nd_node);
-  common::AnfAlgo::SetNodeAttr("cust_aicpu", MakeValue<std::string>("ScatterNdMin"), scatter_nd_node);
-  return scatter_nd_node;
-}
-
-const AnfNodePtr TensorScatterMaxFission::Process(const FuncGraphPtr &graph, const AnfNodePtr &node,
-                                                  const EquivPtr &) const {
-  auto scatter_nd_node = TensorScatterFission::Process(graph, node, nullptr);
-  MS_EXCEPTION_IF_NULL(scatter_nd_node);
-  common::AnfAlgo::SetNodeAttr("cust_aicpu", MakeValue<std::string>("ScatterNdMax"), scatter_nd_node);
-  return scatter_nd_node;
-}
 }  // namespace opt
 }  // namespace mindspore
