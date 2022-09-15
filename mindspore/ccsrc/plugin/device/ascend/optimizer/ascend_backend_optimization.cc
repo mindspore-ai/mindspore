@@ -176,7 +176,7 @@
 #include "include/common/debug/dump_proto.h"
 #include "include/common/debug/draw.h"
 #include "plugin/device/ascend/optimizer/optimizer_factory.h"
-#include "plugin/device/ascend/hal/hardware/ascend_utils.h"
+#include "plugin/device/ascend/hal/common/ascend_utils.h"
 
 namespace mindspore {
 namespace opt {

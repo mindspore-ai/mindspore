@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "plugin/device/ascend/hal/hardware/ascend_utils.h"
+#include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include <vector>
 #include <string>
 #include "common/util/error_manager/error_manager.h"
@@ -30,10 +30,10 @@ namespace ascend {
 constexpr auto kUnknowErrorString = "Unknown error occurred";
 constexpr auto kSOC_VERSION = "SOC_VERSION";
 
-std::string GetErrorMessage() {
+std::string GetErrorMessage(bool add_title) {
   const string &error_message = ErrorManager::GetInstance().GetErrorMessage();
   if (!error_message.empty() && error_message.find(kUnknowErrorString) == string::npos) {
-    return error_message;
+    return add_title ? "#umsg#Ascend Error Message:#umsg#" + error_message : error_message;
   }
   return "";
 }

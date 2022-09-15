@@ -22,6 +22,7 @@
 #include "common/util/error_manager/error_manager.h"
 #include "include/backend/data_queue/data_queue_mgr.h"
 #include "utils/log_adapter.h"
+#include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "plugin/device/ascend/hal/device/ascend_kernel_runtime.h"
 #include "ps/ps_cache/ps_data/ps_data_prefetch.h"
 
@@ -66,14 +67,6 @@ void CheckRtRetWithError(rtError_t error, const std::string &msg) {
   if (error != RT_ERROR_NONE) {
     MS_LOG(ERROR) << "Rt error: " << msg << " | Error number: " << error;
   }
-}
-
-std::string GetErrorMessage() {
-  const std::string &error_message = ErrorManager::GetInstance().GetErrorMessage();
-  if (!error_message.empty() && error_message.find(kUnknownErrorString) == std::string::npos) {
-    return error_message;
-  }
-  return "";
 }
 }  // namespace
 
@@ -200,11 +193,10 @@ AscendTdtQueue::AscendTdtQueue(const std::string &channel_name) : DataQueue(chan
   if (!channel_name_.empty()) {
     acl_handle_ = acltdtCreateChannel(device_id_, channel_name_.c_str());
     if (acl_handle_ == nullptr) {
-      MS_LOG(ERROR) << "Create channel for sending data failed, please check DEVICE ID setting, DEVICE ID that passed "
-                       "into dataset(from context) and training process should be the same.";
-      if (auto error_message = GetErrorMessage(); !error_message.empty()) {
-        MS_LOG(ERROR) << "Ascend error occurred, error message:\n" << error_message;
-      }
+      MS_LOG(EXCEPTION) << "Create channel for sending data failed.#umsg#User Help Message:#umsg#"
+                           "Please check DEVICE ID setting, DEVICE ID that passed into dataset"
+                           "(from context) and training process should be the same."
+                        << ascend::GetErrorMessage(true);
     }
     tdt_handle::AddHandle(&acl_handle_, nullptr);
   }
@@ -213,10 +205,7 @@ AscendTdtQueue::AscendTdtQueue(const std::string &channel_name) : DataQueue(chan
 AscendTdtQueue::~AscendTdtQueue() {
   if (acl_handle_ != nullptr) {
     if (acltdtDestroyChannel(acl_handle_) != ACL_SUCCESS) {
-      MS_LOG(ERROR) << "Failed to destroy channel for tdt queue.";
-      if (auto error_message = GetErrorMessage(); !error_message.empty()) {
-        MS_LOG(ERROR) << "Ascend error occurred, error message:\n" << error_message;
-      }
+      MS_LOG(EXCEPTION) << "Failed to destroy channel for tdt queue." << ascend::GetErrorMessage(true);
     } else {
       tdt_handle::DelHandle(&acl_handle_);
       acl_handle_ = nullptr;
@@ -258,11 +247,7 @@ DataQueueStatus AscendTdtQueue::Push(std::vector<DataQueueItem> data) {
                       << "transmission channel on the device side. So we force the data transmission channel to stop.";
       return DataQueueStatus::SUCCESS;
     }
-    if (auto error_message = GetErrorMessage(); !error_message.empty()) {
-      MS_LOG(ERROR) << "Ascend error occurred, error message:\n" << error_message;
-    }
-    MS_LOG(ERROR) << "Tdt Send data failed.";
-    return DataQueueStatus::INTERNAL_ERROR;
+    MS_LOG(EXCEPTION) << "Tdt Send data failed." << ascend::GetErrorMessage(true);
   }
 
   return DataQueueStatus::SUCCESS;
