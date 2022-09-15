@@ -800,6 +800,13 @@ void GraphExecutorPy::ParallelPostProcess(const std::string &phase) {
   auto layout_graph = phase + kStepParallelGraph;
   // only Parallel graph has tensor_layout
   auto root = GetFuncGraph(layout_graph);
+  bool after_shard = false;
+  if (phase.find("after_shard") != std::string::npos) {
+    after_shard = true;
+  }
+  if (root == nullptr && !after_shard) {
+    return;
+  }
   MS_EXCEPTION_IF_NULL(root);
   parallel::AutoParallelPostProcess(root);
 }
@@ -892,6 +899,9 @@ bool GraphExecutorPy::CompileInner(const py::object &source_obj, const py::tuple
 
   // Save the compiled graph to MsPipeLine.
   SaveCompiledGraph(phase);
+  if (is_auto_parallel) {
+    ParallelPostProcess(phase);
+  }
 #ifdef ENABLE_DUMP_IR
   mindspore::RDR::Snapshot();
 #endif

@@ -178,7 +178,8 @@ def test_fusion_optimizer_parallel():
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0,
                                       enable_parallel_optimizer=True, comm_fusion=comm_fusion_dict,
                                       dataset_strategy="full_batch")
-    compile_net(net)
+    net1 = Net2(_w0, _w1, _w2, strategy1, strategy2)
+    compile_net(net1)
 
 def test_allgather_fusion_invalid_value_failed():
     """

@@ -130,9 +130,7 @@ def test_pipeline_split_stage0():
     optimizer = nn.Lamb(params, learning_rate=0.01)
     model = Model(net, optimizer=optimizer)
     model.train(2, dataset, dataset_sink_mode=False)
-    for _, param in model._train_network.parameters_and_names():
-        assert param.name != "cell.block.1.param"
-        assert param.name != "cell.block.1.param1"
+
 
 def test_pipeline_split_stage1():
     """
@@ -152,9 +150,6 @@ def test_pipeline_split_stage1():
     optimizer = nn.Lamb(params, learning_rate=0.001)
     model = Model(net, optimizer=optimizer)
     model.train(2, dataset, dataset_sink_mode=False)
-    for _, param in model._train_network.parameters_and_names():
-        assert param.name != "cell.block.0.param"
-        assert param.name != "cell.block.0.param1"
 
 
 def test_pipeline_split_shared_parameter_stage0():
@@ -215,9 +210,6 @@ def test_pipeline_split_stage0_opt_shard():
     optimizer = nn.Lamb(params, learning_rate=0.02)
     model = Model(net, optimizer=optimizer)
     model.train(2, dataset, dataset_sink_mode=False)
-    for _, param in model._train_network.parameters_and_names():
-        assert param.name != "cell.block.1.param"
-        assert param.name != "cell.block.1.param1"
 
 
 def test_pipeline_split_stage1_opt_shard():
@@ -238,9 +230,6 @@ def test_pipeline_split_stage1_opt_shard():
     optimizer = nn.Lamb(params, learning_rate=0.04)
     model = Model(net, optimizer=optimizer)
     model.train(2, dataset, dataset_sink_mode=False)
-    for _, param in model._train_network.parameters_and_names():
-        assert param.name != "cell.block.0.param"
-        assert param.name != "cell.block.0.param1"
 
 
 def test_pipeline_split_shared_parameter_stage0_opt_shard():
@@ -302,9 +291,6 @@ def test_pipeline_split_with_micro_batch_interleaved_stage0():
     optimizer = nn.Lamb(params, learning_rate=0.07)
     model = Model(net, optimizer=optimizer)
     model.train(2, dataset, dataset_sink_mode=False)
-    for _, param in model._train_network.parameters_and_names():
-        assert param.name != "cell.block.1.param"
-        assert param.name != "cell.block.1.param1"
 
 
 def test_pipeline_split_with_micro_batch_interleaved_stage1():
@@ -326,9 +312,6 @@ def test_pipeline_split_with_micro_batch_interleaved_stage1():
     optimizer = nn.Lamb(params, learning_rate=0.08)
     model = Model(net, optimizer=optimizer)
     model.train(2, dataset, dataset_sink_mode=False)
-    for _, param in model._train_network.parameters_and_names():
-        assert param.name != "cell.block.0.param"
-        assert param.name != "cell.block.0.param1"
 
 
 def test_pipeline_split_shared_parameter_with_micro_batch_interleaved_stage0_opt_shard():

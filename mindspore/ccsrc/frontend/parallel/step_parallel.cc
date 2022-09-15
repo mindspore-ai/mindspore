@@ -2865,7 +2865,7 @@ bool CreateGroupsByCkptFile(const std::string &file) {
 void ReorderForPipelineSplit(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager, int64_t pipeline_stages) {
   if (!root->has_flag(BACKWARD) && pipeline_stages > 1) {
     root->set_flag(BACKWARD, true);
-    if (root->has_flag(kTraining)) {
+    if (IsTraining(manager)) {
       Reorder(root);
     } else {
       ReorderForPredict(root, manager);

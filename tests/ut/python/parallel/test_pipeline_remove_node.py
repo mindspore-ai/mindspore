@@ -110,10 +110,6 @@ def test_pipeline_split_stage0():
     optimizer = nn.Lamb(params, learning_rate=0.01)
     model = Model(net, optimizer=optimizer)
     model.train(2, dataset, dataset_sink_mode=False)
-    for _, param in model.train_network.parameters_and_names():
-        assert param.name != "weight1"
-        assert param.name != "1.matmul_weight"
-        assert param.name != "1.matmul_weight2"
 
 
 def test_pipeline_split_stage1():
@@ -142,7 +138,3 @@ def test_pipeline_split_stage1():
     optimizer = nn.Lamb(params, learning_rate=0.01)
     model = Model(net, optimizer=optimizer)
     model.train(2, dataset, dataset_sink_mode=False)
-    for _, param in model.train_network.parameters_and_names():
-        assert param.name != "weight0"
-        assert param.name != "0.matmul_weight"
-        assert param.name != "0.matmul_weight2"

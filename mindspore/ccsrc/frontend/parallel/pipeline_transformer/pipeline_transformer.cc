@@ -55,7 +55,7 @@ static bool IsInWhiteList(const CNodePtr &cnode) {
 }
 
 void PipelineTransformer::MainGraph() {
-  if (!root_->has_flag(kTraining)) {
+  if (!is_train_) {
     main_graph_ = root_;
     return;
   }
@@ -146,7 +146,7 @@ bool PipelineTransformer::LabelParameterStart(const FuncGraphPtr &graph, const C
 }
 
 void PipelineTransformer::LabelMicroBatch() {
-  if (!root_->has_flag(kTraining)) {
+  if (!is_train_) {
     return;
   }
   MS_EXCEPTION_IF_NULL(main_graph_);
@@ -223,10 +223,13 @@ void PipelineTransformer::LabelGenMaskFusion() {
 void PipelineTransformer::Coloring() {
   auto need_coloring = true;
   std::set<int64_t> stage_set;
+  if (!IsTraining(manager_)) {
+    is_train_ = false;
+  }
   while (need_coloring) {
     need_coloring = false;
     for (auto &fg : manager_->func_graphs()) {
-      if (fg == root_ && root_->has_flag(kTraining)) {
+      if (fg == root_ && is_train_) {
         continue;
       }
       auto value_nodes = fg->value_nodes();
@@ -457,41 +460,44 @@ std::vector<AnfNodePtr> PipelineTransformer::HandleSharedParameter() {
     if (parameter_stage.size() <= 1) {
       continue;
     }
-    auto users = manager_->node_users()[parameter];
-    for (auto &user : users) {
-      auto node = user.first;
-      auto cnode = node->cast<CNodePtr>();
-      auto graph = node->func_graph();
-      if (IsValueNode<FuncGraph>(cnode->input(0))) {
-        graph = GetValueNode<FuncGraphPtr>(cnode->input(0));
-      }
-      if (graph == root_ || graph->stage() == -1 || parameter_stage.count(stage_) == 0) {
-        continue;
-      }
-      auto micro = cnode->GetPrimalAttr(MICRO);
-      if (!micro) {
-        MS_LOG(INFO) << "parameter: " << parameter->ToString() << " doesn't have micro batch";
-        micro = MakeValue(int64_t(0));
-      }
-      if (stage_ == *parameter_stage.begin()) {
-        auto stage_info = node->user_data<NodeStageInfo>();
-        if (graph->stage() == stage_ || stage_info == nullptr) {
+    auto loads = GetLoadNodeByParam(parameter);
+    for (auto &load : loads) {
+      auto users = manager_->node_users()[load];
+      for (auto &user : users) {
+        auto node = user.first;
+        auto cnode = node->cast<CNodePtr>();
+        auto graph = node->func_graph();
+        if (IsValueNode<FuncGraph>(cnode->input(0))) {
+          graph = GetValueNode<FuncGraphPtr>(cnode->input(0));
+        }
+        if (graph == root_ || graph->stage() == -1 || parameter_stage.count(stage_) == 0) {
           continue;
         }
-        auto user_stage = stage_info->stage();
-        if (Reuse(parameter, user_stage, make_tuple_input, DEST_RANK)) {
-          continue;
+        auto micro = cnode->GetPrimalAttr(MICRO);
+        if (!micro) {
+          MS_LOG(INFO) << "parameter: " << parameter->ToString() << " doesn't have micro batch";
+          micro = MakeValue(int64_t(0));
         }
-        auto send_out = InsertSend(parameter, user_stage, stage_, micro);
-        make_tuple_input.push_back(send_out.depend);
-      } else {
-        auto receive = Reuse(parameter, *parameter_stage.begin(), recvs, SRC_RANK);
-        if (receive) {
-          manager_->SetEdge(node, user.second, receive);
+        if (stage_ == *parameter_stage.begin()) {
+          auto stage_info = node->user_data<NodeStageInfo>();
+          if (graph->stage() == stage_ || stage_info == nullptr) {
+            continue;
+          }
+          auto user_stage = stage_info->stage();
+          if (Reuse(parameter, user_stage, make_tuple_input, DEST_RANK)) {
+            continue;
+          }
+          auto send_out = InsertSend(parameter, user_stage, stage_, micro);
+          make_tuple_input.push_back(send_out.depend);
         } else {
-          auto recv = InsertReceive(main_graph_, parameter, node, user.second, stage_, *parameter_stage.begin(), micro,
-                                    parameter);
-          recvs.push_back(recv);
+          auto receive = Reuse(parameter, *parameter_stage.begin(), recvs, SRC_RANK);
+          if (receive) {
+            manager_->SetEdge(node, user.second, receive);
+          } else {
+            auto recv = InsertReceive(main_graph_, parameter, node, user.second, stage_, *parameter_stage.begin(),
+                                      micro, parameter);
+            recvs.push_back(recv);
+          }
         }
       }
     }
@@ -906,7 +912,7 @@ std::pair<std::vector<AnfNodePtr>, std::vector<AnfNodePtr>> PipelineTransformer:
   std::vector<AnfNodePtr> all_nodes = DeepScopedGraphSearch(ret);
   std::reverse(all_nodes.begin(), all_nodes.end());
   auto stage_num = g_device_manager->stage_num();
-  if (root_->has_flag(kTraining) && (stage_num > micro_size_)) {
+  if (is_train_ && (stage_num > micro_size_)) {
     MS_LOG(EXCEPTION) << "MicroBatch size: " << micro_size_ << " can't less than stage num: " << stage_num;
   }
   for (auto &node : all_nodes) {
@@ -934,7 +940,7 @@ void PipelineTransformer::CutGraph() {
   if (IsLastStage()) {
     return;
   }
-  if (send_ops.empty() && !root_->has_flag(kTraining)) {
+  if (send_ops.empty() && !is_train_) {
     return;
   }
   (void)make_tuple_inputs.insert(make_tuple_inputs.cend(), send_ops.cbegin(), send_ops.cend());

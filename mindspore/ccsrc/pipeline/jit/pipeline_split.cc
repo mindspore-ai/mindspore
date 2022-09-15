@@ -26,6 +26,7 @@
 #include "frontend/parallel/pipeline_transformer/pipeline_transformer.h"
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/step_parallel_utils.h"
+#include "frontend/parallel/parameter_manager.h"
 #if defined(__linux__) && defined(WITH_BACKEND)
 #include "ps/util.h"
 #include "ps/ps_context.h"
@@ -128,6 +129,7 @@ static CNodePtr CreateVirtualDataset(const FuncGraphPtr &func_graph) {
 
 static std::set<FuncGraphPtr> FindForwardGraph(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &all_nodes) {
   std::set<FuncGraphPtr> graph_sets;
+  auto manager = root->manager();
   if (!parallel::IsAutoParallelCareGraph(root)) {
     return graph_sets;
   }
@@ -145,7 +147,7 @@ static std::set<FuncGraphPtr> FindForwardGraph(const FuncGraphPtr &root, const s
       auto cnode = node_user.first->cast_ptr<CNode>();
       MS_EXCEPTION_IF_NULL(cnode);
       if (IsValueNode<Primitive>(cnode->inputs()[0]) ||
-          (IsValueNode<FuncGraph>(cnode->inputs()[0]) && !root->has_flag(parallel::kTraining))) {
+          (IsValueNode<FuncGraph>(cnode->inputs()[0]) && !parallel::IsTraining(manager))) {
         (void)graph_sets.insert(cnode->func_graph());
       }
     }
@@ -303,7 +305,7 @@ bool PipelineSplit(const ResourcePtr &res) {
   // step4: Cut Graph
   transformer->CutGraph();
   // step5: Handle Sens
-  if (root->has_flag(parallel::kTraining)) {
+  if (parallel::IsTraining(manager)) {
     transformer->CoverSensShape();
   }
   // step6: Elim Graph stages and no used parameter

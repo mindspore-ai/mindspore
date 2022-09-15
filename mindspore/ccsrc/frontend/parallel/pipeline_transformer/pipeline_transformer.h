@@ -107,6 +107,7 @@ class PipelineTransformer {
   int64_t micro_size_ = 0;
   std::vector<std::string> group_ = {};
   mindspore::HashMap<AnfNodePtr, std::set<int64_t>> parameter_color_map_ = {};
+  bool is_train_{true};
 };
 
 class NodeStageInfo {
