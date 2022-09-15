@@ -66,6 +66,7 @@ from mindspore.ops.operations.array_ops import IndexFill
 from mindspore.ops.operations.array_ops import SegmentMean
 from mindspore.ops.operations.array_ops import SegmentProd
 from mindspore.ops.operations.array_ops import ScatterAddWithAxis
+from mindspore.ops.operations.array_ops import ConcatOffsetV1
 from mindspore.ops.operations.random_ops import NonDeterministicInts
 from mindspore.ops.operations.random_ops import TruncatedNormal
 from mindspore.ops.operations.random_ops import ParameterizedTruncatedNormal
@@ -3937,6 +3938,14 @@ test_case_array_ops = [
                         Tensor([0, 0, 2], mstype.int64)],
         'desc_bprop': [Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mstype.int8)],
         'skip': ['backward']
+    }),
+    ('ConcatOffsetV1', {
+        'block': ConcatOffsetV1(),
+        'desc_inputs': [Tensor(1, mstype.int32),
+                        (Tensor(np.array([1, 2, 3]).astype(np.int32)),
+                         Tensor(np.array([1, 5, 3]).astype(np.int32)),
+                         Tensor(np.array([1, 4, 3]).astype(np.int32)))],
+        'skip': ['backward'],
     }),
 ]
 
