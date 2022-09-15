@@ -31,7 +31,7 @@ namespace kernel {
 class DynamicBroadcastGradientArgsCpuKernelMod : public NativeCpuKernelMod,
                                                  public MatchKernelHelper<DynamicBroadcastGradientArgsCpuKernelMod> {
  public:
-  DynamicBroadcastGradientArgsCpuKernelMod() : r0_size_(0), r1_size_(0) { ResetResource(); }
+  DynamicBroadcastGradientArgsCpuKernelMod() : r0_size_(0), r1_size_(0) {}
   ~DynamicBroadcastGradientArgsCpuKernelMod() override = default;
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
@@ -50,12 +50,6 @@ class DynamicBroadcastGradientArgsCpuKernelMod : public NativeCpuKernelMod,
   const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
-
-  void ResetResource() noexcept {
-    input_size_list_.clear();
-    output_size_list_.clear();
-    workspace_size_list_.clear();
-  }
 
   std::vector<KernelTensorPtr> GetOutputs() override {
     ShapeVector r0_shape{SizeToLong(r0_size_)};
