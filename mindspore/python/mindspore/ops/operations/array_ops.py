@@ -6345,7 +6345,7 @@ class TensorScatterUpdate(_TensorScatterOp):
     """
     Creates a new tensor by updating the positions in `input_x` indicated by
     `indices`, with values from `update`. This operation is almost equivalent to using
-    ScatterNd, except that the updates are applied on `input_x` instead of a zero tensor.
+    `mindspore.ops.ScatterNdUpdate` , except that the updates are applied on `input_x` instead of a zero tensor.
 
     `indices` must have rank at least 2, the last axis is the depth of each index
     vectors. For each index vector, there must be a corresponding value in `update`. If
@@ -6583,9 +6583,8 @@ class TensorScatterMul(_TensorScatterOp):
     """
     Creates a new tensor by multiplying the values from the positions in `input_x` indicated by
     `indices`, with values from `updates`. When multiple values are provided for the same
-    index, the result of the update will be to multiply these values respectively. This operation is almost
-    equivalent to using ScatterNdSub, except that the updates are applied on output `Tensor`
-    instead of input `Parameter`.
+    index, the result of the update will be to multiply these values respectively.
+    The updates are applied on output `Tensor` instead of input `Parameter`.
 
     Refer to :func:`mindspore.ops.tensor_scatter_mul` for more detail.
 
