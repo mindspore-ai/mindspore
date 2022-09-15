@@ -138,7 +138,8 @@ const AnfNodePtr FlattenConcatFission::Process(const FuncGraphPtr &func_graph, c
       type_id_to_node_info[input_type_id] = std::make_pair(concat_inputs, elem_num);
       (void)output_type_id_order.emplace_back(input_type_id);
     } else {
-      if (block_size > 0 && (iter->second.second + elem_num) * abstract::TypeIdSize(input_type_id) > block_size) {
+      if (block_size > 0 &&
+          LongToSize(iter->second.second + elem_num) * abstract::TypeIdSize(input_type_id) > block_size) {
         auto concat_node = NewConcatNode(func_graph, iter->second, input_type_id);
         MS_EXCEPTION_IF_NULL(concat_node);
         concat_node->set_scope(cnode->scope());

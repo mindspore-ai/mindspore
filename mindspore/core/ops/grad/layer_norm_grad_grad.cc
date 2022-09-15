@@ -45,7 +45,6 @@ AbstractBasePtr LayerNormGradGradInfer(const abstract::AnalysisEnginePtr &, cons
   (void)types.emplace("d_dx", input_args[kInputIndex5]->BuildType());
   (void)types.emplace("d_dg", input_args[kInputIndex6]->BuildType());
   (void)types.emplace("d_db", input_args[kInputIndex7]->BuildType());
-  (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, op_name);
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto d_dx_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
   auto dy_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->BuildShape())[kShape];
