@@ -130,7 +130,6 @@
 #include "plugin/device/ascend/optimizer/format_type/deal_ref_output.h"
 #include "plugin/device/ascend/optimizer/enhancer/insert_tensor_move_for_hccl_op.h"
 #include "plugin/device/ascend/optimizer/enhancer/insert_tensor_move_for_cascade.h"
-#include "plugin/device/ascend/optimizer/enhancer/insert_tensor_move_for_ref.h"
 #include "plugin/device/ascend/optimizer/enhancer/insert_pad_for_nms_with_mask.h"
 #include "plugin/device/ascend/optimizer/format_type/insert_transdata_for_runop.h"
 #include "plugin/device/ascend/optimizer/enhancer/insert_transpose_for_sort.h"
@@ -531,7 +530,6 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
   other_pm->AddPass(std::make_shared<BroadcastFusion>());
   other_pm->AddPass(std::make_shared<DropoutGenMaskFusion>());
   other_pm->AddPass(std::make_shared<InsertTensorMoveForCascade>());
-  other_pm->AddPass(std::make_shared<InsertTensorMoveForGraphOutputRefNode>());
   other_pm->AddPass(std::make_shared<GradientsAllReduceDependLastSend>());
   other_pm->AddPass(std::make_shared<ParameterTransOpFusion>());
   other_pm->AddPass(std::make_shared<RefreshParameterFormat>());

@@ -123,14 +123,10 @@ void InsertTensorMoveForCascade::InsertOutputTensorMove(const FuncGraphPtr &grap
     return;
   }
 
-  if (!common::AnfAlgo::IsFusedCommunicationOp(hccl_node)) {
-    return;
-  }
-
   AnfNodePtr node = nullptr;
   auto outputs = common::AnfAlgo::GetAllOutputWithIndex(graph->output());
   for (const auto &output_with_index : outputs) {
-    if (!common::AnfAlgo::IsFusedCommunicationOp(output_with_index.first)) {
+    if (!common::AnfAlgo::IsCommunicationOp(output_with_index.first)) {
       continue;
     }
     auto cnode = output_with_index.first->cast<CNodePtr>();

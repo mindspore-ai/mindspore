@@ -263,6 +263,7 @@ void GPUKernelExecutor::PreprocessBeforeRun(const FuncGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
+  // somas
   if (ms_context->get_param<int>(MS_CTX_MEMORY_OPTIMIZE_LEVEL) != kOptimizeO0) {
     auto somas = std::make_shared<GPUSomas>();
     bool ret = somas->Assign(kernel_graph);
@@ -312,7 +313,6 @@ void GPUKernelExecutor::OptimizeGraphWithDeviceInfo(const KernelGraphPtr &graph)
   pm->AddPass(std::make_shared<opt::GetitemTuple>());
   pm->AddPass(std::make_shared<opt::ReducePrecisionFusion>("reduce_precision"));
   pm->AddPass(std::make_shared<opt::InsertTensorMoveForCommunication>());
-  pm->AddPass(std::make_shared<opt::InsertTensorMoveForGraphOutputRefNode>());
   optimizer->AddPassManager(pm);
   (void)optimizer->Optimize(graph);
   graph->SetExecOrderByDefault();
