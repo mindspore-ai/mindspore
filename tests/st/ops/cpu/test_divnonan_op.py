@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,57 +16,39 @@
 import numpy as np
 import pytest
 
-import mindspore.context as context
+import mindspore as ms
 import mindspore.nn as nn
+import mindspore.context as context
 from mindspore import Tensor
 from mindspore.ops import operations as P
-from mindspore import dtype
-import mindspore as ms
 
-context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 
 
-class NetExpm1(nn.Cell):
+class Net(nn.Cell):
     def __init__(self):
-        super(NetExpm1, self).__init__()
-        self.expm1 = P.Expm1()
+        super(Net, self).__init__()
+        self.op = P.DivNoNan()
 
-    def construct(self, x):
-        return self.expm1(x)
+    def construct(self, x, y):
+        return self.op(x, y)
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_expm1_dshape():
+def test_divnonan_dshape():
     """
-    Feature: Test expm1 dynamic shape.
-    Description: Test expm1 dynamic shape.
+    Feature: Test divnonan dynamic shape.
+    Description: Test divnonan dynamic shape.
     Expectation: Success.
     """
-    net = NetExpm1()
+    net = Net()
     input_x_dyn = Tensor(shape=[3, None], dtype=ms.float32)
-    net.set_inputs(input_x_dyn)
+    input_y_dyn = Tensor(shape=[None, 1], dtype=ms.float32)
+    net.set_inputs(input_x_dyn, input_y_dyn)
     input_x = Tensor(np.random.random(([3, 10])), dtype=ms.float32)
-    output = net(input_x)
+    input_y = Tensor(np.random.random(([3, 1])), dtype=ms.float32)
+    output = net(input_x, input_y)
     expect_shape = (3, 10)
     assert output.asnumpy().shape == expect_shape
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_expm1_op():
-    x = np.random.rand(3, 8).astype(np.float32)
-    y = np.random.rand(3, 8).astype(np.float16)
-
-    expm1 = NetExpm1()
-    output_x = expm1(Tensor(x, dtype=dtype.float32))
-    expect_x = np.expm1(x)
-    tol_x = 1e-6
-    assert (np.abs(output_x.asnumpy() - expect_x) < tol_x).all()
-
-    output_y = expm1(Tensor(y, dtype=dtype.float16))
-    expect_y = np.expm1(y)
-    tol_y = 1e-3
-    assert (np.abs(output_y.asnumpy() - expect_y) < tol_y).all()

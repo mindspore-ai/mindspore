@@ -16,10 +16,12 @@
 import numpy as np
 import pytest
 
+import mindspore as ms
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
+
 
 class NetElu(nn.Cell):
     def __init__(self):
@@ -28,6 +30,25 @@ class NetElu(nn.Cell):
 
     def construct(self, x):
         return self.elu(x)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_elu_dshape():
+    """
+    Feature: Test elu dynamic shape.
+    Description: Test elu dynamic shape.
+    Expectation: Success.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    net = NetElu()
+    input_x_dyn = Tensor(shape=[3, None], dtype=ms.float32)
+    net.set_inputs(input_x_dyn)
+    input_x = Tensor(np.random.random(([3, 10])), dtype=ms.float32)
+    output = net(input_x)
+    expect_shape = (3, 10)
+    assert output.asnumpy().shape == expect_shape
 
 
 @pytest.mark.level0
@@ -43,6 +64,7 @@ def test_elu_fp16():
     output = elu(x)
     diff = output.asnumpy() - expect
     assert np.all(diff < error)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu

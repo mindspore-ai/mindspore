@@ -16,13 +16,13 @@
 import numpy as np
 import pytest
 
+import mindspore as ms
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
 
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-
 
 axis0 = 0
 axis1 = 1
@@ -41,6 +41,7 @@ x5 = np.random.rand(3).astype(np.float32)
 
 list1 = [x0, x1, x2, x3, x4]
 list2 = [axis0, axis1, axis2, axis3, axis4, axis5, axis6]
+
 
 class CumSum(nn.Cell):
     def __init__(self, exclusive=False, reverse=False):
@@ -269,3 +270,30 @@ def test_cumsum4():
     error = np.ones(shape=expect.shape) * 1.0e-5
     assert np.all(diff < error)
     assert output[k].shape == expect.shape
+
+
+class Net(nn.Cell):
+    def __init__(self):
+        super(Net, self).__init__()
+        self.op = P.CumSum()
+
+    def construct(self, x):
+        return self.op(x, 0)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_cumsum_dshape():
+    """
+    Feature: Test cumsum dynamic shape.
+    Description: Test cumsum dynamic shape.
+    Expectation: Success.
+    """
+    net = Net()
+    input_x_dyn = Tensor(shape=[3, None], dtype=ms.float32)
+    net.set_inputs(input_x_dyn)
+    input_x = Tensor(np.random.random(([3, 10])), dtype=ms.float32)
+    output = net(input_x)
+    expect_shape = (3, 10)
+    assert output.asnumpy().shape == expect_shape
