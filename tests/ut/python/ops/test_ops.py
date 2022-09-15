@@ -90,6 +90,7 @@ from mindspore.ops.operations.array_ops import MatrixSetDiagV3
 from mindspore.ops.operations.array_ops import ScatterNdMax
 from mindspore.ops.operations.math_ops import AddV2
 from mindspore.ops.operations.math_ops import Betainc
+from mindspore.ops.operations.math_ops import Diagonal
 from mindspore.ops.operations.math_ops import Hypot
 from mindspore.ops.operations.math_ops import Heaviside
 from mindspore.ops.operations.math_ops import Lcm
@@ -1441,6 +1442,11 @@ test_case_math_ops = [
         'block': Cauchy(size=[2, 3]),
         'desc_inputs': [],
         'skip': ['backward']}),
+    ('Diagonal', {
+        'block': Diagonal(offset=1, dim1=-1, dim2=1),
+        'desc_inputs': [Tensor([[[0, 1, 2, 3], [4, 5, 6, 7], [8, 9, 10, 11]],
+                                [[12, 13, 14, 15], [16, 17, 18, 19], [20, 21, 22, 23]]], mstype.float32)],
+        'desc_bprop': [Tensor([[1, 1], [1, 1]], mstype.float32)]}),
     ('Betainc', {
         'block': Betainc(),
         'desc_inputs': [Tensor([1, 1, 1, 1], mstype.float32),

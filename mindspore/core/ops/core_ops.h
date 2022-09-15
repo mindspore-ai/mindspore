@@ -135,6 +135,7 @@ constexpr auto kLinearSumAssignment = "LinearSumAssignment";
 // Math
 constexpr auto kCauchy = "Cauchy";
 constexpr auto kCross = "Cross";
+constexpr auto kDiagonal = "Diagonal";
 constexpr auto kEditDistance = "EditDistance";
 constexpr auto kNextAfter = "NextAfter";
 constexpr auto kMaximumGradGrad = "MaximumGradGrad";
@@ -1149,6 +1150,7 @@ GVAR_DEF(PrimitivePtr, kPrimBesselK1e, std::make_shared<Primitive>("BesselK1e"))
 GVAR_DEF(PrimitivePtr, kPrimBetainc, std::make_shared<Primitive>("Betainc"));
 GVAR_DEF(PrimitivePtr, kPrimGer, std::make_shared<Primitive>("Ger"));
 GVAR_DEF(PrimitivePtr, kPrimCeil, std::make_shared<Primitive>("Ceil"));
+GVAR_DEF(PrimitivePtr, kPrimDiagonal, std::make_shared<Primitive>(kDiagonal));
 GVAR_DEF(PrimitivePtr, kPrimTrunc, std::make_shared<Primitive>("Trunc"));
 GVAR_DEF(PrimitivePtr, kPrimLuSolve, std::make_shared<Primitive>("LuSolve"));
 GVAR_DEF(PrimitivePtr, kPrimMatrixSolve, std::make_shared<Primitive>("MatrixSolve"));

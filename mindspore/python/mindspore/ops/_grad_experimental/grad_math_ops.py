@@ -54,6 +54,8 @@ from mindspore.ops.operations.math_ops import CholeskySolve
 from mindspore.ops.operations.math_ops import AddV2
 from mindspore.ops.operations.math_ops import TridiagonalMatMul
 from mindspore.ops.operations.math_ops import Logit
+from mindspore.ops.operations.math_ops import Diagonal
+from mindspore.ops.operations.array_ops import Transpose, MatrixSetDiagV3
 from mindspore.ops.operations._inner_ops import DynamicBroadcastGradientArgs
 from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
 from mindspore.ops.primitive import constexpr
@@ -1312,6 +1314,53 @@ def get_bprop_nextafter(self):
         dx1 = reshape(partial_x1 * dout, s_x1)
         dx2 = reshape(partial_x2 * dout, s_x2)
         return cast(dx1, dtype(dout)), cast(dx2, dtype(dout))
+
+    return bprop
+
+
+@bprop_getters.register(Diagonal)
+def get_bprop_diagonal(self):
+    """Grad definition for 'Diagonal' operation"""
+    offset = self.offset
+    dim1 = self.dim1
+    dim2 = self.dim2
+    zeros = P.Zeros()
+    size_op = P.Size()
+    transpose_op = Transpose()
+    matrix_set_diag_op = MatrixSetDiagV3(align="LEFT_RIGHT")
+
+    def bprop(x, out, dout):
+        x_shape = x.shape
+        x_dim = len(x_shape)
+        if dim1 < 0:
+            dim1_ = dim1 + x_dim
+        else:
+            dim1_ = dim1
+        if dim2 < 0:
+            dim2_ = dim2 + x_dim
+        else:
+            dim2_ = dim2
+        if size_op(out):
+            batch_dim = out.shape[:-1]
+            diag_plane = (x_shape[dim1_], x_shape[dim2_])
+            dx_trans_shape = batch_dim + diag_plane
+            dx = zeros(dx_trans_shape, x.dtype)
+            k = F.cast(offset, mstype.int32)
+            dx = matrix_set_diag_op(dx, dout, k)
+            dim = 0
+            perm = ()
+            for i in range(x_dim):
+                if i == dim1_:
+                    perm = perm + (x_dim - 2,)
+                elif i == dim2_:
+                    perm = perm + (x_dim - 1,)
+                else:
+                    perm = perm + (dim,)
+                    dim = dim + 1
+            dx = transpose_op(dx, perm)
+        else:
+            dx = zeros_like(x)
+        return (dx,)
 
     return bprop
 
