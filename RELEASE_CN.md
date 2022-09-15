@@ -2,8 +2,6 @@
 
 [View English](./RELEASE.md)
 
-# MindSpore 1.8.1
-
 ## MindSpore 1.8.1 Release Notes
 
 ### API变更
@@ -71,8 +69,6 @@
 - [BETA] ops.interpolate 新增GPU、CPU支持。
 - [STABLE] ops.xdivy 新增CPU支持。
 - [STABLE] ops.xlogy 新增CPU支持。
-
-# MindSpore 1.8.0
 
 ## MindSpore 1.8.0 Release Notes
 
