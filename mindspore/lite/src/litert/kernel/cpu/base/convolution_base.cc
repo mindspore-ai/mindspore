@@ -222,6 +222,19 @@ int ConvolutionBaseCPUKernel::CheckResizeValid() {
   return RET_OK;
 }
 
+int ConvolutionBaseCPUKernel::CheckDeconvResizeValid() {
+  // ===============check in channel================= //
+  auto filter_tensor = in_tensors_.at(kWeightIndex);
+  CHECK_NULL_RETURN(filter_tensor);
+  auto filter_out_channel = filter_tensor->Batch();
+  int resize_out_channel = in_tensors_.at(kInputIndex)->Channel();
+  if (filter_out_channel != resize_out_channel) {
+    MS_LOG(ERROR) << "Channel of resized input should be equal to in channel of filter.";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
 int ConvolutionBaseCPUKernel::SetIfPerChannel() {
   if (in_tensors_.size() < kInputSize1) {
     MS_LOG(ERROR) << "filter tensor not exist.";
