@@ -36,10 +36,10 @@ mode_t SetFileDefaultUmask() { return umask(DEFAULT_FILE_PERMISSION); }
  */
 std::vector<double> RunTimeUtil::GetRunTime() {
   auto sec_duration = std::chrono::duration_cast<std::chrono::seconds>(this->end - this->start);
-  uint64_t sec = sec_duration.count();
+  int64_t sec = sec_duration.count();
 
   auto us_duration = std::chrono::duration_cast<std::chrono::microseconds>(this->end - this->start);
-  uint64_t us = us_duration.count();
+  int64_t us = us_duration.count();
   double cost_ms = static_cast<double>(SEC2MS * sec + us / SEC2MS);
   double fps = static_cast<double>(1.0 * SEC2MS / cost_ms);
   std::vector<double> run_time = {cost_ms, fps};
