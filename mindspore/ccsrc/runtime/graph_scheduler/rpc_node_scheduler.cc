@@ -212,7 +212,7 @@ void RpcNodeScheduler::ResetOpcontext(const RpcActorSetPtr &rpc_actors) const {
   }
 }
 
-void RpcNodeScheduler::UpdateRpcActorRefCounts(RpcActorSetPtr rpc_actor_set) {
+void RpcNodeScheduler::UpdateRpcActorRefCounts(RpcActorSetPtr rpc_actor_set) const {
   MS_EXCEPTION_IF_NULL(rpc_actor_set);
   for (const auto send_actor : rpc_actor_set->send_actors_) {
     MS_EXCEPTION_IF_NULL(send_actor);

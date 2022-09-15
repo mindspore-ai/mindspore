@@ -131,7 +131,7 @@ bool SendActor::FreeMessage(void *data) {
   return true;
 }
 
-std::vector<DeviceTensor *> SendActor::FindDeviceTensorNeedsFree(void *data) {
+std::vector<DeviceTensor *> SendActor::FindDeviceTensorNeedsFree(const void *data) const {
   std::vector<DeviceTensor *> free_list;
   // The sent data uses the memory of workspace. So query the DeviceTensor from workspace_device_tensors_.
   for (const auto &device_tensor : workspace_device_tensors_) {

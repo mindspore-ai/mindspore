@@ -254,63 +254,6 @@ void RecvActor::AddArgSpecForInput(AbstractBasePtrList *args_spec_list, const Sh
   }
 }
 
-size_t RecvActor::ParseDynamicShapeData(const std::string &dynamic_shape_data, AbstractBasePtrList *args_spec_list,
-                                        size_t count) {
-  // The data which could be parsed by offset in dynamic shape scenario.
-  auto data_to_be_parsed = dynamic_shape_data.c_str();
-  // The real data offsets which will be used by RpcRecvKernel.
-  std::vector<size_t> real_data_offsets;
-
-  // Once the magic header is dynamic shape, each input of the Recv is dynamic shape.
-  // So traverse each input and parse the dynamic shape data.
-  size_t offset = 0;
-  for (size_t i = 0; i < count; i++) {
-    if (data_to_be_parsed >= dynamic_shape_data.c_str() + dynamic_shape_data.size()) {
-      MS_LOG(EXCEPTION) << "The dynamic shape data size is invalid.";
-    }
-    // Step 1: parse the magic header which indicates the dynamic shape.
-    std::string dynamic_shape_magic_header(data_to_be_parsed, strlen(kRpcDynamicShapeData));
-    if (dynamic_shape_magic_header != kRpcDynamicShapeData) {
-      MS_LOG(EXCEPTION) << "The dynamie shape data must have the magic header RPC_DYNAMIC_SHAPE_DATA";
-    }
-
-    // Step 2: parse the size of serialized protobuf message.
-    data_to_be_parsed += strlen(kRpcDynamicShapeData);
-    size_t pb_msg_size = 0;
-    MS_EXCEPTION_IF_CHECK_FAIL(memcpy_s(&pb_msg_size, sizeof(pb_msg_size), data_to_be_parsed, sizeof(size_t)) == 0,
-                               "memcpy_s protobuf message size failed.");
-
-    // Step 3: deserialize the protobuf message.
-    data_to_be_parsed += sizeof(pb_msg_size);
-    rpc::DynamicShapeMessage pb_msg;
-    (void)pb_msg.ParseFromArray(data_to_be_parsed, SizeToInt(pb_msg_size));
-
-    // Step 4: parse the data shape and
-    ShapeVector shapes(pb_msg.shape_vector().begin(), pb_msg.shape_vector().end());
-    TypeId data_type = static_cast<TypeId>(pb_msg.type_id());
-    data_to_be_parsed += pb_msg_size;
-
-    // Step 5: get the size of real data as recv's input.
-    int64_t real_data_size = 1;
-    if (!kernel::GetShapeSize(shapes, TypeIdToType(data_type), &real_data_size)) {
-      MS_LOG(EXCEPTION) << "Getting shape size for shape " << shapes << " failed.";
-    }
-    data_to_be_parsed += real_data_size;
-
-    // Step 6: update the abstract.
-    AddArgSpecForInput(args_spec_list, shapes, data_type, i);
-
-    offset += strlen(kRpcDynamicShapeData) + sizeof(pb_msg_size) + pb_msg_size;
-    real_data_offsets.push_back(offset);
-    offset += LongToSize(real_data_size);
-  }
-
-  auto recv_kernel_mod = dynamic_cast<kernel::RpcRecvKernelMod *>(kernel_info_->MutableKernelMod());
-  MS_EXCEPTION_IF_NULL(recv_kernel_mod);
-  recv_kernel_mod->set_real_data_offset(real_data_offsets);
-  return offset;
-}
-
 size_t RecvActor::ParseDynamicShapeData(const RpcDataPtr &dynamic_shape_data, size_t data_size,
                                         AbstractBasePtrList *args_spec_list, size_t count) {
   // The data which could be parsed by offset in dynamic shape scenario.
