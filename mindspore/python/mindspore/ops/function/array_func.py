@@ -841,7 +841,7 @@ def reshape(input_x, input_shape):
 
     Args:
         input_x (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-        input_shape (Union[tuple[int], tensor[int]]): Constructed by multiple
+        input_shape (Union[tuple[int], Tensor[int]]): Constructed by multiple
             integers, i.e., :math:`(y_1, y_2, ..., y_S)`. Only constant value is allowed.
 
     Returns:
@@ -2714,7 +2714,7 @@ def tensor_scatter_elements(input_x, indices, updates, axis=0, reduction="none")
         updates (Tensor): The tensor doing the add operation with `input_x`, has the same type as input_x,
           and update.shape should be equal to indices.shape.
         axis (int): Which axis to scatter, default is 0. Accepted range is [-r, r) where r = rank(input_x).
-        reduction (string): Which reduction operation to scatter, default is "none". Other option: "add".
+        reduction (str): Which reduction operation to scatter, default is "none". Other option: "add".
 
     Returns:
         Tensor, has the same shape and type as `input_x`.
@@ -3060,17 +3060,17 @@ def matrix_set_diag(x, diagonal, k=0, align="RIGHT_LEFT"):
     Args:
         x (Tensor): Rank r + 1, where r >= 1.
         diagonal (Tensor): A Tensor. Have the same dtype as x. Rank r when k is an integer or k[0] == k[1].
-          Otherwise, it has rank r + 1.
+            Otherwise, it has rank r + 1.
         k (Union[int, Tensor], optional): A int32 Scalar or int32 Tensor. Diagonal offset(s). Positive value means
-          superdiagonal, 0 refers to the main diagonal, and negative value means subdiagonals. k can be a
-          single integer (for a single diagonal) or a pair of integers specifying the low and high ends of
-          a matrix band. k[0] must not be larger than k[1].
-          The alue of k has restructions, meaning value of k must be in (-x.shape[-2], x.shape[-1]).
-          Input k must be const Tensor when taking Graph mode.
-
-        align (string): An optional string from: "RIGHT_LEFT"(default), "LEFT_RIGHT", "LEFT_LEFT", "RIGHT_RIGHT". Align
-          is a string specifying how superdiagonals and subdiagonals should be aligned, respectively. "RIGHT_LEFT"
-          aligns superdiagonals to the right (left-pads the row) and subdiagonals to the left (right-pads the row).
+            superdiagonal, 0 refers to the main diagonal, and negative value means subdiagonals. k can be a
+            single integer (for a single diagonal) or a pair of integers specifying the low and high ends of
+            a matrix band. k[0] must not be larger than k[1].
+            The alue of k has restructions, meaning value of k must be in (-x.shape[-2], x.shape[-1]).
+            Input k must be const Tensor when taking Graph mode.
+        align (str, optional): An optional string from: "RIGHT_LEFT"(default), "LEFT_RIGHT", "LEFT_LEFT",
+            "RIGHT_RIGHT". Align is a string specifying how superdiagonals and subdiagonals should be aligned,
+            respectively. "RIGHT_LEFT" aligns superdiagonals to the right (left-pads the row) and subdiagonals
+            to the left (right-pads the row).
 
     Returns:
         Tensor, The same type as x. Let x has r+1 dimensions [I, J, ..., L, M, N].

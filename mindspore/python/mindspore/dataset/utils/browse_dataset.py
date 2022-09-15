@@ -28,11 +28,11 @@ def imshow_det_bbox(image, bboxes, labels, segm=None, class_names=None, score_th
     """Draw an image with given bboxes and class labels (with scores).
 
     Args:
-        image (ndarray): The image to be displayed, shaped (C, H, W) or (H, W, C), formatted RGB.
-        bboxes (ndarray): Bounding boxes (with scores), shaped (N, 4) or (N, 5),
+        image (numpy.ndarray): The image to be displayed, shaped (C, H, W) or (H, W, C), formatted RGB.
+        bboxes (numpy.ndarray): Bounding boxes (with scores), shaped (N, 4) or (N, 5),
             data should be ordered with (N, x, y, w, h).
-        labels (ndarray): Labels of bboxes, shaped (N, 1).
-        segm (ndarray): The segmentation masks of image in M classes, shaped (M, H, W) (Default=None).
+        labels (numpy.ndarray): Labels of bboxes, shaped (N, 1).
+        segm (numpy.ndarray): The segmentation masks of image in M classes, shaped (M, H, W) (Default=None).
         class_names (list[str], tuple[str], dict): Names of each class to map label to class name
             (Default=None, only display label).
         score_threshold (float): Minimum score of bboxes to be shown (Default=0).
