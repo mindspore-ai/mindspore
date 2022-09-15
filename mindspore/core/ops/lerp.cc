@@ -40,14 +40,18 @@ abstract::ShapePtr LerpInferShape(const PrimitivePtr &primitive, const std::vect
   auto end_shape = end_shape_map[kShape];
   auto weight_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape());
   auto weight_shape = weight_shape_map[kShape];
-  if (weight_shape.size() > start_shape.size() && weight_shape.size() > end_shape.size()) {
-    MS_EXCEPTION(RuntimeError) << "weight should be of dimension max(self.dim(), end.dim()) or lesser.";
-  }
   auto broadcast_shape = CalBroadCastShape(start_shape, end_shape, op_name, "start", "end");
   if (input_args[kInputIndex2]->isa<abstract::AbstractTensor>()) {
     (void)CalBroadCastShape(start_shape, weight_shape, op_name, "start", "weight");
     (void)CalBroadCastShape(end_shape, weight_shape, op_name, "end", "weight");
     broadcast_shape = CalBroadCastShape(broadcast_shape, weight_shape, op_name);
+  }
+  if (IsDynamicRank(weight_shape) || IsDynamicRank(start_shape) || IsDynamicRank(end_shape)) {
+    return std::make_shared<abstract::Shape>(broadcast_shape);
+  }
+  // Do additional check for the rank of weight for static rank case only.
+  if (weight_shape.size() > start_shape.size() && weight_shape.size() > end_shape.size()) {
+    MS_EXCEPTION(RuntimeError) << "weight should be of dimension max(self.dim(), end.dim()) or lesser.";
   }
   return std::make_shared<abstract::Shape>(broadcast_shape);
 }

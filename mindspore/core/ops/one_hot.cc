@@ -57,24 +57,22 @@ class OneHotInfer : public abstract::OpInferBase {
     MS_EXCEPTION_IF_NULL(depth);
     int64_t depth_value;
     if (depth->isa<tensor::Tensor>()) {
-      auto depth_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
-      auto depth_shape = depth_shape_map[kShape];
-      if (IsDynamic(depth_shape)) {
-        return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
+      auto depth_data = CheckAndConvertUtils::CheckTensorIntValue("depth", depth, op_name);
+      if (depth_data.size() != 1) {
+        MS_LOG_EXCEPTION << "For " << op_name << ", size of depth shouble be 1, but got " << depth_data.size();
       }
-      (void)CheckAndConvertUtils::CheckTensorTypeValid("depth", input_args[1]->BuildType(), {kInt64}, op_name);
-      auto depth_data = depth->cast<tensor::TensorPtr>()->data_c();
-      MS_EXCEPTION_IF_NULL(depth_data);
-      auto data_value = reinterpret_cast<int64_t *>(depth_data);
-      depth_value = *data_value;
+      depth_value = depth_data[0];
+      (void)CheckAndConvertUtils::CheckInteger("depth value", depth_value, kGreaterEqual, 0, op_name);
     } else if (depth->isa<Int64Imm>()) {
       depth_value = GetValue<int64_t>(depth);
+      (void)CheckAndConvertUtils::CheckInteger("depth value", depth_value, kGreaterEqual, 0, op_name);
+    } else if (input_args[depth_index]->isa<abstract::AbstractTensor>()) {
+      depth_value = abstract::Shape::kShapeDimAny;
     } else {
       MS_EXCEPTION(TypeError) << "For '" << op_name
                               << "', 'depth' must be a tensor or number of int64, but got an invalid type.";
     }
 
-    (void)CheckAndConvertUtils::CheckInteger("depth value", depth_value, kGreaterEqual, 0, op_name);
     if (axis >= 0) {
       (void)in_shape.insert(in_shape.begin() + axis, depth_value);
     } else {

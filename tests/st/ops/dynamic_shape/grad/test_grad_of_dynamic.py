@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
 import numpy as np
 
 from mindspore import ops, nn, context, Tensor
@@ -108,7 +107,14 @@ def output_compare(outputs, expects):
     if not isinstance(expects, (list, tuple)):
         expects = [expects]
 
-    assert all(list(map(lambda x, y: np.allclose(x.asnumpy(), y.asnumpy()), outputs, expects)))
+    def _make_sense(element):
+        if not isinstance(element, Tensor):
+            return Tensor(element)
+        return element
+
+    new_outputs = [_make_sense(e) for e in outputs]
+    new_expects = [_make_sense(e) for e in expects]
+    assert all(list(map(lambda x, y: np.allclose(x.asnumpy(), y.asnumpy()), new_outputs, new_expects)))
 
 
 class TestDynamicGrad:

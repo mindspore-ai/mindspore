@@ -38,6 +38,11 @@ abstract::ShapePtr CholeskySolveInferShape(const PrimitivePtr &primitive,
   auto x2_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape());
   auto x1_shape = x1_shape_map[kShape];
   auto x2_shape = x2_shape_map[kShape];
+  ShapeVector out_shape = {};
+  if (IsDynamicRank(x1_shape) || IsDynamicRank(x2_shape)) {
+    out_shape.push_back(abstract::Shape::kShapeRankAny);
+    return std::make_shared<abstract::Shape>(out_shape);
+  }
   if (x1_shape.size() != kDefalutRank && x1_shape.size() != kBatchRank) {
     MS_EXCEPTION(ValueError) << "For CholeskySolve, the rank of x1 must be equal to 2 or 3"
                              << ", while got x1 rank " << x1_shape.size() << ".";

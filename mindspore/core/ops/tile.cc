@@ -68,6 +68,9 @@ abstract::ShapePtr TileInferShape(const PrimitivePtr &primitive, const std::vect
   MS_EXCEPTION_IF_NULL(multiple_value);
   if (multiple_value->isa<tensor::Tensor>()) {
     multiples_v = CheckAndConvertUtils::CheckTensorIntValue("multiples", multiple_value, prim_name);
+    if (IsDynamicRank(multiples_v)) {
+      return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
+    }
   } else {
     multiples_v = CheckAndConvertUtils::CheckTupleInt("input[multiples]", multiple_value, prim_name);
   }

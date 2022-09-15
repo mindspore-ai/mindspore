@@ -44,6 +44,9 @@ def dynamic_rank():
     test_dynamic.test_dynamic_grad_net((x, y), True)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 def test_dynamic_atan2_cpu():
     """
     Feature: Atan2 Grad DynamicShape.
@@ -61,8 +64,8 @@ def test_dynamic_atan2_cpu():
 
 
 @pytest.mark.level1
-@pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
 def test_dynamic_atan2_gpu():
     """
     Feature: Atan2 Grad DynamicShape.
@@ -80,9 +83,9 @@ def test_dynamic_atan2_gpu():
 
 
 @pytest.mark.level1
-@pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_dynamic_atan2_ascend():
     """
     Feature: Atan2 Grad DynamicShape.

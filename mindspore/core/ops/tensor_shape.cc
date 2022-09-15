@@ -35,7 +35,6 @@ abstract::AbstractBasePtr TensorShapeInfer(const abstract::AnalysisEnginePtr &, 
   }
   MS_EXCEPTION_IF_NULL(input->shape());
   auto shape = input->shape()->shape();
-
   ShapeVector tensor_shp({static_cast<int64_t>(shape.size())});
   if (IsDynamic(shape)) {
     if (IsDynamicRank(shape)) {
