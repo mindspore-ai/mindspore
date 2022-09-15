@@ -36,7 +36,7 @@ class MaskAlongAxisOperation : public TensorOperation {
  public:
   MaskAlongAxisOperation(int32_t mask_start, int32_t mask_width, float mask_value, int32_t axis);
 
-  ~MaskAlongAxisOperation();
+  ~MaskAlongAxisOperation() override;
 
   std::shared_ptr<TensorOp> Build() override;
 

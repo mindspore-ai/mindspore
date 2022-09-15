@@ -34,7 +34,7 @@ class GriffinLimOperation : public TensorOperation {
   GriffinLimOperation(int32_t n_fft, int32_t n_iter, int32_t win_length, int32_t hop_length, WindowType window_type,
                       float power, float momentum, int32_t length, bool rand_init);
 
-  ~GriffinLimOperation();
+  ~GriffinLimOperation() override;
 
   std::shared_ptr<TensorOp> Build() override;
 
