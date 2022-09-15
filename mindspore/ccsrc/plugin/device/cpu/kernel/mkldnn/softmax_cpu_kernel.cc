@@ -18,44 +18,55 @@
 #include <algorithm>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "utils/ms_utils.h"
+#include "mindspore/core/ops/softmax.h"
 
 namespace mindspore {
 namespace kernel {
-namespace {
-constexpr size_t kSoftmaxInputsNum = 1;
-constexpr size_t kSoftmaxOutputsNum = 1;
-}  // namespace
-
-void SoftmaxCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  auto src_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  std::vector<int> axis_list;
-  std::vector<int64_t> axis_list_me = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, AXIS);
-  (void)std::transform(axis_list_me.begin(), axis_list_me.end(), std::back_inserter(axis_list),
+bool SoftmaxCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                               const std::vector<KernelTensorPtr> &outputs) {
+  constexpr size_t input_num = 1;
+  constexpr size_t output_num = 1;
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
+  kernel_name_ = base_operator->GetPrim()->name();
+  auto soft_max_ptr = std::dynamic_pointer_cast<ops::Softmax>(base_operator);
+  auto axis_list_me = soft_max_ptr->get_axis();
+  (void)std::transform(axis_list_me.begin(), axis_list_me.end(), std::back_inserter(axis_list_),
                        [](const int64_t &value) { return static_cast<int>(value); });
-  if (axis_list.size() != 1) {
+  if (axis_list_.size() != 1) {
     MS_LOG(EXCEPTION) << "For Softmin and Softmax, the parameter 'axis' only support int type on CPU, but got tuple.";
   }
-  int axis = axis_list[0];
+
+  return true;
+}
+
+int SoftmaxCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                const std::vector<KernelTensorPtr> &outputs,
+                                const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+    return ret;
+  }
+  auto src_shape = inputs[kIndex0]->GetShapeVector();
+  int axis = axis_list_[0];
   if (axis >= SizeToInt(src_shape.size())) {
     axis = SizeToInt(src_shape.size()) - 1;
   }
   while (axis < 0) {
     axis += SizeToInt(src_shape.size());
   }
+
   dnnl::memory::desc src_desc = GetDefaultMemDesc(src_shape);
   auto desc = CreateDesc<dnnl::softmax_forward::desc>(dnnl::prop_kind::forward_training, src_desc, axis);
   auto prim_desc = CreateDesc<dnnl::softmax_forward::primitive_desc>(desc, engine_);
   primitive_ = CreatePrimitive<dnnl::softmax_forward>(prim_desc);
   AddArgument(DNNL_ARG_SRC, src_desc);
   AddArgument(DNNL_ARG_DST, src_desc);
+
+  return KRET_OK;
 }
 
 bool SoftmaxCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                                  const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSoftmaxInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSoftmaxOutputsNum, kernel_name_);
   SetArgumentHandle(DNNL_ARG_SRC, inputs[0]->addr);
   SetArgumentHandle(DNNL_ARG_DST, outputs[0]->addr);
   ExecutePrimitive();

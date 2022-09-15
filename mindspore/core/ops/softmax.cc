@@ -57,6 +57,9 @@ abstract::ShapePtr SoftMaxInferShape(const PrimitivePtr &primitive, const std::v
     return std::make_shared<abstract::Shape>(std::vector<int64_t>());
   }
   auto in_shape = shape_map[kShape];
+  if (IsDynamicRank(in_shape)) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
+  }
   auto rank = SizeToLong(in_shape.size());
   for (auto &item : axis) {
     CheckAndConvertUtils::CheckInRange<int64_t>("axis", item, kIncludeLeft, {-rank, rank}, op_name);
