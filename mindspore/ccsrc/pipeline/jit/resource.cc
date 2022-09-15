@@ -272,6 +272,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"repeat", std::string("repeat")},                                  // C.repeat_elements
        {"bernoulli", prim::kPrimBernoulli},                                // P.Bernoulli()
        {"ceil", std::string("ceil")},                                      // P.Ceil
+       {"floor", std::string("floor")},                                    // P.floor
        {"hardshrink", std::string("hardshrink")},                          // P.hshrink
        {"soft_shrink", std::string("soft_shrink")},                        // P.SoftShrink
        {"gather_nd", std::string("gather_nd")},                            // P.GatherNd()

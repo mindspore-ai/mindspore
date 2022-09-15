@@ -76,6 +76,12 @@ class NetLastFlatten(nn.Cell):
         return x
 
 
+class FlattenFunc(nn.Cell):
+    def construct(self, x):
+        out = ops.flatten(x)
+        return out
+
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -207,6 +213,51 @@ def test_flatten_vmap():
     vmap_round_net = ops.vmap(flatten_graph)
     output = vmap_round_net(in_tensor)
     np.testing.assert_allclose(output.asnumpy(), output_np, rtol=1e-3)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+@pytest.mark.parametrize("dtype", [np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16,
+                                   np.uint32, np.uint64, np.float16, np.float32, np.float64,
+                                   np.bool, np.complex64, np.complex128])
+def test_flatten_op_dtype(mode, dtype):
+    """
+    Feature: gpu Flatten ops.
+    Description: test flatten with the different types.
+    Expectation: success.
+    """
+    context.set_context(mode=mode, device_target="GPU")
+
+    x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]).astype(dtype))
+    expect = np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]).astype(dtype)
+
+    net = NetFlatten()
+    out = net(x)
+
+    assert np.allclose(expect, out.asnumpy())
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_flatten_op_nn(mode):
+    """
+    Feature: gpu Flatten ops.
+    Description: test flatten with nn interface.
+    Expectation: success.
+    """
+    context.set_context(mode=mode, device_target="GPU")
+
+    x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]).astype(np.float32))
+    expect = np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]).astype(np.float32)
+
+    net = nn.Flatten()
+    out = net(x)
+
+    assert np.allclose(expect, out.asnumpy())
 
 
 if __name__ == "__main__":

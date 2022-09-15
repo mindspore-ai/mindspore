@@ -50,7 +50,6 @@ shape_ = P.Shape()
 rank_ = P.Rank()
 tensor_shape_ = P.TensorShape()
 reshape_ = P.Reshape()
-flatten_ = P.Flatten()
 tensor_slice = P.Slice()
 expand_dims_ = P.ExpandDims()
 transpose_ = P.Transpose()
@@ -949,7 +948,8 @@ def flatten(input_x):
         >>> print(output.shape)
         (1, 24)
     """
-    return flatten_(input_x)
+    _flatten = _get_cache_prim(P.Flatten)()
+    return _flatten(input_x)
 
 
 @constexpr
