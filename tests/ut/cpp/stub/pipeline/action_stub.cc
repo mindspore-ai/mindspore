@@ -17,8 +17,6 @@
 #include "pipeline/jit/action.h"
 namespace mindspore {
 namespace pipeline {
-std::vector<ActionItem> PServerPipeline(const ResourcePtr &resource) { return {}; }
 std::vector<ActionItem> PSchedulerPipeline(const ResourcePtr &resource) { return {}; }
-std::vector<ActionItem> ServerPipeline(const ResourcePtr &resource) { return {}; }
 }  // namespace pipeline
 }  // namespace mindspore
