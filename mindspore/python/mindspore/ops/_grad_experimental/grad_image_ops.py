@@ -51,7 +51,7 @@ def get_bprop_resize_bicubic(self):
 def get_bprop_crop_and_resize(self):
     """Grad definition for `CropAndResize` operation."""
     allowed_types = [mstype.float16, mstype.float32, mstype.float64]
-    gradboxes = CropAndResizeGradBoxes(method=self.method)
+    gradboxes = CropAndResizeGradBoxes(method="bilinear")
     method_ = self.method
     def bprop(x, boxes, box_index, crop_size, out, dout):
         if method_ != "bilinear":
