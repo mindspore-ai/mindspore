@@ -171,6 +171,7 @@ class Scheduler {
   std::map<std::string, TypeId> *execution_plan_ = nullptr;
   const std::map<std::string, std::map<std::string, std::string>> *config_info_ = nullptr;
   std::shared_ptr<ShapeFusionPass> shape_fusion_pass_ = nullptr;
+  std::vector<int> infer_subgraph_index_;
 };
 }  // namespace mindspore::lite
 
