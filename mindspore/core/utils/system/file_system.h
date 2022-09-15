@@ -17,6 +17,8 @@
 #ifndef MINDSPORE_CORE_UTILS_SYSTEM_FILE_SYSTEM_H_
 #define MINDSPORE_CORE_UTILS_SYSTEM_FILE_SYSTEM_H_
 
+#include <unistd.h>
+#include <stdio.h>
 #include <cerrno>
 #include <cstdint>
 #include <cstdlib>
@@ -28,6 +30,7 @@
 #include "utils/system/base.h"
 #include "utils/log_adapter.h"
 #include "utils/os.h"
+#include "utils/convert_utils_base.h"
 #include "include/common/debug/common.h"
 
 namespace mindspore {
@@ -44,8 +47,8 @@ class FileSystem {
 
   virtual ~FileSystem() = default;
 
-  // Create a new read/write file
-  virtual WriteFilePtr CreateWriteFile(const string &file_name) = 0;
+  // Create a new read/write file with mode
+  virtual WriteFilePtr CreateWriteFile(const string &file_name, const char *mode = "w+") = 0;
 
   // Check the file is exist?
   virtual bool FileExist(const string &file_name) = 0;
@@ -67,14 +70,26 @@ class WriteFile {
 
   virtual ~WriteFile() = default;
 
-  // Open the file
-  virtual bool Open() = 0;
+  // Open the file using a special mode
+  virtual bool Open(const char *mode = "w+") = 0;
 
   // append the content to file
   virtual bool Write(const std::string &data) {
     MS_LOG(WARNING) << "Attention: Maybe not call the function.";
     return true;
   }
+
+  // Write to a file at a given offset like linux function pwrite
+  virtual bool PWrite(const void *buf, size_t nbytes, size_t offset) = 0;
+
+  // Read from a file at a given offset like linux function pwrite
+  virtual bool PRead(void *buf, size_t nbytes, size_t offset) = 0;
+
+  // Trunc file size to length
+  virtual bool Trunc(size_t length) = 0;
+
+  // Get size of this file
+  virtual size_t Size() = 0;
 
   // name: return the file name
   string get_file_name() { return file_name_; }
@@ -90,6 +105,9 @@ class WriteFile {
 
  protected:
   string file_name_;
+
+  // The size of this file.
+  size_t size_{0};
 };
 
 #if defined(SYSTEM_ENV_POSIX)
@@ -100,8 +118,8 @@ class MS_CORE_API PosixFileSystem : public FileSystem {
 
   ~PosixFileSystem() override = default;
 
-  // create a new write file
-  WriteFilePtr CreateWriteFile(const string &file_name) override;
+  // create a new write file using a special mode
+  WriteFilePtr CreateWriteFile(const string &file_name, const char *mode) override;
 
   // check the file is exist?
   bool FileExist(const string &file_name) override;
@@ -136,7 +154,7 @@ class PosixWriteFile : public WriteFile {
     }
   }
 
-  bool Open() override {
+  bool Open(const char *mode) override {
     if (file_ != nullptr) {
       MS_LOG(WARNING) << "The File(" << file_name_ << ") already open.";
       return true;
@@ -145,15 +163,14 @@ class PosixWriteFile : public WriteFile {
     if (file_name_.c_str() == nullptr) {
       MS_LOG(EXCEPTION) << "The file path is null.";
     }
-    char path[PATH_MAX] = {0x00};
-    if (file_name_.size() >= PATH_MAX || realpath(file_name_.c_str(), path) == nullptr) {
-      MS_LOG(EXCEPTION) << "Convert to real path fail, file name is " << file_name_ << ".";
+    if (file_name_.size() >= PATH_MAX) {
+      MS_LOG(EXCEPTION) << "The file name is too long, file name is " << file_name_ << ".";
     }
 
     // open the file
-    file_ = fopen(path, "w+");
+    file_ = fopen(file_name_.c_str(), mode);
     if (file_ == nullptr) {
-      MS_LOG(ERROR) << "File(" << path << ") IO ERROR. " << ErrnoToString(errno);
+      MS_LOG(ERROR) << "File(" << file_name_ << ") IO ERROR. " << ErrnoToString(errno);
       return false;
     }
     return true;
@@ -168,6 +185,44 @@ class PosixWriteFile : public WriteFile {
     }
     return true;
   }
+
+  bool PWrite(const void *buf, size_t nbytes, size_t offset) override {
+    MS_LOG(DEBUG) << "Write data(" << nbytes << ") at offset(" << offset << ")to file(" << file_name_ << ").";
+
+    size_t r = pwrite(fileno(file_), buf, nbytes, offset);
+    if (r != nbytes) {
+      MS_LOG(ERROR) << "File(" << file_name_ << ") IO ERROR. " << ErrnoToString(errno);
+      return false;
+    }
+
+    return true;
+  }
+
+  bool PRead(void *buf, size_t nbytes, size_t offset) override {
+    MS_LOG(DEBUG) << "Read data(" << nbytes << ") at offset(" << offset << ")to file(" << file_name_ << ").";
+    size_t r = pread(fileno(file_), buf, nbytes, offset);
+    if (r != nbytes) {
+      MS_LOG(ERROR) << "File(" << file_name_ << ") IO ERROR. " << ErrnoToString(errno);
+      return false;
+    }
+
+    return true;
+  }
+
+  bool Trunc(size_t length) override {
+    MS_LOG(DEBUG) << "Trunc file(" << file_name_ << ") to size(" << length << ")";
+    if (length == size_) {
+      return true;
+    }
+    if (ftruncate(fileno(file_), length) != 0) {
+      MS_LOG(ERROR) << "File(" << file_name_ << ") Trunc ERROR. " << ErrnoToString(errno);
+      return false;
+    }
+    size_ = length;
+    return true;
+  }
+
+  size_t Size() override { return size_; }
 
   bool Close() override {
     if (file_ == nullptr) {
@@ -206,8 +261,8 @@ class MS_CORE_API WinFileSystem : public FileSystem {
 
   ~WinFileSystem() override = default;
 
-  // create a new write file
-  WriteFilePtr CreateWriteFile(const string &file_name) override;
+  // create a new write file with mode
+  WriteFilePtr CreateWriteFile(const string &file_name, const char *mode) override;
 
   // check the file is exist?
   bool FileExist(const string &file_name) override;
@@ -229,9 +284,17 @@ class WinWriteFile : public WriteFile {
 
   ~WinWriteFile() override;
 
-  bool Open() override;
+  bool Open(const char *mode) override;
 
   bool Write(const std::string &data) override;
+
+  bool PWrite(const void *buf, size_t nbytes, size_t offset) override;
+
+  bool PRead(void *buf, size_t nbytes, size_t offset) override;
+
+  bool Trunc(size_t length) override;
+
+  size_t Size() override;
 
   bool Close() override;
 
