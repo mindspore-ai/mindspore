@@ -154,6 +154,20 @@ set(LITE_SRC
         # ${MINDIR_KERNEL_SRC}
         )
 
+
+if(MSLITE_ENABLE_PARALLEL_INFERENCE)
+    set(INFER_HELPER_SRC
+            ${INFER_HELPER_SRC}
+            ${LITE_DIR}/src/common/helper/external_tensor/file_helper.cc
+            ${LITE_DIR}/src/common/helper/external_tensor/memory_helper.cc
+            )
+
+    set(LITE_SRC
+            ${LITE_SRC}
+            ${INFER_HELPER_SRC}
+            )
+endif()
+
 if(MSLITE_ENABLE_MODEL_ENCRYPTION)
     set(LITE_SRC
             ${LITE_SRC}

@@ -22,9 +22,12 @@
 #include <map>
 
 #include "extendrt/session/lite_graph_executor.h"
+#include "schema/inner/model_generated.h"
+#include "runtime/hardware/device_context.h"
 #include "include/api/context.h"
 #include "include/model.h"
 #include "src/litert/lite_session.h"
+#include "src/common/helper/infer_helpers.h"
 
 namespace mindspore {
 class LiteRTGraphExecutor : public LiteGraphExecutor {
@@ -48,9 +51,14 @@ class LiteRTGraphExecutor : public LiteGraphExecutor {
                                      bool verify_size);
 
  private:
+  bool ExtractTensorData(mindspore::schema::MetaGraphT *meta_graph_t);
+  bool IsNeedExtractTensorData(mindspore::schema::MetaGraphT *meta_graph_t);
+
+ private:
   const std::shared_ptr<mindspore::Context> context_;
   lite::LiteGraph lite_graph_;
   std::shared_ptr<lite::LiteSession> lite_session_;
+  std::shared_ptr<mindspore::infer::helper::InferHelpers> helpers_ = nullptr;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_GRAPH_EXECUTOR_LITERT_GRAPH_EXECUTOR_H_
