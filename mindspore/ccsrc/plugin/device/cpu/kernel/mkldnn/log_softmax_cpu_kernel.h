@@ -44,6 +44,7 @@ class LogSoftmaxCpuKernelMod : public MKLCpuKernelMod {
   }
 
  private:
+  int axis_ori_{0};
   int axis_{0};
 };
 }  // namespace kernel
