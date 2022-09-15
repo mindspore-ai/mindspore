@@ -25,39 +25,39 @@ from mindspore.ops import operations as P
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 
 
-class NetIsNan(nn.Cell):
+class NetIsInf(nn.Cell):
     def __init__(self):
-        super(NetIsNan, self).__init__()
-        self.isnan = P.IsNan()
+        super(NetIsInf, self).__init__()
+        self.isinf = P.IsInf()
 
     def construct(self, x):
-        return self.isnan(x)
+        return self.isinf(x)
 
 
-x1 = np.array([[1.2, 2, np.nan, 88]]).astype(np.float32)
-x2 = np.array([[np.inf, 1, 88.0, 0]]).astype(np.float32)
-x3 = np.array([[1, 2], [3, 4], [5.0, 88.0]]).astype(np.float32)
+x1 = Tensor(np.array([3, np.log(0), 1, np.log(0)]), ms.float32)
+x2 = Tensor(np.array([np.log(0), 1, np.log(0), 3]), ms.float32)
+x3 = Tensor(np.array([[np.log(0), 2], [np.log(0), np.log(0)]]), ms.float32)
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_nan():
-    ms_isnan = NetIsNan()
-    output1 = ms_isnan(Tensor(x1))
-    expect1 = [[False, False, True, False]]
+    ms_isinf = NetIsInf()
+    output1 = ms_isinf(Tensor(x1))
+    expect1 = [[False, True, False, True]]
     assert (output1.asnumpy() == expect1).all()
 
-    output2 = ms_isnan(Tensor(x2))
-    expect2 = [[False, False, False, False]]
+    output2 = ms_isinf(Tensor(x2))
+    expect2 = [[True, False, True, False]]
     assert (output2.asnumpy() == expect2).all()
 
-    output3 = ms_isnan(Tensor(x3))
-    expect3 = [[False, False], [False, False], [False, False]]
+    output3 = ms_isinf(Tensor(x3))
+    expect3 = [[True, False], [True, True]]
     assert (output3.asnumpy() == expect3).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_is_nan_cpu_dynamic_shape():
@@ -67,7 +67,7 @@ def test_is_nan_cpu_dynamic_shape():
     Expectation: expect correct shape result.
     """
     context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
-    net = NetIsNan()
+    net = NetIsInf()
     x_dyn = Tensor(shape=[1, 32, 9, None], dtype=ms.float32)
     net.set_inputs(x_dyn)
     x = np.random.randn(1, 32, 9, 9)

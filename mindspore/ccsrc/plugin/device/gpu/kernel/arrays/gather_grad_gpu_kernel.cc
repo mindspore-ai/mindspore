@@ -73,6 +73,54 @@ bool GatherGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const st
   return true;
 }
 
+void GatherGradGpuKernelMod::CalculateDim(const BaseOperatorPtr &base_operator,
+                                          const std::vector<KernelTensorPtr> &inputs) {
+  if (grad_shapes_.size() != index_shapes_.size() || grad_shapes_.size() != output_shapes_.size()) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the dimension of grad, index and output must be the same, but got the dimension of "
+                      << "grad: " << grad_shapes_.size() << ", the dimension of index: " << index_shapes_.size()
+                      << ", the dimension of output: " << output_shapes_.size();
+  }
+  int dims = SizeToInt(grad_shapes_.size());
+
+  size_t input_num = inputs.size();
+  constexpr size_t kStaticSize = 2;
+  constexpr size_t kDynamicSize = 3;
+  if (input_num == kStaticSize) {
+    auto kernel_ptr = std::dynamic_pointer_cast<ops::GatherDGrad>(base_operator);
+    axis_ = static_cast<int>(kernel_ptr->get_dim());
+  } else if (input_num == kDynamicSize) {
+    auto kernel_ptr = std::dynamic_pointer_cast<ops::GatherDGradV2>(base_operator);
+    axis_ = static_cast<int>(kernel_ptr->get_dim());
+  } else {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 2 or 3, but got " << input_num;
+  }
+
+  if (axis_ < -dims || axis_ >= dims) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'axis' must be in the range [-" << dims << "," << dims
+                      << "), but got " << axis_;
+  }
+  if (axis_ < 0) {
+    axis_ += dims;
+  }
+
+  int64_t dim_before_axis = 1;
+  for (size_t i = 0; i < IntToSize(axis_); i++) {
+    dim_before_axis *= output_shapes_[i];
+  }
+  size_t dim_at_axis_index = LongToSizeClipNeg(index_shapes_[IntToSize(axis_)]);
+  size_t dim_at_axis_output = LongToSizeClipNeg(output_shapes_[IntToSize(axis_)]);
+  int64_t dim_after_axis = 1;
+  for (size_t i = IntToSize(axis_) + 1; i < output_shapes_.size(); i++) {
+    dim_after_axis *= output_shapes_[i];
+  }
+
+  dims_[kIndex0] = LongToSize(dim_before_axis);
+  dims_[kIndex1] = dim_at_axis_index;
+  dims_[kIndex2] = dim_at_axis_output;
+  dims_[kIndex3] = LongToSize(dim_after_axis);
+}
+
 int GatherGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                    const std::vector<KernelTensorPtr> &outputs,
                                    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
@@ -106,51 +154,8 @@ int GatherGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
   }
 
   if (ret == KRET_OK) {
-    if (grad_shapes_.size() != index_shapes_.size() || grad_shapes_.size() != output_shapes_.size()) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                        << "', the dimension of grad, index and output must be the same, but got the dimension of "
-                        << "grad: " << grad_shapes_.size() << ", the dimension of index: " << index_shapes_.size()
-                        << ", the dimension of output: " << output_shapes_.size();
-    }
-    int dims = SizeToInt(grad_shapes_.size());
     MS_EXCEPTION_IF_NULL(base_operator);
-
-    size_t input_num = inputs.size();
-    constexpr size_t kStaticSize = 2;
-    constexpr size_t kDynamicSize = 3;
-    if (input_num == kStaticSize) {
-      auto kernel_ptr = std::dynamic_pointer_cast<ops::GatherDGrad>(base_operator);
-      axis_ = static_cast<int>(kernel_ptr->get_dim());
-    } else if (input_num == kDynamicSize) {
-      auto kernel_ptr = std::dynamic_pointer_cast<ops::GatherDGradV2>(base_operator);
-      axis_ = static_cast<int>(kernel_ptr->get_dim());
-    } else {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 2 or 3, but got " << input_num;
-    }
-
-    if (axis_ < -dims || axis_ >= dims) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'axis' must be in the range [-" << dims << "," << dims
-                        << "), but got " << axis_;
-    }
-    if (axis_ < 0) {
-      axis_ += dims;
-    }
-
-    int64_t dim_before_axis = 1;
-    for (size_t i = 0; i < IntToSize(axis_); i++) {
-      dim_before_axis *= output_shapes_[i];
-    }
-    size_t dim_at_axis_index = LongToSizeClipNeg(index_shapes_[IntToSize(axis_)]);
-    size_t dim_at_axis_output = LongToSizeClipNeg(output_shapes_[IntToSize(axis_)]);
-    int64_t dim_after_axis = 1;
-    for (size_t i = IntToSize(axis_) + 1; i < output_shapes_.size(); i++) {
-      dim_after_axis *= output_shapes_[i];
-    }
-
-    dims_[kIndex0] = LongToSize(dim_before_axis);
-    dims_[kIndex1] = dim_at_axis_index;
-    dims_[kIndex2] = dim_at_axis_output;
-    dims_[kIndex3] = LongToSize(dim_after_axis);
+    CalculateDim(base_operator, inputs);
   }
 
   return static_cast<int>(ret);

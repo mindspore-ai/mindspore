@@ -16,6 +16,7 @@
 import numpy as np
 import pytest
 
+import mindspore as ms
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -98,3 +99,22 @@ def test_net():
     out = net(x11).asnumpy()
     expect = [True, True, True]
     assert np.all(out == expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_is_finite_cpu_dynamic_shape():
+    """
+    Feature: test FloatStatus op on CPU.
+    Description: test the ops in dynamic shape.
+    Expectation: expect correct shape result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+    net = Net()
+    x_dyn = Tensor(shape=[1, 32, 9, None], dtype=ms.float32)
+    net.set_inputs(x_dyn)
+    x = np.random.randn(1, 32, 9, 9)
+    output = net(Tensor(x, ms.float32))
+    except_shape = (1, 32, 9, 9)
+    assert output.asnumpy().shape == except_shape

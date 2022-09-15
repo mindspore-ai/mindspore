@@ -73,7 +73,38 @@ bool MirrorPadGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   }
   input_type_size_ = abstract::TypeIdSize(inputs.at(kIndex0)->GetDtype());
   padding_type_size_ = abstract::TypeIdSize(inputs.at(kIndex1)->GetDtype());
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
+  }
+  kernel_func_ = func_list_[index].second;
   return true;
+}
+
+void MirrorPadGradGpuKernelMod::CalculateWorkspace(const ShapeVector &input_shape,
+                                                   const std::vector<size_t> &output_shape) {
+  workspace_size_ = input_type_size_;
+  for (int i = 0; i < SizeToInt(kOutputDimLowerLimit); i++) {
+    workspace_size_ *= output_shape[i];                        // BATCH, CHANNEL -> Output size
+    workspace_size_ *= input_shape[i + kOutputDimLowerLimit];  // WIDTH, HEIGHT -> Input Size
+  }
+  workspace_size_list_.push_back(workspace_size_);
+
+  int max_width = input_shape_[kIndexForMaxWidth];
+  // basic error check for padding value
+  if (mode_ == 1) {  // symmetric
+    max_width = max_width + (kSymmetricCoef * max_width);
+  } else {  // reflect
+    max_width = max_width + (kSymmetricCoef * (max_width - 1));
+  }
+  if (output_shape_[(output_shape_.size() - kMaxIndexOffset) + 0] > max_width ||
+      output_shape_[(output_shape_.size() - kMaxIndexOffset) + 1] > max_width) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the output.shape[-1] and output.shape[-2] cannot be greater "
+                      << "than input_x.shape[-1], but got output.shape: " << CONVERT_VECTOR_TO_STRING(output_shape_)
+                      << ", input_x.shape: " << CONVERT_VECTOR_TO_STRING(input_shape_);
+  }
 }
 
 int MirrorPadGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
@@ -149,26 +180,7 @@ int MirrorPadGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
   // calc workspace size
   // store dy values with accumulation across batch and channel only
   if (ret == KRET_OK) {
-    workspace_size_ = input_type_size_;
-    for (int i = 0; i < SizeToInt(kOutputDimLowerLimit); i++) {
-      workspace_size_ *= output_shape[i];                        // BATCH, CHANNEL -> Output size
-      workspace_size_ *= input_shape[i + kOutputDimLowerLimit];  // WIDTH, HEIGHT -> Input Size
-    }
-    workspace_size_list_.push_back(workspace_size_);
-
-    int max_width = input_shape_[kIndexForMaxWidth];
-    // basic error check for padding value
-    if (mode_ == 1) {  // symmetric
-      max_width = max_width + (kSymmetricCoef * max_width);
-    } else {  // reflect
-      max_width = max_width + (kSymmetricCoef * (max_width - 1));
-    }
-    if (output_shape_[(output_shape_.size() - kMaxIndexOffset) + 0] > max_width ||
-        output_shape_[(output_shape_.size() - kMaxIndexOffset) + 1] > max_width) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the output.shape[-1] and output.shape[-2] cannot be greater "
-                        << "than input_x.shape[-1], but got output.shape: " << CONVERT_VECTOR_TO_STRING(output_shape_)
-                        << ", input_x.shape: " << CONVERT_VECTOR_TO_STRING(input_shape_);
-    }
+    CalculateWorkspace(input_shape, output_shape);
   }
   return static_cast<int>(ret);
 }
