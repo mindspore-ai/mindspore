@@ -35,6 +35,7 @@
 #include "kernel/oplib/opinfo.h"
 #include "kernel/kernel_build_info.h"
 #include "ops/base_operator.h"
+#include "ops/strided_slice.h"
 
 namespace mindspore {
 namespace kernel {
@@ -182,9 +183,9 @@ float ScaleGrid(const int x, const float scale);
 BACKEND_EXPORT FusionType GetFusionTypeByName(const std::string &name);
 BACKEND_EXPORT std::string GetFusionNameByType(const kernel::FusionType &type);
 BACKEND_EXPORT std::vector<bool> Dec2Bin(const int64_t &mask);
-BACKEND_EXPORT void FillEmptyDims(const CNodePtr &kernel_node, std::vector<int64_t> *begin, std::vector<int64_t> *end,
-                                  std::vector<int64_t> *stride, ShapeVector *input_shape);
-BACKEND_EXPORT void ParseStrideSliceMasks(const CNodePtr &kernel_node, std::vector<int64_t> *begin,
+BACKEND_EXPORT void FillEmptyDims(const BaseOperatorPtr &base_operator, std::vector<int64_t> *begin,
+                                  std::vector<int64_t> *end, std::vector<int64_t> *stride, ShapeVector *input_shape);
+BACKEND_EXPORT void ParseStrideSliceMasks(const BaseOperatorPtr &base_operator, std::vector<int64_t> *begin,
                                           std::vector<int64_t> *end, std::vector<int64_t> *stride,
                                           const ShapeVector &input_shape);
 struct CachedInterpolation {

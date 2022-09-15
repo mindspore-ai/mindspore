@@ -26,6 +26,7 @@
 #include "abstract/ops/primitive_infer_map.h"
 #include "ops/primitive_c.h"
 #include "mindapi/src/helper.h"
+#include "include/common/utils/utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -36,9 +37,10 @@ std::vector<int64_t> TenToTwo(int64_t num) {
     output.push_back(0);
     return output;
   }
+  const int64_t factor = 2;
   while (num) {
-    output.push_back(num % 2);
-    num /= 2;
+    output.push_back(num % factor);
+    num /= factor;
   }
 
   return output;
@@ -59,7 +61,6 @@ void GetAndCheckAttrMask(const PrimitivePtr &primitive, std::vector<int64_t> *be
   *ellipsis_pos = TenToTwo(ellipsis_mask);
   *new_axis_pos = TenToTwo(new_axis_mask);
   *shrink_axis_pos = TenToTwo(shrink_axis_mask);
-  return;
 }
 
 int64_t GetSlicingLengthForPositiveStrides(int64_t start_pos, int64_t end_pos, int64_t strides, int64_t x_dim) {
@@ -444,6 +445,18 @@ void StridedSlice::set_shrink_axis_mask(int64_t shrink_axis_mask) {
 int64_t StridedSlice::get_shrink_axis_mask() const {
   auto value_ptr = GetAttr(kShrinkAxisMask);
   return GetValue<int64_t>(value_ptr);
+}
+std::vector<int64_t> StridedSlice::get_begin() const {
+  auto value_ptr = GetAttr(kAttrBegin);
+  return GetValue<std::vector<int64_t>>(value_ptr);
+}
+std::vector<int64_t> StridedSlice::get_end() const {
+  auto value_ptr = GetAttr(kAttrEnd);
+  return GetValue<std::vector<int64_t>>(value_ptr);
+}
+std::vector<int64_t> StridedSlice::get_strides() const {
+  auto value_ptr = GetAttr(kAttrStrides);
+  return GetValue<std::vector<int64_t>>(value_ptr);
 }
 void StridedSlice::Init(int64_t begin_mask, int64_t end_mask, int64_t ellipsis_mask, int64_t new_axis_mask,
                         int64_t shrink_axis_mask) {
