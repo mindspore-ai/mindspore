@@ -60,14 +60,6 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
         ${CMAKE_CURRENT_SOURCE_DIR}/delegate_graph_executor.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/convert/runtime_convert.cc
         )
-    # when cpu kernel is need
-    #if(NOT MSLITE_ENABLE_ACL)
-    #    set(MSLITE_EXTEND_RUNTIME_SRC ${MSLITE_EXTEND_RUNTIME_SRC}
-    #        ${MINDIR_KERNEL_SRC}
-    #        ${MINDIR_MODEL_SRC}
-    #        ${CMAKE_CURRENT_SOURCE_DIR}/session/lite_infer_session.cc
-    #        )
-    #endif()
 
     include_directories("${CCSRC_DIR}/ps/core")
     file(GLOB_RECURSE COMM_PROTO_IN RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "${CCSRC_DIR}/ps/core/protos/*.proto")
@@ -140,13 +132,6 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
     add_dependencies(mindspore-extendrt mindspore-kernel-graph)
     add_subdirectory(cxx_api)
     add_subdirectory(delegate/graph_executor/litert)
-
-    # when cpu kernel is need
-    #if(NOT MSLITE_ENABLE_ACL)
-    #    add_subdirectory(mock/lite_runtime)
-    #    add_dependencies(mindspore-extendrt mindspore-infer-lite)
-    #    target_link_libraries(mindspore-extendrt mindspore-infer-lite)
-    #endif()
 
     add_subdirectory(${CCSRC_DIR}/backend/common/pass common_pass)
     add_subdirectory(${CCSRC_DIR}/backend/common/optimizer mindspore_ccsrc_backend_cmmon_optimizer)
