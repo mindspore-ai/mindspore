@@ -51,7 +51,7 @@ class DATASET_API Iterator {
   Iterator();
 
   /// \brief Destructor.
-  ~Iterator();
+  virtual ~Iterator();
 
   /// \brief Method for building and launching the pipeline.
   /// \param[in] ds The last DatasetOp in the dataset pipeline.
@@ -152,7 +152,7 @@ class DATASET_API PullIterator : public Iterator {
   PullIterator();
 
   /// \brief Destructor.
-  ~PullIterator();
+  virtual ~PullIterator();
 
   /// \brief Function to get next row from the data pipeline.
   /// \note Type of return data is a vector(without column name).
