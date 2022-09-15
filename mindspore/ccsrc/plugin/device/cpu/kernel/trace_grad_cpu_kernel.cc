@@ -28,8 +28,11 @@ void TraceGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   values_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-
-  input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
+  auto device_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
+  if (IsDynamic(device_shape)) {
+    return;
+  }
+  input_shape_ = device_shape;
   const std::vector<int64_t> x_shape_ = {2};
   if (input_shape_ != x_shape_) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the shape of input[x_shape] should be " << Vector2Str(x_shape_)
