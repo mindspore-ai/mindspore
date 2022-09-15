@@ -42,8 +42,6 @@ void HandleNoUsedParameter(const FuncGraphPtr &root);
 void HandleFullySplitParameters(const FuncGraphPtr &root);
 void SetClonedTensorShapeForOptimizer(const FuncGraphPtr &root);
 void HandleAdaFactorOpt(const FuncGraphPtr &root);
-py::object GetPyParameterObj(const ParamInfoPtr &param_info, const std::string &obj);
-void SliceParameterObj(const ParameterPtr &parameter, const TensorLayout &tensor_layout);
 void AutoParallelPostProcess(const FuncGraphPtr &root);
 std::pair<AnfNodePtr, bool> FindParameter(const AnfNodePtr &node, const FuncGraphPtr &func_graph);
 std::pair<AnfNodePtr, bool> FindParameterWithAllgather(const AnfNodePtr &node, const FuncGraphPtr &func_graph,

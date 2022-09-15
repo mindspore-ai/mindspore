@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
+import re
 import numpy as np
 import pytest
 import mindspore as ms
@@ -59,7 +59,23 @@ class Net(Cell):
         return out
 
 
+class Net2(Cell):
+    def __init__(self, strategy, split_tuple, param_shape):
+        super().__init__()
+        self.gatherv2 = P.Gather().shard(strategy)
+        self.gatherv2.add_prim_attr("manual_split", split_tuple)
+        self.relu = P.ReLU()
+        self.param = Parameter(initializer("ones", param_shape, ms.float32), name="gatherv2_param")
+        self.axis = 0
+
+    def construct(self, x, b):
+        out = self.gatherv2(self.param, x, self.axis)
+        out = self.relu(out)
+        return out
+
+
 _x = Tensor(np.ones([8, 8]), dtype=ms.int32)
+_x1 = Tensor(np.ones([8, 8, 8]), dtype=ms.int32)
 _b = Tensor(np.ones([64, 8]), dtype=ms.float32)
 
 
@@ -70,6 +86,47 @@ def compile_net(net):
     train_net.set_train()
     _cell_graph_executor.compile(train_net, _x, _b, auto_parallel_mode=True)
     context.reset_auto_parallel_context()
+
+
+def compile_net_and_return_strategy(net: Cell, *inputs):
+    optimizer = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
+    train_net = TrainOneStepCell(net, optimizer)
+    net.set_auto_parallel()
+    net.set_train()
+    _cell_graph_executor.compile(train_net, *inputs, phase='train')
+    strategies = _cell_graph_executor._get_shard_strategy(train_net)
+    context.reset_auto_parallel_context()
+    return strategies
+
+
+def test_manual_split_2x3():
+    """
+    Features: test manual split
+    Description: the strategy of param is (4, 2), the strategy of indices is (1, 1, 4)
+    Expectation: the strategy of output is (1, 1, 4, 2)
+    """
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=8, global_rank=0,
+                                      search_mode="sharding_propagation")
+    net = Net2(strategy=((4, 2), (1, 1, 4)), split_tuple=(10, 20, 30, 4), param_shape=(64, 64))
+    strategies = compile_net_and_return_strategy(net, _x1, _b)
+    for (k, v) in strategies.items():
+        if re.search("ReLU", k) is not None:
+            assert v == [[1, 1, 4, 2]]
+
+
+def test_manual_split_3x3():
+    """
+    Features: test manual split
+    Description: the strategy of param is (4, 2, 2), the strategy of indices is (1, 1, 4)
+    Expectation: the strategy of output is (1, 1, 4, 2, 2)
+    """
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=16, global_rank=0,
+                                      search_mode="sharding_propagation")
+    net = Net2(strategy=((4, 2, 2), (1, 1, 4)), split_tuple=(10, 20, 30, 4), param_shape=(64, 8, 64))
+    strategies = compile_net_and_return_strategy(net, _x1, _b)
+    for (k, v) in strategies.items():
+        if re.search("ReLU", k) is not None:
+            assert v == [[1, 1, 4, 2, 2]]
 
 
 def test_normal_split():
