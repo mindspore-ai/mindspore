@@ -68,7 +68,6 @@ class TileCpuKernelMod : public NativeCpuKernelMod {
   size_t input_num;
   size_t output_num;
   std::vector<int> multiples_;
-  std::vector<int64_t> multiples_me;
   TypeId dtype_{kTypeUnknown};
   using TypeKernel = std::function<void(TileCpuKernelMod *, const std::vector<AddressPtr> &inputs,
                                         const std::vector<AddressPtr> &outputs)>;
