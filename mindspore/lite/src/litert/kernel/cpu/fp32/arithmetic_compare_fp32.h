@@ -41,9 +41,11 @@ class ArithmeticCompareCPUKernel : public ArithmeticCPUKernel {
       : ArithmeticCPUKernel(parameter, inputs, outputs, ctx) {}
   ~ArithmeticCompareCPUKernel() override = default;
 
- private:
+ protected:
   void InitRunFunction(int primitive_type) override;
   int DoExecute(const void *input0, const void *input1, void *output, int64_t size) override;
+
+ private:
   ArithmeticCompareFp32Func func_fp32_{nullptr};
   ArithmeticCompareIntFunc func_int32_{nullptr};
   ArithmeticOptCompareFp32Func opt_func_fp32_{nullptr};

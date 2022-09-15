@@ -32,9 +32,9 @@ class PreprocessorOfFusion {
   PreprocessorOfFusion() = default;
   ~PreprocessorOfFusion() = default;
   int Run(const FuncGraphPtr &func_graph);
-  const std::vector<CNodePtr> &GetReduceOps() { return reduce_ops_; }
+  const std::vector<CNodePtr> &GetReduceOps() const { return reduce_ops_; }
 
-  const ShapeContainer &GetShapeContainer() { return op_shape_infos_; }
+  const ShapeContainer &GetShapeContainer() const { return op_shape_infos_; }
 
  private:
   bool CheckIsDynamicModel(const FuncGraphPtr &func_graph);
