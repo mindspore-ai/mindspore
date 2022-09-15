@@ -6,6 +6,8 @@ endif()
 set(API_SRC "")
 set(LITE_SRC "")
 
+add_compile_definitions(ENABLE_LITE_HELPER)
+
 set(MOCK_SRC
         ${MOCK_SRC}
         ${LITE_DIR}/src/extendrt/mock/lite_runtime/converters.cc
@@ -75,6 +77,17 @@ set(LITE_SRC
         ${MODEL_LOADER_FRAMEWORK_SRC}
         ${MINDIR_MODEL_SRC}
         ${MINDIR_KERNEL_SRC}
+        )
+
+set(INFER_HELPER_SRC
+        ${INFER_HELPER_SRC}
+        ${LITE_DIR}/src/common/helper/external_tensor/file_helper.cc
+        ${LITE_DIR}/src/common/helper/external_tensor/memory_helper.cc
+        )
+
+set(LITE_SRC
+        ${LITE_SRC}
+        ${INFER_HELPER_SRC}
         )
 
 if(MSLITE_ENABLE_MODEL_ENCRYPTION)

@@ -1623,8 +1623,14 @@ std::string lite::LiteSession::ParseWeightPath() {
   return weight_path;
 }
 
+#ifdef ENABLE_LITE_HELPER
+int lite::LiteSession::LoadModelAndCompileByBuf(const char *model_buf, mindspore::ModelType model_type,
+                                                const size_t &buf_size,
+                                                mindspore::infer::helper::InferHelpers *infer_helpers) {
+#else
 int lite::LiteSession::LoadModelAndCompileByBuf(const char *model_buf, mindspore::ModelType model_type,
                                                 const size_t &buf_size) {
+#endif
   size_t lite_buf_size = 0;
   char *lite_buf = nullptr;
   auto buf_model_type = LoadModelByBuff(model_buf, buf_size, &lite_buf, &lite_buf_size, model_type);
@@ -1633,7 +1639,11 @@ int lite::LiteSession::LoadModelAndCompileByBuf(const char *model_buf, mindspore
     return RET_ERROR;
   }
   auto weight_path = ParseWeightPath();
+#ifdef ENABLE_LITE_HELPER
+  auto *model = lite::ImportFromBuffer(lite_buf, lite_buf_size, true, model_type, weight_path, infer_helpers);
+#else
   auto *model = lite::ImportFromBuffer(lite_buf, lite_buf_size, true, model_type, weight_path);
+#endif
   if (model == nullptr) {
     MS_LOG(ERROR) << "Import model failed";
     return RET_ERROR;

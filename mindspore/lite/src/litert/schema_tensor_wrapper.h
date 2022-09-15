@@ -21,6 +21,9 @@
 #include <string>
 #include "src/common/version_manager.h"
 #include "schema/model_generated.h"
+#ifdef ENABLE_LITE_HELPER
+#include "src/common/helper/infer_helpers.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -35,7 +38,12 @@ class SchemaTensorWrapper {
     this->data_ = nullptr;
   }
 
+#ifdef ENABLE_LITE_HELPER
+  bool Init(const schema::Tensor &tensor, SCHEMA_VERSION schema_version, const std::string &base_path,
+            mindspore::infer::helper::InferHelpers *infer_helpers = nullptr);
+#else
   bool Init(const schema::Tensor &tensor, SCHEMA_VERSION schema_version, const std::string &base_path);
+#endif
 
   const schema::Tensor *handler() const { return this->handler_; }
 

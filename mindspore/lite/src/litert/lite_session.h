@@ -37,6 +37,10 @@
 #endif
 #include "src/litert/scheduler_cb.h"
 
+#ifdef ENABLE_LITE_HELPER
+#include "src/common/helper/infer_helpers.h"
+#endif
+
 namespace mindspore {
 namespace lite {
 class LiteSession {
@@ -46,7 +50,12 @@ class LiteSession {
   static LiteSession *CreateSession(const lite::Context *context);
   static LiteSession *CreateSession(const char *model_buf, size_t size, const lite::Context *context);
   static LiteSession *CreateSession(const std::string &model_path, const lite::Context *context);
+#ifdef ENABLE_LITE_HELPER
+  int LoadModelAndCompileByBuf(const char *model_buf, mindspore::ModelType model_type, const size_t &buf_size,
+                               mindspore::infer::helper::InferHelpers *infer_helpers = nullptr);
+#else
   int LoadModelAndCompileByBuf(const char *model_buf, mindspore::ModelType model_type, const size_t &buf_size);
+#endif
   int LoadModelAndCompileByPath(const std::string &model_path, mindspore::ModelType model_type);
   mindspore::ModelType LoadModelByBuff(const char *model_buf, const size_t &buf_size, char **lite_buf, size_t *size,
                                        mindspore::ModelType model_type);

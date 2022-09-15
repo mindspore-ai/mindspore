@@ -33,6 +33,9 @@
 #include "tools/obfuscator/include/deobfuscator.h"
 #endif
 #include "include/api/types.h"
+#ifdef ENABLE_LITE_HELPER
+#include "src/common/helper/infer_helpers.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -40,7 +43,12 @@ class LiteModel : public Model {
  public:
   explicit LiteModel(std::string model_path = "") : model_path_(std::move(model_path)) {}
 
+#ifdef ENABLE_LITE_HELPER
+  int ConstructModel(const char *model_buf, size_t size, bool take_buf,
+                     mindspore::infer::helper::InferHelpers *infer_helpers = nullptr);
+#else
   int ConstructModel(const char *model_buf, size_t size, bool take_buf);
+#endif
 
   bool ModelVerify() const;
 
@@ -61,7 +69,11 @@ class LiteModel : public Model {
   static int VersionVerify(flatbuffers::Verifier *verify);
 
  private:
+#ifdef ENABLE_LITE_HELPER
+  bool PrepareInnerTensors(mindspore::infer::helper::InferHelpers *infer_helpers = nullptr);
+#else
   bool PrepareInnerTensors();
+#endif
 
   bool CheckQuantAllInit(const flatbuffers::Vector<flatbuffers::Offset<mindspore::schema::QuantParam>> *quant_params);
 
@@ -320,9 +332,15 @@ class LiteModel : public Model {
   const std::string model_path_;
 };
 
+#ifdef ENABLE_LITE_HELPER
+Model *ImportFromBuffer(const char *model_buf, size_t size, bool take_buf,
+                        mindspore::ModelType model_type = mindspore::ModelType::kMindIR_Lite,
+                        const std::string &path = "", mindspore::infer::helper::InferHelpers *infer_helpers = nullptr);
+#else
 Model *ImportFromBuffer(const char *model_buf, size_t size, bool take_buf,
                         mindspore::ModelType model_type = mindspore::ModelType::kMindIR_Lite,
                         const std::string &path = "");
+#endif
 LiteModel *LiteImportFromPath(const char *model_path);
 Model *ImportFromPath(const char *model_path);
 }  // namespace lite

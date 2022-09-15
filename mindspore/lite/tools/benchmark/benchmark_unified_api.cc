@@ -483,6 +483,7 @@ int BenchmarkUnifiedApi::InitMSContext(const std::shared_ptr<mindspore::Context>
   // CPU priority is behind GPU and NPU
   std::shared_ptr<CPUDeviceInfo> device_info = std::make_shared<CPUDeviceInfo>();
   device_info->SetEnableFP16(flags_->enable_fp16_);
+  device_info->SetProvider(flags_->provider_);
   device_list.push_back(device_info);
 
   return RET_OK;
