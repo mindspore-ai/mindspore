@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "plugin/device/cpu/kernel/random_cpu_kernel.h"
 #include <random>
 #include <thread>
 #include <memory>
+#include <algorithm>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
-#include "plugin/device/cpu/kernel/random_cpu_kernel.h"
 
 namespace mindspore {
 namespace kernel {
@@ -96,25 +97,38 @@ void LaunchUniformReal(unsigned int seed, const std::vector<AddressPtr> &, const
   }
 }
 
-void RandomCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  auto iter = kRandomOpTypeMap.find(kernel_name_);
+bool RandomCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                              const std::vector<KernelTensorPtr> &outputs) {
+  auto iter = kRandomOpTypeMap.find(kernel_type_);
   if (iter == kRandomOpTypeMap.end()) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+    MS_LOG(EXCEPTION) << "For '" << kernel_type_
                       << ", only support these types: StandardNormal, UniformInt or UniformReal currently, but got "
-                      << kernel_name_;
+                      << kernel_type_;
   } else {
     random_op_type_ = iter->second;
   }
-
-  auto prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
-  MS_EXCEPTION_IF_NULL(prim);
-  seed_ = LongToInt(GetValue<int64_t>(prim->GetAttr("seed")));
-  seed2_ = LongToInt(GetValue<int64_t>(prim->GetAttr("seed2")));
+  seed_ = LongToInt(GetValue<int64_t>(base_operator->GetAttr("seed")));
+  seed2_ = LongToInt(GetValue<int64_t>(base_operator->GetAttr("seed2")));
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto res = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!res.first) {
+    MS_LOG(ERROR) << "For '" << kernel_type_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
+  }
+  return true;
 }
 
-bool RandomCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
+int RandomCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                               const std::vector<KernelTensorPtr> &outputs,
+                               const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  return KRET_OK;
+}
+
+bool RandomCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                const std::vector<kernel::AddressPtr> &workspace,
                                 const std::vector<kernel::AddressPtr> &outputs) {
   unsigned int RNG_seed = 0;
   std::random_device rd;
@@ -127,18 +141,18 @@ bool RandomCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, c
   }
 
   if (random_op_type_ == RANDOM_OP_NORMAL) {
-    CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kStandardNormalOutputsNum, kernel_name_);
+    CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kStandardNormalOutputsNum, kernel_type_);
     LaunchStandardNormal(this, RNG_seed, outputs);
   } else if (random_op_type_ == RANDOM_OP_UNIFORM_INT) {
-    CHECK_KERNEL_INPUTS_NUM(inputs.size(), kUniformIntInputsNum, kernel_name_);
-    CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kUniformIntOutputsNum, kernel_name_);
+    CHECK_KERNEL_INPUTS_NUM(inputs.size(), kUniformIntInputsNum, kernel_type_);
+    CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kUniformIntOutputsNum, kernel_type_);
     LaunchUniformInt(RNG_seed, inputs, outputs);
   } else if (random_op_type_ == RANDOM_OP_UNIFORM_REAL) {
-    CHECK_KERNEL_INPUTS_NUM(inputs.size(), kUniformRealInputsNum, kernel_name_);
-    CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kUniformRealOutputsNum, kernel_name_);
+    CHECK_KERNEL_INPUTS_NUM(inputs.size(), kUniformRealInputsNum, kernel_type_);
+    CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kUniformRealOutputsNum, kernel_type_);
     LaunchUniformReal(RNG_seed, inputs, outputs);
   } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+    MS_LOG(EXCEPTION) << "For '" << kernel_type_
                       << ", only support these types: StandardNormal, UniformInt or UniformReal currently, but got "
                       << random_op_type_;
   }
@@ -161,7 +175,6 @@ std::vector<KernelAttr> RandomCpuKernelMod::GetOpSupport() {
   }
   return iter->second;
 }
-
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, StandardNormal,
                                  []() { return std::make_shared<RandomCpuKernelMod>(kStandardNormal); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, UniformInt,

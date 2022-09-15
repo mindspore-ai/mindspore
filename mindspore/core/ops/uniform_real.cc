@@ -24,6 +24,7 @@
 namespace mindspore {
 namespace ops {
 MIND_API_OPERATOR_IMPL(UniformReal, BaseOperator);
+MIND_API_OPERATOR_IMPL(CudnnUniformReal, BaseOperator);
 void UniformReal::Init(int64_t seed, int64_t seed2) {
   this->set_seed(seed);
   this->set_seed2(seed2);
@@ -73,6 +74,8 @@ abstract::AbstractBasePtr UniformRealInfer(const abstract::AnalysisEnginePtr &, 
 }
 
 REGISTER_HOST_DEPENDS(kNameUniformReal, {0});
+REGISTER_HOST_DEPENDS(kNameCudnnUniformReal, {0});
 REGISTER_PRIMITIVE_EVAL_IMPL(UniformReal, prim::kPrimUniformReal, UniformRealInfer, nullptr, true);
+REGISTER_PRIMITIVE_EVAL_IMPL(CudnnUniformReal, prim::kPrimCudnnUniformReal, UniformRealInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

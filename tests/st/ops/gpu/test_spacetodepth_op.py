@@ -184,5 +184,37 @@ def test_spacetodepth_pynative_uint32():
 def test_spacetodepth_pynative_uint64():
     SpaceToDepth_pynative(np.uint64)
 
+
+class SpaceToDepthDynNet(nn.Cell):
+    def __init__(self, block_size=2):
+        super(SpaceToDepthDynNet, self).__init__()
+        self.net = P.SpaceToDepth(block_size)
+
+    @ms_function
+    def construct(self, input_x):
+        y1 = self.net(input_x)
+        return y1
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_spacetodepth_dyn_shape():
+    """
+    Feature: op dynamic shape
+    Description: set input_shape None and input real tensor
+    Expectation: success
+    """
+
+    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+    input_x = Tensor(np.arange(12).reshape((1, 3, 2, 2)).astype(np.float32))
+    input_x_dyn = Tensor(shape=[1, None, None, None], dtype=input_x.dtype)
+    net = SpaceToDepthDynNet(2)
+    net.set_inputs(input_x_dyn)
+    output = net(input_x)
+    expect_shape = (1, 12, 1, 1)
+    assert output.asnumpy().shape == expect_shape
+
+
 test_spacetodepth_graph_float32()
 test_spacetodepth_pynative_int32()

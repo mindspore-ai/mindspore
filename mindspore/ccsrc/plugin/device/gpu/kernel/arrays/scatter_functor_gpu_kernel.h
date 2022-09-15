@@ -20,6 +20,7 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <algorithm>
 #include <utility>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
@@ -28,9 +29,10 @@
 
 namespace mindspore {
 namespace kernel {
-class ScatterFunctorGPUKernelMod : public NativeGpuKernelMod, public MatchKernelHelper<ScatterFunctorGPUKernelMod> {
+class ScatterFunctorGPUKernelMod : public NativeGpuKernelMod {
  public:
   ScatterFunctorGPUKernelMod() = default;
+  explicit ScatterFunctorGPUKernelMod(const std::string &kernel_name) : kernel_type_(kernel_name) {}
   ~ScatterFunctorGPUKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
@@ -44,20 +46,25 @@ class ScatterFunctorGPUKernelMod : public NativeGpuKernelMod, public MatchKernel
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
-  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
-
-  std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   template <typename T, typename S>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs);
+
+  using LaunchFunc =
+    std::function<bool(ScatterFunctorGPUKernelMod *, const std::vector<kernel::AddressPtr> &,
+                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+  static std::map<std::string, std::vector<std::pair<KernelAttr, LaunchFunc>>> kernel_attr_map_;
   ScatterFunctorType scatter_functor_type_;
+  LaunchFunc kernel_func_{};
   size_t first_dim_size_;
   size_t input_size_;
   size_t inner_size_;
   size_t indices_size_;
   size_t updates_size_;
+  std::string kernel_type_;
   void *cuda_stream_{nullptr};
 };
 }  // namespace kernel

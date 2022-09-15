@@ -81,27 +81,38 @@ bool ScatterArithmeticCpuKernelMod::LaunchKernel(const std::vector<kernel::Addre
   auto *input = reinterpret_cast<T *>(inputs[0]->addr);
   auto *indices = reinterpret_cast<int *>(inputs[1]->addr);
   auto *updates = reinterpret_cast<T *>(inputs[2]->addr);
-  auto *output = reinterpret_cast<T *>(outputs[0]->addr);
   auto func_iter = scatter_arithmetic_func_map.find(kernel_name_);
   if (func_iter == scatter_arithmetic_func_map.end()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the current operator does not support this operation.";
     return false;
   }
-  for (size_t i = 0; i < indices_size_; i++) {
-    auto base_index_updates = i * inner_size_;
-    auto base_index_input = indices[i] * inner_size_;
-    if (indices[i] < 0 || indices[i] >= first_dim_size_) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of indices should be in [0, " << first_dim_size_
-                        << "), but got '" << indices[i] << "' in indices.";
+  if (kernel_name_ == "ScatterDiv") {
+    for (size_t i = 0; i < indices_size_; i++) {
+      auto base_index_updates = i * inner_size_;
+      auto base_index_input = indices[i] * inner_size_;
+      if (indices[i] < 0 || indices[i] >= first_dim_size_) {
+        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of indices should be in [0, " << first_dim_size_
+                          << "), but got '" << indices[i] << "' in indices.";
+      }
+      for (size_t j = 0; j < inner_size_; j++) {
+        if (std::equal_to<T>()(updates[base_index_updates + j], 0)) {
+          MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', updates must not contain 0";
+        }
+        input[base_index_input + j] = func_iter->second(input[base_index_input + j], updates[base_index_updates + j]);
+      }
     }
-    for (size_t j = 0; j < inner_size_; j++) {
-      input[base_index_input + j] = func_iter->second(input[base_index_input + j], updates[base_index_updates + j]);
+  } else {
+    for (size_t i = 0; i < indices_size_; i++) {
+      auto base_index_updates = i * inner_size_;
+      auto base_index_input = indices[i] * inner_size_;
+      if (indices[i] < 0 || indices[i] >= first_dim_size_) {
+        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of indices should be in [0, " << first_dim_size_
+                          << "), but got '" << indices[i] << "' in indices.";
+      }
+      for (size_t j = 0; j < inner_size_; j++) {
+        input[base_index_input + j] = func_iter->second(input[base_index_input + j], updates[base_index_updates + j]);
+      }
     }
-  }
-  auto bufferSize = outputs[0]->size;
-  auto ret = memcpy_s(output, bufferSize, input, input_size_ * sizeof(T));
-  if (ret != EOK) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memory copy failed. Error no: " << ret;
   }
   return true;
 }

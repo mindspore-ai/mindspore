@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_RANDOM_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_RANDOM_CPU_KERNEL_H_
-
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_RANDOM_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_RANDOM_CPU_KERNEL_H_
+#include <utility>
 #include <vector>
 #include <string>
 #include <map>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
+#include "kernel/common_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -34,12 +35,16 @@ enum RandomOptype { RANDOM_OP_NORMAL = 0, RANDOM_OP_UNIFORM_INT, RANDOM_OP_UNIFO
 const std::map<std::string, RandomOptype> kRandomOpTypeMap = {
   {"StandardNormal", RANDOM_OP_NORMAL}, {"UniformInt", RANDOM_OP_UNIFORM_INT}, {"UniformReal", RANDOM_OP_UNIFORM_REAL}};
 
-class RandomCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class RandomCpuKernelMod : public NativeCpuKernelMod {
  public:
   RandomCpuKernelMod() = default;
-  explicit RandomCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}
+  explicit RandomCpuKernelMod(const std::string &kernel_name) : kernel_type_(kernel_name) {}
   ~RandomCpuKernelMod() override = default;
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
@@ -50,8 +55,8 @@ class RandomCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   RandomOptype random_op_type_{RANDOM_OP_INVALID_TYPE};
   int seed_{0};
   int seed2_{0};
-  std::string kernel_type_{kUnknown};
+  std::string kernel_type_;
 };
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_RANDOM_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_RANDOM_CPU_KERNEL_H_

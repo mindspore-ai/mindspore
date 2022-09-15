@@ -90,3 +90,38 @@ def test_spacetobatch_graph_float32():
 @pytest.mark.env_onecard
 def test_spacetobatch_graph_float16():
     SpaceToBatch(np.float16)
+
+
+class SpaceToBatchDynNet(nn.Cell):
+    def __init__(self, block_size=2):
+        super(SpaceToBatchDynNet, self).__init__()
+        self.net = P.SpaceToBatch(block_size=block_size, paddings=[[0, 0], [0, 0]])
+
+    @ms_function
+    def construct(self, input_x):
+        y1 = self.net(input_x)
+        return y1
+
+
+def test_spacetobatch_dyn_shape():
+    """
+    Feature: op dynamic shape
+    Description: set input_shape None and input real tensor
+    Expectation: success
+    """
+
+    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+    input_x = Tensor(np.arange(16).reshape((1, 1, 4, 4)).astype(np.float32))
+    input_x_dyn = Tensor(shape=[1, None, None, None], dtype=input_x.dtype)
+    net = SpaceToBatchDynNet(2)
+    net.set_inputs(input_x_dyn)
+    output = net(input_x)
+    expect = np.array([[[[0, 2],
+                         [8, 10]]],
+                       [[[1, 3],
+                         [9, 11]]],
+                       [[[4, 6],
+                         [12, 14]]],
+                       [[[5, 7],
+                         [13, 15]]]]).astype(np.float32)
+    assert output.asnumpy().shape == expect.shape

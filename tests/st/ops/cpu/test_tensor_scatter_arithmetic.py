@@ -425,3 +425,31 @@ def test_scatter_func_update_vmap(func_name):
     benchmark_output[0][1][1] = f(in_np[0][1][1], 2.2)
     benchmark_output[1][1][1] = f(in_np[1][1][1], 1.23)
     np.testing.assert_allclose(output.asnumpy(), benchmark_output, atol=1e-6, rtol=1e-6)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.parametrize("func_name", ["add", "max", "min", "sub"])
+def test_tensor_scatter_dy_shape(func_name):
+    """
+    Feature: op dynamic shape
+    Description: set input_shape None and input real tensor
+    Expectation: success
+    """
+
+    context.set_context(mode=context.GRAPH_MODE)
+    np.random.seed(1)
+
+    input_x = Parameter(Tensor(np.ones((4, 4, 4)).astype(np.float32)))
+    scatter_indices = Tensor(np.array([[0], [2]]).astype(np.int32))
+    updates = Tensor(np.array([[[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]],
+                               [[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]]]).astype(np.float32))
+    input_x_dyn = Tensor(shape=[4, None, None], dtype=input_x.dtype)
+    indice_dyn = Tensor(shape=[None, None], dtype=scatter_indices.dtype)
+    update_dyn = Tensor(shape=[None, None, None], dtype=updates.dtype)
+    net = TestTensorScatterNet(func_name)
+    net.set_inputs(input_x_dyn, indice_dyn, update_dyn)
+    ms_result = net(input_x, scatter_indices, updates)
+    np_result = tensor_scatter_np(func_name, input_x, scatter_indices, updates)
+    assert ms_result.asnumpy().shape == np_result.shape

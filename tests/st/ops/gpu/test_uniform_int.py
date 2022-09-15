@@ -44,3 +44,33 @@ def test_net_1D():
     ta, tb = Tensor(a, mstype.int32), Tensor(b, mstype.int32)
     output = net(ta, tb)
     assert output.shape == (3, 2, 4)
+
+
+class DynamicShapeNet(nn.Cell):
+    def __init__(self, seed=0, seed2=0):
+        super(DynamicShapeNet, self).__init__()
+        self.seed = seed
+        self.seed2 = seed2
+        self.uniformint = P.UniformInt(seed)
+
+    def construct(self, input_shape, a, b):
+        return self.uniformint(input_shape, a, b)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_net_dynamic_shape():
+    """
+    Feature: op dynamic shape
+    Description: set input_shape None and input real tensor
+    Expectation: success
+    """
+
+    seed = 10
+    shape = Tensor((3, 2, 4), mstype.int64)
+    shape_dyn = Tensor(shape=[None], dtype=shape.dtype)
+    net = DynamicShapeNet(seed)
+    net.set_inputs(shape_dyn, Tensor(1, mstype.int32), Tensor(5, mstype.int32))
+    output = net(shape, Tensor(1, mstype.int32), Tensor(5, mstype.int32))
+    assert output.shape == (3, 2, 4)

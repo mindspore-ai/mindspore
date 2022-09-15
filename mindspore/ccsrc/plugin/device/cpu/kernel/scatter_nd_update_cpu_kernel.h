@@ -19,18 +19,20 @@
 
 #include <vector>
 #include <memory>
+#include <algorithm>
 #include <map>
 #include <utility>
+#include <string>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 #include "kernel/common_utils.h"
 
 namespace mindspore {
 namespace kernel {
-class ScatterUpdateArithmeticCpuKernelMod : public NativeCpuKernelMod,
-                                            public MatchKernelHelper<ScatterUpdateArithmeticCpuKernelMod> {
+class ScatterUpdateArithmeticCpuKernelMod : public NativeCpuKernelMod {
  public:
   ScatterUpdateArithmeticCpuKernelMod() = default;
+  explicit ScatterUpdateArithmeticCpuKernelMod(const std::string &kernel_name) : kernel_type_(kernel_name) {}
   ~ScatterUpdateArithmeticCpuKernelMod() override = default;
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
@@ -44,21 +46,24 @@ class ScatterUpdateArithmeticCpuKernelMod : public NativeCpuKernelMod,
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
-  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
-
-  std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  using SupportListType = std::vector<std::pair<KernelAttr, ScatterUpdateArithmeticCpuKernelMod::KernelRunFunc>>;
   template <typename T, typename S>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
                     const std::vector<kernel::AddressPtr> &outputs);
+  using LaunchFunc =
+    std::function<bool(ScatterUpdateArithmeticCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+  static std::map<std::string, std::vector<std::pair<KernelAttr, LaunchFunc>>> kernel_attr_map_;
 
+  LaunchFunc kernel_func_{};
   TypeId dtype_value_{kTypeUnknown};
   TypeId dtype_shape_{kTypeUnknown};
   int unit_size_{0};
   size_t num_units_{0};
   size_t indices_unit_rank_{0};
+  std::string kernel_type_;
   std::vector<size_t> out_strides_;
 };
 }  // namespace kernel
