@@ -113,6 +113,8 @@ class DATASET_API Slice {
 
   Slice(Slice const &slice) = default;
 
+  Slice &operator=(const Slice &slice) = default;
+
   ~Slice() = default;
 
   bool valid() const { return step_ != 0; }
@@ -151,6 +153,8 @@ class DATASET_API SliceOption {
   explicit SliceOption(const Slice &slice) : slice_(slice) {}
 
   SliceOption(SliceOption const &slice) = default;
+
+  SliceOption &operator=(const SliceOption &slice) = default;
 
   ~SliceOption() = default;
 
