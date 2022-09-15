@@ -18,7 +18,7 @@
 #define MINDSPORE_CORE_OPS_GRAD_BINARY_CROSS_ENTROPY_GRAD_H_
 #include <vector>
 #include <memory>
-
+#include <string>
 #include "ops/base_operator.h"
 #include "mindapi/base/types.h"
 
@@ -33,10 +33,6 @@ class MIND_API BinaryCrossEntropyGrad : public BaseOperator {
   void set_reduction(const Reduction &reduction);
   Reduction get_reduction() const;
 };
-abstract::AbstractBasePtr BinaryCrossEntropyGradInfer(const abstract::AnalysisEnginePtr &,
-                                                      const PrimitivePtr &primitive,
-                                                      const std::vector<abstract::AbstractBasePtr> &input_args);
-using kPrimBinaryCrossEntropyGradPtr = std::shared_ptr<BinaryCrossEntropyGrad>;
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_GRAD_BINARY_CROSS_ENTROPY_GRAD_H_
