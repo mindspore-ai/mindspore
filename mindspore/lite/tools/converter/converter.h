@@ -58,6 +58,7 @@ class ConverterImpl {
     return FuncGraphConvert(param, graph, meta_graph, true, dst_buff, dst_size);
   }
   int Convert(const std::shared_ptr<ConverterPara> &param, schema::MetaGraphT **meta_graph, FuncGraphPtr func_graph);
+  FuncGraphPtr Convert(const std::shared_ptr<ConverterPara> &param, const void *buff, const size_t &size);
 
  private:
   FuncGraphPtr BuildFuncGraph(const std::shared_ptr<ConverterPara> &param);
@@ -73,6 +74,7 @@ class ConverterImpl {
   bool CheckOfflineParallelConfig(const std::string &file, ParallelSplitConfig *parallel_split_config);
   std::string GetStrFromConfigFile(const std::string &file, const std::string &target_key);
   int ReplaceShapeWithDynamicShape(const FuncGraphPtr &graph);
+  int SaveOutputNames(const FuncGraphPtr &graph);
 
  protected:
   converter::ModelParser *model_parser_ = nullptr;

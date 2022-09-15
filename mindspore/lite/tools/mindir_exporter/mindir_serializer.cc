@@ -383,15 +383,15 @@ int MindIRSerializer::IfSaveTogether(bool *save_together) {
 }
 
 int MindIRSerializer::SaveProtoToFile(mind_ir::ModelProto *model_proto, const std::string &output_file) {
-  if (isRuntimeConvert_) {
-    return RET_OK;
-  }
   mind_ir::GraphProto *graph_proto = model_proto->mutable_graph();
   mind_ir::AttributeProto *attr_proto = graph_proto->add_attribute();
   if (attr_proto != nullptr) {
     attr_proto->set_name(kIsOptimized);
     attr_proto->set_type(mind_ir::AttributeProto_AttributeType_BOOL);
     attr_proto->set_i(is_fusion_);
+  }
+  if (isRuntimeConvert_) {
+    return RET_OK;
   }
 
   auto realpath = Common::CreatePrefixPath(output_file, true);

@@ -20,12 +20,13 @@
 #include <string>
 #include <memory>
 #include "include/api/context.h"
+#include "mindapi/ir/func_graph.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-void *RuntimeConvert(const char *model_buf, const size_t &buf_size, size_t *dst_size,
-                     const std::shared_ptr<mindspore::Context> &context);
+mindspore::api::FuncGraphPtr RuntimeConvert(const char *model_buf, const size_t &buf_size,
+                                            const std::shared_ptr<mindspore::Context> &context);
 #ifdef __cplusplus
 }
 #endif

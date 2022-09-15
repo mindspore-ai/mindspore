@@ -59,7 +59,7 @@ STATUS MindsporeImporter::Mindir2AnfAdjust(const FuncGraphPtr &func_graph,
   if (value != nullptr) {
     is_optimized = GetValue<bool>(value);
   }
-  if (!is_optimized) {
+  if (!is_optimized && !param->is_runtime_converter) {
     auto mindir_adjust_pass = std::make_shared<MindirAdjust>();
     MS_CHECK_TRUE_MSG(mindir_adjust_pass != nullptr, RET_NULL_PTR, "mindir_adjust_pass is nullptr.");
     mindir_adjust_pass->SetFmkType(param->fmk_type);
@@ -327,7 +327,7 @@ FuncGraphPtr MindsporeImporter::CheckAndUpdateFuncGraph(const std::shared_ptr<Co
   if (value != nullptr) {
     is_optimized = GetValue<bool>(value);
   }
-  if (!is_optimized) {
+  if (!is_optimized && !param->is_runtime_converter) {
     auto unify_format = std::make_shared<UnifyFormatToNHWC>(converter::kFmkTypeMs, param->train_model);
     MS_CHECK_TRUE_MSG(unify_format != nullptr, nullptr, "unify_format is nullptr.");
     if (!unify_format->Run(func_graph)) {
