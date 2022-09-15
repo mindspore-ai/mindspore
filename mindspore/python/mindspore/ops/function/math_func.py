@@ -3388,9 +3388,10 @@ def std(input_x, axis=(), unbiased=True, keep_dims=False):
         A tuple (output_std, output_mean) containing the standard deviation and mean.
 
     Raises:
-        TypeError: If `keep_dims` is not a bool.
         TypeError: If `input_x` is not a Tensor.
-        ValueError: If `axis` is not one of the following: int, tuple or list.
+        TypeError: If `axis` is not one of the following: int, tuple or list.
+        TypeError: If `keep_dims` is not a bool.
+        ValueError: If `axis` is out of range.
 
     Supported Platforms:
         ``Ascend`` ``CPU``

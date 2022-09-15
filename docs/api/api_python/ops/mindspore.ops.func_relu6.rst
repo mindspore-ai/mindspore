@@ -1,7 +1,7 @@
 ﻿mindspore.ops.relu6
 ====================
 
-.. py:class:: mindspore.ops.relu6(input_x)
+.. py:function:: mindspore.ops.relu6(input_x)
 
     计算输入Tensor的ReLU（修正线性单元），其上限为6。
 
