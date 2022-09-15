@@ -60,9 +60,13 @@ class ModelImpl {
   std::vector<std::string> GetOutputTensorNames();
   MSTensor GetOutputByTensorName(const std::string &name);
 
+  Status LoadConfig(const std::string &config_path);
+  Status UpdateConfig(const std::string &section, const std::pair<std::string, std::string> &config);
+  std::string GetConfig(const std::string &section, const std::string &key);
+
  private:
   Status build_by_buffer_impl(const void *model_data, size_t data_size, ModelType model_type,
-                              const std::shared_ptr<Context> &model_context);
+                              const std::shared_ptr<Context> &model_context, const std::string &model_path = "");
 
  private:
   friend class Model;
@@ -73,6 +77,7 @@ class ModelImpl {
 #ifndef _WIN32
   void *handle_ = nullptr;
 #endif
+  std::map<std::string, std::map<std::string, std::string>> config_info_;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_MODEL_MODEL_IMPL_H_

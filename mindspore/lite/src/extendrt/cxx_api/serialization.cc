@@ -132,8 +132,8 @@ Status Serialization::Load(const void *model_data, size_t data_size, ModelType m
         }
         anf_graph = ConvertStreamToFuncGraph(reinterpret_cast<const char *>(plain_data.get()), plain_data_size, true);
       }
-    } catch (const std::exception &) {
-      err_msg << "Load model failed. Please check the valid of dec_key and dec_mode.";
+    } catch (const std::exception &e) {
+      err_msg << "Load model failed. Please check the valid of dec_key and dec_mode." << e.what();
       MS_LOG(ERROR) << err_msg.str();
       return Status(kMEInvalidInput, err_msg.str());
     }
