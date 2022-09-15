@@ -16,6 +16,7 @@
 import numpy as np
 import pytest
 
+import mindspore as ms
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -31,6 +32,26 @@ class NetEluGrad(nn.Cell):
 
     def construct(self, dy, y):
         return self.elu_grad(dy, y)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_elu_grad_dshape():
+    """
+    Feature: Test elu_grad dynamic shape.
+    Description: Test elu_grad dynamic shape.
+    Expectation: Success.
+    """
+    net = NetEluGrad()
+    input_x_dyn = Tensor(shape=[3, None], dtype=ms.float32)
+    input_y_dyn = Tensor(shape=[None, 10], dtype=ms.float32)
+    net.set_inputs(input_x_dyn, input_y_dyn)
+    input_x = Tensor(np.random.random(([3, 10])), dtype=ms.float32)
+    input_y = Tensor(np.random.random(([3, 10])), dtype=ms.float32)
+    output = net(input_x, input_y)
+    expect_shape = (3, 10)
+    assert output.asnumpy().shape == expect_shape
 
 
 @pytest.mark.level0

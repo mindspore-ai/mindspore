@@ -16,14 +16,45 @@
 import numpy as np
 import pytest
 
+import mindspore as ms
+import mindspore.nn as nn
 import mindspore.context as context
 from mindspore import Tensor
 from mindspore.ops import operations as P
 from scipy import special
 
+context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+
+
+class NetErfc(nn.Cell):
+    def __init__(self):
+        super(NetErfc, self).__init__()
+        self.erfc = P.Erfc()
+
+    def construct(self, x):
+        return self.erfc(x)
+
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_erfc_dshape():
+    """
+    Feature: Test erfc dynamic shape.
+    Description: Test erfc dynamic shape.
+    Expectation: Success.
+    """
+    net = NetErfc()
+    input_x_dyn = Tensor(shape=[3, None], dtype=ms.float32)
+    net.set_inputs(input_x_dyn)
+    input_x = Tensor(np.random.random(([3, 10])), dtype=ms.float32)
+    output = net(input_x)
+    expect_shape = (3, 10)
+    assert output.asnumpy().shape == expect_shape
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.level0
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])

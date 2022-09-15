@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 import numpy as np
 import pytest
 
+import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import context
@@ -31,6 +32,24 @@ class NetCos(nn.Cell):
 
     def construct(self, x):
         return self.cos(x)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_cos_dshape():
+    """
+    Feature: Test Cos dynamic shape.
+    Description: Test Cos dynamic shape.
+    Expectation: Success.
+    """
+    net = NetCos()
+    input_x_dyn = Tensor(shape=[3, None], dtype=ms.float32)
+    net.set_inputs(input_x_dyn)
+    input_x = Tensor(np.random.random(([3, 10])), dtype=ms.float32)
+    output = net(input_x)
+    expect_shape = (3, 10)
+    assert output.asnumpy().shape == expect_shape
 
 
 @pytest.mark.level0
