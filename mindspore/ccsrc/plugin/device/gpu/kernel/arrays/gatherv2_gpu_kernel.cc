@@ -63,9 +63,7 @@ int GatherV2FwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   input_shapes_ = inputs[kIndexZero]->GetShapeVector();
   indices_shapes_ = inputs[kIndexOne]->GetShapeVector();
   output_shapes_ = outputs[kIndexZero]->GetShapeVector();
-  auto it_x = std::find_if(input_shapes_.begin(), input_shapes_.end(), [](int64_t sh) { return sh <= 0; });
-  auto it_y = std::find_if(indices_shapes_.begin(), indices_shapes_.end(), [](int64_t sh) { return sh <= 0; });
-  if (it_x != input_shapes_.end() || it_y != indices_shapes_.end()) {
+  if (IsDynamic(input_shapes_) || IsDynamic(indices_shapes_) || IsDynamic(output_shapes_)) {
     return KRET_UNKNOWN_SHAPE;
   }
   is_null_input_ = CHECK_SHAPE_NULL(input_shapes_, kernel_name_, "input") ||
