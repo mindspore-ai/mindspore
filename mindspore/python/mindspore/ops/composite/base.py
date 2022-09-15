@@ -713,7 +713,7 @@ class HyperMap(HyperMap_):
     Hypermap will apply the set operation to input sequences.
 
     Apply the operations to every element of the sequence or nested sequence. Different
-    from `Map`, the `HyperMap` supports to apply on nested structure.
+    from `mindspore.ops.Map`, the `HyperMap` supports to apply on nested structure.
 
     Args:
         ops (Union[MultitypeFuncGraph, None]): `ops` is the operation to apply. If `ops` is `None`,
