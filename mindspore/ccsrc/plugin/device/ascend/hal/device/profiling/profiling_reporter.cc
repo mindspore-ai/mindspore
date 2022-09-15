@@ -194,8 +194,12 @@ void ProfilingReporter::ReportTask(const CNodePtr &node, const uint32_t stream_i
                                    KernelType kernel_type) const {
   MsprofGeProfTaskData task_info{};
   task_info.taskType = static_cast<uint32_t>(KernelType2TaskTypeEnum[kernel_type]);
+  std::string opType = common::AnfAlgo::GetCNodeName(node);
+  if (opType == PROFILING_OP_NAME) {
+    task_info.taskType = MSPROF_GE_TASK_TYPE_PROFILING;
+  }
   SetAlternativeValue(&task_info.opName, MSPROF_MIX_DATA_STRING_LEN, node->fullname_with_scope(), device_id_);
-  SetAlternativeValue(&task_info.opType, MSPROF_GE_OP_TYPE_LEN, common::AnfAlgo::GetCNodeName(node), device_id_);
+  SetAlternativeValue(&task_info.opType, MSPROF_GE_OP_TYPE_LEN, opType, device_id_);
   // Note: Currently, the profiler supports only static shapes.
   task_info.shapeType = static_cast<uint32_t>(MSPROF_GE_SHAPE_TYPE_STATIC);
   task_info.blockDims = GetBlockDim(node);
