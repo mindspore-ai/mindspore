@@ -50,6 +50,28 @@ class MIND_API UniformReal : public BaseOperator {
   /// \return seed2.
   int64_t get_seed2() const;
 };
+
+constexpr auto kNameCudnnUniformReal = "CudnnUniformReal";
+class MIND_API CudnnUniformReal : public BaseOperator {
+ public:
+  MIND_API_BASE_MEMBER(CudnnUniformReal);
+  /// \brief Constructor.
+  CudnnUniformReal() : BaseOperator(kNameCudnnUniformReal) { InitIOName({"shape"}, {"output"}); }
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.UniformReal for the inputs.
+  void Init(int64_t seed, int64_t seed2);
+  /// \brief Set seed.
+  void set_seed(int64_t seed);
+  /// \brief Set seed2.
+  void set_seed2(int64_t seed2);
+  /// \brief Get seed.
+  ///
+  /// \return seed.
+  int64_t get_seed() const;
+  /// \brief Get seed2.
+  ///
+  /// \return seed2.
+  int64_t get_seed2() const;
+};
 abstract::AbstractBasePtr UniformRealInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                            const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops

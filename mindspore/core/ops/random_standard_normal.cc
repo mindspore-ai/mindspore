@@ -17,6 +17,7 @@
 #include <set>
 #include <string>
 #include <memory>
+#include "ops/standard_normal.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "mindapi/src/helper.h"
@@ -93,7 +94,6 @@ TypePtr RandomStandardNormalInferType(const PrimitivePtr &primitive, const std::
   return std::make_shared<TensorType>(kFloat32);
 }
 }  // namespace
-MIND_API_OPERATOR_IMPL(RandomStandardNormal, BaseOperator);
 
 AbstractBasePtr RandomStandardNormalInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                           const std::vector<AbstractBasePtr> &input_args) {
@@ -113,7 +113,11 @@ AbstractBasePtr RandomStandardNormalInfer(const abstract::AnalysisEnginePtr &, c
   return abstract::MakeAbstract(shape, type);
 }
 
+MIND_API_OPERATOR_IMPL(RandomStandardNormal, BaseOperator);
+MIND_API_OPERATOR_IMPL(StandardNormal, BaseOperator);
+REGISTER_HOST_DEPENDS(kNameStandardNormal, {0});
 REGISTER_HOST_DEPENDS(kNameRandomStandardNormal, {0});
 REGISTER_PRIMITIVE_EVAL_IMPL(RandomStandardNormal, prim::kPrimStandardNormal, RandomStandardNormalInfer, nullptr, true);
+REGISTER_PRIMITIVE_EVAL_IMPL(StandardNormal, prim::kPrimStandardNormal, RandomStandardNormalInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore
