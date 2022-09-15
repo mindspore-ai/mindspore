@@ -42,13 +42,19 @@ namespace mindspore {
 namespace ps {
 namespace core {
 HttpServer::~HttpServer() {
-  if (!Stop()) {
-    MS_LOG(WARNING) << "Stop http server failed.";
-  }
-  for (size_t i = 0; i < worker_threads_.size(); i++) {
-    if (worker_threads_[i] != nullptr && worker_threads_[i]->joinable()) {
-      worker_threads_[i]->join();
+  try {
+    if (!Stop()) {
+      MS_LOG(WARNING) << "Stop http server failed.";
     }
+    for (size_t i = 0; i < worker_threads_.size(); i++) {
+      if (worker_threads_[i] != nullptr && worker_threads_[i]->joinable()) {
+        worker_threads_[i]->join();
+      }
+    }
+  } catch (const std::exception &e) {
+    MS_LOG(ERROR) << "AbstractNode destructor run failed, error message: " << e.what();
+  } catch (...) {
+    MS_LOG(ERROR) << "AbstractNode destructor run failed, unknown error occurred.";
   }
 }
 

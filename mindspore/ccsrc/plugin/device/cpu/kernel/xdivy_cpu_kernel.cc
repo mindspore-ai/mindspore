@@ -110,7 +110,7 @@ bool XdivyCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inpu
       auto idxY = index_listy_[i];
       auto dividend = x_addr[idxX];
       auto divisor = y_addr[idxY];
-      auto zero = (T)0;
+      auto zero = static_cast<T>(0);
       if (divisor == zero) {
         if (dividend == zero) {
           output_addr[i] = zero;
@@ -154,78 +154,10 @@ bool XdivyCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
                   << " out type:" << out_type;
     return false;
   }
-
-  auto iter = func_map_.find(x_type);
-  if (iter == func_map_.end()) {
-    MS_LOG(ERROR) << "Xdivy only support tensor with data type float16, float32, "
-                     "float64, Complex64, Complex128, but got typeid:"
-                  << x_type;
+  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
     return false;
   }
-  kernel_func_ = iter->second;
   return true;
-}
-
-void GetBroadCastIndex(const ShapeVector &unaligned_input_shape, const ShapeVector &output_shape,
-                       std::vector<int64_t> *index_list) {
-  // Given unaligned input shape and output shape, this function returns the mapping
-  // from indices of output (logical) to corespondingly real input indices (physical).
-  // The return will write to index_list, whose size is equal to total elements of output.
-  constexpr int MaxDim = 10;
-  int64_t logical_shape[MaxDim];
-  int64_t physical_shape[MaxDim];
-  int64_t size = 0, output_size = 1;
-  // Align input shape to output shape by filling one into the outermost dimension.
-  ShapeVector input_shape(output_shape.size());
-  for (size_t i = 0, j = output_shape.size() - unaligned_input_shape.size(); i < output_shape.size(); i++) {
-    input_shape[i] = i < j ? 1 : unaligned_input_shape[i - j];
-  }
-  // Get logical shape and physical shape of input. Moreover, we will merge the dimensions with same
-  // (logical or physical) property.
-  for (int i = SizeToInt(output_shape.size()) - 1; i >= 0;) {
-    int64_t stride = 1;
-    bool change = false, is_valid = false;
-    while (i >= 0 && input_shape[i] == output_shape[i]) {
-      stride *= output_shape[i];
-      change = is_valid = true;
-      --i;
-    }
-    if (change) {
-      output_size *= stride;
-      logical_shape[size] = physical_shape[size] = stride;
-      size++;
-    }
-    change = false;
-    stride = 1;
-    while (i >= 0 && input_shape[i] == 1) {
-      stride *= output_shape[i];
-      change = is_valid = true;
-      --i;
-    }
-    if (change) {
-      output_size *= stride;
-      logical_shape[size] = 1;
-      physical_shape[size] = stride;
-      size++;
-    }
-    if (!is_valid) {
-      MS_LOG(EXCEPTION) << "Both shape are not able to broadcast, input shape is " << unaligned_input_shape
-                        << " and output shape is " << output_shape;
-    }
-  }
-  // Get the flatten input indices according to "logical_shape" and "physical_shape".
-  int64_t offset = 1;
-  int64_t stride = 1;
-  index_list->resize(output_size);
-  (*index_list)[0] = 0;  // First element is set to 0.
-  for (int64_t i = 0; i < size; ++i) {
-    int64_t increment = (logical_shape[i] == physical_shape[i] ? stride : 0);
-    for (int64_t j = 0; j < (physical_shape[i] - 1) * offset; ++j) {
-      (*index_list)[offset + j] = (*index_list)[j] + increment;
-    }
-    offset *= physical_shape[i];
-    stride *= logical_shape[i];
-  }
 }
 
 int XdivyCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
@@ -234,14 +166,13 @@ int XdivyCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), INPUT_NUM, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), OUTPUT_NUM, kernel_name_);
   ResetResource();
-  int ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs);
-  if (ret != 0) {
+  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 
-  auto x_shape = inputs[0]->GetShapeVector();
-  auto y_shape = inputs[1]->GetShapeVector();
-  auto out_shape = outputs[0]->GetShapeVector();
+  auto x_shape = LongVecToSizeVec(inputs.at(kIndex0)->GetShapeVector());
+  auto y_shape = LongVecToSizeVec(inputs.at(kIndex1)->GetShapeVector());
+  auto out_shape = LongVecToSizeVec(outputs.at(kIndex0)->GetShapeVector());
   if (out_shape.size() > MAX_DIMS || out_shape.size() < x_shape.size() || out_shape.size() < y_shape.size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input cannot be greater than " << MAX_DIMS
                       << ", and output dimension can't less than input; but got x_shape dimension:" << x_shape.size()
@@ -255,28 +186,27 @@ int XdivyCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
   return 0;
 }
 
-std::vector<KernelAttr> XdivyCpuKernelMod::GetOpSupport() { return support_ops_; }
-
-std::vector<KernelAttr> XdivyCpuKernelMod::support_ops_ = {
-  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16)},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64)},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeComplex64)
-     .AddInputAttr(kNumberTypeComplex64)
-     .AddOutputAttr(kNumberTypeComplex64)},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeComplex128)
-     .AddInputAttr(kNumberTypeComplex128)
-     .AddOutputAttr(kNumberTypeComplex128)},
-};
-
-std::map<mindspore::TypeId, XdivyCpuKernelMod::XdivyFunc> XdivyCpuKernelMod::func_map_ = {
-  {kNumberTypeFloat16, &XdivyCpuKernelMod::LaunchKernel<float16>},
-  {kNumberTypeFloat32, &XdivyCpuKernelMod::LaunchKernel<float>},
-  {kNumberTypeFloat64, &XdivyCpuKernelMod::LaunchKernel<double>},
-  {kNumberTypeComplex64, &XdivyCpuKernelMod::LaunchKernel<complex64>},
-  {kNumberTypeComplex128, &XdivyCpuKernelMod::LaunchKernel<complex128>}};
+const std::vector<std::pair<KernelAttr, XdivyCpuKernelMod::KernelRunFunc>> &XdivyCpuKernelMod::GetFuncList() const {
+  static const std::vector<std::pair<KernelAttr, XdivyCpuKernelMod::KernelRunFunc>> func_list = {
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+     &XdivyCpuKernelMod::LaunchKernel<float16>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &XdivyCpuKernelMod::LaunchKernel<float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     &XdivyCpuKernelMod::LaunchKernel<double>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeComplex64)
+       .AddInputAttr(kNumberTypeComplex64)
+       .AddOutputAttr(kNumberTypeComplex64),
+     &XdivyCpuKernelMod::LaunchKernel<complex64>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeComplex128)
+       .AddInputAttr(kNumberTypeComplex128)
+       .AddOutputAttr(kNumberTypeComplex128),
+     &XdivyCpuKernelMod::LaunchKernel<complex128>},
+  };
+  return func_list;
+}
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Xdivy, XdivyCpuKernelMod);
 }  // namespace kernel

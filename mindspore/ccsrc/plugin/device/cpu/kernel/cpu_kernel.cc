@@ -611,5 +611,66 @@ int Sign(float x) {
   }
   return 0;
 }
+void GetBroadCastIndex(const std::vector<size_t> &unaligned_input_shape, const std::vector<size_t> &output_shape,
+                       std::vector<size_t> *index_list) {
+  // Given unaligned input shape and output shape, this function returns the mapping
+  // from indices of output (logical) to corespondingly real input indices (physical).
+  // The return will write to index_list, whose size is equal to total elements of output.
+  constexpr size_t kIsCloseMaxDim = 10;
+  size_t logical_shape[kIsCloseMaxDim];
+  size_t physical_shape[kIsCloseMaxDim];
+  size_t size = 0, output_size = 1;
+  // Align input shape to output shape by filling one into the outermost dimension.
+  std::vector<size_t> input_shape(output_shape.size());
+  for (size_t i = 0, j = output_shape.size() - unaligned_input_shape.size(); i < output_shape.size(); i++) {
+    input_shape[i] = i < j ? 1 : unaligned_input_shape[i - j];
+  }
+  // Get logical shape and physical shape of input. Moreover, we will merge the dimensions with same
+  // (logical or physical) property.
+  for (size_t i = output_shape.size(); i > 0;) {
+    size_t stride = 1;
+    bool change = false, is_valid = false;
+    while (i > 0 && input_shape[i - 1] == output_shape[i - 1]) {
+      stride *= output_shape[i - 1];
+      change = is_valid = true;
+      --i;
+    }
+    if (change) {
+      output_size *= stride;
+      logical_shape[size] = physical_shape[size] = stride;
+      size++;
+    }
+    change = false;
+    stride = 1;
+    while (i > 0 && input_shape[i - 1] == 1) {
+      stride *= output_shape[i - 1];
+      change = is_valid = true;
+      --i;
+    }
+    if (change) {
+      output_size *= stride;
+      logical_shape[size] = 1;
+      physical_shape[size] = stride;
+      size++;
+    }
+    if (!is_valid) {
+      MS_LOG(EXCEPTION) << "Both shape are not able to broadcast, input shape is " << unaligned_input_shape
+                        << " and output shape is " << output_shape;
+    }
+  }
+  // Get the flatten input indices according to "logical_shape" and "physical_shape".
+  size_t offset = 1;
+  size_t stride = 1;
+  index_list->resize(output_size);
+  (*index_list)[0] = 0;  // First element is set to 0.
+  for (size_t i = 0; i < size; ++i) {
+    size_t increment = (logical_shape[i] == physical_shape[i] ? stride : 0);
+    for (size_t j = 0; j < (physical_shape[i] - 1) * offset; ++j) {
+      (*index_list)[offset + j] = (*index_list)[j] + increment;
+    }
+    offset *= physical_shape[i];
+    stride *= logical_shape[i];
+  }
+}
 }  // namespace kernel
 }  // namespace mindspore

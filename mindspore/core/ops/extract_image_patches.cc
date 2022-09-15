@@ -23,8 +23,8 @@
 namespace mindspore {
 namespace ops {
 constexpr int64_t extract_image_rank_num = 4;
-constexpr size_t kIdx2 = 2;
-constexpr size_t kIdx3 = 3;
+constexpr size_t kExtractPatchIdx2 = 2;
+constexpr size_t kExtractPatchIdx3 = 3;
 
 void ExtractImagePatches::Init(const std::vector<int64_t> &kernel_size, const std::vector<int64_t> &strides,
                                const std::vector<int64_t> &rates, const std::string &padding) {
@@ -115,24 +115,31 @@ class ExtractImagePatchesInfer : public abstract::OpInferBase {
 
     std::vector<int64_t> y_shape(extract_image_rank_num);
     y_shape[0] = x_shape[0];
-    y_shape[1] = x_shape[1] == abstract::Shape::SHP_ANY ? abstract::Shape::SHP_ANY
-                                                        : x_shape[1] * kernel_size[kIdx2] * kernel_size[kIdx3];
+    y_shape[1] = x_shape[1] == abstract::Shape::SHP_ANY
+                   ? abstract::Shape::SHP_ANY
+                   : x_shape[1] * kernel_size[kExtractPatchIdx2] * kernel_size[kExtractPatchIdx3];
     if (padding == "VALID") {
-      y_shape[kIdx2] =
-        x_shape[kIdx2] == abstract::Shape::SHP_ANY
+      y_shape[kExtractPatchIdx2] =
+        x_shape[kExtractPatchIdx2] == abstract::Shape::SHP_ANY
           ? abstract::Shape::SHP_ANY
-          : (x_shape[kIdx2] - (kernel_size[kIdx2] + (kernel_size[kIdx2] - 1) * (rates[kIdx2] - 1))) / strides[kIdx2] +
+          : (x_shape[kExtractPatchIdx2] -
+             (kernel_size[kExtractPatchIdx2] + (kernel_size[kExtractPatchIdx2] - 1) * (rates[kExtractPatchIdx2] - 1))) /
+                strides[kExtractPatchIdx2] +
               1;
-      y_shape[kIdx3] =
-        x_shape[kIdx3] == abstract::Shape::SHP_ANY
+      y_shape[kExtractPatchIdx3] =
+        x_shape[kExtractPatchIdx3] == abstract::Shape::SHP_ANY
           ? abstract::Shape::SHP_ANY
-          : (x_shape[kIdx3] - (kernel_size[kIdx3] + (kernel_size[kIdx3] - 1) * (rates[kIdx3] - 1))) / strides[kIdx3] +
+          : (x_shape[kExtractPatchIdx3] -
+             (kernel_size[kExtractPatchIdx3] + (kernel_size[kExtractPatchIdx3] - 1) * (rates[kExtractPatchIdx3] - 1))) /
+                strides[kExtractPatchIdx3] +
               1;
     } else {
-      y_shape[kIdx2] = x_shape[kIdx2] == abstract::Shape::SHP_ANY ? abstract::Shape::SHP_ANY
-                                                                  : (x_shape[kIdx2] - 1) / strides[kIdx2] + 1;
-      y_shape[kIdx3] = x_shape[kIdx3] == abstract::Shape::SHP_ANY ? abstract::Shape::SHP_ANY
-                                                                  : (x_shape[kIdx3] - 1) / strides[kIdx3] + 1;
+      y_shape[kExtractPatchIdx2] = x_shape[kExtractPatchIdx2] == abstract::Shape::SHP_ANY
+                                     ? abstract::Shape::SHP_ANY
+                                     : (x_shape[kExtractPatchIdx2] - 1) / strides[kExtractPatchIdx2] + 1;
+      y_shape[kExtractPatchIdx3] = x_shape[kExtractPatchIdx3] == abstract::Shape::SHP_ANY
+                                     ? abstract::Shape::SHP_ANY
+                                     : (x_shape[kExtractPatchIdx3] - 1) / strides[kExtractPatchIdx3] + 1;
     }
 
     std::vector<std::string> out_names{"out_batch", "out_depth", "out_row", "out_col"};
