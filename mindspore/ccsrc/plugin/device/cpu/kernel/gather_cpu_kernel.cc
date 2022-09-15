@@ -67,6 +67,9 @@ int GatherCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
   input_shape_ = inputs[kIndexZero]->GetShapeVector();
   indices_shape_ = inputs[kIndexOne]->GetShapeVector();
   output_shape_ = outputs[kIndexZero]->GetShapeVector();
+  if (IsDynamic(input_shape_) || IsDynamic(indices_shape_) || IsDynamic(output_shape_)) {
+    return KRET_UNKNOWN_SHAPE;
+  }
   is_null_input_ = input_shape_.empty() || indices_shape_.empty() || output_shape_.empty();
   if (is_null_input_) {
     InitSizeLists();
@@ -75,11 +78,6 @@ int GatherCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
   if (input_shape_.size() > kGatherInputParamsMaxDim) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'input_params' should be "
                       << kGatherInputParamsMaxDim << "D or lower, but got " << input_shape_.size() << ".";
-  }
-  auto it_x = std::find_if(input_shape_.begin(), input_shape_.end(), [](int64_t sh) { return sh <= 0; });
-  auto it_y = std::find_if(indices_shape_.begin(), indices_shape_.end(), [](int64_t sh) { return sh <= 0; });
-  if (it_x != input_shape_.end() || it_y != indices_shape_.end()) {
-    return KRET_UNKNOWN_SHAPE;
   }
   InitSizeLists();
   return KRET_OK;
