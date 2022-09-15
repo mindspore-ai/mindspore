@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -752,9 +752,11 @@ class TBERegOp(RegOp):
 class CustomRegOp(RegOp):
     r"""
     Class used for generating the registration information for the `func` parameter of :class:`mindspore.ops.Custom`.
+    The registration information mainly specifies the supported data types and formats of input and output tensors,
+    attributes and target of `func`.
 
     Args:
-        op_name (str): kernel name. No need to set this value as `Custom`, operator will generate a unique name
+        op_name (str): kernel name. No need to set this value because `Custom` operator will generate a unique name
             automatically. Default: "Custom".
 
     Examples:
@@ -774,13 +776,31 @@ class CustomRegOp(RegOp):
 
     def input(self, index=None, name=None, param_type="required", **kwargs):
         """
-        Register Custom op input information.
+        Specifies the input tensor information for the `func` parameter of :class:`mindspore.ops.Custom`. Each
+        invocation of this function will generate one input tensor information, that means, if `func` has two input
+        tensors, then this function should be invoked two times continuously. The input tensor information will be
+        generated as a dict: {"index": `index`, "name": `name`, "param_type": `param_type`}.
 
         Args:
-            index (int): Order of the input. Default: None.
-            name (str): Name of the input. Default: None.
-            param_type (str): Param type of the input. Default: "required".
-            kwargs (dict): Other information of the input.
+            index (int): Index of the input, starts from 0. 0 means the first input tensor, 1 means the second input
+                tensor and so on. If None, key "index" will not appear in the input tensor information dict.
+                Default: None.
+            name (str): Name of the `index` 'th input. If None, key "name" will not appear in the input tensor
+                information dict. Default: None.
+            param_type (str): Parameter type of the `index` 'th input, can be one of
+                ["required", "dynamic", "optional"]. If None, key "param_type" will not appear in the input tensor
+                information dict. Default: "required".
+
+                - "required": means the `index` 'th input exist and can only be a single tensor.
+                - "dynamic": means the `index` 'th input exist and may be multiple tensors, such as the input of AddN.
+                - "optional": means the `index` 'th input may exist and be a single tensor or may not exist.
+
+            kwargs (dict): Other information of the input, used for extension.
+
+        Raises:
+            TypeError: If `index` is neither int nor None.
+            TypeError: If `name` is neither str nor None.
+            TypeError: If `param_type` is neither str nor None.
         """
         param_list = [index, name, param_type]
         key_list = ["index", "name", "param_type"]
@@ -791,13 +811,31 @@ class CustomRegOp(RegOp):
 
     def output(self, index=None, name=None, param_type="required", **kwargs):
         """
-        Register Custom op output information.
+        Specifies the output tensor information for the `func` parameter of :class:`mindspore.ops.Custom`. Each
+        invocation of this function will generate one output tensor information, which means, if `func` has two output
+        tensors, then this function should be invoked two times continuously. The output tensor information will be
+        generated as a dict: {"index": `index`, "name": `name`, "param_type": `param_type`}.
 
         Args:
-            index (int): Order of the output. Default: None.
-            name (str): Name of the output. Default: None.
-            param_type (str): Param type of the output. Default: "required".
-            kwargs (dict): Other information of the output.
+            index (int): Index of the output, starts from 0. 0 means the first output tensor, 1 means the second output
+                tensor and so on. If None, key "index" will not appear in the output tensor information dict.
+                Default: None.
+            name (str): Name of the `index` 'th output. If None, key "name" will not appear in the output tensor
+                information dict. Default: None.
+            param_type (str): Parameter type of the `index` 'th output, can be one of
+                ["required", "dynamic", "optional"]. If None, key "param_type" will not appear in the output tensor
+                information dict. Default: "required".
+
+                - "required": means the `index` 'th output exist and can only be a single tensor.
+                - "dynamic": means the `index` 'th output exist and may be multiple tensors.
+                - "optional": means the `index` 'th output may exist and be a single tensor or may not exist.
+
+            kwargs (dict): Other information of the output, used for extension.
+
+        Raises:
+            TypeError: If `index` is neither int nor None.
+            TypeError: If `name` is neither str nor None.
+            TypeError: If `param_type` is neither str nor None.
         """
         param_list = [index, name, param_type]
         key_list = ["index", "name", "param_type"]
@@ -806,17 +844,73 @@ class CustomRegOp(RegOp):
         self.outputs.append(output_dict)
         return self
 
-    def attr(self, name=None, param_type=None, value_type=None, default_value=None, **kwargs):
+    def dtype_format(self, *args):
         """
-        Register Custom op attribute information.
+        Specifies the supported data type and format of each input tensor and output tensor for the `func` parameter
+        of :class:`mindspore.ops.Custom`. This function should be invoked after `input` and `output` function as shown
+        in the above example.
 
         Args:
-            name (str): Name of the attribute. Default: None.
-            param_type (str): Param type of the attribute. Default: None.
-            value_type (str): Value type of the attribute. Default: None.
-            default_value (str): Default value of attribute. If value is a list, each item should split by ','.
-                For example, if `value_type` is "listInt", then `default_value` can be "1,2,3". Default: None.
-            kwargs (dict): Other information of the attribute.
+            args (tuple): A tuple of (data type, format) pair, the length of `args` should be equal to the sum of input
+                tensors and output tensors. Each item in `args` is also a tuple, tuple[0] and tuple[1] are both str
+                type, which specifies the data type and format of a tensor respectively. :class:`mindspore.ops.DataType`
+                provides many predefined (data type, format) combinations, for example, `DataType.F16_Default` means the
+                data type is float16 and the format is default format.
+
+        Raises:
+            ValueError: If the size of `args` not equal to the sum of input tensors and output tensors.
+        """
+        io_nums = len(self.inputs) + len(self.outputs)
+        if len(args) != io_nums:
+            raise ValueError("The size of 'args' must be equal to the sum of input tensors and output tensors, but got "
+                             "{} vs {}".format(len(args), io_nums))
+        return super(CustomRegOp, self).dtype_format(*args)
+
+    def attr(self, name=None, param_type=None, value_type=None, default_value=None, **kwargs):
+        """
+        Specifies the attributes information for the `func` parameter of :class:`mindspore.ops.Custom`. Each
+        invocation of this function will generate one attribute information, that means, if `func` has two attributes,
+        then this function should be invoked two times continuously. The attributes information will be
+        generated as a dict: {"name": `name`, "param_type": `param_type`, "value_type": `value_type`, "default_value":
+        `default_value`}.
+
+        Args:
+            name (str): Name of the attribute. If None, key "name" will not appear in the attributes tensor information
+                dict. Default: None.
+            param_type (str): Parameter type of the attribute, can be one of ["required", "optional"]. If None, key
+                "param_type" will not appear in the attributes tensor information dict. Default: None.
+
+                - "required": means must provide a value for this attribute either by setting a default value in the
+                  registration information or providing an input value when calling the Custom operator.
+                - "optional": means does not have to provide a value for this attribute.
+
+            value_type (str): Value type of the attribute, can be one of ["int", "str", "bool", "float", "listInt",
+                "listStr", "listBool", "listFloat"]. If None, key "value_type" will not appear in the attributes tensor
+                information dict. Default: None.
+
+                - "int": string representation of Python type int.
+                - "str": string representation of Python type str.
+                - "bool": string representation of Python type bool.
+                - "float": string representation of Python type float.
+                - "listInt": string representation of Python type list of int.
+                - "listStr": string representation of Python type list of str.
+                - "listBool": string representation of Python type list of bool.
+                - "listFloat": string representation of Python type list of float.
+
+            default_value (str): Default value of the attribute. `default_value` and `value_type` are used together.
+                If the real default value of the attribute is float type with value 1.0, then the `value_type` should be
+                "float" and `default_value` should be "1.0". If the real default value of the attribute is a list of int
+                with value [1, 2, 3], then the `value_type` should be "listInt" and `default_value` should be "1,2,3",
+                each item should split by ','. If None, means the attribute has no default value and key "default_value"
+                will not appear in the attributes tensor information dict. It is used for "akg", "aicpu" and "tbe"
+                Custom operators currently. Default: None.
+            kwargs (dict): Other information of the attribute, used for extension.
+
+        Raises:
+            TypeError: If `name` is neither str nor None.
+            TypeError: If `param_type` is neither str nor None.
+            TypeError: If `value_type` is neither str nor None.
+            TypeError: If `default_value` is neither str nor None.
         """
         param_list = [name, param_type, value_type, default_value]
         key_list = ["name", "param_type", "type", "default_value"]
@@ -827,15 +921,33 @@ class CustomRegOp(RegOp):
 
     def target(self, target=None):
         """
-        Register Custom op target information.
+        Specifies the target that this registration information is used for.
 
         Args:
             target (str): Device target for current operator information, should be one of ["Ascend", "GPU", "CPU"].
-                Default: None.
+                For the same `func` of :class:`mindspore.ops.Custom`, it may support different data types and formats
+                on different targets, use `target` to specify which target that this registration information is used
+                for. If None, it will be inferred automatically inside :class:`mindspore.ops.Custom`. Default: None.
+
+        Raises:
+            TypeError: If `target` is neither str nor None.
         """
-        self._is_string(target)
+        if target is not None:
+            self._is_string(target)
         self.target_ = target
         return self
+
+    def get_op_info(self):
+        """
+        Return the generated registration information as a dict. This function should be invoked at last on the
+        `CustomRegOp` instance as shown in the above example.
+        """
+        op_info = {}
+        for k, v in self.__dict__.items():
+            if isinstance(k, str) and k.endswith('_'):
+                k = k.rstrip('_')
+            op_info[k] = v
+        return op_info
 
 
 class DataType:
