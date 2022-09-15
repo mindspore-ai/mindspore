@@ -1316,15 +1316,27 @@ def check_shuffle(method):
     return new_method
 
 
+def get_map_kwargs_from_dict(param_dict):
+    """get map operation kwargs parameters."""
+    if param_dict is not None:
+        python_multiprocessing = param_dict.get("python_multiprocessing", False)
+        max_rowsize = param_dict.get("max_rowsize", 16)
+        cache = param_dict.get("cache", None)
+        callbacks = param_dict.get("callbacks", None)
+        offload = param_dict.get("offload", None)
+    return python_multiprocessing, max_rowsize, cache, callbacks, offload
+
+
 def check_map(method):
     """check the input arguments of map."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
         from mindspore.dataset.callback import DSCallback
-        [operations, input_columns, output_columns, column_order, num_parallel_workers, python_multiprocessing, cache,
-         callbacks, max_rowsize, offload], _ = \
+        [operations, input_columns, output_columns, column_order, num_parallel_workers, param_dict], _ = \
             parse_user_args(method, *args, **kwargs)
+
+        (python_multiprocessing, max_rowsize, cache, callbacks, offload) = get_map_kwargs_from_dict(param_dict)
 
         # check whether network computing operator exist in input operations(python function)
         # check used variable and function document whether contain computing operator

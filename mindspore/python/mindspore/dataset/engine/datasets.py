@@ -767,8 +767,7 @@ class Dataset:
 
     @check_map
     def map(self, operations, input_columns=None, output_columns=None, column_order=None,
-            num_parallel_workers=None, python_multiprocessing=False, cache=None, callbacks=None,
-            max_rowsize=16, offload=None):
+            num_parallel_workers=None, **kwargs):
         """
         Apply each operation in operations to this dataset.
 
@@ -779,6 +778,18 @@ class Dataset:
 
         The columns outputted by the very last operation will be assigned names specified by
         `output_columns`, and if not specified, the column name of output column is same as that of `input_columns`.
+
+        - If you use transformations (
+          `vision transform <https://www.mindspore.cn/docs/en/master/api_python/mindspore.dataset.vision.html>`_,
+          `nlp transform <https://www.mindspore.cn/docs/en/master/api_python/mindspore.dataset.text.html>`_,
+          `audio transform <https://www.mindspore.cn/docs/en/master/api_python/mindspore.dataset.audio.html>`_)
+          provided by mindspore dataset, please use the following parameters:
+
+          .. image:: map_parameter_en.png
+
+        - If you use user-defined transform as PyFunc (Python Func), please use the following parameters:
+
+          .. image:: map_parameter_pyfunc_en.png
 
         Args:
             operations (Union[list[TensorOperation], list[functions]]): List of operations to be
@@ -798,14 +809,21 @@ class Dataset:
                 Caution: the list here is not just the columns specified in parameter input_columns and output_columns.
             num_parallel_workers (int, optional): Number of threads used to process the dataset in
                 parallel (default=None, the value from the configuration will be used).
-            python_multiprocessing (bool, optional): Parallelize Python operations with multiple worker processes. This
-                option could be beneficial if the Python operation is computational heavy (default=False).
-            cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
-                (default=None, which means no cache is used).
-            callbacks (DSCallback, list[DSCallback], optional): List of Dataset callbacks to be called (Default=None).
-            max_rowsize (int, optional): Maximum size of row in MB that is used for shared memory allocation to copy
-               data between processes.  This is only used if python_multiprocessing is set to True (Default=16).
-            offload (bool, optional): Flag to indicate whether offload is used (Default=None).
+            **kwargs:
+
+                - python_multiprocessing (bool, optional): Parallelize Python operations with multiple worker processes.
+                  This option could be beneficial if the Python operation is computational heavy (default=False).
+
+                - max_rowsize (int, optional): Maximum size of row in MB that is used for shared memory allocation to
+                  copy data between processes.  This is only used if python_multiprocessing is set to True (Default=16).
+
+                - cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
+                  (default=None, which means no cache is used).
+
+                - callbacks (DSCallback, list[DSCallback], optional): List of Dataset callbacks to be called
+                  (Default=None).
+
+                - offload (bool, optional): Flag to indicate whether offload is used (Default=None).
 
         Note:
             - Input `operations` accepts TensorOperations defined in mindspore.dataset part, plus user-defined
@@ -914,7 +932,7 @@ class Dataset:
                            "Please use '.project' operation instead.")
 
         return MapDataset(self, operations, input_columns, output_columns, column_order, num_parallel_workers,
-                          python_multiprocessing, cache, callbacks, max_rowsize, offload)
+                          **kwargs)
 
     @check_filter
     def filter(self, predicate, input_columns=None, num_parallel_workers=None):
