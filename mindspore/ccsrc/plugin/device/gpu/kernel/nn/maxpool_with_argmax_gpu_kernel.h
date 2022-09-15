@@ -108,8 +108,7 @@ class MaxPoolWithArgmaxGpuKernelMod : public NativeGpuKernelMod,
     pad_left_ = pad_width_ / 2;
   }
 
-  std::string pad_mode_;
-
+  PadMode pad_mode_{PadMode::VALID};
   int n_;
   int c_;
   int input_height_;

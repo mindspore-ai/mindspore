@@ -32,6 +32,11 @@ constexpr auto kPadmodeSame = "1";
 constexpr auto kPadModeValid = "2";
 constexpr auto kSAME = "SAME";
 constexpr auto kVALID = "VALID";
+constexpr size_t kMaxPoolIdx0 = 0;
+constexpr size_t kMaxPoolIdx1 = 1;
+constexpr size_t kMaxPoolIdx2 = 2;
+constexpr size_t kMaxPoolIdx3 = 3;
+
 void MaxPoolWithArgmax::set_pad_mode(const PadMode &pad_mode) {
   int64_t swi = pad_mode;
   (void)this->AddAttr(kPadMode, api::MakeValue(swi));
@@ -91,7 +96,7 @@ abstract::TupleShapePtr MaxPoolWithArgmaxInferShape(const PrimitivePtr &primitiv
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   auto op_name = primitive->name();
-  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDim0]->BuildShape())[kShape];
+  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kMaxPoolIdx0]->BuildShape())[kShape];
   // ToSupport Dynamic rank
   if (IsDynamicRank(in_shape)) {
     // The input tensor of Primitive MaxPoolWithArgmax must be a 4-D tensor and the data format is NCHW/NHWC.
@@ -121,20 +126,20 @@ abstract::TupleShapePtr MaxPoolWithArgmaxInferShape(const PrimitivePtr &primitiv
   (void)CheckAndConvertUtils::CheckInteger("strides size", SizeToLong(strides.size()), kEqual, attr_size, op_name);
 
   int64_t batch = 0, in_h = 0, in_w = 0, channel = 0;
-  int64_t kernel_h = kernel_size[kDim1];
-  int64_t kernel_w = kernel_size[kDim2];
-  int64_t stride_h = strides[kDim1];
-  int64_t stride_w = strides[kDim2];
+  int64_t kernel_h = kernel_size[kMaxPoolIdx1];
+  int64_t kernel_w = kernel_size[kMaxPoolIdx2];
+  int64_t stride_h = strides[kMaxPoolIdx1];
+  int64_t stride_w = strides[kMaxPoolIdx2];
   if (format == Format::NCHW) {
-    batch = in_shape[kDim0];
-    channel = in_shape[kDim1];
-    in_h = in_shape[kDim2];
-    in_w = in_shape[kDim3];
+    batch = in_shape[kMaxPoolIdx0];
+    channel = in_shape[kMaxPoolIdx1];
+    in_h = in_shape[kMaxPoolIdx2];
+    in_w = in_shape[kMaxPoolIdx3];
   } else if (format == Format::NHWC) {
-    batch = in_shape[kDim0];
-    in_h = in_shape[kDim1];
-    in_w = in_shape[kDim2];
-    channel = in_shape[kDim3];
+    batch = in_shape[kMaxPoolIdx0];
+    in_h = in_shape[kMaxPoolIdx1];
+    in_w = in_shape[kMaxPoolIdx2];
+    channel = in_shape[kMaxPoolIdx3];
   }
   int64_t out_h = abstract::Shape::kShapeDimAny, out_w = abstract::Shape::kShapeDimAny;
   if (pad_mode == PadMode::VALID) {
@@ -161,7 +166,8 @@ abstract::TupleShapePtr MaxPoolWithArgmaxInferShape(const PrimitivePtr &primitiv
   // Process attr mapping problems from mindspore to tbe
   // kernel_size -> ksize
   // pad_mode -> padding
-  std::vector<int64_t> ksize = {kernel_size[kDim0], kernel_size[kDim1], kernel_size[kDim2], kernel_size[kDim3]};
+  std::vector<int64_t> ksize = {kernel_size[kMaxPoolIdx0], kernel_size[kMaxPoolIdx1], kernel_size[kMaxPoolIdx2],
+                                kernel_size[kMaxPoolIdx3]};
   auto format_attr_val = format == NHWC ? kFormatNHWC : kFormatNCHW;
   auto pad_attr_val = pad_mode == PadMode::VALID ? MakeValue(kVALID) : MakeValue(kSAME);
   (void)primitive->AddAttr("ksize", MakeValue(ksize));
@@ -180,7 +186,7 @@ TypePtr MaxPoolWithArgmaxInferType(const PrimitivePtr &primitive, const std::vec
                             << "', the input args used for infer shape and type is necessary, but missing it.";
   }
   const std::set<TypePtr> valid_types = {kFloat32, kFloat16};
-  auto input_type = input_args[kDim0]->BuildType();
+  auto input_type = input_args[kMaxPoolIdx0]->BuildType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("input", input_type, valid_types, primitive->name());
   std::vector<TypePtr> type_list = {input_type, kInt32};
   return std::make_shared<Tuple>(type_list);

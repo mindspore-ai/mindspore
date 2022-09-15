@@ -91,7 +91,7 @@ int MaxPoolWithArgmaxGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   input_width_ = LongToInt(input_shape[kInputIndexForW]);
   output_height_ = LongToInt(output_shape[kOutputIndexForH]);
   output_width_ = LongToInt(output_shape[kOutputIndexForW]);
-  if (pad_mode_ == kSamePadModeUpperCase || pad_mode_ == kSamePadModeLowerCase) {
+  if (pad_mode_ == PadMode::SAME) {
     SetPad();
   }
   return static_cast<int>(KRET_OK);
