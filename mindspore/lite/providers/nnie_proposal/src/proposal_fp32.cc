@@ -32,6 +32,10 @@ constexpr int kMaxSize = 1024;
 constexpr int kNumInput2 = 2;
 constexpr int kDecimal = 10;
 constexpr auto kMazRoiNum = "MaxROINum";
+constexpr int kNCHWDims = 4;
+constexpr int kNCHWFormatH = 2;
+constexpr int kNCHWFormatW = 3;
+constexpr int kNCHWFormatC = 1;
 bool IsValidUnsignedNum(const std::string &num_str) {
   return !num_str.empty() && std::all_of(num_str.begin(), num_str.end(), ::isdigit);
 }
@@ -95,7 +99,21 @@ int ProposalCPUKernel::Prepare() {
     }
   }
 
-  return ProposalInit(&proposal_param_, inputs_, max_roi_num_int, image_height_, image_weight_);
+  for (size_t i = 0; i < inputs.size(); i++) {
+    auto ptr_shape = inputs[i].Shape();
+    if ((ptr_shape.size() == kNCHWDims)) {
+      proposal_param_.inputs_height_[i] = ptr_shape[kNCHWFormatH];
+      proposal_param_.inputs_width_[i] = ptr_shape[kNCHWFormatW];
+      proposal_param_.inputs_channel_[i] = ptr_shape[kNCHWFormatC];
+      if (i == 0) {
+        proposal_param_.inputs_stride_ = ptr_shape[kNCHWFormatW] * sizeof(float);
+      }
+    } else {
+      LOGE("proposal only support input shape size == 4.");
+      return RET_ERROR;
+    }
+  }
+  return ProposalInit(&proposal_param_, max_roi_num_int, image_height_, image_weight_);
 }
 
 int ProposalCPUKernel::ReSize() {
@@ -106,7 +124,21 @@ int ProposalCPUKernel::ReSize() {
   return RET_OK;
 }
 
-int ProposalCPUKernel::Execute() { return ProposalRun(&inputs_, &outputs_, &proposal_param_); }
+int ProposalCPUKernel::Execute() {
+  for (int i = 0; i < kNumInput2; i++) {
+    proposal_param_.inputs_[i] = reinterpret_cast<float *>(inputs_[i].MutableData());
+  }
+  if (ProposalRun(&proposal_param_) != RET_OK) {
+    LOGE("ProposalRun error.");
+    return RET_ERROR;
+  }
+  std::vector<int64_t> shape{static_cast<int64_t>(proposal_param_.rpn_bounding_box_.height_), COORDI_NUM};
+  outputs_[0].SetShape(shape);
+  auto output_data = outputs_[0].MutableData();
+  memcpy(output_data, proposal_param_.rpn_bounding_box_.data_,
+         proposal_param_.rpn_bounding_box_.height_ * COORDI_NUM * sizeof(float));
+  return RET_OK;
+}
 
 ProposalCPUKernel::~ProposalCPUKernel() { ProposalDeInit(&proposal_param_); }
 

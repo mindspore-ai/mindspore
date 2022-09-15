@@ -20,7 +20,6 @@
 #include <string>
 #include <vector>
 #include <map>
-#include "include/api/types.h"
 #include "include/mpi_vb.h"
 #include "include/hi_comm_svp.h"
 #include "include/hi_nnie.h"
@@ -104,17 +103,17 @@ typedef struct {
   NnieDataIndex run_idx_;
 } NnieRunCfg;
 
-int NnieCommCreate(NnieRunCfg *nnie_run_cfg, char *model_buf, int size, const std::vector<mindspore::MSTensor> &inputs);
+int NnieLoadModel(char *model_buf, int size, NnieModel *nnie_model);
 
-size_t GetFillIndex(const std::vector<mindspore::MSTensor> &inputs, size_t input_size, const HI_CHAR *name);
+int NnieCommCreate(NnieRunCfg *nnie_run_cfg, const std::vector<int64_t> &input_shape);
 
 void NnieCommDelete(NnieParam *pstNnieParamm, NnieModel *nnie_model);
 
 int NnieCommRun(NnieRunCfg *nnie_run_cfg, bool run_box);
 
-int NnieCommFillData(NnieRunCfg *nnie_run_cfg, void *data, mindspore::DataType dtype, int64_t *shape, int size, int id);
+int NnieCommFillData(NnieRunCfg *nnie_run_cfg, void *data, HI_U32 input_size, int id);
 
-int NnieCommGetOutputData(NnieRunCfg *nnie_run_cfg, float *data, int64_t *shape, int size, int tensor_index);
+int NnieCommGetOutputData(NnieRunCfg *nnie_run_cfg, float *data, HI_U32 output_size, int tensor_index);
 
 HI_U32 GetBlobSize(const SVP_SRC_BLOB_S &blob);
 }  // namespace nnie

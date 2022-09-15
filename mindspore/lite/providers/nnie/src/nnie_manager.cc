@@ -29,6 +29,48 @@ namespace mindspore {
 namespace nnie {
 constexpr int kUINT16_MAX = 65535;
 constexpr int kNumInput2 = 2;
+constexpr int kPreSize = 4;
+constexpr int kPostSize = 5;
+
+static size_t GetFillIndex(const std::vector<mindspore::MSTensor> &inputs, size_t input_size, const HI_CHAR *name) {
+  size_t j;
+  for (j = 0; j < input_size; j++) {
+    auto input_str = inputs[j].Name();
+    if (input_str.length() > kPreSize) {
+      if (input_str.substr(input_str.length() - kPreSize) == "_pre") {
+        input_str = input_str.substr(0, input_str.length() - kPreSize);
+      } else if (input_str.length() > kPostSize) {
+        if (input_str.substr(input_str.length() - kPostSize) == "_post") {
+          input_str = input_str.substr(0, input_str.length() - kPostSize);
+        }
+      }
+    }
+
+    if (strcmp(input_str.c_str(), name) == 0) {
+      break;
+    }
+  }
+  if (j == input_size) {
+    for (j = 0; j < input_size; j++) {
+      auto input_str = inputs[j].Name();
+      if (input_str.length() > kPreSize) {
+        if (input_str.substr(input_str.length() - kPreSize) == "_pre") {
+          input_str = input_str.substr(0, input_str.length() - kPreSize);
+        } else if (input_str.length() > kPostSize) {
+          if (input_str.substr(input_str.length() - kPostSize) == "_post") {
+            input_str = input_str.substr(0, input_str.length() - kPostSize);
+          }
+        }
+      }
+
+      if (strncmp(input_str.c_str(), name, input_str.length()) == 0) {
+        break;
+      }
+    }
+  }
+  return j;
+}
+
 int NNIEManager::CfgInit(const Flags &flags, int max_seg_id) {
   memset(&nnie_cfg_, 0, sizeof(NnieRunCfg));
 
@@ -162,7 +204,25 @@ int NNIEManager::LoadOutputs(std::vector<mindspore::MSTensor> *outputs, std::sha
 void NNIEManager::SetInputNum(int max_input_num) { nnie_cfg_.cfg_.max_input_num_ = max_input_num; }
 
 int NNIEManager::Init(char *model_buf, int size, const std::vector<mindspore::MSTensor> &inputs) {
-  if (NnieCommCreate(&nnie_cfg_, model_buf, size, inputs) != RET_OK) {
+  NnieModel *model = &nnie_cfg_.model_;
+
+  if (inputs.size() <= 1) {
+    LOGE("inputs size need greater than 1!");
+    return RET_ERROR;
+  }
+  auto ret = NnieLoadModel(model_buf, size, model);
+  if (ret != RET_OK) {
+    LOGE("NnieLoadModel failed!");
+    return RET_ERROR;
+  }
+  auto j = GetFillIndex(inputs, inputs.size() - 1, model->model_.astSeg[0].astSrcNode[0].szName);
+  if (j == (inputs.size() - 1)) {
+    j = 0;
+    LOGI("input tensor name(%s) can't match wk node name(%s).", inputs[0].Name().c_str(),
+         model->model_.astSeg[0].astSrcNode[0].szName);
+  }
+
+  if (NnieCommCreate(&nnie_cfg_, inputs[j].Shape()) != RET_OK) {
     NnieCommDelete(&nnie_cfg_.param_, &nnie_cfg_.model_);
     return RET_ERROR;
   }
@@ -244,9 +304,9 @@ int NNIEManager::GetOutputData(std::vector<mindspore::MSTensor> *outputs,
 
     auto input_data_type = (*outputs)[j].DataType();
     if (input_data_type == DataType::kNumberTypeFloat32) {
-      auto ptr_shape = (*outputs)[j].Shape();
+      HI_U32 output_element = static_cast<HI_U32>((*outputs)[j].ElementNum());
       auto ptr = reinterpret_cast<float *>((*outputs)[j].MutableData());
-      if (NnieCommGetOutputData(&nnie_cfg_, ptr, ptr_shape.data(), ptr_shape.size(), i) != RET_OK) {
+      if (NnieCommGetOutputData(&nnie_cfg_, ptr, output_element, i) != RET_OK) {
         return RET_ERROR;
       }
     } else {
@@ -459,16 +519,21 @@ int NNIEManager::FillData(std::vector<mindspore::MSTensor> *inputs, unsigned int
     }
 
     auto input_data_type = (*inputs)[j].DataType();
-    if ((input_data_type == DataType::kNumberTypeFloat32) || (input_data_type == DataType::kNumberTypeUInt8) ||
-        (input_data_type == DataType::kNumberTypeInt8)) {
-      auto ptr_shape = (*inputs)[j].Shape();
-      if (NnieCommFillData(&nnie_cfg_, (*inputs)[j].MutableData(), input_data_type, ptr_shape.data(), ptr_shape.size(),
-                           i) != RET_OK) {
-        LOGE("FillData failed!");
+    SVP_BLOB_TYPE_E src_type = nnie_cfg_.param_.seg_data_[seg_id].src_[i].enType;
+    if (SVP_BLOB_TYPE_U8 <= src_type && src_type <= SVP_BLOB_TYPE_YVU422SP) {
+      if (!(input_data_type == DataType::kNumberTypeUInt8 || input_data_type == DataType::kNumberTypeInt8)) {
+        LOGE("Nnie input node type error!");
         return RET_ERROR;
       }
     } else {
-      LOGE("Unsupported DataType!");
+      if (input_data_type != DataType::kNumberTypeFloat32) {
+        LOGE("Nnie input node type error!");
+        return RET_ERROR;
+      }
+    }
+    HI_U32 input_element = static_cast<HI_U32>((*inputs)[j].ElementNum());
+    if (NnieCommFillData(&nnie_cfg_, (*inputs)[j].MutableData(), input_element, i) != RET_OK) {
+      LOGE("FillData failed!");
       return RET_ERROR;
     }
   }

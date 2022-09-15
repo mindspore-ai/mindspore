@@ -267,17 +267,21 @@ build_lite() {
       MSLITE_REGISTRY_DEVICE=Hi3516D
       check_Hi35xx
       MSLITE_COMPILE_TWICE=ON
+      twice_target='benchmark micro_nnie'
     elif [[ "${MSLITE_REGISTRY_DEVICE}" == "Hi3559A" && "${local_lite_platform}" == "arm64" ]]; then
       TOOLCHAIN_NAME="himix100"
       check_Hi35xx
       MSLITE_COMPILE_TWICE=ON
+      twice_target='benchmark micro_nnie'
     elif [[ "${MSLITE_REGISTRY_DEVICE}" == "SD3403" && "${local_lite_platform}" == "arm64" ]]; then
       TOOLCHAIN_NAME="mix210"
       MSLITE_COMPILE_TWICE=ON
+      twice_target=benchmark
     elif [[ "${MSLITE_REGISTRY_DEVICE}" == "Hi3519A" && "${local_lite_platform}" == "arm32" ]]; then
       TOOLCHAIN_NAME="himix200"
       check_Hi35xx
       MSLITE_COMPILE_TWICE=ON
+      twice_target='benchmark micro_nnie'
     elif [[ ("${MSLITE_ENABLE_NNIE}" == "on" || "${MSLITE_REGISTRY_DEVICE}" == "Hi3516D") && "${local_lite_platform}" == "x86_64" ]]; then
       MSLITE_REGISTRY_DEVICE=Hi3516D
     elif [[ "${MSLITE_MICRO_PLATFORM}" == cortex-m* && "${local_lite_platform}" == "x86_64" ]]; then
@@ -405,9 +409,10 @@ build_lite() {
         if [[ "X$MSLITE_ENABLE_TOOLS" != "XOFF" ]]; then
           LITE_CMAKE_ARGS=`echo $LITE_CMAKE_ARGS | sed 's/-DMSLITE_COMPILE_TWICE=ON/-DMSLITE_COMPILE_TWICE=OFF/g'`
           cp -r ${INSTALL_PREFIX}/mindspore*/runtime ${BASEPATH}/mindspore/lite/providers
-          echo "cmake ${LITE_CMAKE_ARGS} ${BASEPATH}/mindspore/lite"
-          cmake ${LITE_CMAKE_ARGS} "${BASEPATH}/mindspore/lite"
-          cmake --build "${BASEPATH}/mindspore/lite/build" --target benchmark -j$THREAD_NUM
+          PKG_PATH=${INSTALL_PREFIX}/`ls ${INSTALL_PREFIX}/`
+          echo "cmake ${LITE_CMAKE_ARGS} -DPKG_PATH=${PKG_PATH} ${BASEPATH}/mindspore/lite"
+          cmake ${LITE_CMAKE_ARGS} -DPKG_PATH=${PKG_PATH} "${BASEPATH}/mindspore/lite"
+          cmake --build "${BASEPATH}/mindspore/lite/build" --target ${twice_target} -j$THREAD_NUM
           make install
         fi
       fi

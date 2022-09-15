@@ -852,7 +852,7 @@ if(MSLITE_MINDDATA_IMPLEMENT STREQUAL "lite" OR MSLITE_MINDDATA_IMPLEMENT STREQU
 endif()
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src/common/ops)
-if(ANDROID_NDK_TOOLCHAIN_INCLUDED OR TARGET_OHOS_LITE)
+if(ANDROID_NDK_TOOLCHAIN_INCLUDED OR TARGET_OHOS_LITE OR TARGET_HIMIX)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/tools/converter/micro/coder)
 endif()
 
@@ -862,6 +862,9 @@ add_subdirectory(${CCSRC_DIR}/plugin/device/cpu/kernel/nnacl build)
 if(MSLITE_ENABLE_TOOLS)
     if(NOT MSLITE_COMPILE_TWICE)
         add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/tools/benchmark)
+        if(TARGET_HIMIX)
+            add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/tools/converter/micro/providers/nnie nnie_micro)
+        endif()
     endif()
     if(SUPPORT_TRAIN)
         add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/tools/benchmark_train)

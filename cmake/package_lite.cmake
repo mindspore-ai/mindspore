@@ -446,7 +446,7 @@ if(PLATFORM_ARM64)
             COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h" PATTERN "ops*" EXCLUDE)
     install(DIRECTORY ${TOP_DIR}/include/c_api/ DESTINATION ${RUNTIME_INC_DIR}/c_api
             COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
-    if(ANDROID_NDK_TOOLCHAIN_INCLUDED OR MSLITE_ENABLE_CONVERTER)
+    if(ANDROID_NDK_TOOLCHAIN_INCLUDED OR MSLITE_ENABLE_CONVERTER OR TARGET_HIMIX)
         __install_micro_wrapper()
     endif()
     if(MSLITE_ENABLE_RUNTIME_GLOG)
@@ -464,6 +464,10 @@ if(PLATFORM_ARM64)
                             COMPONENT ${RUNTIME_COMPONENT_NAME})
                     install(FILES
                             ${TOP_DIR}/mindspore/lite/build/tools/benchmark/nnie_proposal/${MSLITE_PROPOSAL_LIB_NAME}.so
+                            DESTINATION ${PROVIDERS_LIB_DIR}/${MSLITE_REGISTRY_DEVICE}
+                            COMPONENT ${RUNTIME_COMPONENT_NAME})
+                    install(FILES
+                            ${TOP_DIR}/mindspore/lite/build/nnie_micro/${MICRO_NNIE_LIB_NAME}.so
                             DESTINATION ${PROVIDERS_LIB_DIR}/${MSLITE_REGISTRY_DEVICE}
                             COMPONENT ${RUNTIME_COMPONENT_NAME})
                 endif()
@@ -685,7 +689,7 @@ elseif(PLATFORM_ARM32)
             COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h" PATTERN "ops*" EXCLUDE)
     install(DIRECTORY ${TOP_DIR}/include/c_api/ DESTINATION ${RUNTIME_INC_DIR}/c_api
             COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
-    if(ANDROID_NDK_TOOLCHAIN_INCLUDED OR MSLITE_ENABLE_CONVERTER OR TARGET_OHOS_LITE)
+    if(ANDROID_NDK_TOOLCHAIN_INCLUDED OR MSLITE_ENABLE_CONVERTER OR TARGET_OHOS_LITE OR TARGET_HIMIX)
         __install_micro_wrapper()
     endif()
     if(MSLITE_ENABLE_TOOLS AND NOT TARGET_OHOS_LITE)
@@ -701,12 +705,10 @@ elseif(PLATFORM_ARM32)
                             ${TOP_DIR}/mindspore/lite/build/tools/benchmark/nnie_proposal/${MSLITE_PROPOSAL_LIB_NAME}.so
                             DESTINATION ${PROVIDERS_LIB_DIR}/${MSLITE_REGISTRY_DEVICE}
                             COMPONENT ${RUNTIME_COMPONENT_NAME})
-                    if(${MSLITE_REGISTRY_DEVICE}  STREQUAL "Hi3516D")
-                        install(FILES
-                                ${TOP_DIR}/mindspore/lite/providers/nnie/third_patry/${MICRO_NNIE_LIB_NAME}.so
-                                DESTINATION ${PROVIDERS_LIB_DIR}/${MSLITE_REGISTRY_DEVICE}
-                                COMPONENT ${RUNTIME_COMPONENT_NAME})
-                    endif()
+                    install(FILES
+                            ${TOP_DIR}/mindspore/lite/build/nnie_micro/${MICRO_NNIE_LIB_NAME}.so
+                            DESTINATION ${PROVIDERS_LIB_DIR}/${MSLITE_REGISTRY_DEVICE}
+                            COMPONENT ${RUNTIME_COMPONENT_NAME})
                 endif()
             endif()
         endif()
