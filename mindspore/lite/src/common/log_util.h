@@ -77,11 +77,21 @@
     }                                                                \
   } while (0)
 
+#define CHECK_LESS_RETURN_RET(size1, size2, ret, free_parm)           \
+  do {                                                                \
+    if ((size1) < (size2)) {                                          \
+      MS_LOG(ERROR) << #size1 << " must not be less than " << #size2; \
+      free(free_parm);                                                \
+      return ret;                                                     \
+    }                                                                 \
+  } while (0)
+
 #else
 #define CHECK_NULL_RETURN(ptr)
 #define CHECK_NULL_RETURN_VOID(ptr)
 #define CHECK_LESS_RETURN(size1, size2)
 #define CHECK_NOT_EQUAL_RETURN(size1, size2)
 #define CHECK_EQUAL_RETURN(size1, size2)
+#define CHECK_LESS_RETURN_RET(size1, size2, ret, do_exec)
 #endif
 #endif  // MINDSPORE_LITE_SRC_COMMON_LOG_UTIL_H_
