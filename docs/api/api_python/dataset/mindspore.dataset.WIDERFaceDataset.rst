@@ -63,10 +63,9 @@ mindspore.dataset.WIDERFaceDataset
 
     **关于WIDERFace数据集：**
 
-    WIDER FACE数据集是人脸检测的一个benchmark数据集，包含393,703个标注人脸，其中，158,989个标注人脸位于训练集，
-    39,496个位于验证集。每一个样本集都包含3个级别的检测难度：Easy，Medium，Hard。这些人脸在尺度，姿态，光照、表情、遮挡方面都有很大的变化范围。
+    WIDER FACE数据集具有12,880个训练样本，16,097个测试样本，以及3,226个验证样本。此数据集是WIDER数据集的子集。其中图片已经预先进行了尺寸归一化和人像中心化处理。
 
-    以下是原始的WIDERFace数据集结构，可以将数据集文件解压缩到此目录结构中，并由MindSpore的API读取。
+    以下是原始的WIDERFace数据集结构。可以将数据集文件解压缩到此目录结构中，并由MindSpore的API读取。
 
     .. code-block::
 

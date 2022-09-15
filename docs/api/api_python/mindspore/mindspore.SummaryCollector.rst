@@ -47,4 +47,4 @@ mindspore.SummaryCollector
             - **npy** - 将tensor导出为NPY文件。
 
     异常：
-        - **ValueError** - 译MindSpore时，设置 `-s on` 关闭了维测功能。
+        - **ValueError** - 编译MindSpore时，设置 `-s on` 关闭了维测功能。

@@ -30,7 +30,7 @@ mindspore.dataset.WikiTextDataset
     对于WikiText2，分别在wiki.train.tokens中有36718个样本，在wiki.test.tokens中有4358个样本，在wiki.valid.tokens中有3760个样本。
     对于WikiText103，分别在wiki.train.tokens中有1801350个样本，wiki.test.tokens中的4358个样本，Wiki.valid.tokens中的3760个样本。
 
-    以下是原始的WikiText数据集结构，可以将数据集文件解压缩到此目录结构中，并由MindSpore的API读取。
+    以下是原始的WikiText数据集结构。可以将数据集文件解压缩到此目录结构中，并由MindSpore的API读取。
 
     .. code-block::
 
