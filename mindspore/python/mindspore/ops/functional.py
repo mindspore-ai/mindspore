@@ -81,6 +81,7 @@ shard_fn = Shard()
 
 
 def shard(fn, in_strategy, out_strategy, parameter_plan=None, device="Ascend", level=0):
+    """Apply distributed process for fn"""
     if not isinstance(fn, ms.nn.Cell):
         raise TypeError(f"Type of fn must be 'Cell', but got type {type(fn)}")
     return shard_fn(fn, in_strategy, out_strategy, parameter_plan, device, level)

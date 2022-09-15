@@ -27,6 +27,8 @@ namespace {
 constexpr size_t kIOUInputsNum = 2;
 constexpr size_t kIOUOutputsNum = 1;
 constexpr size_t kBoxCoordinateLen = 4;
+constexpr auto kIou = "iou";
+constexpr auto kIof = "iof";
 }  // namespace
 
 bool IOUCpuKernelMod::Init(const mindspore::kernel::BaseOperatorPtr &base_operator,
@@ -39,9 +41,9 @@ bool IOUCpuKernelMod::Init(const mindspore::kernel::BaseOperatorPtr &base_operat
   auto mode_value_ptr = base_operator->GetAttr(kAttrMode);
   MS_EXCEPTION_IF_NULL(mode_value_ptr);
   auto mode = GetValue<std::string>(mode_value_ptr);
-  if (mode == "iou") {
+  if (mode == kIou) {
     mode_ = 0;
-  } else if (mode == "iof") {
+  } else if (mode == kIof) {
     mode_ = 1;
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', mode only support 'iou' or 'iof'.";

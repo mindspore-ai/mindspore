@@ -31,10 +31,15 @@ class NetIOU(nn.Cell):
     def construct(self, anchor, groundtruth):
         return self.encode(anchor, groundtruth)
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_iou():
+def test_iou_gpu():
+    """
+    Feature: test iou op in gpu.
+    Description: test iou in gpu.
+    Expectation: The output is equal to the expected value.
+    """
     pos1 = [101, 169, 246, 429]
     pos2 = [121, 138, 304, 374]
     mode = "iou"
@@ -53,5 +58,41 @@ def test_iou():
     context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
     overlaps = NetIOU(mode)
     output = overlaps(pos1_box, pos2_box)
+    diff = output.asnumpy() - expect_result
+    assert np.all(abs(diff) < error)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_iou_gpu_dynamic_shape():
+    """
+    Feature: test iou op in gpu.
+    Description: test iou in dynamic shape.
+    Expectation: The output is equal to the expected value.
+    """
+    pos1 = [101, 169, 246, 429]
+    pos2 = [121, 138, 304, 374]
+    mode = "iou"
+    pos1_box = Tensor(np.array(pos1).reshape(1, 4), mindspore.float32)
+    pos2_box = Tensor(np.array(pos2).reshape(1, 4), mindspore.float32)
+    expect_result = np.array(0.46551168, np.float32)
+
+    error = np.ones(shape=[1]) * 1.0e-6
+
+    pos1_dyn = Tensor(shape=[None, 4], dtype=mindspore.float32)
+    pos2_dyn = Tensor(shape=[None, 4], dtype=mindspore.float32)
+
+    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+    dynamic_overlaps = NetIOU(mode)
+    dynamic_overlaps.set_inputs(pos1_dyn, pos2_dyn)
+    output = dynamic_overlaps(pos1_box, pos2_box)
+    diff = output.asnumpy() - expect_result
+    assert np.all(abs(diff) < error)
+
+    context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
+    dynamic_overlaps = NetIOU(mode)
+    dynamic_overlaps.set_inputs(pos1_dyn, pos2_dyn)
+    output = dynamic_overlaps(pos1_box, pos2_box)
     diff = output.asnumpy() - expect_result
     assert np.all(abs(diff) < error)
