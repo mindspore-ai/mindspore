@@ -2773,8 +2773,12 @@ class Pipe:
 
     def master_close(self):
         self.eof.set()
+        self.send_finish_signal()
         self.res_queue.cancel_join_thread()
         self.in_queue.cancel_join_thread()
+
+    def send_finish_signal(self):
+        self.worker_send(None)
 
     def worker_send(self, data):
         self.res_queue.put_until(data, timeout=1, exit_signal=self.eof)
