@@ -16,4 +16,9 @@ mindspore.ops.range
         一维Tensor，数据类型与输入数据类型一致。
 
     异常：
-        - **ValueError** - `start` ， `limit` ， `delta` 不是标量Tensor。
+        - **TypeError** - `start` ， `limit` ， `delta` 不是标量Tensor。
+        - **TypeError** - `start` ， `limit` ， `delta` 的数据类型不一致。
+        - **TypeError** - `start` ， `limit` ， `delta` 的数据类型不支持。
+        - **ValueError** - `delta` 等于0。
+        - **ValueError** - `start` 小于等于 `limit` ， `delta` 小于0。
+        - **ValueError** - `start` 大于等于 `limit` ， `delta` 大于0。
