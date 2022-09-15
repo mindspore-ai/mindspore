@@ -21,4 +21,3 @@ mindspore.ops.bitwise_or
 
     异常：
         - **TypeError** - `x` 或 `y` 不是Tensor。
-        - **RuntimeError** - 输入的 `x` 与 `y` 需要进行参数类型转换时不符合转换规则。
