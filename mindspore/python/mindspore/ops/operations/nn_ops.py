@@ -6589,7 +6589,7 @@ class ApplyProximalGradientDescent(Primitive):
     r"""
     Updates relevant entries according to the FOBOS(Forward Backward Splitting) algorithm.
     Refer to the paper `Efficient Learning using Forward-Backward Splitting
-    <http://papers.nips.cc//paper/3793-efficient-learning-using-forward-backward-splitting.pdf>`_ for more detail。
+    <http://papers.nips.cc//paper/3793-efficient-learning-using-forward-backward-splitting.pdf>`_ for more detail.
 
     .. math::
         \begin{array}{ll} \\
