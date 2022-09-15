@@ -211,3 +211,25 @@ def test_mirror_pad_dynamic():
 
     np.testing.assert_equal(np.array(test1_arr_exp), y_test_1)
     np.testing.assert_equal(np.array(test2_arr_exp), y_test_2)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_mirror_pad_grad_dynamic_shape():
+    """
+    Feature: dynamic shape support of MirrorPadGrad.
+    Description: input Tensor with dynamic shape.
+    Expectation: output shape coincide with expect_shape.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    test_arr_in_dyn = Tensor(shape=[1, 1, None, 3], dtype=mindspore.float32)
+    test_arr_in = [[[[1, 2, 3], [4, 5, 6], [7, 8, 9]]]]
+    test_arr_in = Tensor(test_arr_in, dtype=mindspore.float32)
+    dy_dyn = Tensor(shape=[1, None, None, 5], dtype=mindspore.float32)
+    dy = (np.ones((1, 1, 4, 5)) * 0.1).astype(np.float32)
+    expected_shape = (1, 1, 3, 3)
+    net = Grad(Net(((0, 0), (0, 0), (1, 0), (0, 2)), "REFLECT"))
+    net.set_inputs(test_arr_in_dyn, dy_dyn)
+    dx = net(test_arr_in, Tensor(dy))
+    assert dx[0].asnumpy().shape == expected_shape

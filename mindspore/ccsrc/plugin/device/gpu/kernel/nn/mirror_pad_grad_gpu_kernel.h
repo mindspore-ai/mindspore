@@ -57,6 +57,8 @@ class MirrorPadGradGpuKernelMod : public NativeGpuKernelMod {
                        const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &, void *)>;
 
  private:
+  void CalculateWorkspace(const ShapeVector &input_shape, const std::vector<size_t> &output_shape);
+
   MirrorPadGradLaunchFunc kernel_func_;
   static std::vector<std::pair<KernelAttr, MirrorPadGradLaunchFunc>> func_list_;
 
