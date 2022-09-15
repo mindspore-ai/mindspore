@@ -328,30 +328,18 @@ class Custom(ops.PrimitiveWithInfer):
         >>> # In this case, the input func must be a function written in the Hybrid DSL
         >>> # and decorated by @ms_kernel.
         >>> @ms_kernel
-        ... def outer_product_script(a, b):
+        ... def add_script(a, b):
         ...     c = output_tensor(a.shape, a.dtype)
         ...     for i0 in range(a.shape[0]):
-        ...         for i1 in range(b.shape[1]):
-        ...             c[i0, i1] = 0.0
-        ...             for i2 in range(a.shape[1]):
-        ...                 c[i0, i1] = c[i0, i1] + (a[i0, i2] * b[i2, i1])
+        ...         for i1 in range(a.shape[1]):
+        ...             c[i0, i1] = a[i0, i1] + b[i0, i1]
         ...     return c
         >>>
-        >>> test_op_hybrid = ops.Custom(outer_product_script)
+        >>> test_op_hybrid = ops.Custom(add_script)
         >>> output = test_op_hybrid(input_x, input_y)
-        >>> # the result will be a 16 * 16 tensor with all elements 16
+        >>> # the result will be a 16 * 16 tensor with all elements 2
         >>> print(output.shape)
         (16, 16)
-        >>> # Example, func_type = "akg"
-        >>> def outer_product(a_1, b_1):
-        ...     d = output_tensor(a_1.shape, a_1.dtype)
-        ...     for i0 in range(a_1.shape[0]):
-        ...         for i1 in range(b_1.shape[1]):
-        ...             d[i0, i1] = 0.0
-        ...             for i2 in range(a.shape[1]):
-        ...                 d[i0, i1] = d[i0, i1] + (a_1[i0, i2] * b_1[i2, i1])
-        ...     return d
-        >>>
         >>> # Example, func_type = "tbe"
         >>> square_with_bias_op_info = CustomRegOp() \
         ...     .fusion_type("OPAQUE") \
