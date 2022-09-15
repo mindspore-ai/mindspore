@@ -26,7 +26,7 @@ def accumulate_n_forward_functional(nptype):
     input_x = Tensor(np.array([1, 2, 3]).astype(nptype))
     input_y = Tensor(np.array([4, 5, 6]).astype(nptype))
 
-    output = F.accumulate_n(input_x, input_y, input_x, input_y)
+    output = F.accumulate_n([input_x, input_y, input_x, input_y])
     expected = np.array([10., 14., 18.])
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
