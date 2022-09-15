@@ -24,10 +24,10 @@ constexpr size_t kEmbeddingLookupOutputsNum = 1;
 namespace mindspore {
 namespace kernel {
 namespace {
-template <typename T, typename S>
+template <typename T, typename S, typename G>
 std::unique_ptr<cukernel::GpuKernelHelperBase> CreateEmbeddingLookupKernelPtr(const std::string &kernel_name,
                                                                               const uint32_t &device_id) {
-  return std::make_unique<cukernel::EmbeddingLookupHelperGpuKernel<T, S>>(kernel_name, device_id);
+  return std::make_unique<cukernel::EmbeddingLookupHelperGpuKernel<T, S, G>>(kernel_name, device_id);
 }
 
 using EmbeddingLookupPtrCreatorFunc =
@@ -35,133 +35,145 @@ using EmbeddingLookupPtrCreatorFunc =
 
 const std::vector<std::pair<KernelAttr, EmbeddingLookupPtrCreatorFunc>> kernel_attr = {
   {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
-   CreateEmbeddingLookupKernelPtr<double, int>},
+   CreateEmbeddingLookupKernelPtr<double, int, int64_t>},
   {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
-   CreateEmbeddingLookupKernelPtr<double, int64_t>},
+   CreateEmbeddingLookupKernelPtr<double, int64_t, int64_t>},
   {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
-   CreateEmbeddingLookupKernelPtr<float, int>},
+   CreateEmbeddingLookupKernelPtr<float, int, int64_t>},
   {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
-   CreateEmbeddingLookupKernelPtr<float, int64_t>},
+   CreateEmbeddingLookupKernelPtr<float, int64_t, int64_t>},
   {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat16),
-   CreateEmbeddingLookupKernelPtr<half, int>},
+   CreateEmbeddingLookupKernelPtr<half, int, int64_t>},
   {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
-   CreateEmbeddingLookupKernelPtr<half, int64_t>},
+   CreateEmbeddingLookupKernelPtr<half, int64_t, int64_t>},
   {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
-   CreateEmbeddingLookupKernelPtr<bool, int>},
+   CreateEmbeddingLookupKernelPtr<bool, int, int64_t>},
   {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
-   CreateEmbeddingLookupKernelPtr<bool, int64_t>},
+   CreateEmbeddingLookupKernelPtr<bool, int64_t, int64_t>},
   {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-   CreateEmbeddingLookupKernelPtr<int, int>},
+   CreateEmbeddingLookupKernelPtr<int, int, int64_t>},
   {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-   CreateEmbeddingLookupKernelPtr<int, int64_t>},
+   CreateEmbeddingLookupKernelPtr<int, int64_t, int64_t>},
   {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt16),
-   CreateEmbeddingLookupKernelPtr<int16_t, int>},
+   CreateEmbeddingLookupKernelPtr<int16_t, int, int64_t>},
   {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt16),
-   CreateEmbeddingLookupKernelPtr<int16_t, int64_t>},
+   CreateEmbeddingLookupKernelPtr<int16_t, int64_t, int64_t>},
   {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt8),
-   CreateEmbeddingLookupKernelPtr<int8_t, int>},
+   CreateEmbeddingLookupKernelPtr<int8_t, int, int64_t>},
   {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt8),
-   CreateEmbeddingLookupKernelPtr<int8_t, int64_t>},
+   CreateEmbeddingLookupKernelPtr<int8_t, int64_t, int64_t>},
   {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt8),
-   CreateEmbeddingLookupKernelPtr<uint8_t, int>},
+   CreateEmbeddingLookupKernelPtr<uint8_t, int, int64_t>},
   {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt8),
-   CreateEmbeddingLookupKernelPtr<uint8_t, int64_t>},
+   CreateEmbeddingLookupKernelPtr<uint8_t, int64_t, int64_t>},
   {KernelAttr()
      .AddInputAttr(kNumberTypeFloat64)
      .AddInputAttr(kNumberTypeInt32)
      .AddInputAttr(kNumberTypeInt64)
      .AddOutputAttr(kNumberTypeFloat64),
-   CreateEmbeddingLookupKernelPtr<double, int>},
+   CreateEmbeddingLookupKernelPtr<double, int, int64_t>},
   {KernelAttr()
      .AddInputAttr(kNumberTypeFloat64)
      .AddInputAttr(kNumberTypeInt64)
      .AddInputAttr(kNumberTypeInt64)
      .AddOutputAttr(kNumberTypeFloat64),
-   CreateEmbeddingLookupKernelPtr<double, int64_t>},
+   CreateEmbeddingLookupKernelPtr<double, int64_t, int64_t>},
   {KernelAttr()
      .AddInputAttr(kNumberTypeFloat32)
      .AddInputAttr(kNumberTypeInt32)
      .AddInputAttr(kNumberTypeInt64)
      .AddOutputAttr(kNumberTypeFloat32),
-   CreateEmbeddingLookupKernelPtr<float, int>},
+   CreateEmbeddingLookupKernelPtr<float, int, int64_t>},
   {KernelAttr()
      .AddInputAttr(kNumberTypeFloat32)
      .AddInputAttr(kNumberTypeInt64)
      .AddInputAttr(kNumberTypeInt64)
      .AddOutputAttr(kNumberTypeFloat32),
-   CreateEmbeddingLookupKernelPtr<float, int64_t>},
+   CreateEmbeddingLookupKernelPtr<float, int64_t, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeFloat32),
+   CreateEmbeddingLookupKernelPtr<float, int32_t, int32_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeInt32),
+   CreateEmbeddingLookupKernelPtr<int32_t, int32_t, int32_t>},
   {KernelAttr()
      .AddInputAttr(kNumberTypeFloat16)
      .AddInputAttr(kNumberTypeInt32)
      .AddInputAttr(kNumberTypeInt64)
      .AddOutputAttr(kNumberTypeFloat16),
-   CreateEmbeddingLookupKernelPtr<half, int>},
+   CreateEmbeddingLookupKernelPtr<half, int, int64_t>},
   {KernelAttr()
      .AddInputAttr(kNumberTypeFloat16)
      .AddInputAttr(kNumberTypeInt64)
      .AddInputAttr(kNumberTypeInt64)
      .AddOutputAttr(kNumberTypeFloat16),
-   CreateEmbeddingLookupKernelPtr<half, int64_t>},
+   CreateEmbeddingLookupKernelPtr<half, int64_t, int64_t>},
   {KernelAttr()
      .AddInputAttr(kNumberTypeBool)
      .AddInputAttr(kNumberTypeInt32)
      .AddInputAttr(kNumberTypeInt64)
      .AddOutputAttr(kNumberTypeBool),
-   CreateEmbeddingLookupKernelPtr<bool, int>},
+   CreateEmbeddingLookupKernelPtr<bool, int, int64_t>},
   {KernelAttr()
      .AddInputAttr(kNumberTypeBool)
      .AddInputAttr(kNumberTypeInt64)
      .AddInputAttr(kNumberTypeInt64)
      .AddOutputAttr(kNumberTypeBool),
-   CreateEmbeddingLookupKernelPtr<bool, int64_t>},
+   CreateEmbeddingLookupKernelPtr<bool, int64_t, int64_t>},
   {KernelAttr()
      .AddInputAttr(kNumberTypeInt32)
      .AddInputAttr(kNumberTypeInt32)
      .AddInputAttr(kNumberTypeInt64)
      .AddOutputAttr(kNumberTypeInt32),
-   CreateEmbeddingLookupKernelPtr<int, int>},
+   CreateEmbeddingLookupKernelPtr<int, int, int64_t>},
   {KernelAttr()
      .AddInputAttr(kNumberTypeInt32)
      .AddInputAttr(kNumberTypeInt32)
      .AddInputAttr(kNumberTypeInt64)
      .AddOutputAttr(kNumberTypeInt32),
-   CreateEmbeddingLookupKernelPtr<int, int64_t>},
+   CreateEmbeddingLookupKernelPtr<int, int64_t, int64_t>},
   {KernelAttr()
      .AddInputAttr(kNumberTypeInt16)
      .AddInputAttr(kNumberTypeInt32)
      .AddInputAttr(kNumberTypeInt64)
      .AddOutputAttr(kNumberTypeInt16),
-   CreateEmbeddingLookupKernelPtr<int16_t, int>},
+   CreateEmbeddingLookupKernelPtr<int16_t, int, int64_t>},
   {KernelAttr()
      .AddInputAttr(kNumberTypeInt16)
      .AddInputAttr(kNumberTypeInt64)
      .AddInputAttr(kNumberTypeInt64)
      .AddOutputAttr(kNumberTypeInt16),
-   CreateEmbeddingLookupKernelPtr<int16_t, int64_t>},
+   CreateEmbeddingLookupKernelPtr<int16_t, int64_t, int64_t>},
   {KernelAttr()
      .AddInputAttr(kNumberTypeInt8)
      .AddInputAttr(kNumberTypeInt32)
      .AddInputAttr(kNumberTypeInt64)
      .AddOutputAttr(kNumberTypeInt8),
-   CreateEmbeddingLookupKernelPtr<int8_t, int>},
+   CreateEmbeddingLookupKernelPtr<int8_t, int, int64_t>},
   {KernelAttr()
      .AddInputAttr(kNumberTypeInt8)
      .AddInputAttr(kNumberTypeInt64)
      .AddInputAttr(kNumberTypeInt64)
      .AddOutputAttr(kNumberTypeInt8),
-   CreateEmbeddingLookupKernelPtr<int8_t, int64_t>},
+   CreateEmbeddingLookupKernelPtr<int8_t, int64_t, int64_t>},
   {KernelAttr()
      .AddInputAttr(kNumberTypeUInt8)
      .AddInputAttr(kNumberTypeInt32)
      .AddInputAttr(kNumberTypeInt64)
      .AddOutputAttr(kNumberTypeUInt8),
-   CreateEmbeddingLookupKernelPtr<uint8_t, int>},
+   CreateEmbeddingLookupKernelPtr<uint8_t, int, int64_t>},
   {KernelAttr()
      .AddInputAttr(kNumberTypeUInt8)
      .AddInputAttr(kNumberTypeInt64)
      .AddInputAttr(kNumberTypeInt64)
      .AddOutputAttr(kNumberTypeUInt8),
-   CreateEmbeddingLookupKernelPtr<uint8_t, int64_t>},
+   CreateEmbeddingLookupKernelPtr<uint8_t, int64_t, int64_t>},
 };
 }  // namespace
 
