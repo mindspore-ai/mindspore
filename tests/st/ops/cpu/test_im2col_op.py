@@ -17,6 +17,7 @@ import numpy as np
 import pytest
 
 import mindspore
+import mindspore.nn as nn
 import mindspore.context as context
 import mindspore.ops.operations as P
 from mindspore import Tensor
@@ -48,3 +49,47 @@ def test_im2col_vmap():
     vmap_im2col = vmap(vmap(cal_im2col, in_axes=-1), in_axes=-1)
     outputs = vmap_im2col(x2)
     assert outputs.asnumpy().shape == (32, 32, 1, 9, 2, 2)
+
+
+class NetIm2Col(nn.Cell):
+    def __init__(self):
+        super(NetIm2Col, self).__init__()
+        self.im2col = P.Im2Col(
+            ksizes=2, strides=1, dilations=1, padding_mode="SAME", pads=0)
+
+    def construct(self, x):
+        return self.im2col(x)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_im2col_cpu_dynamic_shape():
+    """
+    Feature: test Im2Col op in cpu.
+    Description: test the ops in dynamic shape.
+    Expectation: expect correct shape result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+    net = NetIm2Col()
+
+    x_dyn = Tensor(shape=[None, 32, 9, 9], dtype=mindspore.float32)
+    net.set_inputs(x_dyn)
+    x = np.random.randn(1, 32, 9, 9)
+    output = net(Tensor(x, mindspore.float32))
+    expect_shape = (1, 128, 9, 9)
+    assert output.asnumpy().shape == expect_shape
+
+    x_dyn = Tensor(shape=[1, None, 9, 9], dtype=mindspore.float32)
+    net.set_inputs(x_dyn)
+    x = np.random.randn(1, 32, 9, 9)
+    output = net(Tensor(x, mindspore.float32))
+    expect_shape = (1, 128, 9, 9)
+    assert output.asnumpy().shape == expect_shape
+
+    x_dyn = Tensor(shape=[1, 32, None, None], dtype=mindspore.float32)
+    net.set_inputs(x_dyn)
+    x = np.random.randn(1, 32, 9, 9)
+    output = net(Tensor(x, mindspore.float32))
+    expect_shape = (1, 128, 9, 9)
+    assert output.asnumpy().shape == expect_shape

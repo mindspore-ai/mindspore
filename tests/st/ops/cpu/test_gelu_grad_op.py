@@ -16,6 +16,7 @@
 import numpy as np
 import pytest
 
+import mindspore
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -61,3 +62,24 @@ def test_gelugrad():
     expect = [0.50963277, 0.9414753, 0.2667653, 0.21358444, 0.25243032, 0.0352667,
               0.34266686, 0.57757664, 0.04707306, 0.51536125]
     assert np.allclose(output[0].asnumpy(), expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_gelu_grad_cpu_dynamic_shape():
+    """
+    Feature: test GeLUGrad op in cpu.
+    Description: test the ops in dynamic shape.
+    Expectation: expect correct shape result.
+    """
+    net = GeluNet()
+    grad = Grad(net)
+    dy_dyn = Tensor(shape=[None, 32], dtype=mindspore.float32)
+    x_dyn = Tensor(shape=[3, None], dtype=mindspore.float32)
+    grad.set_inputs(dy_dyn, x_dyn)
+    dy = np.random.randn(3, 32)
+    x = np.random.randn(3, 32)
+    output = grad(Tensor(dy, mindspore.float32), Tensor(x, mindspore.float32))
+    expect_shape = (3, 32)
+    assert output[0].asnumpy().shape == expect_shape

@@ -314,15 +314,11 @@ def test_index_add_dynamic():
     axis = 1
     expect = np.copy(x)
     expect[:, idx, :] = expect[:, idx, :] + y
+    idx_dyn = Tensor(shape=[None], dtype=mindspore.int32)
     y_dyn = Tensor(shape=[2, None, 4], dtype=mindspore.float32)
     context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
     net = NetIndexAdd(x, axis)
-    net.set_inputs(Tensor(idx), y_dyn)
-    output = net(Tensor(idx), Tensor(y))
-    assert (output.asnumpy() == expect).all()
-    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    net = NetIndexAdd(x, axis)
-    net.set_inputs(Tensor(idx), y_dyn)
+    net.set_inputs(idx_dyn, y_dyn)
     output = net(Tensor(idx), Tensor(y))
     assert (output.asnumpy() == expect).all()
 

@@ -162,6 +162,6 @@ AbstractBasePtr LstmInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
                           const std::vector<AbstractBasePtr> &input_args) {
   return LstmInfer(primitive, input_args);
 }
-REGISTER_PRIMITIVE_C(kNameLSTM, LSTM);
+REGISTER_PRIMITIVE_EVAL_IMPL(LSTM, prim::kPrimLstm, LstmInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

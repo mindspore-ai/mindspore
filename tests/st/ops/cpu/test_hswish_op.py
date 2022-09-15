@@ -16,6 +16,7 @@
 import numpy as np
 import pytest
 
+import mindspore
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -60,3 +61,42 @@ def test_net():
     output = backword_net(Tensor(x), Tensor(sens))
     print(len(output))
     print(output[0].asnumpy())
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_hswish_cpu_dynamic_shape():
+    """
+    Feature: test HSwish op in cpu.
+    Description: test the ops in dynamic shape.
+    Expectation: expect correct shape result.
+    """
+    net = Net()
+    x_dyn = Tensor(shape=[None, 32], dtype=mindspore.float32)
+    net.set_inputs(x_dyn)
+    x = np.random.randn(3, 32)
+    output = net(Tensor(x, mindspore.float32))
+    expect_shape = (3, 32)
+    assert output.asnumpy().shape == expect_shape
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_hswish_grad_cpu_dynamic_shape():
+    """
+    Feature: test HSwishGrad op in cpu.
+    Description: test the ops in dynamic shape.
+    Expectation: expect correct shape result.
+    """
+    net = Net()
+    grad = Grad(net)
+    dy_dyn = Tensor(shape=[None, 32], dtype=mindspore.float32)
+    x_dyn = Tensor(shape=[3, None], dtype=mindspore.float32)
+    grad.set_inputs(dy_dyn, x_dyn)
+    dy = np.random.randn(3, 32)
+    x = np.random.randn(3, 32)
+    output = grad(Tensor(dy, mindspore.float32), Tensor(x, mindspore.float32))
+    expect_shape = (3, 32)
+    assert output[0].asnumpy().shape == expect_shape

@@ -34,27 +34,17 @@ bool L2LossGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
 
 int L2LossGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                const std::vector<KernelTensorPtr> &outputs,
-                               const std::map<uint32_t, tensor::TensorPtr> &) {
-  ResetResource();
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
-  if (ret != 0) {
+                               const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
     return ret;
   }
   auto input_shape = inputs.at(kIndex0)->GetShapeVector();
   is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "input");
-  input_size_ *= SizeOf(input_shape);
+  input_size_ = SizeOf(input_shape);
   if (input_size_ == 0) {
     return KRET_UNKNOWN_SHAPE;
   }
   return KRET_OK;
-}
-
-void L2LossGpuKernelMod::ResetResource() noexcept {
-  input_size_ = 1;
-  is_null_input_ = false;
-  input_size_list_.clear();
-  output_size_list_.clear();
-  workspace_size_list_.clear();
 }
 
 template <typename T>

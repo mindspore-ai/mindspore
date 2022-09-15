@@ -134,12 +134,12 @@ class LstmGradWeightGpuKernelMod : public NativeGpuKernelMod {
   void DestroyTensorDescGrp() {
     if (x_desc_ != nullptr) {
       for (size_t i = 0; i < IntToSize(seq_len_); ++i) {
-        CHECK_CUDNN_RET_WITH_ERROR_NOTRACE(cudnnDestroyTensorDescriptor(x_desc_[i]), "destroy x_desc failed");
+        CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnDestroyTensorDescriptor(x_desc_[i]), "destroy x_desc failed");
       }
     }
     if (y_desc_ != nullptr) {
       for (size_t i = 0; i < IntToSize(seq_len_); ++i) {
-        CHECK_CUDNN_RET_WITH_ERROR_NOTRACE(cudnnDestroyTensorDescriptor(y_desc_[i]), "destroy y_desc failed");
+        CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnDestroyTensorDescriptor(y_desc_[i]), "destroy y_desc failed");
       }
     }
   }
