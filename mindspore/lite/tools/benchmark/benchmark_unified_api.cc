@@ -555,6 +555,10 @@ int BenchmarkUnifiedApi::CompareOutput() {
     } else {
       if (flags_->enable_gl_texture_) {
         auto *gltexture_id = reinterpret_cast<GLuint *>(tensor.MutableData());
+        if (gltexture_id == nullptr) {
+          MS_LOG(ERROR) << "get gltexture_id failed";
+          return RET_ERROR;
+        }
         auto tmp = gl_runtime_.CopyDeviceTextureToHost(*gltexture_id);
         if (tmp == nullptr) {
           MS_LOG(ERROR) << "CopyDeviceTextureToHost failed";
@@ -847,6 +851,10 @@ int BenchmarkUnifiedApi::MarkAccuracy() {
   if (flags_->enable_gl_texture_) {
     for (auto in_tensor : ms_inputs_for_api_) {
       auto *input = reinterpret_cast<GLuint *>(in_tensor.MutableData());
+      if (input == nullptr) {
+        MS_LOG(ERROR) << "get input data failed";
+        return RET_ERROR;
+      }
       float *hostptr = reinterpret_cast<float *>(gl_runtime_.CopyDeviceTextureToHost(*input));
       size_t print_num = 20;
       gl_runtime_.PrintImage2DData(hostptr, 1, 1, print_num);
