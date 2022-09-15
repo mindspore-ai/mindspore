@@ -167,7 +167,7 @@ uint32_t RandomChoiceWithMaskKernel::DoCompute() {
   }
   for (int64_t i = 0; i < input_total_count; i++) {
     if (input[i] != 0) {
-      input_dim[LongToSize(non_zero_num)] = i;
+      input_dim[LongToSize(non_zero_num)] = LongToInt(i);
       non_zero_num++;
     }
   }
