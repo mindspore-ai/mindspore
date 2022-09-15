@@ -5520,7 +5520,7 @@ class Tensor(Tensor_):
         Computes matrix multiplication between two tensors by batch.
 
         .. math::
-        \text{output}[..., :, :] = \text{matrix}(input_x[..., :, :]) * \text{matrix}(mat2[..., :, :])
+            \text{output}[..., :, :] = \text{matrix}(input_x[..., :, :]) * \text{matrix}(mat2[..., :, :])
 
         The first input tensor must be not less than `3` and the second input must be not less than `2`.
 

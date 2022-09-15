@@ -1,7 +1,7 @@
 mindspore.ops.relu
 ==================
 
-.. py:class:: mindspore.ops.relu(input_x)
+.. py:function:: mindspore.ops.relu(input_x)
 
     线性修正单元激活函数（Rectified Linear Unit）。
 
