@@ -598,6 +598,23 @@ class Tensor(Tensor_):
         self._init_check()
         return Tensor_.asnumpy(self)
 
+    def value(self):
+        """
+        Get the value of the tensor or the parameter.
+
+        Returns:
+            The value of the tensor or the parameter.
+
+        Examples:
+            >>> from mindspore import Tensor
+            >>> import numpy as np
+            >>> x = Tensor(np.array([1, 2], dtype=np.float32))
+            >>> x_value = x.value()
+            >>> print(x_value)
+            [1.  2.]
+        """
+        return self
+
     def flush_from_cache(self):
         """
         Flush cache data to host if tensor is cache enable.

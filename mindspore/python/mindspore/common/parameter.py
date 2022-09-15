@@ -37,6 +37,7 @@ from mindspore.parallel._ps_context import _is_role_worker, _is_role_pserver, _i
 from mindspore.parallel._ps_context import _reinsert_hash_table_size
 from mindspore.parallel._ps_context import _insert_weight_init_info, _insert_accumu_init_info
 from mindspore.common.seed import _get_global_and_op_seed
+import mindspore.common._monad as monad
 
 __all__ = ['Parameter', 'ParameterTuple']
 
@@ -233,6 +234,8 @@ class Parameter(Tensor_):
             raise TypeError(f"The type of the argument 'default_input' must be in ['Tensor', 'int', 'float',"
                             f" 'numpy.ndarray', 'list']. But got type {type(default_input)}.")
         self.param_info.parameter_shape = self.shape
+        import mindspore.ops.operations.other_ops as other_ops
+        self.load = other_ops.Load()
 
     def __deepcopy__(self, memodict):
         new_obj = Parameter(self)
@@ -569,6 +572,19 @@ class Parameter(Tensor_):
     def data(self):
         """Return the parameter object."""
         return self
+
+    def value(self):
+        """
+        Return: the value of parameter object.
+        Examples:
+        >>> from mindspore import Tensor, Parameter
+        >>> import numpy as np
+        >>> x = Parameter(Tensor(np.array([1, 2], dtype=np.float32)), name="param")
+        >>> x_value = x.value()
+        >>> print(x_value)
+        [1.  2.]
+        """
+        return self.load(self, monad.U)
 
     def _update_tensor_data(self, data):
         """Update the parameter by a Tensor."""

@@ -307,6 +307,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"atan", std::string("atan")},                                      // atan()
        {"atanh", std::string("atanh")},                                    // atanh()
        {"bmm", std::string("bmm")},                                        // bmm()
+       {"value", std::string("value_")},                                   // P.Load(param, U)
      }},
     {kObjectTypeRowTensorType,
      {
