@@ -1,7 +1,7 @@
-﻿mindspore.Model
-================
+﻿mindspore.train.Model
+======================
 
-.. py:class:: mindspore.Model(network, loss_fn=None, optimizer=None, metrics=None, eval_network=None, eval_indexes=None, amp_level="O0", boost_level="O0", **kwargs)
+.. py:class:: mindspore.train.Model(network, loss_fn=None, optimizer=None, metrics=None, eval_network=None, eval_indexes=None, amp_level="O0", boost_level="O0", **kwargs)
 
     模型训练或推理的高阶接口。 `Model` 会根据用户传入的参数封装可训练或推理的实例。
 

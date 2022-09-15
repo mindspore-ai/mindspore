@@ -82,8 +82,8 @@ class EarlyStopping(Callback):
         ValueError: The monitor value is not a scalar.
 
     Examples:
-        >>> from mindspore.train.callback import EarlyStopping
-        >>> from mindspore import Model, nn
+        >>> from mindspore import nn
+        >>> from mindspore.train import Model, EarlyStopping
         >>> net = LeNet5()
         >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
         >>> optim = nn.Momentum(net.trainable_params(), 0.01, 0.9)

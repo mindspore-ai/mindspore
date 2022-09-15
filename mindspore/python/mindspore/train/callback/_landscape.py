@@ -181,6 +181,7 @@ class SummaryLandscape:
         >>> import mindspore as ms
         >>> import mindspore.nn as nn
         >>> from mindspore.nn import Loss, Accuracy
+        >>> from mindspore.train import Model, SummaryCollector, SummaryLandscape
         >>>
         >>> if __name__ == '__main__':
         ...     # If the device_target is Ascend, set the device_target to "Ascend"
@@ -192,10 +193,10 @@ class SummaryLandscape:
         ...     network = LeNet5(10)
         ...     net_loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
         ...     net_opt = nn.Momentum(network.trainable_params(), 0.01, 0.9)
-        ...     model = ms.Model(network, net_loss, net_opt, metrics={"Accuracy": Accuracy()})
+        ...     model = Model(network, net_loss, net_opt, metrics={"Accuracy": Accuracy()})
         ...     # Simple usage for collect landscape information:
         ...     interval_1 = [1, 2, 3, 4, 5]
-        ...     summary_collector = ms.SummaryCollector(summary_dir='./summary/lenet_interval_1',
+        ...     summary_collector = SummaryCollector(summary_dir='./summary/lenet_interval_1',
         ...                                          collect_specified_data={'collect_landscape':{"landscape_size": 4,
         ...                                                                                        "unit": "step",
         ...                                                                          "create_landscape":{"train":True,
@@ -215,7 +216,7 @@ class SummaryLandscape:
         ...         ds_eval = create_dataset(mnist_dataset_dir, 32)
         ...         return model, network, ds_eval, metrics
         ...
-        ...     summary_landscape = ms.SummaryLandscape('./summary/lenet_interval_1')
+        ...     summary_landscape = SummaryLandscape('./summary/lenet_interval_1')
         ...     # parameters of collect_landscape can be modified or unchanged
         ...     summary_landscape.gen_landscapes_with_multi_process(callback_fn,
         ...                                                        collect_landscape={"landscape_size": 4,

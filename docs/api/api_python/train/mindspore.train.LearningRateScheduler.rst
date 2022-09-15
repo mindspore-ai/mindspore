@@ -1,7 +1,7 @@
-mindspore.LearningRateScheduler
-================================
+mindspore.train.LearningRateScheduler
+=====================================
 
-.. py:class:: mindspore.LearningRateScheduler(learning_rate_function)
+.. py:class:: mindspore.train.LearningRateScheduler(learning_rate_function)
 
     用于在训练期间更改学习率。
 

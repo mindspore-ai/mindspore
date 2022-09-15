@@ -1,7 +1,7 @@
-mindspore.RunContext
-================================
+mindspore.train.RunContext
+==========================
 
-.. py:class:: mindspore.RunContext(original_args)
+.. py:class:: mindspore.train.RunContext(original_args)
 
     保存和管理模型的相关信息。
 
