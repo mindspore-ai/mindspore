@@ -23,7 +23,6 @@
 #include "backend/common/optimizer/common_backend_optimization.h"
 #include "backend/common/pass/adjust_depend_for_parallel_optimizer_recompute_all_gather.h"
 #include "backend/common/pass/insert_tensor_move_for_communication.h"
-#include "backend/common/pass/insert_tensor_move_for_ref.h"
 #include "plugin/device/gpu/optimizer/adam_weight_decay_fusion.h"
 #include "plugin/device/gpu/optimizer/adam_fusion.h"
 #include "plugin/device/gpu/optimizer/alltoall_fusion.h"
