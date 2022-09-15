@@ -15,12 +15,145 @@
  */
 
 #include "plugin/device/gpu/kernel/math/matrix_inverse_gpu_kernel.h"
+#include <map>
+#include <utility>
+#include <algorithm>
+#include "mindspore/core/ops/matrix_inverse.h"
 
 namespace mindspore {
 namespace kernel {
-MS_REG_GPU_KERNEL_ONE(MatrixInverse, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                      MatrixInverseGpuKernelMod, float)
-MS_REG_GPU_KERNEL_ONE(MatrixInverse, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-                      MatrixInverseGpuKernelMod, double)
+bool MatrixInverseGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                     const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->name();
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::MatrixInverse>(base_operator);
+  if (kernel_ptr == nullptr) {
+    MS_LOG(ERROR) << "Cast op from BaseOperator to MaxPoolingGradWithArgmax failed.";
+    return false;
+  }
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto pair = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!pair.first) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "' does not support this kernel type: " << kernel_attr;
+    return false;
+  }
+  kernel_func_ = func_list_[pair.second].second;
+
+  handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCublasHandle();
+  adjoint_ = kernel_ptr->get_adjoint();
+  return true;
+}
+
+int MatrixInverseGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                      const std::vector<KernelTensorPtr> &outputs,
+                                      const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  auto input_shape = inputs[kIndex0]->GetShapeVector();
+  size_t kMinDim = 2;
+  if (input_shape.size() < kMinDim) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input cannot be less than 2, but got "
+                      << input_shape.size();
+  }
+  size_t last_index = input_shape.size() - 1;
+  if (input_shape[last_index] != input_shape[last_index - 1]) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the last two dimensions of the input matrix should be equal, "
+                      << "but got one: " << input_shape[last_index] << ", another: " << input_shape[last_index - 1];
+  }
+  size_ = input_shape[last_index];
+  batch_size_ = 1;
+  for (size_t i = 0; i < last_index - 1; i++) {
+    batch_size_ *= input_shape[i];
+  }
+  auto dtype = inputs[kIndex0]->GetDtype();
+  dtype_size_ = sizeof(TypeIdToType(dtype));
+  input_size_ = dtype_size_;
+  for (auto dim : input_shape) {
+    input_size_ *= dim;
+  }
+  InitSizeLists();
+  return KRET_OK;
+}
+
+template <typename T>
+bool MatrixInverseGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                             const std::vector<AddressPtr> &workspace,
+                                             const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+  CHECK_CUBLAS_RET_WITH_ERROR(cublasSetStream(handle_, reinterpret_cast<cudaStream_t>(stream_ptr)),
+                              "cublasSetStream failed");
+  T *input_addr = GetDeviceAddress<T>(inputs, 0);
+  T *output_addr = GetDeviceAddress<T>(outputs, 0);
+  auto compute_input_addr = GetDeviceAddress<T>(workspace, 0);
+  auto lu_batch_addr = GetDeviceAddress<T *>(workspace, 1);
+  auto inv_batch_addr = GetDeviceAddress<T *>(workspace, 2);
+  auto pivo_addr = GetDeviceAddress<int>(workspace, 3);
+  auto info_addr = GetDeviceAddress<int>(workspace, 4);
+
+  std::vector<T *> lu_addr(batch_size_);
+  std::vector<T *> inv_addr(batch_size_);
+  int len = SizeToInt(size_);
+  int batchsize = SizeToInt(batch_size_);
+  for (size_t i = 0; i < batch_size_; i++) {
+    lu_addr[i] = compute_input_addr + i * len * len;
+    inv_addr[i] = output_addr + i * len * len;
+  }
+  CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
+    cudaMemcpyAsync(compute_input_addr, input_addr, input_size_, cudaMemcpyDeviceToDevice,
+                    reinterpret_cast<cudaStream_t>(stream_ptr)),
+    "cuda memcopy Fail");
+  CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemcpyAsync(lu_batch_addr, lu_addr.data(), sizeof(T *) * batch_size_,
+                                                    cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
+                                    "cuda memcopy Fail");
+  CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemcpyAsync(inv_batch_addr, inv_addr.data(), sizeof(T *) * batch_size_,
+                                                    cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
+                                    "cuda memcopy Fail");
+  if (std::is_same<T, float>::value) {
+    CHECK_CUBLAS_RET_WITH_EXCEPT_NOTRACE(cublasSgetrfBatched(handle_, len, reinterpret_cast<float **>(lu_batch_addr),
+                                                             len, pivo_addr, info_addr, batchsize),
+                                         "cublas trsm batched Fail");
+    CHECK_CUBLAS_RET_WITH_EXCEPT_NOTRACE(
+      cublasSgetriBatched(handle_, len, reinterpret_cast<float **>(lu_batch_addr), len, pivo_addr,
+                          reinterpret_cast<float **>(inv_batch_addr), len, info_addr, batchsize),
+      "cublas trsm batched Fail");
+  } else if (std::is_same<T, double>::value) {
+    CHECK_CUBLAS_RET_WITH_EXCEPT_NOTRACE(cublasDgetrfBatched(handle_, len, reinterpret_cast<double **>(lu_batch_addr),
+                                                             len, pivo_addr, info_addr, batchsize),
+                                         "cublas trsm batched Fail");
+    CHECK_CUBLAS_RET_WITH_EXCEPT_NOTRACE(
+      cublasDgetriBatched(handle_, len, reinterpret_cast<double **>(lu_batch_addr), len, pivo_addr,
+                          reinterpret_cast<double **>(inv_batch_addr), len, info_addr, batchsize),
+      "cublas trsm batched Fail");
+  } else {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the data type entered must be float or double.";
+  }
+
+  return true;
+}
+
+void MatrixInverseGpuKernelMod::InitSizeLists() {
+  workspace_size_list_.emplace_back(input_size_);
+  size_t lu_size = batch_size_ * dtype_size_;
+  workspace_size_list_.emplace_back(lu_size);
+  size_t inv_size = batch_size_ * dtype_size_;
+  workspace_size_list_.emplace_back(inv_size);
+  size_t pivo_size = batch_size_ * size_ * sizeof(int);
+  workspace_size_list_.emplace_back(pivo_size);
+  size_t info_size = batch_size_ * sizeof(int);
+  workspace_size_list_.emplace_back(info_size);
+}
+
+std::vector<std::pair<KernelAttr, MatrixInverseGpuKernelMod::MatrixInverseFunc>> MatrixInverseGpuKernelMod::func_list_ =
+  {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+    &MatrixInverseGpuKernelMod::LaunchKernel<float>},
+   {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+    &MatrixInverseGpuKernelMod::LaunchKernel<double>}};
+
+std::vector<KernelAttr> MatrixInverseGpuKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, MatrixInverseFunc> &pair) { return pair.first; });
+  return support_list;
+}
+MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, MatrixInverse, MatrixInverseGpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
