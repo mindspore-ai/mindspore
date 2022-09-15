@@ -688,6 +688,63 @@ class ConfusionMulGrad(PrimitiveWithInfer):
         return input0_dtype, input1_dtype
 
 
+class ConvertToDynamic(PrimitiveWithCheck):
+    """
+    This op is used for dynamic rank testing. Its inferred shape will be unknown
+    during compile time, so that its output will appear to be dynamically ranked.
+    The input will not be altered in any way. Put this operator before the operator
+    being tested for dynamic rank support.
+
+    Args:
+        is_dynamic_rank (bool): If true, convert to dynamic rank.
+                                If false, convert to dynamic shape. Default: False.
+
+    Inputs:
+        - **input** (Tensor) - The tensor used for testing.
+
+    Outputs:
+        - **output** (Tensor) - Same shape, type and value as `input`.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+          >>> import mindspore as ms
+          >>> import mindspore.nn as nn
+          >>> from mindspore.ops.operations import _inner_ops as inner
+          >>> from mindspore.ops import operations as P
+          >>> class TestDynamicNet(nn.Cell):
+          >>>     def __init__(self):
+          >>>         super(TestDynamicNet, self).__init__()
+          >>>         self.convert_to_dynamic = inner.ConvertToDynamic()
+          >>>         # suppose we are testing Reshape op
+          >>>         self.reshape = P.Reshape()
+          >>>
+          >>>     def construct(self, input, new_shape):
+          >>>         dynamic_input = self.convert_to_dynamic(input)
+          >>>         reshaped_input = self.reshape(dynamic_input, new_shape)
+          >>>
+          >>> ms.set_context(mode=ms.GRAPH_MODE, device_target="CPU")
+          >>> input = Tensor(np.array([0, 1, 2, 3])
+          >>> new_shape = (2, 2)
+          >>> net = TestDynamicNet()
+          >>> output = net(input, new_shape)
+          >>> print(output)
+          [[0, 1], [2, 3]
+    """
+
+    @prim_attr_register
+    def __init__(self, is_dynamic_rank=False):
+        validator.check_value_type('is_dynamic_rank', is_dynamic_rank, [bool], self.name)
+        self.init_prim_io_names(inputs=["input"], outputs=["output"])
+
+    def check_shape(self, input_shape):
+        validator.check("input_shape rank", len(input_shape), "", 0, Rel.GT, self.name)
+
+    def check_dtype(self, input_dtype):
+        validator.check_subclass("input_dtype", input_dtype, mstype.tensor, self.name)
+
+
 class GpuConvertToDynamicShape(PrimitiveWithCheck):
     """
     This op is used for dynamic shape testing. Its inferred shape will be unknown
