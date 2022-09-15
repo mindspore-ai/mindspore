@@ -137,10 +137,12 @@ void OpTilingCalculateAdapter::ConvertInputShapeAndType(const CNodePtr &node, ::
     // ge info
     ::ge::DataType ge_dtype = ascend::GeTypesConvert::TransTypeIdToGeDataType(ms_dtype);
     ::ge::Format ge_format = ascend::GeTypesConvert::GetGeFormat(ms_format, ms_shape.size());
+    ::ge::Format ge_origin_format = ascend::GeTypesConvert::GetGeFormat(kOpFormat_DEFAULT, ms_ori_shape.size());
 
     auto input_name = GetInputName(node, real_index);
     ::ge::GeTensorDesc ge_tensor_desc;
     ge_tensor_desc.SetFormat(ge_format);
+    ge_tensor_desc.SetOriginFormat(ge_origin_format);
     ge_tensor_desc.SetDataType(ge_dtype);
     ge_tensor_desc.SetShape(::ge::GeShape(ms_shape));
     ge_tensor_desc.SetOriginShape(::ge::GeShape(ms_ori_shape));
@@ -162,10 +164,12 @@ void OpTilingCalculateAdapter::ConvertOutputShapeAndType(const CNodePtr &node, :
 
     ::ge::DataType ge_dtype = ascend::GeTypesConvert::TransTypeIdToGeDataType(ms_dtype);
     ::ge::Format ge_format = ascend::GeTypesConvert::GetGeFormat(ms_format, ms_shape.size());
+    ::ge::Format ge_origin_format = ascend::GeTypesConvert::GetGeFormat(kOpFormat_DEFAULT, ms_ori_shape.size());
 
     auto output_name = GetOutputName(node, i);
     ::ge::GeTensorDesc ge_tensor_desc;
     ge_tensor_desc.SetFormat(ge_format);
+    ge_tensor_desc.SetOriginFormat(ge_origin_format);
     ge_tensor_desc.SetDataType(ge_dtype);
     ge_tensor_desc.SetShape(::ge::GeShape(ms_shape));
     ge_tensor_desc.SetOriginShape(::ge::GeShape(ms_ori_shape));
