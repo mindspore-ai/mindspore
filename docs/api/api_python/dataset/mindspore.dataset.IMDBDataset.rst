@@ -14,7 +14,7 @@ mindspore.dataset.IMDBDataset
           对于Polarity数据集，'train'将读取360万个训练样本，'test'将读取40万个测试样本，'all'将读取所有400万个样本。
           对于Full数据集，'train'将读取300万个训练样本，'test'将读取65万个测试样本，'all'将读取所有365万个样本。默认值：None，读取所有样本。
         - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用mindspore.dataset.config中配置的线程数。
-        - **shuffle** (Union[bool, Shuffle], 可选) - 每个epoch中数据混洗的模式，支持传入bool类型与枚举类型进行指定，默认值：mindspore.dataset.Shuffle.GLOBAL。
+        - **shuffle** (bool, 可选) - 每个epoch中数据混洗的模式，支持传入bool类型与枚举类型进行指定，默认值：mindspore.dataset.Shuffle.GLOBAL。
           如果 `shuffle` 为False，则不混洗，如果 `shuffle` 为True，等同于将 `shuffle` 设置为mindspore.dataset.Shuffle.GLOBAL。
           通过传入枚举变量设置数据混洗的模式：
 

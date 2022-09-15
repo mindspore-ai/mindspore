@@ -6,7 +6,7 @@ mindspore.dataset.CityscapesDataset
     读取和解析Cityscapes数据集的源文件构建数据集。
 
     生成的数据集有两列 `[image, task]` 。
-    `image` 列的数据类型为uint8。`task` 列的数据类型根据参数 `task` 的值而定，当 参数 `task` 取值为'polygon'，列的数据类型为string，其他取值下，列的数据类型为uint8。
+    `image` 列的数据类型为uint8。`task` 列的数据类型根据参数 `task` 的值而定，当参数 `task` 取值为'polygon'，列的数据类型为string，其他取值下，列的数据类型为uint8。
 
     参数：
         - **dataset_dir** (str) - 包含数据集文件的根目录路径。
