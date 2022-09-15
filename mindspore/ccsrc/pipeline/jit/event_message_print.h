@@ -24,8 +24,8 @@ namespace mindspore {
 namespace pipeline {
 class EventMessage {
  public:
-  static void PrintCompileStartMsg(const std::string &phase, const std::string &obj_desc);
-  static void PrintCompileEndMsg(const std::string &phase, const std::string &obj_desc);
+  static void PrintCompileStartMsg(const std::string &phase);
+  static void PrintCompileEndMsg(const std::string &phase);
 
   static void PrintEventMessage(const std::string &message);
 };

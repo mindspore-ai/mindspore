@@ -38,7 +38,7 @@ def test_compile_remind_msg():
         assert len(re.findall(r"EVENT", contend)) == 2
         assert len(re.findall(r"PID", contend)) == 2
         assert len(
-            re.findall(r"Start compiling 'Net.construct' and it will take a while. Please wait...", contend)) == 1
-        assert len(re.findall(r"End compiling 'Net.construct'.", contend)) == 1
+            re.findall(r"Start compiling and it will take a while. Please wait...", contend)) == 1
+        assert len(re.findall(r"End compiling.", contend)) == 1
 
     os.remove(file_name)
