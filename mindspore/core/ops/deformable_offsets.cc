@@ -87,12 +87,12 @@ void DeformableOffsetsPadFunction(std::vector<int64_t> *output_hw, const std::ve
   constexpr size_t right_index = 3;
   if (x_h != abstract::Shape::SHP_ANY) {
     out_h = static_cast<int64_t>(std::floor(1 + ((x_h * 1.0) + pads[top_index] + pads[bottom_index] - kernel_size[0] -
-                                                 static_cast<float>((kernel_size[0] - 1) * (dilations[h_axis] - 1))) /
+                                                 LongToFloat((kernel_size[0] - 1) * (dilations[h_axis] - 1))) /
                                                   strides[h_axis]));
   }
   if (x_w != abstract::Shape::SHP_ANY) {
     out_w = static_cast<int64_t>(std::floor(1 + ((x_w * 1.0) + pads[left_index] + pads[right_index] - kernel_size[1] -
-                                                 static_cast<float>((kernel_size[1] - 1) * (dilations[w_axis] - 1))) /
+                                                 LongToFloat((kernel_size[1] - 1) * (dilations[w_axis] - 1))) /
                                                   strides[w_axis]));
   }
   output_hw->push_back(out_h);

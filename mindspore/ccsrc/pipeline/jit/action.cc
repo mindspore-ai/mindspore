@@ -1602,13 +1602,6 @@ std::vector<ActionItem> MindIRPipeline() {
 }
 
 #ifdef WITH_BACKEND
-std::vector<ActionItem> ServerPipeline(const ResourcePtr &resource) {
-  auto actions = CommonPipeline();
-  (void)actions.emplace_back(std::make_pair("optimize", VmOptimizeAction));
-  (void)actions.emplace_back(std::make_pair("validate", ValidateAction));
-  return actions;
-}
-
 std::vector<ActionItem> PSchedulerPipeline(const ResourcePtr &resource) {
   if (resource->EnableCompileCache() && resource->func_graph() != nullptr) {
     return {std::make_pair("scheduler", StartPSSchedulerAction)};
