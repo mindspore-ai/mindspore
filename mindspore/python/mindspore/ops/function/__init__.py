@@ -312,6 +312,8 @@ from .nn_func import (
     conv3d_transpose,
     conv2d,
     sigmoid,
+    relu,
+    relu6,
 )
 from .linalg_func import (
     svd,

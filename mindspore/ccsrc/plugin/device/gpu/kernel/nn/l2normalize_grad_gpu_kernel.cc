@@ -44,7 +44,7 @@ bool L2NormalizeGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
     return false;
   }
   epsilon_ = l2_normalize_grad_ptr->get_epsilon();
-  axis_ = LongToInt(l2_normalize_grad_ptr->get_axis());
+  axis_origin_ = LongToInt(l2_normalize_grad_ptr->get_axis());
   return true;
 }
 
@@ -58,7 +58,7 @@ int L2NormalizeGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 
   auto input_shape = inputs[0]->GetShapeVector();
   int input_dim_length = SizeToInt(input_shape.size());
-  axis_ = axis_ < 0 ? (axis_ + input_dim_length) : axis_;
+  axis_ = axis_origin_ < 0 ? (axis_origin_ + input_dim_length) : axis_origin_;
 
   input_shape_list_.clear();
   for (size_t i = 0; i < inputs.size(); i++) {

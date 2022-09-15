@@ -45,13 +45,13 @@ class RandomChoiceWithMaskCpuKernelMod : public NativeCpuKernelMod {
   }
 
  private:
-  int32_t input_dim_size = 0;
-  int32_t input_total_count = 1;
-  int32_t count{0};
-  std::vector<int32_t> dims;
-  size_t input_shape_size{0};
-  size_t seed{0};
-  size_t seed2{0};
+  int32_t input_dim_size_ = 0;
+  int32_t input_total_count_ = 1;
+  int32_t count_{0};
+  std::vector<int32_t> dims_;
+  size_t input_shape_size_{0};
+  size_t seed_{0};
+  size_t seed2_{0};
   std::mt19937 generator_;
 };
 }  // namespace kernel

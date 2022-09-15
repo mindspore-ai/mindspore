@@ -15,8 +15,8 @@
  */
 
 #include "plugin/device/cpu/kernel/mkldnn/log_softmax_cpu_kernel.h"
-#include <map>
 #include <algorithm>
+#include <memory>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "utils/ms_utils.h"
 #include "mindspore/core/ops/log_softmax.h"
@@ -33,7 +33,7 @@ bool LogSoftmaxCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const st
   MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
   auto kernel_ptr = std::make_shared<ops::LogSoftmax>(base_operator->GetPrim());
-  axis_ = LongToInt(kernel_ptr->get_axis());
+  axis_ori_ = LongToInt(kernel_ptr->get_axis());
   return true;
 }
 
@@ -47,7 +47,7 @@ int LogSoftmaxCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kLogSoftmaxOutputsNum, kernel_name_);
 
   const auto &src_shape = inputs.at(kIndex0)->GetShapeVector();
-  axis_ = axis_ < 0 ? (axis_ + SizeToInt(src_shape.size())) : axis_;
+  axis_ = axis_ori_ < 0 ? (axis_ori_ + SizeToInt(src_shape.size())) : axis_ori_;
 
   dnnl::memory::desc src_desc = GetDefaultMemDesc(src_shape);
   auto desc = CreateDesc<dnnl::logsoftmax_forward::desc>(dnnl::prop_kind::forward_inference, src_desc, axis_);

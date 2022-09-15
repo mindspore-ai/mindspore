@@ -66,6 +66,8 @@ int OneHotGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
     return KRET_RESIZE_FAILED;
   }
   const int64_t default_axis = -1;
+  left_dim_size_ = 1;
+  right_dim_size_ = 1;
 
   // Compress arbitrary tensor dimensions into three dimensions (left_dims, depth, right_dims).
   for (size_t i = 0; i < input_shape.size(); i++) {
