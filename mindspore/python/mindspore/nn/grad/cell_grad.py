@@ -195,27 +195,3 @@ class Vjp(Cell):
         else:
             gradient_output = self.grad(self.fn)(*args)
         return output, gradient_output
-
-
-class _VjpInner(Cell):
-    """
-    Computes the dot product between a vector `v` and the Jacobian of the given network at the point
-    given by the inputs. This class implements the inner process of function vjp.
-    """
-
-    def __init__(self):
-        super(_VjpInner, self).__init__()
-        self.grad = C.GradOperation(get_all=True, sens_param=True)
-        self.grad_single_value = C.GradOperation(sens_param=True)
-        self.tuple_len = Primitive("tuple_len")
-
-    def construct(self, *args):
-        fn = args[0]
-        front_input = args[1:-1]
-        input_with_v = args[1:]
-        output = fn(*front_input)
-        if self.tuple_len(front_input) == 1:
-            gradient_output = self.grad_single_value(fn)(*input_with_v)
-        else:
-            gradient_output = self.grad(fn)(*input_with_v)
-        return output, gradient_output

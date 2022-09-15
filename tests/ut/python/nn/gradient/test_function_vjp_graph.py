@@ -25,12 +25,12 @@ context.set_context(mode=context.GRAPH_MODE)
 
 class SingleInputNet(nn.Cell):
     def construct(self, x):
-        return x**3
+        return x ** 3
 
 
 class MultipleInputsOutputNet(nn.Cell):
     def construct(self, x, y):
-        return 2*x, y**3
+        return 2 * x, y ** 3
 
 
 def test_vjp_single_input_graph():
@@ -42,7 +42,7 @@ def test_vjp_single_input_graph():
     x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
     v = Tensor(np.array([[1, 1], [1, 1]]).astype(np.float32))
     net = SingleInputNet()
-    vjp(net, x, v)
+    vjp(net, x)[1](v)
 
 
 def test_vjp_multiple_inputs_default_v_graph():
@@ -55,7 +55,7 @@ def test_vjp_multiple_inputs_default_v_graph():
     y = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
     v = Tensor(np.array([[1, 1], [1, 1]]).astype(np.float32))
     net = MultipleInputsOutputNet()
-    vjp(net, (x, y), (v, v))
+    vjp(net, x, y)[1](v, v)
 
 
 def test_vjp_wrong_input_type_graph():
@@ -68,4 +68,4 @@ def test_vjp_wrong_input_type_graph():
     v = 1
     net = SingleInputNet()
     with pytest.raises(TypeError):
-        vjp(net, x, v)
+        vjp(net, x)[1](v)
