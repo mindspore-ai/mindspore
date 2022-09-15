@@ -69,10 +69,10 @@ CNodePtr CreateOneHot(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax_
   MS_EXCEPTION_IF_NULL(sparse_softmax_node);
 
   auto logits_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(sparse_softmax_node, 0);
-  int64_t depth = 0;
+  int depth = 0;
   if (!logits_shape.empty()) {
     size_t index = logits_shape.size() - 1;
-    depth = logits_shape[index];
+    depth = LongToInt(logits_shape[index]);
   } else {
     MS_LOG(EXCEPTION) << "Logits's shape of node [" << sparse_softmax_node->DebugString() << "] is empty"
                       << trace::DumpSourceLines(sparse_softmax_node);
@@ -86,8 +86,6 @@ CNodePtr CreateOneHot(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax_
   MS_EXCEPTION_IF_NULL(value_off_node);
   auto kernel_graph = graph->cast<KernelGraphPtr>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  kernel_graph->AddValueNodeToGraph(value_on_node);
-  kernel_graph->AddValueNodeToGraph(value_off_node);
 
   auto one_hot_primitive = std::make_shared<Primitive>(kOneHotOpName);
   std::vector<std::string> input_names = {"indices", "depth", "on_value", "off_value"};
@@ -100,15 +98,15 @@ CNodePtr CreateOneHot(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax_
     one_hot_inputs = {NewValueNode(one_hot_primitive), sparse_softmax_node->input(kIndex2), value_on_node,
                       value_off_node};
   } else {
-    auto depth_node = NewValueNode(depth);
+    auto value_depth = std::make_shared<tensor::Tensor>(depth, kInt32);
+    auto depth_node = CreateValueNode(value_depth, kNumberTypeInt32);
     MS_EXCEPTION_IF_NULL(depth_node);
-    auto depth_abstract = std::make_shared<abstract::AbstractScalar>();
-    MS_EXCEPTION_IF_NULL(depth_abstract);
-    depth_abstract->set_type(kInt64);
-    depth_node->set_abstract(depth_abstract);
+    kernel_graph->AddValueNodeToGraph(depth_node);
     one_hot_inputs = {NewValueNode(one_hot_primitive), sparse_softmax_node->input(kIndex2), depth_node, value_on_node,
                       value_off_node};
   }
+  kernel_graph->AddValueNodeToGraph(value_on_node);
+  kernel_graph->AddValueNodeToGraph(value_off_node);
   auto one_hot_node = pass.NewCNode(one_hot_inputs, graph);
   MS_EXCEPTION_IF_NULL(one_hot_node);
   one_hot_node->set_scope(sparse_softmax_node->scope());
