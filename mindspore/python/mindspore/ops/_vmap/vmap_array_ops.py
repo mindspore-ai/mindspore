@@ -1834,6 +1834,7 @@ def get_squeeze_vmap_rule(prim, axis_size):
         batch_squeeze = P.Squeeze(axis=new_axis)
         out = batch_squeeze(x)
         return out, 0
+
     return vmap_rule
 
 
@@ -1887,7 +1888,7 @@ def get_stridedslice_grad_vmap_rule(prim, axis_size):
     new_new_axis_mask = prim.new_axis_mask * 2
     new_shrink_axis_mask = prim.shrink_axis_mask * 2
     batch_stridedslice_grad = G.StridedSliceGrad(new_begin_mask, new_end_mask, new_ellipsis_mask, new_new_axis_mask, \
-                                        new_shrink_axis_mask)
+                                                 new_shrink_axis_mask)
 
     @constexpr
     def get_new_xshape_begin_end_strided(xshape, begin, end, strided):
@@ -1976,6 +1977,35 @@ def get_im2col_vmap_rule(prim, axis_size):
         original_shape = x_shape[:2] + out_shape[1:]
         out = out.reshape(original_shape)
         return out, 0
+
+    return vmap_rule
+
+
+@vmap_rules_getters.register(P.Split)
+def get_split_vmap_rule(prim, axis_size):
+    """VmapRule for `Split`."""
+
+    if hasattr(prim, 'batch_rank'):
+        batch_rank = prim.batch_rank + 1
+    else:
+        batch_rank = 1
+    axis = prim.axis
+    if axis >= 0:
+        axis += 1
+    batch_prim = P.Split(axis, prim.output_num)
+    batch_prim.add_prim_attr('batch_rank', batch_rank)
+
+    def vmap_rule(x_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim)
+        if is_all_none:
+            return result
+        x, x_dim = x_bdim
+        x = _bdim_at_front(x, x_dim, axis_size)
+        outputs = batch_prim(x)
+        output = ()
+        for out in outputs:
+            output = output + ((out, 0),)
+        return output
 
     return vmap_rule
 
