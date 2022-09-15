@@ -28,7 +28,7 @@ DeconvolutionDepthwiseInt8CPUKernel::~DeconvolutionDepthwiseInt8CPUKernel() {
     sliding_ = nullptr;
   }
   if (packed_weight_sub_ != nullptr) {
-    delete packed_weight_sub_;
+    free(packed_weight_sub_);
     packed_weight_sub_ = nullptr;
   }
   FreeQuantParam();

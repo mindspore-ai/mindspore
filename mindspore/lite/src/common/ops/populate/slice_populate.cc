@@ -45,7 +45,13 @@ OpParameter *PopulateSliceParameter(const void *prim) {
       return nullptr;
     }
     for (size_t i = 0; i < axes->size(); ++i) {
-      param->axis_[i] = axes->Get(i);
+      auto id = axes->Get(i);
+      if (id > UINT_MAX) {
+        MS_LOG(ERROR) << "Invalid axes: " << id;
+        free(param);
+        return nullptr;
+      }
+      param->axis_[i] = id;
     }
   } else {
     // use default axes

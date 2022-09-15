@@ -56,7 +56,10 @@ float *ConvolutionDelegateCPUKernel::CopyData(const lite::Tensor *tensor) {
     MS_LOG(ERROR) << "Malloc data failed.";
     return nullptr;
   }
-  MS_ASSERT(tensor->data() != nullptr);
+  if (tensor->data() == nullptr) {
+    MS_LOG(ERROR) << "tensor data is nullptr.";
+    return nullptr;
+  }
   (void)memcpy(data, tensor->data(), tensor->Size());
   return data;
 }
