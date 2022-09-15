@@ -17,7 +17,7 @@ import pytest
 import numpy as np
 import mindspore as ms
 from mindspore import ms_function
-from mindspore import Tensor, export, load
+from mindspore import Tensor, export, load, context
 from mindspore.nn import GraphCell
 
 
@@ -40,6 +40,7 @@ def test_add_tensor():
         a = Tensor([9, 8, 5], ms.int32)
         return a + i
 
+    context.set_context(mode=context.GRAPH_MODE)
     in_data = Tensor([2, 1, 1], ms.int32)
     expected_out = add_tensor(in_data)
     export(add_tensor, in_data, file_name="tt.mindir", file_format="MINDIR")

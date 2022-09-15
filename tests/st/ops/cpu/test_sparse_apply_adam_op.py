@@ -270,6 +270,7 @@ def test_fused_sparse_adam_invalid_input_type_indices_invalid2():
     Description: list tensor, invalid indices data type
     Expectation: raise expected exception
     """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     var_np = np.ones([3, 3, 3]).astype(np.float32)
     m_np = np.ones([3, 3, 3]).astype(np.float32)
     v_np = np.ones([3, 3, 3]).astype(np.float32)
@@ -293,6 +294,7 @@ def test_fused_sparse_adam_invalid_input_type_gradient_invalid():
     Description: list tensor, invalid gradient data type
     Expectation: raise expected exception
     """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     var_np = np.ones([3, 3, 3]).astype(np.float32)
     m_np = np.ones([3, 3, 3]).astype(np.float32)
     v_np = np.ones([3, 3, 3]).astype(np.float32)

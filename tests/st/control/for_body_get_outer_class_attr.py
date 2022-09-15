@@ -15,7 +15,7 @@
 
 from mindspore import nn
 from mindspore import ops
-from mindspore import Tensor
+from mindspore import Tensor, context
 import numpy as np
 
 
@@ -48,5 +48,6 @@ def test_catch_exception_of_get_outer_class_attr():
         for testcase:test_check_for_body_get_outer_class_attr_log.py::test_catch_exception_stack_trace_log
     Expectation: raise exception with expected code stack info.
     """
+    context.set_context(mode=context.GRAPH_MODE)
     x = Tensor(np.ones((3, 32, 32)).astype(np.float32))
     Conv2dMean()(x)

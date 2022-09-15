@@ -106,6 +106,7 @@ class BPropOperatatorNet(nn.Cell):
 
 
 def test_user_defined_bprop_with_u():
+    context.set_context(mode=context.GRAPH_MODE)
     net = BPropOperatatorNet(mul_size=(128, 96))
     grad_net = TestUserDefinedBpropGradNet(net)
     x = Tensor(np.random.randn(128, 96).astype(np.float32))
@@ -259,6 +260,8 @@ def test_limit_lift_fv_scope():
 
 
 def test_same_primal_used_by_multi_j():
+    context.set_context(mode=context.GRAPH_MODE)
+
     class Net(nn.Cell):
         def construct(self, x):
             return x
@@ -369,6 +372,8 @@ def test_same_primal_used_by_multi_j_with_monad2():
 
 
 def test_grad_args_type_error1():
+    context.set_context(mode=context.GRAPH_MODE)
+
     class Net(nn.Cell):
         def __init__(self):
             super(Net, self).__init__()
@@ -397,6 +402,8 @@ def test_grad_args_type_error1():
 
 
 def test_grad_args_type_error2():
+    context.set_context(mode=context.GRAPH_MODE)
+
     class Net(nn.Cell):
         def __init__(self):
             super(Net, self).__init__()
@@ -425,6 +432,8 @@ def test_grad_args_type_error2():
 
 
 def test_grad_args_type_error3():
+    context.set_context(mode=context.GRAPH_MODE)
+
     class Net(nn.Cell):
         def __init__(self):
             super(Net, self).__init__()
@@ -453,6 +462,8 @@ def test_grad_args_type_error3():
 
 
 def test_grad_net_is_none():
+    context.set_context(mode=context.GRAPH_MODE)
+
     class Net(nn.Cell):
         def __init__(self):
             super(Net, self).__init__()
@@ -481,6 +492,8 @@ def test_grad_net_is_none():
 
 
 def test_grad_missing_net():
+    context.set_context(mode=context.GRAPH_MODE)
+
     class Net(nn.Cell):
         def __init__(self):
             super(Net, self).__init__()
@@ -509,6 +522,8 @@ def test_grad_missing_net():
 
 
 def test_user_defined_bprop_inputs_size_error():
+    context.set_context(mode=context.GRAPH_MODE)
+
     class BpropUserDefinedNet(nn.Cell):
         def __init__(self):
             super(BpropUserDefinedNet, self).__init__()
@@ -540,6 +555,8 @@ def test_user_defined_bprop_inputs_size_error():
 
 
 def test_user_defined_bprop_net_has_parameter():
+    context.set_context(mode=context.GRAPH_MODE)
+
     class BpropUserDefinedNet(nn.Cell):
         def __init__(self):
             super(BpropUserDefinedNet, self).__init__()
@@ -571,6 +588,8 @@ def test_user_defined_bprop_net_has_parameter():
 
 
 def test_user_defined_bprop_inputs_size_error1():
+    context.set_context(mode=context.GRAPH_MODE)
+
     class BpropUserDefinedNet(nn.Cell):
         def __init__(self):
             super(BpropUserDefinedNet, self).__init__()
@@ -602,6 +621,8 @@ def test_user_defined_bprop_inputs_size_error1():
 
 
 def test_grad_hook():
+    context.set_context(mode=context.GRAPH_MODE)
+
     def var_hook_function(grad_out):
         assert grad_out[0].asnumpy().shape == (32, 120)
 
@@ -641,6 +662,8 @@ def test_custom_cell_bprop_with_parameter():
     Description: Get the gradients of inputs when the custom cell bprop use Parameter.
     Expectation: Raise an error
     """
+
+    context.set_context(mode=context.GRAPH_MODE)
 
     class Net(nn.Cell):
         def __init__(self):
@@ -683,6 +706,7 @@ def test_custom_cell_bprop_with_parameter_in_sub_cell():
     Expectation: Raise an error
     """
 
+    context.set_context(mode=context.GRAPH_MODE)
     class Net(nn.Cell):
         def __init__(self):
             super(Net, self).__init__()

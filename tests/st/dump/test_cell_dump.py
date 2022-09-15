@@ -22,7 +22,7 @@ import glob
 from enum import Enum
 import numpy as np
 import pytest
-from mindspore import Tensor, set_dump, ops
+from mindspore import Tensor, set_dump, ops, context
 from mindspore.ops import operations as P
 from mindspore.nn import Cell
 from mindspore.nn import Dense
@@ -86,6 +86,7 @@ def test_ascend_cell_dump():
     Description: Test cell dump
     Expectation: Only dump cell set by set_dump when dump_mode = 2
     """
+    context.set_context(mode=context.GRAPH_MODE)
     if sys.platform != 'linux':
         return
     with tempfile.TemporaryDirectory(dir='/tmp') as tmp_dir:
@@ -130,6 +131,7 @@ def test_ascend_not_cell_dump():
     Description: Test cell dump
     Expectation: Should ignore set_dump when dump_mode != 2
     """
+    context.set_context(mode=context.GRAPH_MODE)
     if sys.platform != 'linux':
         return
     with tempfile.TemporaryDirectory(dir='/tmp') as tmp_dir:
@@ -162,6 +164,7 @@ def test_ascend_cell_empty_dump():
     Description: Test cell dump
     Expectation: Should dump nothing when set_dump is not set and dump_mode = 2
     """
+    context.set_context(mode=context.GRAPH_MODE)
     if sys.platform != 'linux':
         return
     with tempfile.TemporaryDirectory(dir='/tmp') as tmp_dir:
@@ -191,6 +194,7 @@ def test_ascend_cell_dump_set_enable_false():
     Description: Test cell dump
     Expectation: Should ignore set_dump when enabled=False
     """
+    context.set_context(mode=context.GRAPH_MODE)
     if sys.platform != 'linux':
         return
     with tempfile.TemporaryDirectory(dir='/tmp') as tmp_dir:
@@ -234,6 +238,7 @@ def test_ascend_cell_dump_with_operate_symbol():
     Description: Test cell dump
     Expectation: Operators which is expressed by symbol will be dumped
     """
+    context.set_context(mode=context.GRAPH_MODE)
     if sys.platform != 'linux':
         return
     with tempfile.TemporaryDirectory(dir='/tmp') as tmp_dir:

@@ -55,6 +55,7 @@ def test_lazy_adam_converge():
     Description: Verify if the loss is converged
     Expectation: success
     """
+    context.set_context(mode=context.GRAPH_MODE)
     epoch = 3
     net = NetAdam()
     optimizer = Adam(filter(lambda x: x.requires_grad,
@@ -85,6 +86,7 @@ def test_lazy_adam_acc():
     Description: Verify if the result is correct
     Expectation: success
     """
+    context.set_context(mode=context.GRAPH_MODE)
     indices = Tensor(np.array([0, 0, 1]).astype(np.int32))
     label = Tensor(np.zeros([2, 1, 2]).astype(np.float32))
     net = NetWithSparseGatherV2()
@@ -109,6 +111,7 @@ def test_adam_offload_acc():
     Description: Verify if the loss is the same as the original AdamOffload
     Expectation: success
     """
+    context.set_context(mode=context.GRAPH_MODE)
     epoch = 3
     net = NetAdam()
     optimizer = Adam(filter(lambda x: x.requires_grad, net.get_parameters()), learning_rate=0.01, use_offload=True)

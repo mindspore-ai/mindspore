@@ -16,13 +16,11 @@
 import numpy as np
 import pytest
 import mindspore.nn as nn
-from mindspore import Tensor
+from mindspore import Tensor, context, Parameter, ms_function
 from mindspore.ops.composite import GradOperation
 from mindspore.ops import operations as P
 from mindspore.common import dtype as mstype
 from mindspore.common import mutable
-from mindspore import Parameter
-from mindspore import ms_function
 
 
 def compare(a, b):
@@ -70,6 +68,7 @@ def test_grad_mutable_tuple_tensor():
             gradient_function = self.grad_op(self.net)
             return gradient_function(z)
 
+    context.set_context(mode=context.GRAPH_MODE)
     t = mutable((Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32),
                  Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)))
     output = GradNetWrtX(Net())(t)
@@ -115,6 +114,7 @@ def test_grad_mutable_list_tensor():
             gradient_function = self.grad_op(self.net)
             return gradient_function(z)
 
+    context.set_context(mode=context.GRAPH_MODE)
     t = mutable([Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32),
                  Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)])
     output = GradNetWrtX(Net())(t)
@@ -160,6 +160,7 @@ def test_grad_mutable_dict_tensor():
             gradient_function = self.grad_op(self.net)
             return gradient_function(z)
 
+    context.set_context(mode=context.GRAPH_MODE)
     t = mutable({'a': Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32),
                  'b': Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)})
     output = GradNetWrtX(Net())(t)
@@ -205,6 +206,7 @@ def test_grad_mutable_tuple_tuple_tensor():
             gradient_function = self.grad_op(self.net)
             return gradient_function(z)
 
+    context.set_context(mode=context.GRAPH_MODE)
     t = mutable(((Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32),
                   Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32)),
                  Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)))
@@ -252,6 +254,7 @@ def test_grad_mutable_tuple_list_tensor():
             gradient_function = self.grad_op(self.net)
             return gradient_function(z)
 
+    context.set_context(mode=context.GRAPH_MODE)
     t = mutable(([Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32),
                   Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32)],
                  Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)))
@@ -299,6 +302,7 @@ def test_grad_mutable_list_tuple_tensor():
             gradient_function = self.grad_op(self.net)
             return gradient_function(z)
 
+    context.set_context(mode=context.GRAPH_MODE)
     t = mutable([(Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32),
                   Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32)),
                  Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)])
@@ -346,6 +350,7 @@ def test_grad_mutable_tuple_dict_tensor():
             gradient_function = self.grad_op(self.net)
             return gradient_function(z)
 
+    context.set_context(mode=context.GRAPH_MODE)
     t = mutable(({'a': Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32),
                   'b': Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32)},
                  Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)))
@@ -393,6 +398,7 @@ def test_grad_mutable_dict_tuple_tensor():
             gradient_function = self.grad_op(self.net)
             return gradient_function(z)
 
+    context.set_context(mode=context.GRAPH_MODE)
     t = mutable({'a': (Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32),
                        Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32)),
                  'b': Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)})
@@ -440,6 +446,7 @@ def test_grad_mutable_list_dict_tensor():
             gradient_function = self.grad_op(self.net)
             return gradient_function(z)
 
+    context.set_context(mode=context.GRAPH_MODE)
     t = mutable([{'a': Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32),
                   'b': Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32)},
                  Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)])
@@ -487,6 +494,7 @@ def test_grad_mutable_dict_list_tensor():
             gradient_function = self.grad_op(self.net)
             return gradient_function(z)
 
+    context.set_context(mode=context.GRAPH_MODE)
     t = mutable({'a': [Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32),
                        Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32)],
                  'b': Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)})
@@ -521,6 +529,7 @@ def test_grad_mutable_tuple_tensor_ms_function():
     z = mutable((Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32),
                  Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)))
 
+    context.set_context(mode=context.GRAPH_MODE)
     output = GradOperation()(net)(z)
     assert isinstance(output, tuple)
     expect = [np.array([[1.4100001, 1.5999999, 6.6],
@@ -551,6 +560,7 @@ def test_grad_mutable_list_tensor_ms_function():
     z = mutable([Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32),
                  Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)])
 
+    context.set_context(mode=context.GRAPH_MODE)
     output = GradOperation()(net)(z)
     assert isinstance(output, tuple)
     expect = [np.array([[1.4100001, 1.5999999, 6.6],
@@ -593,6 +603,7 @@ def test_grad_mutable_unused_tuple_tensor():
             gradient_function = self.grad_op(self.net)
             return gradient_function(z)
 
+    context.set_context(mode=context.GRAPH_MODE)
     t = mutable((Tensor([[4.0, 6.0, 6.0], [4.0, 6.0, 6.0]], dtype=mstype.float32),
                  Tensor([[2.0, 2.0, 2.0], [2.0, 2.0, 2.0]], dtype=mstype.float32),
                  Tensor([[1.0, 1.0, 1.0], [1.0, 1.0, 1.0]], dtype=mstype.float32)))
@@ -640,6 +651,7 @@ def test_grad_mutable_unused_list_tensor():
             gradient_function = self.grad_op(self.net)
             return gradient_function(z)
 
+    context.set_context(mode=context.GRAPH_MODE)
     t = mutable([Tensor([[4.0, 6.0, 6.0], [4.0, 6.0, 6.0]], dtype=mstype.float32),
                  Tensor([[2.0, 2.0, 2.0], [2.0, 2.0, 2.0]], dtype=mstype.float32),
                  Tensor([[1.0, 1.0, 1.0], [1.0, 1.0, 1.0]], dtype=mstype.float32)])
@@ -687,6 +699,7 @@ def test_grad_mutable_unused_dict_tensor():
             gradient_function = self.grad_op(self.net)
             return gradient_function(z)
 
+    context.set_context(mode=context.GRAPH_MODE)
     t = mutable({'x1': Tensor([[4.0, 6.0, 6.0], [4.0, 6.0, 6.0]], dtype=mstype.float32),
                  'x2': Tensor([[2.0, 2.0, 2.0], [2.0, 2.0, 2.0]], dtype=mstype.float32),
                  'x3': Tensor([[1.0, 1.0, 1.0], [1.0, 1.0, 1.0]], dtype=mstype.float32)})

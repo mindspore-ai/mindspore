@@ -73,7 +73,7 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
 
   set_param<uint32_t>(MS_CTX_MAX_CALL_DEPTH, MAX_CALL_DEPTH_DEFAULT);
   set_param<std::string>(MS_CTX_DEVICE_TARGET, target);
-  set_param<int>(MS_CTX_EXECUTION_MODE, kGraphMode);
+  set_param<int>(MS_CTX_EXECUTION_MODE, kPynativeMode);
   set_param<bool>(MS_CTX_ENABLE_TASK_SINK, true);
   set_param<bool>(MS_CTX_IR_FUSION_FLAG, true);
   set_param<bool>(MS_CTX_ENABLE_HCCL, false);

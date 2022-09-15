@@ -22,5 +22,5 @@ def test_hccl_init_fail():
     os.environ["RANK_TABLE_FILE"] = fake_rank_table_file
     os.environ["RANK_ID"] = "2"
 
-    context.set_context(device_id=2, device_target="Ascend")
+    context.set_context(mode=context.GRAPH_MODE, device_id=2, device_target="Ascend")
     init()
