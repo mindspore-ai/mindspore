@@ -27,20 +27,5 @@
         - **RuntimeError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
         - **ValueError** - `shard_id` 参数值错误（小于0或者大于等于 `num_shards` ）。
 
-    .. include:: mindspore.dataset.Dataset.rst
 
-    .. include:: mindspore.dataset.Dataset.b.rst
-
-    .. include:: mindspore.dataset.Dataset.c.rst
-
-    .. include:: mindspore.dataset.Dataset.d.rst
-
-    .. include:: mindspore.dataset.Dataset.e.rst
-
-    .. include:: mindspore.dataset.Dataset.f.rst
-
-    .. include:: mindspore.dataset.Dataset.save.rst
-
-    .. include:: mindspore.dataset.Dataset.g.rst
-
-    .. include:: mindspore.dataset.Dataset.zip.rst
+.. include:: mindspore.dataset.api_list_nlp.rst

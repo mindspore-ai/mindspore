@@ -16,35 +16,18 @@
         - **python_multiprocessing** (bool，可选) - 启用Python多进程模式加速运算，默认值：True。当传入 `source` 的Python对象的计算量很大时，开启此选项可能会有较好效果。
         - **perf_mode** (bool，可选) - 遍历创建的dataset对象时获得更高性能的模式（在此过程中将调用 `__getitem__` 方法）。默认值：True，将Graph的所有数据（如边的索引、节点特征和图的特征）都作为图特征进行存储。
 
-    .. include:: mindspore.dataset.Dataset.add_sampler.rst
-
-    .. include:: mindspore.dataset.Dataset.rst
-
-    .. include:: mindspore.dataset.Dataset.b.rst
-
-    .. include:: mindspore.dataset.Dataset.c.rst
-
-    .. include:: mindspore.dataset.Dataset.d.rst
 
     .. py:method:: load()
 
         从给定（处理好的）路径加载数据，也可以在自己实现的Dataset类中实现这个方法。
-
-    .. include:: mindspore.dataset.Dataset.e.rst
 
     .. py:method:: process()
 
         针对argoverse数据集的处理方法，基于加载上来的原始数据集创建很多子图。
         数据预处理方法主要参考：https://github.com/xk-huang/yet-another-vectornet/blob/master/dataset.py。
 
-    .. include:: mindspore.dataset.Dataset.f.rst
-
     .. py:method:: save()
 
         将经过 `process` 函数处理后的数据以 numpy.npz 格式保存到磁盘中，也可以在自己实现的Dataset类中自己实现这个方法。
 
-    .. include:: mindspore.dataset.Dataset.g.rst
-
-    .. include:: mindspore.dataset.Dataset.use_sampler.rst
-
-    .. include:: mindspore.dataset.Dataset.zip.rst
+.. include:: mindspore.dataset.api_list_vision.rst

@@ -40,20 +40,5 @@
         - 如果线下训练，建议为每次训练设置 `BATCH_JOB_ID` 环境变量。
         - 分布式训练中，假如使用多个节点（服务器），则必须使用每个节点全部的8张卡。如果只有一个节点（服务器），则没有这样的限制。
 
-    .. include:: mindspore.dataset.Dataset.rst
 
-    .. include:: mindspore.dataset.Dataset.b.rst
-
-    .. include:: mindspore.dataset.Dataset.c.rst
-
-    .. include:: mindspore.dataset.Dataset.d.rst
-
-    .. include:: mindspore.dataset.Dataset.e.rst
-
-    .. include:: mindspore.dataset.Dataset.f.rst
-
-    .. include:: mindspore.dataset.Dataset.save.rst
-
-    .. include:: mindspore.dataset.Dataset.g.rst
-
-    .. include:: mindspore.dataset.Dataset.zip.rst
+.. include:: mindspore.dataset.api_list_nlp.rst

@@ -21,34 +21,16 @@
         - **python_multiprocessing** (bool，可选) - 启用Python多进程模式加速运算，默认值：True。当传入 `source` 的Python对象的计算量很大时，开启此选项可能会有较好效果。
         - **max_rowsize** (int, 可选) - 指定在多进程之间复制数据时，共享内存分配的最大空间，默认值：6，单位为MB。仅当参数 `python_multiprocessing` 设为True时，此参数才会生效。
 
-    .. include:: mindspore.dataset.Dataset.add_sampler.rst
-
-    .. include:: mindspore.dataset.Dataset.rst
-
-    .. include:: mindspore.dataset.Dataset.b.rst
-
-    .. include:: mindspore.dataset.Dataset.c.rst
-
-    .. include:: mindspore.dataset.Dataset.d.rst
-
     .. py:method:: load()
 
         从给定（处理好的）路径加载数据，也可以在自己实现的Dataset类中实现这个方法。
-
-    .. include:: mindspore.dataset.Dataset.e.rst
 
     .. py:method:: process()
 
         与原始数据集相关的处理方法，建议在自定义的Dataset中重写此方法。
 
-    .. include:: mindspore.dataset.Dataset.f.rst
-
     .. py:method:: save()
 
         将经过 `process` 函数处理后的数据以 numpy.npz 格式保存到磁盘中，也可以在自己实现的Dataset类中自己实现这个方法。
 
-    .. include:: mindspore.dataset.Dataset.g.rst
-
-    .. include:: mindspore.dataset.Dataset.use_sampler.rst
-
-    .. include:: mindspore.dataset.Dataset.zip.rst
+.. include:: mindspore.dataset.api_list_vision.rst
