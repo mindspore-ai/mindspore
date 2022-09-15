@@ -5195,7 +5195,7 @@ def bmm(input_x, mat2):
 
     Raises:
         ValueError: If length of shape of `input_x` is not equal to length of shape of `y` or
-                    length of shape of `input_x` is less than 3.
+                    length of shape of `input_x` is less than `3`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
