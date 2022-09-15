@@ -191,10 +191,12 @@ class Caltech101Dataset(GeneratorDataset):
 
     About Caltech101Dataset:
 
-    Pictures of objects belonging to 101 categories. About 40 to 800 images per category.
-    Most categories have about 50 images. Collected in September 2003 by Fei-Fei Li, Marco Andreetto,
-    and Marc 'Aurelio Ranzato. The size of each image is roughly 300 x 200 pixels.
+    Pictures of objects belonging to 101 categories, about 40 to 800 images per category.
+    Most categories have about 50 images. The size of each image is roughly 300 x 200 pixels.
     The official provides the contour data of each object in each picture, which is the annotation.
+
+    Here is the original Caltech101 dataset structure,
+    and you can unzip the dataset files into the following directory structure, which are read by MindSpore API.
 
     .. code-block::
 
@@ -4240,7 +4242,6 @@ class STL10Dataset(MappableDataset, VisionBaseDataset):
     About STL10 dataset:
 
     STL10 dataset consists of 10 classes: airplane, bird, car, cat, deer, dog, horse, monkey, ship, truck.
-    STL10 is is inspired by the CIFAR-10 dataset.
     Images are 96x96 pixels, color.
     500 training images, 800 test images per class and 100000 unlabeled images.
     Labels are 0-indexed, and unlabeled images have -1 as their labels.
