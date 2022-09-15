@@ -20,18 +20,18 @@
 
 namespace mindspore {
 namespace pipeline {
-void EventMessage::PrintCompileStartMsg(const std::string &phase, const std::string &obj_desc) {
+void EventMessage::PrintCompileStartMsg(const std::string &phase) {
   if (IsPhaseLoadFromMindIR(phase)) {
     return;
   }
-  PrintEventMessage("Start compiling " + obj_desc + " and it will take a while. Please wait...");
+  PrintEventMessage("Start compiling and it will take a while. Please wait...");
 }
 
-void EventMessage::PrintCompileEndMsg(const std::string &phase, const std::string &obj_desc) {
+void EventMessage::PrintCompileEndMsg(const std::string &phase) {
   if (IsPhaseLoadFromMindIR(phase)) {
     return;
   }
-  PrintEventMessage("End compiling " + obj_desc + ".");
+  PrintEventMessage("End compiling.");
 }
 
 void EventMessage::PrintEventMessage(const std::string &message) {
