@@ -115,7 +115,7 @@ void TFRecordNode::CheckLargeFile(const std::string &filename, std::ifstream *re
         << "The size of following TFRecord file is larger than 5G. There may be performance problems in "
         << "distributed scenarios. The file can be split into sub-files smaller than 5G to obtain better performance. "
         << "Large TFRecord file: " << filename;
-      large_files_.insert(filename);
+      (void)large_files_.insert(filename);
     }
   }
 }

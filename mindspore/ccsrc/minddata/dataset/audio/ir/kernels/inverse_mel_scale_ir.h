@@ -36,7 +36,7 @@ class InverseMelScaleOperation : public TensorOperation {
                            int32_t max_iter, float tolerance_loss, float tolerance_change,
                            const std::map<std::string, float> &sgdargs, NormType norm, MelType mel_type);
 
-  ~InverseMelScaleOperation();
+  ~InverseMelScaleOperation() override;
 
   std::shared_ptr<TensorOp> Build() override;
 

@@ -36,7 +36,7 @@ class VadOperation : public TensorOperation {
                float noise_reduction_amount, float measure_freq, float measure_duration, float measure_smooth_time,
                float hp_filter_freq, float lp_filter_freq, float hp_lifter_freq, float lp_lifter_freq);
 
-  ~VadOperation();
+  ~VadOperation() override;
 
   std::shared_ptr<TensorOp> Build() override;
 

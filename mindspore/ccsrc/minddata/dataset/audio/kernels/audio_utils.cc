@@ -984,6 +984,8 @@ Status ComputeCmnWaveform(const std::shared_ptr<Tensor> &input, std::shared_ptr<
       auto cmn_it = reinterpret_cast<T *>(const_cast<uchar *>((*cmn_waveform_p)->GetBuffer()));
       it += (m * num_frames * num_feats + i * num_feats);
       cmn_it += (m * num_frames * num_feats + i * num_feats);
+      CHECK_FAIL_RETURN_UNEXPECTED(cmn_window_frames != 0,
+                                   "SlidingWindowCmn: invalid parameter, 'cmn_window_frames' can not be zero.");
       Eigen::Map<ArrayXT>(cmn_it, 1, num_feats) =
         Eigen::Map<ArrayXT>(it, 1, num_feats) - cur_sum.row(m) / cmn_window_frames;
       if (norm_vars) {
@@ -1284,8 +1286,8 @@ Status Onesided(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
 }
 
 template <typename T>
-Status PowerStft(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float power, int n_fft,
-                 int n_columns, int n_length) {
+Status PowerStft(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float power, int n_columns,
+                 int n_length) {
   auto spec_f_begin = input->begin<T>();
   std::vector<int> spec_f_slice = {n_length * n_columns * 2, n_columns * 2, 2};
   std::vector<int> spec_p_slice = {n_length * n_columns, n_columns};
@@ -1311,8 +1313,8 @@ Status PowerStft(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
 
 template <typename T>
 Status Stft(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int n_fft,
-            const std::shared_ptr<Tensor> &win, int win_length, int hop_length, int n_columns, bool normalized,
-            float power, bool onesided) {
+            const std::shared_ptr<Tensor> &win, int win_length, int n_columns, bool normalized, float power,
+            bool onesided) {
   CHECK_FAIL_RETURN_UNEXPECTED(win_length != 0, "Spectrogram: win_length can not be zero.");
   double win_sum = 0.;
   float twice = 2.0;
@@ -1390,7 +1392,7 @@ Status Stft(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outpu
       return Status::OK();
     }
     RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape({input->shape()[0], n_fft, n_columns}), input->type(), &spec_p));
-    RETURN_IF_NOT_OK(PowerStft<T>(output_onsided, &spec_p, power, n_fft, n_columns, n_fft));
+    RETURN_IF_NOT_OK(PowerStft<T>(output_onsided, &spec_p, power, n_columns, n_fft));
     *output = spec_p;
     return Status::OK();
   }
@@ -1398,7 +1400,7 @@ Status Stft(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outpu
     *output = spec_f;
     return Status::OK();
   }
-  RETURN_IF_NOT_OK(PowerStft<T>(spec_f, &spec_p, power, n_fft, n_columns, n_fft / TWO + 1));
+  RETURN_IF_NOT_OK(PowerStft<T>(spec_f, &spec_p, power, n_columns, n_fft / TWO + 1));
   *output = spec_p;
   return Status::OK();
 }
@@ -1479,8 +1481,8 @@ Status SpectrogramImpl(const std::shared_ptr<Tensor> &input, std::shared_ptr<Ten
       }
     }
   }
-  RETURN_IF_NOT_OK(Stft<T>(input_win, &stft_compute, n_fft, fft_window_later, n_fft, hop_length, n_columns, normalized,
-                           power, onesided));
+  RETURN_IF_NOT_OK(
+    Stft<T>(input_win, &stft_compute, n_fft, fft_window_later, n_fft, n_columns, normalized, power, onesided));
   if (onesided) {
     output_shape.push_back(n_fft / TWO + 1);
   } else {
@@ -1687,7 +1689,7 @@ Status WindowSumSquare(const Eigen::MatrixXf &window_matrix, Eigen::VectorXf *wi
 /// \return Status code.
 template <typename T>
 Status ISTFT(const Eigen::MatrixXcd &stft_matrix, std::shared_ptr<Tensor> *output, int32_t n_fft, int32_t hop_length,
-             int32_t win_length, WindowType window_type, bool center, bool normalized, bool onesided, int32_t length) {
+             int32_t win_length, WindowType window_type, bool center, int32_t length) {
   // check input
   CHECK_FAIL_RETURN_UNEXPECTED(n_fft == ((stft_matrix.rows() - 1) * 2),
                                "GriffinLim: the frequency of the input should equal to n_fft / 2 + 1");
@@ -1837,8 +1839,7 @@ Status GriffinLimImpl(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tens
     for (int iter = 0; iter < n_iter; iter++) {
       // istft
       std::shared_ptr<Tensor> inverse;
-      RETURN_IF_NOT_OK(
-        ISTFT<T>(stft_complex, &inverse, n_fft, hop_length, win_length, window_type, true, false, true, length));
+      RETURN_IF_NOT_OK(ISTFT<T>(stft_complex, &inverse, n_fft, hop_length, win_length, window_type, true, length));
       // stft
       std::shared_ptr<Tensor> stft_out;
       RETURN_IF_NOT_OK(SpectrogramImpl<T>(inverse, &stft_out, 0, window_type, n_fft, hop_length, win_length, 0, false,
@@ -1869,8 +1870,7 @@ Status GriffinLimImpl(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tens
     // istft calculate final phase
     auto stft_complex_fin = angles.cwiseProduct(spec_matrix);
     std::shared_ptr<Tensor> waveform;
-    RETURN_IF_NOT_OK(
-      ISTFT<T>(stft_complex_fin, &waveform, n_fft, hop_length, win_length, window_type, true, false, true, length));
+    RETURN_IF_NOT_OK(ISTFT<T>(stft_complex_fin, &waveform, n_fft, hop_length, win_length, window_type, true, length));
 
     if (shape.Rank() == TWO) {
       // do not expand dim
@@ -2010,6 +2010,8 @@ template <typename T>
 Status GetSincResampleKernel(int32_t orig_freq, int32_t des_freq, ResampleMethod resample_method,
                              int32_t lowpass_filter_width, float rolloff, float beta, DataType datatype,
                              std::shared_ptr<Tensor> *kernel, int32_t *width) {
+  CHECK_FAIL_RETURN_UNEXPECTED(orig_freq != 0, "Resample: invalid parameter, 'orig_freq' can not be zero.");
+  CHECK_FAIL_RETURN_UNEXPECTED(des_freq != 0, "Resample: invalid parameter, 'des_freq' can not be zero.");
   float base_freq = static_cast<float>(std::min(orig_freq, des_freq));
   // Removing the highest frequencies to perform antialiasing filtering. This is needed in both upsampling and
   // downsampling
@@ -2138,6 +2140,7 @@ Status Resample(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
   CHECK_FAIL_RETURN_UNEXPECTED(gcd != 0, "Resample: gcd cannet be equal to 0.");
   int32_t orig_freq_prime = static_cast<int32_t>(floor(orig_freq / gcd));
   int32_t des_freq_prime = static_cast<int32_t>(floor(des_freq / gcd));
+  CHECK_FAIL_RETURN_UNEXPECTED(orig_freq_prime != 0, "Resample: invalid parameter, 'orig_freq_prime' can not be zero.");
   std::shared_ptr<Tensor> kernel;
   int32_t width = 0;
   RETURN_IF_NOT_OK(GetSincResampleKernel<T>(orig_freq_prime, des_freq_prime, resample_method, lowpass_filter_width,
