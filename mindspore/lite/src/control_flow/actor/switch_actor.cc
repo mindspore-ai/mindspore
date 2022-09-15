@@ -243,18 +243,18 @@ void LiteSwitchOpActor::DecreaseOtherBranchInputTensor(const size_t &index) {
   }
 }
 
-void LiteSwitchOpActor::AsyncBranchOutput(const size_t &index, OpContext<Tensor> *context) {
+STATUS LiteSwitchOpActor::AsyncBranchOutput(const size_t &index, OpContext<Tensor> *context) {
   if (index >= all_branch_output_data_arrows_.size()) {
     MS_LOG(ERROR) << "index " << index
                   << " extend all_branch_output_data_arrows_.size(): " << all_branch_output_data_arrows_.size();
     context->SetFailed(RET_ERROR);
-    return;
+    return RET_ERROR;
   }
   if (index >= all_branchs_output_data_.size()) {
     MS_LOG(ERROR) << "index " << index
                   << " extend all_branchs_output_data_.size(): " << all_branchs_output_data_.size();
     context->SetFailed(RET_ERROR);
-    return;
+    return RET_ERROR;
   }
   auto branch_output_data_arrows = all_branch_output_data_arrows_.at(index);
   auto branch_outputs_data = all_branchs_output_data_.at(index);
@@ -262,13 +262,14 @@ void LiteSwitchOpActor::AsyncBranchOutput(const size_t &index, OpContext<Tensor>
     MS_LOG(ERROR) << "index " << index
                   << " extend all_branchs_output_data_.size(): " << all_branchs_output_data_.size();
     context->SetFailed(RET_ERROR);
-    return;
+    return RET_ERROR;
   }
   for (size_t i = 0; i < branch_output_data_arrows.size(); ++i) {
     auto &data = branch_outputs_data.at(i);
     Async(branch_output_data_arrows[i]->to_op_id_, get_actor_mgr(), &mindspore::OpActor<Tensor>::RunOpData, data.get(),
           context);
   }
+  return RET_OK;
 }
 
 void LiteSwitchOpActor::RunOpData(OpData<Tensor> *inputs, OpContext<Tensor> *context) {
@@ -303,7 +304,11 @@ void LiteSwitchOpActor::RunOpData(OpData<Tensor> *inputs, OpContext<Tensor> *con
   }
   size_t index = static_cast<size_t>(*cond_ptr);
   DecreaseOtherBranchInputTensor(index);
-  AsyncBranchOutput(index, context);
+  ret = AsyncBranchOutput(index, context);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "AsyncBranchOutput failed.";
+    return;
+  }
   if (!output_data_arrows_.empty()) {
     AsyncOutput(context);
     SetOutputData(context);

@@ -50,7 +50,7 @@ class LiteSwitchOpActor : public LiteOpActor {
   int UpdateActorOutput() override;
 
  private:
-  void AsyncBranchOutput(const size_t &index, OpContext<Tensor> *context);
+  STATUS AsyncBranchOutput(const size_t &index, OpContext<Tensor> *context);
   void DecreaseOtherBranchInputTensor(const size_t &index);
   int GetSwitchAndCallNode(kernel::SubGraphKernel *subgraph_kernel);
   void AppendOutputTensors();

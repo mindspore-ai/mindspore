@@ -675,6 +675,7 @@ int ControlFlowScheduler::IsolateInputOfMultipleCalledGraph(std::vector<kernel::
     auto subgraph = item.first;
     std::vector<kernel::KernelExec *> input_partials{};
     for (auto input : subgraph->in_nodes()) {
+      MS_CHECK_TRUE_MSG(input->op_parameter() != nullptr, RET_ERROR, "op_parameter is nullptr.");
       if (input->op_parameter()->type_ == static_cast<int>(schema::PrimitiveType_PartialFusion)) {
         input_partials.push_back(input);
       }
