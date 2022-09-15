@@ -31,10 +31,16 @@ class NetIOU(nn.Cell):
     def construct(self, anchor, groundtruth):
         return self.encode(anchor, groundtruth)
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_iou():
+def test_iou_cpu():
+    """
+    Feature: test iou op in cpu.
+    Description: test iou in cpu.
+    Expectation: The output is equal to the expected value.
+    """
     pos1 = [[101, 169, 246, 429], [107, 150, 277, 400], [103, 130, 220, 400]]
     pos2 = [[121, 138, 304, 374], [97, 130, 250, 400]]
     mode = "iou"
@@ -53,5 +59,40 @@ def test_iou():
     context.set_context(mode=context.PYNATIVE_MODE, device_target='CPU')
     overlaps = NetIOU(mode)
     output = overlaps(pos1_box, pos2_box)
+    diff = output.asnumpy() - expect_result
+    assert np.all(abs(diff) < error)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_iou_cpu_dynamic_shape():
+    """
+    Feature: test iou op in cpu.
+    Description: test iou in dynamic shape.
+    Expectation: The output is equal to the expected value.
+    """
+    pos1 = [[101, 169, 246, 429], [107, 150, 277, 400], [103, 130, 220, 400]]
+    pos2 = [[121, 138, 304, 374], [97, 130, 250, 400]]
+    mode = "iou"
+    pos1_box = Tensor(np.array(pos1), mindspore.float32)
+    pos2_box = Tensor(np.array(pos2), mindspore.float32)
+    expect_result = np.array([[0.46551168, 0.6898875, 0.4567706], [0.73686045, 0.74506813, 0.76623374]], np.float32)
+    error = np.ones(shape=[1]) * 1.0e-6
+
+    pos1_dyn = Tensor(shape=[None, 4], dtype=mindspore.float32)
+    pos2_dyn = Tensor(shape=[None, 4], dtype=mindspore.float32)
+
+    context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+    dynamic_overlaps = NetIOU(mode)
+    dynamic_overlaps.set_inputs(pos1_dyn, pos2_dyn)
+    output = dynamic_overlaps(pos1_box, pos2_box)
+    diff = output.asnumpy() - expect_result
+    assert np.all(abs(diff) < error)
+
+    context.set_context(mode=context.PYNATIVE_MODE, device_target='CPU')
+    dynamic_overlaps = NetIOU(mode)
+    dynamic_overlaps.set_inputs(pos1_dyn, pos2_dyn)
+    output = dynamic_overlaps(pos1_box, pos2_box)
     diff = output.asnumpy() - expect_result
     assert np.all(abs(diff) < error)
