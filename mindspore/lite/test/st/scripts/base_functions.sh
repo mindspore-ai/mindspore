@@ -11,8 +11,7 @@ function Convert() {
   for ((i = 0; i < ${max_converter_jobs}; i++)); do echo; done >&6
   fail=0
   local cfg_file_list model_info model_name extra_info model_type cfg_file_name model_file weight_file output_file \
-        quant_type config_file train_model in_dtype out_dtype converter_result cfg_file calib_size export_mindir \
-        target_device encryption_flag
+        quant_type config_file train_model in_dtype out_dtype converter_result cfg_file calib_size
   cfg_file_list=$1
   for cfg_file in ${cfg_file_list[*]}; do
     while read line; do
@@ -68,9 +67,6 @@ function Convert() {
         in_dtype="DEFAULT"
         out_dtype="DEFAULT"
         fp16_weight="off"
-        export_mindir="MINDIR_LITE"
-        target_device=""
-        encryption_flag="false"
         if [[ ${cfg_file_name} =~ "weightquant" ]]; then
           # models_weightquant_${suffix}.cfg
           suffix=${cfg_file_name: 19: -4}
@@ -84,11 +80,6 @@ function Convert() {
           option_file="${model_path}/model_option/${model_name}.txt"
           if [ -f "$option_file" ]; then
             config_file=${option_file}
-          fi
-          export_mindir="MINDIR"
-          target_device="Ascend310"
-          if [ ${model_fmk} != "TF" ]; then
-            input_format="NHWC"
           fi
         elif [[ ${cfg_file_name} =~ "posttraining" ]]; then
           quant_type="PostTraining"
@@ -122,24 +113,13 @@ function Convert() {
         echo './converter_lite  --fmk='${model_fmk}' --modelFile='${model_file}' --weightFile='${weight_file}' --outputFile='${output_file}\
              ' --inputDataType='${in_dtype}' --outputDataType='${out_dtype}' --inputShape="'${spec_shapes}'" --fp16='${fp16_weight}\
              ' --configFile='${config_file}' --trainModel='${train_model} >> "$4"
-        if [[ ${cfg_file_name} =~ "_ascend" ]]; then
-            ./converter_lite --fmk=${model_fmk} --modelFile=${model_file} --weightFile=${weight_file} --outputFile=${output_file}\
-              --inputDataType=${in_dtype} --outputDataType=${out_dtype} --inputShape="${spec_shapes}" --fp16=${fp16_weight}\
-              --configFile=${config_file} --trainModel=${train_model} --exportMindIR=${export_mindir} --device=${target_device}\
-              --encryption=${encryption_flag} --inputDataFormat=${input_format} >> "$4"
-        else
-            ./converter_lite --fmk=${model_fmk} --modelFile=${model_file} --weightFile=${weight_file} --outputFile=${output_file}\
-              --inputDataType=${in_dtype} --outputDataType=${out_dtype} --inputShape="${spec_shapes}" --fp16=${fp16_weight}\
-              --configFile=${config_file} --trainModel=${train_model} >> "$4"
-        fi
+        ./converter_lite --fmk=${model_fmk} --modelFile=${model_file} --weightFile=${weight_file} --outputFile=${output_file}\
+          --inputDataType=${in_dtype} --outputDataType=${out_dtype} --inputShape="${spec_shapes}" --fp16=${fp16_weight}\
+          --configFile=${config_file} --trainModel=${train_model} >> "$4"
         if [ $? = 0 ]; then
             converter_result='converter '${model_type}''${quant_type}' '${model_name}' pass';echo ${converter_result} >> $5
             local model_size
-            if [ "${export_mindir}"x == "MINDIR"x ]; then
-              model_size=`ls ${output_file}.mindir  -l|awk -F ' ' '{print $5}'`
-            else
-              model_size=`ls ${output_file}.ms  -l|awk -F ' ' '{print $5}'`
-            fi
+            model_size=`ls ${output_file}.ms  -l|awk -F ' ' '{print $5}'`
             let calib_final_size=${calib_size}+50
             if [[ -n ${calib_size} ]];then
               if [ ${model_size} -gt ${calib_final_size} ]; then
