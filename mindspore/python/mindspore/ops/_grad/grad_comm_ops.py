@@ -14,6 +14,7 @@
 # ============================================================================
 
 """Generate bprop for comm ops"""
+from __future__ import division
 from mindspore import Tensor
 import mindspore.common.dtype as mstype
 from mindspore.ops import functional as F

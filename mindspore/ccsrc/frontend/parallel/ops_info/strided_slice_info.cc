@@ -330,7 +330,7 @@ Status StridedSliceInfo::InferTensorMap() {
   // dimension need to insert MAP_NONE for output tensor map.
   for (size_t j = 0; j < new_axis_mask_bitmap_.size() && j < begin_.size(); ++j) {
     if (new_axis_mask_bitmap_[j]) {
-      tensor_map.insert(tensor_map.cbegin() + j, MAP_NONE);
+      (void)tensor_map.insert(tensor_map.cbegin() + j, MAP_NONE);
     }
   }
 
