@@ -18,7 +18,8 @@ from .._extends.parse.namespace import CellNamespace
 
 _ms_common_ns = CellNamespace('mindspore.common')
 _ms_nn_ns = CellNamespace('mindspore.nn')
-_ms_ops_ns = CellNamespace('mindspore.ops')
+_ms_ops_ns = CellNamespace('mindspore.ops.operations')
+_ms_functional_ns = CellNamespace('mindspore.ops.functional')
 
 
 def is_subtree(cls_name):
@@ -31,3 +32,15 @@ def is_subtree(cls_name):
         return False
 
     return True
+
+
+def is_functional(func_name):
+    """Determine whether 'cls_name' is a functional."""
+    return func_name in _ms_functional_ns
+
+
+def get_functional(func_name):
+    """Get the function corresponding to the func_name."""
+    if func_name in _ms_functional_ns:
+        return _ms_functional_ns[func_name]
+    return None

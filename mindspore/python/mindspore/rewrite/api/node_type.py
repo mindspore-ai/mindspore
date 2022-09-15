@@ -35,9 +35,11 @@ class NodeType(Enum):
     # Compute node type
     CallCell = 1
     CallPrimitive = 2
-    CallMethod = 3
+    CallModule = 3
+    CallFunction = 4
+    CallMethod = 5
     # Other node type
-    Python = 4
-    Input = 5
-    Output = 6
-    Tree = 7
+    Python = 6
+    Input = 7
+    Output = 8
+    Tree = 9

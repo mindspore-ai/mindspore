@@ -621,7 +621,8 @@ class Node:
             targets ([ScopedValue]): A list of instances of ScopedValue as new targets.
         """
         self._targets = targets
-        if self._node_type in (NodeType.CallCell, NodeType.CallMethod, NodeType.CallPrimitive, NodeType.Tree):
+        if self._node_type in (NodeType.CallCell, NodeType.CallMethod, NodeType.CallPrimitive,
+                               NodeType.Tree, NodeType.CallFunction):
             self._sync_assign_targets_to_ast()
 
     def get_func(self) -> ScopedValue:

@@ -279,6 +279,25 @@ class SymbolTree(Observer, Observable):
         """Add Event.TopologicalChangeEvent event when build is finished."""
         self.add_event(Event.TopologicalChangeEvent)
 
+    def create_call_function(self, ast_node, func_name, func, targets, args, kwargs):
+        '''
+        Instantiate an instance of node whose type is `CallFunction`.
+
+        Args:
+            func_name (str): Name of function.
+            ast_node ([ast.AST, optional]): An instance of ast.AST represents corresponding node in ast.
+            targets (list[ScopedValue]): A list of instance of `ScopedValue`. See detail in docstring of Node class.
+            func ([ScopedValue, optional]): An instance of `ScopedValue`. See detail in docstring of Node class.
+            args (list[ScopedValue]): A list of instance of `ScopedValue`. See detail in docstring of Node class.
+            kwargs (dict{str: ScopedValue}): A list of instance of `ScopedValue`. See detail in docstring of `Node`
+                class.
+        '''
+        logger.info(f"func name: {func_name}; func: {func}; targets: {targets}; args: {args}; kwargs: {kwargs}")
+        node = Node(NodeType.CallFunction, ast_node, targets, func_name, args, kwargs, func_name, func)
+        node.set_belong_symbol_tree(self)
+        return node
+
+
     def get_ori_cls_name(self) -> str:
         """
         Get class name of original network.
