@@ -19,138 +19,52 @@
 
 #include <vector>
 #include <algorithm>
+#include <utility>
+#include <map>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/transpose_impl.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/transpose_impl_opt.cuh"
 namespace mindspore {
 namespace kernel {
-constexpr size_t kDimSize4 = 4;
-constexpr size_t kAxisZero = 0;
-constexpr size_t kAxis1st = 1;
-constexpr size_t kAxis2nd = 2;
-constexpr size_t kAxis3rd = 3;
-constexpr size_t kAxisIndexZero = 0;
-constexpr size_t kAxisIndex1st = 1;
-constexpr size_t kAxisIndex2nd = 2;
-constexpr size_t kAxisIndex3rd = 3;
-
-template <typename T>
-class TransposeFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class TransposeGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelper<TransposeGpuKernelMod> {
  public:
-  TransposeFwdGpuKernelMod() { ResetResource(); }
-  ~TransposeFwdGpuKernelMod() = default;
+  TransposeGpuKernelMod() = default;
+  ~TransposeGpuKernelMod() override = default;
+
+  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
+
+  std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
+
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs,
+             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    if (is_null_input_) {
-      return true;
-    }
-    T *input = GetDeviceAddress<T>(inputs, 0);
-    T *output = GetDeviceAddress<T>(outputs, 0);
-    size_t *input_shape = GetDeviceAddress<size_t>(workspace, 0);
-    size_t *input_axis = GetDeviceAddress<size_t>(workspace, 1);
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                               cudaMemcpyAsync(input_shape, &input_shape_[0], workspace_size_, cudaMemcpyHostToDevice,
-                                               reinterpret_cast<cudaStream_t>(stream_ptr)),
-                               "cudaMemcpyAsync input_shape failed");
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                               cudaMemcpyAsync(input_axis, &input_axis_[0], workspace_size_, cudaMemcpyHostToDevice,
-                                               reinterpret_cast<cudaStream_t>(stream_ptr)),
-                               "cudaMemcpyAsync input_axis failed");
-    size_t size = input_size_ / sizeof(T);
-
-    size_t *h_input_shape = reinterpret_cast<size_t *>(&input_shape_[0]);
-    size_t *h_input_axis = &input_axis_[0];
-    if (shape_size_ == kDimSize4 && h_input_axis[kAxisIndexZero] == kAxisZero &&
-        h_input_axis[kAxisIndex1st] == kAxis3rd && h_input_axis[kAxisIndex2nd] == kAxis1st &&
-        h_input_axis[kAxisIndex3rd] == kAxis2nd) {
-      // nhwc->nchw: 0,3,1,2
-      CalNHWC2NCHWInterface(size, shape_size_, input, h_input_shape, h_input_axis, input_shape, input_axis, output,
-                            reinterpret_cast<cudaStream_t>(stream_ptr));
-    } else if (shape_size_ == kDimSize4 && h_input_axis[kAxisIndexZero] == kAxisZero &&
-               h_input_axis[kAxisIndex1st] == kAxis2nd && h_input_axis[kAxisIndex2nd] == kAxis3rd &&
-               h_input_axis[kAxisIndex3rd] == kAxis1st) {
-      // nchw->nhwc: 0,2,3,1
-      CalNCHW2NHWCInterface(size, shape_size_, input, h_input_shape, h_input_axis, input_shape, input_axis, output,
-                            reinterpret_cast<cudaStream_t>(stream_ptr));
-    } else {
-      CalTranspose(size, input, input_shape, input_axis, shape_size_, output,
-                   reinterpret_cast<cudaStream_t>(stream_ptr));
-    }
-    return true;
-  }
-
-  bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    kernel_node_ = kernel_node;
-    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    if (input_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs must be 1, but got " << input_num;
-    }
-    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-    if (output_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs must be 1, but got " << output_num;
-    }
-    input_shape_ = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
-    is_null_input_ = CHECK_SHAPE_NULL(input_shape_, kernel_name, "input");
-    if (is_null_input_) {
-      InitSizeLists();
-      return true;
-    }
-    shape_size_ = input_shape_.size();
-    if (shape_size_ > TRANSPOSE_MAX_DIMENSION) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of output cannot be greater than "
-                        << TRANSPOSE_MAX_DIMENSION << ", but got " << shape_size_;
-    }
-
-    input_size_ = sizeof(T) * SizeOf(input_shape_);
-    output_size_ = input_size_;
-    std::vector<int64_t> perm = GetAttr<std::vector<int64_t>>(kernel_node, "perm");
-    for (size_t j = 0; j < perm.size(); j++) {
-      auto p = (perm[j] >= 0) ? perm[j] : (perm.size() + perm[j]);
-      if (p < 0) {
-        MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the perm value must be in [-" << perm.size() << ", "
-                          << (perm.size() - 1) << "], but got " << perm;
-      }
-      input_axis_.push_back(p);
-    }
-    InitSizeLists();
-    return true;
-  }
-
-  void ResetResource() noexcept override {
-    shape_size_ = 0;
-    input_size_ = 0;
-    output_size_ = 0;
-    workspace_size_ = 0;
-    is_null_input_ = false;
-    input_shape_.clear();
-    input_axis_.clear();
-    input_size_list_.clear();
-    output_size_list_.clear();
-    workspace_size_list_.clear();
-  }
-
- protected:
-  void InitSizeLists() override {
-    input_size_list_.push_back(input_size_);
-    output_size_list_.push_back(output_size_);
-    workspace_size_ = shape_size_ * sizeof(size_t);
-    workspace_size_list_.push_back(workspace_size_);
-    workspace_size_list_.push_back(workspace_size_);
-    return;
+    stream_ptr_ = stream_ptr;
+    return kernel_func_(this, inputs, workspace, outputs);
   }
 
  private:
-  std::vector<int64_t> input_shape_;
-  std::vector<size_t> input_axis_;
+  template <typename T>
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<AddressPtr> &outputs);
 
-  size_t shape_size_;
-  size_t input_size_;
-  size_t output_size_;
-  size_t workspace_size_;
+  void GetPermValue(const std::vector<int64_t> &perm);
+
+  void *stream_ptr_{nullptr};
+  std::vector<int64_t> input_shape_;
+  std::vector<size_t> input_perm_;
+
+  size_t shape_size_{0};
+  size_t workspace_size_{0};
   bool is_null_input_;
+  bool is_dynamic_perm_{false};
+  bool get_dynamic_perm_value_{false};
 };
 }  // namespace kernel
 }  // namespace mindspore
