@@ -31,7 +31,8 @@ endforeach()
 
 list(APPEND ASCEND_SUB_OBJECTS_SRC $<TARGET_OBJECTS:_mindspore_transform_graph_ir_obj>)
 add_library(mindspore_ascend SHARED ${ASCEND_SUB_OBJECTS_SRC})
-target_link_libraries(mindspore_ascend PRIVATE mindspore_core mindspore_common proto_input mindspore::protobuf)
+target_link_libraries(mindspore_ascend PRIVATE mindspore_backend mindspore_core mindspore_common)
+target_link_libraries(mindspore_ascend PRIVATE proto_input mindspore::protobuf)
 target_link_libraries(mindspore_ascend PRIVATE securec)
 target_link_libraries(mindspore_ascend PRIVATE mindspore::dnnl mindspore::mkldnn mindspore::ssl
                       mindspore::crypto nnacl)
