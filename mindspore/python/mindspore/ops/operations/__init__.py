@@ -518,7 +518,7 @@ __all__ = [
     "Custom",
     "LuSolve",
     "CholeskyInverse",
-    "Cummax",
+    "Cummax"
 ]
 
 __sponge__ = [

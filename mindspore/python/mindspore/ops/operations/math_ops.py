@@ -6835,7 +6835,7 @@ class CompareAndBitpack(Primitive):
         ValueError: If the innermost dimension of `x`'s shape is not disvisible by 8.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8]), mindspore.float32)
