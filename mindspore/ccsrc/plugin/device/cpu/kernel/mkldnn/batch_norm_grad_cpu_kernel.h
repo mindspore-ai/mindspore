@@ -17,22 +17,28 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_BATCH_NORM_GRAD_CPU_KERNEL_H_
 #include <memory>
 #include <vector>
+#include <map>
 #include "plugin/device/cpu/kernel/mkldnn/mkl_cpu_kernel.h"
 
 namespace mindspore {
 namespace kernel {
-class BatchNormGradCpuKernelMod : public DeprecatedMKLCpuKernelMod {
+class BatchNormGradCpuKernelMod : public MKLCpuKernelMod {
  public:
   BatchNormGradCpuKernelMod() = default;
   ~BatchNormGradCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(
+    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+    const std::vector<KernelTensorPtr> &outputs,
+    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
  protected:
-  void InitInputOutputSize(const CNodePtr &kernel_node) override;
   std::vector<KernelAttr> GetOpSupport() override {
     static std::vector<KernelAttr> support_list = {KernelAttr()
                                                      .AddInputAttr(kNumberTypeFloat32)
@@ -48,17 +54,25 @@ class BatchNormGradCpuKernelMod : public DeprecatedMKLCpuKernelMod {
   }
 
  private:
-  float momentum{0.9};
-  int64_t batch_size{0};
-  int64_t channel{0};
-  int64_t hw_size{0};
-  int64_t nhw_size{0};
+  void InitWorkspaceSize(const std::vector<KernelTensorPtr> &inputs);
+
+  bool is_train_{false};
+  float epsilon_{1e-5};
+  float momentum_{0.9};
+  int64_t batch_size_{0};
+  int64_t channel_{0};
+  int64_t hw_size_{0};
+  int64_t nhw_size_{0};
   enum format_ { N, C, H, W };
   enum input_list_ { Y_BACKPROP, X, SCALE, SAVE_MEAN, SAVE_VARIANCE, RESERVE };
   enum workspace_list_ { SCALE_BIAS, DIFF_SCALE_BIAS };
   enum output_list_ { DX, DSCALE, DBIAS };
+  BaseOperatorPtr base_operator_{nullptr};
+  std::vector<KernelTensorPtr> inputs_{};
+  std::vector<KernelTensorPtr> outputs_{};
+  std::map<uint32_t, tensor::TensorPtr> inputs_on_host_{};
 };
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_FUSED_BATCH_NORM_GRAD_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_BATCH_NORM_GRAD_CPU_KERNEL_H_

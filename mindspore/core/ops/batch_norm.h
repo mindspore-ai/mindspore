@@ -26,6 +26,8 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameBatchNorm = "BatchNorm";
+constexpr auto kNameBatchNormWithActivation = "BatchNormWithActivation";
+constexpr auto kNameBatchNormWithAddAndActivation = "BatchNormWithAddAndActivation";
 /// \brief Batch Normalization for input data and updated parameters.
 /// Refer to Python API @ref mindspore.ops.BatchNorm for more details.
 class MIND_API BatchNorm : public BaseOperator {
@@ -33,6 +35,10 @@ class MIND_API BatchNorm : public BaseOperator {
   MIND_API_BASE_MEMBER(BatchNorm);
   /// \brief Constructor.
   BatchNorm() : BaseOperator(kNameBatchNorm) {
+    InitIOName({"x", "scale", "offset", "mean", "variance"},
+               {"y", "batch_mean", "batch_variance", "reserve_space_1", "reserve_space_2"});
+  }
+  explicit BatchNorm(const std::string kernel_name) : BaseOperator(kernel_name) {
     InitIOName({"x", "scale", "offset", "mean", "variance"},
                {"y", "batch_mean", "batch_variance", "reserve_space_1", "reserve_space_2"});
   }
@@ -65,9 +71,25 @@ class MIND_API BatchNorm : public BaseOperator {
   float get_momentum() const;
 };
 
-abstract::AbstractBasePtr BatchNormInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                         const std::vector<abstract::AbstractBasePtr> &input_args);
-using PrimBatchNormPtr = std::shared_ptr<BatchNorm>;
+class MIND_API BatchNormWithActivation : public BatchNorm {
+ public:
+  MIND_API_BASE_MEMBER(BatchNormWithActivation);
+  /// \brief Constructor.
+  BatchNormWithActivation() : BatchNorm(kNameBatchNormWithActivation) {
+    InitIOName({"x", "scale", "offset", "mean", "variance"},
+               {"y", "batch_mean", "batch_variance", "reserve_space_1", "reserve_space_2"});
+  }
+};
+
+class MIND_API BatchNormWithAddAndActivation : public BatchNorm {
+ public:
+  MIND_API_BASE_MEMBER(BatchNormWithAddAndActivation);
+  /// \brief Constructor.
+  BatchNormWithAddAndActivation() : BatchNorm(kNameBatchNormWithAddAndActivation) {
+    InitIOName({"x", "scale", "offset", "mean", "variance", "z"},
+               {"y", "batch_mean", "batch_variance", "reserve_space_1", "reserve_space_2"});
+  }
+};
 }  // namespace ops
 }  // namespace mindspore
 

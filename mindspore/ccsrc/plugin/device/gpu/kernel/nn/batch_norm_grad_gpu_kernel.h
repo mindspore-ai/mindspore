@@ -19,8 +19,9 @@
 
 #include <string>
 #include <vector>
+#include <map>
+#include <utility>
 #include "include/common/utils/utils.h"
-
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/kernel_constants.h"
@@ -30,131 +31,25 @@ namespace mindspore {
 namespace kernel {
 constexpr size_t CUDNN_BATCHNORM_OPS_BN_INPUT_NUM = 6;
 constexpr size_t NO_CUDNN_BATCHNORM_OPS_BN_INPUT_NUM = 8;
-template <typename T>
-class BatchNormGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class BatchNormGradGpuKernelMod : public NativeGpuKernelMod {
  public:
   BatchNormGradGpuKernelMod() { ResetResource(); }
+  explicit BatchNormGradGpuKernelMod(const std::string kernel_name) : kernel_name_(kernel_name) { ResetResource(); }
   ~BatchNormGradGpuKernelMod() override { DestroyResource(); }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    VARIABLE_NOT_USED(workspace);
-    VARIABLE_NOT_USED(stream_ptr);
-    if (is_null_input_) {
-      return true;
-    }
-    auto dy = GetDeviceAddress<T>(inputs, 0);
-    auto x = GetDeviceAddress<T>(inputs, 1);
-    auto scale = GetDeviceAddress<float>(inputs, 2);
-    auto save_mean = GetDeviceAddress<float>(inputs, 3);
-    auto save_variance = GetDeviceAddress<float>(inputs, 4);
-    void *bias = nullptr;
-    T *y = nullptr;
-    if (bn_ops_ != CUDNN_BATCHNORM_OPS_BN) {
-      bias = GetDeviceAddress<float>(inputs, 6);
-      y = GetDeviceAddress<T>(inputs, 7);
-    }
-
-    auto dx = GetDeviceAddress<T>(outputs, 0);
-    auto dscale = GetDeviceAddress<float>(outputs, 1);
-    auto dbias = GetDeviceAddress<float>(outputs, 2);
-    T *dz = nullptr;
-    if (bn_ops_ == CUDNN_BATCHNORM_OPS_BN_ADD_ACTIVATION) {
-      dz = GetDeviceAddress<T>(outputs, 3);
-    }
-
-    if (is_train_) {
-      auto reserve_addr = GetPossiblyNullDeviceAddress<float>(inputs, 5);
-      reserve_size_ = inputs[5]->size;
-      void *workspace_addr = GetPossiblyNullDeviceAddress<T>(workspace, 0);
-
-      const float alpha_data_diff = 1;
-      const float alpha_param_diff = 1;
-      const float beta_param_diff = 0;
-      CHECK_CUDNN_RET_WITH_EXCEPT(
-        kernel_node_,
-        cudnnBatchNormalizationBackwardEx(handle_, mode_, bn_ops_, &alpha_data_diff, &beta_data_diff_,
-                                          &alpha_param_diff, &beta_param_diff, x_desc_, x, y_desc_, y, dy_desc_, dy,
-                                          dz_desc_, dz, dx_desc_, dx, scale_bias_diff_desc_, scale, bias, dscale, dbias,
-                                          epsilon_, save_mean, save_variance, activation_desc_, workspace_addr,
-                                          workspace_size_, reserve_addr, reserve_size_),
-        "Kernel launch failed");
-    } else {
-      CalBatchNormGrad(x, dy, scale, save_mean, save_variance, dx, dscale, dbias, epsilon_, batch_, channel_, height_,
-                       width_, reinterpret_cast<cudaStream_t>(stream_ptr));
-    }
-    return true;
+    return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
   }
 
-  bool Init(const CNodePtr &kernel_node) override {
-    kernel_node_ = kernel_node;
-    MS_EXCEPTION_IF_NULL(kernel_node);
-    std::string kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    if (kernel_name == kBatchNormGradOpName) {
-      bn_ops_ = CUDNN_BATCHNORM_OPS_BN;
-    } else if (kernel_name == kBatchNormGradWithActivation) {
-      bn_ops_ = CUDNN_BATCHNORM_OPS_BN_ACTIVATION;
-    } else if (kernel_name == kBatchNormGradWithAddAndActivation) {
-      bn_ops_ = CUDNN_BATCHNORM_OPS_BN_ADD_ACTIVATION;
-    } else {
-      MS_LOG(EXCEPTION) << "Only support these kernel names: " << kBatchNormGradOpName << ", "
-                        << kBatchNormGradWithActivation << ", " << kBatchNormGradWithAddAndActivation << ", but got "
-                        << kernel_name;
-    }
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+  int Resize(
+    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+    const std::vector<KernelTensorPtr> &outputs,
+    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
 
-    InitResource();
-    epsilon_ = GetAttr<float>(kernel_node, "epsilon");
-
-    cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
-    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    if (bn_ops_ == CUDNN_BATCHNORM_OPS_BN) {
-      if (input_num != CUDNN_BATCHNORM_OPS_BN_INPUT_NUM) {
-        MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs must be "
-                          << CUDNN_BATCHNORM_OPS_BN_INPUT_NUM << ", but got " << input_num;
-      }
-    } else {
-      if (input_num != NO_CUDNN_BATCHNORM_OPS_BN_INPUT_NUM) {
-        MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs must be "
-                          << NO_CUDNN_BATCHNORM_OPS_BN_INPUT_NUM << ", but got " << input_num;
-      }
-    }
-
-    auto shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-    if (shape.size() != 4 && shape.size() != 2) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of input must be 2 or 4, but got "
-                        << shape.size();
-    }
-
-    if (IsDynamic(shape)) {
-      return true;
-    }
-
-    is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name, "input");
-    if (is_null_input_) {
-      InitSizeLists();
-      return true;
-    }
-    if (shape.size() == 2) {
-      mode_ = CUDNN_BATCHNORM_PER_ACTIVATION;
-    } else {
-      mode_ = CUDNN_BATCHNORM_SPATIAL_PERSISTENT;
-    }
-
-    std::string format = AnfAlgo::GetInputFormat(kernel_node, 0);
-    auto format_attr = GetAttr<std::string>(kernel_node, "format");
-    if (format_attr == kOpFormat_NHWC) {
-      format = kOpFormat_NHWC;
-    }
-    beta_data_diff_ = GetAttrWithDefault(kernel_node, "inplace_algo", std::string("cover")) == "cover" ? 0 : 1;
-    CheckTensorSize({shape});
-    SetTensorDescriptor(format, shape);
-    InitSizeLists();
-    is_train_ = GetAttr<bool>(kernel_node, "is_training");
-    return true;
-  }
-
-  void ResetResource() noexcept override {
-    ResetSizeLists();
+  void ResetResource() noexcept {
     batch_ = 0;
     channel_ = 0;
     height_ = 0;
@@ -180,139 +75,26 @@ class BatchNormGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     beta_data_diff_ = 0;
   }
 
+  std::vector<KernelAttr> GetOpSupport() override;
+
  protected:
-  void InitResource() override {
-    handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCudnnHandle();
-    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnCreateTensorDescriptor(&x_desc_), "Create x desc failed");
-    if (bn_ops_ != CUDNN_BATCHNORM_OPS_BN) {
-      CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnCreateTensorDescriptor(&y_desc_), "Create y desc failed");
-      CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnCreateActivationDescriptor(&activation_desc_),
-                                  "Create activation descriptor failed");
-    }
-    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnCreateTensorDescriptor(&dy_desc_), "Create dy desc failed");
+  void InitResource() override;
 
-    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnCreateTensorDescriptor(&dx_desc_), "Create dx desc failed");
-    if (bn_ops_ == CUDNN_BATCHNORM_OPS_BN_ADD_ACTIVATION) {
-      CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnCreateTensorDescriptor(&dz_desc_), "Create dz desc failed");
-    }
-    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnCreateTensorDescriptor(&scale_bias_diff_desc_),
-                                "Create para desc failed");
-  }
-
-  void InitSizeLists() override {
-    if (!is_null_input_) {
-      CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnGetTensorSizeInBytes(x_desc_, &x_size_), "Get x size failed");
-      CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnGetTensorSizeInBytes(scale_bias_diff_desc_, &para_size_),
-                                  "Get para size failed");
-
-      CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
-                                  cudnnGetBatchNormalizationBackwardExWorkspaceSize(
-                                    handle_, mode_, bn_ops_, x_desc_, y_desc_, dy_desc_, dz_desc_, dx_desc_,
-                                    scale_bias_diff_desc_, activation_desc_, &workspace_size_),
-                                  "cudnnGetBatchNormalizationBackwardExWorkspaceSize failed");
-    }
-
-    input_size_list_.push_back(x_size_);
-    input_size_list_.push_back(x_size_);
-    input_size_list_.push_back(para_size_);
-    input_size_list_.push_back(para_size_);
-    input_size_list_.push_back(para_size_);
-    input_size_list_.push_back(reserve_size_);
-    if (bn_ops_ != CUDNN_BATCHNORM_OPS_BN) {
-      input_size_list_.push_back(para_size_);
-      input_size_list_.push_back(x_size_);
-    }
-
-    output_size_list_.push_back(x_size_);
-    output_size_list_.push_back(para_size_);
-    output_size_list_.push_back(para_size_);
-    if (bn_ops_ == CUDNN_BATCHNORM_OPS_BN_ADD_ACTIVATION) {
-      output_size_list_.push_back(x_size_);
-    }
-
-    workspace_size_list_.push_back(workspace_size_);
-  }
-  void DestroyResource() noexcept override {
-    CHECK_CUDNN_RET_WITH_ERROR(kernel_node_, cudnnDestroyTensorDescriptor(x_desc_), "Destroy x desc failed");
-    if (bn_ops_ != CUDNN_BATCHNORM_OPS_BN) {
-      CHECK_CUDNN_RET_WITH_ERROR(kernel_node_, cudnnDestroyTensorDescriptor(y_desc_), "Destroy y desc failed");
-      CHECK_CUDNN_RET_WITH_ERROR(kernel_node_, cudnnDestroyActivationDescriptor(activation_desc_),
-                                 "Destroy activation descriptor failed");
-    }
-    CHECK_CUDNN_RET_WITH_ERROR(kernel_node_, cudnnDestroyTensorDescriptor(dy_desc_), "Destroy dy desc failed");
-
-    CHECK_CUDNN_RET_WITH_ERROR(kernel_node_, cudnnDestroyTensorDescriptor(dx_desc_), "Destroy dx desc failed");
-    if (bn_ops_ == CUDNN_BATCHNORM_OPS_BN_ADD_ACTIVATION) {
-      CHECK_CUDNN_RET_WITH_ERROR(kernel_node_, cudnnDestroyTensorDescriptor(dz_desc_), "Destroy z desc failed");
-    }
-    CHECK_CUDNN_RET_WITH_ERROR(kernel_node_, cudnnDestroyTensorDescriptor(scale_bias_diff_desc_),
-                               "Destroy para desc failed");
-  }
+  void InitSizeLists();
+  void DestroyResource() noexcept override;
 
  private:
-  void SetTensorDescriptor(const std::string &format, const ShapeVector &shape) {
-    cudnnTensorFormat_t cudnn_format;
-    if (shape.size() == 2) {
-      batch_ = LongToInt(shape[0]);
-      channel_ = LongToInt(shape[1]);
-      height_ = 1;
-      width_ = 1;
-      cudnn_format = CUDNN_TENSOR_NCHW;
-    } else if (format == kOpFormat_NHWC) {
-      batch_ = LongToInt(shape[0]);
-      height_ = LongToInt(shape[1]);
-      width_ = LongToInt(shape[2]);
-      channel_ = LongToInt(shape[3]);
-      cudnn_format = CUDNN_TENSOR_NHWC;
-    } else {
-      batch_ = LongToInt(shape[0]);
-      channel_ = LongToInt(shape[1]);
-      height_ = LongToInt(shape[2]);
-      width_ = LongToInt(shape[3]);
-      cudnn_format = CUDNN_TENSOR_NCHW;
-    }
+  void SetTensorDescriptor(const Format &format, const ShapeVector &shape);
+  template <typename T>
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  using BatchNormGradFunc =
+    std::function<bool(BatchNormGradGpuKernelMod *, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
+                       const std::vector<AddressPtr> &, void *)>;
+  BatchNormGradFunc kernel_func_{};
+  static std::map<std::string, std::vector<std::pair<KernelAttr, BatchNormGradGpuKernelMod::BatchNormGradFunc>>>
+    kernel_attr_map_;
 
-    CHECK_CUDNN_RET_WITH_EXCEPT(
-      kernel_node_,
-      cudnnSetTensor4dDescriptor(x_desc_, cudnn_format, cudnn_data_type_, batch_, channel_, height_, width_),
-      "Set x desc failed");
-
-    if (bn_ops_ != CUDNN_BATCHNORM_OPS_BN) {
-      CHECK_CUDNN_RET_WITH_EXCEPT(
-        kernel_node_,
-        cudnnSetTensor4dDescriptor(y_desc_, cudnn_format, cudnn_data_type_, batch_, channel_, height_, width_),
-        "Set z desc failed");
-    }
-
-    CHECK_CUDNN_RET_WITH_EXCEPT(
-      kernel_node_,
-      cudnnSetTensor4dDescriptor(dy_desc_, cudnn_format, cudnn_data_type_, batch_, channel_, height_, width_),
-      "Set dy desc failed");
-
-    CHECK_CUDNN_RET_WITH_EXCEPT(
-      kernel_node_,
-      cudnnSetTensor4dDescriptor(dx_desc_, cudnn_format, cudnn_data_type_, batch_, channel_, height_, width_),
-      "Set dx desc failed");
-
-    if (bn_ops_ == CUDNN_BATCHNORM_OPS_BN_ADD_ACTIVATION) {
-      CHECK_CUDNN_RET_WITH_EXCEPT(
-        kernel_node_,
-        cudnnSetTensor4dDescriptor(dz_desc_, cudnn_format, cudnn_data_type_, batch_, channel_, height_, width_),
-        "Set z desc failed");
-    }
-
-    CHECK_CUDNN_RET_WITH_EXCEPT(
-      kernel_node_,
-      cudnnSetTensor4dDescriptor(scale_bias_diff_desc_, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, 1, channel_, 1, 1),
-      "Set para desc failed");
-
-    if (bn_ops_ != CUDNN_BATCHNORM_OPS_BN) {
-      CHECK_CUDNN_RET_WITH_EXCEPT(
-        kernel_node_,
-        cudnnSetActivationDescriptor(activation_desc_, CUDNN_ACTIVATION_RELU, CUDNN_NOT_PROPAGATE_NAN, 0.0),
-        "cudnnSetActivationDescriptor failed");
-    }
-  }
   int batch_;
   int channel_;
   int height_;
@@ -323,9 +105,11 @@ class BatchNormGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   size_t reserve_size_;
   cudnnBatchNormMode_t mode_;
   cudnnBatchNormOps_t bn_ops_;
+  string kernel_name_;
   double epsilon_;
   bool is_train_;
   bool is_null_input_;
+  Format format_;
 
   cudnnTensorDescriptor_t x_desc_;
   cudnnTensorDescriptor_t y_desc_;
@@ -341,4 +125,4 @@ class BatchNormGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
 };
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_FUSED_BATCH_NORM_GRAD_EX_GPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_BATCH_NORM_GRAD_GPU_KERNEL_H_

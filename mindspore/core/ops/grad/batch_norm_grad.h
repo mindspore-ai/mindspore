@@ -18,25 +18,44 @@
 #define MINDSPORE_CORE_OPS_BATCH_NORM_GRAD_H_
 #include <vector>
 #include <memory>
+#include <string>
 #include "ops/base_operator.h"
 #include "mindapi/base/types.h"
+#include "mindapi/base/format.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameBatchNormGrad = "BatchNormGrad";
+constexpr auto kNameBatchNormGradWithActivation = "BatchNormGradWithActivation";
+constexpr auto kNameBatchNormGradWithAddAndActivation = "BatchNormGradWithAddAndActivation";
 class MIND_API BatchNormGrad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(BatchNormGrad);
   BatchNormGrad() : BaseOperator(kNameBatchNormGrad) {}
-  void Init(const bool is_training = false, const float epsilon = 1e-05);
+  explicit BatchNormGrad(const std::string kernel_name) : BaseOperator(kernel_name) {}
+  void Init(const bool is_training = false, const float epsilon = 1e-05, const Format &format = NCHW,
+            const std::string &inplace_algo = "cover");
   void set_is_training(const bool is_training);
   void set_epsilon(const float epsilon);
+  void set_format(const Format &format);
   bool get_is_training() const;
   float get_epsilon() const;
+  Format get_format() const;
+  std::string get_inplace_algo() const;
+  void set_inplace_algo(const std::string &inplace_algo);
 };
 
-abstract::AbstractBasePtr BatchNormGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                             const std::vector<abstract::AbstractBasePtr> &input_args);
+class MIND_API BatchNormGradWithActivation : public BatchNormGrad {
+ public:
+  MIND_API_BASE_MEMBER(BatchNormGradWithActivation);
+  BatchNormGradWithActivation() : BatchNormGrad(kNameBatchNormGradWithActivation) {}
+};
+
+class MIND_API BatchNormGradWithAddAndActivation : public BatchNormGrad {
+ public:
+  MIND_API_BASE_MEMBER(BatchNormGradWithAddAndActivation);
+  BatchNormGradWithAddAndActivation() : BatchNormGrad(kNameBatchNormGradWithAddAndActivation) {}
+};
 }  // namespace ops
 }  // namespace mindspore
 
