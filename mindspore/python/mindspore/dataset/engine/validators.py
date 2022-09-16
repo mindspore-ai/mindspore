@@ -1229,14 +1229,28 @@ def check_bucket_batch_by_length(method):
     return new_method
 
 
+def get_batch_kwargs_from_dict(param_dict):
+    """get batch operation kwargs parameters."""
+    if param_dict is not None:
+        per_batch_map = param_dict.get("per_batch_map", None)
+        input_columns = param_dict.get("input_columns", None)
+        output_columns = param_dict.get("output_columns", None)
+        column_order = param_dict.get("column_order", None)
+        pad_info = param_dict.get("pad_info", None)
+        python_multiprocessing = param_dict.get("python_multiprocessing", False)
+        max_rowsize = param_dict.get("max_rowsize", 16)
+    return per_batch_map, input_columns, output_columns, column_order, pad_info, python_multiprocessing, max_rowsize
+
+
 def check_batch(method):
     """check the input arguments of batch."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
-        [batch_size, drop_remainder, num_parallel_workers, per_batch_map,
-         input_columns, output_columns, column_order, pad_info,
-         python_multiprocessing, max_rowsize], param_dict = parse_user_args(method, *args, **kwargs)
+        [batch_size, drop_remainder, num_parallel_workers, param_dict], _ = parse_user_args(method, *args, **kwargs)
+
+        (per_batch_map, input_columns, output_columns, column_order, pad_info, python_multiprocessing, max_rowsize) = \
+            get_batch_kwargs_from_dict(param_dict)
 
         if not (isinstance(batch_size, int) or (callable(batch_size))):
             raise TypeError("batch_size should either be an int or a callable.")
