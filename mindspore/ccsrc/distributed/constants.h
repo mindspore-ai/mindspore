@@ -80,6 +80,11 @@ const uint16_t kDefaultSchedPort = 6667;
 const uint16_t kMaxPort = 65535;
 constexpr uint32_t kDefaultFinishTimeout = 30;
 
+constexpr char kDataSyncSrcOpName[] = "DataSyncSrc";
+constexpr char kDataSyncDstOpName[] = "DataSyncDst";
+constexpr char kControlSrcOpName[] = "ControlSrc";
+constexpr char kControlDstOpName[] = "ControlDst";
+
 // This macro the current timestamp in milliseconds.
 #define CURRENT_TIMESTAMP_MILLI \
   (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()))

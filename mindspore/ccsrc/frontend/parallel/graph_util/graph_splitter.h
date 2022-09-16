@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_FRONTEND_PARALLEL_GRAPH_UTIL_GRAPH_SPLITTER_H_
 
 #include <map>
+#include <set>
 #include <tuple>
 #include <utility>
 #include <string>
@@ -66,6 +67,14 @@ struct InterProcessEdgeLabel {
 
 // The map of all nodes in the graph to their distributed split label.
 using NodeLabels = std::map<AnfNodePtr, OperatorLabel>;
+
+// The list of data-sync node pairs.
+using DataSyncNodePairList = std::vector<std::pair<CNodePtr, CNodePtr>>;
+
+// The pair of control edge nodes.
+using ControlEdgeNodePair = std::pair<CNodePtr, CNodePtr>;
+// The pair list of control edge nodes.
+using ControlEdgeNodePairList = std::vector<std::pair<CNodePtr, CNodePtr>>;
 
 // The judging functions for different modes because the logic will change under different execution modes. If labels
 // are not matched, the send and recv nodes should be inserted.
@@ -248,6 +257,43 @@ bool NodeHasLabel(const AnfNodePtr &node);
  */
 bool GraphHasLabel(const FuncGraphPtr &func_graph);
 
+/**
+ * @description: Get node list of side effect nodes in the func_graph.
+ * @param {AnfNodePtrList} &nodes: All nodes of the func_graph.
+ * @return {CNodePtrList}: Side effect node list.
+ */
+CNodePtrList GetSideEffectNodeList(const AnfNodePtrList &nodes);
+
+/**
+ * @description: Get reference inputs of the cnode.
+ * @param {CNodePtr} &cnode: Node with side effect.
+ * @return {AnfNodePtrList}: The reference inputs node list.
+ */
+AnfNodePtrList GetRefInputs(const CNodePtr &cnode);
+
+/**
+ * @description: Find the UpdateState node which is the user of the input cnode.
+ * @param {FuncGraphPtr} &func_graph: The graph.
+ * @param {CNodePtr} &cnode: The node with side effect.
+ * @return {CNodePtr}: UpdateState node.
+ */
+CNodePtr FindNextUpdateStateNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
+
+/**
+ * @description: Create 'U' node which is the input of user created side effect nodes like RpcRecv, UpdateState, etc.
+ * @return {CNodePtr}: UMonad node.
+ */
+ValueNodePtr CreateUMonadNode();
+
+/**
+ * @description: Create UpdateState node manually.
+ * @param {FuncGraphPtr} &func_graph: The func_graph.
+ * @param {AnfNodePtrList} &update_state_inputs: Inputs of UpdateState node. Normally first is UMonadNode, which is
+ * created inside this method. the others are other side effect nodes passed by caller.
+ * @return {CNodePtr}: UpdateState node.
+ */
+CNodePtr CreateUpdateStateNode(const FuncGraphPtr &func_graph, const AnfNodePtrList &update_state_inputs);
+
 // Base class for different execution modes. It builds distributed graphs, optimize execution performance, etc.
 class DistributedExecutionMode {
  public:
@@ -404,11 +450,25 @@ class GraphSplitter {
   // with the same 'color'.
   void DyeGraph();
 
+  /**
+   * @description: Add data-sync node pairs for reference nodes like trainable parameters. These nodes are used to
+   * synchronize updates of parameters between nodes.
+   * @return {void}
+   */
+  void ProcessRefNodes();
+
   // Create the execution mode.
   void CreateExecutionMode();
 
   // Traverse all nodes and split these nodes to multiple segments according to the split label.
   std::vector<SplitGraphSegment> GenerateSplitSegments();
+
+  /**
+   * @description: Add some extra control edges between nodes with different labels to keep the consistency of
+   * topo-sort.
+   * @return {void}
+   */
+  void AddExtraControlEdgeAcrossProcess();
 
   // Generate Send-Recv pairs for the nodes which has different split.
   // Because nodes with different split label from this proccess's with be on another machine, we use Send-Recv pairs to
@@ -418,6 +478,66 @@ class GraphSplitter {
   // Eliminate nodes which are on other machine's graphs and add control edges for nodes of this process's graph.
   void SplitGraph(const std::vector<SplitGraphSegment> &segments, const InterProcessOpEdgesInfo &comm_edges);
   void SplitGraph(const FusedInterProcessOpPairMap &fused_inter_process_op_pairs);
+
+  /**
+   * @description: Add data-sync nodes for reference nodes. To ensure the control edges, the data-sync nodes should be
+   * add to the UpdateState node's input:
+   * SideEffectNode(Ref1, Ref2, U)
+   *              |             |
+   *              |             |
+   *              |        DataSyncSrcNode(Ref1, Ref2)
+   *              |             |
+   *              |        DataSyncDstNode(Ref1, Ref2)
+   * UpdateState(U, SideEffectNode, DataSyncDstNode)
+   *
+   * The topology relationship is shown above: After SideEffectNode is launched and could have updated Ref1 and Ref2,
+   * data-sync nodes are inserted and connected to UpdateState node so that nodes after UpdateState will not be launched
+   * until the data is synchronized.
+   * @param {CNodePtr} &update_state_node: The update state node which is the reference node's user.
+   * @param {AnfNodePtrList} &ref_nodes: Reference nodes need to be synchronized.
+   * @return {void}
+   */
+  void AddDataSyncNode(const CNodePtr &side_effect_node, const CNodePtr &update_state_node,
+                       const AnfNodePtrList &ref_nodes);
+
+  /**
+   * @description: Create data-sync node pairs for the reference node. It may need to be synchronized to multiple
+   * processes.
+   * @param {CNodePtr} &side_effect_node: The node with side effect using reference node as input.
+   * @param {AnfNodePtr} &ref: The reference node.
+   * @param {vector<OperatorLabel>} &diff_labels: The operator label list of each process to which the reference node
+   * data will be synchronized.
+   * @return {DataSyncNodePairList}: The list of data-sync nodes.
+   */
+  DataSyncNodePairList CreateDataSyncNodes(const CNodePtr &side_effect_node, const AnfNodePtr &ref,
+                                           const std::set<OperatorLabel> &diff_labels);
+
+  /**
+   * @description: For processes without any indegree, control edge should be connected from process with default label.
+   * This is to avoid these processes
+   * @return {void}
+   */
+  void AddControlEdgeForProcessWithoutIndegree();
+
+  /**
+   * @description: Create src and dst node of a control edge with the specified src and dst operator labels.
+   *              ControlSrc(1.0)
+   *                   |
+   *                   |
+   *              ControlDst()
+   * @param {OperatorLabel} &src_label: Control edge src label.
+   * @param {OperatorLabel} &dst_label: Control edge dst label.
+   * @return {ControlEdgeNodePair}: The nodes pair.
+   */
+  ControlEdgeNodePair CreateControlEdgeNode(const OperatorLabel &src_label, const OperatorLabel &dst_label);
+
+  /**
+   * @description: The data-sync nodes and control-edge nodes should be eliminated at the end of the splitting process.
+   * These nodes are just for graph splitting and have no corresponding backend kernels.
+   * @return {void}
+   */
+  void EliminateDataSyncNode();
+  void EliminateControlEdgeNode();
 
   // Split the graph but don't eliminate the nodes so that a global graph ir could be exported.
   void DumpDistributedGraph(const InterProcessOpEdgesInfo &comm_edges);
@@ -466,6 +586,9 @@ class GraphSplitter {
   // Check whether need split distributed graph.
   bool NeedSplitGraph() const;
 
+  // Return whether this node has corresponding label stored in node_labels_.
+  bool NodeHasLabel(const AnfNodePtr &node);
+
   FuncGraphPtr func_graph_;
 
   // Rank id and node role of this process. They are used to dye graph with different labels, help build split graph,
@@ -486,6 +609,9 @@ class GraphSplitter {
 
   // The map of all nodes in the graph to their distributed split label.
   NodeLabels node_labels_;
+
+  // All labels in the graph.
+  std::set<OperatorLabel> all_labels_;
 
   // Whether need to fuse rpc nodes.
   bool need_fuse_rpc_nodes_;
