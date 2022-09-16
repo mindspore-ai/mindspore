@@ -1463,14 +1463,15 @@ void ControlNodeScheduler::LinkDataArrowForCustomActor(const ActorSet *actor_set
       if (parser->IsCallInputKernelGraph(graph.get())) {
         from_base_actor = FetchActor(parser->FetchGroupNameByKernelGraph(graph) + kStackActorNameSuffix);
         MS_EXCEPTION_IF_NULL(from_base_actor);
+      } else if (!front_node_with_index.first->isa<Parameter>()) {
+        MS_LOG(INFO) << "Internal front node:" << front_node_with_index.first->DebugString()
+                     << " index:" << front_node_with_index.second << " for custom actor:" << custom_actor->GetAID()
+                     << " kernel:" << kernel->fullname_with_scope() << " input index:" << *iter;
+        const auto &from_graph = parser->FetchKernelGraphByFrontNode(front_node_with_index.first);
+        MS_EXCEPTION_IF_NULL(from_graph);
+        from_base_actor = FetchActor(parser->FetchGroupNameByKernelGraph(from_graph) + kExitActorNameSuffix);
+        MS_EXCEPTION_IF_NULL(from_base_actor);
       } else {
-        if (!front_node_with_index.first->isa<Parameter>()) {
-          MS_LOG(EXCEPTION) << "Invalid front node:" << front_node_with_index.first->DebugString()
-                            << " index:" << front_node_with_index.second
-                            << " for custom actor:" << custom_actor->GetAID()
-                            << " kernel:" << kernel->fullname_with_scope() << " input index:" << *iter
-                            << ",it should be a parameter.";
-        }
         const auto &func_graph = front_node_with_index.first->func_graph();
         MS_EXCEPTION_IF_NULL(func_graph);
         from_base_actor = FetchActor(func_graph->ToString() + kEntranceActorNameSuffix);
@@ -1579,6 +1580,20 @@ void ControlNodeScheduler::LinkDataArrowByKernelGraph(const KernelGraphPtr &grap
         auto actor = FetchActor(actor_name);
         MS_EXCEPTION_IF_NULL(actor);
         from_actor = dynamic_cast<ControlActor *>(actor);
+      } else if (from_node->isa<CNode>() && (from_actor->type() != KernelTransformType::kStackActor)) {
+        // If the input is an internal parameter, the input arrow should be linked to the exit actor of the kernel
+        // graph which the internal parameter belong.
+        MS_LOG(INFO) << "Internal parameter in control flow, backend input:" << input->DebugString()
+                     << " front node:" << from_node->DebugString();
+        const auto &from_graph = parser->FetchKernelGraphByFrontNode(from_node);
+        MS_EXCEPTION_IF_NULL(from_graph);
+        auto actor = FetchActor(parser->FetchGroupNameByKernelGraph(from_graph) + kExitActorNameSuffix);
+        MS_EXCEPTION_IF_NULL(actor);
+        auto exit_actor = dynamic_cast<ControlActor *>(actor);
+        from_index = exit_actor->FetchNodePosition(from_node_with_index);
+        SchedulerHelper::AddFormalParameterDeviceTensor(exit_actor, from_index, input, graph);
+        SchedulerHelper::AddDataArrow(exit_actor, to_actor, from_index, i);
+        continue;
       } else {
         from_index = from_actor->FetchNodePosition(from_node_with_index);
       }
