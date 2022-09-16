@@ -85,8 +85,6 @@ class _OutputTo32(nn.Cell):
     def __init__(self, backbone):
         super(_OutputTo32, self).__init__(auto_prefix=False)
         self._backbone = backbone
-        if backbone.jit_config_dict:
-            self._jit_config_dict = backbone.jit_config_dict
 
     def construct(self, *inputs):
         out = self._backbone(*inputs)
