@@ -34,13 +34,13 @@ class TimeMonitor(Callback):
         ValueError: If data_size is not positive int.
 
     Examples:
-        >>> import mindspore as ms
         >>> from mindspore import nn
+        >>> from mindspore.train import Model, TimeMonitor
         >>>
         >>> net = LeNet5()
         >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
         >>> optim = nn.Momentum(net.trainable_params(), 0.01, 0.9)
-        >>> model = ms.Model(net, loss_fn=loss, optimizer=optim)
+        >>> model = Model(net, loss_fn=loss, optimizer=optim)
         >>> data_path = './MNIST_Data'
         >>> dataset = create_dataset(data_path)
         >>> time_monitor = TimeMonitor()

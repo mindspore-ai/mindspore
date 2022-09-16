@@ -1,7 +1,7 @@
-mindspore.ReduceLROnPlateau
-================================
+mindspore.train.ReduceLROnPlateau
+=================================
 
-.. py:class:: mindspore.ReduceLROnPlateau(monitor='eval_loss', factor=0.1, patience=10, verbose=False, mode='auto', min_delta=1e-4, cooldown=0, min_lr=0)
+.. py:class:: mindspore.train.ReduceLROnPlateau(monitor='eval_loss', factor=0.1, patience=10, verbose=False, mode='auto', min_delta=1e-4, cooldown=0, min_lr=0)
 
     当 `monitor` 停止改进时降低学习率。
 

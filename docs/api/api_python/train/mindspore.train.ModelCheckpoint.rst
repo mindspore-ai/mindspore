@@ -1,7 +1,7 @@
-mindspore.ModelCheckpoint
-================================
+mindspore.train.ModelCheckpoint
+===============================
 
-.. py:class:: mindspore.ModelCheckpoint(prefix='CKP', directory=None, config=None)
+.. py:class:: mindspore.train.ModelCheckpoint(prefix='CKP', directory=None, config=None)
 
     checkpoint的回调函数。
 

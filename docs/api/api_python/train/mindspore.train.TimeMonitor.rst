@@ -1,7 +1,7 @@
-mindspore.TimeMonitor
-================================
+mindspore.train.TimeMonitor
+===========================
 
-.. py:class:: mindspore.TimeMonitor(data_size=None)
+.. py:class:: mindspore.train.TimeMonitor(data_size=None)
 
     监控训练或推理的时间。
 

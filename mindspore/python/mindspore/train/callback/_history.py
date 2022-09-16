@@ -35,16 +35,16 @@ class History(Callback):
 
     Examples:
         >>> import numpy as np
-        >>> import mindspore as ms
         >>> import mindspore.dataset as ds
         >>> from mindspore import nn
+        >>> from mindspore.train import Model, History
         >>> data = {"x": np.float32(np.random.rand(64, 10)), "y": np.random.randint(0, 5, (64,))}
         >>> train_dataset = ds.NumpySlicesDataset(data=data).batch(32)
         >>> net = nn.Dense(10, 5)
         >>> crit = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
         >>> opt = nn.Momentum(net.trainable_params(), 0.01, 0.9)
-        >>> history_cb = ms.History()
-        >>> model = ms.Model(network=net, optimizer=opt, loss_fn=crit, metrics={"recall"})
+        >>> history_cb = History()
+        >>> model = Model(network=net, optimizer=opt, loss_fn=crit, metrics={"recall"})
         >>> model.train(2, train_dataset, callbacks=[history_cb])
         >>> print(history_cb.epoch)
         >>> print(history_cb.history)

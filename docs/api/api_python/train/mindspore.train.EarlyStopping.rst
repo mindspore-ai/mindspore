@@ -1,7 +1,7 @@
-mindspore.EarlyStopping
-================================
+mindspore.train.EarlyStopping
+=============================
 
-.. py:class:: mindspore.EarlyStopping(monitor='eval_loss', min_delta=0, patience=0, verbose=False, mode='auto', baseline=None, restore_best_weights=False)
+.. py:class:: mindspore.train.EarlyStopping(monitor='eval_loss', min_delta=0, patience=0, verbose=False, mode='auto', baseline=None, restore_best_weights=False)
 
     当监控的指标停止改进时停止训练。
 

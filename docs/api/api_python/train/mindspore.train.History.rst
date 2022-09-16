@@ -1,7 +1,7 @@
-mindspore.History
-===========================
+mindspore.train.History
+=======================
 
-.. py:class:: mindspore.History
+.. py:class:: mindspore.train.History
 
     将网络输出和评估指标的相关信息记录到 `History` 对象中。
 

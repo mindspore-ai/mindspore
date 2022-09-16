@@ -63,32 +63,6 @@ mindspore
     mindspore.get_algo_parameters
     mindspore.reset_algo_parameters
 
-模型
------
-
-.. mscnautosummary::
-    :toctree: mindspore
-
-    mindspore.Model
-
-回调函数
----------
-
-.. mscnautosummary::
-    :toctree: mindspore
-
-    mindspore.Callback
-    mindspore.CheckpointConfig
-    mindspore.EarlyStopping
-    mindspore.History
-    mindspore.LambdaCallback
-    mindspore.LearningRateScheduler
-    mindspore.LossMonitor
-    mindspore.ModelCheckpoint
-    mindspore.ReduceLROnPlateau
-    mindspore.RunContext
-    mindspore.TimeMonitor
-
 数据处理工具
 -------------------
 

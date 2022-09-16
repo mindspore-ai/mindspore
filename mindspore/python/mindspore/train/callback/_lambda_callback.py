@@ -45,17 +45,17 @@ class LambdaCallback(Callback):
 
     Examples:
         >>> import numpy as np
-        >>> import mindspore as ms
         >>> import mindspore.dataset as ds
         >>> from mindspore import nn
+        >>> from mindspore.train import Model, LambdaCallback
         >>> data = {"x": np.float32(np.random.rand(64, 10)), "y": np.random.randint(0, 5, (64,))}
         >>> train_dataset = ds.NumpySlicesDataset(data=data).batch(32)
         >>> net = nn.Dense(10, 5)
         >>> crit = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
         >>> opt = nn.Momentum(net.trainable_params(), 0.01, 0.9)
-        >>> lambda_callback = ms.LambdaCallback(on_train_epoch_end=
+        >>> lambda_callback = LambdaCallback(on_train_epoch_end=
         ... lambda run_context: print("loss: ", run_context.original_args().net_outputs))
-        >>> model = ms.Model(network=net, optimizer=opt, loss_fn=crit, metrics={"recall"})
+        >>> model = Model(network=net, optimizer=opt, loss_fn=crit, metrics={"recall"})
         >>> model.train(2, train_dataset, callbacks=[lambda_callback])
         loss: 1.6127687
         loss: 1.6106578

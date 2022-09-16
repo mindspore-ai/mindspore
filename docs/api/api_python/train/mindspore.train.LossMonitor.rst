@@ -1,7 +1,7 @@
-mindspore.LossMonitor
-================================
+mindspore.train.LossMonitor
+===========================
 
-.. py:class:: mindspore.LossMonitor(per_print_times=1)
+.. py:class:: mindspore.train.LossMonitor(per_print_times=1)
 
     训练场景下，监控训练的loss；边训练边推理场景下，监控训练的loss和推理的metrics。
 

@@ -177,6 +177,7 @@ class SummaryCollector(Callback):
     Examples:
         >>> import mindspore as ms
         >>> import mindspore.nn as nn
+        >>> from mindspore.train import Model, SummaryCollector
         >>> from mindspore.nn import Accuracy
         >>>
         >>> if __name__ == '__main__':
@@ -189,15 +190,15 @@ class SummaryCollector(Callback):
         ...     network = LeNet5(10)
         ...     net_loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
         ...     net_opt = nn.Momentum(network.trainable_params(), 0.01, 0.9)
-        ...     model = ms.Model(network, net_loss, net_opt, metrics={"Accuracy": Accuracy()}, amp_level="O2")
+        ...     model = Model(network, net_loss, net_opt, metrics={"Accuracy": Accuracy()}, amp_level="O2")
         ...
         ...     # Simple usage:
-        ...     summary_collector = ms.SummaryCollector(summary_dir='./summary_dir')
+        ...     summary_collector = SummaryCollector(summary_dir='./summary_dir')
         ...     model.train(1, ds_train, callbacks=[summary_collector], dataset_sink_mode=False)
         ...
         ...     # Do not collect metric and collect the first layer parameter, others are collected by default
         ...     specified={'collect_metric': False, 'histogram_regular': '^conv1.*'}
-        ...     summary_collector = ms.SummaryCollector(summary_dir='./summary_dir', collect_specified_data=specified)
+        ...     summary_collector = SummaryCollector(summary_dir='./summary_dir', collect_specified_data=specified)
         ...     model.train(1, ds_train, callbacks=[summary_collector], dataset_sink_mode=False)
     """
 

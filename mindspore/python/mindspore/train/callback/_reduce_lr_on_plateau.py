@@ -81,8 +81,8 @@ class ReduceLROnPlateau(Callback):
         ValueError: The learning rate is not a Parameter.
 
     Examples:
-        >>> from mindspore.train.callback import ReduceLROnPlateau
-        >>> from mindspore import Model, nn
+        >>> from mindspore import nn
+        >>> from mindspore.train import Model, ReduceLROnPlateau
         >>> net = LeNet5()
         >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
         >>> optim = nn.Momentum(net.trainable_params(), 0.01, 0.9)
