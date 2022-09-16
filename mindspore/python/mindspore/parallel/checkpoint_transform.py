@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """Transform distributed checkpoint"""
+from __future__ import absolute_import
+
 import os
 import glob
 import copy
@@ -203,7 +205,7 @@ def transform_checkpoints(src_checkpoints_dir, dst_checkpoints_dir, ckpt_prefix,
             param_total_dict_copy = copy.deepcopy(param_total_dict)
             transform_param_list = _transform_parallel_checkpoint(transform_rank, param_total_dict_copy,
                                                                   param_attr_dict, src_strategy_file, dst_strategy_file)
-            save_checkpoint_file = ckpt_prefix + str(transform_rank) + ".ckpt"
+            save_checkpoint_file = os.path.join(ckpt_prefix, str(transform_rank), ".ckpt")
             save_checkpoint_file_dir = os.path.join(dst_checkpoints_dir, "rank_{}".format(transform_rank))
             if not os.path.exists(save_checkpoint_file_dir):
                 _make_dir(save_checkpoint_file_dir, "path")
