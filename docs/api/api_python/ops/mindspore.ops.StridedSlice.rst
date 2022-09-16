@@ -7,14 +7,14 @@
 
     该算子在给定的 `input_tensor` 中提取大小为 `(end-begin)/stride` 的片段。从起始位置开始，根据步长和索引进行提取，直到所有维度的都不小于结束位置为止。
 
-    给定一个 `input_x[m1, m2, ...、mn]` 。 `begin` 、 `end` 和 `strides` 是长度为n的向量。
+    给定一个 `input_x[m1, m2, ...、mn]` ， `begin` 、 `end` 和 `strides` 是长度为n的向量。
 
     在每个掩码字段中（`begin_mask`、`end_mask`、`ellipsis_mask`、`new_axis_mask`、`shrink_axis_mask`），第i位将对应于第i个m。
 
-    对于每个特定的mask，内部先将其转化为二进制表示，然后倒序排布后进行计算。比如说对于一个5*6*7的Tensor，mask设置为3，3转化为二进制表示为ob011，倒序
-    后为ob110，则该mask只在第0维和第1维产生作用，下面各自举例说明。
+    对于每个特定的mask，内部先将其转化为二进制表示，然后倒序排布后进行计算。比如说对于一个5*6*7的Tensor，mask设置为3，3转化为二进制表示为ob011。倒序
+    后为ob110，则该mask只在第0维和第1维产生作用。下面各自举例说明：
 
-    如果设置了 `begin_mask` 的第i位，则忽略 `begin[i]`，而使用该维度的最大可能取值范围， `begin_mask` 使用方法与之类似。
+    如果设置了 `begin_mask` 的第i位，则忽略 `begin[i]`，而使用该维度的最大可能取值范围。 `begin_mask` 使用方法与之类似。
 
     对于5*6*7的Tensor， `x[2:,:3,:]` 等同于 `x[2:5,0:3,0:7]` 。
 
@@ -28,7 +28,7 @@
 
     如果设置了 `shrink_axis_mask` 的第i位，则第i维被收缩掉，并忽略 `begin[i]` 、 `end[i]` 和 `strides[i]` 索引处的值。
 
-    对于5*6*7的Tensor， `x[:, 5, :]` 相当于将 `shrink_axis_mask` 设置为2, 使得输出shape为:math:`(5, 7)` 。
+    对于5*6*7的Tensor， `x[:, 5, :]` 相当于将 `shrink_axis_mask` 设置为2，使得输出shape为:math:`(5, 7)` 。
 
     .. note::
         步长可能为负值，这会导致反向切片。 `begin` 、 `end` 和 `strides` 的shape必须相同。 `begin` 和 `end` 是零索引。 `strides` 的元素必须非零。

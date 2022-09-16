@@ -33,7 +33,7 @@ mindspore.dataset.YelpReviewDataset
 
     **关于YelpReview数据集：**
 
-    Yelp Review Full数据集包括来自Yelp的评论数据，这些数据时从2015年的Yelp数据集挑战赛数据中提取的，主要用于文本分类。
+    Yelp Review Full数据集包括来自Yelp的评论数据。这些数据时从2015年的Yelp数据集挑战赛数据中提取的，主要用于文本分类。
 
     Yelp Review Polarity数据集在Full数据集的基础上，对产品评分进行了分级，评论分数1和2视为负面评论，4和5视为正面评论。
 

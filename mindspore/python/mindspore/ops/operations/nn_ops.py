@@ -1546,7 +1546,7 @@ class MaxPool(_Pool):
 
     Typically the input is of shape :math:`(N_{in}, C_{in}, H_{in}, W_{in})`, MaxPool outputs
     regional maximum in the :math:`(H_{in}, W_{in})`-dimension. Given kernel size
-    :math:`ks = (h_{ker}, w_{ker})` and stride :math:`s = (s_0, s_1)`, the operation is as follows.
+    :math:`ks = (h_{ker}, w_{ker})` and stride :math:`s = (s_0, s_1)`, the operation is as follows:
 
     .. math::
         \text{output}(N_i, C_j, h, w) = \max_{m=0, \ldots, h_{ker}-1} \max_{n=0, \ldots, w_{ker}-1}
@@ -6197,7 +6197,8 @@ class ApplyProximalAdagrad(Primitive):
 
 class SparseApplyProximalAdagrad(PrimitiveWithCheck):
     r"""
-    Updates relevant entries according to the proximal adagrad algorithm. Compared with ApplyProximalAdagrad,
+    Updates relevant entries according to the proximal adagrad algorithm.
+    Compared with :class:`mindspore.ops.ApplyProximalAdagrad`,
     an additional index tensor is input.
 
     .. math::
@@ -7239,9 +7240,9 @@ class DynamicRNN(PrimitiveWithInfer):
             h_{t+1} = o_{t+1} * \tanh(c_{t+1}) \\
         \end{array}
 
-    where :math:`h_{t+1}` is the hidden state at time `t+1`, :math:`x_{t+1}` is the input
-    at time `t+1`, :math:`h_{t}` is the hidden state of the layer
-    at time `t` or the initial hidden state at time `0`,
+    :math:`h_{t+1}` is the hidden state at time `t+1`. :math:`x_{t+1}` is the input
+    at time `t+1`. :math:`h_{t}` is the hidden state of the layer
+    at time `t` or the initial hidden state at time `0`.
     :math:`\sigma` is the sigmoid function, and :math:`*` is the Hadamard product. :math:`W, b`
     are learnable weights between the output and the input in the formula. For instance,
     :math:`W_{ix}, b_{ix}` are the weight and bias used to transform from input :math:`x` to :math:`i`.
@@ -7402,7 +7403,7 @@ class DynamicGRUV2(PrimitiveWithInfer):
 
     where :math:`h_{t+1}` is the hidden state at time `t+1`, :math:`x_{t+1}` is the input
     at time `t+1`, :math:`h_{t}` is the hidden state of the layer
-    at time `t` or the initial hidden state at time `0`, and :math:`r_{t+1}`,
+    at time `t` or the initial hidden state at time `0`. :math:`r_{t+1}`,
     :math:`z_{t+1}`, :math:`n_{t+1}` are the reset, update, and new gates, respectively.
     :math:`W`, :math:`b` are the weight parameter and the deviation parameter respectively.
     :math:`\sigma` is the sigmoid function, and :math:`*` is the Hadamard product.

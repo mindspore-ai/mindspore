@@ -61,7 +61,7 @@ mindspore.dataset.SpeechCommandsDataset
 
     SpeechCommands（语音命令）数据是用于有限词汇语音识别的数据集，包含105,829个'.wav'格式的音频样本。
 
-    以下是原始SpeechCommands的数据集结构，可以将数据集文件解压缩成此目录结构，并由MindSpore的API读取。
+    以下是原始SpeechCommands的数据集结构。可以将数据集文件解压缩成此目录结构，并由MindSpore的API读取。
 
     .. code-block::
 

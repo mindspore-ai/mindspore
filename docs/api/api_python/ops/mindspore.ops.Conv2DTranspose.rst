@@ -6,7 +6,7 @@ mindspore.ops.Conv2DTranspose
     计算二维转置卷积，也称为反卷积（实际不是真正的反卷积）。
 
     参数：
-        - **out_channel** (t) - 输出的通道数。
+        - **out_channel** (int) - 输出的通道数。
         - **kernel_size** (Union[int, tuple[int]]) - 卷积核的大小。
         - **pad_mode** (str) - 填充的模式。它可以是"valid"、"same"或"pad"。默认值："valid"。
         - **pad** (Union[int, tuple[int]]) - 指定要填充的填充值。默认值：0。如果 `pad` 是整数，则顶部、底部、左侧和右侧的填充都等于 `pad` 。如果 `pad` 是四个整数的tuple，则顶部、底部、左侧和右侧的填充分别等于pad[0]、pad[1]、pad[2]和pad[3]。
