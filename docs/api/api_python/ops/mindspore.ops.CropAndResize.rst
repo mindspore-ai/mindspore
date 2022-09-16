@@ -9,8 +9,8 @@ mindspore.ops.CropAndResize
         如果输出shape依赖于 `crop_size` 的值，则 `crop_size` 必须为常量。
 
     参数：
-        - **method** (str, optional) - 指定调整大小的采样方法，为可选字符串。提供的方法有："bilinear"、"nearest"或"bilinear_v2"。"bilinear"代表标准双线性插值算法，而"bilinear_v2"在某些情况下可能会产生更好的结果。默认值："bilinear"。
-        - **extrapolation_value** (float, optional) - 外插值，数据类型为float。默认值：0.0。
+        - **method** (str, 可选) - 指定调整大小的采样方法，为可选字符串。提供的方法有："bilinear"、"nearest"或"bilinear_v2"。"bilinear"代表标准双线性插值算法，而"bilinear_v2"在某些情况下可能会产生更好的结果。默认值："bilinear"。
+        - **extrapolation_value** (float, 可选) - 外插值，数据类型为float。默认值：0.0。
 
     输入：
         - **x** (Tensor) - 输入为四维的Tensor，其shape必须是 :math:`(batch, image\_height, image\_width, depth)` 。支持的数据类型：int8、int16、int32、int64、float16、float32、float64、uint8、uint16。

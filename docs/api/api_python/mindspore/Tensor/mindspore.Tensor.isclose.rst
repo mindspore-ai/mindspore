@@ -7,9 +7,9 @@ mindspore.Tensor.isclose
 
     参数：
         - **x2** (Tensor) - 对比的第二个输入，支持的类型有float32，float16，int32。
-        - **rtol** (float, optional) - 相对容忍度。默认值：1e-05。
-        - **atol** (float, optional) - 绝对容忍度。默认值：1e-08。
-        - **equal_nan** (bool, optional) - IsNan的输入，任意维度的Tensor。默认值：False。
+        - **rtol** (float, 可选) - 相对容忍度。默认值：1e-05。
+        - **atol** (float, 可选) - 绝对容忍度。默认值：1e-08。
+        - **equal_nan** (bool, 可选) - IsNan的输入，任意维度的Tensor。默认值：False。
 
     返回：
         Tensor，shape与广播后的shape相同，数据类型是布尔型。

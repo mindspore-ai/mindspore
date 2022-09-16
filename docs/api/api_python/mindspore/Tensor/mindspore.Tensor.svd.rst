@@ -8,8 +8,8 @@ mindspore.Tensor.svd
     更多参考详见 :func:`mindspore.ops.svd`。
 
     参数：
-        - **full_matrices** (bool, optional) - 如果这个参数为True，则计算完整的 :math:`U` 和 :math:`V` 。否则 :math:`U` 和 :math:`V` 的shape和P有关。P是M和N的较小值。M和N是输入矩阵的行和列。默认值：False。
-        - **compute_uv** (bool, optional) - 如果这个参数为True，则计算 :math:`U` 和 :math:`V` 。如果为false，只计算 :math:`S` 。默认值：True。
+        - **full_matrices** (bool, 可选) - 如果这个参数为True，则计算完整的 :math:`U` 和 :math:`V` 。否则 :math:`U` 和 :math:`V` 的shape和P有关。P是M和N的较小值。M和N是输入矩阵的行和列。默认值：False。
+        - **compute_uv** (bool, 可选) - 如果这个参数为True，则计算 :math:`U` 和 :math:`V` 。如果为false，只计算 :math:`S` 。默认值：True。
 
     返回：
         - **s** (Tensor) - 奇异值。shape为 :math:`(*, P)`。

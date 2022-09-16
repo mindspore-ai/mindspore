@@ -7,9 +7,9 @@ mindspore.ops.unique_consecutive
 
     参数：
         - **x** (Tensor) - 输入Tensor。
-        - **return_idx** (bool, optional) - 是否返回每个去重元素在输入中所在的连续序列的末尾位置的索引。默认值：False。
-        - **return_counts** (bool, optional) - 是否返回每个去重元素在输入所在的连续序列的计数。默认值：False。
-        - **axis** (int, optional) - 维度。如果为None，则对输入进行展平操作。如果指定，必须是int32或int64类型。默认值：None。
+        - **return_idx** (bool, 可选) - 是否返回每个去重元素在输入中所在的连续序列的末尾位置的索引。默认值：False。
+        - **return_counts** (bool, 可选) - 是否返回每个去重元素在输入所在的连续序列的计数。默认值：False。
+        - **axis** (int, 可选) - 维度。如果为None，则对输入进行展平操作。如果指定，必须是int32或int64类型。默认值：None。
 
     返回：
         Tensor或包含Tensor对象的元组（ `output` 、 `idx` 、 `counts` ）。 

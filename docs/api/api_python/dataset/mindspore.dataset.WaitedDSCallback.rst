@@ -14,7 +14,7 @@ mindspore.dataset.WaitedDSCallback
     .. note:: 注意，第2个step或epoch开始时才会触发该调用。
 
     参数：
-        - **step_size** (int, optional) - 每个step包含的数据行数。通常step_size与batch_size一致，默认值：1。
+        - **step_size** (int, 可选) - 每个step包含的数据行数。通常step_size与batch_size一致，默认值：1。
 
     .. py:method:: sync_epoch_begin(train_run_context, ds_run_context)
 

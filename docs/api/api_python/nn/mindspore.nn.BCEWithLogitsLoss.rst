@@ -24,8 +24,8 @@ mindspore.nn.BCEWithLogitsLoss
 
     参数：
         - **reduction** (str) - 指定输出结果的计算方式。可选值有：'mean' ， 'sum' ，和 'none' 。如果为 'none' ，则不执行reduction。默认值：'mean' 。
-        - **weight** (Tensor, optional) - 指定每个批次二值交叉熵的权重。如果不是None，将进行广播，其shape与 `logits` 的shape保持一致，数据类型为float16或float32。默认值：None。
-        - **pos_weight** (Tensor, optional) - 指定正样本的权重。是一个长度等于分类数的向量。如果不是None，将进行广播，其shape与 `logits` 的shape保持一致，数据类型必须为float16或float32。默认值：None。
+        - **weight** (Tensor, 可选) - 指定每个批次二值交叉熵的权重。如果不是None，将进行广播，其shape与 `logits` 的shape保持一致，数据类型为float16或float32。默认值：None。
+        - **pos_weight** (Tensor, 可选) - 指定正样本的权重。是一个长度等于分类数的向量。如果不是None，将进行广播，其shape与 `logits` 的shape保持一致，数据类型必须为float16或float32。默认值：None。
 
     输入：
         - **logits** (Tensor) - 输入预测值Tensor，shape :math:`(N,*)` ，其中 `*` 代表任意数量的附加维度。数据类型必须为float16或float32。

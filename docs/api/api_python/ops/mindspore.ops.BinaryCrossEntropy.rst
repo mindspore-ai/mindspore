@@ -30,7 +30,7 @@ mindspore.ops.BinaryCrossEntropy
     输入：
         - **logits** (Tensor) - 输入预测值。任意维度的Tensor，其数据类型必须为float16或float32。
         - **labels** (Tensor) - 输入目标值，其shape和数据类型与 `logits` 相同。
-        - **weight** (Tensor, optional) - 每个批次二值交叉熵的权重。且shape和数据类型必须与 `logits` 相同。默认值：None。
+        - **weight** (Tensor, 可选) - 每个批次二值交叉熵的权重。且shape和数据类型必须与 `logits` 相同。默认值：None。
 
     输出：
         Tensor，与 `logits` 有相同的数据类型。如果 `reduction` 为'none'，则shape与 `logits` 相同。否则，输出为Scalar Tensor。
