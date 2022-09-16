@@ -19,11 +19,11 @@ from __future__ import absolute_import
 import functools
 from mindspore.common.dtype import type_size_in_bytes
 import mindspore.context as context
-from ..._checkparam import Validator as validator
-from ...common import dtype as mstype
-from ..primitive import prim_attr_register, PrimitiveWithInfer, Primitive
-from ..._checkparam import Rel
-from ...communication.management import GlobalComm
+from mindspore._checkparam import Validator as validator
+from mindspore.common import dtype as mstype
+from mindspore.ops.primitive import prim_attr_register, PrimitiveWithInfer, Primitive
+from mindspore._checkparam import Rel
+from mindspore.communication.management import GlobalComm
 
 
 class EnvCreate(PrimitiveWithInfer):

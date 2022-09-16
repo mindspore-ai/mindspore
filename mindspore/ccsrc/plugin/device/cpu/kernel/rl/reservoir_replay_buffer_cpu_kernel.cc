@@ -40,7 +40,6 @@ bool ReservoirReplayBufferCreateCpuKernel::Init(const BaseOperatorPtr &base_oper
     return false;
   }
 
-  const int64_t &capacity = kernel_ptr->get_capacity();
   const std::vector<int64_t> &schema = kernel_ptr->get_schema();
   const int64_t &seed0 = kernel_ptr->get_seed0();
   const int64_t &seed1 = kernel_ptr->get_seed1();
@@ -60,6 +59,7 @@ bool ReservoirReplayBufferCreateCpuKernel::Init(const BaseOperatorPtr &base_oper
                        [](const int64_t &arg) -> size_t { return LongToSize(arg); });
 
   auto &factory = ReservoirReplayBufferFactory::GetInstance();
+  const int64_t &capacity = kernel_ptr->get_capacity();
   std::tie(handle_, reservoir_replay_buffer_) = factory.Create(seed, capacity, schema_in_size);
   MS_EXCEPTION_IF_NULL(reservoir_replay_buffer_);
 

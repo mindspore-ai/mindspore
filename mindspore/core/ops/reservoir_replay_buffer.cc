@@ -193,12 +193,11 @@ void ReservoirReplayBufferSample::Init(const int64_t &handle, const int64_t &bat
     size_t tensor_size = std::accumulate(shapes[i].begin(), shapes[i].end(), type_size, std::multiplies<int64_t>());
     schema.push_back(tensor_size);
   }
-
+  this->set_schema(schema);
   this->set_handle(handle);
   this->set_batch_size(batch_size);
   this->set_shapes(shapes);
   this->set_types(types);
-  this->set_schema(schema);
 }
 
 void ReservoirReplayBufferDestroy::set_handle(const int64_t &handle) {
@@ -258,7 +257,7 @@ AbstractBasePtr SampleInfer(const abstract::AnalysisEnginePtr &, const Primitive
     (void)shape.emplace(shape.begin(), batch_size);
     auto element = std::make_shared<abstract::AbstractScalar>(kAnyValue, types[i]);
     auto tensor = std::make_shared<abstract::AbstractTensor>(element, std::make_shared<abstract::Shape>(shape));
-    output.emplace_back(tensor);
+    (void)output.emplace_back(tensor);
   }
 
   return std::make_shared<abstract::AbstractTuple>(output);
