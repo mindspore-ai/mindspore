@@ -76,7 +76,7 @@ class GPUEnvChecker(EnvChecker):
                                "installation guidelines: https://www.mindspore.cn/install")
             else:
                 logger.warning(f"MindSpore version {__version__} and cuda version {self.v} does not match, "
-                               "CUDA version [{self.version}] are supported by MindSpore officially. "
+                               f"CUDA version [{self.version}] are supported by MindSpore officially. "
                                "Please refer to the installation guide for version matching "
                                "information: https://www.mindspore.cn/install.")
         nvcc_version = self._get_nvcc_version(False)
@@ -175,16 +175,16 @@ class GPUEnvChecker(EnvChecker):
         """Get gpu lib path by ldd command."""
         path_list = []
         current_path = os.path.split(os.path.realpath(__file__))[0]
-        mindspore_path = os.path.join(current_path, "../")
+        mindspore_path = os.path.join(current_path, "../lib/plugin")
         try:
-            real_path = glob.glob(mindspore_path + "/_c_expression*.so*")
+            real_path = glob.glob(mindspore_path + "/libmindspore_gpu.so")
             if real_path == []:
                 logger.error(f"{self.lib_key_to_lib_name[lib_name]} (need by mindspore-gpu) is not found, please "
-                             f"confirm that _c_expression.so is in directory:{mindspore_path} and the correct cuda "
+                             f"confirm that libmindspore_gpu.so is in directory:{mindspore_path} and the correct cuda "
                              "version has been installed, you can refer to the installation "
                              "guidelines: https://www.mindspore.cn/install")
                 return path_list
-            ldd_r = subprocess.Popen(['ldd', real_path[0]], stdout=subprocess.PIPE)
+            ldd_r = subprocess.Popen(['ldd', real_path[0]], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             ldd_result = subprocess.Popen(['/bin/grep', lib_name], stdin=ldd_r.stdout, stdout=subprocess.PIPE)
             result = ldd_result.communicate(timeout=5)[0].decode()
             for i in result.split('\n'):
