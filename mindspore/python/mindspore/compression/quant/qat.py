@@ -36,7 +36,6 @@ from ..common import QuantDtype
 from .quantizer import Quantizer, OptimizeOption
 from .quant_utils import compute_kl_threshold
 
-
 __all__ = ["QuantizationAwareTraining", "create_quant_config"]
 
 
@@ -224,7 +223,7 @@ class QuantizationAwareTraining(Quantizer):
         >>> quantizer = QuantizationAwareTraining(bn_fold=False, per_channel=[True, False], symmetric=[True, False])
         >>> net_qat = quantizer.quantize(net)
     """
-    __quant_op_name__ = ["Add", "Sub", "Mul", "RealDiv", "ReduceMean"]
+    __quant_op_name = ["Add", "Sub", "Mul", "RealDiv", "ReduceMean"]
 
     def __init__(self,
                  bn_fold=True,
@@ -364,7 +363,7 @@ class QuantizationAwareTraining(Quantizer):
             if name[0] == '_':
                 continue
             attr = network.__dict__[name]
-            if isinstance(attr, ops.Primitive) and attr.name in self.__quant_op_name__:
+            if isinstance(attr, ops.Primitive) and attr.name in self.__quant_op_name:
                 add_list.append((name, attr))
         for name, prim_op in add_list:
             prefix = name
@@ -608,29 +607,28 @@ class QuantizationAwareTraining(Quantizer):
             cell = cell_and_name[1]
             if i not in quantizable_idx:
                 continue
-            else:
-                if isinstance(cell, (nn.Conv2dBnAct, nn.DenseBnAct)):
-                    cell.weight_dtype = type_map.get(quantizable_layer_bit_dict[i][0])
-                    if cell.weight_dtype is None:
-                        raise ValueError("Input strategy is invalid: ", quantizable_layer_bit_dict[i][0])
-                    if isinstance(cell, nn.Conv2dBnAct):
-                        subcell_weight_para = cell.conv.weight.data.asnumpy()
-                        if hasattr(cell.conv, 'gamma'):
-                            scale_factor = (cell.conv.gamma.data.asnumpy() /
-                                            np.sqrt(cell.conv.moving_variance.data.asnumpy() + self.eps))
-                            subcell_weight_para = subcell_weight_para * scale_factor.reshape(-1, 1, 1, 1)
-                        min_init, max_init = self._kl_init(subcell_weight_para, cell.weight_dtype)
-                        cell.conv.fake_quant_weight.reset(quant_dtype=cell.weight_dtype,
-                                                          min_init=min_init,
-                                                          max_init=max_init)
-                    elif isinstance(cell, nn.DenseBnAct):
-                        subcell_weight_para = cell.dense.weight.data.asnumpy()
-                        if hasattr(cell.dense, 'gamma'):
-                            scale_factor = (cell.dense.gamma.data.asnumpy() /
-                                            np.sqrt(cell.dense.moving_variance.data.asnumpy() + self.eps))
-                            subcell_weight_para = subcell_weight_para * scale_factor.reshape(-1, 1, 1, 1)
-                        min_init, max_init = self._kl_init(subcell_weight_para, cell.weight_dtype)
-                        cell.dense.fake_quant_weight.reset(quant_dtype=cell.weight_dtype,
-                                                           min_init=min_init,
-                                                           max_init=max_init)
+            if isinstance(cell, (nn.Conv2dBnAct, nn.DenseBnAct)):
+                cell.weight_dtype = type_map.get(quantizable_layer_bit_dict[i][0])
+                if cell.weight_dtype is None:
+                    raise ValueError("Input strategy is invalid: ", quantizable_layer_bit_dict[i][0])
+                if isinstance(cell, nn.Conv2dBnAct):
+                    subcell_weight_para = cell.conv.weight.data.asnumpy()
+                    if hasattr(cell.conv, 'gamma'):
+                        scale_factor = (cell.conv.gamma.data.asnumpy() /
+                                        np.sqrt(cell.conv.moving_variance.data.asnumpy() + self.eps))
+                        subcell_weight_para = subcell_weight_para * scale_factor.reshape(-1, 1, 1, 1)
+                    min_init, max_init = self._kl_init(subcell_weight_para, cell.weight_dtype)
+                    cell.conv.fake_quant_weight.reset(quant_dtype=cell.weight_dtype,
+                                                      min_init=min_init,
+                                                      max_init=max_init)
+                elif isinstance(cell, nn.DenseBnAct):
+                    subcell_weight_para = cell.dense.weight.data.asnumpy()
+                    if hasattr(cell.dense, 'gamma'):
+                        scale_factor = (cell.dense.gamma.data.asnumpy() /
+                                        np.sqrt(cell.dense.moving_variance.data.asnumpy() + self.eps))
+                        subcell_weight_para = subcell_weight_para * scale_factor.reshape(-1, 1, 1, 1)
+                    min_init, max_init = self._kl_init(subcell_weight_para, cell.weight_dtype)
+                    cell.dense.fake_quant_weight.reset(quant_dtype=cell.weight_dtype,
+                                                       min_init=min_init,
+                                                       max_init=max_init)
         return network

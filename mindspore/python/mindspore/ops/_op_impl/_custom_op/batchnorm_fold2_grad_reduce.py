@@ -82,7 +82,7 @@ def batchnorm_fold2_grad_reduce(dout, x, dout_reduce, dout_x_reduce, kernel_name
     util.check_shape_rule(shape)
     util.check_shape_size(shape, SHAPE_SIZE_LIMIT)
     inp_dtype = x.get("dtype").lower()
-    if not inp_dtype in ["float16", "float32"]:
+    if inp_dtype not in ["float16", "float32"]:
         raise RuntimeError("Dtype of input only support float16, float32")
     dout_t = tvm.placeholder(shape, name="dout", dtype=inp_dtype)
     x_t = tvm.placeholder(shape, name="x", dtype=inp_dtype)

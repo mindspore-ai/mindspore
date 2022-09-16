@@ -21,6 +21,7 @@ Note: This is an experimental interface that is subject to change and/or deletio
 from __future__ import absolute_import
 import numpy as np
 from mindspore._checkparam import Validator
+from mindspore import log as logger
 from ... import nn
 
 __all__ = ["load_nonquant_param_into_quant_net", "query_quant_layers"]
@@ -360,7 +361,7 @@ def query_quant_layers(network):
         cell_name = cell_and_name[0]
         cell = cell_and_name[1]
         if isinstance(cell, nn.FakeQuantWithMinMaxObserver):
-            print(tplt.format(cell_name, cell.quant_dtype))
+            logger.info(tplt.format(cell_name, cell.quant_dtype))
 
 
 def load_nonquant_param_into_quant_net(quant_model, params_dict, quant_new_params=None):
@@ -436,8 +437,7 @@ def load_nonquant_param_into_quant_net(quant_model, params_dict, quant_new_param
         value_param = next(iterable_dict[key_name], None)
         if value_param:
             param.set_data(value_param[1].data)
-            print(f'init model param {name} with checkpoint param {value_param[0]}')
-
+            logger.info(f'init model param {name} with checkpoint param {value_param[0]}')
 
     # Perform KL_init when learned scale quantization is executed.
     for cell_and_name in quant_model.cells_and_names():

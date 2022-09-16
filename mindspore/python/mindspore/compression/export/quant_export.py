@@ -38,7 +38,6 @@ from mindspore.ops.operations import _inner_ops as inner
 from mindspore.compression.quant import quant_utils
 from mindspore.compression.quant.qat import _AddFakeQuantInput, _AddFakeQuantAfterSubCell
 
-
 __all__ = ["ExportToQuantInferNetwork"]
 
 
@@ -216,6 +215,23 @@ class ExportToQuantInferNetwork:
         self.is_mindir = is_mindir
         self.upcell = None
 
+    @staticmethod
+    def __get_dequant_scale(scale_a_in, scale_w):
+        """Get dequant scale"""
+        scale_deq = scale_a_in * scale_w
+
+        # fuse parameter
+        # |--------|47:40|--------|39:32|--------|31:0|
+        #         offset_w [8]    shift_N [8]    deq_scale [32]
+        float32_deq_scale = scale_deq.astype(np.float32)
+        uint32_deq_scale = np.frombuffer(float32_deq_scale, np.uint32)
+        scale_length = scale_deq.size  # channel
+        dequant_param = np.zeros(scale_length, dtype=np.uint64)
+        for index in range(scale_length):
+            dequant_param[index] += uint32_deq_scale[index]
+        scale_deq = Tensor(dequant_param, mstype.uint64)
+        return scale_deq
+
     def get_inputs_table(self, inputs):
         """Get the input quantization parameters of quantization cell for quant export."""
         phase_name = 'export_quant'
@@ -239,6 +255,8 @@ class ExportToQuantInferNetwork:
 
         # Build the `Quant` `Dequant` op.
         # Quant only support perlayer version. Need check here.
+        if float(scale_a_in) == 0:
+            raise ValueError("If `scale_a_in` is zero, will lead to zero error.")
         quant_op = inner.Quant(1 / float(scale_a_in), float(zp_a_in))
         scale_deq = self.__get_dequant_scale(scale_a_in, scale_w)
         dequant_op = inner.Dequant()
@@ -317,23 +335,6 @@ class ExportToQuantInferNetwork:
             # skip quant layer
             scale_a_in, zp_a_in = 1.0, 0.0
         return scale_a_in, zp_a_in, scale_w, zp_w, param_dict
-
-    @staticmethod
-    def __get_dequant_scale(scale_a_in, scale_w):
-        """Get dequant scale"""
-        scale_deq = scale_a_in * scale_w
-
-        # fuse parameter
-        # |--------|47:40|--------|39:32|--------|31:0|
-        #         offset_w [8]    shift_N [8]    deq_scale [32]
-        float32_deq_scale = scale_deq.astype(np.float32)
-        uint32_deq_scale = np.frombuffer(float32_deq_scale, np.uint32)
-        scale_length = scale_deq.size  # channel
-        dequant_param = np.zeros(scale_length, dtype=np.uint64)
-        for index in range(scale_length):
-            dequant_param[index] += uint32_deq_scale[index]
-        scale_deq = Tensor(dequant_param, mstype.uint64)
-        return scale_deq
 
     def __get_weight_bias(self, cell_core, scale_a_in, scale_w, zp_w):
         """Get weight and bias for quantizaiton"""
