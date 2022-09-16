@@ -14,18 +14,16 @@
  * limitations under the License.
  */
 
-#include "plugin/device/cpu/kernel/broadcast_to_cpu_kernel.h"
 #include <algorithm>
 #include <utility>
 #include "plugin/device/cpu/kernel/nnacl/errorcode.h"
+#include "plugin/device/cpu/kernel/broadcast_to_cpu_kernel.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
-#ifndef _MSC_VER
 using complex64 = __complex__ float;
 using complex128 = __complex__ double;
-#endif
 constexpr size_t kBroadcastToOutputsNum = 1;
 }  // namespace
 
@@ -48,16 +46,16 @@ std::map<std::string, std::vector<std::pair<KernelAttr, BroadcastToCpuKernelMod:
        &BroadcastToCpuKernelMod::LaunchKernel<uint32_t>},
       {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
        &BroadcastToCpuKernelMod::LaunchKernel<uint64_t>},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+       &BroadcastToCpuKernelMod::LaunchKernel<float16>},
       {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
        &BroadcastToCpuKernelMod::LaunchKernel<float>},
       {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
        &BroadcastToCpuKernelMod::LaunchKernel<double>},
-#ifndef _MSC_VER
       {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
        &BroadcastToCpuKernelMod::LaunchKernel<complex64>},
       {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
        &BroadcastToCpuKernelMod::LaunchKernel<complex128>},
-#endif
       {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
        &BroadcastToCpuKernelMod::LaunchKernel<bool>}}},
     {kDynamicBroadcastTo,
@@ -66,16 +64,13 @@ std::map<std::string, std::vector<std::pair<KernelAttr, BroadcastToCpuKernelMod:
       {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
        &BroadcastToCpuKernelMod::LaunchKernel<int>},
       {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
-       &BroadcastToCpuKernelMod::LaunchKernel<bool>},
-      {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
-       &BroadcastToCpuKernelMod::LaunchKernel<float>},
-      {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
-       &BroadcastToCpuKernelMod::LaunchKernel<int>},
-      {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
        &BroadcastToCpuKernelMod::LaunchKernel<bool>}}}};
 
-void BroadcastToCpuKernelMod::InitTaskFunc(const CNodePtr &kernel_node) {
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+bool BroadcastToCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                   const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+
   if (kernel_name_ != kernel_type_) {
     MS_LOG(EXCEPTION) << "Suppose to be " << kernel_type_ << " but got " << kernel_name_;
   }
@@ -85,22 +80,27 @@ void BroadcastToCpuKernelMod::InitTaskFunc(const CNodePtr &kernel_node) {
     MS_LOG(EXCEPTION) << "BroadcastTo cpu does not support " << kernel_type_;
   }
 
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
-    MS_LOG(EXCEPTION) << "BroadcastTo does not support this kernel data type: " << kernel_attr;
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "' does not support this kernel type: " << kernel_attr;
+    return false;
   }
   kernel_func_ = func_list_[kernel_type_][index].second;
+  return true;
 }
 
-void BroadcastToCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  input_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  output_shape_ = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
-  if (AnfAlgo::IsShapesDynamic({input_shape_, output_shape_})) {
-    return;
+int BroadcastToCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                    const std::vector<KernelTensorPtr> &outputs,
+                                    const std::map<uint32_t, tensor::TensorPtr> &) {
+  input_shape_ = inputs[kIndex0]->GetShapeVector();
+  output_shape_ = outputs[kIndex0]->GetShapeVector();
+
+  auto it_x = std::find_if(input_shape_.begin(), input_shape_.end(), [](int64_t sh) { return sh < 0; });
+  if (it_x != input_shape_.end()) {
+    return KRET_UNKNOWN_SHAPE;
   }
+
   size_t input_shape_size = input_shape_.size();
   size_t output_shape_size = output_shape_.size();
 
@@ -112,8 +112,8 @@ void BroadcastToCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   }
   shape_info_.input_shape_size_ = SizeToInt(input_shape_size);
   shape_info_.output_shape_size_ = SizeToInt(output_shape_size);
-
-  InitTaskFunc(kernel_node);
+  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  return ret;
 }
 
 void BroadcastToCpuKernelMod::CheckArgs() {
@@ -175,16 +175,16 @@ bool BroadcastToCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
     status = BroadcastToSize32(input_addr, &shape_info_, output_addr);
   } else if constexpr (std::is_same_v<T, uint64_t>) {
     status = BroadcastToSize64(input_addr, &shape_info_, output_addr);
+  } else if constexpr (std::is_same_v<T, float16>) {
+    status = BroadcastToSize16(input_addr, &shape_info_, output_addr);
   } else if constexpr (std::is_same_v<T, float>) {
     status = BroadcastToSize32(input_addr, &shape_info_, output_addr);
   } else if constexpr (std::is_same_v<T, double>) {
     status = BroadcastToSize64(input_addr, &shape_info_, output_addr);
-#ifndef _MSC_VER
   } else if constexpr (std::is_same_v<T, complex64>) {
     status = BroadcastToSize64(input_addr, &shape_info_, output_addr);
   } else if constexpr (std::is_same_v<T, complex128>) {
     status = BroadcastToSize128(input_addr, &shape_info_, output_addr);
-#endif
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', not supported data type, the dtype of input must be bool, int, complex, float or double";

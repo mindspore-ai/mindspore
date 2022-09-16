@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_BROADCAST_TO_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_BROADCAST_TO_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_BROADCAST_TO_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_BROADCAST_TO_CPU_KERNEL_H_
 
 #include <vector>
 #include <map>
@@ -32,7 +32,7 @@ namespace kernel {
 constexpr auto kBroadcastTo = "BroadcastTo";
 constexpr auto kDynamicBroadcastTo = "DynamicBroadcastTo";
 constexpr auto kUnknown = "Unknown";
-class BroadcastToCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class BroadcastToCpuKernelMod : public NativeCpuKernelMod {
  public:
   BroadcastToCpuKernelMod() = default;
   explicit BroadcastToCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}
@@ -43,7 +43,12 @@ class BroadcastToCpuKernelMod : public DeprecatedNativeCpuKernelMod {
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs,
+             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override;
 
   void CheckArgs();
 
@@ -68,4 +73,4 @@ class BroadcastToCpuKernelMod : public DeprecatedNativeCpuKernelMod {
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_BROADCAST_TO_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_BROADCAST_TO_CPU_KERNEL_H_

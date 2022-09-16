@@ -70,6 +70,32 @@ def test_broadcast():
     assert np.allclose(output.asnumpy(), expect)
 
 
+def broadcast_to_dtype(dtype):
+    """
+    Basic function to test data type of BroadcastTo.
+    """
+    shape = (2, 3, 4, 5)
+    x1_np = np.random.rand(4, 5).astype(dtype)
+    output = P.BroadcastTo(shape)(Tensor(x1_np))
+    expect = np.broadcast_to(x1_np, shape)
+    assert np.allclose(output.asnumpy(), expect)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_broadcast_to_dtype():
+    """
+    Feature: Test supported data types of BroadCastTo.
+    Description: all data types
+    Expectation: success.
+    """
+    types = [np.float16, np.float32, np.float64, np.int8, np.int16, np.int32, np.int64,
+             np.uint8, np.uint16, np.uint32, np.uint64, np.complex64, np.complex128]
+    for dtype in types:
+        broadcast_to_dtype(dtype=dtype)
+
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
