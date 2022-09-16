@@ -54,7 +54,7 @@ class EmbeddingLookUpCpuKernelMod : public NativeCpuKernelMod, public MatchKerne
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
  protected:
-  template <typename T, typename S>
+  template <typename T, typename S, typename G>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                     const std::vector<kernel::AddressPtr> &outputs);
 
