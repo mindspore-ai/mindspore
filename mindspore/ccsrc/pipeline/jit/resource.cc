@@ -325,6 +325,10 @@ BuiltInTypeMap &GetMethodMap() {
        {"long", std::string("to_long")},                                   // long()
        {"cholesky", std::string("cholesky")},                              // cholesky()
        {"cholesky_inverse", std::string("cholesky_inverse")},              // cholesky_inverse()
+       {"conj", std::string("conj")},                                      // conj()
+       {"cross", std::string("cross")},                                    // cross()
+       {"erfinv", std::string("erfinv")},                                  // erfinv()
+       {"less_equal", std::string("less_equal")},                          // less_equal()
      }},
     {kObjectTypeRowTensorType,
      {

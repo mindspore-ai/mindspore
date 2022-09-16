@@ -3248,3 +3248,32 @@ def map_tensor_erase(map_tensor, key_tensor):
     Remove records according the key tensor from a map tensor.
     """
     return _map_tensor_ops.erase(map_tensor, key_tensor)
+
+
+def conj(input):
+    r"""
+    Computes complex conjugate of the input element-wise.
+    """
+    return F.conj(input)
+
+
+def cross(input, other, dim=None):
+    r"""
+    Computes the cross product of input vectors in specified dimension.
+    """
+    return F.cross(input, other, dim)
+
+
+def erfinv(input):
+    r"""
+    Computes the inverse error function of input tensor.
+    """
+    return F.erfinv(input)
+
+
+def less_equal(input, other):
+    r"""
+    Computes the boolean value of :math:`input\_x <= other` element-wise.
+    """
+    return F.less_equal(input, other)
+ 

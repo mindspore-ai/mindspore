@@ -6094,12 +6094,14 @@ def cholesky_inverse(input_x, upper=False):
     If `upper` is `False`, :math:`U` is a lower triangular such that the output tensor is
 
     .. math::
-                        inv = (UU^{T})^{-1}
+
+        inv = (UU^{T})^{-1}
 
     If `upper` is `True`, :math:`U` is an upper triangular such that the output tensor is
 
     .. math::
-                        inv = (U^{T}U)^{-1}
+
+        inv = (U^{T}U)^{-1}
 
     Note:
         The input must be either an upper triangular matrix or a lower triangular matrix.
@@ -6129,6 +6131,154 @@ def cholesky_inverse(input_x, upper=False):
     """
     cholesky_inv_op = _get_cache_prim(P.CholeskyInverse)(upper=upper)
     return cholesky_inv_op(input_x)
+
+
+def conj(input):
+    r"""
+    Returns a tensor of complex numbers that are the complex conjugate of each element in input.
+    The complex numbers in input must be of the form a + bj, where a is the real part and b is the imaginary part.
+
+    The complex conjugate returned by this operation is of the form a - bj.
+
+    If input is real, it is returned unchanged.
+
+    Args:
+        input (Tensor) - The input tensor to compute to. Must have numeric type.
+
+    Returns:
+        Tensor, has the same dtype as the input.
+
+    Raises:
+        TypeError: If the dtype of input is not a numeric type.
+        TypeError: If the input is not a Tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.asarray(np.complex(1.3+0.4j)), mindspore.complex64)
+        >>> output = ops.conj(x)
+        >>> print(output)
+        (1.3-0.4j)
+    """
+    if not isinstance(input, (Tensor, Tensor_)):
+        raise TypeError("For conj op, input must be Tensor.")
+    return _get_cache_prim(P.Conj)()(input)
+
+
+def cross(input, other, dim=None):
+    r"""
+    Returns the cross product of vectors in dimension `dim` of input `input` and `other`. `input` and `other` must
+    have the same shape and the same type, and the size of their `dim` dimension should be `3`.
+    If `dim` is not given, it defaults to the first dimension found with the size `3`.
+
+    Args:
+        input (Tensor): input is a tensor.
+        other (Tensor): other is a tensor. input `other` must have the same shape and type as input `input`, and
+            the size of their `dim` dimension should be `3`.
+        dim (int): dimension to apply cross product in. Default: None.
+
+    Returns:
+        Tensor, has the same shape and type as input `input`.
+
+    Raises:
+        TypeError: If `input` is not a Tensor.
+        TypeError: If `other` is not a Tensor.
+        TypeError: If the type of `input` is not the same as that of `other`.
+        ValueError: If `input` and `other` not have the same size, and the size of their `dim` dimension not be `3`.
+        ValueError: If `input` and `other` not have the same shape.
+        ValueError: If `dim` is out of range, `dim` should be [-len(input.shape), len(input.shape)-1].
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> x = Tensor([1, 2, 3], mstype.int8)
+        >>> other = Tensor([1, 2, 3], mstype.int8)
+        >>> output = ops.cross(x, other)
+        >>> print(output)
+        [0 0 0]
+    """
+    if dim is None:
+        dim = -65530
+    cross_op = _get_cache_prim(P.Cross)(dim=dim)
+    return cross_op(input, other)
+
+
+def erfinv(input):
+    r"""
+    Computes the inverse error function of input. The inverse error function is defined in the range `(-1, 1)` as:
+
+    .. math::
+
+        erfinv(erf(x)) = x
+
+    Args:
+        input (Tensor): The input tensor to compute to, with data type float32, float16 or float64.
+
+    Returns:
+        Tensor, has the same shape and dtype as `input`.
+
+    Raises:
+        TypeError: If dtype of `input` is not float16, float32 or float64.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU`` ``GPU``
+
+    Examples:
+        >>> x = Tensor(np.array([0, 0.5, -0.9]), mindspore.float32)
+        >>> output = ops.erfinv(x)
+        >>> print(output)
+        [ 0.          0.47695306 -1.1630805 ]
+    """
+    return _get_cache_prim(P.Erfinv)()(input)
+
+
+def less_equal(input, other):
+    r"""
+    Computes the boolean value of :math:`input\_x <= other` element-wise.
+
+    .. math::
+
+        out_{i} =\begin{cases}
+            & \text{True,    if } input\_x_{i}<=other_{i} \\
+            & \text{False,   if } input\_x_{i}>other_{i}
+            \end{cases}
+
+    .. note::
+        - Inputs of `input` and `other` comply with the implicit type conversion rules to make the data types
+            consistent.
+        - The inputs must be two tensors or one tensor and one scalar.
+        - When the inputs are two tensors, dtypes of them cannot be both bool , and the shapes of them
+            can be broadcast.
+        - When the inputs are one tensor and one scalar, the scalar could only be a constant.
+
+    Args:
+        input (Union[Tensor, number.Number, bool]): The first input is a number.Number or
+            a bool or a tensor whose data type is
+            `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
+            `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
+        other (Union[Tensor, number.Number, bool]): The second input, when the first input is a Tensor,
+            the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool\_.
+            When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
+
+    Returns:
+        Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
+
+    Raises:
+        TypeError: If neither `input` nor `other` is a Tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([1, 2, 3]), mindspore.int32)
+        >>> other = Tensor(np.array([1, 1, 4]), mindspore.int32)
+        >>> output = ops.less_equal(x, other)
+        >>> print(output)
+        [ True False  True]
+    """
+    return _get_cache_prim(P.LessEqual)()(input, other)
 
 
 __all__ = [
@@ -6277,6 +6427,10 @@ __all__ = [
     'bmm',
     'trapz',
     'cholesky',
-    'cholesky_inverse'
+    'cholesky_inverse',
+    'conj',
+    'cross',
+    'erfinv',
+    'less_equal',
 ]
 __all__.sort()

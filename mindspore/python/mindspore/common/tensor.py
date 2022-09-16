@@ -5793,6 +5793,7 @@ class Tensor(Tensor_):
         Computes matrix multiplication between two tensors by batch.
 
         .. math::
+
             \text{output}[..., :, :] = \text{matrix}(input_x[..., :, :]) * \text{matrix}(mat2[..., :, :])
 
         The first input tensor must be not less than `3` and the second input must be not less than `2`.
@@ -5964,11 +5965,13 @@ class Tensor(Tensor_):
         If `upper` is `True`, the returned matrix :math:`U` is upper-triangular, and the decomposition has the form:
 
         .. math::
+
             A = U^TU
 
         If `upper` is `False`, the returned matrix :math:`L` is lower-triangular, and the decomposition has the form:
 
         .. math::
+
             A = LL^T
 
         Args:
@@ -6005,12 +6008,12 @@ class Tensor(Tensor_):
         If `upper` is `False`, :math:`U` is a lower triangular such that the output tensor is
 
         .. math::
-                            inv = (UU^{T})^{{-1}}
+            inv = (UU^{T})^{{-1}}
 
         If `upper` is `True`, :math:`U` is an upper triangular such that the output tensor is
 
         .. math::
-                            inv = (U^{T}U)^{{-1}}
+            inv = (U^{T}U)^{{-1}}
 
         Note:
             The tensor must be either an upper triangular matrix or a lower triangular matrix.
@@ -6038,6 +6041,132 @@ class Tensor(Tensor_):
         """
         self._init_check()
         return tensor_operator_registry.get('cholesky_inverse')(upper=upper)(self)
+
+
+    def conj(self):
+        r"""
+        Returns a tensor of complex numbers that are the complex conjugate of each element in input.
+        The complex numbers in input must be of the form a + bj, where a is the real part and b is the imaginary part.
+
+        The complex conjugate returned by this operation is of the form a - bj.
+
+        If input is real, it is returned unchanged.
+
+        Returns:
+            Tensor, has the same dtype as the input.
+
+        Raises:
+           TypeError: If the dtype of Tensor is not a numeric type.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> x = Tensor(np.asarray(np.complex(1.3+0.4j)), mindspore.complex64)
+            >>> output = x.conj()
+            >>> print(output)
+            (1.3-0.4j)
+        """
+        self._init_check()
+        return tensor_operator_registry.get('conj')(self)
+
+
+    def cross(self, other, dim=None):
+        r"""
+        Returns the cross product of vectors in dimension `dim` of input tensor and `other`. input tensor and `other`
+        must have the same shape and the same type, and the size of their `dim` dimension should be `3`.
+        If `dim` is not given, it defaults to the first dimension found with the size `3`.
+
+        Args:
+            other (Tensor): other is a tensor. input `other` must have the same shape and type as input tensor, and
+                the size of their `dim` dimension should be `3`.
+            dim (int): dimension to apply cross product in. Default: None.
+
+        Outputs:
+            Tensor, has the same dtype as the input.
+
+        Raises:
+            TypeError: If `other` is not a Tensor.
+            TypeError: If the type of input tensor is not the same as that of `other`.
+            ValueError: If input tensor and `other` not have the same size, and the size of their `dim` dimension
+                not be `3`.
+            ValueError: If input tensor and `other` not have the same shape.
+            ValueError: If `dim` is out of range, `dim` should be [-len(x1.shape), len(x1.shape)-1].
+
+        Supported Platforms:
+            ``CPU``
+
+        Examples:
+            >>> input_x = Tensor([1, 2, 3], mstype.int8)
+            >>> other = Tensor([1, 2, 3], mstype.int8)
+            >>> output = input_x.cross(other)
+            >>> print(output)
+            [0 0 0]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('cross')(self, other, dim)
+
+
+    def erfinv(self):
+        r"""
+        Computes the inverse error function of input. The inverse error function is defined in the range `(-1, 1)` as:
+
+        .. math::
+
+            erfinv(erf(x)) = x
+
+        Returns:
+            Tensor, has the same shape and dtype as input tensor.
+
+        Raises:
+            TypeError: If dtype of input tensor is not float16, float32 or float64.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU``
+
+        Examples:
+            >>> x = Tensor(np.array([0, 0.5, -0.9]), mindspore.float32)
+            >>> output = x.erfinv()
+            >>> print(output)
+            [ 0.          0.47695306 -1.1630805 ]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('erfinv')(self)
+
+
+    def less_equal(self, other):
+        r"""
+        Computes the boolean value of :math:`input <= other` element-wise.
+
+        .. math::
+
+            out_{i} =\begin{cases}
+                & \text{True,    if } input\_x_{i}<=other_{i} \\
+                & \text{False,   if } input\_x_{i}>other_{i}
+                \end{cases}
+
+        Args:
+            other (Union[Tensor, number.Number, bool]): The second input. It should be a number.Number or bool value,
+                or a Tensor whose data type is number or bool\_.
+
+        Returns:
+            Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
+
+        Raises:
+            TypeError: If `other` is not a Tensor.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> x = Tensor(np.array([1, 2, 3]), mindspore.int32)
+            >>> other = Tensor(np.array([1, 1, 4]), mindspore.int32)
+            >>> output = x.less_equal(other)
+            >>> print(output)
+            [ True False  True]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('less_equal')(self, other)
 
 
 class RowTensor(RowTensor_):

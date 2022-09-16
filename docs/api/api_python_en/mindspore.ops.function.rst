@@ -108,6 +108,10 @@ Mathematical Functions
     mindspore.ops.bmm
     mindspore.ops.cholesky
     mindspore.ops.cholesky_inverse
+    mindspore.ops.conj
+    mindspore.ops.cross
+    mindspore.ops.erfinv
+    mindspore.ops.less_equal
 
 Element-by-Element Operations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
