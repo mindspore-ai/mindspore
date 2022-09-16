@@ -44,7 +44,6 @@ void TbeKernelReduceSelector::GetSupportedFormatDType(SupportFormatDType *suppor
   GetReduceSupportFracZ(&support_format);
   GetReduceSupportC1HWNCoC0(&support_format);
   GetReduceSupportFracZ3D(&support_format);
-  GetReduceSupportFracNZ(&support_format);
   GenerateSupportFormatDType(cnode_ptr_, support_format, support_format_dtype);
   FilterInvalidFormatDType(support_format_dtype);
 }

@@ -130,9 +130,9 @@ class BACKEND_EXPORT OpAdaptationInfo {
 class BACKEND_EXPORT OpAdaptationInfoRegister {
  public:
   static OpAdaptationInfoRegister &GetInstance();
-  void RegOpAdaptationInfo(OpAdaptationInfo *reg_info);
-  [[nodiscard]] OpAdaptationInfo *GetOpAdaptationInfo(const std::string &origin_op_name, const std::string &device_name,
-                                                      bool flag) const;
+  static void RegOpAdaptationInfo(OpAdaptationInfo *reg_info);
+  [[nodiscard]] static OpAdaptationInfo *GetOpAdaptationInfo(const std::string &origin_op_name,
+                                                             const std::string &device_name, bool flag);
 
  private:
   OpAdaptationInfoRegister() = default;

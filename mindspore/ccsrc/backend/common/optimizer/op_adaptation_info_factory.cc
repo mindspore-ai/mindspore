@@ -17,7 +17,6 @@
 
 #include <memory>
 #include "kernel/oplib/oplib.h"
-#include "include/common/utils/utils.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore::opt {
@@ -50,7 +49,7 @@ void OpAdaptationInfoRegister::RegOpAdaptationInfo(OpAdaptationInfo *reg_info) {
 }
 
 OpAdaptationInfo *OpAdaptationInfoRegister::GetOpAdaptationInfo(const std::string &origin_op_name,
-                                                                const std::string &device_name, bool flag) const {
+                                                                const std::string &device_name, bool flag) {
   auto key = GenerateKey(origin_op_name, device_name, flag);
   auto iter = op_info_map_.find(key);
   if (iter == op_info_map_.end()) {
@@ -85,6 +84,9 @@ RegisterHelper::RegisterHelper(const OpAdaptationInfo &op_adaptation_info) {
   opt::OpAdaptationInfoRegister::GetInstance().RegOpAdaptationInfo(op_adaptation_info_.get());
 }
 OpAdaptationInfo &OpAdaptationInfo::operator=(const OpAdaptationInfo &op_adaptation_info) {
+  if (this == &op_adaptation_info) {
+    return *this;
+  }
   origin_op_name_ = op_adaptation_info.origin_op_name_;
   target_op_name_ = op_adaptation_info.target_op_name_;
   pre_check_func_ = op_adaptation_info.pre_check_func_;
