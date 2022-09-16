@@ -14,92 +14,48 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_SIGMOID_CROSS_ENTROPY_WITH_LOGITS_GRAD_GPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_SIGMOID_CROSS_ENTROPY_WITH_LOGITS_GRAD_GPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_NN_SIGMOID_CROSS_ENTROPY_WITH_LOGITS_GRAD_GPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_NN_SIGMOID_CROSS_ENTROPY_WITH_LOGITS_GRAD_GPU_KERNEL_H_
 
 #include <vector>
+#include <map>
+#include <utility>
+#include <string>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/sigmoid_cross_entropy_with_logits_grad_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
-template <typename T, typename S>
-class SigmoidCrossEntropyWithLogitsGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class SigmoidCrossEntropyWithLogitsGradGpuKernelMod : public NativeGpuKernelMod {
  public:
-  SigmoidCrossEntropyWithLogitsGradGpuKernelMod()
-      : logits_size_(0), labels_size_(0), outputs_size_(0), is_null_input_(false) {}
+  SigmoidCrossEntropyWithLogitsGradGpuKernelMod() = default;
   ~SigmoidCrossEntropyWithLogitsGradGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    if (is_null_input_) {
-      return true;
-    }
-    T *logits_addr = GetDeviceAddress<T>(inputs, 0);
-    S *labels_addr = GetDeviceAddress<S>(inputs, 1);
-    T *dout_addr = GetDeviceAddress<T>(inputs, 2);
-    T *outputs_addr = GetDeviceAddress<T>(outputs, 0);
-
-    SigmoidCrossEntropyWithLogitsGrad(inputs[0]->size / sizeof(T), logits_addr, labels_addr, dout_addr, outputs_addr,
-                                      reinterpret_cast<cudaStream_t>(stream_ptr));
-    return true;
+    return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
   }
 
-  bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    kernel_node_ = kernel_node;
-    if (input_num != 3) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs must be 3, but got " << input_num;
-    }
-    logits_size_ = sizeof(T);
-    labels_size_ = sizeof(S);
-    outputs_size_ = sizeof(T);
-
-    auto logits_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto labels_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    auto output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_SHAPE_NULL(logits_shape, kernel_name, "logits") ||
-                     CHECK_SHAPE_NULL(labels_shape, kernel_name, "labels") ||
-                     CHECK_SHAPE_NULL(output_shape, kernel_name, "output");
-    if (is_null_input_) {
-      InitSizeLists();
-      return true;
-    }
-    logits_size_ *= SizeOf(logits_shape);
-    labels_size_ *= SizeOf(labels_shape);
-    outputs_size_ *= SizeOf(output_shape);
-
-    InitSizeLists();
-    return true;
-  }
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
 
  protected:
-  void InitSizeLists() override {
-    input_size_list_.push_back(logits_size_);
-    input_size_list_.push_back(labels_size_);
-    input_size_list_.push_back(logits_size_);
-    output_size_list_.push_back(outputs_size_);
-  }
+  std::vector<KernelAttr> GetOpSupport() override;
 
-  void ResetResource() override {
-    input_size_list_.clear();
-    output_size_list_.clear();
-    workspace_size_list_.clear();
-    logits_size_ = 0;
-    labels_size_ = 0;
-    outputs_size_ = 0;
-    is_null_input_ = false;
-  }
+  template <typename T, typename S>
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
+
+  using SigmoidCrossEntropyWithLogitsGradLaunchFunc =
+    std::function<bool(SigmoidCrossEntropyWithLogitsGradGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &, void *)>;
 
  private:
-  size_t logits_size_;
-  size_t labels_size_;
-  size_t outputs_size_;
-  bool is_null_input_;
+  std::string kernel_name_{};
+  SigmoidCrossEntropyWithLogitsGradLaunchFunc kernel_func_;
+  static std::vector<std::pair<KernelAttr, SigmoidCrossEntropyWithLogitsGradLaunchFunc>> func_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_SIGMOID_CROSS_ENTROPY_WITH_LOGITS_GRAD_GPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_NN_SIGMOID_CROSS_ENTROPY_WITH_LOGITS_GRAD_GPU_KERNEL_H_
