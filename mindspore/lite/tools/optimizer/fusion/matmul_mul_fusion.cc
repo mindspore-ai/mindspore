@@ -158,14 +158,14 @@ bool IsPrimitiveProper(const CNodePtr &mul_cnode, const CNodePtr &matmul_cnode) 
   }
 
   std::shared_ptr<tensor::Tensor> mul_weight_tensor = GetTensorInfo(mul_weight_node);
-  MS_CHECK_TRUE_RET(mul_weight_tensor != nullptr, RET_ERROR);
+  MS_CHECK_TRUE_RET(mul_weight_tensor != nullptr, false);
   std::vector<int64_t> mul_weight_shape = mul_weight_tensor->shape();
   if (mul_weight_shape.size() != 1) {
     MS_LOG(INFO) << mul_cnode->fullname_with_scope() << "'s weight must be 1 dim";
     return false;
   }
   std::shared_ptr<tensor::Tensor> matmul_weight_tensor = GetTensorInfo(matmul_weight_node);
-  MS_CHECK_TRUE_RET(matmul_weight_tensor != nullptr, RET_ERROR);
+  MS_CHECK_TRUE_RET(matmul_weight_tensor != nullptr, false);
   std::vector<int64_t> matmul_weight_shape = matmul_weight_tensor->shape();
   MS_CHECK_TRUE_RET(matmul_weight_shape.size() >= KMatmulWeightDims, false);
   auto matmul_prim = ops::GetOperator<ops::MatMulFusion>(matmul_cnode->input(0));

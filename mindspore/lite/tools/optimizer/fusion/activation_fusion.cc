@@ -31,8 +31,8 @@ STATUS DoFusion(CNodePtr cur_cnode, const CNodePtr &pre_cnode) {
   MS_ASSERT(cur_act_prim != nullptr);
   auto pre_act_prim = ops::GetOperator<mindspore::ops::Activation>(pre_cnode->input(0));
   MS_ASSERT(pre_act_prim != nullptr);
-  MS_CHECK_TRUE_MSG(cur_act_prim->GetAttr(ops::kActivationType) != nullptr, false, "Get activation type failed.");
-  MS_CHECK_TRUE_MSG(pre_act_prim->GetAttr(ops::kActivationType) != nullptr, false, "Get activation type failed.");
+  MS_CHECK_TRUE_MSG(cur_act_prim->GetAttr(ops::kActivationType) != nullptr, RET_ERROR, "Get activation type failed.");
+  MS_CHECK_TRUE_MSG(pre_act_prim->GetAttr(ops::kActivationType) != nullptr, RET_ERROR, "Get activation type failed.");
   auto cur_act_type = cur_act_prim->get_activation_type();
   auto pre_act_type = pre_act_prim->get_activation_type();
   if (!(cur_act_type == HARD_TANH || cur_act_type == RELU || cur_act_type == RELU6)) {
@@ -41,10 +41,10 @@ STATUS DoFusion(CNodePtr cur_cnode, const CNodePtr &pre_cnode) {
   if (!(pre_act_type == HARD_TANH || pre_act_type == RELU || pre_act_type == RELU6)) {
     return lite::RET_NOT_SUPPORT;
   }
-  MS_CHECK_TRUE_MSG(pre_act_prim->GetAttr(ops::kMaxVal) != nullptr, false, "Get max value failed.");
-  MS_CHECK_TRUE_MSG(cur_act_prim->GetAttr(ops::kMaxVal) != nullptr, false, "Get max value failed.");
-  MS_CHECK_TRUE_MSG(pre_act_prim->GetAttr(ops::kMinVal) != nullptr, false, "Get min value failed.");
-  MS_CHECK_TRUE_MSG(cur_act_prim->GetAttr(ops::kMinVal) != nullptr, false, "Get min value failed.");
+  MS_CHECK_TRUE_MSG(pre_act_prim->GetAttr(ops::kMaxVal) != nullptr, RET_ERROR, "Get max value failed.");
+  MS_CHECK_TRUE_MSG(cur_act_prim->GetAttr(ops::kMaxVal) != nullptr, RET_ERROR, "Get max value failed.");
+  MS_CHECK_TRUE_MSG(pre_act_prim->GetAttr(ops::kMinVal) != nullptr, RET_ERROR, "Get min value failed.");
+  MS_CHECK_TRUE_MSG(cur_act_prim->GetAttr(ops::kMinVal) != nullptr, RET_ERROR, "Get min value failed.");
   auto pre_max_val =
     pre_act_type == RELU ? FLT_MAX : pre_act_type == RELU6 ? kValueThreshold6 : pre_act_prim->get_max_val();
   auto pre_min_val = (pre_act_type == RELU || pre_act_type == RELU6) ? 0 : pre_act_prim->get_min_val();
@@ -53,7 +53,8 @@ STATUS DoFusion(CNodePtr cur_cnode, const CNodePtr &pre_cnode) {
   auto cur_min_val = (cur_act_type == RELU || cur_act_type == RELU6) ? 0 : cur_act_prim->get_min_val();
   auto new_max_val = std::min(pre_max_val, cur_max_val);
   auto new_min_val = std::max(pre_min_val, cur_min_val);
-  MS_CHECK_TRUE_MSG(new_min_val <= new_max_val, false, "The min value is larger than the max value, fusion failed.");
+  MS_CHECK_TRUE_MSG(new_min_val <= new_max_val, RET_ERROR,
+                    "The min value is larger than the max value, fusion failed.");
   cur_act_prim->set_min_val(new_min_val);
   cur_act_prim->set_max_val(new_max_val);
   cur_act_prim->set_activation_type(HARD_TANH);
