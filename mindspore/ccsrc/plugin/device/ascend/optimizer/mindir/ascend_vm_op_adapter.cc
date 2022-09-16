@@ -50,6 +50,51 @@ const AnfNodePtr AscendVmOpAdapter::Process(const FuncGraphPtr &, const AnfNodeP
   return ret_node;
 }
 
+CNodePtr AscendVmOpAdapter::ConvertNodeToCheck(const CNodePtr &origin_op,
+                                               const OpAdaptationInfo &op_adaptation_info) const {
+  MS_EXCEPTION_IF_NULL(origin_op);
+  // check supported if the op need
+  auto graph = origin_op->func_graph();
+  auto kernel_graph = graph->cast<KernelGraphPtr>();
+  if (op_adaptation_info.NeedTBECheck()) {
+    auto is_dynamic = common::AnfAlgo::IsDynamicShape(origin_op);
+    // when cnode is a dynamic shape node, if origin op supported, use origin op
+    if (is_dynamic) {
+      auto ret = CheckAICoreSupported(origin_op);
+      if (ret) {
+        MS_LOG(DEBUG) << "Origin op " << origin_op->fullname_with_scope() << " is supported in this configuration";
+        return origin_op;
+      }
+    }
+
+    auto target_op = CreateTargetOp(origin_op, op_adaptation_info);
+    if (target_op == nullptr) {
+      MS_LOG(DEBUG) << "Create target op failed for node " << origin_op->fullname_with_scope();
+      return origin_op;
+    }
+
+    auto ret = CheckAICoreSupported(target_op);
+    if (!ret) {
+      return origin_op;
+    }
+
+    if (kernel_graph != nullptr) {
+      kernel_graph->FrontBackendlMapUpdate(origin_op, target_op);
+    }
+    return target_op;
+  } else {
+    auto target_op = CreateTargetOp(origin_op, op_adaptation_info);
+    if (target_op == nullptr) {
+      MS_LOG(DEBUG) << "Create target op failed for node " << origin_op->fullname_with_scope();
+      return origin_op;
+    }
+    if (kernel_graph != nullptr) {
+      kernel_graph->FrontBackendlMapUpdate(origin_op, target_op);
+    }
+    return target_op;
+  }
+}
+
 CNodePtr AscendVmOpAdapter::ConvertToTargetOp(const CNodePtr &origin_op, OpAdaptationInfo *op_adaptation_info) const {
   MS_EXCEPTION_IF_NULL(origin_op);
   MS_EXCEPTION_IF_NULL(op_adaptation_info);
@@ -63,7 +108,7 @@ CNodePtr AscendVmOpAdapter::ConvertToTargetOp(const CNodePtr &origin_op, OpAdapt
   if (!attr_name_map.empty()) {
     auto origin_primitive = GetCNodePrimitive(origin_op);
     MS_EXCEPTION_IF_NULL(origin_primitive);
-    for (auto iter : attr_name_map) {
+    for (const auto &iter : attr_name_map) {
       if (origin_primitive->HasAttr(iter.first)) {
         auto value = origin_primitive->GetAttr(iter.first);
         origin_primitive->set_attr(iter.second, value);
@@ -103,46 +148,7 @@ CNodePtr AscendVmOpAdapter::ConvertToTargetOp(const CNodePtr &origin_op, OpAdapt
     }
   }
 
-  // check supported if the op need
-  auto graph = origin_op->func_graph();
-  auto kernel_graph = graph->cast<KernelGraphPtr>();
-  if (need_tbe_check) {
-    auto is_dynamic = common::AnfAlgo::IsDynamicShape(origin_op);
-    // when cnode is a dynamic shape node, if origin op supported, use origin op
-    if (is_dynamic) {
-      auto ret = CheckAICoreSupported(origin_op);
-      if (ret) {
-        MS_LOG(DEBUG) << "Origin op " << origin_op->fullname_with_scope() << " is supported in this configuration";
-        return origin_op;
-      }
-    }
-
-    auto target_op = CreateTargetOp(origin_op, *op_adaptation_info);
-    if (target_op == nullptr) {
-      MS_LOG(DEBUG) << "Create target op failed for node " << origin_op->fullname_with_scope();
-      return origin_op;
-    }
-
-    auto ret = CheckAICoreSupported(target_op);
-    if (!ret) {
-      return origin_op;
-    }
-
-    if (kernel_graph != nullptr) {
-      kernel_graph->FrontBackendlMapUpdate(origin_op, target_op);
-    }
-    return target_op;
-  } else {
-    auto target_op = CreateTargetOp(origin_op, *op_adaptation_info);
-    if (target_op == nullptr) {
-      MS_LOG(DEBUG) << "Create target op failed for node " << origin_op->fullname_with_scope();
-      return origin_op;
-    }
-    if (kernel_graph != nullptr) {
-      kernel_graph->FrontBackendlMapUpdate(origin_op, target_op);
-    }
-    return target_op;
-  }
+  return ConvertNodeToCheck(origin_op, *op_adaptation_info);
 }
 
 template <typename T, typename Scalar>
