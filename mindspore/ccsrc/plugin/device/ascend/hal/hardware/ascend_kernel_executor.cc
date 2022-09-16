@@ -222,6 +222,7 @@ void AscendKernelExecutor::PreprocessBeforeRunGraph(const KernelGraphPtr &graph)
 void AscendKernelExecutor::DoSomas(const KernelGraphPtr &graph) {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
+  // somas
   if (ms_context->get_param<int>(MS_CTX_MEMORY_OPTIMIZE_LEVEL) != kOptimizeO0) {
     auto somas = std::make_shared<AscendSomas>();
     bool ret = somas->Assign(graph);
