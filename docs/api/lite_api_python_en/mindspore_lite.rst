@@ -43,7 +43,7 @@ Converter
     ``FmkType.ONNX``             ONNX model's framework type, and the model uses .onnx as suffix
     ``FmkType.MINDIR``           MindSpore model's framework type, and the model uses .mindir as suffix
     ``FmkType.TFLITE``           TensorFlow Lite model's framework type, and the model uses .tflite as suffix
-    ``FmkType.PYTORCH``          PYTORCH model's framework type, and the model uses .pt or .pth as suffix
+    ``FmkType.PYTORCH``          PyTorch model's framework type, and the model uses .pt or .pth as suffix
     ===========================  ============================================================================
 
 .. autosummary::

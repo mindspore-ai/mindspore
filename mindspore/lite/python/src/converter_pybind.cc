@@ -27,7 +27,8 @@ void ConverterPyBind(const py::module &m) {
     .value("kFmkTypeCaffe", converter::FmkType::kFmkTypeCaffe)
     .value("kFmkTypeOnnx", converter::FmkType::kFmkTypeOnnx)
     .value("kFmkTypeMs", converter::FmkType::kFmkTypeMs)
-    .value("kFmkTypeTflite", converter::FmkType::kFmkTypeTflite);
+    .value("kFmkTypeTflite", converter::FmkType::kFmkTypeTflite)
+    .value("kFmkTypePytorch", converter::FmkType::kFmkTypePytorch);
 
   py::class_<Converter, std::shared_ptr<Converter>>(m, "ConverterBind")
     .def(py::init<converter::FmkType, const std::string &, const std::string &, const std::string &>())

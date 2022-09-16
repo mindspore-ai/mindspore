@@ -26,4 +26,5 @@ mindspore_lite.FmkType
       ``FmkType.ONNX``             ONNX模型的框架类型，该模型使用.onnx作为后缀
       ``FmkType.MINDIR``           MindSpore模型的框架类型，该模型使用.mindir作为后缀
       ``FmkType.TFLITE``           TensorFlow Lite模型的框架类型，该模型使用.tflite作为后缀
+      ``FmkType.PYTORCH``          PyTorch模型的框架类型，该模型使用.pt或.pth作为后缀
       ===========================  ====================================================
