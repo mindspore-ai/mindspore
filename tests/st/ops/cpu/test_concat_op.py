@@ -639,3 +639,78 @@ def test_concat_functional_pynative():
     expect1 = np.array([[0, 1, 0, 1],
                         [2, 1, 2, 1]]).astype(np.float32)
     assert (output1.asnumpy() == expect1).all()
+
+
+class ConcatDynShapeNet(nn.Cell):
+    def __init__(self, axis):
+        super(ConcatDynShapeNet, self).__init__()
+        self.concat = P.Concat(axis=axis)
+
+    def construct(self, *inputs):
+        return self.concat(inputs)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_concat_dynamic_shape_no_axis():
+    """
+    Feature: Op Concat
+    Description: Concat function interface on pynative mode
+    Expectation: success
+    """
+    context.set_context(mode=context.PYNATIVE_MODE)
+    x1 = Tensor(np.array([[0, 1], [2, 1]]).astype(np.float32))
+    x2 = Tensor(np.array([[0, 1], [2, 1]]).astype(np.float32))
+    x3 = Tensor(np.array([[0, 1], [2, 1]]).astype(np.float32))
+    x1_dyn = Tensor(shape=[None, 2], dtype=x1.dtype)
+    x2_dyn = Tensor(shape=[None, 2], dtype=x2.dtype)
+    x3_dyn = Tensor(shape=[None, 2], dtype=x3.dtype)
+    net = ConcatDynShapeNet(1)
+    net.set_inputs(*[x1_dyn, x2_dyn, x3_dyn])
+    out = net(*[x1, x2, x3])
+    excepted_shape = (2, 6)
+    assert out.asnumpy().shape == excepted_shape
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_concat_dynamic_shape_axis():
+    """
+    Feature: Op Concat
+    Description: Concat function interface on pynative mode
+    Expectation: success
+    """
+    context.set_context(mode=context.PYNATIVE_MODE)
+    x1 = Tensor(np.array([[0, 1], [2, 1], [3, 3]]).astype(np.float32))
+    x2 = Tensor(np.array([[0, 1], [2, 1], [3, 3]]).astype(np.float32))
+    x3 = Tensor(np.array([[0, 1], [2, 1], [3, 3]]).astype(np.float32))
+    x2_dyn = Tensor(shape=[None, 2], dtype=x2.dtype)
+    net = ConcatDynShapeNet(0)
+    net.set_inputs(*[x1, x2_dyn, x3])
+    out = net(*[x1, x2, x3])
+    excepted_shape = (9, 2)
+    assert out.asnumpy().shape == excepted_shape
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_concat_dynamic_shape_all():
+    """
+    Feature: Op Concat
+    Description: Concat function interface on pynative mode
+    Expectation: success
+    """
+    context.set_context(mode=context.PYNATIVE_MODE)
+    x1 = Tensor(np.array([[0, 1], [2, 1], [3, 3]]).astype(np.float32))
+    x2 = Tensor(np.array([[0, 1], [2, 1], [3, 3]]).astype(np.float32))
+    x3 = Tensor(np.array([[0, 1], [2, 1], [3, 3]]).astype(np.float32))
+    x2_dyn = Tensor(shape=[None, 2], dtype=x2.dtype)
+    x3_dyn = Tensor(shape=[3, None], dtype=x3.dtype)
+    net = ConcatDynShapeNet(0)
+    net.set_inputs(*[x1, x2_dyn, x3_dyn])
+    out = net(*[x1, x2, x3])
+    excepted_shape = (9, 2)
+    assert out.asnumpy().shape == excepted_shape
