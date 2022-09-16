@@ -22,7 +22,6 @@ from mindspore import Tensor, Parameter
 from mindspore.ops import operations as P
 import mindspore.ops.functional as F
 import mindspore.ops as ops
-from mindspore.ops.operations import _inner_ops as inner
 import mindspore.common.dtype as mstype
 from mindspore.common.initializer import initializer
 from mindspore.ops.bprop_mindir import serializable_bprop_ops
@@ -95,10 +94,12 @@ def test_identity():
 
 
 def test_range():
-    x = Tensor(np.array([1, 2, 3, 2]).astype(np.int64))
-    range_net = Net(inner.Range(1.0, 8.0, 2.0))
+    start = Tensor(0.0, mstype.float32)
+    limit = Tensor(10.0, mstype.float32)
+    delta = Tensor(1.0, mstype.float32)
+    range_net = Net(P.Range())
     grad = GradNet(range_net)
-    grad.compile(x)
+    grad.compile(start, limit, delta)
 
 
 def test_ones_like():

@@ -362,10 +362,10 @@ class ArgMaxWithValueFunc(Cell):
 class RangeNet(Cell):
     def __init__(self):
         super(RangeNet, self).__init__()
-        self.range_ops = inner.Range(1.0, 8.0, 2.0)
+        self.range_ops = P.Range()
 
-    def construct(self, x):
-        return self.range_ops(x)
+    def construct(self, start, limit, delta):
+        return self.range_ops(start, limit, delta)
 
 
 class NetForFlattenConcat(Cell):
@@ -425,7 +425,9 @@ test_case_array_ops = [
         'desc_inputs': [Tensor(np.random.rand(4, 1, 1, 1).astype(np.float16))]}),
     ('RangeNet', {
         'block': RangeNet(),
-        'desc_inputs': [Tensor(np.array([1, 2, 3, 2]), ms.int32)]}),
+        'desc_inputs': [Tensor(np.array(1.0), ms.float32),
+                        Tensor(np.array(8.0), ms.float32),
+                        Tensor(np.array(2.0), ms.float32)]}),
     ('ArgMaxWithValue', {
         'block': ArgMaxWithValueFunc(),
         'desc_inputs': [Tensor(np.array([1., 2., 4., 3.]), ms.float32)]}),

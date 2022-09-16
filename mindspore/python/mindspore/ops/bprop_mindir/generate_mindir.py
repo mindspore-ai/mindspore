@@ -23,10 +23,9 @@ from mindspore.ops import operations as P
 from mindspore.ops import _constants
 import mindspore.ops._grad as g
 from mindspore.ops.operations import _grad_ops as G
-from mindspore.ops.operations import _inner_ops as inner
 from mindspore._c_expression import _export_bprop_mindir
 
-serializable_bprop_ops = [P.ReLU, P.Identity, inner.Range, P.OnesLike, P.ZerosLike, P.Argmax, P.Argmin, P.Broadcast,
+serializable_bprop_ops = [P.ReLU, P.Identity, P.Range, P.OnesLike, P.ZerosLike, P.Argmax, P.Argmin, P.Broadcast,
                           P.AssignAdd, P.AssignSub, P.IsFinite, P.ApproximateEqual, P.Sign, P.LogicalNot, P.Round,
                           P.LinSpace, P.DropoutGenMask, P.OneHot, P.Assign, P.IOU, P.BNTrainingReduce, P.Equal,
                           P.NotEqual, P.Greater, P.GreaterEqual, P.Less, P.LessEqual, P.LogicalAnd, P.LogicalOr,
