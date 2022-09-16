@@ -902,6 +902,22 @@ def test_grad_none_position():
         grad(Net(w), grad_position=None, weights=None)(x, y)
 
 
+def test_grad_constant_tensor():
+    """
+    Features: ops.grad.
+    Description: Test ops.grad with constant tensor.
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def construct(self, x, y):
+            out = x + y
+            return out
+
+    context.set_context(mode=context.GRAPH_MODE)
+    out_graph = grad(Net())(1, 2)
+    assert out_graph == ()
+
+
 def test_grad_int_position_and_single_param():
     """
     Features: ops.grad.
