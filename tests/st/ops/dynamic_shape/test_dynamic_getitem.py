@@ -515,7 +515,6 @@ def test_dynamic_getitem_list():
     fact.grad_impl()
 
 
-@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -558,7 +557,6 @@ def test_dynamic_getitem_tuple():
     fact.grad_impl()
 
 
-@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -598,7 +596,6 @@ def test_dynamic_getitem_tuple_001():
     fact.grad_impl()
 
 
-@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
