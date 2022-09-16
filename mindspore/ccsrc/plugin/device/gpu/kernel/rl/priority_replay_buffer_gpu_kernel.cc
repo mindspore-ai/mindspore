@@ -108,6 +108,9 @@ bool PriorityReplayBufferPushGpuKernel::Init(const BaseOperatorPtr &base_operato
   prioriory_replay_buffer_ = PriorityReplayBufferFactory::GetInstance().GetByHandle(handle_);
   MS_EXCEPTION_IF_NULL(prioriory_replay_buffer_);
 
+  num_item_ = prioriory_replay_buffer_->schema().size();
+  default_priority_ = inputs.size() == num_item_;
+
   auto &allocator = device::gpu::GPUMemoryAllocator::GetInstance();
   handle_device_ = static_cast<int64_t *>(allocator.AllocTensorMem(sizeof(handle_)));
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemcpy(handle_device_, &handle_, sizeof(handle_), cudaMemcpyHostToDevice),
@@ -130,11 +133,12 @@ bool PriorityReplayBufferPushGpuKernel::Launch(const std::vector<AddressPtr> &in
   auto stream = reinterpret_cast<cudaStream_t>(stream_ptr);
   // Return a placeholder in case of dead code eliminate optimization.
   auto handle = GetDeviceAddress<int64_t>(outputs, 0);
+  float *priority = default_priority_ ? nullptr : GetDeviceAddress<float>(inputs, num_item_);
 
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
     cudaMemcpyAsync(handle, handle_device_, sizeof(handle_), cudaMemcpyDeviceToDevice, stream), "cudaMemcpy failed.");
 
-  return prioriory_replay_buffer_->Push(inputs, nullptr, stream);
+  return prioriory_replay_buffer_->Push(inputs, priority, stream);
 }
 
 std::vector<KernelAttr> PriorityReplayBufferPushGpuKernel::GetOpSupport() {

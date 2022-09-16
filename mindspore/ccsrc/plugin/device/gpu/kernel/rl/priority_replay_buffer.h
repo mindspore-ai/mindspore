@@ -55,10 +55,11 @@ class PriorityReplayBuffer {
   // Update experience transitions priorities.
   bool UpdatePriorities(size_t *indices, float *priorities, const size_t &batch_size, cudaStream_t stream);
 
+  const std::vector<size_t> &schema() const { return schema_; }
+
  private:
-  size_t GetStartIndex() const { return total_num_ - total_num_ % capacity_; }
   size_t GetLastRoundIndex() const {
-    return std::max(SizeToLong(total_num_) - SizeToLong(capacity_), static_cast<int64_t>(0));
+    return std::max(SizeToLong(total_num_) - SizeToLong(capacity_) + 1, static_cast<int64_t>(0));
   }
 
   float alpha_{1.};
@@ -127,7 +128,7 @@ bool PriorityReplayBuffer<Tree>::Push(const std::vector<AddressPtr> &transition,
   size_t idx = total_num_ % capacity_;
 
   // Copy transition to FIFO.
-  for (size_t i = 0; i < transition.size(); i++) {
+  for (size_t i = 0; i < schema_.size(); i++) {
     size_t offset = idx * schema_[i];
     CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemcpyAsync(fifo_replay_buffer_[i] + offset, transition[i]->addr, schema_[i],
                                                       cudaMemcpyDeviceToDevice, stream),
@@ -151,14 +152,14 @@ bool PriorityReplayBuffer<Tree>::Sample(const size_t &batch_size, float *beta, s
     InitRandState(batch_size, seed_, rand_state_, stream);
   }
 
-  size_t base_idx = GetStartIndex();
-  SumTreeSample(sum_tree_, rand_state_, capacity_pow_two_, base_idx, beta, batch_size, indices, weights, stream);
+  SumTreeSample(sum_tree_, rand_state_, capacity_pow_two_, beta, batch_size, indices, weights, stream);
 
   for (size_t i = 0; i < schema_.size(); i++) {
     auto output_addr = static_cast<uint8_t *>(transition[i]->addr);
     FifoSlice(fifo_replay_buffer_[i], indices, output_addr, batch_size, schema_[i], stream);
   }
 
+  SumTreeGetGlobalIdx(batch_size, indices, total_num_, capacity_, stream);
   return true;
 }
 

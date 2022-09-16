@@ -62,6 +62,10 @@ class PriorityReplayBufferPushGpuKernel : public NativeGpuKernelMod {
  private:
   int64_t handle_{-1};
   int64_t *handle_device_{nullptr};
+  // The API prototype is push(*transitions, priority), and the last `priority` is an optional argument.
+  // Default priority is used When the `priority` is not provided.
+  size_t num_item_{0};
+  bool default_priority_{true};
   std::shared_ptr<PriorityReplayBuffer<SumMinTree>> prioriory_replay_buffer_{nullptr};
 };
 
