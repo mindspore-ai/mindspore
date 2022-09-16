@@ -315,6 +315,9 @@ int DeConvolutionWinogradCPUKernel::InitDataParam() {
   }
 
   /* bias */
+  if (bias_data_ != nullptr) {
+    free(bias_data_);
+  }
   bias_data_ = malloc(deconv_param_->oc_up_ * sizeof(float));
   if (bias_data_ == nullptr) {
     MS_LOG(ERROR) << "bias_data_ error!";
