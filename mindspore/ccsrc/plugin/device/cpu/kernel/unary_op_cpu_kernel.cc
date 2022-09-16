@@ -55,61 +55,49 @@ void Ceil(const float *input, float *output, size_t start, size_t end) {
 
 template <typename T, typename S>
 void Real(const T *input, S *output, size_t start, size_t end) {
-  if (!std::is_same<S, complex64>::value && !std::is_same<S, complex128>::value) {
-    for (size_t i = start; i < end; ++i) {
-      output[i] = static_cast<S>(std::real(input[i]));
-    }
-  } else {
-    MS_LOG(EXCEPTION) << "For Real, it's output data type only support these types: float or double";
+  for (size_t i = start; i < end; ++i) {
+    output[i] = static_cast<S>(std::real(input[i]));
   }
 }
 
 template <typename T, typename S>
 void Imag(const T *input, S *output, size_t start, size_t end) {
-  if constexpr (!std::is_same<S, std::complex<float>>::value && !std::is_same<S, std::complex<double>>::value) {
-    for (size_t i = start; i < end; ++i) {
-      output[i] = static_cast<S>(std::imag(input[i]));
-    }
-  } else {
-    MS_LOG(EXCEPTION) << "For Imag, it's output data type only support these types: float or double";
+  for (size_t i = start; i < end; ++i) {
+    output[i] = static_cast<S>(std::imag(input[i]));
   }
 }
 
 template <typename T, typename S>
 void Conj(const T *input, S *output, size_t start, size_t end) {
-  if constexpr (std::is_same<T, S>::value &&
-                (std::is_same<T, complex64>::value || std::is_same<T, complex128>::value)) {
-    for (size_t i = start; i < end; ++i) {
-      output[i] = static_cast<S>(std::conj(input[i]));
+  if constexpr (std::is_same<T, S>::value) {
+    if constexpr ((std::is_same<T, complex64>::value || std::is_same<T, complex128>::value)) {
+      for (size_t i = start; i < end; ++i) {
+        output[i] = static_cast<S>(std::conj(input[i]));
+      }
+    } else {
+      for (size_t i = start; i < end; ++i) {
+        output[i] = static_cast<S>(input[i]);
+      }
     }
   } else {
-    MS_LOG(EXCEPTION) << "For Conj, it's output data type only support these types: complex<float> or complex<double>";
+    MS_LOG(EXCEPTION) << "For Conj, it's output data type not equal to input data type.";
   }
 }
 
 template <typename T, typename S>
 void UnaryOpCpuKernelFunc<T, S>::GetUnaryOpFunc() {
-  // only support float
+  const std::map<std::string, UnaryOpFunc> kCommonSupportedMap = {{prim::kPrimReal->name(), &Real<T, S>},
+                                                                  {prim::kPrimImag->name(), &Imag<T, S>},
+                                                                  {prim::kPrimConj->name(), &Conj<T, S>}};
   if constexpr (std::is_same<T, float>::value) {
-    static std::map<std::string, UnaryOpFunc> kFloatSupportedMap = {{prim::kPrimCeil->name(), &Ceil}};
-    auto iter = kFloatSupportedMap.find(kernel_name_);
-    if (iter != kFloatSupportedMap.end()) {
-      unary_op_func_ = iter->second;
+    if (kernel_name_ == prim::kPrimCeil->name()) {
+      unary_op_func_ = &Ceil;
       return;
     }
   }
-
-  if constexpr (std::is_same<T, complex64>::value || std::is_same<T, complex128>::value) {
-    static std::map<std::string, UnaryOpFunc> kComplexSupportedTypeMap = {{prim::kPrimReal->name(), &Real<T, S>},
-                                                                          {prim::kPrimImag->name(), &Imag<T, S>},
-                                                                          {prim::kPrimConj->name(), &Conj<T, S>}};
-    auto iter = kComplexSupportedTypeMap.find(kernel_name_);
-    if (iter != kComplexSupportedTypeMap.end()) {
-      unary_op_func_ = iter->second;
-      return;
-    }
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", only support these types: Real, Imag, Conj currently, but got "
-                      << kernel_name_;
+  auto iter = kCommonSupportedMap.find(kernel_name_);
+  if (iter != kCommonSupportedMap.end()) {
+    unary_op_func_ = iter->second;
   }
 }
 
@@ -126,15 +114,12 @@ bool UnaryOpCpuKernelFunc<T, S>::RunFunc(const std::vector<AddressPtr> &inputs, 
   auto output = outputs.front();
   const auto input_addr = reinterpret_cast<T *>(input->addr);
   auto output_addr = reinterpret_cast<S *>(output->addr);
-  if (unary_op_func_ != nullptr) {
-    ParallelLaunchAutoSearch(
-      std::bind(unary_op_func_, input_addr, output_addr, std::placeholders::_1, std::placeholders::_2),
-      output->size / sizeof(S), this, &parallel_search_info_);
-  } else {
-    if (memcpy_s(output_addr, output->size, input_addr, input->size) != EOK) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it does memory copy fail.";
-    }
+  if (unary_op_func_ == nullptr) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it has no cpu backend implements.";
   }
+  ParallelLaunchAutoSearch(
+    std::bind(unary_op_func_, input_addr, output_addr, std::placeholders::_1, std::placeholders::_2),
+    output->size / sizeof(S), this, &parallel_search_info_);
   return true;
 }
 
@@ -192,7 +177,9 @@ std::map<std::string, std::vector<std::pair<KernelAttr, UnaryOpCpuFuncCreator>>>
      SpecializeUnaryFunc<float, float>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
      SpecializeUnaryFunc<double, double>},
-    {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), SpecializeUnaryFunc<bool, bool>}}},
+    {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), SpecializeUnaryFunc<bool, bool>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
+     SpecializeUnaryFunc<uint8_t, uint8_t>}}},
   {kConj,
    {{KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
      SpecializeUnaryFunc<complex128, complex128>},
