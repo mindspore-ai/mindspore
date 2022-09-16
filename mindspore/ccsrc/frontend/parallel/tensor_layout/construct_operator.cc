@@ -158,8 +158,8 @@ Status ConstructOperator::AllGatherOP(int64_t dev_dim) {
   Attr attr = std::make_pair(GROUP, attr_value);
   auto group_devices = group_list[0].GetDevicesList();
   std::vector<int64_t> group_ranks;
-  std::transform(group_devices.begin(), group_devices.end(), std::back_inserter(group_ranks),
-                 [](Device dev) { return dev.rank(); });
+  (void)std::transform(group_devices.begin(), group_devices.end(), std::back_inserter(group_ranks),
+                       [](const Device &dev) { return dev.rank(); });
   ValuePtr attr_ranks_value = MakeValue(group_ranks);
   Attr attr_ranks = std::make_pair(GROUP_RANKS, attr_ranks_value);
   OperatorAttrs attrs = {attr, attr_ranks};
@@ -276,7 +276,7 @@ Status ConstructOperator::CreateGroupByDim(size_t axis, std::vector<Group> *grou
     std::vector<Device> dev_list;
     (void)std::transform(group_devices.begin(), group_devices.end(), std::back_inserter(dev_list),
                          [](auto &rank_id) { return Device(rank_id); });
-    g.Init("fake_group", dev_list);
+    (void)g.Init("fake_group", dev_list);
     group->push_back(g);
     if (ParallelContext::GetInstance()->do_transform()) {
       return SUCCESS;
