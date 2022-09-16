@@ -50,6 +50,7 @@ from ..operations.math_ops import ReduceStd
 from ..operations.math_ops import LuUnpack
 from ..operations.math_ops import MatrixExp
 from ..operations.math_ops import MatrixSolve
+from ..operations.math_ops import MatrixPower
 from ..operations.math_ops import Median
 from ..operations.math_ops import Betainc
 from ..operations.math_ops import CholeskySolve
@@ -434,6 +435,40 @@ def get_bprop_matrix_inverse(self):
         dx = matmul_x2(dout, out)
         dx = matmul_x1(out, dx)
         dx = neg(dx)
+        return (dx,)
+
+    return bprop
+
+
+@bprop_getters.register(MatrixPower)
+def get_bprop_matrix_power(self):
+    """Generate bprop for MatrixPower"""
+    n = self.n
+    batch_matmul_a = P.BatchMatMul(transpose_a=True)
+    batch_matmul_b = P.BatchMatMul(transpose_b=True)
+    neg = P.Neg()
+
+    def bprop(x, out, dout):
+        dout = F.cast(dout, mstype.float32)
+        x = F.cast(x, mstype.float32)
+        power = n
+        dx = zeros_like(x)
+        if power < 0:
+            matrix_power = MatrixPower(n=-1)
+            x_inv = matrix_power(x)
+            for i in range(0, -power):
+                matrix_power = MatrixPower(n=(-power - 1 - i))
+                dx = dx + batch_matmul_b(dout, matrix_power(x_inv))
+                dout = batch_matmul_a(x_inv, dout)
+            dx = batch_matmul_b(dx, x_inv)
+            dx = batch_matmul_a(x_inv, dx)
+            dx = neg(dx)
+        else:
+            for i in range(0, power):
+                matrix_power = MatrixPower(n=(power - 1 - i))
+                dx = dx + batch_matmul_b(dout, matrix_power(x))
+                dout = batch_matmul_a(x, dout)
+        dx = F.cast(dx, F.dtype(out))
         return (dx,)
 
     return bprop
