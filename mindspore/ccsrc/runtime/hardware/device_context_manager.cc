@@ -24,6 +24,7 @@
 #include <fstream>
 #include "utils/ms_context.h"
 #include "utils/dlopen_macro.h"
+#include "utils/os.h"
 
 namespace mindspore {
 namespace plugin_loader {
@@ -31,12 +32,18 @@ void PluginLoader::LoadDynamicLib(const std::string &plugin_file, std::map<std::
   MS_EXCEPTION_IF_NULL(all_handles);
   void *handle = nullptr;
   std::string err_msg;
+#ifndef _WIN32
   if (plugin_file.find("libmindspore_") == std::string::npos) {
     return;
   }
+#else
+  if (plugin_file.find("mindspore_") == std::string::npos) {
+    return;
+  }
+#endif
   auto so_name = GetDynamicLibName(plugin_file);
 #if defined(_WIN32) || defined(_WIN64)
-  handle = LoadLibrary(plugin_file.c_str());
+  handle = LoadLibraryEx(plugin_file.c_str(), NULL, LOAD_WITH_ALTERED_SEARCH_PATH);
   err_msg = std::to_string(GetLastError());
 #else
   handle = dlopen(plugin_file.c_str(), RTLD_NOW | RTLD_LOCAL);
@@ -63,7 +70,7 @@ void PluginLoader::CloseDynamicLib(const std::string &dl_name, void *handle) {
 }
 
 std::string PluginLoader::GetDynamicLibName(const std::string &plugin_file) {
-  auto p1 = plugin_file.find_last_of('/') + 1;
+  auto p1 = plugin_file.find_last_of(PATH_SEPARATOR) + 1;
   auto target_so = plugin_file.substr(p1);
   auto pos = target_so.rfind('.');
   if (pos == std::string::npos) {
@@ -97,12 +104,16 @@ bool PluginLoader::GetPluginPath(std::string *file_path) {
   }
   cur_so_path = std::string(szPath);
 #endif
-  auto pos = cur_so_path.find_last_of('/');
+  auto pos = cur_so_path.find_last_of(PATH_SEPARATOR);
   if (cur_so_path.empty() || pos == std::string::npos) {
     MS_LOG(INFO) << "Current so path empty or the path [" << cur_so_path << "] is invalid.";
     return false;
   }
+#ifndef _WIN32
   auto plugin_so_path = cur_so_path.substr(0, pos) + "/plugin";
+#else
+  auto plugin_so_path = cur_so_path.substr(0, pos);
+#endif
   if (plugin_so_path.size() >= PATH_MAX) {
     MS_LOG(INFO) << "Current path [" << plugin_so_path << "] is invalid.";
     return false;
@@ -145,6 +156,10 @@ void DeviceContextManager::LoadPlugin() {
     MS_LOG(INFO) << "Plugin path is invalid, skip!";
     return;
   }
+#ifdef _WIN32
+  auto plugin_file = plugin_path_ + "\\mindspore_gpu.dll";
+  plugin_loader::PluginLoader::LoadDynamicLib(plugin_file, &plugin_maps_);
+#else
   DIR *dir = opendir(plugin_path_.c_str());
   if (dir == nullptr) {
     MS_LOG(ERROR) << "Open plugin dir failed, plugin path:" << plugin_path_;
@@ -152,10 +167,11 @@ void DeviceContextManager::LoadPlugin() {
   }
   struct dirent *entry;
   while ((entry = readdir(dir)) != nullptr) {
-    auto plugin_file = plugin_path_ + "/" + entry->d_name;
+    auto plugin_file = plugin_path_ + PATH_SEPARATOR + entry->d_name;
     plugin_loader::PluginLoader::LoadDynamicLib(plugin_file, &plugin_maps_);
   }
   (void)closedir(dir);
+#endif
   load_init_ = true;
 }
 

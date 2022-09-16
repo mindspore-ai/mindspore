@@ -22,8 +22,9 @@
 
 namespace mindspore {
 enum LocDebugDumpMode { kDebugOff = 0, kDebugTopStack = 1, kDebugWholeStack = 2 };
-void DumpIRProtoWithSrcInfo(const FuncGraphPtr &func_graph, const std::string &suffix, const std::string &target_dir,
-                            LocDebugDumpMode dump_location = kDebugWholeStack);
-void DumpConstantInfo(const KernelGraphPtr &graph, const std::string &target_dir);
+BACKEND_EXPORT void DumpIRProtoWithSrcInfo(const FuncGraphPtr &func_graph, const std::string &suffix,
+                                           const std::string &target_dir,
+                                           LocDebugDumpMode dump_location = kDebugWholeStack);
+BACKEND_EXPORT void DumpConstantInfo(const KernelGraphPtr &graph, const std::string &target_dir);
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_DEBUG_DEBUGGER_MINDSPORE_PROTO_EXPORTER_STUB_H_
