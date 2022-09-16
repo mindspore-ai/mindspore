@@ -22,6 +22,7 @@
 #include "include/common/utils/utils.h"
 #include "backend/common/optimizer/helper.h"
 #include "mindspore/core/ops/core_ops.h"
+#include "plugin/device/ascend/optimizer/ir_fusion/reshape_transpose_fusion.h"
 
 namespace mindspore {
 namespace opt {
@@ -56,6 +57,9 @@ const AnfNodePtr TransposeReshapeFusion::Process(const FuncGraphPtr &func_graph,
   auto transpose_cnode = CheckAnfNodeIfCNodeAndInputSize(reshape_cnode->input(1), kBackendReshapeInputTensorNum);
   MS_EXCEPTION_IF_NULL(transpose_cnode);
   if (common::AnfAlgo::IsDynamicShape(transpose_cnode) || common::AnfAlgo::IsDynamicShape(reshape_cnode)) {
+    return nullptr;
+  }
+  if (!CheckMatmulNeighborNodes(func_graph, transpose_cnode, reshape_cnode)) {
     return nullptr;
   }
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();

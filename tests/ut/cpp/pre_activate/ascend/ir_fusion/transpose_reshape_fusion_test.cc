@@ -33,10 +33,9 @@ class TestHWTransposeReshapeFusion : public BackendCommon {
 
 TEST_F(TestHWTransposeReshapeFusion, test_transpose_reshape_fusion) {
   /*
-   * def before(input0, input1):
-   * reshape = Reshape(input0, input1)
-   * transpose = Transpose(reshape)
-   * return transpose
+   * transpose = Transpose(x, (1, 0, 2, 3))
+   * reshape = Reshape(transpose, (2, 2, 16, 16))
+   * res = BatchMatMul(reshape, reshape)
    */
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_transpose_reshape_fusion", "before");
   std::vector<int64_t> shp{2, 2, 16, 16};
@@ -47,7 +46,9 @@ TEST_F(TestHWTransposeReshapeFusion, test_transpose_reshape_fusion) {
   // Set Attr for transpose
   auto ret = kg->get_return();
   EXPECT_NE(ret->input(1), nullptr);
-  auto reshape = ret->input(1)->cast<CNodePtr>();
+  auto bmm = ret->input(1)->cast<CNodePtr>();
+  EXPECT_NE(bmm, nullptr);
+  auto reshape = bmm->input(1)->cast<CNodePtr>();
   EXPECT_NE(reshape->input(1), nullptr);
   auto transpose = reshape->input(1)->cast<CNodePtr>();
   common::AnfAlgo::SetNodeAttr(kAttrPerm, MakeValue("perm"), transpose);
@@ -64,10 +65,9 @@ TEST_F(TestHWTransposeReshapeFusion, test_transpose_reshape_fusion) {
 
 TEST_F(TestHWTransposeReshapeFusion, test_transpose_reshape_no_fusion) {
   /*
-   * def before(input0, input1):
-   * reshape = Reshape(input0, input1)
-   * transpose = Transpose(reshape)
-   * return transpose
+   * transpose = Transpose(x, (1, 0, 2, 3))
+   * reshape = Reshape(transpose, (2, 2, 16, 16))
+   * res = BatchMatMul(reshape, reshape)
    */
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_transpose_reshape_fusion", "before");
   std::vector<int64_t> shp{2, 4, 8, 16};

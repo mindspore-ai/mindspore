@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ from mindspore.ops import operations as P
 
 Transpose = P.Transpose()
 Reshape = P.Reshape()
+BatchMatMul = P.BatchMatMul()
 ConfusionTransposeD = Primitive('ConfusionTransposeD')
 make_tuple = Primitive('MakeTuple')
 
@@ -33,18 +34,20 @@ class FnDict:
 
 
 def test_transpose_reshape_fusion(tag):
+    """test transpose_reshape_fusion net."""
     fns = FnDict()
 
     @fns
     def before(x):
         transpose = Transpose(x, (1, 0, 2, 3))
         reshape = Reshape(transpose, (2, 2, 16, 16))
-        return reshape
+        res = BatchMatMul(reshape, reshape)
+        return res
 
     @fns
     def after(x):
         confusion = ConfusionTransposeD(x)
-        res = make_tuple(confusion)
+        res = make_tuple(BatchMatMul(confusion, confusion))
         return res
 
     return fns[tag]

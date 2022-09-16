@@ -33,15 +33,16 @@ class TestHWReshapeTransposeFusion : public BackendCommon {
 
 TEST_F(TestHWReshapeTransposeFusion, test_reshape_transpose_fusion) {
   /*
-   * def before(input0, input1):
-   * reshape = Reshape(input0, input1)
-   * transpose = Transpose(reshape)
-   * return transpose
+   * x = MatMul(input0, input1)
+   * reshape = Reshape(x, (2, 2, 16, 16))
+   * transpose = Transpose(reshape, (1, 0, 2, 3))
    */
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_reshape_transpose_fusion", "before");
-  std::vector<int64_t> shp{2, 2, 16, 16};
-  auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
-  AbstractBasePtrList args_spec_list{x_abstract};
+  std::vector<int64_t> shpx{16, 64};
+  auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shpx);
+  std::vector<int64_t> shpy{64, 64};
+  auto y_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shpy);
+  AbstractBasePtrList args_spec_list{x_abstract, y_abstract};
   auto kg = GetKernelGraph(g, args_spec_list);
 
   // Set Attr for transpose
@@ -62,15 +63,16 @@ TEST_F(TestHWReshapeTransposeFusion, test_reshape_transpose_fusion) {
 
 TEST_F(TestHWReshapeTransposeFusion, test_reshape_transpose_no_fusion) {
   /*
-   * def before(input0, input1):
-   * reshape = Reshape(input0, input1)
-   * transpose = Transpose(reshape)
-   * return transpose
+   * x = MatMul(input0, input1)
+   * reshape = Reshape(x, (2, 2, 16, 16))
+   * transpose = Transpose(reshape, (1, 0, 2, 3))
    */
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_reshape_transpose_fusion", "before");
-  std::vector<int64_t> shp{2, 4, 8, 16};
-  auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
-  AbstractBasePtrList args_spec_list{x_abstract};
+  std::vector<int64_t> shpx{4, 256};
+  auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shpx);
+  std::vector<int64_t> shpy{256, 256};
+  auto y_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shpy);
+  AbstractBasePtrList args_spec_list{x_abstract, y_abstract};
   auto kg = GetKernelGraph(g, args_spec_list);
 
   auto optimizer = std::make_shared<opt::GraphOptimizer>();

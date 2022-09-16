@@ -17,6 +17,7 @@
 #include "plugin/device/ascend/optimizer/ir_fusion/reshape_transpose_fusion.h"
 #include <vector>
 #include <memory>
+#include <utility>
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/utils.h"
@@ -40,6 +41,36 @@ bool CheckShapeDimInfo(const ShapeVector &shape) {
 }
 }  // namespace
 
+bool CheckMatmulNeighborNodes(const FuncGraphPtr &func_graph, const AnfNodePtr &up_node, const AnfNodePtr &down_node) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(up_node);
+  MS_EXCEPTION_IF_NULL(down_node);
+
+  auto manager = func_graph->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  auto user_list = manager->node_users();
+  auto iter = user_list.find(down_node);
+  if (iter != user_list.end()) {
+    if (std::any_of(iter->second.begin(), iter->second.end(), [](const std::pair<AnfNodePtr, int64_t> &kernel) {
+          return IsPrimitiveCNode(kernel.first, prim::kPrimMatMul) ||
+                 IsPrimitiveCNode(kernel.first, prim::kPrimBatchMatMul);
+        })) {
+      return true;
+    }
+  }
+
+  constexpr size_t input_index = 1;
+  if (common::AnfAlgo::GetInputTensorNum(up_node) >= input_index) {
+    auto cnode = up_node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    auto input_node = cnode->input(input_index);
+    if (IsPrimitiveCNode(input_node, prim::kPrimMatMul) || IsPrimitiveCNode(input_node, prim::kPrimBatchMatMul)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 const BaseRef ReshapeTransposeFusion::DefinePattern() const {
   const auto prim_reshape = std::make_shared<Primitive>(prim::kPrimReshape->name());
   VectorRef reshape({prim_reshape, input_varptr_});
@@ -59,6 +90,11 @@ const AnfNodePtr ReshapeTransposeFusion::Process(const FuncGraphPtr &func_graph,
   if (common::AnfAlgo::IsDynamicShape(transpose_cnode) || common::AnfAlgo::IsDynamicShape(reshape_cnode)) {
     return nullptr;
   }
+
+  if (!CheckMatmulNeighborNodes(func_graph, reshape_cnode, transpose_cnode)) {
+    return nullptr;
+  }
+
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
   if (kernel_graph != nullptr &&
       (kernel_graph->IsInternalOutput(reshape_cnode, 0) || kernel_graph->IsInternalOutput(transpose_cnode, 0))) {
