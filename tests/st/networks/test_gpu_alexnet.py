@@ -87,30 +87,3 @@ def test_trainTensor(num_classes=10, epoch=15, batch_size=32):
         loss = train_network(data, label).asnumpy()
         losses.append(loss)
     assert losses[-1] < 0.01
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_train_tensor_memory_opt(num_classes=10, epoch=15, batch_size=32):
-    """
-    Feature: Somas GPU kernel by kernel.
-    Description: AlexNet with Somas GPU kernel by kernel.
-    Expectation: No exception.
-    """
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU", memory_optimize_level='O1')
-    net = AlexNet(num_classes)
-    lr = 0.1
-    momentum = 0.9
-    optimizer = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), lr, momentum, weight_decay=0.0001)
-    criterion = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
-    net_with_criterion = WithLossCell(net, criterion)
-    train_network = TrainOneStepCell(net_with_criterion, optimizer)
-    train_network.set_train()
-    losses = []
-    for i in range(0, epoch):
-        data = Tensor(np.ones([batch_size, 3, 227, 227]).astype(np.float32) * 0.01)
-        label = Tensor(np.ones([batch_size]).astype(np.int32))
-        loss = train_network(data, label).asnumpy()
-        losses.append(loss)
-    assert losses[-1] < 0.01

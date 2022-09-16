@@ -102,7 +102,6 @@ void RegMsContext(py::module *m) {
     .value("grad_for_scalar", MsCtxParam::MS_CTX_GRAD_FOR_SCALAR)
     .value("pynative_synchronize", MsCtxParam::MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE)
     .value("disable_format_transform", MsCtxParam::MS_CTX_DISABLE_FORMAT_TRANSFORM)
-    .value("memory_optimize_level", MsCtxParam::MS_CTX_MEMORY_OPTIMIZE_LEVEL)
     .value("op_timeout", MsCtxParam::MS_CTX_OP_TIMEOUT);
   (void)py::class_<mindspore::MsContext, std::shared_ptr<mindspore::MsContext>>(*m, "MSContext")
     .def_static("get_instance", &mindspore::MsContext::GetInstance, "Get ms context instance.")
