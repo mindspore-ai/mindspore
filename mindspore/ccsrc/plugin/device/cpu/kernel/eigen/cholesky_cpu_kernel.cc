@@ -112,6 +112,9 @@ bool CholeskyCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, c
         }
       }
     } else {
+      if (!input.isApprox(input.transpose()) || llt.info() == Eigen::NumericalIssue) {
+        MS_LOG_EXCEPTION << "Cholesky expects symmetric positive definite matrices as inputs.";
+      }
       if (!upper_) {
         output = llt.matrixL();
       } else {
