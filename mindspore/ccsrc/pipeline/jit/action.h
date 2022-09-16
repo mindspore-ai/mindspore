@@ -45,7 +45,6 @@ bool DistributedSplitAction(const ResourcePtr &resource);
 std::vector<ActionItem> GePipeline();
 std::vector<ActionItem> VmPipeline(const ResourcePtr &resource);
 std::vector<ActionItem> MindIRPipeline();
-std::vector<ActionItem> ServerPipeline(const ResourcePtr &resource);
 std::vector<ActionItem> PSchedulerPipeline(const ResourcePtr &resource);
 abstract::AnalysisResult AbstractAnalyze(const ResourcePtr &resource, const FuncGraphPtr &func_graph,
                                          const abstract::AbstractBasePtrList &args_abs, bool clear = false);
