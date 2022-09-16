@@ -664,7 +664,7 @@ def _check_target_specific_cfgs(device, arg_key):
         'disable_format_transform': ['GPU']
     }
     # configs not in map device_cfgs are supposed to be suitable for all devices
-    if not arg_key in device_cfgs:
+    if arg_key not in device_cfgs:
         return True
     supported_devices = device_cfgs[arg_key]
     if device in supported_devices:
