@@ -1916,6 +1916,11 @@ void AscendStreamAssign::InsertEventHcomDependHcomAtSameGroup(
 }
 
 void AscendStreamAssign::InsertEventForCallCommSubGraph(const NotNull<KernelGraphPtr> &graph_ptr) const {
+  if (comm_sub_graph_stream_.empty()) {
+    MS_LOG(INFO) << "No comm sub graph, skip.";
+    return;
+  }
+
   std::map<uint32_t, std::string> comm_sub_graph_id_to_group = {};  // key: label id, value: hcom group
   const auto &cnode_list = graph_ptr->execution_order();
   for (const auto &n : cnode_list) {
@@ -1948,7 +1953,7 @@ void AscendStreamAssign::InsertEventForCallCommSubGraph(const NotNull<KernelGrap
       // insert event
       std::map<uint32_t, std::string>::const_iterator label_iter = comm_sub_graph_id_to_group.find(label_id);
       if (label_iter == comm_sub_graph_id_to_group.cend()) {
-        MS_LOG(WARNING) << "Cannot find comm group for sub comm graph label id " << label_id;
+        MS_LOG(INFO) << "Cannot find comm group for sub comm graph label id " << label_id;
         new_order.push_back(n);
         continue;
       }

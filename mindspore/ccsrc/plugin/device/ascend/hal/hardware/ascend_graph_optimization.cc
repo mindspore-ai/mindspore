@@ -261,6 +261,10 @@ void AscendGraphOptimization::RootGraphExecutorValidate(const NotNull<KernelGrap
 
 void AscendGraphOptimization::RecurseSelectKernelInfo(const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
+  if (memo_.find(graph) != memo_.end()) {
+    return;
+  }
+  (void)memo_.insert(graph);
 #ifdef ENABLE_DUMP_IR
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
@@ -270,10 +274,6 @@ void AscendGraphOptimization::RecurseSelectKernelInfo(const KernelGraphPtr &grap
     DumpIR(file_name, graph, true, kTopStack);
   }
 #endif
-  if (memo_.find(graph) != memo_.end()) {
-    return;
-  }
-  (void)memo_.insert(graph);
   MS_LOG(INFO) << "Status record: start select kernel info. graph id: " << graph->graph_id();
   SetOperatorInfo(graph);
   MS_LOG(INFO) << "Status record: end select kernel info. graph id: " << graph->graph_id();
