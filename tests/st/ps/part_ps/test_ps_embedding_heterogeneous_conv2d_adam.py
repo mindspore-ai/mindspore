@@ -37,6 +37,7 @@ from mindspore.common.parameter import Parameter
 from mindspore.train import Model
 from mindspore.common import set_seed
 from mindspore.communication.management import init
+from mindspore.parallel._ps_context import _is_role_worker
 
 parser = argparse.ArgumentParser(description='test_ps_lenet')
 parser.add_argument("--device_target", type=str, default="GPU")
@@ -177,7 +178,8 @@ class NetFactory:
         no_ps = self.no_ps_impl(ds2)
         print(part_ps)
         print(no_ps)
-        assert np.allclose(no_ps, part_ps, rtol=1.0e-4, atol=1.0e-4)
+        if _is_role_worker():
+            assert np.allclose(no_ps, part_ps, rtol=1.0e-4, atol=1.0e-4)
 
 
 if __name__ == "__main__":
