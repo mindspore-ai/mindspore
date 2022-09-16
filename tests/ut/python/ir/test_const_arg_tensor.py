@@ -212,7 +212,7 @@ def test_grad_constant_tensor():
 def test_grad_constant_tensor_mixed_call():
     """
     Feature: Set mutable tensor input to constant.
-    Description: Get gradient with respect to the constant tensor input.
+    Description: Get gradient with respect to the constant tensor input for mixed call of mutable and const_arg.
     Expectation: Get an empty gradient.
     """
 
@@ -240,6 +240,10 @@ def test_grad_constant_tensor_mixed_call():
     x = mutable(x)
     x.set_const_arg(True)
     grad_net = GradNetWrtX(Net())
+    output = grad_net(x, y)
+    assert isinstance(output, tuple)
+    assert output == ()
+    grad_net = GradOperation()(Net())
     output = grad_net(x, y)
     assert isinstance(output, tuple)
     assert output == ()
