@@ -7,7 +7,7 @@ mindspore.ops.Poisson
 
     .. math::
 
-        \text{P}(i|μ) = \frac{\exp(-μ)μ^{i}}{i!},
+        \text{P}(i|μ) = \frac{\exp(-μ)μ^{i}}{i!}
 
     参数：
         - **seed** (int) - 算子层的随机种子，用于生成随机数。必须是非负的。默认值：0。

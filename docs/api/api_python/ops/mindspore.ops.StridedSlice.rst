@@ -28,7 +28,7 @@
 
     如果设置了 `shrink_axis_mask` 的第i位，则第i维被收缩掉，并忽略 `begin[i]` 、 `end[i]` 和 `strides[i]` 索引处的值。
 
-    对于5*6*7的Tensor， `x[:, 5, :]` 相当于将 `shrink_axis_mask` 设置为2, 使得输出shape为:math:`(5, 7)` 。
+    对于5*6*7的Tensor， `x[:, 5, :]` 相当于将 `shrink_axis_mask` 设置为2，使得输出shape为:math:`(5, 7)` 。
 
     .. note::
         步长可能为负值，这会导致反向切片。 `begin` 、 `end` 和 `strides` 的shape必须相同。 `begin` 和 `end` 是零索引。 `strides` 的元素必须非零。
