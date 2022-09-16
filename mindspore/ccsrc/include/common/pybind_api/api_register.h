@@ -53,6 +53,7 @@ void RegMetaTensor(py::module *m);
 void RegCSRTensor(py::module *m);
 void RegCOOTensor(py::module *m);
 void RegRowTensor(py::module *m);
+void RegMapTensor(py::module *m);
 }  // namespace tensor
 
 namespace opt {
