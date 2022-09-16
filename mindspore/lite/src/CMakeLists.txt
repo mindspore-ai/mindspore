@@ -150,12 +150,9 @@ set(MODEL_LOADER_FRAMEWORK_SRC
 set(LITE_SRC
         ${LITE_SRC}
         ${MODEL_LOADER_FRAMEWORK_SRC}
-        # ${MINDIR_MODEL_SRC}
-        # ${MINDIR_KERNEL_SRC}
         )
 
-
-if(MSLITE_ENABLE_PARALLEL_INFERENCE)
+if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
     set(INFER_HELPER_SRC
             ${INFER_HELPER_SRC}
             ${LITE_DIR}/src/common/helper/external_tensor/file_helper.cc
