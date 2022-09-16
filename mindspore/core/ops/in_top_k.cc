@@ -65,7 +65,7 @@ class InTopKInfer : public abstract::OpInferBase {
     const std::set<TypePtr> x1_valid_types = {kFloat16, kFloat32};
     (void)CheckAndConvertUtils::CheckTensorTypeValid("x1", input_args[kInputIndex0]->BuildType(), x1_valid_types,
                                                      prim_name);
-    const std::set<TypePtr> x2_valid_types = {kInt32};
+    const std::set<TypePtr> x2_valid_types = {kInt32, kInt64};
     (void)CheckAndConvertUtils::CheckTensorTypeValid("x2", input_args[kInputIndex1]->BuildType(), x2_valid_types,
                                                      prim_name);
     return std::make_shared<TensorType>(kBool);

@@ -2318,6 +2318,14 @@ def ger(x, y):
     return F.ger(x, y)
 
 
+def gt(x, y):
+    return F.gt(x, y)
+
+
+def ge(x, y):
+    return F.ge(x, y)
+
+
 def while_cond(x):
     """For while condition, if the condition is a tensor, the loop will not be unrolled"""
     if F.issubclass_(F.typeof(x), F.typeof(mstype.tensor)):

@@ -2640,7 +2640,8 @@ def gt(x, y):
         >>> print(output)
         [False  True False]
     """
-    return tensor_gt(x, y)
+    _greater = _get_cache_prim(P.Greater)()
+    return _greater(x, y)
 
 
 def ge(x, y):
@@ -2686,7 +2687,8 @@ def ge(x, y):
         >>> print(output)
         [True True False]
     """
-    return tensor_ge(x, y)
+    _greater_equal = _get_cache_prim(P.GreaterEqual)()
+    return _greater_equal(x, y)
 
 
 def equal(x, y):
