@@ -15,7 +15,6 @@
 """Context for parameter server training mode"""
 
 import os
-from mindspore._checkparam import Validator, Rel
 from mindspore._c_expression import PSContext
 from mindspore import context
 from mindspore import log as logger
@@ -225,4 +224,3 @@ def _enable_distributed_mindrt():
     This method is used to distinguish from old distributed training mode.
     '''
     return ps_context().enable_distributed_mindrt()
-
