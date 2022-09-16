@@ -14,8 +14,8 @@
 # ============================================================================
 """Utils of auto parallel"""
 import numpy as np
+import mindspore as ms
 from mindspore import context, log as logger
-from mindspore.context import ParallelMode
 from mindspore._c_expression import reset_op_id, reset_op_id_with_offset
 from mindspore.common.tensor import Tensor
 from mindspore.common.dtype import dtype_to_nptype
@@ -39,7 +39,7 @@ def _is_sharding_propagation():
 
 
 def _is_in_auto_parallel_mode():
-    return _get_parallel_mode() in [ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL]
+    return _get_parallel_mode() in [ms.ParallelMode.SEMI_AUTO_PARALLEL, ms.ParallelMode.AUTO_PARALLEL]
 
 
 def _get_full_batch():
@@ -297,7 +297,7 @@ def _reset_op_id_with_offset():
 
 def _parallel_predict_check():
     """validate parallel model prediction"""
-    if _get_parallel_mode() in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL):
+    if _is_in_auto_parallel_mode():
         dataset_strategy = context.get_auto_parallel_context("dataset_strategy")
         is_shard_dataset_mp = (dataset_strategy and dataset_strategy not in ("data_parallel", "full_batch"))
         if not context.get_auto_parallel_context("full_batch") and not is_shard_dataset_mp:
