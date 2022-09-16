@@ -44,11 +44,11 @@ class TensorTransform {
   TensorTransform();
   std::unordered_map<string, TransformFunc> transform_operator_;
   bool inited_function_ = false;
-  std::pair<std::string, std::vector<int64_t>> ExtractReshapeOp(const Operator &reshape_op_pair);
-  std::pair<std::string, std::vector<int64_t>> ExtractAllGatherOp(const Operator &allgather_op_pair);
-  std::pair<std::string, std::vector<int64_t>> ExtractSplitOp(const Operator &split_op_pair);
-  std::pair<std::string, std::vector<int64_t>> ExtractConcatOp(const Operator &concat_op_pair);
-  std::pair<std::string, std::vector<int64_t>> ExtractStridedSliceOp(const Operator &slice_op_pair);
+  std::pair<std::string, std::vector<int64_t>> ExtractReshapeOp(const Operator &reshape_op_pair) const;
+  std::pair<std::string, std::vector<int64_t>> ExtractAllGatherOp(const Operator &allgather_op_pair) const;
+  std::pair<std::string, std::vector<int64_t>> ExtractSplitOp(const Operator &split_op_pair) const;
+  std::pair<std::string, std::vector<int64_t>> ExtractConcatOp(const Operator &concat_op_pair) const;
+  std::pair<std::string, std::vector<int64_t>> ExtractStridedSliceOp(const Operator &slice_op_pair) const;
   void OptimizeAllConcat(std::vector<std::pair<std::string, std::vector<int64_t>>> *transform_op_list);
   TensorRedistribution tensor_redistribution_;
 };
