@@ -15,6 +15,7 @@
  */
 
 #include <memory>
+#include <algorithm>
 #include "ops/grad/batch_norm_grad.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
@@ -23,10 +24,18 @@
 
 namespace mindspore {
 namespace ops {
+namespace {
+constexpr auto kInputNum = 6;
+}
 MIND_API_OPERATOR_IMPL(BatchNormGrad, BaseOperator);
-void BatchNormGrad::Init(const bool is_training, const float epsilon) {
+MIND_API_OPERATOR_IMPL(BatchNormGradWithActivation, BatchNormGrad);
+MIND_API_OPERATOR_IMPL(BatchNormGradWithAddAndActivation, BatchNormGrad);
+void BatchNormGrad::Init(const bool is_training, const float epsilon, const Format &format,
+                         const std::string &inplace_algo) {
   this->set_is_training(is_training);
   this->set_epsilon(epsilon);
+  this->set_format(format);
+  this->set_inplace_algo(inplace_algo);
 }
 
 void BatchNormGrad::set_epsilon(const float epsilon) { (void)this->AddAttr(kEpsilon, api::MakeValue(epsilon)); }
@@ -47,34 +56,62 @@ bool BatchNormGrad::get_is_training() const {
   return GetValue<bool>(value_ptr);
 }
 
-constexpr auto kInputNum = 6;
-
-abstract::TupleShapePtr BatchNormGradInferShape(const PrimitivePtr &primitive,
-                                                const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto prim_name = primitive->name();
-  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
-  auto x_shape_ptr = input_args[kInputIndex1]->BuildShape();
-  auto scale_shape_ptr = input_args[kInputIndex2]->BuildShape();
-  return std::make_shared<abstract::TupleShape>(
-    std::vector<abstract::BaseShapePtr>{x_shape_ptr, scale_shape_ptr, scale_shape_ptr});
+void BatchNormGrad::set_format(const Format &format) {
+  int64_t f = format;
+  (void)this->AddAttr(kFormat, api::MakeValue(f));
 }
 
-TuplePtr BatchNormGradInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto prim_name = primitive->name();
-  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
-  auto x_type_ptr = input_args[kInputIndex1]->BuildType();
-  auto scale_type_ptr = input_args[kInputIndex2]->BuildType();
-  return std::make_shared<Tuple>(std::vector<TypePtr>{x_type_ptr, scale_type_ptr, scale_type_ptr});
+Format BatchNormGrad::get_format() const {
+  auto value_ptr = GetAttr(kFormat);
+  return Format(GetValue<int64_t>(value_ptr));
 }
 
-AbstractBasePtr BatchNormGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                   const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  return abstract::MakeAbstract(BatchNormGradInferShape(primitive, input_args),
-                                BatchNormGradInferType(primitive, input_args));
+std::string BatchNormGrad::get_inplace_algo() const {
+  auto value_ptr = GetAttr(kInplaceAlgo);
+  if (value_ptr == nullptr) {
+    return "cover";
+  }
+  return GetValue<std::string>(value_ptr);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(BatchNormGrad, prim::kPrimBatchNormGrad, BatchNormGradInfer, nullptr, true);
+
+void BatchNormGrad::set_inplace_algo(const std::string &inplace_algo) {
+  (void)this->AddAttr(kInplaceAlgo, api::MakeValue(inplace_algo));
+}
+
+class BatchNormGradInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    MS_EXCEPTION_IF_NULL(primitive);
+    auto prim_name = primitive->name();
+    CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
+    auto x_shape_ptr = input_args[kInputIndex1]->BuildShape();
+    auto scale_shape_ptr = input_args[kInputIndex2]->BuildShape();
+    if (prim_name == kNameBatchNormGradWithAddAndActivation) {
+      return std::make_shared<abstract::TupleShape>(
+        std::vector<abstract::BaseShapePtr>{x_shape_ptr, scale_shape_ptr, scale_shape_ptr, x_shape_ptr});
+    }
+    return std::make_shared<abstract::TupleShape>(
+      std::vector<abstract::BaseShapePtr>{x_shape_ptr, scale_shape_ptr, scale_shape_ptr});
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    MS_EXCEPTION_IF_NULL(primitive);
+    auto prim_name = primitive->name();
+    CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
+    auto x_type_ptr = input_args[kInputIndex1]->BuildType();
+    auto scale_type_ptr = input_args[kInputIndex2]->BuildType();
+    if (prim_name == kNameBatchNormGradWithAddAndActivation) {
+      return std::make_shared<Tuple>(std::vector<TypePtr>{x_type_ptr, scale_type_ptr, scale_type_ptr, x_type_ptr});
+    }
+    return std::make_shared<Tuple>(std::vector<TypePtr>{x_type_ptr, scale_type_ptr, scale_type_ptr});
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(BatchNormGrad, prim::kPrimBatchNormGrad, BatchNormGradInfer, false);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(BatchNormGradWithActivation, prim::kPrimBatchNormGradWithActivation,
+                                 BatchNormGradInfer, false);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(BatchNormGradWithAddAndActivation, prim::kPrimBatchNormGradWithAddAndActivation,
+                                 BatchNormGradInfer, false);
 }  // namespace ops
 }  // namespace mindspore

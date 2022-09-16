@@ -785,7 +785,13 @@ GVAR_DEF(PrimitivePtr, kPrimTripletMarginLoss, std::make_shared<Primitive>(kTrip
 GVAR_DEF(PrimitivePtr, kPrimRoll, std::make_shared<Primitive>(kRoll));
 GVAR_DEF(PrimitivePtr, kPrimGroupConv2DGradInput, std::make_shared<Primitive>("GroupConv2DGradInput"));
 GVAR_DEF(PrimitivePtr, kPrimBatchNorm, std::make_shared<Primitive>("BatchNorm"));
+GVAR_DEF(PrimitivePtr, kPrimBatchNormWithActivation, std::make_shared<Primitive>("BatchNormWithActivation"));
+GVAR_DEF(PrimitivePtr, kPrimBatchNormWithAddAndActivation,
+         std::make_shared<Primitive>("BatchNormWithAddAndActivation"));
 GVAR_DEF(PrimitivePtr, kPrimBatchNormGrad, std::make_shared<Primitive>("BatchNormGrad"));
+GVAR_DEF(PrimitivePtr, kPrimBatchNormGradWithActivation, std::make_shared<Primitive>("BatchNormGradWithActivation"));
+GVAR_DEF(PrimitivePtr, kPrimBatchNormGradWithAddAndActivation,
+         std::make_shared<Primitive>("BatchNormGradWithAddAndActivation"));
 GVAR_DEF(PrimitivePtr, kPrimBatchNormGradGrad, std::make_shared<Primitive>("BatchNormGradGrad"));
 GVAR_DEF(PrimitivePtr, kPrimInstanceNorm, std::make_shared<Primitive>("InstanceNorm"));
 GVAR_DEF(PrimitivePtr, kPrimInstanceNormGrad, std::make_shared<Primitive>("InstanceNormGrad"));

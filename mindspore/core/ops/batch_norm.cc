@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,8 @@
 namespace mindspore {
 namespace ops {
 MIND_API_OPERATOR_IMPL(BatchNorm, BaseOperator);
+MIND_API_OPERATOR_IMPL(BatchNormWithActivation, BatchNorm);
+MIND_API_OPERATOR_IMPL(BatchNormWithAddAndActivation, BatchNorm);
 void BatchNorm::Init(const bool is_training, const float epsilon, const float momentum, const Format &format) {
   set_is_training(is_training);
   set_epsilon(epsilon);
@@ -73,6 +75,109 @@ Format BatchNorm::get_format() const {
   return Format(GetValue<int64_t>(value_ptr));
 }
 
-REGISTER_PRIMITIVE_C(kNameBatchNorm, BatchNorm);
+namespace {
+bool MeanAndVarianceValid(const std::vector<AbstractBasePtr> &input_args) {
+  std::vector<int> params_ids = {3, 4};
+  size_t valid_param = 0;
+  for (auto idx : params_ids) {
+    auto type = input_args[idx]->BuildType();
+    if (type->isa<TensorType>()) {
+      auto tensor_type = type->cast<TensorTypePtr>();
+      auto element = tensor_type->element();
+      valid_param += element->type_id() != kMetaTypeNone ? 1 : 0;
+    }
+  }
+  return valid_param == params_ids.size();
+}
+
+std::string get_format_in_infer(const PrimitivePtr &primitive) {
+  auto format_ptr = primitive->GetAttr(kFormat);
+  if (format_ptr->isa<StringImm>()) {
+    return GetValue<std::string>(format_ptr);
+  }
+  auto format = Format(GetValue<int64_t>(format_ptr));
+  return FormatEnumToString(format);
+}
+}  // namespace
+
+class BatchNormInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    const auto prim_name = primitive->name();
+    auto x_shape_ptr = input_args[kInputIndex0]->BuildShape();
+    auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shape_ptr)[kShape];
+    auto scale_shape_ptr = input_args[kInputIndex1]->BuildShape();
+    auto scale_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(scale_shape_ptr)[kShape];
+    auto bias_shape_ptr = input_args[kInputIndex2]->BuildShape();
+    auto bias_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(bias_shape_ptr)[kShape];
+    auto mean_shape_ptr = input_args[kInputIndex3]->BuildShape();
+    auto mean_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(mean_shape_ptr)[kShape];
+    auto variance_shape_ptr = input_args[kInputIndex4]->BuildShape();
+    auto variance_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(variance_shape_ptr)[kShape];
+
+    auto is_training = GetValue<bool>(primitive->GetAttr(kIsTraining));
+
+    (void)CheckAndConvertUtils::CheckInteger("rank of scale", SizeToLong(scale_shape.size()), kEqual, 1, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("rank of bias", SizeToLong(bias_shape.size()), kEqual, 1, prim_name);
+
+    if (!x_shape_ptr->IsDynamic() && !scale_shape_ptr->IsDynamic()) {
+      // auto format = GetValue<std::string>(primitive->GetAttr(kFormat));
+      auto format = get_format_in_infer(primitive);
+      auto channel = format == "NHWC" ? x_shape.back() : x_shape[1];
+      if (scale_shape[kInputIndex0] != channel) {
+        MS_EXCEPTION(ValueError) << "For '" << prim_name
+                                 << "', 'scale_dim0' and input channel should be equal, but got "
+                                 << scale_shape[kInputIndex0] << " and " << channel << ".";
+      }
+    }
+
+    if (!mean_shape_ptr->IsDynamic() && !variance_shape_ptr->IsDynamic() && !bias_shape_ptr->IsDynamic() &&
+        !scale_shape_ptr->IsDynamic()) {
+      if (scale_shape[0] != bias_shape[0]) {
+        MS_EXCEPTION(ValueError) << "For '" << prim_name << "', 'scale' and 'bias' should have the same size, but got "
+                                 << scale_shape[0] << ", " << bias_shape[0] << '.';
+      }
+      if (MeanAndVarianceValid(input_args)) {
+        (void)CheckAndConvertUtils::CheckInteger("rank of mean", SizeToLong(mean_shape.size()), kEqual, 1, prim_name);
+        (void)CheckAndConvertUtils::CheckInteger("rank of variance", SizeToLong(variance_shape.size()), kEqual, 1,
+                                                 prim_name);
+        if (!is_training && (mean_shape[0] != variance_shape[0] || variance_shape[0] != scale_shape[0])) {
+          MS_EXCEPTION(ValueError)
+            << "For '" << prim_name
+            << "', 'scale', 'bias', 'mean', and 'variance' should have the same size during training, but got "
+            << scale_shape[0] << ", " << bias_shape[0] << mean_shape[0] << " and " << variance_shape[0] << ".";
+        }
+      }
+    }
+
+    abstract::ShapePtr y_shape_ptr = std::make_shared<abstract::Shape>(x_shape);
+    abstract::ShapePtr channel_shape_ptr = std::make_shared<abstract::Shape>(scale_shape);
+
+    return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{
+      y_shape_ptr, channel_shape_ptr, channel_shape_ptr, channel_shape_ptr, channel_shape_ptr});
+  }
+
+  TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
+    const std::set valid_types = {kFloat16, kFloat32};
+    auto x_type = input_args[0]->BuildType();
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x", x_type, valid_types, prim->name());
+
+    std::map<std::string, TypePtr> types;
+    (void)types.emplace("scale", input_args[kInputIndex1]->BuildType());
+    (void)types.emplace("bias", input_args[kInputIndex2]->BuildType());
+    if (MeanAndVarianceValid(input_args)) {
+      (void)types.emplace("mean", input_args[kInputIndex3]->BuildType());
+      (void)types.emplace("variance", input_args[kInputIndex4]->BuildType());
+    }
+    (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
+    return std::make_shared<Tuple>(std::vector<TypePtr>{x_type, kFloat32, kFloat32, kFloat32, kFloat32});
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(BatchNorm, prim::kPrimBatchNorm, BatchNormInfer, false);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(BatchNormWithActivation, prim::kPrimBatchNormWithActivation, BatchNormInfer, false);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(BatchNormWithAddAndActivation, prim::kPrimBatchNormWithAddAndActivation,
+                                 BatchNormInfer, false);
 }  // namespace ops
 }  // namespace mindspore
