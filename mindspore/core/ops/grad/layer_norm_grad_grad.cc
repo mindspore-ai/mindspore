@@ -35,16 +35,6 @@ AbstractBasePtr LayerNormGradGradInfer(const abstract::AnalysisEnginePtr &, cons
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);  // x
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex1]);  // dy
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex4]);  // gamma
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
-  std::map<std::string, TypePtr> types;
-  (void)types.emplace("x", input_args[kInputIndex0]->BuildType());
-  (void)types.emplace("dy", input_args[kInputIndex1]->BuildType());
-  (void)types.emplace("variance", input_args[kInputIndex2]->BuildType());
-  (void)types.emplace("mean", input_args[kInputIndex3]->BuildType());
-  (void)types.emplace("gamma", input_args[kInputIndex4]->BuildType());
-  (void)types.emplace("d_dx", input_args[kInputIndex5]->BuildType());
-  (void)types.emplace("d_dg", input_args[kInputIndex6]->BuildType());
-  (void)types.emplace("d_db", input_args[kInputIndex7]->BuildType());
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto d_dx_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
   auto dy_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->BuildShape())[kShape];
