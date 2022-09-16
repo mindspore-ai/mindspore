@@ -27,6 +27,54 @@ context.set_context(mode=context.GRAPH_MODE)
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
+def test_list_comprehension_with_variable_tensor():
+    """
+    Feature: Graph isinstance.
+    Description: Graph list comprehension syntax with variable input.
+    Expectation: No exception.
+    """
+
+    @ms_function
+    def foo(a):
+        x = [i + 1 for i in a]
+        return x
+
+    res = foo(Tensor([1, 2, 3]))
+    assert len(res) == 3
+    assert res[0] == 2
+    assert res[1] == 3
+    assert res[2] == 4
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_list_comprehension_with_variable_dict():
+    """
+    Feature: Graph isinstance.
+    Description: Graph list comprehension syntax with variable input.
+    Expectation: No exception.
+    """
+
+    @ms_function
+    def foo(a):
+        m = {"1": a, "2": a+1, "3": a-1}
+        x = [m[i]+1 for i in m if i != "1"]
+        return x
+
+    res = foo(Tensor([1]))
+    assert len(res) == 2
+    assert res[0] == 3
+    assert res[1] == 1
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_list_comprehension_with_variable_input():
     """
     Feature: Graph isinstance.
