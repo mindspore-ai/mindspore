@@ -58,7 +58,9 @@ class AbstractActor : public OpActor<DeviceTensor> {
         input_datas_num_(0),
         input_controls_num_(0),
         running_dependent_msg_num_(0),
-        parent_fusion_actor_{nullptr} {}
+        parent_fusion_actor_{nullptr},
+        memory_alloc_insert_position_{nullptr},
+        memory_free_insert_position_{nullptr} {}
   ~AbstractActor() override = default;
 
   bool IsActive(int msg_num) override { return msg_num >= running_dependent_msg_num_ ? true : false; }
@@ -92,6 +94,8 @@ class AbstractActor : public OpActor<DeviceTensor> {
   const AbstractActor *parent_fusion_actor() const { return parent_fusion_actor_; }
   const mindspore::HashMap<std::string, std::shared_ptr<AbstractActor>> &sub_actors() const { return sub_actors_; }
   const std::unordered_set<std::string> &dependent_actors() const { return dependent_actors_; }
+  AbstractActor *memory_alloc_insert_position() const { return memory_alloc_insert_position_; }
+  AbstractActor *memory_free_insert_position() const { return memory_free_insert_position_; }
 
  protected:
   friend class GraphScheduler;
@@ -174,6 +178,10 @@ class AbstractActor : public OpActor<DeviceTensor> {
   // All actors that the actor depends on for execution, the dependent actors are expanded by the input data and input
   // controls. For example, ActorA->ActorB->ActorC, the expanded dependent actors of ActorC are ActorA and ActorB.
   std::unordered_set<std::string> dependent_actors_;
+
+  // The information used for integration of dynamic and static memory.
+  AbstractActor *memory_alloc_insert_position_;
+  AbstractActor *memory_free_insert_position_;
 };
 
 using AbstractActorPtr = std::shared_ptr<AbstractActor>;

@@ -36,7 +36,8 @@ class MemoryAllocActor : public MemoryAwareActor {
         created_device_tensor_(nullptr) {
     (void)device_contexts_.emplace_back(device_context);
   }
-  ~MemoryAllocActor() override = default;
+  // MemoryFreeActor will free the ptr, so need set nullptr in the destructor.
+  ~MemoryAllocActor() override { created_device_tensor_->set_ptr(nullptr); }
 
   // The memory related operation interface.
   void SendMemoryAllocReq(OpContext<DeviceTensor> *const context) override;

@@ -19,11 +19,6 @@
 
 namespace mindspore {
 namespace runtime {
-void MemoryFreeActor::Run(OpContext<DeviceTensor> *const context) {
-  SendMemoryFreeReq(context);
-  PostRun(context);
-}
-
 void MemoryFreeActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(somas_info_);
   MS_EXCEPTION_IF_CHECK_FAIL((!device_contexts_.empty()), "The device context doesn't exist.");

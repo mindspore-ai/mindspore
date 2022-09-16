@@ -262,7 +262,7 @@ KernelTransformType FetchKernelTransformType(const AnfNodePtr &node, const Kerne
   // Fetch kernel graph.
   KernelGraphPtr kernel_graph = nullptr;
   if (graph == nullptr) {
-    kernel_graph = AnfAlgo::FetchKernelGraph(node);
+    kernel_graph = AnfAlgo::FetchKernelGraph(node.get());
   } else {
     kernel_graph = graph;
   }
@@ -304,7 +304,7 @@ std::string FetchActorName(KernelTransformType kernel_type, const std::string &a
   // Fetch kernel graph.
   KernelGraphPtr kernel_graph = nullptr;
   if (graph == nullptr) {
-    kernel_graph = AnfAlgo::FetchKernelGraph(node);
+    kernel_graph = AnfAlgo::FetchKernelGraph(node.get());
   } else {
     kernel_graph = graph;
   }

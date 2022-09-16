@@ -1096,7 +1096,7 @@ ShapeVector AnfRuntimeAlgorithm::GetOutputDeviceShapeAdaptively(const AnfNodePtr
   return device_shape;
 }
 
-KernelGraphPtr AnfRuntimeAlgorithm::FetchKernelGraph(const AnfNodePtr &node) {
+KernelGraphPtr AnfRuntimeAlgorithm::FetchKernelGraph(const AnfNode *node) {
   MS_EXCEPTION_IF_NULL(node);
   const auto &func_graph = node->func_graph();
   if (func_graph == nullptr) {

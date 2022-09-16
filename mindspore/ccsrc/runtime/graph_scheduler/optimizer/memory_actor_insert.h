@@ -33,8 +33,8 @@ class MemoryActorInsert : public ActorPass {
   void Process(ActorSet *const actor_set, AbstractActor *const actor) override;
 
  private:
-  void InsertMemoryAllocActor(ActorSet *const actor_set, KernelActor *const kernel_actor, SomasInfo *somas_info);
-  void InsertMemoryFreeActor(ActorSet *const actor_set, KernelActor *const kernel_actor, SomasInfo *somas_info);
+  void InsertMemoryAllocActor(ActorSet *const actor_set, AbstractActor *const actor, SomasInfo *somas_info) const;
+  void InsertMemoryFreeActor(ActorSet *const actor_set, AbstractActor *const actor, SomasInfo *somas_info) const;
 };
 }  // namespace runtime
 }  // namespace mindspore

@@ -84,6 +84,9 @@ class BACKEND_EXPORT KernelInfo : public KernelInfoDevice {
   // The interface of somas.
   bool SetSomasResult(std::vector<std::pair<size_t, size_t>> &&output_somas_result,
                       std::vector<std::pair<size_t, size_t>> &&workspace_somas_result);
+  size_t GetTensorSomasOffset(const std::vector<std::pair<size_t, size_t>> &somas_result, size_t tensor_index) const;
+  size_t GetTensorSomasAlignedSize(const std::vector<std::pair<size_t, size_t>> &somas_result,
+                                   size_t tensor_index) const;
   bool IsTensorEnableSomas(const std::vector<std::pair<size_t, size_t>> &somas_result, size_t tensor_index) const;
   const std::vector<std::pair<size_t, size_t>> &somas_output_result() const { return somas_output_result_; }
   const std::vector<std::pair<size_t, size_t>> &somas_workspace_result() const { return somas_workspace_result_; }

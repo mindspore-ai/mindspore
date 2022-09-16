@@ -78,15 +78,15 @@ class SchedulerHelper {
   static void AddArrowForFusionActor(FusionActor *fusion_actor);
 
   // The interface of integration of dynamic and static memory.
-  static void AddMemorySign(AbstractActor *const from_actor, AbstractActor *const to_actor, int32_t from_position,
-                            int32_t to_position, bool is_data_arrow);
+  static void AddMemorySign(AbstractActor *const from_actor, AbstractActor *const to_actor);
+  static KernelGraphPtr FecthKernelGraphByActor(AbstractActor *const actor);
   // Add the memory alloc sign for the head kernel actor of graph.
-  static void AddMemoryAllocSign(KernelActor *const to_actor, int32_t to_position, const KernelGraphPtr &to_graph,
-                                 bool is_data_arrow);
+  static void AddMemoryAllocSign(AbstractActor *const from_actor, AbstractActor *const to_actor,
+                                 const KernelGraphPtr &to_graph);
   // Add the memory free sign for the tail kernel actor of graph.
-  static void AddMemoryFreeSign(KernelActor *const from_actor, int32_t from_position, const KernelGraphPtr &from_graph,
-                                bool is_data_arrow);
-  static void AddSomasInfo(KernelActor *const kernel_actor, const KernelGraphPtr &graph);
+  static void AddMemoryFreeSign(AbstractActor *const from_actor, AbstractActor *const to_actor,
+                                const KernelGraphPtr &from_graph);
+  static void AddSomasInfo(AbstractActor *const actor);
 
   // Check whether the actor set is valid.
   static void CheckActorValid(const ActorSet *actor_set);

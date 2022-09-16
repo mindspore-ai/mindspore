@@ -68,9 +68,7 @@ class KernelActor : public DebugAwareActor {
         modifiable_ref_input_indexes_(modifiable_ref_input_indexes),
         modifiable_ref_output_indexes_(modifiable_ref_output_indexes),
         is_launch_skipped_(false),
-        somas_info_(nullptr),
-        memory_alloc_insert_position_({-1, false}),
-        memory_free_insert_position_({-1, false}) {
+        somas_info_(nullptr) {
     (void)device_contexts_.emplace_back(device_context);
   }
   ~KernelActor() override = default;
@@ -92,8 +90,6 @@ class KernelActor : public DebugAwareActor {
   bool is_dynamic_shape() const { return is_dynamic_shape_; }
   bool is_launch_skipped() const { return is_launch_skipped_; }
   SomasInfo *somas_info() const { return somas_info_; }
-  const std::pair<int32_t, bool> &memory_alloc_insert_position() const { return memory_alloc_insert_position_; }
-  const std::pair<int32_t, bool> &memory_free_insert_position() const { return memory_free_insert_position_; }
 
  protected:
   void Init() override;
@@ -177,10 +173,6 @@ class KernelActor : public DebugAwareActor {
 
   // The information used for integration of dynamic and static memory.
   SomasInfo *somas_info_;
-  // The first of pair is the inserted position and initial value -1 is the invalid position, the second of pair value
-  // true is the data arrow and value false is the control arrow.
-  std::pair<int32_t, bool> memory_alloc_insert_position_;
-  std::pair<int32_t, bool> memory_free_insert_position_;
 };
 
 using KernelActorPtr = std::shared_ptr<KernelActor>;

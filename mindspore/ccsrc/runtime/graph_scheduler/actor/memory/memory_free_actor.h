@@ -43,7 +43,7 @@ class MemoryFreeActor : public MemoryAwareActor {
   SomasInfo *somas_info() const { return somas_info_; }
 
  protected:
-  void Run(OpContext<DeviceTensor> *const context) override;
+  void Run(OpContext<DeviceTensor> *const context) override { PostRun(context); }
 
  private:
   friend class SchedulerHelper;

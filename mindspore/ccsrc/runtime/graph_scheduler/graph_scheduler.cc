@@ -21,6 +21,7 @@
 #include "runtime/graph_scheduler/actor/debug_actor.h"
 #include "runtime/graph_scheduler/actor/recorder_actor.h"
 #include "runtime/graph_scheduler/optimizer/optimizer.h"
+#include "runtime/graph_scheduler/optimizer/memory_actor_insert.h"
 #include "runtime/graph_scheduler/optimizer/invalid_data_arrow_elimination.h"
 #include "runtime/graph_scheduler/optimizer/batch_data_arrow_fusion.h"
 #include "runtime/graph_scheduler/optimizer/multi_actor_fusion.h"
@@ -765,6 +766,15 @@ void GraphScheduler::CacheGraphOutputToActor(const GraphCompilerInfo &graph_comp
                    << " with index:" << output_with_index.second << " to actor:" << output_actor_name
                    << ", from front node:" << origin_output_with_index.first->fullname_with_scope()
                    << " with index:" << origin_output_with_index.second;
+
+      // Check the memory allocator validity of graph output.
+      if ((output_actor != nullptr) && (output_actor->type() == KernelTransformType::kKernelActor)) {
+        auto kernel_info = dynamic_cast<KernelInfo *>(output_kernel->kernel_info());
+        MS_EXCEPTION_IF_NULL(kernel_info);
+        auto is_somas = kernel_info->IsTensorEnableSomas(kernel_info->somas_output_result(), output_with_index.second);
+        MS_EXCEPTION_IF_CHECK_FAIL((!is_somas),
+                                   (output_kernel->fullname_with_scope() + " can't use somas for graph output."));
+      }
     }
   }
 }
@@ -823,6 +833,12 @@ void GraphScheduler::Optimize(const ActorSetPtr &actor_set) const {
 
   auto optimizer = std::make_shared<ActorSetOptimizer>();
   MS_EXCEPTION_IF_NULL(optimizer);
+
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ms_context->get_param<int>(MS_CTX_MEMORY_OPTIMIZE_LEVEL) != kOptimizeO0) {
+    optimizer->AddPass(std::make_shared<MemoryActorInsert>());
+  }
   optimizer->AddPass(std::make_shared<InvalidDataArrowElimination>());
   optimizer->AddPass(std::make_shared<MultiActorFusion>());
   optimizer->AddPass(std::make_shared<BatchDataArrowFusion>());
@@ -1079,6 +1095,10 @@ DataPrepareActorPtr GraphScheduler::BuildDataPrepareActor(const GraphCompilerInf
       const auto &graph = graph_compiler_info.graphs_[index];
       MS_EXCEPTION_IF_NULL(graph);
       if (graph->is_graph_run_mode()) {
+        continue;
+      }
+      // Somas will take over the continuous memory.
+      if (graph->somas_whole_block_size() != 0) {
         continue;
       }
 
@@ -1843,7 +1863,7 @@ void GraphScheduler::LinkDataArrowForCustomActor(const ActorSet *actor_set,
       auto input_node = common::AnfAlgo::GetInputNode(base_node, LongToSize(*iter));
       MS_EXCEPTION_IF_NULL(input_node);
       KernelWithIndex from_kernel_with_output_idx = common::AnfAlgo::VisitKernelWithReturnType(input_node, 0, false);
-      auto graph = AnfAlgo::FetchKernelGraph(from_kernel_with_output_idx.first);
+      auto graph = AnfAlgo::FetchKernelGraph(from_kernel_with_output_idx.first.get());
       if (graph != nullptr && parser->IsControlFlowDataArrow(graph, from_kernel_with_output_idx.first)) {
         MS_LOG(DEBUG) << "Skip link arrow for custom actor:" << custom_actor->GetAID()
                       << " kernel:" << base_node->fullname_with_scope() << " input node:" << input_node->DebugString()
@@ -1874,6 +1894,11 @@ void GraphScheduler::LinkControlArrowByExecutionOrder(const KernelGraphPtr &grap
   MS_EXCEPTION_IF_NULL(graph);
   auto &execution_order = graph->execution_order();
   for (size_t i = 1; i < execution_order.size(); ++i) {
+    // Rpc op is not available in the execution order.
+    if (IsRpcActor(execution_order[i - 1]) || IsRpcActor(execution_order[i])) {
+      continue;
+    }
+
     auto from_actor = FetchActor(execution_order[i - 1]->fullname_with_scope());
     auto to_actor = FetchActor(execution_order[i]->fullname_with_scope());
     if ((from_actor != nullptr) && (to_actor != nullptr)) {
@@ -2110,8 +2135,8 @@ void GraphScheduler::LinkDeviceTensorStoreForAutoMonadActor(const std::vector<Ab
       }
 
       // Create the copy actor.
-      std::string name = "copy_from:" + auto_monad_actor->GetAID().Name() +
-                         "_device_tensor_store:" + device_tensor_store_key.second->fullname_with_scope();
+      std::string name = "copy_from:" + auto_monad_actor->GetAID().Name() + kCopyActorNameSignFromStore +
+                         device_tensor_store_key.second->fullname_with_scope();
       if (FetchActor(name) != nullptr) {
         continue;
       }
