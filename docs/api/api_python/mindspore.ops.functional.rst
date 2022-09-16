@@ -647,4 +647,5 @@ Parameter操作函数
     mindspore.ops.arange
     mindspore.ops.core
     mindspore.ops.count_nonzero
+    mindspore.ops.iou
 

@@ -1614,11 +1614,11 @@ def relu(x):
           `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
 
     Returns:
-        Tensor of shape :math:`(N, *)`, with the same dtype and shape as the `input_x`.
+        Tensor of shape :math:`(N, *)`, with the same dtype and shape as the `x`.
 
     Raises:
-        TypeError: If dtype of `input_x` is not a number.
-        TypeError: If `input_x` is not a Tensor.
+        TypeError: If dtype of `x` is not a number.
+        TypeError: If `x` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1645,15 +1645,15 @@ def relu6(x):
     It returns :math:`\min(\max(0,x), 6)` element-wise.
 
     Args:
-        x(Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
+        x (Tensor): Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
           additional dimensions, with float16 or float32 data type.
 
     Returns:
-        Tensor, with the same dtype and shape as the `input_x`.
+        Tensor, with the same dtype and shape as the `x`.
 
     Raises:
-        TypeError: If dtype of `input_x` is neither float16 nor float32.
-        TypeError: If `input_x` is not a Tensor.
+        TypeError: If dtype of `x` is neither float16 nor float32.
+        TypeError: If `x` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2903,19 +2903,19 @@ def batch_norm(input_x, running_mean, running_var, weight, bias, training=False,
     Args:
         If `training` is False, `scale`, `bias`, `mean` and `variance` are Tensors.
 
-            input_x (Tensor) - Tensor of shape :math:`(N, C)`, with float16 or float32 data type.
-            running_mean (Tensor) - Tensor of shape :math:`(C,)`, has the same data type with `scale`.
-            running_var (Tensor) - Tensor of shape :math:`(C,)`, has the same data type with `scale`.
-            weight (Tensor) - Tensor of shape :math:`(C,)`, with float16 or float32 data type.
-            bias (Tensor) - Tensor of shape :math:`(C,)`, has the same data type with `scale`.
+        input_x (Tensor): Tensor of shape :math:`(N, C)`, with float16 or float32 data type.
+        running_mean (Tensor): Tensor of shape :math:`(C,)`, has the same data type with `scale`.
+        running_var (Tensor): Tensor of shape :math:`(C,)`, has the same data type with `scale`.
+        weight (Tensor): Tensor of shape :math:`(C,)`, with float16 or float32 data type.
+        bias (Tensor): Tensor of shape :math:`(C,)`, has the same data type with `scale`.
 
         If `training` is True, `scale`, `bias`, `mean` and `variance` are Parameters.
 
-            input_x (Tensor) - Tensor of shape :math:`(N, C)`, with float16 or float32 data type.
-            running_mean (Parameter) - Parameter of shape :math:`(C,)`, has the same data type with `scale`.
-            running_var (Parameter) - Parameter of shape :math:`(C,)`, has the same data type with `scale`.
-            weight (Parameter) - Parameter of shape :math:`(C,)`, with float16 or float32 data type.
-            bias (Parameter) - Parameter of shape :math:`(C,)`, has the same data type with `scale`.
+        input_x (Tensor): Tensor of shape :math:`(N, C)`, with float16 or float32 data type.
+        running_mean (Parameter): Parameter of shape :math:`(C,)`, has the same data type with `scale`.
+        running_var (Parameter): Parameter of shape :math:`(C,)`, has the same data type with `scale`.
+        weight (Parameter): Parameter of shape :math:`(C,)`, with float16 or float32 data type.
+        bias (Parameter): Parameter of shape :math:`(C,)`, has the same data type with `scale`.
 
         training (bool): If `training` is True, `mean` and `variance` are computed during training.
             If `training` is False, they're loaded from checkpoint during inference. Default: False.
@@ -2925,7 +2925,7 @@ def batch_norm(input_x, running_mean, running_var, weight, bias, training=False,
         eps (float): A small value added for numerical stability. Default: 1e-5.
 
     Returns:
-        output_x (Tensor) - The same type and shape as the input_x. The shape is :math:`(N, C)`.
+        output_x (Tensor), The same type and shape as the input_x. The shape is :math:`(N, C)`.
 
     Raises:
         TypeError: If `training` is not a bool.
