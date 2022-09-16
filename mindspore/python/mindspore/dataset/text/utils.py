@@ -42,7 +42,7 @@ class CharNGram(cde.CharNGram):
             file_path (str): Path of the file that contains the CharNGram vectors.
             max_vectors (int, optional): This can be used to limit the number of pre-trained vectors loaded.
                 Most pre-trained vector sets are sorted in the descending order of word frequency. Thus, in
-                situations where the entire set doesn’t fit in memory, or is not needed for another reason,
+                situations where the entire set doesn't fit in memory, or is not needed for another reason,
                 passing max_vectors can limit the size of the loaded set (default=None, no limit).
 
         Examples:
@@ -69,7 +69,7 @@ class FastText(cde.FastText):
                 must be `*.vec`.
             max_vectors (int, optional): This can be used to limit the number of pre-trained vectors loaded.
                 Most pre-trained vector sets are sorted in the descending order of word frequency. Thus, in
-                situations where the entire set doesn’t fit in memory, or is not needed for another reason,
+                situations where the entire set doesn't fit in memory, or is not needed for another reason,
                 passing max_vectors can limit the size of the loaded set (default=None, no limit).
 
         Examples:
@@ -96,7 +96,7 @@ class GloVe(cde.GloVe):
                 must be `glove.6B.*.txt`.
             max_vectors (int, optional): This can be used to limit the number of pre-trained vectors loaded.
                 Most pre-trained vector sets are sorted in the descending order of word frequency. Thus, in
-                situations where the entire set doesn’t fit in memory, or is not needed for another reason,
+                situations where the entire set doesn't fit in memory, or is not needed for another reason,
                 passing max_vectors can limit the size of the loaded set (default=None, no limit).
 
         Examples:
@@ -327,7 +327,7 @@ class Vectors(cde.Vectors):
             file_path (str): Path of the file that contains the vectors.
             max_vectors (int, optional): This can be used to limit the number of pre-trained vectors loaded.
                 Most pre-trained vector sets are sorted in the descending order of word frequency. Thus, in
-                situations where the entire set doesn’t fit in memory, or is not needed for another reason,
+                situations where the entire set doesn't fit in memory, or is not needed for another reason,
                 passing max_vectors can limit the size of the loaded set (default=None, no limit).
 
         Examples:

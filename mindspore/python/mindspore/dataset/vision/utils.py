@@ -119,7 +119,9 @@ class Border(str, Enum):
     - Border.CONSTANT: means it fills the border with constant values.
     - Border.EDGE: means it pads with the last value on the edge.
     - Border.REFLECT: means it reflects the values on the edge omitting the last value of edge.
+      For example, padding [1,2,3,4] with 2 elements on both sides will result in [3,2,1,2,3,4,3,2].
     - Border.SYMMETRIC: means it reflects the values on the edge repeating the last value of edge.
+      For example, padding [1,2,3,4] with 2 elements on both sides will result in [2,1,1,2,3,4,4,3].
 
     Note:
         This class derived from class str to support json serializable.

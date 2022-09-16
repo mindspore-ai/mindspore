@@ -420,6 +420,7 @@ class BassBiquad(AudioTensorOperation):
 class Biquad(TensorOperation):
     """
     Perform a biquad filter of input audio.
+    Mathematical fomulas refer to: `Digital_biquad_filter <https://en.wikipedia.org/wiki/Digital_biquad_filter>`_ .
 
     Args:
         b0 (float): Numerator coefficient of current input, x[n].
@@ -644,6 +645,9 @@ class DeemphBiquad(AudioTensorOperation):
         sample_rate (int): sampling rate of the waveform, e.g. 44100 (Hz),
             the value must be 44100 or 48000.
 
+    Raises:
+        RuntimeError: If the shape of input audio waveform does not match <..., time>.
+
     Examples:
         >>> import numpy as np
         >>>
@@ -836,6 +840,9 @@ class Filtfilt(AudioTensorOperation):
             Lower delays coefficients are first, e.g. [b0, b1, b2, ...].
             Must be same size as a_coeffs (pad with 0's as necessary).
         clamp (bool, optional): If True, clamp the output signal to be in the range [-1, 1]. Default=True.
+
+    Raises:
+        RuntimeError: If the shape of input audio waveform does not match <..., time>.
 
     Examples:
         >>> import numpy as np
@@ -1224,6 +1231,9 @@ class Magphase(AudioTensorOperation):
 
     Args:
         power (float): Power of the norm, which must be non-negative (default=1.0).
+
+    Raises:
+        RuntimeError: If the shape of input audio waveform does not match <..., 2>.
 
     Examples:
         >>> import numpy as np
