@@ -20,7 +20,7 @@
         - **show** (bool) - 是否显示图像，默认值：True。
         - **win_name** (str) - 指定窗口名称，默认值："win"。
         - **wait_time** (int) - 指定cv2.waitKey的时延，单位为ms，即图像显示的自动切换间隔，默认值：2000，表示间隔为2000ms。
-        - **out_file** (str, optional) - 输出图像的文件路径，用于在绘制后将结果存储到本地，默认值：None，不保存。
+        - **out_file** (str, 可选) - 输出图像的文件路径，用于在绘制后将结果存储到本地，默认值：None，不保存。
 
     返回：
         numpy.ndarray，带边界框和类别置信度的图像。

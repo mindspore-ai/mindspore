@@ -11,8 +11,8 @@ mindspore.ops.bernoulli
 
     参数：
         - **x** (Tensor) - 任意维度的Tensor，其数据类型为int8, uint8, int16, int32，int64，bool, float32或float64。
-        - **p** (Union[Tensor, float], optional) - shape需要可以被广播到当前Tensor。其数据类型为float32或float64。`p` 中每个值代表输出Tensor中对应广播位置为1的概率，数值范围在0到1之间。默认值：0.5。
-        - **seed** (int, optional) - 随机种子，用于生成随机数，数值范围是-1或正整数。默认值：-1，代表取当前时间戳。
+        - **p** (Union[Tensor, float], 可选) - shape需要可以被广播到当前Tensor。其数据类型为float32或float64。`p` 中每个值代表输出Tensor中对应广播位置为1的概率，数值范围在0到1之间。默认值：0.5。
+        - **seed** (int, 可选) - 随机种子，用于生成随机数，数值范围是-1或正整数。默认值：-1，代表取当前时间戳。
 
     返回：
         - **output** (Tensor) - shape和数据类型与 `x` 相同。

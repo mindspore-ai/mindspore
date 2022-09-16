@@ -20,7 +20,7 @@ mindspore.ops.top_k
     参数：
         - **input_x** (Tensor) - 需计算的输入，数据类型必须为float16、float32或int32。
         - **k** (int) - 指定计算最大元素的数量，需要是常量。
-        - **sorted** (bool, optional) - 如果为True，则获取的元素将按值降序排序。默认值：True。
+        - **sorted** (bool, 可选) - 如果为True，则获取的元素将按值降序排序。默认值：True。
 
     返回：
         2个Tensor组成的tuple， `values` 和 `indices` 。

@@ -7,4 +7,4 @@ mindspore.dataset.show
 
     参数：
         - **dataset** (Dataset) - 数据处理管道对象。
-        - **indentation** (int, optional) - 设置MindSpore的INFO级别日志文件打印时的缩进字符数。若为None，则不缩进。
+        - **indentation** (int, 可选) - 设置MindSpore的INFO级别日志文件打印时的缩进字符数。若为None，则不缩进。
