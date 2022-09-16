@@ -93,6 +93,7 @@ Activation Functions
     :template: classtemplate.rst
 
     mindspore.ops.celu
+    mindspore.ops.dropout
     mindspore.ops.fast_gelu
     mindspore.ops.gumbel_softmax
     mindspore.ops.hardshrink
@@ -640,8 +641,6 @@ Other Functions
      - Determine if two strings are equal.
    * - mindspore.ops.typeof
      - Get type of object.
-   * - mindspore.ops.iou
-     - Computes the intersection over union (IOU) or the intersection over foreground (IOF) for boxes.-
 
 .. msplatformautosummary::
     :toctree: ops
@@ -649,6 +648,6 @@ Other Functions
     :template: classtemplate.rst
 
     mindspore.ops.arange
-    mindspore.ops.batch_dot
     mindspore.ops.core
     mindspore.ops.count_nonzero
+    mindspore.ops.iou
