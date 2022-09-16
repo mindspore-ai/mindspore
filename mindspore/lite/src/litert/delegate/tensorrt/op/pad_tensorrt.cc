@@ -91,7 +91,6 @@ int PadTensorRT::AddInnerOp(TensorRTContext *ctx) {
     int h_post;
     int w_pre;
     int w_post;
-    // MS_LOG(INFO) << in_tensors_[0].format();
     if (SameDims(pad_input->getDimensions(), in_tensors_[0].Shape())) {
       // NCHW: 0: N_pre, 1: N_post, 2: C_pre, 3: C_post, 4: H_pre, 5: H_post, 6: W_pre, 7: W_post
       if (*padding_data != 0 || *(padding_data + 1) != 0 || *(padding_data + 2) != 0 || *(padding_data + 3) != 0) {

@@ -177,6 +177,10 @@ std::experimental::optional<std::unordered_map<std::string, nvinfer1::Dims>> Ten
 bool TensorRTDelegate::ParseDynamicDims(const std::string &dynamic_dims_str,
                                         const std::unordered_map<std::string, nvinfer1::Dims> &name2input_shape) {
   auto input_slices = Split(dynamic_dims_str, ";");
+  if (input_slices.size() > name2input_shape.size()) {
+    MS_LOG(ERROR) << "dynamic dims input number is more than tensor number !";
+    return false;
+  }
   for (size_t input_index = 0; input_index != input_slices.size(); ++input_index) {
     auto &input_name = input_tensor_names_[input_index];
     auto each_input_slice = input_slices[input_index];
@@ -212,6 +216,10 @@ bool TensorRTDelegate::ParseDynamicDims(const std::string &dynamic_dims_str,
           min_dims.d[i] = std::stoi(min_and_max[0]);
           max_dims.d[i] = std::stoi(min_and_max[1]);
         }
+        if (min_dims.d[i] > max_dims.d[i] || min_dims.d[i] == 0) {
+          MS_LOG(ERROR) << "min dim greater than max dim or equal 0 !";
+          return false;
+        }
       }
       min_dims_[input_name].push_back(min_dims);
       max_dims_[input_name].push_back(max_dims);
@@ -223,6 +231,10 @@ bool TensorRTDelegate::ParseDynamicDims(const std::string &dynamic_dims_str,
 bool TensorRTDelegate::ParseOptDims(const std::string &opt_dims_str,
                                     const std::unordered_map<std::string, nvinfer1::Dims> &name2input_shape) {
   auto input_slices = Split(opt_dims_str, ";");
+  if (input_slices.size() > name2input_shape.size()) {
+    MS_LOG(ERROR) << "opt dims input number is more than tensor number !";
+    return false;
+  }
   for (size_t input_index = 0; input_index != input_slices.size(); ++input_index) {
     auto &input_name = input_tensor_names_[input_index];
     auto each_input_slice = input_slices[input_index];
@@ -247,6 +259,10 @@ bool TensorRTDelegate::ParseOptDims(const std::string &opt_dims_str,
       for (size_t i = 0; i != input_shape.nbDims; ++i) {
         opt_dims.d[i] = input_shape.d[i];
         if (input_shape.d[i] == -1) {
+          if (!IsAllDigit(opt_dims_vec[dynamic_index])) {
+            MS_LOG(ERROR) << "export all string char is digit : " << opt_dims_vec[dynamic_index];
+            return false;
+          }
           opt_dims.d[i] = std::stoi(opt_dims_vec[dynamic_index++]);
         }
       }
@@ -270,7 +286,7 @@ int TensorRTDelegate::ParseOptimizationProfile() {
     opt_dims = input_ranges_.at(kOptimizeDims);
   }
   if (input_shapes.empty() && dynamic_dims.empty() && opt_dims.empty()) {
-    MS_LOG(WARNING) << "do not have input ranges not config.";
+    MS_LOG(WARNING) << "do not have gpu context in config and using msshape as optimization profile.";
     return RET_OK;
   }
   if (input_shapes.empty()) {

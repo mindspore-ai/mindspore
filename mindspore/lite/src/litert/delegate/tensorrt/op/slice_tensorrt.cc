@@ -90,7 +90,6 @@ class StrideSliceTensorRTUtil final : public SliceTensorRTUtil {
           } else {
             size_dims.d[i] = input_dims.d[i];
           }
-          // MS_LOG(WARNING) << start_dims.d[i] << " " << size_dims.d[i] << " " << stride_dims.d[i];
         } else {
           size_dims.d[i] = helper.trt_tensor_->getDimensions().d[i];
         }
