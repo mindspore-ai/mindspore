@@ -286,6 +286,114 @@ class AdaptiveAvgPool2D(PrimitiveWithInfer):
         return x_dtype
 
 
+class AdaptiveAvgPool2DV1(Primitive):
+    r"""
+    AdaptiveAvgPool2DV1 operation.
+
+    This operator applies a 2D adaptive average pooling to an input signal composed of multiple input planes.
+    That is, for any input size, the size of the specified output is H x W.
+    The number of output features is equal to the number of input planes.
+
+    The input and output data format can be "NCHW" and "CHW". N is the batch size, C is the number of channels,
+    H is the feature height, and W is the feature width.
+
+    For AdaptiveAvgPool2DV1:
+
+    ..  math::
+        \begin{align}
+        h_{start} &= floor(i * H_{in} / H_{out})\\
+        h_{end} &= ceil((i + 1) * H_{in} / H_{out})\\
+        w_{start} &= floor(j * W_{in} / W_{out})\\
+        w_{end} &= ceil((j + 1) * W_{in} / W_{out})\\
+        Output(i,j) &= \frac{\sum Input[h_{start}:h_{end}, w_{start}:w_{end}]}{(h_{end}- h_{start})
+        * (w_{end}- w_{start})}
+        \end{align}
+
+    Args:
+        - output_size (Union[int, tuple]): The target output size is H x W.
+          ouput_size can be a tuple, or a single H for H x H, and H and W can be int or None
+          which means the output size is the same as the input.
+
+    Inputs:
+        - **input_x** (Tensor) - The input of AdaptiveAvgPool2DV1, which is a 3D or 4D tensor,
+          with float16 or float32 data type.
+
+    Outputs:
+        Tensor, with the same type as the `input_x`.
+
+        Shape of the output is `input_x_shape[:len(input_x_shape) - len(out_shape)] + out_shape`.
+
+    .. math::
+        out\_shape = \begin{cases}
+        input\_x\_shape[-2] + output\_size[1], & \text{if output_size is (None, w);}\\
+        output\_size[0] + input\_x\_shape[-1], & \text{if output_size is (h, None);}\\
+        input\_x\_shape[-2:], & \text{if output_size is (None, None);}\\
+        (h, h), & \text{if output_size is h;}\\
+        (h, w), & \text{if output_size is (h, w)}
+        \end{cases}
+
+    Raises:
+        TypeError: If `input_x` is not a tensor.
+        TypeError: If dtype of `input_x` is not float16 nor float32.
+        ValueError: If `output_size` is a tuple and the length of `output_size` is not 2.
+        ValueError: If the dimension of `input_x` is less than or equal to the dimension of `output_size`.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> # case 1: output_size=(None, 2)
+        >>> input_x = Tensor(np.array([[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
+        ...                            [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
+        ...                            [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]]), mindspore.float32)
+        >>> adaptive_avg_pool_2d = ops.AdaptiveAvgPool2DV1((None, 2))
+        >>> output = adaptive_avg_pool_2d(input_x)
+        >>> print(output)
+        [[[1.5 2.5]
+          [4.5 5.5]
+          [7.5 8.5]]
+         [[1.5 2.5]
+          [4.5 5.5]
+          [7.5 8.5]]
+         [[1.5 2.5]
+          [4.5 5.5]
+          [7.5 8.5]]]
+        >>> # case 2: output_size=2
+        >>> adaptive_avg_pool_2d = ops.AdaptiveAvgPool2DV1(2)
+        >>> output = adaptive_avg_pool_2d(input_x)
+        >>> print(output)
+        [[[3. 4.]
+          [6. 7.]]
+         [[3. 4.]
+          [6. 7.]]
+         [[3. 4.]
+          [6. 7.]]]
+        >>> # case 3: output_size=(1, 2)
+        >>> adaptive_avg_pool_2d = ops.AdaptiveAvgPool2DV1((1, 2))
+        >>> output = adaptive_avg_pool_2d(input_x)
+        >>> print(output)
+        [[[4.5 5.5]]
+         [[4.5 5.5]]
+         [[4.5 5.5]]]
+    """
+
+    @prim_attr_register
+    def __init__(self, output_size):
+        """Initialize AdaptiveAvgPool2DV1."""
+        self.init_prim_io_names(inputs=['x'], outputs=['y'])
+        validator.check_value_type("output_size", output_size, [int, tuple], self.name)
+        if isinstance(output_size, tuple):
+            validator.check_int(len(output_size), 2, Rel.EQ, 'length of output_size', self.name)
+        self.output_size = (output_size, output_size) if isinstance(self.output_size, int) else output_size
+        for i, size in enumerate(self.output_size):
+            validator.check_value_type(f"output_size[{i}]", size, [int, type(None)], self.name)
+            if size is not None:
+                validator.check_number(f"output_size[{i}]", size, 0, Rel.GE, self.name)
+
+        self.output_size = tuple(-1 if val is None else val for val in self.output_size)
+        self.add_prim_attr('output_size', self.output_size)
+
+
 class AdaptiveMaxPool2D(Primitive):
     r"""
     AdaptiveMaxPool2D operation.

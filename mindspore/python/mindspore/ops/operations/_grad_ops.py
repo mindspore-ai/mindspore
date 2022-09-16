@@ -894,6 +894,16 @@ class AdaptiveAvgPool2DGrad(PrimitiveWithInfer):
         return x1_dtype
 
 
+class AdaptiveAvgPool2DGradV1(Primitive):
+    """Gradients of the adaptive avg pool 2D V1 operation."""
+
+    @prim_attr_register
+    def __init__(self, orig_input_shape):
+        """Initialize AdaptiveAvgPool2DGradV1"""
+        self.init_prim_io_names(inputs=['input_grad'], outputs=['output_grad'])
+        self.add_prim_attr('orig_input_shape', self.orig_input_shape)
+
+
 class AdaptiveAvgPool3DGrad(Primitive):
     """Performs grad of AdaptiveAvgPool3D operation."""
     @prim_attr_register

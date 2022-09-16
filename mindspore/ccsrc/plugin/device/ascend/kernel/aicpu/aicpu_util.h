@@ -119,6 +119,8 @@ constexpr auto kMaxPoolV1 = "MaxPoolV1";
 constexpr auto kMaxPoolGradV1 = "MaxPoolGradV1";
 constexpr auto kAvgPoolV1 = "AvgPoolV1";
 constexpr auto kAvgPoolGradV1 = "AvgPoolGradV1";
+constexpr auto kAdaptiveAvgPool2DV1 = "AdaptiveAvgPool2DV1";
+constexpr auto kAdaptiveAvgPool2DGradV1 = "AdaptiveAvgPool2DGradV1";
 constexpr auto kUniqueConsecutive = "UniqueConsecutive";
 constexpr auto kRandomShuffle = "RandomShuffle";
 constexpr auto kHSigmoid = "HSigmoid";
@@ -298,6 +300,8 @@ const std::map<std::string, std::string> kOpNameToAicpuOpNameMap{
   {kNonZero, "Where"},
   {kAvgPoolGradV1, "AvgPoolGrad"},
   {kConcatOffsetV1, "ConcatOffset"},
+  {kAdaptiveAvgPool2DV1, "AdaptiveAvgPool2d"},
+  {kAdaptiveAvgPool2DGradV1, "AdaptiveAvgPool2dGrad"},
   {kTensorScatterElements, "ScatterElements"},
   {kACos, "Acos"},
   {kHSigmoid, "HardSigmoid"},
