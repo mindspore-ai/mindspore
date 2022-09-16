@@ -1078,7 +1078,8 @@ def roll(a, shift, axis=None):
     # F.strided_slice only supports float on cpu, this will change once more supports
     # are added.
     if not _check_is_float(original_dtype):
-        a = a.astype(mstype.float32)
+        if not original_dtype in (mstype.complex64, mstype.complex128):
+            a = a.astype(mstype.float32)
     if axis is None:
         restore_shape = True
         axis = 0
@@ -1090,7 +1091,8 @@ def roll(a, shift, axis=None):
     if restore_shape:
         a = a.reshape(original_shape)
     if not _check_is_float(original_dtype):
-        a = a.astype(original_dtype)
+        if not original_dtype in (mstype.complex64, mstype.complex128):
+            a = a.astype(original_dtype)
     return a
 
 
