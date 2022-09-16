@@ -52,6 +52,8 @@
 #include "plugin/device/ascend/optimizer/ir_fusion/lamb_next_right_rule.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/lamb_update_with_lr_v2.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/layer_norm_beta_gamma_backprop_fusion.h"
+#include "plugin/device/ascend/optimizer/ir_fusion/reshape_transpose_fusion.h"
+#include "plugin/device/ascend/optimizer/ir_fusion/transpose_reshape_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/adam_apply_one_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/adam_apply_one_with_decay_rule.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/parameter_and_transop_fusion.h"
@@ -224,6 +226,8 @@ void AddAscendIRFusionPass(PassManager *ir_fusion_pm) {
   ir_fusion_pm->AddPass(std::make_shared<SoftmaxGradExtFusionV3>());
   ir_fusion_pm->AddPass(std::make_shared<ConfusionMulGradFusion>());
   ir_fusion_pm->AddPass(std::make_shared<ConfusionSoftmaxGradRule>());
+  ir_fusion_pm->AddPass(std::make_shared<ReshapeTransposeFusion>());
+  ir_fusion_pm->AddPass(std::make_shared<TransposeReshapeFusion>());
   ir_fusion_pm->AddPass(std::make_shared<Conv2dBackpropFilterMul>());
   ir_fusion_pm->AddPass(std::make_shared<DiagFission>());
   ir_fusion_pm->AddPass(std::make_shared<DiagPartFission>());

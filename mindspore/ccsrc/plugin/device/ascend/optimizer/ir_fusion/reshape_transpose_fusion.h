@@ -26,6 +26,8 @@
 
 namespace mindspore {
 namespace opt {
+bool CheckMatmulNeighborNodes(const FuncGraphPtr &func_graph, const AnfNodePtr &up_node, const AnfNodePtr &down_node);
+
 class ReshapeTransposeFusion : public PatternProcessPassWithSwitch {
  public:
   explicit ReshapeTransposeFusion(bool multigraph = true)
