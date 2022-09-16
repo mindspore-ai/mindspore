@@ -214,6 +214,7 @@ class UnsortedSegmentMaxDynNet(nn.Cell):
         self.num_segments = num_segments
         self.to_dyn_1 = dyn_a
         self.to_dyn_2 = dyn_b
+
     def construct(self, data, ids):
         # testing selective inputs being dynamic
         if self.to_dyn_1:
@@ -403,3 +404,24 @@ def test_3d_single_init_dyn_b():
                         [1.0000000e+01, 1.1000000e+01],
                         [1.2000000e+01, 1.3000000e+01]]]).astype(np.float32)
     np.testing.assert_array_almost_equal(output, expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_1d_int32_dynamic_shape():
+    """
+    Feature: UnsortedSegmentMax operation dynamic shape test
+    Description: test UnsortedSegmentMax dynamic shape operation
+    Expectation: UnsortedSegmentMax output == expect
+    """
+    context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
+    input_x = Tensor([1, 2, 3, 4], mstype.int32)
+    segment_ids = Tensor([0, 0, 1, 2], mstype.int32)
+    num_segments = 4
+    net = UnsortedSegmentMaxNet(num_segments)
+    input_x_dyn = Tensor(shape=[None for _ in input_x.shape], dtype=input_x.dtype)
+    net.set_inputs(input_x_dyn, segment_ids)
+    output = net(input_x, segment_ids)
+    expect = [2, 3, 4, -2147483648]
+    assert (output.asnumpy() == expect).all()

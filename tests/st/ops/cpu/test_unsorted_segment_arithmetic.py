@@ -24,7 +24,6 @@ from mindspore.common import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 
-
 UnsortedSegmentArith_func_map = {
     "max": ops.UnsortedSegmentMax,
     "min": ops.UnsortedSegmentMin,
