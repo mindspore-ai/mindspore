@@ -22,8 +22,8 @@
 #include <utility>
 #include "common/kernel_errcode.h"
 
-inline int GetTid(void) {
-  thread_local static int tid = syscall(__NR_gettid);
+inline int64_t GetTid(void) {
+  thread_local static const int64_t tid = syscall(__NR_gettid);
   return tid;
 }
 static const int LOG_COUNT = 0;
