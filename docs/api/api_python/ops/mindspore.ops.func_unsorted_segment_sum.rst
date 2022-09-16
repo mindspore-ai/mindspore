@@ -20,7 +20,7 @@
     参数：
         - **input_x** (Tensor) - shape： :math:`(x_1, x_2, ..., x_R)` 。
         - **segment_ids** (Tensor) - 将形状设置为 :math:`(x_1, x_2, ..., x_N)` ，其中0<N<=R。
-        - **num_segments** (Union[int, Tensor], optional) - 分段数量 :math:`z` ，数据类型为int或0维的Tensor。
+        - **num_segments** (Union[int, Tensor], 可选) - 分段数量 :math:`z` ，数据类型为int或0维的Tensor。
 
     返回：
         Tensor，shape： :math:`(z, x_{N+1}, ..., x_R)` 。

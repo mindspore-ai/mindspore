@@ -9,7 +9,7 @@ mindspore.ops.meshgrid
 
     参数：
         - **inputs** (Union[tuple]) - N个一维Tensor。输入的长度应大于1。数据类型为Number。
-        - **indexing** ('xy', 'ij', optional) - 'xy'或'ij'。影响输出的网格矩阵的size。对于长度为 `M` 和 `N` 的二维输入，取值为'xy'时，输出的shape为 :math:`(N, M)` ，取值为'ij'时，输出的shape为 :math:`(M, N)` 。以长度为 `M` ， `N` 和 `P` 的三维输入，取值为'xy'时，输出的shape为 :math:`(N, M, P)` ，取值为'ij'时，输出的shape为 :math:`(M, N, P)` 。默认值：'xy'。
+        - **indexing** ('xy', 'ij', 可选) - 'xy'或'ij'。影响输出的网格矩阵的size。对于长度为 `M` 和 `N` 的二维输入，取值为'xy'时，输出的shape为 :math:`(N, M)` ，取值为'ij'时，输出的shape为 :math:`(M, N)` 。以长度为 `M` ， `N` 和 `P` 的三维输入，取值为'xy'时，输出的shape为 :math:`(N, M, P)` ，取值为'ij'时，输出的shape为 :math:`(M, N, P)` 。默认值：'xy'。
 
     返回：
         Tensor，N个N维tensor对象的元组。数据类型与输入相同。

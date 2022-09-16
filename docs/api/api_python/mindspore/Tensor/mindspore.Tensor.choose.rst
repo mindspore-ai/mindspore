@@ -7,7 +7,7 @@ mindspore.Tensor.choose
 
     参数：
         - **choices** (Union[tuple, list, Tensor]) - 索引选择数组。原始输入Tensor和 `choices` 的广播维度必须相同。如果 `choices` 本身是一个Tensor，则其最外层的维度（即，对应于第0维的维度）被用来定义 `choices` 数组。
-        - **mode** ('raise', 'wrap', 'clip', optional) - 指定如何处理 `[0, n-1]` 外部的索引：
+        - **mode** ('raise', 'wrap', 'clip', 可选) - 指定如何处理 `[0, n-1]` 外部的索引：
 
           - **raise** - 引发异常（默认）；
           - **wrap** - 原值映射为对n取余后的值；
