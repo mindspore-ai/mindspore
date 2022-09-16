@@ -16,6 +16,7 @@
 import numpy as np
 import pytest
 
+import mindspore
 import mindspore.context as context
 from mindspore.common.tensor import Tensor
 from mindspore.nn import Cell
@@ -65,6 +66,29 @@ def test_maximum():
     diff = output.asnumpy() - expect
     assert np.all(diff < error)
     assert np.all(-diff < error)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_maximum_dynamic_shape():
+    """
+    Feature: test maximum op in gpu
+    Description: test the ops in dynamic shape
+    Expectation: success expect correct shape result.
+    """
+    x = Tensor(np.array([[1, 2, 3]]).astype(np.float32))
+    y = Tensor(np.array([[2]]).astype(np.float32))
+
+    x_dyn = Tensor(shape=[1, None], dtype=mindspore.float32)
+    y_dyn = Tensor(shape=[1, None], dtype=mindspore.float32)
+
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    max_op = Net()
+    max_op.set_inputs(x_dyn, y_dyn)
+    output = max_op(x, y)
+    expect_shape = (1, 3)
+    assert output.asnumpy().shape == expect_shape
 
 
 @pytest.mark.level1
