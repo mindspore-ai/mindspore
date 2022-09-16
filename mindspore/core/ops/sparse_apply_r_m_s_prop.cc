@@ -15,10 +15,9 @@
  */
 
 #include "ops/sparse_apply_r_m_s_prop.h"
-
 #include <algorithm>
 #include <set>
-
+#include <utility>
 #include "abstract/ops/primitive_infer_map.h"
 #include "ops/op_utils.h"
 #include "utils/tensor_construct_utils.h"
@@ -103,6 +102,46 @@ TuplePtr SparseApplyRMSPropInferType(const PrimitivePtr &prim, const std::vector
   return std::make_shared<Tuple>(std::vector<TypePtr>{var_type, ms_type, mom_type});
 }
 }  // namespace
+
+// SparseApplyRMSProp Rho getter method
+float SparseApplyRMSProp::get_rho() const {
+  auto value_ptr = this->GetAttr(kRho);
+  return GetValue<float>(value_ptr);
+}
+
+// SparseApplyRMSProp Rho setter method
+void SparseApplyRMSProp::set_rho(const float rho) { (void)this->AddAttr(kRho, api::MakeValue(rho)); }
+
+// SparseApplyRMSProp Momentum getter method
+float SparseApplyRMSProp::get_momentum() const {
+  auto value_ptr = this->GetAttr(kMomentum);
+  return GetValue<float>(value_ptr);
+}
+
+// SparseApplyRMSProp Momentum setter method
+void SparseApplyRMSProp::set_momentum(const float momentum) {
+  (void)this->AddAttr(kMomentum, api::MakeValue(momentum));
+}
+
+// SparseApplyRMSProp Epsilon getter method
+float SparseApplyRMSProp::get_epsilon() const {
+  auto value_ptr = this->GetAttr(kEpsilon);
+  return GetValue<float>(value_ptr);
+}
+
+// SparseApplyRMSProp Epsilon setter method
+void SparseApplyRMSProp::set_epsilon(const float epsilon) { (void)this->AddAttr(kEpsilon, api::MakeValue(epsilon)); }
+
+// SparseApplyRMSProp Use_Locking getz`ter method
+bool SparseApplyRMSProp::get_use_locking() const {
+  auto value_ptr = this->GetAttr(kUseLocking);
+  return GetValue<bool>(value_ptr);
+}
+
+// SparseApplyRMSProp Use_Locking setter method
+void SparseApplyRMSProp::set_use_locking(const bool use_locking) {
+  (void)this->AddAttr(kUseLocking, api::MakeValue(use_locking));
+}
 
 MIND_API_OPERATOR_IMPL(SparseApplyRMSProp, BaseOperator);
 AbstractBasePtr SparseApplyRMSPropInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
