@@ -9,7 +9,7 @@ Model
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.Model
+    mindspore.train.Model
 
 Callback
 --------
@@ -19,14 +19,14 @@ Callback
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.Callback
-    mindspore.CheckpointConfig
-    mindspore.EarlyStopping
-    mindspore.History
-    mindspore.LambdaCallback
-    mindspore.LearningRateScheduler
-    mindspore.LossMonitor
-    mindspore.ModelCheckpoint
-    mindspore.ReduceLROnPlateau
-    mindspore.RunContext
-    mindspore.TimeMonitor
+    mindspore.train.Callback
+    mindspore.train.CheckpointConfig
+    mindspore.train.EarlyStopping
+    mindspore.train.History
+    mindspore.train.LambdaCallback
+    mindspore.train.LearningRateScheduler
+    mindspore.train.LossMonitor
+    mindspore.train.ModelCheckpoint
+    mindspore.train.ReduceLROnPlateau
+    mindspore.train.RunContext
+    mindspore.train.TimeMonitor
