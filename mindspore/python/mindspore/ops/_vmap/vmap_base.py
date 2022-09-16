@@ -190,6 +190,10 @@ def vmap_unstack(dim, val):
     return P.Unstack(dim)(val)
 
 
+def vmap_stack(val):
+    return P.Stack()(val)
+
+
 def vmap_general_output_process(output):
     """ Match output to axis 0"""
     vals_out_tuple = ()

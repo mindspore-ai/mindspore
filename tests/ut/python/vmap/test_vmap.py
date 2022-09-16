@@ -67,7 +67,7 @@ def test_none_in_axes():
     z_hat = 1
     with pytest.raises(RuntimeError) as ex:
         vmap(ThreeInputsTwoOutputsNet(), in_axes=None, out_axes=0)(x_hat, y_hat, z_hat)
-    assert "The 'in_axes' of 'vmap' cannot be a single None." in str(ex.value)
+    assert "The 'in_axes' of 'vmap' cannot be a single None while 'fn' is not a 'CellList'." in str(ex.value)
 
 
 def test_none_out_axes():
@@ -83,7 +83,8 @@ def test_none_out_axes():
     with pytest.raises(RuntimeError) as ex:
         vmap(ThreeInputsTwoOutputsNet(), in_axes=(1, 1, None),
              out_axes=(None, None, None, (None, None)))(x_hat, y_hat, z_hat)
-    assert "The 'out_axes' of 'vmap' cannot be all None, but got (None, None, None, (None, None))." in str(ex.value)
+    assert "The 'out_axes' of 'vmap' cannot be all None while 'fn' is not a 'CellList', " \
+           "but got (None, None, None, (None, None))." in str(ex.value)
 
 
 def test_mismatch_out_axes():

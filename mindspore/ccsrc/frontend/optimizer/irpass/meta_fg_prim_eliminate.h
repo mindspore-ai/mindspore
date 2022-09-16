@@ -35,7 +35,7 @@ class ExpandMetaFgPrim {
  public:
   ExpandMetaFgPrim() = default;
   virtual ~ExpandMetaFgPrim() = default;
-  bool CheckIfEmbedMetaFgPrim(const CNodePtr &node) const;
+  virtual bool CheckIfEmbedMetaFgPrim(const CNodePtr &node) const;
   const std::vector<CNodePtr> &prim_nodes() const { return prim_nodes_; }
   virtual bool operator()(const FuncGraphPtr &func_graph, const OptimizerPtr &optimizer) = 0;
   void GetMetaFgPrim(const std::vector<AnfNodePtr> &all_nodes);

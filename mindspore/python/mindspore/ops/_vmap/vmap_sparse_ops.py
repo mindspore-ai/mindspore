@@ -14,6 +14,7 @@
 # ============================================================================
 
 """sparse_ops vmap impl."""
+from __future__ import absolute_import
 
 from mindspore.ops._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, _raise_value_error
 from mindspore.ops.primitive import Primitive
