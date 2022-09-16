@@ -172,8 +172,6 @@ BACKEND_EXPORT tensor::TensorPtr CreateTupleTensor(const ValueTuplePtr &value_tu
 
 BACKEND_EXPORT AnfNodePtr CreateTensorMoveOp(const FuncGraphPtr &graph, const AnfNodePtr &node);
 
-BACKEND_EXPORT std::vector<AnfNodePtr> InsertRefTensorMoveForGraphOutput(const FuncGraphPtr &graph);
-
 BACKEND_EXPORT std::vector<AnfNodePtr> InsertTensorMoveForGraphOutput(const FuncGraphPtr &graph,
                                                                       const AnfNodePtr &node);
 
