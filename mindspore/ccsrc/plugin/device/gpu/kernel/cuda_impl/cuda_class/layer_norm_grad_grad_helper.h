@@ -84,8 +84,8 @@ class LayerNormGradGradHelperGpuKernel : public GpuKernelHelperBase {
     input_size_ = input_row_ * input_col_ * sizeof(T);
     input_size_list_.push_back(input_size_);
     input_size_list_.push_back(input_size_);
-    input_size_list_.push_back(input_row_ * sizeof(T));
-    input_size_list_.push_back(input_row_ * sizeof(T));
+    input_size_list_.push_back(input_row_ * sizeof(float));
+    input_size_list_.push_back(input_row_ * sizeof(float));
     input_size_list_.push_back(param_dim_ * sizeof(T));
     input_size_list_.push_back(input_size_);
     input_size_list_.push_back(param_dim_ * sizeof(T));
@@ -110,8 +110,8 @@ class LayerNormGradGradHelperGpuKernel : public GpuKernelHelperBase {
     // get device ptr input index output
     T *x = nullptr;
     T *dy = nullptr;
-    T *var = nullptr;
-    T *mean = nullptr;
+    float *var = nullptr;
+    float *mean = nullptr;
     T *gamma = nullptr;
     T *grad_dx = nullptr;
     T *grad_dg = nullptr;
@@ -130,11 +130,11 @@ class LayerNormGradGradHelperGpuKernel : public GpuKernelHelperBase {
     if (flag != 0) {
       return flag;
     }
-    flag = GetDeviceAddress<T>(input_ptrs, kIndex2, kernel_name_, &var);
+    flag = GetDeviceAddress<float>(input_ptrs, kIndex2, kernel_name_, &var);
     if (flag != 0) {
       return flag;
     }
-    flag = GetDeviceAddress<T>(input_ptrs, kIndex3, kernel_name_, &mean);
+    flag = GetDeviceAddress<float>(input_ptrs, kIndex3, kernel_name_, &mean);
     if (flag != 0) {
       return flag;
     }
