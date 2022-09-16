@@ -14,246 +14,75 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_BIAS_ADD_GRAD_GPU_KENEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_BIAS_ADD_GRAD_GPU_KENEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_NN_BIAS_ADD_GRAD_GPU_KENEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_NN_BIAS_ADD_GRAD_GPU_KENEL_H_
 
 #include <vector>
+#include <map>
+#include <utility>
 #include <string>
 #include <algorithm>
 #include <memory>
+#include "kernel/common_utils.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
-#include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
-#include "plugin/device/gpu/kernel/kernel_constants.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/bias_add_grad_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
-class BiasAddGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class BiasAddGradGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelper<BiasAddGradGpuKernelMod> {
  public:
-  BiasAddGradGpuKernelMod()
-      : same_dims_(true),
-        is_null_input_(false),
-        kernel_name_("BiasAddGrad"),
-        use_cudnn_(false),
-        dy_num_(1),
-        db_num_(1),
-        bias_size_(0),
-        cudnn_handle_(nullptr),
-        cudnn_data_type_(CUDNN_DATA_FLOAT),
-        cudnn_compute_format_(CUDNN_TENSOR_NCHW),
-        dy_desc_(nullptr),
-        db_desc_(nullptr),
-        op_desc_(nullptr) {}
+  BiasAddGradGpuKernelMod() { ResetResource(); }
   ~BiasAddGradGpuKernelMod() override { DestroyResource(); }
 
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
       return true;
     }
-    T *dy_addr = GetDeviceAddress<T>(inputs, 0);
-    T *db_addr = GetDeviceAddress<T>(outputs, 0);
-    if (same_dims_) {
-      CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                                 cudaMemcpyAsync(db_addr, dy_addr, output_size_list_[0], cudaMemcpyDeviceToDevice,
-                                                 reinterpret_cast<cudaStream_t>(stream_ptr)),
-                                 "cudaMemcpyAsync failed.");
-    } else {
-      if (use_cudnn_) {  // shared memory not satisfied or num_dim > 4
-        T *indices_addr = GetPossiblyNullDeviceAddress<T>(workspace, 0);
-        T *workspace_addr = GetPossiblyNullDeviceAddress<T>(workspace, 1);
-        const float alpha = 1;
-        const float beta = 0;
-        CHECK_CUDNN_RET_WITH_EXCEPT(
-          kernel_node_,
-          cudnnReduceTensor(cudnn_handle_, op_desc_, indices_addr, workspace_size_list_[0], workspace_addr,
-                            workspace_size_list_[1], &alpha, dy_desc_, dy_addr, &beta, db_desc_, db_addr),
-          "cudnnReduceTensor failed");
-      } else {  // use own implementation which is more efficient but cannot process num_dim > 4
-        if (data_format_ == kOpFormat_NHWC) {
-          CalBiasAddGradNHWC(dy_num_, bias_size_, dy_addr, db_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
-        } else {
-          CalBiasAddGradNCHW(dy_num_, bias_size_, SizeToInt(dy_shape_[2]), SizeToInt(dy_shape_[3]), dy_addr, db_addr,
-                             reinterpret_cast<cudaStream_t>(stream_ptr));
-        }
-      }
-    }
-    return true;
-  }
-  bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-    kernel_node_ = kernel_node;
-    auto dy_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_SHAPE_NULL(dy_shape, kernel_name_, "input");
-    if (is_null_input_ || IsDynamic(dy_shape)) {
-      InitSizeLists();
-      return true;
-    }
-    cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
-    auto input_device_format = AnfAlgo::GetInputFormat(kernel_node, 0);
-    cudnn_compute_format_ = (input_device_format == kOpFormat_NHWC) ? CUDNN_TENSOR_NHWC : CUDNN_TENSOR_NCHW;
-    num_dims_ = dy_shape.size();
-    if (num_dims_ < 2) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input cannot be less than 2, but got "
-                        << num_dims_;
-    }
-    std::string format = GetAttr<std::string>(kernel_node, "format");
-    string::size_type pos = format.find("C");
-    if (pos == std::string::npos || pos >= num_dims_) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', 'C' character must be in 'format', but got " << format;
-    }
-    bias_size_ = LongToSizeClipNeg(dy_shape[pos]);
-    constexpr size_t four_4D = 4;
-    size_t num_dims_fix = std::max(num_dims_, four_4D);
-    for (size_t i = 0; i < num_dims_fix; i++) {
-      dy_shape_.push_back((i < num_dims_) ? dy_shape[i] : 1);
-      db_shape_.push_back((i == pos) ? dy_shape[i] : 1);
-      if (dy_shape_[i] != db_shape_[i]) {
-        same_dims_ = false;
-      }
-    }
-    dy_num_ *= SizeOf(dy_shape_);
-    db_num_ *= SizeOf(db_shape_);
-    data_format_ = input_device_format;  // for opt implementation
-    if (format == kOpFormat_NHWC) {
-      data_format_ = kOpFormat_NHWC;
-    }
-    MethodSelection();
-    InitResource();
-    InitSizeLists();
-    return true;
+    stream_ = stream_ptr;
+    return kernel_func_(this, inputs, workspace, outputs);
   }
 
-  void DestroyResource() noexcept override {
-    if (use_cudnn_) {
-      CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnDestroyReduceTensorDescriptor(op_desc_),
-                                  "cudnnDestroyReduceTensorDescriptor failed");
-      CHECK_CUDNN_RET_WITH_ERROR(kernel_node_, cudnnDestroyTensorDescriptor(db_desc_),
-                                 "cudnnDestroyTensorDescriptor failed");
-      CHECK_CUDNN_RET_WITH_ERROR(kernel_node_, cudnnDestroyTensorDescriptor(dy_desc_),
-                                 "cudnnDestroyOpTensorDescriptor failed");
-    }
-  }
+  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 
-  void ResetResource() noexcept override {
-    same_dims_ = true;
-    is_null_input_ = false;
-    kernel_name_ = "BiasAddGrad";
-    use_cudnn_ = false;
-    dy_num_ = 1;
-    db_num_ = 1;
-    num_dims_ = 0;
-    bias_size_ = 0;
-    dy_shape_.clear();
-    db_shape_.clear();
-    data_format_ = kOpFormat_NCHW;
-    cudnn_handle_ = nullptr;
-    cudnn_data_type_ = CUDNN_DATA_FLOAT;
-    cudnn_compute_format_ = CUDNN_TENSOR_NCHW;
-    dy_desc_ = nullptr;
-    db_desc_ = nullptr;
-    op_desc_ = nullptr;
-    input_size_list_.clear();
-    output_size_list_.clear();
-    workspace_size_list_.clear();
-  }
+  std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
- protected:
-  void MethodSelection() {
-    // opt implementation can only process num_dims_ <= 4
-    // for num_dims_ = 2, not time-consuming, use cudnn
-    if (num_dims_ > 4 || num_dims_ == 2) {
-      use_cudnn_ = true;
-      return;
-    }
-    if (data_format_ == kOpFormat_NHWC) {
-      const size_t required_sharedmem_size = 32 * 33 * sizeof(float);
-      // nhwc opt implementation performs not so well when bias_size_ <= 6
-      if (required_sharedmem_size > SHARED_MEM_PER_BLOCK || bias_size_ <= 6) {
-        use_cudnn_ = true;
-        return;
-      }
-    }
-  }
-  void InitResource() override {
-    if (use_cudnn_) {
-      cudnn_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCudnnHandle();
-      CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnCreateTensorDescriptor(&dy_desc_),
-                                  "cudnnCreateTensorDescriptor failed");
-      CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnCreateTensorDescriptor(&db_desc_),
-                                  "cudnnCreateTensorDescriptor failed");
-      CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnCreateReduceTensorDescriptor(&op_desc_),
-                                  "cudnnCreateOpTensorDescriptor failed");
-      // Expand to 4 dims for cudnnSetTensorNdDescriptorEx.
-      constexpr size_t four_4D = 4;
-      size_t cudnn_dims = std::max(num_dims_, four_4D);
-      std::unique_ptr<int[]> dy_dims = std::make_unique<int[]>(cudnn_dims);
-      std::unique_ptr<int[]> db_dims = std::make_unique<int[]>(cudnn_dims);
-      for (size_t i = 0; i < cudnn_dims; i++) {
-        dy_dims[i] = LongToInt(dy_shape_[i]);
-        db_dims[i] = LongToInt(db_shape_[i]);
-      }
-      CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
-                                  cudnnSetTensorNdDescriptorEx(dy_desc_, cudnn_compute_format_, cudnn_data_type_,
-                                                               SizeToInt(cudnn_dims), dy_dims.get()),
-                                  "cudnnSetTensorNdDescriptor failed");
-      CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
-                                  cudnnSetTensorNdDescriptorEx(db_desc_, cudnn_compute_format_, cudnn_data_type_,
-                                                               SizeToInt(cudnn_dims), db_dims.get()),
-                                  "cudnnSetTensorNdDescriptor failed");
-      CHECK_CUDNN_RET_WITH_EXCEPT(
-        kernel_node_,
-        cudnnSetReduceTensorDescriptor(op_desc_, CUDNN_REDUCE_TENSOR_ADD, CUDNN_DATA_FLOAT, CUDNN_NOT_PROPAGATE_NAN,
-                                       CUDNN_REDUCE_TENSOR_NO_INDICES, CUDNN_32BIT_INDICES),
-        "cudnnSetReduceTensorDescriptor failed");
-    }
-  }
-  void InitSizeLists() override {
-    if (use_cudnn_) {
-      size_t dy_size, db_size;
-      CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnGetTensorSizeInBytes(dy_desc_, &dy_size),
-                                  "cudnnGetTensorSizeInBytes failed");
-      CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnGetTensorSizeInBytes(db_desc_, &db_size),
-                                  "cudnnGetTensorSizeInBytes failed");
-      input_size_list_.push_back(dy_size);
-      output_size_list_.push_back(db_size);
-      size_t indices_size, workspace_size;
-      CHECK_CUDNN_RET_WITH_EXCEPT(
-        kernel_node_, cudnnGetReductionIndicesSize(cudnn_handle_, op_desc_, dy_desc_, db_desc_, &indices_size),
-        "cudnnGetReductionIndicesSize failed")
-      CHECK_CUDNN_RET_WITH_EXCEPT(
-        kernel_node_, cudnnGetReductionWorkspaceSize(cudnn_handle_, op_desc_, dy_desc_, db_desc_, &workspace_size),
-        "cudnnGetReductionWorkspaceSize failed")
-      workspace_size_list_.push_back(indices_size);
-      workspace_size_list_.push_back(workspace_size);
-    } else {
-      input_size_list_.push_back(dy_num_ * sizeof(T));
-      output_size_list_.push_back(db_num_ * sizeof(T));
-    }
-  }
+  void DestroyResource() noexcept override;
+
+  void ResetResource() noexcept;
 
  private:
-  bool same_dims_;
+  template <typename T>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
+                    const std::vector<kernel::AddressPtr> &outputs);
+  void MethodSelection();
+  void InitResource() override;
+  void InitSizeLists();
+
+  size_t unit_size_{1};
+  bool same_dims_{true};
   bool is_null_input_;
-  std::string kernel_name_;
-  bool use_cudnn_;
-  size_t dy_num_;  // for own implementation
-  size_t db_num_;
-  size_t num_dims_;
-  size_t bias_size_;      // for own implementation
+  bool use_cudnn_{false};
+  size_t dy_num_{1};  // for own implementation
+  size_t db_num_{1};
+  size_t num_dims_{0};
+  size_t bias_size_{0};   // for own implementation
   ShapeVector dy_shape_;  // for own implementation
   ShapeVector db_shape_;  // for own implementation
-  std::string data_format_ = kOpFormat_NCHW;
+  std::string data_format_{kOpFormat_NHWC};
   // for cudnn implementation
-  cudnnHandle_t cudnn_handle_;
-  cudnnDataType_t cudnn_data_type_;
-  cudnnTensorFormat_t cudnn_compute_format_;
-  cudnnTensorDescriptor_t dy_desc_;
-  cudnnTensorDescriptor_t db_desc_;
-  cudnnReduceTensorDescriptor_t op_desc_;
+  void *stream_{nullptr};
+  cudnnHandle_t cudnn_handle_{nullptr};
+  cudnnDataType_t cudnn_data_type_{CUDNN_DATA_FLOAT};
+  cudnnTensorFormat_t cudnn_compute_format_{CUDNN_TENSOR_NCHW};
+  cudnnTensorDescriptor_t dy_desc_{nullptr};
+  cudnnTensorDescriptor_t db_desc_{nullptr};
+  cudnnReduceTensorDescriptor_t op_desc_{nullptr};
 };
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_BIAS_ADD_GRAD_GPU_KENEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_NN_BIAS_ADD_GRAD_GPU_KENEL_H_

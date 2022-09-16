@@ -15,12 +15,227 @@
  */
 
 #include "plugin/device/gpu/kernel/nn/bias_add_grad_gpu_kenel.h"
+#include "plugin/device/gpu/kernel/kernel_constants.h"
+#include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/bias_add_grad_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 
 namespace mindspore {
 namespace kernel {
-MS_REG_GPU_KERNEL_ONE(BiasAddGrad, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                      BiasAddGradGpuKernelMod, float)
-MS_REG_GPU_KERNEL_ONE(BiasAddGrad, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-                      BiasAddGradGpuKernelMod, half)
+template <typename T>
+using Complex = mindspore::utils::Complex<T>;
+
+bool BiasAddGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                   const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  if (inputs.empty() || outputs.empty()) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
+    return false;
+  }
+  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+    return false;
+  }
+  kernel_name_ = base_operator->name();
+  return true;
+}
+
+int BiasAddGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                    const std::vector<KernelTensorPtr> &outputs,
+                                    const std::map<uint32_t, tensor::TensorPtr> &) {
+  auto dy_shape = inputs.at(kIndex0)->GetShapeVector();
+  is_null_input_ = CHECK_SHAPE_NULL(dy_shape, kernel_name_, "input");
+  if (is_null_input_ || IsDynamic(dy_shape)) {
+    return KRET_UNKNOWN_SHAPE;
+  }
+  ResetResource();
+  auto dtype = inputs.at(kIndex0)->GetDtype();
+  unit_size_ = abstract::TypeIdSize(dtype);
+
+  cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(dtype));
+  num_dims_ = dy_shape.size();
+  if (num_dims_ < kDim2) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input cannot be less than 2, but got "
+                      << num_dims_;
+  }
+  auto input_device_format = GetFormatFromEnumToStr(inputs.at(kIndex0)->GetFormat());
+  cudnn_compute_format_ = (input_device_format == kOpFormat_NHWC) ? CUDNN_TENSOR_NHWC : CUDNN_TENSOR_NCHW;
+  data_format_ = input_device_format;
+  std::string format = GetValue<std::string>(base_operator->GetAttr("format"));
+  string::size_type pos = format.find("C");
+  if (pos == std::string::npos || pos >= num_dims_) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', 'C' character must be in 'format', but got " << format;
+  }
+  if (format == kOpFormat_NHWC) {
+    data_format_ = kOpFormat_NHWC;
+  }
+  bias_size_ = LongToSizeClipNeg(dy_shape[pos]);
+  constexpr size_t four_4D = 4;
+  size_t num_dims_fix = std::max(num_dims_, four_4D);
+  for (size_t i = 0; i < num_dims_fix; i++) {
+    dy_shape_.push_back((i < num_dims_) ? dy_shape[i] : 1);
+    db_shape_.push_back((i == pos) ? dy_shape[i] : 1);
+    if (dy_shape_[i] != db_shape_[i]) {
+      same_dims_ = false;
+    }
+  }
+  dy_num_ *= SizeOf(dy_shape_);
+  db_num_ *= SizeOf(db_shape_);
+  MethodSelection();
+  InitResource();
+  InitSizeLists();
+  return KRET_OK;
+}
+
+template <typename T>
+bool BiasAddGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                           const std::vector<AddressPtr> &workspace,
+                                           const std::vector<AddressPtr> &outputs) {
+  T *dy_addr = GetDeviceAddress<T>(inputs, kIndex0);
+  T *db_addr = GetDeviceAddress<T>(outputs, kIndex0);
+  if (same_dims_) {
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+      cudaMemcpyAsync(db_addr, dy_addr, output_size_list_[kIndex0], cudaMemcpyDeviceToDevice,
+                      reinterpret_cast<cudaStream_t>(stream_)),
+      "cudaMemcpyAsync failed.");
+  } else {
+    if (use_cudnn_) {  // shared memory not satisfied or num_dim > 4
+      T *indices_addr = GetPossiblyNullDeviceAddress<T>(workspace, kIndex0);
+      T *workspace_addr = GetPossiblyNullDeviceAddress<T>(workspace, kIndex1);
+      const float alpha = 1;
+      const float beta = 0;
+      CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
+        cudnnReduceTensor(cudnn_handle_, op_desc_, indices_addr, workspace_size_list_[kIndex0], workspace_addr,
+                          workspace_size_list_[kIndex1], &alpha, dy_desc_, dy_addr, &beta, db_desc_, db_addr),
+        "cudnnReduceTensor failed");
+    } else {  // use own implementation which is more efficient but cannot process num_dim > 4
+      if (data_format_ == kOpFormat_NHWC) {
+        CalBiasAddGradNHWC(dy_num_, bias_size_, dy_addr, db_addr, reinterpret_cast<cudaStream_t>(stream_));
+      } else {
+        CalBiasAddGradNCHW(dy_num_, bias_size_, SizeToInt(dy_shape_[kIndex2]), SizeToInt(dy_shape_[kIndex3]), dy_addr,
+                           db_addr, reinterpret_cast<cudaStream_t>(stream_));
+      }
+    }
+  }
+  return true;
+}
+
+void BiasAddGradGpuKernelMod::DestroyResource() noexcept {
+  if (use_cudnn_) {
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnDestroyReduceTensorDescriptor(op_desc_),
+                                        "cudnnDestroyReduceTensorDescriptor failed");
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnDestroyTensorDescriptor(db_desc_), "cudnnDestroyTensorDescriptor failed");
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnDestroyTensorDescriptor(dy_desc_),
+                                        "cudnnDestroyOpTensorDescriptor failed");
+  }
+}
+
+void BiasAddGradGpuKernelMod::ResetResource() noexcept {
+  same_dims_ = true;
+  is_null_input_ = false;
+  use_cudnn_ = false;
+  dy_num_ = 1;
+  db_num_ = 1;
+  num_dims_ = 0;
+  bias_size_ = 0;
+  dy_shape_.clear();
+  db_shape_.clear();
+  data_format_ = kOpFormat_NCHW;
+  cudnn_handle_ = nullptr;
+  cudnn_data_type_ = CUDNN_DATA_FLOAT;
+  cudnn_compute_format_ = CUDNN_TENSOR_NCHW;
+  dy_desc_ = nullptr;
+  db_desc_ = nullptr;
+  op_desc_ = nullptr;
+  input_size_list_.clear();
+  output_size_list_.clear();
+  workspace_size_list_.clear();
+}
+
+void BiasAddGradGpuKernelMod::MethodSelection() {
+  // opt implementation can only process num_dims_ <= 4
+  // for num_dims_ = 2, not time-consuming, use cudnn
+  if (num_dims_ > kDim4 || num_dims_ == kDim2) {
+    use_cudnn_ = true;
+    return;
+  }
+  if (data_format_ == kOpFormat_NHWC) {
+    constexpr auto tile_size_large_mat = 32;
+    auto required_shared_mem_size = tile_size_large_mat * (tile_size_large_mat + 1) * unit_size_;
+    // nhwc opt implementation performs not so well when bias_size_ <= 6
+    constexpr auto max_cudnn_bias_size = 6;
+    if (required_shared_mem_size > SHARED_MEM_PER_BLOCK || bias_size_ <= max_cudnn_bias_size) {
+      use_cudnn_ = true;
+      return;
+    }
+  }
+}
+
+void BiasAddGradGpuKernelMod::InitResource() {
+  if (use_cudnn_) {
+    cudnn_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCudnnHandle();
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreateTensorDescriptor(&dy_desc_), "cudnnCreateTensorDescriptor failed");
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreateTensorDescriptor(&db_desc_), "cudnnCreateTensorDescriptor failed");
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreateReduceTensorDescriptor(&op_desc_),
+                                        "cudnnCreateOpTensorDescriptor failed");
+    // Expand to 4 dims for cudnnSetTensorNdDescriptorEx.
+    constexpr size_t four_4D = 4;
+    size_t cudnn_dims = std::max(num_dims_, four_4D);
+    std::unique_ptr<int[]> dy_dims = std::make_unique<int[]>(cudnn_dims);
+    std::unique_ptr<int[]> db_dims = std::make_unique<int[]>(cudnn_dims);
+    for (size_t i = 0; i < cudnn_dims; i++) {
+      dy_dims[i] = LongToInt(dy_shape_[i]);
+      db_dims[i] = LongToInt(db_shape_[i]);
+    }
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnSetTensorNdDescriptorEx(dy_desc_, cudnn_compute_format_, cudnn_data_type_,
+                                                                     SizeToInt(cudnn_dims), dy_dims.get()),
+                                        "cudnnSetTensorNdDescriptor failed");
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnSetTensorNdDescriptorEx(db_desc_, cudnn_compute_format_, cudnn_data_type_,
+                                                                     SizeToInt(cudnn_dims), db_dims.get()),
+                                        "cudnnSetTensorNdDescriptor failed");
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
+      cudnnSetReduceTensorDescriptor(op_desc_, CUDNN_REDUCE_TENSOR_ADD, CUDNN_DATA_FLOAT, CUDNN_NOT_PROPAGATE_NAN,
+                                     CUDNN_REDUCE_TENSOR_NO_INDICES, CUDNN_32BIT_INDICES),
+      "cudnnSetReduceTensorDescriptor failed");
+  }
+}
+
+void BiasAddGradGpuKernelMod::InitSizeLists() {
+  if (use_cudnn_) {
+    size_t dy_size, db_size;
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnGetTensorSizeInBytes(dy_desc_, &dy_size),
+                                        "cudnnGetTensorSizeInBytes failed");
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnGetTensorSizeInBytes(db_desc_, &db_size),
+                                        "cudnnGetTensorSizeInBytes failed");
+    input_size_list_.push_back(dy_size);
+    output_size_list_.push_back(db_size);
+    size_t indices_size, workspace_size;
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
+      cudnnGetReductionIndicesSize(cudnn_handle_, op_desc_, dy_desc_, db_desc_, &indices_size),
+      "cudnnGetReductionIndicesSize failed")
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
+      cudnnGetReductionWorkspaceSize(cudnn_handle_, op_desc_, dy_desc_, db_desc_, &workspace_size),
+      "cudnnGetReductionWorkspaceSize failed")
+    workspace_size_list_.push_back(indices_size);
+    workspace_size_list_.push_back(workspace_size);
+  } else {
+    input_size_list_.push_back(dy_num_ * unit_size_);
+    output_size_list_.push_back(db_num_ * unit_size_);
+  }
+}
+
+const std::vector<std::pair<KernelAttr, BiasAddGradGpuKernelMod::KernelRunFunc>> &BiasAddGradGpuKernelMod::GetFuncList()
+  const {
+  static const std::vector<std::pair<KernelAttr, BiasAddGradGpuKernelMod::KernelRunFunc>> func_list = {
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+     &BiasAddGradGpuKernelMod::LaunchKernel<half>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &BiasAddGradGpuKernelMod::LaunchKernel<float>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+     &BiasAddGradGpuKernelMod::LaunchKernel<int8_t>},
+  };
+  return func_list;
+}
+
+MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, BiasAddGrad, BiasAddGradGpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
