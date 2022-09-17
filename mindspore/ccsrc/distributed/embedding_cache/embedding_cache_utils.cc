@@ -194,5 +194,9 @@ void EmbeddingCacheTableManager::DumpHashTables() const {
                  << ", host cache address:" << reinterpret_cast<void *>(item.second.host_address.get());
   }
 }
+EmbeddingStoreManager &EmbeddingStoreManager::GetInstance() {
+  static EmbeddingStoreManager instance{};
+  return instance;
+}
 }  // namespace distributed
 }  // namespace mindspore
