@@ -31,6 +31,9 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr int kStaticInputNum = 2;
+constexpr int kDynamicInputNum = 3;
+
 constexpr size_t kInputDimSize = 5;
 constexpr size_t kInDimIdxForN = 0;
 constexpr size_t kInDimIdxForC = 1;
@@ -127,8 +130,8 @@ class Conv3dGradFilterGpuKernelMod : public NativeGpuKernelMod {
     InitResource();
 
     size_t input_num = inputs.size();
-    if (input_num != 2) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 2, but got " << input_num;
+    if (input_num != kStaticInputNum && input_num != kDynamicInputNum) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 2 or 3, but got " << input_num;
     }
     size_t output_num = outputs.size();
     if (output_num != 1) {

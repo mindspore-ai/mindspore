@@ -18,7 +18,7 @@ import numpy as np
 from mindspore.ops.primitive import constexpr
 from mindspore.ops.operations import nn_ops as nps
 from mindspore.common import dtype as mstype
-from .grad_base import bprop_getters
+from .grad_base import bprop_getters, dyn_size, create_tensor_by_element
 from .. import functional as F
 from .. import operations as P
 from ..composite.multitype_ops.zeros_like_impl import zeros_like
@@ -61,6 +61,17 @@ def bias_add_gradgrad_helper(shape, bias_shape, data_format):
     return tuple(expanded_shape), tuple(tile_mults)
 
 
+def bias_add_gradgrad_helper_dynamic(shape, bias_shape, data_format):
+    """Helper function of BiasGradGrad to calculate expanded shape(dynamic version)."""
+    if data_format == "NCHW":
+        expanded_shape = P.Concat(0)((P.OnesLike()(shape[:1]), bias_shape, P.OnesLike()(shape[2:])))
+        tile_mults = P.Concat(0)((shape[:1], [1], shape[2:]))
+    else:
+        expanded_shape = P.Concat(0)((P.OnesLike()(shape[:-1]), bias_shape))
+        tile_mults = P.Concat(0)((shape[:-1], [1]))
+    return tuple(expanded_shape), tuple(tile_mults)
+
+
 @bprop_getters.register(G.BiasAddGrad)
 def get_bprop_bias_add_grad(self):
     """Grad definition for `BiasAddGrad` operation."""
@@ -70,10 +81,19 @@ def get_bprop_bias_add_grad(self):
     def bprop(dy, out, dout):
         reshape = P.Reshape()
         tile = P.Tile()
-
-        expanded_shape, tile_mults = bias_add_gradgrad_helper(dy.shape, dout.shape, data_format)
-        expanded_grad = reshape(dout, expanded_shape)
-        tiled_grad = tile(expanded_grad, tile_mults)
+        dyn_shape = P.TensorShape()
+        if is_shape_unknown(dy) or is_shape_unknown(dout):
+            dy_shape = dyn_shape(dy)
+            dout_shape = dyn_shape(dout)
+            expanded_shape, tile_mults = bias_add_gradgrad_helper_dynamic(dy_shape, dout_shape, data_format)
+            expanded_grad = reshape(dout, create_tensor_by_element(expanded_shape))
+            tiled_grad = tile(expanded_grad, create_tensor_by_element(tile_mults))
+        else:
+            dy_shape = dy.shape
+            dout_shape = dout.shape
+            expanded_shape, tile_mults = bias_add_gradgrad_helper(dy_shape, dout_shape, data_format)
+            expanded_grad = reshape(dout, expanded_shape)
+            tiled_grad = tile(expanded_grad, tile_mults)
         return (tiled_grad,)
 
     return bprop
@@ -122,8 +142,14 @@ def get_bprop_conv3d(self):
         pad=self.pad, stride=self.stride, dilation=self.dilation, group=self.group, data_format=self.data_format
     )
     get_shape = P.Shape()
+    get_dyn_shape = P.TensorShape()
 
     def bprop(x, w, out, dout):
+        if is_shape_unknown(get_shape(x)) or is_shape_unknown(get_shape(w)):
+            dx = input_grad(w, dout, get_dyn_shape(x))
+            dw = filter_grad(x, dout, get_dyn_shape(w))
+            return dx, dw
+
         dx = input_grad(w, dout, get_shape(x))
         dw = filter_grad(x, dout, get_shape(w))
         return dx, dw
@@ -145,8 +171,14 @@ def get_bprop_conv3d_transpose(self):
         out_channel=self.in_channel, kernel_size=self.kernel_size, mode=self.mode, pad_mode="pad",
         pad=pad_list, stride=self.stride, dilation=self.dilation, group=self.group, data_format=self.data_format
     )
+    get_dyn_shape = P.TensorShape()
 
     def bprop(x, w, out, dout):
+        if is_shape_unknown(F.shape(w)):
+            dx = input_grad(dout, w)
+            dw = filter_grad(dout, x, get_dyn_shape(w))
+            return dx, dw
+
         dx = input_grad(dout, w)
         dw = filter_grad(dout, x, F.shape(w))
         return dx, dw
@@ -928,10 +960,12 @@ def get_bprop_top_kv2(self):
     scatter = P.ScatterNd()
     expand_dims = P.ExpandDims()
     shape_op = P.Shape()
+    dyn_shape = P.TensorShape()
     reshape_op = P.Reshape()
     dtype = P.DType()
+    cast = P.Cast()
 
-    def bprop(input_x, k, out, dout):
+    def _bprop_static(input_x, k, out, dout):
         in_shape = shape_op(input_x)
         in_lastdim = in_shape[-1]
 
@@ -957,6 +991,37 @@ def get_bprop_top_kv2(self):
                 in_shape_1d),
             in_shape)
         return out_grad, zeros_like(k)
+
+    def _bprop_dynshape(input_x, k, out, dout):
+        in_shape = dyn_shape(input_x)
+        in_lastdim = in_shape[-1]
+
+        indices = out[1]
+        ind_shape = dyn_shape(indices)
+        ind_lastdim = ind_shape[-1]
+
+        ind_2d = reshape_op(indices, create_tensor_by_element((-1, ind_lastdim)))
+        outerdim = dyn_shape(ind_2d)[0]
+
+        # [0, outterdim, 2*outerdim, ..., (k-1)*outerdim]
+        range_flatten_index = P.Range()(cast(0, mstype.int64), outerdim * in_lastdim, in_lastdim)
+
+        # expand_dims to (k, 1), then broadcast
+        ind = reshape_op(ind_2d + expand_dims(range_flatten_index, -1), create_tensor_by_element((-1,)))
+        in_shape_1d = expand_dims(dyn_size(input_x, mstype.int64), -1)
+
+        out_grad = reshape_op(
+            scatter(
+                expand_dims(ind, -1),
+                reshape_op(dout[0], create_tensor_by_element((-1,))),
+                in_shape_1d),
+            in_shape)
+        return out_grad, zeros_like(k)
+
+    def bprop(input_x, k, out, dout):
+        if is_shape_unknown(shape_op(input_x)):
+            return _bprop_dynshape(input_x, k, out, dout)
+        return _bprop_static(input_x, k, out, dout)
 
     return bprop
 
@@ -1239,7 +1304,7 @@ def get_bprop_binary_cross_entropy(self):
 
 
 @bprop_getters.register(P.BCEWithLogitsLoss)
-def get_bprop_ce_with_logits_loss(self):
+def get_bprop_bce_with_logits_loss(self):
     """Grad definition for `BCEWithLogitsLoss` operation."""
     reduction = self.reduction
     mul = P.Mul()
@@ -1249,6 +1314,7 @@ def get_bprop_ce_with_logits_loss(self):
     size = P.Size()
     neg = P.Neg()
     log = P.Log()
+    shape = P.Shape()
 
     def bprop(predict, target, weight, pos_weight, out, dout):
         sigmoid_input = sigmoid(predict)
@@ -1263,8 +1329,10 @@ def get_bprop_ce_with_logits_loss(self):
             dx = mul(dx, weight)
             grad_target = mul(grad_target, weight)
         if reduction == 'mean':
-            dx = dx / size(dx)
-            grad_target = grad_target / size(target)
+            dx_size = dyn_size(dx) if is_shape_unknown(shape(dx)) else size(dx)
+            target_size = dyn_size(target) if is_shape_unknown(shape(target)) else size(target)
+            dx = dx / dx_size
+            grad_target = grad_target / target_size
         return dx, grad_target, zeros_like(weight), zeros_like(pos_weight)
 
     return bprop
@@ -1414,7 +1482,7 @@ def get_bprop_conv2d_backprop_filter(self):
 
     def bprop(dy, x, filter_size, out, dout):
         x_shape = get_shape(x)
-        if -1 in x_shape:
+        if is_shape_unknown(x_shape):
             x_shape = get_dyn_shape(x)
         dw_dx = input_grad(dy, dout, x_shape)
         dw_dy = filter_grad(x, dout)

@@ -17,38 +17,12 @@
 #include "backend/common/pass/reduce_sum_optimizer.h"
 #include <vector>
 #include "include/common/utils/anfalgo.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace opt {
 namespace {
 const int axis_input_index = 2;
-
-bool IsNeedComputeRank(const CNodePtr &cnode) {
-  MS_EXCEPTION_IF_NULL(cnode);
-  auto axis_input = cnode->input(axis_input_index);
-  MS_EXCEPTION_IF_NULL(axis_input);
-  if (!IsValueNode<ValueTuple>(axis_input)) {
-    return false;
-  }
-  auto value_node = axis_input->cast<ValueNodePtr>();
-  MS_EXCEPTION_IF_NULL(value_node);
-  auto value = value_node->value();
-  MS_EXCEPTION_IF_NULL(value);
-  if (value->isa<ValueTuple>()) {
-    auto value_tuple = value->cast<ValueTuplePtr>();
-    MS_EXCEPTION_IF_NULL(value_tuple);
-    if (value_tuple->value().empty()) {
-      return true;
-    }
-    for (auto &iter : value_tuple->value()) {
-      auto item = GetValue<int64_t>(iter->cast<ScalarPtr>());
-      if (item < 0) {
-        return true;
-      }
-    }
-  }
-  return false;
-}
 }  // namespace
 
 AnfNodePtr ReduceSumOptimizer::NewRankOp(const AnfNodePtr &cnode, const KernelGraphPtr &kernel_graph) const {
@@ -168,9 +142,6 @@ const AnfNodePtr ReduceSumOptimizer::Process(const FuncGraphPtr &func_graph, con
   common::AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), node);
   auto kernel_graph = func_graph->cast<std::shared_ptr<session::KernelGraph>>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  if (AnfUtils::IsDimUnknown(cnode) && IsNeedComputeRank(cnode)) {
-    return InsertAssistNode(cnode, kernel_graph);
-  }
   return NewAssistValueNode(cnode, kernel_graph);
 }
 

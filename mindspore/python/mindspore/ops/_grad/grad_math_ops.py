@@ -53,8 +53,20 @@ def dyn_binop_grad_common(x, y, dx, dy):
     shape_of_x = dyn_shape_op(x)
     shape_of_y = dyn_shape_op(y)
     rx, ry = DynamicBroadcastGradientArgs()(shape_of_x, shape_of_y)
-    dx = reduce_sum(dx, rx)
-    dy = reduce_sum(dy, ry)
+    dx_origin_dtype = dx.dtype
+    if dx_origin_dtype in (mstype.int16, mstype.int32, mstype.int64):
+        dx = F.cast(dx, mstype.float32)
+        dx = reduce_sum(dx, rx)
+        dx = F.cast(dx, dx_origin_dtype)
+    else:
+        dx = reduce_sum(dx, rx)
+    dy_origin_dtype = dy.dtype
+    if dy_origin_dtype in (mstype.int16, mstype.int32, mstype.int64):
+        dy = F.cast(dy, mstype.float32)
+        dy = reduce_sum(dy, ry)
+        dy = F.cast(dy, dy_origin_dtype)
+    else:
+        dy = reduce_sum(dy, ry)
     reduce_dx = reshape(dx, shape_of_x)
     reduce_dy = reshape(dy, shape_of_y)
     return reduce_dx, reduce_dy

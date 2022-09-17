@@ -50,9 +50,9 @@ int LinSpaceGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  auto input1_shape = Convert2SizeTClipNeg(inputs[kIndex0]->GetShapeVector());
-  auto input2_shape = Convert2SizeTClipNeg(inputs[kIndex1]->GetShapeVector());
-  auto output_shape = Convert2SizeTClipNeg(outputs[kIndex0]->GetShapeVector());
+  auto input1_shape = inputs[kIndex0]->GetShapeVector();
+  auto input2_shape = inputs[kIndex1]->GetShapeVector();
+  auto output_shape = outputs[kIndex0]->GetShapeVector();
   is_null_input_ = CHECK_SHAPE_NULL(input1_shape, kernel_name_, "start") ||
                    CHECK_SHAPE_NULL(input2_shape, kernel_name_, "stop") ||
                    CHECK_SHAPE_NULL(output_shape, kernel_name_, "output");

@@ -29,6 +29,7 @@ from mindspore.ops.primitive import constexpr
 from mindspore.common import dtype as mstype
 from mindspore.common.tensor import RowTensor
 from mindspore.ops._utils.utils import range_op, get_1d_shape, generate_shape_index, is_shape_unknown
+from .._grad.grad_base import dyn_rank, convert_to_tensor, dyn_invert_permutation, dyn_size, dyn_ones, dyn_fill
 
 reduce_sum = P.ReduceSum()
 unsorted_segment_sum = P.UnsortedSegmentSum()
@@ -370,11 +371,20 @@ def _transpose_perm_positive(perm):
     return tuple(res)
 
 
+def _dyn_transpose_perm_positive(perm):
+    return (perm + dyn_size(perm)) % (dyn_size(perm))
+
+
 @bprop_getters.register(P.Transpose)
 def get_bprop_transpose(self):
     """Generate bprop for Transpose"""
 
     def bprop(x, perm, out, dout):
+        is_mutable, perm = convert_to_tensor(perm)
+        if is_mutable:
+            perm = _dyn_transpose_perm_positive(perm)
+            return transpose(dout, dyn_invert_permutation(perm)), zeros_like(perm)
+
         perm = _transpose_perm_positive(perm)
         return transpose(dout, invert_permutation(perm)), zeros_like(perm)
 
@@ -1019,18 +1029,36 @@ def _gather_drop_negatives(params,
     select = P.Select()
 
     if zero_clipped_indices is None:
-        zero_clipped_indices = maximum(ids, zeros_like(ids))
+        if is_shape_unknown(shape_op(ids)):
+            zero_ids = dyn_fill(ids.dtype, dyn_shape_op(ids), 0)
+        else:
+            zero_ids = zeros_like(ids)
+        zero_clipped_indices = maximum(ids, zero_ids)
     gathered = gather(params, zero_clipped_indices, 0)
+    zero_slice = zeros_like(gathered)
     if is_positive is None:
         is_positive = greater_equal(ids, 0)
         is_positive_shape = shape_op(is_positive)
-        broadcastable_shape = is_positive_shape
-        for _ in range(rank(gathered) - rank(is_positive)):
-            broadcastable_shape += (1,)
-        is_positive = reshape(is_positive, broadcastable_shape)
         gathered_shape = shape_op(gathered)
-        is_positive = logical_and(is_positive, fill(mstype.bool_, gathered_shape, 1))
-    zero_slice = zeros_like(gathered)
+        if is_shape_unknown(gathered_shape) or is_shape_unknown(is_positive_shape):
+            gathered_shape = dyn_shape_op(gathered)
+            rank_gathered = dyn_rank(gathered)
+            fill_gathered = dyn_fill(mstype.int64, gathered_shape, 1)
+            is_positive_shape = dyn_shape_op(is_positive)
+            rank_positive = dyn_rank(is_positive)
+            if rank_gathered - rank_positive > 0:
+                padded_size = F.expand_dims(rank_gathered - rank_positive, 0)
+                padded_shape = dyn_ones(padded_size, is_positive_shape.dtype)
+                is_positive_shape = P.Concat(-1)((is_positive_shape, padded_shape))
+            is_positive = reshape(is_positive, is_positive_shape)
+            is_positive = logical_and(is_positive, F.cast(fill_gathered, mstype.bool_))
+            zero_slice = dyn_fill(gathered.dtype, gathered_shape, 0)
+        else:
+            broadcastable_shape = is_positive_shape
+            for _ in range(rank(gathered) - rank(is_positive)):
+                broadcastable_shape += (1,)
+            is_positive = reshape(is_positive, broadcastable_shape)
+            is_positive = logical_and(is_positive, fill(mstype.bool_, gathered_shape, 1))
     return (select(is_positive, gathered, zero_slice), zero_clipped_indices, is_positive)
 
 
@@ -1059,7 +1087,13 @@ def get_bprop_unsorted_segment_sum(self):
     """Generate bprop for UnsortedSegmentSum"""
 
     def bprop(x, segment_ids, num_segments, out, dout):
-        return _gather_drop_negatives(dout, segment_ids, None, None)[0], zeros_like(segment_ids), \
+        segment_shape = shape_op(segment_ids)
+        if is_shape_unknown(segment_shape):
+            segment_shape = dyn_shape_op(segment_ids)
+            zeros_segment = dyn_fill(segment_ids.dtype, segment_shape, 0)
+        else:
+            zeros_segment = zeros_like(segment_ids)
+        return _gather_drop_negatives(dout, segment_ids, None, None)[0], zeros_segment, \
                zeros_like(num_segments)
 
     return bprop
