@@ -236,6 +236,15 @@ void EmbeddingCachePrefetchActor::Initialize() {
     MS_LOG(EXCEPTION) << "Create stream failed.";
   }
 
+  // Create and Initialize the random number generator for embedding values.
+  const std::uint64_t seed = 0;
+  const size_t skip = 0;
+  rnd_gen_ = std::make_unique<distributed::RandomGenerator<DataType, Generator, Distribution>>(seed, skip);
+
+  const double mean = 0.0;
+  const double sigma = 0.01;
+  rnd_gen_->Initialize(mean, sigma);
+
   // Get embedding cache table info.
   hash_tables_ = embedding_cache_table_manager.hash_tables_;
   local_host_cache_size_ = embedding_cache_table_manager.host_cache_size_;
@@ -281,6 +290,10 @@ void EmbeddingCachePrefetchActor::Finalize() {
 
   embedding_cache_lookup_node_ = nullptr;
   embedding_cache_update_node_ = nullptr;
+
+  if (rnd_gen_ != nullptr) {
+    (void)rnd_gen_->Finalize();
+  }
 
   rpc_operators_.clear();
   finalized_ = true;

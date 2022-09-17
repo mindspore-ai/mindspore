@@ -113,6 +113,41 @@ struct EmbeddingCacheStatisticsInfo {
   size_t mem_cache_hit_count_{0};
 };
 
+// The RandomGenerator class is used to continuously generate random numbers using specified algorithm.
+template <typename T, typename Generator, typename Distribution>
+class RandomGenerator {
+ public:
+  RandomGenerator(std::uint64_t seed, size_t skip) : seed_(seed), skip_(skip), gen_(nullptr), distri_(nullptr) {}
+  virtual ~RandomGenerator() = default;
+
+  template <typename... Args>
+  bool Initialize(Args... args) {
+    if (gen_ != nullptr || distri_ != nullptr) {
+      return false;
+    }
+    gen_ = std::make_unique<Generator>(seed_);
+    gen_->discard(skip_);
+    distri_ = std::make_unique<Distribution>(args...);
+    return true;
+  }
+
+  bool Finalize() { return true; }
+
+  // Generate a next random number with type `T`.
+  T Next() { return T((*distri_)(*gen_)); }
+
+ private:
+  // The seed of the random number generation algorithm.
+  std::uint64_t seed_;
+
+  // The number of skipped random numbers before generation.
+  size_t skip_;
+
+  // The random number generator and it's range distribution.
+  std::unique_ptr<Generator> gen_;
+  std::unique_ptr<Distribution> distri_;
+};
+
 // The EmbeddingCacheTableManager class is used to save all Parameter information for enabling cache, such as device
 // cache size, host cache size, etc., and can allocate memory for the embedding cache table.
 class BACKEND_EXPORT EmbeddingCacheTableManager {
