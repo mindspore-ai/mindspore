@@ -20,6 +20,7 @@
 #include <memory>
 #include "ops/base_operator.h"
 #include "mindapi/base/types.h"
+#include "ops/mat_mul.h"
 
 namespace mindspore {
 namespace ops {
@@ -27,11 +28,11 @@ constexpr auto kNameBatchMatMul = "BatchMatMul";
 
 /// \brief Computes matrix multiplication between two tensors by batch.
 /// Refer to Python API @ref mindspore.ops.BatchMatmul for more details.
-class MIND_API BatchMatmul : public BaseOperator {
+class MIND_API BatchMatMul : public MatMul {
  public:
-  MIND_API_BASE_MEMBER(BatchMatmul);
+  MIND_API_BASE_MEMBER(BatchMatMul);
   /// \brief Constructor.
-  BatchMatmul() : BaseOperator(kNameBatchMatMul) { InitIOName({"x1", "x2"}, {"output"}); }
+  BatchMatMul() : MatMul(kNameBatchMatMul) { InitIOName({"x1", "x2"}, {"output"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.BatchMatmul for the inputs.
   void Init(bool transpose_a = false, bool transpose_b = false);
   /// \brief Set transpose_a.

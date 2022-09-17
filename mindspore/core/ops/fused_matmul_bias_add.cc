@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include "ops/fused_matmul_bias_add.h"
 #include <set>
 #include <map>
 #include <string>
@@ -26,27 +27,8 @@
 
 namespace mindspore {
 namespace ops {
-void MatMul::Init(bool transpose_a, bool transpose_b) {
-  set_transpose_a(transpose_a);
-  set_transpose_b(transpose_b);
-}
-
-void MatMul::set_transpose_a(bool transpose_a) { (void)AddAttr(kTransposeA, api::MakeValue(transpose_a)); }
-
-void MatMul::set_transpose_b(bool transpose_b) { (void)AddAttr(kTransposeB, api::MakeValue(transpose_b)); }
-
-bool MatMul::get_transpose_a() const {
-  auto value_ptr = GetAttr(kTransposeA);
-  return GetValue<bool>(value_ptr);
-}
-
-bool MatMul::get_transpose_b() const {
-  auto value_ptr = GetAttr(kTransposeB);
-  return GetValue<bool>(value_ptr);
-}
-
-MIND_API_OPERATOR_IMPL(MatMul, BaseOperator);
-class MatMulInfer : public abstract::OpInferBase {
+MIND_API_OPERATOR_IMPL(FusedMatMulBiasAdd, MatMul);
+class FusedMatMulBiasAddInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
@@ -94,6 +76,6 @@ class MatMulInfer : public abstract::OpInferBase {
   }
 };
 
-REGISTER_PRIMITIVE_OP_INFER_IMPL(MatMul, prim::kPrimMatMul, MatMulInfer, false);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(FusedMatMulBiasAdd, prim::kPrimFusedMatMulBiasAdd, FusedMatMulBiasAddInfer, false);
 }  // namespace ops
 }  // namespace mindspore
