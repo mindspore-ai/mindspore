@@ -75,4 +75,10 @@ using pid_t = int;
 #endif
 #endif  // _MSC_VER
 
+#ifndef _WIN32
+#define PATH_SEPARATOR '/'
+#else
+#define PATH_SEPARATOR '\\'
+#endif
+
 #endif  // MINDSPORE_CORE_UTILS_OS_H_

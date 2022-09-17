@@ -121,7 +121,7 @@ class BACKEND_EXPORT KernelBuildInfo {
 };
 using KernelBuildInfoPtr = std::shared_ptr<KernelBuildInfo>;
 
-class KernelBuildInfo::KernelBuildInfoBuilder {
+class BACKEND_EXPORT KernelBuildInfo::KernelBuildInfoBuilder {
  public:
   KernelBuildInfoBuilder() { kernel_build_info_ = std::make_shared<KernelBuildInfo>(); }
 

@@ -459,6 +459,7 @@ def _set_pb_env():
 
 
 def _add_cuda_path():
+    """add cuda path on windows."""
     if platform.system().lower() == 'windows':
         if __package_name__.lower() == "mindspore_gpu":
             cuda_home = os.environ.get('CUDA_PATH')
@@ -466,6 +467,11 @@ def _add_cuda_path():
                 logger.error("mindspore-gpu on windows need CUDA_PATH, but not set it now")
             else:
                 os.add_dll_directory(os.path.join(os.environ['CUDA_PATH'], 'bin'))
+            cudann_home = os.environ.get('CUDNN_HOME')
+            if cudann_home is None:
+                logger.error("mindspore-gpu on windows need CUDNN_HOME, but not set it now")
+            else:
+                os.add_dll_directory(os.path.join(os.environ['CUDNN_HOME'], 'bin'))
 
 
 check_version_and_env_config()

@@ -60,7 +60,7 @@ class BACKEND_EXPORT DeviceContextManager {
   void LoadPlugin();
 
   std::map<std::string, void *> plugin_maps_;
-  bool load_init_;
+  bool load_init_{false};
   std::string plugin_path_;
 
   // The string converted from DeviceContextKey -> DeviceContextPtr.
@@ -69,7 +69,7 @@ class BACKEND_EXPORT DeviceContextManager {
   std::map<std::string, DeviceContextCreator> device_context_creators_;
 };
 
-class DeviceContextRegister {
+class BACKEND_EXPORT DeviceContextRegister {
  public:
   DeviceContextRegister(const std::string &device_name, DeviceContextCreator &&runtime_creator) {
     DeviceContextManager::GetInstance().Register(device_name, std::move(runtime_creator));
