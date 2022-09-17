@@ -82,13 +82,17 @@ void PredictTaskQueue::WaitUntilPredictActive(PredictTask *task, int node_id) {
   return;
 }
 
-void PredictTaskQueue::ActiveTask(PredictTask *task) { task->task_done_condition.notify_one(); }
+void PredictTaskQueue::ActiveTask(PredictTask *task) {
+  std::unique_lock<std::mutex> result_lock(task->task_done_mutex);
+  task->task_done_condition.notify_one();
+}
 
 void PredictTaskQueue::PushPredictTask(PredictTask *task, int node_id) {
   idle_worker_num_[node_id] -= 1;
 #ifdef USE_HQUEUE
   while (!predict_task_[node_id].Enqueue(task)) {
   }
+  std::unique_lock<std::mutex> task_lock(mtx_predict_task_);
 #else
   std::unique_lock<std::mutex> task_lock(mtx_predict_task_);
   predict_task_[node_id].push(task);
