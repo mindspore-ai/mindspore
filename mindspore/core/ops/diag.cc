@@ -29,6 +29,10 @@ namespace {
 abstract::ShapePtr DiagInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];
+  // Support the dynamic rank.
+  if (IsDynamicRank(input_shape)) {
+    return std::make_shared<abstract::Shape>(ShapeVector({UNKNOWN_RANK}));
+  }
   std::vector<int64_t> out_shape;
 
   int64_t batch_rank = 0;
