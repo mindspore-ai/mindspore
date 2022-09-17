@@ -31,10 +31,11 @@ class GLUFusion : public LitePatternProcessPass {
 
   ~GLUFusion() override = default;
 
- private:
-  bool Init() const;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
   const BaseRef DefinePattern() const override;
+
+ private:
+  bool Init() const;
   CNodePtr CreateGLUNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &equiv) const;
 
  protected:

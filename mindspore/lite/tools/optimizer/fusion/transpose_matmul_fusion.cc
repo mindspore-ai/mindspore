@@ -43,11 +43,6 @@ bool CheckInputTransposeNode(const FuncGraphPtr &func_graph, const CNodePtr &cno
       std::vector<int> perm;
       auto trans_cnode = cnode->input(i)->cast<CNodePtr>();
       MS_CHECK_TRUE_RET(trans_cnode != nullptr, false);
-      if (IsMultiOutputTensors(func_graph, trans_cnode)) {
-        MS_LOG(WARNING) << "transpose node is used as input by multiple cnodes, Fusion failed! ,name:"
-                        << trans_cnode->fullname_with_scope();
-        return false;
-      }
       if (GetTransposePerm(trans_cnode, &perm) != lite::RET_OK) {
         MS_LOG(ERROR) << "get transpose perm failed.";
         return false;
@@ -100,7 +95,7 @@ bool TransposeMatMulFusion::Run(const FuncGraphPtr &func_graph) {
       MS_CHECK_TRUE_RET(left_trans_cnode != nullptr, false);
       MS_CHECK_TRUE_RET(left_trans_cnode->size() == kInputSizeThree, false);
       auto left_pre_node = left_trans_cnode->input(SECOND_INPUT);
-      (void)manager->Replace(left_trans_cnode, left_pre_node);
+      (void)manager->SetEdge(cnode, SECOND_INPUT, left_pre_node);
     }
     if (indices_need_fuse[SECOND_INPUT]) {
       if (matmul_prim->GetAttr(ops::kTransposeB) == nullptr) {
@@ -113,7 +108,7 @@ bool TransposeMatMulFusion::Run(const FuncGraphPtr &func_graph) {
       MS_CHECK_TRUE_RET(right_trans_cnode != nullptr, false);
       MS_CHECK_TRUE_RET(right_trans_cnode->size() == kInputSizeThree, false);
       auto right_pre_node = right_trans_cnode->input(SECOND_INPUT);
-      (void)manager->Replace(right_trans_cnode, right_pre_node);
+      (void)manager->SetEdge(cnode, THIRD_INPUT, right_pre_node);
     }
   }
   return false;

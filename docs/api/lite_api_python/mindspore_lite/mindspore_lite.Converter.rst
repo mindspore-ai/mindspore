@@ -9,8 +9,8 @@ mindspore_lite.Converter
         参数默认值是None时表示不设置。
 
     参数：
-        - **fmk_type** (FmkType) - 输入模型框架类型。选项：FmkType.TF | FmkType.CAFFE | FmkType.ONNX | FmkType.MINDIR | FmkType.TFLITE。
-        - **model_file** (str) - 输入模型文件路径。e.g. "/home/user/model.prototxt"。选项：TF: "\*.pb" | CAFFE: "\*.prototxt" | ONNX: "\*.onnx" | MINDIR: "\*.mindir" | TFLITE: "\*.tflite"。
+        - **fmk_type** (FmkType) - 输入模型框架类型。选项：FmkType.TF | FmkType.CAFFE | FmkType.ONNX | FmkType.MINDIR | FmkType.TFLITE | FmkType.PYTORCH。
+        - **model_file** (str) - 输入模型文件路径。e.g. "/home/user/model.prototxt"。选项：TF: "\*.pb" | CAFFE: "\*.prototxt" | ONNX: "\*.onnx" | MINDIR: "\*.mindir" | TFLITE: "\*.tflite" | PYTORCH: "\*.pt or \*.pth"。
         - **output_file** (str) - 输出模型文件路径。可自动生成.ms后缀。e.g. "/home/user/model.prototxt"，它将生成名为model.prototxt.ms的模型在/home/user/路径下。
         - **weight_file** (str，可选) - 输入模型权重文件。仅当输入模型框架类型为FmkType.CAFFE时必选。e.g. "/home/user/model.caffemodel"。默认值：""。
         - **config_file** (str，可选) - 作为训练后量化或离线拆分算子并行的配置文件路径，禁用算子融合功能并将插件设置为so路径。默认值：""。

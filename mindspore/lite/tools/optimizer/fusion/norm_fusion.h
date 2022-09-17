@@ -39,10 +39,10 @@ class NormFusion : public LitePatternProcessPass {
 
   ~NormFusion() override = default;
 
+  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+
  protected:
   bool Init() const;
-
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 
  private:
   void InitShapeSizeInferFuncMap();

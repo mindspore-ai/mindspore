@@ -27,8 +27,6 @@ class ScaleActivationFusion : public LitePatternProcessPass {
   explicit ScaleActivationFusion(bool multigraph = true, const std::string &name = "ScaleActivationFusion")
       : LitePatternProcessPass(name, multigraph) {}
   ~ScaleActivationFusion() override = default;
-
- private:
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 };

@@ -32,14 +32,12 @@ class TfliteRelPosMultiHeadAttentionFusion : public MultiHeadAttentionFusion {
                                                 bool multigraph = true)
       : MultiHeadAttentionFusion(name, multigraph) {}
   ~TfliteRelPosMultiHeadAttentionFusion() override = default;
+  AnfNodePtr Process(const std::string &pattern_name, const FuncGraphPtr &, const AnfNodePtr &,
+                     const EquivPtr &) const override;
+  std::unordered_map<std::string, VectorRef> DefinePatterns() const override;
 
  private:
   bool Init() const override;
-
-  std::unordered_map<std::string, VectorRef> DefinePatterns() const override;
-
-  AnfNodePtr Process(const std::string &pattern_name, const FuncGraphPtr &, const AnfNodePtr &,
-                     const EquivPtr &) const override;
 
   std::shared_ptr<ops::Attention> BuildAttentionPrim(const EquivPtr &equiv) const override;
 

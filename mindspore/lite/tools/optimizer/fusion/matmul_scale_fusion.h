@@ -29,9 +29,9 @@ class MatMulScaleFusion : public ScaleBaseFusion {
  public:
   explicit MatMulScaleFusion(bool multigraph = true) : ScaleBaseFusion("MatMulScaleFusion", multigraph) {}
   ~MatMulScaleFusion() override = default;
+  const BaseRef DefinePattern() const override;
 
  protected:
-  const BaseRef DefinePattern() const override;
   bool CheckPrevCnodeProper(const CNodePtr &prev_cnode) const override;
   PrimitiveCPtr BuildNewPrimitive(const CNodePtr &curr_cnode, const CNodePtr &prev_cnode) const override;
   int CalNewBiasImpl(float *curr_weight_data, float *curr_bias_data, std::vector<int64_t> prev_bias_shape,

@@ -27,9 +27,9 @@ class ConvBatchNormFusion : public ConvTransformFusion {
     fmk_type_ = fmk_type;
   }
   ~ConvBatchNormFusion() override = default;
+  const BaseRef DefinePattern() const override;
 
  private:
-  const BaseRef DefinePattern() const override;
   int InitTransParam(const CNodePtr &, int, float *, float *) const override;
 };
 }  // namespace mindspore::opt

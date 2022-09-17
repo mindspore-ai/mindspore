@@ -26,10 +26,10 @@ class BatchMatMulFusion : public LitePatternProcessPass {
  public:
   explicit BatchMatMulFusion(bool multigraph = true) : LitePatternProcessPass("BatchMatMulFusion", multigraph) {}
   ~BatchMatMulFusion() override = default;
-
- private:
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+
+ private:
   bool CheckCnodeProper(const CNodePtr &stack_cnode, const CNodePtr &fullconnect_cnode,
                         const CNodePtr &left_slice_cnode) const;
 };

@@ -43,12 +43,12 @@ class TfliteLstmCellFusion : public LitePatternProcessPass {
 
   static CNodePtr CreateOutputGetItem(const FuncGraphPtr &func_graph, const CNodePtr &node, int item_index);
 
- protected:
-  bool Init() const;
+  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 
   const BaseRef DefinePattern() const override;
 
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+ protected:
+  bool Init() const;
 
   static lite::STATUS GetFloatScalarFromTensorInfo(const AnfNodePtr &tensor_info, float *v);
 

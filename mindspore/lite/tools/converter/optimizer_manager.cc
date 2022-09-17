@@ -49,6 +49,7 @@ bool RunOptimizerPass(const FuncGraphPtr &func_graph, const std::vector<std::str
     auto pass_outer = registry::PassRegistry::GetPassFromStoreRoom(pass_name);
     if (pass_outer != nullptr) {
       auto api_graph = api::MakeShared<api::FuncGraph>(func_graph);
+      MS_CHECK_TRUE_RET(api_graph != nullptr, false);
       if (!pass_outer->Execute(api_graph)) {
         MS_LOG(WARNING) << "run pass failed, pass name is " << pass_name;
         return false;

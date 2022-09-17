@@ -28,8 +28,6 @@ class AffineFusion : public LitePatternProcessPass {
   explicit AffineFusion(bool multigraph = true, const std::string &name = "AffineFusion")
       : LitePatternProcessPass(name, multigraph) {}
   ~AffineFusion() override = default;
-
- private:
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 };

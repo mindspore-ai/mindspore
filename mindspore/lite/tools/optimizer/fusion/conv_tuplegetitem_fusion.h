@@ -24,8 +24,6 @@ class ConvTupleGetItemFusion : public LitePatternProcessPass {
   explicit ConvTupleGetItemFusion(const std::string &name = "ConvTupleGetItemFusion", bool multigraph = true)
       : LitePatternProcessPass(name, multigraph) {}
   ~ConvTupleGetItemFusion() override = default;
-
- private:
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 };

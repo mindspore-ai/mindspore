@@ -172,7 +172,7 @@ bool ConvTransformFusion::AdjustActivationType(const CNodePtr &conv_node, const 
   MS_CHECK_TRUE_RET(conv_node->input(0) != nullptr, false);
   auto conv_prim = GetValueNode<PrimitivePtr>(conv_node->input(0));
   MS_CHECK_TRUE_RET(conv_prim != nullptr, false);
-  conv_prim->AddAttr(ops::kActivationType, MakeValue(trans_act));
+  (void)conv_prim->AddAttr(ops::kActivationType, MakeValue(trans_act));
   return true;
 }
 

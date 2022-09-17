@@ -34,13 +34,12 @@ class MultiHeadAttentionFusion : public MultiplePatternProcessPass {
 
   ~MultiHeadAttentionFusion() override = default;
 
- protected:
-  virtual bool Init() const;
-
-  std::unordered_map<std::string, VectorRef> DefinePatterns() const override;
-
   AnfNodePtr Process(const std::string &pattern_name, const FuncGraphPtr &, const AnfNodePtr &,
                      const EquivPtr &) const override;
+  std::unordered_map<std::string, VectorRef> DefinePatterns() const override;
+
+ protected:
+  virtual bool Init() const;
 
   // create multi-head-attention without mask
   virtual std::shared_ptr<ops::Attention> BuildAttentionPrim(const EquivPtr &equiv) const;

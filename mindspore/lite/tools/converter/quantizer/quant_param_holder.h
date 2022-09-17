@@ -22,6 +22,7 @@
 #include <map>
 #include "ir/anf.h"
 #include "schema/inner/model_generated.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
@@ -66,6 +67,7 @@ class QuantParamHolder : public Value {
         }
         auto *params = reinterpret_cast<const int8_t *>(this->input_quant_params_.at(i).data());
         auto *params_rhs = reinterpret_cast<const int8_t *>(input_quant_params_rhs.at(i).data());
+        MS_CHECK_TRUE_RET(params != nullptr && params_rhs != nullptr, false);
         for (size_t j = 0; j < input_quant_params_rhs.at(i).size() * sizeof(schema::QuantParamT); ++j) {
           if (params[j] != params_rhs[j]) {
             return false;
@@ -78,6 +80,7 @@ class QuantParamHolder : public Value {
         }
         auto *params = reinterpret_cast<const int8_t *>(this->output_quant_params_.at(i).data());
         auto *params_rhs = reinterpret_cast<const int8_t *>(output_quant_params_rhs.at(i).data());
+        MS_CHECK_TRUE_RET(params != nullptr && params_rhs != nullptr, false);
         for (size_t j = 0; j < output_quant_params_rhs.at(i).size() * sizeof(schema::QuantParamT); ++j) {
           if (params[j] != params_rhs[j]) {
             return false;

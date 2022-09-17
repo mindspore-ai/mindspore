@@ -31,8 +31,11 @@ class TransposeFusion : public MultiplePatternProcessPass {
 
   ~TransposeFusion() override = default;
 
- private:
+  AnfNodePtr Process(const std::string &pattern_name, const FuncGraphPtr &, const AnfNodePtr &,
+                     const EquivPtr &) const override;
   std::unordered_map<std::string, VectorRef> DefinePatterns() const override;
+
+ private:
   VectorRef DefineBNPattern() const;
   VectorRef DefineActivationPattern() const;
   VectorRef DefineActivationscalePattern() const;
@@ -42,8 +45,6 @@ class TransposeFusion : public MultiplePatternProcessPass {
   VectorRef DefineBiasAddPattern() const;
   AnfNodePtr TransTransFusion(const FuncGraphPtr &func_graph, const mindspore::AnfNodePtr &node) const;
   int AdjustAxis(const mindspore::AnfNodePtr &node) const;
-  AnfNodePtr Process(const std::string &pattern_name, const FuncGraphPtr &, const AnfNodePtr &,
-                     const EquivPtr &) const override;
 };
 }  // namespace opt
 }  // namespace mindspore
