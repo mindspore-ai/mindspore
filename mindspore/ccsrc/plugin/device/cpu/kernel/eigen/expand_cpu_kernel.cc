@@ -148,9 +148,9 @@ bool ExpandCpuKernelMod::ExpandCalculate(const std::vector<AddressPtr> &inputs,
   Eigen::array<Eigen::DenseIndex, RANK> bcast;
 
   for (size_t i = 0; i < RANK; i++) {
-    input_reshape[RANK - i - 1] = input_x_shape_[i];
-    output_shape[RANK - i - 1] = output_y_shape_[i];
-    bcast[RANK - i - 1] = input_x_bcast_[i];
+    input_reshape[RANK - i - 1] = static_cast<Eigen::DenseIndex>(input_x_shape_[i]);
+    output_shape[RANK - i - 1] = static_cast<Eigen::DenseIndex>(output_y_shape_[i]);
+    bcast[RANK - i - 1] = static_cast<Eigen::DenseIndex>(input_x_bcast_[i]);
   }
 
   output_y.reshape(output_shape) = input_x.reshape(input_reshape).broadcast(bcast);
