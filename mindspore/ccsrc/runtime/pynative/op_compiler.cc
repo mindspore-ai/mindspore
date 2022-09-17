@@ -90,6 +90,8 @@ OpCompilerInfoPtr OpCompiler::Compile(const session::BackendOpRunInfoPtr &op_run
     opt::CommonUnifyMindIR(graph);
   }
 
+  opt::OpBackendCommonOptimization(graph);
+
   // Select kernel and optimize
   device_context->kernel_executor_->OptimizeGraph(graph);
 
