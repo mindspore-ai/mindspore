@@ -330,6 +330,7 @@ constexpr auto kResizeNearestNeighborGradOpName = "ResizeNearestNeighborGrad";
 constexpr auto kResizeNearestNeighborV2GradOpName = "ResizeNearestNeighborV2Grad";
 constexpr auto kResizeNearestNeighborV2OpName = "ResizeNearestNeighborV2";
 constexpr auto kReturnOpName = "Return";
+constexpr auto kROIAlignGradName = "ROIAlignGrad";
 constexpr auto kRpcRecvOpName = "RpcRecv";
 constexpr auto kRpcSendOpName = "RpcSend";
 constexpr auto kRsqrtGradOpName = "RsqrtGrad";
