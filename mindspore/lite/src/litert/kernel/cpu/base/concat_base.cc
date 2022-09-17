@@ -42,6 +42,10 @@ int ConcatBaseRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 }
 
 int ConcatBaseCPUKernel::DoConcat(int task_id) {
+  if (task_id < 0 || static_cast<size_t>(task_id) >= block_splits_.size()) {
+    MS_LOG(ERROR) << "task_id " << task_id << " is out of range, node is " << name_;
+    return RET_ERROR;
+  }
   auto all_bytes = static_cast<int64_t>(out_tensors_.front()->Size());
   int64_t start = block_splits_[task_id];
   int64_t end = task_id < (static_cast<int>(block_splits_.size()) - 1) ? block_splits_[task_id + 1] : all_bytes;

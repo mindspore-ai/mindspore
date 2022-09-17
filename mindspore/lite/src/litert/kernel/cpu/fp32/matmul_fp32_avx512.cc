@@ -66,6 +66,10 @@ int MatmulFp32AVX512CPUKernel::ParallelRunByBatch(int task_id) const {
 }
 
 int MatmulFp32AVX512CPUKernel::ParallelRunByRow(int task_id) const {
+  if (task_id < 0 || task_id >= thread_count_) {
+    MS_LOG(ERROR) << "task_id " << task_id << " is out of range, node is " << name_;
+    return RET_ERROR;
+  }
   int start_row = split_points_[task_id];
   int end_row = row_num_;
   if (task_id < (thread_count_ - 1)) {
@@ -91,6 +95,10 @@ int MatmulFp32AVX512CPUKernel::ParallelRunByRow(int task_id) const {
 }
 
 int MatmulFp32AVX512CPUKernel::ParallelRunByOC(int task_id) const {
+  if (task_id < 0 || task_id >= thread_count_) {
+    MS_LOG(ERROR) << "task_id " << task_id << " is out of range, node is " << name_;
+    return RET_ERROR;
+  }
   int start_oc = split_points_[task_id];
   int end_oc = col_step_;
   if (task_id < (thread_count_ - 1)) {
