@@ -54,6 +54,10 @@ int GatherBaseCPUKernel::ReSize() {
 }
 
 int GatherBaseCPUKernel::DoGather(int task_id) const {
+  if (task_id < 0 || static_cast<size_t>(task_id) >= block_boundary_infos_.size()) {
+    MS_LOG(ERROR) << "task_id " << task_id << " is out of range, node is " << name_;
+    return RET_ERROR;
+  }
   auto *int8_in = reinterpret_cast<int8_t *>(in_tensors_[FIRST_INPUT]->data());
   CHECK_NULL_RETURN(int8_in);
   auto *int8_out = reinterpret_cast<int8_t *>(out_tensors_[FIRST_INPUT]->data());
