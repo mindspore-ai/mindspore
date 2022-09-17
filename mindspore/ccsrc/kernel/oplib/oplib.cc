@@ -320,7 +320,7 @@ bool OpLib::DecodeOpInfo(const nlohmann::json &obj, const mindspore::kernel::OpI
     MS_LOG(ERROR) << "GetRefInfo Failed";
     return false;
   }
-  op_info_.emplace(op_info->op_name(), op_info);
+  GetOpInfoMap().emplace(op_info->op_name(), op_info);
   return true;
 }
 
@@ -433,12 +433,12 @@ std::shared_ptr<OpInfo> OpLib::FindOp(const std::string &op_name, OpImplyType im
   bool is_cpu = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kCPUDevice);
   if (is_gpu && (imply_type == kTBE || imply_type == kAICPU)) {
     MS_LOG(INFO) << "FindOp failed: opname: " << op_name << ", imply_type: " << ImplTypeToStr(imply_type)
-                 << ", current op num: " << op_info_.size();
+                 << ", current op num: " << GetOpInfoMap().size();
     return nullptr;
   }
   std::string target_processor = is_gpu ? kCUDA : (is_cpu ? kCpu : kAiCore);
   std::vector<std::shared_ptr<OpInfo>> op_info_list;
-  for (auto [iter, end] = op_info_.equal_range(op_name); iter != end; ++iter) {
+  for (auto [iter, end] = GetOpInfoMap().equal_range(op_name); iter != end; ++iter) {
     auto &op_info = (*iter).second;
     MS_EXCEPTION_IF_NULL(op_info);
     if (op_info->imply_type() != imply_type) {
@@ -465,7 +465,7 @@ std::shared_ptr<OpInfo> OpLib::FindOp(const std::string &op_name, OpImplyType im
     return op_info_list.front();
   }
   MS_LOG(INFO) << "FindOp failed: opname: " << op_name << ", imply_type: " << ImplTypeToStr(imply_type)
-               << ", current op num: " << op_info_.size() << " is_dynamic_shape:" << is_dynamic_shape;
+               << ", current op num: " << GetOpInfoMap().size() << " is_dynamic_shape:" << is_dynamic_shape;
   return nullptr;
 }
 
@@ -493,7 +493,7 @@ bool OpLib::GetRefInfo(const std::shared_ptr<OpInfo> &op_info) {
 
 bool OpLib::CheckRepetition(const std::shared_ptr<OpInfo> &op_info) {
   MS_EXCEPTION_IF_NULL(op_info);
-  for (auto [iter, end] = op_info_.equal_range(op_info->op_name()); iter != end; ++iter) {
+  for (auto [iter, end] = GetOpInfoMap().equal_range(op_info->op_name()); iter != end; ++iter) {
     auto &exist_op_info = (*iter).second;
     MS_EXCEPTION_IF_NULL(exist_op_info);
     if (exist_op_info->equals_to(op_info)) {
@@ -501,6 +501,11 @@ bool OpLib::CheckRepetition(const std::shared_ptr<OpInfo> &op_info) {
     }
   }
   return false;
+}
+
+std::multimap<std::string, std::shared_ptr<OpInfo>> &OpLib::GetOpInfoMap() {
+  static std::multimap<std::string, std::shared_ptr<OpInfo>> op_info;
+  return op_info;
 }
 }  // namespace kernel
 }  // namespace mindspore
