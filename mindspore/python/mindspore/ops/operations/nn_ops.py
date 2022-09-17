@@ -8811,7 +8811,7 @@ class SparseApplyRMSProp(Primitive):
         RuntimeError: If the data type of `var`, `ms`, `mom` and `grad` conversion of Parameter is not supported.
 
     Supported Platforms:
-        ``Ascend``  ``CPU``
+        ``Ascend``  ``CPU`` ``GPU``
 
     Examples:
         >>> class SparseApplyRMSPropNet(nn.Cell):
