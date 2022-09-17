@@ -159,7 +159,7 @@ class TopCellInfo {
     op_info_with_ms_func_forward_tensors_[op_info] = forward_tensors;
   }
   const std::string &input_args_id() const { return input_args_id_; }
-  std::string all_op_info() const { return all_op_info_; }
+  const std::string &all_op_info() const { return all_op_info_; }
   void set_all_op_info(const std::string &all_op_info) { all_op_info_ = all_op_info; }
   void ResetTopCellInfo(const py::args &args);
   void SaveOpInfo(const std::string &op_info, const std::vector<tensor::TensorPtr> &op_out_tensors);
