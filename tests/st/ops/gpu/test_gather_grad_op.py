@@ -33,6 +33,17 @@ class GatherDNet(nn.Cell):
     def construct(self, x, index):
         return self.gather_d(x, self.dim, index)
 
+
+class GatherDGradNet(nn.Cell):
+    def __init__(self, net):
+        super(GatherDGradNet, self).__init__()
+        self.net = net
+        self.grad = GradOperation(get_all=True, sens_param=True)(self.net)
+
+    def construct(self, x, index, grad):
+        return self.grad(x, index, grad)
+
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -51,6 +62,7 @@ def test_gather_grad_graph_int32_fp32():
     error = 1e-4
     diff = output[0].asnumpy() - expect
     assert np.all(diff < error)
+
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
@@ -71,6 +83,7 @@ def test_gather_grad_graph_int64_fp32():
     diff = output[0].asnumpy() - expect
     assert np.all(diff < error)
 
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -89,6 +102,7 @@ def test_gather_grad_graph_int32_fp16():
     error = 1e-4
     diff = output[0].asnumpy() - expect
     assert np.all(diff < error)
+
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
@@ -109,6 +123,7 @@ def test_gather_grad_graph_int64_fp16():
     diff = output[0].asnumpy() - expect
     assert np.all(diff < error)
 
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -125,6 +140,7 @@ def test_gather_grad_pynative_int32_fp32():
     error = 1e-4
     diff = output.asnumpy() - expect
     assert np.all(diff < error)
+
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
@@ -143,6 +159,7 @@ def test_gather_grad_pynative_int64_fp32():
     diff = output.asnumpy() - expect
     assert np.all(diff < error)
 
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -160,6 +177,7 @@ def test_gather_grad_pynative_int32_fp16():
     diff = output.asnumpy() - expect
     assert np.all(diff < error)
 
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -176,3 +194,28 @@ def test_gather_grad_pynative_int64_fp16():
     error = 1e-4
     diff = output.asnumpy() - expect
     assert np.all(diff < error)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_gatherd_grad_dynamic_shape():
+    """
+    Feature: dynamic shape support of GatherDGrad.
+    Description: input Tensor with dynamic shape.
+    Expectation: output shape coincide with expect_shape.
+    """
+    context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
+    x_dyn = Tensor(shape=[2, None], dtype=ms.float16)
+    x = Tensor(np.array([[1, 1, 1, 1, 1], [1, 1, 1, 1, 1]]), dtype=ms.float16)
+    dim = 0
+    index_dyn = Tensor(shape=[None, 5], dtype=ms.int64)
+    index = Tensor(np.array([[0, 1, 1, 0, 0], [1, 0, 0, 1, 1]]), dtype=ms.int64)
+    grad_dyn = Tensor(shape=[2, None], dtype=ms.float16)
+    grad = Tensor(np.array([[0.9031, 0.0890, 0.2779, 0.3198, 0.5710],
+                            [0.6949, 0.8439, 0.2003, 0.6868, 0.4437]]), dtype=ms.float16)
+    except_shape = (2, 5)
+    grad_net = GatherDGradNet(GatherDNet(dim))
+    grad_net.set_inputs(x_dyn, index_dyn, grad_dyn)
+    output = grad_net(x, index, grad)
+    assert output[0].asnumpy().shape == except_shape

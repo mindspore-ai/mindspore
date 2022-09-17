@@ -52,6 +52,8 @@ class GatherGradGpuKernelMod : public NativeGpuKernelMod {
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs, void *stream_ptr);
 
  private:
+  void CalculateDim(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs);
+
   using GatherGradOpFunc = std::function<bool(GatherGradGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
                                               const std::vector<kernel::AddressPtr> &, void *)>;
   static std::map<std::string, std::vector<std::pair<KernelAttr, GatherGradGpuKernelMod::GatherGradOpFunc>>>
