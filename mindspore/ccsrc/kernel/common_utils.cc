@@ -996,6 +996,7 @@ size_t CalOffset(const std::vector<int64_t> &start, const std::vector<int64_t> &
 
 size_t UnitSizeInBytes(const mindspore::TypeId &t) {
   size_t bytes = 0;
+  size_t complex_factor = 2;
   switch (t) {
     case kNumberTypeBool:
     case kNumberTypeInt8:
@@ -1019,6 +1020,12 @@ size_t UnitSizeInBytes(const mindspore::TypeId &t) {
     case kNumberTypeInt64:
     case kNumberTypeFloat64:
       bytes = sizeof(int64_t);
+      break;
+    case kNumberTypeComplex64:
+      bytes = sizeof(float) * complex_factor;
+      break;
+    case kNumberTypeComplex128:
+      bytes = sizeof(double) * complex_factor;
       break;
     case kNumberTypeInt4:
     default:

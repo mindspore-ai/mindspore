@@ -18,12 +18,15 @@
 #include <algorithm>
 #include <utility>
 #include <string>
+#include <complex>
 #include "ir/tensor.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
 namespace kernel {
 using mindspore::tensor::Tensor;
+using complex64 = std::complex<float>;
+using complex128 = std::complex<double>;
 
 bool PrintCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                              const std::vector<KernelTensorPtr> &outputs) {
@@ -107,6 +110,8 @@ std::map<TypeId, PrintCpuKernelMod::PrintFunc> PrintCpuKernelMod::func_map_ = {
   {kNumberTypeFloat32, &PrintCpuKernelMod::LaunchKernel<float>},
   {kNumberTypeFloat64, &PrintCpuKernelMod::LaunchKernel<double>},
   {kObjectTypeString, &PrintCpuKernelMod::LaunchKernel<char>},
+  {kNumberTypeComplex64, &PrintCpuKernelMod::LaunchKernel<complex64>},
+  {kNumberTypeComplex128, &PrintCpuKernelMod::LaunchKernel<complex128>},
 };
 
 std::vector<KernelAttr> PrintCpuKernelMod::GetOpSupport() {
