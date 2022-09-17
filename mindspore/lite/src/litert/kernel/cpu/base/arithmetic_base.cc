@@ -42,6 +42,14 @@ int ArithmeticBaseCPUKernel::Prepare() {
                   << " but got: " << op_parameter_->quant_type_;
     return RET_ERROR;
   }
+  if (in_tensors_.at(0)->data_type() < kNumberTypeBegin || in_tensors_.at(0)->data_type() > kNumberTypeEnd) {
+    MS_LOG(ERROR) << "input0 data_type should be number type but got: " << in_tensors_.at(0)->data_type();
+    return RET_ERROR;
+  }
+  if (in_tensors_.at(1)->data_type() < kNumberTypeBegin || in_tensors_.at(1)->data_type() > kNumberTypeEnd) {
+    MS_LOG(ERROR) << "input1 data_type should be number type but got: " << in_tensors_.at(1)->data_type();
+    return RET_ERROR;
+  }
   primitive_type_ = param_->op_parameter_.type_;
   if (primitive_type_ == schema::PrimitiveType_Eltwise) {
     switch (param_->eltwise_mode_) {
