@@ -17,6 +17,7 @@
 #include "ops/softmax_cross_entropy_with_logits.h"
 #include <algorithm>
 #include <set>
+#include <utility>
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
@@ -24,64 +25,60 @@
 
 namespace mindspore {
 namespace ops {
-namespace {
-abstract::TupleShapePtr SoftmaxCrossEntropyWithLogitsInferShape(const PrimitivePtr &primitive,
-                                                                const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto prim_name = primitive->name();
-  const int64_t kInputNum = 2;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
-  auto logits_shape = input_args[0]->BuildShape();
-  auto label_shape = input_args[1]->BuildShape();
-  auto logits_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(logits_shape)[kShape];
-  auto label_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(label_shape)[kShape];
-  const int64_t input_rank = 2;
-  (void)CheckAndConvertUtils::CheckInteger("dimension of logits", SizeToLong(logits_map.size()), kEqual, input_rank,
-                                           prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("dimension of labels", SizeToLong(label_map.size()), kEqual, input_rank,
-                                           prim_name);
-  auto logits_shape_ptr = logits_shape->cast<abstract::ShapePtr>();
-  auto label_shape_ptr = label_shape->cast<abstract::ShapePtr>();
-  // logits and label must have the same shape when is not dynamic
-  if (!logits_shape_ptr->IsDynamic() && !label_shape_ptr->IsDynamic()) {
-    if (*logits_shape != *label_shape) {
-      MS_EXCEPTION(ValueError)
-        << "For '" << prim_name
-        << "', evaluator arg 'label' shape must be consistent with 'logits' shape, but got 'label' shape: "
-        << label_shape->ToString() << ", 'logits' shape: " << logits_shape->ToString() << ".";
+class SoftmaxCrossEntropyWithLogitsInfer : public abstract::OpInferBase {
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    MS_EXCEPTION_IF_NULL(primitive);
+    auto prim_name = primitive->name();
+    const int64_t kInputNum = 2;
+    CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
+    auto logits_shape = input_args[0]->BuildShape();
+    auto label_shape = input_args[1]->BuildShape();
+    auto logits_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(logits_shape)[kShape];
+    auto label_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(label_shape)[kShape];
+    const int64_t input_rank = 2;
+    if (IsDynamicRank(logits_map) || IsDynamicRank(label_map)) {
+      auto ds_shape_ptr = std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
+      return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{ds_shape_ptr, ds_shape_ptr});
     }
+    (void)CheckAndConvertUtils::CheckInteger("dimension of logits", SizeToLong(logits_map.size()), kEqual, input_rank,
+                                             prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("dimension of labels", SizeToLong(label_map.size()), kEqual, input_rank,
+                                             prim_name);
+    auto logits_shape_ptr = logits_shape->cast<abstract::ShapePtr>();
+    auto label_shape_ptr = label_shape->cast<abstract::ShapePtr>();
+    // logits and label must have the same shape when is not dynamic
+    if (!logits_shape_ptr->IsDynamic() && !label_shape_ptr->IsDynamic()) {
+      if (*logits_shape != *label_shape) {
+        MS_EXCEPTION(ValueError)
+          << "For '" << prim_name
+          << "', evaluator arg 'label' shape must be consistent with 'logits' shape, but got 'label' shape: "
+          << label_shape->ToString() << ", 'logits' shape: " << logits_shape->ToString() << ".";
+      }
+    }
+    auto logits_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(logits_shape);
+    auto logits_shp = logits_shape_map[kShape];
+    ShapeVector loss_shape = {logits_shp[0]};
+    abstract::ShapePtr loss_shape_ptr = std::make_shared<abstract::Shape>(loss_shape);
+    return std::make_shared<abstract::TupleShape>(
+      std::vector<abstract::BaseShapePtr>{loss_shape_ptr, logits_shape_ptr});
   }
-  auto logits_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(logits_shape);
-  auto logits_shp = logits_shape_map[kShape];
-  ShapeVector loss_shape = {logits_shp[0]};
-  abstract::ShapePtr loss_shape_ptr = std::make_shared<abstract::Shape>(loss_shape);
-  return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{loss_shape_ptr, logits_shape_ptr});
-}
-
-TuplePtr SoftmaxCrossEntropyWithLogitsInferType(const PrimitivePtr &primitive,
-                                                const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  const int64_t kInputNum = 2;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, primitive->name());
-  auto logits_type = input_args[0]->BuildType();
-  auto label_type = input_args[1]->BuildType();
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
-  std::map<std::string, TypePtr> args;
-  (void)args.insert(std::make_pair("logits_type", logits_type));
-  (void)args.insert(std::make_pair("label_type", label_type));
-  auto type = CheckAndConvertUtils::CheckTensorTypeSame(args, valid_types, primitive->name());
-  return std::make_shared<Tuple>(std::vector<TypePtr>{type, type});
-}
-}  // namespace
-
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    MS_EXCEPTION_IF_NULL(primitive);
+    const int64_t kInputNum = 2;
+    CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, primitive->name());
+    auto logits_type = input_args[0]->BuildType();
+    auto label_type = input_args[1]->BuildType();
+    const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
+    std::map<std::string, TypePtr> args;
+    (void)args.insert(std::make_pair("logits_type", logits_type));
+    (void)args.insert(std::make_pair("label_type", label_type));
+    auto type = CheckAndConvertUtils::CheckTensorTypeSame(args, valid_types, primitive->name());
+    return std::make_shared<Tuple>(std::vector<TypePtr>{type, type});
+  }
+};
 MIND_API_OPERATOR_IMPL(SoftmaxCrossEntropyWithLogits, BaseOperator);
-AbstractBasePtr SoftmaxCrossEntropyWithLogitsInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                   const std::vector<AbstractBasePtr> &input_args) {
-  auto infer_type = SoftmaxCrossEntropyWithLogitsInferType(primitive, input_args);
-  auto infer_shape = SoftmaxCrossEntropyWithLogitsInferShape(primitive, input_args);
-  return abstract::MakeAbstract(infer_shape, infer_type);
-}
-REGISTER_PRIMITIVE_EVAL_IMPL(SoftmaxCrossEntropyWithLogits, prim::kPrimSoftmaxCrossEntropyWithLogits,
-                             SoftmaxCrossEntropyWithLogitsInfer, nullptr, true);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(SoftmaxCrossEntropyWithLogits, prim::kPrimSoftmaxCrossEntropyWithLogits,
+                                 SoftmaxCrossEntropyWithLogitsInfer, false);
 }  // namespace ops
 }  // namespace mindspore

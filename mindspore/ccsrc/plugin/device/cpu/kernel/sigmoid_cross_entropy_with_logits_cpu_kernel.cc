@@ -15,6 +15,7 @@
  */
 
 #include "plugin/device/cpu/kernel/sigmoid_cross_entropy_with_logits_cpu_kernel.h"
+#include <map>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
@@ -24,12 +25,24 @@ constexpr size_t kSigmoidCrossEntropyWithLogitsInputsNum = 2;
 constexpr size_t kSigmoidCrossEntropyWithLogitsOutputsNum = 1;
 }  // namespace
 
-void SigmoidCrossEntropyWithLogitsCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  auto x_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+bool SigmoidCrossEntropyWithLogitsCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                                     const std::vector<KernelTensorPtr> &inputs,
+                                                     const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->name();
+  return True;
+}
+
+int SigmoidCrossEntropyWithLogitsCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                                      const std::vector<KernelTensorPtr> &inputs,
+                                                      const std::vector<KernelTensorPtr> &outputs,
+                                                      const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  dtype_ = inputs.at(0)->GetDtype();
+  auto x_shape = inputs.at(0)->GetShapeVector();
   tensor_size_ = SizeOf(x_shape);
+  return KRET_OK;
 }
 
 bool SigmoidCrossEntropyWithLogitsCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
