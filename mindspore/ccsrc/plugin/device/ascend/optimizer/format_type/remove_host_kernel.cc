@@ -40,14 +40,15 @@ const AnfNodePtr RemoveHostKernel::Process(const FuncGraphPtr &graph, const AnfN
   }
   if (!common::AnfAlgo::IsDynamicShape(node)) {
     auto cnode = node->cast<CNodePtr>();
-    auto output_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 0);
+    auto output_shape = common::AnfAlgo::GetOutputInferShape(cnode, 0);
     auto output_type = TypeId::kNumberTypeInt64;
     auto tensor = std::make_shared<tensor::Tensor>(output_type, output_shape);
     MS_EXCEPTION_IF_NULL(tensor);
     auto data = static_cast<int64_t *>(tensor->data_c());
     MS_EXCEPTION_IF_NULL(data);
-    for (size_t i = 0; i < output_shape.size(); i++) {
-      *(data + i) = output_shape[i];
+    auto value_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 0);
+    for (size_t i = 0; i < value_shape.size(); i++) {
+      *(data + i) = value_shape[i];
     }
     auto abs = std::make_shared<abstract::AbstractTensor>(kInt64, output_shape);
     auto kernel_graph = graph->cast<KernelGraphPtr>();

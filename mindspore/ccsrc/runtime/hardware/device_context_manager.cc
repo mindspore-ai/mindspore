@@ -166,7 +166,7 @@ void DeviceContextManager::UnloadPlugin() {
   auto iter = plugin_maps_.begin();
   while (iter != plugin_maps_.end()) {
     plugin_loader::PluginLoader::CloseDynamicLib(iter->first, iter->second);
-    iter++;
+    (void)iter++;
   }
   plugin_maps_.clear();
   load_init_ = false;
