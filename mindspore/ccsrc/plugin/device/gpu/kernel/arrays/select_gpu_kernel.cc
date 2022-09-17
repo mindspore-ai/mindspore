@@ -16,6 +16,7 @@
 
 #include "plugin/device/gpu/kernel/arrays/select_gpu_kernel.h"
 #include "mindspore/core/ops/select.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace kernel {
@@ -27,7 +28,8 @@ bool SelectGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inp
   auto *input_x = reinterpret_cast<T *>(inputs[1]->addr);
   auto *input_y = reinterpret_cast<T *>(inputs[2]->addr);
   auto *output = reinterpret_cast<T *>(outputs[0]->addr);
-  CalSelect(output_size_, input_cond, input_x, input_y, output, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CalSelect(output_size_, input_cond, input_x, input_y, output, device_id_,
+            reinterpret_cast<cudaStream_t>(cuda_stream_));
   return true;
 }
 
@@ -76,6 +78,7 @@ const std::vector<selectPair> &SelectGpuKernelMod::GetFuncList() const {
 
 bool SelectGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                               const std::vector<KernelTensorPtr> &outputs) {
+  device_id_ = MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID);
   auto kernel_ptr = std::dynamic_pointer_cast<ops::Select>(base_operator);
   MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
   kernel_name_ = kernel_ptr->name();
