@@ -62,6 +62,7 @@ def test_matmul_sub():
     Description: matmul-sub net with strategy in semi auto parallel.
     Expectation: compile done without error.
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
@@ -91,6 +92,7 @@ def test_matmul_add():
     Description: matmul-add net with strategy in semi auto parallel.
     Expectation: compile done without error.
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
@@ -120,6 +122,7 @@ def test_matmul_mul():
     Description: matmul-mul net with strategy in semi auto parallel.
     Expectation: compile done without error.
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
@@ -142,12 +145,14 @@ def test_matmul_mul():
     b = Tensor(np.ones([64, 64]), dtype=ms.float32)
     compile_net(net, x, y, b)
 
+
 def test_matmul_mod():
     """
     Feature: distribute operator sub in auto parallel.
     Description: matmul-mod net with strategy in semi auto parallel.
     Expectation: compile done without error.
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
@@ -170,12 +175,14 @@ def test_matmul_mod():
     b = Tensor(np.ones([64, 64]), dtype=ms.float32)
     compile_net(net, x, y, b)
 
+
 def test_matmul_floormod():
     """
     Feature: distribute operator sub in auto parallel.
     Description: matmul-floormod net with strategy in semi auto parallel.
     Expectation: compile done without error.
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
@@ -205,6 +212,7 @@ def test_matmul_atan2():
     Description: matmul-atan2 net with strategy in semi auto parallel.
     Expectation: compile done without error.
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
@@ -234,6 +242,7 @@ def test_matmul_divNoNan():
     Description: matmul-divNoNan net with strategy in semi auto parallel.
     Expectation: compile done without error.
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
@@ -263,6 +272,7 @@ def test_matmul_logicaland():
     Description: matmul-logical_and net with strategy in semi auto parallel.
     Expectation: compile done without error.
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
@@ -297,6 +307,7 @@ def test_matmul_logicalor():
     Description: matmul-logical_or net with strategy in semi auto parallel.
     Expectation: compile done without error.
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
@@ -331,6 +342,7 @@ def test_matmul_div():
     Description: matmul-div net with strategy in semi auto parallel.
     Expectation: compile done without error.
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
@@ -360,6 +372,7 @@ def test_matmul_add_broadcast():
     Description: matmul-add broadcast net with strategy in semi auto parallel.
     Expectation: compile done without error.
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
@@ -389,6 +402,7 @@ def test_matmul_add_broadcast2():
     Description: matmul-add broadcast net with strategy in semi auto parallel.
     Expectation: compile done without error.
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
@@ -418,6 +432,7 @@ def test_matmul_sub_broadcast():
     Description: matmul-sub broadcast net with strategy in semi auto parallel.
     Expectation: compile done without error.
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
@@ -447,6 +462,7 @@ def test_matmul_sub_broadcast2():
     Description: matmul-sub broadcast net with strategy in semi auto parallel.
     Expectation: compile done without error.
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
@@ -476,6 +492,7 @@ def test_matmul_mul_broadcast():
     Description: matmul-mul broadcast net with strategy in semi auto parallel.
     Expectation: compile done without error.
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
@@ -505,6 +522,7 @@ def test_matmul_mul_broadcast2():
     Description: matmul-mul broadcast net with strategy in semi auto parallel.
     Expectation: compile done without error.
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
@@ -534,6 +552,7 @@ def test_matmul_div_broadcast():
     Description: matmul-div broadcast net with strategy in semi auto parallel.
     Expectation: compile done without error.
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
@@ -563,6 +582,7 @@ def test_matmul_div_broadcast2():
     Description: matmul-div broadcast net with strategy in semi auto parallel.
     Expectation: compile done without error.
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
@@ -592,6 +612,7 @@ def test_matmul_greater_broadcast():
     Description: matmul-greater broadcast net with strategy in semi auto parallel.
     Expectation: compile done without error.
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
@@ -621,6 +642,7 @@ def test_matmul_greater_broadcast2():
     Description: matmul-greater broadcast net with strategy in semi auto parallel.
     Expectation: compile done without error.
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
@@ -650,6 +672,7 @@ def test_matmul_floordiv():
     Description: matmul-floordiv net with strategy in semi auto parallel.
     Expectation: compile done without error.
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
@@ -679,6 +702,7 @@ def test_matmul_floordiv_broadcast():
     Description: matmul-floordiv broadcast net with strategy in semi auto parallel.
     Expectation: compile done without error.
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
@@ -708,6 +732,7 @@ def test_matmul_floordiv_broadcast2():
     Description: matmul-floordiv broadcast net with strategy in semi auto parallel.
     Expectation: compile done without error.
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
@@ -737,6 +762,7 @@ def test_assign_sub():
     Description: mul-assign_sub net with strategy in semi auto parallel.
     Expectation: compile done without error.
     """
+
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -751,7 +777,7 @@ def test_assign_sub():
 
         def construct(self, x):
             out = self.mul(x, self.mul_weight)
-            out = self.assign_sub(self.assignsub_weight, out)
+            self.assign_sub(self.assignsub_weight, out)
             return out
 
     class SubNetWithLoss(nn.Cell):
@@ -786,25 +812,26 @@ def test_assign_sub():
 
 def test_assign_add():
     """
-    Feature: distribute operator sub in auto parallel.
+    Feature: distribute operator add in auto parallel.
     Description: mul-assign_add net with strategy in semi auto parallel.
     Expectation: compile done without error.
     """
+
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
-            self.assign_sub = P.AssignAdd()
+            self.assign_add = P.AssignAdd()
             self.mul = P.Mul()
             self.mul_weight = Parameter(Tensor(np.full([128, 32],
                                                        0.5, dtype=np.float32)),
                                         name="mul_weight")
-            self.assignsub_weight = Parameter(Tensor(np.full([128, 32],
+            self.assignadd_weight = Parameter(Tensor(np.full([128, 32],
                                                              1.1, dtype=np.float32)),
-                                              name="assignsub_weight")
+                                              name="assignadd_weight")
 
         def construct(self, x):
             out = self.mul(x, self.mul_weight)
-            out = self.assign_sub(self.assignsub_weight, out)
+            self.assign_add(self.assignadd_weight, out)
             return out
 
     class SubNetWithLoss(nn.Cell):
@@ -839,25 +866,26 @@ def test_assign_add():
 
 def test_assign():
     """
-    Feature: distribute operator sub in auto parallel.
+    Feature: distribute operator assign in auto parallel.
     Description: mul-assign_sub net with strategy in semi auto parallel.
     Expectation: compile done without error.
     """
+
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
-            self.assign_sub = P.Assign()
+            self.assign = P.Assign()
             self.mul = P.Mul()
             self.mul_weight = Parameter(Tensor(np.full([128, 32],
                                                        0.5, dtype=np.float32)),
                                         name="mul_weight")
-            self.assignsub_weight = Parameter(Tensor(np.full([128, 32],
-                                                             1.1, dtype=np.float32)),
-                                              name="assignsub_weight")
+            self.assign_weight = Parameter(Tensor(np.full([128, 32],
+                                                          1.1, dtype=np.float32)),
+                                           name="assign_weight")
 
         def construct(self, x):
             out = self.mul(x, self.mul_weight)
-            out = self.assign_sub(self.assignsub_weight, out)
+            self.assign(self.assign_weight, out)
             return out
 
     class SubNetWithLoss(nn.Cell):
@@ -896,17 +924,16 @@ def test_matmul_bitwise_and_broadcast():
     Description: mul-BitwiseAnd net with strategy in semi auto parallel.
     Expectation: compile done without error.
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
             self.bitwise_and = P.BitwiseAnd().shard(strategy1)
             self.matmul = P.MatMul().shard(strategy2)
 
-
         def construct(self, x, y, z):
             out = self.bitwise_and(x, y)
             out = self.matmul(out, z)
-
             return out
 
     context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel")
@@ -926,6 +953,7 @@ def test_matmul_bitwise_or_broadcast():
     Description: mul-BitwiseOr net with strategy in semi auto parallel.
     Expectation: compile done without error.
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
@@ -954,6 +982,7 @@ def test_matmul_bitwise_xor_broadcast():
     Description: mul-BitwiseXor net with strategy in semi auto parallel.
     Expectation: compile done without error.
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
@@ -982,6 +1011,7 @@ def test_matmul_mul_no_nan_broadcast():
     Description: mul-MulNoNan net with strategy in semi auto parallel.
     Expectation: compile done without error.
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
@@ -1010,6 +1040,7 @@ def test_matmul_truncate_div_broadcast():
     Description: mul-TruncateDiv net with strategy in semi auto parallel.
     Expectation: compile done without error.
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
@@ -1038,6 +1069,7 @@ def test_matmul_truncate_mod_broadcast():
     Description: mul-TruncateMod net with strategy in semi auto parallel.
     Expectation: compile done without error.
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
@@ -1066,6 +1098,7 @@ def test_matmul_xdivy_broadcast():
     Description: mul-Xdivy net with strategy in semi auto parallel.
     Expectation: compile done without error.
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
@@ -1094,6 +1127,7 @@ def test_matmul_xlogy_broadcast():
     Description: mul-Xlogy net with strategy in semi auto parallel.
     Expectation: compile done without error.
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
@@ -1122,6 +1156,7 @@ def test_matmul_squared_difference_broadcast():
     Description: mul-SquaredDifference net with strategy in semi auto parallel.
     Expectation: compile done without error.
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
@@ -1150,6 +1185,7 @@ def test_matmul_masked_fill_broadcast_with_value_float():
     Description: mul-MaskedFill net with strategy in semi auto parallel.
     Expectation: compile done without error.
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
@@ -1179,6 +1215,7 @@ def test_matmul_masked_fill_broadcast_with_value_tensor():
     Description: mul-MaskedFill net with strategy in semi auto parallel.
     Expectation: compile done without error.
     """
+
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()

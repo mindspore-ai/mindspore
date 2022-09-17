@@ -33,7 +33,8 @@ gradient_accumulation_op = C.MultitypeFuncGraph("gradient_accumulation_op")
 @gradient_accumulation_op.register("Int64", "Tensor", "Tensor")
 def cumulative_grad_process(accumulation_step, cumulative_grad, grad):
     """Apply gradient accumulation to cumulative grad."""
-    return P.AssignAdd()(cumulative_grad, grad / accumulation_step)
+    P.AssignAdd()(cumulative_grad, grad / accumulation_step)
+    return cumulative_grad
 
 
 gradient_clear_op = C.MultitypeFuncGraph("gradient_clear_op")

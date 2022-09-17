@@ -155,10 +155,49 @@ void CheckValueTuple(const AnfNodePtr &node) {
   auto value_tuple = value->cast_ptr<ValueTuple>();
   MS_EXCEPTION_IF_NULL(value_tuple);
   const auto &tuple_values = value_tuple->value();
-  for (size_t i = 0; i < tuple_values.size(); ++i) {
-    auto input_node = NewValueNode(tuple_values[i]);
+  for (const auto &tuple_value : tuple_values) {
+    auto input_node = NewValueNode(tuple_value);
     ValidateOperation(input_node);
     ValidateValueNode(input_node);
+  }
+}
+
+void CheckAssignReturnValue(const AnfNodePtr &node) {
+  static const PrimitiveSet assign_prims = {prim::kPrimAssign, prim::kPrimAssignAdd, prim::kPrimAssignSub};
+  if (IsPrimitiveCNode(node, prim::kPrimDepend)) {
+    auto real_input = node->cast_ptr<CNode>()->input(1);
+    while (IsPrimitiveCNode(real_input, prim::kPrimDepend)) {
+      real_input = real_input->cast_ptr<CNode>()->input(1);
+    }
+    if (!IsOneOfPrimitiveCNode(real_input, assign_prims)) {
+      return;
+    }
+  } else if (!IsOneOfPrimitiveCNode(node, assign_prims)) {
+    return;
+  }
+  auto fg = node->func_graph();
+  MS_EXCEPTION_IF_NULL(fg);
+  auto mgr = fg->manager();
+  MS_EXCEPTION_IF_NULL(mgr);
+  auto &node_users = mgr->node_users();
+  auto iter = node_users.find(node);
+  if (iter == node_users.end()) {
+    return;
+  }
+  static const PrimitiveSet virtual_prims = {
+    prim::kPrimImageSummary, prim::kPrimScalarSummary, prim::kPrimTensorSummary, prim::kPrimHistogramSummary,
+    prim::kPrimMakeTuple,    prim::kPrimStateSetItem,  prim::kPrimTupleGetItem,  prim::kPrimLoad,
+    prim::kPrimPartial,      prim::kPrimDepend,        prim::kPrimUpdateState,   prim::kPrimDynamicLossScale};
+  auto users = iter->second;
+  for (const auto &user : users) {
+    auto user_node = user.first;
+    if (!IsOneOfPrimitiveCNode(user_node, virtual_prims)) {
+      MS_LOG(WARNING) << "Deprecated: the return value of Assign/AssignAdd/AssignSub operator will be removed "
+                      << "in subsequent releases.\n"
+                      << "You can modify the code from:\na = P.Assign()(param, value)\nb = a * 2\nto: \n"
+                      << "P.Assign()(param, value)\nb = param * 2\n"
+                      << "Please check your code:" << trace::GetDebugInfo(node->debug_info());
+    }
   }
 }
 
@@ -168,6 +207,7 @@ void Validate(const FuncGraphPtr &func_graph) {
   const AnfNodeSet &all_nodes = mgr->all_nodes();
   for (auto node : all_nodes) {
     TraceGuard guard(std::make_shared<TraceCopy>(node->debug_info()));
+    CheckAssignReturnValue(node);
     while (IsPrimitiveCNode(node, prim::kPrimReturn) || IsPrimitiveCNode(node, prim::kPrimDepend)) {
       node = node->cast_ptr<CNode>()->input(1);
     }

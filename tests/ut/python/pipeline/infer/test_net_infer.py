@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,8 +21,10 @@ from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer
 import mindspore.ops.operations as op
 
+
 def test_net_infer():
     """ test_net_infer """
+
     class Net(nn.Cell):
         """ Net definition """
 
@@ -40,13 +42,14 @@ def test_net_infer():
             x = self.flatten(x)
             out = self.fc(x)
             return out
+
     Tensor(np.random.randint(0, 255, [1, 3, 224, 224]))
     Net()
 
 
 def test_assign_in_while():
-    context.set_context(device_target="Ascend")
-    context.set_context(mode=context.GRAPH_MODE)
+    context.set_context(device_target="Ascend", mode=context.GRAPH_MODE)
+
     class Net(nn.Cell):
         def __init__(self, input_shape):
             super().__init__()
@@ -58,7 +61,8 @@ def test_assign_in_while():
             while x < y:
                 inputdata = self.inputdata
                 x = x + 1
-                out = self.assign(inputdata, z)
+                self.assign(inputdata, z)
+                out = inputdata
             return out
 
     x = Tensor(np.array(1).astype(np.int32))
@@ -76,9 +80,6 @@ def test_dup_context():
     context.set_context(mode=context.GRAPH_MODE)
 
     class Net(nn.Cell):
-        def __init__(self):
-            super().__init__()
-
         def construct(self, x):
             def identity(f):
                 return f
@@ -106,9 +107,6 @@ def test_maybe_poly_func():
     context.set_context(mode=context.GRAPH_MODE)
 
     class Net(nn.Cell):
-        def __init__(self):
-            super().__init__()
-
         def construct(self, x, y, z):
             def identity(f, inp):
                 return f(inp)

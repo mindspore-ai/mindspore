@@ -34,6 +34,7 @@ def test_parameter_1_1():
     Description: If the name of the input of construct is same as the parameters, add suffix to the name of the input.
     Expectation: No exception.
     """
+
     class ParamNet(Cell):
         def __init__(self):
             super(ParamNet, self).__init__()
@@ -58,6 +59,7 @@ def test_parameter_1_2():
     Description: If the name of the input of construct is same as the parameters, add suffix to the name of the input.
     Expectation: No exception.
     """
+
     class ParamNet(Cell):
         def __init__(self):
             super(ParamNet, self).__init__()
@@ -82,6 +84,7 @@ def test_parameter_2_1():
     Description: If parameters in init have same name, an exception will be thrown.
     Expectation: No exception.
     """
+
     class ParamNet(Cell):
         def __init__(self):
             super(ParamNet, self).__init__()
@@ -107,6 +110,7 @@ def test_parameter_2_2():
     Description: Check the name of parameter in init.
     Expectation: No exception.
     """
+
     class ParamNet(Cell):
         def __init__(self):
             super(ParamNet, self).__init__()
@@ -134,6 +138,7 @@ def test_parameter_3():
     Description: Check the name of parameter in init.
     Expectation: No exception.
     """
+
     class ParamNet(Cell):
         def __init__(self):
             super(ParamNet, self).__init__()
@@ -158,6 +163,7 @@ def test_parameter_4():
     Description: Check the name of parameter in init.
     Expectation: No exception.
     """
+
     class ParamNet(Cell):
         def __init__(self):
             super(ParamNet, self).__init__()
@@ -183,6 +189,7 @@ def test_parameter_5_1():
     Description: Check the name of parameter in init.
     Expectation: No exception.
     """
+
     class ParamNet(Cell):
         def __init__(self):
             super(ParamNet, self).__init__()
@@ -207,6 +214,7 @@ def test_parameter_5_2():
     Description: Check the name of parameter in init.
     Expectation: No exception.
     """
+
     class ParamNet(Cell):
         def __init__(self):
             super(ParamNet, self).__init__()
@@ -233,6 +241,7 @@ def test_parameter_list_tuple_no_name():
     Description: Check the name of parameter in init.
     Expectation: No exception.
     """
+
     class ParamNet(Cell):
         def __init__(self):
             super(ParamNet, self).__init__()
@@ -257,6 +266,7 @@ def test_parameter_in_tuple():
     Description: Check the name of parameter in init.
     Expectation: No exception.
     """
+
     class ParamNet(Cell):
         def __init__(self):
             super(ParamNet, self).__init__()
@@ -282,6 +292,7 @@ def test_parameter_parameter_tuple_1():
     Description: Check the name of parameter in init.
     Expectation: No exception.
     """
+
     class ParamNet(Cell):
         def __init__(self):
             super(ParamNet, self).__init__()
@@ -308,6 +319,7 @@ def test_parameter_parameter_tuple_2():
     Description: Check the name of parameter in init.
     Expectation: No exception.
     """
+
     class ParamNet(Cell):
         def __init__(self):
             super(ParamNet, self).__init__()
@@ -332,6 +344,7 @@ def test_parameter():
     Description: If parameter in list or tuple is not given a name, will give it a unique name.
     Expectation: No exception.
     """
+
     class ParamNet(Cell):
         def __init__(self):
             super(ParamNet, self).__init__()
@@ -369,6 +382,7 @@ def test_parameter_same_name_between_tuple_or_list():
     Description: If the same name exists between tuple and list, an exception will be thrown.
     Expectation: Get the expected exception report.
     """
+
     class ParamNet(Cell):
         def __init__(self):
             super(ParamNet, self).__init__()
@@ -402,6 +416,7 @@ def test_parameter_argument_and_fv():
     Expectation: Parameter used as argument should equal to used as FV.
     """
     y = Parameter(Tensor([1]))
+
     class Demo(Cell):
         def construct(self, x):
             ms.ops.Assign()(x, Tensor([0]))
@@ -428,6 +443,7 @@ def test_parameter_argument_grad():
     Description: Use Parameter as input argmument, and pass it to varargs.
     Expectation: Parameter used as argument should equal to used as FV.
     """
+
     class ParameterArgumentCell(Cell):
         def __init__(self):
             super(ParameterArgumentCell, self).__init__()

@@ -160,7 +160,8 @@ def test_vmap_monad():
         def construct(self, assign_add_val, assign_add_var, scatter_ref, indices, updates):
             self.assign(self.assign_ref, self.replace_tensor)
             F.print(self.assign_ref)
-            out = self.assign_add(assign_add_var, assign_add_val) + self.scatter_add(scatter_ref, indices, updates)
+            self.assign_add(assign_add_var, assign_add_val)
+            out = assign_add_var + self.scatter_add(scatter_ref, indices, updates)
             return out
 
     class VmapMonadNet(nn.Cell):
@@ -411,8 +412,8 @@ def test_vmap_with_celllist_input():
             self.ref_b = Parameter(Tensor([0, 1, 2], mstype.float32), name='ref_b')
 
         def construct(self, replace_tensor):
-            out = self.assign(self.ref_a, replace_tensor)
-            out = self.ref_b + out
+            self.assign(self.ref_a, replace_tensor)
+            out = self.ref_b + self.ref_a
             return out
 
     m1 = AssignNet()

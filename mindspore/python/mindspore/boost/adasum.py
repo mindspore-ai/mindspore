@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -37,7 +37,8 @@ def _update_parameters_after_broadcast(delta_weight, update_delta_weight, parame
     shape = F.shape(delta_weight)
     update_delta_weight = P.Reshape()(update_delta_weight, shape)
     new_parameter = old_parameter - update_delta_weight
-    return P.Assign()(parameter, new_parameter)
+    P.Assign()(parameter, new_parameter)
+    return parameter
 
 
 def _send_before_receive(send_part, send, recv):

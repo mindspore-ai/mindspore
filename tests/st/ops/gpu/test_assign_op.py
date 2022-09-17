@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,7 +29,8 @@ class Net(nn.Cell):
         self.assign = P.Assign()
 
     def construct(self, param):
-        return self.assign(self.var, param)
+        self.assign(self.var, param)
+        return self.var
 
 
 x = np.array([[1.2, 1], [1, 0]]).astype(np.float32)

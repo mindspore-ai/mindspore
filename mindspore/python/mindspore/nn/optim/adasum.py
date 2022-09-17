@@ -47,7 +47,8 @@ def _update_parameters_adasum(delta_weight, update_delta_weight, parameter, old_
     shape = F.shape(delta_weight)
     update_delta_weight = reshape(update_delta_weight, shape)
     new_parameter = old_parameter - update_delta_weight
-    return P.Assign()(parameter, new_parameter)
+    P.Assign()(parameter, new_parameter)
+    return parameter
 
 
 @_reshape_grads.register("Tensor", "Tensor", "Function")
@@ -377,7 +378,8 @@ def _get_delta_weight_process(new_parameter, old_parameter):
 
 @_save_weight.register("Tensor", "Tensor")
 def _save_weight_process(new_parameter, old_parameter):
-    return P.Assign()(new_parameter, old_parameter)
+    P.Assign()(new_parameter, old_parameter)
+    return new_parameter
 
 
 @_clone_weight.register("Tensor", "Tensor")

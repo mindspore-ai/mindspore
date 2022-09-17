@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -206,7 +206,8 @@ def test_assign():
             self.variable = Parameter(Tensor([1.0], mstype.float32), name="variable")
 
         def construct(self, x):
-            return self.assign(self.variable, x)
+            self.assign(self.variable, x)
+            return self.variable
 
     value = Tensor([2.0], mstype.float32)
     assign = AssignNet()
@@ -222,7 +223,8 @@ def test_assign_add():
             self.variable = Parameter(initializer(1, [1], mstype.int64), name="global_step")
 
         def construct(self, x):
-            return self.assign_add(self.variable, x)
+            self.assign_add(self.variable, x)
+            return self.variable
 
     value = Tensor(np.ones([1]).astype(np.int64) * 100)
     assign_add = AssignAddNet()
@@ -234,11 +236,12 @@ def test_assign_sub():
     class AssignSubNet(nn.Cell):
         def __init__(self):
             super(AssignSubNet, self).__init__()
-            self.assign = P.AssignSub()
+            self.assign_sub = P.AssignSub()
             self.variable = Parameter(initializer(1, [1], mstype.int32), name="global_step")
 
         def construct(self, x):
-            return self.assign(self.variable, x)
+            self.assign_sub(self.variable, x)
+            return self.variable
 
     value = Tensor(np.ones([1]).astype(np.int32) * 100)
     assign_sub = AssignSubNet()
@@ -500,6 +503,7 @@ def test_switch():
     Expectation: Load the bprop mindir successfully.
     """
     context.set_context(mode=context.PYNATIVE_MODE)
+
     class SwitchNet(nn.Cell):
         def construct(self, x, y):
             if x > y:
@@ -527,7 +531,8 @@ def test_update_state():
             self.variable = Parameter(initializer(1, [1], mstype.int64), name="global_step")
 
         def construct(self, x):
-            return self.assign_add(self.variable, x)
+            self.assign_add(self.variable, x)
+            return self.variable
 
     value = Tensor(np.ones([1]).astype(np.int64) * 100)
     update_state = UpdateStateNet()

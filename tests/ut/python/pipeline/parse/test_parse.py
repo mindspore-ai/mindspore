@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ from mindspore.ops.primitive import prim_attr_register, PrimitiveWithInfer
 from mindspore.ops.functional import tensor_add
 from ...ut_filter import non_graph_engine
 
+
 # pylint: disable=W0613,W0612
 # W0613: unused-argument
 
@@ -46,10 +47,10 @@ def fixture_enable_check_bprop():
 
 grad_all = C.GradOperation(get_all=True)
 
-
 log = logging.getLogger("test")
 log.setLevel(level=logging.ERROR)
 context.set_context(mode=context.GRAPH_MODE)
+
 
 # Test case: use the parse obj interface use default parameter
 class Net(nn.Cell):
@@ -60,7 +61,7 @@ class Net(nn.Cell):
         self.softmax1 = nn.Softmax(dim)
         self.softmax2 = nn.Softmax(dim + 1)
 
-    def construct(self, input_data, input1=1+2+3+4):
+    def construct(self, input_data, input1=1 + 2 + 3 + 4):
         return self.softmax1(input_data)
 
 
@@ -84,10 +85,6 @@ def test_parse_defalut_parameter_case2():
 # Test case: use the variable parameter for parse object
 class Net1(nn.Cell):
     """ Net1 definition """
-
-    def __init__(self):
-        super(Net1, self).__init__()
-
     def construct(self, *args):
         x = args[0]
         return x
@@ -177,15 +174,13 @@ def test_bprop_with_wrong_output_num(enable_check_bprop):
         return bprop
 
     class BpropWithWrongOutputNumCell(nn.Cell):
-        def __init__(self):
-            super(BpropWithWrongOutputNumCell, self).__init__()
-
         def construct(self, x, y):
             return BpropWithWrongOutputNum()(x, y)
 
     with pytest.raises(ValueError):
         grad_all(BpropWithWrongOutputNumCell())(Tensor(np.array(1).astype(np.int32)),
                                                 Tensor(np.array(2).astype(np.int32)))
+
 
 def test_bprop_with_wrong_output_type(enable_check_bprop):
     class BpropWithWrongOutputType(PrimitiveWithInfer):
@@ -212,9 +207,6 @@ def test_bprop_with_wrong_output_type(enable_check_bprop):
         return bprop
 
     class BpropWithWrongOutputTypeCell(nn.Cell):
-        def __init__(self):
-            super(BpropWithWrongOutputTypeCell, self).__init__()
-
         def construct(self, x):
             return BpropWithWrongOutputType()(x)
 
@@ -248,9 +240,6 @@ def test_bprop_with_wrong_output_shape(enable_check_bprop):
         return bprop
 
     class BpropWithWrongOutputShapeCell(nn.Cell):
-        def __init__(self):
-            super(BpropWithWrongOutputShapeCell, self).__init__()
-
         def construct(self, x):
             return BpropWithWrongOutputShape()(x)
 
@@ -258,6 +247,7 @@ def test_bprop_with_wrong_output_shape(enable_check_bprop):
         net = BpropWithWrongOutputShapeCell()
         net.set_grad()
         grad_all(net)(Tensor(np.ones([64, 10]).astype(np.int32)))
+
 
 class AssignWhenInsertGrad(nn.Cell):
     """ NetWithNDarray definition """
@@ -280,7 +270,9 @@ class AssignWhenInsertGrad(nn.Cell):
         out = self.getG(out)
         return out
 
+
 grad_all = C.GradOperation(get_all=True)
+
 
 class GradNet(nn.Cell):
     def __init__(self, net):
@@ -291,12 +283,14 @@ class GradNet(nn.Cell):
         out = self.net(*inputs)
         return out, grad_all(self.net)(*inputs)
 
+
 def test_assign_in_insert_grad():
     context.set_context(mode=context.GRAPH_MODE)
     net = AssignWhenInsertGrad().to_float(ms.float16)
     input_data = np.array([[1.2, 2.1], [2.2, 3.2]]).astype('float32')
     net_back = GradNet(net)
     net_back(ms.Tensor(input_data))
+
 
 class Assign(nn.Cell):
     """ NetWithNDarray definition """
@@ -316,6 +310,7 @@ def test_assign(enable_check_bprop):
     input_data = ms.Tensor(np.array(1).astype(np.int32))
     net_back = GradNet(net)
     net_back(input_data)
+
 
 class AssignCheck(nn.Cell):
     """ NetWithNDarray definition """

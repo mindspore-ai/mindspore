@@ -82,13 +82,15 @@ def _run_opt_with_one_number(eps, clip_threshold, beta1, beta2t, weight_decay, s
         exp_avg_sq_row_update = P.Mul()(exp_avg_sq_row_update, beta2t)
         update_mean = reduce_mean_keep_alive(update, -1) * (1.0 - beta2t)
         exp_avg_sq_row_update = P.Add()(exp_avg_sq_row_update, update_mean)
-        exp_avg_sq_row_update = F.assign(exp_avg_sq_row, F.cast(exp_avg_sq_row_update, F.dtype(exp_avg_sq_row)))
+        F.assign(exp_avg_sq_row, F.cast(exp_avg_sq_row_update, F.dtype(exp_avg_sq_row)))
+        exp_avg_sq_row_update = exp_avg_sq_row
 
         exp_avg_sq_col_update = F.cast(exp_avg_sq_col, grad_dtype)
         exp_avg_sq_col_update = P.Mul()(exp_avg_sq_col_update, beta2t)
         update_mean = reduce_mean_keep_alive(update, -2) * (1.0 - beta2t)
         exp_avg_sq_col_update = P.Add()(exp_avg_sq_col_update, update_mean)
-        exp_avg_sq_col_update = F.assign(exp_avg_sq_col, F.cast(exp_avg_sq_col_update, F.dtype(exp_avg_sq_col)))
+        F.assign(exp_avg_sq_col, F.cast(exp_avg_sq_col_update, F.dtype(exp_avg_sq_col)))
+        exp_avg_sq_col_update = exp_avg_sq_col
 
         update = _approx_sq_grad(exp_avg_sq_row_update, exp_avg_sq_col_update)
         update = P.Mul()(update, grad)
@@ -96,7 +98,8 @@ def _run_opt_with_one_number(eps, clip_threshold, beta1, beta2t, weight_decay, s
         exp_avg_sq_update = F.cast(exp_avg_sq, grad_dtype)
         update = update * (1.0 - beta2t)
         exp_avg_sq_update = P.Add()(P.Mul()(exp_avg_sq_update, beta2t), update)
-        exp_avg_sq_update = F.assign(exp_avg_sq, F.cast(exp_avg_sq_update, F.dtype(exp_avg_sq)))
+        F.assign(exp_avg_sq, F.cast(exp_avg_sq_update, F.dtype(exp_avg_sq)))
+        exp_avg_sq_update = exp_avg_sq
         exp_avg_sq_update = 1.0 / P.Sqrt()(exp_avg_sq_update)
         update = P.Mul()(exp_avg_sq_update, grad)
 
@@ -109,7 +112,8 @@ def _run_opt_with_one_number(eps, clip_threshold, beta1, beta2t, weight_decay, s
         if compression:
             exp_avg_update = F.cast(exp_avg, grad_dtype)
         exp_avg_update = P.Add()(P.Mul()(exp_avg_update, beta1), update * (1 - beta1))
-        update = F.assign(exp_avg, F.cast(exp_avg_update, F.dtype(exp_avg)))
+        F.assign(exp_avg, F.cast(exp_avg_update, F.dtype(exp_avg)))
+        update = exp_avg
 
     if weight_decay_flag:
         p_data_fp32_coff = p_data_fp32 * -weight_decay * learning_rate_update
@@ -404,7 +408,8 @@ class AdaFactor(Optimizer):
     def construct(self, gradients):
         gradients = self.flatten_gradients(gradients)
         lr = self.get_lr()
-        step = F.assign_add(self.step, 1)
+        F.assign_add(self.step, 1)
+        step = self.step
         if self.scale_lr and self.relative_step:
             if self.warmup_init:
                 min_step = 1e-6 * step

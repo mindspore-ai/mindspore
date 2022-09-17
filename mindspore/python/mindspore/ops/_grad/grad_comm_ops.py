@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -151,8 +151,7 @@ def get_bprop_virtual_assign_add(self):
     def bprop(x, y, out, dout):
         if reduce_scatter:
             dout = reduce_scatter(dout)
-        temp = assign_add(y, dout)
-        return F.depend((cast(out_tensor, dtype(x)), cast(out_tensor, dtype(y))), temp)
+        return F.depend((cast(out_tensor, dtype(x)), cast(out_tensor, dtype(y))), assign_add(y, dout))
 
     return bprop
 
@@ -208,12 +207,14 @@ def get_bprop_mirror_micro_step_operator(self):
                 z = F.depend(z, dout)
                 real_grad = all_reduce(z)
                 real_grad = F.tensor_mul(real_grad, scale)
-                assign_out = assign(z, real_grad)
+                assign(z, real_grad)
+                assign_out = z
         else:
             if F.issubclass_(F.typeof(dout), mstype.tensor):
                 z = F.depend(z, dout)
                 real_grad = all_reduce(z)
-                assign_out = assign(z, real_grad)
+                assign(z, real_grad)
+                assign_out = z
         if opt_shard:
             return (real_grad, cast(out_tensor, dtype(z)))
         return F.depend((cast(out_tensor, dtype(x)), cast(out_tensor, dtype(z))), assign_out)
@@ -284,7 +285,7 @@ def get_bprop_mini_step_all_gather(self):
                 if mean_flag:
                     dx = F.tensor_mul(dx, scale)
                 if add_accu:
-                    z = assign_add(z, dx)
+                    assign_add(z, dx)
                 dx = F.depend(dx, z)
         else:
             dx = dout

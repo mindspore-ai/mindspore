@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -709,10 +709,10 @@ def test_multi_assign():
             self.para3 = Parameter(Tensor(3, dtype=ms.int32), name='para3')
 
         def construct(self, x, y, z):
-            a = self.assign(self.para1, x)
-            a = self.assign(self.para2, y)
-            a = self.assign(self.para3, z)
-            return self.para1 + self.para2 + a
+            self.assign(self.para1, x)
+            self.assign(self.para2, y)
+            self.assign(self.para3, z)
+            return self.para1 + self.para2 + self.para3
 
     x = Tensor(4, dtype=ms.int32)
     y = Tensor(5, dtype=ms.int32)
@@ -1275,10 +1275,11 @@ class AssignNet(Cell):
             1, [1, 3, 2, 2], ms.float32), name='value')
 
     def construct(self, x):
-        x = self.assign_sub(self.input_data, x)
-        x = self.relu(x)
+        self.assign_sub(self.input_data, x)
+        x = self.relu(self.input_data)
         x = self.mean(x, (2, 3))
         return x
+
 
 @security_off_wrap
 def test_auto_mixed_precision_train_1(pynative_save_graphs):
@@ -1286,6 +1287,7 @@ def test_auto_mixed_precision_train_1(pynative_save_graphs):
     input32 = Tensor(np.ones([1, 3, 2, 2]).astype(np.float32))
     label32 = Tensor(np.zeros([1, 3]).astype(np.float32))
     use_build_train_network_check_cast_num(net, "O0", input32, label32, 0)
+
 
 @security_off_wrap
 def test_auto_mixed_precision_train_2(pynative_save_graphs):
@@ -1363,6 +1365,7 @@ def use_build_train_network_controlflow_check_cast_num(network, level, input_x,
         castnum = re.findall('Cast', content)
         assert len(castnum) == cast_num
     return out_me
+
 
 @security_off_wrap
 def test_auto_mixed_precision_controlflow_auto(pynative_save_graphs):
@@ -1527,6 +1530,7 @@ def test_print_assign_print():
     Description: Test load eliminate when umonad and iomona both exist.
     Expectation: No exception.
     """
+
     class Print(Cell):
         def __init__(self):
             super().__init__()
