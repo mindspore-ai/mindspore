@@ -57,7 +57,7 @@ int DepthToSpaceCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
   }
   input_shape_ = inputs[0]->GetShapeVector();
   output_shape_ = outputs[0]->GetShapeVector();
-  return static_cast<int>(KRET_OK);
+  return ret;
 }
 
 template <typename T>

@@ -46,9 +46,6 @@ bool MultinomialCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
   }
   kernel_func_ = func_list_[index].second;
   input_shape_ = inputs[0]->GetShapeVector();
-  if (AnfAlgo::IsShapesDynamic({input_shape_})) {
-    return true;
-  }
   output_dtype_ = outputs[0]->GetDtype();
   input0_dtype_ = inputs[0]->GetDtype();
   input1_dtype_ = inputs[1]->GetDtype();
@@ -82,11 +79,11 @@ int MultinomialCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   if (input0_dtype_ == kNumberTypeFloat16) {
     (void)workspace_size_list_.emplace_back(elem_num * sizeof(float16));
   } else if (input0_dtype_ == kNumberTypeFloat32) {
-    (void)workspace_size_list_.emplace_back(elem_num * sizeof(float16));
+    (void)workspace_size_list_.emplace_back(elem_num * sizeof(float));
   } else if (input0_dtype_ == kNumberTypeFloat64) {
-    (void)workspace_size_list_.emplace_back(elem_num * sizeof(float16));
+    (void)workspace_size_list_.emplace_back(elem_num * sizeof(double));
   }
-  return static_cast<int>(KRET_OK);
+  return ret;
 }
 
 void MultinomialCpuKernelMod::ResetResource() noexcept {
@@ -182,7 +179,17 @@ std::vector<std::pair<KernelAttr, MultinomialCpuKernelMod::MultinomialFunc>> Mul
    &MultinomialCpuKernelMod::LaunchKernel<float, int64_t>},
   {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt64),
    &MultinomialCpuKernelMod::LaunchKernel<float16, int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt64),
+  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
+   &MultinomialCpuKernelMod::LaunchKernel<float, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
+   &MultinomialCpuKernelMod::LaunchKernel<float16, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
+   &MultinomialCpuKernelMod::LaunchKernel<double, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+   &MultinomialCpuKernelMod::LaunchKernel<float, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+   &MultinomialCpuKernelMod::LaunchKernel<float16, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
    &MultinomialCpuKernelMod::LaunchKernel<double, int64_t>}};
 
 std::vector<KernelAttr> MultinomialCpuKernelMod::GetOpSupport() {

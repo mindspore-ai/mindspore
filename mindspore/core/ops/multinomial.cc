@@ -58,16 +58,41 @@ abstract::ShapePtr MultinomialInferShape(const PrimitivePtr &primitive,
   }
 
   auto num_samples_val = 0;
-  auto num_samples = input_args[1]->cast<abstract::AbstractScalarPtr>();
-  auto num_samples_value_ptr = num_samples->BuildValue();
-  if (!num_samples_value_ptr->isa<Int64Imm>()) {
-    MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the num_samples"
-                            << " must be a int, but got " << num_samples_value_ptr->ToString() << ".";
-  }
-  num_samples_val = GetValue<int64_t>(num_samples->BuildValue());
-  if (num_samples_val < 0) {
-    MS_EXCEPTION(ValueError) << "For '" << prim_name << "', num_samples"
-                             << " should be a nonnegative number, but got " << num_samples_val << ".";
+  if (input_args[1]->isa<abstract::AbstractScalar>()) {
+    auto num_samples = input_args[1]->cast<abstract::AbstractScalarPtr>();
+    auto num_samples_value_ptr = num_samples->BuildValue();
+    if (!num_samples_value_ptr->isa<Int64Imm>()) {
+      MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the num_samples"
+                              << " must be a int, but got " << num_samples_value_ptr->ToString() << ".";
+    }
+    num_samples_val = GetValue<int64_t>(num_samples->BuildValue());
+    if (num_samples_val < 0) {
+      MS_EXCEPTION(ValueError) << "For '" << prim_name << "', num_samples"
+                               << " should be a nonnegative number, but got " << num_samples_val << ".";
+    }
+  } else if (input_args[1]->cast<abstract::AbstractTensorPtr>()) {
+    auto num_samples = input_args[1]->cast<abstract::AbstractTensorPtr>();
+    MS_EXCEPTION_IF_NULL(num_samples);
+    auto num_samples_value_ptr = num_samples->BuildValue();
+    MS_EXCEPTION_IF_NULL(num_samples_value_ptr);
+    if (num_samples_value_ptr->isa<tensor::Tensor>()) {
+      auto num_samples_tensor = num_samples_value_ptr->cast<tensor::TensorPtr>();
+      MS_EXCEPTION_IF_ZERO("num_samples_tensor->ElementsNum()", num_samples_tensor->ElementsNum());
+      if (num_samples_tensor->data_type() == kNumberTypeInt64) {
+        num_samples_val = static_cast<int64_t *>(num_samples_tensor->data_c())[0];
+      } else if (num_samples_tensor->data_type() == kNumberTypeInt32) {
+        num_samples_val = static_cast<int32_t *>(num_samples_tensor->data_c())[0];
+      } else {
+        MS_EXCEPTION(TypeError) << "For '" << prim_name << "' the num_samples"
+                                << " must be a int, but got " << TypeIdToString(num_samples_tensor->data_type()) << ".";
+      }
+      if (num_samples_val < 0) {
+        MS_EXCEPTION(ValueError) << "For '" << prim_name << "', num_samples"
+                                 << " should be a nonnegative number, but got " << num_samples_val << ".";
+      }
+    } else {
+      num_samples_val = -1;
+    }
   }
 
   std::vector<int64_t> output_shape;
