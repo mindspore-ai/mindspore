@@ -19,13 +19,13 @@ matmul
 """
 from __future__ import absolute_import
 from impl.matmul_vector import matmul_vector_cce
-from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
-from mindspore.ops._op_impl._custom_op._basic import _shape_check, _get_bias, _get_input_shape
-import te.lang.cce
 import te.platform.cce_params as cce
+import te.lang.cce
 from te import tvm
 from topi import generic
 from topi.cce import util
+from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+from mindspore.ops._op_impl._custom_op._basic import _shape_check, _get_bias, _get_input_shape
 
 # General limitation of the size for input shape: 2**31
 SHAPE_SIZE_LIMIT = 2147483648

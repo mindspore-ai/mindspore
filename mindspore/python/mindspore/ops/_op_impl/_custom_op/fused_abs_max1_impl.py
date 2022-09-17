@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """CusFusedAbsMax1"""
+from __future__ import absolute_import
+
 from te import tik
 from topi.cce import util
 
