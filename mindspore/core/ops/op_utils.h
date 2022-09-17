@@ -60,7 +60,8 @@ ShapeVector ReduceFuncCalShapeInferImpl(const PrimitivePtr &primitive, const Sha
 abstract::ShapePtr ReduceBaseInferShape(const PrimitivePtr &primitive,
                                         const std::vector<abstract::AbstractBasePtr> &input_args,
                                         const std::string &prim_name);
-TypePtr ReduceBaseInferType(const PrimitivePtr &prim, const std::vector<abstract::AbstractBasePtr> &input_args);
+TypePtr ReduceBaseInferType(const PrimitivePtr &prim, const std::vector<abstract::AbstractBasePtr> &input_args,
+                            const std::set<TypePtr> &check_list);
 
 template <typename T>
 api::SharedPtr<T> GetOperator(const AnfNodePtr &node) {
