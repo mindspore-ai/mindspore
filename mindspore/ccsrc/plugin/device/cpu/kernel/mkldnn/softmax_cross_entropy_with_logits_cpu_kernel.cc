@@ -55,7 +55,9 @@ int SoftmaxCrossEntropyWithLogitsCpuKernelMod::Resize(const BaseOperatorPtr &bas
   if (batch_size_ == 0 || class_num_ == 0) {
     MS_LOG(EXCEPTION) << "Invalid batch size or class num input!";
   }
-  auto mem_desc = CreateDesc<dnnl::memory::desc>(mem_dims, dnnl::memory::data_type::f32, dnnl::memory::format_tag::nc);
+  auto dnnl_dtype =
+    (inputs.at(0)->GetDtype() == kNumberTypeFloat32) ? dnnl::memory::data_type::f32 : dnnl::memory::data_type::f16;
+  auto mem_desc = CreateDesc<dnnl::memory::desc>(mem_dims, dnnl_dtype, dnnl::memory::format_tag::nc);
 
   auto desc = CreateDesc<dnnl::softmax_forward::desc>(dnnl::prop_kind::forward_training, mem_desc, 1);
   auto prim_desc = CreateDesc<dnnl::softmax_forward::primitive_desc>(desc, engine_);
@@ -64,8 +66,7 @@ int SoftmaxCrossEntropyWithLogitsCpuKernelMod::Resize(const BaseOperatorPtr &bas
   AddArgument(DNNL_ARG_SRC, mem_desc);
   AddArgument(DNNL_ARG_DST, mem_desc);
 
-  workspace_size_list_.clear();
-  size_t type_size = sizeof(float);
+  size_t type_size = (inputs.at(0)->GetDtype() == kNumberTypeFloat32) ? sizeof(float) : sizeof(float16);
   size_t tensor_size = std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
   (void)workspace_size_list_.emplace_back(tensor_size);
   return KRET_OK;
