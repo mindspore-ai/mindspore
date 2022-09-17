@@ -58,7 +58,10 @@ class HcclAdapter {
   bool InitHccl(uint32_t device_id, std::string_view rank_id);
   bool FinalizeHccl();
   const bool Inited() const { return init_flag_; }
-
+  void SetHcclComm(HcclComm comm) {
+    if (hccl_comm_ == nullptr) hccl_comm_ = comm;
+  }
+  HcclComm get_hccl_comm() const { return hccl_comm_; }
   HcclResult HcclCreateGroup(const std::string &group, uint32_t rank_num, uint32_t *rank_ids) const;
   HcclResult HcclDestroyGroup(const std::string &group) const;
   HcclResult HcclGetRankId(const std::string &group, uint32_t *rank_id) const;
@@ -66,6 +69,11 @@ class HcclAdapter {
 
   HcclResult HcclGetRankId(uint32_t *rank_id) const;
   HcclResult HcclGetRankSize(uint32_t *rank_size) const;
+
+  HcclResult HcclGetLocalRankId(const std::string &group, uint32_t *lcoal_rank_id) const;
+  HcclResult HcclGetLocalRankSize(const std::string &group, uint32_t *local_rank_size) const;
+  HcclResult HcclGetWorldRankFromGroupRank(const std::string &group, uint32_t local_rank, uint32_t *world_rank) const;
+  HcclResult HcclGetGroupRankFromWorldRank(uint32_t world_rank, const std::string &group, uint32_t *local_rank) const;
 
   // for ge node
   bool GenTask(const AnfNodePtr &node, HcclDataType datatype, std::vector<HcclTaskInfo> *task_info_lists) const;
@@ -145,6 +153,10 @@ class HcclAdapter {
   HcomDestroyGroupFunObj hccl_destroy_group_ = nullptr;
   HcomGetRankIdFunObj hccl_get_rank_id_ = nullptr;
   HcomGetRankSizeFunObj hccl_get_rank_size_ = nullptr;
+  HcomGetLocalRankIdFunObj hccl_get_local_rank_id_ = nullptr;
+  HcomGetLocalRankSizeFunObj hccl_get_local_rank_size_ = nullptr;
+  HcomGetWorldRankFromGroupRankFunObj hccl_get_world_rank_by_group_rank_ = nullptr;
+  HcomGetGroupRankFromWorldRankFunObj hccl_get_group_rank_by_world_rank_ = nullptr;
 
   HcomExecInitializeFunObj hccl_exec_initialize_ = nullptr;
   HcomExecFinalizeFunObj hccl_exec_finalize_ = nullptr;

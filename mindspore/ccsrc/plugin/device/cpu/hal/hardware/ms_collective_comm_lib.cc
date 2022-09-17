@@ -33,7 +33,7 @@ MsCollectiveCommLib::MsCollectiveCommLib() {
   MS_LOG(INFO) << "Global group name of MindSpore collective communication library is " << global_group_name_;
 }
 
-bool MsCollectiveCommLib::Initialize(uint32_t global_rank, uint32_t global_rank_size) {
+bool MsCollectiveCommLib::Initialize(uint32_t global_rank, uint32_t global_rank_size, uint32_t local_rank_id) {
   if (initialized_) {
     MS_LOG(WARNING) << "MsCollectiveCommLib has already been initialized.";
     return true;
@@ -51,6 +51,7 @@ bool MsCollectiveCommLib::Initialize(uint32_t global_rank, uint32_t global_rank_
 
   global_rank_id_ = global_rank;
   global_rank_size_ = global_rank_size;
+  local_rank_id_ = local_rank_id;
   initialized_ = true;
   finalized_ = false;
   return true;
@@ -64,13 +65,15 @@ bool MsCollectiveCommLib::Finalize() {
 }
 
 bool MsCollectiveCommLib::CreateCommunicationGroup(const std::string &group_name,
-                                                   const std::vector<uint32_t> &group_ranks) {
+                                                   const std::vector<uint32_t> &group_ranks, uint32_t local_group_rank,
+                                                   uint32_t local_group_size) {
   if (groups_.count(group_name) != 0) {
     MS_LOG(WARNING) << "The group " << group_name << " has already existed.";
     return true;
   }
 
-  MsCommunicationGroupPtr group = std::make_shared<MsCommunicationGroup>(group_name, group_ranks, global_rank_id_);
+  MsCommunicationGroupPtr group = std::make_shared<MsCommunicationGroup>(group_name, group_ranks, global_rank_id_,
+                                                                         local_group_rank, local_group_size);
   CHECK_IF_NULL(group);
   groups_[group_name] = group;
   return true;

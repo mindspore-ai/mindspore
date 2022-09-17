@@ -20,8 +20,10 @@ namespace mindspore {
 namespace device {
 namespace cpu {
 MPICommunicationGroup::MPICommunicationGroup(const std::string &name, const std::vector<uint32_t> &group_ranks,
-                                             uint32_t global_rank)
-    : CommunicationGroup(name, group_ranks, global_rank), group_(MPI_GROUP_NULL), group_communicator_(MPI_COMM_NULL) {}
+                                             uint32_t global_rank, uint32_t local_group_rank, uint32_t local_group_size)
+    : CommunicationGroup(name, group_ranks, global_rank, local_group_rank, local_group_size),
+      group_(MPI_GROUP_NULL),
+      group_communicator_(MPI_COMM_NULL) {}
 
 bool MPICommunicationGroup::Finalize() {
   if (!initialized_) {

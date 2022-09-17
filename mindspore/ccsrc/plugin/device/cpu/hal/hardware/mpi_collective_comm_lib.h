@@ -57,13 +57,15 @@ class EXPORT_MPI_WRAPPER MPICollectiveCommLib : public CollectiveCommunicationLi
     return instance;
   }
 
-  bool Initialize(uint32_t global_rank, uint32_t global_rank_size) override;
+  bool Initialize(uint32_t global_rank, uint32_t global_rank_size, uint32_t local_rank_id) override;
 
   bool AllGatherHostHashName(size_t host_hash_name, std::vector<size_t> *host_hash_names) const override;
 
   bool BroadcastUniqueID(const std::string &group_name, size_t root_info_size, void *root_info) override;
 
-  bool CreateCommunicationGroup(const std::string &group_name, const std::vector<uint32_t> &group_ranks) override;
+  // Override creating method. Reuse destroying method in base class CollectiveCommunicationLib.
+  bool CreateCommunicationGroup(const std::string &group_name, const std::vector<uint32_t> &group_ranks,
+                                uint32_t local_group_rank, uint32_t local_group_size) override;
 
  private:
   MPICollectiveCommLib();

@@ -32,7 +32,8 @@ namespace device {
 // communication group. MindSpore uses 'hccl_world_group' or 'nccl_world_group' as the default group.
 class CommunicationGroup {
  public:
-  explicit CommunicationGroup(const std::string &name, const std::vector<uint32_t> &group_ranks, uint32_t global_rank);
+  explicit CommunicationGroup(const std::string &name, const std::vector<uint32_t> &group_ranks, uint32_t global_rank,
+                              uint32_t local_group_rank, uint32_t local_group_size);
   virtual ~CommunicationGroup() {
     group_ranks_.clear();
     global_to_group_ranks_.clear();
@@ -52,9 +53,13 @@ class CommunicationGroup {
   // Get group or global rank for the given rank.
   uint32_t GetGroupRank(uint32_t global_rank);
   uint32_t GetGlobalRank(uint32_t group_rank);
+  uint32_t GetLocalGroupRank();
 
   // Return the size of this communication group.
   uint32_t group_size() const;
+  uint32_t local_group_size() const;
+  virtual void set_local_rank(uint32_t local_group_rank) { local_group_rank_ = local_group_rank; }
+  virtual void set_local_size(uint32_t local_group_size) { local_group_size_ = local_group_size; }
 
   // Return group ranks info.
   const std::vector<uint32_t> &group_ranks() const;
@@ -67,6 +72,12 @@ class CommunicationGroup {
 
   // This process's global rank.
   uint32_t global_rank_;
+
+  // This group's local rank in current server.
+  uint32_t local_group_rank_;
+
+  // This group's local size in current server.
+  uint32_t local_group_size_;
 
   // The number of processes in this communication group.
   uint32_t size_;
