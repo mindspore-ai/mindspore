@@ -616,6 +616,7 @@ typedef enum TypeIdC {
   kNumberTypeFloat32,
   kNumberTypeFloat64,
   kNumberTypeComplex64,
+  kNumberTypeComplex128,
   kNumberTypeEnd
 } TypeIdC;
 

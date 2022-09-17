@@ -55,7 +55,39 @@ void PadStridedSliceParameterTo8D(StridedSliceParameter *param) {
 
 bool LoopContinue(int stride, int i, int end) { return stride > 0 ? i < end : i > end; }
 
-int DoStridedSliceIntFp64Bool(const void *in_data, void *out_data, StridedSliceParameter *param) {
+int RunIntFp64BoolComplex(const void *in_data, void *out_data, StridedSliceParameter *param, size_t in_offset,
+                          int32_t out_offset) {
+  if (param->data_type == kNumberTypeInt32) {
+    *((int32_t *)out_data + out_offset) = *((int32_t *)in_data + in_offset);
+  } else if (param->data_type == kNumberTypeInt8) {
+    *((int8_t *)out_data + out_offset) = *((int8_t *)in_data + in_offset);
+  } else if (param->data_type == kNumberTypeInt16) {
+    *((int16_t *)out_data + out_offset) = *((int16_t *)in_data + in_offset);
+  } else if (param->data_type == kNumberTypeInt64) {
+    *((int64_t *)out_data + out_offset) = *((int64_t *)in_data + in_offset);
+  } else if (param->data_type == kNumberTypeUInt8) {
+    *((uint8_t *)out_data + out_offset) = *((uint8_t *)in_data + in_offset);
+  } else if (param->data_type == kNumberTypeUInt16) {
+    *((uint16_t *)out_data + out_offset) = *((uint16_t *)in_data + in_offset);
+  } else if (param->data_type == kNumberTypeUInt32) {
+    *((uint32_t *)out_data + out_offset) = *((uint32_t *)in_data + in_offset);
+  } else if (param->data_type == kNumberTypeUInt64) {
+    *((uint64_t *)out_data + out_offset) = *((uint64_t *)in_data + in_offset);
+  } else if (param->data_type == kNumberTypeComplex64) {
+    *((float _Complex *)out_data + out_offset) = *((float _Complex *)in_data + in_offset);
+  } else if (param->data_type == kNumberTypeComplex128) {
+    *((double _Complex *)out_data + out_offset) = *((double _Complex *)in_data + in_offset);
+  } else if (param->data_type == kNumberTypeBool) {
+    *((bool *)out_data + out_offset) = *((bool *)in_data + in_offset);
+  } else if (param->data_type == kNumberTypeFloat64) {
+    *((double *)out_data + out_offset) = *((double *)in_data + in_offset);
+  } else {
+    return NNACL_ERR;
+  }
+  return NNACL_OK;
+}
+
+int DoStridedSliceIntFp64BoolComplex(const void *in_data, void *out_data, StridedSliceParameter *param) {
   if (in_data == NULL || out_data == NULL || param == NULL) {
     return NNACL_NULL_PTR;
   }
@@ -91,15 +123,7 @@ int DoStridedSliceIntFp64Bool(const void *in_data, void *out_data, StridedSliceP
                   int32_t in_offset = dim0 * dim_offset[0] + dim1 * dim_offset[1] + dim2 * dim_offset[2] +
                                       dim3 * dim_offset[3] + dim4 * dim_offset[4] + dim5 * dim_offset[5] +
                                       dim6 * dim_offset[6] + dim7;
-                  if (param->data_type == kNumberTypeInt32) {
-                    *((int32_t *)out_data + out_offset) = *((int32_t *)in_data + in_offset);
-                  } else if (param->data_type == kNumberTypeInt8) {
-                    *((int8_t *)out_data + out_offset) = *((int8_t *)in_data + in_offset);
-                  } else if (param->data_type == kNumberTypeBool) {
-                    *((bool *)out_data + out_offset) = *((bool *)in_data + in_offset);
-                  } else if (param->data_type == kNumberTypeFloat64) {
-                    *((double *)out_data + out_offset) = *((double *)in_data + in_offset);
-                  } else {
+                  if (RunIntFp64BoolComplex(in_data, out_data, param, in_offset, out_offset) != NNACL_OK) {
                     return NNACL_ERR;
                   }
                   out_offset++;
@@ -119,7 +143,7 @@ int DoStridedSlice(const void *in_data, void *out_data, StridedSliceParameter *p
     return NNACL_NULL_PTR;
   }
   if (param->data_type != kNumberTypeFloat32 && param->data_type != kNumberTypeFloat16) {
-    return DoStridedSliceIntFp64Bool(in_data, out_data, param);
+    return DoStridedSliceIntFp64BoolComplex(in_data, out_data, param);
   }
   if (param->num_axes_ > DIMENSION_8D) {
     return NNACL_PARAM_INVALID;
