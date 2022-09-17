@@ -148,6 +148,7 @@ def get_soc_info(initialize_job_info):
     soc_param["vector_fp_ceiling"] = initialize_job_info["SocInfo"]["vector_fp_ceiling"]
     soc_param['mdl_bank_path'] = initialize_job_info["SocInfo"]["mdl_bank_path"]
     soc_param['op_bank_path'] = initialize_job_info["SocInfo"]["op_bank_path"]
+    soc_param['kernel_meta_temp_dir'] = initialize_job_info["SocInfo"]["kernel_meta_temp_dir"]
 
     soc_info = list()
     soc_info.append(initialize_job_info["SocInfo"]["socVersion"])
@@ -291,6 +292,7 @@ def get_options_info(job_content):
     options["deviceId"] = job_content["SocInfo"]["deviceId"]
     options["autoTilingMode"] = job_content["SocInfo"]["autoTilingMode"]
     options["op_impl_mode_list"] = job_content["SocInfo"]["op_impl_mode_list"]
+    options["kernel_meta_temp_dir"] = job_content["SocInfo"]["kernel_meta_temp_dir"]
     options["status_check"] = "false"
     return options
 

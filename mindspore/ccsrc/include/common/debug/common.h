@@ -52,6 +52,7 @@ class COMMON_EXPORT Common {
   static bool CommonFuncForConfigPath(const std::string &default_path, const std::string &env_path,
                                       std::string *const value);
   static std::string GetCompilerCachePath();
+  static std::string GetKernelMetaTempDir();
   static std::string GetUserDefineCachePath();
   static bool GetDebugTerminate();
   static bool GetDebugExitSuccess();

@@ -361,6 +361,18 @@ std::string Common::GetCompilerCachePath() {
   return compile_cache_dir;
 }
 
+std::string Common::GetKernelMetaTempDir() {
+  auto cache_path = GetUserDefineCachePath();
+  std::string rank_id_str = common::GetEnv(kRankID);
+  if (rank_id_str.empty()) {
+    MS_LOG(DEBUG) << "Environment variable 'RANK_ID' is empty, using the default value: 0";
+    rank_id_str = "0";
+  }
+  auto kernel_meta_temp_dir = cache_path + +"rank_" + rank_id_str + "/kernel_meta_temp_dir/";
+  (void)FileUtils::CreateNotExistDirs(kernel_meta_temp_dir);
+  return kernel_meta_temp_dir;
+}
+
 bool Common::GetDebugTerminate() { return debugger_terminate_; }
 
 bool Common::GetDebugExitSuccess() { return exit_success_; }
