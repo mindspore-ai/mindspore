@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2091,40 +2091,30 @@ Status GetSincResampleKernel(int32_t orig_freq, int32_t des_freq, ResampleMethod
   return Status::OK();
 }
 
+namespace {
 template <typename T>
-Status ResampleSingle(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output,
-                      const std::shared_ptr<Tensor> &kernel, int32_t orig_freq, int32_t target_length) {
-  int32_t pad_length = input->shape()[-1];
-  RETURN_IF_NOT_OK(input->Reshape(TensorShape({pad_length})));
-  int32_t kernel_x = kernel->shape()[0];
-  int32_t kernel_y = kernel->shape()[1];
-  std::shared_ptr<Tensor> multi_input;
+using MatrixXTRowMajor = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
+}
+
+template <typename T>
+void ResampleSingle(const MatrixXTRowMajor<T> &waveform_pad_matrix, MatrixXTRowMajor<T> *output_matrix,
+                    const MatrixXTRowMajor<T> &kernel_matrix, int32_t orig_freq, int32_t target_length,
+                    int32_t pad_length, int32_t index) {
+  const int32_t kernel_x = kernel_matrix.cols();
+  const int32_t kernel_y = kernel_matrix.rows();
   int32_t resample_num = static_cast<int32_t>(ceil(static_cast<float>(target_length) / kernel_x));
-  RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape({resample_num, kernel_y}), input->type(), &multi_input));
-  int x_dim = 0;
+  Eigen::MatrixX<T> multi_input(resample_num, kernel_y);
+
   // Slice the waveform with stride orig_freq and length kernel_y
-  for (int i = 0; i + kernel_y < pad_length && x_dim < resample_num; i += orig_freq) {
-    std::vector<dsize_t> slice_idx(kernel_y);
-    std::iota(slice_idx.begin(), slice_idx.end(), i);
-    std::shared_ptr<Tensor> input_slice;
-    RETURN_IF_NOT_OK(input->Slice(&input_slice, std::vector<SliceOption>({SliceOption(slice_idx)})));
-    RETURN_IF_NOT_OK(multi_input->InsertTensor({x_dim}, input_slice));
-    ++x_dim;
+  for (int i = 0, x_dim = 0; i + kernel_y < pad_length && x_dim < resample_num; i += orig_freq, ++x_dim) {
+    multi_input.row(x_dim) = waveform_pad_matrix(Eigen::seqN(index, 1), Eigen::seqN(i, kernel_y));
   }
-  auto multi_input_ptr = &*multi_input->begin<T>();
-  auto kernel_ptr = &*kernel->begin<T>();
-  Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>> multi_input_matrix(multi_input_ptr, kernel_y,
-                                                                                  resample_num);
-  Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>> kernel_matrix(kernel_ptr, kernel_y, kernel_x);
-  Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> mul_matrix =
-    (multi_input_matrix.transpose() * (kernel_matrix)).transpose();
-  std::vector<T> mul_mat(mul_matrix.data(), mul_matrix.data() + mul_matrix.size());
-  std::shared_ptr<Tensor> resampled;
-  RETURN_IF_NOT_OK(Tensor::CreateFromVector(mul_mat, &resampled));
-  std::vector<dsize_t> resampled_idx(target_length);
-  std::iota(resampled_idx.begin(), resampled_idx.end(), 0);
-  RETURN_IF_NOT_OK(resampled->Slice(output, std::vector<SliceOption>({SliceOption(resampled_idx)})));
-  return Status::OK();
+  MatrixXTRowMajor<T> mul_matrix = (multi_input * kernel_matrix).transpose();
+
+  // reshape to RowVector
+  Eigen::Map<Eigen::RowVector<T, Eigen::Dynamic>> mul_matrix_vec(mul_matrix.data(), mul_matrix.size());
+  auto output_slice = mul_matrix_vec(Eigen::seqN(0, target_length));
+  *output_matrix = Eigen::Map<MatrixXTRowMajor<T>>(output_slice.data(), 1, target_length);
 }
 
 template <typename T>
@@ -2137,7 +2127,7 @@ Status Resample(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
   RETURN_IF_NOT_OK(input->Reshape(to_shape));
 
   int32_t gcd = std::gcd(static_cast<int32_t>(orig_freq), static_cast<int32_t>(des_freq));
-  CHECK_FAIL_RETURN_UNEXPECTED(gcd != 0, "Resample: gcd cannet be equal to 0.");
+  CHECK_FAIL_RETURN_UNEXPECTED(gcd != 0, "Resample: gcd cannot be equal to 0.");
   int32_t orig_freq_prime = static_cast<int32_t>(floor(orig_freq / gcd));
   int32_t des_freq_prime = static_cast<int32_t>(floor(des_freq / gcd));
   CHECK_FAIL_RETURN_UNEXPECTED(orig_freq_prime != 0, "Resample: invalid parameter, 'orig_freq_prime' can not be zero.");
@@ -2145,27 +2135,34 @@ Status Resample(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
   int32_t width = 0;
   RETURN_IF_NOT_OK(GetSincResampleKernel<T>(orig_freq_prime, des_freq_prime, resample_method, lowpass_filter_width,
                                             rolloff, beta, input->type(), &kernel, &width));
+  const dsize_t zero = 0;
+  ValidateGreaterThan("Resample", "kernel.shape[0]", kernel->shape()[0], "the least shape", zero);
+  ValidateGreaterThan("Resample", "kernel.shape[1]", kernel->shape()[1], "the least shape", zero);
+  const Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> kernel_matrix =
+    Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>>(&*kernel->begin<T>(), kernel->shape()[1],
+                                                                 kernel->shape()[0]);
   // padding
   int32_t pad_length = waveform_length + 2 * width + orig_freq_prime;
   std::shared_ptr<Tensor> waveform_pad;
   RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape({1, pad_length}), input->type(), &waveform_pad));
   RETURN_IF_NOT_OK(Pad<T>(input, &waveform_pad, width, width + orig_freq_prime, BorderType::kConstant));
 
+  const MatrixXTRowMajor<T> waveform_pad_matrix =
+    Eigen::Map<MatrixXTRowMajor<T>>(&*waveform_pad->begin<T>(), waveform_pad->shape()[0], waveform_pad->shape()[1]);
   int32_t target_length =
     static_cast<int32_t>(std::ceil(static_cast<double>(des_freq_prime * waveform_length) / orig_freq_prime));
-  RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape({num_waveform, target_length}), input->type(), output));
+  MatrixXTRowMajor<T> output_matrix(num_waveform, target_length);
+  MatrixXTRowMajor<T> resampled_single_matrix;
+
   for (int32_t i = 0; i < num_waveform; i++) {
-    std::shared_ptr<Tensor> single_waveform;
-    RETURN_IF_NOT_OK(waveform_pad->Slice(
-      &single_waveform, std::vector<SliceOption>({SliceOption(std::vector<dsize_t>{i}), SliceOption(true)})));
-    std::shared_ptr<Tensor> resampled_single;
-    RETURN_IF_NOT_OK(ResampleSingle<T>(single_waveform, &resampled_single, kernel, orig_freq_prime, target_length));
-    RETURN_IF_NOT_OK((*output)->InsertTensor({i}, resampled_single));
+    ResampleSingle<T>(waveform_pad_matrix, &resampled_single_matrix, kernel_matrix, orig_freq_prime, target_length,
+                      pad_length, i);
+    output_matrix.row(i) = resampled_single_matrix;
   }
   std::vector<dsize_t> shape_vec = input_shape.AsVector();
   shape_vec.at(shape_vec.size() - 1) = static_cast<dsize_t>(target_length);
-  TensorShape output_shape(shape_vec);
-  RETURN_IF_NOT_OK((*output)->Reshape(output_shape));
+  const auto output_data = reinterpret_cast<const uchar *>(output_matrix.data());
+  RETURN_IF_NOT_OK(Tensor::CreateFromMemory(TensorShape(shape_vec), DataType::FromCType<T>(), output_data, output));
   return Status::OK();
 }
 
