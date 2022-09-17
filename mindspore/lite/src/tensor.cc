@@ -295,11 +295,23 @@ int64_t Tensor::ElementsC4Num() const {
     result *= Width();
     CHECK_INT64_MUL_OVERFLOW(result, (Channel() + 3LL) / kC4Align * kC4Align);
     result *= (Channel() + 3LL) / kC4Align * kC4Align;
-  } else if (this->shape_.size() == 2) {
+  } else if (this->shape_.size() == 3) {  // 3 : [H W C]
+    CHECK_INT64_MUL_OVERFLOW(result, this->shape_[0]);
+    result *= this->shape_[0];
+    CHECK_INT64_MUL_OVERFLOW(result, this->shape_[1]);
+    result *= this->shape_[1];
+    CHECK_INT64_MUL_OVERFLOW(result, (this->shape_[2] + 3LL) / kC4Align * kC4Align);  // C : 2
+    result *= (this->shape_[2] + 3LL) / kC4Align * kC4Align;                          // C : 2
+  } else if (this->shape_.size() == 2) {                                              // 2 : [W C]
     CHECK_INT64_MUL_OVERFLOW(result, this->shape_[0]);
     result *= this->shape_[0];
     CHECK_INT64_MUL_OVERFLOW(result, (this->shape_[1] + 3LL) / kC4Align * kC4Align);
     result *= (this->shape_[1] + 3LL) / kC4Align * kC4Align;
+  } else if (this->shape_.size() == 1) {  // 1 : C
+    CHECK_INT64_MUL_OVERFLOW(result, (this->shape_[0] + 3LL) / kC4Align * kC4Align);
+    result *= (this->shape_[0] + 3LL) / kC4Align * kC4Align;
+  } else {
+    MS_LOG(ERROR) << "Unsupported tensor shape: " << this->shape().size();
   }
   return result;
 }
