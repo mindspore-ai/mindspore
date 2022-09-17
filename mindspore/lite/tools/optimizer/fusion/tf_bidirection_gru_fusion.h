@@ -37,12 +37,11 @@ class TfBidirectionGruFusion : public LitePatternProcessPass {
 
   ~TfBidirectionGruFusion() override = default;
 
- protected:
-  bool Init() const;
-
+  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
   const BaseRef DefinePattern() const override;
 
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+ protected:
+  bool Init() const;
 
   virtual AnfNodePtr GetBodyGraphPattern(const PrimitiveVarMapPtr &primitive_vars) const;
 

@@ -30,8 +30,6 @@ class MatMulActivationFusion : public LitePatternProcessPass {
   explicit MatMulActivationFusion(const std::shared_ptr<ConverterPara> &param, bool multigraph = true)
       : LitePatternProcessPass("MatMulActivationFusion", multigraph), param_(param) {}
   ~MatMulActivationFusion() = default;
-
- private:
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
 

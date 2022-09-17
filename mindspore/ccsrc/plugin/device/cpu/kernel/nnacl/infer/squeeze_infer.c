@@ -19,7 +19,8 @@
 
 int SqueezeInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                       OpParameter *parameter) {
-  int check_ret = CheckAugmentNullSize(inputs, inputs_size, outputs, outputs_size, parameter, 1, 1);
+  int check_ret =
+    CheckAugmentNullSizeInputTwo(inputs, inputs_size, outputs, outputs_size, parameter, 1, kInputSize1, 1);
   if (check_ret != NNACL_OK) {
     return check_ret;
   }
@@ -32,6 +33,17 @@ int SqueezeInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC 
   }
   if (input->shape_size_ > MAX_SHAPE_SIZE) {
     return NNACL_INPUT_TENSOR_ERROR;
+  }
+
+  if (inputs_size == kInputSize1) {
+    MS_CHECK_TRUE_RET(inputs[1]->data_type_ == kNumberTypeInt32 || inputs[1]->data_type_ == kNumberTypeInt,
+                      NNACL_PARAM_INVALID);
+    int *axis_data = (int *)(inputs[1]->data_);
+    MS_CHECK_TRUE_RET(axis_data != NULL, NNACL_PARAM_INVALID);
+    param->axis_size_ = GetElementNum(inputs[1]);
+    for (size_t i = 0; i < param->axis_size_; i++) {
+      param->axis_[i] = *(axis_data + i);
+    }
   }
   if (param->axis_size_ > MAX_SHAPE_SIZE) {
     return NNACL_PARAM_INVALID;

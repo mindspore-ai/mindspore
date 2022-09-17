@@ -256,6 +256,7 @@ int CheckExistCustomOps(const schema::MetaGraphT *meta_graph, bool *exist_custom
   MS_CHECK_TRUE_MSG(meta_graph != nullptr && exist_custom_nodes != nullptr, RET_ERROR, "input params contain nullptr.");
   flatbuffers::FlatBufferBuilder fbb(kMaxNum1024);
   for (const auto &node : meta_graph->nodes) {
+    MS_CHECK_TRUE_RET(node != nullptr, RET_ERROR);
     auto prim = ConvertToPrimitive(node->primitive.get(), &fbb);
     if (prim == nullptr) {
       MS_LOG(ERROR) << "get primitive failed.";
@@ -890,6 +891,7 @@ int RunConverter(const std::shared_ptr<ConverterPara> &param, void **model_data,
     status = InitEncryption(param, encKey, &keyLen);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "check encryption failed.";
+      delete meta_graph;
       return status;
     }
     if (not_save) {
@@ -898,10 +900,12 @@ int RunConverter(const std::shared_ptr<ConverterPara> &param, void **model_data,
       auto buffer = malloc(*data_size);
       if (buffer == nullptr) {
         MS_LOG(ERROR) << "malloc failed.";
+        delete meta_graph;
         return RET_ERROR;
       }
       if (memcpy_s(buffer, *data_size, packed_buffer, *data_size) != EOK) {
         free(buffer);
+        delete meta_graph;
         MS_LOG(ERROR) << "memory copy failed.";
         return RET_ERROR;
       }

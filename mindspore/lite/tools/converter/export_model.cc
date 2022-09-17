@@ -61,19 +61,17 @@ void CloneGraphInputs(const FuncGraphPtr &origin, const FuncGraphPtr &mirror, No
 AnfNodePtr CloneParameterAndValueNode(const CNodePtr &cnode, size_t index, const FuncGraphPtr &mirror_graph,
                                       const std::shared_ptr<ConverterPara> &param) {
   MS_ASSERT(cnode != nullptr && mirror_graph != nullptr);
-  if (index >= cnode->size()) {
-    MS_LOG(ERROR) << "input index out of range.";
-    return nullptr;
-  }
+  MS_CHECK_TRUE_RET(index < cnode->size(), nullptr);
   auto node = cnode->input(index);
-  if (utils::isa<mindspore::CNode>(node)) {
+  if (node == nullptr || utils::isa<mindspore::CNode>(node)) {
     MS_LOG(ERROR) << "this func cannot copy cnode.";
     return nullptr;
   }
   if (utils::isa<ValueNode>(node)) {
     auto value_node = node->cast<ValueNodePtr>();
+    MS_CHECK_TRUE_RET(value_node != nullptr, nullptr);
     auto value_ptr = value_node->value();
-    MS_ASSERT(value_ptr != nullptr);
+    MS_CHECK_TRUE_RET(value_ptr != nullptr, nullptr);
     if (utils::isa<Monad>(value_ptr)) {
       std::shared_ptr<Monad> mirror_monad;
       if (utils::isa<UMonad>(value_ptr)) {
@@ -83,6 +81,7 @@ AnfNodePtr CloneParameterAndValueNode(const CNodePtr &cnode, size_t index, const
       }
       MS_CHECK_TRUE_RET(mirror_monad != nullptr, nullptr);
       auto monad_abs = mirror_monad->ToAbstract();
+      MS_CHECK_TRUE_RET(monad_abs != nullptr, nullptr);
       auto mirror_value_node = NewValueNode(mirror_monad);
       MS_CHECK_TRUE_RET(mirror_value_node != nullptr, nullptr);
       mirror_value_node->set_abstract(monad_abs);
@@ -90,13 +89,11 @@ AnfNodePtr CloneParameterAndValueNode(const CNodePtr &cnode, size_t index, const
     }
   }
   DataInfo data_info;
-  STATUS status;
+  STATUS status = RET_ERROR;
   if (utils::isa<Parameter>(node)) {
     status = FetchDataFromParameterNode(cnode, index, param->fmk_type, &data_info, true);
   } else if (utils::isa<ValueNode>(node)) {
     status = FetchDataFromValueNode(cnode, index, param->fmk_type, param->train_model, &data_info, true);
-  } else {
-    status = RET_ERROR;
   }
   if (status != RET_OK && status != RET_NO_CHANGE) {
     MS_LOG(ERROR) << "fetch data failed.";
@@ -113,8 +110,8 @@ AnfNodePtr CloneParameterAndValueNode(const CNodePtr &cnode, size_t index, const
   MS_CHECK_TRUE_RET(tensor_info != nullptr, nullptr);
   if (!data_info.data_.empty()) {
     auto tensor_data = reinterpret_cast<uint8_t *>(tensor_info->data_c());
-    if (tensor_info->data().nbytes() < 0) {
-      MS_LOG(ERROR) << "tensor info data size is smaller than zero.";
+    if (tensor_data == nullptr || tensor_info->data().nbytes() < 0) {
+      MS_LOG(ERROR) << "tensor info data is nullptr or the size is smaller than zero.";
       return nullptr;
     }
     if (memcpy_s(tensor_data, tensor_info->data().nbytes(), data_info.data_.data(), data_info.data_.size()) != EOK) {
@@ -142,6 +139,7 @@ PrimitivePtr ClonePrimitive(const CNodePtr &cnode) {
   auto op_primc_fns = ops::OpPrimCRegister::GetInstance().GetPrimCMap();
   if (op_primc_fns.find(origin_prim->name()) != op_primc_fns.end()) {
     prim = op_primc_fns[origin_prim->name()]();
+    MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   } else {
     prim = std::make_shared<PrimitiveC>(origin_prim->name());
     MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
@@ -196,6 +194,7 @@ FuncGraphPtr CloneFuncGraph(const FuncGraphPtr &graph, const std::shared_ptr<Con
       if (mirror_input == nullptr) {
         if (IsValueNode<FuncGraph>(origin_input)) {
           auto sub_func_graph = GetValueNode<FuncGraphPtr>(origin_input);
+          MS_CHECK_TRUE_RET(sub_func_graph != nullptr, nullptr);
           auto mirror_sub_graph = CloneFuncGraph(sub_func_graph, param, cloned_func_graph);
           mirror_input = NewValueNode(mirror_sub_graph);
         } else {

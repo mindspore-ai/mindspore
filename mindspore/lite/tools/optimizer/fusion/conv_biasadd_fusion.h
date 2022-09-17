@@ -26,8 +26,6 @@ class ConvBiasaddFusion : public LitePatternProcessPass {
  public:
   explicit ConvBiasaddFusion(bool multigraph = true) : LitePatternProcessPass("ConvBiasaddFusion", multigraph) {}
   ~ConvBiasaddFusion() override = default;
-
- private:
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 
