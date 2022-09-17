@@ -4677,34 +4677,36 @@ class ScatterMul(_ScatterOpDynamic):
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
           The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
-        - **indices** (Tensor) - The index to do min operation whose data type must be mindspore.int32.
-        - **updates** (Tensor) - The tensor doing the min operation with `input_x`,
-          the data type is same as `input_x`, the shape is `indices.shape + x.shape[1:]`.
+        - **indices** (Tensor) - The index to do multiply operation whose data type must be mstype.int32 or
+          mstype.int64.
+        - **updates** (Tensor) - The tensor doing the multiply operation with `input_x`,
+          the data type is same as `input_x`, the shape is `indices.shape + input_x.shape[1:]`.
 
     Outputs:
         Tensor, the updated `input_x`, has the same shape and type as `input_x`.
 
     Raises:
         TypeError: If `use_locking` is not a bool.
-        TypeError: If `indices` is not an int32.
-        ValueError: If the shape of `updates` is not equal to `indices.shape + x.shape[1:]`.
+        TypeError: If `indices` is not an int32 or an int64.
+        ValueError: If the shape of `updates` is not equal to `indices.shape + input_x.shape[1:]`.
         RuntimeError: If the data type of `input_x` and `updates` conversion of Parameter
                       is required when data type conversion of Parameter is not supported.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> input_x = Parameter(Tensor(np.array([[1.0, 1.0, 1.0], [2.0, 2.0, 2.0]]), mindspore.float32), name="x")
-        >>> indices = Tensor(np.array([0, 1]), mindspore.int32)
-        >>> updates = Tensor(np.array([[2.0, 2.0, 2.0], [2.0, 2.0, 2.0]]), mindspore.float32)
-        >>> scatter_mul = ops.ScatterMul()
+        >>> from mindspore.ops import operations as op
+        >>> input_x = Parameter(Tensor(np.array([[1.0, 1.0, 1.0], [2.0, 2.0, 2.0]]), mstype.float32), name="x")
+        >>> indices = Tensor(np.array([0, 1]), mstype.int32)
+        >>> updates = Tensor(np.array([[2.0, 2.0, 2.0], [2.0, 2.0, 2.0]]), mstype.float32)
+        >>> scatter_mul = op.ScatterMul()
         >>> output = scatter_mul(input_x, indices, updates)
         >>> print(output)
         [[2. 2. 2.]
          [4. 4. 4.]]
         >>> # for input_x will be updated after the operation is completed. input_x need to be re-initialized.
-        >>> input_x = Parameter(Tensor(np.array([[1.0, 1.0, 1.0], [2.0, 2.0, 2.0]]), mindspore.float32), name="x")
+        >>> input_x = Parameter(Tensor(np.array([[1.0, 1.0, 1.0], [2.0, 2.0, 2.0]]), mstype.float32), name="x")
         >>> # for indices = [[0, 1], [1, 1]]
         >>> # step 1: [0, 1]
         >>> # input_x[0] = [1.0, 1.0, 1.0] * [1.0, 1.0, 1.0] = [1.0, 1.0, 1.0]
@@ -4712,16 +4714,16 @@ class ScatterMul(_ScatterOpDynamic):
         >>> # step 2: [1, 1]
         >>> # input_x[1] = [6.0, 6.0, 6.0] * [7.0, 7.0, 7.0] = [42.0, 42.0, 42.0]
         >>> # input_x[1] = [42.0, 42.0, 42.0] * [9.0, 9.0, 9.0] = [378.0, 378.0, 378.0]
-        >>> indices = Tensor(np.array([[0, 1], [1, 1]]), mindspore.int32)
+        >>> indices = Tensor(np.array([[0, 1], [1, 1]]), mstype.int32)
         >>> updates = Tensor(np.array([[[1.0, 1.0, 1.0], [3.0, 3.0, 3.0]],
-        ...                            [[7.0, 7.0, 7.0], [9.0, 9.0, 9.0]]]), mindspore.float32)
-        >>> scatter_mul = ops.ScatterMul()
+        ...                            [[7.0, 7.0, 7.0], [9.0, 9.0, 9.0]]]), mstype.float32)
+        >>> scatter_mul = op.ScatterMul()
         >>> output = scatter_mul(input_x, indices, updates)
         >>> print(output)
         [[  1.   1.   1.]
          [378. 378. 378.]]
         >>> # for input_x will be updated after the operation is completed. input_x need to be re-initialized.
-        >>> input_x = Parameter(Tensor(np.array([[1.0, 1.0, 1.0], [2.0, 2.0, 2.0]]), mindspore.float32), name="x")
+        >>> input_x = Parameter(Tensor(np.array([[1.0, 1.0, 1.0], [2.0, 2.0, 2.0]]), mstype.float32), name="x")
         >>> # for indices = [[1, 0], [1, 1]]
         >>> # step 1: [1, 0]
         >>> # input_x[0] = [1.0, 1.0, 1.0] * [3.0, 3.0, 3.0] = [3.0, 3.0, 3.0]
@@ -4729,16 +4731,16 @@ class ScatterMul(_ScatterOpDynamic):
         >>> # step 2: [1, 1]
         >>> # input_x[1] = [2.0, 2.0, 2.0] * [7.0, 7.0, 7.0] = [14.0, 14.0, 14.0]
         >>> # input_x[1] = [14.0, 14.0, 14.0] * [9.0, 9.0, 9.0] = [126.0, 126.0, 126.0]
-        >>> indices = Tensor(np.array([[1, 0], [1, 1]]), mindspore.int32)
+        >>> indices = Tensor(np.array([[1, 0], [1, 1]]), mstype.int32)
         >>> updates = Tensor(np.array([[[1.0, 1.0, 1.0], [3.0, 3.0, 3.0]],
-        ...                            [[7.0, 7.0, 7.0], [9.0, 9.0, 9.0]]]), mindspore.float32)
-        >>> scatter_mul = ops.ScatterMul()
+        ...                            [[7.0, 7.0, 7.0], [9.0, 9.0, 9.0]]]), mstype.float32)
+        >>> scatter_mul = op.ScatterMul()
         >>> output = scatter_mul(input_x, indices, updates)
         >>> print(output)
         [[  3.   3.   3.]
          [126. 126. 126.]]
         >>> # for input_x will be updated after the operation is completed. input_x need to be re-initialized.
-        >>> input_x = Parameter(Tensor(np.array([[1.0, 1.0, 1.0], [2.0, 2.0, 2.0]]), mindspore.float32), name="x")
+        >>> input_x = Parameter(Tensor(np.array([[1.0, 1.0, 1.0], [2.0, 2.0, 2.0]]), mstype.float32), name="x")
         >>> # for indices = [[0, 1], [0, 1]]
         >>> # step 1: [0, 1]
         >>> # input_x[0] = [1.0, 1.0, 1.0] * [1.0, 1.0, 1.0] = [1.0, 1.0, 1.0]
@@ -4746,10 +4748,10 @@ class ScatterMul(_ScatterOpDynamic):
         >>> # step 2: [0, 1]
         >>> # input_x[0] = [1.0, 1.0, 1.0] * [7.0, 7.0, 7.0] = [7.0, 7.0, 7.0]
         >>> # input_x[1] = [6.0, 6.0, 6.0] * [9.0, 9.0, 9.0] = [54.0, 54.0, 54.0]
-        >>> indices = Tensor(np.array([[0, 1], [0, 1]]), mindspore.int32)
+        >>> indices = Tensor(np.array([[0, 1], [0, 1]]), mstype.int32)
         >>> updates = Tensor(np.array([[[1.0, 1.0, 1.0], [3.0, 3.0, 3.0]],
-        ...                            [[7.0, 7.0, 7.0], [9.0, 9.0, 9.0]]]), mindspore.float32)
-        >>> scatter_mul = ops.ScatterMul()
+        ...                            [[7.0, 7.0, 7.0], [9.0, 9.0, 9.0]]]), mstype.float32)
+        >>> scatter_mul = op.ScatterMul()
         >>> output = scatter_mul(input_x, indices, updates)
         >>> print(output)
         [[ 7.  7.  7.]
@@ -4764,7 +4766,7 @@ class ScatterDiv(_ScatterOpDynamic):
     Using given values to update tensor value through the div operation, along with the input indices.
     This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
 
-    for each :math:`i, ..., j` in `indices.shape`:
+    for each `i, ..., j` in `indices.shape`:
 
     .. math::
 
@@ -4780,8 +4782,8 @@ class ScatterDiv(_ScatterOpDynamic):
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
           The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
-        - **indices** (Tensor) - The index to do divide operation whose data type must be mindspore.int32 or
-          mindspore.int64.
+        - **indices** (Tensor) - The index to do divide operation whose data type must be mstype.int32 or
+          mstype.int64.
         - **updates** (Tensor) - The tensor doing the divide operation with `input_x`,
           the data type is same as `input_x`, the shape is `indices.shape + input_x.shape[1:]`.
 
@@ -4798,20 +4800,21 @@ class ScatterDiv(_ScatterOpDynamic):
                       and `updates` is greater than 8 dimensions.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> input_x = Parameter(Tensor(np.array([[6.0, 6.0, 6.0], [2.0, 2.0, 2.0]]), mindspore.float32), name="x")
-        >>> indices = Tensor(np.array([0, 1]), mindspore.int32)
-        >>> updates = Tensor(np.array([[2.0, 2.0, 2.0], [2.0, 2.0, 2.0]]), mindspore.float32)
-        >>> scatter_div = ops.ScatterDiv()
+        >>> from mindspore.ops import operations as op
+        >>> input_x = Parameter(Tensor(np.array([[6.0, 6.0, 6.0], [2.0, 2.0, 2.0]]), mstype.float32), name="x")
+        >>> indices = Tensor(np.array([0, 1]), mstype.int32)
+        >>> updates = Tensor(np.array([[2.0, 2.0, 2.0], [2.0, 2.0, 2.0]]), mstype.float32)
+        >>> scatter_div = op.ScatterDiv()
         >>> output = scatter_div(input_x, indices, updates)
         >>> print(output)
         [[3. 3. 3.]
          [1. 1. 1.]]
         >>> # for input_x will be updated after the operation is completed. input_x need to be re-initialized.
         >>> input_x = Parameter(Tensor(np.array([[105.0, 105.0, 105.0],
-        ...                                      [315.0, 315.0, 315.0]]), mindspore.float32), name="x")
+        ...                                      [315.0, 315.0, 315.0]]), mstype.float32), name="x")
         >>> # for indices = [[0, 1], [1, 1]]
         >>> # step 1: [0, 1]
         >>> # input_x[0] = [105.0, 105.0, 105.0] / [1.0, 1.0, 1.0] = [105.0, 105.0, 105.0]
@@ -4819,17 +4822,17 @@ class ScatterDiv(_ScatterOpDynamic):
         >>> # step 2: [1, 1]
         >>> # input_x[1] = [105.0, 105.0, 105.0] / [5.0, 5.0, 5.0] = [21.0, 21.0, 21.0]
         >>> # input_x[1] = [21.0, 21.0, 21.0] / [7.0, 7.0, 7.0] = [3.0, 3.0, 3.0]
-        >>> indices = Tensor(np.array([[0, 1], [1, 1]]), mindspore.int32)
+        >>> indices = Tensor(np.array([[0, 1], [1, 1]]), mstype.int32)
         >>> updates = Tensor(np.array([[[1.0, 1.0, 1.0], [3.0, 3.0, 3.0]],
-        ...                            [[5.0, 5.0, 5.0], [7.0, 7.0, 7.0]]]), mindspore.float32)
-        >>> scatter_div = ops.ScatterDiv()
+        ...                            [[5.0, 5.0, 5.0], [7.0, 7.0, 7.0]]]), mstype.float32)
+        >>> scatter_div = op.ScatterDiv()
         >>> output = scatter_div(input_x, indices, updates)
         >>> print(output)
         [[105. 105. 105.]
          [  3.   3.   3.]]
         >>> # for input_x will be updated after the operation is completed. input_x need to be re-initialized.
         >>> input_x = Parameter(Tensor(np.array([[105.0, 105.0, 105.0],
-        ...                                      [315.0, 315.0, 315.0]]), mindspore.float32), name="x")
+        ...                                      [315.0, 315.0, 315.0]]), mstype.float32), name="x")
         >>> # for indices = [[1, 0], [1, 1]]
         >>> # step 1: [1, 0]
         >>> # input_x[0] = [105.0, 105.0, 105.0] / [3.0, 3.0, 3.0] = [35.0, 35.0, 35.0]
@@ -4837,17 +4840,17 @@ class ScatterDiv(_ScatterOpDynamic):
         >>> # step 2: [1, 1]
         >>> # input_x[1] = [315.0, 315.0, 315.0] / [5.0, 5.0, 5.0] = [63.0 63.0 63.0]
         >>> # input_x[1] = [63.0 63.0 63.0] / [7.0, 7.0, 7.0] = [9.0, 9.0, 9.0]
-        >>> indices = Tensor(np.array([[1, 0], [1, 1]]), mindspore.int32)
+        >>> indices = Tensor(np.array([[1, 0], [1, 1]]), mstype.int32)
         >>> updates = Tensor(np.array([[[1.0, 1.0, 1.0], [3.0, 3.0, 3.0]],
-        ...                            [[5.0, 5.0, 5.0], [7.0, 7.0, 7.0]]]), mindspore.float32)
-        >>> scatter_div = ops.ScatterDiv()
+        ...                            [[5.0, 5.0, 5.0], [7.0, 7.0, 7.0]]]), mstype.float32)
+        >>> scatter_div = op.ScatterDiv()
         >>> output = scatter_div(input_x, indices, updates)
         >>> print(output)
         [[35. 35. 35.]
          [ 9.  9.  9.]]
         >>> # for input_x will be updated after the operation is completed. input_x need to be re-initialized.
         >>> input_x = Parameter(Tensor(np.array([[105.0, 105.0, 105.0],
-        ...                                      [315.0, 315.0, 315.0]]), mindspore.float32), name="x")
+        ...                                      [315.0, 315.0, 315.0]]), mstype.float32), name="x")
         >>> # for indices = [[0, 1], [0, 1]]
         >>> # step 1: [0, 1]
         >>> # input_x[0] = [105.0, 105.0, 105.0] / [1.0, 1.0, 1.0] = [105.0, 105.0, 105.0]
@@ -4855,10 +4858,10 @@ class ScatterDiv(_ScatterOpDynamic):
         >>> # step 2: [0, 1]
         >>> # input_x[0] = [105.0, 105.0, 105.0] / [5.0, 5.0, 5.0] = [21.0, 21.0, 21.0]
         >>> # input_x[1] = [105.0, 105.0, 105.0] / [7.0, 7.0, 7.0] = [15.0, 15.0, 15.0]
-        >>> indices = Tensor(np.array([[0, 1], [0, 1]]), mindspore.int32)
+        >>> indices = Tensor(np.array([[0, 1], [0, 1]]), mstype.int32)
         >>> updates = Tensor(np.array([[[1.0, 1.0, 1.0], [3.0, 3.0, 3.0]],
-        ...                            [[5.0, 5.0, 5.0], [7.0, 7.0, 7.0]]]), mindspore.float32)
-        >>> scatter_div = ops.ScatterDiv()
+        ...                            [[5.0, 5.0, 5.0], [7.0, 7.0, 7.0]]]), mstype.float32)
+        >>> scatter_div = op.ScatterDiv()
         >>> output = scatter_div(input_x, indices, updates)
         >>> print(output)
         [[21. 21. 21.]
