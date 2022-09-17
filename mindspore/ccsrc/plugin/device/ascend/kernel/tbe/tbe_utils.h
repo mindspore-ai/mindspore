@@ -58,6 +58,8 @@ class TbeUtils {
 
   static std::string GetOpDebugPath();
 
+  static std::string GetKernelMetaTempDir();
+
   static std::string GetBankPath();
 
   static std::string GetTuneDumpPath();
