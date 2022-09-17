@@ -26,6 +26,7 @@ namespace mindspore {
 namespace kernel {
 namespace {
 constexpr size_t kTransposeInputsNum = 1;
+constexpr size_t kDynamicPermInputNum = 2;
 constexpr size_t kTransposeOutputsNum = 1;
 constexpr size_t kIndex0 = 0;
 constexpr size_t kIndex1 = 1;
@@ -41,12 +42,7 @@ using complex128 = std::complex<double>;
 constexpr size_t kMaxTransposeSerialSize = 50331648;
 }  // namespace
 
-void TransposeFwdCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  output_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
-  perm_ = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "perm");
+void TransposeFwdCpuKernelMod::CheckPermValue() {
   for (auto &p : perm_) {
     p = (p >= 0) ? p : (SizeToLong(perm_.size()) + p);
     if (p < 0) {
@@ -54,20 +50,45 @@ void TransposeFwdCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
                         << (perm_.size() - 1) << "], but got " << p;
     }
   }
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   if (!IsDynamicRank(input_shape_) && perm_.size() != input_shape_.size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the perm's size must be equal to input_shape's size, but got "
                       << perm_.size() << " vs " << input_shape_.size();
+  }
+
+  if (perm_.size() > MAX_TRANSPOSE_DIM_SIZE) {
+    MS_LOG(EXCEPTION) << "Transpose support max dimension is " << MAX_TRANSPOSE_DIM_SIZE << "D, but got "
+                      << perm_.size() << "D.";
+  }
+}
+
+template <typename T>
+void TransposeFwdCpuKernelMod::InitPerm(const std::vector<kernel::AddressPtr> &inputs) {
+  auto cnode = cnode_ptr_.lock();
+  auto perm_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, kIndex1);
+  auto perm_ptr = static_cast<T *>(inputs[kIndex1]->addr);
+  std::vector<T> perm{perm_ptr, perm_ptr + perm_shape[0]};
+  (void)std::transform(perm.begin(), perm.end(), std::back_inserter(perm_),
+                       [](const T &value) { return static_cast<int64_t>(value); });
+  CheckPermValue();
+}
+
+void TransposeFwdCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  cnode_ptr_ = kernel_node;
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+  input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
+  output_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
+  if (input_num != 1 && input_num != kDynamicPermInputNum) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 1 or " << kDynamicPermInputNum
+                      << ", but got " << input_num;
   }
   if (output_shape_.size() != input_shape_.size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the output_shape's size must be equal to input_shape's size, but got "
                       << output_shape_.size() << " vs " << input_shape_.size();
   }
-  if (perm_.size() > MAX_TRANSPOSE_DIM_SIZE) {
-    MS_LOG(EXCEPTION) << "Transpose support max dimension is " << MAX_TRANSPOSE_DIM_SIZE << "D, but got "
-                      << perm_.size() << "D.";
-  }
+  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   num_axes_ = input_shape_.size();
   if (num_axes_ == 0) {
     MS_LOG(EXCEPTION) << "Transpose's input shape is empty.";
@@ -100,13 +121,25 @@ void TransposeFwdCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   } else {
     MS_LOG(EXCEPTION) << "Unsupported input data type: " << dtype_;
   }
+  if (input_num == kDynamicPermInputNum) {
+    perm_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kIndex1);
+    return;
+  }
+  perm_ = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "perm");
+  CheckPermValue();
 }
 
 bool TransposeFwdCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                       const std::vector<kernel::AddressPtr> &,
                                       const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kTransposeInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kTransposeOutputsNum, kernel_name_);
+  if (inputs.size() == kDynamicPermInputNum) {
+    if (perm_type_ == kNumberTypeInt32) {
+      InitPerm<int32_t>(inputs);
+    } else {
+      InitPerm<int64_t>(inputs);
+    }
+  }
   launch_func_(this, inputs, outputs);
   return true;
 }

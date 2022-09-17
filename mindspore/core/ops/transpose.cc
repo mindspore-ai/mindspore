@@ -16,94 +16,116 @@
 
 #include "ops/transpose.h"
 #include <vector>
+#include <string>
+#include <set>
 #include <memory>
 #include <algorithm>
 #include "ops/op_utils.h"
+#include "abstract/ops/op_infer.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
-namespace {
-abstract::ShapePtr TransposeInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto op_name = primitive->name();
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  (void)CheckAndConvertUtils::CheckInteger("input_x size", SizeToLong(x_shape.size()), kGreaterThan, 0, op_name);
-  ShapeVector p_value;
-  ShapeVector p_value_raw;
-  if (x_shape[0] == 0) {
-    MS_EXCEPTION(ValueError) << "For 'Transpose', first dim of input_x's shape can not be 0, but got 0.";
-  }
+MIND_API_OPERATOR_IMPL(Transpose, BaseOperator);
+
+bool CheckAndGetPermValue(const std::vector<AbstractBasePtr> &input_args, ShapeVector *perm_value,
+                          const PrimitivePtr &primitive) {
+  MS_EXCEPTION_IF_NULL(perm_value);
+  bool is_dynamic = false;
+  const std::string &op_name = primitive->name();
+
   if (input_args.size() == 1) {
     if (!primitive->HasAttr("perm")) {
       MS_EXCEPTION(ValueError) << "For '" << op_name << "', the value of 'input_perm' is necessary, but missing it.";
     }
     ValuePtr perm = primitive->GetAttr("perm");
     MS_EXCEPTION_IF_NULL(perm);
-    auto perm_val = perm->cast<ValueTuplePtr>();
-    MS_EXCEPTION_IF_NULL(perm_val);
-    auto perm_val_data = perm_val->value();
-    (void)std::transform(std::begin(perm_val_data), std::end(perm_val_data), std::back_inserter(p_value_raw),
-                         [](const ValuePtr &e) -> int64_t { return GetValue<int64_t>(e); });
-  } else {
-    auto perm_value = input_args[1]->BuildValue();
-    MS_EXCEPTION_IF_NULL(perm_value);
-    if (perm_value->isa<tensor::Tensor>()) {
-      p_value_raw = CheckAndConvertUtils::CheckTensorIntValue("perm", perm_value, op_name);
+    *perm_value = CheckAndConvertUtils::CheckTupleInt("perm", perm, op_name);
+    return is_dynamic;
+  }
+
+  auto input_value = input_args[kInputIndex1]->BuildValue();
+  if (input_args[kInputIndex1]->isa<abstract::AbstractTuple>()) {
+    *perm_value = CheckAndConvertUtils::CheckTupleInt("perm", input_value, op_name);
+  } else if (input_args[kInputIndex1]->isa<abstract::AbstractTensor>()) {
+    if (input_value->isa<tensor::Tensor>()) {
+      *perm_value = CheckAndConvertUtils::CheckTensorIntValue("perm", input_value, op_name);
     } else {
-      p_value_raw = CheckAndConvertUtils::CheckTupleInt("input[perm]", perm_value, op_name);
+      is_dynamic = true;
+      auto perm_shape = CheckAndConvertUtils::GetTensorInputShape("perm", input_args, 1);
+      if (perm_shape->shape().size() != 1) {
+        MS_EXCEPTION(ValueError) << "For 'transpose perm', " << op_name << " must be 1-D, but got"
+                                 << perm_shape->shape().size() << "-D.";
+      }
     }
+  } else {
+    MS_LOG(EXCEPTION) << "For '" << op_name
+                      << "', the second input type should be tensor or scalar, but got invalid abstract type:"
+                      << input_args[kInputIndex1]->type_name() << ".";
   }
-  for (auto p : p_value_raw) {
-    p = (p >= 0) ? p : (p_value_raw.size() + p);
-    p_value.emplace_back(p);
-  }
-  if (!IsDynamicRank(x_shape) && x_shape.size() != p_value.size()) {
-    MS_EXCEPTION(ValueError) << "For '" << op_name << "', the dim of 'input_x' and 'input_perm' must be equal, but got "
-                             << x_shape.size() << " and " << p_value.size() << " respectively.";
-  }
-  for (auto i : p_value) {
-    (void)CheckAndConvertUtils::CheckInteger("perm element", i, kLessThan, SizeToLong(p_value.size()), op_name);
-  }
-  std::vector<int64_t> tmp(p_value);
-  for (auto it = tmp.begin(); it != tmp.end();) {
-    auto dim = *it;
-    if (!tmp.empty()) {
-      it = tmp.erase(it);
-    }
-    if (std::find(tmp.begin(), tmp.end(), dim) != tmp.end()) {
-      MS_EXCEPTION(ValueError) << "For '" << op_name << "', the value of perm is wrong.";
-    }
-  }
-  if (IsDynamicRank(x_shape)) {
-    return std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
-  }
-  std::vector<int64_t> in_shape(p_value);
-  (void)std::transform(in_shape.begin(), in_shape.end(), in_shape.begin(), [x_shape](size_t i) { return x_shape[i]; });
-  return std::make_shared<abstract::Shape>(in_shape);
+  return is_dynamic;
 }
 
-TypePtr TransposeInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(prim);
-  return CheckAndConvertUtils::CheckSubClass("input_x", input_args[0]->BuildType(), {kTensorType}, prim->name());
-}
-}  // namespace
+class TransposeInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    MS_EXCEPTION_IF_NULL(primitive);
+    auto op_name = primitive->name();
+    auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+    (void)CheckAndConvertUtils::CheckInteger("input_x size", SizeToLong(x_shape.size()), kGreaterThan, 0, op_name);
+    ShapeVector p_value;
+    ShapeVector p_value_raw;
+    if (x_shape[0] == 0) {
+      MS_EXCEPTION(ValueError) << "For 'Transpose', first dim of input_x's shape can not be 0, but got 0.";
+    }
+    if (IsDynamicRank(x_shape)) {
+      return std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
+    }
 
-MIND_API_OPERATOR_IMPL(Transpose, BaseOperator);
-AbstractBasePtr TransposeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                               const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
+    bool perm_is_dynamic = CheckAndGetPermValue(input_args, &p_value_raw, primitive);
+    if (perm_is_dynamic) {
+      ShapeVector out_shape;
+      (void)out_shape.insert(out_shape.end(), x_shape.size(), -1);
+      return std::make_shared<abstract::Shape>(out_shape);
+    }
+
+    for (auto p : p_value_raw) {
+      p = (p >= 0) ? p : (p_value_raw.size() + p);
+      p_value.emplace_back(p);
+    }
+    if (!IsDynamicRank(x_shape) && x_shape.size() != p_value.size()) {
+      MS_EXCEPTION(ValueError) << "For '" << op_name << "', the dim of 'input_x' and 'perm' must be equal, but got "
+                               << x_shape.size() << " and " << p_value.size() << " respectively.";
+    }
+    for (auto i : p_value) {
+      (void)CheckAndConvertUtils::CheckInteger("perm element", i, kLessThan, SizeToLong(p_value.size()), op_name);
+    }
+    std::vector<int64_t> tmp(p_value);
+    for (auto it = tmp.begin(); it != tmp.end();) {
+      auto dim = *it;
+      if (!tmp.empty()) {
+        it = tmp.erase(it);
+      }
+      if (std::find(tmp.begin(), tmp.end(), dim) != tmp.end()) {
+        MS_EXCEPTION(ValueError) << "For '" << op_name << "', the value of perm is wrong.";
+      }
+    }
+    std::vector<int64_t> in_shape(p_value);
+    (void)std::transform(in_shape.begin(), in_shape.end(), in_shape.begin(),
+                         [x_shape](size_t i) { return x_shape[i]; });
+    return std::make_shared<abstract::Shape>(in_shape);
   }
-  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputIndex1, primitive->name());
-  auto type = TransposeInferType(primitive, input_args);
-  auto shape = TransposeInferShape(primitive, input_args);
-  return abstract::MakeAbstract(shape, type);
-}
 
-REGISTER_PRIMITIVE_EVAL_IMPL(Transpose, prim::kPrimTranspose, TransposeInfer, nullptr, true);
+  TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
+    MS_EXCEPTION_IF_NULL(prim);
+    return CheckAndConvertUtils::CheckSubClass("input_x", input_args[0]->BuildType(), {kTensorType}, prim->name());
+  }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {1}; }
+};
+REGISTER_PRIMITIVE_OP_INFER_IMPL(Transpose, prim::kPrimTranspose, TransposeInfer, false);
 }  // namespace ops
 }  // namespace mindspore
