@@ -25,7 +25,8 @@ using mindspore::schema::PrimitiveType_Assert;
 
 namespace mindspore::kernel {
 int AssertCPUKernel::Prepare() {
-  CHECK_LESS_RETURN(in_tensors_.size(), 1);
+  CHECK_NOT_EQUAL_RETURN(in_tensors_.size(), 1);
+  CHECK_NOT_EQUAL_RETURN(out_tensors_.size(), 1);
   return RET_OK;
 }
 

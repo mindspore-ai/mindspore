@@ -237,7 +237,7 @@ class WeightDecoder {
 
   template <typename T1, typename T2>
   static void UnPackData(int origin_bit, const T2 &packed_data, std::queue<bool> *unpack_bit_data, void *unpack_int,
-                         size_t *count, bool is_last) {
+                         size_t *count, size_t limit_size, bool is_last) {
     T2 uint_result = 0;
     T1 result;
     UnPackFromUintToOrigin<T2>(packed_data, unpack_bit_data);
@@ -249,6 +249,9 @@ class WeightDecoder {
         unpack_bit_data->pop();
       }
       result = static_cast<T1>(uint_result - static_cast<T2>(pow(base, origin_bit - 1)));
+      if (*count >= limit_size) {
+        return;
+      }
       (static_cast<T1 *>(unpack_int))[*count] = result;
       uint_result = 0;
       (*count)++;
@@ -261,6 +264,9 @@ class WeightDecoder {
         unpack_bit_data->pop();
       }
       result = static_cast<T1>(uint_result - static_cast<T2>(pow(base, origin_bit - 1)));
+      if (*count >= limit_size) {
+        return;
+      }
       (static_cast<T1 *>(unpack_int))[*count] = result;
     }
   }
@@ -286,7 +292,8 @@ class WeightDecoder {
         MS_LOG(ERROR) << "extend unpack_int_up_limit_size, which is " << unpack_int_up_limit_size;
         return RET_ERROR;
       }
-      UnPackData<T1, T2>(origin_bit, pack_data, &unpack_bit_data, unpack_int_data, &count, is_last);
+      UnPackData<T1, T2>(origin_bit, pack_data, &unpack_bit_data, unpack_int_data, &count, unpack_int_up_limit_size,
+                         is_last);
     }
     return RET_OK;
   }

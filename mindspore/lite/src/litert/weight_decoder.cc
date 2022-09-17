@@ -184,9 +184,14 @@ int WeightDecoder::UnPack(const SchemaTensorWrapper &src_tensor, lite::Tensor *d
       MS_LOG(ERROR) << "Decode huffman code failed: " << ret;
     }
   } else {
+    if (src_tensor.handler()->dims()->size() == 0) {
+      MS_LOG(ERROR) << src_tensor.handler()->name()->c_str() << " shape is empty.";
+      return RET_ERROR;
+    }
     ret = WeightDecoder::UnPackToInt(src_tensor, dst_tensor);
     if (ret != RET_OK && ret != RET_NO_CHANGE) {
       MS_LOG(ERROR) << "Unpack to int8 failed: " << ret;
+      return ret;
     }
   }
   return ret;

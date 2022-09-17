@@ -136,8 +136,8 @@ bool ConvolutionBaseCPUKernel::CheckParamsValid() const {
   MS_CHECK_GT(conv_param_->dilation_w_, 0, false);
   MS_CHECK_GT(conv_param_->stride_h_, 0, false);
   MS_CHECK_GT(conv_param_->stride_w_, 0, false);
-  MS_CHECK_TRUE_MSG(conv_param_->kernel_h_ = weight->Height(), false, "Invalid kernel height in conv params.");
-  MS_CHECK_TRUE_MSG(conv_param_->kernel_w_ = weight->Width(), false, "Invalid kernel Width in conv params.");
+  MS_CHECK_TRUE_MSG(conv_param_->kernel_h_ == weight->Height(), false, "Invalid kernel height in conv params.");
+  MS_CHECK_TRUE_MSG(conv_param_->kernel_w_ == weight->Width(), false, "Invalid kernel Width in conv params.");
   if (conv_param_->group_ > conv_param_->input_channel_) {
     conv_param_->group_ = conv_param_->input_channel_;
   }

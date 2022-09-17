@@ -51,6 +51,10 @@ int DepthToSpaceCPUKernel::ReSize() {
     MS_LOG(ERROR) << "Input shape size should be " << DIMENSION_4D;
     return RET_PARAM_INVALID;
   }
+  if (out_tensors_[0]->shape().size() != DIMENSION_4D) {
+    MS_LOG(ERROR) << "OutPut shape size should be " << DIMENSION_4D;
+    return RET_PARAM_INVALID;
+  }
   if (out_tensors_[kOutputIndex]->shape().size() != DIMENSION_4D) {
     MS_LOG(ERROR) << "Output shape size should be " << DIMENSION_4D;
     return RET_ERROR;
