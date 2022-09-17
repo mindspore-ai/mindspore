@@ -300,7 +300,9 @@ Status BatchOp::MapColumns(std::pair<std::unique_ptr<TensorQTable>, CBatchInfo> 
   TensorTable in_cols(in_col_names_.size(), TensorRow(num_rows, nullptr)), out_cols;
 
   std::unordered_map<std::string, size_t> in_col_name_id;  // name of columns that need to be fed to per-batch_map
-  for (size_t i = 0; i < in_col_names_.size(); i++) in_col_name_id.insert({in_col_names_[i], i});
+  for (size_t i = 0; i < in_col_names_.size(); i++) {
+    in_col_name_id.insert({in_col_names_[i], i});
+  }
 
   for (const auto &itr : child_map_) {
     auto col_itr = in_col_name_id.find(itr.first);
