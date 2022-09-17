@@ -49,6 +49,7 @@ set(DATASET_ENGINE_DATASETOPS_SOURCE_SRC_FILES
     sogou_news_op.cc
     speech_commands_op.cc
     squad_op.cc
+    sst2_op.cc
     stl10_op.cc
     sun397_op.cc
     tedlium_op.cc
