@@ -21,6 +21,7 @@
 #include <set>
 #include <tuple>
 #include <algorithm>
+#include <utility>
 #include "src/common/log_adapter.h"
 #include "tools/common/meta_graph_serializer.h"
 #include "tools/lite_exporter/anf_exporter.h"
@@ -215,6 +216,27 @@ int ConverterImpl::Convert(const std::shared_ptr<ConverterPara> &param, schema::
   }
   *meta_graph = TransferFuncGraph(param, func_graph_ptr);
   return RET_OK;
+}
+
+FuncGraphPtr ConverterImpl::Convert(const std::shared_ptr<ConverterPara> &param, const void *buff, const size_t &size) {
+  auto graph = BuildFuncGraph(param, buff, size);
+  MS_CHECK_TRUE_MSG(graph != nullptr, nullptr, "Build func graph return nullptr.");
+  auto ret = SaveOutputNames(graph);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "save output name failed.";
+    return nullptr;
+  }
+
+  MS_CHECK_TRUE_MSG(funcgraph_transform_ != nullptr, nullptr, "funcgraph_transform init failed");
+  graph = funcgraph_transform_->Transform(graph, param);
+  MS_CHECK_TRUE_MSG(graph != nullptr, nullptr, "Transform anf graph return nullptr.");
+  graph->set_attr(kIsOptimized, MakeValue(true));
+  ret = UpdateFuncGraphInputAndOutputNames(graph);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Update input and output names of funcgraph failed.";
+    return nullptr;
+  }
+  return graph;
 }
 
 schema::MetaGraphT *ConverterImpl::TransferFuncGraph(const std::shared_ptr<ConverterPara> &param,
@@ -570,39 +592,55 @@ int ConverterImpl::ReplaceShapeWithDynamicShape(const FuncGraphPtr &graph) {
         MS_LOG(ERROR) << cnode->fullname_with_scope() << "get value node failed";
         return RET_ERROR;
       }
-      auto value = prim->GetAttr("infer_done");
-      if (value == nullptr) {
-        MS_LOG(ERROR) << cnode->fullname_with_scope() << " get infer_node attr failed";
+      auto dynamic_shape_prim = std::make_shared<ops::DynamicShape>();
+      if (dynamic_shape_prim == nullptr) {
+        MS_LOG(ERROR) << "Make DynamicShape op failed";
         return RET_ERROR;
       }
-      bool infer_node = GetValue<bool>(value);
-      if (!infer_node) {
-        auto dynamic_shape_prim = std::make_shared<ops::DynamicShape>();
-        if (dynamic_shape_prim == nullptr) {
-          MS_LOG(ERROR) << "Make DynamicShape op failed";
-          return RET_ERROR;
-        }
-        auto dynamic_shape_prim_c = dynamic_shape_prim->GetPrim();
-        if (dynamic_shape_prim_c == nullptr) {
-          MS_LOG(ERROR) << "Get the primitive of dynamic shape op failed";
-          return RET_ERROR;
-        }
-        auto inputs = cnode->inputs();
-        inputs.erase(inputs.begin());
-        auto dynamic_shape_node = graph->NewCNode(dynamic_shape_prim_c, inputs);
-        dynamic_shape_node->set_abstract(ori_abstract);
-        auto manager = Manage(graph, true);
-        if (manager == nullptr) {
-          MS_LOG(ERROR) << "Replace shape node " << cnode->fullname_with_scope() << " failed";
-          return RET_ERROR;
-        }
-        if (!manager->Replace(cnode, dynamic_shape_node)) {
-          MS_LOG(ERROR) << "Replace shape node " << cnode->fullname_with_scope() << " failed";
-          return RET_ERROR;
-        }
+      auto dynamic_shape_prim_c = dynamic_shape_prim->GetPrim();
+      if (dynamic_shape_prim_c == nullptr) {
+        MS_LOG(ERROR) << "Get the primitive of dynamic shape op failed";
+        return RET_ERROR;
+      }
+      auto inputs = cnode->inputs();
+      inputs.erase(inputs.begin());
+      auto dynamic_shape_node = graph->NewCNode(dynamic_shape_prim_c, inputs);
+      dynamic_shape_node->set_abstract(ori_abstract);
+      auto manager = Manage(graph, true);
+      if (manager == nullptr) {
+        MS_LOG(ERROR) << "Replace shape node " << cnode->fullname_with_scope() << " failed";
+        return RET_ERROR;
+      }
+      if (!manager->Replace(cnode, dynamic_shape_node)) {
+        MS_LOG(ERROR) << "Replace shape node " << cnode->fullname_with_scope() << " failed";
+        return RET_ERROR;
       }
     }
   }
+  return RET_OK;
+}
+
+int ConverterImpl::SaveOutputNames(const FuncGraphPtr &graph) {
+  std::vector<std::pair<AnfNodePtr, int64_t>> outputs;
+  std::vector<std::string> output_names;
+  std::vector<std::vector<int64_t>> output_dims;
+  auto ret = GetFuncGraphOutputsInfo(graph, &outputs, &output_names, &output_dims);
+  if (ret != lite::RET_OK) {
+    MS_LOG(ERROR) << "Get outputs info of funcgraph failed.";
+    return RET_ERROR;
+  }
+  std::vector<std::string> update_output_names;
+  for (auto &it : outputs) {
+    if (utils::isa<mindspore::CNodePtr>(it.first)) {
+      auto cnode = it.first->cast<CNodePtr>();
+      MS_CHECK_TRUE_MSG(cnode != nullptr, RET_ERROR, "cnode is nullptr");
+      AbstractBasePtr abstract = cnode->abstract();
+      MS_CHECK_TRUE_MSG(abstract != nullptr, RET_ERROR, "abstract is nullptr");
+      auto name = abstract->name();
+      update_output_names.emplace_back(name);
+    }
+  }
+  ConverterInnerContext::GetInstance()->SetGraphOutputTensorNames(update_output_names);
   return RET_OK;
 }
 

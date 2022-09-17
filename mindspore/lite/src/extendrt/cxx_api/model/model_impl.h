@@ -65,10 +65,9 @@ class ModelImpl {
   std::string GetConfig(const std::string &section, const std::string &key);
 
  private:
-  Status build_by_buffer_impl(const void *model_data, size_t data_size, ModelType model_type,
-                              const std::shared_ptr<Context> &model_context, const std::string &model_path = "");
-
- private:
+  Status BuildByBufferImpl(const void *model_data, size_t data_size, ModelType model_type,
+                           const std::shared_ptr<Context> &model_context, const std::string &model_path = "");
+  Status CompileGraphOnline(const void *model_data, size_t data_size, const std::shared_ptr<Context> &model_context);
   friend class Model;
   friend class Serialization;
   std::shared_ptr<Graph> graph_ = nullptr;

@@ -15,11 +15,11 @@
  */
 #ifndef MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_DLUTILS_H_
 #define MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_DLUTILS_H_
+#include <string>
 #if !defined(_WIN32) && !defined(_WIN64)
 #include <dlfcn.h>
 #include <dirent.h>
 #include <memory>
-#include <string>
 #include <fstream>
 #include "utils/file_utils.h"
 #include "include/api/status.h"
@@ -118,5 +118,16 @@ inline void DLSoClose(void *handle) {
     }                                           \
   } while (false)
 }  // namespace mindspore
+#else
+inline Status DLSoPath(const std::string &benchmark_so, const std::string &target_so, std::string *target_so_path) {
+  MS_LOG(ERROR) << "Not support dlopen so";
+  return kMEFailed;
+}
+
+inline Status DLSoOpen(const std::string &dl_path, const std::string &func_name, void **handle, void **function,
+                       bool runtime_convert = false) {
+  MS_LOG(ERROR) << "Not support dlopen so";
+  return kMEFailed;
+}
 #endif
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_DLUTILS_H_

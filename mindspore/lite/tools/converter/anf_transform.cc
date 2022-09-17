@@ -676,6 +676,12 @@ FuncGraphPtr AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph,
     }
     return old_graph;
   }
+  if (param->is_runtime_converter) {
+    if (RunFormatTrans(old_graph) != RET_OK) {
+      MS_LOG(ERROR) << "Run format trans failed";
+      return nullptr;
+    }
+  }
 
   if (RunPass(old_graph, param) != RET_OK) {
     MS_LOG(ERROR) << "Proc online transform failed.";

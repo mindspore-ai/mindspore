@@ -19,8 +19,8 @@
 #include "tools/converter/converter.h"
 #include "tools/converter/cxx_api/converter_para.h"
 
-void *RuntimeConvert(const char *model_buf, const size_t &buf_size, size_t *dst_size,
-                     const std::shared_ptr<mindspore::Context> &context) {
+mindspore::api::FuncGraphPtr RuntimeConvert(const char *model_buf, const size_t &buf_size,
+                                            const std::shared_ptr<mindspore::Context> &context) {
   auto param = std::make_shared<mindspore::ConverterPara>();
   if (param == nullptr) {
     MS_LOG(ERROR) << "New ConverterPara failed";
@@ -33,6 +33,7 @@ void *RuntimeConvert(const char *model_buf, const size_t &buf_size, size_t *dst_
   param->train_model = false;
   param->export_mindir = mindspore::kMindIR;
   param->enable_encryption = false;
+  param->is_runtime_converter = true;
 
   auto device_list = context->MutableDeviceInfo();
   for (auto &device : device_list) {
@@ -69,11 +70,11 @@ void *RuntimeConvert(const char *model_buf, const size_t &buf_size, size_t *dst_
   }
 
   mindspore::lite::ConverterImpl cvt;
-  void *dst_buff;
-  auto ret = cvt.Convert(param, nullptr, model_buf, buf_size, &dst_buff, dst_size);
-  if (ret != mindspore::lite::RET_OK) {
-    MS_LOG(ERROR) << "Convert model failed.";
+  mindspore::FuncGraphPtr graph = cvt.Convert(param, model_buf, buf_size);
+  if (graph == nullptr) {
+    MS_LOG(ERROR) << "Convert model failed";
     return nullptr;
   }
-  return dst_buff;
+  auto api_graph = mindspore::api::MakeShared<mindspore::api::FuncGraph>(graph);
+  return api_graph;
 }
