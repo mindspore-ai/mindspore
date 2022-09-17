@@ -43,18 +43,22 @@ bool SvdGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vect
 int SvdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                             const std::vector<KernelTensorPtr> &outputs,
                             const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  auto input_shape = inputs[kIndex0]->GetShapeVector();
+  if (IsDynamicRank(input_shape)) {
+    return KRET_OK;
+  }
   DestroyResource();
   ResetResource();
-
-  input_shape_ = std::vector<size_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                     inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+  input_shape_ = Convert2SizeTClipNeg(input_shape);
   total_size_ = std::accumulate(input_shape_.begin(), input_shape_.end(), size_t(1), std::multiplies<size_t>());
   is_null_input_ = (total_size_ == 0);
   if (is_null_input_) {
     init_size_lists_func_(this);
-    return 0;
+    return KRET_OK;
   }
-
   dims_ = input_shape_.size();
   if (dims_ < kDim2) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', dimensions must >= 2, but got [" << dims_;

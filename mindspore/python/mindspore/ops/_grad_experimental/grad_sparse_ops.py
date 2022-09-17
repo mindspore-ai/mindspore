@@ -25,6 +25,7 @@ from mindspore.ops.operations.sparse_ops import SparseSegmentSumWithNumSegments
 from mindspore.ops.operations.sparse_ops import SparseSegmentSqrtN
 from mindspore.ops.operations.sparse_ops import SparseSegmentSqrtNWithNumSegments
 from mindspore.ops.operations.sparse_ops import SparseSegmentMeanWithNumSegments
+from mindspore.ops._utils.utils import is_shape_unknown
 from mindspore.common import dtype as mstype
 from mindspore import Tensor
 from mindspore.ops.primitive import constexpr
@@ -36,6 +37,7 @@ from .._grad.grad_base import bprop_getters
 from .._utils.utils import is_shape_unknown
 
 # Unused parameters are placeholders.
+dyn_shape_op = P.TensorShape()
 
 
 @constexpr
@@ -50,6 +52,7 @@ def get_bprop_sparse_softmax(self):
     sparse_dense_cwise_add = SparseDenseCwiseAdd()
     reduce_sum = P.ReduceSum(keep_dims=True)
     mul = P.Mul()
+
     def bprop(indices, values, shape, out, dout):
         default_values = _create_tensor(0, values.dtype)
         out_dout = mul(out, dout)
@@ -106,7 +109,6 @@ def get_bprop_sparse_segment_sqrt_n(self):
     """Grad definition for `SparseSegmentSqrtN` operation."""
     input_grad = G.SparseSegmentSqrtNGrad()
     shape = P.Shape()
-    dyn_shape_op = P.TensorShape()
 
     def bprop(x, indices, segment_ids, out, dout):
         shape_x = shape(x)
@@ -127,7 +129,6 @@ def get_bprop_sparse_segment_sqrt_n_with_num_segments(self):
     """Grad definition for `SparseSegmentSqrtNWithNumSegments` operation."""
     input_grad = G.SparseSegmentSqrtNGrad()
     shape = P.Shape()
-    dyn_shape_op = P.TensorShape()
 
     def bprop(x, indices, segment_ids, num_segments, out, dout):
         shape_x = shape(x)
@@ -148,7 +149,6 @@ def get_bprop_sparse_segment_sum(self):
     """Grad definition for `SparseSegmentSum` operation."""
     input_grad = G.SparseSegmentSumGrad()
     shape = P.Shape()
-    dyn_shape_op = P.TensorShape()
 
     def bprop(x, indices, segment_ids, out, dout):
         shape_x = shape(x)
@@ -169,7 +169,6 @@ def get_bprop_sparse_segment_sum_with_num_segments(self):
     """Grad definition for `SparseSegmentSumWithNumSegments` operation."""
     input_grad = G.SparseSegmentSumGrad()
     shape = P.Shape()
-    dyn_shape_op = P.TensorShape()
 
     def bprop(x, indices, segment_ids, num_segments, out, dout):
         shape_x = shape(x)
@@ -192,7 +191,12 @@ def get_bprop_sparse_segment_mean_with_num_segments(self):
     shape = P.Shape()
 
     def bprop(x, indices, segment_ids, num_segments, out, dout):
-        output_dim0 = F.scalar_to_tensor(shape(x)[0], mstype.int32)
+        x_shp = shape(x)
+        if is_shape_unknown(x_shp):
+            x_shp = dyn_shape_op(x)
+            output_dim0 = F.cast(x_shp[0], mstype.int32)
+        else:
+            output_dim0 = F.scalar_to_tensor(x_shp[0], mstype.int32)
         indices = F.cast(indices, mstype.int32)
         segment_ids = F.cast(segment_ids, mstype.int32)
         dx = input_grad(dout, indices, segment_ids, output_dim0)
@@ -208,6 +212,7 @@ def get_bprop_sparse_reorder(self):
     sparse_reorder_op = SparseReorder()
     range_op = P.Range()
     gather_op = P.Gather()
+
     def bprop(indices, values, shape, out, dout):
         num_entries = F.shape(indices)[0]
         start = Tensor(0, dtype=mstype.int32)

@@ -37,6 +37,7 @@ void InsertCast(const FuncGraphPtr &graph, const AnfNodePtr &node, size_t i, con
   std::vector<AnfNodePtr> inputs = {NewValueNode(prim), common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), i)};
   auto cast = graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(cast);
+  common::AnfAlgo::SetNodeAttr(kAttrDstType, TypeIdToType(cast_type), cast);
   auto cast_shape = {common::AnfAlgo::GetPrevNodeOutputDetailShape(node, i)};
   common::AnfAlgo::SetOutputTypeAndDetailShape({cast_type}, cast_shape, cast.get());
   FuncGraphManagerPtr manager = graph->manager();

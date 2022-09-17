@@ -121,6 +121,10 @@ abstract::ShapePtr MatrixDiagV3InferShape(const PrimitivePtr &primitive,
   auto padding_value_rank = SizeToLong(padding_shape.size());
   constexpr int64_t number_one = 1;
   constexpr int64_t number_two = 2;
+  if (IsDynamicRank(x_shape)) {
+    ShapeVector out_shape = {UNKNOWN_RANK};
+    return std::make_shared<abstract::Shape>(out_shape);
+  }
   CheckAndConvertUtils::CheckInRange<int64_t>("rank of 'k'", k_rank, kIncludeBoth, {0, number_one}, prim_name);
   (void)CheckAndConvertUtils::CheckInteger("rank of 'num_rows'", row_rank, kEqual, 0, prim_name);
   (void)CheckAndConvertUtils::CheckInteger("rank of 'num_cols'", col_rank, kEqual, 0, prim_name);

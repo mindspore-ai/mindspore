@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,16 +82,15 @@ abstract::ShapePtr BatchMatmulInferShape(const PrimitivePtr &primitive,
   if (IsDynamicRank(x_shp) || IsDynamicRank(y_shp)) {
     return std::make_shared<abstract::Shape>(ShapeVector({UNKNOWN_RANK}));
   }
-  auto context = MsContext::GetInstance();
   constexpr size_t x_dim_limit = 3;
   constexpr size_t y_dim_limit = 2;
-  if ((!IsDynamic(x_shp)) && (!IsDynamic(x_shp))) {
-    if (x_shp.size() < x_dim_limit || y_shp.size() < y_dim_limit) {
-      MS_EXCEPTION(ValueError)
-        << "For '" << prim_name
-        << "', input 'x' must be greater or equal to 3, input 'y' must be greater or equal to 2. But got 'x': "
-        << x_shp.size() << ", 'y': " << y_shp.size() << ".";
-    }
+
+  bool not_dynamic_shape = (!IsDynamic(x_shp)) && !(IsDynamic(y_shp));
+  if (not_dynamic_shape && (x_shp.size() < x_dim_limit || y_shp.size() < y_dim_limit)) {
+    MS_EXCEPTION(ValueError)
+      << "For '" << prim_name
+      << "', input 'x' must be greater or equal to 3, input 'y' must be greater or equal to 2. But got 'x': "
+      << x_shp.size() << ", 'y': " << y_shp.size() << ".";
   }
 
   constexpr size_t offset = 2;
@@ -105,7 +104,7 @@ abstract::ShapePtr BatchMatmulInferShape(const PrimitivePtr &primitive,
   int64_t y_row = y_last[static_cast<size_t>(transpose_b)];
   if (std::find(x_shp.begin(), x_shp.end(), -1) == x_shp.end() &&
       std::find(y_shp.begin(), y_shp.end(), -1) == y_shp.end()) {
-    if (x_col != y_row) {
+    if (not_dynamic_shape && x_col != y_row) {
       MS_EXCEPTION(ValueError) << "For " << prim_name << " evaluator shapes of inputs can not do this operator, "
                                << "got " << x_col << " and " << y_row << " , with x1 shape " << x_shp
                                << "(transpose_a=" << transpose_a << "})"
@@ -116,11 +115,7 @@ abstract::ShapePtr BatchMatmulInferShape(const PrimitivePtr &primitive,
   (void)primitive->AddAttr("transpose_x2", transpose_b_ptr);
   // Additional check for dynamic shape
   // Last infer will be real shape values
-  bool x_not_dyn =
-    std::all_of(x_shp.begin(), x_shp.end(), [](int64_t value) { return value != abstract::Shape::SHP_ANY; });
-  bool y_not_dyn =
-    std::all_of(y_shp.begin(), y_shp.end(), [](int64_t value) { return value != abstract::Shape::SHP_ANY; });
-  if (x_not_dyn && y_not_dyn) {
+  if (not_dynamic_shape) {
     size_t x_offset = x_shp.size() - offset;
     size_t y_offset = y_shp.size() - offset;
     auto x_c = x_shp[x_offset + (transpose_a ? 0 : 1)];

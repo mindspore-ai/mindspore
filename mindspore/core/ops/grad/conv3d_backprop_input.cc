@@ -45,7 +45,7 @@ void SetConv3DBackpropInputPadList(const PrimitivePtr &primitive, const std::vec
     CheckAndConvertUtils::CheckIntOrTupleInt("attribute[dilation]", primitive->GetAttr(kDilation), prim_name);
   // default pad mode is valid
   int64_t pad_mode;
-  CheckAndConvertUtils::GetPadModEnumValue(primitive->GetAttr(kPadMode), &pad_mode, true);
+  CheckAndConvertUtils::GetPadModEnumValue(primitive->GetAttr(kPadMode), &pad_mode, false);
   ShapeVector pad_list = {0, 0, 0, 0, 0, 0};
   auto attr_pad_list_prt = primitive->GetAttr(kPadList);
   if ((attr_pad_list_prt != nullptr) && (!attr_pad_list_prt->isa<None>())) {
@@ -258,6 +258,7 @@ class Conv3DBackpropInputInfer : public abstract::OpInferBase {
     std::set<TypePtr> valid_x_type = {kInt8, kInt32, kFloat16, kFloat32};
     return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_x_type, prim_name);
   }
+  std::set<int64_t> GetValueDependArgIndices() const override { return {kConv3DBackpropInputSizeIndex}; }
 };
 
 REGISTER_PRIMITIVE_OP_INFER_IMPL(Conv3DBackpropInput, prim::kPrimConv3DBackpropInput, Conv3DBackpropInputInfer, false);
