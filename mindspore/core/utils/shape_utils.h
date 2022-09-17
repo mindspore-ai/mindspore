@@ -40,7 +40,7 @@ inline bool IsDynamicRank(const ShapeVector &shape) {
   }
   if (std::any_of(shape.cbegin(), shape.cend(),
                   [](ShapeValueDType s) { return s == abstract::Shape::kShapeRankAny; })) {
-    MS_LOG(EXCEPTION) << "Shape should have only one -2 or no -2 at all but got (" << shape << ").";
+    MS_EXCEPTION(ValueError) << "Shape should have only one -2 or no -2 at all but got (" << shape << ").";
   }
   return false;
 }
@@ -52,7 +52,7 @@ inline bool IsDynamicShape(const ShapeVector &shape) {
 
 inline bool IsDynamic(const ShapeVector &shape) {
   if (std::any_of(shape.begin(), shape.end(), [](ShapeValueDType s) { return s < abstract::Shape::kShapeRankAny; })) {
-    MS_LOG(EXCEPTION) << "Shape should not have values less than -2 but got (" << shape << ").";
+    MS_EXCEPTION(ValueError) << "Shape should not have values less than -2 but got (" << shape << ").";
   }
   return IsDynamicRank(shape) || IsDynamicShape(shape);
 }

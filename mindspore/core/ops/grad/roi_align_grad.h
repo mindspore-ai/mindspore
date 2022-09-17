@@ -31,10 +31,59 @@ class MIND_API ROIAlignGrad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ROIAlignGrad);
   ROIAlignGrad() : BaseOperator(kNameROIAlignGrad) {}
-};
 
-abstract::AbstractBasePtr ROIAlignGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                            const std::vector<abstract::AbstractBasePtr> &input_args);
+  /// \brief Method to init the op's attributes.
+  ///
+  /// \param[in] pooled_height Define the height of the output.
+  /// \param[in] pooled_width Define the width of the output.
+  /// \param[in] spatial_scale Define the size factor to translate ROI coordinates from the input coordinate to the
+  /// actual coordinate.
+  /// \param[in] sample_num Define the number of sampling points.
+  void Init(const int64_t pooled_height, const int64_t pooled_width, const float spatial_scale,
+            const int64_t sample_num);
+
+  /// \brief Method to set pooled_height attribute.
+  ///
+  /// \param[in] pooled_height Define the height of the output.
+  void set_pooled_height(const int64_t pooled_height);
+
+  /// \brief Method to set pooled_width attribute.
+  ///
+  /// \param[in] pooled_width Define the width of the output.
+  void set_pooled_width(const int64_t pooled_width);
+
+  /// \brief Method to set spatial_scale attribute.
+  ///
+  /// \param[in] spatial_scale Define the size factor to translate ROI coordinates from the input coordinate to the
+  /// actual
+  ///            coordinate.
+  void set_spatial_scale(const float spatial_scale);
+
+  /// \brief Method to set sample_num attribute.
+  ///
+  /// \param[in] sample_num Define the number of sampling points.
+  void set_sample_num(const int64_t sample_num);
+
+  /// \brief Method to get pooled_height attribute.
+  ///
+  /// \return the height of the output.
+  int64_t get_pooled_height() const;
+
+  /// \brief Method to get pooled_width attribute.
+  ///
+  /// \return the width of the output.
+  int64_t get_pooled_width() const;
+
+  /// \brief Method to get spatial_scale attribute.
+  ///
+  /// \return the size factor.
+  float get_spatial_scale() const;
+
+  /// \brief Method to get sample_num attribute.
+  ///
+  /// \return the number of sampling points.
+  int64_t get_sample_num() const;
+};
 }  // namespace ops
 }  // namespace mindspore
 

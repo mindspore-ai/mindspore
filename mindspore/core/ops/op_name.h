@@ -53,6 +53,7 @@ constexpr auto kBoundaries = "boundaries";
 constexpr auto kCellClip = "cell_clip";
 constexpr auto kCellDepth = "cell_depth";
 constexpr auto kCenterPointBox = "center_point_box";
+constexpr auto kChannels = "channels";
 constexpr auto kClip = "clip";
 constexpr auto kCondition = "condition";
 constexpr auto kCrops = "crops";

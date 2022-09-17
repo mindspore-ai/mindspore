@@ -20,6 +20,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <set>
 
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/src/helper.h"
@@ -28,48 +29,84 @@
 
 namespace mindspore {
 namespace ops {
-namespace {
-constexpr size_t kROIGradFeatureShapeSize = 4;
-constexpr size_t kROIGradRoisShapeSize = 2;
-abstract::ShapePtr ROIAlignGradInferShape(const PrimitivePtr &primitive,
-                                          const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto op_name = primitive->name();
-  auto feature_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto rois_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
-  (void)CheckAndConvertUtils::CheckInteger("rank of feature shape", SizeToLong(feature_shape.size()), kEqual,
-                                           kROIGradFeatureShapeSize, op_name);
-  (void)CheckAndConvertUtils::CheckInteger("rank of rois shape", SizeToLong(rois_shape.size()), kEqual,
-                                           kROIGradRoisShapeSize, op_name);
-  auto xdiff_shape_ptr = primitive->GetAttr("xdiff_shape");
-  MS_EXCEPTION_IF_NULL(xdiff_shape_ptr);
-  auto xdiff_shape = GetValue<std::vector<int64_t>>(xdiff_shape_ptr);
-  return std::make_shared<abstract::Shape>(xdiff_shape);
-}
-
-TypePtr ROIAlignGradInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("ydiff", input_args[0]->BuildType(), {kFloat32, kFloat16},
-                                                   prim->name());
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("rois", input_args[1]->BuildType(), {kFloat32, kFloat16},
-                                                   prim->name());
-  return input_args[0]->BuildType();
-}
-}  // namespace
-
 MIND_API_OPERATOR_IMPL(ROIAlignGrad, BaseOperator);
-AbstractBasePtr ROIAlignGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                  const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto prim_name = primitive->name();
-  const int64_t input_num = 2;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
+class ROIAlignGradInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    MS_EXCEPTION_IF_NULL(primitive);
+    auto op_name = primitive->name();
+    constexpr size_t kInputNumNoShape = 2;
+    constexpr size_t kInputNumWithShape = 3;
+    (void)CheckAndConvertUtils::CheckInRange("the number of inputs", input_args.size(), kIncludeBoth,
+                                             {kInputNumNoShape, kInputNumWithShape}, primitive->name());
+    auto feature_shape =
+      CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+    auto rois_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+    if (!IsDynamicRank(feature_shape)) {
+      constexpr size_t kROIGradFeatureShapeSize = 4;
+      (void)CheckAndConvertUtils::CheckInteger("rank of feature shape", SizeToLong(feature_shape.size()), kLessEqual,
+                                               kROIGradFeatureShapeSize, op_name);
+    }
+    if (!IsDynamicRank(rois_shape)) {
+      constexpr size_t kROIGradRoisShapeSize = 2;
+      (void)CheckAndConvertUtils::CheckInteger("rank of rois shape", SizeToLong(rois_shape.size()), kEqual,
+                                               kROIGradRoisShapeSize, op_name);
+    }
+    ShapeVector out_shape;
+    if (input_args.size() == static_cast<size_t>(kInputNumWithShape)) {
+      auto input_shape = input_args[kInputIndex2];
+      out_shape = GetShapeValue(primitive, input_shape);
+    } else {
+      auto xdiff_shape_attr = primitive->GetAttr("xdiff_shape");
+      MS_EXCEPTION_IF_NULL(xdiff_shape_attr);
+      out_shape = GetValue<ShapeVector>(xdiff_shape_attr);
+    }
+    return std::make_shared<abstract::Shape>(out_shape);
+  }
 
-  auto type = ROIAlignGradInferType(primitive, input_args);
-  auto shape = ROIAlignGradInferShape(primitive, input_args);
+  TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
+    const std::set<TypePtr> valid_types = {kFloat32, kFloat16};
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("ydiff", input_args[kInputIndex0]->BuildType(), valid_types,
+                                                     prim->name());
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("rois", input_args[kInputIndex1]->BuildType(), valid_types,
+                                                     prim->name());
+    return input_args[kInputIndex0]->BuildType();
+  }
+};
 
-  return abstract::MakeAbstract(shape, type);
+void ROIAlignGrad::set_pooled_height(const int64_t pooled_height) {
+  (void)this->AddAttr(kPooledHeight, api::MakeValue(pooled_height));
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(ROIAlignGrad, prim::kPrimROIAlignGrad, ROIAlignGradInfer, nullptr, true);
+
+int64_t ROIAlignGrad::get_pooled_height() const { return GetValue<int64_t>(GetAttr(kPooledHeight)); }
+
+void ROIAlignGrad::set_pooled_width(const int64_t pooled_width) {
+  (void)this->AddAttr(kPooledWidth, api::MakeValue(pooled_width));
+}
+
+int64_t ROIAlignGrad::get_pooled_width() const { return GetValue<int64_t>(GetAttr(kPooledWidth)); }
+
+void ROIAlignGrad::set_spatial_scale(const float spatial_scale) {
+  (void)this->AddAttr(kSpatialScale, api::MakeValue(spatial_scale));
+}
+
+float ROIAlignGrad::get_spatial_scale() const { return GetValue<float>(GetAttr(kSpatialScale)); }
+
+void ROIAlignGrad::set_sample_num(const int64_t sample_num) {
+  (void)this->AddAttr(kSampleNum, api::MakeValue(sample_num));
+}
+
+int64_t ROIAlignGrad::get_sample_num() const { return GetValue<int64_t>(GetAttr(kSampleNum)); }
+
+void ROIAlignGrad::Init(const int64_t pooled_height, const int64_t pooled_width, const float spatial_scale,
+                        const int64_t sample_num) {
+  this->set_pooled_height(pooled_height);
+  this->set_pooled_width(pooled_width);
+  this->set_spatial_scale(spatial_scale);
+  this->set_sample_num(sample_num);
+}
+REGISTER_HOST_DEPENDS(kNameROIAlignGrad, {2});
+REGISTER_PRIMITIVE_OP_INFER_IMPL(ROIAlignGrad, prim::kPrimROIAlignGrad, ROIAlignGradInfer, false);
 }  // namespace ops
 }  // namespace mindspore

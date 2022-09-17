@@ -3220,8 +3220,8 @@ test_case_nn_ops = [
         'desc_inputs': [[2, 256, 192, 320], [1024, 5]],
         'desc_bprop': [[1024, 256, 7, 7]]}),
     ('ROIAlignGrad', {
-        'block': G.ROIAlignGrad((1, 1, 1, 1), 2, 2, 0.5, 2),
-        'desc_inputs': [[1, 1, 2, 2], [1, 5]],
+        'block': G.ROIAlignGrad(2, 2, 0.5, 2),
+        'desc_inputs': [[1, 1, 2, 2], [1, 5], (1, 1, 1, 1)],
         'desc_bprop': [[1, 1, 2, 2]],
         'skip': ['backward']}),
     ('LARSUpdate', {
