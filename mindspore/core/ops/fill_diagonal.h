@@ -37,6 +37,16 @@ class MIND_API FillDiagonal : public BaseOperator {
   MIND_API_BASE_MEMBER(FillDiagonal);
   /// \brief Constructor.
   FillDiagonal() : BaseOperator(kNameFillDiagonal) { InitIOName({"input_x"}, {"y"}); }
+
+  /// \brief Init.
+  void Init(const float fill_value = 0.0, const bool wrap = false);
+  /// \brief Set fill_value & wrap.
+  void set_fill_value(const float fill_value);
+  void set_wrap(const bool wrap);
+
+  /// \brief Get fill_value & wrap.
+  float get_fill_value() const;
+  bool get_wrap() const;
 };
 
 abstract::AbstractBasePtr FillDiagonalInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

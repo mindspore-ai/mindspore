@@ -15,7 +15,6 @@
  */
 
 #include "ops/fill_diagonal.h"
-
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
@@ -35,7 +34,8 @@ abstract::ShapePtr FillDiagonalInferShape(const PrimitivePtr &, const std::vecto
   }
   if (x_size > kDimSize2) {
     for (int64_t i = 1; i < x_size; i++) {
-      if (x_shape[LongToSize(i)] != x_shape[LongToSize(i - 1)]) {
+      if (x_shape[LongToSize(i)] != x_shape[LongToSize(i - 1)] && x_shape[LongToSize(i)] != -1 &&
+          x_shape[LongToSize(i - 1)] != -1) {
         MS_EXCEPTION(ValueError) << "The primitive[FillDiagonal] argument [input_x] must be a Tensor with the same "
                                     "size in all dimensions when its dimension is greater than 2";
       }
@@ -51,6 +51,21 @@ TypePtr FillDiagonalInferType(const PrimitivePtr &primitive, const std::vector<A
   return std::make_shared<TensorType>(x_dtype);
 }
 }  // namespace
+
+void FillDiagonal::Init(const float fill_value, const bool wrap) {
+  set_fill_value(fill_value);
+  set_wrap(wrap);
+}
+
+void FillDiagonal::set_fill_value(const float fill_value) {
+  (void)this->AddAttr(kFillValue, api::MakeValue(fill_value));
+}
+
+float FillDiagonal::get_fill_value() const { return GetValue<float>(GetAttr(kFillValue)); }
+
+void FillDiagonal::set_wrap(const bool wrap) { (void)this->AddAttr(kWrap, api::MakeValue(wrap)); }
+
+bool FillDiagonal::get_wrap() const { return GetValue<bool>(GetAttr(kWrap)); }
 
 MIND_API_OPERATOR_IMPL(FillDiagonal, BaseOperator);
 AbstractBasePtr FillDiagonalInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
