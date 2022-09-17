@@ -15,6 +15,9 @@
  */
 
 #include "runtime/pynative/op_executor.h"
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
+#include "include/common/utils/signal_util.h"
+#endif
 
 namespace mindspore::runtime {
 OpExecutor &OpExecutor::GetInstance() {
@@ -132,6 +135,14 @@ void OpExecutor::ClearRunOpTasks() {
 }
 
 void OpExecutor::WorkerLoop() {
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
+  SignalGuard sig([](int, siginfo_t *, void *) {
+    int this_pid = getpid();
+    MS_LOG(WARNING) << "Process " << this_pid << " receive KeyboardInterrupt signal.";
+    (void)kill(this_pid, SIGTERM);
+  });
+#endif
+
   while (true) {
     std::shared_ptr<OpTask> task;
     {
