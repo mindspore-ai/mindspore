@@ -32,6 +32,7 @@ from mindspore.train.callback import Callback, LossMonitor, TimeMonitor, ModelCh
     History, LambdaCallback, ReduceLROnPlateau, EarlyStopping
 from mindspore.train.summary import SummaryRecord
 from mindspore.train.train_thor import ConvertNetUtils, ConvertModelUtils
+from mindspore.train.metrics import *
 
 __all__ = ["Model", "DatasetHelper", "amp", "connect_network_with_dataset", "build_train_network", "LossScaleManager",
            "FixedLossScaleManager", "DynamicLossScaleManager", "save_checkpoint", "load_checkpoint",
@@ -40,3 +41,4 @@ __all__ = ["Model", "DatasetHelper", "amp", "connect_network_with_dataset", "bui
 __all__.extend(callback.__all__)
 __all__.extend(summary.__all__)
 __all__.extend(train_thor.__all__)
+__all__.extend(metrics.__all__)

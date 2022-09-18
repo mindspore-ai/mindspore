@@ -17,7 +17,7 @@
 import math
 import numpy as np
 from mindspore import Tensor
-from mindspore.nn.metrics import ROC, auc
+from mindspore.train.metrics import ROC, auc
 
 
 def test_auc():

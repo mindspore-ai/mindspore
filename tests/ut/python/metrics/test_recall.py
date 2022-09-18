@@ -18,7 +18,7 @@ import numpy as np
 import pytest
 
 from mindspore import Tensor
-from mindspore.nn.metrics import Recall
+from mindspore.train.metrics import Recall
 
 
 def test_classification_recall():

@@ -38,7 +38,7 @@ from mindspore.train.summary.enums import PluginEnum
 from mindspore.train.anf_ir_pb2 import DataType
 from mindspore.train._utils import check_value_type, _make_directory
 from mindspore.train.dataset_helper import DatasetHelper
-from mindspore.nn.metrics import get_metrics
+from mindspore.train.metrics import get_metrics
 from mindspore import context
 
 # if there is no path, you need to set to empty list
@@ -265,7 +265,7 @@ class SummaryLandscape:
                 - mindspore.Model: User's model object.
                 - mindspore.nn.Cell: User's network object.
                 - mindspore.dataset: User's dataset object for create loss landscape.
-                - mindspore.nn.Metrics: User's metrics object.
+                - mindspore.train.Metrics: User's metrics object.
             collect_landscape (Union[dict, None]): The meaning of the parameters
                 when creating loss landscape is consistent with the fields
                 with the same name in SummaryCollector. The purpose of setting here

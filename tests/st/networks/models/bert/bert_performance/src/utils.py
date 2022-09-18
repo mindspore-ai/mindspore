@@ -26,7 +26,7 @@ from mindspore import log as logger
 from mindspore.common import dtype as mstype
 from mindspore.common.tensor import Tensor
 from mindspore.nn.learning_rate_schedule import LearningRateSchedule, PolynomialDecayLR, WarmUpLR
-from mindspore.nn.metrics import Metric
+from mindspore.train.metrics import Metric
 from mindspore.ops import operations as P
 from mindspore.train.callback import Callback
 

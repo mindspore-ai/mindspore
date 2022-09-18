@@ -15,7 +15,7 @@
 """test_bleu_score"""
 import math
 import pytest
-from mindspore.nn.metrics import BleuScore
+from mindspore.train.metrics import BleuScore
 
 
 def test_bleu_score():

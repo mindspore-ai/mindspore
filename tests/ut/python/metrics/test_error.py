@@ -18,7 +18,7 @@ import numpy as np
 import pytest
 
 from mindspore import Tensor
-from mindspore.nn.metrics import MAE, MSE
+from mindspore.train.metrics import MAE, MSE
 
 
 def test_MAE():

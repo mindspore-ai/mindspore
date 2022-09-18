@@ -18,7 +18,7 @@ import math
 import numpy as np
 import pytest
 from mindspore import Tensor
-from mindspore.nn.metrics import get_metric_fn, RootMeanSquareDistance
+from mindspore.train.metrics import get_metric_fn, RootMeanSquareDistance
 
 
 def test_root_mean_square_distance():

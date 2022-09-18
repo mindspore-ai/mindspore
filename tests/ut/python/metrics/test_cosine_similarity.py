@@ -16,7 +16,7 @@
 import pytest
 import numpy as np
 from sklearn.metrics import pairwise
-from mindspore.nn.metrics import CosineSimilarity
+from mindspore.train.metrics import CosineSimilarity
 
 
 def test_cosine_similarity():

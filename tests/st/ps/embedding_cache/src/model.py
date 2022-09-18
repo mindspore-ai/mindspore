@@ -22,7 +22,7 @@ from mindspore.nn import EmbeddingLookup, SoftmaxCrossEntropyWithLogits
 from mindspore.nn import Adam
 from mindspore.train import Model
 from mindspore.train.callback import CheckpointConfig, ModelCheckpoint
-from mindspore.nn.metrics import Accuracy
+from mindspore.train.metrics import Accuracy
 from mindspore.common import set_seed
 from mindspore.communication.management import get_rank
 import mindspore.ops.operations as op

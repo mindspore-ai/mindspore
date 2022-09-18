@@ -18,7 +18,7 @@ import math
 import numpy as np
 import pytest
 from mindspore import Tensor
-from mindspore.nn.metrics import get_metric_fn, Perplexity
+from mindspore.train.metrics import get_metric_fn, Perplexity
 
 
 def test_perplexity():

@@ -263,42 +263,6 @@ Dropout层
     mindspore.nn.SGD
     mindspore.nn.thor
 
-评价指标
---------
-
-.. mscnplatformautosummary::
-    :toctree: nn
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.nn.Accuracy
-    mindspore.nn.auc
-    mindspore.nn.BleuScore
-    mindspore.nn.ConfusionMatrix
-    mindspore.nn.ConfusionMatrixMetric
-    mindspore.nn.CosineSimilarity
-    mindspore.nn.Dice
-    mindspore.nn.F1
-    mindspore.nn.Fbeta
-    mindspore.nn.HausdorffDistance
-    mindspore.nn.get_metric_fn
-    mindspore.nn.Loss
-    mindspore.nn.MAE
-    mindspore.nn.MeanSurfaceDistance
-    mindspore.nn.Metric
-    mindspore.nn.MSE
-    mindspore.nn.names
-    mindspore.nn.OcclusionSensitivity
-    mindspore.nn.Perplexity
-    mindspore.nn.Precision
-    mindspore.nn.Recall
-    mindspore.nn.ROC
-    mindspore.nn.RootMeanSquareDistance
-    mindspore.nn.rearrange_inputs
-    mindspore.nn.Top1CategoricalAccuracy
-    mindspore.nn.Top5CategoricalAccuracy
-    mindspore.nn.TopKCategoricalAccuracy
-
 动态学习率
 -----------
 

@@ -22,7 +22,7 @@ from mindspore import context
 from mindspore import Tensor
 from mindspore.common import dtype as mstype
 import mindspore.nn as nn
-from mindspore.nn.metrics import Accuracy
+from mindspore.train.metrics import Accuracy
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor
 from mindspore import load_checkpoint, load_param_into_net, export
 from mindspore.train import Model

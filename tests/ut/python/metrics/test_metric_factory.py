@@ -17,8 +17,7 @@ import math
 import numpy as np
 
 from mindspore import Tensor
-from mindspore.nn.metrics import get_metric_fn
-from mindspore.nn.metrics.metric import rearrange_inputs
+from mindspore.train.metrics import get_metric_fn, rearrange_inputs
 
 
 def test_classification_accuracy():
