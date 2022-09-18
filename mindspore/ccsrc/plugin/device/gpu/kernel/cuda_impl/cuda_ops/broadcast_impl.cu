@@ -126,10 +126,30 @@ struct MaximumFunc {
   __device__ __host__ __forceinline__ T operator()(const T &lhs, const T &rhs) { return lhs > rhs ? lhs : rhs; }
 };
 
+#ifndef _WIN32
 template <typename T>
 struct PowerFunc {
   __device__ __host__ __forceinline__ T operator()(const T &lhs, const T &rhs) { return pow(lhs, rhs); }
 };
+
+#else
+template <typename T>
+struct PowerFunc {
+  __device__ __host__ __forceinline__ T operator()(const T &lhs, const T &rhs) {
+    return static_cast<T>(pow(static_cast<double>(lhs), static_cast<double>(rhs)));
+  }
+};
+
+template <>
+struct PowerFunc<float> {
+  __device__ __host__ __forceinline__ float operator()(const float &lhs, const float &rhs) { return pow(lhs, rhs); }
+};
+
+template <>
+struct PowerFunc<double> {
+  __device__ __host__ __forceinline__ double operator()(const double &lhs, const double &rhs) { return pow(lhs, rhs); }
+};
+#endif
 
 template <>
 struct PowerFunc<half> {
@@ -459,7 +479,7 @@ struct XDivyFunc<half2> {
 
 
 // XLogy check if lhs is less than epsilon, XLogy support half, float, double
-template <typename T>
+template <typename T, typename IsInteger = void>
 struct XLogyFunc {
   // default T is float
   __device__ __host__ __forceinline__ T operator()(const T &lhs, const T &rhs) {
@@ -474,6 +494,27 @@ struct XLogyFunc {
     return res;
   }
 };
+
+#ifdef _WIN32
+template <typename T>
+struct XLogyFunc<T, typename std::enable_if<std::is_integral<T>::value>::type> {
+  __device__ __host__ __forceinline__ T operator()(const T &lhs, const T &rhs) {
+    double tmpLhs = static_cast<double>(lhs);
+    double tmpRhs = static_cast<double>(rhs);
+    return tmpLhs < kFloatEplison && tmpLhs > -kFloatEplison ? 0.0 : (tmpLhs * log(tmpRhs));
+  }
+};
+
+template <>
+struct XLogyFunc<bool> {
+  __device__ __host__ __forceinline__ bool operator()(const bool &lhs, const bool &rhs) {
+    if (!lhs || !rhs) {
+      return false;
+    }
+    return true;
+  }
+};
+#endif
 
 template <>
 struct XLogyFunc<Complex<float>> {

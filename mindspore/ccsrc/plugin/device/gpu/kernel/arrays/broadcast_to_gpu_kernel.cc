@@ -82,10 +82,6 @@ int BroadcastToGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   output_size_list_.clear();
   input_size_list_.push_back(input_size_ * input_type_size_);
   output_size_list_.push_back(output_size_ * input_type_size_);
-
-  //  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
-  //    return ret;
-  //  }
   return KRET_OK;
 }
 
