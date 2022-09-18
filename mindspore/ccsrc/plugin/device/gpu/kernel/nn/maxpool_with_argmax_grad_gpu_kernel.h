@@ -20,6 +20,8 @@
 #include <algorithm>
 #include <vector>
 #include <string>
+#include <map>
+#include <utility>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/maxpool_with_argmax_grad_impl.cuh"
@@ -36,8 +38,8 @@ constexpr size_t kXIndexForW = 3;
 constexpr size_t kDyIndexForH = 2;
 constexpr size_t kDyIndexForW = 3;
 
-template <typename T, typename S>
-class MaxPoolWithArgmaxGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class MaxPoolWithArgmaxGradGpuKernelMod : public NativeGpuKernelMod,
+                                          public MatchKernelHelper<MaxPoolWithArgmaxGradGpuKernelMod> {
  public:
   MaxPoolWithArgmaxGradGpuKernelMod()
       : n_(0),
@@ -52,66 +54,32 @@ class MaxPoolWithArgmaxGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
         index_size_(0),
         dx_size_(0) {}
   ~MaxPoolWithArgmaxGradGpuKernelMod() override = default;
+  std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs,
+             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) {
-    if (is_null_input_) {
-      return true;
-    }
+              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    stream_ptr_ = stream_ptr;
+    return kernel_func_(this, inputs, workspace, outputs);
+  }
+
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
+
+ protected:
+  template <typename T, typename S>
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<AddressPtr> &outputs) {
     T *dy_addr = GetDeviceAddress<T>(inputs, 1);
     S *index_addr = GetDeviceAddress<S>(inputs, 2);
     T *dx_addr = GetDeviceAddress<T>(outputs, 0);
     CalMaxPoolWithArgmaxGrad(dy_addr, index_addr, n_, c_, x_height_, x_width_, dy_height_, dy_width_, dx_addr,
-                             reinterpret_cast<cudaStream_t>(stream_ptr));
+                             reinterpret_cast<cudaStream_t>(stream_ptr_));
     return true;
-  }
-
-  bool Init(const CNodePtr &kernel_node) {
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    kernel_node_ = kernel_node;
-    if (input_num != 3) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 3, but got " << input_num;
-    }
-    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-    if (output_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << output_num;
-    }
-    auto x_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto dy_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    auto index_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
-    auto dx_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_SHAPE_NULL(x_shape, kernel_name, "x") || CHECK_SHAPE_NULL(dy_shape, kernel_name, "dy") ||
-                     CHECK_SHAPE_NULL(index_shape, kernel_name, "index") ||
-                     CHECK_SHAPE_NULL(dx_shape, kernel_name, "dx");
-    if (is_null_input_ || AnfAlgo::IsShapesDynamic({x_shape, dy_shape, index_shape, dx_shape})) {
-      InitSizeLists();
-      return true;
-    }
-    x_size_ = sizeof(T) * SizeOf(x_shape);
-    dy_size_ = sizeof(T) * SizeOf(dy_shape);
-    index_size_ = sizeof(S) * SizeOf(index_shape);
-    dx_size_ = sizeof(T) * SizeOf(dx_shape);
-    if (x_shape.size() < kXDimLowerLimit || dy_shape.size() < kDyDimLowerLimit) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of x and dy cannot be less than 4, but got "
-                        << "the dimension of x: " << x_shape.size() << ", the dimension of dy: " << dy_shape.size();
-    }
-    n_ = LongToSizeClipNeg(x_shape[kXIndexForN]);
-    c_ = LongToSizeClipNeg(x_shape[kXIndexForC]);
-    x_height_ = LongToSizeClipNeg(x_shape[kXIndexForH]);
-    x_width_ = LongToSizeClipNeg(x_shape[kXIndexForW]);
-    dy_height_ = LongToSizeClipNeg(dy_shape[kDyIndexForH]);
-    dy_width_ = LongToSizeClipNeg(dy_shape[kDyIndexForW]);
-
-    InitSizeLists();
-    return true;
-  }
-
- protected:
-  void InitSizeLists() override {
-    input_size_list_.push_back(dy_size_);
-    input_size_list_.push_back(index_size_);
-    output_size_list_.push_back(dx_size_);
   }
 
  private:
@@ -127,6 +95,12 @@ class MaxPoolWithArgmaxGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   size_t dy_size_;
   size_t index_size_;
   size_t dx_size_;
+  size_t x_type_size_{1};
+  size_t dy_type_size_{1};
+  size_t idx_type_size_{1};
+  size_t dx_type_size_{1};
+  void *stream_ptr_{nullptr};
+  std::string kernel_name_;
 };
 }  // namespace kernel
 }  // namespace mindspore

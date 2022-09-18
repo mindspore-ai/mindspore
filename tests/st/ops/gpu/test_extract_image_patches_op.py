@@ -15,6 +15,7 @@
 
 import numpy as np
 import pytest
+import mindspore
 
 from mindspore import Tensor
 from mindspore.ops.operations import _inner_ops as inner
@@ -77,6 +78,35 @@ def test_extract_image_patches_same():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     net = Net([1, 1, 5, 2], [1, 1, 8, 2], [1, 1, 3, 3], "same")
     input_tensor = Tensor(np.arange(6).reshape(1, 1, 2, 3).astype(np.float32))
+    output = net(input_tensor)
+    expect = np.array([0., 0., 0., 0., 0., 0., 0., 0., 0., 4., 5., 0., 0., 0.,
+                       0., 0., 0., 0., 0., 0.]).reshape((1, 10, 1, 2))
+    assert np.all(output.asnumpy() == expect)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_extract_image_patches_dynamic_shape():
+    """
+    Feature: test dynamic shape of extract_image_patches
+    Description: test dynamic shape of extract_image_patches
+    Expectation: same to none dynamic
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    net = Net([1, 1, 5, 2], [1, 1, 8, 2], [1, 1, 3, 3], "same")
+    input_tensor = Tensor(np.arange(6).reshape(1, 1, 2, 3).astype(np.float32))
+    in_dyn = Tensor(shape=[1, 1, 2, None], dtype=mindspore.float32)
+    net.set_inputs(in_dyn)
+    output = net(input_tensor)
+    expect = np.array([0., 0., 0., 0., 0., 0., 0., 0., 0., 4., 5., 0., 0.,
+                       0., 0., 0., 0., 0., 0., 0.]).reshape((1, 10, 1, 2))
+    assert np.all(output.asnumpy() == expect)
+
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    net = Net([1, 1, 5, 2], [1, 1, 8, 2], [1, 1, 3, 3], "same")
+    input_tensor = Tensor(np.arange(6).reshape(1, 1, 2, 3).astype(np.float32))
+    net.set_inputs(in_dyn)
     output = net(input_tensor)
     expect = np.array([0., 0., 0., 0., 0., 0., 0., 0., 0., 4., 5., 0., 0., 0.,
                        0., 0., 0., 0., 0., 0.]).reshape((1, 10, 1, 2))
