@@ -23,7 +23,7 @@ import mindspore.dataset.vision as CV
 import mindspore.nn as nn
 from mindspore.common import dtype as mstype
 from mindspore.dataset.vision import Inter
-from mindspore.nn.metrics import Accuracy
+from mindspore.train.metrics import Accuracy
 from mindspore.train import Model
 from mindspore.train.callback import LossMonitor
 from mindspore.common.initializer import TruncatedNormal

@@ -22,7 +22,7 @@ from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from mindspore.nn import Dropout
 from mindspore.nn.optim import Adam
-from mindspore.nn.metrics import Metric
+from mindspore.train.metrics import Metric
 from mindspore import nn, Tensor, ParameterTuple, Parameter
 from mindspore.common.initializer import Uniform, initializer
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig

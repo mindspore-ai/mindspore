@@ -17,7 +17,7 @@ import pytest
 import numpy as np
 from mindspore import nn, context
 from mindspore.common.tensor import Tensor
-from mindspore.nn.metrics import OcclusionSensitivity
+from mindspore.train.metrics import OcclusionSensitivity
 context.set_context(mode=context.GRAPH_MODE)
 
 class DenseNet(nn.Cell):

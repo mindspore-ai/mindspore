@@ -15,7 +15,7 @@
 
 import mindspore.context as context
 from mindspore import set_seed
-from mindspore.nn.metrics import Accuracy
+from mindspore.train.metrics import Accuracy
 from mindspore.train import Model
 from mindspore.train.callback import TimeMonitor
 from mindspore.communication.management import init

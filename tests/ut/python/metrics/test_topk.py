@@ -18,7 +18,7 @@ import numpy as np
 import pytest
 
 from mindspore import Tensor
-from mindspore.nn.metrics import TopKCategoricalAccuracy, Top1CategoricalAccuracy, Top5CategoricalAccuracy
+from mindspore.train.metrics import TopKCategoricalAccuracy, Top1CategoricalAccuracy, Top5CategoricalAccuracy
 
 
 def test_type_topk():

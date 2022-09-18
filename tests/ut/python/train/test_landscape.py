@@ -20,7 +20,7 @@ import pytest
 
 from mindspore.common import set_seed
 from mindspore import nn
-from mindspore.nn.metrics import Loss
+from mindspore.train.metrics import Loss
 from mindspore.train import Model
 from mindspore.train.callback import SummaryLandscape
 from tests.security_utils import security_off_wrap

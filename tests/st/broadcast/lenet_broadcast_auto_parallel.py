@@ -20,7 +20,7 @@ import numpy as np
 import mindspore.communication.management as distributedTool
 import mindspore.nn as nn
 from mindspore import context
-from mindspore.nn.metrics import Accuracy
+from mindspore.train.metrics import Accuracy
 from mindspore.train import Model
 from mindspore.train.callback import LossMonitor, TimeMonitor
 from tests.models.official.cv.lenet.src.dataset import create_dataset

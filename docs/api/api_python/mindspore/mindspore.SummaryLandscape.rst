@@ -27,7 +27,7 @@ mindspore.SummaryLandscape
               - mindspore.Model：用户的模型。
               - mindspore.nn.Cell：用户的网络。
               - mindspore.dataset：创建loss所需要的用户数据集。
-              - mindspore.nn.Metrics：用户的评估指标。
+              - mindspore.train.Metrics：用户的评估指标。
 
             - **collect_landscape** (Union[dict, None]) - 创建loss地形图所用的参数含义与SummaryCollector同名字段一致。此处设置的目的是允许用户可以自由修改创建loss地形图参数。默认值：None。
 

@@ -16,7 +16,7 @@
 import numpy as np
 import pytest
 from mindspore import Tensor
-from mindspore.nn.metrics import ConfusionMatrix
+from mindspore.train.metrics import ConfusionMatrix
 
 
 def test_confusion_matrix():

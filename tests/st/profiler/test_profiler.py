@@ -22,7 +22,7 @@ import pytest
 
 from mindspore import dataset as ds
 from mindspore import nn, Tensor, context
-from mindspore.nn.metrics import Accuracy
+from mindspore.train.metrics import Accuracy
 from mindspore.nn.optim import Momentum
 from mindspore.dataset.transforms import transforms as C
 from mindspore.dataset.vision import transforms as CV

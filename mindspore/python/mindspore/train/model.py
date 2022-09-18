@@ -27,7 +27,7 @@ from mindspore import log as logger
 from mindspore.train.serialization import save_checkpoint, load_checkpoint
 from mindspore.train.callback._checkpoint import ModelCheckpoint, _chg_ckpt_file_name_if_same_exist
 from mindspore.common.tensor import Tensor
-from mindspore.nn.metrics import get_metrics, get_metric_fn
+from mindspore.train.metrics import get_metrics, get_metric_fn
 from mindspore._checkparam import check_input_data, check_output_data, Validator
 from mindspore.train.callback import _InternalCallbackParam, RunContext, _CallbackManager, Callback, TimeMonitor
 from mindspore.train.callback import __all__ as internal_cb_names
@@ -37,7 +37,7 @@ from mindspore.parallel._utils import _get_parallel_mode, _get_device_num, _get_
     _reset_op_id_with_offset
 from mindspore.parallel._ps_context import _is_role_worker, _is_role_pserver, _is_role_sched, _is_ps_mode, \
     _cache_enable, _enable_distributed_mindrt
-from mindspore.nn.metrics import Loss
+from mindspore.train.metrics import Loss
 from mindspore import nn
 from mindspore.boost import AutoBoost
 from mindspore.context import ParallelMode

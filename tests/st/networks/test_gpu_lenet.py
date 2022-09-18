@@ -27,7 +27,7 @@ from mindspore import Tensor, ParameterTuple
 from mindspore.common import dtype as mstype
 from mindspore.dataset.vision import Inter
 from mindspore.nn import Dense, TrainOneStepCell, WithLossCell, ForwardValueAndGrad
-from mindspore.nn.metrics import Accuracy
+from mindspore.train.metrics import Accuracy
 from mindspore.nn.optim import Momentum
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
