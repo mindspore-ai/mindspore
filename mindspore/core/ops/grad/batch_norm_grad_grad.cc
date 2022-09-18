@@ -15,6 +15,7 @@
  */
 
 #include <memory>
+#include <map>
 #include "ops/grad/batch_norm_grad_grad.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
@@ -77,6 +78,26 @@ TuplePtr BatchNormGradGradInferType(const PrimitivePtr &primitive, const std::ve
   TypePtr x_type = input_args[kInputIndex0]->BuildType();
   TypePtr dy_type = input_args[kInputIndex1]->BuildType();
   TypePtr scale_type = input_args[kInputIndex2]->BuildType();
+  TypePtr reserve_space_1_type = input_args[kInputIndex3]->BuildType();
+  TypePtr reserve_space_2_type = input_args[kInputIndex4]->BuildType();
+  TypePtr ddx_type = input_args[kInputIndex5]->BuildType();
+  TypePtr ddscale_type = input_args[kInputIndex6]->BuildType();
+  TypePtr ddoffset_type = input_args[kInputIndex7]->BuildType();
+
+  std::map<std::string, TypePtr> x_with_dy_types;
+  (void)x_with_dy_types.emplace("x", x_type);
+  (void)x_with_dy_types.emplace("dy", dy_type);
+  std::map<std::string, TypePtr> x_with_ddx_types;
+  (void)x_with_ddx_types.emplace("x", x_type);
+  (void)x_with_ddx_types.emplace("ddx", ddx_type);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, {kFloat16, kFloat32}, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("scale", scale_type, {kFloat32}, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("reserve_space_1", reserve_space_1_type, {kFloat32}, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("reserve_space_2", reserve_space_2_type, {kFloat32}, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("ddscale", ddscale_type, {kFloat32}, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("ddoffset", ddoffset_type, {kFloat32}, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeSame(x_with_dy_types, {kFloat16, kFloat32}, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeSame(x_with_ddx_types, {kFloat16, kFloat32}, prim_name);
   return std::make_shared<Tuple>(std::vector<TypePtr>{x_type, dy_type, scale_type});
 }
 
