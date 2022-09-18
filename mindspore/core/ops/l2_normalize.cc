@@ -66,7 +66,8 @@ class L2NormalizeInfer : public abstract::OpInferBase {
       MS_EXCEPTION(TypeError) << "For '" << prim_name << "', input shape size must be > 0.";
     }
     // failed to get vector<int64_t> axis from infer
-    int axis = GetValue<std::vector<int64_t>>(primitive->GetAttr("axis"))[0];
+    auto axis_vec = CheckAndConvertUtils::CheckIntOrTupleInt("attribute[axis]", primitive->GetAttr("axis"), prim_name);
+    int axis = axis_vec[0];
     CheckAndConvertUtils::CheckInRange("axis value", axis, kIncludeLeft, {-input_rank, input_rank}, prim_name);
 
     auto output_shape = input_shape;

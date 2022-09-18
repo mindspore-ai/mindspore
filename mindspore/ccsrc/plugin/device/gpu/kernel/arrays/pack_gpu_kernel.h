@@ -20,67 +20,59 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <map>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/pack.cuh"
+#include "mindspore/core/ops/stack.h"
 
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class PackFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class PackFwdGpuKernelMod : public NativeGpuKernelMod {
  public:
   PackFwdGpuKernelMod()
-      : axis_(0),
-        is_null_input_(false),
-        input_num_(1),
-        output_size_(0),
-        dims_behind_axis_(1),
-        inputs_host_(nullptr),
-        kernel_name_("Pack") {}
+      : axis_(0), input_num_(1), output_size_(0), dims_behind_axis_(1), inputs_host_(nullptr), kernel_name_("Pack") {}
   ~PackFwdGpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    if (is_null_input_) {
-      return true;
-    }
     T *output = GetDeviceAddress<T>(outputs, 0);
     T **inputs_array = GetDeviceAddress<T *>(workspace, 0);
     for (size_t i = 0; i < inputs.size(); i++) {
       inputs_host_[i] = GetDeviceAddress<T>(inputs, i);
     }
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                               cudaMemcpyAsync(inputs_array,  // NOLINT
-                                               inputs_host_.get(), sizeof(T *) * input_num_, cudaMemcpyHostToDevice,
-                                               reinterpret_cast<cudaStream_t>(stream_ptr)),
-                               "Pack opt cudaMemcpyAsync inputs failed");
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+      cudaMemcpyAsync(inputs_array,  // NOLINT
+                      inputs_host_.get(), sizeof(T *) * input_num_, cudaMemcpyHostToDevice,
+                      reinterpret_cast<cudaStream_t>(stream_ptr)),
+      "Pack opt cudaMemcpyAsync inputs failed");
     PackKernel(output_size_, input_num_, dims_behind_axis_, inputs_array, output,
                reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
-  bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-    kernel_node_ = kernel_node;
-    (void)CheckParam(kernel_node);
-    axis_ = static_cast<int32_t>(GetAttr<int64_t>(kernel_node, "axis"));
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs,
+             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override {
+    int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+    if (ret != KRET_OK) {
+      return ret;
+    }
+    auto kernel_ptr = std::make_shared<ops::Stack>(base_operator->GetPrim());
+    axis_ = kernel_ptr->get_axis();
     if (axis_ < 0) {
-      auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
+      auto input_shape = inputs.at(kIndex0)->GetShapeVector();
       axis_ += (SizeToInt(input_shape.size()) + 1);
     }
-    auto origin_data_format = AnfAlgo::GetOriginDataFormat(kernel_node);
-    auto input_format = AnfAlgo::GetInputFormat(kernel_node, 0);
+    auto origin_data_format = kOpFormat_DEFAULT;
+    auto input_format = GetFormatFromEnumToStr(inputs[0]->GetFormat());
     axis_ = AxisTransform(origin_data_format, input_format, axis_);
 
-    input_num_ = common::AnfAlgo::GetInputTensorNum(kernel_node);
+    input_num_ = inputs.size();
     inputs_host_ = std::make_unique<T *[]>(input_num_);
     for (size_t i = 0; i < input_num_; i++) {
       size_t input_size = 1;
-      auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, i);
-      is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "input");
-      if (is_null_input_) {
-        InitSizeLists();
-        return true;
-      }
+      auto input_shape = inputs.at(i)->GetShapeVector();
       for (size_t j = 0; j < input_shape.size(); j++) {
         input_size *= static_cast<size_t>(input_shape[j]);
         if (i == 0 && j >= IntToSize(axis_)) {
@@ -91,24 +83,27 @@ class PackFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     }
     workspace_size_list_.push_back(sizeof(T *) * input_num_);
 
-    auto output_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
-    is_null_input_ = CHECK_SHAPE_NULL(output_shape, kernel_name_, "output");
-    if (is_null_input_) {
-      InitSizeLists();
-      return true;
-    }
+    auto output_shape = outputs.at(kIndex0)->GetShapeVector();
     output_size_ = 1;
     for (size_t i = 0; i < output_shape.size(); i++) {
       output_size_ *= static_cast<size_t>(output_shape[i]);
     }
+    return KRET_OK;
+  }
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override {
+    kernel_name_ = base_operator->name();
+    auto output_num = outputs.size();
+    if (output_num != 1) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << output_num;
+    }
+
     output_size_list_.push_back(output_size_ * sizeof(T));
-    InitSizeLists();
     return true;
   }
 
-  void ResetResource() noexcept override {
+  void ResetResource() noexcept {
     axis_ = 0;
-    is_null_input_ = false;
     input_num_ = 1;
     output_size_ = 0;
     dims_behind_axis_ = 1;
@@ -118,18 +113,8 @@ class PackFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     workspace_size_list_.clear();
   }
 
- protected:
-  void InitSizeLists() override {}
-
  private:
-  void CheckParam(const CNodePtr &kernel_node) {
-    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-    if (output_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << output_num;
-    }
-  }
   int axis_;
-  bool is_null_input_;
   size_t input_num_;
   size_t output_size_;
   size_t dims_behind_axis_;

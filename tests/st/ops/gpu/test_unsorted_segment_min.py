@@ -214,6 +214,7 @@ class UnsortedSegmentMinDynNet(nn.Cell):
         self.num_segments = num_segments
         self.to_dyn_1 = dyn_a
         self.to_dyn_2 = dyn_b
+
     def construct(self, data, ids):
         # testing selective inputs being dynamic
         if self.to_dyn_1:
@@ -396,4 +397,23 @@ def test_3d_float32_b_dyn():
                         [8.0000000e+00, 9.0000000e+00],
                         [1.0000000e+01, 1.1000000e+01],
                         [1.2000000e+01, 1.3000000e+01]]]).astype(np.float32)
+    np.testing.assert_array_almost_equal(output, expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_1d_int32_dynamic_shape():
+    """
+    Feature: UnsortedSegmentMin operation dynamic shape test
+    Description: test UnsortedSegmentMin dynamic shape operation
+    Expectation: UnsortedSegmentMin output == expect
+    """
+    context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
+    input_x = Tensor([1, 2, 3, 4], mstype.int32)
+    segment_ids = Tensor([0, 0, 1, 2], mstype.int32)
+    num_segments = 4
+    net = UnsortedSegmentMinNet(num_segments)
+    output = net(input_x, segment_ids).asnumpy()
+    expect = np.array([1, 3, 4, 2147483647]).astype(np.int32)
     np.testing.assert_array_almost_equal(output, expect)
