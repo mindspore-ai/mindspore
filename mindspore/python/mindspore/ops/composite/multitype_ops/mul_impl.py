@@ -12,14 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
 """Implementation for internal polymorphism `mul` operations."""
-from mindspore.common import CSRTensor, COOTensor
 from mindspore.ops.operations import _inner_ops as inner
+from mindspore.ops.composite.multitype_ops import _compile_utils as utils
 from mindspore.ops.composite.multitype_ops._constexpr_utils import check_equal
-from . import _compile_utils as utils
-from ...composite import base
-from ... import functional as F
+from mindspore.ops.composite import base
+from mindspore.ops import functional as F
+from mindspore.common import CSRTensor, COOTensor
 
 mul = base.MultitypeFuncGraph("mul", True)
 """

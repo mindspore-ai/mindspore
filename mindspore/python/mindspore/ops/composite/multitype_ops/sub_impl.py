@@ -14,11 +14,10 @@
 # ============================================================================
 
 """Implementation for internal polymorphism `sub` operations."""
-
+from mindspore.ops.composite.multitype_ops import _compile_utils as utils
 from mindspore.ops.composite.multitype_ops._constexpr_utils import check_equal, make_tensor
-from . import _compile_utils as utils
-from ...composite import base
-from ... import functional as F
+from mindspore.ops.composite import base
+from mindspore.ops import functional as F
 
 
 sub = base.MultitypeFuncGraph("sub", True)

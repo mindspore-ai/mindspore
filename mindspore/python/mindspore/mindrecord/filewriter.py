@@ -217,52 +217,6 @@ class FileWriter:
                 raise ParamTypeError('index field', 'str')
         return self._header.add_index_fields(index_fields)
 
-    def _verify_based_on_schema(self, raw_data):
-        """
-        Verify data according to schema and remove invalid data if validation failed.
-
-        1) allowed data type contains: "int32", "int64", "float32", "float64", "string", "bytes".
-
-        Args:
-           raw_data (list[dict]): List of raw data.
-        """
-        error_data_dic = {}
-        schema_content = self._header.schema
-        for field in schema_content:
-            for i, v in enumerate(raw_data):
-                if i in error_data_dic:
-                    continue
-
-                if field not in v:
-                    error_data_dic[i] = "for schema, {} th data is wrong, " \
-                                        "there is not '{}' object in the raw data.".format(i, field)
-                    continue
-                field_type = type(v[field]).__name__
-                if field_type not in VALUE_TYPE_MAP:
-                    error_data_dic[i] = "for schema, {} th data is wrong, " \
-                                        "data type for '{}' is not matched.".format(i, field)
-                    continue
-
-                if schema_content[field]["type"] not in VALUE_TYPE_MAP[field_type]:
-                    error_data_dic[i] = "for schema, {} th data is wrong, " \
-                                        "data type for '{}' is not matched.".format(i, field)
-                    continue
-
-                if field_type == 'ndarray':
-                    if 'shape' not in schema_content[field]:
-                        error_data_dic[i] = "for schema, {} th data is wrong, " \
-                                            "data type for '{}' is not matched.".format(i, field)
-                    else:
-                        try:
-                            np.reshape(v[field], schema_content[field]['shape'])
-                        except ValueError:
-                            error_data_dic[i] = "for schema, {} th data is wrong, " \
-                                                "data type for '{}' is not matched.".format(i, field)
-        error_data_dic = sorted(error_data_dic.items(), reverse=True)
-        for i, v in error_data_dic:
-            raw_data.pop(i)
-            logger.warning(v)
-
     def open_and_set_header(self):
         """
         Open writer and set header which stores meta information. The function is only used for parallel \
@@ -446,6 +400,52 @@ class FileWriter:
             error = "Field '{}' contains illegal attributes.".format(v)
             return False, error
         return True, ''
+
+    def _verify_based_on_schema(self, raw_data):
+        """
+        Verify data according to schema and remove invalid data if validation failed.
+
+        1) allowed data type contains: "int32", "int64", "float32", "float64", "string", "bytes".
+
+        Args:
+           raw_data (list[dict]): List of raw data.
+        """
+        error_data_dic = {}
+        schema_content = self._header.schema
+        for field in schema_content:
+            for i, v in enumerate(raw_data):
+                if i in error_data_dic:
+                    continue
+
+                if field not in v:
+                    error_data_dic[i] = "for schema, {} th data is wrong, " \
+                                        "there is not '{}' object in the raw data.".format(i, field)
+                    continue
+                field_type = type(v[field]).__name__
+                if field_type not in VALUE_TYPE_MAP:
+                    error_data_dic[i] = "for schema, {} th data is wrong, " \
+                                        "data type for '{}' is not matched.".format(i, field)
+                    continue
+
+                if schema_content[field]["type"] not in VALUE_TYPE_MAP[field_type]:
+                    error_data_dic[i] = "for schema, {} th data is wrong, " \
+                                        "data type for '{}' is not matched.".format(i, field)
+                    continue
+
+                if field_type == 'ndarray':
+                    if 'shape' not in schema_content[field]:
+                        error_data_dic[i] = "for schema, {} th data is wrong, " \
+                                            "data type for '{}' is not matched.".format(i, field)
+                    else:
+                        try:
+                            np.reshape(v[field], schema_content[field]['shape'])
+                        except ValueError:
+                            error_data_dic[i] = "for schema, {} th data is wrong, " \
+                                                "data type for '{}' is not matched.".format(i, field)
+        error_data_dic = sorted(error_data_dic.items(), reverse=True)
+        for i, v in error_data_dic:
+            raw_data.pop(i)
+            logger.warning(v)
 
     def _validate_schema(self, content):
         """

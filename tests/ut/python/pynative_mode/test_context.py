@@ -33,10 +33,10 @@ def setup_module(module):
 def test_contex_create_context():
     """ test_contex_create_context """
     context.set_context(mode=context.PYNATIVE_MODE)
-    if context._k_context is None:
+    if context.K_CONTEXT is None:
         ctx = context._context()
         assert ctx is not None
-    context._k_context = None
+    context.K_CONTEXT = None
 
 
 def test_set_save_graphs_in_security():

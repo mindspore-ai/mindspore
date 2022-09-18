@@ -31,15 +31,15 @@ from mindspore.ops import _constants
 from mindspore.ops.function import *
 from mindspore.ops.function.sparse_func import sparse_add
 from mindspore.ops.primitive import constexpr, Primitive
-from . import operations as P
-from .operations import _grad_ops
-from .operations import _csr_ops
-from .operations import _inner_ops
-from .operations import linalg_ops
-from .operations.math_ops import Median
-from .operations.array_ops import UniqueConsecutive
-from .operations.nn_ops import AdaptiveMaxPool2D
-from .composite import _Vmap, Shard
+from mindspore.ops import operations as P
+from mindspore.ops.operations import _grad_ops
+from mindspore.ops.operations import _csr_ops
+from mindspore.ops.operations import _inner_ops
+from mindspore.ops.operations import linalg_ops
+from mindspore.ops.operations.math_ops import Median
+from mindspore.ops.operations.array_ops import UniqueConsecutive
+from mindspore.ops.operations.nn_ops import AdaptiveMaxPool2D
+from mindspore.ops.composite import _Vmap, Shard
 
 typeof = Primitive('typeof')
 hastype = Primitive('hastype')

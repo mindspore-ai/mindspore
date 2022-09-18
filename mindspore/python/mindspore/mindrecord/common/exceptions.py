@@ -80,8 +80,7 @@ class MindRecordException(Exception):
         """Initialize an error which may occurs in mindrecord."""
         super(MindRecordException, self).__init__()
         class_name = self.__class__.__name__
-        error_item = EXCEPTIONS[class_name] if class_name in EXCEPTIONS \
-            else EXCEPTIONS['UnknownError']
+        error_item = EXCEPTIONS.get(class_name) if class_name in EXCEPTIONS else EXCEPTIONS.get('UnknownError')
         self._error_msg = error_item[1]
         self._error_code = MindRecordException.transform_error_code(error_item[0])
 
@@ -123,8 +122,7 @@ class MindRecordException(Exception):
         runtime = LogRuntime.RT_HOST
         error_code_type = ErrorCodeType.ERROR_CODE
         error_level = ErrorLevel.COMMON_LEVEL
-        exception_no_range_per_module = 100
-        mod_id = int(exception_no / exception_no_range_per_module) + 1
+        mod_id = int(exception_no / 100) + 1
         error_code = (((0xFF & runtime) << 30)
                       | ((0xFF & error_code_type) << 28)
                       | ((0xFF & error_level) << 25)

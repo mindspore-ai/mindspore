@@ -12,12 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
 """Implementation for internal polymorphism `negative` operations."""
 
+from mindspore.ops.composite import base
+from mindspore.ops import functional as F
 from mindspore.common import CSRTensor, COOTensor
-from ...composite import base
-from ... import functional as F
 
 
 negative = base.MultitypeFuncGraph("negative", True)

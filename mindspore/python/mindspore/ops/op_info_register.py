@@ -14,6 +14,8 @@
 # ============================================================================
 
 """Operators info register."""
+from __future__ import absolute_import
+from __future__ import division
 
 import inspect
 import json
@@ -21,7 +23,6 @@ import os
 import functools
 
 from mindspore._c_expression import Oplib
-
 from mindspore._checkparam import Validator as validator
 
 # path of built-in op info register.

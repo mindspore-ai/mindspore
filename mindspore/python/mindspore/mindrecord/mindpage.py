@@ -54,6 +54,16 @@ class MindPage:
         """
         return self._candidate_fields
 
+    @property
+    def category_field(self):
+        """
+        Getter function for category fields.
+
+        Returns:
+            list[str], by which data could be grouped.
+        """
+        return self._category_field
+
     def get_category_fields(self):
         """
         Return candidate category fields.
@@ -85,16 +95,6 @@ class MindPage:
         if category_field not in self._candidate_fields:
             raise MRMDefineCategoryError("Field '{}' is not a candidate category field.".format(category_field))
         return self._segment.set_category_field(category_field)
-
-    @property
-    def category_field(self):
-        """
-        Getter function for category fields.
-
-        Returns:
-            list[str], by which data could be grouped.
-        """
-        return self._category_field
 
     @category_field.setter
     def category_field(self, category_field):

@@ -13,8 +13,9 @@
 # limitations under the License.
 # ============================================================================
 """Data parallel allreduce fusion"""
-
 from __future__ import absolute_import
+from __future__ import division
+
 import ctypes
 
 _MAX_GROUP_NAME_LEN = 127

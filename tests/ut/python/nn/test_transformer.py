@@ -291,7 +291,7 @@ class TestBasicWarningValidator:
         os.environ['GLOG_logtostderr'] = '0'
         # Force to generate the logger again
         # pylint: disable=W0212
-        mindspore.log._global_logger = None
+        mindspore.log.GLOBAL_LOGGER = None
 
     def teardown_method(self):
         for env in self.log_envs:

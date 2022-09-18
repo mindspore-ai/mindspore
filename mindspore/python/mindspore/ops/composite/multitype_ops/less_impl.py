@@ -14,6 +14,9 @@
 # ============================================================================
 
 """Implementation for internal polymorphism `less` operations."""
+from __future__ import absolute_import
+from __future__ import division
+
 from mindspore.ops.composite import base
 from mindspore.ops import functional as F
 from mindspore.ops.operations import _inner_ops as inner

@@ -36,6 +36,18 @@ class ShardWriter:
         self._header = None
         self._is_open = False
 
+    @property
+    def is_open(self):
+        """getter function"""
+        return self._is_open
+
+    @staticmethod
+    def convert_np_types(val):
+        """convert numpy type to python primitive type"""
+        if isinstance(val, (np.int32, np.int64, np.float32, np.float64)):
+            return val.item()
+        return val
+
     def open(self, paths, override):
         """
         Open a new MindRecord File and prepare to write raw data.
@@ -137,13 +149,6 @@ class ShardWriter:
     def get_shard_header(self):
         return self._header
 
-    @staticmethod
-    def convert_np_types(val):
-        """convert numpy type to python primitive type"""
-        if isinstance(val, (np.int32, np.int64, np.float32, np.float64)):
-            return val.item()
-        return val
-
     def write_raw_data(self, data, validate=True, parallel_writer=False):
         """
         Write raw data of cv dataset.
@@ -181,6 +186,22 @@ class ShardWriter:
             raise MRMWriteDatasetError
         return ret
 
+    def commit(self):
+        """
+        Flush data to disk.
+
+        Returns:
+            MSRStatus, SUCCESS or FAILED.
+
+        Raises:
+            MRMCommitError: If failed to flush data to disk.
+        """
+        ret = self._writer.commit()
+        if ret != ms.MSRStatus.SUCCESS:
+            logger.critical("Failed to commit.")
+            raise MRMCommitError
+        return ret
+
     def _merge_blob(self, blob_data):
         """
         Merge multiple blob data whose type is bytes or ndarray
@@ -207,24 +228,3 @@ class ShardWriter:
             merged += int_to_bytes(len(v))
             merged += v
         return merged
-
-    def commit(self):
-        """
-        Flush data to disk.
-
-        Returns:
-            MSRStatus, SUCCESS or FAILED.
-
-        Raises:
-            MRMCommitError: If failed to flush data to disk.
-        """
-        ret = self._writer.commit()
-        if ret != ms.MSRStatus.SUCCESS:
-            logger.critical("Failed to commit.")
-            raise MRMCommitError
-        return ret
-
-    @property
-    def is_open(self):
-        """getter function"""
-        return self._is_open

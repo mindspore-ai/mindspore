@@ -14,8 +14,12 @@
 # limitations under the License.
 # ============================================================================
 """HCCL management API"""
+from __future__ import absolute_import
+from __future__ import division
+
 import ctypes
 import os
+
 from mindspore import context
 from mindspore._c_expression import get_hccl_rank_id, get_hccl_rank_size
 

@@ -14,9 +14,12 @@
 # ============================================================================
 
 """Registry the relation."""
+from __future__ import absolute_import
+from __future__ import division
 
 from collections import UserDict
-from .primitive import Primitive
+
+from mindspore.ops.primitive import Primitive
 
 
 class Registry(UserDict):
