@@ -198,6 +198,7 @@ class StaticLossScaler(LossScaler):
         Args:
             grads_finite (Tensor): a scalar bool Tensor indicating whether the grads are finite.
         """
+        return False
 
 
 class DynamicLossScaler(LossScaler):
@@ -286,6 +287,7 @@ class DynamicLossScaler(LossScaler):
 
         counter = ((self.counter + 1) % self.scale_window) * grads_finite
         ops.assign(self.counter, counter)
+        return True
 
 __all__ = [
     "DynamicLossScaleManager", "LossScaleManager", "FixedLossScaleManager",
