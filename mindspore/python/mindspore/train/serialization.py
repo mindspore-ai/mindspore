@@ -27,6 +27,7 @@ import threading
 from threading import Thread, Lock
 from collections import defaultdict, OrderedDict
 from io import BytesIO
+from inspect import isfunction
 
 import math
 import sys
@@ -44,6 +45,7 @@ from mindspore import log as logger
 from mindspore._checkparam import check_input_data, check_input_dataset, Validator
 from mindspore.common import dtype as mstype
 from mindspore.common.api import _cell_graph_executor as _executor
+from mindspore.common.api import _MindsporeFunctionExecutor
 from mindspore.common.initializer import initializer, One
 from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor
@@ -936,7 +938,10 @@ def _export(net, file_name, file_format, *inputs, **kwargs):
     if file_format not in supported_formats:
         raise ValueError(f"For 'export', 'file_format' must be one of {supported_formats}, but got {file_format}.")
     # When dumping ONNX file, switch network mode to infer when it is training(NOTE: ONNX only designed for prediction)
-    is_dump_onnx_in_training = net.training and file_format == 'ONNX'
+    is_dump_onnx_in_training = False
+    if hasattr(net, 'training'):
+        is_dump_onnx_in_training = net.training and file_format == 'ONNX'
+
     if is_dump_onnx_in_training:
         net.set_train(mode=False)
 
@@ -1124,18 +1129,38 @@ def _spilt_save(net_dict, model, file_name, is_encrypt, **kwargs):
         os.chmod(data_file_name, stat.S_IRUSR)
 
 
-def _save_mindir(net, file_name, *inputs, **kwargs):
-    """Save MindIR format file."""
-    model = mindir_model()
+def _msfunc_info(net, *inputs):
+    """Get mindir stream and parameter dict of ms_function"""
+    # pylint: disable=protected-access
+    net_dict = OrderedDict()
+    _ms_func_executor = _MindsporeFunctionExecutor(net, time.time() * 1e9)
+    graph_id = _ms_func_executor.compile(args_list=inputs, method_name=net.__name__)
+    mindir_stream = _executor._get_func_graph_proto(net, graph_id, 'mind_ir')
+    params = _ms_func_executor._graph_executor.get_params(graph_id)
+    for name, value in params.items():
+        net_dict[name] = Parameter(value, name=name)
+    return mindir_stream, net_dict
 
+
+def _cell_info(net, *inputs):
+    """Get mindir stream and net dict of cell"""
     phase_name = "predict" if net._auto_parallel_mode else "export.mindir"
-
     graph_id, _ = _executor.compile(net, *inputs, phase=phase_name,
                                     do_convert=False, auto_parallel_mode=net._auto_parallel_mode)
     # pylint: disable=protected-access
     mindir_stream = _executor._get_func_graph_proto(net, graph_id, 'mind_ir')
 
     net_dict = net.parameters_dict()
+    return mindir_stream, net_dict
+
+
+def _save_mindir(net, file_name, *inputs, **kwargs):
+    """Save MindIR format file."""
+    model = mindir_model()
+    if isfunction(net):
+        mindir_stream, net_dict = _msfunc_info(net, *inputs)
+    else:
+        mindir_stream, net_dict = _cell_info(net, *inputs)
     model.ParseFromString(mindir_stream)
 
     if kwargs.get('dataset'):

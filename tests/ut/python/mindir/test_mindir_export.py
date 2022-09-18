@@ -42,7 +42,6 @@ def test_export_control_flow():
 
             return x + y
 
-
     x = np.array([3], np.float32)
     y = np.array([0], np.float32)
     net = Net()

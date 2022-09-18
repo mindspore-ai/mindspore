@@ -1371,6 +1371,23 @@ void GraphExecutorPy::UpdataParamNodeDefaultInput(
   }
 }
 
+py::dict GraphExecutorPy::GetParams(const std::string &phase) {
+  FuncGraphPtr func_graph = info_[phase]->resource->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  py::dict parameter_dict;
+  std::vector<AnfNodePtr> graph_params = func_graph->parameters();
+  for (auto &param : graph_params) {
+    MS_EXCEPTION_IF_NULL(param);
+    auto param_ptr = std::static_pointer_cast<Parameter>(param);
+    std::string name = param_ptr->name();
+    auto tensor = std::dynamic_pointer_cast<tensor::Tensor>(param_ptr->default_param());
+    if (tensor != nullptr) {
+      parameter_dict[py::str(name)] = *tensor;
+    }
+  }
+  return parameter_dict;
+}
+
 void GraphExecutorPy::PyExePath(const py::object &py_exe_path) const {
   if (!py::isinstance<py::str>(py_exe_path)) {
     MS_LOG(EXCEPTION) << "Failed, py_exe_path input is not a str";

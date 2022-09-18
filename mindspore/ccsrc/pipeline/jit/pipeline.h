@@ -99,6 +99,7 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
   void ExportGraph(const std::string &file_name, const std::string &phase, const py::object encrypt = py::none(),
                    char *key = nullptr);
 
+  py::dict GetParams(const std::string &phase);
   void UpdataParamNodeDefaultInput(const std::string &phase,
                                    const std::unordered_map<std::string, tensor::TensorPtr> &params_value);
   void PyExePath(const py::object &py_exe_path) const;
