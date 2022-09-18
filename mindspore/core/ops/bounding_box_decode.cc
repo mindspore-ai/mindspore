@@ -31,7 +31,6 @@ abstract::ShapePtr BoundingBoxDecodeInferShape(const PrimitivePtr &primitive,
                                                const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-
   auto anchor_box = input_args[0]->BuildShape();
   auto deltas = input_args[1]->BuildShape();
 

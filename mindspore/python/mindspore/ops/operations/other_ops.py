@@ -153,20 +153,6 @@ class BoundingBoxEncode(PrimitiveWithInfer):
         validator.check_equal_int(len(means), 4, "means len", self.name)
         validator.check_equal_int(len(stds), 4, "stds len", self.name)
 
-    def infer_shape(self, anchor_box, groundtruth_box):
-        validator.check('anchor_box shape[0]', anchor_box[0], 'groundtruth_box shape[0]', groundtruth_box[0], Rel.EQ,
-                        self.name)
-        validator.check("anchor_box rank", len(anchor_box), "", 2, Rel.EQ, self.name)
-        validator.check("groundtruth_box rank", len(groundtruth_box), "", 2, Rel.EQ, self.name)
-        validator.check_equal_int(anchor_box[1], 4, 'anchor_box shape[1]', self.name)
-        validator.check_equal_int(groundtruth_box[1], 4, 'groundtruth_box shape[1]', self.name)
-        return anchor_box
-
-    def infer_dtype(self, anchor_box, groundtruth_box):
-        args = {"anchor_box": anchor_box, "groundtruth_box": groundtruth_box}
-        validator.check_tensors_dtypes_same_and_valid(args, mstype.number_type, self.name)
-        return anchor_box
-
 
 class BartlettWindow(Primitive):
     r"""
@@ -662,6 +648,7 @@ class CheckBprop(PrimitiveWithInfer):
         self.prim_to_check = prim_to_check
 
     def infer_shape(self, xshapes, yshapes):
+        """infer shape"""
         tips = f"user defined method 'bprop'"
         validator.check_value_type('grads', xshapes, (tuple,), tips)
         validator.check_value_type('params', yshapes, (tuple,), tips)
@@ -682,6 +669,7 @@ class CheckBprop(PrimitiveWithInfer):
         return xshapes
 
     def infer_dtype(self, xdtypes, ydtypes):
+        """infer dtype"""
         tips = f"user defined method 'bprop'"
         validator.check_value_type('grads', xdtypes, (tuple,), tips)
         validator.check_value_type('params', ydtypes, (tuple,), tips)

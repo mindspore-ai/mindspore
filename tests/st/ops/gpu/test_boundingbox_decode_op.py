@@ -90,3 +90,33 @@ def test_bounding_box_decode_functional_modes():
     test_bounding_box_decode_functional()
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     test_bounding_box_decode_functional()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_dynamic_shape_boundingbox_decode():
+    """
+    Feature: Test dynamic shape of BoundingBoxDecode operator
+    Description: dynamic input
+    Expectation: success.
+    """
+    anchor = np.array([[4, 1, 2, 1], [2, 2, 2, 3]], np.float32)
+    deltas = np.array([[3, 1, 2, 2], [1, 2, 1, 4]], np.float32)
+    means = (0.1, 0.1, 0.2, 0.2)
+    stds = (2.0, 2.0, 3.0, 3.0)
+    anchor_box = Tensor(anchor, mindspore.float32)
+    deltas_box = Tensor(deltas, mindspore.float32)
+    expect_deltas = np.array([[28.6500, 0.0000, 0.0000, 33.8500],
+                              [0.0000, 0.0000, 15.8663, 72.7000]], np.float32)
+
+    error = np.ones(shape=[2, 4]) * 1.0e-4
+
+    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+    boundingbox_decode = NetBoundingBoxDecode(means, stds)
+    input_dyn = Tensor(shape=[None, 4], dtype=anchor_box.dtype)
+    deltas_box_dyn = Tensor(shape=[None, 4], dtype=deltas_box.dtype)
+    boundingbox_decode.set_inputs(input_dyn, deltas_box_dyn)
+    output = boundingbox_decode(anchor_box, deltas_box)
+    diff = output.asnumpy() - expect_deltas
+    assert np.all(abs(diff) < error)
