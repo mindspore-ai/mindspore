@@ -141,13 +141,20 @@ class _SharedQueue(multiprocessing.queues.Queue):
         """Get data from the queue. Block until timeout is reached or exit_signal is set."""
         while True:
             try:
-                return self.get(timeout=timeout)
+                r = self.get(timeout=timeout)
             except queue.Empty as e:
                 if exit_signal is None:
                     raise e
                 if exit_signal.is_set():
                     return None
                 continue
+            if r is None:
+                # receive finish signal
+                return None
+            if exit_signal.is_set():
+                # loop until the queue becomes empty
+                continue
+            return r
 
     def get(self, timeout=None):
         result = super().get(timeout=timeout)
@@ -208,10 +215,17 @@ class _Queue(multiprocessing.queues.Queue):
         """Get data from the queue. Block until timeout is reached or exit_signal is set."""
         while True:
             try:
-                return self.get(timeout=timeout)
+                r = self.get(timeout=timeout)
             except queue.Empty as e:
                 if exit_signal is None:
                     raise e
                 if exit_signal.is_set():
                     return None
                 continue
+            if r is None:
+                # receive finish signal
+                return None
+            if exit_signal.is_set():
+                # loop until the queue becomes empty
+                continue
+            return r
