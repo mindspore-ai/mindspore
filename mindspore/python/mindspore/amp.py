@@ -15,6 +15,8 @@
 """ms function for mixed precision."""
 from __future__ import absolute_import
 
+from abc import ABC, abstractmethod
+
 from ._checkparam import Validator as validator
 from .common import dtype as mstype
 from . import context
@@ -42,6 +44,7 @@ else:
 
 _hypermap = ops.HyperMap()
 _partial = ops.Partial()
+
 
 def _grad_unscale(scale, grad):
     return grad * ops.Reciprocal()(scale).astype(grad.dtype)
@@ -94,7 +97,7 @@ def all_finite(inputs):
 
 
 @ms_class
-class LossScaler():
+class LossScaler(ABC):
     r"""
     Loss scaler abstract class when using mixed precision.
 
@@ -105,6 +108,7 @@ class LossScaler():
     Note:
         This is an experimental interface that is subject to change or deletion.
     """
+    @abstractmethod
     def scale(self, inputs):
         """
         Scaling inputs by `scale_value`.
@@ -114,6 +118,7 @@ class LossScaler():
         """
         raise NotImplementedError
 
+    @abstractmethod
     def unscale(self, inputs):
         """
         Unscaling inputs by `scale_value`.
@@ -123,6 +128,7 @@ class LossScaler():
         """
         raise NotImplementedError
 
+    @abstractmethod
     def adjust(self, grads_finite):
         """
         Adjust the `scale_value` dependent on whether grads are finite.
@@ -146,7 +152,7 @@ class StaticLossScaler(LossScaler):
         scale_value (Union(float, int)): The initial loss scale value.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> loss_scaler = amp.StaticLossScaler(scale_value=2**10)
@@ -220,10 +226,10 @@ class DynamicLossScaler(LossScaler):
             overflow to increase the loss scale.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> loss_scaler = amp.DynamicLossScaler(scale_value=2**10)
+        >>> loss_scaler = amp.DynamicLossScaler(scale_value=2**10, scale_factor=2, scale_window=1)
         >>> grads = (Tensor(np.array([np.log(-1), 1.0]), mindspore.float16),
         ...             Tensor(np.array([0.2]), mindspore.float16))
         >>> unscaled_grads = loss_scaler.unscale(grads)

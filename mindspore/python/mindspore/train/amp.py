@@ -397,6 +397,14 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', boost_leve
     Raises:
         ValueError: If device is CPU, property `loss_scale_manager` is not `None` or `FixedLossScaleManager`
             (with property `drop_overflow_update=False` ).
+
+    Examples:
+        >>> from mindpsore import amp, nn
+        >>> network = LeNet5()
+        >>> net_loss = nn.SoftmaxCrossEntropyWithLogits(reduction="mean")
+        >>> net_opt = nn.Momentum(network.trainable_params(), learning_rate=0.01, momentum=0.9)
+        >>> amp_level="O3"
+        >>> net = amp.build_train_network(network, net_opt, net_loss, amp_level)
     """
     validator.check_value_type('optimizer', optimizer, (nn.Optimizer, boost.FreezeOpt,
                                                         nn.AdaSumByGradWrapCell, nn.AdaSumByDeltaWeightWrapCell))
