@@ -51,7 +51,7 @@ class EyeCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<EyeC
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &, const std::vector<AddressPtr> &,
                     const std::vector<kernel::AddressPtr> &outputs);
   int64_t num_n_ = 0;
   int64_t num_m_ = 0;

@@ -17,7 +17,6 @@
 #include "plugin/device/cpu/kernel/eye_cpu_kernel.h"
 #include <algorithm>
 #include <memory>
-#include <utility>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "mindspore/core/ops/eye.h"
 
@@ -40,9 +39,6 @@ bool EyeCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vect
   if (num_n_ < 1) {
     MS_EXCEPTION(ValueError) << "For Eye, n is " << num_n_ << ", but n should be greater than 0.";
   }
-  if (num_m_ < 1) {
-    MS_EXCEPTION(ValueError) << "For Eye, m is " << num_m_ << ", but m should be greater than 0.";
-  }
   return MatchKernelFunc(base_operator, inputs, outputs);
 }
 
@@ -58,8 +54,7 @@ int EyeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vec
 }
 
 template <typename T>
-bool EyeCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                   const std::vector<kernel::AddressPtr> &workspace,
+bool EyeCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &, const std::vector<AddressPtr> &,
                                    const std::vector<kernel::AddressPtr> &outputs) {
   int64_t num_min = (num_n_ > num_m_) ? num_m_ : num_n_;
   size_t data_num = outputs[0]->size;
