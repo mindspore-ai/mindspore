@@ -41,7 +41,7 @@
 #include "mindspore/ccsrc/include/common/debug/common.h"
 #include "kernel/common_utils.h"
 #include "mindspore/core/utils/file_utils.h"
-#include "plugin/device/ascend/hal/hardware/ascend_utils.h"
+#include "plugin/device/ascend/hal/common/ascend_utils.h"
 
 namespace mindspore {
 namespace kernel {

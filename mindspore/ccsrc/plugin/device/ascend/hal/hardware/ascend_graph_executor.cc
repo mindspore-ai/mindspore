@@ -18,7 +18,7 @@
 #include <unordered_map>
 #include <algorithm>
 #include "include/common/utils/utils.h"
-#include "plugin/device/ascend/hal/hardware/ascend_utils.h"
+#include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "backend/common/session/kernel_graph.h"
 #include "plugin/device/ascend/hal/device/kernel_build_ascend.h"
 #include "plugin/device/ascend/hal/device/kernel_adjust.h"
@@ -211,7 +211,7 @@ bool AscendGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<
   device::KernelAdjust::GetInstance().LoadDeviceLoopCtrlParameters(kernel_graph);
   auto ret = ExecuteGraph(kernel_graph);
   if (!ret) {
-    MS_LOG(EXCEPTION) << "Run task error!#dmsg#Ascend Error Message:#dmsg#" << GetErrorMessage();
+    MS_LOG(EXCEPTION) << "Run task error!" << GetErrorMessage(true);
   }
   if (auto warning_message = GetWarningMessage(); !warning_message.empty()) {
     MS_LOG(WARNING) << "Ascend warning message:\n" << warning_message;

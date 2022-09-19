@@ -12,6 +12,7 @@ set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/latest/opp/op_impl/buil
 
 ########### mindspore_ascend.so #####
 set(ASCEND_SUB_COMP
+        hal/common
         hal/device
         hal/hardware
         hal/hccl_adapter

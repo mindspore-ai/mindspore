@@ -20,6 +20,7 @@
 #include "plugin/device/ascend/kernel/ascend_kernel_mod.h"
 #include "include/common/utils/utils.h"
 #include "backend/common/session/kernel_graph.h"
+#include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "plugin/device/ascend/hal/profiler/ascend_profiling.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
 
@@ -166,7 +167,8 @@ void ProfilingReporter::ReportData(uint32_t device_id, unsigned char *data, size
 
   auto report_ret = ProfilingManager::GetInstance().CallMsprofReport(NOT_NULL(&report_data));
   if (report_ret != 0) {
-    MS_LOG(EXCEPTION) << "Report data failed, tag is " << tag_name.c_str() << ", ret: " << ret;
+    MS_LOG(EXCEPTION) << "Report data failed, tag is " << tag_name.c_str() << ", ret: " << ret << "."
+                      << GetErrorMessage(true);
   }
 }
 

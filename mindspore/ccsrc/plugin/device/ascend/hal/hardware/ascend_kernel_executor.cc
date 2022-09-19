@@ -16,7 +16,7 @@
 
 #include "plugin/device/ascend/hal/hardware/ascend_kernel_executor.h"
 #include <algorithm>
-#include "plugin/device/ascend/hal/hardware/ascend_utils.h"
+#include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "plugin/device/ascend/hal/hardware/ascend_graph_optimization.h"
 #include "plugin/device/ascend/hal/device/kernel_select_ascend.h"
 #include "plugin/device/ascend/hal/device/kernel_build_ascend.h"
@@ -205,9 +205,8 @@ void AscendKernelExecutor::PreprocessBeforeRunGraph(const KernelGraphPtr &graph)
       CreateKernel(kernels);
     }
   } catch (const std::exception &e) {
-    MS_LOG(EXCEPTION) << "Preprocess failed before run graph " << graph->graph_id()
-                      << ".#dmsg#The Detailed Error Message:#dmsg#Ascend error message:" << GetErrorMessage()
-                      << "#dmsg#Framework Caught Error Message:#dmsg#" << e.what();
+    MS_LOG(EXCEPTION) << "Preprocess failed before run graph " << graph->graph_id() << "." << GetErrorMessage(true)
+                      << "#dmsg#Framework Error Message:#dmsg#" << e.what();
   }
 
   const std::vector<CNodePtr> &kernels = graph->execution_order();

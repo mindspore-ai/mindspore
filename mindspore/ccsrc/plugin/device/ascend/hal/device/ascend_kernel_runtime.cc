@@ -38,7 +38,7 @@
 #include "include/common/utils/anfalgo.h"
 #include "backend/common/session/kernel_build_client.h"
 #include "plugin/device/ascend/kernel/aicpu/aicpu_kernel_load.h"
-#include "plugin/device/ascend/hal/hardware/ascend_utils.h"
+#include "plugin/device/ascend/hal/common/ascend_utils.h"
 #ifndef ENABLE_SECURITY
 #include "plugin/device/ascend/hal/device/profiling/profiling_manager.h"
 #include "plugin/device/ascend/hal/device/profiling/profiling_utils.h"
@@ -91,7 +91,6 @@ constexpr size_t kPathMax = 4096;
 
 namespace mindspore::device::ascend {
 static thread_local rtContext_t thread_local_rt_context{nullptr};
-constexpr auto kUnknowErrorString = "Unknown error occurred";
 namespace {
 std::string GetRankIdStr() {
   auto context_ptr = MsContext::GetInstance();
@@ -410,11 +409,8 @@ bool AscendKernelRuntime::Init() {
       MS_LOG(EXCEPTION) << "Set op wait timeout failed, error: " << acl_ret;
     }
   } catch (const std::exception &e) {
-    const string &error_message = ErrorManager::GetInstance().GetErrorMessage();
-    if (!error_message.empty() && error_message.find(kUnknowErrorString) == string::npos) {
-      MS_LOG(EXCEPTION) << "Ascend error occurred, error message: " << error_message
-                        << "\nFirst error scene API: " << e.what();
-    }
+    MS_LOG(EXCEPTION) << "Ascend kernel runtime initialization failed." << GetErrorMessage(true)
+                      << "#dmsg#Framework Error Message:#dmsg#" << e.what();
     throw;
   }
 

@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace device {
 namespace ascend {
-std::string GetErrorMessage();
+std::string GetErrorMessage(bool add_title = false);
 std::string GetWarningMessage();
 void SetErrorManagerContext();
 

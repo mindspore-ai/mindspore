@@ -20,7 +20,7 @@
 #include "backend/common/optimizer/common_backend_optimization.h"
 #include "plugin/device/ascend/optimizer/ascend_backend_optimization.h"
 #include "plugin/device/ascend/optimizer/ascend_comm_op_reuse.h"
-#include "plugin/device/ascend/hal/hardware/ascend_utils.h"
+#include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "common/graph_kernel/adapter/graph_kernel_optimization.h"
 #include "common/graph_kernel/adapter/expander.h"
 #include "common/graph_kernel/value_graph_binder.h"
