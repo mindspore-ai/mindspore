@@ -249,7 +249,11 @@ def test_textline_dataset_output_tensor():
     Expectation: Output tensor successfully
     """
     data = ds.TextFileDataset(DATA_FILE, shuffle=False)
-    expected_text = ["This is a text file.", "Be happy every day.", "Good luck to everyone."]
+    expected_text = [
+        "Tensor(shape=[], dtype=String, value= 'This is a text file.')",
+        "Tensor(shape=[], dtype=String, value= 'Be happy every day.')",
+        "Tensor(shape=[], dtype=String, value= 'Good luck to everyone.')",
+    ]
 
     count = 0
     for i in data.create_dict_iterator(num_epochs=1, output_numpy=False):
