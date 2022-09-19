@@ -95,21 +95,6 @@ def test_convert_transpose_input_to_attr(tag):
     return fns[tag]
 
 
-def test_convert_onehot_input_to_attr(tag):
-    fns = FnDict()
-
-    @fns
-    def before(x):
-        return onehot1(x, 2, on_value, off_value)
-
-    @fns
-    def after(x):
-        res = backend_onehot1(x, on_value, off_value)
-        return make_tuple(res)
-
-    return fns[tag]
-
-
 def test_convert_onehot_input_to_tensor1(tag):
     fns = FnDict()
 
@@ -121,20 +106,6 @@ def test_convert_onehot_input_to_tensor1(tag):
     def after_func_graph(x):
         res = backend_onehot2(x, depth, on_value, off_value)
         return make_tuple(res)
-
-    return fns[tag]
-
-
-def test_convert_onehot_input_to_tensor2(tag):
-    fns = FnDict()
-
-    @fns
-    def before(x):
-        return onehot2(x, 2, on_value, off_value)
-
-    @fns
-    def after_kernel_graph(x):
-        return make_tuple(backend_onehot2(x, on_value, off_value))
 
     return fns[tag]
 

@@ -81,38 +81,5 @@ TEST_F(TestHWConstInputToAttr, test_transpose) {
 
   EXPECT_TRUE(CheckEqualGraph(func_graph, g_after));
 }
-
-TEST_F(TestHWConstInputToAttr, test_onehot) {
-  FuncGraphPtr g = getPyFun_.CallAndParseRet("test_convert_onehot_input_to_attr", "before");
-  ASSERT_TRUE(g != nullptr);
-  FuncGraphPtr g_after = getPyFun_.CallAndParseRet("test_convert_onehot_input_to_attr", "after");
-  ASSERT_TRUE(g_after != nullptr);
-
-  auto ret = g->get_return();
-  ASSERT_TRUE(ret != nullptr);
-  EXPECT_NE(ret->input(1), nullptr);
-  EXPECT_NE(ret->input(1)->cast<CNodePtr>(), nullptr);
-  auto cnode = ret->input(1)->cast<CNodePtr>();
-  EXPECT_FALSE(common::AnfAlgo::HasNodeAttr("depth", cnode));
-  EXPECT_FALSE(CheckEqualGraph(g, g_after));
-
-  std::vector<int64_t> shp_x{16};
-  auto x_abstract = std::make_shared<abstract::AbstractTensor>(kInt32, shp_x);
-  AbstractBasePtrList args_spec_list{x_abstract};
-  auto func_graph = GetKernelGraph(g, args_spec_list);
-  ASSERT_TRUE(func_graph != nullptr);
-
-  ret = func_graph->get_return();
-  ASSERT_TRUE(ret != nullptr);
-  EXPECT_NE(ret->input(1), nullptr);
-  EXPECT_NE(ret->input(1)->cast<CNodePtr>(), nullptr);
-  auto make_tuple = ret->input(1)->cast<CNodePtr>();
-  ASSERT_TRUE(make_tuple != nullptr);
-  EXPECT_NE(make_tuple->input(1), nullptr);
-  EXPECT_NE(make_tuple->input(1)->cast<CNodePtr>(), nullptr);
-  cnode = make_tuple->input(1)->cast<CNodePtr>();
-  EXPECT_TRUE(common::AnfAlgo::HasNodeAttr("depth", cnode));
-  EXPECT_TRUE(CheckEqualGraph(func_graph, g_after));
-}
 }  // namespace opt
 }  // namespace mindspore

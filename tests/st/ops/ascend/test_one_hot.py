@@ -116,16 +116,12 @@ def one_hot_vmap(in_type, value_type):
 
 
 def one_hot_static_shape_all_types():
-    one_hot_static_shape_test_case(np.uint8, mstype.int8, np.int8)
-    one_hot_static_shape_test_case(np.uint8, mstype.uint8, np.uint8)
-    one_hot_static_shape_test_case(np.uint8, mstype.int32, np.int32)
-    one_hot_static_shape_test_case(np.uint8, mstype.float16, np.float16)
-    one_hot_static_shape_test_case(np.uint8, mstype.float32, np.float32)
-    one_hot_static_shape_test_case(np.int32, mstype.int8, np.int8)
-    one_hot_static_shape_test_case(np.int32, mstype.uint8, np.uint8)
     one_hot_static_shape_test_case(np.int32, mstype.int32, np.int32)
     one_hot_static_shape_test_case(np.int32, mstype.float16, np.float16)
     one_hot_static_shape_test_case(np.int32, mstype.float32, np.float32)
+    one_hot_static_shape_test_case(np.int64, mstype.int32, np.int32)
+    one_hot_static_shape_test_case(np.int64, mstype.float16, np.float16)
+    one_hot_static_shape_test_case(np.int64, mstype.float32, np.float32)
 
 
 @pytest.mark.level0
