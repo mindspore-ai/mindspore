@@ -17,7 +17,7 @@
 #ifndef PARALLEL_AUTO_PARALLEL_REC_STRATEGY_H_
 #define PARALLEL_AUTO_PARALLEL_REC_STRATEGY_H_
 
-#include <stddef.h>
+#include <cstddef>
 #include <cstdint>
 
 namespace mindspore {

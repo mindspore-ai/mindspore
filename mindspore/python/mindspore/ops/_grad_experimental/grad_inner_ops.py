@@ -15,15 +15,14 @@
 
 """inner_ops"""
 from mindspore import context
+from mindspore.ops.operations.comm_ops import _VirtualPipelineEnd
 from .._grad.grad_base import bprop_getters
 from ..operations import _inner_ops as inner
 from ..operations import _grad_ops as G
-from ..operations.comm_ops import _VirtualPipelineEnd
 from .. import functional as F
 from .. import operations as P
 from ..composite.multitype_ops.zeros_like_impl import zeros_like
 from ...common import dtype as mstype
-
 
 
 @bprop_getters.register(inner.TensorCopySlices)

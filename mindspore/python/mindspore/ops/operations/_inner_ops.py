@@ -20,6 +20,7 @@ import numpy as np
 
 from mindspore.common import Tensor
 from mindspore.ops import composite as C
+from mindspore.communication.management import GlobalComm
 from .array_ops import Cast
 from .. import signature as sig
 from ..operations.math_ops import _infer_shape_reduce
@@ -29,7 +30,6 @@ from ..._checkparam import Rel
 from ..._checkparam import Validator as validator
 from ...common import dtype as mstype
 from ...common.parameter import Parameter
-from ...communication.management import GlobalComm
 from ..._c_expression import call_constant_folding
 
 
