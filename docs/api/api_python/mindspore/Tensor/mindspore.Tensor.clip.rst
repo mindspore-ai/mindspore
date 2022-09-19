@@ -14,7 +14,7 @@ mindspore.Tensor.clip
     参数：
         - **xmin** (Tensor, scalar, None) - 最小值。如果值为None，则不在间隔的下边缘执行裁剪操作。`xmin` 或 `xmax` 只能有一个为None。
         - **xmax** (Tensor, scalar, None) - 最大值。如果值为None，则不在间隔的上边缘执行裁剪操作。`xmin` 或 `xmax` 只能有一个为None。如果 `xmin` 或 `xmax` 是Tensor，则三个Tensor将被广播进行shape匹配。
-        - **dtype** (`mindspore.dtype` , optional) - 覆盖输出Tensor的dtype。默认值为None。
+        - **dtype** (`mindspore.dtype` , 可选) - 覆盖输出Tensor的dtype。默认值为None。
 
     返回：
         Tensor，含有输入Tensor的元素，其中values < `xmin` 被替换为 `xmin` ，values > `xmax` 被替换为 `xmax` 。

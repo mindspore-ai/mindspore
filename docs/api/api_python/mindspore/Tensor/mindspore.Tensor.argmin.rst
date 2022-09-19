@@ -6,7 +6,7 @@ mindspore.Tensor.argmin
     返回指定轴上最小值的索引。
 
     参数：
-        - **axis** (int, optional) - 返回扁平化Tensor的最小值序号，否则返回指定轴方向上的最小值序号。默认值: None。
+        - **axis** (int, 可选) - 返回扁平化Tensor的最小值序号，否则返回指定轴方向上的最小值序号。默认值: None。
 
     返回：
         Tensor，最小Tensor的索引。它与原始Tensor具有相同的shape，但移除了轴方向上的维度。
