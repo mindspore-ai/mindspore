@@ -102,7 +102,7 @@ class BACKEND_EXPORT MindRTBackend : public MindRTBackendBase {
                  const session::BackendOpRunInfoPtr &op_run_info, VectorRef *outputs);
 
   // Dispatch task and execute the task in another thread.
-  void DispatchOpTask(bool single_op_cache_hit, VectorRef *outputs, const OpCompilerInfoPtr &op_compiler_info,
+  void DispatchOpTask(bool single_op_cache_hit, VectorRef *const outputs, const OpCompilerInfoPtr &op_compiler_info,
                       const session::BackendOpRunInfoPtr &op_run_info);
 
   void RunGraphByCondition(const ActorInfo &actor_info, const GraphCompilerInfo &graph_compiler_info,

@@ -81,6 +81,37 @@ class ScopedValue:
     def __hash__(self):
         return hash((self.type, self.scope, self.value))
 
+    @staticmethod
+    def create_name_values(names: Union[list, tuple], scopes: Union[list, tuple] = None) -> ['ScopedValue']:
+        """
+        Create a list of naming `ScopedValue`.
+
+        Args:
+            names: (list[str] or tuple[str]): List or tuple of `str` represents names of referenced variables.
+            scopes: (list[str] or tuple[str]): List or tuple of `str` represents scopes of referenced variables.
+
+        Returns:
+            An list of instance of `ScopedValue`.
+
+        Raises:
+            RuntimeError: If the length of names is not equal to the length of scopes when scopes are not None.
+            TypeError: If `names` is not `list` or `tuple` and name in `names` is not `str`.
+            TypeError: If `scopes` is not `list` or `tuple` and scope in `scopes` is not `str`.
+        """
+        Validator.check_element_type_of_iterable("names", names, [str], "ScopedValue")
+        if scopes is not None:
+            Validator.check_element_type_of_iterable("scopes", scopes, [str], "ScopedValue")
+            if len(names) != len(scopes):
+                raise RuntimeError("Length of names should be equal to length of scopes")
+        result = []
+        for index, name in enumerate(names):
+            if scopes is not None:
+                scope = scopes[index]
+            else:
+                scope = ""
+            result.append(ScopedValue.create_naming_value(name, scope))
+        return result
+
     @classmethod
     def create_variable_value(cls, value) -> Optional['ScopedValue']:
         """
@@ -132,34 +163,3 @@ class ScopedValue:
         Validator.check_value_type("name", name, [str], "ScopedValue")
         Validator.check_value_type("scope", scope, [str], "ScopedValue")
         return cls(ValueType.NamingValue, scope, name)
-
-    @staticmethod
-    def create_name_values(names: Union[list, tuple], scopes: Union[list, tuple] = None) -> ['ScopedValue']:
-        """
-        Create a list of naming `ScopedValue`.
-
-        Args:
-            names: (list[str] or tuple[str]): List or tuple of `str` represents names of referenced variables.
-            scopes: (list[str] or tuple[str]): List or tuple of `str` represents scopes of referenced variables.
-
-        Returns:
-            An list of instance of `ScopedValue`.
-
-        Raises:
-            RuntimeError: If the length of names is not equal to the length of scopes when scopes are not None.
-            TypeError: If `names` is not `list` or `tuple` and name in `names` is not `str`.
-            TypeError: If `scopes` is not `list` or `tuple` and scope in `scopes` is not `str`.
-        """
-        Validator.check_element_type_of_iterable("names", names, [str], "ScopedValue")
-        if scopes is not None:
-            Validator.check_element_type_of_iterable("scopes", scopes, [str], "ScopedValue")
-            if len(names) != len(scopes):
-                raise RuntimeError("Length of names should be equal to length of scopes")
-        result = []
-        for index, name in enumerate(names):
-            if scopes is not None:
-                scope = scopes[index]
-            else:
-                scope = ""
-            result.append(ScopedValue.create_naming_value(name, scope))
-        return result

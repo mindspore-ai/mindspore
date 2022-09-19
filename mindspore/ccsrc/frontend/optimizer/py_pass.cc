@@ -226,12 +226,15 @@ void ReflectParamBackToPython(const AnfNodePtr &param, const string &param_name,
 void Reset(const PatternPtr &pattern) {
   if (pattern->isa<Prim>()) {
     auto prim_pattern = pattern->cast_ptr<Prim>();
+    MS_EXCEPTION_IF_NULL(prim_pattern);
     prim_pattern->reset();
   } else if (pattern->isa<NewParameter>()) {
     auto new_param_pattern = pattern->cast_ptr<NewParameter>();
+    MS_EXCEPTION_IF_NULL(new_param_pattern);
     new_param_pattern->reset();
   } else if (pattern->isa<Call>()) {
     auto call_with_pattern = pattern->cast_ptr<Call>();
+    MS_EXCEPTION_IF_NULL(call_with_pattern);
     for (const auto &sub_pattern : call_with_pattern->inputs()) {
       Reset(sub_pattern);
     }
