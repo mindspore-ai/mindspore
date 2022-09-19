@@ -15,11 +15,11 @@
 
 """bprop primitives"""
 from mindspore.ops import _constants
-from ..operations import _grad_ops as G
-from .. import functional as F
-from .. import operations as P
-from ..composite import multitype_ops as C
-from .grad_base import bprops
+from mindspore.ops.operations import _grad_ops as G
+from mindspore.ops import functional as F
+from mindspore.ops import operations as P
+from mindspore.ops.composite import multitype_ops as C
+from mindspore.ops._grad.grad_base import bprops
 
 get_dtype = P.DType()
 # Unused parameters are placeholders.
@@ -52,7 +52,7 @@ def bprop_scalar_add(x, y, out, dout):
 @bprops.register(_constants.kScalarMul)
 def bprop_scalar_mul(x, y, out, dout):
     """Backpropagator for primitive `scalar_mul`."""
-    return dout*y, dout*x
+    return dout * y, dout * x
 
 
 @bprops.register(_constants.kScalarSub)
@@ -64,13 +64,13 @@ def bprop_scalar_sub(x, y, out, dout):
 @bprops.register(_constants.kScalarDiv)
 def bprop_scalar_div(x, y, out, dout):
     """Backpropagator for primitive `scalar_div`."""
-    return dout/y, (-dout) * (out/y)
+    return dout / y, (-dout) * (out / y)
 
 
 @bprops.register(_constants.kScalarPow)
 def bprop_scalar_pow(x, y, out, dout):
     """Backpropagator for primitive `scalar_pow`."""
-    return dout * (y * (x ** (y-1))), dout * (F.scalar_log(x) * out)
+    return dout * (y * (x ** (y - 1))), dout * (F.scalar_log(x) * out)
 
 
 @bprops.register("scalar_exp")
@@ -179,13 +179,15 @@ def bprop_stop_gradient(x, out, dout):
 def bprop_switch(cond, tb, fb, out, dout):
     """Backpropagator for primitive `switch`."""
     return C.zeros_like(cond), F.switch(cond, dout, C.zeros_like(tb)), \
-        F.switch(cond, C.zeros_like(fb), dout)
+           F.switch(cond, C.zeros_like(fb), dout)
 
 
 def _fprop_switch_layer(index, layers):
     """Backpropagator for primitive `switch_layer`."""
+
     def _bprop_switch_layer(dout):
         return dout, C.zeros_like(index), ()
+
     return F.switch_layer(index, layers), _bprop_switch_layer
 
 

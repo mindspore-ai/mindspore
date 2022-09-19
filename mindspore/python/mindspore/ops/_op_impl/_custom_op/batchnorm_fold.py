@@ -15,11 +15,11 @@
 
 """_BatchNormFold op"""
 
-from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 import te
 from te import tvm
 from topi import generic
 from topi.cce import util
+from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 
 batch_norm_op_info = TBERegOp("BatchNormFoldD") \
     .fusion_type("OPAQUE") \
