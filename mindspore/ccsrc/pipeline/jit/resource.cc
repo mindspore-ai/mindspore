@@ -196,7 +196,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"__len__", prim::kPrimArrayLen},                                   // P.array_len,
        {"__getitem__", prim::kPrimArrayGetItem},                           // P.array_getitem,
        {"__setitem__", prim::kPrimArraySetItem},                           // P.array_setitem,
-       {"__ms_iter__", std::string("array_iter")},                         // C.array_iter
+       {"__ms_iter__", prim::kPrimIdentity},                               // C.array_iter
        {"__ms_hasnext__", std::string("array_hasnext")},                   // C.array_hasnext
        {"__ms_next__", std::string("array_next")},                         // C.array_next
        {"__ms_to_array__", prim::kPrimIdentity},                           // P.identity,
