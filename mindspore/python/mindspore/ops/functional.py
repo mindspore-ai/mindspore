@@ -217,8 +217,10 @@ def vmap(fn, in_axes=0, out_axes=0):
         you need to generate batch random numbers externally in advance and then transfer them to vmap.
 
     Args:
-        fn (Union[Cell, Function]): Function to be mapped along the parameter axes, which takes at least one argument
-            and returns one or more Tensors or the type of data supported by the MindSpore Tensor.
+        fn (Union[Cell, Function, CellList]): Function to be mapped along the parameter axes, which takes at least one
+            argument and returns one or more Tensors or the type of data supported by the MindSpore Tensor. When it is
+            a CellList, the model ensembling scenarioa, it is need to ensure that the structure of each cell is the same
+            and the number of cells is consistent with the sizes of the mapped axes (`axis_size`).
         in_axes (Union[int, list, tuple]): Specifies which dimensions (axes) of the inputs should be mapped over.
             If `in_axes` is an integer, all arguments of `fn` are mapped over according to this axis index. If `in_axes`
             is a tuple or list, which only composed of integers or Nones and the length should equal to the number of

@@ -20,6 +20,7 @@ import mindspore.ops.operations as P
 from mindspore import Tensor
 from mindspore import dtype as mstype
 from mindspore.ops.functional import vmap
+from mindspore.common.parameter import Parameter
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -219,3 +220,87 @@ def test_scalar_with_non_zero_axis():
     with pytest.raises(RuntimeError) as ex:
         vmap(ThreeInputsTwoOutputsNet(), in_axes=(1, 1, None), out_axes=(0, 1))(x_hat, y_hat, z_hat)
     assert "The axis: 1 in 'out_axes' is out of bounds for array of dimension [-1,1)." in str(ex.value)
+
+
+class AssignNetWithTwoParams(nn.Cell):
+    def __init__(self):
+        super(AssignNetWithTwoParams, self).__init__()
+        self.assign = P.Assign()
+        self.ref_a = Parameter(Tensor([0, 1, 2], mstype.float32), name='ref_a')
+        self.ref_b = Parameter(Tensor([0, 1, 2], mstype.float32), name='ref_b')
+
+    def construct(self, replace_tensor):
+        out = self.assign(self.ref_a, replace_tensor)
+        out = self.ref_b + out
+        return out
+
+
+class AssignNetWithSingleParam(nn.Cell):
+    def __init__(self):
+        super(AssignNetWithSingleParam, self).__init__()
+        self.assign = P.Assign()
+        self.ref_a = Parameter(Tensor([0, 1, 2], mstype.float32), name='ref_a')
+
+    def construct(self, replace_tensor):
+        out = self.assign(self.ref_a, replace_tensor)
+        return out
+
+
+class AssignNetWithTwoArgus(nn.Cell):
+    def __init__(self):
+        super(AssignNetWithTwoArgus, self).__init__()
+        self.assign = P.Assign()
+        self.ref_a = Parameter(Tensor([0, 1, 2], mstype.float32), name='ref_a')
+
+    def construct(self, replace_tensor, x):
+        out = self.assign(self.ref_a, replace_tensor)
+        return out, x
+
+
+def test_celllist_with_one_model():
+    """
+    Feature: vmap model ensembling scenario
+    Description: The `fn` is a CellList with only one Model.
+    Expectation: throw RuntimeError:"In the model ensembling parallel training scenario ('VmapOperation'
+        arg0 is a 'CellList'), the size of 'CellList' must be greater than 1, but got 1."
+    """
+    m1 = AssignNetWithSingleParam()
+    mm = nn.CellList([m1])
+    replace_tensor = Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mstype.float32)
+
+    with pytest.raises(RuntimeError) as ex:
+        vmap(mm, in_axes=0)(replace_tensor)
+    assert "In the model ensembling parallel training scenario ('VmapOperation' arg0 is a 'CellList'), " \
+           "the size of 'CellList' must be greater than 1, but got 1." in str(ex.value)
+
+
+def test_celllist_with_inconsistent_inputs():
+    """
+    Feature: vmap model ensembling scenario
+    Description: The `fn` is a CellList with two Model, but they have different input size.
+    Expectation: throw RuntimeError:"'VmapOperation' arg0 is a CellList, whose elements's inputs should be consistent."
+    """
+    m1 = AssignNetWithSingleParam()
+    m2 = AssignNetWithTwoArgus()
+    mm = nn.CellList([m1, m2])
+    replace_tensor = Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mstype.float32)
+
+    with pytest.raises(RuntimeError) as ex:
+        vmap(mm, in_axes=0)(replace_tensor)
+    assert "'VmapOperation' arg0 is a CellList, whose elements's inputs should be consistent." in str(ex.value)
+
+
+def test_celllist_with_inconsistent_params():
+    """
+    Feature: vmap model ensembling scenario
+    Description: The `fn` is a CellList with two Model, but they have different parameter size.
+    Expectation: throw ValueError:"Parameter size of each cell should be consistent, but get 1 and 2."
+    """
+    m1 = AssignNetWithSingleParam()
+    m2 = AssignNetWithTwoParams()
+    mm = nn.CellList([m1, m2])
+    replace_tensor = Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mstype.float32)
+
+    with pytest.raises(ValueError) as ex:
+        vmap(mm, in_axes=0)(replace_tensor)
+    assert "Parameter size of each cell should be consistent, but get 1 and 2." in str(ex.value)
