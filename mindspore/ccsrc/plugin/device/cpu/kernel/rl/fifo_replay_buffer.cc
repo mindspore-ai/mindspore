@@ -43,8 +43,10 @@ FIFOReplayBuffer::FIFOReplayBuffer(size_t capacity, const std::vector<size_t> &s
 
 FIFOReplayBuffer::~FIFOReplayBuffer() {
   for (const auto &item : buffer_) {
-    if (item->addr) device::cpu::CPUMemoryPool::GetInstance().FreeTensorMem(item->addr);
-    item->addr = nullptr;
+    if (item->addr) {
+      device::cpu::CPUMemoryPool::GetInstance().FreeTensorMem(item->addr);
+      item->addr = nullptr;
+    }
   }
 }
 
