@@ -21,14 +21,14 @@ from mindspore import Tensor, CSRTensor, COOTensor, RowTensor, ms_class
 from mindspore import dtype as mstype
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore.ops.function.sparse_func import sparse_add
+from mindspore.ops.composite.base import _append, _insert, _pop, _list_clear, _reverse, \
+    _count, _extend
 
 from ..._checkparam import Validator as validator
 from ...ops import functional as F
 from ...ops import operations as P
 from ...ops.composite import tail, core, MultitypeFuncGraph, env_get, hyper_add, \
     zeros_like, ones_like, repeat_elements
-from ...ops.composite.base import _append, _insert, _pop, _list_clear, _reverse, \
-    _count, _extend
 from ...ops.composite.multitype_ops import _constexpr_utils as const_utils
 from ...ops.composite.multitype_ops import _compile_utils as compile_utils
 from ...ops.operations.math_ops import Median
@@ -2801,18 +2801,22 @@ def list_pop(self_, index=-1):
 
 
 def list_clear(self_):
+    """Clear the list"""
     return _list_clear(self_)
 
 
 def list_reverse(self_):
+    """Reverse the list"""
     return _reverse(self_)
 
 
 def list_extend(self_, obj):
+    """Append another list to the end of the list"""
     return _extend(self_, obj)
 
 
 def list_count(self_, value):
+    """"Count the number of times an element appears in list"""
     return _count(self_, value)
 
 
