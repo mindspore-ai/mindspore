@@ -67,13 +67,12 @@ int ReduceStdCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   });
   sort(axis_.begin(), axis_.end());
   auto last = std::unique(axis_.begin(), axis_.end());
-  axis_.erase(last, axis_.end());
+  (void)axis_.erase(last, axis_.end());
   return KRET_OK;
 }
 
 template <typename T>
 void ReduceStdCpuKernelMod::RunReduceStd(const std::vector<kernel::AddressPtr> &inputs,
-                                         const std::vector<kernel::AddressPtr> &workspace,
                                          const std::vector<kernel::AddressPtr> &outputs) {
   size_t input_size = inputs[0]->size / sizeof(T);
   if (input_size > kReduceSmallVectorSize) {
@@ -99,32 +98,31 @@ void ReduceStdCpuKernelMod::RunReduceStd(const std::vector<kernel::AddressPtr> &
 
 template <typename T>
 void ReduceStdCpuKernelMod::RunReduceStdWithSAxis(const std::vector<kernel::AddressPtr> &inputs,
-                                                  const std::vector<kernel::AddressPtr> &workspace,
                                                   const std::vector<kernel::AddressPtr> &outputs) {
   T *input_addr = reinterpret_cast<T *>(inputs[0]->addr);
   T *output_std_addr = reinterpret_cast<T *>(outputs[0]->addr);
   T *output_mean_addr = reinterpret_cast<T *>(outputs[1]->addr);
-  int dimension = input_shape_.size();
+  size_t dimension = input_shape_.size();
   size_t stride = 1;
   std::vector<size_t> axes(input_shape_.size());
   size_t j = 0;
   size_t k = 0;
-  for (int i = 0; i < dimension; ++i) {
-    if (j == axis_.size() || i != axis_[j]) {
+  for (size_t i = 0; i < dimension; ++i) {
+    if (j == axis_.size() || i != LongToSize(axis_[j])) {
       axes[k] = i;
       ++k;
     } else {
-      stride *= input_shape_[i];
+      stride *= LongToSize(input_shape_[i]);
       ++j;
     }
   }
   for (auto &it : axis_) {
-    axes[k] = it;
+    axes[k] = LongToSize(it);
     ++k;
   }
   size_t output_size = outputs[0]->size / sizeof(T);
   std::vector<int64_t> transpose_shape(input_shape_.size());
-  for (int i = 0; i < dimension; ++i) {
+  for (size_t i = 0; i < dimension; ++i) {
     transpose_shape[i] = input_shape_[axes[i]];
   }
 
@@ -158,22 +156,22 @@ void ReduceStdCpuKernelMod::RunReduceStdWithSAxis(const std::vector<kernel::Addr
 }
 
 bool ReduceStdCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                   const std::vector<kernel::AddressPtr> &workspace,
+                                   const std::vector<kernel::AddressPtr> &,
                                    const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kReduceStdInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kReduceStdOutputsNum, kernel_name_);
 
   if (axis_.empty() || input_shape_.empty() || input_shape_.size() == 1) {
     if (dtype_ == kNumberTypeFloat16) {
-      RunReduceStd<float16>(inputs, workspace, outputs);
+      RunReduceStd<float16>(inputs, outputs);
     } else if (dtype_ == kNumberTypeFloat32) {
-      RunReduceStd<float>(inputs, workspace, outputs);
+      RunReduceStd<float>(inputs, outputs);
     }
   } else {
     if (dtype_ == kNumberTypeFloat16) {
-      RunReduceStdWithSAxis<float16>(inputs, workspace, outputs);
+      RunReduceStdWithSAxis<float16>(inputs, outputs);
     } else if (dtype_ == kNumberTypeFloat32) {
-      RunReduceStdWithSAxis<float>(inputs, workspace, outputs);
+      RunReduceStdWithSAxis<float>(inputs, outputs);
     }
   }
   return true;
