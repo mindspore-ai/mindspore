@@ -308,7 +308,7 @@ std::vector<AnfNodePtr> PipelineTransformer::GetLoadNodeByParam(const AnfNodePtr
     }
   }
   if (load_vec.empty()) {
-    load_vec.emplace_back(param);
+    (void)load_vec.emplace_back(param);
   }
   return load_vec;
 }

@@ -24,7 +24,7 @@ from mindspore.communication.management import get_group_size, get_rank
 from mindspore.parallel._auto_parallel_context import auto_parallel_context
 from mindspore.common.seed import get_seed
 from mindspore._c_expression import GraphExecutor_
-from ..parallel._tensor import _load_tensor_by_layout
+from mindspore.parallel._tensor import _load_tensor_by_layout
 
 
 def _get_parallel_mode():
