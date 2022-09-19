@@ -4259,7 +4259,7 @@ class STL10Dataset(MappableDataset, VisionBaseDataset):
              ├── test_y.bin
              └── unlabeled_X.bin
 
-    Citation of STL10 dataset.
+    Citation of STL10 dataset:
 
     .. code-block::
 

@@ -5,7 +5,7 @@ mindspore.ops.ResizeBilinear
 
     使用双线性插值调整图像大小到指定的大小。
 
-    调整输入图像的高和宽，且可以输入不同数据类型的图像，但输出的数据类型只能是float32。
+    调整输入图像的高和宽。且可以输入不同数据类型的图像，但输出的数据类型只能是float32。
 
     使用通用resize功能请参考 :func:`mindspore.ops.interpolate`。
 

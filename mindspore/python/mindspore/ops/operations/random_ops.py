@@ -415,10 +415,10 @@ class ParameterizedTruncatedNormal(Primitive):
 
 class Poisson(PrimitiveWithInfer):
     r"""
-    Produces random non-negative integer values i, distributed according to discrete probability function:
+    Produces random non-negative integer values i. Distributed according to discrete probability function:
 
     .. math::
-        \text{P}(i|μ) = \frac{\exp(-μ)μ^{i}}{i!},
+        \text{P}(i|μ) = \frac{\exp(-μ)μ^{i}}{i!}
 
     Args:
         seed (int): Random seed, must be non-negative. Default: 0.

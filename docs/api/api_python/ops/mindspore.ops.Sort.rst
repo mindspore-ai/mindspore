@@ -3,7 +3,7 @@
 
 .. py:class:: mindspore.ops.Sort(axis=-1, descending=False)
 
-    根据指定的轴对输入Tensor的元素进行排序。默认为升序排序。
+    根据指定的轴对输入Tensor的元素进行排序，默认为升序排序。
 
     .. warning::
         目前仅支持float16数据类型。如果使用float32类型可能导致数据精度损失。

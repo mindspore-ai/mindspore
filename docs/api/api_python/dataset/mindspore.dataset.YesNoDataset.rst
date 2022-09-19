@@ -59,7 +59,7 @@ mindspore.dataset.YesNoDataset
 
     Yesno是一个音频数据集，由60个录音组成，由一个人用希伯来语说是或不是；每个录音都有8个字长。
 
-    以下是原始的YesNo数据集结构，可以将数据集文件解压缩到此目录结构中，并由MindSpore的API读取。
+    以下是原始的YesNo数据集结构。可以将数据集文件解压缩到此目录结构中，并由MindSpore的API读取。
 
     .. code-block::
 

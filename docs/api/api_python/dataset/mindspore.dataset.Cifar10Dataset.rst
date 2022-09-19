@@ -61,7 +61,7 @@ mindspore.dataset.Cifar10Dataset
 
     CIFAR-10数据集由60000张32x32彩色图片组成，总共有10个类别，每类6000张图片。有50000个训练样本和10000个测试样本。10个类别包含飞机、汽车、鸟类、猫、鹿、狗、青蛙、马、船和卡车。
 
-    以下为原始CIFAR-10数据集的结构，您可以将数据集文件解压得到如下的文件结构，并通过MindSpore的API进行读取。
+    以下为原始CIFAR-10数据集的结构。您可以将数据集文件解压得到如下的文件结构，并通过MindSpore的API进行读取。
 
     .. code-block::
 
@@ -88,9 +88,9 @@ mindspore.dataset.Cifar10Dataset
         howpublished = {http://www.cs.toronto.edu/~kriz/cifar.html}
         }
 
-    .. include:: mindspore.dataset.Dataset.add_sampler.rst
-
     .. include:: mindspore.dataset.Dataset.rst
+
+    .. include:: mindspore.dataset.Dataset.add_sampler.rst
 
     .. include:: mindspore.dataset.Dataset.d.rst
 

@@ -32,11 +32,11 @@ mindspore.dataset.SogouNewsDataset
 
     **关于SogouNew数据集：**
 
-    SogouNews 数据集包括3列，分别对应类别索引（1到5）、标题和内容。 
+    SogouNews 数据集包括3列，分别对应类别索引（1到5）、标题和内容。
     标题和内容使用双引号(")进行转义，任何内部双引号都使用2个双引号("")进行转义。
     新行使用反斜杠进行转义，后跟“n”字符，即"\n"。
 
-    以下是原始SogouNew数据集结构，可以将数据集文件解压缩到此目录结构中，并由MindSpore的API读取。
+    以下是原始SogouNew数据集结构，可以将数据集文件解压缩到此目录结构中，并由MindSpore的API读取：
 
     .. code-block::
 

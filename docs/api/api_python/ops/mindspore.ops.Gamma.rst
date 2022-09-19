@@ -3,7 +3,7 @@ mindspore.ops.Gamma
 
 .. py:class:: mindspore.ops.Gamma(seed=0, seed2=0)
 
-    根据概率密度函数分布生成随机正值浮点数x。
+    根据概率密度函数分布生成随机正值浮点数x：
 
     .. math::
 

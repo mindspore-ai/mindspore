@@ -5,13 +5,13 @@ mindspore.ops.SpaceToDepth
 
     将空间维度分块，增加Tensor深度。
 
-    输出Tensor的高度为（输入高度 / `block_size`）；
+    输出Tensor的高度为（输入高度 / `block_size`）。
 
-    输出Tensor的宽度为（输入宽度 / `block_size`）；
+    输出Tensor的宽度为（输入宽度 / `block_size`）。
 
     输出Tensor的深度为（输入深度 * `block_size` * `block_size`）。
 
-    输入Tensor的高度和宽度必须可被 `block_size` 整除，格式为"NCHW"（batch_size，深度，高度，宽度）。
+    输入Tensor的高度和宽度必须可被 `block_size` 整除。格式为"NCHW"（batch_size，深度，高度，宽度）。
 
     参数：
         - **block_size** (int) - 用于划分空间维度的子块的大小。必须>=2。

@@ -59,7 +59,7 @@ mindspore.dataset.QMnistDataset
     **关于QMNIST数据集：**
     
     QMNIST 数据集是从 NIST Special Database 19 中的原始数据生成的，目的是尽可能地匹配 MNIST 预处理。
-    研究人员试图生成额外的 50k 类似 MNIST 数据的图像，在QMNIST论文中，作者给出了重建过程，并使用匈牙利算法来找到原始 MNIST 样本与其重建样本之间的最佳匹配。
+    研究人员试图生成额外的 50k 类似 MNIST 数据的图像。在QMNIST论文中，作者给出了重建过程，并使用匈牙利算法来找到原始 MNIST 样本与其重建样本之间的最佳匹配。
 
     以下是原始的QMNIST数据集结构。
     可以将数据集文件解压缩到此目录结构中，并通过MindSpore的API读取。

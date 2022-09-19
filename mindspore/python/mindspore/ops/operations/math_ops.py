@@ -2318,7 +2318,7 @@ class Einsum(Primitive):
 
     The inputs must be a tuple of tensors.
     When the inputs are only one tensor, you can input (tensor, )
-    dtypes of them should be float16/float32/float64
+    dtypes of them should be float16/float32/float64.
 
     Args:
         equation (str): An attribute, represent the operation you want to do.
@@ -2491,7 +2491,7 @@ class HistogramFixedWidth(PrimitiveWithInfer):
     width and determined by the inputs `range` and the arguments `nbins`.
 
     Args:
-        dtype (str): An optional attribute. The dtype must be "int32". Default: "int32".
+        dtype (str, optional): An optional attribute. The dtype must be "int32". Default: "int32".
         nbins (int): The number of histogram bins, the type is a positive integer.
 
     Inputs:
@@ -3214,7 +3214,7 @@ class Floor(Primitive):
 
 class FloorMod(Primitive):
     r"""
-    Computes the remainder of division element-wise. It's a flooring divide.
+    Computes the remainder of division element-wise, and it's a flooring divide.
 
     Refer to :func:`mindspore.ops.floor_mod` for more detail.
 
@@ -4005,7 +4005,7 @@ class IsNan(Primitive):
 
 class IsInf(Primitive):
     r"""
-    Determines which elements are inf or -inf for each position
+    Determines which elements are inf or -inf for each position.
 
     .. math::
 
@@ -4371,11 +4371,12 @@ class Asin(Primitive):
 
 class NMSWithMask(PrimitiveWithInfer):
     r"""
-    When object detection problem is performed in the computer vision field, object detection algorithm generates
+    Non-maximum Suppression. When object detection problem is performed in the computer vision field,
+    object detection algorithm generates
     a plurality of bounding boxes. Use the box with the highest score, calculate the overlap between other boxes and
     the current box, and delete the box based on a certain threshold(IOU). On Ascend platform, the input box score is
     ignored, which only selects boexs based on the IOU between boxes, which means if you want to remove boxes that has
-    lower scores, you need to sort the input boxes by score in descending order in advance. The IOU is as follows,
+    lower scores, you need to sort the input boxes by score in descending order in advance. The IOU is as follows:
 
     .. math::
         \text{IOU} = \frac{\text{Area of Overlap}}{\text{Area of Union}}

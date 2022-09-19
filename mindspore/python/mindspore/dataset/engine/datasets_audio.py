@@ -861,6 +861,8 @@ class TedliumDataset(MappableDataset, AudioBaseDataset):
             └── readme
             └── TEDLIUM.150k.dic
 
+    The directory structure of TEDLIUM release3 is slightly different.
+
     .. code-block::
 
         .
@@ -1001,8 +1003,7 @@ class YesNoDataset(MappableDataset, AudioBaseDataset):
     About YesNo dataset:
 
     Yesno is an audio dataset consisting of 60 recordings of one individual saying yes or no in Hebrew; each
-    recording is eight words long. It was created for the Kaldi audio project by an author who wishes to
-    remain anonymous.
+    recording is eight words long.
 
     Here is the original YesNo dataset structure.
     You can unzip the dataset files into this directory structure and read by MindSpore's API.
