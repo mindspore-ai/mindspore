@@ -150,35 +150,6 @@ def test_train_lenet():
     assert losses[-1] < 0.01
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_train_lenet_memory_opt():
-    """
-    Feature: Somas GPU kernel by kernel.
-    Description: LeNet with Somas GPU kernel by kernel.
-    Expectation: No exception.
-    """
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU", memory_optimize_level='O1')
-    epoch = 100
-    net = LeNet()
-    momentum = 0.9
-    learning_rate = multisteplr(epoch, 30)
-
-    optimizer = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), learning_rate, momentum)
-    criterion = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
-    net_with_criterion = WithLossCell(net, criterion)
-    train_network = TrainOneStepCell(net_with_criterion, optimizer)  # optimizer
-    train_network.set_train()
-    losses = []
-    for i in range(epoch):
-        data = Tensor(np.ones([net.batch_size, 3, 32, 32]).astype(np.float32) * 0.01)
-        label = Tensor(np.ones([net.batch_size]).astype(np.int32))
-        loss = train_network(data, label).asnumpy()
-        losses.append(loss)
-    assert losses[-1] < 0.01
-
-
 def create_dataset(data_path, batch_size=32, repeat_size=1,
                    num_parallel_workers=1):
     """

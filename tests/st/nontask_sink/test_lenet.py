@@ -179,23 +179,6 @@ def test_ascend_lenet2():
     assert loss_output.asnumpy() > 0.003
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_ascend_lenet3():
-    """
-    Feature: Somas Ascend kernel by kernel.
-    Description: LeNet with Somas Ascend kernel by kernel.
-    Expectation: No exception.
-    """
-    os.environ['GRAPH_OP_RUN'] = str(1)
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", memory_optimize_level='O1')
-    loss_output = test_ascend_lenet()
-    assert loss_output.asnumpy() < 0.004
-    assert loss_output.asnumpy() > 0.003
-
-
 class GradWrapTuple(nn.Cell):
     """
     GradWrapTuple definition
@@ -257,23 +240,6 @@ def test_ascend_lenet_grad_by_list_tuple1():
     """
     os.environ['GRAPH_OP_RUN'] = str(1)
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    loss_output = test_ascend_lenet_grad_by_list_tuple()
-    assert loss_output.asnumpy() < 0.004
-    assert loss_output.asnumpy() > 0.003
-
-
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_ascend_lenet_grad_by_list_tuple2():
-    """
-    Feature: GradOperation get_by_list pass tuple/list with Ascend kernel by kernel Somas.
-    Description: Grad with Parameters as input type and fv. list or tuple as fv of grad.
-    Expectation: No exception.
-    """
-    os.environ['GRAPH_OP_RUN'] = str(1)
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", memory_optimize_level='O1')
     loss_output = test_ascend_lenet_grad_by_list_tuple()
     assert loss_output.asnumpy() < 0.004
     assert loss_output.asnumpy() > 0.003

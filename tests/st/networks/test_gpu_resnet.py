@@ -352,36 +352,6 @@ def test_trainTensor(num_classes=10, epoch=8, batch_size=1):
     assert (losses[-1].asnumpy() < 1)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_train_tensor_memory_opt(num_classes=10, epoch=8, batch_size=1):
-    """
-    Feature: Somas GPU kernel by kernel.
-    Description: ResNet with Somas GPU kernel by kernel.
-    Expectation: No exception.
-    """
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU", memory_optimize_level='O1')
-    net = resnet50(num_classes)
-    lr = 0.1
-    momentum = 0.9
-    optimizer = Momentum(filter(lambda x: x.requires_grad,
-                                net.get_parameters()), lr, momentum)
-    criterion = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
-    net_with_criterion = WithLossCell(net, criterion)
-    train_network = TrainOneStepCell(
-        net_with_criterion, optimizer)  # optimizer
-    train_network.set_train()
-    losses = []
-    for i in range(0, epoch):
-        data = Tensor(np.ones([batch_size, 3, 224, 224]
-                              ).astype(np.float32) * 0.01)
-        label = Tensor(np.ones([batch_size]).astype(np.int32))
-        loss = train_network(data, label)
-        losses.append(loss)
-    assert (losses[-1].asnumpy() < 1)
-
-
 @pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard

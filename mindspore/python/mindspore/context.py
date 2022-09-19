@@ -199,22 +199,6 @@ class _Context:
                              f"or context.PYNATIVE_MODE (1), but got {mode}.")
         self.set_param(ms_ctx_param.mode, mode)
 
-    def set_memory_optimize_level(self, memory_optimize_level):
-        """
-        The memory optimize level, support "O0", "O1".
-
-        Args:
-            target (str): "O0", "O1"
-        """
-        memory_optimize_levels = ["O0", "O1"]
-        if memory_optimize_level not in memory_optimize_levels:
-            raise ValueError(f"For 'context.set_context', the argument 'memory_optimize_level' must be one of "
-                             f"{memory_optimize_levels}, but got {memory_optimize_level}.")
-        if memory_optimize_level == "O0":
-            self.set_param(ms_ctx_param.memory_optimize_level, 0)
-        else:
-            self.set_param(ms_ctx_param.memory_optimize_level, 1)
-
     def set_backend_policy(self, policy):
         success = self._context_handle.set_backend_policy(policy)
         if not success:
@@ -378,7 +362,6 @@ class _Context:
         'print_file_path': set_print_file_path,
         'env_config_path': set_env_config_path,
         'runtime_num_threads': set_runtime_num_threads,
-        'memory_optimize_level': set_memory_optimize_level,
         'op_timeout': set_op_timeout
     }
 
