@@ -152,8 +152,8 @@ bool MulAddFusion::AdjustScaleBiasTensorShape(size_t *axis_offset) const {
       *axis_offset += DIMENSION_1D;
     }
   }
-  scale_tensor_->set_shape(scale_shape);
-  bias_tensor_->set_shape(scale_shape);
+  (void)scale_tensor_->set_shape(scale_shape);
+  (void)bias_tensor_->set_shape(scale_shape);
 
   // set shape for abstract
   auto mul_abstract = mul_const_anode_->abstract();

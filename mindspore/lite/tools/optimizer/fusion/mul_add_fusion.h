@@ -35,12 +35,13 @@ class MulAddFusion : public MultiplePatternProcessPass {
 
   ~MulAddFusion() override = default;
 
- private:
-  std::unordered_map<std::string, VectorRef> DefinePatterns() const override;
-  VectorRef DefineMulFirstPattern() const;
-  VectorRef DefineMulSecondPattern() const;
   AnfNodePtr Process(const std::string &pattern_name, const FuncGraphPtr &, const AnfNodePtr &,
                      const EquivPtr &) const override;
+  std::unordered_map<std::string, VectorRef> DefinePatterns() const override;
+
+ private:
+  VectorRef DefineMulFirstPattern() const;
+  VectorRef DefineMulSecondPattern() const;
 
   bool CheckAddNode(const mindspore::CNodePtr &cnode) const;
   bool CheckMulNode(const mindspore::FuncGraphPtr &func_graph, const mindspore::CNodePtr &cnode) const;

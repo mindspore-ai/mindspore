@@ -43,7 +43,7 @@ int ShapeFusionInferShape(const TensorC *const *inputs, size_t inputs_size, Tens
       out_tensor->shape_size_ = 1;
       out_tensor->shape_[0] = (int)(matrix_tensor->shape_[0]);
     }
-    int out_size = out_tensor->shape_size_ == 0 ? 1 : out_tensor->shape_[0];
+    size_t out_size = out_tensor->shape_size_ == 0 ? 1 : (size_t)(out_tensor->shape_[0]);
     size_t matrix_data_size = input_len * out_size * sizeof(float);
     float *matrix_data = (float *)(malloc(matrix_data_size));
     NNACL_CHECK_NULL_RETURN_ERR(matrix_data);
@@ -65,11 +65,11 @@ int ShapeFusionInferShape(const TensorC *const *inputs, size_t inputs_size, Tens
       return NNACL_ERR;
     }
     memset(data, 0, out_size * sizeof(int));
-    for (int i = 0; i < out_size; i++) {
+    for (size_t i = 0; i < out_size; i++) {
       for (size_t j = 0; j < input_len - 1; j++) {
-        data[i] += in_tensor->shape_[j] * matrix_data[i * input_len + j];
+        data[i] += (int)(in_tensor->shape_[j] * matrix_data[i * input_len + j]);
       }
-      data[i] += matrix_data[i * input_len + input_len - 1];
+      data[i] += (int)(matrix_data[i * input_len + input_len - 1]);
     }
     outputs[out_idx]->data_ = (void *)data;
     free(matrix_data);

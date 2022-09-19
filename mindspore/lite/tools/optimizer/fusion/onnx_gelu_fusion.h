@@ -32,10 +32,11 @@ class OnnxGeLUFusion : public GeLUFusion {
 
   ~OnnxGeLUFusion() override = default;
 
+  std::unordered_map<std::string, VectorRef> DefinePatterns() const override;
+
  private:
   bool Init() const;
   bool CheckPattern(const std::string &pattern_name, const EquivPtr &equiv) const override;
-  std::unordered_map<std::string, VectorRef> DefinePatterns() const override;
   VectorRef DefineFirstStructurePattern() const;
   VectorRef DefineSecondStructurePattern() const;
 

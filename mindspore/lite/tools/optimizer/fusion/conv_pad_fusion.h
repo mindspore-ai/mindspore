@@ -29,13 +29,13 @@ class ConvPadFusion : public MultiplePatternProcessPass {
   explicit ConvPadFusion(const std::string &name = "ConvPadFusion", bool multigraph = true)
       : MultiplePatternProcessPass(name, multigraph) {}
   ~ConvPadFusion() override = default;
-
- private:
-  std::unordered_map<std::string, VectorRef> DefinePatterns() const override;
-  VectorRef DefinePadConvPattern() const;
-  VectorRef DefinePadTransposeConvPattern() const;
   AnfNodePtr Process(const std::string &pattern_name, const FuncGraphPtr &func_graph, const AnfNodePtr &,
                      const EquivPtr &) const override;
+  std::unordered_map<std::string, VectorRef> DefinePatterns() const override;
+
+ private:
+  VectorRef DefinePadConvPattern() const;
+  VectorRef DefinePadTransposeConvPattern() const;
 };
 }  // namespace opt
 }  // namespace mindspore

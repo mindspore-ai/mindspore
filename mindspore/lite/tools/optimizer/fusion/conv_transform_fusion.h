@@ -28,12 +28,12 @@ class ConvTransformFusion : public LitePatternProcessPass {
   explicit ConvTransformFusion(bool multigraph = true, const std::string &name = "ConvTransformFusion")
       : LitePatternProcessPass(name, multigraph) {}
   ~ConvTransformFusion() override = default;
+  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 
  protected:
   virtual int InitTransParam(const CNodePtr &, int, float *, float *) const = 0;
 
  private:
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
   int GenTransParam(const CNodePtr &, int, float *, float *) const;
   int GenNewConvTensor(const FuncGraphPtr &, const CNodePtr &, int, const float *, const float *) const;
   int CalNewWeightTensor(const CNodePtr &, const tensor::TensorPtr &, int, const float *) const;

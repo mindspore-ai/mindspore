@@ -252,6 +252,7 @@ int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const std::shared
 #endif
   for (size_t index = 0; index < fusions.size(); index++) {
     auto pass_ptr = fusions.at(index);
+    MS_CHECK_TRUE_RET(pass_ptr != nullptr, RET_ERROR);
     auto pass_name = pass_ptr->name();
     if (param->fusion_blacklists.find(pass_name) != param->fusion_blacklists.end()) {
       MS_LOG(INFO) << "Disable fusion: " << pass_name;

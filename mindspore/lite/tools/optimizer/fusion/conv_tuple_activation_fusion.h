@@ -27,8 +27,6 @@ class ConvTupleActivationFusion : public LitePatternProcessPass {
   explicit ConvTupleActivationFusion(bool multigraph = true, const std::string &name = "ConvTupleActivationFusion")
       : LitePatternProcessPass(name, multigraph) {}
   ~ConvTupleActivationFusion() override = default;
-
- private:
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 };

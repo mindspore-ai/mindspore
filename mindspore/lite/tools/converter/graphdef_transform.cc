@@ -51,7 +51,7 @@ std::vector<schema::CNodeT *> GetGraphNodes(const schema::MetaGraphT &graph_defT
 }
 
 int QuantTransform(const std::shared_ptr<ConverterPara> &param, schema::MetaGraphT *graph_defT) {
-  MS_ASSERT(graph_defT != nullptr);
+  MS_ASSERT(param != nullptr && graph_defT != nullptr);
   // quantization
   if (param->commonQuantParam.quant_type == schema::QuantType_QUANT_NONE ||
       param->commonQuantParam.quant_type == schema::QuantType_QUANT_WEIGHT) {
@@ -79,6 +79,7 @@ int QuantTransform(const std::shared_ptr<ConverterPara> &param, schema::MetaGrap
 }  // namespace
 
 int GraphDefTransform::Transform(const std::shared_ptr<ConverterPara> &param) {
+  MS_ASSERT(param != nullptr);
   STATUS status;
   {
     auto old_nodes = GetGraphNodes(*graph_defT_);

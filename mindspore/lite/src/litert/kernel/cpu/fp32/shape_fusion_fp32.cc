@@ -36,7 +36,7 @@ int ShapeFusionCPUKernel::ReSize() { return KernelInferShape(in_tensors_, out_te
 
 int ShapeFusionCPUKernel::Run() {
   bool is_const =
-    std::all_of(out_tensors_.begin(), out_tensors_.end(), [](lite::Tensor *tensor) { return tensor->IsConst(); });
+    std::all_of(out_tensors_.begin(), out_tensors_.end(), [](const lite::Tensor *tensor) { return tensor->IsConst(); });
   if (is_const) {
     return RET_OK;
   }
