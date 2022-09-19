@@ -24,6 +24,7 @@
 
 #include "ir/param_info.h"
 #include "ir/value.h"
+#include "ir/map_tensor.h"
 #include "pipeline/jit/parse/data_converter.h"
 #include "pipeline/jit/parse/parse.h"
 #include "include/common/utils/python_adapter.h"
@@ -128,6 +129,21 @@ std::string GetPyObjId(const py::object &obj) {
   return out.cast<std::string>();
 }
 
+// Get parameter value from a python parameter object.
+// If it is a map parameter, return the map tensor value in it,
+// otherwise, return parameter itself as a meta tensor value.
+static ValuePtr GetParameterValue(const py::object &param_obj) {
+  if (py::hasattr(param_obj, "map_tensor_")) {
+    auto map_tensor = py::cast<MapTensorPtr>(python_adapter::GetPyObjAttr(param_obj, "map_tensor_"));
+    MS_EXCEPTION_IF_NULL(map_tensor);
+    auto param_info = py::cast<ParamInfoPtr>(python_adapter::GetPyObjAttr(param_obj, "param_info"));
+    MS_EXCEPTION_IF_NULL(param_info);
+    map_tensor->set_param_info(param_info);
+    return map_tensor;
+  }
+  return py::cast<tensor::MetaTensorPtr>(param_obj);
+}
+
 // If any mixed precision flag add a cast node after the parameter node.
 // argument obj should be python Parameter object
 // it will be converted to Parameter node here
@@ -179,14 +195,13 @@ AnfNodePtr ResolveParameterObj(const FuncGraphPtr &func_graph, const py::object 
     }
   }
   if (para_node == nullptr) {
-    auto value = py::cast<tensor::MetaTensorPtr>(obj);
+    auto value = GetParameterValue(obj);
     para_node = top_func_graph->AddFvParameter(param_name, value);
     (void)param_obj_ids.emplace_back(obj_id);
     MS_LOG(DEBUG) << "Created a new weight parameter for " << func_graph->ToString()
                   << ", param: " << para_node->DebugString() << ", top_func_graph: " << top_func_graph->ToString();
   }
   func_graph->add_parameter_obj_node(para_node);
-
   return para_node;
 }
 

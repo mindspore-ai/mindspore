@@ -432,6 +432,7 @@ GVAR_DEF(TypePtr, kTensorTypeFP64, std::make_shared<TensorType>(std::make_shared
 GVAR_DEF(TypePtr, kCSRTensorType, std::make_shared<CSRTensorType>());
 GVAR_DEF(TypePtr, kCOOTensorType, std::make_shared<COOTensorType>());
 GVAR_DEF(TypePtr, kRowTensorType, std::make_shared<RowTensorType>());
+GVAR_DEF(TypePtr, kMapTensorType, std::make_shared<MapTensorType>());
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_IR_DTYPE_H_
