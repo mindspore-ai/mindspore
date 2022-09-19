@@ -85,6 +85,7 @@ bool RandomChoiceWithMaskCpuKernelMod::Init(const BaseOperatorPtr &base_operator
                                             const std::vector<KernelTensorPtr> &inputs,
                                             const std::vector<KernelTensorPtr> &outputs) {
   kernel_name_ = base_operator->GetPrim()->name();
+  batch_rank_ = base_operator->get_batch_rank();
   constexpr size_t input_num = 1;
   constexpr size_t output_num = 2;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
@@ -106,7 +107,10 @@ int RandomChoiceWithMaskCpuKernelMod::Resize(const BaseOperatorPtr &base_operato
   }
   auto x_shape = inputs[kIndex0]->GetShapeVector();
   dims_.clear();
-  for (size_t i = 0; i < x_shape.size(); i++) {
+  for (size_t i = 0; i < batch_rank_; i++) {
+    batch_size_ *= x_shape[i];
+  }
+  for (size_t i = batch_rank_; i < x_shape.size(); i++) {
     (void)dims_.emplace_back(LongToInt(x_shape[i]));
   }
   input_dim_size_ = SizeToInt(dims_.size());
@@ -124,68 +128,70 @@ int RandomChoiceWithMaskCpuKernelMod::Resize(const BaseOperatorPtr &base_operato
 bool RandomChoiceWithMaskCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                               const std::vector<kernel::AddressPtr> &workspace,
                                               const std::vector<kernel::AddressPtr> &outputs) {
-  auto *input = reinterpret_cast<bool *>(inputs[0]->addr);
   auto *input_dim = reinterpret_cast<int *>(workspace[0]->addr);
   auto *tmp_output = reinterpret_cast<int *>(workspace[1]->addr);
   auto *mask_dim = reinterpret_cast<int *>(workspace[2]->addr);
   auto *output = reinterpret_cast<int *>(workspace[3]->addr);
-  auto *output_coordinate = reinterpret_cast<int32_t *>(outputs[0]->addr);
-  auto *mask = reinterpret_cast<bool *>(outputs[1]->addr);
+  for (size_t b = 0; b < batch_size_; b++) {
+    auto *input = reinterpret_cast<bool *>(inputs[0]->addr) + b * input_total_count_;
+    auto *output_coordinate = reinterpret_cast<int32_t *>(outputs[0]->addr) + b * count_ * input_dim_size_;
+    auto *mask = reinterpret_cast<bool *>(outputs[1]->addr) + b * count_;
 
-  size_t seedc = seed2_ != 0 ? seed2_ : (seed_ != 0 ? seed_ : generator_());
-  int32_t non_zero_num = 0;
-  for (int32_t i = 0; i < input_total_count_; i++) {
-    if (input[i] != 0) {
-      input_dim[non_zero_num] = i;
-      non_zero_num++;
+    size_t seedc = seed2_ != 0 ? seed2_ : (seed_ != 0 ? seed_ : generator_());
+    int32_t non_zero_num = 0;
+    for (int32_t i = 0; i < input_total_count_; i++) {
+      if (input[i] != 0) {
+        input_dim[non_zero_num] = i;
+        non_zero_num++;
+      }
     }
-  }
 
-  bool padding_flag = false;
-  int32_t output_length = 0;
-  int32_t output_non_zero_length = 0;
-  GetOutputLength(&padding_flag, &output_length, &output_non_zero_length, count_, non_zero_num);
-  (void)memset_s(mask_dim, IntToSize(output_length), 0X00, IntToSize(output_length));
-  (void)memset_s(tmp_output, IntToSize(output_length), 0X00, IntToSize(output_length));
+    bool padding_flag = false;
+    int32_t output_length = 0;
+    int32_t output_non_zero_length = 0;
+    GetOutputLength(&padding_flag, &output_length, &output_non_zero_length, count_, non_zero_num);
+    (void)memset_s(mask_dim, IntToSize(output_length), 0X00, IntToSize(output_length));
+    (void)memset_s(tmp_output, IntToSize(output_length), 0X00, IntToSize(output_length));
 
-  std::vector<int32_t> all_nums(non_zero_num);
-  std::iota(begin(all_nums), end(all_nums), 0);
-  shuffle(all_nums.begin(), all_nums.end(), std::default_random_engine(seedc));
+    std::vector<int32_t> all_nums(non_zero_num);
+    std::iota(begin(all_nums), end(all_nums), 0);
+    shuffle(all_nums.begin(), all_nums.end(), std::default_random_engine(seedc));
 
-  for (int32_t i = 0; i < output_non_zero_length; i++) {
-    int32_t mean = all_nums[i];
-    tmp_output[i] = input_dim[mean];
-    mask_dim[i] = 1;
-  }
-  if (padding_flag) {
-    int32_t index = 0;
-    for (int32_t i = output_length - 1; i > non_zero_num; i--) {
-      tmp_output[non_zero_num + index] = 0;
-      mask_dim[non_zero_num + index] = 0;
-      index++;
+    for (int32_t i = 0; i < output_non_zero_length; i++) {
+      int32_t mean = all_nums[i];
+      tmp_output[i] = input_dim[mean];
+      mask_dim[i] = 1;
     }
-  }
+    if (padding_flag) {
+      int32_t index = 0;
+      for (int32_t i = output_length - 1; i > non_zero_num; i--) {
+        tmp_output[non_zero_num + index] = 0;
+        mask_dim[non_zero_num + index] = 0;
+        index++;
+      }
+    }
 
-  if (output_length * input_dim_size_ >= INT_MAX || output_length * input_dim_size_ < 0) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', output size exceed INT_MAX.";
-  }
+    if (output_length * input_dim_size_ >= INT_MAX || output_length * input_dim_size_ < 0) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', output size exceed INT_MAX.";
+    }
 
-  int32_t copy_output_length = output_length * input_dim_size_;
-  (void)memset_s(output, IntToSize(copy_output_length), 0X00, IntToSize(copy_output_length));
-  ParseOutputCoordinate(dims_, output_length, input_dim_size_, input_total_count_, tmp_output, output);
+    int32_t copy_output_length = output_length * input_dim_size_;
+    (void)memset_s(output, IntToSize(copy_output_length), 0X00, IntToSize(copy_output_length));
+    ParseOutputCoordinate(dims_, output_length, input_dim_size_, input_total_count_, tmp_output, output);
 
-  int32_t actual_output_length = count_ * SizeToInt(dims_.size());
-  copy_output_length = std::min(actual_output_length, copy_output_length);
-  if (INT_MAX / static_cast<int>(sizeof(int32_t)) < copy_output_length) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', output length is out of range.";
-  }
+    int32_t actual_output_length = count_ * SizeToInt(dims_.size());
+    copy_output_length = std::min(actual_output_length, copy_output_length);
+    if (INT_MAX / static_cast<int>(sizeof(int32_t)) < copy_output_length) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', output length is out of range.";
+    }
 
-  size_t copy_output_bytes = IntToSize(copy_output_length) * sizeof(int32_t);
-  auto ret = memcpy_s(output_coordinate, outputs[0]->size, output, copy_output_bytes);
-  if (ret != EOK) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memcpy_s failed. Error no: " << ret;
+    size_t copy_output_bytes = IntToSize(copy_output_length) * sizeof(int32_t);
+    auto ret = memcpy_s(output_coordinate, outputs[0]->size, output, copy_output_bytes);
+    if (ret != EOK) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memcpy_s failed. Error no: " << ret;
+    }
+    UpdateOutput(dims_, non_zero_num, count_, output_length, mask_dim, output_coordinate, mask);
   }
-  UpdateOutput(dims_, non_zero_num, count_, output_length, mask_dim, output_coordinate, mask);
   return true;
 }
 

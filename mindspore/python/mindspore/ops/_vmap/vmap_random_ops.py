@@ -1,4 +1,3 @@
-
 # Copyright 2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,7 +16,8 @@
 """random_ops vmap impl."""
 from __future__ import absolute_import
 
-from mindspore.ops.operations.random_ops import UniformCandidateSampler, RandomShuffle, Multinomial
+from mindspore.ops.operations.random_ops import UniformCandidateSampler, RandomShuffle, Multinomial, \
+    RandomChoiceWithMask
 from mindspore.ops._vmap.vmap_base import vmap_rules_getters, _bdim_at_front, _vmap_clone_prim, \
     vmap_general_preprocess, _raise_value_error
 
@@ -90,5 +90,28 @@ def get_multinomial_vmap_rule(prim, axis_size):
         x = _bdim_at_front(x, x_dim, axis_size)
         out = prim(x, num_samples)
         return (out, 0)
+
+    return vmap_rule
+
+
+@vmap_rules_getters.register(RandomChoiceWithMask)
+def get_random_choice_with_mask(prim, axis_size):
+    """VmapRule for 'RandomChoiceWithMask' operation."""
+    if hasattr(prim, 'batch_rank'):
+        batch_rank = prim.batch_rank + 1
+    else:
+        batch_rank = 1
+
+    batch_prim = _vmap_clone_prim(prim)
+    batch_prim.add_prim_attr('batch_rank', batch_rank)
+
+    def vmap_rule(x_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim)
+        if is_all_none:
+            return result
+        x_data, x_dim = x_bdim
+        x = _bdim_at_front(x_data, x_dim, axis_size)
+        index, mask = batch_prim(x)
+        return (index, 0), (mask, 0)
 
     return vmap_rule

@@ -55,6 +55,11 @@ class RandomChoiceWithMaskInfer : public abstract::OpInferBase {
     auto prim_name = primitive->name();
     const int64_t kRandomChoiceWithMaskInputsNum = 1;
     const int64_t input_num = kRandomChoiceWithMaskInputsNum;
+    size_t batch_rank = 0;
+    if (primitive->HasAttr(kBatchRank)) {
+      auto value_ptr = primitive->GetAttr(kBatchRank);
+      batch_rank = GetValue<int64_t>(value_ptr);
+    }
     (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num,
                                              prim_name);
     MS_EXCEPTION_IF_NULL(input_args.front());
@@ -68,7 +73,10 @@ class RandomChoiceWithMaskInfer : public abstract::OpInferBase {
 
     auto value_ptr = primitive->GetAttr("count");
     auto count_value = GetValue<int64_t>(value_ptr);
-    auto count_shape_ptr = std::make_shared<abstract::Shape>(std::vector<int64_t>{count_value});
+    ShapeVector count_shape;
+    (void)copy(shape_vec.begin(), shape_vec.begin() + batch_rank, std::back_inserter(count_shape));
+    count_shape.push_back(count_value);
+    auto count_shape_ptr = std::make_shared<abstract::Shape>(count_shape);
 
     if (IsDynamicRank(shape_vec)) {
       auto first_output_shape_ptr =
@@ -78,13 +86,16 @@ class RandomChoiceWithMaskInfer : public abstract::OpInferBase {
     }
 
     auto shape_rank = shape_vec.size();
-    if (shape_rank < kDim1 || shape_rank > kDim5) {
+    if (shape_rank < kDim1 + batch_rank || shape_rank > kDim5 + batch_rank) {
       MS_EXCEPTION(ValueError) << "For '" << primitive->name()
                                << "', input[0] rank should be between 1 and 5, but got:" << shape_rank;
     }
 
-    auto first_output_shape_ptr =
-      std::make_shared<abstract::Shape>(ShapeVector({count_value, static_cast<int64_t>(shape_rank)}));
+    ShapeVector index_shape;
+    (void)copy(shape_vec.begin(), shape_vec.begin() + batch_rank, std::back_inserter(index_shape));
+    index_shape.push_back(count_value);
+    index_shape.push_back(static_cast<int64_t>(shape_rank - batch_rank));
+    auto first_output_shape_ptr = std::make_shared<abstract::Shape>(index_shape);
     return std::make_shared<abstract::TupleShape>(
       std::vector<abstract::BaseShapePtr>{first_output_shape_ptr, count_shape_ptr});
   }
