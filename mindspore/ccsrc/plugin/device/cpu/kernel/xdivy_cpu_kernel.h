@@ -17,6 +17,7 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_XDIVY_CPU_KERNEL_H
 #include <complex>
 #include <vector>
+#include <utility>
 #include <map>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
@@ -26,7 +27,7 @@ namespace kernel {
 using complex64 = std::complex<float>;
 using complex128 = std::complex<double>;
 
-class XdivyCpuKernelMod : public NativeCpuKernelMod {
+class XdivyCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<XdivyCpuKernelMod> {
  public:
   XdivyCpuKernelMod() { ResetResource(); }
   ~XdivyCpuKernelMod() override = default;
@@ -40,7 +41,9 @@ class XdivyCpuKernelMod : public NativeCpuKernelMod {
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
-  std::vector<KernelAttr> GetOpSupport() override;
+  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
+
+  std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
  protected:
   void ResetResource() noexcept {
@@ -55,15 +58,8 @@ class XdivyCpuKernelMod : public NativeCpuKernelMod {
   template <typename T>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
                     const std::vector<kernel::AddressPtr> &outputs);
-  using XdivyFunc =
-    std::function<bool(XdivyCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
-  static std::vector<KernelAttr> support_ops_;
-  static std::map<mindspore::TypeId, XdivyFunc> func_map_;
-  XdivyFunc kernel_func_;
-  // Broadcast related.
-  std::vector<int64_t> index_listx_{};
-  std::vector<int64_t> index_listy_{};
+  std::vector<size_t> index_listx_{};
+  std::vector<size_t> index_listy_{};
   bool is_need_broadcast_{false};
 };
 }  // namespace kernel

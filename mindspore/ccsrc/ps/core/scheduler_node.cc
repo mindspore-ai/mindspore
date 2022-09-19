@@ -19,7 +19,6 @@
 #include <string>
 
 #include "include/common/debug/common.h"
-#include "ps/core/common.h"
 #include "ps/core/scheduler_recovery.h"
 
 namespace mindspore {

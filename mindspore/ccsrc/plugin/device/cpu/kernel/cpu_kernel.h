@@ -284,6 +284,9 @@ class BroadcastIterator {
   int output_dimension_{0};
 };
 
+void GetBroadCastIndex(const std::vector<size_t> &unaligned_input_shape, const std::vector<size_t> &output_shape,
+                       std::vector<size_t> *index_list);
+
 // Broadcast for multi_inputs and single output
 class MultipleBroadcastIterator {
  public:

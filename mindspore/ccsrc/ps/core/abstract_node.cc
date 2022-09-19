@@ -25,20 +25,26 @@ namespace mindspore {
 namespace ps {
 namespace core {
 AbstractNode::~AbstractNode() {
-  if (client_to_scheduler_ != nullptr) {
-    client_to_scheduler_->Stop();
-  }
-  if (client_to_scheduler_thread_ != nullptr && client_to_scheduler_thread_->joinable()) {
-    client_to_scheduler_thread_->join();
-  }
-  if (heart_beat_thread_ != nullptr && heart_beat_thread_->joinable()) {
-    heart_beat_thread_->join();
-  }
-  if (server_ != nullptr) {
-    server_->Stop();
-  }
-  if (server_thread_ != nullptr && server_thread_->joinable()) {
-    server_thread_->join();
+  try {
+    if (client_to_scheduler_ != nullptr) {
+      client_to_scheduler_->Stop();
+    }
+    if (client_to_scheduler_thread_ != nullptr && client_to_scheduler_thread_->joinable()) {
+      client_to_scheduler_thread_->join();
+    }
+    if (heart_beat_thread_ != nullptr && heart_beat_thread_->joinable()) {
+      heart_beat_thread_->join();
+    }
+    if (server_ != nullptr) {
+      server_->Stop();
+    }
+    if (server_thread_ != nullptr && server_thread_->joinable()) {
+      server_thread_->join();
+    }
+  } catch (const std::exception &e) {
+    MS_LOG(ERROR) << "AbstractNode destructor run failed, error message: " << e.what();
+  } catch (...) {
+    MS_LOG(ERROR) << "AbstractNode destructor run failed, unknown error occurred.";
   }
 }
 
@@ -511,11 +517,6 @@ void AbstractNode::OnRecvCollectiveData(const MessageMeta &message_meta, const V
   fl_receive_cond_.notify_all();
 }
 
-void AbstractNode::SetIterationResult(size_t last_iteration, bool is_iteration_valid) {
-  iteration_failed_ = !is_iteration_valid;
-  failed_iteration_num_ = last_iteration;
-}
-
 bool AbstractNode::HasIterationFailed(uint32_t iteration_num) const {
   return iteration_num == failed_iteration_num_ && iteration_failed_;
 }
@@ -634,41 +635,6 @@ void AbstractNode::Response(const std::shared_ptr<TcpConnection> &conn, const st
   if (!server_->SendMessage(conn, meta, Protos::RAW, data, size)) {
     MS_LOG(WARNING) << "Server response message failed.";
   }
-}
-
-std::shared_ptr<CommunicatorBase> AbstractNode::GetOrCreateHttpComm(
-  const std::string &ip, uint16_t port, const std::shared_ptr<TaskExecutor> &task_executor) {
-  MS_EXCEPTION_IF_NULL(task_executor);
-  std::lock_guard<std::mutex> lock(communicator_mutex_);
-  if (!communicators_.count(kHttpCommunicator)) {
-    MS_LOG(INFO) << "Create Http communicator.";
-    auto http_comm = std::make_shared<HttpCommunicator>(ip, port, task_executor);
-    MS_EXCEPTION_IF_NULL(http_comm);
-    communicators_[kHttpCommunicator] = http_comm;
-  }
-  return communicators_[kHttpCommunicator];
-}
-
-std::shared_ptr<CommunicatorBase> AbstractNode::GetOrCreateTcpComm(const std::string &scheduler_ip,
-                                                                   std::int16_t scheduler_port, uint32_t worker_num,
-                                                                   uint32_t server_num,
-                                                                   const std::shared_ptr<TaskExecutor> &task_executor) {
-  MS_EXCEPTION_IF_NULL(task_executor);
-  std::lock_guard<std::mutex> lock(communicator_mutex_);
-  if (!communicators_.count(kTcpCommunicator)) {
-    MS_LOG(INFO) << "Create Tcp communicator.";
-    auto tcp_comm = std::make_shared<TcpCommunicator>(task_executor, this);
-    MS_EXCEPTION_IF_NULL(tcp_comm);
-    PSContext::instance()->cluster_config().scheduler_host = scheduler_ip;
-    PSContext::instance()->cluster_config().scheduler_port = static_cast<uint16_t>(scheduler_port);
-    PSContext::instance()->cluster_config().initial_worker_num = worker_num;
-    PSContext::instance()->cluster_config().initial_server_num = server_num;
-    MS_LOG(INFO) << "Initialize cluster metadata for server. Worker number:" << worker_num
-                 << ", Server number:" << server_num << ", Scheduler ip:" << scheduler_ip
-                 << ", Scheduler port:" << scheduler_port;
-    communicators_[kTcpCommunicator] = tcp_comm;
-  }
-  return communicators_[kTcpCommunicator];
 }
 
 void AbstractNode::StartHeartbeatTimer(const std::shared_ptr<TcpClient> &client) {
