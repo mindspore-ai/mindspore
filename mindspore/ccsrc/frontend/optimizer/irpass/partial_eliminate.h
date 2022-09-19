@@ -24,6 +24,7 @@
 #include <set>
 
 #include "utils/hash_map.h"
+#include "ir/func_graph_cloner.h"
 #include "frontend/optimizer/irpass.h"
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/anf_visitor.h"
@@ -264,7 +265,7 @@ class ChoicePartialEliminater : public AnfVisitor {
     MS_LOG(EXCEPTION) << "Can't find parameter of arg:" << arg->DebugString();
   }
 
-  std::vector<AnfNodePtr> GetFuncGraphNewParameters(
+  static std::vector<AnfNodePtr> GetFuncGraphNewParameters(
     const FuncGraphPtr &func_graph, const std::vector<AnfNodePtr> &new_args,
     const HashMap<FuncGraphPtr, HashMap<AnfNodePtr, size_t>> &all_old_args_index_map) {
     MS_EXCEPTION_IF_NULL(func_graph);
