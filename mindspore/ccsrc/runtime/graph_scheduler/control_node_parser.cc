@@ -1025,6 +1025,12 @@ bool ControlNodeParser::IsControlFlowDataArrow(const KernelGraphPtr &graph, cons
     return false;
   }
 
+  // If the input front node and graph not in same graph group, the input arrow should be link to the exit actor
+  // of the graph.
+  if (!IsSameKernelGraphGroup(front_node, graph)) {
+    return true;
+  }
+
   // If the graph has a call input, all of its inputs in the graph should be linked to its stack actor.
   if (IsCallInputKernelGraph(graph.get())) {
     // If the input come from a kernel graph belong the same group, it should be linked by internal parameter.
