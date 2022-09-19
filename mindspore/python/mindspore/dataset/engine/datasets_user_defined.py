@@ -175,8 +175,10 @@ class SamplerFn:
 
     def __init__(self, dataset, num_worker, multi_process, max_rowsize):
         self.workers = []
+        self.dataset = dataset
         self.num_worker = num_worker
         self.multi_process = multi_process
+        self.max_rowsize = max_rowsize
         self.need_join = False
         self.ppid = os.getpid()
         self.pids = []
@@ -341,6 +343,9 @@ class SamplerFn:
             self._stop_subprocess()
         except TypeError:
             pass
+
+    def __deepcopy__(self, memodict, exclude=()):
+        self.__init__(self.dataset, self.num_worker, self.multi_process, self.max_rowsize)
 
 
 def _subprocess_handle(eof, signum, frame):
