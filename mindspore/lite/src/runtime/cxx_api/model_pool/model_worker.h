@@ -31,6 +31,7 @@ class PredictTaskQueue;
 
 struct WorkerConfig {
   std::map<std::string, std::map<std::string, std::string>> config_info;
+  std::string config_path = "";
   std::shared_ptr<Context> context = nullptr;
   int numa_id = -1;
   int worker_id = -1;

@@ -62,6 +62,16 @@ class RunnerConfig {
   /// \return The current operators context setting.
   std::shared_ptr<Context> GetContext() const;
 
+  /// \brief Set the config path before runtime. Only valid for ModelParallelRunner.
+  ///
+  /// \param[in] config_path The path of the configuration parameter.
+  void SetConfigPath(const std::string &config_path);
+
+  /// \brief Get the current config path. Only valid for ModelParallelRunner.
+  ///
+  /// \return The current config path.
+  std::string GetConfigPath() const;
+
  private:
   std::shared_ptr<Data> data_ = nullptr;
 };

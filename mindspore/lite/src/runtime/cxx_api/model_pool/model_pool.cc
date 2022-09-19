@@ -560,12 +560,18 @@ ModelPoolConfig ModelPool::CreateGpuModelPoolConfig(const std::shared_ptr<Runner
   }
   if (runner_config != nullptr) {
     worker_config->config_info = runner_config->GetConfigInfo();
+    worker_config->config_path = runner_config->GetConfigPath();
   }
   worker_config->worker_id = 0;
   worker_config->context = init_context;
   worker_config->numa_id = -1;
   used_numa_node_num_ = 1;
   workers_num_ = 1;
+  if (worker_config->config_info.find(lite::kWeight) == worker_config->config_info.end()) {
+    std::map<std::string, std::string> config;
+    config[lite::kWeightPath] = model_path_;
+    worker_config->config_info[lite::kWeight] = config;
+  }
   model_pool_gpu_config.push_back(worker_config);
   return model_pool_gpu_config;
 }
@@ -622,9 +628,15 @@ ModelPoolConfig ModelPool::CreateCpuModelPoolConfig(const std::shared_ptr<Runner
     new_device_list.push_back(device_info);
     if (runner_config != nullptr) {
       worker_config->config_info = runner_config->GetConfigInfo();
+      worker_config->config_path = runner_config->GetConfigPath();
     }
     worker_config->context = context;
     worker_config->worker_id = i;
+    if (worker_config->config_info.find(lite::kWeight) == worker_config->config_info.end()) {
+      std::map<std::string, std::string> config;
+      config[lite::kWeightPath] = model_path_;
+      worker_config->config_info[lite::kWeight] = config;
+    }
     model_pool_config.push_back(worker_config);
   }
   return model_pool_config;
@@ -878,6 +890,7 @@ Status ModelPool::CanUseAllPhysicalResources(int *percentage) {
 
 Status ModelPool::Init(const std::string &model_path, const std::shared_ptr<RunnerConfig> &runner_config) {
   std::unique_lock<std::shared_mutex> l(model_pool_mutex_);
+  model_path_ = model_path;
   int percentage;
   auto status = CanUseAllPhysicalResources(&percentage);
   if (status != kSuccess) {
