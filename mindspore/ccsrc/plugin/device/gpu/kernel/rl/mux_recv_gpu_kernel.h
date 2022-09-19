@@ -130,12 +130,14 @@ class MuxRecvGpuKernel : public MuxBaseGpuKernel {
       tcp_server_->SetMessageHandler([this](MessageBase *const message) -> MessageBase *const {
         // This CAS operation will be success only if the `Launch` operation is ready to run.
         bool expected = true;
+        const ssize_t interval = 100000;
         while (true) {
           auto rt = idle_.compare_exchange_strong(expected, false);
           if (rt) {
             break;
           } else {
             expected = true;
+            std::this_thread::sleep_for(std::chrono::nanoseconds(interval));
             continue;
           }
         }
