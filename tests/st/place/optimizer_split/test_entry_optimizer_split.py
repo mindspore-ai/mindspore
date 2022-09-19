@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,46 +16,41 @@ import os
 import pytest
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
+@pytest.mark.level2
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_single
-def test_full_ps_lenet_ascend():
+def test_split_ref_without_optim():
     """
-    Feature: Parameter Server.
-    Description: Test LeNet accuracy in ps mode for Ascend.
+    Feature: Graph partition.
+    Description: Test splitting one ref node to another process while optimizer is in local process.
     Expectation: success.
     """
     return_code = os.system(
-        "bash shell_run_test.sh Ascend /home/workspace/mindspore_dataset/mnist 1 1 127.0.0.1 8082"
+        "bash shell_run_test.sh GPU 2 2 127.0.0.1 8082 true split_ref_without_optim"
     )
     if return_code != 0:
         os.system(f"echo '\n**************** Worker Log ****************'")
-        os.system(f"grep -E 'ERROR|Error|error' ./worker*/worker*.log")
-        os.system(f"echo '\n**************** Server Log ****************'")
-        os.system(f"grep -E 'ERROR|Error|error' ./server*/server*.log")
+        os.system(f"grep -E 'ERROR|Error|error' -C 15 ./worker*/worker*.log")
         os.system(f"echo '\n**************** Scheduler Log ****************'")
-        os.system(f"grep -E 'ERROR|Error|error' ./sched/sched.log")
+        os.system(f"grep -E 'ERROR|Error|error' -C 15 ./sched/sched.log")
     assert return_code == 0
 
 
-@pytest.mark.level0
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_full_ps_lenet_gpu():
+@pytest.mark.env_single
+def test_split_optim():
     """
-    Feature: Parameter Server.
-    Description: Test LeNet accuracy in ps mode for GPU.
+    Feature: Graph partition.
+    Description: Test splitting optimizer nodes to another process while there's side-effect node in local process.
     Expectation: success.
     """
     return_code = os.system(
-        "bash shell_run_test.sh GPU /home/workspace/mindspore_dataset/mnist 1 1 127.0.0.1 8082"
+        "bash shell_run_test.sh GPU 2 2 127.0.0.1 8082 true split_optim"
     )
     if return_code != 0:
         os.system(f"echo '\n**************** Worker Log ****************'")
-        os.system(f"grep -E 'ERROR|Error|error' ./worker*/worker*.log")
-        os.system(f"echo '\n**************** Server Log ****************'")
-        os.system(f"grep -E 'ERROR|Error|error' ./server*/server*.log")
+        os.system(f"grep -E 'ERROR|Error|error' -C 15 ./worker*/worker*.log")
         os.system(f"echo '\n**************** Scheduler Log ****************'")
-        os.system(f"grep -E 'ERROR|Error|error' ./sched/sched.log")
+        os.system(f"grep -E 'ERROR|Error|error' -C 15 ./sched/sched.log")
     assert return_code == 0
