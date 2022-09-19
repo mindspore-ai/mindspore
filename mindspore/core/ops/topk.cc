@@ -15,6 +15,7 @@
  */
 
 #include <set>
+#include <utility>
 #include "ops/topk.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
@@ -44,7 +45,7 @@ abstract::TupleShapePtr TopKInferShape(const PrimitivePtr &primitive, const std:
     if (k_ptr->isa<tensor::Tensor>()) {
       auto k_tensor_ptr = k_ptr->cast<tensor::TensorPtr>();
       MS_EXCEPTION_IF_NULL(k_tensor_ptr);
-      k_v = *static_cast<int64_t *>(k_tensor_ptr->data_c());
+      k_v = *static_cast<int32_t *>(k_tensor_ptr->data_c());
     }
   } else if (input_args[kInputIndex1]->isa<abstract::AbstractScalar>()) {
     k_v = GetValue<int64_t>(input_args[kInputIndex1]->BuildValue());
@@ -85,6 +86,12 @@ AbstractBasePtr TopKInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
   auto infer_shape = TopKInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
+
+bool TopK::get_attr(const char *attr) const {
+  auto attr_ptr = GetAttr(attr);
+  return GetValue<bool>(attr_ptr);
+}
+
 REGISTER_PRIMITIVE_EVAL_IMPL(TopK, prim::kPrimTopK, TopKInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore
