@@ -9,9 +9,9 @@ mindspore.dataset.vision.PadToSize
         - **size** (Union[int, Sequence[int]]) - 要填充的目标大小。
           若输入整型，则将图像填充为(size, size)大小；如果提供了序列[int, int]，则将图像填充为(高度, 宽度)大小。
         - **offset** (Union[int, Sequence[int]], 可选) - 顶部和左侧要填充的长度。
-            如果输入整型，使用此值填充图像上侧和左侧。
-            如果提供了序列[int, int]，则应按[top, left]的顺序排列，填充图像上侧和左侧。
-            默认值：None，表示对称填充。
+          如果输入整型，使用此值填充图像上侧和左侧。
+          如果提供了序列[int, int]，则应按[top, left]的顺序排列，填充图像上侧和左侧。
+          默认值：None，表示对称填充。
         - **fill_value** (Union[int, tuple[int]], 可选) - 填充的像素值，仅在 `padding_mode` 取值为Border.CONSTANT时有效。
           如果是3元素元组，则分别用于填充R、G、B通道。
           如果是整数，则用于所有 RGB 通道。
@@ -28,7 +28,7 @@ mindspore.dataset.vision.PadToSize
         - **TypeError** - 如果 `offset` 不是int或tupl[int, int]类型。
         - **TypeError** - 如果 `fill_value` 不是int或tuple[int]类型。
         - **TypeError** - 如果 `padding_mode` 不是 :class:`mindspore.dataset.vision.Border` 的类型。
-        - **ValueErrorr** - 如果 `size` 不是正数。
-        - **ValueErrorr** - 如果 `offset` 为负数。
-        - **ValueErrorr** - 如果 `fill_value` 不在[0, 255]的范围内。
-        - **RuntimeErrorr** - 如果输入图像的形状不是<H, W>或<H, W, C>。
+        - **ValueError** - 如果 `size` 不是正数。
+        - **ValueError** - 如果 `offset` 为负数。
+        - **ValueError** - 如果 `fill_value` 不在[0, 255]的范围内。
+        - **RuntimeError** - 如果输入图像的形状不是<H, W>或<H, W, C>。

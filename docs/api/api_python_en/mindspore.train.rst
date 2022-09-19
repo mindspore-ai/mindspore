@@ -5,7 +5,7 @@ Model
 -----
 
 .. autosummary::
-    :toctree: mindspore
+    :toctree: train
     :nosignatures:
     :template: classtemplate.rst
 
@@ -15,7 +15,7 @@ Callback
 --------
 
 .. autosummary::
-    :toctree: mindspore
+    :toctree: train
     :nosignatures:
     :template: classtemplate.rst
 
@@ -35,7 +35,7 @@ Evaluation Metrics
 ------------------
 
 .. msplatformautosummary::
-    :toctree: mindspore
+    :toctree: train
     :nosignatures:
     :template: classtemplate.rst
 
@@ -67,7 +67,7 @@ Utils
 -----
 
 .. msplatformautosummary::
-    :toctree: mindspore
+    :toctree: train
     :nosignatures:
     :template: classtemplate.rst
 

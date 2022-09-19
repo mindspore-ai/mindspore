@@ -575,7 +575,7 @@ class SparseTensorDenseAdd(Primitive):
           should have 2 elements, represent sparse tensor shape is :math:`(N, C)`.
         - **x2** (Tensor) - A dense Tensor, the dtype is same as `values`.
 
-    Returns:
+    Outputs:
         Tensor, add result of sparse tensor and dense tensor. The dtype is same as `values`,
         and the shape is `x1_shape`.
 

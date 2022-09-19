@@ -1,7 +1,7 @@
-﻿mindspore.dataset.text.get_image_size
-======================================
+﻿mindspore.dataset.vision.get_image_size
+========================================
 
-.. py:function:: mindspore.dataset.text.get_image_size(image)
+.. py:function:: mindspore.dataset.vision.get_image_size(image)
 
     获取输入图像的大小为[高度, 宽度]。
 
