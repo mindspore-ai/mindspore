@@ -15,12 +15,12 @@
  */
 #include "extendrt/delegate/tensorrt/tensorrt_plugin_impl.h"
 #include "extendrt/delegate/tensorrt/distribution/distribution_base.h"
-// #include "plugin/device/gpu/hal/device/distribution/collective_wrapper.h"
+#include "plugin/device/gpu/hal/device/distribution/collective_wrapper.h"
 
 namespace mindspore::lite {
-int TensorRTPluginImpl::GetGPUGroupSize() const { return 1; }  // GetGroupSize(NCCL_WORLD_GROUP);
+int TensorRTPluginImpl::GetGPUGroupSize() const { return GetGroupSize(NCCL_WORLD_GROUP); }
 
-int TensorRTPluginImpl::GetRankID() const { return 0; }  // GetRankIDByGroup(NCCL_WORLD_GROUP);
+int TensorRTPluginImpl::GetRankID() const { return GetRankIDByGroup(NCCL_WORLD_GROUP); }
 }  // namespace mindspore::lite
 
 mindspore::lite::TensorRTExecutorPluginImplBase *CreateTensorRTPluginImpl() {

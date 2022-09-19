@@ -23,7 +23,6 @@
 #include <functional>
 #include <iomanip>
 #include <limits>
-#include "schema/model_generated.h"
 #include "src/common/common.h"
 #include "src/tensor.h"
 #include "tools/common/string_util.h"

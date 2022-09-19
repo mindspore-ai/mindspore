@@ -48,14 +48,16 @@ struct NcclGroupInfo {
     }                                                                                                                  \
   }
 #else
-#define CHECK_RET(expression, result, message)                                                                       \
-  {                                                                                                                  \
-    auto ret = (expression);                                                                                         \
-    if (ret != result) {                                                                                             \
-      printf("Error in file %s | Error on line %d | GPU collective Error: %s | Error Number %d", __FILE__, __LINE__, \
-             message, static_cast<int>(ret));                                                                        \
-      exit(EXIT_FAILURE);                                                                                            \
-    }                                                                                                                \
+#define CHECK_RET(expression, result, message)                                                                         \
+  {                                                                                                                    \
+    auto ret = (expression);                                                                                           \
+    if (ret != result) {                                                                                               \
+      std::ostringstream oss;                                                                                          \
+      oss << "Error in file " << __FILE__ << " | Error on line " << __LINE__ << " | GPU collective Error: " << message \
+          << " | Error Number " << ret;                                                                                \
+      printf("%s", oss.str().c_str());                                                                                 \
+      exit(EXIT_FAILURE);                                                                                              \
+    }                                                                                                                  \
   }
 #endif
 }  // namespace gpu

@@ -57,13 +57,13 @@ class StrideSliceTensorRTUtil final : public SliceTensorRTUtil {
 
     int64_t axis_index = in_tensors.size() == HAS_AXIS ? AXIS_INDEX : -1;
     if (begin.ElementNum() == helper.trt_tensor_->getDimensions().nbDims) {
-      start_dims = lite::ConvertCudaDims(begin.Data(), begin.ElementNum());
+      start_dims = lite::ConvertCudaDims(begin);
       size_dims.nbDims = start_dims.nbDims;
-      auto end_dims = lite::ConvertCudaDims(end.Data(), end.ElementNum());
+      auto end_dims = lite::ConvertCudaDims(end);
       for (int i = 0; i < size_dims.nbDims; i++) {
         size_dims.d[i] = end_dims.d[i] - start_dims.d[i];
       }
-      stride_dims = lite::ConvertCudaDims(stride.Data(), stride.ElementNum());
+      stride_dims = lite::ConvertCudaDims(stride);
     } else {
       if (axis_index == -1 || in_tensors.at(axis_index).ElementNum() != 1) {
         MS_LOG(ERROR) << "invalid input params for " << op_name_;
