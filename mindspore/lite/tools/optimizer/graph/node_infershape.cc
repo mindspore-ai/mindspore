@@ -111,11 +111,11 @@ STATUS NodeInferShape::InferShape(const CNodePtr &cnode) {
     return lite::RET_ERROR;
   }
   std::vector<lite::Tensor *> inputs;
-  std::transform(inputs_ptr.begin(), inputs_ptr.end(), std::back_inserter(inputs),
-                 [](const TensorPtr &input) { return input.get(); });
+  (void)std::transform(inputs_ptr.begin(), inputs_ptr.end(), std::back_inserter(inputs),
+                       [](const TensorPtr &input) { return input.get(); });
   std::vector<lite::Tensor *> outputs;
-  std::transform(outputs_ptr.begin(), outputs_ptr.end(), std::back_inserter(outputs),
-                 [](const TensorPtr &output) { return output.get(); });
+  (void)std::transform(outputs_ptr.begin(), outputs_ptr.end(), std::back_inserter(outputs),
+                       [](const TensorPtr &output) { return output.get(); });
   auto ret = KernelInferShape(inputs, outputs, prim, {}, lite::SCHEMA_CUR);
   if (ret == lite::RET_NOT_SUPPORT) {
     auto parameter_gen = lite::PopulateRegistry::GetInstance()->GetParameterCreator(
@@ -154,8 +154,8 @@ STATUS NodeInferShape::InferShape(const CNodePtr &cnode) {
     MS_LOG(WARNING) << "infer shape failed.";
   }
   std::vector<int64_t> outputs_format;
-  std::transform(outputs.begin(), outputs.end(), std::back_inserter(outputs_format),
-                 [](const lite::Tensor *output) { return output->format(); });
+  (void)std::transform(outputs.begin(), outputs.end(), std::back_inserter(outputs_format),
+                       [](const lite::Tensor *output) { return output->format(); });
   (void)anf_prim->AddAttr(kOutputsFormat, MakeValue(outputs_format));
   return ret;
 }

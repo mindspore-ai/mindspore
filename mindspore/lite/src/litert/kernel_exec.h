@@ -218,10 +218,11 @@ class KernelExec {
       std::static_pointer_cast<Abstractkernel>(kernel_)->set_in_tensors(in_tensors);
     } else {
       std::vector<MSTensor> tensors_in;
-      std::transform(in_tensors.begin(), in_tensors.end(), std::back_inserter(tensors_in), [](lite::Tensor *tensor) {
-        auto impl = std::make_shared<mindspore::LiteTensorImpl>(tensor);
-        return mindspore::MSTensor(impl);
-      });
+      (void)std::transform(in_tensors.begin(), in_tensors.end(), std::back_inserter(tensors_in),
+                           [](lite::Tensor *tensor) {
+                             auto impl = std::make_shared<mindspore::LiteTensorImpl>(tensor);
+                             return mindspore::MSTensor(impl);
+                           });
       kernel_->set_inputs(tensors_in);
     }
   }
@@ -244,10 +245,11 @@ class KernelExec {
       std::static_pointer_cast<Abstractkernel>(kernel_)->set_out_tensors(out_tensors);
     } else {
       std::vector<MSTensor> tensors_out;
-      std::transform(out_tensors.begin(), out_tensors.end(), std::back_inserter(tensors_out), [](lite::Tensor *tensor) {
-        auto impl = std::make_shared<mindspore::LiteTensorImpl>(tensor);
-        return mindspore::MSTensor(impl);
-      });
+      (void)std::transform(out_tensors.begin(), out_tensors.end(), std::back_inserter(tensors_out),
+                           [](lite::Tensor *tensor) {
+                             auto impl = std::make_shared<mindspore::LiteTensorImpl>(tensor);
+                             return mindspore::MSTensor(impl);
+                           });
       kernel_->set_outputs(tensors_out);
     }
   }

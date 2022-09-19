@@ -334,14 +334,17 @@ int CastTensorData(Tensor *dst, Tensor *src, bool support_fp16) {
 }
 
 int CastCommonTensorData(Tensor *dst, Tensor *src, bool support_fp16) {
-  dst->ReallocData();
+  auto dst_data = dst->ReallocData(); /* using MutableData to sync GPU data */
+  if (dst_data == nullptr) {
+    MS_LOG(ERROR) << "Remalloc memory failed.";
+    return RET_NULL_PTR;
+  }
   dst->ResetRefCount();
   if (dst->shape() != src->shape()) {
     MS_LOG(ERROR) << "dst tensor: " << dst->tensor_name() << " shape: " << dst->shape() << " vs "
                   << "src tensor: " << src->tensor_name() << " shape: " << src->shape();
     return RET_PARAM_INVALID;
   }
-  auto dst_data = dst->MutableData(); /* using MutableData to sync GPU data */
   auto src_data = src->MutableData();
   auto src_nums_size = src->ElementsNum();
   auto dst_data_type = static_cast<int>(dst->data_type());

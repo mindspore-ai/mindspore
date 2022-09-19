@@ -32,6 +32,8 @@ class ArithmeticCPUKernel : public ArithmeticBaseCPUKernel {
 
  protected:
   void DoBroadcast(void *out_data, int input_index) override;
+  int DoExecute(const void *input0, const void *input1, void *output, int64_t size) override;
+  void InitRunFunction(int primitive_type) override;
 
  private:
   typedef struct {
@@ -45,8 +47,6 @@ class ArithmeticCPUKernel : public ArithmeticBaseCPUKernel {
     ArithmeticOptFunc<bool> opt_bool_func_;
   } ARITHMETIC_FUNC_INFO_FP32;
 
-  int DoExecute(const void *input0, const void *input1, void *output, int64_t size) override;
-  void InitRunFunction(int primitive_type) override;
   ArithmeticFunc<float> arithmetic_run_fp32_{nullptr};
   ArithmeticOptFunc<float> arithmetic_opt_run_fp32_{nullptr};
   ArithmeticFunc<int> arithmetic_run_int_{nullptr};

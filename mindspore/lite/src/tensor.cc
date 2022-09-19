@@ -397,7 +397,7 @@ int Tensor::MallocData(const AllocatorPtr allocator) {
     this->data_ = malloc(data_size);
   } else {
     this->data_ = allocator_->Malloc(data_size);
-    allocator_->SetRefCount(this->data_, 1);
+    (void)allocator_->SetRefCount(this->data_, 1);
   }
   if (this->data_ == nullptr) {
     MS_LOG(ERROR) << "Malloc tensor data failed, size=" << data_size;

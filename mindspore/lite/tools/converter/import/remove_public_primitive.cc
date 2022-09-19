@@ -55,7 +55,7 @@ bool RemovePublicPrimitiveInterference::Run(const FuncGraphPtr &func_graph) {
           return succ;
         }
       } else {
-        has_visited.insert(first_input);
+        (void)has_visited.insert(first_input);
       }
     }
   }
@@ -88,7 +88,7 @@ bool RemovePublicPrimitiveInterference::CreateIndividualPrim(const CNodePtr &cno
       prim->set_instance_name(node_type);
     }
   }
-  prim->SetAttrs(public_prim->attrs());
+  (void)prim->SetAttrs(public_prim->attrs());
   auto value_node = std::make_shared<ValueNode>(prim);
   MS_CHECK_TRUE_MSG(value_node != nullptr, false, "create valueNode failed.");
   cnode->set_input(0, value_node);

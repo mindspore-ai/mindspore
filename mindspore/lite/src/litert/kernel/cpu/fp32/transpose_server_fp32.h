@@ -30,12 +30,12 @@ class TransposeServerCPUKernel : public TransposeBaseCPUKernel {
   ~TransposeServerCPUKernel() override = default;
 
   int ReSize() override;
+  int DoTransposeMultiThread(int task_id) override;
 
  private:
   void ComputeIndividualOfflineInfo();
   int ChooseThreadCuttingStrategy();
   int DoTransposeSingleThread() override;
-  int DoTransposeMultiThread(int task_id) override;
 
   std::vector<int64_t> overflow_points_;
   std::vector<int64_t> strides_;

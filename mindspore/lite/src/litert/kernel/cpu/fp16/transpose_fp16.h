@@ -30,10 +30,10 @@ class TransposeFp16CPUKernel : public TransposeBaseCPUKernel {
   ~TransposeFp16CPUKernel() = default;
 
   int ReSize() override;
+  int DoTransposeMultiThread(int task_id) override;
 
  private:
   int DoTransposeSingleThread() override;
-  int DoTransposeMultiThread(int task_id) override;
 };
 }  // namespace mindspore::kernel
 
