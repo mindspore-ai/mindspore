@@ -4187,7 +4187,7 @@ def max(x, axis=0, keep_dims=False):
 
 def argmax(x, axis=-1, output_type=mstype.int32):
     """
-    Calculates the indices of the maximum value of a tensor across the axis.
+    Calculates the indices of the maximum value of a tensor across the `axis`.
 
     If the shape of input tensor is :math:`(x_1, ..., x_N)`, the shape of the output tensor will be
     :math:`(x_1, ..., x_{axis-1}, x_{axis+1}, ..., x_N)`.
@@ -4203,7 +4203,7 @@ def argmax(x, axis=-1, output_type=mstype.int32):
           Default: `mindspore.dtype.int32`.
 
     Returns:
-        Tensor, indices of the max value of input tensor across the axis.
+        Tensor, indices of the max value of input tensor across the `axis`.
 
     Raises:
         TypeError: If `axis` is not an int.

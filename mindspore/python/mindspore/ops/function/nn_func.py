@@ -2725,13 +2725,12 @@ def adaptive_avg_pool1d(input_x, output_size):
     r"""
     1D adaptive average pooling for temporal data.
 
-    Applies a 1D adaptive average pooling over an input Tensor which can be regarded as
-    a composition of 1D input planes.
+    Applies a 1D adaptive average pooling over an input Tensor which can be regarded as a composition of 1D input
+    planes.
 
-    Typically, the input is of shape :math:`(N_{in}, C_{in}, L_{in})`,
-    adaptive_avg_pool1d outputs regional average in the :math:`L_{in}`-dimension.
-    The output is of shape :math:`(N_{in}, C_{in}, L_{out})`,
-    where :math:`L_{out}` is defined by `output_size`.
+    Typically, the input is of shape :math:`(N_{in}, C_{in}, L_{in})`, adaptive_avg_pool1d outputs regional average
+    in the :math:`L_{in}`-dimension. The output is of shape :math:`(N_{in}, C_{in}, L_{out})`, where :math:`L_{out}`
+    is defined by `output_size`.
 
     Note:
         :math:`L_{in}` must be divisible by `output_size`.
@@ -2893,39 +2892,37 @@ def batch_norm(input_x, running_mean, running_var, weight, bias, training=False,
         y = \frac{x - mean}{\sqrt{variance + \epsilon}} * \gamma + \beta
 
     where :math:`\gamma` is scale, :math:`\beta` is bias, :math:`\epsilon` is epsilon, :math:`mean` is the
-    mean of input_x, :math:`variance` is the variance of input_x.
+    mean of `input_x`, :math:`variance` is the variance of `input_x`.
 
     .. warning::
-        - If the operation is used for inference, and outputs "reserve_space_1" and "reserve_space_2" are available,
-          then "reserve_space_1" has the same value as "mean" and "reserve_space_2" has the same value as "variance".
         - For Ascend 310, the result accuracy fails to reach 1‰ due to the square root instruction.
 
     Args:
-        If `training` is False, `scale`, `bias`, `mean` and `variance` are Tensors.
+        If running_mean is `False`, `scale`, `bias`, `mean` and `variance` are Tensors.
 
-        input_x (Tensor): Tensor of shape :math:`(N, C)`, with float16 or float32 data type.
-        running_mean (Tensor): Tensor of shape :math:`(C,)`, has the same data type with `scale`.
-        running_var (Tensor): Tensor of shape :math:`(C,)`, has the same data type with `scale`.
-        weight (Tensor): Tensor of shape :math:`(C,)`, with float16 or float32 data type.
-        bias (Tensor): Tensor of shape :math:`(C,)`, has the same data type with `scale`.
+            input_x (Tensor): Tensor of shape :math:`(N, C)`, with float16 or float32 data type.
+            running_mean (Tensor): Tensor of shape :math:`(C,)`, has the same data type with `scale`.
+            running_var (Tensor): Tensor of shape :math:`(C,)`, has the same data type with `scale`.
+            weight (Tensor): Tensor of shape :math:`(C,)`, with float16 or float32 data type.
+            bias (Tensor): Tensor of shape :math:`(C,)`, has the same data type with `scale`.
 
-        If `training` is True, `scale`, `bias`, `mean` and `variance` are Parameters.
+        If `training` is `True`, `scale`, `bias`, `mean` and `variance` are Parameters.
 
-        input_x (Tensor): Tensor of shape :math:`(N, C)`, with float16 or float32 data type.
-        running_mean (Parameter): Parameter of shape :math:`(C,)`, has the same data type with `scale`.
-        running_var (Parameter): Parameter of shape :math:`(C,)`, has the same data type with `scale`.
-        weight (Parameter): Parameter of shape :math:`(C,)`, with float16 or float32 data type.
-        bias (Parameter): Parameter of shape :math:`(C,)`, has the same data type with `scale`.
+            input_x (Tensor): Tensor of shape :math:`(N, C)`, with float16 or float32 data type.
+            running_mean (Parameter): Parameter of shape :math:`(C,)`, has the same data type with `scale`.
+            running_var (Parameter): Parameter of shape :math:`(C,)`, has the same data type with `scale`.
+            weight (Parameter): Parameter of shape :math:`(C,)`, with float16 or float32 data type.
+            bias (Parameter): Parameter of shape :math:`(C,)`, has the same data type with `scale`.
 
-        training (bool): If `training` is True, `mean` and `variance` are computed during training.
-            If `training` is False, they're loaded from checkpoint during inference. Default: False.
-        momentum (float): The hyper parameter to compute moving average for running_mean and running_var
+        training (bool): If `training` is `True`, `mean` and `variance` are computed during training.
+            If `training` is `False`, they're loaded from checkpoint during inference. Default: False.
+        momentum (float): The hyper parameter to compute moving average for `running_mean` and `running_var`
             (e.g. :math:`new\_running\_mean = (1 - momentum) * running\_mean + momentum * current\_mean`).
-            Momentum value must be [0, 1]. Default: 0.1.
+            Momentum value must be `[0, 1]`. Default: 0.1.
         eps (float): A small value added for numerical stability. Default: 1e-5.
 
     Returns:
-        output_x (Tensor), The same type and shape as the input_x. The shape is :math:`(N, C)`.
+        output_x (Tensor) - The same type and shape as the `input_x`. The shape is :math:`(N, C)`.
 
     Raises:
         TypeError: If `training` is not a bool.
@@ -2954,8 +2951,8 @@ def batch_norm(input_x, running_mean, running_var, weight, bias, training=False,
 
 def bias_add(input_x, bias):
     r"""
-    Returns the sum of the input Tensor and the bias Tensor. Before adding, the bias Tensor will be broadcasted to be
-    consistent with the shape of the input Tensor.
+    Returns the sum of the `input_x` and the `bias` Tensor. Before adding, the `bias` Tensor will be broadcasted to be
+    consistent with the shape of the `input_x` Tensor.
 
     Args:
         input_x (Tensor): The input tensor. The shape can be 2-5 dimensions.
@@ -2986,19 +2983,19 @@ def bias_add(input_x, bias):
     return bias_add_op(input_x, bias)
 
 
-def binary_cross_entropy(logits, labels, weight, reduction='mean'):
+def binary_cross_entropy(logits, labels, weight=None, reduction='mean'):
     r"""
     Computes the binary cross entropy between the logits and the labels.
 
-    Sets logits as :math:`x`, labels as :math:`y`, output as :math:`\ell(x, y)`.
+    Sets `logits` as :math:`x`, `labels` as :math:`y`, output as :math:`\ell(x, y)`.
     Let,
 
     .. math::
         L = \{l_1,\dots,l_N\}^\top, \quad
         l_n = - w_n \left[ y_n \cdot \log x_n + (1 - y_n) \cdot \log (1 - x_n) \right]
 
-    In which, :math:`L` indicates the loss of all batch_sizes, :math:`l` indicates the loss of one batch_size,
-    and n indicates one batch_size in the 1-N range. Then,
+    In which, :math:`L` indicates the loss of all `batch_size`, :math:`l` indicates the loss of one `batch_size`,
+    and :math:`n` indicates one `batch_size` in the :math:`1-N` range. Then,
 
     .. math::
         \ell(x, y) = \begin{cases}
@@ -3008,8 +3005,8 @@ def binary_cross_entropy(logits, labels, weight, reduction='mean'):
         \end{cases}
 
     .. warning::
-        - The value of "x" must range from 0 to 1.
-        - The value of "y" must be "0" or "1".
+        - The value of `logits` must range from `0` to `l`.
+        - The value of `labels` must be `0` or `l`.
 
     Args:
         logits (Tensor): The input Tensor. The data type must be float16 or float32,
