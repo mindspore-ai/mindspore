@@ -120,8 +120,7 @@ def test_greater_op_functional(mode):
     """
     context.set_context(mode=mode, device_target="CPU")
 
-    op = P.Greater()
-    op_wrapper = OpNetWrapper(op)
+    op_wrapper = GreaterFunc()
 
     input_x = Tensor(np.array([1, -2, 3]).astype(np.float32))
     input_y = Tensor(np.array([3, 2, 1]).astype(np.float32))
