@@ -44,8 +44,6 @@ class AscendSession : public SessionBasic {
   GraphId GetFinalRunGraph() const override { return final_graph_id_; }
   void SyncStream() const override;
 
-  std::string GetWarningMessage() const;
-  std::string GetErrorMessage() const;
   void SetThreadContext() override;
 
  protected:

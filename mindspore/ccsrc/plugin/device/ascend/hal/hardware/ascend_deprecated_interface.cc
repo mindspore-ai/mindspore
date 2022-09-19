@@ -28,6 +28,7 @@
 #include "runtime/config.h"
 #include "toolchain/plog.h"
 #include "common/util/error_manager/error_manager.h"
+#include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "plugin/device/ascend/hal/device/distribute/ascend_collective.h"
 #include "plugin/device/ascend/hal/profiler/parallel_strategy_profiling.h"
 
@@ -45,8 +46,6 @@ namespace mindspore {
 namespace device {
 namespace ascend {
 namespace {
-constexpr auto kUnknowErrorString = "Unknown error occurred";
-
 void ConvertObjectToTensors(const py::dict &dict, transform::TensorOrderMap *const tensors) {
   for (auto item : dict) {
     if ((!py::isinstance<py::str>(item.first))) {
@@ -166,11 +165,11 @@ void AscendDeprecatedInterface::ExportDFGraph(const std::string &file_name, cons
       return;
     }
     // get model stream
-    ge::Model model("", "");
+    ::ge::Model model("", "");
     model.SetGraph(*ge_graph);
-    ge::Buffer model_data;
+    ::ge::Buffer model_data;
     auto ge_ret = model.Save(model_data);
-    if (ge_ret != ge::SUCCESS) {
+    if (ge_ret != ::ge::SUCCESS) {
       MS_LOG(ERROR) << "ERROR: GE model save fail";
       return;
     }
@@ -291,11 +290,8 @@ bool AscendDeprecatedInterface::OpenTsd(const std::shared_ptr<MsContext> &ms_con
   MS_LOG(INFO) << "Device id = " << device_id << ", rank size = " << rank_size << ".";
   auto ret = rtSetDevice(static_cast<int32_t>(device_id));
   if (ret != RT_ERROR_NONE) {
-    const std::string &error_message = ErrorManager::GetInstance().GetErrorMessage();
-    if (!error_message.empty() && error_message.find(kUnknowErrorString) == std::string::npos) {
-      MS_LOG(ERROR) << "Ascend error occurred, error message:\n" << error_message;
-    }
-    MS_LOG(EXCEPTION) << "Device " << device_id << " call rtSetDevice failed, ret[" << static_cast<int>(ret) << "]";
+    MS_LOG(EXCEPTION) << "Device " << device_id << " call rtSetDevice failed, ret[" << static_cast<int>(ret) << "]."
+                      << GetErrorMessage(true);
   }
   ms_context_ptr->increase_param<uint32_t>(MS_CTX_TSD_REF);
   auto thread_crt = [](const std::string &path, const acltdtChannelHandle *acl_handle) {
@@ -322,11 +318,8 @@ bool AscendDeprecatedInterface::CloseTsd(const std::shared_ptr<MsContext> &ms_co
     uint32_t device_id = ms_context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
     auto ret = rtDeviceReset(static_cast<int32_t>(device_id));
     if (ret != RT_ERROR_NONE) {
-      const std::string &error_message = ErrorManager::GetInstance().GetErrorMessage();
-      if (!error_message.empty() && error_message.find(kUnknowErrorString) == std::string::npos) {
-        MS_LOG(ERROR) << "Ascend error occurred, error message:\n" << error_message;
-      }
-      MS_LOG(EXCEPTION) << "Device " << device_id << " call rtDeviceReset failed, ret[" << static_cast<int>(ret) << "]";
+      MS_LOG(EXCEPTION) << "Device " << device_id << " call rtDeviceReset failed, ret[" << static_cast<int>(ret) << "]."
+                        << GetErrorMessage(true);
     }
     ms_context_ptr->set_param<bool>(MS_CTX_IS_PYNATIVE_GE_INIT, false);
     MS_LOG(INFO) << "Call rtDeviceReset, destroy and close tsd successful, ret[" << static_cast<int>(ret) << "]";

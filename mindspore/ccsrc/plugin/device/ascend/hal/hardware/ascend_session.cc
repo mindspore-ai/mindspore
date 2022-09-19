@@ -86,7 +86,6 @@ using mindspore::profiler::ascend::MemoryProfiling;
 namespace mindspore {
 namespace session {
 const size_t kLabelNumsThreshold = 1023;
-constexpr auto kUnknowErrorString = "Unknown error occurred";
 namespace {
 #ifndef ENABLE_SECURITY
 void DumpGraphExeOrder(const std::vector<CNodePtr> &execution_order, const std::string &tag = "") {
@@ -1506,22 +1505,6 @@ std::shared_ptr<device::Bucket> AscendSession::CreateBucket(uint32_t bucket_id, 
   MS_EXCEPTION_IF_NULL(bucket);
   bucket->Init({compute_stream}, {communication_stream});
   return bucket;
-}
-
-std::string AscendSession::GetWarningMessage() const {
-  const string &warning_message = ErrorManager::GetInstance().GetWarningMessage();
-  if (!warning_message.empty()) {
-    return warning_message;
-  }
-  return "";
-}
-
-std::string AscendSession::GetErrorMessage() const {
-  const string &error_message = ErrorManager::GetInstance().GetErrorMessage();
-  if (!error_message.empty() && error_message.find(kUnknowErrorString) == string::npos) {
-    return error_message;
-  }
-  return "";
 }
 
 void AscendSession::SetThreadContext() { ErrorManager::GetInstance().GenWorkStreamIdDefault(); }

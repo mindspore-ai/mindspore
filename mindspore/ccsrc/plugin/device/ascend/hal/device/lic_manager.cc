@@ -18,7 +18,7 @@
 #include "utils/ms_context.h"
 #include "runtime/dev.h"
 #include "opt_info/opt_info.h"
-#include "plugin/device/ascend/hal/hardware/ascend_utils.h"
+#include "plugin/device/ascend/hal/common/ascend_utils.h"
 
 namespace mindspore {
 namespace {
