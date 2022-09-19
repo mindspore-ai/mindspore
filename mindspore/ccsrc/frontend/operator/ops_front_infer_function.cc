@@ -31,6 +31,9 @@
 #include "abstract/ops/infer_functions.h"
 #include "include/common/utils/convert_utils_py.h"
 #include "include/common/utils/utils.h"
+#ifdef _MSC_VER
+#include "include/common/pybind_api/api_register.h"
+#endif
 
 namespace mindspore {
 namespace abstract {
@@ -1051,6 +1054,7 @@ AbstractBasePtr InferImplStringGetItem(const AnalysisEnginePtr &, const Primitiv
   return std::make_shared<AbstractScalar>(res);
 }
 
+#ifndef _MSC_VER
 // String
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(StringMul, prim::kPrimStringMul, InferImplStringMul, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(StringGetItem, prim::kPrimStringGetItem, InferImplStringGetItem, nullptr);
@@ -1086,5 +1090,44 @@ REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(MakeRange, prim::kPrimMakeRange, InferImplMak
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(Taylor, prim::kPrimTaylor, InferImplTaylor, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(Shard, prim::kPrimShard, InferImplShard, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(Vmap, prim::kPrimVmap, InferImplVmap, nullptr);
+#else
+void RegPrimitiveFrontEval() {
+  // String
+  abstract::RegisterStandardPrimitiveEvalHelper(prim::kPrimStringMul, InferImplStringMul, nullptr);
+  abstract::RegisterStandardPrimitiveEvalHelper(prim::kPrimStringGetItem, InferImplStringGetItem, nullptr);
+  // Tuple
+  abstract::RegisterStandardPrimitiveEvalHelper(prim::kPrimTupleReversed, InferImplTupleReversed, nullptr);
+  abstract::RegisterStandardPrimitiveEvalHelper(prim::kPrimTupleDiv, InferImplTupleDiv, nullptr);
+  abstract::RegisterStandardPrimitiveEvalHelper(prim::kPrimTupleToArray, InferImplTuple2Array, nullptr);
+  abstract::RegisterStandardPrimitiveEvalHelper(prim::kPrimTupleEqual, InferImplTupleEqual, nullptr);
+  // List
+  abstract::RegisterStandardPrimitiveEvalHelper(prim::kPrimListReduce, InferImplListReduce, nullptr);
+  abstract::RegisterStandardPrimitiveEvalHelper(prim::kPrimListEqual, InferImplListEqual, nullptr);
+  // Dict
+  abstract::RegisterStandardPrimitiveEvalHelper(prim::kPrimDictLen, InferImplDictLen, nullptr);
+  // Slice
+  abstract::RegisterStandardPrimitiveEvalHelper(prim::kPrimMakeSlice, InferImplMakeSlice, nullptr);
+  abstract::RegisterStandardPrimitiveEvalHelper(prim::kPrimSliceGetItem, InferImplSliceGetItem, nullptr);
+  // Type
+  abstract::RegisterStandardPrimitiveEvalHelper(prim::kPrimTypeOf, InferImplTypeof, nullptr);
+  abstract::RegisterStandardPrimitiveEvalHelper(prim::kPrimTopTypeOf, InferImplTopTypeof, nullptr);
+  abstract::RegisterStandardPrimitiveEvalHelper(prim::kPrimHasType, InferImplHasType, nullptr);
+  abstract::RegisterStandardPrimitiveEvalHelper(prim::kPrimIsInstance, InferImplIsInstance, nullptr);
+  // Shape
+  abstract::RegisterStandardPrimitiveEvalHelper(prim::kPrimReducedShape, InferImplReduceShape, nullptr);
+  abstract::RegisterStandardPrimitiveEvalHelper(prim::kPrimShapeMul, InferImplShapeMul, nullptr);
+  // Auto-Grad
+  abstract::RegisterStandardPrimitiveEvalHelper(prim::kPrimStopGradient, InferImplStopGradient, nullptr);
+  abstract::RegisterStandardPrimitiveEvalHelper(prim::kPrimFakeBprop, InferImplFakeBprop, nullptr);
+  abstract::RegisterStandardPrimitiveEvalHelper(prim::kPrimJ, InferImplJ, nullptr);
+  abstract::RegisterStandardPrimitiveEvalHelper(prim::kPrimBroadcastGradientArgs, InferImplBroadcastGradientArgs,
+                                                nullptr);
+  // Other
+  abstract::RegisterStandardPrimitiveEvalHelper(prim::kPrimMakeRange, InferImplMakeRange, nullptr);
+  abstract::RegisterStandardPrimitiveEvalHelper(prim::kPrimTaylor, InferImplTaylor, nullptr);
+  abstract::RegisterStandardPrimitiveEvalHelper(prim::kPrimShard, InferImplShard, nullptr);
+  abstract::RegisterStandardPrimitiveEvalHelper(prim::kPrimVmap, InferImplVmap, nullptr);
+}
+#endif
 }  // namespace abstract
 }  // namespace mindspore

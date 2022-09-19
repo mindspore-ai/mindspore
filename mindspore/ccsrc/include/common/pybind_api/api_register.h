@@ -72,6 +72,11 @@ void RegProfiler(py::module *m);
 namespace prim {
 void RegCompositeOpsGroup(py::module *m);
 }
+#ifdef _MSC_VER
+namespace abstract {
+void RegPrimitiveFrontEval();
+}
+#endif
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CCSRC_INCLUDE_COMMON_PYBIND_API_API_REGISTER_H_
