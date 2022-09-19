@@ -2661,29 +2661,22 @@ def batch_norm(input_x, running_mean, running_var, weight, bias, training=False,
 
         y = \frac{x - mean}{\sqrt{variance + \epsilon}} * \gamma + \beta
 
-    where :math:`\gamma` is scale, :math:`\beta` is bias, :math:`\epsilon` is epsilon, :math:`mean` is the
+    where :math:`\gamma` is `weight`, :math:`\beta` is `bias`, :math:`\epsilon` is `eps`, :math:`mean` is the
     mean of `input_x`, :math:`variance` is the variance of `input_x`.
 
     .. warning::
         - For Ascend 310, the result accuracy fails to reach 1‰ due to the square root instruction.
 
+    .. note::
+        - If `training` is `False`, `weight`, `bias`, `running_mean` and `running_var` are Tensors.
+        - If `training` is `True`, `weight`, `bias`, `running_mean` and `running_var` are Parameters.
+
     Args:
-        If running_mean is `False`, `scale`, `bias`, `mean` and `variance` are Tensors.
-
-            input_x (Tensor): Tensor of shape :math:`(N, C)`, with float16 or float32 data type.
-            running_mean (Tensor): Tensor of shape :math:`(C,)`, has the same data type with `scale`.
-            running_var (Tensor): Tensor of shape :math:`(C,)`, has the same data type with `scale`.
-            weight (Tensor): Tensor of shape :math:`(C,)`, with float16 or float32 data type.
-            bias (Tensor): Tensor of shape :math:`(C,)`, has the same data type with `scale`.
-
-        If `training` is `True`, `scale`, `bias`, `mean` and `variance` are Parameters.
-
-            input_x (Tensor): Tensor of shape :math:`(N, C)`, with float16 or float32 data type.
-            running_mean (Parameter): Parameter of shape :math:`(C,)`, has the same data type with `scale`.
-            running_var (Parameter): Parameter of shape :math:`(C,)`, has the same data type with `scale`.
-            weight (Parameter): Parameter of shape :math:`(C,)`, with float16 or float32 data type.
-            bias (Parameter): Parameter of shape :math:`(C,)`, has the same data type with `scale`.
-
+        input_x (Tensor): Tensor of shape :math:`(N, C)`, with float16 or float32 data type.
+        running_mean (Union[Tensor, Parameter]): The shape :math:`(C,)`, has the same data type with `weight`.
+        running_var (Union[Tensor, Parameter]): The shape :math:`(C,)`, has the same data type with `weight`.
+        weight (Union[Tensor, Parameter]): The shape :math:`(C,)`, with float16 or float32 data type.
+        bias (Union[Tensor, Parameter]): The shape :math:`(C,)`, has the same data type with `weight`.
         training (bool): If `training` is `True`, `mean` and `variance` are computed during training.
             If `training` is `False`, they're loaded from checkpoint during inference. Default: False.
         momentum (float): The hyper parameter to compute moving average for `running_mean` and `running_var`
@@ -2696,9 +2689,9 @@ def batch_norm(input_x, running_mean, running_var, weight, bias, training=False,
 
     Raises:
         TypeError: If `training` is not a bool.
-        TypeError: If dtype of `epsilon` or `momentum` is not float.
-        TypeError: If `input_x`, `scale`, `bias`, `mean` or `variance` is not a Tensor.
-        TypeError: If dtype of `input_x`, `scale` is neither float16 nor float32.
+        TypeError: If dtype of `eps` or `momentum` is not float.
+        TypeError: If `input_x`, `weight`, `bias`, `running_mean` or `running_var` is not a Tensor.
+        TypeError: If dtype of `input_x`, `weight` is neither float16 nor float32.
 
     Supported Platforms:
         ``Ascend`` ``CPU`` ``GPU``
@@ -2792,10 +2785,10 @@ def binary_cross_entropy(logits, labels, weight=None, reduction='mean'):
         Otherwise, it is a scalar Tensor.
 
     Raises:
+        TypeError: If `logits`, `labels` or `weight` is not a Tensor.
         TypeError: If dtype of `logits`, `labels` or `weight` (if given) is neither float16 nor float32.
         ValueError: If `reduction` is not one of 'none', 'mean' or 'sum'.
         ValueError: If shape of `labels` is not the same as `logits` or `weight` (if given).
-        TypeError: If `logits`, `labels` or `weight` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
