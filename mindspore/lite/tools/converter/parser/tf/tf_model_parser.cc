@@ -38,6 +38,8 @@
 #include "tools/common/tensor_util.h"
 #include "src/common/log_util.h"
 #include "tools/converter/parser/unify_format.h"
+#include "tools/converter/parser/tf/tf_input_adjust.h"
+#include "tools/converter/parser/tf/remove_ineffective_control_flow.h"
 
 using mindspore::converter::kFmkTypeTf;
 namespace mindspore {
@@ -1223,6 +1225,16 @@ STATUS TFModelParser::MakeAnfGraphOutputs(const std::vector<AnfNodePtr> &output_
 
 int TFModelParser::TF2AnfAdjust(const std::set<FuncGraphPtr> &all_func_graphs) {
   for (const auto &func_graph : all_func_graphs) {
+    if (!TfInputAdjust::Adjust(func_graph)) {
+      MS_LOG(ERROR) << "Do TfInputAdjust failed.";
+      return RET_ERROR;
+    }
+    auto remove_ineffective_control_flow = std::make_shared<RemoveIneffectiveControlFlow>();
+    MS_CHECK_TRUE_RET(remove_ineffective_control_flow != nullptr, RET_ERROR);
+    if (!remove_ineffective_control_flow->Run(func_graph)) {
+      MS_LOG(ERROR) << "Do RemoveIneffectiveControlFlow failed.";
+      return RET_ERROR;
+    }
     auto functionalize_control_op_pass = std::make_shared<opt::FunctionalizeControlOpPass>();
     MS_CHECK_TRUE_RET(functionalize_control_op_pass != nullptr, RET_ERROR);
     if (!functionalize_control_op_pass->Run(func_graph)) {

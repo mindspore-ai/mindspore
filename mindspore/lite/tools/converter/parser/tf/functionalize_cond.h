@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,14 +43,20 @@ class FunctionalizeCond {
   STATUS GetSwitchBranchType(const CNodePtr &switch_cnode, BranchType *branch_type);
   STATUS BranchSubGraphAddNodes(const FuncGraphPtr &graph, const AnfNodePtr &root_node, BranchType branch_type);
   FuncGraphPtr CreateBranchGraph(const AnfNodePtr &node, std::string name, BranchType branch_type);
+  STATUS DegenerateNonControlFlow(const FuncGraphPtr &else_graph, const FuncGraphPtr &then_graph);
   int PosInInputNodes(const CNodePtr &node);
   STATUS IdentifySubgraphInput(const FuncGraphPtr &graph, std::string graph_name);
   CNodePtr CreateNewIf(const FuncGraphPtr &else_branch, const FuncGraphPtr &then_branch);
   STATUS VerifyPredictNode();
+  void CheckBranchIsEffective(const CNodePtr &switch_cnode, BranchType branch_type);
 
+  bool then_is_effective_ = true;
+  bool else_is_effective_ = true;
   FuncGraphPtr fg_ = nullptr;
   CNodePtr merge_node_ = nullptr;
-  CNodePtr pred_node_ = nullptr;
+  AnfNodePtr pred_node_ = nullptr;
+  CNodePtr then_switch_ = nullptr;
+  CNodePtr else_switch_ = nullptr;
   std::vector<CNodePtr> input_nodes_{};
   std::vector<AnfNodePtr> pred_nodes_{};
 };
