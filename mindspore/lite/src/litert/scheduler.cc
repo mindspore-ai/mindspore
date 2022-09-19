@@ -1548,6 +1548,9 @@ int Scheduler::ScheduleSubGraphToKernels(size_t subgraph_index, std::vector<kern
           subgraphs_to_schedule_.push_back(partial_subgraph_index);
         }
       } else {
+        MS_CHECK_TRUE_MSG(
+          subgraph_index != static_cast<size_t>(GetPartialGraphIndex(node->primitive_, schema_version_)), RET_ERROR,
+          "Unreasonable cycles exist in subgraph.");
         kernel = SchedulePartialToKernel(node);
       }
     } else {

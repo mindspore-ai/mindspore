@@ -81,6 +81,8 @@ KernelBase *CreateExp(OpParameter *param, TensorC *in, size_t insize, TensorC *o
                       FormatC format) {
   ExpStru *exp = (ExpStru *)malloc(sizeof(ExpStru));
   NNACL_CHECK_NULL_RETURN_NULL(exp);
+  MS_CHECK_TRUE_RET(insize == 1, NULL);
+  MS_CHECK_TRUE_RET(outsize == 1, NULL);
   exp->base.param = param;
   exp->base.in = in;
   exp->base.insize = insize;
