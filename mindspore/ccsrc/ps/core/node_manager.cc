@@ -47,31 +47,7 @@ uint32_t NodeManager::checkIfRankIdExist(const RegisterMessage &register_message
     return rank_id;
   }
 
-  core::ClusterConfig &clusterConfig = PSContext::instance()->cluster_config();
-  std::unordered_map<std::string, NodeInfo> recovery_node_infos = clusterConfig.initial_registered_nodes_infos;
-
-  // This is for scheduler recovery
-  if (PSContext::instance()->server_mode() == kServerModeFL ||
-      PSContext::instance()->server_mode() == kServerModeHybrid) {
-    if (recovery_node_infos.find(node_id) != recovery_node_infos.end()) {
-      const std::string &new_ip = register_message.ip();
-      uint32_t new_port = register_message.port();
-
-      rank_id = recovery_node_infos[node_id].rank_id_;
-      recovery_node_infos[node_id].is_alive = true;
-      recovery_node_infos[node_id].ip_ = new_ip;
-      recovery_node_infos[node_id].port_ = static_cast<uint16_t>(new_port);
-
-      registered_nodes_info_[node_id] = recovery_node_infos[node_id];
-      MS_LOG(INFO) << "The node id: " << node_id << " is recovery successful!"
-                   << ", ip: " << recovery_node_infos[node_id].ip_ << ", port: " << recovery_node_infos[node_id].port_
-                   << ", rank id: " << rank_id
-                   << ", the node_role:" << CommUtil::NodeRoleToString(recovery_node_infos[node_id].node_role_);
-      return rank_id;
-    }
-  } else {
-    (void)ReAddNodeIfNotExists(node_id, register_message.ip(), register_message.port(), &rank_id);
-  }
+  (void)ReAddNodeIfNotExists(node_id, register_message.ip(), register_message.port(), &rank_id);
   return rank_id;
 }
 
@@ -257,9 +233,7 @@ void NodeManager::UpdateCluster(bool is_cluster_ready) {
   }
 
   // 2. update cluster finish state
-  if (SizeToUint(finish_nodes_id_.size()) == total_node_num_ &&
-      PSContext::instance()->server_mode() != kServerModeHybrid &&
-      PSContext::instance()->server_mode() != kServerModeFL) {
+  if (SizeToUint(finish_nodes_id_.size()) == total_node_num_) {
     UpdateClusterState(ClusterState::CLUSTER_EXIT);
   }
 }

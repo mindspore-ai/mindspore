@@ -36,35 +36,8 @@
 namespace mindspore {
 namespace ps {
 namespace core {
-const std::unordered_map<TcpUserCommand, std::string> kUserCommandToMsgType = {
-  {TcpUserCommand::kPush, "push"},
-  {TcpUserCommand::kPull, "pull"},
-  {TcpUserCommand::kCount, "count"},
-  {TcpUserCommand::kReachThreshold, "countReachThreshold"},
-  {TcpUserCommand::kResetCount, "resetCnt"},
-  {TcpUserCommand::kGetMetadata, "getMetadata"},
-  {TcpUserCommand::kUpdateMetadata, "updateMetadata"},
-  {TcpUserCommand::kGetOneDeviceMeta, "getOneDeviceMeta"},
-  {TcpUserCommand::kCounterEvent, "counterEvent"},
-  {TcpUserCommand::kPullWeight, "pullWeight"},
-  {TcpUserCommand::kPushWeight, "pushWeight"},
-  {TcpUserCommand::kSyncIteration, "syncIteration"},
-  {TcpUserCommand::kNotifyLeaderToNextIter, "notifyLeaderToNextIter"},
-  {TcpUserCommand::kPrepareForNextIter, "prepareForNextIter"},
-  {TcpUserCommand::kProceedToNextIter, "proceedToNextIter"},
-  {TcpUserCommand::kEndLastIter, "endLastIter"},
-  {TcpUserCommand::kStartFLJob, "startFLJob"},
-  {TcpUserCommand::kExchangeKeys, "exchangeKeys"},
-  {TcpUserCommand::kGetKeys, "getKeys"},
-  {TcpUserCommand::kUpdateModel, "updateModel"},
-  {TcpUserCommand::kGetModel, "getModel"},
-  {TcpUserCommand::kPushMetrics, "pushMetrics"},
-  {TcpUserCommand::kNewInstance, "newInstance"},
-  {TcpUserCommand::kQueryInstance, "queryInstance"},
-  {TcpUserCommand::kEnableFLS, "enableFLS"},
-  {TcpUserCommand::kDisableFLS, "disableFLS"},
-  {TcpUserCommand::kSyncAfterRecover, "syncAfterRecover"},
-  {TcpUserCommand::kQueryNodeScaleState, "queryNodeScaleState"}};
+const std::unordered_map<TcpUserCommand, std::string> kUserCommandToMsgType = {{TcpUserCommand::kPush, "push"},
+                                                                               {TcpUserCommand::kPull, "pull"}};
 
 class TcpCommunicator : public CommunicatorBase {
  public:

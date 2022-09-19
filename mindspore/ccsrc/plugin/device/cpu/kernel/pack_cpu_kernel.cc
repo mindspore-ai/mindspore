@@ -18,7 +18,9 @@
 #include <thread>
 #include <algorithm>
 #include <string>
+#include <map>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "mindspore/core/ops/stack.h"
 
 namespace mindspore {
 namespace kernel {
@@ -26,44 +28,50 @@ namespace {
 constexpr size_t kPackOutputsNum = 1;
 }  // namespace
 
-void PackFwdCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  input_num_ = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  axis_ = LongToInt(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS));
-  if (axis_ < 0) {
-    auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-    axis_ += (SizeToInt(input_shape.size()) + 1);
-  }
-
-  dims_behind_axis_ = 1;
-  // calculate elements while dim >= axis
-  auto first_input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  for (size_t i = IntToSize(axis_); i < first_input_shape.size(); i++) {
-    dims_behind_axis_ *= static_cast<size_t>(first_input_shape[i]);
-  }
-
-  auto output_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
-  output_size_ = 1;
-  for (size_t i = 0; i < output_shape.size(); i++) {
-    output_size_ *= static_cast<size_t>(output_shape[i]);
-  }
-
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+bool PackFwdCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                               const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->name();
+  input_num_ = inputs.size();
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
     MS_LOG(EXCEPTION) << kernel_name_ << " does not support this kernel data type: " << kernel_attr;
   }
   kernel_func_ = func_list_[index].second;
+  return true;
 }
 
+int PackFwdCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                const std::vector<KernelTensorPtr> &outputs,
+                                const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  if (ret != KRET_OK) {
+    return ret;
+  }
+  auto kernel_ptr = std::make_shared<ops::Stack>(base_operator->GetPrim());
+  axis_ = kernel_ptr->get_axis();
+  if (axis_ < 0) {
+    auto input_shape = inputs.at(kIndex0)->GetShapeVector();
+    axis_ += (SizeToInt(input_shape.size()) + 1);
+  }
+
+  dims_behind_axis_ = 1;
+  // calculate elements while dim >= axis
+  auto first_input_shape = inputs.at(kIndex0)->GetShapeVector();
+  for (size_t i = IntToSize(axis_); i < first_input_shape.size(); i++) {
+    dims_behind_axis_ *= static_cast<size_t>(first_input_shape[i]);
+  }
+
+  auto output_shape = outputs.at(kIndex0)->GetShapeVector();
+  output_size_ = 1;
+  for (size_t i = 0; i < output_shape.size(); i++) {
+    output_size_ *= static_cast<size_t>(output_shape[i]);
+  }
+  return KRET_OK;
+}
 template <typename T>
 bool PackFwdCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                        const std::vector<kernel::AddressPtr> &outputs) {
-  auto node_ = cnode_ptr_.lock();
-  if (!node_) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', cnode_ptr_(kernel_node) is expired. Error no: " << node_;
-  }
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num_, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kPackOutputsNum, kernel_name_);
   auto *output = reinterpret_cast<T *>(outputs[0]->addr);

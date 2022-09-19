@@ -35,13 +35,7 @@ class BACKEND_EXPORT Scheduler {
  private:
   Scheduler() {
     if (scheduler_node_ == nullptr) {
-      bool is_fl_mode = PSContext::instance()->server_mode() == ps::kServerModeFL ||
-                        PSContext::instance()->server_mode() == ps::kServerModeHybrid;
-      if (is_fl_mode) {
-        scheduler_node_ = std::make_unique<core::SchedulerNode>();
-      } else {
-        scheduler_node_ = std::make_unique<core::PSSchedulerNode>();
-      }
+      scheduler_node_ = std::make_unique<core::PSSchedulerNode>();
     }
   }
 
