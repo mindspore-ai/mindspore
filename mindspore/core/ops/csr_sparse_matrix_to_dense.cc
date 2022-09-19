@@ -50,7 +50,7 @@ abstract::ShapePtr CSRSparseMatrixToDenseInferShape(const PrimitivePtr &primitiv
                              << values_shape.size() << ".";
   }
   // Dynamic Rank
-  if (rank == kOne) {
+  if (IsDynamicRank(d_shape_shape)) {
     ShapeVector dense_shape = {-2};
     return std::make_shared<abstract::Shape>(dense_shape);
   }
