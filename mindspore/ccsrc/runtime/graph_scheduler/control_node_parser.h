@@ -176,6 +176,8 @@ class ControlNodeParser {
   std::string FetchGroupNameByKernelGraph(const KernelGraphPtr &graph);
   NodeWithIndexToContext FetchBackendParameterWithContextByFrontParameter(
     const KernelWithIndex &front_parameter_with_index);
+  // Create tensor for value like scalar or monad U.
+  tensor::TensorPtr CreateTensorForValue(const ValuePtr &value);
 
  private:
   friend class GraphScheduler;
@@ -321,7 +323,8 @@ class ControlNodeParser {
 
   // Kernel graph to the group info it belongs.
   mindspore::HashMap<KernelGraphPtr, KernelGraphGroupInfoPtr> kernel_graphs_to_group_info_;
-
+  // Scalar value will be convert to tensor in control flow, these tensors are placed in the vector.
+  std::vector<tensor::TensorPtr> control_node_tensors_;
   // Is control flow enable.
   bool is_inited_;
 

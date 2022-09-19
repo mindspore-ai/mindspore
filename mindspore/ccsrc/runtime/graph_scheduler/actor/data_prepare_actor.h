@@ -104,7 +104,7 @@ class DataPrepareActor : public DebugAwareActor {
                                             std::vector<TensorPtr> *const host_tensors,
                                             OpContext<DeviceTensor> *const context);
   void PrepareDataForControlValueNode(const KernelWithIndex &node_with_index, const DeviceContext *device_context,
-                                      OpContext<DeviceTensor> *const context) const;
+                                      OpContext<DeviceTensor> *const context, const ControlNodeParserPtr &parser) const;
 
   // The device tensor stores may exist the two device tensors and need copy data in the heterogeneous scene.
   void CopyDataFromDeviceTensorStore(const AnfNodePtr &front_node, const AnfNodePtr &backend_node,
