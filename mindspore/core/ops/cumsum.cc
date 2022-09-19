@@ -61,6 +61,9 @@ abstract::ShapePtr CumSumInferShape(const PrimitivePtr &primitive, const std::ve
     return x_shape_ptr->cast<abstract::ShapePtr>();
   }
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shape_ptr)[kShape];
+  if (IsDynamicRank(x_shape)) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
+  }
   auto rank = SizeToLong(x_shape.size());
   (void)CheckAndConvertUtils::CheckInteger("rank of 'x'", rank, kGreaterThan, 0, prim_name);
 
@@ -73,7 +76,15 @@ abstract::ShapePtr CumSumInferShape(const PrimitivePtr &primitive, const std::ve
     if (axis_value_ptr->isa<tensor::Tensor>()) {
       auto axis_tensor = axis_value_ptr->cast<tensor::TensorPtr>();
       MS_EXCEPTION_IF_NULL(axis_tensor);
-      axis = *static_cast<int64_t *>(axis_tensor->data_c());
+      if (axis_tensor->data_type_c() == TypeId::kNumberTypeInt64) {
+        axis = *static_cast<int64_t *>(axis_tensor->data_c());
+      } else if (axis_tensor->data_type_c() == TypeId::kNumberTypeInt32) {
+        axis = *static_cast<int32_t *>(axis_tensor->data_c());
+      } else {
+        MS_LOG(EXCEPTION) << "For '" << primitive->name()
+                          << "', the second input type should be tensor with type int64 or int32, but got tensor type:"
+                          << TypeIdToString(axis_tensor->data_type());
+      }
     } else {
       return std::make_shared<abstract::Shape>(x_shape);
     }

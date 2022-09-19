@@ -28,11 +28,43 @@ abstract::ShapePtr CumProdInferShape(const PrimitivePtr &primitive, const std::v
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  if (IsDynamicRank(x_shape)) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
+  }
   auto y_rank = x_shape.size();
   const int64_t min_dim = 0;
   (void)CheckAndConvertUtils::CheckInteger("rank of input", SizeToLong(x_shape.size()), kGreaterThan, min_dim,
                                            prim_name);
-  auto axis = GetValue<int64_t>(input_args[1]->BuildValue());
+  int64_t axis;
+  if (input_args[kInputIndex1]->isa<abstract::AbstractTensor>()) {
+    auto axis_ptr = input_args[kInputIndex1]->cast<abstract::AbstractTensorPtr>();
+    MS_EXCEPTION_IF_NULL(axis_ptr);
+    auto axis_value_ptr = axis_ptr->BuildValue();
+    MS_EXCEPTION_IF_NULL(axis_value_ptr);
+    if (axis_value_ptr->isa<tensor::Tensor>()) {
+      auto axis_tensor = axis_value_ptr->cast<tensor::TensorPtr>();
+      MS_EXCEPTION_IF_NULL(axis_tensor);
+      if (axis_tensor->data_type_c() == TypeId::kNumberTypeInt64) {
+        axis = *static_cast<int64_t *>(axis_tensor->data_c());
+      } else if (axis_tensor->data_type_c() == TypeId::kNumberTypeInt32) {
+        axis = *static_cast<int32_t *>(axis_tensor->data_c());
+      } else {
+        MS_LOG(EXCEPTION) << "For '" << primitive->name()
+                          << "', the second input type should be tensor with type int64 or int32, but got tensor type:"
+                          << TypeIdToString(axis_tensor->data_type());
+      }
+    } else {
+      return std::make_shared<abstract::Shape>(x_shape);
+    }
+  } else if (input_args[kInputIndex1]->isa<abstract::AbstractScalar>()) {
+    auto axis_ptr = input_args[kInputIndex1]->cast<abstract::AbstractScalarPtr>();
+    MS_EXCEPTION_IF_NULL(axis_ptr);
+    axis = GetValue<int64_t>(axis_ptr->BuildValue());
+  } else {
+    MS_LOG(EXCEPTION) << "For '" << primitive->name()
+                      << "', the second input type should be tensor or scalar, but got invalid abstract type:"
+                      << input_args[kInputIndex1]->type_name() << ".";
+  }
   CheckAndConvertUtils::CheckInRange<int64_t>("axis", axis, kIncludeBoth, {-y_rank, y_rank - 1}, prim_name);
   return std::make_shared<abstract::Shape>(x_shape);
 }

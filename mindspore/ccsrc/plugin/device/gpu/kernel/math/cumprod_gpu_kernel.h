@@ -19,113 +19,57 @@
 
 #include <vector>
 #include <map>
+#include <utility>
+#include <complex>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cumprod_impl.cuh"
-#include "mindspore/core/ops/cumprod.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace kernel {
 constexpr int kMaxDimsSize = 3;
-template <typename T>
-class CumProdGpuKernelMod : public NativeGpuKernelMod {
+class CumProdGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelper<CumProdGpuKernelMod> {
  public:
-  CumProdGpuKernelMod()
-      : exclusive_(false),
-        reverse_(false),
-        is_null_input_(false),
-        axis_(0),
-        input_size_0_(0),
-        stride_(0),
-        stride2_(0) {}
-  ~CumProdGpuKernelMod() = default;
+  CumProdGpuKernelMod() = default;
+  ~CumProdGpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
       return true;
     }
-    T *input_addr = GetDeviceAddress<T>(inputs, 0);
-    T *output_addr = GetDeviceAddress<T>(outputs, 0);
-    T *ws_addr = GetDeviceAddress<T>(workspace, 0);
-    CumProd(input_addr, output_addr, ws_addr, dims_[0], dims_[1], dims_[2], stride_, stride2_, exclusive_, reverse_,
-            reinterpret_cast<cudaStream_t>(stream_ptr));
-    return true;
+    cuda_stream_ = stream_ptr;
+    return kernel_func_(this, inputs, workspace, outputs);
   }
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override {
-    auto kernel_ptr = std::dynamic_pointer_cast<ops::CumProd>(base_operator);
-    MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-    kernel_name_ = kernel_ptr->name();
-    exclusive_ = kernel_ptr->GetExclusive();
-    reverse_ = kernel_ptr->GetReverse();
-    axis_ = static_cast<int32_t>(kernel_ptr->GetAxis());
-
-    if (inputs.size() != 1) {
-      MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of inputs should be 1, but got " << inputs.size();
-      return false;
-    }
-    return true;
-  }
+            const std::vector<KernelTensorPtr> &outputs) override;
 
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override {
-    int ret = KRET_OK;
-    if ((ret = KernelMod::Resize(base_operator, inputs, outputs)) != 0) {
-      return ret;
-    }
-    input_size_0_ = sizeof(T);
-    auto shape_signed = inputs[kIndex0]->GetShapeVector();
-    shape_ = Convert2SizeTClipNeg(shape_signed);
-    is_null_input_ = CHECK_SHAPE_NULL(shape_, kernel_name_, "input");
-    if (is_null_input_) {
-      workspace_size_list_.push_back(input_size_0_);
-      return KRET_OK;
-    }
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
-    int input_dim_length = SizeToInt(shape_.size());
-    if (axis_ >= input_dim_length) {
-      MS_LOG(ERROR) << "For '" << kernel_name_ << "', the value of 'axis' should be less than " << input_dim_length
-                    << ", but got " << axis_;
-      return KRET_RESIZE_FAILED;
-    }
-    while (axis_ < 0) {
-      axis_ += input_dim_length;
-    }
-    for (size_t i = 0; i < shape_.size(); i++) {
-      input_size_0_ *= shape_[i];
-    }
-    Reshape();
-    workspace_size_list_.push_back(input_size_0_);
+  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 
-    return KRET_OK;
-  }
+  std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
  private:
-  void Reshape() {
-    dims_[0] = 1;
-    dims_[1] = shape_[IntToSize(axis_)];
-    dims_[2] = 1;
-    for (size_t i = 0; i < IntToSize(axis_); i++) {
-      dims_[0] *= shape_[i];
-    }
-    for (size_t i = IntToSize(axis_) + 1; i < shape_.size(); i++) {
-      dims_[2] *= shape_[i];
-    }
-    stride_ = dims_[1] * dims_[2];
-    stride2_ = dims_[2];
-    return;
-  }
-  bool exclusive_;
-  bool reverse_;
-  bool is_null_input_;
-  int axis_;
-  size_t input_size_0_;
-  size_t stride_;
-  size_t stride2_;
+  template <typename T>
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<AddressPtr> &outputs);
+  void Reshape();
+
+  bool exclusive_{false};
+  bool reverse_{false};
+  bool is_null_input_{false};
+  int axis_{0};
+  size_t input_size_0_{0};
+  size_t stride_{0};
+  size_t stride2_{0};
   size_t dims_[kMaxDimsSize] = {};
-  std::vector<size_t> shape_;
+  std::vector<size_t> shape_{};
+  bool is_dynamic_shape_{false};
+  void *cuda_stream_{nullptr};
 };
 }  // namespace kernel
 }  // namespace mindspore

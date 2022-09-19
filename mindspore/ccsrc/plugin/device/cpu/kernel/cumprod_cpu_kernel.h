@@ -52,9 +52,6 @@ class CumProdCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<
   void Reshape();
 
   template <typename T>
-  void InitWorkspaceSize();
-
-  template <typename T>
   void LeftMove(const T *input, T *output, size_t dim0, size_t dim1, size_t dim2, size_t stride, size_t stride2,
                 size_t start, size_t end) const;
 
@@ -91,6 +88,7 @@ class CumProdCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<
   int reverse_{0};
   int axis_{0};
   TypeId dtype_{kTypeUnknown};
+  bool is_dynamic_shape_{false};
 };
 }  // namespace kernel
 }  // namespace mindspore
