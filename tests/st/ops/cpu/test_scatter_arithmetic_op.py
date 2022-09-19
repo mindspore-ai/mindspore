@@ -664,3 +664,98 @@ def test_scatter_update_small_float32_use_locking_false():
     expected = np.array([[6., 7., 8.],
                          [9., 10., 11.]])
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+
+
+class TestScatterAddNetDynamic(nn.Cell):
+    def __init__(self, lock):
+        super(TestScatterAddNetDynamic, self).__init__()
+        self.scatter_add = P.ScatterAdd(use_locking=lock)
+
+    def construct(self, inputx, indices, updates):
+        out = self.scatter_add(inputx, indices, updates)
+        return out
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_scatter_add_dynamic_shape():
+    """
+    Feature: op dynamic shape
+    Description: set input_shape None and input real tensor
+    Expectation: success
+    """
+    inputx = Parameter(Tensor(np.zeros((2, 3)).astype(np.float32)))
+    indices = Tensor(np.array([[0, 1], [0, 1]]).astype(np.int32))
+    updates = Tensor(np.arange(12).reshape((2, 2, 3)).astype(np.float32))
+    net = TestScatterAddNetDynamic(False)
+    indices_dyn = Tensor(shape=[None, None], dtype=indices.dtype)
+    updates_dyn = Tensor(shape=[None, None, None], dtype=updates.dtype)
+    net.set_inputs(inputx, indices_dyn, updates_dyn)
+    output = net(inputx, indices, updates)
+    expected_shape = (2, 3)
+    assert expected_shape == output.asnumpy().shape
+
+
+class TestScatterSubNetDynamic(nn.Cell):
+    def __init__(self, lock):
+        super(TestScatterSubNetDynamic, self).__init__()
+        self.scatter_sub = P.ScatterSub(use_locking=lock)
+
+    def construct(self, inputx, indices, updates):
+        out = self.scatter_sub(inputx, indices, updates)
+        return out
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_scatter_sub_dynamic_shape():
+    """
+    Feature: op dynamic shape
+    Description: set input_shape None and input real tensor
+    Expectation: success
+    """
+
+    inputx = Parameter(Tensor(np.zeros((2, 3)).astype(np.float32)))
+    indices = Tensor(np.array([[0, 1], [0, 1]]).astype(np.int32))
+    updates = Tensor(np.arange(12).reshape((2, 2, 3)).astype(np.float32))
+    net = TestScatterSubNetDynamic(False)
+    indices_dyn = Tensor(shape=[None, None], dtype=indices.dtype)
+    updates_dyn = Tensor(shape=[None, None, None], dtype=updates.dtype)
+    net.set_inputs(inputx, indices_dyn, updates_dyn)
+    output = net(inputx, indices, updates)
+    expected_shape = (2, 3)
+    assert expected_shape == output.asnumpy().shape
+
+
+class TestScatterUpdateNetDynamic(nn.Cell):
+    def __init__(self, lock):
+        super(TestScatterUpdateNetDynamic, self).__init__()
+        self.scatter_update = P.ScatterUpdate(use_locking=lock)
+
+    def construct(self, inputx, indices, updates):
+        out = self.scatter_update(inputx, indices, updates)
+        return out
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_scatter_update_dynamic_shape():
+    """
+    Feature: op dynamic shape
+    Description: set input_shape None and input real tensor
+    Expectation: success
+    """
+
+    inputx = Parameter(Tensor(np.zeros((2, 3)).astype(np.float32)))
+    indices = Tensor(np.array([[0, 1], [0, 1]]).astype(np.int32))
+    updates = Tensor(np.arange(12).reshape((2, 2, 3)).astype(np.float32))
+    net = TestScatterUpdateNetDynamic(False)
+    indices_dyn = Tensor(shape=[None, None], dtype=indices.dtype)
+    updates_dyn = Tensor(shape=[None, None, None], dtype=updates.dtype)
+    net.set_inputs(inputx, indices_dyn, updates_dyn)
+    output = net(inputx, indices, updates)
+    expected_shape = (2, 3)
+    assert expected_shape == output.asnumpy().shape
