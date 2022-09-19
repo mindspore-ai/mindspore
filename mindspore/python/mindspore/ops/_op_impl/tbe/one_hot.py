@@ -21,24 +21,29 @@ one_hot_op_info = TBERegOp("OneHot") \
     .async_flag(False) \
     .binfile_name("one_hot.so") \
     .compute_cost(10) \
-    .kernel_name("one_hot_d") \
+    .kernel_name("one_hot") \
     .partial_flag(True) \
-    .attr("depth", "required", "int", "all") \
+    .dynamic_shape(True) \
+    .dynamic_rank_support(True) \
+    .dynamic_compile_static(True) \
     .attr("axis", "required", "int", "all", "-1") \
     .input(0, "x", False, "required", "all") \
-    .input(1, "on_value", False, "required", "all") \
-    .input(2, "off_value", False, "required", "all") \
+    .input(1, "depth", False, "required", "all", value_depend="optional") \
+    .input(2, "on_value", False, "required", "all") \
+    .input(3, "off_value", False, "required", "all") \
     .output(0, "y", False, "required", "all") \
-    .dtype_format(DataType.U8_Default, DataType.I8_Default, DataType.I8_Default, DataType.I8_Default) \
-    .dtype_format(DataType.U8_Default, DataType.U8_Default, DataType.U8_Default, DataType.U8_Default) \
-    .dtype_format(DataType.U8_Default, DataType.I32_Default, DataType.I32_Default, DataType.I32_Default) \
-    .dtype_format(DataType.U8_Default, DataType.F16_Default, DataType.F16_Default, DataType.F16_Default) \
-    .dtype_format(DataType.U8_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
-    .dtype_format(DataType.I32_Default, DataType.I8_Default, DataType.I8_Default, DataType.I8_Default) \
-    .dtype_format(DataType.I32_Default, DataType.U8_Default, DataType.U8_Default, DataType.U8_Default) \
-    .dtype_format(DataType.I32_Default, DataType.I32_Default, DataType.I32_Default, DataType.I32_Default) \
-    .dtype_format(DataType.I32_Default, DataType.F16_Default, DataType.F16_Default, DataType.F16_Default) \
-    .dtype_format(DataType.I32_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
+    .dtype_format(DataType.I32_Default, DataType.I32_Default, DataType.I32_Default, DataType.I32_Default,
+                  DataType.I32_Default) \
+    .dtype_format(DataType.I32_Default, DataType.I32_Default, DataType.F16_Default, DataType.F16_Default,
+                  DataType.F16_Default) \
+    .dtype_format(DataType.I32_Default, DataType.I32_Default, DataType.F32_Default, DataType.F32_Default,
+                  DataType.F32_Default) \
+    .dtype_format(DataType.I64_Default, DataType.I32_Default, DataType.I32_Default, DataType.I32_Default,
+                  DataType.I32_Default) \
+    .dtype_format(DataType.I64_Default, DataType.I32_Default, DataType.F16_Default, DataType.F16_Default,
+                  DataType.F16_Default) \
+    .dtype_format(DataType.I64_Default, DataType.I32_Default, DataType.F32_Default, DataType.F32_Default,
+                  DataType.F32_Default) \
     .get_op_info()
 
 
