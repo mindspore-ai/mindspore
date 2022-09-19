@@ -79,16 +79,16 @@ int LayerNormGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
   block_size_ = 1;
   param_num_ = 1;
   for (size_t i = 0; i < LongToSize(begin_norm_axis); i++) {
-    block_num_ *= x_shape[i];
+    block_num_ *= LongToUlong(x_shape[i]);
   }
   for (size_t i = LongToSize(begin_norm_axis); i < x_shape.size(); i++) {
-    block_size_ *= x_shape[i];
+    block_size_ *= LongToUlong(x_shape[i]);
   }
   for (size_t i = 0; i < LongToSize(begin_params_axis); i++) {
-    param_size_ *= x_shape[i];
+    param_size_ *= LongToUlong(x_shape[i]);
   }
   for (size_t i = LongToSize(begin_params_axis); i < x_shape.size(); i++) {
-    param_num_ *= x_shape[i];
+    param_num_ *= LongToUlong(x_shape[i]);
   }
   if (block_num_ == 0 || block_size_ == 0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'input_x' must be at least 1, but got "
