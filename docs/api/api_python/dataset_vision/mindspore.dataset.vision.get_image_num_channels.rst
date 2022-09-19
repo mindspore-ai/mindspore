@@ -1,7 +1,7 @@
-﻿mindspore.dataset.text.get_image_num_channels
-==============================================
+﻿mindspore.dataset.vision.get_image_num_channels
+================================================
 
-.. py:function:: mindspore.dataset.text.get_image_num_channels(image)
+.. py:function:: mindspore.dataset.vision.get_image_num_channels(image)
 
     获取输入图像通道数。
 

@@ -5,7 +5,7 @@ mindspore.train
 -----
 
 .. mscnautosummary::
-    :toctree: mindspore
+    :toctree: train
 
     mindspore.train.Model
 
@@ -13,7 +13,7 @@ mindspore.train
 ---------
 
 .. mscnautosummary::
-    :toctree: mindspore
+    :toctree: train
 
     mindspore.train.Callback
     mindspore.train.CheckpointConfig
@@ -31,7 +31,7 @@ mindspore.train
 --------
 
 .. mscnplatformautosummary::
-    :toctree: mindspore
+    :toctree: train
     :nosignatures:
     :template: classtemplate.rst
 
@@ -63,7 +63,7 @@ mindspore.train
 ----
 
 .. mscnplatformautosummary::
-    :toctree: mindspore
+    :toctree: train
     :nosignatures:
     :template: classtemplate.rst
 

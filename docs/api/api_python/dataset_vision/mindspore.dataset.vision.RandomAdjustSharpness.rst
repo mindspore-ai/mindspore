@@ -6,7 +6,7 @@ mindspore.dataset.vision.RandomAdjustSharpness
     以给定的概率随机调整输入图像的清晰度。
 
     参数：
-        - **degrees** (float) - 锐度调整度，必须是非负的。
+        - **degree** (float) - 锐度调整度，必须是非负的。
           0.0度表示模糊图像，1.0度表示原始图像，2.0度表示清晰度增加2倍。
         - **prob** (float, 可选) - 图像被锐化的概率，默认值：0.5。
 

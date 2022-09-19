@@ -44,8 +44,10 @@ functional算子是经过初始化后的Primitive，可以直接作为函数使�
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.ops.adaptive_avg_pool1d
     mindspore.ops.adaptive_avg_pool2d
     mindspore.ops.adaptive_avg_pool3d
+    mindspore.ops.adaptive_max_pool1d
     mindspore.ops.adaptive_max_pool3d
     mindspore.ops.avg_pool1d
     mindspore.ops.avg_pool2d
@@ -145,6 +147,7 @@ functional算子是经过初始化后的Primitive，可以直接作为函数使�
     :template: classtemplate.rst
 
     mindspore.ops.abs
+    mindspore.ops.accumulate_n
     mindspore.ops.acos
     mindspore.ops.acosh
     mindspore.ops.add
@@ -258,6 +261,7 @@ Reduction函数
 
     mindspore.ops.amax
     mindspore.ops.amin
+    mindspore.ops.argmax
     mindspore.ops.argmin
     mindspore.ops.cummax
     mindspore.ops.cummin

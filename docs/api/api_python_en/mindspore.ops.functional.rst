@@ -265,6 +265,7 @@ Reduction Functions
 
     mindspore.ops.amax
     mindspore.ops.amin
+    mindspore.ops.argmax
     mindspore.ops.argmin
     mindspore.ops.cummax
     mindspore.ops.cummin
@@ -275,7 +276,6 @@ Reduction Functions
     mindspore.ops.min
     mindspore.ops.norm
     mindspore.ops.prod
-    mindspore.ops.argmax
     mindspore.ops.std
 
 .. list-table::

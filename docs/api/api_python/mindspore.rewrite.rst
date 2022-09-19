@@ -298,7 +298,7 @@ mindspore.rewrite
         - 当前节点的 `node_type` 为 `Python`、 `Input` 或 `Output` 时，不关心关键字参数。
 
         返回：
-            `key`为str， `value` 为ScopedValue的字典。
+            `key` 为str， `value` 为ScopedValue的字典。
 
     .. py:method:: mindspore.rewrite.Node.get_name()
 
@@ -615,7 +615,7 @@ mindspore.rewrite
             - **is_chain_pattern** (bool) - 标记模式是链模式或树模式。
             - **matched** (OrderedDict) - 匹配结果，从名称映射到节点的字典。
 
-        输出：
+        返回：
             作为替换节点的节点实例列表。
 
 .. py:class:: mindspore.rewrite.TreeNodeHelper
