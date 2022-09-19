@@ -79,10 +79,6 @@ int RandomCategoricalCpuKernel::Resize(const BaseOperatorPtr &base_operator, con
   auto kernel_ptr = std::dynamic_pointer_cast<ops::RandomCategorical>(base_operator);
   MS_EXCEPTION_IF_NULL(kernel_ptr);
   seed_ = kernel_ptr->get_seed();
-  if (seed_ <= 0) {
-    std::random_device rd;
-    seed_ = static_cast<int64_t>(rd());
-  }
   return KRET_OK;
 }
 
