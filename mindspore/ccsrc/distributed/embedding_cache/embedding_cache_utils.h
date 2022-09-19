@@ -21,8 +21,10 @@
 #include <string>
 #include <memory>
 #include <utility>
+#include "utils/hash_map.h"
 #include "kernel/kernel.h"
 #include "distributed/embedding_cache/embedding_hash_map.h"
+#include "distributed/embedding_cache/embedding_store.h"
 #include "runtime/hardware/device_context.h"
 #include "include/backend/visible.h"
 
@@ -199,6 +201,22 @@ class BACKEND_EXPORT EmbeddingCacheTableManager {
   size_t batch_ids_num_{0};
 
   friend class mindspore::runtime::EmbeddingCachePrefetchActor;
+};
+
+// The EmbeddingStoreManager class is used to save all enabling store for all embedding table.
+class BACKEND_EXPORT EmbeddingStoreManager {
+ public:
+  static EmbeddingStoreManager &GetInstance();
+
+  void Add(const std::string &name, std::shared_ptr<EmbeddingStore<float_t>>);
+  std::shared_ptr<EmbeddingStore<float_t>> Get(const std::string &name) const;
+
+ private:
+  EmbeddingStoreManager() = default;
+  ~EmbeddingStoreManager() = default;
+  DISABLE_COPY_AND_ASSIGN(EmbeddingStoreManager);
+
+  mindspore::HashMap<std::string, std::shared_ptr<EmbeddingStore<float_t>>> embedding_stores_;
 };
 }  // namespace distributed
 static distributed::EmbeddingCacheTableManager &embedding_cache_table_manager =
