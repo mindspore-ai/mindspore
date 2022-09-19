@@ -35,10 +35,9 @@ class BACKEND_EXPORT OpLib {
   static std::shared_ptr<OpInfo> FindOp(const std::string &op_name, OpImplyType imply_type,
                                         bool is_dynamic_shape = false);
 
- protected:
-  inline static std::multimap<std::string, std::shared_ptr<OpInfo>> op_info_;
-
  private:
+  static std::multimap<std::string, std::shared_ptr<OpInfo>> &GetOpInfoMap();
+
   static bool RegOpFromLocalInfo();
   static bool DecodeOpInfo(const nlohmann::json &obj, const OpImplyType &imply_type, const std::string &impl_path);
   static bool DecodeAttr(const nlohmann::json &obj, const OpImplyType &imply_type,
