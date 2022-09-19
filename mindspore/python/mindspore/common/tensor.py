@@ -1106,6 +1106,14 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('ger')(self, x)
 
+    def gt(self, x):
+        self._init_check()
+        return tensor_operator_registry.get('gt')()(self, x)
+
+    def ge(self, x):
+        self._init_check()
+        return tensor_operator_registry.get('ge')()(self, x)
+
     def broadcast_to(self, shape):
         """
         Broadcasts input tensor to a given shape.
