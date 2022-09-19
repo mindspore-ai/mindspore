@@ -116,6 +116,9 @@ void RegModule(py::module *m) {
   mindspore::profiler::RegProfilerManager(m);
   mindspore::profiler::RegProfiler(m);
 #endif
+#ifdef _MSC_VER
+  mindspore::abstract::RegPrimitiveFrontEval();
+#endif
 }
 
 void RegModuleHelper(py::module *m) {
