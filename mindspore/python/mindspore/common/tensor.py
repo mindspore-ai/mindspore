@@ -1508,6 +1508,29 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('ceil')()(self)
 
+    def floor(self):
+        """
+        Rounds a tensor up to the closest integer element-wise.
+
+        Returns:
+            Tensor.
+
+        Raises:
+            TypeError: If dtype of self tensor is not in [float16, float32, float64].
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> from mindspore import Tensor
+            >>> a = Tensor([1.1, 2.5, -1.5]).astype("float32")
+            >>> output = a.floor()
+            >>> print(output)
+            [ 1.  2. -2.]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('floor')(self)
+
     def lerp(self, end, weight):
         """
         Does a linear interpolation of two tensors start and end based on a float or tensor weight.

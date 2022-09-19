@@ -913,7 +913,8 @@ def floor(x):
         >>> print(output)
         [ 1.  2. -2.]
     """
-    return floor_(x)
+    _floor = _get_cache_prim(P.Floor)()
+    return _floor(x)
 
 
 def inplace_update(x, v, indices):
