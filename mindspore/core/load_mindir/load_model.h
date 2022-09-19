@@ -44,6 +44,7 @@ class MS_CORE_API MindIRLoader {
   FuncGraphPtr LoadMindIR(const std::string &file_name);
   std::vector<FuncGraphPtr> LoadMindIRs(const std::vector<std::string> &file_names);
   std::vector<std::string> LoadPreprocess(const std::string &file_name);
+  void SetIsLite(bool is_lite) { is_lite_ = is_lite; }
 
  private:
   bool ParseModelProto(mind_ir::ModelProto *model, const std::string &path);

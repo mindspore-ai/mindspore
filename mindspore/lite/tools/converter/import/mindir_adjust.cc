@@ -346,9 +346,6 @@ bool MindirAdjust::Run(const FuncGraphPtr &func_graph) {
     for (auto &node : node_list) {
       if (utils::isa<CNodePtr>(node)) {
         status = ComputeQuantParams(node);
-        if (status == RET_OK || status == RET_NO_CHANGE) {
-          status = UpdateConv2DTransposeInput(node->cast<CNodePtr>());
-        }
       } else if (utils::isa<ParameterPtr>(node)) {
         status = AdjustInputDataType(node);
       } else if (utils::isa<ValueNodePtr>(node)) {
