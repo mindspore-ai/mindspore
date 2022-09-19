@@ -23,12 +23,16 @@
 #include "ops/print.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 #include "kernel/common_utils.h"
 
 using mindspore::tensor::Tensor;
 
 namespace mindspore {
 namespace kernel {
+template <typename T>
+using Complex = mindspore::utils::Complex<T>;
+
 bool PrintGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   if (is_null_input_) {
@@ -160,6 +164,12 @@ void PrintGpuKernelMod::InitDeviceData(const std::vector<AddressPtr> &inputs, st
         break;
       case kNumberTypeFloat64:
         input_device_data->push_back(GetDeviceAddress<double>(inputs, i));
+        break;
+      case kNumberTypeComplex64:
+        input_device_data->push_back(GetDeviceAddress<Complex<float>>(inputs, i));
+        break;
+      case kNumberTypeComplex128:
+        input_device_data->push_back(GetDeviceAddress<Complex<double>>(inputs, i));
         break;
       default:
         MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the typeid cannot be " << type_id;
