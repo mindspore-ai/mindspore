@@ -19,13 +19,17 @@ matmul
 """
 from __future__ import absolute_import
 
-from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+from collections import namedtuple
+import logging
+
 from te import tik
 from topi.cce import util
+from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 
 # General limitation of the size for input shape: 2**31
 SHAPE_SIZE_LIMIT = 2147483648
 NoneType = type(None)
+logging.basicConfig(level=logging.DEBUG, format="%(asctime)s %(levelname)s %(message)s")
 
 cus_matmul_cube_fracz_right_mul_op_info = TBERegOp("CusMatMulCubeFraczRightMul") \
     .fusion_type("OPAQUE") \
@@ -134,9 +138,12 @@ def get_cus_tile_info(input_x1, input_x2, input_x3):
             mo_tile_ = mo_tile_ // 2
     else:
         raise ValueError("please add tile config to the tile_map")
-    print("shape: %s, tile: %s" % (input_shape, str((mo_tile_, ko_tile_, no_tile_, core_m_num_, core_n_num_,
-                                                     diag_opt))))
-    return mo_tile_, ko_tile_, no_tile_, core_m_num_, core_n_num_, diag_opt
+    logging.info(
+        "shape: %s, tile: %s", input_shape, str((mo_tile_, ko_tile_, no_tile_, core_m_num_, core_n_num_,
+                                                 diag_opt)))
+    cus_tile_info = namedtuple('cus_tile_info', ['mo_tile_', 'ko_tile_', 'no_tile_', 'core_m_num_',
+                                                 'core_n_num_', 'diag_opt'])
+    return cus_tile_info(mo_tile_, ko_tile_, no_tile_, core_m_num_, core_n_num_, diag_opt)
 
 
 def cus_cube_matmul_right_mul(tik_instance, input_x1, input_x2, input_x3,

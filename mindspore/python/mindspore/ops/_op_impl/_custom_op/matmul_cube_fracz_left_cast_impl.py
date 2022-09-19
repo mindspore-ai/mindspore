@@ -17,11 +17,14 @@ limitations under the License.
 matmul
 """
 from __future__ import absolute_import
-from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
-from mindspore.ops._op_impl._custom_op._basic import _shape_check, _get_bias, _get_input_shape
+
+import collections
+
 import te.platform.cce_params as cce
 from te import tik
 from topi.cce import util
+from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+from mindspore.ops._op_impl._custom_op._basic import _shape_check, _get_bias, _get_input_shape
 
 # General limitation of the size for input shape: 2**31
 SHAPE_SIZE_LIMIT = 2147483648
@@ -218,7 +221,8 @@ def get_cus_tile_info(input_x1, input_x2, diag_size):
     if shape_info not in tile_map:
         raise ValueError("shape %s is not supported" % str(shape_info))
     mo_tile, ko_tile, no_tile = tile_map[shape_info]
-    return mo_tile, ko_tile, no_tile, diag_opt
+    cus_tile_info = collections.namedtuple('cus_tile_info', ['mo_tile', 'ko_tile', 'no_tile', 'diag_opt'])
+    return cus_tile_info(mo_tile, ko_tile, no_tile, diag_opt)
 
 
 def cus_cube_matmul_cast(tik_instance, input_x1, trans_a, input_x2, trans_b,

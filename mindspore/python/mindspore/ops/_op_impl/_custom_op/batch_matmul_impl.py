@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """batch_matmul_impl"""
+from __future__ import absolute_import
 
 from te import tik
 from topi.cce import util

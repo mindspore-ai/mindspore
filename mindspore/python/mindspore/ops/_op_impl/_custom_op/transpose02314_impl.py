@@ -13,9 +13,11 @@
 # limitations under the License.
 # ============================================================================
 """CusTranspose02314"""
-from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+from __future__ import absolute_import
+
 from te import tik
 from topi.cce import util
+from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 
 cus_transpose02314_op_info = TBERegOp("CusTranspose02314") \
     .fusion_type("OPAQUE") \
