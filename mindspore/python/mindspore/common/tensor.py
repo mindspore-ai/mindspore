@@ -714,8 +714,8 @@ class Tensor(Tensor_):
         r"""
         Executes the outer-product of `vec1` and `vec2` and adds it to the input tensor.
 
-        If `vec1` is a vector of size `N` and `vec2` is a vector of size `M`, then `x` must be
-        broadcastable with a matrix of size `(N, M)` and `out` will be a matrix of size `(N, M)`.
+        If `vec1` is a vector of size :math:`N` and `vec2` is a vector of size :math:`M`, then `x` must be
+        broadcastable with a matrix of size :math:`(N, M)` and `out` will be a matrix of size :math:`(N, M)`.
 
         The optional values `beta` and `alpha` are the scale factors on the outer product between `vec1` and `vec2`
         and the added matrix `x` respectively. If `beta` is 0, then `x` will be ignored.
@@ -724,15 +724,15 @@ class Tensor(Tensor_):
             output = β x + α (vec1 ⊗ vec2)
 
         Args:
-            vec1 (Tensor): The first tensor to be multiplied. The shape of the tensor is `(N,)`.
-            vec2 (Tensor): The second tensor to be multiplied. The shape of the tensor is `(M,)`.
+            vec1 (Tensor): The first tensor to be multiplied. The shape of the tensor is :math:`(N,)`.
+            vec2 (Tensor): The second tensor to be multiplied. The shape of the tensor is :math:`(M,)`.
             beta (scalar[int, float, bool], optional): Multiplier for `x` (β). The `beta` must be int or
                 float or bool, Default: 1.
             alpha (scalar[int, float, bool], optional): Multiplier for `vec1` @ `vec2` (α). The `alpha` must
                 be int or float or bool, Default: 1.
 
         Outputs:
-            Tensor, the shape of the output tensor is `(N, M)`, has the same dtype as `x`.
+            Tensor, the shape of the output tensor is :math:`(N, M)`, has the same dtype as `x`.
 
         Raises:
             TypeError: If `x`, `vec1`, `vec2` is not a Tensor.
@@ -5414,7 +5414,7 @@ class Tensor(Tensor_):
         r"""
         Multiplies matrix `mat` and vector `vec`. Input vector is added to the final result.
 
-        If mat is a :math:`(N, M)` tensor, vec is a 1-D tensor of size :math:`M`, then `x` must be broadcastable
+        If `mat` is a :math:`(N, M)` tensor, `vec` is a 1-D tensor of size :math:`M`, then `x` must be broadcastable
         with a 1-D tensor of size :math:`N` and `out` will be 1-D tensor of size :math:`N`.
 
         The optional values `beta` and `alpha` are the matrix-vector product between `mat` and `vec` and the scale
@@ -5551,7 +5551,7 @@ class Tensor(Tensor_):
 
         Raises:
             ValueError: If length of shape of `input_x` is not equal to length of shape of `mat2` or
-                        length of shape of `input_x` is less than 3.
+                        length of shape of `input_x` is less than `3`.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``

@@ -3030,7 +3030,7 @@ def add(x, y):
 
 def addr(x, vec1, vec2, beta=1, alpha=1):
     r"""
-    Computes the outer-product of `vec1` and `vec2` and adds it to the vec1rix `x`.
+    Computes the outer-product of `vec1` and `vec2` and adds it to `x`.
     """
     return F.addr(x, vec1, vec2, beta=1, alpha=1)
 
