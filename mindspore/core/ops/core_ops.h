@@ -271,6 +271,7 @@ constexpr auto kApplyRMSProp = "ApplyRMSProp";
 constexpr auto kSparseApplyCenteredRMSProp = "SparseApplyCenteredRMSProp";
 constexpr auto kSparseApplyAdagrad = "SparseApplyAdagrad";
 constexpr auto kSparseApplyAdagradV2 = "SparseApplyAdagradV2";
+constexpr auto kSparseApplyRMSProp = "SparseApplyRMSProp";
 constexpr auto kRoll = "Roll";
 constexpr auto kTanh = "Tanh";
 constexpr auto kMish = "Mish";
