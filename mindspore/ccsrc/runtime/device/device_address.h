@@ -31,7 +31,6 @@
 
 namespace mindspore {
 namespace device {
-class Bucket;
 namespace cpu {
 class CPUSimpleMemPlan;
 class CPUMemoryManager;
@@ -257,7 +256,6 @@ class DeviceAddress : public mindspore::DeviceSync {
 #ifndef ENABLE_SECURITY
   friend class mindspore::device::ascend::DataDumper;
 #endif
-  friend class mindspore::device::Bucket;
   friend class mindspore::SingleOpInferSession;
   friend class mindspore::RuntimeUtils;
 };

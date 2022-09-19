@@ -85,7 +85,6 @@ class AscendSession : public SessionBasic {
   void RecurseSetSummaryNodes(KernelGraph *graph, std::map<std::string, std::pair<AnfNodePtr, int>> *summary);
   void SetSummaryNodes(KernelGraph *graph) override;
 #endif
-  std::shared_ptr<device::Bucket> CreateBucket(uint32_t bucket_id, uint32_t bucket_size) override;
 
  private:
   // compile child graph when session have multiple child graphs

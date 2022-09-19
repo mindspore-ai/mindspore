@@ -22,7 +22,6 @@
 #include "plugin/device/ascend/hal/device/kernel_build_ascend.h"
 #include "plugin/device/ascend/kernel/aicpu/aicpu_kernel_load.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_compile.h"
-#include "plugin/device/ascend/hal/device/ascend_bucket.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_assign.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
 #include "include/common/utils/parallel_context.h"
@@ -290,35 +289,6 @@ void AscendKernelExecutor::PreprocessBeforeRunSingleOpGraph(const KernelGraphPtr
   CreateKernel(atomic_nodes);
   LaunchDeviceLibrary();
   DoSomas(graph);
-}
-
-std::shared_ptr<Bucket> AscendKernelExecutor::CreateBucket(uint32_t bucket_id, uint32_t bucket_size) const {
-  MS_EXCEPTION_IF_NULL(res_manager_);
-  auto device_context = res_manager_->device_context_;
-  MS_EXCEPTION_IF_NULL(device_context);
-  auto bucket = std::make_shared<AscendBucket>(bucket_id, bucket_size, device_context->device_context_key().device_id_);
-  MS_EXCEPTION_IF_NULL(bucket);
-
-  // For data-parallel, there is no communication in forward and backward process, the only communication ops arise
-  // from this allreduce bucket. All the ops in forward and backward process are assigned on the compute stream and
-  // allreduce for gradients is assigned on communication stream.
-  // But for semi/auto_parallel mode, there will be communication ops in forward and backward process. To avoid stream
-  // sync error, for semi/auto_parallel mode, the allreduce for gradients is assigned on compute stream as well.
-  auto parallel_context = parallel::ParallelContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(parallel_context);
-  auto parallel_mode = parallel_context->parallel_mode();
-  if (parallel_mode == parallel::kAutoParallel || parallel_mode == parallel::kSemiAutoParallel) {
-    const auto compute_stream = AscendStreamMng::GetInstance().GetStream(kDefaultStreamIndex);
-    MS_EXCEPTION_IF_NULL(compute_stream);
-    bucket->Init({compute_stream}, {compute_stream});
-  } else {
-    const auto compute_stream = AscendStreamMng::GetInstance().GetStream(kDefaultStreamIndex);
-    MS_EXCEPTION_IF_NULL(compute_stream);
-    const auto comm_stream = AscendStreamMng::GetInstance().GetStream(kWorldGroupStreamIndex);
-    MS_EXCEPTION_IF_NULL(comm_stream);
-    bucket->Init({compute_stream}, {comm_stream});
-  }
-  return bucket;
 }
 
 bool AscendKernelExecutor::PySyncRuning() const {

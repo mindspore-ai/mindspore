@@ -407,4 +407,4 @@ def test_train_feed_gpu():
                                       dataset_strategy="data_parallel")
     np.random.seed(42)
     set_seed(55)
-    train_feed(num_classes=65536, expect_out=[54.276253, 54.667892, 54.833946])
+    train_feed(num_classes=65536, expect_out=[54.276253, 54.667854, 54.908398])

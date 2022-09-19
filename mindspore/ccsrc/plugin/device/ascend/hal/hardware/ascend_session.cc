@@ -73,7 +73,6 @@
 #ifdef WITH_BACKEND
 #include "ps/util.h"
 #endif
-#include "plugin/device/ascend/hal/device/ascend_bucket.h"
 #include "plugin/device/ascend/hal/device/ascend_device_address.h"
 #ifndef ENABLE_SECURITY
 #include "plugin/device/ascend/hal/profiler/memory_profiling.h"
@@ -376,7 +375,6 @@ GraphId AscendSession::CompileGraphImpl(const AnfNodePtrList &lst, const AnfNode
   // construct graph, if successfully, graph_sum_ + 1
   auto graph = ConstructKernelGraph(lst, outputs, DeviceType::kAscend);
   auto graph_id = graph->graph_id();
-  InitAllBucket(graph);
   MS_LOG(INFO) << "Status record: end compile graph. graph id: " << graph_id;
   return graph_id;
 }
@@ -1492,21 +1490,6 @@ void AscendSession::SyncStream() const {
   if (!ret) {
     MS_LOG(EXCEPTION) << "Sync stream error!";
   }
-}
-
-std::shared_ptr<device::Bucket> AscendSession::CreateBucket(uint32_t bucket_id, uint32_t bucket_size) {
-  auto bucket = std::make_shared<device::ascend::AscendBucket>(bucket_id, bucket_size, device_id_);
-
-  auto kernel_runtime = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
-  MS_EXCEPTION_IF_NULL(kernel_runtime);
-  auto compute_stream = kernel_runtime->compute_stream();
-  auto communication_stream = kernel_runtime->communication_stream();
-  MS_EXCEPTION_IF_NULL(compute_stream);
-  MS_EXCEPTION_IF_NULL(communication_stream);
-
-  MS_EXCEPTION_IF_NULL(bucket);
-  bucket->Init({compute_stream}, {communication_stream});
-  return bucket;
 }
 
 void AscendSession::SetThreadContext() { ErrorManager::GetInstance().GenWorkStreamIdDefault(); }

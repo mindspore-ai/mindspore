@@ -35,7 +35,6 @@
 #include "plugin/device/gpu/hal/hardware/optimizer.h"
 #include "runtime/device/ms_device_shape_transfer.h"
 #include "common/graph_kernel/graph_kernel_flags.h"
-#include "plugin/device/gpu/hal/device/gpu_bucket.h"
 #include "plugin/device/gpu/hal/profiler/gpu_profiling.h"
 #include "plugin/device/gpu/hal/profiler/gpu_profiling_utils.h"
 #include "backend/common/session/kernel_graph.h"
@@ -726,23 +725,6 @@ uint32_t GPUKernelExecutor::GetRankID() const {
     }
   }
   return rank_id;
-}
-
-std::shared_ptr<Bucket> GPUKernelExecutor::CreateBucket(uint32_t bucket_id, uint32_t bucket_size) const {
-  MS_EXCEPTION_IF_NULL(res_manager_);
-  auto device_context = res_manager_->device_context_;
-  MS_EXCEPTION_IF_NULL(device_context);
-  auto bucket = std::make_shared<GPUBucket>(bucket_id, bucket_size, device_context->device_context_key().device_id_);
-  MS_EXCEPTION_IF_NULL(bucket);
-  const auto default_stream = GPUDeviceManager::GetInstance().default_stream();
-  MS_EXCEPTION_IF_NULL(default_stream);
-  // Create a new communication stream for Bucket
-  CudaDeviceStream comm_stream;
-  GPUDeviceManager::GetInstance().CreateStream(&comm_stream);
-  MS_EXCEPTION_IF_NULL(comm_stream);
-
-  bucket->Init({default_stream}, {comm_stream});
-  return bucket;
 }
 
 bool GPUDeviceResManager::LoadCollectiveCommLib() {

@@ -77,7 +77,6 @@
 #include "runtime/device/kernel_runtime_manager.h"
 #include "plugin/device/gpu/hal/device/cuda_driver.h"
 #include "plugin/device/gpu/hal/device/distribution/collective_init.h"
-#include "plugin/device/gpu/hal/device/gpu_bucket.h"
 #include "plugin/device/gpu/hal/device/gpu_device_address.h"
 #include "utils/ms_utils.h"
 #include "include/common/utils/config_manager.h"
@@ -492,7 +491,6 @@ GraphId GPUSession::CompileGraphImpl(const KernelGraphPtr &graph) {
     graph->set_manager(manager);
   }
 
-  InitAllBucket(graph);
   // Alloc memory in graph mode, including static memory and dynamic memory
   if (!pynative_mode) {
     AllocateMemory(graph.get());
@@ -733,21 +731,6 @@ void GPUSession::SyncStream() const {
   if (!ret) {
     MS_LOG(EXCEPTION) << "Sync stream error!";
   }
-}
-
-std::shared_ptr<device::Bucket> GPUSession::CreateBucket(uint32_t bucket_id, uint32_t bucket_size) {
-  auto bucket = std::make_shared<device::gpu::GPUBucket>(bucket_id, bucket_size, device_id_);
-
-  auto kernel_runtime = device::KernelRuntimeManager::Instance().GetCurrentKernelRuntime();
-  MS_EXCEPTION_IF_NULL(kernel_runtime);
-  auto compute_stream = kernel_runtime->compute_stream();
-  auto communication_stream = kernel_runtime->communication_stream();
-  MS_EXCEPTION_IF_NULL(compute_stream);
-  MS_EXCEPTION_IF_NULL(communication_stream);
-
-  MS_EXCEPTION_IF_NULL(bucket);
-  bucket->Init({compute_stream}, {communication_stream});
-  return bucket;
 }
 }  // namespace gpu
 }  // namespace session
