@@ -213,6 +213,9 @@ int WeightQuantizer::DoCompression(const CNodePtr &cnode, const ParameterPtr &pa
       }
     }
   } else {
+    auto tensor_info = parameter->default_param()->cast<tensor::TensorPtr>();
+    CHECK_NULL_RETURN(tensor_info);
+    weight_quantized_tensors_.insert(tensor_info);
     MS_LOG(INFO) << parameter->fullname_with_scope() << " compression success.";
   }
   return RET_OK;
