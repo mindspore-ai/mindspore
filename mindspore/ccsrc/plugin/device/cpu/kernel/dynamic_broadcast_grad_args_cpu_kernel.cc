@@ -163,7 +163,7 @@ bool DynamicBroadcastGradientArgsCpuKernelMod::Init(const BaseOperatorPtr &base_
   if (!MatchKernelFunc(base_operator, inputs, outputs)) {
     return false;
   }
-
+  is_need_retrieve_output_shape_ = true;
   return true;
 }
 
@@ -177,7 +177,6 @@ int DynamicBroadcastGradientArgsCpuKernelMod::Resize(const BaseOperatorPtr &base
   }
   // get input_shape
   outputs_ = outputs;
-  is_need_retrieve_output_shape_ = true;
 
   return static_cast<int>(KRET_OK);
 }
