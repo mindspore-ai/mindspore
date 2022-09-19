@@ -135,6 +135,8 @@ functional算子是经过初始化后的Primitive，可以直接作为函数使�
     :template: classtemplate.rst
 
     mindspore.ops.bmm
+    mindspore.ops.cholesky
+    mindspore.ops.cholesky_inverse
 
 逐元素运算
 ^^^^^^^^^^^^^
@@ -397,6 +399,7 @@ Array操作
     mindspore.ops.concat
     mindspore.ops.diag
     mindspore.ops.dyn_shape
+    mindspore.ops.expand
     mindspore.ops.expand_dims
     mindspore.ops.gather
     mindspore.ops.gather_d
@@ -564,6 +567,27 @@ Parameter操作函数
 
     mindspore.ops.print_
 
+图像函数
+----------------
+
+.. msplatformautosummary::
+    :toctree: ops
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.ops.bounding_box_decode
+    mindspore.ops.bounding_box_encode
+    mindspore.ops.check_valid
+
+光谱函数
+----------------
+
+.. msplatformautosummary::
+    :toctree: ops
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.ops.blackman_window
 
 其他函数
 ----------------
@@ -638,6 +662,8 @@ Parameter操作函数
      - Determine if two strings are equal.
    * - mindspore.ops.typeof
      - Get type of object.
+   * - mindspore.ops.iou
+     - Computes the intersection over union (IOU) or the intersection over foreground (IOF) for boxes.
 
 .. mscnplatformautosummary::
     :toctree: ops

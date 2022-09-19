@@ -114,6 +114,7 @@ from .array_func import (
     min,
     population_count,
     top_k,
+    expand
 )
 from .parameter_func import (
     assign,
@@ -269,7 +270,9 @@ from .math_func import (
     remainder,
     iou,
     bmm,
-    trapz
+    trapz,
+    cholesky,
+    cholesky_inverse
 )
 from .nn_func import (
     adaptive_avg_pool1d,
@@ -378,6 +381,14 @@ from .grad import (
 from .debug_func import (
     print_,
 )
+from .image_func import (
+    bounding_box_decode,
+    bounding_box_encode,
+    check_valid
+)
+from .spectral_func import (
+    blackman_window
+)
 
 __all__ = []
 __all__.extend(array_func.__all__)
@@ -389,4 +400,6 @@ __all__.extend(sparse_func.__all__)
 __all__.extend(random_func.__all__)
 __all__.extend(grad_func.__all__)
 __all__.extend(debug_func.__all__)
+__all__.extend(image_func.__all__)
+__all__.extend(spectral_func.__all__)
 __all__.sort()
