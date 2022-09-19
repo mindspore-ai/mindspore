@@ -380,12 +380,14 @@ bool AscendKernelRuntime::Init() {
   if (error_manager_ret != 0) {
     MS_LOG(WARNING) << "Init ErrorManager failed.";
   }
+  bool init_device = false;
   try {
     // Start up profiling before rtSetDevice
     bool ret = InitDevice();
     if (!ret) {
       return ret;
     }
+    init_device = true;
 #ifdef ENABLE_DEBUGGER
     SetDebugger();
 #endif
@@ -409,6 +411,9 @@ bool AscendKernelRuntime::Init() {
       MS_LOG(EXCEPTION) << "Set op wait timeout failed, error: " << acl_ret;
     }
   } catch (const std::exception &e) {
+    if (init_device) {
+      ResetDevice(device_id_);
+    }
     MS_LOG(EXCEPTION) << "Ascend kernel runtime initialization failed." << GetErrorMessage(true)
                       << "#dmsg#Framework Error Message:#dmsg#" << e.what();
     throw;
@@ -1232,6 +1237,8 @@ bool AscendKernelRuntime::ResetDevice(uint32_t device_id) {
     MS_LOG(ERROR) << "Fail to destroy all streams when reset device.";
     return false;
   }
+  stream_ = nullptr;
+  communication_stream_ = nullptr;
 
   if (initialized_device_set_.find(device_id) != initialized_device_set_.end()) {
     auto ret = rtDeviceReset(UintToInt(device_id));
