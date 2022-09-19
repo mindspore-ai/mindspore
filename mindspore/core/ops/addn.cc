@@ -75,11 +75,15 @@ abstract::ShapePtr AddNInferShape(const PrimitivePtr &primitive, const std::vect
   ShapeVector output_shape;
   for (size_t i = 0; i < elements.size(); ++i) {
     auto shape = elements[i]->BuildShape();
-    if (!shape->isa<abstract::Shape>()) {
-      MS_LOG(EXCEPTION) << "For '" << primitive->name() << "', input[" << i
-                        << "] should be a Tensor, but got:" << elements[i]->ToString();
+    ShapeVector shape_vec;
+    // If shape is no shape, it is a scalar, use empty shape vector as scalar shape.
+    if (shape->isa<abstract::Shape>()) {
+      shape_vec = shape->cast<abstract::ShapePtr>()->shape();
     }
-    const auto &shape_vec = shape->cast<abstract::ShapePtr>()->shape();
+    // If any shape is dynamic rank, return a dynamic rank.
+    if (IsDynamicRank(shape_vec)) {
+      return std::make_shared<abstract::Shape>(ShapeVector({UNKNOWN_RANK}));
+    }
     // Record input0's shape.
     if (i == 0) {
       output_shape = shape_vec;
