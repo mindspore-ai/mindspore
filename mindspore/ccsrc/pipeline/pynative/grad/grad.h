@@ -22,7 +22,6 @@
 #include <utility>
 #include <stack>
 #include <vector>
-#include "pybind11/pybind11.h"
 #include "pipeline/pynative/base.h"
 #include "mindspore/ccsrc/pipeline/pynative/forward/forward.h"
 #include "pipeline/pynative/grad/top_cell.h"
@@ -181,7 +180,8 @@ class GradExecutor {
   AnfNodePtr CreateTupleGetItemNode(const std::string &obj_id) const;
   void RecordGradNodeToGraphInfoMap(const FuncGraphPtr &fg, const CNodePtr &cnode, const ValuePtr &v,
                                     const std::string &obj_id, const ValuePtrList &input_args) const;
-
+  bool ConvertTupleAndScalarIntoTensor(const FrontendOpRunInfoPtr &op_run_info, ValuePtrList *input_args, size_t idx,
+                                       const ValuePtr &default_value) const;
   bool grad_flag_{false};
   bool enable_op_cache_{true};
   bool grad_is_running_{false};

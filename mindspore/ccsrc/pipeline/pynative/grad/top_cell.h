@@ -28,7 +28,6 @@
 #include "include/common/utils/convert_utils.h"
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
-#include "pybind11/pybind11.h"
 #include "pybind11/numpy.h"
 #include "pybind_api/ir/base_ref_py.h"
 #include "ir/anf.h"
@@ -164,11 +163,11 @@ class TopCellInfo {
   void ResetTopCellInfo(const py::args &args);
   void SaveOpInfo(const std::string &op_info, const std::vector<tensor::TensorPtr> &op_out_tensors);
   void RecordGradOpInfo(const FrontendOpRunInfoPtr &op_run_info);
-  void SetParamNodeMapInGraphInfoMap(const FuncGraphPtr &g, const std::string &id, const ParameterPtr &param);
+  void SetParamNodeMapInGraphInfoMap(const FuncGraphPtr &g, const std::string &id, const ParameterPtr &param) const;
   void SetNodeMapInGraphInfoMap(const FuncGraphPtr &g, const std::string &id, const AnfNodePtr &node,
-                                int64_t index = -1);
+                                int64_t index = -1) const;
   void SetNodeMapInGraphInfoMap(const FuncGraphPtr &g, const std::string &id, const AnfNodePtr &node,
-                                const std::vector<int64_t> &index);
+                                const std::vector<int64_t> &index) const;
   void SetTupleArgsToGraphInfoMap(const FuncGraphPtr &g, const ValuePtr &v, const AnfNodePtr &node,
                                   bool is_param = false);
   std::string GetAlreadyRunCellId(const std::string &cell_id) const;

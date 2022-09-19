@@ -269,6 +269,7 @@ constexpr auto kSparseApplyCenteredRMSProp = "SparseApplyCenteredRMSProp";
 constexpr auto kSparseApplyAdagrad = "SparseApplyAdagrad";
 constexpr auto kSparseApplyAdagradV2 = "SparseApplyAdagradV2";
 constexpr auto kRoll = "Roll";
+constexpr auto kTopK = "TopK";
 constexpr auto kTanh = "Tanh";
 constexpr auto kMish = "Mish";
 constexpr auto kLRN = "LRN";
@@ -479,7 +480,7 @@ GVAR_DEF(PrimitivePtr, kPrimDynamicBroadcastTo, std::make_shared<Primitive>(kDyn
 GVAR_DEF(PrimitivePtr, kPrimCummin, std::make_shared<Primitive>("Cummin"));
 GVAR_DEF(PrimitivePtr, kPrimBroadcastTo, std::make_shared<Primitive>("BroadcastTo"));
 GVAR_DEF(PrimitivePtr, kPrimScalarToArray, std::make_shared<Primitive>("scalar_to_array"));
-GVAR_DEF(PrimitivePtr, kPrimTopK, std::make_shared<Primitive>("TopK"));
+GVAR_DEF(PrimitivePtr, kPrimTopK, std::make_shared<Primitive>(kTopK));
 GVAR_DEF(PrimitivePtr, kPrimInTopK, std::make_shared<Primitive>("InTopK"));
 GVAR_DEF(PrimitivePtr, kPrimArrayToScalar, std::make_shared<Primitive>("array_to_scalar"));
 GVAR_DEF(PrimitivePtr, kPrimBroadcastShape, std::make_shared<Primitive>("broadcast_shape"));

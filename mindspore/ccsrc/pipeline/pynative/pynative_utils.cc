@@ -304,7 +304,7 @@ bool DataConvert::RunOpConvertConstInputToAttr(const FrontendOpRunInfoPtr &op_ru
       return false;
     }
   }
-  op_prim->AddAttr(input_name, v);
+  (void)op_prim->AddAttr(input_name, v);
   (void)op_run_info->index_with_value.emplace_back(std::make_pair(input_index, v));
   return true;
 }
@@ -332,10 +332,10 @@ void DataConvert::PlantTensorTupleToVector(const FrontendOpRunInfoPtr &op_run_in
     auto dyn_v = GetValue<const std::vector<int64_t>>(op_prim->GetAttr(kAttrDynInputSizes));
     if (dyn_v.size() != op_run_info->input_value.size()) {
       for (size_t i = dyn_v.size(); i < index; ++i) {
-        dyn_v.emplace_back(-1);
+        (void)dyn_v.emplace_back(-1);
       }
-      dyn_v.emplace_back(elem_size);
-      op_prim->set_attr(kAttrDynInputSizes, MakeValue(dyn_v));
+      (void)dyn_v.emplace_back(elem_size);
+      (void)op_prim->set_attr(kAttrDynInputSizes, MakeValue(dyn_v));
     } else {
       if (dyn_v[index] != elem_size) {
         dyn_v[index] = elem_size;
@@ -345,9 +345,9 @@ void DataConvert::PlantTensorTupleToVector(const FrontendOpRunInfoPtr &op_run_in
   } else {
     std::vector<int64_t> dyn_v;
     for (size_t i = 0; i < index; ++i) {
-      dyn_v.emplace_back(-1);
+      (void)dyn_v.emplace_back(-1);
     }
-    dyn_v.emplace_back(SizeToLong(value_seq->size()));
+    (void)dyn_v.emplace_back(SizeToLong(value_seq->size()));
     op_prim->set_attr(kAttrDynInputSizes, MakeValue(dyn_v));
   }
 }

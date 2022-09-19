@@ -41,7 +41,7 @@ void RegRandomNormal(py::module *m);
 }
 
 namespace pynative {
-void RegPynativeExecutor(py::module *m);
+void RegPynativeExecutor(const py::module *m);
 }
 
 namespace tensor {
