@@ -19,7 +19,7 @@
 namespace mindspore {
 namespace pynative {
 namespace {
-const mindspore::HashSet<std::string> kForceInferPrim = {prim::kPrimTopK->name(), prim::kPrimDropoutGenMask->name()};
+const mindspore::HashSet<std::string> kForceInferPrim = {prim::kTopK, prim::kDropoutGenMask};
 
 void SetAnyValue(const AbstractBasePtr &abs) {
   MS_EXCEPTION_IF_NULL(abs);
@@ -101,7 +101,7 @@ void InferOperation::SetInputAbstract(const FrontendOpRunInfoPtr &op_run_info) {
   MS_EXCEPTION_IF_NULL(op_run_info);
   size_t input_value_size = op_run_info->input_value.size();
   for (size_t i = 0; i < input_value_size; ++i) {
-    op_run_info->input_abs.emplace_back(
+    (void)op_run_info->input_abs.emplace_back(
       GetInputValueAbs(op_run_info, op_run_info->input_value[i], i, input_const_flag[i]));
   }
 }

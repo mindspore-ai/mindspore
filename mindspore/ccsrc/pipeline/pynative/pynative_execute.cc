@@ -140,7 +140,7 @@ void PyNativeExecutor::set_kernel_build_server_dir(const py::object &kernel_buil
   ms_context->set_param<std::string>(MS_CTX_KERNEL_BUILD_SERVER_DIR, kernel_build_server_dir_s);
 }
 
-void PyNativeExecutor::ClearRes() {
+void PyNativeExecutor::ClearRes() const {
   MS_LOG(DEBUG) << "Clear all res";
   runtime::OpExecutor::GetInstance().Reset();
   pynative::OpCompiler::GetInstance().ClearAllCache();
@@ -230,7 +230,7 @@ void PyNativeExecutor::NewGraph(const py::object &cell, const py::args &args) co
 }
 
 void PyNativeExecutor::EndGraph(const py::object &cell, const py::object &out, const py::args &args) const {
-  forward_executor()->ProcessBeforeEndGraph(cell, args);
+  forward_executor()->ProcessBeforeEndGraph(cell);
 
   if (!grad_flag()) {
     MS_LOG(DEBUG) << "Grad flag is false";
@@ -259,7 +259,7 @@ void PyNativeExecutor::SetMsFunctionCompileStatus(bool is_compiling) {
   forward_executor()->set_is_ms_function_compiling(is_compiling);
 }
 
-void RegPynativeExecutor(py::module *m) {
+void RegPynativeExecutor(const py::module *m) {
   (void)py::class_<PyNativeExecutor, std::shared_ptr<PyNativeExecutor>>(*m, "PynativeExecutor_")
     .def_static("get_instance", &PyNativeExecutor::GetInstance, "PyNativeExecutor get_instance.")
     .def("is_first_cell", &PyNativeExecutor::IsFirstCell, "check if the first cell.")

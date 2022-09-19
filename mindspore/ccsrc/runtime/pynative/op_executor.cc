@@ -92,7 +92,7 @@ void OpExecutor::PushOpBuildTask(const std::shared_ptr<OpBuildTask> &op_build_ta
 void OpExecutor::PushOpRunTask(const std::shared_ptr<OpTask> &op_run_task) {
   std::lock_guard<std::mutex> lock(task_mutex_);
   op_run_tasks_.push(op_run_task);
-  actor_in_queue_.insert(op_run_task->context()->graph_id());
+  (void)actor_in_queue_.insert(op_run_task->context()->graph_id());
   task_cond_var_.notify_all();
 }
 
@@ -163,7 +163,7 @@ void OpExecutor::WorkerLoop() {
       std::unique_lock<std::mutex> lock(task_mutex_);
       if (!op_run_tasks_.empty()) {
         op_run_tasks_.pop();
-        actor_in_queue_.erase(task->context()->graph_id());
+        (void)actor_in_queue_.erase(task->context()->graph_id());
       }
 
       if (op_run_tasks_.empty()) {
