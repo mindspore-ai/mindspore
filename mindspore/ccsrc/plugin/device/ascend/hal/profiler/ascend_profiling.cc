@@ -41,13 +41,13 @@ constexpr auto kUnknownErrorString = "Unknown error occurred";
 PROFILER_REG(kAscendDevice, AscendProfiler);
 }  // namespace
 
-std::map<std::string, aclprofAicoreMetrics> kAicMetrics{
-  {"ArithmeticUtilization", ACL_AICORE_ARITHMETIC_UTILIZATION},
-  {"PipeUtilization", ACL_AICORE_PIPE_UTILIZATION},
-  {"Memory", ACL_AICORE_MEMORY_BANDWIDTH},
-  {"MemoryLO", ACL_AICORE_L0B_AND_WIDTH},
-  {"ResourceConflictRatio", ACL_AICORE_RESOURCE_CONFLICT_RATIO},
-};
+std::map<std::string, aclprofAicoreMetrics> kAicMetrics{{"ArithmeticUtilization", ACL_AICORE_ARITHMETIC_UTILIZATION},
+                                                        {"PipeUtilization", ACL_AICORE_PIPE_UTILIZATION},
+                                                        {"Memory", ACL_AICORE_MEMORY_BANDWIDTH},
+                                                        {"MemoryLO", ACL_AICORE_L0B_AND_WIDTH},
+                                                        {"ResourceConflictRatio", ACL_AICORE_RESOURCE_CONFLICT_RATIO},
+                                                        {"MemoryUB", ACL_AICORE_MEMORY_UB},
+                                                        {"None", ACL_AICORE_NONE}};
 
 std::shared_ptr<AscendProfiler> AscendProfiler::GetInstance() {
   auto instance = Profiler::GetInstance(kAscendDevice);
@@ -128,7 +128,9 @@ uint64_t AscendProfiler::GetOptionsMask() const {
   if (options_json["hccl"] == "on") {
     mask |= ACL_PROF_HCCL_TRACE;
   }
-
+  if (options_json["l2_cache"] == "on") {
+    mask |= ACL_PROF_L2CACHE;
+  }
   return mask;
 }
 
