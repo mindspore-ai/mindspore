@@ -23,7 +23,7 @@ __device__ inline Complex<float> ScatterDivComplex(Complex<float>* address, Comp
   auto ptr_addr = reinterpret_cast<float*>(address);
   float addr_real = (*address).real();
   float addr_imag = (*address).imag();
-  float temp = (pow(val.real(), 2) + pow(val.imag(), 2));
+  float temp = (pow(val.real(), static_cast<float>(2)) + pow(val.imag(), static_cast<float>(2)));
 
   MsAtomicMul(ptr_addr, val.real());
   MsAtomicAdd(ptr_addr, addr_imag * val.imag());
@@ -37,7 +37,7 @@ __device__ inline Complex<double> ScatterDivComplex(Complex<double>* address, Co
   auto ptr_addr = reinterpret_cast<double*>(address);
   double addr_real = (*address).real();
   double addr_imag = (*address).imag();
-  double temp = (pow(val.real(), 2) + pow(val.imag(), 2));
+  double temp = (pow(val.real(), static_cast<double>(2)) + pow(val.imag(), static_cast<double>(2)));
 
   MsAtomicMul(ptr_addr, val.real());
   MsAtomicAdd(ptr_addr, addr_imag * val.imag());
