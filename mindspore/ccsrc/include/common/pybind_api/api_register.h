@@ -17,10 +17,6 @@
 #ifndef MINDSPORE_CCSRC_INCLUDE_COMMON_PYBIND_API_API_REGISTER_H_
 #define MINDSPORE_CCSRC_INCLUDE_COMMON_PYBIND_API_API_REGISTER_H_
 
-#include <map>
-#include <string>
-#include <memory>
-#include <functional>
 #include <vector>
 #include "pybind11/pybind11.h"
 #include "pybind11/stl.h"

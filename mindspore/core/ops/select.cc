@@ -57,6 +57,18 @@ bool CheckScalarOrTensor(ShapeVector input) {
   return flag;
 }
 
+void SelectInferShapeCheck(const std::vector<int64_t> &x_shape, const std::vector<int64_t> &y_shape,
+                           const std::vector<int64_t> &cond_shape, size_t shape_size) {
+  for (size_t i = 0; i < shape_size; i++) {
+    if ((x_shape[i] > 0 && cond_shape[i] > 0 && x_shape[i] != cond_shape[i]) ||
+        (x_shape[i] > 0 && y_shape[i] > 0 && x_shape[i] != y_shape[i])) {
+      MS_EXCEPTION(ValueError)
+        << "For 'Select', shape of tensor condition, x and y must be the same. But got condition shape: " << cond_shape
+        << ", x shape: " << x_shape << ", y shape: " << y_shape << ".";
+    }
+  }
+}
+
 abstract::BaseShapePtr SelectInferShape(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
   auto cond_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kSelectCondIndex]->BuildShape())[kShape];
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kSelectXIndex]->BuildShape())[kShape];
@@ -72,16 +84,8 @@ abstract::BaseShapePtr SelectInferShape(const PrimitivePtr &, const std::vector<
       MS_EXCEPTION(ValueError)
         << "For 'Select', shape size of tensor condition, x and y must be equal. But got condition size: "
         << cond_shape_size << ", x size: " << x_shape_size << ", y size: " << y_shape_size << ".";
-    } else {
-      for (size_t i = 0; i < x_shape_size; i++) {
-        if ((x_shape[i] > 0 && cond_shape[i] > 0 && x_shape[i] != cond_shape[i]) ||
-            (x_shape[i] > 0 && y_shape[i] > 0 && x_shape[i] != y_shape[i])) {
-          MS_EXCEPTION(ValueError)
-            << "For 'Select', shape of tensor condition, x and y must be the same. But got condition shape: "
-            << cond_shape << ", x shape: " << x_shape << ", y shape: " << y_shape << ".";
-        }
-      }
     }
+    SelectInferShapeCheck(x_shape, y_shape, cond_shape, x_shape_size);
   } else {
     if (!(CheckScalarOrTensor(cond_shape) && CheckScalarOrTensor(x_shape) && CheckScalarOrTensor(y_shape))) {
       MS_EXCEPTION(ValueError) << "For 'Select', when any of cond, x, y is of scalar type, "

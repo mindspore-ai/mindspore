@@ -52,7 +52,7 @@ class ArgMaxAbsInfer : public abstract::OpInferBase {
     axis = axis < 0 ? axis + SizeToLong(x_rank) : axis;
 
     auto out_shape_vector = shape_vector;
-    (void)out_shape_vector.erase(out_shape_vector.cbegin() + LongToSize(axis));
+    (void)out_shape_vector.erase(out_shape_vector.cbegin() + axis);
     return std::make_shared<abstract::Shape>(out_shape_vector);
   }
 
