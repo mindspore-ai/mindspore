@@ -312,3 +312,24 @@ def test_broadcast_type_error():
         net(Tensor(input_x), Tensor(input_y))
     except TypeError:
         assert True
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_dynamic_shape():
+    """
+    Feature: op dynamic shape
+    Description: set input_shape None and input real tensor
+    Expectation: success
+    """
+
+    net = SquaredDifference()
+    np.random.seed(1)
+    x1 = Tensor(np.random.randn(2, 3).astype(np.int32))
+    y1 = Tensor(np.random.randn(2, 3).astype(np.int32))
+    x1_dyn = Tensor(shape=[2, None], dtype=x1.dtype)
+    y1_dyn = Tensor(shape=[None, 3], dtype=y1.dtype)
+    net.set_inputs(x1_dyn, y1_dyn)
+    output1 = net(x1, y1).asnumpy()
+    assert output1.shape == x1.asnumpy().shape

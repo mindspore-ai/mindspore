@@ -130,7 +130,7 @@ class TruncatedNormal(Primitive):
         Validator.check_type_name("dtype", dtype, valid_values, self.name)
 
 
-class StandardNormal(PrimitiveWithInfer):
+class StandardNormal(Primitive):
     r"""
     Generates random numbers according to the standard Normal (or Gaussian) random number distribution.
 
@@ -158,18 +158,6 @@ class StandardNormal(PrimitiveWithInfer):
         Validator.check_non_negative_int(seed, "seed", self.name)
         Validator.check_non_negative_int(seed2, "seed2", self.name)
 
-    def __infer__(self, shape):
-        shape_v = shape["value"]
-        if shape_v is None:
-            raise ValueError(f"For '{self.name}', the 'shape' cannot be None.")
-        Validator.check_value_type("shape", shape_v, [tuple], self.name)
-        for i, shape_i in enumerate(shape_v):
-            Validator.check_positive_int(shape_i, f'shape[{i}]', self.name)
-        out = {
-            'shape': shape_v,
-            'dtype': mstype.float32,
-            'value': None}
-        return out
 
 
 class StandardLaplace(Primitive):
@@ -598,7 +586,7 @@ class UniformInt(Primitive):
         Validator.check_non_negative_int(seed2, "seed2", self.name)
 
 
-class UniformReal(StandardNormal):
+class UniformReal(Primitive):
     r"""
     Produces random floating-point values, uniformly distributed to the interval [0, 1).
 
@@ -638,6 +626,13 @@ class UniformReal(StandardNormal):
         >>> print(result)
         (2, 2)
     """
+    @prim_attr_register
+    def __init__(self, seed=0, seed2=0):
+        """Initialize StandardNormal"""
+        self.init_prim_io_names(inputs=['shape'], outputs=['output'])
+        self.add_prim_attr("side_effect_hidden", True)
+        Validator.check_non_negative_int(seed, "seed", self.name)
+        Validator.check_non_negative_int(seed2, "seed2", self.name)
 
 
 class RandomChoiceWithMask(Primitive):
