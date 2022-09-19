@@ -16,11 +16,13 @@
 import numpy as np
 import pytest
 
+import mindspore as ms
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.common.api import ms_function
 from mindspore.ops import operations as P
+
 
 def cum_prod(nptype):
     context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
@@ -80,7 +82,6 @@ def cum_prod(nptype):
                     P.CumProd()(self.x5, self.axis5),
                     P.CumProd()(self.x6, self.axis6))
 
-
     cumprod = CumProd(nptype)
     output = cumprod()
 
@@ -126,11 +127,13 @@ def cum_prod(nptype):
     assert np.all(diff6 < error6)
     assert output[6].shape == expect6.shape
 
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_cum_prod_uint8():
     cum_prod(np.uint8)
+
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
@@ -138,11 +141,13 @@ def test_cum_prod_uint8():
 def test_cum_prod_int8():
     cum_prod(np.int8)
 
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_cum_prod_int32():
     cum_prod(np.int32)
+
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
@@ -150,8 +155,36 @@ def test_cum_prod_int32():
 def test_cum_prod_float16():
     cum_prod(np.float16)
 
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_cum_prod_float32():
     cum_prod(np.float32)
+
+
+class Net(nn.Cell):
+    def __init__(self):
+        super(Net, self).__init__()
+        self.op = P.CumProd()
+
+    def construct(self, x):
+        return self.op(x, 0)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_cumprod_dshape():
+    """
+    Feature: Test cumprod dynamic shape.
+    Description: Test cumprod dynamic shape.
+    Expectation: Success.
+    """
+    net = Net()
+    input_x_dyn = Tensor(shape=[3, None], dtype=ms.float32)
+    net.set_inputs(input_x_dyn)
+    input_x = Tensor(np.random.random(([3, 10])), dtype=ms.float32)
+    output = net(input_x)
+    expect_shape = (3, 10)
+    assert output.asnumpy().shape == expect_shape
