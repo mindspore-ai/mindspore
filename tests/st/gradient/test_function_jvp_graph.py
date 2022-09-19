@@ -309,3 +309,31 @@ def test_jvp_construct_single_input_single_output_default_v_graph():
     expect_grad = Tensor(np.array([[3, 12], [27, 48]]).astype(np.float32))
     assert np.allclose(primal.asnumpy(), expect_primal.asnumpy())
     assert np.allclose(grad.asnumpy(), expect_grad.asnumpy())
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_jvp_multiple_outputs_with_has_aux_graph():
+    """
+    Features: Function jvp
+    Description: Test jvp with multiple inputs, multiple outputs with set_aux as True in graph mode.
+    Expectation: No exception.
+    """
+
+    def fn(x, y):
+        return 2 * x + y, y ** 3
+
+    def fn2(*args):
+        return fn(*args)
+
+    x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
+    y = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
+    v = Tensor(np.array([[1, 1], [1, 1]]).astype(np.float32))
+    expect_primal = Tensor(np.array([[3, 6], [9, 12]]).astype(np.float32))
+    expect_aux = Tensor(np.array([[1, 8], [27, 64]]).astype(np.float32))
+    expect_grad = Tensor(np.array([[3, 3], [3, 3]]).astype(np.float32))
+    primal, jvp_out, aux = jvp(fn2, (x, y), (v, v), has_aux=True)
+    assert np.allclose(primal.asnumpy(), expect_primal.asnumpy())
+    assert np.allclose(aux.asnumpy(), expect_aux.asnumpy())
+    assert np.allclose(jvp_out.asnumpy(), expect_grad.asnumpy())
