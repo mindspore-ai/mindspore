@@ -136,9 +136,11 @@ int LiteModel::VersionVerify(flatbuffers::Verifier *verify) {
 
 int LiteModel::NodeVerify() const {
   auto tensor_size = this->graph_.all_tensors_.size();
+  uint32_t node_size = this->graph_.all_nodes_.size();
   uint32_t subgraph_size = static_cast<uint32_t>(this->graph_.sub_graphs_.size());
 
-  for (auto &node : this->graph_.all_nodes_) {
+  for (uint32_t node_index = 0; node_index < node_size; node_index++) {
+    auto &node = this->graph_.all_nodes_.at(node_index);
     if (node == nullptr || node->primitive_ == nullptr) {
       MS_LOG(ERROR) << "node or its primitive_ is null.";
       return RET_ERROR;
@@ -165,6 +167,14 @@ int LiteModel::NodeVerify() const {
       if (static_cast<uint32_t>(subgraph_index) >= subgraph_size) {
         MS_LOG(ERROR) << "subgraph index：" << subgraph_index << " is beyond subgraph_size: " << subgraph_size;
         return RET_ERROR;
+      }
+      for (uint32_t graph_index = 0; graph_index < subgraph_size; graph_index++) {
+        auto &graph = this->graph_.sub_graphs_.at(graph_index);
+        if (IsContain(graph->node_indices_, node_index) && graph_index == static_cast<uint32_t>(subgraph_index)) {
+          MS_LOG(ERROR) << "The subgraph called by PartialNode is the subgraph where it is located, subgraph index: "
+                        << subgraph_index;
+          return RET_ERROR;
+        }
       }
     }
     if ((!IsTensorListNode(node->primitive_, schema_version_)) && (!IsPartialNode(node->primitive_, schema_version_))) {
