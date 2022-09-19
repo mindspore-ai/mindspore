@@ -121,9 +121,8 @@ abstract::BaseShapePtr ScatterNdInferShape(const PrimitivePtr &prim, const std::
   bool is_dyn_output;
   auto shape = ExtrectScatterNdShape(prim, input_args, &is_dyn_output);
   const auto &out_shape = shape->shape();
-  if (!std::all_of(out_shape.begin(), out_shape.end(), [is_dyn_output](int64_t item) {
-        return item >= 1 || (is_dyn_output && (item == abstract::Shape::SHP_ANY));
-      })) {
+  if (!std::all_of(out_shape.begin(), out_shape.end(),
+                   [is_dyn_output](int64_t item) { return item >= 1 || (is_dyn_output && (item < 0)); })) {
     std::ostringstream buffer;
     buffer << "For 'ScatterNd', the input[shape] should be a tuple with all "
               "positive item. but got (";
