@@ -16,6 +16,7 @@
 import numpy as np
 import pytest
 
+import mindspore as ms
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -34,6 +35,7 @@ class NetGatherD(nn.Cell):
 
     def construct(self, x, index):
         return self.gatherd(x, self.dim, index)
+
 
 class NetGatherDGrad(nn.Cell):
     def __init__(self, network):
@@ -119,3 +121,28 @@ def test_gatherd_grad_checkresult():
     expect = np.array([[[89.99606, -145.67], [0., 119.84]], [[138.56479, -8.696029], [0., -23.369316]]], np.float32)
     error = np.ones(shape=expect.shape) * 1.0e-6
     assert np.all(np.abs(output.asnumpy() - expect) < error)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_gatherd_grad_dynamic_shape():
+    """
+    Feature: dynamic shape support of GatherDGrad.
+    Description: input Tensor with dynamic shape.
+    Expectation: output shape coincide with expect_shape.
+    """
+    context.set_context(mode=context.PYNATIVE_MODE, device_target='CPU')
+    x_dyn = Tensor(shape=[2, None], dtype=ms.float16)
+    x = Tensor(np.array([[1, 1, 1, 1, 1], [1, 1, 1, 1, 1]]), dtype=ms.float16)
+    dim = 0
+    index_dyn = Tensor(shape=[None, 5], dtype=ms.int64)
+    index = Tensor(np.array([[0, 1, 1, 0, 0], [1, 0, 0, 1, 1]]), dtype=ms.int64)
+    grad_dyn = Tensor(shape=[2, None], dtype=ms.float16)
+    grad = Tensor(np.array([[0.9031, 0.0890, 0.2779, 0.3198, 0.5710],
+                            [0.6949, 0.8439, 0.2003, 0.6868, 0.4437]]), dtype=ms.float16)
+    except_shape = (2, 5)
+    grad_net = NetGatherDGrad(NetGatherD(dim))
+    grad_net.set_inputs(x_dyn, index_dyn, grad_dyn)
+    output = grad_net(x, index, grad)
+    assert output[0].asnumpy().shape == except_shape

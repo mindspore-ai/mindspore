@@ -26,23 +26,25 @@ namespace mindspore {
 namespace ops {
 namespace {
 constexpr int64_t kPaddingsSecondDim = 2;
-constexpr int64_t kMaxPaddings = 5;
+constexpr size_t kMaxPaddings = 5;
 
-void verify_padding_range(const std::string &mode, int64_t out_size, std::pair<int64_t, int64_t> padding_attr,
+void verify_padding_range(const std::string &mode, int64_t out_size, const std::pair<int64_t, int64_t> padding_attr,
                           const std::string &prim_name) {
   if (padding_attr.first < 0 || padding_attr.second < 0) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name << "', all elements of paddings must be >= 0.";
   }
   if (mode == "SYMMETRIC") {
-    if (padding_attr.first > out_size || padding_attr.second > out_size)
+    if (padding_attr.first > out_size || padding_attr.second > out_size) {
       MS_EXCEPTION(ValueError) << "For '" << prim_name << "', paddings must be no greater than the dimension size: ["
                                << padding_attr.first << "], [" << padding_attr.second << "] greater than [" << out_size
                                << "]";
+    }
   } else if (mode == "REFLECT") {
-    if (padding_attr.first >= out_size || padding_attr.second >= out_size)
+    if (padding_attr.first >= out_size || padding_attr.second >= out_size) {
       MS_EXCEPTION(ValueError) << "For '" << prim_name << "', paddings must be no greater  than the dimension size: ["
                                << padding_attr.first << "], [" << padding_attr.second << "] not less than [" << out_size
                                << "]";
+    }
   }
 }
 
@@ -85,15 +87,15 @@ abstract::ShapePtr MirrorPadGradInferShape(const PrimitivePtr &primitive,
     paddings_attr.push_back(std::make_pair(paddings_arg[i], paddings_arg[i + 1]));
   }
   (void)CheckAndConvertUtils::CheckInteger("paddings_size", paddings_attr.size(), kEqual, x_shape.size(), prim_name);
-  int64_t size = x_shape.size();
-  if (size < 0 || size > kMaxPaddings) {
+  size_t size = x_shape.size();
+  if (size > kMaxPaddings) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name
                              << "', the dimension of input only supports less than or equal to 5 dims, but got " << size
                              << " dims";
   }
 
   std::string mode = GetValue<std::string>(primitive->GetAttr(kMode));
-  for (int64_t i = 0; i < size; i++) {
+  for (size_t i = 0; i < size; i++) {
     int64_t out_size = x_shape[i] - (paddings_attr[i].first + paddings_attr[i].second);
     verify_padding_range(mode, out_size, paddings_attr[i], prim_name);
   }

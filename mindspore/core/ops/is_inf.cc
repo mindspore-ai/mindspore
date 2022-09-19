@@ -32,21 +32,15 @@ class IsInfInfer : public abstract::OpInferBase {
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
     MS_EXCEPTION_IF_NULL(primitive);
-    const int64_t input_num = 1;
-    CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
-    for (const auto &item : input_args) {
-      MS_EXCEPTION_IF_NULL(item);
-    }
+    CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, 1L, primitive->name());
+    MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
     auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
     return std::make_shared<abstract::Shape>(x_shape);
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
-    for (const auto &item : input_args) {
-      MS_EXCEPTION_IF_NULL(item);
-    }
-    const int64_t input_num = 1;
-    CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim->name());
+    CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, 1L, prim->name());
+    MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
     (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->BuildType(), {kFloat16, kFloat32, kFloat64},
                                                      prim->name());
     return std::make_shared<TensorType>(kBool);
