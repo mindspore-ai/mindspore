@@ -3596,7 +3596,7 @@ class ApproximateEqual(_LogicBinaryOp):
 
     Examples:
         >>> x = Tensor(np.array([1, 2, 3]), mindspore.float32)
-        >>> y = Tensor(np.array([2, 4, 6]), mindspore.float32)
+        >>> y = Tensor(np.array([2, 3, 6]), mindspore.float32)
         >>> approximate_equal = ops.ApproximateEqual(2.)
         >>> output = approximate_equal(x, y)
         >>> print(output)
