@@ -20,30 +20,11 @@
 #include <map>
 #include <string>
 #include <utility>
-#include <vector>
 #include "backend/common/optimizer/pass.h"
+#include "tools/optimizer/graph/preprocess_dynamic_shape.h"
 
 namespace mindspore {
 namespace opt {
-class PreprocessorOfFusion {
-  typedef std::map<AnfNodePtr, std::pair<std::vector<ShapeVector>, std::vector<ShapeVector>>> ShapeContainer;
-
- public:
-  PreprocessorOfFusion() = default;
-  ~PreprocessorOfFusion() = default;
-  int Run(const FuncGraphPtr &func_graph);
-  const std::vector<CNodePtr> &GetReduceOps() const { return reduce_ops_; }
-
-  const ShapeContainer &GetShapeContainer() const { return op_shape_infos_; }
-
- private:
-  bool CheckIsDynamicModel(const FuncGraphPtr &func_graph);
-  int ProcessOps(const FuncGraphPtr &func_graph);
-  int DoInfer(const CNodePtr &cnode, std::string op_type);
-  std::vector<CNodePtr> reduce_ops_;
-  ShapeContainer op_shape_infos_;
-};
-
 class MulReduceFusion : public Pass {
  public:
   explicit MulReduceFusion(const std::string &name = "MulReduceFusion") : Pass(name) {}
@@ -56,6 +37,7 @@ class MulReduceFusion : public Pass {
   int PostProcessSqueezeWithConcat(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
   int GenerateMatmul(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
   int GenerateSqueeze(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
+  int GenerateMul(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
   int ProcessGather();
   bool CheckBasicCond(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
   bool CheckAxisCond(const CNodePtr &cnode);
@@ -71,7 +53,7 @@ class MulReduceFusion : public Pass {
   float coeff_{1.0f};         // valid when reduce_mode_ is reduce_mean, we can break it down into reduce_sum * coeff_.
   int concat_axis_{0};        // record the new axis for concat-op in PostProcess.
   CNodePtr gather_{nullptr};  // gather's first input, valid when reduce_mode_ is reduce_mean.
-  PreprocessorOfFusion preprocessor_;
+  DynamicShapePreprocessor preprocessor_;
   std::map<CNodePtr, std::pair<int, int>>
     squeeze_infos_;  // record generated-squeeze(<op, <axis, out-dims>>) which is used to post-fusion.
 };
