@@ -2792,6 +2792,33 @@ def list_hasnext(xs):
     return len(xs) > 0
 
 
+def dict_next(xs):
+    """Next array."""
+    keys = xs.keys()
+    new_keys = F.make_list()
+    new_values = F.make_list()
+    for i in range(1, len(keys)):
+        new_keys.append(keys[i])
+        new_values.append(xs[keys[i]])
+    new_dict = {}
+    return keys[0], new_dict.fromkeys(new_keys, new_values)
+
+
+def dict_hasnext(xs):
+    """Whether the dict is empty or not."""
+    return len(xs) > 0
+
+
+def array_next(xs):
+    """Next array."""
+    return xs[0], xs[1:]
+
+
+def array_hasnext(xs):
+    """Whether the array is empty or not."""
+    return len(xs) > 0
+
+
 def list_append(self_, list_item):
     """Append into list"""
     return _append(self_, list_item)

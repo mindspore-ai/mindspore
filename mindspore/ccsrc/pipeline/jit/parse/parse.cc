@@ -2405,9 +2405,6 @@ FunctionBlockPtr Parser::ParseListCompIter(const FunctionBlockPtr &block, const 
   if (iter_anf_node->interpret() || interpret_without_internal) {
     iter_anf_node = ConvertInterpretIterNodeToList(block, iter_anf_node, iter_node);
   }
-  AnfNodePtr op_iter = top_block->MakeResolveOperation(NAMED_PRIMITIVE_ITER);
-  MS_EXCEPTION_IF_NULL(top_block->func_graph());
-  CNodePtr iter_apply = top_block->func_graph()->NewCNodeInOrder({op_iter, iter_anf_node});
 
   // Create header graph.
   FunctionBlockPtr list_header_block =
@@ -2431,7 +2428,7 @@ FunctionBlockPtr Parser::ParseListCompIter(const FunctionBlockPtr &block, const 
   list_param->debug_info()->set_name(list_param_name);
   auto empty_list = std::vector<ValuePtr>();
   AnfNodePtr empty_list_node = NewValueNode(std::make_shared<ValueList>(empty_list));
-  top_block->Jump(list_header_block, {iter_apply, empty_list_node});
+  top_block->Jump(list_header_block, {iter_anf_node, empty_list_node});
 
   // Create body graph.
   FunctionBlockPtr list_body_block = GenerateBlock(std::make_shared<TraceForBody>(block->func_graph()->debug_info()));
