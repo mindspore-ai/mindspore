@@ -52,7 +52,7 @@ class PredictTaskQueue {
   void WaitUntilPredictActive(PredictTask *task, int node_id);
   PredictTask *GetPredictTask(int node_id, ModelWorker *worker);
   void ActiveTask(PredictTask *task);
-  void ActiveTaskQueue() { task_push_cond_.notify_all(); }
+  void ActiveTaskQueue();
   Status InitTaskQueue(size_t num, size_t max_queue_size);
 
   bool IsPredictTaskDone() const { return predict_task_done_; }
