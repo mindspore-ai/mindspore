@@ -1534,6 +1534,43 @@ void GraphScheduler::LinkDataArrowForCopyActor(AbstractActor *const from_actor, 
   }
 }
 
+namespace {
+void GetRealDependInputByUpdateState(const AnfNodePtr &update_state, std::vector<AnfNodePtr> *real_depend_inputs) {
+  MS_EXCEPTION_IF_NULL(update_state);
+  MS_EXCEPTION_IF_NULL(real_depend_inputs);
+  const auto &cnode = update_state->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  const auto &inputs = cnode->inputs();
+  if (inputs.size() <= kUpdateStateStateInput) {
+    MS_LOG(WARNING) << " Invalid update state:" << update_state->DebugString();
+    return;
+  }
+  const auto &u_input = inputs[kUpdateStateStateInput];
+  MS_EXCEPTION_IF_NULL(u_input);
+
+  bool is_u_input_valid = true;
+  for (size_t i = kUpdateStateRealInput; i < inputs.size(); ++i) {
+    MS_EXCEPTION_IF_NULL(inputs[i]);
+    (void)real_depend_inputs->emplace_back(inputs[i]);
+
+    // Check the u input of update state.
+    if (inputs[i]->isa<CNode>()) {
+      const auto &input_cnode = inputs[i]->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(input_cnode);
+      if (std::find(input_cnode->inputs().begin(), input_cnode->inputs().end(), u_input) !=
+          input_cnode->inputs().end()) {
+        MS_LOG(DEBUG) << "U input node:" << u_input->DebugString() << " of update state:" << update_state->DebugString()
+                      << " is input of update state input node:" << inputs[i]->DebugString();
+        is_u_input_valid = false;
+      }
+    }
+  }
+  if (is_u_input_valid) {
+    (void)real_depend_inputs->emplace_back(u_input);
+  }
+}
+}  // namespace
+
 void GraphScheduler::LinkControlArrowByAutoMonad(AbstractActor *to_actor, const AnfNodePtr &from_node,
                                                  const KernelGraphPtr &graph, const ControlNodeParserPtr &parser) {
   MS_EXCEPTION_IF_NULL(to_actor);
@@ -1574,10 +1611,7 @@ void GraphScheduler::LinkControlArrowByAutoMonad(AbstractActor *to_actor, const 
     real_depend_inputs.push_back(input_cnode->input(kRealInputIndexInDepend));
     real_depend_inputs.push_back(input_cnode->input(kDependAttachNodeIndex));
   } else if (common::AnfAlgo::CheckPrimitiveType(input_anfnode, prim::kPrimUpdateState)) {
-    MS_EXCEPTION_IF_NULL(input_cnode);
-    for (size_t i = kUpdateStateRealInput; i < input_cnode->inputs().size(); ++i) {
-      real_depend_inputs.push_back(input_cnode->input(i));
-    }
+    GetRealDependInputByUpdateState(input_anfnode, &real_depend_inputs);
   } else {
     real_depend_inputs.push_back(input_anfnode);
   }
