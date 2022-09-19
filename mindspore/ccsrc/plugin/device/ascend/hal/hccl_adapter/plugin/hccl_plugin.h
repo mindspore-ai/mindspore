@@ -59,6 +59,10 @@ ORIGIN_METHOD(HcclCommInitClusterInfo, HcclResult, const char *, uint32_t, HcclC
 ORIGIN_METHOD(HcclCommDestroy, HcclResult, HcclComm);
 ORIGIN_METHOD(HcclGetRankId, HcclResult, void *, uint32_t *);
 ORIGIN_METHOD(HcclGetRankSize, HcclResult, void *, uint32_t *);
+ORIGIN_METHOD(HcomGetLocalRankId, HcclResult, const char *, uint32_t *);
+ORIGIN_METHOD(HcomGetLocalRankSize, HcclResult, const char *, uint32_t *);
+ORIGIN_METHOD(HcomGetWorldRankFromGroupRank, HcclResult, const char *, uint32_t, uint32_t *);
+ORIGIN_METHOD(HcomGetGroupRankFromWorldRank, HcclResult, uint32_t, const char *, uint32_t *);
 
 ORIGIN_METHOD(HcomCreateGroup, HcclResult, const char *, uint32_t, uint32_t *);
 ORIGIN_METHOD(HcomDestroyGroup, HcclResult, const char *);

@@ -101,6 +101,10 @@ void HcclAdapter::InitPlugin() {
   hccl_destroy_group_ = DlsymFuncObj(HcomDestroyGroup, plugin_handle_);
   hccl_get_rank_id_ = DlsymFuncObj(HcomGetRankId, plugin_handle_);
   hccl_get_rank_size_ = DlsymFuncObj(HcomGetRankSize, plugin_handle_);
+  hccl_get_local_rank_id_ = DlsymFuncObj(HcomGetLocalRankId, plugin_handle_);
+  hccl_get_local_rank_size_ = DlsymFuncObj(HcomGetLocalRankSize, plugin_handle_);
+  hccl_get_world_rank_by_group_rank_ = DlsymFuncObj(HcomGetWorldRankFromGroupRank, plugin_handle_);
+  hccl_get_group_rank_by_world_rank_ = DlsymFuncObj(HcomGetGroupRankFromWorldRank, plugin_handle_);
   hccl_exec_initialize_ = DlsymFuncObj(HcomExecInitialize, plugin_handle_);
   hccl_exec_finalize_ = DlsymFuncObj(HcomExecFinalize, plugin_handle_);
   hccl_exec_enqueue_op_ = DlsymFuncObj(HcomExecEnqueueOperation, plugin_handle_);
@@ -127,6 +131,10 @@ void HcclAdapter::FinalizePlugin() {
   hccl_create_group_ = nullptr;
   hccl_destroy_group_ = nullptr;
   hccl_get_rank_id_ = nullptr;
+  hccl_get_local_rank_id_ = nullptr;
+  hccl_get_local_rank_size_ = nullptr;
+  hccl_get_world_rank_by_group_rank_ = nullptr;
+  hccl_get_group_rank_by_world_rank_ = nullptr;
   hccl_get_rank_size_ = nullptr;
   hccl_exec_initialize_ = nullptr;
   hccl_exec_finalize_ = nullptr;
@@ -516,6 +524,52 @@ HcclResult HcclAdapter::HcclGetRankSize(const std::string &group, uint32_t *rank
   CheckExcutionMode();
   CHECK_SYMBOL_NULL(hccl_get_rank_size_);
   return hccl_get_rank_size_(group.c_str(), rank_size);
+}
+
+HcclResult HcclAdapter::HcclGetLocalRankId(const std::string &group, uint32_t *local_rank_id) const {
+  CheckExcutionMode();
+  if (hccl_mode_ != HcclMode::kGraph) {
+    MS_LOG(ERROR) << "The pynative mode doesn't support get local rank.";
+    return HCCL_E_NOT_SUPPORT;
+  } else {
+    CHECK_SYMBOL_NULL(hccl_get_local_rank_id_);
+    return hccl_get_local_rank_id_(group.c_str(), local_rank_id);
+  }
+}
+
+HcclResult HcclAdapter::HcclGetLocalRankSize(const std::string &group, uint32_t *local_rank_size) const {
+  CheckExcutionMode();
+  if (hccl_mode_ != HcclMode::kGraph) {
+    MS_LOG(ERROR) << "The pynative mode doesn't support get local rank szie.";
+    return HCCL_E_NOT_SUPPORT;
+  } else {
+    CHECK_SYMBOL_NULL(hccl_get_local_rank_size_);
+    return hccl_get_local_rank_size_(group.c_str(), local_rank_size);
+  }
+}
+
+HcclResult HcclAdapter::HcclGetWorldRankFromGroupRank(const std::string &group, uint32_t local_rank,
+                                                      uint32_t *world_rank) const {
+  CheckExcutionMode();
+  if (hccl_mode_ != HcclMode::kGraph) {
+    MS_LOG(ERROR) << "The pynative mode doesn't support get world rank by group rank.";
+    return HCCL_E_NOT_SUPPORT;
+  } else {
+    CHECK_SYMBOL_NULL(hccl_get_world_rank_by_group_rank_);
+    return hccl_get_world_rank_by_group_rank_(group.c_str(), local_rank, world_rank);
+  }
+}
+
+HcclResult HcclAdapter::HcclGetGroupRankFromWorldRank(uint32_t world_rank, const std::string &group,
+                                                      uint32_t *local_rank) const {
+  CheckExcutionMode();
+  if (hccl_mode_ != HcclMode::kGraph) {
+    MS_LOG(ERROR) << "The pynative mode doesn't support get group rank by world rank.";
+    return HCCL_E_NOT_SUPPORT;
+  } else {
+    CHECK_SYMBOL_NULL(hccl_get_group_rank_by_world_rank_);
+    return hccl_get_group_rank_by_world_rank_(world_rank, group.c_str(), local_rank);
+  }
 }
 
 bool HcclAdapter::InitHcclExec() {

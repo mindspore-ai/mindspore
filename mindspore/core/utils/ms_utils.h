@@ -126,6 +126,9 @@ static inline bool UseDynamicCluster() {
   return !common::GetEnv("MS_ROLE").empty();
 }
 
+// UseDynamicCluster or UseMPI. If false, means use rank table file.
+static inline bool UseHostCollective() { return common::UseDynamicCluster() || common::UseMPI(); }
+
 template <typename T>
 bool IsEqual(const T *a, const T *b) {
   if (a == b) {

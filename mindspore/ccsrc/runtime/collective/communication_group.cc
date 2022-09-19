@@ -19,9 +19,11 @@
 namespace mindspore {
 namespace device {
 CommunicationGroup::CommunicationGroup(const std::string &name, const std::vector<uint32_t> &group_ranks,
-                                       uint32_t global_rank)
+                                       uint32_t global_rank, uint32_t local_group_rank, uint32_t local_group_size)
     : initialized_(false),
       global_rank_(global_rank),
+      local_group_rank_(local_group_rank),
+      local_group_size_(local_group_size),
       size_(group_ranks.size()),
       name_(name),
       group_ranks_(group_ranks) {
@@ -40,6 +42,12 @@ uint32_t CommunicationGroup::GetGroupRank(uint32_t global_rank) {
   return global_to_group_ranks_[global_rank];
 }
 
+uint32_t CommunicationGroup::GetLocalGroupRank() {
+  CHECK_RET((local_group_rank_ == UINT32_MAX), true,
+            "Group " + name_ + " doesn't contain the global rank " + std::to_string(global_rank_));
+  return local_group_rank_;
+}
+
 uint32_t CommunicationGroup::GetGlobalRank(uint32_t group_rank) {
   CHECK_RET((group_to_global_ranks_.count(group_rank) != 0), true,
             "Group " + name_ + " doesn't contain the group rank " + std::to_string(group_rank));
@@ -47,6 +55,8 @@ uint32_t CommunicationGroup::GetGlobalRank(uint32_t group_rank) {
 }
 
 uint32_t CommunicationGroup::group_size() const { return size_; }
+
+uint32_t CommunicationGroup::local_group_size() const { return local_group_size_; }
 
 const std::vector<uint32_t> &CommunicationGroup::group_ranks() const { return group_ranks_; }
 

@@ -20,8 +20,11 @@ namespace mindspore {
 namespace device {
 namespace gpu {
 NvidiaCommunicationGroup::NvidiaCommunicationGroup(const std::string &name, const std::vector<uint32_t> &group_ranks,
-                                                   uint32_t global_rank)
-    : CommunicationGroup(name, group_ranks, global_rank), unique_id_({}), comm_(nullptr) {}
+                                                   uint32_t global_rank, uint32_t local_group_rank,
+                                                   uint32_t local_group_size)
+    : CommunicationGroup(name, group_ranks, global_rank, local_group_rank, local_group_size),
+      unique_id_({}),
+      comm_(nullptr) {}
 
 bool NvidiaCommunicationGroup::Initialize(void *root_info) {
   if (initialized_) {

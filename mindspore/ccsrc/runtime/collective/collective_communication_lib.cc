@@ -62,11 +62,53 @@ uint32_t CollectiveCommunicationLib::GetGroupSize(const std::string &group_name)
   return group->group_size();
 }
 
+uint32_t CollectiveCommunicationLib::GetLocalRankId(const std::string &group_name) {
+  CHECK_RET(groups_.count(group_name) != 0, true, "The group " + group_name + " does not exist.");
+  auto group = groups_[group_name];
+  CHECK_IF_NULL(group);
+  return group->GetLocalGroupRank();
+}
+
+uint32_t CollectiveCommunicationLib::GetLocalGroupSize(const std::string &group_name) {
+  CHECK_RET(groups_.count(group_name) != 0, true, "The group " + group_name + " does not exist.");
+  auto group = groups_[group_name];
+  CHECK_IF_NULL(group);
+  return group->local_group_size();
+}
+
+uint32_t CollectiveCommunicationLib::GetWorldRankFromGroupRank(const std::string &group_name, uint32_t local_rank) {
+  CHECK_RET(groups_.count(group_name) != 0, true, "The group " + group_name + " does not exist.");
+  auto group = groups_[group_name];
+  CHECK_IF_NULL(group);
+  return group->GetGlobalRank(local_rank);
+}
+
+uint32_t CollectiveCommunicationLib::GetGroupRankFromWorldRank(uint32_t global_rank, const std::string &group_name) {
+  CHECK_RET(groups_.count(group_name) != 0, true, "The group " + group_name + " does not exist.");
+  auto group = groups_[group_name];
+  CHECK_IF_NULL(group);
+  return group->GetGroupRank(global_rank);
+}
+
 CommunicationGroupPtr CollectiveCommunicationLib::GetGroup(const std::string &group_name) {
   if (groups_.count(group_name) == 0) {
     return nullptr;
   }
   return groups_[group_name];
+}
+
+void CollectiveCommunicationLib::SetLocalGroupRank(const std::string &group_name, uint32_t local_rank_id) {
+  CHECK_RET(groups_.count(group_name) != 0, true, "The group " + group_name + " does not exist.");
+  auto group = groups_[group_name];
+  CHECK_IF_NULL(group);
+  group->set_local_rank(local_rank_id);
+}
+
+void CollectiveCommunicationLib::SetLocalGroupSize(const std::string &group_name, uint32_t local_group_size) {
+  CHECK_RET(groups_.count(group_name) != 0, true, "The group " + group_name + " does not exist.");
+  auto group = groups_[group_name];
+  CHECK_IF_NULL(group);
+  group->set_local_size(local_group_size);
 }
 
 const std::string &CollectiveCommunicationLib::global_group_name() const { return global_group_name_; }

@@ -21,24 +21,26 @@ namespace device {
 namespace gpu {
 NvidiaCollectiveCommLib::NvidiaCollectiveCommLib() { global_group_name_ = kNCCLGlobalGroupName; }
 
-bool NvidiaCollectiveCommLib::Initialize(uint32_t global_rank, uint32_t global_rank_size) {
+bool NvidiaCollectiveCommLib::Initialize(uint32_t global_rank, uint32_t global_rank_size, uint32_t local_rank_id) {
   if (initialized_) {
     return false;
   }
 
   global_rank_id_ = global_rank;
   global_rank_size_ = global_rank_size;
+  local_rank_id_ = local_rank_id;
   initialized_ = true;
   finalized_ = false;
   return true;
 }
 
 bool NvidiaCollectiveCommLib::CreateCommunicationGroup(const std::string &group_name,
-                                                       const std::vector<uint32_t> &group_ranks) {
+                                                       const std::vector<uint32_t> &group_ranks,
+                                                       uint32_t local_group_rank, uint32_t local_group_size) {
   CHECK_RET((groups_.count(group_name) == 0), true, "The NCCL group " + group_name + " has already existed.");
 
-  NvidiaCommunicationGroupPtr group =
-    std::make_shared<NvidiaCommunicationGroup>(group_name, group_ranks, global_rank_id_);
+  NvidiaCommunicationGroupPtr group = std::make_shared<NvidiaCommunicationGroup>(
+    group_name, group_ranks, global_rank_id_, local_group_rank, local_group_size);
   CHECK_IF_NULL(group);
   groups_[group_name] = group;
   return true;

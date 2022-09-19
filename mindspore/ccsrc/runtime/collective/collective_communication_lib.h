@@ -54,24 +54,41 @@ class CollectiveCommunicationLib {
   // group.
   // Normally, collective communication libraries on host side will generate these two parameters inside 'Initialize'
   // method. But collective communication libraries on device side needs these inputs passed by the caller.
-  virtual bool Initialize(uint32_t global_rank = UINT32_MAX, uint32_t global_rank_size = UINT32_MAX) = 0;
+  virtual bool Initialize(uint32_t global_rank = UINT32_MAX, uint32_t global_rank_size = UINT32_MAX,
+                          uint32_t local_rank_id = UINT32_MAX) = 0;
 
   // Finalize collecitve communication library.
   virtual bool Finalize();
 
   // Create communication group. This is the precondition for all collective operations on both host and device side.
-  virtual bool CreateCommunicationGroup(const std::string &group_name, const std::vector<uint32_t> &group_ranks) {
+  virtual bool CreateCommunicationGroup(const std::string &group_name, const std::vector<uint32_t> &group_ranks,
+                                        uint32_t local_group_rank, uint32_t local_group_size) {
     return true;
   }
+
+  // Create device communication group. This is only needed on device side with rank_table.
+  virtual bool CreateDeviceCommunicationGroup(const std::string &group_name, const std::vector<uint32_t> &group_ranks) {
+    return true;
+  }
+
+  virtual bool DestroyDeviceCommunicationGroup(const std::string &group_name) { return true; }
 
   // Destroy the communication group.
   virtual bool DestroyCommunicationGroup(const std::string &group_name);
 
   // Get the rank id of this process in the specified group.
-  uint32_t GetRankId(const std::string &group_name);
+  virtual uint32_t GetRankId(const std::string &group_name);
+
+  virtual uint32_t GetLocalRankId(const std::string &group_name);
+
+  virtual uint32_t GetLocalGroupSize(const std::string &group_name);
 
   // Get the size of the specified group.
-  uint32_t GetGroupSize(const std::string &group_name);
+  virtual uint32_t GetGroupSize(const std::string &group_name);
+
+  virtual uint32_t GetWorldRankFromGroupRank(const std::string &group_name, uint32_t local_rank);
+
+  virtual uint32_t GetGroupRankFromWorldRank(uint32_t group_rank, const std::string &group_name);
 
   // Assign the local rank id for this process. Normally used by collective communication library on the host side.
   virtual bool AssignLocalRank() { return true; }
@@ -125,6 +142,10 @@ class CollectiveCommunicationLib {
 
   // Returns global rank size. This is used to create global communication group.
   uint32_t global_rank_size() const;
+
+  virtual void SetLocalGroupRank(const std::string &group_name, uint32_t local_rank_id);
+
+  virtual void SetLocalGroupSize(const std::string &group_name, uint32_t local_group_size);
 
  protected:
   // Whether this collective communication library is initialized.

@@ -29,8 +29,10 @@ constexpr char kMSRootInfo[] = "MS_CLUSTER_ROOT";
 
 class MsCommunicationGroup : public CommunicationGroup {
  public:
-  explicit MsCommunicationGroup(const std::string &name, const std::vector<uint32_t> &group_ranks, uint32_t global_rank)
-      : CommunicationGroup(name, group_ranks, global_rank), root_info_(kMSRootInfo + name_) {}
+  explicit MsCommunicationGroup(const std::string &name, const std::vector<uint32_t> &group_ranks, uint32_t global_rank,
+                                uint32_t local_group_rank, uint32_t local_group_size)
+      : CommunicationGroup(name, group_ranks, global_rank, local_group_rank, local_group_size),
+        root_info_(kMSRootInfo + name_) {}
 
   ~MsCommunicationGroup() override = default;
 

@@ -23,7 +23,7 @@ MPICollectiveCommLib::MPICollectiveCommLib() : world_group_(MPI_GROUP_NULL) {
   global_group_name_ = kMPIGlobalGroupName;
 }
 
-bool MPICollectiveCommLib::Initialize(uint32_t, uint32_t) {
+bool MPICollectiveCommLib::Initialize(uint32_t, uint32_t, uint32_t) {
   if (initialized_) {
     return false;
   }
@@ -69,10 +69,12 @@ bool MPICollectiveCommLib::BroadcastUniqueID(const std::string &group_name, size
 }
 
 bool MPICollectiveCommLib::CreateCommunicationGroup(const std::string &group_name,
-                                                    const std::vector<uint32_t> &group_ranks) {
+                                                    const std::vector<uint32_t> &group_ranks, uint32_t local_group_rank,
+                                                    uint32_t local_group_size) {
   CHECK_RET((groups_.count(group_name) == 0), true, "The MPI group " + group_name + " has already existed.");
 
-  MPICommunicationGroupPtr group = std::make_shared<MPICommunicationGroup>(group_name, group_ranks, global_rank_id_);
+  MPICommunicationGroupPtr group = std::make_shared<MPICommunicationGroup>(group_name, group_ranks, global_rank_id_,
+                                                                           local_group_rank, local_group_size);
   CHECK_IF_NULL(group);
   CHECK_RET(group->Initialize(world_group_), true, "Failed to initialize group " + group_name);
   groups_[group_name] = group;

@@ -454,6 +454,14 @@ PYBIND11_MODULE(_c_expression, m) {
 
   (void)py::class_<CollectiveManager, std::shared_ptr<CollectiveManager>>(m, "CollectiveManager")
     .def_static("get_instance", &CollectiveManager::instance, "Get collective manager instance.")
+    .def("create_group", &CollectiveManager::CreateCommunicationGroup, "Create collective group.")
+    .def("destroy_group", &CollectiveManager::DestroyCommunicationGroup, "Destroy collective group.")
+    .def("get_local_rank_id", &CollectiveManager::GetLocalRankId, "Get the node rank id.")
+    .def("get_local_group_size", &CollectiveManager::GetLocalGroupSize, "Get the node rank id.")
+    .def("get_world_rank_from_group_rank", &CollectiveManager::GetWorldRankFromGroupRank,
+         "Get world rank by group rank.")
+    .def("get_group_rank_from_world_rank", &CollectiveManager::GetGroupRankFromWorldRank,
+         "Get group rank by world rank.")
     .def("get_rank_id", &CollectiveManager::GetRankId, "Get the node rank id.")
     .def("get_group_size", &CollectiveManager::GetGroupSize, "Get the nodes number in the collective communication.");
 
