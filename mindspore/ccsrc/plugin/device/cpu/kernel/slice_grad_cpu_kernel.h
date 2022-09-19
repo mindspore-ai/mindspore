@@ -20,6 +20,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <map>
 
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
@@ -30,7 +31,7 @@ constexpr auto kSliceGrad = "SliceGrad";
 constexpr auto kStridedSliceGrad = "StridedSliceGrad";
 constexpr auto kUnknown = "Unknown";
 
-class SliceGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class SliceGradCpuKernelMod : public NativeCpuKernelMod {
  public:
   SliceGradCpuKernelMod() = default;
 
@@ -38,7 +39,11 @@ class SliceGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
 
   ~SliceGradCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs,
+             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
@@ -71,16 +76,23 @@ class SliceGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   bool SliceGrad8D(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs,
                    T *input_addr, T *output_addr);
 
-  std::vector<int> begin_;
-  std::vector<int> end_;
-  std::vector<int> strides_;
-  std::vector<int> size_;
+  std::vector<int64_t> begin_;
+  std::vector<int64_t> end_;
+  std::vector<int64_t> strides_;
+  std::vector<int64_t> size_;
+  static constexpr size_t kShapexIndex_{1};
+  static constexpr size_t kBeginIndex_{2};
+  static constexpr size_t kEndIndex_{3};
+  static constexpr size_t kStrideIndex_{4};
+  static constexpr size_t kSizeIndex_{3};
   ShapeVector input_shape_;
   std::vector<size_t> input_element_num_;
   ShapeVector output_shape_;
   std::vector<size_t> output_element_num_;
   TypeId dtype_{kTypeUnknown};
   TypeId strides_dtype_{kNumberTypeInt32};
+  bool get_dynamic_attr_value_{false};
+  bool is_dynamic_attr_{false};
   std::string kernel_type_{kUnknown};
 };
 }  // namespace kernel

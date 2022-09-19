@@ -30,60 +30,64 @@ constexpr size_t kOutputsNum = 1;
 constexpr size_t kSliceGradMaxInputShapeSize = 8;
 }  // namespace
 
-void SliceGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  cnode_ptr_ = kernel_node;
+bool SliceGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                 const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->name();
+  auto input_num = inputs.size();
+  dtype_ = inputs.at(0)->GetDtype();
   constexpr size_t kInputNum2 = 2;
-  ClearVectors();
-  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  if (input_num == kSliceGradDynamicInputsNum || input_num == kStridedSliceGradDynamicInputsNum) {
+    is_dynamic_attr_ = true;
+    strides_dtype_ = inputs.at(kInputNum2)->GetDtype();
+    return true;
+  }
+  auto prim = base_operator->GetPrim();
+  MS_EXCEPTION_IF_NULL(prim);
+  auto begin_value = prim->GetAttr(kAttrBegin);
+  MS_EXCEPTION_IF_NULL(begin_value);
+  begin_ = GetValue<std::vector<int64_t>>(begin_value);
+  auto strides_value = prim->GetAttr(STRIDES);
+  if (strides_value != nullptr) {  // StrideSliceGrad
+    strides_ = GetValue<std::vector<int64_t>>(strides_value);
+    auto end_value = prim->GetAttr(kAttrEnd);
+    MS_EXCEPTION_IF_NULL(end_value);
+    end_ = GetValue<std::vector<int64_t>>(end_value);
+  } else {  // SliceGrad
+    auto size_value = prim->GetAttr(kAttrSize);
+    MS_EXCEPTION_IF_NULL(size_value);
+    size_ = GetValue<std::vector<int64_t>>(size_value);
+  }
+  return true;
+}
+
+int SliceGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                  const std::vector<KernelTensorPtr> &outputs,
+                                  const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  auto begin = GetDynamicAttrIntValue(inputs, kBeginIndex_, inputsOnHost, kernel_name_, &begin_);
+  if (kernel_name_ == prim::kPrimStridedSliceGrad->name()) {
+    auto end = GetDynamicAttrIntValue(inputs, kEndIndex_, inputsOnHost, kernel_name_, &end_);
+    auto stride = GetDynamicAttrIntValue(inputs, kStrideIndex_, inputsOnHost, kernel_name_, &strides_);
+    get_dynamic_attr_value_ = begin && end && stride;
+  } else {
+    auto size = GetDynamicAttrIntValue(inputs, kSizeIndex_, inputsOnHost, kernel_name_, &size_);
+    get_dynamic_attr_value_ = begin && size;
+  }
+  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
+    return ret;
+  }
+  auto input_shape = inputs[0]->GetShapeVector();
   if (input_shape.size() > kSliceGradMaxInputShapeSize) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input tensor must be 8D or lower, but got "
                       << input_shape.size() << "D.";
   }
-  output_shape_ = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  if (input_num == kSliceGradDynamicInputsNum || input_num == kStridedSliceGradDynamicInputsNum) {
-    strides_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kInputNum2);
-    return;
-  }
-  // in the case that begin, end, size, stride are const value.
-  std::vector<int64_t> begin_me = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, BEGIN);
-  (void)std::transform(begin_me.begin(), begin_me.end(), std::back_inserter(begin_),
-                       [](const int64_t &value) { return LongToInt(value); });
-  auto prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
-  MS_EXCEPTION_IF_NULL(prim);
-  auto strides = prim->GetAttr(STRIDES);
-  if (strides != nullptr) {  // StridedSliceGrad
-    std::vector<int64_t> strides_me = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, STRIDES);
-    std::vector<int64_t> end_me = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, END);
-    (void)std::transform(strides_me.begin(), strides_me.end(), std::back_inserter(strides_),
-                         [](const int64_t &value) { return LongToInt(value); });
-    (void)std::transform(end_me.begin(), end_me.end(), std::back_inserter(end_),
-                         [](const int64_t &value) { return LongToInt(value); });
-    if (strides_.size() != end_.size() || strides_.size() != output_shape_.size()) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                        << "', the dimension of 'strides|end|output' must be equal, but got the dimension of "
-                        << "'strides': " << strides_.size() << ", the dimension of 'end': " << end_.size()
-                        << ", and the dimension of output: " << output_shape_.size();
-    }
-    FormatArgs(true);
-  } else {  // SliceGrad
-    std::vector<int64_t> size_me = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, SIZE);
-    (void)std::transform(size_me.begin(), size_me.end(), std::back_inserter(size_),
-                         [](const int64_t &value) { return LongToInt(value); });
-    if (size_.size() != output_shape_.size() || begin_.size() != output_shape_.size()) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                        << "', 'begin|size|input' size must be equal, but got 'begin' size: " << begin_.size()
-                        << ", 'size' size: " << size_.size() << " and 'input' size: " << output_shape_.size();
-    }
-    FormatArgs(false);
-  }
+  output_shape_ = outputs[0]->GetShapeVector();
+  FormatArgs(kernel_name_ == prim::kPrimStridedSliceGrad->name());
   ExpandAllMemberDims(kSliceGradMaxInputShapeSize);
 
   CPUKernelUtils::GetElementNumEveryDim(input_shape_, &input_element_num_);
   CPUKernelUtils::GetElementNumEveryDim(output_shape_, &output_element_num_);
+  return KRET_OK;
 }
 
 void SliceGradCpuKernelMod::ClearVectors() {
@@ -129,67 +133,6 @@ void SliceGradCpuKernelMod::ExpandAllMemberDims(size_t expand_dims) {
   }
 }
 
-template <typename T>
-void SliceGradCpuKernelMod::InitParams(const std::vector<kernel::AddressPtr> &inputs) {
-  auto cnode = cnode_ptr_.lock();
-  ClearVectors();
-  output_shape_ = common::AnfAlgo::GetOutputInferShape(cnode, 0);
-  std::string kernel_name = common::AnfAlgo::GetCNodeName(cnode);
-  auto begin_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 2);
-  auto begin_ptr = reinterpret_cast<T *>(inputs[2]->addr);
-  std::vector<T> begin{begin_ptr, begin_ptr + begin_shape[0]};
-  (void)std::transform(begin.begin(), begin.end(), std::back_inserter(begin_),
-                       [](const T &value) { return static_cast<int>(value); });
-  if (kernel_name == prim::kPrimStridedSliceGrad->name()) {  // StridedSliceGrad
-    auto end_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 3);
-    auto stride_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 4);
-    if (begin_shape.size() != 1 || end_shape.size() != 1 || stride_shape.size() != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                        << "', the dimensions of 'begin', 'end', 'strides' must be 1, "
-                           "but got the dimension of 'begin': "
-                        << begin_shape.size() << ", the dimension of 'end': " << end_shape.size()
-                        << ", and the dimension of 'strides': " << stride_shape.size();
-    }
-
-    auto end_ptr = reinterpret_cast<T *>(inputs[3]->addr);
-    auto strides_ptr = reinterpret_cast<T *>(inputs[4]->addr);
-
-    std::vector<T> end{end_ptr, end_ptr + end_shape[0]};
-    std::vector<T> strides{strides_ptr, strides_ptr + stride_shape[0]};
-    (void)std::transform(strides.begin(), strides.end(), std::back_inserter(strides_),
-                         [](const T &value) { return static_cast<int>(value); });
-    (void)std::transform(end.begin(), end.end(), std::back_inserter(end_), [](const T &value) { return value; });
-    if (strides_.size() != end_.size()) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                        << "', the dimension of 'strides|end|output' must be equal, but got the dimension of "
-                        << "'strides': " << strides_.size() << ", the dimension of 'end': " << end_.size()
-                        << ", and the dimension of output: " << output_shape_.size();
-    }
-    FormatArgs(true);
-  } else {  // SliceGrad
-    auto size_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 3);
-    if (begin_shape.size() != 1 || size_shape.size() != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                        << "', the dimensions of 'begin', 'end' must be 1, but got the dimension of 'begin': "
-                        << begin_shape.size() << ", and the dimension of 'end': " << size_shape.size();
-    }
-    auto size_ptr = reinterpret_cast<T *>(inputs[3]->addr);
-    std::vector<T> size{size_ptr, size_ptr + size_shape[0]};
-    (void)std::transform(size.begin(), size.end(), std::back_inserter(size_),
-                         [](const T &value) { return static_cast<int>(value); });
-    if (size_.size() != output_shape_.size() || begin_.size() != output_shape_.size()) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                        << "', 'begin|size|input' size must be equal, but got 'begin' size: " << begin_.size()
-                        << ", 'size' size: " << size_.size() << " and 'input' size: " << output_shape_.size();
-    }
-    FormatArgs(false);
-  }
-  ExpandAllMemberDims(kSliceGradMaxInputShapeSize);
-
-  CPUKernelUtils::GetElementNumEveryDim(input_shape_, &input_element_num_);
-  CPUKernelUtils::GetElementNumEveryDim(output_shape_, &output_element_num_);
-}
-
 bool SliceGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                    const std::vector<kernel::AddressPtr> &,
                                    const std::vector<kernel::AddressPtr> &outputs) {
@@ -218,17 +161,12 @@ bool SliceGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs
 template <typename T>
 bool SliceGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                          const std::vector<kernel::AddressPtr> &outputs) {
+  if (is_dynamic_attr_ && !get_dynamic_attr_value_) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', fail to get value of dynamic attr!";
+  }
   auto *input_addr = reinterpret_cast<T *>(inputs[0]->addr);
   auto *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
 
-  // init params for not const inputs
-  if (inputs.size() == kSliceGradDynamicInputsNum || inputs.size() == kStridedSliceGradDynamicInputsNum) {
-    if (strides_dtype_ == kNumberTypeInt32) {
-      InitParams<int32_t>(inputs);
-    } else {
-      InitParams<int64_t>(inputs);
-    }
-  }
   auto ret = memset_s(output_addr, outputs[0]->size, 0, outputs[0]->size);
   if (ret != EOK) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', output buff memset failed. Error no: " << ret;
