@@ -135,7 +135,7 @@ bool HasRefSequenceInput(const CNodePtr &cnode) {
   }
   auto &inputs = cnode->inputs();
   for (size_t index = 1; index < inputs.size(); ++index) {
-    auto input = cnode->input(index);
+    const auto &input = cnode->input(index);
     MS_EXCEPTION_IF_NULL(input);
     if (common::AnfAlgo::SequenceHasAbstractRef(input)) {
       return true;
@@ -1529,7 +1529,7 @@ class AutoMonadConverter {
       } else if (input_abs->isa<abstract::AbstractList>()) {
         new_seq->set_abstract(std::make_shared<abstract::AbstractList>(new_seq_abstracts));
       }
-      manager_->SetEdge(cnode, index, new_seq);
+      manager_->SetEdge(cnode, SizeToInt(index), new_seq);
       if (update_state) {
         auto current_u = GetUniverse();
         // In the order_enforce phase, the cnode will be added to the updatestate to ensure the order,

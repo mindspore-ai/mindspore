@@ -388,3 +388,48 @@ def test_parameter_tuple_assign_addn_inner_net_control_flow():
     net = Net()
     out = net(input_x, input_y)
     assert out == (9, 15)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_parameter_value_control_flow_ascend():
+    """
+    Feature: param.value() feature.
+    Description: Test param.value() on Ascend platform.
+    Expectation: No exception.
+    """
+    class InnerNet(Cell):
+        def __init__(self):
+            super().__init__()
+            self.param1 = Parameter(Tensor([1]), name="param1")
+            self.param2 = Parameter(Tensor([2]), name="param2")
+            self.tensor1 = Tensor([3])
+            self.tensor2 = Tensor([4])
+
+        def construct(self, x):
+            if x > 0:
+                return self.param1.value(), self.tensor1.value()
+            return self.param2.value(), self.tensor2.value()
+
+    class Net(Cell):
+        def __init__(self):
+            super().__init__()
+            self.inner_net = InnerNet()
+            self.addn = P.AddN()
+
+        def construct(self, x, y):
+            inner_params = self.inner_net(x)
+            out_res = self.addn(inner_params) + y
+            return out_res, inner_params[0] + inner_params[1]
+
+    input_x = Tensor([3])
+    input_y = Tensor([5])
+    net = Net()
+    context.set_context(mode=context.PYNATIVE_MODE)
+    pynative_out = net(input_x, input_y)
+    assert pynative_out == (9, 4)
+    context.set_context(mode=context.GRAPH_MODE)
+    graph_out = net(input_x, input_y)
+    assert graph_out == (9, 4)

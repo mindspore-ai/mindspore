@@ -21,6 +21,7 @@ from mindspore import Tensor, CSRTensor, COOTensor, RowTensor, ms_class
 from mindspore import dtype as mstype
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore.ops.function.sparse_func import sparse_add
+import mindspore.common._monad as monad
 
 from ..._checkparam import Validator as validator
 from ...ops import functional as F
@@ -2836,18 +2837,22 @@ def list_pop(self_, index=-1):
 
 
 def list_clear(self_):
+    """Clear the list"""
     return _list_clear(self_)
 
 
 def list_reverse(self_):
+    """Reverse the obj in list"""
     return _reverse(self_)
 
 
 def list_extend(self_, obj):
+    """Append obj to list"""
     return _extend(self_, obj)
 
 
 def list_count(self_, value):
+    """Count the num of value in list"""
     return _count(self_, value)
 
 
@@ -3123,3 +3128,10 @@ def bmm(input_x, mat2):
     Computes  matrix multiplication between two tensors by batch.
     """
     return F.bmm(input_x, mat2)
+
+
+def value_(x):
+    r"""
+    Get the value of Parameter or Tensor x. If x is Parameter, will change the type from RefTensor to Tensor.
+    """
+    return P.Load()(x, monad.U)

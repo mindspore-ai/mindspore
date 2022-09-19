@@ -260,7 +260,7 @@ class COMMON_EXPORT AnfAlgo {
     auto &abs = node->abstract();
     if ((abs != nullptr) && (abs->isa<abstract::AbstractSequence>())) {
       auto abs_seq = abs->cast_ptr<abstract::AbstractSequence>();
-      AbstractBasePtrList elements = abs_seq->elements();
+      const auto &elements = abs_seq->elements();
       return std::any_of(elements.begin(), elements.end(), [](const AbstractBasePtr &element) {
         return (element != nullptr) && element->isa<abstract::AbstractRefTensor>();
       });

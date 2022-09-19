@@ -1024,6 +1024,9 @@ bool ExistSwitchRef(const FuncGraphPtr &func_graph, const std::vector<AnfNodePtr
   auto manager = func_graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
   auto &node_users = manager->node_users();
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  std::string device_target = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   for (const auto &node : all_nodes) {
     if (!IsPrimitiveCNode(node, prim::kPrimSwitch)) {
       continue;
@@ -1034,6 +1037,13 @@ bool ExistSwitchRef(const FuncGraphPtr &func_graph, const std::vector<AnfNodePtr
       for (auto &user : users) {
         auto &user_node = user.first;
         if (common::AnfAlgo::HasAbstractRef(user_node) || common::AnfAlgo::SequenceHasAbstractRef(user_node)) {
+          if (device_target == kAscendDevice) {
+            MS_LOG(WARNING) << "On the Ascend platform, when the return value of the control flow subgraph is "
+                            << "parameter, the performance may be degraded. The value of the parameter can be returned "
+                            << "to improve the performance. "
+                            << "For example, change 'return param' to 'return param.value()'\n"
+                            << "Please check your code:" << trace::GetDebugInfo(user_node->debug_info());
+          }
           return true;
         }
       }
