@@ -184,6 +184,18 @@ std::vector<std::pair<KernelAttr, GatherV2FwdGpuKernelMod::GatherV2Func>> Gather
      .AddOutputAttr(kNumberTypeFloat64),
    &GatherV2FwdGpuKernelMod::LaunchKernel<double, int64_t, int64_t>},
   {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeFloat64),
+   &GatherV2FwdGpuKernelMod::LaunchKernel<double, int64_t, int>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeFloat64),
+   &GatherV2FwdGpuKernelMod::LaunchKernel<double, int, int>},
+  {KernelAttr()
      .AddInputAttr(kNumberTypeFloat32)
      .AddInputAttr(kNumberTypeInt32)
      .AddInputAttr(kNumberTypeInt64)
@@ -202,6 +214,12 @@ std::vector<std::pair<KernelAttr, GatherV2FwdGpuKernelMod::GatherV2Func>> Gather
      .AddOutputAttr(kNumberTypeFloat32),
    &GatherV2FwdGpuKernelMod::LaunchKernel<float, int64_t, int64_t>},
   {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeFloat32),
+   &GatherV2FwdGpuKernelMod::LaunchKernel<float, int64_t, int>},
+  {KernelAttr()
      .AddInputAttr(kNumberTypeFloat16)
      .AddInputAttr(kNumberTypeInt32)
      .AddInputAttr(kNumberTypeInt64)
@@ -209,10 +227,22 @@ std::vector<std::pair<KernelAttr, GatherV2FwdGpuKernelMod::GatherV2Func>> Gather
    &GatherV2FwdGpuKernelMod::LaunchKernel<half, int, int64_t>},
   {KernelAttr()
      .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeFloat16),
+   &GatherV2FwdGpuKernelMod::LaunchKernel<half, int, int>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat16)
      .AddInputAttr(kNumberTypeInt64)
      .AddInputAttr(kNumberTypeInt64)
      .AddOutputAttr(kNumberTypeFloat16),
    &GatherV2FwdGpuKernelMod::LaunchKernel<half, int64_t, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeFloat16),
+   &GatherV2FwdGpuKernelMod::LaunchKernel<half, int64_t, int>},
   {KernelAttr()
      .AddInputAttr(kNumberTypeBool)
      .AddInputAttr(kNumberTypeInt32)
@@ -226,11 +256,41 @@ std::vector<std::pair<KernelAttr, GatherV2FwdGpuKernelMod::GatherV2Func>> Gather
      .AddOutputAttr(kNumberTypeBool),
    &GatherV2FwdGpuKernelMod::LaunchKernel<bool, int64_t, int64_t>},
   {KernelAttr()
+     .AddInputAttr(kNumberTypeBool)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeBool),
+   &GatherV2FwdGpuKernelMod::LaunchKernel<bool, int, int>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeBool)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeBool),
+   &GatherV2FwdGpuKernelMod::LaunchKernel<bool, int64_t, int>},
+  {KernelAttr()
      .AddInputAttr(kNumberTypeInt32)
      .AddInputAttr(kNumberTypeInt32)
      .AddInputAttr(kNumberTypeInt64)
      .AddOutputAttr(kNumberTypeInt32),
    &GatherV2FwdGpuKernelMod::LaunchKernel<int, int, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeInt32),
+   &GatherV2FwdGpuKernelMod::LaunchKernel<int, int, int>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt32),
+   &GatherV2FwdGpuKernelMod::LaunchKernel<int, int64_t, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeInt32),
+   &GatherV2FwdGpuKernelMod::LaunchKernel<int, int64_t, int>},
 };
 
 MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, Gather, GatherV2FwdGpuKernelMod);

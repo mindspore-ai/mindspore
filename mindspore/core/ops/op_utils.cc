@@ -152,22 +152,22 @@ bool CheckAndGetAxisValue(const std::vector<abstract::AbstractBasePtr> &input_ar
     if (axis_ptr == nullptr) {
       return is_dynamic;
     }
-    *axis_value = CheckAndConvertUtils::CheckIntOrTupleInt(op_name, axis_ptr, "Reduce");
+    *axis_value = CheckAndConvertUtils::CheckIntOrTupleInt("axis", axis_ptr, op_name);
     return is_dynamic;
   }
   auto input_value = input_args[kInputIndex1]->BuildValue();
   if (input_args[kInputIndex1]->isa<abstract::AbstractScalar>() ||
       input_args[kInputIndex1]->isa<abstract::AbstractTuple>() ||
       input_args[kInputIndex1]->isa<abstract::AbstractList>()) {
-    *axis_value = CheckAndConvertUtils::CheckIntOrTupleInt(op_name, input_value, "Reduce");
+    *axis_value = CheckAndConvertUtils::CheckIntOrTupleInt("axis", input_value, op_name);
   } else if (input_args[kInputIndex1]->isa<abstract::AbstractTensor>()) {
-    (void)CheckAndConvertUtils::CheckTensorTypeValid(op_name, input_args[kInputIndex1]->BuildType(), {kInt32, kInt64},
-                                                     "Reduce");
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("axis", input_args[kInputIndex1]->BuildType(), {kInt32, kInt64},
+                                                     op_name);
     if (input_value->isa<tensor::Tensor>()) {
-      *axis_value = CheckAndConvertUtils::CheckTensorIntValue(op_name, input_value, "Reduce");
+      *axis_value = CheckAndConvertUtils::CheckTensorIntValue("axis", input_value, op_name);
     } else {
       is_dynamic = true;
-      auto axis_shape = CheckAndConvertUtils::GetTensorInputShape("Reduce", input_args, 1);
+      auto axis_shape = CheckAndConvertUtils::GetTensorInputShape(op_name, input_args, 1);
       if (axis_shape->shape().size() != 1) {
         MS_EXCEPTION(ValueError) << "For 'Reduce axis', " << op_name << " must be 1-D, but got"
                                  << axis_shape->shape().size() << "-D.";
@@ -215,13 +215,12 @@ abstract::ShapePtr ReduceBaseInferShape(const PrimitivePtr &primitive,
   return std::make_shared<abstract::Shape>(out_shape);
 }
 
-TypePtr ReduceBaseInferType(const PrimitivePtr &prim, const std::vector<abstract::AbstractBasePtr> &input_args) {
+TypePtr ReduceBaseInferType(const PrimitivePtr &prim, const std::vector<abstract::AbstractBasePtr> &input_args,
+                            const std::set<TypePtr> &check_list) {
   MS_EXCEPTION_IF_NULL(prim);
   MS_EXCEPTION_IF_NULL(input_args[0]);
   auto x_type = input_args[0]->BuildType();
-  std::set<TypePtr> valid_types = common_valid_types;
-  (void)valid_types.insert(kBool);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x dtype", x_type, valid_types, prim->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x dtype", x_type, check_list, prim->name());
   return x_type;
 }
 
