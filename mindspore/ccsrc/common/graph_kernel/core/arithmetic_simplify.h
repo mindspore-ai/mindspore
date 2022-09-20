@@ -21,7 +21,7 @@
 #include <string>
 
 #include "utils/hash_map.h"
-#include "backend/common/optimizer/optimizer.h"
+#include "backend/common/optimizer/pass.h"
 #include "ir/func_graph.h"
 #include "common/graph_kernel/model/lite_graph.h"
 

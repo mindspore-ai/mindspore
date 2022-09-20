@@ -20,9 +20,8 @@
 #include <memory>
 #include "ir/func_graph.h"
 #include "common/graph_kernel/graph_kernel_flags.h"
-#include "backend/common/optimizer/optimizer.h"
+#include "backend/common/optimizer/graph_optimizer.h"
 
-#include "backend/common/pass/getitem_tuple.h"
 #include "common/graph_kernel/core/arithmetic_simplify.h"
 #include "common/graph_kernel/core/eliminate_redundant_output.h"
 #include "common/graph_kernel/core/shape_ops_splitter.h"
@@ -37,9 +36,9 @@
 #include "tools/graph_kernel/converter/insert_abstract.h"
 #include "tools/graph_kernel/converter/graph_kernel_splitter_lite.h"
 #include "tools/graph_kernel/converter/parameter_to_tensor.h"
+#include "tools/graph_kernel/converter/eliminate_maketuple_getitem.h"
 
 namespace mindspore::graphkernel {
-using opt::GetitemTuple;
 using opt::GraphOptimizer;
 constexpr size_t kStagePreProcess = 0;
 constexpr size_t kStageCluster = 1;
@@ -91,8 +90,8 @@ GkPassManagerPtr GraphKernelOptimizer::Split() const {
   pm->Add(std::make_shared<GraphKernelSplitterWithTuning>(), OptLevel_1);
 
   // After Simplify and Splitter, a lot of redundant getitem/maketuple
-  // will be exposed, use GetitemTuple Pass to delete them.
-  pm->Add(std::make_shared<GetitemTuple>(), OptLevel_1);
+  // will be exposed, use ElimMaketupleGetitem Pass to delete them.
+  pm->Add(std::make_shared<ElimMaketupleGetitem>(), OptLevel_1);
 
   // Eliminate the redundant node that is copied above but not handled by GraphKernelSplitter
   pm->Add(std::make_shared<MergeOutputForUpdateState>(), OptLevel_1);

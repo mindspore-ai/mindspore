@@ -22,7 +22,7 @@
 
 #include "utils/hash_map.h"
 #include "ir/anf.h"
-#include "backend/common/optimizer/optimizer.h"
+#include "backend/common/optimizer/pass.h"
 
 namespace mindspore {
 namespace graphkernel {

@@ -27,7 +27,6 @@
 #include "include/common/utils/utils.h"
 #include "utils/anf_utils.h"
 #include "utils/ordered_set.h"
-#include "backend/common/pass/getitem_tuple.h"
 #include "common/graph_kernel/core/graph_kernel_callback.h"
 #include "common/graph_kernel/core/graph_kernel_utils.h"
 #include "ir/func_graph_cloner.h"
@@ -313,8 +312,7 @@ std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> BuildSingleGraphFromNod
   (void)InlineInnerFuncGraph(fg);
   // eliminate tuple of tuple, and set Abstract for output MakeTuple
   EliminateTupleOfTuple(fg);
-  // eliminate the inner MakeTuple-GetItem edges
-  (void)std::static_pointer_cast<opt::Pass>(std::make_shared<opt::GetitemTuple>())->Run(fg);
+  (void)EliminateMaketupleGetitem(fg);
   (void)ConvertNonscalarTensorToParameter(fg, &inputs);
 
   return std::make_tuple(fg, inputs, outputs);
@@ -346,5 +344,27 @@ AnfNodePtr ReplaceNodesWithGraphKernelNode(const AnfNodePtrList &nodes, const Fu
   auto fuse_op_name = GkUtils::ExtractGraphKernelName(nodes, "", postfix);
   fg->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, MakeValue(fuse_op_name));
   return fuse_new_node;
+}
+
+// Eliminate redundant MakeTuple-Getitem edges
+bool EliminateMaketupleGetitem(const FuncGraphPtr &fg) {
+  auto nodes = fg->GetOrderedCnodes();
+  auto mng = GkUtils::GetFuncGraphManager(fg);
+  MS_EXCEPTION_IF_NULL(mng);
+  bool changed = false;
+  for (const auto &node : nodes) {
+    if (!IsPrimitiveCNode(node, prim::kPrimTupleGetItem)) {
+      continue;
+    }
+    auto gt = node->cast<CNodePtr>();
+    auto mt = gt->input(kRealInputNodeIndexInTupleGetItem)->cast<CNodePtr>();
+    if (mt == nullptr || !IsPrimitiveCNode(mt, prim::kPrimMakeTuple)) {
+      continue;
+    }
+    auto idx = AnfUtils::GetIntValue(gt->input(kInputNodeOutputIndexInTupleGetItem));
+    mng->Replace(node, mt->input(idx + 1));
+    changed = true;
+  }
+  return changed;
 }
 }  // namespace mindspore::graphkernel
