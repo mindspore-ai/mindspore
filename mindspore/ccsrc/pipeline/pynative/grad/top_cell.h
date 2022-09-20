@@ -78,17 +78,26 @@ using CellSelfInfoPtr = std::shared_ptr<CellSelfInfo>;
 
 class TopCellInfo {
  public:
-  TopCellInfo() = default;
   ~TopCellInfo() = default;
-  TopCellInfo(bool topest, size_t grad_order, pipeline::ResourcePtr r, FuncGraphPtr fg, FuncGraphPtr df,
-              std::string cellid, std::string already_run_cell_id)
+  TopCellInfo(bool topest, size_t grad_order, std::string cellid, std::string already_run_cell_id,
+              pipeline::ResourcePtr r, FuncGraphPtr fg, FuncGraphPtr df)
       : is_topest_(topest),
         grad_order_(grad_order),
+        cell_id_(std::move(cellid)),
+        already_run_cell_id_(std::move(already_run_cell_id)),
         resource_(std::move(r)),
         fg_(std::move(fg)),
-        df_builder_(std::move(df)),
-        cell_id_(std::move(cellid)),
-        already_run_cell_id_(std::move(already_run_cell_id)) {}
+        df_builder_(std::move(df)) {}
+
+  TopCellInfo(const TopCellInfo &top_cell, pipeline::ResourcePtr r, FuncGraphPtr fg, FuncGraphPtr df)
+      : is_topest_(top_cell.is_topest_),
+        grad_order_(top_cell.grad_order_),
+        cell_id_(top_cell.cell_id_),
+        already_run_cell_id_(top_cell.already_run_cell_id_),
+        cell_self_info_(top_cell.cell_self_info_),
+        resource_(std::move(r)),
+        fg_(std::move(fg)),
+        df_builder_(std::move(df)) {}
 
   bool is_init_kpynative() const { return is_init_kpynative_; }
   void set_init_kpynative(bool init) { is_init_kpynative_ = init; }
@@ -126,14 +135,12 @@ class TopCellInfo {
   const std::string &cell_id() const { return cell_id_; }
   void set_cell_id(const std::string &cell_id) { cell_id_ = cell_id; }
   const std::string &already_run_cell_id() const { return already_run_cell_id_; }
-  void set_already_run_cell_id(const std::string &already_run_cell_id) { already_run_cell_id_ = already_run_cell_id; }
   void set_input_args_id(const std::string &input_args_id) { input_args_id_ = input_args_id; }
   const std::string &grad_operation() const { return grad_operation_; }
   void set_grad_operation(const std::string &grad_operation) { grad_operation_ = grad_operation; }
   const abstract::AbstractBasePtr &last_output_abs() const { return last_output_abs_; }
   void set_last_output_abs(const abstract::AbstractBasePtr &last_output_abs) { last_output_abs_ = last_output_abs; }
   CellSelfInfoPtr cell_self_info() const { return cell_self_info_; }
-  void set_cell_self_info(const CellSelfInfoPtr &cell_self_info) { cell_self_info_ = cell_self_info; }
   void SetCellSelfInfoForTopCell(const py::object &cell, const py::args &args);
   void EraseFromSubCellList(const std::string &cell_id) { (void)sub_cell_list_.erase(cell_id); }
   void SetSubCellList(const std::string &cell_id) { (void)sub_cell_list_.emplace(cell_id); }
@@ -171,7 +178,6 @@ class TopCellInfo {
                                 const std::vector<int64_t> &index);
   void SetTupleArgsToGraphInfoMap(const FuncGraphPtr &g, const ValuePtr &v, const AnfNodePtr &node,
                                   bool is_param = false);
-  std::string GetAlreadyRunCellId(const std::string &cell_id) const;
   void ChangeTopCellInfo(size_t args_size);
   void ClearDeviceMemory() const;
   void Clear();
@@ -199,17 +205,17 @@ class TopCellInfo {
   bool need_compile_graph_{false};
   size_t op_num_{0};
   size_t grad_order_{0};
-  pipeline::ResourcePtr resource_{nullptr};
-  FuncGraphPtr fg_{nullptr};
-  FuncGraphPtr df_builder_{nullptr};
-  ad::KPynativeCellPtr k_pynative_cell_ptr_{nullptr};
   std::string cell_id_;
   std::string already_run_cell_id_;
   std::string input_args_id_;
   std::string all_op_info_;
   std::string grad_operation_;
-  abstract::AbstractBasePtr last_output_abs_;
   CellSelfInfoPtr cell_self_info_{nullptr};
+  pipeline::ResourcePtr resource_{nullptr};
+  FuncGraphPtr fg_{nullptr};
+  FuncGraphPtr df_builder_{nullptr};
+  ad::KPynativeCellPtr k_pynative_cell_ptr_{nullptr};
+  abstract::AbstractBasePtr last_output_abs_{nullptr};
   OrderedMap<FuncGraphPtr, GraphInfoPtr> graph_info_map_;
   mindspore::HashSet<std::string> sub_cell_list_;
   // Record `register hook` or `remove hook` function has been called by sub cell

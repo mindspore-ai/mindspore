@@ -37,7 +37,7 @@ class DynamicShape {
   DynamicShape() = default;
   ~DynamicShape() = default;
   void SetDynamicInput(const py::object &cell, const py::args &args);
-  void SetFeedDynamicInputAbs(const py::object &cell, const py::args &args, bool is_auto);
+  void SetFeedDynamicInputAbs(const py::object &cell, const py::args &args);
   py::object GetDynamicInput(const py::object &actual_input) const;
   ValuePtr GetSensValueForDynamicShapeOutput(const TopCellInfoPtr &top_cell, const ValuePtr &v,
                                              const AnfNodePtr &node) const;

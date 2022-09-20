@@ -70,14 +70,14 @@ class CommonFunc():
             8 * 16 * 3).reshape(8, 16, 3).astype(np.float32)
         self.input_np1 = np.arange(
             16 * 32 * 3).reshape(16, 32, 3).astype(np.float32)
-        self.input_np0_bp = self.input_np0.copy()
-        self.input_np1_bp = self.input_np1.copy()
+        self.input_np0_t = Tensor(self.input_np0)
+        self.input_np1_t = Tensor(self.input_np1)
         self.out_np0 = np.array(1).astype(self.input_np0.dtype)
         self.out_np1 = np.array(1).astype(self.input_np1.dtype)
 
     def forward_cmp(self):
         out_ms0, out_ms1 = self.ms_net(
-            Tensor(self.input_np0), Tensor(self.input_np1))
+            self.input_np0_t, self.input_np1_t)
         self.out_np0, self.out_np1 = self. np_net(
             self.input_np0, self.input_np1)
         assert np.all(out_ms0.asnumpy() == self.out_np0)
@@ -86,7 +86,7 @@ class CommonFunc():
     def grad_impl(self):
         grad_net = GradOfAllInputs(self.ms_net)
         grad_net.set_train()
-        grad_net(Tensor(self.input_np0_bp), Tensor(self.input_np1_bp),
+        grad_net(self.input_np0_t, self.input_np1_t,
                  (Tensor(self.out_np0), Tensor(self.out_np1)))
 
 

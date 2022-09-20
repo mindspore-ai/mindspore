@@ -165,8 +165,8 @@ def test_pynative_auto_dynamic_shape_mixing_static_shape_and_dynamic_shape_1():
     # run second shape
     input_x2 = Tensor(np.random.rand(2, 3, 6, 16).astype(np.float32) * 2)
     input_y2 = Tensor(np.random.rand(2, 3, 6, 16).astype(np.float32) * 5)
-    net.set_inputs(Tensor(shape=[2, 3, 6, None], dtype=ms.float32),
-                   Tensor(shape=[2, 3, None, None], dtype=ms.float32))
+    net.set_inputs(Tensor(shape=[None, None, None, None], dtype=ms.float32),
+                   Tensor(shape=[None, None, None, None], dtype=ms.float32))
     out = net(input_x2, input_y2)
     _ = grad_op(net)(input_x2, input_y2, out)
 
@@ -204,8 +204,8 @@ def test_pynative_auto_dynamic_shape_mixing_static_shape_and_dynamic_shape_2():
     # run first shape
     input_x = Tensor(np.random.rand(2, 3, 6, 8).astype(np.float32) * 2)
     input_y = Tensor(np.random.rand(2, 3, 6, 8).astype(np.float32) * 5)
-    net.set_inputs(Tensor(shape=[2, 3, 6, None], dtype=ms.float32),
-                   Tensor(shape=[2, 3, None, None], dtype=ms.float32))
+    net.set_inputs(Tensor(shape=[None, None, None, None], dtype=ms.float32),
+                   Tensor(shape=[None, None, None, None], dtype=ms.float32))
     out = net(input_x, input_y)
     _ = grad_op(net)(input_x, input_y, out)
 
