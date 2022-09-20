@@ -51,7 +51,6 @@ class BesselI0CpuKernelMod : public NativeCpuKernelMod {
 
   size_t input_size_;
   std::vector<int64_t> input_shape_;
-  std::vector<int64_t> output_shape_;
   TypeId input_dtype_;
 };
 }  // namespace kernel

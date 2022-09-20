@@ -25,7 +25,7 @@ from mindspore.ops.primitive import constexpr
 from mindspore.nn import Cell
 
 from mindspore.numpy.utils import _convert_list_tensor_to_tuple_tensor, _expand, _broadcast_to_shape, \
-    _check_input_tensor, _broadcast_to, _to_tensor, _callable
+    _check_input_tensor, _broadcast_to, _to_tensor, _callable, _dyn_infer_out_shape
 from mindspore.numpy.utils_const import _check_axes_range, _check_start_normalize, \
     _raise_type_error, _raise_value_error, _infer_out_shape, _empty, _promote, \
     _check_same_type, _check_axis_valid, _add_unit_axes, _broadcast_tuples, \
@@ -33,6 +33,9 @@ from mindspore.numpy.utils_const import _check_axes_range, _check_start_normaliz
     _list_comprehensions, _check_element_int, _is_shape_empty, _type_convert, \
     _tuple_slice, _expanded_shape, _seq_prod, _tuple_setitem, _iota, \
     _raise_unimplemented_error, _cumprod, _get_device, _check_is_int
+from mindspore.ops._utils.utils import is_shape_unknown
+from ..ops.operations._inner_ops import DynamicBroadcastTo
+
 
 # According to official numpy reference, the dimension of a numpy array must be less
 # than 32
@@ -715,15 +718,25 @@ def where(condition, x=None, y=None):
         x = F.cast(x, mstype.float32)
         y = F.cast(y, mstype.float32)
 
-    # broadcasts input tensors
-    shape_out = _infer_out_shape(F.shape(condition),
-                                 F.shape(x), F.shape(y))
     if not _check_same_type(F.dtype(condition), mstype.float32):
         # tiling with bool is not supported on GPU
         condition = F.cast(condition, mstype.float32)
-    condition = _broadcast_to_shape(condition, shape_out)
-    x = _broadcast_to_shape(x, shape_out)
-    y = _broadcast_to_shape(y, shape_out)
+    dynamic = is_shape_unknown(F.shape(condition)) or is_shape_unknown(F.shape(x)) or is_shape_unknown(F.shape(y))
+    # broadcasts input tensors
+    if not dynamic:
+        shape_out = _infer_out_shape(F.shape(condition),
+                                     F.shape(x), F.shape(y))
+        condition = _broadcast_to_shape(condition, shape_out)
+        x = _broadcast_to_shape(x, shape_out)
+        y = _broadcast_to_shape(y, shape_out)
+    else:
+        dyn_shapes = []
+        for tensor in [condition, x, y]:
+            dyn_shapes.append(P.TensorShape()(tensor))
+        shape_out = _dyn_infer_out_shape(dyn_shapes)
+        condition = DynamicBroadcastTo()(condition, shape_out)
+        x = DynamicBroadcastTo()(x, shape_out)
+        y = DynamicBroadcastTo()(y, shape_out)
 
     if not _check_same_type(F.dtype(condition), mstype.bool_):
         condition = F.cast(condition, mstype.bool_)
