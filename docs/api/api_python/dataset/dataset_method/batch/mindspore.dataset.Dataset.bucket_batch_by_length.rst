@@ -1,4 +1,7 @@
-.. py:method:: bucket_batch_by_length(column_names, bucket_boundaries, bucket_batch_sizes, element_length_function=None, pad_info=None, pad_to_bucket_boundary=False, drop_remainder=False)
+mindspore.dataset.Dataset.bucket_batch_by_length
+================================================
+
+.. py:method:: mindspore.dataset.Dataset.bucket_batch_by_length(column_names, bucket_boundaries, bucket_batch_sizes, element_length_function=None, pad_info=None, pad_to_bucket_boundary=False, drop_remainder=False)
 
     根据数据的长度进行分桶。每个桶将在数据填满的时候进行填充和批处理操作。
 

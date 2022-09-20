@@ -138,22 +138,5 @@ mindspore.dataset.DIV2KDataset
         year      = {2017}
         }
 
-    .. include:: mindspore.dataset.Dataset.add_sampler.rst
 
-    .. include:: mindspore.dataset.Dataset.rst
-
-    .. include:: mindspore.dataset.Dataset.b.rst
-
-    .. include:: mindspore.dataset.Dataset.d.rst
-
-    .. include:: mindspore.dataset.Dataset.e.rst
-
-    .. include:: mindspore.dataset.Dataset.f.rst
-
-    .. include:: mindspore.dataset.Dataset.save.rst
-
-    .. include:: mindspore.dataset.Dataset.g.rst
-
-    .. include:: mindspore.dataset.Dataset.use_sampler.rst
-
-    .. include:: mindspore.dataset.Dataset.zip.rst
+.. include:: mindspore.dataset.api_list_vision.rst

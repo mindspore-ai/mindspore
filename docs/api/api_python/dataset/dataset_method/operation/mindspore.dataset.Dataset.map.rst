@@ -1,4 +1,7 @@
-.. py:method:: map(operations, input_columns=None, output_columns=None, column_order=None, num_parallel_workers=None, **kwargs)
+mindspore.dataset.Dataset.map
+===============================
+
+.. py:method:: mindspore.dataset.Dataset.map(operations, input_columns=None, output_columns=None, column_order=None, num_parallel_workers=None, **kwargs)
 
     给定一组数据增强列表，按顺序将数据增强作用在数据集对象上。
 
@@ -39,28 +42,3 @@
 
     返回：
         MapDataset，map操作后的数据集。
-
-.. py:method:: num_classes()
-
-    获取数据集对象中所有样本的类别数目。
-
-    返回：
-        int，类别的数目。
-
-.. py:method:: output_shapes(estimate=False)
-
-    获取数据集对象中每列数据的shape。
-
-    参数：
-        - **estimate** (bool) - 如果 `estimate` 为 False，将返回数据集第一条数据的shape。
-          否则将遍历整个数据集以获取数据集的真实shape信息，其中动态变化的维度将被标记为None（可用于动态shape数据集场景），默认值：False。
-
-    返回：
-        list，每列数据的shape列表。
-
-.. py:method:: output_types()
-
-    获取数据集对象中每列数据的数据类型。
-
-    返回：
-        list，每列数据的数据类型列表。

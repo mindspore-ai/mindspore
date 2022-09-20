@@ -61,16 +61,5 @@ mindspore.dataset.USPSDataset
           publisher={IEEE}
         }
 
-    .. include:: mindspore.dataset.Dataset.rst
 
-    .. include:: mindspore.dataset.Dataset.d.rst
-
-    .. include:: mindspore.dataset.Dataset.e.rst
-
-    .. include:: mindspore.dataset.Dataset.f.rst
-
-    .. include:: mindspore.dataset.Dataset.save.rst
-
-    .. include:: mindspore.dataset.Dataset.g.rst
-
-    .. include:: mindspore.dataset.Dataset.zip.rst
+.. include:: mindspore.dataset.api_list_vision.rst
