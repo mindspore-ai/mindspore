@@ -18,7 +18,6 @@ import pytest
 
 import mindspore.context as context
 from mindspore import Tensor
-from mindspore.ops import composite as C
 from mindspore.ops.operations.math_ops import Cholesky
 from mindspore.nn import Cell
 
@@ -30,17 +29,6 @@ class CholeskyNet(Cell):
 
     def construct(self, x):
         return self.cholesky(x)
-
-
-class CholeskyGradNet(Cell):
-    def __init__(self, network):
-        super(CholeskyGradNet, self).__init__()
-        self.grad = C.GradOperation(get_all=True, sens_param=True)
-        self.network = network
-
-    def construct(self, input_data, grad_np):
-        gout = self.grad(self.network)(input_data, grad_np)
-        return gout
 
 
 @pytest.mark.level0
@@ -56,13 +44,8 @@ def test_cholesky_fp32():
     x_np = np.array([[10, 22], [22, 50]]).astype(np.float32)
     net = CholeskyNet()
     output_ms = net(Tensor(x_np))
-    grad_np = np.array([[1, 0], [0, 1]]).astype(np.float32)
-    grad_net = CholeskyGradNet(net)
-    output_grad_ms = grad_net(Tensor(x_np), Tensor(grad_np))
     expect_output = np.array([[3.1622777, 0], [6.9570107, 1.2649117]])
-    expect_grad_output = np.array([[2.071291, -0.869626], [-0.869626, 0.39528453]])
     assert np.allclose(output_ms.asnumpy(), expect_output)
-    assert np.allclose(output_grad_ms[0].asnumpy(), expect_grad_output)
 
 
 @pytest.mark.level0
@@ -78,10 +61,5 @@ def test_cholesky_fp64():
     x_np = np.array([[12.56, 27.28], [27.28, 60.5]]).astype(np.float64)
     net = CholeskyNet()
     output_ms = net(Tensor(x_np))
-    grad_np = np.array([[1, 0], [0, 1]]).astype(np.float64)
-    grad_net = CholeskyGradNet(net)
-    output_grad_ms = grad_net(Tensor(x_np), Tensor(grad_np))
     expect_output = np.array([[3.544009, 0.], [7.697497, 1.1173816]])
-    expect_grad_output = np.array([[2.252033, -0.9719036], [-0.9719037, 0.44747472]])
     assert np.allclose(output_ms.asnumpy(), expect_output)
-    assert np.allclose(output_grad_ms[0].asnumpy(), expect_grad_output)
