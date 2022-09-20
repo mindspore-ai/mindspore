@@ -5594,7 +5594,7 @@ class Tensor(Tensor_):
         Args:
             mat2 (Tensor): The tensor to be multiplied. The shape of the tensor is :math:`(*B, C, M)`.
 
-        Outputs:
+        Returns:
             Tensor, the shape of the output tensor is :math:`(*B, N, M)`.
 
         Raises:
@@ -5620,6 +5620,218 @@ class Tensor(Tensor_):
         """
         self._init_check()
         return tensor_operator_registry.get('bmm')(self, mat2)
+
+
+    def to(self, dtype):
+        r"""
+        Performs tensor dtype conversion.
+
+        Args:
+            dtype (dtype.Number): The valid data type of the output tensor. Only constant value is allowed.
+
+        Returns:
+            Tensor, converted to the specified `dtype`.
+
+        Raises:
+            TypeError: If `dtype` is not a Number.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> input_np = np.random.randn(2, 3, 4, 5).astype(np.float32)
+            >>> input_x = Tensor(input_np)
+            >>> dtype = mindspore.int32
+            >>> output = input_x.to(dtype)
+            >>> print(output.dtype)
+            Int32
+        """
+        self._init_check()
+        return tensor_operator_registry.get('to')()(self, dtype)
+
+
+    def bool(self):
+        r"""
+        Converts input tensor dtype to `bool`.
+
+        Returns:
+            Tensor, converted to the `bool` dtype.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> input_x = Tensor(np.ones([2,2]), mindspore.float32)
+            >>> output = input_x.bool()
+            >>> print(output.dtype)
+            Bool
+        """
+        self._init_check()
+        return tensor_operator_registry.get('bool')()(self, mstype.bool_)
+
+
+    def float(self):
+        r"""
+        Converts input tensor dtype to `float32`.
+
+        Returns:
+            Tensor, converted to the `float32` dtype.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> input_x = Tensor(np.ones([2,2]), mindspore.int32)
+            >>> output = input_x.float()
+            >>> print(output.dtype)
+            Float32
+        """
+        self._init_check()
+        return tensor_operator_registry.get('float')()(self, mstype.float32)
+
+
+    def half(self):
+        r"""
+        Converts input tensor dtype to `float16`.
+
+        Returns:
+            Tensor, converted to the `float16` dtype.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> input_x = Tensor(np.ones([2,2]), mindspore.int32)
+            >>> output = input_x.half()
+            >>> print(output.dtype)
+            Float16
+        """
+        self._init_check()
+        return tensor_operator_registry.get('half')()(self, mstype.float16)
+
+
+    def int(self):
+        r"""
+        Converts input tensor dtype to `int32`.
+
+        Returns:
+            Tensor, converted to the `int32` dtype.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> input_x = Tensor(np.ones([2,2]), mindspore.float32)
+            >>> output = input_x.int()
+            >>> print(output.dtype)
+            Int32
+        """
+        self._init_check()
+        return tensor_operator_registry.get('int')()(self, mstype.int32)
+
+
+    def long(self):
+        r"""
+        Converts input tensor dtype to `int64`.
+
+        Returns:
+            Tensor, converted to the `int64` dtype.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> input_x = Tensor(np.ones([2,2]), mindspore.int32)
+            >>> output = input_x.long()
+            >>> print(output.dtype)
+            Int64
+        """
+        self._init_check()
+        return tensor_operator_registry.get('long')()(self, mstype.int64)
+
+
+    def cholesky(self, upper=False):
+        r"""
+        Computes the Cholesky decomposition of a symmetric positive-definite matrix :math:`A`
+        or for batches of symmetric positive-definite matrices.
+
+        If `upper` is `True`, the returned matrix :math:`U` is upper-triangular, and the decomposition has the form:
+
+        .. math::
+            A = U^TU
+
+        If `upper` is `False`, the returned matrix :math:`L` is lower-triangular, and the decomposition has the form:
+
+        .. math::
+            A = LL^T
+
+        Args:
+            upper (bool): Flag that indicates whether to return a upper or lower triangular matrix.
+                Default: False.
+
+        Returns:
+            Tensor, has the same shape and data type as input tensor.
+
+        Raises:
+            TypeError: If `upper` is not a bool.
+            TypeError: If dtype of tensor is not one of: float64, float32.
+            ValueError: If tensor is not batch square.
+            ValueError: If tensor is not symmetric positive definite.
+
+        Supported Platforms:
+            ``Ascend`` ``CPU``
+
+        Examples:
+            >>> x = Tensor(np.array([[1.0, 1.0], [1.0, 2.0]]), mindspore.float32)
+            >>> output = x.cholesky(upper=False)
+            >>> print(output)
+            [[1. 0.]
+             [1. 1.]]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('cholesky')(upper=upper)(self)
+
+
+    def cholesky_inverse(self, upper=False):
+        r"""
+        Returns the inverse of the positive definite matrix using cholesky matrix factorization.
+
+        If `upper` is `False`, :math:`U` is a lower triangular such that the output tensor is
+
+        .. math::
+                            inv = (UU^{T})^{{-1}}
+
+        If `upper` is `True`, :math:`U` is an upper triangular such that the output tensor is
+
+        .. math::
+                            inv = (U^{T}U)^{{-1}}
+
+        Note:
+            The tensor must be either an upper triangular matrix or a lower triangular matrix.
+
+        Args:
+            upper(bool): Whether to return a lower or upper triangular matrix. Default: False.
+
+        Returns:
+            Tensor, has the same shape and dtype as input tensor.
+
+        Raises:
+            TypeError: If dtype of input tensor is not one of: float32, float64.
+            ValueError: If the dimension of input tensor is not equal to 2.
+
+        Supported Platforms:
+            ``CPU``
+
+        Examples:
+            >>> x = Tensor(np.array([[2,0,0], [4,1,0], [-1,1,2]]), mindspore.float32)
+            >>> output = x.cholesky_inverse()
+            >>> print(output)
+            [[ 5.8125 -2.625   0.625 ]
+             [-2.625   1.25   -0.25  ]
+             [ 0.625  -0.25    0.25  ]]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('cholesky_inverse')(upper=upper)(self)
 
 
 class RowTensor(RowTensor_):
