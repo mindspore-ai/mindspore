@@ -85,7 +85,7 @@ int SparseAddCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
 
 template <typename T>
 int SparseAddCpuKernelMod::CompareTowIndices(const T &a_indices, const T &b_indices, const int64_t a_row,
-                                             const int64_t b_row, const size_t dims) {
+                                             const int64_t b_row, const size_t dims) const {
   for (int64_t dim = 0; dim < SizeToLong(dims); dim++) {
     auto a_idx = a_indices[a_row * 2 + dim];
     auto b_idx = b_indices[b_row * 2 + dim];
