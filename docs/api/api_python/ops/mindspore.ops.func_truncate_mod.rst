@@ -17,8 +17,8 @@ mindspore.ops.truncate_mod
         - 若shape为（D1、D2...、Dn），则D1*D2...*DN<=1000000，n<=8。
 
     参数：
-        - **x** (Union[Tensor, Number, bool]) - Number或bool类型的Tensor。
-        - **y** (Union[Tensor, Number, bool]) - Number或bool类型的Tensor。
+        - **x** (Union[Tensor, numbers.Number, bool]) - Number或bool类型的Tensor。
+        - **y** (Union[Tensor, numbers.Number, bool]) - Number或bool类型的Tensor。
 
     返回：
         Tensor，shape为输入进行广播后的shape，数据类型为两个输入中精度较高的输入的类型。

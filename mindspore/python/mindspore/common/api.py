@@ -512,9 +512,9 @@ def ms_function(fn=None, input_signature=None, hash_args=None, jit_config=None):
             will be supplied to this function. If input_signature is specified, each input to `fn` must be a `Tensor`.
             And the input parameters of `fn` cannot accept `**kwargs`. The shape and dtype of actual inputs should
             keep the same as input_signature. Otherwise, TypeError will be raised. Default: None.
-        hash_args (Object, List or Tuple of Objects): The local free variables used inside `fn`, like functions or
-            objects of class defined outside `fn`. Calling `fn` again with change of `hash_args` will trigger
-            recompilation.
+        hash_args (Union[Object, List or Tuple of Objects]): The local free variables used inside `fn`,
+            like functions or objects of class defined outside `fn`. Calling `fn` again with change of `hash_args`
+            will trigger recompilation.
         jit_config (JitConfig): Jit config for compile. Default: None.
 
     Returns:
