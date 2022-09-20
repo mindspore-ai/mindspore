@@ -24,28 +24,6 @@
 
 namespace mindspore {
 namespace runtime {
-namespace {
-// Fetch all the input of ref_node recursively.
-void FetchRefInputDef(const KernelWithIndex &node_with_index, std::set<KernelWithIndex> *ref_inputs,
-                      const std::map<KernelWithIndex, KernelWithIndex> &ref_node_map) {
-  MS_EXCEPTION_IF_NULL(node_with_index.first);
-  ref_inputs->emplace(node_with_index);
-  const auto &iter = ref_node_map.find(node_with_index);
-  if (iter == ref_node_map.end()) {
-    return;
-  }
-  MS_EXCEPTION_IF_NULL(iter->second.first);
-  if (!iter->second.first->isa<CNode>()) {
-    MS_LOG(WARNING) << "Ref node:" << iter->second.first->DebugString() << " index:" << iter->second.second
-                    << " is node a cnode";
-    return;
-  }
-  if (ref_inputs->find(iter->second) != ref_inputs->end()) {
-    return;
-  }
-  FetchRefInputDef(iter->second, ref_inputs, ref_node_map);
-}
-}  // namespace
 void SuperKernelActor::Init() {
   MS_EXCEPTION_IF_NULL(graph_);
   // Check device contexts number.
@@ -79,19 +57,6 @@ void SuperKernelActor::Init() {
         device_address->set_ptr(nullptr);
       }
       memory_alloc_list_.emplace_back(device_address.get());
-      zero_copy_outputs_[KernelWithIndex(output_node, IntToSize(data_arrow->from_output_index_))] =
-        device_address.get();
-
-      // If the output node isa ref node, the input of it should be collected into zero copy outputs.
-      const auto &ref_node_map = graph_->GetRefMap();
-      const auto &iter = ref_node_map.find(KernelWithIndex(output_node, data_arrow->from_output_index_));
-      if (iter != ref_node_map.end()) {
-        std::set<KernelWithIndex> ref_inputs;
-        FetchRefInputDef(iter->second, &ref_inputs, ref_node_map);
-        for (const auto &ref_input : ref_inputs) {
-          zero_copy_outputs_[ref_input] = device_address.get();
-        }
-      }
     }
   }
 
@@ -199,28 +164,14 @@ void SuperKernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const contex
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
   }
   try {
-    std::map<KernelWithIndex, DeviceAddress *> zero_copy_inputs;
-    std::map<KernelWithIndex, DeviceAddress *> zero_copy_outputs = zero_copy_outputs_;
     const auto input_nodes = graph_->input_nodes();
     for (size_t i = 0; i < input_device_tensors_.size(); ++i) {
-      if (input_device_tensors_[i] != nullptr) {
-        zero_copy_inputs[KernelWithIndex(input_nodes[i], 0)] = input_device_tensors_[i];
+      auto node_device_tensor = AnfAlgo::GetMutableOutputAddr(input_nodes[i], 0, false);
+      if (node_device_tensor != nullptr && (!node_device_tensor->is_ptr_persisted()) &&
+          input_device_tensors_[i] != nullptr) {
+        node_device_tensor->set_ptr(input_device_tensors_[i]->GetMutablePtr());
       }
     }
-
-    for (const auto &ref_pair : graph_->GetRefMap()) {
-      const auto &output_with_index = ref_pair.first;
-      const auto &input_node = ref_pair.second.first;
-      MS_EXCEPTION_IF_NULL(input_node);
-      if (input_node->isa<Parameter>()) {
-        for (size_t i = 0; i < input_nodes.size(); ++i) {
-          if (input_nodes[i] == input_node) {
-            zero_copy_outputs[output_with_index] = input_device_tensors_[i];
-          }
-        }
-      }
-    }
-    MS_LOG(DEBUG) << "Input num:" << zero_copy_inputs.size() << " output num:" << zero_copy_outputs.size();
 
     const std::vector<tensor::Tensor> inputs;
     std::vector<tensor::Tensor> outputs;
