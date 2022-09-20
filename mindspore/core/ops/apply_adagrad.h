@@ -32,6 +32,12 @@ class MIND_API ApplyAdagrad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ApplyAdagrad);
   ApplyAdagrad() : BaseOperator(kNameApplyAdagrad) { InitIOName({"var", "accum", "lr", "grad"}, {"var", "accum"}); }
+  /// \brief Set update_slots, A bool where if True, accum will be updated. Default: True.
+  void set_update_slots(const bool update_slots);
+  /// \brief Get update_slots.
+  ///
+  /// \return update_slots.
+  bool get_update_slots() const;
 };
 
 using kPrimApplyAdagradPtr = std::shared_ptr<ApplyAdagrad>;
