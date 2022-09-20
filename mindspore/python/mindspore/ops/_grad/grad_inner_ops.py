@@ -15,14 +15,15 @@
 
 """Generate bprop for quantization aware ops"""
 
+from __future__ import absolute_import
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops.primitive import constexpr
-from .grad_base import bprop_getters
-from ..operations import _grad_ops as G
-from ..operations import _inner_ops as inner
-from ..composite.multitype_ops.zeros_like_impl import zeros_like
-from ..operations import image_ops as IMG
+from mindspore.ops._grad.grad_base import bprop_getters
+from mindspore.ops.operations import _grad_ops as G
+from mindspore.ops.operations import _inner_ops as inner
+from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
+from mindspore.ops.operations import image_ops as IMG
 
 dyn_shape_op = P.TensorShape()
 reshape = P.Reshape()
@@ -116,6 +117,7 @@ def get_dsd_matmul_bprop(self):
 @bprop_getters.register(inner.MatmulDDS)
 def get_bprop(self):
     """brop of the matmulDDS operator"""
+
     def bprop(q, k, local_mask, global_mask, out, d_out):
         lc, gc = out
         d_lc, d_gc = d_out
@@ -123,7 +125,9 @@ def get_bprop(self):
         dk = P.Transpose()(dk, (1, 0, 3, 2))
         all_d = (dq, dk, zeros_like(local_mask), zeros_like(global_mask))
         return all_d
+
     return bprop
+
 
 @bprop_getters.register(inner.PsROIPooling)
 def get_bprop_ps_roi_pooling(self):
