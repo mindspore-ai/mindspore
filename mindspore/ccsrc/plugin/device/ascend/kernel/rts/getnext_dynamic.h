@@ -49,9 +49,6 @@ class GetNextDynamicDesc : public RtKerDesc {
   ~GetNextDynamicDesc() override;
   std::vector<std::shared_ptr<kernel::KernelBuildInfo>> GetKernelInfo(const CNodePtr &kernel_node) override;
 };
-
-MS_REG_RTKERNEL_DESC(getnext, GetNextDynamicDesc);
-MS_REG_RTKERNEL(getnext, GetNextDynamic);
 }  // namespace kernel
 }  // namespace mindspore
 

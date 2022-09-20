@@ -56,7 +56,7 @@ def _get_types_and_shapes(dataset):
     return dataset_types, dataset_shapes
 
 
-def _exec_datagraph(exec_dataset, dataset_size, phase='dataset', create_data_info_queue=False, is_dynamic_shape=False):
+def _exec_datagraph(exec_dataset, dataset_size, phase='dataset', create_data_info_queue=False):
     """Initialize and execute the dataset graph."""
     batch_size = exec_dataset.get_batch_size()
     input_indexs = exec_dataset.input_indexs
@@ -65,15 +65,13 @@ def _exec_datagraph(exec_dataset, dataset_size, phase='dataset', create_data_inf
     dataset_types, dataset_shapes = _get_types_and_shapes(exec_dataset)
     send_epoch_end = bool(dataset_size == -1)
     exec_dataset = exec_dataset.device_que(send_epoch_end=send_epoch_end, create_data_info_queue=create_data_info_queue)
-    need_run = not is_dynamic_shape
     _cell_graph_executor.init_dataset(exec_dataset.queue_name,
                                       dataset_size,
                                       batch_size,
                                       dataset_types,
                                       dataset_shapes,
                                       input_indexs,
-                                      phase=phase,
-                                      need_run=need_run)
+                                      phase=phase)
     return exec_dataset
 
 

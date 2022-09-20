@@ -96,7 +96,7 @@ class BACKEND_EXPORT DataQueueMgr {
   DataQueueStatus Clear(const std::string &channel_name);
   void Release();
   DataQueueStatus CreateDynamicBufQueue(const std::string &channel_name, const size_t &capacity);
-  std::shared_ptr<DataQueue> GetDataQueue(const std::string &channel_name) const;
+  std::shared_ptr<BlockingQueue> GetDataQueue(const std::string &channel_name) const;
   DataQueueStatus SetThreadDevice(const std::string &channel_name) const;
 
   void Close(const std::string &channel_name) const noexcept;
@@ -143,7 +143,12 @@ class BACKEND_EXPORT DataQueueMgr {
   inline static std::once_flag instance_flag_;
 };
 #ifndef BUILD_LITE
-BACKEND_EXPORT bool PopDataFromDataQueue(const AnfNodePtr &data_kernel);
+BACKEND_EXPORT void UpdateGetNextNode(const AnfNodePtr &data_kernel);
+BACKEND_EXPORT void UpdateGetNextWithDataQueueItems(const AnfNodePtr &data_kernel,
+                                                    const std::vector<device::DataQueueItem> &data);
+BACKEND_EXPORT void RetryPeakItemFromDataQueue(const AnfNodePtr &data_kernel,
+                                               const std::shared_ptr<BlockingQueue> &data_queue,
+                                               std::vector<device::DataQueueItem> *data);
 #endif
 #define REGISTER_DATA_QUEUE_CREATOR(device_name, creator)                         \
   struct device_name##DataQueueCreatorClass {                                     \
