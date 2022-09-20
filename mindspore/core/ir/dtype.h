@@ -17,17 +17,12 @@
 #ifndef MINDSPORE_CORE_IR_DTYPE_H_
 #define MINDSPORE_CORE_IR_DTYPE_H_
 
-#include <cstddef>
 #include <iostream>
-#include <initializer_list>
 #include <memory>
-#include <utility>
 #include <sstream>
 #include <string>
 #include <vector>
 #include <unordered_map>
-#include <type_traits>
-#include <algorithm>
 #include "base/base.h"
 #include "ir/named.h"
 
