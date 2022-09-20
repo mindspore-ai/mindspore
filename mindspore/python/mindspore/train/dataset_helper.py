@@ -455,8 +455,7 @@ class _DatasetIter:
             create_data_info_queue = (sink_size == 1 and self.sink_count == 1 and dataset.get_dataset_size() != 1
                                       and context.get_context("device_target") == "Ascend" and not self.dynamic_shape)
             dataset.__transfer_dataset__ = _exec_datagraph(dataset, self.sink_size,
-                                                           create_data_info_queue=create_data_info_queue,
-                                                           is_dynamic_shape=self.dynamic_shape)
+                                                           create_data_info_queue=create_data_info_queue)
 
             if not hasattr(dataset, '__no_send__'):
                 _send_data(dataset, epoch_num)

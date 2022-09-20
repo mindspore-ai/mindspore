@@ -57,10 +57,7 @@ bool GetNextDynamic::Init(const mindspore::AnfNodePtr &anf_node) {
 int GetNextDynamic::Resize(const BaseOperatorPtr &, const std::vector<KernelTensorPtr> &,
                            const std::vector<KernelTensorPtr> &, const std::map<uint32_t, tensor::TensorPtr> &) {
   auto data_kernel = anf_node_.lock();
-  bool ret = device::PopDataFromDataQueue(data_kernel);
-  if (!ret) {
-    return KernelErrorCode::KRET_RESIZE_FAILED;
-  }
+  device::UpdateGetNextNode(data_kernel);
   return KernelErrorCode::KRET_OK;
 }
 
