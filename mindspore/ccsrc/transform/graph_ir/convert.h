@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -120,7 +120,7 @@ class DfGraphConvertor {
   DfGraphConvertor &GenerateCheckpointGraph();
   DfGraphConvertor &GenerateBroadcastGraph(const TensorOrderMap &tensors);
   void InitParamWithData(const TensorOrderMap &tensors);
-  OutHandler GetNormalOpInput(const AnfNodePtr &pred);
+  OutHandler GetNormalOpInput(const AnfNodePtr &node, const AnfNodePtr &pred);
   void DrawOpInput(const AnfNodePtr &node, const AnfNodePtr &pred, size_t i);
   void SetOpInput(const OpAdapterPtr &adpt, const CNodePtr &node);
   void SetupBroadcast(const std::shared_ptr<HcomBroadcast> &broadcast, const std::vector<GeTensorDesc> &broadcast_desc,
@@ -150,24 +150,15 @@ class DfGraphConvertor {
   std::map<std::string, std::string> param_format_;
 
   AnfNodePtr TraceTupleGetItem(const CNodePtr &node, uint64_t *index);
-  AnfNodePtr TraceMakeTuple(const CNodePtr &node, uint64_t index) const;
-  AnfNodePtr TraceDepend(const CNodePtr &node) const;
-  AnfNodePtr TraceLoad(const CNodePtr &node) const;
-  OutHandler TraceRealOp(AnfNodePtr node);
   OutHandler GetHandler(const AnfNodePtr &node);
-  OutHandler GetHandler(const AnfNodePtr &node, const std::stack<uint64_t> &index_stack, AnfNode *const draw_index);
   OperatorPtr Convert(AnfNodePtr node);
   OperatorPtr ConvertCNode(CNodePtr node);
-  std::vector<OperatorPtr> ConvertDependNode(AnfNodePtr node);
-  AnfNodePtr GetRealOpNode(AnfNodePtr node);
-  AnfNodePtr GetRealOpForMakeTuple(const AnfNodePtr &node, const AnfNodePtr &make_tuple, int64_t index);
   OperatorPtr ConvertParameter(AnfNodePtr node);
+  void SetNodeAbstract(const CNodePtr &node) const;
   Status TryConvertValueNodeToMultiConst(const ValueNodePtr node);
   OperatorPtr ConvertValueNode(ValueNodePtr node);
   void SaveParamFormat(CNodePtr node);
   void GetCaseNodeInput(const CNodePtr node, const CNodePtr input_node);
-  void ConvertTupleGetItem(const CNodePtr node);
-  void ConvertMakeTuple(const CNodePtr node);
   void ConvertTopK(const CNodePtr node);
   void ConvertResizeBilinear(const FuncGraphPtr anf_graph) const;
   void ConvertSpaceBatchNd(const FuncGraphPtr anf_graph) const;
@@ -179,11 +170,7 @@ class DfGraphConvertor {
   void ConvertConv2D(const CNodePtr node);
   std::vector<int64_t> CastToInt(const ValuePtr &value) const;
   bool CheckCNode(const std::string &name, const CNodePtr node);
-  void TraceOutput(AnfNodePtr node);
-  void TraceOutputFromParameter(const AnfNodePtr &anf_out);
-  void TraceOutputFromTupleGetItem(const AnfNodePtr &anf_out);
   void SetNodeInput(AnfNodePtr node);
-  void SetOpControlInput(const AnfNodePtr &node);
   void UpdateOpDesc(AnfNodePtr node);
   void SetSubgraph(const AnfNodePtr &node);
   void ProcessSubgraph(const AnfNodePtr &node, const std::vector<AnfNodePtr> &inputs);
@@ -192,22 +179,10 @@ class DfGraphConvertor {
   void UpdateDataOpDesc(const AnfNodePtr &it, const OperatorPtr &op) const;
   void UpdateConstOpDesc(const AnfNodePtr &it, const OperatorPtr &op) const;
   void AddGraphConstInput(const OperatorPtr &op);
-  OperatorPtr ToOperatorPtr(const AnfNodePtr &node);
-  bool IsSourceEdgeNode(const AnfNodePtr &node) const;
-  bool IsControlEdgeNode(const AnfNodePtr &node) const;
-  void AddEdgeForLoad(const AnfNodePtr &node);
-  void AddEdgeToCache(const AnfNodePtr &src, const AnfNodePtr &dest);
-  void FindDestOps(const AnfNodePtr &node, const std::shared_ptr<std::vector<AnfNodePtr>> &node_list, bool top,
-                   mindspore::HashMap<AnfNodePtr, DfsVisitFlag> *flag_map);
   AnfNodePtr ParseLoadInput(const CNodePtr &cnode) const;
-  void AutoMonadSetControlInput(const AnfNodePtr &node);
-  void AutoMonadCollectInput(const AnfNodePtr &node);
-  void AutoMonadSetInput(const AnfNodePtr &node);
-  void SetTupleOpInput(const OpAdapterPtr &adpt, const CNodePtr &node, const AnfNodePtr &pred, const OperatorPtr &src,
-                       int index);
-  void UpdateTupleOutCache(void);
+  bool IsNoOpTypeNode(const AnfNodePtr &node);
   void SetGraphInputs(std::vector<Operator> *inputs);
-  AnfNodePtr TransformConstOp(const CNodePtr &node, AnfNodePtr pred);
+  void TransformConstOp(const CNodePtr &node, const AnfNodePtr &pred);
   AnfNodePtr GetRealInputNode(const CNodePtr &node, const AnfNodePtr &input);
   void SetupDatasetIterGetNextNode();
 
@@ -224,11 +199,25 @@ class DfGraphConvertor {
   bool IsSubGraph() const { return graph_type_ == GraphType::kCond || graph_type_ == GraphType::kBody; }
   bool IsAfterGraph() const { return graph_type_ == GraphType::kAfter; }
   bool IsNormalGraph() const { return graph_type_ == GraphType::kNormal; }
-  bool IsBranchGraph() const { return graph_type_ == GraphType::kBranch; }
   void SetParamIndexMap(const std::vector<AnfNodePtr> &graphs);
   void SetWhileOutputHandle(const OperatorPtr &prev_while_op);
   void GetWhileUsedInputIndex(const std::vector<AnfNodePtr> &graphs);
-  AnfNodePtr GetPred();
+
+  bool IsDataInput(const AnfNodePtr &node, const AnfNodePtr &input, size_t input_index) const;
+  void SetOpDynamicInput(const OpAdapterPtr &adpt, const CNodePtr &node, const AnfNodePtr &input, uint64_t input_index);
+  void SetMakeTupleInput(const OpAdapterPtr &adpt, const CNodePtr &make_tuple_node);
+  void SetMergeInput(const OpAdapterPtr &adpt, const CNodePtr &merge_node);
+  bool IsMergeInput(const CNodePtr &node) const;
+  std::vector<OutHandler> GetAllInputHandle(const CNodePtr &node);
+  void SetNodeControlInput(const AnfNodePtr &node, const AnfNodePtr &input);
+  void SetGraphOutputs();
+
+  // Identity Optimization
+  void IdentityOptimization();
+  std::string GetGNodeName(const ge::GNode &node) const;
+  std::string GetGNodeType(const ge::GNode &node) const;
+  bool IsIdentityRedundant(const ge::GNode &node) const;
+  void RemoveIdentity(ge::GNode identity_node);
 
   std::shared_ptr<AnfGraph> anf_graph_{nullptr};
   std::shared_ptr<DfGraph> df_graph_{nullptr};
@@ -238,11 +227,9 @@ class DfGraphConvertor {
   std::shared_ptr<DfGraph> broadcast_graph_{nullptr};
   mindspore::HashMap<AnfNode *, DfGraph> branches_map_;
   mindspore::HashMap<AnfNode *, OperatorPtr> op_cache_;
-  mindspore::HashMap<AnfNode *, std::vector<ControlEdge>> control_edge_cache_;
-  mindspore::HashMap<AnfNodePtr, std::vector<AnfNodePtr>> monad_control_edge_cache_;
-  /* record "tuple_getitem"<->"out_handler" mapping */
+  /* record "getnext"<->"out_handler" mapping */
   mindspore::HashMap<AnfNode *, OutHandler> out_handle_cache_;
-  /* record "make_tuple"<->"out_handler vector" mapping */
+  /* record "value tuple"<->"out_handler vector" mapping */
   mindspore::HashMap<AnfNode *, std::shared_ptr<std::vector<OutHandler>>> tuple_out_handle_cache_;
   mindspore::HashMap<AnfNode *, std::shared_ptr<std::vector<AnfNodePtr>>> case_input_handle_cache_;
   mindspore::HashMap<std::string, AnfNodePtr> params_;

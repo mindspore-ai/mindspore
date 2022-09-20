@@ -15,4 +15,4 @@
 import os
 
 os.environ['MS_ENABLE_GE'] = '1'
-os.environ['MS_GE_TRAIN'] = '0'
+os.environ['MS_GE_TRAIN'] = '1'

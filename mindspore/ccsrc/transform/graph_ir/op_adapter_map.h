@@ -381,6 +381,12 @@ constexpr const char kNameStringUpper[] = "StringUpper";
 constexpr const char kNameStringLength[] = "StringLength";
 constexpr const char kNameDecodeImage[] = "DecodeImage";
 constexpr const char kNameDecodeBase64[] = "DecodeBase64";
+constexpr const char kNameMakeTuple[] = "MakeTuple";
+constexpr const char kNameTupleGetItem[] = "TupleGetItem";
+constexpr const char kNameLoad[] = "Load";
+constexpr const char kNameDepend[] = "Depend";
+constexpr const char kNameReturn[] = "Return";
+constexpr const char kNameUpdateState[] = "UpdateState";
 
 class OpAdapterDesc;
 

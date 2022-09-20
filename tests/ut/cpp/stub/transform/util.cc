@@ -85,6 +85,8 @@ OutHandler OpAdapterImpl::getOutput(const OperatorPtr &op, int index) {
   return handler;
 }
 
+std::vector<OutHandler> OpAdapterImpl::getOutputs(const OperatorPtr &op) const { return std::vector<OutHandler>(); }
+
 Status OpAdapterImpl::SetOpSubgraphFunc(const OperatorPtr &op, int index,
                                         const std::shared_ptr<std::vector<DfGraph>> &branches) {
   return SUCCESS;

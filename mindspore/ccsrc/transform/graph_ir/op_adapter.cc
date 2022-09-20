@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 #include "transform/graph_ir/op_adapter.h"
+#include <algorithm>
+#include <utility>
 #include "utils/check_convert_utils.h"
 #include "ops/split_combination_ops.h"
 
@@ -272,6 +274,13 @@ OutHandler OpAdapterImpl::getOutput(const OperatorPtr &op, int index) {
   return getNormalOutput(op, index);
 }
 
+std::vector<OutHandler> OpAdapterImpl::getOutputs(const OperatorPtr &op) const {
+  if (IsCustomOp(op)) {
+    return getCustomOutputs(op);
+  }
+  return getNormalOutputs(op);
+}
+
 OutHandler OpAdapterImpl::getCustomOutput(const OperatorPtr &op, int index) const {
   MS_EXCEPTION_IF_NULL(op);
   auto it = cus_output_map_->find(op->GetOpType());
@@ -306,6 +315,38 @@ OutHandler OpAdapterImpl::getNormalOutput(const OperatorPtr &op, int index) {
   }
 }
 
+std::vector<OutHandler> OpAdapterImpl::getNormalOutputs(const OperatorPtr &op) const {
+  MS_EXCEPTION_IF_NULL(op);
+  if (!dyn_output_map_.empty() && !output_map_.empty()) {
+    MS_LOG(ERROR) << "OpAdpator(" << op->GetName() << ") has both OUTPUT and DYN_OUTPUT is not supported!";
+    return std::vector<OutHandler>{};
+  }
+  std::vector<OutHandler> handles;
+  std::transform(output_map_.begin(), output_map_.end(), std::back_inserter(handles),
+                 [&op](const auto &item) { return OutHandler(op, item.second.name); });
+  if (!dyn_output_map_.empty()) {
+    auto dyn_output_name = dyn_output_map_.begin()->second.name;
+    auto dyn_output_size = op->GetDynamicOutputNum(dyn_output_name);
+    for (int i = 0; i < dyn_output_size; i++) {
+      handles.emplace_back(OutHandler(op, dyn_output_name + std::to_string(i)));
+    }
+  }
+  return handles;
+}
+
+std::vector<OutHandler> OpAdapterImpl::getCustomOutputs(const OperatorPtr &op) const {
+  MS_EXCEPTION_IF_NULL(op);
+  std::vector<OutHandler> handles;
+  auto it = cus_output_map_->find(op->GetOpType());
+  if (it == cus_output_map_->end()) {
+    MS_LOG(ERROR) << "OpAdpator(" << op->GetName() << ")'s OUTPUT is not supported!";
+    return handles;
+  }
+  std::transform(it->second.begin(), it->second.end(), std::back_inserter(handles),
+                 [&op](const auto &item) { return OutHandler(op, item.second); });
+  return handles;
+}
+
 Status OpAdapterImpl::UpdateSingleOutputDesc(const OperatorPtr &op, const abstract::BaseShapePtr &shp,
                                              const TypePtr &type, const std::string &format) {
   MS_EXCEPTION_IF_NULL(type);
@@ -327,11 +368,14 @@ Status OpAdapterImpl::UpdateSingleOutputDesc(const OperatorPtr &op, const abstra
     mindspore::HashMap<int, std::string> output_map = (*cus_output_map_)[op->GetOpType()];
     (void)cus_op->UpdateOutputDesc(output_map[0], *desc);
   } else {
-    if (output_map_.empty()) {
+    if (!output_map_.empty()) {
+      output_map_.begin()->second.update_out_desc(op, *desc);
+    } else if (!dyn_output_map_.empty()) {
+      dyn_output_map_.begin()->second.update_dyn_output_desc(op, 0, *desc);
+    } else {
       MS_LOG(INFO) << "This op does not have output map";
       return FAILED;
     }
-    output_map_.begin()->second.update_out_desc(op, *desc);
   }
   return SUCCESS;
 }
@@ -371,7 +415,8 @@ Status OpAdapterImpl::UpdateMultiOutputDesc(const OperatorPtr &op, const abstrac
   if (is_custom_op) {
     output_size = GetCustomOpOutputSize(std::dynamic_pointer_cast<CustomOperator>(op));
   } else {
-    output_size = output_map_.size();
+    output_size =
+      output_map_.empty() ? op->GetDynamicOutputNum(dyn_output_map_.begin()->second.name) : output_map_.size();
   }
 
   if (output_size == 0) {
@@ -404,6 +449,8 @@ Status OpAdapterImpl::UpdateMultiOutputDesc(const OperatorPtr &op, const abstrac
       auto it = output_map_.find(i);
       if (it != output_map_.end()) {
         it->second.update_out_desc(op, *desc);
+      } else if (!dyn_output_map_.empty()) {
+        dyn_output_map_.begin()->second.update_dyn_output_desc(op, i, *desc);
       }
     }
   }

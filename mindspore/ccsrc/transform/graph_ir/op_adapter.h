@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,8 +78,11 @@ class OpAdapterImpl {
   int setInput(const OperatorPtr &op, int index, const OutHandler &handle);
   int setInput(const OperatorPtr &op, int index, const std::shared_ptr<std::vector<OutHandler>> &handler_vec);
   OutHandler getOutput(const OperatorPtr &op, int index);
+  std::vector<OutHandler> getOutputs(const OperatorPtr &op) const;
   OutHandler getCustomOutput(const OperatorPtr &op, int index) const;
   OutHandler getNormalOutput(const OperatorPtr &op, int index);
+  std::vector<OutHandler> getNormalOutputs(const OperatorPtr &op) const;
+  std::vector<OutHandler> getCustomOutputs(const OperatorPtr &op) const;
   Status UpdateSingleOutputDesc(const OperatorPtr &op, const abstract::BaseShapePtr &shp, const TypePtr &type,
                                 const std::string &format);
   size_t GetCustomOpOutputSize(const CusOperatorPtr &cus_op) const;
@@ -176,7 +179,7 @@ class OpAdapter : public BaseOpAdapter {
         MS_LOG(EXCEPTION) << "Dynamic output node:" << op->GetName() << "'s Type is a nullptr!";
       }
       size_t num = type->isa<Tuple>() ? (type->cast<std::shared_ptr<Tuple>>()->size()) : 1;
-      MS_LOG(INFO) << "create_dyn_output for node:" << anf->ToString() << ", type:" << type->ToString()
+      MS_LOG(INFO) << "create_dyn_output for node:" << anf->fullname_with_scope() << ", type:" << type->ToString()
                    << ", num:" << num;
       dyn_output_map_.begin()->second.create_dyn_output(op, static_cast<unsigned int>(num));
     }
@@ -235,6 +238,8 @@ class OpAdapter : public BaseOpAdapter {
   const mindspore::HashMap<int, SubGraphDesc> &getSubgraphMap() override { return subgraph_map_; }
   const mindspore::HashMap<int, OutputDesc> &getOutputMap() override { return output_map_; }
   const mindspore::HashMap<int, DynSubGraphDesc> &getDynSubgraphMap() override { return dyn_subgraph_map_; }
+  bool IsDynInputOp(uint64_t index) override { return dyn_input_map_.find(index) != dyn_input_map_.end(); }
+  bool IsDyOutputOp(uint64_t index) override { return dyn_output_map_.find(index) != dyn_output_map_.end(); }
 
   Status SetOpSubgraphFunc(const OperatorPtr &op, std::shared_ptr<std::vector<DfGraph>> subgraphs) {
     return impl_->SetOpSubgraphFunc(op, subgraphs);
@@ -281,6 +286,8 @@ class OpAdapter : public BaseOpAdapter {
   }
 
   OutHandler getOutput(const OperatorPtr &op, int index) override { return impl_->getOutput(op, index); }
+
+  std::vector<OutHandler> getOutputs(const OperatorPtr &op) { return impl_->getOutputs(op); }
 
   OutHandler getCustomOutput(const OperatorPtr &op, int index) { return impl_->getCustomOutput(op, index); }
 
