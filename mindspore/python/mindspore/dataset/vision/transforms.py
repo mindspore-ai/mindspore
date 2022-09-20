@@ -3873,12 +3873,12 @@ class Solarize(ImageTensorOperation):
     Solarize the image by inverting all pixel values within the threshold.
 
     Args:
-        threshold (Union[float, tuple[float, float]]): Range of solarize threshold, should always
+        threshold (Union[float, Sequence[float, float]]): Range of solarize threshold, should always
             be in (min, max) format, where min and max are integers in range of [0, 255], and min <= max.
             If min=max, then invert all pixel values above min(max).
 
     Raises:
-        TypeError: If `threshold` is not of type float or tuple[float, float].
+        TypeError: If `threshold` is not of type float or Sequence[float, float].
         ValueError: If `threshold` is not in range of [0, 255].
 
     Supported Platforms:
