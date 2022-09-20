@@ -1441,8 +1441,7 @@ void ShardReader::ConsumerByRow(int consumer_id) {
       if (interrupt_) {
         return;
       }
-      delivery_map_[sample_id_pos] =
-        std::make_shared<std::vector<std::tuple<std::vector<uint8_t>, json>>>(std::move(batch));
+      delivery_map_[sample_id_pos] = std::make_shared<std::vector<std::tuple<std::vector<uint8_t>, json>>>(batch);
     }
     cv_iterator_.notify_one();
   }
