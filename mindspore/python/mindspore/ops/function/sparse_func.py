@@ -224,7 +224,7 @@ def csr_to_coo(tensor):
         Only 2-D CSRTensor is supported for now.
 
     Args:
-        tensor: A CSRTensor, must be 2-D.
+        tensor (CSRTensor): A CSRTensor, must be 2-D.
 
     Returns:
         2D COOTensor, the input tensor stored in COO format.
@@ -266,7 +266,7 @@ def csr_to_dense(csr_tensor):
         Only 2-D CSRTensor is supported for now.
 
     Args:
-        csr_tensor: A CSRTensor, must be 2-D.
+        csr_tensor (CSRTensor): A CSRTensor, must be 2-D.
 
     Returns:
         Tensor.
@@ -317,7 +317,7 @@ def dense_to_sparse_coo(tensor):
         Only 2-D tensor is supported for now.
 
     Args:
-        tensor: A dense tensor, must be 2-D.
+        tensor (Tensor): A dense tensor, must be 2-D.
 
     Returns:
         COOTensor, a sparse representation of the original dense tensor, containing the following parts.
@@ -363,7 +363,7 @@ def dense_to_sparse_csr(tensor):
         Only 2-D tensor is supported for now.
 
     Args:
-        tensor: A dense tensor, must be 2-D.
+        tensor (Tensor): A dense tensor, must be 2-D.
 
     Returns:
         CSRTensor, a sparse representation of the original dense tensor, containing the following parts.
