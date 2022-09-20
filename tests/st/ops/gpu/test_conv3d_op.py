@@ -18,6 +18,7 @@ import pytest
 
 import mindspore.context as context
 import mindspore.nn as nn
+import mindspore as ms
 from mindspore import Tensor
 from mindspore.common.parameter import ParameterTuple
 from mindspore.ops import operations as P
@@ -41,6 +42,48 @@ class NetConv3d(nn.Cell):
 
     def construct(self, x, w):
         return self.conv(x, w)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_conv3d_dshape_1():
+    """
+    Feature: Test conv3d dynamic shape.
+    Description: Test conv3d dynamic shape.
+    Expectation: Success.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+    net = NetConv3d()
+    input_x_dyn = Tensor(shape=[1, 3, 3, 3, None], dtype=ms.float32)
+    input_w_dyn = Tensor(shape=[4, 3, 2, 2, None], dtype=ms.float32)
+    net.set_inputs(input_x_dyn, input_w_dyn)
+    x = Tensor(np.arange(1 * 3 * 3 * 3 * 3).reshape(1, 3, 3, 3, 3).astype(np.float32))
+    w = Tensor(np.arange(4 * 3 * 2 * 2 * 2).reshape(4, 3, 2, 2, 2).astype(np.float32))
+    output = net(x, w)
+    expect_shape = (1, 4, 2, 2, 2)
+    assert output.asnumpy().shape == expect_shape
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_conv3d_dshape_2():
+    """
+    Feature: Test conv3d dynamic shape.
+    Description: Test conv3d dynamic shape.
+    Expectation: Success.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+    net = NetConv3d()
+    input_x_dyn = Tensor(shape=[None, 3, 3, 3, 3], dtype=ms.float32)
+    input_w_dyn = Tensor(shape=[None, 3, 2, 2, 2], dtype=ms.float32)
+    net.set_inputs(input_x_dyn, input_w_dyn)
+    x = Tensor(np.arange(1 * 3 * 3 * 3 * 3).reshape(1, 3, 3, 3, 3).astype(np.float32))
+    w = Tensor(np.arange(4 * 3 * 2 * 2 * 2).reshape(4, 3, 2, 2, 2).astype(np.float32))
+    output = net(x, w)
+    expect_shape = (1, 4, 2, 2, 2)
+    assert output.asnumpy().shape == expect_shape
 
 
 @pytest.mark.level0
@@ -195,6 +238,6 @@ def test_conv3d_vmap():
                             [[[2348., 2696.], [3392., 3740.]], [[5480., 5828.], [6524., 6872.]]],
                             [[[2764., 3176.], [4000., 4412.]], [[6472., 6884.], [7708., 8120.]]],
                             [[[3180., 3656.], [4608., 5084.]], [[7464., 7940.], [8892., 9368.]]]]]]
-                        ).astype(np.float32)
+                         ).astype(np.float32)
     output2 = vmap(conv3d, (None, 0))(x, batch_w)
     assert np.allclose(output2.asnumpy(), expected2, 0.0001, 0.0001)
