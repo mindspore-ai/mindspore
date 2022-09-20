@@ -101,6 +101,13 @@ class ApplyAdagradInfer : public abstract::OpInferBase {
     return std::make_shared<Tuple>(std::vector<TypePtr>{var_type, accum_type});
   }
 };
+bool ApplyAdagrad::get_update_slots() const {
+  auto value_ptr = this->GetAttr(kUpdateSlots);
+  return GetValue<bool>(value_ptr);
+}
+void ApplyAdagrad::set_update_slots(const bool update_slots) {
+  (void)this->AddAttr(kUpdateSlots, api::MakeValue(update_slots));
+}
 REGISTER_PRIMITIVE_OP_INFER_IMPL(ApplyAdagrad, prim::kPrimApplyAdagrad, ApplyAdagradInfer, false);
 }  // namespace ops
 }  // namespace mindspore

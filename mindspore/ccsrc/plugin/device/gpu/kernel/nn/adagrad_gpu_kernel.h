@@ -14,19 +14,20 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_ADAGRAD_GPU_KERNEL_H
-#define MINDSPORE_ADAGRAD_GPU_KERNEL_H
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_NN_ADAM_ADAGRAD_GPU_KERNEL_H
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_NN_ADAM_ADAGRAD_GPU_KERNEL_H
 
 #include <vector>
 #include <string>
+#include <map>
+#include <utility>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/adagrad_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
-template <typename T, typename S, typename G>
-class AdagradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class AdagradGpuKernelMod : public NativeGpuKernelMod {
  public:
   AdagradGpuKernelMod()
       : variable_size_(0),
@@ -34,89 +35,43 @@ class AdagradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
         learning_rate_size_(0),
         gradient_size_(0),
         update_slots(true),
-        is_null_input_(false),
         kernel_name_("ApplyAdagrad") {}
 
   ~AdagradGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    if (is_null_input_) {
-      return true;
-    }
-    T *variable = GetDeviceAddress<T>(inputs, 0);
-    T *accumulation = GetDeviceAddress<T>(inputs, 1);
-    S *learning_rate = GetDeviceAddress<S>(inputs, 2);
-    G *gradient = GetDeviceAddress<G>(inputs, 3);
-    T *variable_out = GetDeviceAddress<T>(outputs, 0);
-    T *accumulation_out = GetDeviceAddress<T>(outputs, 1);
-    ApplyAdagrad(inputs[0]->size / sizeof(T), update_slots, learning_rate, gradient, variable, accumulation,
-                 reinterpret_cast<cudaStream_t>(stream_ptr));
-
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                               cudaMemcpyAsync(variable_out, variable, variable_size_, cudaMemcpyDeviceToDevice,
-                                               reinterpret_cast<cudaStream_t>(stream_ptr)),
-                               "cudaMemcpyAsync output failed");
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                               cudaMemcpyAsync(accumulation_out, accumulation, accumulation_size_,
-                                               cudaMemcpyDeviceToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
-                               "cudaMemcpyAsync output failed");
-
-    return true;
+    return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
   }
 
-  bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    update_slots = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "update_slots");
-    kernel_node_ = kernel_node;
-    if (input_num != 4) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 4, but got " << input_num;
-    }
-    variable_size_ = sizeof(T);
-    accumulation_size_ = sizeof(T);
-    learning_rate_size_ = sizeof(S);
-    gradient_size_ = sizeof(G);
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
 
-    auto variable_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto accumulation_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    auto gradient_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
-    is_null_input_ = CHECK_SHAPE_NULL(variable_shape, kernel_name_, "var") ||
-                     CHECK_SHAPE_NULL(accumulation_shape, kernel_name_, "accum") ||
-                     CHECK_SHAPE_NULL(gradient_shape, kernel_name_, "grad");
-    if (is_null_input_ || AnfAlgo::IsShapesDynamic({variable_shape, accumulation_shape, gradient_shape})) {
-      InitSizeLists();
-      return true;
-    }
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
-    variable_size_ *= SizeOf(variable_shape);
-    accumulation_size_ *= SizeOf(accumulation_shape);
-    gradient_size_ *= SizeOf(gradient_shape);
-
-    InitSizeLists();
-    return true;
-  }
+  std::vector<KernelAttr> GetOpSupport() override;
 
  protected:
-  void InitSizeLists() override {
-    input_size_list_.push_back(variable_size_);
-    input_size_list_.push_back(accumulation_size_);
-    input_size_list_.push_back(learning_rate_size_);
-    input_size_list_.push_back(gradient_size_);
-    output_size_list_.push_back(variable_size_);
-    output_size_list_.push_back(accumulation_size_);
-  }
+  template <typename T, typename S, typename G>
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
+
+  using AdagradLaunchFunc =
+    std::function<bool(AdagradGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &, void *)>;
 
  private:
+  AdagradLaunchFunc kernel_func_;
+  static std::vector<std::pair<KernelAttr, AdagradLaunchFunc>> func_list_;
   size_t variable_size_;
   size_t accumulation_size_;
   size_t learning_rate_size_;
   size_t gradient_size_;
   bool update_slots;
-  bool is_null_input_;
   std::string kernel_name_;
 };
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_ADAGRAD_GPU_KERNEL_H
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_NN_ADAM_ADAGRAD_GPU_KERNEL_H
