@@ -222,6 +222,7 @@ Array操作
     mindspore.Tensor.swapaxes
     mindspore.Tensor.T
     mindspore.Tensor.take
+    mindspore.Tensor.tile
     mindspore.Tensor.to_tensor
     mindspore.Tensor.trace
     mindspore.Tensor.transpose

@@ -332,9 +332,6 @@ def tile(x, multiples):
         The length of `multiples` must be greater or equal to the length of dimension in `input_x`.
 
     Args:
-        input_x (Tensor): 1-D or higher dimensional Tensor. Set the shape of input tensor as
-            :math:`(x_1, x_2, ..., x_S)` .
-
         multiples (tuple[int]): The parameter that specifies the number of replications,
             the parameter type is tuple, and the data type is int, i.e., :math:`(y_1, y_2, ..., y_S)`.
             The length of `multiples` cannot be smaller than the length of the shape of `input_x`.
@@ -345,11 +342,11 @@ def tile(x, multiples):
         the dimension of `input_x` is `input_x.dim`, and the shape of `input_x` is :math:`(x_1, x_2, ..., x_S)`.
 
         - If `input_x.dim = d`, then the shape of their corresponding positions can be multiplied, and
-        the shape of Outputs is :math:`(x_1*y_1, x_2*y_2, ..., x_S*y_R)`.
+          the shape of Outputs is :math:`(x_1*y_1, x_2*y_2, ..., x_S*y_R)`.
         - If `input_x.dim < d`, fill in multiple 1 in the length of the shape of `input_x` until their
-        lengths are consistent. Such as set the shape of `input_x` as :math:`(1, ..., x_1, x_2, ..., x_S)`,
-        then the shape of their corresponding positions can be multiplied, and the shape of Outputs is
-        :math:`(1*y_1, ..., x_S*y_R)`.
+          lengths are consistent. Such as set the shape of `input_x` as :math:`(1, ..., x_1, x_2, ..., x_S)`,
+          then the shape of their corresponding positions can be multiplied, and the shape of Outputs is
+          :math:`(1*y_1, ..., x_S*y_R)`.
 
     Raises:
         TypeError: If `multiples` is not a tuple or its elements are not all int.
