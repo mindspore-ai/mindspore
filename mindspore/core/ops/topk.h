@@ -43,6 +43,7 @@ class MIND_API TopK : public BaseOperator {
   ///
   /// \return sorted.
   bool get_sorted() const;
+  bool get_attr(const char *attr) const;
 };
 abstract::AbstractBasePtr TopKInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const std::vector<abstract::AbstractBasePtr> &input_args);
