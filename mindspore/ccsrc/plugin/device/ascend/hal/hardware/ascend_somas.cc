@@ -194,6 +194,12 @@ void AscendSomas::IndependentNodeOutputProcess(const session::KernelGraph &graph
 }
 
 void AscendSomas::NonTaskSplitProcess(const session::KernelGraph &graph) {
+  // When not used task sink mode, should not process non task split mem-reuse.
+  // Because the logic for processing non task split memory offset is in the function TaskGenerator:: GetTaskInput,
+  // only run in task sink mode.
+  if (!graph.is_graph_run_mode()) {
+    return;
+  }
   auto &kernel_cnodes = graph.execution_order();
   for (const auto &kernel : kernel_cnodes) {
     auto op_name = common::AnfAlgo::GetCNodeName(kernel);
