@@ -719,27 +719,32 @@ void KernelRuntime::AssignStaticMemoryOutput(const session::KernelGraph &graph) 
   MS_LOG(INFO) << "AssignStaticMemoryOutput end";
 }
 
-void KernelRuntime::UpdateRefNodeOutputMem(const session::KernelGraph &graph) const {
-  auto &kernels = graph.execution_order();
-  for (auto &kernel : kernels) {
-    MS_EXCEPTION_IF_NULL(kernel);
-    auto output_num = common::AnfAlgo::GetOutputTensorNum(kernel);
-    if (output_num == 0) {
-      MS_LOG(DEBUG) << "This kernel has no output size.";
-      continue;
-    }
-    for (size_t i = 0; i < output_num; ++i) {
-      session::AnfWithOutIndex out_pair(kernel, i);
-      if (graph.IsInRefOutputMap(out_pair)) {
-        auto origin_pair = graph.GetRefCorrespondOutput(out_pair);
-        MS_EXCEPTION_IF_NULL(origin_pair.first);
-        auto origin_node_output_addr = AnfAlgo::GetMutableOutputAddr(origin_pair.first, origin_pair.second);
-        MS_EXCEPTION_IF_NULL(origin_node_output_addr);
-        auto cur_node_output_addr = AnfAlgo::GetMutableOutputAddr(kernel, i);
-        if (origin_node_output_addr.get() != cur_node_output_addr.get()) {
-          MS_LOG(DEBUG) << "REF address is not same, ref node output need address update";
-          MS_LOG(DEBUG) << "REF origin op is " << origin_pair.first->DebugString() << ", output index is "
-                        << origin_pair.second << ", cur op is " << kernel->DebugString() << ", out index is " << i;
+void KernelRuntime::UpdateSingleRefNodeMem(const CNodePtr &kernel, const session::KernelGraph &graph,
+                                           bool reverse) const {
+  MS_EXCEPTION_IF_NULL(kernel);
+  auto output_num = common::AnfAlgo::GetOutputTensorNum(kernel);
+  if (output_num == 0) {
+    MS_LOG(DEBUG) << "This kernel has no output size.";
+    return;
+  }
+  for (size_t i = 0; i < output_num; ++i) {
+    session::AnfWithOutIndex out_pair(kernel, i);
+    if (graph.IsInRefOutputMap(out_pair)) {
+      auto origin_pair = graph.GetRefCorrespondOutput(out_pair);
+      MS_EXCEPTION_IF_NULL(origin_pair.first);
+      auto origin_node_output_addr = AnfAlgo::GetMutableOutputAddr(origin_pair.first, origin_pair.second);
+      MS_EXCEPTION_IF_NULL(origin_node_output_addr);
+      auto cur_node_output_addr = AnfAlgo::GetMutableOutputAddr(kernel, i);
+      if (!reverse && origin_node_output_addr->GetPtr() == nullptr) {
+        continue;
+      }
+      if (origin_node_output_addr.get() != cur_node_output_addr.get()) {
+        MS_LOG(DEBUG) << "REF address is not same, ref node output need address update";
+        MS_LOG(DEBUG) << "REF origin op is " << origin_pair.first->DebugString() << ", output index is "
+                      << origin_pair.second << ", cur op is " << kernel->DebugString() << ", out index is " << i;
+        if (reverse) {
+          AnfAlgo::SetOutputAddr(cur_node_output_addr, origin_pair.second, origin_pair.first.get());
+        } else {
           if (!cur_node_output_addr->host_shape().empty()) {
             origin_node_output_addr->set_host_shape(cur_node_output_addr->host_shape());
           }
@@ -747,6 +752,17 @@ void KernelRuntime::UpdateRefNodeOutputMem(const session::KernelGraph &graph) co
         }
       }
     }
+  }
+}
+
+void KernelRuntime::UpdateRefNodeOutputMem(const session::KernelGraph &graph) const {
+  auto &kernels = graph.execution_order();
+  for (auto &kernel : kernels) {
+    UpdateSingleRefNodeMem(kernel, graph, false);
+  }
+  for (auto it = kernels.rbegin(); it != kernels.rend(); ++it) {
+    auto &kernel = *it;
+    UpdateSingleRefNodeMem(kernel, graph, true);
   }
 }
 

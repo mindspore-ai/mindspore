@@ -1639,8 +1639,43 @@ void Somas::UpdateUnionTensorsOffset() {
   }
 }
 
+// Disjoint-set
+size_t find_father(std::vector<size_t> *father, size_t x) {
+  if (x == (*father)[x]) return x;
+  (*father)[x] = find_father(father, (*father)[x]);
+  return (*father)[x];
+}
+
 void Somas::UpdateUnionTensorsConflict() {
   // Keep all constraints for first tensor in list
+  size_t cnt = tensors_list_.back()->GetId() + 1;
+  std::vector<size_t> father;
+  for (size_t i = 0; i < cnt; i++) {
+    father.push_back(i);
+  }
+  for (auto union_node_list : union_tensors_list_) {
+    size_t tid_0 = union_node_list[0];
+    for (size_t i = 1; i < union_node_list.size(); ++i) {
+      size_t tid_1 = union_node_list[i];
+      father[find_father(&father, tid_1)] = find_father(&father, tid_0);
+    }
+  }
+
+  std::map<size_t, size_t> kv;
+  std::vector<vector<size_t>> tmp_union;
+  for (const auto &union_node_list : union_tensors_list_) {
+    for (size_t tid : union_node_list) {
+      size_t fa = find_father(&father, tid);
+      if (kv.find(fa) == kv.end()) {
+        tmp_union.emplace_back();
+        kv.emplace(fa, tmp_union.size() - 1);
+      }
+      tmp_union[kv.at(fa)].push_back(tid);
+    }
+  }
+
+  union_tensors_list_ = tmp_union;
+
   for (auto union_node_list : union_tensors_list_) {
     size_t tid_0 = union_node_list[0];
     for (const SomasTensorPtr &tensor : tensors_list_) {
@@ -1652,6 +1687,14 @@ void Somas::UpdateUnionTensorsConflict() {
         }
       }
     }
+    // if union_tensors_list has a zero, when need set all union_tensors in this list is zero
+    bool zero_flag = std::any_of(union_node_list.begin(), union_node_list.end(),
+                                 [this](size_t i) { return tensors_list_[i]->aligned_size_ == 0; });
+    if (zero_flag) {
+      for (size_t i : union_node_list) {
+        tensors_list_[i]->aligned_size_ = 0;
+      }
+    }
     // Set rest to size 0, so that solver ignores them (if not contiguous)
     for (size_t i = 1; i < union_node_list.size(); ++i) {
       if (!tensors_list_[union_node_list[i]]->contiguous_) {
@@ -1659,6 +1702,7 @@ void Somas::UpdateUnionTensorsConflict() {
           MS_LOG(WARNING) << "The aligned_size of union tensor " << tensors_list_[union_node_list[i]]->GetId()
                           << " is bigger than the aligned_size of union tensor "
                           << tensors_list_[union_node_list[0]]->GetId();
+          tensors_list_[union_node_list[0]]->aligned_size_ = tensors_list_[union_node_list[i]]->aligned_size_;
         }
         tensors_list_[union_node_list[i]]->aligned_size_ = 0;
       }

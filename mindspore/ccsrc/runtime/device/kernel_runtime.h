@@ -125,6 +125,7 @@ class BACKEND_EXPORT KernelRuntime {
   virtual void *compute_stream() const { return nullptr; }
   virtual void *communication_stream() const { return nullptr; }
   void UpdateRefNodeOutputMem(const session::KernelGraph &graph) const;
+  void UpdateSingleRefNodeMem(const CNodePtr &kernel, const session::KernelGraph &graph, bool reverse) const;
   virtual DeviceAddressPtr AssignExtraStaticMem(const TensorPtr &tensor, const AnfNodePtr &node, size_t index);
   virtual void *GetModelStream(uint32_t graph_id) const { return nullptr; }
   virtual DeviceAddressPtr GetInternalDeviceAddress(const session::KernelGraph &, const AnfNodePtr &) {
