@@ -43,6 +43,8 @@ int SqueezeInt8CPUKernel::Prepare() {
     MS_LOG(ERROR) << "new quant_squeeze_param_ failed.";
     return RET_ERROR;
   }
+  quant_squeeze_param_->in_quant_args_ = nullptr;
+  quant_squeeze_param_->out_quant_args_ = nullptr;
 
   quant_squeeze_param_->in_quant_args_ = reinterpret_cast<QuantArg *>(malloc(sizeof(QuantArg)));
   if (quant_squeeze_param_->in_quant_args_ == nullptr) {

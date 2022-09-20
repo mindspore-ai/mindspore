@@ -1323,6 +1323,12 @@ kernel::KernelExec *Scheduler::SchedulePartialToKernel(const lite::LiteGraph::No
     return nullptr;
   }
   auto subgraph_index = GetPartialGraphIndex(src_node->primitive_, schema_version_);
+  if (SubGraphHasScheduled(subgraph_index)) {
+    MS_LOG(INFO) << "Subgraph has been scheduled.";
+    return {};
+  } else {
+    SubGraphMarkScheduled(subgraph_index);
+  }
   auto subgraph_kernel = SchedulePartialToSubGraphKernel(subgraph_index);
   if (subgraph_kernel == nullptr) {
     MS_LOG(ERROR) << "SchedulePartialToSubGraphKernel failed, subgraph_index: " << subgraph_index;
