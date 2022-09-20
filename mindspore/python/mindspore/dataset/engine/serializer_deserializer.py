@@ -61,7 +61,7 @@ def deserialize(input_dict=None, json_filepath=None):
     Construct dataset pipeline from a JSON file produced by dataset serialize function.
 
     Note:
-        Currently Python function deserialization of map operator are is supported.
+        Currently Python function deserialization of map operator is not supported.
 
     Args:
         input_dict (dict): A Python dictionary containing a serialized dataset graph (default=None).
