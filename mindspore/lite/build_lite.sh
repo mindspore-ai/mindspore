@@ -755,7 +755,6 @@ fi
 INSTALL_PREFIX=${BASEPATH}/output/tmp
 LITE_JAVA_PATH=${BASEPATH}/mindspore/lite/java
 if [[ "${MSLITE_ENABLE_ACL}" == "on" ]]; then
-    unset JAVA_HOME
     update_submodule
 fi
 
