@@ -10,7 +10,7 @@
         - **bboxes** (numpy.ndarray) - 边界框（包含类别置信度），shape为(N, 4)或(N, 5)，格式为(N,X,Y,W,H)。
         - **labels** (numpy.ndarray) - 边界框的类别，shape为(N, 1)。
         - **segm** (numpy.ndarray) - 图像分割掩码，shape为(M, H, W)，M表示类别总数，默认值：None，不绘制掩码。
-        - **class_names** (list[str], dict) - 类别索引到类别名的映射表，默认值：None，仅显示类别索引。
+        - **class_names** (list[str], tuple[str], dict) - 类别索引到类别名的映射表，默认值：None，仅显示类别索引。
         - **score_threshold** (float) - 绘制边界框的类别置信度阈值，默认值：0，绘制所有边界框。
         - **bbox_color** (tuple(int)) - 指定绘制边界框时线条的颜色，顺序为BGR，默认值：(0,255,0)，表示绿色。
         - **text_color** (tuple(int)) - 指定类别文本的显示颜色，顺序为BGR，默认值：(203, 192, 255)，表示粉色。

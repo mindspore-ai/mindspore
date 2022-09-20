@@ -9,7 +9,7 @@ mindspore.ops.reshape
 
     参数：
         - **input_x** (Tensor) - Tensor的shape为 :math:`(x_1, x_2, ..., x_R)` 。
-        - **input_shape** (tuple[int]) - 输入tuple由多个整数构成，如 :math:`(y_1, y_2, ..., y_S)` 。只支持常量值。
+        - **input_shape** (Union[tuple[int], Tensor[int]]) - 输入tuple由多个整数构成，如 :math:`(y_1, y_2, ..., y_S)` 。只支持常量值。
 
     返回：
         Tensor，其shape为 :math:`(y_1, y_2, ..., y_S)` 。
