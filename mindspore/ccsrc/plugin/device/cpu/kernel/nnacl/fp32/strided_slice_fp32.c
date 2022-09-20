@@ -73,10 +73,12 @@ int RunIntFp64BoolComplex(const void *in_data, void *out_data, StridedSliceParam
     *((uint32_t *)out_data + out_offset) = *((uint32_t *)in_data + in_offset);
   } else if (param->data_type == kNumberTypeUInt64) {
     *((uint64_t *)out_data + out_offset) = *((uint64_t *)in_data + in_offset);
+#ifndef _MSC_VER
   } else if (param->data_type == kNumberTypeComplex64) {
     *((float _Complex *)out_data + out_offset) = *((float _Complex *)in_data + in_offset);
   } else if (param->data_type == kNumberTypeComplex128) {
     *((double _Complex *)out_data + out_offset) = *((double _Complex *)in_data + in_offset);
+#endif
   } else if (param->data_type == kNumberTypeBool) {
     *((bool *)out_data + out_offset) = *((bool *)in_data + in_offset);
   } else if (param->data_type == kNumberTypeFloat64) {
