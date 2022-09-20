@@ -13,6 +13,7 @@
 "mindspore/mindspore/python/mindspore/_check_version.py"                                                                 "broad-except"
 "mindspore/mindspore/python/mindspore/common/api.py"                                                                     "protected-access"
 "mindspore/mindspore/python/mindspore/common/parameter.py"                                                               "protected-access"
+"mindspore/mindspore/python/mindspore/common/parameter.py"                                                               "no-value-for-parameter"
 "mindspore/mindspore/python/mindspore/common/hook_handle.py"                                                             "protected-access"
 "mindspore/mindspore/python/mindspore/common/dtype.py"                                                                   "undefined-all-variable"
 "mindspore/mindspore/python/mindspore/context.py"                                                                        "protected-access"

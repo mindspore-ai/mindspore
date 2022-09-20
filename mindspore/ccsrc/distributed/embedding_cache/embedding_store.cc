@@ -23,11 +23,12 @@
 
 namespace mindspore {
 namespace distributed {
-template <typename T>
-bool EmbeddingStore<T>::Initialize(const std::map<std::string, std::string> &storage_config) {
-  value_size_ = emb_dim_ * sizeof(T);
+template <typename K_T, typename V_T>
+bool EmbeddingStore<K_T, V_T>::Initialize(const std::map<std::string, std::string> &storage_config) {
+  value_size_ = emb_dim_ * sizeof(V_T);
+  key_size_ = sizeof(K_T);
   cache_ = std::make_unique<EmbeddingLRUCache>(cache_capacity_);
-  storage_ = std::make_unique<storage::LocalFile>(storage_config, sizeof(uint32_t), value_size_);
+  storage_ = std::make_unique<storage::LocalFile>(storage_config, key_size_, value_size_);
   return true;
 }
 }  // namespace distributed

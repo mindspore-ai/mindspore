@@ -16,6 +16,12 @@
 # ============================================================================
 """common utils."""
 
+import os
+import math
+import functools
+
+from mindspore.common import dtype as mstype
+
 
 def is_shape_unknown(shape):
     """Check whether the shape is unknown."""
@@ -35,3 +41,15 @@ def is_dim_unknown(shape):
     if -2 in shape:
         raise ValueError(f"'shape' should have only one -2 or no -2 at all but got ({shape}).")
     return False
+
+
+def split_to_slice_if_need(dtype, shape):
+    # check if size of data is too huge, and cut it to a smaller one.
+    num_element = functools.reduce(lambda x, y: x * y, shape, 1)
+    data_size = num_element * mstype.type_size_in_bytes(dtype)
+    emb_cache_size = int(os.getenv("MS_EMBEDDING_REMOTE_CACHE_MEMORY_SIZE", "100")) << 30
+    slice_num = 1
+    if data_size <= emb_cache_size:
+        return slice_num
+    slice_num = math.ceil(data_size / emb_cache_size)
+    return slice_num

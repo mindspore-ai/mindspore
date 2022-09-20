@@ -17,6 +17,7 @@ from __future__ import absolute_import
 
 __all__ = ['Tensor', 'RowTensor', 'SparseTensor', 'COOTensor', 'CSRTensor']
 
+import math
 import numbers
 import numpy as np
 
@@ -26,6 +27,7 @@ from mindspore.common.seed import get_seed
 from mindspore import context
 from mindspore import log as logger
 from mindspore.common import dtype as mstype
+from mindspore.common._utils import split_to_slice_if_need
 from mindspore.common._register_for_tensor import tensor_operator_registry
 from mindspore._c_expression import COOTensor as COOTensor_
 from mindspore._c_expression import CSRTensor as CSRTensor_
@@ -184,6 +186,9 @@ class Tensor(Tensor_):
         # index_of_parent_ will set to the index
         self.parent_tensor_ = None
         self.index_of_parent_ = None
+
+        self.slice_num_of_persistent_data_ = None
+        self.slice_shape_of_persistent_data_ = None
 
     @staticmethod
     def _set_default_dtype(input_data, dtype):
@@ -601,6 +606,79 @@ class Tensor(Tensor_):
         """
         self._init_check()
         return Tensor_.asnumpy(self)
+
+    def is_persistent_data(self):
+        """
+        Check if size of tensor is huge, and need save data to persistent storage.
+        If size of tensor is bigger then MS_EMBEDDING_REMOTE_CACHE_MEMORY_SIZE, it will
+        use persistent storage to save tensor data. And will spilt data to some slice.
+
+        Returns:
+            True or False
+
+        Examples:
+            >>> from mindspore import Tensor
+            >>> import numpy as np
+            >>> x = Tensor(np.array([2000000000, 256], dtype=np.float32))
+            >>> ret = x.is_persistent_data()
+            >>> print(ret)
+            True
+        """
+        return Tensor_.is_persistent_data(self)
+
+    def asnumpy_of_slice_persistent_data(self, param_key, slice_index):
+        """
+        Convert a slice of tensor data to numpy array. A slice is part of tensor data.
+        Returns as a NumPy ndarray. This slice tensor data and the returned ndarray
+        share the same underlying storage. Changes to self tensor will be reflected in the ndarray.
+
+        Returns:
+            A numpy ndarray which shares the same underlying storage with the slice of tensor data.
+
+        Examples:
+            >>> from mindspore import Tensor
+            >>> import numpy as np
+            >>> x = Tensor(np.array([2000000000, 256], dtype=np.float32))
+            >>> y = x.asnumpy_of_slice_persistent_data(0, 0)
+            >>> y[0] = 11
+            >>> print(x[0])
+            11
+        """
+        return Tensor_.asnumpy_of_slice_persistent_data(self, param_key, slice_index)
+
+    def slice_num_of_persistent_data(self):
+        """
+        Get slice num of a tensor which use persistent storage.
+
+        Returns:
+            Num of slice.
+
+        Examples:
+            >>> from mindspore import Tensor
+            >>> import numpy as np
+            >>> x = Tensor(np.array([2000000000, 256], dtype=np.float32))
+            >>> y = x.slice_num_of_persistent_data()
+            >>> print(y)
+            5
+        """
+        return self.slice_num_of_persistent_data_
+
+    def slice_shape_of_persistent_data(self):
+        """
+        Get slice shape of tensor after cut to slice size.
+
+        Returns:
+            The slice shape of tensor.
+
+        Examples:
+            >>> from mindspore import Tensor
+            >>> import numpy as np
+            >>> x = Tensor(np.array([2000000000, 256], dtype=np.float32))
+            >>> y = x.slice_shape_of_persistent_data()
+            >>> print(y)
+            [400000000, 256]
+        """
+        return self.slice_shape_of_persistent_data_
 
     def value(self):
         """
@@ -3706,9 +3784,18 @@ class Tensor(Tensor_):
 
         if shape is None:
             shape = self.shape
+        # At embedding cache scenes, we need limit the size of memory for tensor.
+        # And save out of range data to persistent storage to support TB-Level size of tensor.
+        data_shape = shape
+        slice_num_of_persistent_data = split_to_slice_if_need(self.dtype, shape)
+        if slice_num_of_persistent_data > 1:
+            slice_first_dim = math.ceil(shape[0] / slice_num_of_persistent_data)
+            data_shape[0] = slice_first_dim
+            self.slice_shape_of_persistent_data_ = data_shape
+            self.slice_num_of_persistent_data_ = slice_num_of_persistent_data
 
         try:
-            data = np.ndarray(shape, dtype=mstype.dtype_to_nptype(self.dtype))
+            data = np.ndarray(data_shape, dtype=mstype.dtype_to_nptype(self.dtype))
         except ValueError as e:
             msg = "Error shape={}".format(shape)
             logger.critical(msg)
@@ -3750,7 +3837,12 @@ class Tensor(Tensor_):
             size = get_group_size(opt_shard_group)
             data = np.split(data, size)[rank]
         self.init = None
-        self.assign_value(Tensor_.from_numpy(data))
+
+        # At embedding cache scenes. When size of tensor is out of range, we store data to persistent storage
+        if slice_num_of_persistent_data > 1:
+            self.assign_value(Tensor_.persistent_data_from_numpy(data, slice_num_of_persistent_data))
+        else:
+            self.assign_value(Tensor_.from_numpy(data))
         return self
 
     def to_tensor(self, slice_index=None, shape=None, opt_shard_group=None):

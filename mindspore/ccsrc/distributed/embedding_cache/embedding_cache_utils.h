@@ -41,6 +41,20 @@ static constexpr size_t kMaxThreadNum = 16;
 // Maximum number of feature ids processed per thread.
 static constexpr size_t kMaxIdsPerThread = 10000;
 
+static constexpr size_t kNumberBase = 10;
+
+static constexpr size_t kOneGBBitNum = 30;
+
+// The default cache size of one embedding parameter on role of server: 100GB.
+static constexpr size_t kDefaultEmbeddingRemoteCacheMemorySize = size_t(100) << 30;
+
+// The default cache size of one embedding parameter on role of worker: 10GB.
+static constexpr size_t kDefaultEmbeddingLocalCacheMemorySize = size_t(10) << 30;
+
+static constexpr auto kEnvEmbeddingRemoteCacheMemorySize = "MS_EMBEDDING_REMOTE_CACHE_MEMORY_SIZE";
+
+static constexpr auto kEnvEmbeddingLocalCacheMemorySize = "MS_EMBEDDING_LOCAL_CACHE_MEMORY_SIZE";
+
 using mindspore::kernel::Address;
 
 // The hash tables records information such as the dimension, memory address, and cache size of the embedding table
@@ -208,18 +222,26 @@ class BACKEND_EXPORT EmbeddingStoreManager {
  public:
   static EmbeddingStoreManager &GetInstance();
 
-  void Add(const std::string &name, std::shared_ptr<EmbeddingStore<float_t>>);
-  std::shared_ptr<EmbeddingStore<float_t>> Get(const std::string &name) const;
+  void Add(const std::string &name, std::shared_ptr<EmbeddingStore<size_t, float_t>> emb_store) {
+    embedding_stores_[name] = emb_store;
+  }
+  std::shared_ptr<EmbeddingStore<size_t, float_t>> Get(const std::string &name) { return embedding_stores_[name]; }
 
  private:
   EmbeddingStoreManager() = default;
   ~EmbeddingStoreManager() = default;
   DISABLE_COPY_AND_ASSIGN(EmbeddingStoreManager);
 
-  mindspore::HashMap<std::string, std::shared_ptr<EmbeddingStore<float_t>>> embedding_stores_;
+  mindspore::HashMap<std::string, std::shared_ptr<EmbeddingStore<size_t, float_t>>> embedding_stores_;
 };
+
+size_t GetEmbeddingRemoteCacheSize();
+
+size_t GetEmbeddingLocalCacheSize();
 }  // namespace distributed
 static distributed::EmbeddingCacheTableManager &embedding_cache_table_manager =
   distributed::EmbeddingCacheTableManager::GetInstance();
+
+static distributed::EmbeddingStoreManager &embedding_store_manager = distributed::EmbeddingStoreManager::GetInstance();
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_DISTRIBUTED_EMBEDDING_CACHE_EMBEDDING_CHCHE_UTILS_H_

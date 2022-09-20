@@ -23,6 +23,7 @@
 #include "utils/shape_utils.h"
 #include "utils/cache_embedding_hashmap_struct.h"
 #include "include/common/utils/python_adapter.h"
+#include "mindspore/ccsrc/distributed/embedding_cache/embedding_cache_utils.h"
 
 namespace mindspore {
 namespace tensor {
@@ -181,6 +182,8 @@ class TensorDataNumpy : public TensorData {
 
   bool is_from_numpy() const override { return true; }
 
+  const std::vector<ssize_t> &shape() const { return buffer_.shape; }
+
   /// To string.
   std::string ToString(const TypeId, const ShapeVector &, bool use_comma) const override {
     if (use_comma) {
@@ -205,6 +208,44 @@ class TensorDataNumpy : public TensorData {
 
   // The internal buffer.
   py::buffer_info buffer_;
+};
+
+// This class is uesd to get huge tensor data from persistent storage. Tensor data can be got by slice.
+// It used at extend embedding to persistent storage.
+class PersistentTensorDataNumpy : public TensorDataNumpy {
+ public:
+  explicit PersistentTensorDataNumpy(py::buffer_info &&buffer, int slice_num)
+      : TensorDataNumpy(std::move(buffer)), slice_num_(slice_num) {}
+
+  ~PersistentTensorDataNumpy() override = default;
+
+  // Fill data with a special slice tensor data. It will read data from persistent storage.
+  void FillSliceData(const uint32_t param_key, const int slice_index) {
+    if (slice_index >= slice_num_) {
+      MS_LOG(ERROR) << "Slice index is out of range, index: " << slice_index;
+      return;
+    }
+    auto emb_store = embedding_store_manager.Get(std::to_string(param_key));
+    MS_EXCEPTION_IF_NULL(emb_store);
+
+    size_t first_dim = (size_t)SliceDataShape()[0];
+    size_t start_key = slice_index * first_dim;
+    std::vector<size_t> keys(first_dim);
+    std::iota(keys.begin(), keys.end(), start_key);
+    if (!emb_store->Get(first_dim, keys.data(), this->data())) {
+      MS_LOG(EXCEPTION) << "Failed to get data from embedding store!";
+    }
+  }
+
+  const std::vector<ssize_t> &SliceDataShape() const { return this->shape(); }
+
+  // Get total silce num of tensor data.
+  int slice_num() const { return slice_num_; }
+
+  bool is_persistent_data() const override { return true; }
+
+ private:
+  int slice_num_{1};
 };
 
 TensorPtr TensorPy::MakeTensor(const py::array &input, const TypePtr &type_ptr) {
@@ -265,6 +306,26 @@ TensorPtr TensorPy::MakeTensorOfNumpy(const py::array &input) {
   ShapeVector shape(buf.shape.begin(), buf.shape.end());
   // Make a tensor with shared data with numpy array.
   auto tensor_data = std::make_shared<TensorDataNumpy>(std::move(buf));
+  return std::make_shared<Tensor>(dtype, shape, tensor_data);
+}
+
+/// Creates a Tensor from a numpy array without copy, use persistent tensor data
+TensorPtr TensorPy::MakePersistentDataTensorOfNumpy(const py::array &input, const py::int_ slice_num) {
+  // Check format.
+  if (!IsCContiguous(input)) {
+    MS_LOG(EXCEPTION) << "Array should be C contiguous.";
+  }
+  // Get input buffer info.
+  py::buffer_info buf = input.request();
+  // Get tensor dtype and check it.
+  auto dtype = GetDataType(buf);
+  if (dtype == TypeId::kTypeUnknown) {
+    MS_LOG(EXCEPTION) << "Unsupported data type!";
+  }
+  // Get tensor shape.
+  ShapeVector shape(buf.shape.begin(), buf.shape.end());
+  // Make a tensor with shared data with numpy array.
+  auto tensor_data = std::make_shared<PersistentTensorDataNumpy>(std::move(buf), static_cast<int>(slice_num));
   return std::make_shared<Tensor>(dtype, shape, tensor_data);
 }
 
@@ -403,6 +464,18 @@ py::array TensorPy::AsNumpy(const Tensor &tensor) {
   // Otherwise, create numpy array by buffer protocol.
   auto info = GetPyBufferInfo(tensor);
   return py::array(py::dtype(info), info.shape, info.strides, info.ptr, owner);
+}
+
+py::array TensorPy::AsNumpyOfSlice(const Tensor &tensor, const int32_t param_key, const int slice_index) {
+  py::object owner = py::cast(tensor.data_ptr());
+  auto data_numpy = std::dynamic_pointer_cast<PersistentTensorDataNumpy>(tensor.data_ptr());
+  MS_EXCEPTION_IF_NULL(data_numpy);
+
+  data_numpy->FillSliceData(param_key, slice_index);
+
+  // Return internal numpy array if tensor data is implemented base on it.
+  // And persistent tensor data is only implemented base on numpy array.
+  return data_numpy->py_array(owner);
 }
 
 static ShapeVector GetShapeFromTuple(const py::tuple &tuple) {
@@ -572,6 +645,21 @@ void RegMetaTensor(py::module *m) {
                                  >>> a = np.ones((2, 3))
                                  >>> t = mindspore.Tensor.from_numpy(a)
                              )mydelimiter")
+    .def("persistent_data_from_numpy", TensorPy::MakePersistentDataTensorOfNumpy, R"mydelimiter(
+                             Creates a Tensor from a numpy.ndarray without copy.
+                             Use persistent data tensor.
+
+                             Arg:
+                                 array (numpy.ndarray): The input ndarray.
+                                 slice_num (int): The slice num of persistent data tensor.
+
+                             Returns:
+                                 Tensor, tensor with shared data to input ndarray.
+
+                             Examples:
+                                 >>> a = np.ones((2, 3))
+                                 >>> t = mindspore.Tensor.persistent_data_from_numpy(a, 1)
+                             )mydelimiter")
     .def("asnumpy", TensorPy::SyncAsNumpy, R"mydelimiter(
                              Convert tensor to numpy.ndarray.
 
@@ -594,6 +682,26 @@ void RegMetaTensor(py::module *m) {
                              Examples:
                                  >>> data = mindspore.Tensor(np.ones((2, 3)))
                                  >>> data._flush_from_cache()
+                             )mydelimiter")
+    .def("is_persistent_data", &Tensor::is_persistent_data, R"mydelimiter(
+                             Check if tensor have persistent data.
+
+                             Returns:
+                                 Bool.
+
+                             Examples:
+                                 >>> data = mindspore.Tensor(np.ones((2, 3)))
+                                 >>> data.is_persistent_data()
+                             )mydelimiter")
+    .def("asnumpy_of_slice_persistent_data", TensorPy::AsNumpyOfSlice, R"mydelimiter(
+                             Convert tensor to numpy.ndarray of a slice.
+
+                             Returns:
+                                 numpy.ndarray.
+
+                             Examples:
+                                 >>> data = mindspore.Tensor(np.ones((2000000000, 256)))
+                                 >>> data.asnumpy_of_slice_persistent_data(0, 1)
                              )mydelimiter")
     .def("is_init", &Tensor::is_init, R"mydelimiter(
                              Get tensor init_flag.

@@ -104,6 +104,11 @@ class MS_CORE_API TensorData {
   /// \return Whether this tensor data is from numpy.
   virtual bool is_from_numpy() const { return false; }
 
+  /// \brief Get whether this tensor data have use persistent storage to save data.
+  ///
+  /// \return Whether this tensor data have use persistent storage to save data.
+  virtual bool is_persistent_data() const { return false; }
+
   /// \brief Whether the data are equal.
   ///
   /// \param[in] other Another TensorData.
@@ -722,6 +727,11 @@ class MS_CORE_API Tensor final : public MetaTensor {
   ///
   /// \return tensor compression type.
   TensorCompressionType compression_type() const { return compression_type_; }
+
+  /// \brief If tensor use persistent tensor data.
+  ///
+  /// \return if use persistent tenor data.
+  bool is_persistent_data() const;
 
   /// \brief Set tensor name.
   ///
