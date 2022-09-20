@@ -112,7 +112,7 @@ class Converter:
         >>> # Download the model package and extract it, model download link:
         >>> # https://download.mindspore.cn/model_zoo/official/lite/quick_start/micro/mobilenetv2.tar.gz
         >>> import mindspore_lite as mslite
-        >>> converter = mslite.Converter(mslite.FmkType.kFmkTypeTflite, "./mobilenetv2/mobilenet_v2_1.0_224.tflite",
+        >>> converter = mslite.Converter(mslite.FmkType.TFLITE, "./mobilenetv2/mobilenet_v2_1.0_224.tflite",
         ...                              "mobilenet_v2_1.0_224.tflite")
         >>> print(converter)
         config_file: ,
@@ -262,7 +262,7 @@ class Converter:
             >>> # Download the model package and extract it, model download link:
             >>> # https://download.mindspore.cn/model_zoo/official/lite/quick_start/micro/mobilenetv2.tar.gz
             >>> import mindspore_lite as mslite
-            >>> converter = mslite.Converter(mslite.FmkType.kFmkTypeTflite, "./mobilenetv2/mobilenet_v2_1.0_224.tflite",
+            >>> converter = mslite.Converter(mslite.FmkType.TFLITE, "./mobilenetv2/mobilenet_v2_1.0_224.tflite",
             ...                              "mobilenet_v2_1.0_224.tflite")
             >>> section = "common_quant_param"
             >>> config_info = {"quant_type":"WEIGHT_QUANT"}
@@ -285,7 +285,7 @@ class Converter:
             >>> # Download the model package and extract it, model download link:
             >>> # https://download.mindspore.cn/model_zoo/official/lite/quick_start/micro/mobilenetv2.tar.gz
             >>> import mindspore_lite as mslite
-            >>> converter = mslite.Converter(mslite.FmkType.kFmkTypeTflite, "./mobilenetv2/mobilenet_v2_1.0_224.tflite",
+            >>> converter = mslite.Converter(mslite.FmkType.TFLITE, "./mobilenetv2/mobilenet_v2_1.0_224.tflite",
             ...                              "mobilenet_v2_1.0_224.tflite")
             >>> section = "common_quant_param"
             >>> config_info_in = {"quant_type":"WEIGHT_QUANT"}
@@ -307,7 +307,7 @@ class Converter:
             >>> # Download the model package and extract it, model download link:
             >>> # https://download.mindspore.cn/model_zoo/official/lite/quick_start/micro/mobilenetv2.tar.gz
             >>> import mindspore_lite as mslite
-            >>> converter = mslite.Converter(mslite.FmkType.kFmkTypeTflite, "./mobilenetv2/mobilenet_v2_1.0_224.tflite",
+            >>> converter = mslite.Converter(mslite.FmkType.TFLITE, "./mobilenetv2/mobilenet_v2_1.0_224.tflite",
             ...                              "mobilenet_v2_1.0_224.tflite")
             >>> converter.converter()
             CONVERT RESULT SUCCESS:0
