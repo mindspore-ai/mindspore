@@ -63,6 +63,7 @@
 #include "tools/optimizer/fusion/transpose_matmul_fusion.h"
 #include "tools/optimizer/fusion/scale_activation_fusion.h"
 #include "tools/optimizer/fusion/scale_scale_fusion.h"
+#include "tools/optimizer/fusion/resize_fusion.h"
 #include "tools/optimizer/fusion/fullconnected_fusion.h"
 #include "tools/optimizer/fusion/fullconnected_add_fusion.h"
 #include "tools/optimizer/fusion/add_concat_activation_fusion.h"
@@ -235,6 +236,7 @@ int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const std::shared
                                     std::make_shared<opt::OnnxGeLUFusion>(),
                                     std::make_shared<opt::TfliteRelPosMultiHeadAttentionFusion>(),
                                     std::make_shared<opt::GLUFusion>(),
+                                    std::make_shared<opt::ResizeFusion>(),
                                     std::make_shared<opt::ConstFoldPass>(param->fmk_type, param->train_model),
                                     std::make_shared<opt::AffineFusion>(),
                                     std::make_shared<opt::AffineActivationFusion>(),
