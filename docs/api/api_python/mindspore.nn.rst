@@ -225,6 +225,7 @@ Dropout层
     mindspore.nn.DiceLoss
     mindspore.nn.FocalLoss
     mindspore.nn.HuberLoss
+    mindspore.nn.KLDivLoss
     mindspore.nn.L1Loss
     mindspore.nn.MSELoss
     mindspore.nn.MultiClassDiceLoss
