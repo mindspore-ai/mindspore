@@ -116,7 +116,9 @@ class MemoryProfiling {
   bool IsMemoryProfilingInitialized() const { return is_initialized_; }
   bool IsMemoryProfilingEnabled() const { return is_enabled_; }
   void SetMemoryProfilingInitialize(const std::string &profiling_options);
-  bool NeedSaveMemoryProfiling() { return (is_enabled_) && (graph_memory_.size() != 0) && (!has_save_memory_data_); }
+  bool NeedSaveMemoryProfiling() const {
+    return (is_enabled_) && (graph_memory_.size() != 0) && (!has_save_memory_data_);
+  }
   void StartMemoryProfiling();
   void StopMemoryProfiling();
 

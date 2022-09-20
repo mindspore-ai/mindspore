@@ -48,7 +48,8 @@ void PynativeProfiler::Init(const std::string &profiling_path, uint32_t, const s
   if (device_id.empty()) {
     rank_id_ = 0;
   } else {
-    rank_id_ = atoi(device_id.c_str());
+    int base = 10;
+    rank_id_ = static_cast<int32_t>(strtol(device_id.c_str(), nullptr, base));
   }
   WriteStartTime();
 }
@@ -78,12 +79,15 @@ void PynativeProfiler::WriteStartTime() {
 
 void PynativeProfiler::SaveProfileData() { WriteOpDetail(profile_data_path_); }
 
-void PynativeProfiler::ClearInst() { pynative_op_info_.clear(); }
+void PynativeProfiler::ClearInst() {
+  pynative_op_info_.clear();
+  thread_op_info_map_.clear();
+}
 
 void PynativeProfiler::OpDataProducerEnd() {}
 
 void PynativeProfiler::OpDataProducerBegin(AscendKernelRuntime *runtime_instance_, void *stream,
-                                           std::thread::id thread_id, const std::string &op_name,
+                                           const std::thread::id thread_id, const std::string &op_name,
                                            bool is_dynamic_shape) {
   if (enable_flag_ == false) {
     return;
@@ -113,13 +117,13 @@ void PynativeProfiler::OpDataProducerBegin(AscendKernelRuntime *runtime_instance
   } else {
     op_info.thread_index = thread_op_info_map_[thread_id].thread_index;
   }
-  std::unique_lock<std::shared_mutex> lock(op_map_mutex_);
+  std::unique_lock<std::shared_mutex> lock(pynatiave_op_map_mutex_);
   thread_op_info_map_[thread_id] = op_info;
 }
 
 void PynativeProfiler::StepProfilingEnable(const bool enable_flag) { enable_flag_ = enable_flag; }
 
-void PynativeProfiler::OpDataProducerEnd(std::thread::id thread_id, bool is_dynamic_shape) {
+void PynativeProfiler::OpDataProducerEnd(const std::thread::id thread_id, bool is_dynamic_shape) {
   if (enable_flag_ == false) {
     return;
   }
@@ -142,13 +146,12 @@ void PynativeProfiler::OpDataProducerEnd(std::thread::id thread_id, bool is_dyna
   op_info.start->ElapsedTime(&cost_time, op_info.end.get());
 
   op_info.duration = cost_time;
-  constexpr int64_t milli_second_ratio = 1000;
-  int64_t end_timestamp = GetRealTimeStamp();
+  int64_t end_timestamp = static_cast<int64_t>(GetRealTimeStamp());
   int64_t start_timestamp = end_timestamp - static_cast<int64_t>(cost_time * milli_second_ratio);
   double_t start_t = static_cast<double_t>(start_timestamp) / milli_second_ratio;
   op_info.start_timestamp = start_t;
 
-  std::unique_lock<std::shared_mutex> lock(op_map_mutex_);
+  std::unique_lock<std::shared_mutex> lock(pynatiave_op_map_mutex_);
   pynative_op_info_.push_back(op_info);
 }
 
@@ -181,7 +184,7 @@ void PynativeProfiler::WriteOpDetail(const std::string &out_path_dir) {
   MS_LOG(INFO) << "Write " << pynative_op_info_.size() << " op detail infos into file: " << file_path;
 }
 
-int PynativeProfiler::NewThreadIndex() { return thread_op_info_map_.size() + 1; }
+int PynativeProfiler::NewThreadIndex() const { return static_cast<int32_t>(thread_op_info_map_.size()) + 1; }
 }  // namespace ascend
 }  // namespace profiler
 }  // namespace mindspore
