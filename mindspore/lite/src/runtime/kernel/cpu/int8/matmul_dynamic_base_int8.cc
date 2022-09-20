@@ -278,9 +278,22 @@ int MatmulDynamicBaseInt8CPUKernel::Prepare() {
 
 int MatmulDynamicBaseInt8CPUKernel::ReSize() {
   auto x_shape = in_tensors_.at(0)->shape();
+  auto y_shape = in_tensors_.at(1)->shape();
   auto o_shape = out_tensors_.at(0)->shape();
   MS_ASSERT(o_shape.size() >= kSize2);
-  param_->row_ = o_shape[o_shape.size() - kSize2];
+  unsigned int i = 0;
+  param_->row_ = param_->a_transpose_ ? x_shape[x_shape.size() - kSize1] : x_shape[x_shape.size() - kSize2];
+  param_->batch = 1;
+  for (; i < x_shape.size() - kSize2; i++) {
+    if (x_shape[i] != y_shape[i]) {
+      break;
+    }
+    param_->batch *= x_shape[i];
+  }
+  for (; i < x_shape.size() - kSize2; i++) {
+    param_->row_ *= x_shape[i];
+  }
+
   param_->row_align_ = UP_ROUND(param_->row_, row_tile_);
   param_->deep_ = param_->a_transpose_ ? x_shape[x_shape.size() - kSize2] : x_shape[x_shape.size() - kSize1];
   param_->deep_align_ = UP_ROUND(param_->deep_, deep_tile_);
