@@ -44,11 +44,11 @@ void TensorTransform::InitTransforOperator() {
   if (inited_function_) {
     return;
   }
-  transform_operator_[RESHAPE] = [=](auto op_pair) { return ExtractReshapeOp(op_pair); };
-  transform_operator_[ALL_GATHER] = [=](auto op_pair) { return ExtractAllGatherOp(op_pair); };
-  transform_operator_[SPLIT] = [=](auto op_pair) { return ExtractSplitOp(op_pair); };
-  transform_operator_[CONCAT] = [=](auto op_pair) { return ExtractConcatOp(op_pair); };
-  transform_operator_[STRIDEDSLICE] = [=](auto op_pair) { return ExtractStridedSliceOp(op_pair); };
+  transform_operator_[RESHAPE] = [this](auto op_pair) { return ExtractReshapeOp(op_pair); };
+  transform_operator_[ALL_GATHER] = [this](auto op_pair) { return ExtractAllGatherOp(op_pair); };
+  transform_operator_[SPLIT] = [this](auto op_pair) { return ExtractSplitOp(op_pair); };
+  transform_operator_[CONCAT] = [this](auto op_pair) { return ExtractConcatOp(op_pair); };
+  transform_operator_[STRIDEDSLICE] = [this](auto op_pair) { return ExtractStridedSliceOp(op_pair); };
   inited_function_ = true;
 }
 
