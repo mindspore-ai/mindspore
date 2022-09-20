@@ -426,7 +426,7 @@ class OrderEnforcer {
 
   using RefLoads = std::map<std::string, std::vector<CNodePtr>>;
 
-  void AppendLoads(const RefLoads &loads_map, std::vector<CNodePtr> *need_insert_loads) {
+  void AppendLoads(const RefLoads &loads_map, std::vector<CNodePtr> *need_insert_loads) const {
     for (auto &refkey_load_special : loads_map) {
       auto &loads = refkey_load_special.second;
       // If loads size > 1, mean has exist in refkey_loads.
