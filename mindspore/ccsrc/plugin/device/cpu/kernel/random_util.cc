@@ -15,12 +15,12 @@
  */
 
 #include <random>
+#include "securec/include/securec.h"
 #include "mindspore/ccsrc/plugin/device/cpu/kernel/random_util.h"
 
 namespace mindspore {
 namespace kernel {
 namespace random {
-#define CHECK(X)
 constexpr double M_PI_ = 3.14159265358979323846;
 constexpr uint16_t kFp64ExpBias = 1023;
 constexpr uint16_t kFp64ManLen = 52;
@@ -33,7 +33,7 @@ uint64_t GuardedPhiloxRandom::New64() {
   return (*rng)();
 }
 
-void GuardedPhiloxRandom::Init(int64_t seed, int64_t seed2) {
+void GuardedPhiloxRandom::Init(uint64_t seed, uint64_t seed2) {
   if (seed == 0 && seed2 == 0) {
     seed = New64();
     seed2 = New64();
@@ -43,13 +43,13 @@ void GuardedPhiloxRandom::Init(int64_t seed, int64_t seed2) {
   initialized_ = true;
 }
 
-void GuardedPhiloxRandom::Init(random::MSPhiloxRandom::ResType counter, random::MSPhiloxRandom::Key key) {
+void GuardedPhiloxRandom::Init(const random::MSPhiloxRandom::ResType &counter, const random::MSPhiloxRandom::Key &key) {
   mutex_lock lock(mu_);
   generator_ = random::MSPhiloxRandom(counter, key);
   initialized_ = true;
 }
 
-random::MSPhiloxRandom GuardedPhiloxRandom::ReserveSamples128(int64_t samples) {
+random::MSPhiloxRandom GuardedPhiloxRandom::ReserveSamples128(uint64_t samples) {
   mutex_lock lock(mu_);
   auto local = generator_;
   generator_.Skip(samples);
@@ -62,7 +62,7 @@ double Uint64ToDouble(uint32_t x0, uint32_t x1) {
   const uint64_t mantissa = (static_cast<uint64_t>(m_hi) << kBitShift32) | m_lo;
   const uint64_t val = (ex << kFp64ManLen) | mantissa;
   double d_result;
-  memcpy(&d_result, &val, sizeof(val));
+  (void)memcpy_s(&d_result, sizeof(val), &val, sizeof(val));
   return d_result - 1.0;
 }
 

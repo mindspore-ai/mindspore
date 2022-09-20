@@ -70,7 +70,6 @@ int GammaCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), INPUT_NUM, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), OUTPUT_NUM, kernel_name_);
   int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
-
   if (ret != KRET_OK) {
     dyamic_shape_ = ret == KRET_UNKNOWN_OUT_SHAPE;
     return ret;
@@ -138,7 +137,7 @@ void GammaCpuKernelMod::Generate(const std::vector<AddressPtr> &inputs, const st
         for (int64_t sample_idx = output_idx % sample_shape_per_al;
              sample_idx < sample_shape_per_al && output_idx < limit_output; sample_idx++, output_idx++) {
           MSPhiloxRandom gen = rng;
-          gen.Skip(kReservedSamplesPerOutput * output_idx);
+          gen.Skip(static_cast<uint64_t>(kReservedSamplesPerOutput * output_idx));
           int64_t uniform_remaining = 0;
           UNIFORM(u);
           const double res = -log(1.0 - u);
@@ -155,8 +154,8 @@ void GammaCpuKernelMod::Generate(const std::vector<AddressPtr> &inputs, const st
         for (int64_t sample_idx = output_idx % sample_shape_per_al;
              sample_idx < sample_shape_per_al && output_idx < limit_output; sample_idx++, output_idx++) {
           MSPhiloxRandom gen = rng;
-          gen.Skip(kReservedSamplesPerOutput * output_idx);
-          int16_t norm_remaining = 0;
+          gen.Skip(static_cast<uint64_t>(kReservedSamplesPerOutput * output_idx));
+          size_t norm_remaining = 0;
           int16_t uniform_remaining = 0;
 
           while (true) {
@@ -175,7 +174,6 @@ void GammaCpuKernelMod::Generate(const std::vector<AddressPtr> &inputs, const st
 
             double u_max = 1 - 0.0331 * (x * x) * (x * x);
             double u_lmax = 0.5 * x * x + su * (1 - v + log(v));
-
             if ((u < u_max) || (log(u) < u_lmax)) {
               double res = su * v;
               if (alpha_less_than_one) {
@@ -191,7 +189,7 @@ void GammaCpuKernelMod::Generate(const std::vector<AddressPtr> &inputs, const st
     }
   };
 #undef UNIFORM
-  ParallelLaunchAutoSearch(DoWork, num_alphas * sample_shape_per_al, this, &parallel_search_info_);
+  ParallelLaunchAutoSearch(DoWork, static_cast<size_t>(num_alphas * sample_shape_per_al), this, &parallel_search_info_);
 }
 
 bool GammaCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,

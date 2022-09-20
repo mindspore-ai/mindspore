@@ -19,6 +19,7 @@
 
 #include <cstdint>
 #include <mutex>
+#include <string>
 #include "Eigen/Core"
 
 using mutex = std::mutex;
@@ -73,7 +74,7 @@ class MSPhiloxRandom {
     counter_[kIndex3] = static_cast<uint32_t>(seed_hi >> kMoveStepInBit);
   }
 
-  MSPhiloxRandom(ResType counter, Key key) : counter_(counter), key_(key) {}
+  MSPhiloxRandom(const ResType &counter, const Key &key) : counter_(counter), key_(key) {}
   ResType const &counter() const { return counter_; }
   Key const &key() const { return key_; }
 
@@ -155,7 +156,6 @@ class MSPhiloxRandom {
     (*key)[kIndex1] += kMSPhiloxW32B;
   }
 
- private:
   ResType counter_;
   Key key_;
 };
@@ -164,10 +164,10 @@ class GuardedPhiloxRandom {
  public:
   GuardedPhiloxRandom() : initialized_(false) {}
 
-  void Init(int64_t seed, int64_t seed2);
-  void Init(random::MSPhiloxRandom::ResType counter, random::MSPhiloxRandom::Key key);
+  void Init(uint64_t seed, uint64_t seed2);
+  void Init(const random::MSPhiloxRandom::ResType &counter, const random::MSPhiloxRandom::Key &key);
 
-  random::MSPhiloxRandom ReserveSamples128(int64_t samples);
+  random::MSPhiloxRandom ReserveSamples128(uint64_t samples);
 
   random::MSPhiloxRandom ReserveRandomOutputs(int64_t output_count, int multiplier) {
     int64_t conservative_sample_count = output_count * multiplier;
