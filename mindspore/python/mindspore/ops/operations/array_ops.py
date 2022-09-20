@@ -3358,10 +3358,6 @@ class StridedSlice(PrimitiveWithInfer):
         end_v, end_len = self._check_and_get_value(end, 'end')
         strides_v, strides_len = self._check_and_get_value(strides, 'strides')
 
-        if begin_len != strides_len or end_len != strides_len:
-            raise ValueError(f"For '{self.name}', 'begin', 'end' and 'strides' must be the same length, but got "
-                             f"'begin' length: {begin_len}, 'end' length: {end_len}, 'strides' length: {strides_len}.")
-
         if None in (begin_v['value'], end_v['value'], strides_v['value']) or is_shape_unknown(x['shape']):
             ret_shape = self._compute_dynamic_slicing_shape(x, begin_v, end_v, strides_v, begin_len)
             rets = {'shape': ret_shape,
@@ -3369,6 +3365,10 @@ class StridedSlice(PrimitiveWithInfer):
                     'value': None}
 
             return rets
+
+        if begin_len != strides_len or end_len != strides_len:
+            raise ValueError(f"For '{self.name}', 'begin', 'end' and 'strides' must be the same length, but got "
+                             f"'begin' length: {begin_len}, 'end' length: {end_len}, 'strides' length: {strides_len}.")
 
         ret_shape = self._compute_slicing_shape(x['shape'], begin_v['value'], end_v['value'], strides_v['value'])
         if all(ret_shape):
@@ -3647,7 +3647,7 @@ class StridedSlice(PrimitiveWithInfer):
         elif "shape_value" in slice_input:
             slice_special_value = slice_input["shape_value"]
         if slice_value is None:
-            validator.check_tensor_dtype_valid(name, slice_input['dtype'], [mstype.int64], self.name)
+            validator.check_tensor_dtype_valid(name, slice_input['dtype'], [mstype.int32, mstype.int64], self.name)
             slice_shape = slice_input['shape']
             if len(slice_shape) != 1:
                 raise ValueError(f"For '{self.name}', both the 'begins', 'ends', and 'strides' must be 1-D, "

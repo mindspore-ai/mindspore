@@ -20,6 +20,7 @@
 #include <vector>
 #include <memory>
 #include <map>
+#include <utility>
 
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
@@ -33,7 +34,9 @@ class StridedSliceCpuKernelMod : public NativeCpuKernelMod {
   ~StridedSliceCpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, workspace, outputs);
+  }
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
@@ -41,40 +44,12 @@ class StridedSliceCpuKernelMod : public NativeCpuKernelMod {
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
-  std::vector<KernelAttr> GetOpSupport() override {
-    static const std::vector<KernelAttr> support_list = {
-      KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-      KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-      KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-      KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-      KernelAttr()
-        .AddInputAttr(kNumberTypeBool)
-        .AddInputAttr(kNumberTypeInt64)
-        .AddInputAttr(kNumberTypeInt64)
-        .AddInputAttr(kNumberTypeInt64)
-        .AddOutputAttr(kNumberTypeBool),
-      KernelAttr()
-        .AddInputAttr(kNumberTypeInt32)
-        .AddInputAttr(kNumberTypeInt64)
-        .AddInputAttr(kNumberTypeInt64)
-        .AddInputAttr(kNumberTypeInt64)
-        .AddOutputAttr(kNumberTypeInt32),
-      KernelAttr()
-        .AddInputAttr(kNumberTypeFloat32)
-        .AddInputAttr(kNumberTypeInt64)
-        .AddInputAttr(kNumberTypeInt64)
-        .AddInputAttr(kNumberTypeInt64)
-        .AddOutputAttr(kNumberTypeFloat32),
-      KernelAttr()
-        .AddInputAttr(kNumberTypeFloat64)
-        .AddInputAttr(kNumberTypeInt64)
-        .AddInputAttr(kNumberTypeInt64)
-        .AddInputAttr(kNumberTypeInt64)
-        .AddOutputAttr(kNumberTypeFloat64)};
-    return support_list;
-  }
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
+  template <typename T, typename S = int64_t>
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<AddressPtr> &outputs);
   enum ParallelStrategy { kOnSplitAxis, kOnOuter };
   void InitSliceParam(const BaseOperatorPtr &base_operator, std::vector<int64_t> *begin, std::vector<int64_t> *end,
                       std::vector<int64_t> *stride);
@@ -83,6 +58,11 @@ class StridedSliceCpuKernelMod : public NativeCpuKernelMod {
   void ParallelRun(const uint8_t *input_addr, uint8_t *output_addr, int thread_num);
   common::Status RunTaskOnOuter(const uint8_t *input_addr, uint8_t *output_addr, int start_pos);
   common::Status RunTaskOnSplitAxis(const uint8_t *input_addr, uint8_t *output_addr, int start_pos);
+
+  using StridedSliceFunc = std::function<bool(StridedSliceCpuKernelMod *, const std::vector<AddressPtr> &,
+                                              const std::vector<AddressPtr> &, const std::vector<AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, StridedSliceFunc>> func_list_;
+  StridedSliceFunc kernel_func_;
 
   TypeId dtype_;
   int data_size_{4};
