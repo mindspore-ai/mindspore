@@ -74,3 +74,15 @@ def test_convert_attr_to_input():
     Expectation: success
     """
     utils.run_testcase('pass_convert_attr_to_input')
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_convert_resize_nearest_neighbor_x_dtype():
+    """
+    Description: test convert ReszieNearestNeighborX dytpe
+    Expectation: success
+    """
+    utils.run_testcase('pass_convert_resize_nearest_neighbor_x_dtype')

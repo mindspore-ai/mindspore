@@ -36,6 +36,45 @@ bool NeedConvert(const BaseRef &ref) {
   }
   return false;
 }
+
+const AnfNodePtr ConvertDataTypeForCNodeInput(const AnfNodePtr &node, size_t input_idx, TypeId dest_type) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto prev_node = common::AnfAlgo::GetPrevNodeOutput(cnode, input_idx - kIndex1);
+  auto infer_type = common::AnfAlgo::GetOutputInferDataType(prev_node.first, prev_node.second);
+  TypeId src_type(kNumberTypeInt64);
+  if (dest_type == infer_type) {
+    return nullptr;
+  } else if (infer_type == src_type) {
+    // Create cast primitive.
+    PrimitivePtr cast_prim = std::make_shared<Primitive>(prim::kPrimCast->name());
+    (void)cast_prim->AddAttr("dst_type", MakeValue(static_cast<size_t>(dest_type)));
+    (void)cast_prim->AddAttr("DstT", MakeValue(static_cast<size_t>(dest_type)));
+    (void)cast_prim->AddAttr("SrcT", MakeValue(static_cast<size_t>(src_type)));
+    // Create dest type node.
+    auto dest_type_ptr = TypeIdToType(dest_type);
+    auto dest_type_node = NewValueNode(dest_type_ptr);
+    dest_type_node->set_abstract(dest_type_ptr->ToAbstract());
+    // Insert Cast node.
+    auto func_graph = node->func_graph();
+    MS_EXCEPTION_IF_NULL(func_graph);
+    auto input_node = cnode->input(input_idx);
+    MS_EXCEPTION_IF_NULL(input_node);
+    auto cast = func_graph->NewCNode({NewValueNode(cast_prim), input_node, dest_type_node});
+    auto cast_abstract = input_node->abstract();
+    MS_EXCEPTION_IF_NULL(cast);
+    MS_EXCEPTION_IF_NULL(cast_abstract);
+    cast_abstract->set_type(dest_type_ptr);
+    cast->set_abstract(cast_abstract);
+    auto manager = func_graph->manager();
+    MS_EXCEPTION_IF_NULL(manager);
+    manager->SetEdge(node, input_idx, cast);
+  } else {
+    MS_LOG(EXCEPTION) << "Invalid data type: " << infer_type;
+  }
+  return node;
+}
 }  // namespace
 const BaseRef ConvertResizeNearestNeighborXDtype::DefinePattern() const {
   VarPtr convert = std::make_shared<CondVar>(NeedConvert);
@@ -51,6 +90,9 @@ const AnfNodePtr ConvertResizeNearestNeighborXDtype::Process(const FuncGraphPtr 
   MS_EXCEPTION_IF_NULL(cnode);
   auto input_node = cnode->input(kIndex2);
   MS_EXCEPTION_IF_NULL(input_node);
+  if (input_node->isa<CNode>()) {
+    return ConvertDataTypeForCNodeInput(node, kIndex2, kNumberTypeInt32);
+  }
   auto value_ptr = input_node->cast<ValueNodePtr>();
   MS_EXCEPTION_IF_NULL(value_ptr);
   auto input_value = value_ptr->value();
