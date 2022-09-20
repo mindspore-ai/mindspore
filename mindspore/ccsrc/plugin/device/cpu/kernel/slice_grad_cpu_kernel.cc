@@ -119,13 +119,11 @@ void SliceGradCpuKernelMod::ExpandAllMemberDims(size_t expand_dims) {
   }
 
   for (size_t i = 0; i < expand_dims; ++i) {
-    if (SignOfStride(i)) {
-      int ax = (end_[i] - begin_[i]) * SignOfStride(i);
-      if (ax < 0) {
-        ax = 0;
-      }
-      input_shape_.push_back(ax);
+    int ax = (end_[i] - begin_[i]) * SignOfStride(i);
+    if (ax < 0) {
+      ax = 0;
     }
+    input_shape_.push_back(ax);
   }
 }
 
