@@ -95,6 +95,11 @@ std::vector<int64_t> GetOutputShape(const PrimitivePtr &primitive, const std::ve
     out_w =
       DoubleToLong(std::floor((in_w + pad_list[kInputIndex4] + pad_list[kInputIndex5] - kernel_w) / stride_w + 1));
   }
+  if (IsDynamic(in_shape)) {
+    out_d = in_d == UNKNOWN_DIM ? UNKNOWN_DIM : out_d;
+    out_h = in_h == UNKNOWN_DIM ? UNKNOWN_DIM : out_h;
+    out_w = in_w == UNKNOWN_DIM ? UNKNOWN_DIM : out_w;
+  }
   std::vector<int64_t> output_shape = {in_shape[0], in_shape[1], out_d, out_h, out_w};
   return output_shape;
 }
@@ -139,8 +144,9 @@ abstract::ShapePtr AvgPool3DInferShape(const PrimitivePtr &primitive, const std:
   }
   auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];
   // ToSupport Dynamic rank
+  constexpr int64_t k5DOuputDims = 5;
   if (IsDynamicRank(in_shape)) {
-    return std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>(k5DOuputDims, UNKNOWN_DIM));
   }
   (void)CheckAndConvertUtils::CheckInteger("x_rank", SizeToLong(in_shape.size()), kEqual, k5DInputDims, op_name);
 
@@ -171,7 +177,8 @@ abstract::ShapePtr AvgPool3DInferShape(const PrimitivePtr &primitive, const std:
 
   std::vector<int64_t> out_shape = GetOutputShape(primitive, in_shape, kernel_d, kernel_h, kernel_w, stride_d, stride_h,
                                                   stride_w, new_pad_list, ceil_mode);
-  if (std::any_of(out_shape.begin(), out_shape.end(), [](int64_t shp_v) { return shp_v <= 0; })) {
+  if (!IsDynamic(in_shape) &&
+      std::any_of(out_shape.begin(), out_shape.end(), [](int64_t shp_v) { return shp_v <= 0; })) {
     MS_LOG(EXCEPTION) << "For '" << primitive->name()
                       << "', output shape's all elements must be positive, but got shape: " << out_shape << ".";
   }

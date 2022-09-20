@@ -66,6 +66,22 @@ bool AvgPool3DGrad::get_count_include_pad() const { return GetValue<bool>(GetAtt
 
 int64_t AvgPool3DGrad::get_divisor_override() const { return GetValue<int64_t>(GetAttr(kDivisorOverride)); }
 
+void GetTensorIntValue(const abstract::AbstractBasePtr &base, std::vector<int64_t> *value,
+                       const std::string &tensor_name) {
+  MS_EXCEPTION_IF_NULL(base);
+  auto base_v = base->BuildValue();
+  MS_EXCEPTION_IF_NULL(base_v);
+  if (base->isa<abstract::AbstractTensor>()) {
+    if (base_v->isa<tensor::Tensor>()) {
+      *value = CheckAndConvertUtils::CheckTensorIntValue(tensor_name, base_v, kNameAvgPool3DGrad);
+      (void)CheckAndConvertUtils::CheckPositiveVector(tensor_name, *value, kNameAvgPool3DGrad);
+    } else {
+      constexpr int64_t k5DInputDims = 5;
+      value->assign(k5DInputDims, UNKNOWN_DIM);
+    }
+  }
+}
+
 abstract::ShapePtr AvgPool3DGradInferShape(const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
@@ -79,7 +95,9 @@ abstract::ShapePtr AvgPool3DGradInferShape(const PrimitivePtr &primitive,
   size_t grad_index = input_args.size() - 1;
   auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[grad_index]->GetShapeTrack())[kShape];
   constexpr int64_t k5DInputDims = 5;
-  (void)CheckAndConvertUtils::CheckInteger("grad_rank", SizeToLong(grad_shape.size()), kEqual, k5DInputDims, op_name);
+  if (!IsDynamicRank(grad_shape)) {
+    (void)CheckAndConvertUtils::CheckInteger("grad_rank", SizeToLong(grad_shape.size()), kEqual, k5DInputDims, op_name);
+  }
   std::vector<int64_t> origin_input_size;
   if (SizeToLong(input_args.size()) == input_num) {
     auto shape_attr = primitive->GetAttr("origin_input_shape");
@@ -88,8 +106,10 @@ abstract::ShapePtr AvgPool3DGradInferShape(const PrimitivePtr &primitive,
   } else {
     if (input_args[0]->isa<abstract::AbstractTuple>()) {  // origin_size is tuple
       origin_input_size = GetValue<std::vector<int64_t>>(input_args[0]->BuildValue());
+    } else if (input_args[0]->isa<abstract::AbstractTensor>()) {
+      GetTensorIntValue(input_args[0], &origin_input_size, "origin_input_shape");
     } else {
-      MS_LOG(EXCEPTION) << "For '" << op_name << "', the first input data size must be a tuple, but got: "
+      MS_LOG(EXCEPTION) << "For '" << op_name << "', the first input data size must be a tuple or tensor, but got: "
                         << input_args[0]->BuildShape()->ToString() << ".";
     }
   }
@@ -125,6 +145,7 @@ AbstractBasePtr AvgPool3DGradInfer(const abstract::AnalysisEnginePtr &, const Pr
   return res;
 }
 
+REGISTER_HOST_DEPENDS(kNameAvgPool3DGrad, {0});
 REGISTER_PRIMITIVE_EVAL_IMPL(AvgPool3DGrad, prim::kPrimAvgPool3DGrad, AvgPool3DGradInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

@@ -69,6 +69,7 @@ class PoolingGradGpuKernelMod : public NativeGpuKernelMod {
   void SetPad3D();
   void SetPoolingMode();
   std::vector<int64_t> GetEdgeKernelSize();
+  void SetFirstInputIndex(size_t input_num);
   using PoolingGradFunc =
     std::function<bool(PoolingGradGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
                        const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
@@ -118,6 +119,9 @@ class PoolingGradGpuKernelMod : public NativeGpuKernelMod {
   size_t output_size_{0};
   size_t workspace_size_{0};
   void *cuda_stream_{nullptr};
+  // For the dynamic shape of AvgPool3DGrad with two input, index of first valid input data is 1,
+  // and in other cases, the index is 0.
+  size_t first_input_index_{0};
 };
 }  // namespace kernel
 }  // namespace mindspore

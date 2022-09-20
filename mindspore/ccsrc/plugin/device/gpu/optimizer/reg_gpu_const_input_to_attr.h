@@ -22,7 +22,6 @@ namespace mindspore::opt {
 #define RER_GPU_STATIC_CONST_TO_ATTR(op_name, ...) RER_CONST_TO_ATTR_LIST(op_name, kGPUDevice, false, __VA_ARGS__)
 #define RER_GPU_DYNAMIC_CONST_TO_ATTR(op_name, ...) RER_CONST_TO_ATTR_LIST(op_name, kGPUDevice, true, __VA_ARGS__)
 
-RER_GPU_DYNAMIC_CONST_TO_ATTR(kAvgPool3DGradOpName, 0);
 RER_GPU_DYNAMIC_CONST_TO_ATTR(kCastOpName, 1);
 RER_GPU_DYNAMIC_CONST_TO_ATTR(kConcatOpName, 0);
 RER_GPU_DYNAMIC_CONST_TO_ATTR(kGatherOpName, 2);

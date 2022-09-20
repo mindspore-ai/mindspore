@@ -59,7 +59,16 @@ class PoolingGradCpuKernelMod : public MKLCpuKernelMod {
            .AddInputAttr(kNumberTypeFloat32)
            .AddInputAttr(kNumberTypeFloat32)
            .AddOutputAttr(kNumberTypeFloat32)}}},
-      {kAvgPool3DGrad, {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)}}},
+      {kAvgPool3DGrad,
+       {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)},
+        {KernelAttr()
+           .AddInputAttr(kNumberTypeInt32)
+           .AddInputAttr(kNumberTypeFloat32)
+           .AddOutputAttr(kNumberTypeFloat32)},
+        {KernelAttr()
+           .AddInputAttr(kNumberTypeInt64)
+           .AddInputAttr(kNumberTypeFloat32)
+           .AddOutputAttr(kNumberTypeFloat32)}}},
       {kMaxPoolGrad,
        {{KernelAttr()
            .AddInputAttr(kNumberTypeFloat32)
