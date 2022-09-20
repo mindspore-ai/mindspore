@@ -15,10 +15,10 @@
 
 """Implementation for internal polymorphism `add` operations."""
 
+from mindspore.ops.composite.multitype_ops._constexpr_utils import make_tensor, check_equal
 from . import _compile_utils as utils
 from ...composite import base
 from ... import functional as F
-from ...composite.multitype_ops._constexpr_utils import make_tensor, check_equal
 from ....common import CSRTensor, COOTensor
 
 

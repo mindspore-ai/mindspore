@@ -1152,7 +1152,6 @@ def format_tuple_indices(tuple_indices):
 
 def remove_expanded_dims(tuple_index, data_shape, value):
     """Removes expanded dimensions in tuple_index and value."""
-    op_name = const_utils.TENSOR_SETITEM
     not_expanded_dim = ()
     shapes = ()
     has_true = False
@@ -1191,7 +1190,7 @@ def remove_expanded_dims(tuple_index, data_shape, value):
         else:
             const_utils.raise_index_error('invalid index type')
 
-    broadcast_shape = const_utils.generate_broadcast_shape(shapes, op_name)
+    broadcast_shape = const_utils.generate_broadcast_shape(shapes, const_utils.TENSOR_SETITEM)
     if has_false:
         if F.shape_mul(broadcast_shape) != 1:
             const_utils.raise_index_error('unable to broadcast indices')
