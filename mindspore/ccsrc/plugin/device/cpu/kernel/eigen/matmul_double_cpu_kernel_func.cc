@@ -17,6 +17,8 @@
 #include "plugin/device/cpu/kernel/eigen/matmul_double_cpu_kernel_func.h"
 #include <Eigen/Dense>
 #include <vector>
+#include <map>
+#include "mindspore/core/ops/mat_mul.h"
 
 namespace mindspore {
 namespace kernel {
@@ -47,17 +49,28 @@ inline void matmul_b(const MatrixBase<Derived> &A, double *b_addr, double *outpu
   }
 }
 
-void MatmulDoubleCpuKernelFunc::InitFunc(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  std::vector<int64_t> a_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  std::vector<int64_t> b_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-  std::vector<int64_t> out_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
+void MatmulDoubleCpuKernelFunc::InitFunc(const BaseOperatorPtr &base_operator,
+                                         const std::vector<KernelTensorPtr> &inputs,
+                                         const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->name();
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::MatMul>(base_operator);
+  if (!kernel_ptr) {
+    MS_LOG(ERROR) << "cast MatMul ops failed!";
+  }
+
+  trans_a_ = kernel_ptr->get_transpose_a();
+  trans_b_ = kernel_ptr->get_transpose_b();
+}
+
+int MatmulDoubleCpuKernelFunc::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                      const std::vector<KernelTensorPtr> &outputs,
+                                      const std::map<uint32_t, tensor::TensorPtr> &) {
+  auto a_shape = inputs[kIndex0]->GetShapeVector();
+  auto b_shape = inputs[kIndex1]->GetShapeVector();
+  auto out_shape = outputs[kIndex0]->GetShapeVector();
   if (a_shape.size() != kAMatrixDimNum || b_shape.size() != kAMatrixDimNum || out_shape.size() != kAMatrixDimNum) {
     MS_LOG(EXCEPTION) << "The tensor rank of MatMul must be equal to 2.";
   }
-  trans_a_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, TRANSPOSE_A);
-  trans_b_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, TRANSPOSE_B);
 
   a_row_ = static_cast<size_t>(a_shape[kDim0]);
   a_col_ = static_cast<size_t>(a_shape[kDim1]);
@@ -65,6 +78,7 @@ void MatmulDoubleCpuKernelFunc::InitFunc(const CNodePtr &kernel_node) {
   b_col_ = static_cast<size_t>(b_shape[kDim1]);
   out_row_ = static_cast<size_t>(out_shape[kDim0]);
   out_col_ = static_cast<size_t>(out_shape[kDim1]);
+  return KRET_OK;
 }
 
 bool MatmulDoubleCpuKernelFunc::RunFunc(const std::vector<kernel::AddressPtr> &inputs,

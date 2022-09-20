@@ -25,6 +25,7 @@
 #include "utils/ms_context.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/src/helper.h"
+#include "ops/mat_mul.h"
 
 namespace mindspore {
 namespace ops {
@@ -160,22 +161,22 @@ TypePtr BatchMatmulInferType(const PrimitivePtr &prim, const std::vector<Abstrac
 }
 }  // namespace
 
-MIND_API_OPERATOR_IMPL(BatchMatmul, BaseOperator);
-void BatchMatmul::Init(bool transpose_a, bool transpose_b) {
+MIND_API_OPERATOR_IMPL(BatchMatMul, MatMul);
+void BatchMatMul::Init(bool transpose_a, bool transpose_b) {
   set_transpose_a(transpose_a);
   set_transpose_b(transpose_b);
 }
 
-void BatchMatmul::set_transpose_a(bool transpose_a) { (void)AddAttr(kTransposeA, api::MakeValue(transpose_a)); }
+void BatchMatMul::set_transpose_a(bool transpose_a) { (void)AddAttr(kTransposeA, api::MakeValue(transpose_a)); }
 
-void BatchMatmul::set_transpose_b(bool transpose_b) { (void)AddAttr(kTransposeB, api::MakeValue(transpose_b)); }
+void BatchMatMul::set_transpose_b(bool transpose_b) { (void)AddAttr(kTransposeB, api::MakeValue(transpose_b)); }
 
-bool BatchMatmul::get_transpose_a() const {
+bool BatchMatMul::get_transpose_a() const {
   auto value_ptr = GetAttr(kTransposeA);
   return GetValue<bool>(value_ptr);
 }
 
-bool BatchMatmul::get_transpose_b() const {
+bool BatchMatMul::get_transpose_b() const {
   auto value_ptr = GetAttr(kTransposeB);
   return GetValue<bool>(value_ptr);
 }
@@ -193,6 +194,6 @@ AbstractBasePtr BatchMatmulInfer(const abstract::AnalysisEnginePtr &, const Prim
   auto infer_shape = BatchMatmulInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(BatchMatmul, prim::kPrimBatchMatMul, BatchMatmulInfer, nullptr, true);
+REGISTER_PRIMITIVE_EVAL_IMPL(BatchMatMul, prim::kPrimBatchMatMul, BatchMatmulInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

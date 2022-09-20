@@ -1271,7 +1271,7 @@ class LpNorm(Primitive):
         self.init_prim_io_names(inputs=['input'], outputs=['output'])
 
 
-class MatMul(PrimitiveWithCheck):
+class MatMul(Primitive):
     r"""
     Multiplies matrix `a` and matrix `b`.
 
@@ -1322,35 +1322,8 @@ class MatMul(PrimitiveWithCheck):
         cls_name = self.name
         validator.check_value_type("transpose_a", transpose_a, [bool], cls_name)
         validator.check_value_type("transpose_b", transpose_b, [bool], cls_name)
-
-    def check_shape_size(self, x1, x2):
-        if len(x1) != 2 or len(x2) != 2:
-            raise ValueError(f"For '{self.name}', inputs 'x', 'y' should have the same dimension size and "
-                             f"be equal to 2, but got the size of 'x': ({len(x1)}) and the size of 'y': ({len(x2)}).")
-
-    def check_shape(self, x1, x2):
-        self.check_shape_size(x1, x2)
-        cls_name = self.name
-
-        # validate whether last two dims satisfying matrix multiply
-        x1_last = x1[-2:]
-        x2_last = x2[-2:]
-        x1_col = x1_last[not self.transpose_a]
-        x2_row = x2_last[self.transpose_b]
-        if np.all(np.array(x1) != -1) and np.all(np.array(x2) != -1):
-            if x1_col != x2_row:
-                raise ValueError(f"For '{cls_name}', the input dimensions must be equal, but got 'x1_col': {x1_col} "
-                                 f"and 'x2_row': {x2_row}. And 'x' shape {x1}(transpose_a={self.transpose_a}), "
-                                 f"'y' shape {x2}(transpose_b={self.transpose_b}).")
-        # set attribute
         self.add_prim_attr('transpose_x1', self.transpose_a)
         self.add_prim_attr('transpose_x2', self.transpose_b)
-
-    def check_dtype(self, x1, x2):
-        args = {"x1": x1, "x2": x2}
-        validator.check_tensors_dtypes_same_and_valid(args,
-                                                      mstype.float_type + mstype.int_type + (mstype.complex64,),
-                                                      self.name)
 
 
 class BatchMatMul(Primitive):
