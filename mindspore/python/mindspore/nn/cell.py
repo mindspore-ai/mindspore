@@ -583,7 +583,7 @@ class Cell(Cell_):
             kwargs = bound_arguments.kwargs
 
         # Run in Graph mode.
-        if context._get_mode() == context.GRAPH_MODE:
+        if os.getenv("MS_JIT") != '0' and context._get_mode() == context.GRAPH_MODE:
             self._check_construct_args(*args, **kwargs)
             if self._hook_fn_registered():
                 logger.warning(f"For 'Cell', it's not support hook function in graph mode. If you want to use hook "
