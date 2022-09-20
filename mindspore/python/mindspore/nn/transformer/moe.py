@@ -16,6 +16,7 @@
 Note: Mixture of Expert (MoE) structure. This is an experimental interface that is subject to change or deletion.
 """
 from __future__ import absolute_import
+from __future__ import division
 
 import math
 import numpy as np

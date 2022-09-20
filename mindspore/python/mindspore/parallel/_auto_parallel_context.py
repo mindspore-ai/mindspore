@@ -61,16 +61,16 @@ class _AutoParallelContext:
     _instance = None
     _instance_lock = threading.Lock()
 
-    def __init__(self):
-        self._context_handle = AutoParallelContext.get_instance()
-        self._dataset_strategy_using_str = True
-
     def __new__(cls):
         if cls._instance is None:
             cls._instance_lock.acquire()
             cls._instance = object.__new__(cls)
             cls._instance_lock.release()
         return cls._instance
+
+    def __init__(self):
+        self._context_handle = AutoParallelContext.get_instance()
+        self._dataset_strategy_using_str = True
 
     def check_context_handle(self):
         """
@@ -937,20 +937,20 @@ class _AutoParallelContext:
         return group
 
 
-_auto_parallel_context = None
+_AUTO_PARALLEL_CONTEXT = None
 
 
 def auto_parallel_context():
     """
-    Get the global _auto_parallel_context, if it is not created, create a new one.
+    Get the global _AUTO_PARALLEL_CONTEXT, if it is not created, create a new one.
 
     Returns:
         _AutoParallelContext, the global auto parallel context.
     """
-    global _auto_parallel_context
-    if _auto_parallel_context is None:
-        _auto_parallel_context = _AutoParallelContext()
-    return _auto_parallel_context
+    global _AUTO_PARALLEL_CONTEXT
+    if _AUTO_PARALLEL_CONTEXT is None:
+        _AUTO_PARALLEL_CONTEXT = _AutoParallelContext()
+    return _AUTO_PARALLEL_CONTEXT
 
 
 _set_auto_parallel_context_func_map = {

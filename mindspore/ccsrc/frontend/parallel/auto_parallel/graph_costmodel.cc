@@ -1413,7 +1413,7 @@ void CostGraph::CreateTriangleEliminationCostList(const OperatorInfoPtr &elimi_o
 }
 
 OperatorInfoPtr CostGraph::EliminationTriangle(const OperatorInfoPtr &elimi_op,
-                                               const std::shared_ptr<Edge> &edge_left_right) {
+                                               const std::shared_ptr<Edge> &edge_left_right) const {
   MS_EXCEPTION_IF_NULL(edge_left_right);
   MS_EXCEPTION_IF_NULL(elimi_op);
   MS_LOG(INFO) << "Now eliminating triangle: " << elimi_op->name() << ".";
@@ -1583,7 +1583,7 @@ void CostGraph::CreateStarEliminationCostList(std::vector<std::shared_ptr<Edge>>
   recursive(1);
 }
 
-std::vector<std::shared_ptr<Edge>> CostGraph::EliminationStar(const OperatorInfoPtr &merged_op) {
+std::vector<std::shared_ptr<Edge>> CostGraph::EliminationStar(const OperatorInfoPtr &merged_op) const {
   MS_EXCEPTION_IF_NULL(merged_op);
   auto succ_edges = merged_op->GetAliveSuccEdges();
   MS_LOG(INFO) << "Now eliminating star centered at: " << merged_op->name() << ".";

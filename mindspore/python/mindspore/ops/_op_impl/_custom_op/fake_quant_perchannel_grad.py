@@ -115,7 +115,6 @@ def fake_quant_perchannel_grad_param(x, min_val, max_val, channel_axis,
     """Get and check FakeQuantPerChannelGrad parameters"""
     x_shape = x.get("shape")
     x_shape_ = x.get("ori_shape")
-    x_format = x.get("format")
     x_dtype = x.get("dtype")
     min_shape = min_val.get("ori_shape")
     min_dtype = min_val.get("dtype")

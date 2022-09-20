@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """load tensor and combine tensor"""
+from __future__ import division
+from __future__ import absolute_import
 import numpy as np
 from mindspore.common.tensor import Tensor
 from mindspore.communication.management import get_rank, get_group_size
@@ -295,9 +297,9 @@ def _reshape_param_data(param_data, dev_mat, tensor_map):
         tensor_slices_new_inner = []
         for j in range(ele_count):
             new_tensor = tensor_slices_new[j * tensor_strategy[dim_len - 1 - i]]
-            for l in range(j * tensor_strategy[dim_len - 1 - i] + 1,
+            for k in range(j * tensor_strategy[dim_len - 1 - i] + 1,
                            (j + 1) * tensor_strategy[dim_len - 1 - i]):
-                new_tensor = np.concatenate((new_tensor, tensor_slices_new[l]), axis=dim_len - 1 - i)
+                new_tensor = np.concatenate((new_tensor, tensor_slices_new[k]), axis=dim_len - 1 - i)
 
             tensor_slices_new_inner.insert(len(tensor_slices_new_inner), np.array(new_tensor))
         tensor_slices_new = tensor_slices_new_inner
