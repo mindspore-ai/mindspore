@@ -44,8 +44,7 @@ int ReduceTensorRT::AddInnerOp(TensorRTContext *ctx) {
   nvinfer1::ITensor *reduce_input = input(ctx, 0).trt_tensor_;
   MS_LOG(DEBUG) << "origin input " << GetTensorFormat(input(ctx, 0));
   if (input(ctx, 0).trt_tensor_->getDimensions().nbDims == DIMENSION_4D && !input(ctx, 0).same_format_ &&
-      !in_tensors_[0].Shape().empty() &&
-      !SameDims(input(ctx, 0).trt_tensor_->getDimensions(), in_tensors_[0].Shape())) {
+      !in_tensors_[0].Shape().empty()) {
     if (input(ctx, 0).format_ == Format::NCHW) {
       // NCHW->NHWC
       nvinfer1::IShuffleLayer *transpose_layer = NCHW2NHWC(ctx, *input(ctx, 0).trt_tensor_);
