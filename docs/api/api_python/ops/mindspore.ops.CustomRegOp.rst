@@ -94,7 +94,7 @@ mindspore.ops.CustomRegOp
         指定当前注册信息所对应的target。
 
         参数：
-            - **target** (str) - 表示当前注册信息所对应的target，可以是["Ascend", "GPU", "CPU"]之一。 对于同一个 :class:`mindspore.ops.Custom` 的 `func` 参数，其在不同的target上可能支持不同的数据类型和数据格式，使用此参数指定注册信息用于哪个target。如果该值为None，它将在 :class:`mindspore.ops.Custom` 内部被自动推断。默认值：None。
+            - **target** (str) - 表示当前注册信息所对应的target，可以是["Ascend", "GPU", "CPU"]之一。对于同一个 :class:`mindspore.ops.Custom` 的 `func` 参数，其在不同的target上可能支持不同的数据类型和数据格式，使用此参数指定注册信息用于哪个target。如果该值为None，它将在 :class:`mindspore.ops.Custom` 内部被自动推断。默认值：None。
 
         异常：
             - **TypeError** - `target` 既不是str也不是None。

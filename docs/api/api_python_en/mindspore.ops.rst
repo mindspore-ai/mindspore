@@ -316,7 +316,6 @@ Reduction Operator
     mindspore.ops.ReduceMin
     mindspore.ops.ReduceProd
     mindspore.ops.ReduceSum
-    mindspore.ops.ReduceStd
 
 Comparison Operator
 ^^^^^^^^^^^^^^^^^^^
