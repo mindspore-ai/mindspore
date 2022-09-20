@@ -40,7 +40,8 @@ from mindspore._c_expression import GraphExecutor_, Tensor, MetaTensor, CSRTenso
     _ms_memory_recycle
 from mindspore.parallel._tensor import _load_tensor_by_layout
 from mindspore.parallel._ps_context import _is_role_pserver, _is_role_sched, _enable_distributed_mindrt
-from mindspore.parallel._utils import _check_full_batch, _get_parameter_broadcast, _get_pipeline_stages
+from mindspore.parallel._utils import _check_full_batch, _get_parameter_broadcast, _get_pipeline_stages, \
+    _is_pynative_parallel
 from mindspore._checkparam import Validator
 from mindspore.common._utils import is_shape_unknown
 from mindspore.common.mutable import mutable
@@ -291,6 +292,9 @@ class _MindsporeFunctionExecutor:
     def _parallel_process_for_ms_function(self, phase):
         """Set parameter and optimizer states data according to sliced shape for shard"""
         obj = self.shard_parent_obj if self.obj is None else self.obj
+        if not isinstance(obj, ms.nn.Cell):
+            return
+
         obj.parameter_layout_dict = self._graph_executor.get_parameter_layout(phase)
         obj.parallel_parameter_name_list = self._graph_executor.get_parallel_parameter_name_list(phase)
         replace = obj.init_parameters_data(auto_parallel_mode=True)
@@ -342,7 +346,7 @@ class _MindsporeFunctionExecutor:
                         str(self.fn.__code__.co_firstlineno) + '.' + str(id(self.fn))
         if _pynative_executor.grad_flag():
             generate_name = generate_name + ".grad"
-        if is_pynative_parallel():
+        if _is_pynative_parallel():
             generate_name = generate_name[:generate_name.rfind(str(id(self.fn)))] + str(id(self.shard_parent_obj))
 
         # Add key with obj
@@ -383,11 +387,11 @@ class _MindsporeFunctionExecutor:
             is_compile = self._graph_executor.compile(self.obj, compile_args, phase, True)
 
         # init sliced parameter and optimizer state
-        if is_pynative_parallel() and self.fn.__name__ == _PYNATIVE_PARRALLEL_FUNC_NAME:
+        if _is_pynative_parallel() and self.fn.__name__ == _PYNATIVE_PARRALLEL_FUNC_NAME:
             self._parallel_process_for_ms_function(phase)
 
         # init the rest optimizer states
-        if is_pynative_parallel() and _pynative_executor.get_optimizer():
+        if _is_pynative_parallel() and _pynative_executor.get_optimizer():
             opt_states = _pynative_executor.get_optimizer().trainable_params()
             self._optimizer_state_init(opt_states)
 
@@ -588,7 +592,7 @@ def ms_function(fn=None, input_signature=None, hash_args=None, jit_config=None):
             if args and not isinstance(args[0], PythonTensor) and hasattr(args[0], func.__name__):
                 process_obj = args[0]
             # only the function or cell instance wrapped by shard will fall into this branch
-            if is_pynative_parallel() and func.__name__ == _PYNATIVE_PARRALLEL_FUNC_NAME:
+            if _is_pynative_parallel() and func.__name__ == _PYNATIVE_PARRALLEL_FUNC_NAME:
                 process_obj = args[0]
                 args = args[1:]
             out = _MindsporeFunctionExecutor(func, hash_obj, input_signature, process_obj, jit_config)(*args)
@@ -663,13 +667,6 @@ def _function_forbid_reuse(func):
         raise TypeError(f'Decorator _function_forbid_reuse can only be used for function type, but got {func}.')
     setattr(func, '__function_forbid_reuse__', True)
     return func
-
-
-def is_pynative_parallel():
-    run_mode = context.get_context('mode')
-    parallel_mode = context.get_auto_parallel_context('parallel_mode')
-    return run_mode == context.PYNATIVE_MODE and parallel_mode in (
-        context.ParallelMode.SEMI_AUTO_PARALLEL, context.ParallelMode.AUTO_PARALLEL)
 
 
 def _get_auto_split_param_names(parameter_layout_dict):
