@@ -13,13 +13,13 @@
 # limitations under the License.
 # ============================================================================
 """Cell of auto parallel"""
-
+from __future__ import absolute_import
 from mindspore.nn.cell import Cell
 from mindspore.ops.operations.comm_ops import AllGather
 from mindspore.communication import GlobalComm
 from mindspore.common import ms_function
 
-_allgather_cell = None
+_ALLGATHER_CELL = None
 
 
 class AllGatherCell(Cell):
@@ -64,19 +64,19 @@ class SaveOptShardCkptCell(Cell):
 
 def get_allgather_cell(group, need_merge_twice=False):
     """Get AllGatherCell object."""
-    global _allgather_cell
+    global _ALLGATHER_CELL
     if need_merge_twice:
-        _allgather_cell = SaveOptShardCkptCell(group)
+        _ALLGATHER_CELL = SaveOptShardCkptCell(group)
     else:
         if group:
-            _allgather_cell = AllGatherCell(group)
+            _ALLGATHER_CELL = AllGatherCell(group)
         else:
-            _allgather_cell = AllGatherCell(GlobalComm.WORLD_COMM_GROUP)
-    return _allgather_cell
+            _ALLGATHER_CELL = AllGatherCell(GlobalComm.WORLD_COMM_GROUP)
+    return _ALLGATHER_CELL
 
 
 def destroy_allgather_cell():
     """Destroy AllGatherCell object."""
-    global _allgather_cell
-    if _allgather_cell:
-        _allgather_cell = None
+    global _ALLGATHER_CELL
+    if _ALLGATHER_CELL:
+        _ALLGATHER_CELL = None

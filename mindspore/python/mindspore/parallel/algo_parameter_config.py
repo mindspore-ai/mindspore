@@ -13,8 +13,9 @@
 # limitations under the License.
 # ============================================================================
 """Configuration of parameters for strategy-searching algorithm in auto_parallel"""
-
+from __future__ import absolute_import
 import threading
+
 from mindspore._c_expression import CostModelContext
 from mindspore._checkparam import args_type_check
 
@@ -183,20 +184,20 @@ class _AlgoParameterConfig:
         self._config_handle.reset_algo_parameters()
 
 
-_g_algo_parameter_config = None
+_G_ALGO_PARAMETER_CONFIG = None
 
 
 def _algo_parameter_config():
     """
-    Get the global _g_algo_parameter_config. If it is not created, create a new one.
+    Get the global _G_ALGO_PARAMETER_CONFIG. If it is not created, create a new one.
 
     Returns:
-        The global _g_algo_parameter_config.
+        The global _G_ALGO_PARAMETER_CONFIG.
     """
-    global _g_algo_parameter_config
-    if _g_algo_parameter_config is None:
-        _g_algo_parameter_config = _AlgoParameterConfig()
-    return _g_algo_parameter_config
+    global _G_ALGO_PARAMETER_CONFIG
+    if _G_ALGO_PARAMETER_CONFIG is None:
+        _G_ALGO_PARAMETER_CONFIG = _AlgoParameterConfig()
+    return _G_ALGO_PARAMETER_CONFIG
 
 
 set_algo_parameters_config_func_map = {

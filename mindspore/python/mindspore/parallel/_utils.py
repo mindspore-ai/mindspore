@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Utils of auto parallel"""
+from importlib import import_module
 import numpy as np
 import mindspore as ms
 from mindspore import context, log as logger
@@ -272,7 +273,7 @@ def _parameter_broadcast_check(parallel_mode, parameter_broadcast):
 
 def _get_python_op(op_name, op_path, instance_name, arglist):
     """Get python operator."""
-    module = __import__(op_path, fromlist=["None"])
+    module = import_module(op_path)
     cls = getattr(module, op_name)
     if op_path != "mindspore.ops.functional":
         # The AllGather attrs contains group_name and group_ranks, pop group_ranks.

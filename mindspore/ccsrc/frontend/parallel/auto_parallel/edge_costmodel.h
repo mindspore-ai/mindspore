@@ -26,12 +26,12 @@
 #include "frontend/parallel/ops_info/operator_info.h"
 #include "frontend/parallel/tensor_layout/tensor_info.h"
 #include "frontend/parallel/tensor_layout/tensor_layout.h"
+#include "frontend/parallel/graph_util/node_info.h"
 #include "utils/ms_utils.h"
 
 namespace mindspore {
 namespace parallel {
 using CostPtrKey = std::pair<StrategyPtr, StrategyPtr>;
-using OperatorInfoPtr = std::shared_ptr<mindspore::parallel::OperatorInfo>;
 using EdgePtr = std::shared_ptr<mindspore::parallel::Edge>;
 
 struct OpsPtrCompare {
