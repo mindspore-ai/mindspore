@@ -5327,6 +5327,74 @@ class Tensor(Tensor_):
         """
         return tensor_operator_registry.get("erfc")()(self)
 
+    def tile(self, multiples):
+        r"""
+        Replicates an input tensor with given multiples times.
+
+        Creates a new tensor by replicating `input_x` `multiples` times. The i'th dimension of
+        output tensor has `input_x.shape[i] * multiples[i]` elements, and the values of `input_x`
+        are replicated `multiples[i]` times along the i'th dimension.
+
+        Note:
+            The length of `multiples` must be greater or equal to the length of dimension in `input_x`.
+
+        Args:
+            input_x (Tensor): 1-D or higher dimensional Tensor. Set the shape of input tensor as
+                :math:`(x_1, x_2, ..., x_S)` .
+
+            multiples (tuple[int]): The parameter that specifies the number of replications,
+                the parameter type is tuple, and the data type is int, i.e., :math:`(y_1, y_2, ..., y_S)`.
+                The length of `multiples` cannot be smaller than the length of the shape of `input_x`.
+                Only constant value is allowed.
+
+        Returns:
+            Tensor, has the same data type as the `input_x`. Suppose the length of `multiples` is `d`,
+            the dimension of `input_x` is `input_x.dim`, and the shape of `input_x` is :math:`(x_1, x_2, ..., x_S)`.
+
+            - If `input_x.dim = d`, then the shape of their corresponding positions can be multiplied, and
+            the shape of Outputs is :math:`(x_1*y_1, x_2*y_2, ..., x_S*y_R)`.
+            - If `input_x.dim < d`, fill in multiple 1 in the length of the shape of `input_x` until their
+            lengths are consistent. Such as set the shape of `input_x` as :math:`(1, ..., x_1, x_2, ..., x_S)`,
+            then the shape of their corresponding positions can be multiplied, and the shape of Outputs is
+            :math:`(1*y_1, ..., x_S*y_R)`.
+
+        Raises:
+            TypeError: If `multiples` is not a tuple or its elements are not all int.
+            ValueError: If the elements of `multiples` are not all greater than 0.
+            ValueError: If the length of `multiples` are smaller than the length of dimension in `input_x`.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import mindspore as ms
+            >>> from mindspore import Tensor
+            >>> input_x = Tensor(np.array([[1, 2], [3, 4]]), mindspore.float32)
+            >>> multiples = (2, 3)
+            >>> output = input_x.tile(multiples)
+            >>> print(output)
+            [[1.  2.  1.  2.  1.  2.]
+            [3.  4.  3.  4.  3.  4.]
+            [1.  2.  1.  2.  1.  2.]
+            [3.  4.  3.  4.  3.  4.]]
+            >>> multiples = (2, 3, 2)
+            >>> output = input_x.tile(multiples)
+            >>> print(output)
+            [[[1. 2. 1. 2.]
+            [3. 4. 3. 4.]
+            [1. 2. 1. 2.]
+            [3. 4. 3. 4.]
+            [1. 2. 1. 2.]
+            [3. 4. 3. 4.]]
+            [[1. 2. 1. 2.]
+            [3. 4. 3. 4.]
+            [1. 2. 1. 2.]
+            [3. 4. 3. 4.]
+            [1. 2. 1. 2.]
+            [3. 4. 3. 4.]]]
+        """
+        return tensor_operator_registry.get('tile')()(self, multiples)
+
     def top_k(self, k, sorted=True):
         r"""
         Finds values and indices of the `k` largest entries along the last dimension.
