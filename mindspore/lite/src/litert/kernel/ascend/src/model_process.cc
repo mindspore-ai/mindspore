@@ -564,7 +564,8 @@ STATUS ModelProcess::SortTensorInfoByName(const std::vector<mindspore::MSTensor>
       if (name.find((*tensor_info)[j].name) != std::string::npos ||
           (*tensor_info)[j].name.find(name) != std::string::npos) {
         if (i != j) {
-          std::swap((*tensor_info)[i], (*tensor_info)[j]);
+          MS_LOG(WARNING) << "As a reminder, The position of tensor: " << name << " is " << i << ", while "
+                          << (*tensor_info)[j].name << " is " << j;
         }
         break;
       }
