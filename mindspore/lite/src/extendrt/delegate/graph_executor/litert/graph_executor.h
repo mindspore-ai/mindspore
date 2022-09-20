@@ -28,12 +28,13 @@
 #include "include/model.h"
 #include "src/litert/lite_session.h"
 #include "src/common/helper/infer_helpers.h"
+#include "src/common/config_infos.h"
 
 namespace mindspore {
 class LiteRTGraphExecutor : public LiteGraphExecutor {
  public:
   LiteRTGraphExecutor() = default;
-  explicit LiteRTGraphExecutor(const std::shared_ptr<mindspore::Context> &context);
+  LiteRTGraphExecutor(const std::shared_ptr<mindspore::Context> &context, const ConfigInfos &config_infos);
   ~LiteRTGraphExecutor() = default;
   bool CompileGraph(const FuncGraphPtr &graph, const std::map<string, string> &compile_options) override;
   bool RunGraph(const FuncGraphPtr &graph, const std::vector<tensor::Tensor> &inputs,
@@ -56,6 +57,7 @@ class LiteRTGraphExecutor : public LiteGraphExecutor {
 
  private:
   const std::shared_ptr<mindspore::Context> context_;
+  ConfigInfos config_infos_;
   lite::LiteGraph lite_graph_;
   std::shared_ptr<lite::LiteSession> lite_session_;
   std::shared_ptr<mindspore::infer::helper::InferHelpers> helpers_ = nullptr;

@@ -281,6 +281,7 @@ nvinfer1::ITensor *LSTMTensorRT::ConcateAll(TensorRTContext *ctx, std::vector<nv
     return nullptr;
   }
   concat->setAxis(axis);
+  this->layer_ = concat;
   return concat->getOutput(0);
 }
 

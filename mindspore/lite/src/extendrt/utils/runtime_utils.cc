@@ -22,6 +22,7 @@
 #include <memory>
 
 #include "extendrt/utils/runtime_utils.h"
+#include "extendrt/utils/kernel_graph_utils.h"
 
 #include "src/extendrt/infer_device_address.h"
 #include "include/common/utils/anfalgo.h"
@@ -88,7 +89,7 @@ void RuntimeUtils::CopyInputTensorsToKernelGraph(const std::vector<tensor::Tenso
 void RuntimeUtils::CopyOutputTensorsFromKernelGraph(std::vector<tensor::Tensor> *outputs, KernelGraphPtr kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   outputs->clear();
-  auto graph_outputs = kernel_graph->outputs();
+  auto graph_outputs = KernelGraphUtils::GetKernelGraphOutputs(kernel_graph);
   for (auto graph_output : graph_outputs) {
     auto real_output_with_index = common::AnfAlgo::VisitKernelWithReturnType(graph_output, 0);
     auto real_output = real_output_with_index.first;

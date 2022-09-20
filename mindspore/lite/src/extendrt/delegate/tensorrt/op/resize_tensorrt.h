@@ -41,9 +41,10 @@ class ResizeTensorRT : public TensorRTOp {
                 const std::vector<TensorInfo> &out_tensors) override;
 
  private:
-  int SetOutputDims(TensorRTContext *ctx, nvinfer1::ITensor *resize_in_tensor, nvinfer1::IResizeLayer *resize_layer);
   nvinfer1::ITensor *RunPlugin(TensorRTContext *ctx, nvinfer1::ITensor *resize_in_tensor);
   nvinfer1::ITensor *RunTensorRT(TensorRTContext *ctx, nvinfer1::ITensor *resize_in_tensor);
+
+  int SetOutputDims(TensorRTContext *ctx, nvinfer1::ITensor *resize_in_tensor, nvinfer1::IResizeLayer *resize_layer);
 
   void ParseValueFromShapeTensor(TensorRTContext *ctx, const TensorInfo &shape_value_tensor,
                                  std::vector<float> *out_shape);
@@ -61,22 +62,25 @@ class ResizeTensorRT : public TensorRTOp {
 constexpr auto RESIZELINEAR2D_PLUGIN_NAME{"ResizeLinear2DPlugin"};
 class ResizeLinear2DPlugin : public TensorRTPlugin {
  public:
-  ResizeLinear2DPlugin(const std::string name, int resize_h, int resize_w, uint32_t device_id)
+  ResizeLinear2DPlugin(const std::string name, int resize_h, int resize_w, bool using_half_pixel, uint32_t device_id)
       : TensorRTPlugin(name, std::string(RESIZELINEAR2D_PLUGIN_NAME), device_id),
         resize_h_(resize_h),
-        resize_w_(resize_w) {}
+        resize_w_(resize_w),
+        using_half_pixel_(using_half_pixel) {}
 
   ResizeLinear2DPlugin(const char *name, const nvinfer1::PluginFieldCollection *fc)
       : TensorRTPlugin(std::string(name), std::string(RESIZELINEAR2D_PLUGIN_NAME)) {
     const nvinfer1::PluginField *fields = fc->fields;
     resize_h_ = static_cast<const int *>(fields[0].data)[0];
     resize_w_ = static_cast<const int *>(fields[1].data)[0];
+    using_half_pixel_ = static_cast<const bool *>(fields[2].data)[0];
   }
 
   ResizeLinear2DPlugin(const char *name, const void *serialData, size_t serialLength)
       : TensorRTPlugin(std::string(name), std::string(RESIZELINEAR2D_PLUGIN_NAME)) {
     DeserializeValue(&serialData, &serialLength, &resize_h_, sizeof(int));
     DeserializeValue(&serialData, &serialLength, &resize_w_, sizeof(int));
+    DeserializeValue(&serialData, &serialLength, &using_half_pixel_, sizeof(bool));
   }
 
   ResizeLinear2DPlugin() = delete;
@@ -94,6 +98,7 @@ class ResizeLinear2DPlugin : public TensorRTPlugin {
                             void *const *outputs, cudaStream_t stream);
   int resize_h_;
   int resize_w_;
+  bool using_half_pixel_;
   const std::string layer_name_;
   std::string name_space_;
 };

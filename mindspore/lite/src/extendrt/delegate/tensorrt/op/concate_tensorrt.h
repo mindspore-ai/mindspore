@@ -43,6 +43,7 @@ class ConcateTensorRT : public TensorRTOp {
 
  private:
   int PreProcessInputs(TensorRTContext *ctx, nvinfer1::ITensor *trt_input_tensors[]);
+  int CheckParams(TensorRTContext *ctx);
 
   Format out_format_{Format::NCHW};
   bool same_format_{true};

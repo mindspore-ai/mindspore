@@ -14,13 +14,27 @@
  * limitations under the License.
  */
 #include "extendrt/delegate/tensorrt/tensorrt_plugin_impl.h"
+#ifdef LITE_CUDA_DISTRIBUTION
 #include "extendrt/delegate/tensorrt/distribution/distribution_base.h"
 #include "plugin/device/gpu/hal/device/distribution/collective_wrapper.h"
+#endif
 
 namespace mindspore::lite {
-int TensorRTPluginImpl::GetGPUGroupSize() const { return GetGroupSize(NCCL_WORLD_GROUP); }
+int TensorRTPluginImpl::GetGPUGroupSize() const {
+#ifdef LITE_CUDA_DISTRIBUTION
+  return GetGroupSize(NCCL_WORLD_GROUP);
+#else
+  return 1;
+#endif
+}
 
-int TensorRTPluginImpl::GetRankID() const { return GetRankIDByGroup(NCCL_WORLD_GROUP); }
+int TensorRTPluginImpl::GetRankID() const {
+#ifdef LITE_CUDA_DISTRIBUTION
+  return GetRankIDByGroup(NCCL_WORLD_GROUP);
+#else
+  return 0;
+#endif
+}
 }  // namespace mindspore::lite
 
 mindspore::lite::TensorRTExecutorPluginImplBase *CreateTensorRTPluginImpl() {

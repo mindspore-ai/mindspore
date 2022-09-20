@@ -1096,7 +1096,7 @@ Status ModelPool::InitByPath(const std::string &model_path, const std::shared_pt
   size_t size = 0;
   graph_buf_ = lite::ReadFile(model_path.c_str(), &size);
   if (graph_buf_ == nullptr) {
-    MS_LOG(ERROR) << "read ms model failed, model path: " << model_path;
+    MS_LOG(ERROR) << "read model failed, model path: " << model_path;
     return kLiteNullptr;
   }
   auto status = Init(graph_buf_, size, runner_config);

@@ -40,13 +40,8 @@ class SpaceToBatchTensorRT : public TensorRTOp {
 constexpr auto SPACETOTENSORRT_PLUGIN_NAME{"SpaceToBatchPlugin"};
 class SpaceToBatchPlugin : public TensorRTPlugin {
  public:
-  SpaceToBatchPlugin(const std::string name, int in, int ic, int ih, int iw, int bh, int ph0, int ph1, int pw0, int pw1,
-                     uint32_t device_id)
+  SpaceToBatchPlugin(const std::string name, int bh, int ph0, int ph1, int pw0, int pw1, uint32_t device_id)
       : TensorRTPlugin(name, std::string(SPACETOTENSORRT_PLUGIN_NAME), device_id),
-        in_(in),
-        ic_(ic),
-        ih_(ih),
-        iw_(iw),
         bh_(bh),
         ph0_(ph0),
         ph1_(ph1),
@@ -56,23 +51,15 @@ class SpaceToBatchPlugin : public TensorRTPlugin {
   SpaceToBatchPlugin(const char *name, const nvinfer1::PluginFieldCollection *fc)
       : TensorRTPlugin(std::string(name), std::string(SPACETOTENSORRT_PLUGIN_NAME)) {
     const nvinfer1::PluginField *fields = fc->fields;
-    in_ = static_cast<const int *>(fields[0].data)[0];
-    ic_ = static_cast<const int *>(fields[1].data)[0];
-    ih_ = static_cast<const int *>(fields[2].data)[0];
-    iw_ = static_cast<const int *>(fields[3].data)[0];
-    bh_ = static_cast<const int *>(fields[4].data)[0];
-    ph0_ = static_cast<const int *>(fields[5].data)[0];
-    ph1_ = static_cast<const int *>(fields[6].data)[0];
-    pw0_ = static_cast<const int *>(fields[7].data)[0];
-    pw1_ = static_cast<const int *>(fields[8].data)[0];
+    bh_ = static_cast<const int *>(fields[0].data)[0];
+    ph0_ = static_cast<const int *>(fields[1].data)[0];
+    ph1_ = static_cast<const int *>(fields[2].data)[0];
+    pw0_ = static_cast<const int *>(fields[3].data)[0];
+    pw1_ = static_cast<const int *>(fields[4].data)[0];
   }
 
   SpaceToBatchPlugin(const char *name, const void *serialData, size_t serialLength)
       : TensorRTPlugin(std::string(name), std::string(SPACETOTENSORRT_PLUGIN_NAME)) {
-    DeserializeValue(&serialData, &serialLength, &in_, sizeof(int));
-    DeserializeValue(&serialData, &serialLength, &ic_, sizeof(int));
-    DeserializeValue(&serialData, &serialLength, &ih_, sizeof(int));
-    DeserializeValue(&serialData, &serialLength, &iw_, sizeof(int));
     DeserializeValue(&serialData, &serialLength, &bh_, sizeof(int));
     DeserializeValue(&serialData, &serialLength, &ph0_, sizeof(int));
     DeserializeValue(&serialData, &serialLength, &ph1_, sizeof(int));
@@ -93,15 +80,11 @@ class SpaceToBatchPlugin : public TensorRTPlugin {
  private:
   int RunCudaSpaceToBatch(const nvinfer1::PluginTensorDesc *inputDesc, const void *const *inputs, void *const *outputs,
                           cudaStream_t stream);
-  size_t in_;
-  size_t ic_;
-  size_t ih_;
-  size_t iw_;
-  size_t bh_;
-  size_t ph0_;
-  size_t ph1_;
-  size_t pw0_;
-  size_t pw1_;
+  int bh_;
+  int ph0_;
+  int ph1_;
+  int pw0_;
+  int pw1_;
   const std::string layer_name_;
   std::string name_space_;
 };

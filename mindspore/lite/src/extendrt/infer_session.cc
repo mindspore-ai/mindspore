@@ -76,11 +76,13 @@ std::vector<std::string> DefaultInferSession::GetOutputNames() { return std::vec
 std::vector<std::string> DefaultInferSession::GetInputNames() { return std::vector<std::string>(); }
 MutableTensorImplPtr DefaultInferSession::GetOutputByTensorName(const std::string &tensorName) { return nullptr; }
 MutableTensorImplPtr DefaultInferSession::GetInputByTensorName(const std::string &name) { return nullptr; }
-std::shared_ptr<InferSession> InferSession::CreateSession(const std::shared_ptr<Context> &context) {
+
+std::shared_ptr<InferSession> InferSession::CreateSession(const std::shared_ptr<Context> &context,
+                                                          const ConfigInfos &config_info) {
   HandleContext(context);
   auto session_type = SelectSession(context);
   MS_LOG(DEBUG) << "Session type " << static_cast<int64_t>(session_type);
-  return SessionRegistry::GetInstance().GetSession(session_type, context);
+  return SessionRegistry::GetInstance().GetSession(session_type, context, config_info);
 }
 
 void InferSession::HandleContext(const std::shared_ptr<Context> &context) {
@@ -148,7 +150,8 @@ SessionType InferSession::SelectSession(const std::shared_ptr<Context> &context)
   return kDefaultSession;
 }
 
-static std::shared_ptr<InferSession> DefaultSessionCreator(const std::shared_ptr<Context> &ctx) {
+static std::shared_ptr<InferSession> DefaultSessionCreator(const std::shared_ptr<Context> &ctx,
+                                                           const ConfigInfos &config_infos) {
   auto session = std::make_shared<DefaultInferSession>(ctx);
   session->Init(ctx);
   return session;

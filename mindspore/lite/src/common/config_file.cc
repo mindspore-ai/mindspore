@@ -60,8 +60,7 @@ void ParseLine(const std::string &line, std::map<std::string, std::string> *sect
 }
 }  // namespace
 
-int GetAllSectionInfoFromConfigFile(const std::string &file,
-                                    std::map<std::string, std::map<std::string, std::string>> *config) {
+int GetAllSectionInfoFromConfigFile(const std::string &file, ConfigInfos *config) {
   if (file.empty() || config == nullptr) {
     MS_LOG(ERROR) << "input Invalid!check file and config.";
     return RET_ERROR;

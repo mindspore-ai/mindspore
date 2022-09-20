@@ -41,7 +41,9 @@ const int64_t kBufferSize = 1024;
 }  // namespace
 const char litert_provider[] = "litert";
 
-LiteRTGraphExecutor::LiteRTGraphExecutor(const std::shared_ptr<mindspore::Context> &context) : context_(context) {
+LiteRTGraphExecutor::LiteRTGraphExecutor(const std::shared_ptr<mindspore::Context> &context,
+                                         const ConfigInfos &config_infos)
+    : context_(context), config_infos_(config_infos) {
   lite_session_ = CreateLiteSession(ContextUtils::Convert(context_.get()));
 }
 
@@ -355,8 +357,9 @@ bool LiteRTGraphExecutor::IsNeedExtractTensorData(mindspore::schema::MetaGraphT 
   return false;
 }
 
-static std::shared_ptr<device::GraphExecutor> LiteRTGraphExecutorCreator(const std::shared_ptr<Context> &ctx) {
-  return std::make_shared<LiteRTGraphExecutor>(ctx);
+static std::shared_ptr<device::GraphExecutor> LiteRTGraphExecutorCreator(const std::shared_ptr<Context> &ctx,
+                                                                         const ConfigInfos &config_infos) {
+  return std::make_shared<LiteRTGraphExecutor>(ctx, config_infos);
 }
 
 REG_DELEGATE(kCPU, litert_provider, LiteRTGraphExecutorCreator);

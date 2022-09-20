@@ -90,8 +90,8 @@ int ActivationOptPlugin::RunCudaActivation(const nvinfer1::PluginTensorDesc *inp
       break;
     }
     case (ActivationType::SWISH): {
-      CalSwish(GetDimsVolume(inputDesc[0].dims), static_cast<const float *>(inputs[0]),
-               static_cast<float *>(outputs[0]), stream, device_id_);
+      Swish(GetDimsVolume(inputDesc[0].dims), static_cast<const float *>(inputs[0]), static_cast<float *>(outputs[0]),
+            stream, device_id_);
       break;
     }
     default: {
