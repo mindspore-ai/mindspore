@@ -346,12 +346,10 @@ class Parameter(Tensor_):
 
     @property
     def param_info(self):
-        """Get the param_info of the parameter."""
         return self._param_info
 
     @param_info.setter
     def param_info(self, param_info_):
-        """Set thee param_info of the parameter."""
         param_info_.obj = self
         self._param_info = param_info_
         Tensor_.param_info.fset(self, param_info_)
