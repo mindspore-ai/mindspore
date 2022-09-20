@@ -303,8 +303,8 @@ int TensorRTDelegate::ParseOptimizationProfile() {
       min_dims_[input_name].push_back(name2input_shape.value()[input_name]);
       opt_dims_[input_name].push_back(name2input_shape.value()[input_name]);
       max_dims_[input_name].push_back(name2input_shape.value()[input_name]);
-      return RET_OK;
     }
+    return RET_OK;
   }
   if (!ParseDynamicDims(dynamic_dims, name2input_shape.value())) {
     MS_LOG(ERROR) << "parse dynamic dims failed.";

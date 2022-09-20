@@ -104,7 +104,8 @@ class TensorRTSubGraph : public kernel::Kernel {
 
   int MarkOutputs();
 
-  bool OutputFormatCheck(ITensorHelper output_helper, const mindspore::MSTensor &out_tensor);
+  bool FixSizeOutputNeedTranspose(ITensorHelper output_helper, const mindspore::MSTensor &out_tensor);
+  bool DynamicSizeOutputNeedTranspose(ITensorHelper output_helper, const mindspore::MSTensor &out_tensor);
 
   bool IsCached(TensorRTOp *cur_op, const mindspore::MSTensor &in_tensor);
 

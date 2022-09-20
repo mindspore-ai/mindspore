@@ -468,7 +468,7 @@ int TensorRTSubGraph::BuildTensorRTGraph() {
   return RET_OK;
 }
 
-bool TensorRTSubGraph::OutputFormatCheck(ITensorHelper output_helper, const mindspore::MSTensor &out_tensor) {
+bool TensorRTSubGraph::FixSizeOutputNeedTranspose(ITensorHelper output_helper, const mindspore::MSTensor &out_tensor) {
   auto out_shape = out_tensor.Shape();
   auto out_dims = output_helper.trt_tensor_->getDimensions();
   if (out_dims.nbDims != DIMENSION_4D) {
@@ -477,18 +477,26 @@ bool TensorRTSubGraph::OutputFormatCheck(ITensorHelper output_helper, const mind
   if (output_helper.format_ == Format::NHWC) {
     return false;
   }
-  if (out_shape.empty()) {
+  if (out_shape.empty() || out_shape.size() != out_dims.nbDims) {
     return false;
-  }
-  for (int i = 0; i < out_dims.nbDims; i++) {
-    if (out_shape[i] == -1) {
-      return false;
-    }
   }
   if (SameDims(out_dims, out_shape)) {
     return false;
   }
   return true;
+}
+
+bool TensorRTSubGraph::DynamicSizeOutputNeedTranspose(ITensorHelper output_helper,
+                                                      const mindspore::MSTensor &out_tensor) {
+  auto out_shape = out_tensor.Shape();
+  auto out_dims = output_helper.trt_tensor_->getDimensions();
+  if (out_dims.nbDims != DIMENSION_4D) {
+    return false;
+  }
+  if (!(out_shape.size() == 1 && out_shape[0] == -1)) {
+    return false;
+  }
+  return !output_helper.same_format_;
 }
 
 int TensorRTSubGraph::MarkOutputs() {
@@ -500,7 +508,7 @@ int TensorRTSubGraph::MarkOutputs() {
           MS_LOG(INFO) << "markOutput for: " << out_tensor.Name();
           auto output_helper = out_op->output(ctx_, index);
           nvinfer1::ITensor *out_trt_tensor = output_helper.trt_tensor_;
-          if (OutputFormatCheck(output_helper, out_tensor)) {
+          if (FixSizeOutputNeedTranspose(output_helper, out_tensor)) {
             // transpose subgraph output from nchw to nhwc
             nvinfer1::IShuffleLayer *transpose_layer_out = NCHW2NHWC(ctx_, *output_helper.trt_tensor_);
             if (transpose_layer_out == nullptr) {
@@ -510,7 +518,26 @@ int TensorRTSubGraph::MarkOutputs() {
             transpose_layer_out->setName((out_tensor.Name() + "_transpose2NHWC").c_str());
             out_trt_tensor = transpose_layer_out->getOutput(0);
           }
-
+          if (DynamicSizeOutputNeedTranspose(output_helper, out_tensor)) {
+            MS_LOG(DEBUG) << "dynamic size output need transpose !";
+            if (output_helper.format_ == Format::NHWC) {
+              nvinfer1::IShuffleLayer *transpose_layer_out = NHWC2NCHW(ctx_, *output_helper.trt_tensor_);
+              if (transpose_layer_out == nullptr) {
+                MS_LOG(ERROR) << "op action convert failed";
+                return RET_ERROR;
+              }
+              transpose_layer_out->setName((out_tensor.Name() + "_transpose2NCHW").c_str());
+              out_trt_tensor = transpose_layer_out->getOutput(0);
+            } else {
+              nvinfer1::IShuffleLayer *transpose_layer_out = NCHW2NHWC(ctx_, *output_helper.trt_tensor_);
+              if (transpose_layer_out == nullptr) {
+                MS_LOG(ERROR) << "op action convert failed";
+                return RET_ERROR;
+              }
+              transpose_layer_out->setName((out_tensor.Name() + "_transpose2NHWC").c_str());
+              out_trt_tensor = transpose_layer_out->getOutput(0);
+            }
+          }
           out_trt_tensor->setName(("__" + out_tensor.Name()).c_str());
           out_trt_tensor = ctx_->network()->addIdentity(*out_trt_tensor)->getOutput(0);
           out_trt_tensor->setName(out_tensor.Name().c_str());
