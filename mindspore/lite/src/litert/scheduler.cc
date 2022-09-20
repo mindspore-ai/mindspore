@@ -168,7 +168,7 @@ int CopyConstTensorData(const std::vector<Tensor *> &tensors, int op_type) {
     // only copy non-copied const tensor
     if (!tensor->IsConst() && tensor->data() != nullptr) {
       MS_LOG(ERROR) << "Illegitimate tensor : " << tensor->tensor_name();
-      continue;
+      return RET_ERROR;
     }
     if (!tensor->IsConst() || tensor->own_data()) {
       continue;
