@@ -364,14 +364,14 @@ bool IsAllNopNode(const session::KernelGraph *const graph) {
   return true;
 }
 
-bool NeedHideNode(const std::vector<AnfNodePtr> &outputs, const AnfNodePtr &node, bool is_dynamic_graph) {
+bool NeedHideNode(const std::vector<AnfNodePtr> &outputs, const AnfNodePtr &node, bool need_keep_output_nop_node) {
   MS_EXCEPTION_IF_NULL(node);
   // if node is not a nop node, keep it in execution order
   if (!common::AnfAlgo::IsNopNode(node)) {
     return false;
   }
   // if node is nop node and the graph is dynamic graph, check if the nop node is graph's output.
-  if (is_dynamic_graph) {
+  if (need_keep_output_nop_node) {
     auto iter = find(outputs.begin(), outputs.end(), node);
     if (iter != outputs.end()) {
       return false;
@@ -386,13 +386,15 @@ void HideNopNode(session::KernelGraph *const graph) {
     return;
   }
   auto execution_order = graph->execution_order();
-  auto outputs = graph->outputs();
-  bool is_dynamic_graph = graph->is_dynamic_shape();
+  auto outputs = common::AnfAlgo::GetAllOutput(graph->output());
+  // If the graph has flag kFlagEnableZeroCopyInGraph, it means in subgraph sink mode, the inputs and outputs memory of
+  // graph should not be allocated, and the node should not be skipped.
+  bool need_keep_output_nop_node = (graph->is_dynamic_shape() || graph->has_flag(kFlagEnableZeroCopyInGraph));
   MS_LOG(INFO) << "nop node info (Before Remove) size: " << execution_order.size();
   std::vector<CNodePtr> new_nodes;
   for (auto &cnode : execution_order) {
     MS_EXCEPTION_IF_NULL(cnode);
-    if (NeedHideNode(outputs, cnode, is_dynamic_graph)) {
+    if (NeedHideNode(outputs, cnode, need_keep_output_nop_node)) {
       common::AnfAlgo::SetNodeAttr(kAttrSkipNopOpAddr, MakeValue(true), cnode);
       common::AnfAlgo::SetNodeAttr(kAttrSkipNopOpExecution, MakeValue(true), cnode);
     } else {
