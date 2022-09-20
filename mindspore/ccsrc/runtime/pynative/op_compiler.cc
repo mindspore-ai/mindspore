@@ -108,6 +108,8 @@ OpCompilerInfoPtr OpCompiler::Compile(const session::BackendOpRunInfoPtr &op_run
 
   auto op_compiler_info =
     std::make_shared<OpCompilerInfo>(graph_info, graph->graph_id(), graph, outputs_with_index, device_context, false);
+
+  py::gil_scoped_acquire acquire_gil;
   op_compiler_infos_[graph_info] = op_compiler_info;
   return op_compiler_info;
 }
