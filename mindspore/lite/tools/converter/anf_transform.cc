@@ -37,7 +37,9 @@
 #include "tools/optimizer/fusion/conv_bn_fusion.h"
 #include "tools/optimizer/fusion/conv_tuplegetitem_fusion.h"
 #include "tools/optimizer/const_fold/constant_folding_fusion.h"
+#include "tools/optimizer/fusion/hard_swish_fusion.h"
 #include "tools/optimizer/fusion/norm_fusion.h"
+#include "tools/optimizer/fusion/prelu_fusion.h"
 #include "tools/optimizer/fusion/batchmatmul_fusion.h"
 #include "tools/optimizer/fusion/batchnorm_to_scale_fusion.h"
 #include "tools/optimizer/fusion/sigmoid_mul_fusion.h"
@@ -206,6 +208,8 @@ int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const std::shared
   // The training model only does the fusion of the inference part
   // remove quantdtype when awaretraining
   std::vector<opt::PassPtr> fusions{std::make_shared<opt::AddConcatActivationFusion>(),
+                                    std::make_shared<opt::HardSwishFusion>(),
+                                    std::make_shared<opt::PReluFusion>(),
                                     std::make_shared<opt::SqueezeFusion>(),
                                     std::make_shared<opt::TransposeFusion>(),
                                     std::make_shared<opt::ReshapeReshapeFusion>(),
