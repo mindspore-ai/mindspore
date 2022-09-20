@@ -27,6 +27,7 @@ namespace kernel {
 constexpr size_t kReduceStdInputsNum = 1;
 constexpr size_t kReduceStdOutputsNum = 2;
 constexpr size_t kReduceSmallVectorSize = 200000;
+constexpr int kPowExp = 2;
 bool ReduceStdCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                  const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
@@ -49,7 +50,6 @@ bool ReduceStdCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   }
   return true;
 }
-
 int ReduceStdCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                   const std::vector<KernelTensorPtr> &outputs,
                                   const std::map<uint32_t, tensor::TensorPtr> &) {
@@ -79,28 +79,29 @@ void ReduceStdCpuKernelMod::RunReduceStd(const std::vector<kernel::AddressPtr> &
   if (input_size > kReduceSmallVectorSize) {
     MS_LOG(EXCEPTION) << "For reduce std, the input size should be < " << kReduceSmallVectorSize;
   }
-  const T *input_addr = reinterpret_cast<T *>(inputs[0]->addr);
+  T *input_addr = reinterpret_cast<T *>(inputs[0]->addr);
   T *output_std_addr = reinterpret_cast<T *>(outputs[0]->addr);
   T *output_mean_addr = reinterpret_cast<T *>(outputs[1]->addr);
-
-  *output_mean_addr = input_addr[0];
-  for (size_t i = 1; i < input_size; ++i) {
-    *output_mean_addr += static_cast<T>(input_addr[i]);
-  }
-  *output_mean_addr /= static_cast<T>(input_size);
-  T deviation = static_cast<T>(0.0);
+  float mean = 0.0;
   for (size_t i = 0; i < input_size; ++i) {
-    deviation += (input_addr[i] - *output_mean_addr) * (input_addr[i] - *output_mean_addr);
+    mean += static_cast<float>(input_addr[i]);
   }
-  T length = unbiased_ ? static_cast<T>(input_size - 1) : static_cast<T>(input_size);
-  *output_std_addr = static_cast<T>(std::sqrt(static_cast<float>(deviation / length)));
+  mean = mean / SizeToFloat(input_size);
+  *output_mean_addr = static_cast<T>(mean);
+  float deviation = 0.0;
+  for (size_t i = 0; i < input_size; ++i) {
+    deviation += std::pow(static_cast<float>(input_addr[i]) - mean, kPowExp);
+  }
+  float length = unbiased_ ? (input_size - 1) : input_size;
+  deviation = std::sqrt(deviation / length);
+  *output_std_addr = static_cast<T>(deviation);
 }
 
 template <typename T>
 void ReduceStdCpuKernelMod::RunReduceStdWithSAxis(const std::vector<kernel::AddressPtr> &inputs,
                                                   const std::vector<kernel::AddressPtr> &workspace,
                                                   const std::vector<kernel::AddressPtr> &outputs) {
-  const T *input_addr = reinterpret_cast<T *>(inputs[0]->addr);
+  T *input_addr = reinterpret_cast<T *>(inputs[0]->addr);
   T *output_std_addr = reinterpret_cast<T *>(outputs[0]->addr);
   T *output_mean_addr = reinterpret_cast<T *>(outputs[1]->addr);
   int dimension = input_shape_.size();
@@ -126,31 +127,31 @@ void ReduceStdCpuKernelMod::RunReduceStdWithSAxis(const std::vector<kernel::Addr
   for (int i = 0; i < dimension; ++i) {
     transpose_shape[i] = input_shape_[axes[i]];
   }
+
   TransposeIterator base_iter(std::move(transpose_shape), std::move(axes), input_shape_);
   auto task = [this, &base_iter, input_addr, output_mean_addr, output_std_addr, stride](size_t start, size_t end) {
     auto iter = base_iter;
     iter.SetPos(start * stride);
     for (size_t i = start; i < end; ++i) {
-      output_mean_addr[i] = input_addr[iter.GetPos()];
-      iter.GenNextPos();
-      for (size_t j = 1; j < stride; ++j) {
-        output_mean_addr[i] += input_addr[iter.GetPos()];
+      float mean = 0.0;
+      for (size_t j = 0; j < stride; ++j) {
+        mean += static_cast<float>(input_addr[iter.GetPos()]);
         iter.GenNextPos();
       }
-      output_mean_addr[i] /= static_cast<T>(stride);
+      mean = mean / SizeToFloat(stride);
+      output_mean_addr[i] = static_cast<T>(mean);
     }
-
     iter = base_iter;
     iter.SetPos(start * stride);
     for (size_t i = start; i < end; ++i) {
-      T deviation = static_cast<T>(0.0);
+      float deviation = 0.0;
       for (size_t j = 0; j < stride; ++j) {
-        deviation +=
-          (input_addr[iter.GetPos()] - output_mean_addr[i]) * (input_addr[iter.GetPos()] - output_mean_addr[i]);
+        deviation += std::pow(static_cast<float>(input_addr[iter.GetPos()] - output_mean_addr[i]), kPowExp);
         iter.GenNextPos();
       }
-      T length = unbiased_ ? static_cast<T>(stride - 1) : static_cast<T>(stride);
-      output_std_addr[i] = static_cast<T>(std::sqrt(static_cast<float>(deviation / length)));
+      float length = unbiased_ ? static_cast<float>(stride - 1) : static_cast<float>(stride);
+      deviation = std::sqrt(deviation / length);
+      output_std_addr[i] = static_cast<T>(deviation);
     }
   };
   ParallelLaunchAutoSearch(task, output_size, this, &parallel_search_info_);

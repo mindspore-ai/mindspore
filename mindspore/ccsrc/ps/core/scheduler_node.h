@@ -39,9 +39,7 @@
 #include "ps/constants.h"
 #include "ps/core/cluster_metadata.h"
 #include "ps/core/communicator/http_server.h"
-#include "ps/core/leader_scaler.h"
 #include "ps/core/recovery_base.h"
-#include "ps/core/instance_manager.h"
 #include "distributed/cluster/actor_route_table_service.h"
 #include "include/backend/visible.h"
 
@@ -56,11 +54,9 @@ class BACKEND_EXPORT SchedulerNode : public Node {
         scheduler_thread_(nullptr),
         update_state_thread_(nullptr),
         update_persistent_cmd_thread_(nullptr),
-        restful_thread_(nullptr),
         http_server_(nullptr),
         client_thread_(nullptr),
         is_client_started_(false),
-        leader_scaler_(nullptr),
         scheduler_recovery_(nullptr),
         persistent_cmd_(PersistentCommand::DEFAULT),
         is_worker_timeout_(false),
@@ -116,13 +112,6 @@ class BACKEND_EXPORT SchedulerNode : public Node {
   void ProcessFetchMetadata(const std::shared_ptr<TcpServer> &server, const std::shared_ptr<TcpConnection> &conn,
                             const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size);
 
-  // Process scale_out_done messages from workers/servers
-  void ProcessScaleOutDone(const std::shared_ptr<TcpServer> &server, const std::shared_ptr<TcpConnection> &conn,
-                           const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size);
-  // Process scale_in_done messages from workers/servers
-  void ProcessScaleInDone(const std::shared_ptr<TcpServer> &server, const std::shared_ptr<TcpConnection> &conn,
-                          const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size);
-
   // Process scale_in_done messages from workers/servers
   void ProcessSendEvent(const std::shared_ptr<TcpServer> &server, const std::shared_ptr<TcpConnection> &conn,
                         const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size);
@@ -162,45 +151,11 @@ class BACKEND_EXPORT SchedulerNode : public Node {
   // After scheduler receive SEND_EVENT message, it will broadcast the event to all other nodes.
   void SendEvent(const std::shared_ptr<TcpClient> &client, const uint32_t &event);
 
-  // Handle the scale out http request, then delegate to the leader scaler to process scale out asynchronously.
-  void ProcessScaleOut(const std::shared_ptr<HttpMessageHandler> &resp);
-
-  // Handle the scale in http request, then delegate to the leader scaler to process scale in asynchronously.
-  void ProcessScaleIn(const std::shared_ptr<HttpMessageHandler> &resp);
-
-  // Handle the get nodes info http request Synchronously.
-  void ProcessGetNodesInfo(const std::shared_ptr<HttpMessageHandler> &resp);
-
-  // Handle the get cluster state http request Synchronously.
-  void ProcessGetClusterState(const std::shared_ptr<HttpMessageHandler> &resp);
-
-  // Handle the new instance http request Synchronously.
-  void ProcessNewInstance(const std::shared_ptr<HttpMessageHandler> &resp);
-
-  // Handle the query instance http request Synchronously.
-  void ProcessQueryInstance(const std::shared_ptr<HttpMessageHandler> &resp);
-
-  // Handle the enable FLS http request Synchronously.
-  void ProcessEnableFLS(const std::shared_ptr<HttpMessageHandler> &resp);
-
-  // Handle the disable FLS http request Synchronously.
-  void ProcessDisableFLS(const std::shared_ptr<HttpMessageHandler> &resp);
-
-  // Handle the scale out rollback http request, then delegate to the leader scaler to
-  // process scale out rollback asynchronously.
-  void ProcessScaleOutRollback(const std::shared_ptr<HttpMessageHandler> &resp);
-
-  bool QueryNodeScaleState(const std::shared_ptr<HttpMessageHandler> &resp);
-
   // check whether the cluster is in the ready state.
   RequestProcessResult CheckIfClusterReady();
 
   // check whether the node id is legal.
   RequestProcessResult CheckIfNodeIdLegal(const std::vector<std::string> &node_ids);
-
-  void StartRestfulServer(const std::string &address, std::uint16_t port, size_t thread_num = 10);
-
-  void StopRestfulServer();
 
   void InitNodeMetaData();
 
@@ -238,8 +193,6 @@ class BACKEND_EXPORT SchedulerNode : public Node {
 
   NodeManager node_manager_;
 
-  // In this thread will start a http server.
-  std::unique_ptr<std::thread> restful_thread_;
   std::shared_ptr<HttpServer> http_server_;
 
   std::unordered_map<std::string, std::shared_ptr<TcpClient>> connected_nodes_;
@@ -247,8 +200,6 @@ class BACKEND_EXPORT SchedulerNode : public Node {
   std::shared_ptr<TcpClient> client_to_scheduler_;
   std::unique_ptr<std::thread> client_thread_;
   std::atomic<bool> is_client_started_;
-
-  std::unique_ptr<LeaderScaler> leader_scaler_;
 
   std::unordered_map<std::string, OnRequestReceive> callbacks_;
 
@@ -259,8 +210,6 @@ class BACKEND_EXPORT SchedulerNode : public Node {
 
   // The node id of scale in nodes.
   std::vector<std::string> scale_in_node_ids_;
-
-  std::unique_ptr<InstanceManager> instance_manager_;
 
   std::atomic<bool> is_worker_timeout_;
   // This is a map of register connection fd to client node id

@@ -18,9 +18,10 @@ import pytest
 
 import mindspore.context as context
 from mindspore.common.tensor import Tensor
-from mindspore import  dtype as mstype
+from mindspore import dtype as mstype
 from mindspore.nn import Cell
 from mindspore.ops import operations as P
+
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
 
@@ -37,8 +38,8 @@ class Net(Cell):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_l2normalize_float32():
-    x = np.arange(20*20*20*20).astype(np.float32).reshape(20, 20, 20, 20)
-    expect = x / np.sqrt(np.sum(x**2, axis=0, keepdims=True))
+    x = np.arange(20 * 20 * 20 * 20).astype(np.float32).reshape(20, 20, 20, 20)
+    expect = x / np.sqrt(np.sum(x ** 2, axis=0, keepdims=True))
     x = Tensor(x)
     error = np.ones(shape=[20, 20, 20, 20]) * 1.0e-5
 
@@ -54,7 +55,7 @@ def test_l2normalize_float32():
 @pytest.mark.env_onecard
 def test_l2normalize_float16():
     x = np.arange(96).astype(np.float16).reshape(2, 3, 4, 4)
-    expect = x / np.sqrt(np.sum(x**2, axis=0, keepdims=True))
+    expect = x / np.sqrt(np.sum(x ** 2, axis=0, keepdims=True))
     x = Tensor(x, dtype=mstype.float16)
     error = np.ones(shape=[2, 3, 4, 4]) * 1.0e-3
 
@@ -71,7 +72,7 @@ def test_l2normalize_float16():
 def test_l2normalize_axis():
     axis = -2
     x = np.arange(96).astype(np.float32).reshape(2, 3, 4, 4)
-    expect = x / np.sqrt(np.sum(x**2, axis=axis, keepdims=True))
+    expect = x / np.sqrt(np.sum(x ** 2, axis=axis, keepdims=True))
     x = Tensor(x)
     error = np.ones(shape=[2, 3, 4, 4]) * 1.0e-5
 
@@ -95,6 +96,28 @@ def test_l2normalize_epsilon():
 
     norm_op = Net(axis=axis, epsilon=epsilon)
     output = norm_op(x)
+    diff = output.asnumpy() - expect
+    assert np.all(diff < error)
+    assert np.all(-diff < error)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_l2normalize_dynamic_shape_float32():
+    """
+    Feature: l2normalize operation dynamic shape test
+    Description: test l2normalize dynamic shape operation
+    Expectation: l2normalize output == expect
+    """
+    x = np.arange(20 * 20 * 20 * 20).astype(np.float32).reshape(20, 20, 20, 20)
+    expect = x / np.sqrt(np.sum(x ** 2, axis=0, keepdims=True))
+    x = Tensor(x)
+    error = np.ones(shape=[20, 20, 20, 20]) * 1.0e-5
+    net = Net(axis=0)
+    input_dyn = Tensor(shape=[None for _ in x.shape], dtype=x.dtype)
+    net.set_inputs(input_dyn)
+    output = net(x)
     diff = output.asnumpy() - expect
     assert np.all(diff < error)
     assert np.all(-diff < error)

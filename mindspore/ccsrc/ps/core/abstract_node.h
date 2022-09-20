@@ -31,7 +31,6 @@
 #include "ps/core/communicator/communicator_base.h"
 #include "ps/core/communicator/message.h"
 #include "ps/core/communicator/task_executor.h"
-#include "ps/core/follower_scaler.h"
 #include "ps/core/node.h"
 #include "ps/core/node_info.h"
 #include "ps/core/recovery_base.h"
@@ -40,7 +39,6 @@
 namespace mindspore {
 namespace ps {
 namespace core {
-class FollowerScaler;
 class BACKEND_EXPORT AbstractNode : public Node {
  public:
   AbstractNode()
@@ -54,7 +52,6 @@ class BACKEND_EXPORT AbstractNode : public Node {
         server_num_(0),
         is_connected_to_scheduler_(false),
         is_current_node_scale_in_(false),
-        follower_scaler_(nullptr),
         node_recovery_(nullptr),
         persistent_state_(PersistentState::NOT_ENABLE_PERSIST),
         scheduler_ip_(""),
@@ -117,19 +114,6 @@ class BACKEND_EXPORT AbstractNode : public Node {
   std::pair<uint32_t, uint64_t> CollectiveReceiveAsync(const NodeRole &node_role, const uint32_t &rank_id,
                                                        VectorPtr *output);
   bool CollectiveWait(const std::pair<uint32_t, uint64_t> &request_id, const uint32_t &timeout = kCommTimeoutInSeconds);
-
-  // Initialize the scaler for server to process before/after scaling operations.
-  bool InitFollowerScaler();
-
-  // Register barriers before scaling operations for server.
-  void RegisterFollowerScalerBarrierBeforeScaleOut(const std::string &module, const BarrierBeforeScaleOut &barrier);
-  void RegisterFollowerScalerBarrierBeforeScaleIn(const std::string &module, const BarrierBeforeScaleIn &barrier);
-
-  // Register handlers after scaling operations for server.
-  void RegisterFollowerScalerHandlerAfterScaleOut(const std::string &module, const HandlerAfterScaleOut &handler);
-  void RegisterFollowerScalerHandlerAfterScaleIn(const std::string &module, const HandlerAfterScaleIn &handler);
-
-  std::string node_scale_state_str();
 
   PersistentState persistent_state() const;
   void set_persistent_state(PersistentState persistent_state);
@@ -313,9 +297,6 @@ class BACKEND_EXPORT AbstractNode : public Node {
   // In order to ensure the consistency of the cluster, the server broadcasts an iteration_end event to notify all other
   // nodes to modify the iteration status
   std::map<uint32_t, EventCallback> custom_event_to_callback_;
-
-  // Scaler for worker/server node.
-  std::unique_ptr<FollowerScaler> follower_scaler_;
 
   // Recovery for worker/server node.
   std::unique_ptr<RecoveryBase> node_recovery_;

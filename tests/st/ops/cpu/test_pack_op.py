@@ -19,32 +19,38 @@ import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 import mindspore.ops.operations.array_ops as P
-from mindspore import Tensor
 from mindspore.common.api import ms_function
-from mindspore.common.initializer import initializer
-from mindspore.common.parameter import Parameter
+from mindspore import Tensor
+
+context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 
 
 class PackNet(nn.Cell):
-    def __init__(self, nptype):
+    def __init__(self):
         super(PackNet, self).__init__()
         self.stack = P.Stack(axis=2)
-        self.data_np = np.array([0] * 16).astype(nptype)
-        self.data_np = np.reshape(self.data_np, (2, 2, 2, 2))
-        self.x1 = Parameter(initializer(
-            Tensor(self.data_np), [2, 2, 2, 2]), name='x1')
-        self.x2 = Parameter(initializer(
-            Tensor(np.arange(16).reshape(2, 2, 2, 2).astype(nptype)), [2, 2, 2, 2]), name='x2')
 
     @ms_function
-    def construct(self):
-        return self.stack((self.x1, self.x2))
+    def construct(self, x1, x2):
+        return self.stack((x1, x2))
 
 
-def pack(nptype):
-    context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
-    pack_ = PackNet(nptype)
-    output = pack_()
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('dtype', [np.float16, np.float32, np.int32, np.int16, np.uint8, np.bool])
+def test_pack_graph(dtype):
+    """
+    Feature: pack operation test
+    Description: test pack graph float32 operation
+    Expectation: pack output == expect
+    """
+    data_np = np.array([0] * 16).astype(dtype)
+    data_np = np.reshape(data_np, (2, 2, 2, 2))
+    x1 = Tensor(data_np)
+    x2 = Tensor(np.arange(16).reshape(2, 2, 2, 2).astype(dtype))
+    net = PackNet()
+    output = net(x1, x2)
     expect = np.array([[[[[0, 0],
                           [0, 0]],
                          [[0, 1],
@@ -60,41 +66,42 @@ def pack(nptype):
                         [[[0, 0],
                           [0, 0]],
                          [[12, 13],
-                          [14, 15]]]]]).astype(nptype)
+                          [14, 15]]]]]).astype(dtype)
     assert (output.asnumpy() == expect).all()
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_pack_graph_float32():
-    pack(np.float32)
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_pack_graph_float16():
-    pack(np.float16)
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_pack_graph_int32():
-    pack(np.int32)
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_pack_graph_int16():
-    pack(np.int16)
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_pack_graph_uint8():
-    pack(np.uint8)
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_pack_graph_bool():
-    pack(np.bool)
+def test_pack_graph_float32_dynamic_shape():
+    """
+    Feature: pack operation dynamic shape test
+    Description: test pack graph float32 dynamic shape operation
+    Expectation: pack output == expect
+    """
+    data_np = np.array([0] * 16).astype(np.float32)
+    data_np = np.reshape(data_np, (2, 2, 2, 2))
+    x1 = Tensor(data_np)
+    x2 = Tensor(np.arange(16).reshape(2, 2, 2, 2).astype(np.float32))
+    net = PackNet()
+    x1_dyn = Tensor(shape=[None for _ in x1.shape], dtype=x1.dtype)
+    x2_dyn = Tensor(shape=[None for _ in x2.shape], dtype=x2.dtype)
+    net.set_inputs(x1_dyn, x2_dyn)
+    output = net(x1, x2)
+    expect = np.array([[[[[0, 0],
+                          [0, 0]],
+                         [[0, 1],
+                          [2, 3]]],
+                        [[[0, 0],
+                          [0, 0]],
+                         [[4, 5],
+                          [6, 7]]]],
+                       [[[[0, 0],
+                          [0, 0]],
+                         [[8, 9],
+                          [10, 11]]],
+                        [[[0, 0],
+                          [0, 0]],
+                         [[12, 13],
+                          [14, 15]]]]]).astype(np.float32)
+    assert (output.asnumpy() == expect).all()

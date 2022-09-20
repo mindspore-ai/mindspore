@@ -33,36 +33,7 @@
 namespace mindspore {
 namespace ps {
 namespace core {
-enum class TcpUserCommand {
-  kPush,
-  kPull,
-  kCount,
-  kReachThreshold,
-  kResetCount,
-  kGetMetadata,
-  kUpdateMetadata,
-  kCounterEvent,
-  kPullWeight,
-  kPushWeight,
-  kSyncIteration,
-  kNotifyLeaderToNextIter,
-  kPrepareForNextIter,
-  kProceedToNextIter,
-  kEndLastIter,
-  kStartFLJob,
-  kUpdateModel,
-  kGetModel,
-  kPushMetrics,
-  kNewInstance,
-  kQueryInstance,
-  kEnableFLS,
-  kDisableFLS,
-  kSyncAfterRecover,
-  kExchangeKeys,
-  kGetKeys,
-  kGetOneDeviceMeta,
-  kQueryNodeScaleState
-};
+enum class TcpUserCommand { kPush, kPull };
 
 // CommunicatorBase is used to receive request and send response for server.
 // It is the base class of HttpCommunicator and TcpCommunicator.
