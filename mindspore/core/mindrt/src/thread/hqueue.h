@@ -27,8 +27,8 @@ class HQueue;
 struct Pointer {
   int32_t index = -1;
   uint32_t version = 0;
-  bool operator==(const Pointer &that) { return (index == that.index && version == that.version); }
-  bool operator!=(const Pointer &that) { return !(*this == that); }
+  bool operator==(const Pointer &that) const { return (index == that.index && version == that.version); }
+  bool operator!=(const Pointer &that) const { return !(*this == that); }
 };
 
 template <typename T>
