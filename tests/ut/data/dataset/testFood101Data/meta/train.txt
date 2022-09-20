@@ -1,0 +1,4 @@
+class1/1
+class2/0
+class3/1
+class4/1

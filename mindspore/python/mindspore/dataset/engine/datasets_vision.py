@@ -32,14 +32,13 @@ import mindspore._c_dataengine as cde
 
 from .datasets import VisionBaseDataset, SourceDataset, MappableDataset, Shuffle, Schema
 from .datasets_user_defined import GeneratorDataset
-from .validators import check_imagefolderdataset, check_kittidataset,\
-    check_mnist_cifar_dataset, check_manifestdataset, check_vocdataset, check_cocodataset, \
-    check_celebadataset, check_flickr_dataset, check_sb_dataset, check_flowers102dataset, check_cityscapes_dataset, \
-    check_usps_dataset, check_div2k_dataset, check_random_dataset, \
-    check_sbu_dataset, check_qmnist_dataset, check_emnist_dataset, check_fake_image_dataset, check_places365_dataset, \
-    check_photo_tour_dataset, check_svhn_dataset, check_stl10_dataset, check_semeion_dataset, \
-    check_caltech101_dataset, check_caltech256_dataset, check_wider_face_dataset, check_lfw_dataset, \
-    check_lsun_dataset, check_omniglotdataset
+from .validators import check_caltech101_dataset, check_caltech256_dataset, check_celebadataset, \
+    check_cityscapes_dataset, check_cocodataset, check_div2k_dataset, check_emnist_dataset, check_fake_image_dataset, \
+    check_flickr_dataset, check_flowers102dataset, check_food101_dataset, check_imagefolderdataset, \
+    check_kittidataset, check_lfw_dataset, check_lsun_dataset, check_manifestdataset, check_mnist_cifar_dataset, \
+    check_omniglotdataset, check_photo_tour_dataset, check_places365_dataset, check_qmnist_dataset, \
+    check_random_dataset, check_sb_dataset, check_sbu_dataset, check_semeion_dataset, check_stl10_dataset, \
+    check_svhn_dataset, check_usps_dataset, check_vocdataset, check_wider_face_dataset
 
 from ..core.validator_helpers import replace_none
 
@@ -2188,6 +2187,140 @@ class Flowers102Dataset(GeneratorDataset):
             class_dict[class_name] = i
 
         return class_dict
+
+
+class Food101Dataset(MappableDataset, VisionBaseDataset):
+    """
+    A source dataset that reads and parses Food101 dataset.
+
+    The generated dataset has two columns :py:obj:`[image, label]` .
+    The tensor of column :py:obj:`image` is of the uint8 type.
+    The tensor of column :py:obj:`label` is of the string type.
+
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        usage (str, optional): Usage of this dataset, can be 'train', 'test', or 'all'. 'train' will read
+            from 75,750 samples, 'test' will read from 25,250 samples, and 'all' will read all 'train'
+            and 'test' samples. Default: None, will be set to 'all'.
+        num_samples (int, optional): The number of images to be included in the dataset.
+            Default: None, will read all images.
+        num_parallel_workers (int, optional): Number of workers to read the data.
+            Default: None, number set in the mindspore.dataset.config.
+        shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
+            Default: None, expected order behavior shown in the table below.
+        decode (bool, optional): Decode the images after reading. Default: False.
+        sampler (Sampler, optional): Object used to choose samples from the dataset.
+            Default: None, expected order behavior shown in the table below.
+        num_shards (int, optional): Number of shards that the dataset will be divided into. When this argument
+            is specified, `num_samples` reflects the maximum sample number of per shard. Default: None.
+        shard_id (int, optional): The shard ID within `num_shards` . This argument can only be specified
+            when `num_shards` is also specified. Default: None.
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            Default: None, which means no cache is used.
+
+    Raises:
+        RuntimeError: If `dataset_dir` does not contain data files.
+        RuntimeError: If `sampler` and `shuffle` are specified at the same time.
+        RuntimeError: If `sampler` and `num_shards`/`shard_id` are specified at the same time.
+        RuntimeError: If `num_shards` is specified but `shard_id` is None.
+        RuntimeError: If `shard_id` is specified but `num_shards` is None.
+        ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
+        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
+        ValueError: If the value of `usage` is not 'train', 'test', or 'all'.
+        ValueError: If `dataset_dir` is not exist.
+
+    Note:
+        - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
+          The table below shows what input arguments are allowed and their expected behavior.
+
+    .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
+       :widths: 25 25 50
+       :header-rows: 1
+
+       * - Parameter `sampler`
+         - Parameter `shuffle`
+         - Expected Order Behavior
+       * - None
+         - None
+         - random order
+       * - None
+         - True
+         - random order
+       * - None
+         - False
+         - sequential order
+       * - Sampler object
+         - None
+         - order defined by sampler
+       * - Sampler object
+         - True
+         - not allowed
+       * - Sampler object
+         - False
+         - not allowed
+
+    Examples:
+        >>> food101_dataset_dir = "/path/to/food101_dataset_directory"
+        >>>
+        >>> # Read 3 samples from Food101 dataset
+        >>> dataset = ds.Food101Dataset(dataset_dir=food101_dataset_dir, num_samples=3)
+
+    About Food101 dataset:
+
+    The Food101 is a challenging dataset of 101 food categories, with 101,000 images.
+    There are 250 test imgaes and 750 training images in each class. All images were rescaled
+    to have a maximum side length of 512 pixels.
+
+    The following is the original Food101 dataset structure.
+    You can unzip the dataset files into this directory structure and read by MindSpore's API.
+
+    .. code-block::
+
+        .
+        └── food101_dir
+             ├── images
+             │    ├── apple_pie
+             │    │    ├── 1005649.jpg
+             │    │    ├── 1014775.jpg
+             │    │    ├──...
+             │    ├── baby_back_rips
+             │    │    ├── 1005293.jpg
+             │    │    ├── 1007102.jpg
+             │    │    ├──...
+             │    └──...
+             └── meta
+                  ├── train.txt
+                  ├── test.txt
+                  ├── classes.txt
+                  ├── train.json
+                  ├── test.json
+                  └── train.txt
+
+    Citation:
+
+    .. code-block::
+
+        @inproceedings{bossard14,
+        title     = {Food-101 -- Mining Discriminative Components with Random Forests},
+        author    = {Bossard, Lukas and Guillaumin, Matthieu and Van Gool, Luc},
+        booktitle = {European Conference on Computer Vision},
+        year      = {2014}
+        }
+    """
+
+    @check_food101_dataset
+    def __init__(self, dataset_dir, usage=None, num_samples=None, num_parallel_workers=None, shuffle=None,
+                 decode=False, sampler=None, num_shards=None, shard_id=None, cache=None):
+        super().__init__(num_parallel_workers=num_parallel_workers, sampler=sampler, num_samples=num_samples,
+                         shuffle=shuffle, num_shards=num_shards, shard_id=shard_id, cache=cache)
+
+        self.dataset_dir = dataset_dir
+        self.usage = replace_none(usage, "all")
+        self.decode = replace_none(decode, False)
+
+    def parse(self, children=None):
+        return cde.Food101Node(self.dataset_dir, self.usage, self.decode, self.sampler)
 
 
 class ImageFolderDataset(MappableDataset, VisionBaseDataset):
