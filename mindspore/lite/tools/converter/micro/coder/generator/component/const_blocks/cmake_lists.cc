@@ -135,11 +135,8 @@ add_subdirectory(src)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${HEADER_PATH})
 include_directories(${HEADER_PATH}/include)
-set(SRC_FILES
-        benchmark/benchmark.c
-        benchmark/calib_output.c
-        benchmark/load_input.c
-)
+file(GLOB SRC_FILES
+    benchmark/*.c)
 add_executable(benchmark ${SRC_FILES})
 target_link_libraries(benchmark net -lm -pthread)
 
