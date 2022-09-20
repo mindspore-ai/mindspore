@@ -236,8 +236,10 @@ class Conv3DTransposeInfer : public abstract::OpInferBase {
     const int64_t shape_size = 5;
     (void)CheckAndConvertUtils::CheckInteger("x shape size", SizeToLong(x_shape.size()), kEqual, shape_size, prim_name);
     (void)CheckAndConvertUtils::CheckInteger("w shape size", SizeToLong(w_shape.size()), kEqual, shape_size, prim_name);
-    (void)CheckAndConvertUtils::CheckInteger("filter's batch, input x's channel", w_shape[0], kEqual, x_shape[1],
-                                             prim_name);
+    if (w_shape[0] != abstract::Shape::SHP_ANY && x_shape[1] != abstract::Shape::SHP_ANY) {
+      (void)CheckAndConvertUtils::CheckInteger("filter's batch, input x's channel", w_shape[0], kEqual, x_shape[1],
+                                               prim_name);
+    }
     if (!CheckShape(prim_name + " x_shape", x_shape)) {
       return std::make_shared<abstract::Shape>(ShapeVector{UNKNOWN_RANK});
     }
