@@ -316,7 +316,6 @@ Reduction算子
     mindspore.ops.ReduceMin
     mindspore.ops.ReduceProd
     mindspore.ops.ReduceSum
-    mindspore.ops.ReduceStd
 
 比较算子
 ^^^^^^^^^^^^^
