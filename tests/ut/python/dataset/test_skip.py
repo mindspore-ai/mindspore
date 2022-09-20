@@ -15,10 +15,8 @@
 import numpy as np
 import pytest
 
-import mindspore as ms
 import mindspore.dataset as ds
 import mindspore.dataset.vision as vision
-import mindspore.dataset.transforms as transforms
 
 
 DATA_DIR_TF2 = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
@@ -306,9 +304,6 @@ def test_skip_with_generator_dataset_multi_process():
     # apply the transform to data
     dataset_train = dataset_train.map(operations=vision.RandomCrop(size=(250, 250)), input_columns="data")
 
-    # apply the transform to label
-    dataset_train = dataset_train.map(operations=transforms.TypeCast(ms.int32), input_columns="label")
-
     # batch
     dataset_train = dataset_train.batch(batch_size=2)
 
@@ -318,7 +313,7 @@ def test_skip_with_generator_dataset_multi_process():
     count = 0
     for _ in range(epochs):
         for item in ds_iter:
-            print("item: {}".format(item), flush=True)
+            assert item["data"].shape == (2, 250, 250, 3)
             count += 1
     assert count == 2
 
@@ -328,7 +323,7 @@ def test_skip_with_generator_dataset_multi_process():
     count = 0
     for _ in range(epochs):
         for item in ds_iter:
-            print("item: {}".format(item), flush=True)
+            assert item["data"].shape == (300, 300, 3)
             count += 1
     assert count == 4
 

@@ -277,10 +277,10 @@ Status KITTIOp::ReadAnnotationToTensor(const std::string &path, TensorRow *row) 
       bbox_data.insert(bbox_data.end(), tmp_bbox.begin(), tmp_bbox.end());
       dimensions_data.insert(dimensions_data.end(), tmp_dimensions.begin(), tmp_dimensions.end());
       location_data.insert(location_data.end(), tmp_location.begin(), tmp_location.end());
-      alpha_data.push_back(static_cast<float>((item.second)[kAlphaIndex]));
       truncated_data.push_back(static_cast<float>((item.second)[0]));
       occuluded_data.push_back(static_cast<uint32_t>(int64_t((item.second)[1])));
-      rotation_y_data.push_back(static_cast<float>((item.second)[kRotationYIndex]));
+      alpha_data.push_back(static_cast<float>((item.second)[2]));
+      rotation_y_data.push_back(static_cast<float>((item.second)[13]));
       bbox_num++;
     }
   }
