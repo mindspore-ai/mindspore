@@ -15,11 +15,11 @@
  */
 
 #include "src/extendrt/delegate/tensorrt/op/cast_plugin.h"
-#include "src/extendrt/delegate/tensorrt/cuda_impl/cast.cuh"
 #include <cuda_runtime.h>
 #include <numeric>
 #include <memory>
 #include <functional>
+#include "src/extendrt/delegate/tensorrt/cuda_impl/cast.cuh"
 
 namespace mindspore::lite {
 REGISTER_TENSORRT_PLUGIN(CastPluginCreater);
@@ -66,8 +66,7 @@ nvinfer1::IPluginV2DynamicExt *CastPlugin::clone() const noexcept {
   return plugin;
 }
 
-nvinfer1::DataType CastPlugin::getOutputDataType(int index, const nvinfer1::DataType *inputTypes, int nbInputs) const
-  noexcept {
+nvinfer1::DataType CastPlugin::getOutputDataType(int, const nvinfer1::DataType *, int) const noexcept {
   return dest_datatype_;
 }
 

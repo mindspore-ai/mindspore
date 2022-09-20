@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include "src/extendrt/delegate/tensorrt/op/cumsum_tensorrt.h"
 #include <cuda_runtime.h>
 #include <numeric>
 #include <memory>
@@ -22,8 +23,7 @@
 #include <unordered_map>
 #include "src/extendrt/delegate/tensorrt/tensorrt_utils.h"
 #include "NvInferRuntimeCommon.h"
-#include "src/extendrt/delegate/tensorrt/op/cumsum_tensorrt.h"
-#include "cumsum_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cumsum_impl.cuh"
 #include "ops/cumsum.h"
 
 namespace mindspore::lite {
@@ -48,7 +48,12 @@ int CumsumTensorRT::AddInnerOp(TensorRTContext *ctx) {
     MS_LOG(ERROR) << "PreprocessInputs2SameDim input tensor failed for " << op_name_;
     return ret;
   }
-  int axis = static_cast<const int *>(in_tensors_[1].Data())[0];
+  auto axis_vec = ConvertTensorAsIntVector(in_tensors_[1]);
+  if (axis_vec.size() != 1) {
+    MS_LOG(ERROR) << "Failed to get axis input, axis size " << axis_vec.size() << ", node: " << op_name_;
+    return RET_ERROR;
+  }
+  int axis = axis_vec[0];
   auto cumsum_op = AsOps<ops::CumSum>();
   bool exclusive = cumsum_op->get_exclusive();
   bool reverse = cumsum_op->get_reverse();

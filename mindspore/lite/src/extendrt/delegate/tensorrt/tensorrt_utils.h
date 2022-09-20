@@ -64,6 +64,8 @@ nvinfer1::Dims ConvertCudaDims(int data, size_t size);
 
 nvinfer1::Dims ConvertCudaDims(const TensorInfo &ms_tensor);
 
+std::vector<int32_t> ConvertTensorAsIntVector(const TensorInfo &ms_tensor);
+
 bool SameDims(nvinfer1::Dims dims, const std::vector<int64_t> &shape);
 
 std::vector<int64_t> ConvertMSShape(const nvinfer1::Dims dims);

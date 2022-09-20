@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
+#include "src/extendrt/delegate/tensorrt/tensorrt_utils.h"
 #include <cuda_runtime_api.h>
 #include <map>
 #include <unordered_set>
 #include <numeric>
 #include <functional>
-#include "src/extendrt/delegate/tensorrt/tensorrt_utils.h"
 #include "src/extendrt/delegate/tensorrt/op/cast_plugin.h"
 #include "src/extendrt/delegate/tensorrt/distribution/distribution_collective.h"
 
@@ -75,6 +75,36 @@ nvinfer1::Dims ConvertCudaDims(const TensorInfo &ms_tensor) {
   }
   return dims;
 }
+
+std::vector<int32_t> ConvertTensorAsIntVector(const TensorInfo &ms_tensor) {
+  if (!ms_tensor.IsConst()) {
+    MS_LOG(ERROR) << "Expect tensor to be const tensor, but got var tensor";
+    return {};
+  }
+  auto data = ms_tensor.Data();
+  if (data == nullptr) {
+    MS_LOG(ERROR) << "Const data cannot be nullptr";
+    return {};
+  }
+  std::vector<int32_t> vals;
+  auto ms_dtype = ms_tensor.DataType();
+  auto size = ms_tensor.ElementNum();
+  if (ms_dtype == DataType::kNumberTypeInt32) {
+    auto int_data = reinterpret_cast<const int32_t *>(data);
+    for (int64_t i = 0; i < size; i++) {
+      vals.push_back(int_data[i]);
+    }
+  } else if (ms_dtype == DataType::kNumberTypeInt64) {
+    auto int_data = reinterpret_cast<const int64_t *>(data);
+    for (int64_t i = 0; i < size; i++) {
+      vals.push_back(LongToInt(int_data[i]));
+    }
+  } else {
+    MS_LOG(ERROR) << "invalid DataType: " << ms_dtype;
+  }
+  return vals;
+}
+
 bool SameDims(nvinfer1::Dims dims, const std::vector<int64_t> &shape) {
   if (dims.nbDims != static_cast<int>(shape.size())) {
     return false;

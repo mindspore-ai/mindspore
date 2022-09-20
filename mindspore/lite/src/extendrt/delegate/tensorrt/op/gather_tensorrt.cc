@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,8 +40,12 @@ int GatherTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::v
     return RET_ERROR;
   }
   if (in_tensors[AXIS_INDEX].ElementNum() == 1) {
-    MS_ASSERT(in_tensors[AXIS_INDEX].IsConst());
-    axis_ = static_cast<const int *>(in_tensors[AXIS_INDEX].Data())[0];
+    auto axis_vec = ConvertTensorAsIntVector(in_tensors_[AXIS_INDEX]);
+    if (axis_vec.size() != 1) {
+      MS_LOG(ERROR) << "Failed to get axis input, dim count " << axis_vec.size() << ", node: " << op_name_;
+      return RET_ERROR;
+    }
+    axis_ = axis_vec[0];
   } else {
     MS_LOG(ERROR) << "TensorRT axis is attribute.";
     return RET_ERROR;

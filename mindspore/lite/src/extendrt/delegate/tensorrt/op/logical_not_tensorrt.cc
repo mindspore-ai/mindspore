@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include "src/extendrt/delegate/tensorrt/op/logical_not_tensorrt.h"
 #include <cuda_runtime.h>
 #include <numeric>
 #include <memory>
@@ -22,7 +23,6 @@
 #include <unordered_map>
 #include "src/extendrt/delegate/tensorrt/tensorrt_utils.h"
 #include "NvInferRuntimeCommon.h"
-#include "src/extendrt/delegate/tensorrt/op/logical_not_tensorrt.h"
 #include "src/extendrt/delegate/tensorrt/cuda_impl/logical.cuh"
 #include "ops/logical_not.h"
 

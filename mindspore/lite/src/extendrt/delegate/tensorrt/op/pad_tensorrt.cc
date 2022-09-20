@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
+#include "src/extendrt/delegate/tensorrt/op/pad_tensorrt.h"
 #include <numeric>
 #include <functional>
-#include "src/extendrt/delegate/tensorrt/op/pad_tensorrt.h"
 #include "src/extendrt/delegate/tensorrt/tensorrt_utils.h"
 #include "ops/fusion/pad_fusion.h"
 
@@ -59,8 +59,7 @@ int PadTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::vect
 
 int PadTensorRT::AddInnerOp(TensorRTContext *ctx) {
   TensorInfo &pad_tensor = in_tensors_[1];
-  auto pad_shape = pad_tensor.Shape();
-  int element_cnt = std::accumulate(pad_shape.begin(), pad_shape.end(), 1, std::multiplies<int>());
+  int element_cnt = pad_tensor.ElementNum();
   if (element_cnt != input(ctx, 0).trt_tensor_->getDimensions().nbDims * INPUT_SIZE2) {
     MS_LOG(ERROR) << "pad tensor cnt is invalid. cnt: " << element_cnt
                   << ", input tensor dims cnt: " << input(ctx, 0).trt_tensor_->getDimensions().nbDims;
@@ -71,36 +70,36 @@ int PadTensorRT::AddInnerOp(TensorRTContext *ctx) {
   MS_LOG(DEBUG) << "before transpose " << GetTensorFormat(pad_input, input(ctx, 0).format_, input(ctx, 0).same_format_);
 
   // trt 6 only support 2D padding
-  const int *padding_data = reinterpret_cast<const int *>(in_tensors_[1].Data());
-  MS_ASSERT(padding_data);
+  auto pad_vec = ConvertTensorAsIntVector(in_tensors_[1]);
+  if (pad_vec.empty()) {
+    MS_LOG(ERROR) << "Failed to get pad input, node: " << op_name_;
+    return RET_ERROR;
+  }
   nvinfer1::IPaddingLayer *padding_layer = nullptr;
-  if (element_cnt == index_NHWC_ * INPUT_SIZE2) {
+  constexpr size_t expect_pad_size = 8;  // NCHW dim number * 2
+  if (pad_vec.size() == expect_pad_size) {
     // only support pad at HW index
-    int h_pre;
-    int h_post;
-    int w_pre;
-    int w_post;
+    nvinfer1::DimsHW prePadding;
+    nvinfer1::DimsHW postPadding;
     if (SameDims(pad_input->getDimensions(), in_tensors_[0].Shape())) {
       // NCHW: 0: N_pre, 1: N_post, 2: C_pre, 3: C_post, 4: H_pre, 5: H_post, 6: W_pre, 7: W_post
-      if (*padding_data != 0 || *(padding_data + 1) != 0 || *(padding_data + 2) != 0 || *(padding_data + 3) != 0) {
+      constexpr size_t n_pre = 0, n_post = 1, c_pre = 2, c_post = 3;
+      constexpr size_t h_pre = 4, h_post = 5, w_pre = 6, w_post = 7;
+      if (pad_vec[n_pre] != 0 || pad_vec[n_post] != 0 || pad_vec[c_pre] != 0 || pad_vec[c_post] != 0) {
         MS_LOG(WARNING) << "tensorrt padding only support pad at HW index, unsupported padding value of: " << op_name_;
       }
-      h_pre = 4;
-      h_post = 5;
-      w_pre = 6;
-      w_post = 7;
+      prePadding = nvinfer1::DimsHW{pad_vec[h_pre], pad_vec[w_pre]};
+      postPadding = nvinfer1::DimsHW{pad_vec[h_post], pad_vec[w_post]};
     } else {
       // NHWC: 0: N_pre, 1: N_post, 2: H_pre, 3: H_post, 4: W_pre, 5: W_post, 6: C_pre, 7: C_post
-      if (*padding_data != 0 || *(padding_data + 1) != 0 || *(padding_data + 6) != 0 || *(padding_data + 7) != 0) {
+      constexpr size_t n_pre = 0, n_post = 1, c_pre = 6, c_post = 7;
+      constexpr size_t h_pre = 2, h_post = 3, w_pre = 4, w_post = 5;
+      if (pad_vec[n_pre] != 0 || pad_vec[n_post] != 0 || pad_vec[c_pre] != 0 || pad_vec[c_post] != 0) {
         MS_LOG(WARNING) << "tensorrt padding only support pad at HW index, unsupported padding value of: " << op_name_;
       }
-      h_pre = 2;
-      h_post = 3;
-      w_pre = 4;
-      w_post = 5;
+      prePadding = nvinfer1::DimsHW{pad_vec[h_pre], pad_vec[w_pre]};
+      postPadding = nvinfer1::DimsHW{pad_vec[h_post], pad_vec[w_post]};
     }
-    nvinfer1::DimsHW prePadding{*(padding_data + h_pre), *(padding_data + w_pre)};
-    nvinfer1::DimsHW postPadding{*(padding_data + h_post), *(padding_data + w_post)};
     MS_LOG(DEBUG) << op_name_ << " prePadding: " << prePadding.d[0] << ", " << prePadding.d[1]
                   << "; postPadding: " << postPadding.d[0] << ", " << postPadding.d[1];
 
