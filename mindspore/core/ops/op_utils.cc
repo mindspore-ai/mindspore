@@ -89,8 +89,8 @@ void ReduceFuncCheckAxisInferImpl(const PrimitivePtr &prim, std::vector<int64_t>
   int64_t dim_ = static_cast<int64_t>(dim);
   for (size_t i = 0; i < axis->size(); i++) {
     if (axis->at(i) < -dim_ || axis->at(i) >= dim_) {
-      MS_LOG(EXCEPTION) << "For '" << prim->name() << "', 'axis' must be in [" << -dim_ << ", " << dim_
-                        << "). But got 'axis' = " << axis->at(i) << ".";
+      MS_EXCEPTION(ValueError) << "For '" << prim->name() << "', 'axis' must be in [" << -dim_ << ", " << dim_
+                               << "). But got 'axis' = " << axis->at(i) << ".";
     }
     if (axis->at(i) >= -dim_ && axis->at(i) < 0) {
       axis->at(i) += dim_;
@@ -169,8 +169,8 @@ bool CheckAndGetAxisValue(const std::vector<abstract::AbstractBasePtr> &input_ar
       is_dynamic = true;
       auto axis_shape = CheckAndConvertUtils::GetTensorInputShape(op_name, input_args, 1);
       if (axis_shape->shape().size() != 1) {
-        MS_EXCEPTION(ValueError) << "For 'Reduce axis', " << op_name << " must be 1-D, but got"
-                                 << axis_shape->shape().size() << "-D.";
+        MS_EXCEPTION(ValueError) << "For '" << op_name << "', the axis's shape length should be 1, but got '"
+                                 << axis_shape->shape().size() << "'.";
       }
       *axis_shape_v = axis_shape->shape()[0];
     }
