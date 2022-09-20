@@ -24,13 +24,13 @@
 namespace mindspore {
 namespace ops {
 constexpr int64_t kScatterNdInputNum = 2LL;
-bool ScatterNdCheckShape(const PrimitivePtr &prim, const AbstractBasePtrList &inputs, const ShapeVector &out_shape) {
+void ScatterNdCheckShape(const PrimitivePtr &prim, const AbstractBasePtrList &inputs, const ShapeVector &out_shape) {
   auto indices_shape_ptr = inputs[kInputIndex0]->BuildShape();
   ShapeVector indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(indices_shape_ptr)[kShape];
   auto updates_shape_ptr = inputs[kInputIndex1]->BuildShape();
   ShapeVector updates_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(updates_shape_ptr)[kShape];
-  if (IsDynamicRank(indices_shape) || IsDynamicRank(updates_shape)) {
-    return false;
+  if (IsDynamic(indices_shape) || IsDynamic(updates_shape)) {
+    return;
   }
   const int64_t kIndicesRank = 2LL;
   (void)CheckAndConvertUtils::CheckInteger("rank(indices)", SizeToLong(indices_shape.size()), kGreaterEqual,
@@ -39,10 +39,7 @@ bool ScatterNdCheckShape(const PrimitivePtr &prim, const AbstractBasePtrList &in
   if (out_shape.empty()) {
     MS_EXCEPTION(ValueError) << "For '" << prim->name() << "', the input 'shape' can not be empty.";
   }
-  // the last dimension of indices_shape, use the same variable 'N' as document.
-  if (indices_shape.back() == abstract::Shape::SHP_ANY) {
-    MS_EXCEPTION(ValueError) << "For '" << prim->name() << "', the last dimension of 'indices' can not be dynamic.";
-  }
+
   size_t n = LongToSize(indices_shape.back());
   if (n > out_shape.size()) {
     MS_EXCEPTION(ValueError) << "For '" << prim->name()
@@ -64,8 +61,7 @@ bool ScatterNdCheckShape(const PrimitivePtr &prim, const AbstractBasePtrList &in
   // updates.shape = indices.shape[:-1] + shape[indices.shape[-1]:]
   bool constrain = true;
   for (size_t i = 0; i + 1 < indices_shape.size(); ++i) {
-    auto is_dyn = ((updates_shape[i] == abstract::Shape::SHP_ANY) || (indices_shape[i] == abstract::Shape::SHP_ANY));
-    if ((updates_shape[i] != indices_shape[i]) && (!is_dyn)) {
+    if (updates_shape[i] != indices_shape[i]) {
       constrain = false;
       break;
     }
@@ -73,8 +69,7 @@ bool ScatterNdCheckShape(const PrimitivePtr &prim, const AbstractBasePtrList &in
   size_t si = n;
   size_t ui = indices_shape.size() - 1;
   for (; si < out_shape.size(); ++si, ++ui) {
-    auto is_dyn = ((updates_shape[ui] == abstract::Shape::SHP_ANY) || (out_shape[si] == abstract::Shape::SHP_ANY));
-    if ((updates_shape[ui] != out_shape[si]) && (!is_dyn)) {
+    if (updates_shape[ui] != out_shape[si]) {
       constrain = false;
       break;
     }
@@ -92,7 +87,7 @@ bool ScatterNdCheckShape(const PrimitivePtr &prim, const AbstractBasePtrList &in
     buffer << ").";
     MS_EXCEPTION(ValueError) << buffer.str();
   }
-  return true;
+  return;
 }
 
 TypePtr ScatterNdInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
@@ -102,7 +97,7 @@ TypePtr ScatterNdInferType(const PrimitivePtr &prim, const std::vector<AbstractB
   return dtype;
 }
 
-abstract::ShapePtr ExtrectScatterNdShape(const PrimitivePtr &prim, const AbstractBasePtrList &inputs, bool *is_dyn) {
+abstract::ShapePtr ExtractScatterNdShape(const PrimitivePtr &prim, const AbstractBasePtrList &inputs, bool *is_dyn) {
   ShapeVector out_shape;
   *is_dyn = false;
   if (inputs.size() > static_cast<size_t>(kScatterNdInputNum)) {
@@ -119,7 +114,7 @@ abstract::ShapePtr ExtrectScatterNdShape(const PrimitivePtr &prim, const Abstrac
 
 abstract::BaseShapePtr ScatterNdInferShape(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   bool is_dyn_output;
-  auto shape = ExtrectScatterNdShape(prim, input_args, &is_dyn_output);
+  auto shape = ExtractScatterNdShape(prim, input_args, &is_dyn_output);
   const auto &out_shape = shape->shape();
   if (!std::all_of(out_shape.begin(), out_shape.end(),
                    [is_dyn_output](int64_t item) { return item >= 1 || (is_dyn_output && (item < 0)); })) {
@@ -132,8 +127,8 @@ abstract::BaseShapePtr ScatterNdInferShape(const PrimitivePtr &prim, const std::
     buffer << ").";
     MS_EXCEPTION(ValueError) << buffer.str();
   }
-  if (!ScatterNdCheckShape(prim, input_args, out_shape)) {
-    return std::make_shared<abstract::Shape>(ShapeVector{UNKNOWN_RANK});
+  if (!is_dyn_output) {
+    ScatterNdCheckShape(prim, input_args, out_shape);
   }
   return shape;
 }
