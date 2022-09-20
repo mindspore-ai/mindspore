@@ -49,7 +49,8 @@ class SpecialOpEliminater : public OptimizerCaller {
         cell_backward_hook_(std::make_shared<PrimEliminater>(prim::kPrimCellBackwardHook)),
         print_shape_type_(std::make_shared<PrimEliminater>(prim::kPrimPrintShapeType)),
         mirror_(std::make_shared<PrimEliminater>(prim::kPrimMirror)),
-        virtual_div_(std::make_shared<PrimEliminater>(prim::kPrimVirtualDiv)) {
+        virtual_div_(std::make_shared<PrimEliminater>(prim::kPrimVirtualDiv)),
+        mutable_(std::make_shared<PrimEliminater>(prim::kPrimMutable)) {
     (void)eliminaters_.emplace_back(insert_gradient_of_);
     (void)eliminaters_.emplace_back(stop_gradient_);
     (void)eliminaters_.emplace_back(hook_backward_);
@@ -57,6 +58,7 @@ class SpecialOpEliminater : public OptimizerCaller {
     (void)eliminaters_.emplace_back(print_shape_type_);
     (void)eliminaters_.emplace_back(mirror_);
     (void)eliminaters_.emplace_back(virtual_div_);
+    (void)eliminaters_.emplace_back(mutable_);
   }
   ~SpecialOpEliminater() = default;
 
@@ -77,7 +79,7 @@ class SpecialOpEliminater : public OptimizerCaller {
 
  private:
   OptimizerCallerPtr insert_gradient_of_, stop_gradient_, hook_backward_, cell_backward_hook_, print_shape_type_,
-    mirror_, virtual_div_;
+    mirror_, virtual_div_, mutable_;
   std::vector<OptimizerCallerPtr> eliminaters_{};
 };
 

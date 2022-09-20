@@ -320,10 +320,15 @@ AnfNodePtr FunctionBlock::HandleBuiltinNamespaceInfo(const py::tuple &info) {
       resolved_node->set_interpret_internal_type(true);
     }
   }
-  SymbolPtr symbol = std::make_shared<Symbol>(info[symbol_index].cast<std::string>());
-  py::object py_obj = info[value_index];
-  AddGlobalPyParam(symbol->name(), py_obj);
-  MS_LOG(INFO) << "[" << func_graph()->ToString() << "] Added global python symbol: {" << symbol->name() << " : "
+  // The value may not be supported to do ConvertData such as api `mutable`,
+  // and we get its converted object from python.
+  auto ast = parser_.ast();
+  MS_EXCEPTION_IF_NULL(ast);
+  py::object py_obj = ast->CallParserObjMethod(PYTHON_PARSE_GET_CONVERT_OBJECT_FOR_UNSUPPORTED_TYPE, info[value_index]);
+
+  auto symbol_name = info[symbol_index].cast<std::string>();
+  AddGlobalPyParam(symbol_name, py_obj);
+  MS_LOG(INFO) << "[" << func_graph()->ToString() << "] Added global python symbol: {" << symbol_name << " : "
                << py::str(py_obj) << "}";
   return resolved_node;
 }

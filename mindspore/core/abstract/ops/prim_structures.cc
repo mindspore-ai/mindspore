@@ -323,5 +323,35 @@ AbstractBasePtr InferImplArrayLen(const AnalysisEnginePtr &, const PrimitivePtr 
   }
   return std::make_shared<AbstractScalar>(shape->shape()[0]);
 }
+
+namespace {
+void CheckMutableArgAbstract(const AbstractBasePtr &abs) {
+  if (abs->isa<AbstractSequence>()) {
+    auto abs_seq = abs->cast_ptr<AbstractSequence>();
+    for (const auto &ele : abs_seq->elements()) {
+      CheckMutableArgAbstract(ele);
+    }
+  } else if (abs->isa<AbstractDictionary>()) {
+    auto abs_dic = abs->cast_ptr<AbstractDictionary>();
+    for (const auto &ele : abs_dic->elements()) {
+      CheckMutableArgAbstract(ele.second);
+    }
+  } else if (!abs->isa<AbstractTensor>()) {
+    MS_EXCEPTION(TypeError)
+      << "For mutable api in graph, the input arg should be one of (Tensor, tuple[Tensor], list[Tensor], "
+         "dict[Tensor]) or their nested structures, but got "
+      << abs->ToString();
+  }
+}
+}  // namespace
+
+AbstractBasePtr InferImplMutable(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                 const AbstractBasePtrList &args_spec_list) {
+  const std::string op_name = primitive->name();
+  constexpr int args_spec_size = 1;
+  CheckArgsSize(op_name, args_spec_list, args_spec_size);
+  CheckMutableArgAbstract(args_spec_list[0]);
+  return args_spec_list[0]->Broaden();
+}
 }  // namespace abstract
 }  // namespace mindspore

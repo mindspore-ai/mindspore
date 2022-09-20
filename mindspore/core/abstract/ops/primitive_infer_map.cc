@@ -311,6 +311,7 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     // Others
     {prim::kPrimIdentity, R{InferImplIdentity, nullptr, true}},
     {prim::kPrimLoad, R{InferImplLoad, nullptr, true}},
+    {prim::kPrimMutable, R{InferImplMutable, nullptr, true}},
     // Set impl to null as it will use PartialEvaluator;
     {prim::kPrimPartial, R{nullptr, nullptr, true}},
     {prim::kPrimEnvironCreate, R{InferImplEnvironCreate, nullptr, true}},
