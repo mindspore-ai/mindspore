@@ -472,7 +472,7 @@ class FlopsParser:
 
         if not os.path.exists(_step_trace_file_path):
             logger.critical(f'The {_step_trace_file_path} file does not exist.')
-            raise ProfilerFileNotFoundException(_step_trace_file_path)
+            return op_all_step_time, op_all_step_comp
         try:
             with open(_step_trace_file_path, 'r') as f:
                 lines = f.readlines()

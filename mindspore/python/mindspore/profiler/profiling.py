@@ -130,6 +130,15 @@ class Profiler:
     _has_initialized = False
     _ascend_profiling_options = ""
     _ascend_job_id = ""
+    _aicore_metrics_dict = {
+        0: "ArithmeticUtilization",
+        1: "PipeUtilization",
+        2: "Memory",
+        3: "MemoryL0",
+        4: "ResourceConflictRatio",
+        5: "MemoryUB",
+        -1: "None"
+    }
 
     def __init__(self, **kwargs):
         if Profiler._has_initialized:
@@ -150,6 +159,10 @@ class Profiler:
         self._rank_size = 0
         self._ascend_profiler = None
         _environment_check()
+        # default aicore_metrics type is ArithmeticUtilization
+        self._aicore_metrics_id = 0
+        self._l2_cache = "off"
+        self._parser_kwargs(kwargs)
         # get device_id and device_target
         self._get_devid_rankid_and_devtarget()
         self._get_output_path(kwargs)
@@ -262,8 +275,6 @@ class Profiler:
         # Setup and start MindData Profiling
         self._md_profiler = cde.GlobalContext.profiling_manager()
         self._md_profiler.init()
-        if context.get_context("mode") == context.PYNATIVE_MODE:
-            raise RuntimeError("Pynative mode is not supported on GPU currently.")
         self._parse_parameter_for_gpu(kwargs)
 
         gpu_profiler = c_expression.Profiler
@@ -320,11 +331,12 @@ class Profiler:
             "bp_point": bp_point,
             "training_trace": "on",
             "task_trace": "on",
-            "aic_metrics": "ArithmeticUtilization",
+            "aic_metrics": Profiler._aicore_metrics_dict.get(self._aicore_metrics_id, "ArithmeticUtilization"),
             "aicpu": "on",
             "profile_memory": profile_memory,
             "hccl": profiler_communication,
-            "parallel_strategy": "on"
+            "l2_cache": self._l2_cache,
+            "parallel_strategy": "on",
         }
 
         return profiling_options
@@ -454,10 +466,7 @@ class Profiler:
         else:
             logger.info("No need to stop profiler because profiler has been stopped.")
 
-        if context.get_context("mode") == context.PYNATIVE_MODE:
-            self._ascend_pynative_analyse()
-        else:
-            self._ascend_graph_analyse()
+        self._ascend_graph_analyse()
 
         # Call MSAdvisor function
         try:
@@ -701,17 +710,7 @@ class Profiler:
             self._gpu_profiler.step_profiling_enable(True)
         elif self._device_target and self._device_target == DeviceTarget.ASCEND.value:
             self._md_profiler.start()
-            if context.get_context("mode") == context.PYNATIVE_MODE:
-                self._ascend_pynative_start()
-            else:
-                self._ascend_graph_start()
-
-    def _ascend_pynative_start(self):
-        """Ascend pynative mode start profiling."""
-        pynative_profiler = c_expression.Profiler
-        self._pynative_profiler = pynative_profiler.get_instance("PyNative")
-        self._pynative_profiler.init(self._output_path)
-        self._ascend_profiler.start()
+            self._ascend_graph_start()
 
     def _ascend_graph_start(self):
         """Ascend graph mode start profiling."""
@@ -763,8 +762,6 @@ class Profiler:
         if self._device_target and self._device_target == DeviceTarget.GPU.value:
             self._gpu_profiler.stop()
         elif self._device_target and self._device_target == DeviceTarget.ASCEND.value:
-            if context.get_context("mode") == context.PYNATIVE_MODE:
-                self._pynative_profiler.stop()
             self._ascend_profiler.stop()
 
             self._stop_time = int(time.time() * 10000000)
@@ -1181,6 +1178,22 @@ class Profiler:
         else:
             logger.warning("The target dir already exists. "
                            "There may be some old profiling data, and they will be rewritten in the end.")
+
+    def _parser_kwargs(self, kwargs):
+        """Parse kwargs vale."""
+        self._aicore_metrics_id = kwargs.pop("aicore_metrics", 0)
+        if not isinstance(self._aicore_metrics_id, int) or self._aicore_metrics_id not in self._aicore_metrics_dict:
+            logger.warning("aicore_metrics is an invalid value, it will be set to 0.")
+            self._aicore_metrics_id = 0
+
+        l2_cache_enable = kwargs.pop("l2_cache", False)
+        if not isinstance(l2_cache_enable, bool):
+            logger.warning("l2_cache is an invalid value, it will be set to False.")
+
+        if l2_cache_enable:
+            self._l2_cache = "on"
+        else:
+            self._l2_cache = "off"
 
     def _analyse_hccl_info(self):
         """Analyse hccl info."""

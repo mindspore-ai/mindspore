@@ -30,6 +30,7 @@ class HWTSLogParser:
          output_filename (str): The output data path and name. Such as: './output_format_data_hwts_0.txt'.
     """
 
+    GRAPH_MODE_MAX_TASKID = 65000
     _source_file_target_old = 'hwts.log.data.45.dev.profiler_default_tag'
     _source_file_target = 'hwts.data'
     _dst_file_title = 'title:45 HWTS data'
@@ -107,10 +108,10 @@ class HWTSLogParser:
                     logger.info("Profiling: invalid hwts log record type %s", ms_type)
                     continue
 
-                if task_id < task_id_threshold:
-                    if last_task_stream_map.get(stream_id, task_id) > task_id and self._dynamic_status:
-                        flip_times += 1
-                    task_id_str = str(stream_id) + "_" + str(task_id + flip_times * task_id_threshold)
+                if HWTSLogParser.GRAPH_MODE_MAX_TASKID < last_task_stream_map.get(stream_id, task_id)\
+                        and task_id < last_task_stream_map.get(stream_id, task_id):
+                    flip_times += 1
+                task_id_str = str(stream_id) + "_" + str(task_id + flip_times * task_id_threshold)
                 result_data += ("%-14s %-4s %-8s %-9s %-8s %-15s %s\n" % (log_type[int(ms_type, 2)], cnt, core_id,
                                                                           blk_id, task_id_str, syscnt, stream_id))
                 last_task_stream_map[stream_id] = task_id
