@@ -17,7 +17,6 @@
 #include "plugin/device/cpu/kernel/svd_cpu_kernel.h"
 #include <algorithm>
 #include <memory>
-#include <utility>
 #include <map>
 #include "plugin/device/cpu/kernel/eigen/eigen_common_utils.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
