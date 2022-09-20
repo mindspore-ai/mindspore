@@ -844,7 +844,7 @@ def _fill_param_into_net(net, parameter_list):
     load_param_into_net(net, parameter_dict)
 
 
-def export(net, *inputs, file_name, file_format='AIR', **kwargs):
+def export(net, *inputs, file_name, file_format, **kwargs):
     """
     Export the MindSpore network into an offline model in the specified format.
 
@@ -861,7 +861,6 @@ def export(net, *inputs, file_name, file_format='AIR', **kwargs):
              the batch size of 'net' input. Only supports parse "image" column from dataset currently.
         file_name (str): File name of the model to be exported.
         file_format (str): MindSpore currently supports 'AIR', 'ONNX' and 'MINDIR' format for exported model.
-            Default: 'AIR'.
 
             - AIR: Ascend Intermediate Representation. An intermediate representation format of Ascend model.
             - ONNX: Open Neural Network eXchange. An open format built to represent machine learning models.
@@ -894,7 +893,12 @@ def export(net, *inputs, file_name, file_format='AIR', **kwargs):
         >>> input_tensor = Tensor(np.ones([1, 1, 32, 32]).astype(np.float32))
         >>> ms.export(net, input_tensor, file_name='lenet', file_format='MINDIR')
     """
+    supported_formats = ['AIR', 'ONNX', 'MINDIR']
+    if file_format not in supported_formats:
+        raise ValueError(f"For 'export', 'file_format' must be one of {supported_formats}, but got {file_format}.")
+    Validator.check_file_name_by_regular(file_name)
     logger.info("exporting model file:%s format:%s.", file_name, file_format)
+
     if check_input_dataset(*inputs, dataset_type=mindspore.dataset.Dataset):
         if len(inputs) != 1:
             raise RuntimeError(f"You can only serialize one dataset into MindIR, got " + str(len(inputs)) + " datasets")
@@ -912,7 +916,6 @@ def export(net, *inputs, file_name, file_format='AIR', **kwargs):
                                + str(columns))
         inputs = tuple(inputs_col)
 
-    Validator.check_file_name_by_regular(file_name)
     file_name = os.path.realpath(file_name)
     net = _quant_export(net, *inputs, file_format=file_format, **kwargs)
     if 'enc_key' in kwargs.keys():
@@ -934,9 +937,6 @@ def _export(net, file_name, file_format, *inputs, **kwargs):
                        f"it would be removed in future release, use 'AIR' instead.")
         file_format = 'AIR'
 
-    supported_formats = ['AIR', 'ONNX', 'MINDIR']
-    if file_format not in supported_formats:
-        raise ValueError(f"For 'export', 'file_format' must be one of {supported_formats}, but got {file_format}.")
     # When dumping ONNX file, switch network mode to infer when it is training(NOTE: ONNX only designed for prediction)
     is_dump_onnx_in_training = False
     if hasattr(net, 'training'):
