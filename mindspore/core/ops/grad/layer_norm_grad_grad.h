@@ -45,10 +45,6 @@ class MIND_API LayerNormGradGrad : public BaseOperator {
   int64_t get_begin_norm_axis() const;
   int64_t get_begin_params_axis() const;
 };
-
-abstract::AbstractBasePtr LayerNormGradGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                 const std::vector<AbstractBasePtr> &input_args);
-using PrimLayerNormGradGradPtr = std::shared_ptr<LayerNormGradGrad>;
 }  // namespace ops
 }  // namespace mindspore
 
