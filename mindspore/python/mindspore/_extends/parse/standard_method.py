@@ -17,7 +17,7 @@
 """standard_method"""
 
 from __future__ import absolute_import
-from mindspore import Tensor, CSRTensor, COOTensor, RowTensor, ms_class
+from mindspore import Tensor, CSRTensor, COOTensor, RowTensor
 from mindspore import dtype as mstype
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore.ops.function.sparse_func import sparse_add
@@ -26,7 +26,7 @@ import mindspore.common._monad as monad
 from ..._checkparam import Validator as validator
 from ...ops import functional as F
 from ...ops import operations as P
-from ...ops.composite import tail, core, MultitypeFuncGraph, env_get, hyper_add, \
+from ...ops.composite import tail, MultitypeFuncGraph, env_get, hyper_add, \
     zeros_like, ones_like, repeat_elements
 from ...ops.composite.base import _append, _insert, _pop, _list_clear, _reverse, \
     _count, _extend, _dict_clear, _haskey, _update, _fromkeys
@@ -2738,39 +2738,6 @@ def top_k(input_x, k, sorted=True):
 #############
 # Iteration #
 #############
-
-
-@ms_class
-class SequenceIterator:
-    """
-    SequenceIterator is a util class for iterating sequence object.
-
-    Iterator to use for sequences like List, Array.
-    """
-
-    def __init__(self, idx, seq):
-        self.idx = idx
-        self.seq = seq
-
-    @core(ignore_values=True)
-    def __ms_hasnext__(self):
-        """Whether the index is past the length of the sequence."""
-        return self.idx < ms_len(self.seq)
-
-    @core(ignore_values=True)
-    def __ms_next__(self):
-        """Return the next element and a new iterator."""
-        return self.seq[self.idx], SequenceIterator(self.idx + 1, self.seq)
-
-
-def list_iter(xs):
-    """Iterator for List."""
-    return SequenceIterator(0, xs)
-
-
-def array_iter(xs):
-    """Iterator for Array."""
-    return SequenceIterator(0, xs)
 
 
 def tuple_next(xs):
