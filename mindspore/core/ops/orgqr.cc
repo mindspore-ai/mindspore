@@ -31,39 +31,40 @@ namespace {
 abstract::ShapePtr OrgqrInferShape(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
   const int64_t kInputNoBatch = 2;
   const int64_t kInputWithBatch = 3;
-  const size_t kBatchIndex = 3;
   const size_t kRowIndex = 2;
   const size_t kColIndex = 1;
   const size_t kTwo = 2;
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto tau_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
-  if (x_shape.size() != kInputNoBatch && x_shape.size() != kInputWithBatch) {
-    MS_EXCEPTION(ValueError) << "For Orgqr, the rank of x must be equal to 2 or 3"
+  if (IsDynamicRank(x_shape)) {
+    return std::make_shared<abstract::Shape>(x_shape);
+  }
+  if (x_shape.size() < kInputNoBatch) {
+    MS_EXCEPTION(ValueError) << "For Orgqr, the rank of x must be greater than or equal to 2"
                              << ", while got x rank " << x_shape.size() << ".";
   }
-  int64_t rank = static_cast<int64_t>(x_shape.size());
-  if (*(x_shape.end() - 1) > *(x_shape.end() - static_cast<int64_t>(kTwo))) {
+  int64_t rank = x_shape.size();
+  if (*(x_shape.end() - 1) > *(x_shape.end() - kTwo)) {
     MS_EXCEPTION(ValueError) << "For Orgqr, x.shape[-2] must be greater than or equal to x.shape[-1]"
-                             << ", while row number of x is " << x_shape[x_shape.size() - kRowIndex]
-                             << " and column number of x is " << x_shape[x_shape.size() - kColIndex] << ".";
+                             << ", while x.shape[-2] is " << x_shape[rank - kRowIndex] << " and x.shape[-1] is "
+                             << x_shape[rank - kColIndex] << ".";
   }
   if (*(x_shape.end() - 1) < *(tau_shape.end() - 1)) {
     MS_EXCEPTION(ValueError) << "For Orgqr, x.shape[-1] must be greater than or equal to tau.shape[-1]"
-                             << ", while column number of x is" << x_shape[x_shape.size() - kColIndex] << " and "
-                             << "column number of tau is " << tau_shape[tau_shape.size() - kColIndex] << ".";
+                             << ", while x.shape[-1] is " << x_shape[rank - kColIndex] << " and "
+                             << "tau.shape[-1] is " << tau_shape[rank - kColIndex] << ".";
   }
   if ((x_shape.size() - 1) != tau_shape.size()) {
     MS_EXCEPTION(ValueError) << "For Orgqr,  tau should have one dimension less than x"
-                             << ", while rank of x is" << x_shape.size() << " and "
+                             << ", while rank of x is " << x_shape.size() << " and "
                              << "rank of tau is " << tau_shape.size() << ".";
   }
-  if (rank == kInputWithBatch) {
-    if (x_shape[static_cast<size_t>(rank) - kBatchIndex] != tau_shape[static_cast<size_t>(rank) - kBatchIndex]) {
-      MS_EXCEPTION(ValueError) << "For Orgqr, x and tau should share the same batch size"
-                               << ", while x is of batch size " << x_shape[static_cast<size_t>(rank) - kBatchIndex]
-                               << ","
-                               << " and tau is of batch size " << tau_shape[static_cast<size_t>(rank) - kBatchIndex]
-                               << ".";
+  if (rank >= kInputWithBatch) {
+    for (size_t i = 0; i < rank - kRowIndex; i++) {
+      if (x_shape[i] != tau_shape[i]) {
+        MS_EXCEPTION(ValueError) << "For Orgqr, x and tau should share the same batch size, but x.shape[" << i
+                                 << "] is " << x_shape[i] << ",and tau.shape[" << i << "] is " << tau_shape[i] << ".";
+      }
     }
   }
 
