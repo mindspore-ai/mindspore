@@ -35,10 +35,6 @@ if(ENABLE_ACL)
     add_definitions(-D ENABLE_ACL)
     message(STATUS "ACL module is enabled")
 endif()
-if(ENABLE_TDTQUE)
-    add_definitions(-D ENABLE_TDTQUE)
-    message(STATUS "TDT queue is enabled")
-endif()
 if(MS_BUILD_GRPC)
     set(ENABLE_CACHE true)
     add_definitions(-D ENABLE_CACHE)
@@ -118,11 +114,7 @@ add_dependencies(engine-ir-cache core)
 add_dependencies(kernels-ir core)
 add_dependencies(kernels-ir-data core)
 add_dependencies(kernels-ir-vision core)
-
-
-if(ENABLE_ACL)
-    add_dependencies(kernels-dvpp-image core dvpp-utils)
-endif()
+add_dependencies(kernels-dvpp-image core)
 
 if(ENABLE_PYTHON)
     add_dependencies(APItoPython core)
@@ -193,14 +185,8 @@ set(dataengine_submodules
         $<TARGET_OBJECTS:kernels-ir>
         $<TARGET_OBJECTS:kernels-ir-data>
         $<TARGET_OBJECTS:kernels-ir-vision>
-        $<TARGET_OBJECTS:md_plugin>)
-
-if(ENABLE_ACL)
-    set(dataengine_submodules
-            ${dataengine_submodules}
-            $<TARGET_OBJECTS:kernels-dvpp-image>
-            $<TARGET_OBJECTS:dvpp-utils>)
-endif()
+        $<TARGET_OBJECTS:md_plugin>
+        $<TARGET_OBJECTS:kernels-dvpp-image>)
 
 if(ENABLE_PYTHON)
     set(dataengine_submodules
@@ -208,15 +194,10 @@ if(ENABLE_PYTHON)
         $<TARGET_OBJECTS:APItoPython>)
 endif()
 
-if(ENABLE_TDTQUE)
-    if(NOT ENABLE_SECURITY)
-        set(dataengine_submodules ${dataengine_submodules} $<TARGET_OBJECTS:engine-perf>)
-    endif()
-else()
-    if(NOT ENABLE_SECURITY)
-        set(dataengine_submodules ${dataengine_submodules} $<TARGET_OBJECTS:engine-perf>)
-    endif()
+if(NOT ENABLE_SECURITY)
+    set(dataengine_submodules ${dataengine_submodules} $<TARGET_OBJECTS:engine-perf>)
 endif()
+
 set(dataengine_submodules ${dataengine_submodules} CACHE INTERNAL "_c_dataengine objects")
 add_library(_c_dataengine SHARED ${dataengine_submodules})
 if(ENABLE_PYTHON)

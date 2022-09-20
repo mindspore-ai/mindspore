@@ -22,8 +22,6 @@
 #include <iostream>
 #include <memory>
 #include <vector>
-#include "acl/acl.h"
-#include "acl/ops/acl_dvpp.h"
 
 #define DVPP_ALIGN_UP(x, align) ((((x) + ((align)-1)) / (align)) * (align))
 
@@ -43,15 +41,15 @@ const int VPC_OFFSET_ALIGN = 2;
 
 // Data type of tensor
 enum OpAttrType {
-  BOOL = 0,
-  INT = 1,
-  FLOAT = 2,
-  STRING = 3,
-  LIST_BOOL = 4,
-  LIST_INT = 6,
-  LIST_FLOAT = 7,
-  LIST_STRING = 8,
-  LIST_LIST_INT = 9,
+  kBool = 0,
+  kInt = 1,
+  kFloat = 2,
+  kString = 3,
+  kListBool = 4,
+  kListInt = 6,
+  kListFloat = 7,
+  kListString = 8,
+  kListListInt = 9,
 };
 
 // operator attribution describe
@@ -81,12 +79,6 @@ struct ImageInfo {
 };
 
 // Description of data in device
-struct RawData {
-  size_t lenOfByte;  // Size of memory, bytes
-  void *data;        // Pointer of data
-};
-
-// Description of data in device
 struct StreamData {
   size_t size;                 // Size of memory, bytes
   std::shared_ptr<void> data;  // Smart pointer of data
@@ -112,7 +104,7 @@ struct Rectangle {
 struct ObjectDetectInfo {
   int32_t classId;
   float confidence;
-  Rectangle location;
+  struct Rectangle location;
 };
 
 enum VpcProcessType {
@@ -123,14 +115,14 @@ enum VpcProcessType {
 };
 
 struct DvppDataInfo {
-  uint32_t width = 0;                                           // Width of image
-  uint32_t height = 0;                                          // Height of image
-  uint32_t widthStride = 0;                                     // Width after align up
-  uint32_t heightStride = 0;                                    // Height after align up
-  acldvppPixelFormat format = PIXEL_FORMAT_YUV_SEMIPLANAR_420;  // Format of image
-  uint32_t frameId = 0;                                         // Needed by video
-  uint32_t dataSize = 0;                                        // Size of data in byte
-  uint8_t *data = nullptr;                                      // Image data
+  uint32_t width = 0;         // Width of image
+  uint32_t height = 0;        // Height of image
+  uint32_t widthStride = 0;   // Width after align up
+  uint32_t heightStride = 0;  // Height after align up
+  int format = 1;             // Format of image
+  uint32_t frameId = 0;       // Needed by video
+  uint32_t dataSize = 0;      // Size of data in byte
+  uint8_t *data = nullptr;    // Image data
 };
 
 struct CropRoiConfig {
@@ -141,8 +133,8 @@ struct CropRoiConfig {
 };
 
 struct DvppCropInputInfo {
-  DvppDataInfo dataInfo;
-  CropRoiConfig roi;
+  struct DvppDataInfo dataInfo;
+  struct CropRoiConfig roi;
 };
 
 // Description of matrix info
@@ -151,13 +143,13 @@ struct MatrixInfo {
   uint32_t col = 0;                      // col of matrix
   uint32_t dataSize = 0;                 // size of memory, bytes
   std::shared_ptr<void> data = nullptr;  // data of matrix
-  aclDataType dataType = ACL_FLOAT16;    // data Type of matrix
+  int dataType = 1;                      // data Type of matrix
 };
 
 // Description of coefficient info
 struct CoefficientInfo {
   std::shared_ptr<void> data = nullptr;  // data of coefficient
-  aclDataType dataType = ACL_FLOAT16;    // dataType
+  int dataType = 1;                      // dataType
 };
 
 // define the input of BLAS operator such as producing:
@@ -166,8 +158,8 @@ struct BlasInput {
   MatrixInfo A;
   MatrixInfo B;
   MatrixInfo C;
-  CoefficientInfo alpha;
-  CoefficientInfo beta;
+  struct CoefficientInfo alpha;
+  struct CoefficientInfo beta;
 };
 
 extern bool g_vdecNotified[VIDEO_PROCESS_THREAD];

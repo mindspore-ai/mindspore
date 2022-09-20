@@ -16,14 +16,11 @@
 
 #include <string>
 #include <vector>
-#include <iostream>
-#include "include/api/context.h"
 #include "minddata/dataset/core/cv_tensor.h"
 #include "minddata/dataset/core/data_type.h"
 #include "minddata/dataset/core/device_tensor.h"
 #include "minddata/dataset/kernels/image/dvpp/dvpp_resize_jpeg_op.h"
 #include "minddata/dataset/kernels/image/dvpp/utils/CommonDataType.h"
-#include "minddata/dataset/kernels/image/dvpp/utils/MDAclProcess.h"
 #include "minddata/dataset/kernels/image/image_utils.h"
 
 namespace mindspore {
@@ -33,18 +30,18 @@ Status DvppResizeJpegOp::Compute(const std::shared_ptr<DeviceTensor> &input, std
   try {
     CHECK_FAIL_RETURN_UNEXPECTED(input->GetDeviceBuffer() != nullptr, "The input image buffer is empty.");
     std::string last_step = "Decode";
-    std::shared_ptr<DvppDataInfo> imageinfo(processor_->Get_Decode_DeviceData());
+    DvppDataInfo *imageinfo(AclAdapter::GetInstance().GetDecodeDeviceData(processor_.get()));
     if (!imageinfo->data) {
       last_step = "Crop";
     }
-    APP_ERROR ret = processor_->JPEG_R(last_step);
+    APP_ERROR ret = AclAdapter::GetInstance().JPEG_R(processor_.get(), last_step);
     if (ret != APP_ERR_OK) {
-      ret = processor_->Release();
+      ret = AclAdapter::GetInstance().ReleaseAclProcess(processor_.get());
       CHECK_FAIL_RETURN_UNEXPECTED(ret == APP_ERR_OK, "Release memory failed.");
       std::string error = "Error in dvpp processing:" + std::to_string(ret);
       RETURN_STATUS_UNEXPECTED(error);
     }
-    std::shared_ptr<DvppDataInfo> ResizeOut(processor_->Get_Resized_DeviceData());
+    DvppDataInfo *ResizeOut(AclAdapter::GetInstance().GetResizedDeviceData(processor_.get()));
     const TensorShape dvpp_shape({1, 1, 1});
     const DataType dvpp_data_type(DataType::DE_UINT8);
     RETURN_IF_NOT_OK(mindspore::dataset::DeviceTensor::CreateEmpty(dvpp_shape, dvpp_data_type, output));
@@ -77,38 +74,39 @@ Status DvppResizeJpegOp::Compute(const std::shared_ptr<Tensor> &input, std::shar
     imageinfo.widthStride = yuv_shape_[1];
     imageinfo.height = yuv_shape_[2];
     imageinfo.heightStride = yuv_shape_[3];
-    imageinfo.format = PIXEL_FORMAT_YUV_SEMIPLANAR_420;
+    imageinfo.format = 1;  // 1 means PIXEL_FORMAT_YUV_SEMIPLANAR_420
     ResourceInfo resource;
     resource.deviceIds.insert(0);
-    std::shared_ptr<ResourceManager> instance = ResourceManager::GetInstance();
-    APP_ERROR ret = instance->InitResource(resource);
+    APP_ERROR ret = AclAdapter::GetInstance().InitResource(&resource);
     if (ret != APP_ERR_OK) {
-      instance->Release();
+      AclAdapter::GetInstance().Release();
       std::string error = "Error in Init D-chip:" + std::to_string(ret);
       RETURN_STATUS_UNEXPECTED(error);
     }
     int deviceId = *(resource.deviceIds.begin());
-    aclrtContext context = instance->GetContext(deviceId);
+    void *context = AclAdapter::GetInstance().GetContext(deviceId);
     // Second part end where we initialize the resource of D-chip and set up all configures
-    MDAclProcess process(resized_width_, resized_height_, context, false);
-    ret = process.InitResource();
+    std::shared_ptr<void> process(AclAdapter::GetInstance().CreateAclProcessWithPara(resized_width_, resized_height_,
+                                                                                     context, false, nullptr, nullptr),
+                                  [](void *ptr) { AclAdapter::GetInstance().DestroyAclProcess(ptr); });
+
+    ret = AclAdapter::GetInstance().InitAclProcess(process.get());
     if (ret != APP_ERR_OK) {
-      instance->Release();
+      AclAdapter::GetInstance().Release();
       std::string error = "Error in Init resource:" + std::to_string(ret);
       RETURN_STATUS_UNEXPECTED(error);
     }
 
-    ret = process.JPEG_R(imageinfo);
+    ret = AclAdapter::GetInstance().JPEG_R_WITH_DATA(process.get(), imageinfo);
     if (ret != APP_ERR_OK) {
-      instance->Release();
+      AclAdapter::GetInstance().Release();
       std::string error = "Error in dvpp processing:" + std::to_string(ret);
       RETURN_STATUS_UNEXPECTED(error);
     }
 
     // Third part end where we execute the core function of dvpp
-    auto data = std::static_pointer_cast<unsigned char>(process.Get_Memory_Data());
-    unsigned char *ret_ptr = data.get();
-    std::shared_ptr<DvppDataInfo> ResizeOut(process.Get_Resized_DeviceData());
+    unsigned char *ret_ptr = static_cast<unsigned char *>(AclAdapter::GetInstance().GetMemoryData(process.get()));
+    DvppDataInfo *ResizeOut = AclAdapter::GetInstance().GetResizedDeviceData(process.get());
     dsize_t dvpp_length = ResizeOut->dataSize;
     const TensorShape dvpp_shape({dvpp_length, 1, 1});
     uint32_t resized_height = ResizeOut->height;
@@ -122,9 +120,9 @@ Status DvppResizeJpegOp::Compute(const std::shared_ptr<Tensor> &input, std::shar
       std::string error = "[ERROR] Fail to get the Output result from memory!";
       RETURN_STATUS_UNEXPECTED(error);
     }
-    ret = process.device_memory_release();
+    ret = AclAdapter::GetInstance().DeviceMemoryRelease(process.get());
     CHECK_FAIL_RETURN_UNEXPECTED(ret == APP_ERR_OK, "Release device memory failed.");
-    ret = process.Release();
+    ret = AclAdapter::GetInstance().ReleaseAclProcess(process.get());
     CHECK_FAIL_RETURN_UNEXPECTED(ret == APP_ERR_OK, "Release host memory failed.");
     // Last part end where we transform the processed data into a tensor which can be applied in later units.
   } catch (const std::exception &e) {
@@ -135,11 +133,11 @@ Status DvppResizeJpegOp::Compute(const std::shared_ptr<Tensor> &input, std::shar
 }
 
 Status DvppResizeJpegOp::SetAscendResource(const std::shared_ptr<DeviceResource> &resource) {
-  processor_ = std::static_pointer_cast<MDAclProcess>(resource->GetInstance());
+  processor_ = resource->GetInstance();
   if (!processor_) {
     RETURN_STATUS_UNEXPECTED("Resource initialize fail, please check your env");
   }
-  APP_ERROR ret = processor_->SetResizeParas(resized_width_, resized_height_);
+  APP_ERROR ret = AclAdapter::GetInstance().SetResizeParas(processor_.get(), resized_width_, resized_height_);
   CHECK_FAIL_RETURN_UNEXPECTED(ret == APP_ERR_OK, "SetResizeParas failed.");
   return Status::OK();
 }

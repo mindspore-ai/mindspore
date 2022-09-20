@@ -253,6 +253,13 @@ if(ENABLE_D OR ENABLE_ACL)
           COMPONENT mindspore
         )
     endif()
+    if(ENABLE_ACL)
+        install(
+                TARGETS dvpp_utils
+                DESTINATION ${INSTALL_LIB_DIR}
+                COMPONENT mindspore
+        )
+    endif()
 endif()
 
 if(MS_BUILD_GRPC)

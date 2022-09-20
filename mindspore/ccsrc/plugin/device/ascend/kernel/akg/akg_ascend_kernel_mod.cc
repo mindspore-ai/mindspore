@@ -22,7 +22,7 @@
 #include "runtime/rt.h"
 #include "utils/log_adapter.h"
 #include "include/common/utils/convert_utils.h"
-#include "include/common/utils/runtime_error_codes.h"
+#include "plugin/device/ascend/hal/common/ascend_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -78,7 +78,7 @@ bool AkgKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vect
                             SizeToUint(sizeof(void *) * runtime_args.size()), l2ctrl, stream);
   if (ret != RT_ERROR_NONE) {
     MS_LOG(ERROR) << "Call runtime rtKernelLaunch error. Kernel name: " << kernel_name_
-                  << ". Error message: " << GetErrorMsg(static_cast<uint32_t>(ret));
+                  << ". Error message: " << device::ascend::GetErrorMsg(static_cast<uint32_t>(ret));
     return false;
   }
 

@@ -60,7 +60,7 @@ using TensorAllocPtr = std::shared_ptr<Allocator<Tensor>>;  // An allocator shar
 using offset_t = uint32_t;                                  // type of offset values to store strings locations
 using TensorPtr = std::shared_ptr<Tensor>;
 
-class Tensor {
+class DATASET_API Tensor {
  public:
   Tensor() = delete;
   Tensor(const Tensor &other) = delete;

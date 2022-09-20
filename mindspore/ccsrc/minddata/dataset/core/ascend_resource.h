@@ -19,14 +19,9 @@
 
 #include <memory>
 #include <string>
-#include "acl/acl.h"
 #include "minddata/dataset/core/device_resource.h"
 #include "minddata/dataset/core/device_tensor.h"
 #include "minddata/dataset/core/tensor.h"
-#include "minddata/dataset/kernels/image/dvpp/utils/CommonDataType.h"
-#include "minddata/dataset/kernels/image/dvpp/utils/ErrorCode.h"
-#include "minddata/dataset/kernels/image/dvpp/utils/MDAclProcess.h"
-#include "minddata/dataset/kernels/image/dvpp/utils/ResourceManager.h"
 
 namespace mindspore {
 namespace dataset {
@@ -53,8 +48,7 @@ class AscendResource : public DeviceResource {
   void *GetStream() override;
 
  private:
-  std::shared_ptr<MDAclProcess> processor_;
-  std::shared_ptr<ResourceManager> ascend_resource_;
+  std::shared_ptr<void> processor_;
 };
 
 }  // namespace dataset

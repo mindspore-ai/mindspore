@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "minddata/dataset/kernels/image/dvpp/utils/dvpp_video.h"
 #include <malloc.h>
 #include <sys/prctl.h>
 #include <sys/time.h>
@@ -27,8 +28,7 @@
 #include <thread>
 
 #include "mindspore/core/utils/log_adapter.h"
-#include "minddata/dataset/kernels/image/dvpp/dvpp_video.h"
-#include "utils/AclLiteUtils.h"
+#include "AclLiteUtils.h"
 
 namespace {
 const int64_t kUsec = 1000000;
@@ -159,7 +159,7 @@ void FrameExtarct::Decode(FrameProcessCallBack callback, void *callbackParam) {
 }
 
 DvppVideo::DvppVideo(aclrtContext context, uint8_t *data, uint32_t size, uint32_t width, uint32_t height, uint32_t type,
-                     uint32_t out_format, const std::string output)
+                     uint32_t out_format, const std::string &output)
     : data_(data),
       size_(size),
       frameWidth_(width),

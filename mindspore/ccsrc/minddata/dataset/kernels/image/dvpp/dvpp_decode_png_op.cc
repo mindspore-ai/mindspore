@@ -23,7 +23,6 @@
 #include "minddata/dataset/kernels/image/dvpp/dvpp_decode_resize_crop_jpeg_op.h"
 #include "minddata/dataset/kernels/image/dvpp/dvpp_decode_png_op.h"
 #include "minddata/dataset/kernels/image/dvpp/utils/CommonDataType.h"
-#include "minddata/dataset/kernels/image/dvpp/utils/MDAclProcess.h"
 #include "minddata/dataset/kernels/image/image_utils.h"
 
 namespace mindspore {
@@ -32,14 +31,14 @@ Status DvppDecodePngOp::Compute(const std::shared_ptr<DeviceTensor> &input, std:
   IO_CHECK(input, output);
   try {
     CHECK_FAIL_RETURN_UNEXPECTED(input->GetDeviceBuffer() != nullptr, "The input image buffer on device is empty");
-    APP_ERROR ret = processor_->PNG_D();
+    APP_ERROR ret = AclAdapter::GetInstance().PNG_D(processor_.get());
     if (ret != APP_ERR_OK) {
-      ret = processor_->Release();
+      ret = AclAdapter::GetInstance().ReleaseAclProcess(processor_.get());
       CHECK_FAIL_RETURN_UNEXPECTED(ret == APP_ERR_OK, "Release memory failed.");
       std::string error = "Error in dvpp processing:" + std::to_string(ret);
       RETURN_STATUS_UNEXPECTED(error);
     }
-    std::shared_ptr<DvppDataInfo> DecodeOut(processor_->Get_Decode_DeviceData());
+    DvppDataInfo *DecodeOut = AclAdapter::GetInstance().GetDecodeDeviceData(processor_.get());
     const TensorShape dvpp_shape({1, 1, 1});
     const DataType dvpp_data_type(DataType::DE_UINT8);
     RETURN_IF_NOT_OK(mindspore::dataset::DeviceTensor::CreateEmpty(dvpp_shape, dvpp_data_type, output));
@@ -70,35 +69,34 @@ Status DvppDecodePngOp::Compute(const std::shared_ptr<Tensor> &input, std::share
     imageInfo.data = static_cast<void *>(buffer);
     ResourceInfo resource;
     resource.deviceIds.insert(0);
-    std::shared_ptr<ResourceManager> instance = ResourceManager::GetInstance();
-    APP_ERROR ret = instance->InitResource(resource);
+    APP_ERROR ret = AclAdapter::GetInstance().InitResource(&resource);
     if (ret != APP_ERR_OK) {
-      instance->Release();
+      AclAdapter::GetInstance().Release();
       std::string error = "Error in Init D-chip:" + std::to_string(ret);
       RETURN_STATUS_UNEXPECTED(error);
     }
     int deviceId = *(resource.deviceIds.begin());
-    aclrtContext context = instance->GetContext(deviceId);
+    void *context = AclAdapter::GetInstance().GetContext(deviceId);
     // Second part end where we initialize the resource of D-chip and set up all configures
-    MDAclProcess process(context, false);
-    ret = process.InitResource();
+    std::shared_ptr<void> process(AclAdapter::GetInstance().CreateAclProcess(context, false, nullptr, nullptr),
+                                  [](void *ptr) { AclAdapter::GetInstance().DestroyAclProcess(ptr); });
+    ret = AclAdapter::GetInstance().InitAclProcess(process.get());
     if (ret != APP_ERR_OK) {
-      instance->Release();
+      AclAdapter::GetInstance().Release();
       std::string error = "Error in Init resource:" + std::to_string(ret);
       RETURN_STATUS_UNEXPECTED(error);
     }
 
-    ret = process.PNG_D(imageInfo);
+    ret = AclAdapter::GetInstance().PNG_D_WITH_DATA(process.get(), imageInfo);
     if (ret != APP_ERR_OK) {
-      instance->Release();
+      AclAdapter::GetInstance().Release();
       std::string error = "Error in dvpp processing:" + std::to_string(ret);
       RETURN_STATUS_UNEXPECTED(error);
     }
 
     // Third part end where we execute the core function of dvpp
-    auto data = std::static_pointer_cast<unsigned char>(process.Get_Memory_Data());
-    unsigned char *ret_ptr = data.get();
-    std::shared_ptr<DvppDataInfo> DecodeOut(process.Get_Decode_DeviceData());
+    unsigned char *ret_ptr = static_cast<unsigned char *>(AclAdapter::GetInstance().GetMemoryData(process.get()));
+    DvppDataInfo *DecodeOut = AclAdapter::GetInstance().GetDecodeDeviceData(process.get());
     dsize_t dvpp_length = DecodeOut->dataSize;
 
     const TensorShape dvpp_shape({dvpp_length, 1, 1});
@@ -108,9 +106,9 @@ Status DvppDecodePngOp::Compute(const std::shared_ptr<Tensor> &input, std::share
       std::string error = "[ERROR] Fail to get the Output result from memory!";
       RETURN_STATUS_UNEXPECTED(error);
     }
-    ret = process.device_memory_release();
+    ret = AclAdapter::GetInstance().DeviceMemoryRelease(process.get());
     CHECK_FAIL_RETURN_UNEXPECTED(ret == APP_ERR_OK, "Release device memory failed.");
-    ret = process.Release();
+    ret = AclAdapter::GetInstance().ReleaseAclProcess(process.get());
     CHECK_FAIL_RETURN_UNEXPECTED(ret == APP_ERR_OK, "Release host memory failed.");
     // Last part end where we transform the processed data into a tensor which can be applied in later units.
   } catch (const std::exception &e) {
@@ -137,7 +135,7 @@ Status DvppDecodePngOp::OutputShape(const std::vector<TensorShape> &inputs, std:
 }
 
 Status DvppDecodePngOp::SetAscendResource(const std::shared_ptr<DeviceResource> &resource) {
-  processor_ = std::static_pointer_cast<MDAclProcess>(resource->GetInstance());
+  processor_ = resource->GetInstance();
   if (!processor_) {
     RETURN_STATUS_UNEXPECTED("Resource initialize fail, please check your env");
   }

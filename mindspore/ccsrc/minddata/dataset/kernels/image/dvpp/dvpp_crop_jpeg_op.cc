@@ -13,16 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#include "minddata/dataset/kernels/image/dvpp/dvpp_crop_jpeg_op.h"
 #include <string>
 #include <vector>
 #include <iostream>
 #include "include/api/context.h"
 #include "minddata/dataset/core/data_type.h"
 #include "minddata/dataset/core/device_tensor.h"
-#include "minddata/dataset/kernels/image/dvpp/utils/MDAclProcess.h"
 #include "minddata/dataset/kernels/image/dvpp/utils/CommonDataType.h"
-#include "minddata/dataset/kernels/image/dvpp/dvpp_crop_jpeg_op.h"
 #include "minddata/dataset/kernels/image/image_utils.h"
 
 namespace mindspore {
@@ -32,18 +30,18 @@ Status DvppCropJpegOp::Compute(const std::shared_ptr<DeviceTensor> &input, std::
   try {
     CHECK_FAIL_RETURN_UNEXPECTED(input->GetDeviceBuffer() != nullptr, "The input image buffer is empty.");
     std::string last_step = "Resize";
-    std::shared_ptr<DvppDataInfo> imageinfo(processor_->Get_Resized_DeviceData());
+    DvppDataInfo *imageinfo = AclAdapter::GetInstance().GetResizedDeviceData(processor_.get());
     if (!imageinfo->data) {
       last_step = "Decode";
     }
-    APP_ERROR ret = processor_->JPEG_C(last_step);
+    APP_ERROR ret = AclAdapter::GetInstance().JPEG_C(processor_.get(), last_step);
     if (ret != APP_ERR_OK) {
-      ret = processor_->Release();
+      ret = AclAdapter::GetInstance().ReleaseAclProcess(processor_.get());
       CHECK_FAIL_RETURN_UNEXPECTED(ret == APP_ERR_OK, "Release memory failed.");
       std::string error = "Error in dvpp crop processing:" + std::to_string(ret);
       RETURN_STATUS_UNEXPECTED(error);
     }
-    std::shared_ptr<DvppDataInfo> CropOut(processor_->Get_Croped_DeviceData());
+    DvppDataInfo *CropOut = AclAdapter::GetInstance().GetCropedDeviceData(processor_.get());
     const TensorShape dvpp_shape({1, 1, 1});
     const DataType dvpp_data_type(DataType::DE_UINT8);
     RETURN_IF_NOT_OK(mindspore::dataset::DeviceTensor::CreateEmpty(dvpp_shape, dvpp_data_type, output));
@@ -78,38 +76,38 @@ Status DvppCropJpegOp::Compute(const std::shared_ptr<Tensor> &input, std::shared
     imageinfo.widthStride = yuv_shape_[1];
     imageinfo.height = yuv_shape_[2];
     imageinfo.heightStride = yuv_shape_[3];
-    imageinfo.format = PIXEL_FORMAT_YUV_SEMIPLANAR_420;
+    imageinfo.format = 1;  // 1 means PIXEL_FORMAT_YUV_SEMIPLANAR_420
     ResourceInfo resource;
     resource.deviceIds.insert(0);
-    std::shared_ptr<ResourceManager> instance = ResourceManager::GetInstance();
-    APP_ERROR ret = instance->InitResource(resource);
+    APP_ERROR ret = AclAdapter::GetInstance().InitResource(&resource);
     if (ret != APP_ERR_OK) {
-      instance->Release();
+      AclAdapter::GetInstance().Release();
       std::string error = "Error in Init D-chip:" + std::to_string(ret);
       RETURN_STATUS_UNEXPECTED(error);
     }
     int deviceId = *(resource.deviceIds.begin());
-    aclrtContext context = instance->GetContext(deviceId);
+    void *context = AclAdapter::GetInstance().GetContext(deviceId);
     // Second part end where we initialize the resource of D-chip and set up all configures
-    MDAclProcess process(crop_width_, crop_height_, context, true);
-    ret = process.InitResource();
+    std::shared_ptr<void> process(
+      AclAdapter::GetInstance().CreateAclProcessWithPara(crop_width_, crop_height_, context, true, nullptr, nullptr),
+      [](void *ptr) { AclAdapter::GetInstance().DestroyAclProcess(ptr); });
+    ret = AclAdapter::GetInstance().InitAclProcess(process.get());
     if (ret != APP_ERR_OK) {
-      instance->Release();
+      AclAdapter::GetInstance().Release();
       std::string error = "Error in Init resource:" + std::to_string(ret);
       RETURN_STATUS_UNEXPECTED(error);
     }
 
-    ret = process.JPEG_C(imageinfo);
+    ret = AclAdapter::GetInstance().JPEG_C_WITH_DATA(process.get(), imageinfo);
     if (ret != APP_ERR_OK) {
-      instance->Release();
+      AclAdapter::GetInstance().Release();
       std::string error = "Error in dvpp crop processing:" + std::to_string(ret);
       RETURN_STATUS_UNEXPECTED(error);
     }
 
     // Third part end where we execute the core function of dvpp
-    auto data = std::static_pointer_cast<unsigned char>(process.Get_Memory_Data());
-    unsigned char *ret_ptr = data.get();
-    std::shared_ptr<DvppDataInfo> CropOut(process.Get_Croped_DeviceData());
+    unsigned char *ret_ptr = static_cast<unsigned char *>(AclAdapter::GetInstance().GetMemoryData(process.get()));
+    DvppDataInfo *CropOut(AclAdapter::GetInstance().GetCropedDeviceData(process.get()));
     dsize_t dvpp_length = CropOut->dataSize;
     const TensorShape dvpp_shape({dvpp_length, 1, 1});
     uint32_t crop_height = CropOut->height;
@@ -123,9 +121,9 @@ Status DvppCropJpegOp::Compute(const std::shared_ptr<Tensor> &input, std::shared
       std::string error = "[ERROR] Fail to get the Output result from memory!";
       RETURN_STATUS_UNEXPECTED(error);
     }
-    ret = process.device_memory_release();
+    ret = AclAdapter::GetInstance().DeviceMemoryRelease(process.get());
     CHECK_FAIL_RETURN_UNEXPECTED(ret == APP_ERR_OK, "Release device memory failed.");
-    ret = process.Release();
+    ret = AclAdapter::GetInstance().ReleaseAclProcess(process.get());
     CHECK_FAIL_RETURN_UNEXPECTED(ret == APP_ERR_OK, "Release host memory failed.");
     // Last part end where we transform the processed data into a tensor which can be applied in later units.
   } catch (const std::exception &e) {
@@ -152,11 +150,11 @@ Status DvppCropJpegOp::OutputShape(const std::vector<TensorShape> &inputs, std::
 }
 
 Status DvppCropJpegOp::SetAscendResource(const std::shared_ptr<DeviceResource> &resource) {
-  processor_ = std::static_pointer_cast<MDAclProcess>(resource->GetInstance());
+  processor_ = resource->GetInstance();
   if (!processor_) {
     RETURN_STATUS_UNEXPECTED("Resource initialize fail, please check your env");
   }
-  APP_ERROR ret = processor_->SetCropParas(crop_width_, crop_height_);
+  APP_ERROR ret = AclAdapter::GetInstance().SetCropParas(processor_.get(), crop_width_, crop_height_);
   CHECK_FAIL_RETURN_UNEXPECTED(ret == APP_ERR_OK, "SetCropParas failed.");
   return Status::OK();
 }

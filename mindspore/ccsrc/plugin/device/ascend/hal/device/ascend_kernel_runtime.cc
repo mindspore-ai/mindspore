@@ -57,7 +57,6 @@
 #include "include/common/debug/anf_ir_dump.h"
 #include "include/common/utils/parallel_context.h"
 #include "include/common/utils/comm_manager.h"
-#include "include/common/utils/runtime_error_codes.h"
 #ifdef MEM_REUSE_DEBUG
 #include "common/mem_reuse/mem_reuse_checker.h"
 #include "include/common/debug/env_config_parser.h"

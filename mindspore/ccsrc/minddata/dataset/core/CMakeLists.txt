@@ -13,13 +13,8 @@ set(DATASET_CORE_SRC_FILES
         tensor_helpers.cc
         tensor_row.cc
         tensor_shape.cc
+        ascend_resource.cc
         )
-
-if(ENABLE_ACL)
-  set(DATASET_CORE_SRC_FILES
-          ${DATASET_CORE_SRC_FILES}
-          ascend_resource.cc)
-endif()
 
 ms_protobuf_generate(EXAMPLE_SRCS EXAMPLE_HDRS example.proto)
 ms_protobuf_generate(FEATURE_SRCS FEATURE_HDRS feature.proto)

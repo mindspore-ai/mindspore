@@ -86,10 +86,10 @@ class MDAclProcess {
   APP_ERROR JPEG_D();
   // Process the JPEG image only with resize
   APP_ERROR JPEG_R(const DvppDataInfo &ImageInfo);
-  APP_ERROR JPEG_R(std::string &last_step);
+  APP_ERROR JPEG_R(const std::string &last_step);
   // Process the JPEG image only with crop
   APP_ERROR JPEG_C(const DvppDataInfo &ImageInfo);
-  APP_ERROR JPEG_C(std::string &last_step);
+  APP_ERROR JPEG_C(const std::string &last_step);
   // Process the PNG image only with decode
   APP_ERROR PNG_D(const RawData &ImageInfo);
   APP_ERROR PNG_D();
@@ -135,10 +135,10 @@ class MDAclProcess {
   APP_ERROR JPEG_D_();
   // Impl of JPEG_R
   APP_ERROR JPEG_R_(const DvppDataInfo &ImageInfo);
-  APP_ERROR JPEG_R_(std::string &last_step);
+  APP_ERROR JPEG_R_(const std::string &last_step);
   // Impl of JPEG_C
   APP_ERROR JPEG_C_(const DvppDataInfo &ImageInfo);
-  APP_ERROR JPEG_C_(std::string &last_step);
+  APP_ERROR JPEG_C_(const std::string &last_step);
   // Impl of PNG_D
   APP_ERROR PNG_D_(const RawData &ImageInfo);
   APP_ERROR PNG_D_();

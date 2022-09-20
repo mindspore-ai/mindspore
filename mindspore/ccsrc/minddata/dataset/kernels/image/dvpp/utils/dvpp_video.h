@@ -26,8 +26,8 @@
 #include <thread>
 #include <vector>
 
-#include "utils/ThreadSafeQueue.h"
-#include "utils/VdecHelper.h"
+#include "ThreadSafeQueue.h"
+#include "VdecHelper.h"
 
 constexpr int INVALID_CHANNEL_ID = -1;
 constexpr int INVALID_STREAM_FORMAT = -1;
@@ -139,7 +139,7 @@ class DvppVideo {
    * @brief DvppVideo constructor
    */
   DvppVideo(aclrtContext context, uint8_t *data, uint32_t size, uint32_t width, uint32_t height, uint32_t type,
-            uint32_t out_format, std::string output);
+            uint32_t out_format, const std::string &output);
 
   /**
    * @brief DvppVideo destructor

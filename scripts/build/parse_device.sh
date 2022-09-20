@@ -26,53 +26,60 @@ parse_device()
 
   # Parse device
   # Process build option
-  if [[ "X$DEVICE" == "Xgpu" ]]; then
-    export ENABLE_GPU="on"
-    ENABLE_CPU="on"
-    ENABLE_MPI="on"
-    # version default 10.1
-    if [[ "X$DEVICE_VERSION" == "X" ]]; then
-      DEVICE_VERSION=10.1
-    fi
-    if [[ "X$DEVICE_VERSION" != "X11.6" && "X$DEVICE_VERSION" != "X11.1" && "X$DEVICE_VERSION" != "X10.1" ]]; then
-      echo "Invalid value ${DEVICE_VERSION} for option -V"
-      usage
-      exit 1
-    fi
-    export CUDA_VERSION="$DEVICE_VERSION"
-    export ENABLE_AKG="on"
-  elif [[ "X$DEVICE" == "Xd" || "X$DEVICE" == "Xascend" ]]; then
-    # version default 910
-    if [[ "X$DEVICE_VERSION" == "X" ]]; then
-      DEVICE_VERSION=910
-    fi
-    # building 310 package by giving specific -V 310 instruction
-    if [[ "X$DEVICE_VERSION" == "X310" ]]; then
-      ENABLE_ACL="on"
-      export ENABLE_AKG="off"
-    # universal ascend package
-    elif [[ "X$DEVICE_VERSION" == "X910" ]]; then
-      export ENABLE_D="on"
-      export ENABLE_ACL="on"
+  export IFS_ORIGIN=$IFS
+  export IFS=":"
+  for D in $DEVICE;
+  do
+    if [[ "X$D" == "Xgpu" ]]; then
+      export ENABLE_GPU="on"
       ENABLE_CPU="on"
-      export ENABLE_MPI="on"
+      ENABLE_MPI="on"
+      # version default 10.1
+      if [[ "X$DEVICE_VERSION" == "X" ]]; then
+        DEVICE_VERSION=10.1
+      fi
+      if [[ "X$DEVICE_VERSION" != "X11.6" && "X$DEVICE_VERSION" != "X11.1" && "X$DEVICE_VERSION" != "X10.1" ]]; then
+        echo "Invalid value ${DEVICE_VERSION} for option -V"
+        usage
+        exit 1
+      fi
+      export CUDA_VERSION="$DEVICE_VERSION"
       export ENABLE_AKG="on"
+      export DEVICE_VERSION=
+    elif [[ "X$D" == "Xd" || "X$D" == "Xascend" ]]; then
+      # version default 910
+      if [[ "X$DEVICE_VERSION" == "X" ]]; then
+        DEVICE_VERSION=910
+      fi
+      # building 310 package by giving specific -V 310 instruction
+      if [[ "X$DEVICE_VERSION" == "X310" ]]; then
+        ENABLE_ACL="on"
+        export ENABLE_AKG="off"
+      # universal ascend package
+      elif [[ "X$DEVICE_VERSION" == "X910" ]]; then
+        export ENABLE_D="on"
+        export ENABLE_ACL="on"
+        ENABLE_CPU="on"
+        export ENABLE_MPI="on"
+        export ENABLE_AKG="on"
+      else
+        echo "Invalid value ${DEVICE_VERSION} for option -V"
+        usage
+        exit 1
+      fi
+      export DEVICE_VERSION=
+    elif [[ "X$D" == "Xcpu" ]]; then
+      export ENABLE_CPU="on"
+      export ENABLE_AKG="on"
+    elif [[ "X$D" == "X" ]]; then
+      :
     else
-      echo "Invalid value ${DEVICE_VERSION} for option -V"
+      echo "Invalid value ${DEVICE} for option -e"
       usage
       exit 1
     fi
-  elif [[ "X$DEVICE" == "Xcpu" ]]; then
-    export ENABLE_CPU="on"
-    export ENABLE_AKG="on"
-  elif [[ "X$DEVICE" == "X" ]]; then
-    :
-  else
-    echo "Invalid value ${DEVICE} for option -e"
-    usage
-    exit 1
-  fi
-
+  done
+  export IFS=$IFS_ORIGIN
   if [[ "X$ENABLE_AKG" == "Xon" && "X$ENABLE_D" != "Xon" && "X$ENABLE_CPU" == "Xon" ]]; then
     # check llvm version for akg 
     HAS_LLVM=`bash ${BASEPATH}/scripts/build/akg_find_llvm.sh`

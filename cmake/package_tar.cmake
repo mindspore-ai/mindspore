@@ -96,6 +96,14 @@ if(ENABLE_MINDDATA)
             DESTINATION ${INSTALL_LIB_DIR}
             COMPONENT mindspore
     )
+
+    if(ENABLE_ACL)
+        install(
+                TARGETS dvpp_utils
+                DESTINATION ${INSTALL_LIB_DIR}
+                COMPONENT mindspore
+        )
+    endif()
 endif()
 
 # CPU mode
