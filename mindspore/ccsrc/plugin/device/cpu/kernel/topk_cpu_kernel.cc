@@ -16,8 +16,10 @@
 
 #include "plugin/device/cpu/kernel/topk_cpu_kernel.h"
 #include <algorithm>
+#include <map>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "include/common/thread_pool.h"
+#include "ops/topk.h"
 
 namespace mindspore {
 namespace kernel {
@@ -41,7 +43,7 @@ void TopKCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const
   }
   auto input = reinterpret_cast<T *>(inputs[0]->addr);
   int k = reinterpret_cast<int *>(inputs[1]->addr)[0];
-  auto workspace = reinterpret_cast<size_t *>(workspaces[0]->addr);
+  size_t *workspace = GetDeviceAddress<size_t>(workspaces, 0);
   auto output = reinterpret_cast<T *>(outputs[0]->addr);
   auto indices = reinterpret_cast<int *>(outputs[1]->addr);
   if (k < 1) {
@@ -55,7 +57,6 @@ void TopKCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const
   const std::function<bool(size_t, size_t)> comparator = [input](size_t index_1, size_t index_2) {
     return input[index_1] > input[index_2];
   };
-
   std::vector<common::Task> tasks;
   tasks.reserve(outer_size_);
   for (size_t i = 0; i < outer_size_; ++i) {
@@ -89,10 +90,23 @@ void TopKCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const
   ParallelLaunch(tasks);
 }
 
-void TopKCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  auto x_shape_ = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0));
+bool TopKCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                            const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  auto kernel_ptr = std::make_shared<ops::TopK>(base_operator->GetPrim());
+  sorted_ = kernel_ptr->get_attr("sorted");
+  return true;
+}
+
+int TopKCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                             const std::vector<KernelTensorPtr> &outputs,
+                             const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+
+  auto x_shape_ = Convert2SizeTClipNeg(inputs[0]->GetShapeVector());
   if (x_shape_.empty()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the dimension of input must be greater than 0, but got empty input.";
@@ -101,14 +115,15 @@ void TopKCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     outer_size_ *= x_shape_[i];
   }
   inner_size_ = x_shape_[x_shape_.size() - 1];
-  sorted_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "sorted");
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-}
 
-void TopKCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
-  DeprecatedNativeCpuKernelMod::InitInputOutputSize(kernel_node);
+  auto kernel_ptr = std::make_shared<ops::TopK>(base_operator->GetPrim());
+  sorted_ = kernel_ptr->get_attr("sorted");
+  dtype_ = inputs[0]->GetDtype();
+
   size_t element_size = outer_size_ * inner_size_;
   (void)workspace_size_list_.emplace_back((sizeof(size_t) * element_size));
+
+  return KRET_OK;
 }
 
 bool TopKCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
@@ -125,6 +140,25 @@ bool TopKCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
                       << TypeIdToType(dtype_)->ToString();
   }
   return true;
+}
+
+std::vector<KernelAttr> TopKCpuKernelMod::GetOpSupport() {
+  static std::vector<KernelAttr> kernel_attr_list = {KernelAttr()
+                                                       .AddInputAttr(kNumberTypeFloat16)
+                                                       .AddInputAttr(kNumberTypeInt32)
+                                                       .AddOutputAttr(kNumberTypeFloat16)
+                                                       .AddOutputAttr(kNumberTypeInt32),
+                                                     KernelAttr()
+                                                       .AddInputAttr(kNumberTypeFloat32)
+                                                       .AddInputAttr(kNumberTypeInt32)
+                                                       .AddOutputAttr(kNumberTypeFloat32)
+                                                       .AddOutputAttr(kNumberTypeInt32),
+                                                     KernelAttr()
+                                                       .AddInputAttr(kNumberTypeInt32)
+                                                       .AddInputAttr(kNumberTypeInt32)
+                                                       .AddOutputAttr(kNumberTypeInt32)
+                                                       .AddOutputAttr(kNumberTypeInt32)};
+  return kernel_attr_list;
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, TopK, TopKCpuKernelMod);

@@ -14,31 +14,37 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_TOPK_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_TOPK_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_TOPK_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_TOPK_CPU_KERNEL_H_
 
 #include <vector>
 #include <memory>
 #include <string>
+#include <map>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-class TopKCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class TopKCpuKernelMod : public NativeCpuKernelMod {
  public:
   TopKCpuKernelMod() = default;
   ~TopKCpuKernelMod() override = default;
-  void InitKernel(const CNodePtr &kernel_node) override;
+
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspaces,
               const std::vector<AddressPtr> &outputs) override;
 
- protected:
-  void InitInputOutputSize(const CNodePtr &kernel_node) override;
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   template <typename T>
+
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspaces,
                     const std::vector<AddressPtr> &outputs) const;
   size_t outer_size_{1};
@@ -48,4 +54,4 @@ class TopKCpuKernelMod : public DeprecatedNativeCpuKernelMod {
 };
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_TOPK_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_TOPK_CPU_KERNEL_H_
