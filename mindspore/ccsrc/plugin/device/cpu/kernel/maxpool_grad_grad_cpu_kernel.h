@@ -62,7 +62,7 @@ class MaxPoolGradGradCpuKernelMod : public NativeCpuKernelMod {
 
   std::vector<int64_t> kernels_;
   std::vector<int64_t> strides_;
-  PadMode pad_mode_;
+  PadMode pad_mode_ = PadMode::PAD;
   std::vector<int64_t> in_shapes_;
   std::vector<int64_t> out_shapes_;
   PoolingParameter *param_ = nullptr;

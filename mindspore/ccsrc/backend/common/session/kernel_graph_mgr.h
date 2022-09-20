@@ -69,7 +69,7 @@ class BACKEND_EXPORT KernelGraphMgr {
   AnfNodePtr CreateParameterFromTuple(const AnfNodePtr &node, KernelGraph *graph) const;
 
   AnfNodePtr CreateNewParameterFromCNode(const AnfNodePtr &anf, KernelGraph *graph);
-  ValueNodePtr CreateNewValueNode(const AnfNodePtr &anf, KernelGraph *graph);
+  ValueNodePtr CreateNewValueNode(const AnfNodePtr &anf, KernelGraph *graph) const;
   GraphId GraphSum() const { return graph_sum_; }
 
  private:
