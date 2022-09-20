@@ -88,8 +88,11 @@ mindspore
     mindspore.load_param_into_net
     mindspore.merge_sliced_parameter
     mindspore.parse_print
+    mindspore.rank_list_for_transform
     mindspore.restore_group_info_list
     mindspore.save_checkpoint
+    mindspore.transform_checkpoint_by_rank
+    mindspore.transform_checkpoints
 
 调试调优
 ----------
