@@ -26,6 +26,7 @@ namespace mindspore {
 namespace kernel {
 namespace {
 constexpr size_t kAvgPooling3DGradInputsNum = 1;
+constexpr size_t kAvgPooling3DGradDynamicInputsNum = 2;
 constexpr size_t kPoolingGradInputsNum = 3;
 constexpr size_t kPoolingGradOutputsNum = 1;
 constexpr size_t kPoolingGradWorkSpaceNum = 2;
@@ -38,8 +39,13 @@ bool PoolingGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
   PrimitivePtr prim = base_operator->GetPrim();
   MS_EXCEPTION_IF_NULL(prim);
   kernel_name_ = prim->name();
-  size_t input_num = kernel_name_ == kAvgPool3DGradOpName ? kAvgPooling3DGradInputsNum : kPoolingGradInputsNum;
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
+  size_t inputs_size = inputs.size();
+  if (kernel_name_ != kAvgPool3DGradOpName) {
+    CHECK_KERNEL_INPUTS_NUM(inputs_size, kPoolingGradInputsNum, kernel_name_);
+  } else if (inputs_size != kAvgPooling3DGradInputsNum && inputs_size != kAvgPooling3DGradDynamicInputsNum) {
+    MS_LOG_EXCEPTION << "For '" << kernel_name_ << "', the number of inputs must be " << kAvgPooling3DGradInputsNum
+                     << " or " << kAvgPooling3DGradDynamicInputsNum << ", but got " << inputs_size;
+  }
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kPoolingGradOutputsNum, kernel_name_);
   if (prim->HasAttr(CEIL_MODE)) {
     ValuePtr ceil_mode = prim->GetAttr(CEIL_MODE);
@@ -56,6 +62,9 @@ bool PoolingGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
     }
   }
   grad_index_ = kernel_name_ == kAvgPool3DGradOpName ? 0 : kGradIndex;
+  if (kernel_name_ == kAvgPool3DGradOpName && inputs_size == kAvgPooling3DGradDynamicInputsNum) {
+    grad_index_ = 1;
+  }
   format_ = GetValue<std::string>(prim->GetAttr(FORMAT));
   pad_mode_ = GetValue<std::string>(prim->GetAttr(PAD_MODE));
   kernel_include_nc_ = GetValue<std::vector<int64_t>>(prim->GetAttr(KERNEL_SIZE));
