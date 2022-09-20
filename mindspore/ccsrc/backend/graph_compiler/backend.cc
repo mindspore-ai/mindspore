@@ -448,6 +448,7 @@ void RunControlOperator(const std::shared_ptr<GraphCompiler> &graph_compiler, co
     VectorRef args;
     GetControlOpInput(graph_compiler, cnode, kernel, op_output_map, parameter_index, graph_inputs, input_tensor_info,
                       &args);
+    py::gil_scoped_acquire acquire;
     BaseRef out = python_adapter::PyAdapterCallback::RunPrimitivePyHookFunction(prim, args);
     // Convert pyobject output to tensor.
     if (utils::isa<PyObjectRef>(out)) {
@@ -609,6 +610,7 @@ void MindRTBackend::RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_i
       graph_compiler_->CalculateForwardOpOutputCount(graph, inputs[graph_index], &forward_op_output_tensor_id_);
     }
 
+    py::gil_scoped_release release;
     for (const auto &kernel : graph->execution_order()) {
       InputTensorInfo input_tensor_info;
       VectorRef op_outputs;
