@@ -104,6 +104,7 @@ void RegModule(py::module *m) {
   mindspore::tensor::RegCSRTensor(m);
   mindspore::tensor::RegCOOTensor(m);
   mindspore::tensor::RegRowTensor(m);
+  mindspore::tensor::RegMapTensor(m);
   RegValues(m);
   mindspore::initializer::RegRandomNormal(m);
   RegMsContext(m);
