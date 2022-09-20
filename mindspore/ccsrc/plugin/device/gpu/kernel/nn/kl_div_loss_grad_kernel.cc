@@ -93,5 +93,7 @@ std::vector<KernelAttr> KLDivLossGradGpuKernelMod::GetOpSupport() {
     [](const std::pair<KernelAttr, KLDivLossGradGpuKernelMod::KLDivLossLaunchFunc> &pair) { return pair.first; });
   return support_list;
 }
+
+MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, KLDivLossGrad, KLDivLossGradGpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
