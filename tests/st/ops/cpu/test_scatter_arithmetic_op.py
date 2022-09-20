@@ -656,6 +656,26 @@ def test_scatter_update_output_updated_float32():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
+def test_scatter_update_output_updated_huge_tensor_float32():
+    """
+    Feature: Test huge input tensor case of cpu kernel ScatterUpdate.
+    Description: The first input tensor for cpu kernel ScatterUpdate is huge, and
+                 the memory size of this tensor should be greater than 2147483647.
+                 In this case, memory size of inputx tensor is 2147483652 (178956971 * 3 * sizeof(float32))
+    Expectation: success.
+    """
+    inputx = Tensor(np.ones((178956971, 3)).astype(np.float32))
+    indices = Tensor(np.array([[0, 1], [0, 1]]).astype(np.int32))
+    updates = Tensor(np.arange(12).reshape((2, 2, 3)).astype(np.float32))
+    output = scatter_update_net(inputx, indices, updates)
+    expected = np.array([[6., 7., 8.],
+                         [9., 10., 11.]])
+    np.testing.assert_array_almost_equal(output.asnumpy()[0:2], expected)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 def test_scatter_update_small_float32_use_locking_false():
     inputx = Tensor(np.ones((2, 3)).astype(np.float32))
     indices = Tensor(np.array([[0, 1], [0, 1]]).astype(np.int32))
