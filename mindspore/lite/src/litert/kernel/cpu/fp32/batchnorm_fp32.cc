@@ -32,8 +32,19 @@ int BatchnormCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), DIMENSION_3D);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   CHECK_NULL_RETURN(in_tensors_[0]);
-  CHECK_NULL_RETURN(in_tensors_[1]);
-  CHECK_NULL_RETURN(in_tensors_[kNumInput2]);
+  CHECK_NULL_RETURN(in_tensors_[kMeanInput]);
+  CHECK_NULL_RETURN(in_tensors_[kVarInput]);
+  if (in_tensors_[kMeanInput]->data_type() != kNumberTypeFloat16 &&
+      in_tensors_[kMeanInput]->data_type() != kNumberTypeFloat32) {
+    MS_LOG(ERROR) << "Invalid in_tensor[1] data_type: " << in_tensors_[kMeanInput]->data_type();
+    return RET_ERROR;
+  }
+  if (in_tensors_[kVarInput]->data_type() != kNumberTypeFloat16 &&
+      in_tensors_[kVarInput]->data_type() != kNumberTypeFloat32) {
+    MS_LOG(ERROR) << "Invalid in_tensor[2] data_type: " << in_tensors_[kVarInput]->data_type();
+    return RET_ERROR;
+  }
+
   CHECK_NULL_RETURN(out_tensors_[0]);
   CHECK_NULL_RETURN(op_parameter_);
   if (!InferShapeDone()) {

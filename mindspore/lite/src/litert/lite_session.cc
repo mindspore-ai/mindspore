@@ -206,6 +206,8 @@ lite::Tensor *LiteSession::ConvertTensor(const schema::Tensor &src_tensor) {
   }
   lite::Tensor *dst_tensor = nullptr;
   if (TypeId(data_type) == kObjectTypeTensorType) {
+    MS_CHECK_TRUE_RET(src_tensor.data() != nullptr, nullptr);
+    MS_CHECK_TRUE_RET(src_tensor.data()->size() > 0, nullptr);
     auto src_data = src_tensor.data()->data();
     dst_tensor = CreateTensorList(shape, src_category, src_data);
   } else {

@@ -46,7 +46,10 @@ function Run_Converter() {
 
     rm -rf ${ms_models_path}
     mkdir -p ${ms_models_path}
-    fail=0
+
+    cur_timestamp=$((`date '+%s'`*1000+10#`date '+%N'`/1000000))
+    fail_status_file=${cur_timestamp}.log
+    echo '0' > ${fail_status_file}
 
     # parallel processing
     fifo_file="fifo_file.txt"
@@ -88,7 +91,7 @@ function Run_Converter() {
               converter_result='converter mindspore '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
           else
               converter_result='converter mindspore '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file}
-              fail=1
+              echo '1' > ${fail_status_file}
           fi
           # If Transfer sesstion convert backbone model
           if [[ "${enable_transfer}" == "1" ]]; then
@@ -101,7 +104,7 @@ function Run_Converter() {
                   converter_result='converter mindspore '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
               else
                   converter_result='converter mindspore '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file}
-                  fail=1
+                  echo '1' > ${fail_status_file}
               fi
           fi
           echo >&6
@@ -109,7 +112,8 @@ function Run_Converter() {
     done < ${models_ms_train_config}
     wait
     exec 6>&-
-    return ${fail}
+    read fail_status < ${fail_status_file}
+    return ${fail_status}
 }
 
 function should_run_example() {
