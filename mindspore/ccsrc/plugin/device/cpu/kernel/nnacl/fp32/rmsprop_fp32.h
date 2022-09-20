@@ -18,7 +18,6 @@
 
 #include <math.h>
 #include "nnacl/op_base.h"
-#include "nnacl/errorcode.h"
 
 #ifdef __cplusplus
 extern "C" {
