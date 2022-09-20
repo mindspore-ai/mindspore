@@ -27,12 +27,34 @@
 
 namespace mindspore {
 namespace opt {
-PatternProcessPass::PatternProcessPass(const std::string &name, bool multigraph)
-    : NodePass(name),
-      multigraph_(multigraph),
-      pattern_engine_(PatternEngine(std::make_shared<Visitor>())),
-      primitive_vars_(std::make_shared<PrimitiveVarMap>()),
-      equiv_(std::make_shared<Equiv>()) {}
+std::vector<AnfNodePtr> PatternPass::GetOrigNodes() const {
+  std::vector<AnfNodePtr> orig_nodes;
+  for (auto &prim_var : *primitive_vars_) {
+    auto equiv_iter = equiv_->find(prim_var.second);
+    if (equiv_iter == equiv_->end()) {
+      continue;
+    }
+    auto baseref = equiv_iter->second;
+    if (!utils::isa<CNode>(baseref)) {
+      continue;
+    }
+    auto node = utils::cast<AnfNodePtr>(baseref);
+    orig_nodes.push_back(node);
+  }
+  return orig_nodes;
+}
+
+CNodePtr PatternPass::NewCNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &fg) const {
+  MS_EXCEPTION_IF_NULL(fg);
+  auto orig_nodes = GetOrigNodes();
+  return opt::NewCNode(inputs, fg, orig_nodes);
+}
+
+CNodePtr PatternPass::NewCNode(const CNodePtr &cnode, const KernelGraphPtr &fg) const {
+  MS_EXCEPTION_IF_NULL(fg);
+  auto orig_nodes = GetOrigNodes();
+  return opt::NewCNode(cnode, fg, orig_nodes);
+}
 
 const BaseRef PatternProcessPass::DefinePattern() const {
   VarPtr X = std::make_shared<Var>();
@@ -60,34 +82,6 @@ AnfNodePtr PatternProcessPass::Run(const FuncGraphPtr &func_graph, const AnfNode
     }
   }
   return nullptr;
-}
-
-std::vector<AnfNodePtr> PatternProcessPass::GetOrigNodes() const {
-  std::vector<AnfNodePtr> orig_nodes;
-  for (auto &prim_var : *primitive_vars_) {
-    if (equiv_->find(prim_var.second) == equiv_->end()) {
-      continue;
-    }
-    auto baseref = (*equiv_)[prim_var.second];
-    if (!utils::isa<CNode>(baseref)) {
-      continue;
-    }
-    auto node = utils::cast<AnfNodePtr>(baseref);
-    orig_nodes.push_back(node);
-  }
-  return orig_nodes;
-}
-
-CNodePtr PatternProcessPass::NewCNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &fg) const {
-  MS_EXCEPTION_IF_NULL(fg);
-  auto orig_nodes = GetOrigNodes();
-  return opt::NewCNode(inputs, fg, orig_nodes);
-}
-
-CNodePtr PatternProcessPass::NewCNode(const CNodePtr &cnode, const KernelGraphPtr &fg) const {
-  MS_EXCEPTION_IF_NULL(fg);
-  auto orig_nodes = GetOrigNodes();
-  return opt::NewCNode(cnode, fg, orig_nodes);
 }
 
 bool MultipleOutputPatternProcessPass::MatchAnotherPattern(const AnfNodePtr &node, const EquivPtr &equiv) const {

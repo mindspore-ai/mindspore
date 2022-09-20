@@ -18,26 +18,37 @@
 
 namespace mindspore {
 namespace opt {
-const BaseRef AddIoFormatAttrFor3DGraph::DefinePattern() const {
-  std::shared_ptr<Var> V = std::make_shared<CondVar>(UnVisited);
-  std::shared_ptr<Var> Xs = std::make_shared<SeqVar>();
-  return VectorRef({V, Xs});
+namespace {
+constexpr auto m_3d = "m_3d";
+constexpr auto V = "V";
+constexpr auto Xs = "Xs";
+constexpr auto r_3d = "r_3d";
+}  // namespace
+
+bool AddIoFormatAttrFor3DGraph::CheckMatchedDAG(const PatternMap &m, const FuncGraphPtr &graph,
+                                                const AnfNodePtr &node) const {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(node);
+  if (AnfUtils::IsRealKernel(node)) {
+    return true;
+  }
+  return false;
 }
 
-const AnfNodePtr AddIoFormatAttrFor3DGraph::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
-                                                    const EquivPtr &) const {
-  MS_EXCEPTION_IF_NULL(node);
-  MS_EXCEPTION_IF_NULL(func_graph);
-  if (AnfUtils::IsRealKernel(node)) {
-    common::AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), node);
-    auto formats = AnfAlgo::GetAllOutputFormats(node);
-    if (std::any_of(formats.begin(), formats.end(),
-                    [](const std::string &format) { return IsOneOf3DFormat(format); })) {
-      common::AnfAlgo::SetNodeAttr(kAttrFormat, MakeValue(kOpFormat_NCDHW), node);
-    }
-    return node;
+AnfNodePtr AddAttr(const PatternMap &m, const AnfNodePtr & /* default_cnode */) {
+  auto node = m.Get(m_3d);
+  common::AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), node);
+  auto formats = AnfAlgo::GetAllOutputFormats(node);
+  if (std::any_of(formats.begin(), formats.end(), [](const std::string &format) { return IsOneOf3DFormat(format); })) {
+    common::AnfAlgo::SetNodeAttr(kAttrFormat, MakeValue(kOpFormat_NCDHW), node);
   }
-  return nullptr;
+  return node;
+}
+void AddIoFormatAttrFor3DGraph::DefineSrcPattern(SrcPattern *src_pattern) {
+  (*src_pattern).AddVar(V, UnVisited).AddSeqVar(Xs).AddCNode(m_3d, {V, Xs});
+}
+void AddIoFormatAttrFor3DGraph::DefineDstPattern(DstPattern *dst_pattern) {
+  (*dst_pattern).AddCNode(r_3d, {V, Xs}, AddAttr);
 }
 }  // namespace opt
 }  // namespace mindspore

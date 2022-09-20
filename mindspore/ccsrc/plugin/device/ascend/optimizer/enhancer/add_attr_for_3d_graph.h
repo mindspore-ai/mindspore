@@ -21,16 +21,17 @@
 #include "ir/anf.h"
 #include "backend/common/optimizer/optimizer.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
+#include "backend/common/optimizer/pattern_to_pattern.h"
 
 namespace mindspore {
 namespace opt {
-class AddIoFormatAttrFor3DGraph : public PatternProcessPass {
+class AddIoFormatAttrFor3DGraph : public PatternToPatternPass {
  public:
-  explicit AddIoFormatAttrFor3DGraph(bool multigraph = true)
-      : PatternProcessPass("add_attr_for_3d_graph", multigraph) {}
+  AddIoFormatAttrFor3DGraph() : PatternToPatternPass("add_attr_for_3d_graph") {}
   ~AddIoFormatAttrFor3DGraph() override = default;
-  const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
+  void DefineSrcPattern(SrcPattern *src_pattern) override;
+  void DefineDstPattern(DstPattern *dst_pattern) override;
+  bool CheckMatchedDAG(const PatternMap &, const FuncGraphPtr &, const AnfNodePtr &) const override;
 };
 }  // namespace opt
 }  // namespace mindspore

@@ -18,16 +18,18 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_GE_REDUCE_AXIS_UPDATE_H_
 
 #include "backend/common/optimizer/optimizer.h"
+#include "backend/common/optimizer/pattern_to_pattern.h"
 
 namespace mindspore {
 namespace opt {
-class ReduceAxisUpdate : public PatternProcessPass {
+class ReduceAxisUpdate : public PatternToPatternPass {
  public:
-  explicit ReduceAxisUpdate(bool multigraph = true) : PatternProcessPass("reduce_axis_update", multigraph) {}
+  ReduceAxisUpdate() : PatternToPatternPass("reduce_axis_update") {}
   ~ReduceAxisUpdate() override = default;
 
-  const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  void DefineSrcPattern(SrcPattern *src_pattern) override;
+  void DefineDstPattern(DstPattern *dst_pattern) override;
+  bool CheckMatchedDAG(const PatternMap &, const FuncGraphPtr &, const AnfNodePtr &) const override;
 
  private:
   bool IsAxisEmpty(const ValueNodePtr &axis_node) const;

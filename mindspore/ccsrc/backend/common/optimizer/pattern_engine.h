@@ -1,7 +1,5 @@
 /**
- * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
- *
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -135,6 +133,7 @@ class BACKEND_EXPORT SeqVar : public Var {
   ~SeqVar() override = default;
   MS_DECLARE_PARENT(SeqVar, Var);
   explicit SeqVar(const VarPtr subvar) : subvar_(nullptr) { subvar_ = subvar; }
+  explicit SeqVar(const ConditionFunc &cond) { subvar_ = std::make_shared<CondVar>(cond); }
   bool matches(const BaseRef &value) override {
     // match Seq.
     if (utils::isa<Seq>(value)) {

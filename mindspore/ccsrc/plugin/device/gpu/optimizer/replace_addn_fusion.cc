@@ -15,7 +15,6 @@
  */
 #include "plugin/device/gpu/optimizer/replace_addn_fusion.h"
 #include <vector>
-#include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "ir/primitive.h"
 #include "include/common/utils/utils.h"
@@ -23,37 +22,38 @@
 
 namespace mindspore {
 namespace opt {
-const BaseRef ReplaceAddNFusion::DefinePattern() const {
-  VectorRef addn = VectorRef({prim::kPrimAddN, A, B});
-  return addn;
-}
-
-const AnfNodePtr ReplaceAddNFusion::Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &) const {
+namespace {
+constexpr auto A = "A";
+constexpr auto B = "B";
+constexpr auto m_addn = "m_addn";
+constexpr auto r_add = "r_add";
+}  // namespace
+bool ReplaceAddNFusion::CheckMatchedDAG(const PatternMap &, const FuncGraphPtr &graph, const AnfNodePtr &node) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
-  auto A = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), 0);
-  auto B = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), 1);
-  MS_EXCEPTION_IF_NULL(A);
-  MS_EXCEPTION_IF_NULL(B);
-  int64_t num_input = common::AnfAlgo::GetNodeAttr<int64_t>(node, "n");
-  if (num_input == kAddNInputNum) {
-    auto prim = std::make_shared<Primitive>(prim::kPrimAdd->name());
-    MS_EXCEPTION_IF_NULL(prim);
-    std::vector<AnfNodePtr> inputs = {NewValueNode(prim), A, B};
-    auto add_new = graph->NewCNode(inputs);
-    MS_EXCEPTION_IF_NULL(add_new);
-    std::vector<TypeId> outputs_type;
-    std::vector<BaseShapePtr> outputs_shape;
-    outputs_type.push_back(common::AnfAlgo::GetOutputInferDataType(A, 0));
-    outputs_shape.push_back(common::AnfAlgo::GetOutputDetailShape(A, 0));
-    common::AnfAlgo::SetOutputTypeAndDetailShape(outputs_type, outputs_shape, add_new.get());
-    auto manager = graph->manager();
-    MS_EXCEPTION_IF_NULL(manager);
-    manager->Replace(utils::cast<CNodePtr>(node), utils::cast<CNodePtr>(add_new));
-    return add_new;
-  } else {
-    return nullptr;
+  auto num_input = common::AnfAlgo::GetNodeAttr<int64_t>(node, "n");
+  if (LongToSize(num_input) != kAddNInputNum) {
+    return false;
   }
+  return true;
+}
+
+AnfNodePtr BuildAdd(const PatternMap &m, const AnfNodePtr &default_node) {
+  MS_EXCEPTION_IF_NULL(default_node);
+  std::vector<TypeId> outputs_type;
+  std::vector<BaseShapePtr> outputs_shape;
+  outputs_type.push_back(common::AnfAlgo::GetOutputInferDataType(m.Get(A), 0));
+  outputs_shape.push_back(common::AnfAlgo::GetOutputDetailShape(m.Get(A), 0));
+  common::AnfAlgo::SetOutputTypeAndDetailShape(outputs_type, outputs_shape, default_node.get());
+  return default_node;
+}
+
+void ReplaceAddNFusion::DefineSrcPattern(SrcPattern *src_pattern) {
+  (*src_pattern).AddVar(A).AddVar(B).AddCNode(m_addn, {prim::kPrimAddN, A, B});
+}
+
+void ReplaceAddNFusion::DefineDstPattern(DstPattern *dst_pattern) {
+  (*dst_pattern).AddCNode(r_add, {prim::kPrimAdd, A, B}, BuildAdd);
 }
 }  // namespace opt
 }  // namespace mindspore

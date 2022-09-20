@@ -17,23 +17,17 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GPU_REPLACE_ADDN_FUSION_H_
 
 #include <memory>
-#include "backend/common/optimizer/optimizer.h"
+#include "backend/common/optimizer/pattern_to_pattern.h"
 
 namespace mindspore {
 namespace opt {
-class ReplaceAddNFusion : public PatternProcessPass {
+class ReplaceAddNFusion : public PatternToPatternPass {
  public:
-  explicit ReplaceAddNFusion(bool multigraph = true) : PatternProcessPass("replace_addn", multigraph) {
-    A = std::make_shared<Var>();
-    B = std::make_shared<Var>();
-  }
+  ReplaceAddNFusion() : PatternToPatternPass("replace_addn") {}
   ~ReplaceAddNFusion() override = default;
-  const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
-
- private:
-  VarPtr A;
-  VarPtr B;
+  void DefineSrcPattern(SrcPattern *src_pattern) override;
+  void DefineDstPattern(DstPattern *dst_pattern) override;
+  bool CheckMatchedDAG(const PatternMap &, const FuncGraphPtr &, const AnfNodePtr &) const override;
 };
 }  // namespace opt
 }  // namespace mindspore

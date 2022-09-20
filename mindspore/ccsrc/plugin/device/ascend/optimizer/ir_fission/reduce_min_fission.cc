@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,16 @@
 #include "plugin/device/ascend/optimizer/ir_fission/reduce_min_fission.h"
 #include <memory>
 #include <vector>
-#include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace opt {
 namespace {
+constexpr auto m_reduce_min = "m_reduce_min";
+constexpr auto r_reduce_min1 = "r_reduce_min1";
+constexpr auto r_reduce_min2 = "r_reduce_min2";
+constexpr auto X = "X";
+
 bool NeedOptimize(const TypeId &dtype, const ShapeVector &shape, const std::vector<int64_t> &axis) {
   if (dtype != kNumberTypeFloat32) {
     MS_LOG(INFO) << "ReduceMin's input Dtype is not float32, no need to optimize!";
@@ -83,32 +87,21 @@ ShapeVector GetInferShape(const ShapeVector &shape, const std::vector<int64_t> &
   }
   return shape_first;
 }
-}  // namespace
 
-CNodePtr ReduceMinFission::CreateReduceMin(const FuncGraphPtr &graph, const AnfNodePtr &input,
-                                           const CNodePtr &old_node) const {
-  MS_EXCEPTION_IF_NULL(graph);
-  MS_EXCEPTION_IF_NULL(input);
+CNodePtr InitReduceMin(const CNodePtr &reduce_min, const CNodePtr &old_node) {
   MS_EXCEPTION_IF_NULL(old_node);
-  std::vector<AnfNodePtr> inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimReduceMin->name())), input};
-  CNodePtr reduce_min = NewCNode(inputs, graph);
   MS_EXCEPTION_IF_NULL(reduce_min);
   reduce_min->set_scope(old_node->scope());
   common::AnfAlgo::CopyNodeAttr(kAttrKeepDims, old_node, reduce_min);
   return reduce_min;
 }
+}  // namespace
 
-const BaseRef ReduceMinFission::DefinePattern() const {
-  VarPtr X = std::make_shared<Var>();
-  return VectorRef({prim::kPrimReduceMin, X});
-}
-
-const AnfNodePtr ReduceMinFission::Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &) const {
-  if (graph == nullptr || node == nullptr) {
-    return nullptr;
-  }
+bool ReduceMinFission::CheckMatchedDAG(const PatternMap &, const FuncGraphPtr &graph, const AnfNodePtr &node) const {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(node);
   if (common::AnfAlgo::IsDynamicShape(node)) {
-    return nullptr;
+    return false;
   }
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
@@ -119,34 +112,53 @@ const AnfNodePtr ReduceMinFission::Process(const FuncGraphPtr &graph, const AnfN
   MS_EXCEPTION_IF_NULL(prim);
   if (!prim->HasAttr(kAttrAxis) || !prim->HasAttr(kAttrKeepDims)) {
     MS_LOG(INFO) << "ReduceMin has no axis or keep_dims, no need to optimize!";
-    return nullptr;
+    return false;
   }
   auto axis_value = prim->GetAttr(kAttrAxis);
   MS_EXCEPTION_IF_NULL(axis_value);
   if (!axis_value->isa<ValueSequence>()) {
-    return nullptr;
+    return false;
   }
   auto axis = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, kAttrAxis);
-  auto keep_dims = common::AnfAlgo::GetNodeAttr<bool>(cnode, kAttrKeepDims);
 
   if (!NeedOptimize(dtype, shape, axis)) {
     MS_LOG(INFO) << "No need to optimize for this ReduceMin. " << cnode->DebugString();
-    return nullptr;
+    return false;
   }
+  return true;
+}
 
-  // Create reduce_min1
-  CNodePtr reduce_min1 = CreateReduceMin(graph, cnode->input(1), cnode);
+AnfNodePtr BuildReduceMin1(const PatternMap &m, const AnfNodePtr &default_node) {
+  auto cnode = m.Get(m_reduce_min)->cast<CNodePtr>();
+  CNodePtr reduce_min1 = InitReduceMin(default_node->cast<CNodePtr>(), cnode);
+  auto shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 0);
+  auto dtype = common::AnfAlgo::GetPrevNodeOutputInferDataType(cnode, 0);
+  auto axis = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, kAttrAxis);
+  auto keep_dims = common::AnfAlgo::GetNodeAttr<bool>(cnode, kAttrKeepDims);
   std::vector<int64_t> axis_first = CalFirstAxis(shape, axis);
   auto shape_first = GetInferShape(shape, axis_first, keep_dims);
   common::AnfAlgo::SetOutputInferTypeAndShape({dtype}, {shape_first}, reduce_min1.get());
   common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(axis_first), reduce_min1);
+  return reduce_min1;
+}
 
-  // Create reduce_min2
-  CNodePtr reduce_min2 = CreateReduceMin(graph, reduce_min1, cnode);
+AnfNodePtr BuildReduceMin2(const PatternMap &m, const AnfNodePtr &default_node) {
+  auto cnode = m.Get(m_reduce_min)->cast<CNodePtr>();
+  CNodePtr reduce_min2 = InitReduceMin(default_node->cast<CNodePtr>(), cnode);
   reduce_min2->set_abstract(cnode->abstract());
   std::vector<int64_t> axis_last = {-1};
   common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(axis_last), reduce_min2);
   return reduce_min2;
+}
+
+void ReduceMinFission::DefineSrcPattern(SrcPattern *src_pattern) {
+  (*src_pattern).AddVar(X).AddCNode(m_reduce_min, {prim::kPrimReduceMin, X});
+}
+
+void ReduceMinFission::DefineDstPattern(DstPattern *dst_pattern) {
+  (*dst_pattern)
+    .AddCNode(r_reduce_min1, {prim::kPrimReduceMin, X}, BuildReduceMin1)
+    .AddCNode(r_reduce_min2, {prim::kPrimReduceMin, r_reduce_min1}, BuildReduceMin2);
 }
 }  // namespace opt
 }  // namespace mindspore
