@@ -189,8 +189,9 @@ bool CollectiveManager::GetLocalGroupRankAndSize(const std::vector<uint32_t> &gr
     MS_LOG(ERROR) << "The rank " << *it << "is out of global rank size.";
     return false;
   }
-  if (all_host_hashs_.size() != static_cast<size_t>(global_rank_size_ + 1)) {
-    MS_LOG(ERROR) << "The host hash has not been assigned, which means host world group has not been inited.";
+  if (all_host_hashs_.size() != static_cast<size_t>(global_rank_size_)) {
+    MS_LOG(ERROR) << "The host hash size should be equal to global rank size " << global_rank_size_ << ", but got "
+                  << all_host_hashs_.size();
     return false;
   }
   *local_group_size = static_cast<uint32_t>(std::count_if(group_ranks.begin(), group_ranks.end(), [&](uint32_t rank) {
