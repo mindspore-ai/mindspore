@@ -141,110 +141,110 @@ enum {
   // error code
 };
 const std::string APP_ERR_ACL_LOG_STRING[] = {
-  [APP_ERR_OK] = "Success",
-  [APP_ERR_ACL_INVALID_PARAM] = "ACL: invalid parameter",
-  [APP_ERR_ACL_BAD_ALLOC] = "ACL: memory allocation fail",
-  [APP_ERR_ACL_RT_FAILURE] = "ACL: runtime failure",
-  [APP_ERR_ACL_GE_FAILURE] = "ACL: Graph Engine failure",
-  [APP_ERR_ACL_OP_NOT_FOUND] = "ACL: operator not found",
-  [APP_ERR_ACL_OP_LOAD_FAILED] = "ACL: fail to load operator",
-  [APP_ERR_ACL_READ_MODEL_FAILURE] = "ACL: fail to read model",
-  [APP_ERR_ACL_PARSE_MODEL] = "ACL: parse model failure",
-  [APP_ERR_ACL_MODEL_MISSING_ATTR] = "ACL: model missing attribute",
-  [APP_ERR_ACL_DESERIALIZE_MODEL] = "ACL: deserialize model failure",
-  [11] = "Placeholder",
-  [APP_ERR_ACL_EVENT_NOT_READY] = "ACL: event not ready",
-  [APP_ERR_ACL_EVENT_COMPLETE] = "ACL: event complete",
-  [APP_ERR_ACL_UNSUPPORTED_DATA_TYPE] = "ACL: unsupported data type",
-  [APP_ERR_ACL_REPEAT_INITIALIZE] = "ACL: repeat initialize",
-  [APP_ERR_ACL_COMPILER_NOT_REGISTERED] = "ACL: compiler not registered",
-  [APP_ERR_ACL_IO] = "ACL: IO failed",
-  [APP_ERR_ACL_INVALID_FILE] = "ACL: invalid file",
-  [APP_ERR_ACL_INVALID_DUMP_CONFIG] = "ACL: invalid dump comfig",
-  [APP_ERR_ACL_INVALID_PROFILING_CONFIG] = "ACL: invalid profiling config",
-  [APP_ERR_ACL_OP_TYPE_NOT_MATCH] = "ACL: operator type not match",
-  [APP_ERR_ACL_OP_INPUT_NOT_MATCH] = "ACL: operator input not match",
-  [APP_ERR_ACL_OP_OUTPUT_NOT_MATCH] = "ACL: operator output not match",
-  [APP_ERR_ACL_OP_ATTR_NOT_MATCH] = "ACL: operator attribute not match",
-  [APP_ERR_ACL_API_NOT_SUPPORT] = "ACL: API not supported",
-  [APP_ERR_ACL_CREATE_DATA_BUF_FAILED] = "ACL: create data buffer fail",
+  "Success",                            // APP_ERR_OK
+  "ACL: invalid parameter",             // APP_ERR_ACL_INVALID_PARAM
+  "ACL: memory allocation fail",        // APP_ERR_ACL_BAD_ALLOC
+  "ACL: runtime failure",               // APP_ERR_ACL_RT_FAILURE
+  "ACL: Graph Engine failure",          // APP_ERR_ACL_GE_FAILURE
+  "ACL: operator not found",            // APP_ERR_ACL_OP_NOT_FOUND
+  "ACL: fail to load operator",         // APP_ERR_ACL_OP_LOAD_FAILED
+  "ACL: fail to read model",            // APP_ERR_ACL_READ_MODEL_FAILURE
+  "ACL: parse model failure",           // APP_ERR_ACL_PARSE_MODEL
+  "ACL: model missing attribute",       // APP_ERR_ACL_MODEL_MISSING_ATTR
+  "ACL: deserialize model failure",     // APP_ERR_ACL_DESERIALIZE_MODEL
+  "Placeholder",                        // 11
+  "ACL: event not ready",               // APP_ERR_ACL_EVENT_NOT_READY
+  "ACL: event complete",                // APP_ERR_ACL_EVENT_COMPLETE
+  "ACL: unsupported data type",         // APP_ERR_ACL_UNSUPPORTED_DATA_TYPE
+  "ACL: repeat initialize",             // APP_ERR_ACL_REPEAT_INITIALIZE
+  "ACL: compiler not registered",       // APP_ERR_ACL_COMPILER_NOT_REGISTERED
+  "ACL: IO failed",                     // APP_ERR_ACL_IO
+  "ACL: invalid file",                  // APP_ERR_ACL_INVALID_FILE
+  "ACL: invalid dump comfig",           // APP_ERR_ACL_INVALID_DUMP_CONFIG
+  "ACL: invalid profiling config",      // APP_ERR_ACL_INVALID_PROFILING_CONFIG
+  "ACL: operator type not match",       // APP_ERR_ACL_OP_TYPE_NOT_MATCH
+  "ACL: operator input not match",      // APP_ERR_ACL_OP_INPUT_NOT_MATCH
+  "ACL: operator output not match",     // APP_ERR_ACL_OP_OUTPUT_NOT_MATCH
+  "ACL: operator attribute not match",  // APP_ERR_ACL_OP_ATTR_NOT_MATCH
+  "ACL: API not supported",             // APP_ERR_ACL_API_NOT_SUPPORT
+  "ACL: create data buffer fail",       // APP_ERR_ACL_CREATE_DATA_BUF_FAILED
 };
 
 const std::string APP_ERR_COMMON_LOG_STRING[] = {
-  [0] = "Placeholder",
-  [1] = "General Failed",
-  [2] = "Internal error",
-  [3] = "Invalid Pointer",
-  [4] = "Invalid parameter",
-  [5] = "Not implemented",
-  [6] = "Out of memory",
-  [7] = "memory allocation error",
-  [8] = "free memory error",
-  [9] = "out of range",
-  [10] = "NO Permission ",
-  [11] = "Timed out",
-  [12] = "Not initialized",
-  [13] = "initialize failed",
-  [14] = "Operation now in progress ",
-  [15] = "Object, file or other resource already exist",
-  [16] = "Object, file or other resource already doesn't exist",
-  [17] = "Object, file or other resource is in use",
-  [18] = "No available Device or resource",
-  [19] = "Device, file or resource open failed",
-  [20] = "Device, file or resource read failed",
-  [21] = "Device, file or resource write failed",
-  [22] = "Device, file or resource destory failed",
-  [23] = " ",
-  [24] = "Out of connection, Communication shutdown",
-  [25] = "connection fail",
-  [26] = "ACL stream is null pointer",
+  "Placeholder",  // 0
+  "General Failed",
+  "Internal error",
+  "Invalid Pointer",  // 3
+  "Invalid parameter",
+  "Not implemented",  // 5
+  "Out of memory",
+  "memory allocation error",
+  "free memory error",  // 8
+  "out of range",
+  "NO Permission ",  // 10
+  "Timed out",
+  "Not initialized",
+  "initialize failed",  // 13
+  "Operation now in progress ",
+  "Object, file or other resource already exist",  // 15
+  "Object, file or other resource already doesn't exist",
+  "Object, file or other resource is in use",
+  "No available Device or resource",  // 18
+  "Device, file or resource open failed",
+  "Device, file or resource read failed",  // 20
+  "Device, file or resource write failed",
+  "Device, file or resource destory failed",  // 22
+  " ",
+  "Out of connection, Communication shutdown",  // 24
+  "connection fail",
+  "ACL stream is null pointer",  // 26
 };
 
 const std::string APP_ERR_DVPP_LOG_STRING[] = {
-  [0] = "Placeholder",
-  [1] = "DVPP: crop fail",
-  [2] = "DVPP: resize fail",
-  [3] = "DVPP: corp and resize fail",
-  [4] = "DVPP: convert image format fail",
-  [5] = "DVPP: VPC(crop, resize, convert format) fail",
-  [6] = "DVPP: decode jpeg or jpg fail",
-  [7] = "DVPP: encode jpeg or jpg fail",
-  [8] = "DVPP: encode png fail",
-  [9] = "DVPP: decode H264 or H265 fail",
-  [10] = "DVPP: encode H264 or H265 fail",
-  [11] = "DVPP: acldvppChannelDesc is nullptr",
-  [12] = "DVPP: fail to create or set acldvppCreatePicDesc",
-  [13] = "DVPP: fail to set dvpp configuration",
-  [14] = "DVPP: DvppCommon object mismatch the function",
+  "Placeholder",  // 0
+  "DVPP: crop fail",
+  "DVPP: resize fail",
+  "DVPP: corp and resize fail",
+  "DVPP: convert image format fail",
+  "DVPP: VPC(crop, resize, convert format) fail",  // 5
+  "DVPP: decode jpeg or jpg fail",
+  "DVPP: encode jpeg or jpg fail",
+  "DVPP: encode png fail",
+  "DVPP: decode H264 or H265 fail",
+  "DVPP: encode H264 or H265 fail",  // 10
+  "DVPP: acldvppChannelDesc is nullptr",
+  "DVPP: fail to create or set acldvppCreatePicDesc",
+  "DVPP: fail to set dvpp configuration",
+  "DVPP: DvppCommon object mismatch the function",  // 14
 };
 
 const std::string APP_ERR_INFER_LOG_STRING[] = {
-  [0] = "Placeholder",
-  [1] = "Infer: set input fail",
-  [2] = "Infer: set output fail",
-  [3] = "Infer: create output fail",
-  [4] = "Infer: set op attribute fail",
-  [5] = "Infer: get model output fail",
-  [6] = "Infer: find model id fail",
-  [7] = "Infer: find model description fail",
-  [8] = "Infer: find model memory fail",
-  [9] = "Infer: find model weight fail",
+  "Placeholder",  // 0
+  "Infer: set input fail",
+  "Infer: set output fail",
+  "Infer: create output fail",
+  "Infer: set op attribute fail",
+  "Infer: get model output fail",  // 5
+  "Infer: find model id fail",
+  "Infer: find model description fail",
+  "Infer: find model memory fail",
+  "Infer: find model weight fail",  // 9
 };
 
 const std::string APP_ERR_QUEUE_LOG_STRING[] = {
-  [0] = "Placeholder",
-  [1] = "empty queue",
-  [2] = "queue stopped",
-  [3] = "full queue",
+  "Placeholder",
+  "empty queue",
+  "queue stopped",
+  "full queue",
 };
 
 const std::string APP_ERR_FACE_LOG_STRING[] = {
-  [0] = "Placeholder",
-  [1] = "system error",
-  [2] = "multiple faces",
-  [3] = "repeat registration",
-  [4] = "partial search succeeded",
-  [5] = "no face detected",
+  "Placeholder",               // 0
+  "system error",              // 1
+  "multiple faces",            // 2
+  "repeat registration",       // 3
+  "partial search succeeded",  // 4
+  "no face detected",          // 5
 };
 
 std::string GetAppErrCodeInfo(const APP_ERROR err);
