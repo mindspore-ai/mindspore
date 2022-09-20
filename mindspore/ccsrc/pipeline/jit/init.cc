@@ -412,6 +412,14 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("reset_algo_parameters", &CostModelContext::ResetAlgoParameters, "Reset the AlgoParameters.");
 
   (void)py::module::import("atexit").attr("register")(py::cpp_function{[&]() -> void {
+#ifndef ENABLE_SECURITY
+    try {
+      py::module profiler = py::module::import("mindspore.profiler").attr("EnvProfiler")();
+      profiler.attr("analyse")();
+    } catch (const std::exception &e) {
+      MS_LOG(ERROR) << "Failed to parse profiler data." << e.what();
+    }
+#endif
 #ifdef ENABLE_MINDDATA
     MS_LOG(INFO) << "Start releasing dataset handles...";
     py::module iterators = py::module::import("mindspore.dataset.engine.iterators");
