@@ -35,6 +35,7 @@
 #include "backend/common/optimizer/helper.h"
 #include "base/base_ref_utils.h"
 #include "include/common/debug/dump_proto.h"
+#include "include/common/utils/parallel_context.h"
 #ifdef ENABLE_DEBUGGER
 #include "debug/debugger/debugger.h"
 #endif
@@ -250,6 +251,37 @@ void OptimizeNopNode(KernelGraph *graph) {
   EliminateNodesFromGraph(graph->return_node().get(), nop_nodes_need_eliminated, &checked_nodes);
   graph->set_execution_order(new_execution_order);
 }
+
+void SetZeroCopyFlag(const KernelGraphPtr &graph, bool run_in_pynative) {
+  if (run_in_pynative) {
+    return;
+  }
+
+  MS_EXCEPTION_IF_NULL(graph);
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  bool task_sink = ms_context->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
+  bool is_multi_graph_sink = ms_context->get_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK);
+  // If the run mode is not subgraph sink, the flag should not be set.
+  if (!task_sink || is_multi_graph_sink) {
+    return;
+  }
+
+  auto parallel_context = parallel::ParallelContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(parallel_context);
+  auto parallel_mode = parallel_context->parallel_mode();
+  bool is_parallel_mode = parallel_mode == parallel::kSemiAutoParallel || parallel_mode == parallel::kAutoParallel;
+  // If there are auto parallel in graph, the flag should not be set.
+  if (is_parallel_mode) {
+    return;
+  }
+
+  MS_LOG(INFO) << "Set zero copy flag for graph:" << graph->ToString();
+  if (common::GetEnv("ENABLE_ZERO_COPY") != "1") {
+    return;
+  }
+  graph->set_flag(kFlagEnableZeroCopyInGraph, true);
+}
 }  // namespace
 
 GraphId GraphCompiler::CompileGraph(const GraphSegmentPtr &segment, const AnfNodePtrList &outputs,
@@ -441,7 +473,7 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
     DumpIRProto(graph, "before_opt_" + std::to_string(graph->graph_id()));
   }
 #endif
-
+  SetZeroCopyFlag(graph, run_in_pynative);
   MS_EXCEPTION_IF_NULL(device_context->kernel_executor_);
   // Execute optimization pass.
   device_context->kernel_executor_->OptimizeGraph(graph);

@@ -1509,6 +1509,9 @@ void ControlNodeScheduler::LinkDataArrowByKernelGraphInSinkMode(const KernelGrap
     size_t to_index = super_kernel_actor->FetchInputNodePosition(input_node);
     const auto &front_node_with_index = GetFrontNodeByKernelGraph(input_node, graph.get());
     MS_EXCEPTION_IF_NULL(front_node_with_index.first);
+    if (front_node_with_index.first->isa<ValueNode>()) {
+      continue;
+    }
     size_t from_index = from_actor->FetchNodePosition(front_node_with_index);
     SchedulerHelper::AddFormalParameterDeviceTensor(from_actor, from_index, input_node, graph);
     SchedulerHelper::AddDataArrow(from_actor, to_actor, from_index, to_index);
