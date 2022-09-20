@@ -1295,12 +1295,12 @@ class UniqueWithPad(PrimitiveWithCheck):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> x = Tensor(np.array([1, 1, 5, 5, 4, 4, 3, 3, 2, 2,]), mindspore.int32)
+        >>> x = Tensor(np.array([1, 1, 2, 2, 3, 3, 4, 5]), mindspore.int32)
         >>> pad_num = 8
         >>> output = ops.UniqueWithPad()(x, pad_num)
         >>> print(output)
-        (Tensor(shape=[10], dtype=Int32, value= [1, 5, 4, 3, 2, 8, 8, 8, 8, 8]),
-         Tensor(shape=[10], dtype=Int32, value= [0, 0, 1, 1, 2, 2, 3, 3, 4, 4]))
+        (Tensor(shape=[10], dtype=Int32, value= [1, 2, 3, 4, 5, 8, 8, 8]),
+         Tensor(shape=[10], dtype=Int32, value= [0, 0, 1, 1, 2, 2, 3, 4]))
     """
 
     @prim_attr_register
