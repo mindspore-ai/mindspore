@@ -583,6 +583,9 @@ def ms_function(fn=None, input_signature=None, hash_args=None, jit_config=None):
 
         @wraps(func)
         def staging_specialize(*args, **kwargs):
+            if os.getenv("MS_JIT") == '0':
+                return func(*args, **kwargs)
+
             args = _handle_func_args(func, *args, **kwargs)
             process_obj = None
             if args and not isinstance(args[0], PythonTensor) and hasattr(args[0], func.__name__):
