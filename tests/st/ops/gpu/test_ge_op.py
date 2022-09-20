@@ -31,7 +31,7 @@ class OpNetWrapper(nn.Cell):
         return self.op(*inputs)
 
 
-class GreaterFunc(nn.Cell):
+class GreaterEqualFunc(nn.Cell):
     def construct(self, *inputs):
         return ops.ge(*inputs)
 
@@ -120,8 +120,7 @@ def test_greater_equal_op_functional(mode):
     """
     context.set_context(mode=mode, device_target="GPU")
 
-    op = P.GreaterEqual()
-    op_wrapper = OpNetWrapper(op)
+    op_wrapper = GreaterEqualFunc()
 
     input_x = Tensor(np.array([1, 2, 3]).astype(np.float32))
     input_y = Tensor(np.array([3, 2, 1]).astype(np.float32))
