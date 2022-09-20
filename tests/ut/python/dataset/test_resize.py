@@ -268,7 +268,7 @@ def test_resize_op_exception_c_interpolation():
     with pytest.raises(TypeError) as error_info:
         resize_op = vision.Resize(size=(100, 200), interpolation=Inter.ANTIALIAS)
         _ = resize_op(image)
-    assert "Current Interpolation is not supported with NumPy input." in str(error_info.value)
+    assert "img should be PIL image. Got <class 'numpy.ndarray'>." in str(error_info.value)
 
 
 def test_resize_op_exception_py_interpolation():

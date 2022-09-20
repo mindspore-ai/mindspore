@@ -71,7 +71,7 @@ from .validators import check_adjust_brightness, check_adjust_contrast, check_ad
     check_posterize, check_prob, check_rand_augment, check_random_adjust_sharpness, check_random_affine, \
     check_random_auto_contrast, check_random_color_adjust, check_random_crop, check_random_erasing, \
     check_random_perspective, check_random_posterize, check_random_resize_crop, check_random_rotation, \
-    check_random_select_subpolicy_op, check_random_solarize, check_range, check_rescale, check_resize,  \
+    check_random_select_subpolicy_op, check_random_solarize, check_range, check_rescale, check_resize, \
     check_resize_interpolation, check_resized_crop, check_rgb_to_hsv, check_rotate, check_slice_patches, \
     check_solarize, check_ten_crop, check_trivial_augment_wide, check_uniform_augment, check_to_tensor, \
     FLOAT_MAX_INTEGER
@@ -425,13 +425,13 @@ class Affine(ImageTensorOperation):
         self.translate = translate
         self.scale_ = scale
         self.shear = shear
-        self.resample = Inter.to_c_type(resample)
+        self.resample = resample
         self.fill_value = fill_value
         self.implementation = Implementation.C
 
     def parse(self):
-        return cde.AffineOperation(self.degrees, self.translate, self.scale_, self.shear, self.resample,
-                                   self.fill_value)
+        return cde.AffineOperation(self.degrees, self.translate, self.scale_, self.shear,
+                                   Inter.to_c_type(self.resample), self.fill_value)
 
 
 class AutoAugment(ImageTensorOperation):
@@ -1621,11 +1621,10 @@ class Pad(ImageTensorOperation, PyTensorOperation):
         self.padding = padding
         self.fill_value = fill_value
         self.random = False
-        self.c_padding_mode = Border.to_c_type(padding_mode)
-        self.pil_padding_mode = Border.to_python_type(padding_mode)
+        self.padding_mode = padding_mode
 
     def parse(self):
-        return cde.PadOperation(self.padding, self.fill_value, self.c_padding_mode)
+        return cde.PadOperation(self.padding, self.fill_value, Border.to_c_type(self.padding_mode))
 
     def _execute_py(self, img):
         """
@@ -1637,7 +1636,7 @@ class Pad(ImageTensorOperation, PyTensorOperation):
         Returns:
             PIL Image, padded image.
         """
-        return util.pad(img, self.padding, self.fill_value, self.pil_padding_mode)
+        return util.pad(img, self.padding, self.fill_value, Border.to_python_type(self.padding_mode))
 
 
 class PadToSize(ImageTensorOperation):
@@ -1692,11 +1691,11 @@ class PadToSize(ImageTensorOperation):
         else:
             self.offset = [offset, offset] if isinstance(offset, int) else offset
         self.fill_value = tuple([fill_value] * 3) if isinstance(fill_value, int) else fill_value
-        self.padding_mode = Border.to_c_type(padding_mode)
+        self.padding_mode = padding_mode
         self.implementation = Implementation.C
 
     def parse(self):
-        return cde.PadToSizeOperation(self.size, self.offset, self.fill_value, self.padding_mode)
+        return cde.PadToSizeOperation(self.size, self.offset, self.fill_value, Border.to_c_type(self.padding_mode))
 
 
 class Perspective(ImageTensorOperation, PyTensorOperation):
@@ -1749,20 +1748,17 @@ class Perspective(ImageTensorOperation, PyTensorOperation):
         super().__init__()
         self.start_points = start_points
         self.end_points = end_points
-        self.c_interpolation = None
-        self.py_interpolation = None
-        if interpolation in [Inter.PILCUBIC, Inter.AREA]:
-            self.c_interpolation = Inter.to_c_type(interpolation)
+        self.interpolation = interpolation
+        if interpolation in [Inter.AREA, Inter.PILCUBIC]:
+            self.implementation = Implementation.C
         elif interpolation == Inter.ANTIALIAS:
-            self.py_interpolation = Inter.to_python_type(interpolation)
-        else:
-            self.c_interpolation = Inter.to_c_type(interpolation)
-            self.py_interpolation = Inter.to_python_type(interpolation)
+            self.implementation = Implementation.PY
+        self.random = False
 
     def parse(self):
-        if self.c_interpolation is None:
+        if self.interpolation == Inter.ANTIALIAS:
             raise TypeError("Current Interpolation is not supported with NumPy input.")
-        return cde.PerspectiveOperation(self.start_points, self.end_points, self.c_interpolation)
+        return cde.PerspectiveOperation(self.start_points, self.end_points, Inter.to_c_type(self.interpolation))
 
     def execute_py(self, img):
         """
@@ -1774,9 +1770,9 @@ class Perspective(ImageTensorOperation, PyTensorOperation):
         Returns:
             PIL Image, perspectived image.
         """
-        if self.py_interpolation is None:
+        if self.interpolation in [Inter.AREA, Inter.PILCUBIC]:
             raise TypeError("Current Interpolation is not supported with PIL input.")
-        return util.perspective(img, self.start_points, self.end_points, self.py_interpolation)
+        return util.perspective(img, self.start_points, self.end_points, Inter.to_python_type(self.interpolation))
 
 
 class Posterize(ImageTensorOperation):
@@ -1856,6 +1852,7 @@ class RandAugment(ImageTensorOperation):
         if isinstance(fill_value, int):
             fill_value = tuple([fill_value] * 3)
         self.fill_value = fill_value
+        self.implementation = Implementation.C
 
     def parse(self):
         return cde.RandAugmentOperation(self.num_ops, self.magnitude, self.num_magnitude_bins,
@@ -2007,22 +2004,18 @@ class RandomAffine(ImageTensorOperation, PyTensorOperation):
         self.translate = translate
         self.scale = scale
         self.shear = shear
-        self.c_resample = None
-        self.py_resample = None
+        self.resample = resample
         if resample in [Inter.AREA, Inter.PILCUBIC]:
-            self.c_resample = Inter.to_c_type(resample)
+            self.implementation = Implementation.C
         elif resample == Inter.ANTIALIAS:
-            self.py_resample = Inter.to_python_type(resample)
-        else:
-            self.c_resample = Inter.to_c_type(resample)
-            self.py_resample = Inter.to_python_type(resample)
+            self.implementation = Implementation.PY
         self.fill_value = fill_value
 
     def parse(self):
-        if self.c_resample is None:
+        if self.resample == Inter.ANTIALIAS:
             raise TypeError("Current Interpolation is not supported with NumPy input.")
         return cde.RandomAffineOperation(self.degrees, self.translate, self.scale, self.shear,
-                                         self.c_resample, self.fill_value)
+                                         Inter.to_c_type(self.resample), self.fill_value)
 
     def _execute_py(self, img):
         """
@@ -2034,14 +2027,14 @@ class RandomAffine(ImageTensorOperation, PyTensorOperation):
         Returns:
             PIL Image, randomly affine transformed image.
         """
-        if self.py_resample is None:
+        if self.resample in [Inter.AREA, Inter.PILCUBIC]:
             raise TypeError("Current Interpolation is not supported with PIL input.")
         return util.random_affine(img,
                                   self.degrees,
                                   self.translate,
                                   self.scale,
                                   self.shear,
-                                  self.py_resample,
+                                  Inter.to_python_type(self.resample),
                                   self.fill_value)
 
 
@@ -2232,12 +2225,13 @@ class RandomCrop(ImageTensorOperation, PyTensorOperation):
     Note:
         If the input image is more than one, then make sure that the image size is the same.
 
+
     Args:
         size (Union[int, Sequence[int]]): The output size of the cropped image. The size value(s) must be positive.
             If size is an integer, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, an image of size (height, width) will be cropped.
         padding (Union[int, Sequence[int]], optional): The number of pixels to pad each border of the image.
-            The padding value(s) must be non-nagetive (default=None).
+            The padding value(s) must be non-negative (default=None).
             If padding is not None, pad image first with padding values.
             If a single number is provided, pad all borders with this value.
             If a tuple or lists of 2 values are provided, pad the (left and top)
@@ -2308,12 +2302,11 @@ class RandomCrop(ImageTensorOperation, PyTensorOperation):
         self.padding = padding
         self.pad_if_needed = pad_if_needed
         self.fill_value = fill_value
-        self.c_padding_mode = Border.to_c_type(padding_mode)
-        self.pil_padding_mode = Border.to_python_type(padding_mode)
+        self.padding_mode = padding_mode
 
     def parse(self):
         return cde.RandomCropOperation(self.size, self.padding, self.pad_if_needed, self.fill_value,
-                                       self.c_padding_mode)
+                                       Border.to_c_type(self.padding_mode))
 
     def _execute_py(self, img):
         """
@@ -2326,7 +2319,7 @@ class RandomCrop(ImageTensorOperation, PyTensorOperation):
             PIL Image, cropped image.
         """
         return util.random_crop(img, self.size, self.padding, self.pad_if_needed,
-                                self.fill_value, self.pil_padding_mode)
+                                self.fill_value, Border.to_python_type(self.padding_mode))
 
 
 class RandomCropDecodeResize(ImageTensorOperation):
@@ -2422,7 +2415,7 @@ class RandomCropWithBBox(ImageTensorOperation):
             If size is an integer, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, an image of size (height, width) will be cropped.
         padding (Union[int, Sequence[int]], optional): The number of pixels to pad the image
-            The padding value(s) must be non-nagetive (default=None).
+            The padding value(s) must be non-negative (default=None).
             If padding is not None, first pad image with padding values.
             If a single number is provided, pad all borders with this value.
             If a tuple or lists of 2 values are provided, pad the (left and top)
@@ -2493,7 +2486,7 @@ class RandomCropWithBBox(ImageTensorOperation):
         self.padding = padding
         self.pad_if_needed = pad_if_needed
         self.fill_value = fill_value
-        self.padding_mode = padding_mode.value
+        self.padding_mode = padding_mode
         self.implementation = Implementation.C
 
     def parse(self):
@@ -2853,7 +2846,7 @@ class RandomPerspective(PyTensorOperation):
         super().__init__()
         self.distortion_scale = distortion_scale
         self.prob = prob
-        self.interpolation = Inter.to_python_type(interpolation)
+        self.interpolation = interpolation
         self.implementation = Implementation.PY
 
     def _execute_py(self, img):
@@ -2871,7 +2864,7 @@ class RandomPerspective(PyTensorOperation):
         if self.prob > random.random():
             start_points, end_points = util.get_perspective_params(
                 img, self.distortion_scale)
-            return util.perspective(img, start_points, end_points, self.interpolation)
+            return util.perspective(img, start_points, end_points, Inter.to_python_type(self.interpolation))
         return img
 
 
@@ -2982,21 +2975,17 @@ class RandomResizedCrop(ImageTensorOperation, PyTensorOperation):
         self.size = size
         self.scale = scale
         self.ratio = ratio
-        self.c_interpolation = None
-        self.py_interpolation = None
+        self.interpolation = interpolation
         if interpolation in [Inter.AREA, Inter.PILCUBIC]:
-            self.c_interpolation = Inter.to_c_type(interpolation)
+            self.implementation = Implementation.C
         elif interpolation == Inter.ANTIALIAS:
-            self.py_interpolation = Inter.to_python_type(interpolation)
-        else:
-            self.c_interpolation = Inter.to_c_type(interpolation)
-            self.py_interpolation = Inter.to_python_type(interpolation)
+            self.implementation = Implementation.PY
         self.max_attempts = max_attempts
 
     def parse(self):
-        if self.c_interpolation is None:
+        if self.interpolation == Inter.ANTIALIAS:
             raise TypeError("Current Interpolation is not supported with NumPy input.")
-        return cde.RandomResizedCropOperation(self.size, self.scale, self.ratio, self.c_interpolation,
+        return cde.RandomResizedCropOperation(self.size, self.scale, self.ratio, Inter.to_c_type(self.interpolation),
                                               self.max_attempts)
 
     def _execute_py(self, img):
@@ -3009,10 +2998,10 @@ class RandomResizedCrop(ImageTensorOperation, PyTensorOperation):
         Returns:
             PIL Image, randomly cropped and resized image.
         """
-        if self.py_interpolation is None:
+        if self.interpolation in [Inter.AREA, Inter.PILCUBIC]:
             raise TypeError("Current Interpolation is not supported with PIL input.")
         return util.random_resize_crop(img, self.size, self.scale, self.ratio,
-                                       self.py_interpolation, self.max_attempts)
+                                       Inter.to_python_type(self.interpolation), self.max_attempts)
 
 
 class RandomResizedCropWithBBox(ImageTensorOperation):
@@ -3235,15 +3224,11 @@ class RandomRotation(ImageTensorOperation, PyTensorOperation):
         if isinstance(fill_value, int):
             fill_value = tuple([fill_value] * 3)
         self.degrees = degrees
-        self.c_resample = None
-        self.py_resample = None
-        if resample == Inter.AREA:
-            self.c_resample = Inter.to_c_type(resample)
+        self.resample = resample
+        if resample in [Inter.AREA, Inter.PILCUBIC]:
+            self.implementation = Implementation.C
         elif resample == Inter.ANTIALIAS:
-            self.py_resample = Inter.to_python_type(resample)
-        else:
-            self.c_resample = Inter.to_c_type(resample)
-            self.py_resample = Inter.to_python_type(resample)
+            self.implementation = Implementation.PY
         self.expand = expand
         self.py_center = center
         self.c_center = center
@@ -3252,9 +3237,9 @@ class RandomRotation(ImageTensorOperation, PyTensorOperation):
         self.fill_value = fill_value
 
     def parse(self):
-        if self.c_resample is None:
+        if self.resample == Inter.ANTIALIAS:
             raise TypeError("Current Interpolation is not supported with NumPy input.")
-        return cde.RandomRotationOperation(self.degrees, self.c_resample, self.expand, self.c_center,
+        return cde.RandomRotationOperation(self.degrees, Inter.to_c_type(self.resample), self.expand, self.c_center,
                                            self.fill_value)
 
     def _execute_py(self, img):
@@ -3267,9 +3252,10 @@ class RandomRotation(ImageTensorOperation, PyTensorOperation):
         Returns:
             PIL Image, randomly rotated image.
         """
-        if self.py_resample is None:
+        if self.resample in [Inter.AREA, Inter.PILCUBIC]:
             raise TypeError("Current Interpolation is not supported with PIL input.")
-        return util.random_rotation(img, self.degrees, self.py_resample, self.expand, self.py_center, self.fill_value)
+        return util.random_rotation(img, self.degrees, Inter.to_python_type(self.resample), self.expand,
+                                    self.py_center, self.fill_value)
 
 
 class RandomSelectSubpolicy(ImageTensorOperation):
@@ -3554,21 +3540,17 @@ class Resize(ImageTensorOperation, PyTensorOperation):
         if isinstance(size, int):
             size = (size,)
         self.c_size = size
-        self.c_interpolation = None
-        self.py_interpolation = None
+        self.interpolation = interpolation
         if interpolation in [Inter.AREA, Inter.PILCUBIC]:
-            self.c_interpolation = Inter.to_c_type(interpolation)
+            self.implementation = Implementation.C
         elif interpolation == Inter.ANTIALIAS:
-            self.py_interpolation = Inter.to_python_type(interpolation)
-        else:
-            self.c_interpolation = Inter.to_c_type(interpolation)
-            self.py_interpolation = Inter.to_python_type(interpolation)
+            self.implementation = Implementation.PY
         self.random = False
 
     def parse(self):
-        if self.c_interpolation is None:
+        if self.interpolation == Inter.ANTIALIAS:
             raise TypeError("Current Interpolation is not supported with NumPy input.")
-        return cde.ResizeOperation(self.c_size, self.c_interpolation)
+        return cde.ResizeOperation(self.c_size, Inter.to_c_type(self.interpolation))
 
     def _execute_py(self, img):
         """
@@ -3580,9 +3562,9 @@ class Resize(ImageTensorOperation, PyTensorOperation):
         Returns:
             PIL Image, resized image.
         """
-        if self.py_interpolation is None:
+        if self.interpolation in [Inter.AREA, Inter.PILCUBIC]:
             raise TypeError("Current Interpolation is not supported with PIL input.")
-        return util.resize(img, self.py_size, self.py_interpolation)
+        return util.resize(img, self.py_size, Inter.to_python_type(self.interpolation))
 
 
 class ResizedCrop(ImageTensorOperation):
@@ -3629,6 +3611,7 @@ class ResizedCrop(ImageTensorOperation):
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
     """
+
     @check_resized_crop
     def __init__(self, top, left, height, width, size, interpolation=Inter.BILINEAR):
         super().__init__()
