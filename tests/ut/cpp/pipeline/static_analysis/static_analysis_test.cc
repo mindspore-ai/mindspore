@@ -411,9 +411,9 @@ void TestEvalOnePrim::TearDown() {
   // destroy resource
 }
 TEST_F(TestEvalOnePrim, test_scalar_add) {
-  double x1 = 1.1;
-  double x2 = 1.1;
-  double x3 = 2.2;
+  float x1 = 1.1;
+  float x2 = 1.1;
+  float x3 = 2.2;
   AbstractBasePtr base1 = FromValue(x1, false);
   AbstractBasePtr base2 = FromValue(x2, false);
   AbstractBasePtrList base_list = {base1, base2};
