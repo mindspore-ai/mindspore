@@ -94,6 +94,13 @@ Status ModelWorker::Init(const char *model_buf, size_t size) {
     return kLiteNullptr;
   }
   mindspore::ModelType model_type = kMindIR_Lite;
+  if (!worker_config_->config_path.empty()) {
+    auto status = model_->LoadConfig(worker_config_->config_path);
+    if (status != kSuccess) {
+      MS_LOG(ERROR) << "model load config failed.";
+      return kLiteError;
+    }
+  }
   for (auto &section : worker_config_->config_info) {
     for (auto &config : section.second) {
       auto status = model_->UpdateConfig(section.first, std::make_pair(config.first, config.second));

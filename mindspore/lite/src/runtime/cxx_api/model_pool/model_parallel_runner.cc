@@ -90,6 +90,24 @@ std::map<std::string, std::map<std::string, std::string>> RunnerConfig::GetConfi
   return data_->config_info;
 }
 
+void RunnerConfig::SetConfigPath(const std::string &config_path) {
+  if (data_ == nullptr) {
+    MS_LOG(ERROR) << "Runner config data is nullptr.";
+    return;
+  }
+  data_->config_path = config_path;
+  return;
+}
+
+std::string RunnerConfig::GetConfigPath() const {
+  if (data_ == nullptr) {
+    MS_LOG(ERROR) << "Runner config data is nullptr.";
+    std::string empty;
+    return empty;
+  }
+  return data_->config_path;
+}
+
 Status ModelParallelRunner::Init(const std::string &model_path, const std::shared_ptr<RunnerConfig> &runner_config) {
 #ifdef USE_GLOG
   mindspore::mindspore_log_init();

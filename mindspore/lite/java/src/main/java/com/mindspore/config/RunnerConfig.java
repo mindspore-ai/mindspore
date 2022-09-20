@@ -79,6 +79,15 @@ public class RunnerConfig {
     }
 
     /**
+     * Set config path
+     *
+     * @param config_path The config path.
+     */
+    public void setConfigPath(String config_path) {
+        setConfigPath(runnerConfigPtr, config_path);
+    }
+
+    /**
      * Get RunnerConfig pointer.
      *
      * @return RunnerConfig pointer.
@@ -102,6 +111,8 @@ public class RunnerConfig {
     private native void setWorkersNum(long runnerConfigPtr, int workersNum);
 
     private native void setConfigInfo(long runnerConfigPtr, String section, HashMap<String, String> config);
+
+    private native void setConfigPath(long runnerConfigPtr, String config_path);
 
     private native boolean free(long runnerConfigPtr);
 }

@@ -983,15 +983,8 @@ void BenchmarkUnifiedApi::ModelParallelRunnerRun(int task_num, int parallel_idx)
 }
 
 int BenchmarkUnifiedApi::AddConfigInfo(const std::shared_ptr<RunnerConfig> &runner_config) {
-  auto env = std::getenv("BENCHMARK_WEIGHT_PATH");
-  if (env == nullptr) {
-    return RET_OK;
-  }
-  auto weight_path = std::string(env);
-  if (weight_path != "") {
-    std::map<std::string, std::string> config;
-    config[kWeightPath] = weight_path;
-    runner_config->SetConfigInfo(kWeight, config);
+  if (!flags_->config_file_.empty()) {
+    runner_config->SetConfigPath(flags_->config_file_);
   }
   return RET_OK;
 }
