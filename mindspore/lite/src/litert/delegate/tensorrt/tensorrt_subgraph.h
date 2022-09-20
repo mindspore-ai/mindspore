@@ -15,6 +15,7 @@
  */
 #ifndef MINDSPORE_LITE_SRC_LITERT_DELEGATE_TENSORRT_TENSORRT_SUBGRAPH_H_
 #define MINDSPORE_LITE_SRC_LITERT_DELEGATE_TENSORRT_TENSORRT_SUBGRAPH_H_
+#include <experimental/optional>
 #include <utility>
 #include <set>
 #include <map>
@@ -118,10 +119,10 @@ class TensorRTSubGraph : public kernel::Kernel {
   int ParseInputsProfile();
 
   size_t MaxVolumnProfileIndex() const;
-  int SelectProfile() const;
+  std::experimental::optional<int> SelectProfile() const;
 
   bool ValidInputResizeDims(const nvinfer1::Dims &construct_dims, const std::vector<int64_t> &resize_input_shape);
-  bool IsValidProfileDims() const;
+  std::experimental::optional<bool> IsValidProfileDims() const;
 
   std::vector<TensorRTOp *> all_ops_{};
   // subgraph input nodes.
