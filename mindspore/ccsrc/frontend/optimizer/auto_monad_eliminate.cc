@@ -229,12 +229,13 @@ void DeleteLoadUserMakeTuple(const FuncGraphManagerPtr &manager, const CNodePtr 
 // b = Load(para1, u2)
 // t = make_tuple(x, y, z)
 // u3 = UpdateState(u2, t)
-void ReplaceLoadUserMakeTuple(const FuncGraphManagerPtr &manager, const FuncGraphPtr &fg, const CNodePtr &make_tuple,
-                              const AnfNodePtr &load) {
+void ReplaceLoadUserMakeTuple(const FuncGraphManagerPtr &manager, const CNodePtr &make_tuple, const AnfNodePtr &load) {
   auto &make_tuple_inputs = make_tuple->inputs();
   std::vector<AnfNodePtr> new_make_tuple_inputs;
   (void)std::copy_if(make_tuple_inputs.begin(), make_tuple_inputs.end(), std::back_inserter(new_make_tuple_inputs),
                      [load](const AnfNodePtr &input) { return load != input; });
+  auto fg = make_tuple->func_graph();
+  MS_EXCEPTION_IF_NULL(fg);
   const auto &new_make_tuple = fg->NewCNode(new_make_tuple_inputs);
   // Set abstract for the MakeTuple node.
   abstract::AbstractBasePtrList element_abstracts;
@@ -272,7 +273,7 @@ bool ReplaceLoadUser(const FuncGraphManagerPtr &manager, const FuncGraphPtr &fg,
       }
       // Pattern3
       if (make_tuple->size() > 3) {
-        ReplaceLoadUserMakeTuple(manager, fg, make_tuple, load);
+        ReplaceLoadUserMakeTuple(manager, make_tuple, load);
         change = true;
       }
     }
