@@ -21,14 +21,14 @@ import operator
 
 import numpy as np
 
-from ...primitive import constexpr
-from .... import log as logger
-from ....common import dtype as mstype
-from ....common.tensor import Tensor
-from ....common._register_for_tensor import tensor_operator_registry
-from ....ops import _utils as op_utils
-from ...._checkparam import Validator as validator
-from ... import operations as P
+from mindspore.ops.primitive import constexpr
+from mindspore import log as logger
+from mindspore.common import dtype as mstype
+from mindspore.common.tensor import Tensor
+from mindspore.common._register_for_tensor import tensor_operator_registry
+from mindspore.ops import _utils as op_utils
+from mindspore._checkparam import Validator as validator
+from mindspore.ops import operations as P
 
 ALL_TENSOR = 0
 NO_TENSOR = 1

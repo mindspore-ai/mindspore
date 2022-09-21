@@ -24,41 +24,41 @@ from mindspore.common import dtype as mstype
 from mindspore.ops._grad.grad_base import bprop_getters
 from mindspore.ops import operations as P
 from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
-from ..operations import _grad_ops as G
-from ..operations.nn_ops import MaxUnpool2D
-from ..operations.nn_ops import MaxUnpool3D
-from ..operations.nn_ops import Dilation2D
-from ..operations.nn_ops import FractionalMaxPool
-from ..operations.nn_ops import SparseSoftmaxCrossEntropyWithLogitsV2
-from ..operations._grad_ops import FractionalMaxPoolGrad
-from ..operations.nn_ops import FractionalMaxPool3DWithFixedKsize
-from ..operations._grad_ops import FractionalMaxPool3DGradWithFixedKsize
-from ..operations.nn_ops import FractionalAvgPool
-from ..operations._grad_ops import FractionalAvgPoolGrad
-from ..operations.nn_ops import MultiMarginLoss
-from ..operations.nn_ops import MultilabelMarginLoss
-from ..operations.nn_ops import NthElement
-from ..operations.nn_ops import UpsampleTrilinear3D
-from ..operations._grad_ops import UpsampleTrilinear3DGrad
-from ..operations.nn_ops import Pdist
-from ..operations._grad_ops import PdistGrad
-from ..operations.nn_ops import PSROIPooling
-from ..operations._grad_ops import PSROIPoolingGrad
-from ..operations.nn_ops import PadV3
-from ..operations._grad_ops import PadV3Grad
-from ..operations.nn_ops import AvgPoolV1
-from ..operations._grad_ops import AvgPoolGradV1
-from ..operations.nn_ops import UpsampleNearest3D
-from ..operations._grad_ops import UpsampleNearest3DGrad
-from ..operations.nn_ops import MaxPoolV1
-from ..operations._grad_ops import MaxPoolGradV1
-from ..operations.nn_ops import ReLUV3
-from ..operations._grad_ops import ReluGrad
-from ..operations.image_ops import ResizeLinear1D
-from ..operations.nn_ops import MaxPool3DWithArgmax
-from ..operations.nn_ops import FractionalMaxPoolWithFixedKsize
-from ..operations._grad_ops import FractionalMaxPoolGradWithFixedKsize
-from ..operations.nn_ops import AdaptiveAvgPool3D
+from mindspore.ops.operations import _grad_ops as G
+from mindspore.ops.operations.nn_ops import MaxUnpool2D
+from mindspore.ops.operations.nn_ops import MaxUnpool3D
+from mindspore.ops.operations.nn_ops import Dilation2D
+from mindspore.ops.operations.nn_ops import FractionalMaxPool
+from mindspore.ops.operations.nn_ops import SparseSoftmaxCrossEntropyWithLogitsV2
+from mindspore.ops.operations._grad_ops import FractionalMaxPoolGrad
+from mindspore.ops.operations.nn_ops import FractionalMaxPool3DWithFixedKsize
+from mindspore.ops.operations._grad_ops import FractionalMaxPool3DGradWithFixedKsize
+from mindspore.ops.operations.nn_ops import FractionalAvgPool
+from mindspore.ops.operations._grad_ops import FractionalAvgPoolGrad
+from mindspore.ops.operations.nn_ops import MultiMarginLoss
+from mindspore.ops.operations.nn_ops import MultilabelMarginLoss
+from mindspore.ops.operations.nn_ops import NthElement
+from mindspore.ops.operations.nn_ops import UpsampleTrilinear3D
+from mindspore.ops.operations._grad_ops import UpsampleTrilinear3DGrad
+from mindspore.ops.operations.nn_ops import Pdist
+from mindspore.ops.operations._grad_ops import PdistGrad
+from mindspore.ops.operations.nn_ops import PSROIPooling
+from mindspore.ops.operations._grad_ops import PSROIPoolingGrad
+from mindspore.ops.operations.nn_ops import PadV3
+from mindspore.ops.operations._grad_ops import PadV3Grad
+from mindspore.ops.operations.nn_ops import AvgPoolV1
+from mindspore.ops.operations._grad_ops import AvgPoolGradV1
+from mindspore.ops.operations.nn_ops import UpsampleNearest3D
+from mindspore.ops.operations._grad_ops import UpsampleNearest3DGrad
+from mindspore.ops.operations.nn_ops import MaxPoolV1
+from mindspore.ops.operations._grad_ops import MaxPoolGradV1
+from mindspore.ops.operations.nn_ops import ReLUV3
+from mindspore.ops.operations._grad_ops import ReluGrad
+from mindspore.ops.operations.image_ops import ResizeLinear1D
+from mindspore.ops.operations.nn_ops import MaxPool3DWithArgmax
+from mindspore.ops.operations.nn_ops import FractionalMaxPoolWithFixedKsize
+from mindspore.ops.operations._grad_ops import FractionalMaxPoolGradWithFixedKsize
+from mindspore.ops.operations.nn_ops import AdaptiveAvgPool3D
 
 
 @bprop_getters.register(P.CTCLossV2)
@@ -118,6 +118,7 @@ def get_bprop_pad_v3(self):
         pad_v3_grad = PadV3(mode, self.paddings_contiguous)
     else:
         pad_v3_grad = PadV3Grad(mode, self.paddings_contiguous)
+
     def bprop(x, paddings, constant_values, out, dout):
         if mode == 'constant':
             neg_paddings = tuple(-x for x in paddings)
@@ -203,6 +204,7 @@ def get_bprop_upsample_nearest_3d(self):
     """Grad definition for `UpsampleNearest3D` operation."""
     output_size = self.output_size
     scales = self.scales
+
     def bprop(x, out, dout):
         x_shape = P.Shape()(x)
         grad_op = UpsampleNearest3DGrad(x_shape, output_size, scales)
@@ -218,6 +220,7 @@ def get_bprop_upsample_trilinear_3d(self):
     output_size = self.output_size
     scales = self.scales
     align_corners = self.align_corners
+
     def bprop(x, out, dout):
         input_size = P.Shape()(x)
         grad_op = UpsampleTrilinear3DGrad(input_size, output_size, scales, align_corners)
@@ -294,6 +297,7 @@ def get_bprop_nth_element(self):
     equal = P.Equal()
     reduce_sum = P.ReduceSum()
     divide = P.Div()
+
     def bprop(input_x, n, out, dout):
         indicators = cast(equal(expand_dims(out, -1), input_x), input_x.dtype)
         dout = expand_dims(dout, -1)

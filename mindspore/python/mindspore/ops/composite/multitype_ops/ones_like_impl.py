@@ -17,6 +17,7 @@
 
 """Implementation for internal polymorphism `ones_like_leaf` operations."""
 
+from __future__ import absolute_import
 from mindspore.ops.composite import base
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P

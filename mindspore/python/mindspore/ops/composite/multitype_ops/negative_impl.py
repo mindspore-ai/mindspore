@@ -12,8 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+
 """Implementation for internal polymorphism `negative` operations."""
 
+from __future__ import absolute_import
 from mindspore.ops.composite import base
 from mindspore.ops import functional as F
 from mindspore.common import CSRTensor, COOTensor

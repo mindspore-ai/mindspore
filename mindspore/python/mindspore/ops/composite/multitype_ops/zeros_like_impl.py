@@ -15,6 +15,7 @@
 
 """Implementation for internal polymorphism `zeros_like_leaf` operations."""
 
+from __future__ import absolute_import
 from mindspore.ops.composite import base
 from mindspore.ops import functional as F
 
