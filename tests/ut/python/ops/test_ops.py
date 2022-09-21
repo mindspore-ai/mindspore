@@ -37,6 +37,7 @@ from mindspore.ops.operations import _quant_ops as Q
 from mindspore.ops.operations.math_ops import BesselJ0, BesselJ1, BesselK0, BesselK1, BesselK0e, \
                                               BesselI0, BesselI1, BesselK1e, BesselY0, BesselY1, Bucketize
 from mindspore.ops.operations.math_ops import ReduceStd
+from mindspore.ops.operations.math_ops import CumulativeLogsumexp
 from mindspore.ops.operations.math_ops import Sinc
 from mindspore.ops.operations.array_ops import ConjugateTranspose
 from mindspore.ops.operations.array_ops import UnravelIndex
@@ -2226,6 +2227,11 @@ test_case_math_ops = [
         'block': P.Round(),
         'desc_inputs': [[3]],
         'desc_bprop': [[3]]}),
+    ('CumulativeLogsumexp', {
+        'block': CumulativeLogsumexp(exclusive=False, reverse=False),
+        'desc_inputs': [Tensor(np.array([1.0, 2.0, 3.0], np.float32)),
+                        Tensor(0, dtype=mstype.int32)],
+        'desc_bprop': [Tensor(np.array([1.0, 2.0, 3.0], np.float32))]}),
     ('Atan2', {
         'block': P.Atan2(),
         'desc_inputs': [Tensor(np.array([0, 1]).astype(np.float32)),
