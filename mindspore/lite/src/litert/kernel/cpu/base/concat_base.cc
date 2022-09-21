@@ -154,6 +154,7 @@ int ConcatBaseCPUKernel::InitDynamicStatus() {
 
     MS_CHECK_TRUE_MSG(inner_size > 0, RET_ERROR, "data-type is invalid.");
     for (int j = concat_param_->axis_; j < static_cast<int>(shape.size()); ++j) {
+      MS_CHECK_INT_MUL_NOT_OVERFLOW(inner_size, shape[j], RET_ERROR);
       inner_size *= shape[j];
     }
     if (i == 0) {

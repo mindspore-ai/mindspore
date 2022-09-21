@@ -45,18 +45,17 @@ int ArgMinMaxCPUKernel::ReSize() {
   int axis = arg_param_->axis_ < 0 ? arg_param_->axis_ + dims_size : arg_param_->axis_;
   arg_param_->axis_ = axis;
   arg_param_->dims_size_ = static_cast<int>(dims_size);
-  if (arg_param_->topk_ <= 0) {
+  MS_CHECK_TRUE_MSG(axis >= 0 && axis < static_cast<int>(in_shape.size()), RET_ERROR, "The axis is invalid.");
+  if (arg_param_->topk_ <= 0 || arg_param_->topk_ > in_shape.at(axis)) {
     MS_LOG(ERROR) << "Invalid topk " << arg_param_->topk_;
     return RET_ERROR;
   }
-  MS_CHECK_TRUE_MSG(axis >= 0 && axis < static_cast<int>(in_shape.size()), RET_ERROR, "The axis is invalid.");
-  arg_param_->topk_ = MSMIN(arg_param_->topk_, in_shape.at(axis));
   CHECK_NULL_RETURN(in_shape.data());
   ComputeStrides(in_shape.data(), arg_param_->in_strides_, in_shape.size());
   CHECK_NULL_RETURN(out_tensors_.at(0));
   auto out_shape = out_tensors_.at(0)->shape();
   CHECK_NULL_RETURN(out_shape.data());
-  CHECK_LESS_RETURN(COMM_SHAPE_SIZE, out_shape.size());
+  MS_CHECK_TRUE_MSG(static_cast<int>(out_shape.size()) <= COMM_SHAPE_SIZE, RET_ERROR, "The out_shape size invalid.");
   ComputeStrides(out_shape.data(), arg_param_->out_strides_, out_shape.size());
   return RET_OK;
 }

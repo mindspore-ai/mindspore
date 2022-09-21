@@ -14,8 +14,9 @@ function Run_Converter() {
     echo ' ' > ${run_converter_log_file}
     rm -rf ${ms_models_path}
     mkdir -p ${ms_models_path}
-
-    echo '0' > fail_status.log
+    cur_timestamp=$((`date '+%s'`*1000+10#`date '+%N'`/1000000))
+    fail_status_file=${cur_timestamp}.log
+    echo '0' > ${fail_status_file}
 
     # parallel processing
     fifo_file="fifo_file.txt"
@@ -64,14 +65,14 @@ function Run_Converter() {
           else
               rm -rf ${x86_path}/mindspore-lite-${version}-linux-x64/${model_name}
               converter_result='converter CAFFE '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file};
-              echo '1' > fail_status.log
+              echo '1' > ${fail_status_file}
           fi
           echo >&6
         } &
     done < ${models_nnie_config}
     wait
     exec 6>&-
-    read fail_status < fail_status.log
+    read fail_status < ${fail_status_file}
     return ${fail_status}
 }
 

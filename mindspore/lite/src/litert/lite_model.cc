@@ -21,6 +21,7 @@
 #include <vector>
 #include <algorithm>
 #include <set>
+#include <unordered_set>
 #include <unordered_map>
 #include <memory>
 #include <numeric>
@@ -325,6 +326,12 @@ bool LiteModel::ModelVerify() const {
   if (std::any_of(graph_.output_indices_.begin(), graph_.output_indices_.end(),
                   [&all_tensors_size](const uint32_t &idx) { return idx >= all_tensors_size; })) {
     MS_LOG(ERROR) << "Graph output indices is beyond tensor_size.";
+    return false;
+  }
+
+  if (graph_.output_indices_.size() !=
+      std::unordered_set<uint32_t>(graph_.output_indices_.begin(), graph_.output_indices_.end()).size()) {
+    MS_LOG(ERROR) << "Graph output indices contain duplicate.";
     return false;
   }
 
