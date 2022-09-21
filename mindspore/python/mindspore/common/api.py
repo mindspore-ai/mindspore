@@ -405,8 +405,9 @@ class _MindsporeFunctionExecutor:
         args_list = args
         if self.obj is not None:
             args_list = args_list[1:]
-
-        phase = self.compile(args_list, self.fn.__name__)
+        phase = ''
+        with _MsFunctionCompileContext():
+            phase = self.compile(args_list, self.fn.__name__)
         if context.get_context("precompile_only"):
             return None
         new_inputs = self._generate_run_args(args_list)
@@ -665,6 +666,22 @@ def ms_class(cls):
     return cls
 
 
+class _MsFunctionCompileContext:
+    """
+    ms_function compile status manager
+    """
+    def __init__(self):
+        pass
+
+    def __enter__(self):
+        _pynative_executor.set_ms_function_compile_status(True)
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        _pynative_executor.set_ms_function_compile_status(False)
+        return False
+
+
 def _function_forbid_reuse(func):
     if not inspect.isfunction(func):
         raise TypeError(f'Decorator _function_forbid_reuse can only be used for function type, but got {func}.')
@@ -917,6 +934,17 @@ class _PynativeExecutor:
             None.
         """
         self._executor.set_grad_flag(flag)
+
+    def set_ms_function_compile_status(self, status):
+        """
+        Set ms_function is compiling
+
+        Args:
+            status(bool): ms_function compile status
+        Return:
+            None.
+        """
+        self._executor.set_ms_function_compile_status(status)
 
     def set_dynamic_input(self, obj, *args):
         """

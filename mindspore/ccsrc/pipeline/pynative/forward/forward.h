@@ -88,6 +88,7 @@ class ForwardExecutor {
   void ProcessBeforeEndGraph(const py::object &cell, const py::args &args);
   void ProcessAfterEndGraph();
   bool CellNotSetMixedPrecision(const FrontendOpRunInfoPtr &op_run_info);
+  void set_is_ms_function_compiling(bool is_compiling) { is_ms_function_compiling_ = is_compiling; }
 
  private:
   GradExecutorPtr grad() const;
@@ -127,6 +128,7 @@ class ForwardExecutor {
   DynamicShapePtr dynamic_shape_;
   SessionBackendMap session_backends_;
   MindrtBackendMap mindrt_backends_;
+  bool is_ms_function_compiling_{false};
 };
 }  // namespace pynative
 }  // namespace mindspore
