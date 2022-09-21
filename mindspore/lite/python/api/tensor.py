@@ -379,7 +379,6 @@ class Tensor:
             RuntimeError: The data size of `numpy_obj` is not equal to the data size of the tensor.
 
         Examples:
-            >>> # in_data download link: https://download.mindspore.cn/model_zoo/official/lite/quick_start/input.bin
             >>> # 1. set tensor data which is from file
             >>> import mindspore_lite as mslite
             >>> import numpy as np

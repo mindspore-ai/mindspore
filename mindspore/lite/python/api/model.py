@@ -86,7 +86,6 @@ class Model:
             RuntimeError: `model_path` does not exist.
 
         Examples:
-            >>> # model download link: https://download.mindspore.cn/model_zoo/official/lite/quick_start/mobilenetv2.ms
             >>> import mindspore_lite as mslite
             >>> model = mslite.Model()
             >>> context = mslite.Context()
@@ -126,7 +125,6 @@ class Model:
             ValueError: The size of the elements of `inputs` is not equal to the size of the elements of `dims` .
 
         Examples:
-            >>> # model download link: https://download.mindspore.cn/model_zoo/official/lite/quick_start/mobilenetv2.ms
             >>> import mindspore_lite as mslite
             >>> model = mslite.Model()
             >>> context = mslite.Context()
@@ -184,8 +182,6 @@ class Model:
             RuntimeError: predict model failed.
 
         Examples:
-            >>> # model download link: https://download.mindspore.cn/model_zoo/official/lite/quick_start/mobilenetv2.ms
-            >>> # in_data download link: https://download.mindspore.cn/model_zoo/official/lite/quick_start/input.bin
             >>> # 1. predict which indata is from file
             >>> import mindspore_lite as mslite
             >>> import numpy as np
@@ -279,7 +275,6 @@ class Model:
             list[Tensor], the inputs tensor list of the model.
 
         Examples:
-            >>> # model download link: https://download.mindspore.cn/model_zoo/official/lite/quick_start/mobilenetv2.ms
             >>> import mindspore_lite as mslite
             >>> model = mslite.Model()
             >>> context = mslite.Context()
@@ -300,7 +295,6 @@ class Model:
             list[Tensor], the outputs tensor list of the model.
 
         Examples:
-            >>> # model download link: https://download.mindspore.cn/model_zoo/official/lite/quick_start/mobilenetv2.ms
             >>> import mindspore_lite as mslite
             >>> model = mslite.Model()
             >>> context = mslite.Context()
@@ -328,7 +322,6 @@ class Model:
             RuntimeError: get input by tensor name failed.
 
         Examples:
-            >>> # model download link: https://download.mindspore.cn/model_zoo/official/lite/quick_start/mobilenetv2.ms
             >>> import mindspore_lite as mslite
             >>> model = mslite.Model()
             >>> context = mslite.Context()
@@ -364,7 +357,6 @@ class Model:
             RuntimeError: get output by tensor name failed.
 
         Examples:
-            >>> # model download link: https://download.mindspore.cn/model_zoo/official/lite/quick_start/mobilenetv2.ms
             >>> import mindspore_lite as mslite
             >>> model = mslite.Model()
             >>> context = mslite.Context()
@@ -421,7 +413,7 @@ class RunnerConfig:
         >>> runner_config = mslite.RunnerConfig(context=context, workers_num=0, config_info=config_info)
         >>> print(runner_config)
         workers num: 0,
-        config info: weight: weight_path: path of model weight
+        config info: weight: weight_path path of model weight
         ,
         context: thread num: 0, bind mode: 1.
     """
@@ -498,7 +490,6 @@ class ModelParallelRunner:
             RuntimeError: ModelParallelRunner's init failed.
 
         Examples:
-            >>> # model download link: https://download.mindspore.cn/model_zoo/official/lite/quick_start/mobilenetv2.ms
             >>> import mindspore_lite as mslite
             >>> context = mslite.Context()
             >>> context.append_device_info(mslite.CPUDeviceInfo())
@@ -536,8 +527,6 @@ class ModelParallelRunner:
             RuntimeError: predict model failed.
 
         Examples:
-            >>> # model download link: https://download.mindspore.cn/model_zoo/official/lite/quick_start/mobilenetv2.ms
-            >>> # in_data download link: https://download.mindspore.cn/model_zoo/official/lite/quick_start/input.bin
             >>> import mindspore_lite as mslite
             >>> import numpy as np
             >>> context = mslite.Context()
@@ -577,7 +566,7 @@ class ModelParallelRunner:
         if not isinstance(predict_output, list) or len(predict_output) == 0:
             raise RuntimeError(f"predict failed!")
         outputs.clear()
-        for i, element in enumerate(predict_output):
+        for _, element in enumerate(predict_output):
             outputs.append(Tensor(element))
 
     def get_inputs(self):
@@ -588,7 +577,6 @@ class ModelParallelRunner:
             list[Tensor], the inputs tensor list of the model.
 
         Examples:
-            >>> # model download link: https://download.mindspore.cn/model_zoo/official/lite/quick_start/mobilenetv2.ms
             >>> import mindspore_lite as mslite
             >>> context = mslite.Context()
             >>> context.append_device_info(mslite.CPUDeviceInfo())
@@ -610,7 +598,6 @@ class ModelParallelRunner:
             list[Tensor], the outputs tensor list of the model.
 
         Examples:
-            >>> # model download link: https://download.mindspore.cn/model_zoo/official/lite/quick_start/mobilenetv2.ms
             >>> import mindspore_lite as mslite
             >>> context = mslite.Context()
             >>> context.append_device_info(mslite.CPUDeviceInfo())

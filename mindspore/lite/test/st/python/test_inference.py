@@ -60,14 +60,7 @@ def test_gpu_inference_01():
 
 # ============================ ascend inference ============================
 def test_ascend_inference_01():
-    ascend_device_info = mslite.AscendDeviceInfo(device_id=0, input_format=None,
-                                                 input_shape=None,
-                                                 precision_mode="force_fp16",
-                                                 op_select_impl_mode="high_performance",
-                                                 dynamic_batch_size=None,
-                                                 dynamic_image_size="",
-                                                 fusion_switch_config_path="",
-                                                 insert_op_cfg_path="")
+    ascend_device_info = mslite.AscendDeviceInfo(device_id=0)
     print("ascend_device_info: ", ascend_device_info)
     cpu_device_info = mslite.CPUDeviceInfo(enable_fp16=False)
     print("cpu_device_info: ", cpu_device_info)
