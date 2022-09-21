@@ -13,10 +13,10 @@
 # limitations under the License.
 # ============================================================================
 import pytest
-import ge_convert
+import ge_test_utils as utils
 
 
-@pytest.mark.level4
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -26,10 +26,10 @@ def test_convert_return():
     Description: test Return node
     Expectation: success
     """
-    ge_convert.test_convert_return()
+    utils.run_testcase('ge_convert', 'test_convert_return')
 
 
-@pytest.mark.level4
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -39,10 +39,10 @@ def test_convert_update_state():
     Description: test UpdateState node
     Expectation: success
     """
-    ge_convert.test_convert_update_state()
+    utils.run_testcase('ge_convert', 'test_convert_update_state')
 
 
-@pytest.mark.level4
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -52,10 +52,10 @@ def test_convert_load():
     Description: test Load node
     Expectation: success
     """
-    ge_convert.test_convert_load()
+    utils.run_testcase('ge_convert', 'test_convert_load')
 
 
-@pytest.mark.level4
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -65,10 +65,10 @@ def test_convert_make_tuple():
     Description: test MakeTuple node
     Expectation: success
     """
-    ge_convert.test_convert_make_tuple()
+    utils.run_testcase('ge_convert', 'test_convert_make_tuple')
 
 
-@pytest.mark.level4
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -78,4 +78,4 @@ def test_convert_tuple_get_item():
     Description: test TupleGetItem node
     Expectation: success
     """
-    ge_convert.test_convert_tuple_get_item()
+    utils.run_testcase('ge_convert', 'test_convert_tuple_get_item')

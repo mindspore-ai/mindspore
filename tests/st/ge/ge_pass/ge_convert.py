@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
+import ge_train_env  # pylint: disable=unused-import
 import mindspore as ms
 import mindspore.context as context
 import mindspore.nn as nn
@@ -39,12 +40,12 @@ def test_convert_return():
         def construct(self, x_, y_):
             return self.add(x_, y_)
 
-    x = np.ones([1, 3, 3, 4]).astype(np.float32)
-    y = np.ones([1, 3, 3, 4]).astype(np.float32)
+    x = np.ones([1, 3, 3, 4]).astype(np.float64)
+    y = np.ones([1, 3, 3, 4]).astype(np.float64)
     add = Net()
     output = add(Tensor(x), Tensor(y))
     expect = np.add(x, y)
-    assert np.allclose(output.asnumpy(), expect)
+    assert np.allclose(output.asnumpy(), expect, rtol=1e-5, atol=1e-5)
 
 
 def test_convert_update_state():
@@ -136,8 +137,8 @@ def test_convert_tuple_get_item():
             y = self.sort(x)
             return y[0]
 
-    x = np.random.random((3, 3)).astype(np.float16)
+    x = np.random.random((3, 3)).astype(np.float32)
     net = Net()
-    output = net(Tensor(x, ms.float16))
+    output = net(Tensor(x, ms.float32))
     expect = np.sort(x, axis=1)
-    assert np.allclose(output.asnumpy(), expect)
+    assert np.allclose(output.asnumpy(), expect, rtol=1e-3, atol=1e-3)

@@ -16,9 +16,12 @@ import os
 import sys
 
 
-def run_testcase(case_name):
-    log_file = case_name + '.log'
-    ret = os.system(f'{sys.executable} {case_name}.py &> {log_file}')
+def run_testcase(file_name, case_name=""):
+    log_file = file_name + "_" + case_name + '.log'
+    if case_name == "":
+        ret = os.system(f'{sys.executable} {file_name}.py &> {log_file}')
+    else:
+        ret = os.system(f"{sys.executable} -c 'import {file_name};{file_name}.{case_name}()' &> {log_file}")
     os.system(f'grep -E "CRITICAL|ERROR|Error" {log_file} -C 3')
     os.system(f'rm {log_file} -rf')
     assert ret == 0
