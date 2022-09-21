@@ -52,10 +52,10 @@ option(MSLITE_ENABLE_CONVERT_PYTORCH_MODEL "enable to convert pytorch model" off
 option(MSLITE_ENABLE_KERNEL_EXECUTOR "enable kernel executor" off)
 option(MSLITE_ENABLE_GITEE_MIRROR "enable download third_party from gitee mirror" off)
 option(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE "enable cloud and device fusion inference architecture" off)
+option(MSLITE_ENABLE_MODEL_OBF "enable model obfuscation" off)
 
 #Option that can be configured through manually
 option(ENABLE_VERBOSE "" off)
-option(ENABLE_MODEL_OBF "if support model obfuscation" off)
 set(VERSION_STR "1.8.0" CACHE STRING "get from version")
 
 add_definitions(-DVERSION_STR=\"${VERSION_STR}\")
@@ -226,6 +226,10 @@ endif()
 if(DEFINED ENV{ENABLE_FAST_HASH_TABLE})
     add_compile_definitions(ENABLE_FAST_HASH_TABLE)
     set(MSLITE_DEPS_ROBIN_HOOD_HASHING on)
+endif()
+
+if(DEFINED ENV{MSLITE_ENABLE_MODEL_OBF})
+    set(MSLITE_ENABLE_MODEL_OBF $ENV{MSLITE_ENABLE_MODEL_OBF})
 endif()
 
 if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
@@ -481,6 +485,7 @@ message(STATUS "\tMSLITE_ENABLE_GRAPH_KERNEL                 = \t${MSLITE_ENABLE
 message(STATUS "\tMSLITE_ENABLE_KERNEL_EXECUTOR              = \t${MSLITE_ENABLE_KERNEL_EXECUTOR}")
 message(STATUS "\tMSLITE_ENABLE_CLOUD_FUSION_INFERENCE       = \t${MSLITE_ENABLE_CLOUD_FUSION_INFERENCE}")
 message(STATUS "\tMSLITE_ENABLE_CAPTURE_SIGNALS              = \t${MSLITE_ENABLE_CAPTURE_SIGNALS}")
+message(STATUS "\tMSLITE_ENABLE_MODEL_OBF                    = \t${MSLITE_ENABLE_MODEL_OBF}")
 
 if((MSLITE_ENABLE_CONVERTER OR MSLITE_ENABLE_TESTCASES) AND (
         NOT MSLITE_ENABLE_MINDRT
@@ -707,12 +712,12 @@ include_directories(${CORE_DIR}/mindrt/include)
 include_directories(${CORE_DIR}/mindrt/src)
 
 if(NOT WIN32 AND NOT APPLE)
-    if(ENABLE_MODEL_OBF)
+    if(MSLITE_ENABLE_MODEL_OBF)
         add_compile_definitions(ENABLE_MODEL_OBF)
     endif()
 endif()
 
-if(ENABLE_MODEL_OBF)
+if(MSLITE_ENABLE_MODEL_OBF)
     if(PLATFORM_ARM32)
         set(OBF_LIB_DIR ${TOP_DIR}/mindspore/lite/tools/obfuscator/lib/android-aarch32)
     elseif(PLATFORM_ARM64)

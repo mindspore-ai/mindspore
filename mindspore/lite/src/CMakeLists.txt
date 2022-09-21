@@ -643,7 +643,7 @@ if(NOT WIN32)
     target_link_libraries(mindspore-lite dl)
 endif()
 
-if(ENABLE_MODEL_OBF)
+if(MSLITE_ENABLE_MODEL_OBF)
     target_link_libraries(mindspore-lite ${OBF_LIB_DIR}/libmsdeobfuscator-lite.so)
     target_link_libraries(mindspore-lite_static ${OBF_LIB_DIR}/libmsdeobfuscator-lite.so)
 endif()
