@@ -596,6 +596,7 @@ ModelPoolConfig ModelPool::CreateGpuModelPoolConfig(const std::shared_ptr<Runner
   }
   if (runner_config != nullptr) {
     worker_config->config_info = runner_config->GetConfigInfo();
+    worker_config->config_path = runner_config->GetConfigPath();
   }
   worker_config->worker_id = 0;
   worker_config->context = init_context;
@@ -604,6 +605,11 @@ ModelPoolConfig ModelPool::CreateGpuModelPoolConfig(const std::shared_ptr<Runner
   model_pool_info_[strategy].used_numa_node_num_ = 1;
   model_pool_info_[strategy].all_workers_num_ = 1;
   model_pool_info_[strategy].task_queue_num_ = 1;
+  if (worker_config->config_info.find(lite::kWeight) == worker_config->config_info.end() && !model_path_.empty()) {
+    std::map<std::string, std::string> config;
+    config[lite::kWeightPath] = model_path_;
+    worker_config->config_info[lite::kWeight] = config;
+  }
   model_pool_gpu_config.push_back(worker_config);
   model_pool_info_[strategy].model_pool_config = model_pool_gpu_config;
   return model_pool_gpu_config;
@@ -662,11 +668,17 @@ ModelPoolConfig ModelPool::CreateCpuModelPoolConfig(const std::shared_ptr<Runner
     new_device_list.push_back(device_info);
     if (runner_config != nullptr) {
       worker_config->config_info = runner_config->GetConfigInfo();
+      worker_config->config_path = runner_config->GetConfigPath();
     }
     worker_config->context = context;
     worker_config->worker_id = i;
     worker_config->task_queue_id = task_queue_id[i];
     worker_config->strategy = strategy;
+    if (worker_config->config_info.find(lite::kWeight) == worker_config->config_info.end() && !model_path_.empty()) {
+      std::map<std::string, std::string> config;
+      config[lite::kWeightPath] = model_path_;
+      worker_config->config_info[lite::kWeight] = config;
+    }
     model_pool_config.push_back(worker_config);
   }
   return model_pool_config;
@@ -1093,6 +1105,7 @@ Status ModelPool::InitByBuf(const char *model_data, size_t size, const std::shar
 
 Status ModelPool::InitByPath(const std::string &model_path, const std::shared_ptr<RunnerConfig> &runner_config) {
   std::unique_lock<std::shared_mutex> l(model_pool_mutex_);
+  model_path_ = model_path;
   size_t size = 0;
   graph_buf_ = lite::ReadFile(model_path.c_str(), &size);
   if (graph_buf_ == nullptr) {

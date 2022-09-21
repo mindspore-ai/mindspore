@@ -24,6 +24,7 @@ struct RunnerConfig::Data {
   int workers_num = 0;
   std::shared_ptr<Context> context = nullptr;
   std::map<std::string, std::map<std::string, std::string>> config_info;
+  std::string config_path = "";
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_MODEL_POOL_RUNNER_CONFIG_H_

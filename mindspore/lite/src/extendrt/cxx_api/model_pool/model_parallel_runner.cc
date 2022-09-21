@@ -84,6 +84,24 @@ void RunnerConfig::SetConfigInfo(const std::vector<char> &section,
   return;
 }
 
+void RunnerConfig::SetConfigPath(const std::vector<char> &config_path) {
+  if (data_ == nullptr) {
+    MS_LOG(ERROR) << "Runner config data is nullptr.";
+    return;
+  }
+  data_->config_path = CharToString(config_path);
+  return;
+}
+
+std::vector<char> RunnerConfig::GetConfigPathChar() const {
+  if (data_ == nullptr) {
+    MS_LOG(ERROR) << "Runner config data is nullptr.";
+    std::vector<char> empty;
+    return empty;
+  }
+  return StringToChar(data_->config_path);
+}
+
 std::map<std::vector<char>, std::map<std::vector<char>, std::vector<char>>> RunnerConfig::GetConfigInfoChar() const {
   if (data_ == nullptr) {
     MS_LOG(ERROR) << "Runner config data is nullptr.";

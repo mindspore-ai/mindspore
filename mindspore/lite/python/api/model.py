@@ -426,7 +426,7 @@ class RunnerConfig:
         context: thread num: 0, bind mode: 1.
     """
 
-    def __init__(self, context=None, workers_num=None, config_info=None):
+    def __init__(self, context=None, workers_num=None, config_info=None, config_path=None):
         if context is not None:
             check_isinstance("context", context, Context)
         if workers_num is not None:
@@ -449,11 +449,17 @@ class RunnerConfig:
         if config_info is not None:
             for k, v in config_info.items():
                 self._runner_config.set_config_info(k, v)
+        if config_path is not None:
+            if not os.path.exists(config_path):
+                raise ValueError(f"RunnerConfig's init failed, config_path does not exist!")
+            check_isinstance("config_path", config_path, str)
+            self._runner_config.set_config_path(config_path)
 
     def __str__(self):
         res = f"workers num: {self._runner_config.get_workers_num()},\n" \
               f"config info: {self._runner_config.get_config_info_string()},\n" \
-              f"context: {self._runner_config.get_context_info()}."
+              f"context: {self._runner_config.get_context_info()},\n" \
+              f"config path: {self._runner_config.get_config_path()}."
         return res
 
 

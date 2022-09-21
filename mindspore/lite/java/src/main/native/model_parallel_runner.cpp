@@ -94,6 +94,7 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_ModelParallelRunner_init(J
     }
     runner_config->SetContext(copy_context);
     runner_config->SetWorkersNum(c_runner_config->GetWorkersNum());
+    runner_config->SetConfigPath(c_runner_config->GetConfigPath());
     auto config_info = c_runner_config->GetConfigInfo();
     for (auto &item : config_info) {
       runner_config->SetConfigInfo(item.first, item.second);

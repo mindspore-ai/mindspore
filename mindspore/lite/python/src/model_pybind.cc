@@ -86,17 +86,17 @@ void ModelParallelRunnerPyBind(const py::module &m) {
     .def("set_config_info", py::overload_cast<const std::string &, const std::map<std::string, std::string> &>(
                               &RunnerConfig::SetConfigInfo))
     .def("get_config_info", &RunnerConfig::GetConfigInfo)
+    .def("set_config_path", py::overload_cast<const std::string &>(&RunnerConfig::SetConfigPath))
+    .def("get_config_path", &RunnerConfig::GetConfigPath)
     .def("set_workers_num", &RunnerConfig::SetWorkersNum)
     .def("get_workers_num", &RunnerConfig::GetWorkersNum)
     .def("set_context", &RunnerConfig::SetContext)
     .def("get_context", &RunnerConfig::GetContext)
     .def("get_context_info",
          [](RunnerConfig &runner_config) {
-           std::string result = "thread num: ";
            const auto &context = runner_config.GetContext();
-           result += std::to_string(context->GetThreadNum());
-           result += ", bind mode: ";
-           result += std::to_string(context->GetThreadAffinityMode());
+           std::string result = "thread num: " + std::to_string(context->GetThreadNum()) +
+                                ", bind mode: " + std::to_string(context->GetThreadAffinityMode());
            return result;
          })
     .def("get_config_info_string", [](RunnerConfig &runner_config) {
