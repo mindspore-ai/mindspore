@@ -120,20 +120,10 @@ abstract::TupleShapePtr CombinedNonMaxSuppressionInferShape(const PrimitivePtr &
     auto out4 = std::make_shared<abstract::Shape>(shape4);
     return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{out1, out2, out3, out4});
   } else {
-    ShapeVector nmsed_boxes_shape = {-2, -2, -2};
-    ShapeVector max_nmsed_boxes_shape = {1, 1, 1};
-    ShapeVector min_nmsed_boxes_shape = {1, 1, 1};
-    auto shape1 = std::make_shared<abstract::Shape>(nmsed_boxes_shape, min_nmsed_boxes_shape, max_nmsed_boxes_shape);
-    ShapeVector nmsed_scores_shape = {-2, -2};
-    ShapeVector max_nmsed_scores_shape = {1, 1};
-    ShapeVector min_nmsed_scores_shape = {1, 1};
-    auto shape2 = std::make_shared<abstract::Shape>(nmsed_scores_shape, min_nmsed_scores_shape, max_nmsed_scores_shape);
-    ShapeVector nmsed_class_shape = {-2, -2};
-    ShapeVector max_nmsed_class_shape = {1, 1};
-    ShapeVector min_nmsed_class_shape = {1, 1};
-    auto shape3 = std::make_shared<abstract::Shape>(nmsed_class_shape, min_nmsed_class_shape, max_nmsed_class_shape);
-    ShapeVector valid_detection = {-2};
-    auto shape4 = std::make_shared<abstract::Shape>(valid_detection);
+    auto shape1 = std::make_shared<abstract::Shape>(ShapeVector{-2});
+    auto shape2 = std::make_shared<abstract::Shape>(ShapeVector{-2});
+    auto shape3 = std::make_shared<abstract::Shape>(ShapeVector{-2});
+    auto shape4 = std::make_shared<abstract::Shape>(ShapeVector{-2});
     return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{shape1, shape2, shape3, shape4});
   }
 }
