@@ -57,7 +57,7 @@ class KLDivLossCpuKernelMod : public NativeCpuKernelMod {
   bool LaunchOther(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                    const std::vector<AddressPtr> &outputs);
 
-  bool CheckParams();
+  bool CheckParams() const;
 
   using KLDivLossFunc = std::function<bool(KLDivLossCpuKernelMod *, const std::vector<AddressPtr> &,
                                            const std::vector<AddressPtr> &, const std::vector<AddressPtr> &)>;

@@ -100,7 +100,7 @@ std::vector<KernelAttr> KLDivLossCpuKernelMod::GetOpSupport() {
   return support_list;
 }
 
-bool KLDivLossCpuKernelMod::CheckParams() {
+bool KLDivLossCpuKernelMod::CheckParams() const {
   // for kl div, shape size of input 0 and input 1 must be the same
   if (input_target_shape_size_ != input_x_shape_size_) {
     MS_LOG(ERROR) << kernel_name_ << ": input x shape size = " << input_x_shape_size_
