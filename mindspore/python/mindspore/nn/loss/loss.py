@@ -2085,20 +2085,20 @@ class KLDivLoss(LossBase):
     r"""
     Computes the Kullback-Leibler divergence between the logits and the labels.
 
-    The updating formulas of KLDivLoss algorithm are as follows,
+    For tensors of the same shape :math:`x` and :math:`target`,
+    the updating formulas of KLDivLoss algorithm are as follows,
 
     .. math::
-        L = \{l_1,\dots,l_N\}^\top, \quad
-        l_n = target_n \cdot (\log target_n - x_n)
+        L(x, target) = target \cdot (\log target - x)
 
     Then,
 
     .. math::
         \ell(x, target) = \begin{cases}
-        L, & \text{if reduction} = \text{'none';}\\
-        \operatorname{mean}(L), & \text{if reduction} = \text{'mean';}\\
-        \operatorname{batchmean}(L), & \text{if reduction} = \text{'batchmean';}\\
-        \operatorname{sum}(L),  & \text{if reduction} = \text{'sum'.}
+        L(x, target), & \text{if reduction} = \text{'none';}\\
+        \operatorname{mean}(L(x, target)), & \text{if reduction} = \text{'mean';}\\
+        \operatorname{sum}(L(x, target)) / x.\operatorname{shape}[0], & \text{if reduction} = \text{'batchmean';}\\
+        \operatorname{sum}(L(x, target)),  & \text{if reduction} = \text{'sum'.}
         \end{cases}
 
     where :math:`x` represents `logits`.
@@ -2111,7 +2111,11 @@ class KLDivLoss(LossBase):
 
     Args:
         reduction (str): Specifies the reduction to be applied to the output.
-            Its value must be one of 'none', 'mean', 'batchmean' or 'sum'. Default: 'mean'.
+            Default: 'mean'.
+
+            - On Ascend, the value of `reduction` must be one of 'mean', 'batchmean', 'none' or 'sum'.
+            - On GPU, the value of `reduction` must be one of 'mean', 'none' or 'sum'.
+            - On CPU, the value of `reduction` must be one of 'mean', 'batchmean', 'none' or 'sum'.
 
     Inputs:
         - **logits** (Tensor) - The input Tensor. The data type must be float16, float32 or float64.
@@ -2124,7 +2128,9 @@ class KLDivLoss(LossBase):
     Raises:
         TypeError: If `reduction` is not a str.
         TypeError: If neither `logits` nor `labels` is a Tensor.
-        TypeError: If dtype of `logits` or `labels` is not float32.
+        TypeError: If dtype of `logits` or `labels` is not currently supported.
+        ValueError: If shape of `logits` is not the same as `labels`.
+        RuntimeError: If `logits` or `labels` is a scalar when `reduction` is 'batchmean'.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
