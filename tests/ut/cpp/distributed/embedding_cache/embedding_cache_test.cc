@@ -20,7 +20,9 @@
 #include <map>
 #include <vector>
 #include <string>
+#include <random>
 
+#include "include/common/random.h"
 #include "distributed/embedding_cache/embedding_cache_utils.h"
 
 namespace mindspore {
@@ -62,6 +64,35 @@ TEST_F(TestEmbeddingCache, test_embedding_cache) {
   EXPECT_NO_THROW(embedding_cache_manager.set_batch_ids_num(16000));
 
   EXPECT_NO_THROW(embedding_cache_manager.cache_indices_lower_bound());
+}
+
+/// Feature: test the random number generator.
+/// Description: test generate random numbers continuously.
+/// Expectation: the specified random number are generated successfully.
+TEST_F(TestEmbeddingCache, test_random_number_gen) {
+  using T = float;
+  using Generator = random::Philox;
+  using Distribution = random::UniformDistribution<double>;
+
+  const std::uint64_t seed = 0;
+  const size_t skip = 0;
+  std::unique_ptr<distributed::RandomGenerator<T, Generator, Distribution>> rnd_gen =
+    std::make_unique<distributed::RandomGenerator<T, Generator, Distribution>>(seed, skip);
+
+  const double distri_a = 0.0;
+  const double distri_b = 1.0;
+  rnd_gen->Initialize(distri_a, distri_b);
+
+  const size_t count = 10;
+  std::set<T> numbers;
+  for (size_t i = 0; i < count; ++i) {
+    auto num = rnd_gen->Next();
+    auto rt = (num >= distri_a && num <= distri_b);
+    ASSERT_TRUE(rt);
+
+    numbers.insert(num);
+  }
+  ASSERT_TRUE(numbers.size() == count);
 }
 }  // namespace persistent
 }  // namespace distributed
