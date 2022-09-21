@@ -182,16 +182,17 @@ def _zoom(fn, a_low, phi_low, dphi_low, a_high, phi_high, dphi_high, phi_0, g_0,
 class LineSearch(nn.Cell):
     """Line Search that satisfies strong Wolfe conditions."""
 
-    def __init__(self, func):
+    def __init__(self, func, jac):
         """Initialize LineSearch."""
         super(LineSearch, self).__init__()
         self.func = func
+        self.jac = jac
 
     def construct(self, xk, pk, old_fval=None, old_old_fval=None, gfk=None, c1=1e-4, c2=0.9, maxiter=20):
         def fval_and_grad(alpha):
             xkk = xk + alpha * pk
             fkk = self.func(xkk)
-            gkk = grad(self.func)(xkk)
+            gkk = self.jac(xkk)
             return fkk, gkk, mnp.dot(gkk, pk)
 
         # Constant tensors which avoid loop unrolling
@@ -299,7 +300,7 @@ class LineSearch(nn.Cell):
         return state
 
 
-def line_search(f, xk, pk, gfk=None, old_fval=None, old_old_fval=None, c1=1e-4, c2=0.9, maxiter=20):
+def line_search(f, xk, pk, jac=None, gfk=None, old_fval=None, old_old_fval=None, c1=1e-4, c2=0.9, maxiter=20):
     """Inexact line search that satisfies strong Wolfe conditions.
 
     Algorithm 3.5 from Wright and Nocedal, 'Numerical Optimization', 1999, pg. 59-61
@@ -310,6 +311,8 @@ def line_search(f, xk, pk, gfk=None, old_fval=None, old_old_fval=None, c1=1e-4, 
     Args:
         f (function): function of the form f(x) where x is a flat Tensor and returns a real
             scalar. The function should be composed of operations with vjp defined.
+        gf (function): the gradient function at x where x is a flat Tensor and returns a Tensor.
+            The function can be None if you want to use automatic credits.
         xk (Tensor): initial guess.
         pk (Tensor): direction to search in. Assumes the direction is a descent direction.
         gfk (Tensor): initial value of value_and_gradient as position. Default: None.
@@ -337,7 +340,10 @@ def line_search(f, xk, pk, gfk=None, old_fval=None, old_old_fval=None, c1=1e-4, 
         >>> print(res.a_k)
         1.0
     """
-    state = LineSearch(f)(xk, pk, old_fval, old_old_fval, gfk, c1, c2, maxiter)
+    if jac is None:
+        jac = grad(f)
+
+    state = LineSearch(f, jac)(xk, pk, old_fval, old_old_fval, gfk, c1, c2, maxiter)
     # If running in graph mode, the state is a tuple.
     if isinstance(state, tuple):
         state = _LineSearchResults(failed=_to_scalar(state[1] or not state[0]),

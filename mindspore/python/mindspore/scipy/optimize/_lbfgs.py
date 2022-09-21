@@ -60,11 +60,12 @@ class _LBFGSResults(NamedTuple):
 class MinimizeLbfgs(nn.Cell):
     """minimize LBFGS"""
 
-    def __init__(self, func):
+    def __init__(self, func, jac):
         """Initialize MinimizeLbfgs."""
         super(MinimizeLbfgs, self).__init__()
         self.func = func
-        self.line_search = LineSearch(func)
+        self.jac = jac
+        self.line_search = LineSearch(func, jac)
 
     def update_grad_and_curvature(self, g, s_list, y_list, rho_list):
         """calculate alpha using curature info(s, y)
@@ -111,7 +112,7 @@ class MinimizeLbfgs(nn.Cell):
 
         identity = mnp.eye(x0.shape[0], dtype=x0.dtype)
         f = self.func(x0)
-        g = grad(self.func)(x0)
+        g = self.jac(x0)
         r = mnp.dot(identity, g)
         # the buffer used to store data to calc approximate hessian
         # and the final direction vector
@@ -212,7 +213,7 @@ class MinimizeLbfgs(nn.Cell):
         return state
 
 
-def minimize_lbfgs(func, x0, history_size=20, maxiter=None, norm=mnp.inf, gtol=1e-5, line_search_maxiter=10):
+def minimize_lbfgs(func, x0, jac=None, history_size=20, maxiter=None, norm=mnp.inf, gtol=1e-5, line_search_maxiter=10):
     """Minimize a function using LBFGS.
 
     Implements the LBFGS algorithm
@@ -221,6 +222,11 @@ def minimize_lbfgs(func, x0, history_size=20, maxiter=None, norm=mnp.inf, gtol=1
         fun (Callable): function of the form f(x) where x is a flat Tensor and returns a real
             scalar. The function should be composed of operations with vjp defined.
         x0 (Tensor): initial guess.
+        jac (Callable, optional): method for computing the gradient vector.
+        if it is None, the gradient will be estimated with gradient of func.
+        if it is a callable, it should be a function that returns the gradient vector:
+          jac(x, *args) -> array_like, shape (n,)
+          where x is an array with shape (n,) and args is a tuple with the fixed parameters.
         history_size (int, optional): size of buffer used to help to update inv hessian, Default: 20.
         maxiter (int, optional): maximum number of iterations.
         norm (float): order of norm for convergence check. Default inf.
@@ -233,10 +239,13 @@ def minimize_lbfgs(func, x0, history_size=20, maxiter=None, norm=mnp.inf, gtol=1
     Supported Platforms:
         ``GPU`` ``CPU``
     """
+    if jac is None:
+        jac = grad(func)
+
     if maxiter is None:
         maxiter = mnp.size(x0) * 200
 
-    state = MinimizeLbfgs(func)(x0, history_size, maxiter, norm, gtol, line_search_maxiter)
+    state = MinimizeLbfgs(func, jac)(x0, history_size, maxiter, norm, gtol, line_search_maxiter)
     # If running in graph mode, the state is a tuple.
     if isinstance(state, tuple):
         state = _LBFGSResults(converged=_to_scalar(state[0]),
