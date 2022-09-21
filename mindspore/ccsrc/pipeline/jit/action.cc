@@ -24,6 +24,7 @@
 #include <algorithm>
 #include <functional>
 
+#include "ir/anf.h"
 #include "ir/func_graph_cloner.h"
 #include "ir/param_info.h"
 #include "ir/cell.h"
@@ -750,6 +751,23 @@ bool MetaUnpackPrepareAction(const ResourcePtr &resource) {
 }
 
 namespace {
+// Get abstract of the default value from the given pparmeter.
+AbstractBasePtr GetDefaultValueAbstract(const ParameterPtr &param) {
+  auto value = param->default_param();
+  MS_EXCEPTION_IF_NULL(value);
+  auto value_abs = value->ToAbstract();
+  MS_EXCEPTION_IF_NULL(value_abs);
+  if (value_abs->isa<abstract::AbstractMapTensor>()) {
+    // Return AbstractMapTensor for map parameter.
+    return value_abs;
+  }
+  // Make an AbstractRefTensor for the tensor value.
+  auto abs_tensor = value_abs->cast<abstract::AbstractTensorPtr>();
+  MS_EXCEPTION_IF_NULL(abs_tensor);
+  auto ref_key = std::make_shared<RefKey>(param->name());
+  return std::make_shared<abstract::AbstractRefTensor>(abs_tensor, ref_key);
+}
+
 abstract::AbstractBasePtrList GetArgsAbs(const ResourcePtr &resource) {
   FuncGraphPtr func_graph = resource->func_graph();
   abstract::AbstractBasePtrList args_abs = resource->args_abs();
@@ -764,14 +782,10 @@ abstract::AbstractBasePtrList GetArgsAbs(const ResourcePtr &resource) {
     auto param_node = std::static_pointer_cast<Parameter>(param);
     MS_EXCEPTION_IF_NULL(param_node);
     if (param_node->has_default()) {
-      auto value = param_node->default_param();
-      MS_EXCEPTION_IF_NULL(value);
-      auto abs_value = value->ToAbstract()->cast<abstract::AbstractTensorPtr>();
-      auto ref_key = std::make_shared<RefKey>(param_node->name());
-      auto abs_ref = std::make_shared<abstract::AbstractRefTensor>(abs_value, ref_key);
-      context->ParallelParameterContextRestoreShape(func_graph, param_node, abs_ref);
-      (void)args_abs.emplace_back(abs_ref);
-      context->ParallelParameterContextCkptShape(func_graph, param_node, abs_ref);
+      auto param_abs = GetDefaultValueAbstract(param_node);
+      context->ParallelParameterContextRestoreShape(func_graph, param_node, param_abs);
+      (void)args_abs.emplace_back(param_abs);
+      context->ParallelParameterContextCkptShape(func_graph, param_node, param_abs);
     }
   }
   return args_abs;

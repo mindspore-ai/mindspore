@@ -247,6 +247,48 @@ class MS_CORE_API CSRTensorType : public SparseTensorType {
   TypePtr DeepCopy() const override;
 };
 using CSRTensorTypePtr = std::shared_ptr<CSRTensorType>;
+
+/// \brief MapTensorType defines interface for map tensor data type.
+class MS_CORE_API MapTensorType final : public Object {
+ public:
+  /// \brief Construct a generic MapTensorType.
+  MapTensorType() : Object(kObjectTypeMapTensorType, true) {}
+
+  /// \brief Construct a MapTensorType.
+  ///
+  /// \param[in] key The key data type.
+  /// \param[in] value The value data type.
+  explicit MapTensorType(const TypePtr &key, const TypePtr &value)
+      : Object(kObjectTypeRowTensorType, false), key_dtype_(key), value_dtype_(value) {}
+
+  /// \brief Destructor of MapTensorType.
+  ~MapTensorType() override = default;
+  MS_DECLARE_PARENT(MapTensorType, Object)
+
+  TypeId generic_type_id() const override { return kObjectTypeMapTensorType; }
+
+  /// \brief Get the key data type of this MapTensorType.
+  ///
+  /// \return The key data type.
+  const TypePtr &key_dtype() const { return key_dtype_; }
+
+  /// \brief Get the value data type of this MapTensorType.
+  ///
+  /// \return The key data type.
+  const TypePtr &value_dtype() const { return value_dtype_; }
+
+  TypePtr DeepCopy() const override;
+  std::string ToString() const override;
+  std::string ToReprString() const override;
+  std::string DumpText() const override;
+  bool operator==(const Type &other) const override;
+  size_t hash() const override;
+
+ private:
+  TypePtr key_dtype_;
+  TypePtr value_dtype_;
+};
+using MapTensorTypePtr = std::shared_ptr<MapTensorType>;
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_IR_DTYPE_TENSORTYPE_H_

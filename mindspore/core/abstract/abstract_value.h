@@ -33,6 +33,7 @@
 #include "ir/dtype.h"
 #include "ir/value.h"
 #include "ir/tensor.h"
+#include "ir/map_tensor.h"
 #include "abstract/dshape.h"
 #include "abstract/utils.h"
 #include "utils/shape_utils.h"
@@ -1557,6 +1558,36 @@ class MS_CORE_API AbstractIOMonad final : public AbstractMonad {
   bool operator==(const AbstractBase &other) const override;
 };
 using AbstractIOMonadPtr = std::shared_ptr<AbstractIOMonad>;
+
+/// \brief Class AbstractMapTensor describes a MapTensor's abstract value.
+class MS_CORE_API AbstractMapTensor final : public AbstractBase {
+ public:
+  AbstractMapTensor(const MapTensorPtr &map_tensor, const ValuePtr &ref_key_value);
+  AbstractMapTensor(const AbstractMapTensor &other);
+  AbstractMapTensor(const TypePtr &type, const ShapePtr &value_shape, const ValuePtr &value,
+                    const ValuePtr &ref_key_value);
+  ~AbstractMapTensor() override = default;
+
+  MS_DECLARE_PARENT(AbstractMapTensor, AbstractBase)
+
+  MapTensorTypePtr map_tensor_type() const { return dyn_cast<MapTensorType>(GetTypeTrack()); }
+  ShapePtr value_shape() const { return dyn_cast<Shape>(GetShapeTrack()); }
+  const ValuePtr &ref_key_value() const { return ref_key_value_; }
+  TypePtr BuildType() const override { return GetTypeTrack(); }
+  BaseShapePtr BuildShape() const override { return GetShapeTrack(); };
+
+  AbstractBasePtr Clone() const override;
+  AbstractBasePtr Join(const AbstractBasePtr &other) override;
+  bool operator==(const AbstractBase &other) const override;
+  bool operator==(const AbstractMapTensor &) const;
+  std::size_t hash() const override;
+  std::string ToString() const override;
+
+ private:
+  // The reference key value, can be a string value or kAnyValue.
+  ValuePtr ref_key_value_;
+};
+using AbstractMapTensorPtr = std::shared_ptr<AbstractMapTensor>;
 
 MS_CORE_API std::string ExtractLoggingInfo(const std::string &info);
 

@@ -22,7 +22,9 @@
 #include <algorithm>
 #include <utility>
 
+#include "ir/value.h"
 #include "utils/hash_map.h"
+#include "utils/hashing.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
 #include "abstract/utils.h"
@@ -1661,6 +1663,103 @@ const AbstractTensorPtr AbstractCSRTensor::values() const {
     MS_LOG(EXCEPTION) << "Get values nullptr in AbstractCSRTensor: " << ToString();
   }
   return res;
+}
+
+AbstractMapTensor::AbstractMapTensor(const MapTensorPtr &map_tensor, const ValuePtr &ref_key_value)
+    : AbstractBase(map_tensor, std::make_shared<MapTensorType>(map_tensor->KeyDtype(), map_tensor->ValueDtype()),
+                   std::make_shared<Shape>(map_tensor->value_shape())),
+      ref_key_value_(ref_key_value) {}
+
+AbstractMapTensor::AbstractMapTensor(const AbstractMapTensor &other)
+    : AbstractBase(other.GetValueTrack(), other.GetTypeTrack(), other.GetShapeTrack()),
+      ref_key_value_(other.ref_key_value_) {}
+
+AbstractMapTensor::AbstractMapTensor(const TypePtr &type, const ShapePtr &value_shape, const ValuePtr &value,
+                                     const ValuePtr &ref_key_value)
+    : AbstractBase(value, type, value_shape), ref_key_value_(ref_key_value) {}
+
+AbstractBasePtr AbstractMapTensor::Clone() const { return std::make_shared<AbstractMapTensor>(*this); }
+
+AbstractBasePtr AbstractMapTensor::Join(const AbstractBasePtr &other) {
+  MS_EXCEPTION_IF_NULL(other);
+  // Same pointer.
+  if (this == other.get()) {
+    return shared_from_base<AbstractMapTensor>();
+  }
+
+  // Check class.
+  auto other_abs = dyn_cast<AbstractMapTensor>(other);
+  if (other_abs == nullptr) {
+    AbstractTypeJoinLogging(shared_from_base<AbstractBase>(), other);
+  }
+
+  // Join type.
+  auto joined_type = TypeJoin(GetTypeTrack(), other_abs->GetTypeTrack());
+  if (joined_type == kAnyType) {
+    TypeJoinLogging(GetTypeTrack(), other_abs->GetTypeTrack(), shared_from_base<AbstractBase>(), other);
+  }
+
+  // Join shape
+  auto joined_shape = ShapeJoin(value_shape(), other_abs->value_shape());
+  if (joined_shape == nullptr) {
+    ShapeJoinLogging(value_shape(), other_abs->value_shape(), shared_from_base<AbstractBase>(), other);
+  }
+
+  // Join value.
+  auto joined_value = (GetValueTrack() == other_abs->GetValueTrack() ? GetValueTrack() : kAnyValue);
+
+  // Join the ref_key_value.
+  auto joined_ref_key = ValueJoin(ref_key_value_, other_abs->ref_key_value_);
+
+  return std::make_shared<AbstractMapTensor>(joined_type, joined_shape, joined_value, joined_ref_key);
+}
+
+bool AbstractMapTensor::operator==(const AbstractBase &other) const {
+  if (this == &other) {
+    return true;
+  }
+  if (tid() != other.tid()) {
+    return false;
+  }
+  return *this == (static_cast<const AbstractMapTensor &>(other));
+}
+
+bool AbstractMapTensor::operator==(const AbstractMapTensor &other) const {
+  const auto &v1 = GetValueTrack();
+  const auto &v2 = other.GetValueTrack();
+  MS_EXCEPTION_IF_NULL(v1);
+  MS_EXCEPTION_IF_NULL(v2);
+  // Check if both point to same specific value.
+  if (!v1->isa<AnyValue>()) {
+    return v1 == v2;
+  }
+  // Check if both are AnyValue.
+  if (!v2->isa<AnyValue>()) {
+    return false;
+  }
+  return common::IsEqual(GetTypeTrack(), other.GetTypeTrack()) &&
+         common::IsEqual(GetShapeTrack(), other.GetShapeTrack());
+}
+
+std::size_t AbstractMapTensor::hash() const {
+  const auto &type = GetTypeTrack();
+  MS_EXCEPTION_IF_NULL(type);
+  std::size_t hash_value = hash_combine(tid(), type->hash());
+  const auto &value_shape = GetShapeTrack();
+  MS_EXCEPTION_IF_NULL(value_shape);
+  return hash_combine(hash_value, value_shape->hash());
+}
+
+std::string AbstractMapTensor::ToString() const {
+  const auto &type = GetTypeTrack();
+  const auto &value = GetValueTrack();
+  const auto &value_shape = GetShapeTrack();
+  MS_EXCEPTION_IF_NULL(type);
+  MS_EXCEPTION_IF_NULL(value);
+  MS_EXCEPTION_IF_NULL(value_shape);
+  return type_name() + "(" + type->ToString() + " " + value_shape->ToString() +
+         " key: " + (ref_key_value_ == nullptr ? "<null>" : ref_key_value_->ToString()) +
+         " value: " + value->ToString() + ")";
 }
 
 AbstractBasePtr AbstractUMonad::Join(const AbstractBasePtr &other) {

@@ -70,8 +70,10 @@ void PrintNodeOutputType(std::ostringstream &buffer, const AnfNodePtr &node) {
     if (abstract->isa<abstract::AbstractTensor>()) {
       tensor_value = abstract->BuildValue();
     }
-    if (abstract->isa<abstract::AbstractRefTensor>()) {
-      ref_key = abstract->cast<abstract::AbstractRefPtr>()->ref_key_value()->cast<StringImmPtr>();
+    if (auto ref_tensor = abstract->cast_ptr<abstract::AbstractRefTensor>(); ref_tensor != nullptr) {
+      ref_key = dyn_cast<StringImm>(ref_tensor->ref_key_value());
+    } else if (auto map_tensor = abstract->cast_ptr<abstract::AbstractMapTensor>(); map_tensor != nullptr) {
+      ref_key = dyn_cast<StringImm>(map_tensor->ref_key_value());
     }
     sequence_abs = dyn_cast<abstract::AbstractSequence>(abstract);
   }

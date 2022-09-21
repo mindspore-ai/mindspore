@@ -92,7 +92,8 @@ TypePtr TypeIdToType(TypeId id) {
                                                                 {kMetaTypeProblem, kTypeNone},
                                                                 {kObjectTypeCSRTensorType, kCSRTensorType},
                                                                 {kObjectTypeCOOTensorType, kCOOTensorType},
-                                                                {kObjectTypeRowTensorType, kRowTensorType}};
+                                                                {kObjectTypeRowTensorType, kRowTensorType},
+                                                                {kObjectTypeMapTensorType, kMapTensorType}};
   const auto &it = type_id_to_type.find(id);
   if (it == type_id_to_type.end()) {
     MS_LOG(EXCEPTION) << "Not support the type: " << GetExcptionTypeString(id);
@@ -244,6 +245,30 @@ TypePtr CSRTensorStrToType(const std::string &type_name) {
     type = std::make_shared<CSRTensorType>(element_types);
   }
   return type;
+}
+
+TypePtr MapTensorStrToType(const std::string &type_name) {
+  TypePtr type = nullptr;
+  if (type_name == "MapTensor") {
+    return std::make_shared<MapTensorType>();
+  }
+  size_t start = type_name.find_first_of('[');
+  size_t end = type_name.find_last_of(']');
+  // It's better to using regular expression, now just do simple check.
+  if (start == std::string::npos || end == std::string::npos || end < start) {
+    MS_EXCEPTION(NotSupportError) << "Expect format like 'MapTensor[key_dtype, value_dtype]', but got '" << type_name
+                                  << "' that not provide pair of ('[', ']').";
+  }
+  start = start + 1;
+  std::string element_strs = type_name.substr(start, end - start);
+  std::vector<TypePtr> element_types;
+  auto ret = StringToVectorOfType(element_strs, &element_types);
+  constexpr size_t num_of_elements = 2;
+  if (!ret || element_types.size() != num_of_elements) {
+    MS_EXCEPTION(NotSupportError) << "Expect format like 'MapTensor[key_dtype, value_dtype]', but got '" << type_name
+                                  << "' that miss typename after ','.";
+  }
+  return std::make_shared<MapTensorType>(element_types[0], element_types[1]);
 }
 
 TypePtr UndeterminedStrToType(const std::string &type_name) {
@@ -402,6 +427,7 @@ TypePtr GetTypeByStringStarts(const std::string &type_name) {
     {"RowTensor", [](const std::string &type_name) -> TypePtr { return RowTensorStrToType(type_name); }},
     {"COOTensor", [](const std::string &type_name) -> TypePtr { return COOTensorStrToType(type_name); }},
     {"CSRTensor", [](const std::string &type_name) -> TypePtr { return CSRTensorStrToType(type_name); }},
+    {"MapTensor", [](const std::string &type_name) -> TypePtr { return MapTensorStrToType(type_name); }},
     {"List", [](const std::string &type_name) -> TypePtr { return ListStrToType(type_name); }},
     {"Tuple", [](const std::string &type_name) -> TypePtr { return TupleStrToType(type_name); }},
     {"Function", [](const std::string &type_name) -> TypePtr { return FunctionStrToType(type_name); }}};

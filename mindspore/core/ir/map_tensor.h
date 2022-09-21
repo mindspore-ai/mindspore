@@ -22,6 +22,7 @@
 #include "ir/anf.h"
 #include "ir/dtype.h"
 #include "ir/tensor.h"
+#include "ir/param_info.h"
 #include "utils/macros.h"
 #include "utils/shape_utils.h"
 
@@ -83,6 +84,23 @@ class MS_CORE_API MapTensor final : public Value {
 
   TypePtr ValueDtype() const { return TypeIdToType(value_dtype_); }
 
+  abstract::AbstractBasePtr ToAbstract() override;
+
+  /// \brief Get tensor's param_info info.
+  ///
+  /// \return The tensor's param_info info.
+  const ParamInfoPtr &param_info() const { return param_info_; }
+
+  /// \brief Check whether this MapTensor is a parameter.
+  ///
+  /// \return Whether this MapTensor is a parameter.
+  bool is_parameter() const { return param_info_ != nullptr; }
+
+  /// \brief Set param_info info.
+  ///
+  /// \param[in] param_info The input param_info.
+  void set_param_info(const ParamInfoPtr &param_info) { param_info_ = param_info; }
+
   /// \brief Get or create values.
   ///
   /// \param[in] key_tensor [Tensor] The key tensor.
@@ -121,6 +139,9 @@ class MS_CORE_API MapTensor final : public Value {
 
   // Shape of the value.
   ShapeVector value_shape_;
+
+  // Parameter information.
+  ParamInfoPtr param_info_;
 };
 
 // Smart pointer for MapTensor.

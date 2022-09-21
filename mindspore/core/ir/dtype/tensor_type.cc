@@ -239,4 +239,57 @@ TypePtr CSRTensorType::DeepCopy() const {
   }
   return std::make_shared<CSRTensorType>(ElementsClone());
 }
+
+TypePtr MapTensorType::DeepCopy() const {
+  if (IsGeneric()) {
+    return std::make_shared<MapTensorType>();
+  }
+  MS_EXCEPTION_IF_NULL(key_dtype_);
+  MS_EXCEPTION_IF_NULL(value_dtype_);
+  return std::make_shared<MapTensorType>(key_dtype_->DeepCopy(), value_dtype_->DeepCopy());
+}
+
+std::string MapTensorType::ToString() const {
+  if (IsGeneric()) {
+    return "MapTensor";
+  }
+  MS_EXCEPTION_IF_NULL(key_dtype_);
+  MS_EXCEPTION_IF_NULL(value_dtype_);
+  return "MapTensor[" + key_dtype_->ToString() + ", " + value_dtype_->ToString() + "]";
+}
+
+std::string MapTensorType::ToReprString() const {
+  if (IsGeneric()) {
+    return "MapTensor";
+  }
+  MS_EXCEPTION_IF_NULL(key_dtype_);
+  MS_EXCEPTION_IF_NULL(value_dtype_);
+  return "MapTensor[" + key_dtype_->ToReprString() + ", " + value_dtype_->ToReprString() + "]";
+}
+
+std::string MapTensorType::DumpText() const {
+  if (IsGeneric()) {
+    return "MapTensor";
+  }
+  MS_EXCEPTION_IF_NULL(key_dtype_);
+  MS_EXCEPTION_IF_NULL(value_dtype_);
+  return "MapTensor[" + key_dtype_->DumpText() + ", " + value_dtype_->DumpText() + "]";
+}
+
+bool MapTensorType::operator==(const Type &other) const {
+  if (!IsSameObjectType(*this, other)) {
+    return false;
+  }
+  const auto &other_type = static_cast<const MapTensorType &>(other);
+  return common::IsEqual(key_dtype_, other_type.key_dtype_) && common::IsEqual(value_dtype_, other_type.value_dtype_);
+}
+
+size_t MapTensorType::hash() const {
+  size_t hash_value = hash_combine(static_cast<size_t>(kMetaTypeObject), static_cast<size_t>(object_type()));
+  if (!IsGeneric()) {
+    hash_value = hash_combine(hash_value, (key_dtype_ == nullptr ? 0 : key_dtype_->hash()));
+    hash_value = hash_combine(hash_value, (value_dtype_ == nullptr) ? 0 : value_dtype_->hash());
+  }
+  return hash_value;
+}
 }  // namespace mindspore
