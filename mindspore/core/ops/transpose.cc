@@ -61,9 +61,9 @@ bool CheckAndGetPermValue(const std::vector<AbstractBasePtr> &input_args, ShapeV
       }
     }
   } else {
-    MS_LOG(EXCEPTION) << "For '" << op_name
-                      << "', the second input type should be tensor or scalar, but got invalid abstract type:"
-                      << input_args[kInputIndex1]->type_name() << ".";
+    MS_EXCEPTION(TypeError) << "For primitive[" << op_name
+                            << "], the perm must be a tuple or a tensor with all Int elements, but got "
+                            << input_args[kInputIndex1]->type_name() << ".";
   }
   return is_dynamic;
 }
