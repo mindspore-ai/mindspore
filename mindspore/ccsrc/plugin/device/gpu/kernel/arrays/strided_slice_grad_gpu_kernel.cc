@@ -17,9 +17,13 @@
 #include <algorithm>
 
 #include "plugin/device/gpu/kernel/arrays/strided_slice_grad_gpu_kernel.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 
 namespace mindspore {
 namespace kernel {
+template <typename T>
+using Complex = mindspore::utils::Complex<T>;
+
 bool StridedSliceGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                                         const std::vector<KernelTensorPtr> &inputs,
                                         const std::vector<KernelTensorPtr> &outputs) {
@@ -133,6 +137,10 @@ std::vector<std::pair<KernelAttr, StridedSliceGradGpuKernelMod::StridedSliceGrad
      &StridedSliceGradGpuKernelMod::LaunchKernel<uchar>},
     {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
      &StridedSliceGradGpuKernelMod::LaunchKernel<bool>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+     &StridedSliceGradGpuKernelMod::LaunchKernel<Complex<float>>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+     &StridedSliceGradGpuKernelMod::LaunchKernel<Complex<double>>},
     {KernelAttr()
        .AddInputAttr(kNumberTypeFloat64)
        .AddInputAttr(kNumberTypeInt64)
@@ -220,7 +228,23 @@ std::vector<std::pair<KernelAttr, StridedSliceGradGpuKernelMod::StridedSliceGrad
        .AddInputAttr(kNumberTypeInt64)
        .AddInputAttr(kNumberTypeInt64)
        .AddOutputAttr(kNumberTypeBool),
-     &StridedSliceGradGpuKernelMod::LaunchKernel<bool, int64_t>}};
+     &StridedSliceGradGpuKernelMod::LaunchKernel<bool, int64_t>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeComplex64)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeComplex64),
+     &StridedSliceGradGpuKernelMod::LaunchKernel<Complex<float>, int64_t>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeComplex128)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeComplex128),
+     &StridedSliceGradGpuKernelMod::LaunchKernel<Complex<double>, int64_t>}};
 
 std::vector<KernelAttr> StridedSliceGradGpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
