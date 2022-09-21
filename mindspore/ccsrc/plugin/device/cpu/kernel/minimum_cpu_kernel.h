@@ -38,7 +38,7 @@ class MinimumCpuKernelMod : public DeprecatedNativeCpuKernelMod {
 
  private:
   bool IsBroadcast() const;
-  size_t Index(const size_t &index, const size_t &dim) const;
+  int64_t Index(const int64_t &index, const int64_t &dim) const;
   void InitTensorBroadcastShape();
   void InitInputTensorAndScalar(size_t max_input_shape_size);
   void InitInputTensors(TypeId input_x_dtype, TypeId input_y_dtype);

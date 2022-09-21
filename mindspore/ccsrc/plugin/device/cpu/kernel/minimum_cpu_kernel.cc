@@ -157,7 +157,7 @@ void MinimumCpuKernelMod::InitTensorBroadcastShape() {
 }
 
 // Broadcast comparison
-size_t MinimumCpuKernelMod::Index(const size_t &index, const size_t &dim) const { return dim == 1 ? 0 : index; }
+int64_t MinimumCpuKernelMod::Index(const int64_t &index, const int64_t &dim) const { return dim == 1 ? 0 : index; }
 
 // Broadcast Arithmetic
 template <typename T>
