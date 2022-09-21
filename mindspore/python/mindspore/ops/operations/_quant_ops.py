@@ -1801,6 +1801,8 @@ class IFMR(Primitive):
     @prim_attr_register
     def __init__(self, min_percentile=0.999999, max_percentile=0.999999, search_range=(0.7, 1.3), search_step=0.01,
                  with_offset=True):
+        self.init_prim_io_names(
+            inputs=['data', 'data_min', 'data_max', 'cumsum'], outputs=['scale', 'offset'])
         validator.check_value_type("min_percentile", min_percentile, [float], self.name)
         validator.check_value_type("max_percentile", max_percentile, [float], self.name)
         validator.check_value_type("search_range", search_range, [list, tuple], self.name)
