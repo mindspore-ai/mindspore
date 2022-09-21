@@ -57,9 +57,12 @@ class SparseDenseCwiseAdd(Primitive):
 
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> from mindspore.common.tensor import Tensor
+        >>> from mindspore.common import dtype as ms
+        >>> from mindspore.ops.operations import sparse_ops as ops
         >>> x1_indices = Tensor([[0, 0], [2, 2]], dtype=ms.int64)
         >>> x1_values = Tensor([1, 2], dtype=ms.int32)
         >>> x1_shape = Tensor([3, 3], dtype=ms.int64)
@@ -109,9 +112,12 @@ class SparseDenseCwiseMul(Primitive):
         ValueError: If `x1_indices` proceed to cross the border the interview.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> from mindspore.common.tensor import Tensor
+        >>> from mindspore.common import dtype as ms
+        >>> from mindspore.ops.operations import sparse_ops as ops
         >>> x1_indices = Tensor([[0, 0], [2, 2]], dtype=ms.int64)
         >>> x1_values = Tensor([1, 2], dtype=ms.int32)
         >>> x1_shape = Tensor([3, 3], dtype=ms.int64)
@@ -161,9 +167,12 @@ class SparseDenseCwiseDiv(Primitive):
         ValueError: If `x1_indices` proceed to cross the border the interview.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+      >>> from mindspore.common.tensor import Tensor
+      >>> from mindspore.common import dtype as ms
+      >>> from mindspore.ops.operations import sparse_ops as ops
       >>> x1_indices = Tensor([[0, 0], [2, 2]], dtype=ms.int64)
       >>> x1_values = Tensor([4, 2], dtype=ms.int32)
       >>> x1_shape = Tensor([3, 3], dtype=ms.int64)
