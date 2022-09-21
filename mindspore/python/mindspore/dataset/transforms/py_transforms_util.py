@@ -15,7 +15,6 @@
 """
 Built-in py_transforms_utils functions.
 """
-import json
 import random
 from enum import IntEnum
 from types import FunctionType
@@ -171,17 +170,18 @@ def random_choice(img, transforms):
 
 class FuncWrapper:
     """
-    Wrap function with try except logic, mainly for warping python function.
+    Wrap function with try except logic, mainly for wrapping Python function.
 
     Args:
-        transform: Callable python function.
+        transform: Callable Python function.
 
     Returns:
         result, data after apply transformation.
     """
+
     def __init__(self, transform):
         if not callable(transform):
-            raise ValueError("Input operations should be callable python function, but got: " + str(transform))
+            raise ValueError("Input operations should be callable Python function, but got: " + str(transform))
         self.transform = transform
         self.implementation = Implementation.C
         try:
@@ -194,14 +194,12 @@ class FuncWrapper:
         try:
             result = self.transform(*args)
         except Exception:
-            result = ExceptionHandler(where="in map(or batch) worker and execute python function")
+            result = ExceptionHandler(where="in map(or batch) worker and execute Python function")
             result.reraise()
         return result
 
     def to_json(self):
         if isinstance(self.transform, FunctionType):
-            json_obj = {}
-            json_obj["tensor_op_name"] = self.transform.__name__
-            json_obj["python_module"] = self.__class__.__module__
-            return json.dumps(json_obj)
+            # User-defined Python functions cannot be fully nor correctly serialized
+            raise ValueError('Serialization of user-defined Python functions is not supported.')
         return self.transform.to_json()

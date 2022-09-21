@@ -458,6 +458,10 @@ def random_crop(img, size, padding, pad_if_needed, fill_value, padding_mode):
     else:
         raise TypeError("Size should be a single integer or a list/tuple (h, w) of length 2.")
 
+    if isinstance(fill_value, list):
+        # Ensure fill_value of type list (from serialize JSON support) is converted to type tuple
+        fill_value = tuple(fill_value)
+
     def _input_to_factor(img, size):
         img_width, img_height = img.size
         height, width = size
@@ -633,6 +637,9 @@ def rotate(img, angle, resample, expand, center, fill_value):
 
     if isinstance(fill_value, int):
         fill_value = tuple([fill_value] * 3)
+    elif isinstance(fill_value, list):
+        # Ensure fill_value of type list (from serialize JSON support) is converted to type tuple
+        fill_value = tuple(fill_value)
 
     angle = angle % 360.0
     if resample == Inter.ANTIALIAS:
@@ -777,6 +784,10 @@ def random_rotation(img, degrees, resample, expand, center, fill_value):
             raise ValueError("If degrees is a sequence, the length must be 2.")
     else:
         raise TypeError("Degrees must be a single non-negative number or a sequence.")
+
+    if isinstance(fill_value, list):
+        # Ensure fill_value of type list (from serialize JSON support) is converted to type tuple
+        fill_value = tuple(fill_value)
 
     angle = random.uniform(degrees[0], degrees[1])
     return rotate(img, angle, resample, expand, center, fill_value)
@@ -935,6 +946,10 @@ def pad(img, padding, fill_value, padding_mode):
             raise ValueError("The size of the padding list or tuple should be 2 or 4.")
     else:
         raise TypeError("Padding can be any of: a number, a tuple or list of size 2 or 4.")
+
+    if isinstance(fill_value, list):
+        # Ensure fill_value of type list (from serialize JSON support) is converted to type tuple
+        fill_value = tuple(fill_value)
 
     if not isinstance(fill_value, (numbers.Number, str, tuple)):
         raise TypeError("fill_value can be any of: an integer, a string or a tuple.")
@@ -1216,8 +1231,11 @@ def random_affine(img, angle, translations, scale, shear, resample, fill_value=0
     matrix[2] += center[0]
     matrix[5] += center[1]
 
+    # Ensure fill_value of type list (from serialize JSON support) is converted to type tuple
+    kwarg_fill_value = tuple(fill_value) if isinstance(fill_value, list) else fill_value
+
     if __version__ >= '5':
-        kwargs = {"fillcolor": fill_value}
+        kwargs = {"fillcolor": kwarg_fill_value}
     else:
         kwargs = {}
     return img.transform(output_size, Image.AFFINE, matrix, resample, **kwargs)

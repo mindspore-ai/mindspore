@@ -379,10 +379,10 @@ def test_random_affine_op_exception_c_resample():
         _ = random_affine_op(image)
     assert "RandomAffine: Invalid InterpolationMode" in str(error_info.value)
 
-    with pytest.raises(TypeError) as error_info:
+    with pytest.raises(ValueError) as error_info:
         random_affine_op = vision.RandomAffine(degrees=2, translate=(0.2, 0.2, 0, 0), resample=Inter.ANTIALIAS)
         _ = random_affine_op(image)
-    assert "Current Interpolation is not supported with NumPy input." in str(error_info.value)
+    assert "Input image should be a Pillow image." in str(error_info.value)
 
 
 def test_random_affine_op_exception_py_resample():

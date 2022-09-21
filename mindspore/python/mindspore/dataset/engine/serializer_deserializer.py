@@ -27,8 +27,12 @@ def serialize(dataset, json_filepath=""):
     Serialize dataset pipeline into a JSON file.
 
     Note:
-        Currently some Python objects are not supported to be serialized.
-        For Python function serialization of map operator, de.serialize will only return its function name.
+        Currently some Python tensor operations are not supported to be serialized;
+        serialization may have an error returned or serialization may return successfully but with incomplete
+        serialized JSON output, for which later deserialization, pipeline execution of the deserialized JSON file
+        and/or re-serialization may result in an error.
+        Serialization of callable user-defined Python functions (Python UDFs) is not supported.
+        For Python function serialization of map operator, serialize will only return its function name.
 
     Args:
         dataset (Dataset): The starting node.
@@ -38,7 +42,8 @@ def serialize(dataset, json_filepath=""):
        Dict, The dictionary contains the serialized dataset graph.
 
     Raises:
-        OSError: Can not open a file
+        ValueError: Serialization of user-defined Python functions is not supported
+        OSError: Cannot open a file
 
     Examples:
         >>> dataset = ds.MnistDataset(mnist_dataset_dir, num_samples=100)
@@ -53,10 +58,10 @@ def serialize(dataset, json_filepath=""):
 
 def deserialize(input_dict=None, json_filepath=None):
     """
-    Construct dataset pipeline from a JSON file produced by de.serialize().
+    Construct dataset pipeline from a JSON file produced by dataset serialize function.
 
     Note:
-        Currently Python function deserialization of map operator are not supported.
+        Currently Python function deserialization of map operator is not supported.
 
     Args:
         input_dict (dict): A Python dictionary containing a serialized dataset graph (default=None).

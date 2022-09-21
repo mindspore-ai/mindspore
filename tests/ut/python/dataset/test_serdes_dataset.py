@@ -28,7 +28,7 @@ import mindspore.dataset as ds
 import mindspore.dataset.transforms as transforms
 import mindspore.dataset.vision as vision
 from mindspore import log as logger
-from mindspore.dataset.vision import Inter
+from mindspore.dataset.vision import Border, Inter
 from util import config_get_set_num_parallel_workers, config_get_set_seed
 
 
@@ -361,7 +361,7 @@ def test_serdes_zip_dataset(remove_json_files=True):
 def test_serdes_random_crop():
     """
     Feature: Serialize and Deserialize Support
-    Description: Test serialize and deserialize on pipeline with RandomCrop op
+    Description: Test serialize and deserialize on pipeline with C++ implementation of RandomCrop op
     Expectation: Output verified for multiple deserialized pipelines
     """
     logger.info("test_random_crop")
@@ -373,10 +373,12 @@ def test_serdes_random_crop():
 
     # First dataset
     data1 = ds.TFRecordDataset(data_dir, schema_dir, columns_list=["image"])
-    decode_op = vision.Decode()
-    random_crop_op = vision.RandomCrop([512, 512], [200, 200, 200, 200])
-    data1 = data1.map(operations=decode_op, input_columns="image")
-    data1 = data1.map(operations=random_crop_op, input_columns="image")
+    decode_op = vision.Decode(to_pil=False)
+    # Test fill_value with tuple
+    random_crop_op = vision.RandomCrop([512, 512], [200, 200, 200, 200],
+                                       fill_value=(0, 124, 255))
+    # Setup pipeline to select C++ implementation of RandomCrop op
+    data1 = data1.map(operations=[decode_op, random_crop_op], input_columns="image")
 
     # Serializing into Python dictionary
     ds1_dict = ds.serialize(data1)
@@ -395,6 +397,76 @@ def test_serdes_random_crop():
                                      data2.create_dict_iterator(num_epochs=1, output_numpy=True)):
         np.testing.assert_array_equal(item1['image'], item1_1['image'])
         _ = item2["image"]
+
+    # Restore configuration
+    ds.config.set_seed(original_seed)
+    ds.config.set_num_parallel_workers(original_num_parallel_workers)
+
+
+def test_serdes_pyop_fill_value_parm():
+    """
+    Feature: Serialize and Deserialize Support
+    Description: Test serialize and deserialize on pipeline with Python implementation of op with fill_value parameter
+    Expectation: Output verified for multiple deserialized pipelines
+    """
+    logger.info("test_random_rotation")
+    data_dir = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
+    schema_dir = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
+
+    original_seed = config_get_set_seed(1)
+    original_num_parallel_workers = config_get_set_num_parallel_workers(1)
+
+    def test_config(py_fill_value_op, check_image=True):
+        """
+        Test Python implementation of op with fill_value parameter
+        """
+        # First dataset
+        data1 = ds.TFRecordDataset(data_dir, schema_dir, columns_list=["image"])
+        decode_op = vision.Decode(to_pil=True)
+        # Setup pipeline to select Python implementation of input py_fill_value_op
+        data1 = data1.map(operations=[decode_op, py_fill_value_op], input_columns="image")
+
+        # Serializing into Python dictionary
+        ds1_dict = ds.serialize(data1)
+        # Serializing into json object
+        _ = json.dumps(ds1_dict, indent=2)
+
+        # Reconstruct dataset pipeline from its serialized form
+        data1_1 = ds.deserialize(input_dict=ds1_dict)
+
+        # Second dataset
+        data2 = ds.TFRecordDataset(data_dir, schema_dir, columns_list=["image"])
+        data2 = data2.map(operations=decode_op, input_columns="image")
+
+        num_itr = 0
+        for item1, item1_1, item2 in zip(data1.create_dict_iterator(num_epochs=1, output_numpy=True),
+                                         data1_1.create_dict_iterator(num_epochs=1, output_numpy=True),
+                                         data2.create_dict_iterator(num_epochs=1, output_numpy=True)):
+            num_itr += 1
+            if check_image:
+                np.testing.assert_array_equal(item1['image'], item1_1['image'])
+                _ = item2["image"]
+        assert num_itr == 3
+
+    # Test RandomCrop op with tuple for fill_value parameter
+    test_config(vision.RandomCrop([1800, 2400], [2, 2, 2, 2],
+                                  fill_value=(0, 124, 255)),
+                check_image=False)
+
+    # Test RandomRotation op with tuple for fill_value parameter
+    test_config(vision.RandomRotation((90, 90), resample=Inter.BILINEAR, expand=True, center=(50, 50),
+                                      fill_value=(0, 1, 2)),
+                check_image=True)
+
+    # Test Pad op with tuple for fill_value parameter
+    test_config(vision.Pad(padding=[100, 100, 100, 100], fill_value=(255, 100, 0), padding_mode=Border.SYMMETRIC),
+                check_image=True)
+
+    # Test RandomAffine op with tuple for fill_value parameter
+    # Note: Set check_image=False since consistently augmented image is not guaranteed
+    test_config(vision.RandomAffine(degrees=15, translate=(-0.1, 0.1, 0, 0), scale=(0.9, 1.1), resample=Inter.NEAREST,
+                                    fill_value=(0, 10, 20)),
+                check_image=False)
 
     # Restore configuration
     ds.config.set_seed(original_seed)
@@ -448,33 +520,65 @@ def test_serdes_pyvision(remove_json_files=True):
         delete_json_files("pyvision_dataset_pipeline")
 
 
-def test_serdes_pyfunc(remove_json_files=True):
+def test_serdes_pyfunc_exception(remove_json_files=True):
     """
     Feature: Serialize and Deserialize Support
-    Description: Test serialize and deserialize on pipelines with Python functions
-    Expectation: Serialized versus Deserialized+reserialized pipeline output verified
+    Description: Test serialize on pipeline with user-defined Python function
+    Expectation: Exception is raised as expected
     """
     data_dir = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
     schema_file = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 
-    original_seed = config_get_set_seed(1)
-    original_num_parallel_workers = config_get_set_num_parallel_workers(1)
-
-    data2 = ds.TFRecordDataset(data_dir, schema_file, columns_list=["image", "label"], shuffle=False)
-    data2 = data2.map(operations=(lambda x, y, z: (
+    data1 = ds.TFRecordDataset(data_dir, schema_file, columns_list=["image", "label"], shuffle=False)
+    data1 = data1.map(operations=(lambda x, y, z: (
         np.array(x).flatten().reshape(10, 39),
         np.array(y).flatten().reshape(10, 39),
         np.array(z).flatten().reshape(10, 1)
     )))
-    ds.serialize(data2, "pyfunc_dataset_pipeline.json")
-    assert validate_jsonfile("pyfunc_dataset_pipeline.json") is True
 
-    # Restore configuration
-    ds.config.set_seed(original_seed)
-    ds.config.set_num_parallel_workers(original_num_parallel_workers)
+    with pytest.raises(ValueError) as error_info:
+        ds.serialize(data1, "pyfunc_dataset_pipeline.json")
+    assert "Serialization of user-defined Python functions is not supported" in str(error_info.value)
 
     if remove_json_files:
         delete_json_files("pyfunc_dataset_pipeline")
+
+
+def test_serdes_pyfunc_exception2(remove_json_files=True):
+    """
+    Feature: Serialize and Deserialize Support
+    Description: Test serialize on pipeline with user-defined Python function
+    Expectation: Exception is raised as expected
+    """
+
+    def chwtohwc(x):
+        """ CHW to HWC """
+        return x.transpose(1, 2, 0)
+
+    data_dir = "../data/dataset/testPK/data"
+    data1 = ds.ImageFolderDataset(data_dir, shuffle=False, decode=False, num_samples=5)
+
+    image_ops1 = [vision.RandomCropDecodeResize(250),
+                  vision.ToPIL(),
+                  vision.RandomAffine(degrees=15, translate=(0.1, 0.1), scale=(0.9, 1.1)),
+                  vision.ToTensor(),
+                  chwtohwc,
+                  vision.RandomHorizontalFlip(prob=0.5)]
+
+    data1 = data1.map(operations=image_ops1, input_columns="image", num_parallel_workers=8)
+
+    # Perform simple validation for data pipeline
+    num = 0
+    for _ in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
+        num += 1
+    assert num == 5
+
+    with pytest.raises(ValueError) as error_info:
+        ds.serialize(data1, "pyfunc2_dataset_pipeline.json")
+    assert "Serialization of user-defined Python functions is not supported" in str(error_info.value)
+
+    if remove_json_files:
+        delete_json_files("pyfunc2_dataset_pipeline")
 
 
 def test_serdes_inter_mixed_map(remove_json_files=True):
@@ -508,6 +612,60 @@ def test_serdes_inter_mixed_map(remove_json_files=True):
 
     if remove_json_files:
         delete_json_files("inter_mixed_map_pipeline")
+
+
+def test_serdes_inter_mixed_enum_parms_map(remove_json_files=True):
+    """
+    Feature: Serialize and Deserialize Support
+    Description: Test serialize and deserialize on pipelines in which each map op has the same
+        implementation (Python or C++) of ops, for which the ops have parameters with enumerated types;
+        Test a variety serdes-supported ops with interpolation or resample Interpolation enum type parameter.
+        Fccus on ops with both C++ implementation and Python implementation for which Python implementation is selected.
+        Note: No serdes support yet for Perspective op.
+    Expectation: Serialized versus Deserialized+reserialized pipeline output verified
+    """
+    data_dir = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
+    schema_file = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
+
+    original_seed = config_get_set_seed(26)
+    original_num_parallel_workers = config_get_set_num_parallel_workers(1)
+
+    data1 = ds.TFRecordDataset(data_dir, schema_file, columns_list=["image", "label"], shuffle=False)
+    # The following map op uses Python implementation of ops
+    data1 = data1.map(operations=[vision.Decode(True),
+                                  vision.Resize((250, 300), interpolation=Inter.LINEAR),
+                                  vision.RandomCrop(size=250, padding=[100, 100, 100, 100],
+                                                    pad_if_needed=False, fill_value=0, padding_mode=Border.EDGE),
+                                  vision.RandomRotation((0, 90), expand=True, resample=Inter.BILINEAR,
+                                                        center=(50, 50), fill_value=150)],
+                      input_columns=["image"])
+    # The following map op uses C++ implementation of ToTensor op
+    data1 = data1.map(operations=[vision.ToTensor()], input_columns=["image"])
+    # The following map op uses C++ implementation of ops
+    data1 = data1.map(operations=[vision.HorizontalFlip(),
+                                  vision.Rotate(degrees=45, resample=Inter.BILINEAR)],
+                      input_columns=["image"])
+    # The following 2 map ops use Python implementation of ops
+    data1 = data1.map(operations=[vision.ToPIL(),
+                                  vision.Pad(padding=[100, 100, 100, 100], fill_value=150,
+                                             padding_mode=Border.REFLECT),
+                                  vision.RandomPerspective(0.3, 1.0, Inter.LINEAR),
+                                  vision.RandomAffine(degrees=15, translate=(-0.1, 0.1, 0, 0), scale=(0.9, 1.1),
+                                                      resample=Inter.NEAREST)],
+                      input_columns=["image"])
+    data1 = data1.map(operations=[vision.ToPIL(),
+                                  vision.RandomResizedCrop(size=150, interpolation=Inter.BICUBIC),
+                                  vision.Pad(padding=[90, 90, 90, 90], fill_value=0, padding_mode=Border.SYMMETRIC)],
+                      input_columns=["image"])
+
+    util_check_serialize_deserialize_file(data1, "inter_mixed_enum_parms_map_pipeline", remove_json_files)
+
+    # Restore configuration
+    ds.config.set_seed(original_seed)
+    ds.config.set_num_parallel_workers(original_num_parallel_workers)
+
+    if remove_json_files:
+        delete_json_files("inter_mixed_enum_parms_map_pipeline")
 
 
 def test_serdes_intra_mixed_py2c_map(remove_json_files=True):
@@ -708,23 +866,64 @@ def test_serdes_uniform_augment(remove_json_files=True):
     ds.config.set_num_parallel_workers(original_num_parallel_workers)
 
 
-def skip_test_serdes_fill(remove_json_files=True):
+def test_serdes_complex1_pipeline(remove_json_files=True):
     """
     Feature: Serialize and Deserialize Support
-    Description: Test serialize and deserialize on pipelines with Fill op
+    Description: Test serialize on complex pipeline with mix of C++ implementation ops and Python implementation ops
+    Expectation: Serialized versus Deserialized+reserialized pipeline output verified
+    """
+    original_seed = config_get_set_seed(1)
+    original_num_parallel_workers = config_get_set_num_parallel_workers(1)
+
+    data_dir = "../data/dataset/testPK/data"
+    data1 = ds.ImageFolderDataset(data_dir, shuffle=False, decode=False)
+
+    type_cast_op = transforms.TypeCast(mstype.int32)
+    image_ops1 = [vision.RandomCropDecodeResize(250),
+                  vision.ToPIL(),
+                  vision.RandomAffine(degrees=15, translate=(0.1, 0.1), scale=(0.9, 1.1)),
+                  vision.RandomHorizontalFlip(prob=0.5)]
+
+    image_ops2 = [vision.RandomColorAdjust(),
+                  vision.RandomSharpness(),
+                  vision.RandomVerticalFlip(),
+                  vision.Rescale(0.5, 1.0),
+                  vision.Normalize(mean=[121.0, 115.0, 100.0], std=[70.0, 68.0, 71.0]),
+                  vision.HWC2CHW()]
+
+    data1 = data1.map(operations=type_cast_op, input_columns="label", num_parallel_workers=8)
+    data1 = data1.map(operations=image_ops1, input_columns="image", num_parallel_workers=8)
+    data1 = data1.map(operations=image_ops2, input_columns="image", num_parallel_workers=8)
+
+    data1 = data1.batch(batch_size=3, num_parallel_workers=8)
+    data1 = data1.repeat(5)
+
+    util_check_serialize_deserialize_file(data1, "complex1_dataset_pipeline", remove_json_files)
+
+    # Restore configuration
+    ds.config.set_seed(original_seed)
+    ds.config.set_num_parallel_workers(original_num_parallel_workers)
+
+    if remove_json_files:
+        delete_json_files("complex1_dataset_pipeline")
+
+
+def test_serdes_fill(remove_json_files=True):
+    """
+    Feature: Serialize and Deserialize Support
+    Description: Test serialize and deserialize on pipeline with Fill op
     Expectation: Serialized versus Deserialized+reserialized pipeline output verified
     """
 
-    def gen():
-        yield (np.array([4, 5, 6, 7], dtype=np.int32),)
+    data_dir = "../data/dataset/testPK/data"
+    data = ds.ImageFolderDataset(data_dir, shuffle=False, decode=False, num_samples=11)
 
-    data = ds.GeneratorDataset(gen, column_names=["col"])
-    fill_op = transforms.Fill(3)
+    label_fill_value = 3
+    fill_op = transforms.Fill(label_fill_value)
+    data = data.map(operations=fill_op, input_columns=["label"])
 
-    data = data.map(operations=fill_op, input_columns=["col"])
-    expected = np.array([3, 3, 3, 3], dtype=np.int32)
-    for data_row in data:
-        np.testing.assert_array_equal(data_row[0].asnumpy(), expected)
+    for data1 in data.create_dict_iterator(num_epochs=1, output_numpy=True):
+        np.testing.assert_array_equal(data1['label'], label_fill_value)
 
     util_check_serialize_deserialize_file(data, "fill_pipeline", remove_json_files)
 
@@ -745,6 +944,64 @@ def test_serdes_exception():
         ds.serialize(data2, "filter_dataset_fail.json")
     assert "Invalid data, unsupported operation type: Filter" in str(msg)
     delete_json_files("filter_dataset_fail")
+
+
+def test_serdes_not_implemented_op_exception():
+    """
+    Feature: Serialize and Deserialize Support
+    Description: Test serialize on pipeline with op that does not have proper serdes support
+    Expectation: Exception is raised as expected
+    """
+    original_seed = config_get_set_seed(99)
+
+    def test_config(op_list):
+        data_dir = "../data/dataset/testPK/data"
+        data1 = ds.ImageFolderDataset(data_dir, shuffle=False, decode=False, num_samples=3)
+        data1 = data1.map(operations=op_list, input_columns="image")
+        num_itr = 0
+        for _ in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
+            num_itr += 1
+
+        # Serialize the pipeline
+        # Note: For some improper serdes implementation for an op, the serialized output may be wrong
+        #       but still produced.  And a failure may occur on subsequent deserialization or
+        #       re-serialization or when deserializated output is used in pipeline execution.
+        ds.serialize(data1, "not_implemented_serdes_fail_1.json")
+
+        # Deserialize the serialized json file
+        # Note: For some improper serdes implementation for an op, the deserialized support may be wrong.
+        #       And a failure may occur on re-serialization or when deserialized output is used
+        #       in pipeline execution.
+        data2 = ds.deserialize(json_filepath="not_implemented_serdes_fail_1.json")
+
+        # Serialize the pipeline we just deserialized.
+        ds.serialize(data2, "not_implemented_serdes_fail_2.json")
+
+    # Proper to_json and from_json support has not yet been added for Perspective op
+    with pytest.raises(RuntimeError) as error_info:
+        test_config([vision.Decode(),
+                     vision.Resize([64, 64]),
+                     vision.Perspective(start_points=[[0, 63], [63, 63], [63, 0], [0, 0]],
+                                        end_points=[[0, 63], [63, 63], [63, 0], [0, 0]],
+                                        interpolation=Inter.BILINEAR)])
+    assert "Unexpected error. Invalid data, unsupported operation: Perspective" in str(error_info.value)
+
+    # Proper to_json and from_json support has not yet been added for AdjustBrightness op
+    with pytest.raises(RuntimeError) as error_info:
+        test_config([vision.Decode(),
+                     vision.AdjustBrightness(brightness_factor=2.0)])
+    assert "Unexpected error. Invalid data, unsupported operation: AdjustBrightness" in str(error_info.value)
+
+    # Proper to_json and from_json support has not yet been added for AdjustContrast op
+    with pytest.raises(RuntimeError) as error_info:
+        test_config([vision.Decode(),
+                     vision.AdjustContrast(contrast_factor=2.0)])
+    assert "Unexpected error. Invalid data, unsupported operation: AdjustContrast" in str(error_info.value)
+
+    # Restore configuration
+    ds.config.set_seed(original_seed)
+
+    delete_json_files("not_implemented_serdes_fail")
 
 
 def util_check_serialize_deserialize_file(data_orig, filename, remove_json_files):
@@ -801,14 +1058,19 @@ if __name__ == '__main__':
     test_serdes_voc_dataset()
     test_serdes_zip_dataset()
     test_serdes_random_crop()
+    test_serdes_pyop_fill_value_parm()
     test_serdes_to_device()
     test_serdes_pyvision()
-    test_serdes_pyfunc()
+    test_serdes_pyfunc_exception()
+    test_serdes_pyfunc_exception2()
     test_serdes_inter_mixed_map()
+    test_serdes_inter_mixed_enum_parms_map()
     test_serdes_intra_mixed_py2c_map()
     test_serdes_intra_mixed_c2py_map()
     test_serdes_totensor_normalize()
     test_serdes_tonumpy()
     test_serdes_uniform_augment()
-    skip_test_serdes_fill()
+    test_serdes_complex1_pipeline()
+    test_serdes_fill()
+    test_serdes_not_implemented_op_exception()
     test_serdes_exception()
