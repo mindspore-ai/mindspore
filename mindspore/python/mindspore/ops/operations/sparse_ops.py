@@ -1998,7 +1998,7 @@ class SparseMatrixMatMul(Primitive):
     r"""
     Performs a matrix multiplication of a sparse matrix x1 with dense matrix x2; return a dense matrix x1*x2.
     Each matrix may be transposed or adjointed (conjugated and transposed)
-    according to the Boolean parameters transpose_x1,adjoint_x1,transpose_x2 and adjoint_x2.
+    according to the Boolean parameters transpose_x1, adjoint_x1, transpose_x2 and adjoint_x2.
     At most one of transpose_x1 or adjoint_x1 may be True.
     Similarly, at most one of transpose_x2 or adjoint_x2 may be True.
 
@@ -2025,35 +2025,34 @@ class SparseMatrixMatMul(Primitive):
           nonzero values of the first `i - 1` rows in the corresponding batch.
         - **x1_col_indices** (Tensor) - A 1-D Tensor. It represents column indices of the nonzero values
           in the input CSR sparse matrix x1.
-        - **x1_values** (Tensor) - A 1-D Tensor. It represents all the nonzero values in the
-          input CSR sparse matrix x1.
-
+        - **x1_values** (Tensor) - A 1-D Tensor. It represents all the nonzero values
+          in the input CSR sparse matrix x1. Support float32, float64, complex64, complex128.
         - **x2_dense** (Tensor) - A 2-D or 3-D Tensor, represents the input dense matrix x2.
-          Support float32, float64, complex64, complex128.
+          Its dtype is the same as `x1_values`.
 
     Outputs:
-        **y_dense** (Tensor) - A 2-D or 3-D Tensor, represents the output dense matrix y.
-          Support float32, float64, complex64, complex128.
+        Tensor, which represents the output dense matrix y.
+        Its dtype is the same as `x1_values`.
 
     Raises:
-        TypeError: If any dtype of `x1_dense_shape`, `x1_batch_pointers`, `x1_row_pointers`, `x1_col_indices`,
-        `x1_values` or `x2_dense` doesn't meet the parameter description.
-        ValueError: If shape[0] of `x1_dense_shape` or the dimension of `x2_dense' is not 2 or 3.
-        ValueError: If shape[0]-1 of x1_batch_pointers and shape[0] of x2_dense are not the same.
+        TypeError: If the dtype of `x1_dense_shape`, `x1_batch_pointers`, `x1_row_pointers` or `x1_col_indices`
+                   is not int32 or int64, or the dtypes of above inputs are not the same.
+        TypeError: If the dtype of `x1_values`, `x2_dense` is not supported.
+        ValueError: If shape[0] of `x1_dense_shape` or the dimension of `x2_dense` is not 2 or 3.
+        ValueError: If shape[0]-1 of `x1_batch_pointers` and shape[0] of `x2_dense` are not the same.
 
     Supported Platforms:
-
+        ``Ascend`` ``CPU``
 
     Examples:
-        >>> from mindspore.ops.operations.sparse_ops import SparseMatrixMatMul
-        >>> x1_dense_shape = Tensor([4, 5], dtype=mindspore.int32)
-        >>> x1_batch_pointers = Tensor([0, 4], dtype=mindspore.int32)
-        >>> x1_row_pointers = Tensor([0, 1, 1, 3, 4], dtype=mindspore.int32)
-        >>> x1_col_indices = Tensor([0, 3, 4, 0], dtype=mindspore.int32)
-        >>> x1_values = Tensor([1.0, 5.0, -1.0, -2.0], dtype=mindspore.float32)
+        >>> x1_dense_shape = Tensor([4, 5], dtype=ms.int32)
+        >>> x1_batch_pointers = Tensor([0, 4], dtype=ms.int32)
+        >>> x1_row_pointers = Tensor([0, 1, 1, 3, 4], dtype=ms.int32)
+        >>> x1_col_indices = Tensor([0, 3, 4, 0], dtype=ms.int32)
+        >>> x1_values = Tensor([1.0, 5.0, -1.0, -2.0], dtype=ms.float32)
         >>> x2_dense = Tensor([[2.0, 0.8, 1.0],[ 2.9, 3.2, 0.0],[7.0, 4.6, 0.2],[3.5, 4.9, 1.4],[4.0, 3.7, 6.9]],
-        ... dtype=mindspore.float32)
-        >>> sparse_matrix_mat_mul = SparseMatrixMatMul()
+        ... dtype=ms.float32)
+        >>> sparse_matrix_mat_mul = ops.SparseMatrixMatMul()
         >>> out = sparse_matrix_mat_mul(x1_dense_shape, x1_batch_pointers, x1_row_pointers, x1_col_indices,
         ... x1_values, x2_dense)
         >>> print(out)
