@@ -105,6 +105,14 @@ class LiteModel : public Model {
     bool global_init_flag = false;
     for (size_t i = 0; i < in_tensor_index->size(); i++) {
       auto index = size_t(in_tensor_index->template GetAs<uint32_t>(i));
+      if (meta_graph.allTensors() == nullptr) {
+        MS_LOG(ERROR) << "meta_graph.allTensors() is null.";
+        return false;
+      }
+      if (index >= meta_graph.allTensors()->size()) {
+        MS_LOG(ERROR) << "in_tensor_index is invalid.";
+        return false;
+      }
       auto tensor = meta_graph.allTensors()->template GetAs<schema::Tensor>(index);
       bool cur_tensor_init_flag = CheckQuantAllInit(tensor->quantParams());
       global_init_flag = global_init_flag || cur_tensor_init_flag;

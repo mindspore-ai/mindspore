@@ -34,6 +34,9 @@ int GluInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **ou
   SetShapeTensor(output, input);
   GluParameter *param = (GluParameter *)parameter;
   NNACL_CHECK_NULL_RETURN_ERR(param);
+  if (param->axis_ >= (int)input->shape_size_ || (param->axis_ < 0 && ((int)input->shape_size_ + param->axis_) < 0)) {
+    return NNACL_ERR;
+  }
   int axis = param->axis_ > 0 ? param->axis_ : (int)input->shape_size_ + param->axis_;
   if (axis < 0 || axis >= MAX_SHAPE_SIZE) {
     return NNACL_BUFFER_OVERFLOW;
