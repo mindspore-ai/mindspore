@@ -37,13 +37,17 @@ bool GeOptimizeAction(const ResourcePtr &resource);
 bool VmOptimizeAction(const ResourcePtr &resource);
 bool TaskEmitAction(const ResourcePtr &resource);
 bool ExecuteAction(const ResourcePtr &resource);
+#if defined(__linux__) && defined(WITH_BACKEND)
 bool StartPSSchedulerAction(const ResourcePtr &resource);
 bool DistributedSplitAction(const ResourcePtr &resource);
+#endif
 
 std::vector<ActionItem> GePipeline();
 std::vector<ActionItem> VmPipeline(const ResourcePtr &resource);
 std::vector<ActionItem> MindIRPipeline();
+#if defined(__linux__) && defined(WITH_BACKEND)
 std::vector<ActionItem> PSchedulerPipeline(const ResourcePtr &resource);
+#endif
 abstract::AnalysisResult AbstractAnalyze(const ResourcePtr &resource, const FuncGraphPtr &func_graph,
                                          const abstract::AbstractBasePtrList &args_abs, bool clear = false);
 FuncGraphPtr ProgramSpecialize(const ResourcePtr &resource, const FuncGraphPtr &func_graph,

@@ -26,7 +26,7 @@
 #include "utils/log_adapter.h"
 #include "include/common/utils/convert_utils.h"
 #include "distributed/recovery/recovery_context.h"
-#ifdef WITH_BACKEND
+#if defined(__linux__) && defined(WITH_BACKEND)
 #include "runtime/graph_scheduler/embedding_cache_scheduler.h"
 #endif
 
@@ -926,7 +926,7 @@ void DataPrepareActor::PreprocessBeforePrepareData() const {
   // Embedding Cache mode needs to record the number of global steps executed by the compute graph.
   // The first step compute graph needs to wait for the Embedding cache prefetch cache to warm up to prevent the
   // GetNext operator from timing out in the compute graph.
-#ifdef WITH_BACKEND
+#if defined(__linux__) && defined(WITH_BACKEND)
   EmbeddingCacheScheduler::GetInstance().IncreaseGraphStep(GetAID());
 #endif
 }

@@ -48,7 +48,7 @@
 #include "ir/anf.h"
 #include "ir/param_info.h"
 #include "ir/tensor.h"
-#ifdef WITH_BACKEND
+#if defined(__linux__) && defined(WITH_BACKEND)
 #include "ps/util.h"
 #endif
 
@@ -71,7 +71,7 @@ void SearchParallelStrategy(const std::string &strategy_search_mode, const FuncG
 }
 
 bool StepAutoParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &) {
-#ifdef WITH_BACKEND
+#if defined(__linux__) && defined(WITH_BACKEND)
   if (ps::Util::IsRoleOfPServer() || ps::Util::IsRoleOfScheduler()) {
     return false;
   }

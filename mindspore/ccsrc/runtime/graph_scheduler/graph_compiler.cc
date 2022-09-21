@@ -44,7 +44,7 @@
 #ifndef ENABLE_SECURITY
 #include "debug/data_dump/dump_json_parser.h"
 #endif
-#ifdef WITH_BACKEND
+#if defined(__linux__) && defined(WITH_BACKEND)
 #include "ps/ps_context.h"
 #include "runtime/graph_scheduler/embedding_cache_scheduler.h"
 #endif
@@ -374,7 +374,7 @@ GraphId GraphCompiler::CompileWholeGraphForGraphRunMode(const FuncGraphPtr &func
   // set executing sink true in graph mode
   root_graph->set_run_mode(device::RunMode::kGraphMode);
   root_graph->set_is_loop_count_sink(true);
-#ifdef WITH_BACKEND
+#if defined(__linux__) && defined(WITH_BACKEND)
   // Embedding cache need global step of compute graph, can not enable loop sink, move loop control to loop count actor.
   if (ps::PSContext::instance()->cache_enable()) {
     root_graph->set_is_loop_count_sink(false);
@@ -473,7 +473,7 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
   DumpJsonParser::GetInstance().UpdateNeedDumpKernels(*graph.get());
 #endif
 
-#ifdef WITH_BACKEND
+#if defined(__linux__) && defined(WITH_BACKEND)
   // Set device address for embedding cache parameter, only enable when enable embedding cache mode.
   EmbeddingCacheScheduler::GetInstance().SetEmbedCachedParamAddress(device_context, graph);
 #endif

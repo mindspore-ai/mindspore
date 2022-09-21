@@ -26,9 +26,8 @@
 #include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/graph_util/generate_graph.h"
 #include "include/common/utils/parallel_context.h"
-#ifdef WITH_BACKEND
+#if defined(__linux__) && defined(WITH_BACKEND)
 #include "ps/ps_cache/ps_data/ps_data_prefetch.h"
-#include "utils/ms_context.h"
 #include "ps/ps_context.h"
 #include "distributed/embedding_cache/embedding_cache_utils.h"
 #endif
@@ -163,7 +162,7 @@ Status GatherInfo::GetAttrs() {
   if (std::find(inputs_shape_[1].begin(), inputs_shape_[1].end(), -1) != inputs_shape_[1].end()) {
     dynamic_shape_indices_ = true;
   }
-#ifdef WITH_BACKEND
+#if defined(__linux__) && defined(WITH_BACKEND)
   if (ps::PsDataPrefetch::GetInstance().cache_enable()) {
     dynamic_shape_indices_ = true;
   }
@@ -757,7 +756,7 @@ Status GatherInfo::InferBias() {
         rank = rank % (params_strategy[0] * params_strategy[1]);
       }
     }
-#ifdef WITH_BACKEND
+#if defined(__linux__) && defined(WITH_BACKEND)
     if (ps::PsDataPrefetch::GetInstance().cache_enable()) {
       if (ps::PSContext::instance()->enable_distributed_mindrt()) {
         bias_ = static_cast<int64_t>(embedding_cache_table_manager.cache_indices_lower_bound());

@@ -29,7 +29,7 @@
 #include "include/common/utils/utils.h"
 #include "ir/func_graph.h"
 #include "distributed/constants.h"
-#ifdef WITH_BACKEND
+#if defined(__linux__) && defined(WITH_BACKEND)
 #include "distributed/cluster/cluster_context.h"
 #else
 #include "distributed/cluster/dummy_cluster_context.h"

@@ -30,7 +30,7 @@
 #include "frontend/parallel/step_parallel.h"
 #include "mindspore/core/utils/file_utils.h"
 
-#ifdef WITH_BACKEND
+#if defined(__linux__) && defined(WITH_BACKEND)
 #include "ps/core/node.h"
 #include "distributed/cluster/cluster_context.h"
 #endif
@@ -69,7 +69,7 @@ std::string GetCompileCacheDir() {
 }
 
 std::string GetRole() {
-#ifdef WITH_BACKEND
+#if defined(__linux__) && defined(WITH_BACKEND)
   if (distributed::cluster::ClusterContext::instance()->initialized()) {
     auto node = distributed::cluster::ClusterContext::instance()->node();
     MS_EXCEPTION_IF_NULL(node);

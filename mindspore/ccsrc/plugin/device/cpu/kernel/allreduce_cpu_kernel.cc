@@ -20,13 +20,13 @@
 #include <functional>
 #include <memory>
 
-#ifdef WITH_BACKEND
+#if defined(__linux__) && defined(WITH_BACKEND)
 #include "plugin/device/cpu/hal/hardware/ms_collective_comm_lib.h"
 #endif
 
 namespace mindspore {
 namespace kernel {
-#ifdef WITH_BACKEND
+#if defined(__linux__) && defined(WITH_BACKEND)
 using device::CollectiveOpReduceType::Reduce_Sum;
 using device::cpu::kMCCLGlobalGroupName;
 using device::cpu::MsCollectiveCommLib;
@@ -37,7 +37,7 @@ constexpr char kSupportedReduceOp[] = "sum";
 }  // namespace
 
 void AllReduceCPUKernelMod::InitKernel(const CNodePtr &kernel_node) {
-#ifdef WITH_BACKEND
+#if defined(__linux__) && defined(WITH_BACKEND)
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   auto kernel_attr = GetKernelAttrFromNode(kernel_node);
@@ -67,7 +67,7 @@ std::vector<KernelAttr> AllReduceCPUKernelMod::GetOpSupport() {
 bool AllReduceCPUKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                    const std::vector<kernel::AddressPtr> &,
                                    const std::vector<kernel::AddressPtr> &outputs) {
-#ifdef WITH_BACKEND
+#if defined(__linux__) && defined(WITH_BACKEND)
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(EXCEPTION) << kernel_name_ << " has at least one input and one output, but got 0.";
   }

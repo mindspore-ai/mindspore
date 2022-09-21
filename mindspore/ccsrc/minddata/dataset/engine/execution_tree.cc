@@ -21,6 +21,7 @@
 #include "minddata/dataset/engine/datasetops/data_queue_op.h"
 #ifdef WITH_BACKEND
 #include "mindspore/core/utils/numa_interface.h"
+#include "utils/ms_context.h"
 #endif
 #include "minddata/dataset/util/task_manager.h"
 #include "minddata/dataset/util/service.h"

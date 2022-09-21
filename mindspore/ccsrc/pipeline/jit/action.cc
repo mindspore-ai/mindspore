@@ -53,7 +53,7 @@
 #include "backend/graph_compiler/transform.h"
 #include "load_mindir/infer_mindir.h"
 #include "debug/data_dump/dump_json_parser.h"
-#ifdef WITH_BACKEND
+#if defined(__linux__) && defined(WITH_BACKEND)
 #include "ps/scheduler.h"
 #include "distributed/cluster/cluster_context.h"
 #endif
@@ -127,7 +127,7 @@ void DisableMindRT(const ResourcePtr &resource) {
   if (context_ptr->get_param<bool>(MS_CTX_ENABLE_MINDRT) == false) {
     return;
   }
-#ifdef WITH_BACKEND
+#if defined(__linux__) && defined(WITH_BACKEND)
   if (ps::PSContext::instance()->cache_enable()) {
     return;
   }
@@ -863,7 +863,7 @@ bool OptInlineAction(const ResourcePtr &resource) {
 bool GeOptimizeAction(const ResourcePtr &resource) { return OptimizeAction(resource, kGePasses); }
 
 bool VmOptimizeAction(const ResourcePtr &resource) {
-#ifdef WITH_BACKEND
+#if defined(__linux__) && defined(WITH_BACKEND)
   if (ps::PSContext::instance()->is_ps_mode()) {
     (void)kVmPasses.emplace_back(PassItem("server_communication_op_fusion", ps::Util::FuseServerCommOps));
   }
@@ -1121,7 +1121,7 @@ void SetRunMode(const FuncGraphPtr &func_graph, compile::Backend *backend_ptr) {
     return;
   }
 
-#ifdef WITH_BACKEND
+#if defined(__linux__) && defined(WITH_BACKEND)
   if (ps::PSContext::instance()->cache_enable()) {
     set_ctx(true, false, false);
     return;
@@ -1182,7 +1182,7 @@ void SetRunMode(const ResourcePtr &resource) {
   auto enable_hccl = context_ptr->get_param<bool>(MS_CTX_ENABLE_HCCL);
   // After the distributed interface on D is unified, the following flag and judgment will be removed.
   bool enbale_distributed_mindrt = false;
-#ifdef WITH_BACKEND
+#if defined(__linux__) && defined(WITH_BACKEND)
   enbale_distributed_mindrt = ps::PSContext::instance()->enable_distributed_mindrt();
 #endif
   if (!is_task_sink && mode == kGraphMode && enable_hccl && !common::UseMPI() && !enbale_distributed_mindrt) {
@@ -1278,7 +1278,7 @@ bool ExecuteAction(const ResourcePtr &resource) {
   return true;
 }
 
-#ifdef WITH_BACKEND
+#if defined(__linux__) && defined(WITH_BACKEND)
 bool StartPSSchedulerAction(const ResourcePtr &) {
   if (distributed::cluster::ClusterContext::instance()->initialized()) {
     MS_LOG(INFO) << "This node is scheduler. Start wait for finalizing.";
@@ -1574,7 +1574,7 @@ std::vector<ActionItem> VmPipeline(const ResourcePtr &resource) {
     (void)actions.emplace_back(std::make_pair("validate", ValidateAction));
   }
 
-#ifdef WITH_BACKEND
+#if defined(__linux__) && defined(WITH_BACKEND)
   (void)actions.emplace_back(std::make_pair("distribtued_split", DistributedSplitAction));
   if (ps::PSContext::instance()->is_worker()) {
     if (distributed::cluster::ClusterContext::instance()->initialized()) {
@@ -1611,7 +1611,7 @@ std::vector<ActionItem> MindIRPipeline() {
   return actions;
 }
 
-#ifdef WITH_BACKEND
+#if defined(__linux__) && defined(WITH_BACKEND)
 std::vector<ActionItem> PSchedulerPipeline(const ResourcePtr &resource) {
   if (resource->EnableCompileCache() && resource->func_graph() != nullptr) {
     return {std::make_pair("scheduler", StartPSSchedulerAction)};
