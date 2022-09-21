@@ -116,11 +116,10 @@ class Worker {
   pthread_t handle() { return thread_.native_handle(); }
 #endif
   inline void set_alive(bool flag) { alive_ = flag; }
-  inline bool alive() { return alive_; }
+  inline bool alive() const { return alive_; }
 
  protected:
   void SetAffinity();
-  void Run();
   void YieldAndDeactive();
   virtual void WaitUntilActive();
 
@@ -147,6 +146,9 @@ class Worker {
   ThreadPool *pool_{nullptr};
   HQueue<TaskSplit> *local_task_queue_;
   size_t worker_id_{0};
+
+ private:
+  void Run();
 };
 
 class MS_CORE_API ThreadPool {
@@ -181,7 +183,7 @@ class MS_CORE_API ThreadPool {
   int TaskQueuesInit(size_t thread_num);
   const std::unordered_map<std::thread::id, size_t> &GetWorkerIdMap() const { return worker_ids_; }
   float GetServerCpuFrequence() const { return server_cpu_frequence; }
-  inline size_t actor_thread_num() { return actor_thread_num_; }
+  inline size_t actor_thread_num() const { return actor_thread_num_; }
   template <typename T = Worker>
   int CreateThreads(size_t thread_num, const std::vector<int> &core_list) {
     size_t core_num = std::thread::hardware_concurrency();
