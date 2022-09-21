@@ -77,6 +77,16 @@ extern "C" JNIEXPORT void JNICALL Java_com_mindspore_config_RunnerConfig_setConf
   env->ReleaseStringUTFChars(config_path, c_config_path);
 }
 
+extern "C" JNIEXPORT jstring JNICALL Java_com_mindspore_config_RunnerConfig_getConfigPath(JNIEnv *env, jobject thiz,
+                                                                                          jlong runner_config_ptr) {
+  auto *runner_config = reinterpret_cast<mindspore::RunnerConfig *>(runner_config_ptr);
+  if (runner_config == nullptr) {
+    MS_LOG(ERROR) << "runner config pointer from java is nullptr";
+    return nullptr;
+  }
+  return env->NewStringUTF(runner_config->GetConfigPath().c_str());
+}
+
 extern "C" JNIEXPORT void JNICALL Java_com_mindspore_config_RunnerConfig_setConfigInfo(JNIEnv *env, jobject thiz,
                                                                                        jstring runner_config_ptr,
                                                                                        jstring section,
