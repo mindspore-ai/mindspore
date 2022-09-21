@@ -63,6 +63,7 @@ void ModelWorker::Run() {
     create_work_done_ = true;
   }
   create_work_done_condition_.notify_one();
+  MS_LOG(INFO) << "model worker is initialized.";
   while (!predict_task_queue_->IsPredictTaskDone()) {
     auto task = predict_task_queue_->GetPredictTask(task_queue_id, this);
     if (task == nullptr) {
