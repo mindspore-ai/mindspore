@@ -414,7 +414,7 @@ STATUS AclPassImpl::BuildGraph(const FuncGraphPtr &func_graph) {
 STATUS AclPassImpl::TraceOutput(const AnfNodePtr &node) {
   static size_t iter = 0;
   CHECK_NULL_RETURN(node);
-  if (node->isa<ValueNode>()) {
+  if (node->isa<ValueNode>() || utils::isa<ParameterPtr>(node)) {
     MS_LOG(INFO) << "Name of graph output value node is : " << node->fullname_with_scope();
     graph_output_dims_.emplace_back(std::vector<int64_t>());
     graph_outputs_.emplace_back(node);
