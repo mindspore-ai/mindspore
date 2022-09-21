@@ -472,6 +472,9 @@ void GenerateFuncGraphByPosition(const FuncGraphPtr &fg, const AbstractTuplePtr 
   if (pos == nullptr) {
     MS_LOG(EXCEPTION) << "Return grad by position, but the grad_position is empty!";
   }
+  if (pos->empty()) {
+    MS_LOG(EXCEPTION) << "grad_position should not be empty when grad by position.";
+  }
   AnfNodePtr tuple_parameter = fg->add_parameter();
   (void)fg->add_parameter();  // The 'grad_position' parameter.
   // Collect all parameters by 'grad_position'.
@@ -504,7 +507,9 @@ void GenerateFuncGraphByPosition(const FuncGraphPtr &fg, const AbstractTuplePtr 
   } else if (pos_elements.size() > args_least_size) {
     fg->set_output(fg->NewCNodeInOrder(pos_elements));
   } else {  // The 'pos' is empty AbstractTuple.
-    MS_LOG(EXCEPTION) << "grad_position should not be empty when grad by position.";
+    auto empty_tuple_value = std::make_shared<ValueTuple>(ValuePtrList());
+    auto empty_tuple = NewValueNode(empty_tuple_value);
+    fg->set_output(empty_tuple);
   }
 }
 }  // namespace
