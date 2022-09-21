@@ -128,7 +128,7 @@ static CNodePtr CreateVirtualDataset(const FuncGraphPtr &func_graph) {
 
 static std::set<FuncGraphPtr> FindForwardGraph(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &all_nodes) {
   std::set<FuncGraphPtr> graph_sets;
-  if (!parallel::IsAutoParallelCareGraph(root) && !parallel::IsPynativeParallel()) {
+  if (!parallel::IsAutoParallelCareGraph(root)) {
     return graph_sets;
   }
   std::set<AnfNodePtr> input_parameters;
@@ -217,6 +217,16 @@ static void InsertVirtualDataset(const FuncGraphPtr &root, const std::vector<Anf
   }
 }
 
+// If graph has shard node, set flag 'kPynativeShard' for root graph
+void SetPynativeShardFlagIfHasShardNode(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &all_nodes) {
+  for (auto &node : all_nodes) {
+    if (IsPrimitiveCNode(node, prim::kPrimShard)) {
+      root->set_flag(parallel::kPynativeShard, true);
+      break;
+    }
+  }
+}
+
 // Only auto_parallel and semi_auto_parallel support PipelineSplit
 bool PipelineSplit(const ResourcePtr &res) {
 #ifdef WITH_BACKEND
@@ -237,6 +247,7 @@ bool PipelineSplit(const ResourcePtr &res) {
   MS_EXCEPTION_IF_NULL(ret);
   std::vector<AnfNodePtr> all_nodes = DeepScopedGraphSearch(ret);
 
+  SetPynativeShardFlagIfHasShardNode(root, all_nodes);
   if (!HasVirtualDataset(all_nodes)) {
     InsertVirtualDataset(root, all_nodes);
   }

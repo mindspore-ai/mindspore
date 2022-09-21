@@ -418,7 +418,6 @@ static bool SetStrategyForShard(const FuncGraphPtr &root, const std::vector<AnfN
   constexpr size_t kShardParameterPlanIndex = 4;
   for (auto &node : all_nodes) {
     if (IsPrimitiveCNode(node, prim::kPrimShard)) {
-      root->set_flag(kPynativeShard, true);
       auto cnode = node->cast<CNodePtr>();
       auto vnode = cnode->input(kShardFnIndex)->cast<ValueNodePtr>();
       auto in_strategy = cnode->input(kShardInStrategyIndex);

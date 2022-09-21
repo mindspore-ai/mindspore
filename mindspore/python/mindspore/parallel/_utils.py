@@ -43,6 +43,13 @@ def _is_in_auto_parallel_mode():
     return _get_parallel_mode() in [ms.ParallelMode.SEMI_AUTO_PARALLEL, ms.ParallelMode.AUTO_PARALLEL]
 
 
+def _is_pynative_parallel():
+    run_mode = context.get_context('mode')
+    parallel_mode = context.get_auto_parallel_context('parallel_mode')
+    return run_mode == context.PYNATIVE_MODE and parallel_mode in (
+        context.ParallelMode.SEMI_AUTO_PARALLEL, context.ParallelMode.AUTO_PARALLEL)
+
+
 def _get_full_batch():
     """Get whether to use full_batch."""
     return auto_parallel_context().get_full_batch()
@@ -380,3 +387,34 @@ def _infer_rank_list(train_map, predict_map=None):
         else:
             ret[param_name] = (rank_list, False)
     return ret
+
+
+def _sens_divided_by_device_num_if_recomputation(sens_param, args, kwargs):
+    """
+    If in pynative parallel and full_batch is True, divide sens by device num to ensure that the gradients is right.
+    """
+    if not _is_pynative_parallel() or not _get_full_batch():
+        return args, kwargs
+    if not sens_param:
+        logger.warning(
+            "When pynative parallel and full_batch=True, the 'sens_param' should be set to True, "
+            "otherwise the gradients may be wrong.")
+        return args, kwargs
+
+    device_num = _get_device_num()
+    logger.info(f"When pynative_parallel and full_batch=True, "
+                f"the 'sens' will be divided by device num({device_num})")
+    sens = kwargs['sens'] if 'sens' in kwargs.keys() else args[-1]
+
+    if isinstance(sens, tuple):
+        new_sens = ()
+        for item in sens:
+            new_sens += (item / device_num,)
+    else:
+        new_sens = sens / device_num
+
+    if not 'sens' in kwargs.keys():
+        args = args[:-1] + (new_sens,)
+    else:
+        kwargs['sens'] = new_sens
+    return args, kwargs

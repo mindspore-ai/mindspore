@@ -20,6 +20,7 @@
 import numpy as np
 
 import mindspore as ms
+from mindspore import log as logger
 from mindspore.common._register_for_tensor import tensor_operator_registry
 from mindspore.common import Tensor
 from mindspore.common._decorator import deprecated
@@ -80,8 +81,9 @@ shard_fn = Shard()
 
 def shard(fn, in_strategy, out_strategy, parameter_plan=None, device="Ascend", level=0):
     """Apply distributed process for fn"""
-    if not isinstance(fn, ms.nn.Cell):
-        raise TypeError(f"Type of fn must be 'Cell', but got type {type(fn)}")
+    if not isinstance(fn, (ms.nn.Cell)):
+        logger.warning("'fn' is not a mindspore.nn.Cell, and when it derivable contains parameters, "
+                       "the gradient calculation may be incorrect.")
     return shard_fn(fn, in_strategy, out_strategy, parameter_plan, device, level)
 
 

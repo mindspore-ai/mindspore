@@ -22,6 +22,7 @@ import mindspore as ms
 import mindspore.nn as nn
 from mindspore import context
 from mindspore.common.parameter import Parameter, ParameterTuple
+from mindspore.parallel._utils import _sens_divided_by_device_num_if_recomputation
 from mindspore import log as logger
 from ..._c_expression import GradOperation_, HyperMap_, Map_, MultitypeFuncGraph_, Tail_, Shard_, \
     TupleAdd_, UnpackCall_, ZipOperation_, ListAppend_, TupleGetItemTensor_, ListInsert_, \
@@ -381,6 +382,7 @@ class GradOperation(GradOperation_):
         elif self.pynative_:
             @_wrap_func
             def after_grad(*args, **kwargs):
+                args, kwargs = _sens_divided_by_device_num_if_recomputation(grad_.sens_param, args, kwargs)
                 self._pynative_forward_run(fn, grad_, args, kwargs)
                 _pynative_executor.grad(fn, grad_, weights, self.grad_position, *args, **kwargs)
                 out = _pynative_executor(fn, grad_.sens_param, *args, **kwargs)
@@ -878,10 +880,8 @@ class Shard(Shard_):
         if context.get_context("mode") != context.PYNATIVE_MODE or \
             context.get_auto_parallel_context("parallel_mode") not in ["auto_parallel"]:
             raise AssertionError(f"'Shard' only supports auto parallel under PyNative mode")
-        if context.get_context("device_target") not in ["Ascend"]:
-            raise AssertionError(f"'Shard' now only supports 'Ascend'")
-        if context.get_auto_parallel_context("full_batch"):
-            raise AssertionError(f"'Shard' doesn't support 'full_batch'. Please set 'full_batch' as False")
+        if context.get_context("device_target") not in ["Ascend", "GPU"]:
+            raise AssertionError(f"'Shard' now only supports 'Ascend' and 'GPU'")
         if context.get_auto_parallel_context("search_mode") != "sharding_propagation":
             raise AssertionError(f"'search_mode' must be 'sharding_propagation' for 'Shard'")
         if not isinstance(in_strategy, tuple):

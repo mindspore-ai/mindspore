@@ -16,15 +16,29 @@
 import os
 import pytest
 
+
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_single
-def test_cell_shard():
+def test_cell_shard_ascend():
     '''
     Feature: shard function for cell to enable parallel execution under PyNative mode
     Description: Test a shrunk version of ResNet50 with a alternative execution of shard and pynative
     Expectation: Run success
     '''
-    ret = os.system("mpirun -n 8 --allow-run-as-root pytest -s -v cell_shard.py")
+    ret = os.system("mpirun -n 8 --allow-run-as-root pytest -s -v cell_shard.py::test_train_feed_ascend")
+    assert ret == 0
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_single
+def test_cell_shard_gpu():
+    '''
+    Feature: shard function for cell to enable parallel execution under PyNative mode
+    Description: Test a shrunk version of ResNet50 with a alternative execution of shard and pynative
+    Expectation: Run success
+    '''
+    ret = os.system("mpirun -n 8 --allow-run-as-root pytest -s -v cell_shard.py::test_train_feed_gpu")
     assert ret == 0

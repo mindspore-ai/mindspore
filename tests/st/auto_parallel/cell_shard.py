@@ -31,13 +31,6 @@ from mindspore.train.model import Model
 from mindspore.context import ParallelMode
 import mindspore.dataset as ds
 
-context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend", max_device_memory="25GB")
-context.set_context(device_id=int(os.getenv('DEVICE_ID')))
-init()
-context.set_auto_parallel_context(gradients_mean=True, parallel_mode=ParallelMode.AUTO_PARALLEL,
-                                  search_mode="sharding_propagation", device_num=8)
-np.random.seed(42)
-
 
 def weight_variable():
     return TruncatedNormal(0.01)
@@ -366,12 +359,7 @@ class ModelCallback(Callback):
         self.loss_list.append(result.asnumpy().mean())
 
 
-def test_train_feed(num_classes=65536):
-    '''
-    Feature: shard function for cell to enable parallel execution under PyNative mode
-    Description: Test a shrunk version of ResNet50 with a alternative execution of shard and pynative
-    Expectation: Run success
-    '''
+def train_feed(num_classes, expect_out):
     parallel_callback = ModelCallback()
     data_gen = DataGenerator()
     _, input_part = data_gen.input_data((32 * 8, 3, 224, 224))
@@ -385,6 +373,35 @@ def test_train_feed(num_classes=65536):
     model = Model(net, loss_fn=loss, optimizer=opt)
     model.train(3, dataset, dataset_sink_mode=False, callbacks=parallel_callback)
     loss_value = np.array(parallel_callback.loss_list)
-    expect_out = [11.259036, 11.015917, 10.599615]
     print(loss_value)
     assert np.allclose(loss_value, expect_out, 0.0001, 0.0001)
+
+
+def test_train_feed_ascend():
+    '''
+    Feature: shard function for cell to enable parallel execution under PyNative mode in Ascend
+    Description: Test a shrunk version of ResNet50 with a alternative execution of shard and pynative
+    Expectation: Run success
+    '''
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend", max_device_memory="25GB")
+    context.set_context(device_id=int(os.getenv('DEVICE_ID')))
+    init()
+    context.set_auto_parallel_context(gradients_mean=True, parallel_mode=ParallelMode.AUTO_PARALLEL,
+                                      search_mode="sharding_propagation", device_num=8)
+    np.random.seed(42)
+    train_feed(num_classes=65536, expect_out=[11.259036, 11.015917, 10.599615])
+
+
+def test_train_feed_gpu():
+    '''
+    Feature: shard function for cell to enable parallel execution under PyNative mode in GPU
+    Description: Test a shrunk version of ResNet50 with a alternative execution of shard and pynative
+    Expectation: Run success
+    '''
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    context.set_context(device_id=int(os.getenv('DEVICE_ID')))
+    init()
+    context.set_auto_parallel_context(gradients_mean=True, parallel_mode=ParallelMode.AUTO_PARALLEL,
+                                      search_mode="sharding_propagation", device_num=8)
+    np.random.seed(42)
+    train_feed(num_classes=65536, expect_out=[54.420227, 54.950275, 54.788376])
