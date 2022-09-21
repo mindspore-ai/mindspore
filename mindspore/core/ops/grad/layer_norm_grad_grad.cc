@@ -41,8 +41,6 @@ class LayerNormGradGradInfer : public abstract::OpInferBase {
     std::map<std::string, TypePtr> types;
     (void)types.emplace("x", input_args[kInputIndex0]->BuildType());
     (void)types.emplace("dy", input_args[kInputIndex1]->BuildType());
-    (void)types.emplace("variance", input_args[kInputIndex2]->BuildType());
-    (void)types.emplace("mean", input_args[kInputIndex3]->BuildType());
     (void)types.emplace("gamma", input_args[kInputIndex4]->BuildType());
     (void)types.emplace("d_dx", input_args[kInputIndex5]->BuildType());
     (void)types.emplace("d_dg", input_args[kInputIndex6]->BuildType());
