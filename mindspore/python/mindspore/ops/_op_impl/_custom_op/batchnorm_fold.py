@@ -14,6 +14,7 @@
 # ============================================================================
 
 """_BatchNormFold op"""
+from __future__ import absolute_import
 
 from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 import te

@@ -14,10 +14,13 @@
 # ============================================================================
 """CusCholeskyTrsm"""
 from __future__ import absolute_import
+import logging
 
 from te import tik
 from topi.cce import util
 from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+
+logging.basicConfig(level=logging.DEBUG, format="%(asctime)s %(levelname)s %(message)s")
 
 cus_cholesky_trsm_op_info = TBERegOp("CusCholeskyTrsm") \
     .fusion_type("OPAQUE") \
@@ -86,10 +89,7 @@ def cus_cholesky_trsm(input_x, output, kernel_name):
         chol_diag_element_final = tik_instance.Scalar("float32")
         chol_diag_element_final.set_as(input_x_ub[split_dim * split_dim - 1])
         trsm_diag_element = tik_instance.Scalar("float32")
-        try:
-            trsm_diag_element.set_as(1.0 / chol_diag_element_final)
-        except ZeroDivisionError:
-            assert False, "chol_diag_element_final as a divisor should not be zero."
+        trsm_diag_element.set_as(1.0 / chol_diag_element_final)
         temp_ub.__setitem__(split_dim * split_dim - 1, trsm_diag_element)
 
         with tik_instance.for_range(1, split_dim) as i:
@@ -104,10 +104,7 @@ def cus_cholesky_trsm(input_x, output, kernel_name):
             temp_scalar = tik_instance.Scalar("float32")
             temp_scalar.set_as(input_x_ub[index, index])
             chol_diag_element = tik_instance.Scalar("float32")
-            try:
-                chol_diag_element.set_as(1.0 / temp_scalar)
-            except ZeroDivisionError:
-                assert False, "temp_scalar as a divisor should not be zero."
+            chol_diag_element.set_as(1.0 / temp_scalar)
             tik_instance.vsub(64, temp_ub[index, 0], temp_ub[index, 0], assist_1_ub, vector_repeat_times,
                               1, 1, 1, 8, 8, 8)
             tik_instance.vmuls(64, temp_ub[index, 0], temp_ub[index, 0], chol_diag_element, vector_repeat_times, 1, 1,
