@@ -27,6 +27,8 @@ extern "C" {
 int Fp32Relu(const float *src, int length, float *dst);
 int Int32Relu(const int32_t *src, int length, int32_t *dst);
 int Fp32Relu6(const float *src, int length, float *dst);
+int Fp32Clip(const float *src, int length, float *dst, float min, float max);
+int Int32Clip(const int *src, int length, int *dst, int min, int max);
 int LRelu(const float *src, int length, float *dst, float alpha);
 int Sigmoid(const float *src, int length, float *dst);
 int Tanh(const float *src, int length, float *dst);
