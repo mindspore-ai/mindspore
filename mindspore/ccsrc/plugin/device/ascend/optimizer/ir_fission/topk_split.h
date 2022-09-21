@@ -19,15 +19,17 @@
 #include <memory>
 #include "backend/common/optimizer/optimizer.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
+#include "backend/common/optimizer/pattern_to_pattern.h"
 
 namespace mindspore {
 namespace opt {
-class TopKSplit : public PatternProcessPass {
+class TopKSplit : public PatternToPatternPass {
  public:
-  explicit TopKSplit(bool multigraph = true) : PatternProcessPass("topk_split", multigraph) {}
+  TopKSplit() : PatternToPatternPass("topk_split") {}
   ~TopKSplit() override = default;
-  const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
+  void DefineSrcPattern(SrcPattern *src_pattern) override;
+  void DefineDstPattern(DstPattern *dst_pattern) override;
+  bool CheckMatchedDAG(const PatternMap &, const FuncGraphPtr &, const AnfNodePtr &) const override;
 };
 }  // namespace opt
 }  // namespace mindspore

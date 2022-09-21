@@ -18,18 +18,17 @@
 
 #include "backend/common/optimizer/optimizer.h"
 #include "backend/common/optimizer/helper.h"
+#include "backend/common/optimizer/pattern_to_pattern.h"
 
 namespace mindspore {
 namespace opt {
-class ReduceMinFission : public PatternProcessPass {
+class ReduceMinFission : public PatternToPatternPass {
  public:
-  explicit ReduceMinFission(bool multigraph = true) : PatternProcessPass("reduce_min_fission", multigraph) {}
+  ReduceMinFission() : PatternToPatternPass("reduce_min_fission") {}
   ~ReduceMinFission() override = default;
-  const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &) const override;
-
- private:
-  CNodePtr CreateReduceMin(const FuncGraphPtr &graph, const AnfNodePtr &input, const CNodePtr &old_node) const;
+  void DefineSrcPattern(SrcPattern *src_pattern) override;
+  void DefineDstPattern(DstPattern *dst_pattern) override;
+  bool CheckMatchedDAG(const PatternMap &, const FuncGraphPtr &, const AnfNodePtr &) const override;
 };
 }  // namespace opt
 }  // namespace mindspore

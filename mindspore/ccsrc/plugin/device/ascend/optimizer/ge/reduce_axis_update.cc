@@ -27,6 +27,11 @@ namespace opt {
 namespace {
 constexpr size_t kReduceInputNum = 2;
 constexpr size_t kAxisInputIndex = 2;
+constexpr auto r_reduce = "r_reduce";
+constexpr auto m_reduce = "m_reduce";
+constexpr auto Xs = "Xs";
+constexpr auto V = "V";
+constexpr auto v_axis = "axis";
 }  // namespace
 
 bool ReduceAxisUpdate::IsReduce(const BaseRef &ref) {
@@ -60,19 +65,13 @@ bool ReduceAxisUpdate::IsAxisEmpty(const ValueNodePtr &axis_node) const {
   return false;
 }
 
-const BaseRef ReduceAxisUpdate::DefinePattern() const {
-  VarPtr reduce = std::make_shared<CondVar>(IsReduce);
-  VarPtr inputs = std::make_shared<SeqVar>();
-  return VectorRef({reduce, inputs});
-}
-
-const AnfNodePtr ReduceAxisUpdate::Process(const FuncGraphPtr &, const AnfNodePtr &node, const EquivPtr &) const {
+bool ReduceAxisUpdate::CheckMatchedDAG(const PatternMap &, const FuncGraphPtr &graph, const AnfNodePtr &node) const {
   MS_EXCEPTION_IF_NULL(node);
   MS_LOG(INFO) << "Reduce node is " << node->DebugString() << ".";
 
   if (AnfUtils::IsDimUnknown(node)) {
     MS_LOG(INFO) << "The dimension of " << node->DebugString() << " is unknown.";
-    return nullptr;
+    return false;
   }
 
   auto cnode = node->cast<CNodePtr>();
@@ -93,11 +92,15 @@ const AnfNodePtr ReduceAxisUpdate::Process(const FuncGraphPtr &, const AnfNodePt
   auto axis_value_node = input_axis->cast<ValueNodePtr>();
   if (axis_value_node == nullptr || !IsAxisEmpty(axis_value_node)) {
     MS_LOG(INFO) << "Axis input of node " << node->fullname_with_scope() << " is not value node or axis is not empty.";
-    return nullptr;
+    return false;
   } else {
     MS_LOG(INFO) << "Axis of node " << node->fullname_with_scope() << " is empty.";
   }
+  return true;
+}
 
+AnfNodePtr BuildAxis(const PatternMap &m) {
+  auto node = m.Get(m_reduce);
   ShapeVector x_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
   size_t x_dim_len = x_shape.size();
   MS_LOG(INFO) << "Input x dim len: " << x_dim_len;
@@ -112,10 +115,26 @@ const AnfNodePtr ReduceAxisUpdate::Process(const FuncGraphPtr &, const AnfNodePt
   auto new_axis_node = std::make_shared<ValueNode>(new_value);
   MS_EXCEPTION_IF_NULL(new_axis_node);
   new_axis_node->set_abstract(new_value->ToAbstract());
+  return new_axis_node;
+}
 
-  cnode->set_input(kAxisInputIndex, new_axis_node);
+AnfNodePtr BuildReduce(const PatternMap &m, const AnfNodePtr &default_cnode) {
+  auto anf = m.Get(m_reduce);
+  MS_EXCEPTION_IF_NULL(anf);
+  auto cnode = anf->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  cnode->set_input(kAxisInputIndex, m.Get(v_axis));
+  return cnode;
+}
 
-  return node;
+void ReduceAxisUpdate::DefineSrcPattern(SrcPattern *src_pattern) {
+  (*src_pattern).AddVar(V, IsReduce).AddSeqVar(Xs).AddCNode(m_reduce, {V, Xs});
+}
+
+void ReduceAxisUpdate::DefineDstPattern(DstPattern *dst_pattern) {
+  auto reduce_input = Unpacking(Xs);
+  reduce_input[kAxisInputIndex - 1] = v_axis;
+  (*dst_pattern).AddValueNode(v_axis, BuildAxis).AddCNode(r_reduce, {V, reduce_input}, BuildReduce);
 }
 }  // namespace opt
 }  // namespace mindspore
