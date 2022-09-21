@@ -421,7 +421,7 @@ class FeedForward(Cell):
             else:
                 ep = 1
             # ffn use less dp than other ops when use_moe, due to there are ops use dp and ep.
-            dp = int(parallel_config.data_parallel / ep)
+            dp = parallel_config.data_parallel // ep
             if ffn_hidden_size % mp != 0:
                 raise ValueError("For 'FeedForward', the class variable 'ffn_hidden_size' must be a multiple of the"
                                  "num of model parallel, but got the ffn_hidden_size is {} and the num of model "
@@ -471,7 +471,7 @@ class FeedForward(Cell):
             else:
                 ep = 1
             # ffn use less dp than other ops when use_moe, due to there are ops use dp and ep.
-            dp = int(parallel_config.data_parallel / ep)
+            dp = parallel_config.data_parallel // ep
             if ffn_hidden_size % mp != 0:
                 raise ValueError("For 'FeedForward', the class variable 'ffn_hidden_size' must be a multiple of the"
                                  "num of model parallel, but got the ffn_hidden_size is {} and the num of model "
@@ -1492,6 +1492,7 @@ class TransformerEncoderLayer(Cell):
             self.layernorm1 = _LayerNorm((hidden_size,)).to_float(layernorm_compute_type)
             self.layernorm2 = _LayerNorm((hidden_size,)).to_float(layernorm_compute_type)
 
+            attention_parallel_config = parallel_config.dpmp if self.use_moe else parallel_config
             self.attention = MultiHeadAttention(batch_size=batch_size,
                                                 src_seq_length=seq_length,
                                                 tgt_seq_length=seq_length,
@@ -1502,8 +1503,7 @@ class TransformerEncoderLayer(Cell):
                                                 softmax_compute_type=softmax_compute_type,
                                                 param_init_type=param_init_type,
                                                 use_past=use_past,
-                                                parallel_config=parallel_config.dpmp if self.use_moe
-                                                else parallel_config)
+                                                parallel_config=attention_parallel_config)
             if self.use_moe:
                 self.output = MoE(hidden_size=hidden_size,
                                   dropout_rate=hidden_dropout_rate,
@@ -1532,7 +1532,7 @@ class TransformerEncoderLayer(Cell):
                 self.reducesum = P.ReduceSum().shard(((1, 1, 1, 1),))
                 self.not_equal = P.NotEqual().shard(((1, 1, 1, 1), ()))
                 self.slice = P.StridedSlice().shard(((1, 1, 1, 1),))
-                size_per_head = int(hidden_size / num_heads)
+                size_per_head = hidden_size // num_heads
                 self.key_shape = (batch_size, num_heads, size_per_head, seq_length)
                 self.value_shape = (batch_size, num_heads, seq_length, size_per_head)
                 # parameters saving key and value states
@@ -1570,6 +1570,7 @@ class TransformerEncoderLayer(Cell):
             self.layernorm2 = _LayerNorm((hidden_size,)).to_float(layernorm_compute_type)
             self.layernorm2.shard(((parallel_config.data_parallel, 1),))
 
+            attention_parallel_config = parallel_config.dpmp if self.use_moe else parallel_config
             self.attention = MultiHeadAttention(batch_size=batch_size,
                                                 src_seq_length=seq_length,
                                                 tgt_seq_length=seq_length,
@@ -1580,8 +1581,7 @@ class TransformerEncoderLayer(Cell):
                                                 softmax_compute_type=softmax_compute_type,
                                                 param_init_type=param_init_type,
                                                 use_past=use_past,
-                                                parallel_config=parallel_config.dpmp if self.use_moe
-                                                else parallel_config)
+                                                parallel_config=attention_parallel_config)
             if self.use_moe:
                 self.output = MoE(hidden_size=hidden_size,
                                   dropout_rate=hidden_dropout_rate,
@@ -1939,7 +1939,7 @@ class TransformerDecoderLayer(Cell):
                 self.reducesum = P.ReduceSum().shard(((1, 1, 1, 1),))
                 self.not_equal = P.NotEqual().shard(((1, 1, 1, 1), ()))
                 self.slice = P.StridedSlice().shard(((1, 1, 1, 1),))
-                size_per_head = int(hidden_size / num_heads)
+                size_per_head = hidden_size // num_heads
                 self.key_shape = (batch_size, num_heads, size_per_head, tgt_seq_length)
                 self.value_shape = (batch_size, num_heads, tgt_seq_length, size_per_head)
                 # parameters saving key and value states
