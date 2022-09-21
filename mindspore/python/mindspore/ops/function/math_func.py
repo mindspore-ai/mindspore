@@ -2639,7 +2639,7 @@ def gt(x, y):
         >>> y = Tensor(np.array([1, 1, 4]), mindspore.int32)
         >>> output = ops.gt(x, y)
         >>> print(output)
-        [False  True False]
+        [False True False]
     """
     _greater = _get_cache_prim(P.Greater)()
     return _greater(x, y)

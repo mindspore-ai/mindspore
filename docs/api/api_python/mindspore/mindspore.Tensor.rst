@@ -77,6 +77,7 @@ mindspore.Tensor
     mindspore.Tensor.erf
     mindspore.Tensor.erfc
     mindspore.Tensor.exp
+    mindspore.Tensor.floor
     mindspore.Tensor.inv
     mindspore.Tensor.invert
     mindspore.Tensor.lerp
@@ -128,6 +129,8 @@ Reduction方法
     mindspore.Tensor.all
     mindspore.Tensor.any
     mindspore.Tensor.approximate_equal
+    mindspore.Tensor.ge
+    mindspore.Tensor.gt
     mindspore.Tensor.has_init
     mindspore.Tensor.isclose
     mindspore.Tensor.isfinite

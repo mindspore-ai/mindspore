@@ -3687,7 +3687,7 @@ class Greater(PrimitiveWithCheck):
         >>> greater = ops.Greater()
         >>> output = greater(x, y)
         >>> print(output)
-        [False  True False]
+        [False True False]
     """
     __mindspore_signature__ = (sig.sig_dtype.T, sig.sig_dtype.T)
 

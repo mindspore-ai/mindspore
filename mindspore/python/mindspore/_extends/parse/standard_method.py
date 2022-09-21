@@ -2176,7 +2176,7 @@ def ms_len(data):
 
 
 def floor(x):
-    """Implementation of `floor`."""
+    """Rounds a tensor down to the closest integer element-wise."""
     return x.__floor__()
 
 
@@ -2389,10 +2389,12 @@ def ger(x, y):
 
 
 def gt(x, y):
+    """Compare the value of the input parameters :math:`x > y` element-wise."""
     return F.gt(x, y)
 
 
 def ge(x, y):
+    """Compare the value of the input parameters :math:`x >= y` element-wise."""
     return F.ge(x, y)
 
 

@@ -1124,10 +1124,58 @@ class Tensor(Tensor_):
         return tensor_operator_registry.get('ger')(self, x)
 
     def gt(self, x):
+        """
+        Compare the current Tensor and parameter `x` element-wise. If the element in the current Tensor is greater than
+        the corresponding element in the parameter 'x', the corresponding position returns True;
+        otherwise, it returns False.
+
+        Refer to :func:`mindspore.ops.gt` for more detail.
+
+        Args:
+            x (Tensor): Input Tensor to compare.
+
+        Returns:
+            Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> from mindspore import Tensor
+            >>> a = Tensor(np.array([1, 2, 3]), mindspore.int32)
+            >>> x = Tensor(np.array([1, 1, 4]), mindspore.int32)
+            >>> output = a.gt(x)
+            >>> print(output)
+            [False True False]
+        """
         self._init_check()
         return tensor_operator_registry.get('gt')()(self, x)
 
     def ge(self, x):
+        """
+        Compare the current Tensor and parameter `x` element-wise. If the element in the current Tensor is greater than
+        or equal to the corresponding element in the parameter 'x', the corresponding position returns True;
+        otherwise, it returns False.
+
+        Refer to :func:`mindspore.ops.ge` for more detail.
+
+        Args:
+            x (Tensor): Input Tensor to compare.
+
+        Returns:
+            Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> from mindspore import Tensor
+            >>> a = Tensor(np.array([1, 2, 3]), mindspore.int32)
+            >>> x = Tensor(np.array([1, 1, 4]), mindspore.int32)
+            >>> output = a.ge(x)
+            >>> print(output)
+            [True True False]
+        """
         self._init_check()
         return tensor_operator_registry.get('ge')()(self, x)
 
@@ -1527,7 +1575,7 @@ class Tensor(Tensor_):
 
     def floor(self):
         """
-        Rounds a tensor up to the closest integer element-wise.
+        Rounds a tensor down to the closest integer element-wise.
 
         Returns:
             Tensor.
