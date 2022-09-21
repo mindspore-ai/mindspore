@@ -37,6 +37,9 @@ abstract::ShapePtr LrnInferShape(const PrimitivePtr &primitive, const std::vecto
   }
   auto input_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
   auto input_shape = input_shape_map[kShape];
+  if (IsDynamicRank(input_shape)) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
+  }
   // Check Lrn input shape equal to 4D.
   const int64_t input_rank = 4;
   (void)CheckAndConvertUtils::CheckValue<int64_t>("rank of input ", SizeToLong(input_shape.size()), kEqual, input_rank,

@@ -36,6 +36,10 @@ abstract::TupleShapePtr Dropout2DInferShape(const PrimitivePtr &primitive,
   auto input_shape_ptr = input_args[kInputIndex0]->BuildShape();
   auto input_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
   auto input_shape = input_shape_map[kShape];
+  if (IsDynamicRank(input_shape)) {
+    abstract::ShapePtr out_shape = std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
+    return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{out_shape, out_shape});
+  }
   // Check Dropout2d input shape whether equal to 4D.
   const int64_t input_rank = 4;
   (void)CheckAndConvertUtils::CheckValue<int64_t>("rank of input ", SizeToLong(input_shape.size()), kEqual, input_rank,
