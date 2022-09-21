@@ -209,3 +209,10 @@ def _isnan(x):
     if _get_device() == 'Ascend' or not _check_is_float(F.dtype(x)):
         return F.fill(mstype.bool_, F.shape(x), False)
     return F.isnan(x)
+
+
+def _dyn_infer_out_shape(*tensor_shapes):
+    shape_out = tensor_shapes[0]
+    for i in range(1, len(tensor_shapes)):
+        shape_out = F.maximum(shape_out, tensor_shapes[i])
+    return shape_out
