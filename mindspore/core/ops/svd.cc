@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,14 @@ abstract::BaseShapePtr SvdInferShape(const PrimitivePtr &prim, const std::vector
   auto full_matrices = GetValue<bool>(prim->GetAttr(kAttrFullMatrices));
 
   auto a_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  if (IsDynamicRank(a_shape) || IsDynamic(a_shape)) {
+    ShapeVector dyn_shape{UNKNOWN_RANK};
+    std::vector<abstract::BaseShapePtr> shape_tuple;
+    (void)shape_tuple.emplace_back(std::make_shared<abstract::Shape>(dyn_shape));
+    (void)shape_tuple.emplace_back(std::make_shared<abstract::Shape>(dyn_shape));
+    (void)shape_tuple.emplace_back(std::make_shared<abstract::Shape>(dyn_shape));
+    return std::make_shared<abstract::TupleShape>(shape_tuple);
+  }
   auto ndim = a_shape.size();
   (void)CheckAndConvertUtils::CheckInteger("ndim", SizeToLong(ndim), kGreaterEqual, kSizeTwo, prim->name());
   auto m = a_shape[ndim - kIndexTwo];

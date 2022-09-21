@@ -19,14 +19,19 @@ import mindspore
 
 from .. import Tensor
 from .. import functional as F
+from .. import operations as P
 from ..composite.multitype_ops.zeros_like_impl import zeros_like
 from ..operations import math_ops as math
 from ..operations import linalg_ops as linalg
 from ..operations import array_ops as arrays
 from ..primitive import constexpr
 from .._grad.grad_base import bprop_getters
+from .._grad.grad_base import dyn_rank
+from .._utils.utils import is_shape_unknown
 
 _shape = arrays.Shape()
+_dyn_shape = arrays.TensorShape()
+
 _dtype = arrays.DType()
 _cast = arrays.Cast()
 _transpose = arrays.Transpose()
@@ -47,12 +52,19 @@ def _raise_value_error(*info):
 
 
 def _matrix_transpose(a):
-    dims = a.ndim
-    if dims < 2:
-        _raise_value_error(
-            "To do _matrix_transpose for input a's ndim is not greater or equal to 2, which is invalid.")
-    axes = F.make_range(0, dims)
-    axes = axes[:-2] + (axes[-1],) + (axes[-2],)
+    """Transpose last two axes"""
+    if is_shape_unknown(_shape(a)):
+        dims = dyn_rank(a)
+        axes = P.Range()(P.Cast()(0, mindspore.int64), dims, P.Cast()(1, mindspore.int64))
+        axes = P.Concat(axis=-1)((axes[:-2], axes[-1:], axes[-2:-1]))
+    else:
+        dims = a.ndim
+        if dims < 2:
+            _raise_value_error(
+                "To do _matrix_transpose for input a's ndim is not greater or equal to 2, which is invalid: {}."
+                .format(dims))
+        axes = F.make_range(0, dims)
+        axes = axes[:-2] + (axes[-1],) + (axes[-2],)
     return _transpose(a, axes)
 
 
@@ -76,14 +88,26 @@ def _make_zero_matrix(shape, dtype):
 
 
 def _matrix_diag(diagonal):
+    """Do matrix diagnoal"""
     diagonal_shape = _shape(diagonal)
+    if is_shape_unknown(diagonal_shape):
+        diagonal_shape = _dyn_shape(diagonal)
+        row = P.Cast()(diagonal_shape[-1], mindspore.int32)
+        return arrays.MatrixDiagV3()(diagonal, _k_0, row, row, P.Cast()(0, _dtype(diagonal)))
+
     row = _make_tensor(diagonal_shape[-1], mindspore.int32)
     return arrays.MatrixDiagV3()(diagonal, _k_0, row, row, _make_tensor(0, _dtype(diagonal)))
 
 
 def _mat_mul(x, y):
+    """Do matmul"""
     shape = _shape(x)
-    if len(shape) > 2:
+    if is_shape_unknown(shape):
+        shape = _dyn_shape(x)
+        tensor_rank = dyn_rank(x)
+    else:
+        tensor_rank = len(shape)
+    if tensor_rank > 2:
         return math.BatchMatMul()(x, y)
     return math.MatMul()(x, y)
 
@@ -106,12 +130,16 @@ def get_bprop_svd(self):
             return (da,)
 
         a_shape = _shape(a)
-        if len(a_shape) < 2:
+        if is_shape_unknown(a_shape):
+            a_shape = _dyn_shape(a)
+            tensor_rank = dyn_rank(a)
+        else:
+            tensor_rank = len(a_shape)
+        if tensor_rank < 2:
             _raise_value_error(
                 "For input a's ndim is not greater or equal to 2, which is invalid.")
         m = a_shape[-2]
         n = a_shape[-1]
-
         s, u, v = out
         ds, du, dv = dout
         use_adjoint = False

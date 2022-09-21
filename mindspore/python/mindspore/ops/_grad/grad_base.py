@@ -97,12 +97,12 @@ def dyn_rank(tensor):
     return dyn_shape(dyn_shape(tensor))[0]
 
 
-def dyn_size(tensor):
+def dyn_size(tensor, dtype=mstype.int64):
     """get the size of tensor"""
     shape = dyn_shape(tensor)
     shape = cast(shape, mstype.float32)
     size = P.ReduceProd()(shape)
-    size = cast(size, mstype.int32)
+    size = cast(size, dtype)
     return size
 
 
@@ -117,7 +117,7 @@ def create_tensor_by_element(ori_tuple, data_type=mstype.int64):
     return ori_tuple
 
 
-def dyn_invert_premutation(prem):
+def dyn_invert_permutation(prem):
     """get the invert premutation of tensor"""
     indices = P.ExpandDims()(prem, -1)
     end = dyn_size(prem)

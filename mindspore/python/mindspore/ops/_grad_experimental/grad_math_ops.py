@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 
 from mindspore.common import dtype as mstype
 from mindspore.ops.operations.math_ops import Trace, Bernoulli, Renorm
+from mindspore.ops._utils.utils import is_shape_unknown
 from mindspore import nn
 import mindspore.numpy as mnp
 import numpy as np
@@ -27,7 +28,7 @@ from ..operations.math_ops import Real, Imag, Complex, Angle
 from ..operations.math_ops import ComplexAbs
 from ..operations.math_ops import Sinc
 from ..functional import broadcast_gradient_args
-from .._grad.grad_base import bprop_getters
+from .._grad.grad_base import bprop_getters, create_tensor_by_element, dyn_rank
 from .._grad.grad_math_ops import binop_grad_common
 from ..composite.multitype_ops.zeros_like_impl import zeros_like
 from ..operations import _grad_ops as G
@@ -55,15 +56,22 @@ from ..operations.math_ops import CholeskySolve
 from ..operations.math_ops import AddV2
 from ..operations.math_ops import TridiagonalMatMul
 from ..operations.math_ops import Logit
+from .._utils.utils import is_shape_unknown
 
 
 transpose = P.Transpose()
+dyn_shape_op = P.TensorShape()
 _conj = P.Conj()
 
 
 @constexpr
 def _generate_perm(x_dim):
     perm = tuple(range(x_dim - 2))
+    return perm
+
+
+def _dyn_generate_perm(x_dim):
+    perm = P.Range()(P.Cast()(0, x_dim.dtype), x_dim - 2, P.Cast()(1, x_dim.dtype))
     return perm
 
 
@@ -110,10 +118,20 @@ def get_bprop_cdist(self):
 
     def bprop(input_x, input_y, out, dout):
         dout_shape = F.shape(dout)
-        dout_dim = len(dout_shape)
-        dout_perm_part1 = _generate_perm(dout_dim)
-        dout_perm_part2 = (dout_dim - 1, dout_dim - 2)
-        dout_perm = dout_perm_part1 + dout_perm_part2
+        if is_shape_unknown(dout_shape):
+            dout_dim = dyn_rank(dout)
+            dout_perm_part2 = create_tensor_by_element(
+                (dout_dim - 1, dout_dim - 2))
+            if dout_dim <= 2:
+                dout_perm = dout_perm_part2
+            else:
+                dout_perm_part1 = _dyn_generate_perm(dout_dim)
+                dout_perm = P.Concat(0)((dout_perm_part1, dout_perm_part2))
+        else:
+            dout_dim = len(dout_shape)
+            dout_perm_part1 = _generate_perm(dout_dim)
+            dout_perm_part2 = (dout_dim - 1, dout_dim - 2)
+            dout_perm = dout_perm_part1 + dout_perm_part2
         out_perm = dout_perm
         dout_transpose = transpose(dout, dout_perm)
         out_transpose = transpose(out, out_perm)
@@ -484,8 +502,16 @@ def get_bprop_matrix_determinant(self):
     inverse_op = P.MatrixInverse(adjoint=True)
     shape_op = P.Shape()
     reshape = P.Reshape()
+    concat = P.Concat(0)
 
     def bprop(x, out, dout):
+        if is_shape_unknown(shape_op(x)):
+            x_adj_inv = inverse_op(x)
+            out_shape = dyn_shape_op(out)
+            ones = create_tensor_by_element((1, 1))
+            multipliers = reshape(dout * out, concat((out_shape, ones)))
+            dx = multipliers * x_adj_inv
+            return (dx,)
         x_adj_inv = inverse_op(x)
         multipliers = reshape(dout * out, shape_op(out) + (1, 1))
         dx = multipliers * x_adj_inv
@@ -902,7 +928,11 @@ def get_bprop_trace(self):
 
     def bprop(x, out, dout):
         shape = shape_op(x)
-        dx = input_grad(dout, cast(to_array(shape), mstype.int64))
+        if is_shape_unknown(shape):
+            shape = dyn_shape_op(x)
+            dx = input_grad(dout, shape)
+        else:
+            dx = input_grad(dout, cast(to_array(shape), mstype.int64))
         return (dx,)
 
     return bprop
@@ -1041,7 +1071,7 @@ def get_bprop_tridiagonal_matmul(self):
         maindiag_grad = reduce_sum(rhs_conj * grad, -1)
         subdiag_grad = reduce_sum(_rightshift(rhs_conj) * grad, -1)
         rhs_grad = _rightshift(superdiag_conj * grad) + maindiag_conj * grad + \
-        _leftshift(subdiag_conj * grad)
+            _leftshift(subdiag_conj * grad)
         superdiag_grad = expand_dims(superdiag_grad, -2)
         maindiag_grad = expand_dims(maindiag_grad, -2)
         subdiag_grad = expand_dims(subdiag_grad, -2)

@@ -2503,7 +2503,6 @@ class HistogramFixedWidth(PrimitiveWithInfer):
         self.add_prim_attr('dtype', 3)
 
 
-
 class Log(Primitive):
     """
     Returns the natural logarithm of a tensor element-wise.
