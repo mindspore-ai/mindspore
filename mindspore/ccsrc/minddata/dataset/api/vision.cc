@@ -15,7 +15,9 @@
  */
 
 #include "minddata/dataset/include/dataset/vision.h"
+#if defined(WITH_BACKEND) || defined(ENABLE_ACL)
 #include "minddata/dataset/include/dataset/vision_ascend.h"
+#endif
 #include "minddata/dataset/kernels/ir/vision/ascend_vision_ir.h"
 
 #include "minddata/dataset/kernels/ir/vision/adjust_brightness_ir.h"
