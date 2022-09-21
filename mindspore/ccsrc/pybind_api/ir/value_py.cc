@@ -23,7 +23,6 @@
 namespace mindspore {
 // Define python class for values.
 void RegValues(py::module *m) {
-  (void)py::class_<RefKey, std::shared_ptr<RefKey>>(*m, "RefKey").def(py::init<std::string>(), py::arg("str"));
   (void)py::class_<UMonad, std::shared_ptr<UMonad>>(*m, "UMonad").def(py::init());
   (void)py::class_<IOMonad, std::shared_ptr<IOMonad>>(*m, "IOMonad").def(py::init());
 }

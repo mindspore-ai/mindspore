@@ -60,7 +60,7 @@ class ScatterUpdateArithmeticCpuKernelMod : public NativeCpuKernelMod {
   LaunchFunc kernel_func_{};
   TypeId dtype_value_{kTypeUnknown};
   TypeId dtype_shape_{kTypeUnknown};
-  int unit_size_{0};
+  size_t unit_size_{0};
   size_t num_units_{0};
   size_t indices_unit_rank_{0};
   std::string kernel_type_;

@@ -376,7 +376,7 @@ EvalResultPtr AnalysisEngine::EvalCNode(const CNodePtr &cnode, const AnfNodeConf
     if (check_isolated_side_effect()) {
       auto input_cnode = dyn_cast<CNode>(node);
       if (input_cnode != nullptr) {
-        contains_isolated_side_effect |= input_cnode->has_isolated_side_effect_node();
+        contains_isolated_side_effect = contains_isolated_side_effect || input_cnode->has_isolated_side_effect_node();
       }
     }
   }
@@ -403,11 +403,13 @@ EvalResultPtr AnalysisEngine::EvalCNode(const CNodePtr &cnode, const AnfNodeConf
   if (check_isolated_side_effect()) {
     auto func_graph_abs = mindspore::cast<FuncGraphAbstractClosure>(func);
     if (func_graph_abs != nullptr) {
-      contains_isolated_side_effect |= func_graph_abs->func_graph()->has_isolated_side_effect_node();
+      contains_isolated_side_effect =
+        contains_isolated_side_effect || func_graph_abs->func_graph()->has_isolated_side_effect_node();
     }
     auto meta_func_graph_abs = mindspore::cast<MetaFuncGraphAbstractClosure>(func);
     if (meta_func_graph_abs != nullptr) {
-      contains_isolated_side_effect |= meta_func_graph_abs->meta_func_graph()->has_isolated_side_effect_node();
+      contains_isolated_side_effect =
+        contains_isolated_side_effect || meta_func_graph_abs->meta_func_graph()->has_isolated_side_effect_node();
     }
     if (contains_isolated_side_effect) {
       cnode->set_has_isolated_side_effect_node(true);
