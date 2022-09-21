@@ -18,7 +18,6 @@
 #include "extendrt/session/single_op_session.h"
 #include "plugin/factory/ms_factory.h"
 #include "kernel/common_utils.h"
-// #include "backend/common/session/session_basic.h"
 #include "backend/graph_compiler/graph_partition.h"
 #include "plugin/device/cpu/kernel/cpu_kernel_mod.h"
 #include "extendrt/utils/kernel_graph_utils.h"
