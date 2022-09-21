@@ -111,8 +111,6 @@ class Converter:
         RuntimeError: `config_file` is not "", but `config_file` does not exist.
 
     Examples:
-        >>> # Download the model package and extract it, model download link:
-        >>> # https://download.mindspore.cn/model_zoo/official/lite/quick_start/micro/mobilenetv2.tar.gz
         >>> import mindspore_lite as mslite
         >>> converter = mslite.Converter(mslite.FmkType.TFLITE, "./mobilenetv2/mobilenet_v2_1.0_224.tflite",
         ...                              "mobilenet_v2_1.0_224.tflite")
@@ -262,8 +260,6 @@ class Converter:
             TypeError: `config_info` is a dict, the keys are str, but the values are not str.
 
         Examples:
-            >>> # Download the model package and extract it, model download link:
-            >>> # https://download.mindspore.cn/model_zoo/official/lite/quick_start/micro/mobilenetv2.tar.gz
             >>> import mindspore_lite as mslite
             >>> converter = mslite.Converter(mslite.FmkType.TFLITE, "./mobilenetv2/mobilenet_v2_1.0_224.tflite",
             ...                              "mobilenet_v2_1.0_224.tflite")
@@ -285,8 +281,6 @@ class Converter:
             dict{str, dict{str, str}}, the config info which has been set in converter.
 
         Examples:
-            >>> # Download the model package and extract it, model download link:
-            >>> # https://download.mindspore.cn/model_zoo/official/lite/quick_start/micro/mobilenetv2.tar.gz
             >>> import mindspore_lite as mslite
             >>> converter = mslite.Converter(mslite.FmkType.TFLITE, "./mobilenetv2/mobilenet_v2_1.0_224.tflite",
             ...                              "mobilenet_v2_1.0_224.tflite")
@@ -307,8 +301,6 @@ class Converter:
             RuntimeError: converter model failed.
 
         Examples:
-            >>> # Download the model package and extract it, model download link:
-            >>> # https://download.mindspore.cn/model_zoo/official/lite/quick_start/micro/mobilenetv2.tar.gz
             >>> import mindspore_lite as mslite
             >>> converter = mslite.Converter(mslite.FmkType.TFLITE, "./mobilenetv2/mobilenet_v2_1.0_224.tflite",
             ...                              "mobilenet_v2_1.0_224.tflite")
