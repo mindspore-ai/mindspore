@@ -27,6 +27,11 @@ const int kDeconvWinogradMaxPixel = 3145728;
 DeConvolutionWinogradCPUKernel::~DeConvolutionWinogradCPUKernel() {
   FreeResizeBuf();
   FreeDeconvParam();
+
+  if (origin_input_ != nullptr) {
+    free(origin_input_);
+    origin_input_ = nullptr;
+  }
 }
 
 void DeConvolutionWinogradCPUKernel::FreeResizeBuf() {
@@ -411,6 +416,15 @@ int DeConvolutionWinogradCPUKernel::Prepare() {
     MS_LOG(ERROR) << "InitDataParam error!";
     return RET_ERROR;
   }
+  // when input data is const tensor, save data in kernel
+  if (in_tensors_.front()->IsConst()) {
+    origin_input_ = reinterpret_cast<float *>(malloc(in_tensors_.front()->Size()));
+    if (origin_input_ == nullptr) {
+      MS_LOG(ERROR) << "mallloc conv input data failed";
+      return RET_ERROR;
+    }
+    (void)memcpy(origin_input_, in_tensors_.front()->data(), in_tensors_.front()->Size());
+  }
 
   if (!InferShapeDone()) {
     return RET_OK;
@@ -520,7 +534,7 @@ int DeConvolutionWinogradCPUKernel::Run() {
 
   auto input_tensor = in_tensors_.at(kInputIndex);
   auto output_tensor = out_tensors_.at(kOutputIndex);
-  auto src_in = reinterpret_cast<float *>(input_tensor->data());
+  auto src_in = (origin_input_ != nullptr) ? origin_input_ : reinterpret_cast<float *>(input_tensor->data());
   auto src_out = reinterpret_cast<float *>(output_tensor->data());
   CHECK_NULL_RETURN(src_in);
   CHECK_NULL_RETURN(src_out);
