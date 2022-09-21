@@ -21,7 +21,6 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include <algorithm>
 
 #include "ops/base_operator.h"
 #include "mindapi/base/types.h"
