@@ -62,7 +62,6 @@ PrimShapeDependMap &GetHostDependsMap() {
   // Registration directly by the host_depends map will be deprecated and
   // should be registered by the REGISTER_HOST_DEPENDS
   using ShapeSet = std::set<int64_t>;
-  using PrimShapeDependMap = mindspore::HashMap<std::string, ShapeSet>;
   static const auto &kAdaptiveMaxPool3DGrad = prim::kPrimAdaptiveMaxPool3DGrad->name();
   static const auto &kAdaptiveAvgPool3D = prim::kPrimAdaptiveAvgPool3D->name();
   static const auto &kAdaptiveAvgPool3DGrad = prim::kPrimAdaptiveAvgPool3DGrad->name();
