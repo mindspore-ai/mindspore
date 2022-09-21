@@ -34,7 +34,7 @@ class LayerNormGradNet(nn.Cell):
         return self.norm(dy, x, var, mean, gamma)
 
 
-def LayerNormGradReference(x, dy, gamma, epsilon, begin_norm_axis, begin_params_axis):
+def layer_norm_grad_np(x, dy, gamma, epsilon, begin_norm_axis, begin_params_axis):
     begin_norm_axis = begin_norm_axis if begin_norm_axis >= 0 else begin_norm_axis + len(x.shape)
     begin_params_axis = begin_params_axis if begin_params_axis >= 0 else begin_params_axis + len(x.shape)
 
@@ -60,7 +60,8 @@ def LayerNormGradReference(x, dy, gamma, epsilon, begin_norm_axis, begin_params_
     dx2 = sum1 * 2.0 / num * (x - mean)
     dx3 = ((-1.0) * np.power(var + epsilon, -0.5) * sum2 + (1.0 / num) * sum1 * sum3) * (1.0 / num)
     dx = dx1 + dx2 + dx3
-    return dx, dg, db, mean, var
+    ret = (dx, dg, db, mean, var)
+    return ret
 
 
 @pytest.mark.level1
@@ -73,8 +74,8 @@ def test_layernormgrad0():
     dy_np = np.random.randn(4096, 3072).astype(np.float32)
     gamma_np = np.random.randn(*x_np.shape[begin_params_axis:]).astype(np.float32)
     epsilon = 10e-12
-    dx_np, dg_np, db_np, mean_np, var_np = LayerNormGradReference(x_np, dy_np, gamma_np, epsilon, begin_norm_axis,
-                                                                  begin_params_axis)
+    dx_np, dg_np, db_np, mean_np, var_np = layer_norm_grad_np(x_np, dy_np, gamma_np, epsilon, begin_norm_axis,
+                                                              begin_params_axis)
 
     dy_ms = Tensor(dy_np)
     x_ms = Tensor(x_np)
@@ -100,8 +101,8 @@ def test_layernormgrad1():
     dy_np = np.random.randn(640, 768).astype(np.float32)
     gamma_np = np.random.randn(*x_np.shape[begin_params_axis:]).astype(np.float32)
     epsilon = 10e-12
-    dx_np, dg_np, db_np, mean_np, var_np = LayerNormGradReference(x_np, dy_np, gamma_np, epsilon, begin_norm_axis,
-                                                                  begin_params_axis)
+    dx_np, dg_np, db_np, mean_np, var_np = layer_norm_grad_np(x_np, dy_np, gamma_np, epsilon, begin_norm_axis,
+                                                              begin_params_axis)
 
     dy_ms = Tensor(dy_np)
     x_ms = Tensor(x_np)
@@ -127,8 +128,8 @@ def test_layernormgrad2():
     dy_np = np.random.randn(32, 128, 768).astype(np.float32)
     gamma_np = np.random.randn(*x_np.shape[begin_params_axis:]).astype(np.float32)
     epsilon = 10e-12
-    dx_np, dg_np, db_np, mean_np, var_np = LayerNormGradReference(x_np, dy_np, gamma_np, epsilon, begin_norm_axis,
-                                                                  begin_params_axis)
+    dx_np, dg_np, db_np, mean_np, var_np = layer_norm_grad_np(x_np, dy_np, gamma_np, epsilon, begin_norm_axis,
+                                                              begin_params_axis)
 
     dy_ms = Tensor(dy_np)
     x_ms = Tensor(x_np)
@@ -154,8 +155,8 @@ def test_layernormgrad3():
     dy_np = np.random.randn(32, 64).astype(np.float32)
     gamma_np = np.random.randn(*x_np.shape[begin_params_axis:]).astype(np.float32)
     epsilon = 10e-12
-    dx_np, dg_np, db_np, mean_np, var_np = LayerNormGradReference(x_np, dy_np, gamma_np, epsilon, begin_norm_axis,
-                                                                  begin_params_axis)
+    dx_np, dg_np, db_np, mean_np, var_np = layer_norm_grad_np(x_np, dy_np, gamma_np, epsilon, begin_norm_axis,
+                                                              begin_params_axis)
 
     dy_ms = Tensor(dy_np)
     x_ms = Tensor(x_np)
@@ -180,8 +181,8 @@ def test_layernormgrad4():
     dy_np = np.random.randn(32, 64).astype(np.float32)
     gamma_np = np.random.randn(*x_np.shape[begin_params_axis:]).astype(np.float32)
     epsilon = 10e-12
-    dx_np, dg_np, db_np, mean_np, var_np = LayerNormGradReference(x_np, dy_np, gamma_np, epsilon, begin_norm_axis,
-                                                                  begin_params_axis)
+    dx_np, dg_np, db_np, mean_np, var_np = layer_norm_grad_np(x_np, dy_np, gamma_np, epsilon, begin_norm_axis,
+                                                              begin_params_axis)
 
     dy_ms = Tensor(dy_np)
     x_ms = Tensor(x_np)
@@ -206,8 +207,8 @@ def test_layernormgrad5():
     dy_np = np.random.randn(128, 2, 16, 32).astype(np.float32)
     gamma_np = np.random.randn(*x_np.shape[begin_params_axis:]).astype(np.float32)
     epsilon = 10e-12
-    dx_np, dg_np, db_np, mean_np, var_np = LayerNormGradReference(x_np, dy_np, gamma_np, epsilon, begin_norm_axis,
-                                                                  begin_params_axis)
+    dx_np, dg_np, db_np, mean_np, var_np = layer_norm_grad_np(x_np, dy_np, gamma_np, epsilon, begin_norm_axis,
+                                                              begin_params_axis)
 
     dy_ms = Tensor(dy_np)
     x_ms = Tensor(x_np)
@@ -237,8 +238,8 @@ def test_layernormgrad_dynamic_shape():
     dy_np = np.random.randn(128, 2, 16, 32).astype(np.float32)
     gamma_np = np.random.randn(*x_np.shape[begin_params_axis:]).astype(np.float32)
     epsilon = 10e-12
-    dx_np, dg_np, db_np, mean_np, var_np = LayerNormGradReference(x_np, dy_np, gamma_np, epsilon, begin_norm_axis,
-                                                                  begin_params_axis)
+    dx_np, dg_np, db_np, mean_np, var_np = layer_norm_grad_np(x_np, dy_np, gamma_np, epsilon, begin_norm_axis,
+                                                              begin_params_axis)
 
     dy_ms = Tensor(dy_np)
     x_ms = Tensor(x_np)
@@ -253,3 +254,35 @@ def test_layernormgrad_dynamic_shape():
     assert np.allclose(dx_ms.asnumpy(), dx_np, rtol=1e-6, atol=1e-6)
     assert np.allclose(db_ms.asnumpy(), db_np, rtol=1e-6, atol=1e-3)
     assert np.allclose(dg_ms.asnumpy(), dg_np, rtol=1e-6, atol=1e-3)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_layernormgrad_double():
+    """
+    Feature: Test LayerNormGrad double support.
+    Description: The input x type is double.
+    Expectation: match to np benchmark.
+    """
+    begin_norm_axis = 1
+    begin_params_axis = 1
+    x_np = np.random.randn(4096, 3072).astype(np.float64)
+    dy_np = np.random.randn(4096, 3072).astype(np.float64)
+    gamma_np = np.random.randn(*x_np.shape[begin_params_axis:]).astype(np.float64)
+    epsilon = 10e-12
+    dx_np, dg_np, db_np, mean_np, var_np = layer_norm_grad_np(x_np, dy_np, gamma_np, epsilon, begin_norm_axis,
+                                                              begin_params_axis)
+
+    dy_ms = Tensor(dy_np)
+    x_ms = Tensor(x_np)
+    var_ms = Tensor(var_np.astype(np.float32))
+    mean_ms = Tensor(mean_np.astype(np.float32))
+    gamma_ms = Tensor(gamma_np)
+
+    net = LayerNormGradNet(begin_norm_axis, begin_params_axis)
+    dx_ms, dg_ms, db_ms = net(x_ms, dy_ms, var_ms, mean_ms, gamma_ms)
+
+    assert np.allclose(dx_ms.asnumpy(), dx_np, rtol=1e-6, atol=1e-6)
+    assert np.allclose(dg_ms.asnumpy(), dg_np, rtol=1e-6, atol=1e-3)
+    assert np.allclose(db_ms.asnumpy(), db_np, rtol=1e-6, atol=1e-3)

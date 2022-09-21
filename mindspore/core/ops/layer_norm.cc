@@ -16,6 +16,7 @@
 
 #include "ops/layer_norm.h"
 #include "ops/op_utils.h"
+#include "utils/ms_context.h"
 #include "utils/check_convert_utils.h"
 #include "mindapi/src/helper.h"
 
@@ -70,7 +71,7 @@ AbstractBasePtr LayerNormInfer(const abstract::AnalysisEnginePtr &, const Primit
     abstract::CheckAxis(op_name, "begin_params_axis", bpa_ptr, -1, SizeToLong(input_rank), "input_x");
 
   // the beta and gama shape must be x_shape[begin_params_axis:]
-  auto valid_types = {kFloat16, kFloat32};
+  auto valid_types = {kFloat16, kFloat32, kFloat64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x_dtype", input_args[x_index]->BuildType(), valid_types, op_name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("gamma_dtype", input_args[gamma_index]->BuildType(), valid_types,
                                                    op_name);
@@ -112,12 +113,22 @@ AbstractBasePtr LayerNormInfer(const abstract::AnalysisEnginePtr &, const Primit
   }
 
   std::vector<BaseShapePtr> shapes_list = {input_x->BuildShape()};
-  std::vector<TypePtr> types_list = {input_x->BuildType(), kFloat32, kFloat32};
   auto mean_var_shape = CalLayerNormMeanAndVarShape(begin_norm_axis, input_shape->shape());
   (void)shapes_list.emplace_back(std::make_shared<abstract::Shape>(mean_var_shape));
   (void)shapes_list.emplace_back(std::make_shared<abstract::Shape>(mean_var_shape));
-  return abstract::MakeAbstract(std::make_shared<abstract::TupleShape>(shapes_list),
-                                std::make_shared<Tuple>(types_list));
+
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  bool is_ascend = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
+  if (is_ascend) {
+    std::vector<TypePtr> types_list = {input_x->BuildType(), input_x->BuildType(), input_x->BuildType()};
+    return abstract::MakeAbstract(std::make_shared<abstract::TupleShape>(shapes_list),
+                                  std::make_shared<Tuple>(types_list));
+  } else {
+    std::vector<TypePtr> types_list = {input_x->BuildType(), kFloat32, kFloat32};
+    return abstract::MakeAbstract(std::make_shared<abstract::TupleShape>(shapes_list),
+                                  std::make_shared<Tuple>(types_list));
+  }
 }
 
 void LayerNorm::Init(const int64_t begin_norm_axis, const int64_t begin_params_axis, const float epsilon) {
