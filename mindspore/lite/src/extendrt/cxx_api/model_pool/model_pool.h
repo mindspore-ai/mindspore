@@ -188,6 +188,7 @@ class ModelPool {
   int all_core_num_ = -1;
   std::shared_mutex model_pool_mutex_;
   bool is_initialized_ = false;
+  std::string model_path_;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_MODEL_POOL_MODEL_POOL_H_
