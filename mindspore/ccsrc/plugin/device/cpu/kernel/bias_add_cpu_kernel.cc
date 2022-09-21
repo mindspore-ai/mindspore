@@ -15,8 +15,9 @@
  */
 
 #include "plugin/device/cpu/kernel/bias_add_cpu_kernel.h"
-#include "plugin/device/cpu/kernel/nnacl/fp32/add_fp32.h"
-#include "plugin/device/cpu/kernel/nnacl/errorcode.h"
+#include "ops/bias_add.h"
+#include <map>
+#include <complex>
 
 namespace mindspore {
 namespace kernel {
@@ -27,14 +28,25 @@ constexpr size_t kBiasAddInputsNum = 2;
 constexpr size_t kBiasAddOutputsNum = 1;
 }  // namespace
 
-void BiasAddCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  bias_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-  if (AnfAlgo::IsShapesDynamic({input_shape_, bias_shape_})) {
-    return;
+bool BiasAddCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                               const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+    return false;
   }
+  kernel_name_ = base_operator->name();
+  return true;
+}
+
+int BiasAddCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                const std::vector<KernelTensorPtr> &outputs,
+                                const std::map<uint32_t, tensor::TensorPtr> &) {
+  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
+    return ret;
+  }
+  input_shape_ = Convert2SizeTClipNeg(inputs[kIndex0]->GetShapeVector());
+  bias_shape_ = Convert2SizeTClipNeg(inputs[kIndex1]->GetShapeVector());
   data_shape_ = input_shape_.size();
   if (input_shape_.size() < kBiasAddMinDim || input_shape_.size() > kBiasAddMaxDim) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
@@ -51,32 +63,40 @@ void BiasAddCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
                          "the second dimension length of 'input_x', the first dimension length of 'bias': "
                       << bias_shape_[0] << ", and the second dimension length of 'input_x': " << input_shape_[1];
   }
+  return ret;
 }
 
-bool BiasAddCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+bool BiasAddCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                  const std::vector<AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kBiasAddInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kBiasAddOutputsNum, kernel_name_);
-  const auto *src_addr = reinterpret_cast<float *>(inputs[0]->addr);
-  const auto *bias_addr = reinterpret_cast<float *>(inputs[1]->addr);
-  auto *output_addr = reinterpret_cast<float *>(outputs[0]->addr);
+  kernel_func_(this, inputs, workspace, outputs);
+  return true;
+}
 
-  if (input_shape_.size() > 2) {
-    int64_t hw_size = 1;
+template <typename T>
+bool BiasAddCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                                       const std::vector<AddressPtr> &outputs) {
+  const auto *src_addr = reinterpret_cast<T *>(inputs[kIndex0]->addr);
+  const auto *bias_addr = reinterpret_cast<T *>(inputs[kIndex1]->addr);
+  auto *output_addr = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+
+  if (input_shape_.size() > kBiasAddMinDim) {
+    size_t hw_size = 1;
     for (size_t i = 2; i < input_shape_.size(); ++i) {
       hw_size *= input_shape_[i];
     }
 
-    int64_t c_size = input_shape_[1];
-    for (int64_t n = 0; n < input_shape_[0]; ++n) {
-      for (int64_t c = 0; c < c_size; ++c) {
+    size_t c_size = input_shape_[kIndex1];
+    for (size_t n = 0; n < input_shape_[kIndex0]; ++n) {
+      for (size_t c = 0; c < c_size; ++c) {
         size_t offset = LongToSize(n * c_size * hw_size + c * hw_size);
         size_t hw = 0;
 #ifdef ENABLE_AVX
         constexpr size_t C8NUM = 8;
         size_t hw8 = hw_size / C8NUM * C8NUM;
-        const float *in_ptr = src_addr + offset;
-        float *out_ptr = output_addr + offset;
+        const T *in_ptr = src_addr + offset;
+        T *out_ptr = output_addr + offset;
         for (; hw < hw8; hw += C8NUM) {
           __m256 src_r1 = _mm256_loadu_ps(in_ptr);
           __m256 bias_r2 = _mm256_set1_ps(bias_addr[c]);
@@ -95,16 +115,42 @@ bool BiasAddCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const st
   } else {
     auto task = [&](size_t start, size_t end) {
       for (size_t n = start; n < end; ++n) {
-        size_t n_offset = LongToSize(input_shape_[1] * n);
-        if (ElementAdd(src_addr + n_offset, bias_addr, output_addr + n_offset, input_shape_[1]) != NNACL_OK) {
-          MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', ElementAdd failed.";
+        size_t n_offset = LongToSize(input_shape_[kIndex1] * n);
+        const T *inner_src = src_addr + n_offset;
+        T *inner_dst = output_addr + n_offset;
+        for (size_t index = 0; index < input_shape_[kIndex1]; ++index) {
+          inner_dst[index] = inner_src[index] + bias_addr[index];
         }
       }
     };
-    ParallelLaunchAutoSearch(task, LongToSize(input_shape_[0]), this, &parallel_search_info_);
+    ParallelLaunchAutoSearch(task, LongToSize(input_shape_[kIndex0]), this, &parallel_search_info_);
   }
 
   return true;
+}
+
+template <typename T>
+std::pair<KernelAttr, BiasAddCpuKernelMod::KernelRunFunc> BiasAddCpuKernelMod::MakeKernelFunc(TypeId type_id) const {
+  return std::make_pair(KernelAttr().AddInputAttr(type_id).AddInputAttr(type_id).AddOutputAttr(type_id),
+                        &BiasAddCpuKernelMod::LaunchKernel<T>);
+}
+
+const std::vector<std::pair<KernelAttr, BiasAddCpuKernelMod::KernelRunFunc>> &BiasAddCpuKernelMod::GetFuncList() const {
+  static const std::vector<std::pair<KernelAttr, BiasAddCpuKernelMod::KernelRunFunc>> func_list = {
+    MakeKernelFunc<float16>(kNumberTypeFloat16),
+    MakeKernelFunc<float>(kNumberTypeFloat32),
+    MakeKernelFunc<double>(kNumberTypeFloat64),
+    MakeKernelFunc<int8_t>(kNumberTypeInt8),
+    MakeKernelFunc<int16_t>(kNumberTypeInt16),
+    MakeKernelFunc<int64_t>(kNumberTypeInt32),
+    MakeKernelFunc<uint8_t>(kNumberTypeUInt8),
+    MakeKernelFunc<uint16_t>(kNumberTypeUInt16),
+    MakeKernelFunc<uint32_t>(kNumberTypeUInt32),
+    MakeKernelFunc<uint64_t>(kNumberTypeUInt64),
+    MakeKernelFunc<std::complex<float>>(kNumberTypeComplex64),
+    MakeKernelFunc<std::complex<double>>(kNumberTypeComplex128),
+  };
+  return func_list;
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, BiasAdd, BiasAddCpuKernelMod);
