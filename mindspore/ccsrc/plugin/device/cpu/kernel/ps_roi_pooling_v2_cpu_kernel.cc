@@ -61,6 +61,7 @@ void PSROIPoolingCpuKernelMod::PSROIPoolForward(size_t start, size_t end, const 
 
     const T *offset_rois = roi_boxes + n * elements_per_roi_box;
     int roi_batch_ind = static_cast<int>(offset_rois[0]);
+
     // floor round not support half
     T roi_start_width = static_cast<T>(round(static_cast<float>(offset_rois[1] * spatial_scale)));
     T roi_start_height = static_cast<T>(round(static_cast<float>(offset_rois[2] * spatial_scale)));
@@ -174,18 +175,17 @@ int PSROIPoolingCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
   rois_num_ = static_cast<int32_t>(rois_shape[kNumberIndex]);
   output_n_ = batch_size_ * rois_num_;
 
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::PSROIPooling>(base_operator);
-  auto spatial_scale_ptr = kernel_ptr->GetAttr("spatial_scale");
+  auto spatial_scale_ptr = base_operator->GetAttr("spatial_scale");
   MS_EXCEPTION_IF_NULL(spatial_scale_ptr);
   spatial_scale_ = GetValue<float>(spatial_scale_ptr);
 
-  auto group_size_ptr = kernel_ptr->GetAttr("group_size");
+  auto group_size_ptr = base_operator->GetAttr("group_size");
   MS_EXCEPTION_IF_NULL(group_size_ptr);
   pooled_height_ = LongToInt(GetValue<int64_t>(group_size_ptr));
   pooled_width_ = LongToInt(GetValue<int64_t>(group_size_ptr));
   group_size_ = LongToInt(GetValue<int64_t>(group_size_ptr));
 
-  auto output_dim_ptr = kernel_ptr->GetAttr("output_dim");
+  auto output_dim_ptr = base_operator->GetAttr("output_dim");
   output_channels_ = LongToInt(GetValue<int64_t>(output_dim_ptr));
 
   for (auto tensor_ptr : inputs) {
