@@ -46,7 +46,7 @@ class HQueue {
   HQueue() {}
   virtual ~HQueue() {}
 
-  bool IsInit() { return nodes.size() != 0; }
+  bool IsInit() const { return nodes.size() != 0; }
 
   bool Init(int32_t sz) {
     if (IsInit() || sz <= 0) {
