@@ -51,7 +51,7 @@ class SparseAddCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelpe
                     const std::vector<kernel::AddressPtr> &outputs);
   template <typename T>
   int CompareTowIndices(const T &a_indices, const T &b_indices, const int64_t a_row, const int64_t b_row,
-                        const size_t dims);
+                        const size_t dims) const;
 
   float thresh_ = 0;
   size_t row_ = 0;
