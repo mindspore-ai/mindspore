@@ -57,6 +57,7 @@ class DeConvolutionWinogradCPUKernel : public ConvolutionBaseCPUKernel {
   float *nc4hw4_output_ = nullptr;
   float *tile_input_ = nullptr;
   float *tile_output_ = nullptr;
+  float *origin_input_ = nullptr;
   std::mutex lock_;
   int tile_num_;
   int thread_num_hw_ = 0;
