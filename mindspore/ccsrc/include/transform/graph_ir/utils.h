@@ -48,7 +48,7 @@ std::vector<GeTensorPtr> ConvertInputTensors(const std::vector<MeTensorPtr> &me_
 std::vector<MeTensorPtr> ConvertGeTensors(const std::vector<GeTensorPtr> &ge_tensors);
 GeDataType ConvertDataType(const MeDataType &type);
 
-MeTensorPtr ConvertGeTensor(GeTensorPtr ge_tensor, const ShapeVector &request_dims);
+MeTensorPtr ConvertGeTensor(const GeTensorPtr &ge_tensor, const ShapeVector &request_dims);
 MeTensorPtr ConvertGeTensor(const GeTensorPtr &tensor);
 MeTensorPtr ConvertGeTensor(const GeTensorPtr &tensor, const TypeId &me_type);
 
@@ -68,17 +68,17 @@ FuncGraphPtr GetAnfGraph(uint32_t graph_id);
 // convert
 BACKEND_EXPORT DfGraphConvertorPtr NewConverter(const FuncGraphPtr &graph);
 
-BACKEND_EXPORT void SetTraining(DfGraphConvertorPtr converter, bool training);
-BACKEND_EXPORT void BuildGraph(DfGraphConvertorPtr converter,
+BACKEND_EXPORT void SetTraining(const DfGraphConvertorPtr &converter, bool training);
+BACKEND_EXPORT void BuildGraph(const DfGraphConvertorPtr &converter,
                                const std::map<std::string, std::shared_ptr<tensor::Tensor>> &maps);
-void GenerateBroadcastGraph(DfGraphConvertorPtr converter, const TensorOrderMap &tensors);
-BACKEND_EXPORT void GenerateCheckpointGraph(DfGraphConvertorPtr converter);
-BACKEND_EXPORT int ErrCode(DfGraphConvertorPtr converter);
+void GenerateBroadcastGraph(const DfGraphConvertorPtr &converter, const TensorOrderMap &tensors);
+BACKEND_EXPORT void GenerateCheckpointGraph(const DfGraphConvertorPtr &converter);
+BACKEND_EXPORT int ErrCode(const DfGraphConvertorPtr &converter);
 
-BACKEND_EXPORT DfGraphPtr GetComputeGraph(DfGraphConvertorPtr converter);
-BACKEND_EXPORT DfGraphPtr GetInitGraph(DfGraphConvertorPtr converter);
-BACKEND_EXPORT DfGraphPtr GetSaveCheckpointGraph(DfGraphConvertorPtr converter);
-BACKEND_EXPORT DfGraphPtr GetBroadcastGraph(DfGraphConvertorPtr converter);
+BACKEND_EXPORT DfGraphPtr GetComputeGraph(const DfGraphConvertorPtr &converter);
+BACKEND_EXPORT DfGraphPtr GetInitGraph(const DfGraphConvertorPtr &converter);
+BACKEND_EXPORT DfGraphPtr GetSaveCheckpointGraph(const DfGraphConvertorPtr &converter);
+BACKEND_EXPORT DfGraphPtr GetBroadcastGraph(const DfGraphConvertorPtr &converter);
 
 // new session
 BACKEND_EXPORT std::shared_ptr<ge::Session> NewSession(const SessionOptions &sess_options);

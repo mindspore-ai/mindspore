@@ -269,7 +269,7 @@ void AscendTdtQueue::ParseType(aclDataType acl_data_type, std::string *data_type
   *data_type = type_iter->second;
 }
 
-bool AscendTdtQueue::Translate(const std::vector<DataQueueItem> &data, acltdtDataset **output_acl_dataset) {
+bool AscendTdtQueue::Translate(const std::vector<DataQueueItem> &data, acltdtDataset **output_acl_dataset) const {
   auto acl_dataset = acltdtCreateDataset();
   if (acl_dataset == nullptr) {
     MS_LOG(ERROR) << "Create tdt dataset failed.";
@@ -497,7 +497,8 @@ bool AscendHostQueue::EnqueueData(void *buff, bool *need_resend) {
   return true;
 }
 
-bool AscendHostQueue::CreateDataItemInfos(const std::vector<DataQueueItem> &data, std::vector<DataItemInfo> *items) {
+bool AscendHostQueue::CreateDataItemInfos(const std::vector<DataQueueItem> &data,
+                                          std::vector<DataItemInfo> *items) const {
   MS_EXCEPTION_IF_NULL(items);
   if (data.empty()) {
     items->emplace_back(BuildDataItemInfo(ACL_TENSOR_DATA_END_OF_SEQUENCE, ACL_BOOL, nullptr, 0UL, nullptr, 0UL));
