@@ -112,16 +112,18 @@ abstract::ShapePtr MaxUnpool3DInferShape(const PrimitivePtr &primitive,
   auto argmax_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShapeTrack())[kShape];
   auto data_format = GetValue<std::string>(primitive->GetAttr("format"));
-  (void)CheckAndConvertUtils::CheckInteger("x_rank", SizeToLong(in_shape.size()), kEqual, kDim5, op_name);
-  (void)CheckAndConvertUtils::CheckInteger("argmax_rank", SizeToLong(argmax_shape.size()), kEqual, kDim5, op_name);
+  (void)CheckAndConvertUtils::CheckInteger("x_rank", SizeToLong(in_shape.size()), kEqual, SizeToLong(kDim5), op_name);
+  (void)CheckAndConvertUtils::CheckInteger("argmax_rank", SizeToLong(argmax_shape.size()), kEqual, SizeToLong(kDim5),
+                                           op_name);
   CheckAndConvertUtils::Check("x_shape", in_shape, kEqual, argmax_shape, op_name, ValueError);
   auto ksize = GetValue<std::vector<int64_t>>(primitive->GetAttr("ksize"));
   auto strides = GetValue<std::vector<int64_t>>(primitive->GetAttr("strides"));
   auto pads = GetValue<std::vector<int64_t>>(primitive->GetAttr("pads"));
   auto attr_output_shape = GetValue<std::vector<int64_t>>(primitive->GetAttr("output_shape"));
-  (void)CheckAndConvertUtils::CheckInteger("ksize_rank", SizeToLong(ksize.size()), kEqual, kDim5, op_name);
-  (void)CheckAndConvertUtils::CheckInteger("strides_rank", SizeToLong(strides.size()), kEqual, kDim5, op_name);
-  (void)CheckAndConvertUtils::CheckInteger("pads_rank", SizeToLong(pads.size()), kEqual, kDim5, op_name);
+  (void)CheckAndConvertUtils::CheckInteger("ksize_rank", SizeToLong(ksize.size()), kEqual, SizeToLong(kDim5), op_name);
+  (void)CheckAndConvertUtils::CheckInteger("strides_rank", SizeToLong(strides.size()), kEqual, SizeToLong(kDim5),
+                                           op_name);
+  (void)CheckAndConvertUtils::CheckInteger("pads_rank", SizeToLong(pads.size()), kEqual, SizeToLong(kDim5), op_name);
 
   if (attr_output_shape.size() != kDim5 && attr_output_shape.size() != kDim0) {
     MS_EXCEPTION(ValueError) << "MaxUnpool3D: Output_shape size must be 0 or 5.";

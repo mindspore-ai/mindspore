@@ -69,8 +69,8 @@ abstract::ShapePtr CropAndResizeGradBoxesInferShape(const PrimitivePtr &primitiv
   auto input_shape2 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kBoxes]->BuildShape())[kShape];
   (void)CheckAndConvertUtils::CheckInteger("boxes rank", SizeToLong(input_shape2.size()), kEqual, kBoxesShapeLen,
                                            prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("shape[1] of boxes", SizeToLong(input_shape2[1]), kEqual,
-                                           SizeToLong(kCoordinateLen), prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("shape[1] of boxes", input_shape2[1], kEqual, SizeToLong(kCoordinateLen),
+                                           prim_name);
   MS_EXCEPTION_IF_NULL(input_args[kBoxIndex]);
   auto input_shape3 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kBoxIndex]->BuildShape())[kShape];
   (void)CheckAndConvertUtils::CheckInteger("box_index rank", SizeToLong(input_shape3.size()), kEqual, kBoxIndShapeLen,

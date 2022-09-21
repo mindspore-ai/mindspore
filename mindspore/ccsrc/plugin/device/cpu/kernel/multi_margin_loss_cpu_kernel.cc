@@ -187,7 +187,7 @@ void MultiMarginLossCPUKernelMod::LaunchKernelFP16(const std::vector<kernel::Add
 }
 
 void MultiMarginLossCPUKernelMod::CheckParam(const CNodePtr &kernel_node) {
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
+  input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   if (input_num != kMultiMarginLossInputNumWithoutWeight && input_num != kMultiMarginLossInputNumWithWeight) {
     MS_LOG(EXCEPTION) << "Invalid input numbers, expect input number 2 or 3, but actual input number " << input_num;
   }

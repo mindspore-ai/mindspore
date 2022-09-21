@@ -31,7 +31,7 @@ void BartlettWindowCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   periodic_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "periodic");
-  auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
+  input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   if (input_shape.size() > 0) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the dim of window_length should be 0, but got "
                              << input_shape.size();
