@@ -44,8 +44,8 @@ abstract::ShapePtr InplaceOpInferShape(const PrimitivePtr &primitive, const std:
   auto v_in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(v_shape_ptr)[kShape];
 
   // check dimensions except for the first one
-  CheckAndConvertUtils::CheckValue<size_t>("rank of x", x_in_shape.size(), kEqual, "rank of v", v_in_shape.size(),
-                                           primitive->name());
+  (void)CheckAndConvertUtils::CheckValue<size_t>("rank of x", x_in_shape.size(), kEqual, "rank of v", v_in_shape.size(),
+                                                 primitive->name());
   if (x_in_shape.size() == 0) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name()
                              << "', the input 'x' and 'v' must be greater than 0 dimension,"

@@ -152,7 +152,7 @@ bool CTCLossV2CpuKernelMod::IndexProcessing(T *in_len_p, T *tar_len_p, std::vect
 
 template <typename S, typename T>
 bool CTCLossV2CpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                         const std::vector<kernel::AddressPtr> &workspace,
+                                         const std::vector<kernel::AddressPtr> &,
                                          const std::vector<kernel::AddressPtr> &outputs) {
   auto log_probs_p = reinterpret_cast<S *>(inputs[kIndex0]->addr);
   auto tar_p = reinterpret_cast<T *>(inputs[kIndex1]->addr);
