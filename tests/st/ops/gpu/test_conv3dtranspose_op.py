@@ -18,6 +18,7 @@ import pytest
 
 import mindspore.context as context
 import mindspore.nn as nn
+import mindspore as ms
 from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops.functional import vmap
@@ -39,6 +40,48 @@ class NetConv3dTranspose(nn.Cell):
 
     def construct(self, x, w):
         return self.conv_trans(x, w)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_conv3dtranspose_dshape_1():
+    """
+    Feature: Test conv3dtranspose dynamic shape.
+    Description: Test conv3dtranspose dynamic shape.
+    Expectation: Success.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+    net = NetConv3dTranspose()
+    input_x_dyn = Tensor(shape=[1, 2, 3, 3, None], dtype=ms.float32)
+    input_w_dyn = Tensor(shape=[2, 2, 2, 2, None], dtype=ms.float32)
+    net.set_inputs(input_x_dyn, input_w_dyn)
+    x = Tensor(np.arange(1 * 2 * 3 * 3 * 3).reshape(1, 2, 3, 3, 3).astype(np.float32))
+    w = Tensor(np.arange(2 * 2 * 2 * 2 * 2).reshape(2, 2, 2, 2, 2).astype(np.float32))
+    output = net(x, w)
+    expect_shape = (1, 2, 2, 2, 2)
+    assert output.asnumpy().shape == expect_shape
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_conv3dtranspose_dshape_2():
+    """
+    Feature: Test conv3dtranspose dynamic shape.
+    Description: Test conv3dtranspose dynamic shape.
+    Expectation: Success.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+    net = NetConv3dTranspose()
+    input_x_dyn = Tensor(shape=[None, 2, 3, 3, 3], dtype=ms.float32)
+    input_w_dyn = Tensor(shape=[None, 2, 2, 2, 2], dtype=ms.float32)
+    net.set_inputs(input_x_dyn, input_w_dyn)
+    x = Tensor(np.arange(1 * 2 * 3 * 3 * 3).reshape(1, 2, 3, 3, 3).astype(np.float32))
+    w = Tensor(np.arange(2 * 2 * 2 * 2 * 2).reshape(2, 2, 2, 2, 2).astype(np.float32))
+    output = net(x, w)
+    expect_shape = (1, 2, 2, 2, 2)
+    assert output.asnumpy().shape == expect_shape
 
 
 @pytest.mark.level1
