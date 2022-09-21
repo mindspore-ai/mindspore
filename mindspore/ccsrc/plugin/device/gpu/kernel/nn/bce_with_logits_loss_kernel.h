@@ -14,136 +14,44 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_BCE_WITH_LOGITS_LOSS_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_BCE_WITH_LOGITS_LOSS_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_NN_BCE_WITH_LOGITS_LOSS_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_NN_BCE_WITH_LOGITS_LOSS_KERNEL_H_
 
 #include <vector>
 #include <string>
+#include <map>
+#include <utility>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/bce_with_logits_loss_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
-class BCEWithLogitsLossKernelMod : public DeprecatedNativeGpuKernelMod {
+class BCEWithLogitsLossKernelMod : public NativeGpuKernelMod {
  public:
-  BCEWithLogitsLossKernelMod() { ResetResource(); }
+  BCEWithLogitsLossKernelMod() = default;
   ~BCEWithLogitsLossKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    if (is_null_input_) {
-      return true;
-    }
-    T *predict = GetDeviceAddress<T>(inputs, 0);
-    T *target = GetDeviceAddress<T>(inputs, 1);
-    T *weight = GetDeviceAddress<T>(inputs, 2);
-    T *pos_weight = GetDeviceAddress<T>(inputs, 3);
-    size_t *input_shape = GetDeviceAddress<size_t>(workspace, 0);
-    size_t *weight_shape = GetDeviceAddress<size_t>(workspace, 1);
-    size_t *pos_weight_shape = GetDeviceAddress<size_t>(workspace, 2);
-    T *shape_broadcasted = GetDeviceAddress<T>(workspace, 3);
-    T *output = GetDeviceAddress<T>(outputs, 0);
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                               cudaMemcpyAsync(input_shape, &input_shape_[0], input_shape_.size() * sizeof(size_t),
-                                               cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
-                               "cudaMemcpyAsync input_shape_ failed");
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                               cudaMemcpyAsync(weight_shape, &weight_shape_[0], weight_shape_.size() * sizeof(size_t),
-                                               cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
-                               "cudaMemcpyAsync weight_shape_ failed");
-    CHECK_CUDA_RET_WITH_EXCEPT(
-      kernel_node_,
-      cudaMemcpyAsync(pos_weight_shape, &pos_weight_shape_[0], pos_weight_shape_.size() * sizeof(size_t),
-                      cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
-      "cudaMemcpyAsync pos_weight_shape_ failed");
-    CalBCEWithLogitsLoss(input_size_, predict, target, input_shape, input_shape_.size(), weight, weight_shape,
-                         weight_need_broadcast_, pos_weight, pos_weight_shape, pos_weight_need_broadcast_,
-                         shape_broadcasted, output, reinterpret_cast<cudaStream_t>(stream_ptr));
-    return true;
+    return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
   }
 
-  bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-    kernel_node_ = kernel_node;
-    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    if (input_num != 4) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 4, but got " << input_num;
-    }
-    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-    if (output_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << output_num;
-    }
-    input_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    weight_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
-    pos_weight_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
-    is_null_input_ = CHECK_SHAPE_NULL(input_shape_, kernel_name_, "logits") ||
-                     CHECK_SHAPE_NULL(weight_shape_, kernel_name_, "weight") ||
-                     CHECK_SHAPE_NULL(pos_weight_shape_, kernel_name_, "pos_weight");
-    if (is_null_input_ || AnfAlgo::IsShapesDynamic({input_shape_, weight_shape_, pos_weight_shape_})) {
-      InitSizeLists();
-      return true;
-    }
-    if (input_shape_.size() < 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of logits cannot be less than 1, but got "
-                        << input_shape_.size();
-    }
-    if (weight_shape_.size() < 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of weight cannot be less than 1, but got "
-                        << weight_shape_.size();
-    }
-    if (pos_weight_shape_.size() < 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of pos_weight cannot be less than 1, but got "
-                        << pos_weight_shape_.size();
-    }
-    if (input_shape_.size() > MAX_LOGITS_DIMENSION) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of logits cannot be greater than "
-                        << MAX_LOGITS_DIMENSION << ", but got " << input_shape_.size();
-    }
-    input_size_ = SizeOf(input_shape_);
-    // weight shape
-    weight_size_ = SizeOf(weight_shape_);
-    weight_need_broadcast_ = NeedBroadcast(&weight_shape_, input_shape_);
-    // pos_weight shape
-    pos_weight_size_ = SizeOf(pos_weight_shape_);
-    pos_weight_need_broadcast_ = NeedBroadcast(&pos_weight_shape_, input_shape_);
-    InitSizeLists();
-    return true;
-  }
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
 
-  void ResetResource() noexcept override {
-    input_size_ = 1;
-    weight_size_ = 1;
-    pos_weight_size_ = 1;
-    weight_need_broadcast_ = false;
-    pos_weight_need_broadcast_ = false;
-    is_null_input_ = false;
-    kernel_name_ = "BCEWithLogitsLoss";
-    input_shape_.clear();
-    weight_shape_.clear();
-    pos_weight_shape_.clear();
-    input_size_list_.clear();
-    output_size_list_.clear();
-    workspace_size_list_.clear();
-  }
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
  protected:
-  void InitSizeLists() override {
-    input_size_list_.push_back(input_size_ * sizeof(T));
-    input_size_list_.push_back(input_size_ * sizeof(T));
-    input_size_list_.push_back(weight_size_ * sizeof(T));
-    input_size_list_.push_back(pos_weight_size_ * sizeof(T));
+  void InitWorkSpaceSizeLists() {
     workspace_size_list_.push_back(input_shape_.size() * sizeof(size_t));
     workspace_size_list_.push_back(weight_shape_.size() * sizeof(size_t));
     workspace_size_list_.push_back(pos_weight_shape_.size() * sizeof(size_t));
     // extra space for holding extra array shape of input, for broadcasted
     // weight and pos_weight
-    workspace_size_list_.push_back(input_size_ * sizeof(T));
-    output_size_list_.push_back(input_size_ * sizeof(T));
+    workspace_size_list_.push_back(input_size_ * type_id_size_);
   }
 
- private:
   bool NeedBroadcast(ShapeVector *shape, const ShapeVector &result_shape) {
     // result_shape is larger that shape
     // and shape is able to broadcasted to result_shape
@@ -160,17 +68,29 @@ class BCEWithLogitsLossKernelMod : public DeprecatedNativeGpuKernelMod {
     return false;
   }
 
+  std::vector<KernelAttr> GetOpSupport() override;
+  template <typename T>
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
+
+  using BCEWithLogitsLossLaunchFunc =
+    std::function<bool(BCEWithLogitsLossKernelMod *, const std::vector<kernel::AddressPtr> &,
+                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &, void *)>;
+
+ private:
+  std::string kernel_name_{};
+  BCEWithLogitsLossLaunchFunc kernel_func_;
+  static std::vector<std::pair<KernelAttr, BCEWithLogitsLossLaunchFunc>> func_list_;
   size_t input_size_;
   size_t weight_size_;
   size_t pos_weight_size_;
   bool weight_need_broadcast_;
   bool pos_weight_need_broadcast_;
-  bool is_null_input_;
-  std::string kernel_name_;
   ShapeVector input_shape_;
   ShapeVector weight_shape_;
   ShapeVector pos_weight_shape_;
+  size_t type_id_size_{0};
 };
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_BCE_WITH_LOGITS_LOSS_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_NN_BCE_WITH_LOGITS_LOSS_KERNEL_H_
