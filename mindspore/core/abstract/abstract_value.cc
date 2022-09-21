@@ -160,7 +160,7 @@ std::string AbstractBase::ToString(bool verbose) const {
 AbstractBasePtr AbstractScalar::Broaden() const {
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  if (context->get_param<bool>(MS_CTX_GRAD_FOR_SCALAR) || value_mutable()) {
+  if (context->get_param<bool>(MS_CTX_GRAD_FOR_SCALAR)) {
     return AbstractBase::Broaden();
   }
   auto type_id = GetTypeTrack()->type_id();

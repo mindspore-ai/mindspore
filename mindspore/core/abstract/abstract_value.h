@@ -198,10 +198,6 @@ class MS_CORE_API AbstractBase : public Base {
   /// \return A pointer to the broadened abstract.
   virtual AbstractBasePtr PartialBroaden() const;
 
-  bool value_mutable() const { return value_mutable_; }
-
-  void set_value_mutable(bool value_mutable) { value_mutable_ = value_mutable; }
-
   /// \brief Process the abstract with InterpretedObject.
   using InterpretBoolChecker = std::pair<bool, bool> (*)(const AbstractBasePtr &cond);
   static inline InterpretBoolChecker interpret_bool_checker_ = nullptr;
@@ -224,7 +220,6 @@ class MS_CORE_API AbstractBase : public Base {
   TypePtr type_;
   BaseShapePtr shape_;
   std::string value_desc_;  // store initial value description for error report
-  bool value_mutable_{false};
 };
 
 /// \brief Class AbstractScalar describes a scalar's type and value.
