@@ -14,6 +14,7 @@
 # ============================================================================
 
 """_BatchNormFold op"""
+from __future__ import absolute_import
 
 import te
 from te import tvm

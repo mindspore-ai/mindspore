@@ -220,7 +220,7 @@ def get_cus_tile_info(input_x1, input_x2, diag_size):
         diag_opt = True
     if shape_info not in tile_map:
         raise ValueError("shape %s is not supported" % str(shape_info))
-    mo_tile, ko_tile, no_tile = tile_map[shape_info]
+    mo_tile, ko_tile, no_tile = tile_map.get(shape_info)
     cus_tile_info = collections.namedtuple('cus_tile_info', ['mo_tile', 'ko_tile', 'no_tile', 'diag_opt'])
     return cus_tile_info(mo_tile, ko_tile, no_tile, diag_opt)
 

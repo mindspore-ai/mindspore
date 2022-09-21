@@ -160,6 +160,7 @@ class Profiler:
         self._stop_time = 0
         self._dynamic_status = False
         self._decide_device_target(kwargs)
+        self._pynative_profiler = None
         if self.start_profile:
             self.start()
 
