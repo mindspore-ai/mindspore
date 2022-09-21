@@ -24,17 +24,17 @@ from mindspore import context
 from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.parallel._utils import _sens_divided_by_device_num_if_recomputation
 from mindspore import log as logger
-from ..._c_expression import GradOperation_, HyperMap_, Map_, MultitypeFuncGraph_, Tail_, Shard_, \
+from mindspore._c_expression import GradOperation_, HyperMap_, Map_, MultitypeFuncGraph_, Tail_, Shard_, \
     TupleAdd_, UnpackCall_, ZipOperation_, ListAppend_, TupleGetItemTensor_, ListInsert_, \
     SequenceSliceGetItem_, ListSliceSetItem_, VmapOperation_, TaylorOperation_, ListPop_, \
     ListClear_, ListReverse_, ListExtend_, ListCount_, DictClear_, DictHasKey_, DictUpdate_, \
     DictFromKeys_
-from ...common import dtype as mstype
-from ...common.api import ms_function, _pynative_executor, _wrap_func
-from ..primitive import Primitive
-from ..operations import _grad_ops
-from .. import operations as P
-from .. import signature as sig
+from mindspore.common import dtype as mstype
+from mindspore.common.api import ms_function, _pynative_executor, _wrap_func
+from mindspore.ops.primitive import Primitive
+from mindspore.ops.operations import _grad_ops
+from mindspore.ops import operations as P
+from mindspore.ops import signature as sig
 
 __all__ = [TupleAdd_, UnpackCall_, TupleGetItemTensor_, SequenceSliceGetItem_, ListSliceSetItem_]
 
@@ -59,6 +59,7 @@ def add_flags(fn=None, **flags):
         >>> print(hasattr(net, '_func_graph_flags'))
         True
     """
+
     def deco(fn):
         # need set the attr and access on c++
         if not hasattr(fn, "_func_graph_flags"):
@@ -66,6 +67,7 @@ def add_flags(fn=None, **flags):
 
         fn._func_graph_flags.update({**flags})
         return fn
+
     ret = deco
     if fn is not None:
         ret = deco(fn)
@@ -93,6 +95,7 @@ def core(fn=None, **flags):
         >>> print(hasattr(net, '_func_graph_flags'))
         True
     """
+
     # need set the attr and access on c++
 
     def deco(fn):
@@ -430,6 +433,7 @@ class _TaylorOperation(TaylorOperation_):
     """
     Generate the higher order derivatives function for the input function.
     """
+
     def __init__(self):
         """Initialize TaylorOperation."""
         TaylorOperation_.__init__(self, 'taylorgrad')
@@ -699,6 +703,7 @@ class MultitypeFuncGraph(MultitypeFuncGraph_):
             decorator, a decorator to register the function to run, when called under the
             types described in `type_names`.
         """
+
         def deco(fn):
             def convert_type(type_input):
                 if isinstance(type_input, str):
@@ -712,6 +717,7 @@ class MultitypeFuncGraph(MultitypeFuncGraph_):
             self.register_fn(type_names, fn)
             self.entries.append((types, fn))
             return fn
+
         return deco
 
 
@@ -865,6 +871,7 @@ class Map(Map_):
 
 class Shard(Shard_):
     """Shard operation"""
+
     def __init__(self):
         """Initialize Shard."""
         Shard_.__init__(self, 'Shard')
@@ -878,7 +885,7 @@ class Shard(Shard_):
 
     def __call__(self, fn, in_strategy, out_strategy, parameter_plan=None, device="Ascend", level=0):
         if context.get_context("mode") != context.PYNATIVE_MODE or \
-            context.get_auto_parallel_context("parallel_mode") not in ["auto_parallel"]:
+                context.get_auto_parallel_context("parallel_mode") not in ["auto_parallel"]:
             raise AssertionError(f"'Shard' only supports auto parallel under PyNative mode")
         if context.get_context("device_target") not in ["Ascend", "GPU"]:
             raise AssertionError(f"'Shard' now only supports 'Ascend' and 'GPU'")
@@ -926,6 +933,7 @@ class Shard(Shard_):
             @ms_function(hash_args=fn)
             def after_shard(*args):
                 return shard_(fn, in_strategy, out_strategy, parameter_plan, device, level)(*args)
+
             return after_shard(*args)
 
         self.shard_fn = shard_fn
@@ -1195,9 +1203,7 @@ class _ZipOperation(ZipOperation_):
 zip_operation = _ZipOperation('zip_operation')
 """`zip_operation` will generate a tuple of zip iterations of inputs."""
 
-
 env_get = MultitypeFuncGraph("env_get")
-
 
 environ_get = Primitive('EnvironGet')
 ref_to_embed = _grad_ops.RefToEmbed()

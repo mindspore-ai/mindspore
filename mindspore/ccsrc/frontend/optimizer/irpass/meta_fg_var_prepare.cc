@@ -47,10 +47,11 @@ static AnfNodePtr GenerateUnpackGraphNode(const AnfNodePtr &origin_node, const s
   AnfNodePtr unpack_graph_node = nullptr;
   std::shared_ptr<prim::UnpackGraphPrimitive> unpack_graph;
   int64_t inputs_begin_index;
+  constexpr int64_t unpack_inputs_begin_index = 2;
   if (is_unpack) {
     unpack_graph = std::make_shared<prim::UnpackGraphPrimitive>(sens_param, true);
     // {unpackcall, {GradOperation, ...}, args...} and other {unpackcall, {meta_fg_opration, ...}, args...}
-    inputs_begin_index = 2;
+    inputs_begin_index = unpack_inputs_begin_index;
   } else {
     unpack_graph = std::make_shared<prim::UnpackGraphPrimitive>(sens_param, false);
     // {{GradOperation, ...}, args...} and other {{meta_fg_opration, ...}, args...}
