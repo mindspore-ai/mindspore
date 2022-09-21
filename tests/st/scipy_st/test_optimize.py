@@ -520,3 +520,26 @@ def test_lbfgs_fixes4594(dtype):
     results = msp.optimize.minimize(func, Tensor(onp.ones(n, dtype=dtype)), method='LBFGS',
                                     options=dict(maxiter=None, gtol=1e-6)).x
     onp.testing.assert_allclose(results.asnumpy(), onp.zeros(n, dtype=dtype), rtol=1e-6, atol=1e-6)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('dtype', [onp.float32, onp.float64])
+@pytest.mark.parametrize('func_x0', [(rosenbrock, onp.zeros(2)), (rosenbrock, onp.zeros(300))])
+def test_lbfgs_graph(dtype, func_x0):
+    """
+    Feature: ALL TO ALL
+    Description: test cases for lbfgs in GRAPH mode
+    Expectation: the result match bfgs
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    func, x0 = func_x0
+    x0 = x0.astype(dtype)
+    x0_tensor = Tensor(x0)
+    ms_res = msp.optimize.minimize(func(mnp), x0_tensor, method='LBFGS',
+                                   options=dict(history_size=150, maxiter=None, gtol=1e-6))
+    ma_res = msp.optimize.minimize(func(mnp), x0_tensor, method='BFGS',
+                                   options=dict(maxiter=None, gtol=1e-6))
+    match_array(ms_res.x.asnumpy(), ma_res.x, error=5, err_msg=str(ms_res))
