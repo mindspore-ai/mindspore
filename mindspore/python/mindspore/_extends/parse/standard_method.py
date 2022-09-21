@@ -34,6 +34,7 @@ from ...ops.composite.multitype_ops import _constexpr_utils as const_utils
 from ...ops.composite.multitype_ops import _compile_utils as compile_utils
 from ...ops.operations.math_ops import Median
 from ...ops.operations._inner_ops import Format
+from ...ops.operations import _map_tensor_ops
 from ...ops.operations import _csr_ops
 from ...ops.primitive import constexpr
 from ...common import dtype as mstype
@@ -3226,3 +3227,24 @@ def cholesky_inverse(input_x, upper=False):
     Computes the inverse of the positive definite matrix using cholesky matrix factorization.
     """
     return F.cholesky_inverse(input_x, upper=upper)
+
+
+def map_tensor_get(map_tensor, key_tensor, default_value):
+    r"""
+    Get or create value according the key tensor from a map tensor.
+    """
+    return _map_tensor_ops.get(map_tensor, key_tensor, default_value)
+
+
+def map_tensor_put(map_tensor, key_tensor, value_tensor):
+    r"""
+    Insert or update key value tensor pairs to a map tensor.
+    """
+    return _map_tensor_ops.put(map_tensor, key_tensor, value_tensor)
+
+
+def map_tensor_erase(map_tensor, key_tensor):
+    r"""
+    Remove records according the key tensor from a map tensor.
+    """
+    return _map_tensor_ops.erase(map_tensor, key_tensor)

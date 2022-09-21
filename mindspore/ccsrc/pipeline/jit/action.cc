@@ -751,7 +751,7 @@ bool MetaUnpackPrepareAction(const ResourcePtr &resource) {
 }
 
 namespace {
-// Get abstract of the default value from the given pparmeter.
+// Get abstract of the default value in the given parameter.
 AbstractBasePtr GetDefaultValueAbstract(const ParameterPtr &param) {
   auto value = param->default_param();
   MS_EXCEPTION_IF_NULL(value);

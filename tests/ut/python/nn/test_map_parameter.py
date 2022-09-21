@@ -14,8 +14,10 @@
 # ============================================================================
 import numpy as np
 import mindspore as ms
-from mindspore import Tensor
+import mindspore.nn as nn
+from mindspore import Tensor, Parameter, context
 from mindspore.experimental import MapParameter
+from mindspore.common.initializer import initializer
 
 
 def test_basic_operations():
@@ -40,3 +42,32 @@ def test_basic_operations():
 
     m.put(Tensor([1, 2, 3], dtype=ms.int32), Tensor([[1, 1], [2, 2], [3, 3]], dtype=ms.float32))
     m.erase(Tensor([1, 2, 3], dtype=ms.int32))
+
+
+def test_simple_graph_compile():
+    """
+    Feature: MapParameter
+    Description: Test IR graph compiled with MapParameter.
+    Expectation: IR graph with MapParameter created without exceptions.
+    """
+    class MyNet(nn.Cell):
+        def __init__(self):
+            nn.Cell.__init__(self)
+            self.p = Parameter(initializer('ones', (2, 3), ms.float32))
+            self.m = MapParameter(key_dtype=ms.int32, value_dtype=ms.float32, value_shape=(3,))
+            self.key = Tensor([1, 2], dtype=ms.int32)
+            self.default_value = Tensor([3.0, 3.0, 3.0], dtype=ms.float32)
+
+        def construct(self, x):
+            self.m.put(self.key, x)
+            value = self.m.get(self.key, self.default_value)
+            self.m.erase(self.key)
+            return self.p + value
+
+    context.set_context(mode=context.GRAPH_MODE)
+    net = MyNet()
+    t = initializer('ones', (2, 3), ms.float32)
+    t = t.init_data()
+    out = net(t)
+    print(out)
+    assert out.shape == (2, 3)

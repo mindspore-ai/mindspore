@@ -132,11 +132,13 @@ std::string GetPyObjId(const py::object &obj) {
 // Get parameter value from a python parameter object.
 // If it is a map parameter, return the map tensor value in it,
 // otherwise, return parameter itself as a meta tensor value.
-static ValuePtr GetParameterValue(const py::object &param_obj) {
-  if (py::hasattr(param_obj, "map_tensor_")) {
-    auto map_tensor = py::cast<MapTensorPtr>(python_adapter::GetPyObjAttr(param_obj, "map_tensor_"));
+ValuePtr GetParameterValue(const py::object &param_obj) {
+  constexpr char attr_map_tensor[] = "_map_tensor";
+  constexpr char attr_param_info[] = "param_info";
+  if (py::hasattr(param_obj, attr_map_tensor)) {
+    auto map_tensor = py::cast<MapTensorPtr>(python_adapter::GetPyObjAttr(param_obj, attr_map_tensor));
     MS_EXCEPTION_IF_NULL(map_tensor);
-    auto param_info = py::cast<ParamInfoPtr>(python_adapter::GetPyObjAttr(param_obj, "param_info"));
+    auto param_info = py::cast<ParamInfoPtr>(python_adapter::GetPyObjAttr(param_obj, attr_param_info));
     MS_EXCEPTION_IF_NULL(param_info);
     map_tensor->set_param_info(param_info);
     return map_tensor;

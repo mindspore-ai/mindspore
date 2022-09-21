@@ -1665,8 +1665,13 @@ const AbstractTensorPtr AbstractCSRTensor::values() const {
   return res;
 }
 
-AbstractMapTensor::AbstractMapTensor(const MapTensorPtr &map_tensor, const ValuePtr &ref_key_value)
+AbstractMapTensor::AbstractMapTensor(const MapTensorPtr &map_tensor)
     : AbstractBase(map_tensor, std::make_shared<MapTensorType>(map_tensor->KeyDtype(), map_tensor->ValueDtype()),
+                   std::make_shared<Shape>(map_tensor->value_shape())),
+      ref_key_value_(kAnyValue) {}
+
+AbstractMapTensor::AbstractMapTensor(const MapTensorPtr &map_tensor, const ValuePtr &ref_key_value)
+    : AbstractBase(kAnyValue, std::make_shared<MapTensorType>(map_tensor->KeyDtype(), map_tensor->ValueDtype()),
                    std::make_shared<Shape>(map_tensor->value_shape())),
       ref_key_value_(ref_key_value) {}
 

@@ -19,6 +19,7 @@
 
 #include <tuple>
 #include <memory>
+#include <string>
 #include "ir/anf.h"
 #include "ir/dtype.h"
 #include "ir/tensor.h"
@@ -85,6 +86,14 @@ class MS_CORE_API MapTensor final : public Value {
   TypePtr ValueDtype() const { return TypeIdToType(value_dtype_); }
 
   abstract::AbstractBasePtr ToAbstract() override;
+
+  std::string ToString() const override {
+    auto key_dtype = KeyDtype();
+    auto value_dtype = ValueDtype();
+    return "MapTensor(key_dtype=" + (key_dtype == nullptr ? "<null>" : key_dtype->ToString()) +
+           ", value_dtype=" + (value_dtype == nullptr ? "<null>" : value_dtype->ToString()) +
+           ", value_shape=" + tensor::ShapeToString(value_shape_) + ")";
+  }
 
   /// \brief Get tensor's param_info info.
   ///

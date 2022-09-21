@@ -84,6 +84,7 @@
 "mindspore/tests/ut/cpp/python_input/gtest_input/pipeline/parse/parse_primitive.py"                     "super-init-not-called"
 "mindspore/tests/ut/cpp/python_input/gtest_input/pre_activate"                                          "unused-variable"
 "mindspore/tests/ut/cpp/python_input/gtest_input/tbe"                                                   "unused-variable"
+"mindspore/tests/ut/python"                                                                             "c-extension-no-member"
 "mindspore/tests/ut/python/train/summary/test_summary_abnormal_input.py"                                "bare-except"
 "mindspore/tests/ut/python/train/summary/test_graph_summary.py"                                         "protected-access"
 "mindspore/tests/ut/python/parameter_feature/test_parameter.py"                                         "unused-variable"

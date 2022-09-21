@@ -54,7 +54,7 @@ static TypeId TypeIdOf(const TypePtr &data_type, TypeId defaultTypeId) {
   return data_type ? data_type->type_id() : defaultTypeId;
 }
 
-static std::string ShapeToString(const ShapeVector &shape) {
+std::string ShapeToString(const ShapeVector &shape) {
   std::string str = "[";
   const size_t count = shape.size();
   for (size_t i = 0; i < count; ++i) {

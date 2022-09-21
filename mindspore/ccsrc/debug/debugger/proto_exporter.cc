@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ void CheckIfValidType(const TypePtr &type, debugger::TypeProto *const type_proto
   if (!(type->isa<Number>() || type->isa<TensorType>() || type->isa<Tuple>() || type->isa<TypeType>() ||
         type->isa<List>() || type->isa<TypeAnything>() || type->isa<RefKeyType>() || type->isa<RefType>() ||
         type->isa<Function>() || type->isa<TypeNone>() || type->isa<String>() || type->isa<SymbolicKeyType>() ||
-        type->isa<UMonadType>() || type->isa<IOMonadType>())) {
+        type->isa<MapTensorType>() || type->isa<UMonadType>() || type->isa<IOMonadType>())) {
     MS_LOG(EXCEPTION) << "Unknown type: " << type->type_name();
   }
   if (type->isa<Number>()) {
