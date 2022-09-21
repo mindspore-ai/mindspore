@@ -10,7 +10,7 @@ mindspore.ops.pdist
         y[n] = \sqrt[p]{{\mid x_{i} - x_{j} \mid}^p}
 
     参数：
-        - **x** (tensor) - 输入tensor x，其shape为 :math:`(*B, N, M)`，其中 :math:`*B` 表示批处理大小，可以是多维度。类型：float16，float32或float64。
+        - **x** (Tensor) - 输入tensor x，其shape为 :math:`(*B, N, M)`，其中 :math:`*B` 表示批处理大小，可以是多维度。类型：float16，float32或float64。
         - **p** (float) - p-范数距离的p值，:math:`p∈[0，∞]`。默认值：2.0。
 
     返回：

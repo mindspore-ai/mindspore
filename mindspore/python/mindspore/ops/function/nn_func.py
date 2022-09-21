@@ -1059,7 +1059,7 @@ def interpolate(x, roi=None, scales=None, sizes=None, coordinate_transformation_
             must all be positive. Only one of `scales` and `sizes` can be specified.  If `sizes` is specified, then set
             `scales` to 'None' in this operator's input list. It is 1 int elements :math:`(new\_width,)` when `mode`
             is "linear". It is 2 int elements :math:`(new\_height, new\_width)` when `mode` is "bilinear".
-        coordinate_transformation_mode (string): Default is 'align_corners'. Describes how to transform the coordinate
+        coordinate_transformation_mode (str): Default is 'align_corners'. Describes how to transform the coordinate
             in the resized tensor to the coordinate in the original tensor. Other optional: 'half_pixel', 'asymmetric'.
             For example, we want to resize the original tensor along axis x. Let's denote `new_i` as the i-th coordinate
             of the resized tensor along axis x, `old_i` as the coordinate of the original tensor along axis x,

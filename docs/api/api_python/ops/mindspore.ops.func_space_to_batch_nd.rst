@@ -19,8 +19,8 @@ mindspore.ops.space_to_batch_nd
 
     参数：
         - **input_x** (Tensor) - 输入张量，Ascend平台必须为四维。
-        - **block_size** (list[int], tuple[int], int) - 块形状描述空间维度为分割的个数。如果 `block_size` 为list或者tuple，其长度 `M` 为空间维度的长度。如果 `block_size` 为整数，那么所有空间维度分割的个数均为 `block_size` 。在Ascend后端 `M` 必须为2。
-        - **paddings** (tuple, list) - 空间维度的填充大小。
+        - **block_size** (Union[list(int), tuple(int), int]) - 块形状描述空间维度为分割的个数。如果 `block_size` 为list或者tuple，其长度 `M` 为空间维度的长度。如果 `block_size` 为整数，那么所有空间维度分割的个数均为 `block_size` 。在Ascend后端 `M` 必须为2。
+        - **paddings** (Union[tuple, list]) - 空间维度的填充大小。
 
     返回：
         Tensor，经过划分排列之后的结果。

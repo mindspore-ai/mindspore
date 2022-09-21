@@ -20,7 +20,7 @@ mindspore.ops.batch_to_space_nd
 
     参数：
         - **input_x** (Tensor) - 输入张量，必须大于或者等于四维（Ascend平台必须为4维）。批次维度需能被 `block_shape` 整除。支持数据类型float16和float32。
-        - **block_shape** (list[int], tuple[int], int) - 分割批次维度的块的数量，取值需大于1。
+        - **block_shape** (Union[list(int), tuple(int), int]) - 分割批次维度的块的数量，取值需大于1。如果 `block_shape` 为list或者tuple，其长度 `M` 为空间维度的长度。如果 `block_shape` 为整数，那么所有空间维度分割的个数均为 `block_shape` 。 `M` 必须为2。
         - **crops** (tuple, list) - 空间维度的裁剪大小，包含两个长度为2的list，分别对应空间维度H和W。取值需大于或等于0，同时要求 `input_shape[i+2] * block_shape[i] > crops[i][0] + crops[i][1]` 。
 
     返回：

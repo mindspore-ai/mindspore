@@ -12,7 +12,7 @@ mindspore.ops.expand_dims
 
     参数：
         - **input_x** (Tensor) - 输入Tensor，shape为 :math:`(x_1, x_2, ..., x_R)`。
-        - **axis** (Union[int, list(int), tuple(int)]) - 新插入的维度的位置。`axis` 的值必须在范围 `[-input_x.ndim-1, input_x.ndim]` 内。仅接受常量输入。
+        - **axis** (int) - 新插入的维度的位置。`axis` 的值必须在范围 `[-input_x.ndim-1, input_x.ndim]` 内。仅接受常量输入。
 
     返回：
         Tensor，维度在指定轴扩展之后的Tensor，与 `input_x` 的数据类型相同。如果 `axis` 是0，那么它的shape为 :math:`(1, x_1, x_2, ..., x_R)`。
