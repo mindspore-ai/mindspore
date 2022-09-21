@@ -19,7 +19,6 @@
 
 #include <vector>
 #include "src/litert/lite_kernel.h"
-#include "include/context.h"
 #include "nnacl/fp32/batchnorm_fp32.h"
 #include "nnacl/batchnorm_parameter.h"
 

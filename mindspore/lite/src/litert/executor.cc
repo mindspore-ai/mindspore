@@ -25,7 +25,7 @@ int Executor::Run(const std::vector<Tensor *> &in_tensors, const std::vector<Ten
                   const KernelCallBack &after) {
   // init the max spin count.
   CHECK_NULL_RETURN(ctx_);
-  auto thread_pool = ctx_->thread_pool();
+  auto thread_pool = ctx_->thread_pool_;
   CHECK_NULL_RETURN(thread_pool);
   thread_pool->SetSpinCountMaxValue();
 

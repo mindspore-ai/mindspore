@@ -17,7 +17,6 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP16_LAYER_NORM_FP16_H_
 #include <vector>
 #include "src/litert/lite_kernel.h"
-#include "include/context.h"
 #include "nnacl/layer_norm_parameter.h"
 
 using mindspore::lite::InnerContext;

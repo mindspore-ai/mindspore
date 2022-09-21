@@ -29,7 +29,6 @@
 #endif
 #include "src/litert/lite_kernel.h"
 #include "src/litert/pack_weight_manager.h"
-#include "include/context.h"
 #include "src/litert/kernel/cpu/base/layout_transform.h"
 #include "src/litert/weight_decoder.h"
 #include "include/errorcode.h"

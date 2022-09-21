@@ -250,11 +250,11 @@ MutableTensorImplPtr LiteInferSession::GetInputByTensorName(const std::string &n
   return nullptr;
 }
 
-std::shared_ptr<lite::LiteSession> LiteInferSession::CreateLiteSession(lite::InnerContext *context) {
+std::shared_ptr<lite::LiteSession> LiteInferSession::CreateLiteSession(
+  const std::shared_ptr<lite::InnerContext> &context) {
   auto session = std::make_shared<lite::LiteSession>();
   if (session == nullptr) {
     MS_LOG(ERROR) << "create session failed";
-    delete context;
     return nullptr;
   }
 

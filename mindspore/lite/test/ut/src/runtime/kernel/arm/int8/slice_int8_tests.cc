@@ -20,7 +20,6 @@
 #include "common/common_test.h"
 #include "mindspore/lite/src/litert/kernel/cpu/int8/slice_int8.h"
 #include "mindspore/lite/src/litert/kernel_registry.h"
-#include "mindspore/lite/include/context.h"
 
 namespace mindspore {
 class TestSliceInt8 : public mindspore::CommonTest {

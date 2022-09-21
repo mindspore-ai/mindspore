@@ -26,7 +26,6 @@
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "schema/model_generated.h"
-#include "include/context.h"
 #include "include/errorcode.h"
 
 namespace mindspore {

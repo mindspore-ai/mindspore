@@ -99,12 +99,11 @@ int SmoothL1LossGradCPUKernel::Prepare() { return RET_OK; }
 
 kernel::LiteKernel *CpuSmoothL1LossGradFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                          const std::vector<lite::Tensor *> &outputs,
-                                                         OpParameter *opParameter, const lite::Context *ctx,
+                                                         OpParameter *opParameter, const lite::InnerContext *ctx,
                                                          const kernel::KernelKey &desc) {
   MS_CHECK_TRUE_MSG(opParameter != nullptr, nullptr, "Op parameter is nullptr.");
   MS_ASSERT(desc.type == schema::PrimitiveType_SmoothL1LossGrad);
-  auto *kernel = new (std::nothrow)
-    SmoothL1LossGradCPUKernel(opParameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
+  auto *kernel = new (std::nothrow) SmoothL1LossGradCPUKernel(opParameter, inputs, outputs, ctx);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new SmoothL1LossGradWithLogitsCPUKernel failed";
     return nullptr;

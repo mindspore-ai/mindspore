@@ -47,9 +47,8 @@ class LiteSession {
  public:
   LiteSession();
   virtual ~LiteSession();
-  static LiteSession *CreateSession(const lite::Context *context);
-  static LiteSession *CreateSession(const char *model_buf, size_t size, const lite::Context *context);
-  static LiteSession *CreateSession(const std::string &model_path, const lite::Context *context);
+  static LiteSession *CreateSession(const std::shared_ptr<InnerContext> &context);
+  static LiteSession *CreateSession(const char *model_buf, size_t size, const std::shared_ptr<InnerContext> &context);
 #ifdef ENABLE_LITE_HELPER
   int LoadModelAndCompileByBuf(const char *model_buf, mindspore::ModelType model_type, const size_t &buf_size,
                                mindspore::infer::helper::InferHelpers *infer_helpers = nullptr);
@@ -60,7 +59,7 @@ class LiteSession {
   mindspore::ModelType LoadModelByBuff(const char *model_buf, const size_t &buf_size, char **lite_buf, size_t *size,
                                        mindspore::ModelType model_type);
   const char *LoadModelByPath(const std::string &file, mindspore::ModelType model_type, size_t *size);
-  virtual int Init(InnerContext *context);
+  virtual int Init(const std::shared_ptr<InnerContext> &context);
   virtual void BindThread(bool if_bind);
   virtual int CompileGraph(Model *model);
   virtual std::vector<mindspore::lite::Tensor *> GetInputs() const;
@@ -146,7 +145,7 @@ class LiteSession {
   int PreCheck(Model *model);
   int InitExecutor();
   void ResetInputsShape(const std::vector<std::vector<int>> &dims);
-  int ContextInit(InnerContext *context);
+  int ContextInit(const std::shared_ptr<InnerContext> &context);
   int CreateTensorRTDelegate();
   int CreateNPUDelegate();
   int CreateCoreMLDelegate();
@@ -171,7 +170,7 @@ class LiteSession {
   RuntimeAllocatorPtr runtime_allocator_ = nullptr;
 
  protected:
-  InnerContext *context_ = nullptr;
+  std::shared_ptr<InnerContext> context_ = nullptr;
   mindspore::Context *ms_context_ = nullptr;
   std::vector<kernel::KernelExec *> kernels_;
   std::vector<Tensor *> tensors_;

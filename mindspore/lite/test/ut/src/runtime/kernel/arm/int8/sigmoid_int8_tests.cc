@@ -19,7 +19,6 @@
 #include "common/common_test.h"
 #include "nnacl/fp32/activation_fp32.h"
 #include "mindspore/lite/src/litert/kernel_registry.h"
-#include "mindspore/lite/include/context.h"
 
 namespace mindspore {
 class TestSigmoidInt8 : public mindspore::CommonTest {

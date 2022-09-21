@@ -20,7 +20,6 @@
 #include <cstring>
 #include <vector>
 #include "src/litert/lite_kernel.h"
-#include "include/context.h"
 #include "nnacl/op_base.h"
 #include "nnacl/split_parameter.h"
 #include "nnacl/glu_parameter.h"

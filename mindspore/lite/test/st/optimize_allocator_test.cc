@@ -132,7 +132,7 @@ TEST_F(OptimizeAllocator, RuntimeAllocator1) {
   const char *content = reinterpret_cast<char *>(builder.GetBufferPointer());
   mindspore::lite::Model *model = mindspore::lite::Model::Import(content, size);
 
-  auto context = new lite::InnerContext();
+  auto context = std::make_shared<lite::InnerContext>();
   auto lite_session = new lite::SessionMock();
   ASSERT_NE(lite_session, nullptr);
   ON_CALL(*lite_session, RuntimeAllocatorValid).WillByDefault(testing::Return(0));

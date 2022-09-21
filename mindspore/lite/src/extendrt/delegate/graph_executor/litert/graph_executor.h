@@ -45,7 +45,7 @@ class LiteRTGraphExecutor : public LiteGraphExecutor {
   std::vector<tensor::Tensor> GetInputInfos(const FuncGraphPtr &) override;
   std::vector<tensor::Tensor> GetOutputInfos(const FuncGraphPtr &) override;
 
-  std::shared_ptr<lite::LiteSession> CreateLiteSession(lite::InnerContext *context);
+  std::shared_ptr<lite::LiteSession> CreateLiteSession(const std::shared_ptr<lite::InnerContext> &context);
   std::vector<MSTensor> GetLiteSessionOutputs();
   void ResetTensorData(std::vector<void *> old_data, const std::vector<lite::Tensor *> &tensors);
   std::vector<int32_t> TruncateShape(const std::vector<int64_t> &shape, enum TypeId type, size_t data_len,

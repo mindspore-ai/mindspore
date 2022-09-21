@@ -18,7 +18,6 @@
 
 #include <vector>
 #include "src/litert/lite_kernel.h"
-#include "include/context.h"
 #include "nnacl/fp16/fill_fp16.h"
 
 using mindspore::lite::InnerContext;

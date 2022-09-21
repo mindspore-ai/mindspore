@@ -46,7 +46,7 @@ class ConvolutionTrainCPUKernel : public LiteKernel {
 
 kernel::LiteKernel *CpuConvTrainFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                   const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                                  const lite::Context *ctx, const kernel::KernelKey &desc);
+                                                  const lite::InnerContext *ctx, const kernel::KernelKey &desc);
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP32_GRAD_CONVOLUTION_H_

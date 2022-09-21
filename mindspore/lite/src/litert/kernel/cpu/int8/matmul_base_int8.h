@@ -19,7 +19,6 @@
 
 #include <vector>
 #include "include/errorcode.h"
-#include "include/context.h"
 #include "src/litert/lite_kernel.h"
 #include "nnacl/matmul_parameter.h"
 #include "nnacl/common_func.h"

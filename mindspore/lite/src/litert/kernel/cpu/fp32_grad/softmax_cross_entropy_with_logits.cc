@@ -107,12 +107,11 @@ int SoftmaxCrossEntropyWithLogitsCPUKernel::ReSize() {
 
 kernel::LiteKernel *CpuSoftmaxCrossEntropyFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                             const std::vector<lite::Tensor *> &outputs,
-                                                            OpParameter *opParameter, const lite::Context *ctx,
+                                                            OpParameter *opParameter, const lite::InnerContext *ctx,
                                                             const kernel::KernelKey &desc) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_SoftmaxCrossEntropyWithLogits);
-  auto *kernel = new (std::nothrow)
-    SoftmaxCrossEntropyWithLogitsCPUKernel(opParameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
+  auto *kernel = new (std::nothrow) SoftmaxCrossEntropyWithLogitsCPUKernel(opParameter, inputs, outputs, ctx);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new SoftmaxCrossEntropyWithLogitsCPUKernel failed";
     free(opParameter);

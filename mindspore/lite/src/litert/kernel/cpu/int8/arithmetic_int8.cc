@@ -194,18 +194,15 @@ int ArithmeticInt8CPUKernel::Run() {
 
 kernel::LiteKernel *CpuArithmeticInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                    const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
-                                                   const lite::Context *ctx, const kernel::KernelKey &desc) {
+                                                   const lite::InnerContext *ctx, const kernel::KernelKey &desc) {
   kernel::LiteKernel *kernel = nullptr;
   ArithmeticParameter *param = reinterpret_cast<ArithmeticParameter *>(parameter);
   if (desc.type == PrimitiveType_Eltwise && param->eltwise_mode_ == static_cast<int>(schema::EltwiseMode_SUM)) {
-    kernel = new (std::nothrow)
-      QuantizedAddCPUKernel(parameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
+    kernel = new (std::nothrow) QuantizedAddCPUKernel(parameter, inputs, outputs, ctx);
   } else if (desc.type == PrimitiveType_Eltwise && param->eltwise_mode_ == static_cast<int>(schema::EltwiseMode_PROD)) {
-    kernel =
-      new (std::nothrow) MulInt8CPUKernel(parameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
+    kernel = new (std::nothrow) MulInt8CPUKernel(parameter, inputs, outputs, ctx);
   } else {
-    kernel = new (std::nothrow)
-      ArithmeticInt8CPUKernel(parameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
+    kernel = new (std::nothrow) ArithmeticInt8CPUKernel(parameter, inputs, outputs, ctx);
   }
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "Create ArithmeticInt8CPUKernel failed, name: " << parameter->name_;

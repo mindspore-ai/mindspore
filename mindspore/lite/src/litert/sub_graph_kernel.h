@@ -187,7 +187,7 @@ class CpuFp16SubGraph : public CpuSubGraph {
   int SetFp16Attr() override {
     const auto *context = this->Context();
     MS_ASSERT(context != nullptr);
-    support_fp16_ = context->device_and_pkg_support_fp16();
+    support_fp16_ = context->device_and_pkg_support_fp16_;
     return CpuSubGraph::SetFp16Attr();
   }
 

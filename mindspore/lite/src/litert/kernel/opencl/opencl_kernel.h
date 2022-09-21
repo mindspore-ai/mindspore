@@ -336,9 +336,8 @@ class OpenCLKernel : public LiteKernel {
 template <class T>
 kernel::LiteKernel *OpenCLKernelCreator(const std::vector<lite::Tensor *> &inputs,
                                         const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                        const lite::Context *ctx, const kernel::KernelKey &desc) {
-  auto *kernel = new (std::nothrow)
-    T(reinterpret_cast<OpParameter *>(opParameter), inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
+                                        const lite::InnerContext *ctx, const kernel::KernelKey &desc) {
+  auto *kernel = new (std::nothrow) T(reinterpret_cast<OpParameter *>(opParameter), inputs, outputs, ctx);
   if (kernel == nullptr) {
     MS_LOG(WARNING) << "kernel " << opParameter->name_ << "is nullptr.";
     free(opParameter);

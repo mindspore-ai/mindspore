@@ -435,17 +435,15 @@ int MatMulOpenCLKernel::StoreConstData() {
 
 kernel::LiteKernel *OpenCLMatMulKernelCreator(const std::vector<lite::Tensor *> &inputs,
                                               const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                              const lite::Context *ctx, const kernel::KernelKey &desc) {
+                                              const lite::InnerContext *ctx, const kernel::KernelKey &desc) {
   kernel::OpenCLKernel *kernel = nullptr;
   auto shape = outputs.front()->shape();
   bool infer_shape_done = std::find(shape.begin(), shape.end(), -1) == shape.end();
   if (infer_shape_done && IsUseStrassenMatmul(inputs)) {
     MS_LOG(DEBUG) << "use_matmul_strassen";
-    kernel = new (std::nothrow)
-      StrassenOpenCLKernel(opParameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
+    kernel = new (std::nothrow) StrassenOpenCLKernel(opParameter, inputs, outputs, ctx);
   } else {
-    kernel =
-      new (std::nothrow) MatMulOpenCLKernel(opParameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
+    kernel = new (std::nothrow) MatMulOpenCLKernel(opParameter, inputs, outputs, ctx);
   }
   if (kernel == nullptr) {
     MS_LOG(WARNING) << "kernel " << opParameter->name_ << "is nullptr.";

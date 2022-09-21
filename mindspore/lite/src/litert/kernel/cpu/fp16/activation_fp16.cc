@@ -121,7 +121,7 @@ int ActivationFp16CPUKernel::Run() {
 /* creator func */
 kernel::LiteKernel *CpuActivationFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                    const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                                   const lite::Context *ctx, const kernel::KernelKey &desc) {
+                                                   const lite::InnerContext *ctx, const kernel::KernelKey &desc) {
   auto act_param = reinterpret_cast<ActivationParameter *>(opParameter);
   auto type = act_param->type_;
   if (type != schema::ActivationType_RELU && type != schema::ActivationType_RELU6 &&
@@ -135,8 +135,7 @@ kernel::LiteKernel *CpuActivationFp16KernelCreator(const std::vector<lite::Tenso
     return nullptr;
   }
 
-  kernel::LiteKernel *kernel = new (std::nothrow)
-    kernel::ActivationFp16CPUKernel(opParameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
+  kernel::LiteKernel *kernel = new (std::nothrow) kernel::ActivationFp16CPUKernel(opParameter, inputs, outputs, ctx);
   if (kernel == nullptr) {
     MS_LOG(DEBUG) << "Create activation fp16 kernel failed.";
     free(opParameter);

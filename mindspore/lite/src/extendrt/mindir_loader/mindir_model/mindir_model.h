@@ -51,7 +51,7 @@ class MindirModel : public AbstractBaseModel {
   std::string GetModelPath() const override;
   virtual mindspore::kernel::KernelExec *FindBackendKernel(const std::vector<mindspore::lite::Tensor *> &in_tensors,
                                                            const std::vector<mindspore::lite::Tensor *> &out_tensors,
-                                                           const LiteGraph::Node *node, lite::Context *context,
+                                                           const LiteGraph::Node *node, lite::InnerContext *context,
                                                            TypeId prefer_data_type);
 
   void Free() override;
@@ -65,7 +65,7 @@ class MindirModel : public AbstractBaseModel {
   int CheckTensorValid(lite::Tensor *dst_tensor);
   mindspore::kernel::KernelExec *FindLiteKernel(const std::vector<mindspore::lite::Tensor *> &in_tensors,
                                                 const std::vector<mindspore::lite::Tensor *> &out_tensors,
-                                                const LiteGraph::Node *node, lite::Context *context,
+                                                const LiteGraph::Node *node, lite::InnerContext *context,
                                                 TypeId prefer_data_type);
 
  public:

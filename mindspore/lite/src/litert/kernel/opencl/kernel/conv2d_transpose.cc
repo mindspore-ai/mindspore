@@ -331,7 +331,7 @@ int Conv2dTransposeOpenCLKernel::StoreConstData() {
 
 kernel::LiteKernel *OpenCLConv2dTransposeCreator(const std::vector<lite::Tensor *> &inputs,
                                                  const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                                 const lite::Context *ctx, const kernel::KernelKey &desc) {
+                                                 const lite::InnerContext *ctx, const kernel::KernelKey &desc) {
   MS_CHECK_TRUE_RET(opParameter != nullptr, nullptr);
   MS_CHECK_TRUE_RET(inputs.size() >= 1, nullptr);
   MS_CHECK_TRUE_RET(outputs.size() >= 1, nullptr);

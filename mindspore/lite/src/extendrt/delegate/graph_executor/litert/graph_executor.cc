@@ -279,11 +279,11 @@ std::vector<int32_t> LiteRTGraphExecutor::TruncateShape(const std::vector<int64_
   return truncated_shape;
 }
 
-std::shared_ptr<lite::LiteSession> LiteRTGraphExecutor::CreateLiteSession(lite::InnerContext *context) {
+std::shared_ptr<lite::LiteSession> LiteRTGraphExecutor::CreateLiteSession(
+  const std::shared_ptr<lite::InnerContext> &context) {
   auto session = std::make_shared<lite::LiteSession>();
   if (session == nullptr) {
     MS_LOG(ERROR) << "create session failed";
-    delete context;
     return nullptr;
   }
 

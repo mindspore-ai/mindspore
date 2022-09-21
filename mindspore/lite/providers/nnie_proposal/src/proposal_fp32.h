@@ -19,7 +19,6 @@
 
 #include <vector>
 #include "schema/model_generated.h"
-#include "include/context.h"
 #include "include/api/kernel.h"
 #include "src/proposal.h"
 

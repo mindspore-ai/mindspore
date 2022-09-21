@@ -42,7 +42,7 @@ class LiteKernel : public Abstractkernel {
   LiteKernel() = default;
 
   LiteKernel(OpParameter *parameter, std::vector<lite::Tensor *> in_tensors, std::vector<lite::Tensor *> out_tensors,
-             const lite::Context *ctx)
+             const lite::InnerContext *ctx)
       : op_parameter_(parameter),
         in_tensors_(std::move(in_tensors)),
         out_tensors_(std::move(out_tensors)),
@@ -186,7 +186,7 @@ class LiteKernel : public Abstractkernel {
       workspace_ = ws;
     }
   }
-  const lite::Context *context() const { return this->ms_context_; }
+  const lite::InnerContext *context() const { return this->ms_context_; }
   bool ws_allocated_ = false;
 
  protected:
@@ -204,7 +204,7 @@ class LiteKernel : public Abstractkernel {
   TypeId registry_data_type_ = kTypeUnknown;
   size_t workspace_size_ = 0;
   void *workspace_ = nullptr;
-  const lite::Context *ms_context_ = nullptr;
+  const lite::InnerContext *ms_context_ = nullptr;
 
   int thread_num_ = 1;
 };

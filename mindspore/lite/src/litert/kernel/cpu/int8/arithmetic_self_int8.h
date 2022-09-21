@@ -22,7 +22,6 @@
 #include "nnacl/arithmetic_self_parameter.h"
 #include "nnacl/int8/arithmetic_self_int8.h"
 #include "schema/model_generated.h"
-#include "include/context.h"
 
 using mindspore::lite::InnerContext;
 using mindspore::schema::PrimitiveType_Abs;

@@ -28,7 +28,7 @@
 namespace mindspore {
 class ContextUtils {
  public:
-  static lite::InnerContext *Convert(Context *context);
+  static std::shared_ptr<lite::InnerContext> Convert(Context *context);
 
  private:
   static void SetContextAttr(int32_t thread_num, int32_t inter_op_parallel_num, bool enable_parallel,

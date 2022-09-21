@@ -15,6 +15,7 @@
  */
 #ifndef MINDSPORE_LITE_SRC_TRAIN_TRANSFER_SESSION_H_
 #define MINDSPORE_LITE_SRC_TRAIN_TRANSFER_SESSION_H_
+#include <memory>
 #include <vector>
 #include <string>
 #include <tuple>
@@ -48,7 +49,8 @@ namespace lite {
 
 class TransferSession : public lite::TrainSession {
  public:
-  explicit TransferSession(const char *model_buf_backbone, size_t size_backbone, const lite::Context *context);
+  explicit TransferSession(const char *model_buf_backbone, size_t size_backbone,
+                           const std::shared_ptr<lite::InnerContext> &context);
 
   ~TransferSession();
 
@@ -79,8 +81,9 @@ class TransferSession : public lite::TrainSession {
 };
 
 lite::LiteSession *CreateTransferSessionInt(const char *model_buf_backbone, size_t size_backbone,
-                                            const char *model_buf_head, size_t size_head, const lite::Context *context,
-                                            bool train_mode, const lite::TrainCfg *cfg);
+                                            const char *model_buf_head, size_t size_head,
+                                            const std::shared_ptr<InnerContext> &context, bool train_mode,
+                                            const lite::TrainCfg *cfg);
 }  // namespace lite
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_TRAIN_TRANSFER_SESSION_H_

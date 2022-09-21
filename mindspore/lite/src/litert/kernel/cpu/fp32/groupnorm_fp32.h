@@ -19,7 +19,6 @@
 
 #include <vector>
 #include "src/litert/lite_kernel.h"
-#include "include/context.h"
 #include "nnacl/fp32/group_norm_fp32.h"
 #include "nnacl/fp32/scale_fp32.h"
 #include "nnacl/group_norm_parameter.h"

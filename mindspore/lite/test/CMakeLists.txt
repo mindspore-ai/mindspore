@@ -124,7 +124,6 @@ if(MSLITE_ENABLE_CONVERTER)
             ${TEST_DIR}/st/converter_test.cc
             ${TEST_DIR}/st/delegate_test.cc
             ${TEST_DIR}/st/mindrt_parallel_test.cc
-            ${TEST_DIR}/st/graph_test.cc
             ${TEST_DIR}/st/sub_graph_test.cc
             ${TEST_DIR}/ut/src/dynamic_library_loader_test.cc
             ${TEST_DIR}/ut/tools/optimizer/fusion/*.cc
@@ -132,7 +131,6 @@ if(MSLITE_ENABLE_CONVERTER)
     if(MSLITE_ENABLE_SERVER_INFERENCE)
         list(REMOVE_ITEM TEST_CONVERTER_UT_SRC ${TEST_DIR}/st/mindrt_parallel_test.cc)
         list(REMOVE_ITEM TEST_UT_SRC ${TEST_DIR}/st/benchmark_test.cc)
-        list(REMOVE_ITEM TEST_CONVERTER_UT_SRC ${TEST_DIR}/st/graph_test.cc)
         list(REMOVE_ITEM TEST_CONVERTER_UT_SRC ${TEST_DIR}/st/sub_graph_test.cc)
     endif()
 
@@ -151,12 +149,7 @@ endif()
 set(TEST_SRC
         ${TEST_UT_SRC}
         ${TEST_LITE_SRC}
-        ${TEST_DIR}/st/graph_test.cc
         )
-
-if(MSLITE_ENABLE_SERVER_INFERENCE)
-    list(REMOVE_ITEM TEST_SRC ${TEST_DIR}/st/graph_test.cc)
-endif()
 
 add_executable(lite-test ${TEST_SRC})
 add_dependencies(lite-test fbs_src fbs_inner_src)

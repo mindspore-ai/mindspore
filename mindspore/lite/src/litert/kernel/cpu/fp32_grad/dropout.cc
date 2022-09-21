@@ -111,7 +111,7 @@ int DropoutCPUKernel::Run() {
 
 kernel::LiteKernel *CpuDropoutFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                 const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                                const lite::Context *ctx, const kernel::KernelKey &desc) {
+                                                const lite::InnerContext *ctx, const kernel::KernelKey &desc) {
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "Dropout opParameter nullptr.";
     return nullptr;
@@ -120,8 +120,7 @@ kernel::LiteKernel *CpuDropoutFp32KernelCreator(const std::vector<lite::Tensor *
     MS_LOG(ERROR) << "Dropout desc type should be " << schema::PrimitiveType_Dropout << " got " << desc.type;
     return nullptr;
   }
-  auto *kernel =
-    new (std::nothrow) DropoutCPUKernel(opParameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
+  auto *kernel = new (std::nothrow) DropoutCPUKernel(opParameter, inputs, outputs, ctx);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "Dropout new kernel failed.";
     return nullptr;

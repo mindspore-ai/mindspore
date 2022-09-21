@@ -377,7 +377,7 @@ kernel::LiteKernel *CpuGroupConvFp32KernelCreator(const std::vector<lite::Tensor
 /* creator func */
 kernel::LiteKernel *CpuConvFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                              const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
-                                             const lite::Context *ctx, const kernel::KernelKey &desc) {
+                                             const InnerContext *ctx, const kernel::KernelKey &desc) {
   MS_ASSERT(op_parameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Conv2DFusion);
   MS_ASSERT(desc.data_type == kNumberTypeFloat32);
@@ -385,12 +385,11 @@ kernel::LiteKernel *CpuConvFp32KernelCreator(const std::vector<lite::Tensor *> &
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter);
   kernel::LiteKernel *kernel = nullptr;
   if (conv_param->group_ == 1) {
-    kernel = new (std::nothrow)
-      kernel::ConvolutionDelegateCPUKernel(op_parameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
+    kernel = new (std::nothrow) kernel::ConvolutionDelegateCPUKernel(op_parameter, inputs, outputs, ctx);
   } else if (conv_param->group_ == conv_param->input_channel_ && conv_param->group_ == conv_param->output_channel_) {
-    kernel = CpuConvDwFp32KernelCreator(inputs, outputs, op_parameter, static_cast<const lite::InnerContext *>(ctx));
+    kernel = CpuConvDwFp32KernelCreator(inputs, outputs, op_parameter, ctx);
   } else {
-    kernel = CpuGroupConvFp32KernelCreator(inputs, outputs, op_parameter, static_cast<const lite::InnerContext *>(ctx));
+    kernel = CpuGroupConvFp32KernelCreator(inputs, outputs, op_parameter, ctx);
   }
 
   if (kernel == nullptr) {

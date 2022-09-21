@@ -19,7 +19,6 @@
 #include <vector>
 #include "schema/inner/model_generated.h"
 #include "common/common_test.h"
-#include "include/context.h"
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
 #include "tools/converter/anf_transform.h"

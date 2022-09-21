@@ -19,7 +19,6 @@
 
 #include <vector>
 #include "src/litert/lite_kernel.h"
-#include "include/context.h"
 #include "nnacl/int8/batchnorm_int8.h"
 #include "nnacl/batchnorm_parameter.h"
 

@@ -26,7 +26,7 @@
 namespace mindspore::kernel {
 std::shared_ptr<mindspore::kernel::InnerKernel> KernelModUtil::GetInnerKernel(
   const std::vector<mindspore::lite::Tensor *> &in_tensors, const std::vector<mindspore::lite::Tensor *> &out_tensors,
-  const mindspore::lite::LiteGraph::Node *node, lite::Context *context) {
+  const mindspore::lite::LiteGraph::Node *node, lite::InnerContext *context) {
   auto op_type = node->op_type_;
   std::shared_ptr<kernel::KernelMod> kernel_mod = nullptr;
   if (kernel::Factory<kernel::CpuKernelMod>::Instance().IsRegistered(op_type)) {

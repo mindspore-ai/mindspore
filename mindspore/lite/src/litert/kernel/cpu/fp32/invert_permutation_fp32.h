@@ -19,7 +19,6 @@
 #include <vector>
 #include "src/litert/lite_kernel.h"
 #include "include/errorcode.h"
-#include "include/context.h"
 
 using mindspore::lite::InnerContext;
 

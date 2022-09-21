@@ -21,7 +21,6 @@
 #include <vector>
 #include "nnacl/fp32/gatherNd_fp32.h"
 #include "src/litert/lite_kernel.h"
-#include "include/context.h"
 #include "nnacl/op_base.h"
 
 using mindspore::lite::InnerContext;

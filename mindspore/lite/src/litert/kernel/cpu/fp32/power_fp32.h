@@ -19,7 +19,6 @@
 
 #include <vector>
 #include "src/litert/lite_kernel.h"
-#include "include/context.h"
 #include "nnacl/fp32/power_fp32.h"
 
 namespace mindspore::kernel {

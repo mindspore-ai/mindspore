@@ -18,7 +18,6 @@
 
 #include <vector>
 #include "src/litert/lite_kernel.h"
-#include "include/context.h"
 #include "nnacl/fp32/where_fp32.h"
 #include "src/litert/kernel/cpu/base/layout_transform.h"
 

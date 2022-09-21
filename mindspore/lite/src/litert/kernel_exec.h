@@ -30,7 +30,6 @@
 #include "src/litert/inner_context.h"
 #include "src/tensor.h"
 #include "include/errorcode.h"
-#include "include/context.h"
 #include "include/api/kernel.h"
 #include "src/litert/cxx_api/tensor/tensor_impl.h"
 #include "src/litert/lite_kernel.h"
@@ -392,11 +391,11 @@ class KernelExec {
 
 typedef LiteKernel *(*KernelCreator)(const std::vector<lite::Tensor *> &inputs,
                                      const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
-                                     const lite::Context *ctx, const KernelKey &desc);
+                                     const lite::InnerContext *ctx, const KernelKey &desc);
 
 template <class T>
 LiteKernel *LiteKernelCreator(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
-                              OpParameter *parameter, const lite::Context *ctx, const kernel::KernelKey &desc) {
+                              OpParameter *parameter, const lite::InnerContext *ctx, const kernel::KernelKey &desc) {
   if (parameter == nullptr) {
     MS_LOG(ERROR) << "parameter is nullptr.";
     return nullptr;
@@ -404,7 +403,7 @@ LiteKernel *LiteKernelCreator(const std::vector<lite::Tensor *> &inputs, const s
   if (desc.data_type == kTypeUnknown) {
     MS_LOG(WARNING) << "desc data_type is unknown.";
   }
-  auto *kernel = new (std::nothrow) T(parameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
+  auto *kernel = new (std::nothrow) T(parameter, inputs, outputs, ctx);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "kernel: " << parameter->name_ << "is nullptr.";
     free(parameter);

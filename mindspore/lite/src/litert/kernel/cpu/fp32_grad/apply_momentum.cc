@@ -140,11 +140,10 @@ int ApplyMomentumCPUKernel::OptimizerStep() {
 
 kernel::LiteKernel *CpuApplyMomentumFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                       const std::vector<lite::Tensor *> &outputs,
-                                                      OpParameter *opParameter, const lite::Context *ctx,
+                                                      OpParameter *opParameter, const lite::InnerContext *ctx,
                                                       const kernel::KernelKey &desc) {
   MS_ASSERT(desc.type == schema::PrimitiveType_ApplyMomentum);
-  auto *kernel = new (std::nothrow)
-    ApplyMomentumCPUKernel(opParameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
+  auto *kernel = new (std::nothrow) ApplyMomentumCPUKernel(opParameter, inputs, outputs, ctx);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new ApplyMomentumCPUKernel fail!";
     free(opParameter);

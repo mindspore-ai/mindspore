@@ -16,7 +16,6 @@
 
 #include <iostream>
 #include <memory>
-#include "mindspore/lite/include/context.h"
 #include "src/common/log_adapter.h"
 #include "common/common_test.h"
 #include "src/common/utils.h"

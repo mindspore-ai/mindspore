@@ -173,12 +173,11 @@ int ConvolutionTrainCPUKernel::Run() {
 
 kernel::LiteKernel *CpuConvTrainFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                   const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                                  const lite::Context *ctx, const kernel::KernelKey &desc) {
+                                                  const lite::InnerContext *ctx, const kernel::KernelKey &desc) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Conv2DFusion);
 
-  auto *kernel = new (std::nothrow)
-    ConvolutionTrainCPUKernel(opParameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
+  auto *kernel = new (std::nothrow) ConvolutionTrainCPUKernel(opParameter, inputs, outputs, ctx);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new ConvolutionTrainCPUKernel failed!";
     free(opParameter);

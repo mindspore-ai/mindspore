@@ -211,13 +211,12 @@ int ConvolutionGradFilterCPUKernel::Run() {
 
 kernel::LiteKernel *CpuConvGradFilterFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                        const std::vector<lite::Tensor *> &outputs,
-                                                       OpParameter *opParameter, const lite::Context *ctx,
+                                                       OpParameter *opParameter, const lite::InnerContext *ctx,
                                                        const kernel::KernelKey &desc) {
   MS_CHECK_TRUE_MSG(opParameter != nullptr, nullptr, "Op parameter is nullptr.");
   MS_ASSERT(desc.type == schema::PrimitiveType_Conv2DBackpropFilterFusion);
 
-  auto *kernel = new (std::nothrow)
-    ConvolutionGradFilterCPUKernel(opParameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
+  auto *kernel = new (std::nothrow) ConvolutionGradFilterCPUKernel(opParameter, inputs, outputs, ctx);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new kernel fail!";
     free(opParameter);

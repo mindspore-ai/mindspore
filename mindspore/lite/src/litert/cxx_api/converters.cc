@@ -101,8 +101,8 @@ void ContextUtils::ResetContextDefaultParam(Context *context) {
   return;
 }
 
-lite::InnerContext *ContextUtils::Convert(Context *context) {
-  auto inner_context = std::make_unique<lite::InnerContext>();
+std::shared_ptr<lite::InnerContext> ContextUtils::Convert(Context *context) {
+  auto inner_context = std::make_shared<lite::InnerContext>();
   if ((context == nullptr) || (inner_context == nullptr)) {
     MS_LOG(ERROR) << "Invalid context pointers.";
     return nullptr;
@@ -151,11 +151,11 @@ lite::InnerContext *ContextUtils::Convert(Context *context) {
       return nullptr;
     }
   }
-  return inner_context.release();
+  return inner_context;
 }
 
-lite::InnerContext *ContextUtils::Convert(const ContextC *context_c) {
-  auto inner_context = std::make_unique<lite::InnerContext>();
+std::shared_ptr<lite::InnerContext> ContextUtils::Convert(const ContextC *context_c) {
+  auto inner_context = std::make_shared<lite::InnerContext>();
   if ((context_c == nullptr) || (inner_context == nullptr)) {
     MS_LOG(ERROR) << "Invalid context pointers.";
     return nullptr;
@@ -189,6 +189,6 @@ lite::InnerContext *ContextUtils::Convert(const ContextC *context_c) {
       return nullptr;
     }
   }
-  return inner_context.release();
+  return inner_context;
 }
 }  // namespace mindspore

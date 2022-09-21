@@ -108,7 +108,7 @@ std::shared_ptr<mindspore::AscendDeviceInfo> AscendDeviceInfoFromAscendDeviceCon
 }
 }  // namespace
 
-mindspore::Context *MSContextFromContext(const lite::Context *context) {
+mindspore::Context *MSContextFromContext(const std::shared_ptr<InnerContext> &context) {
   if (context == nullptr) {
     MS_LOG(ERROR) << "context is nullptr";
     return nullptr;
@@ -151,7 +151,7 @@ mindspore::Context *MSContextFromContext(const lite::Context *context) {
   return ms_context;
 }
 
-bool DeviceTypePriority(const lite::Context *context, int device_type1, int device_type2) {
+bool DeviceTypePriority(const InnerContext *context, int device_type1, int device_type2) {
   /* dt1 > dt2    true
    * dt1 < dt2    false    */
 

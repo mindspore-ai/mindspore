@@ -20,10 +20,10 @@
 #include <vector>
 #include <map>
 #include "include/api/delegate.h"
-#include "include/context.h"
 #include "src/litert/delegate/npu/npu_manager.h"
 #include "src/litert/delegate/npu/pass/npu_pass_manager.h"
 #include "src/litert/delegate/npu/op/npu_op.h"
+#include "src/litert/inner_context.h"
 
 namespace mindspore::lite {
 class NPUDelegate : public Delegate {

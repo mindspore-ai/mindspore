@@ -18,7 +18,6 @@
 #include <memory>
 #include "schema/inner/model_generated.h"
 #include "common/common_test.h"
-#include "include/context.h"
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
 #include "src/common/file_utils.h"
@@ -321,11 +320,11 @@ TEST_F(SubGraphTest, RecursiveSubGraphTest) {
   auto model = std::shared_ptr<lite::Model>(lite::Model::Import(graph_buf, size));
   ASSERT_NE(model, nullptr);
   delete[](graph_buf);
-  lite::Context context;
-  auto &cpu_device_ctx = context.device_list_[0];
+  auto context = std::make_shared<mindspore::lite::InnerContext>();
+  auto &cpu_device_ctx = context->device_list_[0];
   cpu_device_ctx.device_info_.cpu_device_info_.cpu_bind_mode_ = lite::MID_CPU;
-  context.thread_num_ = 2;
-  auto session = std::shared_ptr<lite::LiteSession>(lite::LiteSession::CreateSession(&context));
+  context->thread_num_ = 2;
+  auto session = std::shared_ptr<lite::LiteSession>(lite::LiteSession::CreateSession(context));
   ASSERT_NE(session, nullptr);
   auto ret = session->CompileGraph(model.get());
   ASSERT_EQ(ret, lite::RET_OK);

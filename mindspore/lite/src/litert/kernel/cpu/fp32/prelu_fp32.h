@@ -18,7 +18,6 @@
 
 #include <vector>
 #include "src/litert/lite_kernel.h"
-#include "include/context.h"
 #include "nnacl/prelu_parameter.h"
 
 namespace mindspore::kernel {
