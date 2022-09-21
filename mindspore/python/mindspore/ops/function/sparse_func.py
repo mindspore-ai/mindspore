@@ -24,11 +24,11 @@ from mindspore.ops.operations.sparse_ops import (
     SparseMatrixSoftmax,
     CSRSparseMatrixToDense
 )
+from mindspore.common import dtype as mstype
 from ..primitive import constexpr, Primitive
 from ..operations.array_ops import GatherNd, Coalesce
 from ..operations import _csr_ops
 from ...common import CSRTensor, COOTensor, Tensor
-from ...common import dtype as mstype
 from ..composite.multitype_ops._constexpr_utils import raise_value_error, raise_type_error, make_tensor
 
 # utility functions and values
