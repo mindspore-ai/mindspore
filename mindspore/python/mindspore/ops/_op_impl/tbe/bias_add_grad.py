@@ -23,6 +23,8 @@ bias_add_grad_op_info = TBERegOp("BiasAddGrad") \
     .compute_cost(10) \
     .kernel_name("bias_add_grad") \
     .partial_flag(True) \
+    .dynamic_compile_static(True) \
+    .dynamic_shape(True) \
     .attr("format", "required", "str", "all") \
     .input(0, "output_backprop", False, "required", "all") \
     .output(0, "output", False, "required", "all") \

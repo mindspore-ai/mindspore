@@ -86,7 +86,6 @@ from .batchnorm_grad import _batch_norm_grad_tbe
 from .bias_add import _bias_add_tbe
 from .bias_add_ds import _bias_add_ds_tbe
 from .bias_add_grad import _bias_add_grad_tbe
-from .bias_add_grad_ds import _bias_add_grad_ds_tbe
 from .cast import _cast_tbe
 from .cast_ds import _cast_ds_tbe
 from .conv2d import _conv2d_tbe
@@ -297,7 +296,6 @@ from .slice_ds import _slice_ds_tbe
 from .sign import _sign_tbe
 from .sign_ds import _sign_ds_tbe
 from .greater import _greater_tbe
-from .greater_ds import _greater_ds_tbe
 from .clip_by_norm_no_div_sum import _clip_by_norm_no_div_sum_tbe
 from .clip_by_norm_no_div_sum_ds import _clip_by_norm_no_div_sum_ds_tbe
 from .clip_by_value import _clip_by_value_tbe
