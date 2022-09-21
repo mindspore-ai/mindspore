@@ -73,18 +73,22 @@ std::string NativeGpuKernelModFactory::SupportedTypeList(const std::string &kern
 }
 
 std::vector<KernelAttr> NativeGpuKernelModFactory::GetGpuSupportedList(const std::string &kernel_name) {
-  std::vector<KernelAttr> kernel_attr_list;
-  auto iter = map_kernel_name_to_creater_.find(kernel_name);
-  if (map_kernel_name_to_creater_.end() == iter) {
+  if (kernel::Factory<kernel::NativeGpuKernelMod>::Instance().IsRegistered(kernel_name)) {
+    return kernel::NativeGpuKernelMod::GetGpuSupportedList(kernel_name);
+  } else {
+    std::vector<KernelAttr> kernel_attr_list;
+    auto iter = map_kernel_name_to_creater_.find(kernel_name);
+    if (map_kernel_name_to_creater_.end() == iter) {
+      return kernel_attr_list;
+    }
+
+    for (size_t attr_index = 0; attr_index < (iter->second).size(); ++attr_index) {
+      auto attr = (iter->second)[attr_index].first;
+      kernel_attr_list.push_back(attr);
+    }
+
     return kernel_attr_list;
   }
-
-  for (size_t attr_index = 0; attr_index < (iter->second).size(); ++attr_index) {
-    auto attr = (iter->second)[attr_index].first;
-    kernel_attr_list.push_back(attr);
-  }
-
-  return kernel_attr_list;
 }
 
 bool NativeGpuKernelModFactory::ReducePrecision(
