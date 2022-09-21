@@ -28,7 +28,7 @@ mindspore.ops.deformable_conv2d
         - **dilations** (tuple[int], 可选) - 一个包含四个整数的元组，表示对于输入的每个维度的膨胀系数。其维度顺序依据 `x` 的数据格式，对应N和C维度的值必须设置成1。默认值为(1, 1, 1, 1)。
         - **groups** (int, 可选) - 一个int32类型的整数，表示从输入通道到输出通道的阻塞连接数。输入通道数和输出通道数必须都能被 `groups` 整除。默认值为1。
         - **deformable_groups** (int, 可选) - 一个int32类型的整数，表示可变形卷积组数。输入通道数必须能被 `deformable_groups` 整除。默认值为1。
-        - **modulated** (int, 可选) - 指定可变形二维卷积的版本。True表示v2，False表示v1。当前只支持设置为v2版本。默认值为True。
+        - **modulated** (bool, 可选) - 指定可变形二维卷积的版本。True表示v2，False表示v1。当前只支持设置为v2版本。默认值为True。
 
     返回：
         Tensor，一个四维Tensor，表示输出特征图。数据类型与 `x` 相同，数据格式为"NCHW"，shape为 :math:`(N, C_{out}, H_{out}, W_{out})` 。
