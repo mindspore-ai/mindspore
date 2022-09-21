@@ -123,7 +123,15 @@ std::vector<std::pair<KernelAttr, LayerNormGpuKernelMod::KernelFunc>> LayerNormG
      .AddOutputAttr(kNumberTypeFloat32)
      .AddOutputAttr(kNumberTypeFloat32)
      .AddOutputAttr(kNumberTypeFloat32),
-   &LayerNormGpuKernelMod::LaunchKernel<float>}};
+   &LayerNormGpuKernelMod::LaunchKernel<float>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddOutputAttr(kNumberTypeFloat64)
+     .AddOutputAttr(kNumberTypeFloat32)
+     .AddOutputAttr(kNumberTypeFloat32),
+   &LayerNormGpuKernelMod::LaunchKernel<double>}};
 
 std::vector<KernelAttr> LayerNormGpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;

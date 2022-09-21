@@ -385,3 +385,7 @@ template CUDA_LIB_EXPORT void LayerNormGrad(const int row_dim, const int col_dim
                                             const float epsilon, const half *dy, const half *x, const float *mean,
                                             const float *var, const half *gamma, half *dx, half *dg, half *db,
                                             cudaStream_t stream);
+template CUDA_LIB_EXPORT void LayerNormGrad(const int row_dim, const int col_dim, const int param_dim,
+                                            const float epsilon, const double *dy, const double *x, const float *mean,
+                                            const float *var, const double *gamma, double *dx, double *dg, double *db,
+                                            cudaStream_t stream);
