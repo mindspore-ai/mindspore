@@ -17,7 +17,7 @@ import os
 import pytest
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_single
@@ -25,5 +25,5 @@ def test_hccl_init_fail():
     sh_path = os.path.split(os.path.realpath(__file__))[0]
     ret = os.system(f"sh {sh_path}/run_hccl_init_fail.sh")
     assert ret == 0
-    grep_ret = os.system(f"grep 'Ascend error occurred, error message:' {sh_path}/test_hccl_init_fail.log -c")
+    grep_ret = os.system(f"grep 'Ascend Error Message' {sh_path}/test_hccl_init_fail.log -c")
     assert grep_ret == 0
