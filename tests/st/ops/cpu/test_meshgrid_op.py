@@ -19,10 +19,11 @@ import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
+import mindspore as ms
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops.functional import vmap
-
+from mindspore import mutable
 
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 
@@ -34,6 +35,28 @@ class NetMeshgrid(nn.Cell):
 
     def construct(self, inputs):
         return self.meshgrid(inputs)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_meshgrid_dshape():
+    """
+    Feature: Test meshgrid dynamic shape.
+    Description: Test meshgrid dynamic shape.
+    Expectation: Success.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+    net = NetMeshgrid()
+    input_x_dyn = Tensor(shape=[None], dtype=ms.float32)
+    input_y_dyn = Tensor(shape=[None], dtype=ms.float32)
+    net.set_inputs(mutable((input_x_dyn, input_y_dyn)))
+    input_x = Tensor(np.random.random(([3])), dtype=ms.float32)
+    input_y = Tensor(np.random.random(([4])), dtype=ms.float32)
+    output = net(mutable((input_x, input_y)))
+    expect_shape = (4, 3)
+    assert output[0].asnumpy().shape == expect_shape
+    assert output[1].asnumpy().shape == expect_shape
 
 
 @pytest.mark.level0
