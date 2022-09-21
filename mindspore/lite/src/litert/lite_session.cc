@@ -1642,10 +1642,6 @@ int lite::LiteSession::LoadModelAndCompileByBuf(const char *model_buf, mindspore
   MS_CHECK_FALSE_MSG(status != RET_OK, RET_ERROR, "InitPackWeightByBuf failed.");
   auto ret = CompileGraph(model);
   model->buf = nullptr;
-  // if (buf_model_type == mindspore::ModelType::kMindIR) {
-  //   delete[] lite_buf;
-  //   lite_buf = nullptr;
-  // }
   if (ret != lite::RET_OK) {
     MS_LOG(ERROR) << "Compile model failed";
     delete model;
