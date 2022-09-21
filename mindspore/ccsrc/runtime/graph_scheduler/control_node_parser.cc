@@ -1715,6 +1715,18 @@ void ControlNodeParser::ParseControlNodeParameter(const std::vector<AnfNodePtr> 
         MS_LOG(DEBUG) << "Control node:" << control_node->DebugString()
                       << " input parameter:" << inputs[i].first->DebugString() << " index:" << inputs[i].second;
         (void)control_node_parameters_.emplace_back(inputs[i]);
+        // Set Dynamic shape flag for parameter.
+        const auto &parameter = inputs[i].first->cast<ParameterPtr>();
+        MS_EXCEPTION_IF_NULL(parameter);
+        const auto &base_shape = parameter->Shape();
+        if (base_shape == nullptr) {
+          continue;
+        }
+        const auto &shape = base_shape->cast<abstract::ShapePtr>();
+        if (shape != nullptr && AnfUtils::IsShapeDynamic(shape)) {
+          MS_LOG(INFO) << "Set dynamic shape flag to parameter:" << parameter->DebugString();
+          parameter->set_has_dynamic_shape(true);
+        }
       }
     }
   }
