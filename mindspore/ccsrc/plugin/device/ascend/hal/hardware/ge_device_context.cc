@@ -288,6 +288,15 @@ void SetDynamicShapeAttr(const KernelGraphPtr &kernel_graph) {
     }
   }
 }
+
+bool IsGeTrain() {
+  auto env_ge = common::GetEnv("MS_ENABLE_GE");
+  auto env_training = common::GetEnv("MS_GE_TRAIN");
+  if (env_ge == "1" && env_training == "1") {
+    return true;
+  }
+  return false;
+}
 }  // namespace
 
 void GeGraphExecutor::AllocInputHostMemory(const KernelGraphPtr &kernel_graph) const {
@@ -528,6 +537,7 @@ void GeDeviceContext::InitGe(const std::shared_ptr<MsContext> &inst_context) {
     return;
   }
 
+  (void)setenv("GE_TRAIN", IsGeTrain() ? "1" : "0", 1);
   std::map<std::string, std::string> ge_options;
   GetGeOptions(inst_context, &ge_options);
   {
@@ -589,9 +599,8 @@ void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_
     (*ge_options)["ge.variableMemoryMaxSize"] = ms_context_ptr->get_param<std::string>(MS_CTX_VARIABLE_MEMORY_MAX_SIZE);
   }
 
-  auto env_ge = common::GetEnv("MS_ENABLE_GE");
-  auto training = common::GetEnv("MS_GE_TRAIN");
-  if (env_ge == "1" && training == "1") {
+  bool training = IsGeTrain();
+  if (training) {
     (*ge_options)["ge.graphRunMode"] = "1";
   }
 
@@ -635,7 +644,7 @@ void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_
     MS_LOG(WARNING) << "Set proto lib path failed!";
   }
 
-  if (training == "1") {
+  if (training) {
     (*ge_options)["ge.exec.precision_mode"] = "allow_fp32_to_fp16";
   } else {
     (*ge_options)["ge.exec.precision_mode"] = "force_fp16";
@@ -765,25 +774,13 @@ FuncGraphPtr GeGraphExecutor::BuildDFGraph(const FuncGraphPtr &anf_graph,
   if (queue_name != "") {
     ConfigManager::GetInstance().set_dataset_mode(DatasetMode::DS_SINK_MODE);
   }
-
+  (void)setenv("GE_TRAIN", IsGeTrain() ? "1" : "0", 1);
   if (!AddDFGraph(anf_graph, init_inputs_map, export_air)) {
     MS_LOG(ERROR) << "GenConvertor failed";
     return nullptr;
   }
 
-  auto env_ge = common::GetEnv("MS_ENABLE_GE");
-  auto env_training = common::GetEnv("MS_GE_TRAIN");
-  bool training = false;
-  if (env_ge == "1" && env_training == "1") {
-    training = true;
-  }
-  if (training) {
-    (void)setenv("GE_TRAIN", "1", 1);
-  } else {
-    (void)setenv("GE_TRAIN", "0", 1);
-  }
-
-  GeDeviceResManager::CreateSessionAndGraphRunner(training);
+  GeDeviceResManager::CreateSessionAndGraphRunner(IsGeTrain());
   auto graph_runner = transform::GetGraphRunner();
   if (graph_runner == nullptr) {
     MS_LOG(ERROR) << "Can not found GraphRunner";
