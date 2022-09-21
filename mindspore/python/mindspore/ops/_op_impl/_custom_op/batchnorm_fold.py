@@ -61,6 +61,8 @@ def _batchnorm_fold_compute(x_input, x_sum, x_square_sum, mean, variance, moment
     """_batchnorm_fold_compute"""
     shape_x = te.lang.cce.util.shape_to_list(x_input.shape)
     num = shape_x[0] * shape_x[2] * shape_x[3]
+    if num == 0.0:
+        raise ValueError('`num` is zero, which leads to divide zero error.')
     num_rec = 1.0 / num
 
     # compute the mean of x
