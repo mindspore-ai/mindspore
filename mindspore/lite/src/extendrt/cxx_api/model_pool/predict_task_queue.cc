@@ -82,13 +82,22 @@ void PredictTaskQueue::WaitUntilPredictActive(PredictTask *task, int node_id) {
   return;
 }
 
-void PredictTaskQueue::ActiveTask(PredictTask *task) { task->task_done_condition.notify_one(); }
+void PredictTaskQueue::ActiveTask(PredictTask *task) {
+  std::unique_lock<std::mutex> result_lock(task->task_done_mutex);
+  task->task_done_condition.notify_one();
+}
+
+void PredictTaskQueue::ActiveTaskQueue() {
+  std::unique_lock<std::mutex> task_lock(mtx_predict_task_);
+  task_push_cond_.notify_all();
+}
 
 void PredictTaskQueue::PushPredictTask(PredictTask *task, int node_id) {
   idle_worker_num_[node_id] -= 1;
 #ifdef USE_HQUEUE
   while (!predict_task_[node_id].Enqueue(task)) {
   }
+  std::unique_lock<std::mutex> task_lock(mtx_predict_task_);
 #else
   std::unique_lock<std::mutex> task_lock(mtx_predict_task_);
   predict_task_[node_id].push(task);
@@ -97,13 +106,18 @@ void PredictTaskQueue::PushPredictTask(PredictTask *task, int node_id) {
 }
 
 PredictTask *PredictTaskQueue::GetPredictTask(int node_id, ModelWorker *worker) {
-  std::unique_lock<std::mutex> task_lock(mtx_predict_task_);
 #ifdef USE_HQUEUE
-  while ((predict_task_[node_id].Empty() || (!worker->IsAvailable())) && (!predict_task_done_)) {
-    task_push_cond_.wait(task_lock);
+  if (!predict_task_[node_id].Empty() && worker->IsAvailable()) {
+    return predict_task_[node_id].Dequeue();
+  } else {
+    std::unique_lock<std::mutex> task_lock(mtx_predict_task_);
+    while ((predict_task_[node_id].Empty() || (!worker->IsAvailable())) && (!predict_task_done_)) {
+      task_push_cond_.wait(task_lock);
+    }
   }
   return predict_task_[node_id].Dequeue();
 #else
+  std::unique_lock<std::mutex> task_lock(mtx_predict_task_);
   while ((predict_task_[node_id].empty() || (!worker->IsAvailable())) && (!predict_task_done_)) {
     task_push_cond_.wait(task_lock);
   }
