@@ -823,8 +823,9 @@ class MultiClassDiceLoss(LossBase):
         if isinstance(self.weights, Tensor) and self.weights.ndim != 2:
             raise ValueError(f"For '{self.cls_name}', the dimension of 'weights' must be 2, "
                              f"but got {self.weights.ndim}.")
-        self.ignore_indiex = ignore_indiex if ignore_indiex is None else \
-            validator.check_value_type("ignore_indiex", ignore_indiex, [int])
+        self.ignore_indiex = ignore_indiex if ignore_indiex is None else validator.check_value_type("ignore_indiex",
+                                                                                                    ignore_indiex,
+                                                                                                    [int])
         if isinstance(activation, str) and activation not in activation_list:
             raise ValueError(f"For '{self.cls_name}', the 'activation' must be in {activation_list}, "
                              f"but got {activation}.")
@@ -1152,7 +1153,6 @@ class MultiMarginLoss(LossBase):
         _check_is_tensor('target', target, self.cls_name)
         weight_one = weight is None
         if not weight_one:
-            weight = weight
             _check_is_tensor('weight', weight, self.cls_name)
         else:
             weight = self.ones(x.shape[1], x.dtype)

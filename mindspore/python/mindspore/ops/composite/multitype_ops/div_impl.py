@@ -15,11 +15,11 @@
 
 """Implementation for internal polymorphism `div` operations."""
 
-from . import _compile_utils as utils
-from ._constexpr_utils import log_warning, check_equal
-from ...composite import base
-from ... import functional as F
-from ....common import CSRTensor, COOTensor
+from mindspore.ops.composite.multitype_ops import _compile_utils as utils
+from mindspore.ops.composite.multitype_ops._constexpr_utils import log_warning, check_equal
+from mindspore.ops.composite import base
+from mindspore.ops import functional as F
+from mindspore.common import CSRTensor, COOTensor
 
 
 div = base.MultitypeFuncGraph("div", True)

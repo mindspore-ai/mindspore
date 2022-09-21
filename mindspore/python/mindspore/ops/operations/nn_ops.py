@@ -15,6 +15,7 @@
 
 """Operators for nn."""
 
+from __future__ import absolute_import
 import math
 from functools import partial
 from mindspore import log as logger

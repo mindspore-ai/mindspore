@@ -39,7 +39,7 @@ except RuntimeError:
     _HCCL_AVAILABLE = False
 
 if _HCCL_AVAILABLE:
-    from . import _hccl_management as hccl
+    from mindspore.communication import _hccl_management as hccl
     try:
         import mindspore._ascend_mpi as mpi
         _MPI_AVAILABLE = True
