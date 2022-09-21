@@ -89,7 +89,7 @@ class AscendTdtQueue : public DataQueue {
   void DestroyAclDataset(acltdtDataset *acl_dataset, bool include_data_item = true) const;
   bool AssembleTensor2AclDataset(const std::vector<DataQueueItem> &data, acltdtDataset *acl_dataset) const;
   void ParseType(aclDataType acl_data_type, std::string *data_type) const;
-  bool Translate(const std::vector<DataQueueItem> &data, acltdtDataset **output_acl_dataset);
+  bool Translate(const std::vector<DataQueueItem> &data, acltdtDataset **output_acl_dataset) const;
 
   std::shared_ptr<BlockingQueue> wingman_queue_;
   acltdtChannelHandle *acl_handle_;
@@ -126,7 +126,7 @@ class AscendHostQueue : public DataQueue {
   bool SetTransId4MBuf(void **buff);
   bool LaunchTensor2MBuff(const std::vector<DataQueueItem> &data, void **buff);
   bool EnqueueData(void *buff, bool *need_resend);
-  bool CreateDataItemInfos(const std::vector<DataQueueItem> &data, std::vector<DataItemInfo> *items);
+  bool CreateDataItemInfos(const std::vector<DataQueueItem> &data, std::vector<DataItemInfo> *items) const;
   bool SerializeDataItemInfos(std::vector<DataItemInfo> *items, void **buff) const;
   DataItemInfo BuildDataItemInfo(acltdtTensorType acl_data_type, int32_t tensor_type, const int64_t *dims,
                                  size_t dim_size, void *data_ptr, uint64_t data_len) const;

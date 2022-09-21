@@ -438,7 +438,7 @@ class OrderEnforcer {
 
   std::vector<CNodePtr> GetSpecialLoads(const RefLoads &loads_map1, const RefLoads &loads_map2,
                                         const RefLoads &loads_map3, const RefLoads &loads_map4,
-                                        const std::set<CNodePtr> &call_nodes) {
+                                        const std::set<CNodePtr> &call_nodes) const {
     std::vector<CNodePtr> need_insert_loads;
     for (auto &refkey_load : loads_map1) {
       auto &loads = refkey_load.second;
