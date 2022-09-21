@@ -150,7 +150,7 @@ STATUS MindsporeImporter::TraceOutput(const AnfNodePtr &node) {
       out_name = out_name + "_" + std::to_string(output_idx);
     }
     MS_LOG(INFO) << "Graph out name: " << out_name;
-    output_tensor_name_.emplace_back(out_name);
+    (void)output_tensor_name_.emplace_back(out_name);
   }
   return RET_OK;
 }

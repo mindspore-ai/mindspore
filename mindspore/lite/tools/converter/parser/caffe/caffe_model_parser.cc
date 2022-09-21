@@ -396,6 +396,7 @@ STATUS CaffeModelParser::ConvertGraphInputsOfDim() {
     auto graph = ConvertGraph(res_graph_);
     MSLITE_CHECK_PTR(graph);
     auto parameter = graph->add_parameter();
+    MSLITE_CHECK_PTR(parameter);
     auto abstract = CreateTensorAbstract(shape, kNumberTypeFloat32);
     if (abstract == nullptr) {
       MS_LOG(ERROR) << "Create tensor abstarct failed";
@@ -622,6 +623,7 @@ STATUS CaffeModelParser::ConvertBottom(const caffe::LayerParameter &layer, std::
 }
 
 STATUS CaffeModelParser::ConvertTop(const caffe::LayerParameter &layer, const CNodePtr &cnode) {
+  MSLITE_CHECK_PTR(cnode);
   if (layer.top_size() == 1) {
     auto abstract = CreateTensorAbstract({}, kNumberTypeFloat32);
     if (abstract == nullptr) {
