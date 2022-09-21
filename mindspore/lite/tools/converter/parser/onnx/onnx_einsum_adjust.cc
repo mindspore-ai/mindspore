@@ -30,16 +30,22 @@ namespace mindspore::lite {
 namespace {
 constexpr const char *DELIM_COMMA = ",";
 constexpr const char *DELIM_ARROW = "->";
+constexpr const char *DELIM_BLANK = " ";
 
 int CheckCanConvertToMatmul(const std::string &first_dims, const std::string &second_dims,
                             const std::string &output_dims, bool *trans_a, bool *trans_b, bool *trans_out) {
   MS_ASSERT(cnode != nullptr);
-  // dimensions other than the last two dimensions should be the same.
-  // e.g. "bdn,bdm->bnm"/"bnm,bdm->bdn"
-  if (first_dims.substr(0, first_dims.length() - DIMENSION_2D) !=
-        second_dims.substr(0, second_dims.length() - DIMENSION_2D) ||
-      first_dims.substr(0, first_dims.length() - DIMENSION_2D) !=
-        output_dims.substr(0, output_dims.length() - DIMENSION_2D)) {
+  // dimensions other than the last two dimensions and not common dimension from the right should be the same.
+  // e.g. "bdn,bdm->bnm"/"bnm,bdm->bdn"/"bhid,bhjd->bhij"/"bhid,hjd->dhij"
+  auto first_subdims = first_dims.substr(0, first_dims.length() - DIMENSION_2D);
+  auto second_subdims = second_dims.substr(0, second_dims.length() - DIMENSION_2D);
+  auto output_subdims = output_dims.substr(0, output_dims.length() - DIMENSION_2D);
+  auto min_dim = first_subdims.length() < second_subdims.length() ? first_subdims.length() : second_subdims.length();
+  min_dim = min_dim < output_subdims.length() ? min_dim : output_subdims.length();
+  if (first_subdims.substr(first_subdims.length() - min_dim) !=
+        second_subdims.substr(second_subdims.length() - min_dim) ||
+      first_subdims.substr(first_subdims.length() - min_dim) !=
+        output_subdims.substr(output_subdims.length() - min_dim)) {
     MS_LOG(ERROR) << "Unsupported to convert einsum to matmul.";
     return RET_ERROR;
   }
@@ -90,6 +96,10 @@ bool OnnxEinsumAdjust::Adjust(const FuncGraphPtr &func_graph) {
     MS_CHECK_TRUE_RET(equation_value != nullptr, false);
     auto equation = GetValue<std::string>(equation_value);
     MS_CHECK_TRUE_RET(!equation.empty(), false);
+    size_t index = 0;
+    while ((index = equation.find(DELIM_BLANK, index)) != std::string::npos) {
+      (void)equation.erase(index, 1);
+    }
 
     auto in_out_dims = StrSplit(equation, DELIM_ARROW);
     if (in_out_dims.size() != DIMENSION_2D) {
