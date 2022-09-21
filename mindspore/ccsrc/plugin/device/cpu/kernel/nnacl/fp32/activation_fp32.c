@@ -173,14 +173,14 @@ int Gelu(const float *src, int length, float *dst, bool approximate) {
   }
   int i = 0;
   if (approximate) {
-    SIMD_RUN_NO_SCALAR(GeluApproximate, i, src, length, dst);
+    SIMD_RUN_NO_SCALAR(GeluTanhApproximate, i, src, length, dst);
 
     // dst = 0.5 * x * (1 + tanh((2 / pi) ^ 0.5 * (x + 0.044715x^3)))
     for (; i < length; i++) {
       dst[i] = 0.5 * src[i] * (1.0 + TanhOpt((0.79788456080287f + 0.035677408136f * src[i] * src[i]) * src[i]));
     }
   } else {
-    SIMD_RUN_NO_SCALAR(Gelu, i, src, length, dst);
+    SIMD_RUN_NO_SCALAR(GeluErfAPPROXIMATE, i, src, length, dst);
 
     for (; i < length; i++) {
       dst[i] =

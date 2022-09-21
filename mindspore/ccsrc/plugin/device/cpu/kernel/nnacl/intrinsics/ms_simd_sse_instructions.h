@@ -120,9 +120,11 @@ static inline MS_FLOAT32X4 MS_POW128_F32(MS_FLOAT32X4 src1, MS_FLOAT32X4 src2) {
 #ifdef ENABLE_AVX  // only enable sse, dont support fma instruction.
 #define MS_FMADD128_F32(src1, src2, src3) _mm_fmadd_ps(src1, src2, src3)
 #define MS_FMSUB128_F32(src1, src2, src3) _mm_fmsub_ps(src1, src2, src3)
+#define MS_FSMUL128_F32(src1, src2, src3) _mm_fnmadd_ps(src3, src2, src1)
 #else
 #define MS_FMADD128_F32(src1, src2, src3) _mm_add_ps(_mm_mul_ps(src1, src2), src3)
 #define MS_FMSUB128_F32(src1, src2, src3) _mm_sub_ps(_mm_mul_ps(src1, src2), src3)
+#define MS_FSMUL128_F32(src1, src2, src3) _mm_sub_ps(src1, _mm_mul_ps(src2, src3))
 #endif
 
 #define MS128_INT16_TO_FLOAT16(src) _mm_cvtepi16_ph(src)

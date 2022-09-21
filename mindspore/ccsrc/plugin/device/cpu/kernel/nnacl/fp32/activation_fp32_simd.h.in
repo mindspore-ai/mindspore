@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+// clang-format off
 #ifndef MINDSPORE_NNACL_FP32_ACTIVATION_@SIMD_INSTRUCTION@_H_
 #define MINDSPORE_NNACL_FP32_ACTIVATION_@SIMD_INSTRUCTION@_H_
 
@@ -128,7 +129,7 @@ static inline int HardTanhLimitMinMax@SIMD_INSTRUCTION@(int index, const float *
     return index;
 }
 
-static inline int GeluApproximate@SIMD_INSTRUCTION@(int index, const float *src, int length, float *dst) {
+static inline int GeluTanhApproximate@SIMD_INSTRUCTION@(int index, const float *src, int length, float *dst) {
     for (int block_max_size = length - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
         SIMD_F32 in = SIMD_LD_F32(src + index);
         SIMD_F32 tmp1 = SIMD_FMADD_F32(SIMD_MUL_N_F32(in, 0.035677408136f), in, SIMD_MOV_F32(0.79788456080287f));
@@ -145,6 +146,47 @@ static inline int Gelu@SIMD_INSTRUCTION@(int index, const float *src, int length
     for (int block_max_size = length - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
       SIMD_F32 in = SIMD_LD_F32(src + index);
       SIMD_F32 res = SIMD_MUL_F32(SIMD_MUL_F32(para3, in), SIMD_ADD_F32(para2, SIMD_ERF_F32(SIMD_DIV_F32(in, para1))));
+      SIMD_ST_F32(dst + index, res);
+    }
+    return index;
+}
+
+static inline SIMD_F32 SIMD_ERFCCHEB@SIMD_INSTRUCTION@(SIMD_F32 src) {
+  static const int ncof = 7;
+  const double cof[7] = {-1.3026537197817094,  6.4196979235649026e-1, 1.9476473204185836e-2, -9.561514786808631e-3,
+                         -9.46595344482036e-4, 3.66839497852761e-4,   4.2523324806907e-5};
+  SIMD_F32 dst;
+  SIMD_F32 d = SIMD_SET0_F32;
+  SIMD_F32 dd = SIMD_SET0_F32;
+  SIMD_F32 t = SIMD_DIV_F32(SIMD_MOV_F32(2.0f), SIMD_ADD_F32(src, SIMD_MOV_F32(2.0f)));
+  SIMD_F32 ty = SIMD_SUB_F32(SIMD_MUL_F32(SIMD_MOV_F32(4.0f), t), SIMD_MOV_F32(2.0f));
+
+  for (int j = ncof - 1; j > 0; j--) {
+    SIMD_F32 tmp = d;
+    d = SIMD_SUB_F32(SIMD_FMADD_F32(ty, d, SIMD_MOV_F32(cof[j])), dd);
+    dd = tmp;
+  }
+
+  dst =
+    SIMD_FMADD_F32(src, src, MS_FSMUL_F32(dd, SIMD_FMADD_F32(ty, d, SIMD_MOV_F32(cof[0])), SIMD_MOV_F32(0.5f)));
+  dst = SIMD_MUL_F32(t, SIMD_EXP_F32(SIMD_MUL_F32(SIMD_MOV_F32(-1.0f), dst)));
+  return dst;
+}
+
+static inline SIMD_F32 SIMD_ERF_APPROXIMATE@SIMD_INSTRUCTION@(SIMD_F32 src) {
+  SIMD_F32 abs_src = SIMD_ABS_F32(src);
+  SIMD_F32 sign = SIMD_DIV_F32(src, abs_src);
+  SIMD_F32 dst = SIMD_ERFCCHEB@SIMD_INSTRUCTION@(abs_src);
+  return SIMD_MUL_F32(sign, SIMD_SUB_F32(SIMD_MOV_F32(1.0f), dst));
+}
+
+static inline int GeluErfAPPROXIMATE@SIMD_INSTRUCTION@(int index, const float *src, int length, float *dst) {
+    SIMD_F32 para1 = SIMD_MOV_F32(1.4142135623730951f);
+    SIMD_F32 para2 = SIMD_MOV_F32(1.0f);
+    SIMD_F32 para3 = SIMD_MOV_F32(0.5f);
+    for (int block_max_size = length - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+      SIMD_F32 in = SIMD_LD_F32(src + index);
+      SIMD_F32 res = SIMD_MUL_F32(SIMD_MUL_F32(para3, in), SIMD_ADD_F32(para2, SIMD_ERF_APPROXIMATE@SIMD_INSTRUCTION@(SIMD_DIV_F32(in, para1))));
       SIMD_ST_F32(dst + index, res);
     }
     return index;
