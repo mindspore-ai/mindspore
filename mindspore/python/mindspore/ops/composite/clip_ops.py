@@ -14,6 +14,8 @@
 # ============================================================================
 
 """Operations for clipping tensors to min/max values."""
+from __future__ import absolute_import
+
 import numpy as np
 from mindspore.nn.cell import Cell
 from mindspore.ops import composite as C
