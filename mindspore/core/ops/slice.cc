@@ -80,7 +80,7 @@ abstract::ShapePtr SliceInferShape(const PrimitivePtr &primitive, const std::vec
     return std::make_shared<abstract::Shape>(out_shape, out_shape_min, out_shape_max);
   }
   if (input_size_value_ptr->isa<AnyValue>()) {
-    if (input_begin_value_ptr->isa<AnyValue>() || input_size_shape.size() == 0) {
+    if (input_size_shape.size() == 0) {
       out_shape.push_back(kDynamicOutValue);
       return std::make_shared<abstract::Shape>(out_shape, out_shape_min, out_shape_max);
     }
