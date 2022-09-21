@@ -1061,13 +1061,53 @@ def select(cond, x, y):
     return tensor_select_(cond, input_x, input_y)
 
 
-def strided_slice(input_x, begin, end, strides):
+def strided_slice(input_x,
+                  begin,
+                  end,
+                  strides,
+                  begin_mask=0,
+                  end_mask=0,
+                  ellipsis_mask=0,
+                  new_axis_mask=0,
+                  shrink_axis_mask=0):
     r"""
     Extracts a strided slice of a tensor.
 
     This operation extracts a fragment of size (end-begin)/stride from the given 'input_tensor'.
     Starting from the beginning position, the fragment continues adding stride to the index until
     all dimensions are not less than the ending position.
+
+    Given a `input_x[m1, m2, ..., mn]`, `begin`, `end` and `strides` will be vectors of length n.
+
+    In each mask field (`begin_mask`, `end_mask`, `ellipsis_mask`, `new_axis_mask`, `shrink_axis_mask`)
+    the ith bit will correspond to the ith m.
+
+    For each specific mask, it will be converted to a binary representation internally, and then
+    reverse the result to start the calculation. For a 5*6*7 tensor with a given mask value of 3 which
+    can be represented as ob011. Reverse that we get ob110, which implies the first and second dim of the
+    original tensor will be effected by this mask. See examples below:
+
+    If the ith bit of `begin_mask` is set, `begin[i]` is ignored and the fullest possible range in that dimension
+    is used instead. `end_mask` is analogous, except with the end range.
+
+    For a 5*6*7 tensor, `x[2:,:3,:]` is equivalent to `x[2:5,0:3,0:7]`.
+
+    If the ith bit of `ellipsis_mask` is set, as many unspecified dimensions as needed will be inserted between
+    other dimensions. Only one non-zero bit is allowed in `ellipsis_mask`.
+
+    For a 5*6*7*8 tensor, `x[2:,...,:6]` is equivalent to `x[2:5,:,:,0:6]`.
+    `x[2:,...]` is equivalent to `x[2:5,:,:,:]`.
+
+    If the ith bit of `new_axis_mask` is set, `begin`, `end` and `strides` are ignored and a new length 1
+    dimension is added at the specified position in the output tensor.
+
+    For a 5*6*7 tensor, `x[:2, newaxis, :6]` will produce a tensor with shape :math:`(2, 1, 6, 7)` .
+
+    If the ith bit of `shrink_axis_mask` is set, dimension i will be shrunk to 0, taking on the value
+    at index `begin[i]`, `end[i]` and `strides[i]` are ignored.
+
+    For a 5*6*7 tensor, `x[:, 5, :]` is equivalent to setting the `shrink_axis_mask` to 2 and results in
+    an output shape of :math:`(5, 7)`.
 
     Note:
         The stride may be negative value, which causes reverse slicing.
@@ -1082,6 +1122,11 @@ def strided_slice(input_x, begin, end, strides):
           Only constant value is allowed.
         strides (tuple[int]): - A tuple which represents the stride is continuously added
           before reaching the maximum location. Only constant value is allowed.
+        begin_mask (int): Starting index of the slice. Default: 0.
+        end_mask (int): Ending index of the slice. Default: 0.
+        ellipsis_mask (int): An int mask. Default: 0.
+        new_axis_mask (int): An int mask. Default: 0.
+        shrink_axis_mask (int): An int mask. Default: 0.
 
     Returns:
         Tensor, The output is explained by following example.
@@ -1159,7 +1204,8 @@ def strided_slice(input_x, begin, end, strides):
         >>> print(output)
         [[[3. 3. 3.]]]
     """
-    strided_slice_ = _get_cache_prim(P.StridedSlice)()
+    strided_slice_ = _get_cache_prim(P.StridedSlice)(
+        begin_mask, end_mask, ellipsis_mask, new_axis_mask, shrink_axis_mask)
     return strided_slice_(input_x, begin, end, strides)
 
 
