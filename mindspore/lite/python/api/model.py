@@ -202,8 +202,8 @@ class Model:
             ...     data = output.get_data_to_numpy()
             ...     print("outputs: ", data)
             ...
-            outputs:  [[1.0227193e-05 9.9270510e-06 1.6968443e-05 ... 6.6909502e-06
-                        2.1626458e-06 1.2400946e-04]]
+            outputs:  [[1.02271215e-05 9.92699006e-06 1.69684317e-05 ... 6.69087376e-06
+                        2.16263197e-06 1.24009384e-04]]
             >>> # 2. predict which indata is numpy array
             >>> import mindspore_lite as mslite
             >>> import numpy as np
@@ -222,7 +222,7 @@ class Model:
             ...     data = output.get_data_to_numpy()
             ...     print("outputs: ", data)
             ...
-            outputs:  [[0.00035889 0.00065501 0.00052926 ... 0.00018387 0.00148318 0.00116824]]
+            outputs:  [[0.00035889 0.00065501 0.00052925 ... 0.00018388 0.00148316 0.00116824]]
             >>> # 3. predict which indata is new mslite tensor with numpy array
             >>> import mindspore_lite as mslite
             >>> import numpy as np
@@ -248,7 +248,7 @@ class Model:
             ...     data = output.get_data_to_numpy()
             ...     print("outputs: ", data)
             ...
-            outputs:  [[0.00035889 0.00065501 0.00052926 ... 0.00018387 0.00148318 0.00116824]]
+            outputs:  [[0.00035889 0.00065501 0.00052925 ... 0.00018388 0.00148316 0.00116824]]
         """
         if not isinstance(inputs, list):
             raise TypeError("inputs must be list, but got {}.".format(type(inputs)))
@@ -421,8 +421,9 @@ class RunnerConfig:
         >>> runner_config = mslite.RunnerConfig(context=context, workers_num=0, config_info=config_info)
         >>> print(runner_config)
         workers num: 0,
-        context: 0,
-        config info: weight: weight_path: path of model weight.
+        config info: weight: weight_path: path of model weight
+        ,
+        context: thread num: 0, bind mode: 1.
     """
 
     def __init__(self, context=None, workers_num=None, config_info=None):
@@ -532,6 +533,7 @@ class ModelParallelRunner:
             >>> # model download link: https://download.mindspore.cn/model_zoo/official/lite/quick_start/mobilenetv2.ms
             >>> # in_data download link: https://download.mindspore.cn/model_zoo/official/lite/quick_start/input.bin
             >>> import mindspore_lite as mslite
+            >>> import numpy as np
             >>> context = mslite.Context()
             >>> context.append_device_info(mslite.CPUDeviceInfo())
             >>> runner_config = mslite.RunnerConfig(context=context, workers_num=4)
@@ -546,8 +548,8 @@ class ModelParallelRunner:
             ...     data = output.get_data_to_numpy()
             ...     print("outputs: ", data)
             ...
-            outputs:  [[8.9401474e-05 4.4536911e-05 1.0089713e-04 ... 3.2687691e-05
-                        3.6021424e-04 8.3650106e-05]]
+            outputs:  [[1.02271215e-05 9.92699006e-06 1.69684317e-05 ... 6.69087376e-06
+                        2.16263197e-06 1.24009384e-04]]
         """
         if not isinstance(inputs, list):
             raise TypeError("inputs must be list, but got {}.".format(type(inputs)))
