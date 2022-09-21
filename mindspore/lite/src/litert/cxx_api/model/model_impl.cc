@@ -260,6 +260,9 @@ Status ModelImpl::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
   }
   std::vector<void *> old_data;
   for (size_t i = 0; i < inputs.size(); i++) {
+    old_data.push_back(input_tensors.at(i)->data());
+  }
+  for (size_t i = 0; i < inputs.size(); i++) {
     auto input = input_tensors.at(i);
     auto user_input = inputs.at(i);
     if (user_input.DataType() != static_cast<enum DataType>(input->data_type())) {
@@ -277,7 +280,6 @@ Status ModelImpl::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
       MS_LOG(WARNING) << "Tensor " << user_input.Name() << " has a different name from input" << input->tensor_name()
                       << ".";
     }
-    old_data.push_back(input->data());
     if (input->data_type() == kObjectTypeString) {
 #ifndef STRING_KERNEL_CLIP
       std::vector<int32_t> shape = TruncateShape(user_input.Shape(), input->data_type(), user_input.DataSize(), false);

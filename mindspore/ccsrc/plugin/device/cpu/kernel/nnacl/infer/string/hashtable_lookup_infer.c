@@ -26,6 +26,10 @@ int HashtableLoopupInferShape(const TensorC *const *inputs, size_t inputs_size, 
 
   const TensorC *input = inputs[0];
   const TensorC *values = inputs[2];
+  if (input == NULL || values == NULL) {
+    return NNACL_NULL_PTR;
+  }
+
   TensorC *output = outputs[0];
   TensorC *hits = outputs[1];
 
