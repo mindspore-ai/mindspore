@@ -1590,7 +1590,7 @@ class AutoMonadConverter {
       auto load = MakeLoad(cnode, ref, u);
       // Replace input with the load cnode.
       for (size_t index : ref_input.second) {
-        manager_->SetEdge(cnode, index, load);
+        manager_->SetEdge(cnode, SizeToInt(index), load);
       }
       (void)loads.emplace_back(std::move(load));
     }
