@@ -14,6 +14,7 @@
 # ============================================================================
 
 """Operators for nn."""
+from __future__ import division
 
 import math
 from functools import partial
