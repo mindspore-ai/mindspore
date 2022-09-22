@@ -139,66 +139,6 @@ void ValueTupleToValue(const ValuePtr &value, std::vector<ValuePtr> *const value
   }
 }
 
-void PrepareDataForValue(const ValuePtr &value, const KernelWithIndex &node_with_index,
-                         const DeviceContext *device_context, OpContext<DeviceTensor> *const context) {
-  MS_EXCEPTION_IF_NULL(value);
-  MS_EXCEPTION_IF_NULL(device_context);
-  MS_EXCEPTION_IF_NULL(context);
-  const auto &node = node_with_index.first;
-  MS_EXCEPTION_IF_NULL(node);
-  size_t index = node_with_index.second;
-  MS_LOG(INFO) << "Prepare data for value node" << node->DebugString() << " index:" << index;
-
-  const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(node, index, false);
-  MS_EXCEPTION_IF_NULL(device_tensor);
-  if (device_tensor->GetPtr() != nullptr) {
-    return;
-  }
-
-  device::DynamicMemAllocatorDebugInfo::SetDebugInfo(node->fullname_with_scope(), device::AllocatorType::kConstantValue,
-                                                     0);
-  if (!device_context->device_res_manager_->AllocateMemory(device_tensor.get())) {
-    SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(GraphExecutionStrategy::kPipeline, *context, *device_context,
-                                                node->fullname_with_scope(), device_tensor->GetSize());
-  }
-
-  TypeId type = kNumberTypeBegin;
-  auto host_addr = std::make_unique<char[]>(device_tensor->GetSize());
-  MS_EXCEPTION_IF_NULL(host_addr);
-  if (value->isa<BoolImm>()) {
-    type = kNumberTypeBool;
-    (reinterpret_cast<bool *>(host_addr.get()))[0] = GetValue<bool>(value);
-  } else if (value->isa<Int64Imm>()) {
-    type = kNumberTypeInt64;
-    (reinterpret_cast<int64_t *>(host_addr.get()))[0] = GetValue<int64_t>(value);
-  } else if (value->isa<Int32Imm>()) {
-    type = kNumberTypeInt32;
-    (reinterpret_cast<int32_t *>(host_addr.get()))[0] = GetValue<int32_t>(value);
-  } else if (value->isa<FloatImm>()) {
-    type = kNumberTypeFloat;
-    (reinterpret_cast<float *>(host_addr.get()))[0] = GetValue<float>(value);
-  } else if (value->isa<Monad>()) {
-    return;
-  } else {
-    std::string error_info = "Invalid value:" + value->ToString();
-    SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
-  }
-
-  auto type_size = GetTypeByte(TypeIdToType(type));
-  if (type_size > device_tensor->GetSize()) {
-    std::string error_info = "Invalid device tensor size:" + std::to_string(device_tensor->GetSize()) +
-                             " for type:" + std::to_string(type) + " type size:" + std::to_string(type_size) +
-                             " for value:" + value->ToString() + " in node:" + node->DebugString() +
-                             " index:" + std::to_string(index);
-    SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
-  }
-
-  if (!device_tensor->SyncHostToDevice({}, type_size, type, host_addr.get())) {
-    std::string error_info = "SyncHostToDevice failed, node name: " + node->DebugString();
-    SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
-  }
-}
-
 void UpdateRefNodeOutputDeviceAddress(const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
   auto ref_node_map = graph->GetRefMap();
@@ -612,10 +552,12 @@ void DataPrepareActor::PrepareDataForValueNodeTensor(const ValueNodePtr &node, c
 
 void DataPrepareActor::PrepareDataForControlValueNode(const KernelWithIndex &node_with_index,
                                                       const DeviceContext *device_context,
-                                                      OpContext<DeviceTensor> *const context) const {
+                                                      OpContext<DeviceTensor> *const context,
+                                                      const ControlNodeParserPtr &parser) const {
   MS_EXCEPTION_IF_NULL(device_context);
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(node_with_index.first);
+  MS_EXCEPTION_IF_NULL(parser);
   if (!node_with_index.first->isa<ValueNode>()) {
     return;
   }
@@ -635,36 +577,37 @@ void DataPrepareActor::PrepareDataForControlValueNode(const KernelWithIndex &nod
   }
   const auto &value = values[index];
   MS_EXCEPTION_IF_NULL(value);
-  if (value->isa<tensor::Tensor>()) {
-    auto tensor = value->cast<tensor::TensorPtr>();
-    MS_EXCEPTION_IF_NULL(tensor);
-    const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(node, index, false);
-    MS_EXCEPTION_IF_NULL(device_tensor);
-    if (device_tensor->GetPtr() != nullptr) {
-      return;
-    }
-
-    MS_LOG(INFO) << "Prepare device data for control value node: " << node->DebugString()
-                 << ", output index: " << index;
-    tensor->set_device_address(device_tensor);
-    UpdateRefCount(device_tensor.get(), true);
-
-    device::DynamicMemAllocatorDebugInfo::SetDebugInfo(node->DebugString(), device::AllocatorType::kConstantValue, 0);
-    if (!device_context->device_res_manager_->AllocateMemory(device_tensor.get())) {
-      SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(real_strategy_, *context, *device_context,
-                                                  node->fullname_with_scope(), device_tensor->GetSize());
-    }
-
-    auto host_tensor_size = LongToSize(tensor->data().nbytes());
-    auto host_tensor_type = tensor->data_type();
-    auto shape = tensor->shape();
-    if (!device_tensor->SyncHostToDevice(shape, host_tensor_size, host_tensor_type, tensor->data_c(),
-                                         tensor->device_info().host_format_)) {
-      std::string error_info = "Sync host to device failed for node:" + node->DebugString();
-      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
-    }
+  TensorPtr tensor = nullptr;
+  if (!value->isa<tensor::Tensor>()) {
+    tensor = parser->CreateTensorForValue(value);
   } else {
-    PrepareDataForValue(value, node_with_index, device_context, context);
+    tensor = value->cast<tensor::TensorPtr>();
+  }
+
+  MS_EXCEPTION_IF_NULL(tensor);
+  const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(node, index, false);
+  MS_EXCEPTION_IF_NULL(device_tensor);
+  if (device_tensor->GetPtr() != nullptr) {
+    return;
+  }
+
+  MS_LOG(INFO) << "Prepare device data for control value node: " << node->DebugString() << ", output index: " << index;
+  tensor->set_device_address(device_tensor);
+  UpdateRefCount(device_tensor.get(), true);
+
+  device::DynamicMemAllocatorDebugInfo::SetDebugInfo(node->DebugString(), device::AllocatorType::kConstantValue, 0);
+  if (!device_context->device_res_manager_->AllocateMemory(device_tensor.get())) {
+    SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(real_strategy_, *context, *device_context, node->fullname_with_scope(),
+                                                device_tensor->GetSize());
+  }
+
+  auto host_tensor_size = LongToSize(tensor->data().nbytes());
+  auto host_tensor_type = tensor->data_type();
+  auto shape = tensor->shape();
+  if (!device_tensor->SyncHostToDevice(shape, host_tensor_size, host_tensor_type, tensor->data_c(),
+                                       tensor->device_info().host_format_)) {
+    std::string error_info = "Sync host to device failed for node:" + node->DebugString();
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
   }
 }
 
@@ -829,7 +772,8 @@ void DataPrepareActor::PrepareDeviceTensorStoreForControlNode(const ControlNodeP
   for (const auto &value_node_with_context : control_node_parser->front_value_nodes()) {
     MS_EXCEPTION_IF_NULL(value_node_with_context.first.first);
     if (AnfAlgo::OutputAddrExist(value_node_with_context.first.first, 0)) {
-      PrepareDataForControlValueNode(value_node_with_context.first, value_node_with_context.second, context);
+      PrepareDataForControlValueNode(value_node_with_context.first, value_node_with_context.second, context,
+                                     control_node_parser);
     }
   }
 
