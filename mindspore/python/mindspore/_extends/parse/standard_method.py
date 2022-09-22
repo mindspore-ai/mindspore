@@ -23,6 +23,7 @@ from mindspore._c_expression import Tensor as Tensor_
 from mindspore.ops.function.sparse_func import sparse_add
 from mindspore.ops.composite.base import _append, _insert, _pop, _list_clear, _reverse, \
     _count, _extend
+import mindspore.common._monad as monad
 
 from ..._checkparam import Validator as validator
 from ...ops import functional as F
@@ -3072,3 +3073,10 @@ def bmm(input_x, mat2):
     Computes  matrix multiplication between two tensors by batch.
     """
     return F.bmm(input_x, mat2)
+
+
+def value_(x):
+    r"""
+    Get the value of Parameter or Tensor x. If x is Parameter, will change the type from RefTensor to Tensor.
+    """
+    return P.Load()(x, monad.U)

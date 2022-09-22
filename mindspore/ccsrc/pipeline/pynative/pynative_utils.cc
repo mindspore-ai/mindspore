@@ -452,7 +452,7 @@ void DataConvert::ConvertValueToTensor(const FrontendOpRunInfoPtr &op_run_info, 
   } else if (v->isa<tensor::CSRTensor>()) {
     ConvertCSRTensorToTensorList(op_run_info, v->cast<tensor::CSRTensorPtr>(), op_prim);
     return;
-  } else if (v->isa<None>()) {
+  } else if (v->isa<None>() || v->isa<Monad>()) {
     (void)op_run_info->index_with_value.emplace_back(std::make_pair(index, kNone));
     return;
   } else {
