@@ -2586,7 +2586,7 @@ def adaptive_max_pool1d(input_x, output_size):
         input_x (Tensor): Tensor of shape :math:`(N, C_{in}, L_{in})`, with float16 or float32 data type.
         output_size (int): the target output size :math:`L_{out}`.
 
-    Outputs:
+    Returns:
         Tensor of shape :math:`(N, C_{in}, L_{out})`, has the same type as `input_x`.
 
     Raises:

@@ -5190,7 +5190,7 @@ def bmm(input_x, mat2):
             size of the last two dimensions.
         mat2 (Tensor): The second tensor to be multiplied. The shape of the tensor is :math:`(*B, C, M)`.
 
-    Outputs:
+    Returns:
         Tensor, the shape of the output tensor is :math:`(*B, N, M)`.
 
     Raises:
