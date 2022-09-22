@@ -54,10 +54,10 @@ abstract::ShapePtr PadV3GradInferShape(const PrimitivePtr &primitive, const std:
   if (paddings_contiguous == false) {
     std::vector<int64_t> tmp = paddings_val;
     for (int64_t i = 0; i < paddings_size; ++i) {
-      if (i % kTwo == 0) {
-        paddings_val[i] = tmp[i / kTwo];
+      if (i % SizeToLong(kTwo) == 0) {
+        paddings_val[LongToSize(i)] = tmp[LongToSize(i) / kTwo];
       } else {
-        paddings_val[i] = tmp[(i + paddings_size) / kTwo];
+        paddings_val[LongToSize(i)] = tmp[LongToSize(i + paddings_size) / kTwo];
       }
     }
   }
@@ -66,20 +66,20 @@ abstract::ShapePtr PadV3GradInferShape(const PrimitivePtr &primitive, const std:
   std::vector<int64_t> out_shape;
   if (paddings_size == kPaddingsSizeTwo) {
     (void)CheckAndConvertUtils::CheckInteger("input dims when padding's size equal 2", kThree, kEqual,
-                                             int64_t(x_shape.size()), prim_name);
+                                             SizeToLong(x_shape.size()), prim_name);
     (void)out_shape.emplace_back(x_shape[0]);
     (void)out_shape.emplace_back(x_shape[1]);
     (void)out_shape.emplace_back(x_shape[kInputIndex2] - paddings_val[0] - paddings_val[1]);
   } else if (paddings_size == kPaddingsSizeFour) {
     (void)CheckAndConvertUtils::CheckInteger("input dims when padding's size equal 4", kFour, kEqual,
-                                             int64_t(x_shape.size()), prim_name);
+                                             SizeToLong(x_shape.size()), prim_name);
     (void)out_shape.emplace_back(x_shape[0]);
     (void)out_shape.emplace_back(x_shape[1]);
     (void)out_shape.emplace_back(x_shape[kInputIndex2] - paddings_val[paddings_pos_2] - paddings_val[paddings_pos_3]);
     (void)out_shape.emplace_back(x_shape[kInputIndex3] - paddings_val[0] - paddings_val[1]);
   } else if (paddings_size == kPaddingsSizeSix) {
     (void)CheckAndConvertUtils::CheckInteger("input dims when padding's size equal 6", kFive, kEqual,
-                                             int64_t(x_shape.size()), prim_name);
+                                             SizeToLong(x_shape.size()), prim_name);
     (void)out_shape.emplace_back(x_shape[0]);
     (void)out_shape.emplace_back(x_shape[1]);
     (void)out_shape.emplace_back(x_shape[kInputIndex2] - paddings_val[paddings_pos_4] - paddings_val[paddings_pos_5]);

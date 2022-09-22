@@ -842,13 +842,13 @@ void TripletMarginLossCPUKernelMod::complextype_swap(size_t start, std::vector<T
 }
 
 void TripletMarginLossCPUKernelMod::CheckParam(const CNodePtr &kernel_node) {
-  auto input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
+  input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   constexpr int kOne = 1;
   constexpr int kfour = 4;
   if (input_num != kfour) {
     MS_LOG(EXCEPTION) << "Input number is " << input_num << ", but TripletMarginLossCPUKernelMod needs 4 inputs.";
   }
-  auto output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
+  output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
   if (output_num != kOne) {
     MS_LOG(EXCEPTION) << "Output number is " << output_num << ", but TripletMarginLossCPUKernelMod needs 1 output.";
   }

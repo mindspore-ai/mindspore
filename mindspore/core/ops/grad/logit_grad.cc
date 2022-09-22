@@ -62,7 +62,7 @@ AbstractBasePtr LogitGradInfer(const abstract::AnalysisEnginePtr &, const Primit
                                const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  const size_t input_num = 2;
+  const int64_t input_num = 2;
   (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
   auto types = LogitGradInferType(primitive, input_args);
   auto shapes = LogitGradInferShape(primitive, input_args);
