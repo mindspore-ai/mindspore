@@ -20,10 +20,12 @@ set(jpeg_turbo_LDFLAGS "-Wl,-z,relro,-z,now,-z,noexecstack,-s")
 
 set(jpeg_turbo_USE_STATIC_LIBS ON)
 set(JPEG_TURBO_PATCHE ${CMAKE_SOURCE_DIR}/third_party/patch/jpeg_turbo/jpeg_turbo.patch001)
+set(CVE_2020_35538 ${CMAKE_SOURCE_DIR}/third_party/patch/jpeg_turbo/CVE-2020-35538.patch)
 set(CMAKE_OPTION -DCMAKE_BUILD_TYPE=Release -DCMAKE_SKIP_RPATH=TRUE -DWITH_SIMD=ON)
 if(BUILD_LITE)
     set(jpeg_turbo_USE_STATIC_LIBS OFF)
     set(JPEG_TURBO_PATCHE ${TOP_DIR}/third_party/patch/jpeg_turbo/jpeg_turbo.patch001)
+    set(CVE_2020_35538 ${TOP_DIR}/third_party/patch/jpeg_turbo/CVE-2020-35538.patch)
     if(PLATFORM_ARM64)
         set(CMAKE_OPTION  -DCMAKE_TOOLCHAIN_FILE=$ENV{ANDROID_NDK}/build/cmake/android.toolchain.cmake
                           -DANDROID_NATIVE_API_LEVEL=19
@@ -50,6 +52,7 @@ mindspore_add_pkg(jpeg_turbo
         MD5 ${MD5}
         CMAKE_OPTION ${CMAKE_OPTION}
         PATCHES ${JPEG_TURBO_PATCHE}
+        PATCHES ${CVE_2020_35538}
         )
 include_directories(${jpeg_turbo_INC})
 add_library(mindspore::jpeg_turbo ALIAS jpeg_turbo::jpeg)
