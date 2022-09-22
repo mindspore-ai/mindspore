@@ -782,18 +782,6 @@ void MindRTBackend::DispatchOpTask(bool single_op_cache_hit, VectorRef *outputs,
   MS_EXCEPTION_IF_NULL(graph);
   const auto &output_nodes = op_compiler_info->graph_output_nodes_;
 
-  auto input_tensors = op_run_info->base_op_run_info.input_tensor;
-  for (auto &input_tensor : input_tensors) {
-    MS_EXCEPTION_IF_NULL(input_tensor);
-    auto data = input_tensor->data_ptr();
-    if (data != nullptr && data->is_from_numpy()) {
-      // Convert python tensor to cpp tensor
-      py::gil_scoped_acquire gil;
-      input_tensor->AssignValue(tensor::Tensor(*input_tensor, input_tensor->data_type()));
-      data = nullptr;
-    }
-  }
-
   runtime::UpdateDeviceAddress(graph, GetTensorWithoutValueMask(op_run_info), op_compiler_info->device_context_);
   // Create output tensor
   UpdateOutput(output_nodes, outputs);
