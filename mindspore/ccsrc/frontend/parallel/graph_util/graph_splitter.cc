@@ -28,7 +28,7 @@
 #include "include/common/utils/anfalgo.h"
 #include "include/common/debug/draw.h"
 #include "include/common/utils/parallel_context.h"
-#ifdef WITH_BACKEND
+#if defined(__linux__) && defined(WITH_BACKEND)
 #include "ps/ps_context.h"
 #endif
 
@@ -336,7 +336,7 @@ distributed::DistExecutionMode GenerateStrategy() {
   distributed::DistExecutionMode strategy;
   bool enable_ps = false;
   bool enable_embedding_cache = false;
-#ifdef WITH_BACKEND
+#if defined(__linux__) && defined(WITH_BACKEND)
   enable_ps = ps::PSContext::instance()->is_ps_mode();
   enable_embedding_cache = ps::PSContext::instance()->cache_enable();
 #endif

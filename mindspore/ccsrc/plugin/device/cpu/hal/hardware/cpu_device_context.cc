@@ -47,7 +47,7 @@
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "plugin/device/cpu/hal/profiler/cpu_profiling.h"
-#ifdef WITH_BACKEND
+#if defined(__linux__) && defined(WITH_BACKEND)
 #include "plugin/device/cpu/hal/hardware/ms_collective_comm_lib.h"
 #endif
 #ifndef ENABLE_SECURITY
@@ -407,7 +407,7 @@ bool CPUDeviceResManager::LoadCollectiveCommLib() {
     collective_comm_lib_ = instance_func();
     MS_EXCEPTION_IF_NULL(collective_comm_lib_);
   } else {
-#ifdef WITH_BACKEND
+#if defined(__linux__) && defined(WITH_BACKEND)
     collective_comm_lib_ = &MsCollectiveCommLib::GetInstance();
     MS_EXCEPTION_IF_NULL(collective_comm_lib_);
 #endif

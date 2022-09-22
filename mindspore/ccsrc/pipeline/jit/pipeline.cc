@@ -67,7 +67,7 @@
 #include "runtime/device/stream_synchronizer.h"
 #include "distributed/collective/collective_manager.h"
 
-#ifdef WITH_BACKEND
+#if defined(__linux__) && defined(WITH_BACKEND)
 #include "ps/constants.h"
 #include "ps/util.h"
 #include "ps/ps_cache/ps_data/ps_data_prefetch.h"
@@ -748,7 +748,7 @@ std::vector<ActionItem> GetPipeline(const ResourcePtr &resource, const std::stri
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   std::string backend = ms_context->backend_policy();
-#ifdef WITH_BACKEND
+#if defined(__linux__) && defined(WITH_BACKEND)
   if (distributed::cluster::ClusterContext::instance()->initialized()) {
     auto node = distributed::cluster::ClusterContext::instance()->node();
     MS_EXCEPTION_IF_NULL(node);
@@ -1448,7 +1448,7 @@ bool InitExecDataset(const std::string &queue_name, int64_t iter_num, int64_t ba
 bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batch_size,
                        const std::vector<TypePtr> &types, const std::vector<std::vector<int64_t>> &shapes,
                        const std::vector<int64_t> &input_indexes, bool need_run) {
-#ifdef WITH_BACKEND
+#if defined(__linux__) && defined(WITH_BACKEND)
   if ((ps::PSContext::instance()->is_ps_mode()) && (!ps::PSContext::instance()->is_worker())) {
     return true;
   }
@@ -1503,7 +1503,7 @@ bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batc
   MS_EXCEPTION_IF_NULL(backend);
   // The data set graph compiling and running of mindRT.
   if (MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
-#ifdef WITH_BACKEND
+#if defined(__linux__) && defined(WITH_BACKEND)
     if (ps::PSContext::instance()->is_worker() && ps::PSContext::instance()->cache_enable()) {
       ps::PsDataPrefetch::GetInstance().CreateDataChannel(queue_name, LongToSize(size));
     }
@@ -1529,7 +1529,7 @@ bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batc
   auto runner = convert_fn(segment, "");
   ConfigManager::GetInstance().set_iter_num(queue_name, size);
   // PS cache does not support loop sink.
-#ifdef WITH_BACKEND
+#if defined(__linux__) && defined(WITH_BACKEND)
   if (ps::PSContext::instance()->is_worker() && ps::PsDataPrefetch::GetInstance().cache_enable()) {
     ps::PsDataPrefetch::GetInstance().CreateDataChannel(queue_name, LongToSize(size));
     ConfigManager::GetInstance().set_iter_num(queue_name, 1);
@@ -1898,7 +1898,7 @@ bool PyIsCipherFile(const std::string &file_path) { return mindspore::IsCipherFi
 
 void FinalizeCluster() {
   MS_LOG(INFO) << "Start finalize the cluster instance.";
-#ifdef WITH_BACKEND
+#if defined(__linux__) && defined(WITH_BACKEND)
   if (distributed::cluster::ClusterContext::instance()->initialized()) {
     runtime::EmbeddingCacheScheduler::GetInstance().Finalize();
     (void)distributed::cluster::ClusterContext::instance()->Finalize(UINT32_MAX);

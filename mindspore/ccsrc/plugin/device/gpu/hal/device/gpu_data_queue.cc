@@ -50,6 +50,10 @@ DataQueueStatus GpuDataQueueDynamic::Push(std::vector<DataQueueItem> data) {
     return DataQueueStatus::SUCCESS;
   }
 
+  if (IsFull()) {
+    return DataQueueStatus::TIMEOUT;
+  }
+
   for (size_t i = 0; i < data.size(); i++) {
     auto &item = data[i];
     if (item.data_ptr == nullptr) {
@@ -195,6 +199,9 @@ GpuDataQueue::~GpuDataQueue() {
 DataQueueStatus GpuDataQueue::Push(std::vector<DataQueueItem> data) {
   if (data.empty()) {
     return DataQueueStatus::SUCCESS;
+  }
+  if (IsFull()) {
+    return DataQueueStatus::TIMEOUT;
   }
   size_t data_len =
     std::accumulate(data.begin(), data.end(), 0, [](size_t accum, const auto &it) { return accum + it.data_len; });

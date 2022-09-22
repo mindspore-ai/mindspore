@@ -29,7 +29,7 @@
 #include "frontend/parallel/strategy.h"
 #include "include/common/utils/parallel_context.h"
 #include "frontend/parallel/tensor_layout/tensor_redistribution.h"
-#ifdef WITH_BACKEND
+#if defined(__linux__) && defined(WITH_BACKEND)
 #include "ps/ps_cache/ps_data/ps_data_prefetch.h"
 #include "ps/ps_context.h"
 #include "distributed/embedding_cache/embedding_cache_utils.h"
@@ -102,7 +102,7 @@ std::vector<StrategyPtr> UniqueInfo::GenerateOpStrategies(int64_t stage_id) {
 
   return sp_vector;
 }
-#ifdef WITH_BACKEND
+#if defined(__linux__) && defined(WITH_BACKEND)
 Status UniqueInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
   GenerateGraph gen_g = GenerateGraph(attrs_);
   if (gen_g.Init(cnode) != SUCCESS) {
@@ -142,7 +142,7 @@ Status UniqueInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
 }
 #endif
 ReplaceGraphPtr UniqueInfo::replace_graph(const CNodePtr &cnode) {
-#ifdef WITH_BACKEND
+#if defined(__linux__) && defined(WITH_BACKEND)
   if (ps::PsDataPrefetch::GetInstance().cache_enable()) {
     auto inputs = cnode->inputs();
     if (inputs.empty()) {

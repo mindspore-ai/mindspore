@@ -54,7 +54,7 @@
 #include "include/common/debug/common.h"
 #include "distributed/recovery/recovery_context.h"
 #include "distributed/collective/collective_manager.h"
-#ifdef WITH_BACKEND
+#if defined(__linux__) && defined(WITH_BACKEND)
 #include "distributed/cluster/cluster_context.h"
 #else
 #include "distributed/cluster/dummy_cluster_context.h"
@@ -195,7 +195,7 @@ void IntHandler(int, siginfo_t *, void *) {
 }
 #endif
 
-#ifdef WITH_BACKEND
+#if defined(__linux__) && defined(WITH_BACKEND)
 void SendFinishTransform(const std::string &actor_set_name) {
   auto node = ClusterContext::instance()->node();
   MS_EXCEPTION_IF_NULL(node);
@@ -517,13 +517,13 @@ ActorSet *GraphScheduler::Transform(const GraphCompilerInfo &graph_compiler_info
   Optimize(actor_set);
   MS_LOG(INFO) << "Graph(" << graph_compiler_info.name_ << ") transforms actor end.";
 
-#ifdef WITH_BACKEND
+#if defined(__linux__) && defined(WITH_BACKEND)
   if (ClusterContext::instance()->initialized() && RecoveryContext::GetInstance()->enable_recovery()) {
     SendFinishTransform(graph_compiler_info.name_);
   }
 #endif
 
-#ifdef WITH_BACKEND
+#if defined(__linux__) && defined(WITH_BACKEND)
   // Save data channel for this actor set.
   MS_EXCEPTION_IF_NULL(actor_set->data_prepare_actor_);
   EmbeddingCacheScheduler::GetInstance().SetDataSetChannel(actor_set->data_prepare_actor_->GetAID(),
@@ -637,7 +637,7 @@ void GraphScheduler::Run(ActorSet *const actor_set, const std::vector<std::vecto
   const size_t kSecondsToMilliseconds = 1000;
   SetActorExecutionStrategy(actor_set, strategy, (end_time - start_time) * kSecondsToMilliseconds);
 
-#ifdef WITH_BACKEND
+#if defined(__linux__) && defined(WITH_BACKEND)
   DoDisasterRecovery(actor_set->name_);
 #endif
 }

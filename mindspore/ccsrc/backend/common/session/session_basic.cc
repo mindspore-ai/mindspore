@@ -48,7 +48,7 @@
 #include "utils/trace_base.h"
 #include "include/common/utils/parallel_context.h"
 #include "kernel/oplib/oplib.h"
-#ifdef WITH_BACKEND
+#if defined(__linux__) && defined(WITH_BACKEND)
 #include "ps/ps_cache/ps_data/ps_data_prefetch.h"
 #include "ps/constants.h"
 #include "ps/util.h"

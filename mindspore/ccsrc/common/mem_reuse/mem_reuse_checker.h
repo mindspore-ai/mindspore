@@ -29,7 +29,7 @@
 namespace mindspore {
 namespace memreuse {
 constexpr auto kSplitC = '/';
-class MemReuseChecker {
+class BACKEND_EXPORT MemReuseChecker {
  public:
   static MemReuseChecker &GetInstance();
   MemReuseChecker(const MemReuseChecker &) = delete;

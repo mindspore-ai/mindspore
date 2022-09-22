@@ -18,7 +18,7 @@
 #define MINDSPORE_CCSRC_DISTRIBUTED_INIT_H_
 
 #include "distributed/collective/collective_manager.h"
-#ifdef WITH_BACKEND
+#if defined(__linux__) && defined(WITH_BACKEND)
 #include "distributed/cluster/cluster_context.h"
 #else
 #include "distributed/cluster/dummy_cluster_context.h"
