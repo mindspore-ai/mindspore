@@ -25,6 +25,7 @@ namespace mindspore {
 namespace kernel {
 namespace {
 constexpr size_t kSoftmaxCrossEntropyWithLogitsInputsNum = 2;
+constexpr size_t kSoftmaxCrossEntropyWithLogitsInputDim = 2;
 constexpr size_t kSoftmaxCrossEntropyWithLogitsOutputsNum = 2;
 constexpr size_t kSoftmaxCrossEntropyWithLogitsWorkspaceSize = 1;
 }  // namespace
@@ -46,7 +47,7 @@ int SoftmaxCrossEntropyWithLogitsCpuKernelMod::Resize(const BaseOperatorPtr &bas
   auto shape = inputs.at(0)->GetShapeVector();
   dnnl::memory::dims mem_dims;
   (void)mem_dims.insert(mem_dims.end(), shape.begin(), shape.end());
-  if (mem_dims.size() != 2) {
+  if (mem_dims.size() != kSoftmaxCrossEntropyWithLogitsInputDim) {
     MS_LOG(ERROR) << "SoftmaxCrossEntropyWithLogits kernel dims invalid " << mem_dims.size();
     return KRET_RESIZE_FAILED;
   }
