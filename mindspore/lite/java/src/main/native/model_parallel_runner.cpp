@@ -22,7 +22,6 @@
 extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_ModelParallelRunner_init(JNIEnv *env, jobject thiz,
                                                                                jstring model_path,
                                                                                jlong runner_config_ptr) {
-  MS_LOG(INFO) << "the model in the java interface is initializing.";
   auto runner = new (std::nothrow) mindspore::ModelParallelRunner();
   if (runner == nullptr) {
     MS_LOG(ERROR) << "Make ModelParallelRunner failed";
@@ -37,6 +36,7 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_ModelParallelRunner_init(J
       env->ReleaseStringUTFChars(model_path, c_model_path);
       return (jlong) nullptr;
     }
+    MS_LOG(INFO) << "the model in the java interface without RunnerConfig has been initialized.";
   } else {
     auto *c_runner_config = reinterpret_cast<mindspore::RunnerConfig *>(runner_config_ptr);
     auto origin_context = c_runner_config->GetContext();
@@ -47,7 +47,7 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_ModelParallelRunner_init(J
         env->ReleaseStringUTFChars(model_path, c_model_path);
         return (jlong) nullptr;
       }
-      MS_LOG(INFO) << "the model parallel runner in the java interface has been initialized.";
+      MS_LOG(INFO) << "the model parallel runner with RunnerConfig in the java interface has been initialized.";
       return (jlong)runner;
     }
     auto copy_context = std::make_shared<mindspore::Context>();
