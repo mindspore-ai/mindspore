@@ -27,13 +27,13 @@ class FullconnectedAddFusion : public MultiplePatternProcessPass {
   explicit FullconnectedAddFusion(const std::string &name = "FullconnectedAddFusion", bool multigraph = true)
       : MultiplePatternProcessPass(name, multigraph) {}
   ~FullconnectedAddFusion() override = default;
-
- private:
-  std::unordered_map<std::string, VectorRef> DefinePatterns() const override;
-  VectorRef DefineFcAddFusionPattern() const;
-  VectorRef DefineFcBiasAddPattern() const;
   AnfNodePtr Process(const std::string &pattern_name, const FuncGraphPtr &func_graph, const AnfNodePtr &,
                      const EquivPtr &) const override;
+  std::unordered_map<std::string, VectorRef> DefinePatterns() const override;
+
+ private:
+  VectorRef DefineFcAddFusionPattern() const;
+  VectorRef DefineFcBiasAddPattern() const;
 };
 }  // namespace mindspore::opt
 #endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_FULLCONNECTED_ADD_FUSION_H_

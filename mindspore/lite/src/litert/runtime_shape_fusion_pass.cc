@@ -48,11 +48,11 @@ int ShapeFusionPass::ConvertToShapeFusion(LiteGraph::Node *node) {
     return RET_ERROR;
   }
   memcpy(prim, fbb.GetBufferPointer(), fbb.GetSize());
+  lite_model_->node_bufs_.push_back(prim);
+  fbb.Clear();
+
   auto shape_fusion_prim = flatbuffers::GetRoot<schema::Primitive>(prim);
   MS_CHECK_TRUE_RET(shape_fusion_prim != nullptr, RET_ERROR);
-  fbb.Clear();
-  lite_model_->node_bufs_.push_back(prim);
-
   ShapeFusionMatrix shape_fusion_matrix(shape.size());
   shape_fusion_matrices_[node->output_indices_.front()] = shape_fusion_matrix;
   auto shape_fusion_matrix_tensor = BuildTensorFromShapeFusionMatrix(shape_fusion_matrix);
@@ -76,7 +76,11 @@ Tensor *ShapeFusionPass::BuildTensorFromShapeFusionMatrix(const ShapeFusionMatri
   auto tensor = new (std::nothrow) Tensor(kNumberTypeFloat32, matrix_shape, NUM_OF_FORMAT, Category::CONST_TENSOR);
   MS_CHECK_TRUE_RET(tensor != nullptr, nullptr);
   auto matrix_data = tensor->MutableData();
-  MS_CHECK_TRUE_RET(matrix_data != nullptr, nullptr);
+  if (matrix_data == nullptr) {
+    MS_LOG(ERROR) << "Mutable data failed for tensor: " << tensor->tensor_name();
+    delete tensor;
+    return nullptr;
+  }
   for (size_t row = 0; row < shape_fusion_matrix.shape_matrix.size(); row++) {
     auto dst_data = reinterpret_cast<float *>(matrix_data) + row * shape_fusion_matrix.shape_matrix.front().size();
     memcpy(dst_data, shape_fusion_matrix.shape_matrix.at(row).data(),
@@ -136,9 +140,9 @@ int ShapeFusionPass::FusePostNodes(LiteGraph::Node *node, size_t subgraph_index)
 bool ShapeFusionPass::CheckCanFused(const LiteGraph::Node *shape_fusion, const LiteGraph::Node *post_node,
                                     uint32_t input_idx, size_t subgraph_index) {
   MS_ASSERT(shape_fusion != nullptr && post_node != nullptr);
-  MS_CHECK_TRUE_RET(subgraph_index < lite_model_->graph_.sub_graphs_.size(), RET_ERROR);
+  MS_CHECK_TRUE_RET(subgraph_index < lite_model_->graph_.sub_graphs_.size(), false);
   auto subgraph = lite_model_->graph_.sub_graphs_.at(subgraph_index);
-  MS_CHECK_TRUE_RET(subgraph != nullptr, RET_ERROR);
+  MS_CHECK_TRUE_RET(subgraph != nullptr, false);
   auto &subgraph_node_indices = subgraph->node_indices_;
   bool belong_to_current_subgraph = std::any_of(subgraph_node_indices.begin(), subgraph_node_indices.end(),
                                                 [&](uint32_t idx) { return all_nodes_->at(idx) == post_node; });
@@ -323,7 +327,7 @@ int ShapeFusionPass::UpdateShapeFusionMatrix(const LiteGraph::Node *post_node, S
     } break;
     case schema::PrimitiveType_Shape: {
       std::vector<float> shape_vec(shape_fusion_matrix->shape_matrix.front().size(), 0);
-      shape_vec.at(shape_vec.size() - 1) = shape_fusion_matrix->shape_matrix.size();
+      shape_vec.at(shape_vec.size() - 1) = static_cast<float>(shape_fusion_matrix->shape_matrix.size());
       shape_fusion_matrix->shape_matrix = {shape_vec};
       shape_fusion_matrix->scalar = true;
     } break;

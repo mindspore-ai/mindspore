@@ -101,13 +101,13 @@ int ScaleScaleFusion::GetInputParamsAndTensors(const CNodePtr &up_scale_cnode, c
   auto up_scale_prim_c = up_scale_prim->GetPrim();
   MS_CHECK_TRUE_RET(up_scale_prim_c != nullptr && up_scale_prim_c->GetAttr(ops::kAxis), lite::RET_ERROR);
   auto axis = up_scale_prim->get_axis();
-  up_scale_axis_ = axis < 0 ? axis + scale_input_shape_.size() : axis;
+  up_scale_axis_ = axis < 0 ? axis + static_cast<int>(scale_input_shape_.size()) : axis;
   auto down_scale_prim = ops::GetOperator<ops::ScaleFusion>(down_scale_cnode->input(FIRST_INPUT));
   MS_CHECK_TRUE_RET(down_scale_prim != nullptr, lite::RET_ERROR);
   auto down_scale_prim_c = down_scale_prim->GetPrim();
   MS_CHECK_TRUE_RET(down_scale_prim_c != nullptr && down_scale_prim_c->GetAttr(ops::kAxis), lite::RET_ERROR);
   axis = down_scale_prim->get_axis();
-  down_scale_axis_ = axis < 0 ? axis + scale_input_shape_.size() : axis;
+  down_scale_axis_ = axis < 0 ? axis + static_cast<int>(scale_input_shape_.size()) : axis;
 
   auto up_weight_param = up_scale_cnode->input(THIRD_INPUT);
   MS_CHECK_TRUE_RET(up_weight_param != nullptr, lite::RET_ERROR);
@@ -247,7 +247,7 @@ ParameterPtr ScaleScaleFusion::GenerateNewBiasNode(const FuncGraphPtr &func_grap
     auto bias_shape = down_bias_tensor_->shape_c();
     int axis_diff = down_scale_axis_ - MSMIN(up_scale_axis_, down_scale_axis_);
     int end_idx_diff =
-      down_scale_axis_ + bias_shape.size() -
+      down_scale_axis_ + static_cast<int>(bias_shape.size()) -
       MSMAX(down_scale_axis_ + bias_shape.size(), up_scale_axis_ + up_weight_tensor_->shape_c().size());
     size_t outer_size = axis_diff > 0 ? std::accumulate(expand_shape_.begin(), expand_shape_.begin() + axis_diff, 1,
                                                         std::multiplies<size_t>())

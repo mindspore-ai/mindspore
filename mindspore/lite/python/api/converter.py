@@ -36,6 +36,7 @@ class FmkType(Enum):
     ONNX = 2
     MINDIR = 3
     TFLITE = 4
+    PYTORCH = 5
 
 
 class Converter:
@@ -47,9 +48,10 @@ class Converter:
 
     Args:
         fmk_type (FmkType): Input model framework type. Options: FmkType.TF | FmkType.CAFFE | FmkType.ONNX |
-            FmkType.MINDIR | FmkType.TFLITE.
+            FmkType.MINDIR | FmkType.TFLITE | FmkType.PYTORCH.
         model_file (str): Path of the input model. e.g. "/home/user/model.prototxt". Options:
-            TF: "\*.pb" | CAFFE: "\*.prototxt" | ONNX: "\*.onnx" | MINDIR: "\*.mindir" | TFLITE: "\*.tflite".
+            TF: "\*.pb" | CAFFE: "\*.prototxt" | ONNX: "\*.onnx" | MINDIR: "\*.mindir" | TFLITE: "\*.tflite" |
+            PYTORCH: "\*.pt or \*.pth".
         output_file (str): Path of the output model. The suffix .ms can be automatically generated.
             e.g. "/home/user/model.prototxt", it will generate the model named model.prototxt.ms in /home/user/
         weight_file (str, optional): Input model weight file. Required only when fmk_type is FmkType.CAFFE.
@@ -175,6 +177,7 @@ class Converter:
             FmkType.ONNX: _c_lite_wrapper.FmkType.kFmkTypeOnnx,
             FmkType.MINDIR: _c_lite_wrapper.FmkType.kFmkTypeMs,
             FmkType.TFLITE: _c_lite_wrapper.FmkType.kFmkTypeTflite,
+            FmkType.PYTORCH: _c_lite_wrapper.FmkType.kFmkTypePytorch,
         }
         self._converter = _c_lite_wrapper.ConverterBind(fmk_type_py_cxx_map.get(fmk_type), model_file, output_file,
                                                         weight_file)

@@ -45,9 +45,9 @@ struct ShapeFusionMatrix {
     auto src_matrix = shape_matrix;
     shape_matrix.clear();
     for (auto idx : indices) {
-      idx = idx >= 0 ? idx : idx + src_matrix.size();
+      idx = idx >= 0 ? idx : idx + static_cast<int>(src_matrix.size());
       MS_CHECK_TRUE_RET(idx >= 0 && idx < static_cast<int>(src_matrix.size()), RET_ERROR);
-      shape_matrix.push_back(src_matrix.at(idx));
+      shape_matrix.push_back(src_matrix.at(static_cast<size_t>(idx)));
     }
     return RET_OK;
   }

@@ -36,7 +36,7 @@ OpParameter *PopulateTopKParameter(const void *prim) {
   memset(param, 0, sizeof(TopkParameter));
 
   param->op_parameter_.type_ = primitive->value_type();
-  param->axis_ = value->axis();
+  param->axis_ = static_cast<int>(value->axis());
   param->sorted_ = value->sorted();
   return reinterpret_cast<OpParameter *>(param);
 }

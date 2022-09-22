@@ -37,7 +37,7 @@ int TopKInt8CPUKernel::ReSize() {
   TopkParameter *parameter = reinterpret_cast<TopkParameter *>(op_parameter_);
   CHECK_NULL_RETURN(parameter);
   lite::Tensor *input = in_tensors_.at(0);
-  parameter->dim_size_ = input->shape().at(parameter->axis_);
+  parameter->dim_size_ = input->shape().at(static_cast<size_t>(parameter->axis_));
   parameter->outer_loop_num_ = 1;
   for (size_t i = 0; i < static_cast<size_t>(parameter->axis_); ++i) {
     parameter->outer_loop_num_ *= input->shape().at(i);

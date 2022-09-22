@@ -32,19 +32,18 @@ class GroupNormFusion : public LitePatternProcessPass {
  public:
   explicit GroupNormFusion(const std::string &name = "GroupNormFusion", bool multigraph = true)
       : LitePatternProcessPass(name, multigraph) {}
-
   ~GroupNormFusion() override = default;
+  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  const BaseRef DefinePattern() const override;
 
  protected:
   bool Init() const;
 
  private:
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
   bool CheckPattern(const FuncGraphPtr &func_graph, const EquivPtr &equiv, int *num_groups, float *epsilon,
                     bool *affine) const;
   CNodePtr CreateGroupNormNode(const FuncGraphPtr &func_graph, const EquivPtr &equiv, int num_groups, float epsilon,
                                bool affine) const;
-  const BaseRef DefinePattern() const override;
 
  protected:
   mutable VarPtr input_ = nullptr;

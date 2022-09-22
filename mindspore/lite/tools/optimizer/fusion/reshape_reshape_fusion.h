@@ -29,10 +29,10 @@ class ReshapeReshapeFusion : public LitePatternProcessPass {
   explicit ReshapeReshapeFusion(bool multigraph = true, const std::string &name = "ReshapeReshapeFusion")
       : LitePatternProcessPass(name, multigraph) {}
   ~ReshapeReshapeFusion() override = default;
+  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  const BaseRef DefinePattern() const override;
 
  private:
-  const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
   mutable VarPtr reshape_input_{nullptr};
   mutable VarPtr reshape_shape_{nullptr};
 };

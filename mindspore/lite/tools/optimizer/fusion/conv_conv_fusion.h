@@ -27,11 +27,11 @@ class ConvConvFusion : public LitePatternProcessPass {
  public:
   explicit ConvConvFusion(bool multigraph = true) : LitePatternProcessPass("ConvConvFusion", multigraph) {}
   ~ConvConvFusion() override = default;
+  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  const BaseRef DefinePattern() const override;
 
  private:
   bool CheckCanFusion(const CNodePtr &up_conv_cnode, const CNodePtr &down_conv_cnode) const;
-  const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 };
 }  // namespace opt
 }  // namespace mindspore
