@@ -21,6 +21,7 @@
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/one_hot_impl.cuh"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace kernel {
@@ -48,11 +49,12 @@ class OneHotFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     const T *on_value = GetDeviceAddress<T>(inputs, on_value_idx);
     const T *off_value = GetDeviceAddress<T>(inputs, off_value_idx);
     T *output = GetDeviceAddress<T>(outputs, 0);
-    OneHot(indices, depth_, on_value, off_value, left_dim_size_, right_dim_size_, output,
+    OneHot(indices, depth_, on_value, off_value, left_dim_size_, right_dim_size_, output, device_id_,
            reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
+    device_id_ = MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID);
     auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     int64_t axis = GetAttr<int64_t>(kernel_node, "axis");

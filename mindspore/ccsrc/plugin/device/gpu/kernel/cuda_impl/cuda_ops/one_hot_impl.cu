@@ -39,21 +39,22 @@ __global__ void OneHotKernel(size_t size, const S *indices, size_t depth, const 
 }
 template <typename T, typename S>
 void OneHot(const S *indices, size_t depth, const T *on_value, const T *off_value, size_t left_dim_size,
-            size_t right_dim_size, T *output, cudaStream_t cuda_stream) {
+            size_t right_dim_size, T *output, const uint32_t &device_id, cudaStream_t cuda_stream) {
   size_t size = left_dim_size * depth * right_dim_size;
-  OneHotKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, indices, depth, on_value, off_value,
-                                                                  left_dim_size, right_dim_size, output);
+  OneHotKernel<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+    size, indices, depth, on_value, off_value, left_dim_size, right_dim_size, output);
   return;
 }
 template CUDA_LIB_EXPORT void OneHot<float, int>(const int *indices, size_t depth, const float *on_value,
                                                  const float *off_value, size_t left_dim_size, size_t right_dim_size,
-                                                 float *output, cudaStream_t cuda_stream);
+                                                 float *output, const uint32_t &device_id, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void OneHot<half, int>(const int *indices, size_t depth, const half *on_value,
                                                 const half *off_value, size_t left_dim_size, size_t right_dim_size,
-                                                half *output, cudaStream_t cuda_stream);
+                                                half *output, const uint32_t &device_id, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void OneHot<float, int64_t>(const int64_t *indices, size_t depth, const float *on_value,
                                                      const float *off_value, size_t left_dim_size,
-                                                     size_t right_dim_size, float *output, cudaStream_t cuda_stream);
+                                                     size_t right_dim_size, float *output, const uint32_t &device_id,
+                                                     cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void OneHot<half, int64_t>(const int64_t *indices, size_t depth, const half *on_value,
                                                     const half *off_value, size_t left_dim_size, size_t right_dim_size,
-                                                    half *output, cudaStream_t cuda_stream);
+                                                    half *output, const uint32_t &device_id, cudaStream_t cuda_stream);
