@@ -998,27 +998,8 @@ void BenchmarkUnifiedApi::ModelParallelRunnerRun(int task_num, int parallel_idx)
 }
 
 int BenchmarkUnifiedApi::AddConfigInfo(const std::shared_ptr<RunnerConfig> &runner_config) {
-  std::map<std::string, std::map<std::string, std::string>> all_config_info;
   if (!flags_->config_file_.empty()) {
-    int ret = lite::GetAllSectionInfoFromConfigFile(flags_->config_file_, &all_config_info);
-    if (ret == RET_OK) {
-      std::map<std::string, std::map<std::string, std::string>>::iterator it;
-      for (it = all_config_info.begin(); it != all_config_info.end(); ++it) {
-        runner_config->SetConfigInfo(it->first, it->second);
-      }
-    }
-  } else {
-    MS_LOG(INFO) << "config file path is empty";
-  }
-  auto env = std::getenv("BENCHMARK_WEIGHT_PATH");
-  if (env == nullptr) {
-    return RET_OK;
-  }
-  auto weight_path = std::string(env);
-  if (weight_path != "") {
-    std::map<std::string, std::string> config;
-    config[kWeightPath] = weight_path;
-    runner_config->SetConfigInfo(kWeight, config);
+    runner_config->SetConfigPath(flags_->config_file_);
   }
   return RET_OK;
 }

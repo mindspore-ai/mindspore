@@ -62,9 +62,21 @@ class RunnerConfig {
   /// \return The current operators context setting.
   std::shared_ptr<Context> GetContext() const;
 
+  /// \brief Set the config path before runtime. Only valid for ModelParallelRunner.
+  ///
+  /// \param[in] config_path The path of the configuration parameter.
+  inline void SetConfigPath(const std::string &config_path);
+
+  /// \brief Get the current config path. Only valid for ModelParallelRunner.
+  ///
+  /// \return The current config path.
+  inline std::string GetConfigPath() const;
+
  private:
   void SetConfigInfo(const std::vector<char> &section, const std::map<std::vector<char>, std::vector<char>> &config);
   std::map<std::vector<char>, std::map<std::vector<char>, std::vector<char>>> GetConfigInfoChar() const;
+  void SetConfigPath(const std::vector<char> &config_path);
+  std::vector<char> GetConfigPathChar() const;
   std::shared_ptr<Data> data_ = nullptr;
 };
 
@@ -75,6 +87,10 @@ void RunnerConfig::SetConfigInfo(const std::string &section, const std::map<std:
 std::map<std::string, std::map<std::string, std::string>> RunnerConfig::GetConfigInfo() const {
   return MapMapCharToString(GetConfigInfoChar());
 }
+
+void RunnerConfig::SetConfigPath(const std::string &config_path) { SetConfigPath(StringToChar(config_path)); }
+
+std::string RunnerConfig::GetConfigPath() const { return CharToString(GetConfigPathChar()); }
 
 class ModelPool;
 
