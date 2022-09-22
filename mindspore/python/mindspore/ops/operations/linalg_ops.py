@@ -95,9 +95,9 @@ class Svd(Primitive):
 
     Examples:
         >>> import numpy as np
-        >>> from mindspore import Tensor, context
+        >>> from mindspore import Tensor, set_context
         >>> from mindspore.ops.operations import linalg_ops as linalg
-        >>> context.set_context(device_target="CPU")
+        >>> set_context(device_target="CPU")
         >>> svd = linalg.Svd(full_matrices=True, compute_uv=True)
         >>> a = Tensor(np.array([[1, 2], [-4, -5], [2, 1]]).astype(np.float32))
         >>> s, u, v = svd(a)

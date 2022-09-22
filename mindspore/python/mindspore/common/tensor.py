@@ -4760,8 +4760,8 @@ class Tensor(Tensor_):
 
         Examples:
             >>> import numpy as np
-            >>> from mindspore import Tensor, context
-            >>> context.set_context(device_target="CPU")
+            >>> from mindspore import Tensor, set_context
+            >>> set_context(device_target="CPU")
             >>> a = Tensor(np.array([[1, 2], [-4, -5], [2, 1]]).astype(np.float32))
             >>> s, u, v = a.svd(full_matrices=True, compute_uv=True)
             >>> print(s)
