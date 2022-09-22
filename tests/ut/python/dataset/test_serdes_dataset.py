@@ -938,6 +938,40 @@ def test_serdes_fill(remove_json_files=True):
     util_check_serialize_deserialize_file(data, "fill_pipeline", remove_json_files)
 
 
+def test_serdes_padded_batch(remove_json_files=True):
+    """
+    Feature: Batch Padding
+    Description: Test batch padding and serdes operation
+    Expectation: Output is equal to the expected output
+    """
+    data_dir = "../data/dataset/testPK/data"
+    data1 = ds.ImageFolderDataset(data_dir, shuffle=False, decode=False)
+
+    type_cast_op = transforms.TypeCast(mstype.int32)
+    image_ops1 = [vision.RandomCropDecodeResize(250),
+                  vision.ToPIL(),
+                  vision.RandomAffine(degrees=15, translate=(0.1, 0.1), scale=(0.9, 1.1)),
+                  vision.RandomHorizontalFlip(prob=0.5)]
+
+    image_ops2 = [vision.RandomColorAdjust(),
+                  vision.RandomSharpness(),
+                  vision.RandomVerticalFlip(),
+                  vision.Rescale(0.5, 1.0),
+                  vision.Normalize(mean=[121.0, 115.0, 100.0], std=[70.0, 68.0, 71.0]),
+                  vision.HWC2CHW()]
+
+    data1 = data1.map(operations=type_cast_op, input_columns="label", num_parallel_workers=8)
+    data1 = data1.map(operations=image_ops1, input_columns="image", num_parallel_workers=8)
+    data1 = data1.map(operations=image_ops2, input_columns="image", num_parallel_workers=8)
+
+    data1 = data1.padded_batch(batch_size=2, drop_remainder=False, pad_info={"image": ([3, 300, 300], 2.0)})
+    data1 = data1.repeat(2)
+    for _ in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
+        pass
+
+    util_check_serialize_deserialize_file(data1, "serdes_padded_batch", remove_json_files)
+
+
 def test_serdes_exception():
     """
     Feature: Serialize and Deserialize Support
@@ -1084,3 +1118,4 @@ if __name__ == '__main__':
     test_serdes_fill()
     test_serdes_not_implemented_op_exception()
     test_serdes_exception()
+    test_serdes_padded_batch()

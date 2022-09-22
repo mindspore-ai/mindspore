@@ -35,6 +35,7 @@ Batch（批操作）
 
     mindspore.dataset.Dataset.batch
     mindspore.dataset.Dataset.bucket_batch_by_length
+    mindspore.dataset.Dataset.padded_batch
 
 迭代器
 ------

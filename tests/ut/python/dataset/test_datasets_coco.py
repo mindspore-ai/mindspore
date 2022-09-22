@@ -294,7 +294,7 @@ def test_coco_case_0():
     """
     data1 = ds.CocoDataset(DATA_DIR, annotation_file=ANNOTATION_FILE, task="Detection", decode=True)
     data1 = data1.shuffle(10)
-    data1 = data1.batch(3, pad_info={})
+    data1 = data1.padded_batch(3, pad_info={})
     num_iter = 0
     for _ in data1.create_dict_iterator(num_epochs=1):
         num_iter += 1

@@ -29,7 +29,7 @@ DATA_DIR = "/home/workspace/mindspore_dataset/cifar-10-verify-bin"
 
 
 def dataset_cifar(dataset_path=None, batch_size=32, repeat_num=1, num_rows=9600, distribution_num=None, shard_id=None,
-                  drop_remainder=True, usage=None, shuffle=False, num_workers=8, resize_size=32, pad_info=None):
+                  drop_remainder=True, usage=None, shuffle=False, num_workers=8, resize_size=32):
     if dataset_path is None:
         dataset_path = DATA_DIR
 
@@ -45,7 +45,7 @@ def dataset_cifar(dataset_path=None, batch_size=32, repeat_num=1, num_rows=9600,
                      c_vision.HWC2CHW()]
     ds = ds.map(input_columns="image", operations=image_op_list, num_parallel_workers=num_workers)
 
-    ds = ds.batch(batch_size, drop_remainder=drop_remainder, num_parallel_workers=num_workers, pad_info=pad_info)
+    ds = ds.batch(batch_size, drop_remainder=drop_remainder, num_parallel_workers=num_workers)
     ds = ds.repeat(repeat_num)
 
     return ds

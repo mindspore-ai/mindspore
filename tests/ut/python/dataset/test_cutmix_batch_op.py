@@ -134,7 +134,7 @@ def test_cutmix_batch_success3(plot=False):
     ds_original = ds_original.map(operations=[decode_op], input_columns=["image"])
     resize_op = vision.Resize([224, 224])
     ds_original = ds_original.map(operations=[resize_op], input_columns=["image"])
-    ds_original = ds_original.batch(4, pad_info={}, drop_remainder=True)
+    ds_original = ds_original.batch(4, drop_remainder=True)
 
     images_original = None
     for idx, (image, _) in enumerate(ds_original):
@@ -156,7 +156,7 @@ def test_cutmix_batch_success3(plot=False):
     data1 = data1.map(operations=one_hot_op, input_columns=["label"])
 
     cutmix_batch_op = vision.CutMixBatch(mode.ImageBatchFormat.NHWC)
-    data1 = data1.batch(4, pad_info={}, drop_remainder=True)
+    data1 = data1.batch(4, drop_remainder=True)
     data1 = data1.map(operations=cutmix_batch_op, input_columns=["image", "label"])
 
     images_cutmix = None

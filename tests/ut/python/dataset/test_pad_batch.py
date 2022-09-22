@@ -66,7 +66,7 @@ def test_batch_padding_01():
     Expectation: Output is equal to the expected output
     """
     data1 = ds.GeneratorDataset((lambda: gen_2cols(2)), ["col1d", "col2d"])
-    data1 = data1.batch(batch_size=2, drop_remainder=False, pad_info={"col2d": ([2, 2], -2), "col1d": ([2], -1)})
+    data1 = data1.padded_batch(batch_size=2, drop_remainder=False, pad_info={"col2d": ([2, 2], -2), "col1d": ([2], -1)})
     data1 = data1.repeat(2)
     for data in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
         np.testing.assert_array_equal([[0, -1], [1, -1]], data["col1d"])
@@ -81,7 +81,7 @@ def test_batch_padding_02():
     Expectation: Output is equal to the expected output
     """
     data1 = ds.GeneratorDataset((lambda: gen_2cols(2)), ["col1d", "col2d"])
-    data1 = data1.batch(batch_size=2, drop_remainder=False, pad_info={"col2d": ([1, 2], -2)})
+    data1 = data1.padded_batch(batch_size=2, drop_remainder=False, pad_info={"col2d": ([1, 2], -2)})
     data1 = data1.repeat(2)
     for data in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
         np.testing.assert_array_equal([[0], [1]], data["col1d"])
@@ -95,7 +95,7 @@ def test_batch_padding_03():
     Expectation: Output is equal to the expected output
     """
     data1 = ds.GeneratorDataset((lambda: gen_var_col(4)), ["col"])
-    data1 = data1.batch(batch_size=2, drop_remainder=False, pad_info={"col": (None, -1)})  # pad automatically
+    data1 = data1.padded_batch(batch_size=2, drop_remainder=False, pad_info={"col": (None, -1)})  # pad automatically
     data1 = data1.repeat(2)
     res = dict()
     for ind, data in enumerate(data1.create_dict_iterator(num_epochs=1, output_numpy=True)):
@@ -113,7 +113,7 @@ def test_batch_padding_04():
     Expectation: Output is equal to the expected output
     """
     data1 = ds.GeneratorDataset((lambda: gen_var_cols(2)), ["col1", "col2"])
-    data1 = data1.batch(batch_size=2, drop_remainder=False, pad_info={})  # pad automatically
+    data1 = data1.padded_batch(batch_size=2, drop_remainder=False, pad_info={})  # pad automatically
     data1 = data1.repeat(2)
     for data in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
         np.testing.assert_array_equal(data["col1"], [[0, 0], [0, 1]])
@@ -127,8 +127,8 @@ def test_batch_padding_05():
     Expectation: Output is equal to the expected output
     """
     data1 = ds.GeneratorDataset((lambda: gen_var_cols_2d(3)), ["col1", "col2"])
-    data1 = data1.batch(batch_size=3, drop_remainder=False,
-                        pad_info={"col2": ([2, None], -2), "col1": (None, -1)})  # pad automatically
+    data1 = data1.padded_batch(batch_size=3, drop_remainder=False,
+                               pad_info={"col2": ([2, None], -2), "col1": (None, -1)})  # pad automatically
     for data in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
         np.testing.assert_array_equal(data["col1"], [[[0, -1, -1]], [[0, 1, -1]], [[0, 1, 2]]])
         np.testing.assert_array_equal(data["col2"], [[[100, -2, -2], [-2, -2, -2]], [[100, 101, -2], [-2, -2, -2]],
@@ -140,7 +140,7 @@ def batch_padding_performance_3d():
     data1 = data1.repeat(24)
     pad_info = {"image": ([36, 36, 3], 0)}
     # pad_info = None
-    data1 = data1.batch(batch_size=24, drop_remainder=True, pad_info=pad_info)
+    data1 = data1.padded_batch(batch_size=24, drop_remainder=True, pad_info=pad_info)
     start_time = time.time()
     num_batches = 0
     for _ in data1.create_dict_iterator(num_epochs=1):
@@ -155,7 +155,7 @@ def batch_padding_performance_1d():
     data1 = data1.map(operations=(lambda x: x.reshape(-1)), input_columns="image")
     pad_info = {"image": ([3888], 0)}  # 3888 =36*36*3
     # pad_info = None
-    data1 = data1.batch(batch_size=24, drop_remainder=True, pad_info=pad_info)
+    data1 = data1.padded_batch(batch_size=24, drop_remainder=True, pad_info=pad_info)
     start_time = time.time()
     num_batches = 0
     for _ in data1.create_dict_iterator(num_epochs=1):
@@ -210,7 +210,7 @@ def pad_map_config(my_num_workers=None, py_multiproc=False, my_max_rowsize=16):
 def pad_batch_config():
     data2 = ds.Cifar10Dataset(CIFAR10_DIR, shuffle=False, num_samples=1000)  # shape = [32,32,3]
     data2 = data2.map(operations=(lambda x: x.reshape(-1)), input_columns="image")  # reshape to 1d
-    data2 = data2.batch(batch_size=25, drop_remainder=True, pad_info={"image": ([3888], 0)})
+    data2 = data2.padded_batch(batch_size=25, drop_remainder=True, pad_info={"image": ([3888], 0)})
     res = []
     for data in data2.create_dict_iterator(num_epochs=1, output_numpy=True):
         res.append(data["image"])

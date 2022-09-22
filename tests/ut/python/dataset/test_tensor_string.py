@@ -287,7 +287,8 @@ def test_batch_padding_01():
     Expectation: Output is equal to the expected output
     """
     data1 = ds.GeneratorDataset((lambda: gen_2cols(2)), ["col1d", "col2d"])
-    data1 = data1.batch(batch_size=2, drop_remainder=False, pad_info={"col2d": ([2, 2], b"-2"), "col1d": ([2], "-1")})
+    data1 = data1.padded_batch(batch_size=2, drop_remainder=False,
+                               pad_info={"col2d": ([2, 2], b"-2"), "col1d": ([2], "-1")})
     data1 = data1.repeat(2)
     for data in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
         np.testing.assert_array_equal([["0", "-1"], ["1", "-1"]], data["col1d"])
@@ -303,7 +304,7 @@ def test_batch_padding_02():
     Expectation: Output is equal to the expected output
     """
     data1 = ds.GeneratorDataset((lambda: gen_2cols(2)), ["col1d", "col2d"])
-    data1 = data1.batch(batch_size=2, drop_remainder=False, pad_info={"col2d": ([1, 2], b"")})
+    data1 = data1.padded_batch(batch_size=2, drop_remainder=False, pad_info={"col2d": ([1, 2], b"")})
     data1 = data1.repeat(2)
     for data in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
         np.testing.assert_array_equal([["0"], ["1"]], data["col1d"])
@@ -317,7 +318,7 @@ def test_batch_padding_03():
     Expectation: Output is equal to the expected output
     """
     data1 = ds.GeneratorDataset((lambda: gen_var_col(4)), ["col"])
-    data1 = data1.batch(batch_size=2, drop_remainder=False, pad_info={"col": (None, "PAD_VALUE")})  # pad automatically
+    data1 = data1.padded_batch(batch_size=2, drop_remainder=False, pad_info={"col": (None, "PAD_VALUE")})
     data1 = data1.repeat(2)
     res = []
     for data in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
@@ -335,7 +336,7 @@ def test_batch_padding_04():
     Expectation: Output is equal to the expected output
     """
     data1 = ds.GeneratorDataset((lambda: gen_var_cols(2)), ["col1", "col2"])
-    data1 = data1.batch(batch_size=2, drop_remainder=False, pad_info={})  # pad automatically
+    data1 = data1.padded_batch(batch_size=2, drop_remainder=False, pad_info={})  # pad automatically
     data1 = data1.repeat(2)
     for data in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
         np.testing.assert_array_equal(data["col1"], [["0", ""], ["0", "1"]])
@@ -349,8 +350,8 @@ def test_batch_padding_05():
     Expectation: Output is equal to the expected output
     """
     data1 = ds.GeneratorDataset((lambda: gen_var_cols_2d(3)), ["col1", "col2"])
-    data1 = data1.batch(batch_size=3, drop_remainder=False,
-                        pad_info={"col2": ([2, None], b"-2"), "col1": (None, "-1")})  # pad automatically
+    data1 = data1.padded_batch(batch_size=3, drop_remainder=False,
+                               pad_info={"col2": ([2, None], b"-2"), "col1": (None, "-1")})
     for data in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
         np.testing.assert_array_equal(data["col1"],
                                       [[["0", "-1", "-1"]], [["0", "1", "-1"]], [["0", "1", "2"]]])

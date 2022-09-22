@@ -1235,11 +1235,9 @@ def get_batch_kwargs_from_dict(param_dict):
         per_batch_map = param_dict.get("per_batch_map", None)
         input_columns = param_dict.get("input_columns", None)
         output_columns = param_dict.get("output_columns", None)
-        column_order = param_dict.get("column_order", None)
-        pad_info = param_dict.get("pad_info", None)
         python_multiprocessing = param_dict.get("python_multiprocessing", False)
         max_rowsize = param_dict.get("max_rowsize", 16)
-    return per_batch_map, input_columns, output_columns, column_order, pad_info, python_multiprocessing, max_rowsize
+    return per_batch_map, input_columns, output_columns, python_multiprocessing, max_rowsize
 
 
 def check_batch(method):
@@ -1249,7 +1247,7 @@ def check_batch(method):
     def new_method(self, *args, **kwargs):
         [batch_size, drop_remainder, num_parallel_workers, param_dict], _ = parse_user_args(method, *args, **kwargs)
 
-        (per_batch_map, input_columns, output_columns, column_order, pad_info, python_multiprocessing, max_rowsize) = \
+        (per_batch_map, input_columns, output_columns, python_multiprocessing, max_rowsize) = \
             get_batch_kwargs_from_dict(param_dict)
 
         if not (isinstance(batch_size, int) or (callable(batch_size))):
@@ -1268,14 +1266,6 @@ def check_batch(method):
         type_check(max_rowsize, (int,), "max_rowsize")
         check_pos_int32(max_rowsize, "max_rowsize")
 
-        if (pad_info is not None) and (per_batch_map is not None):
-            raise ValueError("pad_info and per_batch_map can't both be set.")
-
-        if pad_info is not None:
-            type_check(param_dict["pad_info"], (dict,), "pad_info")
-            for k, v in param_dict.get('pad_info').items():
-                check_pad_info(k, v)
-
         if (input_columns is not None) and (per_batch_map is None):
             # input_columns must be None when per_batch_map is not set
             raise ValueError("input_columns can be specified only when per_batch_map is set.")
@@ -1288,11 +1278,39 @@ def check_batch(method):
         if output_columns is not None:
             check_columns(output_columns, "output_columns")
 
-        if column_order is not None:
-            check_columns(column_order, "column_order")
-
         if python_multiprocessing is not None:
             type_check(python_multiprocessing, (bool,), "python_multiprocessing")
+
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
+def check_padded_batch(method):
+    """check the input arguments of padded_batch."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [batch_size, drop_remainder, num_parallel_workers, pad_info], _ = parse_user_args(method, *args, **kwargs)
+
+        if not (isinstance(batch_size, int) or (callable(batch_size))):
+            raise TypeError("batch_size should either be an int or a callable.")
+
+        if callable(batch_size):
+            sig = ins.signature(batch_size)
+            if len(sig.parameters) != 1:
+                raise ValueError("callable batch_size should take one parameter (BatchInfo).")
+        else:
+            check_pos_int32(int(batch_size), "batch_size")
+
+        if num_parallel_workers is not None:
+            check_num_parallel_workers(num_parallel_workers)
+        type_check(drop_remainder, (bool,), "drop_remainder")
+
+        if pad_info is not None:
+            type_check(pad_info, (dict,), "pad_info")
+            for k, v in pad_info.items():
+                check_pad_info(k, v)
 
         return method(self, *args, **kwargs)
 

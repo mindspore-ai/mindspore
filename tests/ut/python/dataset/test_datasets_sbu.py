@@ -93,7 +93,7 @@ def test_sbu_case():
     repeat_num = 4
     dataset = dataset.repeat(repeat_num)
     batch_size = 2
-    dataset = dataset.batch(batch_size, drop_remainder=True, pad_info={})
+    dataset = dataset.batch(batch_size, drop_remainder=True)
 
     num = 0
     for _ in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
@@ -107,7 +107,7 @@ def test_sbu_case():
     repeat_num = 4
     dataset = dataset.repeat(repeat_num)
     batch_size = 2
-    dataset = dataset.batch(batch_size, drop_remainder=True, pad_info={})
+    dataset = dataset.batch(batch_size, drop_remainder=True)
 
     num = 0
     for _ in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
