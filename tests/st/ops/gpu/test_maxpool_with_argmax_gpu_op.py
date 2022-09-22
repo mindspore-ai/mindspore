@@ -16,6 +16,7 @@
 import numpy as np
 import pytest
 
+import mindspore
 import mindspore.ops.operations as P
 from mindspore import context, Tensor
 from mindspore.nn import Cell
@@ -94,6 +95,7 @@ def test_train_forward_backward():
     diff = dx - expect_dx
     assert np.all(diff < error)
 
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -147,6 +149,7 @@ def test_maxpool_with_argmax_2d():
     assert (index.asnumpy() == expect_index_result).all()
     assert (index2.asnumpy() == expect__index_result2).all()
 
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -193,6 +196,70 @@ def test_maxpool_with_argmax_2d_fp16():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     maxpool2d = MaxPoolWithArgMax_Net(padding="VALID", ksize=2, strides=2)
     maxpool2d2 = MaxPoolWithArgMax_Net(padding="SAME", ksize=3, strides=2)
+    output2, index2 = maxpool2d2(x)
+    output, index = maxpool2d(x)
+    assert (output.asnumpy() == expect_result).all()
+    assert (output2.asnumpy() == expect_result2).all()
+    assert (index.asnumpy() == expect_index_result).all()
+    assert (index2.asnumpy() == expect__index_result2).all()
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_maxpool_with_argmax_2d_dynaimic_shape():
+    """
+    Feature: test dynamic shape of maxpool_with_argmax
+    Description: test dynamic shape of maxpool_with_argmax
+    Expectation: same to none dynamic
+    """
+    x = Tensor(np.array([[[
+        [0, 1, 2, 3, -4, -5],
+        [6, 7, 8, 9, -10, -11],
+        [12, 13, 14, -15, -16, -17],
+        [18, 19, 20, 21, 22, 23],
+        [24, 25, 26, 27, 28, 29],
+        [30, 31, 32, 33, 34, 35]
+    ]]]).astype(np.float32))
+    expect_result = (np.array([[[
+        [7, 9, -4],
+        [19, 21, 23],
+        [31, 33, 35]
+    ]]]))
+    expect_result2 = (np.array([[[
+        [14, 14, -4],
+        [26, 28, 29],
+        [32, 34, 35]
+    ]]]))
+    expect_index_result = (np.array([[[
+        [7, 9, 4],
+        [19, 21, 23],
+        [31, 33, 35]
+    ]]]))
+    expect__index_result2 = (np.array([[[
+        [14, 14, 4],
+        [26, 28, 29],
+        [32, 34, 35]
+    ]]]))
+
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    maxpool2d = MaxPoolWithArgMax_Net(padding="VALID", ksize=2, strides=2)
+    maxpool2d2 = MaxPoolWithArgMax_Net(padding="SAME", ksize=3, strides=2)
+    in_dyn = Tensor(shape=[1, 1, 6, None], dtype=mindspore.float32)
+    maxpool2d2.set_inputs(in_dyn)
+    maxpool2d.set_inputs(in_dyn)
+    output2, index2 = maxpool2d2(x)
+    output, index = maxpool2d(x)
+    assert (output.asnumpy() == expect_result).all()
+    assert (output2.asnumpy() == expect_result2).all()
+    assert (index.asnumpy() == expect_index_result).all()
+    assert (index2.asnumpy() == expect__index_result2).all()
+
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    maxpool2d = MaxPoolWithArgMax_Net(padding="VALID", ksize=2, strides=2)
+    maxpool2d2 = MaxPoolWithArgMax_Net(padding="SAME", ksize=3, strides=2)
+    maxpool2d2.set_inputs(in_dyn)
+    maxpool2d.set_inputs(in_dyn)
     output2, index2 = maxpool2d2(x)
     output, index = maxpool2d(x)
     assert (output.asnumpy() == expect_result).all()

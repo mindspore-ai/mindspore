@@ -20,6 +20,8 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <utility>
+#include <map>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/mirror_pad_impl.cuh"
@@ -41,10 +43,9 @@ constexpr size_t kIndexForMaxWidth = 3;
 constexpr size_t kIndexForMaxHeight = 2;
 constexpr size_t kMaxIndexOffset = 2;
 
-template <typename T>
-class MirrorPadFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class MirrorPadGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelper<MirrorPadGpuKernelMod> {
  public:
-  MirrorPadFwdGpuKernelMod()
+  MirrorPadGpuKernelMod()
       : num_input_(0),
         num_paddings_(0),
         mode_(0),
@@ -52,10 +53,28 @@ class MirrorPadFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
         input_size_(1),
         output_size_(1),
         workspace_size_(0) {}
-  ~MirrorPadFwdGpuKernelMod() override = default;
+  ~MirrorPadGpuKernelMod() override = default;
+
+  std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs,
+             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    stream_ptr_ = stream_ptr;
+    return kernel_func_(this, inputs, workspace, outputs);
+  }
+
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
+
+ protected:
+  template <typename T>
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<AddressPtr> &outputs) {
     if (is_null_input_) {
       return true;
     }
@@ -68,100 +87,8 @@ class MirrorPadFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
 
     CalMirrorPad(size, input, input_shape_[0], input_shape_[kInputIndex1st], input_shape_[kInputIndex2nd],
                  input_shape_[kInputIndex3rd], output_shape_[dim_offset + 0], output_shape_[dim_offset + 1],
-                 num_paddings_, paddings, mode_, output, reinterpret_cast<cudaStream_t>(stream_ptr));
+                 num_paddings_, paddings, mode_, output, reinterpret_cast<cudaStream_t>(stream_ptr_));
     return true;
-  }
-
-  bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    kernel_node_ = kernel_node;
-    if (input_num != kInputNum) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 2, but got " << input_num;
-    }
-    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-    if (output_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << output_num;
-    }
-    auto prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
-    MS_EXCEPTION_IF_NULL(prim);
-    string mode = GetValue<string>(prim->GetAttr("mode"));
-    if (mode == "REFLECT") {
-      mode_ = 0;  // reflected mirroring
-    } else {
-      mode_ = 1;  // symmetric mirroring
-    }
-
-    auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto padding_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    auto output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input_x") ||
-                     CHECK_SHAPE_NULL(padding_shape, kernel_name, "paddings") ||
-                     CHECK_SHAPE_NULL(output_shape, kernel_name, "output");
-    if (is_null_input_ || AnfAlgo::IsShapesDynamic({input_shape, padding_shape, output_shape})) {
-      InitSizeLists();
-      return true;
-    }
-    if (input_shape.size() < kDimMin || input_shape.size() > kDimMax) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of input_x must be in [2, 4], but "
-                        << "got the " << input_shape.size();
-    }
-
-    // shape adjustment -> from 2d/3d to 4d to standardize
-    if (input_shape.size() == kDimNeedPadBatch) {
-      auto it = input_shape.begin();
-      (void)input_shape.insert(it, 1);  // batch padding
-    } else if (input_shape.size() == kDimNeedPadBatchAndChannel) {
-      auto it = input_shape.begin();
-      (void)input_shape.insert(it, 2, 1);  // channel padding
-    }
-
-    for (auto in_shape : input_shape) {
-      input_size_ *= LongToSizeClipNeg(in_shape);
-      input_shape_.push_back(LongToInt(in_shape));
-    }
-    num_input_ = input_size_;
-    input_size_ *= sizeof(T);
-
-    num_paddings_ = LongToSizeClipNeg(padding_shape[0]);
-    input_size_ += IntToSize(kSymmetricCoef) * num_paddings_ * sizeof(int64_t);
-
-    output_size_ = sizeof(T);
-
-    if (output_shape.size() < kOutputDimLowerLimit) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of output cannot be less than 2, but "
-                        << "got the " << output_shape.size();
-    }
-    for (auto x : output_shape) {
-      output_size_ *= LongToSizeClipNeg(x);
-      output_shape_.push_back(LongToInt(x));
-    }
-
-    int max_width = input_shape_[kIndexForMaxWidth];
-    int max_height = input_shape_[kIndexForMaxHeight];
-    // basic error check for padding value
-    if (mode_ == 1) {  // symmetric
-      max_width = max_width + (kSymmetricCoef * max_width);
-      max_height = max_height + (kSymmetricCoef * max_height);
-    } else {  // reflect
-      max_width = max_width + (kSymmetricCoef * (max_width - 1));
-      max_height = max_height + (kSymmetricCoef * (max_height - 1));
-    }
-    if (output_shape_[(output_shape_.size() - kMaxIndexOffset) + 0] > max_width ||
-        output_shape_[(output_shape_.size() - kMaxIndexOffset) + 1] > max_width) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the output.shape[-1] and output.shape[-2] cannot be greater "
-                        << "than input_x.shape[-1], but got output.shape: " << CONVERT_VECTOR_TO_STRING(output_shape_)
-                        << ", input_x.shape: " << CONVERT_VECTOR_TO_STRING(input_shape_);
-    }
-    InitSizeLists();
-    return true;
-  }
-
- protected:
-  void InitSizeLists() override {
-    input_size_list_.push_back(num_input_ * sizeof(T));
-    input_size_list_.push_back(kSymmetricCoef * num_paddings_ * sizeof(int64_t));  // for 64 bit int defined in API
-    output_size_list_.push_back(output_size_);
   }
 
  private:
@@ -175,6 +102,9 @@ class MirrorPadFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   size_t input_size_;
   size_t output_size_;
   size_t workspace_size_;
+  size_t in_type_size_{1};
+  size_t out_type_size_{1};
+  void *stream_ptr_{nullptr};
 };
 }  // namespace kernel
 }  // namespace mindspore
