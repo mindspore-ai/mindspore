@@ -27,7 +27,7 @@ from mindspore.context import GRAPH_MODE, PYNATIVE_MODE, set_context, get_contex
     get_auto_parallel_context, reset_auto_parallel_context, ParallelMode, set_ps_context, \
     get_ps_context, reset_ps_context
 from mindspore.version import __version__
-from mindspore.profiler import Profiler
+from mindspore.profiler import Profiler, EnvProfiler
 from mindspore.parallel import set_algo_parameters, get_algo_parameters, reset_algo_parameters, \
     rank_list_for_transform, transform_checkpoint_by_rank, transform_checkpoints
 from mindspore.rewrite import SymbolTree, ScopedValue, Node, NodeType, TreeNodeHelper

@@ -141,6 +141,9 @@ class Profiler:
     }
 
     def __init__(self, **kwargs):
+        if kwargs.get("env_enable"):
+            self.profiler_init(kwargs)
+            return
         if Profiler._has_initialized:
             msg = "Do not init twice in the profiler."
             raise RuntimeError(msg)
@@ -176,6 +179,26 @@ class Profiler:
         self._decide_device_target(kwargs)
         if self.start_profile:
             self.start()
+
+    def profiler_init(self, kwargs):
+        """Initialize variables when profiler is enabled by environment variables."""
+        options = kwargs.get("env_enable")
+        self._filt_optype_names = ''
+        self._has_started = True
+        self._start_time = options.get("start_time")
+        self._output_path = options.get('output_path')
+        self._profile_memory = options.get('profile_memory')
+        self._profile_communication = options.get('profile_communication')
+        self._device_target = context.get_context("device_target").lower()
+        self._profiler_manager = c_expression.ProfilerManager.get_instance()
+        self._cpu_profiler = c_expression.Profiler.get_instance("CPU")
+        self._md_profiler = cde.GlobalContext.profiling_manager()
+        if self._device_target == DeviceTarget.GPU.value:
+            self._gpu_profiler = c_expression.Profiler.get_instance("GPU")
+
+        if self._device_target == DeviceTarget.ASCEND.value:
+            self._ascend_profiler = c_expression.Profiler.get_instance("Ascend")
+        self._get_devid_rankid_and_devtarget()
 
     def op_analyse(self, op_name, device_id=None):
         """
@@ -365,6 +388,8 @@ class Profiler:
 
     def _parse_parameter_for_ascend(self, kwargs):
         """Parse parameter in Proflier when the device target is Ascend."""
+        ascend_job_id = kwargs.pop("ascend_job_id", "")
+        self._set_ascend_job_id(ascend_job_id)
         self.start_profile = kwargs.pop("start_profile", True)
         if not isinstance(self.start_profile, bool):
             raise TypeError(f"For '{self.__class__.__name__}', the parameter start_profile must be bool, "
@@ -395,6 +420,8 @@ class Profiler:
 
     def _set_ascend_job_id(self, ascend_job_id):
         """Set output_path for offline parsing performance data."""
+        if not ascend_job_id:
+            return
         self._ascend_job_id = validate_and_normalize_path(ascend_job_id)
         if not os.path.exists(self._ascend_job_id):
             msg = f"Invalid ascend_job_id: {self._ascend_job_id}, Please pass the absolute path of the JOB dir"

@@ -21,5 +21,6 @@ Now, Profiler supports AICORE operator, AICPU operator, HostCPU operator, memory
 correspondence, cluster, etc data analysis.
 """
 from mindspore.profiler.profiling import Profiler
+from mindspore.profiler.envprofiling import EnvProfiler
 
-__all__ = ["Profiler"]
+__all__ = ["Profiler", "EnvProfiler"]
