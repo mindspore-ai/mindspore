@@ -597,6 +597,9 @@ class SoftmaxCrossEntropyWithLogits(LossBase):
     Typical input into this function is unnormalized scores denoted as x whose shape is (N, C),
     and the corresponding targets.
 
+    Typically, the input to this function is the fractional value of each category and the corresponding target value,
+    and the input format is (N, C).
+
     For each instance :math:`x_i`, i ranges from 0 to N-1, the loss is given as:
 
     .. math::

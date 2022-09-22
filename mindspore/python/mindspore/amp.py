@@ -235,6 +235,7 @@ class DynamicLossScaler(LossScaler):
         >>> unscaled_grads = loss_scaler.unscale(grads)
         >>> grads_finite = amp.all_finite(unscaled_grads)
         >>> loss_scaler.adjust(grads_finite)
+        True
         >>> print(loss_scaler.scale_value.asnumpy())
         512.0
     """
