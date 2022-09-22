@@ -78,11 +78,16 @@ void RuntimeUtils::CopyInputTensorsToKernelGraph(const std::vector<tensor::Tenso
     auto &input = inputs[i];
     auto graph_input = graph_inputs[i];
     auto graph_input_addr = AnfAlgo::GetMutableOutputAddr(graph_input, 0);
-    if (graph_input_addr->ptr_ == nullptr) {
-      MS_LOG(EXCEPTION) << "Output_idx" << i << " of input " << graph_input->DebugString()
-                        << " output addr ptr is nullptr.";
+    if (graph_input_addr == nullptr || graph_input_addr->ptr_ == nullptr) {
+      MS_LOG(ERROR) << "Input " << i << " of input " << graph_input->DebugString() << " output addr ptr is nullptr.";
+      return;
     }
-    memcpy(graph_input_addr->ptr_, input.data_c(), graph_input_addr->size_);
+    if (graph_input_addr->size_ < input.Size()) {
+      MS_LOG(ERROR) << "Graph input " << i << " size[" << graph_input_addr->size_ << "] is less then user input size[ "
+                    << input.Size() << "]";
+      return;
+    }
+    memcpy(graph_input_addr->ptr_, input.data_c(), input.Size());
   }
 }
 
@@ -190,9 +195,14 @@ void RuntimeUtils::AssignInputNodeAddress(KernelGraphPtr kernel_graph) {
         }
         auto fmt_shape = AnfAlgo::GetOutputDeviceShape(item, index);
         size_t type_size = GetTypeByte(TypeIdToType(output_type_id));
-        size_t tensor_size =
-          fmt_shape.empty() ? type_size
-                            : std::accumulate(fmt_shape.begin(), fmt_shape.end(), type_size, std::multiplies<size_t>());
+        size_t tensor_size;
+        if (std::any_of(fmt_shape.begin(), fmt_shape.end(), [](int64_t shape) { return shape < 0; })) {
+          tensor_size = type_size;
+        } else {
+          tensor_size = fmt_shape.empty()
+                          ? type_size
+                          : std::accumulate(fmt_shape.begin(), fmt_shape.end(), type_size, std::multiplies<size_t>());
+        }
         auto format = AnfAlgo::GetOutputFormat(item, index);
         auto address = CreateDeviceAddress(malloc(tensor_size), tensor_size, format, output_type_id);
         address->set_from_persistent_mem(true);

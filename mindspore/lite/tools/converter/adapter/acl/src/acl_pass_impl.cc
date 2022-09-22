@@ -61,21 +61,11 @@ constexpr size_t kTupleGetItemFirstInputIdx = 1;
 STATUS PreProcForMindIr(const FuncGraphPtr &func_graph, bool offline) { return lite::RET_OK; }
 
 STATUS PreProcForTF(const FuncGraphPtr &func_graph, bool offline) {
-  if (!offline) {
-    auto format_pass = std::make_shared<opt::SpecifyGraphInputFormat>(Format::NCHW, Format::NHWC);
-    MS_CHECK_TRUE_MSG(format_pass != nullptr, lite::RET_ERROR, "Make shared specify graph input format failed.");
-    if (!format_pass->Run(func_graph)) {
-      MS_LOG(ERROR) << "Run specify graph input format pass failed.";
+  if (offline) {
+    if (!lite::RunOptimizerPass(func_graph, {kInferShapePass})) {
+      MS_LOG(ERROR) << "Infer shape pass failed.";
       return lite::RET_ERROR;
     }
-    if (!lite::RunOptimizerPass(func_graph, {kToNHWCFormatPass, kDelRedundantTranspose})) {
-      MS_LOG(ERROR) << "To nhwc format failed.";
-      return lite::RET_ERROR;
-    }
-  }
-  if (!lite::RunOptimizerPass(func_graph, {kInferShapePass})) {
-    MS_LOG(ERROR) << "Infer shape pass failed.";
-    return lite::RET_ERROR;
   }
   auto node_list = TopoSort(func_graph->get_return());
   for (auto &node : node_list) {
@@ -99,14 +89,13 @@ STATUS PreProcForTF(const FuncGraphPtr &func_graph, bool offline) {
 }
 
 STATUS PreProcForCaffe(const FuncGraphPtr &func_graph, bool offline) {
-  if (!offline) {
-    if (!lite::RunOptimizerPass(func_graph, {kDelRedundantTranspose})) {
-      MS_LOG(ERROR) << "Del redundant transpose failed.";
+  if (offline) {
+    if (!lite::RunOptimizerPass(func_graph, {kInferShapePass})) {
+      MS_LOG(ERROR) << "Infer shape pass failed.";
       return lite::RET_ERROR;
     }
-    return lite::RET_OK;
   }
-  if (!lite::RunOptimizerPass(func_graph, {kInferShapePass, kToNCHWFormatPass, kDelRedundantTranspose})) {
+  if (!lite::RunOptimizerPass(func_graph, {kToNCHWFormatPass, "DecreaseTransposeAlgo"})) {
     MS_LOG(ERROR) << "To nchw format failed.";
     return lite::RET_ERROR;
   }
@@ -114,14 +103,13 @@ STATUS PreProcForCaffe(const FuncGraphPtr &func_graph, bool offline) {
 }
 
 STATUS PreProcForOnnx(const FuncGraphPtr &func_graph, bool offline) {
-  if (!offline) {
-    if (!lite::RunOptimizerPass(func_graph, {kDelRedundantTranspose})) {
-      MS_LOG(ERROR) << "Del redundant transpose failed.";
+  if (offline) {
+    if (!lite::RunOptimizerPass(func_graph, {kInferShapePass})) {
+      MS_LOG(ERROR) << "Infer shape pass failed.";
       return lite::RET_ERROR;
     }
-    return lite::RET_OK;
   }
-  if (!lite::RunOptimizerPass(func_graph, {kInferShapePass, kToNCHWFormatPass, kDelRedundantTranspose})) {
+  if (!lite::RunOptimizerPass(func_graph, {kToNCHWFormatPass, "DecreaseTransposeAlgo"})) {
     MS_LOG(ERROR) << "To nchw format failed.";
     return lite::RET_ERROR;
   }
@@ -145,8 +133,8 @@ STATUS AclPassImpl::CommonPass(const FuncGraphPtr &func_graph) {
     MS_LOG(ERROR) << "Remove redundant op pass failed.";
     return lite::RET_ERROR;
   }
-  if (IsDynamicInput()) {
-    MS_LOG(INFO) << "Dynamic input no need to run const fold pass.";
+  if (IsDynamicInput() || !user_options_cfg_.offline) {
+    MS_LOG(INFO) << "Dynamic input or online infer no need to run const fold pass.";
     return lite::RET_OK;
   }
   if (fmk_type_ == converter::kFmkTypeMs) {

@@ -128,15 +128,6 @@ int CommonAnfAdjust(const FuncGraphPtr &func_graph) {
       MS_LOG(ERROR) << "adjust conv1d failed.";
       return RET_ERROR;
     }
-    // adjust for conv2d_transpose
-    if (!is_optimized) {
-      auto conv2d_transpose_adjust = std::make_shared<Conv2DTransposeInputAdjust>();
-      MS_CHECK_TRUE_MSG(conv2d_transpose_adjust != nullptr, RET_NULL_PTR, "conv2d_transpose_adjust is nullptr.");
-      if (!conv2d_transpose_adjust->Run(sub_graph)) {
-        MS_LOG(ERROR) << "adjust conv2d_transpose failed";
-        return RET_ERROR;
-      }
-    }
   }
   return RET_OK;
 }

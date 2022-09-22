@@ -38,8 +38,17 @@ void AscendKernelPlugin::Register() {
     MS_LOG(INFO) << "Create kernel map has been created.";
     return;
   }
+  Dl_info dl_info;
+  dladdr(reinterpret_cast<void *>(this), &dl_info);
+  std::string cur_so_path = dl_info.dli_fname;
+  auto pos = cur_so_path.find("libmindspore-lite.so");
+  if (pos == std::string::npos) {
+    MS_LOG(ERROR) << "Could not find libmindspore-lite so, cur so path: " << cur_so_path;
+    return;
+  }
+  std::string parent_dir = cur_so_path.substr(0, pos);
   std::string ascend_kernel_plugin_path;
-  auto ret = DLSoPath("libmindspore-lite.so", "libascend_kernel_plugin.so", &ascend_kernel_plugin_path);
+  auto ret = FindSoPath(parent_dir, "libascend_kernel_plugin.so", &ascend_kernel_plugin_path);
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "Get real path of libascend_kernel_plugin.so failed.";
     return;
