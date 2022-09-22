@@ -32,12 +32,10 @@ class MemoryAllocActor : public MemoryAwareActor {
   MemoryAllocActor(const std::string &name, const AID &memory_manager_aid, SomasInfo *somas_info,
                    const DeviceContext *device_context)
       : MemoryAwareActor(name, KernelTransformType::kMemoryAllocActor, nullptr, memory_manager_aid),
-        somas_info_(somas_info),
-        created_device_tensor_(nullptr) {
+        somas_info_(somas_info) {
     (void)device_contexts_.emplace_back(device_context);
   }
-  // MemoryFreeActor will free the ptr, so need set nullptr in the destructor.
-  ~MemoryAllocActor() override { created_device_tensor_->set_ptr(nullptr); }
+  ~MemoryAllocActor() override = default;
 
   // The memory related operation interface.
   void SendMemoryAllocReq(OpContext<DeviceTensor> *const context) override;
@@ -55,9 +53,6 @@ class MemoryAllocActor : public MemoryAwareActor {
   friend class SchedulerHelper;
 
   SomasInfo *somas_info_;
-
-  DeviceTensorPtr created_device_tensor_;
-  std::vector<DeviceTensor *> memory_alloc_list_;
 };
 
 using MemoryAllocActorPtr = std::shared_ptr<MemoryAllocActor>;

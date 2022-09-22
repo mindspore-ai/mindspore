@@ -154,7 +154,8 @@ class KernelActor : public DebugAwareActor {
   void RefreshDeviceTensorCopyStore(OpContext<DeviceTensor> *const context);
 
   // Set the memory address for the tensors which use the somas.
-  void SetSomasMemory(OpContext<DeviceTensor> *const context);
+  void SetSomasMemory(OpContext<DeviceTensor> *const context) const;
+  void *GetSomasDevicePtr(size_t offset) const;
 
   // The real input number of kernel launch.
   size_t real_input_num_;

@@ -158,6 +158,62 @@ void MemoryManagerActor::AllocateBatchMemory(const std::vector<DeviceTensor *> *
   OnMemoryAllocFinish(from_aid, op_context);
 }
 
+void MemoryManagerActor::AllocateSomasMemory(SomasInfo *const somas_info, const DeviceContext *device_context,
+                                             OpContext<DeviceTensor> *const op_context, const AID &from_aid) {
+  MS_EXCEPTION_IF_NULL(somas_info);
+  MS_EXCEPTION_IF_NULL(device_context);
+  MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
+  MS_EXCEPTION_IF_NULL(op_context);
+
+  // Allocate the whole block memory.
+  if (somas_info->base_address_ != nullptr) {
+    std::string error_info = from_aid.Name() + " already has the base somas address.";
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*op_context), error_info);
+  }
+  try {
+    device::DynamicMemAllocatorDebugInfo::SetDebugInfo(from_aid.Name(), device::AllocatorType::kKernelOutput);
+    auto device_ptr = device_context->device_res_manager_->AllocateMemory(somas_info->whole_block_size_);
+    if (device_ptr == nullptr) {
+      MS_LOG(WARNING) << from_aid.Name()
+                      << " allocate somas whole block memory failed, alloc size: " << somas_info->whole_block_size_
+                      << ". Try to allocate the merged blocks memory.";
+    } else {
+      somas_info->base_address_ = device_ptr;
+      return;
+    }
+  } catch (const std::exception &e) {
+    SetOpContextMemoryAllocFail(from_aid.Name(), device_context, somas_info->whole_block_size_, op_context);
+    return;
+  }
+
+  // Allocate the merged blocks memory.
+  try {
+    auto &merged_base_addresses = somas_info->merged_base_addresses_;
+    for (auto &megred_block : somas_info->merged_blocks_map_) {
+      size_t block_offset = megred_block.first;
+      size_t block_size = megred_block.second;
+      if ((merged_base_addresses.count(block_offset) > 0) && (merged_base_addresses[block_offset] != nullptr)) {
+        std::string error_info = from_aid.Name() + " already has the base somas address.";
+        SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*op_context), error_info);
+      }
+      device::DynamicMemAllocatorDebugInfo::SetDebugInfo(from_aid.Name(), device::AllocatorType::kKernelOutput);
+      auto device_ptr = device_context->device_res_manager_->AllocateMemory(block_size);
+      if (device_ptr == nullptr) {
+        SetOpContextMemoryAllocFail(from_aid.Name(), device_context, block_size, op_context);
+        return;
+      }
+      merged_base_addresses[block_offset] = device_ptr;
+    }
+  } catch (const std::exception &e) {
+    SetOpContextMemoryAllocFail(from_aid.Name(), device_context, somas_info->whole_block_size_, op_context);
+    return;
+  }
+  MS_LOG(WARNING) << from_aid.Name() << " allocate somas merged blocks memory succeeded and continue running.";
+
+  // Call back to the from actor to process after memory allocation finished.
+  OnMemoryAllocFinish(from_aid, op_context);
+}
+
 void MemoryManagerActor::FreeMemory(const std::vector<DeviceTensor *> *free_list, const DeviceContext *device_context,
                                     OpContext<DeviceTensor> *, const AID &from_aid) {
   MS_EXCEPTION_IF_NULL(free_list);
@@ -184,12 +240,36 @@ void MemoryManagerActor::FreeBatchMemory(const std::vector<DeviceTensor *> *free
   }
 }
 
-void MemoryManagerActor::FreeMemorydirectly(void **free_ptr, const DeviceContext *device_context) {
-  MS_EXCEPTION_IF_NULL(free_ptr);
-  MS_EXCEPTION_IF_NULL(*free_ptr);
+void MemoryManagerActor::FreeSomasMemory(SomasInfo *const somas_info, const DeviceContext *device_context,
+                                         OpContext<DeviceTensor> *const op_context, const AID &from_aid) {
+  MS_EXCEPTION_IF_NULL(somas_info);
   MS_EXCEPTION_IF_NULL(device_context);
-  device_context->device_res_manager_->FreeMemory(*free_ptr);
-  *free_ptr = nullptr;
+  MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
+  MS_EXCEPTION_IF_NULL(op_context);
+
+  // Free the whole block memory.
+  if (somas_info->base_address_ != nullptr) {
+    device_context->device_res_manager_->FreeMemory(somas_info->base_address_);
+    somas_info->base_address_ = nullptr;
+
+    for (auto &merged_base_address : somas_info->merged_base_addresses_) {
+      if (merged_base_address.second != nullptr) {
+        std::string error_info = " There should have no megred block base address for " + from_aid.Name();
+        SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*op_context), error_info);
+      }
+    }
+    return;
+  }
+
+  // Free the merged blocks memory.
+  for (auto &merged_base_address : somas_info->merged_base_addresses_) {
+    if (merged_base_address.second == nullptr) {
+      std::string error_info = " There should have megred block base address for " + from_aid.Name();
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*op_context), error_info);
+    }
+    device_context->device_res_manager_->FreeMemory(merged_base_address.second);
+    merged_base_address.second = nullptr;
+  }
 }
 
 void MemoryManagerActor::Wait(OpContext<DeviceTensor> *const op_context, const AID &from_aid) {
