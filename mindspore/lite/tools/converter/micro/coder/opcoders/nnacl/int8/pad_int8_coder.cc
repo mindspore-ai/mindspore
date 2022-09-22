@@ -83,16 +83,22 @@ int PadInt8Coder::InitPadParam() {
   auto out_dims = output_tensors_.at(0)->shape();
   int ndims = static_cast<int>(in_dims.size());
 
-  int in[] = {1, 1, 1, 1};
-  int out[] = {1, 1, 1, 1};
+  int in[COMM_SHAPE_SIZE] = {1, 1, 1, 1};
+  int out[COMM_SHAPE_SIZE] = {1, 1, 1, 1};
 
   for (int i = 0; i < ndims; i++) {
     in[COMM_SHAPE_SIZE - ndims + i] = in_dims[i];
     out[COMM_SHAPE_SIZE - ndims + i] = out_dims[i];
   }
 
-  memcpy(in_dims_, in, COMM_SHAPE_SIZE * sizeof(int));
-  memcpy(out_dims_, out, COMM_SHAPE_SIZE * sizeof(int));
+  if (memcpy_s(in_dims_, COMM_SHAPE_SIZE * sizeof(int), in, COMM_SHAPE_SIZE * sizeof(int)) != EOK) {
+    MS_LOG(ERROR) << "memcpy failed.";
+    return RET_ERROR;
+  }
+  if (memcpy_s(out_dims_, COMM_SHAPE_SIZE * sizeof(int), out, COMM_SHAPE_SIZE * sizeof(int)) != EOK) {
+    MS_LOG(ERROR) << "memcpy failed.";
+    return RET_ERROR;
+  }
 
   return RET_OK;
 }
