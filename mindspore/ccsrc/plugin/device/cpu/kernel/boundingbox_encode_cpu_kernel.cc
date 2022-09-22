@@ -20,43 +20,25 @@
 
 namespace mindspore {
 namespace kernel {
-std::vector<std::pair<KernelAttr, BoundingBoxEncodeCpuKernelMod::BoundingBoxEncodeFunc>>
-  BoundingBoxEncodeCpuKernelMod::func_list_ = {
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-     &BoundingBoxEncodeCpuKernelMod::LaunchKernel<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-     &BoundingBoxEncodeCpuKernelMod::LaunchKernel<float16>}};
+namespace {
+const size_t kInputRank = 2;
+const size_t kLastDim = 4;
+}  // namespace
 
-void BoundingBoxEncodeCpuKernelMod::InitTaskFunc(const CNodePtr &kernel_node) {
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
-  if (!is_match) {
-    MS_LOG(EXCEPTION) << "BoundingBoxEncode does not support this kernel data type: " << kernel_attr;
-  }
-  kernel_func_ = func_list_[index].second;
-}
-
-std::vector<KernelAttr> BoundingBoxEncodeCpuKernelMod::GetOpSupport() {
-  std::vector<KernelAttr> support_list;
-  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                       [](const std::pair<KernelAttr, BoundingBoxEncodeFunc> &pair) { return pair.first; });
-  return support_list;
-}
-
-void BoundingBoxEncodeCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  if (input_num != INPUT_NUMS) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of inputs must be 2, but got " << input_num;
-  }
+bool BoundingBoxEncodeCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                         const std::vector<KernelTensorPtr> &inputs,
+                                         const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  constexpr size_t input_num = 2;
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
 
   const size_t coordinate_size = 4;
-  if (common::AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("means")->isa<ValueTuple>() ||
-      common::AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("means")->isa<ValueList>()) {
-    means_ = common::AnfAlgo::GetNodeAttr<std::vector<float>>(kernel_node, "means");
-  } else if (common::AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("means")->isa<FloatImm>()) {
-    float mean = common::AnfAlgo::GetNodeAttr<float>(kernel_node, "means");
+  auto means = base_operator->GetAttr("means");
+  if (means->isa<api::ValueSequence>()) {
+    means_ = api::GetValue<std::vector<float>>(means);
+  } else if (means->isa<api::FloatImm>()) {
+    float mean = api::GetValue<float>(means);
     for (size_t i = 0; i < coordinate_size; i++) {
       (void)means_.emplace_back(mean);
     }
@@ -65,11 +47,11 @@ void BoundingBoxEncodeCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
                       << "', the input 'means' must be a tuple or a list, and dtype must be float, but got is not.";
   }
 
-  if (common::AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("stds")->isa<ValueTuple>() ||
-      common::AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("stds")->isa<ValueList>()) {
-    stds_ = common::AnfAlgo::GetNodeAttr<std::vector<float>>(kernel_node, "stds");
-  } else if (common::AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("stds")->isa<FloatImm>()) {
-    float std = common::AnfAlgo::GetNodeAttr<float>(kernel_node, "stds");
+  auto stds = base_operator->GetAttr("stds");
+  if (stds->isa<api::ValueSequence>()) {
+    stds_ = api::GetValue<std::vector<float>>(stds);
+  } else if (stds->isa<api::FloatImm>()) {
+    float std = api::GetValue<float>(stds);
     for (size_t i = 0; i < coordinate_size; i++) {
       (void)stds_.emplace_back(std);
     }
@@ -84,7 +66,15 @@ void BoundingBoxEncodeCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
                          "but got the length of 'means': "
                       << means_.size() << ", and the length of 'stds': " << stds_.size();
   }
-  InitTaskFunc(kernel_node);
+
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "' does not support this kernel type: " << kernel_attr;
+    return false;
+  }
+  kernel_func_ = func_list_[index].second;
+  return true;
 }
 
 template <typename T>
@@ -152,6 +142,62 @@ bool BoundingBoxEncodeCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &
   return true;
 }
 
+int BoundingBoxEncodeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                          const std::vector<KernelTensorPtr> &inputs,
+                                          const std::vector<KernelTensorPtr> &outputs,
+                                          const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+    return ret;
+  }
+
+  auto anchor_box_shape = LongVecToSizeVec(inputs[kIndex0]->GetShapeVector());
+  auto groundtruth_box_shape = LongVecToSizeVec(inputs[kIndex1]->GetShapeVector());
+
+  auto it_x = std::find_if(anchor_box_shape.begin(), anchor_box_shape.end(), [](int64_t sh) { return sh <= 0; });
+  if (it_x != anchor_box_shape.end()) {
+    return KRET_UNKNOWN_SHAPE;
+  }
+
+  auto anchor_box_rank = anchor_box_shape.size();
+  auto groundtruth_box_rank = groundtruth_box_shape.size();
+
+  if (anchor_box_rank != kInputRank) {
+    MS_LOG(ERROR) << "The rank of anchor box must be 2, but got " << anchor_box_rank;
+    return KRET_RESIZE_FAILED;
+  }
+
+  if (groundtruth_box_rank != kInputRank) {
+    MS_LOG(ERROR) << "The rank of groundtruth box must be 2, but got " << groundtruth_box_rank;
+    return KRET_RESIZE_FAILED;
+  }
+
+  if (anchor_box_shape[1] != kLastDim) {
+    MS_LOG(ERROR) << "The shape of anchor box must be (n, 4), but got the second dimension of " << anchor_box_shape[1];
+    return KRET_RESIZE_FAILED;
+  }
+
+  if (groundtruth_box_shape[1] != kLastDim) {
+    MS_LOG(ERROR) << "The shape of groundtruth box must be (n, 4), but got the second dimension of "
+                  << groundtruth_box_shape[1];
+    return KRET_RESIZE_FAILED;
+  }
+
+  return KRET_OK;
+}
+
+std::vector<std::pair<KernelAttr, BoundingBoxEncodeCpuKernelMod::BoundingBoxEncodeFunc>>
+  BoundingBoxEncodeCpuKernelMod::func_list_ = {
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &BoundingBoxEncodeCpuKernelMod::LaunchKernel<float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+     &BoundingBoxEncodeCpuKernelMod::LaunchKernel<float16>}};
+
+std::vector<KernelAttr> BoundingBoxEncodeCpuKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, BoundingBoxEncodeFunc> &pair) { return pair.first; });
+  return support_list;
+}
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, BoundingBoxEncode, BoundingBoxEncodeCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

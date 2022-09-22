@@ -112,5 +112,29 @@ def test_bounding_box_encode_functional_modes():
     test_bounding_box_encode_functional()
 
 
-if __name__ == '__main__':
-    test_bounding_box_encode_functional_modes()
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_dynamic_shape_boundingbox_encode():
+    """
+    Feature: Test dynamic shape of BoundingBoxEncode operator
+    Description: dynamic input
+    Expectation: success.
+    """
+    anchor = np.array([[4, 1, 6, 9], [2, 5, 5, 9]]).astype(np.float32)
+    gt = np.array([[3, 2, 7, 7], [1, 5, 5, 8]]).astype(np.float32)
+    means = (0.1, 0.1, 0.2, 0.2)
+    stds = (2.0, 2.0, 3.0, 3.0)
+    anchor_box = Tensor(anchor, mindspore.float32)
+    groundtruth_box = Tensor(gt, mindspore.float32)
+    expect_deltas = bbox2delta(anchor, gt, means, stds)
+
+    error = np.ones(shape=[2, 4]) * 1.0e-6
+    context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+    boundingbox_encode = NetBoundingBoxEncode(means, stds)
+    input_dyn = Tensor(shape=[None, 4], dtype=anchor_box.dtype)
+    groundtruth_box_dyn = Tensor(shape=[None, 4], dtype=groundtruth_box.dtype)
+    boundingbox_encode.set_inputs(input_dyn, groundtruth_box_dyn)
+    output = boundingbox_encode(anchor_box, groundtruth_box)
+    diff = output.asnumpy() - expect_deltas
+    assert np.all(abs(diff) < error)
