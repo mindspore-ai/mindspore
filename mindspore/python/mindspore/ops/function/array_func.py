@@ -1146,7 +1146,9 @@ def strided_slice(input_x,
         Finally, the output is [3, 3, 3].
 
     Raises:
-        TypeError: If `begin`, `end` or `strides` is not a tuple.
+        TypeError: If `begin_mask`, `end_mask`, `ellipsis_mask`, `new_axis_mask` or `shrink_axis_mask` is not an int.
+        ValueError: If `begin_mask`, `end_mask`, `ellipsis_mask`, `new_axis_mask` or `shrink_axis_mask` is less than 0.
+        ValueError: If the shape of `begin`, `end` and `strides` are difference.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

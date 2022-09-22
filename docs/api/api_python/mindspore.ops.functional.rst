@@ -441,6 +441,7 @@ Array操作
     mindspore.ops.split
     mindspore.ops.squeeze
     mindspore.ops.stack
+    mindspore.ops.strided_slice
     mindspore.ops.tensor_scatter_add
     mindspore.ops.tensor_scatter_div
     mindspore.ops.tensor_scatter_max
@@ -476,8 +477,6 @@ Array操作
      - Refer to :class:`mindspore.ops.DType`.
    * - mindspore.ops.sort
      - Refer to :class:`mindspore.ops.Sort`.
-   * - mindspore.ops.strided_slice
-     - Refer to :class:`mindspore.ops.StridedSlice`.
    * - mindspore.ops.tensor_scatter_update
      - Refer to :class:`mindspore.ops.TensorScatterUpdate`.
    * - mindspore.ops.tensor_slice
