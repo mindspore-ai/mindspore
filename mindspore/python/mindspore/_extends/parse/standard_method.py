@@ -685,8 +685,6 @@ def argmax(x, axis=None):
         >>> print(a.argmax())
         5
     """
-    # P.Argmax only supports float
-    x = x.astype(mstype.float32)
     if axis is None:
         x = ravel(x)
         axis = 0

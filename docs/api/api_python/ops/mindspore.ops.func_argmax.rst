@@ -8,11 +8,7 @@ mindspore.ops.argmax
     如果输入Tensor的shape为 :math:`(x_1, ..., x_N)` ，则输出Tensor的shape为 :math:`(x_1, ..., x_{axis-1}, x_{axis+1}, ..., x_N)` 。
 
     参数：
-        - **x** (Tensor) - Argmax的输入，shape： :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。支持的数据类型如下所示：
-
-          - Ascend：float16和float32。
-          - GPU：float16和float32。
-          - CPU：float16、float32和float64。
+        - **x** (Tensor) - Argmax的输入，shape： :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。
         - **axis** (int) - 指定Argmax计算轴。默认值：-1。
         - **output_type** (:class:`mindspore.dtype`) - 指定输出数据类型。默认值： `mindspore.dtype.int32` 。
 

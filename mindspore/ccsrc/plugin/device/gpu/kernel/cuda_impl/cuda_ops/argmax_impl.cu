@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,9 +43,90 @@ void CalArgmax(const T *input, const S bound, const size_t outer_size, const siz
   return;
 }
 
-template CUDA_LIB_EXPORT void CalArgmax<float, int>(const float *input, const int bound, const size_t outer_size,
-                                                    const size_t inner_size, int *output, const uint32_t &device_id,
-                                                    cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalArgmax<half, int>(const half *input, const int bound, const size_t outer_size,
-                                                   const size_t inner_size, int *output, const uint32_t &device_id,
-                                                   cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalArgmax<half, int32_t>(const half *input, const int32_t bound, const size_t outer_size,
+                                                       const size_t inner_size, int32_t *output,
+                                                       const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalArgmax<float, int32_t>(const float *input, const int32_t bound,
+                                                        const size_t outer_size, const size_t inner_size,
+                                                        int32_t *output, const uint32_t &device_id,
+                                                        cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalArgmax<double, int32_t>(const double *input, const int32_t bound,
+                                                         const size_t outer_size, const size_t inner_size,
+                                                         int32_t *output, const uint32_t &device_id,
+                                                         cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalArgmax<int8_t, int32_t>(const int8_t *input, const int32_t bound,
+                                                         const size_t outer_size, const size_t inner_size,
+                                                         int32_t *output, const uint32_t &device_id,
+                                                         cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalArgmax<int16_t, int32_t>(const int16_t *input, const int32_t bound,
+                                                          const size_t outer_size, const size_t inner_size,
+                                                          int32_t *output, const uint32_t &device_id,
+                                                          cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalArgmax<int32_t, int32_t>(const int32_t *input, const int32_t bound,
+                                                          const size_t outer_size, const size_t inner_size,
+                                                          int32_t *output, const uint32_t &device_id,
+                                                          cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalArgmax<int64_t, int32_t>(const int64_t *input, const int32_t bound,
+                                                          const size_t outer_size, const size_t inner_size,
+                                                          int32_t *output, const uint32_t &device_id,
+                                                          cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalArgmax<uint8_t, int32_t>(const uint8_t *input, const int32_t bound,
+                                                          const size_t outer_size, const size_t inner_size,
+                                                          int32_t *output, const uint32_t &device_id,
+                                                          cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalArgmax<uint16_t, int32_t>(const uint16_t *input, const int32_t bound,
+                                                           const size_t outer_size, const size_t inner_size,
+                                                           int32_t *output, const uint32_t &device_id,
+                                                           cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalArgmax<uint32_t, int32_t>(const uint32_t *input, const int32_t bound,
+                                                           const size_t outer_size, const size_t inner_size,
+                                                           int32_t *output, const uint32_t &device_id,
+                                                           cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalArgmax<uint64_t, int32_t>(const uint64_t *input, const int32_t bound,
+                                                           const size_t outer_size, const size_t inner_size,
+                                                           int32_t *output, const uint32_t &device_id,
+                                                           cudaStream_t cuda_stream);
+
+template CUDA_LIB_EXPORT void CalArgmax<half, int64_t>(const half *input, const int64_t bound, const size_t outer_size,
+                                                       const size_t inner_size, int64_t *output,
+                                                       const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalArgmax<float, int64_t>(const float *input, const int64_t bound,
+                                                        const size_t outer_size, const size_t inner_size,
+                                                        int64_t *output, const uint32_t &device_id,
+                                                        cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalArgmax<double, int64_t>(const double *input, const int64_t bound,
+                                                         const size_t outer_size, const size_t inner_size,
+                                                         int64_t *output, const uint32_t &device_id,
+                                                         cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalArgmax<int8_t, int64_t>(const int8_t *input, const int64_t bound,
+                                                         const size_t outer_size, const size_t inner_size,
+                                                         int64_t *output, const uint32_t &device_id,
+                                                         cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalArgmax<int16_t, int64_t>(const int16_t *input, const int64_t bound,
+                                                          const size_t outer_size, const size_t inner_size,
+                                                          int64_t *output, const uint32_t &device_id,
+                                                          cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalArgmax<int32_t, int64_t>(const int32_t *input, const int64_t bound,
+                                                          const size_t outer_size, const size_t inner_size,
+                                                          int64_t *output, const uint32_t &device_id,
+                                                          cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalArgmax<int64_t, int64_t>(const int64_t *input, const int64_t bound,
+                                                          const size_t outer_size, const size_t inner_size,
+                                                          int64_t *output, const uint32_t &device_id,
+                                                          cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalArgmax<uint8_t, int64_t>(const uint8_t *input, const int64_t bound,
+                                                          const size_t outer_size, const size_t inner_size,
+                                                          int64_t *output, const uint32_t &device_id,
+                                                          cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalArgmax<uint16_t, int64_t>(const uint16_t *input, const int64_t bound,
+                                                           const size_t outer_size, const size_t inner_size,
+                                                           int64_t *output, const uint32_t &device_id,
+                                                           cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalArgmax<uint32_t, int64_t>(const uint32_t *input, const int64_t bound,
+                                                           const size_t outer_size, const size_t inner_size,
+                                                           int64_t *output, const uint32_t &device_id,
+                                                           cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalArgmax<uint64_t, int64_t>(const uint64_t *input, const int64_t bound,
+                                                           const size_t outer_size, const size_t inner_size,
+                                                           int64_t *output, const uint32_t &device_id,
+                                                           cudaStream_t cuda_stream);

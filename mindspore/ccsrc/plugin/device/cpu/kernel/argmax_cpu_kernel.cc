@@ -15,6 +15,8 @@
  */
 #include "plugin/device/cpu/kernel/argmax_cpu_kernel.h"
 #include <string>
+#include <algorithm>
+#include <utility>
 #include "mindspore/core/ops/arg_max.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
@@ -27,7 +29,7 @@ constexpr char kKernelName[] = "Argmax";
 
 int64_t get_element_num(const std::vector<int64_t> &shape) { return SizeToLong(SizeOf(shape)); }
 
-template <typename T>
+template <typename T, typename S>
 bool check_validation(const std::vector<int64_t> &shape, const int64_t num_before_axis, const int64_t num_after_axis,
                       const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kArgMaxInputsNum, kKernelName);
@@ -35,7 +37,7 @@ bool check_validation(const std::vector<int64_t> &shape, const int64_t num_befor
   auto data_size = sizeof(T);
   int64_t input_size = get_element_num(shape) * static_cast<int64_t>(data_size);
   int64_t output_num = num_before_axis * num_after_axis;
-  int64_t output_size = output_num * static_cast<int64_t>(sizeof(int));
+  int64_t output_size = output_num * static_cast<int64_t>(sizeof(S));
   if (static_cast<int64_t>(inputs[0]->size) != input_size) {
     MS_LOG(EXCEPTION) << "For '" << kKernelName << "', the memory size of 'input_x' must be equal to " << input_size
                       << ", but got the memory size is " << inputs[0]->size;
@@ -48,16 +50,16 @@ bool check_validation(const std::vector<int64_t> &shape, const int64_t num_befor
 }
 }  // namespace
 
-template <typename T>
+template <typename T, typename S>
 bool ArgmaxCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                       const std::vector<kernel::AddressPtr> &,
                                       const std::vector<kernel::AddressPtr> &outputs) {
-  if (!check_validation<T>(shape_, num_before_axis_, num_after_axis_, inputs, outputs)) {
+  if (!check_validation<T, S>(shape_, num_before_axis_, num_after_axis_, inputs, outputs)) {
     return false;
   }
 
   const auto *input = reinterpret_cast<T *>(inputs[0]->addr);
-  auto *output = reinterpret_cast<int32_t *>(outputs[0]->addr);
+  auto *output = reinterpret_cast<S *>(outputs[0]->addr);
 
   std::vector<float> array_axis(dim_axis_);
   for (int64_t i = 0; i < num_before_axis_; i++) {
@@ -69,7 +71,7 @@ bool ArgmaxCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inp
         array_axis[LongToSize(k)] = static_cast<float>(input[src_index_k]);
       }
       auto max_ops = std::max_element(array_axis.begin(), array_axis.end());
-      auto max_index = static_cast<int32_t>(std::distance(array_axis.begin(), max_ops));
+      auto max_index = static_cast<S>(std::distance(array_axis.begin(), max_ops));
       auto dst_index = static_cast<size_t>(i * num_after_axis_ + j);
       output[dst_index] = max_index;
     }
@@ -78,7 +80,7 @@ bool ArgmaxCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inp
 }
 
 bool ArgmaxCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &) {
+                              const std::vector<KernelTensorPtr> &outputs) {
   auto kernel_ptr = std::dynamic_pointer_cast<ops::Argmax>(base_operator);
   if (!kernel_ptr) {
     MS_LOG(ERROR) << "cast Argmax ops failed!";
@@ -91,18 +93,12 @@ bool ArgmaxCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
 
   kernel_name_ = kernel_ptr->name();
   axis_ = kernel_ptr->get_axis();
-  auto input_type_id = inputs[0]->GetDtype();
-  switch (input_type_id) {
-    case kNumberTypeFloat32:
-      kernel_func_ = &ArgmaxCpuKernelMod::LaunchKernel<float>;
-      break;
-    case kNumberTypeFloat16:
-      kernel_func_ = &ArgmaxCpuKernelMod::LaunchKernel<float16>;
-      break;
-    default:
-      MS_LOG(ERROR) << "Argmax kernel does not support " << TypeIdToString(input_type_id);
-      return false;
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it does not support this kernel type: " << kernel_attr;
   }
+  kernel_func_ = func_list_[index].second;
   return true;
 }
 
@@ -137,6 +133,59 @@ int ArgmaxCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
   }
   dim_axis_ = shape_[LongToSize(axis_)];
   return 0;
+}
+
+std::vector<std::pair<KernelAttr, ArgmaxCpuKernelMod::ArgmaxFunc>> ArgmaxCpuKernelMod::func_list_ = {
+  {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt32),
+   &ArgmaxCpuKernelMod::LaunchKernel<int8_t, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt32),
+   &ArgmaxCpuKernelMod::LaunchKernel<int16_t, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+   &ArgmaxCpuKernelMod::LaunchKernel<int32_t, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
+   &ArgmaxCpuKernelMod::LaunchKernel<int64_t, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeInt32),
+   &ArgmaxCpuKernelMod::LaunchKernel<uint8_t, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeInt32),
+   &ArgmaxCpuKernelMod::LaunchKernel<uint16_t, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeInt32),
+   &ArgmaxCpuKernelMod::LaunchKernel<uint32_t, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeInt32),
+   &ArgmaxCpuKernelMod::LaunchKernel<uint64_t, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeInt32),
+   &ArgmaxCpuKernelMod::LaunchKernel<float16, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt32),
+   &ArgmaxCpuKernelMod::LaunchKernel<float, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeInt32),
+   &ArgmaxCpuKernelMod::LaunchKernel<double, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt64),
+   &ArgmaxCpuKernelMod::LaunchKernel<int8_t, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt64),
+   &ArgmaxCpuKernelMod::LaunchKernel<int16_t, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt64),
+   &ArgmaxCpuKernelMod::LaunchKernel<int32_t, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+   &ArgmaxCpuKernelMod::LaunchKernel<int64_t, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeInt64),
+   &ArgmaxCpuKernelMod::LaunchKernel<uint8_t, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeInt64),
+   &ArgmaxCpuKernelMod::LaunchKernel<uint16_t, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeInt64),
+   &ArgmaxCpuKernelMod::LaunchKernel<uint32_t, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeInt64),
+   &ArgmaxCpuKernelMod::LaunchKernel<uint64_t, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeInt64),
+   &ArgmaxCpuKernelMod::LaunchKernel<float16, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt64),
+   &ArgmaxCpuKernelMod::LaunchKernel<float, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeInt64),
+   &ArgmaxCpuKernelMod::LaunchKernel<double, int64_t>}};
+
+std::vector<KernelAttr> ArgmaxCpuKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, ArgmaxFunc> &pair) { return pair.first; });
+  return support_list;
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Argmax, ArgmaxCpuKernelMod);
