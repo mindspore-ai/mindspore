@@ -21,6 +21,7 @@
 #include "include/common/thread_pool.h"
 #include "plugin/device/cpu/kernel/transpose_cpu_kernel.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -125,7 +126,14 @@ void TransposeFwdCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     perm_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kIndex1);
     return;
   }
-  perm_ = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "perm");
+  auto prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
+  MS_EXCEPTION_IF_NULL(prim);
+  auto value_ptr = prim->GetAttr("perm");
+  if (value_ptr->isa<tensor::Tensor>()) {
+    perm_ = CheckAndConvertUtils::CheckTensorIntValue("perm", value_ptr, kernel_name_);
+  } else {
+    perm_ = CheckAndConvertUtils::CheckIntOrTupleInt("perm", value_ptr, kernel_name_);
+  }
   CheckPermValue();
 }
 

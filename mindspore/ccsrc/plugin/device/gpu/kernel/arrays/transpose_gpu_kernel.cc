@@ -16,6 +16,7 @@
 
 #include "plugin/device/gpu/kernel/arrays/transpose_gpu_kernel.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -170,7 +171,12 @@ bool TransposeGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
     MS_LOG(ERROR) << "The attr \"perm\" is not found in kernel 'Transpose'.";
     return false;
   }
-  auto perm = GetValue<std::vector<int64_t>>(attr);
+  std::vector<int64_t> perm;
+  if (attr->isa<tensor::Tensor>()) {
+    perm = CheckAndConvertUtils::CheckTensorIntValue("perm", attr, kernel_name_);
+  } else {
+    perm = CheckAndConvertUtils::CheckIntOrTupleInt("perm", attr, kernel_name_);
+  }
   GetPermValue(perm);
   return true;
 }
