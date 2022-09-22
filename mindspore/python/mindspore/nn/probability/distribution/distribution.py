@@ -427,7 +427,8 @@ class Distribution(Cell):
 
     def prob(self, value, *args, **kwargs):
         """
-        Evaluate the probability (pdf or pmf) at given value.
+        Evaluate the probability (pdf or pmf) at given value. For a discrete distribution,
+        it is a probability mass function, while for a continuous distribution, it is probability density function.
 
         Args:
             value (Tensor): value to be evaluated.

@@ -12,8 +12,8 @@ mindspore.nn.probability.distribution.Logistic
     其中 :math:`a, b` 为分别为Logistic分布的位置参数和比例参数。
 
     参数：
-        - **loc** (int, float, list, numpy.ndarray, Tensor) - Logistic分布的位置。默认值：None。
-        - **scale** (int, float, list, numpy.ndarray, Tensor) - Logistic分布的尺度。默认值：None。
+        - **loc** (float, list, numpy.ndarray, Tensor) - Logistic分布的位置。默认值：None。
+        - **scale** (float, list, numpy.ndarray, Tensor) - Logistic分布的尺度。默认值：None。
         - **seed** (int) - 采样时使用的种子。如果为None，则使用全局种子。默认值：None。
         - **dtype** (mindspore.dtype) - 事件样例的类型。默认值：mstype.float32。
         - **name** (str) - 分布的名称。默认值：'Logistic'。

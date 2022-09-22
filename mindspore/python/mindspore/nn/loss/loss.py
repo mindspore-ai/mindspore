@@ -2101,8 +2101,8 @@ class KLDivLoss(LossBase):
         \operatorname{sum}(L(x, target)),  & \text{if reduction} = \text{'sum'.}
         \end{cases}
 
-    where :math:`x` represents `logits`.
-    :math:`target` represents `labels`.
+    where :math:`x` represents `logits`,
+    :math:`target` represents `labels`, and
     :math:`\ell(x, target)` represents `output`.
 
     Note:
@@ -2121,7 +2121,7 @@ class KLDivLoss(LossBase):
         - **logits** (Tensor) - The input Tensor. The data type must be float16, float32 or float64.
         - **labels** (Tensor) - The label Tensor which has the same shape and data type as `logits`.
 
-    Returns:
+    Outputs:
         Tensor or Scalar, if `reduction` is 'none', then output is a tensor and has the same shape as `logits`.
         Otherwise, it is a scalar.
 

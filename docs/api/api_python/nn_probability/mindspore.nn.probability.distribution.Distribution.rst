@@ -90,7 +90,7 @@ mindspore.nn.probability.distribution.Distribution
             - **kwargs** (dict) - 关键字参数字典，具体需要的参数根据子类的实现确定。
 
         .. note:: 
-           传递给字类的参数的顺序应该与通过 `_add_parameter` 初始化默认参数的顺序相同。
+           `dist_spec_args` 必须以列表或者字典的形式传入。传递给字类的参数的顺序应该与通过 `_add_parameter` 初始化默认参数的顺序相同。如果某个 `dist_spec_args` 为None，那么将返回默认值。
 
         返回：
             list[Tensor]，参数列表。
