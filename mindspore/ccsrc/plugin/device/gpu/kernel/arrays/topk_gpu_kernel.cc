@@ -15,6 +15,8 @@
  */
 
 #include "plugin/device/gpu/kernel/arrays/topk_gpu_kernel.h"
+#include <algorithm>
+#include <map>
 
 namespace mindspore {
 namespace kernel {
