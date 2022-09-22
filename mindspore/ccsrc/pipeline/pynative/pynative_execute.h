@@ -82,7 +82,7 @@ class PyNativeExecutor : public std::enable_shared_from_this<PyNativeExecutor> {
   void ClearCell(const py::object &cell) const;
   void ClearGrad(const py::object &cell, const py::args &args) const;
   // Abnormal existed
-  void ClearRes();
+  void ClearRes() const;
   // Sync stream
   void Sync() const;
   void SetLazyBuild(bool enable) const;

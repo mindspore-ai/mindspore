@@ -79,8 +79,7 @@ void UpdateParameterShapeFromInputTensor(const AnfNodePtr &input_node, const ten
 }
 
 void UpdateInputNodeDeviceAddress(const std::vector<AnfNodePtr> &input_nodes,
-                                  const std::vector<tensor::TensorPtr> &input_tensors,
-                                  const device::DeviceContext *device_context) {
+                                  const std::vector<tensor::TensorPtr> &input_tensors) {
   MS_LOG(DEBUG) << "Start";
   auto input_size = input_nodes.size();
   auto tensor_size = input_tensors.size();
@@ -332,7 +331,8 @@ kernel::AddressPtrList CreateKernelInputAddress(const std::shared_ptr<OpRuntimeI
   for (size_t i = 0; i < input_size; ++i) {
     auto device_address = runtime_info->GetInputDeviceAddress(i);
     MS_EXCEPTION_IF_NULL(device_address);
-    inputs.emplace_back(std::make_shared<kernel::Address>(device_address->GetMutablePtr(), device_address->GetSize()));
+    (void)inputs.emplace_back(
+      std::make_shared<kernel::Address>(device_address->GetMutablePtr(), device_address->GetSize()));
     MS_LOG(DEBUG) << "input[" << i << "]:" << inputs.back()->addr << " size:" << inputs.back()->size;
   }
   return inputs;
@@ -392,7 +392,7 @@ kernel::AddressPtrList CreateKernelWorkspaceAddress(const std::shared_ptr<OpRunt
         !device_context->device_res_manager_->AllocateMemory(device_address.get())) {
       MS_LOG(EXCEPTION) << "Allocate workspace memory failed";
     }
-    workspaces.emplace_back(
+    (void)workspaces.emplace_back(
       std::make_shared<kernel::Address>(device_address->GetMutablePtr(), device_address->GetSize()));
     MS_LOG(DEBUG) << "workspace[" << i << "]:" << workspaces.back()->addr << " size:" << workspaces.back()->size;
   }
@@ -405,7 +405,8 @@ kernel::AddressPtrList CreateKernelOutputAddress(const std::shared_ptr<OpRuntime
   kernel::AddressPtrList outputs;
   for (size_t i = 0; i < output_size; ++i) {
     auto device_address = runtime_info->GetOutputDeviceAddress(i);
-    outputs.emplace_back(std::make_shared<kernel::Address>(device_address->GetMutablePtr(), device_address->GetSize()));
+    (void)outputs.emplace_back(
+      std::make_shared<kernel::Address>(device_address->GetMutablePtr(), device_address->GetSize()));
     MS_LOG(DEBUG) << "output[" << i << "]:" << outputs.back()->addr << " size:" << outputs.back()->size;
   }
   return outputs;
@@ -522,7 +523,7 @@ void UpdateDeviceAddress(const KernelGraphPtr &graph, const std::vector<tensor::
   MS_LOG(DEBUG) << "Start";
   const auto &input_nodes = graph->input_nodes();
   UpdateInputTensorFromDevice(input_nodes, tensors_without_value_mask, device_context);
-  UpdateInputNodeDeviceAddress(input_nodes, tensors_without_value_mask, device_context);
+  UpdateInputNodeDeviceAddress(input_nodes, tensors_without_value_mask);
   UpdateRefNodeOutputDeviceAddress(graph);
   MS_LOG(DEBUG) << "End";
 }

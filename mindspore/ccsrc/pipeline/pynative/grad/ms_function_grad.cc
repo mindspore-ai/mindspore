@@ -177,7 +177,7 @@ void MsFunction::GetWeightsNode(const FuncGraphPtr &ms_func_graph, AnfNodePtrLis
     if (graph_info->params.count(param_name) != 0) {
       // Share same weight parameter in different ms_function call.
       const auto &same_param = graph_info->params.at(param_name);
-      manage->Replace(anf_node, same_param);
+      (void)manage->Replace(anf_node, same_param);
       param = same_param;
     } else {
       df_builder->add_parameter(param);

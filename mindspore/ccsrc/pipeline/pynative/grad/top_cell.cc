@@ -194,19 +194,19 @@ void TopCellInfo::RecordGradOpInfo(const FrontendOpRunInfoPtr &op_run_info) {
 }
 
 void TopCellInfo::SetParamNodeMapInGraphInfoMap(const FuncGraphPtr &g, const std::string &id,
-                                                const ParameterPtr &param) {
+                                                const ParameterPtr &param) const {
   auto &graph_info = graph_info_map().at(g);
   MS_EXCEPTION_IF_NULL(graph_info);
   graph_info->params[id] = param;
 }
 void TopCellInfo::SetNodeMapInGraphInfoMap(const FuncGraphPtr &g, const std::string &id, const AnfNodePtr &node,
-                                           int64_t index) {
+                                           int64_t index) const {
   auto &graph_info = graph_info_map().at(g);
   MS_EXCEPTION_IF_NULL(graph_info);
   graph_info->node_map[id] = std::make_pair(node, std::vector<int64_t>{index});
 }
 void TopCellInfo::SetNodeMapInGraphInfoMap(const FuncGraphPtr &g, const std::string &id, const AnfNodePtr &node,
-                                           const std::vector<int64_t> &index) {
+                                           const std::vector<int64_t> &index) const {
   auto &graph_info = graph_info_map().at(g);
   MS_EXCEPTION_IF_NULL(graph_info);
   graph_info->node_map[id] = std::make_pair(node, index);

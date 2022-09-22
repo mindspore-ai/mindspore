@@ -201,8 +201,8 @@ void GraphAdapter::GenerateRefCountForBpropValueNode(const KernelGraphPtr &graph
     MS_EXCEPTION_IF_NULL(value_node);
     auto tensor = GetTensorFromValueNode(value_node);
     if (tensor == nullptr || !tensor->is_forward_output()) {
-      value_node_ref_count_list.emplace_back(SIZE_MAX);
-      value_node_forward_output_flags.emplace_back(false);
+      (void)value_node_ref_count_list.emplace_back(SIZE_MAX);
+      (void)value_node_forward_output_flags.emplace_back(false);
       continue;
     }
 
@@ -211,12 +211,12 @@ void GraphAdapter::GenerateRefCountForBpropValueNode(const KernelGraphPtr &graph
       // The value_node is in bp graph but not used.
       // e.g. %1-MakeTuple(T1, T2) -> TupleGetItem(%1, 0). T2 is not used.
       MS_LOG(DEBUG) << "ValueNode " << value_node->ToString() << " is not used in graph";
-      value_node_ref_count_list.emplace_back(SIZE_MAX);
-      value_node_forward_output_flags.emplace_back(false);
+      (void)value_node_ref_count_list.emplace_back(SIZE_MAX);
+      (void)value_node_forward_output_flags.emplace_back(false);
       continue;
     }
 
-    value_node_ref_count_list.emplace_back(iter->second);
+    (void)value_node_ref_count_list.emplace_back(iter->second);
     value_node_forward_output_flags.emplace_back(true);
     MS_LOG(DEBUG) << "ValueNode " << value_node->DebugString() << " ref_count " << iter->second;
   }
