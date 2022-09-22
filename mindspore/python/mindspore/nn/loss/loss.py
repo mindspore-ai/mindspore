@@ -2121,7 +2121,7 @@ class KLDivLoss(LossBase):
         - **logits** (Tensor) - The input Tensor. The data type must be float16, float32 or float64.
         - **labels** (Tensor) - The label Tensor which has the same shape and data type as `logits`.
 
-    Returns:
+    Outputs:
         Tensor or Scalar, if `reduction` is 'none', then output is a tensor and has the same shape as `logits`.
         Otherwise, it is a scalar.
 

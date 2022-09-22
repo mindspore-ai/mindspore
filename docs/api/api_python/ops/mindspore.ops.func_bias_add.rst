@@ -1,7 +1,7 @@
-mindspore.ops.func_bias_add
+mindspore.ops.bias_add
 ===========================
 
-.. py:class:: mindspore.ops.bias_add(input_x, bias)
+.. py:function:: mindspore.ops.bias_add(input_x, bias)
 
     返回输入Tensor与偏置Tensor之和。相加前会把偏置Tensor广播成与输入Tensor的shape一致。
 

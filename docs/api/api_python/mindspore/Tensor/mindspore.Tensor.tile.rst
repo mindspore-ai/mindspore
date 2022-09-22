@@ -1,7 +1,7 @@
 mindspore.Tensor.tile
 =====================
 
-.. py:class:: mindspore.Tensor.tile(multiples)
+.. py:method:: mindspore.Tensor.tile(multiples)
 
     按照给定的次数复制输入Tensor。
 

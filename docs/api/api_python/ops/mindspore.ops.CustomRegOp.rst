@@ -1,7 +1,7 @@
 mindspore.ops.CustomRegOp
 =========================
 
-.. py:class:: mindspore.ops.CustomRegOp(op_name)
+.. py:class:: mindspore.ops.CustomRegOp(op_name="Custom")
 
     用于为 :class:`mindspore.ops.Custom` 的 `func` 参数生成算子注册信息的类。注册信息主要指定了 `func` 的输入和输出Tensor所支持的数据类型和数据格式、属性以及target信息。
 
@@ -21,7 +21,7 @@ mindspore.ops.CustomRegOp
               - "dynamic": 表示第 `index` 个输入存在且Tensor个数可能为多个，比如AddN算子的输入属于这种情况。
               - "optional": 表示第 `index` 个输入存在且为单个Tensor，或者也可能不存在。
 
-            - **kwargs** (dict) - 表示输入的其他信息，用于扩展。
+            - **\*\*kwargs** (dict) - 表示输入的其他信息，用于扩展。
 
         异常：
             - **TypeError** - `index` 既不是int也不是None。
@@ -41,7 +41,7 @@ mindspore.ops.CustomRegOp
               - "dynamic": 表示第 `index` 个输出存在且Tensor个数可能为多个。
               - "optional": 表示第 `index` 个输出存在且为单个Tensor，或者也可能不存在。
 
-            - **kwargs** (dict) - 表示输出的其他信息，用于扩展。
+            - **\*\*kwargs** (dict) - 表示输出的其他信息，用于扩展。
 
         异常：
             - **TypeError** - `index` 既不是int也不是None。
@@ -53,7 +53,7 @@ mindspore.ops.CustomRegOp
         指定 :class:`mindspore.ops.Custom` 的 `func` 参数的每个输入Tensor和输出Tensor所支持的数据类型和数据格式。正如上面给出的样例，该函数应在 `input` 和 `output` 函数之后被调用。
 
         参数：
-            - **args** (tuple) - 表示（数据类型、格式）组合的列表，`args` 的长度应该等于输入Tensor和输出Tensor数目的总和。 `args` 中的每一项也是一个tuple，tuple[0]和tuple[1]都是str类型，分别指定了一个Tensor的数据类型和数据格式。 :class:`mindspore.ops.DataType` 提供了很多预定义的（数据类型、格式）组合，例如 `DataType.F16_Default` 表示数据类型是float16，数据格式是默认格式。
+            - **\*args** (tuple) - 表示（数据类型、格式）组合的列表，`args` 的长度应该等于输入Tensor和输出Tensor数目的总和。 `args` 中的每一项也是一个tuple，tuple[0]和tuple[1]都是str类型，分别指定了一个Tensor的数据类型和数据格式。 :class:`mindspore.ops.DataType` 提供了很多预定义的（数据类型、格式）组合，例如 `DataType.F16_Default` 表示数据类型是float16，数据格式是默认格式。
 
         异常：
             - **ValueError** - `args` 的长度不等于输入Tensor和输出Tensor数目的总和。
@@ -81,7 +81,7 @@ mindspore.ops.CustomRegOp
               - "listFloat": Python list of float类型的字符串表示。
 
             - **default_value** (str) - 表示属性的默认值。 `default_value` 和 `value_type` 配合使用。如果属性实际的默认值为1.0，那么 `value_type` 是"float", `default_value` 是"1.0"。如果属性实际的默认值是[1, 2, 3]，那么 `value_type` 是"listInt", `default_value` 是"1,2,3"，其中数值通过','分割。如果该值为None，键"default_value"将不会出现在属性信息字典中。目前用于"akg"、"aicpu"和"tbe"类型的自定义算子。默认值：None。
-            - **kwargs** (dict) - 表示属性的其他信息，用于扩展。
+            - **\*\*kwargs** (dict) - 表示属性的其他信息，用于扩展。
 
         异常：
             - **TypeError** - `name` 既不是str也不是None。
