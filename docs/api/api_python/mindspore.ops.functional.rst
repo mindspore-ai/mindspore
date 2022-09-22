@@ -377,6 +377,7 @@ Tensor创建
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.ops.choice_with_mask
     mindspore.ops.gamma
     mindspore.ops.laplace
     mindspore.ops.multinomial

@@ -23,7 +23,7 @@ from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_util
 from ...common import dtype as mstype
 from ...common.seed import _get_graph_seed
 from ...common.tensor import Tensor
-from ..operations.random_ops import RandomShuffle
+from ..operations.random_ops import RandomShuffle, RandomChoiceWithMask
 from .._primitive_cache import _get_cache_prim
 from .._utils import get_broadcast_shape
 
@@ -422,6 +422,51 @@ def random_shuffle(x, seed=0, seed2=0):
     return output
 
 
+def choice_with_mask(input_x, count=256, seed=0, seed2=0):
+    """
+    Generates a random sample as index tensor with a mask tensor from a given tensor.
+
+    The input_x must be a tensor of rank not less than 1. If its rank is greater than or equal to 2,
+    the first dimension specifies the number of samples.
+    The index tensor and the mask tensor have the fixed shapes. The index tensor denotes the index of the nonzero
+    sample, while the mask tensor denotes which elements in the index tensor are valid.
+
+    Args:
+        input_x (Tensor): The input tensor.
+            The input tensor rank must be greater than or equal to 1 and less than or equal to 5.
+        count (int): Number of items expected to get and the number must be greater than 0. Default: 256.
+        seed (int): Random seed. Default: 0.
+        seed2 (int): Random seed2. Default: 0.
+
+    Returns:
+        Two tensors, the first one is the index tensor and the other one is the mask tensor.
+
+        - **index** (Tensor) - The output shape is 2-D.
+        - **mask** (Tensor) - The output shape is 1-D.
+
+    Raises:
+        TypeError: If `count` is not an int.
+        TypeError: If neither `seed` nor `seed2` is an int.
+        TypeError: If `input_x` is not a Tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> input_x = Tensor(np.ones(shape=[240000, 4]).astype(np.bool))
+        >>> output_y, output_mask = ops.choice_with_mask(input_x)
+        >>> result = output_y.shape
+        >>> print(result)
+        (256, 2)
+        >>> result = output_mask.shape
+        >>> print(result)
+        (256,)
+    """
+    choice_with_mask_ = _get_cache_prim(RandomChoiceWithMask)(count=count, seed=seed, seed2=seed2)
+    output = choice_with_mask_(input_x)
+    return output
+
+
 __all__ = [
     'standard_laplace',
     'random_categorical',
@@ -431,5 +476,6 @@ __all__ = [
     'uniform_candidate_sampler',
     'random_poisson',
     'random_shuffle',
+    'choice_with_mask'
 ]
 __all__.sort()
