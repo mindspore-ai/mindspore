@@ -80,45 +80,49 @@ TensorRTSubGraph::~TensorRTSubGraph() {
   }
 }
 
-bool TensorRTSubGraph::IsValidProfileDims() const {
-  if (min_dims_.size() == 0 || min_dims_.size() != opt_dims_.size() || min_dims_.size() != max_dims_.size()) {
-    MS_LOG(WARNING) << "number of min opt max profile tensor name not equal !";
+std::experimental::optional<bool> TensorRTSubGraph::IsValidProfileDims() const {
+  if (min_dims_.empty() && opt_dims_.empty() && max_dims_.empty()) {
+    MS_LOG(WARNING) << "number of min opt max profile number is 0 !";
     return false;
+  }
+  if (min_dims_.size() != opt_dims_.size() || min_dims_.size() != max_dims_.size()) {
+    MS_LOG(ERROR) << "number of min opt max profile tensor name not equal !";
+    return {};
   }
   std::unordered_map<std::string, int> tensor_name2profile_num;
   for (auto it = min_dims_.begin(); it != min_dims_.end(); ++it) {
     if (max_dims_.find(it->first) == max_dims_.end() || opt_dims_.find(it->first) == opt_dims_.end()) {
-      MS_LOG(WARNING) << "min opt max profile name set not equal !";
-      return false;
+      MS_LOG(ERROR) << "min opt max profile name set not equal !";
+      return {};
     }
     tensor_name2profile_num[it->first] = it->second.size();
     if (tensor_name2profile_num[it->first] == 0) {
-      MS_LOG(WARNING) << "min dims profile num for " << it->first << " is 0!";
-      return false;
+      MS_LOG(ERROR) << "min dims profile num for " << it->first << " is 0!";
+      return {};
     }
     int nbdims = it->second.front().nbDims;
     if (opt_dims_.at(it->first).size() != tensor_name2profile_num[it->first]) {
-      MS_LOG(WARNING) << "opt dims profile num for " << it->first << " is not equal min dims!";
-      return false;
+      MS_LOG(ERROR) << "opt dims profile num for " << it->first << " is not equal min dims!";
+      return {};
     }
     if (max_dims_.at(it->first).size() != tensor_name2profile_num[it->first]) {
-      MS_LOG(WARNING) << "max dims profile num for " << it->first << " is not equal min dims!";
-      return false;
+      MS_LOG(ERROR) << "max dims profile num for " << it->first << " is not equal min dims!";
+      return {};
     }
     if (std::any_of(min_dims_.at(it->first).begin(), min_dims_.at(it->first).end(),
                     [=](const nvinfer1::Dims &dims) { return dims.nbDims != nbdims; })) {
-      MS_LOG(WARNING) << "min dims profile dims for " << it->first << " is not equal!";
-      return false;
+      MS_LOG(ERROR) << "min dims profile dims for " << it->first << " is not equal!";
+      return {};
     }
     if (std::any_of(opt_dims_.at(it->first).begin(), opt_dims_.at(it->first).end(),
                     [=](const nvinfer1::Dims &dims) { return dims.nbDims != nbdims; })) {
-      MS_LOG(WARNING) << "opt dims profile dims for " << it->first << " is not equal to min dims!";
-      return false;
+      MS_LOG(ERROR) << "opt dims profile dims for " << it->first << " is not equal to min dims!";
+      return {};
     }
     if (std::any_of(opt_dims_.at(it->first).begin(), opt_dims_.at(it->first).end(),
                     [=](const nvinfer1::Dims &dims) { return dims.nbDims != nbdims; })) {
-      MS_LOG(WARNING) << "max dims profile dims for " << it->first << " is not equal to min dims!";
-      return false;
+      MS_LOG(ERROR) << "max dims profile dims for " << it->first << " is not equal to min dims!";
+      return {};
     }
   }
   auto it = tensor_name2profile_num.begin();
@@ -154,7 +158,12 @@ int TensorRTSubGraph::Init(cudaStream_t stream) {
     MS_LOG(ERROR) << "create Serializer failed.";
     return RET_ERROR;
   }
-  using_input_ranges_ = IsValidProfileDims();
+  auto valid_opt = IsValidProfileDims();
+  if (!valid_opt) {
+    MS_LOG(ERROR) << "Config is not valid";
+    return RET_ERROR;
+  }
+  using_input_ranges_ = valid_opt.value();
   if (using_input_ranges_) {
     for (size_t i = 0; i != min_dims_.begin()->second.size(); ++i) {
       profiles_.push_back(runtime_->GetBuilder()->createOptimizationProfile());
@@ -265,6 +274,10 @@ nvinfer1::ITensor *TensorRTSubGraph::SetTensorRTNetworkInput(const mindspore::MS
   }
   nvinfer1::Dims input_dims;
   if (using_input_ranges_) {
+    if (min_dims_.find(in_tensor.Name()) == min_dims_.end()) {
+      MS_LOG(ERROR) << "profile config do not have input tensor name : " << in_tensor.Name();
+      return nullptr;
+    }
     input_dims = SetInputDimsProfile(in_tensor);
   } else {
     input_dims = ParseInputDimsProfile(in_tensor);
@@ -619,7 +632,7 @@ int TensorRTSubGraph::Prepare() {
   return RET_OK;
 }
 
-int TensorRTSubGraph::SelectProfile() const {
+std::experimental::optional<int> TensorRTSubGraph::SelectProfile() const {
   std::vector<int> profile_index;
   for (int i = 0; i != profiles_.size(); ++i) {
     bool condition = true;
@@ -638,7 +651,10 @@ int TensorRTSubGraph::SelectProfile() const {
       profile_index.push_back(i);
     }
   }
-  return profile_index.empty() ? 0 : profile_index.front();
+  if (profile_index.empty()) {
+    return {};
+  }
+  return profile_index.front();
 }
 
 size_t TensorRTSubGraph::MaxVolumnProfileIndex() const {
@@ -658,7 +674,12 @@ size_t TensorRTSubGraph::MaxVolumnProfileIndex() const {
 }
 
 int TensorRTSubGraph::ReSize() {
-  profile_index_ = SelectProfile();
+  auto profile_index_opt = SelectProfile();
+  if (!profile_index_opt) {
+    MS_LOG(ERROR) << "do not have profile in range!";
+    return RET_ERROR;
+  }
+  profile_index_ = profile_index_opt.value();
   if (this->trt_context_->setOptimizationProfile(profile_index_)) {
     MS_LOG(INFO) << "setOptimizationProfile: " << profile_index_;
   }
