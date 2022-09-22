@@ -577,6 +577,10 @@ void GradExecutor::GradNetInner(const py::object *ret, const prim::GradOperation
   // Get params(weights) require derivative
   auto w_args = GetWeightsArgs(weights, df_builder);
   auto p_args = GetGradPositionArgs(grad_position, grad->get_by_position_);
+  if (w_args.empty() && !df_builder->parameters().empty()) {
+    MS_LOG(DEBUG) << "Add weights params to w_args";
+    (void)w_args.insert(w_args.end(), df_builder->parameters().cbegin(), df_builder->parameters().cend());
+  }
   // Get bprop graph of top cell
   auto bprop_graph = GetBpropGraph(grad, cell, w_args, p_args, size, args);
   MS_EXCEPTION_IF_NULL(bprop_graph);
