@@ -520,6 +520,12 @@ void DataConvert::GetInputTensor(const FrontendOpRunInfoPtr &op_run_info, const 
     }
     // Mark tensors, common tensor data : 0, weight param: 1, valuenode(float_, int_): 2
     ConvertValueToTensor(op_run_info, input_object, index, op_prim);
+    // -1 indicates input_object is not a dynInput
+    if (op_prim->HasAttr(kAttrDynInputSizes) && !input_object->isa<ValueSequence>()) {
+      auto dyn_v = GetValue<const std::vector<int64_t>>(op_prim->GetAttr(kAttrDynInputSizes));
+      (void)dyn_v.emplace_back(-1);
+      op_prim->set_attr(kAttrDynInputSizes, MakeValue(dyn_v));
+    }
   }
   op_prim->EndRecordAddAttr();
 }

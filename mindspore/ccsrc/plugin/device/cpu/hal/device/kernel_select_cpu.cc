@@ -160,6 +160,59 @@ void ExpandKernelAttr(const CNodePtr &kernel_node, kernel::KernelAttr *kernel_at
   }
 }
 
+void ExpandMultiDynamicAttr(const CNodePtr &kernel_node, const std::vector<int64_t> &dyn_input_sizes,
+                            kernel::KernelAttr *kernel_attr) {
+  MS_EXCEPTION_IF_NULL(kernel_attr);
+  // Judge whether the inputs are consistent
+  std::unordered_set<int64_t> dyn_input_sizes_no_repetition(dyn_input_sizes.begin(), dyn_input_sizes.end());
+  if (dyn_input_sizes_no_repetition.size() == 1 && kernel_attr->GetInputSize() == 1) {
+    MS_LOG(EXCEPTION)
+      << "For single dynamic input, the cpu kernel should register the 'AddSkipCheckAttr' or 'AddAllSameAttr'.";
+  }
+  MS_LOG(DEBUG) << "Process multi dynamic inputs.";
+
+  size_t inpyt_attr_num = kernel_attr->GetInputSize();
+  size_t dyn_input_size = dyn_input_sizes.size();
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
+  if (inpyt_attr_num == 0 || input_num == 0) {
+    MS_LOG(EXCEPTION) << "Input size is empty";
+  }
+  if (inpyt_attr_num != dyn_input_size) {
+    MS_LOG(EXCEPTION) << "Input size: " << inpyt_attr_num << ", is not equal to dynamic input size: " << dyn_input_size;
+  }
+  // Expand input kernel attr, support multi dynamic inputs
+  std::string format = kOpFormat_DEFAULT;
+  std::vector<DataType> input_attr_list;
+  for (size_t input_index = 0; input_index < inpyt_attr_num; ++input_index) {
+    TypeId input_dtype = kernel_attr->GetInputAttr(input_index).first;
+    int64_t dyn_input_num = dyn_input_sizes[input_index];
+    if (dyn_input_num < 0) {
+      dyn_input_num = 1;
+    }
+    for (size_t j = 0; j < LongToSize(dyn_input_num); ++j) {
+      (void)input_attr_list.emplace_back(input_dtype, format);
+    }
+  }
+  kernel_attr->SetInputAttrList(input_attr_list);
+
+  size_t output_attr_num = kernel_attr->GetOutputSize();
+  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
+  if (output_attr_num == output_num) {
+    MS_LOG(DEBUG) << "Output is not dynamic.";
+    return;
+  }
+  if (output_attr_num == 0) {
+    MS_LOG(EXCEPTION) << "Output size is empty";
+  }
+  // Expand output kernel attr, only support one dynamic output. TODO: support multi dynamic outputs
+  std::vector<DataType> output_attr_list;
+  for (size_t output_index = 0; output_index < output_num; ++output_index) {
+    TypeId output_dtype = kernel_attr->GetOutputAttr(0).first;
+    (void)output_attr_list.emplace_back(output_dtype, format);
+  }
+  kernel_attr->SetOutputAttrList(output_attr_list);
+}
+
 void SetKernelBuildInfo(const std::vector<std::string> &input_formats, const std::vector<TypeId> &input_types,
                         const std::vector<std::string> &output_formats, const std::vector<TypeId> &output_types,
                         AnfNode *kernel_node) {
@@ -395,9 +448,16 @@ bool SelectKernel(const CNodePtr &kernel_node, kernel::KernelAttr *selected_kern
   MS_EXCEPTION_IF_NULL(selected_kernel_attr);
   MS_EXCEPTION_IF_NULL(matched);
   MS_LOG(DEBUG) << "Select kernel for op: " << common::AnfAlgo::GetCNodeName(kernel_node);
+  std::vector<int64_t> dyn_input_sizes = {};
+  if (common::AnfAlgo::HasNodeAttr(kAttrDynInputSizes, kernel_node)) {
+    dyn_input_sizes = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, kAttrDynInputSizes);
+  }
   for (auto kernel_attr : kernel_attrs) {
     if (kernel_attr.GetAllSame()) {
       ExpandKernelAttr(kernel_node, &kernel_attr);
+    } else if (!kernel_attrs[0].GetSkipCheck() && !dyn_input_sizes.empty()) {
+      // if there are multi dynamic inputs, expand the kernel attr.
+      ExpandMultiDynamicAttr(kernel_node, dyn_input_sizes, &kernel_attr);
     }
     size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     if (kernel_attr.GetOutputSize() != output_num) {
