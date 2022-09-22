@@ -307,6 +307,7 @@ GraphId GraphCompiler::CompileGraph(const GraphSegmentPtr &segment, const AnfNod
 
   graph->set_front_outputs(outputs);
 
+  graph->set_root_graph_id(graph_id);
   session_->DumpGraphs({graph});
 
   // The graph is not compiled yet in PyNative Mode.
@@ -316,12 +317,6 @@ GraphId GraphCompiler::CompileGraph(const GraphSegmentPtr &segment, const AnfNod
     auto backend_node = graph->output();
     MS_EXCEPTION_IF_NULL(backend_node);
     graph->CacheGraphOutputToFrontNodeWithIndex({backend_node}, outputs);
-  }
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  std::string device_target = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-  if (device_target == kGPUDevice) {
-    graph->set_root_graph_id(graph_id);
   }
   AnfAlgo::UpdateGraphValidRefPair(graph);
 
@@ -348,6 +343,7 @@ GraphId GraphCompiler::CompileWholeGraphForGraphRunMode(const FuncGraphPtr &func
   MS_EXCEPTION_IF_NULL(root_graph);
   for (const auto &graph : all_graphs) {
     MS_EXCEPTION_IF_NULL(graph);
+    MS_LOG(INFO) << "Set root graph for graph: " << graph->graph_id() << " to: " << root_graph->graph_id() << ".";
     graph->set_root_graph_id(root_graph->graph_id());
     graph->set_run_mode(device::RunMode::kGraphMode);
     graph->set_is_loop_count_sink(true);

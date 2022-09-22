@@ -472,9 +472,6 @@ GraphId GPUSession::CompileGraphImpl(const KernelGraphPtr &graph) {
 #ifndef ENABLE_SECURITY
   // GPU old runtime.
   if (json_parser.e2e_dump_enabled()) {
-    if (graph->is_dynamic_shape()) {
-      MS_LOG(EXCEPTION) << "Dump is not supported for dynamic shape!";
-    }
     graph->set_root_graph_id(graph->graph_id());
     std::string final_graph = "trace_code_graph_" + std::to_string(graph->graph_id());
     std::string root_dir = json_parser.path() + "/rank_" + std::to_string(rank_id_);

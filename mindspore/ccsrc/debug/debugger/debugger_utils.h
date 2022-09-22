@@ -42,8 +42,6 @@ void ReadDataAndDump(const CNodePtr &cnode, const KernelLaunchInfo *launch_info,
 
 std::string CheckDatasetSinkMode(const KernelGraphPtr &graph_ptr);
 
-std::string CheckDynamicShape(const KernelGraphPtr &graph_ptr);
-
 void LoadDataForDebugger(const KernelGraphPtr &graph_ptr);
 
 void SuperKernelE2eDump(const KernelGraphPtr &graph);

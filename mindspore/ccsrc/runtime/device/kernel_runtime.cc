@@ -1185,9 +1185,6 @@ void KernelRuntime::AssignDynamicMemory(const session::KernelGraph &graph) {
   auto mem_type = kDynamicMem;
   auto &dump_json_parser = DumpJsonParser::GetInstance();
   if (dump_json_parser.e2e_dump_enabled() && dump_json_parser.dump_mode() == 0) {
-    if (graph.is_dynamic_shape()) {
-      MS_LOG(EXCEPTION) << "Dump is not supported for dynamic shape!";
-    }
     mindspore::EnvConfigParser::GetInstance().SetSysMemreuse(false);
     is_enable_mem_reuse = false;
     MS_LOG(INFO) << "Disable Memory Reuse when e2e dump is enable and dump mode is set to dump all kernels";

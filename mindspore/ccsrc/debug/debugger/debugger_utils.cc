@@ -255,29 +255,6 @@ std::string CheckDatasetSinkMode(const KernelGraphPtr &graph_ptr) {
 }
 
 /*
- * Feature group: Dump, Online Debugger.
- * Target device group: Ascend, GPU.
- * Runtime category: MindRT.
- * Description: Returns the error_info when the graph is a dynamic graph.
- * If everything is normal the error_info string will be empty.
- */
-std::string CheckDynamicShape(const KernelGraphPtr &graph_ptr) {
-  std::string error_info = "";
-  bool is_dynamic_shape = graph_ptr->is_dynamic_shape();
-  if (!is_dynamic_shape) {
-    return error_info;
-  }
-  auto debugger = Debugger::GetInstance();
-  if (debugger->CheckDebuggerDumpEnabled()) {
-    error_info = "e2e_dump is not supported for dynamic shape!";
-  }
-  if (debugger->CheckDebuggerEnabled()) {
-    error_info = "Debugger is not supported for dynamic shape!";
-  }
-  return error_info;
-}
-
-/*
  * Feature group: Online Debugger.
  * Target device group: Ascend.
  * Runtime category: MindRT.
