@@ -17,8 +17,8 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_XDIVY_CPU_KERNEL_H
 #include <complex>
 #include <vector>
-#include <utility>
 #include <map>
+#include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 

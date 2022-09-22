@@ -30,6 +30,7 @@
 
 namespace mindspore {
 namespace ops {
+const int64_t kXdivyInputNum = 2;
 MIND_API_OPERATOR_IMPL(Xdivy, BaseOperator);
 class XdivyInfer : public abstract::OpInferBase {
  public:
@@ -37,8 +38,7 @@ class XdivyInfer : public abstract::OpInferBase {
                           const std::vector<AbstractBasePtr> &input_args) const override {
     MS_EXCEPTION_IF_NULL(primitive);
     auto prim_name = primitive->name();
-    const int64_t input_num = 2;
-    (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num,
+    (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, kXdivyInputNum,
                                              prim_name);
     for (const auto &item : input_args) {
       MS_EXCEPTION_IF_NULL(item);
@@ -49,8 +49,7 @@ class XdivyInfer : public abstract::OpInferBase {
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
     MS_EXCEPTION_IF_NULL(prim);
     auto prim_name = prim->name();
-    const int64_t input_num = 2;
-    (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num,
+    (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, kXdivyInputNum,
                                              prim_name);
     MS_EXCEPTION_IF_NULL(input_args[0]);
     MS_EXCEPTION_IF_NULL(input_args[1]);
