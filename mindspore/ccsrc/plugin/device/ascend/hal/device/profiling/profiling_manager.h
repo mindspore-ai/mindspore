@@ -66,7 +66,7 @@ class ProfilingManager {
   const struct MsprofCallback &GetMsprofCallback() const { return prof_cb_; }
   void SetMsprofCtrlCallback(MsprofCtrlCallback func) { prof_cb_.msprofCtrlCallback = func; }
   void SetMsprofReporterCallback(MsprofReporterCallback func) { prof_cb_.msprofReporterCallback = func; }
-  Status GetProfConf(const NotNull<MsprofGeOptions *> prof);
+  Status GetProfConf(const NotNull<MsprofGeOptions *> prof) const;
   Status ProfCommandHandle(ProfCommandHandleType type);
   Status ProfHandleInit();
   Status ProfHandleStart();

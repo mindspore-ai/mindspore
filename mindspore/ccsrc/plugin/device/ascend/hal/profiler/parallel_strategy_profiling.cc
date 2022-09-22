@@ -13,9 +13,7 @@
  * limitations under the License.
  */
 
-#include <vector>
 #include "sys/stat.h"
-
 #include "include/common/debug/dump_proto.h"
 #include "include/common/utils/parallel_context.h"
 #include "plugin/device/ascend/hal/profiler/options.h"

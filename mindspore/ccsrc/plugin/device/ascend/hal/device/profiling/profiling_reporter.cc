@@ -157,7 +157,7 @@ uint32_t ProfilingReporter::GetTaskId(const string &node_name) {
 void ProfilingReporter::ReportData(uint32_t device_id, unsigned char *data, size_t data_size,
                                    const string &tag_name) const {
   ReporterData report_data{};
-  report_data.deviceId = static_cast<uint32_t>(device_id);
+  report_data.deviceId = static_cast<int32_t>(device_id);
   report_data.data = data;
   report_data.dataLen = data_size;
   auto ret = memcpy_s(report_data.tag, MSPROF_ENGINE_MAX_TAG_LEN + 1, tag_name.c_str(), tag_name.length());
