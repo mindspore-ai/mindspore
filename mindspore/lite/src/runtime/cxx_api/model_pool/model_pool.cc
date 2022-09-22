@@ -834,6 +834,7 @@ Status ModelPool::CreateWorkers(char *graph_buf, size_t size, const ModelPoolCon
     }
   }
   // wait for all workers to be created successfully
+  MS_LOG(INFO) << "wait for all workers to be created successfully.";
   for (auto &item : all_model_workers_) {
     auto &workers = item.second;
     for (auto &worker : workers) {
@@ -844,6 +845,7 @@ Status ModelPool::CreateWorkers(char *graph_buf, size_t size, const ModelPoolCon
       }
     }
   }
+  MS_LOG(INFO) << "All models are initialized.";
   // init model pool input and output
   if (model_worker != nullptr) {
     auto inputs = model_worker->GetInputs();
@@ -1283,21 +1285,25 @@ Status ModelPool::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
 }
 
 ModelPool::~ModelPool() {
+  MS_LOG(INFO) << "free model pool.";
   std::unique_lock<std::shared_mutex> l(model_pool_mutex_);
   is_initialized_ = false;
   if (predict_task_queue_ != nullptr) {
     predict_task_queue_->SetPredictTaskDone();
   }
-  if (tasks_ != nullptr) {
-    delete[] tasks_;
-    tasks_ = nullptr;
-  }
+  MS_LOG(INFO) << "Wait for all threads to finish tasks.";
   for (auto &th : worker_thread_vec_) {
     if (th.joinable()) {
       th.join();
     }
   }
+  MS_LOG(INFO) << "delete model pool task.";
+  if (tasks_ != nullptr) {
+    delete[] tasks_;
+    tasks_ = nullptr;
+  }
   // free weight sharing related memory
+  MS_LOG(INFO) << "free pack weight model buf.";
   if (graph_buf_ != nullptr) {
     lite::PackWeightManager::GetInstance()->DeleteOriginModelBufInfo(graph_buf_);
     delete[] graph_buf_;
@@ -1305,5 +1311,6 @@ ModelPool::~ModelPool() {
   }
   lite::PackWeightManager::GetInstance()->FreePackWeight(model_bufs_);
   model_bufs_.clear();
+  MS_LOG(INFO) << "free model pool done.";
 }
 }  // namespace mindspore

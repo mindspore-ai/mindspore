@@ -233,6 +233,7 @@ void PackWeight::DeleteOriginModelBufInfo(const char *model_buf) {
 }
 
 void PackWeight::FreePackWeight(std::vector<char *> model_bufs, bool all) {
+  MS_LOG(INFO) << "free pack weight by other model buf.";
   std::lock_guard<std::mutex> lock(mtx_weight_);
   for (auto &item : buf_model_weight_) {
     auto model_buf = const_cast<char *>(item.first);
@@ -268,5 +269,9 @@ void PackWeight::FreePackWeight(std::vector<char *> model_bufs, bool all) {
   }
 }
 
-PackWeight::~PackWeight() { FreePackWeight({}, true); }
+PackWeight::~PackWeight() {
+  MS_LOG(INFO) << "free pack weight.";
+  FreePackWeight({}, true);
+  MS_LOG(INFO) << "free pack weight done.";
+}
 }  // namespace mindspore::lite
