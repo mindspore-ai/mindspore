@@ -30,8 +30,8 @@ struct DropOutput {
 
 template <typename T>
 struct DropoutNdFunctor {
-  T scale_;
-  T keep_prob_;
+  float scale_;
+  float keep_prob_;
   uint inner_size_;
   explicit DropoutNdFunctor(float scale, float keep_prob, uint inner_size)
       : scale_(scale), keep_prob_(keep_prob), inner_size_(inner_size) {}
