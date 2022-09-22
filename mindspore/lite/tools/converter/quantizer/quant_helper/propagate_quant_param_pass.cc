@@ -211,23 +211,16 @@ int PropagateQuantParamPass::BackwardPropagate(const std::list<CNodePtr> &nodes)
         MS_LOG(INFO) << cnode->fullname_with_scope() << " find depend failed.";
         continue;
       }
-      if (depend_iter->second.backwards.size() == 1) {
+      auto depend_nodes = depend_iter->second;
+      if (depend_nodes.backwards.size() == 1) {
         auto post_cnode = depend_iter->second.backwards.at(0);
         if (BackwardPerNode(post_cnode, cnode, i) != RET_OK) {
           MS_LOG(INFO) << cnode->fullname_with_scope() << " backward propagate failed, index: " << i;
           continue;
         }
-      } else if (depend_iter->second.backwards.size() > 1) {
-        if (cnode->isa<abstract::AbstractTuple>() && cnode->cast<abstract::AbstractTuplePtr>()->size() > 1) {
-          // Single output, multiple references
-          for (auto &post_cnode : depend_iter->second.backwards) {
-            if (BackwardPerNode(post_cnode, cnode, i) != RET_OK) {
-              MS_LOG(INFO) << cnode->fullname_with_scope() << " backward propagate failed, index: " << i;
-              continue;
-            }
-          }
-        } else {
-          MS_LOG(DEBUG) << "Dont support multi output.";
+      } else if (depend_nodes.backwards.size() > 1) {
+        if (BackwardMultipleOutput(cnode, depend_nodes, i) != RET_OK) {
+          continue;
         }
       }
     }
@@ -237,6 +230,22 @@ int PropagateQuantParamPass::BackwardPropagate(const std::list<CNodePtr> &nodes)
       MS_LOG(ERROR) << cnode->fullname_with_scope() << " propagate self failed.";
       return ret;
     }
+  }
+  return RET_OK;
+}
+
+int PropagateQuantParamPass::BackwardMultipleOutput(const CNodePtr &cnode, const DependNodes &depend_nodes,
+                                                    size_t index) {
+  if (cnode->isa<abstract::AbstractTuple>() && cnode->cast<abstract::AbstractTuplePtr>()->size() > 1) {
+    // Single output, multiple references
+    for (auto &post_cnode : depend_nodes.backwards) {
+      if (BackwardPerNode(post_cnode, cnode, index) != RET_OK) {
+        MS_LOG(INFO) << cnode->fullname_with_scope() << " backward propagate failed, index: " << index;
+        return RET_ERROR;
+      }
+    }
+  } else {
+    MS_LOG(DEBUG) << "Don't support multi output.";
   }
   return RET_OK;
 }

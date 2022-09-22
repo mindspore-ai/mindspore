@@ -47,7 +47,6 @@ class QuantNodePass {
   int DoParameterNodeQuant(const CNodePtr &cnode, const ParameterPtr &input_node, size_t input_index);
   int DoValueNodeQuant(const CNodePtr &cnode, const ValueNodePtr &input_node, size_t input_index);
   int IsSupportWeightQuant(const CNodePtr &cnode, const AnfNodePtr &input_node, size_t input_index);
-  bool CanTensorQuantized(const CNodePtr &cnode, const AnfNodePtr &input_node);
 
  private:
   FuncGraphPtr func_graph_ = nullptr;

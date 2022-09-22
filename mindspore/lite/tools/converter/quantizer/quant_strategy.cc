@@ -26,59 +26,6 @@
 #include "ops/op_utils.h"
 
 namespace mindspore::lite::quant {
-bool QuantStrategy::CanTensorQuantized(const CNodePtr &cnode, const AnfNodePtr &input_node, int preferred_dim) {
-  if (input_node == nullptr) {
-    MS_LOG(INFO) << "CanTensorQuantized input is nullptr!";
-    return false;
-  }
-  ParameterPtr param_node = nullptr;
-  if (input_node->isa<Parameter>()) {
-    param_node = input_node->cast<ParameterPtr>();
-  }
-  if (param_node == nullptr) {
-    MS_LOG(INFO) << "CanTensorQuantized invalid param_node!";
-    return false;
-  }
-  if (!param_node->has_default()) {
-    MS_LOG(INFO) << "param_node don't has default.";
-    return false;
-  }
-  auto abstract_base = param_node->abstract();
-  if (abstract_base == nullptr) {
-    MS_LOG(INFO) << "abstract is nullptr";
-    return false;
-  }
-  if (!utils::isa<abstract::ShapePtr>(abstract_base->GetShapeTrack())) {
-    MS_LOG(INFO) << "Shape of Abstract of parameter should be ShapePtr " << param_node->name();
-    return false;
-  }
-  auto weight_shape = utils::cast<abstract::ShapePtr>(abstract_base->GetShapeTrack())->shape();
-  MS_ASSERT(weight_shape != nullptr);
-  if (weight_shape.size() < DIMENSION_2D) {  // do not quant single dim tensors
-    return false;
-  }
-  int total_shape_size = 1;
-  auto ret = GetElementNumFromShape(ConvertShapeVectorToInt32(weight_shape), &total_shape_size);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Get element num from shape failed.";
-    return ret;
-  }
-  if (total_shape_size < 0 || static_cast<size_t>(total_shape_size) <= min_quant_weight_size_) {
-    MS_LOG(INFO) << "shape_size " << total_shape_size << " less min_quant_weight_size_ " << min_quant_weight_size_;
-    return false;
-  }
-
-  static const std::set<PrimitivePtr> check_channel_ops = {prim::kPrimConv2DFusion, prim::kPrimConv2dTransposeFusion};
-
-  if (CheckNodeInSet(cnode, check_channel_ops) && weight_shape.size() >= DIMENSION_2D &&
-      weight_shape[preferred_dim] <= static_cast<int>(min_quant_weight_channel_)) {
-    MS_LOG(INFO) << "preferred_dim shape:" << weight_shape[preferred_dim] << " less min_quant_weight_channel_ "
-                 << min_quant_weight_channel_;
-    return false;
-  }
-  return true;
-}
-
 bool QuantStrategy::CanOpFullQuantized(const CNodePtr &cnode, const std::set<PrimitivePtr> &support_int8_ops,
                                        const std::set<PrimitivePtr> &skip_check_dtype_ops,
                                        const std::set<mindspore::ActivationType> &support_activation) {

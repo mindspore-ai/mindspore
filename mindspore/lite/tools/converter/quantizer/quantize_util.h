@@ -119,5 +119,10 @@ int GetElementNumFromShape(const std::vector<int> &dims, int *total_size);
 int GetBucketAllIndex(const std::vector<int> &dims, int preferred_dim,
                       std::vector<std::vector<int>> *buckets_data_index);
 bool CheckControlFlowType(const AnfNodePtr &node);
+
+bool CanTensorWeightQuantized(const CNodePtr &cnode, const AnfNodePtr &input_node, ShapeVector *weight_shape);
+
+bool CanTensorWeightQuantized(const CNodePtr &cnode, const AnfNodePtr &input_node, int preferred_dim,
+                              int min_quant_weight_size, int min_quant_weight_channel);
 }  // namespace mindspore::lite::quant
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANTIZE_UTIL_H_
