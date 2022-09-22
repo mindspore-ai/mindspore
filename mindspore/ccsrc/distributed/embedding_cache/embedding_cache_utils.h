@@ -43,6 +43,18 @@ static constexpr size_t kMaxIdsPerThread = 10000;
 
 using mindspore::kernel::Address;
 
+// The type of embedding tables.
+enum ParamType { kUnKnown = 0, kWeight = 1, kAccumulation = 2 };
+
+// The initialization information for embedding tables.
+struct ParamInitInfo {
+  std::string param_name_;
+  ParamType param_type_{kUnKnown};
+  size_t global_seed_{0};
+  size_t op_seed_{0};
+  float init_val_{0};
+};
+
 // The hash tables records information such as the dimension, memory address, and cache size of the embedding table
 // with the embedding cache enabled.
 struct HashTableInfo {
@@ -52,6 +64,7 @@ struct HashTableInfo {
   size_t vocab_size{0};
   Address device_address{nullptr, 0};
   std::shared_ptr<float> host_address{nullptr};
+  ParamInitInfo param_init_info_;
   int32_t param_key_{-1};
 };
 
@@ -88,6 +101,7 @@ struct EmbeddingHostCache {
     host_to_server_ids = std::make_unique<int[]>(batch_ids_num);
     server_to_host_index = std::make_unique<int[]>(batch_ids_num);
     server_to_host_ids = std::make_unique<int[]>(batch_ids_num);
+    new_id_index = std::make_unique<int[]>(batch_ids_num);
     host_to_device_index = std::make_unique<int[]>(batch_ids_num);
     device_to_host_index = std::make_unique<int[]>(batch_ids_num);
     host_hash_map_ = std::make_shared<EmbeddingHashMap>(0, host_cache_vocab_size);
@@ -97,6 +111,7 @@ struct EmbeddingHostCache {
   std::unique_ptr<int[]> host_to_server_ids;
   std::unique_ptr<int[]> server_to_host_index;
   std::unique_ptr<int[]> server_to_host_ids;
+  std::unique_ptr<int[]> new_id_index;
   std::unique_ptr<int[]> host_to_device_index;
   std::unique_ptr<int[]> device_to_host_index;
   std::shared_ptr<EmbeddingHashMap> host_hash_map_;
@@ -109,6 +124,7 @@ struct EmbeddingCacheStatisticsInfo {
   size_t host_to_device_size_{0};
   size_t host_to_server_size_{0};
   size_t server_to_host_size_{0};
+  size_t new_id_size_{0};
   size_t hash_hit_count_{0};
   size_t mem_cache_swap_out_size_{0};
   size_t mem_cache_swap_in_size_{0};
@@ -169,6 +185,9 @@ class BACKEND_EXPORT EmbeddingCacheTableManager {
   // the parameter.
   void ReInsertHashTableSize(const std::string &new_param_name, const std::string &cur_param_name,
                              size_t cache_vocab_size, size_t embedding_size);
+
+  // Insert the initial value for the accumulation value of embedding's optimizer.
+  void InsertAccumuInitInfo(const std::string &param_name, float init_val);
 
   // Clone a hash table, such as the optimizer's state parameters are generally cloned from weight.
   void CloneHashTable(const std::string &dest_param_name, int32_t dest_param_key, const std::string &src_param_name,

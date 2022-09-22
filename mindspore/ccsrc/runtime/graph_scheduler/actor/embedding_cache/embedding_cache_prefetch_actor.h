@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_RUNTIME_GRAPH_SCHEDULER_ACTOR_EMBEDDING_CACHE_EMBEDDING_CACHE_PREFETCH_ACTOR_H_
 
 #include <map>
+#include <set>
 #include <memory>
 #include <string>
 #include <vector>
@@ -149,6 +150,9 @@ class EmbeddingCachePrefetchActor : public ActorBase {
   bool PullCacheFromRemoteToLocalHost(const HashTableInfo &hash_info);
   // Pull missing embeddings on device cache from local host.
   bool PullCacheFromLocalHostToDevice(const HashTableInfo &hash_info);
+
+  // Initialize local cache values using the random number generator.
+  bool InitLocalCacheForNewIds(const HashTableInfo &hash_info);
 
   // Insert weights into the local host embedding cache.
   bool InsertLocalHostCache(size_t embedding_size, size_t insert_indices_size, const int *insert_indices,
@@ -346,6 +350,9 @@ class EmbeddingCachePrefetchActor : public ActorBase {
 
   // The random number generator is used to initialize the embedding values when needed.
   std::unique_ptr<distributed::RandomGenerator<DataType, Generator, Distribution>> rnd_gen_;
+
+  // The feature ids that have been initialized already.
+  std::set<int> initialized_ids_;
 };
 
 // RpcOperator is used to do rpc with other processes in distributed execution.

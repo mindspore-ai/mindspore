@@ -703,10 +703,6 @@ bool EmbeddingCachePrefetchActor::ParseHostDataHostToDevice(int id) {
   } else {
     int *host_to_server_index = embedding_host_cache_->host_to_server_index.get();
     int *host_to_server_ids = embedding_host_cache_->host_to_server_ids.get();
-    int *server_to_host_index = embedding_host_cache_->server_to_host_index.get();
-    int *server_to_host_ids = embedding_host_cache_->server_to_host_ids.get();
-    MS_ERROR_IF_NULL(server_to_host_index);
-    MS_ERROR_IF_NULL(server_to_host_ids);
     while (true) {
       // Calculate the mapping of id to index.
       auto index =
@@ -717,8 +713,22 @@ bool EmbeddingCachePrefetchActor::ParseHostDataHostToDevice(int id) {
         continue;
       }
       host_to_device_index[statistics_info_.host_to_device_size_ - 1] = index;
-      server_to_host_index[statistics_info_.server_to_host_size_] = index;
-      server_to_host_ids[statistics_info_.server_to_host_size_++] = id;
+
+      // This feature id has never been seen before, so it's value is initialized using the local random generator.
+      if (initialized_ids_.find(id) == initialized_ids_.end()) {
+        int *new_id_index = embedding_host_cache_->new_id_index.get();
+        MS_ERROR_IF_NULL(new_id_index);
+        new_id_index[statistics_info_.new_id_size_] = index;
+        initialized_ids_.insert(id);
+        // This feature id has been initialized already, so it's latest value has been kept in the remote server.
+      } else {
+        int *server_to_host_index = embedding_host_cache_->server_to_host_index.get();
+        int *server_to_host_ids = embedding_host_cache_->server_to_host_ids.get();
+        MS_ERROR_IF_NULL(server_to_host_index);
+        MS_ERROR_IF_NULL(server_to_host_ids);
+        server_to_host_index[statistics_info_.server_to_host_size_] = index;
+        server_to_host_ids[statistics_info_.server_to_host_size_++] = id;
+      }
       break;
     }
   }
@@ -874,6 +884,8 @@ bool EmbeddingCachePrefetchActor::UpdateCache() {
     auto hash_info = item.second;
     RETURN_IF_FALSE_WITH_LOG(PushCacheFromLocalHostToRemote(hash_info), "Push cache from local host to remote failed.");
     RETURN_IF_FALSE_WITH_LOG(PushCacheFromDeviceToLocalHost(hash_info), "Push cache from device to local host failed.");
+    RETURN_IF_FALSE_WITH_LOG(InitLocalCacheForNewIds(hash_info),
+                             "Initialize the local cache values using random generator.");
     RETURN_IF_FALSE_WITH_LOG(PullCacheFromRemoteToLocalHost(hash_info), "Pull cache from remote to local host failed.");
     RETURN_IF_FALSE_WITH_LOG(PullCacheFromLocalHostToDevice(hash_info), "Pull cache from local host to device failed.");
   }
@@ -1017,6 +1029,43 @@ bool EmbeddingCachePrefetchActor::PullCacheFromLocalHostToDevice(const HashTable
   MS_ERROR_IF_NULL(device_context_);
   MS_ERROR_IF_NULL(device_context_->device_res_manager_);
   RETURN_IF_FALSE_WITH_LOG(device_context_->device_res_manager_->SyncStream(stream_id_), "Synchronize stream failed.");
+  return true;
+}
+
+bool EmbeddingCachePrefetchActor::InitLocalCacheForNewIds(const HashTableInfo &hash_info) {
+  auto new_id_size = statistics_info_.new_id_size_;
+  if (new_id_size == 0) {
+    return true;
+  }
+
+  MS_ERROR_IF_NULL(embedding_host_cache_);
+  auto new_id_index = embedding_host_cache_->new_id_index.get();
+  MS_ERROR_IF_NULL(new_id_index);
+
+  // Compute the feature values size needed to be initialized.
+  auto embedding_size = hash_info.embedding_size;
+  auto total_size = new_id_size * embedding_size;
+  std::vector<float> init_result(total_size, 0);
+
+  // Initialize accumulate values with the configured constant value.
+  if (hash_info.param_init_info_.param_type_ == distributed::ParamType::kAccumulation) {
+    auto init_value = hash_info.param_init_info_.init_val_;
+    for (size_t i = 0; i < total_size; ++i) {
+      init_result[i] = init_value;
+    }
+  } else {
+    // Initialize embedding values from local random generator for feature ids that have never been seen before.
+    for (size_t i = 0; i < total_size; ++i) {
+      init_result[i] = rnd_gen_->Next();
+    }
+  }
+
+  // Insert initialized feature values into the local hash cache.
+  auto host_hash_table_addr = reinterpret_cast<float *>(hash_info.host_address.get());
+  MS_ERROR_IF_NULL(host_hash_table_addr);
+  RETURN_IF_FALSE_WITH_LOG(InsertLocalHostCache(embedding_size, IntToSize(new_id_size), new_id_index,
+                                                init_result.data(), host_hash_table_addr),
+                           "Insert local host cache failed.");
   return true;
 }
 
