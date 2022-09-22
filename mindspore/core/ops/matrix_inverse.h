@@ -29,11 +29,12 @@ class MIND_API MatrixInverse : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(MatrixInverse);
   MatrixInverse() : BaseOperator(kNameMatrixInverse) { InitIOName({"x"}, {"y"}); }
-};
 
-abstract::AbstractBasePtr MatrixInverseInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                             const std::vector<abstract::AbstractBasePtr> &input_args);
-using PrimMatrixInversePtr = std::shared_ptr<MatrixInverse>;
+  void Init(const bool adjoint = false);
+
+  void set_adjoint(const bool adjoint);
+  bool get_adjoint() const;
+};
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_MATRIX_INVERSE_H_

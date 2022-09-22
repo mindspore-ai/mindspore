@@ -15,9 +15,11 @@
  */
 
 #include "plugin/device/cpu/kernel/matrix_inverse_cpu_kernel.h"
+#include <map>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "Eigen/Core"
 #include "Eigen/LU"
+#include "mindspore/core/ops/matrix_inverse.h"
 
 namespace mindspore {
 namespace kernel {
@@ -29,19 +31,22 @@ static constexpr int kNumber2 = 2;
 constexpr size_t kParallelDataNums = 1 * 1024;
 }  // namespace
 
-void MatrixInverseCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  node_wpt_ = kernel_node;
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+bool MatrixInverseCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                     const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->name();
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::MatrixInverse>(base_operator);
+  if (!kernel_ptr) {
+    MS_LOG(ERROR) << "cast " << kernel_name_ << "  ops failed!";
+    return false;
+  }
+  dtype_ = inputs[kIndex0]->GetDtype();
+  adjoint_ = kernel_ptr->get_adjoint();
+  return true;
 }
 
 bool MatrixInverseCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                        const std::vector<kernel::AddressPtr> & /* workspace */,
                                        const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputSize, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputSize, kernel_name_);
-
   if (dtype_ == kNumberTypeFloat32) {
     LaunchMatrixInverse<float>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat64) {
@@ -56,43 +61,50 @@ bool MatrixInverseCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &in
   return true;
 }
 
+int MatrixInverseCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                      const std::vector<KernelTensorPtr> &outputs,
+                                      const std::map<uint32_t, tensor::TensorPtr> &) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputSize, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputSize, kernel_name_);
+  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  // Judge whether the input shape matches
+  input_shape_ = inputs[kIndex0]->GetShapeVector();
+  if (input_shape_.size() < kNumber2) {
+    MS_LOG(EXCEPTION) << "Input x must be at least rank 2.";
+  }
+  if (input_shape_[input_shape_.size() - kNumber1] != input_shape_[input_shape_.size() - kNumber2]) {
+    MS_LOG(EXCEPTION) << "The last two dimensions of Input x must be equal.";
+  }
+  return KRET_OK;
+}
+
 template <typename T>
 void MatrixInverseCpuKernelMod::LaunchMatrixInverse(const std::vector<AddressPtr> &inputs,
                                                     const std::vector<AddressPtr> &outputs) {
-  auto node_ = node_wpt_.lock();
-  if (!node_) {
-    MS_LOG(EXCEPTION) << "node_wpt_ is expired.";
-  }
   T *input_ptr = reinterpret_cast<T *>(inputs[0]->addr);
   MS_EXCEPTION_IF_NULL(input_ptr);
   T *output_ptr = reinterpret_cast<T *>(outputs[0]->addr);
   MS_EXCEPTION_IF_NULL(output_ptr);
-  // Judge whether the input shape matches
-  auto shape = Convert2SizeT(common::AnfAlgo::GetPrevNodeOutputInferShape(node_, 0));
-  if (shape.size() < kNumber2) {
-    MS_LOG(EXCEPTION) << "Input x must be at least rank 2.";
-  }
-  if (shape[shape.size() - kNumber1] != shape[shape.size() - kNumber2]) {
-    MS_LOG(EXCEPTION) << "The last two dimensions of Input x must be equal.";
-  }
-  auto last_dimsize = shape[shape.size() - 1];
+
+  auto last_dimsize = LongToSize(input_shape_[input_shape_.size() - 1]);
   // Output length
   size_t input_num = 1;
-  for (size_t i = 0; i < shape.size(); i++) {
-    input_num *= shape[i];
+  for (size_t i = 0; i < input_shape_.size(); i++) {
+    input_num *= input_shape_[i];
   }
-  size_t matrix_size = last_dimsize * last_dimsize;
+  auto matrix_size = last_dimsize * last_dimsize;
   // Number of matrices
-  size_t matrix_num = input_num / matrix_size;
+  auto matrix_num = input_num / matrix_size;
   // Store two-dimensional array of data for slicing
+
   std::vector<std::vector<T>> temp(matrix_num, std::vector<T>(matrix_size));
   for (size_t i = 0; i < matrix_num; i++) {
     for (size_t j = 0; j < matrix_size; j++) {
       temp[i][j] = *(input_ptr + i * matrix_size + j);
     }
   }
-  // Gets the value of the property adjoint
-  adjoint_ = common::AnfAlgo::GetNodeAttr<bool>(node_, "adjoint");
   auto one_size = sizeof(*input_ptr);
 
   if ((one_size * input_num) <= kParallelDataNums) {

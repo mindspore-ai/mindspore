@@ -19,17 +19,20 @@
 
 #include <vector>
 #include <string>
+#include <map>
+#include <unordered_map>
+#include <utility>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
-#include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
+#include "plugin/factory/ms_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/loss_with_reduction_impl.cuh"
 #include "kernel/common_utils.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace kernel {
-template <typename T, typename S>
-class NLLLossGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class NLLLossGpuKernelMod : public NativeGpuKernelMod {
  public:
-  NLLLossGpuKernelMod() { ResetResource(); }
+  NLLLossGpuKernelMod() = default;
   ~NLLLossGpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
@@ -37,87 +40,43 @@ class NLLLossGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     if (is_null_input_) {
       return true;
     }
-    T *input_device = GetDeviceAddress<T>(inputs, 0);
-    int32_t *target_device = GetDeviceAddress<int32_t>(inputs, 1);  // nll_loss only supports int32 target
-    S *weight_device = GetDeviceAddress<S>(inputs, 2);
-
-    T *loss_device = GetDeviceAddress<T>(outputs, 0);
-    S *total_weight_device = GetDeviceAddress<S>(outputs, 1);
-
-    T *tmp_loss_device = reduction_ != ReductionMode::kNone ? GetDeviceAddress<T>(workspace, 0)
-                                                            : GetPossiblyNullDeviceAddress<T>(workspace, 0);
-
-    S *tmp_target_weight_device = GetDeviceAddress<S>(workspace, 1);
-
-    NLLLoss(n_, c_, reduction_, input_device, target_device, weight_device, loss_device, total_weight_device,
-            tmp_loss_device, tmp_target_weight_device, reinterpret_cast<cudaStream_t>(stream_ptr));
-    return true;
+    MS_EXCEPTION_IF_NULL(kernel_func_);
+    return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
   }
 
-  bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    kernel_node_ = kernel_node;
-    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "logits");
-    if (is_null_input_) {
-      InitSizeLists();
-      return true;
-    }
-    if (input_shape.size() < 2) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of logits cannot be less than 2, but "
-                        << "got the " << input_shape.size();
-    }
-    n_ = LongToInt(input_shape[0]);
-    c_ = LongToInt(input_shape[1]);
-    input_size_ *= SizeOf(input_shape);
-    string reduction = GetAttr<string>(kernel_node, "reduction");
-    reduction_ = kReductionModeMap[reduction];
-    if ((reduction_ == ReductionMode::kSum) || (reduction_ == ReductionMode::kMean)) {
-      tmp_loss_size_ = sizeof(T) * n_;
-    }
-    tmp_target_weight_size_ = n_ * sizeof(S);
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
 
-    InitSizeLists();
-    return true;
-  }
-
-  void ResetResource() noexcept override {
-    input_size_ = 1;
-    n_ = 0;
-    c_ = 0;
-    is_null_input_ = false;
-    reduction_ = ReductionMode::kMean;  // default value
-    tmp_loss_size_ = 0;
-    tmp_target_weight_size_ = 0;  // tmp_target_weight (N,) array
-    input_size_list_.clear();
-    output_size_list_.clear();
-    workspace_size_list_.clear();
-  }
+  int Resize(
+    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+    const std::vector<KernelTensorPtr> &outputs,
+    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
 
  protected:
-  void InitSizeLists() override {
-    input_size_list_.push_back(input_size_ * sizeof(T));  // input tensor with shape (N, C)
-    input_size_list_.push_back(n_ * sizeof(int32_t));     // target tensor with shape (N)
-    input_size_list_.push_back(c_ * sizeof(S));           // weight tensor with shape (C)
-
-    if (reduction_ == ReductionMode::kNone) {
-      output_size_list_.push_back(n_ * sizeof(T));  // loss output of shape (N,)
-    } else {
-      output_size_list_.push_back(sizeof(T));  // scalar loss output
-    }
-    output_size_list_.push_back(sizeof(S));  // total weight
-    workspace_size_list_.push_back(tmp_loss_size_);
-    workspace_size_list_.push_back(tmp_target_weight_size_);
-  }
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
+  void InitSizeLists();
+  template <typename T, typename S>
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
+
+  using NLLLossLaunchFunc =
+    std::function<bool(NLLLossGpuKernelMod *, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
+                       const std::vector<AddressPtr> &, void *)>;
+  static std::vector<std::pair<KernelAttr, NLLLossLaunchFunc>> func_list_;
+  NLLLossLaunchFunc kernel_func_;
+
+  bool is_null_input_;
   size_t input_size_;
   ReductionMode reduction_;
+  size_t logits_data_size_;
+  size_t weight_data_size_;
   size_t tmp_loss_size_;
   size_t tmp_target_weight_size_;
   int n_;
   int c_;
-  bool is_null_input_;
+  string kernel_name_;
 };
 }  // namespace kernel
 }  // namespace mindspore
