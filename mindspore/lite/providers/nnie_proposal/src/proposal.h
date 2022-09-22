@@ -85,10 +85,8 @@ typedef struct {
   int32_t max_;
 } Stack;
 
-int32_t ProposalInit(ProposalParam *param, const std::vector<mindspore::MSTensor> &inputs, uint32_t max_roi_num,
-                     uint32_t ori_image_height, uint32_t ori_image_width);
-int32_t ProposalRun(std::vector<mindspore::MSTensor> *inputs, std::vector<mindspore::MSTensor> *outputs,
-                    ProposalParam *param);
+int32_t ProposalInit(ProposalParam *param, uint32_t max_roi_num, uint32_t ori_image_height, uint32_t ori_image_width);
+int32_t ProposalRun(ProposalParam *param);
 void ProposalDeInit(ProposalParam *param);
 }  // namespace proposal
 }  // namespace mindspore

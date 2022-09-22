@@ -26,7 +26,6 @@ using mindspore::lite::RET_OK;
 namespace mindspore {
 namespace proposal {
 constexpr int kNumInput2 = 2;
-constexpr int kNCHWDims = 4;
 constexpr int kScoreSizeIndex = 2;
 constexpr int kKeyConfidenceIndex = 4;
 constexpr int kPredWeightIndex = 2;
@@ -544,8 +543,7 @@ static void Rpn(float **inputs, uint32_t num_ratio_anchors, uint32_t num_scale_a
   *num_rois = roi_count;
 }
 
-int32_t ProposalInit(ProposalParam *param, const std::vector<mindspore::MSTensor> &inputs, uint32_t max_roi_num,
-                     uint32_t ori_image_height, uint32_t ori_image_width) {
+int32_t ProposalInit(ProposalParam *param, uint32_t max_roi_num, uint32_t ori_image_height, uint32_t ori_image_width) {
   uint32_t tmp_buf_size = 0;
   uint32_t bbox_buf_size = 0;
   uint32_t total_size = 0;
@@ -577,25 +575,6 @@ int32_t ProposalInit(ProposalParam *param, const std::vector<mindspore::MSTensor
   param->rpn_bounding_box_.width_ = COORDI_NUM;
   param->rpn_bounding_box_.stride_ = COORDI_NUM * sizeof(float);
   param->rpn_bounding_box_.num_ = 1;
-  if (inputs.size() < kNumInput2) {
-    LOGE("inputs tensor size error.");
-    return RET_ERROR;
-  }
-
-  for (int i = 0; i < kNumInput2; i++) {
-    auto input_data_type = inputs[i].DataType();
-    if (input_data_type == DataType::kNumberTypeFloat32) {
-      auto ptr_shape = inputs[i].Shape();
-      if ((ptr_shape.size() == kNCHWDims)) {
-        param->inputs_height_[i] = ptr_shape[2];
-        param->inputs_width_[i] = ptr_shape[3];
-        param->inputs_channel_[i] = ptr_shape[1];
-        if (i == 0) {
-          param->inputs_stride_ = ptr_shape[3] * sizeof(float);
-        }
-      }
-    }
-  }
 
   tmp_buf_size = RpnTmpBufSize(param->num_ratio_anchors_, param->num_scale_anchors_, param->inputs_height_[0],
                                param->inputs_width_[0]);
@@ -617,40 +596,19 @@ int32_t ProposalInit(ProposalParam *param, const std::vector<mindspore::MSTensor
   return RET_OK;
 }
 
-int32_t ProposalRun(std::vector<mindspore::MSTensor> *inputs, std::vector<mindspore::MSTensor> *outputs,
-                    ProposalParam *param) {
-  if (inputs->size() < kNumInput2) {
-    LOGE("inputs tensor size error.");
-    return RET_ERROR;
-  }
-  if (outputs->size() != 1) {
-    LOGE("outputs tensor size error.");
-    return RET_ERROR;
-  }
+int32_t ProposalRun(ProposalParam *param) {
   for (int i = 0; i < kNumInput2; i++) {
-    auto input_data_type = inputs->at(i).DataType();
-    if (input_data_type == DataType::kNumberTypeFloat32) {
-      param->inputs_[i] = reinterpret_cast<float *>((*inputs)[i].MutableData());
+    if (param->inputs_[i] == nullptr) {
+      LOGE("inputs is nullptr.");
+      return RET_ERROR;
     }
   }
-  auto output_data_type = (*outputs)[0].DataType();
-  if (output_data_type != DataType::kNumberTypeFloat32) {
-    LOGE("outputs tensor data type error.");
-    return RET_ERROR;
-  }
-
   Rpn(param->inputs_, param->num_ratio_anchors_, param->num_scale_anchors_, param->scales_, param->ratios_,
       param->ori_image_height_, param->ori_image_width_, param->inputs_height_, param->inputs_width_,
       param->inputs_channel_, param->inputs_stride_, param->max_roi_num_, param->min_size_, param->spatial_scale_,
       param->nms_thresh_, param->filter_thresh_, param->num_before_nms_, reinterpret_cast<char *>(param->rpn_tmp_buf_),
       reinterpret_cast<float *>(param->rpn_bounding_box_.data_), param->rpn_bounding_box_.stride_,
       &param->rpn_bounding_box_.height_);
-
-  std::vector<int64_t> shape{static_cast<int64_t>(param->rpn_bounding_box_.height_), COORDI_NUM};
-  (*outputs)[0].SetShape(shape);
-  auto output_data = (*outputs)[0].MutableData();
-  memcpy(output_data, param->rpn_bounding_box_.data_, param->rpn_bounding_box_.height_ * COORDI_NUM * sizeof(float));
-
   return RET_OK;
 }
 

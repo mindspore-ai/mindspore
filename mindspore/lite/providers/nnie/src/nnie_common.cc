@@ -356,7 +356,7 @@ static int NnieParamInit(NnieCfg *nnie_cfg, NnieParam *nnie_param) {
   return RET_OK;
 }
 
-static int NnieLoadModel(char *model_buf, int size, NnieModel *nnie_model) {
+int NnieLoadModel(char *model_buf, int size, NnieModel *nnie_model) {
   HI_S32 ret = HI_INVALID_VALUE;
   HI_U64 phy_addr = 0;
   HI_U8 *vir_addr = nullptr;
@@ -622,14 +622,9 @@ HI_U32 GetBlobSize(const SVP_SRC_BLOB_S &blob) {
   }
 }
 
-static int NnieFillSrcData(NnieCfg *nnie_cfg, NnieParam *nnie_param, NnieDataIndex *input_data_idx, int64_t *shape,
-                           int size) {
+static int NnieFillSrcData(NnieCfg *nnie_cfg, NnieParam *nnie_param, NnieDataIndex *input_data_idx, HI_U32 input_size) {
   HI_U32 i, ret;
-  HI_U32 input_size = 1;
   SVP_SRC_BLOB_S *blob = &nnie_param->seg_data_[input_data_idx->seg_idx_].src_[input_data_idx->node_idx_];
-  for (i = 0; i < (HI_U32)size; i++) {
-    input_size *= shape[i];
-  }
 
   if (SVP_BLOB_TYPE_SEQ_S32 == blob->enType) {
     return NnieFillSrcDataSeq(nnie_cfg, blob, input_size);
@@ -715,13 +710,8 @@ static int NnieGetDstDataSEQ(SVP_SRC_BLOB_S *blob, HI_U32 input_num, NnieDataInd
   }
   return RET_OK;
 }
-static int NnieGetDstData(NnieCfg *nnie_cfg, NnieParam *nnie_param, NnieDataIndex *input_data_idx, int64_t *shape,
-                          int size) {
+static int NnieGetDstData(NnieCfg *nnie_cfg, NnieParam *nnie_param, NnieDataIndex *input_data_idx, HI_U32 input_num) {
   SVP_SRC_BLOB_S *blob = &nnie_param->seg_data_[input_data_idx->seg_idx_ - 1].dst_[input_data_idx->node_idx_];
-  HI_U32 input_num = 1;
-  for (HI_U32 i = 0; i < (HI_U32)size; i++) {
-    input_num *= shape[i];
-  }
   if (SVP_BLOB_TYPE_U8 <= blob->enType && SVP_BLOB_TYPE_YVU422SP >= blob->enType) {
     LOGE("Nnie output type error");
     return RET_ERROR;
@@ -825,47 +815,7 @@ int CheckMsShapeN(NnieRunCfg *nnie_run_cfg, const std::vector<int64_t> &input_sh
   return RET_OK;
 }
 
-size_t GetFillIndex(const std::vector<mindspore::MSTensor> &inputs, size_t input_size, const HI_CHAR *name) {
-  size_t j;
-  for (j = 0; j < input_size; j++) {
-    auto input_str = inputs[j].Name();
-    if (input_str.length() > 4) {
-      if (input_str.substr(input_str.length() - 4) == "_pre") {
-        input_str = input_str.substr(0, input_str.length() - 4);
-      } else if (input_str.length() > 5) {
-        if (input_str.substr(input_str.length() - 5) == "_post") {
-          input_str = input_str.substr(0, input_str.length() - 5);
-        }
-      }
-    }
-
-    if (strcmp(input_str.c_str(), name) == 0) {
-      break;
-    }
-  }
-  if (j == input_size) {
-    for (j = 0; j < input_size; j++) {
-      auto input_str = inputs[j].Name();
-      if (input_str.length() > 4) {
-        if (input_str.substr(input_str.length() - 4) == "_pre") {
-          input_str = input_str.substr(0, input_str.length() - 4);
-        } else if (input_str.length() > 5) {
-          if (input_str.substr(input_str.length() - 5) == "_post") {
-            input_str = input_str.substr(0, input_str.length() - 5);
-          }
-        }
-      }
-
-      if (strncmp(input_str.c_str(), name, input_str.length()) == 0) {
-        break;
-      }
-    }
-  }
-  return j;
-}
-
-int NnieCommCreate(NnieRunCfg *nnie_run_cfg, char *model_buf, int size,
-                   const std::vector<mindspore::MSTensor> &inputs) {
+int NnieCommCreate(NnieRunCfg *nnie_run_cfg, const std::vector<int64_t> &input_shape) {
   HI_U8 *vir_addr = nullptr;
   HI_U32 seg_num;
   HI_U32 off_set;
@@ -877,27 +827,12 @@ int NnieCommCreate(NnieRunCfg *nnie_run_cfg, char *model_buf, int size,
   NnieCfg *cfg = &nnie_run_cfg->cfg_;
   HI_U32 step = cfg->step_;  // time step
 
-  ret = NnieLoadModel(model_buf, size, model);
-  if (ret != RET_OK) {
-    LOGE("NnieLoadModel failed!");
-    return RET_ERROR;
-  }
-  if (inputs.size() <= 1) {
-    LOGE("inputs size need greater than 1!");
-    return RET_ERROR;
-  }
-  if (inputs[0].Shape().size() <= 1) {
+  if (input_shape.size() <= 1) {
     LOGE("input shape size need greater than 1!");
     return RET_ERROR;
   }
 
-  j = GetFillIndex(inputs, inputs.size() - 1, model->model_.astSeg[0].astSrcNode[0].szName);
-  if (j == (inputs.size() - 1)) {
-    j = 0;
-    LOGI("input tensor name(%s) can't match wk node name(%s).", inputs[0].Name().c_str(),
-         model->model_.astSeg[0].astSrcNode[0].szName);
-  }
-  if (CheckMsShapeN(nnie_run_cfg, inputs[j].Shape(), model->model_.astSeg[0].astSrcNode[0]) != RET_OK) {
+  if (CheckMsShapeN(nnie_run_cfg, input_shape, model->model_.astSeg[0].astSrcNode[0]) != RET_OK) {
     return RET_ERROR;
   }
 
@@ -964,7 +899,7 @@ void NnieCommDelete(NnieParam *pstNnieParamm, NnieModel *nnie_model) {
   NnieUnloadModel(nnie_model);
 }
 
-int NnieCommGetOutputData(NnieRunCfg *nnie_run_cfg, float *data, int64_t *shape, int size, int tensor_index) {
+int NnieCommGetOutputData(NnieRunCfg *nnie_run_cfg, float *data, HI_U32 output_size, int tensor_index) {
   if (nnie_run_cfg->run_idx_.seg_idx_ <= 0) {
     LOGE("output seg index error.");
     return RET_ERROR;
@@ -974,7 +909,7 @@ int NnieCommGetOutputData(NnieRunCfg *nnie_run_cfg, float *data, int64_t *shape,
 
   nnie_run_cfg->run_idx_.node_idx_ = id;
   nnie_run_cfg->cfg_.data_ptr_ = data;
-  ret = NnieGetDstData(&nnie_run_cfg->cfg_, &nnie_run_cfg->param_, &nnie_run_cfg->run_idx_, shape, size);
+  ret = NnieGetDstData(&nnie_run_cfg->cfg_, &nnie_run_cfg->param_, &nnie_run_cfg->run_idx_, output_size);
   if (ret != RET_OK) {
     LOGE("NnieGetDstData failed!");
     return RET_ERROR;
@@ -982,8 +917,7 @@ int NnieCommGetOutputData(NnieRunCfg *nnie_run_cfg, float *data, int64_t *shape,
   return RET_OK;
 }
 
-int NnieCommFillData(NnieRunCfg *nnie_run_cfg, void *data, mindspore::DataType dtype, int64_t *shape, int size,
-                     int tensor_index) {
+int NnieCommFillData(NnieRunCfg *nnie_run_cfg, void *data, HI_U32 input_size, int tensor_index) {
   HI_U32 ret = 0;
   int id = tensor_index;
   HI_U32 seg_idx = nnie_run_cfg->run_idx_.seg_idx_;
@@ -992,21 +926,9 @@ int NnieCommFillData(NnieRunCfg *nnie_run_cfg, void *data, mindspore::DataType d
     LOGE("Nnie input node index error!");
     return RET_ERROR;
   }
-  SVP_BLOB_TYPE_E src_type = nnie_run_cfg->param_.seg_data_[seg_idx].src_[id].enType;
-  if (SVP_BLOB_TYPE_U8 <= src_type && src_type <= SVP_BLOB_TYPE_YVU422SP) {
-    if (!(dtype == DataType::kNumberTypeUInt8 || dtype == DataType::kNumberTypeInt8)) {
-      LOGE("Nnie input node type error!");
-      return RET_ERROR;
-    }
-  } else {
-    if (dtype != DataType::kNumberTypeFloat32) {
-      LOGE("Nnie input node type error!");
-      return RET_ERROR;
-    }
-  }
   nnie_run_cfg->run_idx_.node_idx_ = id;
   nnie_run_cfg->cfg_.data_ptr_ = data;
-  ret = NnieFillSrcData(&nnie_run_cfg->cfg_, &nnie_run_cfg->param_, &nnie_run_cfg->run_idx_, shape, size);
+  ret = NnieFillSrcData(&nnie_run_cfg->cfg_, &nnie_run_cfg->param_, &nnie_run_cfg->run_idx_, input_size);
   if (ret != RET_OK) {
     LOGE("NnieFillSrcData failed!");
     return RET_ERROR;
