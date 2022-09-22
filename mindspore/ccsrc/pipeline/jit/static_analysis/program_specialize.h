@@ -92,7 +92,7 @@ class ProgramSpecializer {
       iter->second.first = false;
       return;
     }
-    func_graph_to_abstract_map_.emplace(before_specialized_fg, std::make_pair(true, specialized_abs));
+    (void)func_graph_to_abstract_map_.emplace(before_specialized_fg, std::make_pair(true, specialized_abs));
   }
 
   AbstractFunctionPtr GetUniqueFuncGraphAbstract(const FuncGraphPtr &before_specialized_fg) {

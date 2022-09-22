@@ -415,6 +415,15 @@ AbstractBasePtr FromValue(const T &value, bool broaden = false) {
 }
 EvaluatorPtr GetPrimEvaluator(const PrimitivePtr &prim, const AnalysisEnginePtr &engine);
 EvalResultPtr EvalOnePrim(const PrimitivePtr &primitive, const AbstractBasePtrList &arg_specs);
+
+EvalResultPtr ObtainEvalResultFromCache(const AnfNodeConfigPtr &conf);
+// If the config of CNode(funcgraph/metafuncgraph) can be found in the cache, evaluation of the config of that CNode
+// is not required, but the use flags of arguments should be synchronized as if the flags will be set when the
+// evaluation is executed.
+void SynchronizeSequenceElementsUseFlagsForFuncGraphArgs(const AnalysisEnginePtr &engine, const FuncGraphPtr &fg,
+                                                         const CNodePtr &cnode,
+                                                         const AbstractFunctionPtr &base_func_graph_func,
+                                                         const AnalysisContextPtr &fg_context);
 }  // namespace abstract
 }  // namespace mindspore
 

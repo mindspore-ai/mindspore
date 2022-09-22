@@ -147,6 +147,31 @@ StackFramePtr StackFrame::Jump(const AnalysisEnginePtr &engine) {
 
   // It's FuncGraph Call or MetaFuncGraph Call. `maybe_func` is definitely a AbstractFunction.
   AnfNodeConfigPtr call_node_conf = engine->MakeConfig(cnode, current_context_, current_context_->func_graph());
+  MS_EXCEPTION_IF_NULL(call_node_conf);
+  // Note: Because of kFuncGraphFlagUndetermined flag, call to the same funcgraph with same arguments may not
+  // be idempotent as those arguments may be broadened in the second call, so just do the jump when necessary.
+  auto fg_evaluator = dyn_cast_ptr<BaseFuncGraphEvaluator>(evaluator());
+  if (fg_evaluator == nullptr) {
+    MS_LOG(EXCEPTION) << "Evaluator should be a BaseGraphEvaluator, but got " << evaluator()->ToString();
+  }
+  if (!fg_evaluator->always_eval_flag()) {
+    MS_LOG(DEBUG) << "Check if CNode had been evaluated, cnode: " << cnode->DebugString();
+    const auto &node_eval_result = ObtainEvalResultFromCache(call_node_conf);
+    if (node_eval_result != nullptr) {
+      const auto &abstract = node_eval_result->abstract();
+      MS_EXCEPTION_IF_NULL(abstract);
+      MS_LOG(DEBUG) << "No need to jump as found result from cache for node_config: " << call_node_conf->ToString()
+                    << ", result: " << abstract->ToString();
+
+      static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") != "0");
+      if (enable_eliminate_unused_element) {
+        const auto &abs_func_graph = maybe_func->cast<AbstractFunctionPtr>();
+        SynchronizeSequenceElementsUseFlagsForFuncGraphArgs(engine, current_context_->func_graph(), cnode,
+                                                            abs_func_graph, current_context_);
+      }
+      return nullptr;
+    }
+  }
   // Enter the call CNode.
   trace::TraceEvalCNodeEnter(call_node_conf);
   auto res = DoJump(engine, cnode, dyn_cast<AbstractFunction>(maybe_func));
