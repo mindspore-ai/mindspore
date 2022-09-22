@@ -338,7 +338,7 @@ void GkUtils::UpdateFuncGraphManager(const FuncGraphManagerPtr &mng, const FuncG
 }
 
 PrimitivePtr GkUtils::GetOpsPrim(const std::string &name) {
-  auto op_primc_fns = ops::OpPrimCRegister::GetInstance().GetPrimCMap();
+  const auto &op_primc_fns = ops::OpPrimCRegister::GetInstance().GetPrimCMap();
   auto const iter = op_primc_fns.find(name);
   if (iter == op_primc_fns.end()) {
     return nullptr;

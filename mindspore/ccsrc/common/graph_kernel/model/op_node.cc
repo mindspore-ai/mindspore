@@ -106,7 +106,7 @@ void PrimOp::SetAbastractsFromAttrs(const PrimitivePtr &primitive, const mindspo
 
 std::pair<PrimitivePtr, AbstractBasePtrList> PrimOp::GenPrimAndAbstract(const NodePtrList &inputs,
                                                                         const DAttrs &attrs) const {
-  auto op_primc_fns = ops::OpPrimCRegister::GetInstance().GetPrimCMap();
+  const auto &op_primc_fns = ops::OpPrimCRegister::GetInstance().GetPrimCMap();
   const auto iter = op_primc_fns.find(op_);
   if (iter == op_primc_fns.end()) {
     MS_LOG(EXCEPTION) << "The PrimitiveC of [" << op_ << "] is not defined.";
@@ -330,7 +330,7 @@ NodePtr PrimOp::InferValue(const NodePtrList &inputs, const DAttrs &attrs) {
       return nullptr;
   }
   if (res == nullptr) {
-    auto op_primc_fns = ops::OpPrimCRegister::GetInstance().GetPrimCMap();
+    const auto &op_primc_fns = ops::OpPrimCRegister::GetInstance().GetPrimCMap();
     const auto iter = op_primc_fns.find(op_);
     if (iter == op_primc_fns.end()) {
       return nullptr;
