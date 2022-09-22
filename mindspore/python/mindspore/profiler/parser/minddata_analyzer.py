@@ -66,60 +66,6 @@ class MinddataProfilingAnalyzer:
         """
         return self._save_path
 
-    def analyze(self):
-        """
-        Analyze the MindData profiling files, produce summary pipeline information, including potential
-        bottleneck operator in the MindData pipeline, and save the result to disk.
-
-        Returns:
-            dict, Analyzed MindData pipeline summary information, which is also written to disk in
-               JSON file 'minddata_pipeline_summary_<device_id>.json' and
-               CSV file 'minddata_pipeline_summary_<device_id>.csv'.
-
-        Raises:
-            ProfilerRawFileException: If fails to find a MindData profiling file or a file is empty.
-        """
-
-        # Open the MindData pipeline file
-        with open(self._pipeline_path_filename, 'r') as pipeline_file:
-            try:
-                pipeline_info = json.load(pipeline_file)
-            except (json.JSONDecodeError, TypeError) as path_filename_error:
-                logger.warning(path_filename_error)
-                raise ProfilerRawFileException(
-                    'Failed to find the MindData pipeline profiling file.') from path_filename_error
-        if not pipeline_info:
-            logger.warning('The MindData pipeline file <%s> is empty.', self._pipeline_path_filename)
-            raise ProfilerRawFileException('The MindData pipeline file is empty.')
-
-        # Open the CPU utilization file
-        with open(self._cpu_utilization_path_filename, 'r') as cpu_util_file:
-            try:
-                cpu_util_info = json.load(cpu_util_file)
-            except (json.JSONDecodeError, TypeError) as path_filename_error:
-                logger.warning(path_filename_error)
-                raise ProfilerRawFileException(
-                    'Failed to find the MindData CPU utilization file.') from path_filename_error
-        if not cpu_util_info:
-            logger.warning('The MindData CPU utilization file <%s> is empty.', self._cpu_utilization_path_filename)
-            raise ProfilerRawFileException('The MindData CPU utilization file is empty.')
-
-        # Open the device queue or dataset iterator trace profiling file
-        with open(self._device_trace_path_filename, 'r') as device_trace_file:
-            try:
-                device_trace_info = device_trace_file.readlines()
-            except (TypeError) as path_filename_error:
-                logger.warning(path_filename_error)
-                raise ProfilerRawFileException(
-                    'Failed to find the MindData trace profiling file.') from path_filename_error
-        if not device_trace_info:
-            logger.warning('The MindData trace profiling file <%s> is empty.', self._device_trace_path_filename)
-            raise ProfilerRawFileException('The MindData trace profiling file is empty.')
-
-        # Analyze the MindData profiling file information and save the result
-        summary_dict = self._analyze_and_save(pipeline_info, cpu_util_info, device_trace_info)
-        return summary_dict
-
     @staticmethod
     def _validate_directory(dir_name, dir_type):
         """
@@ -139,128 +85,6 @@ class MinddataProfilingAnalyzer:
             logger.warning('<%s> <%s> not found.', dir_type, validated_dir)
             raise ProfilerDirNotFoundException(validated_dir)
         return validated_dir
-
-    def _get_pipeline_path_filename(self, source_dir):
-        """
-        Get the MindData pipeline full path filename.
-        The filename is 'pipeline_profiling_<device_id>.json'.
-
-        Args:
-            source_dir (str): The source directory for MindData profiling files.
-
-        Returns:
-            str, the MindData pipeline full path filename.
-        """
-
-        pipeline_profiling_templatename = 'pipeline_profiling_{}.json'
-        pipeline_path_filename = os.path.join(
-            source_dir,
-            pipeline_profiling_templatename.format(self._device_id))
-
-        try:
-            pipeline_path_filename = validate_and_normalize_path(pipeline_path_filename)
-        except RuntimeError as path_filename_error:
-            logger.warning('The MindData pipeline path %s is invalid.', pipeline_path_filename)
-            raise ProfilerPathErrorException('The MindData pipeline path is invalid.') from path_filename_error
-
-        if not os.path.isfile(pipeline_path_filename):
-            logger.warning('The MindData pipeline file <%s> is not found.', pipeline_path_filename)
-            raise ProfilerFileNotFoundException(pipeline_path_filename)
-
-        return pipeline_path_filename
-
-    def _get_cpu_utilization_path_filename(self, source_dir):
-        """
-        Get the MindData CPU utilization full path filename.
-        The filename is 'minddata_cpu_utilization_<device_id>.json'.
-
-        Args:
-            source_dir (str): The source directory for MindData profiling files.
-
-        Returns:
-            str, the MindData CPU utilization full path filename.
-        """
-        cpu_utilization_templatename = 'minddata_cpu_utilization_{}.json'
-        cpu_utilization_path_filename = os.path.join(
-            source_dir,
-            cpu_utilization_templatename.format(self._device_id))
-
-        try:
-            cpu_utilization_path_filename = validate_and_normalize_path(cpu_utilization_path_filename)
-        except RuntimeError as path_filename_error:
-            logger.warning('The MindData CPU utilization path <%s> is invalid.', cpu_utilization_path_filename)
-            raise ProfilerPathErrorException('The MindData CPU utilization path is invalid.') from path_filename_error
-
-        if not os.path.isfile(cpu_utilization_path_filename):
-            logger.warning('The MindData CPU utilization file <%s> is not found.', cpu_utilization_path_filename)
-            raise ProfilerFileNotFoundException(cpu_utilization_path_filename)
-
-        return cpu_utilization_path_filename
-
-    def _get_device_trace_path_filename(self, source_dir):
-        """
-        Get the MindData device trace profiling full path filename.
-        File search order:
-        1) 'device_queue_profiling_<device_id>.txt' and then
-        2) 'dataset_iterator_profiling_<device_id>.txt'.
-
-        Args:
-            source_dir (str): The source directory for MindData profiling files.
-
-        Returns:
-            str, the MindData device trace profiling full path filename.
-            bool, flag which indicates if 'device_queue_profiling_<device_id>.txt' has been found or not
-        """
-        # Initialize variable for MindData device trace profiling filename
-        device_trace_path_filename = ''
-        # Initialize flag that 'device_queue_profiling_<device_id>.txt' has not yet been found
-        device_queue_file_found = False
-
-        txt_names = [os.path.join(
-            source_dir,
-            txt_name.format(self._device_id)) for txt_name in
-                     ('device_queue_profiling_{}.txt', 'dataset_iterator_profiling_{}.txt')]
-
-        # Search for a device trace profiling file
-        if os.path.exists(txt_names[0]):
-            device_trace_path_filename = txt_names[0]
-            device_queue_file_found = True
-        elif os.path.exists(txt_names[1]):
-            device_trace_path_filename = txt_names[1]
-        else:
-            logger.warning('A MindData device trace profiling file <%s> nor <%s> cannot be found.',
-                           txt_names[0], txt_names[1])
-            raise ProfilerPathErrorException('A MindData device trace profiling file cannot be found.')
-
-        if not os.path.isfile(device_trace_path_filename):
-            logger.warning('The MindData device trace profiling file <%s> is not found.', device_trace_path_filename)
-            raise ProfilerFileNotFoundException(device_trace_path_filename)
-
-        return device_trace_path_filename, device_queue_file_found
-
-    def _get_save_path(self, output_path):
-        """
-        Get the full pathname for the output file to save MindData pipeline summary analyzed information.
-        The output filename is 'minddata_pipeline_summary_<device_id>.json'.
-
-        Args:
-            output_path (str): The output directory.
-
-        Returns:
-            str, the save path.
-        """
-        try:
-            output_dir = validate_and_normalize_path(output_path)
-        except RuntimeError as path_error:
-            logger.warning('Output path <%s> is invalid.', output_path)
-            raise ProfilerPathErrorException('Output path is invalid.') from path_error
-
-        if not os.path.isdir(output_dir):
-            logger.warning('The output directory <%s> not found.', output_dir)
-            raise ProfilerDirNotFoundException(output_dir)
-
-        summary_templatename = 'minddata_pipeline_summary_{}.json'
-        return os.path.join(output_dir, summary_templatename.format(self._device_id))
 
     @staticmethod
     def _parse_pipeline_metrics_info(metrics):
@@ -296,97 +120,6 @@ class MinddataProfilingAnalyzer:
                     empty_count += 1
             queue_empty_freq_pct = round(100 * empty_count / len(queue_size), 2) if queue_size else -1
         return [queue_size, queue_length, queue_average_size, queue_utilization_pct, queue_empty_freq_pct]
-
-    def _parse_pipeline_info(self, pipeline_info):
-        """
-        Parse and process the pipeline profiling information.
-
-        Args:
-            pipeline_info (dict): The pipeline profiling information.
-
-        Returns:
-            Dictionary with analyzed summary output information
-            For the following key-value pairs, each value is a list ordered by increasing op id
-                pipeline_ops: operator name and operator id, a string, with example format Batch(id=0)
-                op_names: operator name, a string
-                op_ids: operator id, an integer
-                num_workers: number of workers for the op, an integer
-                queue_average_size: average queue size for the op, a float
-                queue_utilization_pct: average percentage of time queue is used for op, a float from 0.00 to 1.00
-                queue_empty_freq_pct: percentage of time queue is empty for op, a float from 0.00 to 1.00
-                children_ids: children op ids of op; list if empty [] if op has no children
-                parent_id: parent id of op
-
-        Raises:
-            ProfilerRawFileException: If the format of the input is wrong.
-        """
-        # Perform sanity checks for pipeline information
-        pipeline_op_info = pipeline_info.get('op_info')
-        for item in pipeline_op_info:
-            if not item:
-                raise ProfilerRawFileException('The contents of MindData pipeline JSON file is wrong.')
-
-        # Parse and process pipeline information
-        # Obtain the following for each op (and build a list), ordered by increasing op id
-        # - op id (handy for user output)
-        # - op name (needed for basic processing)
-        # - op name with op id (handy for user output)
-        # - num_workers
-        # - various queue information
-        # - children op ids
-        # - parent op id
-        dict_opid_pipeline_ops = {}
-        dict_opid_opname = {}
-        dict_opid_numworkers = {}
-        dict_opid_queue_info = {}
-        dict_opid_children_ids = {}
-        dict_opid_parent_id = {}
-        # Note: Will process the input pipeline ops in "reversed" order since typically they are ordered
-        #       from largest op id (usually leaf/source op) to smallest op id (usually root).
-        #       However, since there may be non-linear pipelines, the processed op info needs to be sorted
-        #       before final output is produced and saved.
-        for op_info in reversed(pipeline_info['op_info']):
-            op_id = op_info.get('op_id')
-            op_name = op_info.get('op_type')[0:-2]
-            dict_opid_pipeline_ops[op_id] = '{}(id={})'.format(op_name, str(op_id))
-            dict_opid_opname[op_id] = op_name
-            dict_opid_numworkers[op_id] = op_info.get('num_workers')
-
-            # Obtain the output queue metrics information for the current op
-            dict_opid_queue_info[op_id] = self._parse_pipeline_metrics_info(op_info.get('metrics'))
-
-            # For current op, initialize parent_id=-1, in case after processing all children in pipeline,
-            # it is determined that current op has no parent
-            if dict_opid_parent_id.get(op_id) is None:
-                dict_opid_parent_id[op_id] = -1
-
-            children_ids = op_info.get('children')
-            if children_ids:
-                # Set children op ids for current op
-                dict_opid_children_ids[op_id] = children_ids
-                # For each child op, set parent op to be current op
-                for child_op_id in children_ids:
-                    dict_opid_parent_id[child_op_id] = op_id
-            else:
-                dict_opid_children_ids[op_id] = []
-
-        # Build resultant dictionary
-        return_dict = {}
-
-        return_dict['pipeline_ops'] = [x[1] for x in sorted(dict_opid_pipeline_ops.items())]
-        return_dict['op_names'] = [x[1] for x in sorted(dict_opid_opname.items())]
-        return_dict['op_ids'] = sorted(dict_opid_opname.keys())
-        return_dict['num_workers'] = [x[1] for x in sorted(dict_opid_numworkers.items())]
-
-        queue_info_items = [x[1] for x in sorted(dict_opid_queue_info.items())]
-        return_dict['queue_average_size'] = [y[2] for y in queue_info_items]
-        return_dict['queue_utilization_pct'] = [y[3] for y in queue_info_items]
-        return_dict['queue_empty_freq_pct'] = [y[4] for y in queue_info_items]
-
-        return_dict['children_ids'] = [x[1] for x in sorted(dict_opid_children_ids.items())]
-        return_dict['parent_id'] = [x[1] for x in sorted(dict_opid_parent_id.items())]
-
-        return return_dict
 
     @staticmethod
     def _parse_cpu_util_info(cpu_util_info):
@@ -484,6 +217,271 @@ class MinddataProfilingAnalyzer:
             return_dict = bottleneck_analyzer.analyze()
         except IndexError:
             return_dict = {}
+
+        return return_dict
+
+    def analyze(self):
+        """
+        Analyze the MindData profiling files, produce summary pipeline information, including potential
+        bottleneck operator in the MindData pipeline, and save the result to disk.
+
+        Returns:
+            dict, Analyzed MindData pipeline summary information, which is also written to disk in
+               JSON file 'minddata_pipeline_summary_<device_id>.json' and
+               CSV file 'minddata_pipeline_summary_<device_id>.csv'.
+
+        Raises:
+            ProfilerRawFileException: If fails to find a MindData profiling file or a file is empty.
+        """
+
+        # Open the MindData pipeline file
+        with open(self._pipeline_path_filename, 'r') as pipeline_file:
+            try:
+                pipeline_info = json.load(pipeline_file)
+            except (json.JSONDecodeError, TypeError) as path_filename_error:
+                logger.warning(path_filename_error)
+                raise ProfilerRawFileException(
+                    'Failed to find the MindData pipeline profiling file.') from path_filename_error
+        if not pipeline_info:
+            logger.warning('The MindData pipeline file <%s> is empty.', self._pipeline_path_filename)
+            raise ProfilerRawFileException('The MindData pipeline file is empty.')
+
+        # Open the CPU utilization file
+        with open(self._cpu_utilization_path_filename, 'r') as cpu_util_file:
+            try:
+                cpu_util_info = json.load(cpu_util_file)
+            except (json.JSONDecodeError, TypeError) as path_filename_error:
+                logger.warning(path_filename_error)
+                raise ProfilerRawFileException(
+                    'Failed to find the MindData CPU utilization file.') from path_filename_error
+        if not cpu_util_info:
+            logger.warning('The MindData CPU utilization file <%s> is empty.', self._cpu_utilization_path_filename)
+            raise ProfilerRawFileException('The MindData CPU utilization file is empty.')
+
+        # Open the device queue or dataset iterator trace profiling file
+        with open(self._device_trace_path_filename, 'r') as device_trace_file:
+            try:
+                device_trace_info = device_trace_file.readlines()
+            except (TypeError) as path_filename_error:
+                logger.warning(path_filename_error)
+                raise ProfilerRawFileException(
+                    'Failed to find the MindData trace profiling file.') from path_filename_error
+        if not device_trace_info:
+            logger.warning('The MindData trace profiling file <%s> is empty.', self._device_trace_path_filename)
+            raise ProfilerRawFileException('The MindData trace profiling file is empty.')
+
+        # Analyze the MindData profiling file information and save the result
+        summary_dict = self._analyze_and_save(pipeline_info, cpu_util_info, device_trace_info)
+        return summary_dict
+
+    def _get_pipeline_path_filename(self, source_dir):
+        """
+        Get the MindData pipeline full path filename.
+        The filename is 'pipeline_profiling_<device_id>.json'.
+
+        Args:
+            source_dir (str): The source directory for MindData profiling files.
+
+        Returns:
+            str, the MindData pipeline full path filename.
+        """
+
+        pipeline_profiling_templatename = 'pipeline_profiling_{}.json'
+        pipeline_path_filename = os.path.join(
+            source_dir,
+            pipeline_profiling_templatename.format(self._device_id))
+
+        try:
+            pipeline_path_filename = validate_and_normalize_path(pipeline_path_filename)
+        except RuntimeError as path_filename_error:
+            logger.warning('The MindData pipeline path %s is invalid.', pipeline_path_filename)
+            raise ProfilerPathErrorException('The MindData pipeline path is invalid.') from path_filename_error
+
+        if not os.path.isfile(pipeline_path_filename):
+            logger.warning('The MindData pipeline file <%s> is not found.', pipeline_path_filename)
+            raise ProfilerFileNotFoundException(pipeline_path_filename)
+
+        return pipeline_path_filename
+
+    def _get_cpu_utilization_path_filename(self, source_dir):
+        """
+        Get the MindData CPU utilization full path filename.
+        The filename is 'minddata_cpu_utilization_<device_id>.json'.
+
+        Args:
+            source_dir (str): The source directory for MindData profiling files.
+
+        Returns:
+            str, the MindData CPU utilization full path filename.
+        """
+        cpu_utilization_templatename = 'minddata_cpu_utilization_{}.json'
+        cpu_utilization_path_filename = os.path.join(
+            source_dir,
+            cpu_utilization_templatename.format(self._device_id))
+
+        try:
+            cpu_utilization_path_filename = validate_and_normalize_path(cpu_utilization_path_filename)
+        except RuntimeError as path_filename_error:
+            logger.warning('The MindData CPU utilization path <%s> is invalid.', cpu_utilization_path_filename)
+            raise ProfilerPathErrorException('The MindData CPU utilization path is invalid.') from path_filename_error
+
+        if not os.path.isfile(cpu_utilization_path_filename):
+            logger.warning('The MindData CPU utilization file <%s> is not found.', cpu_utilization_path_filename)
+            raise ProfilerFileNotFoundException(cpu_utilization_path_filename)
+
+        return cpu_utilization_path_filename
+
+    def _get_device_trace_path_filename(self, source_dir):
+        """
+        Get the MindData device trace profiling full path filename.
+        File search order:
+        1) 'device_queue_profiling_<device_id>.txt' and then
+        2) 'dataset_iterator_profiling_<device_id>.txt'.
+
+        Args:
+            source_dir (str): The source directory for MindData profiling files.
+
+        Returns:
+            str, the MindData device trace profiling full path filename.
+            bool, flag which indicates if 'device_queue_profiling_<device_id>.txt' has been found or not
+        """
+        # Initialize variable for MindData device trace profiling filename
+        device_trace_path_filename = ''
+        # Initialize flag that 'device_queue_profiling_<device_id>.txt' has not yet been found
+        device_queue_file_found = False
+
+        txt_names = [os.path.join(source_dir, txt_name.format(self._device_id))
+                     for txt_name in ('device_queue_profiling_{}.txt', 'dataset_iterator_profiling_{}.txt')]
+
+        # Search for a device trace profiling file
+        if os.path.exists(txt_names[0]):
+            device_trace_path_filename = txt_names[0]
+            device_queue_file_found = True
+        elif os.path.exists(txt_names[1]):
+            device_trace_path_filename = txt_names[1]
+        else:
+            logger.warning('A MindData device trace profiling file <%s> nor <%s> cannot be found.',
+                           txt_names[0], txt_names[1])
+            raise ProfilerPathErrorException('A MindData device trace profiling file cannot be found.')
+
+        if not os.path.isfile(device_trace_path_filename):
+            logger.warning('The MindData device trace profiling file <%s> is not found.', device_trace_path_filename)
+            raise ProfilerFileNotFoundException(device_trace_path_filename)
+
+        return device_trace_path_filename, device_queue_file_found
+
+    def _get_save_path(self, output_path):
+        """
+        Get the full pathname for the output file to save MindData pipeline summary analyzed information.
+        The output filename is 'minddata_pipeline_summary_<device_id>.json'.
+
+        Args:
+            output_path (str): The output directory.
+
+        Returns:
+            str, the save path.
+        """
+        try:
+            output_dir = validate_and_normalize_path(output_path)
+        except RuntimeError as path_error:
+            logger.warning('Output path <%s> is invalid.', output_path)
+            raise ProfilerPathErrorException('Output path is invalid.') from path_error
+
+        if not os.path.isdir(output_dir):
+            logger.warning('The output directory <%s> not found.', output_dir)
+            raise ProfilerDirNotFoundException(output_dir)
+
+        summary_templatename = 'minddata_pipeline_summary_{}.json'
+        return os.path.join(output_dir, summary_templatename.format(self._device_id))
+
+    def _parse_pipeline_info(self, pipeline_info):
+        """
+        Parse and process the pipeline profiling information.
+
+        Args:
+            pipeline_info (dict): The pipeline profiling information.
+
+        Returns:
+            Dictionary with analyzed summary output information
+            For the following key-value pairs, each value is a list ordered by increasing op id
+                pipeline_ops: operator name and operator id, a string, with example format Batch(id=0)
+                op_names: operator name, a string
+                op_ids: operator id, an integer
+                num_workers: number of workers for the op, an integer
+                queue_average_size: average queue size for the op, a float
+                queue_utilization_pct: average percentage of time queue is used for op, a float from 0.00 to 1.00
+                queue_empty_freq_pct: percentage of time queue is empty for op, a float from 0.00 to 1.00
+                children_ids: children op ids of op; list if empty [] if op has no children
+                parent_id: parent id of op
+
+        Raises:
+            ProfilerRawFileException: If the format of the input is wrong.
+        """
+        # Perform sanity checks for pipeline information
+        pipeline_op_info = pipeline_info.get('op_info')
+        for item in pipeline_op_info:
+            if not item:
+                raise ProfilerRawFileException('The contents of MindData pipeline JSON file is wrong.')
+
+        # Parse and process pipeline information
+        # Obtain the following for each op (and build a list), ordered by increasing op id
+        # - op id (handy for user output)
+        # - op name (needed for basic processing)
+        # - op name with op id (handy for user output)
+        # - num_workers
+        # - various queue information
+        # - children op ids
+        # - parent op id
+        dict_opid_pipeline_ops = {}
+        dict_opid_opname = {}
+        dict_opid_numworkers = {}
+        dict_opid_queue_info = {}
+        dict_opid_children_ids = {}
+        dict_opid_parent_id = {}
+        # Note: Will process the input pipeline ops in "reversed" order since typically they are ordered
+        #       from largest op id (usually leaf/source op) to smallest op id (usually root).
+        #       However, since there may be non-linear pipelines, the processed op info needs to be sorted
+        #       before final output is produced and saved.
+        for op_info in reversed(pipeline_info['op_info']):
+            op_id = op_info.get('op_id')
+            op_name = op_info.get('op_type')[0:-2]
+            dict_opid_pipeline_ops[op_id] = '{}(id={})'.format(op_name, str(op_id))
+            dict_opid_opname[op_id] = op_name
+            dict_opid_numworkers[op_id] = op_info.get('num_workers')
+
+            # Obtain the output queue metrics information for the current op
+            dict_opid_queue_info[op_id] = self._parse_pipeline_metrics_info(op_info.get('metrics'))
+
+            # For current op, initialize parent_id=-1, in case after processing all children in pipeline,
+            # it is determined that current op has no parent
+            if dict_opid_parent_id.get(op_id) is None:
+                dict_opid_parent_id[op_id] = -1
+
+            children_ids = op_info.get('children')
+            if children_ids:
+                # Set children op ids for current op
+                dict_opid_children_ids[op_id] = children_ids
+                # For each child op, set parent op to be current op
+                for child_op_id in children_ids:
+                    dict_opid_parent_id[child_op_id] = op_id
+            else:
+                dict_opid_children_ids[op_id] = []
+
+        # Build resultant dictionary
+        return_dict = {}
+
+        return_dict['pipeline_ops'] = [x[1] for x in sorted(dict_opid_pipeline_ops.items())]
+        return_dict['op_names'] = [x[1] for x in sorted(dict_opid_opname.items())]
+        return_dict['op_ids'] = sorted(dict_opid_opname.keys())
+        return_dict['num_workers'] = [x[1] for x in sorted(dict_opid_numworkers.items())]
+
+        queue_info_items = [x[1] for x in sorted(dict_opid_queue_info.items())]
+        return_dict['queue_average_size'] = [y[2] for y in queue_info_items]
+        return_dict['queue_utilization_pct'] = [y[3] for y in queue_info_items]
+        return_dict['queue_empty_freq_pct'] = [y[4] for y in queue_info_items]
+
+        return_dict['children_ids'] = [x[1] for x in sorted(dict_opid_children_ids.items())]
+        return_dict['parent_id'] = [x[1] for x in sorted(dict_opid_parent_id.items())]
 
         return return_dict
 
@@ -696,15 +694,6 @@ class BottleneckAnalyzer:
 
         return detailed_analysis
 
-    def __get_non_inline_child_recur(self, cur_op_id):
-        """get the child id of cur op which isn't an inline op"""
-        if cur_op_id == self.op_id_not_exist or not self.children_ids[cur_op_id]:
-            return self.op_id_not_exist
-        cur_child_id = self.children_ids[cur_op_id][0]
-        if self.queue_average_size[cur_child_id] != -1:
-            return cur_child_id
-        return self.__get_non_inline_child_recur(cur_child_id)
-
     def analyze_cpu_usage(self):
         """ analyze cpu usage of each op """
         cpu_usage_analysis = []
@@ -751,22 +740,20 @@ class BottleneckAnalyzer:
             elif self.op_names[op_id] == "DeviceQueue" and in_op_id != self.op_id_not_exist:
                 # if this is device_queue op,
                 if self.queue_empty_freq_pct[in_op_id] > self._DEVICEQUEUE_INPUT_QUEUE_EMPTY_FREQ_PCT_MAXIMUM:
-                    queue_usage_analysis.append((
-                        "{}'s input queue is empty {}% of the time. This might indicate dataset bottlenecks."
-                        " Hence host cannot keep up with the device {}% of the time."
-                        " Device waits whenever input queue is empty.").format(self.pipeline_ops[op_id],
-                                                                               self.queue_empty_freq_pct[in_op_id],
-                                                                               self.queue_empty_freq_pct[in_op_id]))
+                    queue_usage_analysis.append(
+                        f"{self.pipeline_ops[op_id]}'s input queue is empty {self.queue_empty_freq_pct[in_op_id]}% "
+                        f"of the time. This might indicate dataset bottlenecks. Hence host cannot keep up with "
+                        f"the device {self.queue_empty_freq_pct[in_op_id]}% of the time. "
+                        f"Device waits whenever input queue is empty.")
             elif in_op_id != self.op_id_not_exist and out_q != self.queue_usage_not_exist:
                 in_q = self.queue_utilization_pct[in_op_id]
                 if in_q != self.queue_usage_not_exist and in_q - out_q > self._IN_OUT_QUEUE_UTIL_PCT_DIFF_MAXIMUM:
-                    queue_usage_analysis.append((
-                        "{}'s input queue usage={}% is greater output queue usage={}%."
-                        " This indicates child op {} might be producing faster than its parent {} can consume."
-                        " If this op has low CPU utilization, try increasing "
-                        "prefetch_size or increasing num_workers.").format(self.pipeline_ops[op_id],
-                                                                           in_q, out_q, self.pipeline_ops[in_op_id],
-                                                                           self.pipeline_ops[op_id]))
+                    queue_usage_analysis.append(
+                        f"{self.pipeline_ops[op_id]}'s input queue usage={in_q}% is greater output queue "
+                        f"usage={out_q}%. This indicates child op {self.pipeline_ops[in_op_id]} "
+                        f"might be producing faster than its parent {self.pipeline_ops[op_id]} can consume. "
+                        f"If this op has low CPU utilization, try increasing "
+                        f"prefetch_size or increasing num_workers.")
         return queue_usage_analysis
 
     def analyze_bottleneck(self):
@@ -798,3 +785,12 @@ class BottleneckAnalyzer:
                     suggestion += " and abnormal queue usage. Try increasing prefetch_size."
 
         return [bottleneck], [suggestion]
+
+    def __get_non_inline_child_recur(self, cur_op_id):
+        """get the child id of cur op which isn't an inline op"""
+        if cur_op_id == self.op_id_not_exist or not self.children_ids[cur_op_id]:
+            return self.op_id_not_exist
+        cur_child_id = self.children_ids[cur_op_id][0]
+        if self.queue_average_size[cur_child_id] != -1:
+            return cur_child_id
+        return self.__get_non_inline_child_recur(cur_child_id)

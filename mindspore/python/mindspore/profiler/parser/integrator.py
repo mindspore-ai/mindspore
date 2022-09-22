@@ -60,6 +60,35 @@ class Integrator:
         self._column = ""
         self._result = []
 
+    @staticmethod
+    def _is_match_condition(exp_key, exp_value, actual_value):
+        """
+        Check whether the actual value meets the expect condition.
+
+        Args:
+            exp_key (str): Expect key of the condition.
+            exp_value (str): Expect value.
+            actual_value (str): Actual value.
+
+        Returns:
+            bool, `True` if the actual meets the expect condition, else `False`.
+        """
+        if exp_key == 'in':
+            if actual_value not in exp_value:
+                return False
+        elif exp_key == 'not_in':
+            if actual_value in exp_value:
+                return False
+        elif exp_key == 'partial_match_str_in':
+            for partial_match_str in exp_value:
+                if partial_match_str in actual_value:
+                    return True
+            return False
+        else:
+            return False
+
+        return True
+
     def integrate(self):
         """Integrate the parsed profiling files."""
         self._parse_aicore_detail_time()
@@ -456,35 +485,6 @@ class Integrator:
                     if not self._is_match_condition(
                             exp_key, exp_value, actual_value):
                         return False
-        return True
-
-    @staticmethod
-    def _is_match_condition(exp_key, exp_value, actual_value):
-        """
-        Check whether the actual value meets the expect condition.
-
-        Args:
-            exp_key (str): Expect key of the condition.
-            exp_value (str): Expect value.
-            actual_value (str): Actual value.
-
-        Returns:
-            bool, `True` if the actual meets the expect condition, else `False`.
-        """
-        if exp_key == 'in':
-            if actual_value not in exp_value:
-                return False
-        elif exp_key == 'not_in':
-            if actual_value in exp_value:
-                return False
-        elif exp_key == 'partial_match_str_in':
-            for partial_match_str in exp_value:
-                if partial_match_str in actual_value:
-                    return True
-            return False
-        else:
-            return False
-
         return True
 
     def _set_display_col_name(self, is_display_detail, is_display_full_op_name):

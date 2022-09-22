@@ -89,34 +89,6 @@ class BaseStepTraceParser:
         file_name = self._output_path.rsplit('/', 2)
         return file_name[-1] if len(file_name) == 3 else ''
 
-    def show(self):
-        """The property of step trace info."""
-        summary_info = {}
-        if self._result:
-            summary_info = get_summary_for_step_trace(self._result[-1], self._header, self._is_training_mode)
-            summary_info['total_steps'] = len(self._result) - 1
-        print('\nStep trace summary info (unit: syscnt):')
-        print(summary_info)
-        print('\nThe step trace parse result saves under ${summary_dir}/profiler/%s' % self.output_file)
-
-    def parse_and_save(self):
-        """Parse step trace files and save the result."""
-        self._parse()
-        self._save()
-        log.info("Finish to save intermediate result for step trace file.")
-
-    @abstractmethod
-    def record_point_info(self, output_path):
-        """
-        Record point info into json.
-
-        Args:
-            output_path (str): The output path for saving point info.
-
-        Returns:
-            dict, parsed point info.
-        """
-
     @staticmethod
     def _get_op_type(tag, name):
         """
@@ -144,9 +116,51 @@ class BaseStepTraceParser:
 
         return op_name
 
+    def show(self):
+        """The property of step trace info."""
+        summary_info = {}
+        if self._result:
+            summary_info = get_summary_for_step_trace(self._result[-1], self._header, self._is_training_mode)
+            summary_info['total_steps'] = len(self._result) - 1
+        log.info('\nStep trace summary info (unit: syscnt):')
+        log.info(summary_info)
+        log.info('\nThe step trace parse result saves under ${summary_dir}/profiler/%s' % self.output_file)
+
+    def parse_and_save(self):
+        """Parse step trace files and save the result."""
+        self._parse()
+        self._save()
+        log.info("Finish to save intermediate result for step trace file.")
+
+    @abstractmethod
+    def record_point_info(self, output_path):
+        """
+        Record point info into json.
+
+        Args:
+            output_path (str): The output path for saving point info.
+
+        Returns:
+            dict, parsed point info.
+        """
+
     @abstractmethod
     def _parse(self):
         """Parse source step trace files."""
+
+    @abstractmethod
+    def _get_single_reduce_event_info(self, field_name, start_point, end_point):
+        """
+        Get single reduce info.
+
+        Args:
+            field_name (str): The field name.
+            start_point (Tuple[int, int]): Start point time info, including (tag_id, sys_count).
+            end_point (Tuple[int, int]): End point time info, including (tag_id, sys_count).
+
+        Returns:
+            dict, reduce info.
+        """
 
     def _record_trace_event(self, step_trace):
         """Record trace event."""
@@ -196,20 +210,6 @@ class BaseStepTraceParser:
                     field_name, time_points[point_id], time_points[point_id + 1])
                 row_data.update(reduce_info)
 
-    @abstractmethod
-    def _get_single_reduce_event_info(self, field_name, start_point, end_point):
-        """
-        Get single reduce info.
-
-        Args:
-            field_name (str): The field name.
-            start_point (Tuple[int, int]): Start point time info, including (tag_id, sys_count).
-            end_point (Tuple[int, int]): End point time info, including (tag_id, sys_count).
-
-        Returns:
-            dict, reduce info.
-        """
-
     def _record_average_info(self):
         """Calculate average info."""
         result_size = len(self._result)
@@ -255,6 +255,7 @@ class BaseStepTraceParser:
 
 class GpuStepTraceParser(BaseStepTraceParser):
     """The parser for gpu step trace data."""
+
     def __init__(self, *args, **kwargs):
         super(GpuStepTraceParser, self).__init__(*args, **kwargs)
         self._source_file_path = self._input_dir
@@ -458,9 +459,52 @@ class GpuStepTraceParser(BaseStepTraceParser):
 
 class AscendStepTraceParser(BaseStepTraceParser):
     """The parser for ascend step trace data."""
+
     def __init__(self, *args, **kwargs):
         super(AscendStepTraceParser, self).__init__(*args, **kwargs)
         self._task_id_op_name_dict = {}
+
+    @staticmethod
+    def _list_ts_track_files(input_dir):
+        """Ts track files have 4 types data, this function will list all files."""
+        step_trace_paths = []
+        data_dir = os.path.join(input_dir, 'data')
+        data_dir = os.path.realpath(data_dir)
+        for file in Path(data_dir).glob(r'ts_track*[0-9]'):
+            step_trace_paths.append(file.resolve())
+        if not step_trace_paths:
+            raise ProfilerRawFileException(f"Can not find any ts track files in {data_dir} when parse profiler data.")
+        step_trace_paths.sort()
+        log.info("Profiler found %d ts track files.", len(step_trace_paths))
+        return step_trace_paths
+
+    @staticmethod
+    def _is_all_reduce_tag(tag):
+        return PointTag.MIN_ALL_REDUCE.value <= tag < PointTag.MAX_ALL_REDUCE.value
+
+    @staticmethod
+    def _list_ts_track_step_traces(ts_track_paths):
+        """List all ts track from ts track files."""
+        step_trace_size = StructType.sizeof(TS_TRACK_STEP_TRACE_STRUCT)
+        ts_tracks = []
+        for path in ts_track_paths:
+            try:
+                with open(path, 'rb') as fp:
+                    while True:
+                        binary_data = fp.read(step_trace_size)
+                        if len(binary_data) < step_trace_size:
+                            break
+                        unpacked_data = StructType.unpack_binary_data(TS_TRACK_STEP_TRACE_STRUCT, binary_data)
+                        if unpacked_data.get('rptType') != STEP_TRACE_RPT_TYPE:
+                            continue
+                        ts_tracks.append(unpacked_data)
+            except (IOError, OSError) as err:
+                log.critical("Can not parse profiler file, open file %s failed, detail: %s.", path, str(err))
+                raise ProfilerIOException() from err
+            finally:
+                pass
+        log.info("Profiler found %d ts track step trace data.", len(ts_tracks))
+        return ts_tracks
 
     def set_task_id_op_name_dict(self, task_id_op_name_dict):
         """The operator task id matches the operator name."""
@@ -506,20 +550,6 @@ class AscendStepTraceParser(BaseStepTraceParser):
         self._save_step_trace_to_result(ts_tracks, self._skip_first_step)
         self._record_average_info()
         log.info("Finish to parse step trace file.")
-
-    @staticmethod
-    def _list_ts_track_files(input_dir):
-        """Ts track files have 4 types data, this function will list all files."""
-        step_trace_paths = []
-        data_dir = os.path.join(input_dir, 'data')
-        data_dir = os.path.realpath(data_dir)
-        for file in Path(data_dir).glob(r'ts_track*[0-9]'):
-            step_trace_paths.append(file.resolve())
-        if not step_trace_paths:
-            raise ProfilerRawFileException(f"Can not find any ts track files in {data_dir} when parse profiler data.")
-        step_trace_paths.sort()
-        log.info("Profiler found %d ts track files.", len(step_trace_paths))
-        return step_trace_paths
 
     def _construct_point_info(self, ts_tracks, task_id_op_name_dict):
         """This function can not support multi graph scenario."""
@@ -570,10 +600,6 @@ class AscendStepTraceParser(BaseStepTraceParser):
             log.warning("The tag id %s can not be identified.", tag)
         return op_names[real_index]
 
-    @staticmethod
-    def _is_all_reduce_tag(tag):
-        return PointTag.MIN_ALL_REDUCE.value <= tag < PointTag.MAX_ALL_REDUCE.value
-
     def _save_step_trace_to_result(self, ts_tracks, skip_step):
         """Save step trace data to result."""
         step_trace = {'reduce': defaultdict(list), 'start': '-'}
@@ -596,30 +622,6 @@ class AscendStepTraceParser(BaseStepTraceParser):
         if len(model_ids) > 1:
             log.warning("[profiler] Current model has multiple sub graphs, "
                         "the segmentation of steps may be inaccurate.")
-
-    @staticmethod
-    def _list_ts_track_step_traces(ts_track_paths):
-        """List all ts track from ts track files."""
-        step_trace_size = StructType.sizeof(TS_TRACK_STEP_TRACE_STRUCT)
-        ts_tracks = []
-        for path in ts_track_paths:
-            try:
-                with open(path, 'rb') as fp:
-                    while True:
-                        binary_data = fp.read(step_trace_size)
-                        if len(binary_data) < step_trace_size:
-                            break
-                        unpacked_data = StructType.unpack_binary_data(TS_TRACK_STEP_TRACE_STRUCT, binary_data)
-                        if unpacked_data.get('rptType') != STEP_TRACE_RPT_TYPE:
-                            continue
-                        ts_tracks.append(unpacked_data)
-            except (IOError, OSError) as err:
-                log.critical("Can not parse profiler file, open file %s failed, detail: %s.", path, str(err))
-                raise ProfilerIOException()
-            finally:
-                pass
-        log.info("Profiler found %d ts track step trace data.", len(ts_tracks))
-        return ts_tracks
 
     def _construct_step_trace(self, ts_track, step_trace):
         """Construct step point data."""

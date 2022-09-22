@@ -78,7 +78,7 @@ def validate_and_normalize_path(
     try:
         # most unix systems allow
         normalized_path = os.path.realpath(path)
-    except ValueError:
-        raise RuntimeError("The path is invalid!")
+    except ValueError as err:
+        raise RuntimeError("The path is invalid!") from err
     check_valid_character_of_path(normalized_path)
     return normalized_path

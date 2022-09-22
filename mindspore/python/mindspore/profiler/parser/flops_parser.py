@@ -480,7 +480,7 @@ class FlopsParser:
                     self._get_bp_fp_time_by_line(lines, op_all_step_time, op_all_step_comp)
         except (IOError, OSError) as err:
             logger.critical(f'Error occurred when read {_step_trace_file_path} file: {err}')
-            raise ProfilerIOException()
+            raise ProfilerIOException() from err
         logger.info("the train step is %d .", len(op_all_step_time))
         if not op_all_step_time:
             logger.warning(f'Empty when read {_step_trace_file_path} file, please check the valid'
@@ -520,7 +520,7 @@ class FlopsParser:
                     op_start_time.append([op_name, op_start])
         except (IOError, OSError) as err:
             logger.critical(f'Error occurred when read {_timeline_file_path} file: {err}')
-            raise ProfilerIOException()
+            raise ProfilerIOException() from err
         if not op_start_time:
             logger.warning(f'Empty when read {_timeline_file_path} file, please check the valid'
                            'data of this file.')

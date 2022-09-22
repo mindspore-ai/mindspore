@@ -180,6 +180,40 @@ class Profiler:
         if self.start_profile:
             self.start()
 
+    @staticmethod
+    def _check_output_path(output_path):
+        """Checking path validity."""
+        try:
+            output_path = validate_and_normalize_path(output_path)
+        except RuntimeError:
+            raise ProfilerPathErrorException(f'profiling data output path {output_path} is invalid.')
+        finally:
+            pass
+        if not os.path.isdir(output_path):
+            raise ProfilerDirNotFoundException(output_path)
+        return output_path
+
+    @staticmethod
+    def _parse_host_start_log(input_file):
+        """
+        Parse host start log file, get the start time of the job.
+
+        Args:
+             input_file (str): The file path of the host start log file.
+
+        Returns:
+            str, job start time.
+        """
+
+        job_start_time = ""
+        with open(input_file) as f:
+            for line in f.readlines():
+                if "clock_realtime" in line:
+                    # 16 means the first digit of the timestamp, len(line)-3 means the last.
+                    job_start_time = line[16:len(line) - 3]
+
+        return job_start_time
+
     def profiler_init(self, kwargs):
         """Initialize variables when profiler is enabled by environment variables."""
         options = kwargs.get("env_enable")
@@ -264,6 +298,139 @@ class Profiler:
                           f"current device id is {online_device_id}, so no operator performance information is queried."
                 return message
         return op_info
+
+    def analyse(self):
+        """
+        Collect and analyze training performance data, support calls during and after training. The example shows above.
+        """
+        Profiler._has_initialized = False
+        self._dynamic_status = self._profiler_manager.dynamic_status()
+        _environment_check()
+
+        self._cpu_profiler.stop()
+
+        if self._device_target and self._device_target == DeviceTarget.CPU.value:
+            self._cpu_analyse()
+
+        if self._device_target and self._device_target == DeviceTarget.GPU.value:
+            self._gpu_analyse()
+
+        elif self._device_target and self._device_target == DeviceTarget.ASCEND.value:
+            self._ascend_analyse()
+        logger.info("Profiling: all the data have been analyzed.")
+
+    def start(self):
+        """
+        Used for Ascend, GPU, start profiling. Profiling can be turned on based on step and epoch.
+
+        Raises:
+            RuntimeError: If the profiler has already started.
+            RuntimeError: If MD profiling has stopped, repeated start action is not supported.
+            RuntimeError: If the start_profile parameter is not set or is set to True.
+
+        Examples:
+             >>> class StopAtStep(Callback):
+             >>>     def __init__(self, start_step, stop_step):
+             ...         super(StopAtStep, self).__init__()
+             ...         self.start_step = start_step
+             ...         self.stop_step = stop_step
+             ...         self.profiler = Profiler(start_profile=False)
+             ...
+             >>>     def step_begin(self, run_context):
+             ...         cb_params = run_context.original_args()
+             ...         step_num = cb_params.cur_step_num
+             ...         if step_num == self.start_step:
+             ...             self.profiler.start()
+             ...
+             >>>     def step_end(self, run_context):
+             ...         cb_params = run_context.original_args()
+             ...         step_num = cb_params.cur_step_num
+             ...         if step_num == self.stop_step:
+             ...             self.profiler.stop()
+             ...
+             >>>     def end(self, run_context):
+             ...         self.profiler.analyse()
+        """
+        if not self.start_profile and context.get_context("mode") == context.PYNATIVE_MODE:
+            raise RuntimeError("Pynative mode does not support conditional collection of performance data.")
+
+        self._start_time = int(time.time() * 10000000)
+        logger.info("Profiling: start time: %d", self._start_time)
+
+        if not self._has_started:
+            if not self._has_started_twice:
+                self._has_started = True
+                self._has_started_twice = True
+            else:
+                raise RuntimeError("MindSpore Profiling has finished, repeated start and stop actions are not "
+                                   "supported.")
+        else:
+            raise RuntimeError("The profiler has already started. Use profiler.start() only when start_profile value "
+                               "is set to False.")
+
+        # No need to start anything if parse profiling data offline
+        if self._is_offline_parser():
+            return
+
+        self._cpu_profiler.step_profiling_enable(True)
+
+        if self._device_target and self._device_target == DeviceTarget.GPU.value:
+            self._md_profiler.start()
+            self._gpu_profiler.step_profiling_enable(True)
+        elif self._device_target and self._device_target == DeviceTarget.ASCEND.value:
+            self._md_profiler.start()
+            self._ascend_graph_start()
+
+    def stop(self):
+        """
+        Used for Ascend, GPU, stop profiling. Profiling can be turned off based on step and epoch.
+
+        Raises:
+            RuntimeError: If the profiler has not started, this function is disabled.
+
+        Examples:
+             >>> class StopAtEpoch(Callback):
+             >>>     def __init__(self, start_epoch, stop_epoch):
+             ...         super(StopAtEpoch, self).__init__()
+             ...         self.start_epoch = start_epoch
+             ...         self.stop_epoch = stop_epoch
+             ...         self.profiler = Profiler(start_profile=False)
+             ...
+             >>>     def epoch_begin(self, run_context):
+             ...         cb_params = run_context.original_args()
+             ...         epoch_num = cb_params.cur_epoch_num
+             ...         if epoch_num == self.start_epoch:
+             ...             self.profiler.start()
+             ...
+             >>>     def epoch_end(self, run_context):
+             ...         cb_params = run_context.original_args()
+             ...         epoch_num = cb_params.cur_epoch_num
+             ...         if epoch_num == self.stop_epoch:
+             ...             self.profiler.stop()
+             ...
+             >>>     def end(self, run_context):
+             ...         self.profiler.analyse()
+        """
+        if self._has_started:
+            self._has_started = False
+        else:
+            raise RuntimeError("The profiler has not started, so can not stop. Please call the start() method "
+                               "before calling the stop() method.")
+
+        # No need to stop anything if parse profiling data offline
+        if self._is_offline_parser():
+            return
+
+        self._md_profiler.stop()
+        self._md_profiler.save(self._output_path)
+
+        if self._device_target and self._device_target == DeviceTarget.GPU.value:
+            self._gpu_profiler.stop()
+        elif self._device_target and self._device_target == DeviceTarget.ASCEND.value:
+            self._ascend_profiler.stop()
+
+            self._stop_time = int(time.time() * 10000000)
+            logger.info("Profiling: stop time: %d", self._stop_time)
 
     def _decide_device_target(self, kwargs):
         """Complete Profiler initialization according to device_target"""
@@ -434,26 +601,6 @@ class Profiler:
         if self._device_target and self._device_target == DeviceTarget.ASCEND.value:
             return bool(self._ascend_job_id)
         return False
-
-    def analyse(self):
-        """
-        Collect and analyze training performance data, support calls during and after training. The example shows above.
-        """
-        Profiler._has_initialized = False
-        self._dynamic_status = self._profiler_manager.dynamic_status()
-        _environment_check()
-
-        self._cpu_profiler.stop()
-
-        if self._device_target and self._device_target == DeviceTarget.CPU.value:
-            self._cpu_analyse()
-
-        if self._device_target and self._device_target == DeviceTarget.GPU.value:
-            self._gpu_analyse()
-
-        elif self._device_target and self._device_target == DeviceTarget.ASCEND.value:
-            self._ascend_analyse()
-        logger.info("Profiling: all the data have been analyzed.")
 
     def _ascend_pynative_analyse(self):
         """Collect and analyse ascend pynative mode performance data."""
@@ -664,135 +811,9 @@ class Profiler:
             dynamic_parser = DynamicFrameWorkParser(self._output_path, self._rank_id)
             dynamic_parser.write_dynamic_shape_data()
 
-    @staticmethod
-    def _check_output_path(output_path):
-        """Checking path validity."""
-        try:
-            output_path = validate_and_normalize_path(output_path)
-        except RuntimeError:
-            raise ProfilerPathErrorException(f'profiling data output path {output_path} is invalid.')
-        finally:
-            pass
-        if not os.path.isdir(output_path):
-            raise ProfilerDirNotFoundException(output_path)
-        return output_path
-
-    def start(self):
-        """
-        Used for Ascend, GPU, start profiling. Profiling can be turned on based on step and epoch.
-
-        Raises:
-            RuntimeError: If the profiler has already started.
-            RuntimeError: If MD profiling has stopped, repeated start action is not supported.
-            RuntimeError: If the start_profile parameter is not set or is set to True.
-
-        Examples:
-             >>> class StopAtStep(Callback):
-             >>>     def __init__(self, start_step, stop_step):
-             ...         super(StopAtStep, self).__init__()
-             ...         self.start_step = start_step
-             ...         self.stop_step = stop_step
-             ...         self.profiler = Profiler(start_profile=False)
-             ...
-             >>>     def step_begin(self, run_context):
-             ...         cb_params = run_context.original_args()
-             ...         step_num = cb_params.cur_step_num
-             ...         if step_num == self.start_step:
-             ...             self.profiler.start()
-             ...
-             >>>     def step_end(self, run_context):
-             ...         cb_params = run_context.original_args()
-             ...         step_num = cb_params.cur_step_num
-             ...         if step_num == self.stop_step:
-             ...             self.profiler.stop()
-             ...
-             >>>     def end(self, run_context):
-             ...         self.profiler.analyse()
-        """
-        if not self.start_profile and context.get_context("mode") == context.PYNATIVE_MODE:
-            raise RuntimeError("Pynative mode does not support conditional collection of performance data.")
-
-        self._start_time = int(time.time() * 10000000)
-        logger.info("Profiling: start time: %d", self._start_time)
-
-        if not self._has_started:
-            if not self._has_started_twice:
-                self._has_started = True
-                self._has_started_twice = True
-            else:
-                raise RuntimeError("MindSpore Profiling has finished, repeated start and stop actions are not "
-                                   "supported.")
-        else:
-            raise RuntimeError("The profiler has already started. Use profiler.start() only when start_profile value "
-                               "is set to False.")
-
-        # No need to start anything if parse profiling data offline
-        if self._is_offline_parser():
-            return
-
-        self._cpu_profiler.step_profiling_enable(True)
-
-        if self._device_target and self._device_target == DeviceTarget.GPU.value:
-            self._md_profiler.start()
-            self._gpu_profiler.step_profiling_enable(True)
-        elif self._device_target and self._device_target == DeviceTarget.ASCEND.value:
-            self._md_profiler.start()
-            self._ascend_graph_start()
-
     def _ascend_graph_start(self):
         """Ascend graph mode start profiling."""
         self._ascend_profiler.start()
-
-    def stop(self):
-        """
-        Used for Ascend, GPU, stop profiling. Profiling can be turned off based on step and epoch.
-
-        Raises:
-            RuntimeError: If the profiler has not started, this function is disabled.
-
-        Examples:
-             >>> class StopAtEpoch(Callback):
-             >>>     def __init__(self, start_epoch, stop_epoch):
-             ...         super(StopAtEpoch, self).__init__()
-             ...         self.start_epoch = start_epoch
-             ...         self.stop_epoch = stop_epoch
-             ...         self.profiler = Profiler(start_profile=False)
-             ...
-             >>>     def epoch_begin(self, run_context):
-             ...         cb_params = run_context.original_args()
-             ...         epoch_num = cb_params.cur_epoch_num
-             ...         if epoch_num == self.start_epoch:
-             ...             self.profiler.start()
-             ...
-             >>>     def epoch_end(self, run_context):
-             ...         cb_params = run_context.original_args()
-             ...         epoch_num = cb_params.cur_epoch_num
-             ...         if epoch_num == self.stop_epoch:
-             ...             self.profiler.stop()
-             ...
-             >>>     def end(self, run_context):
-             ...         self.profiler.analyse()
-        """
-        if self._has_started:
-            self._has_started = False
-        else:
-            raise RuntimeError("The profiler has not started, so can not stop. Please call the start() method "
-                               "before calling the stop() method.")
-
-        # No need to stop anything if parse profiling data offline
-        if self._is_offline_parser():
-            return
-
-        self._md_profiler.stop()
-        self._md_profiler.save(self._output_path)
-
-        if self._device_target and self._device_target == DeviceTarget.GPU.value:
-            self._gpu_profiler.stop()
-        elif self._device_target and self._device_target == DeviceTarget.ASCEND.value:
-            self._ascend_profiler.stop()
-
-            self._stop_time = int(time.time() * 10000000)
-            logger.info("Profiling: stop time: %d", self._stop_time)
 
     def _gpu_analyse(self):
         """Collect and analyse gpu performance data."""
@@ -1066,27 +1087,6 @@ class Profiler:
 
         return job_id
 
-    @staticmethod
-    def _parse_host_start_log(input_file):
-        """
-        Parse host start log file, get the start time of the job.
-
-        Args:
-             input_file (str): The file path of the host start log file.
-
-        Returns:
-            str, job start time.
-        """
-
-        job_start_time = ""
-        with open(input_file) as f:
-            for line in f.readlines():
-                if "clock_realtime" in line:
-                    # 16 means the first digit of the timestamp, len(line)-3 means the last.
-                    job_start_time = line[16:len(line) - 3]
-
-        return job_start_time
-
     def _analyser_op_info(self):
         """Analyse the operator information."""
         integrator = Integrator(self._output_path, self._rank_id)
@@ -1239,7 +1239,7 @@ class Profiler:
             logger.critical("%s,please check if the hccl_parser-{version}-py3-none-any.whl is installed."
                             "The hccl_parser-{version}-py3-none-any.whl package is usually located "
                             "in the /usr/local/Ascend/tools Directory", err)
-            raise ImportError(err)
+            raise ImportError(err) from err
         logger.info("Parse hccl info successfully.")
         logger.info("Start analyse hccl info.")
         hccl_parse = HcclParser(hccl_path, self._dev_id, self._rank_id, self._output_path)
