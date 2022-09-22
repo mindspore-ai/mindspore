@@ -190,7 +190,7 @@ class ChoicePartialEliminater : public AnfVisitor {
   // h(x1, x2, x3, z1, z2, x4, x5, x7 ,x8, monad1, monad2, monad3)
   // f(x1, x2, x3, z1, z2, x4, x5, x7 ,x8, monad1, monad2, monad3)
   // g(x1, x2, x3, z1, z2, x4, x5, x7 ,x8, monad1, monad2, monad3)
-  AnfNodePtrList UnifyParameters(const AnfNodePtrList &fg_list, const std::vector<AnfNodePtrList> args_list) {
+  static AnfNodePtrList UnifyParameters(const AnfNodePtrList &fg_list, const std::vector<AnfNodePtrList> args_list) {
     if (fg_list.empty()) {
       return {};
     }

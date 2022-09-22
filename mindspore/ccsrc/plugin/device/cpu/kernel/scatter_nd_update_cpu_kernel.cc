@@ -84,13 +84,15 @@ int ScatterUpdateArithmeticCpuKernelMod::Resize(const BaseOperatorPtr &base_oper
     unit_size_ *= updates_shape[i];
   }
   num_units_ = 1;
-  num_units_ *= updates_shape[indices_shape.size() - 2];
-  for (int i = SizeToInt(indices_shape.size()) - 3; i >= 0; i--) {
-    num_units_ *= updates_shape[i];
+  constexpr int64_t index_dist_from_end = 2;
+  int64_t start_back_index = SizeToLong(indices_shape.size()) - index_dist_from_end;
+  num_units_ *= updates_shape[LongToSize(start_back_index)];
+  for (int64_t i = start_back_index - 1; i >= 0; i--) {
+    num_units_ *= updates_shape[LongToSize(i)];
   }
   size_t out_stride = 1;
   out_strides_.push_back(out_stride);
-  for (int64_t i = SizeToLong(indices_unit_rank_) - 2; i >= 0; i--) {
+  for (int64_t i = SizeToLong(indices_unit_rank_) - SizeToLong(index_dist_from_end); i >= 0; i--) {
     out_stride *= LongToSize(shape[LongToSize(i + 1)]);
     out_strides_.push_back(out_stride);
   }
