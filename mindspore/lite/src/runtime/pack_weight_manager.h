@@ -46,6 +46,7 @@ class PackWeightManager {
   PackWeightManager() = default;
   bool is_parallel_ = false;
 #ifdef SHARING_MODEL_WEIGHT
+  std::mutex manager_mutex_;
   std::shared_ptr<PackWeight> pack_weight_ = nullptr;
 #endif
 };
