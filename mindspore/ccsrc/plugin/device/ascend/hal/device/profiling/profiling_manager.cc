@@ -16,7 +16,6 @@
 
 #include "plugin/device/ascend/hal/device/profiling/profiling_manager.h"
 #include <cstdlib>
-#include <vector>
 #include "common/util/error_manager/error_manager.h"
 #include "securec/include/securec.h"
 #include "./prof_mgr_core.h"
@@ -75,7 +74,7 @@ void ProfilingManager::PluginUnInit() const {
   }
 }
 
-Status ProfilingManager::GetProfConf(const NotNull<MsprofGeOptions *> prof) {
+Status ProfilingManager::GetProfConf(const NotNull<MsprofGeOptions *> prof) const {
   string job_id = std::to_string(GetJobId());
   if (memcpy_s(prof->jobId, sizeof(prof->jobId), job_id.c_str(), strlen(job_id.c_str())) != EOK) {
     MS_LOG(ERROR) << "Copy job_id failed.";

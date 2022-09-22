@@ -26,6 +26,7 @@
 #include <vector>
 #include <optional>
 #include "profiler/device/profiling.h"
+#include "profiler/device/data_saver.h"
 #include "actor/actormgr.h"
 #include "backend/common/session/kernel_graph.h"
 
@@ -33,15 +34,6 @@ namespace mindspore {
 namespace profiler {
 namespace cpu {
 constexpr float kNanosecondToMillisecond = 1000000;
-struct CurKernelInputInfo {
-  uint32_t input_id;
-  std::string shape;
-};
-struct CurKernelInfo {
-  std::string op_type;
-  std::string op_name;
-  std::vector<CurKernelInputInfo> cur_kernel_all_inputs_info;
-};
 class CPUProfiler : public Profiler {
  public:
   static std::shared_ptr<CPUProfiler> GetInstance();
