@@ -96,15 +96,16 @@ OpParameter *PopulateSpliceParameter(const void *prim) {
   param->forward_indexes_dim_ = static_cast<int>(primitive_forward_indexes.size());
 
   // malloc && memset for forward_indexes
-  param->forward_indexes_ = reinterpret_cast<int *>(malloc(primitive_context.size() * sizeof(int)));
+  param->forward_indexes_ = reinterpret_cast<int *>(malloc(primitive_forward_indexes.size() * sizeof(int)));
   if (param->forward_indexes_ == nullptr) {
     MS_LOG(ERROR) << "malloc param forward_indexes_ error";
     free(param->context_);
     free(param);
     return nullptr;
   }
-  (void)memset(param->forward_indexes_, 0, primitive_context.size() * sizeof(int));
-  (void)memcpy(param->forward_indexes_, primitive_forward_indexes.data(), primitive_context.size() * sizeof(int));
+  (void)memset(param->forward_indexes_, 0, primitive_forward_indexes.size() * sizeof(int));
+  (void)memcpy(param->forward_indexes_, primitive_forward_indexes.data(),
+               primitive_forward_indexes.size() * sizeof(int));
   param->output_dim_ = value->output_dim();
   return reinterpret_cast<OpParameter *>(param);
 }

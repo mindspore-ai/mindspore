@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "src/litert/kernel/cpu/base/transpose_base.h"
+#include <unordered_set>
 
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
@@ -105,6 +106,11 @@ int TransposeBaseCPUKernel::ResetStatus() {
     }
     perm_data = reinterpret_cast<int *>(perm_tensor->data());
     MSLITE_CHECK_PTR(perm_data);
+    std::vector<int> perm(perm_data, perm_data + in_tensors_[SECOND_INPUT]->ElementsNum());
+    if (perm.size() != std::unordered_set<int>(perm.cbegin(), perm.cend()).size()) {
+      MS_LOG(ERROR) << "Invalid perm, the same element exits in perm.";
+      return RET_ERROR;
+    }
   }
   MS_CHECK_TRUE_MSG(param_->num_axes_ <= MAX_TRANSPOSE_DIM_SIZE, RET_ERROR, "transpose perm is invalid.");
   for (int i = 0; i < param_->num_axes_; ++i) {
