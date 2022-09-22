@@ -78,7 +78,6 @@ AbstractBasePtr UnstackInfer(const abstract::AnalysisEnginePtr &, const Primitiv
 void Unstack::Init(const int64_t axis) { this->set_axis(axis); }
 void Unstack::set_axis(const int64_t axis) { (void)AddAttr(kAxis, api::MakeValue(axis)); }
 int64_t Unstack::get_axis() const { return GetValue<int64_t>(GetAttr(kAxis)); }
-
 REGISTER_PRIMITIVE_EVAL_IMPL(Unstack, prim::kPrimUnstack, UnstackInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore
