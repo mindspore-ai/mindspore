@@ -341,17 +341,13 @@ bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context) {
 
 void SuperKernelActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
-  const auto &sequential_num = context->sequential_num_;
 
   // Collect the input device tensors.
   std::vector<DeviceTensor *> memory_free_list;
-  if (input_op_datas_.count(sequential_num) > 0) {
-    for (auto &input_data : input_op_datas_[sequential_num]) {
-      MS_EXCEPTION_IF_NULL(input_data);
-      MS_EXCEPTION_IF_NULL(input_data->data_);
-      if (input_data->data_->dynamic_ref_count() != INT32_MAX) {
-        (void)memory_free_list.emplace_back(input_data->data_);
-      }
+  for (auto &input_device_tensor : input_device_tensors_) {
+    if (input_device_tensor != nullptr && input_device_tensor->GetMutablePtr() != nullptr &&
+        input_device_tensor->dynamic_ref_count() != INT32_MAX) {
+      (void)memory_free_list.emplace_back(input_device_tensor);
     }
   }
 
