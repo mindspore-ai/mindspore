@@ -284,14 +284,34 @@ def test_gather_vmap_nested():
                         [11, 10]]]).astype(np.float32)
     assert np.allclose(outputs.asnumpy(), expect)
 
-if __name__ == '__main__':
-    test_gatherv2_axis0()
-    test_gatherv2_axis1()
-    test_gatherv2_axisN1()
-    test_gather_vmap_basic()
-    test_gather_vmap_negative_axis()
-    test_gather_vmap_with_inaxes()
-    test_gather_vmap_indices_outofbound()
-    test_gather_vmap_xdim_is_none()
-    test_gather_vmap_idim_is_none()
-    test_gather_vmap_nested()
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize("data_type", [np.uint64, np.uint16, np.int64, np.complex64, np.complex128])
+def test_gather_tensor(data_type):
+    """
+    Feature: Gather
+    Description: test cases for Gather on cpu
+    Expectation: the result match to numpy
+    """
+    x = np.array([1, 2, 3, 4, 5, 6, 7]).astype(data_type)
+    input_indices = Tensor(np.array([0, 2, 4, 2, 6], dtype=np.int))
+    axis = 0
+    y_expect = np.array([1, 3, 5, 3, 7]).astype(data_type)
+
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+
+    graph_table_tensor = Tensor(x)
+    out = graph_table_tensor.gather(input_indices, axis)
+
+    assert out.shape == y_expect.shape
+    np.allclose(out.asnumpy(), y_expect)
+
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
+
+    pynative_table_tensor = Tensor(x)
+    out = pynative_table_tensor.gather(input_indices, axis)
+
+    assert out.shape == y_expect.shape
+    np.allclose(out.asnumpy(), y_expect)
