@@ -41,23 +41,6 @@ class HWTSLogParser:
         self._source_flie_name = self._get_source_file()
         self._dynamic_status = dynamic_status
 
-    def _get_source_file(self):
-        """Get hwts log file name, which was created by ada service."""
-
-        file_name = get_file_join_name(self._input_path, self._source_file_target)
-        if not file_name:
-            file_name = get_file_join_name(self._input_path, self._source_file_target_old)
-            if not file_name:
-                data_path = os.path.join(self._input_path, "data")
-                file_name = get_file_join_name(data_path, self._source_file_target)
-                if not file_name:
-                    file_name = get_file_join_name(data_path, self._source_file_target_old)
-        if not file_name:
-            msg = "Fail to find hwts log file, under profiling directory"
-            raise RuntimeError(msg)
-
-        return file_name
-
     def execute(self):
         """
         Execute the parser, get result data, and write it to the output file.
@@ -119,3 +102,20 @@ class HWTSLogParser:
         fwrite_format(self._output_filename, data_source=self._dst_file_column_title)
         fwrite_format(self._output_filename, data_source=result_data)
         return True
+
+    def _get_source_file(self):
+        """Get hwts log file name, which was created by ada service."""
+
+        file_name = get_file_join_name(self._input_path, self._source_file_target)
+        if not file_name:
+            file_name = get_file_join_name(self._input_path, self._source_file_target_old)
+            if not file_name:
+                data_path = os.path.join(self._input_path, "data")
+                file_name = get_file_join_name(data_path, self._source_file_target)
+                if not file_name:
+                    file_name = get_file_join_name(data_path, self._source_file_target_old)
+        if not file_name:
+            msg = "Fail to find hwts log file, under profiling directory"
+            raise RuntimeError(msg)
+
+        return file_name

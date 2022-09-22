@@ -93,37 +93,6 @@ class OPComputeTimeParser:
                     (op_start_time_str, op_duration_str)
                 )
 
-    def _get_op_task_id_map(self):
-        """
-        Read hwts data file, get the task time info.
-
-        Returns:
-           list: all hwts task time info.
-        """
-
-        op_map_result = []
-        hwts_list = []
-
-        if not os.path.exists(self._hwts_output_file):
-            logger.critical('The hwts output file does not exist.')
-            raise ProfilerFileNotFoundException('hwts output file')
-
-        with open(self._hwts_output_file, 'r') as data_file:
-            lines = data_file.readlines()
-            for line in lines:
-                if line.startswith("Start of task") or line.startswith("End of task"):
-                    line_split = line.split()
-                    container = HWTSContainer(line_split)
-                    hwts_list.append(container)
-
-        # hwts op map by taskId
-        for hwts in hwts_list:
-            if hwts.task_id in self._op_task_info.keys():
-                hwts.op_name = self._op_task_info[hwts.task_id]
-                op_map_result.append(hwts)
-
-        return op_map_result
-
     def execute(self):
         """Execute the parser, compute all op, get op time, and write it to the output file."""
         # Calculate the execution time of operators,
@@ -155,7 +124,7 @@ class OPComputeTimeParser:
         result_data += ("total op  %s 0" % (str(total_time)))
 
         timeline_data = []
-        for op_name, time in op_name_time_dict.items():
+        for op_name, _ in op_name_time_dict.items():
             if op_name in op_name_stream_dict.keys():
                 stream_id = op_name_stream_dict[op_name]
                 start_time_list = op_name_start_time.get(op_name)
@@ -168,6 +137,37 @@ class OPComputeTimeParser:
         # Write the timeline data into file,
         # including operator name, stream id, start time, and duration.
         self._write_timeline_data_into_file(timeline_data)
+
+    def _get_op_task_id_map(self):
+        """
+        Read hwts data file, get the task time info.
+
+        Returns:
+           list: all hwts task time info.
+        """
+
+        op_map_result = []
+        hwts_list = []
+
+        if not os.path.exists(self._hwts_output_file):
+            logger.critical('The hwts output file does not exist.')
+            raise ProfilerFileNotFoundException('hwts output file')
+
+        with open(self._hwts_output_file, 'r') as data_file:
+            lines = data_file.readlines()
+            for line in lines:
+                if line.startswith("Start of task") or line.startswith("End of task"):
+                    line_split = line.split()
+                    container = HWTSContainer(line_split)
+                    hwts_list.append(container)
+
+        # hwts op map by taskId
+        for hwts in hwts_list:
+            if hwts.task_id in self._op_task_info.keys():
+                hwts.op_name = self._op_task_info[hwts.task_id]
+                op_map_result.append(hwts)
+
+        return op_map_result
 
     def _write_op_time_into_file(self, result_data):
         """
@@ -214,7 +214,7 @@ class OPComputeTimeParser:
             os.chmod(file_path, stat.S_IREAD | stat.S_IWRITE)
         except (IOError, OSError) as err:
             logger.critical('Error occurred when writing intermediate timeline file: %s', err)
-            raise ProfilerIOException
+            raise ProfilerIOException from err
 
     def _calculate_op_execution_time(self):
         """
