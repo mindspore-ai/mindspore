@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "nnacl/fp32/rmsprop_fp32.h"
 #ifdef ENABLE_SSE
 #ifdef _MSC_VER
 #include <immintrin.h>
@@ -26,7 +27,7 @@
 #endif
 
 #include <math.h>
-#include "nnacl/fp32/rmsprop_fp32.h"
+#include "nnacl/errorcode.h"
 
 int RMSPropUnuseCenterFp32(float *variable, float *mean_square, float *moment, float *gradients, float momentum,
                            float learning_rate, float decay, float epsilon, size_t start, size_t end) {

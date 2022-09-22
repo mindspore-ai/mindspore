@@ -15,12 +15,9 @@
  */
 
 #include "plugin/device/cpu/kernel/rmsprop_cpu_kernel.h"
-
 #include <algorithm>
 #include <memory>
 #include <functional>
-
-#include "nnacl/errorcode.h"
 #include "nnacl/fp32/rmsprop_fp32.h"
 #include "utils/ms_utils.h"
 #include "ops/apply_rms_prop.h"

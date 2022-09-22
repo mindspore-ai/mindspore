@@ -2630,6 +2630,7 @@ class Concat(PrimitiveWithCheck):
         validator.check_value_type("axis", axis, [int], self.name)
 
     def infer_value(self, input_x):
+        """Implement Concat infer value"""
         value = None
         if input_x is not None:
             value = Tensor(np.concatenate([x.asnumpy() for x in input_x], axis=self.axis))
