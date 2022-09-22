@@ -88,16 +88,12 @@ def dsdbpropimpl(w1_gm, w2_gm, v_gm, a_gm, d_a_gm, d_w1_gm={}, d_w2_gm={}, d_v_g
                             16, seq_len // 16, 16, 16),
                            name='a_gm',
                            scope=tik.scope_gm)
-    local_gm = a_gm
-    global_gm = a_gm
     # zN
     d_a_gm = tik_inst.Tensor('float16',
                              (batch_size, head, v_embedding //
                               16, seq_len // 16, 16, 16),
                              name='d_a_gm',
                              scope=tik.scope_gm)
-    d_local_gm = d_a_gm
-    d_global_gm = d_a_gm
 
     # output
     # w-zN
@@ -125,9 +121,13 @@ def dsdbpropimpl(w1_gm, w2_gm, v_gm, a_gm, d_a_gm, d_w1_gm={}, d_w2_gm={}, d_v_g
         bs_idx = channel_idx % batch_size
         global_idx = 3 - head_idx % 4
         # tensor size // (byte * l0b size * thread)
-        cpt_time = 1 if global_size * v_embedding * \
-                        4 // (1024 * 64) <= 1 else global_size * v_embedding * 4 // (1024 * 64)
-        ub_time = 1 if global_size == 256 else 2
+        cpt_time = 1
+        if not global_size * v_embedding * 4 // (1024 * 64) <= 1:
+            cpu_time = global_size * v_embedding * 4 // (1024 * 64)
+
+        ub_time = 1
+        if global_size != 256:
+            ub_time = 2
 
         d_a_l1 = tik_inst.Tensor('float16', (seq_len // 16, v_embedding // 16, 16, 16),
                                  name='d_a_l1', scope=tik.scope_cbuf)
