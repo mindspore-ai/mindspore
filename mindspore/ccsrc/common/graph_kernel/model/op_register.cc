@@ -127,5 +127,5 @@ OP_REGISTER("ElemAny", ElemAnyOp);
 OP_REGISTER("Pool2D", Pool2DOp);
 // virtual ops
 OP_REGISTER("Assign", VirtualOp);
-OP_REGISTER("TupleGetItem", VirtualOp);
+OP_REGISTER("TupleGetItem", TupleGetItemOp);
 }  // namespace mindspore::graphkernel::inner

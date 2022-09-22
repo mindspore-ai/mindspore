@@ -170,8 +170,8 @@ CNodePtr GkUtils::NewRealCNode(const std::vector<AnfNodePtr> &inputs, const Func
   auto cnode = func_graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(cnode);
 
-  if (!AnfUtils::IsRealKernel(cnode) || out_info_list.size() == 0) {
-    MS_LOG(EXCEPTION) << "CNode must be real kernel and has output!";
+  if (out_info_list.size() == 0) {
+    MS_LOG(EXCEPTION) << "CNode must have output!";
   }
 
   // Setup abstract.
@@ -231,7 +231,11 @@ FuncGraphPtr GkUtils::LiteGraph2AnfGraph(const inner::LiteGraphPtr &lite_graph, 
                              return value_node;
                            }
                          });
-    auto cnode = NewRealCNode(inputs, func_graph, {{op->shape, op->type, op->format}}, cb);
+    auto output_info_list = op->outputs();
+    if (output_info_list.empty()) {
+      (void)output_info_list.emplace_back(static_cast<inner::NodeBase>(*op));
+    }
+    auto cnode = NewRealCNode(inputs, func_graph, output_info_list, cb);
     MS_EXCEPTION_IF_NULL(cnode);
     node_map[op_node] = cnode;
   }

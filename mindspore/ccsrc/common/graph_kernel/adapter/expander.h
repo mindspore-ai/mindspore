@@ -75,12 +75,19 @@ class SetDynamicShapeAttrDeco : public ExpanderDecorator {
 
 class COMMON_EXPORT AttrToInputDeco : public ExpanderDecorator {
  public:
-  explicit AttrToInputDeco(const ExpanderPtr &decorated) : ExpanderDecorator(decorated) {}
+  AttrToInputDeco(const ExpanderPtr &decorated, bool is_backend)
+      : ExpanderDecorator(decorated), is_backend_(is_backend) {}
   ~AttrToInputDeco() override = default;
-  static ExpanderPtr Creator(const ExpanderPtr &decorated) {
-    return std::static_pointer_cast<Expander>(std::make_shared<AttrToInputDeco>(decorated));
+  static ExpanderCreatorFunc GetCreator(bool is_backend) {
+    return [is_backend](const ExpanderPtr &decorated) {
+      return std::static_pointer_cast<Expander>(std::make_shared<AttrToInputDeco>(decorated, is_backend));
+    };
   }
   AnfNodePtr Run(const AnfNodePtr &node) override;
+
+ protected:
+  void ConvertAttrToInput(const FuncGraphPtr &graph);
+  bool is_backend_{false};
 };
 
 /**

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "common/graph_kernel/model/node.h"
+#include <algorithm>
 #include <sstream>
 #include <utility>
 #include "abstract/utils.h"
@@ -23,6 +24,9 @@ void Node::SetBaseInfo(const NodeBaseList &baseinfo) {
   this->shape = baseinfo[0].shape;
   this->type = baseinfo[0].type;
   this->format = baseinfo[0].format;
+  if (baseinfo.size() > 1) {
+    outputs_ = baseinfo;
+  }
 }
 
 std::string Node::ToString() const {
@@ -36,6 +40,17 @@ std::string Node::ToString() const {
   }
   oss << "]{" << TypeIdToString(type) << "x" << format << "}";
   return oss.str();
+}
+
+abstract::AbstractBasePtr Node::ToAbstract() const {
+  if (outputs_.empty()) {
+    return std::make_shared<abstract::AbstractTensor>(TypeIdToType(this->type), this->shape);
+  }
+  AbstractBasePtrList abs_list(outputs_.size());
+  (void)std::transform(outputs_.cbegin(), outputs_.cend(), abs_list.begin(), [](const NodeBase &node) {
+    return std::make_shared<abstract::AbstractTensor>(TypeIdToType(node.type), node.shape);
+  });
+  return std::make_shared<abstract::AbstractTuple>(std::move(abs_list));
 }
 
 void Node::AddInput(const NodePtr &new_input) {

@@ -119,6 +119,8 @@ class GraphBuilder : public LiteGraph::GraphBuilderBase {
     }
     return Value(const_input);
   }
+
+  NodePtr TupleGetItem(const NodePtr &input, int64_t index) const;
 };
 }  // namespace mindspore::graphkernel::inner
 #endif

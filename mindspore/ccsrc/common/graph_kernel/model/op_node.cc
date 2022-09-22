@@ -109,23 +109,33 @@ std::pair<PrimitivePtr, AbstractBasePtrList> PrimOp::GenPrimAndAbstract(const No
   const auto &op_primc_fns = ops::OpPrimCRegister::GetInstance().GetPrimCMap();
   const auto iter = op_primc_fns.find(op_);
   if (iter == op_primc_fns.end()) {
-    MS_LOG(EXCEPTION) << "The PrimitiveC of [" << op_ << "] is not defined.";
+    return std::pair<PrimitivePtr, AbstractBasePtrList>(nullptr, {});
   }
   auto primc = iter->second();
   (void)primc->SetAttrs(attrs);
-  AbstractBasePtrList abs_list;
-  (void)std::transform(inputs.begin(), inputs.end(), std::back_inserter(abs_list),
-                       [](const NodePtr &node) -> AbstractBasePtr {
-                         return std::make_shared<abstract::AbstractTensor>(TypeIdToType(node->type), node->shape);
-                       });
+  AbstractBasePtrList abs_list(inputs.size());
+  (void)std::transform(inputs.cbegin(), inputs.cend(), abs_list.begin(),
+                       [](const NodePtr &node) { return node->ToAbstract(); });
   return std::make_pair(primc->cast<PrimitivePtr>(), abs_list);
 }
 
 std::vector<DShape> PrimOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {
   auto [primc, abs_list] = GenPrimAndAbstract(inputs, attrs);
+  if (primc == nullptr) {
+    MS_LOG(EXCEPTION) << "The PrimitiveC of [" << op_ << "] is not defined.";
+  }
   RectifyAbstract(primc, &abs_list);
   auto baseshape = InferShapeWithAbstract(primc, abs_list);
   MS_EXCEPTION_IF_NULL(baseshape);
+  if (baseshape->isa<abstract::TupleShape>()) {
+    auto tuple_shape = baseshape->cast<abstract::TupleShapePtr>();
+    MS_EXCEPTION_IF_NULL(tuple_shape);
+    const auto &shape_elements = tuple_shape->shape();
+    std::vector<DShape> result(shape_elements.size());
+    (void)std::transform(shape_elements.cbegin(), shape_elements.cend(), result.begin(),
+                         [](const BaseShapePtr &s) { return s->cast<abstract::ShapePtr>()->shape(); });
+    return result;
+  }
   auto shape = baseshape->cast<abstract::ShapePtr>();
   MS_EXCEPTION_IF_NULL(shape);
   return {shape->shape()};
@@ -133,13 +143,20 @@ std::vector<DShape> PrimOp::InferShape(const NodePtrList &inputs, const DAttrs &
 
 std::vector<TypeId> PrimOp::InferType(const NodePtrList &inputs, const DAttrs &attrs) {
   auto [primc, abs_list] = GenPrimAndAbstract(inputs, attrs);
+  MS_EXCEPTION_IF_NULL(primc);
   RectifyAbstract(primc, &abs_list);
   auto type = InferTypeWithAbstract(primc, abs_list);
   MS_EXCEPTION_IF_NULL(type);
-  if (type->isa<TensorType>()) {
-    return {type->cast<TensorTypePtr>()->element()->type_id()};
+  auto get_type_id = [](const TypePtr &t) {
+    return t->isa<TensorType>() ? t->cast<TensorTypePtr>()->element()->type_id() : t->type_id();
+  };
+  if (type->isa<Tuple>()) {
+    auto elements = type->cast<TuplePtr>()->elements();
+    std::vector<TypeId> result(elements.size());
+    (void)std::transform(elements.cbegin(), elements.cend(), result.begin(), get_type_id);
+    return result;
   }
-  return {type->type_id()};
+  return {get_type_id(type)};
 }
 
 NodeBaseList PrimOp::Infer(const NodePtrList &inputs, const DAttrs &attrs) {
@@ -330,18 +347,10 @@ NodePtr PrimOp::InferValue(const NodePtrList &inputs, const DAttrs &attrs) {
       return nullptr;
   }
   if (res == nullptr) {
-    const auto &op_primc_fns = ops::OpPrimCRegister::GetInstance().GetPrimCMap();
-    const auto iter = op_primc_fns.find(op_);
-    if (iter == op_primc_fns.end()) {
+    auto [primc, inputs_abstract] = GenPrimAndAbstract(inputs, attrs);
+    if (primc == nullptr) {
       return nullptr;
     }
-    auto primc = iter->second();
-    (void)primc->SetAttrs(attrs);
-    AbstractBasePtrList inputs_abstract;
-    (void)std::transform(inputs.begin(), inputs.end(), std::back_inserter(inputs_abstract),
-                         [](const NodePtr &node) -> AbstractBasePtr {
-                           return std::make_shared<abstract::AbstractTensor>(TypeIdToType(node->type), node->shape);
-                         });
     RectifyAbstract(primc, &inputs_abstract);
     res = InferValueWithAbstract(primc, inputs_abstract);
   }
@@ -1162,5 +1171,11 @@ std::vector<TypeId> MatMulOp::InferType(const NodePtrList &inputs, const DAttrs 
     return {TypeId::kNumberTypeInt32};
   }
   return {inputs[0]->type};
+}
+
+void TupleGetItemOp::RectifyAbstract(const PrimitivePtr &prim, AbstractBasePtrList *abs_list) {
+  if (prim->HasAttr("index")) {
+    (void)abs_list->emplace_back(prim->GetAttr("index")->ToAbstract());
+  }
 }
 }  // namespace mindspore::graphkernel::inner

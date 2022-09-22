@@ -120,7 +120,7 @@ AnfNodePtr TryExpandCNodeFE(const AnfNodePtr &node) {
   if (iter != creators.end()) {
     expander = graphkernel::WrapExpander(expander, iter->second);
   }
-  expander = graphkernel::AttrToInputDeco::Creator(expander);
+  expander = graphkernel::AttrToInputDeco::GetCreator(false)(expander);
   expander = PrimToPrimPyDecorator::Creator(expander);
   auto new_node = expander->Run(node);
   auto expand_fg = GetCNodeFuncGraph(new_node);

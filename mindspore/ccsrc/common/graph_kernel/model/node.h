@@ -58,8 +58,9 @@ class Node : public NodeBase, public std::enable_shared_from_this<Node> {
 
   virtual NType NodeType() { return NType::Base; }
   virtual std::string ToString() const;
+  virtual abstract::AbstractBasePtr ToAbstract() const;
 
-  void SetBaseInfo(const NodeBaseList &baseinfo);
+  virtual void SetBaseInfo(const NodeBaseList &baseinfo);
   void AddInput(const NodePtr &new_input);
   void SetInput(size_t i, const NodePtr &new_input);
   void SetInputs(const NodePtrList &inputs);
@@ -80,12 +81,18 @@ class Node : public NodeBase, public std::enable_shared_from_this<Node> {
   const NodePtrList &inputs() const { return inputs_; }
   const mindspore::HashMap<Node *, std::set<size_t>> &users() const { return users_; }
   size_t tensor_size(bool in_bytes = false) const;
+  const NodeBaseList &outputs() const { return outputs_; }
 
  protected:
-  mutable std::string debug_name_;  // only used in Dump function
+  // only used in Dump function
+  mutable std::string debug_name_;
   DAttrs attrs_;
   NodePtrList inputs_;
-  mindspore::HashMap<Node *, std::set<size_t>> users_;  // {user_node: {input edge index set}}
+  // {user_node: {input edge index set}}
+  mindspore::HashMap<Node *, std::set<size_t>> users_;
+  // save output tensor info when the node is a multi-output operator.
+  // it should keep empty when the node is single-output.
+  NodeBaseList outputs_;
 
  private:
   // the nodes' users are only maintained by AddInput/SetInput.
@@ -103,6 +110,7 @@ class ConstTensorNode : public Node {
   NType NodeType() override { return NType::Value; }
   std::string ToString() const override { return data_->data().ToString(this->type, this->shape, false); }
   const tensor::TensorPtr data() const { return data_; }
+  abstract::AbstractBasePtr ToAbstract() const override { return data_->ToAbstract(); }
 
  protected:
   tensor::TensorPtr data_;
