@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-import ge_train_env  # pylint: disable=unused-import
 import mindspore as ms
 import mindspore.context as context
 import mindspore.nn as nn
