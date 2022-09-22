@@ -16,6 +16,7 @@
 import numpy as np
 import pytest
 
+import mindspore
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -140,12 +141,22 @@ class Net(nn.Cell):
         return self.op(x, mask)
 
 
-def masked_select_grad():
-    x = np.array([1, 2, 3, 4]).astype(np.int32)
+def masked_select_grad(data_type):
+    x = np.array([1, 2, 3, 4]).astype(data_type)
     mask = np.array([[0], [1], [0], [1]]).astype(np.bool)
-    dy = np.array([i for i in range(8)]).astype(np.int32)
+    dy = np.array([i for i in range(8)]).astype(data_type)
     grad = Grad(Net())
     return grad(Tensor(x), Tensor(mask), Tensor(dy))[0]
+
+
+def masked_select_grad_dynamic_shape():
+    x = Tensor(np.array([1, 2, 3, 4]).astype(np.int32))
+    mask = Tensor(np.array([[0], [1], [0], [1]]).astype(np.bool))
+    dy = Tensor(np.array([i for i in range(8)]).astype(np.int32))
+    x_dynamic_shape = Tensor(shape=[None], dtype=mindspore.int32)
+    grad = Grad(Net())
+    grad.set_inputs(x_dynamic_shape, mask, dy)
+    return grad(x, mask, dy)[0]
 
 
 @pytest.mark.level0
@@ -153,6 +164,36 @@ def masked_select_grad():
 @pytest.mark.env_onecard
 def test_masked_select_grad():
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    dx = masked_select_grad()
+    dx = masked_select_grad(np.int32)
+    expect = [4, 6, 8, 10]
+    assert (dx.asnumpy() == expect).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_masked_select_grad_float64():
+    """
+    Feature: test MaskedSelectGrad complex64 type on CPU
+    Description: the type of input is float64
+    Expectation: the result match with expect
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    dx = masked_select_grad(np.float64)
+    expect = [4, 6, 8, 10]
+    assert (dx.asnumpy() == expect).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_masked_select_grad_dynamic_shape():
+    """
+    Feature: test MaskedSelectGrad dynamic shape on CPU
+    Description: the shape of input is dynamic
+    Expectation: the result match with expect
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    dx = masked_select_grad_dynamic_shape()
     expect = [4, 6, 8, 10]
     assert (dx.asnumpy() == expect).all()

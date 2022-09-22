@@ -64,8 +64,9 @@ int MaskedSelectGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   input_shape_b_ = inputs[kIndexMask]->GetShapeVector();
   grad_shape_ = inputs[kIndexGrad]->GetShapeVector();
   output_shape_ = CPUKernelUtils::GetBroadcastShape(input_shape_a_, input_shape_b_);
-  if (KernelMod::Resize(base_operator, inputs, outputs) != KRET_OK) {
-    MS_LOG(EXCEPTION) << "MaskedSelectGradCpuKernelMod resize failed.";
+  const auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
+    return ret;
   }
   tensor_size_ = 1;
   tensor_size_ =
@@ -114,23 +115,17 @@ bool MaskedSelectGradCpuKernelMod::LaunchKernel(const std::vector<kernel::Addres
 
 std::vector<std::pair<KernelAttr, MaskedSelectGradCpuKernelMod::MaskedSelectGradFunc>>
   MaskedSelectGradCpuKernelMod::func_list_ = {{KernelAttr()
-                                                 .AddInputAttr(kNumberTypeFloat32)
-                                                 .AddInputAttr(kNumberTypeBool)
-                                                 .AddInputAttr(kNumberTypeFloat32)
-                                                 .AddOutputAttr(kNumberTypeFloat32),
-                                               &MaskedSelectGradCpuKernelMod::LaunchKernel<float>},
-                                              {KernelAttr()
-                                                 .AddInputAttr(kNumberTypeInt32)
-                                                 .AddInputAttr(kNumberTypeBool)
-                                                 .AddInputAttr(kNumberTypeInt32)
-                                                 .AddOutputAttr(kNumberTypeInt32),
-                                               &MaskedSelectGradCpuKernelMod::LaunchKernel<int>},
-                                              {KernelAttr()
                                                  .AddInputAttr(kNumberTypeFloat16)
                                                  .AddInputAttr(kNumberTypeBool)
                                                  .AddInputAttr(kNumberTypeFloat16)
                                                  .AddOutputAttr(kNumberTypeFloat16),
                                                &MaskedSelectGradCpuKernelMod::LaunchKernel<float16>},
+                                              {KernelAttr()
+                                                 .AddInputAttr(kNumberTypeFloat32)
+                                                 .AddInputAttr(kNumberTypeBool)
+                                                 .AddInputAttr(kNumberTypeFloat32)
+                                                 .AddOutputAttr(kNumberTypeFloat32),
+                                               &MaskedSelectGradCpuKernelMod::LaunchKernel<float>},
                                               {KernelAttr()
                                                  .AddInputAttr(kNumberTypeFloat64)
                                                  .AddInputAttr(kNumberTypeBool)
@@ -138,17 +133,71 @@ std::vector<std::pair<KernelAttr, MaskedSelectGradCpuKernelMod::MaskedSelectGrad
                                                  .AddOutputAttr(kNumberTypeFloat64),
                                                &MaskedSelectGradCpuKernelMod::LaunchKernel<double>},
                                               {KernelAttr()
+                                                 .AddInputAttr(kNumberTypeInt8)
+                                                 .AddInputAttr(kNumberTypeBool)
+                                                 .AddInputAttr(kNumberTypeInt8)
+                                                 .AddOutputAttr(kNumberTypeInt8),
+                                               &MaskedSelectGradCpuKernelMod::LaunchKernel<int8_t>},
+                                              {KernelAttr()
                                                  .AddInputAttr(kNumberTypeInt16)
                                                  .AddInputAttr(kNumberTypeBool)
                                                  .AddInputAttr(kNumberTypeInt16)
                                                  .AddOutputAttr(kNumberTypeInt16),
                                                &MaskedSelectGradCpuKernelMod::LaunchKernel<int16_t>},
                                               {KernelAttr()
+                                                 .AddInputAttr(kNumberTypeInt32)
+                                                 .AddInputAttr(kNumberTypeBool)
+                                                 .AddInputAttr(kNumberTypeInt32)
+                                                 .AddOutputAttr(kNumberTypeInt32),
+                                               &MaskedSelectGradCpuKernelMod::LaunchKernel<int32_t>},
+                                              {KernelAttr()
                                                  .AddInputAttr(kNumberTypeInt64)
                                                  .AddInputAttr(kNumberTypeBool)
                                                  .AddInputAttr(kNumberTypeInt64)
                                                  .AddOutputAttr(kNumberTypeInt64),
-                                               &MaskedSelectGradCpuKernelMod::LaunchKernel<int64_t>}};
+                                               &MaskedSelectGradCpuKernelMod::LaunchKernel<int64_t>},
+                                              {KernelAttr()
+                                                 .AddInputAttr(kNumberTypeUInt8)
+                                                 .AddInputAttr(kNumberTypeBool)
+                                                 .AddInputAttr(kNumberTypeUInt8)
+                                                 .AddOutputAttr(kNumberTypeUInt8),
+                                               &MaskedSelectGradCpuKernelMod::LaunchKernel<uint8_t>},
+                                              {KernelAttr()
+                                                 .AddInputAttr(kNumberTypeUInt16)
+                                                 .AddInputAttr(kNumberTypeBool)
+                                                 .AddInputAttr(kNumberTypeUInt16)
+                                                 .AddOutputAttr(kNumberTypeUInt16),
+                                               &MaskedSelectGradCpuKernelMod::LaunchKernel<uint16_t>},
+                                              {KernelAttr()
+                                                 .AddInputAttr(kNumberTypeUInt32)
+                                                 .AddInputAttr(kNumberTypeBool)
+                                                 .AddInputAttr(kNumberTypeUInt32)
+                                                 .AddOutputAttr(kNumberTypeUInt32),
+                                               &MaskedSelectGradCpuKernelMod::LaunchKernel<uint32_t>},
+                                              {KernelAttr()
+                                                 .AddInputAttr(kNumberTypeUInt64)
+                                                 .AddInputAttr(kNumberTypeBool)
+                                                 .AddInputAttr(kNumberTypeUInt64)
+                                                 .AddOutputAttr(kNumberTypeUInt64),
+                                               &MaskedSelectGradCpuKernelMod::LaunchKernel<uint64_t>},
+                                              {KernelAttr()
+                                                 .AddInputAttr(kNumberTypeBool)
+                                                 .AddInputAttr(kNumberTypeBool)
+                                                 .AddInputAttr(kNumberTypeBool)
+                                                 .AddOutputAttr(kNumberTypeBool),
+                                               &MaskedSelectGradCpuKernelMod::LaunchKernel<int64_t>},
+                                              {KernelAttr()
+                                                 .AddInputAttr(kNumberTypeComplex64)
+                                                 .AddInputAttr(kNumberTypeBool)
+                                                 .AddInputAttr(kNumberTypeComplex64)
+                                                 .AddOutputAttr(kNumberTypeComplex64),
+                                               &MaskedSelectGradCpuKernelMod::LaunchKernel<complex64>},
+                                              {KernelAttr()
+                                                 .AddInputAttr(kNumberTypeComplex128)
+                                                 .AddInputAttr(kNumberTypeBool)
+                                                 .AddInputAttr(kNumberTypeComplex128)
+                                                 .AddOutputAttr(kNumberTypeComplex128),
+                                               &MaskedSelectGradCpuKernelMod::LaunchKernel<complex128>}};
 
 std::vector<KernelAttr> MaskedSelectGradCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
