@@ -1,7 +1,7 @@
 mindspore.dataset.Dataset.batch
 ===============================
 
-.. py:method:: mindspore.dataset.Dataset.batch(batch_size, drop_remainder=False, num_parallel_workers=None, per_batch_map=None, input_columns=None, output_columns=None, column_order=None, pad_info=None, python_multiprocessing=False, max_rowsize=16)
+.. py:method:: mindspore.dataset.Dataset.batch(batch_size, drop_remainder=False, num_parallel_workers=None, **kwargs)
 
     将数据集中连续 `batch_size` 条数据合并为一个批处理数据。
 

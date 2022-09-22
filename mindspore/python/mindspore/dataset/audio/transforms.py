@@ -1150,6 +1150,9 @@ class LFilter(AudioTensorOperation):
             Must be same size as a_coeffs (pad with 0's as necessary).
         clamp (bool, optional): If True, clamp the output signal to be in the range [-1, 1] (default=True).
 
+    Raises:
+        RuntimeError: If the shape of input audio waveform does not match <..., time>.
+
     Examples:
         >>> import numpy as np
         >>>
