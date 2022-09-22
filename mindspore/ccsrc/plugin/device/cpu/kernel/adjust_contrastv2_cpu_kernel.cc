@@ -65,8 +65,9 @@ bool AdjustContrastv2CpuKernelMod::LaunchAdjustContrastv2Kernel(const std::vecto
   std::vector<int64_t> x_dim_sizes = images_shape;
   std::size_t n{x_dim_sizes.size()};
   std::size_t per_batch_elements{LongToSize(x_dim_sizes[n - 1] * x_dim_sizes[n - 2] * x_dim_sizes[n - 3])};
+  MS_EXCEPTION_IF_ZERO("per_batch_elements", per_batch_elements);
   std::int64_t input_numelements = static_cast<int64_t>(inputs[0]->size / sizeof(T));
-  std::int64_t total{SizeToLong(SizeToLong(input_numelements / per_batch_elements))};
+  std::int64_t total{input_numelements / SizeToLong(per_batch_elements)};
   std::int64_t per_unit_size{total / std::min(kAdjustContrastv2ParallelNum - 2L, total)};
   return ParallelForAdjustContrastv2(total, per_unit_size, [&](std::int64_t begin, std::int64_t end) {
     for (std::int64_t i = begin; i < end; i += 1) {
