@@ -63,6 +63,30 @@ extern "C" JNIEXPORT void JNICALL Java_com_mindspore_config_RunnerConfig_setWork
   pointer->SetWorkersNum(workers_num);
 }
 
+extern "C" JNIEXPORT void JNICALL Java_com_mindspore_config_RunnerConfig_setConfigPath(JNIEnv *env, jobject thiz,
+                                                                                       jstring runner_config_ptr,
+                                                                                       jstring config_path) {
+  auto *runner_config = reinterpret_cast<mindspore::RunnerConfig *>(runner_config_ptr);
+  if (runner_config == nullptr) {
+    MS_LOG(ERROR) << "runner config from java is nullptr";
+    return;
+  }
+  const char *c_config_path = env->GetStringUTFChars(config_path, nullptr);
+  std::string str_config_path(c_config_path, env->GetStringLength(config_path));
+  runner_config->SetConfigPath(str_config_path);
+  env->ReleaseStringUTFChars(config_path, c_config_path);
+}
+
+extern "C" JNIEXPORT jstring JNICALL Java_com_mindspore_config_RunnerConfig_getConfigPath(JNIEnv *env, jobject thiz,
+                                                                                          jlong runner_config_ptr) {
+  auto *runner_config = reinterpret_cast<mindspore::RunnerConfig *>(runner_config_ptr);
+  if (runner_config == nullptr) {
+    MS_LOG(ERROR) << "runner config pointer from java is nullptr";
+    return nullptr;
+  }
+  return env->NewStringUTF(runner_config->GetConfigPath().c_str());
+}
+
 extern "C" JNIEXPORT void JNICALL Java_com_mindspore_config_RunnerConfig_setConfigInfo(JNIEnv *env, jobject thiz,
                                                                                        jstring runner_config_ptr,
                                                                                        jstring section,
