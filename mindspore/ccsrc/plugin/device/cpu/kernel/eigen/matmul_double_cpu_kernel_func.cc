@@ -53,6 +53,10 @@ void MatmulDoubleCpuKernelFunc::InitFunc(const CNodePtr &kernel_node) {
   std::vector<int64_t> a_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   std::vector<int64_t> b_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
   std::vector<int64_t> out_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
+  if (IsDynamicRank(a_shape) || IsDynamicRank(b_shape) || IsDynamicRank(out_shape) || IsDynamic(a_shape) ||
+      IsDynamic(b_shape) || IsDynamic(out_shape)) {
+    return;
+  }
   if (a_shape.size() != kAMatrixDimNum || b_shape.size() != kAMatrixDimNum || out_shape.size() != kAMatrixDimNum) {
     MS_LOG(EXCEPTION) << "The tensor rank of MatMul must be equal to 2.";
   }

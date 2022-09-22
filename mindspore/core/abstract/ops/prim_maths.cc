@@ -221,10 +221,20 @@ AbstractBasePtr InferImplMatMul(const AnalysisEnginePtr &, const PrimitivePtr &p
   MS_EXCEPTION_IF_NULL(y->shape());
   auto x_shp = x->shape()->shape();
   auto y_shp = y->shape()->shape();
-  const size_t SHAPE_SIZE = 2;
-  if (x_shp.size() != SHAPE_SIZE || y_shp.size() != SHAPE_SIZE) {
-    MS_LOG(EXCEPTION) << "MatMul inputs should have the same dimension size and equal to 2.";
+
+  TypePtr x_type = x->element()->GetTypeTrack();
+  if (x_type->type_id() == TypeId::kNumberTypeInt8) {
+    x_type = kInt32;
   }
+  if (primitive->HasAttr("cast_type")) {
+    auto out_type = primitive->GetAttr("cast_type");
+    MS_EXCEPTION_IF_NULL(out_type);
+    if (!out_type->isa<Type>()) {
+      MS_EXCEPTION(ValueError) << "MatMul cast_type must be a `Type`";
+    }
+    x_type = out_type->cast<TypePtr>();
+  }
+
   ValuePtr transpose_a_ptr = primitive->GetAttr("transpose_a");
   ValuePtr transpose_b_ptr = primitive->GetAttr("transpose_b");
   bool transpose_a = GetValue<bool>(transpose_a_ptr);
@@ -233,18 +243,23 @@ AbstractBasePtr InferImplMatMul(const AnalysisEnginePtr &, const PrimitivePtr &p
   ShapeVector x_max_shape = x->shape()->max_shape();
   ShapeVector y_min_shape = y->shape()->min_shape();
   ShapeVector y_max_shape = y->shape()->max_shape();
-  // Additional check for dynamic shape
-  // Last infer will be real shape values
-  bool x_not_dyn = std::all_of(x_shp.begin(), x_shp.end(), [](int64_t value) { return value != Shape::SHP_ANY; });
-  bool y_not_dyn = std::all_of(y_shp.begin(), y_shp.end(), [](int64_t value) { return value != Shape::SHP_ANY; });
-  if (x_not_dyn && y_not_dyn) {
-    auto x_col = x_shp[(transpose_a ? 0 : 1)];
-    auto y_row = y_shp[(transpose_b ? 1 : 0)];
-    if (x_col != y_row) {
-      MS_LOG(EXCEPTION) << "MatMul shape error, got x_col: " << x_col << ", y_row: " << y_row
-                        << ". In MatMul x_col and y_row should be equal.";
-    }
+
+  if (IsDynamicRank(x_shp) || IsDynamicRank(y_shp)) {
+    ShapeVector ret_shape{UNKNOWN_RANK};
+    return std::make_shared<AbstractTensor>(x_type, std::make_shared<Shape>(ret_shape));
   }
+
+  const size_t SHAPE_SIZE = 2;
+  if (x_shp.size() != SHAPE_SIZE || y_shp.size() != SHAPE_SIZE) {
+    MS_LOG(EXCEPTION) << "MatMul inputs should have the same dimension size and equal to 2.";
+  }
+  auto x_col = x_shp[(transpose_a ? 0 : 1)];
+  auto y_row = y_shp[(transpose_b ? 1 : 0)];
+  if (x_col != y_row && x_col >= 0 && y_row >= 0) {
+    MS_LOG(EXCEPTION) << "MatMul shape error, got x_col: " << x_col << ", y_row: " << y_row
+                      << ". In MatMul x_col and y_row should be equal.";
+  }
+
   ShapeVector ret_shape;
   ShapeVector ret_min_shape;
   ShapeVector ret_max_shape;
@@ -259,18 +274,6 @@ AbstractBasePtr InferImplMatMul(const AnalysisEnginePtr &, const PrimitivePtr &p
   make_shape(ret_shape, x_shp, y_shp);
   make_shape(ret_min_shape, x_min_shape, y_min_shape);
   make_shape(ret_max_shape, x_max_shape, y_max_shape);
-  TypePtr x_type = x->element()->GetTypeTrack();
-  if (x_type->type_id() == TypeId::kNumberTypeInt8) {
-    x_type = kInt32;
-  }
-  if (primitive->HasAttr("cast_type")) {
-    auto out_type = primitive->GetAttr("cast_type");
-    MS_EXCEPTION_IF_NULL(out_type);
-    if (!out_type->isa<Type>()) {
-      MS_EXCEPTION(ValueError) << "MatMul cast_type must be a `Type`";
-    }
-    x_type = out_type->cast<TypePtr>();
-  }
   return std::make_shared<AbstractTensor>(x_type, std::make_shared<Shape>(ret_shape, ret_min_shape, ret_max_shape));
 }
 

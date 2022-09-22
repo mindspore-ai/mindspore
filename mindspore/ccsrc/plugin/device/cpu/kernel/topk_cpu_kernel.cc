@@ -111,6 +111,7 @@ int TopKCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the dimension of input must be greater than 0, but got empty input.";
   }
+  outer_size_ = 1;
   for (size_t i = 0; i < x_shape_.size() - 1; ++i) {
     outer_size_ *= x_shape_[i];
   }

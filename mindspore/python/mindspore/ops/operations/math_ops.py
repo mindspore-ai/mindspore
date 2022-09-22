@@ -26,6 +26,7 @@ from mindspore.common._decorator import deprecated
 from mindspore.ops._utils import get_broadcast_shape
 from mindspore.ops.primitive import Primitive, PrimitiveWithInfer, PrimitiveWithCheck, prim_attr_register, _run_op
 from mindspore._c_expression import Tensor as Tensor_
+from mindspore.ops._utils import is_shape_unknown
 
 
 def _infer_shape_reduce(x, axis, keep_dims, prim_name):
@@ -1403,8 +1404,17 @@ class MatMul(PrimitiveWithCheck):
                              f"be equal to 2, but got the size of 'x': ({len(x1)}) and the size of 'y': ({len(x2)}).")
 
     def check_shape(self, x1, x2):
-        self.check_shape_size(x1, x2)
+        is_dyn_shape = is_shape_unknown(x1) or is_shape_unknown(x2)
+        if not is_dyn_shape:
+            self.check_shape_size(x1, x2)
         cls_name = self.name
+
+        # set attribute
+        self.add_prim_attr('transpose_x1', self.transpose_a)
+        self.add_prim_attr('transpose_x2', self.transpose_b)
+
+        if is_dyn_shape:
+            return
 
         # validate whether last two dims satisfying matrix multiply
         x1_last = x1[-2:]
@@ -1416,9 +1426,6 @@ class MatMul(PrimitiveWithCheck):
                 raise ValueError(f"For '{cls_name}', the input dimensions must be equal, but got 'x1_col': {x1_col} "
                                  f"and 'x2_row': {x2_row}. And 'x' shape {x1}(transpose_a={self.transpose_a}), "
                                  f"'y' shape {x2}(transpose_b={self.transpose_b}).")
-        # set attribute
-        self.add_prim_attr('transpose_x1', self.transpose_a)
-        self.add_prim_attr('transpose_x2', self.transpose_b)
 
     def check_dtype(self, x1, x2):
         args = {"x1": x1, "x2": x2}
@@ -2586,7 +2593,6 @@ class HistogramFixedWidth(PrimitiveWithInfer):
         self.dtype = validator.check_string(dtype, valid_values, "dtype", self.name)
         self.init_prim_io_names(inputs=['x', 'range'], outputs=['y'])
         self.add_prim_attr('dtype', 3)
-
 
 
 class Log(Primitive):
