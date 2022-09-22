@@ -770,6 +770,7 @@ def get_bprop_strided_slice_grad(self):
                                    ellipsis_mask=self.ellipsis_mask,
                                    new_axis_mask=self.new_axis_mask,
                                    shrink_axis_mask=self.shrink_axis_mask)
+
     def bprop(dy, shapex, begin, end, strides, out, dout):
         return strided_slice(dout, begin, end, strides), zeros_like(shapex), zeros_like(begin), zeros_like(end), \
             zeros_like(strides)
