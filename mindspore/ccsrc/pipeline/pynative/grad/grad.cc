@@ -567,6 +567,10 @@ void GradExecutor::GradNetInner(const py::object *ret, const prim::GradOperation
   // Get params(weights) require derivative
   auto w_args = GetWeightsArgs(weights, df_builder);
   auto p_args = GetGradPositionArgs(grad_position, grad->get_by_position_);
+  if (w_args.empty() && !df_builder->parameters().empty()) {
+    MS_LOG(DEBUG) << "Add weights params to w_args";
+    (void)w_args.insert(w_args.end(), df_builder->parameters().cbegin(), df_builder->parameters().cend());
+  }
   // Get bprop graph of top cell
   auto bprop_graph = GetBpropGraph(grad, cell, w_args, p_args, size, args);
   MS_EXCEPTION_IF_NULL(bprop_graph);
@@ -1286,7 +1290,22 @@ AnfNodePtr GradExecutor::MakeValueNode(const ValuePtr &v, const std::string &obj
   return node;
 }
 
+void GradExecutor::RecordGradNodeToGraphInfoMap(const FuncGraphPtr &fg, const CNodePtr &cnode, const ValuePtr &v,
+                                                const std::string &obj_id, const ValuePtrList &input_args) const {
+  top_cell()->SetTupleArgsToGraphInfoMap(fg, v, cnode);
+  top_cell()->SetNodeMapInGraphInfoMap(fg, obj_id, cnode);
+  // run ad for make tuple node
+  if (grad_is_running_ && !bprop_grad_stack_.empty() && !bprop_grad_stack_.top().second) {
+    MS_LOG(DEBUG) << "Running custom bprop, no need to do GradPynativeOp.";
+  } else {
+    (void)ad::GradPynativeOp(top_cell()->k_pynative_cell_ptr(), cnode, input_args,
+                             std::make_shared<ValueTuple>(input_args));
+  }
+}
+
 AnfNodePtr GradExecutor::CreateMakeTupleGradNode(const ValuePtr &v, const std::string &obj_id) const {
+  const auto &fg = top_cell()->fg();
+  MS_EXCEPTION_IF_NULL(fg);
   MS_EXCEPTION_IF_NULL(v);
   ValuePtrList input_args;
   std::vector<AnfNodePtr> inputs{NewValueNode(prim::kPrimMakeTuple)};
@@ -1298,36 +1317,32 @@ AnfNodePtr GradExecutor::CreateMakeTupleGradNode(const ValuePtr &v, const std::s
     // Single parameter returns in this case.
     (void)input_args.emplace_back(v);
     (void)inputs.emplace_back(GetInput(v));
-  } else {
-    // A tuple returns in this case: x = op1, y = op2, return (x, y)
-    // or a constant returns in this case
-    const auto &obj_tuple = v->cast<ValueSequencePtr>();
-    const auto &v_list = obj_tuple->value();
-    for (size_t i = 0; i < obj_tuple->size(); ++i) {
-      const auto &v_arg = v_list[i];
-      // Graph have no define for grad
-      if (v_arg->isa<FuncGraph>()) {
-        continue;
-      }
-      (void)input_args.emplace_back(v_arg);
-      (void)inputs.emplace_back(GetInput(v_arg));
-      (void)CreateMakeTupleGradNode(v_arg, PyNativeAlgo::Common::GetIdByValue(v_arg));
-    }
+    auto cnode = fg->NewCNode(inputs);
+    auto v_seq = std::make_shared<ValueSequence>(input_args);
+    const auto &new_id = PyNativeAlgo::Common::GetIdByValue(v_seq);
+    // Record grad node to graph info map.
+    RecordGradNodeToGraphInfoMap(fg, cnode, v_seq, new_id, input_args);
+    return cnode;
   }
-  // create make tuple node and record in graph info map
-  const auto &fg = top_cell()->fg();
-  MS_EXCEPTION_IF_NULL(fg);
+
+  // A tuple returns in this case: x = op1, y = op2, return (x, y)
+  // or a constant returns in this case
+  const auto &obj_tuple = v->cast<ValueSequencePtr>();
+  const auto &v_list = obj_tuple->value();
+  for (size_t i = 0; i < obj_tuple->size(); ++i) {
+    const auto &v_arg = v_list[i];
+    // Graph have no define for grad
+    if (v_arg->isa<FuncGraph>()) {
+      continue;
+    }
+    (void)input_args.emplace_back(v_arg);
+    (void)inputs.emplace_back(GetInput(v_arg));
+    (void)CreateMakeTupleGradNode(v_arg, PyNativeAlgo::Common::GetIdByValue(v_arg));
+  }
+  // Create make tuple node and record to graph info map.
   auto cnode = fg->NewCNode(inputs);
   MS_LOG(DEBUG) << "Create make tuple node: " << cnode->DebugString();
-  top_cell()->SetTupleArgsToGraphInfoMap(fg, v, cnode);
-  top_cell()->SetNodeMapInGraphInfoMap(fg, obj_id, cnode);
-  // run ad for make tuple node
-  if (grad_is_running_ && !bprop_grad_stack_.empty() && !bprop_grad_stack_.top().second) {
-    MS_LOG(DEBUG) << "Running custom bprop, no need to do GradPynativeOp.";
-  } else {
-    (void)ad::GradPynativeOp(top_cell()->k_pynative_cell_ptr(), cnode, input_args,
-                             std::make_shared<ValueTuple>(input_args));
-  }
+  RecordGradNodeToGraphInfoMap(fg, cnode, v, obj_id, input_args);
   return cnode;
 }
 

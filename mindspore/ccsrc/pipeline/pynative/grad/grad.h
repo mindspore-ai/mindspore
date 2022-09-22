@@ -179,6 +179,8 @@ class GradExecutor {
   AnfNodePtr MakeValueNode(const ValuePtr &v, const std::string &obj_id) const;
   AnfNodePtr CreateMakeTupleGradNode(const ValuePtr &v, const std::string &obj_id) const;
   AnfNodePtr CreateTupleGetItemNode(const std::string &obj_id) const;
+  void RecordGradNodeToGraphInfoMap(const FuncGraphPtr &fg, const CNodePtr &cnode, const ValuePtr &v,
+                                    const std::string &obj_id, const ValuePtrList &input_args) const;
 
   bool grad_flag_{false};
   bool enable_op_cache_{true};
