@@ -903,6 +903,22 @@ void FetchAllCalledFuncGraph(const AnfNodePtr &call_node, std::set<FuncGraphPtr>
   }
 }
 
+tensor::TensorPtr ControlNodeParser::CreateTensorForValue(const ValuePtr &value) {
+  MS_EXCEPTION_IF_NULL(value);
+  tensor::TensorPtr tensor = nullptr;
+  if (value->isa<Monad>()) {
+    tensor = std::make_shared<tensor::Tensor>(int8_t('U'), TypeIdToType(kNumberTypeInt8));
+  } else if (value->isa<Scalar>()) {
+    const auto scalar_value = value->cast<ScalarPtr>();
+    MS_EXCEPTION_IF_NULL(scalar_value);
+    tensor = ScalarToTensor(scalar_value);
+  } else {
+    MS_LOG(EXCEPTION) << "Invalid value:" << value->ToString();
+  }
+  control_node_tensors_.emplace_back(tensor);
+  return tensor;
+}
+
 bool ControlNodeParser::IsParallelCallRecursionGraph(const AnfNodePtr &call_node1, const AnfNodePtr &call_node2,
                                                      const FuncGraphToCallNode &func_graph_to_call_nodes) {
   // Fetch all funcgraphs the two call nodes will call both.
