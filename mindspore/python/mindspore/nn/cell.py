@@ -1530,15 +1530,17 @@ class Cell(Cell_):
         Raises:
             ValueError: If dst_type is not mstype.float32 or mstype.float16.
 
+        Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
         Examples:
             >>> import mindspore.nn as nn
             >>> from mindspore import dtype as mstype
             >>>
             >>> net = nn.Conv2d(120, 240, 4, has_bias=False, weight_init='normal')
             >>> net.to_float(mstype.float16)
-
-        Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+            Conv2d<input_channels=120, output_channels=240, kernel_size=(4, 4), stride=(1, 1), pad_mode=same,
+            padding=0, dilation=(1, 1), group=1, has_bias=False, weight_init=normal, bias_init=zeros, format=NCHW>
         """
         if dst_type not in (mstype.float16, mstype.float32):
             raise ValueError("For 'to_float', the argument 'dst_type' must be float32 or float16, "
