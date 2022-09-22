@@ -799,7 +799,7 @@ std::pair<std::string, ExceptionType> CollectNotMatchMessage(
   } else {
     auto candidates = KernelInfoCandidateList(ai_core, ai_cpu);
     ss << "Can not select a valid kernel info for [" << full_name
-       << "] in AI CORE or AI CPU kernel info candidates list: " << candidates
+       << "] in AI CORE or AI CPU kernel info candidates list.#umsg#Kernel Info Candidates List:#umsg#" << candidates
        << "Please check the given data type or shape:"
        << "\nAI CORE: " << aicore_info.str() << "\nAI CPU: " << aicpu_info.str()
        << "\nFor more details, please refer to 'Kernel Select Failed' at "

@@ -101,7 +101,7 @@ const AnfNodePtr BatchNormGradSplit::Process(const FuncGraphPtr &func_graph, con
   auto primitive = common::AnfAlgo::GetCNodePrimitive(cnode);
   MS_EXCEPTION_IF_NULL(primitive);
   if (!primitive->HasAttr(kAttrIsTraining)) {
-    MS_LOG(INFO) << "Op BatchNormGrad must have attrs of is_training" << trace::DumpSourceLines(node);
+    MS_LOG(INFO) << "Op BatchNormGrad must have attrs of is_training" << trace::DumpSourceLines(node, false);
     return nullptr;
   }
   if (!common::AnfAlgo::GetNodeAttr<bool>(cnode, kAttrIsTraining)) {

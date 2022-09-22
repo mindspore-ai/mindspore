@@ -469,7 +469,8 @@ void TbeKernelCompileManager::QueryProcess(const std::string &type, const std::s
         auto target_node = job_id_to_node_[target_status.target_job_id];
         ClearOldTask();
         MS_LOG(EXCEPTION) << "Single op compile failed, op: " << kernel_name
-                          << "\n except_msg: " << target_status.except_msg << trace::DumpSourceLines(target_node);
+                          << ".#dmsg#Operator Compilation Exception Message:#dmsg#" << target_status.except_msg
+                          << trace::DumpSourceLines(target_node);
       } else {
         MS_LOG(INFO) << "Op " << kernel_name << " " << type << " failed,\n except_msg : " << target_status.except_msg;
         (void)success_job->emplace_back(target_status.target_job_id);

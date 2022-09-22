@@ -69,7 +69,7 @@ namespace gpu {
     cudaError_t status = (expression);                                                                                 \
     if (status != cudaSuccess) {                                                                                       \
       MS_LOG(ERROR) << "CUDA Error: " << message << " | Error Number: " << status << " " << cudaGetErrorString(status) \
-                    << trace::DumpSourceLines(node.lock());                                                            \
+                    << trace::DumpSourceLines(node.lock(), false);                                                     \
     }                                                                                                                  \
   }
 
@@ -137,13 +137,13 @@ namespace gpu {
     }                                                                                     \
   }
 
-#define CHECK_CUDNN_RET_WITH_ERROR(node, expression, message)                              \
-  {                                                                                        \
-    cudnnStatus_t status = (expression);                                                   \
-    if (status != CUDNN_STATUS_SUCCESS) {                                                  \
-      MS_LOG(ERROR) << "cuDNN Error: " << message << " | Error Number: " << status << " "  \
-                    << cudnnGetErrorString(status) << trace::DumpSourceLines(node.lock()); \
-    }                                                                                      \
+#define CHECK_CUDNN_RET_WITH_ERROR(node, expression, message)                                     \
+  {                                                                                               \
+    cudnnStatus_t status = (expression);                                                          \
+    if (status != CUDNN_STATUS_SUCCESS) {                                                         \
+      MS_LOG(ERROR) << "cuDNN Error: " << message << " | Error Number: " << status << " "         \
+                    << cudnnGetErrorString(status) << trace::DumpSourceLines(node.lock(), false); \
+    }                                                                                             \
   }
 
 #define CHECK_CUBLAS_RET_WITH_EXCEPT_NOTRACE(expression, message)                              \
