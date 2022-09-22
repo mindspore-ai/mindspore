@@ -15,16 +15,26 @@
  */
 
 #include "plugin/device/gpu/kernel/arrays/gather_grad_gpu_kernel.h"
+#include "plugin/device/gpu/hal/device/gpu_device_address.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
 constexpr auto kGatherDGrad = "GatherDGrad";
 constexpr auto kGatherDGradV2 = "GatherDGradV2";
+constexpr size_t kStaticSize = 2;
+constexpr size_t kDynamicSize = 4;
+constexpr size_t kDynamicDimIdx = 1;
+constexpr size_t kDynamicIndexIdx = 2;
+constexpr size_t kDynamicGradIdx = 3;
 }  // namespace
 
 bool GatherGradGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                     const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+  if (is_v2_) {
+    int dim = GetGatherDGradV2DimValue(inputs);
+    CalculateDim(dim);
+  }
   cuda_stream_ = stream_ptr;
   return kernel_func_(this, inputs, outputs, cuda_stream_);
 }
@@ -46,19 +56,17 @@ bool GatherGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const st
   MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
   size_t input_num = inputs.size();
-  constexpr size_t kStaticSize = 2;
-  constexpr size_t kDynamicSize = 3;
   if (input_num == kStaticSize) {
     index_idx_ = 0;
     grad_idx_ = 1;
   } else if (input_num == kDynamicSize) {
-    index_idx_ = 1;
-    constexpr size_t kDynamicGradIdx = 2;
+    dim_idx_ = kDynamicDimIdx;
+    index_idx_ = kDynamicIndexIdx;
     grad_idx_ = kDynamicGradIdx;
+    is_v2_ = true;
   } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 2 or 3, but got " << input_num;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 2 or 4, but got " << input_num;
   }
-
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -66,15 +74,39 @@ bool GatherGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const st
     return false;
   }
   kernel_func_ = kernel_attr_map_.at(kernel_name_)[index].second;
-
   idx_type_size_ = abstract::TypeIdSize(inputs.at(index_idx_)->GetDtype());
   grad_type_size_ = abstract::TypeIdSize(inputs.at(grad_idx_)->GetDtype());
-
+  if (is_v2_) {
+    dim_type_ = inputs.at(dim_idx_)->GetDtype();
+  }
   return true;
 }
 
-void GatherGradGpuKernelMod::CalculateDim(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs) {
+int GatherGradGpuKernelMod::GetGatherDGradDimValue(const BaseOperatorPtr &base_operator) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::GatherDGrad>(base_operator);
+  return static_cast<int>(kernel_ptr->get_dim());
+}
+
+int GatherGradGpuKernelMod::GetGatherDGradV2DimValue(const std::vector<AddressPtr> &inputs) {
+  size_t size = abstract::TypeIdSize(dim_type_);
+  auto dim_gpu_addr =
+    std::make_shared<device::gpu::GPUDeviceAddress>(inputs[kDynamicDimIdx]->addr, size, kOpFormat_DEFAULT, dim_type_);
+  int res = 0;
+  if (dim_type_ == kNumberTypeInt32) {
+    int32_t host_dim = 0;
+    dim_gpu_addr->SyncDeviceToHost(size, &host_dim);
+    res = static_cast<int>(host_dim);
+  } else if (dim_type_ == kNumberTypeInt64) {
+    int64_t host_dim = 0;
+    dim_gpu_addr->SyncDeviceToHost(size, &host_dim);
+    res = static_cast<int>(host_dim);
+  } else {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', got unsupported data type of dim: " << dim_type_;
+  }
+  return res;
+}
+
+void GatherGradGpuKernelMod::CalculateDim(int axis) {
   if (grad_shapes_.size() != index_shapes_.size() || grad_shapes_.size() != output_shapes_.size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the dimension of grad, index and output must be the same, but got the dimension of "
@@ -82,39 +114,23 @@ void GatherGradGpuKernelMod::CalculateDim(const BaseOperatorPtr &base_operator,
                       << ", the dimension of output: " << output_shapes_.size();
   }
   int dims = SizeToInt(grad_shapes_.size());
-
-  size_t input_num = inputs.size();
-  constexpr size_t kStaticSize = 2;
-  constexpr size_t kDynamicSize = 3;
-  if (input_num == kStaticSize) {
-    auto kernel_ptr = std::dynamic_pointer_cast<ops::GatherDGrad>(base_operator);
-    axis_ = static_cast<int>(kernel_ptr->get_dim());
-  } else if (input_num == kDynamicSize) {
-    auto kernel_ptr = std::dynamic_pointer_cast<ops::GatherDGradV2>(base_operator);
-    axis_ = static_cast<int>(kernel_ptr->get_dim());
-  } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 2 or 3, but got " << input_num;
-  }
-
-  if (axis_ < -dims || axis_ >= dims) {
+  if (axis < -dims || axis >= dims) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'axis' must be in the range [-" << dims << "," << dims
-                      << "), but got " << axis_;
+                      << "), but got " << axis;
   }
-  if (axis_ < 0) {
-    axis_ += dims;
+  if (axis < 0) {
+    axis += dims;
   }
-
   int64_t dim_before_axis = 1;
-  for (size_t i = 0; i < IntToSize(axis_); i++) {
+  for (size_t i = 0; i < IntToSize(axis); i++) {
     dim_before_axis *= output_shapes_[i];
   }
-  size_t dim_at_axis_index = LongToSizeClipNeg(index_shapes_[IntToSize(axis_)]);
-  size_t dim_at_axis_output = LongToSizeClipNeg(output_shapes_[IntToSize(axis_)]);
+  size_t dim_at_axis_index = LongToSizeClipNeg(index_shapes_[IntToSize(axis)]);
+  size_t dim_at_axis_output = LongToSizeClipNeg(output_shapes_[IntToSize(axis)]);
   int64_t dim_after_axis = 1;
-  for (size_t i = IntToSize(axis_) + 1; i < output_shapes_.size(); i++) {
+  for (size_t i = IntToSize(axis) + 1; i < output_shapes_.size(); i++) {
     dim_after_axis *= output_shapes_[i];
   }
-
   dims_[kIndex0] = LongToSize(dim_before_axis);
   dims_[kIndex1] = dim_at_axis_index;
   dims_[kIndex2] = dim_at_axis_output;
@@ -124,40 +140,17 @@ void GatherGradGpuKernelMod::CalculateDim(const BaseOperatorPtr &base_operator,
 int GatherGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                    const std::vector<KernelTensorPtr> &outputs,
                                    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  auto ret = KRET_OK;
-  input_size_list_.clear();
-  output_size_list_.clear();
-  workspace_size_list_.clear();
-
+  auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
   index_shapes_ = inputs.at(index_idx_)->GetShapeVector();
-  if (!IsValidShape(index_shapes_)) {
-    ret = KRET_UNKNOWN_SHAPE;
-    input_size_list_.push_back(idx_type_size_);
-  } else {
-    input_size_list_.push_back(idx_type_size_ * SizeOf(index_shapes_));
-  }
-
-  grad_shapes_ = inputs.at(grad_idx_)->GetShapeVector();
-  if (!IsValidShape(grad_shapes_)) {
-    ret = (ret == KRET_OK ? KRET_UNKNOWN_OUT_SHAPE : ret);
-    input_size_list_.push_back(grad_type_size_);
-  } else {
-    input_size_list_.push_back(grad_type_size_ * SizeOf(grad_shapes_));
-  }
-
   output_shapes_ = outputs.at(kIndex0)->GetShapeVector();
-  if (!IsValidShape(output_shapes_)) {
-    ret = (ret == KRET_OK ? KRET_UNKNOWN_OUT_SHAPE : ret);
-    output_size_list_.push_back(grad_type_size_);
-  } else {
-    output_size_list_.push_back(grad_type_size_ * SizeOf(output_shapes_));
+  grad_shapes_ = inputs.at(grad_idx_)->GetShapeVector();
+  if (is_v2_) {
+    dim_shapes_ = inputs.at(dim_idx_)->GetShapeVector();
   }
-
-  if (ret == KRET_OK) {
-    MS_EXCEPTION_IF_NULL(base_operator);
-    CalculateDim(base_operator, inputs);
+  if (ret == KRET_OK && !is_v2_) {
+    auto dim = GetGatherDGradDimValue(base_operator);
+    CalculateDim(dim);
   }
-
   return static_cast<int>(ret);
 }
 
@@ -228,11 +221,13 @@ std::map<std::string, std::vector<std::pair<KernelAttr, GatherGradGpuKernelMod::
      {{KernelAttr()
          .AddInputAttr(kNumberTypeFloat64)
          .AddInputAttr(kNumberTypeInt32)
+         .AddInputAttr(kNumberTypeInt32)
          .AddInputAttr(kNumberTypeFloat64)
          .AddOutputAttr(kNumberTypeFloat64),
        &GatherGradGpuKernelMod::LaunchKernel<int, double>},
       {KernelAttr()
          .AddInputAttr(kNumberTypeFloat64)
+         .AddInputAttr(kNumberTypeInt32)
          .AddInputAttr(kNumberTypeInt64)
          .AddInputAttr(kNumberTypeFloat64)
          .AddOutputAttr(kNumberTypeFloat64),
@@ -240,11 +235,13 @@ std::map<std::string, std::vector<std::pair<KernelAttr, GatherGradGpuKernelMod::
       {KernelAttr()
          .AddInputAttr(kNumberTypeFloat32)
          .AddInputAttr(kNumberTypeInt32)
+         .AddInputAttr(kNumberTypeInt32)
          .AddInputAttr(kNumberTypeFloat32)
          .AddOutputAttr(kNumberTypeFloat32),
        &GatherGradGpuKernelMod::LaunchKernel<int, float>},
       {KernelAttr()
          .AddInputAttr(kNumberTypeFloat32)
+         .AddInputAttr(kNumberTypeInt32)
          .AddInputAttr(kNumberTypeInt64)
          .AddInputAttr(kNumberTypeFloat32)
          .AddOutputAttr(kNumberTypeFloat32),
@@ -252,11 +249,13 @@ std::map<std::string, std::vector<std::pair<KernelAttr, GatherGradGpuKernelMod::
       {KernelAttr()
          .AddInputAttr(kNumberTypeFloat16)
          .AddInputAttr(kNumberTypeInt32)
+         .AddInputAttr(kNumberTypeInt32)
          .AddInputAttr(kNumberTypeFloat16)
          .AddOutputAttr(kNumberTypeFloat16),
        &GatherGradGpuKernelMod::LaunchKernel<int, half>},
       {KernelAttr()
          .AddInputAttr(kNumberTypeFloat16)
+         .AddInputAttr(kNumberTypeInt32)
          .AddInputAttr(kNumberTypeInt64)
          .AddInputAttr(kNumberTypeFloat16)
          .AddOutputAttr(kNumberTypeFloat16),
@@ -265,9 +264,11 @@ std::map<std::string, std::vector<std::pair<KernelAttr, GatherGradGpuKernelMod::
          .AddInputAttr(kNumberTypeInt32)
          .AddInputAttr(kNumberTypeInt32)
          .AddInputAttr(kNumberTypeInt32)
+         .AddInputAttr(kNumberTypeInt32)
          .AddOutputAttr(kNumberTypeInt32),
        &GatherGradGpuKernelMod::LaunchKernel<int, int>},
       {KernelAttr()
+         .AddInputAttr(kNumberTypeInt32)
          .AddInputAttr(kNumberTypeInt32)
          .AddInputAttr(kNumberTypeInt64)
          .AddInputAttr(kNumberTypeInt32)
@@ -276,11 +277,13 @@ std::map<std::string, std::vector<std::pair<KernelAttr, GatherGradGpuKernelMod::
       {KernelAttr()
          .AddInputAttr(kNumberTypeInt8)
          .AddInputAttr(kNumberTypeInt32)
+         .AddInputAttr(kNumberTypeInt32)
          .AddInputAttr(kNumberTypeInt8)
          .AddOutputAttr(kNumberTypeInt8),
        &GatherGradGpuKernelMod::LaunchKernel<int, int8_t>},
       {KernelAttr()
          .AddInputAttr(kNumberTypeInt8)
+         .AddInputAttr(kNumberTypeInt32)
          .AddInputAttr(kNumberTypeInt64)
          .AddInputAttr(kNumberTypeInt8)
          .AddOutputAttr(kNumberTypeInt8),
@@ -288,16 +291,173 @@ std::map<std::string, std::vector<std::pair<KernelAttr, GatherGradGpuKernelMod::
       {KernelAttr()
          .AddInputAttr(kNumberTypeInt16)
          .AddInputAttr(kNumberTypeInt32)
+         .AddInputAttr(kNumberTypeInt32)
+         .AddInputAttr(kNumberTypeInt16)
+         .AddOutputAttr(kNumberTypeInt16),
+       &GatherGradGpuKernelMod::LaunchKernel<int, int16_t>},
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeInt16)
+         .AddInputAttr(kNumberTypeInt32)
+         .AddInputAttr(kNumberTypeInt64)
+         .AddInputAttr(kNumberTypeInt16)
+         .AddOutputAttr(kNumberTypeInt16),
+       &GatherGradGpuKernelMod::LaunchKernel<int64_t, int16_t>},
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeInt64)
+         .AddInputAttr(kNumberTypeInt32)
+         .AddInputAttr(kNumberTypeInt32)
+         .AddInputAttr(kNumberTypeInt64)
+         .AddOutputAttr(kNumberTypeInt64),
+       &GatherGradGpuKernelMod::LaunchKernel<int, int64_t>},
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeInt64)
+         .AddInputAttr(kNumberTypeInt32)
+         .AddInputAttr(kNumberTypeInt64)
+         .AddInputAttr(kNumberTypeInt64)
+         .AddOutputAttr(kNumberTypeInt64),
+       &GatherGradGpuKernelMod::LaunchKernel<int64_t, int64_t>},
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeUInt8)
+         .AddInputAttr(kNumberTypeInt32)
+         .AddInputAttr(kNumberTypeInt32)
+         .AddInputAttr(kNumberTypeUInt8)
+         .AddOutputAttr(kNumberTypeUInt8),
+       &GatherGradGpuKernelMod::LaunchKernel<int, uchar>},
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeUInt8)
+         .AddInputAttr(kNumberTypeInt32)
+         .AddInputAttr(kNumberTypeInt64)
+         .AddInputAttr(kNumberTypeUInt8)
+         .AddOutputAttr(kNumberTypeUInt8),
+       &GatherGradGpuKernelMod::LaunchKernel<int64_t, uchar>},
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeUInt32)
+         .AddInputAttr(kNumberTypeInt32)
+         .AddInputAttr(kNumberTypeInt32)
+         .AddInputAttr(kNumberTypeUInt32)
+         .AddOutputAttr(kNumberTypeUInt32),
+       &GatherGradGpuKernelMod::LaunchKernel<int, uint>},
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeUInt32)
+         .AddInputAttr(kNumberTypeInt32)
+         .AddInputAttr(kNumberTypeInt64)
+         .AddInputAttr(kNumberTypeUInt32)
+         .AddOutputAttr(kNumberTypeUInt32),
+       &GatherGradGpuKernelMod::LaunchKernel<int64_t, uint>},
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeBool)
+         .AddInputAttr(kNumberTypeInt32)
+         .AddInputAttr(kNumberTypeInt32)
+         .AddInputAttr(kNumberTypeBool)
+         .AddOutputAttr(kNumberTypeBool),
+       &GatherGradGpuKernelMod::LaunchKernel<int, bool>},
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeBool)
+         .AddInputAttr(kNumberTypeInt32)
+         .AddInputAttr(kNumberTypeInt64)
+         .AddInputAttr(kNumberTypeBool)
+         .AddOutputAttr(kNumberTypeBool),
+       &GatherGradGpuKernelMod::LaunchKernel<int64_t, bool>},
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeUInt32)
+         .AddInputAttr(kNumberTypeInt32)
+         .AddInputAttr(kNumberTypeInt32)
+         .AddInputAttr(kNumberTypeUInt32)
+         .AddOutputAttr(kNumberTypeUInt32),
+       &GatherGradGpuKernelMod::LaunchKernel<int, uint32_t>},
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeUInt32)
+         .AddInputAttr(kNumberTypeInt32)
+         .AddInputAttr(kNumberTypeInt64)
+         .AddInputAttr(kNumberTypeUInt32)
+         .AddOutputAttr(kNumberTypeUInt32),
+       &GatherGradGpuKernelMod::LaunchKernel<int64_t, uint32_t>},
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeFloat64)
+         .AddInputAttr(kNumberTypeInt64)
+         .AddInputAttr(kNumberTypeInt32)
+         .AddInputAttr(kNumberTypeFloat64)
+         .AddOutputAttr(kNumberTypeFloat64),
+       &GatherGradGpuKernelMod::LaunchKernel<int, double>},
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeFloat64)
+         .AddInputAttr(kNumberTypeInt64)
+         .AddInputAttr(kNumberTypeInt64)
+         .AddInputAttr(kNumberTypeFloat64)
+         .AddOutputAttr(kNumberTypeFloat64),
+       &GatherGradGpuKernelMod::LaunchKernel<int64_t, double>},
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeFloat32)
+         .AddInputAttr(kNumberTypeInt64)
+         .AddInputAttr(kNumberTypeInt32)
+         .AddInputAttr(kNumberTypeFloat32)
+         .AddOutputAttr(kNumberTypeFloat32),
+       &GatherGradGpuKernelMod::LaunchKernel<int, float>},
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeFloat32)
+         .AddInputAttr(kNumberTypeInt64)
+         .AddInputAttr(kNumberTypeInt64)
+         .AddInputAttr(kNumberTypeFloat32)
+         .AddOutputAttr(kNumberTypeFloat32),
+       &GatherGradGpuKernelMod::LaunchKernel<int64_t, float>},
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeFloat16)
+         .AddInputAttr(kNumberTypeInt64)
+         .AddInputAttr(kNumberTypeInt32)
+         .AddInputAttr(kNumberTypeFloat16)
+         .AddOutputAttr(kNumberTypeFloat16),
+       &GatherGradGpuKernelMod::LaunchKernel<int, half>},
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeFloat16)
+         .AddInputAttr(kNumberTypeInt64)
+         .AddInputAttr(kNumberTypeInt64)
+         .AddInputAttr(kNumberTypeFloat16)
+         .AddOutputAttr(kNumberTypeFloat16),
+       &GatherGradGpuKernelMod::LaunchKernel<int64_t, half>},
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeInt32)
+         .AddInputAttr(kNumberTypeInt64)
+         .AddInputAttr(kNumberTypeInt32)
+         .AddInputAttr(kNumberTypeInt32)
+         .AddOutputAttr(kNumberTypeInt32),
+       &GatherGradGpuKernelMod::LaunchKernel<int, int>},
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeInt32)
+         .AddInputAttr(kNumberTypeInt64)
+         .AddInputAttr(kNumberTypeInt64)
+         .AddInputAttr(kNumberTypeInt32)
+         .AddOutputAttr(kNumberTypeInt32),
+       &GatherGradGpuKernelMod::LaunchKernel<int64_t, int>},
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeInt8)
+         .AddInputAttr(kNumberTypeInt64)
+         .AddInputAttr(kNumberTypeInt32)
+         .AddInputAttr(kNumberTypeInt8)
+         .AddOutputAttr(kNumberTypeInt8),
+       &GatherGradGpuKernelMod::LaunchKernel<int, int8_t>},
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeInt8)
+         .AddInputAttr(kNumberTypeInt64)
+         .AddInputAttr(kNumberTypeInt64)
+         .AddInputAttr(kNumberTypeInt8)
+         .AddOutputAttr(kNumberTypeInt8),
+       &GatherGradGpuKernelMod::LaunchKernel<int64_t, int8_t>},
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeInt16)
+         .AddInputAttr(kNumberTypeInt64)
+         .AddInputAttr(kNumberTypeInt32)
          .AddInputAttr(kNumberTypeInt16)
          .AddOutputAttr(kNumberTypeInt16),
        &GatherGradGpuKernelMod::LaunchKernel<int, int16_t>},
       {KernelAttr()
          .AddInputAttr(kNumberTypeInt16)
          .AddInputAttr(kNumberTypeInt64)
+         .AddInputAttr(kNumberTypeInt64)
          .AddInputAttr(kNumberTypeInt16)
          .AddOutputAttr(kNumberTypeInt16),
        &GatherGradGpuKernelMod::LaunchKernel<int64_t, int16_t>},
       {KernelAttr()
+         .AddInputAttr(kNumberTypeInt64)
          .AddInputAttr(kNumberTypeInt64)
          .AddInputAttr(kNumberTypeInt32)
          .AddInputAttr(kNumberTypeInt64)
@@ -307,10 +467,12 @@ std::map<std::string, std::vector<std::pair<KernelAttr, GatherGradGpuKernelMod::
          .AddInputAttr(kNumberTypeInt64)
          .AddInputAttr(kNumberTypeInt64)
          .AddInputAttr(kNumberTypeInt64)
+         .AddInputAttr(kNumberTypeInt64)
          .AddOutputAttr(kNumberTypeInt64),
        &GatherGradGpuKernelMod::LaunchKernel<int64_t, int64_t>},
       {KernelAttr()
          .AddInputAttr(kNumberTypeUInt8)
+         .AddInputAttr(kNumberTypeInt64)
          .AddInputAttr(kNumberTypeInt32)
          .AddInputAttr(kNumberTypeUInt8)
          .AddOutputAttr(kNumberTypeUInt8),
@@ -318,11 +480,13 @@ std::map<std::string, std::vector<std::pair<KernelAttr, GatherGradGpuKernelMod::
       {KernelAttr()
          .AddInputAttr(kNumberTypeUInt8)
          .AddInputAttr(kNumberTypeInt64)
+         .AddInputAttr(kNumberTypeInt64)
          .AddInputAttr(kNumberTypeUInt8)
          .AddOutputAttr(kNumberTypeUInt8),
        &GatherGradGpuKernelMod::LaunchKernel<int64_t, uchar>},
       {KernelAttr()
          .AddInputAttr(kNumberTypeUInt32)
+         .AddInputAttr(kNumberTypeInt64)
          .AddInputAttr(kNumberTypeInt32)
          .AddInputAttr(kNumberTypeUInt32)
          .AddOutputAttr(kNumberTypeUInt32),
@@ -330,11 +494,13 @@ std::map<std::string, std::vector<std::pair<KernelAttr, GatherGradGpuKernelMod::
       {KernelAttr()
          .AddInputAttr(kNumberTypeUInt32)
          .AddInputAttr(kNumberTypeInt64)
+         .AddInputAttr(kNumberTypeInt64)
          .AddInputAttr(kNumberTypeUInt32)
          .AddOutputAttr(kNumberTypeUInt32),
        &GatherGradGpuKernelMod::LaunchKernel<int64_t, uint>},
       {KernelAttr()
          .AddInputAttr(kNumberTypeBool)
+         .AddInputAttr(kNumberTypeInt64)
          .AddInputAttr(kNumberTypeInt32)
          .AddInputAttr(kNumberTypeBool)
          .AddOutputAttr(kNumberTypeBool),
@@ -342,17 +508,20 @@ std::map<std::string, std::vector<std::pair<KernelAttr, GatherGradGpuKernelMod::
       {KernelAttr()
          .AddInputAttr(kNumberTypeBool)
          .AddInputAttr(kNumberTypeInt64)
+         .AddInputAttr(kNumberTypeInt64)
          .AddInputAttr(kNumberTypeBool)
          .AddOutputAttr(kNumberTypeBool),
        &GatherGradGpuKernelMod::LaunchKernel<int64_t, bool>},
       {KernelAttr()
          .AddInputAttr(kNumberTypeUInt32)
+         .AddInputAttr(kNumberTypeInt64)
          .AddInputAttr(kNumberTypeInt32)
          .AddInputAttr(kNumberTypeUInt32)
          .AddOutputAttr(kNumberTypeUInt32),
        &GatherGradGpuKernelMod::LaunchKernel<int, uint32_t>},
       {KernelAttr()
          .AddInputAttr(kNumberTypeUInt32)
+         .AddInputAttr(kNumberTypeInt64)
          .AddInputAttr(kNumberTypeInt64)
          .AddInputAttr(kNumberTypeUInt32)
          .AddOutputAttr(kNumberTypeUInt32),

@@ -24,9 +24,17 @@ namespace mindspore {
 namespace kernel {
 namespace {
 constexpr size_t kStaticInputNum = 2;
-constexpr size_t kDynInputNum = 3;
+constexpr size_t kDynInputNum = 4;
 constexpr auto kAttrDim = "dim";
+constexpr size_t kDynamicDimIdx = 1;
+constexpr size_t kDynamicIndexIdx = 2;
+constexpr size_t kDynamicGradIdx = 3;
 
+#define V2_REGISTER(X1, X2, X3, X4, OUTPUT, T1, T2)                                                         \
+  {                                                                                                         \
+    KernelAttr().AddInputAttr(X1).AddInputAttr(X2).AddInputAttr(X3).AddInputAttr(X4).AddOutputAttr(OUTPUT), \
+      &GatherDGradCpuKernelMod::LaunchKernel<T1, T2>                                                        \
+  }
 size_t get_element_num(const std::vector<size_t> &shape) {
   return std::accumulate(shape.begin(), shape.end(), static_cast<std::size_t>(1), std::multiplies<size_t>());
 }
@@ -69,15 +77,19 @@ bool GatherDGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
     index_idx_ = 0;
     grad_idx_ = 1;
   } else if (input_num == kDynInputNum) {
-    index_idx_ = 1;
-    constexpr size_t kDynGradIdx = 2;
-    grad_idx_ = kDynGradIdx;
+    dim_idx_ = kDynamicDimIdx;
+    index_idx_ = kDynamicIndexIdx;
+    grad_idx_ = kDynamicGradIdx;
+    is_v2_ = true;
   } else {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of inputs must be 2 or 3, but got " << input_num;
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of inputs must be 2 or 4, but got " << input_num;
     return false;
   }
-
-  axis_ = GetValue<int64_t>(base_operator->GetAttr(kAttrDim));
+  if (is_v2_) {
+    dim_type_ = inputs.at(dim_idx_)->GetDtype();
+  } else {
+    axis_ = GetValue<int64_t>(base_operator->GetAttr(kAttrDim));
+  }
   if (auto ret = MatchKernelFunc(base_operator, inputs, outputs); !ret) {
     return ret;
   }
@@ -94,6 +106,9 @@ int GatherDGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   index_shape_ = Convert2SizeT(inputs[index_idx_]->GetShapeVector());
   grad_shape_ = Convert2SizeT(inputs[grad_idx_]->GetShapeVector());
   output_shape_ = Convert2SizeT(outputs[0]->GetShapeVector());
+  if (is_v2_) {
+    dim_shapes_ = inputs.at(dim_idx_)->GetShapeVector();
+  }
   if (grad_shape_.size() != index_shape_.size() || output_shape_.size() != index_shape_.size()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of grad and output must be the equal to the "
                   << "dimension of index: " << index_shape_.size()
@@ -105,6 +120,16 @@ int GatherDGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   return KRET_OK;
 }
 
+int64_t GatherDGradCpuKernelMod::GetGatherDGradV2DimValue(const std::vector<kernel::AddressPtr> &inputs) {
+  auto dim_ptr = inputs[dim_idx_]->addr;
+  if (dim_type_ == kNumberTypeInt32) {
+    return static_cast<int64_t>(*static_cast<int32_t *>(dim_ptr));
+  } else if (dim_type_ == kNumberTypeInt64) {
+    return *static_cast<int64_t *>(dim_ptr);
+  }
+  MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', got unsupported data type of dim: " << dim_type_;
+  return 0;
+}
 template <typename I, typename T>
 bool GatherDGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                            const std::vector<AddressPtr> &,
@@ -129,6 +154,9 @@ bool GatherDGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
   auto *grad = reinterpret_cast<T *>(inputs[grad_idx_]->addr);
   auto out = reinterpret_cast<T *>(outputs[0]->addr);
   int output_rank = SizeToInt(output_shape_.size());
+  if (is_v2_) {
+    axis_ = GetGatherDGradV2DimValue(inputs);
+  }
   if (axis_ >= output_rank || axis_ < -output_rank) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'dim' must be in [" << -output_rank << ", "
                       << output_rank << "), but got: " << axis_;
@@ -195,67 +223,42 @@ const std::vector<std::pair<KernelAttr, GatherDGradCpuKernelMod::KernelRunFunc>>
     {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
      &GatherDGradCpuKernelMod::LaunchKernel<int64_t, bool>},
     // For dynamic shape case:
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeInt32)
-       .AddInputAttr(kNumberTypeInt32)
-       .AddInputAttr(kNumberTypeInt32)
-       .AddOutputAttr(kNumberTypeInt32),
-     &GatherDGradCpuKernelMod::LaunchKernel<int32_t, int32_t>},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeInt32)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddOutputAttr(kNumberTypeInt64),
-     &GatherDGradCpuKernelMod::LaunchKernel<int32_t, int64_t>},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeFloat32)
-       .AddInputAttr(kNumberTypeInt32)
-       .AddInputAttr(kNumberTypeFloat32)
-       .AddOutputAttr(kNumberTypeFloat32),
-     &GatherDGradCpuKernelMod::LaunchKernel<int32_t, float>},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeFloat16)
-       .AddInputAttr(kNumberTypeInt32)
-       .AddInputAttr(kNumberTypeFloat16)
-       .AddOutputAttr(kNumberTypeFloat16),
-     &GatherDGradCpuKernelMod::LaunchKernel<int32_t, float16>},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeBool)
-       .AddInputAttr(kNumberTypeInt32)
-       .AddInputAttr(kNumberTypeBool)
-       .AddOutputAttr(kNumberTypeBool),
-     &GatherDGradCpuKernelMod::LaunchKernel<int32_t, bool>},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeInt32)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeInt32)
-       .AddOutputAttr(kNumberTypeInt32),
-     &GatherDGradCpuKernelMod::LaunchKernel<int64_t, int32_t>},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddOutputAttr(kNumberTypeInt64),
-     &GatherDGradCpuKernelMod::LaunchKernel<int64_t, int64_t>},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeFloat32)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeFloat32)
-       .AddOutputAttr(kNumberTypeFloat32),
-     &GatherDGradCpuKernelMod::LaunchKernel<int64_t, float>},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeFloat16)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeFloat16)
-       .AddOutputAttr(kNumberTypeFloat16),
-     &GatherDGradCpuKernelMod::LaunchKernel<int64_t, float16>},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeBool)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeBool)
-       .AddOutputAttr(kNumberTypeBool),
-     &GatherDGradCpuKernelMod::LaunchKernel<int64_t, bool>}};
-
+    V2_REGISTER(kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, int32_t,
+                int32_t),
+    V2_REGISTER(kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt64, int32_t,
+                int64_t),
+    V2_REGISTER(kNumberTypeFloat32, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeFloat32, kNumberTypeFloat32, int32_t,
+                float),
+    V2_REGISTER(kNumberTypeFloat16, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeFloat16, kNumberTypeFloat16, int32_t,
+                float16),
+    V2_REGISTER(kNumberTypeBool, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeBool, kNumberTypeBool, int32_t, bool),
+    V2_REGISTER(kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt32, int64_t,
+                int32_t),
+    V2_REGISTER(kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt64, int64_t,
+                int64_t),
+    V2_REGISTER(kNumberTypeFloat32, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeFloat32, kNumberTypeFloat32, int64_t,
+                float),
+    V2_REGISTER(kNumberTypeFloat16, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeFloat16, kNumberTypeFloat16, int64_t,
+                float16),
+    V2_REGISTER(kNumberTypeBool, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeBool, kNumberTypeBool, int64_t, bool),
+    V2_REGISTER(kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, int32_t,
+                int32_t),
+    V2_REGISTER(kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt64, int32_t,
+                int64_t),
+    V2_REGISTER(kNumberTypeFloat32, kNumberTypeInt64, kNumberTypeInt32, kNumberTypeFloat32, kNumberTypeFloat32, int32_t,
+                float),
+    V2_REGISTER(kNumberTypeFloat16, kNumberTypeInt64, kNumberTypeInt32, kNumberTypeFloat16, kNumberTypeFloat16, int32_t,
+                float16),
+    V2_REGISTER(kNumberTypeBool, kNumberTypeInt64, kNumberTypeInt32, kNumberTypeBool, kNumberTypeBool, int32_t, bool),
+    V2_REGISTER(kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt32, int64_t,
+                int32_t),
+    V2_REGISTER(kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt64, int64_t,
+                int64_t),
+    V2_REGISTER(kNumberTypeFloat32, kNumberTypeInt64, kNumberTypeInt64, kNumberTypeFloat32, kNumberTypeFloat32, int64_t,
+                float),
+    V2_REGISTER(kNumberTypeFloat16, kNumberTypeInt64, kNumberTypeInt64, kNumberTypeFloat16, kNumberTypeFloat16, int64_t,
+                float16),
+    V2_REGISTER(kNumberTypeBool, kNumberTypeInt64, kNumberTypeInt64, kNumberTypeBool, kNumberTypeBool, int64_t, bool)};
   return func_list;
 }
 

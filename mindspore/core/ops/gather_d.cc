@@ -102,10 +102,10 @@ abstract::ShapePtr GatherDInferShape(const PrimitivePtr &primitive, const std::v
   MS_EXCEPTION_IF_CHECK_FAIL(input_args[kInputIndex2]->BuildShape()->isa<abstract::Shape>(), "index's shape wrong.");
   auto index_shape_element = input_args[kInputIndex2]->BuildShape()->cast<abstract::ShapePtr>();
   auto index_shape = index_shape_element->shape();
-  if (IsDynamicRank(x_shape) || IsDynamicRank(index_shape)) {
+  bool is_dim_dynamic = input_args[kInputIndex1]->BuildValue()->isa<AnyValue>();
+  if (IsDynamicRank(x_shape) || is_dim_dynamic) {
     return std::make_shared<abstract::Shape>(index_shape);
   }
-
   int64_t x_rank = SizeToLong(x_shape.size());
   int64_t dim_v = 0;
   if (!GetGatherDimValue(input_args[kInputIndex1], &dim_v)) {

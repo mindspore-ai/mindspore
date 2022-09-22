@@ -6032,7 +6032,6 @@ class GatherD(Primitive):
     def __init__(self):
         """Initialize GatherD"""
         self.init_prim_io_names(inputs=['x', 'dim', 'index'], outputs=['output'])
-        self.set_const_input_indexes([1])
 
 
 class Identity(Primitive):
