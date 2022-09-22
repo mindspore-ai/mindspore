@@ -16,6 +16,7 @@
 import numpy as np
 import pytest
 
+import mindspore
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -47,7 +48,7 @@ class MSGradNet(nn.Cell):
         return output
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_lrn_ms():
@@ -73,7 +74,7 @@ def test_lrn_ms():
     assert np.allclose(output.asnumpy(), y_exp)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_lrn_grad():
@@ -102,3 +103,26 @@ def test_lrn_grad():
     output = grad_net(x, dy)
     dx = output[0][0].asnumpy()
     assert np.allclose(dx, dx_exp, atol=1.0e-4, rtol=1.0e-4, equal_nan=True)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_lrn_grad_dynamic_shape():
+    """
+    Feature: test lrn_grad op in gpu.
+    Description: test the ops in dynamic shape.
+    Expectation: expect correct shape result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    x_dyn = Tensor(shape=[1, 32, 64, None], dtype=mindspore.float32)
+    dy_dyn = Tensor(shape=[1, 32, 64, None], dtype=mindspore.float32)
+    net = MSLRNOpNet()
+    grad_net = MSGradNet(net)
+    grad_net.set_train(True)
+    grad_net.set_inputs(x_dyn, dy_dyn)
+    x = np.random.randn(1, 32, 64, 64)
+    dy = np.random.randn(1, 32, 64, 64)
+    output = grad_net(Tensor(x, mindspore.float32), Tensor(dy, mindspore.float32))
+    expect_shape = (1, 32, 64, 64)
+    assert output[0][0].asnumpy().shape == expect_shape
