@@ -59,6 +59,7 @@ struct FrontendOpRunInfo {
   bool is_nop_prim = false;
   bool output_get_by_infer_value = false;
   int mix_type{0};
+  uint64_t py_prim_id{0};
   PrimitivePyPtr op_prim;
   std::string op_info;
   // Tensor input and with its value

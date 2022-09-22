@@ -182,6 +182,7 @@ void PyParser::SetPrim(const FrontendOpRunInfoPtr &op_run_info, const py::object
   MS_EXCEPTION_IF_NULL(op_run_info);
   const auto &adapter = py::cast<PrimitivePyAdapterPtr>(prim_arg);
   MS_EXCEPTION_IF_NULL(adapter);
+  op_run_info->py_prim_id = adapter->id();
   auto prim = adapter->attached_primitive();
   if (prim == nullptr) {
     prim = std::make_shared<PrimitivePy>(prim_arg, adapter);
