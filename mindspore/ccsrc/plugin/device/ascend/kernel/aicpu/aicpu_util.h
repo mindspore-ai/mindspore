@@ -231,6 +231,7 @@ const std::set<std::string> kCpuKernelOps{kIdentity,
                                           kZerosLike,
                                           kEqual,
                                           kOnesLike,
+                                          kTopK,
                                           kSign};
 const std::set<std::string> kCacheKernelOps{kUpdateCache, kCacheSwapTable,      kSubAndFilter, kPadAndShift, kDropout3D,
                                             kDropout2D,   kNonMaxSuppressionV3, kGetNext,      kInitData,    kPrint};
