@@ -3,10 +3,12 @@ mindspore.dataset.vision.AdjustGamma
 
 .. py:class:: mindspore.dataset.vision.AdjustGamma(gamma, gain=1)
 
-    对输入图像应用伽马校正。更多详细信息，请参见 `Gamma矫正 <https://en.wikipedia.org/wiki/Gamma_correction>`_ 。
+    对输入图像应用伽马校正。输入图片shape应该为 [..., H, W, C]或[H, W]。
 
     .. math::
         I_{\text{out}} = 255 \times \text{gain} \times \left(\frac{I_{\text{in}}}{255}\right)^{\gamma}
+
+    更多详细信息，请参见 `Gamma矫正 <https://en.wikipedia.org/wiki/Gamma_correction>`_ 。
 
     参数：
         - **gamma** (float) - 输出图像像素值与输入图像像素值呈指数相关。 `gamma` 大于1使阴影更暗，而 `gamma` 小于1使黑暗区域更亮。

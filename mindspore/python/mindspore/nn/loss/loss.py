@@ -2101,8 +2101,8 @@ class KLDivLoss(LossBase):
         \operatorname{sum}(L(x, target)),  & \text{if reduction} = \text{'sum'.}
         \end{cases}
 
-    where :math:`x` represents `logits`.
-    :math:`target` represents `labels`.
+    where :math:`x` represents `logits`,
+    :math:`target` represents `labels`, and
     :math:`\ell(x, target)` represents `output`.
 
     Note:

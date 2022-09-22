@@ -31,5 +31,5 @@ mindspore.dataset.vision.AutoAugment
     异常：
         - **TypeError** - 如果 `policy` 不是AutoAugmentPolicy类型。
         - **TypeError** - 如果 `interpolation` 不是Inter类型。
-        - **TypeError** - 如果 如果 `fill_value` 不是整数或长度为3的元组。
+        - **TypeError** - 如果 `fill_value` 不是整数或长度为3的元组。
         - **RuntimeError** - 如果给定的张量形状不是<H, W, C>。

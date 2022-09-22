@@ -19,7 +19,9 @@ from .bijector import Bijector
 
 class Invert(Bijector):
     r"""
-    Invert Bijector. Compute the inverse function of the input bijector.
+    Invert Bijector. Compute the inverse function of the input bijector. If the function of the forward mapping,
+    namely the input of `bijector` below, is :math:`Y = g(X)`,
+    then the function of corresponding inverse mapping Bijector is :math:`Y = h(X) = g^{-1}(X)`.
 
     Args:
         bijector (Bijector): Base Bijector.

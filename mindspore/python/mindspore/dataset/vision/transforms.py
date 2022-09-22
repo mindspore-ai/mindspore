@@ -463,7 +463,7 @@ class AutoAugment(ImageTensorOperation):
 
             - Inter.AREA: means the interpolation method is area interpolation.
 
-        fill_value (Union[int, tuple], optional): Pixel fill value for the area outside the transformed image.
+        fill_value (Union[int, tuple[int]], optional): Pixel fill value for the area outside the transformed image.
             It can be an int or a 3-tuple. If it is a 3-tuple, it is used to fill R, G, B channels respectively.
             If it is an integer, it is used for all RGB channels. The fill_value values must be in range [0, 255]
             (default=0).
