@@ -91,7 +91,7 @@ int PadTensorRT::AddInnerOp(TensorRTContext *ctx) {
     int h_post;
     int w_pre;
     int w_post;
-    if (SameDims(pad_input->getDimensions(), in_tensors_[0].Shape())) {
+    if (input(ctx, 0).same_format_) {
       // NCHW: 0: N_pre, 1: N_post, 2: C_pre, 3: C_post, 4: H_pre, 5: H_post, 6: W_pre, 7: W_post
       if (*padding_data != 0 || *(padding_data + 1) != 0 || *(padding_data + 2) != 0 || *(padding_data + 3) != 0) {
         MS_LOG(WARNING) << "tensorrt padding only support pad at HW index, unsupported padding value of: " << op_name_;
@@ -128,9 +128,7 @@ int PadTensorRT::AddInnerOp(TensorRTContext *ctx) {
   this->layer_ = padding_layer;
   padding_layer->setName(op_name_.c_str());
   nvinfer1::ITensor *out_tensor = padding_layer->getOutput(0);
-  bool same_format = SameDims(out_tensor->getDimensions(), out_tensors_[0].Shape()) &&
-                     SameDims(input(ctx, 0).trt_tensor_->getDimensions(), in_tensors_[0].Shape());
-  auto output_helper = ITensorHelper{out_tensor, Format::NCHW, same_format};
+  auto output_helper = ITensorHelper{out_tensor, Format::NCHW, input(ctx, 0).same_format_};
   ctx->RegisterTensor(output_helper, out_tensors_[0].Name());
   MS_LOG(DEBUG) << "after transpose " << GetTensorFormat(output_helper);
   return RET_OK;
