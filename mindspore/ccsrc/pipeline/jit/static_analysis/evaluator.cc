@@ -188,7 +188,6 @@ AbstractBasePtr BaseFuncGraphEvaluator::LaunchRecursiveEval(const AnalysisEngine
     }
     return FOLLOW;
   });
-  std::vector<AnfNodePtr> side_effect_nodes;
   AbstractBasePtr abstract = nullptr;
   for (const auto &node : all_nodes) {
     AnfNodeConfigPtr node_conf = engine->MakeConfig(node, context, fg);

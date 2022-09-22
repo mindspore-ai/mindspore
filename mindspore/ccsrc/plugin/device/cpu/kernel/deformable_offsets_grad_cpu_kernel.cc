@@ -149,12 +149,11 @@ inline InputXIndex CalInputXIndex(const OffsetIndex &offset_index, const Deforma
 }
 
 template <typename T>
-void DeformableOffsetGradKernel(const OffsetIndex &offset_index, const OffsetStride &offset_stride,
-                                const GradStride &grad_stride, const DeformableOffsetGradDims &dims,
-                                const InputXIndex &input_x_index, const InputXStride &input_x_stride,
-                                const size_t &offset_index_base_pos, const size_t &input_grad_base_pos,
-                                const size_t &input_x_base_pos, const T *input_x, const T *input_offset,
-                                const T *input_grad, T *output_grad_x, T *output_grad_offset) {
+void DeformableOffsetGradKernel(const OffsetStride &offset_stride, const GradStride &grad_stride,
+                                const DeformableOffsetGradDims &dims, const InputXIndex &input_x_index,
+                                const InputXStride &input_x_stride, const size_t &offset_index_base_pos,
+                                const size_t &input_grad_base_pos, const size_t &input_x_base_pos, const T *input_x,
+                                const T *input_offset, const T *input_grad, T *output_grad_x, T *output_grad_offset) {
   const size_t offset_index_i = offset_index_base_pos + offset_stride.position_stride;
   const size_t offset_index_weight = offset_index_base_pos + 2 * offset_stride.position_stride;
   float offset_i = static_cast<float>(input_offset[offset_index_i]);
@@ -309,9 +308,9 @@ void DeformableOffsetsGradCpuKernelMod::DeformableOffsetGradNHWCKernel(size_t nu
       const auto [offset_index_base_pos, input_grad_base_pos, input_x_base_pos] =
         CalPosition(offset_index, offset_stride, grad_stride, input_x_stride);
       const auto input_x_index = CalInputXIndex(offset_index, dims);
-      DeformableOffsetGradKernel(offset_index, offset_stride, grad_stride, dims, input_x_index, input_x_stride,
-                                 offset_index_base_pos, input_grad_base_pos, input_x_base_pos, input_x, input_offset,
-                                 input_grad, output_grad_x, output_grad_offset);
+      DeformableOffsetGradKernel(offset_stride, grad_stride, dims, input_x_index, input_x_stride, offset_index_base_pos,
+                                 input_grad_base_pos, input_x_base_pos, input_x, input_offset, input_grad,
+                                 output_grad_x, output_grad_offset);
     }
   };
   ParallelLaunchAutoSearch(task, num_kernels, this, &parallel_search_info_, pool_);
@@ -368,9 +367,9 @@ void DeformableOffsetsGradCpuKernelMod::DeformableOffsetGradNCHWKernel(size_t nu
       const auto [offset_index_base_pos, input_grad_base_pos, input_x_base_pos] =
         CalPosition(offset_index, offset_stride, grad_stride, input_x_stride);
       const auto input_x_index = CalInputXIndex(offset_index, dims);
-      DeformableOffsetGradKernel(offset_index, offset_stride, grad_stride, dims, input_x_index, input_x_stride,
-                                 offset_index_base_pos, input_grad_base_pos, input_x_base_pos, input_x, input_offset,
-                                 input_grad, output_grad_x, output_grad_offset);
+      DeformableOffsetGradKernel(offset_stride, grad_stride, dims, input_x_index, input_x_stride, offset_index_base_pos,
+                                 input_grad_base_pos, input_x_base_pos, input_x, input_offset, input_grad,
+                                 output_grad_x, output_grad_offset);
     }
   };
   ParallelLaunchAutoSearch(task, num_kernels, this, &parallel_search_info_, pool_);
