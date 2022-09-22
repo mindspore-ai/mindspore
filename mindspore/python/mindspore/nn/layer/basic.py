@@ -319,10 +319,9 @@ class Flatten(Cell):
     def __init__(self):
         """Initialize Flatten."""
         super(Flatten, self).__init__()
-        self.flatten = P.Flatten()
 
     def construct(self, x):
-        return self.flatten(x)
+        return F.reshape(x, (F.shape(x)[0], -1))
 
 
 @constexpr
