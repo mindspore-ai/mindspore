@@ -531,6 +531,27 @@ int BenchmarkUnifiedApi::CompareOutputForModelPool(std::vector<mindspore::MSTens
 }
 #endif
 
+void Convert2Float32(float *__restrict out, const uint16_t in) {
+  uint32_t t1;
+  uint32_t t2;
+  uint32_t t3;
+
+  t1 = in & 0x7fffu;
+  t2 = in & 0x8000u;
+  t3 = in & 0x7c00u;
+
+  t1 <<= 13u;
+  t2 <<= 16u;
+
+  t1 += 0x38000000;
+
+  t1 = (t3 == 0 ? 0 : t1);
+
+  t1 |= t2;
+
+  *(out) = static_cast<float>(t1);
+}
+
 int BenchmarkUnifiedApi::CompareOutput() {
   std::cout << "================ Comparing Output data ================" << std::endl;
   float total_bias = 0;
@@ -729,6 +750,26 @@ int BenchmarkUnifiedApi::CompareDataGetTotalCosineDistanceAndSize(const std::str
       res = CompareDatabyCosineDistance<float>(name, tensor->Shape(), mutableData, &bias);
       break;
     }
+    case TypeId::kNumberTypeFloat16: {
+      size_t shapeSize = 1;
+      for (int64_t dim : tensor->Shape()) {
+        if (dim <= 0) {
+          MS_LOG(ERROR) << "Invalid shape.";
+          return RET_ERROR;
+        }
+        MS_CHECK_FALSE_MSG(SIZE_MUL_OVERFLOW(shapeSize, static_cast<size_t>(dim)), RET_ERROR, "mul overflow");
+        shapeSize *= static_cast<size_t>(dim);
+      }
+      float *floatArr = new float[shapeSize];
+      for (size_t i = 0; i < shapeSize; ++i) {
+        uint16_t tmpInt = reinterpret_cast<uint16_t *>(mutableData)[i];
+        Convert2Float32(&floatArr[i], tmpInt);
+        reinterpret_cast<float *>(mutableData)[i] = floatArr[i];
+      }
+      delete[] floatArr;
+      bias = CompareData<float, int64_t>(name, tensor->Shape(), mutableData);
+      break;
+    }
     case TypeId::kNumberTypeInt8: {
       res = CompareDatabyCosineDistance<int8_t>(name, tensor->Shape(), mutableData, &bias);
       break;
@@ -902,6 +943,10 @@ int BenchmarkUnifiedApi::PrintInputData() {
     auto tensor_data_type = static_cast<int>(input.DataType());
 
     std::cout << "InData " << i << ": ";
+    if (tensor_data_type == TypeId::kNumberTypeFloat16) {
+      MS_LOG(INFO) << "DataType: " << TypeId::kNumberTypeFloat16;
+      continue;
+    }
     if (tensor_data_type == TypeId::kObjectTypeString) {
       std::vector<std::string> output_strings = MSTensor::TensorToStrings(input);
       size_t print_num = std::min(output_strings.size(), static_cast<size_t>(20));
