@@ -253,7 +253,7 @@ size_t Tensor::Size() const {
   }
   auto element_num = (format_ == mindspore::NC4HW4 || format_ == mindspore::NHWC4) ? ElementsC4Num() : ElementsNum();
   if (element_num <= 0) {
-    MS_LOG(INFO) << "Element number of tensor should large than 0 : " << element_num << ", shape: " << shape_;
+    MS_LOG(DEBUG) << "Element number of tensor should large than 0 : " << element_num << ", shape: " << shape_;
     return 0;
   }
   return element_size * static_cast<size_t>(element_num);
