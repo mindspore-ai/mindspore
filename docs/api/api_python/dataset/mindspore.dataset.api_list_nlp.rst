@@ -7,8 +7,6 @@
     :template: classtemplate.rst
 
     mindspore.dataset.Dataset.apply
-    mindspore.dataset.TextBaseDataset.build_sentencepiece_vocab
-    mindspore.dataset.TextBaseDataset.build_vocab
     mindspore.dataset.Dataset.concat
     mindspore.dataset.Dataset.filter
     mindspore.dataset.Dataset.flat_map
@@ -24,6 +22,8 @@
     mindspore.dataset.Dataset.split
     mindspore.dataset.Dataset.take
     mindspore.dataset.Dataset.zip
+    mindspore.dataset.TextBaseDataset.build_sentencepiece_vocab
+    mindspore.dataset.TextBaseDataset.build_vocab
 
 Batch（批操作）
 ------------------------
@@ -74,8 +74,8 @@ Batch（批操作）
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.dataset.Dataset.add_sampler
-    mindspore.dataset.Dataset.use_sampler
+    mindspore.dataset.MappableDataset.add_sampler
+    mindspore.dataset.MappableDataset.use_sampler
 
 其他方法
 --------

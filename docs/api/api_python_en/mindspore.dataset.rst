@@ -9,7 +9,7 @@ Vision
 .. autosummary::
     :toctree: dataset
     :nosignatures:
-    :template: classtemplate_inherited.rst
+    :template: classtemplate_dataset.rst
 
     mindspore.dataset.Caltech101Dataset
     mindspore.dataset.Caltech256Dataset
@@ -46,7 +46,7 @@ Text
 .. autosummary::
     :toctree: dataset
     :nosignatures:
-    :template: classtemplate_inherited.rst
+    :template: classtemplate_dataset.rst
 
     mindspore.dataset.AGNewsDataset
     mindspore.dataset.AmazonReviewDataset
@@ -72,7 +72,7 @@ Audio
 .. autosummary::
     :toctree: dataset
     :nosignatures:
-    :template: classtemplate_inherited.rst
+    :template: classtemplate_dataset.rst
 
     mindspore.dataset.LJSpeechDataset
     mindspore.dataset.SpeechCommandsDataset
@@ -85,7 +85,7 @@ Standard Format
 .. autosummary::
     :toctree: dataset
     :nosignatures:
-    :template: classtemplate_inherited.rst
+    :template: classtemplate_dataset.rst
 
     mindspore.dataset.CSVDataset
     mindspore.dataset.MindDataset
@@ -98,7 +98,7 @@ User Defined
 .. autosummary::
     :toctree: dataset
     :nosignatures:
-    :template: classtemplate_inherited.rst
+    :template: classtemplate_dataset.rst
 
     mindspore.dataset.GeneratorDataset
     mindspore.dataset.NumpySlicesDataset
@@ -111,7 +111,7 @@ Graph
 .. autosummary::
     :toctree: dataset
     :nosignatures:
-    :template: classtemplate_inherited.rst
+    :template: classtemplate_dataset.rst
 
     mindspore.dataset.ArgoverseDataset
     mindspore.dataset.Graph
@@ -140,7 +140,7 @@ Others
 .. autosummary::
     :toctree: dataset
     :nosignatures:
-    :template: classtemplate_inherited.rst
+    :template: classtemplate_dataset.rst
 
     mindspore.dataset.BatchInfo
     mindspore.dataset.DatasetCache
@@ -156,4 +156,3 @@ Others
     mindspore.dataset.show
     mindspore.dataset.sync_wait_for_dataset
     mindspore.dataset.utils.imshow_det_bbox
-    mindspore.dataset.zip

@@ -1,5 +1,5 @@
-mindspore.ops.print_
-====================
+mindspore.ops.print\_
+=====================
 
 .. py:function:: mindspore.ops.print_(*input_x)
 
