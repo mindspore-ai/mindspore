@@ -55,7 +55,8 @@ __all__ = ['Softmin',
            'HShrink',
            'CELU',
            'Threshold',
-           'Mish'
+           'Mish',
+           'GLU'
            ]
 
 
@@ -1434,6 +1435,43 @@ class Mish(Cell):
         return self.mish(input_x)
 
 
+class GLU(Cell):
+    r"""Applies the gated linear unit function
+    :math:`{GLU}(a, b)= a \otimes \sigma(b)` where :math:`a` is the first half
+    of the input matrices and :math:`b` is the second half.
+
+    Here :math:`\sigma` is the sigmoid function, and :math:`*` is the Hadamard product.
+
+    Args:
+        axis (int): the dimension on which to split the input. Default: -1
+
+    Inputs:
+        - **x** (Tensor) -  :math:`(\ast_1, N, \ast_2)` where `*` means, any number of additional dimensions
+
+    Outputs:
+        Tensor, math:`(\ast_1, M, \ast_2)` where :math:`M=N/2`
+
+    Supported Platforms:
+    ``Ascend`` ``GPU`` ``CPU``
+
+    Examples::
+        >>> m = nn.GLU()
+        >>> input = Tensor(np.randomn.randn(4, 2))
+        >>> output = m(input)
+    """
+
+    def __init__(self, axis=-1):
+        """Initialize GLU."""
+        super().__init__("GLU")
+        self.dim = axis
+        self.spilt = P.Split(axis=axis, output_num=2)
+        self.sigmoid = P.Sigmoid()
+
+    def construct(self, x):
+        x1, x2 = self.spilt(x)
+        x2 = self.sigmoid(x2)
+        return x1 * x2
+
 _activation = {
     'softmin': Softmin,
     'softmax': Softmax,
@@ -1458,7 +1496,7 @@ _activation = {
     'softshrink': SoftShrink,
     'hshrink': HShrink,
     'threshold': Threshold,
-    'mish': Mish
+    'mish': Mish,
 }
 
 

@@ -3118,6 +3118,45 @@ def conv3d(inputs, weight, pad_mode="valid", padding=0, stride=1, dilation=1, gr
     return output
 
 
+def glu(x, axis=-1):
+    r"""
+    Computes GLU (Gated Linear Unit activation function) of input tensors .
+
+
+    .. math:`{GLU}(a, b)= a \otimes \sigma(b)` where :math:`a` is the first half
+    of the input matrices and :math:`b` is the second half.
+
+    Here :math:`\sigma` is the sigmoid function, and :math:`*` is the Hadamard product.
+    See 'Language Modeling with Gated Convluational Networks <https://arxiv.org/abs/1612.08083>'_
+
+    Args:
+        x(Tensor): :math:`(\ast_1, N, \ast_2)` where `*` means, any number of additional dimensions
+        axis (int): the dimension on which to split the input. Default: -1
+
+    Returns:
+        Tensor of shape :math:`(\ast_1, M, \ast_2)` where :math:`M=N/2`, with the same dtype and shape as the `x`.
+
+    Raises:
+        TypeError: If dtype of `x` is not a number.
+        TypeError: If `x` is not a Tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> m = nn.GLU()
+        >>> input = Tensor(np.randomn.randn(4, 2))
+        >>> output = m(input)
+    """
+    if not isinstance(x, Tensor) or x.size == 0:
+        raise RuntimeError("glu does not support scalars because halving size must be even")
+
+    spilt = _get_cache_prim(P.Split)(axis=axis, output_num=2)
+    x, y = spilt(x)
+    y = sigmoid_(y)
+    return x * y
+
+
 __all__ = [
     'adaptive_avg_pool1d',
     'adaptive_avg_pool2d',
@@ -3166,5 +3205,6 @@ __all__ = [
     'relu',
     'relu6',
     'conv3d',
+    'glu'
 ]
 __all__.sort()
