@@ -16,6 +16,7 @@
 import numpy as np
 import pytest
 
+import mindspore
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -363,3 +364,68 @@ def test_layernormgrad_vmap_begin_params_axis_zero():
     assert np.allclose(dx_ms.asnumpy(), dx_np, rtol=1e-4, atol=1e-4)
     assert np.allclose(db_ms.asnumpy(), db_np, rtol=1e-4, atol=1e-3)
     assert np.allclose(dg_ms.asnumpy(), dg_np, rtol=1e-4, atol=1e-3)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_layernormgrad_dynamic_shape():
+    """
+    Feature: Test LayerNormGrad dynamic shape.
+    Description: The input x shape is dynamic.
+    Expectation: match to np benchmark.
+    """
+    begin_norm_axis = 2
+    begin_params_axis = 1
+    x_np = np.random.randn(128, 2, 16, 32).astype(np.float32)
+    dy_np = np.random.randn(128, 2, 16, 32).astype(np.float32)
+    gamma_np = np.random.randn(*x_np.shape[begin_params_axis:]).astype(np.float32)
+    epsilon = 10e-12
+    dx_np, dg_np, db_np, mean_np, var_np = LayerNormGradReference(x_np, dy_np, gamma_np, epsilon, begin_norm_axis,
+                                                                  begin_params_axis)
+
+    dy_ms = Tensor(dy_np)
+    x_ms = Tensor(x_np)
+    var_ms = Tensor(var_np)
+    mean_ms = Tensor(mean_np)
+    gamma_ms = Tensor(gamma_np)
+
+    net = LayerNormGradNet(begin_norm_axis, begin_params_axis)
+    x_dynamic = Tensor(shape=[None, 2, 16, 32], dtype=mindspore.float32)
+    net.set_inputs(x_dynamic, dy_ms, var_ms, mean_ms, gamma_ms)
+    dx_ms, dg_ms, db_ms = net(x_ms, dy_ms, var_ms, mean_ms, gamma_ms)
+    assert np.allclose(dx_ms.asnumpy(), dx_np, rtol=1e-6, atol=1e-6)
+    assert np.allclose(db_ms.asnumpy(), db_np, rtol=1e-6, atol=1e-3)
+    assert np.allclose(dg_ms.asnumpy(), dg_np, rtol=1e-6, atol=1e-3)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_layernormgrad_double():
+    """
+    Feature: Test LayerNormGrad double support.
+    Description: The input x type is double.
+    Expectation: match to np benchmark.
+    """
+    begin_norm_axis = 1
+    begin_params_axis = 1
+    x_np = np.random.randn(4096, 3072).astype(np.float64)
+    dy_np = np.random.randn(4096, 3072).astype(np.float64)
+    gamma_np = np.random.randn(*x_np.shape[begin_params_axis:]).astype(np.float64)
+    epsilon = 10e-12
+    dx_np, dg_np, db_np, mean_np, var_np = LayerNormGradReference(x_np, dy_np, gamma_np, epsilon, begin_norm_axis,
+                                                                  begin_params_axis)
+
+    dy_ms = Tensor(dy_np)
+    x_ms = Tensor(x_np)
+    var_ms = Tensor(var_np.astype(np.float32))
+    mean_ms = Tensor(mean_np.astype(np.float32))
+    gamma_ms = Tensor(gamma_np)
+
+    net = LayerNormGradNet(begin_norm_axis, begin_params_axis)
+    dx_ms, dg_ms, db_ms = net(x_ms, dy_ms, var_ms, mean_ms, gamma_ms)
+
+    assert np.allclose(dx_ms.asnumpy(), dx_np, rtol=1e-4, atol=1e-4)
+    assert np.allclose(dg_ms.asnumpy(), dg_np, rtol=1e-4, atol=1e-3)
+    assert np.allclose(db_ms.asnumpy(), db_np, rtol=1e-4, atol=1e-3)

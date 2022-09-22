@@ -213,7 +213,17 @@ std::vector<std::pair<KernelAttr, LayerNormGradCpuKernelMod::KernelFunc>> LayerN
      .AddOutputAttr(kNumberTypeFloat32)
      .AddOutputAttr(kNumberTypeFloat32)
      .AddOutputAttr(kNumberTypeFloat32),
-   &LayerNormGradCpuKernelMod::LaunchKernel<float>}};
+   &LayerNormGradCpuKernelMod::LaunchKernel<float>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddOutputAttr(kNumberTypeFloat64)
+     .AddOutputAttr(kNumberTypeFloat64)
+     .AddOutputAttr(kNumberTypeFloat64),
+   &LayerNormGradCpuKernelMod::LaunchKernel<double>}};
 
 std::vector<KernelAttr> LayerNormGradCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;

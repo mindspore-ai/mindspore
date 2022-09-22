@@ -103,10 +103,11 @@ template <typename T>
 void LayerNormCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                          const std::vector<AddressPtr> &outputs) {
   size_t f_size = sizeof(T);
-  if (inputs[1]->size != f_size * param_num_ || inputs[2]->size != f_size * param_num_) {
+  if (inputs[kLayerNormInputGammaIndex]->size != f_size * param_num_ ||
+      inputs[kLayerNormInputBetaIndex]->size != f_size * param_num_) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the product of gamma and beta's shape must be " << param_num_;
   }
-  if (outputs[1]->size != f_size * block_num_ || outputs[2]->size != f_size * block_num_) {
+  if (outputs[kLayerNormOutputMeanIndex]->size != outputs[kLayerNormOutputVarIndex]->size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the product of mean and var's shape must be " << block_num_;
   }
   auto x = reinterpret_cast<T *>(inputs[kLayerNormInputXIndex]->addr);
@@ -170,7 +171,15 @@ std::vector<std::pair<KernelAttr, LayerNormCpuKernelMod::KernelFunc>> LayerNormC
      .AddOutputAttr(kNumberTypeFloat32)
      .AddOutputAttr(kNumberTypeFloat32)
      .AddOutputAttr(kNumberTypeFloat32),
-   &LayerNormCpuKernelMod::LaunchKernel<float>}};
+   &LayerNormCpuKernelMod::LaunchKernel<float>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddOutputAttr(kNumberTypeFloat64)
+     .AddOutputAttr(kNumberTypeFloat32)
+     .AddOutputAttr(kNumberTypeFloat32),
+   &LayerNormCpuKernelMod::LaunchKernel<double>}};
 
 std::vector<KernelAttr> LayerNormCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;

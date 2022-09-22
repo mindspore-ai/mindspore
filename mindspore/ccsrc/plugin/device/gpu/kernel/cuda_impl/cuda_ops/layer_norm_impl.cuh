@@ -35,7 +35,13 @@ struct DynamicSharedMem<half> {
     return addr_half;
   }
 };
-
+template <>
+struct DynamicSharedMem<double> {
+  __device__ double *addr() {
+    extern __shared__ double addr_ptr[];
+    return addr_ptr;
+  }
+};
 template <typename T>
 CUDA_LIB_EXPORT void LayerNorm(const int outer, const int inner, const int param_dim, const float epsilon, const T *x,
                                const T *gamma, const T *beta, T *y, float *mean, float *var, cudaStream_t stream);
