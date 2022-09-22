@@ -39,6 +39,7 @@ constexpr size_t kIdx5 = 5;
 constexpr size_t kIdx6 = 6;
 constexpr size_t kIdx7 = 7;
 constexpr size_t kIdx8 = 8;
+const unsigned int kCoef = 2;
 
 template <typename T>
 class LocalResponseNormGradGpuKernelMod : public NativeGpuKernelMod {
@@ -129,6 +130,12 @@ class LocalResponseNormGradGpuKernelMod : public NativeGpuKernelMod {
     bias_ = kernel_ptr->get_bias();
     alpha_ = kernel_ptr->get_alpha();
     beta_ = kernel_ptr->get_beta();
+    use_native_ = false;
+    int lrnN = kCoef * depth_radius_ + 1;
+    if (lrnN < CUDNN_LRN_MIN_N || lrnN > CUDNN_LRN_MAX_N || bias_ < CUDNN_LRN_MIN_K || beta_ < CUDNN_LRN_MIN_BETA) {
+      use_native_ = true;
+    }
+    InitResource();
     return true;
   }
 
@@ -140,13 +147,8 @@ class LocalResponseNormGradGpuKernelMod : public NativeGpuKernelMod {
       return ret;
     }
     transpose_shape_.clear();
-    use_native_ = false;
-    const unsigned int kCoef = 2;
     int lrnN = kCoef * depth_radius_ + 1;
     double lrnAlpha = lrnN * alpha_;
-    if (lrnN < CUDNN_LRN_MIN_N || lrnN > CUDNN_LRN_MAX_N || bias_ < CUDNN_LRN_MIN_K || beta_ < CUDNN_LRN_MIN_BETA) {
-      use_native_ = true;
-    }
     auto in_shape = inputs[kIndex0]->GetShapeVector();
     auto input_shape = Convert2SizeTClipNeg(in_shape);
     is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "input");
