@@ -42,7 +42,11 @@ bool CheckAndGetPermValue(const std::vector<AbstractBasePtr> &input_args, ShapeV
     }
     ValuePtr perm = primitive->GetAttr("perm");
     MS_EXCEPTION_IF_NULL(perm);
-    *perm_value = CheckAndConvertUtils::CheckTupleInt("perm", perm, op_name);
+    if (perm->isa<tensor::Tensor>()) {
+      *perm_value = CheckAndConvertUtils::CheckTensorIntValue("perm", perm, op_name);
+    } else {
+      *perm_value = CheckAndConvertUtils::CheckTupleInt("perm", perm, op_name);
+    }
     return is_dynamic;
   }
 

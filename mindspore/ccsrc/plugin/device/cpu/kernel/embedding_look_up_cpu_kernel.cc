@@ -16,6 +16,7 @@
 
 #include "plugin/device/cpu/kernel/embedding_look_up_cpu_kernel.h"
 #include "mindspore/core/ops/embedding_lookup.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -181,7 +182,16 @@ int EmbeddingLookUpCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   input_indices_lens_ = SizeOf(input_indices_shape);
   input_indices_dtype_ = inputs[kIndex1]->GetDtype();
   if (inputs.size() == kEmbeddingLookupInputsNum) {
-    offset_ = GetValue<int64_t>(base_operator->GetAttr(kAttrOffset));
+    PrimitivePtr prim = base_operator->GetPrim();
+    MS_EXCEPTION_IF_NULL(prim);
+    auto value_ptr = prim->GetAttr(kAttrOffset);
+    if (value_ptr->isa<tensor::Tensor>()) {
+      auto off_vec = CheckAndConvertUtils::CheckTensorIntValue("offset", value_ptr, kernel_name_);
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', offset must be int, bug got " << off_vec;
+      offset_ = off_vec[0];
+    } else {
+      offset_ = GetValue<int64_t>(value_ptr);
+    }
   }
   return KRET_OK;
 }

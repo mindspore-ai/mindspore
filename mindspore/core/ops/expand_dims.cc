@@ -64,7 +64,16 @@ abstract::ShapePtr ExpandDimsInferShape(const PrimitivePtr &primitive, const std
       }
     }
   } else if (input_args.size() == 1) {
-    axis = GetValue<int64_t>(primitive->GetAttr(kAxis));
+    auto value_ptr = primitive->GetAttr(kAxis);
+    if (value_ptr->isa<tensor::Tensor>()) {
+      auto axis_vec = CheckAndConvertUtils::CheckTensorIntValue("axis", value_ptr, prim_name);
+      if (axis_vec.size() != 1) {
+        MS_LOG(EXCEPTION) << " The input number of ExpandDims axis must be int, but got " << axis_vec;
+      }
+      axis = axis_vec[0];
+    } else {
+      axis = GetValue<int64_t>(primitive->GetAttr(kAxis));
+    }
   } else {
     MS_LOG(EXCEPTION) << " The input number of ExpandDims must be 1 or 2, but got " << input_args.size();
   }
