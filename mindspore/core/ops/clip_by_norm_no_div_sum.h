@@ -35,7 +35,7 @@ class MIND_API ClipByNormNoDivSum : public BaseOperator {
   explicit ClipByNormNoDivSum(const std::string k_name) : BaseOperator(k_name) {
     InitIOName({"input_x", "input_1", "input_2", "input_3"}, {"output_y"});
   }
-  void Init() {}
+  void Init() const {}
 };
 abstract::AbstractBasePtr ClipByNormNoDivSumInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                   const std::vector<abstract::AbstractBasePtr> &input_args);
