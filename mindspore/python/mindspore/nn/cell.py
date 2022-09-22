@@ -2180,26 +2180,28 @@ class Cell(Cell_):
         Args:
             inputs (tuple): Inputs of the Cell object.
         """
-        if len(self._dynamic_shape_inputs) != len(inputs):
-            raise ValueError("The number of 'set_input' Tensor must be equal to network's inputs.")
-        for net_input, set_input in zip(inputs, self._dynamic_shape_inputs):
+        set_inputs_len = len(self._dynamic_shape_inputs)
+        inputs_len = len(inputs)
+        if set_inputs_len != inputs_len:
+            raise ValueError("The number of 'set_input' Tensor must be equal to network's inputs."
+                             f"but got 'set_inputs': {set_inputs_len} and network's input: {inputs_len}.")
+        for index, (net_input, set_input) in enumerate(zip(inputs, self._dynamic_shape_inputs)):
             if isinstance(set_input, Tensor):
                 if not isinstance(net_input, Tensor):
                     raise TypeError(
-                        f"The 'set_inputs' type must be the same as network's input, "
-                        f"but got {type(set_input)} and {type(net_input)}.")
+                        f"The {index+1}th input type of 'set_inputs' must be Tensor, but got {type(net_input)}.")
                 if set_input.dtype is not net_input.dtype:
                     raise ValueError(
-                        f"For 'set_inputs' the type of Tensor must be the same as network's input, "
-                        f"but got {set_input.dtype()} and {net_input.dtype()}.")
+                        f"The {index+1}th input type of 'set_inputs' must be the same as network's input, "
+                        f"but got 'set_inputs': {set_input.dtype} and network's input: {net_input.dtype}.")
                 if net_input.dim() != 0 and set_input.dim() != net_input.dim():
                     raise ValueError(
-                        f"For 'set_inputs' the dims of Tensor must be the same as network's input, "
-                        f"but got {set_input.dim()} and {net_input.dim()}.")
+                        f"The {index+1}th input dims of 'set_inputs' must be the same as network's input, "
+                        f"but got 'set_inputs': {set_input.dim()} and network's input: {net_input.dim()}.")
                 if not all([ele1 in (-1, ele2) for ele1, ele2 in zip(set_input.shape, net_input.shape)]):
                     raise ValueError(
-                        f"For 'set_inputs' the shape of Tensor must be the same as network's input, "
-                        f"but got {set_input.shape} and {net_input.shape}.")
+                        f"The {index+1}th input shape of 'set_inputs' must be the same as network's input, "
+                        f"but got 'set_inputs': {set_input.shape} and network's input: {net_input.shape}.")
 
 
 class GraphCell(Cell):
