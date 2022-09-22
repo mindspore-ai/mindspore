@@ -3032,6 +3032,92 @@ def binary_cross_entropy(logits, labels, weight=None, reduction='mean'):
     return binary_cross_entropy_op(logits, labels, weight)
 
 
+def conv3d(inputs, weight, pad_mode="valid", padding=0, stride=1, dilation=1, group=1):
+    r"""
+    3D convolution layer.
+
+    Applies a 3D convolution over an input tensor which is typically of shape
+    :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})` and output shape
+    :math:`(N, C_{out}, D_{out}, H_{out}, W_{out})`. Where :math:`N` is batch size, :math:`C` is channel number,
+    :math:`D` is depth, :math:`H` is height, :math:`W` is width.
+    the formula is defined as:
+    .. math::
+        \operatorname{out}\left(N_{i}, C_{\text {out}_j}\right)=\operatorname{bias}\left(C_{\text {out}_j}\right)+
+        \sum_{k=0}^{C_{in}-1} ccor(\text {weight}\left(C_{\text {out}_j}, k\right),
+        \operatorname{input}\left(N_{i}, k\right))
+    where :math:`k` is kernel, :math:`ccor` is the cross-correlation operator.
+    If the 'pad_mode' is set to be "valid", the output depth, height and width will be
+    :math:`\left \lfloor{1 + \frac{D_{in} + 2 \times \text{padding} - \text{ks_d} -
+    (\text{ks_d} - 1) \times (\text{dilation} - 1) }{\text{stride}}} \right \rfloor` and
+    :math:`\left \lfloor{1 + \frac{H_{in} + 2 \times \text{padding} - \text{ks_h} -
+    (\text{ks_h} - 1) \times (\text{dilation} - 1) }{\text{stride}}} \right \rfloor` and
+    :math:`\left \lfloor{1 + \frac{W_{in} + 2 \times \text{padding} - \text{ks_w} -
+    (\text{ks_w} - 1) \times (\text{dilation} - 1) }{\text{stride}}} \right \rfloor` respectively. Where
+    :math:`dilation` is Spacing between kernel elements, :math:`stride` is The step length of each step,
+    :math:`padding` is zero-padding added to both sides of the input.
+    Args:
+        inputs (Tensor): Tensor of shape :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})`.
+        weight (Tensor): Set size of kernel is :math:`(\text{kernel_size[0]}, \text{kernel_size[1]},
+            \text{kernel_size[2]})`, then the shape is :math:`(C_{out}, C_{in}, \text{kernel_size[0]},
+            \text{kernel_size[1]}, \text{kernel_size[1]})`.
+        pad_mode (str): Specifies padding mode. The optional values are
+            "same", "valid" and "pad". Default: "valid".
+
+            - same: Adopts the way of completion. The depth, height and width of the output will be equal to
+              the input `x` divided by stride. The padding will be evenly calculated in head and tail, top and bottom,
+              left and right directions possiblily.
+              Otherwise, the last extra padding will be calculated from the tail, bottom and the right side.
+              If this mode is set, `pad` must be 0.
+
+            - valid: Adopts the way of discarding. The possible largest depth, height and width of output
+              will be returned without padding. Extra pixels will be discarded. If this mode is set, `pad`
+              must be 0.
+
+            - pad: Implicit paddings on both sides of the input in depth, height and width. The number of `pad` will
+              be padded to the input Tensor borders. `pad` must be greater than or equal to 0.
+
+        padding (Union(int, tuple[int])): The pad value to be filled. Default: 0. If `pad` is an integer, the paddings
+            of head, tail, top, bottom, left and right are the same, equal to pad. If `pad` is a tuple of six
+            integers, the padding of head, tail, top, bottom, left and right equal to pad[0], pad[1], pad[2],
+            pad[3], pad[4] and pad[5] correspondingly.
+        stride (Union(int, tuple[int])): The distance of kernel moving, an int number that represents
+            the height and width of movement are both strides, or a tuple of two int numbers that
+            represent height and width of movement respectively. Default: 1.
+        dilation (Union[int, tuple[int]]): The data type is int or a tuple of 3 integers
+                                      :math:`(dilation_d, dilation_h, dilation_w)`.
+                                      Currently, dilation on depth only supports the case of 1.
+                                      Specifies the dilation rate to use for dilated convolution.
+                                      If set :math:`k > 1`, there will be :math:`k - 1` pixels skipped
+                                      for each sampling location. Its value must be greater than or equal to 1 and
+                                      bounded by the height and width of the input. Default: 1.
+        group (int): Splits filter into groups, `in_channels` and `out_channels` must be
+            divisible by the number of groups. Default: 1. Only 1 is currently supported.
+    Returns:
+        Tensor, the value that applied 3D convolution. The shape is :math:`(N, C_{out}, D_{out}, H_{out}, W_{out})`.
+    Raises:
+        TypeError: If `out_channel` or `group` is not an int.
+        TypeError: If `stride`, `padding` or `dilation` is neither an int nor a tuple.
+        ValueError: If `stride` or `dilation` is less than 1.
+        ValueError: If `pad_mode` is not one of 'same', 'valid' or 'pad'.
+        ValueError: If `padding` is a tuple whose length is not equal to 4.
+        ValueError: If `pad_mode` is not equal to 'pad' and `pad` is not equal to (0, 0, 0, 0, 0, 0).
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    Examples:
+        >>> x = Tensor(np.ones([16, 3, 10, 32, 32]), mindspore.float16)
+        >>> weight = Tensor(np.ones([32, 3, 4, 3, 3]), mindspore.float16)
+        >>> output = conv3d(x, weight)
+        >>> print(output.shape)
+        (16, 32, 7, 30, 30)
+    """
+    weight_shape = weight.shape
+    out_channel = weight_shape[0]
+    kernel_size = weight_shape[2:5]
+    conv = _get_cache_prim(P.Conv3D)(out_channel, kernel_size, 1, pad_mode, padding, stride, dilation, group, "NCDHW")
+    output = conv(inputs, weight)
+    return output
+
+
 __all__ = [
     'adaptive_avg_pool1d',
     'adaptive_avg_pool2d',
@@ -3079,5 +3165,6 @@ __all__ = [
     'sigmoid',
     'relu',
     'relu6',
+    'conv3d',
 ]
 __all__.sort()

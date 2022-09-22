@@ -56,6 +56,7 @@ functional算子是经过初始化后的Primitive，可以直接作为函数使�
     mindspore.ops.bias_add
     mindspore.ops.ctc_greedy_decoder
     mindspore.ops.conv2d
+    mindspore.ops.conv3d
     mindspore.ops.deformable_conv2d
     mindspore.ops.dropout2d
     mindspore.ops.dropout3d
