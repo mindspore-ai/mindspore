@@ -22,9 +22,11 @@ namespace mindspore {
 namespace opt {
 bool BACKEND_EXPORT AlwaysReturnTrue(const BaseRef &n) { return true; }
 
-bool PatternMap::Contains(const std::string &name) const { return name_set_.contains(name); }
+bool PatternMap::Contains(const std::string &name) const { return name_set_.count(name) > 0; }
 
-bool PatternMap::CheckSeq(const std::string &name) const { return name_set_.contains(name) && seq_map_.contains(name); }
+bool PatternMap::CheckSeq(const std::string &name) const {
+  return name_set_.count(name) > 0 && seq_map_.count(name) > 0;
+}
 
 void PatternMap::Erase(const mindspore::HashSet<std::string> &del_set) {
   for (auto &s : del_set) {
