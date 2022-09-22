@@ -229,3 +229,6 @@ template CUDA_LIB_EXPORT void LayerNorm(const int row_dim, const int col_dim, co
 template CUDA_LIB_EXPORT void LayerNorm(const int row_dim, const int col_dim, const int param_dim, const float epsilon,
                                         const half *x, const half *gamma, const half *beta, half *y, float *mean,
                                         float *var, cudaStream_t stream);
+template CUDA_LIB_EXPORT void LayerNorm(const int row_dim, const int col_dim, const int param_dim, const float epsilon,
+                                        const double *x, const double *gamma, const double *beta, double *y,
+                                        float *mean, float *var, cudaStream_t stream);
