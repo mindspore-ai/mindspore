@@ -1651,7 +1651,6 @@ TypeId AnfAlgo::GetSparseTypeIdAt(const AnfNodePtr &node, size_t idx) {
     return abs_sparse->GetShapeTypeIdAt(idx - shape_idx);
   }
   MS_LOG(EXCEPTION) << "Expect AbstractCSRTensor or AbstractCOOTensor, but got " << node->abstract()->ToString();
-  return kTypeUnknown;
 }
 
 std::string AnfAlgo::GetTensorValueString(const tensor::TensorPtr &tensor) {

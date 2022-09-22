@@ -72,7 +72,7 @@ int DropoutGradBwdCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
                       << dy_shape.size() << ", and the dimension of 'input_mask': " << mask_shape.size();
   }
 
-  num_count_ = std::accumulate(dy_shape.begin(), dy_shape.end(), 1, std::multiplies<size_t>());
+  num_count_ = std::accumulate(dy_shape.begin(), dy_shape.end(), static_cast<size_t>(1), std::multiplies<size_t>());
   return static_cast<int>(KRET_OK);
 }
 
