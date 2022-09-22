@@ -45,6 +45,12 @@ int BiasAddGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
     return ret;
   }
+  for (const auto &input : inputs) {
+    auto input_shape = input->GetShapeVector();
+    if (!IsValidShape(input_shape)) {
+      return KRET_UNKNOWN_SHAPE;
+    }
+  }
   auto x_shape = LongVecToSizeVec(inputs[kIndex0]->GetShapeVector());
   auto num_dims = x_shape.size();
   is_null_input_ = CHECK_SHAPE_NULL(x_shape, kernel_name_, "input_x");
