@@ -34,7 +34,7 @@ bool SpaceToDepthCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
                                     const std::vector<KernelTensorPtr> &outputs) {
   kernel_name_ = base_operator->name();
   auto node_pointer = std::dynamic_pointer_cast<ops::SpaceToDepth>(base_operator);
-  block_size_ = node_pointer->get_block_size();
+  block_size_ = LongToSize(node_pointer->get_block_size());
   if (block_size_ < kSpaceToDepthMinBlockSize) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'block_size' must be greater than or equal to "
                       << kSpaceToDepthMinBlockSize << ", but got " << block_size_;

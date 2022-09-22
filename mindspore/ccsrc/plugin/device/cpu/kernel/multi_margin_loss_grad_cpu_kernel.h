@@ -80,7 +80,7 @@ class MultiMarginLossGradCPUKernelMod : public DeprecatedNativeCpuKernelMod {
   template <typename T>
   void LaunchKernelFP16(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
-  void CheckParam(const CNodePtr &kernel_node);
+  void CheckParam(const CNodePtr &kernel_node) const;
   size_t batch_size = 2;
   size_t dims = 1;
   string reduction = MEAN;

@@ -63,7 +63,7 @@ AbstractBasePtr LogitInfer(const abstract::AnalysisEnginePtr &, const PrimitiveP
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   const int64_t input_num = 1;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
   auto types = LogitInferType(primitive, input_args);
   auto shapes = LogitInferShape(primitive, input_args);
   return abstract::MakeAbstract(shapes, types);
