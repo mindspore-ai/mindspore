@@ -1,22 +1,22 @@
 
-0.1.1	MindSpore*1.9.0.20220901:°
+0.1.1	MindSpore*1.9.0:‹
+¹
+bprop_tuple_getitem.1:data bprop_tuple_getitem.1:[CNode]2:1 bprop_tuple_getitem.1:[CNode]2:1"(REF::S-Prim-hyper_map[zeros_like_leaf]:2:-Default/S-Prim-hyper_map[zeros_like_leaf]-op0
+Ü
+ bprop_tuple_getitem.1:[CNode]2:1
+bprop_tuple_getitem.1:idx
+bprop_tuple_getitem.1:dout bprop_tuple_getitem.1:[CNode]3:3 bprop_tuple_getitem.1:[CNode]3:3"REF::S-Prim-tuple_setitem:4: Default/S-Prim-tuple_setitem-op1
+¸
+bprop_tuple_getitem.1:idx bprop_tuple_getitem.1:[CNode]4:5 bprop_tuple_getitem.1:[CNode]4:5"(REF::S-Prim-hyper_map[zeros_like_leaf]:6:-Default/S-Prim-hyper_map[zeros_like_leaf]-op2
 ¿
-bprop_tuple_getitem.54:data"bprop_tuple_getitem.54:[CNode]55:1"bprop_tuple_getitem.54:[CNode]55:1"(REF::S-Prim-hyper_map[zeros_like_leaf]:2:.Default/S-Prim-hyper_map[zeros_like_leaf]-op35
-å
-"bprop_tuple_getitem.54:[CNode]55:1
-bprop_tuple_getitem.54:idx
-bprop_tuple_getitem.54:dout"bprop_tuple_getitem.54:[CNode]56:3"bprop_tuple_getitem.54:[CNode]56:3"REF::S-Prim-tuple_setitem:4:!Default/S-Prim-tuple_setitem-op36
-¾
-bprop_tuple_getitem.54:idx"bprop_tuple_getitem.54:[CNode]57:5"bprop_tuple_getitem.54:[CNode]57:5"(REF::S-Prim-hyper_map[zeros_like_leaf]:6:.Default/S-Prim-hyper_map[zeros_like_leaf]-op37
-È
-"bprop_tuple_getitem.54:[CNode]56:3
-"bprop_tuple_getitem.54:[CNode]57:5"bprop_tuple_getitem.54:[CNode]58:7"bprop_tuple_getitem.54:[CNode]58:7"REF::S-Prim-MakeTuple:8:Default/S-Prim-MakeTuple-op38bprop_tuple_getitem.54*
-bprop_tuple_getitem.54:data*
-bprop_tuple_getitem.54:idx*
-bprop_tuple_getitem.54:out*
-bprop_tuple_getitem.54:dout2$
-"bprop_tuple_getitem.54:[CNode]58:7:@15c8a6e42bc637ef8ef88de957c9b42bcf8f0cddad564d4af868039e48abf1eaPb&
-S-Prim-MakeTuple:8S-Prim-MakeTuplebH
-#S-Prim-hyper_map[zeros_like_leaf]:6!S-Prim-hyper_map[zeros_like_leaf]b.
+ bprop_tuple_getitem.1:[CNode]3:3
+ bprop_tuple_getitem.1:[CNode]4:5 bprop_tuple_getitem.1:[CNode]5:7 bprop_tuple_getitem.1:[CNode]5:7"REF::S-Prim-MakeTuple:8:Default/S-Prim-MakeTuple-op3bprop_tuple_getitem.1*
+bprop_tuple_getitem.1:data*
+bprop_tuple_getitem.1:idx*
+bprop_tuple_getitem.1:out*
+bprop_tuple_getitem.1:dout2"
+ bprop_tuple_getitem.1:[CNode]5:7:@5762fbec96d9311f48905028e4687b3c255d34c9501710bc8a449a228b23a28ePb.
 S-Prim-tuple_setitem:4S-Prim-tuple_setitembH
-#S-Prim-hyper_map[zeros_like_leaf]:2!S-Prim-hyper_map[zeros_like_leaf]h
+#S-Prim-hyper_map[zeros_like_leaf]:2!S-Prim-hyper_map[zeros_like_leaf]bH
+#S-Prim-hyper_map[zeros_like_leaf]:6!S-Prim-hyper_map[zeros_like_leaf]b&
+S-Prim-MakeTuple:8S-Prim-MakeTupleh
