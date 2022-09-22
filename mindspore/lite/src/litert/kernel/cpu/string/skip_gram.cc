@@ -112,5 +112,5 @@ int SkipGramCPUKernel::Run() {
   return ret;
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_SkipGram, LiteKernelCreator<SkipGramCPUKernel>)
+REG_KERNEL(kCPU, kObjectTypeString, PrimitiveType_SkipGram, LiteKernelCreator<SkipGramCPUKernel>)
 }  // namespace mindspore::kernel

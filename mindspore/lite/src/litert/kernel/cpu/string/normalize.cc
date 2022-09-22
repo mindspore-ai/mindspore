@@ -150,5 +150,5 @@ kernel::LiteKernel *CpuNormalizeKernelCreator(const std::vector<lite::Tensor *> 
   return kernel;
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_CustomNormalize, CpuNormalizeKernelCreator)
+REG_KERNEL(kCPU, kObjectTypeString, PrimitiveType_CustomNormalize, CpuNormalizeKernelCreator)
 }  // namespace mindspore::kernel

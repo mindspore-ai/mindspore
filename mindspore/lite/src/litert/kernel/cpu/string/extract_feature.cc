@@ -92,5 +92,5 @@ kernel::LiteKernel *CpuExtractFeatureKernelCreator(const std::vector<lite::Tenso
   return kernel;
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_CustomExtractFeatures, CpuExtractFeatureKernelCreator)
+REG_KERNEL(kCPU, kObjectTypeString, PrimitiveType_CustomExtractFeatures, CpuExtractFeatureKernelCreator)
 }  // namespace mindspore::kernel

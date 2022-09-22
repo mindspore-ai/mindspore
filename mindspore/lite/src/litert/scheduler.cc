@@ -1311,9 +1311,7 @@ kernel::SubGraphType GetKernelSubGraphType(const kernel::KernelExec *kernel, con
   } else if (desc.arch == kernel::KERNEL_ARCH::kCPU) {
     if (desc.data_type == kNumberTypeFloat16) {
       return kernel::kCpuFP16SubGraph;
-    } else if (desc.data_type == kNumberTypeFloat32 || desc.data_type == kNumberTypeInt8 ||
-               desc.data_type == kNumberTypeInt64 || desc.data_type == kNumberTypeUInt8 ||
-               desc.data_type == kNumberTypeBool || desc.data_type == kNumberTypeInt32) {
+    } else {
       return kernel::kCpuFP32SubGraph;
     }
   } else if (desc.arch == kernel::KERNEL_ARCH::kCustom) {
@@ -1700,9 +1698,6 @@ int Scheduler::ConstructNormalSubGraphs(const std::vector<kernel::KernelExec *> 
 TypeId Scheduler::GetFirstFp32Fp16OrInt8Type(const std::vector<Tensor *> &in_tensors) {
   for (const auto &tensor : in_tensors) {
     auto dtype = tensor->data_type();
-    if (dtype == kObjectTypeString) {
-      return kNumberTypeFloat32;
-    }
     if (dtype == kObjectTypeTensorType) {
       return TensorListDataType(tensor);
     }
