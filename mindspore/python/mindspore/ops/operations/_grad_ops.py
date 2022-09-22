@@ -14,8 +14,9 @@
 # ============================================================================
 
 """Operators for gradients."""
-from mindspore._checkparam import _check_3d_int_or_tuple
+from __future__ import absolute_import
 
+from mindspore._checkparam import _check_3d_int_or_tuple
 from mindspore.ops.operations.nn_ops import _check_positive_int_or_tuple
 from mindspore.ops import signature as sig
 from mindspore.ops._utils import get_concat_offset
