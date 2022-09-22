@@ -172,7 +172,7 @@ bool CTCLossV2GradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPt
     int64_t target_length = target_lengths[b];
     int64_t tg_batch_offset = max_target_length_ * b;
     if (input_length > 0) {
-      for (size_t s = 0; s < kIndex2 * max_target_length_ + 1; s++) {
+      for (size_t s = 0; s < LongToSize(target_mul * max_target_length_ + 1); s++) {
         log_beta[log_beta_it(b, input_length - 1, s)] = neginf;
       }
       log_beta[log_beta_it(b, input_length - 1, target_mul * target_length)] =
