@@ -51,10 +51,6 @@ bool DropoutCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
   if (keep_prob_ <= 0.0 || keep_prob_ > 1.0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", the 'keep_prob' must be in (0.0, 1.0], but got " << keep_prob_;
   }
-  input_shape_ = inputs[0]->GetShapeVector();
-  for (const auto &d : input_shape_) {
-    tensor_size_ *= LongToSize(d);
-  }
   return MatchKernelFunc(base_operator, inputs, outputs);
 }
 
@@ -63,6 +59,10 @@ int DropoutCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
                                 const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
     return ret;
+  }
+  input_shape_ = inputs[0]->GetShapeVector();
+  for (const auto &d : input_shape_) {
+    tensor_size_ *= LongToSize(d);
   }
   return static_cast<int>(KRET_OK);
 }
