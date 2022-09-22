@@ -81,7 +81,12 @@ void RuntimeUtils::CopyInputTensorsToKernelGraph(const std::vector<tensor::Tenso
       MS_LOG(EXCEPTION) << "Output_idx" << i << " of input " << graph_input->DebugString()
                         << " output addr ptr is nullptr.";
     }
-    memcpy(graph_input_addr->ptr_, input.data_c(), graph_input_addr->size_);
+    auto ret = memcpy_s(graph_input_addr->ptr_, graph_input_addr->size_, input.data_c(), input.Size());
+    if (ret != EOK) {
+      MS_LOG(EXCEPTION) << "memcpy_s failed, ret: " << ret << ", dst size: " << graph_input_addr->size_
+                        << ", src size: " << input.Size();
+      return;
+    }
   }
 }
 
