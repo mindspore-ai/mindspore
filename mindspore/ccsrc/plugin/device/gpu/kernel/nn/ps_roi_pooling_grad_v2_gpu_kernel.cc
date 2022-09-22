@@ -22,6 +22,13 @@ namespace {
 constexpr int kDyOutputDimIndex = 1;
 constexpr int kDyHeightIndex = 2;
 constexpr int kDyWidthIndex = 3;
+constexpr int INPUT_NUM = 2;
+constexpr int OUTPUT_NUM = 1;
+constexpr int OUT_PUT_SHAPE_SIZE = 4;
+constexpr int DY_SHAPE_SIZE = 4;
+constexpr int DX_SHAPE_SIZE = 4;
+constexpr int ROI_SHAPE_SIZE = 3;
+constexpr int ROIS_NUM_INDEX = 2;
 }  // namespace
 
 bool PSROIPoolingBackV2GpuKernelMod::Init(const BaseOperatorPtr &base_operator,
@@ -149,11 +156,15 @@ int PSROIPoolingBackV2GpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   feature_channels_ = output_channels_ * group_size_ * group_size_;
 
   for (auto tensor_ptr : inputs) {
-    if (tensor_ptr->IsDynamicShape()) return KRET_UNKNOWN_SHAPE;
+    if (tensor_ptr->IsDynamicShape()) {
+      return KRET_UNKNOWN_SHAPE;
+    }
   }
 
   for (auto tensor_ptr : outputs) {
-    if (tensor_ptr->IsDynamicShape()) return KRET_UNKNOWN_OUT_SHAPE;
+    if (tensor_ptr->IsDynamicShape()) {
+      return KRET_UNKNOWN_OUT_SHAPE;
+    }
   }
 
   auto dy_shape = inputs[0]->GetShapeVector();
@@ -203,28 +214,28 @@ bool PSROIPoolingBackV2GpuKernelMod::Launch(const std::vector<AddressPtr> &input
                                             const std::vector<AddressPtr> &workspace,
                                             const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   if (data_type_id_ == kNumberTypeFloat32) {
-    auto top_diff = reinterpret_cast<float *>(inputs[0]->addr);
+    auto top_diff = static_cast<float *>(inputs[0]->addr);
     MS_EXCEPTION_IF_NULL(top_diff);
-    auto rois = reinterpret_cast<float *>(inputs[1]->addr);
+    auto rois = static_cast<float *>(inputs[1]->addr);
     MS_EXCEPTION_IF_NULL(rois);
-    auto output_diff = reinterpret_cast<float *>(outputs[0]->addr);
+    auto output_diff = static_cast<float *>(outputs[0]->addr);
     MS_EXCEPTION_IF_NULL(output_diff);
     PSROIPoolBackwardV2Launcher(top_diff, batch_size_, output_n_, static_cast<float>(spatial_scale_), feature_channels_,
                                 height_, width_, pooled_width_, pooled_height_, output_channels_, output_diff, rois,
-                                reinterpret_cast<cudaStream_t>(stream_ptr), rois_num_, group_size_);
+                                static_cast<cudaStream_t>(stream_ptr), rois_num_, group_size_);
     return true;
   }
 
   if (data_type_id_ == kNumberTypeFloat16) {
-    auto top_diff = reinterpret_cast<half *>(inputs[0]->addr);
+    auto top_diff = static_cast<half *>(inputs[0]->addr);
     MS_EXCEPTION_IF_NULL(top_diff);
-    auto rois = reinterpret_cast<half *>(inputs[1]->addr);
+    auto rois = static_cast<half *>(inputs[1]->addr);
     MS_EXCEPTION_IF_NULL(rois);
-    auto output_diff = reinterpret_cast<half *>(outputs[0]->addr);
+    auto output_diff = static_cast<half *>(outputs[0]->addr);
     MS_EXCEPTION_IF_NULL(output_diff);
     PSROIPoolBackwardV2Launcher(top_diff, batch_size_, output_n_, static_cast<half>(spatial_scale_), feature_channels_,
                                 height_, width_, pooled_width_, pooled_height_, output_channels_, output_diff, rois,
-                                reinterpret_cast<cudaStream_t>(stream_ptr), rois_num_, group_size_);
+                                static_cast<cudaStream_t>(stream_ptr), rois_num_, group_size_);
     return true;
   }
 

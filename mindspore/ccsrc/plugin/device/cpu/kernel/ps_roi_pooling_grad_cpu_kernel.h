@@ -25,14 +25,6 @@
 
 namespace mindspore {
 namespace kernel {
-#define INPUT_NUM 2
-#define OUTPUT_NUM 1
-#define OUT_PUT_SHAPE_SIZE 4
-#define DY_SHAPE_SIZE 4
-#define DX_SHAPE_SIZE 4
-#define ROI_SHAPE_SIZE 3
-#define ROIS_NUM_INDEX 2
-
 class PSROIPoolingGradCpuKernelMod : public NativeCpuKernelMod {
  public:
   PSROIPoolingGradCpuKernelMod() = default;
@@ -71,9 +63,9 @@ class PSROIPoolingGradCpuKernelMod : public NativeCpuKernelMod {
   TypeId data_type_id_{kNumberTypeFloat32};
 
   template <typename T>
-  void PSROIPoolBackward(size_t start, size_t end, const T *input_diff, T *output_diff, T *roi_boxes);
+  void PSROIPoolBackward(size_t start, size_t end, const T *input_diff, T *output_diff, T *roi_boxes) const;
 
-  int ResizeCheckInputs(const std::vector<KernelTensorPtr> &inputs);
+  int ResizeCheckInputs(const std::vector<KernelTensorPtr> &inputs) const;
 };
 }  // namespace kernel
 }  // namespace mindspore
