@@ -18,7 +18,7 @@
 from mindspore.common import dtype as mstype
 from mindspore.scipy.ops import SolveTriangular
 from mindspore.ops.operations.math_ops import Trace, Bernoulli, Renorm
-from mindspore import nn
+from mindspore import nn, ops, Tensor
 import mindspore.numpy as mnp
 import numpy as np
 from ...nn import LGamma
@@ -49,6 +49,7 @@ from ..operations.math_ops import Hypot
 from ..operations.math_ops import ReduceStd
 from ..operations.math_ops import LuUnpack
 from ..operations.math_ops import MatrixExp
+from ..operations.math_ops import CumulativeLogsumexp
 from ..operations.math_ops import MatrixSolve
 from ..operations.math_ops import MatrixPower
 from ..operations.math_ops import Median
@@ -383,6 +384,56 @@ def get_bprop_lp_norm(self):
             input_scaled = pow_op(abs_op(input_x), (p - 2)) * input_x
             scale_v = dout / pow_op(out, (p - 1))
         return (input_scaled * scale_v,)
+
+    return bprop
+
+
+@bprop_getters.register(CumulativeLogsumexp)
+def get_brop_cumulative_logsumexp(self):
+    """Generate bprop for CumulativeLogsumexp"""
+    exp_op = P.Exp()
+    greater_op = P.Greater()
+    log_op = P.Log()
+    cumulative_op = CumulativeLogsumexp(self.exclusive, not self.reverse)
+    less_op = P.Less()
+    neg_op = P.Neg()
+
+    def where_v2(condition, x=None, y=None):
+        return_all = None
+        if x is None and y is None:
+            return_all = mnp.where(condition, x, y)
+        elif x is not None and y is not None:
+            shape_ = x.shape
+            input_y = np.resize(y, shape_)
+            input_y = Tensor(input_y).astype(x.dtype)
+            return_all = ops.select(condition, x, input_y)
+        else:
+            raise ValueError("x and y must both be non-None or both be None.")
+        return return_all
+
+    def bprop(x, axis, out, dout):
+        dtype_min = 0
+        fp64_flag = False
+        if x.dtype == mstype.float16:
+            dtype_min = -65500e+0
+        elif x.dtype == mstype.float32:
+            dtype_min = -3.4028235e+38
+        elif x.dtype == mstype.float64:
+            dout = F.cast(dout, mstype.float32)
+            x = F.cast(x, mstype.float32)
+            out = F.cast(out, mstype.float32)
+            dtype_min = -3.4028235e+38
+            fp64_flag = True
+
+        log_grad_positive = where_v2(greater_op(dout, 0), log_op(dout), dtype_min)
+        log_grad_negative = where_v2(less_op(dout, 0), log_op(neg_op(dout)), dtype_min)
+        output_pos = exp_op(cumulative_op(log_grad_positive - out, axis) + x)
+        output_neg = exp_op(cumulative_op(log_grad_negative - out, axis) + x)
+        if fp64_flag:
+            output_pos = F.cast(output_pos, mstype.float64)
+            output_neg = F.cast(output_neg, mstype.float64)
+            x = F.cast(x, mstype.float64)
+        return (output_pos - output_neg, zeros_like(x))
 
     return bprop
 

@@ -80,6 +80,7 @@ constexpr auto kExp = "Exp";
 constexpr auto kEqual = "Equal";
 constexpr auto kNotEqual = "NotEqual";
 constexpr auto kNeg = "Neg";
+constexpr auto kCumulativeLogsumexp = "CumulativeLogsumexp";
 constexpr auto kSub = "Sub";
 constexpr auto kMedian = "Median";
 constexpr auto kMedianGrad = "MedianGrad";
@@ -1142,6 +1143,7 @@ GVAR_DEF(PrimitivePtr, kPrimHistogram, std::make_shared<Primitive>("Histogram"))
 GVAR_DEF(PrimitivePtr, kPrimMaximum, std::make_shared<Primitive>("Maximum"));
 GVAR_DEF(PrimitivePtr, kPrimSquare, std::make_shared<Primitive>(kSquare));
 GVAR_DEF(PrimitivePtr, kPrimCumSum, std::make_shared<Primitive>("CumSum"));
+GVAR_DEF(PrimitivePtr, kPrimCumulativeLogsumexp, std::make_shared<Primitive>(kCumulativeLogsumexp));
 GVAR_DEF(PrimitivePtr, kPrimCumProd, std::make_shared<Primitive>("CumProd"));
 GVAR_DEF(PrimitivePtr, kPrimSubscalar, std::make_shared<Primitive>("Subscalar"));
 GVAR_DEF(PrimitivePtr, kPrimInplaceAdd, std::make_shared<Primitive>("InplaceAdd"));

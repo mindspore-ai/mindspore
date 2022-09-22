@@ -615,6 +615,80 @@ class ReduceMean(_Reduce):
         super(ReduceMean, self).__init__(keep_dims)
 
 
+class CumulativeLogsumexp(Primitive):
+    """
+    Compute the cumulative product of the tensor `x` along `axis`.
+
+    When `exclusive` is set `False`, this operation performs an inclusive cumulative log-sum-exp, which means that the
+    first element of the input is identical to the first element of the output. For example, when takes a tensor
+    [a, b, c] as input, this operation outputs [a, log(exp(a) + exp(b)), log(exp(a) + exp(b) + exp(c))]. When `reverse`
+    is set `True`, the cumulative log-sum-exp is performed in the opposite direction and thus get the output
+    [log(exp(a) + exp(b) + exp(c)), log(exp(b) + exp(c)), c].
+
+    When `exclusive` is set `True`, this operation performs an exclusive cumulative log-sum-exp instead. For example,
+    when takes a tensor [a, b, c] as input, this operation outputs [-inf, a, log(exp(a) * exp(b))]. Note that the
+    neutral element of the log-sum-exp operation is -inf, however, for performance reasons, the minimal value
+    representable by the floating point type is used instead. When `reverse` is set `True`, the cumulative log-sum-exp
+    is performed in the opposite direction and thus get the output [log(exp(b) * exp(c)), c, -inf].
+
+    Args:
+        exclusive (bool): If true, perform exclusive cumulative log-sum-exp.
+                          If false, perform inclusive cumulative log-sum-exp. Default: False.
+        reverse (bool): If true, the cumulative log-sum-exp is performed in the opposite direction.
+                        If false, the cumulative log-sum-exp is performed in the forward direction. Default: False.
+
+    Inputs:
+        - **x** (Tensor) - The input tensor. Must be one of the following types: float16, float32, float64.
+          The dimension of `x` must greater than 0.
+        - **axis** (Tensor) - A 0-D tensor describing the dimension to compute the cumulative product. Must be one of
+          the following types: int64, int32, int16. Must be in the range [-rank(x), rank(x)). Default: 0.
+
+    Outputs:
+        Tensor, has the same dtype and shape as the `x`.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        TypeError: If dtype of `x` is not in [float16, float32, float64].
+        TypeError: If `axis` is not a Tensor.
+        TypeError: If dtype of `axis` is not in [int16, int32, int64].
+        TypeError: If `exclusive` or `reverse` is not a bool.
+        ValueError: If the dimension of `x` is not greater than 1.
+        RuntimeError: If `axis` is out of range [-rank(x), rank(x)).
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([1.0, 2.0, 3.0]).astype(np.float32))
+        >>> op = ops.CumulativeLogsumexp(exclusive=False, reverse=False)
+        >>> output = op(x, Tensor(0))
+        >>> print(output)
+        [1.        2.3132617 3.407606 ]
+        >>> x = Tensor(np.array([1.0, 2.0, 3.0]).astype(np.float32))
+        >>> op = ops.CumulativeLogsumexp(exclusive=True, reverse=False)
+        >>> output = op(x, Tensor(0))
+        >>> print(output)
+        [-3.4028235e+38  1.0000000e+00  2.3132617e+00]
+        >>> x = Tensor(np.array([1.0, 2.0, 3.0]).astype(np.float32))
+        >>> op = ops.CumulativeLogsumexp(exclusive=False, reverse=True)
+        >>> output = op(x, Tensor(0))
+        >>> print(output)
+        [3.407606  3.3132617 3.       ]
+        >>> x = Tensor(np.array([1.0, 2.0, 3.0]).astype(np.float32))
+        >>> op = ops.CumulativeLogsumexp(exclusive=True, reverse=True)
+        >>> output = op(x, Tensor(0))
+        >>> print(output)
+        [ 3.3132617e+00  3.0000000e+00 -3.4028235e+38]
+    """
+
+    @prim_attr_register
+    def __init__(self, exclusive=False, reverse=False):
+        """Initialize  CumulativeLogsumexp"""
+        self.init_prim_io_names(inputs=['x', 'axis'], outputs=['y'])
+        validator.check_bool(exclusive, "exclusive", self.name)
+        validator.check_bool(reverse, "reverse", self.name)
+
+
 class ReduceSum(_Reduce):
     """
     Reduces a dimension of a tensor by summing all elements in the dimension, by default. And also can reduce a
