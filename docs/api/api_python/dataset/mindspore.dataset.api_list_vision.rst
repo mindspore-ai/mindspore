@@ -72,8 +72,8 @@ Batch（批操作）
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.dataset.Dataset.add_sampler
-    mindspore.dataset.Dataset.use_sampler
+    mindspore.dataset.MappableDataset.add_sampler
+    mindspore.dataset.MappableDataset.use_sampler
 
 其他方法
 --------

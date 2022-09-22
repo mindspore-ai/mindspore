@@ -32,7 +32,7 @@ mindspore.ops.batch_norm
         - **eps** (float) - 添加到分母上的值，以确保数值稳定性。默认值：1e-5。
 
     返回：
-        Tensor， 数据类型与shape大小与 `input_x` 相同，其中，shape大小为 :math:`(N, C)` 。
+        Tensor，数据类型与shape大小与 `input_x` 相同，其中，shape大小为 :math:`(N, C)` 。
 
     异常：
         - **TypeError** - `training` 不是bool。
