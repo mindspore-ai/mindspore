@@ -553,7 +553,7 @@ Since `mindspore.numpy` directly wraps MindSpore tensors and operators, it has a
 
 - `ms_function`: for running codes in static graph mode for better efficiency.
 - `GradOperation`: for automatic gradient computation.
-- `mindspore.context`: for `mindspore.numpy` execution management.
+- `mindspore.set_context`: for `mindspore.numpy` execution management.
 - `mindspore.nn.Cell`: for using `mindspore.numpy` interfaces in MindSpore Deep Learning Models.
 
 The following are examples:
@@ -663,9 +663,9 @@ The following are examples:
 
   For more details, see `API GradOperation <https://www.mindspore.cn/docs/en/master/api_python/ops/mindspore.ops.GradOperation.html>`_ .
 
-- Use mindspore.context to control execution mode
+- Use mindspore.set_context to control execution mode
 
-  Most functions in `mindspore.numpy` can run in Graph Mode and PyNative Mode, and can run on CPU, GPU and Ascend. Like MindSpore, users can manage the execution mode using `mindspore.context`：
+  Most functions in `mindspore.numpy` can run in Graph Mode and PyNative Mode, and can run on CPU, GPU and Ascend. Like MindSpore, users can manage the execution mode using `mindspore.set_context`：
 
   .. code-block:: python
 
