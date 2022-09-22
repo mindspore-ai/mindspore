@@ -254,11 +254,7 @@ int ShuffleTensorRT::AddReshapeOp(nvinfer1::IShuffleLayer *shuffle_layer) {
   auto &shape_tensor = in_tensors_[1];
   if (shape_tensor.IsConst()) {
     // static shuffle layer
-    nvinfer1::Dims reshape_dims{static_cast<int>(shape_tensor.ElementNum())};
-    const int *shape_ptr = reinterpret_cast<const int *>(shape_tensor.Data());
-    for (int i = 0; i != shape_tensor.ElementNum(); ++i) {
-      reshape_dims.d[i] = *(shape_ptr + i);
-    }
+    auto reshape_dims = lite::ConvertCudaDims(shape_tensor);
     shuffle_layer->setReshapeDimensions(reshape_dims);
   } else {
     if (in_tensors_.size() != INPUT_SIZE2) {

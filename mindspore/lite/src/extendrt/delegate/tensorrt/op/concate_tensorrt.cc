@@ -29,7 +29,7 @@ int ConcateTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::
     MS_LOG(ERROR) << "Unsupported op :" << op_name_ << " , type: " << type_;
     return RET_ERROR;
   }
-  if (in_tensors.size() == 0 || (in_tensors.size() < INPUT_SIZE2 && type_ != ops::kNameStack)) {
+  if (in_tensors.size() == 0) {
     MS_LOG(ERROR) << "Unsupported input tensor size, size is " << in_tensors.size();
     return RET_ERROR;
   }

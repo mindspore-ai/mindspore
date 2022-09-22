@@ -239,6 +239,8 @@ inline size_t DataTypeSize(TypeId type) {
       return sizeof(char);
     case kObjectTypeTensorType:
       return 0;
+    case kMetaTypeTypeType:
+      return sizeof(int);
     default:
       MS_LOG(ERROR) << "Not support the type: " << type;
       return 0;
