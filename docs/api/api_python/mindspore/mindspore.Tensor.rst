@@ -87,10 +87,10 @@ mindspore.Tensor
     mindspore.Tensor.round
     mindspore.Tensor.sigmoid
     mindspore.Tensor.sqrt
+    mindspore.Tensor.square
     mindspore.Tensor.std
     mindspore.Tensor.sub
     mindspore.Tensor.svd
-    mindspore.Tensor.square
     mindspore.Tensor.tan
     mindspore.Tensor.tanh
     mindspore.Tensor.var

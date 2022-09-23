@@ -187,9 +187,6 @@ Element-by-Element Operations
     mindspore.ops.floor
     mindspore.ops.floor_div
     mindspore.ops.floor_mod
-    mindspore.ops.inplace_add
-    mindspore.ops.inplace_sub
-    mindspore.ops.inplace_update
     mindspore.ops.inv
     mindspore.ops.invert
     mindspore.ops.lerp
@@ -205,7 +202,6 @@ Element-by-Element Operations
     mindspore.ops.neg
     mindspore.ops.pow
     mindspore.ops.round
-    mindspore.ops.selu
     mindspore.ops.sin
     mindspore.ops.sinh
     mindspore.ops.sqrt

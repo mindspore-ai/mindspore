@@ -90,10 +90,12 @@ Element-wise Methods
     mindspore.Tensor.logit
     mindspore.Tensor.pow
     mindspore.Tensor.round
+    mindspore.Tensor.sigmoid
     mindspore.Tensor.sqrt
     mindspore.Tensor.std
     mindspore.Tensor.sub
     mindspore.Tensor.svd
+    mindspore.Tensor.square
     mindspore.Tensor.tan
     mindspore.Tensor.tanh
     mindspore.Tensor.var
@@ -200,6 +202,7 @@ Array Methods
     mindspore.Tensor.itemsize
     mindspore.Tensor.masked_fill
     mindspore.Tensor.masked_select
+    mindspore.Tensor.minimum
     mindspore.Tensor.nbytes
     mindspore.Tensor.ndim
     mindspore.Tensor.nonzero
