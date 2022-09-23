@@ -196,7 +196,7 @@ class MoE(Cell):
             self.dp_group = parallel_config.data_parallel
             self.dp = parallel_config.data_parallel
             self.ep = parallel_config.expert_parallel
-            from .transformer import FeedForward
+            from mindspore.nn.transformer import FeedForward
 
             self.ffn = FeedForward(hidden_size=hidden_size,
                                    ffn_hidden_size=ffn_hidden_size,
