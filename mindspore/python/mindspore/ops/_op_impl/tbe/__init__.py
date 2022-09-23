@@ -38,7 +38,9 @@ from .add_ds import _add_ds_tbe
 from .add_n import _add_n_tbe
 from .add_n_ds import _add_n_ds_tbe
 from .addcdiv import _addcdiv_tbe
+from .addcdiv_ds import _addcdiv_ds_tbe
 from .addcmul import _addcmul_tbe
+from .addcmul_ds import _addcmul_ds_tbe
 from .accumulate_n_v2 import _accumulate_n_v2_tbe
 from .accumulate_n_v2_ds import _accumulate_n_v2_ds_tbe
 from .apply_ftrl import _apply_ftrl_tbe
@@ -460,7 +462,9 @@ from .bitwise_or_ds import _bitwise_or_ds_tbe
 from .bitwise_xor import _bitwise_xor_tbe
 from .bitwise_xor_ds import _bitwise_xor_ds_tbe
 from .reduce_all import _reduce_all_tbe
+from .reduce_all_ds import _reduce_all_ds_tbe
 from .reduce_any import _reduce_any_tbe
+from .reduce_any_ds import _reduce_any_ds_tbe
 from .sparse_apply_adagrad import _sparse_apply_adagrad_tbe
 from .sparse_apply_adagrad_ds import _sparse_apply_adagrad_ds
 from .sparse_apply_adagrad_v2_ds import _sparse_apply_adagrad_v2_ds
