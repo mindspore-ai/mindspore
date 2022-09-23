@@ -902,6 +902,7 @@ class TensorShape(Primitive):
 
 
 class Unsqueeze(PrimitiveWithCheck):
+    """Unsqueeze"""
     @prim_attr_register
     def __init__(self, axis):
         self.init_prim_io_names(inputs=['x'], outputs=['y'])

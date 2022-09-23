@@ -16,6 +16,7 @@
 
 """Grad operators for sparse operators."""
 
+from __future__ import absolute_import
 from mindspore.ops.primitive import Primitive, prim_attr_register
 
 
