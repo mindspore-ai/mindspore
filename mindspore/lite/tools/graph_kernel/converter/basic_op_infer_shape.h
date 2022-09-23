@@ -23,6 +23,10 @@ class BasicOpInferShape : public opt::NodeInferShape {
   BasicOpInferShape() : opt::NodeInferShape() {}
   ~BasicOpInferShape() = default;
   void InferShape(const CNodePtr &cnode);
+
+ private:
+  void InferShapeRealKernel(const CNodePtr &cnode);
+  void InsertAbstract(const CNodePtr &cnode);
 };
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_BASIC_OP_INFER_SHAPE_H_
