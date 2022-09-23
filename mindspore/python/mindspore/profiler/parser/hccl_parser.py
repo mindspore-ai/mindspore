@@ -77,6 +77,107 @@ class HcclParser:
         self._step_trace_info = self._get_step_trace_info(output_path)
         self._communication_operator_name_mapping_info = self._get_communication_operator_name_mapping_info()
 
+    @staticmethod
+    def _divide_communication_info_by_thread(trace_events: list):
+        """Divide information by thread."""
+        threads_dict = dict()
+        for item in trace_events:
+            thread_id = item.get("tid")
+            if thread_id not in threads_dict.keys():
+                threads_dict[thread_id] = [item]
+            else:
+                threads_dict[thread_id].append(item)
+        return threads_dict
+
+    @staticmethod
+    def _calculate_adma_link_info(trace_event: list):
+        """
+        Calculate RDMA link info.
+
+        When the link is RDMA,it is necessary to match three consecutive operators RDMASend, RDMASend \
+        and Notify Wait,and take the sum of the time of the three operators as one communication time.
+        """
+        rdma_communication_time = 0
+        rdma_communication_size = 0
+        rdma_communication_wait_time = 0
+        start_index = 0
+        end_index = len(trace_event) - 1
+        while start_index < end_index:
+            first_task_type = trace_event[start_index].get("args").get("task type")
+            if first_task_type == CommunicationInfo.RDMASEND.value and start_index < end_index - 1:
+                second_task_type = trace_event[start_index + 1].get("args").get("task type")
+                third_task_type = trace_event[start_index + 2].get("args").get("task type")
+                if second_task_type == CommunicationInfo.RDMASEND.value and \
+                        third_task_type == CommunicationInfo.NOTIFY_WAIT.value:
+                    rdma_send_cost = trace_event[start_index].get("dur", 0)
+                    notify_record_cost = trace_event[start_index + 1].get("dur", 0)
+                    notify_wait_cost = trace_event[start_index + 2].get("dur", 0)
+                    rdma_communication_time += rdma_send_cost + notify_record_cost + notify_wait_cost
+                    rdma_communication_wait_time += notify_wait_cost
+                    rdma_size = trace_event[start_index].get("args").get("size")
+                    if rdma_size:
+                        rdma_size = rdma_size if isinstance(rdma_size, int) else int(rdma_size, 16)
+                    else:
+                        rdma_size = 0
+                    notify_record_size = trace_event[start_index + 1].get("args").get("size")
+                    if notify_record_size:
+                        notify_record_size = notify_record_size if isinstance(notify_record_size, int) \
+                            else int(notify_record_size, 16)
+                    else:
+                        notify_record_size = 0
+                    rdma_communication_size += rdma_size + notify_record_size
+                    start_index += 2
+            start_index += 1
+
+        # The unit of rdma_communication_wait_time is ms.
+        # The unit of rdma_bandwidth is KB/s.
+        # The unit of rdma_communication_size is k_byte and The unit of rdma_communication_time is ms.
+        rdma_communication_wait_time = rdma_communication_wait_time / 1e3
+        rdma_communication_size = rdma_communication_size / 1e3
+        rdma_communication_time = rdma_communication_time / 1e3
+        rdma_bandwidth = rdma_communication_size / (rdma_communication_time / 1e3) \
+            if rdma_communication_size else 0
+
+        return [rdma_communication_time, rdma_communication_size, rdma_bandwidth, rdma_communication_wait_time]
+
+    @staticmethod
+    def _calculate_notify_wait_time(trace_event: list):
+        """Calculate notify wait time."""
+        total_notify_wait_time = 0
+        for item in trace_event:
+            task_type = item.get("args").get("task type")
+            if task_type == CommunicationInfo.NOTIFY_WAIT.value:
+                total_notify_wait_time += item.get("dur", 0)
+        # The unit of total_notify_wait_time is ms.
+        total_notify_wait_time = total_notify_wait_time / 1e3
+        return total_notify_wait_time
+
+    @staticmethod
+    def _parser_link_dict(result_dict, src_dst_key, src_dst_value):
+        """Parser link info to dict."""
+        if src_dst_key not in result_dict.keys():
+            result_dict[src_dst_key] = dict()
+        for link_key, link_value in src_dst_value.items():
+            if link_key not in result_dict[src_dst_key].keys():
+                result_dict[src_dst_key][link_key] = list()
+            result_dict[src_dst_key][link_key].append(link_value)
+
+    @staticmethod
+    def _calculate_link_value(link_info: list, calculate_type):
+        """Calculate link average or total value."""
+        result_dict = dict()
+        for item in link_info:
+            for src_dst_key, src_dst_value in item.items():
+                HcclParser._parser_link_dict(result_dict, src_dst_key, src_dst_value)
+        for src_dst_key, src_dst_value in result_dict.items():
+            for link_key, _ in src_dst_value.items():
+                if calculate_type == 'average':
+                    result_dict[src_dst_key][link_key] = np.mean(result_dict[src_dst_key][link_key], axis=0).tolist()
+                if calculate_type == 'total':
+                    result_dict[src_dst_key][link_key] = np.sum(result_dict[src_dst_key][link_key], axis=0).tolist()
+
+        return result_dict
+
     def parse(self):
         """Parse communication info."""
         self._parse_and_save(self._source_dir)
@@ -93,7 +194,7 @@ class HcclParser:
         """Parse and save communication info."""
         communication_info_cache = list()
         operators_cost_info = self._get_communication_operators_cost_info(dir_path)
-        for k, v in operators_cost_info.items():
+        for _, v in operators_cost_info.items():
             for item in v:
                 communication_info_cache.append(item)
         communication_info_cache = self._merge_communication_info_by_step_num(communication_info_cache)
@@ -153,9 +254,9 @@ class HcclParser:
         )
         try:
             file_path = validate_and_normalize_path(file_path)
-        except RuntimeError:
+        except RuntimeError as err:
             logger.warning('file path is invalid.')
-            raise ProfilerPathErrorException('file path is invalid.')
+            raise ProfilerPathErrorException('file path is invalid.') from err
         if not os.path.isfile(file_path):
             logger.warning('The step trace file <%s> not found.', file_path)
             raise ProfilerFileNotFoundException(file_path)
@@ -290,7 +391,7 @@ class HcclParser:
                 operator_info = json.load(src_file)
             except (json.JSONDecodeError, TypeError) as err:
                 logger.warning(err)
-                raise ProfilerRawFileException('Fail to parse operator file.')
+                raise ProfilerRawFileException('Fail to parse operator file.') from err
         trace_events = operator_info.get("traceEvents")
         operator_timestamp = trace_events[0].get("ts", 0)
         step_id = self._calculate_the_step_by_timestamp(operator_timestamp)
@@ -308,18 +409,6 @@ class HcclParser:
         return [step_id, mainstream_communication_operator_iter_cost[0],
                 mainstream_communication_operator_iter_cost[1],
                 total_communication_operator_iter_cost[2]]
-
-    @staticmethod
-    def _divide_communication_info_by_thread(trace_events: list):
-        """Divide information by thread."""
-        threads_dict = dict()
-        for item in trace_events:
-            thread_id = item.get("tid")
-            if thread_id not in threads_dict.keys():
-                threads_dict[thread_id] = [item]
-            else:
-                threads_dict[thread_id].append(item)
-        return threads_dict
 
     def _divide_communication_info_by_src_dst_rank(self, trace_event: list):
         """Divide information by src rank id and dst rank id"""
@@ -412,57 +501,6 @@ class HcclParser:
             self._parse_link_cost(result_dict, k, link_type_dict)
         return result_dict
 
-    @staticmethod
-    def _calculate_adma_link_info(trace_event: list):
-        """
-        Calculate RDMA link info.
-
-        When the link is RDMA,it is necessary to match three consecutive operators RDMASend, RDMASend \
-        and Notify Wait,and take the sum of the time of the three operators as one communication time.
-        """
-        rdma_communication_time = 0
-        rdma_communication_size = 0
-        rdma_communication_wait_time = 0
-        start_index = 0
-        end_index = len(trace_event) - 1
-        while start_index < end_index:
-            first_task_type = trace_event[start_index].get("args").get("task type")
-            if first_task_type == CommunicationInfo.RDMASEND.value and start_index < end_index - 1:
-                second_task_type = trace_event[start_index + 1].get("args").get("task type")
-                third_task_type = trace_event[start_index + 2].get("args").get("task type")
-                if second_task_type == CommunicationInfo.RDMASEND.value and \
-                        third_task_type == CommunicationInfo.NOTIFY_WAIT.value:
-                    rdma_send_cost = trace_event[start_index].get("dur", 0)
-                    notify_record_cost = trace_event[start_index + 1].get("dur", 0)
-                    notify_wait_cost = trace_event[start_index + 2].get("dur", 0)
-                    rdma_communication_time += rdma_send_cost + notify_record_cost + notify_wait_cost
-                    rdma_communication_wait_time += notify_wait_cost
-                    rdma_size = trace_event[start_index].get("args").get("size")
-                    if rdma_size:
-                        rdma_size = rdma_size if isinstance(rdma_size, int) else int(rdma_size, 16)
-                    else:
-                        rdma_size = 0
-                    notify_record_size = trace_event[start_index + 1].get("args").get("size")
-                    if notify_record_size:
-                        notify_record_size = notify_record_size if isinstance(notify_record_size, int) \
-                            else int(notify_record_size, 16)
-                    else:
-                        notify_record_size = 0
-                    rdma_communication_size += rdma_size + notify_record_size
-                    start_index += 2
-            start_index += 1
-
-        # The unit of rdma_communication_wait_time is ms.
-        # The unit of rdma_bandwidth is KB/s.
-        # The unit of rdma_communication_size is k_byte and The unit of rdma_communication_time is ms.
-        rdma_communication_wait_time = rdma_communication_wait_time / 1e3
-        rdma_communication_size = rdma_communication_size / 1e3
-        rdma_communication_time = rdma_communication_time / 1e3
-        rdma_bandwidth = rdma_communication_size / (rdma_communication_time / 1e3) \
-            if rdma_communication_size else 0
-
-        return [rdma_communication_time, rdma_communication_size, rdma_bandwidth, rdma_communication_wait_time]
-
     def _calculate_sdma_link_info(self, trace_event: list):
         """
         Calculate SDMA link info.
@@ -493,18 +531,6 @@ class HcclParser:
             if sdma_communication_size else 0
         return [sdma_communication_time, sdma_communication_size, sdma_bandwidth]
 
-    @staticmethod
-    def _calculate_notify_wait_time(trace_event: list):
-        """Calculate notify wait time."""
-        total_notify_wait_time = 0
-        for item in trace_event:
-            task_type = item.get("args").get("task type")
-            if task_type == CommunicationInfo.NOTIFY_WAIT.value:
-                total_notify_wait_time += item.get("dur", 0)
-        # The unit of total_notify_wait_time is ms.
-        total_notify_wait_time = total_notify_wait_time / 1e3
-        return total_notify_wait_time
-
     def _calculate_communication_average_value(self, communication_info: list):
         """Calculate communication average value."""
         communication_info_size = len(communication_info)
@@ -517,32 +543,6 @@ class HcclParser:
         calculate_type = 'average'
         link_average_info = HcclParser._calculate_link_value(link_info, calculate_type)
         return [communication_cost_average, wait_cost_average, link_average_info]
-
-    @staticmethod
-    def _parser_link_dict(result_dict, src_dst_key, src_dst_value):
-        """Parser link info to dict."""
-        if src_dst_key not in result_dict.keys():
-            result_dict[src_dst_key] = dict()
-        for link_key, link_value in src_dst_value.items():
-            if link_key not in result_dict[src_dst_key].keys():
-                result_dict[src_dst_key][link_key] = list()
-            result_dict[src_dst_key][link_key].append(link_value)
-
-    @staticmethod
-    def _calculate_link_value(link_info: list, calculate_type):
-        """Calculate link average or total value."""
-        result_dict = dict()
-        for item in link_info:
-            for src_dst_key, src_dst_value in item.items():
-                HcclParser._parser_link_dict(result_dict, src_dst_key, src_dst_value)
-        for src_dst_key, src_dst_value in result_dict.items():
-            for link_key, _ in src_dst_value.items():
-                if calculate_type == 'average':
-                    result_dict[src_dst_key][link_key] = np.mean(result_dict[src_dst_key][link_key], axis=0).tolist()
-                if calculate_type == 'total':
-                    result_dict[src_dst_key][link_key] = np.sum(result_dict[src_dst_key][link_key], axis=0).tolist()
-
-        return result_dict
 
     def _validate_file_path(self, file_path):
         """Validate file path."""

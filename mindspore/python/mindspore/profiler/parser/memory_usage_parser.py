@@ -58,20 +58,33 @@ class MemoryUsageParser:
         self._framework = {}
         self._points = {}
 
-    def _get_file_path(self):
-        """Get the proto file path."""
-        file_path = os.path.join(
-            self._profiling_dir,
-            self._proto_file_path.format(self._device_id)
-        )
-        file_path = validate_and_normalize_path(file_path)
+    @staticmethod
+    def _process_framework_info(aicore_detail_data):
+        """Process framework info."""
+        framework_info_dict = {}
+        for framework_obj in aicore_detail_data:
+            op_name = framework_obj[0]
+            op_full_name = framework_obj[4]
+            op_info = framework_obj[5]
+            framework_info_dict[op_name] = {
+                'fullname': op_full_name,
+                'name': op_name,
+                'args': op_info
+            }
 
-        if not os.path.exists(file_path):
-            logger.warning('The memory file does not exist! Please ignore the warning '
-                           'if you are running heterogeneous training.')
-            raise ProfilerFileNotFoundException(msg=file_path)
+        return framework_info_dict
 
-        return file_path
+    def write_memory_files(self):
+        """Write memory files."""
+        logger.info('Start recording memory data into files...')
+        # write memory summary to json file
+        summary_filename = self._summary_filename.format(self._device_id)
+        self._write_memory_files(summary_filename, self._mem_summary)
+
+        # write memory details to json file
+        details_filename = self._details_filename.format(self._device_id)
+        self._write_memory_files(details_filename, self._graphs_dict)
+        logger.info('Successfully write memory data into files.')
 
     def init_memory_usage_info(self, aicore_detail_data, points):
         """Init memory usage information."""
@@ -86,7 +99,7 @@ class MemoryUsageParser:
                 content = f.read()
         except (IOError, OSError) as err:
             logger.critical('Failed to read memory file: %s', err)
-            raise ProfilerIOException
+            raise ProfilerIOException from err
 
         # Parse memory raw data from file.
         if not c_expression.security.enable_security():
@@ -99,7 +112,7 @@ class MemoryUsageParser:
             except ParseError as err:
                 msg = "Fail to parse memory proto file."
                 logger.critical("Cannot parse the memory file. Please check the file schema.\n%s", err)
-                raise ProfilerRawFileException(msg)
+                raise ProfilerRawFileException(msg) from err
 
             # Parse memory details based on graphs in the network.
             graphs = memory_proto.graph_mem
@@ -109,6 +122,21 @@ class MemoryUsageParser:
             self._mem_summary['peak_mem'] = self._peak_mem
 
             logger.info('Finished processing memory usage data.')
+
+    def _get_file_path(self):
+        """Get the proto file path."""
+        file_path = os.path.join(
+            self._profiling_dir,
+            self._proto_file_path.format(self._device_id)
+        )
+        file_path = validate_and_normalize_path(file_path)
+
+        if not os.path.exists(file_path):
+            logger.warning('The memory file does not exist! Please ignore the warning '
+                           'if you are running heterogeneous training.')
+            raise ProfilerFileNotFoundException(msg=file_path)
+
+        return file_path
 
     def _parse_graph_memory(self, graphs):
         """Parse memory usage based on subgraphs."""
@@ -140,35 +168,7 @@ class MemoryUsageParser:
                 os.chmod(file_path, stat.S_IREAD | stat.S_IWRITE)
         except (IOError, OSError) as err:
             logger.critical('Fail to write memory file.\n%s', err)
-            raise ProfilerIOException
-
-    def write_memory_files(self):
-        """Write memory files."""
-        logger.info('Start recording memory data into files...')
-        # write memory summary to json file
-        summary_filename = self._summary_filename.format(self._device_id)
-        self._write_memory_files(summary_filename, self._mem_summary)
-
-        # write memory details to json file
-        details_filename = self._details_filename.format(self._device_id)
-        self._write_memory_files(details_filename, self._graphs_dict)
-        logger.info('Successfully write memory data into files.')
-
-    @staticmethod
-    def _process_framework_info(aicore_detail_data):
-        """Process framework info."""
-        framework_info_dict = {}
-        for framework_obj in aicore_detail_data:
-            op_name = framework_obj[0]
-            op_full_name = framework_obj[4]
-            op_info = framework_obj[5]
-            framework_info_dict[op_name] = {
-                'fullname': op_full_name,
-                'name': op_name,
-                'args': op_info
-            }
-
-        return framework_info_dict
+            raise ProfilerIOException from err
 
 
 class GraphMemoryParser:
@@ -191,6 +191,32 @@ class GraphMemoryParser:
         self._mem_change = []
         self.breakdowns = []
         self._lifetime = []
+
+    @staticmethod
+    def _remove_duplicate_tensors(node):
+        """Find conflict tensors in node."""
+        if node.workspace_ids:
+            i = 0
+            while i < len(node.workspace_ids):
+                t_id = node.workspace_ids[i]
+                if t_id in node.output_ids:
+                    del node.workspace_ids[i]  # remove duplicate tensor
+                    continue
+                i += 1
+
+    @staticmethod
+    def _get_tensor_dict(node, tensor, t_id):
+        """Update node outputs to assemble memory breakdowns."""
+        for i, output_id in enumerate(node.output_ids):
+            if t_id == output_id:
+                output = node.outputs[i] if i < len(node.outputs) else {}
+                tensor.name = node.name + ':' + str(i)
+                tensor.shape = output.get('shape')
+                tensor.dtype = output.get('data_type')
+                tensor.format = output.get('format')
+                tensor.type = 'output'
+
+        return tensor.to_dict()
 
     def parse_graph(self):
         """Parse memory usage data for subgraphs."""
@@ -293,18 +319,6 @@ class GraphMemoryParser:
             tensor = self.tensors.get(t_id)
             tensor.source_node = node.name
 
-    @staticmethod
-    def _remove_duplicate_tensors(node):
-        """Find conflict tensors in node."""
-        if node.workspace_ids:
-            i = 0
-            while i < len(node.workspace_ids):
-                t_id = node.workspace_ids[i]
-                if t_id in node.output_ids:
-                    del node.workspace_ids[i]  # remove duplicate tensor
-                    continue
-                i += 1
-
     def _calc_node_memory(self, tensor_ids):
         """Calculate the allocated memory for the node."""
         node_mem = 0
@@ -384,17 +398,3 @@ class GraphMemoryParser:
                 node = self.nodes.get(source_node)
                 tensor_dict = self._get_tensor_dict(node, tensor, t_id)
                 self.breakdowns[index].append(tensor_dict)
-
-    @staticmethod
-    def _get_tensor_dict(node, tensor, t_id):
-        """Update node outputs to assemble memory breakdowns."""
-        for i, output_id in enumerate(node.output_ids):
-            if t_id == output_id:
-                output = node.outputs[i] if i < len(node.outputs) else {}
-                tensor.name = node.name + ':' + str(i)
-                tensor.shape = output.get('shape')
-                tensor.dtype = output.get('data_type')
-                tensor.format = output.get('format')
-                tensor.type = 'output'
-
-        return tensor.to_dict()
