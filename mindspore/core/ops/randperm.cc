@@ -86,9 +86,15 @@ class RandpermInfer : public abstract::OpInferBase {
     (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, 1, prim_name);
     MS_EXCEPTION_IF_NULL(input_args[0]);
     auto x_type = input_args[0]->BuildType();
+    std::set<TypePtr> input_valid_types{kInt32};
+    (void)CheckAndConvertUtils::CheckTypeValid("input_x", x_type, input_valid_types, prim_name);
+    auto dtype_attr = prim->GetAttr("dtype");
+    MS_EXCEPTION_IF_NULL(dtype_attr);
+    auto infer_type = dtype_attr->cast<TypePtr>();
+    MS_EXCEPTION_IF_NULL(infer_type);
     const std::set<TypePtr> valid_types = {kInt8, kInt16, kInt32, kInt64, kUInt8, kUInt16, kUInt32, kUInt64};
-    (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x", x_type, valid_types, prim_name);
-    return x_type;
+    (void)CheckAndConvertUtils::CheckTypeValid("output", infer_type, valid_types, prim_name);
+    return infer_type;
   }
 };
 REGISTER_PRIMITIVE_OP_INFER_IMPL(Randperm, prim::kPrimRandperm, RandpermInfer, false);
