@@ -31,9 +31,9 @@ class AclOpDesc {
   ~AclOpDesc();
 
   void AddInputTensor(const AnfNodePtr &anf_node, const size_t input_num, const std::vector<AddressPtr> &inputs,
-                      const std::vector<size_t> &input_size_list);
+                      const std::vector<size_t> &input_size_list, const std::string &op_type);
   void AddOutputTensor(const AnfNodePtr &anf_node, const size_t output_num, const std::vector<AddressPtr> &outputs,
-                       const std::vector<size_t> &output_size_list);
+                       const std::vector<size_t> &output_size_list, const std::string &op_type);
   void AddTensorAttr(const std::string &attr_name, const ValuePtr &value, const std::string &op_type);
 
   std::vector<aclTensorDesc *> input_tensor_desc() const { return input_tensor_desc_; }

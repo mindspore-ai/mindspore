@@ -74,8 +74,8 @@ bool AclKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vect
 
   auto op_desc_ptr = std::make_unique<AclOpDesc>(node_name_);
   MS_EXCEPTION_IF_NULL(op_desc_ptr);
-  op_desc_ptr->AddInputTensor(node, input_num, inputs, input_size_list_);
-  op_desc_ptr->AddOutputTensor(node, output_num, outputs, output_size_list_);
+  op_desc_ptr->AddInputTensor(node, input_num, inputs, input_size_list_, node_name_);
+  op_desc_ptr->AddOutputTensor(node, output_num, outputs, output_size_list_, node_name_);
 
   auto primitive = GetCNodePrimitive(node);
   MS_EXCEPTION_IF_NULL(primitive);
