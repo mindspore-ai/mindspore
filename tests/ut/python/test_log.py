@@ -314,10 +314,10 @@ def test_log_ms_import():
 
 
 def _clear_logger(logger):
-    if logger._global_logger:
-        for handler in logger._global_logger.handlers:
-            logger._global_logger.removeHandler(handler)
-        logger._global_logger = None
+    if logger.GLOBAL_LOGGER:
+        for handler in logger.GLOBAL_LOGGER.handlers:
+            logger.GLOBAL_LOGGER.removeHandler(handler)
+        logger.GLOBAL_LOGGER = None
 
 
 def _rm_env_config():

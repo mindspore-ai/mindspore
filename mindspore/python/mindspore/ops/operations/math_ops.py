@@ -14,8 +14,11 @@
 # ============================================================================
 
 """Operators for math."""
+from __future__ import absolute_import
+from __future__ import division
 
 import numpy as np
+
 from mindspore import context
 from mindspore.ops import signature as sig
 from mindspore._checkparam import Validator as validator

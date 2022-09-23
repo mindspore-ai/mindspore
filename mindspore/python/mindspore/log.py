@@ -37,18 +37,18 @@ _setup_logger_lock = threading.Lock()
 
 # When getting the logger, Used to check whether
 # the logger already exists
-_global_logger = None
+GLOBAL_LOGGER = None
 
 # The flag for enable console output
-_std_on = '1'
+STD_ON = '1'
 # The flag for disable console output
-_std_off = '0'
+STD_OFF = '0'
 # Rotating max bytes, default is 50M
-_logger_def_max_bytes = '52428800'
+MAX_BYTES = '52428800'
 # Rotating backup count, default is 30
-_logger_def_backup_count = '30'
+BACKUP_COUNT = '30'
 # The default log level
-_logger_def_level = '2'
+LOGGER_LEVEL = '2'
 
 # Log level name and level mapping
 _name_to_level = {
@@ -155,8 +155,8 @@ def _get_logger():
     Returns:
         Logger, a logger.
     """
-    if _global_logger:
-        return _global_logger
+    if GLOBAL_LOGGER:
+        return GLOBAL_LOGGER
 
     kwargs = _get_env_config()
     _verify_config(kwargs)
@@ -180,11 +180,11 @@ def _adapt_cfg(kwargs):
     Returns:
         Dict, the input parameter dictionary.
     """
-    kwargs['level'] = _gloglevel_to_name.get(kwargs.get('level', _logger_def_level))
-    kwargs['stderr_level'] = _gloglevel_to_name.get(kwargs.get('stderr_level', _logger_def_level))
-    kwargs['console'] = not kwargs.get('console') == _std_off
-    kwargs['maxBytes'] = int(kwargs.get('maxBytes', _logger_def_max_bytes))
-    kwargs['backupCount'] = int(kwargs.get('backupCount', _logger_def_backup_count))
+    kwargs['level'] = _gloglevel_to_name.get(kwargs.get('level', LOGGER_LEVEL))
+    kwargs['stderr_level'] = _gloglevel_to_name.get(kwargs.get('stderr_level', LOGGER_LEVEL))
+    kwargs['console'] = not kwargs.get('console') == STD_OFF
+    kwargs['maxBytes'] = int(kwargs.get('maxBytes', MAX_BYTES))
+    kwargs['backupCount'] = int(kwargs.get('backupCount', BACKUP_COUNT))
     return kwargs
 
 
@@ -335,29 +335,29 @@ def _verify_config(kwargs):
     file_path = kwargs.get('filepath', None)
 
     if console is not None:
-        if not console.isdigit() or console not in (_std_off, _std_on):
+        if not console.isdigit() or console not in (STD_OFF, STD_ON):
             raise ValueError(f'Incorrect value, the value of {_confmap_dict["console"]} must be 0 or 1, '
                              f'but got {console}.')
 
-        if console == _std_off and not file_path:
+        if console == STD_OFF and not file_path:
             raise ValueError(f'When {_confmap_dict["console"]} is set to 0, the directory of saving log '
                              f'{_confmap_dict["filepath"]} must be set, but got it empty.')
 
         # Check the input value of filepath
-        if console == _std_off and file_path is not None:
+        if console == STD_OFF and file_path is not None:
             file_real_path = os.path.realpath(file_path)
             if not os.path.exists(file_real_path):
                 _make_directory(file_real_path)
         # Check the input value of maxBytes
         max_bytes = kwargs.get('maxBytes', None)
-        if console == _std_off and max_bytes is not None:
+        if console == STD_OFF and max_bytes is not None:
             if not max_bytes.isdigit():
                 raise ValueError(f'Incorrect value, the value of {_confmap_dict["maxBytes"]} must be positive integer. '
                                  f'But got {_confmap_dict["maxBytes"]}:{max_bytes}.')
 
         # Check the input value of backupCount
         backup_count = kwargs.get('backupCount', None)
-        if console == _std_off and backup_count is not None:
+        if console == STD_OFF and backup_count is not None:
             if not backup_count.isdigit():
                 raise ValueError(f'Incorrect value, the value of {_confmap_dict["backupCount"]} must be positive '
                                  f'integer. But got {_confmap_dict["backupCount"]}:{backup_count}')
@@ -404,10 +404,10 @@ def get_log_config():
     handler = logger.handlers[0]
     config_dict = {}
     config_dict['GLOG_v'] = get_level()
-    config_dict['GLOG_logtostderr'] = _std_on
+    config_dict['GLOG_logtostderr'] = STD_ON
 
     if handler.name == 'FileHandler':
-        config_dict['GLOG_logtostderr'] = _std_off
+        config_dict['GLOG_logtostderr'] = STD_OFF
         # Separating file path and name
         file_path_and_name = os.path.split(handler.baseFilename)
         config_dict['GLOG_log_dir'] = file_path_and_name[0]
@@ -532,12 +532,12 @@ def _setup_logger(kwargs):
     pid = str(os.getpid())
     log_name = 'mindspore.log.' + pid
 
-    global _global_logger
+    global GLOBAL_LOGGER
 
     _setup_logger_lock.acquire()
     try:
-        if _global_logger:
-            return _global_logger
+        if GLOBAL_LOGGER:
+            return GLOBAL_LOGGER
 
         logger = logging.getLogger(name=f'{sub_module}.{log_name}')
         # Override findCaller on the logger, Support for getting log record
@@ -569,9 +569,9 @@ def _setup_logger(kwargs):
             logfile_handler = _MultiCompatibleRotatingFileHandler(
                 filename=file_name,
                 # Rotating max bytes, default is 50M
-                maxBytes=kwargs.get('maxBytes', _logger_def_max_bytes),
+                maxBytes=kwargs.get('maxBytes', MAX_BYTES),
                 # Rotating backup count, default is 30
-                backupCount=kwargs.get('backupCount', _logger_def_backup_count),
+                backupCount=kwargs.get('backupCount', BACKUP_COUNT),
                 encoding='utf8'
             )
             logfile_handler.name = 'FileHandler'
@@ -589,11 +589,11 @@ def _setup_logger(kwargs):
             console_handler.setLevel(kwargs.get('stderr_level', logging.WARNING))
             logger.addHandler(console_handler)
 
-        _global_logger = logger
+        GLOBAL_LOGGER = logger
 
     finally:
         _setup_logger_lock.release()
-    return _global_logger
+    return GLOBAL_LOGGER
 
 
 class _LogActionOnce:

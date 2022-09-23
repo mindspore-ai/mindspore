@@ -14,6 +14,8 @@
 # ============================================================================
 """Cell of auto parallel"""
 from __future__ import absolute_import
+from __future__ import division
+
 from mindspore.nn.cell import Cell
 from mindspore.ops.operations.comm_ops import AllGather
 from mindspore.communication import GlobalComm

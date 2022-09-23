@@ -42,7 +42,7 @@ GRAPH_MODE = 0
 PYNATIVE_MODE = 1
 _DEVICE_APP_MEMORY_SIZE = 31  # The max memory size of graph plus variable.
 _re_pattern = r'[1-9][0-9]*(\.)?[0-9]*GB|0\.[0-9]*GB'
-_k_context = None
+K_CONTEXT = None
 
 
 def _make_directory(path):
@@ -143,19 +143,19 @@ class _Context:
     _instance = None
     _instance_lock = threading.Lock()
 
-    def __init__(self):
-        self._thread_local_info = _ThreadLocalInfo()
-        self._context_switches = _ContextSwitchInfo(False)
-        self._context_handle = MSContext.get_instance()
-        self._support_binary = False
-        self.enable_compile_cache = None
-
     def __new__(cls, *args, **kwargs):
         if cls._instance is None:
             cls._instance_lock.acquire()
             cls._instance = object.__new__(cls)
             cls._instance_lock.release()
         return cls._instance
+
+    def __init__(self):
+        self._thread_local_info = _ThreadLocalInfo()
+        self._context_switches = _ContextSwitchInfo(False)
+        self._context_handle = MSContext.get_instance()
+        self._support_binary = False
+        self.enable_compile_cache = None
 
     def __getattribute__(self, attr):
         value = object.__getattribute__(self, attr)
@@ -434,21 +434,21 @@ def _context():
     Returns:
         _Context, the global context in PyNative mode.
     """
-    global _k_context
-    if _k_context is None:
+    global K_CONTEXT
+    if K_CONTEXT is None:
         default_backend = 'debug'
         try:
             from mindspore import default_config
             default_backend = default_config.__backend__
         except ImportError:
             logger.error("import default config fail")
-        _k_context = _Context()
-        _k_context.enable_debug_runtime = False
+        K_CONTEXT = _Context()
+        K_CONTEXT.enable_debug_runtime = False
         if default_backend == 'debug':
-            _k_context.enable_debug_runtime = True
+            K_CONTEXT.enable_debug_runtime = True
             default_backend = 'vm'
-        _k_context.set_backend_policy(default_backend)
-    return _k_context
+        K_CONTEXT.set_backend_policy(default_backend)
+    return K_CONTEXT
 
 
 @args_type_check(device_num=int, global_rank=int, gradients_mean=bool, gradient_fp32_sync=bool, parallel_mode=str,

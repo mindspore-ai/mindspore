@@ -12,8 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
 """Implementation for internal polymorphism `logical and` operations."""
+from __future__ import absolute_import
+from __future__ import division
+
 from mindspore.ops.composite import base
 from mindspore.ops import functional as F
 

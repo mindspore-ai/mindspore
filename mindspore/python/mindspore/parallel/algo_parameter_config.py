@@ -14,12 +14,16 @@
 # ============================================================================
 """Configuration of parameters for strategy-searching algorithm in auto_parallel"""
 from __future__ import absolute_import
+from __future__ import division
+
 import threading
 
 from mindspore._c_expression import CostModelContext
 from mindspore._checkparam import args_type_check
 
 __all__ = ["get_algo_parameters", "reset_algo_parameters", "set_algo_parameters"]
+
+_PARAMETER_CONFIG = None
 
 
 class _AlgoParameterConfig:

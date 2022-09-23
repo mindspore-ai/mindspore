@@ -15,11 +15,11 @@
 
 """Implementation for internal polymorphism `add` operations."""
 
+from mindspore.ops.composite.multitype_ops import _compile_utils as utils
+from mindspore.ops.composite import base
+from mindspore.ops import functional as F
 from mindspore.ops.composite.multitype_ops._constexpr_utils import make_tensor, check_equal
-from . import _compile_utils as utils
-from ...composite import base
-from ... import functional as F
-from ....common import CSRTensor, COOTensor
+from mindspore.common import CSRTensor, COOTensor
 
 
 add = base.MultitypeFuncGraph('add', True)

@@ -34,6 +34,21 @@ class ShardHeader:
         else:
             self._header = ms.ShardHeader()
 
+    @property
+    def header(self):
+        """Getter of header"""
+        return self._header
+
+    @property
+    def blob_fields(self):
+        """Getter of blob fields"""
+        return self._get_blob_fields()
+
+    @property
+    def schema(self):
+        """Getter of schema"""
+        return self._get_schema()
+
     def add_schema(self, schema):
         """
         Add object of ShardSchema.
@@ -93,11 +108,6 @@ class ShardHeader:
             raise MRMBuildSchemaError
         return schema
 
-    @property
-    def header(self):
-        """Getter of header"""
-        return self._header
-
     def _get_schema(self):
         """
         Get schema info.
@@ -129,13 +139,3 @@ class ShardHeader:
 
         logger.critical("Failed to get meta info.")
         raise MRMGetMetaError
-
-    @property
-    def blob_fields(self):
-        """Getter of blob fields"""
-        return self._get_blob_fields()
-
-    @property
-    def schema(self):
-        """Getter of schema"""
-        return self._get_schema()

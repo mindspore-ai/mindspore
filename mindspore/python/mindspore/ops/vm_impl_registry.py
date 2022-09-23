@@ -19,8 +19,10 @@ User debug operators registry.
 User can define a python implementation of primitive operator and
 register it with the registry, this mechanism applied for debugging currently.
 """
+from __future__ import absolute_import
+from __future__ import division
 
-from ._register_for_op import Registry
+from mindspore.ops._register_for_op import Registry
 
 vm_impl_registry = Registry()
 """

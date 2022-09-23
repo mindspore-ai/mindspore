@@ -27,9 +27,9 @@ from ..filewriter import FileWriter
 from ..shardutils import check_filename, ExceptionThread, SUCCESS, FAILED
 
 try:
-    cv2 = import_module("cv2")
+    cv_import = import_module("cv2")
 except ModuleNotFoundError:
-    cv2 = None
+    cv_import = None
 
 __all__ = ['Cifar100ToMR']
 
@@ -148,14 +148,14 @@ def _construct_raw_data(images, fine_labels, coarse_labels):
     Returns:
         list[dict], data dictionary constructed from cifar100.
     """
-    if not cv2:
+    if not cv_import:
         raise ModuleNotFoundError("opencv-python module not found, please use pip install it.")
 
     raw_data = []
     for i, img in enumerate(images):
         fine_label = np.int(fine_labels[i][0])
         coarse_label = np.int(coarse_labels[i][0])
-        _, img = cv2.imencode(".jpeg", img[..., [2, 1, 0]])
+        _, img = cv_import.imencode(".jpeg", img[..., [2, 1, 0]])
         row_data = {"id": int(i),
                     "data": img.tobytes(),
                     "fine_label": int(fine_label),

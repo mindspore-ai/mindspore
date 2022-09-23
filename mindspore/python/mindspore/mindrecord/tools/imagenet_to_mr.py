@@ -68,59 +68,6 @@ class ImageNetToMR:
 
         self.writer = FileWriter(self.destination, self.partition_number)
 
-    def _get_imagenet_as_dict(self):
-        """
-        Get data from imagenet as dict.
-
-        Yields:
-            data (dict of list): imagenet data list which contains dict.
-        """
-        real_file_path = os.path.realpath(self.map_file)
-        if not os.path.exists(real_file_path):
-            raise IOError("map file {} not exists".format(self.map_file))
-
-        label_dict = {}
-        with open(real_file_path) as fp:
-            line = fp.readline()
-            while line:
-                labels = line.split(" ")
-                label_dict[labels[1]] = labels[0]
-                line = fp.readline()
-
-        # get all the dir which are n02087046, n02094114, n02109525
-        dir_paths = {}
-        for item in label_dict:
-            real_path = os.path.join(self.image_dir, label_dict[item])
-            if not os.path.isdir(real_path):
-                logger.warning("{} dir is not exist".format(real_path))
-                continue
-            dir_paths[item] = real_path
-
-        if not dir_paths:
-            raise PathNotExistsError("not valid image dir in {}".format(self.image_dir))
-
-        # get the filename, label and image binary as a dict
-        for label in dir_paths:
-            for item in os.listdir(dir_paths[label]):
-                file_name = os.path.join(dir_paths[label], item)
-                if not item.endswith("JPEG") and not item.endswith("jpg"):
-                    logger.warning("{} file is not suffix with JPEG/jpg, skip it.".format(file_name))
-                    continue
-                data = {}
-                data["file_name"] = str(file_name)
-                data["label"] = int(label)
-
-                # get the image data
-                real_file_path = os.path.realpath(file_name)
-                image_file = open(real_file_path, "rb")
-                image_bytes = image_file.read()
-                image_file.close()
-                if not image_bytes:
-                    logger.warning("The image file: {} is invalid.".format(file_name))
-                    continue
-                data["image"] = image_bytes
-                yield data
-
     def run(self):
         """
         Execute transformation from imagenet to MindRecord.
@@ -190,3 +137,56 @@ class ImageNetToMR:
         if t.exitcode != 0:
             raise t.exception
         return t.res
+
+    def _get_imagenet_as_dict(self):
+        """
+        Get data from imagenet as dict.
+
+        Yields:
+            data (dict of list): imagenet data list which contains dict.
+        """
+        real_file_path = os.path.realpath(self.map_file)
+        if not os.path.exists(real_file_path):
+            raise IOError("map file {} not exists".format(self.map_file))
+
+        label_dict = {}
+        with open(real_file_path) as fp:
+            line = fp.readline()
+            while line:
+                labels = line.split(" ")
+                label_dict[labels[1]] = labels[0]
+                line = fp.readline()
+
+        # get all the dir which are n02087046, n02094114, n02109525
+        dir_paths = {}
+        for item in label_dict:
+            real_path = os.path.join(self.image_dir, label_dict[item])
+            if not os.path.isdir(real_path):
+                logger.warning("{} dir is not exist".format(real_path))
+                continue
+            dir_paths[item] = real_path
+
+        if not dir_paths:
+            raise PathNotExistsError("not valid image dir in {}".format(self.image_dir))
+
+        # get the filename, label and image binary as a dict
+        for label in dir_paths:
+            for item in os.listdir(dir_paths[label]):
+                file_name = os.path.join(dir_paths[label], item)
+                if not item.endswith("JPEG") and not item.endswith("jpg"):
+                    logger.warning("{} file is not suffix with JPEG/jpg, skip it.".format(file_name))
+                    continue
+                data = {}
+                data["file_name"] = str(file_name)
+                data["label"] = int(label)
+
+                # get the image data
+                real_file_path = os.path.realpath(file_name)
+                image_file = open(real_file_path, "rb")
+                image_bytes = image_file.read()
+                image_file.close()
+                if not image_bytes:
+                    logger.warning("The image file: {} is invalid.".format(file_name))
+                    continue
+                data["image"] = image_bytes
+                yield data

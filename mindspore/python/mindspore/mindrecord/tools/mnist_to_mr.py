@@ -26,9 +26,9 @@ from ..filewriter import FileWriter
 from ..shardutils import check_filename, ExceptionThread, SUCCESS, FAILED
 
 try:
-    cv2 = import_module("cv2")
+    cv_import = import_module("cv2")
 except ModuleNotFoundError:
-    cv2 = None
+    cv_import = None
 
 __all__ = ['MnistToMR']
 
@@ -79,6 +79,40 @@ class MnistToMR:
 
         self.mnist_schema_json = {"label": {"type": "int64"}, "data": {"type": "bytes"}}
 
+    def run(self):
+        """
+        Execute transformation from Mnist to MindRecord.
+
+        Returns:
+            MSRStatus, SUCCESS or FAILED.
+        """
+
+        if not cv_import:
+            raise ModuleNotFoundError("opencv-python module not found, please use pip install it.")
+
+        if self._transform_train() == FAILED:
+            return FAILED
+        if self._transform_test() == FAILED:
+            return FAILED
+
+        return SUCCESS
+
+    def transform(self):
+        """
+        Encapsulate the :func:`mindspore.mindrecord.MnistToMR.run` function to exit normally.
+
+        Returns:
+            MSRStatus, SUCCESS or FAILED.
+        """
+
+        t = ExceptionThread(target=self.run)
+        t.daemon = True
+        t.start()
+        t.join()
+        if t.exitcode != 0:
+            raise t.exception
+        return t.res
+
     def _extract_images(self, filename):
         """Extract the images into a 4D tensor [image index, y, x, channels]."""
         real_file_path = os.path.realpath(filename)
@@ -108,7 +142,7 @@ class MnistToMR:
         train_data = self._extract_images(self.train_data_filename_)
         train_labels = self._extract_labels(self.train_labels_filename_)
         for data, label in zip(train_data, train_labels):
-            _, img = cv2.imencode(".jpeg", data)
+            _, img = cv_import.imencode(".jpeg", data)
             yield {"label": int(label), "data": img.tobytes()}
 
     def _mnist_test_iterator(self):
@@ -121,7 +155,7 @@ class MnistToMR:
         test_data = self._extract_images(self.test_data_filename_)
         test_labels = self._extract_labels(self.test_labels_filename_)
         for data, label in zip(test_data, test_labels):
-            _, img = cv2.imencode(".jpeg", data)
+            _, img = cv_import.imencode(".jpeg", data)
             yield {"label": int(label), "data": img.tobytes()}
 
     def _transform_train(self):
@@ -220,37 +254,3 @@ class MnistToMR:
         logger.info("--------------------------------------------")
 
         return ret
-
-    def run(self):
-        """
-        Execute transformation from Mnist to MindRecord.
-
-        Returns:
-            MSRStatus, SUCCESS or FAILED.
-        """
-
-        if not cv2:
-            raise ModuleNotFoundError("opencv-python module not found, please use pip install it.")
-
-        if self._transform_train() == FAILED:
-            return FAILED
-        if self._transform_test() == FAILED:
-            return FAILED
-
-        return SUCCESS
-
-    def transform(self):
-        """
-        Encapsulate the :func:`mindspore.mindrecord.MnistToMR.run` function to exit normally.
-
-        Returns:
-            MSRStatus, SUCCESS or FAILED.
-        """
-
-        t = ExceptionThread(target=self.run)
-        t.daemon = True
-        t.start()
-        t.join()
-        if t.exitcode != 0:
-            raise t.exception
-        return t.res

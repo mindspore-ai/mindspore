@@ -919,7 +919,6 @@ class _AutoParallelContext:
         self.check_context_handle()
         self._context_handle.reset()
 
-
     def _check_and_default_group(self, group):
         """Validate the given group, if group is empty, returns a default fusion group"""
         if isinstance(group, (str)):

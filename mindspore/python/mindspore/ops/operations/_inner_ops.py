@@ -20,17 +20,17 @@ import numpy as np
 
 from mindspore.common import Tensor
 from mindspore.ops import composite as C
+from mindspore.ops.operations.array_ops import Cast
+from mindspore.ops import signature as sig
+from mindspore.ops.operations.math_ops import _infer_shape_reduce
+from mindspore.ops.primitive import PrimitiveWithCheck, PrimitiveWithInfer, prim_attr_register, Primitive, _run_op
+from mindspore import context
+from mindspore._checkparam import Rel
+from mindspore._checkparam import Validator as validator
+from mindspore.common import dtype as mstype
+from mindspore.common.parameter import Parameter
 from mindspore.communication.management import GlobalComm
-from .array_ops import Cast
-from .. import signature as sig
-from ..operations.math_ops import _infer_shape_reduce
-from ..primitive import PrimitiveWithCheck, PrimitiveWithInfer, prim_attr_register, Primitive, _run_op
-from ... import context
-from ..._checkparam import Rel
-from ..._checkparam import Validator as validator
-from ...common import dtype as mstype
-from ...common.parameter import Parameter
-from ..._c_expression import call_constant_folding
+from mindspore._c_expression import call_constant_folding
 
 
 # Bit operation

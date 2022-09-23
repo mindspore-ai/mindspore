@@ -17,6 +17,7 @@
 
 """Basic composite operations."""
 from functools import partial
+
 from types import FunctionType, MethodType
 import mindspore as ms
 import mindspore.nn as nn

@@ -15,8 +15,8 @@
 
 """Implementation for internal polymorphism `zeros_like_leaf` operations."""
 
-from ...composite import base
-from ... import functional as F
+from mindspore.ops.composite import base
+from mindspore.ops import functional as F
 
 zeros_like_leaf = base.MultitypeFuncGraph('zeros_like_leaf', True)
 """

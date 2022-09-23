@@ -15,7 +15,9 @@
 """load tensor and combine tensor"""
 from __future__ import division
 from __future__ import absolute_import
+
 import numpy as np
+
 from mindspore.common.tensor import Tensor
 from mindspore.communication.management import get_rank, get_group_size
 from mindspore._c_expression import TensorTransform
