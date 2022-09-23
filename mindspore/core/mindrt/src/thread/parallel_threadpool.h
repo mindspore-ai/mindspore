@@ -109,7 +109,7 @@ class ParallelThreadPool : public ActorThreadPool {
 
   bool RunParallel();
 
-  size_t tasks_size() { return tasks_size_; }
+  size_t tasks_size() const { return tasks_size_; }
 
  private:
   ParallelThreadPool() {}

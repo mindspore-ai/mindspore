@@ -52,7 +52,7 @@ void ParallelWorker::Run() {
 
 void ParallelWorker::WaitUntilActive() {
   std::unique_lock<std::mutex> _l(mutex_);
-  cond_var_.wait(_l, [&] { return active_num_ > 0 || !alive_; });
+  cond_var_.wait(_l, [&, this] { return active_num_ > 0 || !alive_; });
   if (active_num_ > 0) {
     active_num_--;
   }
