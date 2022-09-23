@@ -18,7 +18,7 @@ import platform
 from .aicpu import *
 from .cpu import *
 if "Windows" not in platform.system():
+    from mindspore.ops._op_impl.tbe import *
     from .akg import *
-    from .tbe import *
 
 __all__ = []

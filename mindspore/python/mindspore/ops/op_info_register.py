@@ -15,6 +15,7 @@
 
 """Operators info register."""
 
+from __future__ import absolute_import
 import inspect
 import json
 import os

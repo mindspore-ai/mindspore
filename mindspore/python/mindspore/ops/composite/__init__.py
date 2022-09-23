@@ -20,16 +20,16 @@ Pre-defined combination of operators.
 """
 
 
-from .base import GradOperation, _Grad, HyperMap, Map, MultitypeFuncGraph, add_flags, \
+from mindspore.ops.composite.base import GradOperation, _Grad, HyperMap, Map, MultitypeFuncGraph, add_flags, \
                   core, env_get, tail, zip_operation, Shard, _Vmap, _TaylorOperation
-from .clip_ops import clip_by_value, clip_by_global_norm
-from .multitype_ops.add_impl import hyper_add
-from .multitype_ops.ones_like_impl import ones_like
-from .multitype_ops.zeros_like_impl import zeros_like
-from .random_ops import normal, laplace, uniform, gamma, poisson, multinomial
-from .math_ops import count_nonzero, tensor_dot, dot, batch_dot, matmul, cummin
-from .array_ops import repeat_elements, sequence_mask
-from .vmap_ops import _VmapGeneralPreprocess, _VmapGeneralRule
+from mindspore.ops.composite.clip_ops import clip_by_value, clip_by_global_norm
+from mindspore.ops.composite.multitype_ops.add_impl import hyper_add
+from mindspore.ops.composite.multitype_ops.ones_like_impl import ones_like
+from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
+from mindspore.ops.composite.random_ops import normal, laplace, uniform, gamma, poisson, multinomial
+from mindspore.ops.composite.math_ops import count_nonzero, tensor_dot, dot, batch_dot, matmul, cummin
+from mindspore.ops.composite.array_ops import repeat_elements, sequence_mask
+from mindspore.ops.composite.vmap_ops import _VmapGeneralPreprocess, _VmapGeneralRule
 
 
 __all__ = [

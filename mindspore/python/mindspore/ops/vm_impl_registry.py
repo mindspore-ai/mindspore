@@ -20,7 +20,8 @@ User can define a python implementation of primitive operator and
 register it with the registry, this mechanism applied for debugging currently.
 """
 
-from ._register_for_op import Registry
+from __future__ import absolute_import
+from mindspore.ops._register_for_op import Registry
 
 vm_impl_registry = Registry()
 """

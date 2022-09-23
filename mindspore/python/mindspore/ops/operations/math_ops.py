@@ -15,6 +15,7 @@
 
 """Operators for math."""
 
+from __future__ import absolute_import
 import numpy as np
 from mindspore import context
 from mindspore.ops import signature as sig

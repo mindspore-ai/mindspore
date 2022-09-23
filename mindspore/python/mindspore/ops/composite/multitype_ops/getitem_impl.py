@@ -15,9 +15,9 @@
 
 """Implementation for internal polymorphism `getitem` operations."""
 from mindspore.ops.operations import _inner_ops as inner
-from . import _compile_utils as compile_utils
-from .. import base
-from ... import functional as F
+from mindspore.ops.composite.multitype_ops import _compile_utils as compile_utils
+from mindspore.ops.composite import base
+from mindspore.ops import functional as F
 
 
 getitem = base.MultitypeFuncGraph('getitem', True)

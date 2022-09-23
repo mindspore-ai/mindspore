@@ -15,9 +15,10 @@
 
 """Implementation for internal polymorphism `negative` operations."""
 
-from ...composite import base
-from ... import functional as F
-from ....common import CSRTensor, COOTensor
+from __future__ import absolute_import
+from mindspore.ops.composite import base
+from mindspore.ops import functional as F
+from mindspore.common import CSRTensor, COOTensor
 
 
 negative = base.MultitypeFuncGraph("negative", True)

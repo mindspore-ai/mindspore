@@ -15,10 +15,10 @@
 """Operators for random."""
 
 from mindspore.common._decorator import deprecated
-from ..._checkparam import Validator, Rel
-from ...common import dtype as mstype
-from ..primitive import PrimitiveWithInfer, prim_attr_register, Primitive
-from .._utils import get_broadcast_shape
+from mindspore._checkparam import Validator, Rel
+from mindspore.common import dtype as mstype
+from mindspore.ops.primitive import PrimitiveWithInfer, prim_attr_register, Primitive
+from mindspore.ops._utils import get_broadcast_shape
 
 
 class NonDeterministicInts(Primitive):

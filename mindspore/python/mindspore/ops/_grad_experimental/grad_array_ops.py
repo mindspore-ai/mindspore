@@ -16,36 +16,36 @@
 """array_ops"""
 from mindspore import Tensor
 from mindspore.ops.primitive import constexpr
-from ...common import dtype as mstype
-from ...numpy.array_ops import where
-from .._grad.grad_math_ops import binop_grad_common
-from .._grad.grad_base import bprop_getters
-from ..composite.multitype_ops.zeros_like_impl import zeros_like
-from ..operations.array_ops import Tril
-from ..operations.array_ops import MatrixDiagV3
-from ..operations.array_ops import MatrixDiagPartV3
-from ..operations.array_ops import ResizeNearestNeighborV2
-from ..operations.array_ops import MatrixSetDiagV3
-from ..operations.array_ops import Mvlgamma
-from ..operations.array_ops import Triu
-from ..operations.array_ops import IdentityN
-from ..operations.array_ops import IndexFill
-from ..operations.array_ops import CheckNumerics
-from ..operations.array_ops import ConjugateTranspose
-from ..operations.array_ops import SegmentMax
-from ..operations.array_ops import SegmentMin
-from ..operations.array_ops import SegmentSum
-from ..operations.array_ops import TensorScatterElements
-from ..operations.array_ops import ScatterAddWithAxis
-from ..operations.array_ops import Expand
-from ..operations.array_ops import SegmentMean
-from ..operations.array_ops import AffineGrid
-from ..operations.array_ops import Im2Col
-from ..operations.array_ops import Col2Im
-from .. import functional as F
-from .. import operations as P
-from .._utils.utils import is_shape_unknown
-from ..operations import _grad_ops as G
+from mindspore.common import dtype as mstype
+from mindspore.numpy.array_ops import where
+from mindspore.ops._grad.grad_math_ops import binop_grad_common
+from mindspore.ops._grad.grad_base import bprop_getters
+from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
+from mindspore.ops.operations.array_ops import Tril
+from mindspore.ops.operations.array_ops import MatrixDiagV3
+from mindspore.ops.operations.array_ops import MatrixDiagPartV3
+from mindspore.ops.operations.array_ops import ResizeNearestNeighborV2
+from mindspore.ops.operations.array_ops import MatrixSetDiagV3
+from mindspore.ops.operations.array_ops import Mvlgamma
+from mindspore.ops.operations.array_ops import Triu
+from mindspore.ops.operations.array_ops import IdentityN
+from mindspore.ops.operations.array_ops import IndexFill
+from mindspore.ops.operations.array_ops import CheckNumerics
+from mindspore.ops.operations.array_ops import ConjugateTranspose
+from mindspore.ops.operations.array_ops import SegmentMax
+from mindspore.ops.operations.array_ops import SegmentMin
+from mindspore.ops.operations.array_ops import SegmentSum
+from mindspore.ops.operations.array_ops import TensorScatterElements
+from mindspore.ops.operations.array_ops import ScatterAddWithAxis
+from mindspore.ops.operations.array_ops import Expand
+from mindspore.ops.operations.array_ops import SegmentMean
+from mindspore.ops.operations.array_ops import AffineGrid
+from mindspore.ops.operations.array_ops import Im2Col
+from mindspore.ops.operations.array_ops import Col2Im
+from mindspore.ops import functional as F
+from mindspore.ops import operations as P
+from mindspore.ops._utils.utils import is_shape_unknown
+from mindspore.ops.operations import _grad_ops as G
 
 
 @constexpr

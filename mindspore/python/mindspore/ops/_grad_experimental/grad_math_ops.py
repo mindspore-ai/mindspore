@@ -81,10 +81,10 @@ def _adjoint(a):
 
 def cholesky_transpose(a):
     n = len(a.shape)
-    l = list(range(0, n))
-    l[-1] = n - 2
-    l[-2] = n - 1
-    return transpose(a, tuple(l))
+    n_range = list(range(0, n))
+    n_range[-1] = n - 2
+    n_range[-2] = n - 1
+    return transpose(a, tuple(n_range))
 
 
 @bprop_getters.register(P.ACos)

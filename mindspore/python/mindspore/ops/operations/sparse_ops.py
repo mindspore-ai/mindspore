@@ -18,10 +18,10 @@
 
 """Operators for sparse operators."""
 
-from ..._checkparam import Validator as validator
-from ...common import dtype as mstype
-from .. import signature as sig
-from ..primitive import PrimitiveWithInfer, prim_attr_register, Primitive
+from mindspore._checkparam import Validator as validator
+from mindspore.common import dtype as mstype
+from mindspore.ops import signature as sig
+from mindspore.ops.primitive import PrimitiveWithInfer, prim_attr_register, Primitive
 
 
 class SparseDenseCwiseAdd(Primitive):
@@ -690,8 +690,7 @@ class SparseTensorDenseMatmul(Primitive):
             raise ValueError(f"For '{self.name}', the 'values' must be a 1-D tensor and "
                              f"the first dimension length must be equal to the first dimension length of 'indices', "
                              f"but got 'indices' shape: {indices_shape}, 'values' shape: {values_shape}.")
-        a_shape = sparse_shape['value'][::-
-                                        1] if self.adjoint_st else sparse_shape['value']
+        a_shape = sparse_shape['value'][::-1] if self.adjoint_st else sparse_shape['value']
         b_shape = dense['shape'][::-1] if self.adjoint_dt else dense['shape']
         for i in a_shape:
             if isinstance(i, bool) or not isinstance(i, int) or i <= 0:

@@ -2325,7 +2325,7 @@ class Tile(PrimitiveWithInfer):
         if len_sub == 0:
             multiples_w = multiples_v
         if len_sub > 0:
-            for i in range(0, len_sub):
+            for _ in range(0, len_sub):
                 x_shp.insert(0, 1)
             multiples_w = multiples_v
         elif len_sub < 0:

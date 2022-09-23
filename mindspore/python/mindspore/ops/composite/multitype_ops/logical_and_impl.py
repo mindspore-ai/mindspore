@@ -14,6 +14,8 @@
 # ============================================================================
 
 """Implementation for internal polymorphism `logical and` operations."""
+
+from __future__ import absolute_import
 from mindspore.ops.composite import base
 from mindspore.ops import functional as F
 

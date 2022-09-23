@@ -25,16 +25,15 @@ from mindspore.ops.operations.sparse_ops import SparseSegmentSumWithNumSegments
 from mindspore.ops.operations.sparse_ops import SparseSegmentSqrtN
 from mindspore.ops.operations.sparse_ops import SparseSegmentSqrtNWithNumSegments
 from mindspore.ops.operations.sparse_ops import SparseSegmentMeanWithNumSegments
-from mindspore.ops._utils.utils import is_shape_unknown
 from mindspore.common import dtype as mstype
 from mindspore import Tensor
 from mindspore.ops.primitive import constexpr
-from .. import functional as F
-from .. import operations as P
-from ..composite.multitype_ops.zeros_like_impl import zeros_like
-from ..operations import _grad_ops as G
-from .._grad.grad_base import bprop_getters
-from .._utils.utils import is_shape_unknown
+from mindspore.ops import functional as F
+from mindspore.ops import operations as P
+from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
+from mindspore.ops.operations import _grad_ops as G
+from mindspore.ops._grad.grad_base import bprop_getters
+from mindspore.ops._utils.utils import is_shape_unknown
 
 # Unused parameters are placeholders.
 dyn_shape_op = P.TensorShape()

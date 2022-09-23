@@ -17,9 +17,10 @@
 
 """Implementation for internal polymorphism `ones_like_leaf` operations."""
 
-from ...composite import base
-from ... import functional as F
-from ... import operations as P
+from __future__ import absolute_import
+from mindspore.ops.composite import base
+from mindspore.ops import functional as F
+from mindspore.ops import operations as P
 
 
 ones_like_leaf = base.MultitypeFuncGraph('ones_like_leaf', True)

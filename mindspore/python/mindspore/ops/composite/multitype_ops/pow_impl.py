@@ -15,9 +15,9 @@
 
 """Implementation for internal polymorphism `pow` operations."""
 
-from . import _compile_utils as utils
-from ...composite import base
-from ... import functional as F
+from mindspore.ops.composite.multitype_ops import _compile_utils as utils
+from mindspore.ops.composite import base
+from mindspore.ops import functional as F
 
 
 pow_ = base.MultitypeFuncGraph("pow", True)

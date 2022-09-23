@@ -545,7 +545,7 @@ class CentralCrop(Cell):
     def construct(self, image):
         image_shape = F.shape(image)
         rank = len(image_shape)
-        if not rank in (3, 4):
+        if rank not in (3, 4):
             return _raise_dims_rank_error(image_shape, "image", self.cls_name)
         if self.central_fraction == 1.0:
             return image
