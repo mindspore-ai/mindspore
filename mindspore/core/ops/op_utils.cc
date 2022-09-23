@@ -152,7 +152,11 @@ bool CheckAndGetAxisValue(const std::vector<abstract::AbstractBasePtr> &input_ar
     if (axis_ptr == nullptr) {
       return is_dynamic;
     }
-    *axis_value = CheckAndConvertUtils::CheckIntOrTupleInt("axis", axis_ptr, op_name);
+    if (axis_ptr->isa<tensor::Tensor>()) {
+      *axis_value = CheckAndConvertUtils::CheckTensorIntValue("axis", axis_ptr, op_name);
+    } else {
+      *axis_value = CheckAndConvertUtils::CheckIntOrTupleInt("axis", axis_ptr, op_name);
+    }
     return is_dynamic;
   }
   auto input_value = input_args[kInputIndex1]->BuildValue();
@@ -168,11 +172,14 @@ bool CheckAndGetAxisValue(const std::vector<abstract::AbstractBasePtr> &input_ar
     } else {
       is_dynamic = true;
       auto axis_shape = CheckAndConvertUtils::GetTensorInputShape(op_name, input_args, 1);
-      if (axis_shape->shape().size() != 1) {
+      if (axis_shape->shape().size() > 1) {
         MS_EXCEPTION(ValueError) << "For '" << op_name << "', the axis's shape length should be 1, but got '"
                                  << axis_shape->shape().size() << "'.";
+      } else if (axis_shape->shape().size() == 0) {
+        *axis_shape_v = 1;
+      } else {
+        *axis_shape_v = axis_shape->shape()[0];
       }
-      *axis_shape_v = axis_shape->shape()[0];
     }
   } else {
     MS_LOG(EXCEPTION) << "For '" << op_name
@@ -198,14 +205,13 @@ abstract::ShapePtr ReduceBaseInferShape(const PrimitivePtr &primitive,
   std::vector<int64_t> axis_value;
   int64_t axis_shape = 0;
   bool axis_is_dynamic = CheckAndGetAxisValue(input_args, &axis_value, &axis_shape, primitive);
-  ReduceFuncCheckAxisInferImpl(primitive, &axis_value, x_shape.size());
-
   ShapeVector out_shape = {};
   constexpr int dynamic_rank_value = -2;
   if (IsDynamicRank(x_shape) || (axis_shape == -1 && !keep_dims)) {
     out_shape.push_back(dynamic_rank_value);
     return std::make_shared<abstract::Shape>(out_shape);
   }
+  ReduceFuncCheckAxisInferImpl(primitive, &axis_value, x_shape.size());
 
   if (axis_is_dynamic) {
     out_shape = ReduceFuncCalShapeAxisDyn(x_shape, axis_shape, keep_dims);

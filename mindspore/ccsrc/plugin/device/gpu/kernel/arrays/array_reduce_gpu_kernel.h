@@ -25,6 +25,7 @@
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/kernel_constants.h"
+#include "utils/check_convert_utils.h"
 namespace mindspore {
 namespace kernel {
 const std::map<std::string, cudnnReduceTensorOp_t> kReduceTypeMap = {
@@ -314,13 +315,11 @@ class ArrayReduceGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     auto prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
     MS_EXCEPTION_IF_NULL(prim);
     std::vector<int64_t> attr_axis_me;
-    if (prim->GetAttr("axis")->isa<ValueTuple>() || prim->GetAttr("axis")->isa<ValueList>()) {
-      attr_axis_me = GetAttr<std::vector<int64_t>>(kernel_node, "axis");
-    } else if (prim->GetAttr("axis")->isa<Int64Imm>()) {
-      auto axis = GetAttr<int64_t>(kernel_node, "axis");
-      attr_axis_me.push_back(axis);
+    auto value_ptr = prim->GetAttr("axis");
+    if (value_ptr->isa<tensor::Tensor>()) {
+      attr_axis_me = CheckAndConvertUtils::CheckTensorIntValue("axis", value_ptr, kernel_name_);
     } else {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', attribute 'axis' type is invalid.";
+      attr_axis_me = CheckAndConvertUtils::CheckIntOrTupleInt("axis", value_ptr, kernel_name_);
     }
     return attr_axis_me;
   }
