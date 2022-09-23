@@ -1909,7 +1909,7 @@ std::string Somas::Offline() const {
     } else {
       std::map<size_t, size_t> dest_node_streams;
       for (const auto &dest_node : tensor->destination_nodes_) {
-        auto node = GetSomasNode(tensor->GetSourceNodeId());
+        auto node = GetSomasNode(dest_node);
         MS_EXCEPTION_IF_NULL(node);
         (void)dest_node_streams.emplace(dest_node, node->GetStreamId());
       }
