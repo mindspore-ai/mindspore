@@ -43,7 +43,7 @@ __global__ void HashSwapIn(T *hash_table, const T *swap_in_value, const int *swa
 template <typename T>
 void DoHashSwapOut(const T *hash_table, T *swap_out_value, const int *swap_out_index, const int index_size,
                    const int hash_dim, cudaStream_t cuda_stream, const uint32_t device_id) {
-  HashSwapOut<<<CUDA_BLOCKS(index_size, device_id), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+  HashSwapOut<<<CUDA_BLOCKS(device_id, index_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     hash_table, swap_out_value, swap_out_index, index_size, hash_dim);
   return;
 }
@@ -51,7 +51,7 @@ void DoHashSwapOut(const T *hash_table, T *swap_out_value, const int *swap_out_i
 template <typename T>
 void DoHashSwapIn(T *hash_table, const T *swap_in_value, const int *swap_in_index, const int index_size,
                   const int hash_dim, cudaStream_t cuda_stream, const uint32_t device_id) {
-  HashSwapIn<<<CUDA_BLOCKS(index_size, device_id), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+  HashSwapIn<<<CUDA_BLOCKS(device_id, index_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     hash_table, swap_in_value, swap_in_index, index_size, hash_dim);
   return;
 }

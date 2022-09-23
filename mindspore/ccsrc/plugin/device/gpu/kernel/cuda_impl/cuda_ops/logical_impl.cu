@@ -47,7 +47,7 @@ __global__ void LogicalOrKernel(const T *input_addr1, const T *input_addr2, T *o
 
 template <typename T>
 void LogicalNot(const int element_cnt, const T *input1, T *output, cudaStream_t stream, const uint32_t device_id) {
-  LogicalNotKernel<<<CUDA_BLOCKS(element_cnt, device_id), CUDA_THREADS(device_id), 0, stream>>>(input1, output,
+  LogicalNotKernel<<<CUDA_BLOCKS(device_id, element_cnt), CUDA_THREADS(device_id), 0, stream>>>(input1, output,
                                                                                                 element_cnt);
 }
 
@@ -59,14 +59,14 @@ void LogicalNot(const int element_cnt, const T *input1, T *output, cudaStream_t 
 template <typename T>
 void LogicalAnd(const int element_cnt, const T *input1, const T *input2, T *output, cudaStream_t stream,
                 const uint32_t device_id) {
-  LogicalAndKernel<<<CUDA_BLOCKS(element_cnt, device_id), CUDA_THREADS(device_id), 0, stream>>>(input1, input2, output,
+  LogicalAndKernel<<<CUDA_BLOCKS(device_id, element_cnt), CUDA_THREADS(device_id), 0, stream>>>(input1, input2, output,
                                                                                                 element_cnt);
 }
 
 template <typename T>
 void LogicalOr(const int element_cnt, const T *input1, const T *input2, T *output, cudaStream_t stream,
                const uint32_t device_id) {
-  LogicalOrKernel<<<CUDA_BLOCKS(element_cnt, device_id), CUDA_THREADS(device_id), 0, stream>>>(input1, input2, output,
+  LogicalOrKernel<<<CUDA_BLOCKS(device_id, element_cnt), CUDA_THREADS(device_id), 0, stream>>>(input1, input2, output,
                                                                                                element_cnt);
 }
 
