@@ -75,6 +75,13 @@ int TileCPUKernel::ReSize() {
   ComputeStrides(tile_parameter_->in_shape_, tile_parameter_->in_strides_, tile_parameter_->in_dim_);
   ComputeStrides(tile_parameter_->out_shape_, tile_parameter_->out_strides_, tile_parameter_->in_dim_);
 
+  for (size_t i = 0; i < tile_parameter_->dims_size_; i++) {
+    MS_CHECK_FALSE(INT_MUL_OVERFLOW(tile_parameter_->multiples_[i], tile_parameter_->in_shape_[i]),
+                   NNACL_ERRCODE_MUL_OVERFLOW);
+    auto ele_num = tile_parameter_->multiples_[i] * tile_parameter_->in_shape_[i] - 1;
+    MS_CHECK_FALSE(INT_MUL_OVERFLOW(tile_parameter_->out_strides_[i], ele_num), NNACL_ERRCODE_MUL_OVERFLOW);
+  }
+
   auto data_type = in_tensors_.at(0)->data_type();
   if (data_type == kNumberTypeFloat32 || data_type == kNumberTypeInt32) {
     tile_parameter_->data_size_ = sizeof(float);
