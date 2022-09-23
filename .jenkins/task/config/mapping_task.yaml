@@ -82,3 +82,5 @@ MS_DOCS:
     NOTICE
     SECURITY.md
     Third_Party_Open_Source_Software
+MS_MSVC:
+    mindspore/msvc
