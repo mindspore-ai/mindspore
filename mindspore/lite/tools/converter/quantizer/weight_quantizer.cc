@@ -142,13 +142,17 @@ int WeightQuantizer::LinearQuant(const FuncGraphPtr &func_graph, const CNodePtr 
     ParameterPtr parameter;
     tensor::TensorPtr tensor_info;
     GetLiteParameter(input, &parameter, &tensor_info);
-    if (parameter == nullptr || tensor_info == nullptr || tensor_info->data_type() != TypeId::kNumberTypeFloat32 ||
-        tensor_info->compression_type() != kNoCompression) {
+    bool not_need_quant = parameter == nullptr || tensor_info == nullptr ||
+                          tensor_info->data_type() != TypeId::kNumberTypeFloat32 ||
+                          tensor_info->compression_type() != kNoCompression;
+    if (not_need_quant) {
       MS_LOG(INFO) << "This op " << cnode->fullname_with_scope() << " dont need quant weight";
       continue;
     }
     int preferred_dim = GetPreferredDim(cnode, idx - 1, ConvertShapeVectorToInt32(tensor_info->shape()));
-    if (quant_strategy_ != nullptr && !quant_strategy_->CanTensorQuantized(cnode, input, preferred_dim)) {
+    if (quant_strategy_ != nullptr &&
+        !quant::CanTensorWeightQuantized(cnode, input, preferred_dim, param_->commonQuantParam.min_quant_weight_size,
+                                         param_->commonQuantParam.min_quant_weight_channel)) {
       MS_LOG(INFO) << input->fullname_with_scope() << " is not quantizable";
       continue;
     }

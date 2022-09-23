@@ -41,7 +41,8 @@ int QuantNodePass::DoWeightQuant(const CNodePtr &cnode) {
       MS_LOG(INFO) << "This op " << cnode->fullname_with_scope() << " can not quant weight";
       continue;
     }
-    if (!CanTensorQuantized(cnode, input)) {
+    ShapeVector weight_shape;
+    if (!quant::CanTensorWeightQuantized(cnode, input, &weight_shape)) {
       MS_LOG(INFO) << input->fullname_with_scope() << " is not quantized.";
       continue;
     }
@@ -267,40 +268,6 @@ int QuantNodePass::DoFullQuant(const CNodePtr &cnode) {
   primitive_quant_holder->set_quant_type(schema::QuantType_QUANT_ALL);
   // do output quant
   return RET_OK;
-}
-
-bool QuantNodePass::CanTensorQuantized(const CNodePtr &cnode, const AnfNodePtr &input_node) {
-  if (input_node == nullptr) {
-    MS_LOG(INFO) << "CanTensorQuantized input is nullptr!";
-    return false;
-  }
-  ParameterPtr param_node = nullptr;
-  if (input_node->isa<Parameter>()) {
-    param_node = input_node->cast<ParameterPtr>();
-  }
-  if (param_node == nullptr) {
-    MS_LOG(INFO) << "CanTensorQuantized invalid param_node!";
-    return false;
-  }
-  if (!param_node->has_default()) {
-    MS_LOG(INFO) << "param_node don't has default.";
-    return false;
-  }
-  auto abstract_base = param_node->abstract();
-  if (abstract_base == nullptr) {
-    MS_LOG(INFO) << "abstract is nullptr";
-    return false;
-  }
-  if (!utils::isa<abstract::ShapePtr>(abstract_base->GetShapeTrack())) {
-    MS_LOG(INFO) << "Shape of Abstract of parameter should be ShapePtr " << param_node->name();
-    return false;
-  }
-  auto weight_shape = utils::cast<abstract::ShapePtr>(abstract_base->GetShapeTrack())->shape();
-  MS_ASSERT(weight_shape != nullptr);
-  if (weight_shape.size() < DIMENSION_2D) {  // do not quant single dim tensors
-    return false;
-  }
-  return true;
 }
 
 int QuantNodePass::Quant() {

@@ -616,4 +616,67 @@ bool CheckControlFlowType(const AnfNodePtr &node) {
   }
   return false;
 }
+
+bool CanTensorWeightQuantized(const CNodePtr &cnode, const AnfNodePtr &input_node, ShapeVector *weight_shape) {
+  if (input_node == nullptr) {
+    MS_LOG(INFO) << "CanTensorQuantized input is nullptr!";
+    return false;
+  }
+  ParameterPtr param_node = nullptr;
+  if (input_node->isa<Parameter>()) {
+    param_node = input_node->cast<ParameterPtr>();
+  }
+  if (param_node == nullptr) {
+    MS_LOG(INFO) << "CanTensorQuantized invalid param_node!";
+    return false;
+  }
+  if (!param_node->has_default()) {
+    MS_LOG(INFO) << "param_node don't has default.";
+    return false;
+  }
+  auto abstract_base = param_node->abstract();
+  if (abstract_base == nullptr) {
+    MS_LOG(INFO) << "abstract is nullptr";
+    return false;
+  }
+  if (!utils::isa<abstract::ShapePtr>(abstract_base->GetShapeTrack())) {
+    MS_LOG(INFO) << "Shape of Abstract of parameter should be ShapePtr " << param_node->name();
+    return false;
+  }
+  MS_CHECK_TRUE_RET(weight_shape != nullptr, false);
+  *weight_shape = utils::cast<abstract::ShapePtr>(abstract_base->GetShapeTrack())->shape();
+  if (weight_shape->size() < DIMENSION_2D) {  // do not quant single dim tensors
+    return false;
+  }
+  return true;
+}
+
+bool CanTensorWeightQuantized(const CNodePtr &cnode, const AnfNodePtr &input_node, int preferred_dim,
+                              int min_quant_weight_size, int min_quant_weight_channel) {
+  ShapeVector weight_shape;
+  if (!CanTensorWeightQuantized(cnode, input_node, &weight_shape)) {
+    return false;
+  }
+  MS_CHECK_TRUE_RET(!weight_shape.empty(), false);
+  int total_shape_size = 1;
+  auto ret = GetElementNumFromShape(ConvertShapeVectorToInt32(weight_shape), &total_shape_size);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Get element num from shape failed.";
+    return ret;
+  }
+  if (total_shape_size < 0 || total_shape_size <= min_quant_weight_size) {
+    MS_LOG(INFO) << "shape_size " << total_shape_size << " less min_quant_weight_size " << min_quant_weight_size;
+    return false;
+  }
+
+  static const std::set<PrimitivePtr> check_channel_ops = {prim::kPrimConv2DFusion, prim::kPrimConv2dTransposeFusion};
+
+  if (CheckNodeInSet(cnode, check_channel_ops) && weight_shape.size() >= DIMENSION_2D &&
+      weight_shape[preferred_dim] <= min_quant_weight_channel) {
+    MS_LOG(INFO) << "preferred_dim shape:" << weight_shape[preferred_dim] << " less min_quant_weight_channel_ "
+                 << min_quant_weight_channel;
+    return false;
+  }
+  return true;
+}
 }  // namespace mindspore::lite::quant

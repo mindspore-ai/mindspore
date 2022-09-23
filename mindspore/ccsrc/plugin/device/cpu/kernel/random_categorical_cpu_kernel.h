@@ -16,12 +16,10 @@
 
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_RANDOM_CATEGORICAL_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_RANDOM_CATEGORICAL_CPU_KERNEL_H_
-#include <memory>
-#include <unordered_map>
 #include <vector>
 #include <random>
-#include <map>
 #include <utility>
+#include <map>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 #include "nnacl/base/tile_base.h"
