@@ -133,8 +133,16 @@ void *PackWeightManager::MallocData(size_t size) {
 #ifdef _WIN32
   size_t round_size = (size + kMemAlignSize - 1) & (~(kMemAlignSize - 1));
   data = _aligned_malloc(round_size, kMemAlignSize);
+  if (data == nullptr) {
+    MS_LOG(ERROR) << "malloc failed.";
+    return nullptr;
+  }
 #elif defined(__ANDROID__)
   data = malloc(size);
+  if (data == nullptr) {
+    MS_LOG(ERROR) << "malloc failed.";
+    return nullptr;
+  }
 #else
   size_t round_size = (size + kMemAlignSize - 1) & (~(kMemAlignSize - 1));
   auto ret = posix_memalign(&data, kMemAlignSize, round_size);

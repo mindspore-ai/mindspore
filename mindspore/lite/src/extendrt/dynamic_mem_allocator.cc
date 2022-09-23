@@ -19,9 +19,19 @@
 #include "src/common/log_adapter.h"
 
 namespace mindspore {
-void *DynamicMemAllocator::Malloc(size_t size) { return mem_oper_->Malloc(size); }
+void *DynamicMemAllocator::Malloc(size_t size) {
+  if (mem_oper_ != nullptr) {
+    return mem_oper_->Malloc(size);
+  } else {
+    return nullptr;
+  }
+}
 
-void DynamicMemAllocator::Free(void *ptr) { mem_oper_->Free(ptr); }
+void DynamicMemAllocator::Free(void *ptr) {
+  if (mem_oper_ != nullptr) {
+    mem_oper_->Free(ptr);
+  }
+}
 
 int DynamicMemAllocator::RefCount(void *ptr) {
   if (ptr == nullptr) {
