@@ -54,9 +54,9 @@ def svd(a, full_matrices=False, compute_uv=True):
 
     Examples:
         >>> import numpy as np
-        >>> from mindspore import Tensor, context
+        >>> from mindspore import Tensor, set_context
         >>> from mindspore import ops
-        >>> context.set_context(device_target="CPU")
+        >>> set_context(device_target="CPU")
         >>> a = Tensor(np.array([[1, 2], [-4, -5], [2, 1]]).astype(np.float32))
         >>> s, u, v = ops.svd(a, full_matrices=True, compute_uv=True)
         >>> print(s)

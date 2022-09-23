@@ -548,7 +548,7 @@ mindspore.numpy能够充分利用MindSpore的强大功能，实现算子的自�
 
 - `ms_function`: 将代码包裹进图模式，用于提高代码运行效率。
 - `GradOperation`: 用于自动求导。
-- `mindspore.context`: 用于设置运行模式和后端设备等。
+- `mindspore.set_context`: 用于设置运行模式和后端设备等。
 - `mindspore.nn.Cell`: 用于建立深度学习模型。
 
 使用示例如下：
@@ -630,7 +630,7 @@ mindspore.numpy能够充分利用MindSpore的强大功能，实现算子的自�
         ...
        Tensor(shape=[4], dtype=Float32, value= [ 2.00000000e+00,  2.00000000e+00,  2.00000000e+00,  2.00000000e+00]))
 
-  如果要对 `ms_function` 修饰的 `forward` 计算求导，需要提前使用 `context` 设置运算模式为图模式，示例如下：
+  如果要对 `ms_function` 修饰的 `forward` 计算求导，需要提前使用 `set_context` 设置运算模式为图模式，示例如下：
 
   .. code-block:: python
 
@@ -657,9 +657,9 @@ mindspore.numpy能够充分利用MindSpore的强大功能，实现算子的自�
 
   更多细节可参考 `API GradOperation <https://www.mindspore.cn/docs/zh-CN/master/api_python/ops/mindspore.ops.GradOperation.html>`_ 。
 
-- mindspore.context使用示例
+- mindspore.set_context使用示例
 
-  MindSpore支持多后端运算，可以通过 `mindspore.context` 进行设置。`mindspore.numpy` 的多数算子可以使用图模式或者PyNative模式运行，也可以运行在CPU，CPU或者Ascend等多种后端设备上。
+  MindSpore支持多后端运算，可以通过 `mindspore.set_context` 进行设置。`mindspore.numpy` 的多数算子可以使用图模式或者PyNative模式运行，也可以运行在CPU，CPU或者Ascend等多种后端设备上。
 
   .. code-block:: python
 
