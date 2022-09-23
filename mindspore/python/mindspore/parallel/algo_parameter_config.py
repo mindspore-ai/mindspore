@@ -225,7 +225,7 @@ def set_algo_parameters(**kwargs):
     """
     Set parameters in the algorithm for parallel strategy searching. See a typical use in
     `test_auto_parallel_resnet.py
-    <https://gitee.com/mindspore/mindspore/blob/master/tests/ut/python/parallel/test_auto_parallel_resnet.py>`_.
+    <https://gitee.com/mindspore/mindspore/blob/r1.9/tests/ut/python/parallel/test_auto_parallel_resnet.py>`_.
 
     Note:
         The attribute name is required. This interface works ONLY in AUTO_PARALLEL mode.

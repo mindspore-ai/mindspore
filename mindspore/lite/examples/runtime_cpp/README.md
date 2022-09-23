@@ -16,7 +16,7 @@
   bash build.sh
   ```
 
-  > 若MindSpore Lite推理框架下载失败，请手动下载硬件平台为CPU，操作系统为Ubuntu-x64的[MindSpore Lite 模型推理框架](https://www.mindspore.cn/lite/docs/zh-CN/master/use/downloads.html)，解压后将其拷贝对应到`mindspore/lite/examples/runtime_cpp/lib`目录。
+  > 若MindSpore Lite推理框架下载失败，请手动下载硬件平台为CPU，操作系统为Ubuntu-x64的[MindSpore Lite 模型推理框架](https://www.mindspore.cn/lite/docs/zh-CN/r1.9/use/downloads.html)，解压后将其拷贝对应到`mindspore/lite/examples/runtime_cpp/lib`目录。
   >
   > 若mobilenetv2模型下载失败，请手动下载相关模型文件[mobilenetv2](https://download.mindspore.cn/model_zoo/official/lite/mobilenetv2_openimage_lite/mobilenetv2.ms)，并将其拷贝到`mindspore/lite/examples/runtime_cpp/model`目录。
 

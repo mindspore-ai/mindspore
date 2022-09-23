@@ -36,7 +36,7 @@ class CsvToMR:
 
     Note:
         For details about Examples, please refer to `Converting CSV Dataset <https://
-        www.mindspore.cn/tutorials/zh-CN/master/advanced/dataset/record.html#converting-csv-dataset>`_.
+        www.mindspore.cn/tutorials/zh-CN/r1.9/advanced/dataset/record.html#converting-csv-dataset>`_.
 
     Args:
         source (str): The file path of csv.

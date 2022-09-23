@@ -40,7 +40,7 @@ Descriptions of common data processing terms are as follows:
 The data transform operator can be executed in the data processing pipeline or in the eager mode:
 
 - Pipeline mode is generally used to process datasets. For examples, please refer to
-  `introduction to data processing pipeline <https://www.mindspore.cn/docs/en/master/api_python/
+  `introduction to data processing pipeline <https://www.mindspore.cn/docs/en/r1.9/api_python/
   mindspore.dataset.html#introduction-to-data-processing-pipeline>`_.
 - Eager mode is generally used for scattered samples. Examples of audio preprocessing are as follows:
 

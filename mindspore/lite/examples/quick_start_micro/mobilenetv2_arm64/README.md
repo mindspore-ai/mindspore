@@ -16,7 +16,7 @@
 
 ## Android编译部署
 
-本教程以MobileNetv2在安卓手机编译部署为例，使用用户快速了解codegen在安卓平台生成代码、工程构建以及部署的一系列流程。关于converter、codegen的获取以及详细参数介绍可参考mindspore的[编译构建介绍](https://www.mindspore.cn/lite/docs/zh-CN/master/use/build.html)。
+本教程以MobileNetv2在安卓手机编译部署为例，使用用户快速了解codegen在安卓平台生成代码、工程构建以及部署的一系列流程。关于converter、codegen的获取以及详细参数介绍可参考mindspore的[编译构建介绍](https://www.mindspore.cn/lite/docs/zh-CN/r1.9/use/build.html)。
 
 ### 编译依赖
 
@@ -40,7 +40,7 @@ codegen编译[MobileNetv2模型](https://download.mindspore.cn/model_zoo/officia
 ./converter_lite --fmk=TFLITE --modelFile=${model_dir}/mnist.tflite --outputFile=${SOURCE_CODE_DIR} --configFile=${COFIG_FILE}
 ```
 
-关于codegen的更多使用命令说明，可参见[codegen工具的详细介绍](https://www.mindspore.cn/lite/docs/zh-CN/master/use/downloads.html)
+关于codegen的更多使用命令说明，可参见[codegen工具的详细介绍](https://www.mindspore.cn/lite/docs/zh-CN/r1.9/use/downloads.html)
 
 #### 生成代码工程说明
 
@@ -51,7 +51,7 @@ codegen编译[MobileNetv2模型](https://download.mindspore.cn/model_zoo/officia
 
 ##### 算子静态库目录说明
 
-在编译此工程之前需要预先获取安卓平台对应的[Release包](https://www.mindspore.cn/lite/docs/zh-CN/master/use/downloads.html)。
+在编译此工程之前需要预先获取安卓平台对应的[Release包](https://www.mindspore.cn/lite/docs/zh-CN/r1.9/use/downloads.html)。
 
 安卓平台对应的Release包的目录如下:
 
@@ -141,6 +141,6 @@ name: Softmax-65, ,DataType: 43, Size: 4004, Shape:1 1001, Data:
 
 ## 更多详情
 
-### [Linux_x86_64编译部署](https://gitee.com/mindspore/mindspore/blob/master/mindspore/lite/examples/quick_start_micro/mnist_x86/README.md)
+### [Linux_x86_64编译部署](https://gitee.com/mindspore/mindspore/blob/r1.9/mindspore/lite/examples/quick_start_micro/mnist_x86/README.md)
 
-### [Arm&nbsp;Cortex-M平台编译部署](https://www.mindspore.cn/lite/docs/zh-CN/master/use/micro.html)
+### [Arm&nbsp;Cortex-M平台编译部署](https://www.mindspore.cn/lite/docs/zh-CN/r1.9/use/micro.html)

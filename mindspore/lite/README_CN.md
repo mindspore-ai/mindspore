@@ -7,7 +7,7 @@ MindSpore Lite是MindSpore推出的端云协同的、轻量化、高性能AI推�
 
 <img src="../../docs/MindSpore-Lite-architecture.png" alt="MindSpore Lite Architecture" width="600"/>
 
-欲了解更多详情，请查看我们的[MindSpore Lite 总体架构](https://www.mindspore.cn/lite/docs/zh-CN/master/architecture_lite.html)。
+欲了解更多详情，请查看我们的[MindSpore Lite 总体架构](https://www.mindspore.cn/lite/docs/zh-CN/r1.9/architecture_lite.html)。
 
 ## MindSpore Lite技术特点
 
@@ -47,7 +47,7 @@ MindSpore Lite是MindSpore推出的端云协同的、轻量化、高性能AI推�
 
 2. 模型转换/优化
 
-   如果您使用MindSpore或第三方训练的模型，需要使用[MindSpore Lite模型转换工具](https://www.mindspore.cn/lite/docs/zh-CN/master/use/converter_tool.html)转换成MindSpore Lite模型格式。MindSpore Lite模型转换工具不仅提供了将TensorFlow Lite、Caffe、ONNX等模型格式转换为MindSpore Lite模型格式，还提供了算子融合、量化等功能。
+   如果您使用MindSpore或第三方训练的模型，需要使用[MindSpore Lite模型转换工具](https://www.mindspore.cn/lite/docs/zh-CN/r1.9/use/converter_tool.html)转换成MindSpore Lite模型格式。MindSpore Lite模型转换工具不仅提供了将TensorFlow Lite、Caffe、ONNX等模型格式转换为MindSpore Lite模型格式，还提供了算子融合、量化等功能。
 
    MindSpore还提供了将IoT设备上运行的模型转换成.C代码的生成工具。
 
@@ -59,7 +59,7 @@ MindSpore Lite是MindSpore推出的端云协同的、轻量化、高性能AI推�
 
 4. 模型推理
 
-   主要完成模型推理工作，即加载模型，完成模型相关的所有计算。[推理](https://www.mindspore.cn/lite/docs/zh-CN/master/use/runtime.html)是通过模型运行输入数据，获取预测的过程。
+   主要完成模型推理工作，即加载模型，完成模型相关的所有计算。[推理](https://www.mindspore.cn/lite/docs/zh-CN/r1.9/use/runtime.html)是通过模型运行输入数据，获取预测的过程。
 
    MindSpore提供了预训练模型部署在智能终端的[样例](https://www.mindspore.cn/lite/examples)。
 

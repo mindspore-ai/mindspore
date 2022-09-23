@@ -289,7 +289,7 @@ class Flatten(Cell):
 
     Inputs:
         - **x** (Tensor) - The input Tensor to be flattened. The data type is
-          `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ .
+          `number <https://www.mindspore.cn/docs/en/r1.9/api_python/mindspore.html#mindspore.dtype>`_ .
           The shape is :math:`(N, *)` , where :math:`*` means any number of additional dimensions
           and the shape can't be ().
 
@@ -1136,7 +1136,7 @@ class Tril(Cell):
 
     Inputs:
         - **x** (Tensor) - The input tensor. The data type is
-          `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
+          `number <https://www.mindspore.cn/docs/en/r1.9/api_python/mindspore.html#mindspore.dtype>`_.
         - **k** (Int) - The index of diagonal. Default: 0. If the dimensions of the input matrix are d1 and d2,
           the range of k should be in [-min(d1, d2)+1, min(d1, d2)-1], and the output value will be the same as the
           input `x` when `k` is out of range.

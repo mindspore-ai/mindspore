@@ -21,7 +21,7 @@ Besides, this module provides APIs to sample data while loading.
 
 We can enable cache in most of the dataset with its key arguments 'cache'. Please notice that cache is not supported
 on Windows platform yet. Do not use it while loading and processing data on Windows. More introductions and limitations
-can refer `Single-Node Tensor Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_.
+can refer `Single-Node Tensor Cache <https://www.mindspore.cn/tutorials/experts/en/r1.9/dataset/cache.html>`_.
 
 Common imported modules in corresponding API examples are as follows:
 
@@ -55,9 +55,9 @@ The specific steps are as follows:
 - Dataset operation: The user uses the dataset object method `.shuffle` / `.filter` / `.skip` / `.split` /
   `.take` / ... to further shuffle, filter, skip, and obtain the maximum number of samples of datasets;
 - Dataset sample transform operation: The user can add data transform operators
-  (`vision transform <https://www.mindspore.cn/docs/en/master/api_python/mindspore.dataset.vision.html>`_,
-  `NLP transform <https://www.mindspore.cn/docs/en/master/api_python/mindspore.dataset.text.html>`_,
-  `audio transform <https://www.mindspore.cn/docs/en/master/api_python/mindspore.dataset.audio.html>`_) to the map
+  (`vision transform <https://www.mindspore.cn/docs/en/r1.9/api_python/mindspore.dataset.vision.html>`_,
+  `NLP transform <https://www.mindspore.cn/docs/en/r1.9/api_python/mindspore.dataset.text.html>`_,
+  `audio transform <https://www.mindspore.cn/docs/en/r1.9/api_python/mindspore.dataset.audio.html>`_) to the map
   operation to perform transformations. During data preprocessing, multiple map operations can be defined to
   perform different transform operations to different fields. The data transform operator can also be a
   user-defined transform `pyfunc` (Python function);
@@ -67,7 +67,7 @@ The specific steps are as follows:
   iterator, which can output the preprocessed data cyclically.
 
 The data processing pipeline example is as follows. Please refer to
-`datasets_example.py <https://gitee.com/mindspore/mindspore/tree/master/docs/api/api_python_en/datasets_example.py>`_
+`datasets_example.py <https://gitee.com/mindspore/mindspore/tree/r1.9/docs/api/api_python_en/datasets_example.py>`_
 for complete example.
 
 .. code-block::

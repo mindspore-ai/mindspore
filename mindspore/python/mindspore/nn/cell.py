@@ -1559,7 +1559,7 @@ class Cell(Cell_):
         accelerate the algorithm in the algorithm library.
 
         If `boost_type` is not in the algorithm library, please view the algorithm in the algorithm library through
-        `algorithm library <https://gitee.com/mindspore/mindspore/tree/master/mindspore/python/mindspore/boost>`_.
+        `algorithm library <https://gitee.com/mindspore/mindspore/tree/r1.9/mindspore/python/mindspore/boost>`_.
 
         Note:
             Some acceleration algorithms may affect the accuracy of the network, please choose carefully.

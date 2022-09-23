@@ -4200,7 +4200,7 @@ class Tensor(Tensor_):
             1. The value of `input_indices` must be in the range of `[0, input_param.shape[axis])`, the result
                is undefined out of range.
             2. The data type of `input_params` cannot be
-               `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ on Ascend
+               `bool_ <https://www.mindspore.cn/docs/en/r1.9/api_python/mindspore.html#mindspore.dtype>`_ on Ascend
                platform currently.
 
         Args:
@@ -5210,8 +5210,8 @@ class Tensor(Tensor_):
         r"""
         Computes the self tensor multiplied by the logarithm of input tensor element-wise.
         Returns zero when self tensor is zero. The data type of the self tensor should be
-        `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
-        `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
+        `number <https://www.mindspore.cn/docs/en/r1.9/api_python/mindspore.html#mindspore.dtype>`_ or
+        `bool_ <https://www.mindspore.cn/docs/en/r1.9/api_python/mindspore.html#mindspore.dtype>`_.
         To make it clear, the following content will use `x` to represent the self tensor.
 
         .. math::

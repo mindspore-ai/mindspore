@@ -25,7 +25,7 @@ For the label file of the validation set, you can use `./synsets.txt`. The numbe
 
 ## Model preparation
 
-Before inferring the model, you need to convert the model to be inferred into the model file `xxx.ms` of MindSpore Lite. For a detailed description of model conversion, see [Quick Start](https://www.mindspore.cn/lite/docs/en/master/quick_start/one_hour_introduction.html)
+Before inferring the model, you need to convert the model to be inferred into the model file `xxx.ms` of MindSpore Lite. For a detailed description of model conversion, see [Quick Start](https://www.mindspore.cn/lite/docs/en/r1.9/quick_start/one_hour_introduction.html)
 
 ## Environmental requirements
 
@@ -35,7 +35,7 @@ Before inferring the model, you need to convert the model to be inferred into th
 * tqdm
 * mindspore_lite
 
->It should be noted that `mindspore_lite` can obtain the `mindspore_lite-{version}-*.whl` file through [Build MindSpore Lite](https://www.mindspore.cn/lite/docs/en/master/use/build.html) , then install via `pip install mindspore_lite-{version}-*.whl`
+>It should be noted that `mindspore_lite` can obtain the `mindspore_lite-{version}-*.whl` file through [Build MindSpore Lite](https://www.mindspore.cn/lite/docs/en/r1.9/use/build.html) , then install via `pip install mindspore_lite-{version}-*.whl`
 
 ## Run script
 

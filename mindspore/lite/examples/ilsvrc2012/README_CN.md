@@ -25,7 +25,7 @@
 
 ## 模型准备
 
-在对模型进行推理前，需将待推理的模型转换为MindSpore Lite的模型文件`xxx.ms`。关于模型转换的详细说明可以参见[快速入门](https://www.mindspore.cn/lite/docs/zh-CN/master/quick_start/one_hour_introduction.html)
+在对模型进行推理前，需将待推理的模型转换为MindSpore Lite的模型文件`xxx.ms`。关于模型转换的详细说明可以参见[快速入门](https://www.mindspore.cn/lite/docs/zh-CN/r1.9/quick_start/one_hour_introduction.html)
 
 ## 环境要求
 
@@ -35,7 +35,7 @@
 * tqdm
 * mindspore_lite
 
->需要注意：`mindspore_lite`可以通过[编译MindSpore Lite](https://www.mindspore.cn/lite/docs/zh-CN/master/use/build.html)获取 `mindspore_lite-{version}-*.whl`文件，然后通过`pip install mindspore_lite-{version}-*.whl`进行安装
+>需要注意：`mindspore_lite`可以通过[编译MindSpore Lite](https://www.mindspore.cn/lite/docs/zh-CN/r1.9/use/build.html)获取 `mindspore_lite-{version}-*.whl`文件，然后通过`pip install mindspore_lite-{version}-*.whl`进行安装
 
 ## 运行脚本
 

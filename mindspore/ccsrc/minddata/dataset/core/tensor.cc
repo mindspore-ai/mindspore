@@ -127,7 +127,7 @@ Status Tensor::CreateFromMemory(const TensorShape &shape, const DataType &type, 
       "used, please check whether the memory of the "
       "Numpy object returned by Pyfunc has been unexpectedly freed. Adding copy.deepcopy(numpy_object) before "
       "numpy_object returned by Pyfunc maybe solve the issue. For more details, please refer to the FAQ at "
-      "https://www.mindspore.cn/docs/en/master/faq/data_processing.html.";
+      "https://www.mindspore.cn/docs/en/r1.9/faq/data_processing.html.";
     if (byte_size < SECUREC_MEM_MAX_LEN) {
       int ret_code = memcpy_s((*out)->data_, byte_size, src, byte_size);
       CHECK_FAIL_RETURN_UNEXPECTED(ret_code == 0, err_msg);
