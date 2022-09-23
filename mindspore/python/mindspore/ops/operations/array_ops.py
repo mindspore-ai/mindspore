@@ -7788,7 +7788,7 @@ class HammingWindow(Primitive):
         ValueError: If data of `length` is negative.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``CPU`` ``GPU``
 
     Examples:
         >>> # case 1: periodic=True.

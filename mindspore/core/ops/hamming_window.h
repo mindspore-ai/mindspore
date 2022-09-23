@@ -37,11 +37,17 @@ class MIND_API HammingWindow : public BaseOperator {
   MIND_API_BASE_MEMBER(HammingWindow);
   /// \brief Constructor.
   HammingWindow() : BaseOperator(kNameHammingWindow) { InitIOName({"length"}, {"y"}); }
+  void Init(const bool periodic = true, const float alpha = 0.54, const float beta = 0.46);
+  void set_periodic(const bool periodic);
+  bool get_periodic() const;
+  void set_alpha(const float alpha);
+  float get_alpha() const;
+  void set_beta(const float beta);
+  float get_beta() const;
 };
 
 abstract::AbstractBasePtr HammingWindowInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                              const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CORE_OPS_HAMMING_WINDOW_H_
