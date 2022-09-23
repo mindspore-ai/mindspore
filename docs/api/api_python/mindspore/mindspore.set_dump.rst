@@ -5,7 +5,7 @@ mindspore.set_dump
 
     启用或者禁用 `target` 及其子节点的Dump数据功能。
 
-    `target` 为 :class:`mindspore.nn.Cell` 或 :class:`mindspore.ops.Primitive` 的实例。请注意，此API仅在开启异步Dump功能且Dump配置文件中的 `dump_mode` 字段为"2"时生效。有关详细信息，请参阅 `Dump功能文档 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/debug/dump.html>`_ 。默认状态下， :class:`mindspore.nn.Cell` 和 :class:`mindspore.ops.Primitive` 实例不使能Dump数据功能。
+    `target` 为 :class:`mindspore.nn.Cell` 或 :class:`mindspore.ops.Primitive` 的实例。请注意，此API仅在开启异步Dump功能且Dump配置文件中的 `dump_mode` 字段为"2"时生效。有关详细信息，请参阅 `Dump功能文档 <https://www.mindspore.cn/tutorials/experts/zh-CN/r1.9/debug/dump.html>`_ 。默认状态下， :class:`mindspore.nn.Cell` 和 :class:`mindspore.ops.Primitive` 实例不使能Dump数据功能。
 
     .. Warning::
         此类中的所有API均为实验版本，将来可能更改或者删除。

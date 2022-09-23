@@ -3,7 +3,7 @@ mindspore.set_algo_parameters
 
 .. py:function:: mindspore.set_algo_parameters(**kwargs)
 
-    设置并行策略搜索算法中的参数。有关典型用法，请参见 `test_auto_parallel_resnet.py <https://gitee.com/mindspore/mindspore/blob/master/tests/ut/python/parallel/test_auto_parallel_resnet.py>`_ 。
+    设置并行策略搜索算法中的参数。有关典型用法，请参见 `test_auto_parallel_resnet.py <https://gitee.com/mindspore/mindspore/blob/r1.9/tests/ut/python/parallel/test_auto_parallel_resnet.py>`_ 。
 
     .. note::
         属性名称为必填项。此接口仅在AUTO_PARALLEL模式下工作。

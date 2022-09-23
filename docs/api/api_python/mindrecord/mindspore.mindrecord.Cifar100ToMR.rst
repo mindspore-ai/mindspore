@@ -4,7 +4,7 @@
     将CIFAR-100数据集转换为MindRecord格式数据集。
 
     .. note::
-        示例的详细信息，请参见 `转换CIFAR-10数据集 <https://www.mindspore.cn/tutorials/zh-CN/master/advanced/dataset/record.html#转换cifar-10数据集>`_。
+        示例的详细信息，请参见 `转换CIFAR-10数据集 <https://www.mindspore.cn/tutorials/zh-CN/r1.9/advanced/dataset/record.html#转换cifar-10数据集>`_。
 
     参数：
         - **source** (str) - 待转换的CIFAR-100数据集文件所在目录的路径。

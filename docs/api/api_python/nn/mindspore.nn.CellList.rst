@@ -3,7 +3,7 @@ mindspore.nn.CellList
 
 .. py:class:: mindspore.nn.CellList(*args, **kwargs)
 
-    构造Cell列表。关于Cell的介绍，可参考 `Cell <https://www.mindspore.cn/docs/zh-CN/master/api_python/nn/mindspore.nn.Cell.html#mindspore.nn.Cell>`_。
+    构造Cell列表。关于Cell的介绍，可参考 `Cell <https://www.mindspore.cn/docs/zh-CN/r1.9/api_python/nn/mindspore.nn.Cell.html#mindspore.nn.Cell>`_。
 
     CellList可以像普通Python列表一样使用，其包含的Cell均已初始化。
 

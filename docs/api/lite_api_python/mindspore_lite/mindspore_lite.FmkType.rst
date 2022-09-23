@@ -5,7 +5,7 @@ mindspore_lite.FmkType
 
     将第三方或MindSpore模型转换为MindSpore Lite模型时，FmkType定义输入模型的框架类型。
 
-    有关详细信息，请参见 `FmkType <https://gitee.com/mindspore/mindspore/blob/master/mindspore/lite/python/api/converter.py>`_ 。
+    有关详细信息，请参见 `FmkType <https://gitee.com/mindspore/mindspore/blob/r1.9/mindspore/lite/python/api/converter.py>`_ 。
     运行以下命令导入包：
 
     .. code-block::

@@ -8,7 +8,7 @@ mindspore.dataset
 
 大多数数据集可以通过指定参数 `cache` 启用缓存服务，以提升整体数据处理效率。
 请注意Windows平台上还不支持缓存服务，因此在Windows上加载和处理数据时，请勿使用。更多介绍和限制，
-请参考 `Single-Node Tensor Cache <https://www.mindspore.cn/tutorials/experts/zh-CN/master/dataset/cache.html>`_。
+请参考 `Single-Node Tensor Cache <https://www.mindspore.cn/tutorials/experts/zh-CN/r1.9/dataset/cache.html>`_。
 
 在API示例中，常用的模块导入方法如下：
 
@@ -37,9 +37,9 @@ mindspore.dataset
 - 数据集操作（filter/ skip）：用户通过数据集对象方法 `.shuffle` / `.filter` / `.skip` / `.split` /
   `.take` / … 来实现数据集的进一步混洗、过滤、跳过、最多获取条数等操作；
 - 数据集样本增强操作（map）：用户可以将数据增强算子
-  （`vision类 <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.dataset.vision.html>`_，
-  `nlp类 <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.dataset.text.html>`_，
-  `audio类 <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.dataset.audio.html>`_）
+  （`vision类 <https://www.mindspore.cn/docs/zh-CN/r1.9/api_python/mindspore.dataset.vision.html>`_，
+  `nlp类 <https://www.mindspore.cn/docs/zh-CN/r1.9/api_python/mindspore.dataset.text.html>`_，
+  `audio类 <https://www.mindspore.cn/docs/zh-CN/r1.9/api_python/mindspore.dataset.audio.html>`_）
   添加到map操作来执行，数据预处理过程中可以定义多个map操作，用于执行不同增强操作，数据增强算子也可以是
   用户自定义增强的 `PyFunc`；
 - 批（batch）：用户在样本完成增强后，使用 `.batch` 操作将多个样本组织成batch，也可以通过batch的参数 `per_batch_map`
@@ -48,7 +48,7 @@ mindspore.dataset
   可以将预处理完成的数据循环输出。
 
 数据处理Pipeline示例如下，完整示例请参考
-`datasets_example.py <https://gitee.com/mindspore/mindspore/tree/master/docs/api/api_python/datasets_example.py>`_：
+`datasets_example.py <https://gitee.com/mindspore/mindspore/tree/r1.9/docs/api/api_python/datasets_example.py>`_：
 
 .. code-block:: python
 

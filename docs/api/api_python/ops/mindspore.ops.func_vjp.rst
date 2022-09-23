@@ -3,7 +3,7 @@ mindspore.ops.vjp
 
 .. py:function:: mindspore.ops.vjp(fn, inputs, v)
 
-    计算给定网络的向量雅可比积(vector-jacobian-product, VJP)。VJP对应 `反向模式自动微分 <https://www.mindspore.cn/docs/zh-CN/master/design/auto_gradient.html#反向自动微分>`_。
+    计算给定网络的向量雅可比积(vector-jacobian-product, VJP)。VJP对应 `反向模式自动微分 <https://www.mindspore.cn/docs/zh-CN/r1.9/design/auto_gradient.html#反向自动微分>`_。
 
     .. note::
         此接口未來会变动。

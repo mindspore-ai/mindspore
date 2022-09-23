@@ -22,7 +22,7 @@ Converter
 
   When converting a third-party or MindSpore model to a MindSpore Lite model, FmkType defines Input model's framework type.
 
-  For details, see `FmkType <https://gitee.com/mindspore/mindspore/blob/master/mindspore/lite/python/api/converter.py>`_.
+  For details, see `FmkType <https://gitee.com/mindspore/mindspore/blob/r1.9/mindspore/lite/python/api/converter.py>`_.
   Run the following command to import the package:
 
   .. code-block::
@@ -60,7 +60,7 @@ Model
 
   When loading or building a model from file, ModelType defines the type of input model file.
 
-  For details, see `ModelType <https://gitee.com/mindspore/mindspore/blob/master/mindspore/lite/python/api/model.py>`_.
+  For details, see `ModelType <https://gitee.com/mindspore/mindspore/blob/r1.9/mindspore/lite/python/api/model.py>`_.
   Run the following command to import the package:
 
   .. code-block::
@@ -96,7 +96,7 @@ Tensor
 
   Create a data type object of MindSporeLite.
 
-  For details, see `DataType <https://gitee.com/mindspore/mindspore/blob/master/mindspore/lite/python/api/tensor.py>`_.
+  For details, see `DataType <https://gitee.com/mindspore/mindspore/blob/r1.9/mindspore/lite/python/api/tensor.py>`_.
   Run the following command to import the package:
 
   .. code-block::
@@ -156,7 +156,7 @@ Tensor
 
   MindSpore Lite's ``tensor`` type. For example: Format.NCHW.
 
-  For details, see `Format <https://gitee.com/mindspore/mindspore/blob/master/mindspore/lite/python/api/tensor.py>`_.
+  For details, see `Format <https://gitee.com/mindspore/mindspore/blob/r1.9/mindspore/lite/python/api/tensor.py>`_.
   Run the following command to import the package:
 
   .. code-block::
