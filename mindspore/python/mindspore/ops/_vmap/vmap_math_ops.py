@@ -358,6 +358,8 @@ def get_inplace_ops_vmap_rule(prim, axis_size):
 @vmap_rules_getters.register(P.ReduceMin)
 @vmap_rules_getters.register(P.ReduceMean)
 @vmap_rules_getters.register(P.ReduceProd)
+@vmap_rules_getters.register(P.ReduceAll)
+@vmap_rules_getters.register(P.ReduceAny)
 def get_reducer_vmap_rule(prim, axis_size):
     """VmapRule for reduce operations, such as `ReduceSum`."""
     reduce_op_map = {
@@ -365,7 +367,9 @@ def get_reducer_vmap_rule(prim, axis_size):
         "ReduceMax": P.ReduceMax,
         "ReduceMin": P.ReduceMin,
         "ReduceMean": P.ReduceMean,
-        "ReduceProd": P.ReduceProd
+        "ReduceProd": P.ReduceProd,
+        "ReduceAll": P.ReduceAll,
+        "ReduceAny": P.ReduceAny,
     }
 
     if isinstance(prim, str):
