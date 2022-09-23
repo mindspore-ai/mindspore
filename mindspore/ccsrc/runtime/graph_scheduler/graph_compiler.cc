@@ -567,7 +567,7 @@ TensorPtr GraphCompiler::GetSingleOpInputTensorByIndex(const CNodePtr &kernel,
 
 void GraphCompiler::GetSingleOpRunInfoAndGraphInfo(const CNodePtr &kernel, const InputTensorInfo &tensor_info,
                                                    session::BackendOpRunInfoPtr *op_run_info, GraphInfo *graph_info,
-                                                   GraphOutputInfo *const graph_output_info) {
+                                                   const GraphOutputInfo *const graph_output_info) {
   MS_EXCEPTION_IF_NULL(session_);
   MS_EXCEPTION_IF_NULL(graph_info);
   session_->GetSingleOpGraphInfo(kernel, tensor_info, graph_info);

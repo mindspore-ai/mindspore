@@ -28,11 +28,6 @@
 namespace mindspore::pynative {
 namespace py = pybind11;
 
-class ForwardExecutor;
-using ForwardExecutorPtr = std::shared_ptr<ForwardExecutor>;
-class GradExecutor;
-using GradExecutorPtr = std::shared_ptr<GradExecutor>;
-
 py::object RealRunOp(const py::args &args);
 py::object GetDynShape(const py::args &args);
 py::object CallConstantFolding(const py::args &args);

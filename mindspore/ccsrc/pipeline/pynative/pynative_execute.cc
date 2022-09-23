@@ -18,7 +18,6 @@
 #include "pipeline/jit/debug/trace.h"
 #include "pybind_api/pybind_patch.h"
 #include "include/common/utils/config_manager.h"
-#include "include/common/utils/convert_utils_py.h"
 #include "include/common/pybind_api/api_register.h"
 #include "frontend/optimizer/ad/grad.h"
 #include "pipeline/jit/pass.h"
@@ -27,7 +26,7 @@
 #include "ir/cell.h"
 
 namespace mindspore::pynative {
-PyNativeExecutorPtr PyNativeExecutor::executor_ = nullptr;
+std::shared_ptr<PyNativeExecutor> PyNativeExecutor::executor_ = nullptr;
 ForwardExecutorPtr PyNativeExecutor::forward_executor_ = nullptr;
 GradExecutorPtr PyNativeExecutor::grad_executor_ = nullptr;
 std::mutex PyNativeExecutor::instance_lock_;
@@ -98,28 +97,9 @@ py::object GetDynShape(const py::args &args) {
 }
 
 py::object CallConstantFolding(const py::args &args) {
-  const auto &prim_arg = args[0];
-  const auto &adapter = py::cast<PrimitivePyAdapterPtr>(prim_arg);
-  MS_EXCEPTION_IF_NULL(adapter);
-  auto prim = adapter->attached_primitive();
-  if (prim == nullptr) {
-    prim = std::make_shared<PrimitivePy>(prim_arg, adapter);
-    adapter->set_attached_primitive(prim);
-  }
-  if (!prim->HasPyObj()) {
-    MS_LOG(EXCEPTION) << "Pyobj is empty";
-  }
-  const auto &v = PyNativeAlgo::DataConvert::PyObjToValue(args[1]);
-  std::vector<AbstractBasePtr> input_abs;
-  input_abs.push_back(v->ToAbstract());
-  prim->BeginRecordAddAttr();
-  auto eval_ret = EvalOnePrim(prim, input_abs);
-  MS_EXCEPTION_IF_NULL(eval_ret);
-  AbstractBasePtr infer_res = eval_ret->abstract();
-  MS_EXCEPTION_IF_NULL(infer_res);
-  prim->EndRecordAddAttr();
-  auto value_ptr = PyNativeAlgo::DataConvert::PyObjToValue(ConvertAbstractToPython(infer_res)[ATTR_VALUE]);
-  return ValueToPyData(value_ptr);
+  const auto &executor = PyNativeExecutor::GetInstance();
+  MS_EXCEPTION_IF_NULL(executor);
+  return executor->forward_executor()->infer_operation()->CallConstantFolding(args);
 }
 
 void PyNativeExecutor::set_py_exe_path(const py::object &py_exe_path) const {
@@ -186,7 +166,7 @@ bool PyNativeExecutor::grad_flag() const { return grad_executor()->grad_flag(); 
 void PyNativeExecutor::set_grad_flag(bool flag) const { grad_executor()->set_grad_flag(flag); }
 
 void PyNativeExecutor::SetDynamicInput(const py::object &cell, const py::args &args) const {
-  MS_LOG(DEBUG) << "Set dynamic input for feed mode from cell id " << PyNativeAlgo::PyParser::GetIdByPyObj(cell);
+  MS_LOG(DEBUG) << "Set dynamic input for feed mode from cell";
   forward_executor()->dynamic_shape()->SetDynamicInput(cell, args);
   // After set input, check previous top cell can be make to dynamic shape
   forward_executor()->dynamic_shape()->CheckPreviousTopCellCanBeDynamicShape(cell, args);
@@ -207,11 +187,7 @@ py::object PyNativeExecutor::Run(const py::object &cell, const py::object &sens_
   return ret;
 }
 
-void PyNativeExecutor::ClearCell(const py::object &cell) const {
-  const auto &cell_id = PyNativeAlgo::PyParser::GetIdByPyObj(cell);
-  MS_LOG(DEBUG) << "Clear cell res, cell id " << cell_id;
-  grad_executor()->ClearCellRes(cell_id);
-}
+void PyNativeExecutor::ClearCell(const py::object &cell) const { grad_executor()->ClearCellRes(cell); }
 
 void PyNativeExecutor::ClearGrad(const py::object &cell, const py::args &args) const {
   MS_LOG(DEBUG) << "Clear grad";
