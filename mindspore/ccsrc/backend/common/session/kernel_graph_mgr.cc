@@ -133,7 +133,7 @@ bool ExistSummaryNode(const KernelGraph *graph) {
 
 GraphId KernelGraphMgr::graph_sum_ = 0;
 
-ValueNodePtr KernelGraphMgr::CreateNewValueNode(const AnfNodePtr &anf, KernelGraph *graph) {
+ValueNodePtr KernelGraphMgr::CreateNewValueNode(const AnfNodePtr &anf, KernelGraph *graph) const {
   MS_EXCEPTION_IF_NULL(anf);
   MS_EXCEPTION_IF_NULL(graph);
   auto value_node = anf->cast<ValueNodePtr>();

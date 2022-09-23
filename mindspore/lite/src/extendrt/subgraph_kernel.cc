@@ -17,7 +17,6 @@
 namespace mindspore::kernel {
 bool SubgraphKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                             const std::vector<AddressPtr> &outputs, void *stream_ptr) {
-  // TODO(zhaizhiqiang): Construct input/output tensor::Tensor for graph executor.
   std::vector<tensor::Tensor> in;
   std::vector<tensor::Tensor> out;
   std::map<string, string> compile_options;
