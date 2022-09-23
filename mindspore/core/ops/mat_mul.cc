@@ -55,9 +55,8 @@ class MatMulInfer : public abstract::OpInferBase {
     auto a_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(a_shape_ptr)[kShape];
     auto b_shape_ptr = input_args[kInputIndex1]->BuildShape();
     auto b_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(b_shape_ptr)[kShape];
-
-    if (a_shape_ptr->IsDimUnknown() || b_shape_ptr->IsDimUnknown()) {
-      return std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_DIM});
+    if (IsDynamicRank(a_shape) || IsDynamicRank(b_shape)) {
+      return std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
     }
 
     const int mat_rank = 2;

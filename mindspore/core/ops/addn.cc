@@ -89,10 +89,6 @@ abstract::ShapePtr AddNInferShape(const PrimitivePtr &primitive, const std::vect
       output_shape = shape_vec;
       continue;
     }
-    // If any shape is dynamic rank, return a dynamic rank.
-    if (IsDynamicRank(shape_vec)) {
-      return std::make_shared<abstract::Shape>(ShapeVector({UNKNOWN_RANK}));
-    }
     // Join input[i] with input[0]
     if (!AddNDynShapeJoin(&output_shape, &shape_vec)) {
       MS_LOG(EXCEPTION) << "For '" << primitive->name() << "', input[" << i << "]:" << shape->ToString()
