@@ -228,7 +228,7 @@ std::vector<std::vector<tensor::TensorPtr>> GetRunGraphInputs(const GraphCompile
 
 MindRTBackendBase::MindRTBackendBase(const std::string &backend_name, const std::string &device_name,
                                      uint32_t device_id)
-    : Backend(backend_name), device_name_(device_name) {
+    : Backend(backend_name), device_name_(device_name), device_id_(device_id) {
   root_graph_ = nullptr;
   auto ms_context = MsContext::GetInstance();
   const bool pynative_mode = (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode);
@@ -666,7 +666,7 @@ void MindRTBackendBase::ConstructOutputs(const AnfNodePtr &output_node,
       if (*output_position >= output_tensors.size()) {
         MS_LOG(EXCEPTION) << "The output position is out of range: " << *output_position;
       }
-      output_tuple.emplace_back(std::move(output_tensors[*output_position]));
+      output_tuple.emplace_back(output_tensors[*output_position]);
       ++(*output_position);
     }
     outputs->emplace_back(std::move(output_tuple));
@@ -675,7 +675,7 @@ void MindRTBackendBase::ConstructOutputs(const AnfNodePtr &output_node,
       if (*output_position >= output_tensors.size()) {
         MS_LOG(EXCEPTION) << "The output position is out of range: " << *output_position;
       }
-      outputs->emplace_back(std::move(output_tensors[*output_position]));
+      outputs->emplace_back(output_tensors[*output_position]);
       ++(*output_position);
     }
   }
