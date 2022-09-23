@@ -46,6 +46,9 @@ class ProfilerException(Exception):
         self.message = message
         self.http_code = http_code
 
+    def __str__(self):
+        return '[{}] code: {}, msg: {}'.format(self.__class__.__name__, self.error_code, self.message)
+
     @property
     def error_code(self):
         """
@@ -72,9 +75,6 @@ class ProfilerException(Exception):
                | (0x0FFF & self.error.value))
 
         return hex(num)[2:].zfill(8).upper()
-
-    def __str__(self):
-        return '[{}] code: {}, msg: {}'.format(self.__class__.__name__, self.error_code, self.message)
 
 
 class ProfilerParamValueErrorException(ProfilerException):
