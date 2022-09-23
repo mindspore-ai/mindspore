@@ -14,4 +14,4 @@ mindspore.amp.all_finite
         - **inputs** (Union(tuple(Tensor), list(Tensor))) - 可迭代的Tensor。
 
     返回：
-        Tensor, 布尔类型的标量Tensor。
+        Tensor，布尔类型的标量Tensor。

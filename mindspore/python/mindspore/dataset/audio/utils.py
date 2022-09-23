@@ -214,7 +214,7 @@ def create_dct(n_mfcc, n_mels, norm=NormMode.NONE):
     Args:
         n_mfcc (int): Number of mfc coefficients to retain, the value must be greater than 0.
         n_mels (int): Number of mel filterbanks, the value must be greater than 0.
-        norm (NormMode): Normalization mode, can be NormMode.NONE or NormMode.ORTHO (default=NormMode.NONE).
+        norm (NormMode, optional): Normalization mode, can be NormMode.NONE or NormMode.ORTHO (default=NormMode.NONE).
 
     Returns:
         numpy.ndarray, the transformation matrix, to be right-multiplied to row-wise data of size (n_mels, n_mfcc).

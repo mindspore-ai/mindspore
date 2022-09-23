@@ -9,7 +9,7 @@ mindspore.ops.jet
         - 若 `primals` 是int型的Tensor，会被转化成float32格式进行计算。
 
     参数：
-        - **fn** (Union[Function, Cell]) - 待求导的函数或网络。
+        - **fn** (Union[Cell, function]) - 待求导的函数或网络。
         - **primals** (Union[Tensor, tuple[Tensor]]) - `fn` 的输入，单输入的type为Tensor，多输入的type为Tensor组成的tuple。
         - **series** (Union[Tensor, tuple[Tensor]]) - 输入的原始第1到第n阶导数。若为tuple则长度与数据类型应与 `primals` 一致。type与 `primals` 相同，Tensor第一维度i对应输出对输入的第1到第i+1阶导数。
 
