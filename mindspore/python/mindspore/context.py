@@ -463,7 +463,7 @@ def set_auto_parallel_context(**kwargs):
     Note:
         Attribute name is required for setting attributes.
         If a program has tasks on different parallel modes, before setting a new parallel mode for the
-        next task, interface mindspore.context.reset_auto_parallel_context() should be called to reset
+        next task, interface mindspore.reset_auto_parallel_context() should be called to reset
         the configuration.
         Setting or changing parallel modes must be called before creating any Initializer, otherwise,
         it may have RuntimeError when compiling the network.
@@ -549,7 +549,7 @@ def set_auto_parallel_context(**kwargs):
                         configure. The configure provides more detailed behavior control about parallel training
                         when parallel optimizer is enabled. Currently it supports the key `gradient_accumulation_shard`.
                         The configure will be effective when we use
-                        context.set_auto_parallel_context(enable_parallel_optimizer=True).
+                        mindspore.set_auto_parallel_context(enable_parallel_optimizer=True).
                         It supports the following keys.
 
                         - gradient_accumulation_shard(bool): If true, the accumulation gradient parameters will be
@@ -796,7 +796,7 @@ def set_context(**kwargs):
             solves the problem of data loss in screen printing when a large amount of data is generated.
             If it is not set, an error will be reported: prompt to set the upper absolute path.
         env_config_path (str): Config path for DFX.
-            Through context.set_context(env_config_path="./mindspore_config.json")
+            Through mindspore.set_context(env_config_path="./mindspore_config.json")
 
             configure RDR:
 
@@ -843,7 +843,7 @@ def set_context(**kwargs):
         graph_kernel_flags (str):
             Optimization options of graph kernel fusion, and the priority is higher when it conflicts
             with enable_graph_kernel. Only for experienced users.
-            For example, context.set_context(graph_kernel_flags="--opt_level=2 --dump_as_text"). Some general options:
+            For example, mindspore.set_context(graph_kernel_flags="--opt_level=2 --dump_as_text"). Some general options:
 
             - opt_level: Set the optimization level.
               Default: 2. Graph kernel fusion can be enabled equivalently by setting opt_level greater than 0.

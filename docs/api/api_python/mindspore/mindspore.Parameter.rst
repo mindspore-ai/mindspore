@@ -15,7 +15,7 @@
         - **name** (str) - 参数的名称。默认值：None。如果一个网络中存在两个及以上相同名称的 `Parameter` 对象，在定义时将提示设置一个特有的名称。
         - **requires_grad** (bool) - 是否需要微分求梯度。默认值：True。
         - **layerwise_parallel** (bool) - 在数据/混合并行模式下，`layerwise_parallel` 配置为True时，参数广播和梯度聚合时会过滤掉该参数。默认值：False。
-        - **parallel_optimizer** (bool) - 用于在 `semi_auto_parallel` 或 `auto_parallel` 并行模式下区分参数是否进行优化器切分。仅在 `mindspore.context.set_auto_parallel_context()` 并行配置模块中设置 `enable_parallel_optimizer` 启用优化器并行时有效。默认值：True。
+        - **parallel_optimizer** (bool) - 用于在 `semi_auto_parallel` 或 `auto_parallel` 并行模式下区分参数是否进行优化器切分。仅在 `mindspore.set_auto_parallel_context()` 并行配置模块中设置 `enable_parallel_optimizer` 启用优化器并行时有效。默认值：True。
 
     .. py:method:: cache_enable
         :property:
@@ -102,7 +102,7 @@
 
         获取此参数的优化器并行状态（bool）。
 
-        用于在 `AUTO_PARALLEL` 和 `SEMI_AUTO_PARALLEL` 模式下过滤权重切分操作。当在 `mindspore.context.set_auto_parallel_context()` 中启用优化器并行时，它才有效。
+        用于在 `AUTO_PARALLEL` 和 `SEMI_AUTO_PARALLEL` 模式下过滤权重切分操作。当在 `mindspore.set_auto_parallel_context()` 中启用优化器并行时，它才有效。
 
     .. py:method:: parallel_optimizer_comm_recompute
         :property:

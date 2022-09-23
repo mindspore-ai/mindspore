@@ -145,7 +145,7 @@ class Parameter(Tensor_):
         layerwise_parallel (bool): When layerwise_parallel is true in data/hybrid parallel mode,
             broadcast and gradients communication would not be applied to parameters. Default: False.
         parallel_optimizer (bool): It is used to filter the weight shard operation in semi auto or auto parallel
-            mode. It works only when enable parallel optimizer in `mindspore.context.set_auto_parallel_context()`.
+            mode. It works only when enable parallel optimizer in `mindspore.set_auto_parallel_context()`.
             Default: True.
 
     Examples:
@@ -509,7 +509,7 @@ class Parameter(Tensor_):
         Get the optimizer parallel status(bool) of the parameter.
 
         It is used to filter the weight shard operation in `AUTO_PARALLEL` and `SEMI_AUTO_PARALLEL` mode. It works only
-        when enable parallel optimizer in `mindspore.context.set_auto_parallel_context()`.
+        when enable parallel optimizer in `mindspore.set_auto_parallel_context()`.
         """
         return self.param_info.parallel_optimizer
 
