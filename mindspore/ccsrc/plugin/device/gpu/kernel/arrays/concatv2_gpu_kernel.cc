@@ -15,9 +15,18 @@
  */
 
 #include "plugin/device/gpu/kernel/arrays/concatv2_gpu_kernel.h"
-
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 namespace mindspore {
 namespace kernel {
+template <typename T>
+using Complex = mindspore::utils::Complex<T>;
+
+MS_REG_GPU_KERNEL_ONE(
+  Concat, KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+  ConcatV2FwdGpuKernelMod, Complex<double>)
+MS_REG_GPU_KERNEL_ONE(
+  Concat, KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+  ConcatV2FwdGpuKernelMod, Complex<float>)
 MS_REG_GPU_KERNEL_ONE(
   Concat, KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
   ConcatV2FwdGpuKernelMod, double)
