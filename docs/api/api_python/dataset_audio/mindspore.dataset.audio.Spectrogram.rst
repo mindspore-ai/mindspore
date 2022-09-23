@@ -9,7 +9,7 @@ mindspore.dataset.audio.Spectrogram
         - **n_fft** (int, 可选) - FFT的大小，创建 `n_fft // 2 + 1` 组滤波器，默认值：400。
         - **win_length** (int, 可选) - 窗口大小，默认值：None，将设置为 `n_fft` 的值。
         - **hop_length** (int, 可选) - STFT窗口之间的跳数长度，默认值：None，将设置为 `win_length//2` 。
-        - **pad** (int, 可选)：信号的双面填充，默认值：0。
+        - **pad** (int, 可选) - 信号的双面填充，默认值：0。
         - **window** (WindowType, 可选) - GriffinLim的窗口类型，可以是WindowType.BARTLETT，
           WindowType.BLACKMAN，WindowType.HAMMING，WindowType.HANN或WindowType.KAISER。
           默认值：WindowType.HANN，目前macOS上不支持kaiser窗口。

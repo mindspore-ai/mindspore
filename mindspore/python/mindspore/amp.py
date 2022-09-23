@@ -73,7 +73,7 @@ def all_finite(inputs):
         device targets.
 
     Args:
-        inputs (Union(tuple(Tenosr), list(Tensor))): a iterable Tensor.
+        inputs (Union(tuple(Tensor), list(Tensor))): a iterable Tensor.
 
     Returns:
         Tensor, a scalar Tensor and the dtype is bool.

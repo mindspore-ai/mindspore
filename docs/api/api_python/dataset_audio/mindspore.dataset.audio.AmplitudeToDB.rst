@@ -8,7 +8,7 @@ mindspore.dataset.audio.AmplitudeToDB
     .. note:: 待处理音频维度需为(..., freq, time)。
 
     参数：
-        - **stype** ( :class:`mindspore.dataset.audio.utils.ScaleType` , 可选) - 输入音频的原始标度，取值可为ScaleType.MAGNITUDE或ScaleType.POWER，默认值：ScaleType.POWER。
+        - **stype** ( :class:`mindspore.dataset.audio.ScaleType` , 可选) - 输入音频的原始标度，取值可为ScaleType.MAGNITUDE或ScaleType.POWER，默认值：ScaleType.POWER。
         - **ref_value** (float, 可选) - 系数参考值，默认值：1.0，用于计算分贝系数 `db_multiplier` ，公式为
           :math:`db\_multiplier = Log10(max(ref\_value, amin))`。
 

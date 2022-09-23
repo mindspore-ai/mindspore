@@ -1074,7 +1074,7 @@ def interpolate(x, roi=None, scales=None, sizes=None, coordinate_transformation_
 
                 old_i = new_length != 0 ? new_i * old_length / new_length : 0  # if set to 'asymmetric'
 
-        mode (string): The method used to interpolate: 'linear' | 'bilinear'. Default is 'linear'.
+        mode (str): The method used to interpolate: 'linear' | 'bilinear'. Default is 'linear'.
 
     Returns:
         Resized tensor, with the same data type as input `x`.
@@ -1364,16 +1364,16 @@ def deformable_conv2d(x, weight, offsets, kernel_size, strides, padding, bias=No
             be set to 1.
         padding (tuple[int]): A tuple of 4 integers. The number of pixels to add to each (top, bottom, left,
             right) side of the input.
-        bias (Tensor, Optional): An 1D tensor of additive biases to the filter outputs.
+        bias (Tensor, optional): An 1D tensor of additive biases to the filter outputs.
             The shape is :math:`(C_{out})`. Defaults to None.
-        dilations (tuple[int], Optional): A tuple of 4 integers. The dilation factor for each dimension of input. The
+        dilations (tuple[int], optional): A tuple of 4 integers. The dilation factor for each dimension of input. The
             dimension order is interpreted according to the data format of `x`. The N and C dimensions must be set
             to 1. Defaults to (1, 1, 1, 1).
-        groups (int, Optional): An integer of type int32. The number of blocked connections from input channels
+        groups (int, optional): An integer of type int32. The number of blocked connections from input channels
             to output channels. In_channels and out_channels must both be divisible by `groups`. Defaults to 1.
-        deformable_groups (int, Optional): An integer of type int32. The number of deformable group partitions.
+        deformable_groups (int, optional): An integer of type int32. The number of deformable group partitions.
             In_channels must be divisible by `deformable_groups`. Defaults to 1.
-        modulated (bool, Optional): Specifies version of DeformableConv2D, True means v2, False means v1, currently
+        modulated (bool, optional): Specifies version of DeformableConv2D, True means v2, False means v1, currently
             only supports v2. Defaults to True.
 
     Returns:
@@ -2464,7 +2464,7 @@ def ctc_greedy_decoder(inputs, sequence_length, merge_repeated=True):
         decoded_values (Tensor), A tensor with shape of :math:`(total\_decoded\_outputs, )`,
         it stores the decoded classes. Data type is int64.
 
-        decoded_shape (Tensor), A tensor with shape of :math:`(batch\_size, max\_decoded\_legth)`.
+        decoded_shape (Tensor), A tensor with shape of :math:`(batch\_size, max\_decoded\_length)`.
         Data type is int64.
 
         log_probability (Tensor), A tensor with shape of :math:`(batch\_size, 1)`,

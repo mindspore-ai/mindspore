@@ -10,4 +10,4 @@ mindspore.dataset.audio.ComputeDeltas
 
     参数：
         - **win_length** (int, 可选) - 计算窗口长度，长度必须不小于3，默认值：5。
-        - **pad_mode** (BorderType, 可选) - 边界填充模式，默认值：BorderType.EDGE。
+        - **pad_mode** (:class:`mindspore.dataset.audio.BorderType`, 可选) - 边界填充模式，默认值：BorderType.EDGE。
