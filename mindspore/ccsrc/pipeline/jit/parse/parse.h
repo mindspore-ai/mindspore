@@ -450,6 +450,7 @@ class ParseFunctionAst {
   py::object ast_tree() { return ast_tree_; }
 
   bool IsClassMember(const py::object &node);
+  bool IsClassMemberRecursive(const py::object &node);
 
  private:
   // Save obj,eg: class instance or function

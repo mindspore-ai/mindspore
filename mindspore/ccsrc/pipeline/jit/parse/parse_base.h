@@ -60,6 +60,7 @@ const char PYTHON_MOD_PARSE_OBJECT_FUNCTION[] = "parse_cb";
 const char PYTHON_MOD_RESOLVE_FUNCTION[] = "resolve_symbol";
 const char PYTHON_MOD_RESOLVE_GET_OBJ_KEY[] = "get_object_key";
 const char PYTHON_MOD_PARSE_CHECK_IS_CLASS_MEMBER[] = "is_class_member";
+const char PYTHON_MOD_PARSE_CHECK_IS_CLASS_MEMBER_RECURSIVE[] = "is_class_member_recursive";
 const char PYTHON_MOD_RESOLVE_GET_OBJ_TYPE[] = "get_obj_type";
 const char PYTHON_MOD_GET_OBJ_ID[] = "get_obj_id";
 const char PYTHON_MOD_GET_CLASS_INSTANCE_TYPE[] = "get_class_instance_type";

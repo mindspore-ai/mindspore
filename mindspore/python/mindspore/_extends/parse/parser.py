@@ -315,6 +315,20 @@ def is_class_member(node):
     return False
 
 
+def is_class_member_recursive(node):
+    """Check the attr is class member variable resurcively."""
+    type_ = node.__class__.__name__
+    if type_ == "Attribute":
+        if hasattr(node.value, "value"):
+            return is_class_member_recursive(node.value)
+        if not hasattr(node.value, "id"):
+            return False
+        id_ = node.value.id
+        if id_ == "self":
+            return True
+    return False
+
+
 def get_obj_id(obj):
     """Get the obj id."""
     return str(id(obj))
