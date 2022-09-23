@@ -62,7 +62,7 @@ int UniformCandidateSamplerGpuKernelMod::Resize(const BaseOperatorPtr &base_oper
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
     return ret;
   }
-  auto input_shape = LongVecToSizeVec(inputs[kIndex0]->GetShapeVector());
+  auto input_shape = LongVecToSizeVec(inputs[kIndex0]->GetDeviceShapeAdaptively());
   // check the rank of input in infer shape.
   input_size_ = input_shape[0] * input_shape[1];
   if (num_sampled_ + static_cast<int64_t>(input_size_) > range_max_) {
