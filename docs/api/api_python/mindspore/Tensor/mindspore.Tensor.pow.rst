@@ -10,7 +10,7 @@ mindspore.Tensor.pow
         out_{i} = x_{i} ^{ y_{i}}
 
     .. note::
-        - Tensor和 `power` 遵循 `隐式类型转换规则 <https://www.mindspore.cn/docs/zh-CN/master/note/operator_list_implicit.html>`_ ，使数据类型保持一致。
+        - Tensor和 `power` 遵循 `隐式类型转换规则 <https://www.mindspore.cn/docs/zh-CN/r1.9/note/operator_list_implicit.html>`_ ，使数据类型保持一致。
         - 当前的Tensor和 `power` 的数据类型不能同时是bool，并保证其shape可以广播。
 
     参数：

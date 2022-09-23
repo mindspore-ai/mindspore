@@ -3,7 +3,7 @@ mindspore.load_distributed_checkpoint
 
 .. py:function:: mindspore.load_distributed_checkpoint(network, checkpoint_filenames, predict_strategy=None, train_strategy_filename=None, strict_load=False, dec_key=None, dec_mode='AES-GCM')
 
-    给分布式预测加载checkpoint文件到网络，用于分布式推理。关于分布式推理的细节，请参考：https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/distributed_inference.html。
+    给分布式预测加载checkpoint文件到网络，用于分布式推理。关于分布式推理的细节，请参考：https://www.mindspore.cn/tutorials/experts/zh-CN/r1.9/parallel/distributed_inference.html。
 
     参数：
         - **network** (Cell) - 分布式预测网络。

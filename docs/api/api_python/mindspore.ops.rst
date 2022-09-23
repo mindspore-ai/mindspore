@@ -7,7 +7,7 @@ mindspore.ops
 
     import mindspore.ops as ops
 
-MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支持平台的变化信息请参考 `API Updates <https://gitee.com/mindspore/docs/blob/master/resource/api_updates/ops_api_updates.md>`_ 。
+MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支持平台的变化信息请参考 `API Updates <https://gitee.com/mindspore/docs/blob/r1.9/resource/api_updates/ops_api_updates.md>`_ 。
 
 算子原语
 ----------
@@ -525,10 +525,10 @@ Parameter操作算子
 注意，以下列表中的接口需要先配置好通信环境变量。
 
 针对Ascend设备，用户需要准备rank表，设置rank_id和device_id，详见 `Ascend指导文档 \
-<https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/train_ascend.html#准备环节>`_ 。
+<https://www.mindspore.cn/tutorials/experts/zh-CN/r1.9/parallel/train_ascend.html#准备环节>`_ 。
 
 针对GPU设备，用户需要准备host文件和mpi，详见 `GPU指导文档 \
-<https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/train_gpu.html#准备环节>`_ 。
+<https://www.mindspore.cn/tutorials/experts/zh-CN/r1.9/parallel/train_gpu.html#准备环节>`_ 。
 
 .. mscnplatformautosummary::
     :toctree: ops

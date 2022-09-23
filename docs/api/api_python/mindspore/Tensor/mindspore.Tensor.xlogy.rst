@@ -4,8 +4,8 @@ mindspore.Tensor.xlogy
 .. py:method:: mindspore.Tensor.xlogy(y)
 
     计算原Tensor乘以输入Tensor的对数。当原Tensor为零时，则返回零。原Tensor的数据类型需要是
-    `number <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.html#mindspore.dtype>`_ 或
-    `bool_ <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.html#mindspore.dtype>`_。
+    `number <https://www.mindspore.cn/docs/zh-CN/r1.9/api_python/mindspore.html#mindspore.dtype>`_ 或
+    `bool_ <https://www.mindspore.cn/docs/zh-CN/r1.9/api_python/mindspore.html#mindspore.dtype>`_。
     后面为了使表达清晰，使用 `x` 代替原Tensor。
 
     .. math::

@@ -413,7 +413,7 @@
         为了提升网络性能，可以配置boost内的算法让框架自动使能该算法来加速网络训练。
 
         请确保 `boost_type` 所选择的算法在
-        `algorithm library <https://gitee.com/mindspore/mindspore/tree/master/mindspore/python/mindspore/boost>`_ 算法库中。
+        `algorithm library <https://gitee.com/mindspore/mindspore/tree/r1.9/mindspore/python/mindspore/boost>`_ 算法库中。
 
         .. note:: 部分加速算法可能影响网络精度，请谨慎选择。
 

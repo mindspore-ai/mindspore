@@ -7,7 +7,7 @@
 
     .. note::
         集合中的所有进程的Tensor的shape和数据格式相同。在运行下面样例时，用户需要预设通信环境变量，请在 `MindSpore \
-        <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.ops.html#通信算子>`_ 官网上查看详情。
+        <https://www.mindspore.cn/docs/zh-CN/r1.9/api_python/mindspore.ops.html#通信算子>`_ 官网上查看详情。
 
     参数：
         - **root_rank** (int) - 表示发送源的进程编号。除发送数据的进程外，存在于所有进程中。

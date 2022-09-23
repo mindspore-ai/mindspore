@@ -5,7 +5,7 @@ mindspore_lite.ModelType
 
     从文件加载或构建模型时，ModelType定义输入模型文件的类型。
 
-    有关详细信息，请参见 `ModelType <https://gitee.com/mindspore/mindspore/blob/master/mindspore/lite/python/api/model.py>`_ 。
+    有关详细信息，请参见 `ModelType <https://gitee.com/mindspore/mindspore/blob/r1.9/mindspore/lite/python/api/model.py>`_ 。
     运行以下命令导入包：
 
     .. code-block::

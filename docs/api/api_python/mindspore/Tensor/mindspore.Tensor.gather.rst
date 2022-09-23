@@ -7,7 +7,7 @@ mindspore.Tensor.gather
 
     .. note::
         1. input_indices 的值必须在 `[0, input_params.shape[axis])` 的范围内，结果未定义超出范围。
-        2. 当前在Ascend平台，input_params的值不能是 `bool_ <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.html#mindspore.dtype>`_ 类型。
+        2. 当前在Ascend平台，input_params的值不能是 `bool_ <https://www.mindspore.cn/docs/zh-CN/r1.9/api_python/mindspore.html#mindspore.dtype>`_ 类型。
 
     参数：
         - **input_indices** (Tensor) - 待切片的索引张量，其形状为 :math:`(y_1, y_2, ..., y_S)`，代表指定原始张量元素的索引，其数据类型包括：int32，int64。

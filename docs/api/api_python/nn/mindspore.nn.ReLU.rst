@@ -14,7 +14,7 @@ mindspore.nn.ReLU
     ReLU相关图参见 `ReLU <https://en.wikipedia.org/wiki/Activation_function#/media/File:Activation_rectified_linear.svg>`_ 。
 
     输入：
-        - **x** (Tensor) - 用于计算ReLU的任意维度的Tensor。数据类型为 `number <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.dtype.html#mindspore.dtype>`_。
+        - **x** (Tensor) - 用于计算ReLU的任意维度的Tensor。数据类型为 `number <https://www.mindspore.cn/docs/zh-CN/r1.9/api_python/mindspore/mindspore.dtype.html#mindspore.dtype>`_。
 
     输出：
         Tensor，数据类型和shape与 `x` 相同。

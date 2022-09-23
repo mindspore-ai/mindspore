@@ -607,7 +607,7 @@ The following are examples:
        [2816. 2816. 2816. 2816.]]
     
   .. note::
-      Currently, static graph cannot run in Python interactive mode and not all python types can be passed into functions decorated with `ms_function`. For details about how to use `ms_function`, see `API ms_function <https://www.mindspore.cn/docs/en/master/api_python/mindspore/mindspore.ms_function.html>`_ .
+      Currently, static graph cannot run in Python interactive mode and not all python types can be passed into functions decorated with `ms_function`. For details about how to use `ms_function`, see `API ms_function <https://www.mindspore.cn/docs/en/r1.9/api_python/mindspore/mindspore.ms_function.html>`_ .
 
 - Use GradOperation to compute deratives
 
@@ -661,7 +661,7 @@ The following are examples:
         ...
        Tensor(shape=[4], dtype=Float32, value= [ 2.00000000e+00,  2.00000000e+00,  2.00000000e+00,  2.00000000e+00]))
 
-  For more details, see `API GradOperation <https://www.mindspore.cn/docs/en/master/api_python/ops/mindspore.ops.GradOperation.html>`_ .
+  For more details, see `API GradOperation <https://www.mindspore.cn/docs/en/r1.9/api_python/ops/mindspore.ops.GradOperation.html>`_ .
 
 - Use mindspore.set_context to control execution mode
 
@@ -687,7 +687,7 @@ The following are examples:
       set_context(device_target="Ascend")
       ...
 
-  For more details, see `API mindspore.set_context <https://www.mindspore.cn/docs/en/master/api_python/mindspore/mindspore.set_context.html#mindspore.set_context>`_ .
+  For more details, see `API mindspore.set_context <https://www.mindspore.cn/docs/en/r1.9/api_python/mindspore/mindspore.set_context.html#mindspore.set_context>`_ .
 
 - Use mindspore.numpy in MindSpore Deep Learning Models
 

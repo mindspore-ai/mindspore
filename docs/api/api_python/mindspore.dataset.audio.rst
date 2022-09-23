@@ -5,7 +5,7 @@ mindspore.dataset.audio
 
 数据增强算子可以放入数据处理Pipeline中执行，也可以Eager模式执行：
 
-- Pipeline模式一般用于处理数据集，示例可参考 `数据处理Pipeline介绍 <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.dataset.html#数据处理pipeline介绍>`_。
+- Pipeline模式一般用于处理数据集，示例可参考 `数据处理Pipeline介绍 <https://www.mindspore.cn/docs/zh-CN/r1.9/api_python/mindspore.dataset.html#数据处理pipeline介绍>`_。
 - Eager模式一般用于零散样本，音频预处理举例如下：
 
   .. code-block::

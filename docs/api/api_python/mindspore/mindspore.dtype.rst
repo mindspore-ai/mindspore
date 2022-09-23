@@ -40,7 +40,7 @@ mindspore.dtype
       ============================   =================
       类型                            描述
       ============================   =================
-      ``Tensor``                      MindSpore中的张量类型。数据格式采用NCHW。详情请参考 `tensor <https://www.gitee.com/mindspore/mindspore/blob/master/mindspore/python/mindspore/common/tensor.py>`_ 。
+      ``Tensor``                      MindSpore中的张量类型。数据格式采用NCHW。详情请参考 `tensor <https://www.gitee.com/mindspore/mindspore/blob/r1.9/mindspore/python/mindspore/common/tensor.py>`_ 。
       ``bool_``                       布尔型，值为 ``True`` 或者 ``False`` 。
       ``int_``                        整数标量。
       ``uint``                        无符号整数标量。

@@ -76,8 +76,8 @@ mindspore_lite.Converter
 
         参数：
             - **section** (str) - 配置参数的类别。配合config_info一起，设置confile的个别参数。e.g. 对于section是"common_quant_param"，config_info是{"quant_type":"WEIGHT_QUANT"}。默认值：None。
-              有关训练后量化的配置参数，请参见 `quantization <https://www.mindspore.cn/lite/docs/zh-CN/master/use/post_training_quantization.html>`_。
-              有关扩展的配置参数，请参见 `extension  <https://www.mindspore.cn/lite/docs/zh-CN/master/use/nnie.html#%E6%89%A9%E5%B1%95%E9%85%8D%E7%BD%AE>`_。
+              有关训练后量化的配置参数，请参见 `quantization <https://www.mindspore.cn/lite/docs/zh-CN/r1.9/use/post_training_quantization.html>`_。
+              有关扩展的配置参数，请参见 `extension  <https://www.mindspore.cn/lite/docs/zh-CN/r1.9/use/nnie.html#%E6%89%A9%E5%B1%95%E9%85%8D%E7%BD%AE>`_。
 
               - "common_quant_param"：公共量化参数部分。量化的配置参数之一。
               - "mixed_bit_weight_quant_param"：混合位权重量化参数部分。量化的配置参数之一。
@@ -86,8 +86,8 @@ mindspore_lite.Converter
               - "registry"：扩展配置参数部分。扩展的配置参数之一。
 
             - **config_info** (dict{str: str}，可选) - 配置参数列表。配合section一起，设置confile的个别参数。e.g. 对于section是"common_quant_param"，config_info是{"quant_type":"WEIGHT_QUANT"}。默认值：None。
-              有关训练后量化的配置参数，请参见 `quantization <https://www.mindspore.cn/lite/docs/zh-CN/master/use/post_training_quantization.html>`_。
-              有关扩展的配置参数，请参见 `extension  <https://www.mindspore.cn/lite/docs/zh-CN/master/use/nnie.html#%E6%89%A9%E5%B1%95%E9%85%8D%E7%BD%AE>`_。
+              有关训练后量化的配置参数，请参见 `quantization <https://www.mindspore.cn/lite/docs/zh-CN/r1.9/use/post_training_quantization.html>`_。
+              有关扩展的配置参数，请参见 `extension  <https://www.mindspore.cn/lite/docs/zh-CN/r1.9/use/nnie.html#%E6%89%A9%E5%B1%95%E9%85%8D%E7%BD%AE>`_。
 
         异常：
             - **TypeError** - `section` 不是str类型。

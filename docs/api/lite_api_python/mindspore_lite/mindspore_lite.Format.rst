@@ -5,7 +5,7 @@ mindspore_lite.Format
 
     MindSpore Lite的“张量”类型。例如：格式。NCHW。
 
-    有关详细信息，请参见 `Format <https://gitee.com/mindspore/mindspore/blob/master/mindspore/lite/python/api/tensor.py>`_ 。
+    有关详细信息，请参见 `Format <https://gitee.com/mindspore/mindspore/blob/r1.9/mindspore/lite/python/api/tensor.py>`_ 。
     运行以下命令导入包：
 
     .. code-block::

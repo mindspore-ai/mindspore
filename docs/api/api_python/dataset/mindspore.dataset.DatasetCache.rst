@@ -5,7 +5,7 @@ mindspore.dataset.DatasetCache
 
     创建数据缓存客户端实例。
 
-    关于单节点数据缓存的使用，请参阅 `单节点数据缓存教程 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/dataset/cache.html>`_ 。
+    关于单节点数据缓存的使用，请参阅 `单节点数据缓存教程 <https://www.mindspore.cn/tutorials/experts/zh-CN/r1.9/dataset/cache.html>`_ 。
 
     参数：
         - **session_id** (int) - 当前数据缓存客户端的会话ID，用户在命令行开启缓存服务端后可通过 `cache_admin -g` 获取。
