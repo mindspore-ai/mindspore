@@ -132,6 +132,34 @@ const BroadcastOpGradGpuKernelMod::KernelFunc &BroadcastOpGradGpuKernelMod::GetF
        .AddOutputAttr(kNumberTypeInt64),
      &BroadcastOpGradGpuKernelMod::LaunchKernel<int64_t>},
     {KernelAttr()
+       .AddInputAttr(kNumberTypeInt16)
+       .AddInputAttr(kNumberTypeInt16)
+       .AddInputAttr(kNumberTypeInt16)
+       .AddOutputAttr(kNumberTypeInt16)
+       .AddOutputAttr(kNumberTypeInt16),
+     &BroadcastOpGradGpuKernelMod::LaunchKernel<int16_t>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeUInt32)
+       .AddInputAttr(kNumberTypeUInt32)
+       .AddInputAttr(kNumberTypeUInt32)
+       .AddOutputAttr(kNumberTypeUInt32)
+       .AddOutputAttr(kNumberTypeUInt32),
+     &BroadcastOpGradGpuKernelMod::LaunchKernel<uint32_t>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeUInt64)
+       .AddInputAttr(kNumberTypeUInt64)
+       .AddInputAttr(kNumberTypeUInt64)
+       .AddOutputAttr(kNumberTypeUInt64)
+       .AddOutputAttr(kNumberTypeUInt64),
+     &BroadcastOpGradGpuKernelMod::LaunchKernel<uint64_t>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeUInt16)
+       .AddInputAttr(kNumberTypeUInt16)
+       .AddInputAttr(kNumberTypeUInt16)
+       .AddOutputAttr(kNumberTypeUInt16)
+       .AddOutputAttr(kNumberTypeUInt16),
+     &BroadcastOpGradGpuKernelMod::LaunchKernel<uint16_t>},
+    {KernelAttr()
        .AddInputAttr(kNumberTypeFloat16)
        .AddInputAttr(kNumberTypeFloat16)
        .AddInputAttr(kNumberTypeFloat16)
