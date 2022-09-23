@@ -37,12 +37,14 @@ def rank_list_for_transform(rank_id, src_strategy_file=None, dst_strategy_file=N
 
     Args:
         rank_id (int): The rank of which distributed checkpoint needs to be obtained after conversion.
-        src_strategy_file (str): Name of source sharding strategy file, when the 'src_strategy_file' is None,
-                                 it means that the source sharding strategy is without any sharing for each parameter.
-                                 Default:None.
-        dst_strategy_file (str): Name of destination sharding strategy file. when the 'dst_strategy_file' is None,
-                                 it means that the source sharding strategy is without any sharing for each parameter.
-                                 Default:None.
+        src_strategy_file (str): Name of source sharding strategy file which saved by
+                                 'context.set_autp_parallel_context(strategy_ckpt_save_file)'.
+                                 when the 'src_strategy_file' is None, it means that the source sharding strategy is
+                                 without any sharing for each parameter. Default:None.
+        dst_strategy_file (str): Name of destination sharding strategy file which saved by
+                                 'context.set_autp_parallel_context(strategy_ckpt_save_file)'.
+                                 when the 'dst_strategy_file' is None, it means that the destination sharding strategy
+                                 is without any sharing for each parameter. Default:None.
 
     Returns:
         List, the rank list required for converting the distributed checkpoint of rank_id.
@@ -54,8 +56,7 @@ def rank_list_for_transform(rank_id, src_strategy_file=None, dst_strategy_file=N
 
     Examples:
         >>> rank_id = 0
-        >>> rank_list = rank_list_for_transform(rank_id, "./src_strategy.ckpt",
-        >>> "./dst_strategy.ckpt")
+        >>> rank_list = rank_list_for_transform(rank_id, "./src_strategy.ckpt", "./dst_strategy.ckpt")
         >>> checkpoint_files_map = {}
         >>> for rank in rank_list:
         >>>     checkpoint_files_map[rank] = "./pangu{}-100_2.ckpt".format(rank)
@@ -69,7 +70,8 @@ def rank_list_for_transform(rank_id, src_strategy_file=None, dst_strategy_file=N
 def transform_checkpoint_by_rank(rank_id, checkpoint_files_map, save_checkpoint_file_name,
                                  src_strategy_file=None, dst_strategy_file=None):
     """
-    Transform distributed checkpoint from source sharding strategy to destination sharding strategy by rank.
+    Transform distributed checkpoint from source sharding strategy to destination sharding strategy by rank
+    for a network.
 
     Note:
         Cannot transform pipeline parallel dimensions currently.
@@ -79,37 +81,44 @@ def transform_checkpoint_by_rank(rank_id, checkpoint_files_map, save_checkpoint_
         checkpoint_files_map (dict): The checkpoint files map whose key is the rank id and the value is
                                      the checkpoint file name.
         save_checkpoint_file_name (str): The file name to save the converted checkpoint.
-        src_strategy_file (str): Name of source sharding strategy file, when the 'src_strategy_file' is None,
-                                 it means that the source sharding strategy is without any sharding for each parameter.
-                                 Default:None.
-        dst_strategy_file (str): Name of destination sharding strategy file. when the 'dst_strategy_file' is None,
-                                 it means that the source sharding strategy is without any sharding for each parameter.
-                                 Default:None.
+        src_strategy_file (str): Name of source sharding strategy file which saved by
+                                 'context.set_autp_parallel_context(strategy_ckpt_save_file)'.
+                                 when the 'src_strategy_file' is None, it means that the source sharding strategy is
+                                 without any sharing for each parameter. Default:None.
+        dst_strategy_file (str): Name of destination sharding strategy file which saved by
+                                 'context.set_autp_parallel_context(strategy_ckpt_save_file)'.
+                                 when the 'dst_strategy_file' is None, it means that the destination sharding strategy
+                                 is without any sharing for each parameter. Default:None.
 
     Raises:
         ValueError: src_strategy_file or dst_strategy_file is incorrect.
         ValueError: item in checkpoint_files_map is incorrect.
+        ValueError: save_checkpoint_file_name is not end with ".ckpt".
         TypeError: checkpoint_files_map is not a dict.
         TypeError: src_strategy_file or dst_strategy_file is not a string.
         TypeError: rank_id is not a int.
+        TypeError: save_checkpoint_file_name is not a string.
 
     Examples:
         >>> dst_device_num = 8
         >>> for rank_id in range(dst_device_num)
-        >>>     rank_list = rank_list_for_transform(rank_id, "./src_strategy.ckpt",
-        >>>                 "./dst_strategy.ckpt")
+        >>>     rank_list = rank_list_for_transform(rank_id, "./src_strategy.ckpt", "./dst_strategy.ckpt")
         >>>     checkpoint_files_map = {}
         >>>     for rank in rank_list:
         >>>         checkpoint_files_map[rank] = "./origin_checkpoint_rank{}/pangu{}-100_2.ckpt".format(rank)
         >>>     save_checkpoint_file_name = "./new_checkpoint_rank{}/pangu{}-100_2.ckpt".format(rank_id)
         >>>     transform_checkpoint_by_rank(rank_id, checkpoint_files_map, save_checkpoint_file_name,
-        >>>                                           "./src_strategy.ckpt", "./dst_strategy.ckpt")
+        >>>                                  "./src_strategy.ckpt", "./dst_strategy.ckpt")
 
     """
     if not isinstance(checkpoint_files_map, dict):
         raise TypeError("The checkpoint_files_map should be a dict.")
     if not isinstance(rank_id, int):
         raise TypeError("The rank_id should be a int.")
+    if not isinstance(save_checkpoint_file_name, str):
+        raise TypeError("The save_checkpoint_file_name should be a str.")
+    if save_checkpoint_file_name[-5:] != ".ckpt":
+        raise ValueError("The save_checkpoint_file_name {} should end with .ckpt".format(save_checkpoint_file_name))
     for rank, local_file in checkpoint_files_map.items():
         if not os.path.exists(local_file):
             raise ValueError("Checkpoint file {} in rank {} not exits: ".format(local_file, rank))
@@ -128,7 +137,7 @@ def transform_checkpoint_by_rank(rank_id, checkpoint_files_map, save_checkpoint_
 def transform_checkpoints(src_checkpoints_dir, dst_checkpoints_dir, ckpt_prefix, src_strategy_file=None,
                           dst_strategy_file=None):
     """
-    Transform distributed checkpoint from source sharding strategy to destination sharding strategy.
+    Transform distributed checkpoint from source sharding strategy to destination sharding strategy for a rank.
 
     Note:
         The src_checkpoints_dir directory structure should be organized like "src_checkpoints_dir/rank_0/a.ckpt", the
@@ -139,12 +148,15 @@ def transform_checkpoints(src_checkpoints_dir, dst_checkpoints_dir, ckpt_prefix,
     Args:
         src_checkpoints_dir (str): The source checkpoints directory.
         dst_checkpoints_dir (str): The destination checkpoints directory to save the converted checkpoints.
-        src_strategy_file (str): Name of source sharding strategy file, when the 'src_strategy_file' is None,
-                                 it means that the source sharding strategy is without any sharding for each parameter.
-                                 Default:None.
-        dst_strategy_file (str): Name of destination sharding strategy file. when the 'dst_strategy_file' is None,
-                                 it means that the source sharding strategy is without any sharding for each parameter.
-                                 Default:None.
+        ckpt_prefix (str): The destination checkpoint name prefix.
+        src_strategy_file (str): Name of source sharding strategy file which saved by
+                                 'context.set_autp_parallel_context(strategy_ckpt_save_file)'.
+                                 when the 'src_strategy_file' is None, it means that the source sharding strategy is
+                                 without any sharing for each parameter. Default:None.
+        dst_strategy_file (str): Name of destination sharding strategy file which saved by
+                                 'context.set_autp_parallel_context(strategy_ckpt_save_file)'.
+                                 when the 'dst_strategy_file' is None, it means that the destination sharding strategy
+                                 is without any sharing for each parameter. Default:None.
 
     Raises:
         ValueError: src_strategy_file or dst_strategy_file is incorrect.
@@ -153,8 +165,8 @@ def transform_checkpoints(src_checkpoints_dir, dst_checkpoints_dir, ckpt_prefix,
         TypeError: src_strategy_file or dst_strategy_file is not a string.
 
     Examples:
-        >>> transform_checkpoints(src_checkpoints_dir, dst_checkpoints_dir,
-        >>>                       "./src_strategy.ckpt", "./dst_strategy.ckpt")
+        >>> transform_checkpoints(src_checkpoints_dir, dst_checkpoints_dir, "dst_checkpoint",
+        ...                       "./src_strategy.ckpt", "./dst_strategy.ckpt")
 
     """
     if not os.path.isdir(src_checkpoints_dir):
