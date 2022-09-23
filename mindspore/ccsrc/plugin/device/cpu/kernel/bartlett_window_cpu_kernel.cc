@@ -66,7 +66,7 @@ bool BartlettWindowCpuKernelMod::BartlettWindowKernelFunc(const std::vector<kern
 
   auto window_length = static_cast<int64_t>(*input);
   double pre_window_length = static_cast<double>(window_length);
-  const size_t OUTPUTISONE = 1.0;
+  const size_t OUTPUTISONE = 1;
 
   ShapeVector out_shape = {window_length};
   std::vector<TypeId> dtypes = {AnfAlgo::GetOutputDeviceDataType(node_, 0)};
