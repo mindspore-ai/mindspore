@@ -324,7 +324,7 @@ class Conv3DBackpropFilter(Primitive):
         if isinstance(pad, int):
             pad = (pad,) * 6
         validator.check_equal_int(len(pad), 6, 'pad size', self.name)
-        self.add_prim_attr('pad', self.pad)
+        self.add_prim_attr('pad', pad)
         self.pad_list = pad
         self.add_prim_attr('pad_list', self.pad_list)
 
