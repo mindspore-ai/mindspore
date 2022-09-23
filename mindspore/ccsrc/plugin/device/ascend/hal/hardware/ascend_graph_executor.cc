@@ -196,7 +196,7 @@ void EnableGraphOutputZeroCopy(const KernelGraphPtr &graph) {
     MS_EXCEPTION_IF_NULL(node);
     MS_LOG(DEBUG) << "EnableGraphOutputZeroCopy check node:" << node->DebugString();
     if (node->isa<CNode>() && AnfAlgo::OutputAddrExist(node, index)) {
-      auto device_address = AnfAlgo::GetMutableOutputAddr(node, index);
+      auto device_address = AnfAlgo::GetMutableOutputAddr(node, index, false);
       MS_EXCEPTION_IF_NULL(device_address);
       device_address->set_is_ptr_persisted(false);
       MS_LOG(DEBUG) << "Disable ptr persisted in output node:" << node->DebugString() << " index:" << index

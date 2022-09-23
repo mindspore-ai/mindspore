@@ -132,7 +132,6 @@ void TaskGenerator::LaunchAddrCleanKernel(const CNodePtr &anf_node_ptr, AddressP
         MS_EXCEPTION_IF_NULL(input);
         MS_EXCEPTION_IF_NULL(device_address);
         input->addr = device_address->ptr_;
-        MS_EXCEPTION_IF_NULL(input->addr);
         input->size = device_address->size_;
         kernel_inputs->push_back(input);
       }
