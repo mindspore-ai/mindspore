@@ -25,11 +25,11 @@ void MemoryFreeActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context) 
   MS_LOG(DEBUG) << GetAID().Name() << " free memory: " << somas_info_->base_address_;
 
   if (ActorDispatcher::is_memory_free_sync()) {
-    ActorDispatcher::SendSync(memory_manager_aid_, &MemoryManagerActor::FreeMemorydirectly, &somas_info_->base_address_,
-                              device_contexts_[0]);
+    ActorDispatcher::SendSync(memory_manager_aid_, &MemoryManagerActor::FreeSomasMemory, somas_info_,
+                              device_contexts_[0], context, GetAID());
   } else {
-    ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::FreeMemorydirectly, &somas_info_->base_address_,
-                          device_contexts_[0]);
+    ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::FreeSomasMemory, somas_info_, device_contexts_[0],
+                          context, GetAID());
   }
 }
 }  // namespace runtime

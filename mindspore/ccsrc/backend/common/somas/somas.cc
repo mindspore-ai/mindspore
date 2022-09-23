@@ -309,12 +309,14 @@ void Somas::UpdateSomasResultToGraph(const session::KernelGraph &graph) {
     MS_EXCEPTION_IF_NULL(kernel_mod);
     auto output_somas_result = GetNodeOutputSomasResult(node);
     auto workspace_somas_result = GetNodeWorkSpaceSomasResult(node);
+    ProcessContiguous(node, &block_list);
 
     for (const auto &somas_offset_aligned_size : output_somas_result) {
       if (somas_offset_aligned_size.second > 0) {
         block_list.emplace_back(somas_offset_aligned_size.first, somas_offset_aligned_size.second);
       }
     }
+
     for (const auto &somas_offset_aligned_size : workspace_somas_result) {
       if (somas_offset_aligned_size.second > 0) {
         block_list.emplace_back(somas_offset_aligned_size.first, somas_offset_aligned_size.second);
@@ -2010,6 +2012,37 @@ void Somas::GenGraphStatisticInfo() {
                << "Total LifeLong Start Tensor Size:\t" << lifelong_start_total_size_ << "\n"
                << "Total LifeLong End Tensor Size:\t" << lifelong_end_total_size_ << "\n"
                << "Reused Size(Allocate Size):\t" << reused_memory_size_ << "\n\n\n";
+}
+
+void Somas::ProcessContiguous(const AnfNodePtr &node, std::vector<Block> *block_list) const {
+  MS_EXCEPTION_IF_NULL(node);
+  auto key = node.get();
+  auto iter = nodes_map_.find(key);
+  if (iter != nodes_map_.end()) {
+    auto &somas_node = iter->second.at(0);
+    MS_EXCEPTION_IF_NULL(somas_node);
+    if (somas_node->GetType() != kCommunicationNode) {
+      return;
+    }
+    if ((!somas_node->output_tensors_.empty()) && (somas_node->output_tensors_[0]->contiguous_)) {
+      size_t offset = somas_node->output_tensors_[0]->offset_;
+      size_t all_size = 0;
+      for (auto &tensor : somas_node->output_tensors_) {
+        offset = std::min(offset, tensor->offset_);
+        all_size += tensor->aligned_size_;
+      }
+      block_list->emplace_back(offset, all_size);
+    }
+    if ((!somas_node->input_tensors_.empty()) && (somas_node->input_tensors_[0]->contiguous_)) {
+      size_t offset = somas_node->input_tensors_[0]->offset_;
+      size_t all_size = 0;
+      for (auto &tensor : somas_node->input_tensors_) {
+        offset = std::min(offset, tensor->offset_);
+        all_size += tensor->aligned_size_;
+      }
+      block_list->emplace_back(offset, all_size);
+    }
+  }
 }
 
 std::vector<std::pair<size_t, size_t>> Somas::GetNodeOutputSomasResult(const AnfNodePtr &node) const {

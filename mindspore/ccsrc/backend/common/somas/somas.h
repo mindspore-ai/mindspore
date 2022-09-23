@@ -223,6 +223,7 @@ class BACKEND_EXPORT Somas {
   void DumpSomasModelInfo(const string &tag, uint32_t graph_id) const;
 
   // update graph
+  void ProcessContiguous(const AnfNodePtr &node, std::vector<Block> *block_list) const;
   std::vector<std::pair<size_t, size_t>> GetNodeOutputSomasResult(const AnfNodePtr &node) const;
   std::vector<std::pair<size_t, size_t>> GetNodeWorkSpaceSomasResult(const AnfNodePtr &node) const;
   void UpdateSomasResultToGraph(const session::KernelGraph &graph);

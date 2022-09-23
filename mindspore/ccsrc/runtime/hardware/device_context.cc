@@ -28,7 +28,7 @@ bool DeviceResManager::AllocateMemory(DeviceAddress *const &address) const {
 
   auto device_ptr = AllocateMemory(address->GetSize());
   if (!device_ptr) {
-    MS_LOG(WARNING) << "Allocate Memory failed for size: " << address->GetSize();
+    MS_LOG(WARNING) << "Allocate memory failed for size: " << address->GetSize();
     return false;
   }
   address->set_ptr(device_ptr);

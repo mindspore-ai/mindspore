@@ -58,6 +58,9 @@ struct SomasInfo {
 
   // Alloc the base address of graph during execution, which is variable.
   void *base_address_{nullptr};
+  // Block offset -> address.
+  std::map<size_t, void *> merged_base_addresses_;
+
   // The owner graph id.
   uint32_t graph_id_{0};
 };

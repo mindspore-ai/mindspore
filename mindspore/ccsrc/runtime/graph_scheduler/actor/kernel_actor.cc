@@ -264,15 +264,11 @@ void FreeMemory(const std::vector<DeviceTensor *> &free_list, const DeviceContex
 }
 }  // namespace
 
-void KernelActor::SetSomasMemory(OpContext<DeviceTensor> *const context) {
+void KernelActor::SetSomasMemory(OpContext<DeviceTensor> *const context) const {
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(kernel_info_);
   if (!IsSomasEnable(somas_info_)) {
     return;
-  }
-  if (somas_info_->base_address_ == nullptr) {
-    std::string error_info = "The somas base address isn't allocated when running " + GetAID().Name();
-    SET_OPCONTEXT_FAIL_RET_WITH_ERROR(*context, error_info);
   }
 
   // Set the memory address for the output tensors which use the somas.
@@ -280,9 +276,14 @@ void KernelActor::SetSomasMemory(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_CHECK_FAIL((output_device_tensors_.size() >= somas_outputs.size()), "The output num is wrong.");
   for (size_t i = 0; i < somas_outputs.size(); ++i) {
     if (somas_outputs[i].second > 0) {
+      auto device_ptr = GetSomasDevicePtr(somas_outputs[i].first);
+      if (device_ptr == nullptr) {
+        std::string error_info = GetAID().Name() + " get nullptr somas device for output index: " + std::to_string(i);
+        SET_OPCONTEXT_FAIL_RET_WITH_ERROR(*context, error_info);
+      }
       // In this scenario, the Init function can ensure that the pointer of the relevant operation is not nullptr.
       // In order to perform performance, the pointer validity is not checked here.
-      output_device_tensors_[i]->set_ptr(AddressOffset(somas_info_->base_address_, somas_outputs[i].first));
+      output_device_tensors_[i]->set_ptr(device_ptr);
     }
   }
 
@@ -291,11 +292,40 @@ void KernelActor::SetSomasMemory(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_CHECK_FAIL((workspace_device_tensors_.size() >= somas_workspace.size()), "The output num is wrong.");
   for (size_t i = 0; i < somas_workspace.size(); ++i) {
     if (somas_workspace[i].second > 0) {
+      auto device_ptr = GetSomasDevicePtr(somas_workspace[i].first);
+      if (device_ptr == nullptr) {
+        std::string error_info = GetAID().Name() + " get nullptr somas device for workspace index:" + std::to_string(i);
+        SET_OPCONTEXT_FAIL_RET_WITH_ERROR(*context, error_info);
+      }
       // In this scenario, the Init function can ensure that the pointer of the relevant operation is not nullptr.
       // In order to perform performance, the pointer validity is not checked here.
-      workspace_device_tensors_[i]->set_ptr(AddressOffset(somas_info_->base_address_, somas_workspace[i].first));
+      workspace_device_tensors_[i]->set_ptr(device_ptr);
     }
   }
+}
+
+void *KernelActor::GetSomasDevicePtr(size_t offset) const {
+  MS_EXCEPTION_IF_NULL(somas_info_);
+  // Get the ptr from the whole block.
+  if (somas_info_->base_address_ != nullptr) {
+    return AddressOffset(somas_info_->base_address_, offset);
+  }
+
+  // Get the ptr from the merged blocks.
+  auto iter = somas_info_->merged_base_addresses_.upper_bound(offset);
+  if (iter == somas_info_->merged_base_addresses_.begin()) {
+    MS_LOG(ERROR) << GetAID().Name() << " can't find the merged block for offset: " << offset;
+    return nullptr;
+  }
+  --iter;
+  MS_EXCEPTION_IF_CHECK_FAIL((offset >= iter->first), "The offset is smaller than the merged block offset.");
+  size_t real_offset = offset - iter->first;
+  void *real_base_address = iter->second;
+  if (real_base_address == nullptr) {
+    MS_LOG(ERROR) << GetAID().Name() << " doesn't allocate the merged block base address for offset: " << iter->first;
+    return nullptr;
+  }
+  return AddressOffset(real_base_address, real_offset);
 }
 
 void KernelActor::SendMemoryAllocReq(OpContext<DeviceTensor> *const context) {

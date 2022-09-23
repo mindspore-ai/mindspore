@@ -25,21 +25,17 @@ void MemoryAllocActor::Init() {
   MS_EXCEPTION_IF_NULL(device_contexts_[0]->device_res_manager_);
   MS_EXCEPTION_IF_NULL(somas_info_);
   MS_EXCEPTION_IF_CHECK_FAIL((somas_info_->whole_block_size_ != 0), "The alloc size of somas info is zero.");
-
-  created_device_tensor_ = device_contexts_[0]->device_res_manager_->CreateDeviceAddress(
-    nullptr, somas_info_->whole_block_size_, "DefaultFormat", kNumberTypeFloat16, {});
-  (void)memory_alloc_list_.emplace_back(created_device_tensor_.get());
+  MS_EXCEPTION_IF_CHECK_FAIL((somas_info_->merged_blocks_map_.size() != 0),
+                             "The merged blocks size of somas info is zero.");
 }
 
 void MemoryAllocActor::SendMemoryAllocReq(OpContext<DeviceTensor> *const context) {
-  MS_EXCEPTION_IF_NULL(created_device_tensor_);
-  created_device_tensor_->set_ptr(nullptr);
   if (ActorDispatcher::is_memory_allocation_sync()) {
-    ActorDispatcher::SendSync(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, &memory_alloc_list_,
+    ActorDispatcher::SendSync(memory_manager_aid_, &MemoryManagerActor::AllocateSomasMemory, somas_info_,
                               device_contexts_[0], context, GetAID());
     OnMemoryAllocFinish(context);
   } else {
-    ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, &memory_alloc_list_,
+    ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::AllocateSomasMemory, somas_info_,
                           device_contexts_[0], context, GetAID());
   }
 }
@@ -47,17 +43,10 @@ void MemoryAllocActor::SendMemoryAllocReq(OpContext<DeviceTensor> *const context
 void MemoryAllocActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(somas_info_);
-  MS_EXCEPTION_IF_NULL(created_device_tensor_);
   if (IsRunningFailed(context)) {
     return;
   }
 
-  // Set the base address of somas info using the alloc memory.
-  if (somas_info_->base_address_ != nullptr) {
-    std::string error_info = GetAID().Name() + " already has the base address.";
-    SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
-  }
-  somas_info_->base_address_ = created_device_tensor_->GetMutablePtr();
   MS_LOG(DEBUG) << GetAID().Name() << " alloc memory: " << somas_info_->base_address_;
 
   PostRun(context);

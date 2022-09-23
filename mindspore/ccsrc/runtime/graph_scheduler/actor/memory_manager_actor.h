@@ -30,6 +30,7 @@
 namespace mindspore {
 namespace runtime {
 using mindspore::device::DeviceContext;
+using mindspore::session::SomasInfo;
 
 // MemoryManagerActor need response to memory alloc and free quickly, so must bind single thread.
 class MemoryManagerActor : public ActorBase {
@@ -51,6 +52,9 @@ class MemoryManagerActor : public ActorBase {
   void AllocateBatchMemory(const std::vector<DeviceTensor *> *alloc_list,
                            const std::vector<const DeviceContext *> *device_contexts,
                            OpContext<DeviceTensor> *const op_context, const AID &from_aid);
+  // The process entry of somas memory alloc.
+  void AllocateSomasMemory(SomasInfo *const somas_info, const DeviceContext *device_context,
+                           OpContext<DeviceTensor> *const op_context, const AID &from_aid);
 
   // The process entry of memory free.
   void FreeMemory(const std::vector<DeviceTensor *> *free_list, const DeviceContext *device_context,
@@ -59,8 +63,9 @@ class MemoryManagerActor : public ActorBase {
   void FreeBatchMemory(const std::vector<DeviceTensor *> *free_list,
                        const std::vector<const DeviceContext *> *device_contexts,
                        OpContext<DeviceTensor> *const op_context, const AID &from_aid);
-  // Not use the ref count and free the memory directly, only for free in memory pool.
-  void FreeMemorydirectly(void **free_ptr, const DeviceContext *device_context);
+  // The process entry of somas memory free.
+  void FreeSomasMemory(SomasInfo *const somas_info, const DeviceContext *device_context,
+                       OpContext<DeviceTensor> *const op_context, const AID &from_aid);
 
   // Wait the MemoryManagerActor to finish running all current messages.
   void Wait(OpContext<DeviceTensor> *const op_context, const AID &from_aid);
