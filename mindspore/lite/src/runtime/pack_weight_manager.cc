@@ -44,9 +44,12 @@ STATUS PackWeightManager::InitPackWeightByBuf(const char *model_buf, size_t mode
     return RET_OK;
   }
 #ifdef SHARING_MODEL_WEIGHT
-  if (pack_weight_ == nullptr) {
-    pack_weight_ = std::make_shared<PackWeight>();
-    MS_CHECK_FALSE_MSG(pack_weight_ == nullptr, kLiteError, "pack_weight_ is nullptr.");
+  {
+    std::unique_lock<std::mutex> l(manager_mutex_);
+    if (pack_weight_ == nullptr) {
+      pack_weight_ = std::make_shared<PackWeight>();
+      MS_CHECK_FALSE_MSG(pack_weight_ == nullptr, kLiteError, "pack_weight_ is nullptr.");
+    }
   }
   return pack_weight_->InitWeightManagerByBuf(model_buf, model_size, -1, false);
 #endif
@@ -55,11 +58,14 @@ STATUS PackWeightManager::InitPackWeightByBuf(const char *model_buf, size_t mode
 
 STATUS PackWeightManager::InitPackWeight(const char *model_buf, size_t model_size, int numa_id) {
 #ifdef SHARING_MODEL_WEIGHT
-  if (pack_weight_ == nullptr) {
-    pack_weight_ = std::make_shared<PackWeight>();
+  {
+    std::unique_lock<std::mutex> l(manager_mutex_);
     if (pack_weight_ == nullptr) {
-      MS_LOG(ERROR) << "pack_weight_ is nullptr.";
-      return RET_ERROR;
+      pack_weight_ = std::make_shared<PackWeight>();
+      if (pack_weight_ == nullptr) {
+        MS_LOG(ERROR) << "pack_weight_ is nullptr.";
+        return RET_ERROR;
+      }
     }
   }
   auto status = pack_weight_->InitWeightManagerByBuf(model_buf, model_size, numa_id, true);
