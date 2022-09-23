@@ -41,11 +41,6 @@ TEST_F(TestImplementations, ScalarAddTest) {
   ASSERT_EQ(ScalarAdd(list)->cast<FP32ImmPtr>()->value(), 2.5f);
   list.clear();
 
-  list.push_back(MakeValue(3.0));
-  list.push_back(MakeValue(0.5));
-  ASSERT_EQ(ScalarAdd(list)->cast<FP64ImmPtr>()->value(), 3.5);
-  list.clear();
-
   list.push_back(MakeValue(INT64_MAX));
   list.push_back(MakeValue(static_cast<int64_t>(2)));
   try {
@@ -79,11 +74,6 @@ TEST_F(TestImplementations, ScalarSubTest) {
   ASSERT_EQ(ScalarSub(list)->cast<FP32ImmPtr>()->value(), -0.5f);
   list.clear();
 
-  list.push_back(MakeValue(3.0));
-  list.push_back(MakeValue(0.5));
-  ASSERT_EQ(ScalarSub(list)->cast<FP64ImmPtr>()->value(), 2.5);
-  list.clear();
-
   list.push_back(MakeValue(INT64_MAX));
   list.push_back(MakeValue(static_cast<int64_t>(-1)));
   try {
@@ -115,11 +105,6 @@ TEST_F(TestImplementations, ScalarMulTest) {
   list.push_back(MakeValue(2.0f));
   list.push_back(MakeValue(1.5f));
   ASSERT_EQ(ScalarMul(list)->cast<FP32ImmPtr>()->value(), 3.0f);
-  list.clear();
-
-  list.push_back(MakeValue(-2.0));
-  list.push_back(MakeValue(-4.0));
-  ASSERT_EQ(ScalarMul(list)->cast<FP64ImmPtr>()->value(), 8.0);
   list.clear();
 
   list.push_back(MakeValue(static_cast<int64_t>(10)));
@@ -180,11 +165,6 @@ TEST_F(TestImplementations, ScalarDivTest) {
   ASSERT_EQ(ScalarDiv(list)->cast<FP32ImmPtr>()->value(), 2.0f);
   list.clear();
 
-  list.push_back(MakeValue(-4.0));
-  list.push_back(MakeValue(2.0));
-  ASSERT_EQ(ScalarDiv(list)->cast<FP64ImmPtr>()->value(), -2.0);
-  list.clear();
-
   list.push_back(MakeValue(INT64_MAX));
   list.push_back(MakeValue(static_cast<int64_t>(0)));
   try {
@@ -234,8 +214,7 @@ TEST_F(TestImplementations, ScalarModTest) {
     ScalarMod(list);
     FAIL();
   } catch (std::runtime_error const &err) {
-    ASSERT_TRUE(std::string(err.what()).find("Cannot perform modulo operation on zero.")
-                != std::string::npos);
+    ASSERT_TRUE(std::string(err.what()).find("Cannot perform modulo operation on zero.") != std::string::npos);
   }
   list.clear();
 
@@ -259,8 +238,8 @@ TEST_F(TestImplementations, ScalarUAddTest) {
 
 TEST_F(TestImplementations, ScalarLogTest) {
   ValuePtrList list;
-  list.push_back(MakeValue(static_cast<double>(7.3890560989306495)));
-  ASSERT_EQ(ScalarLog(list)->cast<FP64ImmPtr>()->value(), 2.0);
+  list.push_back(MakeValue(static_cast<float>(7.3890560989306495)));
+  ASSERT_EQ(ScalarLog(list)->cast<FP32ImmPtr>()->value(), 2.0);
   list.clear();
 }
 
@@ -282,16 +261,6 @@ TEST_F(TestImplementations, ScalarEqTest) {
   list.push_back(MakeValue(-1.0f));
   ASSERT_EQ(ScalarEq(list)->cast<BoolImmPtr>()->value(), false);
   list.clear();
-
-  list.push_back(MakeValue(1.0f));
-  list.push_back(MakeValue(1.0));
-  ASSERT_EQ(ScalarEq(list)->cast<BoolImmPtr>()->value(), true);
-  list.clear();
-
-  list.push_back(MakeValue(1.0));
-  list.push_back(MakeValue(1.0));
-  ASSERT_EQ(ScalarEq(list)->cast<BoolImmPtr>()->value(), true);
-  list.clear();
 }
 
 TEST_F(TestImplementations, ScalarLtTest) {
@@ -305,16 +274,6 @@ TEST_F(TestImplementations, ScalarLtTest) {
   list.push_back(MakeValue(-1.0f));
   ASSERT_EQ(ScalarLt(list)->cast<BoolImmPtr>()->value(), false);
   list.clear();
-
-  list.push_back(MakeValue(1.0f));
-  list.push_back(MakeValue(2.5));
-  ASSERT_EQ(ScalarLt(list)->cast<BoolImmPtr>()->value(), true);
-  list.clear();
-
-  list.push_back(MakeValue(2.5));
-  list.push_back(MakeValue(3.0));
-  ASSERT_EQ(ScalarLt(list)->cast<BoolImmPtr>()->value(), true);
-  list.clear();
 }
 
 TEST_F(TestImplementations, ScalarGtTest) {
@@ -326,16 +285,6 @@ TEST_F(TestImplementations, ScalarGtTest) {
 
   list.push_back(MakeValue(2.0f));
   list.push_back(MakeValue(-1.0f));
-  ASSERT_EQ(ScalarGt(list)->cast<BoolImmPtr>()->value(), true);
-  list.clear();
-
-  list.push_back(MakeValue(2.0f));
-  list.push_back(MakeValue(2.0));
-  ASSERT_EQ(ScalarGt(list)->cast<BoolImmPtr>()->value(), false);
-  list.clear();
-
-  list.push_back(MakeValue(2.5));
-  list.push_back(MakeValue(2.0));
   ASSERT_EQ(ScalarGt(list)->cast<BoolImmPtr>()->value(), true);
   list.clear();
 }
@@ -351,16 +300,6 @@ TEST_F(TestImplementations, ScalarNeTest) {
   list.push_back(MakeValue(-1.0f));
   ASSERT_EQ(ScalarNe(list)->cast<BoolImmPtr>()->value(), true);
   list.clear();
-
-  list.push_back(MakeValue(1.0f));
-  list.push_back(MakeValue(2.0));
-  ASSERT_EQ(ScalarNe(list)->cast<BoolImmPtr>()->value(), true);
-  list.clear();
-
-  list.push_back(MakeValue(2.0));
-  list.push_back(MakeValue(2.0));
-  ASSERT_EQ(ScalarNe(list)->cast<BoolImmPtr>()->value(), false);
-  list.clear();
 }
 
 TEST_F(TestImplementations, ScalarLeTest) {
@@ -374,16 +313,6 @@ TEST_F(TestImplementations, ScalarLeTest) {
   list.push_back(MakeValue(-1.0f));
   ASSERT_EQ(ScalarLe(list)->cast<BoolImmPtr>()->value(), false);
   list.clear();
-
-  list.push_back(MakeValue(1.0f));
-  list.push_back(MakeValue(2.0));
-  ASSERT_EQ(ScalarLe(list)->cast<BoolImmPtr>()->value(), true);
-  list.clear();
-
-  list.push_back(MakeValue(6.0));
-  list.push_back(MakeValue(-1.0f));
-  ASSERT_EQ(ScalarLe(list)->cast<BoolImmPtr>()->value(), false);
-  list.clear();
 }
 
 TEST_F(TestImplementations, ScalarGeTest) {
@@ -394,16 +323,6 @@ TEST_F(TestImplementations, ScalarGeTest) {
   list.clear();
 
   list.push_back(MakeValue(1.0f));
-  list.push_back(MakeValue(-1.0f));
-  ASSERT_EQ(ScalarGe(list)->cast<BoolImmPtr>()->value(), true);
-  list.clear();
-
-  list.push_back(MakeValue(1.0f));
-  list.push_back(MakeValue(2.0));
-  ASSERT_EQ(ScalarGe(list)->cast<BoolImmPtr>()->value(), false);
-  list.clear();
-
-  list.push_back(MakeValue(6.0));
   list.push_back(MakeValue(-1.0f));
   ASSERT_EQ(ScalarGe(list)->cast<BoolImmPtr>()->value(), true);
   list.clear();
