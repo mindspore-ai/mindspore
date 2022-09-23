@@ -25,10 +25,13 @@
 #include "thread/actor_threadpool.h"
 
 namespace mindspore {
+typedef struct Distributor {
+  int started = 0;
+  int task_num = 0;
+} Distributor;
 typedef struct ParallelTask : public Task {
   ParallelTask() : Task(nullptr, nullptr) {}
-  std::atomic_int started{0};
-  volatile int task_num = 0;
+  std::atomic<Distributor> distributor;
   std::atomic_bool valid = false;
   std::atomic_bool occupied = false;
 } ParallelTask;
@@ -68,6 +71,23 @@ class ParallelThreadPool : public ActorThreadPool {
   static ParallelThreadPool *CreateThreadPool(size_t actor_thread_num, size_t all_thread_num,
                                               const std::vector<int> &core_list, BindMode bind_mode);
   ~ParallelThreadPool() override {
+    // wait until actor queue is empty
+    bool terminate = false;
+    int count = 0;
+    do {
+      {
+#ifdef USE_HQUEUE
+        terminate = actor_queue_.Empty();
+#else
+        std::lock_guard<std::mutex> _l(actor_mutex_);
+        terminate = actor_queue_.empty();
+#endif
+      }
+      if (!terminate) {
+        ActiveWorkers();
+        std::this_thread::yield();
+      }
+    } while (!terminate && count++ < kMaxCount);
     for (auto &worker : workers_) {
       worker->set_alive(false);
     }
