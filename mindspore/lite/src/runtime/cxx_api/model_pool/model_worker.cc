@@ -85,6 +85,7 @@ void ModelWorker::Run() {
     task->ready = true;
     predict_task_queue_->ActiveTask(task);
   }
+  MS_LOG(INFO) << "task queue all tasks completed.";
 }
 
 Status ModelWorker::Init(const char *model_buf, size_t size) {
@@ -111,11 +112,13 @@ Status ModelWorker::Init(const char *model_buf, size_t size) {
       }
     }
   }
+  MS_LOG(INFO) << "ms model init.";
   auto status = model_->Build(model_buf, size, model_type, worker_config_->context);
   if (status != kSuccess) {
     MS_LOG(ERROR) << "model build failed in ModelPool Init";
     return status;
   }
+  MS_LOG(INFO) << "ms model init done.";
   origin_worker_inputs_ = model_->GetInputs();
   origin_worker_outputs_ = model_->GetOutputs();
   if (origin_worker_outputs_.empty() || origin_worker_outputs_.empty()) {
