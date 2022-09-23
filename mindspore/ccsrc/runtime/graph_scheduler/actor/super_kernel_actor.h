@@ -85,8 +85,6 @@ class SuperKernelActor : public DebugAwareActor {
   std::vector<DeviceTensorPtr> copy_input_device_tensors_;
   // The input device tensors for launch.
   std::vector<DeviceTensor *> input_device_tensors_;
-  // The output device tensors of graph when the zero copy is enable.
-  std::map<KernelWithIndex, DeviceAddress *> zero_copy_outputs_;
 };
 
 using SuperKernelActorPtr = std::shared_ptr<SuperKernelActor>;
