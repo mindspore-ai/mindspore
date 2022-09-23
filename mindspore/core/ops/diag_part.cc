@@ -31,6 +31,9 @@ abstract::ShapePtr DiagPartInferShape(const PrimitivePtr &primitive, const std::
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
   auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];
+  if (IsDynamicRank(input_shape)) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
+  }
   if ((input_shape.size() % kScaleNum) != 0 || input_shape.size() == 0) {
     MS_EXCEPTION(ValueError) << "For 'DiagPart', input rank must be non-zero and even, but got rank: "
                              << input_shape.size() << ".";
@@ -38,9 +41,11 @@ abstract::ShapePtr DiagPartInferShape(const PrimitivePtr &primitive, const std::
   auto length = input_shape.size() / kScaleNum;
   std::vector<int64_t> out_shape;
   for (size_t i = 0; i < length; i++) {
-    CheckAndConvertUtils::Check("input_shape[i + rank(input_shape) / 2]", input_shape[i + length], kEqual,
-                                input_shape[i], op_name, ValueError);
-    (void)out_shape.emplace_back(input_shape[i]);
+    if (input_shape[i + length] > 0 && input_shape[i] > 0) {
+      CheckAndConvertUtils::Check("input_shape[i + rank(input_shape) / 2]", input_shape[i + length], kEqual,
+                                  input_shape[i], op_name, ValueError);
+      (void)out_shape.emplace_back(input_shape[i]);
+    }
   }
   return std::make_shared<abstract::Shape>(out_shape);
 }

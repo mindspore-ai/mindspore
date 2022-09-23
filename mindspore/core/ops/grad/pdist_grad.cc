@@ -34,14 +34,15 @@ abstract::ShapePtr PdistGradInferShape(const PrimitivePtr &primitive, const std:
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
   auto pdist_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape())[kShape];
   auto x_size = x_shape.size();
-  (void)CheckAndConvertUtils::CheckValue("y_grad shape", grad_shape, kEqual, "y shape", pdist_shape, prim_name);
+  if (!IsDynamic(grad_shape) && !IsDynamic(pdist_shape)) {
+    CheckAndConvertUtils::CheckValue("y_grad shape", grad_shape, kEqual, "y shape", pdist_shape, prim_name);
+  }
   const int64_t x_dim = 2;
-  (void)CheckAndConvertUtils::CheckInteger("x dim", SizeToLong(x_size), kEqual, x_dim, "PdistGrad");
-  auto out_shape = input_args[1]->BuildShape();
-  MS_EXCEPTION_IF_NULL(out_shape);
-  auto out_element = out_shape->cast<abstract::ShapePtr>();
-  MS_EXCEPTION_IF_NULL(out_element);
-  return out_element;
+  if (!IsDynamicRank(x_shape)) {
+    CheckAndConvertUtils::CheckInteger("x dim", x_size, kEqual, x_dim, "PdistGrad");
+  }
+
+  return std::make_shared<abstract::Shape>(x_shape);
 }
 
 TypePtr PdistGradInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
