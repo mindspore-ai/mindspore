@@ -26,7 +26,7 @@ context.set_context(mode=context.GRAPH_MODE)
 class Unique(nn.Cell):
     def __init__(self):
         super(Unique, self).__init__()
-        self.unique_cpu = P.Unique().add_prim_attr("primitive_target", "CPU")
+        self.unique_cpu = P.Unique().set_device("CPU")
 
     def construct(self, x):
         x, y = self.unique_cpu(x)
@@ -36,7 +36,7 @@ class Unique(nn.Cell):
 class UniqueSquare(nn.Cell):
     def __init__(self):
         super(UniqueSquare, self).__init__()
-        self.unique_cpu = P.Unique().add_prim_attr("primitive_target", "CPU")
+        self.unique_cpu = P.Unique().set_device("CPU")
         self.square = P.Square()
 
     def construct(self, x):
@@ -47,8 +47,8 @@ class UniqueSquare(nn.Cell):
 class UniqueSquareRelu(nn.Cell):
     def __init__(self):
         super(UniqueSquareRelu, self).__init__()
-        self.unique_cpu = P.Unique().add_prim_attr("primitive_target", "CPU")
-        self.square_cpu = P.Square().add_prim_attr("primitive_target", "CPU")
+        self.unique_cpu = P.Unique().set_device("CPU")
+        self.square_cpu = P.Square().set_device("CPU")
         self.relu = P.ReLU()
 
     def construct(self, x):
@@ -60,9 +60,9 @@ class UniqueSquareRelu(nn.Cell):
 class UniqueReshapeAdd(nn.Cell):
     def __init__(self):
         super(UniqueReshapeAdd, self).__init__()
-        self.unique_cpu = P.Unique().add_prim_attr("primitive_target", "CPU")
+        self.unique_cpu = P.Unique().set_device("CPU")
         self.unique = P.Unique()
-        self.reshape_cpu = P.Reshape().add_prim_attr("primitive_target", "CPU")
+        self.reshape_cpu = P.Reshape().set_device("CPU")
         self.reshape = P.Reshape()
         self.add = P.Add()
 

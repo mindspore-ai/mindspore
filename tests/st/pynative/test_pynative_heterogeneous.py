@@ -49,7 +49,7 @@ def test_heterogeneous_default_ascend_prim_cpu():
     inp1 = Tensor(np.random.randn(2, 2).astype(np.float32))
     inp2 = Tensor(np.random.randn(2, 2).astype(np.float32))
     output_device = net(inp1, inp2)
-    net.relu1.add_prim_attr("primitive_target", "CPU")
+    net.relu1.set_device("CPU")
     output_heter = net(inp1, inp2)
     assert np.allclose(output_device.asnumpy(), output_heter.asnumpy(), 1e-6, 1e-6)
 
@@ -67,7 +67,7 @@ def test_heterogeneous_default_cpu_prim_ascend():
     inp1 = Tensor(np.random.randn(2, 2).astype(np.float32))
     inp2 = Tensor(np.random.randn(2, 2).astype(np.float32))
     output_device = net(inp1, inp2)
-    net.relu1.add_prim_attr("primitive_target", "Ascend")
+    net.relu1.set_device("Ascend")
     output_heter = net(inp1, inp2)
     assert np.allclose(output_device.asnumpy(), output_heter.asnumpy(), 1e-6, 1e-6)
 
@@ -85,7 +85,7 @@ def test_heterogeneous_default_gpu_prim_cpu():
     inp1 = Tensor(np.random.randn(2, 2).astype(np.float32))
     inp2 = Tensor(np.random.randn(2, 2).astype(np.float32))
     output_device = net(inp1, inp2)
-    net.relu1.add_prim_attr("primitive_target", "CPU")
+    net.relu1.set_device("CPU")
     output_heter = net(inp1, inp2)
     assert np.allclose(output_device.asnumpy(), output_heter.asnumpy(), 1e-6, 1e-6)
 
@@ -103,6 +103,6 @@ def test_heterogeneous_default_cpu_prim_gpu():
     inp1 = Tensor(np.random.randn(2, 2).astype(np.float32))
     inp2 = Tensor(np.random.randn(2, 2).astype(np.float32))
     output_device = net(inp1, inp2)
-    net.relu1.add_prim_attr("primitive_target", "GPU")
+    net.relu1.set_device("GPU")
     output_heter = net(inp1, inp2)
     assert np.allclose(output_device.asnumpy(), output_heter.asnumpy(), 1e-6, 1e-6)

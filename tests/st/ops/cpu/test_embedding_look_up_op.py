@@ -26,7 +26,7 @@ context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 class Net(nn.Cell):
     def __init__(self):
         super(Net, self).__init__()
-        self.embedding = P.EmbeddingLookup().add_prim_attr("primitive_target", "CPU")
+        self.embedding = P.EmbeddingLookup().set_device("CPU")
 
     def construct(self, param, index, offset):
         return self.embedding(param, index, offset)

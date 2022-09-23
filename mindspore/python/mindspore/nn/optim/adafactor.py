@@ -435,7 +435,7 @@ class AdaFactor(Optimizer):
         """
         self._set_base_target(value)
         if value == 'CPU':
-            self.fused_ada_factor.add_prim_attr("primitive_target", "CPU")
+            self.fused_ada_factor.set_device("CPU")
             self.use_fused_ada_factor = True
         else:
             self.use_fused_ada_factor = False

@@ -142,8 +142,8 @@ class NetFactory:
         context.set_ps_context(enable_ps=False)
         net = Menet(self.in_channels, self.out_channels, self.kernel_size, self.vocab_size,
                     self.embedding_size, self.output_channels, self.target, self.sparse)
-        net.conv.conv2d.add_prim_attr('primitive_target', 'CPU')
-        net.conv.bias_add.add_prim_attr('primitive_target', 'CPU')
+        net.conv.conv2d.set_device('CPU')
+        net.conv.bias_add.set_device('CPU')
         net.set_train()
         loss = SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
         opt = Adam(params=filter(lambda x: x.requires_grad, net.get_parameters()))
@@ -159,8 +159,8 @@ class NetFactory:
         net = Menet(self.in_channels, self.out_channels, self.kernel_size, self.vocab_size,
                     self.embedding_size, self.output_channels, self.target, self.sparse)
         net.embedding_lookup.set_param_ps()
-        net.conv.conv2d.add_prim_attr('primitive_target', 'CPU')
-        net.conv.bias_add.add_prim_attr('primitive_target', 'CPU')
+        net.conv.conv2d.set_device('CPU')
+        net.conv.bias_add.set_device('CPU')
         net.set_train()
         loss = SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
         opt = Adam(params=filter(lambda x: x.requires_grad, net.get_parameters()))

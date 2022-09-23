@@ -6,7 +6,7 @@ mindspore.nn.MultiFieldEmbeddingLookup
     根据指定的索引和字段ID，返回输入Tensor的切片。此操作支持同时使用multi hot和one hot查找嵌入。
 
     .. note::
-        当'target'设置为'CPU'时，此模块将使用P.EmbeddingLookup().add_prim_attr('primitive_target', 'CPU')指定'offset = 0'的查找表。
+        当'target'设置为'CPU'时，此模块将使用P.EmbeddingLookup().set_device('CPU')指定'offset = 0'的查找表。
 
         当'target'设置为'DEVICE'时，此模块将使用P.Gather()指定'axis = 0'的查找表。
 

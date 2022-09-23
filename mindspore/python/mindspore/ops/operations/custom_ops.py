@@ -879,7 +879,7 @@ class Custom(ops.PrimitiveWithInfer):
         """Add primitive_target to primitive's attr."""
         registered_targets = self._get_registered_targets()
         if self.func_type == "pyfunc":
-            self.add_prim_attr("primitive_target", "CPU")
+            self.set_device("CPU")
             if registered_targets and registered_targets != ["CPU"]:
                 logger.warning("{}, only supports CPU platform, but got registered target {}. "
                                "We will run it on CPU".format(self.log_prefix, registered_targets))
@@ -887,11 +887,11 @@ class Custom(ops.PrimitiveWithInfer):
             if len(registered_targets) != 1:
                 logger.info("{}, target will be set according to context.".format(self.log_prefix))
             elif registered_targets == ["GPU"]:
-                self.add_prim_attr("primitive_target", "GPU")
+                self.set_device("GPU")
             elif registered_targets == ["CPU"]:
-                self.add_prim_attr("primitive_target", "CPU")
+                self.set_device("CPU")
         elif self.func_type == "julia":
-            self.add_prim_attr("primitive_target", "CPU")
+            self.set_device("CPU")
             device_target = context.get_context('device_target')
             if device_target == "CPU":
                 pass

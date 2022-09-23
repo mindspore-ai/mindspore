@@ -57,7 +57,7 @@ class Net(nn.Cell):
         if shape is None:
             shape = [64, 64]
         self.gatherv2 = P.Gather().shard(
-            strategy1, gather_out_strategy).add_prim_attr("primitive_target", target)
+            strategy1, gather_out_strategy).set_device(target)
         self.mul = P.Mul().shard(strategy2)
         self.softmax = P.Softmax().shard(strategy3)
         self.index = Tensor(np.ones(shape), dtype=ms.int32)

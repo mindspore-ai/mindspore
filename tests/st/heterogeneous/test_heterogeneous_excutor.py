@@ -77,8 +77,8 @@ def test_heterogeneous_excutor():
 
     # heterogeneous_excutor
     net_heter = Net(3, 10)
-    net_heter.relu.relu.add_prim_attr("primitive_target", "CPU")
-    net_heter.conv.conv2d.add_prim_attr("primitive_target", "CPU")
+    net_heter.relu.relu.set_device("CPU")
+    net_heter.conv.conv2d.set_device("CPU")
 
     opt_heter = nn.Momentum(params=net_heter.trainable_params(),
                             learning_rate=0.001, momentum=0.0009,

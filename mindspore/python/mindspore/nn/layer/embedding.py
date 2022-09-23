@@ -164,7 +164,7 @@ class EmbeddingLookup(Cell):
 
     Note:
         When 'target' is set to 'CPU', this module will use
-        P.EmbeddingLookup().add_prim_attr('primitive_target', 'CPU') which
+        P.EmbeddingLookup().set_device('CPU') which
         specified 'offset = 0' to lookup table.
         When 'target' is set to 'DEVICE', this module will use P.Gather() which
         specified 'axis = 0' to lookup table.
@@ -245,7 +245,7 @@ class EmbeddingLookup(Cell):
             self.gatherv2 = P.SparseGatherV2()
         else:
             self.gatherv2 = P.Gather()
-        self.embeddinglookup = P.EmbeddingLookup().add_prim_attr('primitive_target', 'CPU')
+        self.embeddinglookup = P.EmbeddingLookup().set_device('CPU')
         self.is_ps_server = False
         enable_ps = _get_ps_context("enable_ps")
         if enable_ps:
@@ -401,7 +401,7 @@ class EmbeddingLookup(Cell):
 
             # Add EmbeddingLookup ops on different servers.
             if self.target == 'CPU':
-                embedding_lookup = P.EmbeddingLookup().add_prim_attr('primitive_target', 'CPU')
+                embedding_lookup = P.EmbeddingLookup().set_device('CPU')
             else:
                 if self.sparse:
                     embedding_lookup = P.SparseGatherV2()
@@ -476,7 +476,7 @@ class MultiFieldEmbeddingLookup(EmbeddingLookup):
 
     Note:
         When 'target' is set to 'CPU', this module will use
-        P.EmbeddingLookup().add_prim_attr('primitive_target', 'CPU') which
+        P.EmbeddingLookup().set_device('CPU') which
         specified 'offset = 0' to lookup table.
         When 'target' is set to 'DEVICE', this module will use P.Gather() which
         specified 'axis = 0' to lookup table.
