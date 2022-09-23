@@ -6,7 +6,7 @@ mindspore.nn.probability.toolbox.UncertaintyEvaluation
     包含数据不确定性和模型不确定性的评估工具箱。
 
     参数：
-        - **model** (cell) - 不确定性评估的模型。
+        - **model** (Cell) - 不确定性评估的模型。
         - **train_dataset** (Dataset) - 用于训练模型的数据集迭代器。
         - **task_type** (str) - 模型任务类型的选项。
           - regression：回归模型。
