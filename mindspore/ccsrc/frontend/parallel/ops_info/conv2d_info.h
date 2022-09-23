@@ -44,6 +44,9 @@ class Conv2DInfo : public OperatorInfo {
 
  protected:
   Status GetAttrsBase();
+  virtual Status CheckAttrsBase();
+  virtual std::vector<int64_t> GetStrideAttr();
+  virtual std::vector<int64_t> GetDilationAttr();
   Status GetAttrs() override;
   Status CheckStrategyBase(const StrategyPtr &strategy);
   Status CheckHWStrategyBase(int64_t h_strategy, int64_t w_strategy) const;
@@ -52,7 +55,7 @@ class Conv2DInfo : public OperatorInfo {
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
   void InferAdjacentRankInfo();
-  std::vector<int64_t> GetAdjacentRankIdsAndBiases(int64_t rank_id, const std::string &dimension);
+  std::vector<int64_t> GetAdjacentRankIdsAndBiases(int64_t rank_id, int64_t dimension);
   void InferOverlapSize();
   void CheckHDimensionOverlapSizeNonNegative();
   void CheckWDimensionOverlapSizeNonNegative();
@@ -63,11 +66,11 @@ class Conv2DInfo : public OperatorInfo {
   void InferSendRankIds();
   void InferRecvRankIds();
   void InferCommunicationAttrs();
-  std::string ReplaceNodeName() const;
+  virtual std::string ReplaceNodeName() const;
   AnfNodePtr GenerateConv2DNode(const AnfNodePtr &new_input, const CNodePtr &cnode);
   OperatorAttrs CreateNeighborExchangeV2Attrs();
   OperatorAttrs CreateConv2DAttrs();
-  void ComputeReplaceGraph(const CNodePtr &cnode);
+  virtual void ComputeReplaceGraph(const CNodePtr &cnode);
 
   int64_t out_channel_ = 1;
   std::vector<int64_t> kernel_size_;               // two integers
@@ -147,8 +150,9 @@ class Conv2DInfo : public OperatorInfo {
 
  private:
   Status CheckHWStrategyValidMode(int64_t h_strategy, int64_t w_strategy);
-  Status CheckHWStrategyPadModeByDimension(int64_t strategy, const std::string &dimension);
+  Status CheckHWStrategyPadModeByDimension(int64_t strategy, int64_t dimension_id);
   Status CheckHWStrategyPadMode(int64_t h_strategy, int64_t w_strategy);
+  void AdjustPadList();
 };
 
 class Conv2DBackpropInputInfo : public Conv2DInfo {
