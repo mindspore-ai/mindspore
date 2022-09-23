@@ -21,6 +21,7 @@
 "mindspore/mindspore/ccsrc/transform/graph_ir/convert.h"                                            "runtime/references"
 "mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/gather_grad_kernels.cc"      "build/include"
 "mindspore/mindspore/ccsrc/backend/common/optimizer/op_adaptation_info_factory.h"                   "runtime/explicit"
+"mindspore/mindspore/ccsrc/plugin/device/gpu/kernel/cuda_impl/cuda_ops/concatv2_impl.cu"            "runtime/int"
 
 # Modelzoo
 "mindspore/model_zoo/official/cv/yolov4_tiny/infer/mxbase/src/Yolov4TinyDetection.h"                 "runtime/references"

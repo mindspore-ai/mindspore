@@ -19,6 +19,11 @@
 #include <cuda_runtime.h>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/concatv2_impl.cuh"
 #include "include/cuda_fp16.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
+
+template <typename T>
+using Complex = mindspore::utils::Complex<T>;
+
 template <typename T>
 __global__ void Concat(const size_t size, const int input_num, const int all_size_before_axis, const int all_size_axis,
                        int *len_axis, T **inputs, T *output) {
@@ -52,6 +57,12 @@ void ConcatKernel(const size_t size, const int input_num, const int all_size_bef
   return;
 }
 
+template CUDA_LIB_EXPORT void ConcatKernel(const size_t size, const int input_num, const int all_size_before_axis,
+                                           const int all_size_axis, int *len_axis, Complex<double> **inputs,
+                                           Complex<double> *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void ConcatKernel(const size_t size, const int input_num, const int all_size_before_axis,
+                                           const int all_size_axis, int *len_axis, Complex<float> **inputs,
+                                           Complex<float> *output, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void ConcatKernel(const size_t size, const int input_num, const int all_size_before_axis,
                                            const int all_size_axis, int *len_axis, double **inputs, double *output,
                                            cudaStream_t cuda_stream);
