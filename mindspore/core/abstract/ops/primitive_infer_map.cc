@@ -126,7 +126,9 @@ PrimShapeDependMap &GetHostDependsMap() {
   static const auto &kTraceGrad = prim::kPrimTraceGrad->name();
   static const auto &kSetSize = prim::kPrimSetSize->name();
   // Common host depends.
-  static PrimShapeDependMap host_depends{{kExtractGlimpse, ShapeSet{1}},
+  static PrimShapeDependMap host_depends{{prim::kPrimArgMax->name(), ShapeSet{1}},
+                                         {prim::kPrimArgMin->name(), ShapeSet{1}},
+                                         {kExtractGlimpse, ShapeSet{1}},
                                          {kSegmentMax, ShapeSet{1}},
                                          {kSegmentMin, ShapeSet{1}},
                                          {kSegmentSum, ShapeSet{1}},

@@ -171,6 +171,8 @@ constexpr auto kZerosLike = "ZerosLike";
 constexpr auto kEqual = "Equal";
 constexpr auto kOnesLike = "OnesLike";
 constexpr auto kSign = "Sign";
+constexpr auto kArgmax = "Argmax";
+constexpr auto kArgmin = "Argmin";
 
 const std::set<std::string> kCpuKernelOps{kIdentity,
                                           kMaskedSelect,
@@ -295,7 +297,9 @@ const std::map<std::string, std::string> kOpNameToAicpuOpNameMap{
   {kTensorScatterElements, "ScatterElements"},
   {kACos, "Acos"},
   {kHSigmoid, "HardSigmoid"},
-  {kHSigmoidGrad, "HardSigmoidGrad"}};
+  {kHSigmoidGrad, "HardSigmoidGrad"},
+  {kArgmax, "ArgMax"},
+  {kArgmin, "ArgMin"}};
 struct AicpuParamHead {
   uint32_t length;         // Total length: include cunstom message
   uint32_t ioAddrNum;      // Input and output address number

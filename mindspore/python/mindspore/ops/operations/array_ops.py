@@ -1999,11 +1999,34 @@ class InvertPermutation(PrimitiveWithInfer):
                 'value': tuple(y)}
 
 
-class Argmax(PrimitiveWithInfer):
+class Argmax(Primitive):
     """
     Returns the indices of the maximum value of a tensor across the axis.
 
     Refer to :func:`mindspore.ops.argmax` for more detail.
+
+    If the shape of input tensor is :math:`(x_1, ..., x_N)`, the shape of the output tensor will be
+    :math:`(x_1, ..., x_{axis-1}, x_{axis+1}, ..., x_N)`.
+
+    Args:
+        axis (int): Axis where the Argmax operation applies to. Default: -1.
+        output_type (:class:`mindspore.dtype`): An optional data type of `mindspore.dtype.int32` and
+            `mindspore.dtype.int64`. Default: `mindspore.dtype.int32`.
+
+    Inputs:
+        - **input_x** (Tensor) - Input tensor. :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+          Support data type list as follows:
+
+          - Ascend: Float16, Float32, Float64, Int8, Int16, Int32, Int64, UInt8, UInt16, UInt32, UInt64.
+          - GPU: Float16, Float32.
+          - CPU: Float16, Float32, Float64.
+
+    Outputs:
+        Tensor, whose dtype is determined by `output_type`.
+
+    Raises:
+        TypeError: If `axis` is not an int.
+        TypeError: If `output_type` is neither int32 nor int64.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2020,24 +2043,9 @@ class Argmax(PrimitiveWithInfer):
         """Initialize Argmax"""
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
         validator.check_value_type("axis", axis, [int], self.name)
-        validator.check_types_same_and_valid({'output': output_type}, [mstype.int32], self.name)
+        validator.check_types_same_and_valid({'output': output_type}, [mstype.int32, mstype.int64], self.name)
         self.axis = axis
         self.add_prim_attr('output_type', output_type)
-
-    def infer_shape(self, x_shape):
-        axis = self.axis
-        if axis is None:
-            axis = 0
-        x_rank = len(x_shape)
-        validator.check_int_range(axis, -x_rank, x_rank, Rel.INC_LEFT, "axis", self.name)
-        axis = axis + x_rank if axis < 0 else axis
-        ouput_shape = [x_shape[i] for i in range(x_rank) if i != axis]
-        return ouput_shape
-
-    def infer_dtype(self, x_dtype):
-        validator.check_tensor_dtype_valid("input_x", x_dtype, [mstype.float16, mstype.float32, mstype.float64],
-                                           self.name)
-        return mstype.tensor_type(self.output_type)
 
 
 class Argmin(Primitive):
@@ -2049,15 +2057,17 @@ class Argmin(Primitive):
 
     Args:
         axis (int): Axis where the Argmin operation applies to. Default: -1.
-        output_type (:class:`mindspore.dtype`): An optional data type of `mindspore.dtype.int32`.
-            Default: `mindspore.dtype.int32`.
+        output_type (:class:`mindspore.dtype`): An optional data type of `mindspore.dtype.int32` and
+            `mindspore.dtype.int64`. Default: `mindspore.dtype.int32`.
 
     Inputs:
         - **input_x** (Tensor) - Input tensor.
           The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
+          - Ascend: Float16, Float32, Float64, Int8, Int16, Int32, Int64, UInt8, UInt16, UInt32, UInt64.
+
     Outputs:
-        Tensor, indices of the min value of input tensor across the axis.
+        Tensor, whose dtype is determined by `output_type`.
 
     Raises:
         TypeError: If `axis` is not an int.

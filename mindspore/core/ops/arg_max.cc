@@ -15,6 +15,8 @@
  */
 
 #include "ops/arg_max.h"
+
+#include <set>
 #include "mindapi/ir/type.h"
 #include "utils/check_convert_utils.h"
 #include "ops/op_utils.h"

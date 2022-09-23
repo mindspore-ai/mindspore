@@ -43,6 +43,8 @@ std::map<string, std::vector<std::pair<string, size_t>>> AicpuOpAttrToInputMap =
   {prim::kPrimReduceProd->name(), {{"axis", 1}}},
   {prim::kPrimReverseV2->name(), {{"axis", 1}}},
   {prim::kPrimBroadcastTo->name(), {{"shape", 1}}},
+  {prim::kPrimArgMax->name(), {{"axis", 1}}},
+  {prim::kPrimArgMin->name(), {{"axis", 1}}},
   {prim::kPrimUnsortedSegmentProd->name(), {{"num_segments", 2}}},
   {prim::kPrimUnsortedSegmentSum->name(), {{"num_segments", 2}}}};
 
