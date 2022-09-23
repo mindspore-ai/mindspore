@@ -14,159 +14,52 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARRAYS_SLICE_GRAD_GPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARRAYS_SLICE_GRAD_GPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_ARRAYS_SLICE_GRAD_GPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_ARRAYS_SLICE_GRAD_GPU_KERNEL_H_
 
 #include <vector>
 #include <algorithm>
 #include <string>
 #include <utility>
+#include <map>
+#include <memory>
+#include "mindspore/core/ops/op_name.h"
+#include "mindspore/core/ops/grad/slice_grad.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
-#include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/slice_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_class/slice_grad_helper.h"
 
 namespace mindspore {
 namespace kernel {
 constexpr size_t kSliceGradDefaultInputShapeSize = 4;
 constexpr size_t kSliceGradMaxInputShapeSize = 7;
+constexpr size_t DynamicInputNum = 4;
+constexpr size_t kBeginIndex_ = 2;
+constexpr size_t kSizeIndex_ = 3;
+constexpr size_t kDim4 = 4;
+constexpr size_t kDim7 = 7;
 
-template <typename T>
-class SliceGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class SliceGradGpuKernelMod : public NativeGpuKernelMod {
  public:
-  SliceGradGpuKernelMod()
-      : is_strided_slice_(false),
-        is_null_input_(false),
-        input_size_(0),
-        output_size_(0),
-        workspace_size_(0),
-        kernel_name_("SliceGrad") {}
+  SliceGradGpuKernelMod();
   ~SliceGradGpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    if (is_null_input_) {
-      return true;
-    }
-    T *dy = GetDeviceAddress<T>(inputs, 0);
-    T *dx = GetDeviceAddress<T>(outputs, 0);
-    FillDeviceArray(outputs[0]->size / sizeof(T), dx, 0.f, reinterpret_cast<cudaStream_t>(stream_ptr));
-    if (input_shape_.size() <= kSliceGradDefaultInputShapeSize) {
-      CalSlice4DGrad(begin_[0], begin_[1], begin_[2], begin_[3], size_[0], size_[1], size_[2], size_[3],
-                     input_shape_[0], input_shape_[1], input_shape_[2], input_shape_[3], dy, dx,
-                     reinterpret_cast<cudaStream_t>(stream_ptr));
-    } else {
-      CalSlice7DGrad(begin_[0], begin_[1], begin_[2], begin_[3], begin_[4], begin_[5], begin_[6], size_[0], size_[1],
-                     size_[2], size_[3], size_[4], size_[5], size_[6], input_shape_[0], input_shape_[1],
-                     input_shape_[2], input_shape_[3], input_shape_[4], input_shape_[5], input_shape_[6], dy, dx,
-                     reinterpret_cast<cudaStream_t>(stream_ptr));
-    }
-    return true;
-  }
+              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
 
-  bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-    kernel_node_ = kernel_node;
-    (void)CheckParam(kernel_node);
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    auto data_format = AnfAlgo::GetInputFormat(kernel_node, 0);
-    if (kernel_name == "StridedSliceGrad") {
-      is_strided_slice_ = true;
-      std::vector<int64_t> shapex = GetAttr<std::vector<int64_t>>(kernel_node, "shapex");
-      for (auto x : shapex) {
-        input_shape_.push_back(x);
-      }
-      for (auto i = input_shape_.size(); i < kSliceGradDefaultInputShapeSize; i++) {
-        (void)input_shape_.insert(input_shape_.begin(), 1);
-      }
-      strides_ = GetAttr<std::vector<int64_t>>(kernel_node, "strides");
-      for (auto i = strides_.size(); i < kSliceGradDefaultInputShapeSize; i++) {
-        (void)strides_.insert(strides_.begin(), 1);
-      }
-      size_ = GetAttr<std::vector<int64_t>>(kernel_node, "end");
-    } else {
-      auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-      is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "input");
-      if (is_null_input_) {
-        InitSizeLists();
-        return true;
-      }
-      if (input_shape.size() <= kSliceGradDefaultInputShapeSize) {
-        ShapeNdTo4d(input_shape, &input_shape_);
-      } else {
-        ShapeNdTo7d(input_shape, &input_shape_);
-      }
-      size_ = GetAttr<std::vector<int64_t>>(kernel_node, "size");
-    }
-    auto dy_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-    is_null_input_ = CHECK_SHAPE_NULL(dy_shape, kernel_name_, "input");
-    if (is_null_input_) {
-      InitSizeLists();
-      return true;
-    }
-    if (dy_shape.size() <= kSliceGradDefaultInputShapeSize) {
-      ShapeNdTo4d(dy_shape, &dy_shape_);
-      begin_ = GetAttr<std::vector<int64_t>>(kernel_node, "begin");
-      CalcBeginAndSize(data_format, kSliceGradDefaultInputShapeSize);
-    } else {
-      ShapeNdTo7d(dy_shape, &dy_shape_);
-      begin_ = GetAttr<std::vector<int64_t>>(kernel_node, "begin");
-      CalcBeginAndSize(data_format, kSliceGradMaxInputShapeSize);
-    }
-    input_size_ = sizeof(T);
-    for (auto shape : input_shape_) {
-      input_size_ = input_size_ * static_cast<size_t>(shape);
-    }
-    output_size_ = sizeof(T);
-    for (auto x : dy_shape_) {
-      output_size_ = output_size_ * static_cast<size_t>(x);
-    }
-    InitSizeLists();
-    return true;
-  }
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
 
- protected:
-  void InitSizeLists() override {
-    input_size_list_.push_back(output_size_);
-    input_size_list_.push_back(input_size_);
-    output_size_list_.push_back(input_size_);
-  }
-  void CalcBeginAndSize(const std::string &data_format, size_t dim = 4) {
-    for (auto i = begin_.size(); i < dim; i++) {
-      (void)begin_.insert(begin_.begin(), 0);
-    }
-    for (auto i = size_.size(); i < dim; i++) {
-      (void)size_.insert(size_.begin(), 1);
-    }
-    if (dim == kSliceGradDefaultInputShapeSize && data_format == "NHWC") {
-      std::swap(begin_[1], begin_[3]);
-      std::swap(begin_[1], begin_[2]);
-      std::swap(size_[1], size_[3]);
-      std::swap(size_[1], size_[2]);
-    }
-    for (size_t i = 0; i < begin_.size(); i++) {
-      if (begin_[i] < 0 && i < input_shape_.size()) {
-        begin_[i] = begin_[i] + input_shape_[i];
-      }
-    }
-    for (size_t i = 0; i < size_.size(); i++) {
-      if (size_[i] < 0 && i < input_shape_.size()) {
-        size_[i] = (size_[i] + input_shape_[i]) > 0 ? (size_[i] + input_shape_[i]) : 0;
-      }
-    }
-  }
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs,
+             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override;
+
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  void CheckParam(const CNodePtr &kernel_node) {
-    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-    if (output_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << output_num;
-    }
-    auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    if (input_shape.size() > kSliceGradMaxInputShapeSize) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input cannot be greater than 7, but got "
-                        << input_shape.size();
-    }
-  }
+  void ProccessAttr(const std::vector<KernelTensorPtr> &inputs);
+  void CalcBeginAndSize(const mindspore::Format &data_format, size_t dim = kDim4);
+  void CheckParam(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs);
 
   std::vector<int64_t> begin_;
   std::vector<int64_t> size_;
@@ -174,14 +67,13 @@ class SliceGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   ShapeVector input_shape_;
   ShapeVector dy_shape_;
 
-  bool is_strided_slice_;
-  bool is_null_input_;
-  size_t input_size_;
-  size_t output_size_;
-  size_t workspace_size_;
+  bool is_dynamic_attr_{false};
+  bool get_dynamic_attr_value_{false};
   std::string kernel_name_;
-};  // namespace kernel
+  std::shared_ptr<cukernel::SliceGradAttr> attr_ptr_{nullptr};
+
+  std::unique_ptr<cukernel::GpuKernelHelperBase> helper_ptr_{nullptr};
+};
 }  // namespace kernel
 }  // namespace mindspore
-
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARRAYS_SLICE_GRAD_GPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_ARRAYS_SLICE_GRAD_GPU_KERNEL_H_
