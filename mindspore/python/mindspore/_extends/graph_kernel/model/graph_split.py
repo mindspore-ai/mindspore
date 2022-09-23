@@ -15,9 +15,7 @@
 """Cost model splitter"""
 from functools import reduce as prod_reduce
 from functools import partial
-from mindspore import log as logger
 from .model import PrimLib, Graph, Tensor, Operator
-from .model import DataFormat as DF
 
 
 def tensor_size(tensor):
@@ -175,7 +173,7 @@ class ReshapeElimChecker:
         def _get_remap_axis(in_shape, out_shape):
             rin, rout = [], []
             in_prod, out_prod, out_idx = 1, out_shape[-1], -1
-            in_ext, out_ext = -len(in_shape)-1, -len(out_shape)-1
+            in_ext, out_ext = -len(in_shape) - 1, -len(out_shape) - 1
             for in_idx in range(-1, in_ext, -1):
                 in_prod = in_prod * in_shape[in_idx]
                 while out_prod < in_prod:
@@ -191,6 +189,7 @@ class ReshapeElimChecker:
             if out_idx > out_ext:
                 rout.extend([i for i in range(out_idx, out_ext, -1)])
             return rin, rout
+
         remap_in, remap_out = _get_remap_axis(reshape.inputs[0].shape, reshape.output.shape)
         self.exc_fwd = self._collect_exc_ops(reshape, remap_in, True)
         self.exc_bwd = self._collect_exc_ops(reshape, remap_out, False)
@@ -198,10 +197,11 @@ class ReshapeElimChecker:
     @staticmethod
     def _collect_exc_ops(reshape, remap_axis, is_fwd):
         """collect exclude ops of reshape"""
+
         def _propagate(remap, src, des):
             out_remap = []
             src_prod, des_prod, des_idx = 1, 1, 0
-            for src_idx in range(-1, -len(src)-1, -1):
+            for src_idx in range(-1, -len(src) - 1, -1):
                 src_prod = src_prod * src[src_idx]
                 if src_idx in remap:
                     while des_prod < src_prod:
@@ -256,6 +256,7 @@ class ReshapeElimChecker:
                         push_stack(op, remap)
                     else:
                         exc_ops.add(op)
+
         exc_ops, stack, visited = set(), [], {reshape}
         if is_fwd:
             _visit_fwd(reshape, remap_axis)
@@ -296,7 +297,7 @@ class ReduceOutFuseChecker:
             for to in op.output.to_ops:
                 idx = to.inputs.index(op.output)
                 if PrimLib.iter_type(to) > PrimLib.ELEMWISE or \
-                   tensor_size(to.inputs[idx]) != tensor_size(to.output):
+                        tensor_size(to.inputs[idx]) != tensor_size(to.output):
                     self.output_excluded.add(to)
                 else:
                     recursion_stack.append(to)
@@ -384,7 +385,7 @@ class GraphSplitByPattern:
             self.unique_id = unique_id
             self.reach_tab = reach_tab
             self.checkers = []
-            if self.pattern == PrimLib.RESHAPE and init_op.inputs: # reshape's input may be empty (const value)
+            if self.pattern == PrimLib.RESHAPE and init_op.inputs:  # reshape's input may be empty (const value)
                 self.checkers.append(ReshapeElimChecker(init_op))
             elif self.pattern == PrimLib.REDUCE:
                 self.checkers.append(ReduceOutFuseChecker(init_op))
@@ -430,6 +431,7 @@ class GraphSplitByPattern:
 
         def fuse_confirm(self, area):
             """confirm if area can be fused"""
+
             def _check(a, b, res, fwd):
                 for checker in a.checkers:
                     r = checker.check(b.ops, fwd)
@@ -441,6 +443,7 @@ class GraphSplitByPattern:
             def _commit(a, res):
                 for i, checker in enumerate(a.checkers):
                     checker.commit(res[i])
+
             res1, res2 = [], []
             if not _check(self, area, res1, True) or not _check(area, self, res2, False):
                 return False
@@ -703,6 +706,7 @@ class GraphSplitByPattern:
 
     def hfuse(self, selector):
         """Fuse horizontal areas with same input tensor"""
+
         def _do_fuse(areas):
             for i in range(len(areas) - 1):
                 dom = areas[i]
@@ -1122,6 +1126,7 @@ class GraphSplitGpu(GraphSplitByPattern):
 
         def _broadcast_tot(dom):
             """Fuse rule for TensorScatterAdd and UnsortedSegmentSum."""
+
             def _same_input(op1, op2):
                 return bool(set(op1.inputs) & set(op2.inputs))
 
@@ -1202,18 +1207,19 @@ class GraphSplitGpu(GraphSplitByPattern):
                 return []
             op = a.ops[0]
             return a.pattern == PrimLib.REDUCE and not a.stitch_info.stitch_ops and \
-                PrimLib.is_reduce(op) and dom_op.inputs[0].shape == op.inputs[0].shape and \
-                dom_op.attrs.get("reduce_axis") == op.attrs.get("reduce_axis")
+                   PrimLib.is_reduce(op) and dom_op.inputs[0].shape == op.inputs[0].shape and \
+                   dom_op.attrs.get("reduce_axis") == op.attrs.get("reduce_axis")
 
         def _h_opaque(dom, a):
             if dom.ops[0].prim not in {"StridedSlice"}:
                 return []
             return a.ops[0].prim == dom.ops[0].prim and dom.ops[0].output.shape == a.ops[0].output.shape and \
-                dom.ops[0].inputs[0].shape == a.ops[0].inputs[0].shape
+                   dom.ops[0].inputs[0].shape == a.ops[0].inputs[0].shape
 
         def _link_csr(dom):
             def _same_input(op1, op2):
                 return bool(set(op1.inputs.copy()) & set(op2.inputs.copy()))
+
             fuse_arg = {"CSRReduceSum": slice(1, 3), "CSRGather": slice(2, 3)}
             arg_idx = fuse_arg.get(dom.dom_op().prim, -1)
             if arg_idx == -1:
@@ -1275,220 +1281,9 @@ class GraphSplitGpu(GraphSplitByPattern):
             _fuse_once(fuse_func)
 
 
-class GraphSplitAscend(GraphSplitByPattern):
-    """Graph splitter"""
-    BROADCAST_FUSE_DEPTH = 6
-
-    def __init__(self, graph, flags):
-        super().__init__(graph, flags)
-        self.reduce_fuse_depth = 10 if self.reduce_fuse_depth < 0 else self.reduce_fuse_depth
-
-    def get_default_mode(self, op):
-        """Get default mode for Ascend"""
-
-        def _dtype_same(tensors):
-            dtype = tensors[0].dtype
-            for tensor_ in tensors:
-                if tensor_.dtype != dtype:
-                    return False
-            return True
-
-        if op.prim == "MatMul":
-            if op.inputs[0].dtype == "float16" and not _dtype_same(op.inputs):
-                return self.Area.MODE_COMPOSITE
-        if op.prim in ("Tile", "BroadcastTo", "ExpandDims"):
-            return self.Area.MODE_COMPOSITE
-        return self.Area.MODE_BASIC
-
-    def pattern_fuse(self, fuse_func=None):
-        """fuse Areas by pattern"""
-
-        def _likely_multicore(dom):
-            op = dom.dom_op()
-            iter_size = tensor_size(op.output if not PrimLib.is_reduce(op) else op.inputs[0])
-            return iter_size > 1024
-
-        def _broadcast_pat_exclude(dom, a, r):
-            if _likely_multicore(a) and (dom.is_output or len(dom.ops) > self.BROADCAST_FUSE_DEPTH):
-                return True
-            return a.pattern > PrimLib.REDUCE or r > PrimLib.BROADCAST
-
-        def _broadcast_bwd_depth(dom):
-            if dom.pattern not in (PrimLib.ELEMWISE, PrimLib.BROADCAST) or len(dom.out_relations) != 1:
-                return []
-            a, r = list(dom.out_relations.items())[0]
-            if _broadcast_pat_exclude(dom, a, r) or len(a.in_relations) != 1:
-                return []
-            return [a], False
-
-        def _broadcast_bwd_width(dom):
-            if dom.pattern not in (PrimLib.ELEMWISE, PrimLib.BROADCAST):
-                return []
-            fused = []
-            for a, r in dom.out_relations.items():
-                if _broadcast_pat_exclude(dom, a, r) or not dom.check_acyclic(a) or \
-                        (fused and tensor_size(fused[0].dom_op().output) != tensor_size(a.dom_op().output)):
-                    return []
-                fused.append(a)
-            return fused, False
-
-        def _reduce_pat_exclude(dom, a, r):
-            if len(a.ops) > self.reduce_fuse_depth:
-                return True
-            if r == PrimLib.BROADCAST and _likely_multicore(dom) and \
-                    (dom.is_output or len(dom.ops) > self.BROADCAST_FUSE_DEPTH):
-                return True
-            return a.pattern > PrimLib.BROADCAST or r > PrimLib.REDUCE
-
-        def _reduce_depth(dom):
-            if dom.pattern != PrimLib.REDUCE or len(dom.in_relations) != 1:
-                return []
-            a, r = list(dom.in_relations.items())[0]
-            if _reduce_pat_exclude(dom, a, r) or len(a.out_relations) != 1:
-                return []
-            return [a], True
-
-        def _reduce_width(dom):
-            if dom.pattern != PrimLib.REDUCE:
-                return []
-            fused = []
-            for a, r in dom.in_relations.items():
-                if not _reduce_pat_exclude(dom, a, r) and a.check_acyclic(dom):
-                    fused.append(a)
-            return fused, True
-
-        def _matmul_depth(dom):
-            if dom.dom_op().prim != "MatMul" and dom.dom_op().prim != "BatchMatMul":
-                return []
-            fused = []
-            for a, _ in dom.out_relations.items():
-                if (((a.dom_op().prim == "AddN" or a.dom_op().prim == "Add" or a.dom_op().prim == "Cast")
-                     and dom.dom_op().prim == "MatMul")
-                        or (a.pattern == PrimLib.ELEMWISE and dom.dom_op().prim == "BatchMatMul")) \
-                        and a.check_acyclic(dom):
-                    fused.append(a)
-            return fused, False
-
-        def _reduce_output(dom):
-            if dom.pattern != PrimLib.REDUCE:
-                return []
-            op_attrs = dom.dom_op().attrs
-            if not op_attrs.get('reduce_output_fuse'):
-                return []
-            fused = []
-            for a, r in dom.out_relations.items():
-                if a.pattern <= PrimLib.BROADCAST and r <= PrimLib.BROADCAST and \
-                        dom.check_acyclic(a):
-                    fused.append(a)
-            return fused, False
-
-        def _reduce_stitch(dom):
-            if dom.pattern != PrimLib.REDUCE:
-                return []
-            if tensor_size(dom.ops[0].output) == 1:
-                return []
-            if tensor_size(dom.ops[0].inputs[0]) < 32 * 16 * 16:
-                return []
-
-            fused = []
-            for a, r in dom.out_relations.items():
-                if not may_stitch(dom, a, r, 32, 32 * 16 * 16):
-                    continue
-                if a.pattern == PrimLib.REDUCE:
-                    if a.ops[0].attrs['reduce_axis'] == dom.ops[0].attrs['reduce_axis']:
-                        dom.stitch_info.stitch_ops.add(dom.ops[0].output.name)
-                        fused.append(a)
-                elif a.pattern <= PrimLib.BROADCAST:
-                    dom.stitch_info.stitch_ops.add(dom.ops[0].output.name)
-                    fused.append(a)
-            return fused, False
-
-        def _transdata_pattern_support(dom, a):
-            transdata_op = dom.dom_op()
-
-            # Currently, if transdata has the pad, it is not used to fuse
-            def _has_pad():
-                res = False
-                input_shape = transdata_op.inputs[0].shape
-                output_shape = transdata_op.output.shape
-                cube_size = 16
-                for dim in input_shape[-2:]:
-                    if dim % cube_size != 0:
-                        res = True
-                for dim in output_shape[-2:]:
-                    if dim % cube_size != 0:
-                        res = True
-                return res
-
-            has_pad = _has_pad()
-            if has_pad:
-                return False
-
-            if a.dom_op().prim == "MatMul" and len(dom.ops) == 1:
-                return True
-
-            # reshape/elewise/broadcast + transdata
-            if a.pattern <= PrimLib.BROADCAST and len(dom.ops) == 1:
-                op_attrs = dom.dom_op().attrs
-                if 'src_format' not in op_attrs.keys() \
-                        or 'dst_format' not in op_attrs.keys():
-                    logger.error("For 'TransData', can not find the attr 'src_format' or 'dst_format'")
-                    return False
-                src_format, dst_format = op_attrs['src_format'], op_attrs['dst_format']
-                if src_format == DF.FRAC_NZ and dst_format in (DF.DEFAULT, DF.NCHW):
-                    return True
-                # For the Default/NCHW to FRAC_NZ, currently only the Cast+Transdata is supported
-                if src_format in (DF.DEFAULT, DF.NCHW) and dst_format == DF.FRAC_NZ \
-                        and len(a.ops) == 1 and a.dom_op().prim == "Cast" and not a.is_output:
-                    return True
-            return False
-
-        def _transdata(dom):
-            if dom.dom_op().prim != "TransData":
-                return []
-            fused = []
-            for a, _ in dom.in_relations.items():
-                if _transdata_pattern_support(dom, a) and a.check_acyclic(dom):
-                    fused.append(a)
-            return fused, True
-
-        def _fuse_loop():
-            self.fuse(CommonPattern.reshape)
-            self.fuse(CommonPattern.assign)
-            self.fuse(CommonPattern.elemwise_depth)
-            self.fuse(CommonPattern.elemwise_width)
-            self.fuse(CommonPattern.broadcast_depth)
-            self.fuse(CommonPattern.broadcast_width)
-            self.fuse(_reduce_depth)
-            self.fuse(_reduce_width)
-            self.fuse(_broadcast_bwd_depth)
-            self.fuse(_broadcast_bwd_width)
-            self.fuse(_matmul_depth)
-            self.fuse(_reduce_output)
-            if self.enable_stitch_fusion:
-                self.fuse(_reduce_stitch, True)
-            self.fuse(_transdata)
-
-        def _fuse_once(fuse_func):
-            if fuse_func(CommonPattern.reshape) or \
-                    fuse_func(CommonPattern.elemwise_depth) or fuse_func(CommonPattern.elemwise_width) or \
-                    fuse_func(CommonPattern.broadcast_depth) or fuse_func(CommonPattern.broadcast_width) or \
-                    fuse_func(_reduce_depth) or fuse_func(_reduce_width) or \
-                    fuse_func(_broadcast_bwd_depth) or fuse_func(_broadcast_bwd_width) or \
-                    fuse_func(_matmul_depth) or fuse_func(_reduce_output) or fuse_func(_transdata):
-                pass
-
-        if fuse_func is None:
-            _fuse_loop()
-        else:
-            _fuse_once(fuse_func)
-
-
 def split(graph, target, flags):
     """Split graph"""
     result = None
     if target == "cuda":
         result = GraphSplitGpu(graph, flags).split()
-    else:
-        result = GraphSplitAscend(graph, flags).split()
     return result
