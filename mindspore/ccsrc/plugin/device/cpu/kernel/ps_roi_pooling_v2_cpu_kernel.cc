@@ -20,7 +20,6 @@
 #include "plugin/device/cpu/kernel/ps_roi_pooling_v2_cpu_kernel.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "abstract/utils.h"
-#include "plugin/device/cpu/kernel/atomic_add.h"
 #include "mindspore/core/ops/ps_roi_pooling.h"
 
 namespace mindspore {
@@ -48,7 +47,7 @@ void PSROIPoolingCpuKernelMod::PSROIPoolForward(size_t start, size_t end, const 
   auto pooled_width = pooled_width_;
   auto pooled_height = pooled_height_;
   auto output_channels = output_channels_;
-  auto spatial_scale = (T)spatial_scale_;
+  auto spatial_scale = static_cast<T>(spatial_scale_);
   auto group_size = group_size_;
   auto elements_per_roi_box = 5;
   constexpr float zero = 0;
@@ -69,11 +68,11 @@ void PSROIPoolingCpuKernelMod::PSROIPoolForward(size_t start, size_t end, const 
     T roi_end_height = static_cast<T>(round(static_cast<float>(offset_rois[4] * spatial_scale)));
 
     // Force malformed ROIs to be 1x1
-    T roi_width = std::max(roi_end_width - roi_start_width, (T)0.1);  // avoid 0
-    T roi_height = std::max(roi_end_height - roi_start_height, (T)0.1);
+    T roi_width = std::max(roi_end_width - roi_start_width, static_cast<T>(0.1));  // avoid 0
+    T roi_height = std::max(roi_end_height - roi_start_height, static_cast<T>(0.1));
 
-    T bin_height = (T)(roi_height) / (T)(pooled_height);
-    T bin_width = (T)(roi_width) / (T)(pooled_width);
+    T bin_height = static_cast<T>(roi_height) / static_cast<T>(pooled_height);
+    T bin_width = static_cast<T>(roi_width) / static_cast<T>(pooled_width);
 
     int pooling_start_x = static_cast<int>(floor(static_cast<T>(height_offset_n) * bin_height));
     int pooling_start_y = static_cast<int>(floor(static_cast<T>(width_offset_n) * bin_width));
@@ -92,7 +91,7 @@ void PSROIPoolingCpuKernelMod::PSROIPoolForward(size_t start, size_t end, const 
     int c = (ctop * group_size + gh) * group_size + gw;
 
     const T *offset_input = input + (roi_batch_ind * feature_channels + c) * feature_height * feature_width;
-    T out_sum = T(zero);
+    T out_sum = static_cast<T>(zero);
     for (int h = pooling_start_x; h < pooling_end_x; ++h) {
       for (int w = pooling_start_y; w < pooling_end_y; ++w) {
         int bottom_index = h * feature_width + w;
@@ -100,7 +99,7 @@ void PSROIPoolingCpuKernelMod::PSROIPoolForward(size_t start, size_t end, const 
       }
     }
     T bin_area = static_cast<T>((pooling_end_x - pooling_start_x) * (pooling_end_y - pooling_start_y));
-    output_data[index] = is_empty ? T(zero) : out_sum / bin_area;
+    output_data[index] = is_empty ? static_cast<T>(zero) : out_sum / bin_area;
   }
 }
 
@@ -189,11 +188,15 @@ int PSROIPoolingCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
   output_channels_ = LongToInt(GetValue<int64_t>(output_dim_ptr));
 
   for (auto tensor_ptr : inputs) {
-    if (tensor_ptr->IsDynamicShape()) return KRET_UNKNOWN_SHAPE;
+    if (tensor_ptr->IsDynamicShape()) {
+      return KRET_UNKNOWN_SHAPE;
+    }
   }
 
   for (auto tensor_ptr : outputs) {
-    if (tensor_ptr->IsDynamicShape()) return KRET_UNKNOWN_OUT_SHAPE;
+    if (tensor_ptr->IsDynamicShape()) {
+      return KRET_UNKNOWN_OUT_SHAPE;
+    }
   }
 
   input_shape = inputs[0]->GetShapeVector();
