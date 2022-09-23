@@ -45,6 +45,9 @@ static const std::map<std::string, aclFormat> kMsFormatToAclFormat = {{kOpFormat
                                                                       {kOpFormat_NCDHW, ACL_FORMAT_NCDHW},
                                                                       {kOpFormat_NDC1HWC0, ACL_FORMAT_NDC1HWC0}};
 
+static const std::map<std::string, aclFormat> kMsSpecOriginFormat = {{"BatchMatMul", ACL_FORMAT_ND},
+                                                                     {"MatMul", ACL_FORMAT_ND}};
+
 std::map<std::string, std::string> GetConvertAttr(const std::string &op_type) {
   std::map<std::string, std::string> attrs;
   static const std::map<std::string, std::map<std::string, std::string>> op_type_map = {
@@ -52,7 +55,8 @@ std::map<std::string, std::string> GetConvertAttr(const std::string &op_type) {
     {"Conv2DBackpropInput",
      {{"pad_list", "pads"}, {"dilation", "dilations"}, {"stride", "strides"}, {"format", "data_format"}}},
     {"Conv2DBackpropFilter",
-     {{"pad_list", "pads"}, {"dilation", "dilations"}, {"stride", "strides"}, {"format", "data_format"}}}};
+     {{"pad_list", "pads"}, {"dilation", "dilations"}, {"stride", "strides"}, {"format", "data_format"}}},
+    {"BatchMatMul", {{"transpose_x1", "adj_x1"}, {"transpose_x2", "adj_x2"}}}};
   auto iter = op_type_map.find(op_type);
   return iter == op_type_map.end() ? attrs : iter->second;
 }
@@ -84,7 +88,8 @@ AclOpDesc::~AclOpDesc() {
 }
 
 void AclOpDesc::AddInputTensor(const AnfNodePtr &anf_node, const size_t input_num,
-                               const std::vector<AddressPtr> &inputs, const std::vector<size_t> &input_size_list) {
+                               const std::vector<AddressPtr> &inputs, const std::vector<size_t> &input_size_list,
+                               const std::string &op_type) {
   MS_EXCEPTION_IF_NULL(anf_node);
   for (size_t i = 0; i < input_num; ++i) {
     auto real_index = AnfAlgo::GetInputIndexInGraph(anf_node, i);
@@ -100,8 +105,10 @@ void AclOpDesc::AddInputTensor(const AnfNodePtr &anf_node, const size_t input_nu
 
     auto acl_type = AclUtils::ConvertTypeIdToAclType(input_type);
     auto acl_format = AclUtils::ConvertFormatToAclFormat(input_format);
+    auto ori_iter = kMsSpecOriginFormat.find(op_type);
+    auto ori_format = (ori_iter == kMsSpecOriginFormat.end()) ? ACL_FORMAT_NCHW : ori_iter->second;
 
-    auto input_desc = aclCreateTensorDesc(acl_type, ori_shape.size(), ori_shape.data(), ACL_FORMAT_NCHW);
+    auto input_desc = aclCreateTensorDesc(acl_type, ori_shape.size(), ori_shape.data(), ori_format);
     MS_EXCEPTION_IF_NULL(input_desc);
     if (aclSetTensorShape(input_desc, input_shape.size(), input_shape.data())) {
       MS_LOG(EXCEPTION) << "Acl set tensor shape failed!";
@@ -117,7 +124,8 @@ void AclOpDesc::AddInputTensor(const AnfNodePtr &anf_node, const size_t input_nu
 }
 
 void AclOpDesc::AddOutputTensor(const AnfNodePtr &anf_node, const size_t output_num,
-                                const std::vector<AddressPtr> &outputs, const std::vector<size_t> &output_size_list) {
+                                const std::vector<AddressPtr> &outputs, const std::vector<size_t> &output_size_list,
+                                const std::string &op_type) {
   MS_EXCEPTION_IF_NULL(anf_node);
   for (size_t i = 0; i < output_num; ++i) {
     auto ori_shape = common::AnfAlgo::GetOutputInferShape(anf_node, i);
@@ -128,8 +136,10 @@ void AclOpDesc::AddOutputTensor(const AnfNodePtr &anf_node, const size_t output_
 
     auto acl_type = AclUtils::ConvertTypeIdToAclType(output_type);
     auto acl_format = AclUtils::ConvertFormatToAclFormat(output_format);
+    auto ori_iter = kMsSpecOriginFormat.find(op_type);
+    auto ori_format = (ori_iter == kMsSpecOriginFormat.end()) ? ACL_FORMAT_NCHW : ori_iter->second;
 
-    auto output_desc = aclCreateTensorDesc(acl_type, ori_shape.size(), ori_shape.data(), ACL_FORMAT_NCHW);
+    auto output_desc = aclCreateTensorDesc(acl_type, ori_shape.size(), ori_shape.data(), ori_format);
     MS_EXCEPTION_IF_NULL(output_desc);
     if (aclSetTensorShape(output_desc, output_shape.size(), output_shape.data())) {
       MS_LOG(EXCEPTION) << "Acl set tensor shape failed!";
