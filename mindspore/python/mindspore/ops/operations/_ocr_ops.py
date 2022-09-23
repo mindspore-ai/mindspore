@@ -15,6 +15,7 @@
 
 """Inner OCR operators."""
 
+from __future__ import absolute_import
 from ..primitive import PrimitiveWithInfer, Primitive, prim_attr_register
 from ...common import dtype as mstype
 

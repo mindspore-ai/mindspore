@@ -15,6 +15,7 @@
 
 """Defines sparse operators with functional form."""
 
+from __future__ import absolute_import
 from mindspore.ops.operations.sparse_ops import (
     DenseToCSRSparseMatrix,
     CSRSparseMatrixToSparseTensor,
