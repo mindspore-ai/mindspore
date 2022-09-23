@@ -355,8 +355,8 @@ int LiteModel::GenerateModelByVersion() {
   if (schema_version_ == SCHEMA_VERSION::SCHEMA_CUR) {
 #ifdef ENABLE_MODEL_OBF
     if (IsMetaGraphObfuscated<schema::MetaGraph>(*reinterpret_cast<const schema::MetaGraph *>(meta_graph))) {
-      model_deobf =
-        GetModelDeObfuscator<schema::MetaGraph>(*reinterpret_cast<const schema::MetaGraph *>(meta_graph), this);
+      model_deobf = GetModelDeObfuscator<schema::MetaGraph>(*reinterpret_cast<const schema::MetaGraph *>(meta_graph),
+                                                            this, this->buf_size_);
       this->graph_.model_obfuscated_ = true;
       if (model_deobf == nullptr) {
         return RET_ERROR;

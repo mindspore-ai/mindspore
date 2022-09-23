@@ -243,7 +243,7 @@ if(MSLITE_ENABLE_CONVERTER)
                                     onnx_parser_mid tf_parser_mid)
 endif()
 
-if(ENABLE_MODEL_OBF)
+if(MSLITE_ENABLE_MODEL_OBF)
     target_link_libraries(lite-test ${OBF_LIB_DIR}/libmsdeobfuscator-lite.so)
 endif()
 
