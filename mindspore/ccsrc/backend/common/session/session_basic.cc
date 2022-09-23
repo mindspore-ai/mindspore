@@ -453,7 +453,7 @@ void IterateFindTensor(std::vector<ValuePtr> *msTensors, const VectorRef &ref_li
     } else if (utils::isa<tensor::CSRTensorPtr>(ref_list[i])) {
       auto csr_tensor = utils::cast<tensor::CSRTensorPtr>(ref_list[i]);
       MS_EXCEPTION_IF_NULL(csr_tensor);
-      msTensors->emplace_back(csr_tensor);
+      (void)msTensors->emplace_back(csr_tensor);
     } else {
       MS_LOG(EXCEPTION) << "The output is not a tensor/sparse tensor";
     }
@@ -468,7 +468,7 @@ std::vector<ValuePtr> TransformVectorRefToMultiValue(const VectorRef &base_ref) 
   } else if (utils::isa<tensor::Tensor>(base_ref)) {
     auto tensor_ptr = utils::cast<std::shared_ptr<tensor::Tensor>>(base_ref);
     MS_EXCEPTION_IF_NULL(tensor_ptr);
-    msTensors.emplace_back(tensor_ptr);
+    (void)msTensors.emplace_back(tensor_ptr);
   } else {
     MS_LOG(EXCEPTION) << "The output is not a base ref list or a tensor!";
   }
