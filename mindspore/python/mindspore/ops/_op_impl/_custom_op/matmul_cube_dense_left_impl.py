@@ -49,39 +49,39 @@ matmul_cube_dense_left_op_info = TBERegOp("CusMatMulCubeDenseLeft") \
 
 def shape_gen1(input_x1, input_x2, output_y, kernel_name, trans_a, trans_b):
     """shape gen1"""
-    shape_a = input_x1.get("ori_shape")
-    shape_b = input_x2.get("ori_shape")
+    shape_a_x1 = input_x1.get("ori_shape")
+    shape_b_x2 = input_x2.get("ori_shape")
     shape_output = output_y.get("ori_shape")
 
     if input_x2.get("format") == "FRACTAL_Z":
-        n, c, h, w = shape_b
+        n, c, h, w = shape_b_x2
         c0 = 16
         c1 = c // c0
         if c1 == 0:
             c1 = 1
-        shape_b = [n, c1 * h * w * c0]
-        shape_a = [n, n]
+        shape_b_x2 = [n, c1 * h * w * c0]
+        shape_a_x1 = [n, n]
 
     if input_x1.get("format") == "FRACTAL_Z":
-        n, c, h, w = shape_a
+        n, c, h, w = shape_a_x1
         c0 = 16
         c1 = c // c0
         if c1 == 0:
             c1 = 1
-        shape_a = [n, c1 * h * w * c0]
-        shape_b = [c1 * h * w * c0, c1 * h * w * c0]
+        shape_a_x1 = [n, c1 * h * w * c0]
+        shape_b_x2 = [c1 * h * w * c0, c1 * h * w * c0]
 
     if input_x2.get("format") == "FRACTAL_NZ":
-        shape_a = [shape_b[0], shape_b[0]]
+        shape_a_x1 = [shape_b_x2[0], shape_b_x2[0]]
 
     if input_x1.get("format") == "FRACTAL_NZ":
-        shape_b = [shape_a[1], shape_a[1]]
+        shape_b_x2 = [shape_a_x1[1], shape_a_x1[1]]
 
-    shape_a = list(shape_a)
-    shape_b = list(shape_b)
+    shape_a_list = list(shape_a_x1)
+    shape_b_list = list(shape_b_x2)
 
-    shape_a = _get_input_shape(shape_a)
-    shape_b = _get_input_shape(shape_b)
+    shape_a = _get_input_shape(shape_a_list)
+    shape_b = _get_input_shape(shape_b_list)
     util.check_kernel_name(kernel_name)
     util.check_shape_rule(shape_a)
     util.check_shape_rule(shape_b)

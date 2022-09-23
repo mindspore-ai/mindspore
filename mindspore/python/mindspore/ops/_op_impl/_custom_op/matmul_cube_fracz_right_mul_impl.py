@@ -119,7 +119,7 @@ def get_cus_tile_info(input_x1, input_x2, input_x3):
     if input_x2.shape[0] * input_x2.shape[3] > 128 and input_x2.shape[0] % diag_outer == 0:
         diag_opt = True
     if input_shape in tile_map:
-        mo_tile_, ko_tile_, no_tile_, core_m_num_, core_n_num_ = tile_map[input_shape]
+        mo_tile_, ko_tile_, no_tile_, core_m_num_, core_n_num_ = tile_map.get(input_shape)
     elif diag_opt:
         ko_tile_ = diag_outer
         no_tile_ = ko_tile_

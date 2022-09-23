@@ -14,6 +14,8 @@
 # ============================================================================
 
 """constexpr util"""
+from __future__ import absolute_import
+
 from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
 from mindspore.ops import functional as F
 from mindspore.ops  import operations as P
