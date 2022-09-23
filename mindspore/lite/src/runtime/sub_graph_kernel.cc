@@ -114,9 +114,9 @@ int SubGraphKernel::ReSize() {
       ret = lite::KernelInferShape(inputs, outputs, parameter, context_->allocator);
     }
     if (ret == RET_INFER_INVALID) {
-      MS_LOG(INFO) << "InferShape shouldn't be done before runtime, type:"
-                   << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(kernel->type()))
-                   << "flag set to false.";
+      MS_LOG(DEBUG) << "InferShape shouldn't be done before runtime, type:"
+                    << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(kernel->type()))
+                    << "flag set to false.";
     } else if (ret != RET_OK) {
       MS_LOG(ERROR) << "InferShape failed, type: "
                     << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(kernel->type()));

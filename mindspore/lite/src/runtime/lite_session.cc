@@ -1078,7 +1078,7 @@ int LiteSession::ReSizeKernels(const std::vector<kernel::KernelExec *> &kernels,
       }
     }
     if (ret == RET_INFER_INVALID) {
-      MS_LOG(INFO) << "InferShape is interrupted";
+      MS_LOG(DEBUG) << "InferShape is interrupted";
       continue;
     }
     if (ret != RET_OK) {
