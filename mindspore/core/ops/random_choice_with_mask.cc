@@ -78,8 +78,8 @@ class RandomChoiceWithMaskInfer : public abstract::OpInferBase {
 
     auto shape_rank = shape_vec.size();
     if (shape_rank < kDim1 || shape_rank > kDim5) {
-      MS_LOG(EXCEPTION) << "For '" << primitive->name()
-                        << "', input[0] rank should be between 1 and 5, but got:" << shape_rank;
+      MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+                               << "', input[0] rank should be between 1 and 5, but got:" << shape_rank;
     }
 
     auto first_output_shape_ptr =
