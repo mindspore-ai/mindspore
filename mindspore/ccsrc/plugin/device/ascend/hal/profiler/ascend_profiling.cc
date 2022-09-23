@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -192,6 +192,19 @@ void AscendProfiler::Finalize() {
   aclError aclRet = aclprofFinalize();
   if (aclRet != ACL_SUCCESS) {
     MS_LOG(EXCEPTION) << "Failed to call aclprofDestroyConfig function." << GetErrorMessage(true);
+  }
+}
+
+void AscendProfiler::MsprofInitProfiler() const {
+  if (ProfilingManager::GetInstance().IsMsprofiling()) {
+    ProfilingManager::GetInstance().ProfRegisterCtrlCallback();
+    MsprofInit(MSPROF_CTRL_INIT_DYNA, nullptr, 0);
+  }
+}
+
+void AscendProfiler::MsprofStopProfiler() const {
+  if (ProfilingManager::GetInstance().IsMsprofiling()) {
+    MsprofFinalize();
   }
 }
 
