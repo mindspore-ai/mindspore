@@ -2096,6 +2096,9 @@ void PreProcessOnSplitIndex(const KernelGraphPtr &graph, vector<uint32_t> *split
   auto split_index_num = split_index->back();
   // obtain graph output tensor num
   auto grads_count = GetBpropGraphGradsCount(graph);
+  if (grads_count == 0) {
+    return;
+  }
   if (split_index_num >= grads_count) {
     MS_LOG(WARNING) << "The context configuration all_reduce_fusion_config's upper boundary value should be smaller "
                     << "than total grads count: " << grads_count << ", but got: " << *split_index

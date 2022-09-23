@@ -687,7 +687,7 @@ void MindRTBackend::ReleaseForwardOutput(const std::vector<TensorPtr> &input_ten
   graph_compiler_->UpdateForwardOpOutputRefCount(input_tensors, &forward_op_output_tensor_id_);
 }
 
-void MindRTBackend::CompileSingleOpGraphs(const std::vector<std::shared_ptr<runtime::OpBuildTask>> &build_tasks) {
+void MindRTBackend::CompileSingleOpGraphs(const std::vector<std::shared_ptr<runtime::OpBuildTask>> &build_tasks) const {
   if (build_tasks.empty()) {
     return;
   }

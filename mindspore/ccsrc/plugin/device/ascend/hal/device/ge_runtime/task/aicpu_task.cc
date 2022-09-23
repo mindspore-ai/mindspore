@@ -62,9 +62,9 @@ void AicpuTask::Distribute() {
   (void)io_addrs.insert(io_addrs.cend(), task_info_->output_data_addrs().cbegin(),
                         task_info_->output_data_addrs().cend());
   auto io_addrs_num = static_cast<uint32_t>(io_addrs.size());
-  io_addrs_size_ = static_cast<uint32_t>(io_addrs_num * sizeof(void *));
+  io_addrs_size_ = io_addrs_num * sizeof(void *);
   constexpr uint32_t io_addr_offset = sizeof(aicpu::AicpuParamHead);
-  uint32_t node_def_len_offset = io_addr_offset + io_addrs_size_;
+  uint32_t node_def_len_offset = io_addr_offset + SizeToUint(io_addrs_size_);
   uint32_t node_def_addr_offset = node_def_len_offset + sizeof(uint32_t);
   args_size_ = sizeof(aicpu::AicpuParamHead) + io_addrs_size_ + static_cast<uint32_t>(task_info_->node_def().size()) +
                sizeof(uint32_t);
