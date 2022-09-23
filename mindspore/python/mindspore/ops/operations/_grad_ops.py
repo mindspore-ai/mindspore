@@ -2030,12 +2030,11 @@ class UpsampleNearest3DGrad(Primitive):
             self.add_prim_attr("scales", [])
 
 
-class ROIAlignGrad(PrimitiveWithInfer):
+class ROIAlignGrad(Primitive):
     """
     ROIAlignGrad operator.
 
     Args:
-       xdiff_shape (tuple): The diff shape.
        pooled_height (int): The output feature height.
        pooled_width (int): The output feature width.
        spatial_scale (float): The feature stride.
@@ -2043,24 +2042,17 @@ class ROIAlignGrad(PrimitiveWithInfer):
     """
 
     @prim_attr_register
-    def __init__(self, xdiff_shape, pooled_height, pooled_width, spatial_scale, sample_num=2):
+    def __init__(self, pooled_height, pooled_width, spatial_scale, sample_num=2):
         """Initialize ROIAlignGrad"""
+        self.init_prim_io_names(inputs=["dy", "rois", "xdiff_shape"], outputs=["dx"])
         validator.check_value_type("pooled_height", pooled_height, [int], self.name)
         validator.check_value_type("pooled_width", pooled_width, [int], self.name)
         validator.check_value_type("spatial_scale", spatial_scale, [float], self.name)
         validator.check_value_type("sample_num", sample_num, [int], self.name)
-        validator.check_value_type("xdiff_shape", xdiff_shape, [tuple], self.name)
-        self.xdiff_shape = xdiff_shape
         self.pooled_height = pooled_height
         self.pooled_width = pooled_width
         self.spatial_scale = spatial_scale
         self.sample_num = sample_num
-
-    def infer_shape(self, ydiff_shape, rois_shape):
-        return self.xdiff_shape
-
-    def infer_dtype(self, ydiff_type, rois_type):
-        return ydiff_type
 
 
 class PsROIPoolingGrad(PrimitiveWithInfer):
