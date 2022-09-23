@@ -15,6 +15,8 @@
  */
 
 #include "pipeline/pynative/forward/do_infer.h"
+#include "pipeline/pynative/pynative_utils.h"
+#include "include/common/utils/convert_utils_py.h"
 
 namespace mindspore {
 namespace pynative {
@@ -319,6 +321,19 @@ void InferOperation::SetNodeAbsCacheByValue(const ValuePtr &value, const abstrac
 
 void InferOperation::SetNodeAbsCacheById(const std::string &id, const abstract::AbstractBasePtr &abs) {
   node_abs_cache_[id] = abs;
+}
+
+py::object InferOperation::CallConstantFolding(const py::args &args) {
+  const auto &op_run_info = std::make_shared<FrontendOpRunInfo>();
+  PyNativeAlgo::PyParser::SetPrim(op_run_info, args[0]);
+  const auto &v = PyNativeAlgo::DataConvert::PyObjToValue(args[1]);
+  op_run_info->input_abs.emplace_back(v->ToAbstract());
+  PynativeInfer(op_run_info);
+  auto infer_value = GetInferValueFromAbstract(op_run_info->base_op_run_info.abstract);
+  if (infer_value->isa<AnyValue>()) {
+    MS_LOG(EXCEPTION) << "Can not get value from abstract";
+  }
+  return ValueToPyData(infer_value);
 }
 }  // namespace pynative
 }  // namespace mindspore

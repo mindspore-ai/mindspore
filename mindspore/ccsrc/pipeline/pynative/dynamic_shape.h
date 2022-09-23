@@ -21,16 +21,11 @@
 #include <string>
 #include <vector>
 #include <set>
-#include "pipeline/pynative/pynative_utils.h"
 #include "pipeline/pynative/grad/top_cell.h"
 #include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace pynative {
-class TopCellInfo;
-using TopCellInfoPtr = std::shared_ptr<TopCellInfo>;
-using TensorIdWithTensorObject = mindspore::HashMap<std::string, std::vector<tensor::TensorPtr>>;
-
 // Dynamic shape
 class DynamicShape {
  public:
@@ -76,6 +71,8 @@ class DynamicShape {
   OrderedMap<std::string, abstract::AbstractBasePtr> id_with_dynamic_abs_;
   mindspore::HashMap<std::string, std::vector<abstract::AbstractBasePtr>> feed_dynamic_input_;
 };
+using DynamicShapePtr = std::shared_ptr<DynamicShape>;
+using DynamicShapeWeakPtr = std::weak_ptr<DynamicShape>;
 }  // namespace pynative
 }  // namespace mindspore
 

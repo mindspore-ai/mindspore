@@ -18,6 +18,7 @@
 #include <algorithm>
 #include "pipeline/pynative/grad/top_cell.h"
 #include "pipeline/pynative/pynative_utils.h"
+#include "pipeline/pynative/forward/forward.h"
 #include "pipeline/jit/pipeline.h"
 #include "ir/cell.h"
 #include "include/common/debug/anf_ir_dump.h"
@@ -158,10 +159,10 @@ void GradExecutor::UpdateTopCellInfo(bool forward_already_run, bool need_compile
   top_cell()->set_forward_already_run(forward_already_run);
 }
 
-void GradExecutor::ClearCellRes(const std::string &cell_id) {
+void GradExecutor::ClearCellRes(const py::object &cell) {
   static bool clear_all_cell_res = false;
   // Grad clean
-  if (cell_id.empty()) {
+  if (py::isinstance<py::none>(cell)) {
     MS_LOG(DEBUG) << "Clear all cell resources";
     clear_all_cell_res = true;
     for (const auto &iter : top_cell_list_) {
@@ -177,6 +178,8 @@ void GradExecutor::ClearCellRes(const std::string &cell_id) {
     MS_LOG(DEBUG) << "In process of clearing all cell resources, so no need to clear single cell resource again";
     return;
   }
+  const auto &cell_id = PyNativeAlgo::PyParser::GetIdByPyObj(cell);
+  MS_LOG(DEBUG) << "Clear cell res, cell id " << cell_id;
   // clear when cell destruction
   for (auto it = top_cell_list_.begin(); it != top_cell_list_.end();) {
     MS_EXCEPTION_IF_NULL(*it);
@@ -997,7 +1000,7 @@ void GradExecutor::RunGradGraph(py::object *ret, const py::object &cell, const p
   if (top_cell()->is_topest() && !has_higher_order) {
     top_cell()->ClearDeviceMemory();
     if (!py::isinstance<Cell>(cell)) {
-      ClearCellRes(cell_id);
+      ClearCellRes(cell);
     }
   }
   // High order
@@ -1187,7 +1190,7 @@ void GradExecutor::ClearRes() {
   top_cell_ = nullptr;
   bprop_cell_list_.clear();
   already_run_top_cell_.clear();
-  ClearCellRes();
+  ClearCellRes(py::none());
   std::stack<std::pair<std::string, bool>>().swap(bprop_grad_stack_);
   std::stack<std::string>().swap(cell_stack_);
   std::stack<TopCellInfoPtr>().swap(high_order_stack_);

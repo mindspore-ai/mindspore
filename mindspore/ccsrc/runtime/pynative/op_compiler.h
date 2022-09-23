@@ -70,7 +70,8 @@ class BACKEND_EXPORT OpCompiler {
   static void BatchBuild(const std::vector<KernelGraphPtr> &graphs, const DeviceContext *device_context);
 
   // Set graph inputs abstract with actual shape in dynamic shape scenes
-  void SetGraphInputNodeToActualAbstract(const session::BackendOpRunInfoPtr &op_run_info, const KernelGraphPtr &graph);
+  void SetGraphInputNodeToActualAbstract(const session::BackendOpRunInfoPtr &op_run_info,
+                                         const KernelGraphPtr &graph) const;
 
   // Clear anf resources before process exit.
   void ClearAllCache();

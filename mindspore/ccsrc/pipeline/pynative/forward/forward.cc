@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <vector>
 #include "pipeline/pynative/pynative_utils.h"
+#include "pipeline/pynative/grad/grad.h"
 #include "include/common/utils/convert_utils_py.h"
 #include "include/common/utils/scoped_long_running.h"
 #include "backend/graph_compiler/transform.h"
@@ -395,7 +396,7 @@ void ForwardExecutor::ProcessBeforeEndGraph(const py::object &cell) {
   }
 }
 
-void ForwardExecutor::ProcessAfterEndGraph() {
+void ForwardExecutor::ProcessAfterEndGraph() const {
   if (IsFirstCell()) {
     dynamic_shape()->reset();
     ClearNodeAbsMap();
