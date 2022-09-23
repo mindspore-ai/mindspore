@@ -821,9 +821,10 @@ bool GraphExecutorPy::CompileInner(const py::object &source_obj, const py::tuple
 
   auto phase = py::cast<std::string>(phase_obj);
   phase_ = phase;
+  auto obj_desc = GetObjDesc(source_obj);
   MS_LOG(INFO) << "Start compiling, phase: " << phase;
   MS_LOG(DEBUG) << "source: {" << py::str(source_obj) << "}\nargs: " << py::str(const_cast<py::tuple &>(args));
-  EventMessage::PrintCompileStartMsg(phase);
+  EventMessage::PrintCompileStartMsg(phase, obj_desc);
 
   ExecutorInfoPtr executor_info = std::make_shared<ExecutorInfo>();
   ResourcePtr resource = std::make_shared<Resource>(source_obj);
@@ -899,7 +900,7 @@ bool GraphExecutorPy::CompileInner(const py::object &source_obj, const py::tuple
   ReclaimOptimizer();
   // Clean cache used while compile
   resource->Clean();
-  EventMessage::PrintCompileEndMsg(phase);
+  EventMessage::PrintCompileEndMsg(phase, obj_desc);
   MS_LOG(INFO) << "Finish compiling.";
   return true;
 }
