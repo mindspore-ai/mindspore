@@ -1041,6 +1041,12 @@ bool ControlNodeParser::IsControlFlowDataArrow(const KernelGraphPtr &graph, cons
     return false;
   }
 
+  // If the input front node and graph not in same graph group, the input arrow should be link to the exit actor
+  // of the graph.
+  if (!IsSameKernelGraphGroup(front_node, graph)) {
+    return true;
+  }
+
   // If the graph has a call input, all of its inputs in the graph should be linked to its stack actor.
   if (IsCallInputKernelGraph(graph.get())) {
     // If the input come from a kernel graph belong the same group, it should be linked by internal parameter.
@@ -1725,6 +1731,18 @@ void ControlNodeParser::ParseControlNodeParameter(const std::vector<AnfNodePtr> 
         MS_LOG(DEBUG) << "Control node:" << control_node->DebugString()
                       << " input parameter:" << inputs[i].first->DebugString() << " index:" << inputs[i].second;
         (void)control_node_parameters_.emplace_back(inputs[i]);
+        // Set Dynamic shape flag for parameter.
+        const auto &parameter = inputs[i].first->cast<ParameterPtr>();
+        MS_EXCEPTION_IF_NULL(parameter);
+        const auto &base_shape = parameter->Shape();
+        if (base_shape == nullptr) {
+          continue;
+        }
+        const auto &shape = base_shape->cast<abstract::ShapePtr>();
+        if (shape != nullptr && AnfUtils::IsShapeDynamic(shape)) {
+          MS_LOG(INFO) << "Set dynamic shape flag to parameter:" << parameter->DebugString();
+          parameter->set_has_dynamic_shape(true);
+        }
       }
     }
   }
