@@ -179,3 +179,33 @@ def test_fused_cast_adam_weight_decay():
         res = train_network(data, label)
         loss.append(res.asnumpy())
     assert np.all(loss[-1] < 0.1)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_fused_cast_adam_weight_decay_with_memory_optimize():
+    '''
+    Feature: Integration of dynamic and static memory in the heterogeneous scene
+    Description: Test FusedCastAdamWeightDecay
+    Expectation: Run lenet success
+    '''
+    context.set_context(mode=context.GRAPH_MODE, memory_optimize_level="O1")
+    data = Tensor(np.ones([32, 3, 32, 32]).astype(np.float32) * 0.01)
+    label = Tensor(np.ones([32]).astype(np.int32))
+    net = LeNet()
+    net.batch_size = 32
+    learning_rate = 0.01
+    optimizer = FusedAdamWeightDecayWithGlobalNorm(filter(lambda x: x.requires_grad, net.get_parameters()),
+                                                   learning_rate)
+    criterion = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
+    net_with_criterion = WithLossCell(net, criterion)
+    train_network = TrainOneStepCell(net_with_criterion, optimizer)
+    train_network.set_train()
+    loss = []
+    for _ in range(10):
+        res = train_network(data, label)
+        loss.append(res.asnumpy())
+    assert np.all(loss[-1] < 0.1)
