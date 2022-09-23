@@ -24,10 +24,7 @@
 namespace mindspore::graphkernel::expanders {
 class AddFusion : public OpDesc {
  public:
-  AddFusion() {
-    (void)validators_.emplace_back(std::make_unique<CheckAllFormatsSame>());
-    (void)validators_.emplace_back(std::make_unique<CheckActivationType>(ActivationType::NO_ACTIVATION));
-  }
+  AddFusion() { (void)validators_.emplace_back(std::make_unique<CheckActivationType>(ActivationType::NO_ACTIVATION)); }
   ~AddFusion() = default;
 
  protected:
