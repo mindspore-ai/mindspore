@@ -28,6 +28,11 @@ int EmbeddingLookupCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 1);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   CHECK_NULL_RETURN(param_);
+  auto ids_data_type = in_tensors_.back()->data_type();
+  if (ids_data_type != kNumberTypeInt32 && ids_data_type != kNumberTypeInt64) {
+    MS_LOG(ERROR) << "embedding_lookup not support input_indices data type: " << ids_data_type;
+    return RET_ERROR;
+  }
   if (!InferShapeDone()) {
     return RET_OK;
   }
