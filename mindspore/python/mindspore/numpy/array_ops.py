@@ -1115,8 +1115,7 @@ def _get_moved_perm(ndim, source, destination):
     Helper function for moveaxis, returns permutation after moving axes
     from source to destination.
     """
-    dest_sorted_idx = [i for i, _ in sorted(enumerate(destination),
-                                            key=operator.itemgetter(1))]
+    dest_sorted_idx = [i for i, _ in sorted(enumerate(destination), key=operator.itemgetter(1))]
     axes_orig = [i for i in range(ndim) if i not in source]
 
     k = 0
@@ -2001,9 +2000,9 @@ def rot90(a, k=1, axes=(0, 1)):
         _raise_type_error("tuple(ints) or list(ints) expected, but got ", axes)
     if len(axes) != 2:
         _raise_value_error("len(axes) must be 2.")
-    axis1, axis2 = axes[0], axes[1]
-    axis1 = _canonicalize_axis(axis1, a.ndim)
-    axis2 = _canonicalize_axis(axis2, a.ndim)
+    axis1_tmp, axis2_tmp = axes[0], axes[1]
+    axis1 = _canonicalize_axis(axis1_tmp, a.ndim)
+    axis2 = _canonicalize_axis(axis2_tmp, a.ndim)
     if axis1 == axis2:
         _raise_value_error('Axes must be different.')
 

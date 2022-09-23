@@ -384,9 +384,9 @@ def _add_unit_axes(shape, ndim, append=False):
     ndim_diff = ndim - len(shape)
     if ndim_diff > 0:
         if append:
-            shape = [i for i in shape] + [1]*ndim_diff
+            shape = list(shape) + [1] * ndim_diff
         else:
-            shape = [1]*ndim_diff + [i for i in shape]
+            shape = [1] * ndim_diff + list(shape)
     return tuple(shape)
 
 
@@ -432,9 +432,9 @@ def _list_comprehensions(obj, item=None, return_tuple=False, make_none=False):
     if make_none:
         res = [None for _ in lst]
     elif item is None:
-        res = [i for i in lst]
+        res = list(lst)
     else:
-        res = [item for i in lst]
+        res = [item for _ in lst]
     if return_tuple:
         return tuple(res)
     return res
