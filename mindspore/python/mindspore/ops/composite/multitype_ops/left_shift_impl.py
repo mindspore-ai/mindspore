@@ -14,8 +14,9 @@
 # ============================================================================
 
 """Implementation for internal polymorphism `left_shift` operations."""
+from __future__ import absolute_import
 from mindspore.ops.composite import base
-from ...operations import _inner_ops as inner
+from mindspore.ops.operations import _inner_ops as inner
 
 # left_shift is a metagraph object which will generate function according to input type
 # using ".register" decorator
