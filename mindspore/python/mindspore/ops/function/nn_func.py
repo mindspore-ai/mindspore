@@ -407,8 +407,8 @@ def dropout(x, p=0.5, seed0=0, seed1=0):
         x (Tensor): The input of Dropout, a Tensor of any shape with data type of float16 or float32.
         p (float): The dropping rate, between 0 and 1, e.g. p = 0.1,
             means dropping out 10% of input units. Default: 0.5.
-        seed0 (int): Seed0 value for random generating. Default: 0.
-        seed1 (int): Seed1 value for random generating. Default: 0.
+        seed0 (int): seed0 value for random generating. Default: 0.
+        seed1 (int): seed1 value for random generating. Default: 0.
 
     Returns:
         - **output** (Tensor) - With the same shape and data type as `x`.
@@ -416,7 +416,7 @@ def dropout(x, p=0.5, seed0=0, seed1=0):
 
     Raises:
         TypeError: If `p` is not a float.
-        TypeError: If `Seed0` or `Seed1` is not an int.
+        TypeError: If `seed0` or `seed1` is not an int.
         TypeError: If dtype of `x` is neither float16 nor float32.
         TypeError: If `x` is not a Tensor.
 
