@@ -885,6 +885,10 @@ def kl_div(logits, labels, reduction='mean'):
         >>> print(output)
         -0.23333333
     """
+    if not isinstance(reduction, str):
+        raise ValueError("For 'kl_div', the 'reduction' must be str and must be in "
+                         f"'['none', 'mean', 'batchmean', 'sum']', but got '{reduction}'.")
+
     if reduction == 'batchmean':
         kl_div_sum = P.KLDivLoss(reduction='sum')(logits, labels)
         shape = P.TensorShape()(logits)
