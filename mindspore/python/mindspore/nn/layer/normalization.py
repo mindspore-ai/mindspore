@@ -165,9 +165,6 @@ class _BatchNorm(Cell):
         self.assign_sub_mean = P.AssignSub().shard(data_parallel_strategy)
         self.assign_sub_var = P.AssignSub().shard(data_parallel_strategy)
 
-    def _check_data_dim(self, x):
-        raise NotImplementedError
-
     def list_group(self, world_rank, group_size):
         """ Check whether world_rank and group_size  are valid. """
         if group_size > get_group_size():
@@ -181,35 +178,6 @@ class _BatchNorm(Cell):
         world_rank_list = zip(*(iter(world_rank),) * group_size)
         group_list = [list(i) for i in world_rank_list]
         return group_list
-
-    def _check_rank_ids(self, process_groups, rank_size):
-        seen = set()
-        for rid in itertools.chain(*process_groups):
-            validator.check_int_range(rid, 0, rank_size, Rel.INC_LEFT, "rank id in process_groups", self.cls_name)
-            if rid in seen:
-                raise ValueError(f"For '{self.cls_name}', rank id in 'process_groups' must not be duplicated, "
-                                 f"but got {process_groups}.")
-            seen.add(rid)
-
-    def _create_global_groups(self):
-        for i in range(self.rank_list_idx):
-            if self.rank_id in self.rank_list[i]:
-                self.is_global = True
-                global SYNC_BN_GROUP_NAME
-                if SYNC_BN_GROUP_NAME == "":
-                    SYNC_BN_GROUP_NAME = "sync_bn_group%d" % i
-                    management.create_group(SYNC_BN_GROUP_NAME, self.rank_list[i])
-
-    def _create_sync_groups(self):
-        for i in range(len(self.process_groups)):
-            validator.check_isinstance("process_groups[%d]" % i, self.process_groups[i], list)
-            self.group_device_num = len(self.process_groups[i])
-            if self.rank_id in self.process_groups[i] and self.group_device_num > 1:
-                self.is_global = True
-                global SYNC_BN_GROUP_NAME
-                if SYNC_BN_GROUP_NAME == "":
-                    SYNC_BN_GROUP_NAME = "sync_bn_group%d" % i
-                    management.create_group(SYNC_BN_GROUP_NAME, self.process_groups[i])
 
     def construct(self, x):
         _shape_check_bn(self.shape(x), self.input_dims, self.cls_name)
@@ -243,6 +211,38 @@ class _BatchNorm(Cell):
     def extend_repr(self):
         return 'num_features={}, eps={}, momentum={}, gamma={}, beta={}, moving_mean={}, moving_variance={}'.format(
             self.num_features, self.eps, self.momentum, self.gamma, self.beta, self.moving_mean, self.moving_variance)
+
+    def _check_data_dim(self, x):
+        raise NotImplementedError
+
+    def _check_rank_ids(self, process_groups, rank_size):
+        seen = set()
+        for rid in itertools.chain(*process_groups):
+            validator.check_int_range(rid, 0, rank_size, Rel.INC_LEFT, "rank id in process_groups", self.cls_name)
+            if rid in seen:
+                raise ValueError(f"For '{self.cls_name}', rank id in 'process_groups' must not be duplicated, "
+                                 f"but got {process_groups}.")
+            seen.add(rid)
+
+    def _create_global_groups(self):
+        for i in range(self.rank_list_idx):
+            if self.rank_id in self.rank_list[i]:
+                self.is_global = True
+                global SYNC_BN_GROUP_NAME
+                if SYNC_BN_GROUP_NAME == "":
+                    SYNC_BN_GROUP_NAME = "sync_bn_group%d" % i
+                    management.create_group(SYNC_BN_GROUP_NAME, self.rank_list[i])
+
+    def _create_sync_groups(self):
+        for i in range(len(self.process_groups)):
+            validator.check_isinstance("process_groups[%d]" % i, self.process_groups[i], list)
+            self.group_device_num = len(self.process_groups[i])
+            if self.rank_id in self.process_groups[i] and self.group_device_num > 1:
+                self.is_global = True
+                global SYNC_BN_GROUP_NAME
+                if SYNC_BN_GROUP_NAME == "":
+                    SYNC_BN_GROUP_NAME = "sync_bn_group%d" % i
+                    management.create_group(SYNC_BN_GROUP_NAME, self.process_groups[i])
 
 
 @constexpr

@@ -14,9 +14,11 @@
 # ============================================================================
 
 """Registry the relation."""
-
 from __future__ import absolute_import
+from __future__ import division
+
 from collections import UserDict
+
 from mindspore.ops.primitive import Primitive
 
 

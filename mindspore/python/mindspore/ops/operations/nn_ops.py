@@ -14,10 +14,12 @@
 # ============================================================================
 
 """Operators for nn."""
-
 from __future__ import absolute_import
+from __future__ import division
+
 import math
 from functools import partial
+
 from mindspore import log as logger
 from mindspore._checkparam import _check_3d_int_or_tuple
 from mindspore import context

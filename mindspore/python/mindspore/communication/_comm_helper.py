@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """comm_helper"""
+from __future__ import absolute_import
+from __future__ import division
 
 import os
 from mindspore import context

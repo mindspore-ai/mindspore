@@ -13,8 +13,9 @@
 # limitations under the License.
 # ============================================================================
 
-"""Communication APIs.
-"""
+"""Communication APIs."""
+from __future__ import absolute_import
+from __future__ import division
 
 from mindspore.common import Tensor
 from mindspore._checkparam import Validator as validator
