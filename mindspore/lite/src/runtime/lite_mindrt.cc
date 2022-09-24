@@ -408,8 +408,10 @@ int MindrtInit() { return mindspore::Initialize("", "", "", ""); }
 
 void MindrtTerminate(const std::vector<std::shared_ptr<LiteOpActor>> &actor_list,
                      const std::shared_ptr<ActorMgr> &actor_mgr) {
+  MS_LOG(INFO) << "start terminating mindrt.";
   for (const auto &actor : actor_list) {
     mindspore::Terminate(actor->GetAID(), actor_mgr);
   }
+  MS_LOG(INFO) << "successfully terminated mindrt.";
 }
 }  // namespace mindspore::lite
