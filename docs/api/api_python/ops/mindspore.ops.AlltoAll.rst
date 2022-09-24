@@ -21,5 +21,17 @@ mindspore.ops.AlltoAll
         - **concat_dim** (int) - 在每个进程上，沿着 `concat_dimension` 拼接接收到的块（blocks）。
         - **group** (str) - AlltoAll的通信域。默认值："GlobalComm.WORLD_COMM_GROUP"。
 
+    输入:
+        - **input_x** (Tensor) - shape为 :math:`(x_1, x_2, ..., x_R)`。
+
+    输出:
+        Tensor，设输入的shape是 :math:`(x_1, x_2, ..., x_R)`，则输出的shape为 :math:`(y_1, y_2, ..., y_R)，其中：
+
+        :math:`y_{split\_dim} = x_{split\_dim} / split\_count`
+
+        :math:`y_{concat\_dim} = x_{concat\_dim} * split\_count`
+
+        :math:`y_other = x_other`.
+
     异常：
         - **TypeError** - 如果 `group` 不是字符串。
