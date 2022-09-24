@@ -21,7 +21,9 @@
 #include <limits>
 #include <string>
 #include <utility>
+#include <functional>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "mindspore/ccsrc/distributed/embedding_cache/embedding_cache_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -60,6 +62,9 @@ int ScatterArithmeticCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
     size_tmp *= indices_shape[i];
   }
   indices_size_ = LongToSize(size_tmp);
+
+  use_embedding_cache_ = GetValue<bool>(base_operator->GetAttr(kAttrUseEmbeddingStore));
+  parameter_key_ = GetValue<int64_t>(base_operator->GetAttr(kAttrParameterKey));
   return KRET_OK;
 }
 
@@ -102,6 +107,19 @@ bool ScatterArithmeticCpuKernelMod::LaunchKernel(const std::vector<kernel::Addre
       }
     }
   } else {
+    // A temporary solution to support external storage for embedding cache. Parameter Server use "ScatterUpdate" kernel
+    // to update embedding cache at server. So we need use this kernel to update embedding cache by embedding store.
+    // We will create a new kernel to support this feature in future.
+    if (kernel_name_ == "ScatterUpdate" && use_embedding_cache_) {
+      auto embedding_store = embedding_store_manager.Get(std::to_string(parameter_key_));
+      MS_ERROR_IF_NULL(embedding_store);
+      if (!embedding_store->Put(input, indices_size_, indices, updates)) {
+        MS_LOG(ERROR) << "For '" << kernel_name_ << "', for embedding cache failed for parameter: " << parameter_key_;
+        return false;
+      }
+      return true;
+    }
+
     for (size_t i = 0; i < indices_size_; i++) {
       auto base_index_updates = i * inner_size_;
       auto base_index_input = indices[i] * inner_size_;

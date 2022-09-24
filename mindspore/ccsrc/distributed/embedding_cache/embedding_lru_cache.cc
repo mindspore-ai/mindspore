@@ -18,10 +18,15 @@
 
 namespace mindspore {
 namespace distributed {
-bool EmbeddingLRUCache::Initialize(size_t capacity) {
-  capacity_ = capacity;
-  keys_lru_cache_ = std::make_unique<KeysLRUCache>(capacity_);
+template <typename K, typename V>
+bool EmbeddingLRUCache<K, V>::Initialize() {
+  keys_lru_cache_ = std::make_unique<LRUCache<K, size_t>>(capacity_);
   return true;
 }
+
+template class EmbeddingLRUCache<size_t, float>;
+template class EmbeddingLRUCache<size_t, double>;
+template class EmbeddingLRUCache<size_t, int64_t>;
+template class EmbeddingLRUCache<size_t, size_t>;
 }  // namespace distributed
 }  // namespace mindspore

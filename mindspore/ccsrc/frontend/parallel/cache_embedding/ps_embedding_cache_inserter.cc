@@ -26,6 +26,9 @@
 #include "include/common/utils/utils.h"
 #include "utils/ms_context.h"
 
+#include "mindspore/ccsrc/distributed/embedding_cache/embedding_cache_utils.h"
+#include "mindspore/ccsrc/distributed/embedding_cache/embedding_store.h"
+
 namespace mindspore {
 namespace parallel {
 // One dimensional shape placeholder.
@@ -49,6 +52,7 @@ constexpr size_t kEmbeddingTableDims = 2;
 
 constexpr char kEmbeddingRemoteCacheNode[] = "EmbeddingRemoteCacheNode";
 constexpr char kEmbeddingLocalCacheNode[] = "EmbeddingLocalCacheNode";
+
 namespace {
 ValueNodePtr CreateFakeValueNode(const AnfNodePtr &origin_node) {
   MS_EXCEPTION_IF_NULL(origin_node);
@@ -294,6 +298,11 @@ FuncGraphPtr PsEmbeddingCacheInserter::ConstructEmbeddingLookupSubGraph(const An
   common::AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), embedding_cache_lookup_node);
   common::AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(true), embedding_cache_lookup_node);
 
+  if (embedding_store_manager.IsExists(std::to_string(param_key))) {
+    common::AnfAlgo::SetNodeAttr(kAttrUseEmbeddingStore, MakeValue(true), embedding_cache_lookup_node);
+    common::AnfAlgo::SetNodeAttr(kAttrParameterKey, MakeValue(param_key), embedding_cache_lookup_node);
+  }
+
   // 3. Create RpcSend node.
   std::vector<AnfNodePtr> send_inputs = {NewValueNode(std::make_shared<Primitive>(kRpcSendOpName))};
   send_inputs.push_back(embedding_cache_lookup_node);
@@ -316,7 +325,8 @@ FuncGraphPtr PsEmbeddingCacheInserter::ConstructEmbeddingLookupSubGraph(const An
 }
 
 FuncGraphPtr PsEmbeddingCacheInserter::ConstructUpdateEmbeddingSubGraph(const ParameterPtr &param,
-                                                                        const AnfNodePtr &node) const {
+                                                                        const AnfNodePtr &node,
+                                                                        int32_t param_key) const {
   MS_EXCEPTION_IF_NULL(param);
   MS_EXCEPTION_IF_NULL(node);
 
@@ -358,6 +368,11 @@ FuncGraphPtr PsEmbeddingCacheInserter::ConstructUpdateEmbeddingSubGraph(const Pa
   auto embedding_cache_update_node = graph->NewCNode(embedding_cache_update_inputs);
   MS_EXCEPTION_IF_NULL(embedding_cache_update_node);
   common::AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), embedding_cache_update_node);
+
+  if (embedding_store_manager.IsExists(std::to_string(param_key))) {
+    common::AnfAlgo::SetNodeAttr(kAttrUseEmbeddingStore, MakeValue(true), embedding_cache_update_node);
+    common::AnfAlgo::SetNodeAttr(kAttrParameterKey, MakeValue(param_key), embedding_cache_update_node);
+  }
 
   // 3. Create return node.
   CNodePtr return_node = CreateReturnNode(graph, embedding_cache_update_node);
@@ -453,7 +468,7 @@ bool PsEmbeddingCacheInserter::ConstructEmbeddingCacheServicesSubGraphs(
     make_tuple_inputs->push_back(emb_lookup_partial_node);
 
     // 2. Construct updating embedding service sub graph.
-    auto update_emb_sub_graph = ConstructUpdateEmbeddingSubGraph(param, node);
+    auto update_emb_sub_graph = ConstructUpdateEmbeddingSubGraph(param, node, key);
     MS_EXCEPTION_IF_NULL(update_emb_sub_graph);
     auto update_emb_graph_value = NewValueNode(update_emb_sub_graph);
     MS_EXCEPTION_IF_NULL(update_emb_graph_value);
@@ -523,12 +538,47 @@ bool PsEmbeddingCacheInserter::ConstructEmbeddingCacheGraph() const {
   return graph_manager->Replace(root_graph_->output(), final_output_node);
 }
 
+void PsEmbeddingCacheInserter::BuildEmbeddingStores() {
+  for (const auto &item : keys_to_params_) {
+    int32_t key = item.first;
+    ParameterPtr param = item.second;
+    MS_EXCEPTION_IF_NULL(param);
+
+    auto param_info = param->param_info();
+    MS_EXCEPTION_IF_NULL(param_info);
+    if (!param_info->use_persistent_storage()) {
+      MS_LOG(INFO) << "No need to use embedding store for this parameter(key): " << key;
+      return;
+    }
+
+    const std::vector<int64_t> &slice_shape = param_info->parameter_persistent_slice_shape();
+    if (slice_shape.size() != kEmbeddingTableDims) {
+      MS_LOG(EXCEPTION)
+        << "When build Embedding store, Embedding table should be 2 dims for embedding cache mode, but got: "
+        << slice_shape.size() << " dims, param name: " << param->name() << ", param key: " << key;
+    }
+    size_t capacity = LongToSize(slice_shape.front());
+    size_t emb_dim = LongToSize(slice_shape.back());
+
+    auto emb_store = std::make_shared<distributed::EmbeddingStore<size_t, float_t>>(capacity, emb_dim);
+    MS_EXCEPTION_IF_NULL(emb_store);
+    if (!emb_store->Initialize()) {
+      MS_LOG(EXCEPTION) << "Failed to Initialize for parameter(key): " << key;
+    }
+    embedding_store_manager.Add(std::to_string(key), emb_store);
+  }
+}
+
 bool PsEmbeddingCacheInserter::Run() {
   // Get EmbeddingLookup nodes which are executed on server from origin function graph.
   GetEmbeddingLookupNodes();
 
   // Get parameters enabled embedding cache of origin function graph.
   GetCacheEnableParameters();
+
+  // Build Embedding store for parameters enabled embedding cache to read/write embedding table from/to persistent
+  // storage.
+  BuildEmbeddingStores();
 
   // Construct the embedding cache graph of server.
   RETURN_IF_FALSE_WITH_LOG(ConstructEmbeddingCacheGraph(), "Construct embedding cache graph failed.");

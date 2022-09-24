@@ -17,6 +17,7 @@
 #include "plugin/device/cpu/kernel/embedding_look_up_cpu_kernel.h"
 #include "mindspore/core/ops/embedding_lookup.h"
 #include "utils/check_convert_utils.h"
+#include "mindspore/ccsrc/distributed/embedding_cache/embedding_cache_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -193,6 +194,8 @@ int EmbeddingLookUpCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
       offset_ = GetValue<int64_t>(value_ptr);
     }
   }
+  use_embedding_cache_ = GetValue<bool>(base_operator->GetAttr(kAttrUseEmbeddingStore));
+  parameter_key_ = GetValue<int64_t>(base_operator->GetAttr(kAttrParameterKey));
   return KRET_OK;
 }
 
@@ -206,6 +209,21 @@ bool EmbeddingLookUpCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
     G *input_offset_addr = reinterpret_cast<G *>(inputs[2]->addr);
     memcpy(&offset_, input_offset_addr, sizeof(G));
   }
+
+  // A temporary solution to support external storage for embedding cache. Parameter Server use "EmbeddingLookUp" kernel
+  // to lookup embedding cache at server. So we need use this kernel to lookup embedding cache by embedding store.
+  // We will create a new kernel to support this feature in future.
+  if (use_embedding_cache_) {
+    auto embedding_store = embedding_store_manager.Get(std::to_string(parameter_key_));
+    MS_ERROR_IF_NULL(embedding_store);
+
+    if (!embedding_store->Get(input_params_addr, input_indices_lens_, input_indices_addr, output_addr)) {
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', for embedding cache failed for parameter: " << parameter_key_;
+      return false;
+    }
+    return true;
+  }
+
   auto task = [&](size_t start, size_t end) {
     size_t task_proc_lens = end - start;
     LookUpTableTask<T, S>(input_params_addr, input_indices_addr + start, output_addr + start * outer_dim_size_,
