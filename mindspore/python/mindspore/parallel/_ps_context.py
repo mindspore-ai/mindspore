@@ -108,7 +108,7 @@ def _set_ps_context(**kwargs):
             MS_ROLE        # The role of this process:
                            # MS_SCHED represents the scheduler,
                            # MS_WORKER represents the worker,
-                           # MS_PSERVER represents the Server
+                           # MS_PSERVER/MS_SERVER represents the Server
 
 
     Args:
