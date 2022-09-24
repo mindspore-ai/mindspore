@@ -361,7 +361,7 @@ ShapeVector ConvertTensorListToShapeVector(const tensor::TensorPtrList &tensor_l
     return shape;
   }
 
-  auto converter = [](tensor::TensorPtr tensorptr) {
+  auto converter = [](const tensor::TensorPtr tensorptr) {
     MS_EXCEPTION_IF_NULL(tensorptr);
     if (tensorptr->DataDim() != 0) {
       MS_LOG(EXCEPTION) << "Element must be scalar!";

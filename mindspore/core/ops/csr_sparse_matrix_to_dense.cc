@@ -64,7 +64,7 @@ abstract::ShapePtr CSRSparseMatrixToDenseInferShape(const PrimitivePtr &primitiv
        input_args[kInputIndex0]->BuildValue()->isa<None>())) {
     ShapeVector dense_shape;
     auto shape_size = d_shape_shape[kZero];
-    dense_shape.resize(shape_size, kMinusOne);
+    dense_shape.resize(static_cast<size_t>(shape_size), kMinusOne);
     return std::make_shared<abstract::Shape>(dense_shape);
   }
   // Static Shape
