@@ -18,6 +18,7 @@ import numpy as np
 import pytest
 
 from mindspore import Tensor
+from mindspore import dtype as msdtype
 import mindspore.context as context
 import mindspore.nn as nn
 import mindspore.ops.operations as P
@@ -31,7 +32,8 @@ class AvgPool(nn.Cell):
     def __init__(self, dim, kernel_size, strides, pad_mode, count_include_pad=False):
         super(AvgPool, self).__init__()
         if dim == 2:
-            self.avgpool = P.AvgPool(kernel_size=kernel_size, strides=strides, pad_mode=pad_mode)
+            self.avgpool = P.AvgPool(
+                kernel_size=kernel_size, strides=strides, pad_mode=pad_mode)
         else:
             self.avgpool = P.AvgPool3D(kernel_size=kernel_size, strides=strides, pad_mode=pad_mode,
                                        count_include_pad=count_include_pad)
@@ -73,7 +75,8 @@ def test_avgpool2d_valid():
     assert (actual_output.asnumpy() == expect_output).all()
 
     avgpool_grad = AvgPoolGrad(avgpool)
-    sens = Tensor(np.arange(1, 10).reshape(actual_output.shape).astype(np.float32))
+    sens = Tensor(np.arange(1, 10).reshape(
+        actual_output.shape).astype(np.float32))
     actual_grad = avgpool_grad(x, sens)
     expect_grad = np.array([[[[0.25, 0.25, 0.5, 0.5, 0.75, 0.75],
                               [0.25, 0.25, 0.5, 0.5, 0.75, 0.75],
@@ -107,12 +110,16 @@ def test_avgpool2d_same():
     assert (actual_output.asnumpy() == expect_output).all()
 
     avgpool_grad = AvgPoolGrad(avgpool)
-    sens = Tensor(np.arange(1, 10).reshape(actual_output.shape).astype(np.float32))
+    sens = Tensor(np.arange(1, 10).reshape(
+        actual_output.shape).astype(np.float32))
     actual_grad = avgpool_grad(x, sens)
     expect_grad = np.array([[[[0.11111111, 0.11111111, 0.33333334, 0.22222222, 0.7222222, 0.5],
-                              [0.11111111, 0.11111111, 0.33333334, 0.22222222, 0.7222222, 0.5],
-                              [0.5555556, 0.5555556, 1.3333334, 0.7777778, 2.2777777, 1.5],
-                              [0.44444445, 0.44444445, 1., 0.5555556, 1.5555556, 1.],
+                              [0.11111111, 0.11111111, 0.33333334,
+                               0.22222222, 0.7222222, 0.5],
+                              [0.5555556, 0.5555556, 1.3333334,
+                               0.7777778, 2.2777777, 1.5],
+                              [0.44444445, 0.44444445, 1.,
+                               0.5555556, 1.5555556, 1.],
                               [1.611111, 1.611111, 3.5, 1.888889, 5.138889, 3.25],
                               [1.1666666, 1.1666666, 2.5, 1.3333334, 3.5833335, 2.25]]]]).astype(np.float32)
     assert (actual_grad[0].asnumpy() == expect_grad).all()
@@ -128,8 +135,10 @@ def test_avgpool3d_1():
     Expectation: expect correct forward and backward result.
     """
     x_shape = (1, 3, 2, 3, 4)
-    x = Tensor(np.arange(reduce(lambda x, y: x * y, x_shape))).reshape(x_shape).astype(np.float32)
-    avgpool = AvgPool(dim=3, kernel_size=(2, 2, 3), strides=1, pad_mode='VALID')
+    x = Tensor(np.arange(reduce(lambda x, y: x * y, x_shape))
+               ).reshape(x_shape).astype(np.float32)
+    avgpool = AvgPool(dim=3, kernel_size=(2, 2, 3),
+                      strides=1, pad_mode='VALID')
     actual_output = avgpool(x)
     expect_output = np.array([[[[[9., 10.],
                                  [13., 14.]]],
@@ -173,7 +182,8 @@ def test_avgpool3d_2():
     Expectation: expect correct forward and backward result.
     """
     x_shape = (1, 3, 2, 3, 4)
-    x = Tensor(np.arange(reduce(lambda x, y: x * y, x_shape))).reshape(x_shape).astype(np.float32)
+    x = Tensor(np.arange(reduce(lambda x, y: x * y, x_shape))
+               ).reshape(x_shape).astype(np.float32)
     avgpool = AvgPool(dim=3, kernel_size=2, strides=1, pad_mode='VALID')
     actual_output = avgpool(x)
     expect_output = np.array([[[[[8.5, 9.5, 10.5],
@@ -218,7 +228,8 @@ def test_avgpool3d_3():
     Expectation: expect correct forward and backward result.
     """
     x_shape = (1, 3, 2, 3, 4)
-    x = Tensor(np.arange(reduce(lambda x, y: x * y, x_shape))).reshape(x_shape).astype(np.float32)
+    x = Tensor(np.arange(reduce(lambda x, y: x * y, x_shape))
+               ).reshape(x_shape).astype(np.float32)
     avgpool = AvgPool(dim=3, kernel_size=2, strides=3, pad_mode='VALID')
     actual_output = avgpool(x)
     expect_output = np.array([[[[[8.5]]],
@@ -260,8 +271,10 @@ def test_avgpool3d_4():
     Expectation: expect correct forward and backward result.
     """
     x_shape = (1, 3, 2, 3, 4)
-    x = Tensor(np.arange(reduce(lambda x, y: x * y, x_shape))).reshape(x_shape).astype(np.float32)
-    avgpool = AvgPool(dim=3, kernel_size=(2, 2, 3), strides=1, pad_mode='SAME', count_include_pad=False)
+    x = Tensor(np.arange(reduce(lambda x, y: x * y, x_shape))
+               ).reshape(x_shape).astype(np.float32)
+    avgpool = AvgPool(dim=3, kernel_size=(2, 2, 3), strides=1,
+                      pad_mode='SAME', count_include_pad=False)
     actual_output = avgpool(x)
     expect_output = np.array([[[[[8.5, 9., 10., 10.5],
                                  [12.5, 13., 14., 14.5],
@@ -307,7 +320,7 @@ def test_avgpool3d_4():
     assert np.allclose(actual_grad[0].asnumpy(), expect_grad)
 
 
-def test_avg_pool1d_forward_functional(nptype):
+def avg_pool1d_forward_functional(nptype):
     """
     Feature: test avg_pool1d forward for given input dtype.
     Description: test inputs for given input dtype.
@@ -329,12 +342,12 @@ def test_avg_pool1d_forward_float32_functional():
     Expectation: the result match with expected result.
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    test_avg_pool1d_forward_functional(np.float32)
+    avg_pool1d_forward_functional(np.float32)
     context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
-    test_avg_pool1d_forward_functional(np.float32)
+    avg_pool1d_forward_functional(np.float32)
 
 
-def test_avg_pool2d_forward_functional(nptype):
+def avg_pool2d_forward_functional(nptype):
     """
     Feature: test avg_pool2d forward for given input dtype.
     Description: test inputs for given input dtype.
@@ -356,12 +369,12 @@ def test_avg_pool2d_forward_float32_functional():
     Expectation: the result match with expected result.
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    test_avg_pool2d_forward_functional(np.float32)
+    avg_pool2d_forward_functional(np.float32)
     context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
-    test_avg_pool2d_forward_functional(np.float32)
+    avg_pool2d_forward_functional(np.float32)
 
 
-def test_avg_pool3d_forward_functional(nptype):
+def avg_pool3d_forward_functional(nptype):
     """
     Feature: test avg_pool3d forward for given input dtype.
     Description: test inputs for given input dtype.
@@ -383,12 +396,25 @@ def test_avg_pool3d_forward_float32_functional():
     Expectation: the result match with expected result.
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    test_avg_pool3d_forward_functional(np.float32)
+    avg_pool3d_forward_functional(np.float32)
     context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
-    test_avg_pool3d_forward_functional(np.float32)
+    avg_pool3d_forward_functional(np.float32)
 
 
-if __name__ == '__main__':
-    test_avg_pool1d_forward_float32_functional()
-    test_avg_pool2d_forward_float32_functional()
-    test_avg_pool3d_forward_float32_functional()
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_avgpool_cpu_dynamic_shape():
+    """
+    Feature: test dynamic shape of avgpool.
+    Description: test the dynamic shape output of avgpool.
+    Expectation: correct output shape.
+    """
+
+    x_dyn = Tensor(shape=[None, 32, None, None], dtype=msdtype.float32)
+    net = AvgPool(dim=2, kernel_size=2, strides=2, pad_mode="VALID")
+    net.set_inputs(x_dyn)
+    x = np.random.randn(2, 32, 9, 9)
+    output = net(Tensor(x, msdtype.float32))
+    expect_out_shape = (2, 32, 4, 4)
+    assert output.asnumpy().shape == expect_out_shape

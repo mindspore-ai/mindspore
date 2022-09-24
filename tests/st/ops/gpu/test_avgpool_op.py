@@ -403,7 +403,7 @@ def test_avgpool3d_grad_dynamic_shape():
     assert np.allclose(actual_grad[0].asnumpy(), expect_grad)
 
 
-def test_avg_pool1d_forward_functional(nptype):
+def avg_pool1d_forward_functional(nptype):
     """
     Feature: test avg_pool1d forward for given input dtype.
     Description: test inputs for given input dtype.
@@ -425,12 +425,12 @@ def test_avg_pool1d_forward_float32_functional():
     Expectation: the result match with expected result.
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    test_avg_pool1d_forward_functional(np.float32)
+    avg_pool1d_forward_functional(np.float32)
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-    test_avg_pool1d_forward_functional(np.float32)
+    avg_pool1d_forward_functional(np.float32)
 
 
-def test_avg_pool2d_forward_functional(nptype):
+def avg_pool2d_forward_functional(nptype):
     """
     Feature: test avg_pool2d forward for given input dtype.
     Description: test inputs for given input dtype.
@@ -452,12 +452,12 @@ def test_avg_pool2d_forward_float32_functional():
     Expectation: the result match with expected result.
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    test_avg_pool2d_forward_functional(np.float32)
+    avg_pool2d_forward_functional(np.float32)
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-    test_avg_pool2d_forward_functional(np.float32)
+    avg_pool2d_forward_functional(np.float32)
 
 
-def test_avg_pool3d_forward_functional(nptype):
+def avg_pool3d_forward_functional(nptype):
     """
     Feature: test avg_pool3d forward for given input dtype.
     Description: test inputs for given input dtype.
@@ -479,6 +479,6 @@ def test_avg_pool3d_forward_float32_functional():
     Expectation: the result match with expected result.
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    test_avg_pool3d_forward_functional(np.float32)
+    avg_pool3d_forward_functional(np.float32)
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-    test_avg_pool3d_forward_functional(np.float32)
+    avg_pool3d_forward_functional(np.float32)

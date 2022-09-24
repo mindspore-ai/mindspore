@@ -76,6 +76,8 @@ static std::map<std::string, int64_t> PadModToEnumUpperMap = {
   {"PAD", PadMode::PAD},
   {"SAME", PadMode::SAME},
   {"VALID", PadMode::VALID},
+  // this should be removed, cause some op change "PAD" to "CALCULATED" in python.
+  {"CALCULATED", PadMode::PAD},
 };
 
 static std::map<int64_t, std::string> PadModToStrUpperMap = {

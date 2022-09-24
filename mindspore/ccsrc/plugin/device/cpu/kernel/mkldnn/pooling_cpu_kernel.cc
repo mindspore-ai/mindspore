@@ -17,7 +17,6 @@
 #include "plugin/device/cpu/kernel/mkldnn/pooling_cpu_kernel.h"
 
 #include <string>
-#include <algorithm>
 #include <functional>
 #include "utils/ms_utils.h"
 
@@ -28,10 +27,12 @@ constexpr size_t kPoolingInputsNum = 1;
 constexpr size_t kPoolingOutputsNum = 1;
 }  // namespace
 
-void PoolingCpuKernelMod::InitPoolingFields(const CNodePtr &kernel_node) {
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  PrimitivePtr prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
+bool PoolingCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                               const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  PrimitivePtr prim = base_operator->GetPrim();
   MS_EXCEPTION_IF_NULL(prim);
+  kernel_name_ = prim->name();
   if (prim->HasAttr(CEIL_MODE)) {
     ValuePtr ceil_mode = prim->GetAttr(CEIL_MODE);
     ceil_mode_ = (ceil_mode->isa<BoolImm>() && GetValue<bool>(ceil_mode)) ||
@@ -46,48 +47,57 @@ void PoolingCpuKernelMod::InitPoolingFields(const CNodePtr &kernel_node) {
       divisor_override_ = GetValue<int64_t>(prim->GetAttr(DIVISOR_OVERRIDE));
     }
   }
-  dst_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
+  format_ = GetValue<std::string>(prim->GetAttr(FORMAT));
+  pad_mode_ = GetValue<std::string>(prim->GetAttr(PAD_MODE));
+  kernel_include_nc_ = GetValue<std::vector<int64_t>>(prim->GetAttr(KERNEL_SIZE));
+  strides_include_nc_ = GetValue<std::vector<int64_t>>(prim->GetAttr(STRIDES));
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kPoolingInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kPoolingOutputsNum, kernel_name_);
+  return true;
 }
 
-void PoolingCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  InitPoolingFields(kernel_node);
-  auto src_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  const size_t src_dim = src_shape.size();
-  if (AnfAlgo::IsShapesDynamic({src_shape, dst_shape_})) {
-    return;
+int PoolingCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                const std::vector<KernelTensorPtr> &outputs,
+                                const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
   }
+  auto src_shape = inputs[0]->GetDeviceShapeAdaptively();
+  dst_shape_ = outputs[0]->GetDeviceShapeAdaptively();
+  const size_t src_dim = src_shape.size();
   if (src_dim != SHAPE_4D && src_dim != SHAPE_5D) {
-    MS_LOG(EXCEPTION) << "Pooling only supports 4D/5D input, but got " << src_dim << "D!";
+    MS_LOG(ERROR) << "Pooling only supports 4D/5D input, but got " << src_dim << "D!";
+    return KRET_RESIZE_FAILED;
   }
   const dnnl::memory::desc src_desc = GetDefaultMemDesc(src_shape);
   const dnnl::memory::desc dst_desc = GetDefaultMemDesc(dst_shape_);
-  const auto format = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, FORMAT);
-  if (src_dim == SHAPE_4D && format != NCHW) {
-    MS_LOG(EXCEPTION) << kernel_name_ << " only supports 4D input with NCHW format, but got format " << format;
+  if (src_dim == SHAPE_4D && format_ != NCHW) {
+    MS_LOG(ERROR) << kernel_name_ << " only supports 4D input with NCHW format, but got format " << format_;
+    return KRET_RESIZE_FAILED;
   }
-  if (src_dim == SHAPE_5D && format != NCDHW) {
-    MS_LOG(EXCEPTION) << kernel_name_ << " only supports 5D input with NCDHW format, but got format " << format;
+  if (src_dim == SHAPE_5D && format_ != NCDHW) {
+    MS_LOG(ERROR) << kernel_name_ << " only supports 5D input with NCDHW format, but got format " << format_;
+    return KRET_RESIZE_FAILED;
   }
-  const auto pad_mode = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, PAD_MODE);
-  const auto kernel_include_nc = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, KERNEL_SIZE);
-  const auto strides_include_nc = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, STRIDES);
-  if (kernel_include_nc.size() != src_dim) {
-    MS_LOG(EXCEPTION) << kernel_name_ << " requires kernel_size must be " << src_dim << "D, but got "
-                      << kernel_include_nc.size() << "D!";
+  if (kernel_include_nc_.size() != src_dim) {
+    MS_LOG(ERROR) << kernel_name_ << " requires kernel_size must be " << src_dim << "D, but got "
+                  << kernel_include_nc_.size() << "D!";
+    return KRET_RESIZE_FAILED;
   }
-  if (strides_include_nc.size() != src_dim) {
-    MS_LOG(EXCEPTION) << kernel_name_ << " requires strides must be " << src_dim << "D, but got "
-                      << strides_include_nc.size() << "D!";
+  if (strides_include_nc_.size() != src_dim) {
+    MS_LOG(ERROR) << kernel_name_ << " requires strides must be " << src_dim << "D, but got "
+                  << strides_include_nc_.size() << "D!";
+    return KRET_RESIZE_FAILED;
   }
-  const dnnl::memory::dims kernel(kernel_include_nc.begin() + NC_LEN, kernel_include_nc.end());
-  const dnnl::memory::dims strides(strides_include_nc.begin() + NC_LEN, strides_include_nc.end());
+  const dnnl::memory::dims kernel(kernel_include_nc_.begin() + NC_LEN, kernel_include_nc_.end());
+  const dnnl::memory::dims strides(strides_include_nc_.begin() + NC_LEN, strides_include_nc_.end());
   const dnnl::memory::dims dilation(kernel.size(), kPoolingDilation);
   dnnl::memory::dims padding_l;
   dnnl::memory::dims padding_r;
   kernel_ = kernel;
-  PaddingInfo padding_info{pad_mode, kernel_, strides, dilation, &padding_l, &padding_r, &padding_invalid_, ceil_mode_};
-  GetPadding(kernel_node, src_shape, padding_info);
+  PaddingInfo padding_info{pad_mode_,  kernel_,    strides,           dilation,
+                           &padding_l, &padding_r, &padding_invalid_, ceil_mode_};
+  GetPadding(base_operator, src_shape, padding_info);
 
   const auto desc = CreateDesc<dnnl::pooling_forward::desc>(dnnl::prop_kind::forward_inference, algorithm_, src_desc,
                                                             dst_desc, strides, kernel, padding_l, padding_r);
@@ -95,6 +105,12 @@ void PoolingCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   primitive_ = CreatePrimitive<dnnl::pooling_forward>(prim_desc);
   AddArgument(DNNL_ARG_SRC, src_desc);
   AddArgument(DNNL_ARG_DST, dst_desc);
+
+  base_operator_ = base_operator;
+  inputs_ = inputs;
+  outputs_ = outputs;
+  inputs_on_host_ = inputsOnHost;
+  return KRET_OK;
 }
 
 void PoolingCpuKernelMod::EliminateInvalidPadding(float *dst) {
@@ -176,6 +192,18 @@ bool PoolingCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, 
                                  const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kPoolingInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kPoolingOutputsNum, kernel_name_);
+
+  // From CPUKernelExecutor::LaunchKernel
+  if (!Init(base_operator_, inputs_, outputs_)) {
+    MS_LOG(ERROR) << "Re-init PoolingCpuKernelMod while launching failed";
+    return false;
+  }
+  auto resize_ret = Resize(base_operator_, inputs_, outputs_, inputs_on_host_);
+  if (resize_ret != KRET_OK) {
+    MS_LOG(ERROR) << "Resize PoolingCpuKernelMod while launching failed: " << resize_ret;
+    return false;
+  }
+
   SetArgumentHandle(DNNL_ARG_SRC, inputs[0]->addr);
   SetArgumentHandle(DNNL_ARG_DST, outputs[0]->addr);
   ExecutePrimitive();
