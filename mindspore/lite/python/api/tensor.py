@@ -156,7 +156,7 @@ class Tensor:
     The Tensor class defines a tensor in MindSporeLite.
 
     Args:
-        tensor(Tensor): The data to be stored in a new tensor. It can be another Tensor. Default: None.
+        tensor(Tensor, optional): The data to be stored in a new tensor. It can be another Tensor. Default: None.
 
     Raises:
         TypeError: `tensor` is neither a Tensor nor None.

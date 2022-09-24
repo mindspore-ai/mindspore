@@ -31,7 +31,7 @@ class TransformToBNN:
 
     Args:
         trainable_dnn (Cell): A trainable DNN model (backbone) wrapped by TrainOneStepCell.
-        dnn_factor ((int, float): The coefficient of backbone's loss, which is computed by loss function. Default: 1.
+        dnn_factor (int, float): The coefficient of backbone's loss, which is computed by loss function. Default: 1.
         bnn_factor (int, float): The coefficient of KL loss, which is KL divergence of Bayesian layer. Default: 1.
 
     Supported Platforms:
