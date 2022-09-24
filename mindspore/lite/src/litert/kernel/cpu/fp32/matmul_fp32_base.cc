@@ -511,16 +511,18 @@ int MatmulFp32BaseCPUKernel::ReSize() {
 int MatmulFp32BaseCPUKernel::InitBroadcastParams(const std::vector<int> &a_shape_const,
                                                  const std::vector<int> &b_shape_const, MatMulParameter *params,
                                                  std::vector<int> *a_offsets, std::vector<int> *b_offsets) {
+  size_t max_dim_size = std::max(a_shape_const.size(), b_shape_const.size());
+  max_dim_size = std::max(max_dim_size, static_cast<size_t>(kNCHWDimNumber));
   std::vector<int> a_shape = a_shape_const;
-  if (a_shape.size() < kNCHWDimNumber) {
-    size_t add_nums = kNCHWDimNumber - a_shape.size();
+  if (a_shape.size() < max_dim_size) {
+    size_t add_nums = max_dim_size - a_shape.size();
     for (size_t i = 0; i < add_nums; ++i) {
       (void)a_shape.insert(a_shape.begin(), 1);
     }
   }
   std::vector<int> b_shape = b_shape_const;
-  if (b_shape.size() < kNCHWDimNumber) {
-    size_t add_nums = kNCHWDimNumber - b_shape.size();
+  if (b_shape.size() < max_dim_size) {
+    size_t add_nums = max_dim_size - b_shape.size();
     for (size_t i = 0; i < add_nums; ++i) {
       (void)b_shape.insert(b_shape.begin(), 1);
     }

@@ -56,6 +56,36 @@ int Fp32Relu6(const float *src, int length, float *dst) {
   return NNACL_OK;
 }
 
+int Fp32Clip(const float *src, int length, float *dst, float min, float max) {
+  int i = 0;
+
+  SIMD_RUN_NO_SCALAR(Fp32Clip, i, src, length, dst, min, max);
+
+  for (; i < length; ++i) {
+    if (src[i] < min) {
+      dst[i] = min;
+    } else {
+      dst[i] = src[i] > max ? max : src[i];
+    }
+  }
+  return NNACL_OK;
+}
+
+int Int32Clip(const int *src, int length, int *dst, int min, int max) {
+  int i = 0;
+
+  SIMD_RUN_NO_SCALAR(Int32Clip, i, src, length, dst, min, max);
+
+  for (; i < length; ++i) {
+    if (src[i] < min) {
+      dst[i] = min;
+    } else {
+      dst[i] = src[i] > max ? max : src[i];
+    }
+  }
+  return NNACL_OK;
+}
+
 int LRelu(const float *src, int length, float *dst, float alpha) {
   int i = 0;
 
