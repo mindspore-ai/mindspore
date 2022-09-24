@@ -44,7 +44,8 @@ class Msadvisor:
         logger.info("MSAdvisor is running. Log and result files are saved in %s", output_path)
 
         try:
-            running_result = subprocess.run(["msadvisor", "-d", output_path, "-c", "all"], capture_output=True)
+            running_result = subprocess.run(["msadvisor", "-d", output_path, "-c", "all"],
+                                            capture_output=True, check=True)
         except FileNotFoundError as err:
             logger.warning("MSAdvisor: command not found,"
                            "please check if installed ascend-toolkit and set environment path correctly.")
