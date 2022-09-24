@@ -3,7 +3,7 @@ mindspore.ops.isclose
 
 .. py:function:: mindspore.ops.isclose(x1, x2, rtol=1e-05, atol=1e-08, equal_nan=False)
 
-    返回一个布尔型Tensor，表示 `x1` 的每个元素与 `x2` 的对应元素在给定容忍度内是否“接近”，其中“接近”的数学公式为：
+    返回一个布尔型Tensor，表示 `x1` 的每个元素与 `x2` 的对应元素在给定容忍度内是否“接近”。其中“接近”的数学公式为：
 
     .. math::
 

@@ -3,7 +3,7 @@ mindspore.ops.MaxPool3DWithArgmax
 
 .. py:class:: mindspore.ops.MaxPool3DWithArgmax(ksize, strides, pads, dilation=(1, 1, 1), ceil_mode=False, data_format="NCDHW", argmax_type=mstype.int64)
 
-    3维最大值池化，返回最大值结果及其索引值。
+    三维最大值池化，返回最大值结果及其索引值。
 
     输入是shape为 :math:`(N_{in}, C_{in}, D_{in}, H_{in}, W_{in})` 的Tensor，输出 :math:`(D_{in}, H_{in}, W_{in})` 维度中的最大值。给定 `ksize`
     :math:`ks = (d_{ker}, h_{ker}, w_{ker})`，和 `strides` :math:`s = (s_0, s_1, s_2)`，运算如下：

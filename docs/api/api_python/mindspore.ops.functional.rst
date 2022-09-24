@@ -1,38 +1,6 @@
 mindspore.ops.functional
 =============================
 
-functional算子是经过初始化后的Primitive，可以直接作为函数使用。functional算子的使用示例如下：
-
-.. code-block:: python
-
-    from mindspore import Tensor, ops
-    from mindspore import dtype as mstype
-
-    input_x = Tensor(-1, mstype.int32)
-    input_dict = {'x':1, 'y':2}
-
-    result_abs = ops.absolute(input_x)
-    print(result_abs)
-
-    result_in_dict = ops.in_dict('x', input_dict)
-    print(result_in_dict)
-
-    result_not_in_dict = ops.not_in_dict('x', input_dict)
-    print(result_not_in_dict)
-
-    result_isconstant = ops.isconstant(input_x)
-    print(result_isconstant)
-
-    result_typeof = ops.typeof(input_x)
-    print(result_typeof)
-
-    # outputs:
-    # 1
-    # True
-    # False
-    # True
-    # Tensor[Int32]
-
 神经网络层函数
 ----------------
 
@@ -210,45 +178,6 @@ functional算子是经过初始化后的Primitive，可以直接作为函数使�
     mindspore.ops.xdivy
     mindspore.ops.xlogy
 
-.. list-table::
-   :widths: 50 50
-   :header-rows: 1
-
-   * - functional
-     - Description
-   * - mindspore.ops.absolute
-     - `absolute` will be deprecated in the future. Please use `mindspore.ops.abs` instead.
-   * - mindspore.ops.floordiv
-     - `floordiv` will be deprecated in the future. Please use `mindspore.ops.floor_div` instead.
-   * - mindspore.ops.floormod
-     - `floormod` will be deprecated in the future. Please use `mindspore.ops.floor_mod` instead.
-   * - mindspore.ops.neg_tensor
-     - `neg_tensor` will be deprecated in the future. Please use `mindspore.ops.neg` instead.
-   * - mindspore.ops.pows
-     - `pows` will be deprecated in the future. Please use `mindspore.ops.pow` instead.
-   * - mindspore.ops.sqrt
-     - Refer to :class:`mindspore.ops.Sqrt`.
-   * - mindspore.ops.square
-     - Refer to :class:`mindspore.ops.Square`.
-   * - mindspore.ops.tensor_add
-     - `tensor_add` will be deprecated in the future. Please use `mindspore.ops.add` instead.
-   * - mindspore.ops.tensor_div
-     - `tensor_div` will be deprecated in the future. Please use `mindspore.ops.div` instead.
-   * - mindspore.ops.tensor_exp
-     - `tensor_exp` will be deprecated in the future. Please use `mindspore.ops.exp` instead.
-   * - mindspore.ops.tensor_expm1
-     - `tensor_expm1` will be deprecated in the future. Please use `mindspore.ops.expm1` instead.
-   * - mindspore.ops.tensor_floordiv
-     - `tensor_floordiv` will be deprecated in the future. Please use `mindspore.ops.floor_div` instead.
-   * - mindspore.ops.tensor_mod
-     - `tensor_mod` will be deprecated in the future. Please use `mindspore.ops.floor_mod` instead.
-   * - mindspore.ops.tensor_mul
-     - `tensor_mul` will be deprecated in the future. Please use `mindspore.ops.mul` instead.
-   * - mindspore.ops.tensor_pow
-     - `tensor_pow` will be deprecated in the future. Please use `mindspore.ops.pow` instead.
-   * - mindspore.ops.tensor_sub
-     - `tensor_sub` will be deprecated in the future. Please use `mindspore.ops.sub` instead.
-
 Reduction函数
 ^^^^^^^^^^^^^
 
@@ -316,16 +245,6 @@ Reduction函数
      - Refer to :class:`mindspore.ops.IsInstance`.
    * - mindspore.ops.issubclass\_
      - Refer to :class:`mindspore.ops.IsSubClass`.
-   * - mindspore.ops.not_equal
-     - `not_equal` will be deprecated in the future. Please use `mindspore.ops.ne` instead.
-   * - mindspore.ops.tensor_ge
-     - `tensor_ge` will be deprecated in the future. Please use `mindspore.ops.ge` instead.
-   * - mindspore.ops.tensor_gt
-     - `tensor_gt` will be deprecated in the future. Please use `mindspore.ops.gt` instead.
-   * - mindspore.ops.tensor_le
-     - `tensor_le` will be deprecated in the future. Please use `mindspore.ops.le` instead.
-   * - mindspore.ops.tensor_lt
-     - `tensor_lt` will be deprecated in the future. Please use `mindspore.ops.less` instead.
 
 线性代数函数
 ^^^^^^^^^^^^^
@@ -397,6 +316,7 @@ Array操作
     mindspore.ops.broadcast_to
     mindspore.ops.col2im
     mindspore.ops.concat
+    mindspore.ops.count_nonzero
     mindspore.ops.diag
     mindspore.ops.dyn_shape
     mindspore.ops.expand_dims
@@ -474,8 +394,6 @@ Array操作
      - Refer to :class:`mindspore.ops.StridedSlice`.
    * - mindspore.ops.tensor_scatter_update
      - Refer to :class:`mindspore.ops.TensorScatterUpdate`.
-   * - mindspore.ops.tensor_slice
-     - `tensor_slice` will be deprecated in the future. Please use `mindspore.ops.slice` instead.
 
 类型转换
 ^^^^^^^^^^^^^^^^
@@ -566,6 +484,15 @@ Parameter操作函数
 
     mindspore.ops.print_
 
+图像函数
+----------------
+
+.. msplatformautosummary::
+    :toctree: ops
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.ops.iou
 
 其他函数
 ----------------
@@ -646,8 +573,4 @@ Parameter操作函数
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.ops.arange
     mindspore.ops.core
-    mindspore.ops.count_nonzero
-    mindspore.ops.iou
-
