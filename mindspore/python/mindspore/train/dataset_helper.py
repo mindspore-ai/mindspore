@@ -453,7 +453,7 @@ class _DatasetIter:
                 if not (_is_role_worker() and _is_ps_mode()) or _enable_distributed_mindrt():
                     self.sink_size = dataset.__loop_size__
             create_data_info_queue = (sink_size == 1 and self.sink_count == 1 and dataset.get_dataset_size() != 1
-                                      and context.get_context("device_target") == "Ascend" and not self.dynamic_shape)
+                                      and not self.dynamic_shape)
             dataset.__transfer_dataset__ = _exec_datagraph(dataset, self.sink_size,
                                                            create_data_info_queue=create_data_info_queue)
 
