@@ -21,12 +21,10 @@
 #include <string>
 #include "pipeline/pynative/base.h"
 #include "pipeline/pynative/pynative_execute.h"
-#include "pipeline/pynative/pynative_cache.h"
 
 namespace mindspore {
 namespace pynative {
 class PyNativeExecutor;
-using PyNativeExecutorPtr = std::shared_ptr<PyNativeExecutor>;
 
 namespace PyNativeAlgo {
 // Common function
@@ -35,7 +33,7 @@ struct Common {
   static TypePtr GetTypeFromAbstract(const abstract::AbstractBasePtr &abs);
   static bool IsDynamicShape(const FrontendOpRunInfoPtr &op_run_info);
   static bool ValueHasDynamicShape(const ValuePtr &value);
-  static PyNativeExecutorPtr GetPyNativeExecutor();
+  static std::shared_ptr<PyNativeExecutor> GetPyNativeExecutor();
 };
 
 // Parser python

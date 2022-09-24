@@ -143,7 +143,7 @@ void OpCompiler::SetActualShapeForTensor(const string &op_name, const tensor::Te
 }
 
 void OpCompiler::SetGraphInputNodeToActualAbstract(const session::BackendOpRunInfoPtr &op_run_info,
-                                                   const KernelGraphPtr &graph) {
+                                                   const KernelGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
   if (!op_run_info->base_op_run_info.has_dynamic_output && !op_run_info->base_op_run_info.has_dynamic_input) {
     return;

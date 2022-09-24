@@ -23,7 +23,6 @@
 #include <stack>
 #include <vector>
 #include "pipeline/pynative/base.h"
-#include "mindspore/ccsrc/pipeline/pynative/forward/forward.h"
 #include "pipeline/pynative/grad/top_cell.h"
 #include "pipeline/pynative/dynamic_shape.h"
 #include "pipeline/pynative/grad/ms_function_grad.h"
@@ -31,19 +30,9 @@
 namespace mindspore {
 namespace pynative {
 namespace py = pybind11;
-class TopCellInfo;
-using TopCellInfoPtr = std::shared_ptr<TopCellInfo>;
-
 class ForwardExecutor;
 using ForwardExecutorPtr = std::shared_ptr<ForwardExecutor>;
 using ForwardExecutorWeakPtr = std::weak_ptr<ForwardExecutor>;
-
-class DynamicShape;
-using DynamicShapePtr = std::shared_ptr<DynamicShape>;
-using DynamicShapeWeakPtr = std::weak_ptr<DynamicShape>;
-
-class MsFunction;
-using MsFunctionPtr = std::shared_ptr<MsFunction>;
 
 class GradExecutor {
  public:
@@ -112,7 +101,7 @@ class GradExecutor {
   AnfNodePtr GetInput(const ValuePtr &v) const;
   void ClearGrad(const py::object &cell, const py::args &args);
   void ClearRes();
-  void ClearCellRes(const std::string &cell_id = "");
+  void ClearCellRes(const py::object &cell);
 
  private:
   ForwardExecutorPtr forward() const;

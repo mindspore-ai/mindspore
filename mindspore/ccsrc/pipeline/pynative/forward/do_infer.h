@@ -21,7 +21,7 @@
 #include <string>
 #include <memory>
 #include <set>
-#include "pipeline/pynative/pynative_utils.h"
+#include "pipeline/pynative/base.h"
 #include "pipeline/pynative/pynative_cache.h"
 
 namespace mindspore {
@@ -41,6 +41,7 @@ class InferOperation {
   void ClearPrimAbsList() { prim_abs_list_.clear(); }
   // Manage constant flag primitive cache.
   void ClearConstFlagPrimCache() { no_const_flag_prims_.clear(); }
+  py::object CallConstantFolding(const py::args &args);
 
  private:
   // Set abstract for each input value.
@@ -68,6 +69,7 @@ class InferOperation {
   // This map is used to cache op output abstract.
   PrimAbsCache prim_abs_list_;
 };
+using InferOperationPtr = std::shared_ptr<InferOperation>;
 }  // namespace pynative
 }  // namespace mindspore
 

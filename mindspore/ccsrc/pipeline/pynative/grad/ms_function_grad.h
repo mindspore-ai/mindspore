@@ -28,9 +28,6 @@
 
 namespace mindspore {
 namespace pynative {
-class TopCellInfo;
-using TopCellInfoPtr = std::shared_ptr<TopCellInfo>;
-
 class MsFunction {
  public:
   MsFunction() = default;
@@ -65,6 +62,7 @@ class MsFunction {
   // Stores parameter in ms_function
   std::vector<std::string> ms_function_params_;
 };
+using MsFunctionPtr = std::shared_ptr<MsFunction>;
 }  // namespace pynative
 }  // namespace mindspore
 
