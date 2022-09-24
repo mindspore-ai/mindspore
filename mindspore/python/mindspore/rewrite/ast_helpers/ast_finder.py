@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Find specific type ast node in specific scope."""
-
+from __future__ import absolute_import
 from typing import Type, Any
 import ast
 

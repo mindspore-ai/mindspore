@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Rewrite module api: Node."""
-
+from __future__ import absolute_import
 from typing import Union, Optional
 
 from mindspore.nn import Cell

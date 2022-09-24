@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Rewrite module api: ValueType and ScopedValue."""
+from __future__ import absolute_import
 from enum import Enum
 from typing import Optional, Union
 from ..._checkparam import Validator

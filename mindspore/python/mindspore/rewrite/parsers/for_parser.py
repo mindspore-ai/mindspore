@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """ Parse ast.For node """
+from __future__ import absolute_import
 import ast
 import astunparse
 

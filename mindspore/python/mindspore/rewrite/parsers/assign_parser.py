@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Parse ast.Assign in construct function to node of SymbolTree."""
+from __future__ import absolute_import
 from typing import Union
 import ast
 import astunparse
@@ -276,7 +277,7 @@ class AssignParser(Parser):
             if target.attr != func_name:
                 continue
             changed = True
-            global_vars_key = func_name + "_args"
+            global_vars_key = ''.join([func_name, "_args"])
             stree.add_global_vars(global_vars_key, sub_tree.get_global_vars())
             args_call = AstModifier.create_call(ScopedValue.create_naming_value("get", "global_vars"),
                                                 [ScopedValue.create_variable_value(global_vars_key)])

@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Base class of parser."""
+from __future__ import absolute_import
 import abc
 import ast
 

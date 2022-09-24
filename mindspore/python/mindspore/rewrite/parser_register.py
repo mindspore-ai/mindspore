@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Parser register."""
+from __future__ import absolute_import
 from typing import Optional
 
 from .parser import Parser

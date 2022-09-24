@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Fold if return."""
-
+from __future__ import absolute_import
 import ast
 import copy
 from typing import Any, Union

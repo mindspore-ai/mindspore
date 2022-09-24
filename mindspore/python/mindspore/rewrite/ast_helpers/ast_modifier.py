@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Ast utils for create or update ast node."""
+from __future__ import absolute_import
 from typing import Optional
 import ast
 

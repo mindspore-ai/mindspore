@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Parse ast.arguments to input-node of SymbolTree."""
+from __future__ import absolute_import
 import ast
 
 from ..parser import Parser

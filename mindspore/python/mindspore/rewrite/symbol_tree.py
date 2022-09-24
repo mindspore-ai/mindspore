@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """SymbolTree class define of Rewrite according to forward function of a network."""
+from __future__ import absolute_import
 import stat
 from typing import Optional, Union, Tuple, Any
 import os
@@ -197,12 +198,12 @@ class SymbolTree(Observer, Observable):
         for node in nodes:
             for arg in node.get_args():
                 if consumers.get(arg):
-                    consumers[arg].append(node)
+                    consumers.get(arg).append(node)
                 else:
                     consumers[arg] = [node]
             for _, arg in node.get_kwargs():
                 if consumers.get(arg):
-                    consumers[arg].append(node)
+                    consumers.get(arg).append(node)
                 else:
                     consumers[arg] = [node]
             for target in node.get_targets():

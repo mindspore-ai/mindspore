@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Node class define of Rewrite. See detail in Node class docstring."""
+from __future__ import absolute_import
 from typing import Optional, Union
 import ast
 import inspect

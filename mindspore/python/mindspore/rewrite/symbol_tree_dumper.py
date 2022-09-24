@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """SymbolTree dumper."""
+from __future__ import absolute_import
 import inspect
 
 from .node import Node

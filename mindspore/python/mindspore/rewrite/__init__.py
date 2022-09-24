@@ -16,6 +16,7 @@
 MindSpore Rewrite package.
 This is an experimental python package that is subject to change or deletion.
 """
+from __future__ import absolute_import
 from .parsers.module_parser import g_module_parser
 from .parsers.class_def_parser import g_classdef_parser
 from .parsers.function_def_parser import g_functiondef_parser

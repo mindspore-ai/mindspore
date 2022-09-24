@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Parse ast.Return output-node of SymbolTree."""
+from __future__ import absolute_import
 import ast
 
 from ..symbol_tree import SymbolTree

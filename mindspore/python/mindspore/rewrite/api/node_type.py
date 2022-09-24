@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Rewrite module api: NodeType."""
+from __future__ import absolute_import
 from enum import Enum
 
 

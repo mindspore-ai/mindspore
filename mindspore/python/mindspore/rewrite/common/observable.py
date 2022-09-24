@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Base class, observable of observer design pattern."""
-
+from __future__ import absolute_import
 from .observer import Observer
 from .event import Event
 
