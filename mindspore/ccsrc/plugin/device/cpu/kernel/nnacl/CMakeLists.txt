@@ -223,6 +223,12 @@ if(NOT MSVC)
 string(REPLACE "-fvisibility=hidden" "-fvisibility=default" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
 endif()
 
+if(PLATFORM_ARM)
+    set(NO_FAST_MATH_OPTI ${NNACL_DIR}/fp32/resize_fp32.c)
+    set_source_files_properties(${NO_FAST_MATH_OPTI} PROPERTIES LANGUAGE C
+        COMPILE_FLAGS "${CMAKE_C_FLAGS} -fno-fast-math")
+endif()
+
 add_library(nnacl_mid OBJECT ${KERNEL_SRC} ${TRAIN_SRC} ${ASSEMBLY_SRC} ${MS_X86_SIMD_SRC})
 
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
