@@ -15,6 +15,8 @@
 # ============================================================================
 """HCCL management API"""
 from __future__ import absolute_import
+from __future__ import division
+
 import ctypes
 import os
 from mindspore import context

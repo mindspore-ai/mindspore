@@ -93,8 +93,8 @@ class _Conv(Cell):
         if transposed:
             shape = [in_channels, out_channels // group, *kernel_size]
         else:
-            shape = [out_channels, *kernel_size, in_channels // group] if self.data_format == "NHWC" else \
-                [out_channels, in_channels // group, *kernel_size]
+            shape = [out_channels, *kernel_size, in_channels // group] \
+                if self.data_format == "NHWC" else [out_channels, in_channels // group, *kernel_size]
         self.weight = Parameter(initializer(self.weight_init, shape), name='weight')
 
         if Validator.check_bool(has_bias, "has_bias", self.cls_name):

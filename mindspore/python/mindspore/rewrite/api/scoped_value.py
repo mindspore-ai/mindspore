@@ -61,6 +61,26 @@ class ScopedValue:
         self.scope = scope
         self.value = value
 
+    def __str__(self):
+        if self.type in (ValueType.IntValue, ValueType.FloatValue, ValueType.StringValue):
+            return str(self.value)
+        if self.type == ValueType.NamingValue:
+            return f"{self.scope}.{self.value}" if self.scope else str(self.value)
+        if self.type == ValueType.CustomObjValue:
+            return f"CustomObj: {str(self.value)}"
+        return f"Illegal ValueType: {str(self.type)}"
+
+    def __eq__(self, other):
+        if id(self) == id(other):
+            return True
+        return self.type == other.type and self.scope == other.scope and self.value == other.value
+
+    def __repr__(self):
+        return str(self)
+
+    def __hash__(self):
+        return hash((self.type, self.scope, self.value))
+
     @classmethod
     def create_variable_value(cls, value) -> Optional['ScopedValue']:
         """
@@ -143,23 +163,3 @@ class ScopedValue:
                 scope = ""
             result.append(ScopedValue.create_naming_value(name, scope))
         return result
-
-    def __str__(self):
-        if self.type in (ValueType.IntValue, ValueType.FloatValue, ValueType.StringValue):
-            return str(self.value)
-        if self.type == ValueType.NamingValue:
-            return f"{self.scope}.{self.value}" if self.scope else str(self.value)
-        if self.type == ValueType.CustomObjValue:
-            return f"CustomObj: {str(self.value)}"
-        return f"Illegal ValueType: {str(self.type)}"
-
-    def __eq__(self, other):
-        if id(self) == id(other):
-            return True
-        return self.type == other.type and self.scope == other.scope and self.value == other.value
-
-    def __repr__(self):
-        return str(self)
-
-    def __hash__(self):
-        return hash((self.type, self.scope, self.value))
