@@ -65,6 +65,14 @@ int BatchToSpaceInt8CPUKernel::Processinput() {
 int BatchToSpaceInt8CPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), DIMENSION_1D);
   CHECK_LESS_RETURN(out_tensors_.size(), DIMENSION_1D);
+  CHECK_NULL_RETURN(in_tensors_[0]);
+  CHECK_NULL_RETURN(out_tensors_[0]);
+  if (in_tensors_[0]->data_type() != mindspore::kNumberTypeInt8 ||
+      out_tensors_[0]->data_type() != mindspore::kNumberTypeInt8) {
+    MS_LOG(ERROR) << "Datatype error, input0 data_type is " << in_tensors_[0]->data_type() << ", output data_type is "
+                  << out_tensors_[0]->data_type();
+    return RET_ERROR;
+  }
   MS_ASSERT(in_tensors_.front()->format() == mindspore::NHWC);
   in_quant_arg_ = reinterpret_cast<QuantArg *>(malloc(sizeof(QuantArg)));
   if (in_quant_arg_ == nullptr) {

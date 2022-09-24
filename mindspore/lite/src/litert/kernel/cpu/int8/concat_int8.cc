@@ -30,6 +30,12 @@ int ConcatInt8CPUKernel::Prepare() {
   CHECK_NULL_RETURN(in_tensors_.front());
   MS_CHECK_TRUE_RET(out_tensors_.size() == 1, RET_ERROR);
   CHECK_NULL_RETURN(out_tensors_.front());
+  if (in_tensors_[0]->data_type() != mindspore::kNumberTypeInt8 ||
+      out_tensors_[0]->data_type() != mindspore::kNumberTypeInt8) {
+    MS_LOG(ERROR) << "Datatype error, input0 data_type is " << in_tensors_[0]->data_type() << ", output data_type is "
+                  << out_tensors_[0]->data_type();
+    return RET_ERROR;
+  }
   concat_param_->input_shapes_ = nullptr;
   auto input_num = in_tensors_.size();
   MS_CHECK_FALSE_MSG(SIZE_MUL_OVERFLOW(sizeof(int8_t *), input_num), RET_ERROR, "mul overflow");
