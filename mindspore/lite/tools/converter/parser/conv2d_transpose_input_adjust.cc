@@ -17,7 +17,6 @@
 #include "tools/converter/parser/conv2d_transpose_input_adjust.h"
 #include "tools/converter/parser/parser_utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
-#include "tools/converter/adapter/dpico/common/check_base.h"
 
 namespace mindspore::lite {
 namespace {
@@ -25,17 +24,26 @@ constexpr size_t kInputSizeFour = 4;
 }  // namespace
 
 bool Conv2DTransposeInputAdjust::Run(const FuncGraphPtr &func_graph) {
-  MS_ASSERT(func_graph != nullptr);
+  if (func_graph == nullptr) {
+    MS_LOG(ERROR) << "func graph is nullptr";
+    return false;
+  }
   auto node_list = TopoSort(func_graph->get_return());
   for (auto node : node_list) {
     if (utils::isa<CNodePtr>(node)) {
       auto cnode = node->cast<CNodePtr>();
-      MS_CHECK_TRUE_MSG(cnode != nullptr, false, "cnode is nullptr");
+      if (cnode == nullptr) {
+        MS_LOG(ERROR) << "cnode is nullptr";
+        return false;
+      }
       if (opt::CheckPrimitiveType(cnode, prim::kPrimConv2dTransposeFusion)) {
         auto inputs = cnode->inputs();
         if (inputs.size() == kInputSizeFour) {
           auto prim = GetValuePtr<Primitive>(inputs[0]);
-          MS_CHECK_TRUE_MSG(prim != nullptr, false, "prim is nullptr");
+          if (prim == nullptr) {
+            MS_LOG(ERROR) << "prim is nullptr";
+            return false;
+          }
           auto value = prim->GetAttr("has_bias");
           if (value != nullptr && GetValue<bool>(value)) {
             MS_LOG(INFO) << "The value of has_bias is true";

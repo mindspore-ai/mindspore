@@ -597,6 +597,7 @@ int AnfTransform::DoFormatForMindIR(const FuncGraphPtr &old_graph, const std::sh
       MS_LOG(ERROR) << "Run SpecifyGraphInputFormatMindIR pass failed";
       return RET_ERROR;
     }
+    old_graph->set_attr(kOriginalFmkType, MakeValue(static_cast<int32_t>(param->fmk_type)));
   }
   return RET_OK;
 }
@@ -655,7 +656,6 @@ STATUS AnfTransform::ProcOnlineTransform(const FuncGraphPtr &old_graph, const st
     MS_LOG(ERROR) << "Do format for mindir failed.";
     return lite::RET_ERROR;
   }
-  old_graph->set_attr(kOriginalFmkType, MakeValue(static_cast<int32_t>(param->fmk_type)));
   if (!param->input_shape.empty()) {
     old_graph->set_attr(kConverterInputShape, MakeValue(TransInputShapesToString(param->input_shape)));
   }
@@ -790,6 +790,13 @@ bool AnfTransform::StoreBuiltinPass(const std::shared_ptr<ConverterPara> &param)
       spec_input_format = Format::NHWC;
     }
   }
+  auto spec_input_format_litert = Format::DEFAULT_FORMAT;
+  if (fmk == converter::FmkType::kFmkTypeTf || fmk == converter::FmkType::kFmkTypeTflite) {
+    spec_input_format_litert = Format::NHWC;
+  } else {
+    spec_input_format_litert = Format::NCHW;
+  }
+
   // pass_name, pass and boolean value to indicate whether can be called by external extension,
   std::vector<std::tuple<std::string, opt::PassPtr, bool>> pass_infos = {
     {"DumpGraph", std::make_shared<opt::DumpGraph>(param), true},
@@ -803,7 +810,9 @@ bool AnfTransform::StoreBuiltinPass(const std::shared_ptr<ConverterPara> &param)
     {"DecreaseTransposeAlgo", std::make_shared<opt::DecreaseTransposeAlgo>(fmk, is_train), true},
     {"SpecifyGraphInputFormat", std::make_shared<opt::SpecifyGraphInputFormat>(param->input_format), false},
     {"SpecifyGraphInputFormatMindIR", std::make_shared<opt::SpecifyGraphInputFormat>(spec_input_format, Format::NCHW),
-     false}};
+     false},
+    {"SpecifyGraphInputFormatForLiteRT",
+     std::make_shared<opt::SpecifyGraphInputFormat>(spec_input_format_litert, Format::NHWC), false}};
   for (const auto &pass_info : pass_infos) {
     MS_CHECK_TRUE_RET(std::get<1>(pass_info) != nullptr, false);
     PassStorage::StorePass(std::get<0>(pass_info), std::get<1>(pass_info), std::get<opt::kInputIndexTwo>(pass_info));
@@ -840,6 +849,10 @@ FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &main_graph, const std::
       auto ret = RunFormatTrans(main_graph);
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "Run Format trans pass failed.";
+        return nullptr;
+      }
+      if (!RunOptimizerPass(main_graph, {"SpecifyGraphInputFormatForLiteRT", "DecreaseTransposeAlgo"})) {
+        MS_LOG(ERROR) << "Run SpecifyGraphInputFormatForLiteRT pass failed";
         return nullptr;
       }
       return main_graph;
