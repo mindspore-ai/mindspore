@@ -247,34 +247,25 @@ void ReorderInputsAsFrontGraph(const KernelGraphPtr &kernel_graph, const FuncGra
   kernel_graph->SetInputNodes();
 }
 
-void UpdateOutputNodeShape(const std::vector<KernelWithIndex> &outputs, const std::vector<TypeId> &outputs_type,
-                           const std::vector<ShapeVector> &shapes) {
-  AnfNodePtr cur_node = nullptr;
-  std::vector<TypeId> cur_types = {};
-  std::vector<ShapeVector> cur_shapes = {};
-  for (size_t i = 0; i < outputs.size(); ++i) {
-    const auto &node = outputs[i].first;
-    if (node != cur_node && cur_node != nullptr) {
-      // set shape and then record next node
-      common::AnfAlgo::SetOutputInferTypeAndShape(cur_types, cur_shapes, cur_node.get());
-      cur_node = node;
-      cur_types.clear();
-      cur_shapes.clear();
-      cur_types.push_back(outputs_type[i]);
-      cur_shapes.push_back(shapes[i]);
-    } else if (i + 1 == outputs.size()) {
-      // record before set shape
-      cur_node = node;
-      cur_types.push_back(outputs_type[i]);
-      cur_shapes.push_back(shapes[i]);
-      common::AnfAlgo::SetOutputInferTypeAndShape(cur_types, cur_shapes, cur_node.get());
+void UpdateOutputNodeShape(const AnfNodePtr &node, size_t index, TypeId output_type, const ShapeVector &output_shape) {
+  MS_EXCEPTION_IF_NULL(node);
+  size_t total_output_num = common::AnfAlgo::GetOutputTensorNum(node);
+  if (index >= total_output_num) {
+    MS_LOG(EXCEPTION) << "Invalid output index " << index << ", node " << node->fullname_with_scope() << " has "
+                      << total_output_num << " outputs.";
+  }
+  std::vector<TypeId> types = {};
+  std::vector<ShapeVector> shapes = {};
+  for (size_t i = 0; i < total_output_num; ++i) {
+    if (i == index) {
+      types.push_back(output_type);
+      shapes.push_back(output_shape);
     } else {
-      // only record node
-      cur_node = node;
-      cur_types.push_back(outputs_type[i]);
-      cur_shapes.push_back(shapes[i]);
+      types.push_back(common::AnfAlgo::GetOutputInferDataType(node, i));
+      shapes.emplace_back(common::AnfAlgo::GetOutputInferShape(node, i));
     }
   }
+  common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, node.get());
 }
 
 void SetDynamicShapeAttr(const KernelGraphPtr &kernel_graph) {
@@ -431,7 +422,6 @@ bool GeGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<tens
                       << ge_outputs.size();
   }
 
-  std::vector<ShapeVector> output_shapes;
   for (size_t i = 0; i < graph_outputs.size(); ++i) {
     const auto &[output_node, idx] = graph_outputs[i];
     const auto &tensor = ge_outputs[i];
@@ -447,9 +437,8 @@ bool GeGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<tens
     // memcpy_s does not support data that more than 2GB
     (void)memcpy(reinterpret_cast<uint8_t *>(output_addr->GetMutablePtr()), tensor->GetData(), tensor->GetSize());
     auto actual_shapes = tensor->GetTensorDesc().GetShape().GetDims();
-    (void)output_shapes.emplace_back(std::move(actual_shapes));
+    UpdateOutputNodeShape(output_node, idx, me_types[i], actual_shapes);
   }
-  UpdateOutputNodeShape(graph_outputs, me_types, output_shapes);
   MS_LOG(INFO) << "GE run graph end.";
   return true;
 }
