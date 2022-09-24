@@ -34,6 +34,7 @@ from mindspore.profiler.common.exceptions.exceptions import ProfilerDirNotFoundE
 from mindspore.profiler.common.exceptions.exceptions import ProfilerFileNotFoundException
 from mindspore.profiler.common.exceptions.exceptions import ProfilerParamValueErrorException
 from mindspore.profiler.common.validator.validate_path import validate_and_normalize_path
+from mindspore.profiler.parser.profiler_info import ProfilerInfo
 
 FILE_DATA_STRUCT_DICT = {
     FileDataType.STEP_INFO.value: STEP_INFO_STRUCT,
@@ -41,7 +42,8 @@ FILE_DATA_STRUCT_DICT = {
     FileDataType.TASK_DESC_INFO.value: TASK_DESC_STRUCT
 }
 
-COL_NAMES = ['task_id', 'stream_id', 'block_dim', 'full_op_name', 'op_name', 'op_type', 'subgraph', 'op_info']
+COL_NAMES = ['task_id', 'stream_id', 'block_dim', 'full_op_name', 'op_name', 'op_type', 'subgraph', 'op_info',
+             'graph_id']
 OpData = namedtuple('OpData', field_names=COL_NAMES)
 
 
@@ -388,6 +390,7 @@ class FrameworkParser:
     def _construct_op_data_to_file(self, task_desc_info, task_id_op_attr_dict):
         """Build data written to a file."""
         all_op_data = []
+        graph_ids = set()
         for task_desc in task_desc_info:
             task_id = task_desc['taskId']
             full_op_name = task_desc['opName']
@@ -400,8 +403,11 @@ class FrameworkParser:
                              op_name=full_op_name.split('/')[-1],
                              op_type=task_desc['opType'],
                              subgraph=subgraph,
-                             op_info=json.dumps(task_id_op_attr_dict.get(combined_task_id, {})))
+                             op_info=json.dumps(task_id_op_attr_dict.get(combined_task_id, {})),
+                             graph_id=task_desc['modelId'])
+            graph_ids.add(task_desc['modelId'])
             all_op_data.append(op_data)
+        ProfilerInfo.set_graph_ids(list(graph_ids))
         return all_op_data
 
 

@@ -17,6 +17,7 @@ import os
 import stat
 import time
 import json
+import glob
 
 from mindspore import log as logger, context
 from mindspore.communication.management import GlobalComm, get_rank, get_group_size
@@ -46,6 +47,7 @@ from mindspore.profiler.parser.step_trace_parser import GpuStepTraceParser, Asce
 from mindspore.profiler.parser.hccl_parser import HcclParser
 from mindspore.profiler.parser.op_intermediate_parser import OPIntermediateParser
 from mindspore.profiler.parser.msadvisor_analyzer import Msadvisor
+from mindspore.profiler.parser.profiler_info import ProfilerInfo
 
 INIT_OP_NAME = 'Default/InitDataSetQueue'
 
@@ -177,7 +179,7 @@ class Profiler:
         self._stop_time = 0
         self._dynamic_status = False
         self._decide_device_target(kwargs)
-        self._pynative_profiler = None
+        self._init_profiler_info()
         if self.start_profile:
             self.start()
 
@@ -309,6 +311,7 @@ class Profiler:
 
         self._cpu_profiler.stop()
 
+        ProfilerInfo.set_analyse_start_time(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
         if self._device_target and self._device_target == DeviceTarget.CPU.value:
             self._cpu_analyse()
 
@@ -318,6 +321,14 @@ class Profiler:
         elif self._device_target and self._device_target == DeviceTarget.ASCEND.value:
             self._ascend_analyse()
         logger.info("Profiling: all the data have been analyzed.")
+        ProfilerInfo.set_analyse_end_time(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+        ProfilerInfo.set_rank_size(self._rank_size)
+        is_heterogeneous = False
+        cpu_op_file = glob.glob(os.path.join(self._output_path, 'cpu_op_type_info_*'))
+        if self._device_target and self._device_target == DeviceTarget.CPU.value and cpu_op_file:
+            is_heterogeneous = True
+        ProfilerInfo.set_heterogeneous(is_heterogeneous)
+        ProfilerInfo.save(self._output_path)
 
     def start(self):
         """
@@ -380,6 +391,7 @@ class Profiler:
         elif self._device_target and self._device_target == DeviceTarget.ASCEND.value:
             self._md_profiler.start()
             self._ascend_graph_start()
+        ProfilerInfo.set_profiling_start_time(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
 
     def stop(self):
         """
@@ -430,7 +442,15 @@ class Profiler:
             self._ascend_profiler.stop()
 
             self._stop_time = int(time.time() * 10000000)
-            logger.info("Profiling: stop time: %d", self._stop_time)
+        ProfilerInfo.set_profiling_stop_time(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+        logger.info("Profiling: stop time: %d", self._stop_time)
+
+    def _init_profiler_info(self):
+        """Init profiler info filer."""
+        mode = "graph"
+        if context.get_context("mode") == context.PYNATIVE_MODE:
+            mode = "pynative"
+        ProfilerInfo.init_info(mode, self._rank_id)
 
     def _decide_device_target(self, kwargs):
         """Complete Profiler initialization according to device_target"""
