@@ -48,8 +48,7 @@ class ParallelWorker : public Worker {
       std::lock_guard<std::mutex> _l(mutex_);
       alive_ = false;
     }
-
-    Active();
+    cond_var_.notify_one();
     if (thread_.joinable()) {
       thread_.join();
     }
@@ -71,6 +70,7 @@ class ParallelThreadPool : public ActorThreadPool {
   static ParallelThreadPool *CreateThreadPool(size_t actor_thread_num, size_t all_thread_num,
                                               const std::vector<int> &core_list, BindMode bind_mode);
   ~ParallelThreadPool() override {
+    MS_LOG(INFO) << "free parallel thread pool.";
     // wait until actor queue is empty
     bool terminate = false;
     int count = 0;
@@ -88,14 +88,12 @@ class ParallelThreadPool : public ActorThreadPool {
         std::this_thread::yield();
       }
     } while (!terminate && count++ < kMaxCount);
-    for (auto &worker : workers_) {
-      worker->set_alive(false);
-    }
-    ActiveWorkers();
+    MS_LOG(INFO) << "Wait for all worker to delete.";
     for (auto &worker : workers_) {
       delete worker;
       worker = nullptr;
     }
+    MS_LOG(INFO) << "delete workers.";
     workers_.clear();
     tasks_size_ = 0;
     if (tasks_) {

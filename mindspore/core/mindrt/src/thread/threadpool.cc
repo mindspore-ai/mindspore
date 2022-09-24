@@ -216,13 +216,6 @@ void Worker::Active() {
   cond_var_.notify_one();
 }
 
-void Worker::FastActive() {
-  if (active_num_ == 0) {
-    active_num_++;
-    cond_var_.notify_one();
-  }
-}
-
 bool Worker::available() {
   int expected = kThreadIdle;
   return status_.compare_exchange_strong(expected, kThreadHeld);
