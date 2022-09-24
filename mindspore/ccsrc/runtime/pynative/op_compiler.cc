@@ -135,7 +135,7 @@ void OpCompiler::BatchBuild(const std::vector<KernelGraphPtr> &graphs, const Dev
 }
 
 void OpCompiler::SetActualShapeForTensor(const string &op_name, const tensor::TensorPtr &tensor,
-                                         const AnfNodePtr &node) {
+                                         const AnfNodePtr &node) const {
   MS_EXCEPTION_IF_NULL(tensor);
   MS_LOG(DEBUG) << "Set op " << op_name << " input tensor " << tensor->id() << " real abstract ";
   const auto &actual_abs = std::make_shared<abstract::AbstractTensor>(tensor->Dtype(), tensor->shape());
@@ -166,7 +166,7 @@ void OpCompiler::SetGraphInputNodeToActualAbstract(const session::BackendOpRunIn
   }
 }
 
-void OpCompiler::ClearOpCache(const GraphInfo &graph_info) { op_compiler_infos_.erase(graph_info); }
+void OpCompiler::ClearOpCache(const GraphInfo &graph_info) { (void)op_compiler_infos_.erase(graph_info); }
 
 void OpCompiler::ClearAllCache() { op_compiler_infos_.clear(); }
 }  // namespace pynative

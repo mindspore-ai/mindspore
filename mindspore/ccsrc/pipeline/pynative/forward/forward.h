@@ -64,12 +64,12 @@ class ForwardExecutor {
   void Init();
   void RunOpInner(py::object *ret, const FrontendOpRunInfoPtr &op_run_info);
   ValuePtr RunOpForward(const FrontendOpRunInfoPtr &op_run_info);
-  FrontendOpRunInfoPtr GenerateOpRunInfo(const py::args &args);
+  FrontendOpRunInfoPtr GenerateOpRunInfo(const py::args &args) const;
   void set_grad_executor(const GradExecutorPtr &grad_executor) { grad_executor_ = GradExecutorWeakPtr(grad_executor); }
-  void ClearNodeAbsMap();
-  void EraseFromNodeAbsMap(const std::string &id);
-  void SetNodeAbsMapByValue(const ValuePtr &value, const abstract::AbstractBasePtr &abs);
-  void SetNodeAbsMapById(const std::string &id, const abstract::AbstractBasePtr &abs);
+  void ClearNodeAbsMap() const;
+  void EraseFromNodeAbsMap(const std::string &id) const;
+  void SetNodeAbsMapByValue(const ValuePtr &value, const abstract::AbstractBasePtr &abs) const;
+  void SetNodeAbsMapById(const std::string &id, const abstract::AbstractBasePtr &abs) const;
   const NodeAbsCache &NodeAbsMap() const;
   void ClearRes();
   void set_lazy_build(bool lazy_build) { lazy_build_ = lazy_build; }
@@ -85,7 +85,7 @@ class ForwardExecutor {
   void ExecuteLazyTask();
   void Sync();
   void ProcessBeforeNewGraph(const py::object &cell, const py::args &args);
-  void ProcessBeforeEndGraph(const py::object &cell, const py::args &args);
+  void ProcessBeforeEndGraph(const py::object &cell);
   void ProcessAfterEndGraph();
   bool CellNotSetMixedPrecision(const FrontendOpRunInfoPtr &op_run_info);
   void set_is_ms_function_compiling(bool is_compiling) { is_ms_function_compiling_ = is_compiling; }
@@ -108,7 +108,7 @@ class ForwardExecutor {
   ValuePtr RunOpWithBackendPolicy(const FrontendOpRunInfoPtr &op_run_info);
   ValuePtr GetOutput(const FrontendOpRunInfoPtr &op_run_info);
   // Mix precision and Implicit transform
-  void SetCastForInputs(const FrontendOpRunInfoPtr &op_run_info);
+  void SetCastForInputs(const FrontendOpRunInfoPtr &op_run_info) const;
   // Infer output abstract
   ValuePtr InferOutputAbstract(const FrontendOpRunInfoPtr &op_run_info) const;
   // Check sync condition in heterogeneous

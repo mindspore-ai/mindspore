@@ -194,7 +194,7 @@ ValuePtr ForwardExecutor::RunOpForward(const FrontendOpRunInfoPtr &op_run_info) 
   return out_value;
 }
 
-FrontendOpRunInfoPtr ForwardExecutor::GenerateOpRunInfo(const py::args &args) {
+FrontendOpRunInfoPtr ForwardExecutor::GenerateOpRunInfo(const py::args &args) const {
   if (args.size() != static_cast<size_t>(RunOpArgsEnum::PY_ARGS_NUM)) {
     MS_LOG(EXCEPTION) << "Three args are needed by RunOp";
   }
@@ -206,7 +206,7 @@ FrontendOpRunInfoPtr ForwardExecutor::GenerateOpRunInfo(const py::args &args) {
   return op_run_info;
 }
 
-void ForwardExecutor::SetCastForInputs(const FrontendOpRunInfoPtr &op_run_info) {
+void ForwardExecutor::SetCastForInputs(const FrontendOpRunInfoPtr &op_run_info) const {
   MS_EXCEPTION_IF_NULL(op_run_info);
   // No need cast self
   if (op_run_info->base_op_run_info.op_name == prim::kPrimCast->name()) {
@@ -215,15 +215,17 @@ void ForwardExecutor::SetCastForInputs(const FrontendOpRunInfoPtr &op_run_info) 
   cast_operation()->DoCast(op_run_info);
 }
 
-void ForwardExecutor::ClearNodeAbsMap() { infer_operation()->ClearNodeAbsCache(); }
+void ForwardExecutor::ClearNodeAbsMap() const { infer_operation()->ClearNodeAbsCache(); }
 
-void ForwardExecutor::EraseFromNodeAbsMap(const std::string &id) { infer_operation()->EraseElemFromNodeAbsCache(id); }
+void ForwardExecutor::EraseFromNodeAbsMap(const std::string &id) const {
+  infer_operation()->EraseElemFromNodeAbsCache(id);
+}
 
-void ForwardExecutor::SetNodeAbsMapByValue(const ValuePtr &value, const abstract::AbstractBasePtr &abs) {
+void ForwardExecutor::SetNodeAbsMapByValue(const ValuePtr &value, const abstract::AbstractBasePtr &abs) const {
   infer_operation()->SetNodeAbsCacheByValue(value, abs);
 }
 
-void ForwardExecutor::SetNodeAbsMapById(const std::string &id, const abstract::AbstractBasePtr &abs) {
+void ForwardExecutor::SetNodeAbsMapById(const std::string &id, const abstract::AbstractBasePtr &abs) const {
   infer_operation()->SetNodeAbsCacheById(id, abs);
 }
 
@@ -374,7 +376,7 @@ void ForwardExecutor::ProcessBeforeNewGraph(const py::object &cell, const py::ar
   dynamic_shape()->SetFeedDynamicInputAbs(cell, args);
 }
 
-void ForwardExecutor::ProcessBeforeEndGraph(const py::object &cell, const py::args &args) {
+void ForwardExecutor::ProcessBeforeEndGraph(const py::object &cell) {
   if (py::isinstance<Cell>(cell)) {
     PopForwardCell();
   }

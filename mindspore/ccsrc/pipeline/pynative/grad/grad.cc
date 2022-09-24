@@ -453,7 +453,7 @@ void GradExecutor::EndGraphInner(const py::object *ret, const py::object &cell, 
   // Reset grad flag and update output node of the outermost cell
   if (cell_stack_.empty() && is_top_cell_end) {
     MS_LOG(DEBUG) << "Cur top last cell " << cell_id;
-    PopHighOrderGraphStack();
+    (void)PopHighOrderGraphStack();
     SetForwardLastNodeInfo(out_value, out_id);
     top_cell()->ClearCellHookOp();
     cell_order_ = 0;
@@ -513,7 +513,7 @@ void GradExecutor::DoGradForCustomBprop(const py::object &cell, const py::args &
     MS_LOG(EXCEPTION) << "Decorating bprop with '@ms_function' is not supported.";
   }
   // Three parameters self, out and dout need to be excluded
-  const size_t inputs_num = py::cast<int64_t>(py::getattr(code_obj, "co_argcount")) - 3;
+  const size_t inputs_num = static_cast<size_t>(py::cast<int64_t>(py::getattr(code_obj, "co_argcount")) - 3);
   if (inputs_num != args.size()) {
     MS_EXCEPTION(TypeError) << "Size of bprop func inputs[" << inputs_num
                             << "] is not equal to the size of cell inputs[" << args.size() << "]";
@@ -595,9 +595,9 @@ void GradExecutor::GradNetInner(const py::object *ret, const prim::GradOperation
   compile::SetMindRTEnable();
   resource->SetBackendAsync([]() { return compile::CreateBackend(); });
   MS_LOG(DEBUG) << "Start task emit action";
-  TaskEmitAction(resource);
+  (void)TaskEmitAction(resource);
   MS_LOG(DEBUG) << "Start execute action";
-  ExecuteAction(resource);
+  (void)ExecuteAction(resource);
   MS_LOG(DEBUG) << "Start update top cell info when run finish";
   UpdateTopCellInfo(false, false, true);
   resource->Clean();
@@ -1056,7 +1056,7 @@ void GradExecutor::DoParameterReplace(const FuncGraphPtr &first_grad_fg, const p
     if (params_inputs_set.count(id) != 0) {
       // Can find in second graph
       const auto &input_param_second = second_graph_info->params.at(id);
-      manager->Replace(first_graph_info->params.at(id), input_param_second);
+      (void)manager->Replace(first_graph_info->params.at(id), input_param_second);
       (void)inputs->emplace_back(input_param_second);
     } else {
       (void)inputs->emplace_back(GetInput(PyNativeAlgo::DataConvert::PyObjToValue(forward_args[i])));
@@ -1069,7 +1069,7 @@ void GradExecutor::DoParameterReplace(const FuncGraphPtr &first_grad_fg, const p
       continue;
     }
     // Second graph no this weight param, need add to second graph
-    if (!params_weights_set.count(fir.first)) {
+    if (params_weights_set.count(fir.first) == 0) {
       MS_LOG(DEBUG) << "Can't find " << fir.first << " in outer graph, add it";
       second_df_builder->add_parameter(fir.second);
       top_cell()->SetParamNodeMapInGraphInfoMap(second_df_builder, fir.first, fir.second);
@@ -1083,7 +1083,7 @@ void GradExecutor::DoParameterReplace(const FuncGraphPtr &first_grad_fg, const p
                                return sec.second->has_default() && fir.second->name() == sec.second->name();
                              });
       if (it != second_graph_info->params.end()) {
-        manager->Replace(fir.second, it->second);
+        (void)manager->Replace(fir.second, it->second);
         (void)inputs->emplace_back(it->second);
         (void)weights_args->emplace_back(it->second->default_param());
       }
@@ -1497,6 +1497,38 @@ void GradExecutor::SaveOutputNodeMap(const std::string &obj_id, const ValuePtr &
   top_cell()->SetNodeMapInGraphInfoMap(curr_g(), obj_id, cnode);
 }
 
+bool GradExecutor::ConvertTupleAndScalarIntoTensor(const FrontendOpRunInfoPtr &op_run_info, ValuePtrList *input_args,
+                                                   size_t idx, const ValuePtr &default_value) const {
+  if (top_cell()->dynamic_shape() &&
+      kDynamicInputOpMap.find(op_run_info->base_op_run_info.op_name) != kDynamicInputOpMap.end()) {
+    const auto &input_vec = kDynamicInputOpMap[op_run_info->base_op_run_info.op_name];
+    bool marked = std::any_of(input_vec.begin(), input_vec.end(), [&idx](size_t i) { return idx == i; });
+    if (marked) {
+      if (default_value->isa<ValueSequence>()) {
+        MS_LOG(DEBUG) << "Ready to convert tulpe into tensor, op name:" << op_run_info->base_op_run_info.op_name
+                      << ", index:" << idx;
+        ValueSequencePtr value_seq = default_value->cast<ValueSequencePtr>();
+        ValueTuplePtr value_tuple;
+        if (value_seq->isa<ValueList>()) {
+          value_tuple = std::make_shared<ValueTuple>(value_seq->value());
+        } else {
+          value_tuple = value_seq->cast<ValueTuplePtr>();
+        }
+        auto tensor_ptr = opt::CreateTupleTensor(value_tuple);
+        (*input_args)[idx] = tensor_ptr;
+        return true;
+      } else if (default_value->isa<Scalar>()) {
+        MS_LOG(DEBUG) << "Ready to convert scalar into tensor, op name:" << op_run_info->base_op_run_info.op_name
+                      << ", index:" << idx;
+        auto scalar_tensor = ScalarToTensor(default_value->cast<ScalarPtr>());
+        (*input_args)[idx] = scalar_tensor;
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 // Run ad grad for curr op and connect grad graph with previous op
 void GradExecutor::DoOpGrad(const FrontendOpRunInfoPtr &op_run_info, const CNodePtr &cnode,
                             const ValuePtr &op_out) const {
@@ -1513,38 +1545,9 @@ void GradExecutor::DoOpGrad(const FrontendOpRunInfoPtr &op_run_info, const CNode
   if (op_run_info->run_in_vm) {
     input_args = op_run_info->input_value;
   } else {
-    auto convert_tuple_and_scalar_into_tensor = [&](size_t idx, const ValuePtr &default_value) -> bool {
-      if (top_cell()->dynamic_shape() &&
-          kDynamicInputOpMap.find(op_run_info->base_op_run_info.op_name) != kDynamicInputOpMap.end()) {
-        const auto &input_vec = kDynamicInputOpMap[op_run_info->base_op_run_info.op_name];
-        bool marked = std::any_of(input_vec.begin(), input_vec.end(), [&idx](size_t i) { return idx == i; });
-        if (marked) {
-          if (default_value->isa<ValueSequence>()) {
-            MS_LOG(DEBUG) << "Ready to convert tulpe into tensor, op name:" << op_run_info->base_op_run_info.op_name
-                          << ", index:" << idx;
-            ValueSequencePtr value_seq = default_value->cast<ValueSequencePtr>();
-            ValueTuplePtr value_tuple;
-            if (value_seq->isa<ValueList>()) {
-              value_tuple = std::make_shared<ValueTuple>(value_seq->value());
-            } else {
-              value_tuple = value_seq->cast<ValueTuplePtr>();
-            }
-            auto tensor_ptr = opt::CreateTupleTensor(value_tuple);
-            input_args[idx] = tensor_ptr;
-            return true;
-          } else if (default_value->isa<Scalar>()) {
-            MS_LOG(DEBUG) << "Ready to convert scalar into tensor, op name:" << op_run_info->base_op_run_info.op_name
-                          << ", index:" << idx;
-            auto scalar_tensor = ScalarToTensor(default_value->cast<ScalarPtr>());
-            input_args[idx] = scalar_tensor;
-            return true;
-          }
-        }
-      }
-      return false;
-    };
     for (size_t i = 0; i < op_run_info->input_value.size(); ++i) {
-      if (enable_tuple_to_tensor_ && convert_tuple_and_scalar_into_tensor(i, op_run_info->input_value[i])) {
+      if (enable_tuple_to_tensor_ &&
+          ConvertTupleAndScalarIntoTensor(op_run_info, &input_args, i, op_run_info->input_value[i])) {
         continue;
       }
       input_args[i] = op_run_info->input_value[i];
@@ -1573,8 +1576,8 @@ void GradExecutor::UpdateTensorInfo(const tensor::TensorPtr &new_tensor,
                   << " shape and type " << pre_tensor->GetShapeAndDataTypeInfo() << " with New tensor id "
                   << new_tensor->id() << " device_address " << new_tensor->device_address() << " shape and dtype "
                   << new_tensor->GetShapeAndDataTypeInfo();
-    pre_tensor->set_shape(new_tensor->shape());
-    pre_tensor->set_data_type(new_tensor->data_type());
+    (void)pre_tensor->set_shape(new_tensor->shape());
+    (void)pre_tensor->set_data_type(new_tensor->data_type());
     auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(new_tensor->device_address());
     MS_EXCEPTION_IF_NULL(device_address);
     if (device_target != kCPUDevice && device_address->GetDeviceType() != device::DeviceType::kCPU) {
@@ -1680,9 +1683,9 @@ void GradExecutor::SaveForwardTensorInfoInBpropGraph(const pipeline::ResourcePtr
   mindspore::HashSet<std::string> forward_op_tensor_id;
   const auto &op_info_with_tensor_id = top_cell()->op_info_with_tensor_id();
   for (const auto &record : op_info_with_tensor_id) {
-    std::for_each(record.second.begin(), record.second.end(), [&forward_op_tensor_id](const std::string &tensor_id) {
-      (void)forward_op_tensor_id.emplace(tensor_id);
-    });
+    (void)std::for_each(
+      record.second.begin(), record.second.end(),
+      [&forward_op_tensor_id](const std::string &tensor_id) { (void)forward_op_tensor_id.emplace(tensor_id); });
   }
   // Get all tensors obj in value node of bprop graph
   const auto &bprop_graph = resource->func_graph();

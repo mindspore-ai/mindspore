@@ -74,7 +74,7 @@ class BACKEND_EXPORT OpCompiler {
 
   // Clear anf resources before process exit.
   void ClearAllCache();
-  void SetActualShapeForTensor(const string &op_name, const tensor::TensorPtr &tensor, const AnfNodePtr &node);
+  void SetActualShapeForTensor(const string &op_name, const tensor::TensorPtr &tensor, const AnfNodePtr &node) const;
 
  private:
   OpCompiler();
