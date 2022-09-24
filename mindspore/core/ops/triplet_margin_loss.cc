@@ -59,8 +59,9 @@ abstract::ShapePtr TripletMarginLossInferShape(const PrimitivePtr &primitive,
   ShapeVector out_shape;
   for (size_t i = 0; i < dims; i++) {
     out_shape.push_back((int64_t)std::max(std::max(x[i], positive[i]), negative[i]));
-    if ((x[i] != out_shape[i] && x[i] != kDim1) || (positive[i] != out_shape[i] && positive[i] != kDim1) ||
-        (negative[i] != out_shape[i] && negative[i] != kDim1)) {
+    if ((x[i] != out_shape[i] && x[i] != SizeToLong(kDim1)) ||
+        (positive[i] != out_shape[i] && positive[i] != SizeToLong(kDim1)) ||
+        (negative[i] != out_shape[i] && negative[i] != SizeToLong(kDim1))) {
       MS_EXCEPTION(ValueError) << "For " << op_name << ", inputs' shape can't broadcast.";
     }
   }

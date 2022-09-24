@@ -147,9 +147,10 @@ int ScatterNdCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   }
 
   num_units_ = 1;
-  num_units_ *= updates_shape[indices_shape.size() - 2];
+  const size_t two = 2;
+  num_units_ *= LongToSize(updates_shape[indices_shape.size() - two]);
   for (int i = SizeToInt(indices_shape.size()) - 3; i >= 0; i--) {
-    num_units_ *= updates_shape[IntToSize(i)];
+    num_units_ *= LongToSize(updates_shape[IntToSize(i)]);
   }
   out_strides_.clear();
   int out_stride = 1;

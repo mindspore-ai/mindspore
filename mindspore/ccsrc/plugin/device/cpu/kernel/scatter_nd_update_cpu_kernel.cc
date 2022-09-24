@@ -132,7 +132,7 @@ bool ScatterUpdateArithmeticCpuKernelMod::LaunchKernel(const std::vector<kernel:
                       << "', each element in 'indices' must be greater than or equal to 0, but got " << index;
         return false;
       }
-      offset += IntToSize(index) * out_strides_[j] * unit_size_;
+      offset += static_cast<size_t>(index) * out_strides_[j] * IntToSize(unit_size_);
     }
     if (offset * sizeof(T) > x_mem_size) {
       MS_LOG(ERROR) << "For '" << kernel_type_
