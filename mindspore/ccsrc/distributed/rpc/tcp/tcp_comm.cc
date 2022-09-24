@@ -225,17 +225,6 @@ bool TCPComm::StartServerSocket(const MemAllocateCallback &allocate_cb) {
 
 int TCPComm::GetServerFd() const { return server_fd_; }
 
-void TCPComm::SetMessageFreeCallback(const std::string &dst_url, const MemFreeCallback &free_cb) {
-  Connection *conn = conn_pool_->FindConnection(dst_url);
-  if (conn == nullptr) {
-    MS_LOG(EXCEPTION) << "Can not find the connection to url: " << dst_url;
-  }
-  if (!free_cb) {
-    MS_LOG(EXCEPTION) << "The message callback is empty.";
-  }
-  return conn->SetMessageFreeCallback(free_cb);
-}
-
 void TCPComm::ReadCallBack(void *connection) {
   const int max_recv_count = 3;
   Connection *conn = reinterpret_cast<Connection *>(connection);
@@ -407,9 +396,12 @@ bool TCPComm::Flush(const std::string &dst_url) {
   }
 }
 
-bool TCPComm::Connect(const std::string &dst_url) {
+bool TCPComm::Connect(const std::string &dst_url, const MemFreeCallback &free_cb) {
   MS_EXCEPTION_IF_NULL(conn_mutex_);
   MS_EXCEPTION_IF_NULL(conn_pool_);
+  if (!free_cb) {
+    MS_LOG(EXCEPTION) << "The message callback is empty.";
+  }
 
   std::lock_guard<std::mutex> lock(*conn_mutex_);
 
@@ -472,6 +464,7 @@ bool TCPComm::Connect(const std::string &dst_url) {
       return false;
     }
     conn_pool_->AddConnection(conn);
+    conn->SetMessageFreeCallback(free_cb);
   }
   conn_pool_->AddConnInfo(conn->socket_fd, dst_url, nullptr);
   MS_LOG(INFO) << "Connected to destination: " << dst_url;
