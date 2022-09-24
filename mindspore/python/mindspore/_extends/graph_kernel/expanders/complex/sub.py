@@ -40,5 +40,6 @@ class CSub(Expander):
             y_real = graph_builder.emit('CReal', [input_y])
             y_imag = graph_builder.emit('CImag', [input_y])
             x_sub_y_real = graph_builder.emit('Sub', [input_x, y_real])
+            y_imag = graph_builder.emit('Neg', [y_imag])
             result = graph_builder.emit('Complex', [x_sub_y_real, y_imag])
         return result
