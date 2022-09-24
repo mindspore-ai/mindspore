@@ -68,7 +68,6 @@ def mutable(input_data):
         - This is an experimental prototype that is subject to change or deletion.
         - The runtime has not yet supported to handle the scalar data flow. So we only support tuple[Tensor],
           list[Tensor] or dict[Tensor] for network input to avoid the re-compiled problem now.
-        - Currently we only support to use this api outside the network temporarily.
         - Currently this api only works in GRAPH mode.
 
     Returns:
