@@ -860,6 +860,7 @@ void DataPrepareActor::PrepareHostTensorQueueForControlNode(const std::vector<Te
     }
     MS_LOG(DEBUG) << "Set tensor position:" << tensor_position << " for input data.";
     (*host_tensors)[tensor_position] = input_tensor;
+    UpdateDynamicShape(input_node, input_tensor);
     // Avoid the device `ptr_` being hold by the input tensor and the output tensor, the input tensor address cannot be
     // directly set to the input control node, which may be a passthrough node. The device 'ptr_' is re-malloced and
     // device to device copy by input tensor address in data source process.
