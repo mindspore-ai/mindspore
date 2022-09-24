@@ -14,11 +14,11 @@
 # ============================================================================
 
 """image_ops"""
-from ... import context
-from ..._checkparam import Validator as validator
-from ..._checkparam import Rel
-from ..primitive import prim_attr_register, Primitive
-from ...common import dtype as mstype
+from mindspore import context
+from mindspore._checkparam import Validator as validator
+from mindspore._checkparam import Rel
+from mindspore.ops.primitive import prim_attr_register, Primitive
+from mindspore.common import dtype as mstype
 
 
 class AdjustSaturation(Primitive):

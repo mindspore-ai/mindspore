@@ -22,13 +22,13 @@ from mindspore.ops.operations import nn_ops as NN_OPS
 from mindspore.ops.operations import image_ops as IMG
 from mindspore.ops._utils import is_shape_unknown
 import mindspore.common.dtype as mstype
-from .math_func import logsumexp
-from ...common.tensor import Tensor
-from ..._c_expression import Tensor as Tensor_
-from .._primitive_cache import _get_cache_prim
-from ..._checkparam import Rel
-from ..._checkparam import Validator as validator
-from ..composite.multitype_ops._constexpr_utils import raise_value_error
+from mindspore.ops.function.math_func import logsumexp
+from mindspore.common.tensor import Tensor
+from mindspore._c_expression import Tensor as Tensor_
+from mindspore.ops._primitive_cache import _get_cache_prim
+from mindspore._checkparam import Rel
+from mindspore._checkparam import Validator as validator
+from mindspore.ops.composite.multitype_ops._constexpr_utils import raise_value_error
 
 slice_ = P.Slice()
 fast_gelu_ = P.FastGeLU()

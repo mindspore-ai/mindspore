@@ -14,9 +14,9 @@
 # ============================================================================
 
 """control_ops"""
-from ..primitive import PrimitiveWithInfer, prim_attr_register
-from ..._checkparam import Validator as validator, Rel
-from ...common import dtype as mstype
+from mindspore.ops.primitive import PrimitiveWithInfer, prim_attr_register
+from mindspore._checkparam import Validator as validator, Rel
+from mindspore.common import dtype as mstype
 
 
 class GeSwitch(PrimitiveWithInfer):

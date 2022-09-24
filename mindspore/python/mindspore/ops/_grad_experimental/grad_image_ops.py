@@ -16,19 +16,19 @@
 """image_ops"""
 
 from mindspore import Tensor
-from ...common import dtype as mstype
-from .._grad.grad_base import bprop_getters
-from .. import operations as P
-from .. import functional as F
-from ..operations import _grad_ops as G
-from ..operations.image_ops import ResizeBicubic
-from ..operations._grad_ops import ResizeBicubicGrad
-from ..composite.multitype_ops.zeros_like_impl import zeros_like
-from ..operations.image_ops import CropAndResize
-from ..operations.image_ops import CropAndResizeGradImage
-from ..operations.image_ops import CropAndResizeGradBoxes
-from ..operations.image_ops import RGBToHSV
-from ..operations.image_ops import ScaleAndTranslate
+from mindspore.common import dtype as mstype
+from mindspore.ops._grad.grad_base import bprop_getters
+from mindspore.ops import operations as P
+from mindspore.ops import functional as F
+from mindspore.ops.operations import _grad_ops as G
+from mindspore.ops.operations.image_ops import ResizeBicubic
+from mindspore.ops.operations._grad_ops import ResizeBicubicGrad
+from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
+from mindspore.ops.operations.image_ops import CropAndResize
+from mindspore.ops.operations.image_ops import CropAndResizeGradImage
+from mindspore.ops.operations.image_ops import CropAndResizeGradBoxes
+from mindspore.ops.operations.image_ops import RGBToHSV
+from mindspore.ops.operations.image_ops import ScaleAndTranslate
 
 
 @bprop_getters.register(ResizeBicubic)
@@ -36,6 +36,7 @@ def get_bprop_resize_bicubic(self):
     """Grad definition for `ResizeBicubic` operation."""
     resize_bicubic_grad = ResizeBicubicGrad(align_corners=self.align_corners,
                                             half_pixel_centers=self.half_pixel_centers)
+
     def bprop(images, size, out, dout):
         images_type = F.dtype(images)
         type_list = [mstype.int8, mstype.uint8, mstype.int16, mstype.uint16, mstype.int32,
@@ -53,6 +54,7 @@ def get_bprop_crop_and_resize(self):
     allowed_types = [mstype.float16, mstype.float32, mstype.float64]
     gradboxes = CropAndResizeGradBoxes(method="bilinear")
     method_ = self.method
+
     def bprop(x, boxes, box_index, crop_size, out, dout):
         if method_ != "bilinear":
             return (zeros_like(x), zeros_like(boxes), zeros_like(box_index), zeros_like(crop_size))

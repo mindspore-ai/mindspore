@@ -16,12 +16,12 @@
 """inner_ops"""
 
 import numbers
-from ..._checkparam import Validator as validator
-from ..._checkparam import Rel
-from ...common import dtype as mstype
-from ...common.dtype import tensor, dtype_to_pytype
-from ..primitive import prim_attr_register, PrimitiveWithInfer, Primitive
-from .. import signature as sig
+from mindspore._checkparam import Validator as validator
+from mindspore._checkparam import Rel
+from mindspore.common import dtype as mstype
+from mindspore.common.dtype import tensor, dtype_to_pytype
+from mindspore.ops.primitive import prim_attr_register, PrimitiveWithInfer, Primitive
+from mindspore.ops import signature as sig
 
 
 class ScalarCast(PrimitiveWithInfer):
@@ -371,6 +371,7 @@ class FusedWeightScaleApplyMomentum(PrimitiveWithInfer):
         return v_shape
 
     def infer_dtype(self, d_dtype, s_dtype, v_dtype, a_dtype, l_dtype, g_dtype, m_dtype):
+        """infer dtype"""
         valid_dtypes = [mstype.float16, mstype.float32]
         if v_dtype != mstype.type_refkey and a_dtype != mstype.type_refkey:
             validator.check_tensor_dtype_valid("v", v_dtype, valid_dtypes, self.name)
@@ -477,6 +478,7 @@ class FusedCastAdamWeightDecay(PrimitiveWithInfer):
 
     def infer_dtype(self, var_dtype, m_dtype, v_dtype, lr_dtype, beta1_dtype, beta2_dtype,
                     epsilon_dtype, decay_dtype, grad_dtype, global_norm):
+        """infer dtype"""
         args = {"m": m_dtype, "v": v_dtype}
         validator.check_tensors_dtypes_same_and_valid(args, mstype.number_type, self.name)
         validator.check_scalar_or_tensor_types_same({"var": var_dtype}, [mstype.float16, mstype.float32], self.name)
