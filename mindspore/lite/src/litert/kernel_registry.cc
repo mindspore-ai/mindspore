@@ -94,7 +94,7 @@ kernel::KernelCreator KernelRegistry::GetCreator(const KernelKey &desc) {
 
 int KernelRegistry::GetCreatorFuncIndex(const kernel::KernelKey desc) {
   int device_index = static_cast<int>(desc.arch) - kKernelArch_MIN;
-  int dType_index = static_cast<int>(desc.data_type) - kNumberTypeBegin;
+  int dType_index = desc.data_type == kObjectTypeString ? 0 : static_cast<int>(desc.data_type) - kNumberTypeBegin;
   int op_index = static_cast<int>(desc.type);
   int op_type_length = op_type_length_;
   if (op_index >= PrimType_InnerOpMin && desc.type < PrimType_InnerOpMax) {
