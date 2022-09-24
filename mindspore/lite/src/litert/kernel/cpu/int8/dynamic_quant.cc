@@ -38,6 +38,8 @@ constexpr int kMinNums = 512;
 constexpr float kDefaultRange = 0.01;
 }  // namespace
 int DynamicQuantCPUKernel::Prepare() {
+  CHECK_LESS_RETURN(in_tensors_.size(), C1NUM);
+  CHECK_LESS_RETURN(out_tensors_.size(), C1NUM);
   auto in_tensor = in_tensors_.front();
   CHECK_NULL_RETURN(in_tensor);
   auto out_tensor = out_tensors_.front();

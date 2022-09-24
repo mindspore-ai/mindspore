@@ -98,6 +98,19 @@ int LayerNormInt8CPUKernel::SetQuantArgs() {
 int LayerNormInt8CPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), min_layernorm_input);
   CHECK_LESS_RETURN(out_tensors_.size(), min_layernorm_output);
+  CHECK_NULL_RETURN(in_tensors_[0]);
+  CHECK_NULL_RETURN(in_tensors_[C1NUM]);
+  CHECK_NULL_RETURN(in_tensors_[C2NUM]);
+  CHECK_NULL_RETURN(out_tensors_[0]);
+  if (in_tensors_[0]->data_type() != mindspore::kNumberTypeInt8 ||
+      in_tensors_[C1NUM]->data_type() != mindspore::kNumberTypeInt8 ||
+      in_tensors_[C2NUM]->data_type() != mindspore::kNumberTypeInt32 ||
+      out_tensors_[0]->data_type() != mindspore::kNumberTypeInt8) {
+    MS_LOG(ERROR) << "Datatype error, input0 data_type is " << in_tensors_[0]->data_type() << ", input1 data_type is "
+                  << in_tensors_[C1NUM]->data_type() << ", input2 data_type is " << in_tensors_[C2NUM]->data_type()
+                  << ", output data_type is " << out_tensors_[0]->data_type();
+    return RET_ERROR;
+  }
   CHECK_NULL_RETURN(param_);
 
   auto ret = SetQuantArgs();

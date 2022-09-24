@@ -42,6 +42,16 @@ int LeakyReluInt8Run(void *cdata, int task_id, float, float) {
 }  // namespace
 
 int LeakyReluInt8CPUKernel::Prepare() {
+  CHECK_LESS_RETURN(in_tensors_.size(), C1NUM);
+  CHECK_LESS_RETURN(out_tensors_.size(), C1NUM);
+  CHECK_NULL_RETURN(in_tensors_[0]);
+  CHECK_NULL_RETURN(out_tensors_[0]);
+  if (in_tensors_[0]->data_type() != mindspore::kNumberTypeInt8 ||
+      out_tensors_[0]->data_type() != mindspore::kNumberTypeInt8) {
+    MS_LOG(ERROR) << "Datatype error, input0 data_type is " << in_tensors_[0]->data_type() << ", output data_type is "
+                  << out_tensors_[0]->data_type();
+    return RET_ERROR;
+  }
   quant_prelu_parm_.thread_num_ = op_parameter_->thread_num_;
   quant_prelu_parm_.slope_ = reinterpret_cast<ActivationParameter *>(op_parameter_)->alpha_;
 

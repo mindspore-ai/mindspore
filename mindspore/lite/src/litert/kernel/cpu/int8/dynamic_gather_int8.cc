@@ -46,7 +46,16 @@ DynamicGatherInt8CPUKernel::~DynamicGatherInt8CPUKernel() {
 int DynamicGatherInt8CPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(in_tensors_.at(0));
+  CHECK_NULL_RETURN(in_tensors_.at(1));
+  if (in_tensors_[0]->data_type() != mindspore::kNumberTypeInt8 ||
+      out_tensors_[0]->data_type() != mindspore::kNumberTypeFloat32) {
+    MS_LOG(ERROR) << "Datatype error, input0 data_type is " << in_tensors_[0]->data_type() << ", output data_type is "
+                  << out_tensors_[0]->data_type();
+    return RET_ERROR;
+  }
   if (in_tensors_.size() == kInputSize2) {
+    CHECK_NULL_RETURN(in_tensors_.at(C2NUM));
     auto axis_data = reinterpret_cast<int *>(in_tensors_.at(C2NUM)->data());
     if (axis_data == nullptr) {
       MS_LOG(ERROR) << "DynamicGatherInt8CPUKernel input[2] data nullptr.";

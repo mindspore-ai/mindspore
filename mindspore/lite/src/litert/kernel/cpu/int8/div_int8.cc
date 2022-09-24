@@ -34,12 +34,19 @@ DivInt8CPUKernel::~DivInt8CPUKernel() {
   }
 }
 int DivInt8CPUKernel::Prepare() {
+  CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
+  CHECK_NULL_RETURN(in_tensors_.at(0));
+  CHECK_NULL_RETURN(in_tensors_.at(1));
+  if (in_tensors_[0]->data_type() != mindspore::kNumberTypeInt8 ||
+      in_tensors_[1]->data_type() != mindspore::kNumberTypeInt8 ||
+      out_tensors_[0]->data_type() != mindspore::kNumberTypeInt8) {
+    MS_LOG(ERROR) << "Datatype error, input0 data_type is " << in_tensors_[0]->data_type() << ", input1 data_type is "
+                  << in_tensors_[1]->data_type() << ", output data_type is " << out_tensors_[0]->data_type();
+    return RET_ERROR;
+  }
   lite::Tensor *input0 = in_tensors_.at(0);
   lite::Tensor *input1 = in_tensors_.at(1);
   lite::Tensor *output = out_tensors_.at(0);
-  MS_ASSERT(input0);
-  MS_ASSERT(input1);
-  MS_ASSERT(output);
 
   quant_args_ = reinterpret_cast<DivQuantArg *>(malloc(sizeof(DivQuantArg)));
   if (quant_args_ == nullptr) {

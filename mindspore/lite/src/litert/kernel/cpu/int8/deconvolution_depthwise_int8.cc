@@ -135,6 +135,13 @@ int DeconvolutionDepthwiseInt8CPUKernel::Prepare() {
   CHECK_NULL_RETURN(in_tensors_.at(kInputIndex));
   CHECK_NULL_RETURN(in_tensors_.at(kWeightIndex));
   CHECK_NULL_RETURN(conv_param_);
+  if (in_tensors_[0]->data_type() != mindspore::kNumberTypeInt8 ||
+      in_tensors_[1]->data_type() != mindspore::kNumberTypeInt8 ||
+      out_tensors_[0]->data_type() != mindspore::kNumberTypeInt8) {
+    MS_LOG(ERROR) << "Datatype error, input0 data_type is " << in_tensors_[0]->data_type() << ", input1 data_type is "
+                  << in_tensors_[1]->data_type() << ", output data_type is " << out_tensors_[0]->data_type();
+    return RET_ERROR;
+  }
 
   sliding_ = new (std::nothrow) SlidingWindowParam;
   if (sliding_ == nullptr) {
