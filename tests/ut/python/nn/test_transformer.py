@@ -18,13 +18,26 @@ import shutil
 import numpy as np
 import pytest
 
-
 import mindspore
 from mindspore import Tensor
 from mindspore.common import dtype
+from mindspore.ops import operations as ops
 from mindspore.parallel.nn import MultiHeadAttention, FeedForward, TransformerEncoderLayer, TransformerEncoder, \
     TransformerDecoder, TransformerDecoderLayer, Transformer, CrossEntropyLoss, AttentionMask, FixedSparseAttention
 from mindspore.common.api import _cell_graph_executor
+
+
+class MyActivation(mindspore.nn.Cell):
+    def __init__(self):
+        super(MyActivation, self).__init__()
+        self.add = ops.Add()
+
+    def construct(self, x):
+
+        return self.add(x, 0.1)
+
+    def shard(self, parallel_config):
+        self.add.shard(((parallel_config.data_parallel, parallel_config.model_parallel), ()))
 
 
 def test_transformer_encoder_only():
@@ -208,18 +221,42 @@ def test_multihead_attention():
     _cell_graph_executor.compile(model, from_tensor, to_tensor, to_tensor, attention_mask)
 
 
-def test_multihead_attention_wrong_batch():
+@pytest.mark.parametrize('batch_size', [1, 2, None, 4])
+def test_multihead_attention_wrong_batch(batch_size):
+    """
+    Feature: Test MultiHeadAttention with wrong batch for training
+    Description: Test the batch size to be any int or None
+    Expectation: No exception
+    """
     model = MultiHeadAttention(hidden_size=15,
                                src_seq_length=20,
                                tgt_seq_length=20,
-                               batch_size=2,
+                               batch_size=batch_size,
                                num_heads=3)
     from_tensor = Tensor(np.ones((3, 20, 15)), dtype.float32)
     to_tensor = Tensor(np.ones((3, 20, 15)), dtype.float16)
     attention_mask = Tensor(np.ones((3, 20, 20)), dtype.float16)
 
-    with pytest.raises(ValueError):
-        _cell_graph_executor.compile(model, from_tensor, to_tensor, to_tensor, attention_mask)
+    _cell_graph_executor.compile(model, from_tensor, to_tensor, to_tensor, attention_mask)
+
+
+@pytest.mark.parametrize('from_tensor,to_tensor', [(Tensor(np.ones((20, 15)), dtype.float32),
+                                                    Tensor(np.ones((20, 15)), dtype.float16)),
+                                                   (Tensor(np.ones((3, 20, 15)), dtype.float32),
+                                                    Tensor(np.ones((3, 20, 15)), dtype.float16))])
+def test_multihead_attention_no_mask_2d_or_3d_shape(from_tensor, to_tensor):
+    """
+    Feature: Test MultiHeadAttention no mask
+    Description: Test MultiHeadAttention no mask and 2d as inputs.
+    Expectation: No exception
+    """
+    model = MultiHeadAttention(hidden_size=15,
+                               src_seq_length=20,
+                               tgt_seq_length=20,
+                               batch_size=None,
+                               num_heads=3)
+
+    _cell_graph_executor.compile(model, from_tensor, to_tensor, to_tensor, None)
 
 
 def test_multihead_attention_fp32_dtype():
@@ -238,6 +275,154 @@ def test_multihead_attention_fp32_dtype():
     to_tensor = Tensor(np.ones((2, 20, 15)), dtype.float32)
     attention_mask = Tensor(np.ones((2, 20, 20)), dtype.float32)
     _cell_graph_executor.compile(model, from_tensor, to_tensor, to_tensor, attention_mask)
+
+
+@pytest.mark.parametrize('batch_size', [1, 2, None, 4])
+def test_transformerencoder_wrong_batch(batch_size):
+    """
+    Feature: Test TransformerEncoderLayer with wrong batch for training
+    Description: Test the batch size to be any int or None
+    Expectation: No exception
+    """
+    model = TransformerEncoderLayer(batch_size=batch_size, hidden_size=8, ffn_hidden_size=64, seq_length=16,
+                                    num_heads=2)
+    encoder_input_value = Tensor(np.ones((2, 16, 8)), dtype.float32)
+    encoder_input_mask = Tensor(np.ones((2, 16, 16)), dtype.float16)
+
+    model(encoder_input_value, encoder_input_mask)
+
+
+@pytest.mark.parametrize('attention_mask', [Tensor(np.ones((2, 16, 16)), dtype.float16),
+                                            None])
+def test_transformerencoder_no_mask(attention_mask):
+    """
+    Feature: Test TransformerEncoderLayer with no mask
+    Description: Test the attention mask is None
+    Expectation: No exception
+    """
+    model = TransformerEncoderLayer(batch_size=None, hidden_size=8, ffn_hidden_size=64, seq_length=16,
+                                    num_heads=2)
+    encoder_input_value = Tensor(np.ones((2, 16, 8)), dtype.float32)
+
+    model(encoder_input_value, attention_mask)
+
+
+@pytest.mark.parametrize('shape', [(2, 16, 8), (32, 8)])
+def test_transformerencoder_2d_or_3d_shape(shape):
+    """
+    Feature: Test TransformerEncoderLayer with 2d or 3d inputs
+    Description: Test the attention mask is None
+    Expectation: No exception
+    """
+    model = TransformerEncoderLayer(batch_size=None, hidden_size=8, ffn_hidden_size=64, seq_length=16,
+                                    num_heads=2)
+    encoder_input_value = Tensor(np.ones(shape), dtype.float32)
+
+    model(encoder_input_value, None)
+
+
+@pytest.mark.parametrize('batch_size', [1, 2, None, 4])
+def test_transformerdecoder_wrong_batch(batch_size):
+    """
+    Feature: Test TransformerDecoderLayer with wrong batch for training
+    Description: Test the batch size to be any int or None
+    Expectation: No exception
+    """
+    model = TransformerDecoderLayer(batch_size=batch_size, hidden_size=64, ffn_hidden_size=64, num_heads=2,
+                                    src_seq_length=20, tgt_seq_length=10)
+    encoder_input_value = Tensor(np.ones((2, 20, 64)), dtype.float32)
+    decoder_input_value = Tensor(np.ones((2, 10, 64)), dtype.float32)
+    decoder_input_mask = Tensor(np.ones((2, 10, 10)), dtype.float16)
+    memory_mask = Tensor(np.ones((2, 10, 20)), dtype.float16)
+    model(decoder_input_value, decoder_input_mask, encoder_input_value, memory_mask)
+
+
+@pytest.mark.parametrize('decoder_input_mask,memory_mask',
+                         [(None, None), (Tensor(np.ones((2, 10, 10)), dtype.float16), None),
+                          (None, Tensor(np.ones((2, 10, 20)), dtype.float16))])
+def test_transformerdecoder_mask(decoder_input_mask, memory_mask):
+    """
+    Feature: Test TransformerDecoderLayer with empty mask
+    Description: Test the mask is None
+    Expectation: No exception
+    """
+    model = TransformerDecoderLayer(batch_size=4, hidden_size=64, ffn_hidden_size=64, num_heads=2,
+                                    src_seq_length=20, tgt_seq_length=10)
+    encoder_input_value = Tensor(np.ones((2, 20, 64)), dtype.float32)
+    decoder_input_value = Tensor(np.ones((2, 10, 64)), dtype.float32)
+    model(decoder_input_value, decoder_input_mask, encoder_input_value, memory_mask)
+
+
+def test_transformerdecoder_custom_activation():
+    """
+    Feature: Test TransformerDecoderLayer custom activation
+    Description: Test TransformerDecoderLayer custom activation
+    Expectation: No exception
+    """
+    model = TransformerDecoderLayer(batch_size=4, hidden_size=64, ffn_hidden_size=64, num_heads=2,
+                                    hidden_act=MyActivation,
+                                    src_seq_length=20, tgt_seq_length=10)
+    encoder_input_value = Tensor(np.ones((2, 20, 64)), dtype.float32)
+    decoder_input_value = Tensor(np.ones((2, 10, 64)), dtype.float32)
+    model(decoder_input_value, None, encoder_input_value, None)
+
+
+@pytest.mark.parametrize('encoder_shape,decoder_shape', [((2, 20, 64), (2, 10, 64)),
+                                                         ((20, 64), (10, 64))])
+def test_transformerdecoder_2d_or_3d_shape(encoder_shape, decoder_shape):
+    """
+    Feature: Test TransformerDecoderLayer with 2d or 3d inputs
+    Description: Test the attention mask is None
+    Expectation: No exception
+    """
+    model = TransformerDecoderLayer(batch_size=None, hidden_size=64, ffn_hidden_size=64, num_heads=2,
+                                    src_seq_length=20, tgt_seq_length=10)
+    encoder_input_value = Tensor(np.ones(encoder_shape), dtype.float32)
+    decoder_input_value = Tensor(np.ones(decoder_shape), dtype.float32)
+    model(decoder_input_value, None, encoder_input_value, None)
+
+
+@pytest.mark.parametrize('hidden_act', [MyActivation, None, "relu"])
+def test_transformer_hidden_act(hidden_act):
+    """
+    Feature: Test Transformer hidden activation with activation or None
+    Description: Test the transformer hidden activation
+    Expectation: No exception
+    """
+    model = Transformer(batch_size=2, encoder_layers=1, decoder_layers=2, hidden_size=64,
+                        hidden_act=hidden_act,
+                        ffn_hidden_size=64, src_seq_length=20, tgt_seq_length=10)
+    encoder_input_value = Tensor(np.ones((2, 20, 64)), dtype.float32)
+    encoder_input_mask = Tensor(np.ones((2, 20, 20)), dtype.float16)
+    decoder_input_value = Tensor(np.ones((2, 10, 64)), dtype.float32)
+    decoder_input_mask = Tensor(np.ones((2, 10, 10)), dtype.float16)
+    memory_mask = Tensor(np.ones((2, 10, 20)), dtype.float16)
+    model(encoder_input_value, encoder_input_mask, decoder_input_value,
+          decoder_input_mask, memory_mask)
+
+
+def test_transformer_hidden_act_with_wrong_hidden_act_wrong_lambda_func():
+    """
+    Feature: Test Transformer hidden activation with activation or None
+    Description: Test the transformer hidden activation
+    Expectation: No exception
+    """
+    with pytest.raises(TypeError):
+        Transformer(batch_size=2, encoder_layers=1, decoder_layers=2, hidden_size=64,
+                    hidden_act=lambda x: x,
+                    ffn_hidden_size=64, src_seq_length=20, tgt_seq_length=10)
+
+
+def test_transformer_hidden_act_with_wrong_hidden_act_wrong_str():
+    """
+    Feature: Test Transformer hidden activation with wrong activation
+    Description: Test the transformer hidden activation
+    Expectation: No exception
+    """
+    with pytest.raises(KeyError):
+        Transformer(batch_size=2, encoder_layers=1, decoder_layers=2, hidden_size=64,
+                    hidden_act="no_string",
+                    ffn_hidden_size=64, src_seq_length=20, tgt_seq_length=10)
 
 
 def test_feedforward_layer():

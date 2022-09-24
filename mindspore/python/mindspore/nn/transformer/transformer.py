@@ -37,8 +37,9 @@ from mindspore.context import ParallelMode
 from mindspore.log import _LogActionOnce
 from mindspore.nn.transformer.layers import _LayerNorm, _Linear, _check_input_shape, \
     _args_type_validator_check, _valid_type_checks, _valid_value_checks, \
-    _check_shape_equal, _check_past_none_input_none, _check_input_dtype, _check_input_shape_value
-from mindspore.nn.transformer.op_parallel_config import default_dpmp_config, _PipeLineConfig, OpParallelConfig,\
+    _check_shape_equal, _check_past_none_input_none, _check_input_dtype, _check_input_shape_value, \
+    _check_shape_equal_without_batch
+from mindspore.nn.transformer.op_parallel_config import default_dpmp_config, _PipeLineConfig, OpParallelConfig, \
     _Config, _check_config, MoEParallelConfig
 from mindspore.nn.transformer.moe import default_moe_config, MoE, _check_moe_config
 
@@ -399,7 +400,6 @@ class FeedForward(Cell):
     @_args_type_validator_check(hidden_size=Validator.check_positive_int,
                                 ffn_hidden_size=Validator.check_positive_int,
                                 dropout_rate=Validator.check_non_negative_float,
-                                hidden_act=_valid_type_checks([str], "FeedForward"),
                                 param_init_type=_valid_value_checks([mstype.float32, mstype.float16],
                                                                     "FeedForward"),
                                 parallel_config=_valid_type_checks([OpParallelConfig, MoEParallelConfig],
@@ -718,7 +718,9 @@ class MultiHeadAttention(Cell):
         if query, key and value tensor is same, then it will be self attention.
 
         Args:
-            batch_size(int): The batch size of the input tensor.
+            batch_size(int): The batch size of the input tensor when do increnmental prediction. Should be a positive
+                value. When do training or prediction, the argument will not work and the user can just pass None to
+                the argument.
             src_seq_length(int): The sequence length of the query vector.
             tgt_seq_length(int): The sequence length of the key and value vector.
             hidden_size(int): The hidden size of the input.
@@ -751,9 +753,9 @@ class MultiHeadAttention(Cell):
             - **value_tensor** (Tensor) - The value vector with shape (batch_size, tgt_seq_length, hidden_size) or
               (batch_size * tgt_seq_length, hidden_size), if the use_past is False or is_first_iteration=True.
               Otherwise, must be (batch_size, 1, hidden_size)
-            - **attention_mask** (Tensor) - The attention mask matrix with shape (batch_size, src_seq_length,
-              tgt_seq_length), if the use_past is False or is_first_iteration=True. Otherwise,
-              must be (batch_size, 1, tgt_seq_length)
+            - **attention_mask** (Tensor) - If the use_past is False or is_first_iteration=True, the attention mask
+              matrix should ba (batch_size, src_seq_length, tgt_seq_length), or None. None means there will be no mask
+              in softmax computation. Otherwise, the mask must be (batch_size, 1, tgt_seq_length)
             - **key_past** (Tensor) - Float16 tensor with shape (batch_size, num_heads, size_per_head, tgt_seq_length).
               The past calculated key vector. Used for incremental prediction when the use_past is True.
               Default None.
@@ -783,7 +785,7 @@ class MultiHeadAttention(Cell):
             >>> from mindspore.nn.transformer import MultiHeadAttention
             >>> from mindspore import dtype as mstype
             >>> from mindspore import Tensor
-            >>> model = MultiHeadAttention(batch_size=2, hidden_size=15, src_seq_length=20, tgt_seq_length=20,
+            >>> model = MultiHeadAttention(batch_size=None, hidden_size=15, src_seq_length=20, tgt_seq_length=20,
             ...                            num_heads=3)
             >>> from_tensor = Tensor(np.ones((2, 20, 15)), mstype.float32)
             >>> to_tensor = Tensor(np.ones((2, 20, 15)), mstype.float16)
@@ -830,8 +832,7 @@ class MultiHeadAttention(Cell):
     """
     @_LogActionOnce(logger=logger, key='MultiHeadAttention',
                     no_warning=_get_parallel_mode() in (ParallelMode.STAND_ALONE,))
-    @_args_type_validator_check(batch_size=Validator.check_positive_int,
-                                hidden_size=Validator.check_positive_int,
+    @_args_type_validator_check(hidden_size=Validator.check_positive_int,
                                 num_heads=Validator.check_positive_int,
                                 src_seq_length=Validator.check_positive_int,
                                 tgt_seq_length=Validator.check_positive_int,
@@ -860,10 +861,13 @@ class MultiHeadAttention(Cell):
                  parallel_config=default_dpmp_config):
         super(MultiHeadAttention, self).__init__()
         self._is_ascend = context.get_context('device_target') in ["Ascend"]
+        self.dp = parallel_config.data_parallel
+        self.is_parallel_mode = _get_parallel_mode() in (
+            ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL)
+        if batch_size:
+            Validator.check_positive_int(batch_size)
         if _get_parallel_mode() in (ParallelMode.AUTO_PARALLEL,) and _is_sharding_propagation():
             _check_config(parallel_config)
-            self.is_parallel_mode = _get_parallel_mode() in (
-                ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL)
             self.src_seq_length = src_seq_length
             self.tgt_seq_length = tgt_seq_length
             self.hidden_size = hidden_size
@@ -883,11 +887,6 @@ class MultiHeadAttention(Cell):
                                  "'parallel_config.model_parallel', but got the num_heads is {} "
                                  "and the parallel_config.model_parallel  is {}."
                                  .format(num_heads, parallel_config.model_parallel))
-            if self.is_parallel_mode and batch_size % parallel_config.data_parallel != 0:
-                raise ValueError("For 'MultiHeadAttention', the class variable 'batch_size' must be a multiple of "
-                                 "'parallel_config.data_parallel', but got the batch_size is {} "
-                                 "and the parallel_config.data_parallel is {}."
-                                 .format(batch_size, parallel_config.data_parallel))
             self.is_first_iteration = True
             # Output layer
             self.projection = _Linear(in_channels=hidden_size,
@@ -961,8 +960,6 @@ class MultiHeadAttention(Cell):
                 self.mul1 = P.Mul().shard(((1, 1, 1, 1), (1, 1, 1, 1)))
         else:
             _check_config(parallel_config)
-            self.is_parallel_mode = _get_parallel_mode() in (
-                ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL)
             self.src_seq_length = src_seq_length
             self.tgt_seq_length = tgt_seq_length
             self.hidden_size = hidden_size
@@ -982,11 +979,6 @@ class MultiHeadAttention(Cell):
                                  "'parallel_config.model_parallel', but got the num_heads is {} "
                                  "and the parallel_config.model_parallel  is {}."
                                  .format(num_heads, parallel_config.model_parallel))
-            if self.is_parallel_mode and batch_size % parallel_config.data_parallel != 0:
-                raise ValueError("For 'MultiHeadAttention', the class variable 'batch_size' must be a multiple of "
-                                 "'parallel_config.data_parallel', but got the batch_size is {} "
-                                 "and the parallel_config.data_parallel is {}."
-                                 .format(batch_size, parallel_config.data_parallel))
             self.is_first_iteration = True
             # Output layer
             self.projection = _Linear(in_channels=hidden_size,
@@ -1086,10 +1078,16 @@ class MultiHeadAttention(Cell):
                   value_past=None, batch_valid_length=None):
         self._check_inputs(query_tensor, key_tensor, value_tensor, attention_mask, key_past,
                            value_past, batch_valid_length)
-        query_tensor, key_tensor, value_tensor, batch_size, ori_shape = self._convert_to_2d_tensor(query_tensor,
-                                                                                                   key_tensor,
-                                                                                                   value_tensor,
-                                                                                                   attention_mask)
+        ori_shape = F.shape(query_tensor)
+        batch_size = None
+        if len(F.shape(query_tensor)) == 2:
+            batch_size = F.shape(query_tensor)[0] // self.src_seq_length
+        else:
+            batch_size = F.shape(query_tensor)[0]
+        query_tensor, key_tensor, value_tensor = self._convert_to_2d_tensor(query_tensor,
+                                                                            key_tensor,
+                                                                            value_tensor,
+                                                                            attention_mask)
         ori_dtype = F.dtype(query_tensor)
         query_tensor = F.cast(query_tensor, self.dtype)
         key_tensor = F.cast(key_tensor, self.dtype)
@@ -1116,7 +1114,7 @@ class MultiHeadAttention(Cell):
                 (batch_size, -1, self.n_head, self.size_per_head)),
             (0, 2, 1, 3))
         # support input shape is [bs, seq, seq] or [bs, heads, seq, seq]
-        if len(F.shape(attention_mask)) == 3:
+        if attention_mask is not None and len(F.shape(attention_mask)) == 3:
             # expand attention mask from [bs, seq, seq] -> [bs, 1, seq, seq]
             attention_mask = self.expand_dims(attention_mask, 1)
         # key and value for current token(s)
@@ -1171,17 +1169,15 @@ class MultiHeadAttention(Cell):
                       value_past=None, batch_valid_length=None):
         r"""Check inputs"""
         if not self.use_past or (self.use_past and self.is_first_iteration):
-            _check_shape_equal(F.shape(query_tensor), "query_tensor", self.cls_name,
-                               [[self.batch_size, self.src_seq_length, self.hidden_size],
-                                [self.batch_size * self.src_seq_length, self.hidden_size]])
-            _check_shape_equal(F.shape(key_tensor), "key_tensor", self.cls_name,
-                               [[self.batch_size, self.tgt_seq_length, self.hidden_size],
-                                [self.batch_size * self.tgt_seq_length, self.hidden_size]])
-            _check_shape_equal(F.shape(value_tensor), "value_tensor", self.cls_name,
-                               [[self.batch_size, self.tgt_seq_length, self.hidden_size],
-                                [self.batch_size * self.tgt_seq_length, self.hidden_size]])
-            _check_shape_equal(F.shape(attention_mask), "attention_mask", self.cls_name,
-                               [self.batch_size, self.src_seq_length, self.tgt_seq_length])
+            _check_shape_equal_without_batch(F.shape(query_tensor), "query_tensor", self.cls_name,
+                                             [self.src_seq_length, self.hidden_size])
+            _check_shape_equal_without_batch(F.shape(key_tensor), "key_tensor", self.cls_name,
+                                             [self.tgt_seq_length, self.hidden_size])
+            _check_shape_equal_without_batch(F.shape(value_tensor), "value_tensor", self.cls_name,
+                                             [self.tgt_seq_length, self.hidden_size])
+            if attention_mask is not None:
+                _check_shape_equal(F.shape(attention_mask), "attention_mask", self.cls_name,
+                                   [F.shape(attention_mask)[0], self.src_seq_length, self.tgt_seq_length])
         else:
             _check_shape_equal(F.shape(query_tensor), "query_tensor", self.cls_name,
                                [[self.batch_size, 1, self.hidden_size], [self.batch_size, self.hidden_size]])
@@ -1189,13 +1185,16 @@ class MultiHeadAttention(Cell):
                                [[self.batch_size, 1, self.hidden_size], [self.batch_size, self.hidden_size]])
             _check_shape_equal(F.shape(value_tensor), "value_tensor", self.cls_name,
                                [[self.batch_size, 1, self.hidden_size], [self.batch_size, self.hidden_size]])
-            _check_shape_equal(F.shape(attention_mask), "attention_mask", self.cls_name,
-                               [[self.batch_size, 1, self.tgt_seq_length], [self.batch_size, self.hidden_size]])
+            if attention_mask is not None:
+                _check_shape_equal(F.shape(attention_mask), "attention_mask", self.cls_name,
+                                   [[self.batch_size, 1, self.tgt_seq_length], [self.batch_size, self.hidden_size]])
 
         _check_input_dtype(F.dtype(query_tensor), "query_tensor", [mstype.float32, mstype.float16], self.cls_name)
         _check_input_dtype(F.dtype(key_tensor), "key_tensor", [mstype.float32, mstype.float16], self.cls_name)
         _check_input_dtype(F.dtype(value_tensor), "value_tensor", [mstype.float32, mstype.float16], self.cls_name)
-        _check_input_dtype(F.dtype(attention_mask), "attention_mask", [mstype.float32, mstype.float16], self.cls_name)
+        if attention_mask is not None:
+            _check_input_dtype(F.dtype(attention_mask), "attention_mask", [mstype.float32, mstype.float16],
+                               self.cls_name)
 
         key_is_tensor = isinstance(key_past, Tensor)
         value_is_tensor = isinstance(value_past, Tensor)
@@ -1228,7 +1227,8 @@ class MultiHeadAttention(Cell):
         key_tensor = F.reshape(key_tensor, (-1, key_shape[-1]))
         value_shape = F.shape(value_tensor)
         value_tensor = F.reshape(value_tensor, (-1, value_shape[-1]))
-        return query_tensor, key_tensor, value_tensor, F.shape(attention_mask)[0], query_shape
+
+        return query_tensor, key_tensor, value_tensor
 
     def _merge_heads(self, x):
         """
@@ -1286,30 +1286,31 @@ class MultiHeadAttention(Cell):
         score = self.batch_matmul(query, key)
 
         ori_dtype = P.DType()(score)
-        score = P.Cast()(score, self.softmax_dtype)
+        attention_scores = P.Cast()(score, self.softmax_dtype)
 
         # for input size of (bs, 1) namely the second graph,
         # the shape of attention_mask matrix should be (bs, 1, 1, seq_length)
-        if self.use_past and not self.is_first_iteration:
-            # Calculate the current total token
-            current_index = self.reducesum(F.cast(self.not_equal(self.slice(key, (0, 0, 0, 0),
-                                                                            (F.shape(query)[0], 1, 1, self.seq_length),
-                                                                            (1, 1, 1, 1)),
-                                                                 0), mstype.float32), (1, 2, 3))
-            # Get the precise position index
-            index = self.sub1(F.cast(current_index, mstype.int32), 1)
-            index = F.reshape(index, (-1, 1, 1))
-            # Calculate the attention_mask matrix via the position index
-            attention_mask = F.cast(self.tensor_le(self.range, index), mstype.int32)
-            attention_mask = self.expand_dims(attention_mask, 2)
+        if attention_mask is not None:
+            if self.use_past and not self.is_first_iteration:
+                # Calculate the current total token
+                current_index = self.reducesum(F.cast(self.not_equal(self.slice(key, (0, 0, 0, 0),
+                                                                                (F.shape(query)[0], 1, 1,
+                                                                                 self.seq_length),
+                                                                                (1, 1, 1, 1)),
+                                                                     0), mstype.float32), (1, 2, 3))
+                # Get the precise position index
+                index = self.sub1(F.cast(current_index, mstype.int32), 1)
+                index = F.reshape(index, (-1, 1, 1))
+                # Calculate the attention_mask matrix via the position index
+                attention_mask = F.cast(self.tensor_le(self.range, index), mstype.int32)
+                attention_mask = self.expand_dims(attention_mask, 2)
+            # Minus 10000 for the position where masked to exclude them from softmax
+            multiplu_out = self.sub(
+                P.Cast()(F.tuple_to_array((1.0,)), P.DType()(attention_scores)),
+                P.Cast()(attention_mask, P.DType()(attention_scores)))
 
-        # Minus 10000 for the position where masked to exclude them from softmax
-        multiplu_out = self.sub(
-            P.Cast()(F.tuple_to_array((1.0,)), P.DType()(score)),
-            P.Cast()(attention_mask, P.DType()(score)))
-
-        adder = self.mul(multiplu_out, self.multiply_data)
-        attention_scores = self.add(adder, score)
+            adder = self.mul(multiplu_out, self.multiply_data)
+            attention_scores = self.add(adder, attention_scores)
 
         # attention probs
         attention_probs = self._softmax(attention_scores)
@@ -1328,7 +1329,9 @@ class TransformerEncoderLayer(Cell):
         encoder layer, including multihead attention and feedward layer.
 
         Args:
-            batch_size(int): The batch size of the input tensor.
+            batch_size(int): The batch size of the input tensor when do increnmental prediction. Should be a positive
+                value. When do training or prediction, the argument will not work and the user can just pass None to
+                the argument.
             hidden_size(int): The hidden size of the input.
             ffn_hidden_size(int): The hidden size of bottleneck in the feedforward layer.
             num_heads(int): The number of the heads.
@@ -1362,8 +1365,9 @@ class TransformerEncoderLayer(Cell):
             - **x** (Tensor) - Float Tensor, shape should be [batch_size, seq_length, hidden_size] or
               [batch_size * seq_length, hidden_size], if the use_past is False or is_first_iteration=True. Otherwise,
               should be [batch_size, 1, hidden_size]
-            - **input_mask** (Tensor) - Float Tensor, attention mask with shape [batch_size, seq_length, seq_length],
-              if the use_past is False or is_first_iteration=True. Otherwise, should be [batch_size, 1, hidden_size]
+            - **input_mask** (Tensor) - Float Tensor, If the use_past is False or is_first_iteration=True,
+              the attention mask matrix should ba [batch_size, seq_length, seq_length], or None. None means there will
+              be no mask in softmax computation. Otherwise, should be [batch_size, 1, hidden_size]
             - **init_reset** (Tensor) - A bool tensor with shape [1], used to clear the past key parameter and
               past value parameter used in the incremental prediction. Only valid when use_past is True. Default True.
             - **batch_valid_length** (Tensor) - Int32 tensor with shape [batch_size] the past calculated the index.
@@ -1430,14 +1434,12 @@ class TransformerEncoderLayer(Cell):
     """
     @_LogActionOnce(logger=logger, key='TransformerEncoderLayer',
                     no_warning=_get_parallel_mode() in (ParallelMode.STAND_ALONE,))
-    @_args_type_validator_check(batch_size=Validator.check_positive_int,
-                                hidden_size=Validator.check_positive_int,
+    @_args_type_validator_check(hidden_size=Validator.check_positive_int,
                                 num_heads=Validator.check_positive_int,
                                 ffn_hidden_size=Validator.check_positive_int,
                                 seq_length=Validator.check_positive_int,
                                 attention_dropout_rate=Validator.check_non_negative_float,
                                 hidden_dropout_rate=Validator.check_non_negative_float,
-                                hidden_act=_valid_type_checks([str], "TransformerEncoderLayer"),
                                 post_layernorm_residual=Validator.check_bool,
                                 layernorm_compute_type=_valid_value_checks([mstype.float32, mstype.float16],
                                                                            "TransformerEncoderLayer"),
@@ -1465,6 +1467,9 @@ class TransformerEncoderLayer(Cell):
                  moe_config=default_moe_config,
                  parallel_config=default_dpmp_config):
         super(TransformerEncoderLayer, self).__init__()
+        if batch_size or use_past:
+            Validator.check_positive_int(batch_size)
+        self.batch_size = batch_size
         if _get_parallel_mode() in (ParallelMode.AUTO_PARALLEL,) and _is_sharding_propagation():
             _check_config(parallel_config)
             if num_heads % parallel_config.model_parallel != 0:
@@ -1488,7 +1493,6 @@ class TransformerEncoderLayer(Cell):
             self.use_past = use_past
             self.seq_length = seq_length
             self.hidden_size = hidden_size
-            self.batch_size = batch_size
             self.layernorm1 = _LayerNorm((hidden_size,)).to_float(layernorm_compute_type)
             self.layernorm2 = _LayerNorm((hidden_size,)).to_float(layernorm_compute_type)
 
@@ -1564,7 +1568,6 @@ class TransformerEncoderLayer(Cell):
             self.use_past = use_past
             self.seq_length = seq_length
             self.hidden_size = hidden_size
-            self.batch_size = batch_size
             self.layernorm1 = _LayerNorm((hidden_size,)).to_float(layernorm_compute_type)
             self.layernorm1.shard(((parallel_config.data_parallel, 1),))
             self.layernorm2 = _LayerNorm((hidden_size,)).to_float(layernorm_compute_type)
@@ -1623,7 +1626,7 @@ class TransformerEncoderLayer(Cell):
             raise RuntimeError(f"The {self.cls_name} only support sharding propagation or "
                                f"semi-auto parallel mode now.")
 
-    def construct(self, x, input_mask, init_reset=True, batch_valid_length=None):
+    def construct(self, x, input_mask=None, init_reset=True, batch_valid_length=None):
         self._check_input(x, input_mask, init_reset, batch_valid_length)
         x_shape = F.shape(x)
         x = F.reshape(x, (-1, x_shape[-1]))
@@ -1699,17 +1702,19 @@ class TransformerEncoderLayer(Cell):
     def _check_input(self, x, input_mask, init_reset, batch_valid_length):
         r"""Check inputs"""
         if not self.use_past or (self.use_past and self.is_first_iteration):
-            _check_shape_equal(F.shape(x), "x", self.cls_name,
-                               [[self.batch_size, self.seq_length, self.hidden_size],
-                                [self.batch_size * self.seq_length, self.hidden_size]])
-            _check_shape_equal(F.shape(input_mask), "input_mask", self.cls_name,
-                               [self.batch_size, self.seq_length, self.seq_length])
+            _check_shape_equal_without_batch(F.shape(x), "x", self.cls_name,
+                                             [self.seq_length, self.hidden_size])
+            if input_mask is not None:
+                _check_shape_equal(F.shape(input_mask), "input_mask", self.cls_name,
+                                   [F.shape(input_mask)[0], self.seq_length, self.seq_length])
         else:
             _check_shape_equal(F.shape(x), "x", self.cls_name, [self.batch_size, 1, self.hidden_size])
-            _check_shape_equal(F.shape(input_mask), "input_mask", self.cls_name,
-                               [self.batch_size, 1, self.seq_length])
+            if input_mask is not None:
+                _check_shape_equal(F.shape(input_mask), "input_mask", self.cls_name,
+                                   [F.shape(input_mask)[0], 1, self.seq_length])
         _check_input_dtype(F.dtype(x), "x", [mstype.float32, mstype.float16], self.cls_name)
-        _check_input_dtype(F.dtype(input_mask), "input_mask", [mstype.float32, mstype.float16], self.cls_name)
+        if input_mask is not None:
+            _check_input_dtype(F.dtype(input_mask), "input_mask", [mstype.float32, mstype.float16], self.cls_name)
 
         init_reset_is_tensor = isinstance(init_reset, Tensor)
         init_reset_is_default = init_reset is True
@@ -1738,7 +1743,9 @@ class TransformerDecoderLayer(Cell):
             hidden_size(int): The hidden size of the input.
             ffn_hidden_size(int): The hidden size of bottleneck in the feedforward layer.
             num_heads(int): The number of the heads.
-            batch_size(int): The batch size of the input tensor.
+            batch_size(int): The batch size of the input tensor when do increnmental prediction. Should be a positive
+                value. When do training or prediction, the argument will not work and the user can just pass None to
+                the argument.
             src_seq_length(int): The input source sequence length.
             tgt_seq_length(int): The input target sequence length.
             attention_dropout_rate(float): The dropout rate of the attention scores. Default:0.1.
@@ -1764,13 +1771,13 @@ class TransformerDecoderLayer(Cell):
             - **hidden_stats** (Tensor) - The input tensor with shape [batch_size, tgt_seq_length, hidden_size] or
               [batch_size * tgt_seq_length, hidden_size].
             - **decoder_mask** (Tensor) - The attention mask for decoder with shape [batch_size, src_seq_length,
-              seq_length].
+              seq_length] or None. None means there will be no mask in softmax computation in self attention.
             - **encoder_output** (Tensor) - The output of the encoder with shape [batch_size, seq_length, hidden_size]
               or [batch_size * seq_length, hidden_size].
               Note this args can not be passed by None when the net is in outermost layer. Default None.
             - **memory_mask** (Tensor) - The memory mask of the cross attention with shape [batch, tgt_seq_length,
-              src_seq_length] where tgt_seq_length is the length of the decoder. Note this args can not be passed by
-              None when the net is in outermost layer. Default None.
+              src_seq_length] where tgt_seq_length is the length of the decoder. The user can also pass None. None
+              means there will be no mask in softmax computation in cross attention. Default None.
             - **init_reset** (Tensor) - A bool tensor with shape [1], used to clear the past key parameter and
               past value parameter used in the incremental prediction. Only valid when use_past is True. Default True.
             - **batch_valid_length** (Tensor) - Int32 tensor with shape [batch_size] the past calculated the index.
@@ -1815,15 +1822,13 @@ class TransformerDecoderLayer(Cell):
     """
     @_LogActionOnce(logger=logger, key='TransformerDecoderLayer',
                     no_warning=_get_parallel_mode() in (ParallelMode.STAND_ALONE,))
-    @_args_type_validator_check(batch_size=Validator.check_positive_int,
-                                hidden_size=Validator.check_positive_int,
+    @_args_type_validator_check(hidden_size=Validator.check_positive_int,
                                 num_heads=Validator.check_positive_int,
                                 ffn_hidden_size=Validator.check_positive_int,
                                 src_seq_length=Validator.check_positive_int,
                                 tgt_seq_length=Validator.check_positive_int,
                                 attention_dropout_rate=Validator.check_non_negative_float,
                                 hidden_dropout_rate=Validator.check_non_negative_float,
-                                hidden_act=_valid_type_checks([str], "TransformerDecoderLayer"),
                                 post_layernorm_residual=Validator.check_bool,
                                 layernorm_compute_type=_valid_value_checks([mstype.float32, mstype.float16],
                                                                            "TransformerDecoderLayer"),
@@ -1854,6 +1859,8 @@ class TransformerDecoderLayer(Cell):
         _check_moe_config(moe_config, parallel_config)
         self.use_moe = (moe_config.expert_num > 1)
         config_to_attention = parallel_config.dpmp if self.use_moe else parallel_config
+        if batch_size or use_past:
+            Validator.check_positive_int(batch_size)
         if _get_parallel_mode() in (ParallelMode.AUTO_PARALLEL,) and _is_sharding_propagation():
             _check_config(parallel_config)
             if num_heads % parallel_config.model_parallel != 0:
@@ -2144,28 +2151,30 @@ class TransformerDecoderLayer(Cell):
     def _check_input(self, hidden_states, attention_mask, encoder_output, memory_mask, init_reset, batch_valid_length):
         r"""Check inputs"""
         if not self.use_past or (self.use_past and self.is_first_iteration):
-            _check_shape_equal(F.shape(hidden_states), "hidden_states", self.cls_name,
-                               [[self.batch_size, self.tgt_seq_length, self.hidden_size],
-                                [self.batch_size * self.tgt_seq_length, self.hidden_size]])
-            _check_shape_equal(F.shape(attention_mask), "attention_mask", self.cls_name,
-                               [self.batch_size, self.tgt_seq_length, self.tgt_seq_length])
+            _check_shape_equal_without_batch(F.shape(hidden_states), "hidden_states", self.cls_name,
+                                             [self.tgt_seq_length, self.hidden_size])
+            if attention_mask is not None:
+                _check_shape_equal(F.shape(attention_mask), "attention_mask", self.cls_name,
+                                   [F.shape(attention_mask)[0], self.tgt_seq_length, self.tgt_seq_length])
 
         else:
             _check_shape_equal(F.shape(hidden_states), "hidden_states", self.cls_name,
                                [self.batch_size, 1, self.hidden_size])
-            _check_shape_equal(F.shape(attention_mask), "attention_mask", self.cls_name,
-                               [self.batch_size, 1, self.tgt_seq_length])
+            if attention_mask is not None:
+                _check_shape_equal(F.shape(attention_mask), "attention_mask", self.cls_name,
+                                   [self.batch_size, 1, self.tgt_seq_length])
         _check_input_dtype(F.dtype(hidden_states), "hidden_states", [mstype.float32, mstype.float16], self.cls_name)
-        _check_input_dtype(F.dtype(attention_mask), "attention_mask", [mstype.float32, mstype.float16], self.cls_name)
+        if attention_mask is not None:
+            _check_input_dtype(F.dtype(attention_mask), "attention_mask", [mstype.float32, mstype.float16],
+                               self.cls_name)
         if encoder_output is not None:
-            _check_shape_equal(F.shape(encoder_output), "encoder_output", self.cls_name,
-                               [[self.batch_size, self.src_seq_length, self.hidden_size],
-                                [self.batch_size * self.src_seq_length, self.hidden_size]])
+            _check_shape_equal_without_batch(F.shape(encoder_output), "encoder_output", self.cls_name,
+                                             [self.src_seq_length, self.hidden_size])
             _check_input_dtype(F.dtype(encoder_output), "encoder_output",
                                [mstype.float32, mstype.float16], self.cls_name)
         if memory_mask is not None:
-            _check_shape_equal(F.shape(memory_mask), "memory_mask", self.cls_name,
-                               [self.batch_size, self.tgt_seq_length, self.src_seq_length])
+            _check_shape_equal_without_batch(F.shape(memory_mask), "memory_mask", self.cls_name,
+                                             [self.tgt_seq_length, self.src_seq_length])
             _check_input_dtype(F.dtype(memory_mask), "memory_mask",
                                [mstype.float32, mstype.float16], self.cls_name)
 
@@ -2240,7 +2249,9 @@ class TransformerEncoder(Cell):
         attention and feedforward layer.
 
         Args:
-            batch_size(int): The batch size of the input tensor.
+            batch_size(int): The batch size of the input tensor when do increnmental prediction. Should be a positive
+                value. When do training or prediction, the argument will not work and the user can just pass None to
+                the argument.
             num_layers(int): The layers of the `TransformerEncoderLayer`
             hidden_size(int): The hidden size of the input.
             ffn_hidden_size(int): The hidden size of bottleneck in the feedforward layer.
@@ -2284,7 +2295,9 @@ class TransformerEncoder(Cell):
             - **hidden_states** (Tensor) - Tensor, shape should be [batch_size, seq_length, hidden_size] or
               [batch_size * seq_length, hidden_size], if the use_past is False or is_first_iteration=True. Otherwise,
               should be [batch_size, 1, hidden_size].
-            - **attention_mask** (Tensor) - Tensor, attention mask with shape [batch_size, seq_length, seq_length]
+            - **attention_mask** (Tensor) - Float Tensor, If the use_past is False or is_first_iteration=True,
+              the attention mask matrix should ba [batch_size, seq_length, seq_length], or None. None means there will
+              be no mask in softmax computation. Otherwise, should be [batch_size, 1, hidden_size]
             - **init_reset** (Tensor) - A bool tensor with shape [1], used to clear the past key parameter and
               past value parameter used in the incremental prediction. Only valid when use_past is True. Default True.
             - **batch_valid_length** (Tensor) - Int32 tensor with shape [batch_size] the past calculated the index.
@@ -2361,7 +2374,6 @@ class TransformerEncoder(Cell):
                                 offset=Validator.check_non_negative_int,
                                 attention_dropout_rate=Validator.check_non_negative_float,
                                 hidden_dropout_rate=Validator.check_non_negative_float,
-                                hidden_act=_valid_type_checks([str], "TransformerEncoder"),
                                 post_layernorm_residual=Validator.check_bool,
                                 layernorm_compute_type=_valid_value_checks([mstype.float32, mstype.float16],
                                                                            "TransformerEncoder"),
@@ -2490,7 +2502,9 @@ class TransformerDecoder(Cell):
 
         Args:
             num_layers(int): The layers of the `TransformerDecoderLayer`.
-            batch_size(int): The batch size of the input tensor.
+            batch_size(int): The batch size of the input tensor when do increnmental prediction. Should be a positive
+                value. When do training or prediction, the argument will not work and the user can just pass None to
+                the argument.
             hidden_size(int): The hidden size of the input.
             ffn_hidden_size(int): The hidden size of bottleneck in the feedforward layer.
             src_seq_length(int): The input source sequence length.
@@ -2528,13 +2542,14 @@ class TransformerDecoder(Cell):
             - **hidden_stats** (Tensor) - The input tensor with shape [batch_size, seq_length, hidden_size] or
               [batch_size * seq_length, hidden_size]
             - **attention_mask** (Tensor) - The attention mask for decoder with shape
-              [batch_size, seq_length, seq_length]
+              [batch_size, seq_length, seq_length] or None. None means there will be no mask in softmax
+              computation in self attention.
             - **encoder_output** (Tensor) - The output of the encoder with shape [batch_size, seq_length, hidden_size]
               or [batch_size * seq_length, hidden_size]. Note this args can not be passed by None when the net is in
               outermost layer. Default None.
             - **memory_mask** (Tensor) - The memory mask of the cross attention with shape [batch, tgt_seq_length,
-              src_seq_length] where tgt_seq_length is the length of the decoder. Note this args can not be passed by
-              None when the net is in outermost layer. Default None.
+              src_seq_length] where tgt_seq_length is the length of the decoder. The user can also pass None. None
+              means there will be no mask in softmax computation in cross attention. Default None.
             - **init_reset** (Tensor) - A bool tensor with shape [1], used to clear the past key parameter and
               past value parameter used in the incremental prediction. Only valid when use_past is True. Default True.
             - **batch_valid_length** (Tensor) - Int32 tensor with shape [batch_size] the past calculated the index.
@@ -2591,7 +2606,6 @@ class TransformerDecoder(Cell):
                                 offset=Validator.check_non_negative_int,
                                 attention_dropout_rate=Validator.check_non_negative_float,
                                 hidden_dropout_rate=Validator.check_non_negative_float,
-                                hidden_act=_valid_type_checks([str], "TransformerDecoder"),
                                 post_layernorm_residual=Validator.check_bool,
                                 layernorm_compute_type=_valid_value_checks([mstype.float32, mstype.float16],
                                                                            "TransformerDecoder"),
@@ -2736,7 +2750,9 @@ class Transformer(Cell):
 
         Args:
             hidden_size(int): The hidden size of the input.
-            batch_size(int): The batch size of the input tensor.
+            batch_size(int): The batch size of the input tensor when do increnmental prediction. Should be a positive
+                value. When do training or prediction, the argument will not work and the user can just pass None to
+                the argument.
             ffn_hidden_size(int): The hidden size of bottleneck in the feedforward layer.
             src_seq_length(int): The seq_length of the encoder's input tensor.
             tgt_seq_length(int): The seq_length of the decoder's input tensor.
@@ -2772,15 +2788,17 @@ class Transformer(Cell):
             - **encoder_inputs** (Tensor) - The input tensor with shape [batch_size, seq_length, hidden_size] or
               [batch_size * seq_length, hidden_size].
             - **encoder_masks** (Tensor) - The attention mask for decoder with shape
-              [batch_size, seq_length, seq_length].
+              [batch_size, seq_length, seq_length] or None. None means there will be no mask in softmax computation
+              in self attention of the encoder module.
             - **decoder_inputs** (Tensor) - The output of the encoder with shape [batch_size, seq_length, hidden_size]
               or [batch_size * seq_length, hidden_size], this should be none if the decoder layer is 0.
             - **decoder_masks** (Tensor) - The attention mask for decoder with shape
-              [batch_size, seq_length, seq_length]
+              [batch_size, seq_length, seq_length] or None. None means there will be no mask in softmax computation
+              in self attention of the decoder module.
             - **memory_mask** (Tensor) - The memory mask of the cross attention with shape [batch, tgt_seq_length,
               src_seq_length]
               where tgt_seq_length is the length of the decoder. The output of the encoder with shape [batch_size,
-              seq_length, hidden_size], this should be none if the decoder layer is 0.
+              seq_length, hidden_size], this should be none if the decoder layer is 0 or the user wants no mask.
             - **init_reset** (Tensor) - A bool tensor with shape [1], used to clear the past key parameter and
               past value parameter used in the incremental prediction. Only valid when use_past is True. Default True.
             - **batch_valid_length** (Tensor) - Int32 tensor with shape [batch_size] the past calculated the index.
@@ -2854,7 +2872,6 @@ class Transformer(Cell):
                                 tgt_seq_length=Validator.check_positive_int,
                                 attention_dropout_rate=Validator.check_non_negative_float,
                                 hidden_dropout_rate=Validator.check_non_negative_float,
-                                hidden_act=_valid_type_checks([str], "Transformer"),
                                 post_layernorm_residual=Validator.check_bool,
                                 layernorm_compute_type=_valid_value_checks([mstype.float32, mstype.float16],
                                                                            "Transformer"),
