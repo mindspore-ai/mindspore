@@ -44,7 +44,7 @@ def test_catch_exception_stack_trace_log():
     assert os.path.exists(log_file_name)
     with open(log_file_name, "r") as f_first:
         data_first = f_first.read()
-    assert "Do not support to get attribute" in data_first
+    assert "Do not support to convert" in data_first
     assert "x = self.y.tt1" in data_first
 
     # Clean files
