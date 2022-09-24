@@ -832,7 +832,9 @@ FunctionBlockPtr Parser::ParseExpr(const FunctionBlockPtr &block, const py::obje
       // Expand the assign statement,
       // e.g.: x.append(y)  -> x = x.append(y)
       py::object target_node = expand_info[2];
-      if (ast_->target_type() == PARSE_TARGET_OBJECT_INSTANCE && ast_->IsClassMember(target_node)) {
+      // Check whether the target_node is class member recursively.
+      // e.g.: self.a1.a1.update()
+      if (ast_->target_type() == PARSE_TARGET_OBJECT_INSTANCE && ast_->IsClassMemberRecursive(target_node)) {
         // self.x = [xx, xx]
         // self.x.append()
         MS_LOG(DEBUG) << "The variables whose type is not parameter do not support assign operation.";
@@ -3423,6 +3425,15 @@ AstSubType ParseFunctionAst::GetOpType(const py::object &node) {
 
 bool ParseFunctionAst::IsClassMember(const py::object &node) {
   py::object ret = CallParseModFunction(PYTHON_MOD_PARSE_CHECK_IS_CLASS_MEMBER, node);
+  if (!py::isinstance<py::bool_>(ret)) {
+    MS_LOG(ERROR) << "The result of mod function parse, should be bool type.";
+    return false;
+  }
+  return ret.cast<bool>();
+}
+
+bool ParseFunctionAst::IsClassMemberRecursive(const py::object &node) {
+  py::object ret = CallParseModFunction(PYTHON_MOD_PARSE_CHECK_IS_CLASS_MEMBER_RECURSIVE, node);
   if (!py::isinstance<py::bool_>(ret)) {
     MS_LOG(ERROR) << "The result of mod function parse, should be bool type.";
     return false;

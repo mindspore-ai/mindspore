@@ -26,7 +26,7 @@ from .parser import (Parser, create_instance, is_supported_create_instance_type,
                      convert_to_ms_tensor, get_object_description, get_class_attr_namespace_symbol, get_ms_class_name,
                      is_class_type, check_obj_bool, python_isinstance, ms_isinstance, convert_to_ms_csrtensor,
                      convert_to_ms_cootensor, convert_class_to_function, convert_cell_list_to_sequence, is_cell_list,
-                     get_obj_from_sequence, get_type)
+                     get_obj_from_sequence, get_type, is_class_member_recursive)
 
 __all__ = ['Parser', 'create_instance', 'is_supported_create_instance_type', 'generate_scope',
            'get_bprop_method_of_class', 'get_class_instance_type', 'get_class_member_namespace_symbol',
@@ -37,4 +37,4 @@ __all__ = ['Parser', 'create_instance', 'is_supported_create_instance_type', 'ge
            'convert_to_ms_tensor', 'get_object_description', 'get_class_attr_namespace_symbol', 'get_ms_class_name',
            'is_class_type', 'check_obj_bool', 'python_isinstance', 'ms_isinstance', 'convert_to_ms_csrtensor',
            'convert_to_ms_cootensor', 'convert_class_to_function', 'convert_cell_list_to_sequence', 'is_cell_list',
-           'get_obj_from_sequence', 'get_type']
+           'get_obj_from_sequence', 'get_type', 'is_class_member_recursive']
