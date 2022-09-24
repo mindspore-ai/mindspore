@@ -390,8 +390,7 @@ std::vector<T> PaddingShapeTo4dDefault(const std::vector<T> &shape, const AnfNod
       shape_4d[kW] = shape[kH];
       break;
     case kNchwDims:
-      (void)std::copy(shape.begin(), shape.end(), shape_4d.begin());
-      break;
+      return shape;
     default:
       auto node_info = (node != nullptr) ? ". Node: " + node->fullname_with_scope() : " .";
       MS_LOG(EXCEPTION) << "Unexpected shape : " << shape << node_info;

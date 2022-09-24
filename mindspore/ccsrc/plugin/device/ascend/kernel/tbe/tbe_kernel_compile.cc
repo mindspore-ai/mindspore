@@ -395,7 +395,7 @@ void TbeKernelCompileManager::SaveSucceedTaskCompileResult(int task_id, const st
     TbeUtils::UpdateCache(json_name);
     if (task_info.is_dynamic) {
       bool save_flag = true;
-      MS_LOG(INFO) << "Save compile info to json file for op: " << json_name << ", compile_info:" << compile_info;
+      MS_LOG(INFO) << "Save compile info to json file for op: " << json_name;
       TbeUtils::SaveCompileInfo(json_name, compile_info, &save_flag);
       if (!save_flag) {
         MS_LOG(EXCEPTION) << "Save json file failed, op: " << json_name << ", compile_info:" << compile_info;

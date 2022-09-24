@@ -445,7 +445,6 @@ from .sqrt_grad_ds import _sqrt_grad_ds_tbe
 from .rsqrt_grad import _rsqrt_grad_tbe
 from .rsqrt_grad_ds import _rsqrt_grad_ds_tbe
 from .scatter_add import _scatter_add_tbe
-from .scatter_add_ds import _scatter_add_ds_tbe
 from .atan2 import _atan2_tbe
 from .atan2_ds import _atan2_ds_tbe
 from .bessel_i0e import _bessel_i0e_tbe

@@ -170,8 +170,7 @@ RangePair PaddingRangeTo4dDefault(const RangePair &ori_range) {
       dst_range[kW] = ori_range[kH];
       break;
     case kNchwDims:
-      (void)std::copy(ori_range.begin(), ori_range.end(), std::back_inserter(dst_range));
-      break;
+      return ori_range;
     default:
       MS_LOG(EXCEPTION) << "Unexpected range size: " << ori_range.size();
   }
