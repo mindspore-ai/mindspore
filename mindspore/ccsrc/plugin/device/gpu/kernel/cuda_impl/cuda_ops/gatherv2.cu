@@ -86,6 +86,13 @@ template CUDA_LIB_EXPORT void GatherV2<double, int>(double *input, int *indices,
 template CUDA_LIB_EXPORT void GatherV2<double, int64_t>(double *input, int64_t *indices, double *output,
                                                         size_t output_dim0, size_t output_dim1, size_t output_dim2,
                                                         size_t input_dim1, cudaStream_t stream);
+template CUDA_LIB_EXPORT void GatherV2<int64_t, int>(int64_t *input, int *indices, int64_t *output, size_t output_dim0,
+                                                     size_t output_dim1, size_t output_dim2, size_t input_dim1,
+                                                     cudaStream_t stream);
+template CUDA_LIB_EXPORT void GatherV2<int64_t, int64_t>(int64_t *input, int64_t *indices, int64_t *output,
+                                                         size_t output_dim0,
+                                                         size_t output_dim1, size_t output_dim2, size_t input_dim1,
+                                                         cudaStream_t stream);
 template CUDA_LIB_EXPORT void GatherV2<int, int>(int *input, int *indices, int *output, size_t output_dim0,
                                                  size_t output_dim1, size_t output_dim2, size_t input_dim1,
                                                  cudaStream_t stream);
@@ -104,10 +111,23 @@ template CUDA_LIB_EXPORT void GatherV2<int8_t, int>(int8_t *input, int *indices,
 template CUDA_LIB_EXPORT void GatherV2<int8_t, int64_t>(int8_t *input, int64_t *indices, int8_t *output,
                                                         size_t output_dim0, size_t output_dim1, size_t output_dim2,
                                                         size_t input_dim1, cudaStream_t stream);
+template CUDA_LIB_EXPORT void GatherV2<uint64_t, int>(uint64_t *input, int *indices, uint64_t *output,
+                                                      size_t output_dim0, size_t output_dim1, size_t output_dim2,
+                                                      size_t input_dim1, cudaStream_t stream);
+template CUDA_LIB_EXPORT void GatherV2<uint64_t, int64_t>(uint64_t *input, int64_t *indices, uint64_t *output,
+                                                          size_t output_dim0, size_t output_dim1, size_t output_dim2,
+                                                          size_t input_dim1, cudaStream_t stream);
 template CUDA_LIB_EXPORT void GatherV2<uint32_t, int>(uint32_t *input, int *indices, uint32_t *output,
                                                       size_t output_dim0, size_t output_dim1, size_t output_dim2,
                                                       size_t input_dim1, cudaStream_t stream);
 template CUDA_LIB_EXPORT void GatherV2<uint32_t, int64_t>(uint32_t *input, int64_t *indices, uint32_t *output,
+                                                          size_t output_dim0, size_t output_dim1, size_t output_dim2,
+                                                          size_t input_dim1, cudaStream_t stream);
+template CUDA_LIB_EXPORT void GatherV2<uint16_t, int>(uint16_t *input, int *indices, uint16_t *output,
+                                                      size_t output_dim0,
+                                                      size_t output_dim1, size_t output_dim2, size_t input_dim1,
+                                                      cudaStream_t stream);
+template CUDA_LIB_EXPORT void GatherV2<uint16_t, int64_t>(uint16_t *input, int64_t *indices, uint16_t *output,
                                                           size_t output_dim0, size_t output_dim1, size_t output_dim2,
                                                           size_t input_dim1, cudaStream_t stream);
 template CUDA_LIB_EXPORT void GatherV2<uint8_t, int>(uint8_t *input, int *indices, uint8_t *output, size_t output_dim0,

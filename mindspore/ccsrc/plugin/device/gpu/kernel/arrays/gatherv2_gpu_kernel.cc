@@ -146,6 +146,10 @@ std::vector<std::pair<KernelAttr, GatherV2FwdGpuKernelMod::GatherV2Func>> Gather
    &GatherV2FwdGpuKernelMod::LaunchKernel<half, int, int64_t>},
   {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
    &GatherV2FwdGpuKernelMod::LaunchKernel<half, int64_t, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt64),
+   &GatherV2FwdGpuKernelMod::LaunchKernel<int64_t, int, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+   &GatherV2FwdGpuKernelMod::LaunchKernel<int64_t, int64_t, int64_t>},
   {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
    &GatherV2FwdGpuKernelMod::LaunchKernel<int, int, int64_t>},
   {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
@@ -158,10 +162,18 @@ std::vector<std::pair<KernelAttr, GatherV2FwdGpuKernelMod::GatherV2Func>> Gather
    &GatherV2FwdGpuKernelMod::LaunchKernel<int8_t, int, int64_t>},
   {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt8),
    &GatherV2FwdGpuKernelMod::LaunchKernel<int8_t, int64_t, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt64),
+   &GatherV2FwdGpuKernelMod::LaunchKernel<uint64_t, int, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt64),
+   &GatherV2FwdGpuKernelMod::LaunchKernel<uint64_t, int64_t, int64_t>},
   {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt32),
    &GatherV2FwdGpuKernelMod::LaunchKernel<uint, int, int64_t>},
   {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt32),
    &GatherV2FwdGpuKernelMod::LaunchKernel<uint, int64_t, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt16),
+   &GatherV2FwdGpuKernelMod::LaunchKernel<uint16_t, int, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt16),
+   &GatherV2FwdGpuKernelMod::LaunchKernel<uint16_t, int64_t, int64_t>},
   {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt8),
    &GatherV2FwdGpuKernelMod::LaunchKernel<uint8_t, int, int64_t>},
   {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt8),
@@ -291,6 +303,30 @@ std::vector<std::pair<KernelAttr, GatherV2FwdGpuKernelMod::GatherV2Func>> Gather
      .AddInputAttr(kNumberTypeInt32)
      .AddOutputAttr(kNumberTypeInt32),
    &GatherV2FwdGpuKernelMod::LaunchKernel<int, int64_t, int>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeComplex64)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeComplex64),
+   &GatherV2FwdGpuKernelMod::LaunchKernel<Complex<float>, int, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeComplex64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeComplex64),
+   &GatherV2FwdGpuKernelMod::LaunchKernel<Complex<float>, int64_t, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeComplex128)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeComplex128),
+   &GatherV2FwdGpuKernelMod::LaunchKernel<Complex<double>, int, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeComplex128)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeComplex128),
+   &GatherV2FwdGpuKernelMod::LaunchKernel<Complex<double>, int64_t, int64_t>},
 };
 
 MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, Gather, GatherV2FwdGpuKernelMod);

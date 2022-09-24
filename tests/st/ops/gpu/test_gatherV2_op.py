@@ -1374,3 +1374,35 @@ def test_gather1_bool():
     gather = GatherNet1()
     output = gather(x, indices)
     assert np.all(expect == output.asnumpy())
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize("data_type", [np.uint64, np.uint16, np.int64, np.complex64, np.complex128])
+def test_gather_tensor(data_type):
+    """
+    Feature: Gather
+    Description: test cases for Gather
+    Expectation: the result match to numpy
+    """
+    x = np.array([1, 2, 3, 4, 5, 6, 7]).astype(data_type)
+    input_indices = Tensor(np.array([0, 2, 4, 2, 6], dtype=np.int))
+    axis = 0
+    y_expect = np.array([1, 3, 5, 3, 7]).astype(data_type)
+
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+
+    graph_table_tensor = Tensor(x)
+    out = graph_table_tensor.gather(input_indices, axis)
+
+    assert out.shape == y_expect.shape
+    np.allclose(out.asnumpy(), y_expect)
+
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+
+    pynative_table_tensor = Tensor(x)
+    out = pynative_table_tensor.gather(input_indices, axis)
+
+    assert out.shape == y_expect.shape
+    np.allclose(out.asnumpy(), y_expect)
