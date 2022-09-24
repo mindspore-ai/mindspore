@@ -602,66 +602,49 @@ void GradExecutor::GradNetInner(const py::object *ret, const prim::GradOperation
   trace::ClearTraceStack();
 }
 
-AnfNodePtr GradExecutor::GetSingleWeightArg(const py::object &param, const FuncGraphPtr &df_builder) const {
-  if (!py::hasattr(param, "__parameter__")) {
-    MS_LOG(EXCEPTION) << "When 'get_by_list' is set to True, all elements in 'weights' should be Parameter, but got "
-                      << py::str(param);
-  }
-  auto param_id = PyNativeAlgo::PyParser::GetIdByPyObj(param);
-  auto &graph_info_map = top_cell()->graph_info_map();
-  if (graph_info_map.find(df_builder) == graph_info_map.end()) {
-    MS_LOG(EXCEPTION) << "Can not find df_builder " << df_builder.get() << ". Top cell: " << top_cell().get()
-                      << ", cell id: " << top_cell()->cell_id();
-  }
-  const auto &graph_info = graph_info_map.at(df_builder);
-  MS_EXCEPTION_IF_NULL(graph_info);
-  if (graph_info->params.find(param_id) != graph_info->params.end()) {
-    return graph_info->params.at(param_id);
-  }
-
-  const auto &name_attr = python_adapter::GetPyObjAttr(param, "name");
-  if (py::isinstance<py::none>(name_attr)) {
-    MS_LOG(EXCEPTION) << "Parameter object should have name attribute.";
-  }
-  const auto &param_name = py::cast<std::string>(name_attr);
-  MS_LOG(DEBUG) << "The input parameter weight name: " << param_name;
-  AnfNodePtr para_node = nullptr;
-  if (graph_info->params.find(param_name) != graph_info->params.end()) {
-    para_node = graph_info->params.at(param_name);
-  } else {
-    MS_LOG(DEBUG) << "Can not find input param in graph info map, make a new parameter.";
-    auto free_param = df_builder->add_parameter();
-    free_param->set_name(param_name);
-    auto value = py::cast<tensor::TensorPtr>(param);
-    free_param->set_default_param(value);
-    free_param->debug_info()->set_name(param_name);
-    para_node = free_param;
-  }
-  return para_node;
-}
-
 std::vector<AnfNodePtr> GradExecutor::GetWeightsArgs(const py::object &weights, const FuncGraphPtr &df_builder) const {
-  // Weights is None by default.
-  if (py::isinstance<py::none>(weights)) {
+  MS_EXCEPTION_IF_NULL(df_builder);
+  if (!py::hasattr(weights, "__parameter_tuple__")) {
+    MS_LOG(DEBUG) << "No parameter tuple get";
     return {};
-  }
-  // Single weight.
-  if (py::hasattr(weights, "__parameter__")) {
-    auto para_node = GetSingleWeightArg(weights, df_builder);
-    return {para_node};
-  }
-  // Multiple weights.
-  if (!py::hasattr(weights, "__parameter_tuple__") && !py::isinstance<py::tuple>(weights) &&
-      !py::isinstance<py::list>(weights)) {
-    MS_LOG(EXCEPTION) << "When 'get_by_list' is set to True, the argument 'weights' must be Parameters array, but got "
-                      << py::str(weights);
   }
 
   const auto &tuple = weights.cast<py::tuple>();
   MS_LOG(DEBUG) << "Get weights tuple size " << tuple.size();
   std::vector<AnfNodePtr> w_args;
   for (size_t it = 0; it < tuple.size(); ++it) {
-    auto para_node = GetSingleWeightArg(tuple[it], df_builder);
+    auto param = tuple[it];
+    auto param_id = PyNativeAlgo::PyParser::GetIdByPyObj(param);
+    auto &graph_info_map = top_cell()->graph_info_map();
+    if (graph_info_map.find(df_builder) == graph_info_map.end()) {
+      MS_LOG(EXCEPTION) << "Can not find df_builder " << df_builder.get() << " Top cell " << top_cell().get()
+                        << " cell id " << top_cell()->cell_id();
+    }
+    const auto &graph_info = graph_info_map.at(df_builder);
+    MS_EXCEPTION_IF_NULL(graph_info);
+    AnfNodePtr para_node = nullptr;
+    if (graph_info->params.find(param_id) != graph_info->params.end()) {
+      para_node = graph_info->params.at(param_id);
+      (void)w_args.emplace_back(para_node);
+      continue;
+    }
+    const auto &name_attr = python_adapter::GetPyObjAttr(param, "name");
+    if (py::isinstance<py::none>(name_attr)) {
+      MS_LOG(EXCEPTION) << "Parameter object should have name attribute";
+    }
+    const auto &param_name = py::cast<std::string>(name_attr);
+    MS_LOG(DEBUG) << "The input " << it << " parameter weight name " << param_name;
+    if (graph_info->params.find(param_name) != graph_info->params.end()) {
+      para_node = graph_info->params.at(param_name);
+    } else {
+      MS_LOG(DEBUG) << "Can not find input param in graph info map, make a new parameter";
+      auto free_param = df_builder->add_parameter();
+      free_param->set_name(param_name);
+      auto value = py::cast<tensor::TensorPtr>(param);
+      free_param->set_default_param(value);
+      free_param->debug_info()->set_name(param_name);
+      para_node = free_param;
+    }
     (void)w_args.emplace_back(para_node);
   }
   return w_args;
@@ -1265,7 +1248,14 @@ AnfNodePtr GradExecutor::GetObjNode(const ValuePtr &v, const std::string &obj_id
   auto graph_info = top_cell()->graph_info_map().at(fg);
   MS_EXCEPTION_IF_NULL(graph_info);
   if (graph_info->node_map.find(obj_id) == graph_info->node_map.end()) {
-    return CreateMakeTupleGradNode(v, obj_id);
+    // A tuple returns in this case: x = op1, y = op2, return (x, y)
+    // or a constant returns in this case
+    auto make_tuple = CreateMakeTupleGradNode(v, obj_id);
+    if (make_tuple == nullptr) {
+      MS_LOG(DEBUG) << "Create value node for obj id: " << obj_id;
+      return MakeValueNode(v, obj_id);
+    }
+    return make_tuple;
   }
   // single output CNode
   const auto &out = graph_info->node_map.at(obj_id);
@@ -1313,23 +1303,9 @@ AnfNodePtr GradExecutor::CreateMakeTupleGradNode(const ValuePtr &v, const std::s
   ValuePtrList input_args;
   std::vector<AnfNodePtr> inputs{NewValueNode(prim::kPrimMakeTuple)};
   if (!v->isa<ValueSequence>()) {
-    // Graph have no define for grad
-    if (v->isa<FuncGraph>()) {
-      return MakeValueNode(v, obj_id);
-    }
-    // Single parameter returns in this case.
-    (void)input_args.emplace_back(v);
-    (void)inputs.emplace_back(GetInput(v));
-    auto cnode = fg->NewCNode(inputs);
-    auto v_seq = std::make_shared<ValueSequence>(input_args);
-    const auto &new_id = PyNativeAlgo::Common::GetIdByValue(v_seq);
-    // Record grad node to graph info map.
-    RecordGradNodeToGraphInfoMap(fg, cnode, v_seq, new_id, input_args);
-    return cnode;
+    MS_LOG(DEBUG) << "The input obj is not a tuple or list.";
+    return nullptr;
   }
-
-  // A tuple returns in this case: x = op1, y = op2, return (x, y)
-  // or a constant returns in this case
   const auto &obj_tuple = v->cast<ValueSequencePtr>();
   const auto &v_list = obj_tuple->value();
   for (size_t i = 0; i < obj_tuple->size(); ++i) {
