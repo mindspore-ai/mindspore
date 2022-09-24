@@ -3182,6 +3182,60 @@ class Select(Primitive):
         self.init_prim_io_names(inputs=['condition', 'x', 'y'], outputs=['output'])
 
 
+class StridedSliceV2(Primitive):
+    r"""
+    StridedSliceV2 will be deprecated by StridedSlice in the future.
+    Extracts a strided slice of a tensor.
+    Refer to class StridedSlice for more details.
+
+    Args:
+        begin_mask (int): Starting index of the slice. Default: 0.
+        end_mask (int): Ending index of the slice. Default: 0.
+        ellipsis_mask (int): An int mask. Default: 0.
+        new_axis_mask (int): An int mask. Default: 0.
+        shrink_axis_mask (int): An int mask. Default: 0.
+
+    Inputs:
+        - **input_x** (Tensor) - The input Tensor.
+        - **begin** (tuple[int]) - A tuple which represents the location where to start. Only
+          constant value is allowed.
+        - **end** (tuple[int]) - A tuple or which represents the maximum location where to end.
+          Only constant value is allowed.
+        - **strides** (tuple[int]) - A tuple which represents the stride is continuously added
+          before reaching the maximum location. Only constant value is allowed.
+
+    Outputs:
+        Tensor, The output is explained by following example.
+
+    Raises:
+        TypeError: If `begin_mask`, `end_mask`, `ellipsis_mask`, `new_axis_mask` or `shrink_axis_mask` is not an int.
+        TypeError: If `begin`, `end` or `strides` is not a tuple.
+        ValueError: If `begin_mask`, `end_mask`, `ellipsis_mask`, `new_axis_mask` or `shrink_axis_mask` is less than 0.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> input_x = Tensor([[[1, 1, 1], [2, 2, 2]], [[3, 3, 3], [4, 4, 4]],
+        ...                   [[5, 5, 5], [6, 6, 6]]], mindspore.float32)
+        >>> strided_slice_v2 = ops.StridedSliceV2()
+        >>> output = strided_slice_v2(input_x, (1, 0, 2), (3, 1, 3), (1, 1, 1))
+        >>> print(output)
+        [[[3.]]
+         [[5.]]]
+    """
+
+    @prim_attr_register
+    def __init__(self,
+                 begin_mask=0,
+                 end_mask=0,
+                 ellipsis_mask=0,
+                 new_axis_mask=0,
+                 shrink_axis_mask=0):
+        """Initialize StridedSliceV2"""
+        self.init_prim_io_names(inputs=['x', 'begin', 'end', 'strides'], outputs=['output'])
+
+
 class StridedSlice(PrimitiveWithInfer):
     r"""
 

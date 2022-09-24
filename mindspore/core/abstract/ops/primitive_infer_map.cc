@@ -35,6 +35,8 @@
 #include "ops/mod.h"
 #include "ops/sub.h"
 #include "ops/strided_slice.h"
+#include "ops/strided_slice_v2.h"
+#include "ops/grad/strided_slice_v2_grad.h"
 #include "abstract/abstract_function.h"
 #include "abstract/ops/infer_functions.h"
 #include "utils/ms_context.h"
@@ -70,6 +72,8 @@ PrimShapeDependMap &GetHostDependsMap() {
   static const auto &kDropoutGenMask = prim::kPrimDropoutGenMask->name();
   static const auto &kStridedSlice = prim::kPrimStridedSlice->name();
   static const auto &kStridedSliceGrad = prim::kPrimStridedSliceGrad->name();
+  static const auto &kStridedSliceV2 = prim::kPrimStridedSliceV2->name();
+  static const auto &kStridedSliceV2Grad = prim::kPrimStridedSliceV2Grad->name();
   static const auto &kSparseToDenseV2 = prim::kPrimSparseToDenseV2->name();
   static const auto &kResizeBicubic = prim::kPrimResizeBicubic->name();
   static const auto &kRandomCategorical = prim::kPrimRandomCategorical->name();
@@ -156,6 +160,8 @@ PrimShapeDependMap &GetHostDependsMap() {
                                          {kDropoutGenMask, ShapeSet{0}},
                                          {kStridedSlice, ShapeSet{1, 2, 3}},
                                          {kStridedSliceGrad, ShapeSet{1, 2, 3, 4}},
+                                         {kStridedSliceV2, ShapeSet{1, 2, 3}},
+                                         {kStridedSliceV2Grad, ShapeSet{0}},
                                          {kTensorCopySlices, ShapeSet{2, 3, 4}},
                                          {kTile, ShapeSet{1}},
                                          {kTopK, ShapeSet{1}},

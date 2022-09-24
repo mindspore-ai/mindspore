@@ -42,10 +42,34 @@ from mindspore.ops.operations.array_ops import SegmentMean
 from mindspore.ops.operations.array_ops import AffineGrid
 from mindspore.ops.operations.array_ops import Im2Col
 from mindspore.ops.operations.array_ops import Col2Im
+from mindspore.ops.operations.array_ops import StridedSliceV2
+from mindspore.ops.operations._grad_ops import StridedSliceV2Grad
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from mindspore.ops._utils.utils import is_shape_unknown
 from mindspore.ops.operations import _grad_ops as G
+
+
+@bprop_getters.register(StridedSliceV2)
+def get_bprop_strided_slice_v2(self):
+    """Generate bprop for StridedSliceV2"""
+    shape_op = P.Shape()
+    dyn_shape_op = P.TensorShape()
+    input_grad = StridedSliceV2Grad(self.begin_mask,
+                                    self.end_mask,
+                                    self.ellipsis_mask,
+                                    self.new_axis_mask,
+                                    self.shrink_axis_mask)
+
+    def bprop(x, begin, end, strides, out, dout):
+        x_shape = shape_op(x)
+        if -1 in x_shape:
+            x_shape = dyn_shape_op(x)
+        dx = input_grad(x_shape, begin, end, strides, dout)
+        dx_all = (dx, zeros_like(begin), zeros_like(end), zeros_like(strides))
+        return dx_all
+
+    return bprop
 
 
 @constexpr
