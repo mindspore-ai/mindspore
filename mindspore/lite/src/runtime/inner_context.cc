@@ -187,10 +187,12 @@ int InnerContext::Init() {
 }
 
 InnerContext::~InnerContext() {
+  MS_LOG(INFO) << "delete InnerContext.";
   if (this->thread_pool_ != nullptr) {
     delete thread_pool_;
     this->thread_pool_ = nullptr;
   }
+  MS_LOG(INFO) << "delete InnerContext done.";
 }
 
 int InnerContext::IsValid() {
