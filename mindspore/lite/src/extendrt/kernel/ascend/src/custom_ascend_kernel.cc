@@ -167,6 +167,7 @@ int CustomAscendKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
     MS_LOG(ERROR) << "inputs size is less than one.";
     return lite::RET_ERROR;
   }
+  original_data_ = inputs_;
   inputs_.assign(inputs.begin(), inputs.end() - 1);
   return lite::RET_OK;
 }
@@ -232,7 +233,7 @@ bool CustomAscendKernelMod::Launch(const std::vector<AddressPtr> &inputs, const 
     return false;
   }
   if (IsDynamicInput()) {
-    if (dyn_shape_proc_->ProcDynamicInput(&inputs_) != lite::RET_OK) {
+    if (dyn_shape_proc_->ProcDynamicInput(&original_data_, &inputs_) != lite::RET_OK) {
       MS_LOG(ERROR) << "Proc dynamic batch size input failed.";
       return false;
     }

@@ -19,6 +19,7 @@
 
 #include <vector>
 #include <memory>
+#include <string>
 #include "extendrt/kernel/ascend/options/acl_model_options.h"
 #include "kernel/kernel.h"
 #include "include/api/types.h"
@@ -30,12 +31,14 @@ class DynShapeProcess {
   explicit DynShapeProcess(const AclModelOptionsPtr &options, size_t input_data_idx)
       : acl_options_(options), input_data_idx_(input_data_idx), batch_size_ptr_(nullptr), image_size_ptr_(nullptr) {}
 
-  int ProcDynamicInput(std::vector<KernelTensorPtr> *const inputs);
+  int ProcDynamicInput(std::vector<KernelTensorPtr> *const original_datas, std::vector<KernelTensorPtr> *const inputs);
   void DestroyDynamicInput(std::vector<KernelTensorPtr> *const inputs);
 
  private:
-  int AddBatchSizeInput(std::vector<KernelTensorPtr> *const inputs);
-  int AddImageSizeInput(std::vector<KernelTensorPtr> *const inputs);
+  int CheckBatchSize(std::vector<KernelTensorPtr> *const original_datas, std::vector<KernelTensorPtr> *const inputs);
+  int CheckImageSize(std::vector<KernelTensorPtr> *const original_datas, std::vector<KernelTensorPtr> *const inputs);
+  int AddBatchSizeInput(std::vector<KernelTensorPtr> *const original_datas, std::vector<KernelTensorPtr> *const inputs);
+  int AddImageSizeInput(std::vector<KernelTensorPtr> *const original_datas, std::vector<KernelTensorPtr> *const inputs);
   int GetRealBatchSize(std::vector<KernelTensorPtr> *const inputs, int32_t *batch_size);
   int GetRealImageSize(std::vector<KernelTensorPtr> *const inputs, int32_t *image_size, int32_t num);
 

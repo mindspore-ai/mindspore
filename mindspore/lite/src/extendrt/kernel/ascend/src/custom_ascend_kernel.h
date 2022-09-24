@@ -60,6 +60,7 @@ class CustomAscendKernelMod : public kernel::KernelMod {
   void UpdateOutputAddr(const std::vector<AddressPtr> &outputs);
 
   bool load_model_;
+  std::vector<KernelTensorPtr> original_data_;
   std::vector<KernelTensorPtr> inputs_;
   std::vector<KernelTensorPtr> outputs_;
   AclModelOptionsPtr acl_options_;
