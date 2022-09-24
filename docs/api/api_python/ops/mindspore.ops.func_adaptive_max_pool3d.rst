@@ -3,7 +3,7 @@ mindspore.ops.adaptive_max_pool3d
 
 .. py:function:: mindspore.ops.adaptive_max_pool3d(x, output_size, return_indices=False)
 
-    3维自适应最大值池化。
+    三维自适应最大值池化。
 
     对于任何输入尺寸，输出的大小为 :math:`(D, H, W)` ，其中输出特征的数量与输入特征的数量相同。
 

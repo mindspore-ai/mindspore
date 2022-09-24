@@ -3,7 +3,7 @@ mindspore.ops.adaptive_max_pool1d
 
 .. py:function:: mindspore.ops.adaptive_max_pool1d(input_x, output_size)
 
-    1维自适应最大池化。
+    一维自适应最大池化。
 
     对输入Tensor，提供1维的自适应最大池化操作。
 

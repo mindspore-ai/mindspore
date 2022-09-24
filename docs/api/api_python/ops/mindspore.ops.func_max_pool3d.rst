@@ -3,7 +3,7 @@ mindspore.ops.max_pool3d
 
 .. py:function:: mindspore.ops.max_pool3d(x, kernel_size, stride=None, padding=0, dilation=1, ceil_mode=False, return_indices=False)
 
-    3维最大值池化。
+    三维最大值池化。
 
     输入是shape为 :math:`(N_{in}, C_{in}, D_{in}, H_{in}, W_{in})` 的Tensor，输出 :math:`(D_{in}, H_{in}, W_{in})` 维度中的最大值。给定 `kernel_size`
     :math:`ks = (d_{ker}, h_{ker}, w_{ker})`，和 `stride` :math:`s = (s_0, s_1, s_2)`，运算如下：
