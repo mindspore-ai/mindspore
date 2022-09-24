@@ -995,7 +995,7 @@ class IWSLT2017Dataset(SourceDataset, TextBaseDataset):
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
         usage (str, optional): Acceptable usages include 'train', 'valid', 'test' and 'all' (default=None, all samples).
-        language_pair (list, optional): List containing src and tgt language, supported values are ('en', 'nl'),
+        language_pair (sequence, optional): List containing src and tgt language, supported values are ('en', 'nl'),
             ('en', 'de'), ('en', 'it'), ('en', 'ro'), ('nl', 'en'), ('nl', 'de'), ('nl', 'it'), ('nl', 'ro'),
             ('de', 'en'), ('de', 'nl'), ('de', 'it'), ('de', 'ro'), ('it', 'en'), ('it', 'nl'), ('it', 'de'),
             ('it', 'ro'), ('ro', 'en'), ('ro', 'nl'), ('ro', 'de'), ('ro', 'it') (default=('de', 'en')).

@@ -6,7 +6,7 @@ mindspore.dataset.audio.InverseMelScale
     使用转换矩阵求解STFT，形成梅尔频率的STFT。
 
     参数：
-        - **n_stft** (int, 可选) - STFT中的滤波器的组数。
+        - **n_stft** (int) - STFT中的滤波器的组数。
         - **n_mels** (int, 可选) - mel滤波器的数量，默认值：128。
         - **sample_rate** (int, 可选) - 音频信号采样频率，默认值：16000。
         - **f_min** (float, 可选) - 最小频率，默认值：0.0。

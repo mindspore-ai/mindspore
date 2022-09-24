@@ -13,7 +13,7 @@ mindspore.ops.ctc_greedy_decoder
     返回：
         - **decoded_indices** (Tensor) - shape: :math:`(total\_decoded\_outputs, 2)`，数据类型为int64。
         - **decoded_values** (Tensor) - shape: :math:`(total\_decoded\_outputs, )`，数据类型为int64。
-        - **decoded_shape** (Tensor) - shape: :math:`(batch\_size, max\_decoded\_legth)`，数据类型为int64。
+        - **decoded_shape** (Tensor) - shape: :math:`(batch\_size, max\_decoded\_length)`，数据类型为int64。
         - **log_probability** (Tensor) - shape: :math:`(batch\_size, 1)`，包含序列的对数概率，其数据类型与 `inputs` 保持一致。
 
     异常：

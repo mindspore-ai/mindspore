@@ -649,7 +649,7 @@ class SubsetSampler(BuiltinSampler):
     Samples the elements from a sequence of indices.
 
     Args:
-        indices (Any iterable Python object but string): A sequence of indices.
+        indices (Iterable): A sequence of indices (Any iterable Python object but string).
         num_samples (int, optional): Number of elements to sample (default=None, which means sample all elements).
 
     Raises:
@@ -737,7 +737,7 @@ class SubsetRandomSampler(SubsetSampler):
     Samples the elements randomly from a sequence of indices.
 
     Args:
-        indices (Any iterable Python object but string): A sequence of indices.
+        indices (Iterable): A sequence of indices (Any iterable Python object but string).
         num_samples (int, optional): Number of elements to sample (default=None, which means sample all elements).
 
     Raises:

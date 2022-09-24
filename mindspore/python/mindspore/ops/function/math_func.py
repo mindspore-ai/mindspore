@@ -2130,7 +2130,7 @@ def linspace(start, stop, num):
             Must be positive int number or 0D int32/int64 Tensor.
 
     Returns:
-        Tensor, has the same dtype as `start`, and the shape of :math:`(num)`
+        Tensor, has the same dtype as `start`, and the shape of :math:`(num)`.
 
     Raises:
         TypeError: If `start` or `stop` is not a Tensor.
@@ -3376,7 +3376,7 @@ def std(input_x, axis=(), unbiased=True, keep_dims=False):
     If `axis` is a list of dimensions, reduce over all of them.
 
     Args:
-        input_x (Tensor): Input tensor.
+        input_x (Tensor[Number]): Input tensor.
         axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Default: (), reduce all dimensions.
                                                   Only constant value is allowed.
                                                   Must be in the range [-rank(`input_x`), rank(`input_x`)).
@@ -4668,7 +4668,7 @@ def norm(input_x, axis, p=2, keep_dims=False, epsilon=1e-12):
 
     Args:
         input_x (Tensor): Input tensor. The dtype must be float32 or float16.
-        axis (Union[int,list,tuple]): Specifies which dimension or dimensions of input to calculate the norm across.
+        axis (Union[int, list, tuple]): Specifies which dimension or dimensions of input to calculate the norm across.
         p (int): The order of norm. Default: 2. `p` is greater than or equal to 0.
         keep_dims (bool): Whether the output tensors have dim retained or not. Default: False.
         epsilon (float): A value added to the denominator for numerical stability. Default: 1e-12.
