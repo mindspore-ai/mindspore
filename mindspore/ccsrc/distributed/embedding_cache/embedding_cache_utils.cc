@@ -83,6 +83,21 @@ void EmbeddingCacheTableManager::ReInsertHashTableSize(const std::string &new_pa
   }
 }
 
+void EmbeddingCacheTableManager::InsertAccumuInitInfo(const std::string &param_name, float init_val) {
+  auto iter = hash_tables_.find(param_name);
+  if (iter == hash_tables_.end()) {
+    MS_LOG(EXCEPTION) << "Can not find parameter[" << param_name << "] in hash table.";
+  }
+  auto &hash_table_info = iter->second;
+  if (hash_table_info.param_init_info_.param_type_ != kUnKnown) {
+    return;
+  }
+  MS_LOG(INFO) << "Insert accumulation init info:" << param_name << ", init value:" << init_val;
+  hash_table_info.param_init_info_.param_name_ = param_name;
+  hash_table_info.param_init_info_.param_type_ = kAccumulation;
+  hash_table_info.param_init_info_.init_val_ = init_val;
+}
+
 void EmbeddingCacheTableManager::CloneHashTable(const std::string &dest_param_name, int32_t dest_param_key,
                                                 const std::string &src_param_name, int32_t src_param_key) {
   if (dest_param_name == src_param_name) {

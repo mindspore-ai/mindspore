@@ -32,16 +32,6 @@
 
 namespace mindspore {
 namespace ps {
-enum ParamType { kUnKnown = 0, kWeight = 1, kAccumulation = 2 };
-
-struct ParamInitInfo {
-  std::string param_name_;
-  ParamType param_type_{kUnKnown};
-  size_t global_seed_{0};
-  size_t op_seed_{0};
-  float init_val_{0};
-};
-
 constexpr size_t kNodeInputWeightNameOffset = 1;
 constexpr size_t kNodeInputWeightIndexOffset = 2;
 
