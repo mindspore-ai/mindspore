@@ -150,9 +150,9 @@ def profiler_init():
     if os.getenv("MS_PROFILER_RUN_CONFIG"):
         return
     config = construct_profiling_options()
-    os.environ["MS_PROFILER_RUN_CONFIG"] = json.dumps(config)
     if not config.get("start"):
         return
+    os.environ["MS_PROFILER_RUN_CONFIG"] = json.dumps(config)
     Profiler(output_path=config.get("output_path"),
              profile_memory=config.get("profile_memory"),
              profile_communication=config.get("profile_communication"))

@@ -28,6 +28,7 @@
 #include <utility>
 #include <vector>
 #include "profiler/device/profiling.h"
+#include "profiler/device/data_saver.h"
 #include "plugin/device/gpu/hal/profiler/gpu_profiling_utils.h"
 
 namespace mindspore {
@@ -48,15 +49,7 @@ enum class ActivityType {
   kMemset = 10,
   kMemcpyUnknown = 11
 };
-struct CurKernelInputInfo {
-  uint32_t input_id;
-  std::string shape;
-};
-struct CurKernelInfo {
-  std::string op_type;
-  std::string op_name;
-  std::vector<CurKernelInputInfo> cur_kernel_all_inputs_info;
-};
+
 struct MemcpyInfo {
   size_t bytes;
   unsigned char src_kind;

@@ -267,8 +267,7 @@ class Profiler:
             ...     profiler.analyse()
             ...
             ...     profiler.op_analyse(op_name=["BiasAdd", "Conv2D"])
-
-        Examples:
+            ...
             >>> from mindspore import Profiler
             >>>
             ...     # Profiler init.
