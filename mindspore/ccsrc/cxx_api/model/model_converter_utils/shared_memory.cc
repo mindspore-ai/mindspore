@@ -21,7 +21,7 @@
 
 namespace mindspore {
 Status SharedMemory::Create(uint64_t memory_size) {
-  auto access_mode = S_IRUSR | S_IWUSR | S_IROTH | S_IWOTH | S_IRGRP | S_IWGRP;
+  uint32_t access_mode = S_IRUSR | S_IWUSR | S_IROTH | S_IWOTH | S_IRGRP | S_IWGRP;
   shm_id_ = shmget(IPC_PRIVATE, memory_size, IPC_CREAT | IPC_EXCL | access_mode);
   if (shm_id_ == -1) {
     MS_LOG_ERROR << "Shared memory creation failed. Errno " + std::to_string(errno);

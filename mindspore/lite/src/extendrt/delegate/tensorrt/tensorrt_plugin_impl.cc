@@ -15,7 +15,6 @@
  */
 #include "extendrt/delegate/tensorrt/tensorrt_plugin_impl.h"
 #include "extendrt/delegate/tensorrt/distribution/distribution_base.h"
-// #include "plugin/device/gpu/hal/device/distribution/collective_wrapper.h"
 
 namespace mindspore::lite {
 int TensorRTPluginImpl::GetGPUGroupSize() const { return 1; }  // GetGroupSize(NCCL_WORLD_GROUP);

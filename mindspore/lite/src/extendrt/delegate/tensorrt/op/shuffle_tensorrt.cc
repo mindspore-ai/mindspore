@@ -31,7 +31,6 @@ int ShuffleTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::
                                const std::vector<TensorInfo> &out_tensors) {
   if (!IsShapeKnown()) {
     MS_LOG(ERROR) << "Unsupported input tensor unknown shape: " << op_name_;
-    // return RET_ERROR;
   }
   if (type_ == ops::kNameFlatten || type_ == ops::kNameUnsqueeze) {
     if (in_tensors.size() != 1) {
@@ -60,9 +59,6 @@ int ShuffleTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::
       return RET_ERROR;
     }
     dynamic_shape_params_.support_hw_dynamic_ = false;
-    // if (in_tensors[0].Shape()[0] != out_tensors[0].Shape()[0]) {
-    //   dynamic_shape_params_.support_dynamic_ = false;
-    // }
   } else if (type_ == ops::kNameTranspose || type_ == ops::kNameExpandDims || type_ == ops::kNameBroadcastTo) {
     if (in_tensors.size() != INPUT_SIZE2) {
       MS_LOG(ERROR) << "PrimitiveType_Transpose Unsupported in_tensors size: " << in_tensors.size();

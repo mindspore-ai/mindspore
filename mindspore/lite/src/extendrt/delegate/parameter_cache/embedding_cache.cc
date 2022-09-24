@@ -135,7 +135,6 @@ Status EmbeddingCache::Init(uint32_t device_id, const void *context, mindspore::
   }
   ret = cache_->Init(device_cache_size_, min_host_index_, max_host_index_);
   if (ret != kSuccess) {
-    // MS_LOG(ERROR) << "init cache failed," << ret.CodeAsString();
     return kLiteError;
   }
 
