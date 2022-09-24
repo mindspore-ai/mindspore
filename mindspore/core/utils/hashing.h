@@ -36,17 +36,13 @@ inline std::size_t hash_combine(const std::initializer_list<std::size_t> &hash_v
 
 template <typename T>
 struct PointerHash {
-  constexpr std::size_t operator()(const T *ptr) const noexcept {
-    constexpr int shift_bits = (sizeof(std::size_t) == 8 ? 3 : 1);
-    return (reinterpret_cast<std::size_t>(ptr) >> shift_bits);
-  }
+  constexpr std::size_t operator()(const T *ptr) const noexcept { return reinterpret_cast<std::size_t>(ptr); }
 };
 
 template <typename T>
 struct PointerHash<std::shared_ptr<T>> {
   constexpr std::size_t operator()(const std::shared_ptr<T> &ptr) const noexcept {
-    constexpr int shift_bits = (sizeof(std::size_t) == 8 ? 3 : 1);
-    return (reinterpret_cast<std::size_t>(ptr.get()) >> shift_bits);
+    return reinterpret_cast<std::size_t>(ptr.get());
   }
 };
 
