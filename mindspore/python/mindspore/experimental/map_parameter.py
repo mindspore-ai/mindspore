@@ -19,7 +19,7 @@ __all__ = ['MapParameter']
 
 import numbers
 import mindspore as ms
-from mindspore.common.parameter import Parameter
+from mindspore.common.parameter import Tensor, Parameter
 from mindspore.common.initializer import initializer
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore._c_expression import MapTensor_
@@ -82,7 +82,8 @@ class MapParameter(Parameter):
         obj.key_dtype = key_dtype
         obj.value_dtype = value_dtype
         obj.value_shape = value_shape
-        obj.default_value = default_value
+        obj.default_value = default_value if isinstance(default_value, Tensor) else \
+            initializer(default_value, shape=value_shape, dtype=value_dtype).init_data()
         return obj
 
     def __init__(self, name=None, requires_grad=True, **kwargs):
@@ -95,15 +96,15 @@ class MapParameter(Parameter):
 
         Args:
             key_tensor (Tensor): The key tensor.
-            default_value (Union[Tensor, str]): The default value or initializer. Default: None
+            default_value (Tensor): The default value tensor. Default: None
 
         Returns:
             Tensor, the value tensor for the key tensor.
         """
         if default_value is None:
             default_value = self.default_value
-        result = initializer(default_value, shape=(key_tensor.shape + self.value_shape), dtype=self.value_dtype)
-        return result.init_data()
+        result_tensor = self._map_tensor.get(key_tensor, default_value)
+        return Tensor(result_tensor, internal=True)
 
     def put(self, key_tensor, value_tensor):
         """
@@ -116,6 +117,7 @@ class MapParameter(Parameter):
         Returns:
             MapParameter, the MapParameter object itself.
         """
+        self._map_tensor.put(key_tensor, value_tensor)
         return self
 
     def erase(self, key_tensor):
@@ -128,4 +130,26 @@ class MapParameter(Parameter):
         Returns:
             MapParameter, the MapParameter object itself.
         """
+        self._map_tensor.erase(key_tensor)
         return self
+
+    def export(self, full=False):
+        """
+        Export data from this map parameter.
+
+        Args:
+            full (bool): True for full export, otherwise for incremental export. Default: False.
+
+        Returns:
+            Tuple(key_array, value_array, status_array), The exported data as a tuple.
+        """
+        return self._map_tensor.export(full)
+
+    def update(self, data):
+        """
+        Update this map parameter from exported data.
+
+        Args:
+            data (Tuple): The data tuple with key_array, value_array and status_array.
+        """
+        self._map_tensor.update(data)

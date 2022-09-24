@@ -35,7 +35,7 @@ def test_basic_operations():
     assert t.shape == (3, 2)
     assert np.allclose(t.asnumpy(), 0)
 
-    t = m.get(Tensor([1, 2, 3], dtype=ms.int32), 'ones')
+    t = m.get(Tensor([1, 2, 3], dtype=ms.int32), Tensor([1, 1], dtype=ms.float32))
     assert t.dtype == ms.float32
     assert t.shape == (3, 2)
     assert np.allclose(t.asnumpy(), 1)
@@ -71,3 +71,14 @@ def test_simple_graph_compile():
     out = net(t)
     print(out)
     assert out.shape == (2, 3)
+
+
+def test_export_update_api():
+    """
+    Feature: MapParameter
+    Description: Test export update api for MapParameter.
+    Expectation: Export update api works as expected.
+    """
+    m = MapParameter(key_dtype=ms.int32, value_dtype=ms.float32, value_shape=(3,))
+    data = m.export(full=True)
+    m.update(data)
