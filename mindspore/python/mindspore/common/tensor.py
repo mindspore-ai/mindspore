@@ -651,7 +651,7 @@ class Tensor(Tensor_):
             Tensor, has the same shape and dtype as x1/x2.
 
         Supported Platforms:
-            ``Ascend`` ``CPU``
+            ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
             >>> x = Tensor(np.array([1, 1, 1, 1]), mindspore.float32)
@@ -683,7 +683,7 @@ class Tensor(Tensor_):
             Tensor, has the same shape and dtype as x1*x2.
 
         Supported Platforms:
-            ``Ascend`` ``CPU``
+            ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
             >>> x = Tensor(np.array([1, 1, 1]), mindspore.float32)
