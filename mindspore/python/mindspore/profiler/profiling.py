@@ -169,8 +169,8 @@ class Profiler:
         """Checking path validity."""
         try:
             output_path = validate_and_normalize_path(output_path)
-        except RuntimeError:
-            raise ProfilerPathErrorException(f'profiling data output path {output_path} is invalid.')
+        except RuntimeError as err:
+            raise ProfilerPathErrorException(f'profiling data output path {output_path} is invalid.') from err
         finally:
             pass
         if not os.path.isdir(output_path):
@@ -868,7 +868,7 @@ class Profiler:
             timeline_generator.write_timeline_summary()
         except (ProfilerIOException, ProfilerFileNotFoundException, RuntimeError) as err:
             logger.warning('Fail to write timeline data: %s', err)
-            raise RuntimeError('Fail to write timeline data.')
+            raise RuntimeError('Fail to write timeline data.') from err
         if self._dynamic_status:
             raise RuntimeError('Profiler does not support dynamic shape network on CPU platform currently.')
 
@@ -978,7 +978,7 @@ class Profiler:
             return timeline_generator
         except (ProfilerIOException, ProfilerFileNotFoundException, RuntimeError) as err:
             logger.warning('Fail to write timeline data: %s', err)
-            raise RuntimeError('Fail to write timeline data.')
+            raise RuntimeError('Fail to write timeline data.') from err
 
     def _analyse_memory_usage(self, points):
         """Analyse memory usage data."""

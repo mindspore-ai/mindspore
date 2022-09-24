@@ -705,7 +705,7 @@ class BaseTimelineGenerator:
             return self._timeline_meta
         except (IOError, OSError) as err:
             logger.critical('Error occurred when write timeline display file: %s', err)
-            raise ProfilerIOException()
+            raise ProfilerIOException() from err
 
     def write_timeline_summary(self):
         """Write timeline summary to json."""
@@ -722,7 +722,7 @@ class BaseTimelineGenerator:
             os.chmod(timeline_summary_file_path, stat.S_IREAD | stat.S_IWRITE)
         except (IOError, OSError) as err:
             logger.critical('Error occurred when write timeline summary file: %s', err)
-            raise ProfilerIOException()
+            raise ProfilerIOException() from err
 
     def _get_device_process_label(self):
         """Get device process label."""
@@ -1178,7 +1178,7 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
                 gpu_start_time = int(lines[1].strip().split(':')[-1])
         except (IOError, OSError) as err:
             logger.critical(f'Error occurred when read {start_time_file_path}: {err}')
-            raise ProfilerIOException()
+            raise ProfilerIOException() from err
 
         time_diff = gpu_start_time - host_monotonic_start_time
         for idx, time_item in enumerate(timeline_list):
@@ -1232,7 +1232,7 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
                     activity_timeline_list.append(line_list)
         except (IOError, OSError) as err:
             logger.critical('Error occurred when load activity timeline data intermediate file: %s', err)
-            raise ProfilerIOException()
+            raise ProfilerIOException() from err
 
         return activity_timeline_list, cuda_compute_ops_timeline_list
 
@@ -1263,7 +1263,7 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
                     step_num += 1
         except (IOError, OSError) as err:
             logger.critical(f'Error occurred when read {step_trace_profiling_path}: {err}')
-            raise ProfilerIOException()
+            raise ProfilerIOException() from err
 
         return step_time_list
 
@@ -1636,7 +1636,7 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
                 host_monotonic = int(lines[2].strip().split(':')[1])
         except (IOError, OSError) as err:
             logger.critical('Error occurred when read host_start.log: %s', err)
-            raise ProfilerIOException()
+            raise ProfilerIOException() from err
         try:
             with open(dev_start_file_path) as f_obj:
                 lines = f_obj.readlines()
@@ -1644,7 +1644,7 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
                 dev_cntvct = int(lines[2].strip().split(':')[1])
         except (IOError, OSError) as err:
             logger.critical('Error occurred when read dev_start.log: %s', err)
-            raise ProfilerIOException()
+            raise ProfilerIOException() from err
 
         factor_ns_to_ms = 1e-6
         factor_ten_ns_to_ns = 10
@@ -1996,7 +1996,7 @@ class CpuTimelineGenerator(GpuTimelineGenerator):
                         op_timeline_list.append(line_list)
         except (IOError, OSError) as err:
             logger.critical('Error occurred when load operator timeline data intermediate file: %s', err)
-            raise ProfilerIOException()
+            raise ProfilerIOException() from err
 
         return op_timeline_list
 
