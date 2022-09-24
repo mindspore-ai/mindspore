@@ -28,6 +28,15 @@
 
 namespace mindspore {
 namespace profiler {
+struct CurKernelInputInfo {
+  uint32_t input_id;
+  std::string shape;
+};
+struct CurKernelInfo {
+  std::string op_type;
+  std::string op_name;
+  std::vector<CurKernelInputInfo> cur_kernel_all_inputs_info;
+};
 struct OpDetailInfo {
   std::string op_type_;
   std::string op_name_;
@@ -112,6 +121,8 @@ class BACKEND_EXPORT DataSaver {
   virtual ~DataSaver() = default;
 
   void ParseOpInfo(const OpInfoMap &op_info_maps);
+
+  void WriteFrameWork(const std::string &base_dir, const std::vector<CurKernelInfo> &all_kernel_info_);
 
   OpTimestampInfo op_timestamps_map_;
 

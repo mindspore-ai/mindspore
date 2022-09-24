@@ -42,8 +42,6 @@ class BACKEND_EXPORT CpuDataSaver : public DataSaver {
 
   void WriteFile(const std::string out_path);
 
-  void WriteFrameWork(const std::string &base_dir, const std::vector<CurKernelInfo> &all_kernel_info_);
-
  private:
   static std::shared_ptr<CpuDataSaver> cpu_data_saver_inst_;
 };

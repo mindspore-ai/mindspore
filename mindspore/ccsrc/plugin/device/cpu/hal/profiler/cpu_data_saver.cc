@@ -16,7 +16,6 @@
 #include "plugin/device/cpu/hal/profiler/cpu_data_saver.h"
 #include <fstream>
 #include <numeric>
-#include "sys/stat.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
 #include "utils/ms_context.h"
@@ -59,34 +58,6 @@ void CpuDataSaver::WriteFile(const std::string out_path_dir) {
   WriteOpDetail(out_path_dir);
   WriteOpType(out_path_dir);
   WriteOpTimestamp(out_path_dir);
-}
-
-void CpuDataSaver::WriteFrameWork(const std::string &base_dir, const std::vector<CurKernelInfo> &all_kernel_info) {
-  std::string file_path = base_dir + "/cpu_framework_" + device_id_ + ".txt";
-  std::ofstream ofs(file_path);
-  if (!ofs.is_open()) {
-    MS_LOG(WARNING) << "Open file '" << file_path << "' failed!";
-    return;
-  }
-  for (auto kernel_info : all_kernel_info) {
-    auto op_name = kernel_info.op_name;
-    auto op_type = kernel_info.op_type;
-    auto cur_kernel_all_inputs_info = kernel_info.cur_kernel_all_inputs_info;
-    try {
-      ofs << op_type << ";" << op_name << ";";
-      for (auto cur_kernel_input_info : cur_kernel_all_inputs_info) {
-        ofs << "input_" << cur_kernel_input_info.input_id << ":" << cur_kernel_input_info.shape << ";";
-      }
-    } catch (const std::exception &e) {
-      MS_LOG(ERROR) << "Write " << file_path << "failed:" << e.what();
-      ofs.close();
-      return;
-    }
-    ofs << std::endl;
-  }
-  ofs.close();
-  ChangeFileMode(file_path);
-  MS_LOG(INFO) << "Write framework infos into file: " << file_path;
 }
 OpTimestampInfo &CpuDataSaver::GetOpTimeStampInfo() { return op_timestamps_map_; }
 

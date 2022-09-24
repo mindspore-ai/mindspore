@@ -79,8 +79,6 @@ class GpuDataSaver : public DataSaver {
 
   void WriteFile(std::string out_path, const BaseTime &start_time);
 
-  void WriteFrameWork(const std::string &base_dir, const std::vector<CurKernelInfo> &all_kernel_info_);
-
  private:
   void AddKernelEvent(const Event &event);
 

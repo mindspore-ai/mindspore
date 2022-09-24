@@ -15,13 +15,8 @@
  */
 
 #include "profiler/device/profiling.h"
-
-#ifndef _MSC_VER
-#include <cxxabi.h>
-#endif
 #include <chrono>
 #include <cmath>
-#include <ctime>
 #include "utils/log_adapter.h"
 #include "include/common/utils/utils.h"
 #include "utils/ms_context.h"
@@ -85,7 +80,7 @@ void Profiler::RecordOneStepStartEndInfo() {
   MS_EXCEPTION_IF_NULL(profiler_manage_inst);
   auto dynamic_status = profiler_manage_inst->GetNetDynamicShapeStatus();
   std::lock_guard<std::mutex> locker(record_mutex_);
-  uint32_t vector_size = (uint32_t)step_start_end_info_vector_.size();
+  uint32_t vector_size = static_cast<uint32_t>(step_start_end_info_vector_.size());
   step_start_end_info_.iter_start_op_name = step_start_end_info_vector_[0];
   step_start_end_info_.fp_start_op_name = step_start_end_info_vector_[0];
   // If is the first step, the step_start_end_info_vector_ length is 1.
