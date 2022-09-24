@@ -24,9 +24,6 @@
 
 namespace mindspore {
 namespace kernel {
-using complex64 = std::complex<float>;
-using complex128 = std::complex<double>;
-
 class XdivyCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<XdivyCpuKernelMod> {
  public:
   XdivyCpuKernelMod() { ResetResource(); }

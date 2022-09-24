@@ -23,6 +23,7 @@
 #include <map>
 #include <utility>
 #include "mindspore/core/utils/ms_context.h"
+#include "mindspore/core/mindapi/base/types.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/maxpool_with_argmax_impl.cuh"
@@ -108,8 +109,7 @@ class MaxPoolWithArgmaxGpuKernelMod : public NativeGpuKernelMod,
     pad_left_ = pad_width_ / 2;
   }
 
-  std::string pad_mode_;
-
+  PadMode pad_mode_{PadMode::VALID};
   int n_;
   int c_;
   int input_height_;

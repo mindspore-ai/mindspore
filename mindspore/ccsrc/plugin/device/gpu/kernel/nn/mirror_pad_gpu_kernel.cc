@@ -34,14 +34,14 @@ bool MirrorPadGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   if (output_num != 1) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << output_num;
   }
+  in_type_size_ = GetTypeByte(TypeIdToType(inputs[0]->GetDtype()));
+  out_type_size_ = GetTypeByte(TypeIdToType(outputs[0]->GetDtype()));
   string mode = kernel_ptr->get_mode();
   if (mode == "REFLECT") {
     mode_ = 0;  // reflected mirroring
   } else {
     mode_ = 1;  // symmetric mirroring
   }
-  in_type_size_ = GetTypeByte(TypeIdToType(inputs[0]->GetDtype()));
-  out_type_size_ = GetTypeByte(TypeIdToType(outputs[0]->GetDtype()));
 
   if (!MatchKernelFunc(base_operator, inputs, outputs)) {
     return false;
