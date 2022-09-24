@@ -30,6 +30,12 @@ int CropInt8CPUKernel::Prepare() {
   if (ret != RET_OK) {
     return ret;
   }
+  if (in_tensors_[0]->data_type() != mindspore::kNumberTypeInt8 ||
+      out_tensors_[0]->data_type() != mindspore::kNumberTypeInt8) {
+    MS_LOG(ERROR) << "Datatype error, input0 data_type is " << in_tensors_[0]->data_type() << ", output data_type is "
+                  << out_tensors_[0]->data_type();
+    return RET_ERROR;
+  }
   auto *input_tensor = in_tensors_.at(kInputIndex);
   auto in_quant_args = input_tensor->quant_params();
   MS_CHECK_TRUE_MSG(!in_quant_args.empty(), RET_ERROR, "Input quant param cannot be empty!");

@@ -107,8 +107,18 @@ int ConvolutionDepthwiseInt8CPUKernel::InitWeightBias() {
 }
 
 int ConvolutionDepthwiseInt8CPUKernel::Prepare() {
-  CHECK_LESS_RETURN(in_tensors_.size(), 2);
+  CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(in_tensors_[0]);
+  CHECK_NULL_RETURN(in_tensors_[1]);
+  CHECK_NULL_RETURN(out_tensors_[0]);
+  if (in_tensors_[0]->data_type() != mindspore::kNumberTypeInt8 ||
+      in_tensors_[1]->data_type() != mindspore::kNumberTypeInt8 ||
+      out_tensors_[0]->data_type() != mindspore::kNumberTypeInt8) {
+    MS_LOG(ERROR) << "Datatype error, input0 data_type is " << in_tensors_[0]->data_type() << ", input1 data_type is "
+                  << in_tensors_[1]->data_type() << ", output data_type is " << out_tensors_[0]->data_type();
+    return RET_ERROR;
+  }
   auto ret = ConvolutionBaseCPUKernel::SetQuantParam();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Set quant param failed.";
