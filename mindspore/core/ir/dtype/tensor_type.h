@@ -259,7 +259,7 @@ class MS_CORE_API MapTensorType final : public Object {
   /// \param[in] key The key data type.
   /// \param[in] value The value data type.
   explicit MapTensorType(const TypePtr &key, const TypePtr &value)
-      : Object(kObjectTypeRowTensorType, false), key_dtype_(key), value_dtype_(value) {}
+      : Object(kObjectTypeMapTensorType, false), key_dtype_(key), value_dtype_(value) {}
 
   /// \brief Destructor of MapTensorType.
   ~MapTensorType() override = default;

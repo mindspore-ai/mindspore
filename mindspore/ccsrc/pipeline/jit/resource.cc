@@ -17,14 +17,15 @@
  */
 
 #include "pipeline/jit/resource.h"
+#include "ir/dtype.h"
+#include "ops/core_ops.h"
 #include "pipeline/jit/static_analysis/static_analysis.h"
 #include "pipeline/jit/debug/trace.h"
-#include "ir/dtype.h"
 #include "pipeline/jit/parse/data_converter.h"
 #include "frontend/operator/ops.h"
 #include "frontend/optimizer/ad/dfunctor.h"
-#include "include/common/utils/parallel_context.h"
 #include "frontend/parallel/step_parallel_utils.h"
+#include "include/common/utils/parallel_context.h"
 #include "utils/ms_utils.h"
 
 namespace mindspore {
@@ -351,6 +352,12 @@ BuiltInTypeMap &GetMethodMap() {
        {"to_dense", std::string("coo_to_dense")},  // C.coo_to_dense
        {"coalesce", std::string("coo_coalesce")},  // C.coo_coalesce
        {"add", std::string("coo_add")},            // C.coo_add
+     }},
+    {kObjectTypeMapTensorType,
+     {
+       {"get", std::string("map_tensor_get")},      // C.map_tensor_get
+       {"put", std::string("map_tensor_put")},      // C.map_tensor_put
+       {"erase", std::string("map_tensor_erase")},  // C.map_tensor_erase
      }},
     {kObjectTypeJTagged, {}},
     {kObjectTypeSymbolicKeyType, {}},

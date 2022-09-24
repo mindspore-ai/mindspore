@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ using mindspore::abstract::AbstractError;
 using mindspore::abstract::AbstractFunction;
 using mindspore::abstract::AbstractJTagged;
 using mindspore::abstract::AbstractList;
+using mindspore::abstract::AbstractMapTensor;
 using mindspore::abstract::AbstractRefTensor;
 using mindspore::abstract::AbstractRowTensor;
 using mindspore::abstract::AbstractScalar;
@@ -120,8 +121,8 @@ void ValidateAbstract(const AnfNodePtr &node) {
   bool is_legal_abstract = abstract->isa<AbstractType>() || abstract->isa<AbstractFunction>() ||
                            abstract->isa<AbstractTuple>() || abstract->isa<AbstractList>() ||
                            abstract->isa<AbstractTensor>() || abstract->isa<AbstractRowTensor>() ||
-                           abstract->isa<AbstractRefTensor>() || abstract->isa<abstract::AbstractNone>() ||
-                           abstract->isa<abstract::AbstractMonad>();
+                           abstract->isa<AbstractRefTensor>() || abstract->isa<AbstractMapTensor>() ||
+                           abstract->isa<abstract::AbstractNone>() || abstract->isa<abstract::AbstractMonad>();
   if (is_legal_abstract) {
     return;
   }

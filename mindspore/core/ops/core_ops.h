@@ -315,6 +315,12 @@ constexpr auto kCSRTensorGetIndices = "CSRTensorGetIndices";
 constexpr auto kCSRTensorGetDenseShape = "CSRTensorGetDenseShape";
 constexpr auto kIsCSRFunc = "IsCSRFunc";
 
+// MapTensor
+constexpr auto kMapTensorGet = "MapTensorGet";
+constexpr auto kMapTensorPut = "MapTensorPut";
+constexpr auto kMapTensorErase = "MapTensorErase";
+constexpr auto kMapTensorPutBprop = "MapTensorPutBprop";
+
 // COOTensor
 constexpr auto kMakeCOOTensor = "MakeCOOTensor";
 constexpr auto kCOOTensorGetValues = "COOTensorGetValues";
@@ -1022,6 +1028,12 @@ GVAR_DEF(PrimitivePtr, kPrimCSRTensorGetValues, std::make_shared<Primitive>(kCSR
 GVAR_DEF(PrimitivePtr, kPrimCSRTensorGetIndptr, std::make_shared<Primitive>(kCSRTensorGetIndptr));
 GVAR_DEF(PrimitivePtr, kPrimCSRTensorGetIndices, std::make_shared<Primitive>(kCSRTensorGetIndices));
 GVAR_DEF(PrimitivePtr, kPrimCSRTensorGetDenseShape, std::make_shared<Primitive>(kCSRTensorGetDenseShape));
+
+// MapTensor
+GVAR_DEF(PrimitivePtr, kPrimMapTensorGet, std::make_shared<Primitive>(kMapTensorGet));
+GVAR_DEF(PrimitivePtr, kPrimMapTensorPut, std::make_shared<Primitive>(kMapTensorPut));
+GVAR_DEF(PrimitivePtr, kPrimMapTensorErase, std::make_shared<Primitive>(kMapTensorErase));
+GVAR_DEF(PrimitivePtr, kPrimMapTensorPutBprop, std::make_shared<Primitive>(kMapTensorPutBprop));
 
 // Sparse ops
 GVAR_DEF(PrimitivePtr, kPrimSparseTensorDenseMatmul, std::make_shared<Primitive>(kSparseTensorDenseMatmul));

@@ -1557,10 +1557,11 @@ using AbstractIOMonadPtr = std::shared_ptr<AbstractIOMonad>;
 /// \brief Class AbstractMapTensor describes a MapTensor's abstract value.
 class MS_CORE_API AbstractMapTensor final : public AbstractBase {
  public:
+  explicit AbstractMapTensor(const MapTensorPtr &map_tensor);
   AbstractMapTensor(const MapTensorPtr &map_tensor, const ValuePtr &ref_key_value);
-  AbstractMapTensor(const AbstractMapTensor &other);
   AbstractMapTensor(const TypePtr &type, const ShapePtr &value_shape, const ValuePtr &value,
                     const ValuePtr &ref_key_value);
+  AbstractMapTensor(const AbstractMapTensor &other);
   ~AbstractMapTensor() override = default;
 
   MS_DECLARE_PARENT(AbstractMapTensor, AbstractBase)

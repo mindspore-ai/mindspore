@@ -74,6 +74,11 @@ class MapParameter(Parameter):
         data = Tensor_(value_dtype, value_shape)
         obj = Tensor_.__new__(cls)
         Tensor_.__init__(obj, data)
+        # Compatible attributes with Parameter.
+        obj.has_init = False
+        obj.init_mode = None
+        obj.is_default_input_init = False
+        # MapParameter added attributes.
         obj.key_dtype = key_dtype
         obj.value_dtype = value_dtype
         obj.value_shape = value_shape
@@ -82,7 +87,7 @@ class MapParameter(Parameter):
 
     def __init__(self, name=None, requires_grad=True, **kwargs):
         Parameter.__init__(self, self, name=name, requires_grad=requires_grad)
-        self.map_tensor_ = MapTensor_(self.key_dtype, self.value_dtype, self.value_shape)
+        self._map_tensor = MapTensor_(self.key_dtype, self.value_dtype, self.value_shape)
 
     def get(self, key_tensor, default_value=None):
         """

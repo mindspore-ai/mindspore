@@ -100,16 +100,20 @@ static irpb::DataType GetNumberDataType(const TypePtr &type) {
   }
 }
 
+static inline bool IsKindOfTensorType(const TypePtr &type) {
+  return type->isa<TensorType>() || type->isa<RowTensorType>() || type->isa<CSRTensorType>() ||
+         type->isa<COOTensorType>() || type->isa<MapTensorType>();
+}
+
 void CheckIfValidType(const TypePtr &type) {
   MS_EXCEPTION_IF_NULL(type);
   if (type->isa<Problem>()) {
     MS_LOG(WARNING) << "The type: " << type->type_name();
     return;
   }
-  if (!(type->isa<Number>() || type->isa<TensorType>() || type->isa<Tuple>() || type->isa<TypeType>() ||
+  if (!(type->isa<Number>() || IsKindOfTensorType(type) || type->isa<Tuple>() || type->isa<TypeType>() ||
         type->isa<List>() || type->isa<TypeAnything>() || type->isa<RefKeyType>() || type->isa<RefType>() ||
-        type->isa<Function>() || type->isa<TypeNone>() || type->isa<String>() || type->isa<RowTensorType>() ||
-        type->isa<CSRTensorType>() || type->isa<UndeterminedType>() || type->isa<COOTensorType>() ||
+        type->isa<Function>() || type->isa<TypeNone>() || type->isa<String>() || type->isa<UndeterminedType>() ||
         type->isa<SymbolicKeyType>() || type->isa<MonadType>())) {
     MS_LOG(EXCEPTION) << "Unknown type: " << type->type_name();
   }

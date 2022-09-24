@@ -27,8 +27,14 @@ std::size_t MapTensor::hash() const { return static_cast<std::size_t>(tid()); }
 bool MapTensor::operator==(const MapTensor &other) const { return this == &other; }
 
 abstract::AbstractBasePtr MapTensor::ToAbstract() {
-  ValuePtr ref_key = (param_info_ != nullptr ? std::make_shared<RefKey>(param_info_->name()) : kAnyValue);
-  return std::make_shared<abstract::AbstractMapTensor>(shared_from_base<MapTensor>(), ref_key);
+  if (param_info_ != nullptr) {
+    // For parameter, a broaden abstract is created with ref_key set.
+    ValuePtr ref_key = std::make_shared<RefKey>(param_info_->name());
+    return std::make_shared<abstract::AbstractMapTensor>(shared_from_base<MapTensor>(), ref_key);
+  } else {
+    // For value, an abstract is created with value set.
+    return std::make_shared<abstract::AbstractMapTensor>(shared_from_base<MapTensor>());
+  }
 }
 
 TensorPtr MapTensor::Get(const TensorPtr &key_tensor, const TensorPtr &default_value) {
