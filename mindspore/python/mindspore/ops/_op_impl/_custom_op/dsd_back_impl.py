@@ -123,7 +123,7 @@ def dsdbpropimpl(w1_gm, w2_gm, v_gm, a_gm, d_a_gm, d_w1_gm={}, d_w2_gm={}, d_v_g
         # tensor size // (byte * l0b size * thread)
         cpt_time = 1
         if not global_size * v_embedding * 4 // (1024 * 64) <= 1:
-            cpu_time = global_size * v_embedding * 4 // (1024 * 64)
+            cpt_time = global_size * v_embedding * 4 // (1024 * 64)
 
         ub_time = 1
         if global_size != 256:

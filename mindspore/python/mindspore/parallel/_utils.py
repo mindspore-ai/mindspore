@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Utils of auto parallel"""
+from __future__ import absolute_import
 from importlib import import_module
 import numpy as np
 import mindspore as ms
