@@ -291,6 +291,7 @@ const char benchmark_source_cortex[] = R"RAW(/**
  * limitations under the License.
  */
 
+#include "benchmark.h"
 #include "calib_output.h"
 #include "load_input.h"
 #include "data.h"
@@ -351,7 +352,7 @@ void PrintTensorHandle(MSTensorHandle tensor) {
   }
 }
 
-int benchmark() {
+int benchmark(char *work_space, unsigned int work_space_size) {
   int ret;
   printf("========run benchmark======\n");
   printf("========Model build========\n");
@@ -360,6 +361,12 @@ int benchmark() {
     printf("MSModelCreate failed.\n");
     return kMSStatusLiteNullptr;
   }
+  size_t workspace_size = MSModelCalcWorkspaceSize(model_handle);
+  if (workspace_size > work_space_size) {
+    printf("This Model inference requires %ul bytes of memory.\n", workspace_size);
+    return kMSStatusLiteError;
+  }
+  MSModelSetWorkspace(model_handle, work_space, work_space_size);
   ret = MSModelBuild(model_handle, NULL, 0, kMSModelTypeMindIR, NULL);
   if (ret != kMSStatusSuccess) {
     printf("MSModelBuildFromFile failed, ret : %d.\n", ret);
@@ -421,6 +428,7 @@ int benchmark() {
   MSModelDestroy(&model_handle);
   return kMSStatusSuccess;
 }
+
 )RAW";
 
 const char benchmark_h_cortex[] = R"RAW(/**
@@ -444,7 +452,7 @@ const char benchmark_h_cortex[] = R"RAW(/**
 #ifdef __cplusplus
 extern "C" {
 #endif
-int benchmark();
+int benchmark(char *work_space, unsigned int work_space_size);
 #ifdef __cplusplus
 }
 #endif

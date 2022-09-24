@@ -172,11 +172,13 @@ void CodeWeightInitFunc(std::ofstream &ofs, const std::unique_ptr<CoderContext> 
     ofs << "  }\n";
   } else {
     ofs << "int Init(void *weight_buffer, int weight_size) {\n";
+    ofs << "  if (" << ctx->weight_name() << "== NULL) {\n";
+    ofs << "    return RET_ERROR;\n  }\n";
     ofs << "  const size_t w_size = " << ctx->weight_buffer_size() << ";\n";
   }
   ofs << "  size_t " << ctx->weight_offset_name() << " = 0;\n";
   for (const auto &block : ctx->init_contents()) {
-    ofs << "{\n" << block << "}\n";
+    ofs << "\n{\n" << block << "}\n";
   }
   ofs << "  if (" << ctx->weight_size_name() << " < " << ctx->weight_offset_name()
       << ") {\n    return RET_ERROR;\n  }\n";

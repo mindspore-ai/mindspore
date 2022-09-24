@@ -22,22 +22,23 @@
 #include "coder/log.h"
 #include "include/errorcode.h"
 #include "nnacl/op_base.h"
+#include "include/c_api/model_c.h"
 
 namespace mindspore::lite::micro {
-const char model_runtime_init_source[] = R"RAW(
+const char micro_model_define_source[] = R"RAW(
 typedef struct {
   void *runtime_buffer;
   bool train_mode;  // true: train mode, false: eval mode
   MSTensorHandleArray inputs;
   MSTensorHandleArray outputs;
 } MicroModel;
+)RAW";
+const char model_runtime_malloc_source[] = R"RAW(
 MSModelHandle MSModelCreate() {
   MicroModel *micro_model = (MicroModel *)malloc(sizeof(MicroModel));
   if (micro_model == NULL) {
     return NULL;
   }
-)RAW";
-const char model_runtime_malloc_source[] = R"RAW(
   int buffer_size = GetBufferSize();
   void *runtime_buffer = malloc(buffer_size);
   if (runtime_buffer == NULL) {
@@ -50,63 +51,202 @@ const char model_runtime_malloc_source[] = R"RAW(
   }
 
 )RAW";
+const char handle_array_destroy[] = R"RAW(
+void MSTensorHandleArrayDestroy(MSTensorHandleArray inputs) {
+  if (inputs.handle_list == NULL) {
+    return;
+  }
+  for (size_t i = 0; i < inputs.handle_num; i++) {
+    MicroTensor *micro_tensor = inputs.handle_list[i];
+    if (!micro_tensor) {
+      continue;
+    }
+    if (micro_tensor->data) {
+      free(micro_tensor->data);
+      micro_tensor->data = NULL;
+    }
+    if (micro_tensor->shape) {
+      free(micro_tensor->shape);
+      micro_tensor->shape = NULL;
+    }
+    free(micro_tensor);
+    micro_tensor = NULL;
+  }
+  free(inputs.handle_list);
+  inputs.handle_list = NULL;
+}
+
+)RAW";
+const char cortex_set_workspace[] = R"RAW(
+  MicroModel *micro_model = (MicroModel *)model;
+  if (micro_model == NULL) {
+    return;
+  }
+  if (workspace_size < MSModelCalcWorkspaceSize(model)) {
+    return;
+  }
+  if (micro_model->inputs.handle_num != GRAPH_INPUTS_SIZE) {
+    return;
+  }
+  if (micro_model->outputs.handle_num != GRAPH_OUTPUTS_SIZE) {
+    return;
+  }
+
+  micro_model->runtime_buffer = workspace;
+  int buffer_size = GetBufferSize();
+  char* buf = workspace;
+  SetBuffer(buf);
+
+)RAW";
+void CodeMSModelCalcWorkspaceSize(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx,
+                                  const Configurator &config) {
+  if (config.target() == kCortex_M) {
+    ofs << "size_t MSModelCalcWorkspaceSize(MSModelHandle model) {\n";
+    ofs << "  size_t shape_size=0;\n";
+    std::vector<Tensor *> inputs = ctx->graph_inputs();
+    for (size_t i = 0; i < inputs.size(); ++i) {
+      ofs << "  shape_size += " << inputs[i]->shape().size() << " * sizeof(int64_t);\n";
+    }
+    std::vector<Tensor *> outputs = ctx->graph_outputs();
+    for (size_t i = 0; i < outputs.size(); ++i) {
+      ofs << "  shape_size += " << outputs[i]->shape().size() << " * sizeof(int64_t);\n";
+    }
+    ofs << "  return GetBufferSize() + WEIGHT_BUF_SIZE + shape_size + "
+        << "(sizeof(MicroTensor) + sizeof(MicroTensor *)) * "
+        << (ctx->graph_inputs().size() + ctx->graph_outputs().size()) << ";\n}\n";
+  } else {
+    ofs << "size_t MSModelCalcWorkspaceSize(MSModelHandle model) {\n  return 0;\n}\n";
+  }
+  ofs << "\n";
+}
+
+void CodeMSModelSetWorkspace(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx, const Configurator &config) {
+  ofs << "void MSModelSetWorkspace(MSModelHandle model, void *workspace, size_t workspace_size) {\n";
+  if (config.target() == kCortex_M) {
+    ofs << cortex_set_workspace;
+    ofs << "  " << ctx->weight_name() << " = (uint8_t *)&buf[buffer_size];\n";
+    ofs << R"RAW(
+  buffer_size += WEIGHT_BUF_SIZE;
+
+  micro_model->inputs.handle_list = (MSTensorHandle *)&buf[buffer_size];
+  buffer_size +=  GRAPH_INPUTS_SIZE * sizeof(MicroTensor *);
+  MicroTensor **input_tensors = (MicroTensor **)micro_model->inputs.handle_list;
+
+  micro_model->outputs.handle_list = (MSTensorHandle *)&buf[buffer_size];
+  buffer_size +=  GRAPH_OUTPUTS_SIZE * sizeof(MicroTensor *);
+  MicroTensor **output_tensors = (MicroTensor **)micro_model->outputs.handle_list;
+)RAW";
+    ofs << "  int i;\n"
+        << "  for (i = 0; i < GRAPH_INPUTS_SIZE; i++) {\n";
+    std::vector<Tensor *> inputs = ctx->graph_inputs();
+    for (size_t i = 0; i < inputs.size(); ++i) {
+      ofs << "    input_tensors[i] = (MicroTensor *)&buf[buffer_size];\n"
+          << "    buffer_size += sizeof(MicroTensor);\n";
+      ofs << "    input_tensors[i]->shape = (int64_t *)&buf[buffer_size];\n"
+          << "    buffer_size += " << inputs[i]->shape().size() * sizeof(int64_t) << ";\n";
+    }
+    ofs << "  }\n";
+
+    ofs << "  for (i = 0; i < GRAPH_OUTPUTS_SIZE; i++) {\n";
+    std::vector<Tensor *> outputs = ctx->graph_outputs();
+    for (size_t i = 0; i < outputs.size(); ++i) {
+      ofs << "    output_tensors[i] = (MicroTensor *)&buf[buffer_size];\n"
+          << "    buffer_size += sizeof(MicroTensor);\n";
+      ofs << "    output_tensors[i]->shape = (int64_t *)&buf[buffer_size];\n"
+          << "    buffer_size += " << outputs[i]->shape().size() * sizeof(int64_t) << ";\n";
+    }
+    ofs << "  }\n";
+
+    auto array_tostring = [&ofs](Tensor *tensor, const std::string &prefix, size_t index) {
+      ofs << kAlignedString << prefix << "_tensors[" << index << "]->type = " << EnumNameMSDataType(tensor->data_type())
+          << ";\n";
+      ofs << kAlignedString << prefix << "_tensors[" << index << "]->format = kMSFormatNHWC;\n";
+      ofs << kAlignedString << prefix << "_tensors[" << index << "]->ndim = " << tensor->shape().size() << ";\n";
+      size_t shape_size = tensor->shape().size();
+      for (size_t i = 0; i < shape_size; i++) {
+        ofs << kAlignedString << prefix << "_tensors[" << index << "]->shape[" << i << "]= " << tensor->shape()[i]
+            << ";\n";
+      }
+      ofs << kAlignedString << prefix << "_tensors[" << index << "]->name = \"" << tensor->tensor_name() << "\";\n";
+      ofs << kAlignedString << prefix << "_tensors[" << index << "]->data = NULL;\n";
+    };
+    for (size_t i = 0; i < inputs.size(); ++i) {
+      array_tostring(inputs[i], "input", i);
+    }
+    for (size_t i = 0; i < outputs.size(); ++i) {
+      array_tostring(outputs[i], "output", i);
+    }
+  }
+  ofs << "}\n\n";
+}
 
 void CodeMSModelCreate(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx, const Configurator &config) {
-  ofs << model_runtime_init_source;
+  ofs << micro_model_define_source;
   if (config.target() != kCortex_M) {
     ofs << model_runtime_malloc_source;
-  } else {
-    ofs << "  micro_model->runtime_buffer = " << ctx->buffer_name() << ";\n";
-  }
-  if (config.code_mode() == CodeMode::Inference) {
-    ofs << "  micro_model->train_mode = false;\n";
-  } else if (config.code_mode() == CodeMode::Train) {
-    ofs << "  micro_model->train_mode = true;\n";
-  }
-  auto array_tostring = [&ofs](Tensor *tensor, const std::string &prefix, size_t index) {
-    ofs << kAlignedString << prefix << "_tensors[" << index << "] = malloc(sizeof(MicroTensor));\n";
-    ofs << kAlignedString << prefix << "_tensors[" << index << "]->type = " << EnumNameMSDataType(tensor->data_type())
-        << ";\n";
-    ofs << kAlignedString << prefix << "_tensors[" << index << "]->format = kMSFormatNHWC;\n";
-    ofs << kAlignedString << prefix << "_tensors[" << index << "]->ndim = " << tensor->shape().size() << ";\n";
-    size_t shape_size = tensor->shape().size();
-    ofs << kAlignedString << prefix << "_tensors[" << index << "]->shape = "
-        << "malloc(" << shape_size << " * sizeof(int64_t));\n";
-    for (size_t i = 0; i < shape_size; i++) {
-      ofs << kAlignedString << prefix << "_tensors[" << index << "]->shape[" << i << "]= " << tensor->shape()[i]
-          << ";\n";
+    if (config.code_mode() == CodeMode::Inference) {
+      ofs << "  micro_model->train_mode = false;\n";
+    } else if (config.code_mode() == CodeMode::Train) {
+      ofs << "  micro_model->train_mode = true;\n";
     }
-    ofs << kAlignedString << prefix << "_tensors[" << index << "]->name = \"" << tensor->tensor_name() << "\";\n";
-    ofs << kAlignedString << prefix << "_tensors[" << index << "]->data = NULL;\n";
-  };
-  std::vector<Tensor *> inputs = ctx->graph_inputs();
-  std::vector<Tensor *> outputs = ctx->graph_outputs();
-  if (config.code_mode() == CodeMode::Inference) {
-    outputs = ctx->graph_outputs();
-  } else if (config.code_mode() == CodeMode::Train) {
-    outputs = ctx->graph_train_outputs();
+    auto array_tostring = [&ofs](Tensor *tensor, const std::string &prefix, size_t index) {
+      ofs << kAlignedString << prefix << "_tensors[" << index << "] = malloc(sizeof(MicroTensor));\n";
+      ofs << kAlignedString << prefix << "_tensors[" << index << "]->type = " << EnumNameMSDataType(tensor->data_type())
+          << ";\n";
+      ofs << kAlignedString << prefix << "_tensors[" << index << "]->format = kMSFormatNHWC;\n";
+      ofs << kAlignedString << prefix << "_tensors[" << index << "]->ndim = " << tensor->shape().size() << ";\n";
+      size_t shape_size = tensor->shape().size();
+      ofs << kAlignedString << prefix << "_tensors[" << index << "]->shape = "
+          << "malloc(" << shape_size << " * sizeof(int64_t));\n";
+      for (size_t i = 0; i < shape_size; i++) {
+        ofs << kAlignedString << prefix << "_tensors[" << index << "]->shape[" << i << "]= " << tensor->shape()[i]
+            << ";\n";
+      }
+      ofs << kAlignedString << prefix << "_tensors[" << index << "]->name = \"" << tensor->tensor_name() << "\";\n";
+      ofs << kAlignedString << prefix << "_tensors[" << index << "]->data = NULL;\n";
+    };
+    std::vector<Tensor *> inputs = ctx->graph_inputs();
+    std::vector<Tensor *> outputs = ctx->graph_outputs();
+    if (config.code_mode() == CodeMode::Inference) {
+      outputs = ctx->graph_outputs();
+    } else if (config.code_mode() == CodeMode::Train) {
+      outputs = ctx->graph_train_outputs();
+    }
+    size_t inputs_size = inputs.size();
+    ofs << "  MSTensorHandleArray model_inputs;\n";
+    ofs << "  model_inputs.handle_num = " << inputs_size << ";\n";
+    ofs << "  MicroTensor **input_tensors = malloc(" << inputs_size << " * sizeof(MicroTensor *));\n";
+    ofs << "  model_inputs.handle_list = (MSTensorHandle *)(input_tensors);\n";
+    ofs << "  micro_model->inputs = model_inputs;\n";
+    for (size_t i = 0; i < inputs_size; ++i) {
+      Tensor *input = inputs[i];
+      array_tostring(input, "input", i);
+    }
+    size_t outputs_size = outputs.size();
+    ofs << "  MSTensorHandleArray model_outputs;\n";
+    ofs << "  model_outputs.handle_num = " << outputs_size << ";\n";
+    ofs << "  MicroTensor **output_tensors = malloc(" << outputs_size << " * sizeof(MicroTensor *));\n";
+    ofs << "  model_outputs.handle_list = (MSTensorHandle *)(output_tensors);\n";
+    ofs << "  micro_model->outputs = model_outputs;\n";
+    for (size_t i = 0; i < outputs_size; ++i) {
+      Tensor *output = outputs[i];
+      array_tostring(output, "output", i);
+    }
+    ofs << "  return (MSModelHandle)micro_model;\n";
+  } else {
+    ofs << "#define GRAPH_INPUTS_SIZE " << ctx->graph_inputs().size() << "\n";
+    ofs << "#define GRAPH_OUTPUTS_SIZE " << ctx->graph_outputs().size() << "\n";
+    ofs << "#define WEIGHT_BUF_SIZE " << ctx->weight_buffer_size() << "\n";
+    ofs << "MSModelHandle MSModelCreate() {\n";
+    ofs << "  static MicroModel model;\n";
+    ofs << "  model.runtime_buffer = NULL;\n";
+    ofs << "  model.inputs.handle_num = GRAPH_INPUTS_SIZE;\n";
+    ofs << "  model.inputs.handle_list = NULL;\n";
+    ofs << "  model.outputs.handle_num = GRAPH_OUTPUTS_SIZE;\n";
+    ofs << "  model.outputs.handle_list = NULL;\n";
+    ofs << "  model.train_mode = false;\n";
+    ofs << "  return (MSModelHandle)&model;\n";
   }
-  size_t inputs_size = inputs.size();
-  ofs << "  MSTensorHandleArray model_inputs;\n";
-  ofs << "  model_inputs.handle_num = " << inputs_size << ";\n";
-  ofs << "  MicroTensor **input_tensors = malloc(" << inputs_size << " * sizeof(MicroTensor *));\n";
-  ofs << "  model_inputs.handle_list = (MSTensorHandle *)(input_tensors);\n";
-  ofs << "  micro_model->inputs = model_inputs;\n";
-  for (size_t i = 0; i < inputs_size; ++i) {
-    Tensor *input = inputs[i];
-    array_tostring(input, "input", i);
-  }
-  size_t outputs_size = outputs.size();
-  ofs << "  MSTensorHandleArray model_outputs;\n";
-  ofs << "  model_outputs.handle_num = " << outputs_size << ";\n";
-  ofs << "  MicroTensor **output_tensors = malloc(" << outputs_size << " * sizeof(MicroTensor *));\n";
-  ofs << "  model_outputs.handle_list = (MSTensorHandle *)(output_tensors);\n";
-  ofs << "  micro_model->outputs = model_outputs;\n";
-  for (size_t i = 0; i < outputs_size; ++i) {
-    Tensor *output = outputs[i];
-    array_tostring(output, "output", i);
-  }
-  ofs << "  return (MSModelHandle)micro_model;\n";
   ofs << "}\n\n";
 }
 
@@ -116,6 +256,9 @@ void CodeMSModelBuild(std::ofstream &ofs, const Configurator *config) {
        "                      const MSContextHandle model_context) {\n"
        "  if (model_type != kMSModelTypeMindIR) {\n"
        "    return kMSStatusLiteNotSupport;\n"
+       "  }\n"
+       "  if (((MicroModel *)model)->runtime_buffer == NULL) {\n"
+       "    return kMSStatusLiteMemoryFailed;\n"
        "  }\n";
   ofs << "  int ret = RET_OK;\n";
   if (config->target() != kCortex_M) {
@@ -139,23 +282,26 @@ void CodeMSModelBuild(std::ofstream &ofs, const Configurator *config) {
 }
 
 void CodeMSModelDestory(std::ofstream &ofs, const Configurator *config) {
-  ofs << "void MSModelDestroy(MSModelHandle *model) {\n";
-  ofs << "  if (*model) {\n"
-         "    MicroModel *micro_model = (MicroModel *)*model;\n";
   if (config->target() != kCortex_M) {
+    ofs << handle_array_destroy;
+  }
+  ofs << "void MSModelDestroy(MSModelHandle *model) {\n";
+  if (config->target() != kCortex_M) {
+    ofs << "  if (*model) {\n"
+           "    MicroModel *micro_model = (MicroModel *)*model;\n";
     ofs << "    if (micro_model->runtime_buffer) {\n"
            "      free(micro_model->runtime_buffer);\n"
            "      micro_model->runtime_buffer = NULL;\n"
            "    }\n";
-  }
-  ofs << "    MSTensorHandleArrayDestroy(micro_model->inputs);\n"
-         "    MSTensorHandleArrayDestroy(micro_model->outputs);\n"
-         "    free(*model);\n"
-         "    *model = NULL;\n"
-         "  }\n";
+    ofs << "    MSTensorHandleArrayDestroy(micro_model->inputs);\n"
+           "    MSTensorHandleArrayDestroy(micro_model->outputs);\n"
+           "    free(*model);\n"
+           "    *model = NULL;\n"
+           "  }\n";
 
-  if (config->support_parallel()) {
-    ofs << "  ClearThreadPool();\n";
+    if (config->support_parallel()) {
+      ofs << "  ClearThreadPool();\n";
+    }
   }
   ofs << "}\n";
 }

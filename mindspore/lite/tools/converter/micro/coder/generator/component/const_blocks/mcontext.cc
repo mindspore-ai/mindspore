@@ -38,6 +38,7 @@ const char context_header[] = R"RAW(
 #define MINDSPORE_LITE_MICRO_LIBRARY_SOURCE_CONTEXT_H_
 
 #include <stdbool.h>
+#include "c_api/context_c.h"
 
 typedef struct MicroContext {
   char* vendor_name_;
@@ -69,29 +70,14 @@ const char context_source_cortex[] = R"RAW(
  */
 
 #include "context.h"
-#include "c_api/context_c.h"
 #include <stdlib.h>
 #include <string.h>
 
 MSContextHandle MSContextCreate() {
-  MicroContext *micro_context = (MicroContext *)malloc(sizeof(MicroContext));
-  if (micro_context == NULL) {
-    return NULL;
-  }
-  micro_context->enable_parallel_ = false;
-  micro_context->thread_num_ = 1;
-  micro_context->affinity_core_list_ = NULL;
-  micro_context->core_num = 0;
-  micro_context->affinity_mode = 0;
-  return micro_context;
+  return NULL;
 }
 
 void MSContextDestroy(MSContextHandle *context) {
-  MicroContext *micro_context = (MicroContext *)(*context);
-  if (micro_context) {
-    free(micro_context);
-    micro_context = NULL;
-  }
 }
 
 void MSContextSetThreadNum(MSContextHandle context, int32_t thread_num) {
@@ -127,7 +113,6 @@ const char context_source_no_parallel[] = R"RAW(
  */
 
 #include "context.h"
-#include "c_api/context_c.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -185,10 +170,9 @@ const char context_source[] = R"RAW(
  */
 
 #include "context.h"
-#include "c_api/context_c.h"
-#include "wrapper/thread/micro_core_affinity.h"
 #include <stdlib.h>
 #include <string.h>
+#include "wrapper/thread/micro_core_affinity.h"
 
 #define MAX_THREAD_NUM 4
 
