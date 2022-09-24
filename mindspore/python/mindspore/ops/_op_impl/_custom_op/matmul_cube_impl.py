@@ -126,21 +126,21 @@ def cus_matmul_cube(input_x1, input_x2, bias=None, output_y=None, trans_a=False,
 
 def _get_shape_a_b(input_x1, input_x2, trans_a, trans_b):
     """_get_shape_a_b"""
-    shape_a = input_x1.get("ori_shape")
-    shape_b = input_x2.get("ori_shape")
+    shape_a_x1 = input_x1.get("ori_shape")
+    shape_b_x2 = input_x2.get("ori_shape")
 
-    if shape_a and len(shape_a) < 2:
-        shape_a = input_x1.get("shape")
+    if shape_a_x1 and len(shape_a_x1) < 2:
+        shape_a_x1 = input_x1.get("shape")
 
-    if shape_b and len(shape_b) < 2:
-        shape_b = input_x2.get("shape")
+    if shape_b_x2 and len(shape_b_x2) < 2:
+        shape_b_x2 = input_x2.get("shape")
 
-    shape_a = list(shape_a)
-    shape_b = list(shape_b)
+    shape_a_list = list(shape_a_x1)
+    shape_b_list = list(shape_b_x2)
 
     if input_x1.get("format") == "FRACTAL_NZ":
-        shape_a = _get_input_shape(shape_a)
-        shape_b = _get_input_shape(shape_b)
+        shape_a = _get_input_shape(shape_a_list)
+        shape_b = _get_input_shape(shape_b_list)
 
     util.check_shape_rule(shape_a)
     util.check_shape_rule(shape_b)
