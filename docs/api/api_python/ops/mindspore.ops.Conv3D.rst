@@ -1,7 +1,7 @@
 mindspore.ops.Conv3D
 ====================
 
-.. py:function:: mindspore.ops.conv3d(inputs, weight, pad_mode="valid", padding=0, stride=1, dilation=1, group=1)
+.. py:class:: mindspore.ops.Conv3D(out_channel, kernel_size, mode=1, pad_mode="valid", pad=0, stride=1, dilation=1, group=1, data_format="NCDHW")
 
     三维卷积操作。
 

@@ -5,11 +5,11 @@ mindspore.ops.bias_add
 
     返回输入Tensor与偏置Tensor之和。相加前会把偏置Tensor广播成与输入Tensor的shape一致。
 
-    输入：
+    参数：
         - **input_x** (Tensor) - 输入Tensor。shape可以有2~5个维度。
         - **bias** (Tensor) - 偏置Tensor，shape为 :math:`(C)`。C必须与 `input_x` 的通道维度C相同。
 
-    输出：
+    返回：
         Tensor，shape和数据类型与 `input_x` 相同。
 
     异常：
