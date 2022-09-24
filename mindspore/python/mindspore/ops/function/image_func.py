@@ -108,7 +108,7 @@ def check_valid(bboxes, img_metas):
 
     Args:
         bboxes (Tensor): Bounding boxes tensor with shape :math:`(N, 4)`. :math:`N` indicates the number of
-            bounding boxes, the value `4` indicates `x0`, `x1`, `y0, and `y1`. Data type must be float16 or float32.
+            bounding boxes, the value `4` indicates `x0`, `x1`, `y0`, and `y1`. Data type must be float16 or float32.
         img_metas (Tensor): Raw image size information with the format of `(height, width, ratio)`, specifying
             the valid boundary `(height * ratio, width * ratio)`. Data type must be float16 or float32.
 

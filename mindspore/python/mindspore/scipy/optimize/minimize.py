@@ -56,7 +56,7 @@ def minimize(func, x0, args=(), method=None, jac=None, hess=None, hessp=None, bo
     - Gradients of ``func`` are calculated automatically using MindSpore's autodiff
       support when the value of jac is None.
     - The ``method`` argument is required. A exception will be thrown if you don't specify a solver.
-    - Various optional arguments `"hess"` `"hessp"` `"bounds"` `"constraints"` `"tol"` `"callback" `
+    - Various optional arguments `"hess"` `"hessp"` `"bounds"` `"constraints"` `"tol"` `"callback"`
       in the SciPy interface have not yet been implemented.
     - Optimization results may differ from SciPy due to differences in the line
       search implementation.
@@ -79,7 +79,7 @@ def minimize(func, x0, args=(), method=None, jac=None, hess=None, hessp=None, bo
       jac (Callable, optional): method for computing the gradient vector. Only for `"BFGS"` and `"LBFGS"`.
           if it is None, the gradient will be estimated with gradient of ``func``.
           if it is a callable, it should be a function that returns the gradient vector:
-              :math:`jac(x, *args) -> array_like, shape (n,)`
+          :math:`jac(x, *args) -> array_like, shape (n,)`
           where x is an array with shape (n,) and args is a tuple with the fixed parameters.
       tol (float, optional): tolerance for termination. For detailed control, use solver-specific
           options. Default: None.
