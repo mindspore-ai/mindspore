@@ -175,9 +175,13 @@ inline std::vector<int64_t> Conv3DCheckAttrIntOrTuple(const ValuePtr &attr, cons
 
 inline bool Conv3DCheckShape(const std::string &op, const ShapeVector &shape) {
   for (size_t i = 0; i < shape.size(); ++i) {
-    // should be positive integer or -1, if -2 return false
-    if ((shape[i] < 0) && (shape[i] != abstract::Shape::SHP_ANY)) {
+    // should be positive integer or -1, or -2
+    if (shape[i] == UNKNOWN_RANK) {
       return false;
+    }
+    if ((shape[i] < 0) && (shape[i] != abstract::Shape::SHP_ANY)) {
+      MS_EXCEPTION(ValueError) << "For '" << op << "',  shape element [" << i
+                               << "] must be positive integer or -1 or -2, but got: " << shape[i] << ".";
     }
   }
   return true;
