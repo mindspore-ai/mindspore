@@ -852,7 +852,8 @@ class NeighborExchangeV2(Primitive):
         recv_lens (list(int)): Data lens which received from recv_rank_ids, 4 numbers represent the lens of
                                [top, bottom, left, right].
         data_format (str): Data format, only support NCHW now.
-        group (str): The communication group to work on. Default: "GlobalComm.WORLD_COMM_GROUP".
+        group (str, optional): The communication group to work on. Default: "GlobalComm.WORLD_COMM_GROUP", which means
+                     "hccl_world_group" in Ascend, and "nccl_world_group" in GPU.
 
     Supported Platforms:
         ``Ascend``
