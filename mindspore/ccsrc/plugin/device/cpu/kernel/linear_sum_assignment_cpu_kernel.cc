@@ -294,12 +294,12 @@ void LinearSumAssignmentCpuKernelMod::PostProcess(int64_t *a, int64_t *b, const 
     size_t i = 0;
     for (auto val : index) {
       a[i] = col4row[val];
-      b[i] = val;
+      b[i] = SizeToLong(val);
       i++;
     }
   } else {
     for (size_t i = 0; i < LongToSize(nr); i++) {
-      a[i] = i;
+      a[i] = SizeToLong(i);
       b[i] = col4row[i];
     }
   }

@@ -346,12 +346,12 @@ class Conv3DTransposeInfer : public abstract::OpInferBase {
       output_padding->clear();
       constexpr size_t pad_size = 5;
       (void)output_padding->insert(output_padding->begin(), pad_size, 0);
-      pad_list->emplace_back(pad_head);
-      pad_list->emplace_back(pad_tail);
-      pad_list->emplace_back(pad_top);
-      pad_list->emplace_back(pad_bottom);
-      pad_list->emplace_back(pad_left);
-      pad_list->emplace_back(pad_right);
+      (void)pad_list->emplace_back(pad_head);
+      (void)pad_list->emplace_back(pad_tail);
+      (void)pad_list->emplace_back(pad_top);
+      (void)pad_list->emplace_back(pad_bottom);
+      (void)pad_list->emplace_back(pad_left);
+      (void)pad_list->emplace_back(pad_right);
     } else if (pad_mode == PadMode::PAD) {
       int64_t pad_head = pad_list->at(kAxis0);
       int64_t pad_tail = pad_list->at(kAxis1);
