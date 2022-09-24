@@ -223,7 +223,9 @@ EquivPtr PatternEngine::AlignSVar(const VectorRef &values_pattern, const VectorR
       return nullptr;
     }
   }
-  if ((values_expr_len == 0) && (values_pattern_len == 0)) return equiv;
+  if ((values_expr_len == 0) && (values_pattern_len == 0)) {
+    return equiv;
+  }
   if (values_expr_len < values_pattern_len - 1) {
     MS_LOG(DEBUG) << "invalid size: pattern len " << values_pattern_len << ", expr len " << values_expr_len;
     return nullptr;

@@ -25,7 +25,6 @@ int ShuffleTensorRT::IsSupport(const schema::Primitive *primitive, const std::ve
                                const std::vector<mindspore::MSTensor> &out_tensors) {
   if (!IsShapeKnown()) {
     MS_LOG(ERROR) << "Unsupported input tensor unknown shape: " << op_name_;
-    // return RET_ERROR;
   }
   switch (type_) {
     case schema::PrimitiveType_Flatten:
