@@ -49,8 +49,8 @@ class PdistCpuKernelMod : public NativeCpuKernelMod {
   template <typename T>
   void Apply_pdist(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
-  size_t h_;
-  size_t w_;
+  int64_t h_;
+  int64_t w_;
   float p_;
   TypeId dtype_{kTypeUnknown};
 };
