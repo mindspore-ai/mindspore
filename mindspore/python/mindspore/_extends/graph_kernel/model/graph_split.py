@@ -963,10 +963,21 @@ class GraphSplitGpu(GraphSplitByPattern):
                 return reduce_size >= 1024
             return True
 
+        def _may_multi_filter(dom_ops):
+            count = 1
+            stack = [dom_ops[0]]
+            while stack:
+                op = stack.pop()
+                for t in op.inputs:
+                    if t.op and t.op in dom_ops:
+                        count = count + 1
+                        stack.append(t.op)
+            return count < len(dom_ops)
+
         def _reduce_output(dom):
             if dom.pattern != PrimLib.REDUCE:
                 return []
-            if reduce_nums(dom.ops) > 1:
+            if _may_multi_filter(dom.ops):
                 return []
             if _is_atomic_add_available(dom):
                 return []
