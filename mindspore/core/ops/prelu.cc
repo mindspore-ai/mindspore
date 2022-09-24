@@ -83,7 +83,7 @@ MIND_API_OPERATOR_IMPL(PReLU, BaseOperator);
 AbstractBasePtr PReLUInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                            const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  constexpr size_t input_num = 2;
+  constexpr int64_t input_num = 2;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   auto type = PReLUInferType(primitive, input_args);
   auto shape = PReLUInferShape(primitive, input_args);
