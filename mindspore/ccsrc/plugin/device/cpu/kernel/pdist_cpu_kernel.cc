@@ -26,6 +26,7 @@ constexpr float P_ZERO = 0.0;
 constexpr float P_ONE = 1.0;
 constexpr float P_TWO = 2.0;
 constexpr int64_t GRAIN_SIZE = 2048;
+constexpr float EPS = 1.0e-6;
 }  // namespace
 
 struct zdist_calc {
@@ -112,7 +113,7 @@ bool PdistCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, cons
       const T *input_i = input + l * one_size + i;
       const T *input_j = input + l * one_size + j;
       double agg = 0;
-      for (size_t x = 0; x < w_; x++) {
+      for (int64_t x = 0; x < w_; x++) {
         double a = static_cast<double>(*(input_i + x));
         double b = static_cast<double>(*(input_j + x));
         agg = F::red(agg, F::map(std::abs(a - b), p_));
@@ -137,14 +138,14 @@ bool PdistCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, cons
 
 template <typename T>
 void PdistCpuKernelMod::Apply_pdist(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
-  if (p_ == P_ZERO) {
-    LaunchKernel<zdist_calc, T>(inputs, outputs);
-  } else if (p_ == P_ONE) {
-    LaunchKernel<odist_calc, T>(inputs, outputs);
-  } else if (p_ == P_TWO) {
-    LaunchKernel<tdist_calc, T>(inputs, outputs);
-  } else if (std::isinf(p_)) {
+  if (std::isinf(p_)) {
     LaunchKernel<idist_calc, T>(inputs, outputs);
+  } else if (std::abs(p_ - P_ZERO) <= EPS * p_) {
+    LaunchKernel<zdist_calc, T>(inputs, outputs);
+  } else if (std::abs(p_ - P_ONE) <= EPS * p_) {
+    LaunchKernel<odist_calc, T>(inputs, outputs);
+  } else if (std::abs(p_ - P_TWO) <= EPS * p_) {
+    LaunchKernel<tdist_calc, T>(inputs, outputs);
   } else {
     LaunchKernel<pdist_calc, T>(inputs, outputs);
   }
