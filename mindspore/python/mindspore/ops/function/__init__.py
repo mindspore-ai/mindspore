@@ -322,6 +322,7 @@ from .nn_func import (
     relu,
     relu6,
     conv3d,
+    glu,
 )
 from .linalg_func import (
     svd,
