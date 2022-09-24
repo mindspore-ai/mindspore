@@ -191,9 +191,7 @@ int ParallelThreadPool::ParallelLaunch(const Func &func, Content content, int ta
   p_task->finished = 1;
   p_task->distributor = {1, task_num};
   p_task->valid.store(true);
-  for (auto &worker : workers_) {
-    worker->FastActive();
-  }
+  ActiveWorkers();
 
   p_task->status |= p_task->func(p_task->content, 0, 0, 0);
 
