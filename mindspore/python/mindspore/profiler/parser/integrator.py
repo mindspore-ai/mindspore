@@ -313,7 +313,7 @@ class Integrator:
                     self._point_info = json.load(file)
                 except (json.JSONDecodeError, TypeError) as err:
                     logger.warning(err)
-                    raise ProfilerRawFileException('Fail to parse point info file.')
+                    raise ProfilerRawFileException('Fail to parse point info file.') from err
 
     def _query_for_all_reduce(self):
         """
