@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <limits>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 
 #define kThreadsPerBlock (256)
 #define kBlocksPerGrid(n) ((n + kThreadsPerBlock - 1) / kThreadsPerBlock)
@@ -235,6 +236,18 @@ __device__ __forceinline__ bool MsAtomicAdd(bool *address, bool val) {
   return address[0];
 }
 
+template <>
+__device__ __forceinline__ Complex<float> MsAtomicAdd(Complex<float> *address, Complex<float> val) {
+  float *realAddr = reinterpret_cast<float *>(address);
+  return Complex<float>(MsAtomicAdd(realAddr, val.real()), MsAtomicAdd(realAddr + 1, val.imag()));
+}
+
+template <>
+__device__ __forceinline__ Complex<double> MsAtomicAdd(Complex<double> *address, Complex<double> val) {
+  double *realAddr = reinterpret_cast<double *>(address);
+  return Complex<double>(MsAtomicAdd(realAddr, val.real()), MsAtomicAdd(realAddr + 1, val.imag()));
+}
+
 // atomic sub
 template <typename T>
 __device__ __forceinline__ T MsAtomicSub(T *address, T val) {
@@ -420,6 +433,51 @@ inline int Log2Ceil64(uint64_t n) {
     return floor;
   else
     return floor + 1;
+}
+
+template <typename T>
+__device__ __forceinline__ T ZeroImpl() {
+  return 0;
+}
+
+template <>
+__device__ __forceinline__ cuComplex ZeroImpl() {
+  return make_cuComplex(0., 0.);
+}
+
+template <>
+__device__ __forceinline__ cuDoubleComplex ZeroImpl() {
+  return make_cuDoubleComplex(0., 0.);
+}
+
+template <typename T>
+__device__ __forceinline__ T shfl_xor_sync(unsigned mask, T var, int lane_mask) {
+  return __shfl_xor_sync(mask, var, lane_mask);
+}
+
+template <>
+__device__ __forceinline__ Complex<float> shfl_xor_sync(unsigned mask, Complex<float> var, int lane_mask) {
+  return Complex<float>(__shfl_xor_sync(mask, var.real(), lane_mask), __shfl_xor_sync(mask, var.imag(), lane_mask));
+}
+
+template <>
+__device__ __forceinline__ Complex<double> shfl_xor_sync(unsigned mask, Complex<double> var, int lane_mask) {
+  return Complex<double>(__shfl_xor_sync(mask, var.real(), lane_mask), __shfl_xor_sync(mask, var.imag(), lane_mask));
+}
+
+template <typename T>
+__device__ __forceinline__ T shfl_down_sync(unsigned mask, T var, int lane_mask) {
+  return __shfl_down_sync(mask, var, lane_mask);
+}
+
+template <>
+__device__ __forceinline__ Complex<float> shfl_down_sync(unsigned mask, Complex<float> var, int lane_mask) {
+  return Complex<float>(__shfl_down_sync(mask, var.real(), lane_mask), __shfl_down_sync(mask, var.imag(), lane_mask));
+}
+
+template <>
+__device__ __forceinline__ Complex<double> shfl_down_sync(unsigned mask, Complex<double> var, int lane_mask) {
+  return Complex<double>(__shfl_down_sync(mask, var.real(), lane_mask), __shfl_down_sync(mask, var.imag(), lane_mask));
 }
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_UTIL_CUH_

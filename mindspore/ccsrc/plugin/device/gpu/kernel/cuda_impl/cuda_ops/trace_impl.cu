@@ -18,21 +18,6 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 
 template <typename T>
-__device__ T ZeroImpl() {
-  return 0;
-}
-
-template <>
-__device__ cuComplex ZeroImpl() {
-  return make_cuComplex(0., 0.);
-}
-
-template <>
-__device__ cuDoubleComplex ZeroImpl() {
-  return make_cuDoubleComplex(0., 0.);
-}
-
-template <typename T>
 __device__ void TraceAtomicAdd(T *address, T val) {
   MsAtomicAdd(address, val);
 }

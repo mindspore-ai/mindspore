@@ -29,7 +29,6 @@ from .adam_weight_decay import _adam_weight_decay_cpu
 from .arg_max import _arg_max_cpu
 from .arg_min_with_value import _arg_min_with_value_cpu
 from .arg_max_with_value import _arg_max_with_value_cpu
-from .bias_add_grad import _bias_add_grad_cpu
 from .dropout import _dropout_cpu
 from .dropout_grad import _dropout_grad_cpu
 from .gather_d import _gather_cpu
