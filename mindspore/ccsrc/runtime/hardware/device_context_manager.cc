@@ -50,7 +50,7 @@ void PluginLoader::LoadDynamicLib(const std::string &plugin_file, std::map<std::
   err_msg = GetDlErrorMsg();
 #endif
   if (handle == nullptr) {
-    MS_LOG(INFO) << "Load dynamic lib: " << so_name << " failed. " << err_msg;
+    MS_LOG(ERROR) << "Load dynamic library " << so_name << " failed, returns [" << err_msg << "].";
     return;
   }
   (*all_handles)[so_name] = handle;
@@ -154,6 +154,7 @@ void DeviceContextManager::LoadPlugin() {
   }
   if (plugin_path_.empty() && !plugin_loader::PluginLoader::GetPluginPath(&plugin_path_)) {
     MS_LOG(INFO) << "Plugin path is invalid, skip!";
+    load_init_ = true;
     return;
   }
 #ifdef _WIN32
@@ -163,6 +164,7 @@ void DeviceContextManager::LoadPlugin() {
   DIR *dir = opendir(plugin_path_.c_str());
   if (dir == nullptr) {
     MS_LOG(ERROR) << "Open plugin dir failed, plugin path:" << plugin_path_;
+    load_init_ = true;
     return;
   }
   struct dirent *entry;
