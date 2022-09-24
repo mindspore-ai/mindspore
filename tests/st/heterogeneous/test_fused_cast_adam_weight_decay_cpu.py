@@ -138,7 +138,7 @@ class FusedAdamWeightDecayWithGlobalNorm(Optimizer):
         self.moments2 = clone_state(self._parameters, prefix="adam_v", init='zeros')
         self.norm = GlobalNorm()
         self.opt = P.FusedCastAdamWeightDecay()
-        self.opt.add_prim_attr("primitive_target", "CPU")
+        self.opt.set_device("CPU")
 
     def construct(self, gradients):
         """construct with gradients"""

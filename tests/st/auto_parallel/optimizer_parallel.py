@@ -189,7 +189,7 @@ class OptimizerSemiAutoAndAutoParallel6Net(Cell):
         self.sigmoid = P.Sigmoid()
         self.add1 = P.Add()
         self.add2 = P.Add()
-        self.mul1 = P.Mul().add_prim_attr('primitive_target', 'CPU')
+        self.mul1 = P.Mul().set_device('CPU')
         self.mul2 = P.Mul()
         self.mul3 = P.Mul()
         self.flatten = Flatten()

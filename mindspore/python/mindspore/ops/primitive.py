@@ -81,6 +81,15 @@ class Primitive(Primitive_):
         self.add_attr(name, value)
         return self
 
+    def set_device(self, device_target):
+        """
+        Set primitive been executed device
+
+        Args:
+            device_target (str): The target device to run, support "Ascend", "GPU", and "CPU".
+        """
+        return self.add_prim_attr("primitive_target", device_target)
+
     def _fill_signature(self, signatures):
         """fills signature."""
         signatures_new = []

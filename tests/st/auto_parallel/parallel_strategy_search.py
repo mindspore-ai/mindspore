@@ -203,7 +203,7 @@ class ParallelStrategySearchNet(Cell):
         self.tensor = Tensor(np.full(test_size, 0.05, dtype=np.float32))
         self.softmax = Softmax(axis=axis)
         self.relu = ReLU()
-        self.relu.relu.add_prim_attr("primitive_target", "CPU")
+        self.relu.relu.set_device("CPU")
         self.reshape = P.Reshape()
         self.input_shape = input_shape
         self.equal = P.Equal()

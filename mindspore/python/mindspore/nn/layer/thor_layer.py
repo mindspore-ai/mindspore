@@ -749,7 +749,7 @@ class EmbeddingLookupThor(Cell):
             self.gatherv2 = P.SparseGatherV2()
         else:
             self.gatherv2 = P.Gather()
-        self.embeddinglookup = P.EmbeddingLookup().add_prim_attr('primitive_target', 'CPU')
+        self.embeddinglookup = P.EmbeddingLookup().set_device('CPU')
         enable_ps = _get_ps_context("enable_ps")
         if enable_ps:
             self._process_vocab_cache(slice_mode)
@@ -866,11 +866,11 @@ class EmbeddingLookupThor(Cell):
 
         logger.info("EmbeddingLookup cache enable takes effect.")
         self.forward_unique = True
-        self.unique = P.Unique().add_prim_attr('primitive_target', 'CPU')
+        self.unique = P.Unique().set_device('CPU')
         self.unique.add_prim_attr('cache_enable', True)
         self.embedding_table.cache_enable = self.cache_enable
         self.embedding_table.cache_shape = (self.vocab_cache_size, self.embedding_size)
-        self.reshape_first = P.Reshape().add_prim_attr('primitive_target', 'CPU')
+        self.reshape_first = P.Reshape().set_device('CPU')
 
     def _process_vocab_cache(self, slice_mode):
         """PS embeddingLookup cache check and process."""

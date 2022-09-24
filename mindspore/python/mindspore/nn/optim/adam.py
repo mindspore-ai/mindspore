@@ -515,7 +515,7 @@ class Adam(Optimizer):
         else:
             self.opt = P.Adam(use_locking, use_nesterov)
         self.sparse_opt = P.FusedSparseAdam(use_locking, use_nesterov)
-        self.sparse_opt.add_prim_attr("primitive_target", "CPU")
+        self.sparse_opt.set_device("CPU")
         self._ps_pull = P.Pull()
         if use_amsgrad:
             self._ps_push = P.Push("ApplyAdamWithAmsgrad", [0, 1, 2, 3])
@@ -802,7 +802,7 @@ class AdamWeightDecay(Optimizer):
         """
         self._set_base_target(value)
         if value == 'CPU':
-            self.fused_opt.add_prim_attr("primitive_target", "CPU")
+            self.fused_opt.set_device("CPU")
             self.use_fused_opt = True
         else:
             self.use_fused_opt = False
@@ -963,7 +963,7 @@ class AdamOffload(Optimizer):
         self.moment1 = self._parameters.clone(prefix="moment1", init='zeros')
         self.moment2 = self._parameters.clone(prefix="moment2", init='zeros')
         self.opt = P.AdamNoUpdateParam(use_locking, use_nesterov)
-        self.opt.add_prim_attr("primitive_target", "CPU")
+        self.opt.set_device("CPU")
 
     @ms_function
     def construct(self, gradients):

@@ -2607,7 +2607,7 @@ The following optimizers add the target interface:  Adam, FTRL, LazyAdam, Proxim
 >>>
 >>> net = LeNet5()
 >>> optimizer = Adam(filter(lambda x: x.requires_grad, net.get_parameters()))
->>> optimizer.sparse_opt.add_prim_attr("primitive_target", "CPU")
+>>> optimizer.sparse_opt.set_device("CPU")
 ```
 
 </td>

@@ -2283,7 +2283,7 @@ class EmbeddingLookupCommGrad(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         self.init_prim_io_names(inputs=['dy', 'split_num'], outputs=['output'])
-        self.add_prim_attr('primitive_target', 'CPU')
+        self.set_device('CPU')
         self.tuple_setitem = Primitive('tuple_setitem')
 
     def __infer__(self, dy, split_num):

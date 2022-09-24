@@ -15,6 +15,13 @@ mindspore.ops.Primitive
         参数：
             - **name** (str) - 属性名称。
             - **value** (Any) - 属性值。
+    
+    .. py:method:: set_device(device_target)
+
+        设置Primitive执行后端。
+
+        参数：
+            - **device_target** (str) - 后端名称，支持CPU、GPU、Ascend。
 
     .. py:method:: check_elim(*args)
 

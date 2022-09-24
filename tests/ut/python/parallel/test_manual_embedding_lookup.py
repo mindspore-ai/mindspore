@@ -43,7 +43,7 @@ class Net(Cell):
         super().__init__()
         self.gatherv2 = P.EmbeddingLookup().shard(strategy1)
         self.gatherv2.add_prim_attr(split_string, split_tuple)
-        self.gatherv2.add_prim_attr("primitive_target", "CPU")
+        self.gatherv2.set_device("CPU")
         self.mul = P.Mul().shard(strategy2)
         self.reshape = P.Reshape()
         self.matmul = P.MatMul().shard(strategy3)
@@ -68,7 +68,7 @@ _b = Tensor(np.ones([8, 8, 8]), dtype=ms.float32)
 
 def compile_net(net):
     optimizer = LazyAdam(net.trainable_params(), learning_rate=0.1)
-    optimizer.sparse_opt.add_prim_attr("primitive_target", "CPU")
+    optimizer.sparse_opt.set_device("CPU")
     train_net = TrainOneStepCell(net, optimizer)
     train_net.set_auto_parallel()
     train_net.set_train()

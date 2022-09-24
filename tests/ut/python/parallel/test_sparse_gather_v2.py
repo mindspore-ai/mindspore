@@ -56,7 +56,7 @@ class Net(nn.Cell):
         super().__init__()
         if shape is None:
             shape = [64, 64]
-        self.gatherv2 = P.SparseGatherV2().shard(strategy1).add_prim_attr("primitive_target", target)
+        self.gatherv2 = P.SparseGatherV2().shard(strategy1).set_device(target)
         self.mul = P.Mul().shard(strategy2)
         self.index = Tensor(np.ones(shape), dtype=ms.int32)
         self.axis = axis

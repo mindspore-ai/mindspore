@@ -58,7 +58,7 @@ class AdamWeightDecayOp(Optimizer):
         self.moments1 = self.parameters.clone(prefix="adam_m", init='zeros')
         self.moments2 = self.parameters.clone(prefix="adam_v", init='zeros')
         self.opt = P.AdamWeightDecay()
-        self.opt.add_prim_attr("primitive_target", "CPU")
+        self.opt.set_device("CPU")
 
     def construct(self, gradients):
         """AdamWeightDecayOp"""

@@ -42,7 +42,7 @@ class Net2(nn.Cell):
     def __init__(self):
         super(Net2, self).__init__()
         self.relu1 = P.ReLU()
-        self.relu2 = P.ReLU().add_prim_attr("primitive_target", "CPU")
+        self.relu2 = P.ReLU().set_device("CPU")
         self.mul = P.Mul()
         self.depend = P.Depend()
 
