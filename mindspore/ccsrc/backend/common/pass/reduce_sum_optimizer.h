@@ -16,6 +16,7 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_REDUCE_SUM_OPTIMIZER_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_REDUCE_SUM_OPTIMIZER_H_
 #include <memory>
+#include <vector>
 #include "backend/common/optimizer/optimizer.h"
 
 namespace mindspore {
@@ -32,6 +33,10 @@ class ReduceSumOptimizer : public PatternProcessPass {
   AnfNodePtr NewRangeOp(const AnfNodePtr &rank_op, const KernelGraphPtr &kernel_graph) const;
   AnfNodePtr InsertAssistNode(const CNodePtr &cnode, const KernelGraphPtr &) const;
   AnfNodePtr NewAssistValueNode(const CNodePtr &cnode, const KernelGraphPtr &kernel_graph) const;
+  AnfNodePtr HandleAxisWithEmptyTensor(const CNodePtr &cnode, const KernelGraphPtr &kernel_graph,
+                                       const AnfNodePtr &axis_input) const;
+  AnfNodePtr CreateValueNodeWithVector(const CNodePtr &cnode, const KernelGraphPtr &kernel_graph,
+                                       const std::vector<int64_t> &axis) const;
 };
 }  // namespace opt
 }  // namespace mindspore

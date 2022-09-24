@@ -20,6 +20,7 @@
 namespace mindspore {
 namespace opt {
 BACKEND_EXPORT void BackendCommonOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph);
+BACKEND_EXPORT void OpBackendCommonOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph);
 BACKEND_EXPORT void CommonFinalOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph);
 BACKEND_EXPORT void CommonUnifyMindIR(const std::shared_ptr<session::KernelGraph> &kernel_graph);
 BACKEND_EXPORT void AddDynamicShapeAttrPass(const std::shared_ptr<session::KernelGraph> &kernel_graph);

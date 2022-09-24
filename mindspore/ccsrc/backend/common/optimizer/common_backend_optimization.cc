@@ -88,6 +88,20 @@ void BackendCommonOptimization(const std::shared_ptr<session::KernelGraph> &kern
   MS_LOG(INFO) << "Status record: end common optimization. graph id: " << kernel_graph->graph_id();
 }
 
+// Delete this optimizer when dynamic and static ReduceSum is unified.
+void OpBackendCommonOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
+  MS_LOG(INFO) << "Status record: start op common optimization. graph id: " << kernel_graph->graph_id();
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  auto optimizer = std::make_shared<GraphOptimizer>();
+  auto common_pm = std::make_shared<PassManager>("op_common_pm");
+  common_pm->AddPass(std::make_shared<ReduceSumOptimizer>());
+  common_pm->AddPass(std::make_shared<ConvertConstInputToTensorInput>());
+  optimizer->AddPassManager(common_pm);
+  (void)optimizer->Optimize(kernel_graph);
+  kernel_graph->SetExecOrderByDefault();
+  MS_LOG(INFO) << "Status record: end op common optimization. graph id: " << kernel_graph->graph_id();
+}
+
 void CommonFinalOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   // Run optimizer passes.

@@ -71,6 +71,50 @@ AnfNodePtr ReduceSumOptimizer::InsertAssistNode(const CNodePtr &cnode, const Ker
     << trace::DumpSourceLines(cnode);
 }
 
+AnfNodePtr ReduceSumOptimizer::CreateValueNodeWithVector(const CNodePtr &cnode, const KernelGraphPtr &kernel_graph,
+                                                         const std::vector<int64_t> &axis) const {
+  MS_EXCEPTION_IF_NULL(cnode);
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  auto new_value_node = NewValueNode(MakeValue<std::vector<int64_t>>(axis));
+  MS_EXCEPTION_IF_NULL(new_value_node);
+  new_value_node->set_abstract(std::make_shared<abstract::AbstractTensor>(kInt64, axis));
+  auto assist_value_node = kernel_graph->NewValueNode(new_value_node);
+
+  std::vector<AnfNodePtr> new_inputs = {common::AnfAlgo::GetCNodePrimitiveNode(cnode), cnode->input(1),
+                                        assist_value_node};
+  auto new_node = NewCNode(cnode, kernel_graph);
+  MS_EXCEPTION_IF_NULL(new_node);
+  new_node->set_inputs(new_inputs);
+  return new_node;
+}
+
+AnfNodePtr ReduceSumOptimizer::HandleAxisWithEmptyTensor(const CNodePtr &cnode, const KernelGraphPtr &kernel_graph,
+                                                         const AnfNodePtr &axis_input) const {
+  MS_EXCEPTION_IF_NULL(cnode);
+  MS_EXCEPTION_IF_NULL(axis_input);
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  auto value_node = axis_input->cast<ValueNodePtr>();
+  MS_EXCEPTION_IF_NULL(value_node);
+  auto value = value_node->value();
+  MS_EXCEPTION_IF_NULL(value);
+  if (value->isa<tensor::Tensor>()) {
+    auto tensor = value->cast<tensor::TensorPtr>();
+    MS_EXCEPTION_IF_NULL(tensor);
+    if (tensor->shape() == ShapeVector({0})) {
+      auto x_shape = dyn_cast<abstract::Shape>(cnode->input(1)->Shape());
+      MS_EXCEPTION_IF_NULL(x_shape);
+      auto shape_vector = x_shape->shape();
+      std::vector<int64_t> axis_value;
+      for (size_t i = 0; i < shape_vector.size(); ++i) {
+        (void)axis_value.emplace_back(SizeToLong(i));
+      }
+      MS_LOG(INFO) << "Change axis from () to " << axis_value;
+      return CreateValueNodeWithVector(cnode, kernel_graph, axis_value);
+    }
+  }
+  return nullptr;
+}
+
 // create a new assist value node to deal with the following two case
 // 1: the axis_input is empty, the new tensor of the new value node should be 'range(shape.size())',
 // the shape is the first input'shape of ReduceSum;
@@ -79,7 +123,11 @@ AnfNodePtr ReduceSumOptimizer::InsertAssistNode(const CNodePtr &cnode, const Ker
 // the shape is the first input'shape of ReduceSum;
 AnfNodePtr ReduceSumOptimizer::NewAssistValueNode(const CNodePtr &cnode, const KernelGraphPtr &kernel_graph) const {
   // axis is a tuple ,maybe empty or contain a value less 0;
+  if (cnode->inputs().size() <= axis_input_index) {
+    return nullptr;
+  }
   auto axis_input = cnode->input(axis_input_index);
+  MS_EXCEPTION_IF_NULL(axis_input);
   if (IsValueNode<ValueTuple>(axis_input)) {
     std::vector<AnfNodePtr> new_inputs = {common::AnfAlgo::GetCNodePrimitiveNode(cnode)};
     new_inputs.push_back(cnode->input(1));
@@ -92,34 +140,28 @@ AnfNodePtr ReduceSumOptimizer::NewAssistValueNode(const CNodePtr &cnode, const K
       MS_EXCEPTION_IF_NULL(value_tuple);
       auto x_shape = dyn_cast<abstract::Shape>(cnode->input(1)->Shape());
       MS_EXCEPTION_IF_NULL(x_shape);
-      std::vector<int64_t> axes_value;
-      ValuePtr valuePtr = nullptr;
+      std::vector<int64_t> axis_value;
       if (value_tuple->value().empty()) {
         // case 1: tensor is empty;
         for (size_t i = 0; i < x_shape->shape().size(); i++) {
-          axes_value.emplace_back(SizeToLong(i));
+          axis_value.emplace_back(SizeToLong(i));
         }
       } else {
         // case 2: contain value less 0;
         for (auto &iter : value_tuple->value()) {
           auto item = GetValue<int64_t>(iter->cast<ScalarPtr>());
           if (item < 0) {
-            (void)axes_value.emplace_back(item + static_cast<int64_t>(x_shape->shape().size()));
+            (void)axis_value.emplace_back(item + static_cast<int64_t>(x_shape->shape().size()));
           } else {
-            (void)axes_value.emplace_back(item);
+            (void)axis_value.emplace_back(item);
           }
         }
       }
-      valuePtr = MakeValue<std::vector<int64_t>>(axes_value);
-      auto assist_node = NewValueNode(valuePtr);
-      assist_node->set_abstract(std::make_shared<abstract::AbstractTensor>(kInt64, axes_value));
-      auto assist_value_node = kernel_graph->NewValueNode(assist_node);
-      new_inputs.push_back(assist_value_node);
-      auto new_node = NewCNode(cnode, kernel_graph);
-      MS_EXCEPTION_IF_NULL(new_node);
-      new_node->set_inputs(new_inputs);
-      return new_node;
+
+      return CreateValueNodeWithVector(cnode, kernel_graph, axis_value);
     }
+  } else if (axis_input->isa<ValueNode>()) {
+    return HandleAxisWithEmptyTensor(cnode, kernel_graph, axis_input);
   }
   return nullptr;
 }
