@@ -246,7 +246,7 @@ void ReplaceLoadUserMakeTuple(const FuncGraphManagerPtr &manager, const CNodePtr
   manager->Replace(make_tuple, new_make_tuple);
 }
 
-bool ReplaceLoadUser(const FuncGraphManagerPtr &manager, const FuncGraphPtr &fg, const AnfNodePtr &load) {
+bool ReplaceLoadUser(const FuncGraphManagerPtr &manager, const AnfNodePtr &load) {
   bool change = false;
   auto load_users = manager->node_users()[load];
   for (const auto &load_user : load_users) {
@@ -281,15 +281,15 @@ bool ReplaceLoadUser(const FuncGraphManagerPtr &manager, const FuncGraphPtr &fg,
   return change;
 }
 
-bool ReplaceSameGroupLoad(const FuncGraphManagerPtr &manager, const FuncGraphPtr &fg,
-                          const std::vector<AnfNodePtr> &toposet, const std::vector<size_t> &group) {
+bool ReplaceSameGroupLoad(const FuncGraphManagerPtr &manager, const std::vector<AnfNodePtr> &toposet,
+                          const std::vector<size_t> &group) {
   if (group.size() <= 1) {
     return false;
   }
   bool change = false;
   const auto &main = toposet[group[0]];
   for (size_t i = 1; i < group.size(); i++) {
-    change = ReplaceLoadUser(manager, fg, toposet[group[i]]);
+    change = ReplaceLoadUser(manager, toposet[group[i]]);
     manager->Replace(toposet[group[i]], main);
   }
   return change;
@@ -389,7 +389,7 @@ bool AutoMonadEliminator::ReplaceAutoMonadNode(const FuncGraphManagerPtr &manage
       (void)need_merge_loads.insert(need_merge_loads.cend(), groups.cbegin(), groups.cend());
     }
     for (auto &group : need_merge_loads) {
-      bool replaced = ReplaceSameGroupLoad(manager, fg, toposet, group);
+      bool replaced = ReplaceSameGroupLoad(manager, toposet, group);
       if (replaced) {
         changed = true;
       }

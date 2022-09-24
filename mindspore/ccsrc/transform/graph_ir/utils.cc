@@ -179,7 +179,7 @@ std::vector<MeTensorPtr> ConvertGeTensors(const std::vector<GeTensorPtr> &ge_ten
 
 GeDataType ConvertDataType(const MeDataType &type) { return TransformUtil::ConvertDataType(type); }
 
-MeTensorPtr ConvertGeTensor(GeTensorPtr ge_tensor, const ShapeVector &request_dims) {
+MeTensorPtr ConvertGeTensor(const GeTensorPtr &ge_tensor, const ShapeVector &request_dims) {
   return TransformUtil::ConvertGeTensor(ge_tensor, request_dims);
 }
 
@@ -222,42 +222,43 @@ DfGraphConvertorPtr NewConverter(const FuncGraphPtr &graph) {
   return converter;
 }
 
-void SetTraining(DfGraphConvertorPtr converter, bool training) {
+void SetTraining(const DfGraphConvertorPtr &converter, bool training) {
   MS_EXCEPTION_IF_NULL(converter);
   converter->set_training(training);
 }
 
-void BuildGraph(DfGraphConvertorPtr converter, const std::map<std::string, std::shared_ptr<tensor::Tensor>> &maps) {
+void BuildGraph(const DfGraphConvertorPtr &converter,
+                const std::map<std::string, std::shared_ptr<tensor::Tensor>> &maps) {
   MS_EXCEPTION_IF_NULL(converter);
   (void)converter->ConvertAllNode().InitParam(maps).BuildGraph();
 }
 
-void GenerateBroadcastGraph(DfGraphConvertorPtr converter, const TensorOrderMap &tensors) {
+void GenerateBroadcastGraph(const DfGraphConvertorPtr &converter, const TensorOrderMap &tensors) {
   MS_EXCEPTION_IF_NULL(converter);
   (void)converter->GenerateBroadcastGraph(tensors);
 }
-void GenerateCheckpointGraph(DfGraphConvertorPtr converter) {
+void GenerateCheckpointGraph(const DfGraphConvertorPtr &converter) {
   MS_EXCEPTION_IF_NULL(converter);
   (void)converter->GenerateCheckpointGraph();
 }
-int ErrCode(DfGraphConvertorPtr converter) {
+int ErrCode(const DfGraphConvertorPtr &converter) {
   MS_EXCEPTION_IF_NULL(converter);
   return converter->ErrCode();
 }
 
-DfGraphPtr GetComputeGraph(DfGraphConvertorPtr converter) {
+DfGraphPtr GetComputeGraph(const DfGraphConvertorPtr &converter) {
   MS_EXCEPTION_IF_NULL(converter);
   return converter->GetComputeGraph();
 }
-DfGraphPtr GetInitGraph(DfGraphConvertorPtr converter) {
+DfGraphPtr GetInitGraph(const DfGraphConvertorPtr &converter) {
   MS_EXCEPTION_IF_NULL(converter);
   return converter->GetInitGraph();
 }
-DfGraphPtr GetSaveCheckpointGraph(DfGraphConvertorPtr converter) {
+DfGraphPtr GetSaveCheckpointGraph(const DfGraphConvertorPtr &converter) {
   MS_EXCEPTION_IF_NULL(converter);
   return converter->GetSaveCheckpointGraph();
 }
-DfGraphPtr GetBroadcastGraph(DfGraphConvertorPtr converter) {
+DfGraphPtr GetBroadcastGraph(const DfGraphConvertorPtr &converter) {
   MS_EXCEPTION_IF_NULL(converter);
   return converter->GetBroadcastGraph();
 }
