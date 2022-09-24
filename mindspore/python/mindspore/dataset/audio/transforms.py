@@ -504,8 +504,8 @@ class ComputeDeltas(AudioTensorOperation):
         d_{t}=\frac{{\textstyle\sum_{n=1}^{N}}n(c_{t+n}-c_{t-n})}{2{\textstyle\sum_{n=1}^{N}}n^{2}}
 
     Args:
-        win_length (int): The window length used for computing delta, must be no less than 3 (default=5).
-        pad_mode (BorderType): Mode parameter passed to padding (default=BorderType.EDGE).It can be any of
+        win_length (int, optional): The window length used for computing delta, must be no less than 3 (default=5).
+        pad_mode (BorderType, optional): Mode parameter passed to padding (default=BorderType.EDGE).It can be any of
             [BorderType.CONSTANT, BorderType.EDGE, BorderType.REFLECT, BordBorderTypeer.SYMMETRIC].
 
             - BorderType.CONSTANT, means it fills the border with constant values.
@@ -1360,7 +1360,7 @@ class MuLawDecoding(AudioTensorOperation):
     Decode mu-law encoded signal.
 
     Args:
-        quantization_channels (int): Number of channels, which must be positive (Default: 256).
+        quantization_channels (int, optional): Number of channels, which must be positive (Default: 256).
 
     Examples:
         >>> import numpy as np
@@ -1385,7 +1385,7 @@ class MuLawEncoding(AudioTensorOperation):
     Encode signal based on mu-law companding.
 
     Args:
-        quantization_channels (int): Number of channels, which must be positive (Default: 256).
+        quantization_channels (int, optional): Number of channels, which must be positive (Default: 256).
 
     Examples:
         >>> import numpy as np
@@ -1410,8 +1410,8 @@ class Overdrive(AudioTensorOperation):
     Apply overdrive on input audio.
 
     Args:
-        gain (float): Desired gain at the boost (or attenuation) in dB, in range of [0, 100] (default=20.0).
-        color (float): Controls the amount of even harmonic content in the over-driven output,
+        gain (float, optional): Desired gain at the boost (or attenuation) in dB, in range of [0, 100] (default=20.0).
+        color (float, optional): Controls the amount of even harmonic content in the over-driven output,
             in range of [0, 100] (default=20.0).
 
     Examples:
@@ -1439,14 +1439,14 @@ class Phaser(AudioTensorOperation):
 
     Args:
         sample_rate (int): Sampling rate of the waveform, e.g. 44100 (Hz).
-        gain_in (float): Desired input gain at the boost (or attenuation) in dB.
+        gain_in (float, optional): Desired input gain at the boost (or attenuation) in dB.
             Allowed range of values is [0, 1] (default=0.4).
-        gain_out (float): Desired output gain at the boost (or attenuation) in dB.
+        gain_out (float, optional): Desired output gain at the boost (or attenuation) in dB.
             Allowed range of values is [0, 1e9] (default=0.74).
-        delay_ms (float): Desired delay in milli seconds. Allowed range of values is [0, 5] (default=3.0).
-        decay (float): Desired decay relative to gain-in. Allowed range of values is [0, 0.99] (default=0.4).
-        mod_speed (float): Modulation speed in Hz. Allowed range of values is [0.1, 2] (default=0.5).
-        sinusoidal (bool): If True, use sinusoidal modulation (preferable for multiple instruments).
+        delay_ms (float, optional): Desired delay in milli seconds. Allowed range of values is [0, 5] (default=3.0).
+        decay (float, optional): Desired decay relative to gain-in. Allowed range of values is [0, 0.99] (default=0.4).
+        mod_speed (float, optional): Modulation speed in Hz. Allowed range of values is [0.1, 2] (default=0.5).
+        sinusoidal (bool, optional): If True, use sinusoidal modulation (preferable for multiple instruments).
             If False, use triangular modulation (gives single instruments a sharper
             phasing effect) (default=True).
 

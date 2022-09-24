@@ -18,7 +18,7 @@ mindspore.ops.interpolate
         - **sizes** (tuple[int]，可选) - 输入shape指定轴的新维度。 `sizes` 中的数全是正数。 `scales` 和 `sizes` 同时只能指定一个。当 `mode` 是"linear"时， `sizes` 为1个int元素 :math:`(new\_width,)` 的tuple。当 `mode` 是"bilinear"时， `sizes` 为2个int元素 :math:`(new\_height, new\_width)` 的tuple。
         - **coordinate_transformation_mode** (str) - 指定进行坐标变换的方式，默认值是"align_corners"，还可选"half_pixel"和"asymmetric"。
           假如我们需要将输入Tensor的x轴进行resize。我们记 `new_i` 为resize之后的Tenosr沿x轴的第i个坐标；记 `old_i` 为输入Tensor沿x轴的对应坐标；
-          记 `new_length` 是resize之后的Tensor沿着x轴的长度，记 `old_length` 是输入Tensor沿x轴的长度。我们可以通过下面的公式计算出来 `old_i` :
+          记 `new_length` 是resize之后的Tensor沿着x轴的长度，记 `old_length` 是输入Tensor沿x轴的长度。我们可以通过下面的公式计算出来 `old_i` ：
 
           .. code-block::
 
@@ -28,7 +28,7 @@ mindspore.ops.interpolate
 
               old_i = new_length != 0 ? new_i * old_length / new_length : 0  # if set to 'asymmetric'
 
-        - **mode** (str) - 所使用的插值方式。目前支持"linear"和"bilinear"插值方式。默认值: "linear"。
+        - **mode** (str) - 所使用的插值方式。目前支持"linear"和"bilinear"插值方式。默认值："linear"。
 
     返回：
         Tensor，数据类型与 `x` 相同。

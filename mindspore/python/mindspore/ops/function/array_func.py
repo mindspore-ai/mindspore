@@ -3139,7 +3139,7 @@ def meshgrid(inputs, indexing='xy'):
             `(N, M, P)` for 'xy' indexing and `(M, N, P)` for 'ij' indexing.
 
     Returns:
-        Tensors, A Tuple of N N-D Tensor objects. The data type is the same with the Inputs.
+        Tensors, a Tuple of N N-D Tensor objects. The data type is the same with the Inputs.
 
     Raises:
         TypeError: If `indexing` is not a str or `inputs` is not a tuple.

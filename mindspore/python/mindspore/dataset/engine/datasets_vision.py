@@ -4340,7 +4340,7 @@ class SVHNDataset(GeneratorDataset):
         num_parallel_workers (int, optional): Number of subprocesses used to fetch the dataset in parallel (default=1).
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset. Random accessible input is required.
             (default=None, expected order behavior shown in the table).
-        sampler (Union[Sampler, Iterable], optional): Object used to choose samples from the dataset. Random accessible
+        sampler (Sampler, optional): Object used to choose samples from the dataset. Random accessible
             input is required (default=None, expected order behavior shown in the table).
         num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
             Random accessible input is required. When this argument is specified, 'num_samples' reflects the max

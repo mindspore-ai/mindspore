@@ -9,7 +9,7 @@ mindspore.ops.derivative
         - 若 `primals` 是int型的Tensor，会被转化成float32格式进行计算。
 
     参数：
-        - **fn** (Union[Function, Cell]) - 待求导的函数或网络。
+        - **fn** (Union[Cell, function]) - 待求导的函数或网络。
         - **primals** (Union[Tensor, tuple[Tensor]]) - `fn` 的输入，单输入的type为Tensor，多输入的type为Tensor组成的tuple。
         - **order** (int) - 求导的阶数。
 

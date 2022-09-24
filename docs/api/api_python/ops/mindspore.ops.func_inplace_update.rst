@@ -11,7 +11,7 @@ mindspore.ops.inplace_update
     参数：
         - **x** (Tensor) - 待更新的Tensor。
         - **v** (Tensor) - 更新的值。
-        - **indices** (Union[int, tuple]) - 待更新值在原Tensor中的索引。
+        - **indices** (Union[int, tuple], Tensor) - 待更新值在原Tensor中的索引。
 
     返回：
         Tensor，更新后的Tensor。
