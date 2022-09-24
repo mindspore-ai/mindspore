@@ -16,6 +16,7 @@
 # ============================================================================
 
 """Basic composite operations."""
+from __future__ import absolute_import
 from functools import partial
 from types import FunctionType
 import mindspore as ms

@@ -14,9 +14,10 @@
 # ============================================================================
 
 """Implementation for internal polymorphism `bitwise or` operations."""
+from __future__ import absolute_import
 from mindspore.ops.composite import base
 from mindspore.ops import functional as F
-from ...operations import _inner_ops as inner
+from mindspore.ops.operations import _inner_ops as inner
 
 # bitwise_or is a metagraph object which will generate function according to input type
 # using ".register" decorator
