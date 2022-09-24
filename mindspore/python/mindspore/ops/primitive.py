@@ -312,7 +312,7 @@ class Primitive(Primitive_):
         return type(self)(**self.init_attrs)
 
     def __repr__(self):
-        attr = ', '.join([f'{k}={self.attrs[k]}' for k in self.attrs if not k in Primitive._repr_ignore_list])
+        attr = ', '.join([f'{k}={self.attrs.get(k)}' for k in self.attrs if k not in Primitive._repr_ignore_list])
         info_str = f'Prim[{self.name}]'
         if attr:
             info_str += f'<{attr}>'
