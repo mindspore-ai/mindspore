@@ -18,26 +18,40 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_MKLDNN_MATMUL_CPU_KERNEL_FUNC_H_
 
 #include <vector>
+#include <map>
 #include "plugin/device/cpu/kernel/mkldnn/mkl_cpu_kernel.h"
 
 namespace mindspore {
 namespace kernel {
-class MatMulCpuKernelFunc : public DeprecatedCpuKernelFunc, private DeprecatedMKLCpuKernelMod {
+class MatMulCpuKernelFunc : public CpuKernelFunc, private MKLCpuKernelMod {
  public:
   MatMulCpuKernelFunc() = default;
   ~MatMulCpuKernelFunc() override = default;
 
-  void InitFunc(const CNodePtr &kernel_node) override;
+  void InitFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(
+    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+    const std::vector<KernelTensorPtr> &outputs,
+    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
 
   bool RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                const std::vector<AddressPtr> &outputs) override;
 
  private:
-  void InitKernel(const CNodePtr &kernel_node) override {}
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override {
+    return true;
+  };
+
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
     return true;
   }
+
+  bool trans_a_{false};
+  bool trans_b_{false};
 };
 }  // namespace kernel
 }  // namespace mindspore

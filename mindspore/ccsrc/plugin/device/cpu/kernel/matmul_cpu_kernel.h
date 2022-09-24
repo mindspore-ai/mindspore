@@ -20,29 +20,36 @@
 #include <vector>
 #include <memory>
 #include <string>
+#include <map>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "kernel/common_utils.h"
 
 namespace mindspore {
 namespace kernel {
 constexpr auto kUnkown = "Unknown";
-class MatMulCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class MatMulCpuKernelMod : public NativeCpuKernelMod {
  public:
   MatMulCpuKernelMod() = default;
   explicit MatMulCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}
   ~MatMulCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
     return func_obj_->RunFunc(inputs, workspace, outputs);
   }
 
+  int Resize(
+    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+    const std::vector<KernelTensorPtr> &outputs,
+    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
+
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  std::shared_ptr<DeprecatedCpuKernelFunc> func_obj_;
+  std::shared_ptr<CpuKernelFunc> func_obj_;
   std::string kernel_type_{kUnkown};
 };
 }  // namespace kernel

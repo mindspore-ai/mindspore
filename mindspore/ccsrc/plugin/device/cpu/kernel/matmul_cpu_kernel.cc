@@ -28,7 +28,7 @@ namespace {
 constexpr auto kMatMul = "MatMul";
 constexpr auto kBatchMatMul = "BatchMatMul";
 
-using MatMulFuncCreator = std::function<std::shared_ptr<DeprecatedCpuKernelFunc>()>;
+using MatMulFuncCreator = std::function<std::shared_ptr<CpuKernelFunc>()>;
 static std::map<std::string, std::vector<std::pair<KernelAttr, MatMulFuncCreator>>> support_list_map = {
   {kMatMul,
    {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
@@ -52,25 +52,32 @@ std::vector<KernelAttr> MatMulCpuKernelMod::GetOpSupport() {
   return support_list;
 }
 
-void MatMulCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+bool MatMulCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                              const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->name();
   if (kernel_name_ != kernel_type_) {
     MS_LOG(EXCEPTION) << "Suppose to be " << kernel_type_ << " but got " << kernel_name_;
   }
 
-  auto iter = support_list_map.find(kernel_type_);
-  if (iter == support_list_map.end()) {
-    MS_LOG(EXCEPTION) << "MatMul cpu does not support " << kernel_type_;
-  }
-
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
     MS_LOG(EXCEPTION) << "MatMul does not support this kernel data type: " << kernel_attr;
   }
 
   func_obj_ = support_list_map[kernel_type_][index].second();
-  func_obj_->InitFunc(kernel_node);
+  func_obj_->InitFunc(base_operator, inputs, outputs);
+  return true;
+}
+
+int MatMulCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                               const std::vector<KernelTensorPtr> &outputs,
+                               const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  int ret = 0;
+  if ((ret = KernelMod::Resize(base_operator, inputs, outputs)) != 0) {
+    return ret;
+  }
+  return func_obj_->Resize(base_operator, inputs, outputs, inputsOnHost);
 }
 
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, MatMul,

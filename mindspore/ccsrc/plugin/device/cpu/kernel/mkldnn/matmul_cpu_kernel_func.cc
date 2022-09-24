@@ -16,12 +16,14 @@
 
 #include "plugin/device/cpu/kernel/mkldnn/matmul_cpu_kernel_func.h"
 #include <utility>
+#include <map>
 #include "include/common/thread_pool.h"
 #include "plugin/device/cpu/kernel/nnacl/op_base.h"
 #include "plugin/device/cpu/kernel/nnacl/matmul_parameter.h"
 #include "plugin/device/cpu/kernel/nnacl/fp32/matmul_fp32.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "utils/ms_utils.h"
+#include "mindspore/core/ops/mat_mul.h"
 
 namespace mindspore {
 namespace kernel {
@@ -33,20 +35,26 @@ constexpr size_t kRankMin = 2;
 using dims = dnnl::memory::dims;
 }  // namespace
 
-void MatMulCpuKernelFunc::InitFunc(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  std::vector<int64_t> a_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  std::vector<int64_t> b_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-  std::vector<int64_t> o_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
-  if (AnfAlgo::IsShapesDynamic({a_shape, b_shape, o_shape})) {
-    return;
+void MatMulCpuKernelFunc::InitFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                   const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->name();
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::MatMul>(base_operator);
+  if (!kernel_ptr) {
+    MS_LOG(ERROR) << "cast MatMul ops failed!";
   }
+  trans_a_ = kernel_ptr->get_transpose_a();
+  trans_b_ = kernel_ptr->get_transpose_b();
+}
+
+int MatMulCpuKernelFunc::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                const std::vector<KernelTensorPtr> &outputs,
+                                const std::map<uint32_t, tensor::TensorPtr> &) {
+  auto a_shape = inputs[kIndex0]->GetShapeVector();
+  auto b_shape = inputs[kIndex1]->GetShapeVector();
+  auto o_shape = outputs[kIndex0]->GetShapeVector();
   if (a_shape.size() < kRankMin || b_shape.size() < kRankMin || o_shape.size() < kRankMin) {
     MS_LOG(EXCEPTION) << "The tensor rank of MatMul must be greater than or equal to " << kRankMin;
   }
-  bool trans_a = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, TRANSPOSE_A);
-  bool trans_b = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, TRANSPOSE_B);
   auto rank = a_shape.size();
   int64_t batch = 1;
   for (size_t i = 0; i < rank - kIndexOffset; ++i) {
@@ -56,7 +64,7 @@ void MatMulCpuKernelFunc::InitFunc(const CNodePtr &kernel_node) {
   int64_t dim_m = o_shape[rank - kIndexOffset];
   int64_t dim_n = o_shape[rank - 1];
   int64_t dim_k = 1;
-  if (trans_a) {
+  if (trans_a_) {
     dim_k = a_shape[rank - kIndexOffset];
   } else {
     dim_k = a_shape[rank - 1];
@@ -67,15 +75,15 @@ void MatMulCpuKernelFunc::InitFunc(const CNodePtr &kernel_node) {
     src_dims = {batch, dim_m, dim_k};
     weights_dims = {batch, dim_k, dim_n};
     dst_dims = {batch, dim_m, dim_n};
-    a_strides = {trans_a ? dims{dim_m * dim_k, 1, dim_m} : dims{dim_m * dim_k, dim_k, 1}};
-    b_strides = {trans_b ? dims{dim_n * dim_k, 1, dim_k} : dims{dim_n * dim_k, dim_n, 1}};
+    a_strides = {trans_a_ ? dims{dim_m * dim_k, 1, dim_m} : dims{dim_m * dim_k, dim_k, 1}};
+    b_strides = {trans_b_ ? dims{dim_n * dim_k, 1, dim_k} : dims{dim_n * dim_k, dim_n, 1}};
     o_strides = {dim_n * dim_m, dim_n, 1};
   } else {
     src_dims = {dim_m, dim_k};
     weights_dims = {dim_k, dim_n};
     dst_dims = {dim_m, dim_n};
-    a_strides = {trans_a ? dims{1, dim_m} : dims{dim_k, 1}};
-    b_strides = {trans_b ? dims{1, dim_k} : dims{dim_n, 1}};
+    a_strides = {trans_a_ ? dims{1, dim_m} : dims{dim_k, 1}};
+    b_strides = {trans_b_ ? dims{1, dim_k} : dims{dim_n, 1}};
     o_strides = {dim_n, 1};
   }
 
@@ -89,6 +97,8 @@ void MatMulCpuKernelFunc::InitFunc(const CNodePtr &kernel_node) {
   AddArgument(DNNL_ARG_SRC, src_md);
   AddArgument(DNNL_ARG_WEIGHTS, weights_md);
   AddArgument(DNNL_ARG_DST, dst_md);
+
+  return KRET_OK;
 }
 
 bool MatMulCpuKernelFunc::RunFunc(const std::vector<kernel::AddressPtr> &inputs,

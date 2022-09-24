@@ -19,20 +19,38 @@
 
 #include <string>
 #include <vector>
+#include <map>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 
 namespace mindspore {
 namespace kernel {
-class MatmulDoubleCpuKernelFunc : public DeprecatedCpuKernelFunc {
+class MatmulDoubleCpuKernelFunc : public CpuKernelFunc, private NativeCpuKernelMod {
  public:
   MatmulDoubleCpuKernelFunc() = default;
   ~MatmulDoubleCpuKernelFunc() override = default;
 
-  void InitFunc(const CNodePtr &kernel_node) override;
+  void InitFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                const std::vector<KernelTensorPtr> &outputs) override;
+
   bool RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                const std::vector<AddressPtr> &outputs) override;
 
+  int Resize(
+    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+    const std::vector<KernelTensorPtr> &outputs,
+    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
+
  private:
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override {
+    return true;
+  }
+
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+              const std::vector<AddressPtr> &outputs) override {
+    return true;
+  }
+
   size_t a_row_{0};
   size_t b_row_{0};
   size_t out_row_{0};
