@@ -224,7 +224,7 @@ def _transform_parallel_checkpoint(rank_id, param_total_dict, param_attr_dict, s
             to_dev_matrix_origin, to_tensor_map_origin, to_opt_shard_step, to_opt_shard_size = _extract_layout_item(
                 dst_strategy_list.get(param_name))
         # Add optimizer sharding dim for tensor layout
-        device_num = np.prod(from_dev_matrix)
+        device_num = np.prod(from_dev_matrix) if np.prod(from_dev_matrix) > 1 else rank_id + 1
         param_strategy = _get_tensor_strategy(from_dev_matrix, from_tensor_map)
         origin_tensor_shape = ()
         for i, item in enumerate(tensor_shape):
