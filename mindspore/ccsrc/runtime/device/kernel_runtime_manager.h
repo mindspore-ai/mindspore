@@ -35,7 +35,7 @@ using KernelRuntimeCreator = std::function<std::shared_ptr<KernelRuntime>()>;
 class BACKEND_EXPORT KernelRuntimeManager {
  public:
   static KernelRuntimeManager &Instance();
-  void Register(const std::string &device_name, KernelRuntimeCreator &&runtime_creator);
+  void Register(const std::string &device_name, KernelRuntimeCreator &&runtime_creator) const;
   KernelRuntime *GetKernelRuntime(const std::string &device_name, uint32_t device_id);
   KernelRuntime *GetCurrentKernelRuntime();
   KernelRuntime *GetSingleKernelRuntime(const std::string &device_name, uint32_t device_id);
