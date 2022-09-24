@@ -16,4 +16,4 @@
               可以传递 `max_vectors` 限制加载数量。默认值：None，无限制。
 
         返回：
-            Vectors对象。
+            Vectors， 根据文件构建的Vectors向量。

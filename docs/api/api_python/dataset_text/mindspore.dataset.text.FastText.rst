@@ -7,7 +7,7 @@
 
     .. py:method:: from_file(file_path, max_vectors=None)
 
-        从文件构建CharNGram向量。
+        从文件构建FastText向量。
 
         参数：
             - **file_path** (str) - 包含向量的文件的路径。预训练向量集的文件后缀必须是 `*.vec` 。
@@ -16,4 +16,4 @@
               可以传递 `max_vectors` 限制加载数量。默认值：None，无限制。
 
         返回：
-            FastText对象。
+            FastText， 根据文件构建的FastText向量。

@@ -3,6 +3,6 @@ mindspore.dataset.text.FilterWikipediaXML
 
 .. py:class:: mindspore.dataset.text.FilterWikipediaXML(vocab, unknown_token=None, data_type=mstype.int32)
 
-    docs/api/api_python/dataset_text/mindspore.dataset.text.FilterWikipediaXML.rst
+    将Wikipedia XML格式转储过滤为仅由小写字母（a-z，从A-Z转换而来）和空格（从不连续）组成的“干净”文本。
 
     .. note:: Windows平台尚不支持 `FilterWikipediaXML` 。

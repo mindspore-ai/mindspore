@@ -45,6 +45,9 @@ class CharNGram(cde.CharNGram):
                 situations where the entire set doesn't fit in memory, or is not needed for another reason,
                 passing max_vectors can limit the size of the loaded set (default=None, no limit).
 
+        Returns:
+            CharNGram, CharNGram vector build from a file.
+
         Examples:
             >>> char_n_gram = text.CharNGram.from_file("/path/to/char_n_gram/file", max_vectors=None)
         """
@@ -72,6 +75,9 @@ class FastText(cde.FastText):
                 situations where the entire set doesn't fit in memory, or is not needed for another reason,
                 passing max_vectors can limit the size of the loaded set (default=None, no limit).
 
+        Returns:
+            FastText, FastText vector build from a file.
+
         Examples:
             >>> fast_text = text.FastText.from_file("/path/to/fast_text/file", max_vectors=None)
         """
@@ -98,6 +104,9 @@ class GloVe(cde.GloVe):
                 Most pre-trained vector sets are sorted in the descending order of word frequency. Thus, in
                 situations where the entire set doesn't fit in memory, or is not needed for another reason,
                 passing max_vectors can limit the size of the loaded set (default=None, no limit).
+
+        Returns:
+            GloVe, GloVe vector build from a file.
 
         Examples:
             >>> glove = text.GloVe.from_file("/path/to/glove/file", max_vectors=None)
@@ -329,6 +338,9 @@ class Vectors(cde.Vectors):
                 Most pre-trained vector sets are sorted in the descending order of word frequency. Thus, in
                 situations where the entire set doesn't fit in memory, or is not needed for another reason,
                 passing max_vectors can limit the size of the loaded set (default=None, no limit).
+
+        Returns:
+            Vectors, Vectors build from a file.
 
         Examples:
             >>> vector = text.Vectors.from_file("/path/to/vectors/file", max_vectors=None)
