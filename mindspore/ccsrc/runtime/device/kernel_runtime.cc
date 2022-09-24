@@ -233,7 +233,7 @@ void KernelRuntime::GetCommunicationOutputInfo(const AnfNodePtr &node, size_t *t
     MS_EXCEPTION_IF_NULL(address);
     auto align_size = MemoryManager::GetCommonAlignSize(address->size());
     *total_size += align_size;
-    align_size_list->emplace_back(align_size);
+    (void)align_size_list->emplace_back(align_size);
     (void)address_list->emplace_back(address);
   }
 }
@@ -260,7 +260,7 @@ void KernelRuntime::AssignCommunicationOutputFromMemoryPool(const AnfNodePtr &no
 }
 
 void KernelRuntime::RunOpMallocPre(const session::KernelGraph &graph,
-                                   const std::vector<tensor::TensorPtr> &input_tensors) {
+                                   const std::vector<tensor::TensorPtr> &input_tensors) const {
   const auto &nodes = graph.execution_order();
   // Malloc for Node output
   for (const auto &node : nodes) {

@@ -61,9 +61,9 @@ bool CheckTaskValid(const CNodePtr &node, const std::vector<void *> &args_datas)
   auto workspace_addrs = TaskGenerator::GetTaskWorkspace(node);
 
   std::vector<AddressPtr> node_addresses;
-  std::move(input_addrs.begin(), input_addrs.end(), std::back_inserter(node_addresses));
-  std::move(output_addrs.begin(), output_addrs.end(), std::back_inserter(node_addresses));
-  std::move(workspace_addrs.begin(), workspace_addrs.end(), std::back_inserter(node_addresses));
+  (void)std::move(input_addrs.begin(), input_addrs.end(), std::back_inserter(node_addresses));
+  (void)std::move(output_addrs.begin(), output_addrs.end(), std::back_inserter(node_addresses));
+  (void)std::move(workspace_addrs.begin(), workspace_addrs.end(), std::back_inserter(node_addresses));
 
   if (node_addresses.size() != args_datas.size()) {
     MS_LOG(ERROR) << "Check failed, Node " << node->UniqueName() << " total addr size " << node_addresses.size()
@@ -163,8 +163,8 @@ bool RtModelZeroCopy::GenerateZeroCopyTasks(const session::KernelGraph &graph) {
   std::vector<ZeroCopyTaskPtr> zero_copy_tasks;
   auto task_lists = ge::model_runner::ModelRunner::Instance().GetTaskList(graph.graph_id());
   std::map<std::string, TaskPtr> op_name_to_task;
-  std::transform(task_lists.begin(), task_lists.end(), std::inserter(op_name_to_task, op_name_to_task.end()),
-                 [](const TaskPtr &task) { return std::make_pair(task->task_name(), task); });
+  (void)std::transform(task_lists.begin(), task_lists.end(), std::inserter(op_name_to_task, op_name_to_task.end()),
+                       [](const TaskPtr &task) { return std::make_pair(task->task_name(), task); });
 
   auto nodes = graph.execution_order();
   for (const auto &node : nodes) {
@@ -187,12 +187,12 @@ bool RtModelZeroCopy::GenerateZeroCopyTasks(const session::KernelGraph &graph) {
       auto input = common::AnfAlgo::GetPrevNodeOutput(node, input_index_in_graph, true).first;
       MS_EXCEPTION_IF_NULL(input);
       if (input->isa<Parameter>()) {
-        zero_copy_tasks.emplace_back(std::make_shared<tasksink::ParameterZeroCopyTask>(
+        (void)zero_copy_tasks.emplace_back(std::make_shared<tasksink::ParameterZeroCopyTask>(
           input, task->Args(), i * sizeof(void *), task->task_name()));
         MS_LOG(INFO) << "Generate ZeroCopyTask for Node " << node->fullname_with_scope() << " Parameter "
                      << input->DebugString();
       } else if (IsForwardOutputValueNode(input)) {
-        zero_copy_tasks.emplace_back(std::make_shared<tasksink::ValueNodeZeroCopyTask>(
+        (void)zero_copy_tasks.emplace_back(std::make_shared<tasksink::ValueNodeZeroCopyTask>(
           input, task->Args(), i * sizeof(void *), task->task_name()));
         MS_LOG(INFO) << "Generate ZeroCopyTask for Node " << node->fullname_with_scope() << " ValueNode "
                      << input->DebugString();
@@ -235,8 +235,8 @@ bool RtModelZeroCopy::CheckRtModelValid(const session::KernelGraph &graph) {
   auto graph_id = graph.graph_id();
   auto tasks = ge::model_runner::ModelRunner::Instance().GetTaskList(graph_id);
   std::map<std::string, TaskPtr> op_name_to_task;
-  std::transform(tasks.begin(), tasks.end(), std::inserter(op_name_to_task, op_name_to_task.end()),
-                 [](const TaskPtr &task) { return std::make_pair(task->task_name(), task); });
+  (void)std::transform(tasks.begin(), tasks.end(), std::inserter(op_name_to_task, op_name_to_task.end()),
+                       [](const TaskPtr &task) { return std::make_pair(task->task_name(), task); });
 
   auto nodes = graph.execution_order();
   bool task_valid = true;

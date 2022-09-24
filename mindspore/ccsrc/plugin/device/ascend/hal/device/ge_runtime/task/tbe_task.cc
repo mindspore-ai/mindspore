@@ -19,6 +19,7 @@
 #include "runtime/mem.h"
 #include "acl/acl_rt.h"
 #include "runtime/kernel.h"
+#include "utils/convert_utils_base.h"
 #include "plugin/device/ascend/hal/device/ge_runtime/task/task_factory.h"
 
 namespace mindspore::ge::model_runner {
@@ -92,7 +93,7 @@ void TbeTask::Distribute() {
   auto dump_flag = task_info_->dump_flag() ? RT_KERNEL_DUMPFLAG : RT_KERNEL_DEFAULT;
   rtArgsEx_t args_info = {};
   args_info.args = args_;
-  args_info.argsSize = args_size_;
+  args_info.argsSize = SizeToUint(args_size_);
   rt_ret = rtKernelLaunchWithFlag(stub_func_, task_info_->block_dim(), &args_info, nullptr, stream_, dump_flag);
   if (rt_ret != RT_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Call rt api rtKernelLaunch failed, ret: " << rt_ret << " mem size " << args_size_;
