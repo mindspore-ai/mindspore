@@ -39,6 +39,7 @@
 #include "nnacl/op_base.h"
 #include "ops/op_utils.h"
 #include "src/common/common.h"
+#include "tools/converter/parser/conv2d_transpose_input_adjust.h"
 
 namespace mindspore::lite {
 namespace {
@@ -87,6 +88,11 @@ void GetAllFuncGraph(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr> *all
 
 int CommonAnfAdjust(const FuncGraphPtr &func_graph) {
   MS_ASSERT(func_graph != nullptr);
+  bool is_optimized = false;
+  auto value = func_graph->get_attr(kIsOptimized);
+  if (value != nullptr) {
+    is_optimized = GetValue<bool>(value);
+  }
   {
     auto asylic_optimizer = std::make_shared<opt::GraphOptimizer>();
     MS_CHECK_TRUE_MSG(asylic_optimizer != nullptr, RET_NULL_PTR, "asylic_optimizer is nullptr.");
@@ -99,11 +105,6 @@ int CommonAnfAdjust(const FuncGraphPtr &func_graph) {
     asylic_pm->AddPass(std::make_shared<opt::UnusedNodeRemovePass>());
     asylic_optimizer->AddPassManager(asylic_pm);
 
-    bool is_optimized = false;
-    auto value = func_graph->get_attr(kIsOptimized);
-    if (value != nullptr) {
-      is_optimized = GetValue<bool>(value);
-    }
     if (!is_optimized && !asylic_optimizer->Optimize(func_graph)) {
       MS_LOG(ERROR) << "gru cf fusion pass failed.";
       ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
@@ -126,6 +127,15 @@ int CommonAnfAdjust(const FuncGraphPtr &func_graph) {
     if (!conv1d_adjust->Run(sub_graph)) {
       MS_LOG(ERROR) << "adjust conv1d failed.";
       return RET_ERROR;
+    }
+    // adjust for conv2d_transpose
+    if (!is_optimized) {
+      auto conv2d_transpose_adjust = std::make_shared<Conv2DTransposeInputAdjust>();
+      MS_CHECK_TRUE_MSG(conv2d_transpose_adjust != nullptr, RET_NULL_PTR, "conv2d_transpose_adjust is nullptr.");
+      if (!conv2d_transpose_adjust->Run(sub_graph)) {
+        MS_LOG(ERROR) << "adjust conv2d_transpose failed";
+        return RET_ERROR;
+      }
     }
   }
   return RET_OK;

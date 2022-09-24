@@ -240,6 +240,7 @@ void MindsporeImporter::RemoveUnusedGraphInput(const FuncGraphPtr &func_graph) {
 FuncGraphPtr MindsporeImporter::ImportMindIR(const std::shared_ptr<ConverterPara> &param, const void *buff,
                                              const size_t &size) {
   MindIRLoader mindir_loader;
+  mindir_loader.SetIsLite(true);
   auto func_graph = mindir_loader.LoadMindIR(buff, size);
   return CheckAndUpdateFuncGraph(param, func_graph);
 }

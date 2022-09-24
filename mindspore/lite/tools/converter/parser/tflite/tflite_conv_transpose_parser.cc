@@ -49,6 +49,9 @@ PrimitiveCPtr TfliteDeConvParser::Parse(const std::unique_ptr<tflite::OperatorT>
     MS_LOG(ERROR) << "the tflite_op shape is illegal";
     return nullptr;
   }
+  if (tflite_op->inputs.size() == kInputSize2) {
+    (void)prim->AddAttr(ops::kHasBias, api::MakeValue<bool>(true));
+  }
   const auto &weight_tensor = tflite_subgraph->tensors.at(tflite_op->inputs.at(SECOND_INPUT));
   if (weight_tensor == nullptr) {
     MS_LOG(ERROR) << "the weight tensor is null";

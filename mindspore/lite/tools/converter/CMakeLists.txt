@@ -58,6 +58,7 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/parser/tf_bidirection_gru_cf_fusion.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/parser/unused_node_remove_pass.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/parser/conv1d_inout_adjust.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/parser/conv2d_transpose_input_adjust.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/parser/inputs_adjust.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/parser/unify_format.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/adapter/acl/plugin/acl_pass_plugin.cc

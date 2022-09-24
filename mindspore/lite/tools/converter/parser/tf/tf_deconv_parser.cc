@@ -74,18 +74,10 @@ PrimitiveCPtr TFDeconvParser::Parse(const tensorflow::NodeDef &tf_op,
   (void)prim->AddAttr(ops::kOriginalOpName, api::MakeValue("Conv2DBackpropInput"));
 
   *output_size = 1;
-  auto target_device = ConverterInnerContext::GetInstance()->GetTargetDevice();
-  if (target_device.find("Ascend") != std::string::npos) {
-    if (AddOpInput(tf_op, kOutBackpropIndex, inputs) != RET_OK || AddOpInput(tf_op, kFilterIndex, inputs) != RET_OK ||
-        AddOpInput(tf_op, kInputSizeIndex, inputs) != RET_OK) {
-      MS_LOG(ERROR) << "add op input failed";
-      return nullptr;
-    }
-  } else {
-    if (AddOpInput(tf_op, kOutBackpropIndex, inputs) != RET_OK || AddOpInput(tf_op, kFilterIndex, inputs) != RET_OK) {
-      MS_LOG(ERROR) << "add op input failed";
-      return nullptr;
-    }
+  if (AddOpInput(tf_op, kOutBackpropIndex, inputs) != RET_OK || AddOpInput(tf_op, kFilterIndex, inputs) != RET_OK ||
+      AddOpInput(tf_op, kInputSizeIndex, inputs) != RET_OK) {
+    MS_LOG(ERROR) << "add op input failed";
+    return nullptr;
   }
   return prim->GetPrim();
 }

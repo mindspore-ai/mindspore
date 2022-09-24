@@ -23,6 +23,9 @@
 
 namespace mindspore {
 namespace lite {
+namespace {
+const size_t kInputSizeThree = 3;
+}
 STATUS OnnxDeConvParser::ParseOnnxAttr(const onnx::NodeProto &onnx_node, int64_t *group, mindspore::PadMode *pad_mode,
                                        std::vector<int64_t> *output_paddings) {
   MS_ASSERT(group != nullptr);
@@ -61,6 +64,9 @@ PrimitiveCPtr OnnxDeConvParser::Parse(const onnx::GraphProto &onnx_graph, const 
     return nullptr;
   }
   (void)prim_c->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(mindspore::Format::NCHW));
+  if (onnx_node.input_size() == kInputSizeThree) {
+    (void)prim_c->AddAttr(ops::kHasBias, MakeValue<bool>(true));
+  }
   prim->set_group(group);
   prim->set_pad_mode(pad_mode);
 
