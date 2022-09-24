@@ -131,7 +131,7 @@ class GraphCompiler {
   // Get OpRunInfo and GraphInfo for single op compile and run.
   void GetSingleOpRunInfoAndGraphInfo(const CNodePtr &kernel, const InputTensorInfo &tensor_info,
                                       session::BackendOpRunInfoPtr *op_run_info, GraphInfo *graph_info,
-                                      GraphOutputInfo *const graph_output_info);
+                                      const GraphOutputInfo *const graph_output_info);
 
   // Calculate ref count of PyNative back propagation operators.
   void CalculateRefCount(const KernelGraphPtr &graph, std::map<KernelWithIndex, size_t> *ref_count) const;

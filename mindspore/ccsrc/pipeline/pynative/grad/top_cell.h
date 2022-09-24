@@ -35,8 +35,6 @@
 #include "frontend/operator/composite/composite.h"
 #include "pipeline/jit/resource.h"
 #include "pipeline/pynative/base.h"
-#include "pipeline/pynative/pynative_cache.h"
-#include "pipeline/pynative/pynative_utils.h"
 #include "utils/ms_context.h"
 
 namespace mindspore {
@@ -227,6 +225,7 @@ class TopCellInfo {
   TensorIdWithTensorObject tensor_id_with_tensor_object_;
   OpInfoWithMsFuncForwardTensors op_info_with_ms_func_forward_tensors_;
 };
+using TopCellInfoPtr = std::shared_ptr<TopCellInfo>;
 }  // namespace pynative
 }  // namespace mindspore
 #endif  // MINDSPORE_MINDSPORE_CCSRC_PIPELINE_PYNATIVE_GRAD_TOP_CELL_H_

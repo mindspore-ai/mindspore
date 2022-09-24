@@ -17,7 +17,6 @@
 #include <set>
 #include <utility>
 #include <vector>
-#include "pipeline/pynative/pynative_cache.h"
 #include "backend/common/optimizer/helper.h"
 #include "backend/common/optimizer/op_adaptation_info_factory.h"
 #include "pybind_api/ir/primitive_py.h"
@@ -94,7 +93,7 @@ bool Common::ValueHasDynamicShape(const ValuePtr &value) {
   return false;
 }
 
-PyNativeExecutorPtr Common::GetPyNativeExecutor() {
+std::shared_ptr<PyNativeExecutor> Common::GetPyNativeExecutor() {
   const auto &executor = PyNativeExecutor::GetInstance();
   MS_EXCEPTION_IF_NULL(executor);
   return executor;

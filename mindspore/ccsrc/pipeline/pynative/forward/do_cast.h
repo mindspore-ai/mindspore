@@ -19,7 +19,8 @@
 
 #include <vector>
 #include <string>
-#include "pipeline/pynative/pynative_utils.h"
+#include <memory>
+#include "pipeline/pynative/base.h"
 #include "pipeline/pynative/pynative_cache.h"
 
 namespace mindspore {
@@ -58,6 +59,7 @@ class CastOperation {
   PrimitivePyPtr cast_prim_{nullptr};
   ImplicitCastCache implicit_cast_map_;
 };
+using CastOperationPtr = std::shared_ptr<CastOperation>;
 }  // namespace pynative
 }  // namespace mindspore
 
