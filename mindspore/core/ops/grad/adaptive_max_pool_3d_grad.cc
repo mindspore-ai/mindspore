@@ -24,57 +24,47 @@
 namespace mindspore {
 namespace ops {
 namespace {
-constexpr auto kNameAdaptiveMaxPool3DGrad = "AdaptiveMaxPool3DGrad";
-
-bool AdaptiveMaxPool3DGradIsDynamic(const ShapeVector &shape) {
-  if (std::find(shape.begin(), shape.end(), -1) != shape.end()) {
-    return true;
-  }
-  return false;
-}
-
-abstract::ShapePtr AdaptiveMaxPool3DGradInferShape(const PrimitivePtr &,
+abstract::ShapePtr AdaptiveMaxPool3DGradInferShape(const PrimitivePtr &primitive,
                                                    const std::vector<AbstractBasePtr> &input_args) {
-  auto input_grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
-  auto argmax_shape_ptr = CheckAndConvertUtils::GetTensorInputShape("AdaptiveMaxPool3DGrad", input_args, 2);
-  MS_EXCEPTION_IF_NULL(argmax_shape_ptr);
-
-  const int64_t input_grad_dims = SizeToLong(input_grad_shape.size());
-  const int64_t x_dims = SizeToLong(x_shape.size());
-  CheckAndConvertUtils::CheckInRange("input_grad_dim", input_grad_dims, kIncludeBoth, {4, 5},
-                                     kNameAdaptiveMaxPool3DGrad);
-  CheckAndConvertUtils::CheckInRange("x_dim", x_dims, kIncludeBoth, {4, 5}, kNameAdaptiveMaxPool3DGrad);
-  (void)CheckAndConvertUtils::CheckInteger("input_grad_dims", input_grad_dims, kEqual, x_dims,
-                                           kNameAdaptiveMaxPool3DGrad);
-  auto argmax_shape = argmax_shape_ptr->shape();
-  if (!AdaptiveMaxPool3DGradIsDynamic(argmax_shape)) {
+  auto prim_name = primitive->name();
+  auto input_grad_shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, 0);
+  auto x_shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, 1);
+  auto argmax_shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, 2);
+  if (!x_shape_ptr->IsDynamic() && !argmax_shape_ptr->IsDynamic() && !argmax_shape_ptr->IsDynamic()) {
+    auto input_grad_shape = input_grad_shape_ptr->shape();
+    auto x_shape = x_shape_ptr->shape();
+    auto argmax_shape = argmax_shape_ptr->shape();
+    const int64_t input_grad_dims = SizeToLong(input_grad_shape.size());
+    const int64_t x_dims = SizeToLong(x_shape.size());
     const int64_t argmax_dim = SizeToLong(argmax_shape.size());
-    CheckAndConvertUtils::CheckInRange("argmax_dim", argmax_dim, kIncludeBoth, {4, 5}, kNameAdaptiveMaxPool3DGrad);
-    (void)CheckAndConvertUtils::CheckInteger("argmax_dim", argmax_dim, kEqual, x_dims, kNameAdaptiveMaxPool3DGrad);
+    CheckAndConvertUtils::CheckInRange("dim of input_grad", input_grad_dims, kIncludeBoth, {4, 5}, prim_name);
+    CheckAndConvertUtils::CheckInRange("dim of x", x_dims, kIncludeBoth, {4, 5}, prim_name);
+    CheckAndConvertUtils::CheckInRange("dim of argmax", argmax_dim, kIncludeBoth, {4, 5}, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("dim of input_grad", input_grad_dims, kEqual, x_dims, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("dim of argmax", argmax_dim, kEqual, x_dims, prim_name);
     if (input_grad_shape != argmax_shape) {
-      MS_LOG(EXCEPTION) << "Input grad shape must be same with argmax shape.";
-    }
-  } else {
-    for (int64_t i = 1; i < x_dims; ++i) {
-      argmax_shape[LongToSize(i)] = abstract::Shape::kShapeDimAny;
+      MS_EXCEPTION(ValueError) << "For '" << prim_name << "', input_grad shape must be same with argmax shape, but got "
+                               << input_grad_shape_ptr->ToString() << " and " << argmax_shape_ptr->ToString() << ".";
     }
   }
-  return std::make_shared<abstract::Shape>(x_shape);
+  return x_shape_ptr;
 }
 
-TypePtr AdaptiveMaxPool3DGradInferType(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr AdaptiveMaxPool3DGradInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  auto prim_name = primitive->name();
   auto input_grad_dtype = input_args[0]->BuildType();
   auto x_dtype = input_args[1]->BuildType();
   auto argmax_dtype = input_args[2]->BuildType();
-  const std::set<TypePtr> real_number_types = {kInt8,   kInt16,  kInt32,   kInt64,   kUInt8,  kUInt16,
-                                               kUInt32, kUInt64, kFloat16, kFloat32, kFloat64};
+  const std::set<TypePtr> common_valid_types = {kInt8,   kInt16,  kInt32,   kInt64,   kUInt8,  kUInt16,
+                                                kUInt32, kUInt64, kFloat16, kFloat32, kFloat64};
   const std::set<TypePtr> argmax_valid_types = {kInt32, kInt64};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("input_grad_dtype", input_grad_dtype, real_number_types,
-                                                   kNameAdaptiveMaxPool3DGrad);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x_dtype", x_dtype, real_number_types, kNameAdaptiveMaxPool3DGrad);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("argmax_dtype", argmax_dtype, argmax_valid_types,
-                                                   kNameAdaptiveMaxPool3DGrad);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_dtype, common_valid_types, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("input_grad", input_grad_dtype, common_valid_types, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("argmax", argmax_dtype, argmax_valid_types, prim_name);
+  std::map<std::string, TypePtr> types;
+  (void)types.emplace("input_grad", input_grad_dtype);
+  (void)types.emplace("x", x_dtype);
+  (void)CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, primitive->name());
   return x_dtype;
 }
 }  // namespace

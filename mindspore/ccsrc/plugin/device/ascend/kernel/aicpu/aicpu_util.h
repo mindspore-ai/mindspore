@@ -186,6 +186,7 @@ constexpr auto kRange = "Range";
 constexpr auto kSliceGrad = "SliceGrad";
 constexpr auto kStatelessDropOutGenMask = "StatelessDropOutGenMask";
 constexpr auto kRaggedTensorToTensor = "RaggedTensorToTensor";
+constexpr auto kAdaptiveMaxPool3D = "AdaptiveMaxPool3D";
 
 const std::set<std::string> kCpuKernelOps{kIdentity,
                                           kMaskedSelect,
@@ -325,6 +326,7 @@ const std::map<std::string, std::string> kOpNameToAicpuOpNameMap{
   {kArgmin, "ArgMin"},
   {kGLU, "Glu"},
   {kStridedSliceV2, "StridedSlice"},
+  {kAdaptiveMaxPool3D, "AdaptiveMaxPool3d"},
   {kStridedSliceV2Grad, "StridedSliceGrad"}};
 struct AicpuParamHead {
   uint32_t length;         // Total length: include cunstom message

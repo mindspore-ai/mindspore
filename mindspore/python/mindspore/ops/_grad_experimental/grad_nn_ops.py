@@ -66,6 +66,7 @@ from mindspore.ops.operations.nn_ops import FractionalMaxPoolWithFixedKsize
 from mindspore.ops.operations._grad_ops import FractionalMaxPoolGradWithFixedKsize
 from mindspore.ops.operations.nn_ops import AdaptiveAvgPool3D
 from mindspore.ops.operations.nn_ops import GLU
+from mindspore.ops.operations.nn_ops import AdaptiveMaxPool3D
 
 
 @bprop_getters.register(P.CTCLossV2)
@@ -412,6 +413,18 @@ def get_bprop_p_s_r_o_i_pooling(self):
         p_s_r_o_i_pooling_grad = PSROIPoolingGrad((shape[2:]), spatial_scale, group_size, output_dim)
         dx = p_s_r_o_i_pooling_grad(dout, rois)
         return (dx, zeros_like(rois))
+
+    return bprop
+
+
+@bprop_getters.register(AdaptiveMaxPool3D)
+def get_bprop_adaptive_max_pool_3d(self):
+    """Grad definition for `AdaptiveMaxPool3D` operation."""
+    grad = G.AdaptiveMaxPool3DGrad()
+
+    def bprop(x, output_size, out, dout):
+        dx = grad(dout[0], x, out[1])
+        return (dx, P.ZerosLike()(output_size))
 
     return bprop
 

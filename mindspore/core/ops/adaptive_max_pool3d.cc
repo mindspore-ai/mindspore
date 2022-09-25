@@ -29,6 +29,7 @@ constexpr int64_t kOutputSizeNumElem = 3;
 
 abstract::TupleShapePtr AdaptiveMaxPool3DInferShape(const PrimitivePtr &primitive,
                                                     const std::vector<AbstractBasePtr> &input_args) {
+  auto prim_name = primitive->name();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto output_size_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
   const int64_t input_num_dims = SizeToLong(x_shape.size());
@@ -39,27 +40,25 @@ abstract::TupleShapePtr AdaptiveMaxPool3DInferShape(const PrimitivePtr &primitiv
     return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{out_shape_ptr, out_shape_ptr});
   }
   const int64_t output_size_dim = SizeToLong(output_size_shape.size());
-  CheckAndConvertUtils::CheckInRange("x_dim", input_num_dims, kIncludeBoth, {kInputDims4, kInputDims5},
-                                     kNameAdaptiveMaxPool3D);
-  (void)CheckAndConvertUtils::CheckInteger("output_size_dim", output_size_dim, kEqual, 1, kNameAdaptiveMaxPool3D);
+  CheckAndConvertUtils::CheckInRange("rank of x", input_num_dims, kIncludeBoth, {kInputDims4, kInputDims5}, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("rank of output_size", output_size_dim, kEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("size of output_size", output_size_shape[0], kEqual, kOutputSizeNumElem,
+                                           prim_name);
 
-  auto output_size = input_args[1];
-  auto output_size_value = output_size->BuildValue();
+  auto output_size_value = input_args[1]->BuildValue();
   MS_EXCEPTION_IF_NULL(output_size_value);
-  if (output_size->isa<abstract::AbstractTensor>() && !output_size_value->isa<None>() &&
+  if (input_args[1]->isa<abstract::AbstractTensor>() && !output_size_value->isa<None>() &&
       !output_size_value->isa<AnyValue>()) {
-    const std::set<TypePtr> output_size_valid_types = {kInt32};
-    (void)CheckAndConvertUtils::CheckTensorTypeValid("output_size dtype", output_size->BuildType(),
-                                                     output_size_valid_types, kNameAdaptiveMaxPool3D);
-    auto output_size_tensor = output_size_value->cast<tensor::TensorPtr>();
-    MS_EXCEPTION_IF_NULL(output_size_tensor);
-    const std::vector<int64_t> const_output_size_shape = output_size_tensor->shape_c();
-    (void)CheckAndConvertUtils::CheckInteger("output_size_num_elem", const_output_size_shape[0], kEqual,
-                                             kOutputSizeNumElem, kNameAdaptiveMaxPool3D);
-    auto value = reinterpret_cast<int32_t *>(output_size_tensor->data_c());
-    std::vector<int64_t> out_shape = x_shape;
+    auto output_size = CheckAndConvertUtils::CheckTensorIntValue("output_size", output_size_value, prim_name);
+
+    ShapeVector out_shape = x_shape;
     for (int64_t i = 1; i <= kOutputSizeNumElem; ++i) {
-      out_shape[input_num_dims - i] = value[kOutputSizeNumElem - i];
+      if (output_size[kOutputSizeNumElem - i] <= 0) {
+        MS_EXCEPTION(ValueError) << "For '" << prim_name
+                                 << "', 'output_size' should be a vector with all positive item, but got "
+                                 << ShapeVectorToStr(output_size) << ".";
+      }
+      out_shape[input_num_dims - i] = output_size[kOutputSizeNumElem - i];
     }
     out_shape_ptr = std::make_shared<abstract::Shape>(out_shape);
   } else {
@@ -77,14 +76,15 @@ abstract::TupleShapePtr AdaptiveMaxPool3DInferShape(const PrimitivePtr &primitiv
 }
 
 TuplePtr AdaptiveMaxPool3DInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  auto prim_name = primitive->name();
   auto x_dtype = input_args[0]->BuildType();
   auto output_size_dtype = input_args[1]->BuildType();
   const std::set<TypePtr> x_valid_types = {kInt8,   kInt16,  kInt32,   kInt64,   kUInt8,  kUInt16,
                                            kUInt32, kUInt64, kFloat16, kFloat32, kFloat64};
   const std::set<TypePtr> output_size_valid_types = {kInt32};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x_dtype", x_dtype, x_valid_types, kNameAdaptiveMaxPool3D);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("output_size_dtype", output_size_dtype, output_size_valid_types,
-                                                   kNameAdaptiveMaxPool3D);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_dtype, x_valid_types, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("output_size", output_size_dtype, output_size_valid_types,
+                                                   prim_name);
   return std::make_shared<Tuple>(std::vector<TypePtr>{x_dtype, output_size_dtype});
 }
 }  // namespace
