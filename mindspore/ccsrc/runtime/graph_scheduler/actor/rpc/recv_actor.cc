@@ -96,6 +96,14 @@ bool RecvActor::StartServer() {
   return true;
 }
 
+void RecvActor::StopRpcAtException() {
+  std::unique_lock<std::mutex> lock(context_mtx_);
+  if (!is_context_valid_) {
+    is_exception_thrown_ = true;
+    context_cv_.notify_all();
+  }
+}
+
 void RecvActor::RunOpInterProcessData(MessageBase *const msg, OpContext<DeviceTensor> *const context) {
   // Once recv actor is launched, reset the op_context so that the next step's recv will not be launched in advance.
   ResetOpcontext();
@@ -359,7 +367,11 @@ void RecvActor::PreprocessRemoteInput(const MessageBase *const msg, bool *need_f
 MessageBase *RecvActor::HandleMessage(MessageBase *const msg) {
   // Block the message handler if the context is invalid.
   std::unique_lock<std::mutex> lock(context_mtx_);
-  context_cv_.wait(lock, [this] { return is_context_valid_; });
+  context_cv_.wait(lock, [this] { return is_context_valid_ || is_exception_thrown_; });
+  if (is_exception_thrown_) {
+    MS_LOG(WARNING) << "Recv actor stops waiting for op_context at exception.";
+    return distributed::rpc::NULL_MSG;
+  }
   lock.unlock();
 
   MS_LOG(INFO) << "Rpc actor recv message for inter-process edge: " << inter_process_edge_names_;

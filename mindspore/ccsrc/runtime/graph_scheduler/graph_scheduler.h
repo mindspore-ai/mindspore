@@ -78,6 +78,11 @@ class BACKEND_EXPORT GraphScheduler {
   // Fetch the actor set by actor info.
   ActorSet *Fetch(const ActorInfo &actor_info) const;
 
+#ifdef ENABLE_RPC_ACTOR
+  // Returns pointer of RpcNodeScheduler to distributed module.
+  RpcNodeScheduler *rpc_node_scheduler() { return rpc_node_scheduler_.get(); }
+#endif
+
  private:
   GraphScheduler() = default;
   ~GraphScheduler() = default;

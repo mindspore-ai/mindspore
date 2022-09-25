@@ -143,6 +143,12 @@ bool CollectiveManager::Initialize() {
   }
   need_host_collective_ = common::UseHostCollective();
   device_type_ = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  // need_host_collective_ means using rank_table to initialize collective communication, which is only supported by
+  // Ascend. On other types of devices, exception should be thrown.
+  if (device_type_ != kAscendDevice && !need_host_collective_) {
+    MS_LOG(EXCEPTION) << kDetailedFailureReason;
+  }
+
   MS_LOG(INFO) << "Start initializing collective communication for backend: " << device_type_ << "...";
 
   if (device_type_ == kAscendDevice) {

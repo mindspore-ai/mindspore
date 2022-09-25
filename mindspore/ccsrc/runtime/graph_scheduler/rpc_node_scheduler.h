@@ -30,7 +30,7 @@ using mindspore::session::KernelWithIndex;
 // Scheduler for rpc actors, e.g., it adds inter-process arrows, generate router for actors, etc.
 class RpcNodeScheduler {
  public:
-  RpcNodeScheduler() = default;
+  RpcNodeScheduler() : op_context_(nullptr), rpc_actors_(nullptr) {}
   ~RpcNodeScheduler() = default;
 
   // Build rpc actors and return rpc actor set.
@@ -44,10 +44,13 @@ class RpcNodeScheduler {
   void Schedule(const ActorSet *actor_set) const;
 
   // Set op context to rpc actors.
-  void SetOpcontext(const RpcActorSetPtr &rpc_actors, OpContext<DeviceTensor> *const op_context) const;
+  void SetOpcontext(const RpcActorSetPtr &rpc_actors, OpContext<DeviceTensor> *const op_context);
 
   // Reset op context for rpc actors.
   void ResetOpcontext(const RpcActorSetPtr &rpc_actors) const;
+
+  // Abort rpc communication. This is usually called when the cluster exits with exception.
+  void Abort();
 
  private:
   /**
@@ -61,6 +64,10 @@ class RpcNodeScheduler {
 
   // Create new route table proxy.
   ActorRouteTableProxyPtr CreateRouteTableProxy() const;
+
+  OpContext<DeviceTensor> *op_context_;
+
+  RpcActorSetPtr rpc_actors_;
 };
 
 // The setter of op context for rpc actors.

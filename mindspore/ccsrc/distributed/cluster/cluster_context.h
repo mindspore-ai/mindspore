@@ -38,13 +38,6 @@ namespace cluster {
 // The environment variable name represents the node id of a certain process(compute graph node).
 constexpr char kNodeId[] = "MS_NODE_ID";
 
-// The detailed reason of failing to run 'mindspore.communication.init()' with ClusterContext.
-constexpr char kDetailedFailureReason[] =
-  "Maybe you are trying to call 'mindspore.communication.init()' without using 'mpirun', which will make MindSpore "
-  "load several environment variables and check their validation. Please use 'mpirun' to launch this process to fix "
-  "this issue, or refer to this link if you want to run distributed training without using 'mpirun': "
-  "https://www.mindspore.cn/docs/programming_guide/zh-CN/r1.6/distributed_training_gpu.html#openmpi.";
-
 // Node role based cluster built by MindSpore communication framework.
 class BACKEND_EXPORT ClusterContext {
  public:
@@ -83,6 +76,10 @@ class BACKEND_EXPORT ClusterContext {
   // Return actor route proxy for AbstractNode.
   const ActorRouteTableProxyPtr &actor_route_table_proxy() const;
 
+  // Get and set whether this process exits with exception.
+  void set_cluster_exit_with_exception();
+  bool cluster_exit_with_exception() const;
+
  private:
   ClusterContext();
 
@@ -109,6 +106,9 @@ class BACKEND_EXPORT ClusterContext {
 
   // The mutex about exiting status of this node.
   std::mutex finish_mutex_;
+
+  // Whether the process in this cluster exits with any python exception.
+  bool cluster_exit_with_exception_;
 
   // Node role to role number map.
   std::map<std::string, uint32_t> node_num_each_role_;

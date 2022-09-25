@@ -20,7 +20,8 @@ from mindspore.communication._comm_helper import Backend, _get_rank_helper, _get
     _get_world_rank_from_group_rank_helper, _get_group_rank_from_world_rank_helper, \
     _create_group_helper, _destroy_group_helper, HCCL_WORLD_COMM_GROUP, NCCL_WORLD_COMM_GROUP, \
     MCCL_WORLD_COMM_GROUP, _get_local_rank_helper, _get_local_size_helper, GlobalComm, \
-    _not_require_collective_comm_lib, _check_mpi_envs, _use_old_ps
+    _not_require_collective_comm_lib, _check_mpi_envs, _use_old_ps, \
+    _set_elegant_exit_handle
 from mindspore._c_expression import init_hccl, finalize_hccl, init_gpu_collective, init_cluster
 
 __all__ = ["init", "release", "get_rank", "get_local_rank", "get_group_size",
@@ -159,6 +160,7 @@ def init(backend_name=None):
         raise RuntimeError("For 'init', the argument 'backend_name' must be nccl while 'device_target' is GPU, "
                            "but got the 'backend_name' : hccl.")
     GlobalComm.INITED = True
+    _set_elegant_exit_handle()
 
 
 def release():
