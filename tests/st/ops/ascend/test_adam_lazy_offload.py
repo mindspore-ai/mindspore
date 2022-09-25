@@ -1,9 +1,3 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
 # http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
@@ -23,8 +17,6 @@ from mindspore.nn import Dense
 from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.nn.optim import Adam
 from mindspore.ops import operations as P
-
-context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
 
 class NetAdam(nn.Cell):
@@ -54,23 +46,25 @@ class NetWithSparseGatherV2(nn.Cell):
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_adam():
+def test_lazy_adam_converge():
     """
-    Feature: Adam optimizer
+    Feature: LazyAdam optimizer
     Description: Verify if the loss is converged
     Expectation: success
     """
     epoch = 3
     net = NetAdam()
-    optimizer = Adam(filter(lambda x: x.requires_grad, net.get_parameters()), learning_rate=0.01)
+    optimizer = Adam(filter(lambda x: x.requires_grad,
+                            net.get_parameters()), learning_rate=0.01, use_lazy=True)
     criterion = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
     net_with_criterion = WithLossCell(net, criterion)
     train_network = TrainOneStepCell(net_with_criterion, optimizer)
     train_network.set_train()
 
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     losses1 = []
     for _ in range(epoch):
         data = Tensor(np.arange(0, 16).reshape((1, 1, 4, 4)).astype(np.float32) * 0.01)
@@ -80,21 +74,12 @@ def test_adam():
     assert losses1[0] > losses1[1]
     assert losses1[1] > losses1[2]
 
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-    losses2 = []
-    for _ in range(epoch):
-        data = Tensor(np.arange(0, 16).reshape((1, 1, 4, 4)).astype(np.float32) * 0.01)
-        label = Tensor(np.array([0]).astype(np.int32))
-        loss = train_network(data, label)
-        losses2.append(loss.asnumpy())
-    assert losses2[0] > losses2[1]
-    assert losses2[1] > losses2[2]
-
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_lazy_adam():
+def test_lazy_adam_acc():
     """
     Feature: LazyAdam optimizer
     Description: Verify if the result is correct
@@ -106,17 +91,17 @@ def test_lazy_adam():
 
     output = []
     optimizer = Adam(net.trainable_params(), learning_rate=0.1, use_lazy=True)
-    optimizer.target = 'CPU'
+    optimizer.target = 'Ascend'
     for _ in range(2):
         train_network = TrainOneStepCell(net, optimizer)
         output = train_network(indices, label)
-    expected_output = np.array([[[1.8000001, 1.8000001]], [[1.8000001, 1.8000001]],
-                                [[1.8000001, 1.8000001]]]).astype(np.float32)
+    expected_output = np.array([[[1.8, 1.8]], [[1.8, 1.8]], [[1.8000001, 1.8000001]]]).astype(np.float32)
     assert np.allclose(output.asnumpy(), expected_output)
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_adam_offload_acc():
     """
@@ -126,14 +111,13 @@ def test_adam_offload_acc():
     """
     epoch = 3
     net = NetAdam()
-    optimizer = Adam(filter(lambda x: x.requires_grad,
-                            net.get_parameters()), learning_rate=0.01, use_offload=True)
+    optimizer = Adam(filter(lambda x: x.requires_grad, net.get_parameters()), learning_rate=0.01, use_offload=True)
     criterion = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
     net_with_criterion = WithLossCell(net, criterion)
     train_network = TrainOneStepCell(net_with_criterion, optimizer)
     train_network.set_train()
 
-    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    context.set_context(mode=context.GRAPH_MODE)
     losses1 = []
     for _ in range(epoch):
         data = Tensor(np.arange(0, 16).reshape((1, 1, 4, 4)).astype(np.float32) * 0.01)
