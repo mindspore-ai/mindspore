@@ -106,14 +106,14 @@ abstract::ShapePtr EditDistanceInferShape(const PrimitivePtr &primitive,
   auto hypothesis_shape_value = hypothesis_shape_abs->BuildValue();
   MS_EXCEPTION_IF_NULL(hypothesis_shape_value);
   if (!hypothesis_shape_value->isa<tensor::Tensor>()) {
-    MS_LOG(EXCEPTION) << "hypothesis_shape_value shpuld be a Tensor but got: " << hypothesis_shape_value->ToString()
+    MS_LOG(EXCEPTION) << "hypothesis_shape_value should be a Tensor but got: " << hypothesis_shape_value->ToString()
                       << ".";
   }
   auto hypothesis_shape_ptr = static_cast<int64_t *>(hypothesis_shape_value->cast<tensor::TensorPtr>()->data_c());
   auto truth_shape_value = truth_shape_abs->BuildValue();
   MS_EXCEPTION_IF_NULL(truth_shape_value);
   if (!truth_shape_value->isa<tensor::Tensor>()) {
-    MS_LOG(EXCEPTION) << "truth_shape_value shpuld be a Tensor but got: " << truth_shape_value->ToString() << ".";
+    MS_LOG(EXCEPTION) << "truth_shape_value should be a Tensor but got: " << truth_shape_value->ToString() << ".";
   }
   auto truth_shape_ptr = static_cast<int64_t *>(truth_shape_value->cast<tensor::TensorPtr>()->data_c());
   ShapeVector infer_shape;
