@@ -101,6 +101,9 @@ abstract::ShapePtr SliceInferShape(const PrimitivePtr &primitive, const std::vec
   }
   (void)CheckAndConvertUtils::CheckPositiveVector("input_begin", input_begin_value, prim_name);
   for (size_t i = 0; i < rank; ++i) {
+    if (input_x_shape[i] < 0) {
+      continue;
+    }
     if (input_begin_value[i] + input_size_value[i] > input_x_shape[i]) {
       MS_EXCEPTION(ValueError) << "For Slice, the sum of begin_shape[" << i << "] and size_shape[" << i
                                << "] must be no greater than input_x_shape[" << i << "].";
@@ -108,8 +111,6 @@ abstract::ShapePtr SliceInferShape(const PrimitivePtr &primitive, const std::vec
     if (input_size_value[i] == -1) {
       input_size_value[i] = input_x_shape[i] - input_begin_value[i];
     }
-    out_shape_min[i] = input_size_value[i];
-    out_shape_max[i] = input_size_value[i];
   }
   return std::make_shared<abstract::Shape>(input_size_value);
 }
