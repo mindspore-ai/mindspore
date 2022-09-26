@@ -87,10 +87,6 @@ bool InitializeCluster() {
         RecoveryContext::GetInstance()->set_global_rank_id(node->rank_id());
         RecoveryContext::GetInstance()->set_global_rank_size(global_rank_size);
       }
-
-      if (RecoveryContext::GetInstance()->enable_recovery()) {
-        RecoveryContext::GetInstance()->ObtainGlobalLatestCkptInfo();
-      }
     }
   }
 #endif
@@ -108,7 +104,14 @@ bool InitializeCollective() {
     MS_LOG(INFO) << "Scheduler node does not need to initialize collective communication.";
     return true;
   }
-  return collective::CollectiveManager::instance()->Initialize();
+  if (!collective::CollectiveManager::instance()->Initialize()) {
+    return false;
+  }
+
+  if (RecoveryContext::GetInstance()->enable_recovery()) {
+    RecoveryContext::GetInstance()->ObtainGlobalLatestCkptInfo();
+  }
+  return true;
 }
 
 bool FinalizeCollective() { return collective::CollectiveManager::instance()->Finalize(); }
