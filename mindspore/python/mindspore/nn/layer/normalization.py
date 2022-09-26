@@ -365,8 +365,6 @@ class BatchNorm3d(_BatchNorm):
             use the mean value and variance value of specified value. If None, the training process will use the mean
             and variance of current batch data and track the running mean and variance, the evaluation process will use
             the running mean and variance. Default: None.
-        data_format (str): The optional value for data format, is 'NHWC' or 'NCHW'.
-            Default: 'NCHW'.
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})`.

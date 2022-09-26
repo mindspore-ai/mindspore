@@ -9,7 +9,7 @@ mindspore.dataset.BatchInfo
     .. py:method:: get_batch_num()
 
         返回数据集的批处理数量（batch size）。
-        
+
     .. py:method:: get_epoch_num()
 
         返回数据集的迭代数（epoch）。
