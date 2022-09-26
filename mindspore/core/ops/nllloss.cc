@@ -88,7 +88,8 @@ class NLLLossInfer : public abstract::OpInferBase {
     auto logits_data_type = input_args[kIndex0]->BuildType();
     (void)types.emplace("logits", logits_data_type);
     (void)types.emplace("weight", input_args[kIndex2]->BuildType());
-    (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("logits", types["logits"], valid_types, prim->name());
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("weight", types["weight"], valid_types, prim->name());
     return std::make_shared<Tuple>(std::vector<TypePtr>{logits_data_type, logits_data_type});
   }
 };
