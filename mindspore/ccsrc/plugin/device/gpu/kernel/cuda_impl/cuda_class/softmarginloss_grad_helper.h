@@ -37,7 +37,7 @@ class SoftMarginLossGradHelperGpuKernel : public GpuKernelHelperBase {
   explicit SoftMarginLossGradHelperGpuKernel(const std::string &kernel_name, const uint32_t &device_id)
       : GpuKernelHelperBase(kernel_name, device_id) {
     reduction_ = ReductionMode::kMean;
-    is_null_input_ = false;
+    is_null_softmarginloss_grad_input_ = false;
     input_size_ = 1;
   }
 
@@ -48,9 +48,10 @@ class SoftMarginLossGradHelperGpuKernel : public GpuKernelHelperBase {
     constexpr size_t OUTPUT_NUM = 1;
     ResetResource();
 
-    int inp_flag = CalShapesSizeInBytes<T>(input_shapes, INPUT_NUM, kernel_name_, "input_shapes", &input_size_list_);
-    if (inp_flag == -1) {
-      return inp_flag;
+    int grad_inp_flag =
+      CalShapesSizeInBytes<T>(input_shapes, INPUT_NUM, kernel_name_, "input_shapes", &input_size_list_);
+    if (grad_inp_flag == -1) {
+      return grad_inp_flag;
     }
     if (input_shapes[0] != input_shapes[1]) {
       MS_LOG(ERROR) << "For '" << kernel_name_ << "', the input shape should be equal to " << input_shapes[0]
@@ -78,18 +79,18 @@ class SoftMarginLossGradHelperGpuKernel : public GpuKernelHelperBase {
       input_size_ *= input_shape_[i];
     }
 
-    int out_flag =
+    int grad_out_flag =
       CalShapesSizeInBytes<T>(output_shapes, OUTPUT_NUM, kernel_name_, "output_shapes", &output_size_list_);
-    if (out_flag == -1) {
-      return out_flag;
+    if (grad_out_flag == -1) {
+      return grad_out_flag;
     }
-    is_null_input_ = (inp_flag == 1 || out_flag == 1);
+    is_null_softmarginloss_grad_input_ = (grad_inp_flag == 1 || grad_out_flag == 1);
     return CheckKernelParam();
   }
 
   int Process(const std::vector<void *> &input_ptrs, const std::vector<void *> &output_ptrs,
               const std::vector<void *> &work_ptrs, void *cuda_stream) override {
-    if (is_null_input_) {
+    if (is_null_softmarginloss_grad_input_) {
       return 0;
     }
 
@@ -150,7 +151,7 @@ class SoftMarginLossGradHelperGpuKernel : public GpuKernelHelperBase {
   ReductionMode reduction_;
   std::shared_ptr<SoftMarginLossGradAttr> attr_ptr_;
   std::vector<int64_t> input_shape_;
-  bool is_null_input_;
+  bool is_null_softmarginloss_grad_input_;
   size_t input_size_;
 };
 }  // namespace cukernel

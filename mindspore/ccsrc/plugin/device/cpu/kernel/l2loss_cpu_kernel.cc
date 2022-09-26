@@ -45,8 +45,7 @@ bool L2LossCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
 int L2LossCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                const std::vector<KernelTensorPtr> &outputs,
                                const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = 0;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) != 0) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
     return ret;
   }
   input_shape_ = inputs[kIndex0]->GetShapeVector();
@@ -58,10 +57,8 @@ template <typename T>
 bool L2LossCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                       const std::vector<kernel::AddressPtr> &,
                                       const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kL2LossInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kL2LossOutputsNum, kernel_name_);
-  auto input_addr = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  auto result_addr = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+  T *input_addr = GetDeviceAddress<T>(inputs, kIndex0);
+  T *result_addr = GetDeviceAddress<T>(outputs, kIndex0);
   *result_addr = static_cast<T>(0);
   if (tensor_size_ == 0) {
     MS_LOG(WARNING) << kernel_name_ << " input shape contain 0, input_shape: " << input_shape_;

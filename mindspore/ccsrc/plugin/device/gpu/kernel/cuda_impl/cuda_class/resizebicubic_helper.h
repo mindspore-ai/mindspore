@@ -46,7 +46,7 @@ class ResizeBicubicHelperGpuKernel : public GpuKernelHelperBase {
     inputheight_ = 0;
     outputwidth_ = 0;
     outputheight_ = 0;
-    is_null_input_ = false;
+    is_null_resizebicubic_input_ = false;
     h_scale_ = 0;
     w_scale_ = 0;
   }
@@ -61,7 +61,7 @@ class ResizeBicubicHelperGpuKernel : public GpuKernelHelperBase {
     constexpr int INPUT_C_ORDER = 3;
     ResetResource();
     align_corners_ = false;
-    is_null_input_ = false;
+    is_null_resizebicubic_input_ = false;
     batch_ = 0;
     channel_ = 0;
     inputheight_ = 0;
@@ -96,13 +96,13 @@ class ResizeBicubicHelperGpuKernel : public GpuKernelHelperBase {
     if (out_flag == -1) {
       return out_flag;
     }
-    is_null_input_ = (inp_flag == 1 || out_flag == 1);
+    is_null_resizebicubic_input_ = (inp_flag == 1 || out_flag == 1);
     return CheckKernelParam();
   }
 
   int Process(const std::vector<void *> &input_ptrs, const std::vector<void *> &output_ptrs,
               const std::vector<void *> &work_ptrs, void *cuda_stream) override {
-    if (is_null_input_) {
+    if (is_null_resizebicubic_input_) {
       return 0;
     }
     T *input_ptr = nullptr;
@@ -169,7 +169,7 @@ class ResizeBicubicHelperGpuKernel : public GpuKernelHelperBase {
   std::vector<int64_t> input_shape_;
   std::vector<int64_t> output_shapesize_;
   std::vector<int64_t> input_out_shape_;
-  bool is_null_input_;
+  bool is_null_resizebicubic_input_;
   int batch_;
   int channel_;
   int inputwidth_;
