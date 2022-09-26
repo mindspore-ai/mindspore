@@ -68,6 +68,7 @@ void ModelWorker::Run() {
     auto task = predict_task_queue_->GetPredictTask(task_queue_id, this);
     if (task == nullptr) {
       MS_LOG(DEBUG) << "task queue is empty, wait task ...";
+      available_ = true;
       continue;
     }
     available_ = false;

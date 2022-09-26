@@ -117,8 +117,9 @@ PredictTask *PredictTaskQueue::GetPredictTask(int node_id, ModelWorker *worker) 
     while ((predict_task_[node_id].Empty() || (!worker->IsAvailable())) && (!predict_task_done_)) {
       task_push_cond_.wait(task_lock);
     }
+    return predict_task_[node_id].Dequeue();
   }
-  return predict_task_[node_id].Dequeue();
+  return nullptr;
 #else
   std::unique_lock<std::mutex> task_lock(mtx_predict_task_);
   while ((predict_task_[node_id].empty() || (!worker->IsAvailable())) && (!predict_task_done_)) {
