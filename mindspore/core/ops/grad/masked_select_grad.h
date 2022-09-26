@@ -16,7 +16,6 @@
 #ifndef MINDSPORE_CORE_OPS_MASKEDGRAD_H_
 #define MINDSPORE_CORE_OPS_MASKEDGRAD_H_
 #include <map>
-#include <vector>
 #include <string>
 #include <memory>
 #include "ops/base_operator.h"
@@ -29,7 +28,7 @@ class MIND_API MaskedSelectGrad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(MaskedSelectGrad);
   MaskedSelectGrad() : BaseOperator(kNameMaskedSelectGrad) {}
-  void Init() {}
+  void Init() const {}
 };
 }  // namespace ops
 }  // namespace mindspore
