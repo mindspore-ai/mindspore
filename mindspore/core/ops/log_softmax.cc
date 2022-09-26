@@ -45,7 +45,7 @@ abstract::ShapePtr LogSoftmaxInferShape(const PrimitivePtr &primitive, const std
   }
   const auto in_shape = shape_map[kShape];
   if (IsDynamicRank(in_shape)) {
-    return std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
   }
   const auto rank = SizeToLong(in_shape.size());
   (void)CheckAndConvertUtils::CheckValue<int64_t>("dimension of 'logits'", rank, kGreaterEqual, 1, op_name);

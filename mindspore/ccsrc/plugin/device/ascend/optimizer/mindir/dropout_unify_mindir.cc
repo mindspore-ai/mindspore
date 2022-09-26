@@ -199,7 +199,7 @@ CNodePtr CreateDropoutGenMaskCNode(const FuncGraphPtr &func_graph, const CNodePt
 
   std::shared_ptr<abstract::AbstractTensor> gen_mask_abstract;
   if (input_shape->IsDynamic()) {
-    ShapeVector mask_shp = {abstract::Shape::SHP_ANY};
+    ShapeVector mask_shp = {abstract::Shape::kShapeDimAny};
     ShapeVector mask_min_shp = CalGenMaskOutputShape(input_shape->min_shape());
     ShapeVector mask_max_shp = CalGenMaskOutputShape(input_shape->max_shape());
     auto gen_mask_shape = std::make_shared<abstract::Shape>(mask_shp, mask_min_shp, mask_max_shp);

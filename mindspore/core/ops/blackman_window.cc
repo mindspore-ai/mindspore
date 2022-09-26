@@ -86,7 +86,7 @@ abstract::ShapePtr BlackmanWindowInferShape(const PrimitivePtr &primitive,
                                  << "', the dim of window_length must be 0, but got: " << x_size << ".";
       }
     }
-    std::vector<int64_t> out_shape = {abstract::Shape::SHP_ANY};
+    std::vector<int64_t> out_shape = {abstract::Shape::kShapeDimAny};
     std::vector<int64_t> infer_shape_min = {0};
     std::vector<int64_t> infer_shape_max = {max_length};
     return std::make_shared<abstract::Shape>(out_shape, infer_shape_min, infer_shape_max);

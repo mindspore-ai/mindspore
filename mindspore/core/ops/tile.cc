@@ -45,7 +45,7 @@ std::vector<int64_t> GetInferShape(const PrimitivePtr &prim, const std::vector<i
       << multiples_v.size() << ", 'input_x' dimension length: " << input_shape.size() << ".";
   }
   for (size_t i = 0; i < multiples_w.size(); i++) {
-    if (infer_shape[i] == abstract::Shape::SHP_ANY) {
+    if (infer_shape[i] == abstract::Shape::kShapeDimAny) {
       continue;
     }
     infer_shape[i] *= multiples_w[i];

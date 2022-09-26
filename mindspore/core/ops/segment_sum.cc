@@ -90,7 +90,7 @@ abstract::ShapePtr SegmentSumInferShape(const PrimitivePtr &primitive, const std
     }
     return std::make_shared<abstract::Shape>(out_shape);
   } else {
-    out_shape[0] = abstract::Shape::SHP_ANY;
+    out_shape[0] = abstract::Shape::kShapeDimAny;
     return std::make_shared<abstract::Shape>(out_shape);
   }
 }

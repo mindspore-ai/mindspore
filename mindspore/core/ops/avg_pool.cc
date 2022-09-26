@@ -87,7 +87,7 @@ abstract::ShapePtr AvgPoolInferShape(const PrimitivePtr &primitive,
   auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
   auto in_shape = shape_map[kShape];
   if (IsDynamicRank(in_shape)) {
-    return std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
   }
   int64_t format = CheckAndConvertUtils::GetAndCheckFormat(primitive->GetAttr("format"));
   mindspore::Format format_enum = static_cast<mindspore::Format>(format);
@@ -122,19 +122,23 @@ abstract::ShapePtr AvgPoolInferShape(const PrimitivePtr &primitive,
   auto kernel_w = kernel_size[3];
   auto stride_h = strides[2];
   auto stride_w = strides[3];
-  int64_t out_h = UNKNOWN_DIM;
-  int64_t out_w = UNKNOWN_DIM;
+  int64_t out_h = abstract::Shape::kShapeDimAny;
+  int64_t out_w = abstract::Shape::kShapeDimAny;
 
   if (pad_mode_enum == VALID) {
-    out_h = in_h == UNKNOWN_DIM
-              ? UNKNOWN_DIM
+    out_h = in_h == abstract::Shape::kShapeDimAny
+              ? abstract::Shape::kShapeDimAny
               : (static_cast<int64_t>(std::ceil((in_h - (kernel_h - 1)) / static_cast<float>(stride_h))));
-    out_w = in_w == UNKNOWN_DIM
-              ? UNKNOWN_DIM
+    out_w = in_w == abstract::Shape::kShapeDimAny
+              ? abstract::Shape::kShapeDimAny
               : (static_cast<int64_t>(std::ceil((in_w - (kernel_w - 1)) / static_cast<float>(stride_w))));
   } else if (pad_mode_enum == SAME) {
-    out_h = in_h == UNKNOWN_DIM ? UNKNOWN_DIM : (static_cast<int64_t>(std::ceil(in_h / static_cast<float>(stride_h))));
-    out_w = in_w == UNKNOWN_DIM ? UNKNOWN_DIM : (static_cast<int64_t>(std::ceil(in_w / static_cast<float>(stride_w))));
+    out_h = in_h == abstract::Shape::kShapeDimAny
+              ? abstract::Shape::kShapeDimAny
+              : (static_cast<int64_t>(std::ceil(in_h / static_cast<float>(stride_h))));
+    out_w = in_w == abstract::Shape::kShapeDimAny
+              ? abstract::Shape::kShapeDimAny
+              : (static_cast<int64_t>(std::ceil(in_w / static_cast<float>(stride_w))));
   }
   std::vector<int64_t> out_shape = {batch, channel, out_h, out_w};
 

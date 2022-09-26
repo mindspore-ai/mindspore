@@ -85,12 +85,12 @@ void DeformableOffsetsPadFunction(std::vector<int64_t> *output_hw, const std::ve
   constexpr size_t bottom_index = 1;
   constexpr size_t left_index = 2;
   constexpr size_t right_index = 3;
-  if (x_h != abstract::Shape::SHP_ANY) {
+  if (x_h != abstract::Shape::kShapeDimAny) {
     out_h = static_cast<int64_t>(std::floor(1 + ((x_h * 1.0) + pads[top_index] + pads[bottom_index] - kernel_size[0] -
                                                  LongToFloat((kernel_size[0] - 1) * (dilations[h_axis] - 1))) /
                                                   strides[h_axis]));
   }
-  if (x_w != abstract::Shape::SHP_ANY) {
+  if (x_w != abstract::Shape::kShapeDimAny) {
     out_w = static_cast<int64_t>(std::floor(1 + ((x_w * 1.0) + pads[left_index] + pads[right_index] - kernel_size[1] -
                                                  LongToFloat((kernel_size[1] - 1) * (dilations[w_axis] - 1))) /
                                                   strides[w_axis]));
@@ -101,9 +101,9 @@ void DeformableOffsetsPadFunction(std::vector<int64_t> *output_hw, const std::ve
 
 void CheckOutputHeightAndWight(const std::string &prim_name, const std::vector<int64_t> &output_hw,
                                const std::vector<int64_t> &offset_shape) {
-  if ((output_hw[kIndex0] != abstract::Shape::SHP_ANY && offset_shape[kIndex2] != abstract::Shape::SHP_ANY &&
+  if ((output_hw[kIndex0] != abstract::Shape::kShapeDimAny && offset_shape[kIndex2] != abstract::Shape::kShapeDimAny &&
        output_hw[kIndex0] != offset_shape[kIndex2]) ||
-      (output_hw[kIndex1] != abstract::Shape::SHP_ANY && offset_shape[kIndex3] != abstract::Shape::SHP_ANY &&
+      (output_hw[kIndex1] != abstract::Shape::kShapeDimAny && offset_shape[kIndex3] != abstract::Shape::kShapeDimAny &&
        output_hw[kIndex1] != offset_shape[kIndex3])) {
     MS_EXCEPTION(ValueError)
       << "For '" << prim_name
@@ -127,7 +127,7 @@ abstract::ShapePtr DeformableOffsetsInferShape(const PrimitivePtr &primitive,
   auto x_shape = x_shape_map[kShape];
   auto offsets_shape = offsets_shape_map[kShape];
   if (IsDynamicRank(x_shape) || IsDynamicRank(offsets_shape)) {
-    return std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
   }
   constexpr int64_t shape_size = 4;
   (void)CheckAndConvertUtils::CheckInteger("x shape size", SizeToLong(x_shape.size()), kEqual, shape_size, prim_name);
@@ -145,7 +145,7 @@ abstract::ShapePtr DeformableOffsetsInferShape(const PrimitivePtr &primitive,
   auto dilations = CheckAttrTupleAndNCDimensions(primitive, kAttrDilations, dilations_num, n_axis, c_axis);
 
   int64_t deformable_groups = CheckAttrInt64Positive(prim_name, primitive->GetAttr(kAttrDfmGroup), kAttrDfmGroup);
-  if (x_shape[c_axis] != abstract::Shape::SHP_ANY && x_shape[c_axis] % deformable_groups != 0) {
+  if (x_shape[c_axis] != abstract::Shape::kShapeDimAny && x_shape[c_axis] % deformable_groups != 0) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name
                              << "', 'C_in' of input 'x' shape must be divisible by 'deformable_groups'"
                              << ", but got 'C_in' of input 'x' shape: " << x_shape[c_axis]
@@ -155,7 +155,7 @@ abstract::ShapePtr DeformableOffsetsInferShape(const PrimitivePtr &primitive,
   constexpr int64_t offsets_channel_factor = 3;
   constexpr size_t kernel_size_num = 2;
   std::vector<int64_t> kernel_size = CheckAttrTuple(primitive, kAttrKsize, kernel_size_num);
-  if (offsets_shape[c_axis] != abstract::Shape::SHP_ANY &&
+  if (offsets_shape[c_axis] != abstract::Shape::kShapeDimAny &&
       offsets_shape[c_axis] != deformable_groups * offsets_channel_factor * kernel_size[0] * kernel_size[1]) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name << "', 'C_in' of input 'offsets' shape must be equal to "
                              << offsets_channel_factor << " * kernel_height * kernel_width * deformable_groups"

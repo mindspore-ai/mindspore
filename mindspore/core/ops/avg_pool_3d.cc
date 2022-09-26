@@ -96,9 +96,9 @@ std::vector<int64_t> GetOutputShape(const PrimitivePtr &primitive, const std::ve
       DoubleToLong(std::floor((in_w + pad_list[kInputIndex4] + pad_list[kInputIndex5] - kernel_w) / stride_w + 1));
   }
   if (IsDynamic(in_shape)) {
-    out_d = in_d == UNKNOWN_DIM ? UNKNOWN_DIM : out_d;
-    out_h = in_h == UNKNOWN_DIM ? UNKNOWN_DIM : out_h;
-    out_w = in_w == UNKNOWN_DIM ? UNKNOWN_DIM : out_w;
+    out_d = in_d == abstract::Shape::kShapeDimAny ? abstract::Shape::kShapeDimAny : out_d;
+    out_h = in_h == abstract::Shape::kShapeDimAny ? abstract::Shape::kShapeDimAny : out_h;
+    out_w = in_w == abstract::Shape::kShapeDimAny ? abstract::Shape::kShapeDimAny : out_w;
   }
   std::vector<int64_t> output_shape = {in_shape[0], in_shape[1], out_d, out_h, out_w};
   return output_shape;
@@ -146,7 +146,7 @@ abstract::ShapePtr AvgPool3DInferShape(const PrimitivePtr &primitive, const std:
   // ToSupport Dynamic rank
   constexpr int64_t k5DOuputDims = 5;
   if (IsDynamicRank(in_shape)) {
-    return std::make_shared<abstract::Shape>(std::vector<int64_t>(k5DOuputDims, UNKNOWN_DIM));
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>(k5DOuputDims, abstract::Shape::kShapeDimAny));
   }
   (void)CheckAndConvertUtils::CheckInteger("x_rank", SizeToLong(in_shape.size()), kEqual, k5DInputDims, op_name);
 

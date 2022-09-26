@@ -70,16 +70,16 @@ ShapePtr CalculateDynamicShape(const ShapePtr &shape1, const ShapePtr &shape2, c
   }
 
   for (size_t i = 0; i < dims.size(); ++i) {
-    if (dims[i] != Shape::SHP_ANY) {
+    if (dims[i] != Shape::kShapeDimAny) {
       min_dims[i] = max_dims[i] = dims[i];
       continue;
     }
-    if (shape1->shape()[i] != Shape::SHP_ANY && shape2->shape()[i] != Shape::SHP_ANY) {
+    if (shape1->shape()[i] != Shape::kShapeDimAny && shape2->shape()[i] != Shape::kShapeDimAny) {
       min_dims[i] = std::min(shape1->shape()[i], shape2->shape()[i]);
       max_dims[i] = std::max(shape1->shape()[i], shape2->shape()[i]);
       continue;
     }
-    if (shape1->shape()[i] == Shape::SHP_ANY && shape2->shape()[i] != Shape::SHP_ANY) {
+    if (shape1->shape()[i] == Shape::kShapeDimAny && shape2->shape()[i] != Shape::kShapeDimAny) {
       if (shape1->min_shape().size() <= i || shape1->max_shape().size() <= i) {
         MS_EXCEPTION(ValueError) << "Shape " << shape1->ToString()
                                  << " has dynamic shape, but does not have min/max shape info.";
@@ -88,7 +88,7 @@ ShapePtr CalculateDynamicShape(const ShapePtr &shape1, const ShapePtr &shape2, c
       max_dims[i] = std::max(shape1->max_shape()[i], shape2->shape()[i]);
       continue;
     }
-    if (shape1->shape()[i] != Shape::SHP_ANY && shape2->shape()[i] == Shape::SHP_ANY) {
+    if (shape1->shape()[i] != Shape::kShapeDimAny && shape2->shape()[i] == Shape::kShapeDimAny) {
       if (shape2->min_shape().size() <= i || shape2->max_shape().size() <= i) {
         MS_EXCEPTION(ValueError) << "Shape " << shape1->ToString()
                                  << " has dynamic shape, but does not have min/max shape info.";
@@ -114,19 +114,43 @@ ShapePtr CalculateDynamicShape(const ShapePtr &shape1, const ShapePtr &shape2, c
 
 bool IsShapesDynamicRank(const std::vector<ShapeVector> &shapes) {
   return std::any_of(shapes.begin(), shapes.end(), [](const ShapeVector &shape) {
-    return std::any_of(shape.begin(), shape.end(), [](int64_t dim) { return dim == -2; });
+    return std::any_of(shape.begin(), shape.end(), [](int64_t dim) { return dim == Shape::kShapeRankAny; });
   });
 }
 
 bool HasSpecialShape(const std::vector<ShapePtr> &shapes) {
   for (const auto &shape : shapes) {
     bool shape_dyn =
-      std::any_of(shape->shape().begin(), shape->shape().end(), [](int64_t dim) { return dim == Shape::SHP_ANY; });
+      std::any_of(shape->shape().begin(), shape->shape().end(), [](int64_t dim) { return dim == Shape::kShapeDimAny; });
     if (shape_dyn && shape->min_shape().empty() && shape->max_shape().empty()) {
       return true;
     }
   }
   return false;
+}
+
+ShapePtr SingleElementShapeJoin(const ShapePtr &shape1, const ShapePtr &shape2) {
+  // special case: shape(1), shape() -> shape(1)
+  if (shape1->shape().size() == 1 && shape1->shape()[0] == 1 && shape2->shape().empty()) {
+    return shape1;
+  }
+  if (shape2->shape().size() == 1 && shape2->shape()[0] == 1 && shape1->shape().empty()) {
+    return shape2;
+  }
+  return nullptr;
+}
+
+// If shape sizes are not equal, but shape1 and shape2 are all dynamic shape, return a dynamic rank.
+ShapePtr DifferentSizeDynShapeJoin(const ShapePtr &shape1, const ShapePtr &shape2) {
+  auto shape_vec1 = shape1->shape();
+  auto shape_vec2 = shape2->shape();
+  if (!IsDynamicShape(shape_vec1)) {
+    return nullptr;
+  }
+  if (!IsDynamicShape(shape_vec2)) {
+    return nullptr;
+  }
+  return std::make_shared<Shape>(ShapeVector({Shape::kShapeRankAny}));
 }
 
 ShapePtr ShapeJoin(const ShapePtr &shape1, const ShapePtr &shape2) {
@@ -146,12 +170,13 @@ ShapePtr ShapeJoin(const ShapePtr &shape1, const ShapePtr &shape2) {
   }
   // lengths of two shapes are not same, join failed
   if (shape1->shape().size() != shape2->shape().size()) {
-    // special case: shape(1), shape() -> shape(1)
-    if (shape1->shape().size() == 1 && shape1->shape()[0] == 1 && shape2->shape().empty()) {
-      return shape1;
+    auto joined_shape = SingleElementShapeJoin(shape1, shape2);
+    if (joined_shape != nullptr) {
+      return joined_shape;
     }
-    if (shape2->shape().size() == 1 && shape2->shape()[0] == 1 && shape1->shape().empty()) {
-      return shape2;
+    joined_shape = DifferentSizeDynShapeJoin(shape1, shape1);
+    if (joined_shape != nullptr) {
+      return joined_shape;
     }
     return nullptr;
   }
@@ -159,11 +184,11 @@ ShapePtr ShapeJoin(const ShapePtr &shape1, const ShapePtr &shape2) {
   for (std::size_t i = 0; i < shape1->shape().size(); i++) {
     if (shape1->shape()[i] == shape2->shape()[i]) {
       dims[i] = shape1->shape()[i];
-      if (shape1->shape()[i] == Shape::SHP_ANY) {
+      if (shape1->shape()[i] == Shape::kShapeDimAny) {
         has_dynamic_shape = true;
       }
     } else {
-      dims[i] = Shape::SHP_ANY;
+      dims[i] = Shape::kShapeDimAny;
       has_dynamic_shape = true;
     }
   }

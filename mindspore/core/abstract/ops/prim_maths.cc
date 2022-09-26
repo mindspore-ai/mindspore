@@ -245,7 +245,7 @@ AbstractBasePtr InferImplMatMul(const AnalysisEnginePtr &, const PrimitivePtr &p
   ShapeVector y_max_shape = y->shape()->max_shape();
 
   if (IsDynamicRank(x_shp) || IsDynamicRank(y_shp)) {
-    ShapeVector ret_shape{UNKNOWN_RANK};
+    ShapeVector ret_shape{Shape::kShapeRankAny};
     return std::make_shared<AbstractTensor>(x_type, std::make_shared<Shape>(ret_shape));
   }
 

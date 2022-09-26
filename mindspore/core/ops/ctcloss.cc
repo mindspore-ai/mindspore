@@ -39,7 +39,7 @@ void CheckCTCLossInputs(const ShapeVector &inputs_shape, const ShapeVector &labe
   (void)CheckAndConvertUtils::CheckInteger("inputs rank", SizeToLong(inputs_shape.size()), kEqual, input_size, op_name);
   (void)CheckAndConvertUtils::CheckInteger("label_indices rank", SizeToLong(labels_indices_shape.size()), kEqual,
                                            label_indice_size, op_name);
-  if (labels_indices_shape[1] != UNKNOWN_DIM) {
+  if (labels_indices_shape[1] != abstract::Shape::kShapeDimAny) {
     (void)CheckAndConvertUtils::CheckInteger("label_indices second dim", labels_indices_shape[1], kEqual,
                                              label_indice_last_dim, op_name);
   }
@@ -48,13 +48,13 @@ void CheckCTCLossInputs(const ShapeVector &inputs_shape, const ShapeVector &labe
   (void)CheckAndConvertUtils::CheckInteger("sequence_length rank", int64_t(sequence_length_shape.size()), kEqual, 1,
                                            op_name);
 
-  if (labels_indices_shape[0] != UNKNOWN_DIM && labels_values_shape[0] != UNKNOWN_DIM &&
-      labels_indices_shape[0] != labels_values_shape[0]) {
+  if (labels_indices_shape[0] != abstract::Shape::kShapeDimAny &&
+      labels_values_shape[0] != abstract::Shape::kShapeDimAny && labels_indices_shape[0] != labels_values_shape[0]) {
     MS_EXCEPTION(ValueError)
       << "For 'CTCLoss', the first dim of 'label_indices' and 'label_value' must be same, but got 'label_indices':"
       << labels_indices_shape[0] << ", 'label_value': " << labels_values_shape[0] << ".";
   }
-  if (inputs_shape[1] != UNKNOWN_DIM && sequence_length_shape[0] != UNKNOWN_DIM &&
+  if (inputs_shape[1] != abstract::Shape::kShapeDimAny && sequence_length_shape[0] != abstract::Shape::kShapeDimAny &&
       inputs_shape[1] != sequence_length_shape[0]) {
     MS_EXCEPTION(ValueError)
       << "For 'CTCLoss', input batch_size must be same with 'sequence_length' batch_size, but got input batch_size:"
@@ -78,9 +78,9 @@ abstract::TupleShapePtr CTCLossInferShape(const PrimitivePtr &primitive,
   auto sequence_length_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(sequence_length->BuildShape())[kShape];
   if (IsDynamicRank(inputs_shape) || IsDynamicRank(labels_indices_shape) || IsDynamicRank(labels_values_shape) ||
       IsDynamicRank(sequence_length_shape)) {
-    return std::make_shared<abstract::TupleShape>(
-      std::vector<abstract::BaseShapePtr>{std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK}),
-                                          std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK})});
+    return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{
+      std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny}),
+      std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny})});
   }
   CheckCTCLossInputs(inputs_shape, labels_indices_shape, labels_values_shape, sequence_length_shape, op_name);
 

@@ -46,7 +46,7 @@ class ApplyAdagradInfer : public abstract::OpInferBase {
     auto accum_shape_ptr = input_args[kInputIndex1]->BuildShape();
     auto grad_shape_ptr = input_args[kInputIndex3]->BuildShape();
     if (IsDynamicRank(var_shape) || IsDynamicRank(accum_shape)) {
-      auto unknow_shape_ptr = std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
+      auto unknow_shape_ptr = std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
       return std::make_shared<abstract::TupleShape>(
         std::vector<abstract::BaseShapePtr>{unknow_shape_ptr, unknow_shape_ptr});
     }

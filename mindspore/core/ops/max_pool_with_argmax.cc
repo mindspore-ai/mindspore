@@ -136,7 +136,7 @@ abstract::TupleShapePtr MaxPoolWithArgmaxInferShape(const PrimitivePtr &primitiv
     in_w = in_shape[kDim2];
     channel = in_shape[kDim3];
   }
-  int64_t out_h = abstract::Shape::SHP_ANY, out_w = abstract::Shape::SHP_ANY;
+  int64_t out_h = abstract::Shape::kShapeDimAny, out_w = abstract::Shape::kShapeDimAny;
   if (pad_mode == PadMode::VALID) {
     out_h = static_cast<int64_t>(std::ceil((in_h - (kernel_h - 1)) / static_cast<float>(stride_h)));
     out_w = static_cast<int64_t>(std::ceil((in_w - (kernel_w - 1)) / static_cast<float>(stride_w)));

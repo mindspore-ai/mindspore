@@ -43,7 +43,7 @@ abstract::ShapePtr ApplyCenteredRMSPropInferShape(const PrimitivePtr &primitive,
   if (IsDynamicRank(var_shape_ptr->shape()) || IsDynamicRank(mg_shape_ptr->shape()) ||
       IsDynamicRank(ms_shape_ptr->shape()) || IsDynamicRank(mom_shape_ptr->shape()) ||
       IsDynamicRank(grad_shape_ptr->shape())) {
-    return std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
   }
   // var and mg must have the same shape when is not dynamic
   if (!var_shape_ptr->IsDynamic() && !mg_shape_ptr->IsDynamic()) {

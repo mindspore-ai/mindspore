@@ -115,29 +115,29 @@ class ExtractImagePatchesInfer : public abstract::OpInferBase {
 
     std::vector<int64_t> y_shape(extract_image_rank_num);
     y_shape[0] = x_shape[0];
-    y_shape[1] = x_shape[1] == abstract::Shape::SHP_ANY ? abstract::Shape::SHP_ANY
-                                                        : x_shape[1] * kernel_size[kIdx2] * kernel_size[kIdx3];
+    y_shape[1] = x_shape[1] == abstract::Shape::kShapeDimAny ? abstract::Shape::kShapeDimAny
+                                                             : x_shape[1] * kernel_size[kIdx2] * kernel_size[kIdx3];
     if (padding == "VALID") {
       y_shape[kIdx2] =
-        x_shape[kIdx2] == abstract::Shape::SHP_ANY
-          ? abstract::Shape::SHP_ANY
+        x_shape[kIdx2] == abstract::Shape::kShapeDimAny
+          ? abstract::Shape::kShapeDimAny
           : (x_shape[kIdx2] - (kernel_size[kIdx2] + (kernel_size[kIdx2] - 1) * (rates[kIdx2] - 1))) / strides[kIdx2] +
               1;
       y_shape[kIdx3] =
-        x_shape[kIdx3] == abstract::Shape::SHP_ANY
-          ? abstract::Shape::SHP_ANY
+        x_shape[kIdx3] == abstract::Shape::kShapeDimAny
+          ? abstract::Shape::kShapeDimAny
           : (x_shape[kIdx3] - (kernel_size[kIdx3] + (kernel_size[kIdx3] - 1) * (rates[kIdx3] - 1))) / strides[kIdx3] +
               1;
     } else {
-      y_shape[kIdx2] = x_shape[kIdx2] == abstract::Shape::SHP_ANY ? abstract::Shape::SHP_ANY
-                                                                  : (x_shape[kIdx2] - 1) / strides[kIdx2] + 1;
-      y_shape[kIdx3] = x_shape[kIdx3] == abstract::Shape::SHP_ANY ? abstract::Shape::SHP_ANY
-                                                                  : (x_shape[kIdx3] - 1) / strides[kIdx3] + 1;
+      y_shape[kIdx2] = x_shape[kIdx2] == abstract::Shape::kShapeDimAny ? abstract::Shape::kShapeDimAny
+                                                                       : (x_shape[kIdx2] - 1) / strides[kIdx2] + 1;
+      y_shape[kIdx3] = x_shape[kIdx3] == abstract::Shape::kShapeDimAny ? abstract::Shape::kShapeDimAny
+                                                                       : (x_shape[kIdx3] - 1) / strides[kIdx3] + 1;
     }
 
     std::vector<std::string> out_names{"out_batch", "out_depth", "out_row", "out_col"};
     for (size_t idx = 0; idx < y_shape.size(); idx++) {
-      if (y_shape[idx] == abstract::Shape::SHP_ANY) {
+      if (y_shape[idx] == abstract::Shape::kShapeDimAny) {
         continue;
       }
       CheckAndConvertUtils::Check(out_names[idx], y_shape[idx], kGreaterThan, 0, primitive->name());

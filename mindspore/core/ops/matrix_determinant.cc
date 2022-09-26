@@ -31,7 +31,7 @@ abstract::ShapePtr MatrixDeterminantInferShape(const PrimitivePtr &primitive,
   auto prim_name = primitive->name();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   if (IsDynamicRank(x_shape)) {
-    return std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
   }
   auto x_rank = SizeToLong(x_shape.size());
   constexpr int64_t number1 = 1;

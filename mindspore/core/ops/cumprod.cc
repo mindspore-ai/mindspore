@@ -29,7 +29,7 @@ abstract::ShapePtr CumProdInferShape(const PrimitivePtr &primitive, const std::v
   auto prim_name = primitive->name();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   if (IsDynamicRank(x_shape)) {
-    return std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
   }
   auto y_rank = x_shape.size();
   const int64_t min_dim = 0;

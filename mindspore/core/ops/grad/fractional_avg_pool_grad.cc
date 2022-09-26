@@ -87,7 +87,7 @@ abstract::ShapePtr FractionalAvgPoolGradInferShape(const PrimitivePtr &primitive
     ShapeVector shape_min;
     ShapeVector shape_max;
     for (int i = 0; i < shape_v[kInputIndex0]; i++) {
-      output_shape.push_back(abstract::Shape::SHP_ANY);
+      output_shape.push_back(abstract::Shape::kShapeDimAny);
       shape_min.push_back(0);
       shape_max.push_back(input_shapes);
     }

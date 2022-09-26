@@ -61,7 +61,7 @@ abstract::ShapePtr InferShapeAdaptiveAvgPool3DGrad(const PrimitivePtr &primitive
     MS_LOG(WARNING) << "Output_size tensor is not a const tensor";
     ShapeVector dynamic_shape(input_grad_shape), min_shape(input_grad_shape), max_shape(input_grad_shape);
     for (int64_t i = 1; i <= input_grad_dims; ++i) {
-      dynamic_shape.end()[-i] = abstract::Shape::SHP_ANY;
+      dynamic_shape.end()[-i] = abstract::Shape::kShapeDimAny;
       min_shape.end()[-i] = 0;
       max_shape.end()[-i] = kMaxShapeAdaptiveAvgPool3DGrap;
     }

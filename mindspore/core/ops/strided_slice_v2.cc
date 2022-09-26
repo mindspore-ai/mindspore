@@ -391,7 +391,7 @@ abstract::ShapePtr StridedSliceV2InferShape(const PrimitivePtr &primitive,
   auto min_shape = shape_map[kMinShape];
   auto max_shape = shape_map[kMaxShape];
   bool x_is_dyn =
-    std::any_of(x_shape.begin(), x_shape.end(), [](int64_t value) { return value == abstract::Shape::SHP_ANY; });
+    std::any_of(x_shape.begin(), x_shape.end(), [](int64_t value) { return value == abstract::Shape::kShapeDimAny; });
   ShapeVector begin_v;
   ShapeVector end_v;
   ShapeVector strides_v;

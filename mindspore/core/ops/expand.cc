@@ -117,7 +117,7 @@ abstract::ShapePtr ExpandInferShape(const PrimitivePtr &primitive, const std::ve
     ShapeVector shape_min;
     ShapeVector shape_max;
     for (int i = 0; i < shape_size; i++) {
-      output_shape.push_back(abstract::Shape::SHP_ANY);
+      output_shape.push_back(abstract::Shape::kShapeDimAny);
       shape_min.push_back(0);
       shape_max.push_back(input_shapes);
     }

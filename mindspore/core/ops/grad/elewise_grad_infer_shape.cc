@@ -35,7 +35,7 @@ abstract::ShapePtr ElewiseGradInferShape(const PrimitivePtr &primitive,
   auto x_shape = x_shape_ptr->shape();
   auto dout_shape = dout_shape_ptr->shape();
   if (IsDynamicRank(x_shape) || IsDynamicRank(dout_shape)) {
-    return std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
   }
   if (x_shape.size() != dout_shape.size()) {
     MS_EXCEPTION(RuntimeError) << "Rank of x(" << x_shape.size() << ") and dout(" << dout_shape.size()
@@ -44,8 +44,8 @@ abstract::ShapePtr ElewiseGradInferShape(const PrimitivePtr &primitive,
   ShapeVector output_shape(x_shape.size());
   for (size_t i = 0; i < x_shape.size(); i++) {
     if (x_shape[i] != dout_shape[i]) {
-      if (x_shape[i] == UNKNOWN_DIM || dout_shape[i] == UNKNOWN_DIM) {
-        output_shape[i] = UNKNOWN_DIM;
+      if (x_shape[i] == abstract::Shape::kShapeDimAny || dout_shape[i] == abstract::Shape::kShapeDimAny) {
+        output_shape[i] = abstract::Shape::kShapeDimAny;
       } else {
         MS_EXCEPTION(RuntimeError) << "The " << i << "th dim of x(" << x_shape[i] << ") and dout(" << dout_shape[i]
                                    << ") not equal.";

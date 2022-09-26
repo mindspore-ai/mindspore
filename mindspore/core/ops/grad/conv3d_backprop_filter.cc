@@ -72,30 +72,30 @@ void SetConv3DBackpropPadList(const PrimitivePtr &primitive, const std::vector<i
     auto dilation_d = dilation[kConv3DBackpropFilterDilationDIndex];
     auto dilation_h = dilation[kConv3DBackpropFilterDilationHIndex];
     auto dilation_w = dilation[kConv3DBackpropFilterDilationWIndex];
-    int64_t pad_head = abstract::Shape::SHP_ANY;
-    int64_t pad_tail = abstract::Shape::SHP_ANY;
-    int64_t pad_top = abstract::Shape::SHP_ANY;
-    int64_t pad_bottom = abstract::Shape::SHP_ANY;
-    int64_t pad_left = abstract::Shape::SHP_ANY;
-    int64_t pad_right = abstract::Shape::SHP_ANY;
-    if (dout_shape_norm[kInputIndex2] != abstract::Shape::SHP_ANY &&
-        x_size_v[kInputIndex2] != abstract::Shape::SHP_ANY) {
+    int64_t pad_head = abstract::Shape::kShapeDimAny;
+    int64_t pad_tail = abstract::Shape::kShapeDimAny;
+    int64_t pad_top = abstract::Shape::kShapeDimAny;
+    int64_t pad_bottom = abstract::Shape::kShapeDimAny;
+    int64_t pad_left = abstract::Shape::kShapeDimAny;
+    int64_t pad_right = abstract::Shape::kShapeDimAny;
+    if (dout_shape_norm[kInputIndex2] != abstract::Shape::kShapeDimAny &&
+        x_size_v[kInputIndex2] != abstract::Shape::kShapeDimAny) {
       auto pad_needed_d =
         (dout_shape_norm[kInputIndex2] - 1) * stride_d + dilation_d * (kernel_d - 1) + 1 - x_size_v[kInputIndex2];
       pad_needed_d = 0 > pad_needed_d ? 0 : pad_needed_d;
       pad_head = pad_needed_d / kConv3DBackpropFilterPadHalf;
       pad_tail = pad_needed_d - pad_head;
     }
-    if (dout_shape_norm[kInputIndex3] != abstract::Shape::SHP_ANY &&
-        x_size_v[kInputIndex3] != abstract::Shape::SHP_ANY) {
+    if (dout_shape_norm[kInputIndex3] != abstract::Shape::kShapeDimAny &&
+        x_size_v[kInputIndex3] != abstract::Shape::kShapeDimAny) {
       auto pad_needed_h =
         (dout_shape_norm[kInputIndex3] - 1) * stride_h + dilation_h * (kernel_h - 1) + 1 - x_size_v[kInputIndex3];
       pad_needed_h = 0 > pad_needed_h ? 0 : pad_needed_h;
       pad_top = pad_needed_h / kConv3DBackpropFilterPadHalf;
       pad_bottom = pad_needed_h - pad_top;
     }
-    if (dout_shape_norm[kInputIndex4] != abstract::Shape::SHP_ANY &&
-        x_size_v[kInputIndex4] != abstract::Shape::SHP_ANY) {
+    if (dout_shape_norm[kInputIndex4] != abstract::Shape::kShapeDimAny &&
+        x_size_v[kInputIndex4] != abstract::Shape::kShapeDimAny) {
       auto pad_needed_w =
         (dout_shape_norm[kInputIndex4] - 1) * stride_w + dilation_w * (kernel_w - 1) + 1 - x_size_v[kInputIndex4];
       pad_needed_w = 0 > pad_needed_w ? 0 : pad_needed_w;
@@ -261,7 +261,7 @@ class Conv3DBackpropFilterInfer : public abstract::OpInferBase {
     auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(
       input_args[kConv3DBackpropFilterInputIndex]->BuildShape())[kShape];
     if (IsDynamicRank(filter_size_v) || IsDynamicRank(input_shape) || IsDynamicRank(dout_shape)) {
-      std::vector<int64_t> out_shape = {UNKNOWN_RANK};
+      std::vector<int64_t> out_shape = {abstract::Shape::kShapeRankAny};
       return std::make_shared<abstract::Shape>(out_shape);
     }
     SetConv3DBackpropPadList(primitive, dout_shape, input_shape);

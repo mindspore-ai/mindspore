@@ -40,8 +40,9 @@ abstract::TupleShapePtr SplitInferShape(const PrimitivePtr &primitive, const std
   if (IsDynamicRank(x_shape)) {
     for (int64_t i = 0; i < output_num_value; ++i) {
       abstract::ShapePtr output =
-        std::make_shared<abstract::Shape>(std::vector<int64_t>(1, UNKNOWN_RANK), std::vector<int64_t>(1, UNKNOWN_RANK),
-                                          std::vector<int64_t>(1, UNKNOWN_RANK));
+        std::make_shared<abstract::Shape>(std::vector<int64_t>(1, abstract::Shape::kShapeRankAny),
+                                          std::vector<int64_t>(1, abstract::Shape::kShapeRankAny),
+                                          std::vector<int64_t>(1, abstract::Shape::kShapeRankAny));
       output_list.push_back(output);
     }
     return std::make_shared<abstract::TupleShape>(output_list);

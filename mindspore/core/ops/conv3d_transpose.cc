@@ -205,10 +205,10 @@ inline std::vector<int64_t> CheckTuple(const std::string &prim_name, const std::
 inline bool CheckShape(const std::string &op, const ShapeVector &shape) {
   for (size_t i = 0; i < shape.size(); ++i) {
     // should be positive integer or -1, or -2
-    if (shape[i] == UNKNOWN_RANK) {
+    if (shape[i] == abstract::Shape::kShapeRankAny) {
       return false;
     }
-    if ((shape[i] < 0) && (shape[i] != abstract::Shape::SHP_ANY)) {
+    if ((shape[i] < 0) && (shape[i] != abstract::Shape::kShapeDimAny)) {
       MS_EXCEPTION(ValueError) << "For '" << op << "',  shape element [" << i
                                << "] must be positive integer or -1 or -2, but got: " << shape[i] << ".";
     }
@@ -235,20 +235,20 @@ class Conv3DTransposeInfer : public abstract::OpInferBase {
     auto x_shape = x_shape_map[kShape];
     auto w_shape = w_shape_map[kShape];
     if (IsDynamicRank(x_shape) || IsDynamicRank(w_shape)) {
-      return std::make_shared<abstract::Shape>(ShapeVector{UNKNOWN_RANK});
+      return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
     }
     const int64_t shape_size = 5;
     (void)CheckAndConvertUtils::CheckInteger("x shape size", SizeToLong(x_shape.size()), kEqual, shape_size, prim_name);
     (void)CheckAndConvertUtils::CheckInteger("w shape size", SizeToLong(w_shape.size()), kEqual, shape_size, prim_name);
-    if (w_shape[0] != abstract::Shape::SHP_ANY && x_shape[1] != abstract::Shape::SHP_ANY) {
+    if (w_shape[0] != abstract::Shape::kShapeDimAny && x_shape[1] != abstract::Shape::kShapeDimAny) {
       (void)CheckAndConvertUtils::CheckInteger("filter's batch, input x's channel", w_shape[0], kEqual, x_shape[1],
                                                prim_name);
     }
     if (!CheckShape(prim_name + " x_shape", x_shape)) {
-      return std::make_shared<abstract::Shape>(ShapeVector{UNKNOWN_RANK});
+      return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
     }
     if (!CheckShape(prim_name + " w_shape", w_shape)) {
-      return std::make_shared<abstract::Shape>(ShapeVector{UNKNOWN_RANK});
+      return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
     }
 
     std::vector<int64_t> kernel_size = CheckTuple(prim_name, kKernelSize, primitive->GetAttr(kKernelSize));
@@ -259,9 +259,9 @@ class Conv3DTransposeInfer : public abstract::OpInferBase {
     int64_t pad_mode;
     CheckAndConvertUtils::GetPadModEnumValue(primitive->GetAttr(kPadMode), &pad_mode);
 
-    int64_t d_out = abstract::Shape::SHP_ANY;
-    int64_t w_out = abstract::Shape::SHP_ANY;
-    int64_t h_out = abstract::Shape::SHP_ANY;
+    int64_t d_out = abstract::Shape::kShapeDimAny;
+    int64_t w_out = abstract::Shape::kShapeDimAny;
+    int64_t h_out = abstract::Shape::kShapeDimAny;
 
     int64_t group = primitive->GetAttr(kGroup)->cast<Int64ImmPtr>()->value();
     CaculateShape(x_shape, kernel_size, stride, dilation, pad_mode, &pad_list, &output_padding, &d_out, &h_out, &w_out);
@@ -270,7 +270,7 @@ class Conv3DTransposeInfer : public abstract::OpInferBase {
     ShapeVector output_shape{x_shape[0], w_shape[1] * group, d_out, h_out, w_out};
     primitive->set_attr(kInput_size, MakeValue(output_shape));
     if (!CheckShape(prim_name + " output_shape", output_shape)) {
-      return std::make_shared<abstract::Shape>(ShapeVector{UNKNOWN_RANK});
+      return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
     }
 
     return std::make_shared<abstract::Shape>(output_shape);
@@ -302,13 +302,13 @@ class Conv3DTransposeInfer : public abstract::OpInferBase {
     int64_t x_w = x_shape[kAxis4];
 
     if (pad_mode == PadMode::VALID) {
-      if (x_d != abstract::Shape::SHP_ANY) {
+      if (x_d != abstract::Shape::kShapeDimAny) {
         *d_out = DeconvOutputLength(x_d, kernel_d, stride_d, dilation_d);
       }
-      if (x_h != abstract::Shape::SHP_ANY) {
+      if (x_h != abstract::Shape::kShapeDimAny) {
         *h_out = DeconvOutputLength(x_h, kernel_h, stride_h, dilation_h);
       }
-      if (x_w != abstract::Shape::SHP_ANY) {
+      if (x_w != abstract::Shape::kShapeDimAny) {
         *w_out = DeconvOutputLength(x_w, kernel_w, stride_w, dilation_w);
       }
 
@@ -319,27 +319,27 @@ class Conv3DTransposeInfer : public abstract::OpInferBase {
       (void)pad_list->insert(pad_list->begin(), pad_list_size, 0);
       (void)output_padding->insert(output_padding->begin(), output_padding_size, 0);
     } else if (pad_mode == PadMode::SAME) {
-      int64_t pad_head = abstract::Shape::SHP_ANY;
-      int64_t pad_tail = abstract::Shape::SHP_ANY;
-      int64_t pad_top = abstract::Shape::SHP_ANY;
-      int64_t pad_bottom = abstract::Shape::SHP_ANY;
-      int64_t pad_left = abstract::Shape::SHP_ANY;
-      int64_t pad_right = abstract::Shape::SHP_ANY;
+      int64_t pad_head = abstract::Shape::kShapeDimAny;
+      int64_t pad_tail = abstract::Shape::kShapeDimAny;
+      int64_t pad_top = abstract::Shape::kShapeDimAny;
+      int64_t pad_bottom = abstract::Shape::kShapeDimAny;
+      int64_t pad_left = abstract::Shape::kShapeDimAny;
+      int64_t pad_right = abstract::Shape::kShapeDimAny;
 
       const int64_t kNumber2 = 2;
-      if (x_d != abstract::Shape::SHP_ANY) {
+      if (x_d != abstract::Shape::kShapeDimAny) {
         *d_out = x_d * stride_d;
         int64_t pad_needed_d = std::max(SizeToLong(0), (x_d - 1) * stride_d + dilation_d * (kernel_d - 1) + 1 - *d_out);
         pad_head = pad_needed_d / kNumber2;
         pad_tail = pad_needed_d - pad_head;
       }
-      if (x_h != abstract::Shape::SHP_ANY) {
+      if (x_h != abstract::Shape::kShapeDimAny) {
         *h_out = x_h * stride_h;
         int64_t pad_needed_h = std::max(SizeToLong(0), (x_h - 1) * stride_h + dilation_h * (kernel_h - 1) + 1 - *h_out);
         pad_top = pad_needed_h / kNumber2;
         pad_bottom = pad_needed_h - pad_top;
       }
-      if (x_w != abstract::Shape::SHP_ANY) {
+      if (x_w != abstract::Shape::kShapeDimAny) {
         *w_out = x_w * stride_w;
         int64_t pad_needed_w = std::max(SizeToLong(0), (x_w - 1) * stride_w + dilation_w * (kernel_w - 1) + 1 - *w_out);
         pad_left = pad_needed_w / kNumber2;
@@ -364,15 +364,15 @@ class Conv3DTransposeInfer : public abstract::OpInferBase {
       int64_t pad_left = pad_list->at(kAxis4);
       int64_t pad_right = pad_list->at(kAxis5);
 
-      if (x_d != abstract::Shape::SHP_ANY) {
+      if (x_d != abstract::Shape::kShapeDimAny) {
         *d_out =
           (x_d - 1) * stride_d - (pad_head + pad_tail) + dilation_d * (kernel_d - 1) + output_padding->at(kAxis2) + 1;
       }
-      if (x_h != abstract::Shape::SHP_ANY) {
+      if (x_h != abstract::Shape::kShapeDimAny) {
         *h_out =
           (x_h - 1) * stride_h - (pad_top + pad_bottom) + dilation_h * (kernel_h - 1) + output_padding->at(kAxis3) + 1;
       }
-      if (x_w != abstract::Shape::SHP_ANY) {
+      if (x_w != abstract::Shape::kShapeDimAny) {
         *w_out =
           (x_w - 1) * stride_w - (pad_left + pad_right) + dilation_w * (kernel_w - 1) + output_padding->at(kAxis4) + 1;
       }

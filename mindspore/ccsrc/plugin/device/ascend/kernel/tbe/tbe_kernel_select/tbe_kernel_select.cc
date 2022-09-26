@@ -423,7 +423,7 @@ bool TbeKernelSelect::IsShapeMatchFormatRNN(const ShapeVector &shape, const std:
         return false;
       }
       auto last_but_one_dim = shape[shape.size() - kDim2];
-      if ((last_but_one_dim != abstract::Shape::SHP_ANY) && (last_but_one_dim != input_size) &&
+      if ((last_but_one_dim != abstract::Shape::kShapeDimAny) && (last_but_one_dim != input_size) &&
           (last_but_one_dim != hidden_size) && (last_but_one_dim != input_size + hidden_size)) {
         return false;
       }
@@ -434,7 +434,7 @@ bool TbeKernelSelect::IsShapeMatchFormatRNN(const ShapeVector &shape, const std:
         return false;
       }
       auto last_dim = shape[shape.size() - kDim1];
-      if (last_dim != abstract::Shape::SHP_ANY && last_dim % hidden_size != 0) {
+      if (last_dim != abstract::Shape::kShapeDimAny && last_dim % hidden_size != 0) {
         return false;
       }
     }

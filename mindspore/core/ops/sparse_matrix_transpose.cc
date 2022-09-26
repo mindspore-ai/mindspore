@@ -112,7 +112,7 @@ abstract::TupleShapePtr SparseMatrixTransposeInferShape(const PrimitivePtr &prim
       transpose_shape_shape_list, transpose_batch_shape_list, transpose_row_pointers_shape_list,
       transpose_col_indices_shape_list, transpose_values_shape_list});
   } else {
-    ShapeVector transpose_row_pointers_shape = {abstract::Shape::SHP_ANY};
+    ShapeVector transpose_row_pointers_shape = {abstract::Shape::kShapeDimAny};
     ShapeVector transpose_row_pointer_min_shape = {0};
     ShapeVector transpose_row_pointer_max_shape = {max_length};
     abstract::ShapePtr transpose_row_pointers_shape_list = std::make_shared<abstract::Shape>(

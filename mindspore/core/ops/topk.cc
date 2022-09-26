@@ -38,7 +38,8 @@ abstract::TupleShapePtr TopKInferShape(const PrimitivePtr &primitive, const std:
   auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
   auto x_shape = shape_map[kShape];
   if (IsDynamicRank(x_shape)) {
-    abstract::BaseShapePtr out_shape_ptr = std::make_shared<abstract::Shape>(ShapeVector{UNKNOWN_RANK});
+    abstract::BaseShapePtr out_shape_ptr =
+      std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
     return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{out_shape_ptr, out_shape_ptr});
   }
   int64_t k_v = 0;
@@ -57,7 +58,7 @@ abstract::TupleShapePtr TopKInferShape(const PrimitivePtr &primitive, const std:
     MS_LOG(EXCEPTION) << "Invalid abstract type:" << input_args[kInputIndex1]->type_name();
   }
   auto ndims = x_shape.size() - 1;
-  if (x_shape[ndims] != abstract::Shape::SHP_ANY) {
+  if (x_shape[ndims] != abstract::Shape::kShapeDimAny) {
     std::pair<int64_t, int64_t> k_range(0, x_shape[ndims]);
     CheckAndConvertUtils::CheckInRange<int64_t>("k", k_v, kIncludeRight, k_range, prim_name);
     x_shape[ndims] = k_v;

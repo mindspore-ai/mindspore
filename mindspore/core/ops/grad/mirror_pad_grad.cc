@@ -65,7 +65,7 @@ abstract::ShapePtr MirrorPadGradInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(paddings);
   // if shape of x is determined and padding value is unknown, return a all -1 shape
   if (paddings->isa<AnyValue>() || paddings->isa<None>()) {
-    return std::make_shared<abstract::Shape>(ShapeVector(x_shape.size(), UNKNOWN_DIM));
+    return std::make_shared<abstract::Shape>(ShapeVector(x_shape.size(), abstract::Shape::kShapeDimAny));
   }
 
   if (paddings_shape.size() != kPaddingsSecondDim) {

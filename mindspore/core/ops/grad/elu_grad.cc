@@ -43,7 +43,7 @@ abstract::ShapePtr EluGradInferShape(const PrimitivePtr &primitive, const std::v
   auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x);
   auto x_shape = shape_map[kShape];
   if (IsDynamicRank(x_shape)) {
-    return std::make_shared<abstract::Shape>(ShapeVector{UNKNOWN_RANK});
+    return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
   }
 
   MS_EXCEPTION_IF_NULL(x);

@@ -102,7 +102,7 @@ abstract::ShapePtr SegmentProdInferShape(const PrimitivePtr &primitive,
     const uint32_t max_shape_value = static_cast<uint32_t>(max_length) / length;
     ShapeVector min_shape(x_shape);
     ShapeVector max_shape(x_shape);
-    out_shape[0] = abstract::Shape::SHP_ANY;
+    out_shape[0] = abstract::Shape::kShapeDimAny;
     min_shape[0] = 1;
     max_shape[0] = max_shape_value;
     return std::make_shared<abstract::Shape>(out_shape, min_shape, max_shape);

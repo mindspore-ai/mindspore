@@ -119,8 +119,8 @@ abstract::TupleShapePtr SparseMatrixSparseMatMulInferShape(const PrimitivePtr &p
   abstract::ShapePtr y_col_shape = nullptr;
   abstract::ShapePtr y_values_shape = nullptr;
 
-  ShapeVector col_shape = {abstract::Shape::SHP_ANY};
-  ShapeVector values_shape = {abstract::Shape::SHP_ANY};
+  ShapeVector col_shape = {abstract::Shape::kShapeDimAny};
+  ShapeVector values_shape = {abstract::Shape::kShapeDimAny};
   ShapeVector infer_shape_min = {1};
   ShapeVector infer_shape_max = {MAX_LENGTH};
   y_col_shape = std::make_shared<abstract::Shape>(col_shape, infer_shape_min, infer_shape_max);

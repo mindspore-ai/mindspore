@@ -37,7 +37,7 @@ abstract::ShapePtr SqueezeInferShape(const PrimitivePtr &primitive, const std::v
   auto in_shape = shape_infos[kShape];
 
   if (IsDynamicRank(in_shape)) {
-    return std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
   }
 
   if (axis.empty()) {
@@ -53,7 +53,7 @@ abstract::ShapePtr SqueezeInferShape(const PrimitivePtr &primitive, const std::v
                                                   op_name);
       auto idx = item >= 0 ? item : rank + item;
       // If shape dims contain unknown dim, ignore it.
-      if (in_shape[LongToSize(idx)] != UNKNOWN_DIM) {
+      if (in_shape[LongToSize(idx)] != abstract::Shape::kShapeDimAny) {
         const std::string ith_shape = "input_x.shape[" + std::to_string(idx) + "]";
         (void)CheckAndConvertUtils::CheckValue<int64_t>(ith_shape, in_shape[LongToSize(idx)], kEqual, kSqueezedDim,
                                                         op_name);

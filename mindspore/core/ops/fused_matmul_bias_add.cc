@@ -39,7 +39,7 @@ class FusedMatMulBiasAddInfer : public abstract::OpInferBase {
     auto b_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(b_shape_ptr)[kShape];
 
     if (a_shape_ptr->IsDimUnknown() || b_shape_ptr->IsDimUnknown()) {
-      return std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_DIM});
+      return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeDimAny});
     }
 
     const int mat_rank = 2;

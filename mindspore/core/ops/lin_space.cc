@@ -91,7 +91,7 @@ abstract::ShapePtr LinSpaceInferShape(const PrimitivePtr &primitive, const std::
                               << ".";
     }
   } else {
-    ShapeVector out_shape = {abstract::Shape::SHP_ANY};
+    ShapeVector out_shape = {abstract::Shape::kShapeDimAny};
     return std::make_shared<abstract::Shape>(out_shape);
   }
 

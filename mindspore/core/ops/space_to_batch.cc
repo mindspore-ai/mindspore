@@ -77,11 +77,11 @@ class SpaceToBatchInfer : public abstract::OpInferBase {
     auto block_size = GetValue<int64_t>(primitive->GetAttr("block_size"));
     auto paddings = GetValue<std::vector<std::vector<int64_t>>>(primitive->GetAttr("paddings"));
 
-    if (out_shape[DIM_0] != abstract::Shape::SHP_ANY) {
+    if (out_shape[DIM_0] != abstract::Shape::kShapeDimAny) {
       out_shape[DIM_0] *= block_size * block_size;
     }
 
-    if (out_shape[DIM_2] != abstract::Shape::SHP_ANY) {
+    if (out_shape[DIM_2] != abstract::Shape::kShapeDimAny) {
       auto padded_0 = out_shape[DIM_2] + paddings[DIM_0][DIM_0] + paddings[DIM_0][DIM_1];
       if (padded_0 % block_size != 0) {
         MS_EXCEPTION(ValueError) << "For SpaceToBatch, the x_shape[2] plus paddings must be divisible by "
@@ -91,7 +91,7 @@ class SpaceToBatchInfer : public abstract::OpInferBase {
       out_shape[DIM_2] = padded_0 / block_size;
     }
 
-    if (out_shape[DIM_3] != abstract::Shape::SHP_ANY) {
+    if (out_shape[DIM_3] != abstract::Shape::kShapeDimAny) {
       auto padded_1 = out_shape[DIM_3] + paddings[DIM_1][DIM_0] + paddings[DIM_1][DIM_1];
       if (padded_1 % block_size != 0) {
         MS_EXCEPTION(ValueError) << "For SpaceToBatch, the x_shape[3] plus paddings must be divisible by "

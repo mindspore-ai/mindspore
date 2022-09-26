@@ -86,7 +86,7 @@ class TransposeInfer : public abstract::OpInferBase {
       MS_EXCEPTION(ValueError) << "For 'Transpose', first dim of input_x's shape can not be 0, but got 0.";
     }
     if (IsDynamicRank(x_shape)) {
-      return std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
+      return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
     }
 
     bool perm_is_dynamic = CheckAndGetPermValue(input_args, &p_value_raw, primitive);

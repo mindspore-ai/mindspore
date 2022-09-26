@@ -149,10 +149,12 @@ abstract::TupleShapePtr MaxPool3DWithArgmaxInferShape(const PrimitivePtr &prim,
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   if (IsDynamicRank(x_shape)) {
     std::vector<abstract::BaseShapePtr> shape_list = {
-      std::make_shared<abstract::Shape>(
-        std::vector<int64_t>{UNKNOWN_DIM, UNKNOWN_DIM, UNKNOWN_DIM, UNKNOWN_DIM, UNKNOWN_DIM}),
-      std::make_shared<abstract::Shape>(
-        std::vector<int64_t>{UNKNOWN_DIM, UNKNOWN_DIM, UNKNOWN_DIM, UNKNOWN_DIM, UNKNOWN_DIM})};
+      std::make_shared<abstract::Shape>(std::vector<int64_t>{
+        abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny,
+        abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny}),
+      std::make_shared<abstract::Shape>(std::vector<int64_t>{
+        abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny,
+        abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny})};
     return std::make_shared<abstract::TupleShape>(shape_list);
   }
   (void)CheckAndConvertUtils::CheckInteger("input x rank", SizeToLong(x_shape.size()), kEqual, kInputShapeSize,
@@ -168,11 +170,12 @@ abstract::TupleShapePtr MaxPool3DWithArgmaxInferShape(const PrimitivePtr &prim,
   (void)CheckAndConvertUtils::CheckInteger("dilation rank", SizeToLong(dilation.size()), kEqual, kAttrsSize,
                                            prim->name());
   if (IsDynamic(x_shape)) {
-    std::vector<abstract::BaseShapePtr> shape_list = {
-      std::make_shared<abstract::Shape>(
-        std::vector<int64_t>{x_shape[0], x_shape[1], UNKNOWN_DIM, UNKNOWN_DIM, UNKNOWN_DIM}),
-      std::make_shared<abstract::Shape>(
-        std::vector<int64_t>{x_shape[0], x_shape[1], UNKNOWN_DIM, UNKNOWN_DIM, UNKNOWN_DIM})};
+    std::vector<abstract::BaseShapePtr> shape_list = {std::make_shared<abstract::Shape>(std::vector<int64_t>{
+                                                        x_shape[0], x_shape[1], abstract::Shape::kShapeDimAny,
+                                                        abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny}),
+                                                      std::make_shared<abstract::Shape>(std::vector<int64_t>{
+                                                        x_shape[0], x_shape[1], abstract::Shape::kShapeDimAny,
+                                                        abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny})};
     return std::make_shared<abstract::TupleShape>(shape_list);
   }
   auto D_in = x_shape[kIndex2];

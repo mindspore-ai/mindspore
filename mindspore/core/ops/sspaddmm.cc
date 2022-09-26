@@ -415,7 +415,7 @@ abstract::TupleShapePtr SspaddmmInferShape(const PrimitivePtr &primitive,
     return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{
       output_indices_shape_list, output_values_shape_list, output_shape_shape_list});
   } else {
-    std::vector<int64_t> output_shape = {abstract::Shape::SHP_ANY};
+    std::vector<int64_t> output_shape = {abstract::Shape::kShapeDimAny};
     std::vector<int64_t> infer_shape_min = {0};
     std::vector<int64_t> infer_shape_max = {MAX_LEN};
     abstract::ShapePtr output_shape_list =

@@ -168,13 +168,13 @@ abstract::TupleShapePtr SparseSliceInferShape(const PrimitivePtr &primitive,
     return std::make_shared<abstract::TupleShape>(
       std::vector<abstract::BaseShapePtr>{output_indices_shape_list, output_values_shape_list, output_size_shape_list});
   } else {
-    std::vector<int64_t> output_indices_shape = {abstract::Shape::SHP_ANY, 2};
+    std::vector<int64_t> output_indices_shape = {abstract::Shape::kShapeDimAny, 2};
     abstract::ShapePtr output_indices_shape_list =
       std::make_shared<abstract::Shape>(output_indices_shape, output_indices_shape, output_indices_shape);
-    std::vector<int64_t> output_values_shape = {abstract::Shape::SHP_ANY};
+    std::vector<int64_t> output_values_shape = {abstract::Shape::kShapeDimAny};
     abstract::ShapePtr output_values_shape_list =
       std::make_shared<abstract::Shape>(output_values_shape, output_values_shape, output_values_shape);
-    std::vector<int64_t> output_size_shape = {abstract::Shape::SHP_ANY, abstract::Shape::SHP_ANY};
+    std::vector<int64_t> output_size_shape = {abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny};
     abstract::ShapePtr output_size_shape_list =
       std::make_shared<abstract::Shape>(output_size_shape, output_size_shape, output_size_shape);
     return std::make_shared<abstract::TupleShape>(

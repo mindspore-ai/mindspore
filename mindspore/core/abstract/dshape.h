@@ -29,7 +29,7 @@
 #include "utils/hashing.h"
 #include "utils/log_adapter.h"
 #include "base/base.h"
-#include "utils/shape_utils.h"
+#include "mindapi/base/shape_vector.h"
 
 namespace mindspore {
 namespace abstract {
@@ -113,7 +113,9 @@ GVAR_DEF(std::shared_ptr<NoShape>, kNoShape, std::make_shared<NoShape>());
 /// \brief Shape defines dimensions of tensor.
 class MS_CORE_API Shape final : public BaseShape {
  public:
-  static const ShapeValueDType SHP_ANY = -1;
+  static const ShapeValueDType kShapeDimAny;
+  static const ShapeValueDType kShapeRankAny;
+  static const size_t kDynamicRankLen;
 
   /// \brief Constructor of Shape.
   Shape() : shape_() {}
@@ -187,7 +189,7 @@ class MS_CORE_API Shape final : public BaseShape {
   /// \return Maximum shape dimensions.
   const ShapeVector &max_shape() const { return max_shape_; }
 
-  bool IsDynamic() const override { return mindspore::IsDynamic(shape_); }
+  bool IsDynamic() const override;
 
   bool IsDimZero() const override { return shape_.empty(); };
 
@@ -196,7 +198,7 @@ class MS_CORE_API Shape final : public BaseShape {
   }
 
  private:
-  ShapeVector shape_;      // use SHP_ANY to implement the any shape in python
+  ShapeVector shape_;      // use kShapeDimAny to implement the any shape in python
   ShapeVector min_shape_;  // record minimum length for each dynamic dimension
   ShapeVector max_shape_;  // record maximum length for each dynamic dimension
 };

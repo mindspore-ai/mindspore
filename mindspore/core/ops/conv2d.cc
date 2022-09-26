@@ -43,7 +43,7 @@ constexpr size_t right_padding = 3;
 
 void CheckShapeAnyAndPositive(const std::string &op, const ShapeVector &shape) {
   for (size_t i = 0; i < shape.size(); ++i) {
-    if ((shape[i] < 0) && (shape[i] != Shape::SHP_ANY)) {
+    if ((shape[i] < 0) && (shape[i] != abstract::Shape::kShapeDimAny)) {
       MS_EXCEPTION(ValueError) << "For '" << op << "',  shape element [" << i
                                << "] must be positive integer or -1, but got: " << shape[i] << ".";
     }
@@ -85,14 +85,14 @@ void Conv2DPadFunction(std::vector<int64_t> *output_hw, std::vector<int64_t> *pa
   if (pad_mode == PadMode::VALID) {
     int64_t out_h = -1;
     int64_t out_w = -1;
-    if (x_h != Shape::SHP_ANY) {
+    if (x_h != abstract::Shape::kShapeDimAny) {
       out_h =
         static_cast<int64_t>(std::ceil(((x_h * 1.0) - static_cast<float>(dilation[0] * (kernel[0] - 1))) / stride[0]));
       if (is_min_shape && out_h < 1) {
         out_h = 1L;
       }
     }
-    if (x_w != Shape::SHP_ANY) {
+    if (x_w != abstract::Shape::kShapeDimAny) {
       out_w =
         static_cast<int64_t>(std::ceil(((x_w * 1.0) - static_cast<float>(dilation[1] * (kernel[1] - 1))) / stride[1]));
       if (is_min_shape && out_w < 1) {
@@ -104,10 +104,10 @@ void Conv2DPadFunction(std::vector<int64_t> *output_hw, std::vector<int64_t> *pa
     constexpr size_t pad_size = 4;
     (void)pad_list->insert(pad_list->begin(), pad_size, 0);
   } else if (pad_mode == PadMode::SAME) {
-    if (x_h == Shape::SHP_ANY) {
-      output_hw->push_back(Shape::SHP_ANY);
-      pad_list->push_back(Shape::SHP_ANY);
-      pad_list->push_back(Shape::SHP_ANY);
+    if (x_h == abstract::Shape::kShapeDimAny) {
+      output_hw->push_back(abstract::Shape::kShapeDimAny);
+      pad_list->push_back(abstract::Shape::kShapeDimAny);
+      pad_list->push_back(abstract::Shape::kShapeDimAny);
     } else {
       output_hw->push_back(static_cast<int64_t>(std::ceil((x_h * 1.0) / stride[0])));
       int64_t pad_needed_h = (output_hw->at(0) - 1) * stride[0] + dilation[0] * (kernel[0] - 1) + 1 - x_h;
@@ -116,10 +116,10 @@ void Conv2DPadFunction(std::vector<int64_t> *output_hw, std::vector<int64_t> *pa
       pad_list->push_back(pad_needed_h - pad_list->at(0));
     }
 
-    if (x_w == Shape::SHP_ANY) {
-      output_hw->push_back(Shape::SHP_ANY);
-      pad_list->push_back(Shape::SHP_ANY);
-      pad_list->push_back(Shape::SHP_ANY);
+    if (x_w == abstract::Shape::kShapeDimAny) {
+      output_hw->push_back(abstract::Shape::kShapeDimAny);
+      pad_list->push_back(abstract::Shape::kShapeDimAny);
+      pad_list->push_back(abstract::Shape::kShapeDimAny);
     } else {
       output_hw->push_back(static_cast<int64_t>(std::ceil((x_w * 1.0) / stride[1])));
       int64_t pad_needed_w = (output_hw->at(1) - 1) * stride[1] + dilation[1] * (kernel[1] - 1) + 1 - x_w;
@@ -131,7 +131,7 @@ void Conv2DPadFunction(std::vector<int64_t> *output_hw, std::vector<int64_t> *pa
     (void)pad_list->insert(pad_list->begin(), padding.begin(), padding.end());
     int64_t out_h = -1;
     int64_t out_w = -1;
-    if (x_h != Shape::SHP_ANY) {
+    if (x_h != abstract::Shape::kShapeDimAny) {
       out_h = static_cast<int64_t>(std::floor(1 + ((x_h * 1.0) + pad_list->at(0) + pad_list->at(1) - kernel[0] -
                                                    static_cast<float>((kernel[0] - 1) * (dilation[0] - 1))) /
                                                     stride[0]));
@@ -139,7 +139,7 @@ void Conv2DPadFunction(std::vector<int64_t> *output_hw, std::vector<int64_t> *pa
         out_h = 1L;
       }
     }
-    if (x_w != Shape::SHP_ANY) {
+    if (x_w != abstract::Shape::kShapeDimAny) {
       out_w =
         static_cast<int64_t>(std::floor(1 + ((x_w * 1.0) + pad_list->at(kInputIndex2) + pad_list->at(kInputIndex3) -
                                              kernel[1] - static_cast<float>((kernel[1] - 1) * (dilation[1] - 1))) /
@@ -161,7 +161,7 @@ bool CheckConv2dShape(const std::string &prim_name, const std::vector<AbstractBa
   if (x_shape_ptr->IsDynamic() || w_shape_ptr->IsDynamic()) {
     return true;
   }
-  if (w_shape[w_axis] != Shape::SHP_ANY && pad_mode != PadMode::SAME) {
+  if (w_shape[w_axis] != abstract::Shape::kShapeDimAny && pad_mode != PadMode::SAME) {
     int64_t input_height = x_shape[h_axis];
     int64_t input_width = x_shape[w_axis];
     if (pad_mode == PadMode::PAD) {
@@ -209,7 +209,7 @@ abstract::ShapePtr Conv2dInferShape(const PrimitivePtr &primitive, const std::ve
     w_axis = 2;
   }
   int64_t group = CheckAttrPositiveInt64(prim_name, primitive->GetAttr("group"), "group");
-  if ((x_shape[c_axis] != Shape::SHP_ANY) && (w_shape[c_axis] != Shape::SHP_ANY) &&
+  if ((x_shape[c_axis] != abstract::Shape::kShapeDimAny) && (w_shape[c_axis] != abstract::Shape::kShapeDimAny) &&
       ((x_shape[c_axis] / group) != w_shape[c_axis])) {
     MS_LOG(EXCEPTION) << "For '" << prim_name
                       << "', 'C_in' of input 'x' shape divide by parameter 'group' must be "
@@ -218,18 +218,18 @@ abstract::ShapePtr Conv2dInferShape(const PrimitivePtr &primitive, const std::ve
                       << ", and 'group': " << group << ".";
   }
   int64_t out_channel = CheckAttrPositiveInt64(prim_name, primitive->GetAttr("out_channel"), "out_channel");
-  if ((w_shape[n_axis] != Shape::SHP_ANY) && (w_shape[n_axis] != out_channel)) {
+  if ((w_shape[n_axis] != abstract::Shape::kShapeDimAny) && (w_shape[n_axis] != out_channel)) {
     MS_LOG(EXCEPTION) << "For '" << prim_name << "', 'w_shape[" << n_axis
                       << "]' must be equal to 'out_channel', but got 'w_shape[" << n_axis << "]': " << w_shape[n_axis]
                       << ", 'out_channel': " << out_channel << ".";
   }
   std::vector<int64_t> kernel_size = CheckAttrIntOrTuple(primitive->GetAttr("kernel_size"), 0, kernel_size_num);
-  if ((w_shape[h_axis] != Shape::SHP_ANY) && (w_shape[h_axis] != kernel_size[0])) {
+  if ((w_shape[h_axis] != abstract::Shape::kShapeDimAny) && (w_shape[h_axis] != kernel_size[0])) {
     MS_LOG(EXCEPTION) << "For '" << prim_name << "', 'w_shape[" << h_axis
                       << "]' must be equal to 'kernel_size[0]', but got 'w_shape[" << h_axis
                       << "]': " << w_shape[h_axis] << ", 'kernel_size[0]': " << kernel_size[0] << ".";
   }
-  if ((w_shape[w_axis] != Shape::SHP_ANY) && (w_shape[w_axis] != kernel_size[1])) {
+  if ((w_shape[w_axis] != abstract::Shape::kShapeDimAny) && (w_shape[w_axis] != kernel_size[1])) {
     MS_LOG(EXCEPTION) << "For '" << prim_name << "', 'w_shape[" << w_axis
                       << "]' must be equal to 'kernel_size[1]', but got 'w_shape[" << w_axis
                       << "]': " << w_shape[w_axis] << ", 'kernel_size[1]': " << kernel_size[1] << ".";

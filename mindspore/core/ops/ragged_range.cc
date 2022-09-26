@@ -137,8 +137,8 @@ abstract::TupleShapePtr RaggedRangeInferShape(const PrimitivePtr &primitive,
     return (std::make_shared<abstract::TupleShape>(
       std::vector<abstract::BaseShapePtr>{rt_nested_splits_shape, rt_dense_values_shape}));
   }
-  std::vector<int64_t> rt_nested_splits_shape_vec = {abstract::Shape::SHP_ANY};
-  std::vector<int64_t> rt_dense_values_shape_vec = {abstract::Shape::SHP_ANY};
+  std::vector<int64_t> rt_nested_splits_shape_vec = {abstract::Shape::kShapeDimAny};
+  std::vector<int64_t> rt_dense_values_shape_vec = {abstract::Shape::kShapeDimAny};
   std::vector<int64_t> infer_shape_min = {0};
   std::vector<int64_t> infer_shape_max = {max_length};
   abstract::ShapePtr rt_nested_splits_shape =

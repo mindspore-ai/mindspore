@@ -175,8 +175,8 @@ bool AicpuExtInfoHandler::UpdateOutputShapeAndType(uint32_t output_index, const 
   auto shape = AnfAlgo::GetOutputDeviceShape(anf_node, output_index);
   auto max_shape = common::AnfAlgo::GetOutputMaxShape(anf_node, output_index);
   for (size_t i = 0; i < shape.size(); ++i) {
-    if (i < max_shape.size() && shape[i] == abstract::Shape::SHP_ANY) {
-      MS_LOG(INFO) << "Node:" << node_name_ << " update shape from SHP_ANY to " << max_shape[i];
+    if (i < max_shape.size() && shape[i] == abstract::Shape::kShapeDimAny) {
+      MS_LOG(INFO) << "Node:" << node_name_ << " update shape from kShapeDimAny to " << max_shape[i];
       shape[i] = max_shape[i];
     }
   }

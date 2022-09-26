@@ -62,13 +62,13 @@ abstract::BaseShapePtr UniqueConsecutiveInferShape(const PrimitivePtr &primitive
     MS_LOG(INFO) << "node:" << op_name << " has no axis attribute or axis id None! Deal as flatten";
     (void)primitive->SetAttrs({{"axis", MakeValue(kAxisIsNone)}});
     auto input_total = std::accumulate(input_shape_vec.begin(), input_shape_vec.end(), 1, std::multiplies<int64_t>());
-    output_vec = {abstract::Shape::SHP_ANY};
+    output_vec = {abstract::Shape::kShapeDimAny};
     output_min_vec = {1};
     output_max_vec = {input_total};
 
     idx_shape_vec = input_shape_vec;
 
-    counts_shape_vec = {abstract::Shape::SHP_ANY};
+    counts_shape_vec = {abstract::Shape::kShapeDimAny};
     counts_min_vec = {1};
     counts_max_vec = {input_total};
   } else {
@@ -83,14 +83,14 @@ abstract::BaseShapePtr UniqueConsecutiveInferShape(const PrimitivePtr &primitive
     }
     size_t axis_size = LongToSize(axis);
     output_vec = input_shape_vec;
-    output_vec[axis_size] = abstract::Shape::SHP_ANY;
+    output_vec[axis_size] = abstract::Shape::kShapeDimAny;
     output_min_vec = input_shape_vec;
     output_min_vec[axis_size] = 1;
     output_max_vec = input_shape_vec;
 
     idx_shape_vec = {input_shape_vec[axis_size]};
 
-    counts_shape_vec = {abstract::Shape::SHP_ANY};
+    counts_shape_vec = {abstract::Shape::kShapeDimAny};
     counts_min_vec = {1};
     counts_max_vec = {input_shape_vec[axis_size]};
   }

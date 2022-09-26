@@ -669,7 +669,8 @@ AbstractBasePtr ExtendDim(int *axis, const AbstractBasePtr &orig_abs, int axis_s
     if (shape != nullptr) {
       orig_shape = shape->shape();
     }
-    if (std::any_of(orig_shape.begin(), orig_shape.end(), [](ShapeValueDType s) { return s == UNKNOWN_RANK; })) {
+    if (std::any_of(orig_shape.begin(), orig_shape.end(),
+                    [](ShapeValueDType s) { return s == Shape::kShapeRankAny; })) {
       return orig_abs;
     }
   }

@@ -40,7 +40,7 @@ abstract::ShapePtr KLDivLossInferShape(const PrimitivePtr &primitive, const std:
   auto input_target_shape = input_target_map[kShape];
 
   if (IsDynamicRank(input_x_shape) || IsDynamicRank(input_target_shape)) {
-    return std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
   }
 
   CheckAndConvertUtils::Check("x shape", input_x_shape, kEqual, input_target_shape, op_name, ValueError);

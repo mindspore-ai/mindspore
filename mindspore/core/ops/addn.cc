@@ -49,11 +49,11 @@ bool AddNDynShapeJoin(ShapeVector *shape1, const ShapeVector *shape2) {
       continue;
     }
     // If shape1 is dynamic, use shape of shape2.If shape2 is dynamic, keep shape1.
-    if ((*shape1)[i] == UNKNOWN_DIM) {
+    if ((*shape1)[i] == abstract::Shape::kShapeDimAny) {
       (*shape1)[i] = (*shape2)[i];
       continue;
     }
-    if ((*shape2)[i] == UNKNOWN_DIM) {
+    if ((*shape2)[i] == abstract::Shape::kShapeDimAny) {
       continue;
     }
     // If shape1 != shape2
@@ -82,7 +82,7 @@ abstract::ShapePtr AddNInferShape(const PrimitivePtr &primitive, const std::vect
     }
     // If any shape is dynamic rank, return a dynamic rank.
     if (IsDynamicRank(shape_vec)) {
-      return std::make_shared<abstract::Shape>(ShapeVector({UNKNOWN_RANK}));
+      return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
     }
     // Record input0's shape.
     if (i == 0) {

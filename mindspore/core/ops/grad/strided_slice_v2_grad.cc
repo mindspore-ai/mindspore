@@ -77,7 +77,7 @@ abstract::ShapePtr StridedSliceV2GradInferShape(const PrimitivePtr &primitive,
   auto shape_max_value = abstract_tensor->get_max_value();
   if (shape_min_value == nullptr || shape_max_value == nullptr) {
     for (size_t i = 0; i < shapex_len; i++) {
-      out_shape.push_back(abstract::Shape::SHP_ANY);
+      out_shape.push_back(abstract::Shape::kShapeDimAny);
     }
     return std::make_shared<abstract::Shape>(out_shape);
   }
@@ -94,7 +94,7 @@ abstract::ShapePtr StridedSliceV2GradInferShape(const PrimitivePtr &primitive,
     if (shape_min[i] == shape_max[i]) {
       out_shape.push_back(shape_min[i]);
     } else {
-      out_shape.push_back(abstract::Shape::SHP_ANY);
+      out_shape.push_back(abstract::Shape::kShapeDimAny);
     }
   }
   return std::make_shared<abstract::Shape>(out_shape, shape_min, shape_max);

@@ -54,9 +54,9 @@ std::vector<int64_t> CalBroadCastShape(std::vector<int64_t> x_shape, std::vector
       (void)broadcast_shape.push_back(x_shape[LongToSize(x_length + i)]);
     } else if (x_shape[x_length + i] == y_shape[LongToSize(y_length + i)]) {
       (void)broadcast_shape.push_back(x_shape[LongToSize(x_length + i)]);
-    } else if ((x_shape[LongToSize(x_length + i)] == abstract::Shape::SHP_ANY) ||
-               (y_shape[LongToSize(y_length + i)] == abstract::Shape::SHP_ANY)) {
-      broadcast_shape.push_back(abstract::Shape::SHP_ANY);
+    } else if ((x_shape[LongToSize(x_length + i)] == abstract::Shape::kShapeDimAny) ||
+               (y_shape[LongToSize(y_length + i)] == abstract::Shape::kShapeDimAny)) {
+      broadcast_shape.push_back(abstract::Shape::kShapeDimAny);
     } else {
       MS_EXCEPTION(ValueError) << "For '" << op_name << "', the two input '" << op_x_name << "' and '" << op_y_name
                                << "' with shape: " << x_shape << " and " << y_shape << " can not broadcast.";
@@ -397,12 +397,12 @@ ShapeVector GetShapeValue(const PrimitivePtr &primitive, const AbstractBasePtr &
     auto abs_tensor_shape = abs_tensor->shape()->shape();
     MS_EXCEPTION_IF_CHECK_FAIL(abs_tensor_shape.size() == 1, "Shape of shape value only could be one-dimensional");
     if (IsDynamic(abs_tensor_shape)) {
-      return {UNKNOWN_RANK};
+      return {abstract::Shape::kShapeRankAny};
     }
     auto shape_size = abs_tensor_shape[0];
     auto shape_value = abs_tensor->get_shape_value();
     if (shape_value == nullptr) {
-      return ShapeVector(shape_size, UNKNOWN_DIM);
+      return ShapeVector(shape_size, abstract::Shape::kShapeDimAny);
     } else {
       auto shape_vector = GetValue<ShapeVector>(shape_value);
       MS_EXCEPTION_IF_CHECK_FAIL(LongToSize(shape_size) == shape_vector.size(), "Illegal shape of shape value");

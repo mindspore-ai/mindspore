@@ -77,7 +77,7 @@ void GetTensorIntValue(const abstract::AbstractBasePtr &base, std::vector<int64_
       (void)CheckAndConvertUtils::CheckPositiveVector(tensor_name, *value, kNameAvgPool3DGrad);
     } else {
       constexpr int64_t k5DInputDims = 5;
-      value->assign(k5DInputDims, UNKNOWN_DIM);
+      value->assign(k5DInputDims, abstract::Shape::kShapeDimAny);
     }
   }
 }

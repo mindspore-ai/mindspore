@@ -143,8 +143,8 @@ abstract::ShapePtr Col2ImInferShape(const PrimitivePtr &primitive, const std::ve
   ShapeVector y_shape = {batch, channel};
   if (is_compile) {
     int64_t max_len = x_shape[kInputIndex2] * x_shape[kInputIndex3];
-    (void)y_shape.emplace_back(abstract::Shape::SHP_ANY);
-    (void)y_shape.emplace_back(abstract::Shape::SHP_ANY);
+    (void)y_shape.emplace_back(abstract::Shape::kShapeDimAny);
+    (void)y_shape.emplace_back(abstract::Shape::kShapeDimAny);
     ShapeVector y_shape_min = {batch, channel, 0, 0};
     ShapeVector y_shape_max = {batch, channel, max_len, max_len};
     return std::make_shared<abstract::Shape>(y_shape, y_shape_min, y_shape_max);

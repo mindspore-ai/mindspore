@@ -69,8 +69,8 @@ abstract::ShapePtr ResizeNearestNeighborV2InferShape(const PrimitivePtr &primiti
 
   ShapeVector y_shape(long_kdim4);
   if (IsDynamicRank(x_shape)) {
-    y_shape[dim_idx_map['N']] = abstract::Shape::SHP_ANY;
-    y_shape[dim_idx_map['C']] = abstract::Shape::SHP_ANY;
+    y_shape[dim_idx_map['N']] = abstract::Shape::kShapeDimAny;
+    y_shape[dim_idx_map['C']] = abstract::Shape::kShapeDimAny;
   } else {
     (void)CheckAndConvertUtils::CheckInteger("dimension of x", SizeToLong(x_shape.size()), kEqual, long_kdim4,
                                              prim_name);
@@ -80,8 +80,8 @@ abstract::ShapePtr ResizeNearestNeighborV2InferShape(const PrimitivePtr &primiti
 
   bool is_compile = IsNoneOrAnyValue(size_ptr);
   if (is_compile) {
-    y_shape[dim_idx_map['H']] = abstract::Shape::SHP_ANY;
-    y_shape[dim_idx_map['W']] = abstract::Shape::SHP_ANY;
+    y_shape[dim_idx_map['H']] = abstract::Shape::kShapeDimAny;
+    y_shape[dim_idx_map['W']] = abstract::Shape::kShapeDimAny;
   } else {
     MS_EXCEPTION_IF_NULL(size_ptr);
     auto size_value = CheckAndConvertUtils::CheckTensorIntValue("input size", size_ptr, prim_name);

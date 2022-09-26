@@ -42,7 +42,7 @@ abstract::ShapePtr BiasAddInferShape(const PrimitivePtr &primitive, const std::v
   auto input_shape = shape_map[kShape];
   auto bias_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
   if (IsDynamicRank(input_shape) || IsDynamicRank(bias_shape)) {
-    return std::make_shared<abstract::Shape>(ShapeVector{UNKNOWN_RANK});
+    return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
   }
   const int64_t x_min_rank = 2;
   const int64_t x_max_rank = 5;
@@ -66,7 +66,7 @@ abstract::ShapePtr BiasAddInferShape(const PrimitivePtr &primitive, const std::v
   }
   auto x_channel = data_format == Format::NHWC ? input_shape[input_shape.size() - 1] : input_shape[1];
   bool x_not_dyn = std::all_of(input_shape.begin(), input_shape.end(),
-                               [](int64_t value) { return value != abstract::Shape::SHP_ANY; });
+                               [](int64_t value) { return value != abstract::Shape::kShapeDimAny; });
   if (x_not_dyn && bias_shape[0] != x_channel) {
     auto input_shape_channel = input_shape.size() - 1;
     MS_EXCEPTION(ValueError) << "For '" << prim_name << "', bias[0] shape must be equal to input_x["

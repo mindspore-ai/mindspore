@@ -120,7 +120,8 @@ abstract::ShapePtr ResizeBicubicInferShape(const PrimitivePtr &primitive,
     if (x_shape_ptr->IsDynamic()) {
       return std::make_shared<abstract::Shape>(x_shape);
     }
-    ShapeVector shape_out = {shape0_v[0], abstract::Shape::SHP_ANY, abstract::Shape::SHP_ANY, shape0_v[indexid3]};
+    ShapeVector shape_out = {shape0_v[0], abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny,
+                             shape0_v[indexid3]};
     return std::make_shared<abstract::Shape>(shape_out);
   }
 }

@@ -68,7 +68,7 @@ class BatchToSpaceInfer : public abstract::OpInferBase {
       MS_EXCEPTION(ValueError) << "Rank of input should be 4, got " << shape_element->shape().size();
     }
     if (mindspore::IsDynamicRank(shape_element->shape())) {
-      return std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
+      return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
     }
     auto block_size = GetValue<int64_t>(primitive->GetAttr(kBlockSize));
     auto crops = GetValue<std::vector<std::vector<int64_t>>>(primitive->GetAttr(kCrops));

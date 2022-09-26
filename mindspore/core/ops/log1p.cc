@@ -32,7 +32,7 @@ abstract::ShapePtr Log1pInferShape(const PrimitivePtr &primitive, const std::vec
   auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
   auto in_shape = shape_map[kShape];
   if (IsDynamicRank(in_shape)) {
-    return std::make_shared<abstract::Shape>(ShapeVector{UNKNOWN_RANK});
+    return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
   }
   return std::make_shared<abstract::Shape>(in_shape);
 }

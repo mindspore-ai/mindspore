@@ -44,7 +44,7 @@ class ApplyRMSPropInfer : public abstract::OpInferBase {
       CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->BuildShape())[kShape];
     if (IsDynamicRank(var_shape_map) || IsDynamicRank(ms_shape_map) || IsDynamicRank(mom_shape_map) ||
         IsDynamicRank(grad_shape_map)) {
-      return std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
+      return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
     }
     if (var_shape->IsDynamic() || ms_shape->IsDynamic() || mom_shape->IsDynamic() || grad_shape->IsDynamic()) {
       return var_shape->cast<abstract::ShapePtr>();

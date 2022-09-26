@@ -40,7 +40,7 @@ void BatchMatMulMakeShape(ShapeVector *output, const ShapeVector xshp, const Sha
     ShapeVector broadcast_input = xshp.size() > yshp.size() ? xshp : yshp;
     for (size_t i = 0; i < broadcast_input.size() - offset; i++) {
       if (broadcast_input[i] < 0) {
-        output->push_back(abstract::Shape::SHP_ANY);
+        output->push_back(abstract::Shape::kShapeDimAny);
       } else {
         output->push_back(broadcast_input[i]);
       }
@@ -48,7 +48,7 @@ void BatchMatMulMakeShape(ShapeVector *output, const ShapeVector xshp, const Sha
   } else {
     for (size_t i = 0; i < xshp.size() - offset; i++) {
       if (xshp[i] < 0 || yshp[i] < 0) {
-        output->push_back(abstract::Shape::SHP_ANY);
+        output->push_back(abstract::Shape::kShapeDimAny);
       } else {
         output->push_back(xshp[i] > yshp[i] ? xshp[i] : yshp[i]);
       }
@@ -81,7 +81,7 @@ abstract::ShapePtr BatchMatmulInferShape(const PrimitivePtr &primitive,
   auto x_shp = x_shape_map[kShape];
   auto y_shp = y_shape_map[kShape];
   if (IsDynamicRank(x_shp) || IsDynamicRank(y_shp)) {
-    return std::make_shared<abstract::Shape>(ShapeVector({UNKNOWN_RANK}));
+    return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
   }
   constexpr size_t x_dim_limit = 3;
   constexpr size_t y_dim_limit = 2;

@@ -50,7 +50,7 @@ abstract::TupleShapePtr MeshgridInferShape(const PrimitivePtr &primitive,
 
     auto input_shape = shape_map[kShape];
     if (IsDynamicRank(input_shape)) {
-      auto shape_ptr = std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
+      auto shape_ptr = std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
       return std::make_shared<abstract::TupleShape>(
         std::vector<abstract::BaseShapePtr>(SizeToLong(elements.size()), shape_ptr));
     }

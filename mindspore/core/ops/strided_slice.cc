@@ -357,7 +357,7 @@ abstract::ShapePtr StridedSliceInferShape(const PrimitivePtr &primitive,
   auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[x_index]->BuildShape());
   auto x_shape = shape_map[kShape];
   if (IsDynamicRank(x_shape)) {
-    return std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
   }
 
   ShapeVector begin_v;

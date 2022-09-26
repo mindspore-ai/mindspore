@@ -31,7 +31,8 @@ abstract::TupleShapePtr LogMatrixDeterminantInferShape(const PrimitivePtr &primi
   auto prim_name = primitive->name();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   if (IsDynamicRank(x_shape)) {
-    abstract::ShapePtr out_shape = std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
+    abstract::ShapePtr out_shape =
+      std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
     return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{out_shape, out_shape});
   }
   auto x_rank = SizeToLong(x_shape.size());

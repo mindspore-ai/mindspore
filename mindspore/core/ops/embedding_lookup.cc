@@ -68,7 +68,7 @@ class EmbeddingLookupInfer : public abstract::OpInferBase {
         out_shape.push_back(params_shape.back());
       }
     } else {
-      out_shape.push_back(UNKNOWN_RANK);
+      out_shape.push_back(abstract::Shape::kShapeRankAny);
     }
     return std::make_shared<abstract::Shape>(out_shape);
   }

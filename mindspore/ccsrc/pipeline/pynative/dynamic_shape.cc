@@ -22,8 +22,6 @@
 namespace mindspore {
 namespace pynative {
 const char kSensInfo[] = "SensInfo";
-static const ShapeValueDType UNKNOWN_DIM = -1;
-static const ShapeValueDType UNKNOWN_RANK = -2;
 
 ShapeVector DynamicShape::GetTensorShape(const ValuePtr &v) const {
   MS_EXCEPTION_IF_NULL(v);
@@ -472,12 +470,12 @@ void DynamicShape::FindMatchTopCell(const TopCellInfoPtr &top_cell, const py::ar
     if (cur_shape.size() != elem_shape.size()) {
       MS_LOG(DEBUG) << "The " << i << "th args shape size is not the same, cur is " << cur_shape.size()
                     << " and the elem is " << elem_shape.size() << ", change shape to dynamic rank";
-      new_shape.emplace_back(UNKNOWN_RANK);
+      new_shape.emplace_back(abstract::Shape::kShapeRankAny);
       continue;
     }
     // Shape dynamic
     for (size_t j = 0; j < cur_shape.size(); ++j) {
-      (void)new_shape.emplace_back(UNKNOWN_DIM);
+      (void)new_shape.emplace_back(abstract::Shape::kShapeDimAny);
     }
     (void)new_args_shape->emplace_back(new_shape);
     MS_LOG(DEBUG) << "Cur shape " << cur_shape << ", elem shape " << elem_shape << ", new shape " << new_shape;

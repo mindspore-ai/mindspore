@@ -55,7 +55,7 @@ abstract::TupleShapePtr Infer(const PrimitivePtr &primitive, const std::vector<A
   auto x_shape0 = CheckInputsAndGetShape(input_args[0], prim_name);
   auto y_shape0 = CheckInputsAndGetShape(input_args[1], prim_name);
 
-  ShapeVector shape{abstract::Shape::SHP_ANY};
+  ShapeVector shape{abstract::Shape::kShapeDimAny};
   if (x_shape0 < 0 && y_shape0 < 0) {
     auto out_shape = std::make_shared<abstract::Shape>(shape);
     return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{out_shape, out_shape});

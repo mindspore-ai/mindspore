@@ -56,7 +56,7 @@ class MatMulInfer : public abstract::OpInferBase {
     auto b_shape_ptr = input_args[kInputIndex1]->BuildShape();
     auto b_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(b_shape_ptr)[kShape];
     if (IsDynamicRank(a_shape) || IsDynamicRank(b_shape)) {
-      return std::make_shared<abstract::Shape>(std::vector<int64_t>{UNKNOWN_RANK});
+      return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
     }
 
     const int mat_rank = 2;

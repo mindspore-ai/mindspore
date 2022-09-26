@@ -134,7 +134,7 @@ abstract::ShapePtr DropoutGenMaskInferShape(const PrimitivePtr &primitive,
       MS_EXCEPTION(TypeError) << "For '" << op_name
                               << "', input 'shape' must be a 1-D Tensor, but got: " << shape->shape().size() << ".";
     }
-    ShapeVector any_shape{abstract::Shape::SHP_ANY};
+    ShapeVector any_shape{abstract::Shape::kShapeDimAny};
     return std::make_shared<abstract::Shape>(any_shape);
   }
 
