@@ -39,7 +39,15 @@ def _convert_to_list(strategy):
             field_size = int(layout.field)
             shard_stride = int(layout.opt_weight_shard_step)
             shard_size = int(layout.opt_weight_shard_size)
-            train_map[param_name] = [dev_mat, tensor_map, param_split_shape, field_size, shard_stride, shard_size]
+            pipeline_stage = 0
+            origin_param_name = param_name
+            if "-" in param_name:
+                pipeline_stage, origin_param_name = param_name.split("-")
+            if origin_param_name not in train_map:
+                train_map[origin_param_name] = [dev_mat, tensor_map, param_split_shape, field_size, shard_stride,
+                                                shard_size, [int(pipeline_stage)]]
+            else:
+                train_map.get(origin_param_name)[6].append(int(pipeline_stage))
         except BaseException as e:
             raise ValueError(f"{e.__str__()}. Convert layout strategy to list "
                              f"failed, please make sure that strategy matches the node_strategy.proto, you can "
@@ -73,8 +81,8 @@ def _convert_to_layout(param_name, tensor_layout):
     return strategy
 
 
-def _build_searched_strategy(strategy_filename):
-    """build searched strategy"""
+def _load_strategy_file(strategy_filename):
+    """load parallel strategy file"""
     if not isinstance(strategy_filename, str):
         raise TypeError(f"For 'build_searched_strategy', the argument 'strategy_filename' should be string, "
                         f"but got {type(strategy_filename)}.")
@@ -91,6 +99,12 @@ def _build_searched_strategy(strategy_filename):
     with open(strategy_filename, 'rb') as f:
         pb_content = f.read()
     parallel_strategy_map.ParseFromString(pb_content)
+    return parallel_strategy_map
+
+
+def _build_searched_strategy(strategy_filename):
+    """build searched strategy"""
+    parallel_strategy_map = _load_strategy_file(strategy_filename)
 
     layout_items = parallel_strategy_map.parallel_layout_item
     if not layout_items:
@@ -104,6 +118,55 @@ def _build_searched_strategy(strategy_filename):
         strategy[parameter_name] = layout
 
     return strategy
+
+
+def _parameter_not_in_local_stage(param_name, origin_strategy_list, strategy_list):
+    """parameter whether in the local stage"""
+    if origin_strategy_list is None or strategy_list is None:
+        return True
+    return param_name in origin_strategy_list and param_name not in strategy_list
+
+
+def _extract_layout_map(strategy_file):
+    """Extract layout map"""
+    layout_map = None
+    if strategy_file is not None:
+        src_strategy = _build_searched_strategy(strategy_file)
+        layout_map = _convert_to_list(src_strategy)
+    return layout_map
+
+
+def _extract_pipeline_stage_num(strategy_file):
+    """extract pipeline stage num"""
+    pipeline_stage_num = 1
+    if strategy_file is not None:
+        src_strategy = _build_searched_strategy(strategy_file)
+        layout_map = _convert_to_list(src_strategy)
+        pipeline_stage_set = set()
+        for _, layout in layout_map.items():
+            pipeline_stage_set.update(layout[6])
+        pipeline_stage_num = len(pipeline_stage_set)
+        if list(pipeline_stage_set) != list(range(pipeline_stage_num)):
+            raise ValueError("The strategy file for pipeline parallel dose not contains all stages.")
+    return pipeline_stage_num
+
+
+def _extract_src_dst_layout_map(rank_id, src_strategy_file=None, dst_strategy_file=None):
+    """Extract strategy list"""
+    src_layout_map = _extract_layout_map(src_strategy_file)
+    dst_layout_map = _extract_layout_map(dst_strategy_file)
+    if dst_layout_map is None:
+        return src_layout_map, dst_layout_map
+    dst_stage_device_num = np.prod(dst_layout_map.get(list(dst_layout_map.keys())[0])[0])
+    dst_stage_id = rank_id // dst_stage_device_num
+    # cut the source and destination layout, remain the parameter in the dst_stage
+    for param_name in list(dst_layout_map.keys()):
+        if dst_stage_id in dst_layout_map.get(param_name)[6]:
+            continue
+        dst_layout_map.pop(param_name)
+        if src_layout_map is not None and param_name in src_layout_map:
+            src_layout_map.pop(param_name)
+    return src_layout_map, dst_layout_map
 
 
 def _restore_group_info_list(group_info_file_name):
@@ -122,6 +185,7 @@ def _restore_group_info_list(group_info_file_name):
 
 
 def _get_device_num_from_strategy(strategy_file=None):
+    """Get device num from strategy file"""
     if strategy_file is None:
         return 1
     src_strategy = _build_searched_strategy(strategy_file)
@@ -130,23 +194,14 @@ def _get_device_num_from_strategy(strategy_file=None):
     return np.prod(device_mat)
 
 
-def _rank_list_for_transform_parallel_checkpoint(rank_id, src_strategy_file=None, dst_strategy_file=None):
+def _rank_list_for_transform_parallel_checkpoint(rank_id, src_strategy_list, dst_strategy_list):
     """
     Get the needed rank list for transform model parallel dim of checkpoint.
     """
-    if src_strategy_file is None:
-        return [rank_id]
-    src_strategy = _build_searched_strategy(src_strategy_file)
-    src_strategy_list = _convert_to_list(src_strategy)
-    if not src_strategy_list:
-        raise ValueError("The src_strategy_file is empty.")
-    if dst_strategy_file is not None:
-        dst_strategy = _build_searched_strategy(dst_strategy_file)
-        dst_strategy_list = _convert_to_list(dst_strategy)
     result_list = set()
     handled_layout = []
     for param_name, _ in src_strategy_list.items():
-        if dst_strategy_file is not None and param_name not in dst_strategy_list:
+        if dst_strategy_list is not None and param_name not in dst_strategy_list:
             continue
         from_dev_matrix, from_tensor_map, from_opt_shard_step, from_opt_shard_size = _extract_layout_item(
             src_strategy_list.get(param_name))
@@ -156,7 +211,7 @@ def _rank_list_for_transform_parallel_checkpoint(rank_id, src_strategy_file=None
         to_tensor_map = [-1] * len(fake_tensor_shape)
         to_opt_shard_step = 0
         to_opt_shard_size = 0
-        if dst_strategy_file is not None:
+        if dst_strategy_list is not None:
             to_dev_matrix, to_tensor_map, to_opt_shard_step, to_opt_shard_size = _extract_layout_item(
                 dst_strategy_list.get(param_name))
         handled_key = (from_dev_matrix, from_tensor_map, from_opt_shard_step, from_opt_shard_size,
@@ -188,18 +243,10 @@ def _rank_list_for_transform_parallel_checkpoint(rank_id, src_strategy_file=None
     return list(result_list)
 
 
-def _transform_parallel_checkpoint(rank_id, param_total_dict, param_attr_dict, src_strategy_file=None,
-                                   dst_strategy_file=None):
+def _transform_parallel_checkpoint(rank_id, param_total_dict, param_attr_dict, src_strategy_list, dst_strategy_list):
     """
     Transform model parallel dimension for distributed checkpoint files.
     """
-    device_num = rank_id + 1
-    if src_strategy_file is not None:
-        src_strategy = _build_searched_strategy(src_strategy_file)
-        src_strategy_list = _convert_to_list(src_strategy)
-    if dst_strategy_file is not None:
-        dst_strategy = _build_searched_strategy(dst_strategy_file)
-        dst_strategy_list = _convert_to_list(dst_strategy)
     transform_param_dict = {}
     for param_name, _ in param_total_dict.items():
         tensor_shape = list(param_total_dict[param_name].values())[0].shape
@@ -207,7 +254,7 @@ def _transform_parallel_checkpoint(rank_id, param_total_dict, param_attr_dict, s
         from_tensor_map = [-1] * len(tensor_shape)
         from_opt_shard_step = 0
         from_opt_shard_size = 0
-        if src_strategy_file is not None:
+        if src_strategy_list is not None:
             if param_name not in src_strategy_list:
                 ms.log.warning("The parameter {} is not in src_strategy.".format(param_name))
                 continue
@@ -217,14 +264,14 @@ def _transform_parallel_checkpoint(rank_id, param_total_dict, param_attr_dict, s
         to_tensor_map_origin = [-1] * len(tensor_shape)
         to_opt_shard_step = 0
         to_opt_shard_size = 0
-        if dst_strategy_file is not None:
+        if dst_strategy_list is not None:
             if param_name not in dst_strategy_list:
                 ms.log.warning("The parameter {} is not in dst_strategy.".format(param_name))
                 continue
             to_dev_matrix_origin, to_tensor_map_origin, to_opt_shard_step, to_opt_shard_size = _extract_layout_item(
                 dst_strategy_list.get(param_name))
         # Add optimizer sharding dim for tensor layout
-        device_num = np.prod(from_dev_matrix) if np.prod(from_dev_matrix) > 1 else rank_id + 1
+        device_num = np.prod(from_dev_matrix)
         param_strategy = _get_tensor_strategy(from_dev_matrix, from_tensor_map)
         origin_tensor_shape = ()
         for i, item in enumerate(tensor_shape):

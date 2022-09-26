@@ -18,7 +18,7 @@ from __future__ import absolute_import
 from mindspore.parallel.algo_parameter_config import get_algo_parameters, reset_algo_parameters, \
     set_algo_parameters
 from mindspore.parallel.checkpoint_transform import rank_list_for_transform, transform_checkpoint_by_rank, \
-    transform_checkpoints
+    transform_checkpoints, merge_pipeline_strategys
 
 __all__ = ["set_algo_parameters", "reset_algo_parameters", "get_algo_parameters", "rank_list_for_transform",
-           "transform_checkpoint_by_rank", "transform_checkpoints"]
+           "transform_checkpoint_by_rank", "transform_checkpoints", "merge_pipeline_strategys"]
