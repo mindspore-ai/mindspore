@@ -224,7 +224,7 @@ class MaxUnpool3DGradHelperGpuKernel : public GpuKernelHelperBase {
     for (int64_t i = dims - 1; i >= 0; i--) {
       outer_size *= backprop_output_shape_[i];
     }
-    CalMaxUnpool3DGrad(grad, indices, backprop_input_shape_, grad_shape_, output_ptr, outer_size, data_format_,
+    CalMaxUnpool3DGrad(grad, indices, backprop_input_shape_, grad_shape_, output_ptr, outer_size, grad_data_format_,
                        device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
     return 0;
   }
@@ -235,13 +235,13 @@ class MaxUnpool3DGradHelperGpuKernel : public GpuKernelHelperBase {
 
  protected:
   int CheckKernelParam() override {
-    data_format_ = attr_ptr_->data_format;
-    if (data_format_ != "NCDHW" && data_format_ != "NDHWC") {
+    grad_data_format_ = attr_ptr_->data_format;
+    if (grad_data_format_ != "NCDHW" && grad_data_format_ != "NDHWC") {
       MS_LOG(ERROR) << "For '" << kernel_name_ << "', the 'data_format' must be 'NCDHW' or 'NDHWC' ,"
-                    << " but got " << data_format_;
+                    << " but got " << grad_data_format_;
       return -1;
     }
-    data_format_ = attr_ptr_->data_format;
+    grad_data_format_ = attr_ptr_->data_format;
     return 0;
   }
 
@@ -251,7 +251,7 @@ class MaxUnpool3DGradHelperGpuKernel : public GpuKernelHelperBase {
   std::vector<int64_t> grad_shape_;
   std::vector<int64_t> indices_shape_;
   std::vector<int64_t> backprop_output_shape_;
-  std::string data_format_;
+  std::string grad_data_format_;
   bool is_null_input_;
 };
 }  // namespace cukernel

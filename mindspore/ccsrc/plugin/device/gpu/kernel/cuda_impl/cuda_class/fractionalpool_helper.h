@@ -66,7 +66,7 @@ class FractionalPoolHelperGpuKernel : public GpuKernelHelperBase {
  public:
   explicit FractionalPoolHelperGpuKernel(const std::string &kernel_name, const uint32_t &device_id)
       : GpuKernelHelperBase(kernel_name, device_id) {
-    is_null_input_ = false;
+    is_null_fractional_input_ = false;
   }
 
   virtual ~FractionalPoolHelperGpuKernel() = default;
@@ -100,7 +100,7 @@ class FractionalPoolHelperGpuKernel : public GpuKernelHelperBase {
     output_size_list_.emplace_back(cur_size * row_pooling_shape_[0]);
     output_size_list_.emplace_back(cur_size * col_pooling_shape_[0]);
 
-    is_null_input_ = (inp_flag == 1 || out_flag == 1);
+    is_null_fractional_input_ = (inp_flag == 1 || out_flag == 1);
     return CheckKernelParam();
   }
 
@@ -190,7 +190,7 @@ class FractionalPoolHelperGpuKernel : public GpuKernelHelperBase {
 
   int Process(const std::vector<void *> &input_ptrs, const std::vector<void *> &output_ptrs,
               const std::vector<void *> &work_ptrs, void *cuda_stream) override {
-    if (is_null_input_) {
+    if (is_null_fractional_input_) {
       return 0;
     }
     T *input_ptr = nullptr;
@@ -291,7 +291,7 @@ class FractionalPoolHelperGpuKernel : public GpuKernelHelperBase {
   std::vector<int64_t> output_shape_;
   std::vector<int64_t> row_pooling_shape_;
   std::vector<int64_t> col_pooling_shape_;
-  bool is_null_input_;
+  bool is_null_fractional_input_;
 };
 
 class FractionalPoolGradAttr : public GpuKernelAttrBase {
@@ -306,7 +306,7 @@ class FractionalPoolGradHelperGpuKernel : public GpuKernelHelperBase {
  public:
   explicit FractionalPoolGradHelperGpuKernel(const std::string &kernel_name, const uint32_t &device_id)
       : GpuKernelHelperBase(kernel_name, device_id) {
-    is_null_input_ = false;
+    is_null_fractional_grad_input_ = false;
     is_max_pooling_grad_ = (kernel_name_.find("FractionalMaxPoolGrad") != std::string::npos);
   }
 
@@ -375,13 +375,13 @@ class FractionalPoolGradHelperGpuKernel : public GpuKernelHelperBase {
       return out_flag;
     }
 
-    is_null_input_ = (inp_flag == 1 || out_flag == 1);
+    is_null_fractional_grad_input_ = (inp_flag == 1 || out_flag == 1);
     return CheckKernelParam();
   }
 
   int Process(const std::vector<void *> &input_ptrs, const std::vector<void *> &output_ptrs,
               const std::vector<void *> &work_ptrs, void *cuda_stream) override {
-    if (is_null_input_) {
+    if (is_null_fractional_grad_input_) {
       return 0;
     }
 
@@ -513,7 +513,7 @@ class FractionalPoolGradHelperGpuKernel : public GpuKernelHelperBase {
   std::vector<int64_t> row_pooling_shape_;
   std::vector<int64_t> col_pooling_shape_;
   std::vector<int64_t> output_shape_;
-  bool is_null_input_;
+  bool is_null_fractional_grad_input_;
   bool is_max_pooling_grad_;
 };
 }  // namespace cukernel

@@ -41,7 +41,8 @@ abstract::ShapePtr Dilation2DInferShape(const PrimitivePtr &primitive, const std
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   const int64_t input_num = 2;
-  CheckAndConvertUtils::CheckInteger("input number", input_args.size(), kEqual, input_num, primitive->name());
+  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num,
+                                           primitive->name());
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
@@ -53,9 +54,10 @@ abstract::ShapePtr Dilation2DInferShape(const PrimitivePtr &primitive, const std
 
   const int64_t x_shape_size = 4;
   const int64_t filter_shape_size = 3;
-  CheckAndConvertUtils::CheckInteger("x shape size", x_shape.size(), kEqual, x_shape_size, primitive->name());
-  CheckAndConvertUtils::CheckInteger("filter shape size", filter_shape.size(), kEqual, filter_shape_size,
-                                     primitive->name());
+  (void)CheckAndConvertUtils::CheckInteger("x shape size", SizeToLong(x_shape.size()), kEqual, x_shape_size,
+                                           primitive->name());
+  (void)CheckAndConvertUtils::CheckInteger("filter shape size", SizeToLong(filter_shape.size()), kEqual,
+                                           filter_shape_size, primitive->name());
   const uint64_t n_axis = 0;
   const uint64_t shapeIndex1 = 1;
   const uint64_t shapeIndex2 = 2;
@@ -80,8 +82,8 @@ abstract::ShapePtr Dilation2DInferShape(const PrimitivePtr &primitive, const std
   // }
   std::vector<int64_t> stride = GetValue<std::vector<int64_t>>(primitive->GetAttr("stride"));
   std::vector<int64_t> dilation = GetValue<std::vector<int64_t>>(primitive->GetAttr("dilation"));
-  int window_h = (kernel_size[0] - 1) * dilation[h_axis] + 1;
-  int window_w = (kernel_size[1] - 1) * dilation[w_axis] + 1;
+  int window_h = static_cast<int>((kernel_size[0] - 1) * dilation[h_axis] + 1);
+  int window_w = static_cast<int>((kernel_size[1] - 1) * dilation[w_axis] + 1);
   const int64_t wLengthMaxLimit = 255;
   const int64_t wSizeMaxLimit = 512;
   if (window_h < 1 || window_h > wLengthMaxLimit || window_w < 1 || window_w > wLengthMaxLimit ||
@@ -127,7 +129,8 @@ abstract::ShapePtr Dilation2DInferShape(const PrimitivePtr &primitive, const std
 TypePtr Dilation2DInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   const int64_t input_num = 2;
-  CheckAndConvertUtils::CheckInteger("input number", input_args.size(), kEqual, input_num, prim->name());
+  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num,
+                                           prim->name());
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }

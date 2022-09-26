@@ -88,14 +88,14 @@ bool MaxUnpool2DGPUKernelMod::Launch(const std::vector<AddressPtr> &inputs, cons
 
 bool MaxUnpool2DGPUKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                    const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::MaxUnpool2D>(base_operator);
-  kernel_name_ = kernel_ptr->name();
+  auto maxunpool2d_kernel_ptr = std::dynamic_pointer_cast<ops::MaxUnpool2D>(base_operator);
+  kernel_name_ = maxunpool2d_kernel_ptr->name();
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
   if (!is_match) {
     return false;
   }
-  attr_ptr_->data_format = kernel_ptr->get_format();
+  attr_ptr_->data_format = maxunpool2d_kernel_ptr->get_format();
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
   helper_ptr_->SetKernelParam(attr_ptr_);
   return true;
@@ -110,15 +110,15 @@ int MaxUnpool2DGPUKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
       return KRET_UNKNOWN_SHAPE;
     }
   }
-  std::vector<std::vector<int64_t>> input_shapes;
-  std::vector<std::vector<int64_t>> output_shapes;
+  std::vector<std::vector<int64_t>> input_maxunpool2d_shapes;
+  std::vector<std::vector<int64_t>> output_maxunpool2d_shapes;
   std::vector<int64_t> inp_shape = inputs[0]->GetShapeVector();
   std::vector<int64_t> indices_shape = inputs[1]->GetShapeVector();
   std::vector<int64_t> out_shape = outputs[0]->GetShapeVector();
-  input_shapes.emplace_back(inp_shape);
-  input_shapes.emplace_back(indices_shape);
-  output_shapes.emplace_back(out_shape);
-  if (helper_ptr_->CalMemSize(input_shapes, output_shapes) == -1) {
+  input_maxunpool2d_shapes.emplace_back(inp_shape);
+  input_maxunpool2d_shapes.emplace_back(indices_shape);
+  output_maxunpool2d_shapes.emplace_back(out_shape);
+  if (helper_ptr_->CalMemSize(input_maxunpool2d_shapes, output_maxunpool2d_shapes) == -1) {
     return KRET_RESIZE_FAILED;
   }
   input_size_list_ = helper_ptr_->GetInputSizeList();
