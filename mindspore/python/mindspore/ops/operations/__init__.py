@@ -75,7 +75,7 @@ from .math_ops import (Abs, ACos, Asin, Asinh, AddN, AccumulateNV2, AssignAdd, A
                        CholeskyInverse)
 from .nn_ops import (LSTM, SGD, Adam, AdamWeightDecay, FusedSparseAdam, FusedSparseLazyAdam, AdamNoUpdateParam,
                      ApplyMomentum, BatchNorm, BiasAdd, Conv2D, Conv3D, Conv2DTranspose, Conv3DTranspose,
-                     DepthwiseConv2dNative,
+                     DepthwiseConv2dNative, GLU,
                      DropoutDoMask, Dropout, Dropout2D, Dropout3D, DropoutGenMask, Flatten,
                      InstanceNorm, BNTrainingReduce, BNTrainingUpdate,
                      GeLU, Gelu, FastGeLU, FastGelu, Elu, CeLU,
@@ -126,6 +126,7 @@ __all__ = [
     'HSVToRGB',
     'CeLU',
     'Ger',
+    'GLU',
     'Unique',
     'ReverseSequence',
     'Sort',

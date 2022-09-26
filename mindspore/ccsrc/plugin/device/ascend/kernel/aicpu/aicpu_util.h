@@ -177,6 +177,7 @@ constexpr auto kZerosLike = "ZerosLike";
 constexpr auto kEqual = "Equal";
 constexpr auto kOnesLike = "OnesLike";
 constexpr auto kSign = "Sign";
+constexpr auto kGLU = "GLU";
 constexpr auto kArgmax = "Argmax";
 constexpr auto kArgmin = "Argmin";
 constexpr auto kRange = "Range";
@@ -317,6 +318,7 @@ const std::map<std::string, std::string> kOpNameToAicpuOpNameMap{
   {kHSigmoidGrad, "HardSigmoidGrad"},
   {kArgmax, "ArgMax"},
   {kArgmin, "ArgMin"},
+  {kGLU, "Glu"},
   {kStridedSliceV2, "StridedSlice"},
   {kStridedSliceV2Grad, "StridedSliceGrad"}};
 struct AicpuParamHead {
