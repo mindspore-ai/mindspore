@@ -33,15 +33,14 @@ abstract::ShapePtr DataFormatVecPermuteInferShape(const PrimitivePtr &primitive,
   auto prim_name = primitive->name();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto x_shape_ptr = input_args[kInputIndex0]->BuildShape()->cast<abstract::ShapePtr>();
-  if (input_args[kInputIndex0]->isa<abstract::AbstractTensor>() &&
-      !input_args[kInputIndex0]->BuildValue()->isa<AnyValue>() &&
-      !input_args[kInputIndex0]->BuildValue()->isa<None>()) {
-    std::vector<int64_t> shape1 = {4};
-    std::vector<int64_t> shape2 = {4, 2};
-    if (x_shape != shape1 && x_shape != shape2) {
-      MS_EXCEPTION(ValueError) << "For " << prim_name << ", input shape must be (4, ) or (4, 2), but got " << x_shape
-                               << ".";
-    }
+  if (IsDynamic(x_shape)) {
+    return x_shape_ptr;
+  }
+  std::vector<int64_t> shape1 = {4};
+  std::vector<int64_t> shape2 = {4, 2};
+  if (x_shape != shape1 && x_shape != shape2) {
+    MS_EXCEPTION(ValueError) << "For " << prim_name << ", input shape must be (4, ) or (4, 2), but got " << x_shape
+                             << ".";
   }
   return x_shape_ptr;
 }

@@ -42,12 +42,14 @@ int SquaredDifferenceOpGpuKernelMod::Resize(const BaseOperatorPtr &base_operator
   need_broadcast_ = false;
   if (input_shape1.size() != input_shape2.size()) {
     need_broadcast_ = true;
-  }
-  for (size_t i = 0; i < input_shape1.size(); i++) {
-    if (input_shape1[i] != input_shape2[i]) {
-      need_broadcast_ = true;
+  } else {
+    for (size_t i = 0; i < input_shape1.size(); i++) {
+      if (input_shape1[i] != input_shape2[i]) {
+        need_broadcast_ = true;
+      }
     }
   }
+
   if (need_broadcast_ && output_shape.size() > MAX_DIMS) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of output cannot be greater than " << MAX_DIMS
                       << ", but got " << output_shape.size();
