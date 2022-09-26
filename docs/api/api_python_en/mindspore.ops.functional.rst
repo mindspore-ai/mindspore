@@ -436,6 +436,7 @@ Differential Functions
     mindspore.ops.jet
     mindspore.ops.jvp
     mindspore.ops.vjp
+    mindspore.ops.jacfwd
     mindspore.ops.vmap
 
 Debugging Functions
