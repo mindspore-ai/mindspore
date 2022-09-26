@@ -40,8 +40,8 @@ def grad_dyn_case(is_dynamic_rank):
 
 
 @pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
+@pytest.mark.platform_x86_gpu_training
 def test_gpu_grad_dynamic_shape():
     """
     Feature: test Conv2DBackpropFilter dynamic shape on GPU.
@@ -53,8 +53,8 @@ def test_gpu_grad_dynamic_shape():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
+@pytest.mark.platform_x86_gpu_training
 def test_gpu_grad_dynamic_rank():
     """
     Feature: test Conv2DBackpropFilter dynamic rank on GPU.
@@ -66,8 +66,8 @@ def test_gpu_grad_dynamic_rank():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
 def test_cpu_grad_dynamic_shape():
     """
     Feature: test Conv2DBackpropFilter dynamic shape on CPU.
@@ -79,8 +79,8 @@ def test_cpu_grad_dynamic_shape():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
 def test_cpu_grad_dynamic_rank():
     """
     Feature: test Conv2DBackpropFilter dynamic rank on CPU.

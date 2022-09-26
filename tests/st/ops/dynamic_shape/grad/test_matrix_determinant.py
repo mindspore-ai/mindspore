@@ -44,6 +44,7 @@ def dynamic_rank():
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 def test_dynamic_matrix_determinant_cpu():
     """
     Feature: MatrixDeterminant Grad DynamicShape.
@@ -62,6 +63,7 @@ def test_dynamic_matrix_determinant_cpu():
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
 def test_dynamic_matrix_determinant_gpu():
     """
     Feature: MatrixDeterminant Grad DynamicShape.

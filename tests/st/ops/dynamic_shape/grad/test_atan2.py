@@ -61,6 +61,7 @@ def test_dynamic_atan2_cpu():
 
 
 @pytest.mark.level1
+@pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 def test_dynamic_atan2_gpu():
     """
@@ -79,6 +80,7 @@ def test_dynamic_atan2_gpu():
 
 
 @pytest.mark.level1
+@pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 def test_dynamic_atan2_ascend():

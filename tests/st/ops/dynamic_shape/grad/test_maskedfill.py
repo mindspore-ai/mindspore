@@ -48,6 +48,7 @@ def run_dynamic_rank():
 
 
 @pytest.mark.level1
+@pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 def test_dynamic_maskedfill_gpu():
     """
@@ -66,6 +67,7 @@ def test_dynamic_maskedfill_gpu():
 
 
 @pytest.mark.level1
+@pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 def test_dynamic_maskedfill_ascend():
     """
