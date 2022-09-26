@@ -903,7 +903,6 @@ void DfGraphConvertor::BuildWhileAfterSubGraph() {
   if (graph_outputs_.empty()) {
     SetGraphOutputs();
   }
-  IdentityOptimization();
   compute_sout_ << "}" << endl;
   return;
 }
