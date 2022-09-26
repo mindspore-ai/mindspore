@@ -326,7 +326,7 @@ void KernelAdjust::InsertGetNextLoopStreamSwitch(
 }
 
 void KernelAdjust::SetBeforeGetNextStreamID(std::vector<CNodePtr> *exec_order, const std::vector<CNodePtr> &orders,
-                                            size_t *order_index, CNodePtr getnext_cnode,
+                                            size_t *order_index, CNodePtr *getnext_cnode,
                                             uint32_t getnext_stream_id) const {
   MS_EXCEPTION_IF_NULL(exec_order);
   MS_EXCEPTION_IF_NULL(order_index);
@@ -335,7 +335,7 @@ void KernelAdjust::SetBeforeGetNextStreamID(std::vector<CNodePtr> *exec_order, c
     (*exec_order).push_back(node);
     AnfAlgo::SetStreamId(getnext_stream_id, (*exec_order)[(*exec_order).size() - 1].get());
     if (common::AnfAlgo::GetCNodeName(node) == kGetNextOpName) {
-      getnext_cnode = node;
+      *getnext_cnode = node;
       break;
     }
   }
@@ -466,7 +466,7 @@ void KernelAdjust::ProcessLoopSink(const std::shared_ptr<session::KernelGraph> &
   if (exist_getnext) {
     InsertGetNextLoopStreamSwitch(kernel_graph_ptr, &exec_order, &getnext_switch_stream_id, &getnext_stream_id,
                                   switch_loop_input);
-    SetBeforeGetNextStreamID(&exec_order, orders, &order_index, getnext_cnode, getnext_stream_id);
+    SetBeforeGetNextStreamID(&exec_order, orders, &order_index, &getnext_cnode, getnext_stream_id);
     InsertGetNextLoopFpBpStartSend(kernel_graph_ptr, &exec_order, &fpbp_start_event_id, getnext_stream_id);
     if (eos_mode) {
       InsertGetNextLoopEosStartSend(kernel_graph_ptr, &exec_order, &eos_start_event_id, getnext_stream_id);
