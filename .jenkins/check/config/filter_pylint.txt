@@ -159,6 +159,7 @@
 "mindspore/tests/st/fallback/control_flow/test_fallback_100_if_after_if.py"                             "unused-variable"
 "mindspore/tests/st/numpy_native/test_array_ops.py"                                                     "useless-super-delegation"
 "mindspore/tests/ut/python/mindir/test_mindir_export.py"                                                "no-else-return"
+"mindspore/tests/"                                                                                      "c-extension-no-member"
 
 #MindSpore Lite
 "mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/experimental/HPC-generator/generator.py"                                         "redefined-builtin"

@@ -56,7 +56,7 @@ def dyn_grad_func(dtype=np.float16, is_dynamic_rank=False):
 @pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_one_card
+@pytest.mark.env_onecard
 def test_roialign_dynamic_shape():
     """
     Feature: Test the bprop process of ROIAlign in PyNative mode with dynamic shape inputs
@@ -70,7 +70,7 @@ def test_roialign_dynamic_shape():
 @pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_one_card
+@pytest.mark.env_onecard
 def test_roialign_dynamic_rank():
     """
     Feature: Test the bprop process of ROIAlign in PyNative mode with dynamic rank inputs

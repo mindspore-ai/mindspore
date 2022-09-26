@@ -46,6 +46,7 @@ def run_dynamic_rank():
 
 
 @pytest.mark.level1
+@pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 def test_dynamic_bias_add_cpu():
     """
@@ -64,6 +65,7 @@ def test_dynamic_bias_add_cpu():
 
 
 @pytest.mark.level1
+@pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 def test_dynamic_bias_add_gpu():
     """
@@ -82,6 +84,7 @@ def test_dynamic_bias_add_gpu():
 
 
 @pytest.mark.level1
+@pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 def test_dynamic_bias_add_ascend():
     """
