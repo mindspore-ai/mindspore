@@ -345,7 +345,7 @@ bool ReduceCpuKernelFunc<T>::RunFunc(const std::vector<kernel::AddressPtr> &inpu
         iter.GenNextPos();
         reduce_func_(input_addr, &output_addr[i], 1, stride, &iter);
         if (reduce_type_ == ReduceFuncType::kReduceMeanType) {
-          output_addr[i] /= static_cast<float>(stride);
+          output_addr[i] /= SizeToFloat(stride);
         }
       }
     };
