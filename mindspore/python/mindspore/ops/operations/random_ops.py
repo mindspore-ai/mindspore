@@ -919,7 +919,7 @@ class RandomShuffle(Primitive):
         TypeError: If data type of `seed` or `seed2` is not int.
 
     Supported Platforms:
-        ``CPU``
+        ``CPU`` ``GPU``
 
     Examples:
         >>> x = Tensor(np.array([1, 2, 3, 4]), mstype.float32)
