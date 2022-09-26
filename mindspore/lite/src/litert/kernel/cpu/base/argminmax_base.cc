@@ -28,8 +28,8 @@ using mindspore::schema::PrimitiveType_ArgMinFusion;
 
 namespace mindspore::kernel {
 int ArgMinMaxCPUKernel::Prepare() {
-  CHECK_LESS_RETURN(in_tensors_.size(), 1);
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NOT_EQUAL_RETURN(in_tensors_.size(), 1);
+  CHECK_NOT_EQUAL_RETURN(out_tensors_.size(), 1);
   CHECK_NULL_RETURN(arg_param_);
   arg_param_->data_type_ = kNumberTypeFloat32;
   if (!InferShapeDone()) {

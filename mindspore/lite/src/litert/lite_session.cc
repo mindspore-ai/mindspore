@@ -311,7 +311,10 @@ void LiteSession::InitGraphInputMap(const lite::Model *model) {
     MS_ASSERT(in_node != nullptr);
     auto in_size = in_node->input_indices_.size();
     for (size_t i = 0; i < in_size; ++i) {
-      MS_ASSERT(this->input_map_.find(in_node->name_ + std::to_string(i)) == this->input_map_.end());
+      if (this->input_map_.find(in_node->name_ + std::to_string(i)) != this->input_map_.end()) {
+        MS_LOG(ERROR) << "cant find input " << in_node->name_ + std::to_string(i) << "at input_map_";
+        return;
+      }
       auto in_tensor_index = size_t(in_node->input_indices_[i]);
       bool is_graph_input = false;
       for (size_t j = 0; j < graph_in_size; ++j) {

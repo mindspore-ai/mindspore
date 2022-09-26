@@ -302,6 +302,15 @@ int ResizeInt8CPUKernel::ReSize() {
       return InitFloatResizeBiLinear();
     }
   }
+  if (in_tensors_.front()->quant_params().empty() || out_tensors_.front()->quant_params().empty() ||
+      in_tensors_.front()->quant_params().front().scale != out_tensors_.front()->quant_params().front().scale ||
+      in_tensors_.front()->quant_params().front().zeroPoint != out_tensors_.front()->quant_params().front().zeroPoint ||
+      in_tensors_.front()->quant_params().front().zeroPoint > INT8_MAX ||
+      in_tensors_.front()->quant_params().front().zeroPoint < INT8_MIN ||
+      in_tensors_.front()->quant_params().front().scale < 0) {
+    MS_LOG(ERROR) << "Resize quant param is invalid.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 

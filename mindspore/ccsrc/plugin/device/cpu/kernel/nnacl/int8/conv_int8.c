@@ -784,6 +784,9 @@ void Im2ColPackUnitInt8Opt(const int8_t *input_data, int8_t *packed_input, int8_
     int kh_e = MSMIN(kernel_h, UP_DIV(in_h - input_h, dilation_h));
     int kw_s = MSMAX(0, UP_DIV(-input_w, dilation_w));
     int kw_e = MSMIN(kernel_w, UP_DIV(in_w - input_w, dilation_w));
+    if (kw_e <= kw_s || kh_e <= kh_s) {
+      continue;
+    }
     if (dilation_w == 1 && dilation_h == 1) {
       for (int j = kh_s; j < kh_e; j++) {
         int input_y_stride = j * in_w * in_channel + input_stride;

@@ -50,6 +50,14 @@ int QuantDTypeCastCPUKernel::Prepare() {
     MS_LOG(ERROR) << "param data type and tensor data type do not match.";
     return RET_ERROR;
   }
+  if (src_dtype != TypeId::kNumberTypeFloat32 && in_tensors_.front()->quant_params().empty()) {
+    MS_LOG(ERROR) << in_tensors_.front()->tensor_name() << " quant param is empty.";
+    return RET_ERROR;
+  }
+  if (dst_dtype != TypeId::kNumberTypeFloat32 && out_tensors_.front()->quant_params().empty()) {
+    MS_LOG(ERROR) << out_tensors_.front()->tensor_name() << " quant param is empty.";
+    return RET_ERROR;
+  }
 
   if (!InferShapeDone()) {
     return RET_OK;
@@ -63,6 +71,11 @@ int QuantDTypeCastCPUKernel::ReSize() {
   thread_n_num_ = MSMIN(thread_num_, num_unit_);
   MS_CHECK_GT(thread_n_num_, 0, RET_ERROR);
   thread_n_stride_ = UP_DIV(num_unit_, thread_n_num_);
+  if (in_tensors_.front()->shape() != out_tensors_.front()->shape()) {
+    MS_LOG(ERROR) << "in_tensors shape is " << in_tensors_.front()->shape() << " != out_tensors shape "
+                  << out_tensors_.front()->shape();
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
