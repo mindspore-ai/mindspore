@@ -2625,6 +2625,7 @@ void DfGraphConvertor::SetNodeAbstract(const CNodePtr &node) const {
     std::transform(inputs.begin() + 1, inputs.end(), std::back_inserter(elem),
                    [](const AnfNodePtr &node) { return node->abstract(); });
     node->set_abstract(std::make_shared<abstract::AbstractTuple>(elem));
+    return;
   }
   if (IsPrimitiveCNode(node, prim::kPrimReturn)) {
     auto inputs = node->inputs();
@@ -2635,6 +2636,7 @@ void DfGraphConvertor::SetNodeAbstract(const CNodePtr &node) const {
     auto input = inputs[1];
     MS_EXCEPTION_IF_NULL(input);
     node->set_abstract(input->abstract());
+    return;
   }
   MS_LOG(ERROR) << "Node has not abstract:" << node->fullname_with_scope() << ", DebugString: " << node->ToString();
 }
