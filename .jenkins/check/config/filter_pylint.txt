@@ -151,6 +151,7 @@
 "mindspore/tests/st/networks/test_gpu_alexnet.py"                                                       "unused-variable"
 "mindspore/tests/st/networks/test_gpu_lenet.py"                                                         "unused-variable"
 "mindspore/tests/st/ops/custom_ops_tbe/cus_add3.py"                                                     "unused-import"
+"mindspore/tests/st/control/inner/test_002_single_for.py"                                               "not-an-iterable"
 "mindspore/tests/st/ops/ascend/test_aicpu_ops/test_strided_slice.py"                                    "redefined-outer-name"
 "mindspore/tests/st/ops/ascend/test_aicpu_ops/test_strided_slice.py"                                    "redefined-builtin"
 "mindspore/tests/st/ops/ascend/test_aicpu_ops/test_strided_slice_grad.py"                               "redefined-outer-name"

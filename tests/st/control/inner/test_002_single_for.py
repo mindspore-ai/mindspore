@@ -281,3 +281,26 @@ def test_single_for():
         input_y = Tensor([2], mstype.int32)
         res = control_flow_for(input_x, input_y)
         print("res:", res)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_single_for_with_not_iterable_object():
+    """
+    Feature: The else branches of for loops aren't supported.
+    Description: The else branches of for loops aren't supported.
+    Expectation: No exception.
+    """
+    @ms_function
+    def control_flow_for_with_not_iterable_object():
+        ret = 0
+        a = 1
+        for i in a:
+            ret = ret + i
+        return ret
+
+    with pytest.raises(TypeError, match="object is not iterable in graph mode"):
+        control_flow_for_with_not_iterable_object()
