@@ -22,6 +22,7 @@
 #include <memory>
 #include "ir/primitive.h"
 #include "ir/value.h"
+#include "utils/hash_map.h"
 namespace mindspore {
 namespace ops {
 /// \brief PrimitiveC defines the base class for end side operators.
@@ -61,7 +62,7 @@ class MS_CORE_API OpPrimCRegister {
   /// \brief Get PrimCMap of the OpPrimCRegister singleton.
   ///
   /// \return The PrimCMap of the OpPrimCRegister singleton.
-  std::map<std::string, OpPrimCDefineFunc> GetPrimCMap();
+  const HashMap<std::string, OpPrimCDefineFunc> &GetPrimCMap();
 
   /// \brief Add an element into the PrimCMap of the OpPrimCRegister singleton.
   ///
@@ -71,7 +72,7 @@ class MS_CORE_API OpPrimCRegister {
 
  private:
   OpPrimCRegister() {}
-  std::map<std::string, OpPrimCDefineFunc> op_primc_fns_;
+  HashMap<std::string, OpPrimCDefineFunc> op_primc_fns_;
 };
 
 /// \brief OpPrimCRegisterHelper defines the helper class for the OpPrimCRegister singleton.
