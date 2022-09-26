@@ -8,7 +8,7 @@ mindspore.Tensor.renorm
     参数：
         - **p** (int) - 范数计算的幂。
         - **dim** (int) - 获得子张量的维度。
-        - **maxnorm** (float32) - 给定的最大范数。
+        - **maxnorm** (float) - 给定的最大范数。
 
     返回：
         Tensor，shape和type与输入Tensor一致。
