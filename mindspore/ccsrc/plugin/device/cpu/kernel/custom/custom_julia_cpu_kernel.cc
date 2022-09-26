@@ -23,11 +23,16 @@
 #include "plugin/device/cpu/hal/device/cpu_common.h"
 #include "plugin/device/cpu/kernel/custom/julia_api.h"
 #include "utils/file_utils.h"
+#include "mindspore/core/ops/custom.h"
 
 namespace mindspore {
 namespace kernel {
-void CustomJULIACpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  const auto &exec_info = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, "func_name");
+bool CustomJULIACpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                   const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->GetPrim()->name();
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::Custom>(base_operator);
+  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
+  const auto &exec_info = GetValue<std::string>(kernel_ptr->GetAttr("func_name"));
   auto pos1 = exec_info.find(":");
   auto pos2 = exec_info.rfind(":");
   if (pos1 == std::string::npos || pos2 == std::string::npos || pos1 == pos2) {
@@ -42,48 +47,37 @@ void CustomJULIACpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   module_name_ = exec_info.substr(pos1 + 1, (pos2 - pos1) - 1);
   func_name_ = exec_info.substr(pos2 + 1);
 
-  num_input_ = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  auto input_type_list = AnfAlgo::GetAllInputDeviceTypes(kernel_node);
-  if (num_input_ != input_type_list.size()) {
-    MS_LOG(EXCEPTION) << "Kernel[" << exec_info << "]'s input shapes'size is " << num_input_
-                      << "is different from input types' size which is " << input_type_list.size();
-  }
-
-  for (size_t i = 0; i < num_input_; i++) {
-    auto in_shape = AnfAlgo::GetInputDeviceShape(kernel_node, i);
+  for (size_t i = 0; i < inputs.size(); i++) {
+    auto dtype = inputs[i]->GetDtype();
+    auto in_shape = inputs[i]->GetShapeVector();
     ndims_.push_back(in_shape.size());
     shape_list_.push_back(in_shape);
-    type_list_.push_back(TypeIdToString(input_type_list[i], true));
+    type_list_.push_back(TypeIdToString(dtype, true));
   }
 
-  num_output_ = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-  auto output_type_list = AnfAlgo::GetAllOutputDeviceTypes(kernel_node);
-  if (num_output_ != output_type_list.size()) {
-    MS_LOG(EXCEPTION) << "Kernel[" << exec_info << "]'s output shapes'size is " << num_input_
-                      << "is different from output types' size which is " << input_type_list.size();
-  }
-
-  for (size_t i = 0; i < num_output_; i++) {
-    auto out_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, i);
+  for (size_t i = 0; i < outputs.size(); i++) {
+    auto dtype = outputs[i]->GetDtype();
+    auto out_shape = outputs[i]->GetShapeVector();
     ndims_.push_back(out_shape.size());
     shape_list_.push_back(out_shape);
-    type_list_.push_back(TypeIdToString(output_type_list[i], true));
+    type_list_.push_back(TypeIdToString(dtype, true));
   }
 
   (void)std::transform(std::begin(shape_list_), std::end(shape_list_), std::back_inserter(shapes_),
                        [](auto &v) { return &v[0]; });
   (void)std::transform(std::begin(type_list_), std::end(type_list_), std::back_inserter(type_pointer_list_),
                        [](auto &str) { return str.c_str(); });
+  return true;
 }
 
 bool CustomJULIACpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                      const std::vector<AddressPtr> &outputs) {
   std::vector<void *> params;
-  for (size_t i = 0; i < num_input_; i++) {
-    params.push_back(GetDeviceAddress<void>(inputs, i));
+  for (size_t i = 0; i < inputs.size(); i++) {
+    params.push_back(reinterpret_cast<void *>(inputs[i]->addr));
   }
-  for (size_t i = 0; i < num_output_; i++) {
-    params.push_back(GetDeviceAddress<void>(outputs, i));
+  for (size_t i = 0; i < outputs.size(); i++) {
+    params.push_back(reinterpret_cast<void *>(outputs[i]->addr));
   }
   size_t nparam = params.size();
   JuliaAPI *julia = JuliaAPI::GetInstance();

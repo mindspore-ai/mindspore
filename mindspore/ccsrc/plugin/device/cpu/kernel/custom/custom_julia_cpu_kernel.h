@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CUSTOM_JULIA_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CUSTOM_JULIA_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_CUSTOM_CUSTOM_JULIA_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_CUSTOM_CUSTOM_JULIA_KERNEL_H_
 
 #include <vector>
 #include <string>
@@ -23,25 +23,24 @@
 
 namespace mindspore {
 namespace kernel {
-class CustomJULIACpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class CustomJULIACpuKernelMod : public NativeCpuKernelMod {
  public:
   CustomJULIACpuKernelMod() = default;
   ~CustomJULIACpuKernelMod() = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
  protected:
-  std::vector<std::vector<int64_t>> shape_list_;
+  ShapeArray shape_list_;
   std::vector<size_t> ndims_;
   std::vector<std::string> type_list_;
 
-  std::vector<int64_t *> shapes_;
+  std::vector<ShapeValueDType *> shapes_;
   std::vector<const char *> type_pointer_list_;
 
-  size_t num_input_{0};
-  size_t num_output_{0};
   std::string file_path_;
   std::string module_name_;
   std::string func_name_;
@@ -49,4 +48,4 @@ class CustomJULIACpuKernelMod : public DeprecatedNativeCpuKernelMod {
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CUSTOM_JULIA_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_CUSTOM_CUSTOM_JULIA_KERNEL_H_
