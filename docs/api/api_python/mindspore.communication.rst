@@ -135,7 +135,7 @@ mindspore.communication
         - 列表rank_ids的长度应大于1。
         - 列表rank_ids内不能有重复数据。
         - `create_group` 方法应该在 `init` 方法之后使用。
-        - PyNative模式下仅支持全局单通信组。
+        - 如果没有使用mpirun启动，PyNative模式下仅支持全局单通信组。
         - 在运行以下示例之前，用户需要预设通信环境变量，请查看mindspore.communication的文档注释。
 
     参数：
