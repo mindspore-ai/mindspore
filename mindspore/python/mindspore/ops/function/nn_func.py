@@ -635,10 +635,10 @@ def dropout(x, p=0.5, seed0=0, seed1=0):
 
     Args:
         x (Tensor): The input of Dropout, a Tensor of any shape with data type of float16 or float32.
-        p (float): The dropping rate, between 0 and 1, e.g. p = 0.1,
+        p (float, optional): The dropping rate, between 0 and 1, e.g. p = 0.1,
             means dropping out 10% of input units. Default: 0.5.
-        seed0 (int): Seed0 value for random generating. Default: 0.
-        seed1 (int): Seed1 value for random generating. Default: 0.
+        seed0 (int, optional): seed0 value for random generating. Default: 0.
+        seed1 (int, optional): seed1 value for random generating. Default: 0.
 
     Returns:
         - **output** (Tensor) - With the same shape and data type as `x`.
@@ -646,7 +646,7 @@ def dropout(x, p=0.5, seed0=0, seed1=0):
 
     Raises:
         TypeError: If `p` is not a float.
-        TypeError: If `Seed0` or `Seed1` is not an int.
+        TypeError: If `seed0` or `seed1` is not an int.
         TypeError: If dtype of `x` is neither float16 nor float32.
         TypeError: If `x` is not a Tensor.
 
@@ -2630,7 +2630,7 @@ def conv2d(inputs, weight, pad_mode="valid", padding=0, stride=1, dilation=1, gr
         inputs (Tensor): Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
         weight (Tensor): Set size of kernel is :math:`(\text{kernel_size[0]}, \text{kernel_size[1]})`,
             then the shape is :math:`(C_{out}, C_{in}, \text{kernel_size[0]}, \text{kernel_size[1]})`.
-        pad_mode (str): Specifies padding mode. The optional values are
+        pad_mode (str, optional): Specifies padding mode. The optional values are
             "same", "valid" and "pad". Default: "valid".
 
             - same: Adopts the way of completion. The height and width of the output will be equal to
@@ -2644,19 +2644,19 @@ def conv2d(inputs, weight, pad_mode="valid", padding=0, stride=1, dilation=1, gr
 
             - pad: Implicit paddings on both sides of the input `x`. The number of `padding` will be padded to the input
               Tensor borders. `padding` must be greater than or equal to 0.
-        padding (Union(int, tuple[int])): Implicit paddings on both sides of the input `x`. If `padding` is one integer,
-                    the paddings of top, bottom, left and right are the same, equal to padding. If `padding` is a tuple
-                    with four integers, the paddings of top, bottom, left and right will be equal to padding[0],
-                    padding[1], padding[2], and padding[3] accordingly. Default: 0.
-        stride (Union(int, tuple[int])): The distance of kernel moving, an int number that represents
+        padding (Union(int, tuple[int]), optional): Implicit paddings on both sides of the input `x`.
+            If `padding` is one integer,
+            the paddings of top, bottom, left and right are the same, equal to padding. If `padding` is a tuple
+            with four integers, the paddings of top, bottom, left and right will be equal to padding[0],
+            padding[1], padding[2], and padding[3] accordingly. Default: 0.
+        stride (Union(int, tuple[int]), optional): The distance of kernel moving, an int number that represents
             the height and width of movement are both strides, or a tuple of two int numbers that
             represent height and width of movement respectively. Default: 1.
-        dilation (Union(int, tuple[int])): The data type is int or a tuple of 2 integers. Specifies the dilation rate
-                                      to use for dilated convolution. If set to be :math:`k > 1`, there will
-                                      be :math:`k - 1` pixels skipped for each sampling location. Its value must
-                                      be greater than or equal to 1 and bounded by the height and width of the
-                                      input `x`. Default: 1.
-        group (int): Splits inputs into groups. Default: 1.
+        dilation (Union(int, tuple[int]), optional): The data type is int or a tuple of 2 integers.
+            Specifies the dilation rate to use for dilated convolution. If set to be :math:`k > 1`, there will
+            be :math:`k - 1` pixels skipped for each sampling location. Its value must
+            be greater than or equal to 1 and bounded by the height and width of the input `x`. Default: 1.
+        group (int, optional): Splits inputs into groups. Default: 1.
 
     Returns:
         Tensor, the value that applied 2D convolution. The shape is :math:`(N, C_{out}, H_{out}, W_{out})`.
@@ -3064,7 +3064,7 @@ def conv3d(inputs, weight, pad_mode="valid", padding=0, stride=1, dilation=1, gr
         weight (Tensor): Set size of kernel is :math:`(\text{kernel_size[0]}, \text{kernel_size[1]},
             \text{kernel_size[2]})`, then the shape is :math:`(C_{out}, C_{in}, \text{kernel_size[0]},
             \text{kernel_size[1]}, \text{kernel_size[1]})`.
-        pad_mode (str): Specifies padding mode. The optional values are
+        pad_mode (str, optional): Specifies padding mode. The optional values are
             "same", "valid" and "pad". Default: "valid".
 
             - same: Adopts the way of completion. The depth, height and width of the output will be equal to
@@ -3080,21 +3080,19 @@ def conv3d(inputs, weight, pad_mode="valid", padding=0, stride=1, dilation=1, gr
             - pad: Implicit paddings on both sides of the input in depth, height and width. The number of `pad` will
               be padded to the input Tensor borders. `pad` must be greater than or equal to 0.
 
-        padding (Union(int, tuple[int])): The pad value to be filled. Default: 0. If `pad` is an integer, the paddings
-            of head, tail, top, bottom, left and right are the same, equal to pad. If `pad` is a tuple of six
-            integers, the padding of head, tail, top, bottom, left and right equal to pad[0], pad[1], pad[2],
-            pad[3], pad[4] and pad[5] correspondingly.
-        stride (Union(int, tuple[int])): The distance of kernel moving, an int number that represents
+        padding (Union(int, tuple[int]), optional): The pad value to be filled. Default: 0. If `pad` is an integer,
+            the paddings of head, tail, top, bottom, left and right are the same, equal to pad.
+            If `pad` is a tuple of six integers, the padding of head, tail, top, bottom,
+            left and right equal to pad[0], pad[1], pad[2], pad[3], pad[4] and pad[5] correspondingly.
+        stride (Union(int, tuple[int]), optional): The distance of kernel moving, an int number that represents
             the height and width of movement are both strides, or a tuple of two int numbers that
             represent height and width of movement respectively. Default: 1.
-        dilation (Union[int, tuple[int]]): The data type is int or a tuple of 3 integers
-                                      :math:`(dilation_d, dilation_h, dilation_w)`.
-                                      Currently, dilation on depth only supports the case of 1.
-                                      Specifies the dilation rate to use for dilated convolution.
-                                      If set :math:`k > 1`, there will be :math:`k - 1` pixels skipped
-                                      for each sampling location. Its value must be greater than or equal to 1 and
-                                      bounded by the height and width of the input. Default: 1.
-        group (int): Splits filter into groups, `in_channels` and `out_channels` must be
+        dilation (Union[int, tuple[int]], optional): The data type is int or a tuple of 3 integers
+            :math:`(dilation_d, dilation_h, dilation_w)`. Currently, dilation on depth only supports the case of 1.
+            Specifies the dilation rate to use for dilated convolution. If set :math:`k > 1`,
+            there will be :math:`k - 1` pixels skipped for each sampling location.
+            Its value must be greater than or equal to 1 and bounded by the height and width of the input. Default: 1.
+        group (int, optional): Splits filter into groups, `in_channels` and `out_channels` must be
             divisible by the number of groups. Default: 1. Only 1 is currently supported.
     Returns:
         Tensor, the value that applied 3D convolution. The shape is :math:`(N, C_{out}, D_{out}, H_{out}, W_{out})`.
@@ -3161,6 +3159,133 @@ def glu(x, axis=-1):
     return x * y
 
 
+def multi_margin_loss(inputs, target, p=1, margin=1, weight=None, reduction='mean'):
+    r"""
+    Creates a criterion that optimizes a multi-class classification hinge
+    loss (margin-based loss) between input :math:`x` (a 2D mini-batch `Tensor`) and
+    output :math:`y` (which is a 1D tensor of target class indices,
+    :math:`0 \leq y \leq \text{x.size}(1)-1`):
+    For each mini-batch sample, the loss in terms of the 1D input :math:`x` and scalar
+    output :math:`y` is:
+    .. math::
+        \text{loss}(x, y) = \frac{\sum_i \max(0, w[y] * (\text{margin} - x[y] + x[i]))^p)}{\text{x.size}(0)}
+    where :math:`x \in \left\{0, \; \cdots , \; \text{x.size}(0) - 1\right\}`
+    and :math:`i \neq y`.
+    Optionally, you can give non-equal weighting on the classes by passing
+    a 1D input `weight` tensor into the constructor.
+
+    Args:
+        - **inputs** (Tensor) - Input , with shape :math:`(N, C)`. Data type only support float32, float16 or float64.
+        - **target** (Tensor) - Ground truth labels, with shape :math:`(N,)`. Data type only support int64. The
+          value of target should be non-negative, less than C.
+        - **p** (int, optional) - The norm degree for pairwise distance. Should be 1 or 2. Default: 1.
+        - **margin** (int, optional) - A parameter to change pairwise distance. Default: 1.
+        - **weight** (Tensor, optional) - The rescaling weight to each class with shape :math:`(C,)`. Data type only
+          support float16, float32 or float64. Default: None.
+        - **reduction** (str, optional) - Apply specific reduction method to the output: 'none', 'mean',
+          'sum'. Default: 'mean'.
+
+          - 'none': no reduction will be applied.
+          - 'mean': the sum of the output will be divided by the number of elements in the output.
+          - 'sum': the output will be summed.
+
+    Returns:
+        Tensor, When `reduction` is 'none', the shape is :math:`(N,)`.
+        Otherwise, it is a scalar. Has the same data type with `inputs`.
+
+    Raises:
+        TypeError: If dtype of `p` or `target` is not int.
+        TypeError: If dtype of `margin` is not int.
+        TypeError: If dtype of `reduction` is not str.
+        TypeError: If dtype of `inputs` is not float16, float or float64.
+        TypeError: If dtype of `weight` and `inputs` is not the same.
+        ValueError: If `p` is not 1 or 2.
+        ValueError: If `reduction` is not one of {'none','sum','mean'}.
+        ValueError: If shape[0] of `inputs` is not equal to shape[0] of `target`.
+        ValueError: If shape[1] of `inputs` is not equal to shape[0] of `weight`.
+        ValueError: If rank of `weight` is not 1 or  rank of `target` is not 1 or `inputs` is not 2.
+
+    Supported Platforms:
+        ``Ascend``  ``CPU``
+
+    Examples:
+        >>> inputs = Tensor(np.ones(shape=[3, 3]), mindspore.float32)
+        >>> target = Tensor(np.array([1, 2, 1]), mindspore.int64)
+        >>> weight = Tensor(np.array([1, 1, 1]), mindspore.float32)
+        >>> output = ops.multi_margin_loss(inputs, target, weight)
+        >>> print(output)
+        0.6666667
+    """
+
+    if not isinstance(margin, int):
+        raise TypeError(f"For 'multi_margin_loss', the type of 'margin' must be int, but got {type(margin)}.")
+    margin_ = float(margin)
+    loss = _get_cache_prim(P.MultiMarginLoss)(p, margin_, reduction)
+    outputs = loss(inputs, target, weight)
+    return outputs
+
+
+def multi_label_margin_loss(inputs, target, reduction='mean'):
+    r"""
+    MultilabelMarginLoss operation.
+    Creates a criterion that optimizes a multi-class multi-classification
+    hinge loss (margin-based loss) between input :math:`x` (a 2D mini-batch `Tensor`)
+    and output :math:`y` (which is a 2D `Tensor` of target class indices).
+    For each sample in the mini-batch:
+    .. math::
+        \text{loss}(x, y) = \sum_{ij}\frac{\max(0, 1 - (x[y[j]] - x[i]))}{\text{x.size}(0)}
+    where :math:`x \in \left\{0, \; \cdots , \; \text{x.size}(0) - 1\right\}`, \
+    :math:`y \in \left\{0, \; \cdots , \; \text{y.size}(0) - 1\right\}`, \
+    :math:`0 \leq y[j] \leq \text{x.size}(0)-1`, \
+    and :math:`i \neq y[j]` for all :math:`i` and :math:`j`.
+    :math:`y` and :math:`x` must have the same size.
+    The criterion only considers a contiguous block of non-negative targets that
+    starts at the front.
+    This allows for different samples to have variable amounts of target classes.
+
+    Args:
+        - **inputs** (Tensor) - Predict data. Tensor of shape :math:`(C)` or :math:`(N, C)`, where :math:`N`
+          is the batch size and :math:`C` is the number of classes. Data type must be float16 or float32.
+        - **target** (Tensor) - Ground truth data, with the same shape as `x`, data type must be int32 and
+          label targets padded by -1.
+        - **reduction** (str, optional) - Apply specific reduction method to the output: 'none', 'mean',
+          'sum'. Default: 'mean'.
+
+          - 'none': no reduction will be applied.
+          - 'mean': the sum of the output will be divided by the number of elements in the output.
+          - 'sum': the output will be summed.
+
+    Returns:
+        - **outputs** (Union[Tensor, Scalar]) - The loss of MultilabelMarginLoss. If `reduction` is "none", its shape
+          is :math:`(N)`. Otherwise, a scalar value will be returned.
+        - **is_target** (Tensor) - Output tensor for backward input, with the same shape as `target`,
+          data type must be int32.
+
+    Raises:
+        TypeError: If `inputs` or `target` is not a Tensor.
+        TypeError: If dtype of `inputs` is neither float16 nor float32.
+        TypeError: If dtype of `target` is not int32.
+        ValueError: If length of shape of `inputs` is neither 1 nor 2.
+        ValueError: If shape of `inputs` is not the same as `target`.
+        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+       >>> inputs = Tensor(np.array([[0.1, 0.2, 0.4, 0.8], [0.2, 0.3, 0.5, 0.7]]), mindspore.float32)
+       >>> target = Tensor(np.array([[1, 2, 0, 3], [2, 3, -1, 1]]), mindspore.int32)
+       >>> output, _ = ops.multi_label_margin_loss(inputs, target)
+       >>> print(output)
+       (Tensor(shape=[], dtype=Float32, value= 0.325), Tensor(shape=[2, 4], dtype=Int32, value=
+       [[1, 1, 1, 1], [0, 0, 1, 1]]))
+    """
+
+    loss = _get_cache_prim(P.MultiLabelMarginLoss)(reduction)
+    outputs, _ = loss(inputs, target)
+    return outputs
+
+
 __all__ = [
     'adaptive_avg_pool1d',
     'adaptive_avg_pool2d',
@@ -3209,6 +3334,8 @@ __all__ = [
     'relu',
     'relu6',
     'conv3d',
-    'glu'
+    'glu',
+    'multi_margin_loss',
+    'multi_label_margin_loss'
 ]
 __all__.sort()

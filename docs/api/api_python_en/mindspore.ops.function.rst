@@ -23,14 +23,18 @@ Neural Network
     mindspore.ops.batch_norm
     mindspore.ops.bias_add
     mindspore.ops.conv2d
+    mindspore.ops.conv3d
     mindspore.ops.ctc_greedy_decoder
     mindspore.ops.deformable_conv2d
+    mindspore.ops.dropout
     mindspore.ops.dropout2d
     mindspore.ops.dropout3d
     mindspore.ops.flatten
     mindspore.ops.interpolate
     mindspore.ops.lrn
     mindspore.ops.max_pool3d
+    mindspore.ops.multi_margin_loss
+    mindspore.ops.multi_label_margin_loss
     mindspore.ops.kl_div
     mindspore.ops.pad
     mindspore.ops.padding

@@ -59,7 +59,7 @@ class ScalarSummary(Primitive):
 
     Inputs:
         - **name** (str) - The name of the input variable, it must not be an empty string.
-        - **value** (Tensor) - The value of scalar, and the shape of value must be [] or [1].
+        - **value** (Tensor) - The value of scalar, and the dim of value must be 0 or 1.
 
     Raises:
         TypeError: If `name` is not a str.
