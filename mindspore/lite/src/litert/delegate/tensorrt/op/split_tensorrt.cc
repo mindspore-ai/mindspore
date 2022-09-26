@@ -167,7 +167,6 @@ int SplitTensorRT::ParseParams(const ITensorHelper &helper) {
         }
       } else {
         MS_LOG(INFO) << op_name_ << " has invalid input size and size_splits: " << in_tensors_.size();
-        // return RET_ERROR;
       }
       break;
     }

@@ -56,7 +56,6 @@ int MhaTensorRT::AddInnerOp(TensorRTContext *ctx) {
     MS_LOG(ERROR) << "op action convert failed";
     return RET_ERROR;
   }
-  // get attribute for Attn op - TODO - add attribute in op
   int head_number = mha_op->get_head_num();
   int head_size = mha_op->get_head_size();
   int compute_type = 1;  //  mha_op->get_compute_type();
@@ -76,13 +75,8 @@ int MhaTensorRT::AddInnerOp(TensorRTContext *ctx) {
     return RET_ERROR;
   }
   mha_layer->setName(op_name_.c_str());
-  // TODO(haim) one output
   nvinfer1::ITensor *attn_tensor = mha_layer->getOutput(0);
   ctx->RegisterTensor(ITensorHelper{attn_tensor, Format::NCHW, true}, out_tensors_[0].Name());
-  // nvinfer1::ITensor *key_tensor = mha_layer->getOutput(1);
-  // ctx->RegisterTensor(ITensorHelper{key_tensor, Format::NCHW, true}, out_tensors_[1].Name());
-  // nvinfer1::ITensor *value_tensor = mha_layer->getOutput(kTwo);
-  // ctx->RegisterTensor(ITensorHelper{value_tensor, Format::NCHW, true}, out_tensors_[kTwo].Name());
   this->layer_ = mha_layer;
 
   return RET_OK;
@@ -115,9 +109,7 @@ int MhaPlugin::RunCudaMha(const nvinfer1::PluginTensorDesc *inputDesc, const nvi
 
   cublasSetStream(cublas_handle_, stream);
 
-  // TODO(Haim) - Fix tensor ids according to cross flag
   const int from_tensor_idx = 0;
-  // const int encoder_tensor_idx = 1;
   const int weight_qkv_tensor_idx = 3;
   const int weight_projection_tensor_idx = 4;
   const int bias_qkv_tensor_idx = 5;
@@ -132,8 +124,6 @@ int MhaPlugin::RunCudaMha(const nvinfer1::PluginTensorDesc *inputDesc, const nvi
   auto bias_projection = static_cast<const float *>(inputs[bias_projection_tensor_idx]);
 
   auto output0 = static_cast<float *>(outputs[0]);
-  // auto output1 = static_cast<float *>(outputs[1]);
-  // auto output2 = static_cast<float *>(outputs[2]);
 
   auto attn_dim_size = inputDesc[attn_mask_tensor_idx].dims.nbDims;
   const int request_batch_size = static_cast<const int>(inputDesc[attn_mask_tensor_idx].dims.d[0]);
@@ -141,7 +131,6 @@ int MhaPlugin::RunCudaMha(const nvinfer1::PluginTensorDesc *inputDesc, const nvi
   const int request_tgt_seq_len = static_cast<const int>(inputDesc[attn_mask_tensor_idx].dims.d[attn_dim_size - 1]);
   auto hidden_size = static_cast<const int>(head_number_ * head_size_);
 
-  // TODO(NIZZAN): fix allocator
   size_t extra_tmp_size = request_batch_size * head_number_ * head_size_ * request_tgt_seq_len;
 
   size_t size_q = request_batch_size * request_src_seq_len * hidden_size;
@@ -249,10 +238,6 @@ size_t MhaPlugin::getWorkspaceSize(const nvinfer1::PluginTensorDesc *inputs, int
   const int request_tgt_seq_len = static_cast<const int>(inputs[nbInputs - 1].dims.d[attn_dim_size - 1]);
   auto hidden_size = static_cast<const int>(head_number_ * head_size_);
 
-  // TODO(NIZZAN) Fix efficient allocator
-  // size_t buff_size = request_batch_size * head_number_ * request_src_seq_len * request_tgt_seq_len +
-  //             request_batch_size * request_src_seq_len * hidden_size;
-
   size_t size_q = request_batch_size * request_src_seq_len * hidden_size;
   size_t size_k = request_batch_size * request_tgt_seq_len * hidden_size;
   size_t size_v = size_k;
@@ -282,12 +267,6 @@ nvinfer1::DimsExprs MhaPlugin::getOutputDimensions(int32_t index, const nvinfer1
   //      value_cache [batch, head_num, tgt_seq_len, size_per_head]
   nvinfer1::DimsExprs dims;
   if (index == 0) {
-    // if (inputs[0].nbDims == 2) {
-    //   dims.nbDims = INPUT_SIZE2;
-    //   dims.d[0] = inputs[nbInputDims - 1].d[(inputs[nbInputDims - 1].nbDims) - 1];
-    //   auto hidden_size = exprBuilder.constant(head_size_ * head_number_);
-    //   dims.d[1] = hidden_size;
-    // } else
     {
       dims.nbDims = INPUT_SIZE3;
       dims.d[0] = inputs[nbInputDims - 1].d[0];  // batch
@@ -296,7 +275,6 @@ nvinfer1::DimsExprs MhaPlugin::getOutputDimensions(int32_t index, const nvinfer1
       dims.d[kTwo] = hidden_size;
     }
   } else {
-    // TODO(Haim) - Fix size in case of 2d input
     dims.nbDims = INPUT_SIZE4;
     dims.d[0] = inputs[nbInputDims - 1].d[0];  // batch
     dims.d[1] = exprBuilder.constant(head_number_);
@@ -307,7 +285,7 @@ nvinfer1::DimsExprs MhaPlugin::getOutputDimensions(int32_t index, const nvinfer1
 }
 
 nvinfer1::IPluginV2DynamicExt *MhaPlugin::clone() const noexcept {
-  auto *plugin = new MhaPlugin(*this);  // TODO(haim) CopyConstructor
+  auto *plugin = new MhaPlugin(*this);
   if (plugin == nullptr) {
     MS_LOG(ERROR) << "plugin is null";
     return nullptr;
