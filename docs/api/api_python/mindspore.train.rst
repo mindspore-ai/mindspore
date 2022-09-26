@@ -23,6 +23,7 @@ mindspore.train
     mindspore.train.LearningRateScheduler
     mindspore.train.LossMonitor
     mindspore.train.ModelCheckpoint
+    mindspore.train.OnRequestExit
     mindspore.train.ReduceLROnPlateau
     mindspore.train.RunContext
     mindspore.train.TimeMonitor

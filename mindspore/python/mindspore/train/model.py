@@ -1330,8 +1330,9 @@ class Model:
         list_callback.on_eval_epoch_begin(run_context)
         for next_element in dataset_helper:
             cb_params.cur_step_num += 1
-            list_callback.on_eval_step_begin(run_context)
             next_element = _transfer_tensor_to_tuple(next_element)
+            cb_params.eval_dataset_element = next_element
+            list_callback.on_eval_step_begin(run_context)
             self._check_network_mode(self._eval_network, False)
             outputs = self._eval_network(*next_element)
             cb_params.net_outputs = outputs
@@ -1342,6 +1343,8 @@ class Model:
             if add_eval_loss:
                 eval_loss_fn = get_metric_fn("loss")
                 eval_loss_fn.update(outputs[self._eval_indexes[0]])
+            if run_context.get_stop_requested():
+                break
 
         list_callback.on_eval_epoch_end(run_context)
         valid_dataset.reset()

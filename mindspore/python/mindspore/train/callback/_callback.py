@@ -509,7 +509,7 @@ class RunContext:
 
     def request_stop(self):
         """
-        Set stop requirement during training.
+        Set stop requirement during training or eval.
 
         Callbacks can use this function to request stop of iterations.
         model.train() checks whether this is called or not.

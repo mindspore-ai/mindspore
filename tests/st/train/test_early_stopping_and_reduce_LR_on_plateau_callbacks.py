@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
-""" test EarlyStopping and ReduceLROnPlateau"""
+""" test EarlyStopping and ReduceLROnPlateau Callbacks"""
 
 import copy
 import pytest
